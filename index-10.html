@@ -1,0 +1,368 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>PIXEL ENGINE SIM - 2CYL 4STROKE</title>
+<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0;image-rendering:pixelated;-webkit-font-smoothing:none}
+body{background:#0a0a12;color:#e0e0e0;font-family:'Press Start 2P',monospace;font-size:10px;line-height:1.6;overflow-x:hidden;min-height:100vh}
+.container{max-width:1100px;margin:0 auto;padding:8px}
+header{text-align:center;padding:12px 8px;border-bottom:4px solid #333;background:linear-gradient(180deg,#1a1a2e 0%,#0a0a12 100%);margin-bottom:12px}
+header h1{font-size:14px;color:#ffcc00;text-shadow:2px 2px 0 #000,-1px -1px 0 #aa6600;letter-spacing:1px}
+header .subtitle{font-size:8px;color:#888;margin-top:6px}
+.main{display:grid;grid-template-columns:1fr 320px;gap:12px}
+@media(max-width:800px){.main{grid-template-columns:1fr}}
+.viz-panel{background:#12121c;border:4px solid #444;position:relative;box-shadow:inset 0 0 20px #000}
+.viz-tabs{display:flex;gap:0;background:#0a0a12;border-bottom:3px solid #333}
+.viz-tabs button{flex:1;font-family:'Press Start 2P',monospace;font-size:8px;padding:10px 8px;background:#1a1a28;color:#888;border:none;border-right:2px solid #333;cursor:pointer;box-shadow:none}
+.viz-tabs button:last-child{border-right:none}
+.viz-tabs button:hover{background:#2a2a3a;color:#ccc}
+.viz-tabs button.active{background:#004422;color:#00ff88;border-bottom:3px solid #00ff88;margin-bottom:-3px}
+#engineCanvas{width:100%;height:auto;display:block;background:#0d0d18}
+.side-panel{display:flex;flex-direction:column;gap:10px}
+.panel{background:#161622;border:4px solid #3a3a4a;padding:10px}
+.panel h2{font-size:9px;color:#00ccff;margin-bottom:8px;border-bottom:2px solid #333;padding-bottom:4px;text-transform:uppercase}
+.gauge-row{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin-bottom:8px}
+.stat{background:#0a0a10;border:2px solid #333;padding:6px 8px;min-width:90px;text-align:center}
+.stat .label{font-size:7px;color:#888;display:block}
+.stat .value{font-size:12px;color:#00ff88;margin-top:2px}
+.stat .unit{font-size:7px;color:#666}
+.stat.warning .value{color:#ffaa00}
+.stat.danger .value{color:#ff3333}
+.control-group{margin-bottom:10px}
+.control-group label{display:flex;justify-content:space-between;font-size:8px;color:#aaa;margin-bottom:3px}
+.control-group label span.val{color:#ffcc00}
+input[type=range]{-webkit-appearance:none;width:100%;height:12px;background:#222;border:2px solid #555;outline:none;cursor:pointer}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:16px;height:20px;background:#00ff88;border:2px solid #000;cursor:pointer;box-shadow:2px 2px 0 #000}
+input[type=range]::-moz-range-thumb{width:16px;height:20px;background:#00ff88;border:2px solid #000;cursor:pointer;box-shadow:2px 2px 0 #000}
+.btn-row{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
+button{font-family:'Press Start 2P',monospace;font-size:8px;padding:8px 12px;background:#2a2a3a;color:#eee;border:3px solid #666;cursor:pointer;box-shadow:3px 3px 0 #000}
+button:hover{background:#3a3a5a;color:#fff}
+button:active{box-shadow:1px 1px 0 #000;transform:translate(2px,2px)}
+button.danger{border-color:#aa3333;color:#ff6666}
+.status-bar{margin-top:10px;padding:6px;background:#0a0a10;border:2px solid #333;font-size:8px;color:#00ff88;min-height:28px}
+.status-bar.warn{color:#ffaa00}
+.status-bar.err{color:#ff4444}
+footer{text-align:center;margin-top:16px;padding:8px;font-size:7px;color:#555;border-top:2px solid #222}
+.legend{font-size:7px;color:#666;margin-top:6px;line-height:1.4}
+</style>
+</head>
+<body>
+<div class="container">
+<header>
+<h1>PIXEL ENGINE SIM v0.1</h1>
+<div class="subtitle">2-CYLINDER • 4-STROKE • 1.0L • LIGHT AUTOMATION</div>
+</header>
+<div class="main">
+<div class="viz-panel">
+<div class="viz-tabs">
+<button id="tabEngine" class="active">ENGINE VIEW</button>
+<button id="tabDyno">DYNO CURVE</button>
+</div>
+<canvas id="engineCanvas" width="640" height="420"></canvas>
+</div>
+<div class="side-panel">
+<div class="panel">
+<h2>Live Output</h2>
+<div class="gauge-row">
+<div class="stat" id="statHP"><span class="label">POWER</span><div class="value">0</div><span class="unit">HP</span></div>
+<div class="stat" id="statTQ"><span class="label">TORQUE</span><div class="value">0</div><span class="unit">Nm</span></div>
+<div class="stat" id="statBSFC"><span class="label">BSFC</span><div class="value">0</div><span class="unit">g/kWh</span></div>
+</div>
+<div class="gauge-row">
+<div class="stat" id="statEff"><span class="label">THERMAL EFF</span><div class="value">0</div><span class="unit">%</span></div>
+<div class="stat" id="statFuel"><span class="label">FUEL FLOW</span><div class="value">0</div><span class="unit">L/h</span></div>
+<div class="stat" id="statKnock"><span class="label">KNOCK RISK</span><div class="value">LOW</div><span class="unit"></span></div>
+</div>
+</div>
+<div class="panel">
+<h2>Engine Controls</h2>
+<div class="control-group"><label>RPM <span class="val" id="valRPM">3000</span></label><input type="range" id="rpm" min="800" max="8500" step="50" value="3000"></div>
+<div class="control-group"><label>INTAKE PRESSURE (MAP) <span class="val" id="valMAP">1.00</span> bar</label><input type="range" id="map" min="0.40" max="2.20" step="0.01" value="1.00"></div>
+<div class="control-group"><label>AIR-FUEL RATIO <span class="val" id="valAFR">14.7</span></label><input type="range" id="afr" min="10.0" max="18.0" step="0.1" value="14.7"></div>
+<div class="control-group"><label>COOLANT TEMP <span class="val" id="valCool">90</span> °C</label><input type="range" id="coolant" min="40" max="130" step="1" value="90"></div>
+<div class="control-group"><label>OIL TEMP <span class="val" id="valOil">100</span> °C</label><input type="range" id="oil" min="40" max="150" step="1" value="100"></div>
+<div class="btn-row">
+<button id="btnOptimal">OPTIMAL</button>
+<button id="btnMaxPower">MAX POWER</button>
+<button id="btnEco">ECO</button>
+<button id="btnReset" class="danger">RESET</button>
+</div>
+<div class="status-bar" id="status">READY • SET PARAMETERS • WATCH THE PISTONS</div>
+<div class="legend" id="legend">Drag sliders to tune. Engine animates at set RPM.<br>MAP >1.0 = boost. AFR ~12.5 peak power, ~15.5 peak efficiency.</div>
+</div>
+</div>
+</div>
+<footer>PIXEL ENGINE SIM • Prototype for mobile conversion • Expandable to more configs<br>Physics simplified for education & fun • Inspired by Automation</footer>
+</div>
+<script>
+const ENGINE={displacement_L:1.0,cylinders:2,stroke:4,stoichAFR:14.7,fuelDensity:0.74,fuelLHV:44.0};
+let state={rpm:3000,map:1.00,afr:14.7,coolant:90,oil:100,torque:0,powerHP:0,powerKW:0,bsfc:0,thermalEff:0,fuelFlowLph:0,knockRisk:0,ve:0.85,bmep:0};
+let crankAngle=0,lastTime=performance.now();
+let vizMode='engine'; // 'engine' | 'dyno'
+let dynoCache=null;
+let dynoCacheKey='';
+
+function clamp(v,lo,hi){return Math.max(lo,Math.min(hi,v))}
+function computeVE(rpm){const peak=4800,width=2800;let ve=0.82*Math.exp(-Math.pow((rpm-peak)/width,2));ve*=(0.95+0.05*state.map);if(rpm>7000)ve*=1-(rpm-7000)/4000;return clamp(ve,0.25,1.05)}
+function afrPowerFactor(afr){const peak=12.6;let f=1.08*Math.exp(-Math.pow((afr-peak)/2.8,2));if(afr<11.0)f*=0.85+0.15*(afr-10);if(afr>16.5)f*=1.0-0.15*(afr-16.5);return clamp(f,0.25,1.12)}
+function tempFactors(coolant,oil){let coolF=1.0-0.0008*Math.pow(coolant-91,2);if(coolant>105)coolF-=0.15*((coolant-105)/25);if(coolant<60)coolF-=0.08;let oilFrictionMult=1.0;if(oil<75)oilFrictionMult=1.0+0.9*(1-oil/75);else if(oil>115)oilFrictionMult=1.0+0.6*((oil-115)/35);oilFrictionMult=clamp(oilFrictionMult,1.0,2.2);return{coolF:clamp(coolF,0.4,1.05),oilFrictionMult}}
+function computeKnockRisk(rpm,map,afr,coolant){let risk=0;risk+=Math.max(0,map-1.1)*40;risk+=Math.max(0,afr-13.5)*8;risk+=Math.max(0,coolant-95)*1.5;risk+=Math.max(0,rpm-5500)/80;if(afr<12.5)risk*=0.4;return clamp(risk,0,100)}
+
+function calcAtRpm(rpm){
+  const map=state.map,afr=state.afr;
+  const {coolF,oilFrictionMult}=tempFactors(state.coolant,state.oil);
+  const ve=computeVE(rpm);
+  const afrP=afrPowerFactor(afr);
+  let imep=10.8*map*ve*afrP*coolF;
+  let fmep=(0.55+1.8e-8*rpm*rpm)*oilFrictionMult;
+  let bmep=Math.max(0.05,imep-fmep);
+  const Vd=ENGINE.displacement_L/1000;
+  const bmep_pa=bmep*1e5;
+  let torque=(bmep_pa*Vd)/(4*Math.PI);
+  let powerKW=torque*rpm*2*Math.PI/60/1000;
+  let powerHP=powerKW/0.7457;
+  const knock=computeKnockRisk(rpm,map,afr,state.coolant);
+  if(knock>60){const derate=1-0.35*((knock-60)/40);powerKW*=derate;powerHP*=derate;torque*=derate}
+  return {rpm,torque,powerHP,powerKW,bmep,ve,knock};
+}
+
+function updatePhysics(){
+  const r=calcAtRpm(state.rpm);
+  state.torque=r.torque;state.powerKW=r.powerKW;state.powerHP=r.powerHP;state.bmep=r.bmep;state.ve=r.ve;state.knockRisk=r.knock;
+  const T_intake=280+state.coolant*0.35;
+  const MAP_pa=state.map*1e5;
+  const Vd=ENGINE.displacement_L/1000;
+  const airMass_kg_s=(MAP_pa*Vd*(state.rpm/60)*state.ve)/(287*T_intake*2);
+  const fuelMass_kg_s=airMass_kg_s/state.afr;
+  state.fuelFlowLph=(fuelMass_kg_s*3600)/ENGINE.fuelDensity;
+  const fuelPower=fuelMass_kg_s*ENGINE.fuelLHV*1e6/1000;
+  state.thermalEff=fuelPower>0.1?clamp((state.powerKW/fuelPower)*100,0,45):0;
+  state.bsfc=state.powerKW>0.5?(fuelMass_kg_s*3600*1000)/state.powerKW:999;
+}
+
+function getDynoData(){
+  const key=state.map.toFixed(2)+'|'+state.afr.toFixed(1)+'|'+state.coolant+'|'+state.oil;
+  if(dynoCache && dynoCacheKey===key) return dynoCache;
+  const points=[];
+  for(let rpm=1000;rpm<=8000;rpm+=100){
+    points.push(calcAtRpm(rpm));
+  }
+  dynoCache=points;
+  dynoCacheKey=key;
+  return points;
+}
+
+const canvas=document.getElementById('engineCanvas'),ctx=canvas.getContext('2d');
+const C={bg:'#0d0d18',block:'#2a2a3a',metal:'#6a6a7a',metalDark:'#3a3a4a',metalLight:'#9a9aaa',piston:'#c0c0d0',pistonTop:'#e0e0f0',rod:'#888898',fire:'#ff6600',spark:'#ffff00',intake:'#44aaff',exhaust:'#ff4422',text:'#e0e0e0',green:'#00ff88',yellow:'#ffcc00',red:'#ff4444',cyan:'#00ccff'};
+
+function drawPixelRect(x,y,w,h,color){ctx.fillStyle=color;ctx.fillRect(Math.floor(x),Math.floor(y),Math.floor(w),Math.floor(h))}
+function getStrokeName(angle){if(angle<180)return'INTAKE';if(angle<360)return'COMPRESS';if(angle<540)return'POWER';return'EXHAUST'}
+
+function drawCylinder(x,y,w,h,angle){
+  drawPixelRect(x,y,w,h,'#1a1a28');ctx.strokeStyle=C.metal;ctx.lineWidth=2;ctx.strokeRect(x+1,y+1,w-2,h-2);
+  const crankDeg=angle%360,rad=crankDeg*Math.PI/180,pistonTravel=h*0.55,pistonY=y+15+(1-Math.cos(rad))/2*pistonTravel,pH=38;
+  drawPixelRect(x+8,pistonY,w-16,pH,C.piston);drawPixelRect(x+8,pistonY+4,w-16,3,C.metalDark);drawPixelRect(x+8,pistonY+10,w-16,3,C.metalDark);drawPixelRect(x+10,pistonY,w-20,6,C.pistonTop);
+  const rodTop=pistonY+pH,crankCenterY=y+h+25;
+  ctx.strokeStyle=C.rod;ctx.lineWidth=6;ctx.beginPath();ctx.moveTo(x+w/2,rodTop);ctx.lineTo(x+w/2+Math.sin(rad)*18,crankCenterY);ctx.stroke();
+  const stroke=getStrokeName(angle);
+  if(stroke==='INTAKE'){drawPixelRect(x+4,y+4,18,12,C.intake);ctx.fillStyle=C.intake;ctx.font='7px "Press Start 2P"';ctx.fillText('IN',x+6,y+14)}
+  else if(stroke==='EXHAUST'){drawPixelRect(x+w-22,y+4,18,12,C.exhaust);ctx.fillStyle=C.exhaust;ctx.font='7px "Press Start 2P"';ctx.fillText('EX',x+w-20,y+14)}
+  else if(stroke==='POWER'){const flameH=20+Math.random()*10;ctx.fillStyle=C.fire;ctx.beginPath();ctx.moveTo(x+w/2,pistonY);ctx.lineTo(x+w/2-15,pistonY-flameH);ctx.lineTo(x+w/2+15,pistonY-flameH);ctx.closePath();ctx.fill();if(Math.random()>0.6){ctx.fillStyle=C.spark;ctx.fillRect(x+w/2-2,pistonY-8,4,4)}}
+  ctx.fillStyle=stroke==='POWER'?C.fire:(stroke==='INTAKE'?C.intake:C.text);ctx.font='8px "Press Start 2P"';ctx.fillText(stroke,x+18,y+h-8)
+}
+
+function drawMiniGauge(x,y,label,valueStr,norm){
+  ctx.fillStyle='#888';ctx.font='8px "Press Start 2P"';ctx.fillText(label,x,y);
+  drawPixelRect(x,y+6,150,12,'#222');
+  const fillW=Math.floor(150*clamp(norm,0,1));
+  let col=C.green;if(norm>0.85)col=C.yellow;if(norm>0.95)col=C.red;
+  drawPixelRect(x,y+6,fillW,12,col);
+  ctx.fillStyle=C.text;ctx.font='9px "Press Start 2P"';ctx.fillText(valueStr,x+2,y+32)
+}
+
+function drawEngine(dt){
+  const W=canvas.width,H=canvas.height;
+  ctx.fillStyle=C.bg;ctx.fillRect(0,0,W,H);
+  const omega=state.rpm*6;crankAngle=(crankAngle+omega*dt)%720;
+  drawPixelRect(0,0,W,28,'#12121c');
+  ctx.fillStyle=C.yellow;ctx.font='10px "Press Start 2P"';ctx.fillText('2CYL INLINE • 4-STROKE CYCLE',12,19);
+  ctx.fillStyle=C.green;ctx.fillText(Math.round(state.rpm)+' RPM',W-110,19);
+  const blockX=40,blockY=50,blockW=360,blockH=280;
+  drawPixelRect(blockX,blockY,blockW,blockH,C.block);ctx.strokeStyle=C.metal;ctx.lineWidth=3;ctx.strokeRect(blockX+1.5,blockY+1.5,blockW-3,blockH-3);
+  const cylW=110,cylH=160,cylGap=40,cyl1X=blockX+50,cyl2X=cyl1X+cylW+cylGap,cylY=blockY+40;
+  for(let i=0;i<2;i++){const cx=i===0?cyl1X:cyl2X;const localCrank=(crankAngle+(i===1?180:0))%720;drawCylinder(cx,cylY,cylW,cylH,localCrank)}
+  const crankY=cylY+cylH+10;drawPixelRect(blockX+30,crankY,blockW-60,50,C.metalDark);
+  ctx.fillStyle=C.metalLight;ctx.beginPath();ctx.arc(cyl1X+cylW/2,crankY+25,12,0,Math.PI*2);ctx.arc(cyl2X+cylW/2,crankY+25,12,0,Math.PI*2);ctx.fill();
+  ctx.font='8px "Press Start 2P"';ctx.fillStyle=C.cyan;ctx.fillText('CYL 1',cyl1X+30,cylY-8);ctx.fillText('CYL 2',cyl2X+30,cylY-8);
+  const infoX=430;drawPixelRect(infoX,40,190,340,'#12121c');ctx.strokeStyle='#333';ctx.strokeRect(infoX+1,41,188,338);
+  ctx.fillStyle=C.cyan;ctx.font='9px "Press Start 2P"';ctx.fillText('SENSORS',infoX+20,60);
+  drawMiniGauge(infoX+20,80,'MAP',state.map.toFixed(2)+' bar',state.map/2.2);
+  drawMiniGauge(infoX+20,130,'AFR',state.afr.toFixed(1),(state.afr-10)/8);
+  drawMiniGauge(infoX+20,180,'COOL',state.coolant+'C',(state.coolant-40)/90);
+  drawMiniGauge(infoX+20,230,'OIL',state.oil+'C',(state.oil-40)/110);
+  drawMiniGauge(infoX+20,280,'VE',(state.ve*100).toFixed(0)+'%',state.ve);
+  drawMiniGauge(infoX+20,330,'BMEP',state.bmep.toFixed(1)+' bar',state.bmep/20);
+  drawPixelRect(0,H-32,W,32,'#12121c');
+  ctx.fillStyle=state.knockRisk>70?C.red:(state.knockRisk>40?C.yellow:C.green);ctx.font='9px "Press Start 2P"';
+  let msg='CYCLE: '+getStrokeName(crankAngle%720);if(state.knockRisk>50)msg+='  •  KNOCK WARNING';
+  ctx.fillText(msg,12,H-12)
+}
+
+function drawDyno(){
+  const W=canvas.width,H=canvas.height;
+  ctx.fillStyle=C.bg;ctx.fillRect(0,0,W,H);
+  // Header
+  drawPixelRect(0,0,W,28,'#12121c');
+  ctx.fillStyle=C.yellow;ctx.font='10px "Press Start 2P"';ctx.fillText('DYNO CURVE • POWER & TORQUE',12,19);
+  ctx.fillStyle=C.green;ctx.fillText(Math.round(state.rpm)+' RPM',W-110,19);
+
+  const data=getDynoData();
+  let maxT=0,maxP=0,peakT={rpm:0,v:0},peakP={rpm:0,v:0};
+  data.forEach(p=>{if(p.torque>maxT){maxT=p.torque;peakT={rpm:p.rpm,v:p.torque}}if(p.powerHP>maxP){maxP=p.powerHP;peakP={rpm:p.rpm,v:p.powerHP}}});
+  maxT=Math.max(maxT*1.15,40);maxP=Math.max(maxP*1.15,40);
+
+  // Graph area
+  const gX=55,gY=50,gW=530,gH=300;
+  drawPixelRect(gX,gY,gW,gH,'#0a0a14');
+  ctx.strokeStyle='#333';ctx.lineWidth=2;ctx.strokeRect(gX,gY,gW,gH);
+
+  // Grid
+  ctx.strokeStyle='#1a1a28';ctx.lineWidth=1;
+  for(let i=1;i<8;i++){
+    const x=gX+(gW/8)*i;ctx.beginPath();ctx.moveTo(x,gY);ctx.lineTo(x,gY+gH);ctx.stroke();
+    const y=gY+(gH/6)*i;ctx.beginPath();ctx.moveTo(gX,y);ctx.lineTo(gX+gW,y);ctx.stroke();
+  }
+
+  // Axes labels
+  ctx.fillStyle='#666';ctx.font='7px "Press Start 2P"';
+  ctx.fillText('1000',gX-5,gY+gH+14);
+  ctx.fillText('3000',gX+gW*0.28,gY+gH+14);
+  ctx.fillText('5000',gX+gW*0.57,gY+gH+14);
+  ctx.fillText('7000',gX+gW*0.85,gY+gH+14);
+  ctx.fillText('RPM',gX+gW/2-15,gY+gH+28);
+
+  // Y labels left (Torque)
+  ctx.fillStyle=C.cyan;ctx.fillText('0',gX-25,gY+gH+3);
+  ctx.fillText(Math.round(maxT/2).toString(),gX-30,gY+gH/2+3);
+  ctx.fillText(Math.round(maxT).toString(),gX-30,gY+10);
+  ctx.fillText('Nm',gX-28,gY+gH/2-12);
+
+  // Y labels right (Power)
+  ctx.fillStyle=C.yellow;ctx.fillText('0',gX+gW+6,gY+gH+3);
+  ctx.fillText(Math.round(maxP/2).toString(),gX+gW+6,gY+gH/2+3);
+  ctx.fillText(Math.round(maxP).toString(),gX+gW+6,gY+10);
+  ctx.fillText('HP',gX+gW+6,gY+gH/2-12);
+
+  // Draw curves
+  function rpmToX(rpm){return gX+((rpm-1000)/(8000-1000))*gW}
+  function tToY(t){return gY+gH-(t/maxT)*gH}
+  function pToY(p){return gY+gH-(p/maxP)*gH}
+
+  // Torque curve (cyan)
+  ctx.strokeStyle=C.cyan;ctx.lineWidth=3;ctx.beginPath();
+  data.forEach((p,i)=>{const x=rpmToX(p.rpm),y=tToY(p.torque);if(i===0)ctx.moveTo(x,y);else ctx.lineTo(x,y)});
+  ctx.stroke();
+
+  // Power curve (yellow)
+  ctx.strokeStyle=C.yellow;ctx.lineWidth=3;ctx.beginPath();
+  data.forEach((p,i)=>{const x=rpmToX(p.rpm),y=pToY(p.powerHP);if(i===0)ctx.moveTo(x,y);else ctx.lineTo(x,y)});
+  ctx.stroke();
+
+  // Current RPM line
+  const curX=rpmToX(state.rpm);
+  ctx.strokeStyle=C.green;ctx.lineWidth=2;ctx.setLineDash([4,4]);
+  ctx.beginPath();ctx.moveTo(curX,gY);ctx.lineTo(curX,gY+gH);ctx.stroke();
+  ctx.setLineDash([]);
+
+  // Peak markers
+  ctx.fillStyle=C.cyan;ctx.beginPath();ctx.arc(rpmToX(peakT.rpm),tToY(peakT.v),5,0,Math.PI*2);ctx.fill();
+  ctx.fillStyle=C.yellow;ctx.beginPath();ctx.arc(rpmToX(peakP.rpm),pToY(peakP.v),5,0,Math.PI*2);ctx.fill();
+
+  // Legend + peaks
+  drawPixelRect(gX,gY+gH+40,gW,50,'#12121c');
+  ctx.fillStyle=C.cyan;ctx.font='8px "Press Start 2P"';ctx.fillText('■ TORQUE  peak '+peakT.v.toFixed(0)+' Nm @ '+peakT.rpm+' rpm',gX+10,gY+gH+58);
+  ctx.fillStyle=C.yellow;ctx.fillText('■ POWER   peak '+peakP.v.toFixed(0)+' HP @ '+peakP.rpm+' rpm',gX+10,gY+gH+76);
+  ctx.fillStyle=C.green;ctx.fillText('│ current RPM',gX+340,gY+gH+58);
+
+  // Footer status
+  drawPixelRect(0,H-32,W,32,'#12121c');
+  ctx.fillStyle=C.green;ctx.font='9px "Press Start 2P"';
+  ctx.fillText('MAP '+state.map.toFixed(2)+'  AFR '+state.afr.toFixed(1)+'  COOL '+state.coolant+'C  OIL '+state.oil+'C',12,H-12);
+}
+
+function updateUI(){
+  document.getElementById('valRPM').textContent=Math.round(state.rpm);
+  document.getElementById('valMAP').textContent=state.map.toFixed(2);
+  document.getElementById('valAFR').textContent=state.afr.toFixed(1);
+  document.getElementById('valCool').textContent=state.coolant;
+  document.getElementById('valOil').textContent=state.oil;
+  document.querySelector('#statHP .value').textContent=state.powerHP.toFixed(1);
+  document.querySelector('#statTQ .value').textContent=state.torque.toFixed(1);
+  document.querySelector('#statBSFC .value').textContent=state.bsfc>500?'---':state.bsfc.toFixed(0);
+  document.querySelector('#statEff .value').textContent=state.thermalEff.toFixed(1);
+  document.querySelector('#statFuel .value').textContent=state.fuelFlowLph.toFixed(1);
+  const knockEl=document.querySelector('#statKnock .value');
+  if(state.knockRisk<25){knockEl.textContent='LOW';document.getElementById('statKnock').className='stat'}
+  else if(state.knockRisk<55){knockEl.textContent='MED';document.getElementById('statKnock').className='stat warning'}
+  else{knockEl.textContent='HIGH';document.getElementById('statKnock').className='stat danger'}
+  const status=document.getElementById('status');
+  const legend=document.getElementById('legend');
+  if(state.knockRisk>70){status.textContent='DETONATION RISK — RETARDING SPARK / POWER CUT';status.className='status-bar err'}
+  else if(state.coolant>115){status.textContent='OVERHEAT — REDUCE LOAD OR INCREASE COOLING';status.className='status-bar err'}
+  else if(state.oil<55){status.textContent='COLD OIL — HIGH FRICTION, WARM UP RECOMMENDED';status.className='status-bar warn'}
+  else if(state.powerHP>5){status.textContent='RUNNING • '+state.powerHP.toFixed(0)+' HP @ '+Math.round(state.rpm)+' RPM • BMEP '+state.bmep.toFixed(1)+' bar';status.className='status-bar'}
+  else{status.textContent='IDLE / LOW LOAD';status.className='status-bar'}
+  if(vizMode==='engine'){
+    legend.innerHTML='Drag sliders to tune. Engine animates at set RPM.<br>MAP >1.0 = boost. AFR ~12.5 peak power, ~15.5 peak efficiency.';
+  }else{
+    legend.innerHTML='Dyno shows full power & torque curves for current MAP/AFR/temps.<br>Green line = current RPM. Peaks marked with dots.';
+  }
+}
+
+function bindControls(){
+  ['rpm','map','afr','coolant','oil'].forEach(id=>{
+    document.getElementById(id).addEventListener('input',()=>{
+      if(id==='rpm')state.rpm=parseFloat(document.getElementById(id).value);
+      else if(id==='map')state.map=parseFloat(document.getElementById(id).value);
+      else if(id==='afr')state.afr=parseFloat(document.getElementById(id).value);
+      else if(id==='coolant')state.coolant=parseFloat(document.getElementById(id).value);
+      else if(id==='oil')state.oil=parseFloat(document.getElementById(id).value);
+      dynoCache=null; // invalidate
+      updatePhysics();updateUI();
+    });
+  });
+  document.getElementById('btnOptimal').addEventListener('click',()=>{state.rpm=4500;state.map=1.00;state.afr=14.7;state.coolant=90;state.oil=100;dynoCache=null;syncSliders();updatePhysics();updateUI()});
+  document.getElementById('btnMaxPower').addEventListener('click',()=>{state.rpm=6200;state.map=1.35;state.afr=12.6;state.coolant=88;state.oil=105;dynoCache=null;syncSliders();updatePhysics();updateUI()});
+  document.getElementById('btnEco').addEventListener('click',()=>{state.rpm=2800;state.map=0.75;state.afr=15.8;state.coolant=92;state.oil=98;dynoCache=null;syncSliders();updatePhysics();updateUI()});
+  document.getElementById('btnReset').addEventListener('click',()=>{state.rpm=3000;state.map=1.00;state.afr=14.7;state.coolant=90;state.oil=100;dynoCache=null;syncSliders();updatePhysics();updateUI()});
+
+  document.getElementById('tabEngine').addEventListener('click',()=>{
+    vizMode='engine';
+    document.getElementById('tabEngine').classList.add('active');
+    document.getElementById('tabDyno').classList.remove('active');
+    updateUI();
+  });
+  document.getElementById('tabDyno').addEventListener('click',()=>{
+    vizMode='dyno';
+    document.getElementById('tabDyno').classList.add('active');
+    document.getElementById('tabEngine').classList.remove('active');
+    updateUI();
+  });
+}
+function syncSliders(){document.getElementById('rpm').value=state.rpm;document.getElementById('map').value=state.map;document.getElementById('afr').value=state.afr;document.getElementById('coolant').value=state.coolant;document.getElementById('oil').value=state.oil}
+
+function loop(now){
+  const dt=Math.min((now-lastTime)/1000,0.05);lastTime=now;
+  updatePhysics();
+  if(vizMode==='engine') drawEngine(dt);
+  else drawDyno();
+  updateUI();
+  requestAnimationFrame(loop);
+}
+bindControls();updatePhysics();updateUI();requestAnimationFrame(loop);
+</script>
+</body>
+</html>
