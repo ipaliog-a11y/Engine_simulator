@@ -114,6 +114,12 @@ footer{text-align:center;margin-top:16px;padding:8px;font-size:7px;color:#555;bo
 <div class="field"><label for="edExhaust">EXHAUST</label><select id="edExhaust"><option value="stock">STOCK</option><option value="sport">SPORT</option><option value="race">RACE</option></select></div>
 </div>
 
+<div class="design-section">Valvetrain</div>
+<div class="design-grid">
+<div class="field"><label for="edCam">CAM PROFILE</label><select id="edCam"><option value="stock">STOCK</option><option value="sport">SPORT</option><option value="race">RACE</option></select></div>
+<div class="field"><label for="edVVT">VARIABLE VALVE TIMING</label><select id="edVVT"><option value="no">NONE</option><option value="yes">VVT</option></select></div>
+</div>
+
 <div class="design-section">Fuel &amp; Spark</div>
 <div class="design-grid">
 <div class="field"><label for="edOctane">FUEL OCTANE (RON)</label><input type="number" id="edOctane" min="87" max="110" step="1" value="95"></div>
@@ -187,12 +193,20 @@ const EXHAUST={
   sport:{topGain:0.12,lowLoss:0.03},
   race:{topGain:0.20,lowLoss:0.06}
 };
+// Camshaft profiles: bigger cams (more duration/lift/overlap) move the VE peak up,
+// add top-end breathing & scavenging, but cost low-end VE and idle quality.
+const CAM={
+  stock:{peakShift:0,   ampMul:1.00,loWiden:1.00,lowLoss:0.00,scav:0.00,idleRpm:0},
+  sport:{peakShift:600, ampMul:1.04,loWiden:0.82,lowLoss:0.05,scav:0.04,idleRpm:150},
+  race: {peakShift:1300,ampMul:1.08,loWiden:0.66,lowLoss:0.12,scav:0.08,idleRpm:400}
+};
 
 // The engine build spec. Everything downstream derives from this object, so new
 // subsystems (electrical, cooling, etc.) can be added later as more fields here.
 const DEFAULT_ENGINE={
   cylinders:4,bore_mm:86,stroke_mm:86,compression:10.5,layout:'inline',redline:7000,
   intake:'na',boost_bar:0,intercooler:true,turboSize:'medium',exhaust:'stock',
+  cam:'stock',vvt:false,
   octane:95,injector:'port',ignitionAdv:22,ignitionType:'coil',
   radiator:'stock',fan:'electric',oilCooler:false,thermostat:88
 };
@@ -244,6 +258,8 @@ function readEngineFromForm(){
     intercooler:g('edIntercooler').value==='yes',
     turboSize:g('edTurboSize').value,
     exhaust:g('edExhaust').value,
+    cam:g('edCam').value,
+    vvt:g('edVVT').value==='yes',
     octane:clamp(Math.round(+g('edOctane').value||95),87,110),
     injector:g('edInjector').value,
     ignitionAdv:clamp(Math.round(+g('edIgnAdv').value||22),5,40),
@@ -260,6 +276,7 @@ function applyEngineToForm(e){
   g('edStroke').value=e.stroke_mm;g('edCR').value=e.compression;g('edRedline').value=e.redline;
   g('edIntake').value=e.intake;g('edBoost').value=e.boost_bar;g('edIntercooler').value=e.intercooler?'yes':'no';
   g('edTurboSize').value=e.turboSize||'medium';
+  g('edCam').value=e.cam||'stock';g('edVVT').value=e.vvt?'yes':'no';
   g('edExhaust').value=e.exhaust;g('edOctane').value=e.octane;g('edInjector').value=e.injector;
   g('edIgnAdv').value=e.ignitionAdv;g('edIgnType').value=e.ignitionType;
   g('edRadiator').value=e.radiator||'stock';g('edFan').value=e.fan||'electric';
@@ -288,6 +305,18 @@ function buildEngine(){
   engine.veWidthLo=engine.redline*0.42;
   engine.veWidthHi=engine.redline*0.66;
   engine.veShoulder=1.4;
+  // Camshaft: a wilder cam shifts the VE peak up and adds top-end breathing at the cost of
+  // low-end VE and idle quality. VVT recovers most of the low end (cam advances down low),
+  // giving a broad powerband — strong bottom AND top.
+  const cam=CAM[engine.cam]||CAM.stock;
+  let loWiden=cam.loWiden,camLowLoss=cam.lowLoss,idlePenalty=cam.idleRpm;
+  if(engine.vvt){loWiden+= (1-loWiden)*0.8;camLowLoss*=0.3;idlePenalty*=0.3;engine.veWidthHi*=1.06;}
+  engine.veAmp*=cam.ampMul;
+  engine.vePeakRpm=clamp(engine.vePeakRpm+cam.peakShift,3000,engine.redline*0.98);
+  engine.veWidthLo*=loWiden;
+  engine.camLowLoss=camLowLoss;
+  engine.camScav=cam.scav;
+  engine.idleRpmEff=IDLE_RPM+idlePenalty;   // wild cam idles higher / lumpier
   engine.crFactor=otto(engine.compression)/otto(10.5);   // 1.0 at CR 10.5
   engine.strokeFrictionMult=1+(engine.stroke_mm-86)/320;  // longer stroke = more friction
   engine.maxBoost=engine.intake==='na'?0:engine.boost_bar;
@@ -311,7 +340,7 @@ function buildEngine(){
   engine.fanFloor={none:0,mechanical:0.15,electric:0.5}[engine.fan];
 
   // Keep the live operating point valid for the new engine.
-  state.rpm=clamp(state.rpm,IDLE_RPM,engine.redline);
+  state.rpm=clamp(state.rpm,engine.idleRpmEff,engine.redline);
   state.map=clamp(state.map,0.12,engine.mapMax);
   syncSliders();
 
@@ -340,7 +369,7 @@ function updateDesignSummary(){
     '<b>'+engine.cylinders+' × '+engine.bore_mm+'×'+engine.stroke_mm+'mm</b> → <b>'+disp+' L</b> '+LAYOUT_LABEL[engine.layout]+
     '<br>Compression <b>'+engine.compression.toFixed(1)+':1</b> • Redline <b>'+engine.redline+'</b> rpm'+
     '<br>Induction <b>'+induction+'</b>'+
-    '<br>Exhaust <b>'+engine.exhaust.toUpperCase()+'</b> • Fuel <b>'+engine.octane+' RON</b>'+
+    '<br>Exhaust <b>'+engine.exhaust.toUpperCase()+'</b> • Cam <b>'+engine.cam.toUpperCase()+(engine.vvt?' + VVT':'')+'</b> • Fuel <b>'+engine.octane+' RON</b>'+
     '<br>Injection <b>'+(engine.injector==='direct'?'Direct':'Port')+'</b> • Ignition <b>'+engine.ignitionAdv+'° '+engine.ignitionType.toUpperCase()+'</b>'+
     '<br>Cooling <b>'+engine.radiator.toUpperCase()+' RAD</b> • <b>'+engine.fan.toUpperCase()+' FAN</b>'+(engine.oilCooler?' • <b>OIL COOLER</b>':'')+' • Thermostat <b>'+engine.thermostat+'°C</b>'+note;
 }
@@ -386,8 +415,8 @@ function computeVE(rpm,map){
   const w=rpm<peak?engine.veWidthLo:engine.veWidthHi;
   let ve=engine.veAmp/(1+Math.pow(Math.abs((rpm-peak)/w),2*engine.veShoulder));
   const ex=EXHAUST[engine.exhaust]||EXHAUST.stock;
-  if(rpm>peak)ve*=1+ex.topGain*clamp((rpm-peak)/engine.veWidthHi,0,1.2);  // scavenging helps top end
-  else ve*=1-ex.lowLoss*clamp((peak-rpm)/peak,0,1);                     // race exhaust hurts low end
+  if(rpm>peak)ve*=1+(ex.topGain+engine.camScav)*clamp((rpm-peak)/engine.veWidthHi,0,1.2);  // exhaust + cam scavenging up top
+  else ve*=1-(ex.lowLoss+engine.camLowLoss)*clamp((peak-rpm)/peak,0,1);                    // race exhaust / big cam hurt low end
   if(engine.intake==='turbo'&&rpm>peak)                                 // small turbo chokes up top
     ve*=1-engine.turboChoke*clamp((rpm-peak)/(engine.redline-peak),0,1);
   ve*=(0.97+0.03*clamp(map/engine.mapMax,0,1.2));
@@ -500,7 +529,7 @@ function stepEngine(dt){
   // top to hold it) — the balance point between this and brake torque sets steady RPM.
   const loadTq=state.load*engine.loadRefTq*LOAD_MULT*Math.pow(state.rpm/engine.redline,1.3);
   const omega=state.rpm*2*Math.PI/60+(tq-loadTq)/engine.inertia*dt;
-  state.rpm=clamp(omega*60/(2*Math.PI),IDLE_RPM,engine.redline);
+  state.rpm=clamp(omega*60/(2*Math.PI),engine.idleRpmEff,engine.redline);
 }
 function updatePhysics(){
   const map=liveMap();
