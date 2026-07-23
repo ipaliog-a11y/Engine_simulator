@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" shape-rendering="crispEdges">
+  <rect width="32" height="32" fill="#0a0a12"/>
+  <!-- cylinder bore -->
+  <rect x="10" y="4" width="12" height="24" fill="#1a1a28" stroke="#6a6a7a" stroke-width="1"/>
+  <!-- piston -->
+  <rect x="12" y="12" width="8" height="7" fill="#c0c0d0"/>
+  <rect x="12" y="12" width="8" height="2" fill="#e0e0f0"/>
+  <!-- rings -->
+  <rect x="12" y="15" width="8" height="1" fill="#3a3a4a"/>
+  <!-- combustion flame -->
+  <polygon points="16,12 12,6 20,6" fill="#ff6600"/>
+  <rect x="15" y="7" width="2" height="2" fill="#ffff00"/>
+  <!-- conrod -->
+  <rect x="15" y="19" width="2" height="7" fill="#888898"/>
+  <!-- crank pin -->
+  <rect x="14" y="25" width="4" height="4" fill="#9a9aaa"/>
+</svg>
