@@ -21,8 +21,11 @@ feeds the physics:
 - **Valvetrain** — cam profile (stock / sport / race) and variable valve timing (VVT). A
   wilder cam moves the powerband up and adds top-end at the cost of low-end torque and idle
   quality; VVT recovers the bottom end for a broad powerband.
-- **Fuel & spark** — fuel octane (RON), injector type (port / direct), ignition advance
-  and ignition type (distributor / wasted spark / coil-on-plug).
+- **Fuel & spark** — fuel type (pump gas / race gas / E85 / methanol), fuel octane (RON,
+  pump gas only), injector type (port / direct), ignition advance and ignition type
+  (distributor / wasted spark / coil-on-plug). Each fuel has its own energy density, stoich
+  AFR, knock rating and charge-cooling — alcohols resist knock and cool the charge (more
+  power headroom) but burn far more fuel.
 - **Cooling** — radiator size (small / stock / large), cooling fan (none / mechanical /
   electric), oil cooler, and thermostat opening temperature.
 
@@ -114,7 +117,11 @@ Curve** tab remains a wide-open-throttle steady-state sweep for reading the full
 - Ignition timing has a max-brake-torque optimum — too little or too much loses power, and
   over-advance feeds knock.
 - Knock combines boost, compression, charge/coolant temperature, RPM, timing and mixture,
-  offset by octane and direct injection; high knock derates power.
+  offset by fuel octane, charge cooling and direct injection; high knock derates power.
+- Fuel type sets energy density, stoichiometric AFR (the mixture control works in lambda,
+  so the AFR slider rescales per fuel), knock rating and evaporative charge cooling. E85 and
+  methanol resist knock and cool the intake charge (more power) but need much more fuel
+  flow (higher BSFC), while race gas is high-octane pump gas.
 - Cooling balances load-generated heat against radiator capacity + airflow (RPM-driven)
   and fan; the thermostat sets the floor temperature. Overheating (>~108 °C) costs power.
 - Standard 4-stroke BMEP → Torque → Power conversion throughout.
@@ -149,7 +156,7 @@ philosophy).
 - [x] Turbo lag / spool modelling vs. RPM (turbo size, spool curve, transient lag)
 - [x] Cooling subsystem (radiator size, fan, oil cooler, thermostat) feeding the thermal model
 - [ ] Electrical subsystem (alternator load, starter, ignition dwell)
-- [ ] Different fuels (E85, methanol, race gas) with their own knock/energy properties
+- [x] Different fuels (pump/race gas, E85, methanol) with their own energy, stoich, knock & cooling
 - [ ] Reliability / wear simulation
 - [x] Calibration pass for realistic power figures & curve shape (ongoing refinement)
 - [ ] Native Android build (wrap the PWA with Capacitor or a Trusted Web Activity)
