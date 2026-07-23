@@ -122,6 +122,7 @@ footer{text-align:center;margin-top:16px;padding:8px;font-size:7px;color:#555;bo
 
 <div class="design-section">Fuel &amp; Spark</div>
 <div class="design-grid">
+<div class="field"><label for="edFuel">FUEL TYPE</label><select id="edFuel"><option value="gasoline">PUMP GAS</option><option value="race">RACE GAS</option><option value="e85">E85</option><option value="methanol">METHANOL</option></select></div>
 <div class="field"><label for="edOctane">FUEL OCTANE (RON)</label><input type="number" id="edOctane" min="87" max="110" step="1" value="95"></div>
 <div class="field"><label for="edInjector">INJECTOR</label><select id="edInjector"><option value="port">PORT (PFI)</option><option value="direct">DIRECT (DI)</option></select></div>
 <div class="field"><label for="edIgnAdv">IGNITION ADV (° BTDC)</label><input type="number" id="edIgnAdv" min="5" max="40" step="1" value="22"></div>
@@ -186,7 +187,16 @@ footer{text-align:center;margin-top:16px;padding:8px;font-size:7px;color:#555;bo
 <footer>PIXEL ENGINE SIM • Configurable engine designer • Expandable per subsystem<br>Physics simplified for education &amp; fun • Inspired by Automation</footer>
 </div>
 <script>
-const FUEL={density:0.745,LHV:44.0};   // gasoline: kg/L, MJ/kg
+// Fuel properties. density kg/L, LHV MJ/kg, stoich AFR (mass), octane (null → use the
+// RON slider), chargeCool = evaporative charge cooling °C (denser charge + less knock),
+// knockBonus = extra knock margin beyond octane. Alcohols: low energy/kg (more fuel flow)
+// but great knock resistance + big charge cooling → more power headroom.
+const FUELS={
+  gasoline:{label:'PUMP GAS',density:0.745,LHV:44.0,stoich:14.7,octane:null,chargeCool:0, knockBonus:0},
+  race:    {label:'RACE GAS',density:0.735,LHV:43.5,stoich:14.7,octane:105, chargeCool:2, knockBonus:2},
+  e85:     {label:'E85',     density:0.785,LHV:29.2,stoich:9.8, octane:102, chargeCool:15,knockBonus:8},
+  methanol:{label:'METHANOL',density:0.792,LHV:19.9,stoich:6.45,octane:109, chargeCool:25,knockBonus:14}
+};
 const LAYOUT_LABEL={inline:'INLINE',v:'V',boxer:'BOXER'};
 const EXHAUST={
   stock:{topGain:0.05,lowLoss:0.02},
@@ -207,7 +217,7 @@ const DEFAULT_ENGINE={
   cylinders:4,bore_mm:86,stroke_mm:86,compression:10.5,layout:'inline',redline:7000,
   intake:'na',boost_bar:0,intercooler:true,turboSize:'medium',exhaust:'stock',
   cam:'stock',vvt:false,
-  octane:95,injector:'port',ignitionAdv:22,ignitionType:'coil',
+  fuel:'gasoline',octane:95,injector:'port',ignitionAdv:22,ignitionType:'coil',
   radiator:'stock',fan:'electric',oilCooler:false,thermostat:88
 };
 const RAD_CAP={small:0.75,stock:1.0,large:1.35};   // relative heat-rejection capacity
@@ -260,6 +270,7 @@ function readEngineFromForm(){
     exhaust:g('edExhaust').value,
     cam:g('edCam').value,
     vvt:g('edVVT').value==='yes',
+    fuel:g('edFuel').value,
     octane:clamp(Math.round(+g('edOctane').value||95),87,110),
     injector:g('edInjector').value,
     ignitionAdv:clamp(Math.round(+g('edIgnAdv').value||22),5,40),
@@ -277,6 +288,7 @@ function applyEngineToForm(e){
   g('edIntake').value=e.intake;g('edBoost').value=e.boost_bar;g('edIntercooler').value=e.intercooler?'yes':'no';
   g('edTurboSize').value=e.turboSize||'medium';
   g('edCam').value=e.cam||'stock';g('edVVT').value=e.vvt?'yes':'no';
+  g('edFuel').value=e.fuel||'gasoline';
   g('edExhaust').value=e.exhaust;g('edOctane').value=e.octane;g('edInjector').value=e.injector;
   g('edIgnAdv').value=e.ignitionAdv;g('edIgnType').value=e.ignitionType;
   g('edRadiator').value=e.radiator||'stock';g('edFan').value=e.fan||'electric';
@@ -289,9 +301,17 @@ function syncDesignEnable(){
   document.getElementById('edBoost').disabled=na;
   document.getElementById('edIntercooler').disabled=na;
   document.getElementById('edTurboSize').disabled=intake!=='turbo';
+  // Octane only matters for pump gas; other fuels carry their own rating.
+  document.getElementById('edOctane').disabled=document.getElementById('edFuel').value!=='gasoline';
 }
 function buildEngine(){
+  const prevStoich=(engine&&engine.stoichAFR)||14.7;   // to preserve lambda across fuel swaps
   engine=readEngineFromForm();
+  // Fuel: energy content, stoichiometry, knock rating and charge cooling.
+  const fp=FUELS[engine.fuel]||FUELS.gasoline;
+  engine.fuelDensity=fp.density;engine.fuelLHV=fp.LHV;engine.stoichAFR=fp.stoich;
+  engine.effOctane=fp.octane!=null?fp.octane:engine.octane;
+  engine.fuelKnockBonus=fp.knockBonus;engine.chargeCool=fp.chargeCool;
   // Geometry → displacement (bore/stroke in mm → cm³ → L).
   const vcyl_cc=Math.PI/4*Math.pow(engine.bore_mm/10,2)*(engine.stroke_mm/10);
   engine.displacement_L=vcyl_cc*engine.cylinders/1000;
@@ -342,6 +362,12 @@ function buildEngine(){
   // Keep the live operating point valid for the new engine.
   state.rpm=clamp(state.rpm,engine.idleRpmEff,engine.redline);
   state.map=clamp(state.map,0.12,engine.mapMax);
+  // Re-range the AFR slider to this fuel's stoichiometry, preserving the mixture (lambda).
+  const afrEl=document.getElementById('afr'),lam=state.afr/prevStoich;
+  afrEl.min=(engine.stoichAFR*0.68).toFixed(1);
+  afrEl.max=(engine.stoichAFR*1.22).toFixed(1);
+  afrEl.step=engine.stoichAFR<10?0.05:0.1;
+  state.afr=clamp(lam*engine.stoichAFR,+afrEl.min,+afrEl.max);
   syncSliders();
 
   buildRev++;dynoCache=null;
@@ -369,7 +395,8 @@ function updateDesignSummary(){
     '<b>'+engine.cylinders+' × '+engine.bore_mm+'×'+engine.stroke_mm+'mm</b> → <b>'+disp+' L</b> '+LAYOUT_LABEL[engine.layout]+
     '<br>Compression <b>'+engine.compression.toFixed(1)+':1</b> • Redline <b>'+engine.redline+'</b> rpm'+
     '<br>Induction <b>'+induction+'</b>'+
-    '<br>Exhaust <b>'+engine.exhaust.toUpperCase()+'</b> • Cam <b>'+engine.cam.toUpperCase()+(engine.vvt?' + VVT':'')+'</b> • Fuel <b>'+engine.octane+' RON</b>'+
+    '<br>Exhaust <b>'+engine.exhaust.toUpperCase()+'</b> • Cam <b>'+engine.cam.toUpperCase()+(engine.vvt?' + VVT':'')+'</b>'+
+    '<br>Fuel <b>'+FUELS[engine.fuel].label+'</b> ('+engine.effOctane+' oct, '+engine.stoichAFR.toFixed(1)+':1 stoich'+(engine.chargeCool?', −'+engine.chargeCool+'°C charge':'')+')'+
     '<br>Injection <b>'+(engine.injector==='direct'?'Direct':'Port')+'</b> • Ignition <b>'+engine.ignitionAdv+'° '+engine.ignitionType.toUpperCase()+'</b>'+
     '<br>Cooling <b>'+engine.radiator.toUpperCase()+' RAD</b> • <b>'+engine.fan.toUpperCase()+' FAN</b>'+(engine.oilCooler?' • <b>OIL COOLER</b>':'')+' • Thermostat <b>'+engine.thermostat+'°C</b>'+note;
 }
@@ -395,12 +422,14 @@ function liveMap(){return state.map;}
 
 // ---- Physics (all derived from the engine spec + live state) ----
 function effIAT(map){
-  // Forced induction heats the charge; an intercooler removes most of it.
+  // Forced induction heats the charge; an intercooler removes most of it. High-enthalpy
+  // fuels (ethanol/methanol) evaporatively cool the charge — denser air and less knock.
   let t=state.iat;
   if(engine.intake!=='na'){
     const boost=Math.max(0,map-1.0);
     t+=boost*(engine.intercooler?6:25);
   }
+  t-=engine.chargeCool*(engine.injector==='direct'?1.15:1.0);   // DI cools the charge slightly more
   return t;
 }
 function mbtAdvance(rpm,map){
@@ -424,10 +453,12 @@ function computeVE(rpm,map){
   return clamp(ve,0.2,1.2);
 }
 function afrPowerFactor(afr){
-  const peak=12.6;
-  let f=1.08*Math.exp(-Math.pow((afr-peak)/2.8,2));
-  if(afr<11.0)f*=0.85+0.15*(afr-10);
-  if(afr>16.5)f*=1.0-0.15*(afr-16.5);
+  // Work in lambda (AFR / stoich) so the mixture response is fuel-agnostic: peak power at
+  // λ≈0.86 (rich), stoich at λ=1, lean beyond. Alcohols just have a much lower stoich AFR.
+  const lam=afr/engine.stoichAFR,peak=0.86,width=0.19;
+  let f=1.08*Math.exp(-Math.pow((lam-peak)/width,2));
+  if(lam<0.75)f*=0.85+0.6*(lam-0.68);   // very rich rolloff
+  if(lam>1.12)f*=1.0-1.5*(lam-1.12);    // very lean rolloff
   return clamp(f,0.25,1.12);
 }
 function tempFactors(coolant,oil){
@@ -453,9 +484,11 @@ function computeKnockRisk(rpm,map){
   k+=Math.max(0,state.coolant-95)*1.0;                  // hot chamber
   k+=Math.max(0,rpm-engine.redline*0.8)/60;             // less time = more heat soak
   k+=Math.max(0,engine.ignitionAdv-mbt-ignBonus)*2.5;   // over-advanced spark
-  k+=Math.max(0,afr-14.0)*4;                            // lean burns hotter
-  if(afr<12.8)k*=0.5;                                   // rich charge-cools
-  k-=(engine.octane-90)*2.2;                            // octane resists knock
+  const lam=afr/engine.stoichAFR;
+  k+=Math.max(0,(lam-0.95))*60;                         // lean burns hotter
+  if(lam<0.87)k*=0.5;                                   // rich charge-cools
+  k-=(engine.effOctane-90)*2.2;                         // fuel octane resists knock
+  k-=engine.fuelKnockBonus;                             // alcohol extra knock margin
   if(engine.injector==='direct')k-=12;                  // DI charge cooling
   return clamp(k,0,100);
 }
@@ -540,8 +573,8 @@ function updatePhysics(){
   const T_k=effIAT(map)+273.15,MAP_pa=map*1e5,Vd=engine.displacement_L/1000;
   const airMass_kg_s=(MAP_pa*Vd*(state.rpm/60)*state.ve)/(287*T_k*2);
   const fuelMass_kg_s=airMass_kg_s/state.afr;
-  state.fuelFlowLph=(fuelMass_kg_s*3600)/FUEL.density;
-  const fuelPower=fuelMass_kg_s*FUEL.LHV*1e6/1000;
+  state.fuelFlowLph=(fuelMass_kg_s*3600)/engine.fuelDensity;
+  const fuelPower=fuelMass_kg_s*engine.fuelLHV*1e6/1000;
   state.thermalEff=fuelPower>0.1?clamp((state.powerKW/fuelPower)*100,0,45):0;
   state.bsfc=state.powerKW>0.5?(fuelMass_kg_s*3600*1000)/state.powerKW:999;
 }
@@ -849,6 +882,7 @@ function bindControls(){
   document.getElementById('tabDyno').addEventListener('click',()=>setTab('dyno'));
 
   document.getElementById('edIntake').addEventListener('change',syncDesignEnable);
+  document.getElementById('edFuel').addEventListener('change',syncDesignEnable);
   document.getElementById('btnBuild').addEventListener('click',()=>{buildEngine();flash('ENGINE BUILT • '+engine.displacement_L.toFixed(engine.displacement_L<1?2:1)+'L');setTab('dyno')});
   document.getElementById('btnDesignReset').addEventListener('click',()=>{applyEngineToForm(Object.assign({},DEFAULT_ENGINE));buildEngine();flash('DESIGN RESET TO DEFAULTS')});
 }
