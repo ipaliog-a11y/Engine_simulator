@@ -20,10 +20,15 @@ feeds the physics:
   and exhaust (stock / sport / race).
 - **Fuel & spark** — fuel octane (RON), injector type (port / direct), ignition advance
   and ignition type (distributor / wasted spark / coil-on-plug).
+- **Cooling** — radiator size (small / stock / large), cooling fan (none / mechanical /
+  electric), oil cooler, and thermostat opening temperature.
 
 These couple realistically: octane, compression, boost, intake temperature and ignition
 advance all feed a **knock model**, and direct injection / higher octane buy back knock
-margin so you can run more boost or timing. Get it wrong and the ECU derates power.
+margin so you can run more boost or timing. Get it wrong and the ECU derates power. The
+**cooling subsystem** sets running temperatures in Auto Thermal mode — an under-sized
+radiator with no fan will heat-soak and overheat under load (and at idle), which in turn
+saps power; a large radiator, electric fan and oil cooler keep it cool.
 
 ![Design tab](docs/design.png)
 
@@ -35,7 +40,9 @@ margin so you can run more boost or timing. Get it wrong and the ECU derates pow
 - **Dyno Curve** — full power & torque vs RPM out to your redline, with peak markers and a
   live current-RPM line.
 - **Runtime controls**: RPM, MAP (load/boost), AFR, intake-air / coolant / oil temps.
-- **Auto Thermal mode** — coolant & oil drift toward load-dependent targets over time.
+- **Auto Thermal mode** — coolant & oil drift toward load-dependent targets over time,
+  balanced against the cooling subsystem's capacity (radiator airflow scales with RPM;
+  the fan provides idle cooling).
 - **Engine sound** — Web Audio note pitched to firing frequency (scales with cylinder
   count & RPM) and load.
 - **Save / Load** — stores and recalls the entire build + tune via `localStorage`.
@@ -81,6 +88,8 @@ Source: GitHub Actions**, and it deploys to
   over-advance feeds knock.
 - Knock combines boost, compression, charge/coolant temperature, RPM, timing and mixture,
   offset by octane and direct injection; high knock derates power.
+- Cooling balances load-generated heat against radiator capacity + airflow (RPM-driven)
+  and fan; the thermostat sets the floor temperature. Overheating (>~108 °C) costs power.
 - Standard 4-stroke BMEP → Torque → Power conversion throughout.
 
 Absolute numbers are ballpark, not bench-calibrated — this is tuned for fun, learning and
@@ -109,11 +118,17 @@ rapid experimentation (the "light Automation" philosophy).
 - [ ] Proper V / boxer bank visuals & firing-order animation
 - [ ] Cam profiles & valvetrain (variable valve timing)
 - [ ] Turbo lag / spool modelling vs. RPM
-- [ ] Cooling subsystem (radiator size, fan, oil cooler) feeding the thermal model
+- [x] Cooling subsystem (radiator size, fan, oil cooler, thermostat) feeding the thermal model
 - [ ] Electrical subsystem (alternator load, starter, ignition dwell)
 - [ ] Different fuels (E85, methanol, race gas) with their own knock/energy properties
 - [ ] Reliability / wear simulation
 - [ ] Bench calibration pass for realistic absolute power figures
+- [ ] Native Android build (wrap the PWA with Capacitor or a Trusted Web Activity)
+
+> **Android note:** the app is intentionally a self-contained, offline-capable PWA with no
+> server or external network dependencies and all persistence in `localStorage`. That keeps
+> it wrappable into an Android APK later (Capacitor or a Trusted Web Activity) with minimal
+> changes. New features are kept touch-friendly and framework-free to preserve that path.
 
 ## License
 
