@@ -17,7 +17,7 @@ feeds the physics:
 - **Bottom end** — cylinder count (1–12), layout (inline / V / boxer), bore, stroke,
   compression ratio, redline. Bore × stroke × cylinders sets the displacement.
 - **Air path** — naturally aspirated / turbo / supercharger, boost target, intercooler,
-  and exhaust (stock / sport / race).
+  turbo size (small / medium / large), and exhaust (stock / sport / race).
 - **Fuel & spark** — fuel octane (RON), injector type (port / direct), ignition advance
   and ignition type (distributor / wasted spark / coil-on-plug).
 - **Cooling** — radiator size (small / stock / large), cooling fan (none / mechanical /
@@ -79,11 +79,19 @@ Source: GitHub Actions**, and it deploys to
 ## Physics Notes (simplified educational model)
 
 - Displacement derived from bore, stroke and cylinder count.
-- VE curve peak shifts with bore/stroke ratio and redline; exhaust choice trades low-end
-  for top-end scavenging.
+- VE uses a broad generalized-bell breathing curve (flat plateau, gentle shoulders) so
+  torque stays flat across the midrange and power keeps climbing toward redline instead of
+  falling off a peaky Gaussian. Its peak shifts with bore/stroke ratio and redline; exhaust
+  choice trades low-end for top-end scavenging.
+- Output is calibrated to sane ballpark figures (e.g. a 2.0 L turbo at 0.8 bar / sport
+  exhaust / 98 RON makes ~255 hp & ~350 Nm; a 2.0 NA ~130 hp), with only a gentle power
+  drop from peak to redline.
 - Compression scales indicated work and efficiency via a relative Otto-cycle factor.
 - Forced induction raises achievable MAP; without an intercooler the charge heats up.
   Superchargers cost parasitic drive power.
+- Turbo boost spools with RPM along a logistic curve: small turbos spool early (strong
+  midrange) but choke the top end, large turbos lag down low but flow more up top. Actual
+  boost also lags in time (turbo lag), so it builds over ~1 s in the live Engine View.
 - Ignition timing has a max-brake-torque optimum — too little or too much loses power, and
   over-advance feeds knock.
 - Knock combines boost, compression, charge/coolant temperature, RPM, timing and mixture,
@@ -117,12 +125,12 @@ rapid experimentation (the "light Automation" philosophy).
 - [x] Mobile app packaging (PWA)
 - [ ] Proper V / boxer bank visuals & firing-order animation
 - [ ] Cam profiles & valvetrain (variable valve timing)
-- [ ] Turbo lag / spool modelling vs. RPM
+- [x] Turbo lag / spool modelling vs. RPM (turbo size, spool curve, transient lag)
 - [x] Cooling subsystem (radiator size, fan, oil cooler, thermostat) feeding the thermal model
 - [ ] Electrical subsystem (alternator load, starter, ignition dwell)
 - [ ] Different fuels (E85, methanol, race gas) with their own knock/energy properties
 - [ ] Reliability / wear simulation
-- [ ] Bench calibration pass for realistic absolute power figures
+- [x] Calibration pass for realistic power figures & curve shape (ongoing refinement)
 - [ ] Native Android build (wrap the PWA with Capacitor or a Trusted Web Activity)
 
 > **Android note:** the app is intentionally a self-contained, offline-capable PWA with no
