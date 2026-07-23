@@ -1,114 +1,119 @@
-# PIXEL ENGINE SIM v0.2
+# PIXEL ENGINE SIM v0.3
 
-**A lightweight, 8-bit style internal combustion engine simulator** inspired by *Automation*.
+**A lightweight, 8-bit style internal combustion engine *designer* & simulator** inspired by *Automation*.
 
-Web-based prototype focused on a **2-cylinder 4-stroke 1.0 L** engine.
-Designed to be expandable and later convertible to a mobile app.
+Design an engine from the ground up — cylinders, bore & stroke, compression, forced
+induction, exhaust, fuel octane, injection and ignition — then run it on the dyno and
+watch the physics respond. Web-based, fully offline-capable, installable as a PWA.
 
 ![Preview](docs/preview.png)
 
 ## Features
 
-- **Live physics simulation**
-  - RPM
-  - Intake manifold pressure (MAP / boost)
-  - Air-Fuel Ratio (AFR)
-  - Intake air temperature
-  - Coolant temperature
-  - Oil temperature
-- **Outputs**: Power (HP), Torque (Nm), BMEP, Volumetric Efficiency, Thermal Efficiency, BSFC, Fuel Flow, Knock Risk
-- **Animated 8-bit cutaway** of the 2-cylinder engine showing the full 4-stroke cycle (Intake → Compression → Power → Exhaust)
-- **Dyno Curve view** – switchable full power & torque graphs vs RPM (with peak markers and current-RPM line)
-- **Auto Thermal mode** – coolant and oil temperatures drift toward load-dependent targets over time (dynamic warm-up / heat-soak) instead of being set by hand
-- **Engine sound** – a Web Audio engine note whose pitch tracks RPM and whose volume tracks load (toggleable)
-- **Save / Load** – store and recall a tuning setup in the browser via `localStorage`
-- **Pixel-art GUI** with the Press Start 2P font (self-hosted — works fully offline), chunky controls, and retro gauges
-- **Presets**: Optimal / Max Power / Eco / Reset
-- **Installable PWA** – manifest + service worker for offline use and "add to home screen"
-- Fully responsive (works on desktop + mobile browsers)
+### Engine Designer (new in v0.3)
+Configure a build on the **DESIGN** tab, press **BUILD & DYNO**, and every parameter
+feeds the physics:
+
+- **Bottom end** — cylinder count (1–12), layout (inline / V / boxer), bore, stroke,
+  compression ratio, redline. Bore × stroke × cylinders sets the displacement.
+- **Air path** — naturally aspirated / turbo / supercharger, boost target, intercooler,
+  and exhaust (stock / sport / race).
+- **Fuel & spark** — fuel octane (RON), injector type (port / direct), ignition advance
+  and ignition type (distributor / wasted spark / coil-on-plug).
+
+These couple realistically: octane, compression, boost, intake temperature and ignition
+advance all feed a **knock model**, and direct injection / higher octane buy back knock
+margin so you can run more boost or timing. Get it wrong and the ECU derates power.
+
+![Design tab](docs/design.png)
+
+### Simulation & live tuning
+- **Live outputs**: Power (HP), Torque (Nm), BMEP, Volumetric Efficiency, Thermal
+  Efficiency, BSFC, Fuel Flow, Knock Risk.
+- **Animated cutaway** that renders your actual cylinder count through the full 4-stroke
+  cycle (Intake → Compression → Power → Exhaust).
+- **Dyno Curve** — full power & torque vs RPM out to your redline, with peak markers and a
+  live current-RPM line.
+- **Runtime controls**: RPM, MAP (load/boost), AFR, intake-air / coolant / oil temps.
+- **Auto Thermal mode** — coolant & oil drift toward load-dependent targets over time.
+- **Engine sound** — Web Audio note pitched to firing frequency (scales with cylinder
+  count & RPM) and load.
+- **Save / Load** — stores and recalls the entire build + tune via `localStorage`.
+- **Presets**: Optimal / Max Power / Eco / Reset (adapt to the current engine).
+- **Installable PWA**, self-hosted font, works fully offline.
+
+![Dyno](docs/dyno.png)
 
 ## How to Run
 
-### Option 1 – Local
-1. Download or clone this repository.
-2. Serve the folder over HTTP and open `index.html`, e.g.:
-   ```bash
-   python3 -m http.server 8000
-   # then visit http://localhost:8000
-   ```
-   > Opening `index.html` directly via `file://` also works, but the PWA/service-worker
-   > (offline install) features only activate over `http://` or `https://`.
+### Local
+Serve the folder over HTTP and open `index.html`:
+```bash
+python3 -m http.server 8000    # then visit http://localhost:8000
+```
+> Opening via `file://` works too, but the PWA/offline features only activate over `http(s)`.
 
-### Option 2 – GitHub Pages (recommended)
-This repo ships a workflow at `.github/workflows/pages.yml` that deploys automatically:
-1. Push to `main`.
-2. In **Settings → Pages**, set **Source** to **GitHub Actions**.
-3. Your sim goes live at `https://<your-username>.github.io/<repo-name>/`.
+### GitHub Pages
+This repo ships `.github/workflows/pages.yml`. Push to `main`, set **Settings → Pages →
+Source: GitHub Actions**, and it deploys to
+`https://<your-username>.github.io/<repo-name>/`.
 
-### Option 3 – Mobile / installable
-The page is a PWA. Open it over HTTPS (e.g. GitHub Pages) and use your browser's
-**Install app / Add to Home Screen** option for a native-feeling app. You can also wrap it
-with **Capacitor** or **Cordova**.
+## Runtime Controls
 
-## Controls
-
-| Control               | Range           | Notes |
-|-----------------------|-----------------|-------|
-| RPM                   | 800 – 8500      | Engine speed |
-| Intake Pressure (MAP) | 0.40 – 2.20 bar | 1.00 = atmospheric, >1.0 = boost |
-| Air-Fuel Ratio        | 10.0 – 18.0     | ~12.5 peak power, ~15.5 peak efficiency |
-| Intake Air Temp       | -10 – 60 °C     | Colder = denser charge = more power |
-| Coolant Temp          | 40 – 130 °C     | Optimal ~90 °C (auto-driven in Auto Thermal mode) |
-| Oil Temp              | 40 – 150 °C     | Optimal ~100 °C (auto-driven in Auto Thermal mode) |
-
-Buttons: **Optimal / Max Power / Eco / Reset** presets, plus **Auto Thermal**, **Sound**,
-**Save** and **Load** toggles/actions.
+| Control               | Range              | Notes |
+|-----------------------|--------------------|-------|
+| RPM                   | 800 – redline      | Redline comes from the design |
+| Intake Pressure (MAP) | 0.30 – design max  | Max = 1.05 bar (NA) or 1.0 + boost |
+| Air-Fuel Ratio        | 10.0 – 18.0        | ~12.5 peak power, ~15.5 peak efficiency |
+| Intake Air Temp       | -10 – 60 °C        | Colder = denser charge = more power |
+| Coolant Temp          | 40 – 130 °C        | Optimal ~90 °C (auto in Auto Thermal) |
+| Oil Temp              | 40 – 150 °C        | Optimal ~100 °C (auto in Auto Thermal) |
 
 ## Physics Notes (simplified educational model)
 
-- Volumetric efficiency curve peaks around 4800 rpm
-- AFR power factor peaks near 12.5–13.0
-- MAP scales air mass and indicated mean effective pressure
-- Intake-air-temperature density correction (ideal gas, referenced to 25 °C)
-- Friction rises with RPM² and is strongly affected by oil temperature
-- Knock risk increases with high MAP + lean mixture + high coolant + high intake temp + high RPM → power is automatically derated
-- In Auto Thermal mode, coolant/oil relax toward load-dependent targets with a first-order (exponential) time constant
-- Standard 4-stroke BMEP → Torque → Power conversion is used
+- Displacement derived from bore, stroke and cylinder count.
+- VE curve peak shifts with bore/stroke ratio and redline; exhaust choice trades low-end
+  for top-end scavenging.
+- Compression scales indicated work and efficiency via a relative Otto-cycle factor.
+- Forced induction raises achievable MAP; without an intercooler the charge heats up.
+  Superchargers cost parasitic drive power.
+- Ignition timing has a max-brake-torque optimum — too little or too much loses power, and
+  over-advance feeds knock.
+- Knock combines boost, compression, charge/coolant temperature, RPM, timing and mixture,
+  offset by octane and direct injection; high knock derates power.
+- Standard 4-stroke BMEP → Torque → Power conversion throughout.
 
-This is **not** a high-fidelity thermodynamic model. It is tuned for fun, learning, and rapid experimentation (the "light Automation" philosophy).
+Absolute numbers are ballpark, not bench-calibrated — this is tuned for fun, learning and
+rapid experimentation (the "light Automation" philosophy).
 
 ## Project Structure
 
 ```
 .
 ├── index.html                     # Complete single-file app (HTML + CSS + JS)
-├── favicon.svg                    # App icon
-├── manifest.webmanifest           # PWA manifest
-├── sw.js                          # Service worker (offline cache)
-├── assets/
-│   ├── PressStart2P-latin.woff2   # Self-hosted font (no CDN dependency)
-│   ├── icon-192.png               # PWA icon
-│   └── icon-512.png               # PWA icon (maskable)
-├── docs/
-│   └── preview.png                # README screenshot
+├── favicon.svg / manifest.webmanifest / sw.js   # PWA (icon, manifest, offline SW)
+├── assets/                        # Self-hosted font + PWA icons
+├── docs/                          # README screenshots
 └── .github/workflows/pages.yml    # Auto-deploy to GitHub Pages
 ```
 
-The app itself still lives entirely in `index.html`; the extra files add offline
-support, installability, and deployment.
-
 ## Roadmap / Future Expansion
 
-- [ ] More engine configurations (I3, I4, V6, boxer, etc.)
-- [ ] Adjustable displacement, compression ratio, cam profiles
+- [x] Configurable engine designer (cylinders, bore/stroke, compression, induction, fuel, spark)
 - [x] Full dyno sweep graphs (power & torque curves)
 - [x] Dynamic thermal model (temps change over time)
-- [ ] Forced induction types (turbo, supercharger) with lag
-- [ ] Different fuels (petrol, E85, methanol…)
-- [ ] Reliability / wear simulation
+- [x] Forced induction (turbo / supercharger, boost, intercooler)
 - [x] Sound (Web Audio API engine note)
 - [x] Save / load engine setups
 - [x] Mobile app packaging (PWA)
+- [ ] Proper V / boxer bank visuals & firing-order animation
+- [ ] Cam profiles & valvetrain (variable valve timing)
+- [ ] Turbo lag / spool modelling vs. RPM
+- [ ] Cooling subsystem (radiator size, fan, oil cooler) feeding the thermal model
+- [ ] Electrical subsystem (alternator load, starter, ignition dwell)
+- [ ] Different fuels (E85, methanol, race gas) with their own knock/energy properties
+- [ ] Reliability / wear simulation
+- [ ] Bench calibration pass for realistic absolute power figures
 
 ## License
 
