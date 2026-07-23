@@ -109,6 +109,7 @@ footer{text-align:center;margin-top:16px;padding:8px;font-size:7px;color:#555;bo
 <div class="field"><label for="edIntake">INTAKE TYPE</label><select id="edIntake"><option value="na">NATURALLY ASP.</option><option value="turbo">TURBO</option><option value="supercharger">SUPERCHARGER</option></select></div>
 <div class="field"><label for="edBoost">BOOST TARGET (bar)</label><input type="number" id="edBoost" min="0" max="1.8" step="0.05" value="0"></div>
 <div class="field"><label for="edIntercooler">INTERCOOLER</label><select id="edIntercooler"><option value="yes">YES</option><option value="no">NO</option></select></div>
+<div class="field"><label for="edTurboSize">TURBO SIZE</label><select id="edTurboSize"><option value="small">SMALL</option><option value="medium">MEDIUM</option><option value="large">LARGE</option></select></div>
 <div class="field"><label for="edExhaust">EXHAUST</label><select id="edExhaust"><option value="stock">STOCK</option><option value="sport">SPORT</option><option value="race">RACE</option></select></div>
 </div>
 
@@ -189,15 +190,22 @@ const EXHAUST={
 // subsystems (electrical, cooling, etc.) can be added later as more fields here.
 const DEFAULT_ENGINE={
   cylinders:4,bore_mm:86,stroke_mm:86,compression:10.5,layout:'inline',redline:7000,
-  intake:'na',boost_bar:0,intercooler:true,exhaust:'stock',
+  intake:'na',boost_bar:0,intercooler:true,turboSize:'medium',exhaust:'stock',
   octane:95,injector:'port',ignitionAdv:22,ignitionType:'coil',
   radiator:'stock',fan:'electric',oilCooler:false,thermostat:88
 };
 const RAD_CAP={small:0.75,stock:1.0,large:1.35};   // relative heat-rejection capacity
+// Turbo characteristics as fractions of redline: 50% spool point, ramp width,
+// top-end choke, and boost-response speed (larger turbo = laggier).
+const TURBO={
+  small:{spool50:0.26,width:0.06,choke:0.18,k:3.5},
+  medium:{spool50:0.40,width:0.08,choke:0.10,k:2.2},
+  large:{spool50:0.54,width:0.10,choke:0.04,k:1.4}
+};
 let engine=Object.assign({},DEFAULT_ENGINE);
 let buildRev=0;   // bumped each build so the dyno cache invalidates
 
-let state={rpm:3000,map:1.00,afr:14.7,iat:25,coolant:90,oil:100,torque:0,powerHP:0,powerKW:0,bsfc:0,thermalEff:0,fuelFlowLph:0,knockRisk:0,ve:0.85,bmep:0};
+let state={rpm:3000,map:1.00,afr:14.7,iat:25,coolant:90,oil:100,torque:0,powerHP:0,powerKW:0,bsfc:0,thermalEff:0,fuelFlowLph:0,knockRisk:0,ve:0.85,bmep:0,boostActual:0};
 let crankAngle=0,lastTime=performance.now();
 let vizMode='engine';
 let autoThermal=false;
@@ -223,6 +231,7 @@ function readEngineFromForm(){
     intake,
     boost_bar:intake==='na'?0:clamp(+g('edBoost').value||0,0,1.8),
     intercooler:g('edIntercooler').value==='yes',
+    turboSize:g('edTurboSize').value,
     exhaust:g('edExhaust').value,
     octane:clamp(Math.round(+g('edOctane').value||95),87,110),
     injector:g('edInjector').value,
@@ -239,6 +248,7 @@ function applyEngineToForm(e){
   g('edCyl').value=e.cylinders;g('edLayout').value=e.layout;g('edBore').value=e.bore_mm;
   g('edStroke').value=e.stroke_mm;g('edCR').value=e.compression;g('edRedline').value=e.redline;
   g('edIntake').value=e.intake;g('edBoost').value=e.boost_bar;g('edIntercooler').value=e.intercooler?'yes':'no';
+  g('edTurboSize').value=e.turboSize||'medium';
   g('edExhaust').value=e.exhaust;g('edOctane').value=e.octane;g('edInjector').value=e.injector;
   g('edIgnAdv').value=e.ignitionAdv;g('edIgnType').value=e.ignitionType;
   g('edRadiator').value=e.radiator||'stock';g('edFan').value=e.fan||'electric';
@@ -246,10 +256,11 @@ function applyEngineToForm(e){
   syncDesignEnable();
 }
 function syncDesignEnable(){
-  // Boost / intercooler only matter for forced induction.
-  const na=document.getElementById('edIntake').value==='na';
+  // Boost / intercooler only matter for forced induction; turbo size only for turbos.
+  const intake=document.getElementById('edIntake').value,na=intake==='na';
   document.getElementById('edBoost').disabled=na;
   document.getElementById('edIntercooler').disabled=na;
+  document.getElementById('edTurboSize').disabled=intake!=='turbo';
 }
 function buildEngine(){
   engine=readEngineFromForm();
@@ -264,6 +275,13 @@ function buildEngine(){
   engine.strokeFrictionMult=1+(engine.stroke_mm-86)/320;  // longer stroke = more friction
   engine.maxBoost=engine.intake==='na'?0:engine.boost_bar;
   engine.mapMax=engine.intake==='na'?1.05:1.0+engine.maxBoost;
+  // Turbo spool characteristics scaled to this engine's redline.
+  const tb=TURBO[engine.turboSize]||TURBO.medium;
+  engine.spool50=tb.spool50*engine.redline;
+  engine.spoolWidth=tb.width*engine.redline;
+  engine.turboChoke=tb.choke;
+  engine.spoolK=tb.k;
+  state.boostActual=0;   // start unspooled after a build
   // Cooling: radiator core capacity, plus a fixed fan contribution to airflow
   // that keeps the engine cool at low speed (idle) where ram-air is negligible.
   engine.radCap=RAD_CAP[engine.radiator]||1.0;
@@ -294,9 +312,11 @@ function updateDesignSummary(){
   const disp=engine.displacement_L.toFixed(engine.displacement_L<1?3:2);
   const specific=(engine.displacement_L>0? (state.powerHP/engine.displacement_L):0).toFixed(0);
   const note=engine.layout!=='inline'?'<br><span style="color:#886">Note: '+LAYOUT_LABEL[engine.layout]+' bank visuals are simplified for now.</span>':'';
-  const induction=engine.intake==='na'
-    ?'Naturally aspirated'
-    :engine.intake.toUpperCase()+' @ '+engine.boost_bar.toFixed(2)+' bar'+(engine.intercooler?' (IC)':' (no IC)');
+  let induction;
+  if(engine.intake==='na')induction='Naturally aspirated';
+  else if(engine.intake==='turbo')
+    induction='TURBO ('+engine.turboSize.toUpperCase()+') @ '+engine.boost_bar.toFixed(2)+' bar'+(engine.intercooler?' (IC)':' (no IC)')+', ~50% boost @ '+Math.round(engine.spool50)+' rpm';
+  else induction='SUPERCHARGER @ '+engine.boost_bar.toFixed(2)+' bar'+(engine.intercooler?' (IC)':' (no IC)');
   document.getElementById('designSummary').innerHTML=
     '<b>'+engine.cylinders+' × '+engine.bore_mm+'×'+engine.stroke_mm+'mm</b> → <b>'+disp+' L</b> '+LAYOUT_LABEL[engine.layout]+
     '<br>Compression <b>'+engine.compression.toFixed(1)+':1</b> • Redline <b>'+engine.redline+'</b> rpm'+
@@ -306,27 +326,46 @@ function updateDesignSummary(){
     '<br>Cooling <b>'+engine.radiator.toUpperCase()+' RAD</b> • <b>'+engine.fan.toUpperCase()+' FAN</b>'+(engine.oilCooler?' • <b>OIL COOLER</b>':'')+' • Thermostat <b>'+engine.thermostat+'°C</b>'+note;
 }
 
+// ---- Turbo spool: how much of the target boost is available at a given RPM ----
+// A turbo needs exhaust energy to spool, so boost builds with RPM along a logistic
+// curve. Smaller turbos spool early (strong midrange) but choke the top end; larger
+// turbos are laggy down low but flow more up top.
+function spoolFrac(rpm){
+  return 1/(1+Math.exp(-(rpm-engine.spool50)/engine.spoolWidth));
+}
+// Steady-state manifold pressure at an RPM (used for the dyno sweep). For a turbo the
+// commanded boost is capped by what the turbo can make at that RPM.
+function effMapAt(rpm){
+  if(engine.intake!=='turbo')return state.map;
+  const commanded=Math.max(0,state.map-1.0);
+  return 1.0+Math.min(commanded,engine.boost_bar*spoolFrac(rpm));
+}
+// Live manifold pressure: for a turbo, the lagged actual boost (see stepBoost).
+function liveMap(){return engine.intake==='turbo'?1.0+state.boostActual:state.map;}
+
 // ---- Physics (all derived from the engine spec + live state) ----
-function effIAT(){
+function effIAT(map){
   // Forced induction heats the charge; an intercooler removes most of it.
   let t=state.iat;
   if(engine.intake!=='na'){
-    const boost=Math.max(0,state.map-1.0);
+    const boost=Math.max(0,map-1.0);
     t+=boost*(engine.intercooler?6:25);
   }
   return t;
 }
-function mbtAdvance(rpm){
+function mbtAdvance(rpm,map){
   // Simplified "minimum advance for best torque": more at speed, less under load.
-  return clamp(18+(rpm/engine.redline)*14-(state.map-1)*6,8,40);
+  return clamp(18+(rpm/engine.redline)*14-(map-1)*6,8,40);
 }
-function computeVE(rpm){
+function computeVE(rpm,map){
   const peak=engine.vePeakRpm,width=engine.redline*0.42;
   let ve=engine.veAmp*Math.exp(-Math.pow((rpm-peak)/width,2));
   const ex=EXHAUST[engine.exhaust]||EXHAUST.stock;
   if(rpm>peak)ve*=1+ex.topGain*clamp((rpm-peak)/width,0,1.5);   // scavenging helps top end
   else ve*=1-ex.lowLoss*clamp((peak-rpm)/peak,0,1);              // race exhaust hurts low end
-  ve*=(0.96+0.04*clamp(state.map/engine.mapMax,0,1.2));
+  if(engine.intake==='turbo'&&rpm>peak)                          // small turbo chokes up top
+    ve*=1-engine.turboChoke*clamp((rpm-peak)/(engine.redline-peak),0,1);
+  ve*=(0.96+0.04*clamp(map/engine.mapMax,0,1.2));
   if(rpm>engine.redline)ve*=1-(rpm-engine.redline)/(engine.redline*0.6);  // valve float past redline
   return clamp(ve,0.2,1.15);
 }
@@ -348,15 +387,15 @@ function tempFactors(coolant,oil){
   oilFrictionMult=clamp(oilFrictionMult,1.0,1.70);
   return{coolF,oilFrictionMult};
 }
-function computeKnockRisk(rpm){
+function computeKnockRisk(rpm,map){
   // A knock "pressure" from load/CR/heat/timing/mixture, minus fuel & DI resistance.
-  const mbt=mbtAdvance(rpm);
+  const mbt=mbtAdvance(rpm,map);
   const ignBonus={distributor:-2,wasted:0,coil:2}[engine.ignitionType]||0;
   const afr=state.afr;
   let k=0;
-  k+=Math.max(0,state.map-1.0)*30;                      // boost
+  k+=Math.max(0,map-1.0)*30;                            // boost
   k+=Math.max(0,engine.compression-9)*8;                // static compression
-  k+=Math.max(0,effIAT()-30)*0.8;                       // hot intake charge
+  k+=Math.max(0,effIAT(map)-30)*0.8;                    // hot intake charge
   k+=Math.max(0,state.coolant-95)*1.0;                  // hot chamber
   k+=Math.max(0,rpm-engine.redline*0.8)/60;             // less time = more heat soak
   k+=Math.max(0,engine.ignitionAdv-mbt-ignBonus)*2.5;   // over-advanced spark
@@ -366,15 +405,16 @@ function computeKnockRisk(rpm){
   if(engine.injector==='direct')k-=12;                  // DI charge cooling
   return clamp(k,0,100);
 }
-function calcAtRpm(rpm){
-  const map=state.map;
+// mapOverride lets the live view pass lagged boost; the dyno omits it (steady state).
+function calcAtRpm(rpm,mapOverride){
+  const map=mapOverride!=null?mapOverride:effMapAt(rpm);
   const {coolF,oilFrictionMult}=tempFactors(state.coolant,state.oil);
-  const ve=computeVE(rpm);
+  const ve=computeVE(rpm,map);
   const afrP=afrPowerFactor(state.afr);
-  const ignF=clamp(1-0.004*Math.pow(engine.ignitionAdv-mbtAdvance(rpm),2),0.72,1.0);
+  const ignF=clamp(1-0.004*Math.pow(engine.ignitionAdv-mbtAdvance(rpm,map),2),0.72,1.0);
 
   let imep=10.8*map*ve*afrP*coolF*engine.crFactor*ignF;
-  imep*=298.15/(effIAT()+273.15);   // intake-air density correction (ref 25°C)
+  imep*=298.15/(effIAT(map)+273.15);   // intake-air density correction (ref 25°C)
 
   let fmep=(0.55+1.8e-8*rpm*rpm)*oilFrictionMult*engine.strokeFrictionMult;
   if(engine.intake==='supercharger')
@@ -386,16 +426,24 @@ function calcAtRpm(rpm){
   let powerKW=torque*rpm*2*Math.PI/60/1000;
   let powerHP=powerKW/0.7457;
 
-  const knock=computeKnockRisk(rpm);
+  const knock=computeKnockRisk(rpm,map);
   if(knock>60){const derate=1-0.32*((knock-60)/40);powerKW*=derate;powerHP*=derate;torque*=derate;}
-  return {rpm,torque,powerHP,powerKW,bmep,ve,knock};
+  return {rpm,torque,powerHP,powerKW,bmep,ve,knock,map};
+}
+// Advance the turbo's actual boost toward what it can make right now (lag/spool).
+function stepBoost(dt){
+  if(engine.intake!=='turbo'){state.boostActual=Math.max(0,state.map-1.0);return;}
+  const commanded=Math.max(0,state.map-1.0);
+  const target=Math.min(commanded,engine.boost_bar*spoolFrac(state.rpm));
+  state.boostActual+=(target-state.boostActual)*(1-Math.exp(-engine.spoolK*dt));
 }
 function updatePhysics(){
-  const r=calcAtRpm(state.rpm);
+  const map=liveMap();
+  const r=calcAtRpm(state.rpm,map);
   state.torque=r.torque;state.powerKW=r.powerKW;state.powerHP=r.powerHP;
   state.bmep=r.bmep;state.ve=r.ve;state.knockRisk=r.knock;
 
-  const T_k=effIAT()+273.15,MAP_pa=state.map*1e5,Vd=engine.displacement_L/1000;
+  const T_k=effIAT(map)+273.15,MAP_pa=map*1e5,Vd=engine.displacement_L/1000;
   const airMass_kg_s=(MAP_pa*Vd*(state.rpm/60)*state.ve)/(287*T_k*2);
   const fuelMass_kg_s=airMass_kg_s/state.afr;
   state.fuelFlowLph=(fuelMass_kg_s*3600)/FUEL.density;
@@ -573,16 +621,19 @@ function drawEngine(dt){
 
   const infoX=432;drawPixelRect(infoX,40,190,340,'#12121c');ctx.strokeStyle='#333';ctx.strokeRect(infoX+1,41,188,338);
   ctx.fillStyle=C.cyan;ctx.font='9px "Press Start 2P"';ctx.fillText('SENSORS',infoX+20,60);
-  drawMiniGauge(infoX+20,80,'MAP',state.map.toFixed(2)+' bar',state.map/Math.max(1.05,engine.mapMax));
+  const m=liveMap();
+  drawMiniGauge(infoX+20,80,'MAP',m.toFixed(2)+' bar',m/Math.max(1.05,engine.mapMax));
   drawMiniGauge(infoX+20,130,'AFR',state.afr.toFixed(1),(state.afr-10)/8);
-  drawMiniGauge(infoX+20,180,'IAT',Math.round(effIAT())+'C',(effIAT()+10)/90);
+  drawMiniGauge(infoX+20,180,'IAT',Math.round(effIAT(m))+'C',(effIAT(m)+10)/90);
   drawMiniGauge(infoX+20,230,'COOL',Math.round(state.coolant)+'C',(state.coolant-40)/90);
   drawMiniGauge(infoX+20,280,'OIL',Math.round(state.oil)+'C',(state.oil-40)/110);
   drawMiniGauge(infoX+20,330,'VE',(state.ve*100).toFixed(0)+'%',state.ve);
 
   drawPixelRect(0,H-32,W,32,'#12121c');
   ctx.fillStyle=state.knockRisk>70?C.red:(state.knockRisk>40?C.yellow:C.green);ctx.font='9px "Press Start 2P"';
-  let msg='CYCLE: '+getStrokeName(crankAngle%720);if(state.knockRisk>50)msg+='  •  KNOCK WARNING';
+  let msg='CYCLE: '+getStrokeName(crankAngle%720);
+  if(engine.intake==='turbo')msg+='  •  BOOST +'+state.boostActual.toFixed(2);
+  if(state.knockRisk>50)msg+='  •  KNOCK WARNING';
   ctx.fillText(msg,12,H-12)
 }
 function drawDyno(){
@@ -713,6 +764,7 @@ function syncSliders(){
 function loop(now){
   const dt=Math.min((now-lastTime)/1000,0.05);lastTime=now;
   stepThermal(dt);
+  stepBoost(dt);
   updatePhysics();
   updateSound();
   if(vizMode==='engine')drawEngine(dt);
