@@ -79,8 +79,13 @@ Source: GitHub Actions**, and it deploys to
 ## Physics Notes (simplified educational model)
 
 - Displacement derived from bore, stroke and cylinder count.
-- VE curve peak shifts with bore/stroke ratio and redline; exhaust choice trades low-end
-  for top-end scavenging.
+- VE uses a broad generalized-bell breathing curve (flat plateau, gentle shoulders) so
+  torque stays flat across the midrange and power keeps climbing toward redline instead of
+  falling off a peaky Gaussian. Its peak shifts with bore/stroke ratio and redline; exhaust
+  choice trades low-end for top-end scavenging.
+- Output is calibrated to sane ballpark figures (e.g. a 2.0 L turbo at 0.8 bar / sport
+  exhaust / 98 RON makes ~255 hp & ~350 Nm; a 2.0 NA ~130 hp), with only a gentle power
+  drop from peak to redline.
 - Compression scales indicated work and efficiency via a relative Otto-cycle factor.
 - Forced induction raises achievable MAP; without an intercooler the charge heats up.
   Superchargers cost parasitic drive power.
@@ -125,7 +130,7 @@ rapid experimentation (the "light Automation" philosophy).
 - [ ] Electrical subsystem (alternator load, starter, ignition dwell)
 - [ ] Different fuels (E85, methanol, race gas) with their own knock/energy properties
 - [ ] Reliability / wear simulation
-- [ ] Bench calibration pass for realistic absolute power figures
+- [x] Calibration pass for realistic power figures & curve shape (ongoing refinement)
 - [ ] Native Android build (wrap the PWA with Capacitor or a Trusted Web Activity)
 
 > **Android note:** the app is intentionally a self-contained, offline-capable PWA with no

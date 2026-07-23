@@ -195,6 +195,7 @@ const DEFAULT_ENGINE={
   radiator:'stock',fan:'electric',oilCooler:false,thermostat:88
 };
 const RAD_CAP={small:0.75,stock:1.0,large:1.35};   // relative heat-rejection capacity
+const IMEP_K=13.2;   // indicated MEP calibration (bar at map=1, ve=1, best-power AFR)
 // Turbo characteristics as fractions of redline: 50% spool point, ramp width,
 // top-end choke, and boost-response speed (larger turbo = laggier).
 const TURBO={
@@ -269,8 +270,12 @@ function buildEngine(){
   engine.displacement_L=vcyl_cc*engine.cylinders/1000;
   engine.boreStroke=engine.bore_mm/engine.stroke_mm;
   // VE shape: oversquare (bore>stroke) & higher redline peak higher up.
-  engine.veAmp=0.86+(engine.injector==='direct'?0.015:0);
+  engine.veAmp=0.95+(engine.injector==='direct'?0.02:0);
   engine.vePeakRpm=clamp(engine.redline*0.60+(engine.boreStroke-1)*1500,3000,engine.redline*0.95);
+  // Generalized-bell breathing curve: wide plateau, gentle high-rpm roll-off so
+  // power keeps climbing toward redline instead of falling off a Gaussian cliff.
+  engine.veWidth=engine.redline*0.66;
+  engine.veShoulder=1.4;
   engine.crFactor=otto(engine.compression)/otto(10.5);   // 1.0 at CR 10.5
   engine.strokeFrictionMult=1+(engine.stroke_mm-86)/320;  // longer stroke = more friction
   engine.maxBoost=engine.intake==='na'?0:engine.boost_bar;
@@ -358,16 +363,18 @@ function mbtAdvance(rpm,map){
   return clamp(18+(rpm/engine.redline)*14-(map-1)*6,8,40);
 }
 function computeVE(rpm,map){
-  const peak=engine.vePeakRpm,width=engine.redline*0.42;
-  let ve=engine.veAmp*Math.exp(-Math.pow((rpm-peak)/width,2));
+  const peak=engine.vePeakRpm;
+  // Generalized-bell (a.k.a. Cauchy/Lorentzian-family) curve: flat plateau around
+  // the peak, with shoulders that fall off far more gently than a Gaussian.
+  let ve=engine.veAmp/(1+Math.pow(Math.abs((rpm-peak)/engine.veWidth),2*engine.veShoulder));
   const ex=EXHAUST[engine.exhaust]||EXHAUST.stock;
-  if(rpm>peak)ve*=1+ex.topGain*clamp((rpm-peak)/width,0,1.5);   // scavenging helps top end
-  else ve*=1-ex.lowLoss*clamp((peak-rpm)/peak,0,1);              // race exhaust hurts low end
-  if(engine.intake==='turbo'&&rpm>peak)                          // small turbo chokes up top
+  if(rpm>peak)ve*=1+ex.topGain*clamp((rpm-peak)/engine.veWidth,0,1.2);  // scavenging helps top end
+  else ve*=1-ex.lowLoss*clamp((peak-rpm)/peak,0,1);                     // race exhaust hurts low end
+  if(engine.intake==='turbo'&&rpm>peak)                                 // small turbo chokes up top
     ve*=1-engine.turboChoke*clamp((rpm-peak)/(engine.redline-peak),0,1);
-  ve*=(0.96+0.04*clamp(map/engine.mapMax,0,1.2));
-  if(rpm>engine.redline)ve*=1-(rpm-engine.redline)/(engine.redline*0.6);  // valve float past redline
-  return clamp(ve,0.2,1.15);
+  ve*=(0.97+0.03*clamp(map/engine.mapMax,0,1.2));
+  if(rpm>engine.redline)ve*=1-0.6*clamp((rpm-engine.redline)/(engine.redline*0.5),0,1);  // valve float
+  return clamp(ve,0.2,1.2);
 }
 function afrPowerFactor(afr){
   const peak=12.6;
@@ -413,7 +420,7 @@ function calcAtRpm(rpm,mapOverride){
   const afrP=afrPowerFactor(state.afr);
   const ignF=clamp(1-0.004*Math.pow(engine.ignitionAdv-mbtAdvance(rpm,map),2),0.72,1.0);
 
-  let imep=10.8*map*ve*afrP*coolF*engine.crFactor*ignF;
+  let imep=IMEP_K*map*ve*afrP*coolF*engine.crFactor*ignF;
   imep*=298.15/(effIAT(map)+273.15);   // intake-air density correction (ref 25°C)
 
   let fmep=(0.55+1.8e-8*rpm*rpm)*oilFrictionMult*engine.strokeFrictionMult;
