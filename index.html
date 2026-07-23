@@ -2,10 +2,16 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>PIXEL ENGINE SIM - 2CYL 4STROKE</title>
-<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+<meta name="description" content="An 8-bit style, physics-based 2-cylinder 4-stroke internal combustion engine simulator. Tune RPM, boost, AFR and temperatures and watch live power, torque and dyno curves.">
+<meta name="theme-color" content="#0a0a12">
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="assets/icon-192.png">
+<link rel="manifest" href="manifest.webmanifest">
 <style>
+/* Self-hosted retro font so the sim works fully offline (no CDN dependency). */
+@font-face{font-family:'Press Start 2P';font-style:normal;font-weight:400;font-display:swap;src:url(assets/PressStart2P-latin.woff2) format('woff2')}
 *{box-sizing:border-box;margin:0;padding:0;image-rendering:pixelated;-webkit-font-smoothing:none}
 body{background:#0a0a12;color:#e0e0e0;font-family:'Press Start 2P',monospace;font-size:10px;line-height:1.6;overflow-x:hidden;min-height:100vh}
 .container{max-width:1100px;margin:0 auto;padding:8px}
@@ -42,6 +48,10 @@ button{font-family:'Press Start 2P',monospace;font-size:8px;padding:8px 12px;bac
 button:hover{background:#3a3a5a;color:#fff}
 button:active{box-shadow:1px 1px 0 #000;transform:translate(2px,2px)}
 button.danger{border-color:#aa3333;color:#ff6666}
+button.toggle.on{border-color:#00ff88;color:#00ff88;background:#004422}
+input[type=range]:disabled{opacity:0.55;cursor:not-allowed}
+input[type=range]:disabled::-webkit-slider-thumb{background:#666}
+input[type=range]:disabled::-moz-range-thumb{background:#666}
 .status-bar{margin-top:10px;padding:6px;background:#0a0a10;border:2px solid #333;font-size:8px;color:#00ff88;min-height:28px}
 .status-bar.warn{color:#ffaa00}
 .status-bar.err{color:#ff4444}
@@ -61,7 +71,7 @@ footer{text-align:center;margin-top:16px;padding:8px;font-size:7px;color:#555;bo
 <button id="tabEngine" class="active">ENGINE VIEW</button>
 <button id="tabDyno">DYNO CURVE</button>
 </div>
-<canvas id="engineCanvas" width="640" height="420"></canvas>
+<canvas id="engineCanvas" width="640" height="420" role="img" aria-label="Animated pixel-art cutaway of a 2-cylinder 4-stroke engine and dyno curves"></canvas>
 </div>
 <div class="side-panel">
 <div class="panel">
@@ -79,17 +89,23 @@ footer{text-align:center;margin-top:16px;padding:8px;font-size:7px;color:#555;bo
 </div>
 <div class="panel">
 <h2>Engine Controls</h2>
-<div class="control-group"><label>RPM <span class="val" id="valRPM">3000</span></label><input type="range" id="rpm" min="800" max="8500" step="50" value="3000"></div>
-<div class="control-group"><label>INTAKE PRESSURE (MAP) <span class="val" id="valMAP">1.00</span> bar</label><input type="range" id="map" min="0.40" max="2.20" step="0.01" value="1.00"></div>
-<div class="control-group"><label>AIR-FUEL RATIO <span class="val" id="valAFR">14.7</span></label><input type="range" id="afr" min="10.0" max="18.0" step="0.1" value="14.7"></div>
-<div class="control-group"><label>INTAKE AIR TEMP <span class="val" id="valIAT">25</span> °C</label><input type="range" id="iat" min="-10" max="60" step="1" value="25"></div>
-<div class="control-group"><label>COOLANT TEMP <span class="val" id="valCool">90</span> °C</label><input type="range" id="coolant" min="40" max="130" step="1" value="90"></div>
-<div class="control-group"><label>OIL TEMP <span class="val" id="valOil">100</span> °C</label><input type="range" id="oil" min="40" max="150" step="1" value="100"></div>
+<div class="control-group"><label for="rpm">RPM <span class="val" id="valRPM">3000</span></label><input type="range" id="rpm" min="800" max="8500" step="50" value="3000" aria-label="Engine RPM"></div>
+<div class="control-group"><label for="map">INTAKE PRESSURE (MAP) <span class="val" id="valMAP">1.00</span> bar</label><input type="range" id="map" min="0.40" max="2.20" step="0.01" value="1.00" aria-label="Intake manifold pressure in bar"></div>
+<div class="control-group"><label for="afr">AIR-FUEL RATIO <span class="val" id="valAFR">14.7</span></label><input type="range" id="afr" min="10.0" max="18.0" step="0.1" value="14.7" aria-label="Air-fuel ratio"></div>
+<div class="control-group"><label for="iat">INTAKE AIR TEMP <span class="val" id="valIAT">25</span> °C</label><input type="range" id="iat" min="-10" max="60" step="1" value="25" aria-label="Intake air temperature in Celsius"></div>
+<div class="control-group"><label for="coolant">COOLANT TEMP <span class="val" id="valCool">90</span> °C</label><input type="range" id="coolant" min="40" max="130" step="1" value="90" aria-label="Coolant temperature in Celsius"></div>
+<div class="control-group"><label for="oil">OIL TEMP <span class="val" id="valOil">100</span> °C</label><input type="range" id="oil" min="40" max="150" step="1" value="100" aria-label="Oil temperature in Celsius"></div>
 <div class="btn-row">
 <button id="btnOptimal">OPTIMAL</button>
 <button id="btnMaxPower">MAX POWER</button>
 <button id="btnEco">ECO</button>
 <button id="btnReset" class="danger">RESET</button>
+</div>
+<div class="btn-row">
+<button id="btnAutoThermal" class="toggle" aria-pressed="false">AUTO THERMAL</button>
+<button id="btnSound" class="toggle" aria-pressed="false">SOUND</button>
+<button id="btnSave">SAVE</button>
+<button id="btnLoad">LOAD</button>
 </div>
 <div class="status-bar" id="status">READY • SET PARAMETERS • WATCH THE PISTONS</div>
 <div class="legend" id="legend">Drag sliders to tune. Engine animates at set RPM.<br>MAP >1.0 = boost. AFR ~12.5 peak power, ~15.5 peak efficiency.<br>Colder intake air = denser charge = more power.</div>
@@ -103,6 +119,9 @@ const ENGINE={displacement_L:1.0,cylinders:2,stroke:4,stoichAFR:14.7,fuelDensity
 let state={rpm:3000,map:1.00,afr:14.7,iat:25,coolant:90,oil:100,torque:0,powerHP:0,powerKW:0,bsfc:0,thermalEff:0,fuelFlowLph:0,knockRisk:0,ve:0.85,bmep:0};
 let crankAngle=0,lastTime=performance.now();
 let vizMode='engine';
+let autoThermal=false;
+let statusFlashUntil=0;
+const SAVE_KEY='pixelEngineSim.setup.v1';
 let dynoCache=null;
 let dynoCacheKey='';
 
@@ -213,6 +232,92 @@ function getDynoData(){
   return points;
 }
 
+// ---- Dynamic thermal model (roadmap: temps drift over time under load) ----
+// When enabled, coolant and oil relax toward load-dependent targets instead of
+// being set directly by the sliders. Uses a first-order (exponential) approach
+// so warm-up and heat-soak happen smoothly over several seconds.
+function stepThermal(dt){
+  if(!autoThermal) return;
+  const loadFrac=clamp((state.rpm-800)/(7000-800),0,1)*0.6
+                +clamp((state.map-0.4)/(2.2-0.4),0,1)*0.4;
+  let coolantTarget=82+loadFrac*30;               // ~82°C idle → ~112°C full load
+  if(state.knockRisk>60) coolantTarget+=6;         // detonation dumps extra heat
+  coolantTarget=clamp(coolantTarget,40,125);
+  let oilTarget=state.coolant+6+loadFrac*28;        // oil runs hotter than coolant
+  oilTarget=clamp(oilTarget,40,145);
+  // Time constants: coolant ~12s, oil ~20s.
+  state.coolant+=(coolantTarget-state.coolant)*(1-Math.exp(-0.08*dt));
+  state.oil+=(oilTarget-state.oil)*(1-Math.exp(-0.05*dt));
+  dynoCache=null;                                   // temps changed → dyno stale
+  document.getElementById('coolant').value=Math.round(state.coolant);
+  document.getElementById('oil').value=Math.round(state.oil);
+}
+
+// ---- Engine sound (Web Audio, created lazily on first user gesture) ----
+const Sound={ctx:null,osc:null,sub:null,filter:null,gain:null,on:false};
+function initSound(){
+  if(Sound.ctx) return;
+  const AC=window.AudioContext||window.webkitAudioContext;
+  if(!AC) return;
+  Sound.ctx=new AC();
+  Sound.gain=Sound.ctx.createGain();Sound.gain.gain.value=0;
+  Sound.filter=Sound.ctx.createBiquadFilter();
+  Sound.filter.type='lowpass';Sound.filter.frequency.value=900;
+  Sound.osc=Sound.ctx.createOscillator();Sound.osc.type='sawtooth';
+  Sound.sub=Sound.ctx.createOscillator();Sound.sub.type='square';
+  Sound.osc.connect(Sound.filter);Sound.sub.connect(Sound.filter);
+  Sound.filter.connect(Sound.gain);Sound.gain.connect(Sound.ctx.destination);
+  Sound.osc.start();Sound.sub.start();
+}
+function updateSound(){
+  if(!Sound.on||!Sound.ctx) return;
+  // 2-cyl 4-stroke fires once per crank revolution → firing freq = rpm/60 Hz.
+  const fire=state.rpm/60;
+  const t=Sound.ctx.currentTime;
+  Sound.osc.frequency.setTargetAtTime(fire*2,t,0.05);
+  Sound.sub.frequency.setTargetAtTime(fire,t,0.05);
+  Sound.filter.frequency.setTargetAtTime(600+state.rpm*0.12,t,0.05);
+  const loud=0.05+clamp(state.powerHP/120,0,1)*0.12;
+  Sound.gain.gain.setTargetAtTime(loud,t,0.08);
+}
+function setSound(on){
+  Sound.on=on;
+  if(on){initSound();if(Sound.ctx&&Sound.ctx.state==='suspended')Sound.ctx.resume();}
+  else if(Sound.ctx){Sound.gain.gain.setTargetAtTime(0,Sound.ctx.currentTime,0.05);}
+  const btn=document.getElementById('btnSound');
+  btn.classList.toggle('on',on);btn.setAttribute('aria-pressed',on);
+}
+
+// ---- Save / load setups (localStorage) ----
+function saveSetup(){
+  const s={rpm:state.rpm,map:state.map,afr:state.afr,iat:state.iat,coolant:state.coolant,oil:state.oil,autoThermal};
+  try{localStorage.setItem(SAVE_KEY,JSON.stringify(s));flash('SETUP SAVED');}
+  catch(e){flash('SAVE FAILED (storage blocked)','err');}
+}
+function loadSetup(){
+  let raw;try{raw=localStorage.getItem(SAVE_KEY);}catch(e){raw=null;}
+  if(!raw){flash('NO SAVED SETUP','warn');return;}
+  try{
+    const s=JSON.parse(raw);
+    ['rpm','map','afr','iat','coolant','oil'].forEach(k=>{if(typeof s[k]==='number')state[k]=s[k];});
+    setAutoThermal(!!s.autoThermal);
+    dynoCache=null;syncSliders();flash('SETUP LOADED');
+  }catch(e){flash('LOAD FAILED (corrupt data)','err');}
+}
+function flash(msg,cls){
+  const status=document.getElementById('status');
+  status.textContent=msg;status.className='status-bar'+(cls?' '+cls:'');
+  statusFlashUntil=performance.now()+1600;   // hold message so the loop doesn't overwrite it
+}
+
+function setAutoThermal(on){
+  autoThermal=on;
+  const btn=document.getElementById('btnAutoThermal');
+  btn.classList.toggle('on',on);btn.setAttribute('aria-pressed',on);
+  document.getElementById('coolant').disabled=on;
+  document.getElementById('oil').disabled=on;
+}
+
 const canvas=document.getElementById('engineCanvas'),ctx=canvas.getContext('2d');
 const C={bg:'#0d0d18',block:'#2a2a3a',metal:'#6a6a7a',metalDark:'#3a3a4a',metalLight:'#9a9aaa',piston:'#c0c0d0',pistonTop:'#e0e0f0',rod:'#888898',fire:'#ff6600',spark:'#ffff00',intake:'#44aaff',exhaust:'#ff4422',text:'#e0e0e0',green:'#00ff88',yellow:'#ffcc00',red:'#ff4444',cyan:'#00ccff'};
 
@@ -260,8 +365,8 @@ function drawEngine(dt){
   drawMiniGauge(infoX+20,80,'MAP',state.map.toFixed(2)+' bar',state.map/2.2);
   drawMiniGauge(infoX+20,130,'AFR',state.afr.toFixed(1),(state.afr-10)/8);
   drawMiniGauge(infoX+20,180,'IAT',state.iat+'C',(state.iat+10)/70);
-  drawMiniGauge(infoX+20,230,'COOL',state.coolant+'C',(state.coolant-40)/90);
-  drawMiniGauge(infoX+20,280,'OIL',state.oil+'C',(state.oil-40)/110);
+  drawMiniGauge(infoX+20,230,'COOL',Math.round(state.coolant)+'C',(state.coolant-40)/90);
+  drawMiniGauge(infoX+20,280,'OIL',Math.round(state.oil)+'C',(state.oil-40)/110);
   drawMiniGauge(infoX+20,330,'VE',(state.ve*100).toFixed(0)+'%',state.ve);
   drawPixelRect(0,H-32,W,32,'#12121c');
   ctx.fillStyle=state.knockRisk>70?C.red:(state.knockRisk>40?C.yellow:C.green);ctx.font='9px "Press Start 2P"';
@@ -335,7 +440,7 @@ function drawDyno(){
 
   drawPixelRect(0,H-32,W,32,'#12121c');
   ctx.fillStyle=C.green;ctx.font='9px "Press Start 2P"';
-  ctx.fillText('MAP '+state.map.toFixed(2)+'  AFR '+state.afr.toFixed(1)+'  IAT '+state.iat+'C  COOL '+state.coolant+'C  OIL '+state.oil+'C',12,H-12);
+  ctx.fillText('MAP '+state.map.toFixed(2)+'  AFR '+state.afr.toFixed(1)+'  IAT '+state.iat+'C  COOL '+Math.round(state.coolant)+'C  OIL '+Math.round(state.oil)+'C',12,H-12);
 }
 
 function updateUI(){
@@ -343,8 +448,8 @@ function updateUI(){
   document.getElementById('valMAP').textContent=state.map.toFixed(2);
   document.getElementById('valAFR').textContent=state.afr.toFixed(1);
   document.getElementById('valIAT').textContent=state.iat;
-  document.getElementById('valCool').textContent=state.coolant;
-  document.getElementById('valOil').textContent=state.oil;
+  document.getElementById('valCool').textContent=Math.round(state.coolant);
+  document.getElementById('valOil').textContent=Math.round(state.oil);
   document.querySelector('#statHP .value').textContent=state.powerHP.toFixed(1);
   document.querySelector('#statTQ .value').textContent=state.torque.toFixed(1);
   document.querySelector('#statBSFC .value').textContent=state.bsfc>500?'---':state.bsfc.toFixed(0);
@@ -356,7 +461,8 @@ function updateUI(){
   else{knockEl.textContent='HIGH';document.getElementById('statKnock').className='stat danger'}
   const status=document.getElementById('status');
   const legend=document.getElementById('legend');
-  if(state.knockRisk>70){status.textContent='DETONATION RISK — RETARDING SPARK / POWER CUT';status.className='status-bar err'}
+  if(performance.now()<statusFlashUntil){/* keep transient flash message */}
+  else if(state.knockRisk>70){status.textContent='DETONATION RISK — RETARDING SPARK / POWER CUT';status.className='status-bar err'}
   else if(state.coolant>115){status.textContent='OVERHEAT — REDUCE LOAD OR INCREASE COOLING';status.className='status-bar err'}
   else if(state.oil<55){status.textContent='COLD OIL — HIGH FRICTION, WARM UP RECOMMENDED';status.className='status-bar warn'}
   else if(state.powerHP>5){status.textContent='RUNNING • '+state.powerHP.toFixed(0)+' HP @ '+Math.round(state.rpm)+' RPM • BMEP '+state.bmep.toFixed(1)+' bar';status.className='status-bar'}
@@ -370,34 +476,39 @@ function updateUI(){
 
 function bindControls(){
   const ids=['rpm','map','afr','iat','coolant','oil'];
+  // The animation loop recomputes physics + UI every frame, so handlers only
+  // need to push the new slider value into state and invalidate the dyno cache.
   ids.forEach(id=>{
     document.getElementById(id).addEventListener('input',()=>{
-      if(id==='rpm')state.rpm=parseFloat(document.getElementById(id).value);
-      else if(id==='map')state.map=parseFloat(document.getElementById(id).value);
-      else if(id==='afr')state.afr=parseFloat(document.getElementById(id).value);
-      else if(id==='iat')state.iat=parseFloat(document.getElementById(id).value);
-      else if(id==='coolant')state.coolant=parseFloat(document.getElementById(id).value);
-      else if(id==='oil')state.oil=parseFloat(document.getElementById(id).value);
+      state[id]=parseFloat(document.getElementById(id).value);
       dynoCache=null;
-      updatePhysics();updateUI();
     });
   });
+  function applyPreset(p){
+    Object.assign(state,p);
+    dynoCache=null;syncSliders();
+  }
   document.getElementById('btnOptimal').addEventListener('click',()=>{
-    state.rpm=4500;state.map=1.00;state.afr=14.7;state.iat=25;state.coolant=90;state.oil=100;
-    dynoCache=null;syncSliders();updatePhysics();updateUI();
+    applyPreset({rpm:4500,map:1.00,afr:14.7,iat:25,coolant:90,oil:100});
   });
   document.getElementById('btnMaxPower').addEventListener('click',()=>{
-    state.rpm=6200;state.map=1.35;state.afr=12.6;state.iat=15;state.coolant=88;state.oil=105;
-    dynoCache=null;syncSliders();updatePhysics();updateUI();
+    applyPreset({rpm:6200,map:1.35,afr:12.6,iat:15,coolant:88,oil:105});
   });
   document.getElementById('btnEco').addEventListener('click',()=>{
-    state.rpm=2800;state.map=0.75;state.afr=15.8;state.iat=30;state.coolant=92;state.oil=98;
-    dynoCache=null;syncSliders();updatePhysics();updateUI();
+    applyPreset({rpm:2800,map:0.75,afr:15.8,iat:30,coolant:92,oil:98});
   });
   document.getElementById('btnReset').addEventListener('click',()=>{
-    state.rpm=3000;state.map=1.00;state.afr=14.7;state.iat=25;state.coolant=90;state.oil=100;
-    dynoCache=null;syncSliders();updatePhysics();updateUI();
+    setAutoThermal(false);
+    applyPreset({rpm:3000,map:1.00,afr:14.7,iat:25,coolant:90,oil:100});
   });
+  document.getElementById('btnAutoThermal').addEventListener('click',()=>{
+    setAutoThermal(!autoThermal);
+  });
+  document.getElementById('btnSound').addEventListener('click',()=>{
+    setSound(!Sound.on);
+  });
+  document.getElementById('btnSave').addEventListener('click',saveSetup);
+  document.getElementById('btnLoad').addEventListener('click',loadSetup);
 
   document.getElementById('tabEngine').addEventListener('click',()=>{
     vizMode='engine';
@@ -423,13 +534,20 @@ function syncSliders(){
 
 function loop(now){
   const dt=Math.min((now-lastTime)/1000,0.05);lastTime=now;
+  stepThermal(dt);
   updatePhysics();
+  updateSound();
   if(vizMode==='engine') drawEngine(dt);
   else drawDyno();
   updateUI();
   requestAnimationFrame(loop);
 }
 bindControls();updatePhysics();updateUI();requestAnimationFrame(loop);
+
+// Register service worker for offline/installable PWA (no-op on file://).
+if('serviceWorker' in navigator && location.protocol.startsWith('http')){
+  window.addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{}));
+}
 </script>
 </body>
 </html>
