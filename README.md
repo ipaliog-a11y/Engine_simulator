@@ -18,6 +18,9 @@ feeds the physics:
   compression ratio, redline. Bore × stroke × cylinders sets the displacement.
 - **Air path** — naturally aspirated / turbo / supercharger, boost target, intercooler,
   turbo size (small / medium / large), and exhaust (stock / sport / race).
+- **Valvetrain** — cam profile (stock / sport / race) and variable valve timing (VVT). A
+  wilder cam moves the powerband up and adds top-end at the cost of low-end torque and idle
+  quality; VVT recovers the bottom end for a broad powerband.
 - **Fuel & spark** — fuel octane (RON), injector type (port / direct), ignition advance
   and ignition type (distributor / wasted spark / coil-on-plug).
 - **Cooling** — radiator size (small / stock / large), cooling fan (none / mechanical /
@@ -96,6 +99,9 @@ Curve** tab remains a wide-open-throttle steady-state sweep for reading the full
   torque stays flat across the midrange and power keeps climbing toward redline instead of
   falling off a peaky Gaussian. Its peak shifts with bore/stroke ratio and redline; exhaust
   choice trades low-end for top-end scavenging.
+- Camshaft profile shifts the VE peak and adds top-end breathing/scavenging at the cost of
+  low-end VE and idle quality (a wild cam idles high and lumpy). VVT restores most of the
+  low end, widening the powerband — strong bottom *and* top.
 - Output is calibrated to sane ballpark figures (e.g. a 2.0 L turbo at 0.8 bar / sport
   exhaust / 98 RON makes ~255 hp & ~350 Nm; a 2.0 NA ~130 hp), with only a gentle power
   drop from peak to redline.
@@ -139,7 +145,7 @@ philosophy).
 - [x] Save / load engine setups
 - [x] Mobile app packaging (PWA)
 - [ ] Proper V / boxer bank visuals & firing-order animation
-- [ ] Cam profiles & valvetrain (variable valve timing)
+- [x] Cam profiles & valvetrain (stock/sport/race cam + VVT, reshaping the VE curve & idle)
 - [x] Turbo lag / spool modelling vs. RPM (turbo size, spool curve, transient lag)
 - [x] Cooling subsystem (radiator size, fan, oil cooler, thermostat) feeding the thermal model
 - [ ] Electrical subsystem (alternator load, starter, ignition dwell)
