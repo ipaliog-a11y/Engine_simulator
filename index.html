@@ -272,9 +272,11 @@ function buildEngine(){
   // VE shape: oversquare (bore>stroke) & higher redline peak higher up.
   engine.veAmp=0.95+(engine.injector==='direct'?0.02:0);
   engine.vePeakRpm=clamp(engine.redline*0.60+(engine.boreStroke-1)*1500,3000,engine.redline*0.95);
-  // Generalized-bell breathing curve: wide plateau, gentle high-rpm roll-off so
-  // power keeps climbing toward redline instead of falling off a Gaussian cliff.
-  engine.veWidth=engine.redline*0.66;
+  // Asymmetric generalized-bell breathing curve: a steeper low-rpm side (so torque
+  // builds later and peaks up in the midrange) and a gentle high-rpm side (so power
+  // keeps climbing toward redline instead of falling off a Gaussian cliff).
+  engine.veWidthLo=engine.redline*0.42;
+  engine.veWidthHi=engine.redline*0.66;
   engine.veShoulder=1.4;
   engine.crFactor=otto(engine.compression)/otto(10.5);   // 1.0 at CR 10.5
   engine.strokeFrictionMult=1+(engine.stroke_mm-86)/320;  // longer stroke = more friction
@@ -364,11 +366,13 @@ function mbtAdvance(rpm,map){
 }
 function computeVE(rpm,map){
   const peak=engine.vePeakRpm;
-  // Generalized-bell (a.k.a. Cauchy/Lorentzian-family) curve: flat plateau around
-  // the peak, with shoulders that fall off far more gently than a Gaussian.
-  let ve=engine.veAmp/(1+Math.pow(Math.abs((rpm-peak)/engine.veWidth),2*engine.veShoulder));
+  // Asymmetric generalized-bell (Cauchy/Lorentzian-family) curve: flat plateau around
+  // the peak; the low-rpm side is narrower (torque builds later) and the high-rpm side
+  // wider (shoulders fall off far more gently than a Gaussian, so power holds up top).
+  const w=rpm<peak?engine.veWidthLo:engine.veWidthHi;
+  let ve=engine.veAmp/(1+Math.pow(Math.abs((rpm-peak)/w),2*engine.veShoulder));
   const ex=EXHAUST[engine.exhaust]||EXHAUST.stock;
-  if(rpm>peak)ve*=1+ex.topGain*clamp((rpm-peak)/engine.veWidth,0,1.2);  // scavenging helps top end
+  if(rpm>peak)ve*=1+ex.topGain*clamp((rpm-peak)/engine.veWidthHi,0,1.2);  // scavenging helps top end
   else ve*=1-ex.lowLoss*clamp((peak-rpm)/peak,0,1);                     // race exhaust hurts low end
   if(engine.intake==='turbo'&&rpm>peak)                                 // small turbo chokes up top
     ve*=1-engine.turboChoke*clamp((rpm-peak)/(engine.redline-peak),0,1);
