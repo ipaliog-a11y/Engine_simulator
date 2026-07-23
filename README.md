@@ -1,4 +1,4 @@
-# PIXEL ENGINE SIM v0.3
+# PIXEL ENGINE SIM v0.4
 
 **A lightweight, 8-bit style internal combustion engine *designer* & simulator** inspired by *Automation*.
 
@@ -39,7 +39,13 @@ saps power; a large radiator, electric fan and oil cooler keep it cool.
   cycle (Intake → Compression → Power → Exhaust).
 - **Dyno Curve** — full power & torque vs RPM out to your redline, with peak markers and a
   live current-RPM line.
-- **Runtime controls**: RPM, MAP (load/boost), AFR, intake-air / coolant / oil temps.
+- **Drive it (dynamic model)** — you control **THROTTLE** and **LOAD** (a dyno brake), not
+  RPM directly. Opening the throttle raises manifold pressure (MAP), which makes torque,
+  which spins the engine up through its **rotating inertia** (derived from displacement &
+  stroke, so a big long-stroke engine revs lazily and a small one snaps up). A turbo
+  spools as the revs climb; closed throttle gives engine braking; there's an idle floor
+  and a rev limiter. No load + throttle = revs to the limiter; add load to hold an RPM.
+- **Other runtime controls**: AFR, intake-air / coolant / oil temps.
 - **Auto Thermal mode** — coolant & oil drift toward load-dependent targets over time,
   balanced against the cooling subsystem's capacity (radiator airflow scales with RPM;
   the fan provides idle cooling).
@@ -67,18 +73,25 @@ Source: GitHub Actions**, and it deploys to
 
 ## Runtime Controls
 
-| Control               | Range              | Notes |
-|-----------------------|--------------------|-------|
-| RPM                   | 800 – redline      | Redline comes from the design |
-| Intake Pressure (MAP) | 0.30 – design max  | Max = 1.05 bar (NA) or 1.0 + boost |
-| Air-Fuel Ratio        | 10.0 – 18.0        | ~12.5 peak power, ~15.5 peak efficiency |
-| Intake Air Temp       | -10 – 60 °C        | Colder = denser charge = more power |
-| Coolant Temp          | 40 – 130 °C        | Optimal ~90 °C (auto in Auto Thermal) |
-| Oil Temp              | 40 – 150 °C        | Optimal ~100 °C (auto in Auto Thermal) |
+| Control          | Range         | Notes |
+|------------------|---------------|-------|
+| Throttle         | 0 – 100 %     | Opens the flap → MAP → torque → revs |
+| Load (dyno brake)| 0 – 100 %     | Resistance that sets steady RPM; 0 = free-rev to limiter |
+| Air-Fuel Ratio   | 10.0 – 18.0   | ~12.5 peak power, ~15.5 peak efficiency |
+| Intake Air Temp  | -10 – 60 °C   | Colder = denser charge = more power |
+| Coolant Temp     | 40 – 130 °C   | Optimal ~90 °C (auto in Auto Thermal) |
+| Oil Temp         | 40 – 150 °C   | Optimal ~100 °C (auto in Auto Thermal) |
+
+RPM and MAP are now **outputs** (shown live under the sliders), not inputs. The **Dyno
+Curve** tab remains a wide-open-throttle steady-state sweep for reading the full curve.
 
 ## Physics Notes (simplified educational model)
 
 - Displacement derived from bore, stroke and cylinder count.
+- Dynamic driveline: manifold pressure fills toward a throttle/RPM/boost target; net torque
+  (combustion − pumping − friction − load) accelerates the crank through a rotating inertia
+  derived from displacement and stroke. Pumping loss under vacuum gives engine braking; a
+  rev limiter cuts fuel at redline; an idle floor prevents stalling.
 - VE uses a broad generalized-bell breathing curve (flat plateau, gentle shoulders) so
   torque stays flat across the midrange and power keeps climbing toward redline instead of
   falling off a peaky Gaussian. Its peak shifts with bore/stroke ratio and redline; exhaust
@@ -100,8 +113,9 @@ Source: GitHub Actions**, and it deploys to
   and fan; the thermostat sets the floor temperature. Overheating (>~108 °C) costs power.
 - Standard 4-stroke BMEP → Torque → Power conversion throughout.
 
-Absolute numbers are ballpark, not bench-calibrated — this is tuned for fun, learning and
-rapid experimentation (the "light Automation" philosophy).
+Numbers are calibrated to a realistic ballpark but this is not a high-fidelity thermodynamic
+model — it's tuned for fun, learning and rapid experimentation (the "light Automation"
+philosophy).
 
 ## Project Structure
 
@@ -117,6 +131,7 @@ rapid experimentation (the "light Automation" philosophy).
 ## Roadmap / Future Expansion
 
 - [x] Configurable engine designer (cylinders, bore/stroke, compression, induction, fuel, spark)
+- [x] Dynamic throttle + load driveline with rotating inertia (drive it, don't set RPM)
 - [x] Full dyno sweep graphs (power & torque curves)
 - [x] Dynamic thermal model (temps change over time)
 - [x] Forced induction (turbo / supercharger, boost, intercooler)

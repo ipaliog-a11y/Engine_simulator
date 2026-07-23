@@ -57,6 +57,7 @@ input[type=range]:disabled::-moz-range-thumb{background:#666}
 .status-bar.err{color:#ff4444}
 footer{text-align:center;margin-top:16px;padding:8px;font-size:7px;color:#555;border-top:2px solid #222}
 .legend{font-size:7px;color:#666;margin-top:6px;line-height:1.4}
+.readout{font-size:9px;color:#00ff88;background:#0a0a10;border:2px solid #333;padding:6px;margin:2px 0 10px;text-align:center;letter-spacing:1px}
 /* ---- Engine Design tab ---- */
 .design-panel{display:none;padding:12px;background:#0d0d18;max-height:600px;overflow-y:auto}
 .design-panel.active{display:block}
@@ -79,8 +80,8 @@ footer{text-align:center;margin-top:16px;padding:8px;font-size:7px;color:#555;bo
 <body>
 <div class="container">
 <header>
-<h1>PIXEL ENGINE SIM v0.3</h1>
-<div class="subtitle" id="subtitle">ENGINE DESIGNER • BUILD IT, THEN DYNO IT</div>
+<h1>PIXEL ENGINE SIM v0.4</h1>
+<div class="subtitle" id="subtitle">ENGINE DESIGNER • BUILD IT, THEN DRIVE IT</div>
 </header>
 <div class="main">
 <div class="viz-panel">
@@ -152,8 +153,9 @@ footer{text-align:center;margin-top:16px;padding:8px;font-size:7px;color:#555;bo
 </div>
 <div class="panel">
 <h2>Engine Controls</h2>
-<div class="control-group"><label for="rpm">RPM <span class="val" id="valRPM">3000</span></label><input type="range" id="rpm" min="800" max="7000" step="50" value="3000" aria-label="Engine RPM"></div>
-<div class="control-group"><label for="map">INTAKE PRESSURE (MAP) <span class="val" id="valMAP">1.00</span> bar</label><input type="range" id="map" min="0.30" max="1.05" step="0.01" value="1.00" aria-label="Intake manifold pressure in bar"></div>
+<div class="control-group"><label for="throttle">THROTTLE <span class="val" id="valThrottle">20</span> %</label><input type="range" id="throttle" min="0" max="100" step="1" value="20" aria-label="Throttle pedal position percent"></div>
+<div class="control-group"><label for="load">LOAD (DYNO BRAKE) <span class="val" id="valLoad">20</span> %</label><input type="range" id="load" min="0" max="100" step="1" value="20" aria-label="Applied dyno brake load percent"></div>
+<div class="readout" id="readout">RPM 0 • MAP 0.00 bar</div>
 <div class="control-group"><label for="afr">AIR-FUEL RATIO <span class="val" id="valAFR">14.7</span></label><input type="range" id="afr" min="10.0" max="18.0" step="0.1" value="14.7" aria-label="Air-fuel ratio"></div>
 <div class="control-group"><label for="iat">INTAKE AIR TEMP <span class="val" id="valIAT">25</span> °C</label><input type="range" id="iat" min="-10" max="60" step="1" value="25" aria-label="Intake air temperature in Celsius"></div>
 <div class="control-group"><label for="coolant">COOLANT TEMP <span class="val" id="valCool">90</span> °C</label><input type="range" id="coolant" min="40" max="130" step="1" value="90" aria-label="Coolant temperature in Celsius"></div>
@@ -196,6 +198,13 @@ const DEFAULT_ENGINE={
 };
 const RAD_CAP={small:0.75,stock:1.0,large:1.35};   // relative heat-rejection capacity
 const IMEP_K=13.2;   // indicated MEP calibration (bar at map=1, ve=1, best-power AFR)
+// Dynamic (throttle-driven) model tuning:
+const PUMP_K=0.9;    // pumping loss (bar) at full manifold vacuum → engine braking
+const MAP_K=9;       // manifold-pressure response rate (1/s) — fast
+const THR_K=0.12;    // throttle-vs-rpm restriction (higher = more vacuum at rpm)
+const IDLE_AIR=0.03; // idle bypass air (fraction of throttle area at 0% pedal)
+const IDLE_RPM=850;  // idle-controller floor — the engine can't stall below this
+const LOAD_MULT=1.3; // full dyno brake can exceed peak torque (to hold/decelerate)
 // Turbo characteristics as fractions of redline: 50% spool point, ramp width,
 // top-end choke, and boost-response speed (larger turbo = laggier).
 const TURBO={
@@ -206,7 +215,8 @@ const TURBO={
 let engine=Object.assign({},DEFAULT_ENGINE);
 let buildRev=0;   // bumped each build so the dyno cache invalidates
 
-let state={rpm:3000,map:1.00,afr:14.7,iat:25,coolant:90,oil:100,torque:0,powerHP:0,powerKW:0,bsfc:0,thermalEff:0,fuelFlowLph:0,knockRisk:0,ve:0.85,bmep:0,boostActual:0};
+// throttle & load are the driver inputs; rpm & map are now integrated by the sim.
+let state={throttle:0.20,load:0.20,rpm:1000,map:0.45,afr:14.7,iat:25,coolant:90,oil:100,torque:0,powerHP:0,powerKW:0,bsfc:0,thermalEff:0,fuelFlowLph:0,knockRisk:0,ve:0.85,bmep:0,boostActual:0};
 let crankAngle=0,lastTime=performance.now();
 let vizMode='engine';
 let autoThermal=false;
@@ -289,18 +299,20 @@ function buildEngine(){
   engine.turboChoke=tb.choke;
   engine.spoolK=tb.k;
   state.boostActual=0;   // start unspooled after a build
+  // Rotating-assembly + flywheel inertia grows faster than torque with engine size
+  // (bigger displacement, longer stroke, heavier flywheel), so a big long-stroke engine
+  // revs lazily while a small oversquare one snaps up.
+  engine.inertia=0.04+0.06*Math.pow(engine.displacement_L,1.5)*(engine.stroke_mm/86);
+  // Reference brake torque (~peak) used to scale the dyno brake load.
+  engine.loadRefTq=(IMEP_K*engine.mapMax*0.95*1e5*(engine.displacement_L/1000))/(4*Math.PI);
   // Cooling: radiator core capacity, plus a fixed fan contribution to airflow
   // that keeps the engine cool at low speed (idle) where ram-air is negligible.
   engine.radCap=RAD_CAP[engine.radiator]||1.0;
   engine.fanFloor={none:0,mechanical:0.15,electric:0.5}[engine.fan];
 
-  // Re-range the runtime sliders to the new engine and clamp current state.
-  const rpmEl=document.getElementById('rpm');
-  rpmEl.max=engine.redline;
-  state.rpm=clamp(state.rpm,+rpmEl.min,engine.redline);
-  const mapEl=document.getElementById('map');
-  mapEl.max=engine.mapMax.toFixed(2);
-  state.map=clamp(state.map,+mapEl.min,engine.mapMax);
+  // Keep the live operating point valid for the new engine.
+  state.rpm=clamp(state.rpm,IDLE_RPM,engine.redline);
+  state.map=clamp(state.map,0.12,engine.mapMax);
   syncSliders();
 
   buildRev++;dynoCache=null;
@@ -340,15 +352,17 @@ function updateDesignSummary(){
 function spoolFrac(rpm){
   return 1/(1+Math.exp(-(rpm-engine.spool50)/engine.spoolWidth));
 }
-// Steady-state manifold pressure at an RPM (used for the dyno sweep). For a turbo the
-// commanded boost is capped by what the turbo can make at that RPM.
-function effMapAt(rpm){
-  if(engine.intake!=='turbo')return state.map;
-  const commanded=Math.max(0,state.map-1.0);
-  return 1.0+Math.min(commanded,engine.boost_bar*spoolFrac(rpm));
+// Steady compressor pressure ratio above atmosphere at an RPM (turbo spools with RPM;
+// a supercharger is crank-driven so it makes boost almost from idle).
+function boostAvail(rpm){
+  if(engine.intake==='turbo')return engine.boost_bar*spoolFrac(rpm);
+  if(engine.intake==='supercharger')return engine.boost_bar*clamp(0.3+0.7*rpm/engine.redline,0,1);
+  return 0;
 }
-// Live manifold pressure: for a turbo, the lagged actual boost (see stepBoost).
-function liveMap(){return engine.intake==='turbo'?1.0+state.boostActual:state.map;}
+// Wide-open-throttle manifold pressure at an RPM (used for the dyno sweep).
+function wotMapAt(rpm){return 1.0+boostAvail(rpm);}
+// Live manifold pressure is now an integrated state variable (see stepEngine).
+function liveMap(){return state.map;}
 
 // ---- Physics (all derived from the engine spec + live state) ----
 function effIAT(map){
@@ -416,9 +430,19 @@ function computeKnockRisk(rpm,map){
   if(engine.injector==='direct')k-=12;                  // DI charge cooling
   return clamp(k,0,100);
 }
-// mapOverride lets the live view pass lagged boost; the dyno omits it (steady state).
+// Friction + pumping mean effective pressure. Pumping loss grows with manifold vacuum
+// (throttling), which is what produces engine braking on a closed throttle.
+function pumpFrictionMEP(rpm,map,oilFrictionMult){
+  let fmep=(0.55+1.8e-8*rpm*rpm)*oilFrictionMult*engine.strokeFrictionMult;
+  if(engine.intake==='supercharger')
+    fmep+=0.18*Math.max(0,map-1.0)*(0.4+0.6*rpm/engine.redline);  // parasitic drive
+  fmep+=PUMP_K*Math.max(0,1.0-map);                                // pumping / throttling loss
+  return fmep;
+}
+// mapOverride lets the live view pass the integrated manifold pressure; the dyno omits
+// it and uses wide-open throttle (steady state) at each RPM.
 function calcAtRpm(rpm,mapOverride){
-  const map=mapOverride!=null?mapOverride:effMapAt(rpm);
+  const map=mapOverride!=null?mapOverride:wotMapAt(rpm);
   const {coolF,oilFrictionMult}=tempFactors(state.coolant,state.oil);
   const ve=computeVE(rpm,map);
   const afrP=afrPowerFactor(state.afr);
@@ -427,10 +451,7 @@ function calcAtRpm(rpm,mapOverride){
   let imep=IMEP_K*map*ve*afrP*coolF*engine.crFactor*ignF;
   imep*=298.15/(effIAT(map)+273.15);   // intake-air density correction (ref 25°C)
 
-  let fmep=(0.55+1.8e-8*rpm*rpm)*oilFrictionMult*engine.strokeFrictionMult;
-  if(engine.intake==='supercharger')
-    fmep+=0.18*Math.max(0,map-1.0)*(0.4+0.6*rpm/engine.redline);  // parasitic drive
-  let bmep=Math.max(0.05,imep-fmep);
+  let bmep=Math.max(0.05,imep-pumpFrictionMEP(rpm,map,oilFrictionMult));
 
   const Vd=engine.displacement_L/1000;
   let torque=(bmep*1e5*Vd)/(4*Math.PI);   // 4-stroke: one power stroke per 2 revs
@@ -441,12 +462,45 @@ function calcAtRpm(rpm,mapOverride){
   if(knock>60){const derate=1-0.32*((knock-60)/40);powerKW*=derate;powerHP*=derate;torque*=derate;}
   return {rpm,torque,powerHP,powerKW,bmep,ve,knock,map};
 }
-// Advance the turbo's actual boost toward what it can make right now (lag/spool).
+// Raw brake torque (Nm) at an operating point — NOT floored, so it goes negative under
+// vacuum (engine braking). fuelCut zeroes combustion for the rev limiter / overrun.
+function brakeTorqueRaw(rpm,map,fuelCut){
+  const {coolF,oilFrictionMult}=tempFactors(state.coolant,state.oil);
+  let imep=0;
+  if(!fuelCut){
+    const ve=computeVE(rpm,map),afrP=afrPowerFactor(state.afr);
+    const ignF=clamp(1-0.004*Math.pow(engine.ignitionAdv-mbtAdvance(rpm,map),2),0.72,1.0);
+    imep=IMEP_K*map*ve*afrP*coolF*engine.crFactor*ignF*(298.15/(effIAT(map)+273.15));
+    const knock=computeKnockRisk(rpm,map);
+    if(knock>60)imep*=1-0.32*((knock-60)/40);
+  }
+  const bmep=imep-pumpFrictionMEP(rpm,map,oilFrictionMult);
+  return (bmep*1e5*(engine.displacement_L/1000))/(4*Math.PI);
+}
+// Advance the turbo's actual boost toward what it can make at the current RPM (spool lag).
 function stepBoost(dt){
-  if(engine.intake!=='turbo'){state.boostActual=Math.max(0,state.map-1.0);return;}
-  const commanded=Math.max(0,state.map-1.0);
-  const target=Math.min(commanded,engine.boost_bar*spoolFrac(state.rpm));
+  if(engine.intake!=='turbo'){state.boostActual=boostAvail(state.rpm);return;}
+  const target=engine.boost_bar*spoolFrac(state.rpm);
   state.boostActual+=(target-state.boostActual)*(1-Math.exp(-engine.spoolK*dt));
+}
+// Target manifold pressure from throttle opening, RPM and available boost.
+function mapTarget(){
+  const Pup=1.0+state.boostActual;                       // upstream pressure (atmo + boost)
+  const tArea=IDLE_AIR+(1-IDLE_AIR)*Math.pow(state.throttle,1.2);
+  const frac=tArea/(tArea+THR_K*(state.rpm/1000)*(1-tArea));
+  return clamp(Pup*frac,0.12,Pup);
+}
+// Integrate the dynamic engine: spool → manifold fill → net torque → RPM via inertia.
+function stepEngine(dt){
+  stepBoost(dt);
+  state.map+=(mapTarget()-state.map)*(1-Math.exp(-MAP_K*dt));
+  const limiter=state.rpm>=engine.redline;               // fuel cut at redline
+  const tq=brakeTorqueRaw(state.rpm,state.map,limiter);
+  // Dyno/road load rises with speed (light at low RPM so the engine can launch, heavy up
+  // top to hold it) — the balance point between this and brake torque sets steady RPM.
+  const loadTq=state.load*engine.loadRefTq*LOAD_MULT*Math.pow(state.rpm/engine.redline,1.3);
+  const omega=state.rpm*2*Math.PI/60+(tq-loadTq)/engine.inertia*dt;
+  state.rpm=clamp(omega*60/(2*Math.PI),IDLE_RPM,engine.redline);
 }
 function updatePhysics(){
   const map=liveMap();
@@ -463,7 +517,7 @@ function updatePhysics(){
   state.bsfc=state.powerKW>0.5?(fuelMass_kg_s*3600*1000)/state.powerKW:999;
 }
 function getDynoData(){
-  const key=[buildRev,state.map.toFixed(2),state.afr.toFixed(1),state.iat,Math.round(state.coolant),Math.round(state.oil)].join('|');
+  const key=[buildRev,state.afr.toFixed(1),state.iat,Math.round(state.coolant),Math.round(state.oil)].join('|');
   if(dynoCache&&dynoCacheKey===key)return dynoCache;
   const pts=[],rMax=engine.redline,step=Math.max(50,Math.round((rMax-1000)/70/50)*50);
   for(let rpm=1000;rpm<=rMax;rpm+=step)pts.push(calcAtRpm(rpm));
@@ -530,7 +584,7 @@ function setSound(on){
 
 // ---- Save / load full builds (localStorage) ----
 function saveSetup(){
-  const s={engine:engine,state:{rpm:state.rpm,map:state.map,afr:state.afr,iat:state.iat,coolant:state.coolant,oil:state.oil,autoThermal}};
+  const s={engine:engine,state:{throttle:state.throttle,load:state.load,afr:state.afr,iat:state.iat,coolant:state.coolant,oil:state.oil,autoThermal}};
   try{localStorage.setItem(SAVE_KEY,JSON.stringify(s));flash('BUILD SAVED');}
   catch(e){flash('SAVE FAILED (storage blocked)','err');}
 }
@@ -543,9 +597,8 @@ function loadSetup(){
     buildEngine();
     if(s.state){
       const st=s.state;
-      ['rpm','map','afr','iat','coolant','oil'].forEach(k=>{if(typeof st[k]==='number')state[k]=st[k];});
-      state.rpm=clamp(state.rpm,800,engine.redline);
-      state.map=clamp(state.map,0.3,engine.mapMax);
+      ['throttle','load','afr','iat','coolant','oil'].forEach(k=>{if(typeof st[k]==='number')state[k]=st[k];});
+      state.throttle=clamp(state.throttle,0,1);state.load=clamp(state.load,0,1);
       setAutoThermal(!!st.autoThermal);
     }
     dynoCache=null;syncSliders();flash('BUILD LOADED');
@@ -695,8 +748,12 @@ function drawDyno(){
   ctx.fillText('MAP '+state.map.toFixed(2)+'  AFR '+state.afr.toFixed(1)+'  IAT '+state.iat+'C  COOL '+Math.round(state.coolant)+'C  OIL '+Math.round(state.oil)+'C',12,H-12);
 }
 function updateUI(){
-  document.getElementById('valRPM').textContent=Math.round(state.rpm);
-  document.getElementById('valMAP').textContent=state.map.toFixed(2);
+  document.getElementById('valThrottle').textContent=Math.round(state.throttle*100);
+  document.getElementById('valLoad').textContent=Math.round(state.load*100);
+  const boost=state.map-1.0;
+  document.getElementById('readout').textContent=
+    'RPM '+Math.round(state.rpm)+' • MAP '+state.map.toFixed(2)+' bar'+
+    (engine.intake!=='na'?' • BOOST '+(boost>=0?'+':'')+boost.toFixed(2):'');
   document.getElementById('valAFR').textContent=state.afr.toFixed(1);
   document.getElementById('valIAT').textContent=state.iat;
   document.getElementById('valCool').textContent=Math.round(state.coolant);
@@ -716,10 +773,11 @@ function updateUI(){
   else if(state.knockRisk>70){status.textContent='DETONATION RISK — RETARDING SPARK / POWER CUT';status.className='status-bar err'}
   else if(state.coolant>115){status.textContent='OVERHEAT — REDUCE LOAD OR INCREASE COOLING';status.className='status-bar err'}
   else if(state.oil<55){status.textContent='COLD OIL — HIGH FRICTION, WARM UP RECOMMENDED';status.className='status-bar warn'}
+  else if(state.rpm>=engine.redline-30){status.textContent='REV LIMITER • '+Math.round(state.rpm)+' RPM';status.className='status-bar warn'}
   else if(state.powerHP>5){status.textContent='RUNNING • '+state.powerHP.toFixed(0)+' HP @ '+Math.round(state.rpm)+' RPM • BMEP '+state.bmep.toFixed(1)+' bar';status.className='status-bar'}
-  else{status.textContent='IDLE / LOW LOAD';status.className='status-bar'}
+  else{status.textContent='IDLE / OVERRUN • '+Math.round(state.rpm)+' RPM';status.className='status-bar'}
   if(vizMode==='design')legend.innerHTML='Bore/stroke set displacement. Octane+compression+boost+ignition feed the knock model.<br>Cooling (radiator/fan/oil cooler/thermostat) sets running temps in AUTO THERMAL mode.';
-  else if(vizMode==='engine')legend.innerHTML='Tune the built engine here. Higher MAP = more load/boost.<br>AFR ~12.5 peak power, ~15.5 peak efficiency. Colder charge = more power.';
+  else if(vizMode==='engine')legend.innerHTML='THROTTLE opens the flap → MAP → torque → revs (via inertia). Add LOAD to hold RPM.<br>No load + throttle = revs to the limiter. Bigger/longer-stroke engines rev slower.';
   else legend.innerHTML='Dyno shows full power & torque curves to redline.<br>Green line = current RPM. Peaks marked with dots.';
 }
 
@@ -734,23 +792,24 @@ function setTab(mode){
 }
 
 function bindControls(){
-  const ids=['rpm','map','afr','iat','coolant','oil'];
-  ids.forEach(id=>{
+  // Throttle & load are fractions (0..1); AFR/temps are direct values.
+  document.getElementById('throttle').addEventListener('input',e=>state.throttle=(+e.target.value)/100);
+  document.getElementById('load').addEventListener('input',e=>state.load=(+e.target.value)/100);
+  ['afr','iat','coolant','oil'].forEach(id=>{
     document.getElementById(id).addEventListener('input',()=>{
       state[id]=parseFloat(document.getElementById(id).value);
       dynoCache=null;
     });
   });
   function applyPreset(p){
-    state.rpm=clamp(p.rpm,800,engine.redline);
-    state.map=clamp(p.map,0.3,engine.mapMax);
+    state.throttle=p.throttle;state.load=p.load;
     state.afr=p.afr;state.iat=p.iat;state.coolant=p.coolant;state.oil=p.oil;
     dynoCache=null;syncSliders();
   }
-  document.getElementById('btnOptimal').addEventListener('click',()=>applyPreset({rpm:Math.round(engine.vePeakRpm),map:Math.min(1.0,engine.mapMax),afr:13.5,iat:25,coolant:90,oil:100}));
-  document.getElementById('btnMaxPower').addEventListener('click',()=>applyPreset({rpm:Math.round(engine.redline*0.9),map:engine.mapMax,afr:12.6,iat:15,coolant:88,oil:105}));
-  document.getElementById('btnEco').addEventListener('click',()=>applyPreset({rpm:2600,map:Math.min(0.7,engine.mapMax),afr:15.8,iat:30,coolant:92,oil:98}));
-  document.getElementById('btnReset').addEventListener('click',()=>{setAutoThermal(false);applyPreset({rpm:2000,map:Math.min(1.0,engine.mapMax),afr:14.7,iat:25,coolant:90,oil:100})});
+  document.getElementById('btnOptimal').addEventListener('click',()=>applyPreset({throttle:0.60,load:0.40,afr:13.5,iat:25,coolant:90,oil:100}));
+  document.getElementById('btnMaxPower').addEventListener('click',()=>applyPreset({throttle:1.00,load:0.50,afr:12.6,iat:15,coolant:88,oil:105}));
+  document.getElementById('btnEco').addEventListener('click',()=>applyPreset({throttle:0.35,load:0.30,afr:15.8,iat:30,coolant:92,oil:98}));
+  document.getElementById('btnReset').addEventListener('click',()=>{setAutoThermal(false);applyPreset({throttle:0.10,load:0.20,afr:14.7,iat:25,coolant:90,oil:100})});
   document.getElementById('btnAutoThermal').addEventListener('click',()=>setAutoThermal(!autoThermal));
   document.getElementById('btnSound').addEventListener('click',()=>setSound(!Sound.on));
   document.getElementById('btnSave').addEventListener('click',saveSetup);
@@ -765,8 +824,8 @@ function bindControls(){
   document.getElementById('btnDesignReset').addEventListener('click',()=>{applyEngineToForm(Object.assign({},DEFAULT_ENGINE));buildEngine();flash('DESIGN RESET TO DEFAULTS')});
 }
 function syncSliders(){
-  document.getElementById('rpm').value=state.rpm;
-  document.getElementById('map').value=state.map;
+  document.getElementById('throttle').value=Math.round(state.throttle*100);
+  document.getElementById('load').value=Math.round(state.load*100);
   document.getElementById('afr').value=state.afr;
   document.getElementById('iat').value=state.iat;
   document.getElementById('coolant').value=state.coolant;
@@ -775,7 +834,7 @@ function syncSliders(){
 function loop(now){
   const dt=Math.min((now-lastTime)/1000,0.05);lastTime=now;
   stepThermal(dt);
-  stepBoost(dt);
+  stepEngine(dt);
   updatePhysics();
   updateSound();
   if(vizMode==='engine')drawEngine(dt);
