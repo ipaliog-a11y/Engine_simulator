@@ -290,7 +290,6 @@ const MAP_K=9;       // manifold-pressure response rate (1/s) — fast
 const THR_K=0.12;    // throttle-vs-rpm restriction (higher = more vacuum at rpm)
 const IDLE_AIR=0.03; // idle bypass air (fraction of throttle area at 0% pedal)
 const IDLE_RPM=850;  // idle-controller floor — the engine can't stall below this
-const LOAD_MULT=1.3; // full dyno brake can exceed peak torque (to hold/decelerate)
 // Electrical: alternator rated output (A) and constant belt drag (bar of FMEP).
 const ALT={'60':{maxA:60,drag:0.020},'120':{maxA:120,drag:0.035},'180':{maxA:180,drag:0.050}};
 const ELEC_BASE_A=12;   // ECU / fuel pump / ignition baseline draw
@@ -309,7 +308,7 @@ let engine=Object.assign({},DEFAULT_ENGINE);
 let buildRev=0;   // bumped each build so the dyno cache invalidates
 
 // throttle & load are the driver inputs; rpm & map are now integrated by the sim.
-let state={throttle:0.20,load:0.20,elecLoad:0.30,rpm:1000,map:0.45,afr:14.7,iat:25,coolant:90,oil:100,torque:0,powerHP:0,powerKW:0,bsfc:0,thermalEff:0,fuelFlowLph:0,knockRisk:0,ve:0.85,bmep:0,boostActual:0,batterySOC:1.0,systemVoltage:14.0,engineHealth:1.0,blown:false,wearCause:''};
+let state={throttle:0.20,load:0.20,elecLoad:0.30,rpm:1000,map:0.45,afr:14.7,iat:25,coolant:90,oil:100,torque:0,powerHP:0,powerKW:0,bsfc:0,thermalEff:0,fuelFlowLph:0,knockRisk:0,ve:0.85,bmep:0,boostActual:0,batterySOC:1.0,systemVoltage:14.0,engineHealth:1.0,blown:false,wearCause:'',fuelCut:false};
 let crankAngle=0,lastTime=performance.now();
 let vizMode='engine';
 let autoThermal=false;
@@ -449,6 +448,8 @@ function buildEngine(){
   engine.inertia=0.04+0.06*Math.pow(engine.displacement_L,1.5)*(engine.stroke_mm/86);
   // Reference brake torque (~peak) used to scale the dyno brake load.
   engine.loadRefTq=(IMEP_K*engine.mapMax*0.95*1e5*(engine.displacement_L/1000))/(4*Math.PI);
+  engine.brakeGain=engine.loadRefTq/220;   // dyno-brake torque per rpm over the hold target
+  engine.canDFCO=(engine.intakeSys==='efi'||engine.intakeSys==='itb');   // injection can cut fuel on overrun
   // Cooling: radiator core capacity, plus a fixed fan contribution to airflow
   // that keeps the engine cool at low speed (idle) where ram-air is negligible.
   engine.radCap=RAD_CAP[engine.radiator]||1.0;
@@ -699,16 +700,32 @@ function mapTarget(){
   const frac=tArea/(tArea+THR_K*(state.rpm/1000)*(1-tArea));
   return clamp(Pup*frac,0.12,Pup);
 }
+// Deceleration (overrun) fuel cut-off: on a closed throttle above idle, an injection system
+// cuts fuel entirely (no combustion, zero fuel flow) — saves fuel and adds engine braking.
+function overrunFuelCut(){
+  return engine.canDFCO&&state.throttle<0.03&&state.rpm>engine.idleRpmEff+150;
+}
+// LOAD as a dyno brake targeting a hold-RPM: it only resists ABOVE that target, so the
+// engine can always rev up to it (no getting trapped below a torque valley). load 0 →
+// target = redline (free-rev to the limiter); load 1 → target = idle.
+function brakeTorque(){
+  if(state.load<=0.001)return 0;
+  const target=engine.redline-state.load*(engine.redline-engine.idleRpmEff);
+  const over=state.rpm-target;
+  return over>0?Math.min(over*engine.brakeGain,engine.loadRefTq*3):0;
+}
 // Integrate the dynamic engine: spool → manifold fill → net torque → RPM via inertia.
 function stepEngine(dt){
   stepBoost(dt);
   state.map+=(mapTarget()-state.map)*(1-Math.exp(-MAP_K*engine.intakeRespK*dt));
-  const limiter=state.rpm>=engine.redline;               // fuel cut at redline
-  const tq=brakeTorqueRaw(state.rpm,state.map,limiter);
-  // Dyno/road load rises with speed (light at low RPM so the engine can launch, heavy up
-  // top to hold it) — the balance point between this and brake torque sets steady RPM.
-  const loadTq=state.load*engine.loadRefTq*LOAD_MULT*Math.pow(state.rpm/engine.redline,1.3);
-  const omega=state.rpm*2*Math.PI/60+(tq-loadTq)/engine.inertia*dt;
+  const cut=state.rpm>=engine.redline||overrunFuelCut();
+  let tq=brakeTorqueRaw(state.rpm,state.map,cut);
+  // Engine braking on a closed throttle (pumping/friction/windage), scaled to engine size
+  // and RPM, so lift-off deceleration is brisk for every engine.
+  if(state.throttle<0.05&&state.rpm>engine.idleRpmEff)
+    tq-=engine.loadRefTq*(0.14+0.30*clamp(state.rpm/engine.redline,0,1));
+  tq-=brakeTorque();
+  const omega=state.rpm*2*Math.PI/60+tq/engine.inertia*dt;
   state.rpm=clamp(omega*60/(2*Math.PI),engine.idleRpmEff,engine.redline);
 }
 // Integrate the battery: charge when the alternator out-supplies demand, drain otherwise.
@@ -743,10 +760,16 @@ function stepWear(dt){
 }
 function updatePhysics(){
   const map=liveMap();
+  state.fuelCut=overrunFuelCut()||state.rpm>=engine.redline;
   const r=calcAtRpm(state.rpm,map);
   state.torque=r.torque;state.powerKW=r.powerKW;state.powerHP=r.powerHP;
   state.bmep=r.bmep;state.ve=r.ve;state.knockRisk=r.knock;
 
+  if(state.fuelCut){   // overrun / limiter fuel cut → no fuel burned, engine braking
+    state.fuelFlowLph=0;state.bsfc=999;state.thermalEff=0;
+    if(state.rpm<engine.redline){state.torque=Math.min(0,brakeTorqueRaw(state.rpm,map,true));state.powerKW=state.torque*state.rpm*2*Math.PI/60/1000;state.powerHP=state.powerKW/0.7457;}
+    return;
+  }
   const T_k=effIAT(map)+273.15,MAP_pa=map*1e5,Vd=engine.displacement_L/1000;
   const airMass_kg_s=(MAP_pa*Vd*(state.rpm/60)*state.ve)/(287*T_k*2);
   // Imprecise metering (carbs / mechanical injection) wastes fuel: same power, more fuel
@@ -1038,7 +1061,7 @@ function drawEngine(dt){
   box(460,45,165,116,'FUEL SYSTEM',[
     [FUELS[engine.fuel].label,C.yellow],
     ['AFR  '+state.afr.toFixed(1)+' λ'+lam],
-    ['FLOW '+state.fuelFlowLph.toFixed(1)+' L/h'],
+    state.fuelCut&&state.rpm<engine.redline?['FLOW 0 — DFCO CUT',C.cyan]:['FLOW '+state.fuelFlowLph.toFixed(1)+' L/h'],
     [(engine.injector==='direct'?'DIRECT':'PORT')+' INJ'],
     ['IGN  '+(engine.timingMode==='auto'?'AUTO ECU':engine.ignitionAdv+'° FIXED')],
     detailed?['SPARK '+engine.ignitionType.toUpperCase()]:null,
@@ -1183,10 +1206,11 @@ function updateUI(){
   else if(state.oil<55){status.textContent='COLD OIL — HIGH FRICTION, WARM UP RECOMMENDED';status.className='status-bar warn'}
   else if(state.systemVoltage<11.6){status.textContent='LOW VOLTAGE '+state.systemVoltage.toFixed(1)+'V — WEAK SPARK / MISFIRE';status.className='status-bar err'}
   else if(state.rpm>=engine.redline-30){status.textContent='REV LIMITER • '+Math.round(state.rpm)+' RPM';status.className='status-bar warn'}
+  else if(state.fuelCut){status.textContent='OVERRUN • FUEL CUT-OFF (DFCO) • '+Math.round(state.rpm)+' RPM';status.className='status-bar'}
   else if(state.powerHP>5){status.textContent='RUNNING • '+state.powerHP.toFixed(0)+' HP @ '+Math.round(state.rpm)+' RPM • BMEP '+state.bmep.toFixed(1)+' bar';status.className='status-bar'}
-  else{status.textContent='IDLE / OVERRUN • '+Math.round(state.rpm)+' RPM';status.className='status-bar'}
+  else{status.textContent='IDLE / LOW LOAD • '+Math.round(state.rpm)+' RPM';status.className='status-bar'}
   if(vizMode==='design')legend.innerHTML='Bore/stroke set displacement. Octane+compression+boost+ignition feed the knock model.<br>Cooling (radiator/fan/oil cooler/thermostat) sets running temps in AUTO THERMAL mode.';
-  else if(vizMode==='engine')legend.innerHTML='THROTTLE → MAP → torque → revs (via inertia). Add LOAD to hold RPM; no load = revs to the limiter.<br>Detonation, overheat, lean-boost & over-rev wear the engine — a clean tune lasts. Rebuild via BUILD & DYNO.';
+  else if(vizMode==='engine')legend.innerHTML='THROTTLE makes power; LOAD (dyno brake) sets the hold RPM — more load = lower RPM, zero = free-rev to limiter.<br>Lift off at speed → engine braking + fuel cut. Detonation/overheat/lean-boost/over-rev wear the engine.';
   else legend.innerHTML='Dyno shows full power & torque curves to redline.<br>Green line = current RPM. Peaks marked with dots.';
 }
 
