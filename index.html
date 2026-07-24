@@ -177,6 +177,9 @@ footer{text-align:center;margin-top:16px;padding:8px;font-size:7px;color:#555;bo
 <div class="stat" id="statFuel"><span class="label">FUEL FLOW</span><div class="value">0</div><span class="unit">L/h</span></div>
 <div class="stat" id="statKnock"><span class="label">KNOCK RISK</span><div class="value">LOW</div><span class="unit"></span></div>
 </div>
+<div class="gauge-row">
+<div class="stat" id="statHealth"><span class="label">ENGINE HEALTH</span><div class="value">100</div><span class="unit">%</span></div>
+</div>
 </div>
 <div class="panel">
 <h2>Engine Controls</h2>
@@ -292,7 +295,7 @@ let engine=Object.assign({},DEFAULT_ENGINE);
 let buildRev=0;   // bumped each build so the dyno cache invalidates
 
 // throttle & load are the driver inputs; rpm & map are now integrated by the sim.
-let state={throttle:0.20,load:0.20,elecLoad:0.30,rpm:1000,map:0.45,afr:14.7,iat:25,coolant:90,oil:100,torque:0,powerHP:0,powerKW:0,bsfc:0,thermalEff:0,fuelFlowLph:0,knockRisk:0,ve:0.85,bmep:0,boostActual:0,batterySOC:1.0,systemVoltage:14.0};
+let state={throttle:0.20,load:0.20,elecLoad:0.30,rpm:1000,map:0.45,afr:14.7,iat:25,coolant:90,oil:100,torque:0,powerHP:0,powerKW:0,bsfc:0,thermalEff:0,fuelFlowLph:0,knockRisk:0,ve:0.85,bmep:0,boostActual:0,batterySOC:1.0,systemVoltage:14.0,engineHealth:1.0,blown:false,wearCause:''};
 let crankAngle=0,lastTime=performance.now();
 let vizMode='engine';
 let autoThermal=false;
@@ -419,6 +422,7 @@ function buildEngine(){
   engine.turboChoke=tb.choke;
   engine.spoolK=tb.k;
   state.boostActual=0;   // start unspooled after a build
+  state.engineHealth=1.0;state.blown=false;state.wearCause='';   // a fresh (rebuilt) engine
   // Rotating-assembly + flywheel inertia grows faster than torque with engine size
   // (bigger displacement, longer stroke, heavier flywheel), so a big long-stroke engine
   // revs lazily while a small oversquare one snaps up.
@@ -625,7 +629,7 @@ function calcAtRpm(rpm,mapOverride){
   const afrP=afrPowerFactor(state.afr);
   const ignF=clamp(1-0.004*Math.pow(activeAdvance(rpm,map)-mbtAdvance(rpm,map),2),0.72,1.0);
 
-  let imep=IMEP_K*map*ve*afrP*coolF*engine.crFactor*ignF*ignitionHealth(rpm);
+  let imep=IMEP_K*map*ve*afrP*coolF*engine.crFactor*ignF*ignitionHealth(rpm)*healthFactor();
   imep*=298.15/(effIAT(map)+273.15);   // intake-air density correction (ref 25°C)
 
   let bmep=Math.max(0.05,imep-pumpFrictionMEP(rpm,map,oilFrictionMult));
@@ -647,7 +651,7 @@ function brakeTorqueRaw(rpm,map,fuelCut){
   if(!fuelCut){
     const ve=computeVE(rpm,map),afrP=afrPowerFactor(state.afr);
     const ignF=clamp(1-0.004*Math.pow(activeAdvance(rpm,map)-mbtAdvance(rpm,map),2),0.72,1.0);
-    imep=IMEP_K*map*ve*afrP*coolF*engine.crFactor*ignF*ignitionHealth(rpm)*(298.15/(effIAT(map)+273.15));
+    imep=IMEP_K*map*ve*afrP*coolF*engine.crFactor*ignF*ignitionHealth(rpm)*healthFactor()*(298.15/(effIAT(map)+273.15));
     const knock=computeKnockRisk(rpm,map);
     if(knock>60)imep*=1-0.32*((knock-60)/40);
   }
@@ -686,6 +690,27 @@ function stepElectrical(dt){
   state.batterySOC=clamp(state.batterySOC+netA*dt*0.0004,0,1);
   const charging=netA>0&&state.batterySOC<0.999;
   state.systemVoltage=clamp(11.4+1.6*state.batterySOC+(charging?0.6:0),10.5,14.4);
+}
+// ---- Reliability / wear ----
+// A worn engine makes less power (down on compression, more friction). Health drops fast
+// under detonation, overheat, lean-under-boost, and over-rev — the things that really kill
+// engines. A clean tune barely wears. At zero health the engine lets go (rebuild = BUILD).
+function healthFactor(){return state.blown?0:(0.5+0.5*state.engineHealth);}
+function stepWear(dt){
+  if(state.blown)return;   // stays dead until rebuilt; keep the cause that killed it
+  const lam=state.afr/engine.stoichAFR;
+  let w=0,worst=0,cause='';
+  const add=(a,label)=>{if(a>0){w+=a;if(a>worst){worst=a;cause=label;}}};
+  add(state.knockRisk>55?(state.knockRisk-55)/45*0.060:0,'DETONATION');          // knock is the big killer
+  add(state.coolant>112?(state.coolant-112)/18*0.030:0,'OVERHEAT');
+  add(state.oil>132?(state.oil-132)/22*0.025:0,'OIL TEMP');
+  add(state.rpm>engine.redline*0.985?0.006:0,'OVER-REV');
+  add(Math.max(0,lam-1.05)*Math.max(0,state.map-0.9)*0.14,'LEAN/BOOST');         // burnt pistons
+  add(state.oil<55&&state.powerHP>15?0.004:0,'COLD-OIL');
+  w+=0.000006;   // baseline fatigue (negligible — hours of clean running)
+  state.engineHealth=clamp(state.engineHealth-w*dt,0,1);
+  state.wearCause=worst>0.001?cause:'';
+  if(state.engineHealth<=0){state.blown=true;state.engineHealth=0;state.wearCause=cause||'FAILURE';}
 }
 function updatePhysics(){
   const map=liveMap();
@@ -881,13 +906,18 @@ function drawEngine(dt){
   drawMiniGauge(infoX+20,330,'VE',(state.ve*100).toFixed(0)+'%',state.ve);
 
   drawPixelRect(0,H-32,W,32,'#12121c');
-  ctx.fillStyle=state.knockRisk>70?C.red:(state.knockRisk>40?C.yellow:C.green);ctx.font='9px "Press Start 2P"';
-  let msg='CYCLE: '+getStrokeName(crankAngle%720);
-  if(engine.intake==='turbo')msg+='  •  BOOST +'+state.boostActual.toFixed(2);
-  msg+='  •  ADV '+Math.round(activeAdvance(state.rpm,state.map))+'°'+(engine.timingMode==='auto'?'*':'');
-  msg+='  •  '+state.systemVoltage.toFixed(1)+'V';
-  if(state.systemVoltage<11.6)msg+=' LOW';
-  if(state.knockRisk>50)msg+='  •  KNOCK WARNING';
+  const alarm=state.blown||state.wearCause||state.knockRisk>70;
+  ctx.fillStyle=alarm?C.red:(state.knockRisk>40||state.engineHealth<0.7?C.yellow:C.green);ctx.font='9px "Press Start 2P"';
+  let msg;
+  if(state.blown)msg='ENGINE FAILURE — '+state.wearCause+' • REBUILD';
+  else{
+    msg='CYCLE: '+getStrokeName(crankAngle%720);
+    if(engine.intake==='turbo')msg+='  •  BOOST +'+state.boostActual.toFixed(2);
+    msg+='  •  ADV '+Math.round(activeAdvance(state.rpm,state.map))+'°'+(engine.timingMode==='auto'?'*':'');
+    msg+='  •  '+Math.round(state.engineHealth*100)+'%HP';
+    if(state.wearCause)msg+='  •  DAMAGE:'+state.wearCause;
+    else if(state.knockRisk>50)msg+='  •  KNOCK WARNING';
+  }
   ctx.fillText(msg,12,H-12)
 }
 function drawDyno(){
@@ -959,9 +989,14 @@ function updateUI(){
   if(state.knockRisk<25){knockEl.textContent='LOW';document.getElementById('statKnock').className='stat'}
   else if(state.knockRisk<55){knockEl.textContent='MED';document.getElementById('statKnock').className='stat warning'}
   else{knockEl.textContent='HIGH';document.getElementById('statKnock').className='stat danger'}
+  const hp=Math.round(state.engineHealth*100),healthEl=document.getElementById('statHealth');
+  healthEl.querySelector('.value').textContent=state.blown?'DEAD':hp;
+  healthEl.className='stat'+(state.blown||hp<30?' danger':(hp<70?' warning':''));
   const status=document.getElementById('status'),legend=document.getElementById('legend');
   if(performance.now()<statusFlashUntil){/* keep transient flash message */}
   else if(vizMode==='design'){status.textContent='DESIGN MODE • CONFIGURE & BUILD';status.className='status-bar'}
+  else if(state.blown){status.textContent='ENGINE FAILURE ('+state.wearCause+') — REBUILD WITH BUILD & DYNO';status.className='status-bar err'}
+  else if(state.wearCause){status.textContent='DAMAGE: '+state.wearCause+' — HEALTH '+hp+'% FALLING';status.className='status-bar err'}
   else if(state.knockRisk>70){status.textContent='DETONATION RISK — RETARDING SPARK / POWER CUT';status.className='status-bar err'}
   else if(state.coolant>115){status.textContent='OVERHEAT — REDUCE LOAD OR INCREASE COOLING';status.className='status-bar err'}
   else if(state.oil<55){status.textContent='COLD OIL — HIGH FRICTION, WARM UP RECOMMENDED';status.className='status-bar warn'}
@@ -970,7 +1005,7 @@ function updateUI(){
   else if(state.powerHP>5){status.textContent='RUNNING • '+state.powerHP.toFixed(0)+' HP @ '+Math.round(state.rpm)+' RPM • BMEP '+state.bmep.toFixed(1)+' bar';status.className='status-bar'}
   else{status.textContent='IDLE / OVERRUN • '+Math.round(state.rpm)+' RPM';status.className='status-bar'}
   if(vizMode==='design')legend.innerHTML='Bore/stroke set displacement. Octane+compression+boost+ignition feed the knock model.<br>Cooling (radiator/fan/oil cooler/thermostat) sets running temps in AUTO THERMAL mode.';
-  else if(vizMode==='engine')legend.innerHTML='THROTTLE opens the flap → MAP → torque → revs (via inertia). Add LOAD to hold RPM.<br>No load + throttle = revs to the limiter. Bigger/longer-stroke engines rev slower.';
+  else if(vizMode==='engine')legend.innerHTML='THROTTLE → MAP → torque → revs (via inertia). Add LOAD to hold RPM; no load = revs to the limiter.<br>Detonation, overheat, lean-boost & over-rev wear the engine — a clean tune lasts. Rebuild via BUILD & DYNO.';
   else legend.innerHTML='Dyno shows full power & torque curves to redline.<br>Green line = current RPM. Peaks marked with dots.';
 }
 
@@ -1004,7 +1039,7 @@ function bindControls(){
   document.getElementById('btnOptimal').addEventListener('click',()=>applyPreset({throttle:0.60,load:0.40,afr:13.5,iat:25,coolant:90,oil:100}));
   document.getElementById('btnMaxPower').addEventListener('click',()=>applyPreset({throttle:1.00,load:0.50,afr:12.6,iat:15,coolant:88,oil:105}));
   document.getElementById('btnEco').addEventListener('click',()=>applyPreset({throttle:0.35,load:0.30,afr:15.8,iat:30,coolant:92,oil:98}));
-  document.getElementById('btnReset').addEventListener('click',()=>{setAutoThermal(false);applyPreset({throttle:0.10,load:0.20,afr:14.7,iat:25,coolant:90,oil:100})});
+  document.getElementById('btnReset').addEventListener('click',()=>{setAutoThermal(false);state.engineHealth=1.0;state.blown=false;state.wearCause='';state.coolant=90;state.oil=100;state.batterySOC=1.0;applyPreset({throttle:0.10,load:0.20,afr:14.7,iat:25,coolant:90,oil:100})});
   document.getElementById('btnAutoThermal').addEventListener('click',()=>setAutoThermal(!autoThermal));
   document.getElementById('btnSound').addEventListener('click',()=>setSound(!Sound.on));
   document.getElementById('btnSave').addEventListener('click',saveSetup);
@@ -1036,6 +1071,7 @@ function loop(now){
   stepEngine(dt);
   stepElectrical(dt);
   updatePhysics();
+  stepWear(dt);
   updateSound();
   if(vizMode==='engine')drawEngine(dt);
   else if(vizMode==='dyno')drawDyno();

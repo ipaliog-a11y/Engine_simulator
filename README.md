@@ -37,6 +37,10 @@ feeds the physics:
   knock and cool the charge (more power headroom) but burn far more fuel.
 - **Cooling** — radiator size (small / stock / large), cooling fan (none / mechanical /
   electric), oil cooler, and thermostat opening temperature.
+- **Reliability / wear** — the engine has a live **health** that falls under abuse:
+  sustained detonation, overheating, lean-under-boost, and over-rev all wear it (a clean
+  tune barely ages). A worn engine makes less power; at zero health it lets go and must be
+  rebuilt (BUILD & DYNO or RESET). This puts real stakes on every design and tune choice.
 
 These couple realistically: octane, compression, boost, intake temperature and ignition
 advance all feed a **knock model**, and direct injection / higher octane buy back knock
@@ -49,7 +53,7 @@ saps power; a large radiator, electric fan and oil cooler keep it cool.
 
 ### Simulation & live tuning
 - **Live outputs**: Power (HP), Torque (Nm), BMEP, Volumetric Efficiency, Thermal
-  Efficiency, BSFC, Fuel Flow, Knock Risk.
+  Efficiency, BSFC, Fuel Flow, Knock Risk, Engine Health.
 - **Animated cutaway** that renders your actual cylinder count through the full 4-stroke
   cycle (Intake → Compression → Power → Exhaust).
 - **Dyno Curve** — full power & torque vs RPM out to your redline, with peak markers and a
@@ -141,6 +145,10 @@ Curve** tab remains a wide-open-throttle steady-state sweep for reading the full
   flow (higher BSFC), while race gas is high-octane pump gas.
 - Cooling balances load-generated heat against radiator capacity + airflow (RPM-driven)
   and fan; the thermostat sets the floor temperature. Overheating (>~108 °C) costs power.
+- Reliability: engine health accumulates wear from detonation (the big killer), overheat,
+  lean-under-boost (burnt pistons) and over-rev; a clean tune barely wears. Lower health
+  cuts power; zero health = catastrophic failure until rebuilt. Damage happens over tens of
+  seconds of abuse — long enough to heed the warnings and back off.
 - Electrical: the alternator (output rising with RPM) charges the battery when it
   out-supplies demand and drains it otherwise; system voltage tracks state of charge. Low
   voltage weakens the spark, and each ignition type has a dwell/misfire RPM limit, so a
@@ -181,7 +189,7 @@ philosophy).
 - [x] Different fuels (pump/race gas, E85, methanol) with their own energy, stoich, knock & cooling
 - [x] Induction/metering systems (carbs, mechanical injection, EFI, ITBs) + air filters
 - [x] Ignition control: Fixed vs Auto (ECU, MBT-tracking & knock-limited timing)
-- [ ] Reliability / wear simulation
+- [x] Reliability / wear simulation (health falls under detonation/overheat/lean-boost/over-rev)
 - [x] Calibration pass for realistic power figures & curve shape (ongoing refinement)
 - [ ] Native Android build (wrap the PWA with Capacitor or a Trusted Web Activity)
 
