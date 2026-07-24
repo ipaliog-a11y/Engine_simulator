@@ -27,6 +27,10 @@ header .subtitle{font-size:8px;color:#888;margin-top:6px}
 .viz-tabs button:hover{background:#2a2a3a;color:#ccc}
 .viz-tabs button.active{background:#004422;color:#00ff88;border-bottom:3px solid #00ff88;margin-bottom:-3px}
 #engineCanvas{width:100%;height:auto;display:block;background:#0d0d18}
+.fs-btn{position:absolute;top:44px;right:8px;z-index:6;font-size:7px;padding:5px 7px;background:#1a1a28;color:#00ccff;border:2px solid #00ccff;box-shadow:2px 2px 0 #000}
+.fs-btn:hover{background:#004422;color:#00ff88}
+.viz-panel:fullscreen{display:flex;flex-direction:column;background:#0d0d18}
+.viz-panel:fullscreen #engineCanvas{flex:1;min-height:0;height:auto;max-height:100%;object-fit:contain;margin:auto}
 .side-panel{display:flex;flex-direction:column;gap:10px}
 .panel{background:#161622;border:4px solid #3a3a4a;padding:10px}
 .panel h2{font-size:9px;color:#00ccff;margin-bottom:8px;border-bottom:2px solid #333;padding-bottom:4px;text-transform:uppercase}
@@ -90,7 +94,8 @@ footer{text-align:center;margin-top:16px;padding:8px;font-size:7px;color:#555;bo
 <button id="tabEngine" class="active">ENGINE VIEW</button>
 <button id="tabDyno">DYNO CURVE</button>
 </div>
-<canvas id="engineCanvas" width="640" height="420" role="img" aria-label="Animated pixel-art engine cutaway and dyno curves"></canvas>
+<button id="btnFullscreen" class="fs-btn" title="Full-screen detailed view" aria-label="Full-screen detailed view">⛶ FULL</button>
+<canvas id="engineCanvas" width="640" height="420" role="img" aria-label="Engine test-bench schematic with live values"></canvas>
 <div class="design-panel" id="designPanel">
 <h3>ENGINE DESIGN</h3>
 <div class="hint">Configure the build, then press BUILD &amp; DYNO. Physics update live.</div>
@@ -199,6 +204,7 @@ footer{text-align:center;margin-top:16px;padding:8px;font-size:7px;color:#555;bo
 </div>
 <div class="btn-row">
 <button id="btnAutoThermal" class="toggle" aria-pressed="false">AUTO THERMAL</button>
+<button id="btnWear" class="toggle on" aria-pressed="true">WEAR</button>
 <button id="btnSound" class="toggle" aria-pressed="false">SOUND</button>
 <button id="btnSave">SAVE</button>
 <button id="btnLoad">LOAD</button>
@@ -299,6 +305,9 @@ let state={throttle:0.20,load:0.20,elecLoad:0.30,rpm:1000,map:0.45,afr:14.7,iat:
 let crankAngle=0,lastTime=performance.now();
 let vizMode='engine';
 let autoThermal=false;
+let wearEnabled=true;   // WEAR toggle: off = invincible engine
+let fullscreen=false;   // detailed full-screen schematic
+let visualCrank=0;      // calm decorative flywheel angle (not real RPM)
 let statusFlashUntil=0;
 const SAVE_KEY='pixelEngineSim.setup.v2';
 let dynoCache=null;
@@ -697,6 +706,7 @@ function stepElectrical(dt){
 // engines. A clean tune barely wears. At zero health the engine lets go (rebuild = BUILD).
 function healthFactor(){return state.blown?0:(0.5+0.5*state.engineHealth);}
 function stepWear(dt){
+  if(!wearEnabled){state.engineHealth=1;state.blown=false;state.wearCause='';return;}  // invincible
   if(state.blown)return;   // stays dead until rebuilt; keep the cause that killed it
   const lam=state.afr/engine.stoichAFR;
   let w=0,worst=0,cause='';
@@ -833,92 +843,131 @@ const canvas=document.getElementById('engineCanvas'),ctx=canvas.getContext('2d')
 const C={bg:'#0d0d18',block:'#2a2a3a',metal:'#6a6a7a',metalDark:'#3a3a4a',metalLight:'#9a9aaa',piston:'#c0c0d0',pistonTop:'#e0e0f0',rod:'#888898',fire:'#ff6600',spark:'#ffff00',intake:'#44aaff',exhaust:'#ff4422',text:'#e0e0e0',green:'#00ff88',yellow:'#ffcc00',red:'#ff4444',cyan:'#00ccff'};
 
 function drawPixelRect(x,y,w,h,color){ctx.fillStyle=color;ctx.fillRect(Math.floor(x),Math.floor(y),Math.floor(w),Math.floor(h))}
-function getStrokeName(angle){if(angle<180)return'INTAKE';if(angle<360)return'COMPRESS';if(angle<540)return'POWER';return'EXHAUST'}
-
-// Width-adaptive so it looks right for anything from 1 to 12 cylinders.
-function drawCylinder(x,y,w,h,angle,showLabel){
-  drawPixelRect(x,y,w,h,'#1a1a28');ctx.strokeStyle=C.metal;ctx.lineWidth=2;ctx.strokeRect(x+1,y+1,w-2,h-2);
-  const inset=Math.max(3,w*0.14);
-  const crankDeg=angle%360,rad=crankDeg*Math.PI/180;
-  const pistonTravel=h*0.5,pistonY=y+12+(1-Math.cos(rad))/2*pistonTravel,pH=Math.min(34,h*0.22);
-  drawPixelRect(x+inset,pistonY,w-2*inset,pH,C.piston);
-  drawPixelRect(x+inset,pistonY+4,w-2*inset,2,C.metalDark);
-  drawPixelRect(x+inset,pistonY+pH*0.5,w-2*inset,2,C.metalDark);
-  drawPixelRect(x+inset+2,pistonY,w-2*inset-4,4,C.pistonTop);
-  const rodTop=pistonY+pH,crankCenterY=y+h+20;
-  ctx.strokeStyle=C.rod;ctx.lineWidth=Math.max(3,w*0.06);
-  ctx.beginPath();ctx.moveTo(x+w/2,rodTop);ctx.lineTo(x+w/2+Math.sin(rad)*Math.min(16,w*0.18),crankCenterY);ctx.stroke();
-  const stroke=getStrokeName(angle),vw=Math.min(16,w*0.3);
-  if(w>24){
-    if(stroke==='INTAKE')drawPixelRect(x+3,y+3,vw,9,C.intake);
-    else if(stroke==='EXHAUST')drawPixelRect(x+w-3-vw,y+3,vw,9,C.exhaust);
-  }
-  if(stroke==='POWER'){
-    const flameH=12+Math.random()*8;ctx.fillStyle=C.fire;
-    ctx.beginPath();ctx.moveTo(x+w/2,pistonY);ctx.lineTo(x+w/2-w*0.22,pistonY-flameH);ctx.lineTo(x+w/2+w*0.22,pistonY-flameH);ctx.closePath();ctx.fill();
-    if(Math.random()>0.6){ctx.fillStyle=C.spark;ctx.fillRect(x+w/2-2,pistonY-7,4,4)}
-  }
-  if(showLabel){ctx.fillStyle=stroke==='POWER'?C.fire:C.text;ctx.font='6px "Press Start 2P"';ctx.fillText(stroke.slice(0,4),x+3,y+h-6)}
-}
-function drawMiniGauge(x,y,label,valueStr,norm){
-  ctx.fillStyle='#888';ctx.font='8px "Press Start 2P"';ctx.fillText(label,x,y);
-  drawPixelRect(x,y+6,150,12,'#222');
-  let col=C.green;if(norm>0.85)col=C.yellow;if(norm>0.95)col=C.red;
-  drawPixelRect(x,y+6,Math.floor(150*clamp(norm,0,1)),12,col);
-  ctx.fillStyle=C.text;ctx.font='9px "Press Start 2P"';ctx.fillText(valueStr,x+2,y+32)
-}
+// ---- Engine test-bench schematic (replaces the old blur animation) ----
+// Live values annotate each subsystem around a central engine. Laid out in a base
+// 640×420 space and uniformly scaled, so the same code serves the lite view and the
+// full-screen detailed view (which just adds extra lines).
 function drawEngine(dt){
-  const W=canvas.width,H=canvas.height;
+  const W=canvas.width,H=canvas.height,detailed=fullscreen;
+  const S=Math.min(W/640,H/420),offX=(W-640*S)/2,offY=(H-420*S)/2;
+  const px=x=>offX+x*S,py=y=>offY+y*S,F=n=>Math.round(n*S)+'px "Press Start 2P"';
   ctx.fillStyle=C.bg;ctx.fillRect(0,0,W,H);
-  const omega=state.rpm*6;crankAngle=(crankAngle+omega*dt)%720;
-  drawPixelRect(0,0,W,28,'#12121c');
-  const disp=engine.displacement_L.toFixed(engine.displacement_L<1?2:1);
-  ctx.fillStyle=C.yellow;ctx.font='10px "Press Start 2P"';
-  ctx.fillText(engine.cylinders+'CYL '+LAYOUT_LABEL[engine.layout]+' • '+disp+'L • 4-STROKE',12,19);
-  ctx.fillStyle=C.green;ctx.fillText(Math.round(state.rpm)+' RPM',W-110,19);
+  // calm decorative flywheel (conveys running/dead without being a blur)
+  const vrate=state.blown?0:2+clamp(state.rpm/8000,0,1)*4;
+  visualCrank=(visualCrank+vrate*dt)%(Math.PI*2);
+  const m=liveMap(),disp=engine.displacement_L.toFixed(engine.displacement_L<1?2:1);
+  const knockTxt=state.knockRisk<25?'LOW':state.knockRisk<55?'MED':'HIGH';
+  const knockCol=state.knockRisk<25?C.green:state.knockRisk<55?C.yellow:C.red;
+  const tempCol=t=>t>115?C.red:t>108?C.yellow:C.text;
+  const battCol=state.systemVoltage<11.6?C.red:state.systemVoltage<12.6?C.yellow:C.text;
 
-  const n=engine.cylinders,blockX=24,blockY=52,blockW=396,blockH=286;
-  drawPixelRect(blockX,blockY,blockW,blockH,C.block);
-  ctx.strokeStyle=C.metal;ctx.lineWidth=3;ctx.strokeRect(blockX+1.5,blockY+1.5,blockW-3,blockH-3);
-  const padX=16,availW=blockW-2*padX;
-  let gap=n<=4?20:n<=6?12:6;
-  let cw=(availW-(n-1)*gap)/n;
-  if(cw<10){gap=4;cw=(availW-(n-1)*gap)/n;}
-  const cylH=150,cylY=blockY+42,showLbl=cw>=34;
-  for(let i=0;i<n;i++){
-    const cx=blockX+padX+i*(cw+gap);
-    const phase=(crankAngle+(720/n)*i)%720;
-    drawCylinder(cx,cylY,cw,cylH,phase,showLbl);
-    if(showLbl){ctx.font='8px "Press Start 2P"';ctx.fillStyle=C.cyan;ctx.fillText('C'+(i+1),cx+4,cylY-6)}
+  function box(x,y,w,h,title,lines,accent){
+    ctx.fillStyle='#10101a';ctx.fillRect(px(x),py(y),w*S,h*S);
+    ctx.strokeStyle=accent;ctx.lineWidth=Math.max(1,1.5*S);ctx.strokeRect(px(x),py(y),w*S,h*S);
+    ctx.fillStyle=accent;ctx.font=F(7);ctx.fillText(title,px(x)+6*S,py(y)+12*S);
+    ctx.font=F(6.5);
+    lines.forEach((ln,i)=>{if(!ln)return;ctx.fillStyle=ln[1]||C.text;ctx.fillText(ln[0],px(x)+6*S,py(y)+(24+i*12)*S);});
   }
-  const crankY=cylY+cylH+10;drawPixelRect(blockX+padX,crankY,availW,44,C.metalDark);
-  ctx.fillStyle=C.metalLight;
-  for(let i=0;i<n;i++){const cx=blockX+padX+i*(cw+gap)+cw/2;ctx.beginPath();ctx.arc(cx,crankY+22,Math.min(11,cw*0.22),0,Math.PI*2);ctx.fill()}
+  function pipe(x1,y1,x2,y2,color){
+    ctx.strokeStyle=color;ctx.lineWidth=Math.max(2,3*S);ctx.beginPath();ctx.moveTo(px(x1),py(y1));ctx.lineTo(px(x2),py(y2));ctx.stroke();
+  }
 
-  const infoX=432;drawPixelRect(infoX,40,190,340,'#12121c');ctx.strokeStyle='#333';ctx.strokeRect(infoX+1,41,188,338);
-  ctx.fillStyle=C.cyan;ctx.font='9px "Press Start 2P"';ctx.fillText('SENSORS',infoX+20,60);
-  const m=liveMap();
-  drawMiniGauge(infoX+20,80,'MAP',m.toFixed(2)+' bar',m/Math.max(1.05,engine.mapMax));
-  drawMiniGauge(infoX+20,130,'AFR',state.afr.toFixed(1),(state.afr-10)/8);
-  drawMiniGauge(infoX+20,180,'IAT',Math.round(effIAT(m))+'C',(effIAT(m)+10)/90);
-  drawMiniGauge(infoX+20,230,'COOL',Math.round(state.coolant)+'C',(state.coolant-40)/90);
-  drawMiniGauge(infoX+20,280,'OIL',Math.round(state.oil)+'C',(state.oil-40)/110);
-  drawMiniGauge(infoX+20,330,'VE',(state.ve*100).toFixed(0)+'%',state.ve);
+  // Header + tachometer
+  ctx.fillStyle=C.yellow;ctx.font=F(9);
+  ctx.fillText('ENGINE TEST BENCH',px(14),py(15));
+  ctx.fillStyle=C.green;ctx.font=F(11);ctx.fillText(Math.round(state.rpm)+' RPM',px(470),py(16));
+  const tbX=14,tbY=22,tbW=612,tbH=7;
+  ctx.fillStyle='#1a1a28';ctx.fillRect(px(tbX),py(tbY),tbW*S,tbH*S);
+  const rl=engine.redline,rpmFrac=clamp(state.rpm/rl,0,1),redZone=0.92;
+  ctx.fillStyle='#3a1414';ctx.fillRect(px(tbX+tbW*redZone),py(tbY),tbW*(1-redZone)*S,tbH*S);
+  ctx.fillStyle=rpmFrac>redZone?C.red:C.green;ctx.fillRect(px(tbX),py(tbY),tbW*rpmFrac*S,tbH*S);
 
-  drawPixelRect(0,H-32,W,32,'#12121c');
+  // Connecting pipes (drawn first, boxes on top)
+  pipe(180,110,235,150,C.intake);   // intake → engine
+  pipe(460,110,405,150,C.yellow);   // fuel → engine
+  pipe(235,250,180,300,C.exhaust);  // engine → exhaust
+  pipe(405,235,460,290,C.green);     // engine → dyno (shaft)
+  pipe(320,290,320,312,'#556');      // engine → electrical
+
+  // Central engine
+  const ex=235,ey=118,ew=170,eh=172;
+  box(ex,ey,ew,eh,'ENGINE',[
+    [engine.cylinders+'CYL '+LAYOUT_LABEL[engine.layout]+' '+disp+'L'],
+    ['CR '+engine.compression.toFixed(1)+':1'],
+    ['COOL '+Math.round(state.coolant)+'C',tempCol(state.coolant)],
+    ['OIL  '+Math.round(state.oil)+'C',tempCol(state.oil)],
+    ['ADV  '+Math.round(activeAdvance(state.rpm,m))+'°'+(engine.timingMode==='auto'?' AUTO':''),C.cyan],
+    ['HEALTH '+(state.blown?'DEAD':Math.round(state.engineHealth*100)+'%'),state.blown||state.engineHealth<0.3?C.red:state.engineHealth<0.7?C.yellow:C.green],
+    detailed?['CAM '+engine.cam.toUpperCase()+(engine.vvt?'+VVT':'')]:null,
+    detailed?['ALT '+engine.altMaxA+'A']:null
+  ],C.metal);
+  // little cylinder + flywheel glyph in the engine box
+  const gx=ex+ew-46,gy=ey+26,gw=30,gh=64;
+  ctx.fillStyle='#1a1a28';ctx.fillRect(px(gx),py(gy),gw*S,gh*S);
+  ctx.strokeStyle=C.metal;ctx.lineWidth=Math.max(1,1.2*S);ctx.strokeRect(px(gx),py(gy),gw*S,gh*S);
+  const pistonY=gy+6+(1-Math.cos(visualCrank))/2*(gh*0.42);
+  ctx.fillStyle=state.blown?'#553':C.piston;ctx.fillRect(px(gx+4),py(pistonY),(gw-8)*S,14*S);
+  ctx.strokeStyle=C.rod;ctx.lineWidth=Math.max(1,2*S);ctx.beginPath();
+  ctx.moveTo(px(gx+gw/2),py(pistonY+14));ctx.lineTo(px(gx+gw/2+Math.sin(visualCrank)*6),py(gy+gh+8));ctx.stroke();
+  ctx.fillStyle=C.metalLight;ctx.beginPath();ctx.arc(px(gx+gw/2),py(gy+gh+8),5*S,0,Math.PI*2);ctx.fill();
+
+  // Intake (top-left)
+  box(20,58,160,86,'AIR INTAKE',[
+    [INTAKE_SYS[engine.intakeSys].label,C.cyan],
+    ['FILTER '+AIR_FILTER[engine.airFilter].label.split(' ')[0]],
+    ['MAP  '+m.toFixed(2)+' bar'],
+    ['IAT  '+Math.round(effIAT(m))+'C'],
+    engine.intake!=='na'?['BOOST +'+Math.max(0,m-1).toFixed(2),C.yellow]:['VE   '+(state.ve*100).toFixed(0)+'%'],
+    engine.intake!=='na'?['VE   '+(state.ve*100).toFixed(0)+'%']:null
+  ],C.intake);
+
+  // Fuel system (top-right)
+  const lam=(state.afr/engine.stoichAFR).toFixed(2);
+  box(460,45,165,116,'FUEL SYSTEM',[
+    [FUELS[engine.fuel].label,C.yellow],
+    ['AFR  '+state.afr.toFixed(1)+' λ'+lam],
+    ['FLOW '+state.fuelFlowLph.toFixed(1)+' L/h'],
+    [(engine.injector==='direct'?'DIRECT':'PORT')+' INJ'],
+    ['IGN  '+(engine.timingMode==='auto'?'AUTO ECU':engine.ignitionAdv+'° FIXED')],
+    detailed?['SPARK '+engine.ignitionType.toUpperCase()]:null,
+    detailed?['BSFC '+(state.bsfc>500?'---':Math.round(state.bsfc))]:null
+  ],C.yellow);
+
+  // Exhaust / analyser (bottom-left)
+  box(20,250,160,100,'EXHAUST • ANALYSER',[
+    ['SYSTEM '+engine.exhaust.toUpperCase()],
+    ['KNOCK  '+knockTxt+' ('+Math.round(state.knockRisk)+')',knockCol],
+    ['DETON  '+(state.knockRisk>60?'RETARD/CUT':'OK'),state.knockRisk>60?C.red:C.green],
+    detailed?['THERM.EFF '+state.thermalEff.toFixed(0)+'%']:null
+  ],C.exhaust);
+
+  // Dynamometer (bottom-right) + coupling
+  ctx.fillStyle=C.metalLight;ctx.beginPath();ctx.arc(px(432),py(262),5*S,0,Math.PI*2);ctx.fill();
+  box(460,230,165,120,'DYNAMOMETER',[
+    ['POWER  '+state.powerHP.toFixed(0)+' HP',C.green],
+    ['TORQUE '+state.torque.toFixed(0)+' Nm',C.cyan],
+    ['LOAD   '+Math.round(state.load*100)+'%'],
+    ['TH.EFF '+state.thermalEff.toFixed(0)+'%'],
+    ['BSFC   '+(state.bsfc>500?'---':Math.round(state.bsfc))],
+    detailed?['BMEP '+state.bmep.toFixed(1)+' bar']:null
+  ],C.green);
+
+  // Electrical (bottom-center)
+  box(250,312,140,62,'ELECTRICAL',[
+    ['BATT '+state.systemVoltage.toFixed(1)+'V'+(state.systemVoltage<11.6?' LOW':''),battCol],
+    ['SOC '+Math.round(state.batterySOC*100)+'% • '+Math.round(elecDemandA())+'A draw']
+  ],C.cyan);
+
+  // Status strip
+  ctx.fillStyle='#12121c';ctx.fillRect(px(0),py(398),640*S,24*S);
   const alarm=state.blown||state.wearCause||state.knockRisk>70;
-  ctx.fillStyle=alarm?C.red:(state.knockRisk>40||state.engineHealth<0.7?C.yellow:C.green);ctx.font='9px "Press Start 2P"';
+  ctx.fillStyle=alarm?C.red:(state.knockRisk>40||state.engineHealth<0.7?C.yellow:C.green);ctx.font=F(8);
   let msg;
-  if(state.blown)msg='ENGINE FAILURE — '+state.wearCause+' • REBUILD';
-  else{
-    msg='CYCLE: '+getStrokeName(crankAngle%720);
-    if(engine.intake==='turbo')msg+='  •  BOOST +'+state.boostActual.toFixed(2);
-    msg+='  •  ADV '+Math.round(activeAdvance(state.rpm,state.map))+'°'+(engine.timingMode==='auto'?'*':'');
-    msg+='  •  '+Math.round(state.engineHealth*100)+'%HP';
-    if(state.wearCause)msg+='  •  DAMAGE:'+state.wearCause;
-    else if(state.knockRisk>50)msg+='  •  KNOCK WARNING';
-  }
-  ctx.fillText(msg,12,H-12)
+  if(state.blown)msg='ENGINE FAILURE — '+state.wearCause+' • REBUILD WITH BUILD & DYNO';
+  else if(state.wearCause)msg='DAMAGE: '+state.wearCause+' — HEALTH '+Math.round(state.engineHealth*100)+'% FALLING';
+  else if(!wearEnabled)msg='WEAR OFF (INVINCIBLE) • '+state.powerHP.toFixed(0)+' HP @ '+Math.round(state.rpm)+' RPM';
+  else msg=(state.powerHP>5?'RUNNING':'IDLE')+' • '+state.powerHP.toFixed(0)+' HP • '+state.torque.toFixed(0)+' Nm'+(detailed?'  ('+INTAKE_SYS[engine.intakeSys].label+' • '+FUELS[engine.fuel].label+')':'  •  '+(fullscreen?'':'⛶ FULL for detail'));
+  ctx.fillText(msg,px(10),py(414));
 }
 function drawDyno(){
   const W=canvas.width,H=canvas.height,rMax=engine.redline;
@@ -1041,6 +1090,12 @@ function bindControls(){
   document.getElementById('btnEco').addEventListener('click',()=>applyPreset({throttle:0.35,load:0.30,afr:15.8,iat:30,coolant:92,oil:98}));
   document.getElementById('btnReset').addEventListener('click',()=>{setAutoThermal(false);state.engineHealth=1.0;state.blown=false;state.wearCause='';state.coolant=90;state.oil=100;state.batterySOC=1.0;applyPreset({throttle:0.10,load:0.20,afr:14.7,iat:25,coolant:90,oil:100})});
   document.getElementById('btnAutoThermal').addEventListener('click',()=>setAutoThermal(!autoThermal));
+  document.getElementById('btnWear').addEventListener('click',()=>{
+    wearEnabled=!wearEnabled;
+    const b=document.getElementById('btnWear');
+    b.classList.toggle('on',wearEnabled);b.setAttribute('aria-pressed',wearEnabled);
+    flash(wearEnabled?'WEAR ON • ENGINE CAN BE DAMAGED':'WEAR OFF • ENGINE INVINCIBLE');
+  });
   document.getElementById('btnSound').addEventListener('click',()=>setSound(!Sound.on));
   document.getElementById('btnSave').addEventListener('click',saveSetup);
   document.getElementById('btnLoad').addEventListener('click',loadSetup);
@@ -1048,6 +1103,17 @@ function bindControls(){
   document.getElementById('tabDesign').addEventListener('click',()=>setTab('design'));
   document.getElementById('tabEngine').addEventListener('click',()=>setTab('engine'));
   document.getElementById('tabDyno').addEventListener('click',()=>setTab('dyno'));
+
+  const vizPanel=document.querySelector('.viz-panel');
+  document.getElementById('btnFullscreen').addEventListener('click',()=>{
+    if(!document.fullscreenElement)(vizPanel.requestFullscreen||vizPanel.webkitRequestFullscreen||(()=>{})).call(vizPanel);
+    else (document.exitFullscreen||document.webkitExitFullscreen||(()=>{})).call(document);
+  });
+  document.addEventListener('fullscreenchange',()=>{
+    fullscreen=!!document.fullscreenElement;
+    if(fullscreen){canvas.width=1280;canvas.height=800;canvas.style.display='block';document.getElementById('designPanel').classList.remove('active');}
+    else{canvas.width=640;canvas.height=420;setTab(vizMode);}
+  });
 
   document.getElementById('edIntake').addEventListener('change',syncDesignEnable);
   document.getElementById('edFuel').addEventListener('change',syncDesignEnable);
@@ -1073,7 +1139,7 @@ function loop(now){
   updatePhysics();
   stepWear(dt);
   updateSound();
-  if(vizMode==='engine')drawEngine(dt);
+  if(fullscreen||vizMode==='engine')drawEngine(dt);
   else if(vizMode==='dyno')drawDyno();
   updateUI();
   requestAnimationFrame(loop);
