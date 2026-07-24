@@ -79,6 +79,20 @@ footer{text-align:center;margin-top:16px;padding:8px;font-size:7px;color:#555;bo
 .build-row{margin-top:12px;display:flex;gap:8px;flex-wrap:wrap}
 .build-row button{flex:1}
 #btnBuild{border-color:#00ff88;color:#00ff88}
+/* 5 tabs — tighten padding so labels fit */
+.viz-tabs button{padding:10px 4px;font-size:7.5px;letter-spacing:0}
+/* ---- Guide & Options tabs (reuse the scrollable design-panel shell) ---- */
+.guide-body{font-size:8px;color:#b8c4d0;line-height:1.9;margin-bottom:4px}
+.guide-body b{color:#ffcc00}
+.guide-body i{color:#00ccff;font-style:normal}
+.opt-row{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:8px 0;border-bottom:2px solid #17172a}
+.opt-row>div{flex:1}
+.opt-row b{font-size:8px;color:#e0e0e0}
+.opt-note{font-size:7px;color:#778;line-height:1.5;margin-top:4px}
+.opt-row button,.opt-select{flex:0 0 auto;min-width:96px}
+.opt-select{font-family:'Press Start 2P',monospace;font-size:8px;padding:8px;background:#12121c;color:#00ff88;border:2px solid #555}
+.vehicle-soon{font-size:8px;color:#aab;line-height:1.8;padding:6px 2px}
+.vehicle-soon b{color:#ffcc00}
 </style>
 </head>
 <body>
@@ -91,8 +105,10 @@ footer{text-align:center;margin-top:16px;padding:8px;font-size:7px;color:#555;bo
 <div class="viz-panel">
 <div class="viz-tabs">
 <button id="tabDesign">DESIGN</button>
-<button id="tabEngine" class="active">ENGINE VIEW</button>
-<button id="tabDyno">DYNO CURVE</button>
+<button id="tabEngine" class="active">ENGINE</button>
+<button id="tabDyno">DYNO</button>
+<button id="tabGuide">GUIDE</button>
+<button id="tabOptions">OPTIONS</button>
 </div>
 <button id="btnFullscreen" class="fs-btn" title="Full-screen detailed view" aria-label="Full-screen detailed view">⛶ FULL</button>
 <canvas id="engineCanvas" width="640" height="420" role="img" aria-label="Engine test-bench schematic with live values"></canvas>
@@ -116,7 +132,7 @@ footer{text-align:center;margin-top:16px;padding:8px;font-size:7px;color:#555;bo
 <div class="design-grid">
 <div class="field"><label for="edIntake">INTAKE TYPE</label><select id="edIntake"><option value="na">NATURALLY ASP.</option><option value="turbo">TURBO</option><option value="supercharger">SUPERCHARGER</option></select></div>
 <div class="field"><label for="edBoost">BOOST TARGET (bar)</label><input type="number" id="edBoost" min="0" max="2.5" step="0.05" value="0"></div>
-<div class="field"><label for="edIntercooler">INTERCOOLER</label><select id="edIntercooler"><option value="yes">YES</option><option value="no">NO</option></select></div>
+<div class="field"><label for="edIntercooler">INTERCOOLER</label><select id="edIntercooler"><option value="none">NONE</option><option value="small">SMALL CORE</option><option value="large">LARGE CORE</option></select></div>
 <div class="field"><label for="edTurboSize">TURBO SIZE</label><select id="edTurboSize"><option value="small">SMALL</option><option value="medium">MEDIUM</option><option value="large">LARGE</option></select></div>
 <div class="field"><label for="edTurboConfig">TURBO CONFIG</label><select id="edTurboConfig"><option value="single">SINGLE</option><option value="twin">TWIN</option><option value="sequential">SEQUENTIAL</option><option value="compound">COMPOUND</option></select></div>
 <div class="field"><label for="edAntilag">ANTI-LAG (ALS)</label><select id="edAntilag"><option value="no">NO</option><option value="yes">YES</option></select></div>
@@ -175,6 +191,92 @@ footer{text-align:center;margin-top:16px;padding:8px;font-size:7px;color:#555;bo
 <button id="btnDesignReset" class="danger">DEFAULTS</button>
 </div>
 </div>
+
+<!-- GUIDE: in-app documentation (kept in-app so the offline PWA stays self-contained) -->
+<div class="design-panel guide-panel" id="guidePanel">
+<h3>GUIDE • HOW IT WORKS</h3>
+<div class="hint">A quick manual for the sim and its numbers. Design → BUILD &amp; DYNO → drive it.</div>
+
+<div class="design-section">The Loop</div>
+<div class="guide-body">
+<b>1. DESIGN</b> an engine (bottom end, air path, fuel &amp; spark, cooling…), then press
+<b>BUILD &amp; DYNO</b>. <b>2. DYNO</b> reads the full power/torque curve and a graded scorecard.
+<b>3. ENGINE</b> is a live test bench: you set <b>THROTTLE</b> and <b>LOAD</b> and watch the
+engine respond in real time. You never set RPM directly — you drive it.
+</div>
+
+<div class="design-section">Driving Controls</div>
+<div class="guide-body">
+<b>THROTTLE</b> — opens the intake; raises manifold pressure → torque → revs.<br>
+<b>LOAD (dyno brake)</b> — resistance that sets the <i>hold RPM</i>. 0% = free-rev to the
+limiter; 100% = holds near idle. It only resists <i>above</i> its target, so any engine can
+always rev up to it.<br>
+<b>ELEC LOAD</b> — accessory draw (lights/AC). Heavy load + small alternator at idle drains
+the battery → low voltage → weak spark.<br>
+<b>AFR</b> — air-fuel ratio. Peak power near λ0.86 (rich), best economy near λ1.05 (lean).<br>
+<b>IAT / COOLANT / OIL</b> — charge &amp; engine temps (auto in AUTO THERMAL mode).<br>
+<b>NITROUS</b> — if fitted, sprays at wide-open throttle from a bottle that depletes.
+</div>
+
+<div class="design-section">Reading the Numbers</div>
+<div class="guide-body">
+<b>HP / kW</b> — power = torque × rpm. <b>TORQUE (Nm)</b> — twisting force; peaks lower than power.<br>
+<b>BMEP (bar)</b> — brake mean effective pressure: torque normalised to displacement, so you can
+compare engines of any size. <b>VE (%)</b> — volumetric efficiency: how well the engine breathes
+vs its swept volume (boost can exceed 100%).<br>
+<b>THERMAL EFF (%)</b> — share of fuel energy turned into work. <b>BSFC (g/kWh)</b> — fuel burned
+per unit power; <i>lower is better</i> (best around stoich, part-load).<br>
+<b>FUEL FLOW (L/h)</b> — live consumption. <b>MAP / BOOST (bar)</b> — manifold pressure; boost is
+MAP above 1.0.<br>
+<b>KNOCK (LOW/MED/HIGH)</b> — detonation risk. AUTO timing retards to control it; sustained HIGH
+does damage. <b>HEALTH (%)</b> — condition; falls under abuse, and 0 = a blown engine (rebuild).<br>
+<b>EMISSIONS (CLEAN/OK/DIRTY)</b> — from the exhaust analyser: CO &amp; HC climb rich, NOx climbs
+lean/hot; a catalytic converter only cleans all three near stoich.<br>
+<b>λ (lambda)</b> — AFR ÷ the fuel's stoichiometric AFR: λ&lt;1 rich, 1 = stoich, &gt;1 lean.
+</div>
+
+<div class="design-section">The Scorecard</div>
+<div class="guide-body">
+Every build is graded <b>S → F</b> from six things: specific <b>power</b> &amp; <b>torque</b>
+(per litre), power<b>band</b> width, thermal <b>eff</b>iciency, knock <b>safety</b>,
+<b>drive</b>ability (low-end torque) and <b>emit</b> (emissions). Chasing peak power usually
+costs drivability, safety and emissions — the score rewards a balanced build.
+</div>
+
+<div class="design-section">Design Subsystems</div>
+<div class="guide-body">
+<b>Bottom end</b> — bore × stroke × cylinders = displacement; oversquare &amp; higher redline shift
+the powerband up.<br>
+<b>Air path</b> — turbo (spools with rpm; size/config trade lag vs top-end) or supercharger (boost
+from idle); intercooler size cools the charge (denser, less knock) with a little lag; exhaust and
+catalytic converter trade flow vs back-pressure/emissions; nitrous is bottled power.<br>
+<b>Induction</b> — carbs → EFI → ITBs set breathing, metering precision and idle quality.<br>
+<b>Valvetrain</b> — wilder cams move power up top &amp; idle lumpy; VVT restores the bottom end.<br>
+<b>Fuel &amp; spark</b> — fuel type, octane, injector, ignition type and FIXED vs AUTO (ECU) timing.<br>
+<b>Cooling &amp; electrical</b> — radiator/fan/oil-cooler/thermostat set temps; alternator size and
+ignition type set charging and the misfire RPM limit.
+</div>
+<div class="guide-body" style="color:#667;margin-top:12px">Tip: turn WEAR off in OPTIONS to
+experiment freely, then back on for consequences.</div>
+</div>
+
+<!-- OPTIONS: sim preferences (sound, wear, language) -->
+<div class="design-panel options-panel" id="optionsPanel">
+<h3>OPTIONS</h3>
+<div class="hint">Simulator preferences. These don't change the engine build.</div>
+
+<div class="design-section">Audio</div>
+<div class="opt-row"><div><b>ENGINE SOUND</b><div class="opt-note">Web Audio engine note (pitched to firing frequency; lumpy idle from wild cams).</div></div>
+<button id="btnSound" class="toggle" aria-pressed="false">SOUND OFF</button></div>
+
+<div class="design-section">Simulation</div>
+<div class="opt-row"><div><b>WEAR &amp; DAMAGE</b><div class="opt-note">On: detonation/overheat/lean-boost/over-rev damage the engine. Off: invincible, for free experimentation.</div></div>
+<button id="btnWear" class="toggle on" aria-pressed="true">WEAR ON</button></div>
+
+<div class="design-section">Language</div>
+<div class="opt-row"><div><b>LANGUAGE PACK</b><div class="opt-note">More language packs are planned. English only for now.</div></div>
+<select id="edLang" class="opt-select"><option value="en">ENGLISH</option><option value="soon" disabled>MORE COMING…</option></select></div>
+</div>
 </div>
 <div class="side-panel">
 <div class="panel">
@@ -193,7 +295,7 @@ footer{text-align:center;margin-top:16px;padding:8px;font-size:7px;color:#555;bo
 <div class="stat" id="statHealth"><span class="label">ENGINE HEALTH</span><div class="value">100</div><span class="unit">%</span></div>
 </div>
 </div>
-<div class="panel">
+<div class="panel" id="controlsPanel">
 <h2>Engine Controls</h2>
 <div class="control-group"><label for="throttle">THROTTLE <span class="val" id="valThrottle">20</span> %</label><input type="range" id="throttle" min="0" max="100" step="1" value="20" aria-label="Throttle pedal position percent"></div>
 <div class="control-group"><label for="load">LOAD (DYNO BRAKE) <span class="val" id="valLoad">20</span> %</label><input type="range" id="load" min="0" max="100" step="1" value="20" aria-label="Applied dyno brake load percent"></div>
@@ -211,22 +313,29 @@ footer{text-align:center;margin-top:16px;padding:8px;font-size:7px;color:#555;bo
 </div>
 <div class="btn-row">
 <button id="btnAutoThermal" class="toggle" aria-pressed="false">AUTO THERMAL</button>
-<button id="btnWear" class="toggle on" aria-pressed="true">WEAR</button>
 <button id="btnNitrous" class="toggle" aria-pressed="false" disabled>NITROUS</button>
-<button id="btnSound" class="toggle" aria-pressed="false">SOUND</button>
-<button id="btnSave">SAVE</button>
-<button id="btnLoad">LOAD</button>
 </div>
 <div class="btn-row">
+<button id="btnLogPull">LOG PULL</button>
+<button id="btnClearPulls">CLR PULLS</button>
+</div>
+<div class="btn-row" style="border-top:2px solid #26263a;padding-top:8px">
+<button id="btnSave">SAVE</button>
+<button id="btnLoad">LOAD</button>
 <button id="btnExport">SAVE FILE</button>
 <button id="btnImport">OPEN FILE</button>
 <button id="btnShare">SHARE</button>
-<button id="btnLogPull">LOG PULL</button>
-<button id="btnClearPulls">CLR PULLS</button>
 </div>
 <input type="file" id="fileInput" accept="application/json,.json" style="display:none">
 <div class="status-bar" id="status">READY • DESIGN AN ENGINE • THEN DYNO IT</div>
 <div class="legend" id="legend">Use the DESIGN tab to build your engine, then tune it here.</div>
+</div>
+<div class="panel" id="vehiclePanel" style="display:none">
+<h2>Vehicle Designer</h2>
+<div class="vehicle-soon">🏎️ <b>Coming soon</b> — feature A on the roadmap.<br><br>
+This is where you'll drop the engine into a car: gearbox ratios, weight, tyre grip and aero
+drag, then run <b>0–60</b>, the <b>¼-mile</b> and <b>top speed</b> off the same dynamic model.
+<br><br><span style="color:#667">For now, design the engine and read it on the dyno.</span></div>
 </div>
 </div>
 </div>
@@ -285,7 +394,7 @@ const AIR_FILTER={
 // coil-on-plug with ECU knock-limited timing).
 const DEFAULT_ENGINE={
   cylinders:4,bore_mm:81,stroke_mm:78,compression:12.5,layout:'inline',redline:7200,
-  intake:'na',boost_bar:0,intercooler:true,turboSize:'medium',turboConfig:'single',scType:'roots',antilag:false,nitrous:'none',exhaust:'sport',cat:'stock',
+  intake:'na',boost_bar:0,intercooler:'large',turboSize:'medium',turboConfig:'single',scType:'roots',antilag:false,nitrous:'none',exhaust:'sport',cat:'stock',
   intakeSys:'efi',airFilter:'perf',
   cam:'stock',vvt:true,
   fuel:'gasoline',octane:95,injector:'direct',ignitionAdv:22,ignitionType:'coil',timingMode:'auto',
@@ -347,6 +456,14 @@ const SC_TYPE={
   centrifugal:{label:'CENTRIFUGAL',lo:0.04,hi:1.00,exp:2,drag:0.80}
 };
 const NITROUS_BAR={none:0,small:2.2,large:4.2};   // extra IMEP (bar) from a nitrous shot
+// Intercooler core: heat = residual charge-heat added per bar of boost (°C). A bigger core
+// cools the charge far better (denser air, more knock margin) but its extra volume adds a
+// little turbo spool lag (more plumbing to pressurise). None = no intercooler.
+const INTERCOOLER={
+  none: {label:'NONE',      heat:25,lag:0.00},
+  small:{label:'SMALL CORE',heat:11,lag:0.05},
+  large:{label:'LARGE CORE',heat:5, lag:0.12}
+};
 // Catalytic converter: a three-way cat only cleans efficiently in a narrow window around
 // stoich. conv = peak conversion efficiency; restrict = exhaust back-pressure (a small
 // top-end VE loss, like an extra air filter). A modern engine uses a stock (high-flow-
@@ -391,7 +508,7 @@ function readEngineFromForm(){
     redline:clamp(Math.round(+g('edRedline').value||7000),5000,9500),
     intake,
     boost_bar:intake==='na'?0:clamp(+g('edBoost').value||0,0,2.5),
-    intercooler:g('edIntercooler').value==='yes',
+    intercooler:g('edIntercooler').value,
     turboSize:g('edTurboSize').value,
     turboConfig:g('edTurboConfig').value,
     antilag:g('edAntilag').value==='yes',
@@ -420,7 +537,9 @@ function applyEngineToForm(e){
   const g=id=>document.getElementById(id);
   g('edCyl').value=e.cylinders;g('edLayout').value=e.layout;g('edBore').value=e.bore_mm;
   g('edStroke').value=e.stroke_mm;g('edCR').value=e.compression;g('edRedline').value=e.redline;
-  g('edIntake').value=e.intake;g('edBoost').value=e.boost_bar;g('edIntercooler').value=e.intercooler?'yes':'no';
+  // Migrate legacy boolean intercooler (true→large, false→none) from older saved builds.
+  g('edIntake').value=e.intake;g('edBoost').value=e.boost_bar;
+  g('edIntercooler').value=(e.intercooler===true?'large':e.intercooler===false?'none':(e.intercooler||'large'));
   g('edTurboSize').value=e.turboSize||'medium';
   g('edTurboConfig').value=e.turboConfig||'single';g('edAntilag').value=e.antilag?'yes':'no';
   g('edScType').value=e.scType||'roots';g('edNitrous').value=e.nitrous||'none';
@@ -501,14 +620,17 @@ function buildEngine(){
   engine.strokeFrictionMult=1+(engine.stroke_mm-86)/320;  // longer stroke = more friction
   engine.maxBoost=engine.intake==='na'?0:engine.boost_bar;
   engine.mapMax=engine.intake==='na'?1.05:1.0+engine.maxBoost;
+  // Intercooler core: charge-heat residual (feeds effIAT) and its spool-lag penalty.
+  const ic=INTERCOOLER[engine.intercooler]||INTERCOOLER.large;
+  engine.icHeat=ic.heat;engine.icLag=ic.lag;
   // Turbo spool characteristics scaled to redline, then modified by the turbo config
-  // (twin/sequential/compound) and anti-lag (keeps it spooled — earlier, faster).
+  // (twin/sequential/compound), anti-lag (keeps it spooled) and intercooler volume (lag).
   const tb=TURBO[engine.turboSize]||TURBO.medium, cfg=TURBO_CONFIG[engine.turboConfig]||TURBO_CONFIG.single;
   const als=engine.antilag?0.62:1.0, alsK=engine.antilag?1.5:1.0;
   engine.spool50=tb.spool50*cfg.spool*als*engine.redline;
   engine.spoolWidth=tb.width*cfg.width*engine.redline;
   engine.turboChoke=tb.choke*cfg.choke;
-  engine.spoolK=tb.k*cfg.k*alsK;
+  engine.spoolK=tb.k*cfg.k*alsK*(engine.intake==='turbo'?(1-engine.icLag):1);
   engine.nitrousBar=NITROUS_BAR[engine.nitrous]||0;
   state.boostActual=0;state.nitrousActive=false;state.nitrousCharge=1.0;   // fresh tanks
   state.engineHealth=1.0;state.blown=false;state.wearCause='';   // a fresh (rebuilt) engine
@@ -566,10 +688,11 @@ function updateDesignSummary(){
   const specific=(engine.displacement_L>0? (state.powerHP/engine.displacement_L):0).toFixed(0);
   const note=engine.layout!=='inline'?'<br><span style="color:#886">Note: '+LAYOUT_LABEL[engine.layout]+' bank visuals are simplified for now.</span>':'';
   let induction;
+  const icTxt=engine.intercooler==='none'?' (no IC)':' ('+(engine.intercooler==='large'?'LG':'SM')+' IC)';
   if(engine.intake==='na')induction='Naturally aspirated';
   else if(engine.intake==='turbo')
-    induction=TURBO_CONFIG[engine.turboConfig].label+' TURBO ('+engine.turboSize.toUpperCase()+')'+(engine.antilag?' +ALS':'')+' @ '+engine.boost_bar.toFixed(2)+' bar'+(engine.intercooler?' (IC)':' (no IC)')+', 50% boost @ '+Math.round(engine.spool50)+' rpm';
-  else induction=SC_TYPE[engine.scType].label+' S/C @ '+engine.boost_bar.toFixed(2)+' bar'+(engine.intercooler?' (IC)':' (no IC)');
+    induction=TURBO_CONFIG[engine.turboConfig].label+' TURBO ('+engine.turboSize.toUpperCase()+')'+(engine.antilag?' +ALS':'')+' @ '+engine.boost_bar.toFixed(2)+' bar'+icTxt+', 50% boost @ '+Math.round(engine.spool50)+' rpm';
+  else induction=SC_TYPE[engine.scType].label+' S/C @ '+engine.boost_bar.toFixed(2)+' bar'+icTxt;
   if(engine.nitrous!=='none')induction+=' • <span style="color:#ff66cc">'+(engine.nitrous==='large'?'BIG':'SMALL')+' NITROUS</span>';
   document.getElementById('designSummary').innerHTML=
     '<b>'+engine.cylinders+' × '+engine.bore_mm+'×'+engine.stroke_mm+'mm</b> → <b>'+disp+' L</b> '+LAYOUT_LABEL[engine.layout]+
@@ -621,7 +744,7 @@ function effIAT(map){
   let t=state.iat;
   if(engine.intake!=='na'){
     const boost=Math.max(0,map-1.0);
-    t+=boost*(engine.intercooler?6:25);
+    t+=boost*(engine.icHeat!=null?engine.icHeat:25);
   }
   t-=engine.chargeCool*(engine.injector==='direct'?1.15:1.0);   // DI cools the charge slightly more
   return t;
@@ -983,7 +1106,7 @@ function setSound(on){
   if(on){initSound();if(Sound.ctx&&Sound.ctx.state==='suspended')Sound.ctx.resume();}
   else if(Sound.ctx)Sound.gain.gain.setTargetAtTime(0,Sound.ctx.currentTime,0.05);
   const btn=document.getElementById('btnSound');
-  btn.classList.toggle('on',on);btn.setAttribute('aria-pressed',on);
+  btn.classList.toggle('on',on);btn.setAttribute('aria-pressed',on);btn.textContent=on?'SOUND ON':'SOUND OFF';
 }
 
 // ---- Save / load full builds (localStorage) ----
@@ -1372,11 +1495,19 @@ function updateUI(){
 
 function setTab(mode){
   vizMode=mode;
-  document.getElementById('tabDesign').classList.toggle('active',mode==='design');
-  document.getElementById('tabEngine').classList.toggle('active',mode==='engine');
-  document.getElementById('tabDyno').classList.toggle('active',mode==='dyno');
-  canvas.style.display=mode==='design'?'none':'block';
+  ['Design','Engine','Dyno','Guide','Options'].forEach(m=>
+    document.getElementById('tab'+m).classList.toggle('active',mode===m.toLowerCase()));
+  // DESIGN / GUIDE / OPTIONS are full-panel overlays that replace the canvas.
+  const overlay=mode==='design'||mode==='guide'||mode==='options';
+  canvas.style.display=overlay?'none':'block';
+  document.getElementById('btnFullscreen').style.display=overlay?'none':'block';
   document.getElementById('designPanel').classList.toggle('active',mode==='design');
+  document.getElementById('guidePanel').classList.toggle('active',mode==='guide');
+  document.getElementById('optionsPanel').classList.toggle('active',mode==='options');
+  // Right column: runtime Engine Controls only while driving/dyno; the Vehicle Designer
+  // placeholder takes their space on the DESIGN tab.
+  document.getElementById('controlsPanel').style.display=(mode==='engine'||mode==='dyno')?'':'none';
+  document.getElementById('vehiclePanel').style.display=(mode==='design')?'':'none';
   updateUI();
 }
 
@@ -1405,7 +1536,7 @@ function bindControls(){
   document.getElementById('btnWear').addEventListener('click',()=>{
     wearEnabled=!wearEnabled;
     const b=document.getElementById('btnWear');
-    b.classList.toggle('on',wearEnabled);b.setAttribute('aria-pressed',wearEnabled);
+    b.classList.toggle('on',wearEnabled);b.setAttribute('aria-pressed',wearEnabled);b.textContent=wearEnabled?'WEAR ON':'WEAR OFF';
     flash(wearEnabled?'WEAR ON • ENGINE CAN BE DAMAGED':'WEAR OFF • ENGINE INVINCIBLE');
   });
   document.getElementById('btnNitrous').addEventListener('click',()=>{
@@ -1428,6 +1559,8 @@ function bindControls(){
   document.getElementById('tabDesign').addEventListener('click',()=>setTab('design'));
   document.getElementById('tabEngine').addEventListener('click',()=>setTab('engine'));
   document.getElementById('tabDyno').addEventListener('click',()=>setTab('dyno'));
+  document.getElementById('tabGuide').addEventListener('click',()=>setTab('guide'));
+  document.getElementById('tabOptions').addEventListener('click',()=>setTab('options'));
 
   const vizPanel=document.querySelector('.viz-panel');
   document.getElementById('btnFullscreen').addEventListener('click',()=>{
@@ -1436,7 +1569,8 @@ function bindControls(){
   });
   document.addEventListener('fullscreenchange',()=>{
     fullscreen=!!document.fullscreenElement;
-    if(fullscreen){canvas.width=1280;canvas.height=800;canvas.style.display='block';document.getElementById('designPanel').classList.remove('active');}
+    if(fullscreen){canvas.width=1280;canvas.height=800;canvas.style.display='block';
+      ['designPanel','guidePanel','optionsPanel'].forEach(id=>document.getElementById(id).classList.remove('active'));}
     else{canvas.width=640;canvas.height=420;setTab(vizMode);}
   });
 
