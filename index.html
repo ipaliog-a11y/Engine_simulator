@@ -209,6 +209,14 @@ footer{text-align:center;margin-top:16px;padding:8px;font-size:7px;color:#555;bo
 <button id="btnSave">SAVE</button>
 <button id="btnLoad">LOAD</button>
 </div>
+<div class="btn-row">
+<button id="btnExport">SAVE FILE</button>
+<button id="btnImport">OPEN FILE</button>
+<button id="btnShare">SHARE</button>
+<button id="btnLogPull">LOG PULL</button>
+<button id="btnClearPulls">CLR PULLS</button>
+</div>
+<input type="file" id="fileInput" accept="application/json,.json" style="display:none">
 <div class="status-bar" id="status">READY • DESIGN AN ENGINE • THEN DYNO IT</div>
 <div class="legend" id="legend">Use the DESIGN tab to build your engine, then tune it here.</div>
 </div>
@@ -310,8 +318,11 @@ let fullscreen=false;   // detailed full-screen schematic
 let visualCrank=0;      // calm decorative flywheel angle (not real RPM)
 let statusFlashUntil=0;
 const SAVE_KEY='pixelEngineSim.setup.v2';
+const APP_TAG='PixelEngineSim',APP_VER='0.5';
 let dynoCache=null;
 let dynoCacheKey='';
+let dynoPulls=[];   // saved dyno pulls to overlay for comparison
+const PULL_COLORS=['#ff66cc','#ffaa00','#66ddff','#aaff66'];
 
 function clamp(v,lo,hi){return Math.max(lo,Math.min(hi,v))}
 const otto=(cr)=>1-Math.pow(cr,-0.3);   // relative Otto-cycle efficiency (gamma≈1.3)
@@ -459,6 +470,7 @@ function buildEngine(){
   syncSliders();
 
   buildRev++;dynoCache=null;
+  engine.score=scoreEngine();
   updateEngineLabels();
   updateDesignSummary();
 }
@@ -488,7 +500,14 @@ function updateDesignSummary(){
     '<br>Fuel <b>'+FUELS[engine.fuel].label+'</b> ('+engine.effOctane+' oct, '+engine.stoichAFR.toFixed(1)+':1 stoich'+(engine.chargeCool?', −'+engine.chargeCool+'°C charge':'')+')'+
     '<br>'+(engine.injector==='direct'?'<b>Direct inj</b> • ':'')+'Ignition <b>'+(engine.timingMode==='auto'?'AUTO (ECU)':engine.ignitionAdv+'° fixed')+' '+engine.ignitionType.toUpperCase()+'</b>'+
     '<br>Cooling <b>'+engine.radiator.toUpperCase()+' RAD</b> • <b>'+engine.fan.toUpperCase()+' FAN</b>'+(engine.oilCooler?' • <b>OIL COOLER</b>':'')+' • Thermostat <b>'+engine.thermostat+'°C</b>'+
-    '<br>Electrical <b>'+engine.altMaxA+'A alt</b> • Ignition misfire above <b>~'+engine.dwellLimit+'</b> rpm ('+engine.ignitionType.toUpperCase()+')'+note;
+    '<br>Electrical <b>'+engine.altMaxA+'A alt</b> • Ignition misfire above <b>~'+engine.dwellLimit+'</b> rpm ('+engine.ignitionType.toUpperCase()+')'+note+
+    scoreLine(engine.score);
+}
+function scoreLine(s){
+  if(!s)return'';
+  const gc=s.overall>=76?'#00ff88':s.overall>=46?'#ffcc00':'#ff6666';
+  return '<br><span style="color:'+gc+'">SCORE <b>'+s.grade+' ('+s.overall+')</b></span> • '+s.peakHP+'hp @'+s.peakHPrpm+' • '+s.peakTQ+'Nm @'+s.peakTQrpm+
+    '<br><span style="color:#889">'+s.hpPerL+'hp/L • band '+s.band+'rpm • eff '+s.thEff+'% • safety '+s.safety+' • drive '+s.drive+'%</span>';
 }
 
 // ---- Turbo spool: how much of the target boost is available at a given RPM ----
@@ -805,26 +824,119 @@ function setSound(on){
 }
 
 // ---- Save / load full builds (localStorage) ----
+// ---- Shared build (de)serialization for localStorage, files and share links ----
+function serializeBuild(name,note){
+  return {app:APP_TAG,v:APP_VER,name:name||'engine',note:note||'',date:new Date().toISOString().slice(0,10),
+    engine:readEngineFromForm(),   // clean design spec only (no derived fields)
+    tune:{throttle:state.throttle,load:state.load,elecLoad:state.elecLoad,afr:state.afr,iat:state.iat,coolant:state.coolant,oil:state.oil,autoThermal}};
+}
+function applyBuild(s){
+  if(!s||!s.engine)throw new Error('not an engine build');
+  applyEngineToForm(Object.assign({},DEFAULT_ENGINE,s.engine));
+  buildEngine();
+  const t=s.tune||s.state||{};
+  ['throttle','load','elecLoad','afr','iat','coolant','oil'].forEach(k=>{if(typeof t[k]==='number')state[k]=t[k];});
+  state.throttle=clamp(state.throttle,0,1);state.load=clamp(state.load,0,1);state.elecLoad=clamp(state.elecLoad,0,1);
+  setAutoThermal(!!t.autoThermal);
+  dynoCache=null;syncSliders();
+  return s.name||'engine';
+}
 function saveSetup(){
-  const s={engine:engine,state:{throttle:state.throttle,load:state.load,elecLoad:state.elecLoad,afr:state.afr,iat:state.iat,coolant:state.coolant,oil:state.oil,autoThermal}};
-  try{localStorage.setItem(SAVE_KEY,JSON.stringify(s));flash('BUILD SAVED');}
+  try{localStorage.setItem(SAVE_KEY,JSON.stringify(serializeBuild('quicksave','')));flash('BUILD SAVED');}
   catch(e){flash('SAVE FAILED (storage blocked)','err');}
 }
 function loadSetup(){
   let raw;try{raw=localStorage.getItem(SAVE_KEY);}catch(e){raw=null;}
   if(!raw){flash('NO SAVED BUILD','warn');return;}
-  try{
-    const s=JSON.parse(raw);
-    if(s.engine)applyEngineToForm(Object.assign({},DEFAULT_ENGINE,s.engine));
-    buildEngine();
-    if(s.state){
-      const st=s.state;
-      ['throttle','load','elecLoad','afr','iat','coolant','oil'].forEach(k=>{if(typeof st[k]==='number')state[k]=st[k];});
-      state.throttle=clamp(state.throttle,0,1);state.load=clamp(state.load,0,1);state.elecLoad=clamp(state.elecLoad,0,1);
-      setAutoThermal(!!st.autoThermal);
-    }
-    dynoCache=null;syncSliders();flash('BUILD LOADED');
-  }catch(e){flash('LOAD FAILED (corrupt data)','err');}
+  try{applyBuild(JSON.parse(raw));flash('BUILD LOADED');}
+  catch(e){flash('LOAD FAILED (corrupt data)','err');}
+}
+// ---- Save to / open from file (named, with a note) ----
+function exportBuild(){
+  const name=(typeof prompt==='function'?prompt('Engine name:',(engine.name||'My Engine')):'My Engine');
+  if(name===null)return;
+  const note=(typeof prompt==='function'?(prompt('Note (optional):','')||''):'');
+  const build=serializeBuild(name,note);
+  const fn=(name.replace(/[^a-z0-9]+/gi,'_').replace(/^_|_$/g,'')||'engine')+'.pes.json';
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(new Blob([JSON.stringify(build,null,2)],{type:'application/json'}));
+  a.download=fn;document.body.appendChild(a);a.click();
+  setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove();},1000);
+  flash('SAVED FILE: '+fn);
+}
+function openFileDialog(){document.getElementById('fileInput').click();}
+function readBuildFile(file){
+  const r=new FileReader();
+  r.onload=()=>{try{const nm=applyBuild(JSON.parse(r.result));flash('OPENED: '+nm);setTab('dyno');}catch(e){flash('OPEN FAILED — not a valid engine file','err');}};
+  r.onerror=()=>flash('OPEN FAILED — could not read file','err');
+  r.readAsText(file);
+}
+// ---- Share via encoded link (URL hash) ----
+function encodeBuild(b){return btoa(unescape(encodeURIComponent(JSON.stringify(b))));}
+function decodeBuild(s){return JSON.parse(decodeURIComponent(escape(atob(s))));}
+function shareBuild(){
+  const name=(typeof prompt==='function'?prompt('Name this shared engine:',(engine.name||'My Engine')):'My Engine');
+  if(name===null)return;
+  const code=encodeBuild(serializeBuild(name,''));
+  const url=location.origin+location.pathname+'#b='+code;
+  try{location.hash='b='+code;}catch(e){}
+  if(navigator.share){navigator.share({title:'Pixel Engine Sim — '+name,url:url}).catch(()=>{});}
+  if(navigator.clipboard&&navigator.clipboard.writeText){
+    navigator.clipboard.writeText(url).then(()=>flash('SHARE LINK COPIED TO CLIPBOARD'),()=>flash('SHARE LINK IN ADDRESS BAR'));
+  }else flash('SHARE LINK IN ADDRESS BAR');
+}
+function loadFromHash(){
+  const h=location.hash||'';
+  if(h.indexOf('#b=')!==0)return false;
+  try{const nm=applyBuild(decodeBuild(h.slice(3)));flash('LOADED SHARED: '+nm);return true;}
+  catch(e){return false;}
+}
+// ---- Dyno pull logging (overlay saved curves for comparison) ----
+function logPull(){
+  const data=getDynoData().map(p=>({rpm:p.rpm,torque:p.torque,powerHP:p.powerHP}));
+  let peak=0;data.forEach(p=>peak=Math.max(peak,p.powerHP));
+  dynoPulls.push({label:(engine.name||engine.displacement_L.toFixed(1)+'L')+' '+Math.round(peak)+'hp',pts:data,color:PULL_COLORS[dynoPulls.length%PULL_COLORS.length]});
+  if(dynoPulls.length>4)dynoPulls.shift();
+  flash('PULL LOGGED ('+dynoPulls.length+' overlaid) — SEE DYNO');
+}
+function clearPulls(){dynoPulls=[];flash('DYNO PULLS CLEARED');}
+// ---- Scoring: rate the design at a standard WOT best-power condition ----
+function scoreEngine(){
+  const sv={afr:state.afr,iat:state.iat,coolant:state.coolant,oil:state.oil,eh:state.engineHealth,bl:state.blown,el:state.elecLoad,map:state.map,rpm:state.rpm};
+  state.iat=25;state.coolant=90;state.oil=100;state.engineHealth=1;state.blown=false;state.elecLoad=0.3;
+  const rMax=engine.redline;
+  // best-power WOT sweep → peaks, powerband, low-end torque
+  state.afr=engine.stoichAFR*0.86;
+  let peakHP=0,peakHPrpm=0,peakTQ=0,peakTQrpm=0;const pts=[];
+  for(let r=1000;r<=rMax;r+=100){const p=calcAtRpm(r);pts.push(p);
+    if(p.powerHP>peakHP){peakHP=p.powerHP;peakHPrpm=r;}if(p.torque>peakTQ){peakTQ=p.torque;peakTQrpm=r;}}
+  let lo=rMax,hi=1000;pts.forEach(p=>{if(p.powerHP>=0.8*peakHP){lo=Math.min(lo,p.rpm);hi=Math.max(hi,p.rpm);}});
+  const band=Math.max(0,hi-lo);
+  const tqLow=(pts.find(p=>p.rpm>=2000)||pts[0]).torque,drive=clamp(tqLow/peakTQ,0,1);
+  // safety: worst knock over a stoich WOT stress sweep
+  state.afr=engine.stoichAFR;let maxKnock=0;
+  for(let r=1000;r<=rMax;r+=200)maxKnock=Math.max(maxKnock,computeKnockRisk(r,wotMapAt(r)));
+  const safety=clamp(1-maxKnock/100,0,1);
+  // efficiency: best brake thermal efficiency across a high-load / mid-rpm island (where
+  // BSFC is best — pumping/friction are the smallest fraction there)
+  state.afr=engine.stoichAFR;let thEff=0;
+  for(const mm of [0.8,1.0,Math.min(1.2,engine.mapMax)]){const cm=Math.min(mm,engine.mapMax);
+    for(const rf of [0.6,0.85,1.05]){const rr=Math.round(clamp(peakTQrpm*rf,1200,rMax));
+      const cr=calcAtRpm(rr,cm);
+      const airMass=(cm*1e5*(engine.displacement_L/1000)*(rr/60)*cr.ve)/(287*(effIAT(cm)+273.15)*2);
+      const fuelPower=((airMass/state.afr)/engine.meteringEff)*engine.fuelLHV*1e6/1000;
+      if(fuelPower>0.1)thEff=Math.max(thEff,clamp((cr.powerKW/fuelPower)*100,0,45));
+    }}
+  Object.assign(state,{afr:sv.afr,iat:sv.iat,coolant:sv.coolant,oil:sv.oil,engineHealth:sv.eh,blown:sv.bl,elecLoad:sv.el,map:sv.map,rpm:sv.rpm});
+
+  const hpPerL=peakHP/engine.displacement_L,nmPerL=peakTQ/engine.displacement_L;
+  const sPower=clamp((hpPerL-30)/120,0,1)*100, sTorque=clamp((nmPerL-60)/100,0,1)*100;
+  const sBand=clamp(band/(rMax*0.55),0,1)*100, sEff=clamp((thEff-10)/16,0,1)*100;
+  const sSafe=safety*100, sDrive=clamp((drive-0.4)/0.5,0,1)*100;
+  const overall=Math.round(0.28*sPower+0.14*sTorque+0.16*sBand+0.14*sEff+0.16*sSafe+0.12*sDrive);
+  const grade=overall>=88?'S':overall>=76?'A':overall>=62?'B':overall>=46?'C':overall>=30?'D':'F';
+  return {peakHP:Math.round(peakHP),peakHPrpm,peakTQ:Math.round(peakTQ),peakTQrpm,hpPerL:Math.round(hpPerL),
+    nmPerL:Math.round(nmPerL),band,thEff:Math.round(thEff),safety:Math.round(sSafe),drive:Math.round(drive*100),overall,grade};
 }
 function flash(msg,cls){
   const status=document.getElementById('status');
@@ -979,9 +1091,10 @@ function drawDyno(){
   const data=getDynoData();
   let maxT=0,maxP=0,peakT={rpm:0,v:0},peakP={rpm:0,v:0};
   data.forEach(p=>{if(p.torque>maxT){maxT=p.torque;peakT={rpm:p.rpm,v:p.torque}}if(p.powerHP>maxP){maxP=p.powerHP;peakP={rpm:p.rpm,v:p.powerHP}}});
+  dynoPulls.forEach(pl=>pl.pts.forEach(p=>{maxT=Math.max(maxT,p.torque);maxP=Math.max(maxP,p.powerHP)}));  // fit overlays too
   maxT=Math.max(maxT*1.15,40);maxP=Math.max(maxP*1.15,40);
 
-  const gX=55,gY=50,gW=530,gH=300;
+  const gX=55,gY=48,gW=530,gH=262;
   drawPixelRect(gX,gY,gW,gH,'#0a0a14');ctx.strokeStyle='#333';ctx.lineWidth=2;ctx.strokeRect(gX,gY,gW,gH);
   ctx.strokeStyle='#1a1a28';ctx.lineWidth=1;
   for(let i=1;i<8;i++){
@@ -998,6 +1111,15 @@ function drawDyno(){
   ctx.fillStyle=C.yellow;ctx.fillText('0',gX+gW+6,gY+gH+3);ctx.fillText(Math.round(maxP/2).toString(),gX+gW+6,gY+gH/2+3);ctx.fillText(Math.round(maxP).toString(),gX+gW+6,gY+10);ctx.fillText('HP',gX+gW+6,gY+gH/2-12);
 
   const rpmToX=r=>gX+((r-1000)/(rMax-1000))*gW,tToY=t=>gY+gH-(t/maxT)*gH,pToY=p=>gY+gH-(p/maxP)*gH;
+  // Overlaid saved pulls (faint, behind the current curves) for comparison
+  ctx.lineWidth=1.5;
+  dynoPulls.forEach(pl=>{
+    ctx.strokeStyle=pl.color;ctx.globalAlpha=0.55;
+    ctx.beginPath();pl.pts.forEach((p,i)=>{if(p.rpm<1000||p.rpm>rMax)return;const x=rpmToX(p.rpm),y=pToY(p.powerHP);i===0?ctx.moveTo(x,y):ctx.lineTo(x,y)});ctx.stroke();
+    ctx.globalAlpha=0.30;
+    ctx.beginPath();pl.pts.forEach((p,i)=>{if(p.rpm<1000||p.rpm>rMax)return;const x=rpmToX(p.rpm),y=tToY(p.torque);i===0?ctx.moveTo(x,y):ctx.lineTo(x,y)});ctx.stroke();
+  });
+  ctx.globalAlpha=1;
   ctx.strokeStyle=C.cyan;ctx.lineWidth=3;ctx.beginPath();
   data.forEach((p,i)=>{const x=rpmToX(p.rpm),y=tToY(p.torque);i===0?ctx.moveTo(x,y):ctx.lineTo(x,y)});ctx.stroke();
   ctx.strokeStyle=C.yellow;ctx.lineWidth=3;ctx.beginPath();
@@ -1008,13 +1130,23 @@ function drawDyno(){
   ctx.fillStyle=C.cyan;ctx.beginPath();ctx.arc(rpmToX(peakT.rpm),tToY(peakT.v),5,0,Math.PI*2);ctx.fill();
   ctx.fillStyle=C.yellow;ctx.beginPath();ctx.arc(rpmToX(peakP.rpm),pToY(peakP.v),5,0,Math.PI*2);ctx.fill();
 
-  drawPixelRect(gX,gY+gH+40,gW,50,'#12121c');
-  ctx.fillStyle=C.cyan;ctx.font='8px "Press Start 2P"';ctx.fillText('■ TORQUE  peak '+peakT.v.toFixed(0)+' Nm @ '+peakT.rpm+' rpm',gX+10,gY+gH+58);
-  ctx.fillStyle=C.yellow;ctx.fillText('■ POWER   peak '+peakP.v.toFixed(0)+' HP @ '+peakP.rpm+' rpm',gX+10,gY+gH+76);
-  ctx.fillStyle=C.green;ctx.fillText('│ current RPM',gX+340,gY+gH+58);
-
-  drawPixelRect(0,H-32,W,32,'#12121c');ctx.fillStyle=C.green;ctx.font='9px "Press Start 2P"';
-  ctx.fillText('MAP '+state.map.toFixed(2)+'  AFR '+state.afr.toFixed(1)+'  IAT '+state.iat+'C  COOL '+Math.round(state.coolant)+'C  OIL '+Math.round(state.oil)+'C',12,H-12);
+  // Info strip below the graph: peaks + scorecard + overlaid-pull legend
+  const iy=gY+gH+30;
+  drawPixelRect(0,iy-14,W,H-(iy-14),'#12121c');
+  ctx.font='7px "Press Start 2P"';
+  ctx.fillStyle=C.cyan;ctx.fillText('TQ '+peakT.v.toFixed(0)+'Nm@'+peakT.rpm,gX+4,iy);
+  ctx.fillStyle=C.yellow;ctx.fillText('PWR '+peakP.v.toFixed(0)+'HP@'+peakP.rpm,gX+160,iy);
+  const s=engine.score;
+  if(s){
+    const gc=s.overall>=76?C.green:s.overall>=46?C.yellow:C.red;
+    ctx.fillStyle=gc;ctx.font='11px "Press Start 2P"';ctx.fillText('GRADE '+s.grade+' '+s.overall,gX+320,iy+1);
+    ctx.font='6px "Press Start 2P"';ctx.fillStyle='#99aabb';
+    ctx.fillText(s.hpPerL+'hp/L • '+s.nmPerL+'Nm/L • band '+s.band+'rpm • eff '+s.thEff+'% • safety '+s.safety+' • drive '+s.drive+'%',gX+4,iy+15);
+  }
+  ctx.font='6px "Press Start 2P"';
+  if(dynoPulls.length){
+    dynoPulls.forEach((pl,i)=>{ctx.fillStyle=pl.color;ctx.fillText('— '+pl.label,gX+4+i*132,iy+28);});
+  }else{ctx.fillStyle='#667';ctx.fillText('LOG PULL to snapshot & overlay a curve for comparison',gX+4,iy+28);}
 }
 function updateUI(){
   document.getElementById('valThrottle').textContent=Math.round(state.throttle*100);
@@ -1099,6 +1231,12 @@ function bindControls(){
   document.getElementById('btnSound').addEventListener('click',()=>setSound(!Sound.on));
   document.getElementById('btnSave').addEventListener('click',saveSetup);
   document.getElementById('btnLoad').addEventListener('click',loadSetup);
+  document.getElementById('btnExport').addEventListener('click',exportBuild);
+  document.getElementById('btnImport').addEventListener('click',openFileDialog);
+  document.getElementById('btnShare').addEventListener('click',shareBuild);
+  document.getElementById('btnLogPull').addEventListener('click',logPull);
+  document.getElementById('btnClearPulls').addEventListener('click',clearPulls);
+  document.getElementById('fileInput').addEventListener('change',e=>{const f=e.target.files&&e.target.files[0];if(f)readBuildFile(f);e.target.value='';});
 
   document.getElementById('tabDesign').addEventListener('click',()=>setTab('design'));
   document.getElementById('tabEngine').addEventListener('click',()=>setTab('engine'));
@@ -1144,7 +1282,9 @@ function loop(now){
   updateUI();
   requestAnimationFrame(loop);
 }
-bindControls();applyEngineToForm(Object.assign({},DEFAULT_ENGINE));buildEngine();updatePhysics();updateUI();requestAnimationFrame(loop);
+bindControls();applyEngineToForm(Object.assign({},DEFAULT_ENGINE));buildEngine();
+loadFromHash();   // open a shared build if the URL carries one
+updatePhysics();updateUI();requestAnimationFrame(loop);
 
 // Register service worker for offline/installable PWA (no-op on file://).
 if('serviceWorker' in navigator && location.protocol.startsWith('http')){

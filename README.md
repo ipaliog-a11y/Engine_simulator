@@ -74,7 +74,14 @@ saps power; a large radiator, electric fan and oil cooler keep it cool.
   the fan provides idle cooling).
 - **Engine sound** — Web Audio note pitched to firing frequency (scales with cylinder
   count & RPM) and load.
-- **Save / Load** — stores and recalls the entire build + tune via `localStorage`.
+- **Scoring** — every build gets a graded scorecard (S–F) rating power, specific output,
+  powerband width, efficiency, knock safety and drivability, shown on the design summary and
+  the dyno.
+- **Dyno pull logging** — snapshot the current curve and overlay several pulls on the graph
+  to compare builds or tunes.
+- **Save / Load / Share** — quick-save to `localStorage`; **save to a named file** (with a
+  note) and **open** one back; or **Share** a build as an encoded link (copied to the
+  clipboard) that loads the exact engine when opened.
 - **Presets**: Optimal / Max Power / Eco / Reset (adapt to the current engine).
 - **Installable PWA**, self-hosted font, works fully offline.
 
@@ -194,6 +201,8 @@ philosophy).
 - [x] Induction/metering systems (carbs, mechanical injection, EFI, ITBs) + air filters
 - [x] Ignition control: Fixed vs Auto (ECU, MBT-tracking & knock-limited timing)
 - [x] Reliability / wear simulation (health falls under detonation/overheat/lean-boost/over-rev)
+- [x] Scoring / rating (graded scorecard) and dyno-pull logging & overlay
+- [x] Save to / open from named files (with notes) and shareable build links
 - [x] Calibration pass for realistic power figures & curve shape (ongoing refinement)
 - [ ] Native Android build (wrap the PWA with Capacitor or a Trusted Web Activity)
 
