@@ -98,11 +98,13 @@ footer{text-align:center;margin-top:16px;padding:8px;font-size:7px;color:#555;bo
 <canvas id="engineCanvas" width="640" height="420" role="img" aria-label="Engine test-bench schematic with live values"></canvas>
 <div class="design-panel" id="designPanel">
 <h3>ENGINE DESIGN</h3>
-<div class="hint">Configure the build, then press BUILD &amp; DYNO. Physics update live.</div>
+<div class="hint">Load a preset, or configure a build and press BUILD &amp; DYNO. Physics update live.</div>
+
+<div class="field" style="margin-bottom:6px"><label for="edPreset">LOAD A PRESET</label><select id="edPreset"><option value="">— choose a popular build —</option></select></div>
 
 <div class="design-section">Bottom End</div>
 <div class="design-grid">
-<div class="field"><label for="edCyl">CYLINDERS</label><input type="number" id="edCyl" min="1" max="12" step="1" value="4"></div>
+<div class="field"><label for="edCyl">CYLINDERS</label><select id="edCyl"><option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option><option value="6">6</option><option value="8">8</option><option value="10">10</option><option value="12">12</option></select></div>
 <div class="field"><label for="edLayout">LAYOUT</label><select id="edLayout"><option value="inline">INLINE</option><option value="v">V</option><option value="boxer">BOXER</option></select></div>
 <div class="field"><label for="edBore">BORE (mm)</label><input type="number" id="edBore" min="60" max="105" step="0.5" value="86"></div>
 <div class="field"><label for="edStroke">STROKE (mm)</label><input type="number" id="edStroke" min="50" max="110" step="0.5" value="86"></div>
@@ -273,15 +275,32 @@ const AIR_FILTER={
 
 // The engine build spec. Everything downstream derives from this object, so new
 // subsystems (electrical, cooling, etc.) can be added later as more fields here.
+// Default is a modern 1.6 L naturally-aspirated sport four (high compression, DI, VVT,
+// coil-on-plug with ECU knock-limited timing).
 const DEFAULT_ENGINE={
-  cylinders:4,bore_mm:86,stroke_mm:86,compression:10.5,layout:'inline',redline:7000,
-  intake:'na',boost_bar:0,intercooler:true,turboSize:'medium',exhaust:'stock',
-  intakeSys:'efi',airFilter:'stock',
-  cam:'stock',vvt:false,
-  fuel:'gasoline',octane:95,injector:'port',ignitionAdv:22,ignitionType:'coil',timingMode:'fixed',
+  cylinders:4,bore_mm:81,stroke_mm:78,compression:12.5,layout:'inline',redline:7200,
+  intake:'na',boost_bar:0,intercooler:true,turboSize:'medium',exhaust:'sport',
+  intakeSys:'efi',airFilter:'perf',
+  cam:'stock',vvt:true,
+  fuel:'gasoline',octane:95,injector:'direct',ignitionAdv:22,ignitionType:'coil',timingMode:'auto',
   radiator:'stock',fan:'electric',oilCooler:false,thermostat:88,
   alternator:'120'
 };
+// Ready-made popular builds (deltas over DEFAULT_ENGINE). Loaded from the DESIGN dropdown.
+const PRESETS=[
+  {name:'1.6 Sport NA I4',        engine:{}},
+  {name:'1.0 Kei Turbo I3',       engine:{cylinders:3,bore_mm:73,stroke_mm:79.6,compression:9.5,redline:7000,intake:'turbo',boost_bar:0.7,turboSize:'small',injector:'port'}},
+  {name:'1.5 Turbo Eco I4',       engine:{cylinders:4,bore_mm:73,stroke_mm:89.5,compression:10.5,redline:6500,intake:'turbo',boost_bar:0.8,turboSize:'small',airFilter:'stock',exhaust:'stock'}},
+  {name:'2.0 Turbo Hot-Hatch I4', engine:{cylinders:4,bore_mm:86,stroke_mm:86,compression:9.8,redline:7000,intake:'turbo',boost_bar:1.0,turboSize:'medium',octane:98,cam:'sport',exhaust:'sport',radiator:'large',oilCooler:true}},
+  {name:'2.0 ITB NA Screamer I4', engine:{cylinders:4,bore_mm:87,stroke_mm:84,compression:11.7,redline:8800,intakeSys:'itb',airFilter:'none',cam:'race',exhaust:'race',octane:98,injector:'port',radiator:'large',oilCooler:true}},
+  {name:'2.5 Turbo I5 (RS)',      engine:{cylinders:5,bore_mm:82.5,stroke_mm:92.8,compression:10,redline:7000,intake:'turbo',boost_bar:1.1,turboSize:'medium',octane:98,cam:'sport',exhaust:'sport',radiator:'large',oilCooler:true}},
+  {name:'3.0 Turbo I6 (2JZ)',     engine:{cylinders:6,bore_mm:84,stroke_mm:90,compression:10.2,redline:7000,intake:'turbo',boost_bar:0.9,turboSize:'medium',octane:98,cam:'sport',exhaust:'sport',radiator:'large',oilCooler:true}},
+  {name:'5.0 V8 NA Muscle',       engine:{cylinders:8,bore_mm:93,stroke_mm:92.7,compression:12,layout:'v',redline:7500,cam:'sport',exhaust:'sport',radiator:'large',oilCooler:true}},
+  {name:'6.2 Supercharged V8',    engine:{cylinders:8,bore_mm:103.9,stroke_mm:90.9,compression:9.5,layout:'v',redline:6400,intake:'supercharger',boost_bar:0.65,octane:98,injector:'port',vvt:false,cam:'sport',exhaust:'sport',radiator:'large',oilCooler:true}},
+  {name:'6.5 V12 NA Supercar',    engine:{cylinders:12,bore_mm:95,stroke_mm:76.4,compression:11.8,layout:'v',redline:8500,intakeSys:'itb',cam:'race',exhaust:'race',octane:98,injector:'port',radiator:'large',oilCooler:true}}
+];
+const STD_TUNE={throttle:0.85,load:0.40,elecLoad:0.30,afr:13.2,iat:25,coolant:90,oil:100,autoThermal:false};
+
 const RAD_CAP={small:0.75,stock:1.0,large:1.35};   // relative heat-rejection capacity
 const IMEP_K=13.2;   // indicated MEP calibration (bar at map=1, ve=1, best-power AFR)
 // Dynamic (throttle-driven) model tuning:
@@ -1281,6 +1300,18 @@ function bindControls(){
   document.getElementById('edFuel').addEventListener('change',syncDesignEnable);
   document.getElementById('edTiming').addEventListener('change',syncDesignEnable);
   document.getElementById('edIntakeSys').addEventListener('change',syncDesignEnable);
+  // Populate & wire the preset dropdown
+  const presetSel=document.getElementById('edPreset');
+  PRESETS.forEach((p,i)=>{const o=document.createElement('option');o.value=i;o.textContent=p.name;presetSel.appendChild(o);});
+  presetSel.addEventListener('change',e=>{
+    if(e.target.value==='')return;
+    const p=PRESETS[+e.target.value];
+    applyBuild({engine:Object.assign({},p.engine),tune:Object.assign({},STD_TUNE),name:p.name});
+    engine.name=p.name;
+    e.target.value='';
+    flash('LOADED: '+p.name+' • '+engine.displacement_L.toFixed(engine.displacement_L<1?2:1)+'L'+(engine.score?' • '+engine.score.grade:''));
+    setTab('dyno');
+  });
   document.getElementById('btnBuild').addEventListener('click',()=>{buildEngine();flash('ENGINE BUILT • '+engine.displacement_L.toFixed(engine.displacement_L<1?2:1)+'L');setTab('dyno')});
   document.getElementById('btnDesignReset').addEventListener('click',()=>{applyEngineToForm(Object.assign({},DEFAULT_ENGINE));buildEngine();flash('DESIGN RESET TO DEFAULTS')});
 }

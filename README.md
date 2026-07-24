@@ -11,8 +11,9 @@ watch the physics respond. Web-based, fully offline-capable, installable as a PW
 ## Features
 
 ### Engine Designer (new in v0.3)
-Configure a build on the **DESIGN** tab, press **BUILD & DYNO**, and every parameter
-feeds the physics:
+Load one of **10 preset builds** from the dropdown (1.6 sport, kei turbo, hot-hatch, ITB
+screamer, 2JZ six, muscle V8, blown V8, V12 supercar…), or configure your own on the
+**DESIGN** tab and press **BUILD & DYNO**. Every parameter feeds the physics:
 
 - **Bottom end** — cylinder count (1–12), layout (inline / V / boxer), bore, stroke,
   compression ratio, redline. Bore × stroke × cylinders sets the displacement.
@@ -189,9 +190,9 @@ philosophy).
 
 ### Next round — planned build order
 
-1. **Engine presets / example gallery** — one-click, load-ready archetypes (kei triple,
-   2.0 turbo, 5.0 V8, ITB screamer, race V12, …) built on the share-code format, so variants
-   are easy to try and the physics gets stress-tested across the design space. *(next)*
+1. ~~Engine presets / example gallery~~ ✅ **done** — a **LOAD A PRESET** dropdown with 10
+   popular archetypes (1.6 sport, kei turbo, hot-hatch, ITB screamer, RS5-turbo, 2JZ six,
+   muscle V8, blown V8, V12 supercar, eco turbo).
 2. **(D) Forced-induction & tuning depth** — twin / sequential / compound turbos, supercharger
    types (roots vs centrifugal curves), anti-lag, nitrous, and 2D fuel/ignition maps.
 3. **(E) Emissions & sound** — CO / HC / NOx + catalytic converter + an emissions score
