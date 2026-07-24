@@ -120,8 +120,11 @@ Curve** tab remains a wide-open-throttle steady-state sweep for reading the full
 
 - Displacement derived from bore, stroke and cylinder count.
 - Dynamic driveline: manifold pressure fills toward a throttle/RPM/boost target; net torque
-  (combustion − pumping − friction − load) accelerates the crank through a rotating inertia
-  derived from displacement and stroke. Pumping loss under vacuum gives engine braking; a
+  (combustion − pumping − friction − brake) accelerates the crank through a rotating inertia
+  derived from displacement and stroke. LOAD is a dyno brake that targets a hold-RPM and only
+  resists above it (so even a peaky engine can always rev up to it, rather than getting
+  trapped below a torque valley); zero load free-revs to the limiter. Lifting the throttle
+  gives engine braking, and injection systems cut fuel on overrun (DFCO — zero fuel flow); a
   rev limiter cuts fuel at redline; an idle floor prevents stalling.
 - VE uses a broad generalized-bell breathing curve (flat plateau, gentle shoulders) so
   torque stays flat across the midrange and power keeps climbing toward redline instead of
