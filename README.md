@@ -187,6 +187,25 @@ philosophy).
 
 ## Roadmap / Future Expansion
 
+### Next round — planned build order
+
+1. **Engine presets / example gallery** — one-click, load-ready archetypes (kei triple,
+   2.0 turbo, 5.0 V8, ITB screamer, race V12, …) built on the share-code format, so variants
+   are easy to try and the physics gets stress-tested across the design space. *(next)*
+2. **(D) Forced-induction & tuning depth** — twin / sequential / compound turbos, supercharger
+   types (roots vs centrifugal curves), anti-lag, nitrous, and 2D fuel/ignition maps.
+3. **(E) Emissions & sound** — CO / HC / NOx + catalytic converter + an emissions score
+   (matches the exhaust-analyser bench), and a firing-order-aware engine note.
+4. **(C) Strategy layer** — per-part costs / budget and objective-based challenges
+   (targets for power, economy, reliability, power-per-dollar).
+5. **(B) New engine types** — diesel (compression ignition), rotary/Wankel, 2-stroke.
+6. **(A) Vehicle / drivetrain layer** — gearbox, weight, grip and aero drag → 0–60,
+   quarter-mile and top-speed runs off the dynamic model.
+
+Deferred: V/boxer bank visuals (cosmetic); native Android build (parked).
+
+### Completed
+
 - [x] Configurable engine designer (cylinders, bore/stroke, compression, induction, fuel, spark)
 - [x] Dynamic throttle + load driveline with rotating inertia (drive it, don't set RPM)
 - [x] Full dyno sweep graphs (power & torque curves)
