@@ -1,4 +1,4 @@
-# PIXEL ENGINE SIM v0.4
+# PIXEL ENGINE SIM v0.5
 
 **A lightweight, 8-bit style internal combustion engine *designer* & simulator** inspired by *Automation*.
 
@@ -18,6 +18,10 @@ feeds the physics:
   compression ratio, redline. Bore × stroke × cylinders sets the displacement.
 - **Air path** — naturally aspirated / turbo / supercharger, boost target, intercooler,
   turbo size (small / medium / large), and exhaust (stock / sport / race).
+- **Induction (metering)** — intake system (1/2/4-bbl carburetor, sidedraft carbs,
+  mechanical injection, single-throttle EFI, or individual throttle bodies) and air filter
+  (open stacks → restrictive). These set top-end breathing, AFR-metering precision (EFI is
+  most efficient; carbs waste fuel), throttle response and idle quality.
 - **Valvetrain** — cam profile (stock / sport / race) and variable valve timing (VVT). A
   wilder cam moves the powerband up and adds top-end at the cost of low-end torque and idle
   quality; VVT recovers the bottom end for a broad powerband.
@@ -26,10 +30,11 @@ feeds the physics:
   voltage then weakens the spark. Ignition type sets a dwell/misfire RPM limit (a
   distributor falls off up top; coil-on-plug holds to redline).
 - **Fuel & spark** — fuel type (pump gas / race gas / E85 / methanol), fuel octane (RON,
-  pump gas only), injector type (port / direct), ignition advance and ignition type
-  (distributor / wasted spark / coil-on-plug). Each fuel has its own energy density, stoich
-  AFR, knock rating and charge-cooling — alcohols resist knock and cool the charge (more
-  power headroom) but burn far more fuel.
+  pump gas only), injector type (port / direct), ignition type (distributor / wasted spark /
+  coil-on-plug), and **ignition control**: *Fixed* (a locked advance you dial in) or *Auto*
+  (an ECU that tracks MBT timing and retards just enough to stay off knock). Each fuel has
+  its own energy density, stoich AFR, knock rating and charge-cooling — alcohols resist
+  knock and cool the charge (more power headroom) but burn far more fuel.
 - **Cooling** — radiator size (small / stock / large), cooling fan (none / mechanical /
   electric), oil cooler, and thermostat opening temperature.
 
@@ -119,8 +124,15 @@ Curve** tab remains a wide-open-throttle steady-state sweep for reading the full
 - Turbo boost spools with RPM along a logistic curve: small turbos spool early (strong
   midrange) but choke the top end, large turbos lag down low but flow more up top. Actual
   boost also lags in time (turbo lag), so it builds over ~1 s in the live Engine View.
-- Ignition timing has a max-brake-torque optimum — too little or too much loses power, and
-  over-advance feeds knock.
+- Ignition timing has a max-brake-torque (MBT) optimum that varies with RPM and load — too
+  little or too much advance loses power, and advancing past MBT feeds knock (retarding pulls
+  it back). *Fixed* timing is only optimal at one operating point; *Auto* tracks MBT
+  everywhere and retards under knock, so it makes more power across the curve and adapts to
+  fuel — full timing on race gas/E85, pulled timing on low octane or high boost.
+- Intake system sets top-end airflow (restrictive small carbs choke up top; ITBs, sidedraft
+  carbs and mechanical injection breathe best) and AFR-metering precision — EFI holds optimal
+  AFR for the best efficiency, while carburetors and mechanical injection run richer and
+  waste fuel (worse BSFC). The air filter adds an airflow-weighted restriction.
 - Knock combines boost, compression, charge/coolant temperature, RPM, timing and mixture,
   offset by fuel octane, charge cooling and direct injection; high knock derates power.
 - Fuel type sets energy density, stoichiometric AFR (the mixture control works in lambda,
@@ -167,6 +179,8 @@ philosophy).
 - [x] Cooling subsystem (radiator size, fan, oil cooler, thermostat) feeding the thermal model
 - [x] Electrical subsystem (alternator, battery/charging, dwell-limited ignition misfire)
 - [x] Different fuels (pump/race gas, E85, methanol) with their own energy, stoich, knock & cooling
+- [x] Induction/metering systems (carbs, mechanical injection, EFI, ITBs) + air filters
+- [x] Ignition control: Fixed vs Auto (ECU, MBT-tracking & knock-limited timing)
 - [ ] Reliability / wear simulation
 - [x] Calibration pass for realistic power figures & curve shape (ongoing refinement)
 - [ ] Native Android build (wrap the PWA with Capacitor or a Trusted Web Activity)

@@ -80,7 +80,7 @@ footer{text-align:center;margin-top:16px;padding:8px;font-size:7px;color:#555;bo
 <body>
 <div class="container">
 <header>
-<h1>PIXEL ENGINE SIM v0.4</h1>
+<h1>PIXEL ENGINE SIM v0.5</h1>
 <div class="subtitle" id="subtitle">ENGINE DESIGNER • BUILD IT, THEN DRIVE IT</div>
 </header>
 <div class="main">
@@ -114,6 +114,20 @@ footer{text-align:center;margin-top:16px;padding:8px;font-size:7px;color:#555;bo
 <div class="field"><label for="edExhaust">EXHAUST</label><select id="edExhaust"><option value="stock">STOCK</option><option value="sport">SPORT</option><option value="race">RACE</option></select></div>
 </div>
 
+<div class="design-section">Induction (Metering)</div>
+<div class="design-grid">
+<div class="field"><label for="edIntakeSys">INTAKE SYSTEM</label><select id="edIntakeSys">
+<option value="carb1">1-BBL CARB</option>
+<option value="carb2">2-BBL CARB</option>
+<option value="carb4">4-BBL CARB</option>
+<option value="sidedraft">SIDEDRAFT CARBS</option>
+<option value="mech">MECH INJECTION</option>
+<option value="efi">EFI (SINGLE TB)</option>
+<option value="itb">EFI (ITB)</option>
+</select></div>
+<div class="field"><label for="edAirFilter">AIR FILTER</label><select id="edAirFilter"><option value="none">NONE (STACKS)</option><option value="perf">PERFORMANCE</option><option value="stock">STOCK PAPER</option><option value="restrictive">RESTRICTIVE</option></select></div>
+</div>
+
 <div class="design-section">Valvetrain</div>
 <div class="design-grid">
 <div class="field"><label for="edCam">CAM PROFILE</label><select id="edCam"><option value="stock">STOCK</option><option value="sport">SPORT</option><option value="race">RACE</option></select></div>
@@ -125,8 +139,9 @@ footer{text-align:center;margin-top:16px;padding:8px;font-size:7px;color:#555;bo
 <div class="field"><label for="edFuel">FUEL TYPE</label><select id="edFuel"><option value="gasoline">PUMP GAS</option><option value="race">RACE GAS</option><option value="e85">E85</option><option value="methanol">METHANOL</option></select></div>
 <div class="field"><label for="edOctane">FUEL OCTANE (RON)</label><input type="number" id="edOctane" min="87" max="110" step="1" value="95"></div>
 <div class="field"><label for="edInjector">INJECTOR</label><select id="edInjector"><option value="port">PORT (PFI)</option><option value="direct">DIRECT (DI)</option></select></div>
-<div class="field"><label for="edIgnAdv">IGNITION ADV (° BTDC)</label><input type="number" id="edIgnAdv" min="5" max="40" step="1" value="22"></div>
 <div class="field"><label for="edIgnType">IGNITION TYPE</label><select id="edIgnType"><option value="distributor">DISTRIBUTOR</option><option value="wasted">WASTED SPARK</option><option value="coil">COIL-ON-PLUG</option></select></div>
+<div class="field"><label for="edTiming">IGNITION CONTROL</label><select id="edTiming"><option value="fixed">FIXED (LOCKED)</option><option value="auto">AUTO (ECU / KNOCK-LIMITED)</option></select></div>
+<div class="field"><label for="edIgnAdv">IGNITION ADV (° BTDC)</label><input type="number" id="edIgnAdv" min="5" max="40" step="1" value="22"></div>
 </div>
 
 <div class="design-section">Cooling</div>
@@ -216,14 +231,37 @@ const CAM={
   sport:{peakShift:600, ampMul:1.04,loWiden:0.82,lowLoss:0.05,scav:0.04,idleRpm:150},
   race: {peakShift:1300,ampMul:1.08,loWiden:0.66,lowLoss:0.12,scav:0.08,idleRpm:400}
 };
+// Induction / metering system. flowTop = top-end breathing adjustment (airflow: restrictive
+// carbs choke up top, ITB/sidedraft/mech-injection breathe best). flowLow = low-rpm effect
+// (small carbs keep intake velocity; race setups sacrifice low-end plenum). metering = AFR
+// precision → efficiency (EFI holds optimal AFR everywhere; carbs/mech run rich & waste
+// fuel). resp = manifold response for the dynamic model. idle = idle-rpm penalty. di =
+// whether direct injection is available. Values chosen to reflect real relative behaviour.
+const INTAKE_SYS={
+  carb1:    {label:'1-BBL CARB',      flowTop:-0.16,flowLow:+0.03,metering:0.90,resp:0.90,idle:0,  di:false},
+  carb2:    {label:'2-BBL CARB',      flowTop:-0.09,flowLow:+0.01,metering:0.92,resp:0.95,idle:0,  di:false},
+  carb4:    {label:'4-BBL CARB',      flowTop:-0.03,flowLow:-0.02,metering:0.93,resp:1.00,idle:40, di:false},
+  sidedraft:{label:'SIDEDRAFT CARBS', flowTop:+0.06,flowLow:-0.05,metering:0.92,resp:1.15,idle:250,di:false},
+  mech:     {label:'MECH INJECTION',  flowTop:+0.05,flowLow:-0.07,metering:0.89,resp:1.10,idle:300,di:false},
+  efi:      {label:'EFI (SINGLE TB)', flowTop:0.00, flowLow:0.00, metering:1.00,resp:1.00,idle:0,  di:true},
+  itb:      {label:'EFI (ITB)',       flowTop:+0.08,flowLow:-0.03,metering:1.00,resp:1.25,idle:180,di:true}
+};
+// Air filter restriction (a top-end-weighted VE loss; open stacks flow best but don't filter).
+const AIR_FILTER={
+  none:       {label:'NONE (STACKS)',flowTop:+0.02},
+  perf:       {label:'PERFORMANCE',  flowTop:-0.01},
+  stock:      {label:'STOCK PAPER',  flowTop:-0.04},
+  restrictive:{label:'RESTRICTIVE',  flowTop:-0.10}
+};
 
 // The engine build spec. Everything downstream derives from this object, so new
 // subsystems (electrical, cooling, etc.) can be added later as more fields here.
 const DEFAULT_ENGINE={
   cylinders:4,bore_mm:86,stroke_mm:86,compression:10.5,layout:'inline',redline:7000,
   intake:'na',boost_bar:0,intercooler:true,turboSize:'medium',exhaust:'stock',
+  intakeSys:'efi',airFilter:'stock',
   cam:'stock',vvt:false,
-  fuel:'gasoline',octane:95,injector:'port',ignitionAdv:22,ignitionType:'coil',
+  fuel:'gasoline',octane:95,injector:'port',ignitionAdv:22,ignitionType:'coil',timingMode:'fixed',
   radiator:'stock',fan:'electric',oilCooler:false,thermostat:88,
   alternator:'120'
 };
@@ -282,6 +320,8 @@ function readEngineFromForm(){
     intercooler:g('edIntercooler').value==='yes',
     turboSize:g('edTurboSize').value,
     exhaust:g('edExhaust').value,
+    intakeSys:g('edIntakeSys').value,
+    airFilter:g('edAirFilter').value,
     cam:g('edCam').value,
     vvt:g('edVVT').value==='yes',
     fuel:g('edFuel').value,
@@ -289,6 +329,7 @@ function readEngineFromForm(){
     injector:g('edInjector').value,
     ignitionAdv:clamp(Math.round(+g('edIgnAdv').value||22),5,40),
     ignitionType:g('edIgnType').value,
+    timingMode:g('edTiming').value,
     radiator:g('edRadiator').value,
     fan:g('edFan').value,
     oilCooler:g('edOilCooler').value==='yes',
@@ -302,10 +343,11 @@ function applyEngineToForm(e){
   g('edStroke').value=e.stroke_mm;g('edCR').value=e.compression;g('edRedline').value=e.redline;
   g('edIntake').value=e.intake;g('edBoost').value=e.boost_bar;g('edIntercooler').value=e.intercooler?'yes':'no';
   g('edTurboSize').value=e.turboSize||'medium';
+  g('edIntakeSys').value=e.intakeSys||'efi';g('edAirFilter').value=e.airFilter||'stock';
   g('edCam').value=e.cam||'stock';g('edVVT').value=e.vvt?'yes':'no';
   g('edFuel').value=e.fuel||'gasoline';
   g('edExhaust').value=e.exhaust;g('edOctane').value=e.octane;g('edInjector').value=e.injector;
-  g('edIgnAdv').value=e.ignitionAdv;g('edIgnType').value=e.ignitionType;
+  g('edIgnAdv').value=e.ignitionAdv;g('edIgnType').value=e.ignitionType;g('edTiming').value=e.timingMode||'fixed';
   g('edRadiator').value=e.radiator||'stock';g('edFan').value=e.fan||'electric';
   g('edOilCooler').value=e.oilCooler?'yes':'no';g('edThermostat').value=e.thermostat||88;
   g('edAlternator').value=e.alternator||'120';
@@ -319,6 +361,11 @@ function syncDesignEnable(){
   document.getElementById('edTurboSize').disabled=intake!=='turbo';
   // Octane only matters for pump gas; other fuels carry their own rating.
   document.getElementById('edOctane').disabled=document.getElementById('edFuel').value!=='gasoline';
+  // Fixed advance value only applies in FIXED timing mode.
+  document.getElementById('edIgnAdv').disabled=document.getElementById('edTiming').value!=='fixed';
+  // Direct injection only exists on EFI systems (carbs/mechanical injection can't do DI).
+  const sys=INTAKE_SYS[document.getElementById('edIntakeSys').value]||INTAKE_SYS.efi;
+  document.getElementById('edInjector').disabled=!sys.di;
 }
 function buildEngine(){
   const prevStoich=(engine&&engine.stoichAFR)||14.7;   // to preserve lambda across fuel swaps
@@ -352,7 +399,15 @@ function buildEngine(){
   engine.veWidthLo*=loWiden;
   engine.camLowLoss=camLowLoss;
   engine.camScav=cam.scav;
-  engine.idleRpmEff=IDLE_RPM+idlePenalty;   // wild cam idles higher / lumpier
+  // Induction system (metering + throttle) and air filter → breathing, AFR precision,
+  // manifold response, idle quality. Direct injection is only possible on EFI systems.
+  const sys=INTAKE_SYS[engine.intakeSys]||INTAKE_SYS.efi,filt=AIR_FILTER[engine.airFilter]||AIR_FILTER.stock;
+  if(!sys.di)engine.injector='port';          // carbs / mechanical injection: no DI
+  engine.inductionFlowTop=sys.flowTop+filt.flowTop;
+  engine.inductionFlowLow=sys.flowLow;
+  engine.meteringEff=sys.metering;            // AFR precision → thermal efficiency
+  engine.intakeRespK=sys.resp;                // manifold fill speed (dynamic model)
+  engine.idleRpmEff=IDLE_RPM+idlePenalty+sys.idle;   // wild cam / race intake idle higher & lumpier
   engine.crFactor=otto(engine.compression)/otto(10.5);   // 1.0 at CR 10.5
   engine.strokeFrictionMult=1+(engine.stroke_mm-86)/320;  // longer stroke = more friction
   engine.maxBoost=engine.intake==='na'?0:engine.boost_bar;
@@ -415,9 +470,10 @@ function updateDesignSummary(){
     '<b>'+engine.cylinders+' × '+engine.bore_mm+'×'+engine.stroke_mm+'mm</b> → <b>'+disp+' L</b> '+LAYOUT_LABEL[engine.layout]+
     '<br>Compression <b>'+engine.compression.toFixed(1)+':1</b> • Redline <b>'+engine.redline+'</b> rpm'+
     '<br>Induction <b>'+induction+'</b>'+
+    '<br>Intake <b>'+INTAKE_SYS[engine.intakeSys].label+'</b> • Filter <b>'+AIR_FILTER[engine.airFilter].label+'</b>'+
     '<br>Exhaust <b>'+engine.exhaust.toUpperCase()+'</b> • Cam <b>'+engine.cam.toUpperCase()+(engine.vvt?' + VVT':'')+'</b>'+
     '<br>Fuel <b>'+FUELS[engine.fuel].label+'</b> ('+engine.effOctane+' oct, '+engine.stoichAFR.toFixed(1)+':1 stoich'+(engine.chargeCool?', −'+engine.chargeCool+'°C charge':'')+')'+
-    '<br>Injection <b>'+(engine.injector==='direct'?'Direct':'Port')+'</b> • Ignition <b>'+engine.ignitionAdv+'° '+engine.ignitionType.toUpperCase()+'</b>'+
+    '<br>'+(engine.injector==='direct'?'<b>Direct inj</b> • ':'')+'Ignition <b>'+(engine.timingMode==='auto'?'AUTO (ECU)':engine.ignitionAdv+'° fixed')+' '+engine.ignitionType.toUpperCase()+'</b>'+
     '<br>Cooling <b>'+engine.radiator.toUpperCase()+' RAD</b> • <b>'+engine.fan.toUpperCase()+' FAN</b>'+(engine.oilCooler?' • <b>OIL COOLER</b>':'')+' • Thermostat <b>'+engine.thermostat+'°C</b>'+
     '<br>Electrical <b>'+engine.altMaxA+'A alt</b> • Ignition misfire above <b>~'+engine.dwellLimit+'</b> rpm ('+engine.ignitionType.toUpperCase()+')'+note;
 }
@@ -469,6 +525,9 @@ function computeVE(rpm,map){
   else ve*=1-(ex.lowLoss+engine.camLowLoss)*clamp((peak-rpm)/peak,0,1);                    // race exhaust / big cam hurt low end
   if(engine.intake==='turbo'&&rpm>peak)                                 // small turbo chokes up top
     ve*=1-engine.turboChoke*clamp((rpm-peak)/(engine.redline-peak),0,1);
+  // Induction system + air filter: restriction/flow weighted by airflow demand (rpm).
+  const breathe=clamp(rpm/engine.redline,0,1);
+  ve*=1+engine.inductionFlowTop*breathe+engine.inductionFlowLow*(1-breathe);
   ve*=(0.97+0.03*clamp(map/engine.mapMax,0,1.2));
   if(rpm>engine.redline)ve*=1-0.6*clamp((rpm-engine.redline)/(engine.redline*0.5),0,1);  // valve float
   return clamp(ve,0.2,1.2);
@@ -493,19 +552,19 @@ function tempFactors(coolant,oil){
   oilFrictionMult=clamp(oilFrictionMult,1.0,1.70);
   return{coolF,oilFrictionMult};
 }
-function computeKnockRisk(rpm,map){
-  // A knock "pressure" from load/CR/heat/timing/mixture, minus fuel & DI resistance.
+function ignBonus(){return {distributor:-2,wasted:0,coil:2}[engine.ignitionType]||0;}
+// Knock risk (0-100) for a given spark advance. The advance term is signed: advancing
+// past MBT feeds knock, retarding below it pulls knock back down.
+function knockAt(rpm,map,adv){
   const mbt=mbtAdvance(rpm,map);
-  const ignBonus={distributor:-2,wasted:0,coil:2}[engine.ignitionType]||0;
-  const afr=state.afr;
   let k=0;
   k+=Math.max(0,map-1.0)*30;                            // boost
   k+=Math.max(0,engine.compression-9)*8;                // static compression
   k+=Math.max(0,effIAT(map)-30)*0.8;                    // hot intake charge
   k+=Math.max(0,state.coolant-95)*1.0;                  // hot chamber
   k+=Math.max(0,rpm-engine.redline*0.8)/60;             // less time = more heat soak
-  k+=Math.max(0,engine.ignitionAdv-mbt-ignBonus)*2.5;   // over-advanced spark
-  const lam=afr/engine.stoichAFR;
+  k+=(adv-mbt-ignBonus())*2.5;                          // spark timing vs MBT (signed)
+  const lam=state.afr/engine.stoichAFR;
   k+=Math.max(0,(lam-0.95))*60;                         // lean burns hotter
   if(lam<0.87)k*=0.5;                                   // rich charge-cools
   k-=(engine.effOctane-90)*2.2;                         // fuel octane resists knock
@@ -513,6 +572,19 @@ function computeKnockRisk(rpm,map){
   if(engine.injector==='direct')k-=12;                  // DI charge cooling
   return clamp(k,0,100);
 }
+// The spark advance actually run at an operating point. FIXED = the designed value; AUTO =
+// an ECU that targets MBT and retards just enough to hold knock near KNOCK_TARGET.
+const KNOCK_TARGET=40;
+function activeAdvance(rpm,map){
+  const mbt=mbtAdvance(rpm,map);
+  if(engine.timingMode!=='auto')return engine.ignitionAdv;
+  const knockAtMbt=knockAt(rpm,map,mbt);
+  if(knockAtMbt<=KNOCK_TARGET)return mbt;               // clean at MBT → run full timing
+  const lam=state.afr/engine.stoichAFR,rich=lam<0.87?0.5:1;
+  const retard=(knockAtMbt-KNOCK_TARGET)/(2.5*Math.max(rich,0.3));
+  return clamp(mbt-retard,6,mbt);                       // pull timing to protect
+}
+function computeKnockRisk(rpm,map){return knockAt(rpm,map,activeAdvance(rpm,map));}
 // Friction + pumping mean effective pressure. Pumping loss grows with manifold vacuum
 // (throttling), which is what produces engine braking on a closed throttle.
 function pumpFrictionMEP(rpm,map,oilFrictionMult){
@@ -551,7 +623,7 @@ function calcAtRpm(rpm,mapOverride){
   const {coolF,oilFrictionMult}=tempFactors(state.coolant,state.oil);
   const ve=computeVE(rpm,map);
   const afrP=afrPowerFactor(state.afr);
-  const ignF=clamp(1-0.004*Math.pow(engine.ignitionAdv-mbtAdvance(rpm,map),2),0.72,1.0);
+  const ignF=clamp(1-0.004*Math.pow(activeAdvance(rpm,map)-mbtAdvance(rpm,map),2),0.72,1.0);
 
   let imep=IMEP_K*map*ve*afrP*coolF*engine.crFactor*ignF*ignitionHealth(rpm);
   imep*=298.15/(effIAT(map)+273.15);   // intake-air density correction (ref 25°C)
@@ -574,7 +646,7 @@ function brakeTorqueRaw(rpm,map,fuelCut){
   let imep=0;
   if(!fuelCut){
     const ve=computeVE(rpm,map),afrP=afrPowerFactor(state.afr);
-    const ignF=clamp(1-0.004*Math.pow(engine.ignitionAdv-mbtAdvance(rpm,map),2),0.72,1.0);
+    const ignF=clamp(1-0.004*Math.pow(activeAdvance(rpm,map)-mbtAdvance(rpm,map),2),0.72,1.0);
     imep=IMEP_K*map*ve*afrP*coolF*engine.crFactor*ignF*ignitionHealth(rpm)*(298.15/(effIAT(map)+273.15));
     const knock=computeKnockRisk(rpm,map);
     if(knock>60)imep*=1-0.32*((knock-60)/40);
@@ -598,7 +670,7 @@ function mapTarget(){
 // Integrate the dynamic engine: spool → manifold fill → net torque → RPM via inertia.
 function stepEngine(dt){
   stepBoost(dt);
-  state.map+=(mapTarget()-state.map)*(1-Math.exp(-MAP_K*dt));
+  state.map+=(mapTarget()-state.map)*(1-Math.exp(-MAP_K*engine.intakeRespK*dt));
   const limiter=state.rpm>=engine.redline;               // fuel cut at redline
   const tq=brakeTorqueRaw(state.rpm,state.map,limiter);
   // Dyno/road load rises with speed (light at low RPM so the engine can launch, heavy up
@@ -623,11 +695,13 @@ function updatePhysics(){
 
   const T_k=effIAT(map)+273.15,MAP_pa=map*1e5,Vd=engine.displacement_L/1000;
   const airMass_kg_s=(MAP_pa*Vd*(state.rpm/60)*state.ve)/(287*T_k*2);
-  const fuelMass_kg_s=airMass_kg_s/state.afr;
-  state.fuelFlowLph=(fuelMass_kg_s*3600)/engine.fuelDensity;
-  const fuelPower=fuelMass_kg_s*engine.fuelLHV*1e6/1000;
+  // Imprecise metering (carbs / mechanical injection) wastes fuel: same power, more fuel
+  // burned → higher flow, worse BSFC and lower thermal efficiency than EFI.
+  const meteredFuel=(airMass_kg_s/state.afr)/engine.meteringEff;
+  state.fuelFlowLph=(meteredFuel*3600)/engine.fuelDensity;
+  const fuelPower=meteredFuel*engine.fuelLHV*1e6/1000;
   state.thermalEff=fuelPower>0.1?clamp((state.powerKW/fuelPower)*100,0,45):0;
-  state.bsfc=state.powerKW>0.5?(fuelMass_kg_s*3600*1000)/state.powerKW:999;
+  state.bsfc=state.powerKW>0.5?(meteredFuel*3600*1000)/state.powerKW:999;
 }
 function getDynoData(){
   const key=[buildRev,state.afr.toFixed(1),state.iat,Math.round(state.coolant),Math.round(state.oil)].join('|');
@@ -810,6 +884,7 @@ function drawEngine(dt){
   ctx.fillStyle=state.knockRisk>70?C.red:(state.knockRisk>40?C.yellow:C.green);ctx.font='9px "Press Start 2P"';
   let msg='CYCLE: '+getStrokeName(crankAngle%720);
   if(engine.intake==='turbo')msg+='  •  BOOST +'+state.boostActual.toFixed(2);
+  msg+='  •  ADV '+Math.round(activeAdvance(state.rpm,state.map))+'°'+(engine.timingMode==='auto'?'*':'');
   msg+='  •  '+state.systemVoltage.toFixed(1)+'V';
   if(state.systemVoltage<11.6)msg+=' LOW';
   if(state.knockRisk>50)msg+='  •  KNOCK WARNING';
@@ -941,6 +1016,8 @@ function bindControls(){
 
   document.getElementById('edIntake').addEventListener('change',syncDesignEnable);
   document.getElementById('edFuel').addEventListener('change',syncDesignEnable);
+  document.getElementById('edTiming').addEventListener('change',syncDesignEnable);
+  document.getElementById('edIntakeSys').addEventListener('change',syncDesignEnable);
   document.getElementById('btnBuild').addEventListener('click',()=>{buildEngine();flash('ENGINE BUILT • '+engine.displacement_L.toFixed(engine.displacement_L<1?2:1)+'L');setTab('dyno')});
   document.getElementById('btnDesignReset').addEventListener('click',()=>{applyEngineToForm(Object.assign({},DEFAULT_ENGINE));buildEngine();flash('DESIGN RESET TO DEFAULTS')});
 }
