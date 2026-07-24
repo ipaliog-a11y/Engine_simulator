@@ -21,6 +21,10 @@ feeds the physics:
 - **Valvetrain** — cam profile (stock / sport / race) and variable valve timing (VVT). A
   wilder cam moves the powerband up and adds top-end at the cost of low-end torque and idle
   quality; VVT recovers the bottom end for a broad powerband.
+- **Electrical** — alternator size (60 / 120 / 180 A). With a live **ELEC LOAD** control
+  (lights/AC), a small alternator plus heavy load at idle drains the battery — low system
+  voltage then weakens the spark. Ignition type sets a dwell/misfire RPM limit (a
+  distributor falls off up top; coil-on-plug holds to redline).
 - **Fuel & spark** — fuel type (pump gas / race gas / E85 / methanol), fuel octane (RON,
   pump gas only), injector type (port / direct), ignition advance and ignition type
   (distributor / wasted spark / coil-on-plug). Each fuel has its own energy density, stoich
@@ -83,7 +87,8 @@ Source: GitHub Actions**, and it deploys to
 |------------------|---------------|-------|
 | Throttle         | 0 – 100 %     | Opens the flap → MAP → torque → revs |
 | Load (dyno brake)| 0 – 100 %     | Resistance that sets steady RPM; 0 = free-rev to limiter |
-| Air-Fuel Ratio   | 10.0 – 18.0   | ~12.5 peak power, ~15.5 peak efficiency |
+| Elec load        | 0 – 100 %     | Accessory electrical draw (lights/AC); can drain the battery at idle |
+| Air-Fuel Ratio   | rescales/fuel | ~λ0.86 peak power, ~λ1.05 peak efficiency (range set by fuel) |
 | Intake Air Temp  | -10 – 60 °C   | Colder = denser charge = more power |
 | Coolant Temp     | 40 – 130 °C   | Optimal ~90 °C (auto in Auto Thermal) |
 | Oil Temp         | 40 – 150 °C   | Optimal ~100 °C (auto in Auto Thermal) |
@@ -124,6 +129,11 @@ Curve** tab remains a wide-open-throttle steady-state sweep for reading the full
   flow (higher BSFC), while race gas is high-octane pump gas.
 - Cooling balances load-generated heat against radiator capacity + airflow (RPM-driven)
   and fan; the thermostat sets the floor temperature. Overheating (>~108 °C) costs power.
+- Electrical: the alternator (output rising with RPM) charges the battery when it
+  out-supplies demand and drains it otherwise; system voltage tracks state of charge. Low
+  voltage weakens the spark, and each ignition type has a dwell/misfire RPM limit, so a
+  distributor or a flat battery loses top-end power. The alternator also costs a little
+  parasitic crank power, most noticeable at idle.
 - Standard 4-stroke BMEP → Torque → Power conversion throughout.
 
 Numbers are calibrated to a realistic ballpark but this is not a high-fidelity thermodynamic
@@ -155,7 +165,7 @@ philosophy).
 - [x] Cam profiles & valvetrain (stock/sport/race cam + VVT, reshaping the VE curve & idle)
 - [x] Turbo lag / spool modelling vs. RPM (turbo size, spool curve, transient lag)
 - [x] Cooling subsystem (radiator size, fan, oil cooler, thermostat) feeding the thermal model
-- [ ] Electrical subsystem (alternator load, starter, ignition dwell)
+- [x] Electrical subsystem (alternator, battery/charging, dwell-limited ignition misfire)
 - [x] Different fuels (pump/race gas, E85, methanol) with their own energy, stoich, knock & cooling
 - [ ] Reliability / wear simulation
 - [x] Calibration pass for realistic power figures & curve shape (ongoing refinement)

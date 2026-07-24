@@ -137,6 +137,11 @@ footer{text-align:center;margin-top:16px;padding:8px;font-size:7px;color:#555;bo
 <div class="field"><label for="edThermostat">THERMOSTAT (°C)</label><input type="number" id="edThermostat" min="71" max="95" step="1" value="88"></div>
 </div>
 
+<div class="design-section">Electrical</div>
+<div class="design-grid">
+<div class="field"><label for="edAlternator">ALTERNATOR</label><select id="edAlternator"><option value="60">60 A</option><option value="120">120 A</option><option value="180">180 A (HD)</option></select></div>
+</div>
+
 <div class="design-summary" id="designSummary"></div>
 <div class="build-row">
 <button id="btnBuild">BUILD &amp; DYNO</button>
@@ -162,6 +167,7 @@ footer{text-align:center;margin-top:16px;padding:8px;font-size:7px;color:#555;bo
 <h2>Engine Controls</h2>
 <div class="control-group"><label for="throttle">THROTTLE <span class="val" id="valThrottle">20</span> %</label><input type="range" id="throttle" min="0" max="100" step="1" value="20" aria-label="Throttle pedal position percent"></div>
 <div class="control-group"><label for="load">LOAD (DYNO BRAKE) <span class="val" id="valLoad">20</span> %</label><input type="range" id="load" min="0" max="100" step="1" value="20" aria-label="Applied dyno brake load percent"></div>
+<div class="control-group"><label for="elec">ELEC LOAD (LIGHTS/AC) <span class="val" id="valElec">30</span> %</label><input type="range" id="elec" min="0" max="100" step="1" value="30" aria-label="Electrical accessory load percent"></div>
 <div class="readout" id="readout">RPM 0 • MAP 0.00 bar</div>
 <div class="control-group"><label for="afr">AIR-FUEL RATIO <span class="val" id="valAFR">14.7</span></label><input type="range" id="afr" min="10.0" max="18.0" step="0.1" value="14.7" aria-label="Air-fuel ratio"></div>
 <div class="control-group"><label for="iat">INTAKE AIR TEMP <span class="val" id="valIAT">25</span> °C</label><input type="range" id="iat" min="-10" max="60" step="1" value="25" aria-label="Intake air temperature in Celsius"></div>
@@ -218,7 +224,8 @@ const DEFAULT_ENGINE={
   intake:'na',boost_bar:0,intercooler:true,turboSize:'medium',exhaust:'stock',
   cam:'stock',vvt:false,
   fuel:'gasoline',octane:95,injector:'port',ignitionAdv:22,ignitionType:'coil',
-  radiator:'stock',fan:'electric',oilCooler:false,thermostat:88
+  radiator:'stock',fan:'electric',oilCooler:false,thermostat:88,
+  alternator:'120'
 };
 const RAD_CAP={small:0.75,stock:1.0,large:1.35};   // relative heat-rejection capacity
 const IMEP_K=13.2;   // indicated MEP calibration (bar at map=1, ve=1, best-power AFR)
@@ -229,6 +236,13 @@ const THR_K=0.12;    // throttle-vs-rpm restriction (higher = more vacuum at rpm
 const IDLE_AIR=0.03; // idle bypass air (fraction of throttle area at 0% pedal)
 const IDLE_RPM=850;  // idle-controller floor — the engine can't stall below this
 const LOAD_MULT=1.3; // full dyno brake can exceed peak torque (to hold/decelerate)
+// Electrical: alternator rated output (A) and constant belt drag (bar of FMEP).
+const ALT={'60':{maxA:60,drag:0.020},'120':{maxA:120,drag:0.035},'180':{maxA:180,drag:0.050}};
+const ELEC_BASE_A=12;   // ECU / fuel pump / ignition baseline draw
+const ELEC_ACC_A=55;    // max accessory draw (lights, AC, audio…) at 100% ELEC LOAD
+const ELEC_FAN_A=22;    // electric cooling fan draw when running
+// Ignition dwell limit (rpm) before spark energy falls off → misfire, by ignition type.
+const DWELL_RPM={distributor:5200,wasted:6800,coil:9000};
 // Turbo characteristics as fractions of redline: 50% spool point, ramp width,
 // top-end choke, and boost-response speed (larger turbo = laggier).
 const TURBO={
@@ -240,7 +254,7 @@ let engine=Object.assign({},DEFAULT_ENGINE);
 let buildRev=0;   // bumped each build so the dyno cache invalidates
 
 // throttle & load are the driver inputs; rpm & map are now integrated by the sim.
-let state={throttle:0.20,load:0.20,rpm:1000,map:0.45,afr:14.7,iat:25,coolant:90,oil:100,torque:0,powerHP:0,powerKW:0,bsfc:0,thermalEff:0,fuelFlowLph:0,knockRisk:0,ve:0.85,bmep:0,boostActual:0};
+let state={throttle:0.20,load:0.20,elecLoad:0.30,rpm:1000,map:0.45,afr:14.7,iat:25,coolant:90,oil:100,torque:0,powerHP:0,powerKW:0,bsfc:0,thermalEff:0,fuelFlowLph:0,knockRisk:0,ve:0.85,bmep:0,boostActual:0,batterySOC:1.0,systemVoltage:14.0};
 let crankAngle=0,lastTime=performance.now();
 let vizMode='engine';
 let autoThermal=false;
@@ -278,7 +292,8 @@ function readEngineFromForm(){
     radiator:g('edRadiator').value,
     fan:g('edFan').value,
     oilCooler:g('edOilCooler').value==='yes',
-    thermostat:clamp(Math.round(+g('edThermostat').value||88),71,95)
+    thermostat:clamp(Math.round(+g('edThermostat').value||88),71,95),
+    alternator:g('edAlternator').value
   };
 }
 function applyEngineToForm(e){
@@ -293,6 +308,7 @@ function applyEngineToForm(e){
   g('edIgnAdv').value=e.ignitionAdv;g('edIgnType').value=e.ignitionType;
   g('edRadiator').value=e.radiator||'stock';g('edFan').value=e.fan||'electric';
   g('edOilCooler').value=e.oilCooler?'yes':'no';g('edThermostat').value=e.thermostat||88;
+  g('edAlternator').value=e.alternator||'120';
   syncDesignEnable();
 }
 function syncDesignEnable(){
@@ -358,6 +374,10 @@ function buildEngine(){
   // that keeps the engine cool at low speed (idle) where ram-air is negligible.
   engine.radCap=RAD_CAP[engine.radiator]||1.0;
   engine.fanFloor={none:0,mechanical:0.15,electric:0.5}[engine.fan];
+  // Electrical: alternator rated output & belt drag; ignition dwell (misfire) limit.
+  const alt=ALT[engine.alternator]||ALT['120'];
+  engine.altMaxA=alt.maxA;engine.altDragMEP=alt.drag;
+  engine.dwellLimit=DWELL_RPM[engine.ignitionType]||6800;
 
   // Keep the live operating point valid for the new engine.
   state.rpm=clamp(state.rpm,engine.idleRpmEff,engine.redline);
@@ -398,7 +418,8 @@ function updateDesignSummary(){
     '<br>Exhaust <b>'+engine.exhaust.toUpperCase()+'</b> • Cam <b>'+engine.cam.toUpperCase()+(engine.vvt?' + VVT':'')+'</b>'+
     '<br>Fuel <b>'+FUELS[engine.fuel].label+'</b> ('+engine.effOctane+' oct, '+engine.stoichAFR.toFixed(1)+':1 stoich'+(engine.chargeCool?', −'+engine.chargeCool+'°C charge':'')+')'+
     '<br>Injection <b>'+(engine.injector==='direct'?'Direct':'Port')+'</b> • Ignition <b>'+engine.ignitionAdv+'° '+engine.ignitionType.toUpperCase()+'</b>'+
-    '<br>Cooling <b>'+engine.radiator.toUpperCase()+' RAD</b> • <b>'+engine.fan.toUpperCase()+' FAN</b>'+(engine.oilCooler?' • <b>OIL COOLER</b>':'')+' • Thermostat <b>'+engine.thermostat+'°C</b>'+note;
+    '<br>Cooling <b>'+engine.radiator.toUpperCase()+' RAD</b> • <b>'+engine.fan.toUpperCase()+' FAN</b>'+(engine.oilCooler?' • <b>OIL COOLER</b>':'')+' • Thermostat <b>'+engine.thermostat+'°C</b>'+
+    '<br>Electrical <b>'+engine.altMaxA+'A alt</b> • Ignition misfire above <b>~'+engine.dwellLimit+'</b> rpm ('+engine.ignitionType.toUpperCase()+')'+note;
 }
 
 // ---- Turbo spool: how much of the target boost is available at a given RPM ----
@@ -499,7 +520,29 @@ function pumpFrictionMEP(rpm,map,oilFrictionMult){
   if(engine.intake==='supercharger')
     fmep+=0.18*Math.max(0,map-1.0)*(0.4+0.6*rpm/engine.redline);  // parasitic drive
   fmep+=PUMP_K*Math.max(0,1.0-map);                                // pumping / throttling loss
+  fmep+=engine.altDragMEP;                                         // alternator belt drag (baseline)
   return fmep;
+}
+// ---- Electrical: alternator, battery and ignition health ----
+function altOutputA(rpm){         // ~35% of rated at idle, full by ~2500 rpm
+  return engine.altMaxA*clamp((rpm-500)/2000,0.35,1);
+}
+function elecDemandA(){           // ECU/pump baseline + accessories + electric fan (when hot)
+  return ELEC_BASE_A+state.elecLoad*ELEC_ACC_A+(engine.fan==='electric'&&state.coolant>92?ELEC_FAN_A:0);
+}
+// Parasitic crank torque (Nm) to spin the alternator for the current actually generated —
+// significant at idle (low RPM), negligible up top.
+function electricalDragTorque(rpm){
+  const genA=Math.min(altOutputA(rpm),elecDemandA());
+  const watts=genA*14.0/0.55;     // electrical power / alternator efficiency
+  return watts/(Math.max(rpm,500)*2*Math.PI/60);
+}
+// Spark strength falls with low system voltage; combined with the dwell limit this sets the
+// misfire onset RPM. Weak battery + a distributor = early top-end misfire.
+function ignVFactor(){return clamp((state.systemVoltage-9.5)/(13-9.5),0.35,1);}
+function ignitionHealth(rpm){
+  const lim=engine.dwellLimit*ignVFactor();
+  return rpm<=lim?1:clamp(1-(rpm-lim)/(engine.dwellLimit*0.45),0.5,1);
 }
 // mapOverride lets the live view pass the integrated manifold pressure; the dyno omits
 // it and uses wide-open throttle (steady state) at each RPM.
@@ -510,13 +553,13 @@ function calcAtRpm(rpm,mapOverride){
   const afrP=afrPowerFactor(state.afr);
   const ignF=clamp(1-0.004*Math.pow(engine.ignitionAdv-mbtAdvance(rpm,map),2),0.72,1.0);
 
-  let imep=IMEP_K*map*ve*afrP*coolF*engine.crFactor*ignF;
+  let imep=IMEP_K*map*ve*afrP*coolF*engine.crFactor*ignF*ignitionHealth(rpm);
   imep*=298.15/(effIAT(map)+273.15);   // intake-air density correction (ref 25°C)
 
   let bmep=Math.max(0.05,imep-pumpFrictionMEP(rpm,map,oilFrictionMult));
 
   const Vd=engine.displacement_L/1000;
-  let torque=(bmep*1e5*Vd)/(4*Math.PI);   // 4-stroke: one power stroke per 2 revs
+  let torque=(bmep*1e5*Vd)/(4*Math.PI)-electricalDragTorque(rpm);   // 4-stroke, minus alternator load
   let powerKW=torque*rpm*2*Math.PI/60/1000;
   let powerHP=powerKW/0.7457;
 
@@ -532,12 +575,12 @@ function brakeTorqueRaw(rpm,map,fuelCut){
   if(!fuelCut){
     const ve=computeVE(rpm,map),afrP=afrPowerFactor(state.afr);
     const ignF=clamp(1-0.004*Math.pow(engine.ignitionAdv-mbtAdvance(rpm,map),2),0.72,1.0);
-    imep=IMEP_K*map*ve*afrP*coolF*engine.crFactor*ignF*(298.15/(effIAT(map)+273.15));
+    imep=IMEP_K*map*ve*afrP*coolF*engine.crFactor*ignF*ignitionHealth(rpm)*(298.15/(effIAT(map)+273.15));
     const knock=computeKnockRisk(rpm,map);
     if(knock>60)imep*=1-0.32*((knock-60)/40);
   }
   const bmep=imep-pumpFrictionMEP(rpm,map,oilFrictionMult);
-  return (bmep*1e5*(engine.displacement_L/1000))/(4*Math.PI);
+  return (bmep*1e5*(engine.displacement_L/1000))/(4*Math.PI)-electricalDragTorque(rpm);
 }
 // Advance the turbo's actual boost toward what it can make at the current RPM (spool lag).
 function stepBoost(dt){
@@ -563,6 +606,14 @@ function stepEngine(dt){
   const loadTq=state.load*engine.loadRefTq*LOAD_MULT*Math.pow(state.rpm/engine.redline,1.3);
   const omega=state.rpm*2*Math.PI/60+(tq-loadTq)/engine.inertia*dt;
   state.rpm=clamp(omega*60/(2*Math.PI),engine.idleRpmEff,engine.redline);
+}
+// Integrate the battery: charge when the alternator out-supplies demand, drain otherwise.
+// System voltage tracks state of charge; a flat battery weakens the spark (see ignVFactor).
+function stepElectrical(dt){
+  const netA=altOutputA(state.rpm)-elecDemandA();
+  state.batterySOC=clamp(state.batterySOC+netA*dt*0.0004,0,1);
+  const charging=netA>0&&state.batterySOC<0.999;
+  state.systemVoltage=clamp(11.4+1.6*state.batterySOC+(charging?0.6:0),10.5,14.4);
 }
 function updatePhysics(){
   const map=liveMap();
@@ -646,7 +697,7 @@ function setSound(on){
 
 // ---- Save / load full builds (localStorage) ----
 function saveSetup(){
-  const s={engine:engine,state:{throttle:state.throttle,load:state.load,afr:state.afr,iat:state.iat,coolant:state.coolant,oil:state.oil,autoThermal}};
+  const s={engine:engine,state:{throttle:state.throttle,load:state.load,elecLoad:state.elecLoad,afr:state.afr,iat:state.iat,coolant:state.coolant,oil:state.oil,autoThermal}};
   try{localStorage.setItem(SAVE_KEY,JSON.stringify(s));flash('BUILD SAVED');}
   catch(e){flash('SAVE FAILED (storage blocked)','err');}
 }
@@ -659,8 +710,8 @@ function loadSetup(){
     buildEngine();
     if(s.state){
       const st=s.state;
-      ['throttle','load','afr','iat','coolant','oil'].forEach(k=>{if(typeof st[k]==='number')state[k]=st[k];});
-      state.throttle=clamp(state.throttle,0,1);state.load=clamp(state.load,0,1);
+      ['throttle','load','elecLoad','afr','iat','coolant','oil'].forEach(k=>{if(typeof st[k]==='number')state[k]=st[k];});
+      state.throttle=clamp(state.throttle,0,1);state.load=clamp(state.load,0,1);state.elecLoad=clamp(state.elecLoad,0,1);
       setAutoThermal(!!st.autoThermal);
     }
     dynoCache=null;syncSliders();flash('BUILD LOADED');
@@ -759,6 +810,8 @@ function drawEngine(dt){
   ctx.fillStyle=state.knockRisk>70?C.red:(state.knockRisk>40?C.yellow:C.green);ctx.font='9px "Press Start 2P"';
   let msg='CYCLE: '+getStrokeName(crankAngle%720);
   if(engine.intake==='turbo')msg+='  •  BOOST +'+state.boostActual.toFixed(2);
+  msg+='  •  '+state.systemVoltage.toFixed(1)+'V';
+  if(state.systemVoltage<11.6)msg+=' LOW';
   if(state.knockRisk>50)msg+='  •  KNOCK WARNING';
   ctx.fillText(msg,12,H-12)
 }
@@ -812,10 +865,12 @@ function drawDyno(){
 function updateUI(){
   document.getElementById('valThrottle').textContent=Math.round(state.throttle*100);
   document.getElementById('valLoad').textContent=Math.round(state.load*100);
+  document.getElementById('valElec').textContent=Math.round(state.elecLoad*100);
   const boost=state.map-1.0;
   document.getElementById('readout').textContent=
     'RPM '+Math.round(state.rpm)+' • MAP '+state.map.toFixed(2)+' bar'+
-    (engine.intake!=='na'?' • BOOST '+(boost>=0?'+':'')+boost.toFixed(2):'');
+    (engine.intake!=='na'?' • BOOST '+(boost>=0?'+':'')+boost.toFixed(2):'')+
+    ' • BATT '+state.systemVoltage.toFixed(1)+'V';
   document.getElementById('valAFR').textContent=state.afr.toFixed(1);
   document.getElementById('valIAT').textContent=state.iat;
   document.getElementById('valCool').textContent=Math.round(state.coolant);
@@ -835,6 +890,7 @@ function updateUI(){
   else if(state.knockRisk>70){status.textContent='DETONATION RISK — RETARDING SPARK / POWER CUT';status.className='status-bar err'}
   else if(state.coolant>115){status.textContent='OVERHEAT — REDUCE LOAD OR INCREASE COOLING';status.className='status-bar err'}
   else if(state.oil<55){status.textContent='COLD OIL — HIGH FRICTION, WARM UP RECOMMENDED';status.className='status-bar warn'}
+  else if(state.systemVoltage<11.6){status.textContent='LOW VOLTAGE '+state.systemVoltage.toFixed(1)+'V — WEAK SPARK / MISFIRE';status.className='status-bar err'}
   else if(state.rpm>=engine.redline-30){status.textContent='REV LIMITER • '+Math.round(state.rpm)+' RPM';status.className='status-bar warn'}
   else if(state.powerHP>5){status.textContent='RUNNING • '+state.powerHP.toFixed(0)+' HP @ '+Math.round(state.rpm)+' RPM • BMEP '+state.bmep.toFixed(1)+' bar';status.className='status-bar'}
   else{status.textContent='IDLE / OVERRUN • '+Math.round(state.rpm)+' RPM';status.className='status-bar'}
@@ -857,6 +913,7 @@ function bindControls(){
   // Throttle & load are fractions (0..1); AFR/temps are direct values.
   document.getElementById('throttle').addEventListener('input',e=>state.throttle=(+e.target.value)/100);
   document.getElementById('load').addEventListener('input',e=>state.load=(+e.target.value)/100);
+  document.getElementById('elec').addEventListener('input',e=>state.elecLoad=(+e.target.value)/100);
   ['afr','iat','coolant','oil'].forEach(id=>{
     document.getElementById(id).addEventListener('input',()=>{
       state[id]=parseFloat(document.getElementById(id).value);
@@ -865,6 +922,7 @@ function bindControls(){
   });
   function applyPreset(p){
     state.throttle=p.throttle;state.load=p.load;
+    if(p.elec!=null)state.elecLoad=p.elec;
     state.afr=p.afr;state.iat=p.iat;state.coolant=p.coolant;state.oil=p.oil;
     dynoCache=null;syncSliders();
   }
@@ -889,6 +947,7 @@ function bindControls(){
 function syncSliders(){
   document.getElementById('throttle').value=Math.round(state.throttle*100);
   document.getElementById('load').value=Math.round(state.load*100);
+  document.getElementById('elec').value=Math.round(state.elecLoad*100);
   document.getElementById('afr').value=state.afr;
   document.getElementById('iat').value=state.iat;
   document.getElementById('coolant').value=state.coolant;
@@ -898,6 +957,7 @@ function loop(now){
   const dt=Math.min((now-lastTime)/1000,0.05);lastTime=now;
   stepThermal(dt);
   stepEngine(dt);
+  stepElectrical(dt);
   updatePhysics();
   updateSound();
   if(vizMode==='engine')drawEngine(dt);
