@@ -20,9 +20,11 @@ screamer, 2JZ six, muscle V8, blown V8, V12 supercar…), or configure your own 
 - **Air path** — naturally aspirated / turbo / supercharger, boost target, intercooler,
   turbo size, **turbo configuration** (single / twin / sequential / compound), **anti-lag**,
   **supercharger type** (roots / twin-screw / centrifugal), **nitrous** (small / big shot),
-  and exhaust (stock / sport / race). Twin/sequential/compound turbos spool earlier and
-  flatter; PD superchargers make boost from idle while centrifugals build it with rpm²;
-  anti-lag keeps the turbo lit (at a wear cost); nitrous is a big power adder from a bottle.
+  exhaust (stock / sport / race) and a **catalytic converter** (none/decat / sport / stock).
+  Twin/sequential/compound turbos spool earlier and flatter; PD superchargers make boost from
+  idle while centrifugals build it with rpm²; anti-lag keeps the turbo lit (at a wear cost);
+  nitrous is a big power adder from a bottle. A cat cleans the exhaust but adds a little
+  back-pressure; deleting it frees a few hp at the cost of emissions.
 - **Induction (metering)** — intake system (1/2/4-bbl carburetor, sidedraft carbs,
   mechanical injection, single-throttle EFI, or individual throttle bodies) and air filter
   (open stacks → restrictive). These set top-end breathing, AFR-metering precision (EFI is
@@ -61,8 +63,14 @@ saps power; a large radiator, electric fan and oil cooler keep it cool.
   Efficiency, BSFC, Fuel Flow, Knock Risk, Engine Health.
 - **Engine-view schematic** — a test-bench diagram (air intake, fuel system, engine,
   exhaust/analyser, dynamometer, electrical) with live values on every subsystem, instead of
-  a too-fast animation. A **⛶ FULL** button opens a full-screen detailed view with extra
-  readouts.
+  a too-fast animation. The **exhaust/analyser** box reads live **emissions** (a CLEAN/OK/DIRTY
+  rating, with CO/HC/NOx in the detailed view) like the bench gas analyser it's modelled on. A
+  **⛶ FULL** button opens a full-screen detailed view with extra readouts.
+- **Emissions** — engine-out CO / HC / NOx computed from the mixture (λ) and combustion
+  temperature, then cleaned by the catalytic converter *only* in a narrow window around
+  stoich: run rich and CO/HC spike (no O₂ to burn them); run lean and NOx slips past (a cat
+  can't reduce it with excess O₂). A **DIRTY** analyser is the price of chasing power on a rich
+  or decatted tune.
 - **WEAR toggle** — turn damage/wear off for free experimentation (invincible engine) or on
   for consequences.
 - **Dyno Curve** — full power & torque vs RPM out to your redline, with peak markers and a
@@ -78,10 +86,12 @@ saps power; a large radiator, electric fan and oil cooler keep it cool.
   balanced against the cooling subsystem's capacity (radiator airflow scales with RPM;
   the fan provides idle cooling).
 - **Engine sound** — Web Audio note pitched to firing frequency (scales with cylinder
-  count & RPM) and load.
+  count & RPM) and load, now with a **lope/burble** whose depth tracks the build's character —
+  a wild cam, a cross-plane V8 or anti-lag idles lumpy, while VVT and more cylinders smooth
+  it out.
 - **Scoring** — every build gets a graded scorecard (S–F) rating power, specific output,
-  powerband width, efficiency, knock safety and drivability, shown on the design summary and
-  the dyno.
+  powerband width, efficiency, knock safety, drivability and **emissions**, shown on the
+  design summary and the dyno.
 - **Dyno pull logging** — snapshot the current curve and overlay several pulls on the graph
   to compare builds or tunes.
 - **Save / Load / Share** — quick-save to `localStorage`; **save to a named file** (with a
@@ -158,6 +168,13 @@ Curve** tab remains a wide-open-throttle steady-state sweep for reading the full
   waste fuel (worse BSFC). The air filter adds an airflow-weighted restriction.
 - Knock combines boost, compression, charge/coolant temperature, RPM, timing and mixture,
   offset by fuel octane, charge cooling and direct injection; high knock derates power.
+- Emissions: CO rises sharply when rich (incomplete combustion); HC is U-shaped — high rich
+  (excess fuel) and very lean (misfire), plus cam-overlap scavenging, imprecise metering and
+  a cold engine; NOx is thermal, peaking slightly lean (~λ1.08) and scaling with combustion
+  temperature (load, compression, spark advance, hot charge). A three-way cat needs excess O₂
+  to oxidise CO/HC but an O₂-free exhaust to reduce NOx, so only a stoich mixture cleans all
+  three at once — the rating rewards a cat + precise stoich metering and punishes rich/lean/
+  decatted running. The cat also adds a little exhaust back-pressure (a small top-end VE loss).
 - Fuel type sets energy density, stoichiometric AFR (the mixture control works in lambda,
   so the AFR slider rescales per fuel), knock rating and evaporative charge cooling. E85 and
   methanol resist knock and cool the intake charge (more power) but need much more fuel
@@ -200,15 +217,18 @@ philosophy).
 2. **(D) Forced-induction & tuning depth** — ✅ turbo configs (twin/sequential/compound),
    supercharger types (roots/screw/centrifugal), anti-lag and nitrous are **done**; 2D
    fuel/ignition map editor still to come (Auto timing already covers ignition-map behaviour).
-3. **(E) Emissions & sound** — CO / HC / NOx + catalytic converter + an emissions score
-   (matches the exhaust-analyser bench), and a firing-order-aware engine note.
+3. ~~**(E) Emissions & sound**~~ ✅ **done** — engine-out CO / HC / NOx vs mixture &
+   combustion temperature, a **catalytic converter** design option and a stoich-window
+   three-way conversion model, a live analyser readout + an emissions score, and a
+   character-driven **lope/burble** on the engine note.
 4. **(C) Strategy layer** — per-part costs / budget and objective-based challenges
    (targets for power, economy, reliability, power-per-dollar).
 5. **(B) New engine types** — diesel (compression ignition), rotary/Wankel, 2-stroke.
 6. **(A) Vehicle / drivetrain layer** — gearbox, weight, grip and aero drag → 0–60,
    quarter-mile and top-speed runs off the dynamic model.
 
-Deferred: V/boxer bank visuals (cosmetic); native Android build (parked).
+Deferred: 2D fuel/ignition map editor (parked for later); V/boxer bank visuals (cosmetic);
+native Android build (parked).
 
 ### Completed
 
@@ -231,6 +251,8 @@ Deferred: V/boxer bank visuals (cosmetic); native Android build (parked).
 - [x] Reliability / wear simulation (health falls under detonation/overheat/lean-boost/over-rev)
 - [x] Scoring / rating (graded scorecard) and dyno-pull logging & overlay
 - [x] Save to / open from named files (with notes) and shareable build links
+- [x] Emissions (engine-out CO/HC/NOx + three-way catalytic converter) with a live analyser & score
+- [x] Character-driven engine note (lope/burble from cam, layout & anti-lag)
 - [x] Calibration pass for realistic power figures & curve shape (ongoing refinement)
 - [ ] Native Android build (wrap the PWA with Capacitor or a Trusted Web Activity)
 
