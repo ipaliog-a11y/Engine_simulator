@@ -18,7 +18,11 @@ screamer, 2JZ six, muscle V8, blown V8, V12 supercar…), or configure your own 
 - **Bottom end** — cylinder count (1–12), layout (inline / V / boxer), bore, stroke,
   compression ratio, redline. Bore × stroke × cylinders sets the displacement.
 - **Air path** — naturally aspirated / turbo / supercharger, boost target, intercooler,
-  turbo size (small / medium / large), and exhaust (stock / sport / race).
+  turbo size, **turbo configuration** (single / twin / sequential / compound), **anti-lag**,
+  **supercharger type** (roots / twin-screw / centrifugal), **nitrous** (small / big shot),
+  and exhaust (stock / sport / race). Twin/sequential/compound turbos spool earlier and
+  flatter; PD superchargers make boost from idle while centrifugals build it with rpm²;
+  anti-lag keeps the turbo lit (at a wear cost); nitrous is a big power adder from a bottle.
 - **Induction (metering)** — intake system (1/2/4-bbl carburetor, sidedraft carbs,
   mechanical injection, single-throttle EFI, or individual throttle bodies) and air filter
   (open stacks → restrictive). These set top-end breathing, AFR-metering precision (EFI is
@@ -193,8 +197,9 @@ philosophy).
 1. ~~Engine presets / example gallery~~ ✅ **done** — a **LOAD A PRESET** dropdown with 10
    popular archetypes (1.6 sport, kei turbo, hot-hatch, ITB screamer, RS5-turbo, 2JZ six,
    muscle V8, blown V8, V12 supercar, eco turbo).
-2. **(D) Forced-induction & tuning depth** — twin / sequential / compound turbos, supercharger
-   types (roots vs centrifugal curves), anti-lag, nitrous, and 2D fuel/ignition maps.
+2. **(D) Forced-induction & tuning depth** — ✅ turbo configs (twin/sequential/compound),
+   supercharger types (roots/screw/centrifugal), anti-lag and nitrous are **done**; 2D
+   fuel/ignition map editor still to come (Auto timing already covers ignition-map behaviour).
 3. **(E) Emissions & sound** — CO / HC / NOx + catalytic converter + an emissions score
    (matches the exhaust-analyser bench), and a firing-order-aware engine note.
 4. **(C) Strategy layer** — per-part costs / budget and objective-based challenges

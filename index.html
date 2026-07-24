@@ -115,10 +115,14 @@ footer{text-align:center;margin-top:16px;padding:8px;font-size:7px;color:#555;bo
 <div class="design-section">Air Path</div>
 <div class="design-grid">
 <div class="field"><label for="edIntake">INTAKE TYPE</label><select id="edIntake"><option value="na">NATURALLY ASP.</option><option value="turbo">TURBO</option><option value="supercharger">SUPERCHARGER</option></select></div>
-<div class="field"><label for="edBoost">BOOST TARGET (bar)</label><input type="number" id="edBoost" min="0" max="1.8" step="0.05" value="0"></div>
+<div class="field"><label for="edBoost">BOOST TARGET (bar)</label><input type="number" id="edBoost" min="0" max="2.5" step="0.05" value="0"></div>
 <div class="field"><label for="edIntercooler">INTERCOOLER</label><select id="edIntercooler"><option value="yes">YES</option><option value="no">NO</option></select></div>
 <div class="field"><label for="edTurboSize">TURBO SIZE</label><select id="edTurboSize"><option value="small">SMALL</option><option value="medium">MEDIUM</option><option value="large">LARGE</option></select></div>
+<div class="field"><label for="edTurboConfig">TURBO CONFIG</label><select id="edTurboConfig"><option value="single">SINGLE</option><option value="twin">TWIN</option><option value="sequential">SEQUENTIAL</option><option value="compound">COMPOUND</option></select></div>
+<div class="field"><label for="edAntilag">ANTI-LAG (ALS)</label><select id="edAntilag"><option value="no">NO</option><option value="yes">YES</option></select></div>
+<div class="field"><label for="edScType">SUPERCHARGER</label><select id="edScType"><option value="roots">ROOTS</option><option value="screw">TWIN-SCREW</option><option value="centrifugal">CENTRIFUGAL</option></select></div>
 <div class="field"><label for="edExhaust">EXHAUST</label><select id="edExhaust"><option value="stock">STOCK</option><option value="sport">SPORT</option><option value="race">RACE</option></select></div>
+<div class="field"><label for="edNitrous">NITROUS (N2O)</label><select id="edNitrous"><option value="none">NONE</option><option value="small">SMALL SHOT</option><option value="large">BIG SHOT</option></select></div>
 </div>
 
 <div class="design-section">Induction (Metering)</div>
@@ -207,6 +211,7 @@ footer{text-align:center;margin-top:16px;padding:8px;font-size:7px;color:#555;bo
 <div class="btn-row">
 <button id="btnAutoThermal" class="toggle" aria-pressed="false">AUTO THERMAL</button>
 <button id="btnWear" class="toggle on" aria-pressed="true">WEAR</button>
+<button id="btnNitrous" class="toggle" aria-pressed="false" disabled>NITROUS</button>
 <button id="btnSound" class="toggle" aria-pressed="false">SOUND</button>
 <button id="btnSave">SAVE</button>
 <button id="btnLoad">LOAD</button>
@@ -279,7 +284,7 @@ const AIR_FILTER={
 // coil-on-plug with ECU knock-limited timing).
 const DEFAULT_ENGINE={
   cylinders:4,bore_mm:81,stroke_mm:78,compression:12.5,layout:'inline',redline:7200,
-  intake:'na',boost_bar:0,intercooler:true,turboSize:'medium',exhaust:'sport',
+  intake:'na',boost_bar:0,intercooler:true,turboSize:'medium',turboConfig:'single',scType:'roots',antilag:false,nitrous:'none',exhaust:'sport',
   intakeSys:'efi',airFilter:'perf',
   cam:'stock',vvt:true,
   fuel:'gasoline',octane:95,injector:'direct',ignitionAdv:22,ignitionType:'coil',timingMode:'auto',
@@ -323,11 +328,29 @@ const TURBO={
   medium:{spool50:0.40,width:0.08,choke:0.10,k:2.2},
   large:{spool50:0.54,width:0.10,choke:0.04,k:1.4}
 };
+// Turbo configuration: multipliers on the base (size) spool point / width / top-end choke /
+// response. Twin spools earlier & flows better; sequential spools very early and stays flat;
+// compound makes big low-end and huge boost.
+const TURBO_CONFIG={
+  single:    {label:'SINGLE',     spool:1.00,width:1.00,choke:1.00,k:1.00},
+  twin:      {label:'TWIN',       spool:0.82,width:1.10,choke:0.55,k:1.15},
+  sequential:{label:'SEQUENTIAL', spool:0.60,width:1.55,choke:0.30,k:1.30},
+  compound:  {label:'COMPOUND',   spool:0.68,width:1.35,choke:0.18,k:1.10}
+};
+// Supercharger types: boost fraction vs rpm = clamp(lo + (hi-lo)*(rpm/redline)^exp). Roots &
+// twin-screw are positive-displacement (near-full boost from low rpm); centrifugal is a
+// belt-driven compressor (boost rises with rpm²). drag = relative parasitic belt load.
+const SC_TYPE={
+  roots:      {label:'ROOTS',      lo:0.82,hi:1.00,exp:1,drag:1.25},
+  screw:      {label:'TWIN-SCREW', lo:0.78,hi:1.00,exp:1,drag:1.00},
+  centrifugal:{label:'CENTRIFUGAL',lo:0.04,hi:1.00,exp:2,drag:0.80}
+};
+const NITROUS_BAR={none:0,small:2.2,large:4.2};   // extra IMEP (bar) from a nitrous shot
 let engine=Object.assign({},DEFAULT_ENGINE);
 let buildRev=0;   // bumped each build so the dyno cache invalidates
 
 // throttle & load are the driver inputs; rpm & map are now integrated by the sim.
-let state={throttle:0.20,load:0.20,elecLoad:0.30,rpm:1000,map:0.45,afr:14.7,iat:25,coolant:90,oil:100,torque:0,powerHP:0,powerKW:0,bsfc:0,thermalEff:0,fuelFlowLph:0,knockRisk:0,ve:0.85,bmep:0,boostActual:0,batterySOC:1.0,systemVoltage:14.0,engineHealth:1.0,blown:false,wearCause:'',fuelCut:false};
+let state={throttle:0.20,load:0.20,elecLoad:0.30,rpm:1000,map:0.45,afr:14.7,iat:25,coolant:90,oil:100,torque:0,powerHP:0,powerKW:0,bsfc:0,thermalEff:0,fuelFlowLph:0,knockRisk:0,ve:0.85,bmep:0,boostActual:0,batterySOC:1.0,systemVoltage:14.0,engineHealth:1.0,blown:false,wearCause:'',fuelCut:false,nitrousActive:false,nitrousCharge:1.0};
 let crankAngle=0,lastTime=performance.now();
 let vizMode='engine';
 let autoThermal=false;
@@ -357,9 +380,13 @@ function readEngineFromForm(){
     layout:g('edLayout').value,
     redline:clamp(Math.round(+g('edRedline').value||7000),5000,9500),
     intake,
-    boost_bar:intake==='na'?0:clamp(+g('edBoost').value||0,0,1.8),
+    boost_bar:intake==='na'?0:clamp(+g('edBoost').value||0,0,2.5),
     intercooler:g('edIntercooler').value==='yes',
     turboSize:g('edTurboSize').value,
+    turboConfig:g('edTurboConfig').value,
+    antilag:g('edAntilag').value==='yes',
+    scType:g('edScType').value,
+    nitrous:g('edNitrous').value,
     exhaust:g('edExhaust').value,
     intakeSys:g('edIntakeSys').value,
     airFilter:g('edAirFilter').value,
@@ -384,6 +411,8 @@ function applyEngineToForm(e){
   g('edStroke').value=e.stroke_mm;g('edCR').value=e.compression;g('edRedline').value=e.redline;
   g('edIntake').value=e.intake;g('edBoost').value=e.boost_bar;g('edIntercooler').value=e.intercooler?'yes':'no';
   g('edTurboSize').value=e.turboSize||'medium';
+  g('edTurboConfig').value=e.turboConfig||'single';g('edAntilag').value=e.antilag?'yes':'no';
+  g('edScType').value=e.scType||'roots';g('edNitrous').value=e.nitrous||'none';
   g('edIntakeSys').value=e.intakeSys||'efi';g('edAirFilter').value=e.airFilter||'stock';
   g('edCam').value=e.cam||'stock';g('edVVT').value=e.vvt?'yes':'no';
   g('edFuel').value=e.fuel||'gasoline';
@@ -399,7 +428,11 @@ function syncDesignEnable(){
   const intake=document.getElementById('edIntake').value,na=intake==='na';
   document.getElementById('edBoost').disabled=na;
   document.getElementById('edIntercooler').disabled=na;
-  document.getElementById('edTurboSize').disabled=intake!=='turbo';
+  const turbo=intake==='turbo';
+  document.getElementById('edTurboSize').disabled=!turbo;
+  document.getElementById('edTurboConfig').disabled=!turbo;
+  document.getElementById('edAntilag').disabled=!turbo;
+  document.getElementById('edScType').disabled=intake!=='supercharger';
   // Octane only matters for pump gas; other fuels carry their own rating.
   document.getElementById('edOctane').disabled=document.getElementById('edFuel').value!=='gasoline';
   // Fixed advance value only applies in FIXED timing mode.
@@ -453,13 +486,16 @@ function buildEngine(){
   engine.strokeFrictionMult=1+(engine.stroke_mm-86)/320;  // longer stroke = more friction
   engine.maxBoost=engine.intake==='na'?0:engine.boost_bar;
   engine.mapMax=engine.intake==='na'?1.05:1.0+engine.maxBoost;
-  // Turbo spool characteristics scaled to this engine's redline.
-  const tb=TURBO[engine.turboSize]||TURBO.medium;
-  engine.spool50=tb.spool50*engine.redline;
-  engine.spoolWidth=tb.width*engine.redline;
-  engine.turboChoke=tb.choke;
-  engine.spoolK=tb.k;
-  state.boostActual=0;   // start unspooled after a build
+  // Turbo spool characteristics scaled to redline, then modified by the turbo config
+  // (twin/sequential/compound) and anti-lag (keeps it spooled — earlier, faster).
+  const tb=TURBO[engine.turboSize]||TURBO.medium, cfg=TURBO_CONFIG[engine.turboConfig]||TURBO_CONFIG.single;
+  const als=engine.antilag?0.62:1.0, alsK=engine.antilag?1.5:1.0;
+  engine.spool50=tb.spool50*cfg.spool*als*engine.redline;
+  engine.spoolWidth=tb.width*cfg.width*engine.redline;
+  engine.turboChoke=tb.choke*cfg.choke;
+  engine.spoolK=tb.k*cfg.k*alsK;
+  engine.nitrousBar=NITROUS_BAR[engine.nitrous]||0;
+  state.boostActual=0;state.nitrousActive=false;state.nitrousCharge=1.0;   // fresh tanks
   state.engineHealth=1.0;state.blown=false;state.wearCause='';   // a fresh (rebuilt) engine
   // Rotating-assembly + flywheel inertia grows faster than torque with engine size
   // (bigger displacement, longer stroke, heavier flywheel), so a big long-stroke engine
@@ -500,7 +536,9 @@ function updateEngineLabels(){
   document.getElementById('subtitle').textContent=
     engine.cylinders+'-CYL '+LAYOUT_LABEL[engine.layout]+' • '+disp+'L • '+boostTxt+' • '+engine.octane+'RON';
   document.getElementById('engineCanvas').setAttribute('aria-label',
-    'Animated cutaway of a '+engine.cylinders+' cylinder '+LAYOUT_LABEL[engine.layout]+' '+disp+' litre engine');
+    'Test-bench schematic of a '+engine.cylinders+' cylinder '+LAYOUT_LABEL[engine.layout]+' '+disp+' litre engine');
+  const nb=document.getElementById('btnNitrous');
+  nb.disabled=engine.nitrous==='none';nb.classList.remove('on');nb.setAttribute('aria-pressed','false');
 }
 function updateDesignSummary(){
   const disp=engine.displacement_L.toFixed(engine.displacement_L<1?3:2);
@@ -509,8 +547,9 @@ function updateDesignSummary(){
   let induction;
   if(engine.intake==='na')induction='Naturally aspirated';
   else if(engine.intake==='turbo')
-    induction='TURBO ('+engine.turboSize.toUpperCase()+') @ '+engine.boost_bar.toFixed(2)+' bar'+(engine.intercooler?' (IC)':' (no IC)')+', ~50% boost @ '+Math.round(engine.spool50)+' rpm';
-  else induction='SUPERCHARGER @ '+engine.boost_bar.toFixed(2)+' bar'+(engine.intercooler?' (IC)':' (no IC)');
+    induction=TURBO_CONFIG[engine.turboConfig].label+' TURBO ('+engine.turboSize.toUpperCase()+')'+(engine.antilag?' +ALS':'')+' @ '+engine.boost_bar.toFixed(2)+' bar'+(engine.intercooler?' (IC)':' (no IC)')+', 50% boost @ '+Math.round(engine.spool50)+' rpm';
+  else induction=SC_TYPE[engine.scType].label+' S/C @ '+engine.boost_bar.toFixed(2)+' bar'+(engine.intercooler?' (IC)':' (no IC)');
+  if(engine.nitrous!=='none')induction+=' • <span style="color:#ff66cc">'+(engine.nitrous==='large'?'BIG':'SMALL')+' NITROUS</span>';
   document.getElementById('designSummary').innerHTML=
     '<b>'+engine.cylinders+' × '+engine.bore_mm+'×'+engine.stroke_mm+'mm</b> → <b>'+disp+' L</b> '+LAYOUT_LABEL[engine.layout]+
     '<br>Compression <b>'+engine.compression.toFixed(1)+':1</b> • Redline <b>'+engine.redline+'</b> rpm'+
@@ -541,9 +580,14 @@ function spoolFrac(rpm){
 // a supercharger is crank-driven so it makes boost almost from idle).
 function boostAvail(rpm){
   if(engine.intake==='turbo')return engine.boost_bar*spoolFrac(rpm);
-  if(engine.intake==='supercharger')return engine.boost_bar*clamp(0.3+0.7*rpm/engine.redline,0,1);
+  if(engine.intake==='supercharger'){
+    const sc=SC_TYPE[engine.scType]||SC_TYPE.roots;
+    return engine.boost_bar*clamp(sc.lo+(sc.hi-sc.lo)*Math.pow(rpm/engine.redline,sc.exp),0,1);
+  }
   return 0;
 }
+// Extra IMEP (bar) from an active nitrous shot (WOT only, while the bottle has charge).
+function nitrousImep(){return state.nitrousActive&&state.nitrousCharge>0&&state.throttle>0.5?engine.nitrousBar:0;}
 // Wide-open-throttle manifold pressure at an RPM (used for the dyno sweep).
 function wotMapAt(rpm){return 1.0+boostAvail(rpm);}
 // Live manifold pressure is now an integrated state variable (see stepEngine).
@@ -622,6 +666,7 @@ function knockAt(rpm,map,adv){
   k-=(engine.effOctane-90)*2.2;                         // fuel octane resists knock
   k-=engine.fuelKnockBonus;                             // alcohol extra knock margin
   if(engine.injector==='direct')k-=12;                  // DI charge cooling
+  k+=nitrousImep()*4;                                   // nitrous raises cylinder pressure → more knock
   return clamp(k,0,100);
 }
 // The spark advance actually run at an operating point. FIXED = the designed value; AUTO =
@@ -642,7 +687,7 @@ function computeKnockRisk(rpm,map){return knockAt(rpm,map,activeAdvance(rpm,map)
 function pumpFrictionMEP(rpm,map,oilFrictionMult){
   let fmep=(0.55+1.8e-8*rpm*rpm)*oilFrictionMult*engine.strokeFrictionMult;
   if(engine.intake==='supercharger')
-    fmep+=0.18*Math.max(0,map-1.0)*(0.4+0.6*rpm/engine.redline);  // parasitic drive
+    fmep+=0.18*(SC_TYPE[engine.scType]||SC_TYPE.roots).drag*Math.max(0,map-1.0)*(0.4+0.6*rpm/engine.redline);  // parasitic drive (by type)
   fmep+=PUMP_K*Math.max(0,1.0-map);                                // pumping / throttling loss
   fmep+=engine.altDragMEP;                                         // alternator belt drag (baseline)
   return fmep;
@@ -677,7 +722,7 @@ function calcAtRpm(rpm,mapOverride){
   const afrP=afrPowerFactor(state.afr);
   const ignF=clamp(1-0.004*Math.pow(activeAdvance(rpm,map)-mbtAdvance(rpm,map),2),0.72,1.0);
 
-  let imep=IMEP_K*map*ve*afrP*coolF*engine.crFactor*ignF*ignitionHealth(rpm)*healthFactor();
+  let imep=IMEP_K*map*ve*afrP*coolF*engine.crFactor*ignF*ignitionHealth(rpm)*healthFactor()+nitrousImep()*healthFactor();
   imep*=298.15/(effIAT(map)+273.15);   // intake-air density correction (ref 25°C)
 
   let bmep=Math.max(0.05,imep-pumpFrictionMEP(rpm,map,oilFrictionMult));
@@ -699,7 +744,7 @@ function brakeTorqueRaw(rpm,map,fuelCut){
   if(!fuelCut){
     const ve=computeVE(rpm,map),afrP=afrPowerFactor(state.afr);
     const ignF=clamp(1-0.004*Math.pow(activeAdvance(rpm,map)-mbtAdvance(rpm,map),2),0.72,1.0);
-    imep=IMEP_K*map*ve*afrP*coolF*engine.crFactor*ignF*ignitionHealth(rpm)*healthFactor()*(298.15/(effIAT(map)+273.15));
+    imep=IMEP_K*map*ve*afrP*coolF*engine.crFactor*ignF*ignitionHealth(rpm)*healthFactor()*(298.15/(effIAT(map)+273.15))+nitrousImep()*healthFactor();
     const knock=computeKnockRisk(rpm,map);
     if(knock>60)imep*=1-0.32*((knock-60)/40);
   }
@@ -737,6 +782,10 @@ function brakeTorque(){
 function stepEngine(dt){
   stepBoost(dt);
   state.map+=(mapTarget()-state.map)*(1-Math.exp(-MAP_K*engine.intakeRespK*dt));
+  if(state.nitrousActive){   // deplete the bottle while spraying at WOT (~14 s per fill)
+    if(state.throttle>0.5&&state.nitrousCharge>0)state.nitrousCharge=Math.max(0,state.nitrousCharge-0.07*dt);
+    if(state.nitrousCharge<=0)state.nitrousActive=false;
+  }
   const cut=state.rpm>=engine.redline||overrunFuelCut();
   let tq=brakeTorqueRaw(state.rpm,state.map,cut);
   // Engine braking on a closed throttle (pumping/friction/windage), scaled to engine size
@@ -772,6 +821,8 @@ function stepWear(dt){
   add(state.rpm>engine.redline*0.985?0.006:0,'OVER-REV');
   add(Math.max(0,lam-1.05)*Math.max(0,state.map-0.9)*0.14,'LEAN/BOOST');         // burnt pistons
   add(state.oil<55&&state.powerHP>15?0.004:0,'COLD-OIL');
+  add(nitrousImep()>0?0.011:0,'NITROUS');                                        // nitrous stresses everything
+  add(engine.antilag&&state.rpm>2500?0.004:0,'ANTI-LAG');                        // ALS cooks the turbo/exhaust
   w+=0.000006;   // baseline fatigue (negligible — hours of clean running)
   state.engineHealth=clamp(state.engineHealth-w*dt,0,1);
   state.wearCause=worst>0.001?cause:'';
@@ -1120,7 +1171,9 @@ function drawEngine(dt){
   if(state.blown)msg='ENGINE FAILURE — '+state.wearCause+' • REBUILD WITH BUILD & DYNO';
   else if(state.wearCause)msg='DAMAGE: '+state.wearCause+' — HEALTH '+Math.round(state.engineHealth*100)+'% FALLING';
   else if(!wearEnabled)msg='WEAR OFF (INVINCIBLE) • '+state.powerHP.toFixed(0)+' HP @ '+Math.round(state.rpm)+' RPM';
-  else msg=(state.powerHP>5?'RUNNING':'IDLE')+' • '+state.powerHP.toFixed(0)+' HP • '+state.torque.toFixed(0)+' Nm'+(detailed?'  ('+INTAKE_SYS[engine.intakeSys].label+' • '+FUELS[engine.fuel].label+')':'  •  '+(fullscreen?'':'⛶ FULL for detail'));
+  else if(state.nitrousActive&&nitrousImep()>0)msg='NITROUS! • '+state.powerHP.toFixed(0)+' HP • BOTTLE '+Math.round(state.nitrousCharge*100)+'%';
+  else msg=(state.powerHP>5?'RUNNING':'IDLE')+' • '+state.powerHP.toFixed(0)+' HP • '+state.torque.toFixed(0)+' Nm'+(engine.nitrous!=='none'?'  •  N2O '+Math.round(state.nitrousCharge*100)+'%':'')+(detailed?'  ('+INTAKE_SYS[engine.intakeSys].label+')':(fullscreen?'':'  •  ⛶ FULL'));
+  if(state.nitrousActive&&nitrousImep()>0)ctx.fillStyle='#ff66cc';
   ctx.fillText(msg,px(10),py(414));
 }
 function drawDyno(){
@@ -1270,6 +1323,13 @@ function bindControls(){
     const b=document.getElementById('btnWear');
     b.classList.toggle('on',wearEnabled);b.setAttribute('aria-pressed',wearEnabled);
     flash(wearEnabled?'WEAR ON • ENGINE CAN BE DAMAGED':'WEAR OFF • ENGINE INVINCIBLE');
+  });
+  document.getElementById('btnNitrous').addEventListener('click',()=>{
+    if(engine.nitrous==='none'){flash('NO NITROUS FITTED — ADD A SHOT IN THE DESIGN','warn');return;}
+    if(state.nitrousCharge<=0){flash('NITROUS BOTTLE EMPTY — REBUILD TO REFILL','warn');return;}
+    state.nitrousActive=!state.nitrousActive;
+    const b=document.getElementById('btnNitrous');b.classList.toggle('on',state.nitrousActive);b.setAttribute('aria-pressed',state.nitrousActive);
+    flash(state.nitrousActive?'NITROUS ARMED — SPRAYS AT WOT':'NITROUS OFF');
   });
   document.getElementById('btnSound').addEventListener('click',()=>setSound(!Sound.on));
   document.getElementById('btnSave').addEventListener('click',saveSetup);
