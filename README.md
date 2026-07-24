@@ -54,8 +54,12 @@ saps power; a large radiator, electric fan and oil cooler keep it cool.
 ### Simulation & live tuning
 - **Live outputs**: Power (HP), Torque (Nm), BMEP, Volumetric Efficiency, Thermal
   Efficiency, BSFC, Fuel Flow, Knock Risk, Engine Health.
-- **Animated cutaway** that renders your actual cylinder count through the full 4-stroke
-  cycle (Intake → Compression → Power → Exhaust).
+- **Engine-view schematic** — a test-bench diagram (air intake, fuel system, engine,
+  exhaust/analyser, dynamometer, electrical) with live values on every subsystem, instead of
+  a too-fast animation. A **⛶ FULL** button opens a full-screen detailed view with extra
+  readouts.
+- **WEAR toggle** — turn damage/wear off for free experimentation (invincible engine) or on
+  for consequences.
 - **Dyno Curve** — full power & torque vs RPM out to your redline, with peak markers and a
   live current-RPM line.
 - **Drive it (dynamic model)** — you control **THROTTLE** and **LOAD** (a dyno brake), not
