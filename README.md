@@ -17,7 +17,8 @@ screamer, 2JZ six, muscle V8, blown V8, V12 supercar…), or configure your own 
 
 - **Bottom end** — cylinder count (1–12), layout (inline / V / boxer), bore, stroke,
   compression ratio, redline. Bore × stroke × cylinders sets the displacement.
-- **Air path** — naturally aspirated / turbo / supercharger, boost target, intercooler,
+- **Air path** — naturally aspirated / turbo / supercharger, boost target, **intercooler size**
+  (none / small / large core — a bigger core cools the charge more but adds a little spool lag),
   turbo size, **turbo configuration** (single / twin / sequential / compound), **anti-lag**,
   **supercharger type** (roots / twin-screw / centrifugal), **nitrous** (small / big shot),
   exhaust (stock / sport / race) and a **catalytic converter** (none/decat / sport / stock).
@@ -61,11 +62,19 @@ saps power; a large radiator, electric fan and oil cooler keep it cool.
 ### Simulation & live tuning
 - **Live outputs**: Power (HP), Torque (Nm), BMEP, Volumetric Efficiency, Thermal
   Efficiency, BSFC, Fuel Flow, Knock Risk, Engine Health.
+- **Five tabs** — **DESIGN** (build the engine), **ENGINE** (live test-bench schematic),
+  **DYNO** (power/torque curve + scorecard), **GUIDE** (an in-app manual explaining every
+  control and metric) and **OPTIONS** (sound, wear and future language packs). The right column
+  is context-aware: the runtime Engine Controls show while driving/on the dyno, and the DESIGN
+  tab reserves that space for the upcoming **Vehicle Designer**.
 - **Engine-view schematic** — a test-bench diagram (air intake, fuel system, engine,
   exhaust/analyser, dynamometer, electrical) with live values on every subsystem, instead of
   a too-fast animation. The **exhaust/analyser** box reads live **emissions** (a CLEAN/OK/DIRTY
   rating, with CO/HC/NOx in the detailed view) like the bench gas analyser it's modelled on. A
   **⛶ FULL** button opens a full-screen detailed view with extra readouts.
+- **In-app GUIDE** — a built-in manual (kept in-app so the offline PWA stays self-contained)
+  that explains the loop, the driving controls, every metric on screen and each design
+  subsystem, so the numbers are never a mystery.
 - **Emissions** — engine-out CO / HC / NOx computed from the mixture (λ) and combustion
   temperature, then cleaned by the catalytic converter *only* in a narrow window around
   stoich: run rich and CO/HC spike (no O₂ to burn them); run lean and NOx slips past (a cat
@@ -101,6 +110,10 @@ saps power; a large radiator, electric fan and oil cooler keep it cool.
 - **Installable PWA**, self-hosted font, works fully offline.
 
 ![Dyno](docs/dyno.png)
+
+The built-in **GUIDE** tab explains every control and metric without leaving the app:
+
+![Guide](docs/guide.png)
 
 ## How to Run
 
@@ -152,8 +165,10 @@ Curve** tab remains a wide-open-throttle steady-state sweep for reading the full
   exhaust / 98 RON makes ~255 hp & ~350 Nm; a 2.0 NA ~130 hp), with only a gentle power
   drop from peak to redline.
 - Compression scales indicated work and efficiency via a relative Otto-cycle factor.
-- Forced induction raises achievable MAP; without an intercooler the charge heats up.
-  Superchargers cost parasitic drive power.
+- Forced induction raises achievable MAP and heats the charge; the intercooler size sets how
+  much of that heat is removed (a large core leaves the charge coolest — denser air, more knock
+  margin — but its extra plumbing volume adds a little turbo spool lag). Superchargers cost
+  parasitic drive power.
 - Turbo boost spools with RPM along a logistic curve: small turbos spool early (strong
   midrange) but choke the top end, large turbos lag down low but flow more up top. Actual
   boost also lags in time (turbo lag), so it builds over ~1 s in the live Engine View.
@@ -253,6 +268,9 @@ native Android build (parked).
 - [x] Save to / open from named files (with notes) and shareable build links
 - [x] Emissions (engine-out CO/HC/NOx + three-way catalytic converter) with a live analyser & score
 - [x] Character-driven engine note (lope/burble from cam, layout & anti-lag)
+- [x] Intercooler core sizing (none/small/large — charge cooling vs spool lag)
+- [x] In-app GUIDE tab (documentation) and OPTIONS tab (sound/wear/language); tab-aware side panel
+- [x] Vehicle Designer placeholder reserving space for the vehicle/drivetrain layer (feature A)
 - [x] Calibration pass for realistic power figures & curve shape (ongoing refinement)
 - [ ] Native Android build (wrap the PWA with Capacitor or a Trusted Web Activity)
 
