@@ -71,7 +71,7 @@ saps power; a large radiator, electric fan and oil cooler keep it cool.
   Efficiency, BSFC, Fuel Flow, Knock Risk, Engine Health.
 - **Five tabs** — **DESIGN** (build the engine), **ENGINE** (live test-bench schematic),
   **DYNO** (power/torque curve + scorecard), **GUIDE** (an in-app manual explaining every
-  control and metric) and **OPTIONS** (sound, wear and future language packs). The right column
+  control and metric) and **OPTIONS** (sound, wear and **language**). The right column
   is context-aware: the runtime Engine Controls show while driving/on the dyno, and the DESIGN
   tab reserves that space for the upcoming **Vehicle Designer**.
 - **Engine-view schematic** — a test-bench diagram (air intake, fuel system, engine,
@@ -120,6 +120,11 @@ saps power; a large radiator, electric fan and oil cooler keep it cool.
   note) and **open** one back; or **Share** a build as an encoded link (copied to the
   clipboard) that loads the exact engine when opened.
 - **Presets**: Optimal / Max Power / Eco / Reset (adapt to the current engine).
+- **Languages** — English and **Ελληνικά (Greek)**, switchable in OPTIONS and remembered
+  between visits. The whole interface — tabs, labels, buttons, the challenge card and the full
+  in-app GUIDE — localises (live technical readouts and units stay universal).
+- **Responsive** — a fluid layout that fills the screen in **portrait** (phones & tablets held
+  upright) as well as landscape, scaling type and controls up so nothing sits in a narrow strip.
 - **Installable PWA**, self-hosted font, works fully offline.
 
 ![Dyno](docs/dyno.png)
@@ -127,6 +132,10 @@ saps power; a large radiator, electric fan and oil cooler keep it cool.
 The built-in **GUIDE** tab explains every control and metric without leaving the app:
 
 ![Guide](docs/guide.png)
+
+The interface is fully translatable (English / Ελληνικά) and fills the screen in portrait:
+
+![Greek UI](docs/greek.png)
 
 ## How to Run
 
@@ -300,6 +309,7 @@ native Android build (parked).
 - [x] Vehicle Designer placeholder reserving space for the vehicle/drivetrain layer (feature A)
 - [x] Strategy layer: parts cost/budget, reliability index, power-per-dollar & objective challenges
 - [x] New engine types: diesel (CI), 2-stroke and rotary/Wankel, each with distinct physics & emissions
+- [x] Localisation (English / Greek) with persistence, and a responsive portrait layout
 - [x] Calibration pass for realistic power figures & curve shape (ongoing refinement)
 - [ ] Native Android build (wrap the PWA with Capacitor or a Trusted Web Activity)
 

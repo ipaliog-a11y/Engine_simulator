@@ -20,6 +20,33 @@ header h1{font-size:14px;color:#ffcc00;text-shadow:2px 2px 0 #000,-1px -1px 0 #a
 header .subtitle{font-size:8px;color:#888;margin-top:6px}
 .main{display:grid;grid-template-columns:1fr 320px;gap:12px}
 @media(max-width:800px){.main{grid-template-columns:1fr}}
+/* Portrait (phones & tablets held upright): stack to one column and use the full width so the
+   sim fills the screen instead of sitting in a narrow strip. Font & controls scale up too. */
+@media(orientation:portrait){
+  .container{max-width:100%;padding:10px}
+  .main{grid-template-columns:1fr;gap:14px}
+  body{font-size:12px}
+  header h1{font-size:18px}
+  header .subtitle{font-size:10px}
+  .viz-tabs button{font-size:10px;padding:12px 4px}
+  .design-panel{max-height:none}          /* let the form flow with the page, no inner scrollbar */
+  .panel h2{font-size:11px}
+  .stat{min-width:28%;flex:1}
+  .stat .value{font-size:16px}
+  input[type=range]{height:18px}
+  input[type=range]::-webkit-slider-thumb{width:22px;height:28px}
+  input[type=range]::-moz-range-thumb{width:22px;height:28px}
+  button{font-size:10px;padding:11px 12px}
+  .field input,.field select{font-size:10px;padding:9px}
+  .fs-btn{font-size:9px;padding:7px 9px}
+}
+/* Tall, roomy portrait (tablets): scale the type up a touch more for legibility. */
+@media(orientation:portrait) and (min-width:700px){
+  body{font-size:14px}
+  .viz-tabs button{font-size:12px}
+  .design-section{font-size:11px}
+  .field label{font-size:9px}
+}
 .viz-panel{background:#12121c;border:4px solid #444;position:relative;box-shadow:inset 0 0 20px #000}
 .viz-tabs{display:flex;gap:0;background:#0a0a12;border-bottom:3px solid #333}
 .viz-tabs button{flex:1;font-family:'Press Start 2P',monospace;font-size:8px;padding:10px 6px;background:#1a1a28;color:#888;border:none;border-right:2px solid #333;cursor:pointer;box-shadow:none}
@@ -221,7 +248,7 @@ footer{text-align:center;margin-top:16px;padding:8px;font-size:7px;color:#555;bo
 <div class="hint">A quick manual for the sim and its numbers. Design → BUILD &amp; DYNO → drive it.</div>
 
 <div class="design-section">The Loop</div>
-<div class="guide-body">
+<div class="guide-body" data-gk="loop">
 <b>1. DESIGN</b> an engine (bottom end, air path, fuel &amp; spark, cooling…), then press
 <b>BUILD &amp; DYNO</b>. <b>2. DYNO</b> reads the full power/torque curve and a graded scorecard.
 <b>3. ENGINE</b> is a live test bench: you set <b>THROTTLE</b> and <b>LOAD</b> and watch the
@@ -229,7 +256,7 @@ engine respond in real time. You never set RPM directly — you drive it.
 </div>
 
 <div class="design-section">Driving Controls</div>
-<div class="guide-body">
+<div class="guide-body" data-gk="driving">
 <b>THROTTLE</b> — opens the intake; raises manifold pressure → torque → revs.<br>
 <b>LOAD (dyno brake)</b> — resistance that sets the <i>hold RPM</i>. 0% = free-rev to the
 limiter; 100% = holds near idle. It only resists <i>above</i> its target, so any engine can
@@ -242,7 +269,7 @@ the battery → low voltage → weak spark.<br>
 </div>
 
 <div class="design-section">Reading the Numbers</div>
-<div class="guide-body">
+<div class="guide-body" data-gk="numbers">
 <b>HP / kW</b> — power = torque × rpm. <b>TORQUE (Nm)</b> — twisting force; peaks lower than power.<br>
 <b>BMEP (bar)</b> — brake mean effective pressure: torque normalised to displacement, so you can
 compare engines of any size. <b>VE (%)</b> — volumetric efficiency: how well the engine breathes
@@ -262,7 +289,7 @@ higher is tougher. <b>hp/$1k</b> — power per thousand dollars: the value metri
 </div>
 
 <div class="design-section">The Scorecard</div>
-<div class="guide-body">
+<div class="guide-body" data-gk="scorecard">
 Every build is graded <b>S → F</b> from seven things: specific <b>power</b> &amp; <b>torque</b>
 (per litre), power<b>band</b> width, thermal <b>eff</b>iciency, knock <b>safety</b>,
 <b>drive</b>ability (low-end torque) and <b>emit</b> (emissions). Chasing peak power usually
@@ -270,7 +297,7 @@ costs drivability, safety and emissions — the score rewards a balanced build.
 </div>
 
 <div class="design-section">Career &amp; Budget</div>
-<div class="guide-body">
+<div class="guide-body" data-gk="career">
 Pick an <b>OBJECTIVE</b> at the top of the DESIGN tab to turn free building into a puzzle.
 Each challenge sets targets — power, economy, emissions, <b>reliability</b> or
 <b>power-per-dollar</b> — and some cap your <b>budget</b>. The card ticks off each target
@@ -280,7 +307,7 @@ race parts win on power but cost money and reliability. Balance the brief.
 </div>
 
 <div class="design-section">Engine Types</div>
-<div class="guide-body">
+<div class="guide-body" data-gk="types">
 <b>Petrol 4-stroke</b> — the all-rounder: spark ignition, one power stroke every two revs.<br>
 <b>Diesel (CI)</b> — compression ignition (no spark, no spark-knock), very high compression,
 runs lean and unthrottled. Big low-end <b>torque</b>, low redline, and the best <b>efficiency</b>
@@ -294,7 +321,7 @@ apply (spark for diesel; cam/VVT for ported engines).
 </div>
 
 <div class="design-section">Design Subsystems</div>
-<div class="guide-body">
+<div class="guide-body" data-gk="subsystems">
 <b>Bottom end</b> — engine type, bore × stroke × cylinders = displacement; oversquare &amp; higher
 redline shift the powerband up.<br>
 <b>Air path</b> — turbo (spools with rpm; size/config trade lag vs top-end) or supercharger (boost
@@ -306,7 +333,7 @@ catalytic converter trade flow vs back-pressure/emissions; nitrous is bottled po
 <b>Cooling &amp; electrical</b> — radiator/fan/oil-cooler/thermostat set temps; alternator size and
 ignition type set charging and the misfire RPM limit.
 </div>
-<div class="guide-body" style="color:#667;margin-top:12px">Tip: turn WEAR off in OPTIONS to
+<div class="guide-body" data-gk="tip" style="color:#667;margin-top:12px">Tip: turn WEAR off in OPTIONS to
 experiment freely, then back on for consequences.</div>
 </div>
 
@@ -324,8 +351,8 @@ experiment freely, then back on for consequences.</div>
 <button id="btnWear" class="toggle on" aria-pressed="true">WEAR ON</button></div>
 
 <div class="design-section">Language</div>
-<div class="opt-row"><div><b>LANGUAGE PACK</b><div class="opt-note">More language packs are planned. English only for now.</div></div>
-<select id="edLang" class="opt-select"><option value="en">ENGLISH</option><option value="soon" disabled>MORE COMING…</option></select></div>
+<div class="opt-row"><div><b>LANGUAGE PACK</b><div class="opt-note">Switch the interface language (chrome, guide &amp; readouts).</div></div>
+<select id="edLang" class="opt-select"><option value="en">ENGLISH</option><option value="el">ΕΛΛΗΝΙΚΑ</option></select></div>
 </div>
 </div>
 <div class="side-panel">
@@ -347,14 +374,14 @@ experiment freely, then back on for consequences.</div>
 </div>
 <div class="panel" id="controlsPanel">
 <h2>Engine Controls</h2>
-<div class="control-group"><label for="throttle">THROTTLE <span class="val" id="valThrottle">20</span> %</label><input type="range" id="throttle" min="0" max="100" step="1" value="20" aria-label="Throttle pedal position percent"></div>
-<div class="control-group"><label for="load">LOAD (DYNO BRAKE) <span class="val" id="valLoad">20</span> %</label><input type="range" id="load" min="0" max="100" step="1" value="20" aria-label="Applied dyno brake load percent"></div>
-<div class="control-group"><label for="elec">ELEC LOAD (LIGHTS/AC) <span class="val" id="valElec">30</span> %</label><input type="range" id="elec" min="0" max="100" step="1" value="30" aria-label="Electrical accessory load percent"></div>
+<div class="control-group"><label for="throttle"><span class="ctl-lbl">THROTTLE</span> <span class="val" id="valThrottle">20</span> %</label><input type="range" id="throttle" min="0" max="100" step="1" value="20" aria-label="Throttle pedal position percent"></div>
+<div class="control-group"><label for="load"><span class="ctl-lbl">LOAD (DYNO BRAKE)</span> <span class="val" id="valLoad">20</span> %</label><input type="range" id="load" min="0" max="100" step="1" value="20" aria-label="Applied dyno brake load percent"></div>
+<div class="control-group"><label for="elec"><span class="ctl-lbl">ELEC LOAD (LIGHTS/AC)</span> <span class="val" id="valElec">30</span> %</label><input type="range" id="elec" min="0" max="100" step="1" value="30" aria-label="Electrical accessory load percent"></div>
 <div class="readout" id="readout">RPM 0 • MAP 0.00 bar</div>
-<div class="control-group"><label for="afr">AIR-FUEL RATIO <span class="val" id="valAFR">14.7</span></label><input type="range" id="afr" min="10.0" max="18.0" step="0.1" value="14.7" aria-label="Air-fuel ratio"></div>
-<div class="control-group"><label for="iat">INTAKE AIR TEMP <span class="val" id="valIAT">25</span> °C</label><input type="range" id="iat" min="-10" max="60" step="1" value="25" aria-label="Intake air temperature in Celsius"></div>
-<div class="control-group"><label for="coolant">COOLANT TEMP <span class="val" id="valCool">90</span> °C</label><input type="range" id="coolant" min="40" max="130" step="1" value="90" aria-label="Coolant temperature in Celsius"></div>
-<div class="control-group"><label for="oil">OIL TEMP <span class="val" id="valOil">100</span> °C</label><input type="range" id="oil" min="40" max="150" step="1" value="100" aria-label="Oil temperature in Celsius"></div>
+<div class="control-group"><label for="afr"><span class="ctl-lbl">AIR-FUEL RATIO</span> <span class="val" id="valAFR">14.7</span></label><input type="range" id="afr" min="10.0" max="18.0" step="0.1" value="14.7" aria-label="Air-fuel ratio"></div>
+<div class="control-group"><label for="iat"><span class="ctl-lbl">INTAKE AIR TEMP</span> <span class="val" id="valIAT">25</span> °C</label><input type="range" id="iat" min="-10" max="60" step="1" value="25" aria-label="Intake air temperature in Celsius"></div>
+<div class="control-group"><label for="coolant"><span class="ctl-lbl">COOLANT TEMP</span> <span class="val" id="valCool">90</span> °C</label><input type="range" id="coolant" min="40" max="130" step="1" value="90" aria-label="Coolant temperature in Celsius"></div>
+<div class="control-group"><label for="oil"><span class="ctl-lbl">OIL TEMP</span> <span class="val" id="valOil">100</span> °C</label><input type="range" id="oil" min="40" max="150" step="1" value="100" aria-label="Oil temperature in Celsius"></div>
 <div class="btn-row">
 <button id="btnOptimal">OPTIMAL</button>
 <button id="btnMaxPower">MAX POWER</button>
@@ -511,6 +538,128 @@ const CHALLENGES=[
 ];
 let activeChallenge='free';
 
+// ---- Internationalisation (English / Ελληνικά) ----
+// Keyed by the exact English source text so static chrome can be translated in place. Live
+// technical readouts (canvas schematic, status ticker, design-summary spec) stay in English —
+// their content is numbers and universal units.
+const I18N={
+  'DESIGN':{el:'ΣΧΕΔΙΑΣΗ'},'ENGINE':{el:'ΚΙΝΗΤΗΡΑΣ'},'DYNO':{el:'ΔΥΝΑΜΟ'},'GUIDE':{el:'ΟΔΗΓΟΣ'},'OPTIONS':{el:'ΕΠΙΛΟΓΕΣ'},
+  '⛶ FULL':{el:'⛶ ΠΛΗΡΗΣ'},
+  'ENGINE DESIGN':{el:'ΣΧΕΔΙΑΣΗ ΚΙΝΗΤΗΡΑ'},
+  'Load a preset, or configure a build and press BUILD & DYNO. Physics update live.':{el:'Φόρτωσε προεπιλογή ή στήσε ένα build και πάτα BUILD & DYNO. Η φυσική ενημερώνεται ζωντανά.'},
+  'LOAD A PRESET':{el:'ΦΟΡΤΩΣΗ ΠΡΟΕΠΙΛΟΓΗΣ'},
+  '— choose a popular build —':{el:'— διάλεξε δημοφιλές build —'},
+  'Career / Challenge':{el:'Καριέρα / Πρόκληση'},'OBJECTIVE':{el:'ΣΤΟΧΟΣ'},
+  'Bottom End':{el:'Κάτω Μέρος'},'ENGINE TYPE':{el:'ΤΥΠΟΣ ΚΙΝΗΤΗΡΑ'},
+  'CYLINDERS':{el:'ΚΥΛΙΝΔΡΟΙ'},'ROTORS':{el:'ΡΟΤΟΡΕΣ'},'LAYOUT':{el:'ΔΙΑΤΑΞΗ'},
+  'BORE (mm)':{el:'ΔΙΑΜΕΤΡΟΣ (mm)'},'STROKE (mm)':{el:'ΔΙΑΔΡΟΜΗ (mm)'},
+  'ROTOR R (mm)':{el:'ΑΚΤ. ΡΟΤΟΡΑ (mm)'},'ROTOR W (mm)':{el:'ΠΛΑΤ. ΡΟΤΟΡΑ (mm)'},
+  'COMPRESSION':{el:'ΣΥΜΠΙΕΣΗ'},'REDLINE (rpm)':{el:'ΟΡΙΟ ΣΤΡΟΦΩΝ (rpm)'},
+  'Air Path':{el:'Διαδρομή Αέρα'},'INTAKE TYPE':{el:'ΤΥΠΟΣ ΕΙΣΑΓΩΓΗΣ'},
+  'BOOST TARGET (bar)':{el:'ΣΤΟΧΟΣ BOOST (bar)'},'INTERCOOLER':{el:'INTERCOOLER'},
+  'TURBO SIZE':{el:'ΜΕΓΕΘΟΣ ΤΟΥΡΜΠΟ'},'TURBO CONFIG':{el:'ΔΙΑΤΑΞΗ ΤΟΥΡΜΠΟ'},
+  'ANTI-LAG (ALS)':{el:'ANTI-LAG (ALS)'},'SUPERCHARGER':{el:'ΥΠΕΡΣΥΜΠΙΕΣΤΗΣ'},
+  'EXHAUST':{el:'ΕΞΑΤΜΙΣΗ'},'CATALYTIC CONV.':{el:'ΚΑΤΑΛΥΤΗΣ'},'NITROUS (N2O)':{el:'ΝΙΤΡΟ (N2O)'},
+  'Induction (Metering)':{el:'Εισαγωγή (Τροφοδοσία)'},'INTAKE SYSTEM':{el:'ΣΥΣΤΗΜΑ ΕΙΣΑΓΩΓΗΣ'},'AIR FILTER':{el:'ΦΙΛΤΡΟ ΑΕΡΑ'},
+  'Valvetrain':{el:'Χρονισμός Βαλβίδων'},'CAM PROFILE':{el:'ΠΡΟΦΙΛ ΕΚΚΕΝΤΡ.'},'VARIABLE VALVE TIMING':{el:'ΜΕΤΑΒΛΗΤΟΣ ΧΡΟΝΙΣΜΟΣ'},
+  'Fuel & Spark':{el:'Καύσιμο & Σπινθήρας'},'FUEL TYPE':{el:'ΤΥΠΟΣ ΚΑΥΣΙΜΟΥ'},'FUEL OCTANE (RON)':{el:'ΟΚΤΑΝΙΑ (RON)'},
+  'INJECTOR':{el:'ΜΠΕΚ ΨΕΚΑΣΜΟΥ'},'IGNITION TYPE':{el:'ΤΥΠΟΣ ΑΝΑΦΛΕΞΗΣ'},'IGNITION CONTROL':{el:'ΕΛΕΓΧΟΣ ΑΝΑΦΛΕΞΗΣ'},'IGNITION ADV (° BTDC)':{el:'ΠΡΟΠΟΡΕΙΑ (° BTDC)'},
+  'Cooling':{el:'Ψύξη'},'RADIATOR':{el:'ΨΥΓΕΙΟ'},'COOLING FAN':{el:'ΒΕΝΤΙΛΑΤΕΡ'},'OIL COOLER':{el:'ΨΥΓΕΙΟ ΛΑΔΙΟΥ'},'THERMOSTAT (°C)':{el:'ΘΕΡΜΟΣΤΑΤΗΣ (°C)'},
+  'Electrical':{el:'Ηλεκτρικά'},'ALTERNATOR':{el:'ΔΥΝΑΜΟ (ALT)'},
+  'BUILD & DYNO':{el:'ΚΑΤΑΣΚΕΥΗ & ΔΥΝΑΜΟ'},'DEFAULTS':{el:'ΠΡΟΕΠΙΛΟΓΕΣ'},
+  'Simulator preferences. These don\'t change the engine build.':{el:'Προτιμήσεις προσομοιωτή. Δεν αλλάζουν τον κινητήρα.'},
+  'Audio':{el:'Ήχος'},'ENGINE SOUND':{el:'ΗΧΟΣ ΚΙΝΗΤΗΡΑ'},
+  'Web Audio engine note (pitched to firing frequency; lumpy idle from wild cams).':{el:'Ήχος κινητήρα (τόνος ανά συχνότητα ανάφλεξης· ανώμαλο ρελαντί με άγρια εκκεντροφόρο).'},
+  'Simulation':{el:'Προσομοίωση'},'WEAR & DAMAGE':{el:'ΦΘΟΡΑ & ΖΗΜΙΑ'},
+  'On: detonation/overheat/lean-boost/over-rev damage the engine. Off: invincible, for free experimentation.':{el:'Ενεργό: πειράκι/υπερθέρμανση/φτωχό-boost/υπερστροφή κάνουν ζημιά. Ανενεργό: άφθαρτος, για ελεύθερο πειραματισμό.'},
+  'Language':{el:'Γλώσσα'},'LANGUAGE PACK':{el:'ΠΑΚΕΤΟ ΓΛΩΣΣΑΣ'},
+  'Switch the interface language (chrome, guide & readouts).':{el:'Άλλαξε τη γλώσσα του περιβάλλοντος (μενού & οδηγός).'},
+  'Live Output':{el:'Ζωντανές Ενδείξεις'},
+  'POWER':{el:'ΙΣΧΥΣ'},'TORQUE':{el:'ΡΟΠΗ'},'BSFC':{el:'BSFC'},'THERMAL EFF':{el:'ΘΕΡΜ. ΑΠΟΔ.'},'FUEL FLOW':{el:'ΡΟΗ ΚΑΥΣΙΜΟΥ'},'KNOCK RISK':{el:'ΚΙΝΔ. ΠΕΙΡΑΚΙΟΥ'},'ENGINE HEALTH':{el:'ΥΓΕΙΑ ΚΙΝΗΤΗΡΑ'},
+  'Engine Controls':{el:'Χειριστήρια'},
+  'THROTTLE':{el:'ΓΚΑΖΙ'},'LOAD (DYNO BRAKE)':{el:'ΦΟΡΤΙΟ (ΦΡΕΝΟ)'},'ELEC LOAD (LIGHTS/AC)':{el:'ΗΛΕΚ. ΦΟΡΤΙΟ (ΦΩΤΑ/AC)'},
+  'AIR-FUEL RATIO':{el:'ΑΝΑΛΟΓΙΑ ΑΕΡΑ-ΚΑΥΣΙΜΟΥ'},'INTAKE AIR TEMP':{el:'ΘΕΡΜ. ΑΕΡΑ ΕΙΣΑΓ.'},'COOLANT TEMP':{el:'ΘΕΡΜ. ΨΥΚΤΙΚΟΥ'},'OIL TEMP':{el:'ΘΕΡΜ. ΛΑΔΙΟΥ'},
+  'OPTIMAL':{el:'ΒΕΛΤΙΣΤΟ'},'MAX POWER':{el:'ΜΕΓ. ΙΣΧΥΣ'},'ECO':{el:'ΟΙΚΟΝΟΜΙΑ'},'RESET':{el:'ΕΠΑΝΑΦΟΡΑ'},
+  'AUTO THERMAL':{el:'ΑΥΤ. ΘΕΡΜΙΚΟ'},'NITROUS':{el:'ΝΙΤΡΟ'},'LOG PULL':{el:'ΚΑΤΑΓΡΑΦΗ'},'CLR PULLS':{el:'ΚΑΘΑΡΙΣΜΟΣ'},
+  'SAVE':{el:'ΑΠΟΘΗΚ.'},'LOAD':{el:'ΦΟΡΤΩΣΗ'},'SAVE FILE':{el:'ΑΠΟΘ. ΑΡΧΕΙΟΥ'},'OPEN FILE':{el:'ΑΝΟΙΓΜΑ ΑΡΧΕΙΟΥ'},'SHARE':{el:'ΚΟΙΝΟΠΟΙΗΣΗ'},
+  'Vehicle Designer':{el:'Σχεδιαστής Οχήματος'},
+  'SOUND ON':{el:'ΗΧΟΣ ΟΝ'},'SOUND OFF':{el:'ΗΧΟΣ OFF'},'WEAR ON':{el:'ΦΘΟΡΑ ΟΝ'},'WEAR OFF':{el:'ΦΘΟΡΑ OFF'},
+  // guide h3 + section headers
+  'GUIDE • HOW IT WORKS':{el:'ΟΔΗΓΟΣ • ΠΩΣ ΛΕΙΤΟΥΡΓΕΙ'},
+  'A quick manual for the sim and its numbers. Design → BUILD & DYNO → drive it.':{el:'Σύντομο εγχειρίδιο για τον προσομοιωτή και τους αριθμούς του. Σχεδίασε → BUILD & DYNO → οδήγησε.'},
+  'The Loop':{el:'Η Ροή'},'Driving Controls':{el:'Χειριστήρια Οδήγησης'},'Reading the Numbers':{el:'Διαβάζοντας τους Αριθμούς'},
+  'The Scorecard':{el:'Η Βαθμολογία'},'Career & Budget':{el:'Καριέρα & Προϋπολογισμός'},'Engine Types':{el:'Τύποι Κινητήρα'},'Design Subsystems':{el:'Υποσυστήματα Σχεδίασης'},
+  // challenge card structural words + target labels
+  'COST':{el:'ΚΟΣΤΟΣ'},'REL':{el:'ΑΞΙΟΠ.'},'BUDGET':{el:'ΠΡΟΫΠ.'},'OVER':{el:'ΥΠΕΡΒΑΣΗ'},'need':{el:'θέλει'},
+  'CHALLENGE PASSED':{el:'ΠΡΟΚΛΗΣΗ ΕΠΙΤΥΧΗΣ'},'NOT MET YET':{el:'ΔΕΝ ΕΠΙΤΕΥΧΘΗΚΕ'},
+  'Pick an objective above to set targets, or keep building freely.':{el:'Διάλεξε στόχο πιο πάνω για να ορίσεις κριτήρια, ή χτίσε ελεύθερα.'},
+  'Power':{el:'Ισχύς'},'Reliability':{el:'Αξιοπιστία'},'HP per $1k':{el:'HP ανά $1k'},'Thermal eff':{el:'Θερμ. απόδ.'},
+  'Emissions':{el:'Εκπομπές'},'Grade':{el:'Βαθμός'},'Safety':{el:'Ασφάλεια'},'HP per litre':{el:'HP ανά λίτρο'}
+};
+// Guide body blocks (rich HTML), swapped by data-gk on language change.
+const GUIDE_I18N={
+  loop:{el:'<b>1. ΣΧΕΔΙΑΣΗ</b> ενός κινητήρα (κάτω μέρος, διαδρομή αέρα, καύσιμο & σπινθήρας, ψύξη…), μετά πάτα <b>BUILD & DYNO</b>. <b>2. ΔΥΝΑΜΟ</b> δείχνει όλη την καμπύλη ισχύος/ροπής και μια βαθμολογία. <b>3. ΚΙΝΗΤΗΡΑΣ</b> είναι ζωντανός πάγκος δοκιμών: ρυθμίζεις <b>ΓΚΑΖΙ</b> και <b>ΦΟΡΤΙΟ</b> και βλέπεις τον κινητήρα να αποκρίνεται σε πραγματικό χρόνο. Δεν ορίζεις ποτέ απευθείας τις στροφές — τον οδηγείς.'},
+  driving:{el:'<b>ΓΚΑΖΙ</b> — ανοίγει την εισαγωγή· αυξάνει την πίεση πολλαπλής → ροπή → στροφές.<br><b>ΦΟΡΤΙΟ (φρένο δυναμό)</b> — αντίσταση που ορίζει τις <i>στροφές κρατήματος</i>. 0% = ελεύθερες στροφές ως το όριο· 100% = κρατά κοντά στο ρελαντί. Αντιστέκεται μόνο <i>πάνω</i> από τον στόχο, οπότε κάθε κινητήρας ανεβαίνει πάντα ως εκεί.<br><b>ΗΛΕΚ. ΦΟΡΤΙΟ</b> — κατανάλωση παρελκομένων (φώτα/AC). Μεγάλο φορτίο + μικρό δυναμό στο ρελαντί αδειάζει την μπαταρία → χαμηλή τάση → αδύναμος σπινθήρας.<br><b>AFR</b> — αναλογία αέρα-καυσίμου. Μέγιστη ισχύς κοντά σε λ0.86 (πλούσιο), καλύτερη οικονομία κοντά σε λ1.05 (φτωχό).<br><b>IAT / ΨΥΚΤΙΚΟ / ΛΑΔΙ</b> — θερμοκρασίες χαρμανιού & κινητήρα (αυτόματα σε AUTO THERMAL).<br><b>ΝΙΤΡΟ</b> — αν υπάρχει, ψεκάζει με τέρμα γκάζι από φιάλη που αδειάζει.'},
+  numbers:{el:'<b>HP / kW</b> — ισχύς = ροπή × στροφές. <b>ΡΟΠΗ (Nm)</b> — δύναμη στρέψης· κορυφώνεται χαμηλότερα από την ισχύ.<br><b>BMEP (bar)</b> — μέση πραγματική πίεση πέδης: ροπή ανά κυβισμό, για σύγκριση κινητήρων κάθε μεγέθους. <b>VE (%)</b> — ογκομετρική απόδοση: πόσο καλά αναπνέει σε σχέση με τον κυβισμό (το boost ξεπερνά το 100%).<br><b>ΘΕΡΜ. ΑΠΟΔ. (%)</b> — ποσοστό ενέργειας καυσίμου που γίνεται έργο. <b>BSFC (g/kWh)</b> — καύσιμο ανά μονάδα ισχύος· <i>όσο χαμηλότερο τόσο καλύτερο</i>.<br><b>ΡΟΗ ΚΑΥΣΙΜΟΥ (L/h)</b> — ζωντανή κατανάλωση. <b>MAP / BOOST (bar)</b> — πίεση πολλαπλής· boost = MAP πάνω από 1.0.<br><b>ΠΕΙΡΑΚΙ (LOW/MED/HIGH)</b> — κίνδυνος πειρακίου. Ο χρονισμός AUTO καθυστερεί για έλεγχο· παρατεταμένο HIGH κάνει ζημιά. <b>ΥΓΕΙΑ (%)</b> — κατάσταση· 0 = καμένος κινητήρας.<br><b>ΕΚΠΟΜΠΕΣ (CLEAN/OK/DIRTY)</b> — από τον αναλυτή: CO & HC ανεβαίνουν στο πλούσιο, NOx στο φτωχό/καυτό· ο καταλύτης καθαρίζει και τα τρία μόνο κοντά στο στοιχειομετρικό.<br><b>λ (λάμδα)</b> — AFR ÷ στοιχειομετρικό: λ&lt;1 πλούσιο, 1 = στοιχειομετρικό, &gt;1 φτωχό.<br><b>ΚΟΣΤΟΣ ($)</b> — συνολικό κόστος εξαρτημάτων. <b>REL (αξιοπιστία)</b> — εκτίμηση αντοχής (boost/πειράκι/θερμότητα/στροφές). <b>hp/$1k</b> — ισχύς ανά χίλια δολάρια.'},
+  scorecard:{el:'Κάθε build βαθμολογείται <b>S → F</b> από επτά στοιχεία: ειδική <b>ισχύ</b> & <b>ροπή</b> (ανά λίτρο), εύρος <b>περιοχής ισχύος</b>, θερμική <b>απόδοση</b>, <b>ασφάλεια</b> από πειράκι, <b>οδηγησιμότητα</b> (ροπή στις χαμηλές) και <b>εκπομπές</b>. Το κυνήγι μέγιστης ισχύος κοστίζει σε οδηγησιμότητα, ασφάλεια και εκπομπές — η βαθμολογία επιβραβεύει το ισορροπημένο build.'},
+  career:{el:'Διάλεξε έναν <b>ΣΤΟΧΟ</b> στην κορυφή της ΣΧΕΔΙΑΣΗΣ για να κάνεις τη σχεδίαση γρίφο. Κάθε πρόκληση θέτει κριτήρια — ισχύ, οικονομία, εκπομπές, <b>αξιοπιστία</b> ή <b>ισχύ ανά δολάριο</b> — και κάποιες βάζουν όριο <b>προϋπολογισμού</b>. Η κάρτα τσεκάρει κάθε κριτήριο ζωντανά (✓/✗) και δείχνει <b>ΕΠΙΤΥΧΙΑ</b> όταν καλυφθούν όλα· κόστος και αξιοπιστία φαίνονται πάντα. Ο μεγάλος κυβισμός κερδίζει σε αξία· boost και αγωνιστικά μέρη κερδίζουν σε ισχύ αλλά κοστίζουν σε χρήμα και αξιοπιστία.'},
+  types:{el:'<b>Βενζίνη 4-χρονη</b> — η ισορροπημένη επιλογή: ανάφλεξη με σπινθήρα, μία εκρηκτική διαδρομή ανά δύο στροφές.<br><b>Πετρέλαιο (CI)</b> — ανάφλεξη με συμπίεση (χωρίς μπουζί, χωρίς πειράκι), πολύ υψηλή συμπίεση, φτωχό χωρίς πεταλούδα. Μεγάλη <b>ροπή</b> στις χαμηλές, χαμηλό όριο στροφών, η καλύτερη <b>απόδοση</b> — αλλά βαρύ, με εκπομπές <b>NOx + αιθάλη (PM)</b> που καθαρίζει σύστημα DPF/SCR.<br><b>2-χρονη</b> — εκρηκτική διαδρομή σε <i>κάθε</i> στροφή (θυρίδες, χωρίς εκκεντροφόρο): υψηλή ειδική ισχύς αλλά λαίμαργη και <b>HC</b>-βρόμικη.<br><b>Wankel (ρότορας)</b> — περιστρεφόμενος ρότορας που ανάβει σε κάθε στροφή: ομαλός σαν τουρμπίνα, τεράστιες στροφές, υψηλή ισχύς ανά λίτρο, αλλά λαίμαργος, <b>HC</b>-βαρύς και σκληρός στα ελάσματα κορυφής.<br>Η αλλαγή τύπου προσαρμόζει τα εύρη συμπίεσης/στροφών/AFR και απενεργοποιεί ό,τι δεν ισχύει.'},
+  subsystems:{el:'<b>Κάτω μέρος</b> — τύπος κινητήρα, διάμετρος × διαδρομή × κύλινδροι = κυβισμός· υπερτετράγωνος & υψηλότερο όριο ανεβάζουν την περιοχή ισχύος.<br><b>Διαδρομή αέρα</b> — τούρμπο (γεμίζει με τις στροφές) ή υπερσυμπιεστής (boost από ρελαντί)· το intercooler ψύχει το χάρμανι· εξάτμιση & καταλύτης ανταλλάσσουν ροή με αντίθλιψη/εκπομπές· το νιτρό είναι εμφιαλωμένη ισχύς.<br><b>Εισαγωγή</b> — καρμπιρατέρ → EFI → ITB ορίζουν αναπνοή, ακρίβεια & ρελαντί.<br><b>Χρονισμός βαλβίδων</b> — άγριες εκκεντροφόροι ανεβάζουν την ισχύ ψηλά· το VVT επαναφέρει τις χαμηλές.<br><b>Καύσιμο & σπινθήρας</b> — τύπος καυσίμου, οκτάνια, μπεκ, ανάφλεξη και χρονισμός FIXED/AUTO.<br><b>Ψύξη & ηλεκτρικά</b> — ψυγείο/βεντιλατέρ/ψυγείο λαδιού/θερμοστάτης ορίζουν θερμοκρασίες· δυναμό & ανάφλεξη ορίζουν φόρτιση και όριο μισφάιρ.'},
+  tip:{el:'Συμβουλή: κλείσε τη ΦΘΟΡΑ στις ΕΠΙΛΟΓΕΣ για ελεύθερο πειραματισμό, μετά ξανάνοιξέ την για συνέπειες.'}
+};
+const CHALLENGE_I18N={
+  free:{name:'Ελεύθερο Χτίσιμο (χωρίς στόχο)',desc:'Σχεδίασε ό,τι θες — χωρίς στόχους, μόνο ενδείξεις κόστους & αξιοπιστίας.'},
+  sleeper:{name:'Οικονομικό Sleeper',desc:'Πραγματική ισχύς με λίγα χρήματα. Κάθε εξάρτημα μετράει.'},
+  ppd:{name:'Ισχύς ανά Δολάριο',desc:'Βγάλε τους περισσότερους ίππους από κάθε 1000$.'},
+  eco:{name:'Οικονομικός Οδηγός',desc:'Αποδοτικό και καθαρό, αλλά πρέπει να κινείται.'},
+  track:{name:'Όπλο Πίστας',desc:'Σοβαρή ισχύς που αντέχει και βαθμολογείται καλά.'},
+  reliable:{name:'Δοκιμή Αξιοπιστίας',desc:'Πρώτα αδιάφθορο, μετά δυνατό.'},
+  clean:{name:'Καθαρή Μηχανή',desc:'Ισχύς φιλική στις εκπομπές — καταλύτης και στοιχειομετρικό χάρμανι.'},
+  screamer:{name:'Βασιλιάς Ειδικής Ισχύος',desc:'Κυνήγα τη μέγιστη ισχύ ανά λίτρο χωρίς να τον κάψεις.'}
+};
+let currentLang='en';
+try{currentLang=localStorage.getItem('pes.lang')||'en';}catch(e){}
+function tr(en){const m=I18N[en];return (m&&m[currentLang])||en;}
+function chName(ch){const g=CHALLENGE_I18N[ch.id];return (currentLang==='el'&&g)?g.name:ch.name;}
+function chDesc(ch){const g=CHALLENGE_I18N[ch.id];return (currentLang==='el'&&g)?g.desc:ch.desc;}
+function applyLang(lang){
+  currentLang=(lang==='el')?'el':'en';
+  try{localStorage.setItem('pes.lang',currentLang);}catch(e){}
+  document.documentElement.lang=currentLang;
+  const sel='.viz-tabs button, #btnFullscreen, .design-panel h3, .design-section, .hint, .panel h2, .stat .label, .opt-note, .opt-row>div>b, .ctl-lbl, .field>label, .build-row button, #controlsPanel .btn-row button';
+  document.querySelectorAll(sel).forEach(el=>{
+    if(el.children.length>0)return;                       // skip nodes with child elements
+    if(el.dataset.en===undefined)el.dataset.en=el.textContent.trim();
+    el.textContent=tr(el.dataset.en);
+  });
+  // Guide body blocks (rich HTML)
+  document.querySelectorAll('[data-gk]').forEach(el=>{
+    const k=el.getAttribute('data-gk');
+    if(el.dataset.enHtml===undefined)el.dataset.enHtml=el.innerHTML;
+    el.innerHTML=(currentLang==='el'&&GUIDE_I18N[k])?GUIDE_I18N[k].el:el.dataset.enHtml;
+  });
+  // Preset placeholder, language selector, footer, vehicle placeholder
+  const pp=document.getElementById('edPreset');if(pp&&pp.options[0])pp.options[0].textContent=tr('— choose a popular build —');
+  const lg=document.getElementById('edLang');if(lg)lg.value=currentLang;
+  const foot=document.querySelector('footer');
+  if(foot){if(foot.dataset.en===undefined)foot.dataset.en=foot.innerHTML;
+    foot.innerHTML=currentLang==='el'
+      ?'PIXEL ENGINE SIM • Σχεδιαστής κινητήρα • Επεκτάσιμος ανά υποσύστημα<br>Φυσική απλοποιημένη για μάθηση & διασκέδαση • Εμπνευσμένο από το Automation'
+      :foot.dataset.en;}
+  const veh=document.querySelector('#vehiclePanel .vehicle-soon');
+  if(veh){if(veh.dataset.en===undefined)veh.dataset.en=veh.innerHTML;
+    veh.innerHTML=currentLang==='el'
+      ?'🏎️ <b>Έρχεται σύντομα</b> — χαρακτηριστικό A του πλάνου.<br><br>Εδώ θα βάζεις τον κινητήρα σε αυτοκίνητο: σχέσεις κιβωτίου, βάρος, πρόσφυση & αεροδυναμική, και μετά <b>0–100</b>, το <b>¼ μιλίου</b> και <b>τελική</b> από το ίδιο δυναμικό μοντέλο.<br><br><span style="color:#667">Προς το παρόν, σχεδίασε τον κινητήρα και δες τον στο δυναμό.</span>'
+      :veh.dataset.en;}
+  // Re-render dynamic bits that carry translated text
+  if(typeof syncDesignEnable==='function')syncDesignEnable();
+  if(typeof setSound==='function')setSound(Sound.on);
+  const wb=document.getElementById('btnWear');if(wb)wb.textContent=tr(wearEnabled?'WEAR ON':'WEAR OFF');
+  const chSel=document.getElementById('edChallenge');
+  if(chSel)[...chSel.options].forEach(o=>{const c=CHALLENGES.find(x=>x.id===o.value);if(c)o.textContent=chName(c);});
+  if(typeof renderChallenge==='function')renderChallenge();
+}
+
 const RAD_CAP={small:0.75,stock:1.0,large:1.35};   // relative heat-rejection capacity
 const IMEP_K=13.2;   // indicated MEP calibration (bar at map=1, ve=1, best-power AFR)
 // Dynamic (throttle-driven) model tuning:
@@ -660,9 +809,9 @@ function syncDesignEnable(){
   // Diesel is compression-ignition (no spark, runs on diesel); 2-stroke & rotary use ports
   // (no poppet valvetrain); rotary has rotors, not a bank layout.
   if(tp.ci)g('edFuel').value='diesel'; else if(g('edFuel').value==='diesel')g('edFuel').value='gasoline';
-  g('lblCyl').textContent=type==='rotary'?'ROTORS':'CYLINDERS';
-  g('lblBore').textContent=type==='rotary'?'ROTOR R (mm)':'BORE (mm)';
-  g('lblStroke').textContent=type==='rotary'?'ROTOR W (mm)':'STROKE (mm)';
+  g('lblCyl').textContent=tr(type==='rotary'?'ROTORS':'CYLINDERS');
+  g('lblBore').textContent=tr(type==='rotary'?'ROTOR R (mm)':'BORE (mm)');
+  g('lblStroke').textContent=tr(type==='rotary'?'ROTOR W (mm)':'STROKE (mm)');
   g('edLayout').disabled=type==='rotary';
   g('edFuel').disabled=tp.ci;                              // diesel fuel is fixed
   // Boost / intercooler only matter for forced induction; turbo size only for turbos.
@@ -872,24 +1021,24 @@ function renderChallenge(){
   const ch=CHALLENGES.find(c=>c.id===activeChallenge)||CHALLENGES[0];
   const m=buildMetrics();
   const relCol=m.reliability>=75?'#00ff88':m.reliability>=50?'#ffcc00':'#ff6666';
-  let html='<div class="ch-desc">'+ch.desc+'</div>';
-  html+='<div class="ch-stats"><span>COST <b>'+fmtCost(m.cost)+'</b></span>'
-    +'<span>REL <b style="color:'+relCol+'">'+m.reliability+'</b></span>'
+  let html='<div class="ch-desc">'+chDesc(ch)+'</div>';
+  html+='<div class="ch-stats"><span>'+tr('COST')+' <b>'+fmtCost(m.cost)+'</b></span>'
+    +'<span>'+tr('REL')+' <b style="color:'+relCol+'">'+m.reliability+'</b></span>'
     +'<span><b>'+m.hpPerK+'</b> hp/$1k</span></div>';
   if((ch.targets&&ch.targets.length)||ch.budget){
     const ev=evalChallenge(ch,m);
     if(ch.budget){
       const over=m.cost>ch.budget,frac=clamp(m.cost/ch.budget,0,1.15);
-      html+='<div class="ch-budget"><div class="ch-bud-lbl">BUDGET '+fmtCost(m.cost)+' / '+fmtCost(ch.budget)+(over?' — OVER':'')+'</div>'
+      html+='<div class="ch-budget"><div class="ch-bud-lbl">'+tr('BUDGET')+' '+fmtCost(m.cost)+' / '+fmtCost(ch.budget)+(over?' — '+tr('OVER'):'')+'</div>'
         +'<div class="ch-bar"><div class="ch-bar-fill" style="width:'+Math.min(100,frac*100)+'%;background:'+(over?'#ff4444':'#00ff88')+'"></div></div></div>';
     }
     ev.results.forEach(r=>{
       const val=typeof r.v==='number'?(Number.isInteger(r.v)?r.v:r.v.toFixed(1)):r.v;
-      html+='<div class="ch-tgt '+(r.pass?'ok':'no')+'">'+(r.pass?'✓':'✗')+' '+r.label+': <b>'+val+r.unit+'</b> <span>(need '+(r.op==='<='?'≤':'≥')+' '+r.t+r.unit+')</span></div>';
+      html+='<div class="ch-tgt '+(r.pass?'ok':'no')+'">'+(r.pass?'✓':'✗')+' '+tr(r.label)+': <b>'+val+r.unit+'</b> <span>('+tr('need')+' '+(r.op==='<='?'≤':'≥')+' '+r.t+r.unit+')</span></div>';
     });
-    html+='<div class="ch-verdict '+(ev.pass?'pass':'fail')+'">'+(ev.pass?'✓ CHALLENGE PASSED':'✗ NOT MET YET')+'</div>';
+    html+='<div class="ch-verdict '+(ev.pass?'pass':'fail')+'">'+(ev.pass?'✓ '+tr('CHALLENGE PASSED'):'✗ '+tr('NOT MET YET'))+'</div>';
   }else{
-    html+='<div class="ch-hint">Pick an objective above to set targets, or keep building freely.</div>';
+    html+='<div class="ch-hint">'+tr('Pick an objective above to set targets, or keep building freely.')+'</div>';
   }
   el.innerHTML=html;
 }
@@ -1385,7 +1534,7 @@ function setSound(on){
   if(on){initSound();if(Sound.ctx&&Sound.ctx.state==='suspended')Sound.ctx.resume();}
   else if(Sound.ctx)Sound.gain.gain.setTargetAtTime(0,Sound.ctx.currentTime,0.05);
   const btn=document.getElementById('btnSound');
-  btn.classList.toggle('on',on);btn.setAttribute('aria-pressed',on);btn.textContent=on?'SOUND ON':'SOUND OFF';
+  btn.classList.toggle('on',on);btn.setAttribute('aria-pressed',on);btn.textContent=tr(on?'SOUND ON':'SOUND OFF');
 }
 
 // ---- Save / load full builds (localStorage) ----
@@ -1848,7 +1997,7 @@ function bindControls(){
   document.getElementById('btnWear').addEventListener('click',()=>{
     wearEnabled=!wearEnabled;
     const b=document.getElementById('btnWear');
-    b.classList.toggle('on',wearEnabled);b.setAttribute('aria-pressed',wearEnabled);b.textContent=wearEnabled?'WEAR ON':'WEAR OFF';
+    b.classList.toggle('on',wearEnabled);b.setAttribute('aria-pressed',wearEnabled);b.textContent=tr(wearEnabled?'WEAR ON':'WEAR OFF');
     flash(wearEnabled?'WEAR ON • ENGINE CAN BE DAMAGED':'WEAR OFF • ENGINE INVINCIBLE');
   });
   document.getElementById('btnNitrous').addEventListener('click',()=>{
@@ -1912,10 +2061,13 @@ function bindControls(){
   });
   // Career / challenge selector
   const chSel=document.getElementById('edChallenge');
-  CHALLENGES.forEach(c=>{const o=document.createElement('option');o.value=c.id;o.textContent=c.name;chSel.appendChild(o);});
+  CHALLENGES.forEach(c=>{const o=document.createElement('option');o.value=c.id;o.textContent=chName(c);chSel.appendChild(o);});
   chSel.value=activeChallenge;
   chSel.addEventListener('change',e=>{activeChallenge=e.target.value;renderChallenge();
-    const ch=CHALLENGES.find(c=>c.id===activeChallenge);flash('OBJECTIVE: '+(ch?ch.name:'FREE BUILD'));});
+    const ch=CHALLENGES.find(c=>c.id===activeChallenge);flash(tr('OBJECTIVE')+': '+(ch?chName(ch):''));});
+  // Language selector
+  const langSel=document.getElementById('edLang');
+  if(langSel){langSel.value=currentLang;langSel.addEventListener('change',e=>{applyLang(e.target.value);flash(e.target.value==='el'?'Γλώσσα: Ελληνικά':'Language: English');});}
   document.getElementById('btnBuild').addEventListener('click',()=>{buildEngine();flash('ENGINE BUILT • '+engine.displacement_L.toFixed(engine.displacement_L<1?2:1)+'L');setTab('dyno')});
   document.getElementById('btnDesignReset').addEventListener('click',()=>{applyEngineToForm(Object.assign({},DEFAULT_ENGINE));buildEngine();flash('DESIGN RESET TO DEFAULTS')});
 }
@@ -1943,6 +2095,7 @@ function loop(now){
 }
 bindControls();applyEngineToForm(Object.assign({},DEFAULT_ENGINE));buildEngine();
 loadFromHash();   // open a shared build if the URL carries one
+applyLang(currentLang);   // localise the UI (persisted choice)
 updatePhysics();updateUI();requestAnimationFrame(loop);
 
 // Register service worker for offline/installable PWA (no-op on file://).
