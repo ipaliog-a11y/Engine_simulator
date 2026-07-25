@@ -11,12 +11,19 @@ watch the physics respond. Web-based, fully offline-capable, installable as a PW
 ## Features
 
 ### Engine Designer (new in v0.3)
-Load one of **10 preset builds** from the dropdown (1.6 sport, kei turbo, hot-hatch, ITB
+Load one of **16 preset builds** from the dropdown — petrol, diesel, rotary and 2-stroke
+(1.6 sport, kei turbo, hot-hatch, ITB
 screamer, 2JZ six, muscle V8, blown V8, V12 supercar…), or configure your own on the
 **DESIGN** tab and press **BUILD & DYNO**. Every parameter feeds the physics:
 
-- **Bottom end** — cylinder count (1–12), layout (inline / V / boxer), bore, stroke,
-  compression ratio, redline. Bore × stroke × cylinders sets the displacement.
+- **Engine type / cycle** — **petrol 4-stroke**, **diesel (compression-ignition)**,
+  **2-stroke**, or **rotary (Wankel)**. Each reshapes the physics: a power stroke every rev
+  (2-stroke & rotary) doubles the firing frequency for high specific output; diesel runs lean
+  and unthrottled with no spark-knock, big low-end torque and the best efficiency; 2-stroke
+  and rotary are thirsty and HC-heavy; rotaries rev sky-high and turbine-smooth. Switching type
+  retargets the compression / redline / AFR ranges and disables what doesn't apply.
+- **Bottom end** — cylinder count (1–12; rotors 1–3 for rotary), layout (inline / V / boxer),
+  bore, stroke, compression ratio, redline. Bore × stroke × cylinders sets the displacement.
 - **Air path** — naturally aspirated / turbo / supercharger, boost target, **intercooler size**
   (none / small / large core — a bigger core cools the charge more but adds a little spool lag),
   turbo size, **turbo configuration** (single / twin / sequential / compound), **anti-lag**,
@@ -152,6 +159,13 @@ Curve** tab remains a wide-open-throttle steady-state sweep for reading the full
 
 ## Physics Notes (simplified educational model)
 
+- Engine cycle: the torque equation uses a power-stroke divisor per type — 4π for 4-stroke
+  (one power stroke every two revs) and 2π for a 2-stroke and a rotary (a power event every
+  rev), which is the main reason those make high specific output. Diesel is compression
+  ignition (no spark, no spark-knock; limited by smoke/EGT), runs lean and unthrottled (little
+  pumping loss), makes big low-end torque and the highest thermal efficiency; 2-stroke and
+  rotary carry a thirst penalty (scavenging / seal losses) and rev high. Emissions follow the
+  cycle too (diesel = NOx + soot with DPF/SCR aftertreatment; 2-stroke & rotary = high HC).
 - Displacement derived from bore, stroke and cylinder count.
 - Dynamic driveline: manifold pressure fills toward a throttle/RPM/boost target; net torque
   (combustion − pumping − friction − brake) accelerates the crank through a rotating inertia
@@ -250,7 +264,8 @@ philosophy).
 4. ~~**(C) Strategy layer**~~ ✅ **done** — per-part costs, a total build budget, a design
    reliability index and power-per-dollar, plus eight objective-based challenges (power,
    economy, emissions, reliability, power-per-dollar…) with live pass/fail.
-5. **(B) New engine types** — diesel (compression ignition), rotary/Wankel, 2-stroke.
+5. ~~**(B) New engine types**~~ ✅ **done** — diesel (compression ignition), rotary/Wankel and
+   2-stroke, each with its own firing frequency, fuelling, efficiency, emissions and sound.
 6. **(A) Vehicle / drivetrain layer** — gearbox, weight, grip and aero drag → 0–60,
    quarter-mile and top-speed runs off the dynamic model.
 
@@ -284,6 +299,7 @@ native Android build (parked).
 - [x] In-app GUIDE tab (documentation) and OPTIONS tab (sound/wear/language); tab-aware side panel
 - [x] Vehicle Designer placeholder reserving space for the vehicle/drivetrain layer (feature A)
 - [x] Strategy layer: parts cost/budget, reliability index, power-per-dollar & objective challenges
+- [x] New engine types: diesel (CI), 2-stroke and rotary/Wankel, each with distinct physics & emissions
 - [x] Calibration pass for realistic power figures & curve shape (ongoing refinement)
 - [ ] Native Android build (wrap the PWA with Capacitor or a Trusted Web Activity)
 

@@ -142,12 +142,13 @@ footer{text-align:center;margin-top:16px;padding:8px;font-size:7px;color:#555;bo
 
 <div class="design-section">Bottom End</div>
 <div class="design-grid">
-<div class="field"><label for="edCyl">CYLINDERS</label><select id="edCyl"><option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option><option value="6">6</option><option value="8">8</option><option value="10">10</option><option value="12">12</option></select></div>
+<div class="field"><label for="edType">ENGINE TYPE</label><select id="edType"><option value="petrol4">PETROL 4-STROKE</option><option value="diesel">DIESEL (CI)</option><option value="twostroke">2-STROKE</option><option value="rotary">ROTARY (WANKEL)</option></select></div>
+<div class="field"><label for="edCyl"><span id="lblCyl">CYLINDERS</span></label><select id="edCyl"><option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option><option value="6">6</option><option value="8">8</option><option value="10">10</option><option value="12">12</option></select></div>
 <div class="field"><label for="edLayout">LAYOUT</label><select id="edLayout"><option value="inline">INLINE</option><option value="v">V</option><option value="boxer">BOXER</option></select></div>
-<div class="field"><label for="edBore">BORE (mm)</label><input type="number" id="edBore" min="60" max="105" step="0.5" value="86"></div>
-<div class="field"><label for="edStroke">STROKE (mm)</label><input type="number" id="edStroke" min="50" max="110" step="0.5" value="86"></div>
-<div class="field"><label for="edCR">COMPRESSION</label><input type="number" id="edCR" min="7" max="14" step="0.1" value="10.5"></div>
-<div class="field"><label for="edRedline">REDLINE (rpm)</label><input type="number" id="edRedline" min="5000" max="9500" step="100" value="7000"></div>
+<div class="field"><label for="edBore"><span id="lblBore">BORE (mm)</span></label><input type="number" id="edBore" min="60" max="105" step="0.5" value="86"></div>
+<div class="field"><label for="edStroke"><span id="lblStroke">STROKE (mm)</span></label><input type="number" id="edStroke" min="50" max="110" step="0.5" value="86"></div>
+<div class="field"><label for="edCR">COMPRESSION</label><input type="number" id="edCR" min="7" max="24" step="0.1" value="10.5"></div>
+<div class="field"><label for="edRedline">REDLINE (rpm)</label><input type="number" id="edRedline" min="3500" max="11000" step="100" value="7000"></div>
 </div>
 
 <div class="design-section">Air Path</div>
@@ -186,7 +187,7 @@ footer{text-align:center;margin-top:16px;padding:8px;font-size:7px;color:#555;bo
 
 <div class="design-section">Fuel &amp; Spark</div>
 <div class="design-grid">
-<div class="field"><label for="edFuel">FUEL TYPE</label><select id="edFuel"><option value="gasoline">PUMP GAS</option><option value="race">RACE GAS</option><option value="e85">E85</option><option value="methanol">METHANOL</option></select></div>
+<div class="field"><label for="edFuel">FUEL TYPE</label><select id="edFuel"><option value="gasoline">PUMP GAS</option><option value="race">RACE GAS</option><option value="e85">E85</option><option value="methanol">METHANOL</option><option value="diesel">DIESEL</option></select></div>
 <div class="field"><label for="edOctane">FUEL OCTANE (RON)</label><input type="number" id="edOctane" min="87" max="110" step="1" value="95"></div>
 <div class="field"><label for="edInjector">INJECTOR</label><select id="edInjector"><option value="port">PORT (PFI)</option><option value="direct">DIRECT (DI)</option></select></div>
 <div class="field"><label for="edIgnType">IGNITION TYPE</label><select id="edIgnType"><option value="distributor">DISTRIBUTOR</option><option value="wasted">WASTED SPARK</option><option value="coil">COIL-ON-PLUG</option></select></div>
@@ -278,10 +279,24 @@ live (✓/✗) and shows a <b>PASSED</b> verdict when the whole brief is met; th
 race parts win on power but cost money and reliability. Balance the brief.
 </div>
 
+<div class="design-section">Engine Types</div>
+<div class="guide-body">
+<b>Petrol 4-stroke</b> — the all-rounder: spark ignition, one power stroke every two revs.<br>
+<b>Diesel (CI)</b> — compression ignition (no spark, no spark-knock), very high compression,
+runs lean and unthrottled. Big low-end <b>torque</b>, low redline, and the best <b>efficiency</b>
+— but heavy, and its emissions signature is <b>NOx + soot (PM)</b>, cleaned by a DPF/SCR system.<br>
+<b>2-stroke</b> — a power stroke <i>every</i> rev (ported, no valvetrain): high specific output
+for its size but thirsty and <b>HC</b>-dirty (it burns oil and short-circuits fresh charge).<br>
+<b>Rotary (Wankel)</b> — a spinning rotor firing every rev: turbine-smooth, revs sky-high, high
+power per litre, but thirsty, <b>HC</b>-heavy and hard on apex seals (lower reliability).<br>
+Switching type retargets the compression, redline and AFR ranges and disables what doesn't
+apply (spark for diesel; cam/VVT for ported engines).
+</div>
+
 <div class="design-section">Design Subsystems</div>
 <div class="guide-body">
-<b>Bottom end</b> — bore × stroke × cylinders = displacement; oversquare &amp; higher redline shift
-the powerband up.<br>
+<b>Bottom end</b> — engine type, bore × stroke × cylinders = displacement; oversquare &amp; higher
+redline shift the powerband up.<br>
 <b>Air path</b> — turbo (spools with rpm; size/config trade lag vs top-end) or supercharger (boost
 from idle); intercooler size cools the charge (denser, less knock) with a little lag; exhaust and
 catalytic converter trade flow vs back-pressure/emissions; nitrous is bottled power.<br>
@@ -385,9 +400,26 @@ const FUELS={
   gasoline:{label:'PUMP GAS',density:0.745,LHV:44.0,stoich:14.7,octane:null,chargeCool:0, knockBonus:0},
   race:    {label:'RACE GAS',density:0.735,LHV:43.5,stoich:14.7,octane:105, chargeCool:2, knockBonus:2},
   e85:     {label:'E85',     density:0.785,LHV:29.2,stoich:9.8, octane:102, chargeCool:15,knockBonus:8},
-  methanol:{label:'METHANOL',density:0.792,LHV:19.9,stoich:6.45,octane:109, chargeCool:25,knockBonus:14}
+  methanol:{label:'METHANOL',density:0.792,LHV:19.9,stoich:6.45,octane:109, chargeCool:25,knockBonus:14},
+  diesel:  {label:'DIESEL',  density:0.832,LHV:42.8,stoich:14.5,octane:null,chargeCool:0, knockBonus:0}   // compression-ignition; octane N/A (cetane)
 };
-const LAYOUT_LABEL={inline:'INLINE',v:'V',boxer:'BOXER'};
+// ---- Engine cycle / type ----
+// Each type reshapes the physics: strokeDiv is the power-stroke divisor in the torque
+// equation (4π for 4-stroke, 2π for a power stroke every rev → 2-stroke & rotary), ci marks
+// compression ignition (diesel: no spark, no spark-knock, runs lean), ports means no poppet
+// valvetrain (2-stroke/rotary: cam & VVT don't apply). imep/eff/bsfc scale peak pressure,
+// thermal efficiency and thirst; the cr/redline/afr ranges retarget the design sliders.
+const ENGINE_TYPE={
+  petrol4:  {label:'PETROL 4-STROKE',strokeDiv:4*Math.PI,ci:false,ports:false,imep:1.00,eff:1.00,bsfc:1.00,
+             crDef:11,crMin:8,crMax:14,redlineDef:7000,redMin:5000,redMax:9500,fuel:null},
+  diesel:   {label:'DIESEL (CI)',    strokeDiv:4*Math.PI,ci:true, ports:false,imep:1.02,eff:1.30,bsfc:0.72,
+             crDef:18,crMin:15,crMax:24,redlineDef:4800,redMin:3500,redMax:5800,fuel:'diesel'},
+  twostroke:{label:'2-STROKE',       strokeDiv:2*Math.PI,ci:false,ports:true, imep:0.60,eff:0.80,bsfc:1.45,
+             crDef:9, crMin:7,crMax:12,redlineDef:8000,redMin:5500,redMax:11000,fuel:null},
+  rotary:   {label:'ROTARY (WANKEL)',strokeDiv:2*Math.PI,ci:false,ports:true, imep:0.70,eff:0.74,bsfc:1.48,
+             crDef:9.4,crMin:8.5,crMax:11,redlineDef:9000,redMin:6500,redMax:11000,fuel:null}
+};
+const LAYOUT_LABEL={inline:'INLINE',v:'V',boxer:'BOXER',rotary:'ROTARY'};
 const EXHAUST={
   stock:{topGain:0.05,lowLoss:0.02},
   sport:{topGain:0.12,lowLoss:0.03},
@@ -428,6 +460,7 @@ const AIR_FILTER={
 // Default is a modern 1.6 L naturally-aspirated sport four (high compression, DI, VVT,
 // coil-on-plug with ECU knock-limited timing).
 const DEFAULT_ENGINE={
+  type:'petrol4',
   cylinders:4,bore_mm:81,stroke_mm:78,compression:12.5,layout:'inline',redline:7200,
   intake:'na',boost_bar:0,intercooler:'large',turboSize:'medium',turboConfig:'single',scType:'roots',antilag:false,nitrous:'none',exhaust:'sport',cat:'stock',
   intakeSys:'efi',airFilter:'perf',
@@ -447,7 +480,12 @@ const PRESETS=[
   {name:'3.0 Turbo I6 (2JZ)',     engine:{cylinders:6,bore_mm:84,stroke_mm:90,compression:10.2,redline:7000,intake:'turbo',boost_bar:0.9,turboSize:'medium',octane:98,cam:'sport',exhaust:'sport',radiator:'large',oilCooler:true}},
   {name:'5.0 V8 NA Muscle',       engine:{cylinders:8,bore_mm:93,stroke_mm:92.7,compression:12,layout:'v',redline:7500,cam:'sport',exhaust:'sport',radiator:'large',oilCooler:true}},
   {name:'6.2 Supercharged V8',    engine:{cylinders:8,bore_mm:103.9,stroke_mm:90.9,compression:9.5,layout:'v',redline:6400,intake:'supercharger',boost_bar:0.65,octane:98,injector:'port',vvt:false,cam:'sport',exhaust:'sport',radiator:'large',oilCooler:true}},
-  {name:'6.5 V12 NA Supercar',    engine:{cylinders:12,bore_mm:95,stroke_mm:76.4,compression:11.8,layout:'v',redline:8500,intakeSys:'itb',cam:'race',exhaust:'race',cat:'sport',octane:98,injector:'port',radiator:'large',oilCooler:true}}
+  {name:'6.5 V12 NA Supercar',    engine:{cylinders:12,bore_mm:95,stroke_mm:76.4,compression:11.8,layout:'v',redline:8500,intakeSys:'itb',cam:'race',exhaust:'race',cat:'sport',octane:98,injector:'port',radiator:'large',oilCooler:true}},
+  {name:'2.0 Turbo Diesel I4',    engine:{type:'diesel',vvt:false,cylinders:4,bore_mm:84,stroke_mm:90,compression:17,redline:4800,intake:'turbo',boost_bar:1.2,turboSize:'medium',intakeSys:'efi',injector:'direct',exhaust:'stock',cat:'stock',radiator:'large',oilCooler:true}},
+  {name:'6.6 V8 Turbodiesel',     engine:{type:'diesel',vvt:false,cylinders:8,bore_mm:103,stroke_mm:99,compression:16.5,layout:'v',redline:4500,intake:'turbo',boost_bar:1.4,turboSize:'large',turboConfig:'sequential',intakeSys:'efi',injector:'direct',exhaust:'sport',cat:'stock',radiator:'large',oilCooler:true}},
+  {name:'1.3 Rotary Turbo (13B)', engine:{type:'rotary',cylinders:2,bore_mm:80,stroke_mm:80,compression:9.4,redline:9000,intake:'turbo',boost_bar:0.7,turboSize:'medium',turboConfig:'sequential',intakeSys:'efi',injector:'port',exhaust:'sport',cat:'sport',octane:98,radiator:'large',oilCooler:true}},
+  {name:'1.3 Rotary NA (Renesis)',engine:{type:'rotary',cylinders:2,bore_mm:80,stroke_mm:80,compression:10,redline:9000,intakeSys:'itb',injector:'port',exhaust:'sport',cat:'sport',octane:98,radiator:'large',oilCooler:true}},
+  {name:'500cc 2-Stroke Twin',    engine:{type:'twostroke',cylinders:2,bore_mm:70,stroke_mm:64,compression:9,redline:9500,intakeSys:'carb2',airFilter:'perf',exhaust:'race',cat:'none',octane:98,injector:'port',ignitionType:'coil',radiator:'stock'}}
 ];
 const STD_TUNE={throttle:0.85,load:0.40,elecLoad:0.30,afr:13.2,iat:25,coolant:90,oil:100,autoThermal:false};
 
@@ -534,7 +572,7 @@ let engine=Object.assign({},DEFAULT_ENGINE);
 let buildRev=0;   // bumped each build so the dyno cache invalidates
 
 // throttle & load are the driver inputs; rpm & map are now integrated by the sim.
-let state={throttle:0.20,load:0.20,elecLoad:0.30,rpm:1000,map:0.45,afr:14.7,iat:25,coolant:90,oil:100,torque:0,powerHP:0,powerKW:0,bsfc:0,thermalEff:0,fuelFlowLph:0,knockRisk:0,ve:0.85,bmep:0,boostActual:0,batterySOC:1.0,systemVoltage:14.0,engineHealth:1.0,blown:false,wearCause:'',fuelCut:false,nitrousActive:false,nitrousCharge:1.0,emCO:0,emHC:0,emNOx:0,emRating:100};
+let state={throttle:0.20,load:0.20,elecLoad:0.30,rpm:1000,map:0.45,afr:14.7,iat:25,coolant:90,oil:100,torque:0,powerHP:0,powerKW:0,bsfc:0,thermalEff:0,fuelFlowLph:0,knockRisk:0,ve:0.85,bmep:0,boostActual:0,batterySOC:1.0,systemVoltage:14.0,engineHealth:1.0,blown:false,wearCause:'',fuelCut:false,nitrousActive:false,nitrousCharge:1.0,emCO:0,emHC:0,emNOx:0,emPM:0,emRating:100};
 let crankAngle=0,lastTime=performance.now();
 let vizMode='engine';
 let autoThermal=false;
@@ -556,13 +594,18 @@ const otto=(cr)=>1-Math.pow(cr,-0.3);   // relative Otto-cycle efficiency (gamma
 function readEngineFromForm(){
   const g=id=>document.getElementById(id);
   const intake=g('edIntake').value;
+  const type=g('edType').value, tp=ENGINE_TYPE[type]||ENGINE_TYPE.petrol4;
+  const maxCyl=type==='rotary'?3:12;   // rotaries: 1-3 rotors
+  let fuel=g('edFuel').value;
+  if(tp.ci)fuel='diesel'; else if(fuel==='diesel')fuel='gasoline';   // fuel follows the cycle
   return {
-    cylinders:clamp(Math.round(+g('edCyl').value||4),1,12),
+    type,
+    cylinders:clamp(Math.round(+g('edCyl').value||4),1,maxCyl),
     bore_mm:clamp(+g('edBore').value||86,60,105),
     stroke_mm:clamp(+g('edStroke').value||86,50,110),
-    compression:clamp(+g('edCR').value||10.5,7,14),
-    layout:g('edLayout').value,
-    redline:clamp(Math.round(+g('edRedline').value||7000),5000,9500),
+    compression:clamp(+g('edCR').value||tp.crDef,tp.crMin,tp.crMax),
+    layout:type==='rotary'?'rotary':g('edLayout').value,
+    redline:clamp(Math.round(+g('edRedline').value||tp.redlineDef),tp.redMin,tp.redMax),
     intake,
     boost_bar:intake==='na'?0:clamp(+g('edBoost').value||0,0,2.5),
     intercooler:g('edIntercooler').value,
@@ -577,7 +620,7 @@ function readEngineFromForm(){
     airFilter:g('edAirFilter').value,
     cam:g('edCam').value,
     vvt:g('edVVT').value==='yes',
-    fuel:g('edFuel').value,
+    fuel,
     octane:clamp(Math.round(+g('edOctane').value||95),87,110),
     injector:g('edInjector').value,
     ignitionAdv:clamp(Math.round(+g('edIgnAdv').value||22),5,40),
@@ -592,7 +635,8 @@ function readEngineFromForm(){
 }
 function applyEngineToForm(e){
   const g=id=>document.getElementById(id);
-  g('edCyl').value=e.cylinders;g('edLayout').value=e.layout;g('edBore').value=e.bore_mm;
+  g('edType').value=e.type||'petrol4';
+  g('edCyl').value=e.cylinders;g('edLayout').value=(e.layout==='rotary'?'inline':e.layout);g('edBore').value=e.bore_mm;
   g('edStroke').value=e.stroke_mm;g('edCR').value=e.compression;g('edRedline').value=e.redline;
   // Migrate legacy boolean intercooler (true→large, false→none) from older saved builds.
   g('edIntake').value=e.intake;g('edBoost').value=e.boost_bar;
@@ -611,26 +655,50 @@ function applyEngineToForm(e){
   syncDesignEnable();
 }
 function syncDesignEnable(){
+  const g=id=>document.getElementById(id);
+  const type=g('edType').value, tp=ENGINE_TYPE[type]||ENGINE_TYPE.petrol4;
+  // Diesel is compression-ignition (no spark, runs on diesel); 2-stroke & rotary use ports
+  // (no poppet valvetrain); rotary has rotors, not a bank layout.
+  if(tp.ci)g('edFuel').value='diesel'; else if(g('edFuel').value==='diesel')g('edFuel').value='gasoline';
+  g('lblCyl').textContent=type==='rotary'?'ROTORS':'CYLINDERS';
+  g('lblBore').textContent=type==='rotary'?'ROTOR R (mm)':'BORE (mm)';
+  g('lblStroke').textContent=type==='rotary'?'ROTOR W (mm)':'STROKE (mm)';
+  g('edLayout').disabled=type==='rotary';
+  g('edFuel').disabled=tp.ci;                              // diesel fuel is fixed
   // Boost / intercooler only matter for forced induction; turbo size only for turbos.
-  const intake=document.getElementById('edIntake').value,na=intake==='na';
-  document.getElementById('edBoost').disabled=na;
-  document.getElementById('edIntercooler').disabled=na;
+  const intake=g('edIntake').value,na=intake==='na';
+  g('edBoost').disabled=na;
+  g('edIntercooler').disabled=na;
   const turbo=intake==='turbo';
-  document.getElementById('edTurboSize').disabled=!turbo;
-  document.getElementById('edTurboConfig').disabled=!turbo;
-  document.getElementById('edAntilag').disabled=!turbo;
-  document.getElementById('edScType').disabled=intake!=='supercharger';
-  // Octane only matters for pump gas; other fuels carry their own rating.
-  document.getElementById('edOctane').disabled=document.getElementById('edFuel').value!=='gasoline';
-  // Fixed advance value only applies in FIXED timing mode.
-  document.getElementById('edIgnAdv').disabled=document.getElementById('edTiming').value!=='fixed';
-  // Direct injection only exists on EFI systems (carbs/mechanical injection can't do DI).
-  const sys=INTAKE_SYS[document.getElementById('edIntakeSys').value]||INTAKE_SYS.efi;
-  document.getElementById('edInjector').disabled=!sys.di;
+  g('edTurboSize').disabled=!turbo;
+  g('edTurboConfig').disabled=!turbo;
+  g('edAntilag').disabled=!turbo;
+  g('edScType').disabled=intake!=='supercharger';
+  // No poppet valvetrain on 2-stroke / rotary.
+  g('edCam').disabled=tp.ports;
+  g('edVVT').disabled=tp.ports;
+  // Spark & timing only exist on spark-ignition engines (diesel is CI).
+  g('edIgnType').disabled=tp.ci;
+  g('edTiming').disabled=tp.ci;
+  // Octane only matters for spark-ignition pump gas.
+  g('edOctane').disabled=tp.ci||g('edFuel').value!=='gasoline';
+  // Fixed advance value only applies to spark-ignition in FIXED timing mode.
+  g('edIgnAdv').disabled=tp.ci||g('edTiming').value!=='fixed';
+  // Injector: diesel is direct-injection only; else DI needs an EFI intake.
+  const sys=INTAKE_SYS[g('edIntakeSys').value]||INTAKE_SYS.efi;
+  if(tp.ci)g('edInjector').value='direct';
+  g('edInjector').disabled=tp.ci||!sys.di;
 }
 function buildEngine(){
   const prevStoich=(engine&&engine.stoichAFR)||14.7;   // to preserve lambda across fuel swaps
   engine=readEngineFromForm();
+  // Engine cycle/type: power-stroke divisor, compression-ignition & port-induction flags, and
+  // the peak-pressure / thirst multipliers that give each type its character.
+  const et=ENGINE_TYPE[engine.type]||ENGINE_TYPE.petrol4;
+  engine.strokeDiv=et.strokeDiv;engine.ci=et.ci;engine.ports=et.ports;
+  engine.typeImep=et.imep;engine.typeBsfc=et.bsfc;engine.typeLabel=et.label;
+  if(engine.ports){engine.cam='stock';engine.vvt=false;}   // 2-stroke / rotary: no poppet valvetrain
+  if(engine.ci)engine.injector='direct';                   // diesel: direct injection
   // Fuel: energy content, stoichiometry, knock rating and charge cooling.
   const fp=FUELS[engine.fuel]||FUELS.gasoline;
   engine.fuelDensity=fp.density;engine.fuelLHV=fp.LHV;engine.stoichAFR=fp.stoich;
@@ -696,7 +764,7 @@ function buildEngine(){
   // revs lazily while a small oversquare one snaps up.
   engine.inertia=0.04+0.06*Math.pow(engine.displacement_L,1.5)*(engine.stroke_mm/86);
   // Reference brake torque (~peak) used to scale the dyno brake load.
-  engine.loadRefTq=(IMEP_K*engine.mapMax*0.95*1e5*(engine.displacement_L/1000))/(4*Math.PI);
+  engine.loadRefTq=(IMEP_K*engine.typeImep*engine.mapMax*0.95*1e5*(engine.displacement_L/1000))/engine.strokeDiv;
   engine.brakeGain=engine.loadRefTq/220;   // dyno-brake torque per rpm over the hold target
   engine.canDFCO=(engine.intakeSys==='efi'||engine.intakeSys==='itb');   // injection can cut fuel on overrun
   // Cooling: radiator core capacity, plus a fixed fan contribution to airflow
@@ -712,17 +780,29 @@ function buildEngine(){
   engine.lumpiness=clamp((CAM[engine.cam]||CAM.stock).scav*4.5
     +(engine.layout==='v'&&engine.cylinders===8?0.25:0)
     +(engine.cylinders<=4?0.15:0)
-    +(engine.antilag?0.20:0),0,1)*(engine.vvt?0.7:1);
+    +(engine.antilag?0.20:0)
+    +(engine.ci?0.30:0)                        // diesel clatter
+    +(engine.type==='twostroke'?0.22:0),0,1)   // two-stroke ring-ding
+    *(engine.vvt?0.7:1)
+    *(engine.type==='rotary'?0.25:1);          // rotaries are turbine-smooth
 
   // Keep the live operating point valid for the new engine.
   state.rpm=clamp(state.rpm,engine.idleRpmEff,engine.redline);
   state.map=clamp(state.map,0.12,engine.mapMax);
-  // Re-range the AFR slider to this fuel's stoichiometry, preserving the mixture (lambda).
+  // Re-range the AFR slider. Diesel is quality-governed: air is unthrottled and power is set
+  // by how much fuel is injected, so it always runs lean (λ≥1) from the smoke limit to idle.
   const afrEl=document.getElementById('afr'),lam=state.afr/prevStoich;
-  afrEl.min=(engine.stoichAFR*0.68).toFixed(1);
-  afrEl.max=(engine.stoichAFR*1.22).toFixed(1);
-  afrEl.step=engine.stoichAFR<10?0.05:0.1;
-  state.afr=clamp(lam*engine.stoichAFR,+afrEl.min,+afrEl.max);
+  if(engine.ci){
+    afrEl.min=(engine.stoichAFR*1.02).toFixed(1);   // smoke limit (full fuelling)
+    afrEl.max=(engine.stoichAFR*4.2).toFixed(1);    // light-load / idle (very lean)
+    afrEl.step=0.2;
+    state.afr=clamp(engine.ci&&state.afr<engine.stoichAFR*1.02?engine.stoichAFR*1.15:lam*engine.stoichAFR,+afrEl.min,+afrEl.max);
+  }else{
+    afrEl.min=(engine.stoichAFR*0.68).toFixed(1);
+    afrEl.max=(engine.stoichAFR*1.22).toFixed(1);
+    afrEl.step=engine.stoichAFR<10?0.05:0.1;
+    state.afr=clamp(lam*engine.stoichAFR,+afrEl.min,+afrEl.max);
+  }
   syncSliders();
 
   buildRev++;dynoCache=null;
@@ -738,7 +818,8 @@ function buildEngine(){
 // believable range and exotic choices (big turbos, ITBs, race cams) cost real money.
 function computeCost(){
   let c=900*engine.cylinders+350*engine.displacement_L;          // block, machining, internals
-  c+={inline:0,v:700,boxer:1100}[engine.layout]||0;
+  c+={petrol4:0,diesel:2500,twostroke:-400,rotary:1200}[engine.type]||0;  // cycle-specific build cost
+  c+={inline:0,v:700,boxer:1100,rotary:0}[engine.layout]||0;
   if(engine.redline>7500)c+=(engine.redline-7500)*0.9;           // high-rpm valvetrain/internals
   if(engine.compression>11)c+=(engine.compression-11)*250;       // forged high-compression pistons
   if(engine.intake==='turbo'){
@@ -815,17 +896,21 @@ function renderChallenge(){
 function updateEngineLabels(){
   const disp=engine.displacement_L.toFixed(engine.displacement_L<1?2:1);
   const boostTxt=engine.intake==='na'?'NA':engine.intake.toUpperCase()+' '+engine.boost_bar.toFixed(1)+'bar';
+  const unit=engine.type==='rotary'?engine.cylinders+'-ROTOR':engine.cylinders+'-CYL '+LAYOUT_LABEL[engine.layout];
+  const fuelTag=engine.ci?'DIESEL':engine.octane+'RON';
+  const typeTag={petrol4:'',diesel:'DIESEL ',twostroke:'2-STR ',rotary:'ROTARY '}[engine.type]||'';
   document.getElementById('subtitle').textContent=
-    engine.cylinders+'-CYL '+LAYOUT_LABEL[engine.layout]+' • '+disp+'L • '+boostTxt+' • '+engine.octane+'RON';
+    typeTag+unit+' • '+disp+'L • '+boostTxt+' • '+fuelTag;
   document.getElementById('engineCanvas').setAttribute('aria-label',
-    'Test-bench schematic of a '+engine.cylinders+' cylinder '+LAYOUT_LABEL[engine.layout]+' '+disp+' litre engine');
+    'Test-bench schematic of a '+disp+' litre '+ENGINE_TYPE[engine.type].label+' engine');
   const nb=document.getElementById('btnNitrous');
   nb.disabled=engine.nitrous==='none';nb.classList.remove('on');nb.setAttribute('aria-pressed','false');
 }
 function updateDesignSummary(){
   const disp=engine.displacement_L.toFixed(engine.displacement_L<1?3:2);
   const specific=(engine.displacement_L>0? (state.powerHP/engine.displacement_L):0).toFixed(0);
-  const note=engine.layout!=='inline'?'<br><span style="color:#886">Note: '+LAYOUT_LABEL[engine.layout]+' bank visuals are simplified for now.</span>':'';
+  const note=(engine.layout==='v'||engine.layout==='boxer')?'<br><span style="color:#886">Note: '+LAYOUT_LABEL[engine.layout]+' bank visuals are simplified for now.</span>':'';
+  const unitWord=engine.type==='rotary'?(engine.cylinders+'-ROTOR'):(engine.cylinders+'-CYL '+LAYOUT_LABEL[engine.layout]);
   let induction;
   const icTxt=engine.intercooler==='none'?' (no IC)':' ('+(engine.intercooler==='large'?'LG':'SM')+' IC)';
   if(engine.intake==='na')induction='Naturally aspirated';
@@ -833,16 +918,26 @@ function updateDesignSummary(){
     induction=TURBO_CONFIG[engine.turboConfig].label+' TURBO ('+engine.turboSize.toUpperCase()+')'+(engine.antilag?' +ALS':'')+' @ '+engine.boost_bar.toFixed(2)+' bar'+icTxt+', 50% boost @ '+Math.round(engine.spool50)+' rpm';
   else induction=SC_TYPE[engine.scType].label+' S/C @ '+engine.boost_bar.toFixed(2)+' bar'+icTxt;
   if(engine.nitrous!=='none')induction+=' • <span style="color:#ff66cc">'+(engine.nitrous==='large'?'BIG':'SMALL')+' NITROUS</span>';
+  const dimLabel=engine.type==='rotary'?'rotor':'mm';
+  const valveLine=engine.ports?'<br>Induction ports <b>(no poppet valvetrain)</b>':
+    '<br>Cam <b>'+engine.cam.toUpperCase()+(engine.vvt?' + VVT':'')+'</b>';
+  const sparkLine=engine.ci?
+    '<br><b>Compression ignition</b> • <b>Direct inj</b> • Diesel (cetane)':
+    '<br>'+(engine.injector==='direct'?'<b>Direct inj</b> • ':'')+'Ignition <b>'+(engine.timingMode==='auto'?'AUTO (ECU)':engine.ignitionAdv+'° fixed')+' '+engine.ignitionType.toUpperCase()+'</b>';
+  const elecLine=engine.ci?
+    '<br>Electrical <b>'+engine.altMaxA+'A alt</b> • glow-plug start (no spark)':
+    '<br>Electrical <b>'+engine.altMaxA+'A alt</b> • Ignition misfire above <b>~'+engine.dwellLimit+'</b> rpm ('+engine.ignitionType.toUpperCase()+')';
   document.getElementById('designSummary').innerHTML=
-    '<b>'+engine.cylinders+' × '+engine.bore_mm+'×'+engine.stroke_mm+'mm</b> → <b>'+disp+' L</b> '+LAYOUT_LABEL[engine.layout]+
+    '<b>'+ENGINE_TYPE[engine.type].label+'</b> • <b>'+unitWord+'</b>'+
+    '<br><b>'+engine.cylinders+' × '+engine.bore_mm+'×'+engine.stroke_mm+dimLabel+'</b> → <b>'+disp+' L</b>'+
     '<br>Compression <b>'+engine.compression.toFixed(1)+':1</b> • Redline <b>'+engine.redline+'</b> rpm'+
     '<br>Induction <b>'+induction+'</b>'+
     '<br>Intake <b>'+INTAKE_SYS[engine.intakeSys].label+'</b> • Filter <b>'+AIR_FILTER[engine.airFilter].label+'</b>'+
-    '<br>Exhaust <b>'+engine.exhaust.toUpperCase()+'</b> • Cat <b>'+CAT[engine.cat].label.split(' ')[0]+'</b> • Cam <b>'+engine.cam.toUpperCase()+(engine.vvt?' + VVT':'')+'</b>'+
-    '<br>Fuel <b>'+FUELS[engine.fuel].label+'</b> ('+engine.effOctane+' oct, '+engine.stoichAFR.toFixed(1)+':1 stoich'+(engine.chargeCool?', −'+engine.chargeCool+'°C charge':'')+')'+
-    '<br>'+(engine.injector==='direct'?'<b>Direct inj</b> • ':'')+'Ignition <b>'+(engine.timingMode==='auto'?'AUTO (ECU)':engine.ignitionAdv+'° fixed')+' '+engine.ignitionType.toUpperCase()+'</b>'+
+    '<br>Exhaust <b>'+engine.exhaust.toUpperCase()+'</b> • Cat <b>'+CAT[engine.cat].label.split(' ')[0]+'</b>'+valveLine+
+    '<br>Fuel <b>'+FUELS[engine.fuel].label+'</b> ('+(engine.ci?'CI':engine.effOctane+' oct')+', '+engine.stoichAFR.toFixed(1)+':1 stoich'+(engine.chargeCool?', −'+engine.chargeCool+'°C charge':'')+')'+
+    sparkLine+
     '<br>Cooling <b>'+engine.radiator.toUpperCase()+' RAD</b> • <b>'+engine.fan.toUpperCase()+' FAN</b>'+(engine.oilCooler?' • <b>OIL COOLER</b>':'')+' • Thermostat <b>'+engine.thermostat+'°C</b>'+
-    '<br>Electrical <b>'+engine.altMaxA+'A alt</b> • Ignition misfire above <b>~'+engine.dwellLimit+'</b> rpm ('+engine.ignitionType.toUpperCase()+')'+note+
+    elecLine+note+
     scoreLine(engine.score);
 }
 function scoreLine(s){
@@ -914,9 +1009,14 @@ function computeVE(rpm,map){
   return clamp(ve,0.2,1.2);
 }
 function afrPowerFactor(afr){
-  // Work in lambda (AFR / stoich) so the mixture response is fuel-agnostic: peak power at
-  // λ≈0.86 (rich), stoich at λ=1, lean beyond. Alcohols just have a much lower stoich AFR.
-  const lam=afr/engine.stoichAFR,peak=0.86,width=0.19;
+  const lam=afr/engine.stoichAFR;
+  if(engine.ci){
+    // Diesel is quality-governed: torque tracks how much fuel is injected. Most fuel (near
+    // the smoke limit, λ≈1.0) makes peak torque; leaning out (less fuel) drops it steadily.
+    return clamp(1.06*Math.exp(-Math.pow(Math.max(0,lam-1.0)/0.85,2)),0.10,1.06);
+  }
+  // Spark-ignition: peak power at λ≈0.86 (rich), stoich at λ=1, lean beyond.
+  const peak=0.86,width=0.19;
   let f=1.08*Math.exp(-Math.pow((lam-peak)/width,2));
   if(lam<0.75)f*=0.85+0.6*(lam-0.68);   // very rich rolloff
   if(lam>1.12)f*=1.0-1.5*(lam-1.12);    // very lean rolloff
@@ -937,6 +1037,7 @@ function ignBonus(){return {distributor:-2,wasted:0,coil:2}[engine.ignitionType]
 // Knock risk (0-100) for a given spark advance. The advance term is signed: advancing
 // past MBT feeds knock, retarding below it pulls knock back down.
 function knockAt(rpm,map,adv){
+  if(engine.ci)return 0;   // compression ignition — no spark knock (limited by smoke/EGT instead)
   const mbt=mbtAdvance(rpm,map);
   let k=0;
   k+=Math.max(0,map-1.0)*30;                            // boost
@@ -959,6 +1060,7 @@ function knockAt(rpm,map,adv){
 const KNOCK_TARGET=40;
 function activeAdvance(rpm,map){
   const mbt=mbtAdvance(rpm,map);
+  if(engine.ci)return mbt;   // diesel: no spark timing (injection-timed); treat as on-MBT
   if(engine.timingMode!=='auto')return engine.ignitionAdv;
   const knockAtMbt=knockAt(rpm,map,mbt);
   if(knockAtMbt<=KNOCK_TARGET)return mbt;               // clean at MBT → run full timing
@@ -973,7 +1075,7 @@ function pumpFrictionMEP(rpm,map,oilFrictionMult){
   let fmep=(0.55+1.8e-8*rpm*rpm)*oilFrictionMult*engine.strokeFrictionMult;
   if(engine.intake==='supercharger')
     fmep+=0.18*(SC_TYPE[engine.scType]||SC_TYPE.roots).drag*Math.max(0,map-1.0)*(0.4+0.6*rpm/engine.redline);  // parasitic drive (by type)
-  fmep+=PUMP_K*Math.max(0,1.0-map);                                // pumping / throttling loss
+  fmep+=PUMP_K*Math.max(0,1.0-map)*(engine.ci?0.15:1);            // pumping / throttling loss (diesel is unthrottled)
   fmep+=engine.altDragMEP;                                         // alternator belt drag (baseline)
   return fmep;
 }
@@ -995,6 +1097,7 @@ function electricalDragTorque(rpm){
 // misfire onset RPM. Weak battery + a distributor = early top-end misfire.
 function ignVFactor(){return clamp((state.systemVoltage-9.5)/(13-9.5),0.35,1);}
 function ignitionHealth(rpm){
+  if(engine.ci)return 1;   // compression ignition — no spark dwell limit
   const lim=engine.dwellLimit*ignVFactor();
   return rpm<=lim?1:clamp(1-(rpm-lim)/(engine.dwellLimit*0.45),0.5,1);
 }
@@ -1007,13 +1110,13 @@ function calcAtRpm(rpm,mapOverride){
   const afrP=afrPowerFactor(state.afr);
   const ignF=clamp(1-0.004*Math.pow(activeAdvance(rpm,map)-mbtAdvance(rpm,map),2),0.72,1.0);
 
-  let imep=IMEP_K*map*ve*afrP*coolF*engine.crFactor*ignF*ignitionHealth(rpm)*healthFactor()+nitrousImep()*healthFactor();
+  let imep=IMEP_K*engine.typeImep*map*ve*afrP*coolF*engine.crFactor*ignF*ignitionHealth(rpm)*healthFactor()+nitrousImep()*healthFactor();
   imep*=298.15/(effIAT(map)+273.15);   // intake-air density correction (ref 25°C)
 
   let bmep=Math.max(0.05,imep-pumpFrictionMEP(rpm,map,oilFrictionMult));
 
   const Vd=engine.displacement_L/1000;
-  let torque=(bmep*1e5*Vd)/(4*Math.PI)-electricalDragTorque(rpm);   // 4-stroke, minus alternator load
+  let torque=(bmep*1e5*Vd)/engine.strokeDiv-electricalDragTorque(rpm);   // power strokes/rev per type, minus alternator load
   let powerKW=torque*rpm*2*Math.PI/60/1000;
   let powerHP=powerKW/0.7457;
 
@@ -1029,12 +1132,12 @@ function brakeTorqueRaw(rpm,map,fuelCut){
   if(!fuelCut){
     const ve=computeVE(rpm,map),afrP=afrPowerFactor(state.afr);
     const ignF=clamp(1-0.004*Math.pow(activeAdvance(rpm,map)-mbtAdvance(rpm,map),2),0.72,1.0);
-    imep=IMEP_K*map*ve*afrP*coolF*engine.crFactor*ignF*ignitionHealth(rpm)*healthFactor()*(298.15/(effIAT(map)+273.15))+nitrousImep()*healthFactor();
+    imep=IMEP_K*engine.typeImep*map*ve*afrP*coolF*engine.crFactor*ignF*ignitionHealth(rpm)*healthFactor()*(298.15/(effIAT(map)+273.15))+nitrousImep()*healthFactor();
     const knock=computeKnockRisk(rpm,map);
     if(knock>60)imep*=1-0.32*((knock-60)/40);
   }
   const bmep=imep-pumpFrictionMEP(rpm,map,oilFrictionMult);
-  return (bmep*1e5*(engine.displacement_L/1000))/(4*Math.PI)-electricalDragTorque(rpm);
+  return (bmep*1e5*(engine.displacement_L/1000))/engine.strokeDiv-electricalDragTorque(rpm);
 }
 // Advance the turbo's actual boost toward what it can make at the current RPM (spool lag).
 function stepBoost(dt){
@@ -1104,7 +1207,8 @@ function stepWear(dt){
   add(state.coolant>112?(state.coolant-112)/18*0.030:0,'OVERHEAT');
   add(state.oil>132?(state.oil-132)/22*0.025:0,'OIL TEMP');
   add(state.rpm>engine.redline*0.985?0.006:0,'OVER-REV');
-  add(Math.max(0,lam-1.05)*Math.max(0,state.map-0.9)*0.14,'LEAN/BOOST');         // burnt pistons
+  if(!engine.ci)add(Math.max(0,lam-1.05)*Math.max(0,state.map-0.9)*0.14,'LEAN/BOOST');  // burnt pistons (diesels run lean by design)
+  if(engine.ci)add(state.emPM>35?(state.emPM-35)/40*0.020:0,'OVER-FUEL/EGT');     // diesel: over-fuelling → soot & heat
   add(state.oil<55&&state.powerHP>15?0.004:0,'COLD-OIL');
   add(nitrousImep()>0?0.011:0,'NITROUS');                                        // nitrous stresses everything
   add(engine.antilag&&state.rpm>2500?0.004:0,'ANTI-LAG');                        // ALS cooks the turbo/exhaust
@@ -1132,21 +1236,51 @@ function computeEmissions(){
     +Math.max(0,state.coolant-90)*0.004,0.2,2.4);
   const cold=state.coolant<60?(60-state.coolant)/60:0;
   const meterSlop=1-engine.meteringEff;   // carbs/mech injection run imprecise & rich
-  let coEO =4+Math.max(0,1.0-lam)*300+meterSlop*140;
-  let hcEO =3+Math.max(0,1.0-lam)*95+Math.max(0,lam-1.06)*280+engine.camScav*130+meterSlop*70+cold*45;
-  let noxEO=2+100*Math.exp(-Math.pow((lam-1.08)/0.11,2))*tempF;
-  if(state.fuelCut){coEO=1;hcEO=2;noxEO=1;}   // no combustion on overrun/limiter cut
-  // Three-way conversion: window round stoich, plus O2 availability (lean) for oxidation
-  // and O2 absence (rich) for NOx reduction. A stone-cold cat hasn't lit off yet.
-  const w=Math.exp(-Math.pow((lam-1.0)/0.02,2));
-  const leanO2=clamp((lam-1.0)/0.05,0,1),richRed=clamp((1.0-lam)/0.05,0,1);
-  const litoff=state.coolant<50?0.25:1;
-  const oxEff =engine.catConv*litoff*Math.max(w,leanO2*0.85);
-  const redEff=engine.catConv*litoff*Math.max(w,richRed*0.85);
-  state.emCO=coEO*(1-oxEff);state.emHC=hcEO*(1-oxEff);state.emNOx=noxEO*(1-redEff);
-  // Cleanliness rating 0-100 (higher = cleaner): saturating penalties per pollutant.
-  const coBad=clamp(state.emCO/40,0,1),hcBad=clamp(state.emHC/25,0,1),noxBad=clamp(state.emNOx/70,0,1);
-  state.emRating=Math.round(clamp(100-(coBad*38+hcBad*30+noxBad*32),0,100));
+  // Engine-out pollutants differ sharply by cycle. PM (soot) is a diesel-specific pollutant.
+  let coEO,hcEO,noxEO,pmEO=0;
+  if(engine.ci){
+    // Diesel: lean CI. Low CO/HC, high thermal NOx, and soot (PM) that climbs toward the
+    // smoke limit (λ→1, lots of fuel in little excess air) and with imprecise metering.
+    const fuelling=clamp((1.7-lam)/1.0,0,1);           // ~0 very lean, ~1 near smoke limit
+    coEO =3+fuelling*9;
+    hcEO =2+fuelling*6+cold*20;
+    noxEO=8+130*clamp(tempF*0.62,0,1.4);               // hot lean flame → lots of NOx
+    pmEO =2+Math.pow(fuelling,1.6)*80+meterSlop*30;    // black smoke near full fuelling
+  }else if(engine.type==='twostroke'){
+    coEO =6+Math.max(0,1.0-lam)*260+meterSlop*120;
+    hcEO =42+Math.max(0,1.0-lam)*120+engine.typeBsfc*18;   // oil burning + short-circuit scavenging → very high HC
+    noxEO=2+42*Math.exp(-Math.pow((lam-1.08)/0.13,2))*tempF;
+  }else if(engine.type==='rotary'){
+    coEO =6+Math.max(0,1.0-lam)*300+meterSlop*120;
+    hcEO =26+Math.max(0,1.0-lam)*120+Math.max(0,lam-1.06)*200;   // apex-seal leakage → high HC
+    noxEO=2+55*Math.exp(-Math.pow((lam-1.08)/0.12,2))*tempF;
+  }else{
+    coEO =4+Math.max(0,1.0-lam)*300+meterSlop*140;
+    hcEO =3+Math.max(0,1.0-lam)*95+Math.max(0,lam-1.06)*280+engine.camScav*130+meterSlop*70+cold*45;
+    noxEO=2+100*Math.exp(-Math.pow((lam-1.08)/0.11,2))*tempF;
+  }
+  if(state.fuelCut){coEO=Math.min(coEO,1);hcEO=Math.min(hcEO,2);noxEO=Math.min(noxEO,1);pmEO=0;}
+  // Aftertreatment. Diesel uses DOC (CO/HC) + DPF (PM) always, plus SCR (NOx) on the full
+  // "stock" system; a spark engine's three-way cat only works in the stoich window.
+  let oxEff,redEff,pmEff=0;
+  if(engine.ci){
+    const hot=state.coolant<50?0.3:1;
+    oxEff =engine.catConv*hot;                       // DOC oxidises CO/HC
+    pmEff =engine.catConv*hot;                       // DPF traps soot
+    redEff=(engine.cat==='stock'?0.9:0)*hot;         // SCR reduces NOx (full system only)
+  }else{
+    const w=Math.exp(-Math.pow((lam-1.0)/0.02,2));
+    const leanO2=clamp((lam-1.0)/0.05,0,1),richRed=clamp((1.0-lam)/0.05,0,1);
+    const litoff=state.coolant<50?0.25:1;
+    oxEff =engine.catConv*litoff*Math.max(w,leanO2*0.85);
+    redEff=engine.catConv*litoff*Math.max(w,richRed*0.85);
+  }
+  state.emCO=coEO*(1-oxEff);state.emHC=hcEO*(1-oxEff);state.emNOx=noxEO*(1-redEff);state.emPM=pmEO*(1-pmEff);
+  // Cleanliness rating 0-100 (higher = cleaner): saturating penalties per pollutant, weighted
+  // to each cycle's signature (diesel = NOx + soot; spark = CO/HC/NOx).
+  const coBad=clamp(state.emCO/40,0,1),hcBad=clamp(state.emHC/25,0,1),noxBad=clamp(state.emNOx/70,0,1),pmBad=clamp(state.emPM/45,0,1);
+  if(engine.ci)state.emRating=Math.round(clamp(100-(coBad*14+hcBad*12+noxBad*36+pmBad*34),0,100));
+  else state.emRating=Math.round(clamp(100-(coBad*38+hcBad*30+noxBad*32),0,100));
   return state.emRating;
 }
 function updatePhysics(){
@@ -1164,12 +1298,13 @@ function updatePhysics(){
   }
   const T_k=effIAT(map)+273.15,MAP_pa=map*1e5,Vd=engine.displacement_L/1000;
   const airMass_kg_s=(MAP_pa*Vd*(state.rpm/60)*state.ve)/(287*T_k*2);
-  // Imprecise metering (carbs / mechanical injection) wastes fuel: same power, more fuel
-  // burned → higher flow, worse BSFC and lower thermal efficiency than EFI.
-  const meteredFuel=(airMass_kg_s/state.afr)/engine.meteringEff;
+  // Imprecise metering (carbs / mechanical injection) wastes fuel; the cycle's thirst factor
+  // (typeBsfc) captures combustion/scavenging losses — a 2-stroke short-circuits fresh charge
+  // out the exhaust (>1, thirsty), while a diesel's complete lean CI burns less (<1).
+  const meteredFuel=(airMass_kg_s/state.afr)/engine.meteringEff*engine.typeBsfc;
   state.fuelFlowLph=(meteredFuel*3600)/engine.fuelDensity;
   const fuelPower=meteredFuel*engine.fuelLHV*1e6/1000;
-  state.thermalEff=fuelPower>0.1?clamp((state.powerKW/fuelPower)*100,0,45):0;
+  state.thermalEff=fuelPower>0.1?clamp((state.powerKW/fuelPower)*100,0,46):0;
   state.bsfc=state.powerKW>0.5?(meteredFuel*3600*1000)/state.powerKW:999;
 }
 function getDynoData(){
@@ -1227,13 +1362,16 @@ function initSound(){
 }
 function updateSound(){
   if(!Sound.on||!Sound.ctx)return;
-  // Firing frequency: cylinders fire once each per 2 revs → cyl*(rpm/60)/2 Hz.
-  const fire=engine.cylinders*(state.rpm/60)/2;
+  // Firing frequency: 4-stroke fires once per cylinder every 2 revs; a 2-stroke and a rotary
+  // make a power event every rev, so they fire twice as often (higher, busier note).
+  const perRev=(engine.strokeDiv===2*Math.PI)?1:0.5;
+  const fire=engine.cylinders*(state.rpm/60)*perRev;
   const t=Sound.ctx.currentTime;
   Sound.osc.frequency.setTargetAtTime(fire,t,0.05);
   Sound.sub.frequency.setTargetAtTime(fire/2,t,0.05);
-  // More cylinders sit brighter/smoother; the note opens up with revs.
-  Sound.filter.frequency.setTargetAtTime(440+state.rpm*0.15+engine.cylinders*8,t,0.05);
+  // Rotaries sit bright & smooth, diesels dark & clattery; the note opens up with revs.
+  const bright=engine.type==='rotary'?1.5:engine.ci?0.6:1.0;
+  Sound.filter.frequency.setTargetAtTime((440+state.rpm*0.15+engine.cylinders*8)*bright,t,0.05);
   const loud=state.blown?0:0.05+clamp(state.powerHP/160,0,1)*0.13;
   Sound.gain.gain.setTargetAtTime(loud,t,0.08);
   // Lope pulses at the crank-rev rate, deepest at idle and fading with rpm.
@@ -1332,8 +1470,11 @@ function scoreEngine(){
   const sv={afr:state.afr,iat:state.iat,coolant:state.coolant,oil:state.oil,eh:state.engineHealth,bl:state.blown,el:state.elecLoad,map:state.map,rpm:state.rpm};
   state.iat=25;state.coolant=90;state.oil=100;state.engineHealth=1;state.blown=false;state.elecLoad=0.3;
   const rMax=engine.redline;
-  // best-power WOT sweep → peaks, powerband, low-end torque
-  state.afr=engine.stoichAFR*0.86;
+  // best-power WOT sweep → peaks, powerband, low-end torque. Diesel makes peak power lean,
+  // near the smoke limit (λ≈1.05); spark engines peak rich (λ≈0.86).
+  const powerAfr=engine.ci?engine.stoichAFR*1.05:engine.stoichAFR*0.86;
+  const effAfr=engine.ci?engine.stoichAFR*1.15:engine.stoichAFR;
+  state.afr=powerAfr;
   let peakHP=0,peakHPrpm=0,peakTQ=0,peakTQrpm=0;const pts=[];
   for(let r=1000;r<=rMax;r+=100){const p=calcAtRpm(r);pts.push(p);
     if(p.powerHP>peakHP){peakHP=p.powerHP;peakHPrpm=r;}if(p.torque>peakTQ){peakTQ=p.torque;peakTQrpm=r;}}
@@ -1346,18 +1487,18 @@ function scoreEngine(){
   const safety=clamp(1-maxKnock/100,0,1);
   // efficiency: best brake thermal efficiency across a high-load / mid-rpm island (where
   // BSFC is best — pumping/friction are the smallest fraction there)
-  state.afr=engine.stoichAFR;let thEff=0;
+  state.afr=effAfr;let thEff=0;
   for(const mm of [0.8,1.0,Math.min(1.2,engine.mapMax)]){const cm=Math.min(mm,engine.mapMax);
     for(const rf of [0.6,0.85,1.05]){const rr=Math.round(clamp(peakTQrpm*rf,1200,rMax));
       const cr=calcAtRpm(rr,cm);
       const airMass=(cm*1e5*(engine.displacement_L/1000)*(rr/60)*cr.ve)/(287*(effIAT(cm)+273.15)*2);
-      const fuelPower=((airMass/state.afr)/engine.meteringEff)*engine.fuelLHV*1e6/1000;
-      if(fuelPower>0.1)thEff=Math.max(thEff,clamp((cr.powerKW/fuelPower)*100,0,45));
+      const fuelPower=((airMass/state.afr)/engine.meteringEff*engine.typeBsfc)*engine.fuelLHV*1e6/1000;
+      if(fuelPower>0.1)thEff=Math.max(thEff,clamp((cr.powerKW/fuelPower)*100,0,46));
     }}
   // emissions: cleanliness at a representative stoich cruise + part-load (where a modern
   // engine spends its regulated life). Rewards a cat + precise metering; a decatted, carb'd
   // or overlap-heavy build rates dirty even run at stoich.
-  state.afr=engine.stoichAFR;let emSum=0,emN=0;
+  state.afr=engine.ci?engine.stoichAFR*1.7:engine.stoichAFR;let emSum=0,emN=0;   // diesel cruises lean
   for(const [rf,mm] of [[0.45,0.5],[0.7,0.7],[0.9,Math.min(0.95,engine.mapMax)]]){
     state.rpm=Math.round(clamp(peakTQrpm*rf,1000,rMax));state.map=Math.min(mm,engine.mapMax);
     emSum+=computeEmissions();emN++;
@@ -1380,10 +1521,13 @@ function scoreEngine(){
   rel-=Math.max(0,hpPerL-110)*0.30;                    // highly-strung specific output
   rel-=engine.antilag?15:0;                            // ALS cooks turbo/exhaust
   rel-=engine.nitrous!=='none'?12:0;                   // chemical stress
-  rel-=Math.max(0,engine.redline-7500)/100*2;          // sky-high redline
+  rel-=Math.max(0,engine.redline-(engine.ports?9800:7500))/100*2;   // sky-high redline (rotary/2-str rev high by design)
   const coolNeed=clamp(peakHP/260,0,1.6);
   const coolHave=engine.radCap+(engine.oilCooler?0.4:0)+(engine.fan==='none'?0:0.2);
   rel-=Math.max(0,coolNeed-coolHave)*30;               // under-cooled for the power
+  rel+=engine.ci?16:0;                                 // diesels are built heavy & robust
+  rel-=engine.type==='rotary'?18:0;                    // apex-seal wear
+  rel-=engine.type==='twostroke'?12:0;                 // ring/port wear, oil dependency
   const reliability=clamp(Math.round(rel),0,100);
   return {peakHP:Math.round(peakHP),peakHPrpm,peakTQ:Math.round(peakTQ),peakTQrpm,hpPerL:Math.round(hpPerL),
     nmPerL:Math.round(nmPerL),band,thEff:Math.round(thEff),safety:Math.round(sSafe),drive:Math.round(drive*100),emissions,reliability,overall,grade};
@@ -1453,14 +1597,16 @@ function drawEngine(dt){
 
   // Central engine
   const ex=235,ey=118,ew=170,eh=172;
+  const unitTxt=engine.type==='rotary'?engine.cylinders+'-ROTOR '+disp+'L':engine.cylinders+'CYL '+LAYOUT_LABEL[engine.layout]+' '+disp+'L';
+  const typeTxt={petrol4:'4-STROKE',diesel:'DIESEL CI',twostroke:'2-STROKE',rotary:'WANKEL'}[engine.type]||'';
   box(ex,ey,ew,eh,'ENGINE',[
-    [engine.cylinders+'CYL '+LAYOUT_LABEL[engine.layout]+' '+disp+'L'],
-    ['CR '+engine.compression.toFixed(1)+':1'],
+    [unitTxt],
+    [typeTxt+' • CR'+engine.compression.toFixed(1),C.cyan],
     ['COOL '+Math.round(state.coolant)+'C',tempCol(state.coolant)],
     ['OIL  '+Math.round(state.oil)+'C',tempCol(state.oil)],
-    ['ADV  '+Math.round(activeAdvance(state.rpm,m))+'°'+(engine.timingMode==='auto'?' AUTO':''),C.cyan],
+    engine.ci?['INJ  COMPRESSION',C.cyan]:['ADV  '+Math.round(activeAdvance(state.rpm,m))+'°'+(engine.timingMode==='auto'?' AUTO':''),C.cyan],
     ['HEALTH '+(state.blown?'DEAD':Math.round(state.engineHealth*100)+'%'),state.blown||state.engineHealth<0.3?C.red:state.engineHealth<0.7?C.yellow:C.green],
-    detailed?['CAM '+engine.cam.toUpperCase()+(engine.vvt?'+VVT':'')]:null,
+    detailed?[engine.ports?'PORTS (NO CAM)':'CAM '+engine.cam.toUpperCase()+(engine.vvt?'+VVT':'')]:null,
     detailed?['ALT '+engine.altMaxA+'A']:null
   ],C.metal);
   // little cylinder + flywheel glyph in the engine box
@@ -1490,8 +1636,8 @@ function drawEngine(dt){
     ['AFR  '+state.afr.toFixed(1)+' λ'+lam],
     state.fuelCut&&state.rpm<engine.redline?['FLOW 0 — DFCO CUT',C.cyan]:['FLOW '+state.fuelFlowLph.toFixed(1)+' L/h'],
     [(engine.injector==='direct'?'DIRECT':'PORT')+' INJ'],
-    ['IGN  '+(engine.timingMode==='auto'?'AUTO ECU':engine.ignitionAdv+'° FIXED')],
-    detailed?['SPARK '+engine.ignitionType.toUpperCase()]:null,
+    engine.ci?['COMPRESSION IGN',C.cyan]:['IGN  '+(engine.timingMode==='auto'?'AUTO ECU':engine.ignitionAdv+'° FIXED')],
+    detailed?(engine.ci?['GLOW-PLUG START']:['SPARK '+engine.ignitionType.toUpperCase()]):null,
     detailed?['BSFC '+(state.bsfc>500?'---':Math.round(state.bsfc))]:null
   ],C.yellow);
 
@@ -1500,10 +1646,12 @@ function drawEngine(dt){
   const emWord=state.emRating>=75?'CLEAN':state.emRating>=45?'OK':'DIRTY';
   box(20,244,160,120,'EXHAUST • ANALYSER',[
     ['SYS '+engine.exhaust.toUpperCase()+' • CAT '+CAT[engine.cat].label.split(' ')[0]],
-    ['KNOCK '+knockTxt+' ('+Math.round(state.knockRisk)+')',knockCol],
-    ['DETON '+(state.knockRisk>60?'RETARD/CUT':'OK'),state.knockRisk>60?C.red:C.green],
+    engine.ci?['SMOKE/PM '+(state.emPM>25?'HIGH':state.emPM>10?'MED':'LOW'),state.emPM>25?C.red:state.emPM>10?C.yellow:C.green]
+             :['KNOCK '+knockTxt+' ('+Math.round(state.knockRisk)+')',knockCol],
+    engine.ci?['CI — NO SPARK KNOCK',C.green]:['DETON '+(state.knockRisk>60?'RETARD/CUT':'OK'),state.knockRisk>60?C.red:C.green],
     ['EMISS '+emWord+' '+state.emRating,emCol],
-    detailed?['CO '+state.emCO.toFixed(0)+' HC '+state.emHC.toFixed(0)+' NOx '+state.emNOx.toFixed(0)]:null,
+    detailed?(engine.ci?['CO '+state.emCO.toFixed(0)+' NOx '+state.emNOx.toFixed(0)+' PM '+state.emPM.toFixed(0)]
+                       :['CO '+state.emCO.toFixed(0)+' HC '+state.emHC.toFixed(0)+' NOx '+state.emNOx.toFixed(0)]):null,
     detailed?['THERM.EFF '+state.thermalEff.toFixed(0)+'%']:null
   ],C.exhaust);
 
@@ -1742,6 +1890,14 @@ function bindControls(){
   document.getElementById('edFuel').addEventListener('change',syncDesignEnable);
   document.getElementById('edTiming').addEventListener('change',syncDesignEnable);
   document.getElementById('edIntakeSys').addEventListener('change',syncDesignEnable);
+  // Switching engine type resets CR / redline / cylinders to that cycle's sensible defaults.
+  document.getElementById('edType').addEventListener('change',e=>{
+    const tp=ENGINE_TYPE[e.target.value]||ENGINE_TYPE.petrol4,g=id=>document.getElementById(id);
+    g('edCR').value=tp.crDef;g('edRedline').value=tp.redlineDef;
+    if(e.target.value==='rotary'&&+g('edCyl').value>3)g('edCyl').value=2;
+    if(tp.ports){g('edCam').value='stock';g('edVVT').value='no';}
+    syncDesignEnable();
+  });
   // Populate & wire the preset dropdown
   const presetSel=document.getElementById('edPreset');
   PRESETS.forEach((p,i)=>{const o=document.createElement('option');o.value=i;o.textContent=p.name;presetSel.appendChild(o);});
