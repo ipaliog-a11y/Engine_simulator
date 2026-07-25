@@ -93,6 +93,24 @@ footer{text-align:center;margin-top:16px;padding:8px;font-size:7px;color:#555;bo
 .opt-select{font-family:'Press Start 2P',monospace;font-size:8px;padding:8px;background:#12121c;color:#00ff88;border:2px solid #555}
 .vehicle-soon{font-size:8px;color:#aab;line-height:1.8;padding:6px 2px}
 .vehicle-soon b{color:#ffcc00}
+/* ---- Career / challenge card ---- */
+.challenge-card{background:#0a0a10;border:2px solid #33334a;padding:9px;margin-bottom:6px;font-size:8px;line-height:1.6}
+.ch-desc{color:#99aecc;line-height:1.7;margin-bottom:8px}
+.ch-stats{display:flex;flex-wrap:wrap;gap:12px;margin-bottom:8px;color:#889}
+.ch-stats b{color:#ffcc00}
+.ch-budget{margin:6px 0 8px}
+.ch-bud-lbl{font-size:7px;color:#aab;margin-bottom:4px}
+.ch-bar{height:10px;background:#1a1a28;border:2px solid #444}
+.ch-bar-fill{height:100%}
+.ch-tgt{font-size:7.5px;line-height:1.9;color:#cdd}
+.ch-tgt span{color:#667}
+.ch-tgt.ok{color:#00ff88}
+.ch-tgt.no{color:#ff8888}
+.ch-tgt.ok b,.ch-tgt.no b{color:#fff}
+.ch-verdict{margin-top:8px;padding:6px;text-align:center;font-size:8px;border:2px solid}
+.ch-verdict.pass{color:#00ff88;border-color:#00ff88;background:#04220f}
+.ch-verdict.fail{color:#ffaa66;border-color:#664433;background:#1a1108}
+.ch-hint{font-size:7px;color:#667;margin-top:4px}
 </style>
 </head>
 <body>
@@ -117,6 +135,10 @@ footer{text-align:center;margin-top:16px;padding:8px;font-size:7px;color:#555;bo
 <div class="hint">Load a preset, or configure a build and press BUILD &amp; DYNO. Physics update live.</div>
 
 <div class="field" style="margin-bottom:6px"><label for="edPreset">LOAD A PRESET</label><select id="edPreset"><option value="">— choose a popular build —</option></select></div>
+
+<div class="design-section">Career / Challenge</div>
+<div class="field" style="margin-bottom:6px"><label for="edChallenge">OBJECTIVE</label><select id="edChallenge"></select></div>
+<div class="challenge-card" id="challengeCard"></div>
 
 <div class="design-section">Bottom End</div>
 <div class="design-grid">
@@ -232,15 +254,28 @@ MAP above 1.0.<br>
 does damage. <b>HEALTH (%)</b> — condition; falls under abuse, and 0 = a blown engine (rebuild).<br>
 <b>EMISSIONS (CLEAN/OK/DIRTY)</b> — from the exhaust analyser: CO &amp; HC climb rich, NOx climbs
 lean/hot; a catalytic converter only cleans all three near stoich.<br>
-<b>λ (lambda)</b> — AFR ÷ the fuel's stoichiometric AFR: λ&lt;1 rich, 1 = stoich, &gt;1 lean.
+<b>λ (lambda)</b> — AFR ÷ the fuel's stoichiometric AFR: λ&lt;1 rich, 1 = stoich, &gt;1 lean.<br>
+<b>COST ($)</b> — total build price of the parts you chose. <b>REL (reliability)</b> — a
+design estimate of how much abuse the build invites (boost/knock/heat/high-rpm stress);
+higher is tougher. <b>hp/$1k</b> — power per thousand dollars: the value metric.
 </div>
 
 <div class="design-section">The Scorecard</div>
 <div class="guide-body">
-Every build is graded <b>S → F</b> from six things: specific <b>power</b> &amp; <b>torque</b>
+Every build is graded <b>S → F</b> from seven things: specific <b>power</b> &amp; <b>torque</b>
 (per litre), power<b>band</b> width, thermal <b>eff</b>iciency, knock <b>safety</b>,
 <b>drive</b>ability (low-end torque) and <b>emit</b> (emissions). Chasing peak power usually
 costs drivability, safety and emissions — the score rewards a balanced build.
+</div>
+
+<div class="design-section">Career &amp; Budget</div>
+<div class="guide-body">
+Pick an <b>OBJECTIVE</b> at the top of the DESIGN tab to turn free building into a puzzle.
+Each challenge sets targets — power, economy, emissions, <b>reliability</b> or
+<b>power-per-dollar</b> — and some cap your <b>budget</b>. The card ticks off each target
+live (✓/✗) and shows a <b>PASSED</b> verdict when the whole brief is met; the build's
+<b>cost</b> and reliability are always on show. Cheap displacement wins on value; boost and
+race parts win on power but cost money and reliability. Balance the brief.
 </div>
 
 <div class="design-section">Design Subsystems</div>
@@ -415,6 +450,28 @@ const PRESETS=[
   {name:'6.5 V12 NA Supercar',    engine:{cylinders:12,bore_mm:95,stroke_mm:76.4,compression:11.8,layout:'v',redline:8500,intakeSys:'itb',cam:'race',exhaust:'race',cat:'sport',octane:98,injector:'port',radiator:'large',oilCooler:true}}
 ];
 const STD_TUNE={throttle:0.85,load:0.40,elecLoad:0.30,afr:13.2,iat:25,coolant:90,oil:100,autoThermal:false};
+
+// ---- Strategy layer: objective challenges ----
+// Each challenge sets an optional budget cap and a list of targets (op >= or <=) checked
+// against the build's scorecard/cost. A curated brief that turns free design into a puzzle.
+const CHALLENGES=[
+  {id:'free',name:'Free Build (no objective)',desc:'Design whatever you like — no targets, just the cost & reliability readout.',targets:[]},
+  {id:'sleeper',name:'Budget Sleeper',desc:'Real power on a shoestring. Every part counts.',budget:9000,
+    targets:[{label:'Power',key:'peakHP',op:'>=',t:200,unit:'hp'},{label:'Reliability',key:'reliability',op:'>=',t:60}]},
+  {id:'ppd',name:'Power per Dollar',desc:'Squeeze the most horsepower out of every $1000 spent.',
+    targets:[{label:'HP per $1k',key:'hpPerK',op:'>=',t:22},{label:'Power',key:'peakHP',op:'>=',t:150,unit:'hp'}]},
+  {id:'eco',name:'Eco Cruiser',desc:'Efficient and clean, but still has to move.',budget:14000,
+    targets:[{label:'Thermal eff',key:'thEff',op:'>=',t:34,unit:'%'},{label:'Emissions',key:'emissions',op:'>=',t:80},{label:'Power',key:'peakHP',op:'>=',t:120,unit:'hp'}]},
+  {id:'track',name:'Track Weapon',desc:'Serious power that still holds together and grades well.',budget:24000,
+    targets:[{label:'Power',key:'peakHP',op:'>=',t:300,unit:'hp'},{label:'Grade',key:'grade',op:'>=',t:62},{label:'Safety',key:'safety',op:'>=',t:55}]},
+  {id:'reliable',name:'Reliability Run',desc:'Bulletproof first, powerful second.',
+    targets:[{label:'Reliability',key:'reliability',op:'>=',t:82},{label:'Power',key:'peakHP',op:'>=',t:180,unit:'hp'}]},
+  {id:'clean',name:'Clean Machine',desc:'Emissions-legal muscle — a cat and a stoich-capable tune.',
+    targets:[{label:'Emissions',key:'emissions',op:'>=',t:90},{label:'Power',key:'peakHP',op:'>=',t:150,unit:'hp'}]},
+  {id:'screamer',name:'Specific-Output King',desc:'Chase the highest power per litre without grenading it.',
+    targets:[{label:'HP per litre',key:'hpPerL',op:'>=',t:130},{label:'Safety',key:'safety',op:'>=',t:40}]}
+];
+let activeChallenge='free';
 
 const RAD_CAP={small:0.75,stock:1.0,large:1.35};   // relative heat-rejection capacity
 const IMEP_K=13.2;   // indicated MEP calibration (bar at map=1, ve=1, best-power AFR)
@@ -669,9 +726,91 @@ function buildEngine(){
   syncSliders();
 
   buildRev++;dynoCache=null;
+  engine.cost=computeCost();
   engine.score=scoreEngine();
   updateEngineLabels();
   updateDesignSummary();
+  renderChallenge();
+}
+// ---- Strategy layer: what the build costs (parts $) ----
+// Rough per-part pricing so budget challenges and hp-per-dollar have meaning. Values are
+// ballpark "build" money, not a real quote — tuned so a sensible street build lands in a
+// believable range and exotic choices (big turbos, ITBs, race cams) cost real money.
+function computeCost(){
+  let c=900*engine.cylinders+350*engine.displacement_L;          // block, machining, internals
+  c+={inline:0,v:700,boxer:1100}[engine.layout]||0;
+  if(engine.redline>7500)c+=(engine.redline-7500)*0.9;           // high-rpm valvetrain/internals
+  if(engine.compression>11)c+=(engine.compression-11)*250;       // forged high-compression pistons
+  if(engine.intake==='turbo'){
+    c+=({small:1200,medium:1800,large:2600}[engine.turboSize]||1800)*({single:1,twin:1.8,sequential:2.6,compound:3.0}[engine.turboConfig]||1);
+    if(engine.antilag)c+=700;
+  }else if(engine.intake==='supercharger'){
+    c+={roots:2200,screw:3200,centrifugal:2600}[engine.scType]||2200;
+  }
+  if(engine.intake!=='na'){
+    c+={none:0,small:450,large:950}[engine.intercooler]||0;
+    c+=engine.boost_bar*900;                                     // fuelling/plumbing for boost
+  }
+  c+={none:0,small:500,large:900}[engine.nitrous]||0;
+  c+={stock:0,sport:550,race:1400}[engine.exhaust]||0;
+  c+={none:0,sport:500,stock:300}[engine.cat]||0;
+  c+={carb1:200,carb2:350,carb4:600,sidedraft:1400,mech:1900,efi:1200,itb:2600}[engine.intakeSys]||0;
+  c+={none:0,perf:200,stock:60,restrictive:30}[engine.airFilter]||0;
+  c+={stock:0,sport:700,race:1600}[engine.cam]||0;
+  if(engine.vvt)c+=1200;
+  if(engine.injector==='direct')c+=900;
+  c+={distributor:150,wasted:400,coil:900}[engine.ignitionType]||0;
+  if(engine.timingMode==='auto')c+=600;
+  c+={gasoline:0,race:0,e85:300,methanol:500}[engine.fuel]||0;
+  c+={small:200,stock:400,large:800}[engine.radiator]||0;
+  c+={none:0,mechanical:150,electric:350}[engine.fan]||0;
+  if(engine.oilCooler)c+=500;
+  c+={'60':150,'120':250,'180':450}[engine.alternator]||0;
+  return Math.max(500,Math.round(c/50)*50);   // round to nearest $50
+}
+// Metrics available to a challenge objective (score + cost + derived power-per-dollar).
+function buildMetrics(){
+  const s=engine.score||{};
+  return {peakHP:s.peakHP||0,hpPerL:s.hpPerL||0,peakTQ:s.peakTQ||0,nmPerL:s.nmPerL||0,
+    thEff:s.thEff||0,emissions:s.emissions||0,safety:s.safety||0,drive:s.drive||0,band:s.band||0,
+    reliability:s.reliability||0,grade:s.overall||0,cost:engine.cost||0,
+    hpPerK:engine.cost>0?+((s.peakHP||0)/(engine.cost/1000)).toFixed(1):0};
+}
+function evalChallenge(ch,m){
+  const results=(ch.targets||[]).map(t=>{
+    const v=m[t.key],pass=t.op==='<='?v<=t.t:v>=t.t;
+    return {label:t.label,v,t:t.t,op:t.op,unit:t.unit||'',pass};
+  });
+  const budgetPass=ch.budget?m.cost<=ch.budget:true;
+  return {results,budgetPass,cost:m.cost,budget:ch.budget||0,pass:results.every(r=>r.pass)&&budgetPass};
+}
+function fmtCost(v){return '$'+Math.round(v).toLocaleString();}
+function renderChallenge(){
+  const el=document.getElementById('challengeCard');
+  if(!el)return;
+  const ch=CHALLENGES.find(c=>c.id===activeChallenge)||CHALLENGES[0];
+  const m=buildMetrics();
+  const relCol=m.reliability>=75?'#00ff88':m.reliability>=50?'#ffcc00':'#ff6666';
+  let html='<div class="ch-desc">'+ch.desc+'</div>';
+  html+='<div class="ch-stats"><span>COST <b>'+fmtCost(m.cost)+'</b></span>'
+    +'<span>REL <b style="color:'+relCol+'">'+m.reliability+'</b></span>'
+    +'<span><b>'+m.hpPerK+'</b> hp/$1k</span></div>';
+  if((ch.targets&&ch.targets.length)||ch.budget){
+    const ev=evalChallenge(ch,m);
+    if(ch.budget){
+      const over=m.cost>ch.budget,frac=clamp(m.cost/ch.budget,0,1.15);
+      html+='<div class="ch-budget"><div class="ch-bud-lbl">BUDGET '+fmtCost(m.cost)+' / '+fmtCost(ch.budget)+(over?' — OVER':'')+'</div>'
+        +'<div class="ch-bar"><div class="ch-bar-fill" style="width:'+Math.min(100,frac*100)+'%;background:'+(over?'#ff4444':'#00ff88')+'"></div></div></div>';
+    }
+    ev.results.forEach(r=>{
+      const val=typeof r.v==='number'?(Number.isInteger(r.v)?r.v:r.v.toFixed(1)):r.v;
+      html+='<div class="ch-tgt '+(r.pass?'ok':'no')+'">'+(r.pass?'✓':'✗')+' '+r.label+': <b>'+val+r.unit+'</b> <span>(need '+(r.op==='<='?'≤':'≥')+' '+r.t+r.unit+')</span></div>';
+    });
+    html+='<div class="ch-verdict '+(ev.pass?'pass':'fail')+'">'+(ev.pass?'✓ CHALLENGE PASSED':'✗ NOT MET YET')+'</div>';
+  }else{
+    html+='<div class="ch-hint">Pick an objective above to set targets, or keep building freely.</div>';
+  }
+  el.innerHTML=html;
 }
 function updateEngineLabels(){
   const disp=engine.displacement_L.toFixed(engine.displacement_L<1?2:1);
@@ -709,8 +848,10 @@ function updateDesignSummary(){
 function scoreLine(s){
   if(!s)return'';
   const gc=s.overall>=76?'#00ff88':s.overall>=46?'#ffcc00':'#ff6666';
+  const relCol=s.reliability>=75?'#00ff88':s.reliability>=50?'#ffcc00':'#ff6666';
   return '<br><span style="color:'+gc+'">SCORE <b>'+s.grade+' ('+s.overall+')</b></span> • '+s.peakHP+'hp @'+s.peakHPrpm+' • '+s.peakTQ+'Nm @'+s.peakTQrpm+
-    '<br><span style="color:#889">'+s.hpPerL+'hp/L • band '+s.band+'rpm • eff '+s.thEff+'% • safety '+s.safety+' • drive '+s.drive+'% • emit '+s.emissions+'</span>';
+    '<br><span style="color:#889">'+s.hpPerL+'hp/L • band '+s.band+'rpm • eff '+s.thEff+'% • safety '+s.safety+' • drive '+s.drive+'% • emit '+s.emissions+'</span>'+
+    '<br>Cost <b>'+fmtCost(engine.cost||0)+'</b> • Reliability <b style="color:'+relCol+'">'+(s.reliability||0)+'</b> • <b>'+(engine.cost>0?(s.peakHP/(engine.cost/1000)).toFixed(1):0)+'</b> hp/$1k';
 }
 
 // ---- Turbo spool: how much of the target boost is available at a given RPM ----
@@ -1231,8 +1372,21 @@ function scoreEngine(){
   const sSafe=safety*100, sDrive=clamp((drive-0.4)/0.5,0,1)*100, sEmit=emissions;
   const overall=Math.round(0.26*sPower+0.12*sTorque+0.15*sBand+0.12*sEff+0.15*sSafe+0.10*sDrive+0.10*sEmit);
   const grade=overall>=88?'S':overall>=76?'A':overall>=62?'B':overall>=46?'C':overall>=30?'D':'F';
+  // Design reliability index (0-100): a static estimate of how much abuse the build invites,
+  // from knock margin, boost/specific-output stress, high-strung choices and cooling adequacy.
+  let rel=100;
+  rel-=(1-safety)*45;                                   // knock-prone = grenade
+  rel-=Math.max(0,engine.maxBoost-0.5)*22;             // boost stress on internals
+  rel-=Math.max(0,hpPerL-110)*0.30;                    // highly-strung specific output
+  rel-=engine.antilag?15:0;                            // ALS cooks turbo/exhaust
+  rel-=engine.nitrous!=='none'?12:0;                   // chemical stress
+  rel-=Math.max(0,engine.redline-7500)/100*2;          // sky-high redline
+  const coolNeed=clamp(peakHP/260,0,1.6);
+  const coolHave=engine.radCap+(engine.oilCooler?0.4:0)+(engine.fan==='none'?0:0.2);
+  rel-=Math.max(0,coolNeed-coolHave)*30;               // under-cooled for the power
+  const reliability=clamp(Math.round(rel),0,100);
   return {peakHP:Math.round(peakHP),peakHPrpm,peakTQ:Math.round(peakTQ),peakTQrpm,hpPerL:Math.round(hpPerL),
-    nmPerL:Math.round(nmPerL),band,thEff:Math.round(thEff),safety:Math.round(sSafe),drive:Math.round(drive*100),emissions,overall,grade};
+    nmPerL:Math.round(nmPerL),band,thEff:Math.round(thEff),safety:Math.round(sSafe),drive:Math.round(drive*100),emissions,reliability,overall,grade};
 }
 function flash(msg,cls){
   const status=document.getElementById('status');
@@ -1443,12 +1597,22 @@ function drawDyno(){
     const gc=s.overall>=76?C.green:s.overall>=46?C.yellow:C.red;
     ctx.fillStyle=gc;ctx.font='11px "Press Start 2P"';ctx.fillText('GRADE '+s.grade+' '+s.overall,gX+320,iy+1);
     ctx.font='6px "Press Start 2P"';ctx.fillStyle='#99aabb';
-    ctx.fillText(s.hpPerL+'hp/L • '+s.nmPerL+'Nm/L • band '+s.band+'rpm • eff '+s.thEff+'% • safety '+s.safety+' • drive '+s.drive+'% • emit '+s.emissions,gX+4,iy+15);
+    ctx.fillText(s.hpPerL+'hp/L • '+s.nmPerL+'Nm/L • band '+s.band+'rpm • eff '+s.thEff+'% • safety '+s.safety+' • drive '+s.drive+'% • emit '+s.emissions+' • rel '+s.reliability,gX+4,iy+15);
+  }
+  // Strategy: cost / power-per-dollar, and the active challenge verdict
+  const m=buildMetrics();
+  ctx.font='6px "Press Start 2P"';ctx.fillStyle='#cbb26a';
+  ctx.fillText('COST '+fmtCost(m.cost)+' • '+m.hpPerK+' hp/$1k',gX+4,iy+28);
+  const ch=CHALLENGES.find(c=>c.id===activeChallenge);
+  if(ch&&ch.id!=='free'){
+    const ev=evalChallenge(ch,m);
+    ctx.fillStyle=ev.pass?C.green:C.red;
+    ctx.fillText((ev.pass?'✓ ':'✗ ')+ch.name.toUpperCase()+' — '+(ev.pass?'PASSED':'NOT MET'),gX+200,iy+28);
   }
   ctx.font='6px "Press Start 2P"';
   if(dynoPulls.length){
-    dynoPulls.forEach((pl,i)=>{ctx.fillStyle=pl.color;ctx.fillText('— '+pl.label,gX+4+i*132,iy+28);});
-  }else{ctx.fillStyle='#667';ctx.fillText('LOG PULL to snapshot & overlay a curve for comparison',gX+4,iy+28);}
+    dynoPulls.forEach((pl,i)=>{ctx.fillStyle=pl.color;ctx.fillText('— '+pl.label,gX+4+i*132,iy+41);});
+  }else{ctx.fillStyle='#667';ctx.fillText('LOG PULL to snapshot & overlay a curve for comparison',gX+4,iy+41);}
 }
 function updateUI(){
   document.getElementById('valThrottle').textContent=Math.round(state.throttle*100);
@@ -1590,6 +1754,12 @@ function bindControls(){
     flash('LOADED: '+p.name+' • '+engine.displacement_L.toFixed(engine.displacement_L<1?2:1)+'L'+(engine.score?' • '+engine.score.grade:''));
     setTab('dyno');
   });
+  // Career / challenge selector
+  const chSel=document.getElementById('edChallenge');
+  CHALLENGES.forEach(c=>{const o=document.createElement('option');o.value=c.id;o.textContent=c.name;chSel.appendChild(o);});
+  chSel.value=activeChallenge;
+  chSel.addEventListener('change',e=>{activeChallenge=e.target.value;renderChallenge();
+    const ch=CHALLENGES.find(c=>c.id===activeChallenge);flash('OBJECTIVE: '+(ch?ch.name:'FREE BUILD'));});
   document.getElementById('btnBuild').addEventListener('click',()=>{buildEngine();flash('ENGINE BUILT • '+engine.displacement_L.toFixed(engine.displacement_L<1?2:1)+'L');setTab('dyno')});
   document.getElementById('btnDesignReset').addEventListener('click',()=>{applyEngineToForm(Object.assign({},DEFAULT_ENGINE));buildEngine();flash('DESIGN RESET TO DEFAULTS')});
 }

@@ -101,6 +101,12 @@ saps power; a large radiator, electric fan and oil cooler keep it cool.
 - **Scoring** — every build gets a graded scorecard (S–F) rating power, specific output,
   powerband width, efficiency, knock safety, drivability and **emissions**, shown on the
   design summary and the dyno.
+- **Strategy / Career** — every build has a **parts cost** and a **reliability index** (a
+  design estimate of how much abuse it invites), plus a **power-per-dollar** metric. Pick an
+  **OBJECTIVE** on the DESIGN tab (Budget Sleeper, Power per Dollar, Eco Cruiser, Track
+  Weapon, Reliability Run, Clean Machine, Specific-Output King…) — some cap your budget — and
+  the challenge card ticks off each target live (✓/✗) with a PASS/FAIL verdict, mirrored on
+  the dyno. Turns free design into a puzzle with real trade-offs.
 - **Dyno pull logging** — snapshot the current curve and overlay several pulls on the graph
   to compare builds or tunes.
 - **Save / Load / Share** — quick-save to `localStorage`; **save to a named file** (with a
@@ -200,6 +206,11 @@ Curve** tab remains a wide-open-throttle steady-state sweep for reading the full
   lean-under-boost (burnt pistons) and over-rev; a clean tune barely wears. Lower health
   cuts power; zero health = catastrophic failure until rebuilt. Damage happens over tens of
   seconds of abuse — long enough to heed the warnings and back off.
+- Strategy: each part carries a rough build cost, summed into a total (so budget challenges
+  and power-per-dollar have meaning); a design reliability index estimates durability from
+  knock margin, boost/specific-output stress, high-strung choices (anti-lag, nitrous, sky-high
+  redline) and cooling adequacy for the power made. These are design-time estimates, not the
+  live wear model (which still plays out as you drive).
 - Electrical: the alternator (output rising with RPM) charges the battery when it
   out-supplies demand and drains it otherwise; system voltage tracks state of charge. Low
   voltage weakens the spark, and each ignition type has a dwell/misfire RPM limit, so a
@@ -236,8 +247,9 @@ philosophy).
    combustion temperature, a **catalytic converter** design option and a stoich-window
    three-way conversion model, a live analyser readout + an emissions score, and a
    character-driven **lope/burble** on the engine note.
-4. **(C) Strategy layer** — per-part costs / budget and objective-based challenges
-   (targets for power, economy, reliability, power-per-dollar).
+4. ~~**(C) Strategy layer**~~ ✅ **done** — per-part costs, a total build budget, a design
+   reliability index and power-per-dollar, plus eight objective-based challenges (power,
+   economy, emissions, reliability, power-per-dollar…) with live pass/fail.
 5. **(B) New engine types** — diesel (compression ignition), rotary/Wankel, 2-stroke.
 6. **(A) Vehicle / drivetrain layer** — gearbox, weight, grip and aero drag → 0–60,
    quarter-mile and top-speed runs off the dynamic model.
@@ -271,6 +283,7 @@ native Android build (parked).
 - [x] Intercooler core sizing (none/small/large — charge cooling vs spool lag)
 - [x] In-app GUIDE tab (documentation) and OPTIONS tab (sound/wear/language); tab-aware side panel
 - [x] Vehicle Designer placeholder reserving space for the vehicle/drivetrain layer (feature A)
+- [x] Strategy layer: parts cost/budget, reliability index, power-per-dollar & objective challenges
 - [x] Calibration pass for realistic power figures & curve shape (ongoing refinement)
 - [ ] Native Android build (wrap the PWA with Capacitor or a Trusted Web Activity)
 
