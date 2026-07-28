@@ -1647,14 +1647,17 @@ function buildVehicle(){
   vehicle.powerToWeight=engine.score?engine.score.peakHP/(vehicle.mass/1000):0;   // hp per tonne
   perf=simulateAccel();
 }
-// A best-power torque curve (Nm vs rpm) so performance reflects the engine's potential, not
-// whatever live tune happens to be dialled in.
+// A best-power torque curve (Nm vs rpm) so performance reflects the engine's DESIGN potential,
+// independent of the live driving state. Every live variable that feeds torque — mixture,
+// temps, engine health, battery voltage (spark strength) and any armed nitrous — is set to its
+// ideal value here, then fully restored, so 0-100 etc. depend only on the engine + vehicle
+// build, never on throttle history, temperature or a drained battery.
 function buildTorqueCurve(){
-  const sv={afr:state.afr,coolant:state.coolant,oil:state.oil,eh:state.engineHealth,bl:state.blown,iat:state.iat,rpm:state.rpm,map:state.map};
-  state.coolant=90;state.oil=100;state.engineHealth=1;state.blown=false;state.iat=20;
+  const sv={afr:state.afr,coolant:state.coolant,oil:state.oil,engineHealth:state.engineHealth,blown:state.blown,iat:state.iat,systemVoltage:state.systemVoltage,nitrousActive:state.nitrousActive};
+  state.coolant=90;state.oil=100;state.engineHealth=1;state.blown=false;state.iat=20;state.systemVoltage=14.0;state.nitrousActive=false;
   state.afr=engine.ci?engine.stoichAFR*1.05:engine.stoichAFR*0.88;
   const pts=[];for(let r=1000;r<=engine.redline;r+=100)pts.push({rpm:r,tq:calcAtRpm(r).torque});
-  Object.assign(state,sv);
+  Object.assign(state,sv);   // restore the exact live state (correct keys — no accidental heal)
   return pts;
 }
 // Integrate the standing-start acceleration run through the gearbox with a traction-limited
