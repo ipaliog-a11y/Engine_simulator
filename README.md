@@ -49,7 +49,9 @@ screamer, 2JZ six, muscle V8, blown V8, V12 supercar…), or configure your own 
   coil-on-plug), **ignition control** (*Fixed* — a locked advance you dial in — or *Auto*, an
   ECU that tracks MBT timing and retards just enough to stay off knock), and the **fuel mixture**:
   *Manual* (one AFR you set everywhere) or *Auto*, a **3D ECU fuel map** that targets near-stoich
-  at light load and enriches under load & boost for power/EGT — just like a real fuel map. Each
+  at light load and enriches under load & boost for power/EGT — just like a real fuel map (the
+  default on fuel-injected builds; a live **load×RPM heat-grid** shows the target AFR in every
+  cell with a marker on the current operating point). Carbs/mechanical injection stay manual. Each
   fuel has its own energy density, stoich AFR, knock rating and charge-cooling — alcohols resist
   knock and cool the charge (more power headroom) but burn far more fuel.
 - **Cooling** — radiator size (small / stock / large), cooling fan (none / mechanical /

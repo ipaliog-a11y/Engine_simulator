@@ -150,6 +150,13 @@ footer{text-align:center;margin-top:16px;padding:8px;font-size:7px;color:#555;bo
 .ch-verdict.pass{color:#00ff88;border-color:#00ff88;background:#04220f}
 .ch-verdict.fail{color:#ffaa66;border-color:#664433;background:#1a1108}
 .ch-hint{font-size:7px;color:#667;margin-top:4px}
+/* ---- ECU fuel map grid ---- */
+.fuelmap-wrap{overflow-x:auto;margin-bottom:6px}
+table.fuelmap{border-collapse:collapse;font-size:7px;width:100%}
+table.fuelmap th{color:#88aacc;font-weight:normal;padding:2px 3px;font-size:6.5px}
+table.fuelmap td{color:#fff;text-align:center;padding:4px 2px;border:1px solid #0a0a10;cursor:default;min-width:26px;text-shadow:1px 1px 0 #0006}
+table.fuelmap td.live{outline:2px solid #fff;outline-offset:-2px;font-weight:bold}
+.fuelmap-note{font-size:6.5px;color:#778;margin-top:4px;line-height:1.5}
 </style>
 </head>
 <body>
@@ -235,6 +242,8 @@ footer{text-align:center;margin-top:16px;padding:8px;font-size:7px;color:#555;bo
 <div class="field"><label for="edIgnAdv">IGNITION ADV (° BTDC)</label><input type="number" id="edIgnAdv" min="5" max="40" step="1" value="22"></div>
 <div class="field"><label for="edAfrMode">FUEL MIXTURE</label><select id="edAfrMode"><option value="fixed">MANUAL (FIXED AFR)</option><option value="auto">AUTO (ECU MAP)</option></select></div>
 </div>
+<div class="design-section" id="fuelMapHdr">ECU Fuel Map (target AFR)</div>
+<div class="fuelmap-wrap" id="fuelMapBox"></div>
 
 <div class="design-section">Cooling</div>
 <div class="design-grid">
@@ -563,7 +572,7 @@ const DEFAULT_ENGINE={
   intake:'na',boost_bar:0,intercooler:'large',turboSize:'medium',turboConfig:'single',scType:'roots',antilag:false,nitrous:'none',exhaust:'sport',cat:'stock',
   intakeSys:'efi',airFilter:'perf',
   cam:'stock',vvt:true,
-  fuel:'gasoline',octane:95,injector:'direct',ignitionAdv:22,ignitionType:'coil',timingMode:'auto',afrMode:'fixed',
+  fuel:'gasoline',octane:95,injector:'direct',ignitionAdv:22,ignitionType:'coil',timingMode:'auto',afrMode:'auto',
   radiator:'stock',fan:'electric',oilCooler:false,thermostat:88,
   alternator:'120'
 };
@@ -635,6 +644,9 @@ const I18N={
   'Valvetrain':{el:'Χρονισμός Βαλβίδων'},'CAM PROFILE':{el:'ΠΡΟΦΙΛ ΕΚΚΕΝΤΡ.'},'VARIABLE VALVE TIMING':{el:'ΜΕΤΑΒΛΗΤΟΣ ΧΡΟΝΙΣΜΟΣ'},
   'Fuel & Spark':{el:'Καύσιμο & Σπινθήρας'},'FUEL TYPE':{el:'ΤΥΠΟΣ ΚΑΥΣΙΜΟΥ'},'FUEL OCTANE (RON)':{el:'ΟΚΤΑΝΙΑ (RON)'},
   'INJECTOR':{el:'ΜΠΕΚ ΨΕΚΑΣΜΟΥ'},'IGNITION TYPE':{el:'ΤΥΠΟΣ ΑΝΑΦΛΕΞΗΣ'},'IGNITION CONTROL':{el:'ΕΛΕΓΧΟΣ ΑΝΑΦΛΕΞΗΣ'},'IGNITION ADV (° BTDC)':{el:'ΠΡΟΠΟΡΕΙΑ (° BTDC)'},'FUEL MIXTURE':{el:'ΜΕΙΓΜΑ ΚΑΥΣΙΜΟΥ'},
+  'ECU Fuel Map (target AFR)':{el:'Χάρτης Καυσίμου ECU (στόχος AFR)'},
+  'Rows = load (MAP bar, top = full) · Columns = RPM · cell = target':{el:'Γραμμές = φορτίο (MAP bar, πάνω = πλήρες) · Στήλες = στροφές · κελί = στόχος'},
+  'Warm = rich, blue = lean; the outlined cell is the live operating point.':{el:'Θερμό = πλούσιο, μπλε = φτωχό· το κελί με περίγραμμα είναι το ζωντανό σημείο λειτουργίας.'},
   'Cooling':{el:'Ψύξη'},'RADIATOR':{el:'ΨΥΓΕΙΟ'},'COOLING FAN':{el:'ΒΕΝΤΙΛΑΤΕΡ'},'OIL COOLER':{el:'ΨΥΓΕΙΟ ΛΑΔΙΟΥ'},'THERMOSTAT (°C)':{el:'ΘΕΡΜΟΣΤΑΤΗΣ (°C)'},
   'Electrical':{el:'Ηλεκτρικά'},'ALTERNATOR':{el:'ΔΥΝΑΜΟ (ALT)'},
   'BUILD & DYNO':{el:'ΚΑΤΑΣΚΕΥΗ & ΔΥΝΑΜΟ'},'DEFAULTS':{el:'ΠΡΟΕΠΙΛΟΓΕΣ'},
@@ -740,6 +752,7 @@ function applyLang(lang){
   if(chSel)[...chSel.options].forEach(o=>{const c=CHALLENGES.find(x=>x.id===o.value);if(c)o.textContent=chName(c);});
   if(typeof renderChallenge==='function')renderChallenge();
   if(typeof updateVehicleSummary==='function'&&vehicle&&vehicle.chLabel)updateVehicleSummary();
+  if(typeof renderFuelMap==='function')renderFuelMap();
 }
 
 const RAD_CAP={small:0.75,stock:1.0,large:1.35};   // relative heat-rejection capacity
@@ -987,6 +1000,10 @@ function syncDesignEnable(){
   const sys=INTAKE_SYS[g('edIntakeSys').value]||INTAKE_SYS.efi;
   if(tp.ci)g('edInjector').value='direct';
   g('edInjector').disabled=tp.ci||!sys.di;
+  // The AUTO (ECU MAP) mixture needs electronic fuel injection; carbs/mech injection are manual.
+  const efi=g('edIntakeSys').value==='efi'||g('edIntakeSys').value==='itb';
+  if(!efi)g('edAfrMode').value='fixed';
+  g('edAfrMode').disabled=!efi;
 }
 function buildEngine(){
   const prevStoich=(engine&&engine.stoichAFR)||14.7;   // to preserve lambda across fuel swaps
@@ -1035,6 +1052,8 @@ function buildEngine(){
   // manifold response, idle quality. Direct injection is only possible on EFI systems.
   const sys=INTAKE_SYS[engine.intakeSys]||INTAKE_SYS.efi,filt=AIR_FILTER[engine.airFilter]||AIR_FILTER.stock;
   if(!sys.di)engine.injector='port';          // carbs / mechanical injection: no DI
+  engine.canAutoAFR=(engine.intakeSys==='efi'||engine.intakeSys==='itb');   // only EFI has an ECU fuel map
+  if(!engine.canAutoAFR)engine.afrMode='fixed';   // carbs / mechanical injection: mixture is mechanical
   // Catalytic converter: conversion efficiency + a small exhaust back-pressure that costs
   // top-end breathing (folded into the top-end flow term, like an extra restrictive filter).
   const catp=CAT[engine.cat]||CAT.stock;
@@ -1116,6 +1135,7 @@ function buildEngine(){
   renderChallenge();
   // In AUTO (ECU MAP) mode the ECU sets the mixture, so the manual AFR slider is read-only.
   const afrSlider=document.getElementById('afr');if(afrSlider)afrSlider.disabled=(engine.afrMode==='auto');
+  renderFuelMap();
   if(document.getElementById('vhChassis')){buildVehicle();updateVehicleSummary();}   // refresh vehicle performance for the new engine
 }
 // ---- Strategy layer: what the build costs (parts $) ----
@@ -1335,6 +1355,42 @@ function mappedAFR(rpm,map){
 }
 // The AFR actually run at an operating point: the ECU map (AUTO) or the fixed slider (MANUAL).
 function curAFR(rpm,map){return engine.afrMode==='auto'?mappedAFR(rpm,map):state.afr;}
+// ---- Fuel-map visualiser: a load×RPM grid of the target AFR (shown when the mixture is AUTO) ----
+const FM_COLS=8, FM_ROWS=6;
+const fmRpmAt=c=>Math.round(lerp(1000,engine.redline,c/(FM_COLS-1)));
+const fmMapAt=r=>lerp(0.3,engine.mapMax,r/(FM_ROWS-1));   // r=0 light load … r=ROWS-1 full load
+function renderFuelMap(){
+  const box=document.getElementById('fuelMapBox'),hdr=document.getElementById('fuelMapHdr');
+  if(!box||!hdr)return;
+  const show=engine.afrMode==='auto';
+  box.style.display=show?'block':'none';hdr.style.display=show?'':'none';
+  if(!show){box.innerHTML='';return;}
+  const st=engine.stoichAFR;
+  let h='<table class="fuelmap"><tr><th>MAP\\RPM</th>';
+  for(let c=0;c<FM_COLS;c++){const rp=fmRpmAt(c);h+='<th>'+(rp>=1000?(rp/1000).toFixed(1)+'k':rp)+'</th>';}
+  h+='</tr>';
+  for(let r=FM_ROWS-1;r>=0;r--){
+    const mp=fmMapAt(r);
+    h+='<tr><th>'+(mp>1.001?'+'+(mp-1).toFixed(1):mp.toFixed(1))+'</th>';
+    for(let c=0;c<FM_COLS;c++){
+      const afr=mappedAFR(fmRpmAt(c),mp),lam=afr/st;
+      const rr=clamp((1.12-lam)/0.34,0,1),hue=Math.round(lerp(210,12,rr));
+      h+='<td data-c="'+c+'" data-r="'+r+'" style="background:hsl('+hue+',60%,40%)">'+(engine.ci?lam.toFixed(1):afr.toFixed(1))+'</td>';
+    }
+    h+='</tr>';
+  }
+  h+='</table><div class="fuelmap-note">'+tr('Rows = load (MAP bar, top = full) · Columns = RPM · cell = target')+' '+(engine.ci?'λ':'AFR')+'. '+tr('Warm = rich, blue = lean; the outlined cell is the live operating point.')+'</div>';
+  box.innerHTML=h;
+  updateFuelMapMarker();
+}
+function updateFuelMapMarker(){
+  const box=document.getElementById('fuelMapBox');
+  if(!box||engine.afrMode!=='auto'||box.style.display==='none')return;
+  const c=clamp(Math.round((state.rpm-1000)/(engine.redline-1000)*(FM_COLS-1)),0,FM_COLS-1);
+  const r=clamp(Math.round((state.map-0.3)/(engine.mapMax-0.3)*(FM_ROWS-1)),0,FM_ROWS-1);
+  const prev=box.querySelector('td.live');if(prev)prev.classList.remove('live');
+  const cell=box.querySelector('td[data-c="'+c+'"][data-r="'+r+'"]');if(cell)cell.classList.add('live');
+}
 function afrPowerFactor(afr){
   const lam=afr/engine.stoichAFR;
   if(engine.ci){
@@ -2296,6 +2352,7 @@ function drawDyno(){
   }else{ctx.fillStyle='#667';ctx.fillText('LOG PULL to snapshot & overlay a curve for comparison',gX+4,iy+41);}
 }
 function updateUI(){
+  if(vizMode==='design')updateFuelMapMarker();
   document.getElementById('valThrottle').textContent=Math.round(state.throttle*100);
   document.getElementById('valLoad').textContent=Math.round(state.load*100);
   document.getElementById('valElec').textContent=Math.round(state.elecLoad*100);
