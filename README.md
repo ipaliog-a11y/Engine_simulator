@@ -46,9 +46,11 @@ screamer, 2JZ six, muscle V8, blown V8, V12 supercar…), or configure your own 
   distributor falls off up top; coil-on-plug holds to redline).
 - **Fuel & spark** — fuel type (pump gas / race gas / E85 / methanol), fuel octane (RON,
   pump gas only), injector type (port / direct), ignition type (distributor / wasted spark /
-  coil-on-plug), and **ignition control**: *Fixed* (a locked advance you dial in) or *Auto*
-  (an ECU that tracks MBT timing and retards just enough to stay off knock). Each fuel has
-  its own energy density, stoich AFR, knock rating and charge-cooling — alcohols resist
+  coil-on-plug), **ignition control** (*Fixed* — a locked advance you dial in — or *Auto*, an
+  ECU that tracks MBT timing and retards just enough to stay off knock), and the **fuel mixture**:
+  *Manual* (one AFR you set everywhere) or *Auto*, a **3D ECU fuel map** that targets near-stoich
+  at light load and enriches under load & boost for power/EGT — just like a real fuel map. Each
+  fuel has its own energy density, stoich AFR, knock rating and charge-cooling — alcohols resist
   knock and cool the charge (more power headroom) but burn far more fuel.
 - **Cooling** — radiator size (small / stock / large), cooling fan (none / mechanical /
   electric), oil cooler, and thermostat opening temperature.
@@ -219,6 +221,13 @@ Curve** tab remains a wide-open-throttle steady-state sweep for reading the full
   it back). *Fixed* timing is only optimal at one operating point; *Auto* tracks MBT
   everywhere and retards under knock, so it makes more power across the curve and adapts to
   fuel — full timing on race gas/E85, pulled timing on low octane or high boost.
+- Fuel mixture: in *Manual* mode the AFR you set is used everywhere; in *Auto* mode a 3D ECU
+  fuel map picks the target AFR from load (MAP) and RPM — near stoich at light load for economy,
+  richer under load and boost (down to ~λ0.80) for power and exhaust-temperature control, like a
+  real fuel map. Fuel *quantity* is always the air mass ÷ target AFR (so it already responds to
+  both load and RPM); the map adds the load-varying target on top. Scoring and the vehicle
+  acceleration model always evaluate at a fixed best-power AFR, so grades and lap-style figures
+  stay comparable regardless of the mode.
 - Intake system sets top-end airflow (restrictive small carbs choke up top; ITBs, sidedraft
   carbs and mechanical injection breathe best) and AFR-metering precision — EFI holds optimal
   AFR for the best efficiency, while carburetors and mechanical injection run richer and
