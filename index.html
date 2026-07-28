@@ -351,11 +351,13 @@ ignition type set charging and the misfire RPM limit.
 On the <b>VEHICLE</b> tab you drop your engine into a car. Pick a <b>chassis</b> (each has its
 own weight, size and drivetrain), a <b>drivetrain</b> (FWD/RWD/AWD — AWD launches hardest),
 a <b>gearbox</b> (speeds + a short↔tall gearing slider), <b>tyres</b> (compound + width/profile/
-diameter set grip and rolling radius) and <b>aero</b> (front/rear/floor add downforce and drag).
-The engine's mass and torque curve are added in and the <b>Performance</b> panel computes
-<b>0–100 km/h</b>, <b>400/800/1000 m</b> (time + trap speed) and <b>top speed</b> live — a
-traction-limited launch with weight transfer, downforce, drag and rolling resistance. Over-gearing
-hurts both acceleration and top speed; sticky tyres and AWD help you put the power down.
+diameter set grip and rolling radius), <b>aero</b> (front/rear/floor add downforce and drag),
+<b>brakes</b> (type + rotor size set stopping power and fade resistance) and <b>suspension</b>
+(a mechanical-grip multiplier). The engine's mass and torque curve are added in and the
+<b>Performance</b> panel computes <b>0–100 km/h</b>, <b>400/800/1000 m</b> (time + trap speed),
+<b>top speed</b>, <b>100–0 braking</b> and the <b>0–200–0</b> test live — a traction-limited launch
+and a tyre/brake-limited stop with fade, weight transfer, downforce, drag and rolling resistance.
+Over-gearing hurts both acceleration and top speed; sticky tyres, big brakes and AWD help most.
 </div>
 <div class="guide-body" data-gk="tip" style="color:#667;margin-top:12px">Tip: turn WEAR off in OPTIONS to
 experiment freely, then back on for consequences.</div>
@@ -412,8 +414,14 @@ experiment freely, then back on for consequences.</div>
 <div class="field"><label for="vhAeroFl">FLOOR / DIFFUSER</label><select id="vhAeroFl"><option value="none">NONE</option><option value="undertray">UNDERTRAY</option><option value="diffuser">DIFFUSER</option></select></div>
 <div class="field"><label for="vhWeight">WEIGHT REDUCTION</label><select id="vhWeight"><option value="none">NONE</option><option value="street">STREET</option><option value="sport">SPORT</option><option value="race">RACE</option></select></div>
 </div>
+
+<div class="design-section">Brakes &amp; Suspension</div>
+<div class="design-grid">
+<div class="field"><label for="vhBrake">BRAKES</label><select id="vhBrake"><option value="steel">STEEL DISC</option><option value="slotted">SLOTTED/VENTED</option><option value="big">BIG BRAKE KIT</option><option value="carbon">CARBON-CERAMIC</option></select></div>
+<div class="field"><label for="vhRotor">ROTOR SIZE (mm)</label><input type="number" id="vhRotor" min="250" max="420" step="10" value="330"></div>
+<div class="field"><label for="vhSusp">SUSPENSION</label><select id="vhSusp"><option value="comfort">COMFORT</option><option value="sport">SPORT</option><option value="coilover">COILOVERS</option><option value="race">RACE/ADJUST</option></select></div>
+</div>
 <div class="design-summary" id="vehicleSummary"></div>
-<div class="hint" style="margin-top:8px">Brakes, suspension detail and braking tests (0–200–0) arrive in the next update.</div>
 </div>
 </div>
 <div class="side-panel">
@@ -650,9 +658,9 @@ const I18N={
   'Chassis & Drivetrain':{el:'Σασί & Μετάδοση'},'CHASSIS':{el:'ΣΑΣΙ'},'DRIVETRAIN':{el:'ΜΕΤΑΔΟΣΗ'},'GEARBOX (SPEEDS)':{el:'ΚΙΒΩΤΙΟ (ΣΧΕΣΕΙΣ)'},'GEARING':{el:'ΤΕΛΙΚΗ ΣΧΕΣΗ'},
   'Wheels & Tyres':{el:'Τροχοί & Ελαστικά'},'TYRE COMPOUND':{el:'ΤΥΠΟΣ ΕΛΑΣΤΙΚΟΥ'},'WHEEL DIA (in)':{el:'ΔΙΑΜ. ΖΑΝΤΑΣ (in)'},'TYRE WIDTH (mm)':{el:'ΠΛΑΤΟΣ ΕΛΑΣΤ. (mm)'},'TYRE ASPECT (%)':{el:'ΠΡΟΦΙΛ ΕΛΑΣΤ. (%)'},
   'Aerodynamics':{el:'Αεροδυναμική'},'FRONT AERO':{el:'ΕΜΠΡΟΣ ΑΕΡΟΔ.'},'REAR AERO':{el:'ΠΙΣΩ ΑΕΡΟΔ.'},'FLOOR / DIFFUSER':{el:'ΠΑΤΩΜΑ / DIFFUSER'},'WEIGHT REDUCTION':{el:'ΜΕΙΩΣΗ ΒΑΡΟΥΣ'},
-  'Brakes, suspension detail and braking tests (0–200–0) arrive in the next update.':{el:'Φρένα, ανάρτηση και τεστ φρεναρίσματος (0–200–0) έρχονται στην επόμενη ενημέρωση.'},
-  'Performance':{el:'Επιδόσεις'},'0–100 km/h':{el:'0–100 km/h'},'TOP SPEED':{el:'ΤΕΛΙΚΗ'},'POWER/WT':{el:'ΙΣΧΥΣ/ΒΑΡΟΣ'},
-  'Best-power run through the gearbox with a traction-limited launch. Braking tests come next.':{el:'Εκκίνηση με μέγιστη ισχύ μέσα από το κιβώτιο, με εκκίνηση περιορισμένη από πρόσφυση. Ακολουθούν τα τεστ φρεναρίσματος.'},
+  'Brakes & Suspension':{el:'Φρένα & Ανάρτηση'},'BRAKES':{el:'ΦΡΕΝΑ'},'ROTOR SIZE (mm)':{el:'ΔΙΑΜ. ΔΙΣΚΟΥ (mm)'},'SUSPENSION':{el:'ΑΝΑΡΤΗΣΗ'},
+  'Performance':{el:'Επιδόσεις'},'0–100 km/h':{el:'0–100 km/h'},'TOP SPEED':{el:'ΤΕΛΙΚΗ'},'POWER/WT':{el:'ΙΣΧΥΣ/ΒΑΡΟΣ'},'100–0 BRAKING':{el:'ΦΡΕΝΑΡΙΣΜΑ 100–0'},'0–200–0':{el:'0–200–0'},
+  'Best-power run through the gearbox with a traction-limited launch, then braking (tyre- and brake-limited, with fade).':{el:'Εκκίνηση με μέγιστη ισχύ μέσα από το κιβώτιο, περιορισμένη από πρόσφυση, και μετά φρενάρισμα (όριο ελαστικών & φρένων, με εξασθένηση).'},
   // guide h3 + section headers
   'GUIDE • HOW IT WORKS':{el:'ΟΔΗΓΟΣ • ΠΩΣ ΛΕΙΤΟΥΡΓΕΙ'},
   'A quick manual for the sim and its numbers. Design → BUILD & DYNO → drive it.':{el:'Σύντομο εγχειρίδιο για τον προσομοιωτή και τους αριθμούς του. Σχεδίασε → BUILD & DYNO → οδήγησε.'},
@@ -674,7 +682,7 @@ const GUIDE_I18N={
   career:{el:'Διάλεξε έναν <b>ΣΤΟΧΟ</b> στην κορυφή της ΣΧΕΔΙΑΣΗΣ για να κάνεις τη σχεδίαση γρίφο. Κάθε πρόκληση θέτει κριτήρια — ισχύ, οικονομία, εκπομπές, <b>αξιοπιστία</b> ή <b>ισχύ ανά δολάριο</b> — και κάποιες βάζουν όριο <b>προϋπολογισμού</b>. Η κάρτα τσεκάρει κάθε κριτήριο ζωντανά (✓/✗) και δείχνει <b>ΕΠΙΤΥΧΙΑ</b> όταν καλυφθούν όλα· κόστος και αξιοπιστία φαίνονται πάντα. Ο μεγάλος κυβισμός κερδίζει σε αξία· boost και αγωνιστικά μέρη κερδίζουν σε ισχύ αλλά κοστίζουν σε χρήμα και αξιοπιστία.'},
   types:{el:'<b>Βενζίνη 4-χρονη</b> — η ισορροπημένη επιλογή: ανάφλεξη με σπινθήρα, μία εκρηκτική διαδρομή ανά δύο στροφές.<br><b>Πετρέλαιο (CI)</b> — ανάφλεξη με συμπίεση (χωρίς μπουζί, χωρίς πειράκι), πολύ υψηλή συμπίεση, φτωχό χωρίς πεταλούδα. Μεγάλη <b>ροπή</b> στις χαμηλές, χαμηλό όριο στροφών, η καλύτερη <b>απόδοση</b> — αλλά βαρύ, με εκπομπές <b>NOx + αιθάλη (PM)</b> που καθαρίζει σύστημα DPF/SCR.<br><b>2-χρονη</b> — εκρηκτική διαδρομή σε <i>κάθε</i> στροφή (θυρίδες, χωρίς εκκεντροφόρο): υψηλή ειδική ισχύς αλλά λαίμαργη και <b>HC</b>-βρόμικη.<br><b>Wankel (ρότορας)</b> — περιστρεφόμενος ρότορας που ανάβει σε κάθε στροφή: ομαλός σαν τουρμπίνα, τεράστιες στροφές, υψηλή ισχύς ανά λίτρο, αλλά λαίμαργος, <b>HC</b>-βαρύς και σκληρός στα ελάσματα κορυφής.<br>Η αλλαγή τύπου προσαρμόζει τα εύρη συμπίεσης/στροφών/AFR και απενεργοποιεί ό,τι δεν ισχύει.'},
   subsystems:{el:'<b>Κάτω μέρος</b> — τύπος κινητήρα, διάμετρος × διαδρομή × κύλινδροι = κυβισμός· υπερτετράγωνος & υψηλότερο όριο ανεβάζουν την περιοχή ισχύος.<br><b>Διαδρομή αέρα</b> — τούρμπο (γεμίζει με τις στροφές) ή υπερσυμπιεστής (boost από ρελαντί)· το intercooler ψύχει το χάρμανι· εξάτμιση & καταλύτης ανταλλάσσουν ροή με αντίθλιψη/εκπομπές· το νιτρό είναι εμφιαλωμένη ισχύς.<br><b>Εισαγωγή</b> — καρμπιρατέρ → EFI → ITB ορίζουν αναπνοή, ακρίβεια & ρελαντί.<br><b>Χρονισμός βαλβίδων</b> — άγριες εκκεντροφόροι ανεβάζουν την ισχύ ψηλά· το VVT επαναφέρει τις χαμηλές.<br><b>Καύσιμο & σπινθήρας</b> — τύπος καυσίμου, οκτάνια, μπεκ, ανάφλεξη και χρονισμός FIXED/AUTO.<br><b>Ψύξη & ηλεκτρικά</b> — ψυγείο/βεντιλατέρ/ψυγείο λαδιού/θερμοστάτης ορίζουν θερμοκρασίες· δυναμό & ανάφλεξη ορίζουν φόρτιση και όριο μισφάιρ.'},
-  vehicle:{el:'Στην καρτέλα <b>ΟΧΗΜΑ</b> βάζεις τον κινητήρα σου σε αυτοκίνητο. Διάλεξε <b>σασί</b> (κάθε ένα με δικό του βάρος, μέγεθος και μετάδοση), <b>μετάδοση</b> (FWD/RWD/AWD — το AWD ξεκινά καλύτερα), <b>κιβώτιο</b> (σχέσεις + ρυθμιστικό κοντή↔μακριά τελική), <b>ελαστικά</b> (τύπος + πλάτος/προφίλ/διάμετρος ορίζουν πρόσφυση και ακτίνα κύλισης) και <b>αεροδυναμική</b> (εμπρός/πίσω/πάτωμα προσθέτουν κάθετη δύναμη και οπισθέλκουσα). Ο κινητήρας προστίθεται και το ταμπλό <b>Επιδόσεις</b> υπολογίζει <b>0–100 km/h</b>, <b>400/800/1000 m</b> (χρόνος + ταχύτητα) και <b>τελική</b> ζωντανά — εκκίνηση περιορισμένη από πρόσφυση με μεταφορά βάρους, κάθετη δύναμη, οπισθέλκουσα και αντίσταση κύλισης. Η υπερβολικά μακριά τελική βλάπτει και την επιτάχυνση και την τελική· κολλώδη ελαστικά και AWD βοηθούν να περάσει η ισχύς στον δρόμο.'},
+  vehicle:{el:'Στην καρτέλα <b>ΟΧΗΜΑ</b> βάζεις τον κινητήρα σου σε αυτοκίνητο. Διάλεξε <b>σασί</b> (κάθε ένα με δικό του βάρος, μέγεθος και μετάδοση), <b>μετάδοση</b> (FWD/RWD/AWD — το AWD ξεκινά καλύτερα), <b>κιβώτιο</b> (σχέσεις + ρυθμιστικό κοντή↔μακριά τελική), <b>ελαστικά</b> (τύπος + πλάτος/προφίλ/διάμετρος), <b>αεροδυναμική</b> (εμπρός/πίσω/πάτωμα = κάθετη δύναμη & οπισθέλκουσα), <b>φρένα</b> (τύπος + διάμετρος δίσκου ορίζουν φρενάρισμα και αντοχή στην εξασθένηση) και <b>ανάρτηση</b> (πολλαπλασιαστής μηχανικής πρόσφυσης). Ο κινητήρας προστίθεται και το ταμπλό <b>Επιδόσεις</b> υπολογίζει <b>0–100 km/h</b>, <b>400/800/1000 m</b>, <b>τελική</b>, <b>φρενάρισμα 100–0</b> και το τεστ <b>0–200–0</b> ζωντανά — εκκίνηση περιορισμένη από πρόσφυση και φρενάρισμα με όριο ελαστικών/φρένων και εξασθένηση. Η υπερβολικά μακριά τελική βλάπτει επιτάχυνση και τελική· κολλώδη ελαστικά, μεγάλα φρένα και AWD βοηθούν πιο πολύ.'},
   tip:{el:'Συμβουλή: κλείσε τη ΦΘΟΡΑ στις ΕΠΙΛΟΓΕΣ για ελεύθερο πειραματισμό, μετά ξανάνοιξέ την για συνέπειες.'}
 };
 const CHALLENGE_I18N={
@@ -827,6 +835,21 @@ const AERO_FLOOR={none:{cl:0,cd:0},undertray:{cl:0.35,cd:0.006},diffuser:{cl:0.8
 const AERO_COST={none:0,splitter:600,wing:1800,lip:400,undertray:900,diffuser:2200};
 // Weight reduction stages: kg removed and cost.
 const WEIGHT_RED={none:{kg:0,cost:0},street:{kg:45,cost:1200},sport:{kg:95,cost:3500},race:{kg:170,cost:9000}};
+// Brakes: cap = peak deceleration the brakes can command (g, before fade), fade = resistance
+// to heat build-up (1 = none). A bigger rotor adds both capacity and thermal mass.
+const BRAKE_TYPE={
+  steel:  {label:'STEEL DISC',     cap:1.05,fade:0.45,cost:600},
+  slotted:{label:'SLOTTED/VENTED', cap:1.35,fade:0.70,cost:1400},
+  big:    {label:'BIG BRAKE KIT',  cap:1.65,fade:0.88,cost:3200},
+  carbon: {label:'CARBON-CERAMIC', cap:1.95,fade:1.00,cost:7000}
+};
+// Suspension: a mechanical-grip multiplier (better damping puts more of the tyre down).
+const SUSPENSION={
+  comfort: {label:'COMFORT',    grip:0.95,cost:400},
+  sport:   {label:'SPORT',      grip:1.00,cost:1500},
+  coilover:{label:'COILOVERS',  grip:1.05,cost:3200},
+  race:    {label:'RACE/ADJUST',grip:1.10,cost:6500}
+};
 // Drivetrain: driveline efficiency (crank→wheels) and the driven-axle description.
 const DRIVE_EFF={fwd:0.92,rwd:0.90,awd:0.86};
 const AIR_RHO=1.20;   // air density kg/m³
@@ -834,7 +857,8 @@ const G=9.81;
 const DEFAULT_VEHICLE={
   chassis:'coupe',drive:'rwd',gears:6,gearing:55,
   tireType:'sport',tireWidth:235,tireAspect:40,wheelDia:18,
-  aeroFront:'splitter',aeroRear:'lip',aeroFloor:'none',weightRed:'street'
+  aeroFront:'splitter',aeroRear:'lip',aeroFloor:'none',weightRed:'street',
+  brakeType:'slotted',rotor:330,suspension:'sport'
 };
 let vehicle=Object.assign({},DEFAULT_VEHICLE);
 let perf=null;   // last computed performance result
@@ -1607,7 +1631,8 @@ function readVehicleFromForm(){
     gears:clamp(Math.round(+g('vhGears').value||6),4,8),gearing:clamp(+g('vhGearing').value||55,0,100),
     tireType:g('vhTire').value,tireWidth:clamp(Math.round(+g('vhTireW').value||225),135,355),
     tireAspect:clamp(Math.round(+g('vhTireA').value||40),25,70),wheelDia:clamp(Math.round(+g('vhWheel').value||18),13,22),
-    aeroFront:g('vhAeroF').value,aeroRear:g('vhAeroR').value,aeroFloor:g('vhAeroFl').value,weightRed:g('vhWeight').value
+    aeroFront:g('vhAeroF').value,aeroRear:g('vhAeroR').value,aeroFloor:g('vhAeroFl').value,weightRed:g('vhWeight').value,
+    brakeType:g('vhBrake').value,rotor:clamp(Math.round(+g('vhRotor').value||330),250,420),suspension:g('vhSusp').value
   };
 }
 function applyVehicleToForm(v){
@@ -1616,10 +1641,13 @@ function applyVehicleToForm(v){
   g('vhGears').value=v.gears||6;g('vhGearing').value=v.gearing!=null?v.gearing:55;
   g('vhTire').value=v.tireType||'sport';g('vhTireW').value=v.tireWidth||235;g('vhTireA').value=v.tireAspect||40;g('vhWheel').value=v.wheelDia||18;
   g('vhAeroF').value=v.aeroFront||'none';g('vhAeroR').value=v.aeroRear||'none';g('vhAeroFl').value=v.aeroFloor||'none';g('vhWeight').value=v.weightRed||'none';
+  g('vhBrake').value=v.brakeType||'slotted';g('vhRotor').value=v.rotor||330;g('vhSusp').value=v.suspension||'sport';
 }
 function computeVehicleCost(ch,tt,wr){
   let c=ch.cost+tt.cost+wr.cost;
   c+=(AERO_COST[vehicle.aeroFront]||0)+(AERO_COST[vehicle.aeroRear]||0)+(AERO_COST[vehicle.aeroFloor]||0);
+  c+=(BRAKE_TYPE[vehicle.brakeType]||BRAKE_TYPE.slotted).cost+(SUSPENSION[vehicle.suspension]||SUSPENSION.sport).cost;
+  c+=Math.max(0,vehicle.rotor-320)*6;
   c+={fwd:0,rwd:800,awd:2500}[vehicle.drive]||0;
   c+=Math.max(0,vehicle.gears-5)*400;
   c+=Math.max(0,vehicle.wheelDia-16)*120+Math.max(0,vehicle.tireWidth-205)*4;
@@ -1632,8 +1660,13 @@ function buildVehicle(){
   const sidewall=vehicle.tireWidth*(vehicle.tireAspect/100);           // mm
   vehicle.rTire=((vehicle.wheelDia*25.4)/2+sidewall)/1000;            // rolling radius (m)
   const widthBonus=clamp((vehicle.tireWidth-205)/205,-0.15,0.30);
-  vehicle.mu=tt.mu*ch.grip*(1+0.25*widthBonus);
+  const susp=SUSPENSION[vehicle.suspension]||SUSPENSION.sport;
+  vehicle.mu=tt.mu*ch.grip*susp.grip*(1+0.25*widthBonus);
   vehicle.crr=tt.crr;
+  // Brakes: peak commanded deceleration (m/s²) and a heat-energy budget before fade sets in.
+  const bt=BRAKE_TYPE[vehicle.brakeType]||BRAKE_TYPE.slotted, rotorF=0.85+clamp((vehicle.rotor-320)/100,0,1)*0.30;
+  vehicle.brakeDecelCap=bt.cap*rotorF*G;
+  vehicle.brakeFadeE=1.1e6*bt.fade*rotorF;   // joules absorbed before capacity starts fading
   vehicle.engineMass=engineMass();
   vehicle.mass=Math.max(380,ch.mass+vehicle.engineMass-wr.kg);
   vehicle.wb=ch.wb;vehicle.cg=ch.cg;vehicle.fWt=ch.fWt;vehicle.area=ch.area;
@@ -1646,6 +1679,31 @@ function buildVehicle(){
   vehicle.cost=computeVehicleCost(ch,tt,wr);
   vehicle.powerToWeight=engine.score?engine.score.peakHP/(vehicle.mass/1000):0;   // hp per tonne
   perf=simulateAccel();
+  if(perf){
+    perf.brake100=simulateBraking(100/3.6);        // 100→0 stopping distance
+    perf.brake200=simulateBraking(200/3.6);        // 200→0 (used by the 0-200-0 test)
+    if(perf.t200!=null){                            // 0-200-0: accelerate to 200 then brake to 0
+      perf.zt=perf.t200+perf.brake200.time;
+      perf.zd=perf.x200+perf.brake200.dist;
+    }else{perf.zt=null;perf.zd=null;}
+  }
+}
+// Braking run from v0 (m/s) to a stop: decel is the lesser of tyre grip (μ·(weight+downforce))
+// and what the brakes can command (capacity, fading as they absorb heat), with aero drag also
+// helping to slow the car. Returns stopping distance (m) and time (s).
+function simulateBraking(v0){
+  const m=vehicle.mass,dt=0.005;let v=v0,x=0,t=0,heat=0;
+  while(v>0.15&&t<25){
+    const down=0.5*AIR_RHO*vehicle.clA*v*v;
+    const gripDecel=vehicle.mu*(m*G+down)/m;                       // tyre-limited
+    const fade=1-clamp(heat/vehicle.brakeFadeE,0,1)*0.35;          // capacity fades with absorbed heat
+    const brakeDecel=vehicle.brakeDecelCap*fade;                   // brake-limited
+    const mech=Math.min(gripDecel,brakeDecel);                    // mechanical (tyre/brake) decel
+    const aero=(0.5*AIR_RHO*vehicle.cdA*v*v)/m;                    // drag also decelerates
+    heat+=m*mech*v*dt;                                            // work turned into brake heat
+    v=Math.max(0,v-(mech+aero)*dt);x+=v*dt;t+=dt;
+  }
+  return {dist:x,time:t};
 }
 // A best-power torque curve (Nm vs rpm) so performance reflects the engine's DESIGN potential,
 // independent of the live driving state. Every live variable that feeds torque — mixture,
@@ -1670,8 +1728,8 @@ function simulateAccel(){
   const idle=engine.idleRpmEff,rl=engine.redline,TWO_PI=Math.PI*2,dt=0.005;
   const launchRpm=clamp(rl*0.55,idle+400,rl*0.72);
   let v=0,x=0,t=0,gear=0,a=0,shiftT=0;
-  const M={t100:null,q400:null,q800:null,q1000:null},V100=100/3.6;
-  for(let step=0;step<40000&&x<1000&&t<120;step++){
+  const M={t100:null,q400:null,q800:null,q1000:null,v200:null},V100=100/3.6,V200=200/3.6;
+  for(let step=0;step<48000&&t<150;step++){
     let totalRatio=ratios[gear]*fd,rpm=v*totalRatio/r*60/TWO_PI;
     if(shiftT<=0&&rpm>=rl&&gear<ratios.length-1){gear++;shiftT=0.12;totalRatio=ratios[gear]*fd;rpm=v*totalRatio/r*60/TWO_PI;}
     const engineRpm=clamp(v<3?Math.max(rpm,launchRpm):rpm,idle,rl);
@@ -1689,6 +1747,8 @@ function simulateAccel(){
     if(!M.q400&&x>=400)M.q400={t,v};
     if(!M.q800&&x>=800)M.q800={t,v};
     if(!M.q1000&&x>=1000)M.q1000={t,v};
+    if(!M.v200&&v>=V200)M.v200={t,x};
+    if(x>=1000&&(M.v200||a<0.03))break;   // have the marks and either hit 200 or can't
   }
   // Top speed: fastest v where top-gear drive force still beats drag+roll, capped by the limiter.
   const topGear=ratios[ratios.length-1]*fd;let vTop=0;
@@ -1697,7 +1757,8 @@ function simulateAccel(){
     if(F>drag+roll)vTop=vv;else break;}
   const vRedline=rl*TWO_PI*r/60/topGear;
   const topSpeed=Math.min(vTop||vRedline,vRedline)*3.6;
-  return {t100:M.t100,q400:M.q400,q800:M.q800,q1000:M.q1000,topSpeed,mass:m,ptw:vehicle.powerToWeight};
+  return {t100:M.t100,q400:M.q400,q800:M.q800,q1000:M.q1000,topSpeed,mass:m,ptw:vehicle.powerToWeight,
+    t200:M.v200?M.v200.t:null,x200:M.v200?M.v200.x:null};
 }
 function fmtT(t){return (t==null)?'—':t.toFixed(2)+'s';}
 function fmtTrap(mk){return mk?Math.round(mk.v*3.6)+' km/h':'';}
@@ -1708,6 +1769,7 @@ function updateVehicleSummary(){
   el.innerHTML='<b>'+vehicle.chLabel+'</b> • '+dl+' • '+vehicle.gears+'-speed'+
     '<br>Curb weight <b>'+Math.round(vehicle.mass)+' kg</b> (engine ~'+vehicle.engineMass+' kg) • '+vehicle.powerToWeight.toFixed(0)+' hp/t'+
     '<br>Tyres <b>'+(TIRE_TYPE[vehicle.tireType]||TIRE_TYPE.sport).label+'</b> '+vehicle.tireWidth+'/'+vehicle.tireAspect+' R'+vehicle.wheelDia+' • grip μ<b>'+vehicle.mu.toFixed(2)+'</b>'+
+    '<br>Brakes <b>'+(BRAKE_TYPE[vehicle.brakeType]||BRAKE_TYPE.slotted).label+'</b> '+vehicle.rotor+'mm ('+(vehicle.brakeDecelCap/G).toFixed(2)+'g) • Susp <b>'+(SUSPENSION[vehicle.suspension]||SUSPENSION.sport).label+'</b>'+
     '<br>Drag CdA <b>'+vehicle.cdA.toFixed(2)+'</b> • downforce ClA <b>'+vehicle.clA.toFixed(2)+'</b> • final drive <b>'+vehicle.finalDrive.toFixed(2)+'</b>'+
     '<br>Vehicle cost <b>'+fmtCost(vehicle.cost)+'</b> • with engine <b>'+fmtCost(vehicle.cost+(engine.cost||0))+'</b>';
   renderPerformance();
@@ -1719,14 +1781,19 @@ function renderPerformance(){
   if(!p){head.textContent='—';grid.innerHTML='';if(note)note.textContent='';return;}
   head.innerHTML='<b>'+vehicle.chLabel+'</b> • '+(engine.score?engine.score.peakHP:0)+' hp • '+Math.round(vehicle.mass)+' kg • <b>'+p.ptw.toFixed(0)+'</b> hp/t';
   const cell=(k,v,u,cls)=>'<div class="perf-cell '+(cls||'')+'"><span class="k">'+k+'</span><div class="v">'+v+'</div><span class="u">'+(u||'')+'</span></div>';
+  const b100=p.brake100?Math.round(p.brake100.dist)+' m':'—';
+  const zz=(p.zt!=null)?p.zt.toFixed(1)+'s':'—';
+  const zzU=(p.zd!=null)?Math.round(p.zd)+' m total':'not reached';
   grid.innerHTML=
     cell(tr('0–100 km/h'),fmtT(p.t100),'',' hero')+
     cell(tr('TOP SPEED'),Math.round(p.topSpeed),'km/h','hero')+
     cell('400 m',fmtT(p.q400&&p.q400.t),fmtTrap(p.q400))+
     cell('800 m',fmtT(p.q800&&p.q800.t),fmtTrap(p.q800))+
     cell('1000 m',fmtT(p.q1000&&p.q1000.t),fmtTrap(p.q1000))+
-    cell(tr('POWER/WT'),p.ptw.toFixed(0),'hp/tonne');
-  if(note)note.textContent=tr('Best-power run through the gearbox with a traction-limited launch. Braking tests come next.');
+    cell(tr('POWER/WT'),p.ptw.toFixed(0),'hp/tonne')+
+    cell(tr('100–0 BRAKING'),b100,'')+
+    cell(tr('0–200–0'),zz,zzU);
+  if(note)note.textContent=tr('Best-power run through the gearbox with a traction-limited launch, then braking (tyre- and brake-limited, with fade).');
 }
 
 // ---- Dynamic thermal model (temps drift over time under load) ----
@@ -2293,7 +2360,7 @@ function bindControls(){
   document.getElementById('tabGuide').addEventListener('click',()=>setTab('guide'));
   document.getElementById('tabOptions').addEventListener('click',()=>setTab('options'));
   // Vehicle design: recompute performance live on any change; chassis sets a default drivetrain.
-  ['vhChassis','vhDrive','vhGears','vhGearing','vhTire','vhTireW','vhTireA','vhWheel','vhAeroF','vhAeroR','vhAeroFl','vhWeight'].forEach(id=>{
+  ['vhChassis','vhDrive','vhGears','vhGearing','vhTire','vhTireW','vhTireA','vhWheel','vhAeroF','vhAeroR','vhAeroFl','vhWeight','vhBrake','vhRotor','vhSusp'].forEach(id=>{
     const el=document.getElementById(id);if(!el)return;
     el.addEventListener('input',()=>{
       if(id==='vhChassis'){const ch=CHASSIS[el.value];if(ch)document.getElementById('vhDrive').value=ch.drive;}
