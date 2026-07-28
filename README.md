@@ -69,11 +69,19 @@ saps power; a large radiator, electric fan and oil cooler keep it cool.
 ### Simulation & live tuning
 - **Live outputs**: Power (HP), Torque (Nm), BMEP, Volumetric Efficiency, Thermal
   Efficiency, BSFC, Fuel Flow, Knock Risk, Engine Health.
-- **Five tabs** — **DESIGN** (build the engine), **ENGINE** (live test-bench schematic),
-  **DYNO** (power/torque curve + scorecard), **GUIDE** (an in-app manual explaining every
-  control and metric) and **OPTIONS** (sound, wear and **language**). The right column
-  is context-aware: the runtime Engine Controls show while driving/on the dyno, and the DESIGN
-  tab reserves that space for the upcoming **Vehicle Designer**.
+- **Six tabs** — **DESIGN** (build the engine), **VEHICLE** (drop it in a car & read its
+  performance), **ENGINE** (live test-bench schematic), **DYNO** (power/torque curve +
+  scorecard), **GUIDE** (an in-app manual) and **OPTIONS** (sound, wear and **language**). The
+  right column is context-aware: runtime Engine Controls while driving/on the dyno, and the
+  live **Performance** panel on the VEHICLE tab.
+- **Vehicle & performance (new)** — pick a **chassis** (13 archetypes, each with its own weight,
+  size, drivetrain and grip), a **drivetrain** (FWD/RWD/AWD), a **gearbox** (4–8 speeds + a
+  short↔tall gearing slider), **tyres** (compound + width/profile/wheel diameter → grip &
+  rolling radius) and **aero** (front/rear/floor downforce vs drag), plus **weight reduction**.
+  Your current engine is dropped in and the sim computes **0–100 km/h**, **400 / 800 / 1000 m**
+  (time + trap speed) and **top speed** live — a traction-limited launch with weight transfer,
+  downforce, aero drag and rolling resistance. Vehicle cost and power-to-weight are shown too.
+  *(Brakes, suspension detail and braking tests are coming in the next update.)*
 - **Engine-view schematic** — a test-bench diagram (air intake, fuel system, engine,
   exhaust/analyser, dynamometer, electrical) with live values on every subsystem, instead of
   a too-fast animation. The **exhaust/analyser** box reads live **emissions** (a CLEAN/OK/DIRTY
@@ -136,6 +144,10 @@ The built-in **GUIDE** tab explains every control and metric without leaving the
 The interface is fully translatable (English / Ελληνικά) and fills the screen in portrait:
 
 ![Greek UI](docs/greek.png)
+
+The **VEHICLE** tab drops your engine into a car and computes acceleration & top speed:
+
+![Vehicle & performance](docs/vehicle.png)
 
 ## How to Run
 
@@ -229,6 +241,15 @@ Curve** tab remains a wide-open-throttle steady-state sweep for reading the full
   lean-under-boost (burnt pistons) and over-rev; a clean tune barely wears. Lower health
   cuts power; zero health = catastrophic failure until rebuilt. Damage happens over tens of
   seconds of abuse — long enough to heed the warnings and back off.
+- Vehicle: acceleration is integrated step-by-step — the engine's best-power torque curve is
+  taken through the gearbox (auto-spaced ratios × a final drive from the gearing slider), giving
+  tractive force = wheel torque ÷ rolling radius, capped by traction (μ × the driven-axle load,
+  including static weight distribution, longitudinal weight transfer under acceleration, and
+  aero downforce). Aero drag (½ρ·CdA·v²) and rolling resistance oppose it; the car shifts at the
+  limiter. Top speed is where top-gear thrust equals drag (or the limiter, whichever comes
+  first), so over-gearing lowers it. AWD puts all four tyres' grip down and launches hardest;
+  FWD loses front load under acceleration. Engine mass is estimated from the spec and added to
+  the chassis for curb weight and power-to-weight.
 - Strategy: each part carries a rough build cost, summed into a total (so budget challenges
   and power-per-dollar have meaning); a design reliability index estimates durability from
   knock margin, boost/specific-output stress, high-strung choices (anti-lag, nitrous, sky-high
@@ -275,8 +296,10 @@ philosophy).
    economy, emissions, reliability, power-per-dollar…) with live pass/fail.
 5. ~~**(B) New engine types**~~ ✅ **done** — diesel (compression ignition), rotary/Wankel and
    2-stroke, each with its own firing frequency, fuelling, efficiency, emissions and sound.
-6. **(A) Vehicle / drivetrain layer** — gearbox, weight, grip and aero drag → 0–60,
-   quarter-mile and top-speed runs off the dynamic model.
+6. **(A) Vehicle / drivetrain layer** — 🚧 *in progress.* **Done:** chassis, drivetrain
+   (FWD/RWD/AWD), gearbox, tyres, aero and weight → **acceleration (0–100 km/h, 400/800/1000 m)
+   and top speed**. **Next:** brakes, suspension detail and **braking tests (0–200–0)**, then a
+   test track.
 
 Deferred: 2D fuel/ignition map editor (parked for later); V/boxer bank visuals (cosmetic);
 native Android build (parked).

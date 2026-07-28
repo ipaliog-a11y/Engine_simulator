@@ -120,6 +120,18 @@ footer{text-align:center;margin-top:16px;padding:8px;font-size:7px;color:#555;bo
 .opt-select{font-family:'Press Start 2P',monospace;font-size:8px;padding:8px;background:#12121c;color:#00ff88;border:2px solid #555}
 .vehicle-soon{font-size:8px;color:#aab;line-height:1.8;padding:6px 2px}
 .vehicle-soon b{color:#ffcc00}
+/* ---- Vehicle performance panel ---- */
+.perf-head{font-size:8px;color:#00ccff;line-height:1.6;margin-bottom:8px}
+.perf-head b{color:#ffcc00}
+.perf-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.perf-cell{background:#0a0a10;border:2px solid #2a2a3a;padding:7px 8px}
+.perf-cell .k{font-size:7px;color:#889;display:block}
+.perf-cell .v{font-size:13px;color:#00ff88;margin-top:3px}
+.perf-cell .u{font-size:7px;color:#667}
+.perf-cell.wide{grid-column:1/3}
+.perf-cell.hero .v{color:#ffcc00}
+.perf-note{font-size:7px;color:#778;line-height:1.6;margin-top:8px}
+.vehicleSummaryWrap b{color:#ffcc00}
 /* ---- Career / challenge card ---- */
 .challenge-card{background:#0a0a10;border:2px solid #33334a;padding:9px;margin-bottom:6px;font-size:8px;line-height:1.6}
 .ch-desc{color:#99aecc;line-height:1.7;margin-bottom:8px}
@@ -150,6 +162,7 @@ footer{text-align:center;margin-top:16px;padding:8px;font-size:7px;color:#555;bo
 <div class="viz-panel">
 <div class="viz-tabs">
 <button id="tabDesign">DESIGN</button>
+<button id="tabVehicle">VEHICLE</button>
 <button id="tabEngine" class="active">ENGINE</button>
 <button id="tabDyno">DYNO</button>
 <button id="tabGuide">GUIDE</button>
@@ -333,6 +346,17 @@ catalytic converter trade flow vs back-pressure/emissions; nitrous is bottled po
 <b>Cooling &amp; electrical</b> — radiator/fan/oil-cooler/thermostat set temps; alternator size and
 ignition type set charging and the misfire RPM limit.
 </div>
+<div class="design-section">Vehicle &amp; Performance</div>
+<div class="guide-body" data-gk="vehicle">
+On the <b>VEHICLE</b> tab you drop your engine into a car. Pick a <b>chassis</b> (each has its
+own weight, size and drivetrain), a <b>drivetrain</b> (FWD/RWD/AWD — AWD launches hardest),
+a <b>gearbox</b> (speeds + a short↔tall gearing slider), <b>tyres</b> (compound + width/profile/
+diameter set grip and rolling radius) and <b>aero</b> (front/rear/floor add downforce and drag).
+The engine's mass and torque curve are added in and the <b>Performance</b> panel computes
+<b>0–100 km/h</b>, <b>400/800/1000 m</b> (time + trap speed) and <b>top speed</b> live — a
+traction-limited launch with weight transfer, downforce, drag and rolling resistance. Over-gearing
+hurts both acceleration and top speed; sticky tyres and AWD help you put the power down.
+</div>
 <div class="guide-body" data-gk="tip" style="color:#667;margin-top:12px">Tip: turn WEAR off in OPTIONS to
 experiment freely, then back on for consequences.</div>
 </div>
@@ -353,6 +377,43 @@ experiment freely, then back on for consequences.</div>
 <div class="design-section">Language</div>
 <div class="opt-row"><div><b>LANGUAGE PACK</b><div class="opt-note">Switch the interface language (chrome, guide &amp; readouts).</div></div>
 <select id="edLang" class="opt-select"><option value="en">ENGLISH</option><option value="el">ΕΛΛΗΝΙΚΑ</option></select></div>
+</div>
+
+<!-- VEHICLE: drop the engine into a car and read its acceleration & top speed -->
+<div class="design-panel vehicle-panel" id="vehiclePanelTab">
+<h3>VEHICLE DESIGN</h3>
+<div class="hint">Pick a chassis, drivetrain, tyres and aero. Your current engine is dropped in and the performance is computed live.</div>
+
+<div class="design-section">Chassis &amp; Drivetrain</div>
+<div class="design-grid">
+<div class="field"><label for="vhChassis">CHASSIS</label><select id="vhChassis">
+<option value="kei">KEI CAR</option><option value="hatch">HOT HATCH</option><option value="roadster">LIGHT ROADSTER</option>
+<option value="coupe">SPORTS COUPE</option><option value="sedan">SPORTS SEDAN</option><option value="muscle">MUSCLE CAR</option>
+<option value="rally">RALLY AWD HATCH</option><option value="gt">GRAND TOURER</option><option value="super">MID-ENGINE SUPER</option>
+<option value="hyper">CARBON HYPERCAR</option><option value="proto">TRACK PROTOTYPE</option><option value="pickup">PICKUP TRUCK</option><option value="suv">PERFORMANCE SUV</option>
+</select></div>
+<div class="field"><label for="vhDrive">DRIVETRAIN</label><select id="vhDrive"><option value="fwd">FWD</option><option value="rwd">RWD</option><option value="awd">AWD</option></select></div>
+<div class="field"><label for="vhGears">GEARBOX (SPEEDS)</label><select id="vhGears"><option value="4">4</option><option value="5">5</option><option value="6">6</option><option value="7">7</option><option value="8">8</option></select></div>
+<div class="field"><label for="vhGearing"><span id="lblGearing" class="ctl-lbl">GEARING</span> <span class="val" id="valGearing">55</span></label><input type="range" id="vhGearing" min="0" max="100" step="1" value="55" aria-label="Gearing short to tall"></div>
+</div>
+
+<div class="design-section">Wheels &amp; Tyres</div>
+<div class="design-grid">
+<div class="field"><label for="vhTire">TYRE COMPOUND</label><select id="vhTire"><option value="eco">ECO/TOURING</option><option value="street">STREET</option><option value="sport">SPORT</option><option value="semi">SEMI-SLICK</option><option value="slick">RACE SLICK</option><option value="drag">DRAG RADIAL</option></select></div>
+<div class="field"><label for="vhWheel">WHEEL DIA (in)</label><input type="number" id="vhWheel" min="13" max="22" step="1" value="18"></div>
+<div class="field"><label for="vhTireW">TYRE WIDTH (mm)</label><input type="number" id="vhTireW" min="135" max="355" step="5" value="235"></div>
+<div class="field"><label for="vhTireA">TYRE ASPECT (%)</label><input type="number" id="vhTireA" min="25" max="70" step="5" value="40"></div>
+</div>
+
+<div class="design-section">Aerodynamics</div>
+<div class="design-grid">
+<div class="field"><label for="vhAeroF">FRONT AERO</label><select id="vhAeroF"><option value="none">NONE</option><option value="splitter">SPLITTER</option><option value="wing">FRONT WING</option></select></div>
+<div class="field"><label for="vhAeroR">REAR AERO</label><select id="vhAeroR"><option value="none">NONE</option><option value="lip">LIP SPOILER</option><option value="wing">REAR WING</option></select></div>
+<div class="field"><label for="vhAeroFl">FLOOR / DIFFUSER</label><select id="vhAeroFl"><option value="none">NONE</option><option value="undertray">UNDERTRAY</option><option value="diffuser">DIFFUSER</option></select></div>
+<div class="field"><label for="vhWeight">WEIGHT REDUCTION</label><select id="vhWeight"><option value="none">NONE</option><option value="street">STREET</option><option value="sport">SPORT</option><option value="race">RACE</option></select></div>
+</div>
+<div class="design-summary" id="vehicleSummary"></div>
+<div class="hint" style="margin-top:8px">Brakes, suspension detail and braking tests (0–200–0) arrive in the next update.</div>
 </div>
 </div>
 <div class="side-panel">
@@ -408,11 +469,10 @@ experiment freely, then back on for consequences.</div>
 <div class="legend" id="legend">Use the DESIGN tab to build your engine, then tune it here.</div>
 </div>
 <div class="panel" id="vehiclePanel" style="display:none">
-<h2>Vehicle Designer</h2>
-<div class="vehicle-soon">🏎️ <b>Coming soon</b> — feature A on the roadmap.<br><br>
-This is where you'll drop the engine into a car: gearbox ratios, weight, tyre grip and aero
-drag, then run <b>0–60</b>, the <b>¼-mile</b> and <b>top speed</b> off the same dynamic model.
-<br><br><span style="color:#667">For now, design the engine and read it on the dyno.</span></div>
+<h2>Performance</h2>
+<div class="perf-head" id="perfHead">—</div>
+<div class="perf-grid" id="perfGrid"></div>
+<div class="perf-note" id="perfNote"></div>
 </div>
 </div>
 </div>
@@ -584,11 +644,20 @@ const I18N={
   'SAVE':{el:'ΑΠΟΘΗΚ.'},'LOAD':{el:'ΦΟΡΤΩΣΗ'},'SAVE FILE':{el:'ΑΠΟΘ. ΑΡΧΕΙΟΥ'},'OPEN FILE':{el:'ΑΝΟΙΓΜΑ ΑΡΧΕΙΟΥ'},'SHARE':{el:'ΚΟΙΝΟΠΟΙΗΣΗ'},
   'Vehicle Designer':{el:'Σχεδιαστής Οχήματος'},
   'SOUND ON':{el:'ΗΧΟΣ ΟΝ'},'SOUND OFF':{el:'ΗΧΟΣ OFF'},'WEAR ON':{el:'ΦΘΟΡΑ ΟΝ'},'WEAR OFF':{el:'ΦΘΟΡΑ OFF'},
+  // vehicle tab
+  'VEHICLE':{el:'ΟΧΗΜΑ'},'VEHICLE DESIGN':{el:'ΣΧΕΔΙΑΣΗ ΟΧΗΜΑΤΟΣ'},
+  'Pick a chassis, drivetrain, tyres and aero. Your current engine is dropped in and the performance is computed live.':{el:'Διάλεξε σασί, μετάδοση, ελαστικά και αεροδυναμική. Ο τρέχων κινητήρας μπαίνει μέσα και οι επιδόσεις υπολογίζονται ζωντανά.'},
+  'Chassis & Drivetrain':{el:'Σασί & Μετάδοση'},'CHASSIS':{el:'ΣΑΣΙ'},'DRIVETRAIN':{el:'ΜΕΤΑΔΟΣΗ'},'GEARBOX (SPEEDS)':{el:'ΚΙΒΩΤΙΟ (ΣΧΕΣΕΙΣ)'},'GEARING':{el:'ΤΕΛΙΚΗ ΣΧΕΣΗ'},
+  'Wheels & Tyres':{el:'Τροχοί & Ελαστικά'},'TYRE COMPOUND':{el:'ΤΥΠΟΣ ΕΛΑΣΤΙΚΟΥ'},'WHEEL DIA (in)':{el:'ΔΙΑΜ. ΖΑΝΤΑΣ (in)'},'TYRE WIDTH (mm)':{el:'ΠΛΑΤΟΣ ΕΛΑΣΤ. (mm)'},'TYRE ASPECT (%)':{el:'ΠΡΟΦΙΛ ΕΛΑΣΤ. (%)'},
+  'Aerodynamics':{el:'Αεροδυναμική'},'FRONT AERO':{el:'ΕΜΠΡΟΣ ΑΕΡΟΔ.'},'REAR AERO':{el:'ΠΙΣΩ ΑΕΡΟΔ.'},'FLOOR / DIFFUSER':{el:'ΠΑΤΩΜΑ / DIFFUSER'},'WEIGHT REDUCTION':{el:'ΜΕΙΩΣΗ ΒΑΡΟΥΣ'},
+  'Brakes, suspension detail and braking tests (0–200–0) arrive in the next update.':{el:'Φρένα, ανάρτηση και τεστ φρεναρίσματος (0–200–0) έρχονται στην επόμενη ενημέρωση.'},
+  'Performance':{el:'Επιδόσεις'},'0–100 km/h':{el:'0–100 km/h'},'TOP SPEED':{el:'ΤΕΛΙΚΗ'},'POWER/WT':{el:'ΙΣΧΥΣ/ΒΑΡΟΣ'},
+  'Best-power run through the gearbox with a traction-limited launch. Braking tests come next.':{el:'Εκκίνηση με μέγιστη ισχύ μέσα από το κιβώτιο, με εκκίνηση περιορισμένη από πρόσφυση. Ακολουθούν τα τεστ φρεναρίσματος.'},
   // guide h3 + section headers
   'GUIDE • HOW IT WORKS':{el:'ΟΔΗΓΟΣ • ΠΩΣ ΛΕΙΤΟΥΡΓΕΙ'},
   'A quick manual for the sim and its numbers. Design → BUILD & DYNO → drive it.':{el:'Σύντομο εγχειρίδιο για τον προσομοιωτή και τους αριθμούς του. Σχεδίασε → BUILD & DYNO → οδήγησε.'},
   'The Loop':{el:'Η Ροή'},'Driving Controls':{el:'Χειριστήρια Οδήγησης'},'Reading the Numbers':{el:'Διαβάζοντας τους Αριθμούς'},
-  'The Scorecard':{el:'Η Βαθμολογία'},'Career & Budget':{el:'Καριέρα & Προϋπολογισμός'},'Engine Types':{el:'Τύποι Κινητήρα'},'Design Subsystems':{el:'Υποσυστήματα Σχεδίασης'},
+  'The Scorecard':{el:'Η Βαθμολογία'},'Career & Budget':{el:'Καριέρα & Προϋπολογισμός'},'Engine Types':{el:'Τύποι Κινητήρα'},'Design Subsystems':{el:'Υποσυστήματα Σχεδίασης'},'Vehicle & Performance':{el:'Όχημα & Επιδόσεις'},
   // challenge card structural words + target labels
   'COST':{el:'ΚΟΣΤΟΣ'},'REL':{el:'ΑΞΙΟΠ.'},'BUDGET':{el:'ΠΡΟΫΠ.'},'OVER':{el:'ΥΠΕΡΒΑΣΗ'},'need':{el:'θέλει'},
   'CHALLENGE PASSED':{el:'ΠΡΟΚΛΗΣΗ ΕΠΙΤΥΧΗΣ'},'NOT MET YET':{el:'ΔΕΝ ΕΠΙΤΕΥΧΘΗΚΕ'},
@@ -605,6 +674,7 @@ const GUIDE_I18N={
   career:{el:'Διάλεξε έναν <b>ΣΤΟΧΟ</b> στην κορυφή της ΣΧΕΔΙΑΣΗΣ για να κάνεις τη σχεδίαση γρίφο. Κάθε πρόκληση θέτει κριτήρια — ισχύ, οικονομία, εκπομπές, <b>αξιοπιστία</b> ή <b>ισχύ ανά δολάριο</b> — και κάποιες βάζουν όριο <b>προϋπολογισμού</b>. Η κάρτα τσεκάρει κάθε κριτήριο ζωντανά (✓/✗) και δείχνει <b>ΕΠΙΤΥΧΙΑ</b> όταν καλυφθούν όλα· κόστος και αξιοπιστία φαίνονται πάντα. Ο μεγάλος κυβισμός κερδίζει σε αξία· boost και αγωνιστικά μέρη κερδίζουν σε ισχύ αλλά κοστίζουν σε χρήμα και αξιοπιστία.'},
   types:{el:'<b>Βενζίνη 4-χρονη</b> — η ισορροπημένη επιλογή: ανάφλεξη με σπινθήρα, μία εκρηκτική διαδρομή ανά δύο στροφές.<br><b>Πετρέλαιο (CI)</b> — ανάφλεξη με συμπίεση (χωρίς μπουζί, χωρίς πειράκι), πολύ υψηλή συμπίεση, φτωχό χωρίς πεταλούδα. Μεγάλη <b>ροπή</b> στις χαμηλές, χαμηλό όριο στροφών, η καλύτερη <b>απόδοση</b> — αλλά βαρύ, με εκπομπές <b>NOx + αιθάλη (PM)</b> που καθαρίζει σύστημα DPF/SCR.<br><b>2-χρονη</b> — εκρηκτική διαδρομή σε <i>κάθε</i> στροφή (θυρίδες, χωρίς εκκεντροφόρο): υψηλή ειδική ισχύς αλλά λαίμαργη και <b>HC</b>-βρόμικη.<br><b>Wankel (ρότορας)</b> — περιστρεφόμενος ρότορας που ανάβει σε κάθε στροφή: ομαλός σαν τουρμπίνα, τεράστιες στροφές, υψηλή ισχύς ανά λίτρο, αλλά λαίμαργος, <b>HC</b>-βαρύς και σκληρός στα ελάσματα κορυφής.<br>Η αλλαγή τύπου προσαρμόζει τα εύρη συμπίεσης/στροφών/AFR και απενεργοποιεί ό,τι δεν ισχύει.'},
   subsystems:{el:'<b>Κάτω μέρος</b> — τύπος κινητήρα, διάμετρος × διαδρομή × κύλινδροι = κυβισμός· υπερτετράγωνος & υψηλότερο όριο ανεβάζουν την περιοχή ισχύος.<br><b>Διαδρομή αέρα</b> — τούρμπο (γεμίζει με τις στροφές) ή υπερσυμπιεστής (boost από ρελαντί)· το intercooler ψύχει το χάρμανι· εξάτμιση & καταλύτης ανταλλάσσουν ροή με αντίθλιψη/εκπομπές· το νιτρό είναι εμφιαλωμένη ισχύς.<br><b>Εισαγωγή</b> — καρμπιρατέρ → EFI → ITB ορίζουν αναπνοή, ακρίβεια & ρελαντί.<br><b>Χρονισμός βαλβίδων</b> — άγριες εκκεντροφόροι ανεβάζουν την ισχύ ψηλά· το VVT επαναφέρει τις χαμηλές.<br><b>Καύσιμο & σπινθήρας</b> — τύπος καυσίμου, οκτάνια, μπεκ, ανάφλεξη και χρονισμός FIXED/AUTO.<br><b>Ψύξη & ηλεκτρικά</b> — ψυγείο/βεντιλατέρ/ψυγείο λαδιού/θερμοστάτης ορίζουν θερμοκρασίες· δυναμό & ανάφλεξη ορίζουν φόρτιση και όριο μισφάιρ.'},
+  vehicle:{el:'Στην καρτέλα <b>ΟΧΗΜΑ</b> βάζεις τον κινητήρα σου σε αυτοκίνητο. Διάλεξε <b>σασί</b> (κάθε ένα με δικό του βάρος, μέγεθος και μετάδοση), <b>μετάδοση</b> (FWD/RWD/AWD — το AWD ξεκινά καλύτερα), <b>κιβώτιο</b> (σχέσεις + ρυθμιστικό κοντή↔μακριά τελική), <b>ελαστικά</b> (τύπος + πλάτος/προφίλ/διάμετρος ορίζουν πρόσφυση και ακτίνα κύλισης) και <b>αεροδυναμική</b> (εμπρός/πίσω/πάτωμα προσθέτουν κάθετη δύναμη και οπισθέλκουσα). Ο κινητήρας προστίθεται και το ταμπλό <b>Επιδόσεις</b> υπολογίζει <b>0–100 km/h</b>, <b>400/800/1000 m</b> (χρόνος + ταχύτητα) και <b>τελική</b> ζωντανά — εκκίνηση περιορισμένη από πρόσφυση με μεταφορά βάρους, κάθετη δύναμη, οπισθέλκουσα και αντίσταση κύλισης. Η υπερβολικά μακριά τελική βλάπτει και την επιτάχυνση και την τελική· κολλώδη ελαστικά και AWD βοηθούν να περάσει η ισχύς στον δρόμο.'},
   tip:{el:'Συμβουλή: κλείσε τη ΦΘΟΡΑ στις ΕΠΙΛΟΓΕΣ για ελεύθερο πειραματισμό, μετά ξανάνοιξέ την για συνέπειες.'}
 };
 const CHALLENGE_I18N={
@@ -658,6 +728,7 @@ function applyLang(lang){
   const chSel=document.getElementById('edChallenge');
   if(chSel)[...chSel.options].forEach(o=>{const c=CHALLENGES.find(x=>x.id===o.value);if(c)o.textContent=chName(c);});
   if(typeof renderChallenge==='function')renderChallenge();
+  if(typeof updateVehicleSummary==='function'&&vehicle&&vehicle.chLabel)updateVehicleSummary();
 }
 
 const RAD_CAP={small:0.75,stock:1.0,large:1.35};   // relative heat-rejection capacity
@@ -717,6 +788,57 @@ const CAT={
   sport:{label:'SPORT CAT',   conv:0.85,restrict:0.02},
   stock:{label:'STOCK CAT',   conv:0.97,restrict:0.05}
 };
+
+// ====== VEHICLE LAYER (feature A) ======
+// Chassis archetypes: mass is the rolling platform WITHOUT the engine (kg); the engine's mass
+// is estimated from its spec and added. area = frontal area (m²), cd = base drag coefficient,
+// wb = wheelbase (m), cg = centre-of-gravity height (m), fWt = static front weight fraction,
+// grip = mechanical grip factor, drive = default driven layout, aero = how much downforce the
+// body can carry (a formula car a lot, a truck little), cost = chassis price.
+const CHASSIS={
+  kei:      {label:'KEI CAR',           mass:640, area:1.85,cd:0.34,wb:2.40,cg:0.52,fWt:0.60,grip:0.98,drive:'fwd',aero:0.4,cost:5000},
+  hatch:    {label:'HOT HATCH',         mass:1080,area:2.10,cd:0.32,wb:2.60,cg:0.52,fWt:0.62,grip:1.00,drive:'fwd',aero:0.6,cost:8000},
+  roadster: {label:'LIGHT ROADSTER',    mass:980, area:1.90,cd:0.35,wb:2.30,cg:0.46,fWt:0.52,grip:1.04,drive:'rwd',aero:0.6,cost:9000},
+  coupe:    {label:'SPORTS COUPE',      mass:1200,area:2.05,cd:0.31,wb:2.65,cg:0.48,fWt:0.54,grip:1.03,drive:'rwd',aero:0.8,cost:11000},
+  sedan:    {label:'SPORTS SEDAN',      mass:1420,area:2.20,cd:0.29,wb:2.85,cg:0.52,fWt:0.55,grip:1.00,drive:'rwd',aero:0.7,cost:12000},
+  muscle:   {label:'MUSCLE CAR',        mass:1620,area:2.25,cd:0.36,wb:2.95,cg:0.50,fWt:0.56,grip:0.98,drive:'rwd',aero:0.5,cost:13000},
+  rally:    {label:'RALLY AWD HATCH',   mass:1300,area:2.15,cd:0.34,wb:2.60,cg:0.52,fWt:0.58,grip:1.06,drive:'awd',aero:0.7,cost:14000},
+  gt:       {label:'GRAND TOURER',      mass:1580,area:2.15,cd:0.30,wb:2.90,cg:0.48,fWt:0.52,grip:1.04,drive:'rwd',aero:0.9,cost:20000},
+  super:    {label:'MID-ENGINE SUPER',  mass:1340,area:1.95,cd:0.33,wb:2.65,cg:0.44,fWt:0.42,grip:1.12,drive:'rwd',aero:1.2,cost:30000},
+  hyper:    {label:'CARBON HYPERCAR',   mass:1240,area:1.92,cd:0.35,wb:2.70,cg:0.44,fWt:0.44,grip:1.18,drive:'awd',aero:1.6,cost:60000},
+  proto:    {label:'TRACK PROTOTYPE',   mass:620, area:1.55,cd:0.60,wb:2.80,cg:0.32,fWt:0.46,grip:1.30,drive:'rwd',aero:3.0,cost:45000},
+  pickup:   {label:'PICKUP TRUCK',      mass:2050,area:3.20,cd:0.45,wb:3.60,cg:0.68,fWt:0.58,grip:0.92,drive:'rwd',aero:0.2,cost:11000},
+  suv:      {label:'PERFORMANCE SUV',   mass:1950,area:2.95,cd:0.36,wb:2.95,cg:0.66,fWt:0.54,grip:0.96,drive:'awd',aero:0.4,cost:16000}
+};
+// Tyre compound: mu = peak grip coefficient (dry), crr = rolling resistance, cost.
+const TIRE_TYPE={
+  eco:     {label:'ECO/TOURING', mu:0.90,crr:0.010,cost:400},
+  street:  {label:'STREET',      mu:1.00,crr:0.012,cost:600},
+  sport:   {label:'SPORT',       mu:1.15,crr:0.013,cost:1000},
+  semi:    {label:'SEMI-SLICK',  mu:1.35,crr:0.014,cost:1600},
+  slick:   {label:'RACE SLICK',  mu:1.55,crr:0.016,cost:2400},
+  drag:    {label:'DRAG RADIAL', mu:1.70,crr:0.018,cost:2000}
+};
+// Aero elements — each adds a downforce coefficient (Cl·A, m²) and a drag penalty (ΔCd). The
+// floor/diffuser is the efficient one (lots of downforce, little drag). Scaled by chassis.aero.
+const AERO_FRONT={none:{cl:0,cd:0},splitter:{cl:0.25,cd:0.010},wing:{cl:0.60,cd:0.028}};
+const AERO_REAR ={none:{cl:0,cd:0},lip:{cl:0.20,cd:0.008},wing:{cl:0.75,cd:0.035}};
+const AERO_FLOOR={none:{cl:0,cd:0},undertray:{cl:0.35,cd:0.006},diffuser:{cl:0.80,cd:0.014}};
+const AERO_COST={none:0,splitter:600,wing:1800,lip:400,undertray:900,diffuser:2200};
+// Weight reduction stages: kg removed and cost.
+const WEIGHT_RED={none:{kg:0,cost:0},street:{kg:45,cost:1200},sport:{kg:95,cost:3500},race:{kg:170,cost:9000}};
+// Drivetrain: driveline efficiency (crank→wheels) and the driven-axle description.
+const DRIVE_EFF={fwd:0.92,rwd:0.90,awd:0.86};
+const AIR_RHO=1.20;   // air density kg/m³
+const G=9.81;
+const DEFAULT_VEHICLE={
+  chassis:'coupe',drive:'rwd',gears:6,gearing:55,
+  tireType:'sport',tireWidth:235,tireAspect:40,wheelDia:18,
+  aeroFront:'splitter',aeroRear:'lip',aeroFloor:'none',weightRed:'street'
+};
+let vehicle=Object.assign({},DEFAULT_VEHICLE);
+let perf=null;   // last computed performance result
+
 let engine=Object.assign({},DEFAULT_ENGINE);
 let buildRev=0;   // bumped each build so the dyno cache invalidates
 
@@ -960,6 +1082,7 @@ function buildEngine(){
   updateEngineLabels();
   updateDesignSummary();
   renderChallenge();
+  if(document.getElementById('vhChassis')){buildVehicle();updateVehicleSummary();}   // refresh vehicle performance for the new engine
 }
 // ---- Strategy layer: what the build costs (parts $) ----
 // Rough per-part pricing so budget challenges and hp-per-dollar have meaning. Values are
@@ -1464,6 +1587,145 @@ function getDynoData(){
   dynoCache=pts;dynoCacheKey=key;return pts;
 }
 
+// ====== VEHICLE: build spec, mass, gearing, aero and the acceleration simulation ======
+const lerp=(a,b,t)=>a+(b-a)*t;
+// Estimate the engine's installed mass (kg) from its spec — fed into the car's curb weight.
+function engineMass(){
+  let m=50+18*engine.displacement_L+7*engine.cylinders;
+  if(engine.ci)m*=1.35;                                   // diesels: iron block, strong internals
+  if(engine.intake==='turbo')m+=15+engine.boost_bar*10;
+  else if(engine.intake==='supercharger')m+=25;
+  if(engine.layout==='v'||engine.layout==='boxer')m+=10;
+  return Math.round(m);
+}
+// Auto-spaced gear ratios: a geometric progression from a short 1st to a tall top gear.
+function genRatios(n){n=clamp(Math.round(n),4,8);const r1=3.35,rn=0.82,out=[];for(let i=0;i<n;i++)out.push(r1*Math.pow(rn/r1,i/(n-1)));return out;}
+function readVehicleFromForm(){
+  const g=id=>document.getElementById(id);
+  return {
+    chassis:g('vhChassis').value,drive:g('vhDrive').value,
+    gears:clamp(Math.round(+g('vhGears').value||6),4,8),gearing:clamp(+g('vhGearing').value||55,0,100),
+    tireType:g('vhTire').value,tireWidth:clamp(Math.round(+g('vhTireW').value||225),135,355),
+    tireAspect:clamp(Math.round(+g('vhTireA').value||40),25,70),wheelDia:clamp(Math.round(+g('vhWheel').value||18),13,22),
+    aeroFront:g('vhAeroF').value,aeroRear:g('vhAeroR').value,aeroFloor:g('vhAeroFl').value,weightRed:g('vhWeight').value
+  };
+}
+function applyVehicleToForm(v){
+  const g=id=>document.getElementById(id);
+  g('vhChassis').value=v.chassis||'coupe';g('vhDrive').value=v.drive||'rwd';
+  g('vhGears').value=v.gears||6;g('vhGearing').value=v.gearing!=null?v.gearing:55;
+  g('vhTire').value=v.tireType||'sport';g('vhTireW').value=v.tireWidth||235;g('vhTireA').value=v.tireAspect||40;g('vhWheel').value=v.wheelDia||18;
+  g('vhAeroF').value=v.aeroFront||'none';g('vhAeroR').value=v.aeroRear||'none';g('vhAeroFl').value=v.aeroFloor||'none';g('vhWeight').value=v.weightRed||'none';
+}
+function computeVehicleCost(ch,tt,wr){
+  let c=ch.cost+tt.cost+wr.cost;
+  c+=(AERO_COST[vehicle.aeroFront]||0)+(AERO_COST[vehicle.aeroRear]||0)+(AERO_COST[vehicle.aeroFloor]||0);
+  c+={fwd:0,rwd:800,awd:2500}[vehicle.drive]||0;
+  c+=Math.max(0,vehicle.gears-5)*400;
+  c+=Math.max(0,vehicle.wheelDia-16)*120+Math.max(0,vehicle.tireWidth-205)*4;
+  return Math.max(3000,Math.round(c/50)*50);
+}
+function buildVehicle(){
+  vehicle=readVehicleFromForm();
+  const ch=CHASSIS[vehicle.chassis]||CHASSIS.coupe, tt=TIRE_TYPE[vehicle.tireType]||TIRE_TYPE.sport, wr=WEIGHT_RED[vehicle.weightRed]||WEIGHT_RED.none;
+  vehicle.chLabel=ch.label;
+  const sidewall=vehicle.tireWidth*(vehicle.tireAspect/100);           // mm
+  vehicle.rTire=((vehicle.wheelDia*25.4)/2+sidewall)/1000;            // rolling radius (m)
+  const widthBonus=clamp((vehicle.tireWidth-205)/205,-0.15,0.30);
+  vehicle.mu=tt.mu*ch.grip*(1+0.25*widthBonus);
+  vehicle.crr=tt.crr;
+  vehicle.engineMass=engineMass();
+  vehicle.mass=Math.max(380,ch.mass+vehicle.engineMass-wr.kg);
+  vehicle.wb=ch.wb;vehicle.cg=ch.cg;vehicle.fWt=ch.fWt;vehicle.area=ch.area;
+  const af=AERO_FRONT[vehicle.aeroFront]||AERO_FRONT.none, ar=AERO_REAR[vehicle.aeroRear]||AERO_REAR.none, al=AERO_FLOOR[vehicle.aeroFloor]||AERO_FLOOR.none;
+  vehicle.clA=(af.cl+ar.cl+al.cl)*ch.aero;                            // downforce coefficient·area
+  vehicle.cdA=(ch.cd+af.cd+ar.cd+al.cd)*ch.area;                      // drag coefficient·area
+  vehicle.driveEff=DRIVE_EFF[vehicle.drive]||0.90;
+  vehicle.finalDrive=lerp(4.9,2.6,vehicle.gearing/100);              // short → tall
+  vehicle.ratios=genRatios(vehicle.gears);
+  vehicle.cost=computeVehicleCost(ch,tt,wr);
+  vehicle.powerToWeight=engine.score?engine.score.peakHP/(vehicle.mass/1000):0;   // hp per tonne
+  perf=simulateAccel();
+}
+// A best-power torque curve (Nm vs rpm) so performance reflects the engine's potential, not
+// whatever live tune happens to be dialled in.
+function buildTorqueCurve(){
+  const sv={afr:state.afr,coolant:state.coolant,oil:state.oil,eh:state.engineHealth,bl:state.blown,iat:state.iat,rpm:state.rpm,map:state.map};
+  state.coolant=90;state.oil=100;state.engineHealth=1;state.blown=false;state.iat=20;
+  state.afr=engine.ci?engine.stoichAFR*1.05:engine.stoichAFR*0.88;
+  const pts=[];for(let r=1000;r<=engine.redline;r+=100)pts.push({rpm:r,tq:calcAtRpm(r).torque});
+  Object.assign(state,sv);
+  return pts;
+}
+// Integrate the standing-start acceleration run through the gearbox with a traction-limited
+// launch (weight transfer + downforce), aero drag and rolling resistance.
+function simulateAccel(){
+  if(!engine.score)return null;
+  const curve=buildTorqueCurve();
+  const tqAt=rpm=>{if(rpm<=curve[0].rpm)return curve[0].tq;for(let i=1;i<curve.length;i++){if(rpm<=curve[i].rpm){const p=curve[i-1],q=curve[i];return p.tq+(q.tq-p.tq)*(rpm-p.rpm)/(q.rpm-p.rpm);}}return curve[curve.length-1].tq;};
+  const m=vehicle.mass,r=vehicle.rTire,fd=vehicle.finalDrive,eff=vehicle.driveEff,ratios=vehicle.ratios;
+  const idle=engine.idleRpmEff,rl=engine.redline,TWO_PI=Math.PI*2,dt=0.005;
+  const launchRpm=clamp(rl*0.55,idle+400,rl*0.72);
+  let v=0,x=0,t=0,gear=0,a=0,shiftT=0;
+  const M={t100:null,q400:null,q800:null,q1000:null},V100=100/3.6;
+  for(let step=0;step<40000&&x<1000&&t<120;step++){
+    let totalRatio=ratios[gear]*fd,rpm=v*totalRatio/r*60/TWO_PI;
+    if(shiftT<=0&&rpm>=rl&&gear<ratios.length-1){gear++;shiftT=0.12;totalRatio=ratios[gear]*fd;rpm=v*totalRatio/r*60/TWO_PI;}
+    const engineRpm=clamp(v<3?Math.max(rpm,launchRpm):rpm,idle,rl);
+    let driveF=0;
+    if(shiftT>0)shiftT-=dt; else driveF=tqAt(engineRpm)*totalRatio*eff/r;
+    const down=0.5*AIR_RHO*vehicle.clA*v*v,Wtot=m*G+down,transfer=m*a*vehicle.cg/vehicle.wb;
+    let drivenN;
+    if(vehicle.drive==='awd')drivenN=Wtot;
+    else if(vehicle.drive==='rwd')drivenN=m*G*(1-vehicle.fWt)+down*0.5+Math.max(0,transfer);
+    else drivenN=m*G*vehicle.fWt+down*0.5-Math.max(0,transfer);
+    const F=Math.min(driveF,vehicle.mu*Math.max(0,drivenN));
+    const drag=0.5*AIR_RHO*vehicle.cdA*v*v,roll=v>0.2?vehicle.crr*m*G:0;
+    a=(F-drag-roll)/m;v=Math.max(0,v+a*dt);x+=v*dt;t+=dt;
+    if(!M.t100&&v>=V100)M.t100=t;
+    if(!M.q400&&x>=400)M.q400={t,v};
+    if(!M.q800&&x>=800)M.q800={t,v};
+    if(!M.q1000&&x>=1000)M.q1000={t,v};
+  }
+  // Top speed: fastest v where top-gear drive force still beats drag+roll, capped by the limiter.
+  const topGear=ratios[ratios.length-1]*fd;let vTop=0;
+  for(let vv=5;vv<160;vv+=0.5){const rpm=vv*topGear/r*60/TWO_PI;if(rpm>rl)break;
+    const F=tqAt(clamp(rpm,idle,rl))*topGear*eff/r,drag=0.5*AIR_RHO*vehicle.cdA*vv*vv,roll=vehicle.crr*m*G;
+    if(F>drag+roll)vTop=vv;else break;}
+  const vRedline=rl*TWO_PI*r/60/topGear;
+  const topSpeed=Math.min(vTop||vRedline,vRedline)*3.6;
+  return {t100:M.t100,q400:M.q400,q800:M.q800,q1000:M.q1000,topSpeed,mass:m,ptw:vehicle.powerToWeight};
+}
+function fmtT(t){return (t==null)?'—':t.toFixed(2)+'s';}
+function fmtTrap(mk){return mk?Math.round(mk.v*3.6)+' km/h':'';}
+function updateVehicleSummary(){
+  const el=document.getElementById('vehicleSummary');if(!el)return;
+  const dl={fwd:'FWD',rwd:'RWD',awd:'AWD'}[vehicle.drive]||'RWD';
+  el.className='design-summary vehicleSummaryWrap';
+  el.innerHTML='<b>'+vehicle.chLabel+'</b> • '+dl+' • '+vehicle.gears+'-speed'+
+    '<br>Curb weight <b>'+Math.round(vehicle.mass)+' kg</b> (engine ~'+vehicle.engineMass+' kg) • '+vehicle.powerToWeight.toFixed(0)+' hp/t'+
+    '<br>Tyres <b>'+(TIRE_TYPE[vehicle.tireType]||TIRE_TYPE.sport).label+'</b> '+vehicle.tireWidth+'/'+vehicle.tireAspect+' R'+vehicle.wheelDia+' • grip μ<b>'+vehicle.mu.toFixed(2)+'</b>'+
+    '<br>Drag CdA <b>'+vehicle.cdA.toFixed(2)+'</b> • downforce ClA <b>'+vehicle.clA.toFixed(2)+'</b> • final drive <b>'+vehicle.finalDrive.toFixed(2)+'</b>'+
+    '<br>Vehicle cost <b>'+fmtCost(vehicle.cost)+'</b> • with engine <b>'+fmtCost(vehicle.cost+(engine.cost||0))+'</b>';
+  renderPerformance();
+}
+function renderPerformance(){
+  const head=document.getElementById('perfHead'),grid=document.getElementById('perfGrid'),note=document.getElementById('perfNote');
+  if(!head||!grid)return;
+  const p=perf;
+  if(!p){head.textContent='—';grid.innerHTML='';if(note)note.textContent='';return;}
+  head.innerHTML='<b>'+vehicle.chLabel+'</b> • '+(engine.score?engine.score.peakHP:0)+' hp • '+Math.round(vehicle.mass)+' kg • <b>'+p.ptw.toFixed(0)+'</b> hp/t';
+  const cell=(k,v,u,cls)=>'<div class="perf-cell '+(cls||'')+'"><span class="k">'+k+'</span><div class="v">'+v+'</div><span class="u">'+(u||'')+'</span></div>';
+  grid.innerHTML=
+    cell(tr('0–100 km/h'),fmtT(p.t100),'',' hero')+
+    cell(tr('TOP SPEED'),Math.round(p.topSpeed),'km/h','hero')+
+    cell('400 m',fmtT(p.q400&&p.q400.t),fmtTrap(p.q400))+
+    cell('800 m',fmtT(p.q800&&p.q800.t),fmtTrap(p.q800))+
+    cell('1000 m',fmtT(p.q1000&&p.q1000.t),fmtTrap(p.q1000))+
+    cell(tr('POWER/WT'),p.ptw.toFixed(0),'hp/tonne');
+  if(note)note.textContent=tr('Best-power run through the gearbox with a traction-limited launch. Braking tests come next.');
+}
+
 // ---- Dynamic thermal model (temps drift over time under load) ----
 // Heat generated by load is balanced against the cooling subsystem's capacity.
 // Airflow through the radiator scales with RPM (ram air); the fan provides a
@@ -1542,12 +1804,15 @@ function setSound(on){
 function serializeBuild(name,note){
   return {app:APP_TAG,v:APP_VER,name:name||'engine',note:note||'',date:new Date().toISOString().slice(0,10),
     engine:readEngineFromForm(),   // clean design spec only (no derived fields)
+    vehicle:readVehicleFromForm(),
     tune:{throttle:state.throttle,load:state.load,elecLoad:state.elecLoad,afr:state.afr,iat:state.iat,coolant:state.coolant,oil:state.oil,autoThermal}};
 }
 function applyBuild(s){
   if(!s||!s.engine)throw new Error('not an engine build');
   applyEngineToForm(Object.assign({},DEFAULT_ENGINE,s.engine));
   buildEngine();
+  applyVehicleToForm(Object.assign({},DEFAULT_VEHICLE,s.vehicle||{}));
+  buildVehicle();updateVehicleSummary();
   const t=s.tune||s.state||{};
   ['throttle','load','elecLoad','afr','iat','coolant','oil'].forEach(k=>{if(typeof t[k]==='number')state[k]=t[k];});
   state.throttle=clamp(state.throttle,0,1);state.load=clamp(state.load,0,1);state.elecLoad=clamp(state.elecLoad,0,1);
@@ -1956,19 +2221,20 @@ function updateUI(){
 
 function setTab(mode){
   vizMode=mode;
-  ['Design','Engine','Dyno','Guide','Options'].forEach(m=>
+  ['Design','Vehicle','Engine','Dyno','Guide','Options'].forEach(m=>
     document.getElementById('tab'+m).classList.toggle('active',mode===m.toLowerCase()));
-  // DESIGN / GUIDE / OPTIONS are full-panel overlays that replace the canvas.
-  const overlay=mode==='design'||mode==='guide'||mode==='options';
+  // DESIGN / VEHICLE / GUIDE / OPTIONS are full-panel overlays that replace the canvas.
+  const overlay=mode==='design'||mode==='vehicle'||mode==='guide'||mode==='options';
   canvas.style.display=overlay?'none':'block';
   document.getElementById('btnFullscreen').style.display=overlay?'none':'block';
   document.getElementById('designPanel').classList.toggle('active',mode==='design');
+  document.getElementById('vehiclePanelTab').classList.toggle('active',mode==='vehicle');
   document.getElementById('guidePanel').classList.toggle('active',mode==='guide');
   document.getElementById('optionsPanel').classList.toggle('active',mode==='options');
-  // Right column: runtime Engine Controls only while driving/dyno; the Vehicle Designer
-  // placeholder takes their space on the DESIGN tab.
+  // Right column: runtime Engine Controls while driving/dyno; the Performance panel on VEHICLE.
   document.getElementById('controlsPanel').style.display=(mode==='engine'||mode==='dyno')?'':'none';
-  document.getElementById('vehiclePanel').style.display=(mode==='design')?'':'none';
+  document.getElementById('vehiclePanel').style.display=(mode==='vehicle')?'':'none';
+  if(mode==='vehicle'){buildVehicle();updateVehicleSummary();}
   updateUI();
 }
 
@@ -2018,10 +2284,20 @@ function bindControls(){
   document.getElementById('fileInput').addEventListener('change',e=>{const f=e.target.files&&e.target.files[0];if(f)readBuildFile(f);e.target.value='';});
 
   document.getElementById('tabDesign').addEventListener('click',()=>setTab('design'));
+  document.getElementById('tabVehicle').addEventListener('click',()=>setTab('vehicle'));
   document.getElementById('tabEngine').addEventListener('click',()=>setTab('engine'));
   document.getElementById('tabDyno').addEventListener('click',()=>setTab('dyno'));
   document.getElementById('tabGuide').addEventListener('click',()=>setTab('guide'));
   document.getElementById('tabOptions').addEventListener('click',()=>setTab('options'));
+  // Vehicle design: recompute performance live on any change; chassis sets a default drivetrain.
+  ['vhChassis','vhDrive','vhGears','vhGearing','vhTire','vhTireW','vhTireA','vhWheel','vhAeroF','vhAeroR','vhAeroFl','vhWeight'].forEach(id=>{
+    const el=document.getElementById(id);if(!el)return;
+    el.addEventListener('input',()=>{
+      if(id==='vhChassis'){const ch=CHASSIS[el.value];if(ch)document.getElementById('vhDrive').value=ch.drive;}
+      document.getElementById('valGearing').textContent=document.getElementById('vhGearing').value;
+      buildVehicle();updateVehicleSummary();
+    });
+  });
 
   const vizPanel=document.querySelector('.viz-panel');
   document.getElementById('btnFullscreen').addEventListener('click',()=>{
@@ -2094,6 +2370,7 @@ function loop(now){
   requestAnimationFrame(loop);
 }
 bindControls();applyEngineToForm(Object.assign({},DEFAULT_ENGINE));buildEngine();
+applyVehicleToForm(DEFAULT_VEHICLE);buildVehicle();updateVehicleSummary();
 loadFromHash();   // open a shared build if the URL carries one
 applyLang(currentLang);   // localise the UI (persisted choice)
 updatePhysics();updateUI();requestAnimationFrame(loop);
