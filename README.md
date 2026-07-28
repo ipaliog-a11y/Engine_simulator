@@ -77,11 +77,12 @@ saps power; a large radiator, electric fan and oil cooler keep it cool.
 - **Vehicle & performance (new)** — pick a **chassis** (13 archetypes, each with its own weight,
   size, drivetrain and grip), a **drivetrain** (FWD/RWD/AWD), a **gearbox** (4–8 speeds + a
   short↔tall gearing slider), **tyres** (compound + width/profile/wheel diameter → grip &
-  rolling radius) and **aero** (front/rear/floor downforce vs drag), plus **weight reduction**.
+  rolling radius), **aero** (front/rear/floor downforce vs drag), **brakes** (type + rotor size →
+  stopping power & fade resistance), **suspension** (a grip multiplier) and **weight reduction**.
   Your current engine is dropped in and the sim computes **0–100 km/h**, **400 / 800 / 1000 m**
-  (time + trap speed) and **top speed** live — a traction-limited launch with weight transfer,
-  downforce, aero drag and rolling resistance. Vehicle cost and power-to-weight are shown too.
-  *(Brakes, suspension detail and braking tests are coming in the next update.)*
+  (time + trap speed), **top speed**, **100–0 braking** and the **0–200–0** test live — a
+  traction-limited launch and a tyre/brake-limited stop (with fade), weight transfer, downforce,
+  aero drag and rolling resistance. Vehicle cost and power-to-weight are shown too.
 - **Engine-view schematic** — a test-bench diagram (air intake, fuel system, engine,
   exhaust/analyser, dynamometer, electrical) with live values on every subsystem, instead of
   a too-fast animation. The **exhaust/analyser** box reads live **emissions** (a CLEAN/OK/DIRTY
@@ -249,7 +250,10 @@ Curve** tab remains a wide-open-throttle steady-state sweep for reading the full
   limiter. Top speed is where top-gear thrust equals drag (or the limiter, whichever comes
   first), so over-gearing lowers it. AWD puts all four tyres' grip down and launches hardest;
   FWD loses front load under acceleration. Engine mass is estimated from the spec and added to
-  the chassis for curb weight and power-to-weight.
+  the chassis for curb weight and power-to-weight. Braking is the mirror image: deceleration is
+  the lesser of tyre grip (μ·(weight + downforce)) and what the brakes can command (capacity by
+  type/rotor size, fading as they absorb heat), with aero drag also slowing the car — so big
+  brakes and sticky tyres shorten 100–0, while undersized steel brakes fade in the 0–200–0.
 - Strategy: each part carries a rough build cost, summed into a total (so budget challenges
   and power-per-dollar have meaning); a design reliability index estimates durability from
   knock margin, boost/specific-output stress, high-strung choices (anti-lag, nitrous, sky-high
@@ -297,8 +301,8 @@ philosophy).
 5. ~~**(B) New engine types**~~ ✅ **done** — diesel (compression ignition), rotary/Wankel and
    2-stroke, each with its own firing frequency, fuelling, efficiency, emissions and sound.
 6. **(A) Vehicle / drivetrain layer** — 🚧 *in progress.* **Done:** chassis, drivetrain
-   (FWD/RWD/AWD), gearbox, tyres, aero and weight → **acceleration (0–100 km/h, 400/800/1000 m)
-   and top speed**. **Next:** brakes, suspension detail and **braking tests (0–200–0)**, then a
+   (FWD/RWD/AWD), gearbox, tyres, aero, weight, **brakes and suspension** → **acceleration
+   (0–100 km/h, 400/800/1000 m), top speed, 100–0 braking and the 0–200–0 test**. **Next:** a
    test track.
 
 Deferred: 2D fuel/ignition map editor (parked for later); V/boxer bank visuals (cosmetic);
@@ -333,6 +337,7 @@ native Android build (parked).
 - [x] Strategy layer: parts cost/budget, reliability index, power-per-dollar & objective challenges
 - [x] New engine types: diesel (CI), 2-stroke and rotary/Wankel, each with distinct physics & emissions
 - [x] Localisation (English / Greek) with persistence, and a responsive portrait layout
+- [x] Vehicle layer: chassis/drivetrain/gearbox/tyres/aero/weight/brakes/suspension → 0–100, 400/800/1000 m, top speed, 100–0 & 0–200–0
 - [x] Calibration pass for realistic power figures & curve shape (ongoing refinement)
 - [ ] Native Android build (wrap the PWA with Capacitor or a Trusted Web Activity)
 
