@@ -233,6 +233,7 @@ footer{text-align:center;margin-top:16px;padding:8px;font-size:7px;color:#555;bo
 <div class="field"><label for="edIgnType">IGNITION TYPE</label><select id="edIgnType"><option value="distributor">DISTRIBUTOR</option><option value="wasted">WASTED SPARK</option><option value="coil">COIL-ON-PLUG</option></select></div>
 <div class="field"><label for="edTiming">IGNITION CONTROL</label><select id="edTiming"><option value="fixed">FIXED (LOCKED)</option><option value="auto">AUTO (ECU / KNOCK-LIMITED)</option></select></div>
 <div class="field"><label for="edIgnAdv">IGNITION ADV (° BTDC)</label><input type="number" id="edIgnAdv" min="5" max="40" step="1" value="22"></div>
+<div class="field"><label for="edAfrMode">FUEL MIXTURE</label><select id="edAfrMode"><option value="fixed">MANUAL (FIXED AFR)</option><option value="auto">AUTO (ECU MAP)</option></select></div>
 </div>
 
 <div class="design-section">Cooling</div>
@@ -342,7 +343,9 @@ from idle); intercooler size cools the charge (denser, less knock) with a little
 catalytic converter trade flow vs back-pressure/emissions; nitrous is bottled power.<br>
 <b>Induction</b> — carbs → EFI → ITBs set breathing, metering precision and idle quality.<br>
 <b>Valvetrain</b> — wilder cams move power up top &amp; idle lumpy; VVT restores the bottom end.<br>
-<b>Fuel &amp; spark</b> — fuel type, octane, injector, ignition type and FIXED vs AUTO (ECU) timing.<br>
+<b>Fuel &amp; spark</b> — fuel type, octane, injector, ignition type, FIXED vs AUTO (ECU) timing, and
+the fuel mixture: MANUAL (you set one AFR) or AUTO, a 3D ECU map that runs near stoich at light
+load and enriches under load/boost for power — just like a real fuel map.<br>
 <b>Cooling &amp; electrical</b> — radiator/fan/oil-cooler/thermostat set temps; alternator size and
 ignition type set charging and the misfire RPM limit.
 </div>
@@ -560,7 +563,7 @@ const DEFAULT_ENGINE={
   intake:'na',boost_bar:0,intercooler:'large',turboSize:'medium',turboConfig:'single',scType:'roots',antilag:false,nitrous:'none',exhaust:'sport',cat:'stock',
   intakeSys:'efi',airFilter:'perf',
   cam:'stock',vvt:true,
-  fuel:'gasoline',octane:95,injector:'direct',ignitionAdv:22,ignitionType:'coil',timingMode:'auto',
+  fuel:'gasoline',octane:95,injector:'direct',ignitionAdv:22,ignitionType:'coil',timingMode:'auto',afrMode:'fixed',
   radiator:'stock',fan:'electric',oilCooler:false,thermostat:88,
   alternator:'120'
 };
@@ -631,7 +634,7 @@ const I18N={
   'Induction (Metering)':{el:'Εισαγωγή (Τροφοδοσία)'},'INTAKE SYSTEM':{el:'ΣΥΣΤΗΜΑ ΕΙΣΑΓΩΓΗΣ'},'AIR FILTER':{el:'ΦΙΛΤΡΟ ΑΕΡΑ'},
   'Valvetrain':{el:'Χρονισμός Βαλβίδων'},'CAM PROFILE':{el:'ΠΡΟΦΙΛ ΕΚΚΕΝΤΡ.'},'VARIABLE VALVE TIMING':{el:'ΜΕΤΑΒΛΗΤΟΣ ΧΡΟΝΙΣΜΟΣ'},
   'Fuel & Spark':{el:'Καύσιμο & Σπινθήρας'},'FUEL TYPE':{el:'ΤΥΠΟΣ ΚΑΥΣΙΜΟΥ'},'FUEL OCTANE (RON)':{el:'ΟΚΤΑΝΙΑ (RON)'},
-  'INJECTOR':{el:'ΜΠΕΚ ΨΕΚΑΣΜΟΥ'},'IGNITION TYPE':{el:'ΤΥΠΟΣ ΑΝΑΦΛΕΞΗΣ'},'IGNITION CONTROL':{el:'ΕΛΕΓΧΟΣ ΑΝΑΦΛΕΞΗΣ'},'IGNITION ADV (° BTDC)':{el:'ΠΡΟΠΟΡΕΙΑ (° BTDC)'},
+  'INJECTOR':{el:'ΜΠΕΚ ΨΕΚΑΣΜΟΥ'},'IGNITION TYPE':{el:'ΤΥΠΟΣ ΑΝΑΦΛΕΞΗΣ'},'IGNITION CONTROL':{el:'ΕΛΕΓΧΟΣ ΑΝΑΦΛΕΞΗΣ'},'IGNITION ADV (° BTDC)':{el:'ΠΡΟΠΟΡΕΙΑ (° BTDC)'},'FUEL MIXTURE':{el:'ΜΕΙΓΜΑ ΚΑΥΣΙΜΟΥ'},
   'Cooling':{el:'Ψύξη'},'RADIATOR':{el:'ΨΥΓΕΙΟ'},'COOLING FAN':{el:'ΒΕΝΤΙΛΑΤΕΡ'},'OIL COOLER':{el:'ΨΥΓΕΙΟ ΛΑΔΙΟΥ'},'THERMOSTAT (°C)':{el:'ΘΕΡΜΟΣΤΑΤΗΣ (°C)'},
   'Electrical':{el:'Ηλεκτρικά'},'ALTERNATOR':{el:'ΔΥΝΑΜΟ (ALT)'},
   'BUILD & DYNO':{el:'ΚΑΤΑΣΚΕΥΗ & ΔΥΝΑΜΟ'},'DEFAULTS':{el:'ΠΡΟΕΠΙΛΟΓΕΣ'},
@@ -681,7 +684,7 @@ const GUIDE_I18N={
   scorecard:{el:'Κάθε build βαθμολογείται <b>S → F</b> από επτά στοιχεία: ειδική <b>ισχύ</b> & <b>ροπή</b> (ανά λίτρο), εύρος <b>περιοχής ισχύος</b>, θερμική <b>απόδοση</b>, <b>ασφάλεια</b> από πειράκι, <b>οδηγησιμότητα</b> (ροπή στις χαμηλές) και <b>εκπομπές</b>. Το κυνήγι μέγιστης ισχύος κοστίζει σε οδηγησιμότητα, ασφάλεια και εκπομπές — η βαθμολογία επιβραβεύει το ισορροπημένο build.'},
   career:{el:'Διάλεξε έναν <b>ΣΤΟΧΟ</b> στην κορυφή της ΣΧΕΔΙΑΣΗΣ για να κάνεις τη σχεδίαση γρίφο. Κάθε πρόκληση θέτει κριτήρια — ισχύ, οικονομία, εκπομπές, <b>αξιοπιστία</b> ή <b>ισχύ ανά δολάριο</b> — και κάποιες βάζουν όριο <b>προϋπολογισμού</b>. Η κάρτα τσεκάρει κάθε κριτήριο ζωντανά (✓/✗) και δείχνει <b>ΕΠΙΤΥΧΙΑ</b> όταν καλυφθούν όλα· κόστος και αξιοπιστία φαίνονται πάντα. Ο μεγάλος κυβισμός κερδίζει σε αξία· boost και αγωνιστικά μέρη κερδίζουν σε ισχύ αλλά κοστίζουν σε χρήμα και αξιοπιστία.'},
   types:{el:'<b>Βενζίνη 4-χρονη</b> — η ισορροπημένη επιλογή: ανάφλεξη με σπινθήρα, μία εκρηκτική διαδρομή ανά δύο στροφές.<br><b>Πετρέλαιο (CI)</b> — ανάφλεξη με συμπίεση (χωρίς μπουζί, χωρίς πειράκι), πολύ υψηλή συμπίεση, φτωχό χωρίς πεταλούδα. Μεγάλη <b>ροπή</b> στις χαμηλές, χαμηλό όριο στροφών, η καλύτερη <b>απόδοση</b> — αλλά βαρύ, με εκπομπές <b>NOx + αιθάλη (PM)</b> που καθαρίζει σύστημα DPF/SCR.<br><b>2-χρονη</b> — εκρηκτική διαδρομή σε <i>κάθε</i> στροφή (θυρίδες, χωρίς εκκεντροφόρο): υψηλή ειδική ισχύς αλλά λαίμαργη και <b>HC</b>-βρόμικη.<br><b>Wankel (ρότορας)</b> — περιστρεφόμενος ρότορας που ανάβει σε κάθε στροφή: ομαλός σαν τουρμπίνα, τεράστιες στροφές, υψηλή ισχύς ανά λίτρο, αλλά λαίμαργος, <b>HC</b>-βαρύς και σκληρός στα ελάσματα κορυφής.<br>Η αλλαγή τύπου προσαρμόζει τα εύρη συμπίεσης/στροφών/AFR και απενεργοποιεί ό,τι δεν ισχύει.'},
-  subsystems:{el:'<b>Κάτω μέρος</b> — τύπος κινητήρα, διάμετρος × διαδρομή × κύλινδροι = κυβισμός· υπερτετράγωνος & υψηλότερο όριο ανεβάζουν την περιοχή ισχύος.<br><b>Διαδρομή αέρα</b> — τούρμπο (γεμίζει με τις στροφές) ή υπερσυμπιεστής (boost από ρελαντί)· το intercooler ψύχει το χάρμανι· εξάτμιση & καταλύτης ανταλλάσσουν ροή με αντίθλιψη/εκπομπές· το νιτρό είναι εμφιαλωμένη ισχύς.<br><b>Εισαγωγή</b> — καρμπιρατέρ → EFI → ITB ορίζουν αναπνοή, ακρίβεια & ρελαντί.<br><b>Χρονισμός βαλβίδων</b> — άγριες εκκεντροφόροι ανεβάζουν την ισχύ ψηλά· το VVT επαναφέρει τις χαμηλές.<br><b>Καύσιμο & σπινθήρας</b> — τύπος καυσίμου, οκτάνια, μπεκ, ανάφλεξη και χρονισμός FIXED/AUTO.<br><b>Ψύξη & ηλεκτρικά</b> — ψυγείο/βεντιλατέρ/ψυγείο λαδιού/θερμοστάτης ορίζουν θερμοκρασίες· δυναμό & ανάφλεξη ορίζουν φόρτιση και όριο μισφάιρ.'},
+  subsystems:{el:'<b>Κάτω μέρος</b> — τύπος κινητήρα, διάμετρος × διαδρομή × κύλινδροι = κυβισμός· υπερτετράγωνος & υψηλότερο όριο ανεβάζουν την περιοχή ισχύος.<br><b>Διαδρομή αέρα</b> — τούρμπο (γεμίζει με τις στροφές) ή υπερσυμπιεστής (boost από ρελαντί)· το intercooler ψύχει το χάρμανι· εξάτμιση & καταλύτης ανταλλάσσουν ροή με αντίθλιψη/εκπομπές· το νιτρό είναι εμφιαλωμένη ισχύς.<br><b>Εισαγωγή</b> — καρμπιρατέρ → EFI → ITB ορίζουν αναπνοή, ακρίβεια & ρελαντί.<br><b>Χρονισμός βαλβίδων</b> — άγριες εκκεντροφόροι ανεβάζουν την ισχύ ψηλά· το VVT επαναφέρει τις χαμηλές.<br><b>Καύσιμο & σπινθήρας</b> — τύπος καυσίμου, οκτάνια, μπεκ, ανάφλεξη, χρονισμός FIXED/AUTO και το μείγμα: MANUAL (ένα σταθερό AFR) ή AUTO — ένας 3D χάρτης ECU που τρέχει κοντά στο στοιχειομετρικό στο ελαφρύ φορτίο και εμπλουτίζει υπό φορτίο/boost, όπως ένας πραγματικός χάρτης καυσίμου.<br><b>Ψύξη & ηλεκτρικά</b> — ψυγείο/βεντιλατέρ/ψυγείο λαδιού/θερμοστάτης ορίζουν θερμοκρασίες· δυναμό & ανάφλεξη ορίζουν φόρτιση και όριο μισφάιρ.'},
   vehicle:{el:'Στην καρτέλα <b>ΟΧΗΜΑ</b> βάζεις τον κινητήρα σου σε αυτοκίνητο. Διάλεξε <b>σασί</b> (κάθε ένα με δικό του βάρος, μέγεθος και μετάδοση), <b>μετάδοση</b> (FWD/RWD/AWD — το AWD ξεκινά καλύτερα), <b>κιβώτιο</b> (σχέσεις + ρυθμιστικό κοντή↔μακριά τελική), <b>ελαστικά</b> (τύπος + πλάτος/προφίλ/διάμετρος), <b>αεροδυναμική</b> (εμπρός/πίσω/πάτωμα = κάθετη δύναμη & οπισθέλκουσα), <b>φρένα</b> (τύπος + διάμετρος δίσκου ορίζουν φρενάρισμα και αντοχή στην εξασθένηση) και <b>ανάρτηση</b> (πολλαπλασιαστής μηχανικής πρόσφυσης). Ο κινητήρας προστίθεται και το ταμπλό <b>Επιδόσεις</b> υπολογίζει <b>0–100 km/h</b>, <b>400/800/1000 m</b>, <b>τελική</b>, <b>φρενάρισμα 100–0</b> και το τεστ <b>0–200–0</b> ζωντανά — εκκίνηση περιορισμένη από πρόσφυση και φρενάρισμα με όριο ελαστικών/φρένων και εξασθένηση. Η υπερβολικά μακριά τελική βλάπτει επιτάχυνση και τελική· κολλώδη ελαστικά, μεγάλα φρένα και AWD βοηθούν πιο πολύ.'},
   tip:{el:'Συμβουλή: κλείσε τη ΦΘΟΡΑ στις ΕΠΙΛΟΓΕΣ για ελεύθερο πειραματισμό, μετά ξανάνοιξέ την για συνέπειες.'}
 };
@@ -921,6 +924,7 @@ function readEngineFromForm(){
     ignitionAdv:clamp(Math.round(+g('edIgnAdv').value||22),5,40),
     ignitionType:g('edIgnType').value,
     timingMode:g('edTiming').value,
+    afrMode:g('edAfrMode').value,
     radiator:g('edRadiator').value,
     fan:g('edFan').value,
     oilCooler:g('edOilCooler').value==='yes',
@@ -943,7 +947,7 @@ function applyEngineToForm(e){
   g('edCam').value=e.cam||'stock';g('edVVT').value=e.vvt?'yes':'no';
   g('edFuel').value=e.fuel||'gasoline';
   g('edExhaust').value=e.exhaust;g('edCat').value=e.cat||'stock';g('edOctane').value=e.octane;g('edInjector').value=e.injector;
-  g('edIgnAdv').value=e.ignitionAdv;g('edIgnType').value=e.ignitionType;g('edTiming').value=e.timingMode||'fixed';
+  g('edIgnAdv').value=e.ignitionAdv;g('edIgnType').value=e.ignitionType;g('edTiming').value=e.timingMode||'fixed';g('edAfrMode').value=e.afrMode||'fixed';
   g('edRadiator').value=e.radiator||'stock';g('edFan').value=e.fan||'electric';
   g('edOilCooler').value=e.oilCooler?'yes':'no';g('edThermostat').value=e.thermostat||88;
   g('edAlternator').value=e.alternator||'120';
@@ -1110,6 +1114,8 @@ function buildEngine(){
   updateEngineLabels();
   updateDesignSummary();
   renderChallenge();
+  // In AUTO (ECU MAP) mode the ECU sets the mixture, so the manual AFR slider is read-only.
+  const afrSlider=document.getElementById('afr');if(afrSlider)afrSlider.disabled=(engine.afrMode==='auto');
   if(document.getElementById('vhChassis')){buildVehicle();updateVehicleSummary();}   // refresh vehicle performance for the new engine
 }
 // ---- Strategy layer: what the build costs (parts $) ----
@@ -1221,9 +1227,10 @@ function updateDesignSummary(){
   const dimLabel=engine.type==='rotary'?'rotor':'mm';
   const valveLine=engine.ports?'<br>Induction ports <b>(no poppet valvetrain)</b>':
     '<br>Cam <b>'+engine.cam.toUpperCase()+(engine.vvt?' + VVT':'')+'</b>';
+  const mixTxt=' • Mixture <b>'+(engine.afrMode==='auto'?'AUTO (ECU map)':'MANUAL')+'</b>';
   const sparkLine=engine.ci?
-    '<br><b>Compression ignition</b> • <b>Direct inj</b> • Diesel (cetane)':
-    '<br>'+(engine.injector==='direct'?'<b>Direct inj</b> • ':'')+'Ignition <b>'+(engine.timingMode==='auto'?'AUTO (ECU)':engine.ignitionAdv+'° fixed')+' '+engine.ignitionType.toUpperCase()+'</b>';
+    '<br><b>Compression ignition</b> • <b>Direct inj</b> • Diesel (cetane)'+mixTxt:
+    '<br>'+(engine.injector==='direct'?'<b>Direct inj</b> • ':'')+'Ignition <b>'+(engine.timingMode==='auto'?'AUTO (ECU)':engine.ignitionAdv+'° fixed')+' '+engine.ignitionType.toUpperCase()+'</b>'+mixTxt;
   const elecLine=engine.ci?
     '<br>Electrical <b>'+engine.altMaxA+'A alt</b> • glow-plug start (no spark)':
     '<br>Electrical <b>'+engine.altMaxA+'A alt</b> • Ignition misfire above <b>~'+engine.dwellLimit+'</b> rpm ('+engine.ignitionType.toUpperCase()+')';
@@ -1308,6 +1315,26 @@ function computeVE(rpm,map){
   if(rpm>engine.redline)ve*=1-0.6*clamp((rpm-engine.redline)/(engine.redline*0.5),0,1);  // valve float
   return clamp(ve,0.2,1.2);
 }
+// ---- ECU fuel map: the AFR target as a 3D function of load (MAP) and RPM ----
+// A real ECU doesn't hold one AFR everywhere — its map runs near stoich at light load for
+// economy/emissions and enriches under load & boost for power and exhaust-temperature control.
+// In AUTO (ECU MAP) mode the mixture is looked up here; in MANUAL mode the AFR slider is used.
+function mappedAFR(rpm,map){
+  const st=engine.stoichAFR;
+  if(engine.ci){
+    // Diesel: quality-governed fuelling schedule — very lean at light load, toward the smoke
+    // limit (λ≈1.05) at full fuelling.
+    const l=clamp((map-0.5)/Math.max(0.3,engine.mapMax-0.5),0,1);
+    return st*(3.4-2.35*l);
+  }
+  const boost=Math.max(0,map-1.0);
+  let lam=1.02-0.16*clamp((map-0.35)/0.65,0,1);                          // ~stoich cruise → ~λ0.86 WOT
+  lam-=0.07*clamp(boost/1.2,0,1.1);                                      // enrich under boost (power/EGT)
+  lam-=0.015*clamp((rpm-engine.redline*0.85)/(engine.redline*0.2),0,1); // slight top-end enrichment
+  return st*clamp(lam,0.78,1.05);
+}
+// The AFR actually run at an operating point: the ECU map (AUTO) or the fixed slider (MANUAL).
+function curAFR(rpm,map){return engine.afrMode==='auto'?mappedAFR(rpm,map):state.afr;}
 function afrPowerFactor(afr){
   const lam=afr/engine.stoichAFR;
   if(engine.ci){
@@ -1346,7 +1373,7 @@ function knockAt(rpm,map,adv){
   k+=Math.max(0,state.coolant-95)*1.0;                  // hot chamber
   k+=Math.max(0,rpm-engine.redline*0.8)/60;             // less time = more heat soak
   k+=(adv-mbt-ignBonus())*2.5;                          // spark timing vs MBT (signed)
-  const lam=state.afr/engine.stoichAFR;
+  const lam=curAFR(rpm,map)/engine.stoichAFR;
   k+=Math.max(0,(lam-0.95))*60;                         // lean burns hotter
   if(lam<0.87)k*=0.5;                                   // rich charge-cools
   k-=(engine.effOctane-90)*2.2;                         // fuel octane resists knock
@@ -1364,7 +1391,7 @@ function activeAdvance(rpm,map){
   if(engine.timingMode!=='auto')return engine.ignitionAdv;
   const knockAtMbt=knockAt(rpm,map,mbt);
   if(knockAtMbt<=KNOCK_TARGET)return mbt;               // clean at MBT → run full timing
-  const lam=state.afr/engine.stoichAFR,rich=lam<0.87?0.5:1;
+  const lam=curAFR(rpm,map)/engine.stoichAFR,rich=lam<0.87?0.5:1;
   const retard=(knockAtMbt-KNOCK_TARGET)/(2.5*Math.max(rich,0.3));
   return clamp(mbt-retard,6,mbt);                       // pull timing to protect
 }
@@ -1416,7 +1443,7 @@ function calcAtRpm(rpm,mapOverride){
   const map=mapOverride!=null?mapOverride:wotMapAt(rpm);
   const {coolF,oilFrictionMult}=tempFactors(state.coolant,state.oil);
   const ve=computeVE(rpm,map);
-  const afrP=afrPowerFactor(state.afr);
+  const afrP=afrPowerFactor(curAFR(rpm,map));
   const ignF=clamp(1-0.004*Math.pow(activeAdvance(rpm,map)-mbtAdvance(rpm,map),2),0.72,1.0);
 
   let imep=IMEP_K*engine.typeImep*map*ve*afrP*coolF*engine.crFactor*ignF*ignitionHealth(rpm)*healthFactor()+nitrousImep()*healthFactor();
@@ -1440,7 +1467,7 @@ function brakeTorqueRaw(rpm,map,fuelCut){
   const {coolF,oilFrictionMult}=tempFactors(state.coolant,state.oil);
   let imep=0;
   if(!fuelCut){
-    const ve=computeVE(rpm,map),afrP=afrPowerFactor(state.afr);
+    const ve=computeVE(rpm,map),afrP=afrPowerFactor(curAFR(rpm,map));
     const ignF=clamp(1-0.004*Math.pow(activeAdvance(rpm,map)-mbtAdvance(rpm,map),2),0.72,1.0);
     imep=IMEP_K*engine.typeImep*map*ve*afrP*coolF*engine.crFactor*ignF*ignitionHealth(rpm)*healthFactor()*(298.15/(effIAT(map)+273.15))+nitrousImep()*healthFactor();
     imep=dieselImepLimit(imep);
@@ -1596,6 +1623,9 @@ function computeEmissions(){
 }
 function updatePhysics(){
   const map=liveMap();
+  // AUTO (ECU MAP) mode: the ECU sets the live mixture from its load×rpm map, so the AFR
+  // readout, fuel flow, emissions and wear all reflect the mapped value.
+  if(engine.afrMode==='auto')state.afr=mappedAFR(state.rpm,map);
   computeEmissions();
   state.fuelCut=overrunFuelCut()||state.rpm>=engine.redline;
   const r=calcAtRpm(state.rpm,map);
@@ -1727,9 +1757,11 @@ function simulateBraking(v0){
 // build, never on throttle history, temperature or a drained battery.
 function buildTorqueCurve(){
   const sv={afr:state.afr,coolant:state.coolant,oil:state.oil,engineHealth:state.engineHealth,blown:state.blown,iat:state.iat,systemVoltage:state.systemVoltage,nitrousActive:state.nitrousActive};
+  const savedAfrMode=engine.afrMode;engine.afrMode='fixed';   // use the fixed best-power AFR below
   state.coolant=90;state.oil=100;state.engineHealth=1;state.blown=false;state.iat=20;state.systemVoltage=14.0;state.nitrousActive=false;
   state.afr=engine.ci?engine.stoichAFR*1.05:engine.stoichAFR*0.88;
   const pts=[];for(let r=1000;r<=engine.redline;r+=100)pts.push({rpm:r,tq:calcAtRpm(r).torque});
+  engine.afrMode=savedAfrMode;
   Object.assign(state,sv);   // restore the exact live state (correct keys — no accidental heal)
   return pts;
 }
@@ -1967,6 +1999,7 @@ function clearPulls(){dynoPulls=[];flash('DYNO PULLS CLEARED');}
 // ---- Scoring: rate the design at a standard WOT best-power condition ----
 function scoreEngine(){
   const sv={afr:state.afr,iat:state.iat,coolant:state.coolant,oil:state.oil,eh:state.engineHealth,bl:state.blown,el:state.elecLoad,map:state.map,rpm:state.rpm};
+  const savedAfrMode=engine.afrMode;engine.afrMode='fixed';   // score against the explicit sweep AFRs, independent of the ECU map
   state.iat=25;state.coolant=90;state.oil=100;state.engineHealth=1;state.blown=false;state.elecLoad=0.3;
   const rMax=engine.redline;
   // best-power WOT sweep → peaks, powerband, low-end torque. Diesel makes peak power lean,
@@ -2003,6 +2036,7 @@ function scoreEngine(){
     emSum+=computeEmissions();emN++;
   }
   const emissions=Math.round(emSum/emN);
+  engine.afrMode=savedAfrMode;
   Object.assign(state,{afr:sv.afr,iat:sv.iat,coolant:sv.coolant,oil:sv.oil,engineHealth:sv.eh,blown:sv.bl,elecLoad:sv.el,map:sv.map,rpm:sv.rpm});
   computeEmissions();   // restore live emissions readout at the real operating point
 
