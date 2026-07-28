@@ -577,7 +577,7 @@ const PRESETS=[
   {name:'6.2 Supercharged V8',    engine:{cylinders:8,bore_mm:103.9,stroke_mm:90.9,compression:9.5,layout:'v',redline:6400,intake:'supercharger',boost_bar:0.65,octane:98,injector:'port',vvt:false,cam:'sport',exhaust:'sport',radiator:'large',oilCooler:true}},
   {name:'6.5 V12 NA Supercar',    engine:{cylinders:12,bore_mm:95,stroke_mm:76.4,compression:11.8,layout:'v',redline:8500,intakeSys:'itb',cam:'race',exhaust:'race',cat:'sport',octane:98,injector:'port',radiator:'large',oilCooler:true}},
   {name:'2.0 Turbo Diesel I4',    engine:{type:'diesel',vvt:false,cylinders:4,bore_mm:84,stroke_mm:90,compression:17,redline:4800,intake:'turbo',boost_bar:1.2,turboSize:'medium',intakeSys:'efi',injector:'direct',exhaust:'stock',cat:'stock',radiator:'large',oilCooler:true}},
-  {name:'6.6 V8 Turbodiesel',     engine:{type:'diesel',vvt:false,cylinders:8,bore_mm:103,stroke_mm:99,compression:16.5,layout:'v',redline:4500,intake:'turbo',boost_bar:1.4,turboSize:'large',turboConfig:'sequential',intakeSys:'efi',injector:'direct',exhaust:'sport',cat:'stock',radiator:'large',oilCooler:true}},
+  {name:'6.6 V8 Turbodiesel',     engine:{type:'diesel',vvt:false,cylinders:8,bore_mm:103,stroke_mm:99,compression:16.5,layout:'v',redline:3800,intake:'turbo',boost_bar:1.1,turboSize:'medium',turboConfig:'single',intakeSys:'efi',injector:'direct',exhaust:'stock',cat:'stock',radiator:'large',oilCooler:true}},
   {name:'1.3 Rotary Turbo (13B)', engine:{type:'rotary',cylinders:2,bore_mm:80,stroke_mm:80,compression:9.4,redline:9000,intake:'turbo',boost_bar:0.7,turboSize:'medium',turboConfig:'sequential',intakeSys:'efi',injector:'port',exhaust:'sport',cat:'sport',octane:98,radiator:'large',oilCooler:true}},
   {name:'1.3 Rotary NA (Renesis)',engine:{type:'rotary',cylinders:2,bore_mm:80,stroke_mm:80,compression:10,redline:9000,intakeSys:'itb',injector:'port',exhaust:'sport',cat:'sport',octane:98,radiator:'large',oilCooler:true}},
   {name:'500cc 2-Stroke Twin',    engine:{type:'twostroke',cylinders:2,bore_mm:70,stroke_mm:64,compression:9,redline:9500,intakeSys:'carb2',airFilter:'perf',exhaust:'race',cat:'none',octane:98,injector:'port',ignitionType:'coil',radiator:'stock'}}
@@ -1023,6 +1023,10 @@ function buildEngine(){
   engine.veWidthLo*=loWiden;
   engine.camLowLoss=camLowLoss;
   engine.camScav=cam.scav;
+  // Diesels breathe poorly up top (airflow/turbo-limited) and make their power low in the rev
+  // range: pull the VE peak down and steepen the high-rpm falloff so torque tapers before the
+  // (low) redline and peak power lands realistically early, instead of climbing to the limiter.
+  if(engine.ci){engine.vePeakRpm=clamp(engine.vePeakRpm*0.78,2000,engine.redline*0.9);engine.veWidthHi*=0.55;}
   // Induction system (metering + throttle) and air filter → breathing, AFR precision,
   // manifold response, idle quality. Direct injection is only possible on EFI systems.
   const sys=INTAKE_SYS[engine.intakeSys]||INTAKE_SYS.efi,filt=AIR_FILTER[engine.airFilter]||AIR_FILTER.stock;
@@ -1397,6 +1401,15 @@ function ignitionHealth(rpm){
   const lim=engine.dwellLimit*ignVFactor();
   return rpm<=lim?1:clamp(1-(rpm-lim)/(engine.dwellLimit*0.45),0.5,1);
 }
+// Diesels have no spark-knock ceiling, so raw IMEP would scale with boost×compression without
+// limit. In reality peak cylinder pressure, the smoke limit and turbo/EGT constraints cap how
+// much work a diesel makes per cycle — production & built diesels top out around ~22-24 bar
+// BMEP. Softly saturate diesel IMEP toward that ceiling (low-boost/NA diesels are untouched).
+function dieselImepLimit(imep){
+  if(!engine.ci)return imep;
+  const knee=17,span=7;   // → asymptotes near ~24 bar IMEP (~22 bar BMEP)
+  return imep>knee?knee+span*Math.tanh((imep-knee)/span):imep;
+}
 // mapOverride lets the live view pass the integrated manifold pressure; the dyno omits
 // it and uses wide-open throttle (steady state) at each RPM.
 function calcAtRpm(rpm,mapOverride){
@@ -1408,6 +1421,7 @@ function calcAtRpm(rpm,mapOverride){
 
   let imep=IMEP_K*engine.typeImep*map*ve*afrP*coolF*engine.crFactor*ignF*ignitionHealth(rpm)*healthFactor()+nitrousImep()*healthFactor();
   imep*=298.15/(effIAT(map)+273.15);   // intake-air density correction (ref 25°C)
+  imep=dieselImepLimit(imep);          // diesel peak-cylinder-pressure / smoke ceiling
 
   let bmep=Math.max(0.05,imep-pumpFrictionMEP(rpm,map,oilFrictionMult));
 
@@ -1429,6 +1443,7 @@ function brakeTorqueRaw(rpm,map,fuelCut){
     const ve=computeVE(rpm,map),afrP=afrPowerFactor(state.afr);
     const ignF=clamp(1-0.004*Math.pow(activeAdvance(rpm,map)-mbtAdvance(rpm,map),2),0.72,1.0);
     imep=IMEP_K*engine.typeImep*map*ve*afrP*coolF*engine.crFactor*ignF*ignitionHealth(rpm)*healthFactor()*(298.15/(effIAT(map)+273.15))+nitrousImep()*healthFactor();
+    imep=dieselImepLimit(imep);
     const knock=computeKnockRisk(rpm,map);
     if(knock>60)imep*=1-0.32*((knock-60)/40);
   }
