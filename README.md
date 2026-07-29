@@ -51,7 +51,9 @@ screamer, 2JZ six, muscle V8, blown V8, V12 supercar…), or configure your own 
   *Manual* (one AFR you set everywhere) or *Auto*, a **3D ECU fuel map** that targets near-stoich
   at light load and enriches under load & boost for power/EGT — just like a real fuel map (the
   default on fuel-injected builds; a live **load×RPM heat-grid** shows the target AFR in every
-  cell with a marker on the current operating point). Carbs/mechanical injection stay manual. Each
+  cell with a marker on the current operating point, and the map is **editable** — tap a cell and
+  nudge it richer/leaner to hand-tune the mixture, or reset to the factory grid). Carbs/mechanical
+  injection stay manual. Each
   fuel has its own energy density, stoich AFR, knock rating and charge-cooling — alcohols resist
   knock and cool the charge (more power headroom) but burn far more fuel.
 - **Cooling** — radiator size (small / stock / large), cooling fan (none / mechanical /
@@ -227,9 +229,12 @@ Curve** tab remains a wide-open-throttle steady-state sweep for reading the full
   fuel map picks the target AFR from load (MAP) and RPM — near stoich at light load for economy,
   richer under load and boost (down to ~λ0.80) for power and exhaust-temperature control, like a
   real fuel map. Fuel *quantity* is always the air mass ÷ target AFR (so it already responds to
-  both load and RPM); the map adds the load-varying target on top. Scoring and the vehicle
-  acceleration model always evaluate at a fixed best-power AFR, so grades and lap-style figures
-  stay comparable regardless of the mode.
+  both load and RPM); the map adds the load-varying target on top. The map is **hand-editable**
+  in the design panel — select any load×RPM cell and shift its target richer/leaner (the live dyno
+  reflects the change immediately); a custom map is saved with the build and can be reset to the
+  factory grid at any time. Scoring and the vehicle acceleration model always evaluate at a fixed
+  best-power AFR, so grades and lap-style figures stay comparable regardless of the mode or any
+  hand-tuning.
 - Intake system sets top-end airflow (restrictive small carbs choke up top; ITBs, sidedraft
   carbs and mechanical injection breathe best) and AFR-metering precision — EFI holds optimal
   AFR for the best efficiency, while carburetors and mechanical injection run richer and
@@ -337,6 +342,7 @@ native Android build (parked).
 - [x] Different fuels (pump/race gas, E85, methanol) with their own energy, stoich, knock & cooling
 - [x] Induction/metering systems (carbs, mechanical injection, EFI, ITBs) + air filters
 - [x] Ignition control: Fixed vs Auto (ECU, MBT-tracking & knock-limited timing)
+- [x] Fuel mixture: Manual (fixed AFR) vs Auto (editable 3D ECU fuel map, load×RPM, with a live heat-grid)
 - [x] Reliability / wear simulation (health falls under detonation/overheat/lean-boost/over-rev)
 - [x] Scoring / rating (graded scorecard) and dyno-pull logging & overlay
 - [x] Save to / open from named files (with notes) and shareable build links

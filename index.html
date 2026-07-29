@@ -155,8 +155,16 @@ footer{text-align:center;margin-top:16px;padding:8px;font-size:7px;color:#555;bo
 table.fuelmap{border-collapse:collapse;font-size:7px;width:100%}
 table.fuelmap th{color:#88aacc;font-weight:normal;padding:2px 3px;font-size:6.5px}
 table.fuelmap td{color:#fff;text-align:center;padding:4px 2px;border:1px solid #0a0a10;cursor:default;min-width:26px;text-shadow:1px 1px 0 #0006}
-table.fuelmap td.live{outline:2px solid #fff;outline-offset:-2px;font-weight:bold}
+table.fuelmap td.fm-cell{cursor:pointer}
+table.fuelmap td.fm-cell.sel{outline:2px solid #ffcc00;outline-offset:-2px;font-weight:bold}
+table.fuelmap td.live{box-shadow:inset 0 0 0 2px #fff;font-weight:bold}
 .fuelmap-note{font-size:6.5px;color:#778;margin-top:4px;line-height:1.5}
+.fuelmap-edit{display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:8px}
+.fuelmap-edit #fmSelInfo{font-size:7px;color:#9bd;flex:1 1 auto;min-width:90px}
+.fuelmap-edit .fm-btns{display:flex;gap:4px}
+.fuelmap-edit button{font-family:inherit;font-size:6.5px;color:#fff;background:#1a2030;border:1px solid #33405a;padding:4px 6px;cursor:pointer}
+.fuelmap-edit button:hover{background:#26304a}
+.fuelmap-edit button#fmReset{color:#ffb0b0;border-color:#5a3340}
 </style>
 </head>
 <body>
@@ -244,6 +252,7 @@ table.fuelmap td.live{outline:2px solid #fff;outline-offset:-2px;font-weight:bol
 </div>
 <div class="design-section" id="fuelMapHdr">ECU Fuel Map (target AFR)</div>
 <div class="fuelmap-wrap" id="fuelMapBox"></div>
+<div class="fuelmap-edit" id="fuelMapEdit" style="display:none"><span id="fmSelInfo"></span><span class="fm-btns"><button type="button" id="fmLean">− LEAN</button><button type="button" id="fmRich">+ RICH</button><button type="button" id="fmReset">RESET MAP</button></span></div>
 
 <div class="design-section">Cooling</div>
 <div class="design-grid">
@@ -354,7 +363,9 @@ catalytic converter trade flow vs back-pressure/emissions; nitrous is bottled po
 <b>Valvetrain</b> — wilder cams move power up top &amp; idle lumpy; VVT restores the bottom end.<br>
 <b>Fuel &amp; spark</b> — fuel type, octane, injector, ignition type, FIXED vs AUTO (ECU) timing, and
 the fuel mixture: MANUAL (you set one AFR) or AUTO, a 3D ECU map that runs near stoich at light
-load and enriches under load/boost for power — just like a real fuel map.<br>
+load and enriches under load/boost for power — just like a real fuel map. In AUTO you can
+<b>tune the map</b>: tap any cell to select it, then − LEAN / + RICH to shift that load×rpm
+target (RESET MAP restores the factory grid).<br>
 <b>Cooling &amp; electrical</b> — radiator/fan/oil-cooler/thermostat set temps; alternator size and
 ignition type set charging and the misfire RPM limit.
 </div>
@@ -646,7 +657,9 @@ const I18N={
   'INJECTOR':{el:'ΜΠΕΚ ΨΕΚΑΣΜΟΥ'},'IGNITION TYPE':{el:'ΤΥΠΟΣ ΑΝΑΦΛΕΞΗΣ'},'IGNITION CONTROL':{el:'ΕΛΕΓΧΟΣ ΑΝΑΦΛΕΞΗΣ'},'IGNITION ADV (° BTDC)':{el:'ΠΡΟΠΟΡΕΙΑ (° BTDC)'},'FUEL MIXTURE':{el:'ΜΕΙΓΜΑ ΚΑΥΣΙΜΟΥ'},
   'ECU Fuel Map (target AFR)':{el:'Χάρτης Καυσίμου ECU (στόχος AFR)'},
   'Rows = load (MAP bar, top = full) · Columns = RPM · cell = target':{el:'Γραμμές = φορτίο (MAP bar, πάνω = πλήρες) · Στήλες = στροφές · κελί = στόχος'},
-  'Warm = rich, blue = lean; the outlined cell is the live operating point.':{el:'Θερμό = πλούσιο, μπλε = φτωχό· το κελί με περίγραμμα είναι το ζωντανό σημείο λειτουργίας.'},
+  'Warm = rich, blue = lean. Tap a cell to tune it; outlined = live point.':{el:'Θερμό = πλούσιο, μπλε = φτωχό. Πατήστε ένα κελί για ρύθμιση· περίγραμμα = ζωντανό σημείο.'},
+  'CUSTOM MAP':{el:'ΠΡΟΣΑΡΜΟΣΜΕΝΟΣ ΧΑΡΤΗΣ'},'Tap a cell to select':{el:'Πατήστε ένα κελί για επιλογή'},
+  '− LEAN':{el:'− ΦΤΩΧΟ'},'+ RICH':{el:'+ ΠΛΟΥΣΙΟ'},'RESET MAP':{el:'ΕΠΑΝΑΦΟΡΑ ΧΑΡΤΗ'},'FUEL MAP RESET TO FACTORY':{el:'ΧΑΡΤΗΣ ΚΑΥΣΙΜΟΥ ΕΠΑΝΗΛΘΕ ΣΤΟ ΕΡΓΟΣΤΑΣΙΑΚΟ'},
   'Cooling':{el:'Ψύξη'},'RADIATOR':{el:'ΨΥΓΕΙΟ'},'COOLING FAN':{el:'ΒΕΝΤΙΛΑΤΕΡ'},'OIL COOLER':{el:'ΨΥΓΕΙΟ ΛΑΔΙΟΥ'},'THERMOSTAT (°C)':{el:'ΘΕΡΜΟΣΤΑΤΗΣ (°C)'},
   'Electrical':{el:'Ηλεκτρικά'},'ALTERNATOR':{el:'ΔΥΝΑΜΟ (ALT)'},
   'BUILD & DYNO':{el:'ΚΑΤΑΣΚΕΥΗ & ΔΥΝΑΜΟ'},'DEFAULTS':{el:'ΠΡΟΕΠΙΛΟΓΕΣ'},
@@ -696,7 +709,7 @@ const GUIDE_I18N={
   scorecard:{el:'Κάθε build βαθμολογείται <b>S → F</b> από επτά στοιχεία: ειδική <b>ισχύ</b> & <b>ροπή</b> (ανά λίτρο), εύρος <b>περιοχής ισχύος</b>, θερμική <b>απόδοση</b>, <b>ασφάλεια</b> από πειράκι, <b>οδηγησιμότητα</b> (ροπή στις χαμηλές) και <b>εκπομπές</b>. Το κυνήγι μέγιστης ισχύος κοστίζει σε οδηγησιμότητα, ασφάλεια και εκπομπές — η βαθμολογία επιβραβεύει το ισορροπημένο build.'},
   career:{el:'Διάλεξε έναν <b>ΣΤΟΧΟ</b> στην κορυφή της ΣΧΕΔΙΑΣΗΣ για να κάνεις τη σχεδίαση γρίφο. Κάθε πρόκληση θέτει κριτήρια — ισχύ, οικονομία, εκπομπές, <b>αξιοπιστία</b> ή <b>ισχύ ανά δολάριο</b> — και κάποιες βάζουν όριο <b>προϋπολογισμού</b>. Η κάρτα τσεκάρει κάθε κριτήριο ζωντανά (✓/✗) και δείχνει <b>ΕΠΙΤΥΧΙΑ</b> όταν καλυφθούν όλα· κόστος και αξιοπιστία φαίνονται πάντα. Ο μεγάλος κυβισμός κερδίζει σε αξία· boost και αγωνιστικά μέρη κερδίζουν σε ισχύ αλλά κοστίζουν σε χρήμα και αξιοπιστία.'},
   types:{el:'<b>Βενζίνη 4-χρονη</b> — η ισορροπημένη επιλογή: ανάφλεξη με σπινθήρα, μία εκρηκτική διαδρομή ανά δύο στροφές.<br><b>Πετρέλαιο (CI)</b> — ανάφλεξη με συμπίεση (χωρίς μπουζί, χωρίς πειράκι), πολύ υψηλή συμπίεση, φτωχό χωρίς πεταλούδα. Μεγάλη <b>ροπή</b> στις χαμηλές, χαμηλό όριο στροφών, η καλύτερη <b>απόδοση</b> — αλλά βαρύ, με εκπομπές <b>NOx + αιθάλη (PM)</b> που καθαρίζει σύστημα DPF/SCR.<br><b>2-χρονη</b> — εκρηκτική διαδρομή σε <i>κάθε</i> στροφή (θυρίδες, χωρίς εκκεντροφόρο): υψηλή ειδική ισχύς αλλά λαίμαργη και <b>HC</b>-βρόμικη.<br><b>Wankel (ρότορας)</b> — περιστρεφόμενος ρότορας που ανάβει σε κάθε στροφή: ομαλός σαν τουρμπίνα, τεράστιες στροφές, υψηλή ισχύς ανά λίτρο, αλλά λαίμαργος, <b>HC</b>-βαρύς και σκληρός στα ελάσματα κορυφής.<br>Η αλλαγή τύπου προσαρμόζει τα εύρη συμπίεσης/στροφών/AFR και απενεργοποιεί ό,τι δεν ισχύει.'},
-  subsystems:{el:'<b>Κάτω μέρος</b> — τύπος κινητήρα, διάμετρος × διαδρομή × κύλινδροι = κυβισμός· υπερτετράγωνος & υψηλότερο όριο ανεβάζουν την περιοχή ισχύος.<br><b>Διαδρομή αέρα</b> — τούρμπο (γεμίζει με τις στροφές) ή υπερσυμπιεστής (boost από ρελαντί)· το intercooler ψύχει το χάρμανι· εξάτμιση & καταλύτης ανταλλάσσουν ροή με αντίθλιψη/εκπομπές· το νιτρό είναι εμφιαλωμένη ισχύς.<br><b>Εισαγωγή</b> — καρμπιρατέρ → EFI → ITB ορίζουν αναπνοή, ακρίβεια & ρελαντί.<br><b>Χρονισμός βαλβίδων</b> — άγριες εκκεντροφόροι ανεβάζουν την ισχύ ψηλά· το VVT επαναφέρει τις χαμηλές.<br><b>Καύσιμο & σπινθήρας</b> — τύπος καυσίμου, οκτάνια, μπεκ, ανάφλεξη, χρονισμός FIXED/AUTO και το μείγμα: MANUAL (ένα σταθερό AFR) ή AUTO — ένας 3D χάρτης ECU που τρέχει κοντά στο στοιχειομετρικό στο ελαφρύ φορτίο και εμπλουτίζει υπό φορτίο/boost, όπως ένας πραγματικός χάρτης καυσίμου.<br><b>Ψύξη & ηλεκτρικά</b> — ψυγείο/βεντιλατέρ/ψυγείο λαδιού/θερμοστάτης ορίζουν θερμοκρασίες· δυναμό & ανάφλεξη ορίζουν φόρτιση και όριο μισφάιρ.'},
+  subsystems:{el:'<b>Κάτω μέρος</b> — τύπος κινητήρα, διάμετρος × διαδρομή × κύλινδροι = κυβισμός· υπερτετράγωνος & υψηλότερο όριο ανεβάζουν την περιοχή ισχύος.<br><b>Διαδρομή αέρα</b> — τούρμπο (γεμίζει με τις στροφές) ή υπερσυμπιεστής (boost από ρελαντί)· το intercooler ψύχει το χάρμανι· εξάτμιση & καταλύτης ανταλλάσσουν ροή με αντίθλιψη/εκπομπές· το νιτρό είναι εμφιαλωμένη ισχύς.<br><b>Εισαγωγή</b> — καρμπιρατέρ → EFI → ITB ορίζουν αναπνοή, ακρίβεια & ρελαντί.<br><b>Χρονισμός βαλβίδων</b> — άγριες εκκεντροφόροι ανεβάζουν την ισχύ ψηλά· το VVT επαναφέρει τις χαμηλές.<br><b>Καύσιμο & σπινθήρας</b> — τύπος καυσίμου, οκτάνια, μπεκ, ανάφλεξη, χρονισμός FIXED/AUTO και το μείγμα: MANUAL (ένα σταθερό AFR) ή AUTO — ένας 3D χάρτης ECU που τρέχει κοντά στο στοιχειομετρικό στο ελαφρύ φορτίο και εμπλουτίζει υπό φορτίο/boost, όπως ένας πραγματικός χάρτης καυσίμου. Στο AUTO μπορείς να <b>ρυθμίσεις τον χάρτη</b>: πάτησε ένα κελί και μετά − ΦΤΩΧΟ / + ΠΛΟΥΣΙΟ για να αλλάξεις τον στόχο σε εκείνο το φορτίο×στροφές (ΕΠΑΝΑΦΟΡΑ ΧΑΡΤΗ επαναφέρει το εργοστασιακό).<br><b>Ψύξη & ηλεκτρικά</b> — ψυγείο/βεντιλατέρ/ψυγείο λαδιού/θερμοστάτης ορίζουν θερμοκρασίες· δυναμό & ανάφλεξη ορίζουν φόρτιση και όριο μισφάιρ.'},
   vehicle:{el:'Στην καρτέλα <b>ΟΧΗΜΑ</b> βάζεις τον κινητήρα σου σε αυτοκίνητο. Διάλεξε <b>σασί</b> (κάθε ένα με δικό του βάρος, μέγεθος και μετάδοση), <b>μετάδοση</b> (FWD/RWD/AWD — το AWD ξεκινά καλύτερα), <b>κιβώτιο</b> (σχέσεις + ρυθμιστικό κοντή↔μακριά τελική), <b>ελαστικά</b> (τύπος + πλάτος/προφίλ/διάμετρος), <b>αεροδυναμική</b> (εμπρός/πίσω/πάτωμα = κάθετη δύναμη & οπισθέλκουσα), <b>φρένα</b> (τύπος + διάμετρος δίσκου ορίζουν φρενάρισμα και αντοχή στην εξασθένηση) και <b>ανάρτηση</b> (πολλαπλασιαστής μηχανικής πρόσφυσης). Ο κινητήρας προστίθεται και το ταμπλό <b>Επιδόσεις</b> υπολογίζει <b>0–100 km/h</b>, <b>400/800/1000 m</b>, <b>τελική</b>, <b>φρενάρισμα 100–0</b> και το τεστ <b>0–200–0</b> ζωντανά — εκκίνηση περιορισμένη από πρόσφυση και φρενάρισμα με όριο ελαστικών/φρένων και εξασθένηση. Η υπερβολικά μακριά τελική βλάπτει επιτάχυνση και τελική· κολλώδη ελαστικά, μεγάλα φρένα και AWD βοηθούν πιο πολύ.'},
   tip:{el:'Συμβουλή: κλείσε τη ΦΘΟΡΑ στις ΕΠΙΛΟΓΕΣ για ελεύθερο πειραματισμό, μετά ξανάνοιξέ την για συνέπειες.'}
 };
@@ -719,7 +732,7 @@ function applyLang(lang){
   currentLang=(lang==='el')?'el':'en';
   try{localStorage.setItem('pes.lang',currentLang);}catch(e){}
   document.documentElement.lang=currentLang;
-  const sel='.viz-tabs button, #btnFullscreen, .design-panel h3, .design-section, .hint, .panel h2, .stat .label, .opt-note, .opt-row>div>b, .ctl-lbl, .field>label, .build-row button, #controlsPanel .btn-row button';
+  const sel='.viz-tabs button, #btnFullscreen, .design-panel h3, .design-section, .hint, .panel h2, .stat .label, .opt-note, .opt-row>div>b, .ctl-lbl, .field>label, .build-row button, #controlsPanel .btn-row button, .fuelmap-edit button';
   document.querySelectorAll(sel).forEach(el=>{
     if(el.children.length>0)return;                       // skip nodes with child elements
     if(el.dataset.en===undefined)el.dataset.en=el.textContent.trim();
@@ -878,6 +891,9 @@ const DEFAULT_VEHICLE={
 };
 let vehicle=Object.assign({},DEFAULT_VEHICLE);
 let perf=null;   // last computed performance result
+// Editable ECU fuel map: a λ grid (rows=load, cols=rpm). null → use the factory curve. Custom
+// edits persist across rebuilds while the map-relevant engine params (below) are unchanged.
+let fuelMap=null,fuelMapCustom=false,fuelMapKey='',fmSel=null;
 
 let engine=Object.assign({},DEFAULT_ENGINE);
 let buildRev=0;   // bumped each build so the dyno cache invalidates
@@ -1135,7 +1151,7 @@ function buildEngine(){
   renderChallenge();
   // In AUTO (ECU MAP) mode the ECU sets the mixture, so the manual AFR slider is read-only.
   const afrSlider=document.getElementById('afr');if(afrSlider)afrSlider.disabled=(engine.afrMode==='auto');
-  renderFuelMap();
+  manageFuelMap();renderFuelMap();
   if(document.getElementById('vhChassis')){buildVehicle();updateVehicleSummary();}   // refresh vehicle performance for the new engine
 }
 // ---- Strategy layer: what the build costs (parts $) ----
@@ -1338,20 +1354,31 @@ function computeVE(rpm,map){
 // ---- ECU fuel map: the AFR target as a 3D function of load (MAP) and RPM ----
 // A real ECU doesn't hold one AFR everywhere — its map runs near stoich at light load for
 // economy/emissions and enriches under load & boost for power and exhaust-temperature control.
-// In AUTO (ECU MAP) mode the mixture is looked up here; in MANUAL mode the AFR slider is used.
-function mappedAFR(rpm,map){
-  const st=engine.stoichAFR;
+// baseFuelLambda() is the factory curve (λ); the editable grid (fuelMap) overrides it cell by
+// cell. In AUTO mode the mixture is looked up here; in MANUAL mode the AFR slider is used.
+function baseFuelLambda(rpm,map){
   if(engine.ci){
-    // Diesel: quality-governed fuelling schedule — very lean at light load, toward the smoke
-    // limit (λ≈1.05) at full fuelling.
+    // Diesel: quality-governed fuelling — very lean at light load, toward the smoke limit at full.
     const l=clamp((map-0.5)/Math.max(0.3,engine.mapMax-0.5),0,1);
-    return st*(3.4-2.35*l);
+    return 3.4-2.35*l;
   }
   const boost=Math.max(0,map-1.0);
   let lam=1.02-0.16*clamp((map-0.35)/0.65,0,1);                          // ~stoich cruise → ~λ0.86 WOT
   lam-=0.07*clamp(boost/1.2,0,1.1);                                      // enrich under boost (power/EGT)
   lam-=0.015*clamp((rpm-engine.redline*0.85)/(engine.redline*0.2),0,1); // slight top-end enrichment
-  return st*clamp(lam,0.78,1.05);
+  return clamp(lam,0.78,1.05);
+}
+function mappedAFR(rpm,map){
+  const st=engine.stoichAFR;
+  if(fuelMap){   // bilinear-interpolate the (editable) λ grid over its breakpoints
+    const fc=clamp((rpm-1000)/Math.max(1,engine.redline-1000)*(FM_COLS-1),0,FM_COLS-1);
+    const fr=clamp((map-0.3)/Math.max(0.1,engine.mapMax-0.3)*(FM_ROWS-1),0,FM_ROWS-1);
+    const c0=Math.floor(fc),c1=Math.min(c0+1,FM_COLS-1),tc=fc-c0;
+    const r0=Math.floor(fr),r1=Math.min(r0+1,FM_ROWS-1),trr=fr-r0;
+    const lam=(fuelMap[r0][c0]*(1-tc)+fuelMap[r0][c1]*tc)*(1-trr)+(fuelMap[r1][c0]*(1-tc)+fuelMap[r1][c1]*tc)*trr;
+    return st*lam;
+  }
+  return st*baseFuelLambda(rpm,map);
 }
 // The AFR actually run at an operating point: the ECU map (AUTO) or the fixed slider (MANUAL).
 function curAFR(rpm,map){return engine.afrMode==='auto'?mappedAFR(rpm,map):state.afr;}
@@ -1359,11 +1386,33 @@ function curAFR(rpm,map){return engine.afrMode==='auto'?mappedAFR(rpm,map):state
 const FM_COLS=8, FM_ROWS=6;
 const fmRpmAt=c=>Math.round(lerp(1000,engine.redline,c/(FM_COLS-1)));
 const fmMapAt=r=>lerp(0.3,engine.mapMax,r/(FM_ROWS-1));   // r=0 light load … r=ROWS-1 full load
+// Fill a fresh λ grid from the factory curve at each breakpoint.
+function generateFuelMap(){
+  const g=[];for(let r=0;r<FM_ROWS;r++){const row=[];for(let c=0;c<FM_COLS;c++)row.push(baseFuelLambda(fmRpmAt(c),fmMapAt(r)));g.push(row);}
+  return g;
+}
+// Keep the map in sync with the engine: regenerate (discarding edits) when the map-relevant
+// params change or there's no map yet; keep the user's custom grid otherwise.
+function manageFuelMap(){
+  const key=engine.mapMax.toFixed(2)+'|'+engine.redline+'|'+engine.stoichAFR.toFixed(1)+'|'+(engine.ci?'d':'p');
+  const dimsOk=Array.isArray(fuelMap)&&fuelMap.length===FM_ROWS&&fuelMap[0]&&fuelMap[0].length===FM_COLS;
+  if(!dimsOk||!fuelMapCustom||fuelMapKey!==key){fuelMap=generateFuelMap();fuelMapKey=key;fuelMapCustom=false;fmSel=null;}
+}
+const FM_LMIN=0.72,FM_LMAX=1.10,FM_LMIN_CI=1.0,FM_LMAX_CI=3.8;   // editable λ bounds
+function selectFmCell(c,r){fmSel={c:clamp(c,0,FM_COLS-1),r:clamp(r,0,FM_ROWS-1)};renderFuelMap();}
+function adjustFmCell(delta){
+  if(!fmSel||!fuelMap)return;
+  const lo=engine.ci?FM_LMIN_CI:FM_LMIN,hi=engine.ci?FM_LMAX_CI:FM_LMAX;
+  fuelMap[fmSel.r][fmSel.c]=clamp(fuelMap[fmSel.r][fmSel.c]+delta,lo,hi);
+  fuelMapCustom=true;dynoCache=null;renderFuelMap();
+}
+function resetFuelMap(){fuelMap=generateFuelMap();fuelMapCustom=false;fmSel=null;dynoCache=null;renderFuelMap();flash(tr('FUEL MAP RESET TO FACTORY'));}
 function renderFuelMap(){
   const box=document.getElementById('fuelMapBox'),hdr=document.getElementById('fuelMapHdr');
   if(!box||!hdr)return;
   const show=engine.afrMode==='auto';
   box.style.display=show?'block':'none';hdr.style.display=show?'':'none';
+  const edHide=document.getElementById('fuelMapEdit');if(edHide&&!show)edHide.style.display='none';
   if(!show){box.innerHTML='';return;}
   const st=engine.stoichAFR;
   let h='<table class="fuelmap"><tr><th>MAP\\RPM</th>';
@@ -1375,12 +1424,22 @@ function renderFuelMap(){
     for(let c=0;c<FM_COLS;c++){
       const afr=mappedAFR(fmRpmAt(c),mp),lam=afr/st;
       const rr=clamp((1.12-lam)/0.34,0,1),hue=Math.round(lerp(210,12,rr));
-      h+='<td data-c="'+c+'" data-r="'+r+'" style="background:hsl('+hue+',60%,40%)">'+(engine.ci?lam.toFixed(1):afr.toFixed(1))+'</td>';
+      const selCls=fmSel&&fmSel.c===c&&fmSel.r===r?' sel':'';
+      h+='<td class="fm-cell'+selCls+'" data-c="'+c+'" data-r="'+r+'" style="background:hsl('+hue+',60%,40%)">'+(engine.ci?lam.toFixed(1):afr.toFixed(1))+'</td>';
     }
     h+='</tr>';
   }
-  h+='</table><div class="fuelmap-note">'+tr('Rows = load (MAP bar, top = full) · Columns = RPM · cell = target')+' '+(engine.ci?'λ':'AFR')+'. '+tr('Warm = rich, blue = lean; the outlined cell is the live operating point.')+'</div>';
+  h+='</table><div class="fuelmap-note">'+tr('Rows = load (MAP bar, top = full) · Columns = RPM · cell = target')+' '+(engine.ci?'λ':'AFR')+'. '+tr('Warm = rich, blue = lean. Tap a cell to tune it; outlined = live point.')+(fuelMapCustom?' <b style="color:#ffcc00">'+tr('CUSTOM MAP')+'</b>':'')+'</div>';
   box.innerHTML=h;
+  // Edit controls
+  const ed=document.getElementById('fuelMapEdit');
+  if(ed){
+    ed.style.display='flex';
+    const info=document.getElementById('fmSelInfo');
+    if(fmSel){const afr=mappedAFR(fmRpmAt(fmSel.c),fmMapAt(fmSel.r)),mp=fmMapAt(fmSel.r);
+      info.textContent=Math.round(fmRpmAt(fmSel.c))+'rpm • '+(mp>1.001?'+'+(mp-1).toFixed(1):mp.toFixed(1))+'bar → '+(engine.ci?'λ'+(afr/st).toFixed(2):afr.toFixed(1)+' AFR');
+    }else info.textContent=tr('Tap a cell to select');
+  }
   updateFuelMapMarker();
 }
 function updateFuelMapMarker(){
@@ -1975,15 +2034,22 @@ function setSound(on){
 // ---- Save / load full builds (localStorage) ----
 // ---- Shared build (de)serialization for localStorage, files and share links ----
 function serializeBuild(name,note){
-  return {app:APP_TAG,v:APP_VER,name:name||'engine',note:note||'',date:new Date().toISOString().slice(0,10),
+  const b={app:APP_TAG,v:APP_VER,name:name||'engine',note:note||'',date:new Date().toISOString().slice(0,10),
     engine:readEngineFromForm(),   // clean design spec only (no derived fields)
     vehicle:readVehicleFromForm(),
     tune:{throttle:state.throttle,load:state.load,elecLoad:state.elecLoad,afr:state.afr,iat:state.iat,coolant:state.coolant,oil:state.oil,autoThermal}};
+  // Only persist the fuel map when it's a hand-tuned custom grid (factory maps regenerate).
+  if(fuelMapCustom&&Array.isArray(fuelMap))b.fuelMap=fuelMap.map(row=>row.map(v=>+v.toFixed(3)));
+  return b;
 }
 function applyBuild(s){
   if(!s||!s.engine)throw new Error('not an engine build');
   applyEngineToForm(Object.assign({},DEFAULT_ENGINE,s.engine));
   buildEngine();
+  // Restore a saved custom fuel map (buildEngine regenerated the factory grid); dims must match.
+  if(Array.isArray(s.fuelMap)&&s.fuelMap.length===FM_ROWS&&s.fuelMap.every(r=>Array.isArray(r)&&r.length===FM_COLS)){
+    fuelMap=s.fuelMap.map(r=>r.map(Number));fuelMapCustom=true;fmSel=null;dynoCache=null;renderFuelMap();
+  }
   applyVehicleToForm(Object.assign({},DEFAULT_VEHICLE,s.vehicle||{}));
   buildVehicle();updateVehicleSummary();
   const t=s.tune||s.state||{};
@@ -2499,6 +2565,17 @@ function bindControls(){
     if(tp.ports){g('edCam').value='stock';g('edVVT').value='no';}
     syncDesignEnable();
   });
+  // Editable ECU fuel map: click a cell to select it, then nudge its target richer/leaner.
+  const fmBox=document.getElementById('fuelMapBox');
+  if(fmBox)fmBox.addEventListener('click',e=>{
+    const td=e.target.closest('td.fm-cell');if(!td)return;
+    selectFmCell(+td.dataset.c,+td.dataset.r);
+  });
+  const fmStep=()=>engine.ci?0.08:0.02;   // λ per nudge (diesel grid is wider)
+  const fmLean=document.getElementById('fmLean'),fmRich=document.getElementById('fmRich'),fmReset=document.getElementById('fmReset');
+  if(fmLean)fmLean.addEventListener('click',()=>adjustFmCell(fmStep()));    // leaner = higher λ
+  if(fmRich)fmRich.addEventListener('click',()=>adjustFmCell(-fmStep()));   // richer = lower λ
+  if(fmReset)fmReset.addEventListener('click',resetFuelMap);
   // Populate & wire the preset dropdown
   const presetSel=document.getElementById('edPreset');
   PRESETS.forEach((p,i)=>{const o=document.createElement('option');o.value=i;o.textContent=p.name;presetSel.appendChild(o);});
