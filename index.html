@@ -397,6 +397,22 @@ converter stalls up against the brakes and <i>multiplies</i> engine torque (up t
 manual despite giving away power everywhere else — and why it suits a heavy, torquey car far
 better than a light, peaky one. It also spreads its ratios wider: a lower 1st to get the load
 moving, a taller top for cruising.<br>
+<b>The differential</b> splits drive between the two wheels on an axle — and decides how much of
+that axle's grip you can actually use. The two wheels are never loaded identically (road camber,
+engine torque reaction, axle wind-up, suspension geometry), and an <b>open</b> diff can only feed
+each wheel what the <i>lighter-loaded</i> one will hold: it spins that wheel and throws the rest
+away, leaving about 78% of the axle's grip usable. A <b>viscous LSD</b> ties the two together
+through fluid shear and recovers most of it (~92%); a <b>clutch-plate LSD</b> locks them against a
+preload for effectively all of it; a <b>spool</b> welds them solid and is the best of all in a
+straight line, which is why drag cars run one.<br>
+The key thing: a diff only matters while you're <b>traction-limited</b>. Fit a spool to a slow car
+and nothing changes — it never troubles its tyres. Fit one to a car that's spinning up off the
+line and it can be worth more than a power upgrade. Watch the LIMITED-BY behaviour: if your 0–100
+barely moves when you change diff, the engine is the limit, not grip.<br>
+<span style="color:#c86">One caveat — a spool's real cost is cornering: it fights every turn,
+scrubs tyres and understeers badly, which is why road cars don't use one. This sim only measures
+straight lines so far, so the spool looks strictly best here. Take that with a pinch of salt until
+the test track lands.</span><br>
 <b>The gearing number</b> — the 0–100 slider is your <b>final drive ratio</b>, how many times the
 driveshaft turns per turn of the wheels. It runs from <b>0 = 4.90:1</b> (the <i>shortest</i>,
 lowest gearing) to <b>100 = 2.60:1</b> (the <i>tallest</i>); the ratio is shown next to the number.
@@ -450,6 +466,7 @@ experiment freely, then back on for consequences.</div>
 <option value="hyper">CARBON HYPERCAR</option><option value="proto">TRACK PROTOTYPE</option><option value="pickup">PICKUP TRUCK</option><option value="suv">PERFORMANCE SUV</option>
 </select></div>
 <div class="field"><label for="vhDrive">DRIVETRAIN</label><select id="vhDrive"><option value="fwd">FWD</option><option value="rwd">RWD</option><option value="awd">AWD</option></select></div>
+<div class="field"><label for="vhDiff">DIFFERENTIAL</label><select id="vhDiff"><option value="open">OPEN</option><option value="visc">VISCOUS LSD</option><option value="clsd">CLUTCH-PLATE LSD</option><option value="spool">SPOOL / LOCKED</option></select></div>
 <div class="field"><label for="vhGearbox">GEARBOX TYPE</label><select id="vhGearbox"><option value="manual">MANUAL (H-PATTERN)</option><option value="sequential">SEQUENTIAL</option><option value="dct">DUAL-CLUTCH (DCT)</option><option value="auto">TORQUE-CONV AUTO</option></select></div>
 <div class="field"><label for="vhGears">GEARBOX (SPEEDS)</label><select id="vhGears"><option value="4">4</option><option value="5">5</option><option value="6">6</option><option value="7">7</option><option value="8">8</option></select></div>
 <div class="field"><label for="vhGearing"><span id="lblGearing" class="ctl-lbl">GEARING (FINAL DRIVE)</span> <span class="val" id="valGearing">52</span></label><input type="range" id="vhGearing" min="0" max="100" step="1" value="52" aria-label="Gearing short to tall"></div>
@@ -720,6 +737,7 @@ const I18N={
   'VEHICLE':{el:'ΟΧΗΜΑ'},'VEHICLE DESIGN':{el:'ΣΧΕΔΙΑΣΗ ΟΧΗΜΑΤΟΣ'},
   'Pick a chassis and it arrives on its factory spec — matching tyres, wheels, brakes, suspension and aero. Swap any part from there; your current engine is dropped in and the performance is computed live.':{el:'Διάλεξε σασί και έρχεται με τον εργοστασιακό του εξοπλισμό — ταιριαστά ελαστικά, ζάντες, φρένα, ανάρτηση και αεροδυναμική. Άλλαξε ό,τι θέλεις από εκεί· ο τρέχων κινητήρας μπαίνει μέσα και οι επιδόσεις υπολογίζονται ζωντανά.'},
   'Chassis & Drivetrain':{el:'Σασί & Μετάδοση'},'CHASSIS':{el:'ΣΑΣΙ'},'DRIVETRAIN':{el:'ΜΕΤΑΔΟΣΗ'},'GEARBOX (SPEEDS)':{el:'ΚΙΒΩΤΙΟ (ΣΧΕΣΕΙΣ)'},'GEARING (FINAL DRIVE)':{el:'ΤΕΛΙΚΗ ΣΧΕΣΗ'},
+  'DIFFERENTIAL':{el:'ΔΙΑΦΟΡΙΚΟ'},'OPEN':{el:'ΑΝΟΙΧΤΟ'},'VISCOUS LSD':{el:'ΙΞΩΔΕΣ LSD'},'CLUTCH-PLATE LSD':{el:'LSD ΜΕ ΔΙΣΚΟΥΣ'},'SPOOL / LOCKED':{el:'ΜΠΛΟΚΕ / SPOOL'},
   'GEARBOX TYPE':{el:'ΤΥΠΟΣ ΚΙΒΩΤΙΟΥ'},'MANUAL (H-PATTERN)':{el:'ΧΕΙΡΟΚΙΝΗΤΟ (H)'},'SEQUENTIAL':{el:'ΣΕΙΡΙΑΚΟ'},'DUAL-CLUTCH (DCT)':{el:'ΔΙΠΛΟΥ ΣΥΜΠΛΕΚΤΗ (DCT)'},'TORQUE-CONV AUTO':{el:'ΑΥΤΟΜΑΤΟ (ΜΕΤΑΤΡΟΠΕΑΣ)'},
   'REFIT FACTORY SPEC':{el:'ΕΡΓΟΣΤΑΣΙΑΚΟΣ ΕΞΟΠΛΙΣΜΟΣ'},'FITTED':{el:'ΤΟΠΟΘΕΤΗΘΗΚΕ'},'REFITTED TO FACTORY SPEC':{el:'ΕΠΑΝΑΦΟΡΑ ΣΤΟΝ ΕΡΓΟΣΤΑΣΙΑΚΟ ΕΞΟΠΛΙΣΜΟ'},
   '(factory spec)':{el:'(εργοστασιακό)'},'(modified)':{el:'(τροποποιημένο)'},
@@ -749,7 +767,7 @@ const GUIDE_I18N={
   career:{el:'Διάλεξε έναν <b>ΣΤΟΧΟ</b> στην κορυφή της ΣΧΕΔΙΑΣΗΣ για να κάνεις τη σχεδίαση γρίφο. Κάθε πρόκληση θέτει κριτήρια — ισχύ, οικονομία, εκπομπές, <b>αξιοπιστία</b> ή <b>ισχύ ανά δολάριο</b> — και κάποιες βάζουν όριο <b>προϋπολογισμού</b>. Η κάρτα τσεκάρει κάθε κριτήριο ζωντανά (✓/✗) και δείχνει <b>ΕΠΙΤΥΧΙΑ</b> όταν καλυφθούν όλα· κόστος και αξιοπιστία φαίνονται πάντα. Ο μεγάλος κυβισμός κερδίζει σε αξία· boost και αγωνιστικά μέρη κερδίζουν σε ισχύ αλλά κοστίζουν σε χρήμα και αξιοπιστία.'},
   types:{el:'<b>Βενζίνη 4-χρονη</b> — η ισορροπημένη επιλογή: ανάφλεξη με σπινθήρα, μία εκρηκτική διαδρομή ανά δύο στροφές.<br><b>Πετρέλαιο (CI)</b> — ανάφλεξη με συμπίεση (χωρίς μπουζί, χωρίς πειράκι), πολύ υψηλή συμπίεση, φτωχό χωρίς πεταλούδα. Μεγάλη <b>ροπή</b> στις χαμηλές, χαμηλό όριο στροφών, η καλύτερη <b>απόδοση</b> — αλλά βαρύ, με εκπομπές <b>NOx + αιθάλη (PM)</b> που καθαρίζει σύστημα DPF/SCR.<br><b>2-χρονη</b> — εκρηκτική διαδρομή σε <i>κάθε</i> στροφή (θυρίδες, χωρίς εκκεντροφόρο): υψηλή ειδική ισχύς αλλά λαίμαργη και <b>HC</b>-βρόμικη.<br><b>Wankel (ρότορας)</b> — περιστρεφόμενος ρότορας που ανάβει σε κάθε στροφή: ομαλός σαν τουρμπίνα, τεράστιες στροφές, υψηλή ισχύς ανά λίτρο, αλλά λαίμαργος, <b>HC</b>-βαρύς και σκληρός στα ελάσματα κορυφής.<br>Η αλλαγή τύπου προσαρμόζει τα εύρη συμπίεσης/στροφών/AFR και απενεργοποιεί ό,τι δεν ισχύει.'},
   subsystems:{el:'<b>Κάτω μέρος</b> — τύπος κινητήρα, διάμετρος × διαδρομή × κύλινδροι = κυβισμός· υπερτετράγωνος & υψηλότερο όριο ανεβάζουν την περιοχή ισχύος.<br><b>Διαδρομή αέρα</b> — τούρμπο (γεμίζει με τις στροφές) ή υπερσυμπιεστής (boost από ρελαντί)· το intercooler ψύχει το χάρμανι· εξάτμιση & καταλύτης ανταλλάσσουν ροή με αντίθλιψη/εκπομπές· το νιτρό είναι εμφιαλωμένη ισχύς.<br><b>Εισαγωγή</b> — καρμπιρατέρ → EFI → ITB ορίζουν αναπνοή, ακρίβεια & ρελαντί.<br><b>Χρονισμός βαλβίδων</b> — άγριες εκκεντροφόροι ανεβάζουν την ισχύ ψηλά· το VVT επαναφέρει τις χαμηλές.<br><b>Καύσιμο & σπινθήρας</b> — τύπος καυσίμου, οκτάνια, μπεκ, ανάφλεξη, χρονισμός FIXED/AUTO και το μείγμα: MANUAL (ένα σταθερό AFR) ή AUTO — ένας 3D χάρτης ECU που τρέχει κοντά στο στοιχειομετρικό στο ελαφρύ φορτίο και εμπλουτίζει υπό φορτίο/boost, όπως ένας πραγματικός χάρτης καυσίμου. Στο AUTO μπορείς να <b>ρυθμίσεις τον χάρτη</b>: πάτησε ένα κελί και μετά − ΦΤΩΧΟ / + ΠΛΟΥΣΙΟ για να αλλάξεις τον στόχο σε εκείνο το φορτίο×στροφές (ΕΠΑΝΑΦΟΡΑ ΧΑΡΤΗ επαναφέρει το εργοστασιακό).<br><b>Ψύξη & ηλεκτρικά</b> — ψυγείο/βεντιλατέρ/ψυγείο λαδιού/θερμοστάτης ορίζουν θερμοκρασίες· δυναμό & ανάφλεξη ορίζουν φόρτιση και όριο μισφάιρ.'},
-  vehicle:{el:'Στην καρτέλα <b>ΟΧΗΜΑ</b> βάζεις τον κινητήρα σου σε αυτοκίνητο. Διάλεξε <b>σασί</b> και έρχεται με τον <b>εργοστασιακό του εξοπλισμό</b> — τα ελαστικά, ζάντες, φρένα, ανάρτηση, αεροδυναμική και κιβώτιο που θα φορούσε πραγματικά: ένα kei εμφανίζεται με στενά οικονομικά ελαστικά και μικρούς ατσάλινους δίσκους, ενώ ένα hypercar παίρνει φαρδιά semi-slick, carbon-ceramic φρένα και πακέτο αεροτομής/diffuser. Όλα παραμένουν επεξεργάσιμα· το <b>ΕΡΓΟΣΤΑΣΙΑΚΟΣ ΕΞΟΠΛΙΣΜΟΣ</b> τα επαναφέρει.<br>Από εκεί ρυθμίζεις <b>μετάδοση</b> (FWD/RWD/AWD — το AWD ξεκινά καλύτερα), <b>κιβώτιο</b> (τύπος, σχέσεις + ρυθμιστικό τελικής), <b>ελαστικά</b> (τύπος + πλάτος/προφίλ/διάμετρος), <b>αεροδυναμική</b> (εμπρός/πίσω/πάτωμα = κάθετη δύναμη & οπισθέλκουσα), <b>φρένα</b> (τύπος + διάμετρος δίσκου) και <b>ανάρτηση</b> (πολλαπλασιαστής μηχανικής πρόσφυσης).<br><b>Ο τύπος κιβωτίου</b> αλλάζει τέσσερα πράγματα: πόσο κόβεται η μετάδοση σε κάθε αλλαγή, πόση από την ισχύ του κινητήρα φτάνει στους τροχούς, πώς είναι κλιμακωμένες οι σχέσεις, και πώς ξεκινά το αυτοκίνητο.<br>· <b>Χειροκίνητο (H)</b> — το πιο αποδοτικό, αλλά χάνεις ~350 ms σε κάθε αλλαγή. Φθηνό.<br>· <b>Σειριακό</b> — αγωνιστικό: αλλαγές ~60 ms και κοντές σχέσεις που κρατούν έναν «αιχμηρό» κινητήρα στην περιοχή του. Ακριβό.<br>· <b>Διπλού συμπλέκτη (DCT)</b> — η επόμενη σχέση είναι ήδη επιλεγμένη στον δεύτερο συμπλέκτη, άρα σχεδόν αδιάλειπτες αλλαγές (~30 ms). Το ταχύτερο, και ανάλογα ακριβό.<br>· <b>Αυτόματο με μετατροπέα ροπής</b> — οι πιο αργές αλλαγές (~200 ms) και οι μεγαλύτερες απώλειες, γιατί μεταδίδει μέσω υγρού. Το κερδίζει στην <b>εκκίνηση</b>: ο μετατροπέας «φορτίζει» πάνω στα φρένα και <i>πολλαπλασιάζει</i> τη ροπή (έως ~1.9× σε στάλλ 2400 σ.α.λ.), σβήνοντας στο 1:1 καθώς ο στρόβιλος προλαβαίνει. Γι’ αυτό ένα αυτόματο ξεκινά καλύτερα από ένα χειροκίνητο παρότι χάνει ισχύ παντού αλλού — και γι’ αυτό ταιριάζει σε βαρύ, ροπάτο αυτοκίνητο, όχι σε ελαφρύ και «αιχμηρό». Επίσης απλώνει περισσότερο τις σχέσεις: πιο κοντή 1η, πιο μακριά τελευταία.<br><b>Ο αριθμός της τελικής</b> — το ρυθμιστικό 0–100 είναι η <b>σχέση τελικής μετάδοσης</b>, πόσες φορές γυρίζει ο άξονας ανά στροφή των τροχών. Πάει από <b>0 = 4.90:1</b> (η <i>κοντύτερη</i>) έως <b>100 = 2.60:1</b> (η <i>μακρύτερη</i>)· η σχέση φαίνεται δίπλα στον αριθμό. Κοντή τελική πολλαπλασιάζει τη ροπή στους τροχούς: δυνατότερη επιτάχυνση, αλλά κάθε σχέση τελειώνει νωρίς. Μακριά τελική κάνει το αντίθετο: πιο νωθρή επιτάχυνση, περισσότερη ταχύτητα ανά 1000 στροφές και ήρεμο ταξίδι. Ιδανική είναι η πιο μακριά που ο κινητήρας μπορεί ακόμα να τραβήξει ως την κορυφή της ισχύος του στην τελευταία σχέση. Πιο μακριά από αυτό, η τελική ταχύτητα απλώς <i>σταματά να βελτιώνεται</i> — το αυτοκίνητο πιάνει το μέγιστό του μια σχέση χαμηλότερα αντί να «πνίγεται» στην τελευταία — ενώ η επιτάχυνση συνεχίζει να χειροτερεύει, οπότε πληρώνεις χωρίς όφελος. Πολλή ισχύς και λίγη οπισθέλκουσα σηκώνουν πολύ μακριά τελική και κερδίζουν ταχύτητα ως το τέρμα· βαριά, αδύναμα ή αεροδυναμικά «βρώμικα» αυτοκίνητα φτάνουν γρήγορα σε πλατό και θέλουν κοντύτερη.<br>Ο κινητήρας προστίθεται και το ταμπλό <b>Επιδόσεις</b> υπολογίζει <b>0–100 km/h</b>, <b>400/800/1000 m</b>, <b>τελική</b>, <b>φρενάρισμα 100–0</b> και το τεστ <b>0–200–0</b> ζωντανά — εκκίνηση περιορισμένη από πρόσφυση και φρενάρισμα με όριο ελαστικών/φρένων και εξασθένηση. Κολλώδη ελαστικά, μεγάλα φρένα και AWD βοηθούν πιο πολύ.'},
+  vehicle:{el:'Στην καρτέλα <b>ΟΧΗΜΑ</b> βάζεις τον κινητήρα σου σε αυτοκίνητο. Διάλεξε <b>σασί</b> και έρχεται με τον <b>εργοστασιακό του εξοπλισμό</b> — τα ελαστικά, ζάντες, φρένα, ανάρτηση, αεροδυναμική και κιβώτιο που θα φορούσε πραγματικά: ένα kei εμφανίζεται με στενά οικονομικά ελαστικά και μικρούς ατσάλινους δίσκους, ενώ ένα hypercar παίρνει φαρδιά semi-slick, carbon-ceramic φρένα και πακέτο αεροτομής/diffuser. Όλα παραμένουν επεξεργάσιμα· το <b>ΕΡΓΟΣΤΑΣΙΑΚΟΣ ΕΞΟΠΛΙΣΜΟΣ</b> τα επαναφέρει.<br>Από εκεί ρυθμίζεις <b>μετάδοση</b> (FWD/RWD/AWD — το AWD ξεκινά καλύτερα), <b>κιβώτιο</b> (τύπος, σχέσεις + ρυθμιστικό τελικής), <b>ελαστικά</b> (τύπος + πλάτος/προφίλ/διάμετρος), <b>αεροδυναμική</b> (εμπρός/πίσω/πάτωμα = κάθετη δύναμη & οπισθέλκουσα), <b>φρένα</b> (τύπος + διάμετρος δίσκου) και <b>ανάρτηση</b> (πολλαπλασιαστής μηχανικής πρόσφυσης).<br><b>Ο τύπος κιβωτίου</b> αλλάζει τέσσερα πράγματα: πόσο κόβεται η μετάδοση σε κάθε αλλαγή, πόση από την ισχύ του κινητήρα φτάνει στους τροχούς, πώς είναι κλιμακωμένες οι σχέσεις, και πώς ξεκινά το αυτοκίνητο.<br>· <b>Χειροκίνητο (H)</b> — το πιο αποδοτικό, αλλά χάνεις ~350 ms σε κάθε αλλαγή. Φθηνό.<br>· <b>Σειριακό</b> — αγωνιστικό: αλλαγές ~60 ms και κοντές σχέσεις που κρατούν έναν «αιχμηρό» κινητήρα στην περιοχή του. Ακριβό.<br>· <b>Διπλού συμπλέκτη (DCT)</b> — η επόμενη σχέση είναι ήδη επιλεγμένη στον δεύτερο συμπλέκτη, άρα σχεδόν αδιάλειπτες αλλαγές (~30 ms). Το ταχύτερο, και ανάλογα ακριβό.<br>· <b>Αυτόματο με μετατροπέα ροπής</b> — οι πιο αργές αλλαγές (~200 ms) και οι μεγαλύτερες απώλειες, γιατί μεταδίδει μέσω υγρού. Το κερδίζει στην <b>εκκίνηση</b>: ο μετατροπέας «φορτίζει» πάνω στα φρένα και <i>πολλαπλασιάζει</i> τη ροπή (έως ~1.9× σε στάλλ 2400 σ.α.λ.), σβήνοντας στο 1:1 καθώς ο στρόβιλος προλαβαίνει. Γι’ αυτό ένα αυτόματο ξεκινά καλύτερα από ένα χειροκίνητο παρότι χάνει ισχύ παντού αλλού — και γι’ αυτό ταιριάζει σε βαρύ, ροπάτο αυτοκίνητο, όχι σε ελαφρύ και «αιχμηρό». Επίσης απλώνει περισσότερο τις σχέσεις: πιο κοντή 1η, πιο μακριά τελευταία.<br><b>Το διαφορικό</b> μοιράζει την κίνηση στους δύο τροχούς του άξονα — και καθορίζει πόση από την πρόσφυση του άξονα μπορείς πραγματικά να χρησιμοποιήσεις. Οι δύο τροχοί δεν είναι ποτέ φορτωμένοι το ίδιο (κλίση δρόμου, αντίδραση ροπής, στρέψη άξονα, γεωμετρία ανάρτησης), και ένα <b>ανοιχτό</b> διαφορικό δίνει σε κάθε τροχό μόνο όση ροπή αντέχει ο <i>λιγότερο φορτωμένος</i>: στρίβει αυτόν τον τροχό και πετάει τα υπόλοιπα, αφήνοντας περίπου 78% της πρόσφυσης αξιοποιήσιμο. Ένα <b>ιξώδες LSD</b> τους δένει μεταξύ τους και ανακτά τα περισσότερα (~92%)· ένα <b>LSD με δίσκους</b> ουσιαστικά όλα· ένα <b>μπλοκέ (spool)</b> τους ενώνει μόνιμα και είναι το καλύτερο σε ευθεία — γι’ αυτό το χρησιμοποιούν τα dragster.<br>Το βασικό: το διαφορικό μετράει μόνο όσο είσαι <b>περιορισμένος από πρόσφυση</b>. Βάλε spool σε αργό αυτοκίνητο και δεν αλλάζει τίποτα. Βάλ’ το σε ένα που πατινάρει στην εκκίνηση και αξίζει περισσότερο από αναβάθμιση ισχύος.<br><span style="color:#c86">Μια επιφύλαξη — το πραγματικό κόστος ενός spool είναι στις στροφές: παλεύει σε κάθε στροφή, τρώει ελαστικά και υποστρέφει άσχημα, γι’ αυτό δεν το βάζουν στα δρόμου. Ο προσομοιωτής μετράει μόνο ευθείες προς το παρόν, οπότε εδώ φαίνεται απόλυτα καλύτερο. Κράτα μια επιφύλαξη μέχρι να έρθει η πίστα δοκιμών.</span><br><b>Ο αριθμός της τελικής</b> — το ρυθμιστικό 0–100 είναι η <b>σχέση τελικής μετάδοσης</b>, πόσες φορές γυρίζει ο άξονας ανά στροφή των τροχών. Πάει από <b>0 = 4.90:1</b> (η <i>κοντύτερη</i>) έως <b>100 = 2.60:1</b> (η <i>μακρύτερη</i>)· η σχέση φαίνεται δίπλα στον αριθμό. Κοντή τελική πολλαπλασιάζει τη ροπή στους τροχούς: δυνατότερη επιτάχυνση, αλλά κάθε σχέση τελειώνει νωρίς. Μακριά τελική κάνει το αντίθετο: πιο νωθρή επιτάχυνση, περισσότερη ταχύτητα ανά 1000 στροφές και ήρεμο ταξίδι. Ιδανική είναι η πιο μακριά που ο κινητήρας μπορεί ακόμα να τραβήξει ως την κορυφή της ισχύος του στην τελευταία σχέση. Πιο μακριά από αυτό, η τελική ταχύτητα απλώς <i>σταματά να βελτιώνεται</i> — το αυτοκίνητο πιάνει το μέγιστό του μια σχέση χαμηλότερα αντί να «πνίγεται» στην τελευταία — ενώ η επιτάχυνση συνεχίζει να χειροτερεύει, οπότε πληρώνεις χωρίς όφελος. Πολλή ισχύς και λίγη οπισθέλκουσα σηκώνουν πολύ μακριά τελική και κερδίζουν ταχύτητα ως το τέρμα· βαριά, αδύναμα ή αεροδυναμικά «βρώμικα» αυτοκίνητα φτάνουν γρήγορα σε πλατό και θέλουν κοντύτερη.<br>Ο κινητήρας προστίθεται και το ταμπλό <b>Επιδόσεις</b> υπολογίζει <b>0–100 km/h</b>, <b>400/800/1000 m</b>, <b>τελική</b>, <b>φρενάρισμα 100–0</b> και το τεστ <b>0–200–0</b> ζωντανά — εκκίνηση περιορισμένη από πρόσφυση και φρενάρισμα με όριο ελαστικών/φρένων και εξασθένηση. Κολλώδη ελαστικά, μεγάλα φρένα και AWD βοηθούν πιο πολύ.'},
   tip:{el:'Συμβουλή: κλείσε τη ΦΘΟΡΑ στις ΕΠΙΛΟΓΕΣ για ελεύθερο πειραματισμό, μετά ξανάνοιξέ την για συνέπειες.'}
 };
 const CHALLENGE_I18N={
@@ -877,31 +895,31 @@ const CAT={
 // carbon-ceramics and a full wing/diffuser package — which the user can then tune from.
 const CHASSIS={
   kei:      {label:'KEI CAR',           mass:640, area:1.85,cd:0.34,wb:2.40,cg:0.52,fWt:0.60,grip:0.98,drive:'fwd',aero:0.4,cost:5000,
-             fit:{tire:'eco',  tw:165,ta:60,wheel:15,brake:'steel',  rotor:260,susp:'comfort', aF:'none',    aR:'none',aFl:'none',     weight:'none',  gears:5,gearing:44,gearbox:'manual'}},
+             fit:{tire:'eco',  tw:165,ta:60,wheel:15,brake:'steel',  rotor:260,susp:'comfort', aF:'none',    aR:'none',aFl:'none',     weight:'none',  gears:5,gearing:44,gearbox:'manual',diff:'open'}},
   hatch:    {label:'HOT HATCH',         mass:1080,area:2.10,cd:0.32,wb:2.60,cg:0.52,fWt:0.62,grip:1.00,drive:'fwd',aero:0.6,cost:8000,
-             fit:{tire:'sport',tw:205,ta:45,wheel:17,brake:'slotted',rotor:300,susp:'sport',   aF:'none',    aR:'none',aFl:'none',     weight:'none',  gears:6,gearing:50,gearbox:'manual'}},
+             fit:{tire:'sport',tw:205,ta:45,wheel:17,brake:'slotted',rotor:300,susp:'sport',   aF:'none',    aR:'none',aFl:'none',     weight:'none',  gears:6,gearing:50,gearbox:'manual',diff:'open'}},
   roadster: {label:'LIGHT ROADSTER',    mass:980, area:1.90,cd:0.35,wb:2.30,cg:0.46,fWt:0.52,grip:1.04,drive:'rwd',aero:0.6,cost:9000,
-             fit:{tire:'sport',tw:195,ta:50,wheel:16,brake:'slotted',rotor:290,susp:'sport',   aF:'none',    aR:'none',aFl:'none',     weight:'street',gears:6,gearing:52,gearbox:'manual'}},
+             fit:{tire:'sport',tw:195,ta:50,wheel:16,brake:'slotted',rotor:290,susp:'sport',   aF:'none',    aR:'none',aFl:'none',     weight:'street',gears:6,gearing:52,gearbox:'manual',diff:'visc'}},
   coupe:    {label:'SPORTS COUPE',      mass:1200,area:2.05,cd:0.31,wb:2.65,cg:0.48,fWt:0.54,grip:1.03,drive:'rwd',aero:0.8,cost:11000,
-             fit:{tire:'sport',tw:245,ta:40,wheel:18,brake:'slotted',rotor:330,susp:'sport',   aF:'none',    aR:'lip', aFl:'none',     weight:'none',  gears:6,gearing:52,gearbox:'manual'}},
+             fit:{tire:'sport',tw:245,ta:40,wheel:18,brake:'slotted',rotor:330,susp:'sport',   aF:'none',    aR:'lip', aFl:'none',     weight:'none',  gears:6,gearing:52,gearbox:'manual',diff:'clsd'}},
   sedan:    {label:'SPORTS SEDAN',      mass:1420,area:2.20,cd:0.29,wb:2.85,cg:0.52,fWt:0.55,grip:1.00,drive:'rwd',aero:0.7,cost:12000,
-             fit:{tire:'sport',tw:245,ta:40,wheel:18,brake:'slotted',rotor:330,susp:'sport',   aF:'none',    aR:'none',aFl:'none',     weight:'none',  gears:7,gearing:56,gearbox:'auto'}},
+             fit:{tire:'sport',tw:245,ta:40,wheel:18,brake:'slotted',rotor:330,susp:'sport',   aF:'none',    aR:'none',aFl:'none',     weight:'none',  gears:7,gearing:56,gearbox:'auto',diff:'visc'}},
   muscle:   {label:'MUSCLE CAR',        mass:1620,area:2.25,cd:0.36,wb:2.95,cg:0.50,fWt:0.56,grip:0.98,drive:'rwd',aero:0.5,cost:13000,
-             fit:{tire:'sport',tw:275,ta:40,wheel:18,brake:'big',    rotor:340,susp:'sport',   aF:'none',    aR:'none',aFl:'none',     weight:'none',  gears:6,gearing:48,gearbox:'auto'}},
+             fit:{tire:'sport',tw:275,ta:40,wheel:18,brake:'big',    rotor:340,susp:'sport',   aF:'none',    aR:'none',aFl:'none',     weight:'none',  gears:6,gearing:48,gearbox:'auto',diff:'clsd'}},
   rally:    {label:'RALLY AWD HATCH',   mass:1300,area:2.15,cd:0.34,wb:2.60,cg:0.52,fWt:0.58,grip:1.06,drive:'awd',aero:0.7,cost:14000,
-             fit:{tire:'sport',tw:225,ta:45,wheel:17,brake:'slotted',rotor:320,susp:'coilover',aF:'splitter',aR:'lip', aFl:'none',     weight:'street',gears:6,gearing:50,gearbox:'manual'}},
+             fit:{tire:'sport',tw:225,ta:45,wheel:17,brake:'slotted',rotor:320,susp:'coilover',aF:'splitter',aR:'lip', aFl:'none',     weight:'street',gears:6,gearing:50,gearbox:'manual',diff:'clsd'}},
   gt:       {label:'GRAND TOURER',      mass:1580,area:2.15,cd:0.30,wb:2.90,cg:0.48,fWt:0.52,grip:1.04,drive:'rwd',aero:0.9,cost:20000,
-             fit:{tire:'sport',tw:265,ta:35,wheel:19,brake:'big',    rotor:350,susp:'coilover',aF:'splitter',aR:'lip', aFl:'none',     weight:'none',  gears:7,gearing:58,gearbox:'dct'}},
+             fit:{tire:'sport',tw:265,ta:35,wheel:19,brake:'big',    rotor:350,susp:'coilover',aF:'splitter',aR:'lip', aFl:'none',     weight:'none',  gears:7,gearing:58,gearbox:'dct',diff:'clsd'}},
   super:    {label:'MID-ENGINE SUPER',  mass:1340,area:1.95,cd:0.33,wb:2.65,cg:0.44,fWt:0.42,grip:1.12,drive:'rwd',aero:1.2,cost:30000,
-             fit:{tire:'semi', tw:285,ta:35,wheel:19,brake:'big',    rotor:360,susp:'coilover',aF:'splitter',aR:'wing',aFl:'undertray',weight:'sport', gears:7,gearing:54,gearbox:'dct'}},
+             fit:{tire:'semi', tw:285,ta:35,wheel:19,brake:'big',    rotor:360,susp:'coilover',aF:'splitter',aR:'wing',aFl:'undertray',weight:'sport', gears:7,gearing:54,gearbox:'dct',diff:'clsd'}},
   hyper:    {label:'CARBON HYPERCAR',   mass:1240,area:1.92,cd:0.35,wb:2.70,cg:0.44,fWt:0.44,grip:1.18,drive:'awd',aero:1.6,cost:60000,
-             fit:{tire:'semi', tw:305,ta:30,wheel:20,brake:'carbon', rotor:390,susp:'race',    aF:'wing',    aR:'wing',aFl:'diffuser', weight:'sport', gears:7,gearing:56,gearbox:'dct'}},
+             fit:{tire:'semi', tw:305,ta:30,wheel:20,brake:'carbon', rotor:390,susp:'race',    aF:'wing',    aR:'wing',aFl:'diffuser', weight:'sport', gears:7,gearing:56,gearbox:'dct',diff:'clsd'}},
   proto:    {label:'TRACK PROTOTYPE',   mass:620, area:1.55,cd:0.60,wb:2.80,cg:0.32,fWt:0.46,grip:1.30,drive:'rwd',aero:3.0,cost:45000,
-             fit:{tire:'slick',tw:305,ta:30,wheel:18,brake:'carbon', rotor:380,susp:'race',    aF:'wing',    aR:'wing',aFl:'diffuser', weight:'race',  gears:6,gearing:50,gearbox:'sequential'}},
+             fit:{tire:'slick',tw:305,ta:30,wheel:18,brake:'carbon', rotor:380,susp:'race',    aF:'wing',    aR:'wing',aFl:'diffuser', weight:'race',  gears:6,gearing:50,gearbox:'sequential',diff:'spool'}},
   pickup:   {label:'PICKUP TRUCK',      mass:2050,area:3.20,cd:0.45,wb:3.60,cg:0.68,fWt:0.58,grip:0.92,drive:'rwd',aero:0.2,cost:11000,
-             fit:{tire:'eco',  tw:265,ta:65,wheel:17,brake:'slotted',rotor:330,susp:'comfort', aF:'none',    aR:'none',aFl:'none',     weight:'none',  gears:6,gearing:42,gearbox:'auto'}},
+             fit:{tire:'eco',  tw:265,ta:65,wheel:17,brake:'slotted',rotor:330,susp:'comfort', aF:'none',    aR:'none',aFl:'none',     weight:'none',  gears:6,gearing:42,gearbox:'auto',diff:'open'}},
   suv:      {label:'PERFORMANCE SUV',   mass:1950,area:2.95,cd:0.36,wb:2.95,cg:0.66,fWt:0.54,grip:0.96,drive:'awd',aero:0.4,cost:16000,
-             fit:{tire:'sport',tw:275,ta:45,wheel:20,brake:'big',    rotor:350,susp:'sport',   aF:'none',    aR:'none',aFl:'none',     weight:'none',  gears:8,gearing:48,gearbox:'auto'}}
+             fit:{tire:'sport',tw:275,ta:45,wheel:20,brake:'big',    rotor:350,susp:'sport',   aF:'none',    aR:'none',aFl:'none',     weight:'none',  gears:8,gearing:48,gearbox:'auto',diff:'visc'}}
 };
 // Tyre compound: mu = peak grip coefficient (dry), crr = rolling resistance, cost.
 const TIRE_TYPE={
@@ -953,13 +971,33 @@ const GEARBOX={
   dct:       {label:'DUAL-CLUTCH (DCT)', shift:0.03,eff:0.98,spread:0.95,stall:0,   mult:1.0, cost:9000},
   auto:      {label:'TORQUE-CONV AUTO',  shift:0.20,eff:0.93,spread:1.10,stall:2400,mult:1.9, cost:3000}
 };
+// Differential. An axle's two driven wheels are never loaded exactly alike — road camber, engine
+// torque reaction, axle wind-up and suspension geometry all unload one side. An OPEN diff can
+// only feed each wheel the torque the *lesser-loaded* one can hold, so the usable share of the
+// axle's grip is 1 − 2·asym for that asymmetry: it spins the light wheel and throws the rest
+// away. A limited-slip locks the two together against a preload and recovers most of it; a spool
+// welds them and recovers all of it.
+//   traction — fraction of the driven axle's grip the diff can actually put down.
+// Note this only bites when the car is traction-limited: an engine-limited car sees no
+// difference, which is why a diff transforms a powerful build and does nothing for a slow one.
+// The spool's real cost — understeer, tyre scrub, undrivable on the road — is cornering
+// behaviour, which this sim doesn't model yet, so it looks strictly best here. Flagged in GUIDE.
+// The clutch LSD is deliberately traction:1.00 — the model before differentials existed applied
+// no penalty at all, so saves from then (which inherit DEFAULT_VEHICLE's clutch LSD) reproduce
+// their old numbers exactly.
+const DIFF={
+  open:  {label:'OPEN',          traction:0.78,cost:0},
+  visc:  {label:'VISCOUS LSD',   traction:0.92,cost:900},
+  clsd:  {label:'CLUTCH-PLATE LSD',traction:1.00,cost:2200},
+  spool: {label:'SPOOL / LOCKED',traction:1.04,cost:1200}
+};
 // Drivetrain: driveline efficiency (crank→wheels) and the driven-axle description.
 const DRIVE_EFF={fwd:0.92,rwd:0.90,awd:0.86};
 const AIR_RHO=1.20;   // air density kg/m³
 const G=9.81;
 // The default car is simply the SPORTS COUPE on its own factory fitment (CHASSIS.coupe.fit).
 const DEFAULT_VEHICLE={
-  chassis:'coupe',drive:'rwd',gearbox:'manual',gears:6,gearing:52,
+  chassis:'coupe',drive:'rwd',gearbox:'manual',diff:'clsd',gears:6,gearing:52,
   tireType:'sport',tireWidth:245,tireAspect:40,wheelDia:18,
   aeroFront:'none',aeroRear:'lip',aeroFloor:'none',weightRed:'none',
   brakeType:'slotted',rotor:330,suspension:'sport'
@@ -1872,7 +1910,7 @@ function genRatios(n,spread){
 function readVehicleFromForm(){
   const g=id=>document.getElementById(id);
   return {
-    chassis:g('vhChassis').value,drive:g('vhDrive').value,gearbox:g('vhGearbox').value,
+    chassis:g('vhChassis').value,drive:g('vhDrive').value,gearbox:g('vhGearbox').value,diff:g('vhDiff').value,
     // gearing may legitimately be 0 (shortest final drive), so fall back only on a non-number.
     gears:clamp(Math.round(+g('vhGears').value||6),4,8),gearing:clamp(numOr(g('vhGearing').value,52),0,100),
     tireType:g('vhTire').value,tireWidth:clamp(Math.round(+g('vhTireW').value||225),135,355),
@@ -1883,7 +1921,7 @@ function readVehicleFromForm(){
 }
 function applyVehicleToForm(v){
   const g=id=>document.getElementById(id);
-  g('vhChassis').value=v.chassis||'coupe';g('vhDrive').value=v.drive||'rwd';g('vhGearbox').value=v.gearbox||'manual';
+  g('vhChassis').value=v.chassis||'coupe';g('vhDrive').value=v.drive||'rwd';g('vhGearbox').value=v.gearbox||'manual';g('vhDiff').value=v.diff||'open';
   g('vhGears').value=v.gears||6;g('vhGearing').value=v.gearing!=null?v.gearing:52;
   g('vhTire').value=v.tireType||'sport';g('vhTireW').value=v.tireWidth||235;g('vhTireA').value=v.tireAspect||40;g('vhWheel').value=v.wheelDia||18;
   g('vhAeroF').value=v.aeroFront||'none';g('vhAeroR').value=v.aeroRear||'none';g('vhAeroFl').value=v.aeroFloor||'none';g('vhWeight').value=v.weightRed||'none';
@@ -1896,7 +1934,7 @@ function applyChassisFit(key){
   const ch=CHASSIS[key];if(!ch||!ch.fit)return null;
   const f=ch.fit,g=id=>document.getElementById(id);
   g('vhChassis').value=key;   // self-contained: callers may fit a chassis without touching the select
-  g('vhDrive').value=ch.drive;g('vhGearbox').value=f.gearbox;
+  g('vhDrive').value=ch.drive;g('vhGearbox').value=f.gearbox;g('vhDiff').value=f.diff;
   g('vhGears').value=f.gears;g('vhGearing').value=f.gearing;
   g('vhTire').value=f.tire;g('vhTireW').value=f.tw;g('vhTireA').value=f.ta;g('vhWheel').value=f.wheel;
   g('vhAeroF').value=f.aF;g('vhAeroR').value=f.aR;g('vhAeroFl').value=f.aFl;g('vhWeight').value=f.weight;
@@ -1919,7 +1957,7 @@ function fitmentLabel(v){
 // True when every fitted part still matches the chassis' factory spec.
 function isFactoryFit(v){
   const ch=CHASSIS[v.chassis];if(!ch||!ch.fit)return false;const f=ch.fit;
-  return v.drive===ch.drive&&v.gears===f.gears&&v.gearing===f.gearing&&v.gearbox===f.gearbox&&
+  return v.drive===ch.drive&&v.gears===f.gears&&v.gearing===f.gearing&&v.gearbox===f.gearbox&&v.diff===f.diff&&
     v.tireType===f.tire&&v.tireWidth===f.tw&&v.tireAspect===f.ta&&v.wheelDia===f.wheel&&
     v.aeroFront===f.aF&&v.aeroRear===f.aR&&v.aeroFloor===f.aFl&&v.weightRed===f.weight&&
     v.brakeType===f.brake&&v.rotor===f.rotor&&v.suspension===f.susp;
@@ -1930,7 +1968,7 @@ function computeVehicleCost(ch,tt,wr){
   c+=(BRAKE_TYPE[vehicle.brakeType]||BRAKE_TYPE.slotted).cost+(SUSPENSION[vehicle.suspension]||SUSPENSION.sport).cost;
   c+=Math.max(0,vehicle.rotor-320)*6;
   c+={fwd:0,rwd:800,awd:2500}[vehicle.drive]||0;
-  c+=(GEARBOX[vehicle.gearbox]||GEARBOX.manual).cost;
+  c+=(GEARBOX[vehicle.gearbox]||GEARBOX.manual).cost+(DIFF[vehicle.diff]||DIFF.open).cost;
   c+=Math.max(0,vehicle.gears-5)*400;
   c+=Math.max(0,vehicle.wheelDia-16)*120+Math.max(0,vehicle.tireWidth-205)*4;
   return Math.max(3000,Math.round(c/50)*50);
@@ -1955,8 +1993,9 @@ function buildVehicle(){
   const af=AERO_FRONT[vehicle.aeroFront]||AERO_FRONT.none, ar=AERO_REAR[vehicle.aeroRear]||AERO_REAR.none, al=AERO_FLOOR[vehicle.aeroFloor]||AERO_FLOOR.none;
   vehicle.clA=(af.cl+ar.cl+al.cl)*ch.aero;                            // downforce coefficient·area
   vehicle.cdA=(ch.cd+af.cd+ar.cd+al.cd)*ch.area;                      // drag coefficient·area
-  const gb=GEARBOX[vehicle.gearbox]||GEARBOX.manual;
+  const gb=GEARBOX[vehicle.gearbox]||GEARBOX.manual,df=DIFF[vehicle.diff]||DIFF.open;
   vehicle.gb=gb;vehicle.gbLabel=gb.label;
+  vehicle.df=df;vehicle.diffLabel=df.label;vehicle.diffTraction=df.traction;
   vehicle.shiftTime=gb.shift;
   vehicle.driveEff=(DRIVE_EFF[vehicle.drive]||0.90)*gb.eff;          // layout loss × gearbox loss
   vehicle.finalDrive=lerp(4.9,2.6,vehicle.gearing/100);              // short → tall
@@ -2015,6 +2054,7 @@ function simulateAccel(){
   const idle=engine.idleRpmEff,rl=engine.redline,TWO_PI=Math.PI*2,dt=0.005;
   const gb=vehicle.gb||GEARBOX.manual;
   const shiftTime=gb.shift,tcStall=gb.stall>0?clamp(gb.stall,idle,rl*0.85):0;
+  const diffTraction=vehicle.diffTraction!=null?vehicle.diffTraction:1;
   const launchRpm=clamp(rl*0.55,idle+400,rl*0.72);
   let v=0,x=0,t=0,gear=0,a=0,shiftT=0;
   const M={t100:null,q400:null,q800:null,q1000:null,v200:null},V100=100/3.6,V200=200/3.6;
@@ -2047,7 +2087,10 @@ function simulateAccel(){
     if(vehicle.drive==='awd')drivenN=Wtot;
     else if(vehicle.drive==='rwd')drivenN=m*G*(1-vehicle.fWt)+down*0.5+Math.max(0,transfer);
     else drivenN=m*G*vehicle.fWt+down*0.5-Math.max(0,transfer);
-    const F=Math.min(driveF,vehicle.mu*Math.max(0,drivenN));
+    // The differential decides how much of the driven axle's grip is actually usable: an open
+    // diff is governed by the lighter-loaded wheel and throws the rest away, an LSD recovers
+    // most of it, a spool all of it. This only bites while the car is traction-limited.
+    const F=Math.min(driveF,vehicle.mu*diffTraction*Math.max(0,drivenN));
     const drag=0.5*AIR_RHO*vehicle.cdA*v*v,roll=v>0.2?vehicle.crr*m*G:0;
     a=(F-drag-roll)/m;v=Math.max(0,v+a*dt);x+=v*dt;t+=dt;
     if(!M.t100&&v>=V100)M.t100=t;
@@ -2091,6 +2134,7 @@ function updateVehicleSummary(){
     '<br>Tyres <b>'+(TIRE_TYPE[vehicle.tireType]||TIRE_TYPE.sport).label+'</b> '+vehicle.tireWidth+'/'+vehicle.tireAspect+' R'+vehicle.wheelDia+' • grip μ<b>'+vehicle.mu.toFixed(2)+'</b>'+
     '<br>Brakes <b>'+(BRAKE_TYPE[vehicle.brakeType]||BRAKE_TYPE.slotted).label+'</b> '+vehicle.rotor+'mm ('+(vehicle.brakeDecelCap/G).toFixed(2)+'g) • Susp <b>'+(SUSPENSION[vehicle.suspension]||SUSPENSION.sport).label+'</b>'+
     '<br>Gearbox <b>'+tr(vehicle.gbLabel)+'</b> • shift '+(vehicle.shiftTime*1000).toFixed(0)+' ms • driveline '+(vehicle.driveEff*100).toFixed(0)+'%'+(vehicle.gb.stall?' • converter stall '+vehicle.gb.stall+' rpm ×'+vehicle.gb.mult.toFixed(1):'')+
+    '<br>Diff <b>'+tr(vehicle.diffLabel)+'</b> • puts down '+(vehicle.diffTraction*100).toFixed(0)+'% of axle grip'+
     '<br>Drag CdA <b>'+vehicle.cdA.toFixed(2)+'</b> • downforce ClA <b>'+vehicle.clA.toFixed(2)+'</b> • final drive <b>'+vehicle.finalDrive.toFixed(2)+'</b>'+
     '<br>Vehicle cost <b>'+fmtCost(vehicle.cost)+'</b> • with engine <b>'+fmtCost(vehicle.cost+(engine.cost||0))+'</b>';
   renderPerformance();
@@ -2692,7 +2736,7 @@ function bindControls(){
   document.getElementById('tabOptions').addEventListener('click',()=>setTab('options'));
   // Vehicle design: recompute performance live on any change. Picking a chassis fits its whole
   // factory spec (drivetrain, gearbox, tyres/wheels, brakes, suspension, aero, weight).
-  ['vhChassis','vhDrive','vhGearbox','vhGears','vhGearing','vhTire','vhTireW','vhTireA','vhWheel','vhAeroF','vhAeroR','vhAeroFl','vhWeight','vhBrake','vhRotor','vhSusp'].forEach(id=>{
+  ['vhChassis','vhDrive','vhGearbox','vhDiff','vhGears','vhGearing','vhTire','vhTireW','vhTireA','vhWheel','vhAeroF','vhAeroR','vhAeroFl','vhWeight','vhBrake','vhRotor','vhSusp'].forEach(id=>{
     const el=document.getElementById(id);if(!el)return;
     el.addEventListener('input',()=>{
       if(id==='vhChassis'){
