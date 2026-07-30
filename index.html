@@ -178,6 +178,7 @@ table.fuelmap td.live{box-shadow:inset 0 0 0 2px #fff;font-weight:bold}
 <div class="viz-tabs">
 <button id="tabDesign">DESIGN</button>
 <button id="tabVehicle">VEHICLE</button>
+<button id="tabTrack">TRACK</button>
 <button id="tabEngine" class="active">ENGINE</button>
 <button id="tabDyno">DYNO</button>
 <button id="tabGuide">GUIDE</button>
@@ -397,6 +398,16 @@ converter stalls up against the brakes and <i>multiplies</i> engine torque (up t
 manual despite giving away power everywhere else — and why it suits a heavy, torquey car far
 better than a light, peaky one. It also spreads its ratios wider: a lower 1st to get the load
 moving, a taller top for cruising.<br>
+<b>The TRACK tab</b> puts the car on a circuit and solves a lap. It finds the cornering speed at
+every point (<i>v = &radic;(&mu;&middot;(mg + downforce)&middot;r / m)</i>), then works backwards from each
+corner to find the braking points and forwards out of each corner on the available drive, taking
+the lower speed at every point. A <b>friction circle</b> ties the two together: grip already spent
+turning isn't available for accelerating or braking, so a car at the cornering limit can't also
+put its power down. The coloured line on the map shows what is limiting the car at each point, and
+the legend totals how much of the lap each one accounts for — a fast circuit is mostly
+<span style="color:#55dd66">power</span> and <span style="color:#ff5555">braking</span>, a tight
+one mostly <span style="color:#4aa3ff">traction</span> out of slow corners. Shift time is charged
+per gear change around the lap, so a slow-shifting box loses real time.<br>
 <b>The differential</b> splits drive between the two wheels on an axle — and decides how much of
 that axle's grip you can actually use. The two wheels are never loaded identically (road camber,
 engine torque reaction, axle wind-up, suspension geometry), and an <b>open</b> diff can only feed
@@ -409,10 +420,11 @@ The key thing: a diff only matters while you're <b>traction-limited</b>. Fit a s
 and nothing changes — it never troubles its tyres. Fit one to a car that's spinning up off the
 line and it can be worth more than a power upgrade. Watch the LIMITED-BY behaviour: if your 0–100
 barely moves when you change diff, the engine is the limit, not grip.<br>
-<span style="color:#c86">One caveat — a spool's real cost is cornering: it fights every turn,
-scrubs tyres and understeers badly, which is why road cars don't use one. This sim only measures
-straight lines so far, so the spool looks strictly best here. Take that with a pinch of salt until
-the test track lands.</span><br>
+And now the trade is measurable. On the TRACK tab a locked diff pays for its straight-line
+advantage: it scrubs in every corner (less lateral grip) even though it never wastes drive. On an
+842&nbsp;hp muscle car a spool is ~0.2&nbsp;s quicker to 100&nbsp;km/h than a clutch LSD and
+~2.5&nbsp;s <i>slower</i> per lap, while an open diff is worst at both — it spins the inside wheel
+hardest exactly when cornering has already unloaded it.<br>
 <b>The gearing number</b> — the 0–100 slider is your <b>final drive ratio</b>, how many times the
 driveshaft turns per turn of the wheels. It runs from <b>0 = 4.90:1</b> (the <i>shortest</i>,
 lowest gearing) to <b>100 = 2.60:1</b> (the <i>tallest</i>); the ratio is shown next to the number.
@@ -557,6 +569,13 @@ experiment freely, then back on for consequences.</div>
 <div class="perf-head" id="perfHead">—</div>
 <div class="perf-grid" id="perfGrid"></div>
 <div class="perf-note" id="perfNote"></div>
+</div>
+<div class="panel" id="trackPanel" style="display:none">
+<h2>Lap Time</h2>
+<div class="field"><label for="trkSel">CIRCUIT</label><select id="trkSel"><option value="tech">ASHDOWN PARK</option><option value="fast">CAPE SPEEDWAY</option><option value="mixed" selected>RIVERSIDE GP</option></select></div>
+<div class="perf-head" id="lapHead">—</div>
+<div class="perf-grid" id="lapGrid"></div>
+<div class="perf-note" id="lapNote"></div>
 </div>
 </div>
 </div>
@@ -737,6 +756,14 @@ const I18N={
   'VEHICLE':{el:'ΟΧΗΜΑ'},'VEHICLE DESIGN':{el:'ΣΧΕΔΙΑΣΗ ΟΧΗΜΑΤΟΣ'},
   'Pick a chassis and it arrives on its factory spec — matching tyres, wheels, brakes, suspension and aero. Swap any part from there; your current engine is dropped in and the performance is computed live.':{el:'Διάλεξε σασί και έρχεται με τον εργοστασιακό του εξοπλισμό — ταιριαστά ελαστικά, ζάντες, φρένα, ανάρτηση και αεροδυναμική. Άλλαξε ό,τι θέλεις από εκεί· ο τρέχων κινητήρας μπαίνει μέσα και οι επιδόσεις υπολογίζονται ζωντανά.'},
   'Chassis & Drivetrain':{el:'Σασί & Μετάδοση'},'CHASSIS':{el:'ΣΑΣΙ'},'DRIVETRAIN':{el:'ΜΕΤΑΔΟΣΗ'},'GEARBOX (SPEEDS)':{el:'ΚΙΒΩΤΙΟ (ΣΧΕΣΕΙΣ)'},'GEARING (FINAL DRIVE)':{el:'ΤΕΛΙΚΗ ΣΧΕΣΗ'},
+  'TRACK':{el:'ΠΙΣΤΑ'},'Lap Time':{el:'Χρόνος Γύρου'},'CIRCUIT':{el:'ΠΙΣΤΑ'},'LAP TIME':{el:'ΧΡΟΝΟΣ ΓΥΡΟΥ'},
+  'AVG SPEED':{el:'ΜΕΣΗ ΤΑΧΥΤΗΤΑ'},'SECTOR 1':{el:'ΤΟΜΕΑΣ 1'},'SECTOR 2':{el:'ΤΟΜΕΑΣ 2'},'SECTOR 3':{el:'ΤΟΜΕΑΣ 3'},
+  'SLOWEST':{el:'ΒΡΑΔΥΤΕΡΟ'},'FASTEST':{el:'ΤΑΧΥΤΕΡΟ'},'SHIFTS':{el:'ΑΛΛΑΓΕΣ'},'TEST TRACK':{el:'ΠΙΣΤΑ ΔΟΚΙΜΩΝ'},
+  'BUILD AN ENGINE FIRST':{el:'ΦΤΙΑΞΕ ΠΡΩΤΑ ΚΙΝΗΤΗΡΑ'},'corners':{el:'στροφές'},'avg':{el:'μέση'},'shifts':{el:'αλλαγές'},
+  'TRACTION (diff/tyres)':{el:'ΠΡΟΣΦΥΣΗ (διαφ./ελαστικά)'},'CORNERING (grip)':{el:'ΣΤΡΟΦΗ (πρόσφυση)'},'BRAKING':{el:'ΦΡΕΝΑΡΙΣΜΑ'},
+  'Tight and technical — second-gear corners, short straights. Grip, brakes and a light car matter more than power.':{el:'Στενή και τεχνική — στροφές δευτέρας, κοντές ευθείες. Πρόσφυση, φρένα και χαμηλό βάρος μετρούν πιο πολύ από ισχύ.'},
+  'Long straights and fast sweepers. Power, gearing and low drag decide it; downforce pays for itself.':{el:'Μεγάλες ευθείες και γρήγορες στροφές. Ισχύς, σχέσεις και χαμηλή οπισθέλκουσα κρίνουν· η κάθετη δύναμη αποδίδει.'},
+  'A balanced grand-prix layout: a long back straight into heavy braking, then a technical infield.':{el:'Ισορροπημένη διάταξη grand-prix: μεγάλη πίσω ευθεία με δυνατό φρενάρισμα και μετά τεχνικό εσωτερικό.'},
   'DIFFERENTIAL':{el:'ΔΙΑΦΟΡΙΚΟ'},'OPEN':{el:'ΑΝΟΙΧΤΟ'},'VISCOUS LSD':{el:'ΙΞΩΔΕΣ LSD'},'CLUTCH-PLATE LSD':{el:'LSD ΜΕ ΔΙΣΚΟΥΣ'},'SPOOL / LOCKED':{el:'ΜΠΛΟΚΕ / SPOOL'},
   'GEARBOX TYPE':{el:'ΤΥΠΟΣ ΚΙΒΩΤΙΟΥ'},'MANUAL (H-PATTERN)':{el:'ΧΕΙΡΟΚΙΝΗΤΟ (H)'},'SEQUENTIAL':{el:'ΣΕΙΡΙΑΚΟ'},'DUAL-CLUTCH (DCT)':{el:'ΔΙΠΛΟΥ ΣΥΜΠΛΕΚΤΗ (DCT)'},'TORQUE-CONV AUTO':{el:'ΑΥΤΟΜΑΤΟ (ΜΕΤΑΤΡΟΠΕΑΣ)'},
   'REFIT FACTORY SPEC':{el:'ΕΡΓΟΣΤΑΣΙΑΚΟΣ ΕΞΟΠΛΙΣΜΟΣ'},'FITTED':{el:'ΤΟΠΟΘΕΤΗΘΗΚΕ'},'REFITTED TO FACTORY SPEC':{el:'ΕΠΑΝΑΦΟΡΑ ΣΤΟΝ ΕΡΓΟΣΤΑΣΙΑΚΟ ΕΞΟΠΛΙΣΜΟ'},
@@ -767,7 +794,7 @@ const GUIDE_I18N={
   career:{el:'Διάλεξε έναν <b>ΣΤΟΧΟ</b> στην κορυφή της ΣΧΕΔΙΑΣΗΣ για να κάνεις τη σχεδίαση γρίφο. Κάθε πρόκληση θέτει κριτήρια — ισχύ, οικονομία, εκπομπές, <b>αξιοπιστία</b> ή <b>ισχύ ανά δολάριο</b> — και κάποιες βάζουν όριο <b>προϋπολογισμού</b>. Η κάρτα τσεκάρει κάθε κριτήριο ζωντανά (✓/✗) και δείχνει <b>ΕΠΙΤΥΧΙΑ</b> όταν καλυφθούν όλα· κόστος και αξιοπιστία φαίνονται πάντα. Ο μεγάλος κυβισμός κερδίζει σε αξία· boost και αγωνιστικά μέρη κερδίζουν σε ισχύ αλλά κοστίζουν σε χρήμα και αξιοπιστία.'},
   types:{el:'<b>Βενζίνη 4-χρονη</b> — η ισορροπημένη επιλογή: ανάφλεξη με σπινθήρα, μία εκρηκτική διαδρομή ανά δύο στροφές.<br><b>Πετρέλαιο (CI)</b> — ανάφλεξη με συμπίεση (χωρίς μπουζί, χωρίς πειράκι), πολύ υψηλή συμπίεση, φτωχό χωρίς πεταλούδα. Μεγάλη <b>ροπή</b> στις χαμηλές, χαμηλό όριο στροφών, η καλύτερη <b>απόδοση</b> — αλλά βαρύ, με εκπομπές <b>NOx + αιθάλη (PM)</b> που καθαρίζει σύστημα DPF/SCR.<br><b>2-χρονη</b> — εκρηκτική διαδρομή σε <i>κάθε</i> στροφή (θυρίδες, χωρίς εκκεντροφόρο): υψηλή ειδική ισχύς αλλά λαίμαργη και <b>HC</b>-βρόμικη.<br><b>Wankel (ρότορας)</b> — περιστρεφόμενος ρότορας που ανάβει σε κάθε στροφή: ομαλός σαν τουρμπίνα, τεράστιες στροφές, υψηλή ισχύς ανά λίτρο, αλλά λαίμαργος, <b>HC</b>-βαρύς και σκληρός στα ελάσματα κορυφής.<br>Η αλλαγή τύπου προσαρμόζει τα εύρη συμπίεσης/στροφών/AFR και απενεργοποιεί ό,τι δεν ισχύει.'},
   subsystems:{el:'<b>Κάτω μέρος</b> — τύπος κινητήρα, διάμετρος × διαδρομή × κύλινδροι = κυβισμός· υπερτετράγωνος & υψηλότερο όριο ανεβάζουν την περιοχή ισχύος.<br><b>Διαδρομή αέρα</b> — τούρμπο (γεμίζει με τις στροφές) ή υπερσυμπιεστής (boost από ρελαντί)· το intercooler ψύχει το χάρμανι· εξάτμιση & καταλύτης ανταλλάσσουν ροή με αντίθλιψη/εκπομπές· το νιτρό είναι εμφιαλωμένη ισχύς.<br><b>Εισαγωγή</b> — καρμπιρατέρ → EFI → ITB ορίζουν αναπνοή, ακρίβεια & ρελαντί.<br><b>Χρονισμός βαλβίδων</b> — άγριες εκκεντροφόροι ανεβάζουν την ισχύ ψηλά· το VVT επαναφέρει τις χαμηλές.<br><b>Καύσιμο & σπινθήρας</b> — τύπος καυσίμου, οκτάνια, μπεκ, ανάφλεξη, χρονισμός FIXED/AUTO και το μείγμα: MANUAL (ένα σταθερό AFR) ή AUTO — ένας 3D χάρτης ECU που τρέχει κοντά στο στοιχειομετρικό στο ελαφρύ φορτίο και εμπλουτίζει υπό φορτίο/boost, όπως ένας πραγματικός χάρτης καυσίμου. Στο AUTO μπορείς να <b>ρυθμίσεις τον χάρτη</b>: πάτησε ένα κελί και μετά − ΦΤΩΧΟ / + ΠΛΟΥΣΙΟ για να αλλάξεις τον στόχο σε εκείνο το φορτίο×στροφές (ΕΠΑΝΑΦΟΡΑ ΧΑΡΤΗ επαναφέρει το εργοστασιακό).<br><b>Ψύξη & ηλεκτρικά</b> — ψυγείο/βεντιλατέρ/ψυγείο λαδιού/θερμοστάτης ορίζουν θερμοκρασίες· δυναμό & ανάφλεξη ορίζουν φόρτιση και όριο μισφάιρ.'},
-  vehicle:{el:'Στην καρτέλα <b>ΟΧΗΜΑ</b> βάζεις τον κινητήρα σου σε αυτοκίνητο. Διάλεξε <b>σασί</b> και έρχεται με τον <b>εργοστασιακό του εξοπλισμό</b> — τα ελαστικά, ζάντες, φρένα, ανάρτηση, αεροδυναμική και κιβώτιο που θα φορούσε πραγματικά: ένα kei εμφανίζεται με στενά οικονομικά ελαστικά και μικρούς ατσάλινους δίσκους, ενώ ένα hypercar παίρνει φαρδιά semi-slick, carbon-ceramic φρένα και πακέτο αεροτομής/diffuser. Όλα παραμένουν επεξεργάσιμα· το <b>ΕΡΓΟΣΤΑΣΙΑΚΟΣ ΕΞΟΠΛΙΣΜΟΣ</b> τα επαναφέρει.<br>Από εκεί ρυθμίζεις <b>μετάδοση</b> (FWD/RWD/AWD — το AWD ξεκινά καλύτερα), <b>κιβώτιο</b> (τύπος, σχέσεις + ρυθμιστικό τελικής), <b>ελαστικά</b> (τύπος + πλάτος/προφίλ/διάμετρος), <b>αεροδυναμική</b> (εμπρός/πίσω/πάτωμα = κάθετη δύναμη & οπισθέλκουσα), <b>φρένα</b> (τύπος + διάμετρος δίσκου) και <b>ανάρτηση</b> (πολλαπλασιαστής μηχανικής πρόσφυσης).<br><b>Ο τύπος κιβωτίου</b> αλλάζει τέσσερα πράγματα: πόσο κόβεται η μετάδοση σε κάθε αλλαγή, πόση από την ισχύ του κινητήρα φτάνει στους τροχούς, πώς είναι κλιμακωμένες οι σχέσεις, και πώς ξεκινά το αυτοκίνητο.<br>· <b>Χειροκίνητο (H)</b> — το πιο αποδοτικό, αλλά χάνεις ~350 ms σε κάθε αλλαγή. Φθηνό.<br>· <b>Σειριακό</b> — αγωνιστικό: αλλαγές ~60 ms και κοντές σχέσεις που κρατούν έναν «αιχμηρό» κινητήρα στην περιοχή του. Ακριβό.<br>· <b>Διπλού συμπλέκτη (DCT)</b> — η επόμενη σχέση είναι ήδη επιλεγμένη στον δεύτερο συμπλέκτη, άρα σχεδόν αδιάλειπτες αλλαγές (~30 ms). Το ταχύτερο, και ανάλογα ακριβό.<br>· <b>Αυτόματο με μετατροπέα ροπής</b> — οι πιο αργές αλλαγές (~200 ms) και οι μεγαλύτερες απώλειες, γιατί μεταδίδει μέσω υγρού. Το κερδίζει στην <b>εκκίνηση</b>: ο μετατροπέας «φορτίζει» πάνω στα φρένα και <i>πολλαπλασιάζει</i> τη ροπή (έως ~1.9× σε στάλλ 2400 σ.α.λ.), σβήνοντας στο 1:1 καθώς ο στρόβιλος προλαβαίνει. Γι’ αυτό ένα αυτόματο ξεκινά καλύτερα από ένα χειροκίνητο παρότι χάνει ισχύ παντού αλλού — και γι’ αυτό ταιριάζει σε βαρύ, ροπάτο αυτοκίνητο, όχι σε ελαφρύ και «αιχμηρό». Επίσης απλώνει περισσότερο τις σχέσεις: πιο κοντή 1η, πιο μακριά τελευταία.<br><b>Το διαφορικό</b> μοιράζει την κίνηση στους δύο τροχούς του άξονα — και καθορίζει πόση από την πρόσφυση του άξονα μπορείς πραγματικά να χρησιμοποιήσεις. Οι δύο τροχοί δεν είναι ποτέ φορτωμένοι το ίδιο (κλίση δρόμου, αντίδραση ροπής, στρέψη άξονα, γεωμετρία ανάρτησης), και ένα <b>ανοιχτό</b> διαφορικό δίνει σε κάθε τροχό μόνο όση ροπή αντέχει ο <i>λιγότερο φορτωμένος</i>: στρίβει αυτόν τον τροχό και πετάει τα υπόλοιπα, αφήνοντας περίπου 78% της πρόσφυσης αξιοποιήσιμο. Ένα <b>ιξώδες LSD</b> τους δένει μεταξύ τους και ανακτά τα περισσότερα (~92%)· ένα <b>LSD με δίσκους</b> ουσιαστικά όλα· ένα <b>μπλοκέ (spool)</b> τους ενώνει μόνιμα και είναι το καλύτερο σε ευθεία — γι’ αυτό το χρησιμοποιούν τα dragster.<br>Το βασικό: το διαφορικό μετράει μόνο όσο είσαι <b>περιορισμένος από πρόσφυση</b>. Βάλε spool σε αργό αυτοκίνητο και δεν αλλάζει τίποτα. Βάλ’ το σε ένα που πατινάρει στην εκκίνηση και αξίζει περισσότερο από αναβάθμιση ισχύος.<br><span style="color:#c86">Μια επιφύλαξη — το πραγματικό κόστος ενός spool είναι στις στροφές: παλεύει σε κάθε στροφή, τρώει ελαστικά και υποστρέφει άσχημα, γι’ αυτό δεν το βάζουν στα δρόμου. Ο προσομοιωτής μετράει μόνο ευθείες προς το παρόν, οπότε εδώ φαίνεται απόλυτα καλύτερο. Κράτα μια επιφύλαξη μέχρι να έρθει η πίστα δοκιμών.</span><br><b>Ο αριθμός της τελικής</b> — το ρυθμιστικό 0–100 είναι η <b>σχέση τελικής μετάδοσης</b>, πόσες φορές γυρίζει ο άξονας ανά στροφή των τροχών. Πάει από <b>0 = 4.90:1</b> (η <i>κοντύτερη</i>) έως <b>100 = 2.60:1</b> (η <i>μακρύτερη</i>)· η σχέση φαίνεται δίπλα στον αριθμό. Κοντή τελική πολλαπλασιάζει τη ροπή στους τροχούς: δυνατότερη επιτάχυνση, αλλά κάθε σχέση τελειώνει νωρίς. Μακριά τελική κάνει το αντίθετο: πιο νωθρή επιτάχυνση, περισσότερη ταχύτητα ανά 1000 στροφές και ήρεμο ταξίδι. Ιδανική είναι η πιο μακριά που ο κινητήρας μπορεί ακόμα να τραβήξει ως την κορυφή της ισχύος του στην τελευταία σχέση. Πιο μακριά από αυτό, η τελική ταχύτητα απλώς <i>σταματά να βελτιώνεται</i> — το αυτοκίνητο πιάνει το μέγιστό του μια σχέση χαμηλότερα αντί να «πνίγεται» στην τελευταία — ενώ η επιτάχυνση συνεχίζει να χειροτερεύει, οπότε πληρώνεις χωρίς όφελος. Πολλή ισχύς και λίγη οπισθέλκουσα σηκώνουν πολύ μακριά τελική και κερδίζουν ταχύτητα ως το τέρμα· βαριά, αδύναμα ή αεροδυναμικά «βρώμικα» αυτοκίνητα φτάνουν γρήγορα σε πλατό και θέλουν κοντύτερη.<br>Ο κινητήρας προστίθεται και το ταμπλό <b>Επιδόσεις</b> υπολογίζει <b>0–100 km/h</b>, <b>400/800/1000 m</b>, <b>τελική</b>, <b>φρενάρισμα 100–0</b> και το τεστ <b>0–200–0</b> ζωντανά — εκκίνηση περιορισμένη από πρόσφυση και φρενάρισμα με όριο ελαστικών/φρένων και εξασθένηση. Κολλώδη ελαστικά, μεγάλα φρένα και AWD βοηθούν πιο πολύ.'},
+  vehicle:{el:'Στην καρτέλα <b>ΟΧΗΜΑ</b> βάζεις τον κινητήρα σου σε αυτοκίνητο. Διάλεξε <b>σασί</b> και έρχεται με τον <b>εργοστασιακό του εξοπλισμό</b> — τα ελαστικά, ζάντες, φρένα, ανάρτηση, αεροδυναμική και κιβώτιο που θα φορούσε πραγματικά: ένα kei εμφανίζεται με στενά οικονομικά ελαστικά και μικρούς ατσάλινους δίσκους, ενώ ένα hypercar παίρνει φαρδιά semi-slick, carbon-ceramic φρένα και πακέτο αεροτομής/diffuser. Όλα παραμένουν επεξεργάσιμα· το <b>ΕΡΓΟΣΤΑΣΙΑΚΟΣ ΕΞΟΠΛΙΣΜΟΣ</b> τα επαναφέρει.<br>Από εκεί ρυθμίζεις <b>μετάδοση</b> (FWD/RWD/AWD — το AWD ξεκινά καλύτερα), <b>κιβώτιο</b> (τύπος, σχέσεις + ρυθμιστικό τελικής), <b>ελαστικά</b> (τύπος + πλάτος/προφίλ/διάμετρος), <b>αεροδυναμική</b> (εμπρός/πίσω/πάτωμα = κάθετη δύναμη & οπισθέλκουσα), <b>φρένα</b> (τύπος + διάμετρος δίσκου) και <b>ανάρτηση</b> (πολλαπλασιαστής μηχανικής πρόσφυσης).<br><b>Ο τύπος κιβωτίου</b> αλλάζει τέσσερα πράγματα: πόσο κόβεται η μετάδοση σε κάθε αλλαγή, πόση από την ισχύ του κινητήρα φτάνει στους τροχούς, πώς είναι κλιμακωμένες οι σχέσεις, και πώς ξεκινά το αυτοκίνητο.<br>· <b>Χειροκίνητο (H)</b> — το πιο αποδοτικό, αλλά χάνεις ~350 ms σε κάθε αλλαγή. Φθηνό.<br>· <b>Σειριακό</b> — αγωνιστικό: αλλαγές ~60 ms και κοντές σχέσεις που κρατούν έναν «αιχμηρό» κινητήρα στην περιοχή του. Ακριβό.<br>· <b>Διπλού συμπλέκτη (DCT)</b> — η επόμενη σχέση είναι ήδη επιλεγμένη στον δεύτερο συμπλέκτη, άρα σχεδόν αδιάλειπτες αλλαγές (~30 ms). Το ταχύτερο, και ανάλογα ακριβό.<br>· <b>Αυτόματο με μετατροπέα ροπής</b> — οι πιο αργές αλλαγές (~200 ms) και οι μεγαλύτερες απώλειες, γιατί μεταδίδει μέσω υγρού. Το κερδίζει στην <b>εκκίνηση</b>: ο μετατροπέας «φορτίζει» πάνω στα φρένα και <i>πολλαπλασιάζει</i> τη ροπή (έως ~1.9× σε στάλλ 2400 σ.α.λ.), σβήνοντας στο 1:1 καθώς ο στρόβιλος προλαβαίνει. Γι’ αυτό ένα αυτόματο ξεκινά καλύτερα από ένα χειροκίνητο παρότι χάνει ισχύ παντού αλλού — και γι’ αυτό ταιριάζει σε βαρύ, ροπάτο αυτοκίνητο, όχι σε ελαφρύ και «αιχμηρό». Επίσης απλώνει περισσότερο τις σχέσεις: πιο κοντή 1η, πιο μακριά τελευταία.<br><b>Η καρτέλα ΠΙΣΤΑ</b> βάζει το αυτοκίνητο σε κυκλική πίστα και λύνει έναν γύρο. Βρίσκει την ταχύτητα στροφής σε κάθε σημείο (<i>v = &radic;(μ&middot;(mg + κάθετη δύναμη)&middot;r / m)</i>), μετά δουλεύει ανάποδα από κάθε στροφή για τα σημεία φρεναρίσματος και προς τα εμπρός στην έξοδο με τη διαθέσιμη κίνηση, κρατώντας τη μικρότερη ταχύτητα σε κάθε σημείο. Ο <b>κύκλος τριβής</b> τα δένει: η πρόσφυση που ξοδεύεται στο στρίψιμο δεν είναι διαθέσιμη για επιτάχυνση ή φρενάρισμα. Η χρωματιστή γραμμή στον χάρτη δείχνει τι περιορίζει το αυτοκίνητο σε κάθε σημείο και η λεζάντα αθροίζει τα ποσοστά του γύρου. Ο χρόνος αλλαγής σχέσης χρεώνεται σε κάθε αλλαγή, οπότε ένα αργό κιβώτιο χάνει πραγματικό χρόνο.<br><b>Το διαφορικό</b> μοιράζει την κίνηση στους δύο τροχούς του άξονα — και καθορίζει πόση από την πρόσφυση του άξονα μπορείς πραγματικά να χρησιμοποιήσεις. Οι δύο τροχοί δεν είναι ποτέ φορτωμένοι το ίδιο (κλίση δρόμου, αντίδραση ροπής, στρέψη άξονα, γεωμετρία ανάρτησης), και ένα <b>ανοιχτό</b> διαφορικό δίνει σε κάθε τροχό μόνο όση ροπή αντέχει ο <i>λιγότερο φορτωμένος</i>: στρίβει αυτόν τον τροχό και πετάει τα υπόλοιπα, αφήνοντας περίπου 78% της πρόσφυσης αξιοποιήσιμο. Ένα <b>ιξώδες LSD</b> τους δένει μεταξύ τους και ανακτά τα περισσότερα (~92%)· ένα <b>LSD με δίσκους</b> ουσιαστικά όλα· ένα <b>μπλοκέ (spool)</b> τους ενώνει μόνιμα και είναι το καλύτερο σε ευθεία — γι’ αυτό το χρησιμοποιούν τα dragster.<br>Το βασικό: το διαφορικό μετράει μόνο όσο είσαι <b>περιορισμένος από πρόσφυση</b>. Βάλε spool σε αργό αυτοκίνητο και δεν αλλάζει τίποτα. Βάλ’ το σε ένα που πατινάρει στην εκκίνηση και αξίζει περισσότερο από αναβάθμιση ισχύος.<br>Και τώρα το αντιστάθμισμα μετριέται. Στην καρτέλα ΠΙΣΤΑ ένα μπλοκέ διαφορικό πληρώνει το πλεονέκτημά του στην ευθεία: τρίβει σε κάθε στροφή. Σε ένα muscle 842&nbsp;hp το spool είναι ~0.2&nbsp;s ταχύτερο στο 0–100 και ~2.5&nbsp;s <i>πιο αργό</i> ανά γύρο, ενώ το ανοιχτό είναι το χειρότερο και στα δύο.<br><b>Ο αριθμός της τελικής</b> — το ρυθμιστικό 0–100 είναι η <b>σχέση τελικής μετάδοσης</b>, πόσες φορές γυρίζει ο άξονας ανά στροφή των τροχών. Πάει από <b>0 = 4.90:1</b> (η <i>κοντύτερη</i>) έως <b>100 = 2.60:1</b> (η <i>μακρύτερη</i>)· η σχέση φαίνεται δίπλα στον αριθμό. Κοντή τελική πολλαπλασιάζει τη ροπή στους τροχούς: δυνατότερη επιτάχυνση, αλλά κάθε σχέση τελειώνει νωρίς. Μακριά τελική κάνει το αντίθετο: πιο νωθρή επιτάχυνση, περισσότερη ταχύτητα ανά 1000 στροφές και ήρεμο ταξίδι. Ιδανική είναι η πιο μακριά που ο κινητήρας μπορεί ακόμα να τραβήξει ως την κορυφή της ισχύος του στην τελευταία σχέση. Πιο μακριά από αυτό, η τελική ταχύτητα απλώς <i>σταματά να βελτιώνεται</i> — το αυτοκίνητο πιάνει το μέγιστό του μια σχέση χαμηλότερα αντί να «πνίγεται» στην τελευταία — ενώ η επιτάχυνση συνεχίζει να χειροτερεύει, οπότε πληρώνεις χωρίς όφελος. Πολλή ισχύς και λίγη οπισθέλκουσα σηκώνουν πολύ μακριά τελική και κερδίζουν ταχύτητα ως το τέρμα· βαριά, αδύναμα ή αεροδυναμικά «βρώμικα» αυτοκίνητα φτάνουν γρήγορα σε πλατό και θέλουν κοντύτερη.<br>Ο κινητήρας προστίθεται και το ταμπλό <b>Επιδόσεις</b> υπολογίζει <b>0–100 km/h</b>, <b>400/800/1000 m</b>, <b>τελική</b>, <b>φρενάρισμα 100–0</b> και το τεστ <b>0–200–0</b> ζωντανά — εκκίνηση περιορισμένη από πρόσφυση και φρενάρισμα με όριο ελαστικών/φρένων και εξασθένηση. Κολλώδη ελαστικά, μεγάλα φρένα και AWD βοηθούν πιο πολύ.'},
   tip:{el:'Συμβουλή: κλείσε τη ΦΘΟΡΑ στις ΕΠΙΛΟΓΕΣ για ελεύθερο πειραματισμό, μετά ξανάνοιξέ την για συνέπειες.'}
 };
 const CHALLENGE_I18N={
@@ -823,6 +850,7 @@ function applyLang(lang){
   if(typeof renderChallenge==='function')renderChallenge();
   if(typeof updateVehicleSummary==='function'&&vehicle&&vehicle.chLabel)updateVehicleSummary();
   if(typeof renderFuelMap==='function')renderFuelMap();
+  if(typeof renderLap==='function'&&lapResult)renderLap();
 }
 
 const RAD_CAP={small:0.75,stock:1.0,large:1.35};   // relative heat-rejection capacity
@@ -978,19 +1006,40 @@ const GEARBOX={
 // away. A limited-slip locks the two together against a preload and recovers most of it; a spool
 // welds them and recovers all of it.
 //   traction — fraction of the driven axle's grip the diff can actually put down.
-// Note this only bites when the car is traction-limited: an engine-limited car sees no
+//   corner  — lateral-grip multiplier. The mirror image: locking the wheels together forces the
+//             outer wheel to travel a longer arc at the same speed as the inner one, so a tyre
+//             has to scrub, and the grip it burns scrubbing isn't available for cornering. An
+//             open diff never binds and corners best; a spool binds hardest and pushes wide.
+// Note traction only bites when the car is traction-limited: an engine-limited car sees no
 // difference, which is why a diff transforms a powerful build and does nothing for a slow one.
-// The spool's real cost — understeer, tyre scrub, undrivable on the road — is cornering
-// behaviour, which this sim doesn't model yet, so it looks strictly best here. Flagged in GUIDE.
+// Together the two columns are the real trade: a spool is the best thing you can fit for a
+// standing start and the worst for a lap.
 // The clutch LSD is deliberately traction:1.00 — the model before differentials existed applied
 // no penalty at all, so saves from then (which inherit DEFAULT_VEHICLE's clutch LSD) reproduce
 // their old numbers exactly.
+//   lock    — how strongly the two wheels are tied together (0 = open, 1 = welded). This is what
+//             makes cornering different from a straight line: lateral load transfer unloads the
+//             inside wheel far more than the small standing asymmetry does, so an open diff that
+//             gives up 22% on a drag strip gives up most of its drive on a fast corner exit,
+//             while a locked one keeps all of it. See lapDiffTraction().
 const DIFF={
-  open:  {label:'OPEN',          traction:0.78,cost:0},
-  visc:  {label:'VISCOUS LSD',   traction:0.92,cost:900},
-  clsd:  {label:'CLUTCH-PLATE LSD',traction:1.00,cost:2200},
-  spool: {label:'SPOOL / LOCKED',traction:1.04,cost:1200}
+  open:  {label:'OPEN',            traction:0.78,corner:1.00,lock:0.00,cost:0},
+  visc:  {label:'VISCOUS LSD',     traction:0.92,corner:0.99,lock:0.55,cost:900},
+  clsd:  {label:'CLUTCH-PLATE LSD',traction:1.00,corner:0.97,lock:0.80,cost:2200},
+  spool: {label:'SPOOL / LOCKED',  traction:1.04,corner:0.90,lock:1.00,cost:1200}
 };
+const DIFF_ASYM0=0.11;   // standing load asymmetry across a driven axle (gives open its 0.78)
+// How much of the driven axle's grip the diff can use at a given lateral acceleration. An open
+// diff is governed by the lighter-loaded wheel, and cornering unloads that wheel hard; a locked
+// one always commands the whole axle. Normalised so that at zero lateral g this returns exactly
+// the straight-line `traction` figure, leaving the drag-strip model (and old saves) untouched.
+function lapDiffTraction(df,aLat,cgH){
+  const xfer=clamp((aLat/G)*(cgH/1.55),0,0.5-DIFF_ASYM0);     // lateral transfer, capped at lift
+  const openUse=2*Math.max(0,0.5-DIFF_ASYM0-xfer);
+  const use=df.lock+(1-df.lock)*openUse;
+  const useStraight=df.lock+(1-df.lock)*2*(0.5-DIFF_ASYM0);
+  return df.traction*(use/useStraight);
+}
 // Drivetrain: driveline efficiency (crank→wheels) and the driven-axle description.
 const DRIVE_EFF={fwd:0.92,rwd:0.90,awd:0.86};
 const AIR_RHO=1.20;   // air density kg/m³
@@ -1004,6 +1053,8 @@ const DEFAULT_VEHICLE={
 };
 let vehicle=Object.assign({},DEFAULT_VEHICLE);
 let perf=null;   // last computed performance result
+let lapResult=null;      // last computed lap-time result
+let trackKey='mixed';    // selected circuit
 // Editable ECU fuel map: a λ grid (rows=load, cols=rpm). null → use the factory curve. Custom
 // edits persist across rebuilds while the map-relevant engine params (below) are unchanged.
 let fuelMap=null,fuelMapCustom=false,fuelMapKey='',fmSel=null;
@@ -2011,6 +2062,8 @@ function buildVehicle(){
       perf.zd=perf.x200+perf.brake200.dist;
     }else{perf.zt=null;perf.zd=null;}
   }
+  // The lap solver is heavier than the straight-line runs, so only re-run it while it's on screen.
+  if(typeof vizMode!=='undefined'&&vizMode==='track'&&typeof refreshLap==='function')refreshLap();
 }
 // Braking run from v0 (m/s) to a stop: decel is the lesser of tyre grip (μ·(weight+downforce))
 // and what the brakes can command (capacity, fading as they absorb heat), with aero drag also
@@ -2121,7 +2174,175 @@ function simulateAccel(){
   return {t100:M.t100,q400:M.q400,q800:M.q800,q1000:M.q1000,topSpeed,mass:m,ptw:vehicle.powerToWeight,
     t200:M.v200?M.v200.t:null,x200:M.v200?M.v200.x:null};
 }
+// ====== TEST TRACK: circuits, lap solver ======
+// A circuit is a ring of control points (metres). A closed Catmull-Rom spline through them gives
+// a smooth, guaranteed-closed centreline; sampling that yields both the distance/curvature
+// profile the lap solver needs and the polyline the map draws — one source of truth for both, so
+// the picture can never disagree with the physics.
+const TRACKS={
+  tech: {label:'ASHDOWN PARK',  blurb:'Tight and technical — second-gear corners, short straights. Grip, brakes and a light car matter more than power.',
+    pts:[{x:60,y:250},{x:70,y:120},{x:150,y:60},{x:250,y:80},{x:290,y:160},{x:250,y:215},{x:300,y:265},
+         {x:420,y:250},{x:470,y:150},{x:560,y:140},{x:610,y:220},{x:560,y:300},{x:600,y:380},{x:520,y:430},
+         {x:380,y:410},{x:330,y:340},{x:250,y:360},{x:210,y:440},{x:110,y:420}]},
+  fast: {label:'CAPE SPEEDWAY', blurb:'Long straights and fast sweepers. Power, gearing and low drag decide it; downforce pays for itself.',
+    pts:[{x:80,y:400},{x:80,y:220},{x:140,y:110},{x:320,y:70},{x:700,y:60},{x:980,y:80},{x:1120,y:170},
+         {x:1150,y:330},{x:1080,y:470},{x:900,y:520},{x:700,y:500},{x:660,y:400},{x:700,y:300},{x:640,y:250},
+         {x:480,y:270},{x:420,y:380},{x:300,y:470},{x:150,y:490}]},
+  mixed:{label:'RIVERSIDE GP',  blurb:'A balanced grand-prix layout: a long back straight into heavy braking, then a technical infield.',
+    pts:[{x:90,y:430},{x:80,y:280},{x:160,y:180},{x:300,y:150},{x:420,y:190},{x:520,y:130},{x:660,y:100},
+         {x:820,y:130},{x:880,y:250},{x:840,y:370},{x:720,y:420},{x:640,y:350},{x:560,y:380},{x:540,y:470},
+         {x:420,y:500},{x:330,y:440},{x:240,y:470},{x:150,y:510}]}
+};
+// Closed Catmull-Rom through the control points, sampled at roughly `step` metres.
+function catmullClosed(cp,step){
+  const n=cp.length,out=[];
+  for(let i=0;i<n;i++){
+    const p0=cp[(i-1+n)%n],p1=cp[i],p2=cp[(i+1)%n],p3=cp[(i+2)%n];
+    const steps=Math.max(4,Math.ceil(Math.hypot(p2.x-p1.x,p2.y-p1.y)/step));
+    for(let j=0;j<steps;j++){
+      const t=j/steps,t2=t*t,t3=t2*t;
+      out.push({
+        x:0.5*(2*p1.x+(-p0.x+p2.x)*t+(2*p0.x-5*p1.x+4*p2.x-p3.x)*t2+(-p0.x+3*p1.x-3*p2.x+p3.x)*t3),
+        y:0.5*(2*p1.y+(-p0.y+p2.y)*t+(2*p0.y-5*p1.y+4*p2.y-p3.y)*t2+(-p0.y+3*p1.y-3*p2.y+p3.y)*t3)
+      });
+    }
+  }
+  return out;
+}
+const trackCache={};
+// Sample a circuit into {x,y,ds,s,r} points. Radius comes from the Menger curvature of a window
+// of three samples — huge on a straight, small in a hairpin.
+function buildTrack(key){
+  if(trackCache[key])return trackCache[key];
+  const def=TRACKS[key]||TRACKS.mixed;
+  const p=catmullClosed(def.pts,5),n=p.length;
+  for(let i=0;i<n;i++){const q=p[(i+1)%n];p[i].ds=Math.hypot(q.x-p[i].x,q.y-p[i].y);}
+  let s=0;for(let i=0;i<n;i++){p[i].s=s;s+=p[i].ds;}
+  for(let i=0;i<n;i++){
+    const a=p[(i-3+n)%n],b=p[i],c=p[(i+3)%n];
+    const ab=Math.hypot(b.x-a.x,b.y-a.y),bc=Math.hypot(c.x-b.x,c.y-b.y),ca=Math.hypot(a.x-c.x,a.y-c.y);
+    const area=Math.abs((b.x-a.x)*(c.y-a.y)-(c.x-a.x)*(b.y-a.y))/2;
+    const k=(ab*bc*ca)>1e-6?4*area/(ab*bc*ca):0;
+    p[i].r=k>1e-5?1/k:1e6;
+  }
+  // Corner count: distinct stretches tighter than 200 m radius.
+  let corners=0,inC=false;
+  for(let i=0;i<n;i++){const t=p[i].r<200;if(t&&!inC)corners++;inC=t;}
+  const xs=p.map(q=>q.x),ys=p.map(q=>q.y);
+  const T={key,label:def.label,blurb:def.blurb,pts:p,length:s,corners,
+    minX:Math.min(...xs),maxX:Math.max(...xs),minY:Math.min(...ys),maxY:Math.max(...ys)};
+  trackCache[key]=T;return T;
+}
+// Quasi-steady-state lap: a cornering-speed ceiling at every point, then a backward braking pass
+// and a forward traction/power pass, taking the lower speed at each point. Gearbox shift time is
+// charged per gear change around the lap, so a slow-shifting box loses real time on a circuit.
+function simulateLap(key){
+  if(!engine.score||!vehicle.mass)return null;
+  const T=buildTrack(key),p=T.pts,n=p.length;
+  const curve=buildTorqueCurve();
+  const tqAt=rpm=>{if(rpm<=curve[0].rpm)return curve[0].tq;for(let i=1;i<curve.length;i++){if(rpm<=curve[i].rpm){const a=curve[i-1],b=curve[i];return a.tq+(b.tq-a.tq)*(rpm-a.rpm)/(b.rpm-a.rpm);}}return curve[curve.length-1].tq;};
+  const m=vehicle.mass,rT=vehicle.rTire,fd=vehicle.finalDrive,eff=vehicle.driveEff,ratios=vehicle.ratios;
+  const idle=engine.idleRpmEff,rl=engine.redline,TWO_PI=Math.PI*2;
+  const df=vehicle.df||DIFF.open;
+  const muLat=vehicle.mu*(df.corner!=null?df.corner:1);   // locking the diff scrubs lateral grip
+  const muLong=vehicle.mu*(df.traction!=null?df.traction:1);
+  const down=v=>0.5*AIR_RHO*vehicle.clA*v*v;
+  const drag=v=>0.5*AIR_RHO*vehicle.cdA*v*v;
+  const rollF=vehicle.crr*m*G;
+  // Best gear at a road speed = the one giving the most wheel torque without over-revving.
+  function bestGear(v){
+    let bi=0,bf=-1;
+    for(let i=0;i<ratios.length;i++){
+      const tot=ratios[i]*fd,rpm=v*tot/rT*60/TWO_PI;
+      if(rpm>rl&&i<ratios.length-1)continue;
+      const f=tqAt(clamp(rpm,idle,rl))*tot*eff/rT;
+      if(f>bf){bf=f;bi=i;}
+    }
+    return{gear:bi,F:Math.max(0,bf)};
+  }
+  // 1. Cornering ceiling. m·v²/r = muLat·(m·g + ½ρ·ClA·v²) solves for v² in closed form, because
+  //    downforce also scales with v² — no iteration needed.
+  const vC=new Array(n),lim=new Array(n);
+  const VMAX=140;   // 504 km/h ceiling, so a straight is bounded
+  for(let i=0;i<n;i++){
+    const denom=m/p[i].r-0.5*AIR_RHO*vehicle.clA*muLat;
+    vC[i]=denom>1e-6?Math.min(VMAX,Math.sqrt(muLat*m*G/denom)):VMAX;
+    lim[i]='corner';
+  }
+  const v=vC.slice(),accKind=new Array(n).fill('power'),latUse=new Array(n).fill(0);
+  // 2. Backward pass: brake into every corner. Lateral grip in use eats the longitudinal budget
+  //    (friction circle), and the brakes' own capacity caps it too.
+  for(let pass=0;pass<2;pass++)for(let k=n;k>0;k--){
+    const i=(k-1+n)%n,j=(i+1)%n;
+    const aLatMax=muLat*(m*G+down(v[i]))/m,u=clamp((v[i]*v[i]/p[i].r)/Math.max(0.1,aLatMax),0,1);
+    const aBrake=Math.min(vehicle.brakeDecelCap,aLatMax*Math.sqrt(Math.max(0,1-u*u)))+drag(v[i])/m;
+    const cap=Math.sqrt(Math.max(0,v[j]*v[j]+2*aBrake*p[i].ds));
+    if(cap<v[i])v[i]=cap;
+  }
+  // 3. Forward pass: accelerate out. Drive force is capped by the driven axle's grip (via the
+  //    diff) and again by the friction circle, then drag and rolling resistance are subtracted.
+  for(let pass=0;pass<2;pass++)for(let k=0;k<n;k++){
+    const i=k%n,j=(i+1)%n;
+    const dn=down(v[i]);
+    const drivenN=vehicle.drive==='awd'?m*G+dn:(vehicle.drive==='rwd'?m*G*(1-vehicle.fWt)+dn*0.5:m*G*vehicle.fWt+dn*0.5);
+    const aLat=v[i]*v[i]/p[i].r;
+    const aLatMax=muLat*(m*G+dn)/m,u=clamp(aLat/Math.max(0.1,aLatMax),0,1);
+    // Diff traction is evaluated at the lateral load transfer actually happening here, so an
+    // open diff falls apart on a fast corner exit while a locked one doesn't.
+    const gripA=vehicle.mu*lapDiffTraction(df,aLat,vehicle.cg)*drivenN/m*Math.sqrt(Math.max(0,1-u*u));
+    const powerA=bestGear(v[i]).F/m;
+    accKind[i]=powerA<gripA?'power':'traction';latUse[i]=u;
+    const aAcc=Math.min(powerA,gripA)-(drag(v[i])+rollF)/m;
+    const cap=Math.sqrt(Math.max(0,v[i]*v[i]+2*Math.max(0,aAcc)*p[i].ds));
+    if(cap<v[j])v[j]=cap;
+  }
+  // Classify from the FINISHED profile, not during the passes — the backward pass touches almost
+  // every point on a twisty circuit, so labelling as it goes would call the whole lap "braking".
+  // What's actually limiting the car is: losing speed → brakes; sitting on the cornering ceiling
+  // → grip; otherwise gaining speed, capped by either engine output or the driven axle.
+  for(let i=0;i<n;i++){
+    const j=(i+1)%n;
+    const aLong=(v[j]*v[j]-v[i]*v[i])/(2*p[i].ds);   // m/s², negative = slowing
+    // Order matters. Hard deceleration is braking. Otherwise, if most of the tyre is already
+    // committed sideways the car is grip-limited — call that cornering, not "traction", even
+    // though the friction circle has squeezed the longitudinal budget to nearly nothing.
+    // Only when the tyres have capacity left does it make sense to ask whether the engine or
+    // the driven axle is the ceiling.
+    if(aLong<-1.0)lim[i]='brake';
+    else if(latUse[i]>0.65||(v[i]>=vC[i]*0.97&&vC[i]<VMAX*0.99))lim[i]='corner';
+    else lim[i]=accKind[i];
+  }
+  // 4. Integrate the lap and gather stats.
+  let t=0,vMin=1e9,vMax=0;
+  const sect=[0,0,0],third=T.length/3,gears=new Array(n);
+  for(let i=0;i<n;i++){
+    const j=(i+1)%n,vAvg=Math.max(2,(v[i]+v[j])/2),dtSeg=p[i].ds/vAvg;
+    t+=dtSeg;sect[Math.min(2,Math.floor(p[i].s/third))]+=dtSeg;
+    gears[i]=bestGear(v[i]).gear;
+    if(v[i]<vMin)vMin=v[i];if(v[i]>vMax)vMax=v[i];
+  }
+  // Count real shifts, not solver chatter: picking the best gear point-by-point flickers between
+  // two near-equal ratios, so collapse any run shorter than 40 m into its neighbour first.
+  let shifts=0;
+  {
+    const MINRUN=40;let runStart=0;
+    for(let i=1;i<=n;i++){
+      if(i<n&&gears[i]===gears[runStart])continue;
+      if(p[(i-1+n)%n].s-p[runStart].s<MINRUN&&runStart>0)
+        for(let k=runStart;k<i;k++)gears[k]=gears[runStart-1];
+      runStart=i;
+    }
+    for(let i=0;i<n;i++)if(gears[i]!==gears[(i-1+n)%n])shifts++;
+  }
+  const shiftLoss=shifts*vehicle.shiftTime*0.5;   // half a shift's drive-cut costs time on track
+  t+=shiftLoss;sect[0]+=shiftLoss/3;sect[1]+=shiftLoss/3;sect[2]+=shiftLoss/3;
+  const counts={corner:0,brake:0,power:0,traction:0};
+  for(let i=0;i<n;i++)counts[lim[i]]+=p[i].ds;
+  return {track:T,lap:t,sectors:sect,v,lim,vMin:vMin*3.6,vMax:vMax*3.6,
+    avg:T.length/t*3.6,shifts,shiftLoss,counts,length:T.length,corners:T.corners};
+}
 function fmtT(t){return (t==null)?'—':t.toFixed(2)+'s';}
+function fmtLap(t){if(t==null)return '—';const mm=Math.floor(t/60);return (mm?mm+':':'')+(t-mm*60).toFixed(2).padStart(mm?5:1,'0');}
 function fmtTrap(mk){return mk?Math.round(mk.v*3.6)+' km/h':'';}
 function updateVehicleSummary(){
   const el=document.getElementById('vehicleSummary');if(!el)return;
@@ -2543,6 +2764,82 @@ function drawEngine(dt){
   if(state.nitrousActive&&nitrousImep()>0)ctx.fillStyle='#ff66cc';
   ctx.fillText(msg,px(10),py(414));
 }
+// ---- TRACK map: the circuit drawn from the same sampled centreline the lap solver used, with
+// the racing line coloured by what is limiting the car at each point. ----
+const LIMC={corner:'#ffcc00',brake:'#ff5555',power:'#55dd66',traction:'#4aa3ff'};
+const LIMLBL={corner:'CORNERING (grip)',brake:'BRAKING',power:'POWER',traction:'TRACTION (diff/tyres)'};
+function drawTrack(){
+  const W=canvas.width,H=canvas.height;
+  ctx.fillStyle=C.bg;ctx.fillRect(0,0,W,H);
+  drawPixelRect(0,0,W,28,'#12121c');
+  ctx.fillStyle=C.yellow;ctx.font='10px "Press Start 2P"';
+  const L=lapResult;
+  ctx.fillText(tr('TEST TRACK')+' • '+(L?L.track.label:''),12,19);
+  if(!L){ctx.fillStyle='#778';ctx.font='8px "Press Start 2P"';ctx.fillText(tr('BUILD AN ENGINE FIRST'),12,60);return;}
+  // Lap time sits below the title bar, clear of the ⛶ FULL button in the top-right corner.
+  ctx.fillStyle=C.green;ctx.font='14px "Press Start 2P"';ctx.fillText(fmtLap(L.lap),12,50);
+  ctx.font='7px "Press Start 2P"';ctx.fillStyle='#778';ctx.fillText(tr('LAP TIME'),14+ctx.measureText(fmtLap(L.lap)).width*2,50);
+  const T=L.track,pad=40,topBar=62,botBar=52;
+  const sx=(W-pad*2)/(T.maxX-T.minX),sy=(H-topBar-botBar-pad)/(T.maxY-T.minY);
+  const sc=Math.min(sx,sy);
+  const ox=pad+((W-pad*2)-(T.maxX-T.minX)*sc)/2, oy=topBar+((H-topBar-botBar-pad)-(T.maxY-T.minY)*sc)/2;
+  const px=q=>ox+(q.x-T.minX)*sc, py=q=>oy+(q.y-T.minY)*sc;
+  const pts=T.pts,n=pts.length;
+  // Track surface: a wide dark ribbon under the coloured racing line.
+  ctx.lineCap='round';ctx.lineJoin='round';
+  ctx.strokeStyle='#23232f';ctx.lineWidth=Math.max(7,14*sc/1.2);
+  ctx.beginPath();ctx.moveTo(px(pts[0]),py(pts[0]));
+  for(let i=1;i<n;i++)ctx.lineTo(px(pts[i]),py(pts[i]));
+  ctx.closePath();ctx.stroke();
+  // Racing line, coloured per segment by the limiting factor.
+  ctx.lineWidth=Math.max(3,6*sc/1.2);
+  for(let i=0;i<n;i++){
+    const j=(i+1)%n;
+    ctx.strokeStyle=LIMC[L.lim[i]]||'#888';
+    ctx.beginPath();ctx.moveTo(px(pts[i]),py(pts[i]));ctx.lineTo(px(pts[j]),py(pts[j]));ctx.stroke();
+  }
+  // Start/finish line + slowest-corner marker.
+  let slow=0;for(let i=1;i<n;i++)if(L.v[i]<L.v[slow])slow=i;
+  ctx.fillStyle='#fff';ctx.fillRect(px(pts[0])-4,py(pts[0])-4,8,8);
+  ctx.fillStyle='#000';ctx.fillRect(px(pts[0])-2,py(pts[0])-2,4,4);
+  ctx.fillStyle=C.yellow;ctx.font='7px "Press Start 2P"';
+  ctx.fillText(Math.round(L.v[slow]*3.6)+' km/h',px(pts[slow])+8,py(pts[slow])+3);
+  ctx.fillStyle='#ff5555';ctx.fillRect(px(pts[slow])-3,py(pts[slow])-3,6,6);
+  // Legend along the bottom: how much of the lap distance each limit accounts for.
+  ctx.font='7px "Press Start 2P"';
+  let lx=14;const ly=H-30;
+  for(const k of ['power','traction','corner','brake']){
+    const pct=Math.round(L.counts[k]/T.length*100);
+    ctx.fillStyle=LIMC[k];ctx.fillRect(lx,ly-6,8,8);
+    ctx.fillStyle='#99a';ctx.fillText(tr(LIMLBL[k])+' '+pct+'%',lx+12,ly+1);
+    lx+=ctx.measureText(tr(LIMLBL[k])+' '+pct+'%').width+30;
+  }
+  ctx.fillStyle='#778';
+  ctx.fillText((T.length/1000).toFixed(2)+' km • '+T.corners+' '+tr('corners')+' • '+tr('avg')+' '+Math.round(L.avg)+' km/h • '+L.shifts+' '+tr('shifts'),14,H-12);
+}
+function renderLap(){
+  const head=document.getElementById('lapHead'),grid=document.getElementById('lapGrid'),note=document.getElementById('lapNote');
+  if(!head||!grid)return;
+  const L=lapResult;
+  if(!L){head.textContent='—';grid.innerHTML='';if(note)note.textContent='';return;}
+  head.innerHTML='<b>'+L.track.label+'</b> • '+(L.length/1000).toFixed(2)+' km • '+L.corners+' '+tr('corners');
+  const cell=(k,v,u,cls)=>'<div class="perf-cell '+(cls||'')+'"><span class="k">'+k+'</span><div class="v">'+v+'</div><span class="u">'+(u||'')+'</span></div>';
+  grid.innerHTML=
+    cell(tr('LAP TIME'),fmtLap(L.lap),'','hero wide')+
+    cell(tr('AVG SPEED'),Math.round(L.avg),'km/h')+
+    cell(tr('SECTOR 1'),L.sectors[0].toFixed(2),'s')+
+    cell(tr('SECTOR 2'),L.sectors[1].toFixed(2),'s')+
+    cell(tr('SECTOR 3'),L.sectors[2].toFixed(2),'s')+
+    cell(tr('SLOWEST'),Math.round(L.vMin),'km/h')+
+    cell(tr('FASTEST'),Math.round(L.vMax),'km/h')+
+    cell(tr('SHIFTS'),L.shifts,'−'+L.shiftLoss.toFixed(2)+'s');
+  if(note)note.textContent=tr(L.track.blurb);
+}
+function refreshLap(){
+  if(!engine.score||!vehicle.mass){lapResult=null;}
+  else lapResult=simulateLap(trackKey);
+  renderLap();
+}
 function drawDyno(){
   const W=canvas.width,H=canvas.height,rMax=engine.redline;
   ctx.fillStyle=C.bg;ctx.fillRect(0,0,W,H);
@@ -2666,7 +2963,7 @@ function updateUI(){
 
 function setTab(mode){
   vizMode=mode;
-  ['Design','Vehicle','Engine','Dyno','Guide','Options'].forEach(m=>
+  ['Design','Vehicle','Track','Engine','Dyno','Guide','Options'].forEach(m=>
     document.getElementById('tab'+m).classList.toggle('active',mode===m.toLowerCase()));
   // DESIGN / VEHICLE / GUIDE / OPTIONS are full-panel overlays that replace the canvas.
   const overlay=mode==='design'||mode==='vehicle'||mode==='guide'||mode==='options';
@@ -2679,7 +2976,9 @@ function setTab(mode){
   // Right column: runtime Engine Controls while driving/dyno; the Performance panel on VEHICLE.
   document.getElementById('controlsPanel').style.display=(mode==='engine'||mode==='dyno')?'':'none';
   document.getElementById('vehiclePanel').style.display=(mode==='vehicle')?'':'none';
+  document.getElementById('trackPanel').style.display=(mode==='track')?'':'none';
   if(mode==='vehicle'){buildVehicle();updateVehicleSummary();}
+  if(mode==='track'){buildVehicle();refreshLap();}
   updateUI();
 }
 
@@ -2730,6 +3029,9 @@ function bindControls(){
 
   document.getElementById('tabDesign').addEventListener('click',()=>setTab('design'));
   document.getElementById('tabVehicle').addEventListener('click',()=>setTab('vehicle'));
+  document.getElementById('tabTrack').addEventListener('click',()=>setTab('track'));
+  const trkSel=document.getElementById('trkSel');
+  if(trkSel){trkSel.value=trackKey;trkSel.addEventListener('change',e=>{trackKey=e.target.value;refreshLap();});}
   document.getElementById('tabEngine').addEventListener('click',()=>setTab('engine'));
   document.getElementById('tabDyno').addEventListener('click',()=>setTab('dyno'));
   document.getElementById('tabGuide').addEventListener('click',()=>setTab('guide'));
@@ -2834,6 +3136,7 @@ function loop(now){
   updateSound();
   if(fullscreen||vizMode==='engine')drawEngine(dt);
   else if(vizMode==='dyno')drawDyno();
+  else if(vizMode==='track')drawTrack();
   updateUI();
   requestAnimationFrame(loop);
 }
