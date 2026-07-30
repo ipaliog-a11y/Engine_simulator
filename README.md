@@ -122,8 +122,10 @@ saps power; a large radiator, electric fan and oil cooler keep it cool.
 
 - **Test track (new)** — a **TRACK** tab that puts the finished car on a circuit and solves a lap.
   Three layouts with different characters: **Ashdown Park** (2.0 km, tight and technical),
-  **Cape Speedway** (3.1 km, long straights and fast sweepers) and **Riverside GP** (2.2 km,
-  balanced). You get a **lap time**, three **sector splits**, average / slowest / fastest speeds
+  **Cape Speedway** (3.1 km, long straights and fast sweepers), **Riverside GP** (2.2 km,
+  balanced) and the **Nordschleife** (20.4 km, 40 corners, 290 m of elevation and 505 m of climbing
+  per lap — geometry and gradients derived from a recorded GPX trace, corners numbered rather than
+  named because the detector can't be reliably aligned with the circuit's real corner names). You get a **lap time**, three **sector splits**, average / slowest / fastest speeds
   and the number of gear changes, plus a top-down pixel map — the track drawn to its real width,
   with an **optimised racing line** through it **coloured by what is limiting the car** — power, traction, cornering grip or braking — and a legend totalling
   how much of the lap each accounts for.
@@ -490,6 +492,7 @@ native Android build (parked).
 - [x] Minimum-curvature racing line within the track width (4–7 % quicker than the centreline)
 - [x] Track elevation: gradient, slope-adjusted load and crest/compression vertical curvature, with an elevation profile on the lap report
 - [x] GPX circuit import (projection, uniform resampling, smoothing, real elevation) with localStorage persistence
+- [x] Nordschleife in the track pack (20.4 km, 290 m elevation) — a real road course as a benchmark
 - [x] Printable dyno report (PNG + library-free PDF) with chart, peaks, engine spec, run conditions and tabulated data
 - [x] Printable hot lap report: map with throttle/braking highlighted, speed trace, sector times, per-corner speed traps with names
 - [x] Calibration pass for realistic power figures & curve shape (ongoing refinement)
