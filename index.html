@@ -385,12 +385,13 @@ diameter set grip and rolling radius), <b>aero</b> (front/rear/floor add downfor
 driveshaft turns per turn of the wheels. It runs from <b>0 = 4.90:1</b> (the <i>shortest</i>,
 lowest gearing) to <b>100 = 2.60:1</b> (the <i>tallest</i>); the ratio is shown next to the number.
 Short gearing multiplies torque at the wheels, so the car accelerates harder and reaches the rev
-limiter sooner — quick 0–100, but it runs out of revs at a low top speed. Tall gearing does the
-opposite: lazier acceleration, more speed per 1000 rpm and a higher top speed, and calmer cruising
-revs. The best setting is the one where the car hits the redline in top gear right as drag stops
-it — go taller than that and you lose acceleration <i>and</i> top speed, because the engine can no
-longer pull to its power peak. Big power and low drag want taller gearing; heavy, low-power or
-draggy cars want shorter.<br>
+limiter sooner — quick 0–100, but each gear runs out of revs early. Tall gearing does the
+opposite: lazier acceleration, more speed per 1000 rpm and calmer cruising revs. The sweet spot is
+the tallest gearing your engine can still pull to its power peak in top gear. Go taller than that
+and top speed simply <i>stops improving</i> — the car reaches its maximum a gear lower instead of
+bogging in top — while acceleration keeps getting worse, so you're paying for nothing. Big power
+and low drag can use very tall gearing and keep gaining speed all the way out; heavy, low-power or
+draggy cars plateau early and want shorter gearing.<br>
 The engine's mass and torque curve are added in and the
 <b>Performance</b> panel computes <b>0–100 km/h</b>, <b>400/800/1000 m</b> (time + trap speed),
 <b>top speed</b>, <b>100–0 braking</b> and the <b>0–200–0</b> test live — a traction-limited launch
@@ -730,7 +731,7 @@ const GUIDE_I18N={
   career:{el:'Διάλεξε έναν <b>ΣΤΟΧΟ</b> στην κορυφή της ΣΧΕΔΙΑΣΗΣ για να κάνεις τη σχεδίαση γρίφο. Κάθε πρόκληση θέτει κριτήρια — ισχύ, οικονομία, εκπομπές, <b>αξιοπιστία</b> ή <b>ισχύ ανά δολάριο</b> — και κάποιες βάζουν όριο <b>προϋπολογισμού</b>. Η κάρτα τσεκάρει κάθε κριτήριο ζωντανά (✓/✗) και δείχνει <b>ΕΠΙΤΥΧΙΑ</b> όταν καλυφθούν όλα· κόστος και αξιοπιστία φαίνονται πάντα. Ο μεγάλος κυβισμός κερδίζει σε αξία· boost και αγωνιστικά μέρη κερδίζουν σε ισχύ αλλά κοστίζουν σε χρήμα και αξιοπιστία.'},
   types:{el:'<b>Βενζίνη 4-χρονη</b> — η ισορροπημένη επιλογή: ανάφλεξη με σπινθήρα, μία εκρηκτική διαδρομή ανά δύο στροφές.<br><b>Πετρέλαιο (CI)</b> — ανάφλεξη με συμπίεση (χωρίς μπουζί, χωρίς πειράκι), πολύ υψηλή συμπίεση, φτωχό χωρίς πεταλούδα. Μεγάλη <b>ροπή</b> στις χαμηλές, χαμηλό όριο στροφών, η καλύτερη <b>απόδοση</b> — αλλά βαρύ, με εκπομπές <b>NOx + αιθάλη (PM)</b> που καθαρίζει σύστημα DPF/SCR.<br><b>2-χρονη</b> — εκρηκτική διαδρομή σε <i>κάθε</i> στροφή (θυρίδες, χωρίς εκκεντροφόρο): υψηλή ειδική ισχύς αλλά λαίμαργη και <b>HC</b>-βρόμικη.<br><b>Wankel (ρότορας)</b> — περιστρεφόμενος ρότορας που ανάβει σε κάθε στροφή: ομαλός σαν τουρμπίνα, τεράστιες στροφές, υψηλή ισχύς ανά λίτρο, αλλά λαίμαργος, <b>HC</b>-βαρύς και σκληρός στα ελάσματα κορυφής.<br>Η αλλαγή τύπου προσαρμόζει τα εύρη συμπίεσης/στροφών/AFR και απενεργοποιεί ό,τι δεν ισχύει.'},
   subsystems:{el:'<b>Κάτω μέρος</b> — τύπος κινητήρα, διάμετρος × διαδρομή × κύλινδροι = κυβισμός· υπερτετράγωνος & υψηλότερο όριο ανεβάζουν την περιοχή ισχύος.<br><b>Διαδρομή αέρα</b> — τούρμπο (γεμίζει με τις στροφές) ή υπερσυμπιεστής (boost από ρελαντί)· το intercooler ψύχει το χάρμανι· εξάτμιση & καταλύτης ανταλλάσσουν ροή με αντίθλιψη/εκπομπές· το νιτρό είναι εμφιαλωμένη ισχύς.<br><b>Εισαγωγή</b> — καρμπιρατέρ → EFI → ITB ορίζουν αναπνοή, ακρίβεια & ρελαντί.<br><b>Χρονισμός βαλβίδων</b> — άγριες εκκεντροφόροι ανεβάζουν την ισχύ ψηλά· το VVT επαναφέρει τις χαμηλές.<br><b>Καύσιμο & σπινθήρας</b> — τύπος καυσίμου, οκτάνια, μπεκ, ανάφλεξη, χρονισμός FIXED/AUTO και το μείγμα: MANUAL (ένα σταθερό AFR) ή AUTO — ένας 3D χάρτης ECU που τρέχει κοντά στο στοιχειομετρικό στο ελαφρύ φορτίο και εμπλουτίζει υπό φορτίο/boost, όπως ένας πραγματικός χάρτης καυσίμου. Στο AUTO μπορείς να <b>ρυθμίσεις τον χάρτη</b>: πάτησε ένα κελί και μετά − ΦΤΩΧΟ / + ΠΛΟΥΣΙΟ για να αλλάξεις τον στόχο σε εκείνο το φορτίο×στροφές (ΕΠΑΝΑΦΟΡΑ ΧΑΡΤΗ επαναφέρει το εργοστασιακό).<br><b>Ψύξη & ηλεκτρικά</b> — ψυγείο/βεντιλατέρ/ψυγείο λαδιού/θερμοστάτης ορίζουν θερμοκρασίες· δυναμό & ανάφλεξη ορίζουν φόρτιση και όριο μισφάιρ.'},
-  vehicle:{el:'Στην καρτέλα <b>ΟΧΗΜΑ</b> βάζεις τον κινητήρα σου σε αυτοκίνητο. Διάλεξε <b>σασί</b> και έρχεται με τον <b>εργοστασιακό του εξοπλισμό</b> — τα ελαστικά, ζάντες, φρένα, ανάρτηση, αεροδυναμική και κιβώτιο που θα φορούσε πραγματικά: ένα kei εμφανίζεται με στενά οικονομικά ελαστικά και μικρούς ατσάλινους δίσκους, ενώ ένα hypercar παίρνει φαρδιά semi-slick, carbon-ceramic φρένα και πακέτο αεροτομής/diffuser. Όλα παραμένουν επεξεργάσιμα· το <b>ΕΡΓΟΣΤΑΣΙΑΚΟΣ ΕΞΟΠΛΙΣΜΟΣ</b> τα επαναφέρει.<br>Από εκεί ρυθμίζεις <b>μετάδοση</b> (FWD/RWD/AWD — το AWD ξεκινά καλύτερα), <b>κιβώτιο</b> (σχέσεις + ρυθμιστικό τελικής), <b>ελαστικά</b> (τύπος + πλάτος/προφίλ/διάμετρος), <b>αεροδυναμική</b> (εμπρός/πίσω/πάτωμα = κάθετη δύναμη & οπισθέλκουσα), <b>φρένα</b> (τύπος + διάμετρος δίσκου) και <b>ανάρτηση</b> (πολλαπλασιαστής μηχανικής πρόσφυσης).<br><b>Ο αριθμός της τελικής</b> — το ρυθμιστικό 0–100 είναι η <b>σχέση τελικής μετάδοσης</b>, πόσες φορές γυρίζει ο άξονας ανά στροφή των τροχών. Πάει από <b>0 = 4.90:1</b> (η <i>κοντύτερη</i>) έως <b>100 = 2.60:1</b> (η <i>μακρύτερη</i>)· η σχέση φαίνεται δίπλα στον αριθμό. Κοντή τελική πολλαπλασιάζει τη ροπή στους τροχούς: δυνατότερη επιτάχυνση αλλά το κόφτη έρχεται νωρίς, άρα γρήγορο 0–100 με χαμηλή τελική ταχύτητα. Μακριά τελική κάνει το αντίθετο: πιο νωθρή επιτάχυνση, περισσότερη ταχύτητα ανά 1000 στροφές, υψηλότερη τελική και ήρεμο ταξίδι. Ιδανική είναι εκείνη που φτάνει στο κόφτη στην τελευταία σχέση ακριβώς όταν η οπισθέλκουσα σταματά το αυτοκίνητο — πιο μακριά από αυτό χάνεις επιτάχυνση <i>και</i> τελική, γιατί ο κινητήρας δεν φτάνει πια στην κορυφή της ισχύος του. Πολλή ισχύς και λίγη οπισθέλκουσα θέλουν μακρύτερη· βαριά, αδύναμα ή αεροδυναμικά «βρώμικα» αυτοκίνητα θέλουν κοντύτερη.<br>Ο κινητήρας προστίθεται και το ταμπλό <b>Επιδόσεις</b> υπολογίζει <b>0–100 km/h</b>, <b>400/800/1000 m</b>, <b>τελική</b>, <b>φρενάρισμα 100–0</b> και το τεστ <b>0–200–0</b> ζωντανά — εκκίνηση περιορισμένη από πρόσφυση και φρενάρισμα με όριο ελαστικών/φρένων και εξασθένηση. Κολλώδη ελαστικά, μεγάλα φρένα και AWD βοηθούν πιο πολύ.'},
+  vehicle:{el:'Στην καρτέλα <b>ΟΧΗΜΑ</b> βάζεις τον κινητήρα σου σε αυτοκίνητο. Διάλεξε <b>σασί</b> και έρχεται με τον <b>εργοστασιακό του εξοπλισμό</b> — τα ελαστικά, ζάντες, φρένα, ανάρτηση, αεροδυναμική και κιβώτιο που θα φορούσε πραγματικά: ένα kei εμφανίζεται με στενά οικονομικά ελαστικά και μικρούς ατσάλινους δίσκους, ενώ ένα hypercar παίρνει φαρδιά semi-slick, carbon-ceramic φρένα και πακέτο αεροτομής/diffuser. Όλα παραμένουν επεξεργάσιμα· το <b>ΕΡΓΟΣΤΑΣΙΑΚΟΣ ΕΞΟΠΛΙΣΜΟΣ</b> τα επαναφέρει.<br>Από εκεί ρυθμίζεις <b>μετάδοση</b> (FWD/RWD/AWD — το AWD ξεκινά καλύτερα), <b>κιβώτιο</b> (σχέσεις + ρυθμιστικό τελικής), <b>ελαστικά</b> (τύπος + πλάτος/προφίλ/διάμετρος), <b>αεροδυναμική</b> (εμπρός/πίσω/πάτωμα = κάθετη δύναμη & οπισθέλκουσα), <b>φρένα</b> (τύπος + διάμετρος δίσκου) και <b>ανάρτηση</b> (πολλαπλασιαστής μηχανικής πρόσφυσης).<br><b>Ο αριθμός της τελικής</b> — το ρυθμιστικό 0–100 είναι η <b>σχέση τελικής μετάδοσης</b>, πόσες φορές γυρίζει ο άξονας ανά στροφή των τροχών. Πάει από <b>0 = 4.90:1</b> (η <i>κοντύτερη</i>) έως <b>100 = 2.60:1</b> (η <i>μακρύτερη</i>)· η σχέση φαίνεται δίπλα στον αριθμό. Κοντή τελική πολλαπλασιάζει τη ροπή στους τροχούς: δυνατότερη επιτάχυνση, αλλά κάθε σχέση τελειώνει νωρίς. Μακριά τελική κάνει το αντίθετο: πιο νωθρή επιτάχυνση, περισσότερη ταχύτητα ανά 1000 στροφές και ήρεμο ταξίδι. Ιδανική είναι η πιο μακριά που ο κινητήρας μπορεί ακόμα να τραβήξει ως την κορυφή της ισχύος του στην τελευταία σχέση. Πιο μακριά από αυτό, η τελική ταχύτητα απλώς <i>σταματά να βελτιώνεται</i> — το αυτοκίνητο πιάνει το μέγιστό του μια σχέση χαμηλότερα αντί να «πνίγεται» στην τελευταία — ενώ η επιτάχυνση συνεχίζει να χειροτερεύει, οπότε πληρώνεις χωρίς όφελος. Πολλή ισχύς και λίγη οπισθέλκουσα σηκώνουν πολύ μακριά τελική και κερδίζουν ταχύτητα ως το τέρμα· βαριά, αδύναμα ή αεροδυναμικά «βρώμικα» αυτοκίνητα φτάνουν γρήγορα σε πλατό και θέλουν κοντύτερη.<br>Ο κινητήρας προστίθεται και το ταμπλό <b>Επιδόσεις</b> υπολογίζει <b>0–100 km/h</b>, <b>400/800/1000 m</b>, <b>τελική</b>, <b>φρενάρισμα 100–0</b> και το τεστ <b>0–200–0</b> ζωντανά — εκκίνηση περιορισμένη από πρόσφυση και φρενάρισμα με όριο ελαστικών/φρένων και εξασθένηση. Κολλώδη ελαστικά, μεγάλα φρένα και AWD βοηθούν πιο πολύ.'},
   tip:{el:'Συμβουλή: κλείσε τη ΦΘΟΡΑ στις ΕΠΙΛΟΓΕΣ για ελεύθερο πειραματισμό, μετά ξανάνοιξέ την για συνέπειες.'}
 };
 const CHALLENGE_I18N={
@@ -1969,7 +1970,14 @@ function simulateAccel(){
   for(let step=0;step<48000&&t<150;step++){
     let totalRatio=ratios[gear]*fd,rpm=v*totalRatio/r*60/TWO_PI;
     if(shiftT<=0&&rpm>=rl&&gear<ratios.length-1){gear++;shiftT=0.12;totalRatio=ratios[gear]*fd;rpm=v*totalRatio/r*60/TWO_PI;}
-    const engineRpm=clamp(v<3?Math.max(rpm,launchRpm):rpm,idle,rl);
+    // Clutch. From a standstill it slips, holding the engine at the launch rpm while road speed
+    // brings the gearbox input up to meet it — that's what a real launch does, and it's why a
+    // peaky high-revving engine can still leave the line hard. Once the input side catches up
+    // (or in any higher gear) the clutch is locked and the engine is tied to the wheels.
+    // Slipping only ever costs the engine speed, never adds torque: drive force is still capped
+    // by traction below, so the launch stays grip-limited.
+    const clutchSlip=gear===0&&rpm<launchRpm;
+    const engineRpm=clamp(clutchSlip?launchRpm:rpm,idle,rl);
     let driveF=0;
     if(shiftT>0)shiftT-=dt; else driveF=tqAt(engineRpm)*totalRatio*eff/r;
     const down=0.5*AIR_RHO*vehicle.clA*v*v,Wtot=m*G+down,transfer=m*a*vehicle.cg/vehicle.wb;
@@ -1987,13 +1995,24 @@ function simulateAccel(){
     if(!M.v200&&v>=V200)M.v200={t,x};
     if(x>=1000&&(M.v200||a<0.03))break;   // have the marks and either hit 200 or can't
   }
-  // Top speed: fastest v where top-gear drive force still beats drag+roll, capped by the limiter.
-  const topGear=ratios[ratios.length-1]*fd;let vTop=0;
-  for(let vv=5;vv<160;vv+=0.5){const rpm=vv*topGear/r*60/TWO_PI;if(rpm>rl)break;
-    const F=tqAt(clamp(rpm,idle,rl))*topGear*eff/r,drag=0.5*AIR_RHO*vehicle.cdA*vv*vv,roll=vehicle.crr*m*G;
-    if(F>drag+roll)vTop=vv;else break;}
-  const vRedline=rl*TWO_PI*r/60/topGear;
-  const topSpeed=Math.min(vTop||vRedline,vRedline)*3.6;
+  // Top speed: the fastest the car can actually hold — the best any gear manages, not just top
+  // gear. For each gear, scan DOWN from its limiter speed and take the highest speed where drive
+  // force still beats drag+roll. Two reasons it works this way: scanning up from a crawl would
+  // stop at the low-speed torque hole a peaky engine has in a tall gear (and the car never pulls
+  // top gear from walking pace — it gets there through the lower gears), and a peaky or
+  // over-geared car genuinely reaches its top speed one gear down, on the cam, rather than
+  // bogging in top.
+  const rollF=vehicle.crr*m*G;let vTop=0;
+  for(const gr of ratios){
+    const tot=gr*fd,vLim=rl*TWO_PI*r/60/tot;
+    for(let vv=Math.min(vLim,160);vv>vTop;vv-=0.5){
+      const rpm=clamp(vv*tot/r*60/TWO_PI,idle,rl);
+      const F=tqAt(rpm)*tot*eff/r,drag=0.5*AIR_RHO*vehicle.cdA*vv*vv;
+      if(F>drag+rollF){vTop=vv;break;}
+    }
+  }
+  const vRedline=rl*TWO_PI*r/60/(ratios[ratios.length-1]*fd);
+  const topSpeed=(vTop||vRedline)*3.6;
   return {t100:M.t100,q400:M.q400,q800:M.q800,q1000:M.q1000,topSpeed,mass:m,ptw:vehicle.powerToWeight,
     t200:M.v200?M.v200.t:null,x200:M.v200?M.v200.x:null};
 }
