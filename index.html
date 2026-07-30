@@ -346,6 +346,14 @@ costs drivability, safety and emissions — the score rewards a balanced build.
 
 <div class="design-section">Career &amp; Budget</div>
 <div class="guide-body" data-gk="career">
+<b>Track objectives</b> judge the whole car, not just the engine: four of them set a lap target on a
+named circuit (Club Sprint at Ashdown, Grand Prix Pace at Riverside, Under Seven at the Ring on the
+Nordschleife, and Lap per Dollar for the cheapest car that can still lap quickly). Their budget
+covers <i>engine plus vehicle</i>, so a cheap engine in an expensive chassis counts against you —
+build the car on the VEHICLE tab, then watch the objective card.<br>
+The scorecard also reports your <b>lap time</b> for the circuit selected on the TRACK tab. It is
+reported, not folded into the letter grade: the grade rates the <i>engine</i>, and an engine's grade
+should not move because you fitted different tyres.<br>
 Pick an <b>OBJECTIVE</b> at the top of the DESIGN tab to turn free building into a puzzle.
 Each challenge sets targets — power, economy, emissions, <b>reliability</b> or
 <b>power-per-dollar</b> — and some cap your <b>budget</b>. The card ticks off each target
@@ -750,7 +758,21 @@ const CHALLENGES=[
   {id:'clean',name:'Clean Machine',desc:'Emissions-legal muscle — a cat and a stoich-capable tune.',
     targets:[{label:'Emissions',key:'emissions',op:'>=',t:90},{label:'Power',key:'peakHP',op:'>=',t:150,unit:'hp'}]},
   {id:'screamer',name:'Specific-Output King',desc:'Chase the highest power per litre without grenading it.',
-    targets:[{label:'HP per litre',key:'hpPerL',op:'>=',t:130},{label:'Safety',key:'safety',op:'>=',t:40}]}
+    targets:[{label:'HP per litre',key:'hpPerL',op:'>=',t:130},{label:'Safety',key:'safety',op:'>=',t:40}]},
+  // ---- Track objectives. These judge the whole car on a circuit, so their budget covers the
+  // vehicle as well as the engine, and `circuit` says which lap is being timed.
+  {id:'clubsprint',name:'Club Sprint',desc:'Get round the tight club circuit inside the target on a modest budget. Grip and weight beat power here.',
+    circuit:'tech',budget:40000,
+    targets:[{label:'Ashdown lap',key:'lap',op:'<=',t:85,unit:'s'},{label:'Reliability',key:'reliability',op:'>=',t:55}]},
+  {id:'gppace',name:'Grand Prix Pace',desc:'A proper lap of Riverside. Balance power against the grip to use it.',
+    circuit:'mixed',budget:70000,
+    targets:[{label:'Riverside lap',key:'lap',op:'<=',t:60,unit:'s'},{label:'Power',key:'peakHP',op:'>=',t:300,unit:'hp'}]},
+  {id:'greenhell',name:'Under Seven at the Ring',desc:'20 km, 40 corners and 290 m of elevation. No budget — just go and do the time.',
+    circuit:'nord',
+    targets:[{label:'Nordschleife lap',key:'lap',op:'<=',t:420,unit:'s'},{label:'Reliability',key:'reliability',op:'>=',t:45}]},
+  {id:'laptime$',name:'Lap per Dollar',desc:'The cheapest car that can still lap Riverside quickly. Every part has to earn its place.',
+    circuit:'mixed',budget:38000,
+    targets:[{label:'Riverside lap',key:'lap',op:'<=',t:75,unit:'s'}]}
 ];
 let activeChallenge='free';
 
@@ -813,7 +835,7 @@ const I18N={
   'TRACK':{el:'ΠΙΣΤΑ'},'Lap Time':{el:'Χρόνος Γύρου'},'CIRCUIT':{el:'ΠΙΣΤΑ'},'LAP TIME':{el:'ΧΡΟΝΟΣ ΓΥΡΟΥ'},
   'AVG SPEED':{el:'ΜΕΣΗ ΤΑΧΥΤΗΤΑ'},'SECTOR 1':{el:'ΤΟΜΕΑΣ 1'},'SECTOR 2':{el:'ΤΟΜΕΑΣ 2'},'SECTOR 3':{el:'ΤΟΜΕΑΣ 3'},
   'SLOWEST':{el:'ΒΡΑΔΥΤΕΡΟ'},'FASTEST':{el:'ΤΑΧΥΤΕΡΟ'},'SHIFTS':{el:'ΑΛΛΑΓΕΣ'},'TEST TRACK':{el:'ΠΙΣΤΑ ΔΟΚΙΜΩΝ'},
-  'BUILD AN ENGINE FIRST':{el:'ΦΤΙΑΞΕ ΠΡΩΤΑ ΚΙΝΗΤΗΡΑ'},'corners':{el:'στροφές'},'wide':{el:'πλάτος'},'elevation':{el:'υψομ.'},'ELEVATION PROFILE':{el:'ΠΡΟΦΙΛ ΥΨΟΜΕΤΡΟΥ'},'IMPORT GPX TRACK':{el:'ΕΙΣΑΓΩΓΗ GPX'},'avg':{el:'μέση'},'shifts':{el:'αλλαγές'},
+  'BUILD AN ENGINE FIRST':{el:'ΦΤΙΑΞΕ ΠΡΩΤΑ ΚΙΝΗΤΗΡΑ'},'corners':{el:'στροφές'},'wide':{el:'πλάτος'},'elevation':{el:'υψομ.'},'ELEVATION PROFILE':{el:'ΠΡΟΦΙΛ ΥΨΟΜΕΤΡΟΥ'},'IMPORT GPX TRACK':{el:'ΕΙΣΑΓΩΓΗ GPX'},'Lap':{el:'Γύρος'},'car':{el:'αυτοκίνητο'},'Timed on':{el:'Χρονομέτρηση σε'},'build the car on the VEHICLE tab':{el:'φτιάξε το αυτοκίνητο στην καρτέλα ΟΧΗΜΑ'},'avg':{el:'μέση'},'shifts':{el:'αλλαγές'},
   'TRACTION (diff/tyres)':{el:'ΠΡΟΣΦΥΣΗ (διαφ./ελαστικά)'},'CORNERING (grip)':{el:'ΣΤΡΟΦΗ (πρόσφυση)'},'BRAKING':{el:'ΦΡΕΝΑΡΙΣΜΑ'},
   'Tight and technical — second-gear corners, short straights. Grip, brakes and a light car matter more than power.':{el:'Στενή και τεχνική — στροφές δευτέρας, κοντές ευθείες. Πρόσφυση, φρένα και χαμηλό βάρος μετρούν πιο πολύ από ισχύ.'},
   'Long straights and fast sweepers. Power, gearing and low drag decide it; downforce pays for itself.':{el:'Μεγάλες ευθείες και γρήγορες στροφές. Ισχύς, σχέσεις και χαμηλή οπισθέλκουσα κρίνουν· η κάθετη δύναμη αποδίδει.'},
@@ -845,13 +867,17 @@ const GUIDE_I18N={
   driving:{el:'<b>ΓΚΑΖΙ</b> — ανοίγει την εισαγωγή· αυξάνει την πίεση πολλαπλής → ροπή → στροφές.<br><b>ΦΟΡΤΙΟ (φρένο δυναμό)</b> — αντίσταση που ορίζει τις <i>στροφές κρατήματος</i>. 0% = ελεύθερες στροφές ως το όριο· 100% = κρατά κοντά στο ρελαντί. Αντιστέκεται μόνο <i>πάνω</i> από τον στόχο, οπότε κάθε κινητήρας ανεβαίνει πάντα ως εκεί.<br><b>ΗΛΕΚ. ΦΟΡΤΙΟ</b> — κατανάλωση παρελκομένων (φώτα/AC). Μεγάλο φορτίο + μικρό δυναμό στο ρελαντί αδειάζει την μπαταρία → χαμηλή τάση → αδύναμος σπινθήρας.<br><b>AFR</b> — αναλογία αέρα-καυσίμου. Μέγιστη ισχύς κοντά σε λ0.86 (πλούσιο), καλύτερη οικονομία κοντά σε λ1.05 (φτωχό).<br><b>IAT / ΨΥΚΤΙΚΟ / ΛΑΔΙ</b> — θερμοκρασίες χαρμανιού & κινητήρα (αυτόματα σε AUTO THERMAL).<br><b>ΝΙΤΡΟ</b> — αν υπάρχει, ψεκάζει με τέρμα γκάζι από φιάλη που αδειάζει.'},
   numbers:{el:'<b>HP / kW</b> — ισχύς = ροπή × στροφές. <b>ΡΟΠΗ (Nm)</b> — δύναμη στρέψης· κορυφώνεται χαμηλότερα από την ισχύ.<br><b>BMEP (bar)</b> — μέση πραγματική πίεση πέδης: ροπή ανά κυβισμό, για σύγκριση κινητήρων κάθε μεγέθους. <b>VE (%)</b> — ογκομετρική απόδοση: πόσο καλά αναπνέει σε σχέση με τον κυβισμό (το boost ξεπερνά το 100%).<br><b>ΘΕΡΜ. ΑΠΟΔ. (%)</b> — ποσοστό ενέργειας καυσίμου που γίνεται έργο. <b>BSFC (g/kWh)</b> — καύσιμο ανά μονάδα ισχύος· <i>όσο χαμηλότερο τόσο καλύτερο</i>.<br><b>ΡΟΗ ΚΑΥΣΙΜΟΥ (L/h)</b> — ζωντανή κατανάλωση. <b>MAP / BOOST (bar)</b> — πίεση πολλαπλής· boost = MAP πάνω από 1.0.<br><b>ΠΕΙΡΑΚΙ (LOW/MED/HIGH)</b> — κίνδυνος πειρακίου. Ο χρονισμός AUTO καθυστερεί για έλεγχο· παρατεταμένο HIGH κάνει ζημιά. <b>ΥΓΕΙΑ (%)</b> — κατάσταση· 0 = καμένος κινητήρας.<br><b>ΕΚΠΟΜΠΕΣ (CLEAN/OK/DIRTY)</b> — από τον αναλυτή: CO & HC ανεβαίνουν στο πλούσιο, NOx στο φτωχό/καυτό· ο καταλύτης καθαρίζει και τα τρία μόνο κοντά στο στοιχειομετρικό.<br><b>λ (λάμδα)</b> — AFR ÷ στοιχειομετρικό: λ&lt;1 πλούσιο, 1 = στοιχειομετρικό, &gt;1 φτωχό.<br><b>ΚΟΣΤΟΣ ($)</b> — συνολικό κόστος εξαρτημάτων. <b>REL (αξιοπιστία)</b> — εκτίμηση αντοχής (boost/πειράκι/θερμότητα/στροφές). <b>hp/$1k</b> — ισχύς ανά χίλια δολάρια.'},
   scorecard:{el:'<b>ΑΝΑΦΟΡΑ ΓΥΡΟΥ</b> — στην καρτέλα ΠΙΣΤΑ, τα κουμπιά ΑΝΑΦΟΡΑ ΓΥΡΟΥ PNG/PDF αποθηκεύουν τον γύρο ως φύλλο τηλεμετρίας: χάρτης με τα σημεία <span style="color:#1a7f37">τέρμα γκάζι</span> και <span style="color:#c1121f">φρεναρίσματος</span>, κάθε στροφή αριθμημένη, γράφημα ταχύτητας ανά απόσταση, χρόνοι γύρου και τομέων, πλήρης προδιαγραφή αυτοκινήτου και <b>παγίδα ταχύτητας σε κάθε στροφή</b> (είσοδος, apex, έξοδος, σχέση, ακτίνα). Οι στροφές έχουν αριθμούς T1…Tn και ονόματα ανά πίστα.<br><b>ΑΝΑΦΟΡΑ ΔΥΝΑΜΟ</b> — τα κουμπιά ΑΝΑΦΟΡΑ PNG/PDF αποθηκεύουν την τρέχουσα μέτρηση ως εκτυπώσιμο φύλλο με τη διάταξη πραγματικού δυναμόμετρου: καμπύλες ισχύος και ροπής με τις κορυφές, μπάντα αποτελεσμάτων, πλήρη προδιαγραφή κινητήρα, συνθήκες μέτρησης και πίνακα δεδομένων. Οι καταγεγραμμένες μετρήσεις εμφανίζονται αχνά για σύγκριση. Το γράφημα είναι ο κινητήρας <i>όπως είναι ρυθμισμένος τώρα</i>, γι’ αυτό τυπώνεται και το <b>δυναμικό σχεδίασης</b>. Όλα παράγονται εκτός σύνδεσης· τίποτα δεν ανεβαίνει.<br>Κάθε build βαθμολογείται <b>S → F</b> από επτά στοιχεία: ειδική <b>ισχύ</b> & <b>ροπή</b> (ανά λίτρο), εύρος <b>περιοχής ισχύος</b>, θερμική <b>απόδοση</b>, <b>ασφάλεια</b> από πειράκι, <b>οδηγησιμότητα</b> (ροπή στις χαμηλές) και <b>εκπομπές</b>. Το κυνήγι μέγιστης ισχύος κοστίζει σε οδηγησιμότητα, ασφάλεια και εκπομπές — η βαθμολογία επιβραβεύει το ισορροπημένο build.'},
-  career:{el:'Διάλεξε έναν <b>ΣΤΟΧΟ</b> στην κορυφή της ΣΧΕΔΙΑΣΗΣ για να κάνεις τη σχεδίαση γρίφο. Κάθε πρόκληση θέτει κριτήρια — ισχύ, οικονομία, εκπομπές, <b>αξιοπιστία</b> ή <b>ισχύ ανά δολάριο</b> — και κάποιες βάζουν όριο <b>προϋπολογισμού</b>. Η κάρτα τσεκάρει κάθε κριτήριο ζωντανά (✓/✗) και δείχνει <b>ΕΠΙΤΥΧΙΑ</b> όταν καλυφθούν όλα· κόστος και αξιοπιστία φαίνονται πάντα. Ο μεγάλος κυβισμός κερδίζει σε αξία· boost και αγωνιστικά μέρη κερδίζουν σε ισχύ αλλά κοστίζουν σε χρήμα και αξιοπιστία.'},
+  career:{el:'<b>Στόχοι πίστας</b> κρίνουν ολόκληρο το αυτοκίνητο: τέσσερις βάζουν στόχο χρόνου γύρου σε συγκεκριμένη πίστα, και το μπάτζετ τους καλύπτει κινητήρα <i>και</i> όχημα. Ο πίνακας βαθμολογίας δείχνει επίσης τον χρόνο γύρου σου — ως ένδειξη, όχι μέσα στον βαθμό: ο βαθμός αφορά τον <i>κινητήρα</i> και δεν πρέπει να αλλάζει επειδή έβαλες άλλα ελαστικά.<br>Διάλεξε έναν <b>ΣΤΟΧΟ</b> στην κορυφή της ΣΧΕΔΙΑΣΗΣ για να κάνεις τη σχεδίαση γρίφο. Κάθε πρόκληση θέτει κριτήρια — ισχύ, οικονομία, εκπομπές, <b>αξιοπιστία</b> ή <b>ισχύ ανά δολάριο</b> — και κάποιες βάζουν όριο <b>προϋπολογισμού</b>. Η κάρτα τσεκάρει κάθε κριτήριο ζωντανά (✓/✗) και δείχνει <b>ΕΠΙΤΥΧΙΑ</b> όταν καλυφθούν όλα· κόστος και αξιοπιστία φαίνονται πάντα. Ο μεγάλος κυβισμός κερδίζει σε αξία· boost και αγωνιστικά μέρη κερδίζουν σε ισχύ αλλά κοστίζουν σε χρήμα και αξιοπιστία.'},
   types:{el:'<b>Βενζίνη 4-χρονη</b> — η ισορροπημένη επιλογή: ανάφλεξη με σπινθήρα, μία εκρηκτική διαδρομή ανά δύο στροφές.<br><b>Πετρέλαιο (CI)</b> — ανάφλεξη με συμπίεση (χωρίς μπουζί, χωρίς πειράκι), πολύ υψηλή συμπίεση, φτωχό χωρίς πεταλούδα. Μεγάλη <b>ροπή</b> στις χαμηλές, χαμηλό όριο στροφών, η καλύτερη <b>απόδοση</b> — αλλά βαρύ, με εκπομπές <b>NOx + αιθάλη (PM)</b> που καθαρίζει σύστημα DPF/SCR.<br><b>2-χρονη</b> — εκρηκτική διαδρομή σε <i>κάθε</i> στροφή (θυρίδες, χωρίς εκκεντροφόρο): υψηλή ειδική ισχύς αλλά λαίμαργη και <b>HC</b>-βρόμικη.<br><b>Wankel (ρότορας)</b> — περιστρεφόμενος ρότορας που ανάβει σε κάθε στροφή: ομαλός σαν τουρμπίνα, τεράστιες στροφές, υψηλή ισχύς ανά λίτρο, αλλά λαίμαργος, <b>HC</b>-βαρύς και σκληρός στα ελάσματα κορυφής.<br>Η αλλαγή τύπου προσαρμόζει τα εύρη συμπίεσης/στροφών/AFR και απενεργοποιεί ό,τι δεν ισχύει.'},
   subsystems:{el:'<b>Κάτω μέρος</b> — τύπος κινητήρα, διάμετρος × διαδρομή × κύλινδροι = κυβισμός· υπερτετράγωνος & υψηλότερο όριο ανεβάζουν την περιοχή ισχύος.<br><b>Διαδρομή αέρα</b> — τούρμπο (γεμίζει με τις στροφές) ή υπερσυμπιεστής (boost από ρελαντί)· το intercooler ψύχει το χάρμανι· εξάτμιση & καταλύτης ανταλλάσσουν ροή με αντίθλιψη/εκπομπές· το νιτρό είναι εμφιαλωμένη ισχύς.<br><b>Εισαγωγή</b> — καρμπιρατέρ → EFI → ITB ορίζουν αναπνοή, ακρίβεια & ρελαντί.<br><b>Χρονισμός βαλβίδων</b> — άγριες εκκεντροφόροι ανεβάζουν την ισχύ ψηλά· το VVT επαναφέρει τις χαμηλές.<br><b>Καύσιμο & σπινθήρας</b> — τύπος καυσίμου, οκτάνια, μπεκ, ανάφλεξη, χρονισμός FIXED/AUTO και το μείγμα: MANUAL (ένα σταθερό AFR) ή AUTO — ένας 3D χάρτης ECU που τρέχει κοντά στο στοιχειομετρικό στο ελαφρύ φορτίο και εμπλουτίζει υπό φορτίο/boost, όπως ένας πραγματικός χάρτης καυσίμου. Στο AUTO μπορείς να <b>ρυθμίσεις τον χάρτη</b>: πάτησε ένα κελί και μετά − ΦΤΩΧΟ / + ΠΛΟΥΣΙΟ για να αλλάξεις τον στόχο σε εκείνο το φορτίο×στροφές (ΕΠΑΝΑΦΟΡΑ ΧΑΡΤΗ επαναφέρει το εργοστασιακό).<br><b>Ψύξη & ηλεκτρικά</b> — ψυγείο/βεντιλατέρ/ψυγείο λαδιού/θερμοστάτης ορίζουν θερμοκρασίες· δυναμό & ανάφλεξη ορίζουν φόρτιση και όριο μισφάιρ.'},
   vehicle:{el:'Στην καρτέλα <b>ΟΧΗΜΑ</b> βάζεις τον κινητήρα σου σε αυτοκίνητο. Διάλεξε <b>σασί</b> και έρχεται με τον <b>εργοστασιακό του εξοπλισμό</b> — τα ελαστικά, ζάντες, φρένα, ανάρτηση, αεροδυναμική και κιβώτιο που θα φορούσε πραγματικά: ένα kei εμφανίζεται με στενά οικονομικά ελαστικά και μικρούς ατσάλινους δίσκους, ενώ ένα hypercar παίρνει φαρδιά semi-slick, carbon-ceramic φρένα και πακέτο αεροτομής/diffuser. Όλα παραμένουν επεξεργάσιμα· το <b>ΕΡΓΟΣΤΑΣΙΑΚΟΣ ΕΞΟΠΛΙΣΜΟΣ</b> τα επαναφέρει.<br>Από εκεί ρυθμίζεις <b>μετάδοση</b> (FWD/RWD/AWD — το AWD ξεκινά καλύτερα), <b>κιβώτιο</b> (τύπος, σχέσεις + ρυθμιστικό τελικής), <b>ελαστικά</b> (τύπος + πλάτος/προφίλ/διάμετρος), <b>αεροδυναμική</b> (εμπρός/πίσω/πάτωμα = κάθετη δύναμη & οπισθέλκουσα), <b>φρένα</b> (τύπος + διάμετρος δίσκου) και <b>ανάρτηση</b> (πολλαπλασιαστής μηχανικής πρόσφυσης).<br><b>Ο τύπος κιβωτίου</b> αλλάζει τέσσερα πράγματα: πόσο κόβεται η μετάδοση σε κάθε αλλαγή, πόση από την ισχύ του κινητήρα φτάνει στους τροχούς, πώς είναι κλιμακωμένες οι σχέσεις, και πώς ξεκινά το αυτοκίνητο.<br>· <b>Χειροκίνητο (H)</b> — το πιο αποδοτικό, αλλά χάνεις ~350 ms σε κάθε αλλαγή. Φθηνό.<br>· <b>Σειριακό</b> — αγωνιστικό: αλλαγές ~60 ms και κοντές σχέσεις που κρατούν έναν «αιχμηρό» κινητήρα στην περιοχή του. Ακριβό.<br>· <b>Διπλού συμπλέκτη (DCT)</b> — η επόμενη σχέση είναι ήδη επιλεγμένη στον δεύτερο συμπλέκτη, άρα σχεδόν αδιάλειπτες αλλαγές (~30 ms). Το ταχύτερο, και ανάλογα ακριβό.<br>· <b>Αυτόματο με μετατροπέα ροπής</b> — οι πιο αργές αλλαγές (~200 ms) και οι μεγαλύτερες απώλειες, γιατί μεταδίδει μέσω υγρού. Το κερδίζει στην <b>εκκίνηση</b>: ο μετατροπέας «φορτίζει» πάνω στα φρένα και <i>πολλαπλασιάζει</i> τη ροπή (έως ~1.9× σε στάλλ 2400 σ.α.λ.), σβήνοντας στο 1:1 καθώς ο στρόβιλος προλαβαίνει. Γι’ αυτό ένα αυτόματο ξεκινά καλύτερα από ένα χειροκίνητο παρότι χάνει ισχύ παντού αλλού — και γι’ αυτό ταιριάζει σε βαρύ, ροπάτο αυτοκίνητο, όχι σε ελαφρύ και «αιχμηρό». Επίσης απλώνει περισσότερο τις σχέσεις: πιο κοντή 1η, πιο μακριά τελευταία.<br><b>Η καρτέλα ΠΙΣΤΑ</b> βάζει το αυτοκίνητο σε κυκλική πίστα και λύνει έναν γύρο. Πρώτα υπολογίζει την <b>ιδανική γραμμή</b>: κανείς δεν οδηγεί στον άξονα της πίστας, γιατί χρησιμοποιώντας όλο το πλάτος «ισιώνει» η στροφή και περνάς πιο γρήγορα. Η γραμμή βρίσκεται ελαχιστοποιώντας τη συνολική καμπυλότητα μέσα στα όρια της πίστας — και το έξω-μέσα-έξω προκύπτει μόνο του. Οι πίστες είναι τρισδιάστατες, οπότε ο γύρος λαμβάνει υπόψη και το <b>υψόμετρο</b>: η βαρύτητα σε κρατά πίσω στην ανηφόρα και σε σπρώχνει στην κατηφόρα, και — το πιο σημαντικό — η <b>κατακόρυφη καμπυλότητα</b>. Σε μια κορυφή το αυτοκίνητο «ελαφραίνει» και χάνει πρόσφυση ακριβώς εκεί που πάει γρήγορα· σε μια κοιλάδα πιέζεται στο οδόστρωμα και περνά πολύ πιο γρήγορα. Μετράει και το πού πέφτουν οι λόφοι: μια ανηφόρα σε ζώνη φρεναρίσματος σε αφήνει να φρενάρεις αργότερα και <i>κερδίζει</i> χρόνο.<br><b>ΕΙΣΑΓΩΓΗ GPX</b> φορτώνει πραγματική πίστα από αρχείο GPX: προβάλλεται σε μέτρα, ξαναδειγματοληπτείται σε σταθερό βήμα και εξομαλύνεται ελαφρά ώστε ο θόρυβος GPS να μη γίνει «στροφές». Το υψόμετρο έρχεται από το αρχείο. Οι εισαγόμενες πίστες μένουν μόνο στον browser σου.<br><span style="color:#c86">Ο χρόνος θα βγει λίγο αργός: η γραμμή είναι ελάχιστης καμπυλότητας (όχι ελάχιστου χρόνου), το πλάτος θεωρείται σταθερό και ο οδηγός δεν κάνει ποτέ λάθος. Χρησιμοποίησέ το για σύγκριση των δικών σου κατασκευών.</span> Αξίζει <b>4–7% του χρόνου γύρου</b> σε σχέση με τον άξονα, και όσο πιο φαρδιά η πίστα τόσο περισσότερο. Μετά βρίσκει την ταχύτητα στροφής σε κάθε σημείο (<i>v = &radic;(μ&middot;(mg + κάθετη δύναμη)&middot;r / m)</i>), μετά δουλεύει ανάποδα από κάθε στροφή για τα σημεία φρεναρίσματος και προς τα εμπρός στην έξοδο με τη διαθέσιμη κίνηση, κρατώντας τη μικρότερη ταχύτητα σε κάθε σημείο. Ο <b>κύκλος τριβής</b> τα δένει: η πρόσφυση που ξοδεύεται στο στρίψιμο δεν είναι διαθέσιμη για επιτάχυνση ή φρενάρισμα. Η χρωματιστή γραμμή στον χάρτη δείχνει τι περιορίζει το αυτοκίνητο σε κάθε σημείο και η λεζάντα αθροίζει τα ποσοστά του γύρου. Ο χρόνος αλλαγής σχέσης χρεώνεται σε κάθε αλλαγή, οπότε ένα αργό κιβώτιο χάνει πραγματικό χρόνο.<br><span style="color:#c86">Ένα όριο: η ελάχιστη καμπυλότητα δεν είναι το ίδιο με τον ελάχιστο <i>χρόνο</i>. Ο πραγματικός οδηγός θυσιάζει λίγη ακτίνα για <b>καθυστερημένο apex</b> όταν η στροφή βγάζει σε μεγάλη ευθεία — αξίζει άλλο μισό τοις εκατό περίπου. Δεν μοντελοποιείται ακόμα.</span><br><b>Το διαφορικό</b> μοιράζει την κίνηση στους δύο τροχούς του άξονα — και καθορίζει πόση από την πρόσφυση του άξονα μπορείς πραγματικά να χρησιμοποιήσεις. Οι δύο τροχοί δεν είναι ποτέ φορτωμένοι το ίδιο (κλίση δρόμου, αντίδραση ροπής, στρέψη άξονα, γεωμετρία ανάρτησης), και ένα <b>ανοιχτό</b> διαφορικό δίνει σε κάθε τροχό μόνο όση ροπή αντέχει ο <i>λιγότερο φορτωμένος</i>: στρίβει αυτόν τον τροχό και πετάει τα υπόλοιπα, αφήνοντας περίπου 78% της πρόσφυσης αξιοποιήσιμο. Ένα <b>ιξώδες LSD</b> τους δένει μεταξύ τους και ανακτά τα περισσότερα (~92%)· ένα <b>LSD με δίσκους</b> ουσιαστικά όλα· ένα <b>μπλοκέ (spool)</b> τους ενώνει μόνιμα και είναι το καλύτερο σε ευθεία — γι’ αυτό το χρησιμοποιούν τα dragster.<br>Το βασικό: το διαφορικό μετράει μόνο όσο είσαι <b>περιορισμένος από πρόσφυση</b>. Βάλε spool σε αργό αυτοκίνητο και δεν αλλάζει τίποτα. Βάλ’ το σε ένα που πατινάρει στην εκκίνηση και αξίζει περισσότερο από αναβάθμιση ισχύος.<br>Και τώρα το αντιστάθμισμα μετριέται. Στην καρτέλα ΠΙΣΤΑ ένα μπλοκέ διαφορικό πληρώνει το πλεονέκτημά του στην ευθεία: τρίβει σε κάθε στροφή. Σε ένα muscle 842&nbsp;hp το spool είναι ~0.2&nbsp;s ταχύτερο στο 0–100 και ~2.5&nbsp;s <i>πιο αργό</i> ανά γύρο, ενώ το ανοιχτό είναι το χειρότερο και στα δύο.<br><b>Ο αριθμός της τελικής</b> — το ρυθμιστικό 0–100 είναι η <b>σχέση τελικής μετάδοσης</b>, πόσες φορές γυρίζει ο άξονας ανά στροφή των τροχών. Πάει από <b>0 = 4.90:1</b> (η <i>κοντύτερη</i>) έως <b>100 = 2.60:1</b> (η <i>μακρύτερη</i>)· η σχέση φαίνεται δίπλα στον αριθμό. Κοντή τελική πολλαπλασιάζει τη ροπή στους τροχούς: δυνατότερη επιτάχυνση, αλλά κάθε σχέση τελειώνει νωρίς. Μακριά τελική κάνει το αντίθετο: πιο νωθρή επιτάχυνση, περισσότερη ταχύτητα ανά 1000 στροφές και ήρεμο ταξίδι. Ιδανική είναι η πιο μακριά που ο κινητήρας μπορεί ακόμα να τραβήξει ως την κορυφή της ισχύος του στην τελευταία σχέση. Πιο μακριά από αυτό, η τελική ταχύτητα απλώς <i>σταματά να βελτιώνεται</i> — το αυτοκίνητο πιάνει το μέγιστό του μια σχέση χαμηλότερα αντί να «πνίγεται» στην τελευταία — ενώ η επιτάχυνση συνεχίζει να χειροτερεύει, οπότε πληρώνεις χωρίς όφελος. Πολλή ισχύς και λίγη οπισθέλκουσα σηκώνουν πολύ μακριά τελική και κερδίζουν ταχύτητα ως το τέρμα· βαριά, αδύναμα ή αεροδυναμικά «βρώμικα» αυτοκίνητα φτάνουν γρήγορα σε πλατό και θέλουν κοντύτερη.<br>Ο κινητήρας προστίθεται και το ταμπλό <b>Επιδόσεις</b> υπολογίζει <b>0–100 km/h</b>, <b>400/800/1000 m</b>, <b>τελική</b>, <b>φρενάρισμα 100–0</b> και το τεστ <b>0–200–0</b> ζωντανά — εκκίνηση περιορισμένη από πρόσφυση και φρενάρισμα με όριο ελαστικών/φρένων και εξασθένηση. Κολλώδη ελαστικά, μεγάλα φρένα και AWD βοηθούν πιο πολύ.'},
   tip:{el:'Συμβουλή: κλείσε τη ΦΘΟΡΑ στις ΕΠΙΛΟΓΕΣ για ελεύθερο πειραματισμό, μετά ξανάνοιξέ την για συνέπειες.'}
 };
 const CHALLENGE_I18N={
+  clubsprint:{name:'Σπριντ Λέσχης',desc:'Κάνε τον γύρο στο στενό κλειστό κύκλωμα μέσα στον στόχο με μέτριο μπάτζετ. Εδώ μετράνε πρόσφυση και βάρος, όχι ισχύς.'},
+  gppace:{name:'Ρυθμός Grand Prix',desc:'Ένας κανονικός γύρος στο Riverside. Ισορρόπησε την ισχύ με την πρόσφυση για να τη χρησιμοποιήσεις.'},
+  greenhell:{name:'Κάτω από Επτά στο Ring',desc:'20 χλμ, 40 στροφές και 290 μ. υψομετρικής διαφοράς. Χωρίς μπάτζετ — απλώς κάνε τον χρόνο.'},
+  'laptime$':{name:'Γύρος ανά Δολάριο',desc:'Το φθηνότερο αυτοκίνητο που κάνει γρήγορο γύρο στο Riverside. Κάθε εξάρτημα πρέπει να αξίζει τη θέση του.'},
   free:{name:'Ελεύθερο Χτίσιμο (χωρίς στόχο)',desc:'Σχεδίασε ό,τι θες — χωρίς στόχους, μόνο ενδείξεις κόστους & αξιοπιστίας.'},
   sleeper:{name:'Οικονομικό Sleeper',desc:'Πραγματική ισχύς με λίγα χρήματα. Κάθε εξάρτημα μετράει.'},
   ppd:{name:'Ισχύς ανά Δολάριο',desc:'Βγάλε τους περισσότερους ίππους από κάθε 1000$.'},
@@ -1409,33 +1435,60 @@ function computeCost(){
   c+={'60':150,'120':250,'180':450}[engine.alternator]||0;
   return Math.max(500,Math.round(c/50)*50);   // round to nearest $50
 }
-// Metrics available to a challenge objective (score + cost + derived power-per-dollar).
-function buildMetrics(){
+// A lap time for scoring, cached on the engine + vehicle build so it isn't re-solved on every
+// frame or every slider nudge. Solving the Nordschleife takes ~100 ms, which is fine once but not
+// sixty times a second.
+let lapScoreCache={key:'',val:null};
+function lapFor(circuit){
+  if(!engine.score||!vehicle||!vehicle.mass||!TRACKS[circuit])return null;
+  const key=buildRev+'|'+vehRev+'|'+circuit;
+  if(lapScoreCache.key===key)return lapScoreCache.val;
+  let val=null;
+  try{const L=simulateLap(circuit);val=L?L.lap:null;}catch(e){val=null;}
+  lapScoreCache={key,val};
+  return val;
+}
+// Metrics available to a challenge objective (score + cost + derived power-per-dollar). A lap
+// time is only solved when the active objective actually asks for one.
+function buildMetrics(ch){
   const s=engine.score||{};
-  return {peakHP:s.peakHP||0,hpPerL:s.hpPerL||0,peakTQ:s.peakTQ||0,nmPerL:s.nmPerL||0,
+  const totalCost=(engine.cost||0)+((vehicle&&vehicle.cost)||0);
+  const m={peakHP:s.peakHP||0,hpPerL:s.hpPerL||0,peakTQ:s.peakTQ||0,nmPerL:s.nmPerL||0,
     thEff:s.thEff||0,emissions:s.emissions||0,safety:s.safety||0,drive:s.drive||0,band:s.band||0,
-    reliability:s.reliability||0,grade:s.overall||0,cost:engine.cost||0,
+    reliability:s.reliability||0,grade:s.overall||0,cost:engine.cost||0,buildCost:totalCost,
     hpPerK:engine.cost>0?+((s.peakHP||0)/(engine.cost/1000)).toFixed(1):0};
+  if(ch&&ch.circuit){
+    const t=lapFor(ch.circuit);
+    m.lap=t!=null?+t.toFixed(2):9999;      // 9999 = no car yet, so the target simply reads as unmet
+  }
+  return m;
 }
 function evalChallenge(ch,m){
   const results=(ch.targets||[]).map(t=>{
     const v=m[t.key],pass=t.op==='<='?v<=t.t:v>=t.t;
     return {label:t.label,v,t:t.t,op:t.op,unit:t.unit||'',pass};
   });
-  const budgetPass=ch.budget?m.cost<=ch.budget:true;
-  return {results,budgetPass,cost:m.cost,budget:ch.budget||0,pass:results.every(r=>r.pass)&&budgetPass};
+  // A track objective is about the whole car, so its budget covers engine + vehicle; an
+  // engine-only objective keeps costing just the engine, as before.
+  const spend=ch.circuit?m.buildCost:m.cost;
+  const budgetPass=ch.budget?spend<=ch.budget:true;
+  return {results,budgetPass,cost:spend,budget:ch.budget||0,pass:results.every(r=>r.pass)&&budgetPass};
 }
 function fmtCost(v){return '$'+Math.round(v).toLocaleString();}
 function renderChallenge(){
   const el=document.getElementById('challengeCard');
   if(!el)return;
   const ch=CHALLENGES.find(c=>c.id===activeChallenge)||CHALLENGES[0];
-  const m=buildMetrics();
+  const m=buildMetrics(ch);
   const relCol=m.reliability>=75?'#00ff88':m.reliability>=50?'#ffcc00':'#ff6666';
   let html='<div class="ch-desc">'+chDesc(ch)+'</div>';
-  html+='<div class="ch-stats"><span>'+tr('COST')+' <b>'+fmtCost(m.cost)+'</b></span>'
+  html+='<div class="ch-stats"><span>'+tr('COST')+' <b>'+fmtCost(ch.circuit?m.buildCost:m.cost)+'</b>'+(ch.circuit?' <i>'+tr('car')+'</i>':'')+'</span>'
     +'<span>'+tr('REL')+' <b style="color:'+relCol+'">'+m.reliability+'</b></span>'
     +'<span><b>'+m.hpPerK+'</b> hp/$1k</span></div>';
+  if(ch.circuit){
+    const T=TRACKS[ch.circuit];
+    html+='<div class="ch-hint">'+tr('Timed on')+' <b>'+(T?T.label:ch.circuit)+'</b> — '+tr('build the car on the VEHICLE tab')+'</div>';
+  }
   if((ch.targets&&ch.targets.length)||ch.budget){
     const ev=evalChallenge(ch,m);
     if(ch.budget){
@@ -1444,8 +1497,12 @@ function renderChallenge(){
         +'<div class="ch-bar"><div class="ch-bar-fill" style="width:'+Math.min(100,frac*100)+'%;background:'+(over?'#ff4444':'#00ff88')+'"></div></div></div>';
     }
     ev.results.forEach(r=>{
-      const val=typeof r.v==='number'?(Number.isInteger(r.v)?r.v:r.v.toFixed(1)):r.v;
-      html+='<div class="ch-tgt '+(r.pass?'ok':'no')+'">'+(r.pass?'✓':'✗')+' '+tr(r.label)+': <b>'+val+r.unit+'</b> <span>('+tr('need')+' '+(r.op==='<='?'≤':'≥')+' '+r.t+r.unit+')</span></div>';
+      // A lap reads far better as 1:16.70 than as 76.7 — and 9999 means "no car yet".
+      const isLap=r.unit==='s'&&/lap/i.test(r.label);
+      const val=isLap?(r.v>=9999?'—':fmtLap(r.v))
+        :(typeof r.v==='number'?(Number.isInteger(r.v)?r.v:r.v.toFixed(1)):r.v);
+      const tgt=isLap?fmtLap(r.t):r.t+r.unit;
+      html+='<div class="ch-tgt '+(r.pass?'ok':'no')+'">'+(r.pass?'✓':'✗')+' '+tr(r.label)+': <b>'+val+(isLap?'':r.unit)+'</b> <span>('+tr('need')+' '+(r.op==='<='?'≤':'≥')+' '+tgt+')</span></div>';
     });
     html+='<div class="ch-verdict '+(ev.pass?'pass':'fail')+'">'+(ev.pass?'✓ '+tr('CHALLENGE PASSED'):'✗ '+tr('NOT MET YET'))+'</div>';
   }else{
@@ -1507,7 +1564,18 @@ function scoreLine(s){
   const relCol=s.reliability>=75?'#00ff88':s.reliability>=50?'#ffcc00':'#ff6666';
   return '<br><span style="color:'+gc+'">SCORE <b>'+s.grade+' ('+s.overall+')</b></span> • '+s.peakHP+'hp @'+s.peakHPrpm+' • '+s.peakTQ+'Nm @'+s.peakTQrpm+
     '<br><span style="color:#889">'+s.hpPerL+'hp/L • band '+s.band+'rpm • eff '+s.thEff+'% • safety '+s.safety+' • drive '+s.drive+'% • emit '+s.emissions+'</span>'+
-    '<br>Cost <b>'+fmtCost(engine.cost||0)+'</b> • Reliability <b style="color:'+relCol+'">'+(s.reliability||0)+'</b> • <b>'+(engine.cost>0?(s.peakHP/(engine.cost/1000)).toFixed(1):0)+'</b> hp/$1k';
+    '<br>Cost <b>'+fmtCost(engine.cost||0)+'</b> • Reliability <b style="color:'+relCol+'">'+(s.reliability||0)+'</b> • <b>'+(engine.cost>0?(s.peakHP/(engine.cost/1000)).toFixed(1):0)+'</b> hp/$1k'+
+    scoreLapLine();
+}
+// Lap time is REPORTED on the scorecard, not folded into the letter grade. The grade rates the
+// engine; a lap rates the whole car, and mixing them would make an engine's grade move when you
+// changed the tyres. Shown for whichever circuit is selected on the TRACK tab.
+function scoreLapLine(){
+  if(!vehicle||!vehicle.mass)return '';
+  const t=lapFor(trackKey);if(t==null)return '';
+  const T=TRACKS[trackKey];
+  return '<br><span style="color:#7fd">'+tr('Lap')+' <b>'+fmtLap(t)+'</b></span> <span style="color:#889">'+
+    (T?T.label:'')+' • '+tr('car')+' '+fmtCost((engine.cost||0)+(vehicle.cost||0))+'</span>';
 }
 
 // ---- Turbo spool: how much of the target boost is available at a given RPM ----
@@ -2078,7 +2146,9 @@ function computeVehicleCost(ch,tt,wr){
   c+=Math.max(0,vehicle.wheelDia-16)*120+Math.max(0,vehicle.tireWidth-205)*4;
   return Math.max(3000,Math.round(c/50)*50);
 }
+let vehRev=0;                      // bumped on every rebuild, so lap results can be cached
 function buildVehicle(){
+  vehRev++;
   vehicle=readVehicleFromForm();
   const ch=CHASSIS[vehicle.chassis]||CHASSIS.coupe, tt=TIRE_TYPE[vehicle.tireType]||TIRE_TYPE.sport, wr=WEIGHT_RED[vehicle.weightRed]||WEIGHT_RED.none;
   vehicle.chLabel=ch.label;
@@ -3923,9 +3993,12 @@ function drawDyno(){
     ctx.fillText(s.hpPerL+'hp/L • '+s.nmPerL+'Nm/L • band '+s.band+'rpm • eff '+s.thEff+'% • safety '+s.safety+' • drive '+s.drive+'% • emit '+s.emissions+' • rel '+s.reliability,gX+4,iy+15);
   }
   // Strategy: cost / power-per-dollar, and the active challenge verdict
-  const m=buildMetrics();
+  const chNow=CHALLENGES.find(c=>c.id===activeChallenge)||CHALLENGES[0];
+  const m=buildMetrics(chNow);
   ctx.font='6px "Press Start 2P"';ctx.fillStyle='#cbb26a';
-  ctx.fillText('COST '+fmtCost(m.cost)+' • '+m.hpPerK+' hp/$1k',gX+4,iy+28);
+  const lapNow=(vehicle&&vehicle.mass)?lapFor(trackKey):null;
+  ctx.fillText('COST '+fmtCost(m.cost)+' • '+m.hpPerK+' hp/$1k'+
+    (lapNow!=null?'  •  LAP '+fmtLap(lapNow)+' '+((TRACKS[trackKey]||{}).label||''):''),gX+4,iy+28);
   const ch=CHALLENGES.find(c=>c.id===activeChallenge);
   if(ch&&ch.id!=='free'){
     const ev=evalChallenge(ch,m);
