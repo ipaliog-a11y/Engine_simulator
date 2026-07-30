@@ -101,9 +101,9 @@ saps power; a large radiator, electric fan and oil cooler keep it cool.
   aero drag and rolling resistance. Vehicle cost and power-to-weight are shown too.
 - **Hot lap report (new)** — **LAP REPORT PNG / PDF** on the TRACK tab saves the lap as a printable
   telemetry sheet: the circuit map with **full-throttle** and **braking** sections picked out and
-  every corner tagged, a **speed trace** against distance with braking zones shaded, lap and sector
-  times, the full car specification, and a **speed trap at every corner** — entry, apex and exit
-  speed, gear and radius. Corners are detected from the racing line, numbered T1…Tn and named per
+  every corner tagged, a **speed trace** against distance with braking zones shaded, an **elevation
+  profile** on the same axis, lap and sector times, the full car specification, and a **speed trap at
+  every corner** — entry, apex and exit speed, gear, radius and gradient. Corners are detected from the racing line, numbered T1…Tn and named per
   circuit (Riverside GP runs Millrace, Weir, Ferryman, The Island…). The same corner list drives
   the on-screen corner count, so the app and the sheet can never disagree.
 
@@ -351,6 +351,17 @@ Curve** tab remains a wide-open-throttle steady-state sweep for reading the full
   and the gain scales cleanly with track width (Riverside: 78.3 s at 6 m wide → 74.8 s at 18 m).
   *Caveat: minimum curvature is not minimum time — a real driver trades a little radius for a late
   apex onto a straight, worth roughly another 0.5 %. Not modelled; stated in the GUIDE.*
+- Elevation: circuits carry a height profile, and the lap is solved in three dimensions. Three
+  effects, all of them real: gravity along the slope (`m·g·sinθ`, resisting a climb and adding to a
+  descent — and *helping* the brakes uphill, which is why an uphill braking zone lets you brake so
+  late); the weight-on-tyres reduced to `m·g·cosθ` on a slope; and **vertical curvature**, where the
+  normal load changes by `m·v²·κ_v` — a crest throws the car light exactly where it is fastest, a
+  compression presses it down and lets it carry far more speed (on the test circuits, ~104 km/h over
+  a brow against ~140 km/h through the equivalent dip). The vertical term is capped at ±0.6 g, since
+  real suspension runs out of travel. Validated on a constant-radius circle where elevation can only
+  cost time: 22.55 s flat → 22.74 / 23.21 / 25.31 / 28.32 s as the profile grows, with minimum speed
+  falling and maximum rising throughout. Where the hills sit matters as much as their size — rotating
+  the same profile around a circuit swings the lap by ±3.8 s.
 - Lap time: a quasi-steady-state solver over that racing line. Each circuit is a ring of
   control points; a closed Catmull-Rom spline through them gives a smooth, guaranteed-closed
   centreline whose sampled curvature feeds the physics **and** whose polyline draws the map, so the
@@ -464,6 +475,7 @@ native Android build (parked).
 - [x] Differential types: open / viscous LSD / clutch-plate LSD / spool, capping the usable share of driven-axle grip
 - [x] Test track: 3 circuits, quasi-steady-state lap solver with a friction circle, sector splits and a limit-coloured pixel map
 - [x] Minimum-curvature racing line within the track width (4–7 % quicker than the centreline)
+- [x] Track elevation: gradient, slope-adjusted load and crest/compression vertical curvature, with an elevation profile on the lap report
 - [x] Printable dyno report (PNG + library-free PDF) with chart, peaks, engine spec, run conditions and tabulated data
 - [x] Printable hot lap report: map with throttle/braking highlighted, speed trace, sector times, per-corner speed traps with names
 - [x] Calibration pass for realistic power figures & curve shape (ongoing refinement)
