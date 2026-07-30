@@ -81,8 +81,14 @@ saps power; a large radiator, electric fan and oil cooler keep it cool.
   right column is context-aware: runtime Engine Controls while driving/on the dyno, and the
   live **Performance** panel on the VEHICLE tab.
 - **Vehicle & performance (new)** — pick a **chassis** (13 archetypes, each with its own weight,
-  size, drivetrain and grip), a **drivetrain** (FWD/RWD/AWD), a **gearbox** (4–8 speeds + a
-  short↔tall gearing slider), **tyres** (compound + width/profile/wheel diameter → grip &
+  size, drivetrain and grip) and it arrives on its **factory spec**: the tyres, wheels, brakes,
+  suspension, aero and gearbox that car would really wear, so a kei car turns up on skinny eco
+  tyres and small steel discs while a hypercar gets wide semi-slicks, carbon-ceramics and a
+  wing/diffuser package. Every part stays editable from there, and **REFIT FACTORY SPEC** puts it
+  all back; the summary marks the car *(factory spec)* or *(modified)*. Tune the
+  **drivetrain** (FWD/RWD/AWD), the **gearbox** (4–8 speeds + a
+  **final-drive slider**, 4.90:1 short → 2.60:1 tall, with the ratio shown next to the number),
+  **tyres** (compound + width/profile/wheel diameter → grip &
   rolling radius), **aero** (front/rear/floor downforce vs drag), **brakes** (type + rotor size →
   stopping power & fade resistance), **suspension** (a grip multiplier) and **weight reduction**.
   Your current engine is dropped in and the sim computes **0–100 km/h**, **400 / 800 / 1000 m**
@@ -264,7 +270,13 @@ Curve** tab remains a wide-open-throttle steady-state sweep for reading the full
   including static weight distribution, longitudinal weight transfer under acceleration, and
   aero downforce). Aero drag (½ρ·CdA·v²) and rolling resistance oppose it; the car shifts at the
   limiter. Top speed is where top-gear thrust equals drag (or the limiter, whichever comes
-  first), so over-gearing lowers it. AWD puts all four tyres' grip down and launches hardest;
+  first), so over-gearing lowers it. The **gearing number is the final drive** (0 = 4.90:1,
+  100 = 2.60:1): short gearing multiplies wheel torque for a quicker 0–100 but hits the limiter
+  at a low speed, tall gearing does the reverse, and the optimum is where the car reaches the
+  redline in top gear just as drag stops it — past that you lose acceleration *and* top speed.
+  In the sim a 1.5 NA sedan peaks at ~4.7:1 and drops from 200 to 139 km/h by 2.60:1, while a
+  twin-turbo V8 supercar keeps gaining all the way to the tallest setting.
+  AWD puts all four tyres' grip down and launches hardest;
   FWD loses front load under acceleration. Engine mass is estimated from the spec and added to
   the chassis for curb weight and power-to-weight. Braking is the mirror image: deceleration is
   the lesser of tyre grip (μ·(weight + downforce)) and what the brakes can command (capacity by
@@ -318,10 +330,11 @@ philosophy).
    2-stroke, each with its own firing frequency, fuelling, efficiency, emissions and sound.
 6. **(A) Vehicle / drivetrain layer** — 🚧 *in progress.* **Done:** chassis, drivetrain
    (FWD/RWD/AWD), gearbox, tyres, aero, weight, **brakes and suspension** → **acceleration
-   (0–100 km/h, 400/800/1000 m), top speed, 100–0 braking and the 0–200–0 test**. **Next:** a
-   test track.
+   (0–100 km/h, 400/800/1000 m), top speed, 100–0 braking and the 0–200–0 test**, plus
+   **per-chassis factory fitment** (each chassis ships with matching tyres/wheels/brakes/
+   suspension/aero) and a REFIT button. **Next:** a test track.
 
-Deferred: 2D fuel/ignition map editor (parked for later); V/boxer bank visuals (cosmetic);
+Deferred: V/boxer bank visuals (cosmetic);
 native Android build (parked).
 
 ### Completed
@@ -355,6 +368,7 @@ native Android build (parked).
 - [x] New engine types: diesel (CI), 2-stroke and rotary/Wankel, each with distinct physics & emissions
 - [x] Localisation (English / Greek) with persistence, and a responsive portrait layout
 - [x] Vehicle layer: chassis/drivetrain/gearbox/tyres/aero/weight/brakes/suspension → 0–100, 400/800/1000 m, top speed, 100–0 & 0–200–0
+- [x] Per-chassis factory fitment (matching tyres/wheels/brakes/suspension/aero) + a final-drive read-out on the gearing slider
 - [x] Calibration pass for realistic power figures & curve shape (ongoing refinement)
 - [ ] Native Android build (wrap the PWA with Capacitor or a Trusted Web Activity)
 
