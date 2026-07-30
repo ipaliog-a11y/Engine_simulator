@@ -101,9 +101,9 @@ saps power; a large radiator, electric fan and oil cooler keep it cool.
   aero drag and rolling resistance. Vehicle cost and power-to-weight are shown too.
 - **Hot lap report (new)** — **LAP REPORT PNG / PDF** on the TRACK tab saves the lap as a printable
   telemetry sheet: the circuit map with **full-throttle** and **braking** sections picked out and
-  every corner tagged, a **speed trace** against distance with braking zones shaded, lap and sector
-  times, the full car specification, and a **speed trap at every corner** — entry, apex and exit
-  speed, gear and radius. Corners are detected from the racing line, numbered T1…Tn and named per
+  every corner tagged, a **speed trace** against distance with braking zones shaded, an **elevation
+  profile** on the same axis, lap and sector times, the full car specification, and a **speed trap at
+  every corner** — entry, apex and exit speed, gear, radius and gradient. Corners are detected from the racing line, numbered T1…Tn and named per
   circuit (Riverside GP runs Millrace, Weir, Ferryman, The Island…). The same corner list drives
   the on-screen corner count, so the app and the sheet can never disagree.
 
@@ -122,8 +122,10 @@ saps power; a large radiator, electric fan and oil cooler keep it cool.
 
 - **Test track (new)** — a **TRACK** tab that puts the finished car on a circuit and solves a lap.
   Three layouts with different characters: **Ashdown Park** (2.0 km, tight and technical),
-  **Cape Speedway** (3.1 km, long straights and fast sweepers) and **Riverside GP** (2.2 km,
-  balanced). You get a **lap time**, three **sector splits**, average / slowest / fastest speeds
+  **Cape Speedway** (3.1 km, long straights and fast sweepers), **Riverside GP** (2.2 km,
+  balanced) and the **Nordschleife** (20.4 km, 40 corners, 290 m of elevation and 505 m of climbing
+  per lap — geometry and gradients derived from a recorded GPX trace, corners numbered rather than
+  named because the detector can't be reliably aligned with the circuit's real corner names). You get a **lap time**, three **sector splits**, average / slowest / fastest speeds
   and the number of gear changes, plus a top-down pixel map — the track drawn to its real width,
   with an **optimised racing line** through it **coloured by what is limiting the car** — power, traction, cornering grip or braking — and a legend totalling
   how much of the lap each accounts for.
@@ -351,6 +353,30 @@ Curve** tab remains a wide-open-throttle steady-state sweep for reading the full
   and the gain scales cleanly with track width (Riverside: 78.3 s at 6 m wide → 74.8 s at 18 m).
   *Caveat: minimum curvature is not minimum time — a real driver trades a little radius for a late
   apex onto a straight, worth roughly another 0.5 %. Not modelled; stated in the GUIDE.*
+- Imported circuits: **IMPORT GPX TRACK** on the TRACK tab reads a GPX trace and turns it into a
+  lappable circuit. Points are projected to metres (equirectangular about the centroid — centimetre
+  error at circuit scale), **resampled to a uniform step** because GPX spacing is wildly uneven (a
+  real 20 km trace came in at 2.4 m / 27.9 m / 421.8 m min/median/max, which starves the spline in
+  places and over-fits it in others), and lightly smoothed so GPS jitter doesn't read as curvature
+  and invent corners. Elevation is taken from the file, so an imported circuit gets its real
+  gradients; a trace that doesn't quite close is bridged. A 534-point, 20.5 km trace with 290 m of
+  elevation imports and solves in ~120 ms. Imported tracks persist in `localStorage` and are marked
+  `*` in the list — **nothing is uploaded and no circuit data ships with the app**; importing is
+  something the user does with their own file.
+  *Accuracy note: imported lap times read a little slow — the line is minimum-curvature rather than
+  minimum-time, track width is treated as constant, and the driver never errs. It is a consistent
+  yardstick for comparing builds, not a lap record.*
+- Elevation: circuits carry a height profile, and the lap is solved in three dimensions. Three
+  effects, all of them real: gravity along the slope (`m·g·sinθ`, resisting a climb and adding to a
+  descent — and *helping* the brakes uphill, which is why an uphill braking zone lets you brake so
+  late); the weight-on-tyres reduced to `m·g·cosθ` on a slope; and **vertical curvature**, where the
+  normal load changes by `m·v²·κ_v` — a crest throws the car light exactly where it is fastest, a
+  compression presses it down and lets it carry far more speed (on the test circuits, ~104 km/h over
+  a brow against ~140 km/h through the equivalent dip). The vertical term is capped at ±0.6 g, since
+  real suspension runs out of travel. Validated on a constant-radius circle where elevation can only
+  cost time: 22.55 s flat → 22.74 / 23.21 / 25.31 / 28.32 s as the profile grows, with minimum speed
+  falling and maximum rising throughout. Where the hills sit matters as much as their size — rotating
+  the same profile around a circuit swings the lap by ±3.8 s.
 - Lap time: a quasi-steady-state solver over that racing line. Each circuit is a ring of
   control points; a closed Catmull-Rom spline through them gives a smooth, guaranteed-closed
   centreline whose sampled curvature feeds the physics **and** whose polyline draws the map, so the
@@ -464,6 +490,9 @@ native Android build (parked).
 - [x] Differential types: open / viscous LSD / clutch-plate LSD / spool, capping the usable share of driven-axle grip
 - [x] Test track: 3 circuits, quasi-steady-state lap solver with a friction circle, sector splits and a limit-coloured pixel map
 - [x] Minimum-curvature racing line within the track width (4–7 % quicker than the centreline)
+- [x] Track elevation: gradient, slope-adjusted load and crest/compression vertical curvature, with an elevation profile on the lap report
+- [x] GPX circuit import (projection, uniform resampling, smoothing, real elevation) with localStorage persistence
+- [x] Nordschleife in the track pack (20.4 km, 290 m elevation) — a real road course as a benchmark
 - [x] Printable dyno report (PNG + library-free PDF) with chart, peaks, engine spec, run conditions and tabulated data
 - [x] Printable hot lap report: map with throttle/braking highlighted, speed trace, sector times, per-corner speed traps with names
 - [x] Calibration pass for realistic power figures & curve shape (ongoing refinement)
