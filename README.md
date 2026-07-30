@@ -99,6 +99,17 @@ saps power; a large radiator, electric fan and oil cooler keep it cool.
   (time + trap speed), **top speed**, **100–0 braking** and the **0–200–0** test live — a
   traction-limited launch and a tyre/brake-limited stop (with fade), weight transfer, downforce,
   aero drag and rolling resistance. Vehicle cost and power-to-weight are shown too.
+- **Dyno report (new)** — **REPORT PNG** / **REPORT PDF** on the dyno save the current pull as a
+  printable A4 sheet laid out like a real dynamometer print-out: power and torque traces with the
+  peaks called out, a peak-result band, the full engine specification, the conditions the run was
+  made under, and a tabulated run-data list. Logged pulls are overlaid faintly for comparison.
+  Both formats are generated entirely in the browser — the PDF embeds the rendered sheet as a
+  JPEG via PDF's native `DCTDecode` filter, so there is no library and it still works offline.
+  The sheet is clearly marked **SIMULATED — NOT A MEASUREMENT**, and prints the *design potential*
+  alongside the as-tuned run so the two figures can't be mistaken for each other.
+
+  ![Dyno report](docs/dyno-report.png)
+
 - **Test track (new)** — a **TRACK** tab that puts the finished car on a circuit and solves a lap.
   Three layouts with different characters: **Ashdown Park** (2.0 km, tight and technical),
   **Cape Speedway** (3.1 km, long straights and fast sweepers) and **Riverside GP** (2.2 km,
@@ -432,6 +443,7 @@ native Android build (parked).
 - [x] Gearbox types: manual / sequential / DCT / torque-converter auto (shift time, driveline loss, ratio spread, converter stall & multiplication)
 - [x] Differential types: open / viscous LSD / clutch-plate LSD / spool, capping the usable share of driven-axle grip
 - [x] Test track: 3 circuits, quasi-steady-state lap solver with a friction circle, sector splits and a limit-coloured pixel map
+- [x] Printable dyno report (PNG + library-free PDF) with chart, peaks, engine spec, run conditions and tabulated data
 - [x] Calibration pass for realistic power figures & curve shape (ongoing refinement)
 - [ ] Native Android build (wrap the PWA with Capacitor or a Trusted Web Activity)
 
