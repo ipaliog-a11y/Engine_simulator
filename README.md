@@ -351,6 +351,19 @@ Curve** tab remains a wide-open-throttle steady-state sweep for reading the full
   and the gain scales cleanly with track width (Riverside: 78.3 s at 6 m wide → 74.8 s at 18 m).
   *Caveat: minimum curvature is not minimum time — a real driver trades a little radius for a late
   apex onto a straight, worth roughly another 0.5 %. Not modelled; stated in the GUIDE.*
+- Imported circuits: **IMPORT GPX TRACK** on the TRACK tab reads a GPX trace and turns it into a
+  lappable circuit. Points are projected to metres (equirectangular about the centroid — centimetre
+  error at circuit scale), **resampled to a uniform step** because GPX spacing is wildly uneven (a
+  real 20 km trace came in at 2.4 m / 27.9 m / 421.8 m min/median/max, which starves the spline in
+  places and over-fits it in others), and lightly smoothed so GPS jitter doesn't read as curvature
+  and invent corners. Elevation is taken from the file, so an imported circuit gets its real
+  gradients; a trace that doesn't quite close is bridged. A 534-point, 20.5 km trace with 290 m of
+  elevation imports and solves in ~120 ms. Imported tracks persist in `localStorage` and are marked
+  `*` in the list — **nothing is uploaded and no circuit data ships with the app**; importing is
+  something the user does with their own file.
+  *Accuracy note: imported lap times read a little slow — the line is minimum-curvature rather than
+  minimum-time, track width is treated as constant, and the driver never errs. It is a consistent
+  yardstick for comparing builds, not a lap record.*
 - Elevation: circuits carry a height profile, and the lap is solved in three dimensions. Three
   effects, all of them real: gravity along the slope (`m·g·sinθ`, resisting a climb and adding to a
   descent — and *helping* the brakes uphill, which is why an uphill braking zone lets you brake so
@@ -476,6 +489,7 @@ native Android build (parked).
 - [x] Test track: 3 circuits, quasi-steady-state lap solver with a friction circle, sector splits and a limit-coloured pixel map
 - [x] Minimum-curvature racing line within the track width (4–7 % quicker than the centreline)
 - [x] Track elevation: gradient, slope-adjusted load and crest/compression vertical curvature, with an elevation profile on the lap report
+- [x] GPX circuit import (projection, uniform resampling, smoothing, real elevation) with localStorage persistence
 - [x] Printable dyno report (PNG + library-free PDF) with chart, peaks, engine spec, run conditions and tabulated data
 - [x] Printable hot lap report: map with throttle/braking highlighted, speed trace, sector times, per-corner speed traps with names
 - [x] Calibration pass for realistic power figures & curve shape (ongoing refinement)
