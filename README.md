@@ -86,7 +86,8 @@ saps power; a large radiator, electric fan and oil cooler keep it cool.
   tyres and small steel discs while a hypercar gets wide semi-slicks, carbon-ceramics and a
   wing/diffuser package. Every part stays editable from there, and **REFIT FACTORY SPEC** puts it
   all back; the summary marks the car *(factory spec)* or *(modified)*. Tune the
-  **drivetrain** (FWD/RWD/AWD), the **gearbox** — **type** (manual / sequential / DCT /
+  **drivetrain** (FWD/RWD/AWD), the **differential** (open / viscous LSD / clutch-plate LSD /
+  spool — how much of the driven axle's grip you can actually put down), the **gearbox** — **type** (manual / sequential / DCT /
   torque-converter auto, each with its own shift time, driveline loss and ratio spacing; the auto
   adds converter stall & torque multiplication off the line), 4–8 speeds, and a
   **final-drive slider**, 4.90:1 short → 2.60:1 tall, with the ratio shown next to the number —
@@ -283,6 +284,16 @@ Curve** tab remains a wide-open-throttle steady-state sweep for reading the full
   pickup, 8.61 s → 8.01 s) and loses badly on a light, peaky one whose powerband sits far above
   the stall speed (2.0 ITB screamer roadster, 4.55 s → 5.96 s) — at the cost of the worst
   driveline efficiency of the four boxes.
+  The **differential** then sets how much of the driven axle's grip is usable. An axle's two
+  wheels are never loaded identically (camber, torque reaction, axle wind-up, suspension
+  geometry), and an *open* diff can only feed each wheel what the lighter-loaded one holds — it
+  spins that wheel and throws the rest away (≈78 % usable). A *viscous* LSD recovers most of it
+  (92 %), a *clutch-plate* LSD effectively all of it, a *spool* all of it and a little more.
+  Because it caps traction rather than torque, a diff **only matters while the car is
+  traction-limited**: on an 842 hp muscle car, open → spool is worth **1.85 s** to 100 km/h
+  (6.43 → 4.58 s), while on a 48 hp kei it is worth **0.00 s**. Top speed is drag-limited, so the
+  diff never changes it. *(The spool's real penalty is cornering — understeer and tyre scrub —
+  which this straight-line sim doesn't model yet, so it looks strictly best; flagged in the GUIDE.)*
   Top speed is the fastest steady speed **any** gear can hold (thrust = drag + rolling
   resistance, capped by the limiter) — a peaky or over-geared car genuinely reaches its maximum
   one gear down, on the cam, rather than bogging in top. The **gearing number is the final
@@ -348,8 +359,9 @@ philosophy).
    (FWD/RWD/AWD), gearbox, tyres, aero, weight, **brakes and suspension** → **acceleration
    (0–100 km/h, 400/800/1000 m), top speed, 100–0 braking and the 0–200–0 test**, plus
    **per-chassis factory fitment** (each chassis ships with matching tyres/wheels/brakes/
-   suspension/aero) and a REFIT button, and **gearbox types** (manual / sequential / DCT /
-   torque-converter auto). **Next:** differential types (open / LSD / locked), then a test track.
+   suspension/aero) and a REFIT button, **gearbox types** (manual / sequential / DCT /
+   torque-converter auto) and **differential types** (open / viscous LSD / clutch LSD / spool).
+   **Next:** a test track — which will also let the spool's cornering penalty be modelled.
 
 Deferred: V/boxer bank visuals (cosmetic);
 native Android build (parked).
@@ -387,6 +399,7 @@ native Android build (parked).
 - [x] Vehicle layer: chassis/drivetrain/gearbox/tyres/aero/weight/brakes/suspension → 0–100, 400/800/1000 m, top speed, 100–0 & 0–200–0
 - [x] Per-chassis factory fitment (matching tyres/wheels/brakes/suspension/aero) + a final-drive read-out on the gearing slider
 - [x] Gearbox types: manual / sequential / DCT / torque-converter auto (shift time, driveline loss, ratio spread, converter stall & multiplication)
+- [x] Differential types: open / viscous LSD / clutch-plate LSD / spool, capping the usable share of driven-axle grip
 - [x] Calibration pass for realistic power figures & curve shape (ongoing refinement)
 - [ ] Native Android build (wrap the PWA with Capacitor or a Trusted Web Activity)
 
