@@ -86,8 +86,10 @@ saps power; a large radiator, electric fan and oil cooler keep it cool.
   tyres and small steel discs while a hypercar gets wide semi-slicks, carbon-ceramics and a
   wing/diffuser package. Every part stays editable from there, and **REFIT FACTORY SPEC** puts it
   all back; the summary marks the car *(factory spec)* or *(modified)*. Tune the
-  **drivetrain** (FWD/RWD/AWD), the **gearbox** (4–8 speeds + a
-  **final-drive slider**, 4.90:1 short → 2.60:1 tall, with the ratio shown next to the number),
+  **drivetrain** (FWD/RWD/AWD), the **gearbox** — **type** (manual / sequential / DCT /
+  torque-converter auto, each with its own shift time, driveline loss and ratio spacing; the auto
+  adds converter stall & torque multiplication off the line), 4–8 speeds, and a
+  **final-drive slider**, 4.90:1 short → 2.60:1 tall, with the ratio shown next to the number —
   **tyres** (compound + width/profile/wheel diameter → grip &
   rolling radius), **aero** (front/rear/floor downforce vs drag), **brakes** (type + rotor size →
   stopping power & fade resistance), **suspension** (a grip multiplier) and **weight reduction**.
@@ -269,11 +271,18 @@ Curve** tab remains a wide-open-throttle steady-state sweep for reading the full
   tractive force = wheel torque ÷ rolling radius, capped by traction (μ × the driven-axle load,
   including static weight distribution, longitudinal weight transfer under acceleration, and
   aero downforce). Aero drag (½ρ·CdA·v²) and rolling resistance oppose it; the car shifts at the
-  limiter. The launch models a **slipping clutch**: from a standstill the engine is held at its
-  launch rpm (≈55 % of the redline) while road speed brings the gearbox input up to meet it, and
-  only then locks to the wheels — which is why a peaky, high-revving engine can still leave the
-  line hard instead of falling into a torque hole the instant it moves. Slipping never adds
-  torque; drive force is still capped by traction, so the launch stays grip-limited.
+  limiter, losing drive for the gearbox's shift time. The launch depends on the gearbox. A clutch
+  box (manual/sequential/DCT) models a **slipping clutch**: from a standstill the engine is held
+  at its launch rpm (≈55 % of the redline) while road speed brings the gearbox input up to meet
+  it, and only then locks to the wheels — which is why a peaky, high-revving engine can still
+  leave the line hard instead of falling into a torque hole the instant it moves. Slipping never
+  adds torque; drive force is still capped by traction, so the launch stays grip-limited. A
+  **torque-converter auto** instead stalls its impeller up against a slow turbine and *multiplies*
+  engine torque (≈1.9× at a 2400 rpm stall), fading to 1:1 as the turbine catches up. That launch
+  advantage is why an auto beats an equivalent manual on a heavy, torquey engine (6.6 diesel
+  pickup, 8.61 s → 8.01 s) and loses badly on a light, peaky one whose powerband sits far above
+  the stall speed (2.0 ITB screamer roadster, 4.55 s → 5.96 s) — at the cost of the worst
+  driveline efficiency of the four boxes.
   Top speed is the fastest steady speed **any** gear can hold (thrust = drag + rolling
   resistance, capped by the limiter) — a peaky or over-geared car genuinely reaches its maximum
   one gear down, on the cam, rather than bogging in top. The **gearing number is the final
@@ -339,7 +348,8 @@ philosophy).
    (FWD/RWD/AWD), gearbox, tyres, aero, weight, **brakes and suspension** → **acceleration
    (0–100 km/h, 400/800/1000 m), top speed, 100–0 braking and the 0–200–0 test**, plus
    **per-chassis factory fitment** (each chassis ships with matching tyres/wheels/brakes/
-   suspension/aero) and a REFIT button. **Next:** a test track.
+   suspension/aero) and a REFIT button, and **gearbox types** (manual / sequential / DCT /
+   torque-converter auto). **Next:** differential types (open / LSD / locked), then a test track.
 
 Deferred: V/boxer bank visuals (cosmetic);
 native Android build (parked).
@@ -376,6 +386,7 @@ native Android build (parked).
 - [x] Localisation (English / Greek) with persistence, and a responsive portrait layout
 - [x] Vehicle layer: chassis/drivetrain/gearbox/tyres/aero/weight/brakes/suspension → 0–100, 400/800/1000 m, top speed, 100–0 & 0–200–0
 - [x] Per-chassis factory fitment (matching tyres/wheels/brakes/suspension/aero) + a final-drive read-out on the gearing slider
+- [x] Gearbox types: manual / sequential / DCT / torque-converter auto (shift time, driveline loss, ratio spread, converter stall & multiplication)
 - [x] Calibration pass for realistic power figures & curve shape (ongoing refinement)
 - [ ] Native Android build (wrap the PWA with Capacitor or a Trusted Web Activity)
 
