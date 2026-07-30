@@ -322,6 +322,14 @@ higher is tougher. <b>hp/$1k</b> — power per thousand dollars: the value metri
 </div>
 
 <div class="design-section">The Scorecard</div>
+<b>HOT LAP REPORT</b> — on the TRACK tab, <b>LAP REPORT PNG</b> / <b>PDF</b> saves the lap as a
+telemetry sheet: the circuit map with <span style="color:#1a7f37">full-throttle</span> and
+<span style="color:#c1121f">braking</span> sections picked out and every corner tagged, a speed
+trace against distance with the braking zones shaded, lap and sector times, the full car spec, and
+a <b>speed trap at every corner</b> — entry, apex and exit speed, gear and radius. Corners are
+numbered T1…Tn and named per circuit (Riverside's are Millrace, Weir, Ferryman…). "Full throttle"
+means the car is accelerating at its limit, engine or tyres; the footer also reports how much of
+the lap is specifically engine-limited.<br>
 <b>DYNO REPORT</b> — the <b>REPORT PNG</b> / <b>REPORT PDF</b> buttons save the current pull as a
 printable sheet laid out like a real dynamometer print-out: the power and torque traces with their
 peaks called out, a peak-result band, the full engine specification, the conditions the run was
@@ -596,6 +604,10 @@ experiment freely, then back on for consequences.</div>
 <div class="perf-head" id="lapHead">—</div>
 <div class="perf-grid" id="lapGrid"></div>
 <div class="perf-note" id="lapNote"></div>
+<div class="build-row">
+<button id="btnLapPng" title="Save the hot lap report as an image">LAP REPORT PNG</button>
+<button id="btnLapPdf" title="Save the hot lap report as a PDF">PDF</button>
+</div>
 </div>
 </div>
 </div>
@@ -776,7 +788,7 @@ const I18N={
   'VEHICLE':{el:'ΟΧΗΜΑ'},'VEHICLE DESIGN':{el:'ΣΧΕΔΙΑΣΗ ΟΧΗΜΑΤΟΣ'},
   'Pick a chassis and it arrives on its factory spec — matching tyres, wheels, brakes, suspension and aero. Swap any part from there; your current engine is dropped in and the performance is computed live.':{el:'Διάλεξε σασί και έρχεται με τον εργοστασιακό του εξοπλισμό — ταιριαστά ελαστικά, ζάντες, φρένα, ανάρτηση και αεροδυναμική. Άλλαξε ό,τι θέλεις από εκεί· ο τρέχων κινητήρας μπαίνει μέσα και οι επιδόσεις υπολογίζονται ζωντανά.'},
   'Chassis & Drivetrain':{el:'Σασί & Μετάδοση'},'CHASSIS':{el:'ΣΑΣΙ'},'DRIVETRAIN':{el:'ΜΕΤΑΔΟΣΗ'},'GEARBOX (SPEEDS)':{el:'ΚΙΒΩΤΙΟ (ΣΧΕΣΕΙΣ)'},'GEARING (FINAL DRIVE)':{el:'ΤΕΛΙΚΗ ΣΧΕΣΗ'},
-  'REPORT PNG':{el:'ΑΝΑΦΟΡΑ PNG'},'REPORT PDF':{el:'ΑΝΑΦΟΡΑ PDF'},
+  'REPORT PNG':{el:'ΑΝΑΦΟΡΑ PNG'},'REPORT PDF':{el:'ΑΝΑΦΟΡΑ PDF'},'LAP REPORT PNG':{el:'ΑΝΑΦΟΡΑ ΓΥΡΟΥ PNG'},
   'TRACK':{el:'ΠΙΣΤΑ'},'Lap Time':{el:'Χρόνος Γύρου'},'CIRCUIT':{el:'ΠΙΣΤΑ'},'LAP TIME':{el:'ΧΡΟΝΟΣ ΓΥΡΟΥ'},
   'AVG SPEED':{el:'ΜΕΣΗ ΤΑΧΥΤΗΤΑ'},'SECTOR 1':{el:'ΤΟΜΕΑΣ 1'},'SECTOR 2':{el:'ΤΟΜΕΑΣ 2'},'SECTOR 3':{el:'ΤΟΜΕΑΣ 3'},
   'SLOWEST':{el:'ΒΡΑΔΥΤΕΡΟ'},'FASTEST':{el:'ΤΑΧΥΤΕΡΟ'},'SHIFTS':{el:'ΑΛΛΑΓΕΣ'},'TEST TRACK':{el:'ΠΙΣΤΑ ΔΟΚΙΜΩΝ'},
@@ -811,7 +823,7 @@ const GUIDE_I18N={
   loop:{el:'<b>1. ΣΧΕΔΙΑΣΗ</b> ενός κινητήρα (κάτω μέρος, διαδρομή αέρα, καύσιμο & σπινθήρας, ψύξη…), μετά πάτα <b>BUILD & DYNO</b>. <b>2. ΔΥΝΑΜΟ</b> δείχνει όλη την καμπύλη ισχύος/ροπής και μια βαθμολογία. <b>3. ΚΙΝΗΤΗΡΑΣ</b> είναι ζωντανός πάγκος δοκιμών: ρυθμίζεις <b>ΓΚΑΖΙ</b> και <b>ΦΟΡΤΙΟ</b> και βλέπεις τον κινητήρα να αποκρίνεται σε πραγματικό χρόνο. Δεν ορίζεις ποτέ απευθείας τις στροφές — τον οδηγείς.'},
   driving:{el:'<b>ΓΚΑΖΙ</b> — ανοίγει την εισαγωγή· αυξάνει την πίεση πολλαπλής → ροπή → στροφές.<br><b>ΦΟΡΤΙΟ (φρένο δυναμό)</b> — αντίσταση που ορίζει τις <i>στροφές κρατήματος</i>. 0% = ελεύθερες στροφές ως το όριο· 100% = κρατά κοντά στο ρελαντί. Αντιστέκεται μόνο <i>πάνω</i> από τον στόχο, οπότε κάθε κινητήρας ανεβαίνει πάντα ως εκεί.<br><b>ΗΛΕΚ. ΦΟΡΤΙΟ</b> — κατανάλωση παρελκομένων (φώτα/AC). Μεγάλο φορτίο + μικρό δυναμό στο ρελαντί αδειάζει την μπαταρία → χαμηλή τάση → αδύναμος σπινθήρας.<br><b>AFR</b> — αναλογία αέρα-καυσίμου. Μέγιστη ισχύς κοντά σε λ0.86 (πλούσιο), καλύτερη οικονομία κοντά σε λ1.05 (φτωχό).<br><b>IAT / ΨΥΚΤΙΚΟ / ΛΑΔΙ</b> — θερμοκρασίες χαρμανιού & κινητήρα (αυτόματα σε AUTO THERMAL).<br><b>ΝΙΤΡΟ</b> — αν υπάρχει, ψεκάζει με τέρμα γκάζι από φιάλη που αδειάζει.'},
   numbers:{el:'<b>HP / kW</b> — ισχύς = ροπή × στροφές. <b>ΡΟΠΗ (Nm)</b> — δύναμη στρέψης· κορυφώνεται χαμηλότερα από την ισχύ.<br><b>BMEP (bar)</b> — μέση πραγματική πίεση πέδης: ροπή ανά κυβισμό, για σύγκριση κινητήρων κάθε μεγέθους. <b>VE (%)</b> — ογκομετρική απόδοση: πόσο καλά αναπνέει σε σχέση με τον κυβισμό (το boost ξεπερνά το 100%).<br><b>ΘΕΡΜ. ΑΠΟΔ. (%)</b> — ποσοστό ενέργειας καυσίμου που γίνεται έργο. <b>BSFC (g/kWh)</b> — καύσιμο ανά μονάδα ισχύος· <i>όσο χαμηλότερο τόσο καλύτερο</i>.<br><b>ΡΟΗ ΚΑΥΣΙΜΟΥ (L/h)</b> — ζωντανή κατανάλωση. <b>MAP / BOOST (bar)</b> — πίεση πολλαπλής· boost = MAP πάνω από 1.0.<br><b>ΠΕΙΡΑΚΙ (LOW/MED/HIGH)</b> — κίνδυνος πειρακίου. Ο χρονισμός AUTO καθυστερεί για έλεγχο· παρατεταμένο HIGH κάνει ζημιά. <b>ΥΓΕΙΑ (%)</b> — κατάσταση· 0 = καμένος κινητήρας.<br><b>ΕΚΠΟΜΠΕΣ (CLEAN/OK/DIRTY)</b> — από τον αναλυτή: CO & HC ανεβαίνουν στο πλούσιο, NOx στο φτωχό/καυτό· ο καταλύτης καθαρίζει και τα τρία μόνο κοντά στο στοιχειομετρικό.<br><b>λ (λάμδα)</b> — AFR ÷ στοιχειομετρικό: λ&lt;1 πλούσιο, 1 = στοιχειομετρικό, &gt;1 φτωχό.<br><b>ΚΟΣΤΟΣ ($)</b> — συνολικό κόστος εξαρτημάτων. <b>REL (αξιοπιστία)</b> — εκτίμηση αντοχής (boost/πειράκι/θερμότητα/στροφές). <b>hp/$1k</b> — ισχύς ανά χίλια δολάρια.'},
-  scorecard:{el:'<b>ΑΝΑΦΟΡΑ ΔΥΝΑΜΟ</b> — τα κουμπιά ΑΝΑΦΟΡΑ PNG/PDF αποθηκεύουν την τρέχουσα μέτρηση ως εκτυπώσιμο φύλλο με τη διάταξη πραγματικού δυναμόμετρου: καμπύλες ισχύος και ροπής με τις κορυφές, μπάντα αποτελεσμάτων, πλήρη προδιαγραφή κινητήρα, συνθήκες μέτρησης και πίνακα δεδομένων. Οι καταγεγραμμένες μετρήσεις εμφανίζονται αχνά για σύγκριση. Το γράφημα είναι ο κινητήρας <i>όπως είναι ρυθμισμένος τώρα</i>, γι’ αυτό τυπώνεται και το <b>δυναμικό σχεδίασης</b>. Όλα παράγονται εκτός σύνδεσης· τίποτα δεν ανεβαίνει.<br>Κάθε build βαθμολογείται <b>S → F</b> από επτά στοιχεία: ειδική <b>ισχύ</b> & <b>ροπή</b> (ανά λίτρο), εύρος <b>περιοχής ισχύος</b>, θερμική <b>απόδοση</b>, <b>ασφάλεια</b> από πειράκι, <b>οδηγησιμότητα</b> (ροπή στις χαμηλές) και <b>εκπομπές</b>. Το κυνήγι μέγιστης ισχύος κοστίζει σε οδηγησιμότητα, ασφάλεια και εκπομπές — η βαθμολογία επιβραβεύει το ισορροπημένο build.'},
+  scorecard:{el:'<b>ΑΝΑΦΟΡΑ ΓΥΡΟΥ</b> — στην καρτέλα ΠΙΣΤΑ, τα κουμπιά ΑΝΑΦΟΡΑ ΓΥΡΟΥ PNG/PDF αποθηκεύουν τον γύρο ως φύλλο τηλεμετρίας: χάρτης με τα σημεία <span style="color:#1a7f37">τέρμα γκάζι</span> και <span style="color:#c1121f">φρεναρίσματος</span>, κάθε στροφή αριθμημένη, γράφημα ταχύτητας ανά απόσταση, χρόνοι γύρου και τομέων, πλήρης προδιαγραφή αυτοκινήτου και <b>παγίδα ταχύτητας σε κάθε στροφή</b> (είσοδος, apex, έξοδος, σχέση, ακτίνα). Οι στροφές έχουν αριθμούς T1…Tn και ονόματα ανά πίστα.<br><b>ΑΝΑΦΟΡΑ ΔΥΝΑΜΟ</b> — τα κουμπιά ΑΝΑΦΟΡΑ PNG/PDF αποθηκεύουν την τρέχουσα μέτρηση ως εκτυπώσιμο φύλλο με τη διάταξη πραγματικού δυναμόμετρου: καμπύλες ισχύος και ροπής με τις κορυφές, μπάντα αποτελεσμάτων, πλήρη προδιαγραφή κινητήρα, συνθήκες μέτρησης και πίνακα δεδομένων. Οι καταγεγραμμένες μετρήσεις εμφανίζονται αχνά για σύγκριση. Το γράφημα είναι ο κινητήρας <i>όπως είναι ρυθμισμένος τώρα</i>, γι’ αυτό τυπώνεται και το <b>δυναμικό σχεδίασης</b>. Όλα παράγονται εκτός σύνδεσης· τίποτα δεν ανεβαίνει.<br>Κάθε build βαθμολογείται <b>S → F</b> από επτά στοιχεία: ειδική <b>ισχύ</b> & <b>ροπή</b> (ανά λίτρο), εύρος <b>περιοχής ισχύος</b>, θερμική <b>απόδοση</b>, <b>ασφάλεια</b> από πειράκι, <b>οδηγησιμότητα</b> (ροπή στις χαμηλές) και <b>εκπομπές</b>. Το κυνήγι μέγιστης ισχύος κοστίζει σε οδηγησιμότητα, ασφάλεια και εκπομπές — η βαθμολογία επιβραβεύει το ισορροπημένο build.'},
   career:{el:'Διάλεξε έναν <b>ΣΤΟΧΟ</b> στην κορυφή της ΣΧΕΔΙΑΣΗΣ για να κάνεις τη σχεδίαση γρίφο. Κάθε πρόκληση θέτει κριτήρια — ισχύ, οικονομία, εκπομπές, <b>αξιοπιστία</b> ή <b>ισχύ ανά δολάριο</b> — και κάποιες βάζουν όριο <b>προϋπολογισμού</b>. Η κάρτα τσεκάρει κάθε κριτήριο ζωντανά (✓/✗) και δείχνει <b>ΕΠΙΤΥΧΙΑ</b> όταν καλυφθούν όλα· κόστος και αξιοπιστία φαίνονται πάντα. Ο μεγάλος κυβισμός κερδίζει σε αξία· boost και αγωνιστικά μέρη κερδίζουν σε ισχύ αλλά κοστίζουν σε χρήμα και αξιοπιστία.'},
   types:{el:'<b>Βενζίνη 4-χρονη</b> — η ισορροπημένη επιλογή: ανάφλεξη με σπινθήρα, μία εκρηκτική διαδρομή ανά δύο στροφές.<br><b>Πετρέλαιο (CI)</b> — ανάφλεξη με συμπίεση (χωρίς μπουζί, χωρίς πειράκι), πολύ υψηλή συμπίεση, φτωχό χωρίς πεταλούδα. Μεγάλη <b>ροπή</b> στις χαμηλές, χαμηλό όριο στροφών, η καλύτερη <b>απόδοση</b> — αλλά βαρύ, με εκπομπές <b>NOx + αιθάλη (PM)</b> που καθαρίζει σύστημα DPF/SCR.<br><b>2-χρονη</b> — εκρηκτική διαδρομή σε <i>κάθε</i> στροφή (θυρίδες, χωρίς εκκεντροφόρο): υψηλή ειδική ισχύς αλλά λαίμαργη και <b>HC</b>-βρόμικη.<br><b>Wankel (ρότορας)</b> — περιστρεφόμενος ρότορας που ανάβει σε κάθε στροφή: ομαλός σαν τουρμπίνα, τεράστιες στροφές, υψηλή ισχύς ανά λίτρο, αλλά λαίμαργος, <b>HC</b>-βαρύς και σκληρός στα ελάσματα κορυφής.<br>Η αλλαγή τύπου προσαρμόζει τα εύρη συμπίεσης/στροφών/AFR και απενεργοποιεί ό,τι δεν ισχύει.'},
   subsystems:{el:'<b>Κάτω μέρος</b> — τύπος κινητήρα, διάμετρος × διαδρομή × κύλινδροι = κυβισμός· υπερτετράγωνος & υψηλότερο όριο ανεβάζουν την περιοχή ισχύος.<br><b>Διαδρομή αέρα</b> — τούρμπο (γεμίζει με τις στροφές) ή υπερσυμπιεστής (boost από ρελαντί)· το intercooler ψύχει το χάρμανι· εξάτμιση & καταλύτης ανταλλάσσουν ροή με αντίθλιψη/εκπομπές· το νιτρό είναι εμφιαλωμένη ισχύς.<br><b>Εισαγωγή</b> — καρμπιρατέρ → EFI → ITB ορίζουν αναπνοή, ακρίβεια & ρελαντί.<br><b>Χρονισμός βαλβίδων</b> — άγριες εκκεντροφόροι ανεβάζουν την ισχύ ψηλά· το VVT επαναφέρει τις χαμηλές.<br><b>Καύσιμο & σπινθήρας</b> — τύπος καυσίμου, οκτάνια, μπεκ, ανάφλεξη, χρονισμός FIXED/AUTO και το μείγμα: MANUAL (ένα σταθερό AFR) ή AUTO — ένας 3D χάρτης ECU που τρέχει κοντά στο στοιχειομετρικό στο ελαφρύ φορτίο και εμπλουτίζει υπό φορτίο/boost, όπως ένας πραγματικός χάρτης καυσίμου. Στο AUTO μπορείς να <b>ρυθμίσεις τον χάρτη</b>: πάτησε ένα κελί και μετά − ΦΤΩΧΟ / + ΠΛΟΥΣΙΟ για να αλλάξεις τον στόχο σε εκείνο το φορτίο×στροφές (ΕΠΑΝΑΦΟΡΑ ΧΑΡΤΗ επαναφέρει το εργοστασιακό).<br><b>Ψύξη & ηλεκτρικά</b> — ψυγείο/βεντιλατέρ/ψυγείο λαδιού/θερμοστάτης ορίζουν θερμοκρασίες· δυναμό & ανάφλεξη ορίζουν φόρτιση και όριο μισφάιρ.'},
@@ -2201,15 +2213,18 @@ function simulateAccel(){
 // profile the lap solver needs and the polyline the map draws — one source of truth for both, so
 // the picture can never disagree with the physics.
 const TRACKS={
-  tech: {label:'ASHDOWN PARK',  width:10,blurb:'Tight and technical — second-gear corners, short straights. Grip, brakes and a light car matter more than power.',
+  tech: {label:'ASHDOWN PARK',  width:10,names:['Gatehouse','The Kink','Beeches','Old Barn','Hollow','Chapel','Quarry','Farm Bend','Paddock','Coppice','Stables','The Dell','The Ford','Ash Corner','Millpond','Keeper\'s','Gate Loop'],
+    blurb:'Tight and technical — second-gear corners, short straights. Grip, brakes and a light car matter more than power.',
     pts:[{x:60,y:250},{x:70,y:120},{x:150,y:60},{x:250,y:80},{x:290,y:160},{x:250,y:215},{x:300,y:265},
          {x:420,y:250},{x:470,y:150},{x:560,y:140},{x:610,y:220},{x:560,y:300},{x:600,y:380},{x:520,y:430},
          {x:380,y:410},{x:330,y:340},{x:250,y:360},{x:210,y:440},{x:110,y:420}]},
-  fast: {label:'CAPE SPEEDWAY', width:14,blurb:'Long straights and fast sweepers. Power, gearing and low drag decide it; downforce pays for itself.',
+  fast: {label:'CAPE SPEEDWAY', width:14,names:['Lighthouse','Ocean Sweep','Windward','The Cape','Seawall','Harbour','Gull','Breakwater','Dunes','Marina','Pier'],
+    blurb:'Long straights and fast sweepers. Power, gearing and low drag decide it; downforce pays for itself.',
     pts:[{x:80,y:400},{x:80,y:220},{x:140,y:110},{x:320,y:70},{x:700,y:60},{x:980,y:80},{x:1120,y:170},
          {x:1150,y:330},{x:1080,y:470},{x:900,y:520},{x:700,y:500},{x:660,y:400},{x:700,y:300},{x:640,y:250},
          {x:480,y:270},{x:420,y:380},{x:300,y:470},{x:150,y:490}]},
-  mixed:{label:'RIVERSIDE GP',  width:12,blurb:'A balanced grand-prix layout: a long back straight into heavy braking, then a technical infield.',
+  mixed:{label:'RIVERSIDE GP',  width:12,names:['Millrace','Weir','Ferryman','The Island','Boathouse','Willows','Lock','Bridge','Towpath','Reeds','Anglers','Bankside','Riverbend'],
+    blurb:'A balanced grand-prix layout: a long back straight into heavy braking, then a technical infield.',
     pts:[{x:90,y:430},{x:80,y:280},{x:160,y:180},{x:300,y:150},{x:420,y:190},{x:520,y:130},{x:660,y:100},
          {x:820,y:130},{x:880,y:250},{x:840,y:370},{x:720,y:420},{x:640,y:350},{x:560,y:380},{x:540,y:470},
          {x:420,y:500},{x:330,y:440},{x:240,y:470},{x:150,y:510}]}
@@ -2246,13 +2261,13 @@ function buildTrack(key){
     const k=(ab*bc*ca)>1e-6?4*area/(ab*bc*ca):0;
     p[i].r=k>1e-5?1/k:1e6;
   }
-  // Corner count: distinct stretches tighter than 200 m radius.
-  let corners=0,inC=false;
-  for(let i=0;i<n;i++){const t=p[i].r<200;if(t&&!inC)corners++;inC=t;}
+  // Corner count comes from the same detector the report uses, so the two never disagree.
+  let corners=0;
   const xs=p.map(q=>q.x),ys=p.map(q=>q.y);
-  const T={key,label:def.label,blurb:def.blurb,pts:p,length:s,corners,width:def.width||12,
+  const T={key,label:def.label,blurb:def.blurb,names:def.names||[],pts:p,length:s,corners,width:def.width||12,
     minX:Math.min(...xs),maxX:Math.max(...xs),minY:Math.min(...ys),maxY:Math.max(...ys)};
   T.line=optimiseLine(T);       // depends only on geometry + width, so cache it with the track
+  T.corners=detectCorners(T.line).length;
   trackCache[key]=T;return T;
 }
 // ---- Racing line: minimum curvature within the track width ----
@@ -2448,8 +2463,91 @@ function simulateLap(key){
   const counts={corner:0,brake:0,power:0,traction:0};
   for(let i=0;i<n;i++)counts[lim[i]]+=p[i].ds;
   return {track:T,lap:t,sectors:sect,v,lim,vMin:vMin*3.6,vMax:vMax*3.6,
-    avg:p.length_/t*3.6,shifts,shiftLoss,counts,length:T.length,lineLength:p.length_,
+    avg:p.length_/t*3.6,shifts,shiftLoss,counts,gears,length:T.length,lineLength:p.length_,
     corners:T.corners,width:T.width};
+}
+// ---- Corners: find them on the racing line, number and name them, and take a speed trap ----
+// A corner is a local MINIMUM of the racing-line radius that is prominent enough to be a corner
+// rather than a wobble: the radius has to open out by at least 55% on both sides before the next
+// one, and two apexes closer than 45 m are the same corner (a double-apex is one corner). Working
+// from minima rather than "every stretch under some radius" is what stops a long sweeping section
+// being reported as a single 600 m corner.
+const CORNER_R=170;
+function detectCorners(line){
+  const n=line.length,r=line.map(q=>q.r);
+  const cand=[];
+  for(let i=0;i<n;i++){
+    let isMin=true;
+    for(let d=-4;d<=4;d++){const j=(i+d+n)%n;if(r[j]<r[i]-1e-9){isMin=false;break;}}
+    if(isMin&&r[i]<CORNER_R)cand.push(i);
+  }
+  // collapse plateaus / near-duplicates into one apex per 45 m
+  const merged=[];
+  for(const i of cand){
+    const prev=merged[merged.length-1];
+    if(prev!=null){
+      let gap=0,d=((i-prev)+n)%n;
+      for(let k=0;k<d;k++)gap+=line[(prev+k)%n].ds;
+      if(gap<45){if(r[i]<r[prev])merged[merged.length-1]=i;continue;}
+    }
+    merged.push(i);
+  }
+  // Prominence: between two apexes the radius has to open out, or they are the same corner.
+  // Repeatedly drop the shallower of the least-prominent adjacent pair until all pairs separate,
+  // otherwise a single long sweep reports as three corners sharing one apex.
+  const keep=merged.slice();
+  const peakBetween=(i,j)=>{let peak=r[i],d=((j-i)+n)%n||n;for(let k=0;k<d;k++)peak=Math.max(peak,r[(i+k)%n]);return peak;};
+  while(keep.length>2){
+    let worst=-1,worstRatio=Infinity;
+    for(let a=0;a<keep.length;a++){
+      const i=keep[a],j=keep[(a+1)%keep.length];
+      const ratio=peakBetween(i,j)/Math.min(r[i],r[j]);
+      if(ratio<worstRatio){worstRatio=ratio;worst=a;}
+    }
+    if(worstRatio>=1.8)break;
+    const i=keep[worst],j=keep[(worst+1)%keep.length];
+    keep.splice(r[i]>=r[j]?worst:(worst+1)%keep.length,1);   // drop the shallower one
+  }
+  return keep;
+}
+function lapCorners(L){
+  if(!L)return [];
+  const p=L.track.line,n=p.length,v=L.v,names=L.track.names||[];
+  const apexes=detectCorners(p).sort((x,y)=>x-y);
+  const m=apexes.length,out=[];
+  for(let c=0;c<m;c++){
+    const apex=apexes[c],prev=apexes[(c-1+m)%m],next=apexes[(c+1)%m];
+    // Each corner owns the stretch up to the midpoint toward its neighbours, so two apexes can
+    // never claim the same window (and so never report the same speed trap).
+    const halfBack=Math.floor((((apex-prev)+n)%n||n)/2),halfFwd=Math.floor((((next-apex)+n)%n||n)/2);
+    let a=apex,b=apex;
+    for(let k=1;k<=halfBack;k++){const j=(apex-k+n)%n;if(p[j].r>CORNER_R)break;a=j;}
+    for(let k=1;k<=halfFwd;k++){const j=(apex+k)%n;if(p[j].r>CORNER_R)break;b=j;}
+    let arc=0,len=((b-a)+n)%n+1;
+    for(let k=0;k<len;k++)arc+=p[(a+k)%n].ds;
+    // the trap sits at the slowest point inside the corner, which is the true apex
+    let ap=apex;for(let k=0;k<len;k++){const j=(a+k)%n;if(v[j]<v[ap])ap=j;}
+    out.push({apex:ap,entry:a,exit:b,arc,radius:p[apex].r,
+      vApex:v[ap]*3.6,vEntry:v[a]*3.6,vExit:v[b]*3.6,
+      gear:(L.gears?L.gears[ap]:0)+1,s:p[ap].s});
+  }
+  out.sort((x,y)=>x.s-y.s);
+  out.forEach((c,i)=>{c.idx=i+1;c.tag='T'+(i+1);c.name=names[i]||('Turn '+(i+1));});
+  return out;
+}
+// Where the driver is flat. "On power" means the car is accelerating as hard as it is allowed to,
+// whether the cap is the engine or the driven tyres — pedal down either way. It is reported apart
+// from the engine-limited share, because a car that is traction-limited everywhere it accelerates
+// is telling you something different from one that is running out of engine.
+function lapThrottleStats(L){
+  const p=L.track.line,n=p.length;let wot=0,eng=0,brake=0,total=0;
+  for(let i=0;i<n;i++){
+    total+=p[i].ds;
+    if(L.lim[i]==='power'){wot+=p[i].ds;eng+=p[i].ds;}
+    else if(L.lim[i]==='traction')wot+=p[i].ds;
+    else if(L.lim[i]==='brake')brake+=p[i].ds;
+  }
+  return {wotPct:wot/total*100,engPct:eng/total*100,brakePct:brake/total*100,total};
 }
 function fmtT(t){return (t==null)?'—':t.toFixed(2)+'s';}
 function fmtLap(t){if(t==null)return '—';const mm=Math.floor(t/60);return (mm?mm+':':'')+(t-mm*60).toFixed(2).padStart(mm?5:1,'0');}
@@ -2838,7 +2936,9 @@ function exportDynoPNG(){
 // DCTDecode filter, so the canvas bytes can be dropped straight in — no encoder, no library.
 function exportDynoPDF(){
   if(!engine.score){flash(tr('BUILD AN ENGINE FIRST'),'warn');return;}
-  const cv=dynoReportCanvas(2);
+  canvasToPDF(dynoReportCanvas(2),reportFileName('pdf'));
+}
+function canvasToPDF(cv,fn){
   const jpg=cv.toDataURL('image/jpeg',0.92).split(',')[1];
   const bin=atob(jpg),img=new Uint8Array(bin.length);
   for(let i=0;i<bin.length;i++)img[i]=bin.charCodeAt(i);
@@ -2868,9 +2968,203 @@ function exportDynoPDF(){
   push(str(x));
   const out=new Uint8Array(len);let o=0;
   for(const p of parts){out.set(p,o);o+=p.length;}
-  const fn=reportFileName('pdf');
   downloadBlob(new Blob([out],{type:'application/pdf'}),fn);
   flash('SAVED REPORT: '+fn);
+}
+// ====== HOT LAP REPORT: a printable telemetry sheet for the lap ======
+// Same paper stock as the dyno report: A4, white, dark ink, drawn offscreen and exported as PNG
+// or wrapped in the same library-free PDF.
+function lapVehicleRows(){
+  const v=vehicle,e=engine,s=e.score||{};
+  const dl={fwd:'Front-wheel drive',rwd:'Rear-wheel drive',awd:'All-wheel drive'}[v.drive]||v.drive;
+  return [
+    ['Engine',(e.displacement_L<1?e.displacement_L.toFixed(2):e.displacement_L.toFixed(1))+' L '+(e.type==='rotary'?e.cylinders+'-rotor':e.cylinders+'-cyl')+(e.intake==='na'?' NA':e.intake==='turbo'?' turbo':' supercharged')],
+    ['Peak power',(s.peakHP||0)+' hp @ '+(s.peakHPrpm||0)+' rpm'],
+    ['Peak torque',(s.peakTQ||0)+' Nm @ '+(s.peakTQrpm||0)+' rpm'],
+    ['Chassis',v.chLabel],
+    ['Kerb weight',Math.round(v.mass)+' kg  ('+v.powerToWeight.toFixed(0)+' hp/tonne)'],
+    ['Drivetrain',dl],
+    ['Gearbox',tr(v.gbLabel)+', '+v.gears+'-speed, '+v.finalDrive.toFixed(2)+':1 final'],
+    ['Differential',tr(v.diffLabel)],
+    ['Tyres',(TIRE_TYPE[v.tireType]||{}).label+'  '+v.tireWidth+'/'+v.tireAspect+'R'+v.wheelDia],
+    ['Grip coefficient','μ '+v.mu.toFixed(2)],
+    ['Brakes',(BRAKE_TYPE[v.brakeType]||{}).label+' '+v.rotor+' mm  ('+(v.brakeDecelCap/G).toFixed(2)+' g)'],
+    ['Suspension',(SUSPENSION[v.suspension]||{}).label],
+    ['Aero',(v.clA>0.01?'ClA '+v.clA.toFixed(2)+' m²':'no downforce')+'  ·  CdA '+v.cdA.toFixed(2)+' m²'],
+    ['Build cost',fmtCost(v.cost+(e.cost||0))]
+  ];
+}
+function hotLapReportCanvas(scale){
+  scale=scale||2;
+  const L=lapResult;if(!L)return null;
+  const W=RPT.W,H=RPT.H;
+  const cv=document.createElement('canvas');cv.width=Math.round(W*scale);cv.height=Math.round(H*scale);
+  const g=cv.getContext('2d');g.scale(scale,scale);g.textBaseline='alphabetic';
+  const px_=n=>n+'px "Press Start 2P"';
+  const sans=(n,b)=>(b?'bold ':'')+n+'px ui-sans-serif,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif';
+  const BRK='#c1121f',WOT='#1a7f37',CORN='#b8860b',NEU='#7a7a88';
+  g.fillStyle='#fff';g.fillRect(0,0,W,H);
+  // ---- Header ----
+  g.fillStyle=RPT.accent;g.fillRect(0,0,W,96);
+  g.fillStyle='#ffcc00';g.font=px_(20);g.fillText('PIXEL ENGINE SIM',40,44);
+  g.fillStyle='#fff';g.font=px_(11);g.fillText('HOT LAP REPORT',40,72);
+  const now=new Date();
+  g.fillStyle='#9aa';g.font=sans(13);g.textAlign='right';
+  g.fillText(now.toISOString().slice(0,10)+'  '+now.toTimeString().slice(0,5),W-40,44);
+  g.fillText('SIMULATED LAP — NOT A MEASUREMENT',W-40,68);
+  g.textAlign='left';
+  // ---- Title: circuit + car ----
+  const T=L.track;
+  g.fillStyle=RPT.ink;g.font=sans(30,true);g.fillText(T.label,40,142);
+  g.fillStyle='#667';g.font=sans(15);
+  g.fillText((T.length/1000).toFixed(2)+' km  ·  '+T.width+' m wide  ·  '+T.corners+' corners      '+
+    (engine.name||engine.displacement_L.toFixed(1)+'L')+'  in  '+vehicle.chLabel,40,168);
+  // ---- Lap + sector band ----
+  const by=186;
+  g.fillStyle='#f4f5f8';g.fillRect(40,by,W-80,86);
+  g.strokeStyle=RPT.rule;g.lineWidth=1;g.strokeRect(40,by,W-80,86);
+  g.fillStyle='#667';g.font=sans(12);g.fillText('LAP TIME',70,by+26);
+  g.fillStyle=RPT.ink;g.font=sans(34,true);g.fillText(fmtLap(L.lap),70,by+64);
+  const secX=[360,560,760];
+  ['SECTOR 1','SECTOR 2','SECTOR 3'].forEach((lb,i)=>{
+    g.fillStyle='#667';g.font=sans(12);g.fillText(lb,secX[i],by+26);
+    g.fillStyle=RPT.ink;g.font=sans(24,true);g.fillText(L.sectors[i].toFixed(2)+'s',secX[i],by+60);
+  });
+  g.fillStyle='#667';g.font=sans(12);g.fillText('AVG SPEED',960,by+26);
+  g.fillStyle=RPT.ink;g.font=sans(24,true);g.fillText(Math.round(L.avg)+' km/h',960,by+60);
+  // ---- Circuit map with braking / full-throttle highlighted and every corner tagged ----
+  const my=292,mh=620;
+  const line=T.line,n=line.length;
+  const sc=Math.min((W-140)/(T.maxX-T.minX),(mh-40)/(T.maxY-T.minY));
+  const ox=70+((W-140)-(T.maxX-T.minX)*sc)/2, oy=my+((mh-40)-(T.maxY-T.minY)*sc)/2+20;
+  const MX=q=>ox+(q.x-T.minX)*sc, MY=q=>oy+(q.y-T.minY)*sc;
+  g.lineCap='round';g.lineJoin='round';
+  g.strokeStyle='#e3e4e9';g.lineWidth=Math.max(5,T.width*sc);
+  g.beginPath();g.moveTo(MX(T.pts[0]),MY(T.pts[0]));
+  for(let i=1;i<n;i++)g.lineTo(MX(T.pts[i]),MY(T.pts[i]));
+  g.closePath();g.stroke();
+  g.lineWidth=Math.max(2.5,4.2*sc/1.2);
+  for(let i=0;i<n;i++){
+    const j=(i+1)%n,k=L.lim[i];
+    g.strokeStyle=k==='brake'?BRK:(k==='power'?WOT:(k==='traction'?'#6aa84f':CORN));
+    g.beginPath();g.moveTo(MX(line[i]),MY(line[i]));g.lineTo(MX(line[j]),MY(line[j]));g.stroke();
+  }
+  // corner tags + speed traps
+  const corners=lapCorners(L);
+  g.font=sans(11,true);g.textAlign='center';
+  corners.forEach(c=>{
+    const q=line[c.apex],x=MX(q),y=MY(q);
+    // push the label away from the track centre so it doesn't sit on the line
+    const cx=(T.minX+T.maxX)/2,cy=(T.minY+T.maxY)/2;
+    const dx=q.x-cx,dy=q.y-cy,dl=Math.hypot(dx,dy)||1;
+    const lx=x+dx/dl*27,ly=y+dy/dl*27;
+    g.fillStyle='#fff';g.beginPath();g.arc(x,y,4.5,0,6.284);g.fill();
+    g.strokeStyle=RPT.ink;g.lineWidth=1.6;g.stroke();
+    g.strokeStyle='#fff';g.lineWidth=3;g.strokeText(c.tag,lx,ly+4);   // halo, so tags stay legible
+    g.fillStyle=RPT.ink;g.fillText(c.tag,lx,ly+4);
+  });
+  g.textAlign='left';
+  // start/finish
+  g.fillStyle=RPT.ink;g.fillRect(MX(line[0])-5,MY(line[0])-5,10,10);
+  g.fillStyle='#fff';g.fillRect(MX(line[0])-2,MY(line[0])-2,4,4);
+  // map legend
+  const th=lapThrottleStats(L);
+  let lx2=70;const ly2=my+mh+12;
+  g.font=sans(12);
+  [[WOT,'FULL THROTTLE '+th.wotPct.toFixed(0)+'%'],[BRK,'BRAKING '+th.brakePct.toFixed(0)+'%'],[CORN,'CORNERING '+(100-th.wotPct-th.brakePct).toFixed(0)+'%']].forEach(([col,lab])=>{
+    g.fillStyle=col;g.fillRect(lx2,ly2-9,11,11);
+    g.fillStyle='#556';g.fillText(lab,lx2+16,ly2);
+    lx2+=g.measureText(lab).width+46;
+  });
+  // ---- Speed trace ----
+  const ty=my+mh+40,tH=210,tX=96,tW=W-166;
+  g.fillStyle='#667';g.font=sans(12,true);g.fillText('SPEED TRACE',40,ty-8);
+  g.strokeStyle=RPT.rule;g.lineWidth=1;g.strokeRect(tX,ty,tW,tH);
+  const vMaxT=Math.max(...L.v)*3.6*1.08;
+  const SX=s=>tX+s/L.lineLength*tW, SY=v=>ty+tH-v/vMaxT*tH;
+  // shade braking zones behind the trace
+  for(let i=0;i<n;i++)if(L.lim[i]==='brake'){
+    const a=SX(line[i].s),b=SX(line[(i+1)%n].s||L.lineLength);
+    g.fillStyle='#fbe3e5';g.fillRect(a,ty+1,Math.max(1,b-a),tH-2);
+  }
+  for(let i=0;i<n;i++)if(L.lim[i]==='power'){
+    const a=SX(line[i].s),b=SX(line[(i+1)%n].s||L.lineLength);
+    g.fillStyle='#e4f3e7';g.fillRect(a,ty+1,Math.max(1,b-a),tH-2);
+  }
+  g.strokeStyle='#ccd';g.setLineDash([3,4]);
+  g.font=sans(10);g.textAlign='right';
+  for(let k=1;k<=4;k++){const y=ty+tH-k/4*tH;
+    if(k<4){g.beginPath();g.moveTo(tX,y);g.lineTo(tX+tW,y);g.stroke();}
+    g.fillStyle='#99a';g.fillText(Math.round(vMaxT*k/4),tX-6,y+3);}
+  g.setLineDash([]);g.textAlign='left';
+  g.strokeStyle=RPT.tq;g.lineWidth=2;g.beginPath();
+  for(let i=0;i<n;i++){const x=SX(line[i].s),y=SY(L.v[i]*3.6);i?g.lineTo(x,y):g.moveTo(x,y);}
+  g.stroke();
+  // corner ticks under the trace
+  g.font=sans(9);g.textAlign='center';
+  corners.forEach(c=>{
+    const x=SX(c.s);
+    g.strokeStyle='#aab';g.lineWidth=1;g.beginPath();g.moveTo(x,ty+tH);g.lineTo(x,ty+tH+5);g.stroke();
+    g.fillStyle='#667';g.fillText(c.tag,x,ty+tH+16);
+  });
+  g.textAlign='left';
+  g.fillStyle='#99a';g.font=sans(10);g.fillText('km/h vs distance (m)',40,ty+tH+30);
+  // ---- Corner speed traps + vehicle spec ----
+  const tabY=ty+tH+44;
+  const colHdr=(x,w,title)=>{g.fillStyle=RPT.accent;g.fillRect(x,tabY,w,26);g.fillStyle='#fff';g.font=px_(9);g.fillText(title,x+10,tabY+18);};
+  colHdr(40,660,'CORNER SPEED TRAPS');
+  colHdr(720,480,'VEHICLE');
+  g.font=sans(11,true);g.fillStyle='#667';
+  ['','CORNER','ENTRY','APEX','EXIT','GEAR','RADIUS'].forEach((h,i)=>{
+    const xs=[52,86,300,382,464,546,600];if(h)g.fillText(h,xs[i],tabY+44);
+  });
+  const rowH=Math.min(20,(H-120-tabY-40)/Math.max(1,corners.length));
+  g.font=sans(11);
+  corners.forEach((c,i)=>{
+    const y=tabY+44+rowH*(i+1);
+    if(i%2===0){g.fillStyle=RPT.faint;g.fillRect(40,y-rowH+5,660,rowH);}
+    g.fillStyle=RPT.ink;g.font=sans(11,true);g.fillText(c.tag,52,y);
+    g.font=sans(11);g.fillStyle='#334';g.fillText(c.name,86,y);
+    g.fillStyle='#667';g.fillText(Math.round(c.vEntry)+' km/h',300,y);
+    g.fillStyle=BRK;g.font=sans(11,true);g.fillText(Math.round(c.vApex)+' km/h',382,y);
+    g.font=sans(11);g.fillStyle='#667';g.fillText(Math.round(c.vExit)+' km/h',464,y);
+    g.fillStyle='#334';g.fillText(String(c.gear),546,y);
+    g.fillStyle='#889';g.fillText(Math.round(c.radius)+' m',600,y);
+  });
+  const vr=lapVehicleRows();
+  g.font=sans(12);
+  vr.forEach((r,i)=>{
+    const y=tabY+44+20*(i+1);
+    if(i%2===0){g.fillStyle=RPT.faint;g.fillRect(720,y-15,480,20);}
+    g.fillStyle='#667';g.font=sans(12);g.fillText(r[0],730,y);
+    g.fillStyle=RPT.ink;g.font=sans(12,true);
+    let val=String(r[1]);
+    while(g.measureText(val).width>300&&val.length>4)val=val.slice(0,-2);
+    if(val!==String(r[1]))val+='…';
+    g.fillText(val,890,y);
+  });
+  // ---- Footer ----
+  const fy=Math.max(tabY+44+rowH*(corners.length+1),tabY+44+20*(vr.length+1))+22;
+  g.strokeStyle=RPT.rule;g.lineWidth=1;g.beginPath();g.moveTo(40,fy);g.lineTo(W-40,fy);g.stroke();
+  g.fillStyle='#889';g.font=sans(12);
+  g.fillText('Best-case lap on the minimum-curvature racing line: no traffic, no tyre wear, no fuel burn, no driver error.',40,fy+22);
+  g.fillText('"Full throttle" = accelerating at the limit (engine or driven tyres); '+th.engPct.toFixed(0)+'% of the lap is engine-limited.',40,fy+42);
+  g.fillText('Figures are SIMULATED, not measured. Slowest point '+Math.round(L.vMin)+' km/h · fastest '+Math.round(L.vMax)+' km/h · '+L.shifts+' gear changes.',40,fy+62);
+  return cv;
+}
+function lapFileName(ext){
+  const t=(lapResult?lapResult.track.label:'lap').replace(/[^a-z0-9]+/gi,'_');
+  const c=(engine.name||engine.displacement_L.toFixed(1)+'L').replace(/[^a-z0-9]+/gi,'_');
+  return (t+'_'+c+'_hotlap_'+new Date().toISOString().slice(0,10)+'.'+ext).replace(/_+/g,'_');
+}
+function exportLapPNG(){
+  if(!lapResult){flash(tr('BUILD AN ENGINE FIRST'),'warn');return;}
+  const cv=hotLapReportCanvas(2),fn=lapFileName('png');
+  cv.toBlob(b=>{if(!b){flash('REPORT FAILED','err');return;}downloadBlob(b,fn);flash('SAVED REPORT: '+fn);},'image/png');
+}
+function exportLapPDF(){
+  if(!lapResult){flash(tr('BUILD AN ENGINE FIRST'),'warn');return;}
+  canvasToPDF(hotLapReportCanvas(2),lapFileName('pdf'));
 }
 function openFileDialog(){document.getElementById('fileInput').click();}
 function readBuildFile(file){
@@ -3399,6 +3693,8 @@ function bindControls(){
   document.getElementById('btnClearPulls').addEventListener('click',clearPulls);
   document.getElementById('btnReportPng').addEventListener('click',exportDynoPNG);
   document.getElementById('btnReportPdf').addEventListener('click',exportDynoPDF);
+  document.getElementById('btnLapPng').addEventListener('click',exportLapPNG);
+  document.getElementById('btnLapPdf').addEventListener('click',exportLapPDF);
   document.getElementById('fileInput').addEventListener('change',e=>{const f=e.target.files&&e.target.files[0];if(f)readBuildFile(f);e.target.value='';});
 
   document.getElementById('tabDesign').addEventListener('click',()=>setTab('design'));

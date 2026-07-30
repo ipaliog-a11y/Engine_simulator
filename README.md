@@ -99,6 +99,16 @@ saps power; a large radiator, electric fan and oil cooler keep it cool.
   (time + trap speed), **top speed**, **100–0 braking** and the **0–200–0** test live — a
   traction-limited launch and a tyre/brake-limited stop (with fade), weight transfer, downforce,
   aero drag and rolling resistance. Vehicle cost and power-to-weight are shown too.
+- **Hot lap report (new)** — **LAP REPORT PNG / PDF** on the TRACK tab saves the lap as a printable
+  telemetry sheet: the circuit map with **full-throttle** and **braking** sections picked out and
+  every corner tagged, a **speed trace** against distance with braking zones shaded, lap and sector
+  times, the full car specification, and a **speed trap at every corner** — entry, apex and exit
+  speed, gear and radius. Corners are detected from the racing line, numbered T1…Tn and named per
+  circuit (Riverside GP runs Millrace, Weir, Ferryman, The Island…). The same corner list drives
+  the on-screen corner count, so the app and the sheet can never disagree.
+
+  ![Hot lap report](docs/lap-report.png)
+
 - **Dyno report (new)** — **REPORT PNG** / **REPORT PDF** on the dyno save the current pull as a
   printable A4 sheet laid out like a real dynamometer print-out: power and torque traces with the
   peaks called out, a peak-result band, the full engine specification, the conditions the run was
@@ -455,6 +465,7 @@ native Android build (parked).
 - [x] Test track: 3 circuits, quasi-steady-state lap solver with a friction circle, sector splits and a limit-coloured pixel map
 - [x] Minimum-curvature racing line within the track width (4–7 % quicker than the centreline)
 - [x] Printable dyno report (PNG + library-free PDF) with chart, peaks, engine spec, run conditions and tabulated data
+- [x] Printable hot lap report: map with throttle/braking highlighted, speed trace, sector times, per-corner speed traps with names
 - [x] Calibration pass for realistic power figures & curve shape (ongoing refinement)
 - [ ] Native Android build (wrap the PWA with Capacitor or a Trusted Web Activity)
 
