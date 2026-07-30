@@ -269,13 +269,20 @@ Curve** tab remains a wide-open-throttle steady-state sweep for reading the full
   tractive force = wheel torque ÷ rolling radius, capped by traction (μ × the driven-axle load,
   including static weight distribution, longitudinal weight transfer under acceleration, and
   aero downforce). Aero drag (½ρ·CdA·v²) and rolling resistance oppose it; the car shifts at the
-  limiter. Top speed is where top-gear thrust equals drag (or the limiter, whichever comes
-  first), so over-gearing lowers it. The **gearing number is the final drive** (0 = 4.90:1,
-  100 = 2.60:1): short gearing multiplies wheel torque for a quicker 0–100 but hits the limiter
-  at a low speed, tall gearing does the reverse, and the optimum is where the car reaches the
-  redline in top gear just as drag stops it — past that you lose acceleration *and* top speed.
-  In the sim a 1.5 NA sedan peaks at ~4.7:1 and drops from 200 to 139 km/h by 2.60:1, while a
-  twin-turbo V8 supercar keeps gaining all the way to the tallest setting.
+  limiter. The launch models a **slipping clutch**: from a standstill the engine is held at its
+  launch rpm (≈55 % of the redline) while road speed brings the gearbox input up to meet it, and
+  only then locks to the wheels — which is why a peaky, high-revving engine can still leave the
+  line hard instead of falling into a torque hole the instant it moves. Slipping never adds
+  torque; drive force is still capped by traction, so the launch stays grip-limited.
+  Top speed is the fastest steady speed **any** gear can hold (thrust = drag + rolling
+  resistance, capped by the limiter) — a peaky or over-geared car genuinely reaches its maximum
+  one gear down, on the cam, rather than bogging in top. The **gearing number is the final
+  drive** (0 = 4.90:1, 100 = 2.60:1): short gearing multiplies wheel torque for a quicker 0–100
+  but runs each gear out of revs early; tall gearing does the reverse. The optimum is the tallest
+  ratio the engine can still pull to its power peak in top gear — past that, top speed stops
+  improving (the car just achieves it a gear lower) while acceleration keeps degrading. In the sim
+  a 1.5 NA sedan plateaus around 200 km/h at every setting while its 0–100 slides from 10.0 s to
+  13.1 s, whereas a twin-turbo V8 supercar keeps gaining, 221 → 407 km/h, all the way to 2.60:1.
   AWD puts all four tyres' grip down and launches hardest;
   FWD loses front load under acceleration. Engine mass is estimated from the spec and added to
   the chassis for curb weight and power-to-weight. Braking is the mirror image: deceleration is
