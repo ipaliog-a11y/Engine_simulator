@@ -75,11 +75,12 @@ saps power; a large radiator, electric fan and oil cooler keep it cool.
 ### Simulation & live tuning
 - **Live outputs**: Power (HP), Torque (Nm), BMEP, Volumetric Efficiency, Thermal
   Efficiency, BSFC, Fuel Flow, Knock Risk, Engine Health.
-- **Six tabs** — **DESIGN** (build the engine), **VEHICLE** (drop it in a car & read its
-  performance), **ENGINE** (live test-bench schematic), **DYNO** (power/torque curve +
-  scorecard), **GUIDE** (an in-app manual) and **OPTIONS** (sound, wear and **language**). The
-  right column is context-aware: runtime Engine Controls while driving/on the dyno, and the
-  live **Performance** panel on the VEHICLE tab.
+- **Seven tabs** — **DESIGN** (build the engine), **VEHICLE** (drop it in a car & read its
+  performance), **TRACK** (lap it round a circuit), **ENGINE** (live test-bench schematic),
+  **DYNO** (power/torque curve + scorecard), **GUIDE** (an in-app manual) and **OPTIONS** (sound,
+  wear and **language**). The right column is context-aware: runtime Engine Controls while
+  driving/on the dyno, the live **Performance** panel on VEHICLE and the **Lap Time** panel on
+  TRACK.
 - **Vehicle & performance (new)** — pick a **chassis** (13 archetypes, each with its own weight,
   size, drivetrain and grip) and it arrives on its **factory spec**: the tyres, wheels, brakes,
   suspension, aero and gearbox that car would really wear, so a kei car turns up on skinny eco
@@ -98,6 +99,16 @@ saps power; a large radiator, electric fan and oil cooler keep it cool.
   (time + trap speed), **top speed**, **100–0 braking** and the **0–200–0** test live — a
   traction-limited launch and a tyre/brake-limited stop (with fade), weight transfer, downforce,
   aero drag and rolling resistance. Vehicle cost and power-to-weight are shown too.
+- **Test track (new)** — a **TRACK** tab that puts the finished car on a circuit and solves a lap.
+  Three layouts with different characters: **Ashdown Park** (2.0 km, tight and technical),
+  **Cape Speedway** (3.1 km, long straights and fast sweepers) and **Riverside GP** (2.2 km,
+  balanced). You get a **lap time**, three **sector splits**, average / slowest / fastest speeds
+  and the number of gear changes, plus a top-down pixel map with the racing line **coloured by
+  what is limiting the car** — power, traction, cornering grip or braking — and a legend totalling
+  how much of the lap each accounts for.
+
+  ![test track](docs/track.png)
+
 - **Engine-view schematic** — a test-bench diagram (air intake, fuel system, engine,
   exhaust/analyser, dynamometer, electrical) with live values on every subsystem, instead of
   a too-fast animation. The **exhaust/analyser** box reads live **emissions** (a CLEAN/OK/DIRTY
@@ -309,6 +320,24 @@ Curve** tab remains a wide-open-throttle steady-state sweep for reading the full
   the lesser of tyre grip (μ·(weight + downforce)) and what the brakes can command (capacity by
   type/rotor size, fading as they absorb heat), with aero drag also slowing the car — so big
   brakes and sticky tyres shorten 100–0, while undersized steel brakes fade in the 0–200–0.
+- Lap time: a quasi-steady-state solver over the circuit centreline. Each circuit is a ring of
+  control points; a closed Catmull-Rom spline through them gives a smooth, guaranteed-closed
+  centreline whose sampled curvature feeds the physics **and** whose polyline draws the map, so the
+  picture can never disagree with the numbers. The solver takes the cornering ceiling at every
+  point — *m·v²/r = μ·(m·g + ½ρ·ClA·v²)*, which solves for v² in closed form because downforce
+  scales with v² too — then runs a **backward braking pass** and a **forward traction/power pass**,
+  keeping the lower speed at each point. A **friction circle** couples them: grip already spent
+  turning is unavailable for accelerating or braking, so a car at the cornering limit cannot also
+  deploy its power. Gearbox shift time is charged per gear change around the lap. The result is
+  that circuits reward different builds — a 300 hp/1049 kg screamer beats an 842 hp/1872 kg
+  muscle car around Ashdown (92.3 s vs 95.3 s) and loses to it down Cape's straights
+  (85.5 s vs 84.0 s).
+- Differential on track: the straight-line traction figure is only the standing case. Cornering
+  transfers load off the inside wheel, so an open diff — governed by the lighter-loaded wheel —
+  collapses exactly when you want power on exit, while a locked one is unaffected. That, plus the
+  lateral grip a locked diff scrubs away, finally prices the spool honestly: on an 842 hp muscle
+  car it is ~0.2 s **quicker** to 100 km/h than a clutch LSD and ~2.9 s **slower** around Ashdown,
+  and an open diff is worst at both ends.
 - Strategy: each part carries a rough build cost, summed into a total (so budget challenges
   and power-per-dollar have meaning); a design reliability index estimates durability from
   knock margin, boost/specific-output stress, high-strung choices (anti-lag, nitrous, sky-high
@@ -361,7 +390,9 @@ philosophy).
    **per-chassis factory fitment** (each chassis ships with matching tyres/wheels/brakes/
    suspension/aero) and a REFIT button, **gearbox types** (manual / sequential / DCT /
    torque-converter auto) and **differential types** (open / viscous LSD / clutch LSD / spool).
-   **Next:** a test track — which will also let the spool's cornering penalty be modelled.
+   and a **test track** (three circuits, a full cornering/friction-circle lap solver, sector
+   splits and a limit-coloured map) — which also prices the spool's cornering penalty properly.
+   **Next:** feeding lap time into the challenge system and the scorecard.
 
 Deferred: V/boxer bank visuals (cosmetic);
 native Android build (parked).
@@ -400,6 +431,7 @@ native Android build (parked).
 - [x] Per-chassis factory fitment (matching tyres/wheels/brakes/suspension/aero) + a final-drive read-out on the gearing slider
 - [x] Gearbox types: manual / sequential / DCT / torque-converter auto (shift time, driveline loss, ratio spread, converter stall & multiplication)
 - [x] Differential types: open / viscous LSD / clutch-plate LSD / spool, capping the usable share of driven-axle grip
+- [x] Test track: 3 circuits, quasi-steady-state lap solver with a friction circle, sector splits and a limit-coloured pixel map
 - [x] Calibration pass for realistic power figures & curve shape (ongoing refinement)
 - [ ] Native Android build (wrap the PWA with Capacitor or a Trusted Web Activity)
 
