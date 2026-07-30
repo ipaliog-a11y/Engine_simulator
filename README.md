@@ -114,8 +114,8 @@ saps power; a large radiator, electric fan and oil cooler keep it cool.
   Three layouts with different characters: **Ashdown Park** (2.0 km, tight and technical),
   **Cape Speedway** (3.1 km, long straights and fast sweepers) and **Riverside GP** (2.2 km,
   balanced). You get a **lap time**, three **sector splits**, average / slowest / fastest speeds
-  and the number of gear changes, plus a top-down pixel map with the racing line **coloured by
-  what is limiting the car** — power, traction, cornering grip or braking — and a legend totalling
+  and the number of gear changes, plus a top-down pixel map — the track drawn to its real width,
+  with an **optimised racing line** through it **coloured by what is limiting the car** — power, traction, cornering grip or braking — and a legend totalling
   how much of the lap each accounts for.
 
   ![test track](docs/track.png)
@@ -331,7 +331,17 @@ Curve** tab remains a wide-open-throttle steady-state sweep for reading the full
   the lesser of tyre grip (μ·(weight + downforce)) and what the brakes can command (capacity by
   type/rotor size, fading as they absorb heat), with aero drag also slowing the car — so big
   brakes and sticky tyres shorten 100–0, while undersized steel brakes fade in the 0–200–0.
-- Lap time: a quasi-steady-state solver over the circuit centreline. Each circuit is a ring of
+- Racing line: nobody drives the centreline — using the full width straightens a corner and raises
+  the speed you can carry. The line is solved by **minimising total curvature** within the track
+  edges (projected gradient on Σ|second difference|², run on a coarse node set because the
+  curvature gradient scales like ds⁴/R³ and is hopelessly ill-conditioned at 5 m sampling — worse,
+  the Catmull-Rom centreline satisfies the stationarity condition exactly, so a fine-grid solve
+  never leaves it). Out-in-out through corners, straightened esses and linked complexes emerge from
+  the objective rather than being scripted. It is worth **4–7 % of lap time** over the centreline,
+  and the gain scales cleanly with track width (Riverside: 78.3 s at 6 m wide → 74.8 s at 18 m).
+  *Caveat: minimum curvature is not minimum time — a real driver trades a little radius for a late
+  apex onto a straight, worth roughly another 0.5 %. Not modelled; stated in the GUIDE.*
+- Lap time: a quasi-steady-state solver over that racing line. Each circuit is a ring of
   control points; a closed Catmull-Rom spline through them gives a smooth, guaranteed-closed
   centreline whose sampled curvature feeds the physics **and** whose polyline draws the map, so the
   picture can never disagree with the numbers. The solver takes the cornering ceiling at every
@@ -443,6 +453,7 @@ native Android build (parked).
 - [x] Gearbox types: manual / sequential / DCT / torque-converter auto (shift time, driveline loss, ratio spread, converter stall & multiplication)
 - [x] Differential types: open / viscous LSD / clutch-plate LSD / spool, capping the usable share of driven-axle grip
 - [x] Test track: 3 circuits, quasi-steady-state lap solver with a friction circle, sector splits and a limit-coloured pixel map
+- [x] Minimum-curvature racing line within the track width (4–7 % quicker than the centreline)
 - [x] Printable dyno report (PNG + library-free PDF) with chart, peaks, engine spec, run conditions and tabulated data
 - [x] Calibration pass for realistic power figures & curve shape (ongoing refinement)
 - [ ] Native Android build (wrap the PWA with Capacitor or a Trusted Web Activity)
