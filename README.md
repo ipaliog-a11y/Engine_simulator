@@ -395,6 +395,15 @@ Curve** tab remains a wide-open-throttle steady-state sweep for reading the full
   lateral grip a locked diff scrubs away, finally prices the spool honestly: on an 842 hp muscle
   car it is ~0.2 s **quicker** to 100 km/h than a clutch LSD and ~2.9 s **slower** around Ashdown,
   and an open diff is worst at both ends.
+- Track objectives: four of the challenges set a **lap target on a named circuit** rather than an
+  engine metric, and their budget covers **engine + vehicle**, so the whole car is being judged.
+  Targets are calibrated against measured builds — each is reachable with about 1–7 s of margin by a
+  sensible build and comfortably missed by a weak one (a 112 hp kei car fails all four). Lap time is
+  also **reported on the scorecard**, but deliberately *not* folded into the letter grade: the grade
+  rates the engine, and an engine's grade should not move because the tyres changed. Verified — the
+  same engine holds A(76) whether it is in a kei body or a hypercar, while its Riverside lap moves
+  93.2 s → 53.7 s. Lap results are cached on the engine+vehicle build (cold 6.9 ms, cached
+  0.0004 ms/call), since the dyno scorecard redraws sixty times a second.
 - Strategy: each part carries a rough build cost, summed into a total (so budget challenges
   and power-per-dollar have meaning); a design reliability index estimates durability from
   knock margin, boost/specific-output stress, high-strung choices (anti-lag, nitrous, sky-high
@@ -493,6 +502,8 @@ native Android build (parked).
 - [x] Track elevation: gradient, slope-adjusted load and crest/compression vertical curvature, with an elevation profile on the lap report
 - [x] GPX circuit import (projection, uniform resampling, smoothing, real elevation) with localStorage persistence
 - [x] Nordschleife in the track pack (20.4 km, 290 m elevation) — a real road course as a benchmark
+- [x] Track objectives (lap targets on named circuits, whole-car budgets) + lap time on the scorecard
+- [x] Track objectives (lap targets on named circuits, budgeting the whole car) + lap time on the scorecard
 - [x] Printable dyno report (PNG + library-free PDF) with chart, peaks, engine spec, run conditions and tabulated data
 - [x] Printable hot lap report: map with throttle/braking highlighted, speed trace, sector times, per-corner speed traps with names
 - [x] Calibration pass for realistic power figures & curve shape (ongoing refinement)
