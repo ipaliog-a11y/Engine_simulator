@@ -429,7 +429,23 @@ load and enriches under load/boost for power — just like a real fuel map. In A
 <b>tune the map</b>: tap any cell to select it, then − LEAN / + RICH to shift that load×rpm
 target (RESET MAP restores the factory grid).<br>
 <b>Cooling &amp; electrical</b> — radiator/fan/oil-cooler/thermostat set temps; alternator size and
-ignition type set charging and the misfire RPM limit.
+ignition type set charging and the misfire RPM limit.<br>
+<b>The ENGINE tab is a live cutaway</b> of the engine you just designed. Everything on it moves
+because the simulation moved it, not on a timer: the crank angle is integrated from the <i>real</i>
+rpm, so a long-stroke diesel lopes and a 9000 rpm screamer blurs. The piston follows proper
+crank-slider geometry (<i>not</i> a sine wave — a real rod of finite length makes the piston
+linger at the bottom and snap through the top), the bore is drawn to your actual bore/stroke ratio
+so an oversquare engine really is short and wide, and the valves open on true four-stroke timing
+with the scavenging overlap visible around TDC. The chamber is colour-coded by what is in it right
+now — fresh charge, compressed charge, burning, burnt — and the stroke is named above the head, so
+the cycle is something you can watch rather than something you have to remember. A two-stroke
+shows ports uncovering in the liner instead of valves; a rotary shows a real epitrochoid housing
+with the rotor turning at a third of the eccentric shaft. The strip beside it draws every cylinder
+at its own phase, so you can see the firing order run through a V12.<br>
+The numbers that used to be printed here in 7 px type now live in the <b>LIVE OUTPUT</b> panel
+beside the canvas, where they are actual text; what stays on the cutaway is what benefits from
+being next to the part it describes — throttle plate angle, boost and compressor flow at the
+turbo, EGT at the exhaust, and the knock bar.
 </div>
 <div class="design-section">Vehicle &amp; Performance</div>
 <div class="guide-body" data-gk="vehicle">
@@ -939,6 +955,17 @@ const I18N={
   'No saved builds yet. Name the car above and press SAVE TO GARAGE — the chassis, every part on it and the engine inside are all kept together.':{el:'Καμία αποθηκευμένη κατασκευή ακόμα. Δώσε όνομα πιο πάνω και πάτησε ΑΠΟΘΗΚΕΥΣΗ ΣΤΟ ΓΚΑΡΑΖ — το σασί, κάθε εξάρτημά του και ο κινητήρας μέσα κρατιούνται μαζί.'},
   'OFF THE COMPRESSOR MAP — fit a bigger frame':{el:'ΕΚΤΟΣ ΧΑΡΤΗ ΣΥΜΠΙΕΣΤΗ — βάλε μεγαλύτερο τούρμπο'},
   'at the limit of this frame':{el:'στο όριο αυτού του τούρμπο'},
+  // Engine cutaway
+  'ENGINE CUTAWAY':{el:'ΤΟΜΗ ΚΙΝΗΤΗΡΑ'},'INTAKE':{el:'ΕΙΣΑΓΩΓΗ'},'COMPRESSION':{el:'ΣΥΜΠΙΕΣΗ'},
+  'POWER/SCAVENGE':{el:'ΙΣΧΥΣ/ΣΑΡΩΣΗ'},'IN':{el:'ΕΙΣ'},'EX':{el:'ΕΞ'},'TURBO':{el:'ΤΟΥΡΜΠΟ'},
+  'BLOWER':{el:'ΥΠΕΡΣΥΜΠ.'},'of rated flow':{el:'της παροχής'},'CAT':{el:'ΚΑΤ.'},'EGT':{el:'ΘΕΡΜ.ΕΞ'},
+  'KNOCK':{el:'ΠΕΙΡΑΚΙΑ'},'KNOCK RISK':{el:'ΚΙΝΔ. ΠΕΙΡΑΚΙΩΝ'},'FIRING ORDER':{el:'ΣΕΙΡΑ ΑΝΑΦΛ.'},
+  'PORTS':{el:'ΘΥΡΙΔΕΣ'},'COOLANT':{el:'ΨΥΚΤΙΚΟ'},'OIL':{el:'ΛΑΔΙ'},'FUEL & SPARK':{el:'ΚΑΥΣΙΜΟ/ΣΠΙΝΘΗΡΑΣ'},
+  'OVERRUN CUT — 0 L/h':{el:'ΔΙΑΚΟΠΗ ΣΤΗΝ ΕΠΙΒΡΑΔΥΝΣΗ — 0 L/h'},'ADV':{el:'ΠΡΟΠ.'},'AUTO':{el:'ΑΥΤΟΜ.'},
+  'COMPRESSION IGNITION':{el:'ΑΝΑΦΛΕΞΗ ΜΕ ΣΥΜΠΙΕΣΗ'},'ROTOR TURNS AT 1/3 SHAFT SPEED':{el:'ΡΟΤΟΡΑΣ = 1/3 ΤΟΥ ΑΞΟΝΑ'},
+  'ENGINE FAILURE':{el:'ΒΛΑΒΗ ΚΙΝΗΤΗΡΑ'},'REBUILD WITH BUILD & DYNO':{el:'ΞΑΝΑΦΤΙΑΞΕ ΤΟΝ ΚΙΝΗΤΗΡΑ'},
+  'DAMAGE':{el:'ΖΗΜΙΑ'},'HEALTH':{el:'ΥΓΕΙΑ'},'BOTTLE':{el:'ΦΙΑΛΗ'},'RUNNING':{el:'ΛΕΙΤΟΥΡΓΕΙ'},'IDLE':{el:'ΡΕΛΑΝΤΙ'},
+  'COOL':{el:'ΨΥΞΗ'},
   'REFIT FACTORY SPEC':{el:'ΕΡΓΟΣΤΑΣΙΑΚΟΣ ΕΞΟΠΛΙΣΜΟΣ'},'FITTED':{el:'ΤΟΠΟΘΕΤΗΘΗΚΕ'},'REFITTED TO FACTORY SPEC':{el:'ΕΠΑΝΑΦΟΡΑ ΣΤΟΝ ΕΡΓΟΣΤΑΣΙΑΚΟ ΕΞΟΠΛΙΣΜΟ'},
   '(factory spec)':{el:'(εργοστασιακό)'},'(modified)':{el:'(τροποποιημένο)'},
   'Wheels & Tyres':{el:'Τροχοί & Ελαστικά'},'TYRE COMPOUND':{el:'ΤΥΠΟΣ ΕΛΑΣΤΙΚΟΥ'},'WHEEL DIA (in)':{el:'ΔΙΑΜ. ΖΑΝΤΑΣ (in)'},'TYRE WIDTH (mm)':{el:'ΠΛΑΤΟΣ ΕΛΑΣΤ. (mm)'},'TYRE ASPECT (%)':{el:'ΠΡΟΦΙΛ ΕΛΑΣΤ. (%)'},
@@ -966,7 +993,7 @@ const GUIDE_I18N={
   scorecard:{el:'<b>ΑΝΑΦΟΡΑ ΓΥΡΟΥ</b> — στην καρτέλα ΠΙΣΤΑ, τα κουμπιά ΑΝΑΦΟΡΑ ΓΥΡΟΥ PNG/PDF αποθηκεύουν τον γύρο ως φύλλο τηλεμετρίας: χάρτης με τα σημεία <span style="color:#1a7f37">τέρμα γκάζι</span> και <span style="color:#c1121f">φρεναρίσματος</span>, κάθε στροφή αριθμημένη, γράφημα ταχύτητας ανά απόσταση, χρόνοι γύρου και τομέων, πλήρης προδιαγραφή αυτοκινήτου και <b>παγίδα ταχύτητας σε κάθε στροφή</b> (είσοδος, apex, έξοδος, σχέση, ακτίνα). Οι στροφές έχουν αριθμούς T1…Tn και ονόματα ανά πίστα.<br><b>ΑΝΑΦΟΡΑ ΔΥΝΑΜΟ</b> — τα κουμπιά ΑΝΑΦΟΡΑ PNG/PDF αποθηκεύουν την τρέχουσα μέτρηση ως εκτυπώσιμο φύλλο με τη διάταξη πραγματικού δυναμόμετρου: καμπύλες ισχύος και ροπής με τις κορυφές, μπάντα αποτελεσμάτων, πλήρη προδιαγραφή κινητήρα, συνθήκες μέτρησης και πίνακα δεδομένων. Οι καταγεγραμμένες μετρήσεις εμφανίζονται αχνά για σύγκριση. Το γράφημα είναι ο κινητήρας <i>όπως είναι ρυθμισμένος τώρα</i>, γι’ αυτό τυπώνεται και το <b>δυναμικό σχεδίασης</b>. Όλα παράγονται εκτός σύνδεσης· τίποτα δεν ανεβαίνει.<br>Κάθε build βαθμολογείται <b>S → F</b> από επτά στοιχεία: ειδική <b>ισχύ</b> & <b>ροπή</b> (ανά λίτρο), εύρος <b>περιοχής ισχύος</b>, θερμική <b>απόδοση</b>, <b>ασφάλεια</b> από πειράκι, <b>οδηγησιμότητα</b> (ροπή στις χαμηλές) και <b>εκπομπές</b>. Το κυνήγι μέγιστης ισχύος κοστίζει σε οδηγησιμότητα, ασφάλεια και εκπομπές — η βαθμολογία επιβραβεύει το ισορροπημένο build.'},
   career:{el:'<b>Στόχοι πίστας</b> κρίνουν ολόκληρο το αυτοκίνητο: τέσσερις βάζουν στόχο χρόνου γύρου σε συγκεκριμένη πίστα, και το μπάτζετ τους καλύπτει κινητήρα <i>και</i> όχημα. Ο πίνακας βαθμολογίας δείχνει επίσης τον χρόνο γύρου σου — ως ένδειξη, όχι μέσα στον βαθμό: ο βαθμός αφορά τον <i>κινητήρα</i> και δεν πρέπει να αλλάζει επειδή έβαλες άλλα ελαστικά.<br>Διάλεξε έναν <b>ΣΤΟΧΟ</b> στην κορυφή της ΣΧΕΔΙΑΣΗΣ για να κάνεις τη σχεδίαση γρίφο. Κάθε πρόκληση θέτει κριτήρια — ισχύ, οικονομία, εκπομπές, <b>αξιοπιστία</b> ή <b>ισχύ ανά δολάριο</b> — και κάποιες βάζουν όριο <b>προϋπολογισμού</b>. Η κάρτα τσεκάρει κάθε κριτήριο ζωντανά (✓/✗) και δείχνει <b>ΕΠΙΤΥΧΙΑ</b> όταν καλυφθούν όλα· κόστος και αξιοπιστία φαίνονται πάντα. Ο μεγάλος κυβισμός κερδίζει σε αξία· boost και αγωνιστικά μέρη κερδίζουν σε ισχύ αλλά κοστίζουν σε χρήμα και αξιοπιστία.'},
   types:{el:'<b>Βενζίνη 4-χρονη</b> — η ισορροπημένη επιλογή: ανάφλεξη με σπινθήρα, μία εκρηκτική διαδρομή ανά δύο στροφές.<br><b>Πετρέλαιο (CI)</b> — ανάφλεξη με συμπίεση (χωρίς μπουζί, χωρίς πειράκι), πολύ υψηλή συμπίεση, φτωχό χωρίς πεταλούδα. Μεγάλη <b>ροπή</b> στις χαμηλές, χαμηλό όριο στροφών, η καλύτερη <b>απόδοση</b> — αλλά βαρύ, με εκπομπές <b>NOx + αιθάλη (PM)</b> που καθαρίζει σύστημα DPF/SCR.<br><b>2-χρονη</b> — εκρηκτική διαδρομή σε <i>κάθε</i> στροφή (θυρίδες, χωρίς εκκεντροφόρο): υψηλή ειδική ισχύς αλλά λαίμαργη και <b>HC</b>-βρόμικη.<br><b>Wankel (ρότορας)</b> — περιστρεφόμενος ρότορας που ανάβει σε κάθε στροφή: ομαλός σαν τουρμπίνα, τεράστιες στροφές, υψηλή ισχύς ανά λίτρο, αλλά λαίμαργος, <b>HC</b>-βαρύς και σκληρός στα ελάσματα κορυφής.<br>Η αλλαγή τύπου προσαρμόζει τα εύρη συμπίεσης/στροφών/AFR και απενεργοποιεί ό,τι δεν ισχύει.'},
-  subsystems:{el:'<b>Κάτω μέρος</b> — τύπος κινητήρα, διάμετρος × διαδρομή × κύλινδροι = κυβισμός· υπερτετράγωνος & υψηλότερο όριο ανεβάζουν την περιοχή ισχύος.<br><b>Διαδρομή αέρα</b> — τούρμπο (γεμίζει με τις στροφές) ή υπερσυμπιεστής (boost από ρελαντί)· το intercooler ψύχει το χάρμανι· εξάτμιση & καταλύτης ανταλλάσσουν ροή με αντίθλιψη/εκπομπές· το νιτρό είναι εμφιαλωμένη ισχύς.<br><b>Το boost δεν είναι δωρεάν, και το τούρμπο έχει μέγεθος.</b> Ένας συμπιεστής παράγει πίεση περιστρεφόμενος, και αυτές οι στροφές πληρώνονται με ενέργεια από την εξάτμιση — άρα <i>όσο περισσότερο boost ζητάς από ένα δεδομένο τούρμπο, τόσο αργότερα έρχεται και τόσο πιο αργά χτίζεται</i>. Το ίδιο μικρό τούρμπο που έχει γεμίσει στις 1200 σ.α.λ. με 0.5 bar δεν φτάνει το μισό των 2.5 bar πριν τις ~3000. Ο αριθμός γεμίσματος στη σύνοψη σχεδίασης αφορά το boost που ζήτησες, δεν είναι σταθερή ιδιότητα του τούρμπο.<br>Κάθε τούρμπο έχει επίσης <b>ονομαστική παροχή</b> — μικρό 32, μεσαίο 55, μεγάλο 82 lb/min, και οι διατάξεις με πολλά τούρμπο περνούν περισσότερο (twin ×1.85, sequential ×1.55, compound ×2.3). Αυτός είναι ο άξονας πάνω στον οποίο σχεδιάζεται ένας πραγματικός χάρτης συμπιεστή. Αν ζητήσεις από τον κινητήρα να περάσει περισσότερο αέρα από όσο αντέχει το τούρμπο, βγαίνεις εκτός χάρτη: η απόδοση του συμπιεστή καταρρέει, οι ψηλές στροφές πνίγονται και — το χειρότερο — το χάρμανι φτάνει <b>καυτό</b>. Η συμπίεση του αέρα τον θερμαίνει κατά <i>T&middot;(PR<sup>0.283</sup> − 1) / απόδοση</i>, που αυξάνεται πιο γρήγορα από το boost και ακόμη περισσότερο καθώς πέφτει η απόδοση. Ένας 2.0 L που ζητά 2.5 bar από μικρό τούρμπο θέλει 1.7× την ονομαστική του παροχή, και το χάρμανι φτάνει στις βαλβίδες στους <b>74 °C</b> εκεί που το σωστό τούρμπο δίνει 58 °C — οπότε κάνει πειράκια, βγάζει 120 hp <i>λιγότερα</i> από το μεσαίο, και είναι πιο αργός στον γύρο από τον ίδιο κινητήρα στα 0.8 bar. Τίποτα δεν σε εμποδίζει να τον φτιάξεις· απλώς δεν είναι έτσι που βγαίνει ισχύς.<br><span style="color:#c86">Ένα όριο: η καθυστέρηση γεμίσματος — ο <i>χρόνος</i> να χτιστεί το boost — μοντελοποιείται στον ζωντανό πάγκο ΚΙΝΗΤΗΡΑ, αλλά οι επιδόσεις και οι χρόνοι γύρου λύνονται από το σταθερό boost που είναι διαθέσιμο σε κάθε στροφή, οπότε βλέπουν το <i>σημείο</i> γεμίσματος να μετακινείται, όχι το μεταβατικό φαινόμενο. Μια πολύ «τεμπέλικη» κατασκευή ευνοείται λίγο στα 0–100 και στον γύρο.</span><br><b>Εισαγωγή</b> — καρμπιρατέρ → EFI → ITB ορίζουν αναπνοή, ακρίβεια & ρελαντί.<br><b>Χρονισμός βαλβίδων</b> — άγριες εκκεντροφόροι ανεβάζουν την ισχύ ψηλά· το VVT επαναφέρει τις χαμηλές.<br><b>Καύσιμο & σπινθήρας</b> — τύπος καυσίμου, οκτάνια, μπεκ, ανάφλεξη, χρονισμός FIXED/AUTO και το μείγμα: MANUAL (ένα σταθερό AFR) ή AUTO — ένας 3D χάρτης ECU που τρέχει κοντά στο στοιχειομετρικό στο ελαφρύ φορτίο και εμπλουτίζει υπό φορτίο/boost, όπως ένας πραγματικός χάρτης καυσίμου. Στο AUTO μπορείς να <b>ρυθμίσεις τον χάρτη</b>: πάτησε ένα κελί και μετά − ΦΤΩΧΟ / + ΠΛΟΥΣΙΟ για να αλλάξεις τον στόχο σε εκείνο το φορτίο×στροφές (ΕΠΑΝΑΦΟΡΑ ΧΑΡΤΗ επαναφέρει το εργοστασιακό).<br><b>Ψύξη & ηλεκτρικά</b> — ψυγείο/βεντιλατέρ/ψυγείο λαδιού/θερμοστάτης ορίζουν θερμοκρασίες· δυναμό & ανάφλεξη ορίζουν φόρτιση και όριο μισφάιρ.'},
+  subsystems:{el:'<b>Κάτω μέρος</b> — τύπος κινητήρα, διάμετρος × διαδρομή × κύλινδροι = κυβισμός· υπερτετράγωνος & υψηλότερο όριο ανεβάζουν την περιοχή ισχύος.<br><b>Διαδρομή αέρα</b> — τούρμπο (γεμίζει με τις στροφές) ή υπερσυμπιεστής (boost από ρελαντί)· το intercooler ψύχει το χάρμανι· εξάτμιση & καταλύτης ανταλλάσσουν ροή με αντίθλιψη/εκπομπές· το νιτρό είναι εμφιαλωμένη ισχύς.<br><b>Το boost δεν είναι δωρεάν, και το τούρμπο έχει μέγεθος.</b> Ένας συμπιεστής παράγει πίεση περιστρεφόμενος, και αυτές οι στροφές πληρώνονται με ενέργεια από την εξάτμιση — άρα <i>όσο περισσότερο boost ζητάς από ένα δεδομένο τούρμπο, τόσο αργότερα έρχεται και τόσο πιο αργά χτίζεται</i>. Το ίδιο μικρό τούρμπο που έχει γεμίσει στις 1200 σ.α.λ. με 0.5 bar δεν φτάνει το μισό των 2.5 bar πριν τις ~3000. Ο αριθμός γεμίσματος στη σύνοψη σχεδίασης αφορά το boost που ζήτησες, δεν είναι σταθερή ιδιότητα του τούρμπο.<br>Κάθε τούρμπο έχει επίσης <b>ονομαστική παροχή</b> — μικρό 32, μεσαίο 55, μεγάλο 82 lb/min, και οι διατάξεις με πολλά τούρμπο περνούν περισσότερο (twin ×1.85, sequential ×1.55, compound ×2.3). Αυτός είναι ο άξονας πάνω στον οποίο σχεδιάζεται ένας πραγματικός χάρτης συμπιεστή. Αν ζητήσεις από τον κινητήρα να περάσει περισσότερο αέρα από όσο αντέχει το τούρμπο, βγαίνεις εκτός χάρτη: η απόδοση του συμπιεστή καταρρέει, οι ψηλές στροφές πνίγονται και — το χειρότερο — το χάρμανι φτάνει <b>καυτό</b>. Η συμπίεση του αέρα τον θερμαίνει κατά <i>T&middot;(PR<sup>0.283</sup> − 1) / απόδοση</i>, που αυξάνεται πιο γρήγορα από το boost και ακόμη περισσότερο καθώς πέφτει η απόδοση. Ένας 2.0 L που ζητά 2.5 bar από μικρό τούρμπο θέλει 1.7× την ονομαστική του παροχή, και το χάρμανι φτάνει στις βαλβίδες στους <b>74 °C</b> εκεί που το σωστό τούρμπο δίνει 58 °C — οπότε κάνει πειράκια, βγάζει 120 hp <i>λιγότερα</i> από το μεσαίο, και είναι πιο αργός στον γύρο από τον ίδιο κινητήρα στα 0.8 bar. Τίποτα δεν σε εμποδίζει να τον φτιάξεις· απλώς δεν είναι έτσι που βγαίνει ισχύς.<br><span style="color:#c86">Ένα όριο: η καθυστέρηση γεμίσματος — ο <i>χρόνος</i> να χτιστεί το boost — μοντελοποιείται στον ζωντανό πάγκο ΚΙΝΗΤΗΡΑ, αλλά οι επιδόσεις και οι χρόνοι γύρου λύνονται από το σταθερό boost που είναι διαθέσιμο σε κάθε στροφή, οπότε βλέπουν το <i>σημείο</i> γεμίσματος να μετακινείται, όχι το μεταβατικό φαινόμενο. Μια πολύ «τεμπέλικη» κατασκευή ευνοείται λίγο στα 0–100 και στον γύρο.</span><br><b>Εισαγωγή</b> — καρμπιρατέρ → EFI → ITB ορίζουν αναπνοή, ακρίβεια & ρελαντί.<br><b>Χρονισμός βαλβίδων</b> — άγριες εκκεντροφόροι ανεβάζουν την ισχύ ψηλά· το VVT επαναφέρει τις χαμηλές.<br><b>Καύσιμο & σπινθήρας</b> — τύπος καυσίμου, οκτάνια, μπεκ, ανάφλεξη, χρονισμός FIXED/AUTO και το μείγμα: MANUAL (ένα σταθερό AFR) ή AUTO — ένας 3D χάρτης ECU που τρέχει κοντά στο στοιχειομετρικό στο ελαφρύ φορτίο και εμπλουτίζει υπό φορτίο/boost, όπως ένας πραγματικός χάρτης καυσίμου. Στο AUTO μπορείς να <b>ρυθμίσεις τον χάρτη</b>: πάτησε ένα κελί και μετά − ΦΤΩΧΟ / + ΠΛΟΥΣΙΟ για να αλλάξεις τον στόχο σε εκείνο το φορτίο×στροφές (ΕΠΑΝΑΦΟΡΑ ΧΑΡΤΗ επαναφέρει το εργοστασιακό).<br><b>Ψύξη & ηλεκτρικά</b> — ψυγείο/βεντιλατέρ/ψυγείο λαδιού/θερμοστάτης ορίζουν θερμοκρασίες· δυναμό & ανάφλεξη ορίζουν φόρτιση και όριο μισφάιρ.<br><b>Η καρτέλα ΚΙΝΗΤΗΡΑΣ είναι ζωντανή τομή</b> του κινητήρα που μόλις σχεδίασες. Όλα κινούνται επειδή τα κίνησε η προσομοίωση, όχι με χρονόμετρο: η γωνία στροφάλου ολοκληρώνεται από τις <i>πραγματικές</i> στροφές, οπότε ένα diesel με μεγάλη διαδρομή «βαραίνει» και ένας κινητήρας των 9000 σ.α.λ. θολώνει. Το έμβολο ακολουθεί σωστή γεωμετρία στροφάλου-διωστήρα (<i>όχι</i> ημίτονο — ένας πραγματικός διωστήρας κάνει το έμβολο να αργοπορεί κάτω και να «κόβει» πάνω), η διάμετρος σχεδιάζεται στη δική σου αναλογία διαμέτρου/διαδρομής, και οι βαλβίδες ανοίγουν με αληθινό χρονισμό τεσσάρων χρόνων, με την επικάλυψη σάρωσης ορατή γύρω από το ΑΝΣ. Ο θάλαμος χρωματίζεται με βάση το τι υπάρχει μέσα του αυτή τη στιγμή — φρέσκο μείγμα, συμπιεσμένο, καιγόμενο, καμένο — και ο χρόνος ονομάζεται πάνω από την κεφαλή. Ένας δίχρονος δείχνει θυρίδες αντί για βαλβίδες· ένας ρότορας δείχνει πραγματικό επιτροχοειδές περίβλημα με τον ρότορα στο 1/3 του εκκεντροφόρου άξονα. Η λωρίδα δίπλα σχεδιάζει κάθε κύλινδρο στη δική του φάση, ώστε να βλέπεις τη σειρά ανάφλεξης σε έναν V12.<br>Οι αριθμοί που τυπώνονταν εδώ σε γράμματα 7 px βρίσκονται πλέον στο πλαίσιο <b>ΖΩΝΤΑΝΗ ΕΞΟΔΟΣ</b> δίπλα στον καμβά, όπου είναι πραγματικό κείμενο.'},
   vehicle:{el:'Στην καρτέλα <b>ΟΧΗΜΑ</b> βάζεις τον κινητήρα σου σε αυτοκίνητο. Διάλεξε <b>σασί</b> και έρχεται με τον <b>εργοστασιακό του εξοπλισμό</b> — τα ελαστικά, ζάντες, φρένα, ανάρτηση, αεροδυναμική και κιβώτιο που θα φορούσε πραγματικά: ένα kei εμφανίζεται με στενά οικονομικά ελαστικά και μικρούς ατσάλινους δίσκους, ενώ ένα hypercar παίρνει φαρδιά semi-slick, carbon-ceramic φρένα και πακέτο αεροτομής/diffuser. Όλα παραμένουν επεξεργάσιμα· το <b>ΕΡΓΟΣΤΑΣΙΑΚΟΣ ΕΞΟΠΛΙΣΜΟΣ</b> τα επαναφέρει.<br><b>Το ΓΚΑΡΑΖ</b> στο κάτω μέρος της καρτέλας κρατά όσα ολοκληρωμένα αυτοκίνητα θέλεις. Δώσε όνομα και πάτησε <b>ΑΠΟΘΗΚΕΥΣΗ ΣΤΟ ΓΚΑΡΑΖ</b> και αποθηκεύεται το σύνολο — το σασί, κάθε εξάρτημα πάνω του, <i>και</i> ο κινητήρας μέσα, μέχρι και ο χειροκίνητα ρυθμισμένος χάρτης καυσίμου. Κάθε κάρτα δείχνει τα βασικά νούμερα που είχε όταν την αποθήκευσες (ισχύ, βάρος, 0–100, τελική, χρόνο γύρου και συνολικό κόστος), οπότε μπορείς να παρατάξεις τρεις κατασκευές και να τις συγκρίνεις χωρίς να ξαναφτιάξεις καμία. Η <b>ΦΟΡΤΩΣΗ</b> επαναφέρει το αυτοκίνητο ακριβώς όπως ήταν· αν γράψεις όνομα που υπάρχει ήδη, η κάρτα του τονίζεται και η αποθήκευση το αντικαθιστά. Αυτό είναι ξεχωριστό από τα <b>ΑΠΟΘΗΚ.</b>/<b>ΦΟΡΤΩΣΗ</b>, που είναι μία μοναδική θέση γρήγορης αποθήκευσης. Μια εγγραφή του γκαράζ είναι η ίδια που γράφει η <b>ΑΠΟΘ. ΑΡΧΕΙΟΥ</b> και μεταφέρει ένα σύνδεσμος κοινοποίησης. Όλα μένουν μόνο σε αυτόν τον browser — αν καθαρίσεις τα δεδομένα ιστότοπου, χάνεται το γκαράζ, και η <b>ΑΠΟΘ. ΑΡΧΕΙΟΥ</b> είναι αυτή που σώζει μια κατασκευή από αυτό.<br>Από εκεί ρυθμίζεις <b>μετάδοση</b> (FWD/RWD/AWD — το AWD ξεκινά καλύτερα), <b>κιβώτιο</b> (τύπος, σχέσεις + ρυθμιστικό τελικής), <b>ελαστικά</b> (τύπος + πλάτος/προφίλ/διάμετρος), <b>αεροδυναμική</b> (εμπρός/πίσω/πάτωμα = κάθετη δύναμη & οπισθέλκουσα), <b>φρένα</b> (τύπος + διάμετρος δίσκου) και <b>ανάρτηση</b> (πολλαπλασιαστής μηχανικής πρόσφυσης).<br><b>Ο τύπος κιβωτίου</b> αλλάζει τέσσερα πράγματα: πόσο κόβεται η μετάδοση σε κάθε αλλαγή, πόση από την ισχύ του κινητήρα φτάνει στους τροχούς, πώς είναι κλιμακωμένες οι σχέσεις, και πώς ξεκινά το αυτοκίνητο.<br>· <b>Χειροκίνητο (H)</b> — το πιο αποδοτικό, αλλά χάνεις ~350 ms σε κάθε αλλαγή. Φθηνό.<br>· <b>Σειριακό</b> — αγωνιστικό: αλλαγές ~60 ms και κοντές σχέσεις που κρατούν έναν «αιχμηρό» κινητήρα στην περιοχή του. Ακριβό.<br>· <b>Διπλού συμπλέκτη (DCT)</b> — η επόμενη σχέση είναι ήδη επιλεγμένη στον δεύτερο συμπλέκτη, άρα σχεδόν αδιάλειπτες αλλαγές (~30 ms). Το ταχύτερο, και ανάλογα ακριβό.<br>· <b>Αυτόματο με μετατροπέα ροπής</b> — οι πιο αργές αλλαγές (~200 ms) και οι μεγαλύτερες απώλειες, γιατί μεταδίδει μέσω υγρού. Το κερδίζει στην <b>εκκίνηση</b>: ο μετατροπέας «φορτίζει» πάνω στα φρένα και <i>πολλαπλασιάζει</i> τη ροπή (έως ~1.9× σε στάλλ 2400 σ.α.λ.), σβήνοντας στο 1:1 καθώς ο στρόβιλος προλαβαίνει. Γι’ αυτό ένα αυτόματο ξεκινά καλύτερα από ένα χειροκίνητο παρότι χάνει ισχύ παντού αλλού — και γι’ αυτό ταιριάζει σε βαρύ, ροπάτο αυτοκίνητο, όχι σε ελαφρύ και «αιχμηρό». Επίσης απλώνει περισσότερο τις σχέσεις: πιο κοντή 1η, πιο μακριά τελευταία.<br><b>Η καρτέλα ΠΙΣΤΑ</b> βάζει το αυτοκίνητο σε κυκλική πίστα και λύνει έναν γύρο. Πρώτα υπολογίζει την <b>ιδανική γραμμή</b>: κανείς δεν οδηγεί στον άξονα της πίστας, γιατί χρησιμοποιώντας όλο το πλάτος «ισιώνει» η στροφή και περνάς πιο γρήγορα. Η γραμμή βρίσκεται ελαχιστοποιώντας τη συνολική καμπυλότητα μέσα στα όρια της πίστας — και το έξω-μέσα-έξω προκύπτει μόνο του. Δύο πράγματα την απομακρύνουν από την καθαρή ελάχιστη καμπυλότητα. Πρώτον, <b>η πίστα δεν έχει ένα πλάτος</b>: κάθε πίστα εδώ στενεύει στα τεχνικά της σημεία και ανοίγει στα γρήγορα, και μια στροφή 7 m απλώς δεν «ισιώνει» όσο μία 13 m — ο αριθμός στον χάρτη είναι το εύρος, και το πλάτος της πίστας είναι ο μέσος όρος. Δεύτερον, το <b>καθυστερημένο apex</b>: ένα μέτρο ακτίνας στην <i>έξοδο</i> αξίζει πολύ περισσότερο από ένα μέτρο στην είσοδο, γιατί η ταχύτητα εξόδου μεταφέρεται σε όλο το μήκος αυτού που ακολουθεί, ενώ στην είσοδο ούτως ή άλλως φρενάρεις. Ο λύτης «τιμολογεί» την καμπυλότητα με βάση το πόσο ανοιχτή είναι η πίστα μπροστά, οπότε θυσιάζει ακτίνα εισόδου για να ισιώσει την έξοδο — μετακινώντας το apex περίπου 11 m αργότερα στις στροφές που βγάζουν σε ευθεία, και αφήνοντας ανέπαφες όσες οδηγούν σε άλλες στροφές. Οι πίστες είναι τρισδιάστατες, οπότε ο γύρος λαμβάνει υπόψη και το <b>υψόμετρο</b>: η βαρύτητα σε κρατά πίσω στην ανηφόρα και σε σπρώχνει στην κατηφόρα, και — το πιο σημαντικό — η <b>κατακόρυφη καμπυλότητα</b>. Σε μια κορυφή το αυτοκίνητο «ελαφραίνει» και χάνει πρόσφυση ακριβώς εκεί που πάει γρήγορα· σε μια κοιλάδα πιέζεται στο οδόστρωμα και περνά πολύ πιο γρήγορα. Μετράει και το πού πέφτουν οι λόφοι: μια ανηφόρα σε ζώνη φρεναρίσματος σε αφήνει να φρενάρεις αργότερα και <i>κερδίζει</i> χρόνο.<br><b>ΕΙΣΑΓΩΓΗ GPX</b> φορτώνει πραγματική πίστα από αρχείο GPX: προβάλλεται σε μέτρα, ξαναδειγματοληπτείται σε σταθερό βήμα και εξομαλύνεται ελαφρά ώστε ο θόρυβος GPS να μη γίνει «στροφές». Το υψόμετρο έρχεται από το αρχείο. Οι εισαγόμενες πίστες μένουν μόνο στον browser σου.<br><span style="color:#c86">Ο χρόνος θα βγει λίγο αργός: ένα αρχείο GPX δεν περιέχει καθόλου πλάτος, οπότε το προφίλ πλάτους <i>μοντελοποιείται</i> από τη χάραξη — οι δρόμοι φτιάχνονται φαρδιοί εκεί που είναι γρήγοροι και στενοί εκεί που είναι τεχνικοί — δεν είναι μετρημένο. Η γραμμή παραμένει προσέγγιση της γραμμής ελάχιστου χρόνου και ο οδηγός δεν κάνει ποτέ λάθος. Χρησιμοποίησέ το για σύγκριση των δικών σου κατασκευών.</span> Αξίζει <b>5–7% του χρόνου γύρου</b> σε σχέση με τον άξονα, και όσο πιο φαρδιά η πίστα τόσο περισσότερο. Μετά βρίσκει την ταχύτητα στροφής σε κάθε σημείο (<i>v = &radic;(μ&middot;(mg + κάθετη δύναμη)&middot;r / m)</i>), μετά δουλεύει ανάποδα από κάθε στροφή για τα σημεία φρεναρίσματος και προς τα εμπρός στην έξοδο με τη διαθέσιμη κίνηση, κρατώντας τη μικρότερη ταχύτητα σε κάθε σημείο. Ο <b>κύκλος τριβής</b> τα δένει: η πρόσφυση που ξοδεύεται στο στρίψιμο δεν είναι διαθέσιμη για επιτάχυνση ή φρενάρισμα. Η χρωματιστή γραμμή στον χάρτη δείχνει τι περιορίζει το αυτοκίνητο σε κάθε σημείο και η λεζάντα αθροίζει τα ποσοστά του γύρου. Ο χρόνος αλλαγής σχέσης χρεώνεται σε κάθε αλλαγή, οπότε ένα αργό κιβώτιο χάνει πραγματικό χρόνο.<br><span style="color:#c86">Ένα όριο: η γραμμή παραμένει μόνο προσέγγιση της γραμμής ελάχιστου <i>χρόνου</i>. Η τάση για καθυστερημένο apex υπολογίζεται από τη γεωμετρία μπροστά, όχι από την ταχύτητα του ίδιου του αυτοκινήτου, οπότε την ίδια γραμμή οδηγεί ένα hatchback 90&nbsp;hp και ένα αγωνιστικό 800&nbsp;hp — ενώ στην πραγματικότητα το γρήγορο θα φρέναρε αργότερα και θα έκανε ακόμα πιο καθυστερημένο apex. Αξίζει περίπου μισό τοις εκατό, και είναι το ίδιο μισό τοις εκατό για όλους, οπότε οι συγκρίσεις μεταξύ κατασκευών παραμένουν έντιμες.</span><br><b>Το διαφορικό</b> μοιράζει την κίνηση στους δύο τροχούς του άξονα — και καθορίζει πόση από την πρόσφυση του άξονα μπορείς πραγματικά να χρησιμοποιήσεις. Οι δύο τροχοί δεν είναι ποτέ φορτωμένοι το ίδιο (κλίση δρόμου, αντίδραση ροπής, στρέψη άξονα, γεωμετρία ανάρτησης), και ένα <b>ανοιχτό</b> διαφορικό δίνει σε κάθε τροχό μόνο όση ροπή αντέχει ο <i>λιγότερο φορτωμένος</i>: στρίβει αυτόν τον τροχό και πετάει τα υπόλοιπα, αφήνοντας περίπου 78% της πρόσφυσης αξιοποιήσιμο <i>στην εκκίνηση</i>. Αυτό το 78% δεν είναι σταθερό — η ασυμμετρία που αντιμετωπίζει προέρχεται κυρίως από την <b>αντίδραση ροπής</b> (στρέψη ημιαξονίων, γεωμετρία ανάρτησης, torque steer), που είναι ανάλογη με τη ροπή που περνά πράγματι από τον άξονα. Στην πρώτη σχέση με πλήρη πολλαπλασιασμό είναι στο χειρότερό της· στην τρίτη στα 100&nbsp;χλμ/ώρα ο άξονας βλέπει ένα κλάσμα αυτής της ροπής και μένει λίγο παραπάνω από την κλίση του δρόμου, οπότε το ανοιχτό διαφορικό ανακτά προς ~94%. Ένα <b>ιξώδες LSD</b> τους δένει μεταξύ τους και ανακτά τα περισσότερα (~92%)· ένα <b>LSD με δίσκους</b> ουσιαστικά όλα· ένα <b>μπλοκέ (spool)</b> τους ενώνει μόνιμα και είναι το καλύτερο σε ευθεία — γι’ αυτό το χρησιμοποιούν τα dragster.<br>Το βασικό: το διαφορικό μετράει μόνο όσο είσαι <b>περιορισμένος από πρόσφυση</b>. Βάλε spool σε αργό αυτοκίνητο και δεν αλλάζει τίποτα. Βάλ’ το σε ένα που πατινάρει στην εκκίνηση και αξίζει περισσότερο από αναβάθμιση ισχύος.<br><b>Γιατί ένα προσθιοκίνητο ξεμένει από πρόσφυση τόσο νωρίς.</b> Τρία πράγματα πολλαπλασιάζονται, και το πρώτο ξαφνιάζει: ένα FWD κινεί μόνο τον εμπρός άξονα, που σηκώνει περίπου το 60% του βάρους σταματημένο — και η επιτάχυνση μεταφέρει βάρος <i>μακριά</i> από αυτόν, στο ~53%. Πολλαπλασίασε με ανοιχτό διαφορικό (0.78) και οικονομικά ελαστικά (μ 0.81) και όλο το αυτοκίνητο περιορίζεται στα <b>0.33&nbsp;g</b>, ό,τι κι αν βγάζει ο κινητήρας. Στα 100&nbsp;χλμ/ώρα αυτό το ταβάνι είναι ~2500&nbsp;N, και ήδη ένας κινητήρας 109&nbsp;hp ζητά 2700&nbsp;N — οπότε μια έκδοση 217&nbsp;hp του ίδιου αυτοκινήτου φτάνει τα 100&nbsp;χλμ/ώρα στον <i>ίδιο ακριβώς χρόνο</i>. Και τα δύο απλώς «κάθονται» στο ταβάνι. Δεν είναι ιδιοτροπία της προσομοίωσης· γι’ αυτό κανείς δεν φτιάχνει προσθιοκίνητο kei 200&nbsp;hp. Η λύση είναι πρόσφυση, όχι ισχύς — στο ίδιο αυτοκίνητο των 217&nbsp;hp: μόνο ένα LSD με δίσκους το πάει από 9.9&nbsp;s σε 8.0&nbsp;s, σπορ ελαστικά 6.6&nbsp;s, slick 5.5&nbsp;s, και μετατροπή σε AWD 4.4&nbsp;s. Με τον ίδιο κινητήρα.<br>Και τώρα το αντιστάθμισμα μετριέται. Στην καρτέλα ΠΙΣΤΑ ένα μπλοκέ διαφορικό πληρώνει το πλεονέκτημά του στην ευθεία: τρίβει σε κάθε στροφή. Σε ένα muscle 842&nbsp;hp το spool είναι ~0.2&nbsp;s ταχύτερο στο 0–100 και ~2.5&nbsp;s <i>πιο αργό</i> ανά γύρο, ενώ το ανοιχτό είναι το χειρότερο και στα δύο.<br><b>Ο αριθμός της τελικής</b> — το ρυθμιστικό 0–100 είναι η <b>σχέση τελικής μετάδοσης</b>, πόσες φορές γυρίζει ο άξονας ανά στροφή των τροχών. Πάει από <b>0 = 4.90:1</b> (η <i>κοντύτερη</i>) έως <b>100 = 2.60:1</b> (η <i>μακρύτερη</i>)· η σχέση φαίνεται δίπλα στον αριθμό. Κοντή τελική πολλαπλασιάζει τη ροπή στους τροχούς: δυνατότερη επιτάχυνση, αλλά κάθε σχέση τελειώνει νωρίς. Μακριά τελική κάνει το αντίθετο: πιο νωθρή επιτάχυνση, περισσότερη ταχύτητα ανά 1000 στροφές και ήρεμο ταξίδι. Ιδανική είναι η πιο μακριά που ο κινητήρας μπορεί ακόμα να τραβήξει ως την κορυφή της ισχύος του στην τελευταία σχέση. Πιο μακριά από αυτό, η τελική ταχύτητα απλώς <i>σταματά να βελτιώνεται</i> — το αυτοκίνητο πιάνει το μέγιστό του μια σχέση χαμηλότερα αντί να «πνίγεται» στην τελευταία — ενώ η επιτάχυνση συνεχίζει να χειροτερεύει, οπότε πληρώνεις χωρίς όφελος. Πολλή ισχύς και λίγη οπισθέλκουσα σηκώνουν πολύ μακριά τελική και κερδίζουν ταχύτητα ως το τέρμα· βαριά, αδύναμα ή αεροδυναμικά «βρώμικα» αυτοκίνητα φτάνουν γρήγορα σε πλατό και θέλουν κοντύτερη.<br>Ο κινητήρας προστίθεται και το ταμπλό <b>Επιδόσεις</b> υπολογίζει <b>0–100 km/h</b>, <b>400/800/1000 m</b>, <b>τελική</b>, <b>φρενάρισμα 100–0</b> και το τεστ <b>0–200–0</b> ζωντανά — εκκίνηση περιορισμένη από πρόσφυση και φρενάρισμα με όριο ελαστικών/φρένων και εξασθένηση. Κολλώδη ελαστικά, μεγάλα φρένα και AWD βοηθούν πιο πολύ.'},
   tip:{el:'Συμβουλή: κλείσε τη ΦΘΟΡΑ στις ΕΠΙΛΟΓΕΣ για ελεύθερο πειραματισμό, μετά ξανάνοιξέ την για συνέπειες.'}
 };
@@ -1270,12 +1297,11 @@ let buildRev=0;   // bumped each build so the dyno cache invalidates
 
 // throttle & load are the driver inputs; rpm & map are now integrated by the sim.
 let state={throttle:0.20,load:0.20,elecLoad:0.30,rpm:1000,map:0.45,afr:14.7,iat:25,coolant:90,oil:100,torque:0,powerHP:0,powerKW:0,bsfc:0,thermalEff:0,fuelFlowLph:0,knockRisk:0,ve:0.85,bmep:0,boostActual:0,batterySOC:1.0,systemVoltage:14.0,engineHealth:1.0,blown:false,wearCause:'',fuelCut:false,nitrousActive:false,nitrousCharge:1.0,emCO:0,emHC:0,emNOx:0,emPM:0,emRating:100};
-let crankAngle=0,lastTime=performance.now();
+let lastTime=performance.now();
 let vizMode='engine';
 let autoThermal=false;
 let wearEnabled=true;   // WEAR toggle: off = invincible engine
 let fullscreen=false;   // detailed full-screen schematic
-let visualCrank=0;      // calm decorative flywheel angle (not real RPM)
 let statusFlashUntil=0;
 const SAVE_KEY='pixelEngineSim.setup.v2';
 const APP_TAG='PixelEngineSim',APP_VER='0.5';
@@ -4019,6 +4045,23 @@ function setAutoThermal(on){
 }
 
 const canvas=document.getElementById('engineCanvas'),ctx=canvas.getContext('2d');
+// ---- Canvas resolution ----
+// The three visualisations share this one canvas and draw on a fixed 640x420 LOGICAL grid. The
+// backing store used to be 640x420 too, while CSS stretched it to whatever the panel was — 744 px
+// wide on a desktop, and twice that again on a high-DPI screen. Every 7 px glyph therefore landed
+// on fractional pixels and smeared, which is why the readouts were unreadable.
+// Now the backing store is sized to the real device pixels and the context is scaled, so all the
+// drawing code keeps its 640x420 coordinates while the output is pixel-exact.
+let vizW=640,vizH=420,vizScale=1;
+function sizeCanvas(){
+  const dpr=Math.min(3,Math.max(1,window.devicePixelRatio||1));
+  const cssW=canvas.getBoundingClientRect().width||vizW;
+  vizScale=Math.max(1,Math.min(4,(cssW/vizW)*dpr));
+  const bw=Math.round(vizW*vizScale),bh=Math.round(vizH*vizScale);
+  if(canvas.width!==bw||canvas.height!==bh){canvas.width=bw;canvas.height=bh;}
+  ctx.setTransform(vizScale,0,0,vizScale,0,0);
+}
+addEventListener('resize',()=>{sizeCanvas();});
 const C={bg:'#0d0d18',block:'#2a2a3a',metal:'#6a6a7a',metalDark:'#3a3a4a',metalLight:'#9a9aaa',piston:'#c0c0d0',pistonTop:'#e0e0f0',rod:'#888898',fire:'#ff6600',spark:'#ffff00',intake:'#44aaff',exhaust:'#ff4422',text:'#e0e0e0',green:'#00ff88',yellow:'#ffcc00',red:'#ff4444',cyan:'#00ccff'};
 
 function drawPixelRect(x,y,w,h,color){ctx.fillStyle=color;ctx.fillRect(Math.floor(x),Math.floor(y),Math.floor(w),Math.floor(h))}
@@ -4026,144 +4069,401 @@ function drawPixelRect(x,y,w,h,color){ctx.fillStyle=color;ctx.fillRect(Math.floo
 // Live values annotate each subsystem around a central engine. Laid out in a base
 // 640×420 space and uniformly scaled, so the same code serves the lite view and the
 // full-screen detailed view (which just adds extra lines).
+// ====== ENGINE VIEW: an animated cutaway ======
+// This used to be six boxes of 7 px text painted onto a canvas that was then stretched by CSS —
+// unreadable, and a canvas is the wrong place for a table anyway. The numbers already live in the
+// LIVE OUTPUT panel beside it, so the canvas now does what only a canvas can: it SHOWS the engine
+// running. Piston, rod and crank move on real crank-slider geometry at the real crank angle,
+// valves open on the real four-stroke cycle, the charge glows when it burns and the turbo spins
+// with actual boost. Everything on screen is driven by simulation state, not decoration.
+//
+// Crank angle is integrated from live rpm, not from wall-clock time, so what you see is the engine
+// you built: a long-stroke diesel lopes, a 9000 rpm screamer blurs.
+let crankAngle=0;          // radians, 0..4π for a four-stroke cycle (720°)
+let rotorAngle=0;          // rotary output shaft
+let flashT=0;              // combustion flash decay, seconds
+let turboAngle=0;
+// Phase within the cycle. cyl 0 is the one drawn large; the rest are offset by the firing interval.
+function cylPhase(i,n,cycle){return (crankAngle+i*cycle/n)%cycle;}
+// Crank-slider: piston position from crank angle, as a fraction of stroke below TDC.
+// x = r(1−cos θ) + L − √(L² − r²sin²θ), normalised by the 2r stroke. rodRatio L/r ≈ 3.2 is typical.
+function pistonFrac(theta,rodRatio){
+  const s=Math.sin(theta),c=Math.cos(theta);
+  const L=rodRatio;
+  return ((1-c)+L-Math.sqrt(Math.max(0,L*L-s*s)))/2;
+}
+// Valve lift 0..1 across an opening window, with a smooth cam-like ramp.
+function valveLift(deg,open,close){
+  let d=deg-open; if(d<0)d+=720; let span=close-open; if(span<0)span+=720;
+  if(d>span)return 0;
+  return Math.sin(Math.PI*d/span);
+}
 function drawEngine(dt){
-  const W=canvas.width,H=canvas.height,detailed=fullscreen;
+  const W=vizW,H=vizH,detailed=fullscreen;
   const S=Math.min(W/640,H/420),offX=(W-640*S)/2,offY=(H-420*S)/2;
   const px=x=>offX+x*S,py=y=>offY+y*S,F=n=>Math.round(n*S)+'px "Press Start 2P"';
+  const LW=n=>Math.max(1,n*S);
   ctx.fillStyle=C.bg;ctx.fillRect(0,0,W,H);
-  // calm decorative flywheel (conveys running/dead without being a blur)
-  const vrate=state.blown?0:2+clamp(state.rpm/8000,0,1)*4;
-  visualCrank=(visualCrank+vrate*dt)%(Math.PI*2);
-  const m=liveMap(),disp=engine.displacement_L.toFixed(engine.displacement_L<1?2:1);
-  const knockTxt=state.knockRisk<25?'LOW':state.knockRisk<55?'MED':'HIGH';
-  const knockCol=state.knockRisk<25?C.green:state.knockRisk<55?C.yellow:C.red;
-  const tempCol=t=>t>115?C.red:t>108?C.yellow:C.text;
-  const battCol=state.systemVoltage<11.6?C.red:state.systemVoltage<12.6?C.yellow:C.text;
 
-  function box(x,y,w,h,title,lines,accent){
-    ctx.fillStyle='#10101a';ctx.fillRect(px(x),py(y),w*S,h*S);
-    ctx.strokeStyle=accent;ctx.lineWidth=Math.max(1,1.5*S);ctx.strokeRect(px(x),py(y),w*S,h*S);
-    ctx.fillStyle=accent;ctx.font=F(7);ctx.fillText(title,px(x)+6*S,py(y)+12*S);
-    ctx.font=F(6.5);
-    lines.forEach((ln,i)=>{if(!ln)return;ctx.fillStyle=ln[1]||C.text;ctx.fillText(ln[0],px(x)+6*S,py(y)+(24+i*12)*S);});
-  }
-  function pipe(x1,y1,x2,y2,color){
-    ctx.strokeStyle=color;ctx.lineWidth=Math.max(2,3*S);ctx.beginPath();ctx.moveTo(px(x1),py(y1));ctx.lineTo(px(x2),py(y2));ctx.stroke();
-  }
+  const e=engine,m=liveMap(),rpm=state.rpm;
+  const rotary=e.type==='rotary',two=e.type==='twostroke';
+  const cycle=(two||rotary)?Math.PI*2:Math.PI*4;          // radians per full cycle
+  // Advance the crank at the real rate, but cap the on-screen rate so a 9000 rpm engine reads as
+  // "fast" rather than as strobing nonsense at 60 fps.
+  const radPerSec=state.blown?0:(rpm/60)*Math.PI*2;
+  const shown=Math.min(radPerSec,Math.PI*2*22);
+  crankAngle=(crankAngle+shown*dt)%cycle;
+  rotorAngle=(rotorAngle+shown*dt/3)%(Math.PI*2);         // rotor turns at 1/3 shaft speed
+  turboAngle=(turboAngle+(2+clamp(Math.max(0,m-1)/1.5,0,1)*26+clamp(rpm/e.redline,0,1)*10)*dt)%(Math.PI*2);
+  if(flashT>0)flashT-=dt;
 
-  // Header + tachometer
+  const deg=crankAngle*180/Math.PI;                        // 0..720 for a four-stroke
+  const nCyl=Math.max(1,e.cylinders);
+  const rodRatio=3.2;
+  // Bore and stroke drive the drawing, so an oversquare engine really is wider and shorter.
+  const bsr=clamp(e.bore_mm/e.stroke_mm,0.55,1.9);
+
+  // ---------- title + tachometer ----------
   ctx.fillStyle=C.yellow;ctx.font=F(9);
-  ctx.fillText('ENGINE TEST BENCH',px(14),py(15));
-  ctx.fillStyle=C.green;ctx.font=F(11);ctx.fillText(Math.round(state.rpm)+' RPM',px(470),py(16));
-  const tbX=14,tbY=22,tbW=612,tbH=7;
+  ctx.fillText(tr('ENGINE CUTAWAY'),px(14),py(15));
+  ctx.fillStyle=state.rpm>e.redline*0.92?C.red:C.green;ctx.font=F(11);
+  ctx.textAlign='right';ctx.fillText(Math.round(rpm)+' RPM',px(560),py(16));ctx.textAlign='left';
+  const tbX=14,tbY=26,tbW=546,tbH=6,rl=e.redline;
   ctx.fillStyle='#1a1a28';ctx.fillRect(px(tbX),py(tbY),tbW*S,tbH*S);
-  const rl=engine.redline,rpmFrac=clamp(state.rpm/rl,0,1),redZone=0.92;
-  ctx.fillStyle='#3a1414';ctx.fillRect(px(tbX+tbW*redZone),py(tbY),tbW*(1-redZone)*S,tbH*S);
-  ctx.fillStyle=rpmFrac>redZone?C.red:C.green;ctx.fillRect(px(tbX),py(tbY),tbW*rpmFrac*S,tbH*S);
+  ctx.fillStyle='#3a1414';ctx.fillRect(px(tbX+tbW*0.92),py(tbY),tbW*0.08*S,tbH*S);
+  const rf=clamp(rpm/rl,0,1);
+  ctx.fillStyle=rf>0.92?C.red:C.green;ctx.fillRect(px(tbX),py(tbY),tbW*rf*S,tbH*S);
 
-  // Connecting pipes (drawn first, boxes on top)
-  pipe(180,110,235,150,C.intake);   // intake → engine
-  pipe(460,110,405,150,C.yellow);   // fuel → engine
-  pipe(235,250,180,300,C.exhaust);  // engine → exhaust
-  pipe(405,235,460,290,C.green);     // engine → dyno (shaft)
-  pipe(320,290,320,312,'#556');      // engine → electrical
+  if(rotary)drawRotaryCutaway(px,py,S,F,LW,dt);
+  else drawPistonCutaway(px,py,S,F,LW,deg,nCyl,rodRatio,bsr,two,m,detailed);
 
-  // Central engine
-  const ex=235,ey=118,ew=170,eh=172;
-  const unitTxt=engine.type==='rotary'?engine.cylinders+'-ROTOR '+disp+'L':engine.cylinders+'CYL '+LAYOUT_LABEL[engine.layout]+' '+disp+'L';
-  const typeTxt={petrol4:'4-STROKE',diesel:'DIESEL CI',twostroke:'2-STROKE',rotary:'WANKEL'}[engine.type]||'';
-  box(ex,ey,ew,eh,'ENGINE',[
-    [unitTxt],
-    [typeTxt+' • CR'+engine.compression.toFixed(1),C.cyan],
-    ['COOL '+Math.round(state.coolant)+'C',tempCol(state.coolant)],
-    ['OIL  '+Math.round(state.oil)+'C',tempCol(state.oil)],
-    engine.ci?['INJ  COMPRESSION',C.cyan]:['ADV  '+Math.round(activeAdvance(state.rpm,m))+'°'+(engine.timingMode==='auto'?' AUTO':''),C.cyan],
-    ['HEALTH '+(state.blown?'DEAD':Math.round(state.engineHealth*100)+'%'),state.blown||state.engineHealth<0.3?C.red:state.engineHealth<0.7?C.yellow:C.green],
-    detailed?[engine.ports?'PORTS (NO CAM)':'CAM '+engine.cam.toUpperCase()+(engine.vvt?'+VVT':'')]:null,
-    detailed?['ALT '+engine.altMaxA+'A']:null
-  ],C.metal);
-  // little cylinder + flywheel glyph in the engine box
-  const gx=ex+ew-46,gy=ey+26,gw=30,gh=64;
-  ctx.fillStyle='#1a1a28';ctx.fillRect(px(gx),py(gy),gw*S,gh*S);
-  ctx.strokeStyle=C.metal;ctx.lineWidth=Math.max(1,1.2*S);ctx.strokeRect(px(gx),py(gy),gw*S,gh*S);
-  const pistonY=gy+6+(1-Math.cos(visualCrank))/2*(gh*0.42);
-  ctx.fillStyle=state.blown?'#553':C.piston;ctx.fillRect(px(gx+4),py(pistonY),(gw-8)*S,14*S);
-  ctx.strokeStyle=C.rod;ctx.lineWidth=Math.max(1,2*S);ctx.beginPath();
-  ctx.moveTo(px(gx+gw/2),py(pistonY+14));ctx.lineTo(px(gx+gw/2+Math.sin(visualCrank)*6),py(gy+gh+8));ctx.stroke();
-  ctx.fillStyle=C.metalLight;ctx.beginPath();ctx.arc(px(gx+gw/2),py(gy+gh+8),5*S,0,Math.PI*2);ctx.fill();
-
-  // Intake (top-left)
-  box(20,58,160,86,'AIR INTAKE',[
-    [INTAKE_SYS[engine.intakeSys].label,C.cyan],
-    ['FILTER '+AIR_FILTER[engine.airFilter].label.split(' ')[0]],
-    ['MAP  '+m.toFixed(2)+' bar'],
-    ['IAT  '+Math.round(effIAT(m))+'C'],
-    engine.intake!=='na'?['BOOST +'+Math.max(0,m-1).toFixed(2),C.yellow]:['VE   '+(state.ve*100).toFixed(0)+'%'],
-    engine.intake!=='na'?['VE   '+(state.ve*100).toFixed(0)+'%']:null
-  ],C.intake);
-
-  // Fuel system (top-right)
-  const lam=(state.afr/engine.stoichAFR).toFixed(2);
-  box(460,45,165,116,'FUEL SYSTEM',[
-    [FUELS[engine.fuel].label,C.yellow],
-    ['AFR  '+state.afr.toFixed(1)+' λ'+lam],
-    state.fuelCut&&state.rpm<engine.redline?['FLOW 0 — DFCO CUT',C.cyan]:['FLOW '+state.fuelFlowLph.toFixed(1)+' L/h'],
-    [(engine.injector==='direct'?'DIRECT':'PORT')+' INJ'],
-    engine.ci?['COMPRESSION IGN',C.cyan]:['IGN  '+(engine.timingMode==='auto'?'AUTO ECU':engine.ignitionAdv+'° FIXED')],
-    detailed?(engine.ci?['GLOW-PLUG START']:['SPARK '+engine.ignitionType.toUpperCase()]):null,
-    detailed?['BSFC '+(state.bsfc>500?'---':Math.round(state.bsfc))]:null
-  ],C.yellow);
-
-  // Exhaust / analyser (bottom-left)
-  const emCol=state.emRating>=75?C.green:state.emRating>=45?C.yellow:C.red;
-  const emWord=state.emRating>=75?'CLEAN':state.emRating>=45?'OK':'DIRTY';
-  box(20,244,160,120,'EXHAUST • ANALYSER',[
-    ['SYS '+engine.exhaust.toUpperCase()+' • CAT '+CAT[engine.cat].label.split(' ')[0]],
-    engine.ci?['SMOKE/PM '+(state.emPM>25?'HIGH':state.emPM>10?'MED':'LOW'),state.emPM>25?C.red:state.emPM>10?C.yellow:C.green]
-             :['KNOCK '+knockTxt+' ('+Math.round(state.knockRisk)+')',knockCol],
-    engine.ci?['CI — NO SPARK KNOCK',C.green]:['DETON '+(state.knockRisk>60?'RETARD/CUT':'OK'),state.knockRisk>60?C.red:C.green],
-    ['EMISS '+emWord+' '+state.emRating,emCol],
-    detailed?(engine.ci?['CO '+state.emCO.toFixed(0)+' NOx '+state.emNOx.toFixed(0)+' PM '+state.emPM.toFixed(0)]
-                       :['CO '+state.emCO.toFixed(0)+' HC '+state.emHC.toFixed(0)+' NOx '+state.emNOx.toFixed(0)]):null,
-    detailed?['THERM.EFF '+state.thermalEff.toFixed(0)+'%']:null
-  ],C.exhaust);
-
-  // Dynamometer (bottom-right) + coupling
-  ctx.fillStyle=C.metalLight;ctx.beginPath();ctx.arc(px(432),py(262),5*S,0,Math.PI*2);ctx.fill();
-  box(460,230,165,120,'DYNAMOMETER',[
-    ['POWER  '+state.powerHP.toFixed(0)+' HP',C.green],
-    ['TORQUE '+state.torque.toFixed(0)+' Nm',C.cyan],
-    ['LOAD   '+Math.round(state.load*100)+'%'],
-    ['TH.EFF '+state.thermalEff.toFixed(0)+'%'],
-    ['BSFC   '+(state.bsfc>500?'---':Math.round(state.bsfc))],
-    detailed?['BMEP '+state.bmep.toFixed(1)+' bar']:null
-  ],C.green);
-
-  // Electrical (bottom-center)
-  box(250,312,140,62,'ELECTRICAL',[
-    ['BATT '+state.systemVoltage.toFixed(1)+'V'+(state.systemVoltage<11.6?' LOW':''),battCol],
-    ['SOC '+Math.round(state.batterySOC*100)+'% • '+Math.round(elecDemandA())+'A draw']
-  ],C.cyan);
-
-  // Status strip
+  // ---------- status strip ----------
   ctx.fillStyle='#12121c';ctx.fillRect(px(0),py(398),640*S,24*S);
   const alarm=state.blown||state.wearCause||state.knockRisk>70;
   ctx.fillStyle=alarm?C.red:(state.knockRisk>40||state.engineHealth<0.7?C.yellow:C.green);ctx.font=F(8);
   let msg;
-  if(state.blown)msg='ENGINE FAILURE — '+state.wearCause+' • REBUILD WITH BUILD & DYNO';
-  else if(state.wearCause)msg='DAMAGE: '+state.wearCause+' — HEALTH '+Math.round(state.engineHealth*100)+'% FALLING';
-  else if(!wearEnabled)msg='WEAR OFF (INVINCIBLE) • '+state.powerHP.toFixed(0)+' HP @ '+Math.round(state.rpm)+' RPM';
-  else if(state.nitrousActive&&nitrousImep()>0)msg='NITROUS! • '+state.powerHP.toFixed(0)+' HP • BOTTLE '+Math.round(state.nitrousCharge*100)+'%';
-  else msg=(state.powerHP>5?'RUNNING':'IDLE')+' • '+state.powerHP.toFixed(0)+' HP • '+state.torque.toFixed(0)+' Nm'+(engine.nitrous!=='none'?'  •  N2O '+Math.round(state.nitrousCharge*100)+'%':'')+(detailed?'  ('+INTAKE_SYS[engine.intakeSys].label+')':(fullscreen?'':'  •  ⛶ FULL'));
+  if(state.blown)msg=tr('ENGINE FAILURE')+' — '+state.wearCause+' • '+tr('REBUILD WITH BUILD & DYNO');
+  else if(state.wearCause)msg=tr('DAMAGE')+': '+state.wearCause+' — '+tr('HEALTH')+' '+Math.round(state.engineHealth*100)+'%';
+  else if(state.nitrousActive&&nitrousImep()>0)msg='NITROUS! • '+state.powerHP.toFixed(0)+' HP • '+tr('BOTTLE')+' '+Math.round(state.nitrousCharge*100)+'%';
+  else msg=(state.powerHP>5?tr('RUNNING'):tr('IDLE'))+' • '+state.powerHP.toFixed(0)+' HP • '+state.torque.toFixed(0)+' Nm • '
+    +tr('COOL')+' '+Math.round(state.coolant)+'C • '+tr('HEALTH')+' '+Math.round(state.engineHealth*100)+'%'+(fullscreen?'':'  •  ⛶ FULL');
   if(state.nitrousActive&&nitrousImep()>0)ctx.fillStyle='#ff66cc';
   ctx.fillText(msg,px(10),py(414));
+}
+
+// ---- Four-stroke / two-stroke: one cylinder drawn large, the whole bank drawn small ----
+function drawPistonCutaway(px,py,S,F,LW,deg,nCyl,rodRatio,bsr,two,m,detailed){
+  const e=engine;
+  // Geometry of the big cylinder. Bore/stroke ratio decides how wide and how tall it is, so an
+  // oversquare engine really is drawn short and wide and a long-stroke one tall and narrow. The
+  // crank centre is placed so the whole crank circle stays inside the block casting.
+  const cx=252,headY=54,bore=clamp(50*bsr,34,72),strokeLen=clamp(78/bsr,58,104);
+  const boreTop=headY+38;
+  const crankY=boreTop+strokeLen+42;
+  const cycleDeg=two?360:720;
+  const th=(deg%cycleDeg)*(two?2:1)*Math.PI/180;          // crank radians for the drawn cylinder
+  const frac=pistonFrac(th,rodRatio);
+  const pistonH=20;
+  const topY=boreTop+frac*strokeLen;                      // crown position
+
+  // ---- combustion: fire near TDC of the power stroke ----
+  const powerStart=two?170:340;
+  const d=(deg%cycleDeg);
+  if(!state.blown&&state.powerHP>1&&d>powerStart&&d<powerStart+18&&flashT<=0)flashT=0.09;
+  const burning=flashT>0;
+
+  // ---- block casting: head deck on top, crankcase below ----
+  const blkX=cx-bore/2-20,blkW=bore+40,blkY=headY,blkH=crankY-headY+46;
+  ctx.fillStyle='#15151f';ctx.fillRect(px(blkX),py(blkY),blkW*S,blkH*S);
+  ctx.strokeStyle=C.metal;ctx.lineWidth=LW(1.5);ctx.strokeRect(px(blkX),py(blkY),blkW*S,blkH*S);
+  ctx.strokeStyle='#26263a';ctx.lineWidth=LW(1);
+  ctx.beginPath();ctx.moveTo(px(blkX),py(boreTop-4));ctx.lineTo(px(blkX+blkW),py(boreTop-4));ctx.stroke();
+
+  // ---- cylinder bore ----
+  const boreH=strokeLen+pistonH+4;
+  ctx.fillStyle='#0c0c14';ctx.fillRect(px(cx-bore/2),py(boreTop-4),bore*S,boreH*S);
+  // charge in the chamber: colour by what is in it right now
+  const chamberH=Math.max(3,(topY-boreTop+4));
+  let chargeCol='#12203a';                                 // fresh air
+  if(!two){
+    if(d<180)chargeCol='#12304a';                          // intake
+    else if(d<340)chargeCol='#1b3a55';                     // compression
+    else if(d<520)chargeCol=burning?'#ffcc44':'#5a2a18';   // power / burnt
+    else chargeCol='#3a2420';                              // exhaust
+  }else chargeCol=burning?'#ffcc44':(d<170?'#1b3a55':'#3a2420');
+  ctx.fillStyle=chargeCol;ctx.fillRect(px(cx-bore/2+2),py(boreTop-3),(bore-4)*S,chamberH*S);
+  if(burning){                                             // flame front
+    ctx.fillStyle='#fff2a8';
+    const g=(flashT/0.09);
+    ctx.fillRect(px(cx-bore/2+2),py(boreTop-3),(bore-4)*S,Math.max(2,chamberH*g)*S);
+  }
+  ctx.strokeStyle=C.metal;ctx.lineWidth=LW(1.2);
+  ctx.strokeRect(px(cx-bore/2),py(boreTop-4),bore*S,boreH*S);
+  // crankcase: the open space the rod swings in, with the main bearing at its centre
+  ctx.fillStyle='#0a0a12';ctx.fillRect(px(blkX+3),py(boreTop-4+boreH),(blkW-6)*S,(crankY+40-(boreTop+boreH))*S);
+  ctx.strokeStyle='#26263a';ctx.lineWidth=LW(1);
+  ctx.beginPath();ctx.arc(px(cx),py(crankY),Math.min(strokeLen/2+10,blkW/2-6)*S,0,6.284);ctx.stroke();
+
+  // ---- piston + rings + rod + crank ----
+  const throwR=strokeLen/2, pinY=topY+pistonH-4;
+  const crankX=cx+Math.sin(th)*throwR, crankPinY=crankY-Math.cos(th)*throwR;
+  ctx.fillStyle=state.blown?'#5a5a3a':C.piston;
+  ctx.fillRect(px(cx-bore/2+3),py(topY),(bore-6)*S,pistonH*S);
+  ctx.strokeStyle='#0c0c14';ctx.lineWidth=LW(1);
+  for(let r=0;r<3;r++){ctx.beginPath();ctx.moveTo(px(cx-bore/2+3),py(topY+4+r*3.5));ctx.lineTo(px(cx+bore/2-3),py(topY+4+r*3.5));ctx.stroke();}
+  ctx.strokeStyle=C.rod;ctx.lineWidth=LW(4);
+  ctx.beginPath();ctx.moveTo(px(cx),py(pinY));ctx.lineTo(px(crankX),py(crankPinY));ctx.stroke();
+  // crank web + counterweight, so the rotation reads at a glance
+  ctx.strokeStyle=C.metalLight;ctx.lineWidth=LW(6);
+  ctx.beginPath();ctx.moveTo(px(cx),py(crankY));ctx.lineTo(px(crankX),py(crankPinY));ctx.stroke();
+  ctx.fillStyle='#3a3a4e';ctx.beginPath();
+  ctx.arc(px(cx-Math.sin(th)*throwR*0.85),py(crankY+Math.cos(th)*throwR*0.85),10*S,0,6.284);ctx.fill();
+  ctx.fillStyle=C.metalLight;ctx.beginPath();ctx.arc(px(crankX),py(crankPinY),4*S,0,6.284);ctx.fill();
+  ctx.fillStyle=C.metalLight;ctx.beginPath();ctx.arc(px(cx),py(crankY),8*S,0,6.284);ctx.fill();
+  ctx.fillStyle='#0c0c14';ctx.beginPath();ctx.arc(px(cx),py(crankY),3*S,0,6.284);ctx.fill();
+
+  // ---- head: valves (or ports on a two-stroke) ----
+  const headTop=headY+6;
+  if(!two&&!e.ports){
+    // Crank degrees with 0° = TDC on intake. Intake opens 20° BTDC and closes 50° ABDC; exhaust
+    // opens 50° BBDC on the power stroke and closes 10° ATDC. The two overlap around TDC, which
+    // is exactly the scavenging overlap a big cam widens.
+    const inL=valveLift(d,700,230),exL=valveLift(d,490,10);
+    const vw=Math.max(7,bore*0.26);
+    [[cx-bore*0.24,inL,C.intake,tr('IN')],[cx+bore*0.24,exL,C.exhaust,tr('EX')]].forEach(([vx,lift,col])=>{
+      const stemTop=headTop, headYY=boreTop-4+lift*10;
+      ctx.strokeStyle=col;ctx.lineWidth=LW(3);
+      ctx.beginPath();ctx.moveTo(px(vx),py(stemTop));ctx.lineTo(px(vx),py(headYY));ctx.stroke();
+      ctx.fillStyle=lift>0.02?col:'#4a4a5e';
+      ctx.beginPath();ctx.moveTo(px(vx-vw/2),py(headYY));ctx.lineTo(px(vx+vw/2),py(headYY));
+      ctx.lineTo(px(vx+vw/2-2),py(headYY+4));ctx.lineTo(px(vx-vw/2+2),py(headYY+4));ctx.closePath();ctx.fill();
+    });
+  }else{
+    // Ports in the liner: uncovered when the piston crown drops past them.
+    const portY=boreTop+strokeLen*0.62;
+    const open=topY>portY-4;
+    ctx.fillStyle=open?C.intake:'#2a2a3a';ctx.fillRect(px(cx-bore/2-6),py(portY),6*S,12*S);
+    ctx.fillStyle=open?C.exhaust:'#2a2a3a';ctx.fillRect(px(cx+bore/2),py(portY-6),6*S,12*S);
+  }
+  // spark plug / injector
+  if(!e.ci){
+    ctx.strokeStyle=burning?'#fff2a8':'#8898aa';ctx.lineWidth=LW(2.5);
+    ctx.beginPath();ctx.moveTo(px(cx),py(headTop));ctx.lineTo(px(cx),py(boreTop-5));ctx.stroke();
+    if(burning){ctx.fillStyle='#fff2a8';ctx.beginPath();ctx.arc(px(cx),py(boreTop-3),4*S,0,6.284);ctx.fill();}
+  }else{
+    ctx.strokeStyle=C.yellow;ctx.lineWidth=LW(2.5);
+    ctx.beginPath();ctx.moveTo(px(cx),py(headTop));ctx.lineTo(px(cx),py(boreTop-5));ctx.stroke();
+    if(d>330&&d<400){ctx.fillStyle=C.yellow;for(let i=0;i<3;i++){
+      ctx.beginPath();ctx.arc(px(cx-4+i*4),py(boreTop+i*3),1.6*S,0,6.284);ctx.fill();}}
+  }
+  // stroke label, so the animation teaches the cycle rather than just moving
+  const strokeName=two?(d<170?tr('COMPRESSION'):tr('POWER/SCAVENGE'))
+    :(d<180?tr('INTAKE'):d<360?tr('COMPRESSION'):d<540?tr('POWER'):tr('EXHAUST'));
+  ctx.fillStyle=C.cyan;ctx.font=F(7);ctx.textAlign='center';
+  ctx.fillText(strokeName,px(cx),py(headY-6));ctx.textAlign='left';
+
+  // ---- intake tract with a throttle butterfly ----
+  const portYc=headY+20, itX=cx-bore/2-20;
+  ctx.strokeStyle=C.intake;ctx.lineWidth=LW(8);
+  ctx.beginPath();ctx.moveTo(px(52),py(portYc));ctx.lineTo(px(itX),py(portYc));ctx.stroke();
+  const thr=state.throttle,bx=112;
+  ctx.strokeStyle='#cfe';ctx.lineWidth=LW(3);
+  ctx.beginPath();
+  ctx.moveTo(px(bx-8*Math.cos(thr*1.4)),py(portYc-8*Math.sin(thr*1.4)));
+  ctx.lineTo(px(bx+8*Math.cos(thr*1.4)),py(portYc+8*Math.sin(thr*1.4)));ctx.stroke();
+  ctx.fillStyle=C.intake;ctx.font=F(6.5);
+  ctx.fillText(tr('THROTTLE')+' '+Math.round(thr*100)+'%',px(52),py(portYc-14));
+  ctx.fillStyle='#89b';ctx.font=F(6);
+  ctx.fillText('MAP '+m.toFixed(2)+' bar',px(52),py(portYc+20));
+  ctx.fillText('IAT '+Math.round(effIAT(m))+'C',px(52),py(portYc+30));
+
+  // ---- forced induction ----
+  if(e.intake!=='na'){
+    const tx=84,ty=headY+118;
+    ctx.fillStyle='#10101a';ctx.beginPath();ctx.arc(px(tx),py(ty),22*S,0,6.284);ctx.fill();
+    ctx.strokeStyle=e.intake==='turbo'?C.exhaust:C.yellow;ctx.lineWidth=LW(2);
+    ctx.beginPath();ctx.arc(px(tx),py(ty),22*S,0,6.284);ctx.stroke();
+    ctx.strokeStyle=C.metalLight;ctx.lineWidth=LW(2.5);
+    for(let i=0;i<6;i++){const a=turboAngle+i*Math.PI/3;
+      ctx.beginPath();ctx.moveTo(px(tx),py(ty));
+      ctx.lineTo(px(tx+Math.cos(a)*17),py(ty+Math.sin(a)*17));ctx.stroke();}
+    ctx.fillStyle=C.metalLight;ctx.beginPath();ctx.arc(px(tx),py(ty),4*S,0,6.284);ctx.fill();
+    ctx.strokeStyle=C.intake;ctx.lineWidth=LW(5);
+    ctx.beginPath();ctx.moveTo(px(tx),py(ty-22));ctx.lineTo(px(tx),py(portYc));ctx.stroke();
+    const boost=Math.max(0,m-1);
+    ctx.fillStyle=boost>0.02?C.yellow:'#667';ctx.font=F(6);ctx.textAlign='center';
+    ctx.fillText((e.intake==='turbo'?tr('TURBO'):tr('BLOWER'))+' +'+boost.toFixed(2),px(tx),py(ty+34));
+    if(e.intake==='turbo'){ctx.fillStyle='#89b';
+      ctx.fillText(Math.round(engine.turboLoad*100)+'% '+tr('of rated flow'),px(tx),py(ty+44));}
+    ctx.textAlign='left';
+  }
+
+  // ---- exhaust tract, hot when it is flowing ----
+  const exX=cx+bore/2+20;
+  const exHot=clamp(state.powerHP/Math.max(60,engine.score?engine.score.peakHP:200),0,1);
+  ctx.strokeStyle=state.blown?'#444':`rgb(${Math.round(120+120*exHot)},${Math.round(60+30*exHot)},40)`;
+  ctx.lineWidth=LW(7);
+  ctx.beginPath();ctx.moveTo(px(exX),py(portYc));ctx.lineTo(px(392),py(portYc));ctx.stroke();
+  ctx.fillStyle=C.exhaust;ctx.font=F(6.5);
+  ctx.fillText(tr('EXHAUST'),px(330),py(portYc-14));
+  ctx.fillStyle='#89b';ctx.font=F(6);
+  ctx.fillText(e.exhaust.toUpperCase()+' • '+tr('CAT')+' '+CAT[e.cat].label.split(' ')[0],px(330),py(portYc+20));
+  ctx.fillText(tr('EGT')+' '+Math.round(320+520*exHot)+'C',px(330),py(portYc+30));
+
+  // ---- knock: shake the block and flag it, because it is the thing that kills engines ----
+  if(state.knockRisk>55&&!state.blown){
+    const j=(state.knockRisk-55)/45;
+    ctx.fillStyle=C.red;ctx.font=F(7);ctx.textAlign='center';
+    ctx.fillText(tr('KNOCK')+' '+Math.round(state.knockRisk),px(cx+(Math.random()-0.5)*j*4),py(crankY+60));
+    ctx.textAlign='left';
+  }
+
+  // ---- the whole bank, small: every cylinder at its real phase ----
+  const bx0=396,by0=132,bw=200,bh=150;
+  ctx.fillStyle='#10101a';ctx.fillRect(px(bx0),py(by0),bw*S,bh*S);
+  ctx.strokeStyle=C.metal;ctx.lineWidth=LW(1.2);ctx.strokeRect(px(bx0),py(by0),bw*S,bh*S);
+  ctx.fillStyle=C.metal;ctx.font=F(6.5);
+  const layoutTxt=engine.cylinders+'-CYL '+(LAYOUT_LABEL[engine.layout]||'')+'  '+engine.displacement_L.toFixed(engine.displacement_L<1?2:1)+'L';
+  ctx.fillText(layoutTxt,px(bx0+8),py(by0+14));
+  const vee=engine.layout==='v'||engine.layout==='boxer';
+  const perBank=vee?Math.ceil(nCyl/2):nCyl;
+  const slotW=Math.min(26,(bw-24)/perBank), cylTop=by0+26, cylH=vee?42:64;
+  for(let b=0;b<(vee?2:1);b++){
+    for(let i=0;i<perBank;i++){
+      const idx=b*perBank+i; if(idx>=nCyl)break;
+      const sx=bx0+12+i*slotW, sy=cylTop+b*(cylH+14);
+      const ph=cylPhase(idx,nCyl,Math.PI*(two?2:4));
+      const f=pistonFrac(ph*(two?2:1),rodRatio);
+      ctx.fillStyle='#0c0c14';ctx.fillRect(px(sx),py(sy),(slotW-5)*S,cylH*S);
+      // firing cylinder glows
+      const pd=(ph*180/Math.PI)%(two?360:720);
+      const firing=!state.blown&&state.powerHP>1&&pd>(two?170:340)&&pd<(two?230:430);
+      ctx.fillStyle=firing?'#ffcc44':'#1b3a55';
+      ctx.fillRect(px(sx+1),py(sy+1),(slotW-7)*S,Math.max(2,f*cylH*0.42)*S);
+      ctx.fillStyle=state.blown?'#5a5a3a':C.piston;
+      ctx.fillRect(px(sx+1),py(sy+2+f*cylH*0.42),(slotW-7)*S,10*S);
+      ctx.strokeStyle=C.metal;ctx.lineWidth=LW(1);ctx.strokeRect(px(sx),py(sy),(slotW-5)*S,cylH*S);
+    }
+  }
+  ctx.fillStyle='#778';ctx.font=F(6);
+  ctx.fillText(tr('FIRING ORDER')+' 1-'+nCyl+'  •  '+(engine.ports?tr('PORTS'):e.cam.toUpperCase()+(e.vvt?'+VVT':'')),px(bx0+8),py(by0+bh-8));
+
+  // ---- oil + coolant, as gauges rather than numbers in a box ----
+  gaugeBar(px,py,S,F,LW,bx0,by0+bh+12,bw,tr('COOLANT'),state.coolant,60,125,108,115);
+  gaugeBar(px,py,S,F,LW,bx0,by0+bh+34,bw,tr('OIL'),state.oil,60,140,115,125);
+
+  // ---- fuel & spark, bottom-left: the two things you actually tune while it runs ----
+  const fx=22,fy=286;
+  ctx.fillStyle='#778';ctx.font=F(6);ctx.fillText(tr('FUEL & SPARK'),px(fx),py(fy-4));
+  const lam=state.afr/engine.stoichAFR;
+  const lamCol=lam<0.85?C.yellow:lam>1.08?C.red:C.green;
+  ctx.font=F(6.5);
+  ctx.fillStyle='#cde';ctx.fillText(FUELS[e.fuel].label+(e.fuel==='gasoline'?' '+e.octane+' RON':''),px(fx),py(fy+10));
+  ctx.fillStyle=state.fuelCut&&state.rpm<e.redline?C.cyan:'#cde';
+  ctx.fillText(state.fuelCut&&state.rpm<e.redline?tr('OVERRUN CUT — 0 L/h'):state.fuelFlowLph.toFixed(1)+' L/h',px(fx),py(fy+22));
+  ctx.fillStyle=lamCol;ctx.fillText('AFR '+state.afr.toFixed(1)+'  λ'+lam.toFixed(2),px(fx),py(fy+34));
+  ctx.fillStyle='#cde';
+  ctx.fillText(e.ci?tr('COMPRESSION IGNITION'):tr('ADV')+' '+Math.round(activeAdvance(state.rpm,m))+'°'+(e.timingMode==='auto'?' '+tr('AUTO'):''),px(fx),py(fy+46));
+  // knock bar — the readout that decides whether the build survives
+  ctx.fillStyle='#778';ctx.font=F(6);ctx.fillText(tr('KNOCK RISK'),px(fx),py(fy+62));
+  ctx.fillStyle='#1a1a28';ctx.fillRect(px(fx),py(fy+66),150*S,9*S);
+  const kf=clamp(state.knockRisk/100,0,1);
+  ctx.fillStyle=state.knockRisk>60?C.red:state.knockRisk>30?C.yellow:C.green;
+  ctx.fillRect(px(fx),py(fy+66),150*kf*S,9*S);
+  ctx.fillStyle='#cde';ctx.textAlign='right';ctx.fillText(Math.round(state.knockRisk),px(fx+147),py(fy+73));ctx.textAlign='left';
+}
+
+// Small labelled bar with warn/danger thresholds — legible where a 6 px number was not.
+function gaugeBar(px,py,S,F,LW,x,y,w,label,val,lo,hi,warn,danger){
+  const f=clamp((val-lo)/(hi-lo),0,1);
+  ctx.fillStyle='#778';ctx.font=F(6);ctx.fillText(label,px(x),py(y-2));
+  ctx.fillStyle='#1a1a28';ctx.fillRect(px(x),py(y),w*S,9*S);
+  ctx.fillStyle=val>danger?C.red:val>warn?C.yellow:C.green;
+  ctx.fillRect(px(x),py(y),w*f*S,9*S);
+  ctx.fillStyle='#cde';ctx.font=F(6);ctx.textAlign='right';
+  ctx.fillText(Math.round(val)+'C',px(x+w-3),py(y+7));ctx.textAlign='left';
+}
+
+// ---- Wankel ----
+// The housing is a true two-lobe epitrochoid, x = R·cosθ + e·cos3θ, y = R·sinθ + e·sin3θ, and the
+// rotor is an equilateral triangle whose apexes sit at radius R from a centre that orbits the
+// housing centre at radius e. That geometry is what forces the 3:1 relationship: the eccentric
+// shaft turns three times for every one turn of the rotor, which is why a 1.3 L rotary sounds and
+// revs like something far smaller than its torque suggests.
+function drawRotaryCutaway(px,py,S,F,LW,dt){
+  // R/e is 7 on a real Wankel, which makes the lobing almost invisible at this size; 5.5 keeps
+  // the shape honest while letting you actually see it is not a circle.
+  const cx=236,cy=196,R=72,ecc=R/5.5;
+  // housing
+  ctx.fillStyle='#15151f';ctx.beginPath();
+  for(let a=0;a<=6.2832;a+=0.04){
+    const x=cx+R*Math.cos(a)+ecc*Math.cos(3*a), y=cy+R*Math.sin(a)+ecc*Math.sin(3*a);
+    a?ctx.lineTo(px(x),py(y)):ctx.moveTo(px(x),py(y));
+  }
+  ctx.closePath();ctx.fill();
+  ctx.strokeStyle=C.metal;ctx.lineWidth=LW(2);ctx.stroke();
+  // three working chambers, shaded by what each is doing right now
+  const ex=cx+ecc*Math.cos(3*rotorAngle), ey=cy+ecc*Math.sin(3*rotorAngle);
+  const apex=i=>({x:ex+R*0.985*Math.cos(rotorAngle+i*2.0944),y:ey+R*0.985*Math.sin(rotorAngle+i*2.0944)});
+  const burning=flashT>0;
+  if(!state.blown&&state.powerHP>1&&flashT<=0&&Math.abs(((rotorAngle*3)%6.2832)-3.0)<0.25)flashT=0.09;
+  // rotor
+  ctx.fillStyle=state.blown?'#5a5a3a':C.piston;ctx.beginPath();
+  for(let i=0;i<3;i++){const p=apex(i);i?ctx.lineTo(px(p.x),py(p.y)):ctx.moveTo(px(p.x),py(p.y));}
+  ctx.closePath();ctx.fill();
+  ctx.strokeStyle=C.metalLight;ctx.lineWidth=LW(1.5);ctx.stroke();
+  // apex seals
+  ctx.fillStyle='#e8e8f0';
+  for(let i=0;i<3;i++){const p=apex(i);ctx.beginPath();ctx.arc(px(p.x),py(p.y),2.4*S,0,6.284);ctx.fill();}
+  // eccentric + output shaft
+  ctx.strokeStyle='#3a3a4e';ctx.lineWidth=LW(2);
+  ctx.beginPath();ctx.arc(px(cx),py(cy),ecc*S,0,6.284);ctx.stroke();
+  ctx.fillStyle=C.metalLight;ctx.beginPath();ctx.arc(px(ex),py(ey),9*S,0,6.284);ctx.fill();
+  ctx.fillStyle='#0c0c14';ctx.beginPath();ctx.arc(px(cx),py(cy),4*S,0,6.284);ctx.fill();
+  // spark plugs fire on the right-hand flank, where the chamber is at minimum volume
+  ctx.strokeStyle=burning?'#fff2a8':'#8898aa';ctx.lineWidth=LW(2.5);
+  const plugX=cx+R+ecc;                       // the housing wall on the minor axis
+  ctx.beginPath();ctx.moveTo(px(plugX),py(cy-7));ctx.lineTo(px(plugX-14),py(cy-7));ctx.stroke();
+  ctx.beginPath();ctx.moveTo(px(plugX),py(cy+7));ctx.lineTo(px(plugX-14),py(cy+7));ctx.stroke();
+  if(burning){ctx.fillStyle='#fff2a8';ctx.beginPath();ctx.arc(px(plugX-22),py(cy),8*S,0,6.284);ctx.fill();}
+  // intake and exhaust ports in the housing wall
+  ctx.fillStyle=C.intake;ctx.fillRect(px(cx-R-ecc-8),py(cy-16),8*S,20*S);
+  ctx.fillStyle=C.exhaust;ctx.fillRect(px(cx-R-ecc-8),py(cy+10),8*S,20*S);
+  ctx.font=F(6);ctx.fillStyle=C.intake;ctx.textAlign='right';
+  ctx.fillText(tr('INTAKE'),px(cx-R-ecc-12),py(cy-4));
+  ctx.fillStyle=C.exhaust;ctx.fillText(tr('EXHAUST'),px(cx-R-ecc-12),py(cy+24));ctx.textAlign='left';
+
+  ctx.fillStyle=C.cyan;ctx.font=F(7);ctx.textAlign='center';
+  ctx.fillText(engine.cylinders+'-ROTOR WANKEL '+engine.displacement_L.toFixed(2)+'L',px(cx),py(cy+R+30));
+  ctx.fillStyle='#778';ctx.font=F(6);
+  ctx.fillText(tr('ROTOR TURNS AT 1/3 SHAFT SPEED'),px(cx),py(cy+R+42));
+  ctx.textAlign='left';
+
+  // same right-hand column as the piston view, so switching type does not move the readouts
+  const bx0=396,by0=90;
+  ctx.fillStyle='#778';ctx.font=F(6);ctx.fillText(tr('THROTTLE')+' '+Math.round(state.throttle*100)+'%',px(bx0),py(by0));
+  ctx.fillStyle='#cde';ctx.font=F(6.5);
+  ctx.fillText('MAP '+liveMap().toFixed(2)+' bar',px(bx0),py(by0+14));
+  ctx.fillText('IAT '+Math.round(effIAT(liveMap()))+'C',px(bx0),py(by0+26));
+  ctx.fillText(FUELS[engine.fuel].label,px(bx0),py(by0+38));
+  const lam=state.afr/engine.stoichAFR;
+  ctx.fillStyle=lam<0.85?C.yellow:lam>1.08?C.red:C.green;
+  ctx.fillText('AFR '+state.afr.toFixed(1)+'  λ'+lam.toFixed(2),px(bx0),py(by0+50));
+  ctx.fillStyle='#cde';ctx.fillText(state.fuelFlowLph.toFixed(1)+' L/h',px(bx0),py(by0+62));
+  ctx.fillStyle='#778';ctx.font=F(6);ctx.fillText(tr('KNOCK RISK'),px(bx0),py(by0+80));
+  ctx.fillStyle='#1a1a28';ctx.fillRect(px(bx0),py(by0+84),190*S,9*S);
+  ctx.fillStyle=state.knockRisk>60?C.red:state.knockRisk>30?C.yellow:C.green;
+  ctx.fillRect(px(bx0),py(by0+84),190*clamp(state.knockRisk/100,0,1)*S,9*S);
+  ctx.fillStyle='#cde';ctx.textAlign='right';ctx.fillText(Math.round(state.knockRisk),px(bx0+187),py(by0+91));ctx.textAlign='left';
+  gaugeBar(px,py,S,F,LW,bx0,by0+118,190,tr('COOLANT'),state.coolant,60,125,108,115);
+  gaugeBar(px,py,S,F,LW,bx0,by0+140,190,tr('OIL'),state.oil,60,140,115,125);
 }
 // ---- TRACK map: the circuit drawn from the same sampled centreline the lap solver used, with
 // the racing line coloured by what is limiting the car at each point. ----
 const LIMC={corner:'#ffcc00',brake:'#ff5555',power:'#55dd66',traction:'#4aa3ff'};
 const LIMLBL={corner:'CORNERING (grip)',brake:'BRAKING',power:'POWER',traction:'TRACTION (diff/tyres)'};
 function drawTrack(){
-  const W=canvas.width,H=canvas.height;
+  const W=vizW,H=vizH;
   ctx.fillStyle=C.bg;ctx.fillRect(0,0,W,H);
   drawPixelRect(0,0,W,28,'#12121c');
   ctx.fillStyle=C.yellow;ctx.font='10px "Press Start 2P"';
@@ -4277,7 +4577,7 @@ function refreshLap(){
   renderLap();
 }
 function drawDyno(){
-  const W=canvas.width,H=canvas.height,rMax=engine.redline;
+  const W=vizW,H=vizH,rMax=engine.redline;
   ctx.fillStyle=C.bg;ctx.fillRect(0,0,W,H);
   drawPixelRect(0,0,W,28,'#12121c');
   ctx.fillStyle=C.yellow;ctx.font='10px "Press Start 2P"';ctx.fillText('DYNO CURVE • POWER & TORQUE',12,19);
@@ -4407,6 +4707,8 @@ function setTab(mode){
   // DESIGN / VEHICLE / GUIDE / OPTIONS are full-panel overlays that replace the canvas.
   const overlay=mode==='design'||mode==='vehicle'||mode==='guide'||mode==='options';
   canvas.style.display=overlay?'none':'block';
+  // The canvas has no layout size while hidden, so re-measure whenever it comes back.
+  if(!overlay)sizeCanvas();
   document.getElementById('btnFullscreen').style.display=overlay?'none':'block';
   document.getElementById('designPanel').classList.toggle('active',mode==='design');
   document.getElementById('vehiclePanelTab').classList.toggle('active',mode==='vehicle');
@@ -4535,9 +4837,11 @@ function bindControls(){
   });
   document.addEventListener('fullscreenchange',()=>{
     fullscreen=!!document.fullscreenElement;
-    if(fullscreen){canvas.width=1280;canvas.height=800;canvas.style.display='block';
+    // Fullscreen widens the LOGICAL grid so the drawings get more room; sizeCanvas() then
+    // matches the backing store to the real device pixels either way.
+    if(fullscreen){vizW=1280;vizH=800;sizeCanvas();canvas.style.display='block';
       ['designPanel','guidePanel','optionsPanel'].forEach(id=>document.getElementById(id).classList.remove('active'));}
-    else{canvas.width=640;canvas.height=420;setTab(vizMode);}
+    else{vizW=640;vizH=420;sizeCanvas();setTab(vizMode);}
   });
 
   document.getElementById('edIntake').addEventListener('change',syncDesignEnable);
@@ -4614,7 +4918,7 @@ bindControls();applyEngineToForm(Object.assign({},DEFAULT_ENGINE));buildEngine()
 applyVehicleToForm(DEFAULT_VEHICLE);buildVehicle();updateVehicleSummary();
 loadFromHash();   // open a shared build if the URL carries one
 applyLang(currentLang);   // localise the UI (persisted choice)
-updatePhysics();updateUI();requestAnimationFrame(loop);
+sizeCanvas();updatePhysics();updateUI();requestAnimationFrame(loop);
 
 // Register service worker for offline/installable PWA (no-op on file://).
 if('serviceWorker' in navigator && location.protocol.startsWith('http')){
