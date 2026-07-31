@@ -106,6 +106,24 @@ footer{text-align:center;margin-top:16px;padding:8px;font-size:7px;color:#555;bo
 .build-row{margin-top:12px;display:flex;gap:8px;flex-wrap:wrap}
 .build-row button{flex:1}
 #btnBuild{border-color:#00ff88;color:#00ff88}
+/* ---- Garage: saved chassis+engine combos ---- */
+.garage-row{display:flex;gap:8px;align-items:flex-end;margin-bottom:10px}
+.garage-row .field{flex:1 1 auto;min-width:0}
+.garage-row button{flex:0 0 auto}
+.garage-list{display:flex;flex-direction:column;gap:7px;max-height:280px;overflow-y:auto}
+.garage-item{background:#0a0a10;border:2px solid #333;padding:8px}
+.garage-item.current{border-color:#00ff88}
+.garage-head{display:flex;justify-content:space-between;align-items:baseline;gap:8px}
+.garage-name{font-size:8px;color:#ffcc00;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.garage-date{font-size:6px;color:#667;flex:0 0 auto}
+.garage-spec{font-size:7px;color:#88aacc;line-height:1.7;margin-top:5px}
+.garage-stats{font-size:7px;color:#00ccff;line-height:1.7;margin-top:3px}
+.garage-stats b{color:#00ff88}
+.garage-note{font-size:7px;color:#778;line-height:1.5;margin-top:3px;font-style:italic}
+.garage-btns{display:flex;gap:6px;margin-top:7px}
+.garage-btns button{flex:1;padding:6px 4px;font-size:7px}
+.garage-btns .del{border-color:#663333;color:#cc7777}
+.garage-empty{font-size:7px;color:#667;line-height:1.7;padding:8px;background:#0a0a10;border:2px dashed #2a2a3a}
 /* 5 tabs — tighten padding so labels fit */
 .viz-tabs button{padding:10px 4px;font-size:7.5px;letter-spacing:0}
 /* ---- Guide & Options tabs (reuse the scrollable design-panel shell) ---- */
@@ -400,6 +418,16 @@ its <b>factory spec</b> — the tyres, wheels, brakes, suspension, aero and gear
 really wear, so a kei car turns up on skinny eco tyres and small steel discs while a hypercar gets
 wide semi-slicks, carbon-ceramics and a wing/diffuser package. Everything stays editable from
 there; <b>REFIT FACTORY SPEC</b> puts it all back.<br>
+<b>The GARAGE</b> at the bottom of the tab keeps as many finished cars as you like. Name one and
+press <b>SAVE TO GARAGE</b> and the whole thing is stored together — the chassis, every part bolted
+to it, <i>and</i> the engine inside, down to a hand-tuned fuel map. Each card shows the headline
+numbers it had when you saved it (power, weight, 0–100, top speed, lap time and total cost), so you
+can line three builds up and compare them without rebuilding any of them. <b>LOAD</b> puts a car
+back exactly as it was; typing a name that already exists highlights that card and saving
+overwrites it. This is separate from <b>SAVE</b>/<b>LOAD</b>, which is a single quicksave slot that
+each save overwrites. A garage entry is the same record <b>SAVE FILE</b> writes and a share link
+carries, so a build is portable between all three. Everything lives in this browser only —
+clearing site data clears the garage, and <b>SAVE FILE</b> is what makes a build survive that.<br>
 From that baseline you tune the <b>drivetrain</b> (FWD/RWD/AWD — AWD launches hardest),
 the <b>gearbox</b> (type, speeds and the gearing slider), <b>tyres</b> (compound + width/profile/
 diameter set grip and rolling radius), <b>aero</b> (front/rear/floor add downforce and drag),
@@ -571,6 +599,14 @@ experiment freely, then back on for consequences.</div>
 <button id="btnRefit">REFIT FACTORY SPEC</button>
 </div>
 <div class="design-summary" id="vehicleSummary"></div>
+
+<div class="design-section">Garage</div>
+<div class="hint" id="garageHint">Save the whole car — this chassis, its parts and the engine in it — under a name, and swap between builds later. Kept in this browser.</div>
+<div class="garage-row">
+<div class="field"><label for="garageName">BUILD NAME</label><input type="text" id="garageName" maxlength="28" placeholder="My track coupe"></div>
+<button id="btnGarageSave">SAVE TO GARAGE</button>
+</div>
+<div class="garage-list" id="garageList"></div>
 </div>
 </div>
 <div class="side-panel">
@@ -855,6 +891,16 @@ const I18N={
   'A balanced grand-prix layout: a long back straight into heavy braking, then a technical infield.':{el:'Ισορροπημένη διάταξη grand-prix: μεγάλη πίσω ευθεία με δυνατό φρενάρισμα και μετά τεχνικό εσωτερικό.'},
   'DIFFERENTIAL':{el:'ΔΙΑΦΟΡΙΚΟ'},'OPEN':{el:'ΑΝΟΙΧΤΟ'},'VISCOUS LSD':{el:'ΙΞΩΔΕΣ LSD'},'CLUTCH-PLATE LSD':{el:'LSD ΜΕ ΔΙΣΚΟΥΣ'},'SPOOL / LOCKED':{el:'ΜΠΛΟΚΕ / SPOOL'},
   'GEARBOX TYPE':{el:'ΤΥΠΟΣ ΚΙΒΩΤΙΟΥ'},'MANUAL (H-PATTERN)':{el:'ΧΕΙΡΟΚΙΝΗΤΟ (H)'},'SEQUENTIAL':{el:'ΣΕΙΡΙΑΚΟ'},'DUAL-CLUTCH (DCT)':{el:'ΔΙΠΛΟΥ ΣΥΜΠΛΕΚΤΗ (DCT)'},'TORQUE-CONV AUTO':{el:'ΑΥΤΟΜΑΤΟ (ΜΕΤΑΤΡΟΠΕΑΣ)'},
+  // Garage
+  'Garage':{el:'ΓΚΑΡΑΖ'},'BUILD NAME':{el:'ΟΝΟΜΑ ΚΑΤΑΣΚΕΥΗΣ'},'SAVE TO GARAGE':{el:'ΑΠΟΘΗΚΕΥΣΗ ΣΤΟ ΓΚΑΡΑΖ'},
+  'DELETE':{el:'ΔΙΑΓΡΑΦΗ'},'SAVED TO GARAGE':{el:'ΑΠΟΘΗΚΕΥΤΗΚΕ ΣΤΟ ΓΚΑΡΑΖ'},'BUILD UPDATED':{el:'Η ΚΑΤΑΣΚΕΥΗ ΕΝΗΜΕΡΩΘΗΚΕ'},
+  'LOADED':{el:'ΦΟΡΤΩΘΗΚΕ'},'DELETED':{el:'ΔΙΑΓΡΑΦΗΚΕ'},'NAME THE BUILD FIRST':{el:'ΔΩΣΕ ΠΡΩΤΑ ΟΝΟΜΑ'},
+  'BUILD A CAR FIRST':{el:'ΦΤΙΑΞΕ ΠΡΩΤΑ ΑΥΤΟΚΙΝΗΤΟ'},'GARAGE FULL':{el:'ΤΟ ΓΚΑΡΑΖ ΕΙΝΑΙ ΓΕΜΑΤΟ'},'in':{el:'σε'},'My track coupe':{el:'Το coupe της πίστας μου'},
+  'LOAD FAILED (corrupt data)':{el:'Η ΦΟΡΤΩΣΗ ΑΠΕΤΥΧΕ (κατεστραμμένα δεδομένα)'},
+  'Overwrite the saved build':{el:'Αντικατάσταση της αποθηκευμένης κατασκευής'},
+  'Delete the saved build':{el:'Διαγραφή της αποθηκευμένης κατασκευής'},
+  'Save the whole car — this chassis, its parts and the engine in it — under a name, and swap between builds later. Kept in this browser.':{el:'Αποθήκευσε ολόκληρο το αυτοκίνητο — αυτό το σασί, τα μέρη του και τον κινητήρα μέσα του — με ένα όνομα, και άλλαξε ανάμεσα σε κατασκευές αργότερα. Μένει σε αυτόν τον browser.'},
+  'No saved builds yet. Name the car above and press SAVE TO GARAGE — the chassis, every part on it and the engine inside are all kept together.':{el:'Καμία αποθηκευμένη κατασκευή ακόμα. Δώσε όνομα πιο πάνω και πάτησε ΑΠΟΘΗΚΕΥΣΗ ΣΤΟ ΓΚΑΡΑΖ — το σασί, κάθε εξάρτημά του και ο κινητήρας μέσα κρατιούνται μαζί.'},
   'REFIT FACTORY SPEC':{el:'ΕΡΓΟΣΤΑΣΙΑΚΟΣ ΕΞΟΠΛΙΣΜΟΣ'},'FITTED':{el:'ΤΟΠΟΘΕΤΗΘΗΚΕ'},'REFITTED TO FACTORY SPEC':{el:'ΕΠΑΝΑΦΟΡΑ ΣΤΟΝ ΕΡΓΟΣΤΑΣΙΑΚΟ ΕΞΟΠΛΙΣΜΟ'},
   '(factory spec)':{el:'(εργοστασιακό)'},'(modified)':{el:'(τροποποιημένο)'},
   'Wheels & Tyres':{el:'Τροχοί & Ελαστικά'},'TYRE COMPOUND':{el:'ΤΥΠΟΣ ΕΛΑΣΤΙΚΟΥ'},'WHEEL DIA (in)':{el:'ΔΙΑΜ. ΖΑΝΤΑΣ (in)'},'TYRE WIDTH (mm)':{el:'ΠΛΑΤΟΣ ΕΛΑΣΤ. (mm)'},'TYRE ASPECT (%)':{el:'ΠΡΟΦΙΛ ΕΛΑΣΤ. (%)'},
@@ -883,7 +929,7 @@ const GUIDE_I18N={
   career:{el:'<b>Στόχοι πίστας</b> κρίνουν ολόκληρο το αυτοκίνητο: τέσσερις βάζουν στόχο χρόνου γύρου σε συγκεκριμένη πίστα, και το μπάτζετ τους καλύπτει κινητήρα <i>και</i> όχημα. Ο πίνακας βαθμολογίας δείχνει επίσης τον χρόνο γύρου σου — ως ένδειξη, όχι μέσα στον βαθμό: ο βαθμός αφορά τον <i>κινητήρα</i> και δεν πρέπει να αλλάζει επειδή έβαλες άλλα ελαστικά.<br>Διάλεξε έναν <b>ΣΤΟΧΟ</b> στην κορυφή της ΣΧΕΔΙΑΣΗΣ για να κάνεις τη σχεδίαση γρίφο. Κάθε πρόκληση θέτει κριτήρια — ισχύ, οικονομία, εκπομπές, <b>αξιοπιστία</b> ή <b>ισχύ ανά δολάριο</b> — και κάποιες βάζουν όριο <b>προϋπολογισμού</b>. Η κάρτα τσεκάρει κάθε κριτήριο ζωντανά (✓/✗) και δείχνει <b>ΕΠΙΤΥΧΙΑ</b> όταν καλυφθούν όλα· κόστος και αξιοπιστία φαίνονται πάντα. Ο μεγάλος κυβισμός κερδίζει σε αξία· boost και αγωνιστικά μέρη κερδίζουν σε ισχύ αλλά κοστίζουν σε χρήμα και αξιοπιστία.'},
   types:{el:'<b>Βενζίνη 4-χρονη</b> — η ισορροπημένη επιλογή: ανάφλεξη με σπινθήρα, μία εκρηκτική διαδρομή ανά δύο στροφές.<br><b>Πετρέλαιο (CI)</b> — ανάφλεξη με συμπίεση (χωρίς μπουζί, χωρίς πειράκι), πολύ υψηλή συμπίεση, φτωχό χωρίς πεταλούδα. Μεγάλη <b>ροπή</b> στις χαμηλές, χαμηλό όριο στροφών, η καλύτερη <b>απόδοση</b> — αλλά βαρύ, με εκπομπές <b>NOx + αιθάλη (PM)</b> που καθαρίζει σύστημα DPF/SCR.<br><b>2-χρονη</b> — εκρηκτική διαδρομή σε <i>κάθε</i> στροφή (θυρίδες, χωρίς εκκεντροφόρο): υψηλή ειδική ισχύς αλλά λαίμαργη και <b>HC</b>-βρόμικη.<br><b>Wankel (ρότορας)</b> — περιστρεφόμενος ρότορας που ανάβει σε κάθε στροφή: ομαλός σαν τουρμπίνα, τεράστιες στροφές, υψηλή ισχύς ανά λίτρο, αλλά λαίμαργος, <b>HC</b>-βαρύς και σκληρός στα ελάσματα κορυφής.<br>Η αλλαγή τύπου προσαρμόζει τα εύρη συμπίεσης/στροφών/AFR και απενεργοποιεί ό,τι δεν ισχύει.'},
   subsystems:{el:'<b>Κάτω μέρος</b> — τύπος κινητήρα, διάμετρος × διαδρομή × κύλινδροι = κυβισμός· υπερτετράγωνος & υψηλότερο όριο ανεβάζουν την περιοχή ισχύος.<br><b>Διαδρομή αέρα</b> — τούρμπο (γεμίζει με τις στροφές) ή υπερσυμπιεστής (boost από ρελαντί)· το intercooler ψύχει το χάρμανι· εξάτμιση & καταλύτης ανταλλάσσουν ροή με αντίθλιψη/εκπομπές· το νιτρό είναι εμφιαλωμένη ισχύς.<br><b>Εισαγωγή</b> — καρμπιρατέρ → EFI → ITB ορίζουν αναπνοή, ακρίβεια & ρελαντί.<br><b>Χρονισμός βαλβίδων</b> — άγριες εκκεντροφόροι ανεβάζουν την ισχύ ψηλά· το VVT επαναφέρει τις χαμηλές.<br><b>Καύσιμο & σπινθήρας</b> — τύπος καυσίμου, οκτάνια, μπεκ, ανάφλεξη, χρονισμός FIXED/AUTO και το μείγμα: MANUAL (ένα σταθερό AFR) ή AUTO — ένας 3D χάρτης ECU που τρέχει κοντά στο στοιχειομετρικό στο ελαφρύ φορτίο και εμπλουτίζει υπό φορτίο/boost, όπως ένας πραγματικός χάρτης καυσίμου. Στο AUTO μπορείς να <b>ρυθμίσεις τον χάρτη</b>: πάτησε ένα κελί και μετά − ΦΤΩΧΟ / + ΠΛΟΥΣΙΟ για να αλλάξεις τον στόχο σε εκείνο το φορτίο×στροφές (ΕΠΑΝΑΦΟΡΑ ΧΑΡΤΗ επαναφέρει το εργοστασιακό).<br><b>Ψύξη & ηλεκτρικά</b> — ψυγείο/βεντιλατέρ/ψυγείο λαδιού/θερμοστάτης ορίζουν θερμοκρασίες· δυναμό & ανάφλεξη ορίζουν φόρτιση και όριο μισφάιρ.'},
-  vehicle:{el:'Στην καρτέλα <b>ΟΧΗΜΑ</b> βάζεις τον κινητήρα σου σε αυτοκίνητο. Διάλεξε <b>σασί</b> και έρχεται με τον <b>εργοστασιακό του εξοπλισμό</b> — τα ελαστικά, ζάντες, φρένα, ανάρτηση, αεροδυναμική και κιβώτιο που θα φορούσε πραγματικά: ένα kei εμφανίζεται με στενά οικονομικά ελαστικά και μικρούς ατσάλινους δίσκους, ενώ ένα hypercar παίρνει φαρδιά semi-slick, carbon-ceramic φρένα και πακέτο αεροτομής/diffuser. Όλα παραμένουν επεξεργάσιμα· το <b>ΕΡΓΟΣΤΑΣΙΑΚΟΣ ΕΞΟΠΛΙΣΜΟΣ</b> τα επαναφέρει.<br>Από εκεί ρυθμίζεις <b>μετάδοση</b> (FWD/RWD/AWD — το AWD ξεκινά καλύτερα), <b>κιβώτιο</b> (τύπος, σχέσεις + ρυθμιστικό τελικής), <b>ελαστικά</b> (τύπος + πλάτος/προφίλ/διάμετρος), <b>αεροδυναμική</b> (εμπρός/πίσω/πάτωμα = κάθετη δύναμη & οπισθέλκουσα), <b>φρένα</b> (τύπος + διάμετρος δίσκου) και <b>ανάρτηση</b> (πολλαπλασιαστής μηχανικής πρόσφυσης).<br><b>Ο τύπος κιβωτίου</b> αλλάζει τέσσερα πράγματα: πόσο κόβεται η μετάδοση σε κάθε αλλαγή, πόση από την ισχύ του κινητήρα φτάνει στους τροχούς, πώς είναι κλιμακωμένες οι σχέσεις, και πώς ξεκινά το αυτοκίνητο.<br>· <b>Χειροκίνητο (H)</b> — το πιο αποδοτικό, αλλά χάνεις ~350 ms σε κάθε αλλαγή. Φθηνό.<br>· <b>Σειριακό</b> — αγωνιστικό: αλλαγές ~60 ms και κοντές σχέσεις που κρατούν έναν «αιχμηρό» κινητήρα στην περιοχή του. Ακριβό.<br>· <b>Διπλού συμπλέκτη (DCT)</b> — η επόμενη σχέση είναι ήδη επιλεγμένη στον δεύτερο συμπλέκτη, άρα σχεδόν αδιάλειπτες αλλαγές (~30 ms). Το ταχύτερο, και ανάλογα ακριβό.<br>· <b>Αυτόματο με μετατροπέα ροπής</b> — οι πιο αργές αλλαγές (~200 ms) και οι μεγαλύτερες απώλειες, γιατί μεταδίδει μέσω υγρού. Το κερδίζει στην <b>εκκίνηση</b>: ο μετατροπέας «φορτίζει» πάνω στα φρένα και <i>πολλαπλασιάζει</i> τη ροπή (έως ~1.9× σε στάλλ 2400 σ.α.λ.), σβήνοντας στο 1:1 καθώς ο στρόβιλος προλαβαίνει. Γι’ αυτό ένα αυτόματο ξεκινά καλύτερα από ένα χειροκίνητο παρότι χάνει ισχύ παντού αλλού — και γι’ αυτό ταιριάζει σε βαρύ, ροπάτο αυτοκίνητο, όχι σε ελαφρύ και «αιχμηρό». Επίσης απλώνει περισσότερο τις σχέσεις: πιο κοντή 1η, πιο μακριά τελευταία.<br><b>Η καρτέλα ΠΙΣΤΑ</b> βάζει το αυτοκίνητο σε κυκλική πίστα και λύνει έναν γύρο. Πρώτα υπολογίζει την <b>ιδανική γραμμή</b>: κανείς δεν οδηγεί στον άξονα της πίστας, γιατί χρησιμοποιώντας όλο το πλάτος «ισιώνει» η στροφή και περνάς πιο γρήγορα. Η γραμμή βρίσκεται ελαχιστοποιώντας τη συνολική καμπυλότητα μέσα στα όρια της πίστας — και το έξω-μέσα-έξω προκύπτει μόνο του. Δύο πράγματα την απομακρύνουν από την καθαρή ελάχιστη καμπυλότητα. Πρώτον, <b>η πίστα δεν έχει ένα πλάτος</b>: κάθε πίστα εδώ στενεύει στα τεχνικά της σημεία και ανοίγει στα γρήγορα, και μια στροφή 7 m απλώς δεν «ισιώνει» όσο μία 13 m — ο αριθμός στον χάρτη είναι το εύρος, και το πλάτος της πίστας είναι ο μέσος όρος. Δεύτερον, το <b>καθυστερημένο apex</b>: ένα μέτρο ακτίνας στην <i>έξοδο</i> αξίζει πολύ περισσότερο από ένα μέτρο στην είσοδο, γιατί η ταχύτητα εξόδου μεταφέρεται σε όλο το μήκος αυτού που ακολουθεί, ενώ στην είσοδο ούτως ή άλλως φρενάρεις. Ο λύτης «τιμολογεί» την καμπυλότητα με βάση το πόσο ανοιχτή είναι η πίστα μπροστά, οπότε θυσιάζει ακτίνα εισόδου για να ισιώσει την έξοδο — μετακινώντας το apex περίπου 11 m αργότερα στις στροφές που βγάζουν σε ευθεία, και αφήνοντας ανέπαφες όσες οδηγούν σε άλλες στροφές. Οι πίστες είναι τρισδιάστατες, οπότε ο γύρος λαμβάνει υπόψη και το <b>υψόμετρο</b>: η βαρύτητα σε κρατά πίσω στην ανηφόρα και σε σπρώχνει στην κατηφόρα, και — το πιο σημαντικό — η <b>κατακόρυφη καμπυλότητα</b>. Σε μια κορυφή το αυτοκίνητο «ελαφραίνει» και χάνει πρόσφυση ακριβώς εκεί που πάει γρήγορα· σε μια κοιλάδα πιέζεται στο οδόστρωμα και περνά πολύ πιο γρήγορα. Μετράει και το πού πέφτουν οι λόφοι: μια ανηφόρα σε ζώνη φρεναρίσματος σε αφήνει να φρενάρεις αργότερα και <i>κερδίζει</i> χρόνο.<br><b>ΕΙΣΑΓΩΓΗ GPX</b> φορτώνει πραγματική πίστα από αρχείο GPX: προβάλλεται σε μέτρα, ξαναδειγματοληπτείται σε σταθερό βήμα και εξομαλύνεται ελαφρά ώστε ο θόρυβος GPS να μη γίνει «στροφές». Το υψόμετρο έρχεται από το αρχείο. Οι εισαγόμενες πίστες μένουν μόνο στον browser σου.<br><span style="color:#c86">Ο χρόνος θα βγει λίγο αργός: ένα αρχείο GPX δεν περιέχει καθόλου πλάτος, οπότε το προφίλ πλάτους <i>μοντελοποιείται</i> από τη χάραξη — οι δρόμοι φτιάχνονται φαρδιοί εκεί που είναι γρήγοροι και στενοί εκεί που είναι τεχνικοί — δεν είναι μετρημένο. Η γραμμή παραμένει προσέγγιση της γραμμής ελάχιστου χρόνου και ο οδηγός δεν κάνει ποτέ λάθος. Χρησιμοποίησέ το για σύγκριση των δικών σου κατασκευών.</span> Αξίζει <b>5–7% του χρόνου γύρου</b> σε σχέση με τον άξονα, και όσο πιο φαρδιά η πίστα τόσο περισσότερο. Μετά βρίσκει την ταχύτητα στροφής σε κάθε σημείο (<i>v = &radic;(μ&middot;(mg + κάθετη δύναμη)&middot;r / m)</i>), μετά δουλεύει ανάποδα από κάθε στροφή για τα σημεία φρεναρίσματος και προς τα εμπρός στην έξοδο με τη διαθέσιμη κίνηση, κρατώντας τη μικρότερη ταχύτητα σε κάθε σημείο. Ο <b>κύκλος τριβής</b> τα δένει: η πρόσφυση που ξοδεύεται στο στρίψιμο δεν είναι διαθέσιμη για επιτάχυνση ή φρενάρισμα. Η χρωματιστή γραμμή στον χάρτη δείχνει τι περιορίζει το αυτοκίνητο σε κάθε σημείο και η λεζάντα αθροίζει τα ποσοστά του γύρου. Ο χρόνος αλλαγής σχέσης χρεώνεται σε κάθε αλλαγή, οπότε ένα αργό κιβώτιο χάνει πραγματικό χρόνο.<br><span style="color:#c86">Ένα όριο: η γραμμή παραμένει μόνο προσέγγιση της γραμμής ελάχιστου <i>χρόνου</i>. Η τάση για καθυστερημένο apex υπολογίζεται από τη γεωμετρία μπροστά, όχι από την ταχύτητα του ίδιου του αυτοκινήτου, οπότε την ίδια γραμμή οδηγεί ένα hatchback 90&nbsp;hp και ένα αγωνιστικό 800&nbsp;hp — ενώ στην πραγματικότητα το γρήγορο θα φρέναρε αργότερα και θα έκανε ακόμα πιο καθυστερημένο apex. Αξίζει περίπου μισό τοις εκατό, και είναι το ίδιο μισό τοις εκατό για όλους, οπότε οι συγκρίσεις μεταξύ κατασκευών παραμένουν έντιμες.</span><br><b>Το διαφορικό</b> μοιράζει την κίνηση στους δύο τροχούς του άξονα — και καθορίζει πόση από την πρόσφυση του άξονα μπορείς πραγματικά να χρησιμοποιήσεις. Οι δύο τροχοί δεν είναι ποτέ φορτωμένοι το ίδιο (κλίση δρόμου, αντίδραση ροπής, στρέψη άξονα, γεωμετρία ανάρτησης), και ένα <b>ανοιχτό</b> διαφορικό δίνει σε κάθε τροχό μόνο όση ροπή αντέχει ο <i>λιγότερο φορτωμένος</i>: στρίβει αυτόν τον τροχό και πετάει τα υπόλοιπα, αφήνοντας περίπου 78% της πρόσφυσης αξιοποιήσιμο. Ένα <b>ιξώδες LSD</b> τους δένει μεταξύ τους και ανακτά τα περισσότερα (~92%)· ένα <b>LSD με δίσκους</b> ουσιαστικά όλα· ένα <b>μπλοκέ (spool)</b> τους ενώνει μόνιμα και είναι το καλύτερο σε ευθεία — γι’ αυτό το χρησιμοποιούν τα dragster.<br>Το βασικό: το διαφορικό μετράει μόνο όσο είσαι <b>περιορισμένος από πρόσφυση</b>. Βάλε spool σε αργό αυτοκίνητο και δεν αλλάζει τίποτα. Βάλ’ το σε ένα που πατινάρει στην εκκίνηση και αξίζει περισσότερο από αναβάθμιση ισχύος.<br>Και τώρα το αντιστάθμισμα μετριέται. Στην καρτέλα ΠΙΣΤΑ ένα μπλοκέ διαφορικό πληρώνει το πλεονέκτημά του στην ευθεία: τρίβει σε κάθε στροφή. Σε ένα muscle 842&nbsp;hp το spool είναι ~0.2&nbsp;s ταχύτερο στο 0–100 και ~2.5&nbsp;s <i>πιο αργό</i> ανά γύρο, ενώ το ανοιχτό είναι το χειρότερο και στα δύο.<br><b>Ο αριθμός της τελικής</b> — το ρυθμιστικό 0–100 είναι η <b>σχέση τελικής μετάδοσης</b>, πόσες φορές γυρίζει ο άξονας ανά στροφή των τροχών. Πάει από <b>0 = 4.90:1</b> (η <i>κοντύτερη</i>) έως <b>100 = 2.60:1</b> (η <i>μακρύτερη</i>)· η σχέση φαίνεται δίπλα στον αριθμό. Κοντή τελική πολλαπλασιάζει τη ροπή στους τροχούς: δυνατότερη επιτάχυνση, αλλά κάθε σχέση τελειώνει νωρίς. Μακριά τελική κάνει το αντίθετο: πιο νωθρή επιτάχυνση, περισσότερη ταχύτητα ανά 1000 στροφές και ήρεμο ταξίδι. Ιδανική είναι η πιο μακριά που ο κινητήρας μπορεί ακόμα να τραβήξει ως την κορυφή της ισχύος του στην τελευταία σχέση. Πιο μακριά από αυτό, η τελική ταχύτητα απλώς <i>σταματά να βελτιώνεται</i> — το αυτοκίνητο πιάνει το μέγιστό του μια σχέση χαμηλότερα αντί να «πνίγεται» στην τελευταία — ενώ η επιτάχυνση συνεχίζει να χειροτερεύει, οπότε πληρώνεις χωρίς όφελος. Πολλή ισχύς και λίγη οπισθέλκουσα σηκώνουν πολύ μακριά τελική και κερδίζουν ταχύτητα ως το τέρμα· βαριά, αδύναμα ή αεροδυναμικά «βρώμικα» αυτοκίνητα φτάνουν γρήγορα σε πλατό και θέλουν κοντύτερη.<br>Ο κινητήρας προστίθεται και το ταμπλό <b>Επιδόσεις</b> υπολογίζει <b>0–100 km/h</b>, <b>400/800/1000 m</b>, <b>τελική</b>, <b>φρενάρισμα 100–0</b> και το τεστ <b>0–200–0</b> ζωντανά — εκκίνηση περιορισμένη από πρόσφυση και φρενάρισμα με όριο ελαστικών/φρένων και εξασθένηση. Κολλώδη ελαστικά, μεγάλα φρένα και AWD βοηθούν πιο πολύ.'},
+  vehicle:{el:'Στην καρτέλα <b>ΟΧΗΜΑ</b> βάζεις τον κινητήρα σου σε αυτοκίνητο. Διάλεξε <b>σασί</b> και έρχεται με τον <b>εργοστασιακό του εξοπλισμό</b> — τα ελαστικά, ζάντες, φρένα, ανάρτηση, αεροδυναμική και κιβώτιο που θα φορούσε πραγματικά: ένα kei εμφανίζεται με στενά οικονομικά ελαστικά και μικρούς ατσάλινους δίσκους, ενώ ένα hypercar παίρνει φαρδιά semi-slick, carbon-ceramic φρένα και πακέτο αεροτομής/diffuser. Όλα παραμένουν επεξεργάσιμα· το <b>ΕΡΓΟΣΤΑΣΙΑΚΟΣ ΕΞΟΠΛΙΣΜΟΣ</b> τα επαναφέρει.<br><b>Το ΓΚΑΡΑΖ</b> στο κάτω μέρος της καρτέλας κρατά όσα ολοκληρωμένα αυτοκίνητα θέλεις. Δώσε όνομα και πάτησε <b>ΑΠΟΘΗΚΕΥΣΗ ΣΤΟ ΓΚΑΡΑΖ</b> και αποθηκεύεται το σύνολο — το σασί, κάθε εξάρτημα πάνω του, <i>και</i> ο κινητήρας μέσα, μέχρι και ο χειροκίνητα ρυθμισμένος χάρτης καυσίμου. Κάθε κάρτα δείχνει τα βασικά νούμερα που είχε όταν την αποθήκευσες (ισχύ, βάρος, 0–100, τελική, χρόνο γύρου και συνολικό κόστος), οπότε μπορείς να παρατάξεις τρεις κατασκευές και να τις συγκρίνεις χωρίς να ξαναφτιάξεις καμία. Η <b>ΦΟΡΤΩΣΗ</b> επαναφέρει το αυτοκίνητο ακριβώς όπως ήταν· αν γράψεις όνομα που υπάρχει ήδη, η κάρτα του τονίζεται και η αποθήκευση το αντικαθιστά. Αυτό είναι ξεχωριστό από τα <b>ΑΠΟΘΗΚ.</b>/<b>ΦΟΡΤΩΣΗ</b>, που είναι μία μοναδική θέση γρήγορης αποθήκευσης. Μια εγγραφή του γκαράζ είναι η ίδια που γράφει η <b>ΑΠΟΘ. ΑΡΧΕΙΟΥ</b> και μεταφέρει ένα σύνδεσμος κοινοποίησης. Όλα μένουν μόνο σε αυτόν τον browser — αν καθαρίσεις τα δεδομένα ιστότοπου, χάνεται το γκαράζ, και η <b>ΑΠΟΘ. ΑΡΧΕΙΟΥ</b> είναι αυτή που σώζει μια κατασκευή από αυτό.<br>Από εκεί ρυθμίζεις <b>μετάδοση</b> (FWD/RWD/AWD — το AWD ξεκινά καλύτερα), <b>κιβώτιο</b> (τύπος, σχέσεις + ρυθμιστικό τελικής), <b>ελαστικά</b> (τύπος + πλάτος/προφίλ/διάμετρος), <b>αεροδυναμική</b> (εμπρός/πίσω/πάτωμα = κάθετη δύναμη & οπισθέλκουσα), <b>φρένα</b> (τύπος + διάμετρος δίσκου) και <b>ανάρτηση</b> (πολλαπλασιαστής μηχανικής πρόσφυσης).<br><b>Ο τύπος κιβωτίου</b> αλλάζει τέσσερα πράγματα: πόσο κόβεται η μετάδοση σε κάθε αλλαγή, πόση από την ισχύ του κινητήρα φτάνει στους τροχούς, πώς είναι κλιμακωμένες οι σχέσεις, και πώς ξεκινά το αυτοκίνητο.<br>· <b>Χειροκίνητο (H)</b> — το πιο αποδοτικό, αλλά χάνεις ~350 ms σε κάθε αλλαγή. Φθηνό.<br>· <b>Σειριακό</b> — αγωνιστικό: αλλαγές ~60 ms και κοντές σχέσεις που κρατούν έναν «αιχμηρό» κινητήρα στην περιοχή του. Ακριβό.<br>· <b>Διπλού συμπλέκτη (DCT)</b> — η επόμενη σχέση είναι ήδη επιλεγμένη στον δεύτερο συμπλέκτη, άρα σχεδόν αδιάλειπτες αλλαγές (~30 ms). Το ταχύτερο, και ανάλογα ακριβό.<br>· <b>Αυτόματο με μετατροπέα ροπής</b> — οι πιο αργές αλλαγές (~200 ms) και οι μεγαλύτερες απώλειες, γιατί μεταδίδει μέσω υγρού. Το κερδίζει στην <b>εκκίνηση</b>: ο μετατροπέας «φορτίζει» πάνω στα φρένα και <i>πολλαπλασιάζει</i> τη ροπή (έως ~1.9× σε στάλλ 2400 σ.α.λ.), σβήνοντας στο 1:1 καθώς ο στρόβιλος προλαβαίνει. Γι’ αυτό ένα αυτόματο ξεκινά καλύτερα από ένα χειροκίνητο παρότι χάνει ισχύ παντού αλλού — και γι’ αυτό ταιριάζει σε βαρύ, ροπάτο αυτοκίνητο, όχι σε ελαφρύ και «αιχμηρό». Επίσης απλώνει περισσότερο τις σχέσεις: πιο κοντή 1η, πιο μακριά τελευταία.<br><b>Η καρτέλα ΠΙΣΤΑ</b> βάζει το αυτοκίνητο σε κυκλική πίστα και λύνει έναν γύρο. Πρώτα υπολογίζει την <b>ιδανική γραμμή</b>: κανείς δεν οδηγεί στον άξονα της πίστας, γιατί χρησιμοποιώντας όλο το πλάτος «ισιώνει» η στροφή και περνάς πιο γρήγορα. Η γραμμή βρίσκεται ελαχιστοποιώντας τη συνολική καμπυλότητα μέσα στα όρια της πίστας — και το έξω-μέσα-έξω προκύπτει μόνο του. Δύο πράγματα την απομακρύνουν από την καθαρή ελάχιστη καμπυλότητα. Πρώτον, <b>η πίστα δεν έχει ένα πλάτος</b>: κάθε πίστα εδώ στενεύει στα τεχνικά της σημεία και ανοίγει στα γρήγορα, και μια στροφή 7 m απλώς δεν «ισιώνει» όσο μία 13 m — ο αριθμός στον χάρτη είναι το εύρος, και το πλάτος της πίστας είναι ο μέσος όρος. Δεύτερον, το <b>καθυστερημένο apex</b>: ένα μέτρο ακτίνας στην <i>έξοδο</i> αξίζει πολύ περισσότερο από ένα μέτρο στην είσοδο, γιατί η ταχύτητα εξόδου μεταφέρεται σε όλο το μήκος αυτού που ακολουθεί, ενώ στην είσοδο ούτως ή άλλως φρενάρεις. Ο λύτης «τιμολογεί» την καμπυλότητα με βάση το πόσο ανοιχτή είναι η πίστα μπροστά, οπότε θυσιάζει ακτίνα εισόδου για να ισιώσει την έξοδο — μετακινώντας το apex περίπου 11 m αργότερα στις στροφές που βγάζουν σε ευθεία, και αφήνοντας ανέπαφες όσες οδηγούν σε άλλες στροφές. Οι πίστες είναι τρισδιάστατες, οπότε ο γύρος λαμβάνει υπόψη και το <b>υψόμετρο</b>: η βαρύτητα σε κρατά πίσω στην ανηφόρα και σε σπρώχνει στην κατηφόρα, και — το πιο σημαντικό — η <b>κατακόρυφη καμπυλότητα</b>. Σε μια κορυφή το αυτοκίνητο «ελαφραίνει» και χάνει πρόσφυση ακριβώς εκεί που πάει γρήγορα· σε μια κοιλάδα πιέζεται στο οδόστρωμα και περνά πολύ πιο γρήγορα. Μετράει και το πού πέφτουν οι λόφοι: μια ανηφόρα σε ζώνη φρεναρίσματος σε αφήνει να φρενάρεις αργότερα και <i>κερδίζει</i> χρόνο.<br><b>ΕΙΣΑΓΩΓΗ GPX</b> φορτώνει πραγματική πίστα από αρχείο GPX: προβάλλεται σε μέτρα, ξαναδειγματοληπτείται σε σταθερό βήμα και εξομαλύνεται ελαφρά ώστε ο θόρυβος GPS να μη γίνει «στροφές». Το υψόμετρο έρχεται από το αρχείο. Οι εισαγόμενες πίστες μένουν μόνο στον browser σου.<br><span style="color:#c86">Ο χρόνος θα βγει λίγο αργός: ένα αρχείο GPX δεν περιέχει καθόλου πλάτος, οπότε το προφίλ πλάτους <i>μοντελοποιείται</i> από τη χάραξη — οι δρόμοι φτιάχνονται φαρδιοί εκεί που είναι γρήγοροι και στενοί εκεί που είναι τεχνικοί — δεν είναι μετρημένο. Η γραμμή παραμένει προσέγγιση της γραμμής ελάχιστου χρόνου και ο οδηγός δεν κάνει ποτέ λάθος. Χρησιμοποίησέ το για σύγκριση των δικών σου κατασκευών.</span> Αξίζει <b>5–7% του χρόνου γύρου</b> σε σχέση με τον άξονα, και όσο πιο φαρδιά η πίστα τόσο περισσότερο. Μετά βρίσκει την ταχύτητα στροφής σε κάθε σημείο (<i>v = &radic;(μ&middot;(mg + κάθετη δύναμη)&middot;r / m)</i>), μετά δουλεύει ανάποδα από κάθε στροφή για τα σημεία φρεναρίσματος και προς τα εμπρός στην έξοδο με τη διαθέσιμη κίνηση, κρατώντας τη μικρότερη ταχύτητα σε κάθε σημείο. Ο <b>κύκλος τριβής</b> τα δένει: η πρόσφυση που ξοδεύεται στο στρίψιμο δεν είναι διαθέσιμη για επιτάχυνση ή φρενάρισμα. Η χρωματιστή γραμμή στον χάρτη δείχνει τι περιορίζει το αυτοκίνητο σε κάθε σημείο και η λεζάντα αθροίζει τα ποσοστά του γύρου. Ο χρόνος αλλαγής σχέσης χρεώνεται σε κάθε αλλαγή, οπότε ένα αργό κιβώτιο χάνει πραγματικό χρόνο.<br><span style="color:#c86">Ένα όριο: η γραμμή παραμένει μόνο προσέγγιση της γραμμής ελάχιστου <i>χρόνου</i>. Η τάση για καθυστερημένο apex υπολογίζεται από τη γεωμετρία μπροστά, όχι από την ταχύτητα του ίδιου του αυτοκινήτου, οπότε την ίδια γραμμή οδηγεί ένα hatchback 90&nbsp;hp και ένα αγωνιστικό 800&nbsp;hp — ενώ στην πραγματικότητα το γρήγορο θα φρέναρε αργότερα και θα έκανε ακόμα πιο καθυστερημένο apex. Αξίζει περίπου μισό τοις εκατό, και είναι το ίδιο μισό τοις εκατό για όλους, οπότε οι συγκρίσεις μεταξύ κατασκευών παραμένουν έντιμες.</span><br><b>Το διαφορικό</b> μοιράζει την κίνηση στους δύο τροχούς του άξονα — και καθορίζει πόση από την πρόσφυση του άξονα μπορείς πραγματικά να χρησιμοποιήσεις. Οι δύο τροχοί δεν είναι ποτέ φορτωμένοι το ίδιο (κλίση δρόμου, αντίδραση ροπής, στρέψη άξονα, γεωμετρία ανάρτησης), και ένα <b>ανοιχτό</b> διαφορικό δίνει σε κάθε τροχό μόνο όση ροπή αντέχει ο <i>λιγότερο φορτωμένος</i>: στρίβει αυτόν τον τροχό και πετάει τα υπόλοιπα, αφήνοντας περίπου 78% της πρόσφυσης αξιοποιήσιμο. Ένα <b>ιξώδες LSD</b> τους δένει μεταξύ τους και ανακτά τα περισσότερα (~92%)· ένα <b>LSD με δίσκους</b> ουσιαστικά όλα· ένα <b>μπλοκέ (spool)</b> τους ενώνει μόνιμα και είναι το καλύτερο σε ευθεία — γι’ αυτό το χρησιμοποιούν τα dragster.<br>Το βασικό: το διαφορικό μετράει μόνο όσο είσαι <b>περιορισμένος από πρόσφυση</b>. Βάλε spool σε αργό αυτοκίνητο και δεν αλλάζει τίποτα. Βάλ’ το σε ένα που πατινάρει στην εκκίνηση και αξίζει περισσότερο από αναβάθμιση ισχύος.<br>Και τώρα το αντιστάθμισμα μετριέται. Στην καρτέλα ΠΙΣΤΑ ένα μπλοκέ διαφορικό πληρώνει το πλεονέκτημά του στην ευθεία: τρίβει σε κάθε στροφή. Σε ένα muscle 842&nbsp;hp το spool είναι ~0.2&nbsp;s ταχύτερο στο 0–100 και ~2.5&nbsp;s <i>πιο αργό</i> ανά γύρο, ενώ το ανοιχτό είναι το χειρότερο και στα δύο.<br><b>Ο αριθμός της τελικής</b> — το ρυθμιστικό 0–100 είναι η <b>σχέση τελικής μετάδοσης</b>, πόσες φορές γυρίζει ο άξονας ανά στροφή των τροχών. Πάει από <b>0 = 4.90:1</b> (η <i>κοντύτερη</i>) έως <b>100 = 2.60:1</b> (η <i>μακρύτερη</i>)· η σχέση φαίνεται δίπλα στον αριθμό. Κοντή τελική πολλαπλασιάζει τη ροπή στους τροχούς: δυνατότερη επιτάχυνση, αλλά κάθε σχέση τελειώνει νωρίς. Μακριά τελική κάνει το αντίθετο: πιο νωθρή επιτάχυνση, περισσότερη ταχύτητα ανά 1000 στροφές και ήρεμο ταξίδι. Ιδανική είναι η πιο μακριά που ο κινητήρας μπορεί ακόμα να τραβήξει ως την κορυφή της ισχύος του στην τελευταία σχέση. Πιο μακριά από αυτό, η τελική ταχύτητα απλώς <i>σταματά να βελτιώνεται</i> — το αυτοκίνητο πιάνει το μέγιστό του μια σχέση χαμηλότερα αντί να «πνίγεται» στην τελευταία — ενώ η επιτάχυνση συνεχίζει να χειροτερεύει, οπότε πληρώνεις χωρίς όφελος. Πολλή ισχύς και λίγη οπισθέλκουσα σηκώνουν πολύ μακριά τελική και κερδίζουν ταχύτητα ως το τέρμα· βαριά, αδύναμα ή αεροδυναμικά «βρώμικα» αυτοκίνητα φτάνουν γρήγορα σε πλατό και θέλουν κοντύτερη.<br>Ο κινητήρας προστίθεται και το ταμπλό <b>Επιδόσεις</b> υπολογίζει <b>0–100 km/h</b>, <b>400/800/1000 m</b>, <b>τελική</b>, <b>φρενάρισμα 100–0</b> και το τεστ <b>0–200–0</b> ζωντανά — εκκίνηση περιορισμένη από πρόσφυση και φρενάρισμα με όριο ελαστικών/φρένων και εξασθένηση. Κολλώδη ελαστικά, μεγάλα φρένα και AWD βοηθούν πιο πολύ.'},
   tip:{el:'Συμβουλή: κλείσε τη ΦΘΟΡΑ στις ΕΠΙΛΟΓΕΣ για ελεύθερο πειραματισμό, μετά ξανάνοιξέ την για συνέπειες.'}
 };
 const CHALLENGE_I18N={
@@ -909,7 +955,7 @@ function applyLang(lang){
   currentLang=(lang==='el')?'el':'en';
   try{localStorage.setItem('pes.lang',currentLang);}catch(e){}
   document.documentElement.lang=currentLang;
-  const sel='.viz-tabs button, #btnFullscreen, .design-panel h3, .design-section, .hint, .panel h2, .stat .label, .opt-note, .opt-row>div>b, .ctl-lbl, .field>label, .build-row button, #controlsPanel .btn-row button, .fuelmap-edit button';
+  const sel='.viz-tabs button, #btnFullscreen, .design-panel h3, .design-section, .hint, .panel h2, .stat .label, .opt-note, .opt-row>div>b, .ctl-lbl, .field>label, .build-row button, #controlsPanel .btn-row button, .fuelmap-edit button, .garage-row button';
   document.querySelectorAll(sel).forEach(el=>{
     if(el.children.length>0)return;                       // skip nodes with child elements
     if(el.dataset.en===undefined)el.dataset.en=el.textContent.trim();
@@ -944,6 +990,9 @@ function applyLang(lang){
   if(typeof updateVehicleSummary==='function'&&vehicle&&vehicle.chLabel)updateVehicleSummary();
   if(typeof renderFuelMap==='function')renderFuelMap();
   if(typeof renderLap==='function'&&lapResult)renderLap();
+  const gn=document.getElementById('garageName');
+  if(gn){if(gn.dataset.enPh===undefined)gn.dataset.enPh=gn.placeholder;gn.placeholder=tr(gn.dataset.enPh);}
+  if(typeof renderGarage==='function')renderGarage();
 }
 
 const RAD_CAP={small:0.75,stock:1.0,large:1.35};   // relative heat-rejection capacity
@@ -1488,6 +1537,9 @@ function evalChallenge(ch,m){
   return {results,budgetPass,cost:spend,budget:ch.budget||0,pass:results.every(r=>r.pass)&&budgetPass};
 }
 function fmtCost(v){return '$'+Math.round(v).toLocaleString();}
+// Build names are typed by the user and can also arrive from a .pes.json file or a share link,
+// and they end up inside innerHTML. Escape them at the boundary rather than trusting the source.
+function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
 function renderChallenge(){
   const el=document.getElementById('challengeCard');
   if(!el)return;
@@ -3167,6 +3219,90 @@ function loadSetup(){
   try{applyBuild(JSON.parse(raw));flash('BUILD LOADED');}
   catch(e){flash('LOAD FAILED (corrupt data)','err');}
 }
+// ---- Garage: any number of named chassis+engine combos, kept side by side ----
+// SAVE/LOAD above is a single quicksave slot — saving again overwrites it. The garage is the
+// other half of that: a build you name is kept until you delete it, so you can put the same
+// engine in three chassis, or three engines in one chassis, and flip between them.
+// A garage entry is just a serializeBuild() record, so it is exactly what SAVE FILE writes and
+// what a share link carries — one format, and file/link/garage can never drift apart.
+const GARAGE_KEY='pes.garage', GARAGE_MAX=24;
+let garage=[];
+function loadGarage(){
+  let raw;try{raw=localStorage.getItem(GARAGE_KEY);}catch(e){raw=null;}
+  if(!raw){garage=[];return garage;}
+  try{const a=JSON.parse(raw);garage=Array.isArray(a)?a.filter(x=>x&&x.build&&x.build.engine):[];}
+  catch(e){garage=[];}
+  return garage;
+}
+function persistGarage(){
+  try{localStorage.setItem(GARAGE_KEY,JSON.stringify(garage));return true;}
+  catch(e){flash('GARAGE FULL OR STORAGE BLOCKED','err');return false;}
+}
+// The headline numbers, snapshotted when the build is saved. They are a label on the card, not a
+// source of truth — loading the build recomputes everything from the spec.
+function garageStats(){
+  const s=engine.score||{};
+  return {hp:s.peakHP||0,tq:s.peakTQ||0,kg:Math.round((vehicle&&vehicle.mass)||0),
+    t100:(perf&&perf.t100!=null)?+perf.t100.toFixed(2):null,
+    vmax:(perf&&perf.topSpeed!=null)?Math.round(perf.topSpeed):null,
+    cost:(engine.cost||0)+((vehicle&&vehicle.cost)||0),
+    lap:lapFor(trackKey),circuit:(TRACKS[trackKey]||{}).label||'',
+    chassis:(vehicle&&vehicle.chLabel)||'',
+    engine:engine.name||(engine.displacement_L?engine.displacement_L.toFixed(1)+'L':'engine')};
+}
+function garageSave(){
+  const inp=document.getElementById('garageName');
+  const name=((inp&&inp.value)||'').trim().slice(0,28);
+  if(!name){flash(tr('NAME THE BUILD FIRST'),'warn');if(inp)inp.focus();return;}
+  if(!engine.score||!vehicle||!vehicle.mass){flash(tr('BUILD A CAR FIRST'),'warn');return;}
+  const at=garage.findIndex(g=>g.name.toLowerCase()===name.toLowerCase());
+  if(at>=0&&typeof confirm==='function'&&!confirm(tr('Overwrite the saved build')+' "'+garage[at].name+'"?'))return;
+  if(at<0&&garage.length>=GARAGE_MAX){flash(tr('GARAGE FULL')+' ('+GARAGE_MAX+')','warn');return;}
+  const entry={id:at>=0?garage[at].id:'g'+Date.now().toString(36)+Math.random().toString(36).slice(2,6),
+    name,date:new Date().toISOString().slice(0,10),stats:garageStats(),build:serializeBuild(name,'')};
+  if(at>=0)garage[at]=entry;else garage.unshift(entry);
+  if(persistGarage())flash(at>=0?tr('BUILD UPDATED'):tr('SAVED TO GARAGE'));
+  renderGarage();
+}
+function garageLoad(id){
+  const g=garage.find(x=>x.id===id);if(!g)return;
+  try{applyBuild(g.build);}
+  catch(e){flash(tr('LOAD FAILED (corrupt data)'),'err');return;}
+  const inp=document.getElementById('garageName');if(inp)inp.value=g.name;
+  flash(tr('LOADED')+': '+g.name.toUpperCase());
+  renderGarage();
+}
+function garageDelete(id){
+  const g=garage.find(x=>x.id===id);if(!g)return;
+  if(typeof confirm==='function'&&!confirm(tr('Delete the saved build')+' "'+g.name+'"?'))return;
+  garage=garage.filter(x=>x.id!==id);
+  persistGarage();flash(tr('DELETED')+': '+g.name.toUpperCase());
+  renderGarage();
+}
+function renderGarage(){
+  const list=document.getElementById('garageList');if(!list)return;
+  if(!garage.length){
+    list.innerHTML='<div class="garage-empty">'+tr('No saved builds yet. Name the car above and press SAVE TO GARAGE — the chassis, every part on it and the engine inside are all kept together.')+'</div>';
+    return;
+  }
+  const cur=((document.getElementById('garageName')||{}).value||'').trim().toLowerCase();
+  list.innerHTML=garage.map(g=>{
+    const s=g.stats||{};
+    const bits=[];
+    if(s.hp)bits.push('<b>'+s.hp+'</b> hp');
+    if(s.kg)bits.push('<b>'+s.kg+'</b> kg');
+    if(s.t100!=null)bits.push('0–100 <b>'+s.t100.toFixed(2)+'s</b>');
+    if(s.vmax)bits.push('<b>'+s.vmax+'</b> km/h');
+    if(s.lap!=null)bits.push(tr('Lap')+' <b>'+fmtLap(s.lap)+'</b>'+(s.circuit?' @ '+s.circuit:''));
+    if(s.cost)bits.push(fmtCost(s.cost));
+    return '<div class="garage-item'+(cur&&g.name.toLowerCase()===cur?' current':'')+'">'+
+      '<div class="garage-head"><span class="garage-name">'+esc(g.name)+'</span><span class="garage-date">'+esc(g.date||'')+'</span></div>'+
+      '<div class="garage-spec">'+esc(s.engine||'')+(s.chassis?' '+tr('in')+' '+esc(tr(s.chassis)):'')+'</div>'+
+      '<div class="garage-stats">'+bits.join(' &middot; ')+'</div>'+
+      '<div class="garage-btns"><button data-gload="'+g.id+'">'+tr('LOAD')+'</button>'+
+      '<button class="del" data-gdel="'+g.id+'">'+tr('DELETE')+'</button></div></div>';
+  }).join('');
+}
 // ---- Save to / open from file (named, with a note) ----
 function exportBuild(){
   const name=(typeof prompt==='function'?prompt('Engine name:',(engine.name||'My Engine')):'My Engine');
@@ -4264,6 +4400,20 @@ function bindControls(){
     buildVehicle();updateVehicleSummary();
     if(ch)flash(tr('REFITTED TO FACTORY SPEC')+': '+tr(ch.label));
   });
+  // Garage. The list is rebuilt on every change, so LOAD/DELETE are delegated off the container
+  // rather than rebound per card.
+  const gSave=document.getElementById('btnGarageSave'),gName=document.getElementById('garageName'),gList=document.getElementById('garageList');
+  if(gSave)gSave.addEventListener('click',garageSave);
+  if(gName){
+    gName.addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();garageSave();}});
+    gName.addEventListener('input',renderGarage);       // highlights the card you are about to overwrite
+  }
+  if(gList)gList.addEventListener('click',e=>{
+    const b=e.target.closest('button');if(!b)return;
+    if(b.dataset.gload)garageLoad(b.dataset.gload);
+    else if(b.dataset.gdel)garageDelete(b.dataset.gdel);
+  });
+  loadGarage();renderGarage();
 
   const vizPanel=document.querySelector('.viz-panel');
   document.getElementById('btnFullscreen').addEventListener('click',()=>{
