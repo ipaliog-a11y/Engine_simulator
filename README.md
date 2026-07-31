@@ -138,8 +138,11 @@ saps power; a large radiator, electric fan and oil cooler keep it cool.
 
   ![engine cutaway](docs/cutaway.png)
 
-  - **Crank angle is integrated from real rpm**, not from a timer, so a long-stroke diesel lopes
-    and a 9000 rpm screamer blurs. It stops dead when the engine does.
+  - **Deliberately not real time.** A crank at 5000 rpm turns 83 times a *second*; drawn
+    literally at 60 fps that is a strobe, not a picture. The cycle runs at a readable pace —
+    about 3.3 s down to 1.1 s per full four-stroke cycle — still ranked by rpm so idle is
+    visibly lazier than the limiter, and it stops dead when the engine does. The true speed is
+    on the tachometer and in the note; the animation's job is to make the *cycle* legible.
   - **Proper crank-slider geometry** — `x = r(1−cosθ) + L − √(L²−r²sin²θ)`, not a sine wave. A
     connecting rod of finite length makes the piston linger at the bottom and snap through the
     top; at quarter-crank it is at 0.58 of stroke where a sine would say 0.50.
@@ -561,37 +564,58 @@ philosophy).
 
 ## Roadmap / Future Expansion
 
-### Next round — planned build order
+### The original feature plan — all shipped
 
-1. ~~Engine presets / example gallery~~ ✅ **done** — a **LOAD A PRESET** dropdown with 10
-   popular archetypes (1.6 sport, kei turbo, hot-hatch, ITB screamer, RS5-turbo, 2JZ six,
-   muscle V8, blown V8, V12 supercar, eco turbo).
-2. **(D) Forced-induction & tuning depth** — ✅ turbo configs (twin/sequential/compound),
-   supercharger types (roots/screw/centrifugal), anti-lag and nitrous are **done**; 2D
-   fuel/ignition map editor still to come (Auto timing already covers ignition-map behaviour).
-3. ~~**(E) Emissions & sound**~~ ✅ **done** — engine-out CO / HC / NOx vs mixture &
-   combustion temperature, a **catalytic converter** design option and a stoich-window
-   three-way conversion model, a live analyser readout + an emissions score, and a
-   character-driven **lope/burble** on the engine note.
-4. ~~**(C) Strategy layer**~~ ✅ **done** — per-part costs, a total build budget, a design
-   reliability index and power-per-dollar, plus eight objective-based challenges (power,
-   economy, emissions, reliability, power-per-dollar…) with live pass/fail.
-5. ~~**(B) New engine types**~~ ✅ **done** — diesel (compression ignition), rotary/Wankel and
-   2-stroke, each with its own firing frequency, fuelling, efficiency, emissions and sound.
-6. **(A) Vehicle / drivetrain layer** — 🚧 *in progress.* **Done:** chassis, drivetrain
-   (FWD/RWD/AWD), gearbox, tyres, aero, weight, **brakes and suspension** → **acceleration
-   (0–100 km/h, 400/800/1000 m), top speed, 100–0 braking and the 0–200–0 test**, plus
-   **per-chassis factory fitment** (each chassis ships with matching tyres/wheels/brakes/
-   suspension/aero) and a REFIT button, **gearbox types** (manual / sequential / DCT /
-   torque-converter auto) and **differential types** (open / viscous LSD / clutch LSD / spool).
-   and a **test track** (four circuits, a full cornering/friction-circle lap solver with a
-   late-apex racing line and variable track width, sector splits and a limit-coloured map) —
-   which also prices the spool's cornering penalty properly. Lap time now feeds the **challenge
-   system and the scorecard**, and a **garage** keeps any number of named chassis+engine combos
-   side by side. That closes the layer.
+1. ~~Engine presets / example gallery~~ ✅ — a **LOAD A PRESET** dropdown with popular
+   archetypes (1.6 sport, kei turbo, hot-hatch, ITB screamer, RS5-turbo, 2JZ six, muscle V8,
+   blown V8, V12 supercar, eco turbo, diesels, rotaries, two-stroke).
+2. ~~**(D) Forced-induction & tuning depth**~~ ✅ — turbo configs (twin/sequential/compound),
+   supercharger types (roots/screw/centrifugal), anti-lag, nitrous, an **editable 3D ECU fuel
+   map** (tap a load×rpm cell, − LEAN / + RICH, RESET MAP), and pressure-ratio-aware spool with
+   compressor flow limits. *Ignition is covered by the Auto (MBT-tracking, knock-limited) timing
+   model rather than a hand-editable spark map — see below.*
+3. ~~**(E) Emissions & sound**~~ ✅ — engine-out CO / HC / NOx vs mixture & combustion
+   temperature, a **catalytic converter** with a stoich-window three-way conversion model, a live
+   analyser readout, an emissions score, and a character-driven **lope/burble** on the note.
+4. ~~**(C) Strategy layer**~~ ✅ — per-part costs, build budgets, a design reliability index and
+   power-per-dollar, plus objective-based challenges with live pass/fail — including four that
+   judge the **whole car against the clock** on a circuit.
+5. ~~**(B) New engine types**~~ ✅ — diesel (compression ignition), rotary/Wankel and 2-stroke,
+   each with its own firing frequency, fuelling, efficiency, emissions and sound.
+6. ~~**(A) Vehicle / drivetrain layer**~~ ✅ — chassis, drivetrain, gearbox types, differential
+   types, tyres, aero, weight, brakes and suspension → acceleration, top speed, braking and the
+   0–200–0 test, with **per-chassis factory fitment**; a **test track** (four circuits, a
+   friction-circle lap solver with a late-apex racing line, variable width and 3D elevation,
+   sector splits and a limit-coloured map); lap time feeding the **challenge system and
+   scorecard**; and a **garage** holding any number of named chassis+engine combos.
 
-Deferred: V/boxer bank visuals (cosmetic);
-native Android build (parked).
+### Known limits — the honest list
+
+These are modelled approximations that are *stated* rather than hidden, each one measured and
+documented in the GUIDE at the point where it matters:
+
+- **Turbo lag doesn't reach the performance numbers.** Spool time is integrated on the live
+  ENGINE bench, but `simulateAccel` and `simulateLap` both work from the steady boost available
+  at each rpm, so they feel the spool *point* move and not the transient. A very laggy build is
+  flattered a little by its 0–100 and lap times.
+- **The racing line doesn't know what car is driving it.** The late-apex bias is priced from the
+  geometry ahead, not the car's own speed, so a 90 hp hatchback and an 800 hp aero car take the
+  same line. It is the same half-percent for everyone, so build-to-build comparisons stay honest.
+- **A lap is a single best-case lap** — no tyre wear, no fuel burn, no traffic, no driver error.
+- **Imported circuits have modelled width, not surveyed width**, derived from the layout.
+
+### What could come next
+
+Nothing is in progress. Candidates, roughly in order of how much they'd add:
+
+- **Charge the acceleration and lap solvers for spool lag**, closing the first limit above. It
+  needs a transient pass rather than the current per-rpm steady solve.
+- **A hand-editable ignition map**, to match the fuel map editor — the last piece of item 2.
+- **Tyre wear and fuel burn over a stint**, turning the single best-case lap into a run.
+- **V/boxer geometry in the large cutaway.** The bank strip already lays cylinders out by layout
+  (a V12 shows two banks of six, a boxer two opposed pairs), but the big section is still a single
+  upright cylinder whatever the layout — a real V-angle or opposed section would finish it.
+- **Native Android wrap** (Capacitor/TWA) — parked, not abandoned.
 
 ### Completed
 
@@ -603,11 +627,12 @@ native Android build (parked).
 - [x] Sound (Web Audio API engine note)
 - [x] Pressure-ratio-aware turbo spool, compressor flow limits and real charge heating
 - [x] Torque-scaled axle asymmetry, and acceleration calibrated against six real cars
-- [x] Animated engine cutaway driven by real crank angle, at device resolution
+- [x] Animated engine cutaway at a readable pace, with live values beside each part, at device resolution
 - [x] Save / load engine setups
 - [x] Garage: any number of named chassis+engine combos, with per-build stat cards
 - [x] Mobile app packaging (PWA)
-- [ ] Proper V / boxer bank visuals & firing-order animation
+- [x] Firing-order animation and V / boxer bank layout in the cutaway's cylinder strip
+- [ ] V-angle / opposed geometry in the *large* cutaway section (still one upright cylinder)
 - [x] Cam profiles & valvetrain (stock/sport/race cam + VVT, reshaping the VE curve & idle)
 - [x] Turbo lag / spool modelling vs. RPM (turbo size, spool curve, transient lag)
 - [x] Cooling subsystem (radiator size, fan, oil cooler, thermostat) feeding the thermal model
@@ -638,7 +663,6 @@ native Android build (parked).
 - [x] Track elevation: gradient, slope-adjusted load and crest/compression vertical curvature, with an elevation profile on the lap report
 - [x] GPX circuit import (projection, uniform resampling, smoothing, real elevation) with localStorage persistence
 - [x] Nordschleife in the track pack (20.4 km, 290 m elevation) — a real road course as a benchmark
-- [x] Track objectives (lap targets on named circuits, whole-car budgets) + lap time on the scorecard
 - [x] Track objectives (lap targets on named circuits, budgeting the whole car) + lap time on the scorecard
 - [x] Printable dyno report (PNG + library-free PDF) with chart, peaks, engine spec, run conditions and tabulated data
 - [x] Printable hot lap report: map with throttle/braking highlighted, speed trace, sector times, per-corner speed traps with names
