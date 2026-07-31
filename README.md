@@ -138,8 +138,11 @@ saps power; a large radiator, electric fan and oil cooler keep it cool.
 
   ![engine cutaway](docs/cutaway.png)
 
-  - **Crank angle is integrated from real rpm**, not from a timer, so a long-stroke diesel lopes
-    and a 9000 rpm screamer blurs. It stops dead when the engine does.
+  - **Deliberately not real time.** A crank at 5000 rpm turns 83 times a *second*; drawn
+    literally at 60 fps that is a strobe, not a picture. The cycle runs at a readable pace —
+    about 3.3 s down to 1.1 s per full four-stroke cycle — still ranked by rpm so idle is
+    visibly lazier than the limiter, and it stops dead when the engine does. The true speed is
+    on the tachometer and in the note; the animation's job is to make the *cycle* legible.
   - **Proper crank-slider geometry** — `x = r(1−cosθ) + L − √(L²−r²sin²θ)`, not a sine wave. A
     connecting rod of finite length makes the piston linger at the bottom and snap through the
     top; at quarter-crank it is at 0.58 of stroke where a sine would say 0.50.
@@ -624,7 +627,7 @@ Nothing is in progress. Candidates, roughly in order of how much they'd add:
 - [x] Sound (Web Audio API engine note)
 - [x] Pressure-ratio-aware turbo spool, compressor flow limits and real charge heating
 - [x] Torque-scaled axle asymmetry, and acceleration calibrated against six real cars
-- [x] Animated engine cutaway driven by real crank angle, at device resolution
+- [x] Animated engine cutaway at a readable pace, with live values beside each part, at device resolution
 - [x] Save / load engine setups
 - [x] Garage: any number of named chassis+engine combos, with per-build stat cards
 - [x] Mobile app packaging (PWA)
