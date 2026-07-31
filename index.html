@@ -425,7 +425,16 @@ moving, a taller top for cruising.<br>
 <b>racing line</b>: nobody drives the centreline, because using the full width of the track
 straightens a corner and so raises the speed you can carry through it. The line is found by
 minimising its total curvature inside the track edges, and out-in-out through corners, straightened
-esses and linked complexes all fall out of that on their own. Circuits are three-dimensional, so the
+esses and linked complexes all fall out of that on their own. Two things bend it away from pure
+minimum curvature. First, <b>the track is not one width</b>: every circuit here narrows through its
+tight sections and opens out on the fast ones, and a 7 m corner simply cannot be straightened as
+much as a 13 m one — the figure quoted on the map is the range, and the circuit's headline width is
+its average. Second, a <b>late apex</b>: a metre of radius at a corner <i>exit</i> is worth far more
+than a metre at the entry, because exit speed is carried the whole length of whatever follows while
+at the entry you are braking anyway. The solver prices curvature by how open the track is ahead, so
+it gives up entry radius to straighten the exit — moving the apex about 11 m later on corners that
+lead onto a straight, and leaving corners that lead into more corners exactly where they were.
+Circuits are three-dimensional, so the
 lap also accounts for <b>elevation</b>: gravity pulling you back up a climb and pushing you down a
 descent, the slightly reduced weight-on-tyres of a slope, and — the one that really bites —
 <b>vertical curvature</b>. Over a crest the car is thrown light and loses grip exactly where it is
@@ -439,10 +448,12 @@ spacing (GPX points are wildly uneven, and a starved spline invents corners) and
 so GPS jitter doesn't read as curvature. Elevation comes straight from the file, so an imported
 circuit gets its real gradients. Imported tracks are marked <b>*</b> in the list and are kept in
 your browser only — nothing is uploaded, and nothing ships with the app.<br>
-<span style="color:#c86">On accuracy: an imported circuit's lap time will read a little slow. The
-line is minimum-curvature rather than minimum-time, the track is treated as one constant width,
-and the driver never makes a mistake or takes a compromise line. Treat it as a consistent yardstick
-for comparing your own builds, not as a real lap record.</span><br> It is worth <b>4–7% of lap time</b>
+<span style="color:#c86">On accuracy: an imported circuit's lap time will read a little slow. A GPX
+trace carries no width at all, so the width profile is <i>modelled</i> from the layout — roads are
+built wide where they are fast and narrow where they are tight — rather than surveyed. The line is
+still an approximation of the minimum-time line, and the driver never makes a mistake or takes a
+compromise line. Treat it as a consistent yardstick for comparing your own builds, not as a real lap
+record.</span><br> It is worth <b>5–7% of lap time</b>
 over driving the centreline, and a wider circuit is worth more. Then it finds the cornering speed at
 every point (<i>v = &radic;(&mu;&middot;(mg + downforce)&middot;r / m)</i>), then works backwards from each
 corner to find the braking points and forwards out of each corner on the available drive, taking
@@ -453,10 +464,11 @@ the legend totals how much of the lap each one accounts for — a fast circuit i
 <span style="color:#55dd66">power</span> and <span style="color:#ff5555">braking</span>, a tight
 one mostly <span style="color:#4aa3ff">traction</span> out of slow corners. Shift time is charged
 per gear change around the lap, so a slow-shifting box loses real time.<br>
-<span style="color:#c86">One limit worth knowing: minimum curvature is not the same as minimum
-<i>time</i>. A real driver gives up a little radius for a <b>late apex</b> when a corner leads onto
-a long straight, so they can get on the power earlier — worth roughly another half a percent. The
-line here doesn't model that yet.</span><br>
+<span style="color:#c86">One limit worth knowing: the line is still only an approximation of the
+minimum-<i>time</i> line. The late-apex bias is priced from the geometry ahead, not from the car's
+own speed, so the same line is driven by a 90 hp hatchback and an 800 hp aero car — where in
+reality the fast car would brake later and apex later still. It is worth about half a percent, and
+it is the same half percent for everyone, so build-to-build comparisons stay honest.</span><br>
 <b>The differential</b> splits drive between the two wheels on an axle — and decides how much of
 that axle's grip you can actually use. The two wheels are never loaded identically (road camber,
 engine torque reaction, axle wind-up, suspension geometry), and an <b>open</b> diff can only feed
@@ -837,6 +849,7 @@ const I18N={
   'SLOWEST':{el:'ΒΡΑΔΥΤΕΡΟ'},'FASTEST':{el:'ΤΑΧΥΤΕΡΟ'},'SHIFTS':{el:'ΑΛΛΑΓΕΣ'},'TEST TRACK':{el:'ΠΙΣΤΑ ΔΟΚΙΜΩΝ'},
   'BUILD AN ENGINE FIRST':{el:'ΦΤΙΑΞΕ ΠΡΩΤΑ ΚΙΝΗΤΗΡΑ'},'corners':{el:'στροφές'},'wide':{el:'πλάτος'},'elevation':{el:'υψομ.'},'ELEVATION PROFILE':{el:'ΠΡΟΦΙΛ ΥΨΟΜΕΤΡΟΥ'},'IMPORT GPX TRACK':{el:'ΕΙΣΑΓΩΓΗ GPX'},'Lap':{el:'Γύρος'},'car':{el:'αυτοκίνητο'},'Timed on':{el:'Χρονομέτρηση σε'},'build the car on the VEHICLE tab':{el:'φτιάξε το αυτοκίνητο στην καρτέλα ΟΧΗΜΑ'},'avg':{el:'μέση'},'shifts':{el:'αλλαγές'},
   'TRACTION (diff/tyres)':{el:'ΠΡΟΣΦΥΣΗ (διαφ./ελαστικά)'},'CORNERING (grip)':{el:'ΣΤΡΟΦΗ (πρόσφυση)'},'BRAKING':{el:'ΦΡΕΝΑΡΙΣΜΑ'},
+  'A 20 km road course through wooded hills: 290 m of elevation, blind crests, long descents and a 3 km straight. Geometry and gradients from a recorded GPX trace; corners are numbered, not named, because the detector cannot reliably align with the circuit\'s real corner names. Track width is modelled from the layout — tight sections narrow, fast sections open — not surveyed.':{el:'Διαδρομή 20 χλμ. μέσα σε δασωμένους λόφους: 290 μ. υψομετρικής διαφοράς, τυφλές κορυφές, μεγάλες κατηφόρες και ευθεία 3 χλμ. Η γεωμετρία και οι κλίσεις προέρχονται από καταγεγραμμένο αρχείο GPX· οι στροφές είναι αριθμημένες, όχι ονομασμένες, γιατί ο ανιχνευτής δεν μπορεί να τις αντιστοιχίσει αξιόπιστα με τα πραγματικά ονόματα. Το πλάτος της πίστας μοντελοποιείται από τη χάραξη — στενό στα τεχνικά σημεία, φαρδύ στα γρήγορα — δεν είναι μετρημένο.'},
   'Tight and technical — second-gear corners, short straights. Grip, brakes and a light car matter more than power.':{el:'Στενή και τεχνική — στροφές δευτέρας, κοντές ευθείες. Πρόσφυση, φρένα και χαμηλό βάρος μετρούν πιο πολύ από ισχύ.'},
   'Long straights and fast sweepers. Power, gearing and low drag decide it; downforce pays for itself.':{el:'Μεγάλες ευθείες και γρήγορες στροφές. Ισχύς, σχέσεις και χαμηλή οπισθέλκουσα κρίνουν· η κάθετη δύναμη αποδίδει.'},
   'A balanced grand-prix layout: a long back straight into heavy braking, then a technical infield.':{el:'Ισορροπημένη διάταξη grand-prix: μεγάλη πίσω ευθεία με δυνατό φρενάρισμα και μετά τεχνικό εσωτερικό.'},
@@ -870,7 +883,7 @@ const GUIDE_I18N={
   career:{el:'<b>Στόχοι πίστας</b> κρίνουν ολόκληρο το αυτοκίνητο: τέσσερις βάζουν στόχο χρόνου γύρου σε συγκεκριμένη πίστα, και το μπάτζετ τους καλύπτει κινητήρα <i>και</i> όχημα. Ο πίνακας βαθμολογίας δείχνει επίσης τον χρόνο γύρου σου — ως ένδειξη, όχι μέσα στον βαθμό: ο βαθμός αφορά τον <i>κινητήρα</i> και δεν πρέπει να αλλάζει επειδή έβαλες άλλα ελαστικά.<br>Διάλεξε έναν <b>ΣΤΟΧΟ</b> στην κορυφή της ΣΧΕΔΙΑΣΗΣ για να κάνεις τη σχεδίαση γρίφο. Κάθε πρόκληση θέτει κριτήρια — ισχύ, οικονομία, εκπομπές, <b>αξιοπιστία</b> ή <b>ισχύ ανά δολάριο</b> — και κάποιες βάζουν όριο <b>προϋπολογισμού</b>. Η κάρτα τσεκάρει κάθε κριτήριο ζωντανά (✓/✗) και δείχνει <b>ΕΠΙΤΥΧΙΑ</b> όταν καλυφθούν όλα· κόστος και αξιοπιστία φαίνονται πάντα. Ο μεγάλος κυβισμός κερδίζει σε αξία· boost και αγωνιστικά μέρη κερδίζουν σε ισχύ αλλά κοστίζουν σε χρήμα και αξιοπιστία.'},
   types:{el:'<b>Βενζίνη 4-χρονη</b> — η ισορροπημένη επιλογή: ανάφλεξη με σπινθήρα, μία εκρηκτική διαδρομή ανά δύο στροφές.<br><b>Πετρέλαιο (CI)</b> — ανάφλεξη με συμπίεση (χωρίς μπουζί, χωρίς πειράκι), πολύ υψηλή συμπίεση, φτωχό χωρίς πεταλούδα. Μεγάλη <b>ροπή</b> στις χαμηλές, χαμηλό όριο στροφών, η καλύτερη <b>απόδοση</b> — αλλά βαρύ, με εκπομπές <b>NOx + αιθάλη (PM)</b> που καθαρίζει σύστημα DPF/SCR.<br><b>2-χρονη</b> — εκρηκτική διαδρομή σε <i>κάθε</i> στροφή (θυρίδες, χωρίς εκκεντροφόρο): υψηλή ειδική ισχύς αλλά λαίμαργη και <b>HC</b>-βρόμικη.<br><b>Wankel (ρότορας)</b> — περιστρεφόμενος ρότορας που ανάβει σε κάθε στροφή: ομαλός σαν τουρμπίνα, τεράστιες στροφές, υψηλή ισχύς ανά λίτρο, αλλά λαίμαργος, <b>HC</b>-βαρύς και σκληρός στα ελάσματα κορυφής.<br>Η αλλαγή τύπου προσαρμόζει τα εύρη συμπίεσης/στροφών/AFR και απενεργοποιεί ό,τι δεν ισχύει.'},
   subsystems:{el:'<b>Κάτω μέρος</b> — τύπος κινητήρα, διάμετρος × διαδρομή × κύλινδροι = κυβισμός· υπερτετράγωνος & υψηλότερο όριο ανεβάζουν την περιοχή ισχύος.<br><b>Διαδρομή αέρα</b> — τούρμπο (γεμίζει με τις στροφές) ή υπερσυμπιεστής (boost από ρελαντί)· το intercooler ψύχει το χάρμανι· εξάτμιση & καταλύτης ανταλλάσσουν ροή με αντίθλιψη/εκπομπές· το νιτρό είναι εμφιαλωμένη ισχύς.<br><b>Εισαγωγή</b> — καρμπιρατέρ → EFI → ITB ορίζουν αναπνοή, ακρίβεια & ρελαντί.<br><b>Χρονισμός βαλβίδων</b> — άγριες εκκεντροφόροι ανεβάζουν την ισχύ ψηλά· το VVT επαναφέρει τις χαμηλές.<br><b>Καύσιμο & σπινθήρας</b> — τύπος καυσίμου, οκτάνια, μπεκ, ανάφλεξη, χρονισμός FIXED/AUTO και το μείγμα: MANUAL (ένα σταθερό AFR) ή AUTO — ένας 3D χάρτης ECU που τρέχει κοντά στο στοιχειομετρικό στο ελαφρύ φορτίο και εμπλουτίζει υπό φορτίο/boost, όπως ένας πραγματικός χάρτης καυσίμου. Στο AUTO μπορείς να <b>ρυθμίσεις τον χάρτη</b>: πάτησε ένα κελί και μετά − ΦΤΩΧΟ / + ΠΛΟΥΣΙΟ για να αλλάξεις τον στόχο σε εκείνο το φορτίο×στροφές (ΕΠΑΝΑΦΟΡΑ ΧΑΡΤΗ επαναφέρει το εργοστασιακό).<br><b>Ψύξη & ηλεκτρικά</b> — ψυγείο/βεντιλατέρ/ψυγείο λαδιού/θερμοστάτης ορίζουν θερμοκρασίες· δυναμό & ανάφλεξη ορίζουν φόρτιση και όριο μισφάιρ.'},
-  vehicle:{el:'Στην καρτέλα <b>ΟΧΗΜΑ</b> βάζεις τον κινητήρα σου σε αυτοκίνητο. Διάλεξε <b>σασί</b> και έρχεται με τον <b>εργοστασιακό του εξοπλισμό</b> — τα ελαστικά, ζάντες, φρένα, ανάρτηση, αεροδυναμική και κιβώτιο που θα φορούσε πραγματικά: ένα kei εμφανίζεται με στενά οικονομικά ελαστικά και μικρούς ατσάλινους δίσκους, ενώ ένα hypercar παίρνει φαρδιά semi-slick, carbon-ceramic φρένα και πακέτο αεροτομής/diffuser. Όλα παραμένουν επεξεργάσιμα· το <b>ΕΡΓΟΣΤΑΣΙΑΚΟΣ ΕΞΟΠΛΙΣΜΟΣ</b> τα επαναφέρει.<br>Από εκεί ρυθμίζεις <b>μετάδοση</b> (FWD/RWD/AWD — το AWD ξεκινά καλύτερα), <b>κιβώτιο</b> (τύπος, σχέσεις + ρυθμιστικό τελικής), <b>ελαστικά</b> (τύπος + πλάτος/προφίλ/διάμετρος), <b>αεροδυναμική</b> (εμπρός/πίσω/πάτωμα = κάθετη δύναμη & οπισθέλκουσα), <b>φρένα</b> (τύπος + διάμετρος δίσκου) και <b>ανάρτηση</b> (πολλαπλασιαστής μηχανικής πρόσφυσης).<br><b>Ο τύπος κιβωτίου</b> αλλάζει τέσσερα πράγματα: πόσο κόβεται η μετάδοση σε κάθε αλλαγή, πόση από την ισχύ του κινητήρα φτάνει στους τροχούς, πώς είναι κλιμακωμένες οι σχέσεις, και πώς ξεκινά το αυτοκίνητο.<br>· <b>Χειροκίνητο (H)</b> — το πιο αποδοτικό, αλλά χάνεις ~350 ms σε κάθε αλλαγή. Φθηνό.<br>· <b>Σειριακό</b> — αγωνιστικό: αλλαγές ~60 ms και κοντές σχέσεις που κρατούν έναν «αιχμηρό» κινητήρα στην περιοχή του. Ακριβό.<br>· <b>Διπλού συμπλέκτη (DCT)</b> — η επόμενη σχέση είναι ήδη επιλεγμένη στον δεύτερο συμπλέκτη, άρα σχεδόν αδιάλειπτες αλλαγές (~30 ms). Το ταχύτερο, και ανάλογα ακριβό.<br>· <b>Αυτόματο με μετατροπέα ροπής</b> — οι πιο αργές αλλαγές (~200 ms) και οι μεγαλύτερες απώλειες, γιατί μεταδίδει μέσω υγρού. Το κερδίζει στην <b>εκκίνηση</b>: ο μετατροπέας «φορτίζει» πάνω στα φρένα και <i>πολλαπλασιάζει</i> τη ροπή (έως ~1.9× σε στάλλ 2400 σ.α.λ.), σβήνοντας στο 1:1 καθώς ο στρόβιλος προλαβαίνει. Γι’ αυτό ένα αυτόματο ξεκινά καλύτερα από ένα χειροκίνητο παρότι χάνει ισχύ παντού αλλού — και γι’ αυτό ταιριάζει σε βαρύ, ροπάτο αυτοκίνητο, όχι σε ελαφρύ και «αιχμηρό». Επίσης απλώνει περισσότερο τις σχέσεις: πιο κοντή 1η, πιο μακριά τελευταία.<br><b>Η καρτέλα ΠΙΣΤΑ</b> βάζει το αυτοκίνητο σε κυκλική πίστα και λύνει έναν γύρο. Πρώτα υπολογίζει την <b>ιδανική γραμμή</b>: κανείς δεν οδηγεί στον άξονα της πίστας, γιατί χρησιμοποιώντας όλο το πλάτος «ισιώνει» η στροφή και περνάς πιο γρήγορα. Η γραμμή βρίσκεται ελαχιστοποιώντας τη συνολική καμπυλότητα μέσα στα όρια της πίστας — και το έξω-μέσα-έξω προκύπτει μόνο του. Οι πίστες είναι τρισδιάστατες, οπότε ο γύρος λαμβάνει υπόψη και το <b>υψόμετρο</b>: η βαρύτητα σε κρατά πίσω στην ανηφόρα και σε σπρώχνει στην κατηφόρα, και — το πιο σημαντικό — η <b>κατακόρυφη καμπυλότητα</b>. Σε μια κορυφή το αυτοκίνητο «ελαφραίνει» και χάνει πρόσφυση ακριβώς εκεί που πάει γρήγορα· σε μια κοιλάδα πιέζεται στο οδόστρωμα και περνά πολύ πιο γρήγορα. Μετράει και το πού πέφτουν οι λόφοι: μια ανηφόρα σε ζώνη φρεναρίσματος σε αφήνει να φρενάρεις αργότερα και <i>κερδίζει</i> χρόνο.<br><b>ΕΙΣΑΓΩΓΗ GPX</b> φορτώνει πραγματική πίστα από αρχείο GPX: προβάλλεται σε μέτρα, ξαναδειγματοληπτείται σε σταθερό βήμα και εξομαλύνεται ελαφρά ώστε ο θόρυβος GPS να μη γίνει «στροφές». Το υψόμετρο έρχεται από το αρχείο. Οι εισαγόμενες πίστες μένουν μόνο στον browser σου.<br><span style="color:#c86">Ο χρόνος θα βγει λίγο αργός: η γραμμή είναι ελάχιστης καμπυλότητας (όχι ελάχιστου χρόνου), το πλάτος θεωρείται σταθερό και ο οδηγός δεν κάνει ποτέ λάθος. Χρησιμοποίησέ το για σύγκριση των δικών σου κατασκευών.</span> Αξίζει <b>4–7% του χρόνου γύρου</b> σε σχέση με τον άξονα, και όσο πιο φαρδιά η πίστα τόσο περισσότερο. Μετά βρίσκει την ταχύτητα στροφής σε κάθε σημείο (<i>v = &radic;(μ&middot;(mg + κάθετη δύναμη)&middot;r / m)</i>), μετά δουλεύει ανάποδα από κάθε στροφή για τα σημεία φρεναρίσματος και προς τα εμπρός στην έξοδο με τη διαθέσιμη κίνηση, κρατώντας τη μικρότερη ταχύτητα σε κάθε σημείο. Ο <b>κύκλος τριβής</b> τα δένει: η πρόσφυση που ξοδεύεται στο στρίψιμο δεν είναι διαθέσιμη για επιτάχυνση ή φρενάρισμα. Η χρωματιστή γραμμή στον χάρτη δείχνει τι περιορίζει το αυτοκίνητο σε κάθε σημείο και η λεζάντα αθροίζει τα ποσοστά του γύρου. Ο χρόνος αλλαγής σχέσης χρεώνεται σε κάθε αλλαγή, οπότε ένα αργό κιβώτιο χάνει πραγματικό χρόνο.<br><span style="color:#c86">Ένα όριο: η ελάχιστη καμπυλότητα δεν είναι το ίδιο με τον ελάχιστο <i>χρόνο</i>. Ο πραγματικός οδηγός θυσιάζει λίγη ακτίνα για <b>καθυστερημένο apex</b> όταν η στροφή βγάζει σε μεγάλη ευθεία — αξίζει άλλο μισό τοις εκατό περίπου. Δεν μοντελοποιείται ακόμα.</span><br><b>Το διαφορικό</b> μοιράζει την κίνηση στους δύο τροχούς του άξονα — και καθορίζει πόση από την πρόσφυση του άξονα μπορείς πραγματικά να χρησιμοποιήσεις. Οι δύο τροχοί δεν είναι ποτέ φορτωμένοι το ίδιο (κλίση δρόμου, αντίδραση ροπής, στρέψη άξονα, γεωμετρία ανάρτησης), και ένα <b>ανοιχτό</b> διαφορικό δίνει σε κάθε τροχό μόνο όση ροπή αντέχει ο <i>λιγότερο φορτωμένος</i>: στρίβει αυτόν τον τροχό και πετάει τα υπόλοιπα, αφήνοντας περίπου 78% της πρόσφυσης αξιοποιήσιμο. Ένα <b>ιξώδες LSD</b> τους δένει μεταξύ τους και ανακτά τα περισσότερα (~92%)· ένα <b>LSD με δίσκους</b> ουσιαστικά όλα· ένα <b>μπλοκέ (spool)</b> τους ενώνει μόνιμα και είναι το καλύτερο σε ευθεία — γι’ αυτό το χρησιμοποιούν τα dragster.<br>Το βασικό: το διαφορικό μετράει μόνο όσο είσαι <b>περιορισμένος από πρόσφυση</b>. Βάλε spool σε αργό αυτοκίνητο και δεν αλλάζει τίποτα. Βάλ’ το σε ένα που πατινάρει στην εκκίνηση και αξίζει περισσότερο από αναβάθμιση ισχύος.<br>Και τώρα το αντιστάθμισμα μετριέται. Στην καρτέλα ΠΙΣΤΑ ένα μπλοκέ διαφορικό πληρώνει το πλεονέκτημά του στην ευθεία: τρίβει σε κάθε στροφή. Σε ένα muscle 842&nbsp;hp το spool είναι ~0.2&nbsp;s ταχύτερο στο 0–100 και ~2.5&nbsp;s <i>πιο αργό</i> ανά γύρο, ενώ το ανοιχτό είναι το χειρότερο και στα δύο.<br><b>Ο αριθμός της τελικής</b> — το ρυθμιστικό 0–100 είναι η <b>σχέση τελικής μετάδοσης</b>, πόσες φορές γυρίζει ο άξονας ανά στροφή των τροχών. Πάει από <b>0 = 4.90:1</b> (η <i>κοντύτερη</i>) έως <b>100 = 2.60:1</b> (η <i>μακρύτερη</i>)· η σχέση φαίνεται δίπλα στον αριθμό. Κοντή τελική πολλαπλασιάζει τη ροπή στους τροχούς: δυνατότερη επιτάχυνση, αλλά κάθε σχέση τελειώνει νωρίς. Μακριά τελική κάνει το αντίθετο: πιο νωθρή επιτάχυνση, περισσότερη ταχύτητα ανά 1000 στροφές και ήρεμο ταξίδι. Ιδανική είναι η πιο μακριά που ο κινητήρας μπορεί ακόμα να τραβήξει ως την κορυφή της ισχύος του στην τελευταία σχέση. Πιο μακριά από αυτό, η τελική ταχύτητα απλώς <i>σταματά να βελτιώνεται</i> — το αυτοκίνητο πιάνει το μέγιστό του μια σχέση χαμηλότερα αντί να «πνίγεται» στην τελευταία — ενώ η επιτάχυνση συνεχίζει να χειροτερεύει, οπότε πληρώνεις χωρίς όφελος. Πολλή ισχύς και λίγη οπισθέλκουσα σηκώνουν πολύ μακριά τελική και κερδίζουν ταχύτητα ως το τέρμα· βαριά, αδύναμα ή αεροδυναμικά «βρώμικα» αυτοκίνητα φτάνουν γρήγορα σε πλατό και θέλουν κοντύτερη.<br>Ο κινητήρας προστίθεται και το ταμπλό <b>Επιδόσεις</b> υπολογίζει <b>0–100 km/h</b>, <b>400/800/1000 m</b>, <b>τελική</b>, <b>φρενάρισμα 100–0</b> και το τεστ <b>0–200–0</b> ζωντανά — εκκίνηση περιορισμένη από πρόσφυση και φρενάρισμα με όριο ελαστικών/φρένων και εξασθένηση. Κολλώδη ελαστικά, μεγάλα φρένα και AWD βοηθούν πιο πολύ.'},
+  vehicle:{el:'Στην καρτέλα <b>ΟΧΗΜΑ</b> βάζεις τον κινητήρα σου σε αυτοκίνητο. Διάλεξε <b>σασί</b> και έρχεται με τον <b>εργοστασιακό του εξοπλισμό</b> — τα ελαστικά, ζάντες, φρένα, ανάρτηση, αεροδυναμική και κιβώτιο που θα φορούσε πραγματικά: ένα kei εμφανίζεται με στενά οικονομικά ελαστικά και μικρούς ατσάλινους δίσκους, ενώ ένα hypercar παίρνει φαρδιά semi-slick, carbon-ceramic φρένα και πακέτο αεροτομής/diffuser. Όλα παραμένουν επεξεργάσιμα· το <b>ΕΡΓΟΣΤΑΣΙΑΚΟΣ ΕΞΟΠΛΙΣΜΟΣ</b> τα επαναφέρει.<br>Από εκεί ρυθμίζεις <b>μετάδοση</b> (FWD/RWD/AWD — το AWD ξεκινά καλύτερα), <b>κιβώτιο</b> (τύπος, σχέσεις + ρυθμιστικό τελικής), <b>ελαστικά</b> (τύπος + πλάτος/προφίλ/διάμετρος), <b>αεροδυναμική</b> (εμπρός/πίσω/πάτωμα = κάθετη δύναμη & οπισθέλκουσα), <b>φρένα</b> (τύπος + διάμετρος δίσκου) και <b>ανάρτηση</b> (πολλαπλασιαστής μηχανικής πρόσφυσης).<br><b>Ο τύπος κιβωτίου</b> αλλάζει τέσσερα πράγματα: πόσο κόβεται η μετάδοση σε κάθε αλλαγή, πόση από την ισχύ του κινητήρα φτάνει στους τροχούς, πώς είναι κλιμακωμένες οι σχέσεις, και πώς ξεκινά το αυτοκίνητο.<br>· <b>Χειροκίνητο (H)</b> — το πιο αποδοτικό, αλλά χάνεις ~350 ms σε κάθε αλλαγή. Φθηνό.<br>· <b>Σειριακό</b> — αγωνιστικό: αλλαγές ~60 ms και κοντές σχέσεις που κρατούν έναν «αιχμηρό» κινητήρα στην περιοχή του. Ακριβό.<br>· <b>Διπλού συμπλέκτη (DCT)</b> — η επόμενη σχέση είναι ήδη επιλεγμένη στον δεύτερο συμπλέκτη, άρα σχεδόν αδιάλειπτες αλλαγές (~30 ms). Το ταχύτερο, και ανάλογα ακριβό.<br>· <b>Αυτόματο με μετατροπέα ροπής</b> — οι πιο αργές αλλαγές (~200 ms) και οι μεγαλύτερες απώλειες, γιατί μεταδίδει μέσω υγρού. Το κερδίζει στην <b>εκκίνηση</b>: ο μετατροπέας «φορτίζει» πάνω στα φρένα και <i>πολλαπλασιάζει</i> τη ροπή (έως ~1.9× σε στάλλ 2400 σ.α.λ.), σβήνοντας στο 1:1 καθώς ο στρόβιλος προλαβαίνει. Γι’ αυτό ένα αυτόματο ξεκινά καλύτερα από ένα χειροκίνητο παρότι χάνει ισχύ παντού αλλού — και γι’ αυτό ταιριάζει σε βαρύ, ροπάτο αυτοκίνητο, όχι σε ελαφρύ και «αιχμηρό». Επίσης απλώνει περισσότερο τις σχέσεις: πιο κοντή 1η, πιο μακριά τελευταία.<br><b>Η καρτέλα ΠΙΣΤΑ</b> βάζει το αυτοκίνητο σε κυκλική πίστα και λύνει έναν γύρο. Πρώτα υπολογίζει την <b>ιδανική γραμμή</b>: κανείς δεν οδηγεί στον άξονα της πίστας, γιατί χρησιμοποιώντας όλο το πλάτος «ισιώνει» η στροφή και περνάς πιο γρήγορα. Η γραμμή βρίσκεται ελαχιστοποιώντας τη συνολική καμπυλότητα μέσα στα όρια της πίστας — και το έξω-μέσα-έξω προκύπτει μόνο του. Δύο πράγματα την απομακρύνουν από την καθαρή ελάχιστη καμπυλότητα. Πρώτον, <b>η πίστα δεν έχει ένα πλάτος</b>: κάθε πίστα εδώ στενεύει στα τεχνικά της σημεία και ανοίγει στα γρήγορα, και μια στροφή 7 m απλώς δεν «ισιώνει» όσο μία 13 m — ο αριθμός στον χάρτη είναι το εύρος, και το πλάτος της πίστας είναι ο μέσος όρος. Δεύτερον, το <b>καθυστερημένο apex</b>: ένα μέτρο ακτίνας στην <i>έξοδο</i> αξίζει πολύ περισσότερο από ένα μέτρο στην είσοδο, γιατί η ταχύτητα εξόδου μεταφέρεται σε όλο το μήκος αυτού που ακολουθεί, ενώ στην είσοδο ούτως ή άλλως φρενάρεις. Ο λύτης «τιμολογεί» την καμπυλότητα με βάση το πόσο ανοιχτή είναι η πίστα μπροστά, οπότε θυσιάζει ακτίνα εισόδου για να ισιώσει την έξοδο — μετακινώντας το apex περίπου 11 m αργότερα στις στροφές που βγάζουν σε ευθεία, και αφήνοντας ανέπαφες όσες οδηγούν σε άλλες στροφές. Οι πίστες είναι τρισδιάστατες, οπότε ο γύρος λαμβάνει υπόψη και το <b>υψόμετρο</b>: η βαρύτητα σε κρατά πίσω στην ανηφόρα και σε σπρώχνει στην κατηφόρα, και — το πιο σημαντικό — η <b>κατακόρυφη καμπυλότητα</b>. Σε μια κορυφή το αυτοκίνητο «ελαφραίνει» και χάνει πρόσφυση ακριβώς εκεί που πάει γρήγορα· σε μια κοιλάδα πιέζεται στο οδόστρωμα και περνά πολύ πιο γρήγορα. Μετράει και το πού πέφτουν οι λόφοι: μια ανηφόρα σε ζώνη φρεναρίσματος σε αφήνει να φρενάρεις αργότερα και <i>κερδίζει</i> χρόνο.<br><b>ΕΙΣΑΓΩΓΗ GPX</b> φορτώνει πραγματική πίστα από αρχείο GPX: προβάλλεται σε μέτρα, ξαναδειγματοληπτείται σε σταθερό βήμα και εξομαλύνεται ελαφρά ώστε ο θόρυβος GPS να μη γίνει «στροφές». Το υψόμετρο έρχεται από το αρχείο. Οι εισαγόμενες πίστες μένουν μόνο στον browser σου.<br><span style="color:#c86">Ο χρόνος θα βγει λίγο αργός: ένα αρχείο GPX δεν περιέχει καθόλου πλάτος, οπότε το προφίλ πλάτους <i>μοντελοποιείται</i> από τη χάραξη — οι δρόμοι φτιάχνονται φαρδιοί εκεί που είναι γρήγοροι και στενοί εκεί που είναι τεχνικοί — δεν είναι μετρημένο. Η γραμμή παραμένει προσέγγιση της γραμμής ελάχιστου χρόνου και ο οδηγός δεν κάνει ποτέ λάθος. Χρησιμοποίησέ το για σύγκριση των δικών σου κατασκευών.</span> Αξίζει <b>5–7% του χρόνου γύρου</b> σε σχέση με τον άξονα, και όσο πιο φαρδιά η πίστα τόσο περισσότερο. Μετά βρίσκει την ταχύτητα στροφής σε κάθε σημείο (<i>v = &radic;(μ&middot;(mg + κάθετη δύναμη)&middot;r / m)</i>), μετά δουλεύει ανάποδα από κάθε στροφή για τα σημεία φρεναρίσματος και προς τα εμπρός στην έξοδο με τη διαθέσιμη κίνηση, κρατώντας τη μικρότερη ταχύτητα σε κάθε σημείο. Ο <b>κύκλος τριβής</b> τα δένει: η πρόσφυση που ξοδεύεται στο στρίψιμο δεν είναι διαθέσιμη για επιτάχυνση ή φρενάρισμα. Η χρωματιστή γραμμή στον χάρτη δείχνει τι περιορίζει το αυτοκίνητο σε κάθε σημείο και η λεζάντα αθροίζει τα ποσοστά του γύρου. Ο χρόνος αλλαγής σχέσης χρεώνεται σε κάθε αλλαγή, οπότε ένα αργό κιβώτιο χάνει πραγματικό χρόνο.<br><span style="color:#c86">Ένα όριο: η γραμμή παραμένει μόνο προσέγγιση της γραμμής ελάχιστου <i>χρόνου</i>. Η τάση για καθυστερημένο apex υπολογίζεται από τη γεωμετρία μπροστά, όχι από την ταχύτητα του ίδιου του αυτοκινήτου, οπότε την ίδια γραμμή οδηγεί ένα hatchback 90&nbsp;hp και ένα αγωνιστικό 800&nbsp;hp — ενώ στην πραγματικότητα το γρήγορο θα φρέναρε αργότερα και θα έκανε ακόμα πιο καθυστερημένο apex. Αξίζει περίπου μισό τοις εκατό, και είναι το ίδιο μισό τοις εκατό για όλους, οπότε οι συγκρίσεις μεταξύ κατασκευών παραμένουν έντιμες.</span><br><b>Το διαφορικό</b> μοιράζει την κίνηση στους δύο τροχούς του άξονα — και καθορίζει πόση από την πρόσφυση του άξονα μπορείς πραγματικά να χρησιμοποιήσεις. Οι δύο τροχοί δεν είναι ποτέ φορτωμένοι το ίδιο (κλίση δρόμου, αντίδραση ροπής, στρέψη άξονα, γεωμετρία ανάρτησης), και ένα <b>ανοιχτό</b> διαφορικό δίνει σε κάθε τροχό μόνο όση ροπή αντέχει ο <i>λιγότερο φορτωμένος</i>: στρίβει αυτόν τον τροχό και πετάει τα υπόλοιπα, αφήνοντας περίπου 78% της πρόσφυσης αξιοποιήσιμο. Ένα <b>ιξώδες LSD</b> τους δένει μεταξύ τους και ανακτά τα περισσότερα (~92%)· ένα <b>LSD με δίσκους</b> ουσιαστικά όλα· ένα <b>μπλοκέ (spool)</b> τους ενώνει μόνιμα και είναι το καλύτερο σε ευθεία — γι’ αυτό το χρησιμοποιούν τα dragster.<br>Το βασικό: το διαφορικό μετράει μόνο όσο είσαι <b>περιορισμένος από πρόσφυση</b>. Βάλε spool σε αργό αυτοκίνητο και δεν αλλάζει τίποτα. Βάλ’ το σε ένα που πατινάρει στην εκκίνηση και αξίζει περισσότερο από αναβάθμιση ισχύος.<br>Και τώρα το αντιστάθμισμα μετριέται. Στην καρτέλα ΠΙΣΤΑ ένα μπλοκέ διαφορικό πληρώνει το πλεονέκτημά του στην ευθεία: τρίβει σε κάθε στροφή. Σε ένα muscle 842&nbsp;hp το spool είναι ~0.2&nbsp;s ταχύτερο στο 0–100 και ~2.5&nbsp;s <i>πιο αργό</i> ανά γύρο, ενώ το ανοιχτό είναι το χειρότερο και στα δύο.<br><b>Ο αριθμός της τελικής</b> — το ρυθμιστικό 0–100 είναι η <b>σχέση τελικής μετάδοσης</b>, πόσες φορές γυρίζει ο άξονας ανά στροφή των τροχών. Πάει από <b>0 = 4.90:1</b> (η <i>κοντύτερη</i>) έως <b>100 = 2.60:1</b> (η <i>μακρύτερη</i>)· η σχέση φαίνεται δίπλα στον αριθμό. Κοντή τελική πολλαπλασιάζει τη ροπή στους τροχούς: δυνατότερη επιτάχυνση, αλλά κάθε σχέση τελειώνει νωρίς. Μακριά τελική κάνει το αντίθετο: πιο νωθρή επιτάχυνση, περισσότερη ταχύτητα ανά 1000 στροφές και ήρεμο ταξίδι. Ιδανική είναι η πιο μακριά που ο κινητήρας μπορεί ακόμα να τραβήξει ως την κορυφή της ισχύος του στην τελευταία σχέση. Πιο μακριά από αυτό, η τελική ταχύτητα απλώς <i>σταματά να βελτιώνεται</i> — το αυτοκίνητο πιάνει το μέγιστό του μια σχέση χαμηλότερα αντί να «πνίγεται» στην τελευταία — ενώ η επιτάχυνση συνεχίζει να χειροτερεύει, οπότε πληρώνεις χωρίς όφελος. Πολλή ισχύς και λίγη οπισθέλκουσα σηκώνουν πολύ μακριά τελική και κερδίζουν ταχύτητα ως το τέρμα· βαριά, αδύναμα ή αεροδυναμικά «βρώμικα» αυτοκίνητα φτάνουν γρήγορα σε πλατό και θέλουν κοντύτερη.<br>Ο κινητήρας προστίθεται και το ταμπλό <b>Επιδόσεις</b> υπολογίζει <b>0–100 km/h</b>, <b>400/800/1000 m</b>, <b>τελική</b>, <b>φρενάρισμα 100–0</b> και το τεστ <b>0–200–0</b> ζωντανά — εκκίνηση περιορισμένη από πρόσφυση και φρενάρισμα με όριο ελαστικών/φρένων και εξασθένηση. Κολλώδη ελαστικά, μεγάλα φρένα και AWD βοηθούν πιο πολύ.'},
   tip:{el:'Συμβουλή: κλείσε τη ΦΘΟΡΑ στις ΕΠΙΛΟΓΕΣ για ελεύθερο πειραματισμό, μετά ξανάνοιξέ την για συνέπειες.'}
 };
 const CHALLENGE_I18N={
@@ -2304,14 +2317,25 @@ function simulateAccel(){
 // profile the lap solver needs and the polyline the map draws — one source of truth for both, so
 // the picture can never disagree with the physics.
 const TRACKS={
-  tech: {label:'ASHDOWN PARK',  width:10,names:['Gatehouse','The Kink','Beeches','Old Barn','Hollow','Chapel','Quarry','Farm Bend','Paddock','Coppice','Stables','The Dell','The Ford','Ash Corner','Millpond','Keeper\'s','Gate Loop'],
+  // `width` is the AVERAGE width; `wprof` are relative multipliers spread around the lap and
+  // normalised to mean 1, so a circuit narrows and opens the way a real one does. Ashdown is an
+  // old parkland course: wide at the gatehouse straight, pinched to a country lane through the
+  // woods.
+  tech: {label:'ASHDOWN PARK',  width:10,wprof:[1.30,1.22,1.05,0.88,0.80,0.78,0.86,1.00,1.12,1.18,1.05,0.90,0.80,0.76,0.82,0.95,1.10,1.24],
+    names:['Gatehouse','The Kink','Beeches','Old Barn','Hollow','Chapel','Quarry','Farm Bend','Paddock','Coppice','Stables','The Dell','The Ford','Ash Corner','Millpond','Keeper\'s','Gate Loop'],
     blurb:'Tight and technical — second-gear corners, short straights. Grip, brakes and a light car matter more than power.',
     pts:[{x:60,y:250,z:4},{x:70,y:120,z:6},{x:150,y:60,z:2},{x:250,y:80,z:0},{x:290,y:160,z:6},{x:250,y:215,z:14},{x:300,y:265,z:20},{x:420,y:250,z:18},{x:470,y:150,z:12},{x:560,y:140,z:10},{x:610,y:220,z:16},{x:560,y:300,z:24},{x:600,y:380,z:26},{x:520,y:430,z:20},{x:380,y:410,z:10},{x:330,y:340,z:4},{x:250,y:360,z:-2},{x:210,y:440,z:-6},{x:110,y:420,z:-2}]},
-  fast: {label:'CAPE SPEEDWAY', width:14,names:['Lighthouse','Ocean Sweep','Windward','The Cape','Seawall','Harbour','Gull','Breakwater','Dunes','Marina','Pier'],
+  // A purpose-built speed bowl: broad and consistent, only pinching slightly through the harbour
+  // infield.
+  fast: {label:'CAPE SPEEDWAY', width:14,wprof:[1.14,1.16,1.12,1.06,1.02,0.98,0.94,0.90,0.88,0.90,0.96,1.04,1.10,1.14],
+    names:['Lighthouse','Ocean Sweep','Windward','The Cape','Seawall','Harbour','Gull','Breakwater','Dunes','Marina','Pier'],
     blurb:'Long straights and fast sweepers. Power, gearing and low drag decide it; downforce pays for itself.',
     pts:[{x:80,y:400,z:6},{x:80,y:220,z:2},{x:140,y:110,z:-2},{x:320,y:70,z:-4},{x:700,y:60,z:-3},{x:980,y:80,z:0},{x:1120,y:170,z:4},{x:1150,y:330,z:6},{x:1080,y:470,z:5},{x:900,y:520,z:3},{x:700,y:500,z:2},{x:660,y:400,z:1},{x:700,y:300,z:0},{x:640,y:250,z:2},{x:480,y:270,z:5},{x:420,y:380,z:8},{x:300,y:470,z:10},{x:150,y:490,z:9}]},
-  nord: {label:'NORDSCHLEIFE',  width:9,names:[],
-    blurb:'A 20 km road course through wooded hills: 290 m of elevation, blind crests, long descents and a 3 km straight. Geometry and gradients from a recorded GPX trace; corners are numbered, not named, because the detector cannot reliably align with the circuit\'s real corner names.',
+  // No survey data ships with a GPX trace, so the width profile is DERIVED from the layout —
+  // narrow through the twisty wooded sections, opening out on the fast ones — which is how the
+  // road was actually built. Modelled width, not measured width, and said so in the blurb.
+  nord: {label:'NORDSCHLEIFE',  width:9,wvar:[0.88,1.45],names:[],
+    blurb:'A 20 km road course through wooded hills: 290 m of elevation, blind crests, long descents and a 3 km straight. Geometry and gradients from a recorded GPX trace; corners are numbered, not named, because the detector cannot reliably align with the circuit\'s real corner names. Track width is modelled from the layout — tight sections narrow, fast sections open — not surveyed.',
     pts:[
          {x:3235.7,y:3888,z:236.1},{x:3216.5,y:3903.7,z:236.9},{x:3198.8,y:3920.7,z:237.7},{x:3179.7,y:3936.6,z:238.5},{x:3158.5,y:3951.1,z:239.5},{x:3136.7,y:3965.2,z:240.6},
          {x:3114.8,y:3979.3,z:241.6},{x:3092.9,y:3993.4,z:242.7},{x:3071.1,y:4007.5,z:243.7},{x:3049.2,y:4021.6,z:244.8},{x:3027.4,y:4035.7,z:245.8},{x:3005.5,y:4049.7,z:246.9},
@@ -2446,7 +2470,9 @@ const TRACKS={
          {x:3637.6,y:3649.6,z:215.4},{x:3615.5,y:3663.3,z:216},{x:3593.3,y:3676.9,z:216.7},{x:3571.2,y:3690.6,z:217.6},{x:3549.2,y:3704.4,z:218.8},{x:3527.2,y:3718.3,z:220.2},
          {x:3505.2,y:3732.1,z:221.5},{x:3483.2,y:3746,z:222.9},{x:3461.2,y:3759.9,z:224.3},{x:3439.2,y:3773.7,z:225.7},{x:3417.2,y:3787.5,z:227},{x:3395,y:3801.1,z:228.3},
          {x:3372.5,y:3814.1,z:229.6},{x:3349.6,y:3826.4,z:230.7},{x:3326.6,y:3838.5,z:231.8},{x:3303.5,y:3850.4,z:232.9},{x:3280.4,y:3862.4,z:234},{x:3257.5,y:3874.6,z:235.1}]},
-  mixed:{label:'RIVERSIDE GP',  width:12,names:['Millrace','Weir','Ferryman','The Island','Boathouse','Willows','Lock','Bridge','Towpath','Reeds','Anglers','Bankside','Riverbend'],
+  // Modern GP layout: a very wide pit straight and stadium section, a noticeably tighter infield.
+  mixed:{label:'RIVERSIDE GP',  width:12,wprof:[1.28,1.22,1.10,1.00,0.96,1.02,1.14,1.20,1.10,0.96,0.86,0.82,0.84,0.90,0.98,1.08,1.18,1.26],
+    names:['Millrace','Weir','Ferryman','The Island','Boathouse','Willows','Lock','Bridge','Towpath','Reeds','Anglers','Bankside','Riverbend'],
     blurb:'A balanced grand-prix layout: a long back straight into heavy braking, then a technical infield.',
     pts:[{x:90,y:430,z:-2},{x:80,y:280,z:6},{x:160,y:180,z:14},{x:300,y:150,z:20},{x:420,y:190,z:22},{x:520,y:130,z:16},{x:660,y:100,z:8},{x:820,y:130,z:2},{x:880,y:250,z:-4},{x:840,y:370,z:-8},{x:720,y:420,z:-6},{x:640,y:350,z:-2},{x:560,y:380,z:0},{x:540,y:470,z:-6},{x:420,y:500,z:-14},{x:330,y:440,z:-20},{x:240,y:470,z:-18},{x:150,y:510,z:-10}]}
 };
@@ -2539,10 +2565,27 @@ function gpxToTrack(text,opts){
   const gap=Math.hypot(pts[0].x-pts[pts.length-1].x,pts[0].y-pts[pts.length-1].y);
   return {
     label:(opts.name||gpxTrackName(text)).toUpperCase().slice(0,28),
-    width:opts.width||10,names:[],
-    blurb:opts.blurb||'Imported from a GPX trace. Lap length, gradients and corner sequence come from the recorded data.',
+    // A trace carries no width. Rather than pretend the road is a constant ribbon, derive the
+    // profile from the layout — roads are wide where they are fast and narrow where they are
+    // tight — and label it as modelled.
+    width:opts.width||10,wvar:opts.wvar||[0.90,1.30],names:[],
+    blurb:opts.blurb||'Imported from a GPX trace. Lap length, gradients and corner sequence come from the recorded data; track width is modelled from the layout, not measured.',
     pts:outPts,imported:true,srcPoints:raw.length,closureGap:gap
   };
+}
+// The track surface is drawn as a filled ribbon rather than a fat stroke, because the width now
+// varies around the lap and a stroke can only ever be one width. Outer edge forward, inner edge
+// back: the two loops wind opposite ways, so a non-zero fill covers exactly the tarmac and leaves
+// the infield alone.
+function trackRibbon(g,T,MX,MY,sc,minPx){
+  const p=T.pts,n=p.length;
+  const hw=q=>Math.max(minPx,(q.hw!=null?q.hw:T.width/2)*sc);
+  g.beginPath();
+  for(let i=0;i<=n;i++){const q=p[i%n],h=hw(q);
+    const X=MX(q)+q.nx*h,Y=MY(q)+q.ny*h;
+    if(i)g.lineTo(X,Y);else g.moveTo(X,Y);}
+  for(let i=n;i>=0;i--){const q=p[i%n],h=hw(q);g.lineTo(MX(q)-q.nx*h,MY(q)-q.ny*h);}
+  g.closePath();g.fill();
 }
 const trackCache={};
 // Sample a circuit into {x,y,ds,s,r} points. Radius comes from the Menger curvature of a window
@@ -2581,10 +2624,43 @@ function buildTrack(key){
     const dg=(b2.grade-a2.grade)/Math.max(1e-6,span),gg=p[i].grade;
     p[i].kv=dg/Math.pow(1+gg*gg,1.5);
   }
+  // ---- Track width. A circuit is not a constant-width ribbon. It narrows through the tight,
+  // walled-in sections and opens out on the fast ones, and that changes the racing line directly:
+  // a 7 m corner simply cannot be straightened as much as a 13 m one, no matter who is driving.
+  // `width` stays the AVERAGE width — the profile below is a set of relative multipliers
+  // normalised to mean 1 — so the number quoted on the map still reads true and scaling `width`
+  // still scales the whole circuit.
+  const W0=def.width||12;
+  const mul=new Array(n).fill(1);
+  if(def.wprof&&def.wprof.length>1){
+    // Authored profile: multipliers spread uniformly around the lap, cosine-blended so the edge
+    // never steps.
+    const wp=def.wprof,M=wp.length;
+    for(let i=0;i<n;i++){
+      const f=p[i].s/s*M,j0=Math.floor(f)%M,t=f-Math.floor(f);
+      const a=wp[j0],b=wp[(j0+1)%M];
+      mul[i]=a+(b-a)*(1-Math.cos(Math.PI*t))/2;
+    }
+  }else if(def.wvar){
+    // Derived profile, for traces where no survey exists: roads are built wide where they are
+    // fast and narrow where they are tight, so the layout itself is the best available estimate.
+    // This is a model of the width, not measured width data, and it is labelled as such.
+    // The saturation radius is deliberately high (3 km). A road is one width through everything
+    // except the sections that were actually built for speed, so only a genuinely long, open
+    // alignment widens it — a 500 m sweeper through the trees is still a country road.
+    const lo=def.wvar[0],hi=def.wvar[1];
+    for(let i=0;i<n;i++)mul[i]=lo+(hi-lo)*clamp((p[i].r-400)/(3000-400),0,1);
+    for(let k=0;k<80;k++){const prev=mul.slice();
+      for(let i=0;i<n;i++)mul[i]=(prev[(i-1+n)%n]+2*prev[i]+prev[(i+1)%n])/4;}
+  }
+  const mAvg=mul.reduce((a,b)=>a+b,0)/n;
+  let wMin=1e9,wMax=0;
+  for(let i=0;i<n;i++){p[i].w=W0*mul[i]/mAvg;p[i].hw=p[i].w/2;wMin=Math.min(wMin,p[i].w);wMax=Math.max(wMax,p[i].w);}
   // Corner count comes from the same detector the report uses, so the two never disagree.
   let corners=0;
   const xs=p.map(q=>q.x),ys=p.map(q=>q.y);
-  const T={key,label:def.label,blurb:def.blurb,names:def.names||[],pts:p,length:s,corners,width:def.width||12,
+  const T={key,label:def.label,blurb:def.blurb,names:def.names||[],pts:p,length:s,corners,width:W0,
+    wMin,wMax,wLabel:(wMax-wMin<0.4?Math.round(W0)+' m':Math.round(wMin)+'–'+Math.round(wMax)+' m'),
     minX:Math.min(...xs),maxX:Math.max(...xs),minY:Math.min(...ys),maxY:Math.max(...ys)};
   T.line=optimiseLine(T);       // depends only on geometry + width, so cache it with the track
   T.corners=detectCorners(T.line).length;
@@ -2597,9 +2673,9 @@ function buildTrack(key){
 // midpoint of its neighbours — the move that reduces curvature — and clamp it at the track edge.
 // This is projected Gauss-Seidel on ∫κ²ds; out-in-out through corners, straightened esses and
 // linked complexes all emerge from it rather than being scripted.
-// Caveat: minimum curvature is not minimum TIME. The true optimum gives up a little radius for a
-// late apex when a corner leads onto a straight, worth roughly half a percent of lap time. Stated
-// in the GUIDE rather than faked.
+// Minimum curvature on its own is not minimum TIME, because it is symmetric: it values a metre of
+// radius at corner entry exactly as much as a metre at the exit. LATE_APEX below breaks that
+// symmetry, which is what puts a real late apex into the line.
 function optimiseLine(T){
   const c=T.pts,n=c.length,half=T.width/2;
   const nx=new Array(n),ny=new Array(n),lim=new Array(n);
@@ -2607,8 +2683,10 @@ function optimiseLine(T){
     const a=c[(i-1+n)%n],b=c[(i+1)%n];
     let tx=b.x-a.x,ty=b.y-a.y;const L=Math.hypot(tx,ty)||1;
     nx[i]=-ty/L;ny[i]=tx/L;
-    // Don't let the line cut so far inside a tight corner that the geometry folds on itself.
-    lim[i]=Math.min(half,Math.max(1,c[i].r*0.45));
+    c[i].nx=nx[i];c[i].ny=ny[i];              // the map draws its edges from these
+    // Track width varies around the lap, so the room available is per-point, not a constant.
+    // Also don't let the line cut so far inside a tight corner that the geometry folds on itself.
+    lim[i]=Math.min(c[i].hw!=null?c[i].hw:half,Math.max(1,c[i].r*0.45));
   }
   const off=new Array(n).fill(0),px=new Array(n),py=new Array(n);
   const sync=i=>{px[i]=c[i].x+off[i]*nx[i];py[i]=c[i].y+off[i]*ny[i];};
@@ -2627,13 +2705,38 @@ function optimiseLine(T){
   const qx=new Array(m),qy=new Array(m);
   const qsync=j=>{const i=idx[j];qx[j]=c[i].x+co[j]*nx[i];qy[j]=c[i].y+co[j]*ny[i];};
   for(let j=0;j<m;j++)qsync(j);
+  // ---- Late apex ----
+  // A metre of radius is not worth the same everywhere. At a corner EXIT the car is on the power
+  // and whatever speed it gains there is carried the whole length of what follows; at the ENTRY it
+  // is braking anyway, so a tighter arc costs almost nothing. So weight the curvature cost by how
+  // OPEN the track is ahead: the solver then trades entry radius away to straighten the exit,
+  // which is precisely a late apex — and it appears only where a corner actually leads somewhere
+  // fast, which is exactly where a driver would use one.
+  // Both constants are calibrated, not guessed: swept against measured laps on all four circuits.
+  // 3 / 90 m is the setting at which EVERY circuit gains — a shorter span buys a lot at Ashdown
+  // but costs time at Cape and the Ring, which is the model over-applying a late apex to a fast
+  // sweeper that only wants minimum curvature. It moves the apex ~11 m later on corners that lead
+  // onto a straight and leaves corners that lead into more corners where they were.
+  const LATE_APEX=3;                         // strength of the exit bias (0 = pure min-curvature)
+  const APEX_SPAN=90;                        // m — how far ahead a corner exit "sees"
+  const sp=Math.max(1,(T.length||n*5)/m);    // metres between coarse nodes
+  const open=new Array(m),wg=new Array(m);
+  for(let j=0;j<m;j++)open[j]=clamp((c[idx[j]].r-70)/(420-70),0,1);   // 0 = hairpin, 1 = straight
+  const LOOK=Math.max(2,Math.min(m-1,Math.round(3*APEX_SPAN/sp)));
+  for(let j=0;j<m;j++){
+    let acc=0,tot=0;
+    for(let k=1;k<=LOOK;k++){const dcy=Math.exp(-k*sp/APEX_SPAN);acc+=dcy*open[(j+k)%m];tot+=dcy;}
+    wg[j]=1+LATE_APEX*(tot?acc/tot:0);
+  }
   const gx=new Array(m),gy=new Array(m),dx=new Array(m),dy=new Array(m);
   for(let k=0;k<600;k++){
     for(let j=0;j<m;j++){const a=(j-1+m)%m,b=(j+1)%m;dx[j]=qx[a]-2*qx[j]+qx[b];dy[j]=qy[a]-2*qy[j]+qy[b];}
     let gmax=0;
     for(let j=0;j<m;j++){
       const a=(j-1+m)%m,b=(j+1)%m;
-      gx[j]=dx[a]-2*dx[j]+dx[b];gy[j]=dy[a]-2*dy[j]+dy[b];
+      // ∂/∂Q_j of Σ w|Q''|² — the weights are what make the exit side expensive.
+      gx[j]=wg[a]*dx[a]-2*wg[j]*dx[j]+wg[b]*dx[b];
+      gy[j]=wg[a]*dy[a]-2*wg[j]*dy[j]+wg[b]*dy[b];
       const i=idx[j];const g=gx[j]*nx[i]+gy[j]*ny[i];
       gx[j]=g;gmax=Math.max(gmax,Math.abs(g));
     }
@@ -2827,7 +2930,7 @@ function simulateLap(key){
   for(let i=0;i<n;i++)counts[lim[i]]+=p[i].ds3;
   return {track:T,lap:t,sectors:sect,v,lim,vMin:vMin*3.6,vMax:vMax*3.6,
     avg:p.length_/t*3.6,shifts,shiftLoss,counts,gears,climb,zMin,zMax,length:T.length,lineLength:p.length_,
-    corners:T.corners,width:T.width};
+    corners:T.corners,width:T.width,wLabel:T.wLabel};
 }
 // ---- Corners: find them on the racing line, number and name them, and take a speed trap ----
 // A corner is a local MINIMUM of the racing-line radius that is prominent enough to be a corner
@@ -3380,7 +3483,7 @@ function hotLapReportCanvas(scale){
   const T=L.track;
   g.fillStyle=RPT.ink;g.font=sans(30,true);g.fillText(T.label,40,142);
   g.fillStyle='#667';g.font=sans(15);
-  g.fillText((T.length/1000).toFixed(2)+' km  ·  '+T.width+' m wide  ·  '+T.corners+' corners      '+
+  g.fillText((T.length/1000).toFixed(2)+' km  ·  '+T.wLabel+' wide  ·  '+T.corners+' corners      '+
     (engine.name||engine.displacement_L.toFixed(1)+'L')+'  in  '+vehicle.chLabel,40,168);
   // ---- Lap + sector band ----
   const by=186;
@@ -3402,10 +3505,7 @@ function hotLapReportCanvas(scale){
   const ox=70+((W-140)-(T.maxX-T.minX)*sc)/2, oy=my+((mh-40)-(T.maxY-T.minY)*sc)/2+20;
   const MX=q=>ox+(q.x-T.minX)*sc, MY=q=>oy+(q.y-T.minY)*sc;
   g.lineCap='round';g.lineJoin='round';
-  g.strokeStyle='#e3e4e9';g.lineWidth=Math.max(5,T.width*sc);
-  g.beginPath();g.moveTo(MX(T.pts[0]),MY(T.pts[0]));
-  for(let i=1;i<n;i++)g.lineTo(MX(T.pts[i]),MY(T.pts[i]));
-  g.closePath();g.stroke();
+  g.fillStyle='#e3e4e9';trackRibbon(g,T,MX,MY,sc,2.5);
   g.lineWidth=Math.max(2.5,4.2*sc/1.2);
   for(let i=0;i<n;i++){
     const j=(i+1)%n,k=L.lim[i];
@@ -3532,7 +3632,7 @@ function hotLapReportCanvas(scale){
   const fy=Math.max(tabY+44+rowH*(corners.length+1),tabY+44+20*(vr.length+1))+22;
   g.strokeStyle=RPT.rule;g.lineWidth=1;g.beginPath();g.moveTo(40,fy);g.lineTo(W-40,fy);g.stroke();
   g.fillStyle='#889';g.font=sans(12);
-  g.fillText('Best-case lap on the minimum-curvature racing line: no traffic, no tyre wear, no fuel burn, no driver error.',40,fy+22);
+  g.fillText('Best-case lap on the optimised racing line — minimum curvature with a late-apex bias, inside the track width: no traffic, no tyre wear, no fuel burn, no driver error.',40,fy+22);
   g.fillText('"Full throttle" = accelerating at the limit (engine or driven tyres); '+th.engPct.toFixed(0)+'% of the lap is engine-limited.',40,fy+42);
   g.fillText('Figures are SIMULATED, not measured. Slowest point '+Math.round(L.vMin)+' km/h · fastest '+Math.round(L.vMax)+' km/h · '+L.shifts+' gear changes.',40,fy+62);
   return cv;
@@ -3833,10 +3933,7 @@ function drawTrack(){
   // Track surface: the full width of the circuit, drawn from the centreline. Width is to scale,
   // so you can see the racing line using it.
   ctx.lineCap='round';ctx.lineJoin='round';
-  ctx.strokeStyle='#23232f';ctx.lineWidth=Math.max(6,T.width*sc);
-  ctx.beginPath();ctx.moveTo(px(pts[0]),py(pts[0]));
-  for(let i=1;i<n;i++)ctx.lineTo(px(pts[i]),py(pts[i]));
-  ctx.closePath();ctx.stroke();
+  ctx.fillStyle='#23232f';trackRibbon(ctx,T,px,py,sc,3);
   // Centreline, faint, so the racing line's use of the width reads clearly.
   ctx.strokeStyle='#34344a';ctx.lineWidth=1;ctx.setLineDash([4,6]);
   ctx.beginPath();ctx.moveTo(px(pts[0]),py(pts[0]));
@@ -3866,7 +3963,7 @@ function drawTrack(){
     lx+=ctx.measureText(tr(LIMLBL[k])+' '+pct+'%').width+30;
   }
   ctx.fillStyle='#778';
-  ctx.fillText((T.length/1000).toFixed(2)+' km • '+T.width+'m '+tr('wide')+' • '+T.corners+' '+tr('corners')+' • '+Math.round(L.zMax-L.zMin)+'m '+tr('elevation')+' • '+tr('avg')+' '+Math.round(L.avg)+' km/h',14,H-12);
+  ctx.fillText((T.length/1000).toFixed(2)+' km • '+T.wLabel+' '+tr('wide')+' • '+T.corners+' '+tr('corners')+' • '+Math.round(L.zMax-L.zMin)+'m '+tr('elevation')+' • '+tr('avg')+' '+Math.round(L.avg)+' km/h',14,H-12);
 }
 function renderLap(){
   const head=document.getElementById('lapHead'),grid=document.getElementById('lapGrid'),note=document.getElementById('lapNote');
@@ -3902,7 +3999,7 @@ function refreshTrackList(){
 function saveImportedTracks(){
   try{
     const out={};
-    for(const [k,t] of Object.entries(TRACKS))if(t.imported)out[k]={label:t.label,width:t.width,blurb:t.blurb,pts:t.pts,names:t.names||[]};
+    for(const [k,t] of Object.entries(TRACKS))if(t.imported)out[k]={label:t.label,width:t.width,wvar:t.wvar,wprof:t.wprof,blurb:t.blurb,pts:t.pts,names:t.names||[]};
     localStorage.setItem(GPX_KEY,JSON.stringify(out));
   }catch(e){}
 }

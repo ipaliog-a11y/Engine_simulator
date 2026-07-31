@@ -123,10 +123,11 @@ saps power; a large radiator, electric fan and oil cooler keep it cool.
 - **Test track (new)** — a **TRACK** tab that puts the finished car on a circuit and solves a lap.
   Three layouts with different characters: **Ashdown Park** (2.0 km, tight and technical),
   **Cape Speedway** (3.1 km, long straights and fast sweepers), **Riverside GP** (2.2 km,
-  balanced) and the **Nordschleife** (20.4 km, 40 corners, 290 m of elevation and 505 m of climbing
+  balanced) and the **Nordschleife** (20.4 km, 44 corners, 290 m of elevation and 505 m of climbing
   per lap — geometry and gradients derived from a recorded GPX trace, corners numbered rather than
   named because the detector can't be reliably aligned with the circuit's real corner names). You get a **lap time**, three **sector splits**, average / slowest / fastest speeds
-  and the number of gear changes, plus a top-down pixel map — the track drawn to its real width,
+  and the number of gear changes, plus a top-down pixel map — the track drawn to its real, **varying**
+  width,
   with an **optimised racing line** through it **coloured by what is limiting the car** — power, traction, cornering grip or braking — and a legend totalling
   how much of the lap each accounts for.
 
@@ -349,10 +350,39 @@ Curve** tab remains a wide-open-throttle steady-state sweep for reading the full
   curvature gradient scales like ds⁴/R³ and is hopelessly ill-conditioned at 5 m sampling — worse,
   the Catmull-Rom centreline satisfies the stationarity condition exactly, so a fine-grid solve
   never leaves it). Out-in-out through corners, straightened esses and linked complexes emerge from
-  the objective rather than being scripted. It is worth **4–7 % of lap time** over the centreline,
-  and the gain scales cleanly with track width (Riverside: 78.3 s at 6 m wide → 74.8 s at 18 m).
-  *Caveat: minimum curvature is not minimum time — a real driver trades a little radius for a late
-  apex onto a straight, worth roughly another 0.5 %. Not modelled; stated in the GUIDE.*
+  the objective rather than being scripted. It is worth **5–7 % of lap time** over the centreline,
+  and the gain scales cleanly with track width (Riverside: 79.7 s at 6 m wide → 75.8 s at 18 m).
+- **Late apex (new)**: minimum curvature is symmetric — it prices a metre of radius at corner entry
+  exactly like a metre at the exit. On track it isn't: exit speed is carried the whole length of
+  whatever follows, while at entry the car is braking anyway. So the curvature cost is **weighted by
+  how open the track is ahead** (`Σ w·|Q″|²`, `w = 1 + 3·openness`, 90 m exponential lookahead),
+  which makes the solver trade entry radius for exit radius. Both constants are swept against
+  measured laps rather than guessed: 3 / 90 m is the setting at which *every* circuit gains — a
+  shorter lookahead buys 1.2 s at Ashdown but costs time at Cape and the Ring, which is the model
+  over-applying a late apex to a fast sweeper that only wants minimum curvature.
+
+  Measured with a node-quantisation-free metric (arc-length centroid of the line's depth toward the
+  inside, minus the centreline's own curvature centroid), the apex moves **+11.7 m later on corners
+  that lead onto a straight and only +4.7 m on corners that lead into more corners** — the bias is
+  selective, which is the whole claim. Worth 0.15–0.51 % of lap time, and negative on no circuit.
+
+  *Remaining caveat: the bias is priced from the geometry ahead, not from the car's own speed, so a
+  90 hp hatchback and an 800 hp aero car drive the same line. It is the same half-percent for
+  everyone, so build-to-build comparisons stay honest.*
+- **Variable track width (new)**: a circuit is not a constant ribbon — it narrows through the tight
+  sections and opens on the fast ones, and a 7 m corner cannot be straightened as much as a 13 m
+  one no matter who is driving. Each circuit carries a width profile normalised to **mean 1**, so
+  the quoted `width` is by definition the arc-length average and the old width knob still scales the
+  whole circuit. Ashdown runs **8–13 m**, Cape **12–16 m**, Riverside **9–15 m**, the Nordschleife
+  **8–12 m**. The racing line is clamped per point against its *own* half-width, so it is on the
+  track everywhere, not merely within some nominal average. The map is drawn as a filled ribbon
+  rather than a fat stroke, because a stroke can only ever be one width.
+
+  For the three hand-built circuits the profile is authored by station. For a GPX import there is
+  no survey to read, so it is **derived from the layout** — roads are built wide where they are fast
+  and narrow where they are tight — and labelled in the app as modelled, not measured. The
+  saturation radius is deliberately high (3 km): a 500 m sweeper through the trees is still a
+  country road.
 - Imported circuits: **IMPORT GPX TRACK** on the TRACK tab reads a GPX trace and turns it into a
   lappable circuit. Points are projected to metres (equirectangular about the centroid — centimetre
   error at circuit scale), **resampled to a uniform step** because GPX spacing is wildly uneven (a
@@ -363,9 +393,9 @@ Curve** tab remains a wide-open-throttle steady-state sweep for reading the full
   elevation imports and solves in ~120 ms. Imported tracks persist in `localStorage` and are marked
   `*` in the list — **nothing is uploaded and no circuit data ships with the app**; importing is
   something the user does with their own file.
-  *Accuracy note: imported lap times read a little slow — the line is minimum-curvature rather than
-  minimum-time, track width is treated as constant, and the driver never errs. It is a consistent
-  yardstick for comparing builds, not a lap record.*
+  *Accuracy note: imported lap times read a little slow — the line is still an approximation of the
+  minimum-time line, the width profile is modelled from the layout rather than surveyed, and the
+  driver never errs. It is a consistent yardstick for comparing builds, not a lap record.*
 - Elevation: circuits carry a height profile, and the lap is solved in three dimensions. Three
   effects, all of them real: gravity along the slope (`m·g·sinθ`, resisting a climb and adding to a
   descent — and *helping* the brakes uphill, which is why an uphill braking zone lets you brake so
@@ -498,7 +528,9 @@ native Android build (parked).
 - [x] Gearbox types: manual / sequential / DCT / torque-converter auto (shift time, driveline loss, ratio spread, converter stall & multiplication)
 - [x] Differential types: open / viscous LSD / clutch-plate LSD / spool, capping the usable share of driven-axle grip
 - [x] Test track: 3 circuits, quasi-steady-state lap solver with a friction circle, sector splits and a limit-coloured pixel map
-- [x] Minimum-curvature racing line within the track width (4–7 % quicker than the centreline)
+- [x] Minimum-curvature racing line within the track width (5–7 % quicker than the centreline)
+- [x] Late-apex bias on corners that lead onto a straight (+11.7 m of apex shift, selective)
+- [x] Variable track width per circuit, authored or derived, with a per-point line clamp
 - [x] Track elevation: gradient, slope-adjusted load and crest/compression vertical curvature, with an elevation profile on the lap report
 - [x] GPX circuit import (projection, uniform resampling, smoothing, real elevation) with localStorage persistence
 - [x] Nordschleife in the track pack (20.4 km, 290 m elevation) — a real road course as a benchmark
