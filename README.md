@@ -133,11 +133,36 @@ saps power; a large radiator, electric fan and oil cooler keep it cool.
 
   ![test track](docs/track.png)
 
-- **Engine-view schematic** — a test-bench diagram (air intake, fuel system, engine,
-  exhaust/analyser, dynamometer, electrical) with live values on every subsystem, instead of
-  a too-fast animation. The **exhaust/analyser** box reads live **emissions** (a CLEAN/OK/DIRTY
-  rating, with CO/HC/NOx in the detailed view) like the bench gas analyser it's modelled on. A
-  **⛶ FULL** button opens a full-screen detailed view with extra readouts.
+- **Animated engine cutaway (new)** — the ENGINE tab is a live section through the engine you
+  just designed, and everything on it moves because the simulation moved it:
+
+  ![engine cutaway](docs/cutaway.png)
+
+  - **Crank angle is integrated from real rpm**, not from a timer, so a long-stroke diesel lopes
+    and a 9000 rpm screamer blurs. It stops dead when the engine does.
+  - **Proper crank-slider geometry** — `x = r(1−cosθ) + L − √(L²−r²sin²θ)`, not a sine wave. A
+    connecting rod of finite length makes the piston linger at the bottom and snap through the
+    top; at quarter-crank it is at 0.58 of stroke where a sine would say 0.50.
+  - **Drawn to your bore/stroke ratio**, so an oversquare engine really is short and wide.
+  - **True four-stroke valve timing** (intake 20° BTDC → 50° ABDC, exhaust 50° BBDC → 10° ATDC)
+    with the scavenging overlap visible around TDC. A two-stroke shows ports uncovering in the
+    liner instead; a rotary shows a real two-lobe epitrochoid housing,
+    `x = R·cosθ + e·cos3θ`, with the rotor turning at a third of the eccentric shaft.
+  - The chamber is **colour-coded by what is in it** — fresh charge, compressed, burning, burnt —
+    and the stroke is named above the head, so the cycle is watchable rather than memorised.
+  - A **bank strip** draws every cylinder at its own phase, so the firing order runs visibly
+    through a V12, and the firing cylinder glows.
+  - Live parts stay next to the thing they describe: throttle-plate angle at the butterfly, boost
+    and compressor flow at the turbo, EGT at the exhaust, and a knock bar.
+
+  The subsystem numbers that used to be printed here in 7 px type live in the **LIVE OUTPUT**
+  panel beside the canvas, where they are real text. A **⛶ FULL** button widens the drawing.
+- **Canvas rendered at device resolution (new)** — the three visualisations share one canvas that
+  drew on a fixed 640×420 backing store while CSS stretched it to whatever the panel was (744 px
+  on a desktop, twice that again on a high-DPI screen). Every 7 px glyph landed on fractional
+  pixels and smeared. The backing store is now sized to real device pixels and the context scaled,
+  so the drawing code keeps its 640×420 coordinates and the output is pixel-exact — which fixes
+  **DYNO** and **TRACK** at the same time.
 - **In-app GUIDE** — a built-in manual (kept in-app so the offline PWA stays self-contained)
   that explains the loop, the driving controls, every metric on screen and each design
   subsystem, so the numbers are never a mystery.
@@ -578,6 +603,7 @@ native Android build (parked).
 - [x] Sound (Web Audio API engine note)
 - [x] Pressure-ratio-aware turbo spool, compressor flow limits and real charge heating
 - [x] Torque-scaled axle asymmetry, and acceleration calibrated against six real cars
+- [x] Animated engine cutaway driven by real crank angle, at device resolution
 - [x] Save / load engine setups
 - [x] Garage: any number of named chassis+engine combos, with per-build stat cards
 - [x] Mobile app packaging (PWA)
