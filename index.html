@@ -401,6 +401,26 @@ redline shift the powerband up.<br>
 <b>Air path</b> — turbo (spools with rpm; size/config trade lag vs top-end) or supercharger (boost
 from idle); intercooler size cools the charge (denser, less knock) with a little lag; exhaust and
 catalytic converter trade flow vs back-pressure/emissions; nitrous is bottled power.<br>
+<b>Boost is not free, and the frame has a size.</b> A compressor makes pressure by spinning, and
+that shaft speed has to be bought with exhaust energy — so <i>the more boost you ask a given turbo
+for, the later it arrives and the longer it takes to build</i>. The same small frame that is fully
+lit by 1200 rpm at 0.5 bar does not reach half of 2.5 bar until nearly 3000 rpm. The spool figure
+quoted in the design summary is for the boost you actually asked for, not a fixed property of the
+frame.<br>
+Each frame also has a <b>rated flow</b> — small 32, medium 55, large 82 lb/min, and multi-turbo
+configs flow more (twin ×1.85, sequential ×1.55, compound ×2.3). That is the axis a real
+compressor map is drawn against. Ask an engine to move more air than its turbo is rated for and
+you are off the map: compressor efficiency falls away, the top end chokes off, and — the one that
+really bites — the charge arrives <b>hot</b>. Squeezing air heats it by
+<i>T&middot;(PR<sup>0.283</sup> − 1) / efficiency</i>, which grows faster than the boost does and
+grows again as efficiency drops. A 2.0 L asking 2.5 bar of a small frame wants 1.7× its rated
+flow, and the charge reaches the valves at <b>74 °C</b> where the right frame delivers 58 °C —
+so it knocks, makes 120 hp <i>less</i> than the medium frame, and is slower round a lap than the
+same engine at 0.8 bar. Nothing stops you building it; it simply isn't the way to make power.<br>
+<span style="color:#c86">One limit: spool <i>lag</i> — the time to build boost — is modelled on
+the live ENGINE bench, but the performance and lap figures are solved from the steady boost
+available at each rpm, so they feel the spool <i>point</i> moving and not the transient. A very
+laggy build is therefore flattered slightly by its 0–100 and lap times.</span><br>
 <b>Induction</b> — carbs → EFI → ITBs set breathing, metering precision and idle quality.<br>
 <b>Valvetrain</b> — wilder cams move power up top &amp; idle lumpy; VVT restores the bottom end.<br>
 <b>Fuel &amp; spark</b> — fuel type, octane, injector, ignition type, FIXED vs AUTO (ECU) timing, and
@@ -901,6 +921,8 @@ const I18N={
   'Delete the saved build':{el:'Διαγραφή της αποθηκευμένης κατασκευής'},
   'Save the whole car — this chassis, its parts and the engine in it — under a name, and swap between builds later. Kept in this browser.':{el:'Αποθήκευσε ολόκληρο το αυτοκίνητο — αυτό το σασί, τα μέρη του και τον κινητήρα μέσα του — με ένα όνομα, και άλλαξε ανάμεσα σε κατασκευές αργότερα. Μένει σε αυτόν τον browser.'},
   'No saved builds yet. Name the car above and press SAVE TO GARAGE — the chassis, every part on it and the engine inside are all kept together.':{el:'Καμία αποθηκευμένη κατασκευή ακόμα. Δώσε όνομα πιο πάνω και πάτησε ΑΠΟΘΗΚΕΥΣΗ ΣΤΟ ΓΚΑΡΑΖ — το σασί, κάθε εξάρτημά του και ο κινητήρας μέσα κρατιούνται μαζί.'},
+  'OFF THE COMPRESSOR MAP — fit a bigger frame':{el:'ΕΚΤΟΣ ΧΑΡΤΗ ΣΥΜΠΙΕΣΤΗ — βάλε μεγαλύτερο τούρμπο'},
+  'at the limit of this frame':{el:'στο όριο αυτού του τούρμπο'},
   'REFIT FACTORY SPEC':{el:'ΕΡΓΟΣΤΑΣΙΑΚΟΣ ΕΞΟΠΛΙΣΜΟΣ'},'FITTED':{el:'ΤΟΠΟΘΕΤΗΘΗΚΕ'},'REFITTED TO FACTORY SPEC':{el:'ΕΠΑΝΑΦΟΡΑ ΣΤΟΝ ΕΡΓΟΣΤΑΣΙΑΚΟ ΕΞΟΠΛΙΣΜΟ'},
   '(factory spec)':{el:'(εργοστασιακό)'},'(modified)':{el:'(τροποποιημένο)'},
   'Wheels & Tyres':{el:'Τροχοί & Ελαστικά'},'TYRE COMPOUND':{el:'ΤΥΠΟΣ ΕΛΑΣΤΙΚΟΥ'},'WHEEL DIA (in)':{el:'ΔΙΑΜ. ΖΑΝΤΑΣ (in)'},'TYRE WIDTH (mm)':{el:'ΠΛΑΤΟΣ ΕΛΑΣΤ. (mm)'},'TYRE ASPECT (%)':{el:'ΠΡΟΦΙΛ ΕΛΑΣΤ. (%)'},
@@ -928,7 +950,7 @@ const GUIDE_I18N={
   scorecard:{el:'<b>ΑΝΑΦΟΡΑ ΓΥΡΟΥ</b> — στην καρτέλα ΠΙΣΤΑ, τα κουμπιά ΑΝΑΦΟΡΑ ΓΥΡΟΥ PNG/PDF αποθηκεύουν τον γύρο ως φύλλο τηλεμετρίας: χάρτης με τα σημεία <span style="color:#1a7f37">τέρμα γκάζι</span> και <span style="color:#c1121f">φρεναρίσματος</span>, κάθε στροφή αριθμημένη, γράφημα ταχύτητας ανά απόσταση, χρόνοι γύρου και τομέων, πλήρης προδιαγραφή αυτοκινήτου και <b>παγίδα ταχύτητας σε κάθε στροφή</b> (είσοδος, apex, έξοδος, σχέση, ακτίνα). Οι στροφές έχουν αριθμούς T1…Tn και ονόματα ανά πίστα.<br><b>ΑΝΑΦΟΡΑ ΔΥΝΑΜΟ</b> — τα κουμπιά ΑΝΑΦΟΡΑ PNG/PDF αποθηκεύουν την τρέχουσα μέτρηση ως εκτυπώσιμο φύλλο με τη διάταξη πραγματικού δυναμόμετρου: καμπύλες ισχύος και ροπής με τις κορυφές, μπάντα αποτελεσμάτων, πλήρη προδιαγραφή κινητήρα, συνθήκες μέτρησης και πίνακα δεδομένων. Οι καταγεγραμμένες μετρήσεις εμφανίζονται αχνά για σύγκριση. Το γράφημα είναι ο κινητήρας <i>όπως είναι ρυθμισμένος τώρα</i>, γι’ αυτό τυπώνεται και το <b>δυναμικό σχεδίασης</b>. Όλα παράγονται εκτός σύνδεσης· τίποτα δεν ανεβαίνει.<br>Κάθε build βαθμολογείται <b>S → F</b> από επτά στοιχεία: ειδική <b>ισχύ</b> & <b>ροπή</b> (ανά λίτρο), εύρος <b>περιοχής ισχύος</b>, θερμική <b>απόδοση</b>, <b>ασφάλεια</b> από πειράκι, <b>οδηγησιμότητα</b> (ροπή στις χαμηλές) και <b>εκπομπές</b>. Το κυνήγι μέγιστης ισχύος κοστίζει σε οδηγησιμότητα, ασφάλεια και εκπομπές — η βαθμολογία επιβραβεύει το ισορροπημένο build.'},
   career:{el:'<b>Στόχοι πίστας</b> κρίνουν ολόκληρο το αυτοκίνητο: τέσσερις βάζουν στόχο χρόνου γύρου σε συγκεκριμένη πίστα, και το μπάτζετ τους καλύπτει κινητήρα <i>και</i> όχημα. Ο πίνακας βαθμολογίας δείχνει επίσης τον χρόνο γύρου σου — ως ένδειξη, όχι μέσα στον βαθμό: ο βαθμός αφορά τον <i>κινητήρα</i> και δεν πρέπει να αλλάζει επειδή έβαλες άλλα ελαστικά.<br>Διάλεξε έναν <b>ΣΤΟΧΟ</b> στην κορυφή της ΣΧΕΔΙΑΣΗΣ για να κάνεις τη σχεδίαση γρίφο. Κάθε πρόκληση θέτει κριτήρια — ισχύ, οικονομία, εκπομπές, <b>αξιοπιστία</b> ή <b>ισχύ ανά δολάριο</b> — και κάποιες βάζουν όριο <b>προϋπολογισμού</b>. Η κάρτα τσεκάρει κάθε κριτήριο ζωντανά (✓/✗) και δείχνει <b>ΕΠΙΤΥΧΙΑ</b> όταν καλυφθούν όλα· κόστος και αξιοπιστία φαίνονται πάντα. Ο μεγάλος κυβισμός κερδίζει σε αξία· boost και αγωνιστικά μέρη κερδίζουν σε ισχύ αλλά κοστίζουν σε χρήμα και αξιοπιστία.'},
   types:{el:'<b>Βενζίνη 4-χρονη</b> — η ισορροπημένη επιλογή: ανάφλεξη με σπινθήρα, μία εκρηκτική διαδρομή ανά δύο στροφές.<br><b>Πετρέλαιο (CI)</b> — ανάφλεξη με συμπίεση (χωρίς μπουζί, χωρίς πειράκι), πολύ υψηλή συμπίεση, φτωχό χωρίς πεταλούδα. Μεγάλη <b>ροπή</b> στις χαμηλές, χαμηλό όριο στροφών, η καλύτερη <b>απόδοση</b> — αλλά βαρύ, με εκπομπές <b>NOx + αιθάλη (PM)</b> που καθαρίζει σύστημα DPF/SCR.<br><b>2-χρονη</b> — εκρηκτική διαδρομή σε <i>κάθε</i> στροφή (θυρίδες, χωρίς εκκεντροφόρο): υψηλή ειδική ισχύς αλλά λαίμαργη και <b>HC</b>-βρόμικη.<br><b>Wankel (ρότορας)</b> — περιστρεφόμενος ρότορας που ανάβει σε κάθε στροφή: ομαλός σαν τουρμπίνα, τεράστιες στροφές, υψηλή ισχύς ανά λίτρο, αλλά λαίμαργος, <b>HC</b>-βαρύς και σκληρός στα ελάσματα κορυφής.<br>Η αλλαγή τύπου προσαρμόζει τα εύρη συμπίεσης/στροφών/AFR και απενεργοποιεί ό,τι δεν ισχύει.'},
-  subsystems:{el:'<b>Κάτω μέρος</b> — τύπος κινητήρα, διάμετρος × διαδρομή × κύλινδροι = κυβισμός· υπερτετράγωνος & υψηλότερο όριο ανεβάζουν την περιοχή ισχύος.<br><b>Διαδρομή αέρα</b> — τούρμπο (γεμίζει με τις στροφές) ή υπερσυμπιεστής (boost από ρελαντί)· το intercooler ψύχει το χάρμανι· εξάτμιση & καταλύτης ανταλλάσσουν ροή με αντίθλιψη/εκπομπές· το νιτρό είναι εμφιαλωμένη ισχύς.<br><b>Εισαγωγή</b> — καρμπιρατέρ → EFI → ITB ορίζουν αναπνοή, ακρίβεια & ρελαντί.<br><b>Χρονισμός βαλβίδων</b> — άγριες εκκεντροφόροι ανεβάζουν την ισχύ ψηλά· το VVT επαναφέρει τις χαμηλές.<br><b>Καύσιμο & σπινθήρας</b> — τύπος καυσίμου, οκτάνια, μπεκ, ανάφλεξη, χρονισμός FIXED/AUTO και το μείγμα: MANUAL (ένα σταθερό AFR) ή AUTO — ένας 3D χάρτης ECU που τρέχει κοντά στο στοιχειομετρικό στο ελαφρύ φορτίο και εμπλουτίζει υπό φορτίο/boost, όπως ένας πραγματικός χάρτης καυσίμου. Στο AUTO μπορείς να <b>ρυθμίσεις τον χάρτη</b>: πάτησε ένα κελί και μετά − ΦΤΩΧΟ / + ΠΛΟΥΣΙΟ για να αλλάξεις τον στόχο σε εκείνο το φορτίο×στροφές (ΕΠΑΝΑΦΟΡΑ ΧΑΡΤΗ επαναφέρει το εργοστασιακό).<br><b>Ψύξη & ηλεκτρικά</b> — ψυγείο/βεντιλατέρ/ψυγείο λαδιού/θερμοστάτης ορίζουν θερμοκρασίες· δυναμό & ανάφλεξη ορίζουν φόρτιση και όριο μισφάιρ.'},
+  subsystems:{el:'<b>Κάτω μέρος</b> — τύπος κινητήρα, διάμετρος × διαδρομή × κύλινδροι = κυβισμός· υπερτετράγωνος & υψηλότερο όριο ανεβάζουν την περιοχή ισχύος.<br><b>Διαδρομή αέρα</b> — τούρμπο (γεμίζει με τις στροφές) ή υπερσυμπιεστής (boost από ρελαντί)· το intercooler ψύχει το χάρμανι· εξάτμιση & καταλύτης ανταλλάσσουν ροή με αντίθλιψη/εκπομπές· το νιτρό είναι εμφιαλωμένη ισχύς.<br><b>Το boost δεν είναι δωρεάν, και το τούρμπο έχει μέγεθος.</b> Ένας συμπιεστής παράγει πίεση περιστρεφόμενος, και αυτές οι στροφές πληρώνονται με ενέργεια από την εξάτμιση — άρα <i>όσο περισσότερο boost ζητάς από ένα δεδομένο τούρμπο, τόσο αργότερα έρχεται και τόσο πιο αργά χτίζεται</i>. Το ίδιο μικρό τούρμπο που έχει γεμίσει στις 1200 σ.α.λ. με 0.5 bar δεν φτάνει το μισό των 2.5 bar πριν τις ~3000. Ο αριθμός γεμίσματος στη σύνοψη σχεδίασης αφορά το boost που ζήτησες, δεν είναι σταθερή ιδιότητα του τούρμπο.<br>Κάθε τούρμπο έχει επίσης <b>ονομαστική παροχή</b> — μικρό 32, μεσαίο 55, μεγάλο 82 lb/min, και οι διατάξεις με πολλά τούρμπο περνούν περισσότερο (twin ×1.85, sequential ×1.55, compound ×2.3). Αυτός είναι ο άξονας πάνω στον οποίο σχεδιάζεται ένας πραγματικός χάρτης συμπιεστή. Αν ζητήσεις από τον κινητήρα να περάσει περισσότερο αέρα από όσο αντέχει το τούρμπο, βγαίνεις εκτός χάρτη: η απόδοση του συμπιεστή καταρρέει, οι ψηλές στροφές πνίγονται και — το χειρότερο — το χάρμανι φτάνει <b>καυτό</b>. Η συμπίεση του αέρα τον θερμαίνει κατά <i>T&middot;(PR<sup>0.283</sup> − 1) / απόδοση</i>, που αυξάνεται πιο γρήγορα από το boost και ακόμη περισσότερο καθώς πέφτει η απόδοση. Ένας 2.0 L που ζητά 2.5 bar από μικρό τούρμπο θέλει 1.7× την ονομαστική του παροχή, και το χάρμανι φτάνει στις βαλβίδες στους <b>74 °C</b> εκεί που το σωστό τούρμπο δίνει 58 °C — οπότε κάνει πειράκια, βγάζει 120 hp <i>λιγότερα</i> από το μεσαίο, και είναι πιο αργός στον γύρο από τον ίδιο κινητήρα στα 0.8 bar. Τίποτα δεν σε εμποδίζει να τον φτιάξεις· απλώς δεν είναι έτσι που βγαίνει ισχύς.<br><span style="color:#c86">Ένα όριο: η καθυστέρηση γεμίσματος — ο <i>χρόνος</i> να χτιστεί το boost — μοντελοποιείται στον ζωντανό πάγκο ΚΙΝΗΤΗΡΑ, αλλά οι επιδόσεις και οι χρόνοι γύρου λύνονται από το σταθερό boost που είναι διαθέσιμο σε κάθε στροφή, οπότε βλέπουν το <i>σημείο</i> γεμίσματος να μετακινείται, όχι το μεταβατικό φαινόμενο. Μια πολύ «τεμπέλικη» κατασκευή ευνοείται λίγο στα 0–100 και στον γύρο.</span><br><b>Εισαγωγή</b> — καρμπιρατέρ → EFI → ITB ορίζουν αναπνοή, ακρίβεια & ρελαντί.<br><b>Χρονισμός βαλβίδων</b> — άγριες εκκεντροφόροι ανεβάζουν την ισχύ ψηλά· το VVT επαναφέρει τις χαμηλές.<br><b>Καύσιμο & σπινθήρας</b> — τύπος καυσίμου, οκτάνια, μπεκ, ανάφλεξη, χρονισμός FIXED/AUTO και το μείγμα: MANUAL (ένα σταθερό AFR) ή AUTO — ένας 3D χάρτης ECU που τρέχει κοντά στο στοιχειομετρικό στο ελαφρύ φορτίο και εμπλουτίζει υπό φορτίο/boost, όπως ένας πραγματικός χάρτης καυσίμου. Στο AUTO μπορείς να <b>ρυθμίσεις τον χάρτη</b>: πάτησε ένα κελί και μετά − ΦΤΩΧΟ / + ΠΛΟΥΣΙΟ για να αλλάξεις τον στόχο σε εκείνο το φορτίο×στροφές (ΕΠΑΝΑΦΟΡΑ ΧΑΡΤΗ επαναφέρει το εργοστασιακό).<br><b>Ψύξη & ηλεκτρικά</b> — ψυγείο/βεντιλατέρ/ψυγείο λαδιού/θερμοστάτης ορίζουν θερμοκρασίες· δυναμό & ανάφλεξη ορίζουν φόρτιση και όριο μισφάιρ.'},
   vehicle:{el:'Στην καρτέλα <b>ΟΧΗΜΑ</b> βάζεις τον κινητήρα σου σε αυτοκίνητο. Διάλεξε <b>σασί</b> και έρχεται με τον <b>εργοστασιακό του εξοπλισμό</b> — τα ελαστικά, ζάντες, φρένα, ανάρτηση, αεροδυναμική και κιβώτιο που θα φορούσε πραγματικά: ένα kei εμφανίζεται με στενά οικονομικά ελαστικά και μικρούς ατσάλινους δίσκους, ενώ ένα hypercar παίρνει φαρδιά semi-slick, carbon-ceramic φρένα και πακέτο αεροτομής/diffuser. Όλα παραμένουν επεξεργάσιμα· το <b>ΕΡΓΟΣΤΑΣΙΑΚΟΣ ΕΞΟΠΛΙΣΜΟΣ</b> τα επαναφέρει.<br><b>Το ΓΚΑΡΑΖ</b> στο κάτω μέρος της καρτέλας κρατά όσα ολοκληρωμένα αυτοκίνητα θέλεις. Δώσε όνομα και πάτησε <b>ΑΠΟΘΗΚΕΥΣΗ ΣΤΟ ΓΚΑΡΑΖ</b> και αποθηκεύεται το σύνολο — το σασί, κάθε εξάρτημα πάνω του, <i>και</i> ο κινητήρας μέσα, μέχρι και ο χειροκίνητα ρυθμισμένος χάρτης καυσίμου. Κάθε κάρτα δείχνει τα βασικά νούμερα που είχε όταν την αποθήκευσες (ισχύ, βάρος, 0–100, τελική, χρόνο γύρου και συνολικό κόστος), οπότε μπορείς να παρατάξεις τρεις κατασκευές και να τις συγκρίνεις χωρίς να ξαναφτιάξεις καμία. Η <b>ΦΟΡΤΩΣΗ</b> επαναφέρει το αυτοκίνητο ακριβώς όπως ήταν· αν γράψεις όνομα που υπάρχει ήδη, η κάρτα του τονίζεται και η αποθήκευση το αντικαθιστά. Αυτό είναι ξεχωριστό από τα <b>ΑΠΟΘΗΚ.</b>/<b>ΦΟΡΤΩΣΗ</b>, που είναι μία μοναδική θέση γρήγορης αποθήκευσης. Μια εγγραφή του γκαράζ είναι η ίδια που γράφει η <b>ΑΠΟΘ. ΑΡΧΕΙΟΥ</b> και μεταφέρει ένα σύνδεσμος κοινοποίησης. Όλα μένουν μόνο σε αυτόν τον browser — αν καθαρίσεις τα δεδομένα ιστότοπου, χάνεται το γκαράζ, και η <b>ΑΠΟΘ. ΑΡΧΕΙΟΥ</b> είναι αυτή που σώζει μια κατασκευή από αυτό.<br>Από εκεί ρυθμίζεις <b>μετάδοση</b> (FWD/RWD/AWD — το AWD ξεκινά καλύτερα), <b>κιβώτιο</b> (τύπος, σχέσεις + ρυθμιστικό τελικής), <b>ελαστικά</b> (τύπος + πλάτος/προφίλ/διάμετρος), <b>αεροδυναμική</b> (εμπρός/πίσω/πάτωμα = κάθετη δύναμη & οπισθέλκουσα), <b>φρένα</b> (τύπος + διάμετρος δίσκου) και <b>ανάρτηση</b> (πολλαπλασιαστής μηχανικής πρόσφυσης).<br><b>Ο τύπος κιβωτίου</b> αλλάζει τέσσερα πράγματα: πόσο κόβεται η μετάδοση σε κάθε αλλαγή, πόση από την ισχύ του κινητήρα φτάνει στους τροχούς, πώς είναι κλιμακωμένες οι σχέσεις, και πώς ξεκινά το αυτοκίνητο.<br>· <b>Χειροκίνητο (H)</b> — το πιο αποδοτικό, αλλά χάνεις ~350 ms σε κάθε αλλαγή. Φθηνό.<br>· <b>Σειριακό</b> — αγωνιστικό: αλλαγές ~60 ms και κοντές σχέσεις που κρατούν έναν «αιχμηρό» κινητήρα στην περιοχή του. Ακριβό.<br>· <b>Διπλού συμπλέκτη (DCT)</b> — η επόμενη σχέση είναι ήδη επιλεγμένη στον δεύτερο συμπλέκτη, άρα σχεδόν αδιάλειπτες αλλαγές (~30 ms). Το ταχύτερο, και ανάλογα ακριβό.<br>· <b>Αυτόματο με μετατροπέα ροπής</b> — οι πιο αργές αλλαγές (~200 ms) και οι μεγαλύτερες απώλειες, γιατί μεταδίδει μέσω υγρού. Το κερδίζει στην <b>εκκίνηση</b>: ο μετατροπέας «φορτίζει» πάνω στα φρένα και <i>πολλαπλασιάζει</i> τη ροπή (έως ~1.9× σε στάλλ 2400 σ.α.λ.), σβήνοντας στο 1:1 καθώς ο στρόβιλος προλαβαίνει. Γι’ αυτό ένα αυτόματο ξεκινά καλύτερα από ένα χειροκίνητο παρότι χάνει ισχύ παντού αλλού — και γι’ αυτό ταιριάζει σε βαρύ, ροπάτο αυτοκίνητο, όχι σε ελαφρύ και «αιχμηρό». Επίσης απλώνει περισσότερο τις σχέσεις: πιο κοντή 1η, πιο μακριά τελευταία.<br><b>Η καρτέλα ΠΙΣΤΑ</b> βάζει το αυτοκίνητο σε κυκλική πίστα και λύνει έναν γύρο. Πρώτα υπολογίζει την <b>ιδανική γραμμή</b>: κανείς δεν οδηγεί στον άξονα της πίστας, γιατί χρησιμοποιώντας όλο το πλάτος «ισιώνει» η στροφή και περνάς πιο γρήγορα. Η γραμμή βρίσκεται ελαχιστοποιώντας τη συνολική καμπυλότητα μέσα στα όρια της πίστας — και το έξω-μέσα-έξω προκύπτει μόνο του. Δύο πράγματα την απομακρύνουν από την καθαρή ελάχιστη καμπυλότητα. Πρώτον, <b>η πίστα δεν έχει ένα πλάτος</b>: κάθε πίστα εδώ στενεύει στα τεχνικά της σημεία και ανοίγει στα γρήγορα, και μια στροφή 7 m απλώς δεν «ισιώνει» όσο μία 13 m — ο αριθμός στον χάρτη είναι το εύρος, και το πλάτος της πίστας είναι ο μέσος όρος. Δεύτερον, το <b>καθυστερημένο apex</b>: ένα μέτρο ακτίνας στην <i>έξοδο</i> αξίζει πολύ περισσότερο από ένα μέτρο στην είσοδο, γιατί η ταχύτητα εξόδου μεταφέρεται σε όλο το μήκος αυτού που ακολουθεί, ενώ στην είσοδο ούτως ή άλλως φρενάρεις. Ο λύτης «τιμολογεί» την καμπυλότητα με βάση το πόσο ανοιχτή είναι η πίστα μπροστά, οπότε θυσιάζει ακτίνα εισόδου για να ισιώσει την έξοδο — μετακινώντας το apex περίπου 11 m αργότερα στις στροφές που βγάζουν σε ευθεία, και αφήνοντας ανέπαφες όσες οδηγούν σε άλλες στροφές. Οι πίστες είναι τρισδιάστατες, οπότε ο γύρος λαμβάνει υπόψη και το <b>υψόμετρο</b>: η βαρύτητα σε κρατά πίσω στην ανηφόρα και σε σπρώχνει στην κατηφόρα, και — το πιο σημαντικό — η <b>κατακόρυφη καμπυλότητα</b>. Σε μια κορυφή το αυτοκίνητο «ελαφραίνει» και χάνει πρόσφυση ακριβώς εκεί που πάει γρήγορα· σε μια κοιλάδα πιέζεται στο οδόστρωμα και περνά πολύ πιο γρήγορα. Μετράει και το πού πέφτουν οι λόφοι: μια ανηφόρα σε ζώνη φρεναρίσματος σε αφήνει να φρενάρεις αργότερα και <i>κερδίζει</i> χρόνο.<br><b>ΕΙΣΑΓΩΓΗ GPX</b> φορτώνει πραγματική πίστα από αρχείο GPX: προβάλλεται σε μέτρα, ξαναδειγματοληπτείται σε σταθερό βήμα και εξομαλύνεται ελαφρά ώστε ο θόρυβος GPS να μη γίνει «στροφές». Το υψόμετρο έρχεται από το αρχείο. Οι εισαγόμενες πίστες μένουν μόνο στον browser σου.<br><span style="color:#c86">Ο χρόνος θα βγει λίγο αργός: ένα αρχείο GPX δεν περιέχει καθόλου πλάτος, οπότε το προφίλ πλάτους <i>μοντελοποιείται</i> από τη χάραξη — οι δρόμοι φτιάχνονται φαρδιοί εκεί που είναι γρήγοροι και στενοί εκεί που είναι τεχνικοί — δεν είναι μετρημένο. Η γραμμή παραμένει προσέγγιση της γραμμής ελάχιστου χρόνου και ο οδηγός δεν κάνει ποτέ λάθος. Χρησιμοποίησέ το για σύγκριση των δικών σου κατασκευών.</span> Αξίζει <b>5–7% του χρόνου γύρου</b> σε σχέση με τον άξονα, και όσο πιο φαρδιά η πίστα τόσο περισσότερο. Μετά βρίσκει την ταχύτητα στροφής σε κάθε σημείο (<i>v = &radic;(μ&middot;(mg + κάθετη δύναμη)&middot;r / m)</i>), μετά δουλεύει ανάποδα από κάθε στροφή για τα σημεία φρεναρίσματος και προς τα εμπρός στην έξοδο με τη διαθέσιμη κίνηση, κρατώντας τη μικρότερη ταχύτητα σε κάθε σημείο. Ο <b>κύκλος τριβής</b> τα δένει: η πρόσφυση που ξοδεύεται στο στρίψιμο δεν είναι διαθέσιμη για επιτάχυνση ή φρενάρισμα. Η χρωματιστή γραμμή στον χάρτη δείχνει τι περιορίζει το αυτοκίνητο σε κάθε σημείο και η λεζάντα αθροίζει τα ποσοστά του γύρου. Ο χρόνος αλλαγής σχέσης χρεώνεται σε κάθε αλλαγή, οπότε ένα αργό κιβώτιο χάνει πραγματικό χρόνο.<br><span style="color:#c86">Ένα όριο: η γραμμή παραμένει μόνο προσέγγιση της γραμμής ελάχιστου <i>χρόνου</i>. Η τάση για καθυστερημένο apex υπολογίζεται από τη γεωμετρία μπροστά, όχι από την ταχύτητα του ίδιου του αυτοκινήτου, οπότε την ίδια γραμμή οδηγεί ένα hatchback 90&nbsp;hp και ένα αγωνιστικό 800&nbsp;hp — ενώ στην πραγματικότητα το γρήγορο θα φρέναρε αργότερα και θα έκανε ακόμα πιο καθυστερημένο apex. Αξίζει περίπου μισό τοις εκατό, και είναι το ίδιο μισό τοις εκατό για όλους, οπότε οι συγκρίσεις μεταξύ κατασκευών παραμένουν έντιμες.</span><br><b>Το διαφορικό</b> μοιράζει την κίνηση στους δύο τροχούς του άξονα — και καθορίζει πόση από την πρόσφυση του άξονα μπορείς πραγματικά να χρησιμοποιήσεις. Οι δύο τροχοί δεν είναι ποτέ φορτωμένοι το ίδιο (κλίση δρόμου, αντίδραση ροπής, στρέψη άξονα, γεωμετρία ανάρτησης), και ένα <b>ανοιχτό</b> διαφορικό δίνει σε κάθε τροχό μόνο όση ροπή αντέχει ο <i>λιγότερο φορτωμένος</i>: στρίβει αυτόν τον τροχό και πετάει τα υπόλοιπα, αφήνοντας περίπου 78% της πρόσφυσης αξιοποιήσιμο. Ένα <b>ιξώδες LSD</b> τους δένει μεταξύ τους και ανακτά τα περισσότερα (~92%)· ένα <b>LSD με δίσκους</b> ουσιαστικά όλα· ένα <b>μπλοκέ (spool)</b> τους ενώνει μόνιμα και είναι το καλύτερο σε ευθεία — γι’ αυτό το χρησιμοποιούν τα dragster.<br>Το βασικό: το διαφορικό μετράει μόνο όσο είσαι <b>περιορισμένος από πρόσφυση</b>. Βάλε spool σε αργό αυτοκίνητο και δεν αλλάζει τίποτα. Βάλ’ το σε ένα που πατινάρει στην εκκίνηση και αξίζει περισσότερο από αναβάθμιση ισχύος.<br>Και τώρα το αντιστάθμισμα μετριέται. Στην καρτέλα ΠΙΣΤΑ ένα μπλοκέ διαφορικό πληρώνει το πλεονέκτημά του στην ευθεία: τρίβει σε κάθε στροφή. Σε ένα muscle 842&nbsp;hp το spool είναι ~0.2&nbsp;s ταχύτερο στο 0–100 και ~2.5&nbsp;s <i>πιο αργό</i> ανά γύρο, ενώ το ανοιχτό είναι το χειρότερο και στα δύο.<br><b>Ο αριθμός της τελικής</b> — το ρυθμιστικό 0–100 είναι η <b>σχέση τελικής μετάδοσης</b>, πόσες φορές γυρίζει ο άξονας ανά στροφή των τροχών. Πάει από <b>0 = 4.90:1</b> (η <i>κοντύτερη</i>) έως <b>100 = 2.60:1</b> (η <i>μακρύτερη</i>)· η σχέση φαίνεται δίπλα στον αριθμό. Κοντή τελική πολλαπλασιάζει τη ροπή στους τροχούς: δυνατότερη επιτάχυνση, αλλά κάθε σχέση τελειώνει νωρίς. Μακριά τελική κάνει το αντίθετο: πιο νωθρή επιτάχυνση, περισσότερη ταχύτητα ανά 1000 στροφές και ήρεμο ταξίδι. Ιδανική είναι η πιο μακριά που ο κινητήρας μπορεί ακόμα να τραβήξει ως την κορυφή της ισχύος του στην τελευταία σχέση. Πιο μακριά από αυτό, η τελική ταχύτητα απλώς <i>σταματά να βελτιώνεται</i> — το αυτοκίνητο πιάνει το μέγιστό του μια σχέση χαμηλότερα αντί να «πνίγεται» στην τελευταία — ενώ η επιτάχυνση συνεχίζει να χειροτερεύει, οπότε πληρώνεις χωρίς όφελος. Πολλή ισχύς και λίγη οπισθέλκουσα σηκώνουν πολύ μακριά τελική και κερδίζουν ταχύτητα ως το τέρμα· βαριά, αδύναμα ή αεροδυναμικά «βρώμικα» αυτοκίνητα φτάνουν γρήγορα σε πλατό και θέλουν κοντύτερη.<br>Ο κινητήρας προστίθεται και το ταμπλό <b>Επιδόσεις</b> υπολογίζει <b>0–100 km/h</b>, <b>400/800/1000 m</b>, <b>τελική</b>, <b>φρενάρισμα 100–0</b> και το τεστ <b>0–200–0</b> ζωντανά — εκκίνηση περιορισμένη από πρόσφυση και φρενάρισμα με όριο ελαστικών/φρένων και εξασθένηση. Κολλώδη ελαστικά, μεγάλα φρένα και AWD βοηθούν πιο πολύ.'},
   tip:{el:'Συμβουλή: κλείσε τη ΦΘΟΡΑ στις ΕΠΙΛΟΓΕΣ για ελεύθερο πειραματισμό, μετά ξανάνοιξέ την για συνέπειες.'}
 };
@@ -1011,20 +1033,29 @@ const ELEC_FAN_A=22;    // electric cooling fan draw when running
 // Ignition dwell limit (rpm) before spark energy falls off → misfire, by ignition type.
 const DWELL_RPM={distributor:5200,wasted:6800,coil:9000};
 // Turbo characteristics as fractions of redline: 50% spool point, ramp width,
-// top-end choke, and boost-response speed (larger turbo = laggier).
+// top-end choke, and boost-response speed (larger turbo = laggier). `flow` is the frame's
+// rated compressor flow in lb/min — the quantity a real compressor map is drawn against, and
+// what decides whether an engine is asking more of a turbo than it can actually deliver.
+// Figures are the usual real classes: TD04/GT2560R, GT3076R, GT3582R.
+// The spool figures are quoted AT THE REFERENCE PRESSURE RATIO below; asking for more boost
+// than that moves the spool point up, because pressure has to be paid for in shaft speed.
 const TURBO={
-  small:{spool50:0.26,width:0.06,choke:0.18,k:3.5},
-  medium:{spool50:0.40,width:0.08,choke:0.10,k:2.2},
-  large:{spool50:0.54,width:0.10,choke:0.04,k:1.4}
+  small:{spool50:0.26,width:0.06,choke:0.18,k:3.5,flow:32},
+  medium:{spool50:0.40,width:0.08,choke:0.10,k:2.2,flow:55},
+  large:{spool50:0.54,width:0.10,choke:0.04,k:1.4,flow:82}
 };
+const TURBO_PR_REF=2.0;   // frames are characterised at 1.0 bar of boost
+// How strongly the spool point follows shaft speed. Calibrated (not guessed) so a small frame
+// keeps its early-spooling character at low boost and clearly gives it up at high boost.
+const SPOOL_PR_EXP=1.45;
 // Turbo configuration: multipliers on the base (size) spool point / width / top-end choke /
-// response. Twin spools earlier & flows better; sequential spools very early and stays flat;
-// compound makes big low-end and huge boost.
+// response / rated flow. Twin spools earlier & flows better; sequential spools very early and
+// stays flat; compound stages two compressors, so it makes big low-end and flows the most.
 const TURBO_CONFIG={
-  single:    {label:'SINGLE',     spool:1.00,width:1.00,choke:1.00,k:1.00},
-  twin:      {label:'TWIN',       spool:0.82,width:1.10,choke:0.55,k:1.15},
-  sequential:{label:'SEQUENTIAL', spool:0.60,width:1.55,choke:0.30,k:1.30},
-  compound:  {label:'COMPOUND',   spool:0.68,width:1.35,choke:0.18,k:1.10}
+  single:    {label:'SINGLE',     spool:1.00,width:1.00,choke:1.00,k:1.00,flow:1.00},
+  twin:      {label:'TWIN',       spool:0.82,width:1.10,choke:0.55,k:1.15,flow:1.85},
+  sequential:{label:'SEQUENTIAL', spool:0.60,width:1.55,choke:0.30,k:1.30,flow:1.55},
+  compound:  {label:'COMPOUND',   spool:0.68,width:1.35,choke:0.18,k:1.10,flow:2.30}
 };
 // Supercharger types: boost fraction vs rpm = clamp(lo + (hi-lo)*(rpm/redline)^exp). Roots &
 // twin-screw are positive-displacement (near-full boost from low rpm); centrifugal is a
@@ -1038,10 +1069,13 @@ const NITROUS_BAR={none:0,small:2.2,large:4.2};   // extra IMEP (bar) from a nit
 // Intercooler core: heat = residual charge-heat added per bar of boost (°C). A bigger core
 // cools the charge far better (denser air, more knock margin) but its extra volume adds a
 // little turbo spool lag (more plumbing to pressurise). None = no intercooler.
+// Intercooler: `eff` is heat-exchanger effectiveness — the fraction of the compressor's
+// temperature rise it gives back to ambient, which is how a core is actually rated. `lag` is the
+// extra volume to fill, which costs spool response.
 const INTERCOOLER={
-  none: {label:'NONE',      heat:25,lag:0.00},
-  small:{label:'SMALL CORE',heat:11,lag:0.05},
-  large:{label:'LARGE CORE',heat:5, lag:0.12}
+  none: {label:'NONE',      eff:0.00,lag:0.00},
+  small:{label:'SMALL CORE',eff:0.62,lag:0.05},
+  large:{label:'LARGE CORE',eff:0.82,lag:0.12}
 };
 // Catalytic converter: a three-way cat only cleans efficiently in a narrow window around
 // stoich. conv = peak conversion efficiency; restrict = exhaust back-pressure (a small
@@ -1391,15 +1425,43 @@ function buildEngine(){
   engine.mapMax=engine.intake==='na'?1.05:1.0+engine.maxBoost;
   // Intercooler core: charge-heat residual (feeds effIAT) and its spool-lag penalty.
   const ic=INTERCOOLER[engine.intercooler]||INTERCOOLER.large;
-  engine.icHeat=ic.heat;engine.icLag=ic.lag;
+  engine.icEff=ic.eff;engine.icLag=ic.lag;
   // Turbo spool characteristics scaled to redline, then modified by the turbo config
   // (twin/sequential/compound), anti-lag (keeps it spooled) and intercooler volume (lag).
   const tb=TURBO[engine.turboSize]||TURBO.medium, cfg=TURBO_CONFIG[engine.turboConfig]||TURBO_CONFIG.single;
   const als=engine.antilag?0.62:1.0, alsK=engine.antilag?1.5:1.0;
-  engine.spool50=tb.spool50*cfg.spool*als*engine.redline;
+  // ---- How hard is this engine leaning on that frame? ----
+  // Air demanded at peak power, in lb/min — the axis a real compressor map is drawn against.
+  // Deliberately computed from the DESIGN VE amplitude and a fixed reference charge
+  // temperature rather than the live VE/IAT solution: those depend on compressor efficiency,
+  // which depends on this, and the loop would not close.
+  const PR=1+engine.maxBoost;
+  const perRev=(engine.strokeDiv===2*Math.PI)?1:0.5;      // intake events per revolution
+  const rhoRef=PR*1e5/(287*(273+40));
+  const kgs=rhoRef*(engine.displacement_L/1000)*perRev*(engine.redline*0.85/60)*engine.veAmp;
+  engine.turboFlow=kgs*132.28;                            // kg/s → lb/min
+  engine.turboCap=tb.flow*cfg.flow;                       // what the frame is rated for
+  engine.turboLoad=engine.intake==='turbo'?engine.turboFlow/engine.turboCap:0;   // 1.0 = at rating
+  // Compressor efficiency. Best on the island near the reference pressure ratio, falling as PR
+  // climbs and falling hard once the engine asks for more air than the frame is rated to move —
+  // which is what makes over-boosting a small frame a bad idea rather than a free lunch.
+  engine.compEff=engine.intake==='na'?1:clamp(
+    0.78-0.055*Math.max(0,PR-1.8)-0.30*Math.max(0,engine.turboLoad-1),0.42,0.78);
+  // ---- Spool point and rate, both priced off pressure ratio ----
+  // A compressor makes pressure by spinning, and shaft speed has to be bought with exhaust
+  // energy. Turbine speed for a given pressure ratio goes like √(PR^0.283 − 1), so asking a
+  // frame for more than it was characterised at pushes its spool point up and slows its
+  // response; asking for less brings both forward. Over-flowing the frame delays it further.
+  const shaft=pr=>Math.sqrt(Math.max(0,Math.pow(pr,0.283)-1));
+  const prMul=engine.intake==='turbo'
+    ? Math.pow(shaft(PR)/shaft(TURBO_PR_REF),SPOOL_PR_EXP)*(1+0.25*Math.max(0,engine.turboLoad-1))
+    : 1;
+  engine.spoolPRMul=prMul;
+  engine.spool50=tb.spool50*cfg.spool*als*prMul*engine.redline;
   engine.spoolWidth=tb.width*cfg.width*engine.redline;
-  engine.turboChoke=tb.choke*cfg.choke;
-  engine.spoolK=tb.k*cfg.k*alsK*(engine.intake==='turbo'?(1-engine.icLag):1);
+  // Past its rated flow the compressor runs out of map and the top end chokes off in earnest.
+  engine.turboChoke=tb.choke*cfg.choke+0.32*Math.max(0,engine.turboLoad-1);
+  engine.spoolK=tb.k*cfg.k*alsK*(engine.intake==='turbo'?(1-engine.icLag)/prMul:1);
   engine.nitrousBar=NITROUS_BAR[engine.nitrous]||0;
   state.boostActual=0;state.nitrousActive=false;state.nitrousCharge=1.0;   // fresh tanks
   state.engineHealth=1.0;state.blown=false;state.wearCause='';   // a fresh (rebuilt) engine
@@ -1596,8 +1658,15 @@ function updateDesignSummary(){
   let induction;
   const icTxt=engine.intercooler==='none'?' (no IC)':' ('+(engine.intercooler==='large'?'LG':'SM')+' IC)';
   if(engine.intake==='na')induction='Naturally aspirated';
-  else if(engine.intake==='turbo')
+  else if(engine.intake==='turbo'){
     induction=TURBO_CONFIG[engine.turboConfig].label+' TURBO ('+engine.turboSize.toUpperCase()+')'+(engine.antilag?' +ALS':'')+' @ '+engine.boost_bar.toFixed(2)+' bar'+icTxt+', 50% boost @ '+Math.round(engine.spool50)+' rpm';
+    // Say plainly when the engine is asking the frame for more air than it is rated to move —
+    // otherwise the power just quietly stops arriving and there is nothing to learn from.
+    induction+='<br>Compressor '+Math.round(engine.turboFlow)+' of '+Math.round(engine.turboCap)+' lb/min rated ('+
+      Math.round(engine.turboLoad*100)+'%) • '+Math.round(engine.compEff*100)+'% efficient';
+    if(engine.turboLoad>1)induction+=' • <span style="color:#ff5555">'+tr('OFF THE COMPRESSOR MAP — fit a bigger frame')+'</span>';
+    else if(engine.turboLoad>0.9)induction+=' • <span style="color:#ffcc00">'+tr('at the limit of this frame')+'</span>';
+  }
   else induction=SC_TYPE[engine.scType].label+' S/C @ '+engine.boost_bar.toFixed(2)+' bar'+icTxt;
   if(engine.nitrous!=='none')induction+=' • <span style="color:#ff66cc">'+(engine.nitrous==='large'?'BIG':'SMALL')+' NITROUS</span>';
   const dimLabel=engine.type==='rotary'?'rotor':'mm';
@@ -1673,8 +1742,16 @@ function effIAT(map){
   // fuels (ethanol/methanol) evaporatively cool the charge — denser air and less knock.
   let t=state.iat;
   if(engine.intake!=='na'){
-    const boost=Math.max(0,map-1.0);
-    t+=boost*(engine.icHeat!=null?engine.icHeat:25);
+    // Real compression heating, not a per-bar constant. Squeezing air heats it by
+    // T1·(PR^((γ−1)/γ) − 1) if the compressor were perfect, and by that divided by the
+    // compressor's efficiency in the real world — so the term grows faster than linearly with
+    // boost, and grows again as efficiency falls off the map. The intercooler then gives back
+    // its effectiveness times that rise. This is the term that punishes over-boosting a small
+    // frame: at PR 3.5 on a frame running 0.59 efficient, the charge arrives ~240 °C before the
+    // core and still ~70 °C after it, where a flat 5 °C/bar said 38 °C.
+    const PR=Math.max(1,map);
+    const rise=(t+273.15)*(Math.pow(PR,0.283)-1)/clamp(engine.compEff||0.72,0.30,0.85);
+    t+=rise*(1-(engine.icEff!=null?engine.icEff:0.82));
   }
   t-=engine.chargeCool*(engine.injector==='direct'?1.15:1.0);   // DI cools the charge slightly more
   return t;
