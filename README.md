@@ -175,9 +175,21 @@ saps power; a large radiator, electric fan and oil cooler keep it cool.
   the dyno. Turns free design into a puzzle with real trade-offs.
 - **Dyno pull logging** — snapshot the current curve and overlay several pulls on the graph
   to compare builds or tunes.
-- **Save / Load / Share** — quick-save to `localStorage`; **save to a named file** (with a
-  note) and **open** one back; or **Share** a build as an encoded link (copied to the
-  clipboard) that loads the exact engine when opened.
+- **Garage (new)** — a saved-builds list at the bottom of the **VEHICLE** tab that keeps as
+  many finished cars as you like, side by side. Name one and **SAVE TO GARAGE** stores the whole
+  thing together — the chassis, every part bolted to it, *and* the engine inside, down to a
+  hand-tuned fuel map. Each card carries the headline numbers it had when it was saved (power,
+  weight, 0–100, top speed, lap time, total cost), so three builds can be compared without
+  rebuilding any of them. **LOAD** restores a car exactly as it was; typing an existing name
+  highlights that card and saving overwrites it.
+
+  ![garage](docs/garage.png)
+
+- **Save / Load / Share** — quick-save to `localStorage` (a single slot, distinct from the
+  garage); **save to a named file** (with a note) and **open** one back; or **Share** a build as
+  an encoded link (copied to the clipboard) that loads the exact engine when opened. All four
+  paths — quicksave, garage, file and link — carry the *same* `serializeBuild()` record, so a
+  build is portable between them and the formats cannot drift apart.
 - **Presets**: Optimal / Max Power / Eco / Reset (adapt to the current engine).
 - **Languages** — English and **Ελληνικά (Greek)**, switchable in OPTIONS and remembered
   between visits. The whole interface — tabs, labels, buttons, the challenge card and the full
@@ -486,9 +498,11 @@ philosophy).
    **per-chassis factory fitment** (each chassis ships with matching tyres/wheels/brakes/
    suspension/aero) and a REFIT button, **gearbox types** (manual / sequential / DCT /
    torque-converter auto) and **differential types** (open / viscous LSD / clutch LSD / spool).
-   and a **test track** (three circuits, a full cornering/friction-circle lap solver, sector
-   splits and a limit-coloured map) — which also prices the spool's cornering penalty properly.
-   **Next:** feeding lap time into the challenge system and the scorecard.
+   and a **test track** (four circuits, a full cornering/friction-circle lap solver with a
+   late-apex racing line and variable track width, sector splits and a limit-coloured map) —
+   which also prices the spool's cornering penalty properly. Lap time now feeds the **challenge
+   system and the scorecard**, and a **garage** keeps any number of named chassis+engine combos
+   side by side. That closes the layer.
 
 Deferred: V/boxer bank visuals (cosmetic);
 native Android build (parked).
@@ -502,6 +516,7 @@ native Android build (parked).
 - [x] Forced induction (turbo / supercharger, boost, intercooler)
 - [x] Sound (Web Audio API engine note)
 - [x] Save / load engine setups
+- [x] Garage: any number of named chassis+engine combos, with per-build stat cards
 - [x] Mobile app packaging (PWA)
 - [ ] Proper V / boxer bank visuals & firing-order animation
 - [x] Cam profiles & valvetrain (stock/sport/race cam + VVT, reshaping the VE curve & idle)
