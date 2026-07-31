@@ -365,12 +365,42 @@ Curve** tab remains a wide-open-throttle steady-state sweep for reading the full
   The **differential** then sets how much of the driven axle's grip is usable. An axle's two
   wheels are never loaded identically (camber, torque reaction, axle wind-up, suspension
   geometry), and an *open* diff can only feed each wheel what the lighter-loaded one holds — it
-  spins that wheel and throws the rest away (≈78 % usable). A *viscous* LSD recovers most of it
-  (92 %), a *clutch-plate* LSD effectively all of it, a *spool* all of it and a little more.
+  spins that wheel and throws the rest away (≈78 % usable **at launch**). A *viscous* LSD recovers
+  most of it (92 %), a *clutch-plate* LSD effectively all of it, a *spool* all of it and a little
+  more. That 78 % is **not a constant (new)**: most of the asymmetry an open diff is fighting is
+  torque reaction — driveshaft wind-up, anti-lift geometry, torque steer — which is proportional to
+  the torque actually going through the axle. In first gear under full multiplication it is at its
+  worst; in a tall gear the axle sees a fraction of that torque and little more than road camber is
+  left, so an open diff recovers to ≈91 %. Normalised so that at full axle torque it returns
+  exactly the quoted figure, which leaves the standing start — and the whole drag-strip diff trade
+  — bit-identical. A spool is unaffected, being welded.
   Because it caps traction rather than torque, a diff **only matters while the car is
-  traction-limited**: on an 842 hp muscle car, open → spool is worth **1.85 s** to 100 km/h
-  (6.43 → 4.58 s), while on a 48 hp kei it is worth **0.00 s**. Top speed is drag-limited, so the
-  diff never changes it. *(The spool's real penalty is cornering — understeer and tyre scrub —
+  traction-limited**: on an 842 hp muscle car, open → spool is worth **0.94 s** to 100 km/h
+  (5.52 → 4.58 s), while on a 48 hp kei it is worth **0.05 s** — it never troubles its tyres. Top speed is drag-limited, so the
+  diff never changes it.
+- **Why a front-driver runs out of grip so early.** Three factors multiply, and the first is the
+  one people forget: a FWD car drives only the front axle (≈60 % of the weight standing), and
+  accelerating transfers weight *off* it, down to ≈53 %. Times an open diff (0.78) times eco tyres
+  (μ 0.81), the whole car is capped at **0.33 g** whatever the engine makes. At 100 km/h that
+  ceiling is ~2500 N and even a 109 hp engine already wants 2700 N — so a 217 hp version of the
+  same car reaches 100 km/h at essentially the same time. The fix is grip, not power: on that same
+  217 hp kei, a clutch LSD alone takes 9.3 s → 7.9 s, sport tyres 6.5 s, slicks 5.5 s, AWD 4.4 s.
+- **Acceleration calibration (new).** The whole model is checked against cars whose real 0–100 is
+  public, with power, kerb weight, drivetrain, tyre class, diff *and gearbox* all matched first —
+  so what is under test is the traction/weight-transfer/gearing model rather than the engine model:
+
+  | car | hp | kg | drive | gearbox | real | model | error |
+  |---|---|---|---|---|---|---|---|
+  | VW Golf GTI (Mk8) | 245 | 1450 | fwd | DCT | 6.2 s | 6.22 s | +0.3 % |
+  | Honda Civic Type R (FL5) | 329 | 1430 | fwd | manual | 5.4 s | 5.19 s | −3.8 % |
+  | Toyota Supra RZ (A80) | 326 | 1570 | rwd | manual | 4.9 s | 5.02 s | +2.4 % |
+  | BMW M2 (G87) | 460 | 1725 | rwd | auto | 4.1 s | 3.94 s | −3.9 % |
+  | Subaru WRX STI (GD) | 280 | 1470 | awd | manual | 5.2 s | 5.06 s | −2.6 % |
+  | Suzuki Alto Works | 64 | 720 | fwd | manual | 11.0 s | 11.03 s | +0.3 % |
+
+  RMS error **2.66 %** across the set. Matching the gearbox matters more than it looks — 350 ms of
+  manual shift twice is 0.7 s of the run, so quoting a DSG car's time against a modelled manual
+  measures the gearbox, not the traction. *(The spool's real penalty is cornering — understeer and tyre scrub —
   which this straight-line sim doesn't model yet, so it looks strictly best; flagged in the GUIDE.)*
   Top speed is the fastest steady speed **any** gear can hold (thrust = drag + rolling
   resistance, capped by the limiter) — a peaky or over-geared car genuinely reaches its maximum
@@ -547,6 +577,7 @@ native Android build (parked).
 - [x] Forced induction (turbo / supercharger, boost, intercooler)
 - [x] Sound (Web Audio API engine note)
 - [x] Pressure-ratio-aware turbo spool, compressor flow limits and real charge heating
+- [x] Torque-scaled axle asymmetry, and acceleration calibrated against six real cars
 - [x] Save / load engine setups
 - [x] Garage: any number of named chassis+engine combos, with per-build stat cards
 - [x] Mobile app packaging (PWA)
