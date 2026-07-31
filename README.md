@@ -269,13 +269,44 @@ Curve** tab remains a wide-open-throttle steady-state sweep for reading the full
   exhaust / 98 RON makes ~255 hp & ~350 Nm; a 2.0 NA ~130 hp), with only a gentle power
   drop from peak to redline.
 - Compression scales indicated work and efficiency via a relative Otto-cycle factor.
-- Forced induction raises achievable MAP and heats the charge; the intercooler size sets how
-  much of that heat is removed (a large core leaves the charge coolest — denser air, more knock
-  margin — but its extra plumbing volume adds a little turbo spool lag). Superchargers cost
-  parasitic drive power.
+- Forced induction raises achievable MAP and heats the charge. Charge heating is the real
+  thing — `T·(PR^0.283 − 1) / η_compressor` — not a per-bar constant, so it grows faster than
+  boost does and grows again as compressor efficiency falls. The intercooler is rated by
+  **heat-exchanger effectiveness** (none 0, small 0.62, large 0.82), the fraction of that rise
+  it gives back; a large core leaves the charge coolest but its plumbing volume adds spool lag.
+  At 1.8 bar this is the difference between a 164 °C charge with no intercooler (245 hp, knock
+  risk 40) and 50 °C with a large one (381 hp, knock 10).
 - Turbo boost spools with RPM along a logistic curve: small turbos spool early (strong
   midrange) but choke the top end, large turbos lag down low but flow more up top. Actual
   boost also lags in time (turbo lag), so it builds over ~1 s in the live Engine View.
+- **Pressure has to be paid for (new).** A compressor makes boost by spinning, and shaft speed
+  has to be bought with exhaust energy — turbine speed for a pressure ratio goes like
+  `√(PR^0.283 − 1)`. So the spool point and the response time are functions of *the boost you
+  asked for*, not fixed properties of the frame. The same small turbo on a 1.0 L:
+
+  | boost | 50% boost at | time to 90% | charge temp | knock |
+  |---|---|---|---|---|
+  | 0.5 bar | 1197 rpm | 0.50 s | 33 °C | 0 |
+  | 1.0 bar | 1820 rpm | 0.75 s | 40 °C | 3 |
+  | 2.5 bar | 2968 rpm | 1.22 s | 58 °C | 34 |
+
+  Previously all three columns were flat — 1820 rpm and 0.75 s at *every* boost target, and a
+  small frame delivered 2.28 bar at 3000 rpm on a 2.0 L.
+- **Frames have a rated flow (new)** — small 32, medium 55, large 82 lb/min, with config
+  multipliers (twin ×1.85, sequential ×1.55, compound ×2.3). That is the axis a real compressor
+  map is drawn against. The engine's air demand at peak power is computed against it, and past
+  the rating the compressor is off its map: efficiency falls, the top end chokes harder, and the
+  charge cooks. A 2.0 L asking 2.5 bar of a small frame wants **166 %** of its rated flow, runs
+  49 % efficient, and makes 120 hp *less* than the medium frame while lapping slower than the
+  same engine at 0.8 bar. The design summary states the flow, the efficiency and an explicit
+  *off the compressor map* warning, so the limit is visible rather than merely felt.
+
+  ![turbo off the compressor map](docs/turbo-offmap.png)
+
+  *Known limit: spool lag — the time to build boost — is integrated on the live ENGINE bench,
+  but the acceleration and lap solvers work from the steady boost available at each rpm, so
+  they feel the spool point move and not the transient. A very laggy build is flattered a
+  little by its 0–100 and lap times.*
 - Ignition timing has a max-brake-torque (MBT) optimum that varies with RPM and load — too
   little or too much advance loses power, and advancing past MBT feeds knock (retarding pulls
   it back). *Fixed* timing is only optimal at one operating point; *Auto* tracks MBT
@@ -515,6 +546,7 @@ native Android build (parked).
 - [x] Dynamic thermal model (temps change over time)
 - [x] Forced induction (turbo / supercharger, boost, intercooler)
 - [x] Sound (Web Audio API engine note)
+- [x] Pressure-ratio-aware turbo spool, compressor flow limits and real charge heating
 - [x] Save / load engine setups
 - [x] Garage: any number of named chassis+engine combos, with per-build stat cards
 - [x] Mobile app packaging (PWA)
