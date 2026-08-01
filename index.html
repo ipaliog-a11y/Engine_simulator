@@ -188,7 +188,7 @@ table.fuelmap td.live{box-shadow:inset 0 0 0 2px #fff;font-weight:bold}
 <body>
 <div class="container">
 <header>
-<h1>PIXEL ENGINE SIM v0.6 build 57</h1>
+<h1>PIXEL ENGINE SIM v0.6 build 58</h1>
 <div class="subtitle" id="subtitle">ENGINE DESIGNER • BUILD IT, THEN DRIVE IT</div>
 </header>
 <div class="main">
@@ -234,7 +234,10 @@ table.fuelmap td.live{box-shadow:inset 0 0 0 2px #fff;font-weight:bold}
 <div class="field"><label for="edTurboConfig">TURBO CONFIG</label><select id="edTurboConfig"><option value="single">SINGLE</option><option value="twin">TWIN</option><option value="sequential">SEQUENTIAL</option><option value="compound">COMPOUND</option></select></div>
 <div class="field"><label for="edAntilag">ANTI-LAG (ALS)</label><select id="edAntilag"><option value="no">NO</option><option value="yes">YES</option></select></div>
 <div class="field"><label for="edScType">SUPERCHARGER</label><select id="edScType"><option value="roots">ROOTS</option><option value="screw">TWIN-SCREW</option><option value="centrifugal">CENTRIFUGAL</option></select></div>
-<div class="field"><label for="edExhaust">EXHAUST</label><select id="edExhaust"><option value="stock">STOCK</option><option value="sport">SPORT</option><option value="race">RACE</option></select></div>
+<div class="field"><label for="edExhaust">EXHAUST</label><select id="edExhaust"><option value="stock">STOCK CAST</option><option value="sport">SPORT HEADER</option><option value="race">RACE HEADER</option></select></div>
+<div class="field"><label for="edRunner">INTAKE RUNNER</label><select id="edRunner"><option value="long">LONG (TORQUE)</option><option value="medium">MEDIUM</option><option value="short">SHORT (POWER)</option><option value="variable">VARIABLE</option></select></div>
+<div class="field"><label>RUNNER / RAM PEAK</label><span class="val" id="valRam">—</span></div>
+<div class="field"><label>PRIMARY / SCAVENGE</label><span class="val" id="valScav">—</span></div>
 <div class="field"><label for="edCat">CATALYTIC CONV.</label><select id="edCat"><option value="none">NONE (DECAT)</option><option value="sport">SPORT CAT</option><option value="stock">STOCK CAT</option></select></div>
 <div class="field"><label for="edNitrous">NITROUS (N2O)</label><select id="edNitrous"><option value="none">NONE</option><option value="small">SMALL SHOT</option><option value="large">BIG SHOT</option></select></div>
 </div>
@@ -261,6 +264,7 @@ table.fuelmap td.live{box-shadow:inset 0 0 0 2px #fff;font-weight:bold}
 <div class="field"><label for="edValveMat">VALVE MATERIAL</label><select id="edValveMat"><option value="steel">STEEL</option><option value="titanium">TITANIUM</option></select></div>
 <div class="field"><label for="edSpring">VALVE SPRINGS</label><select id="edSpring"><option value="stock">STOCK</option><option value="perf">PERFORMANCE</option><option value="race">RACE</option></select></div>
 <div class="field"><label>VALVE FLOAT</label><span class="val" id="valFloat">—</span></div>
+<div class="field"><label>CAM OVERLAP</label><span class="val" id="valOverlap">—</span></div>
 </div>
 
 <div class="design-section">Fuel &amp; Spark</div>
@@ -783,10 +787,33 @@ const ENGINE_TYPE={
              crDef:9.4,crMin:8.5,crMax:11,redlineDef:9000,redMin:6500,redMax:11000,fuel:null}
 };
 const LAYOUT_LABEL={inline:'INLINE',v:'V',boxer:'BOXER',rotary:'ROTARY'};
+// Exhaust systems, as GEOMETRY rather than as an asserted VE bonus. What each grade means:
+//   stock  a cast log manifold. Short, small-bore, and not a tuned pipe at all — every runner is a
+//          different length, so the reflections arrive smeared and cancel. sigma says so.
+//   sport  an off-the-shelf tubular header, cut for a generic mid-range rather than for this engine.
+//   race   equal-length primaries cut on a jig FOR THIS ENGINE's power peak.
+// dOverBore sizes the primary off the bore; sysD/sysL are everything downstream of the collector,
+// which is where most of the back-pressure actually comes from. sigma is the spread in path length
+// — literally what the claim "equal-length header" is about, and the reason nobody tunes past the
+// 5th order. targetRpm null means "designed for whatever engine it is bolted to".
+// sysV is the CYCLE-MEAN gas speed the system downstream of the collector is sized to reach at the
+// power peak — the pipe diameter is then solved from the engine's own flow, because a 6.5 V12 and a
+// 1.0 kei car do not run the same tailpipe. Design practice puts it near 75 m/s; a stock system is
+// sized tighter for noise and cost, a race system is sized loose.
 const EXHAUST={
-  stock:{topGain:0.05,lowLoss:0.02},
-  sport:{topGain:0.12,lowLoss:0.03},
-  race:{topGain:0.20,lowLoss:0.06}
+  stock:{label:'STOCK CAST',   dOverBore:0.38,sysV:105,sysL:3.0,sigma:0.35,fixedL:0.55,targetRpm:null},
+  sport:{label:'SPORT HEADER', dOverBore:0.46,sysV: 78,sysL:2.6,sigma:0.12,fixedL:null,targetRpm:5200},
+  race: {label:'RACE HEADER',  dOverBore:0.54,sysV: 58,sysL:2.2,sigma:0.05,fixedL:null,targetRpm:null}
+};
+// Intake runner length, plenum to valve, before the head port is added. Measured geometry, not
+// intent: a torque manifold really is about half a metre and an ITB stack really is a stub on the
+// head. VARIABLE is a manifold with a flap in it — long below the crossover, short above — which
+// is all a DISA or a VarioRam actually is.
+const RUNNER={
+  long:    {label:'LONG (TORQUE)', mm:460},
+  medium:  {label:'MEDIUM',        mm:320},
+  short:   {label:'SHORT (POWER)', mm:150},
+  variable:{label:'VARIABLE',      mm:null}
 };
 // Camshaft profiles: bigger cams (more duration/lift/overlap) move the VE peak up,
 // add top-end breathing & scavenging, but cost low-end VE and idle quality.
@@ -797,14 +824,16 @@ const EXHAUST={
 //           for the same lift and duration. A gentle stock lobe stays near 0.80; a race lobe is
 //           ground far more aggressively to buy area under the curve, and pays for it by floating
 //           earlier at the same spring load. That is a trade a cam designer really makes.
-// The peakShift/ampMul/loWiden/lowLoss/scav fields are the OLD fitted multipliers. They still
-// shape the base VE bell curve and are marked for removal when intake wave tuning and trapping
-// are derived (the next conversion) — at which point the powerband position will emerge from
-// duration instead of being asserted by peakShift.
+//   lsa     lobe separation angle, ground into the cam. Wide (112-116) keeps a stock engine idling
+//           smoothly and emissions-legal; race cams are ground tight (104-108) to buy overlap.
+// Overlap is NOT a separate input — it falls out of duration and LSA as (dur_in + dur_ex)/2 - 2·LSA,
+// and the sign convention is real: a stock cam comes out slightly NEGATIVE, which is exactly why a
+// stock engine idles smoothly and scavenges nothing however good a header you bolt to it.
+// scav/peakShift/lowLoss are GONE — the gas-dynamics conversion derives all three.
 const CAM={
-  stock:{peakShift:0,   ampMul:1.00,loWiden:1.00,lowLoss:0.00,scav:0.00,idleRpm:0,  lOverD:0.22,dur:220,accel:0.80},
-  sport:{peakShift:600, ampMul:1.04,loWiden:0.82,lowLoss:0.05,scav:0.04,idleRpm:150,lOverD:0.25,dur:252,accel:0.88},
-  race: {peakShift:1300,ampMul:1.08,loWiden:0.66,lowLoss:0.12,scav:0.08,idleRpm:400,lOverD:0.28,dur:284,accel:0.98}
+  stock:{ampMul:1.00,loWiden:1.00,idleRpm:0,  lOverD:0.22,dur:220,accel:0.80,lsa:114},
+  sport:{ampMul:1.04,loWiden:0.82,idleRpm:150,lOverD:0.25,dur:252,accel:0.88,lsa:110},
+  race: {ampMul:1.08,loWiden:0.66,idleRpm:400,lOverD:0.28,dur:284,accel:0.98,lsa:106}
 };
 // ================================================================================================
 // PHYSICS CORE — VALVETRAIN AND PORT FLOW
@@ -898,6 +927,23 @@ function updateFloatLabel(){
   el.textContent=Math.round(e.floatRpm)+' rpm'+(short?' — BELOW REDLINE':'');
   el.style.color=short?'#ff6b6b':(e.floatMargin<1.10?'#e8974a':'#7ee08a');
 }
+// Show what the pipes came out as. These are the numbers that used to be asserted by peakShift,
+// topGain and scav, so they belong on screen next to the choices that decide them.
+function updateGasLabels(){
+  const e=engine,set=(id,txt,col)=>{const el=document.getElementById(id);if(!el)return;el.textContent=txt;el.style.color=col||'#cfe';};
+  const ov=document.getElementById('valOverlap');
+  if(ov){
+    if(e.ports||!e.overlap&&e.overlap!==0){set('valOverlap','n/a','#778');}
+    else if(e.overlap<=0)set('valOverlap',Math.round(e.overlap)+'\u00b0 — NONE','#778');
+    else set('valOverlap',Math.round(e.overlap)+'\u00b0',e.overlap>55?'#e8974a':'#cfe');
+  }
+  if(!e.primL){set('valRam','n/a','#778');set('valScav','n/a','#778');return;}
+  set('valRam',Math.round(e.runnerL*1000)+'mm \u00b7 '+(e.runnerVariable?'VAR ':'')+
+    Math.round(e.ramPeakRpm)+' rpm +'+(e.ramPeakGain*100).toFixed(1)+'%');
+  set('valScav',Math.round(e.primL*1000)+'mm k='+e.primK+' \u00b7 '+
+    (e.scavPeakGain>0.002?Math.round(e.scavPeakRpm)+' rpm +'+(e.scavPeakGain*100).toFixed(1)+'%':'no scavenging'),
+    e.scavPeakGain>0.002?'#7ee08a':'#778');
+}
 function deriveValvetrain(){
   const e=engine;
   if(e.type==='rotary'||e.ports){e.ivDia_mm=0;e.floatRpm=0;e.valveMass_g=0;return;}
@@ -910,6 +956,207 @@ function deriveValvetrain(){
   e.valveMass_g=valveMass(e.ivDia_mm,e.valveMat)*1000;
   e.floatRpm=valveFloatRpm(e.ivLift_mm,cam.dur,spring,e.valveMass_g/1000,cam.accel,2);
   e.floatMargin=e.floatRpm/Math.max(1,e.redline);
+}
+// ================================================================================================
+// PHYSICS CORE — GAS DYNAMICS
+// ------------------------------------------------------------------------------------------------
+// Third v1.0 conversion, and the one that retires the most fitted numbers at once:
+//   CAM.peakShift   asserted where the powerband sat        -> falls out of intake runner length
+//   CAM.scav        asserted top-end bonus per cam          -> falls out of overlap x header timing
+//   EXHAUST.topGain asserted top-end bonus per exhaust      -> the SAME effect as camScav; both go
+//   EXHAUST.lowLoss asserted low-end penalty per exhaust    -> falls out of back-pressure + reversion
+//   CAM.lowLoss     asserted low-end penalty per cam        -> same
+// topGain and scav had to go together. They were two knobs describing one physical event: the
+// rarefaction that comes back up the primary from the collector and, if both valves happen to be
+// open when it arrives, pulls residuals out and fresh charge in. Deriving either alone would have
+// left the other double-counting it.
+//
+// Two different mechanisms, because they really are different:
+//
+// INTAKE is a HELMHOLTZ resonator during the induction event — the runner is the neck, the cylinder
+// is the volume. This is the textbook treatment of intake tuning and the one with published
+// experimental backing (Engelman; Ohata & Ishida), and it is NOT the same as a standing wave in a
+// pipe. The resonator completes n_H = f_H·theta/(6N) cycles while the valve is open, and filling
+// peaks when that lands on a whole number, because the resonator is then handing back a pressure
+// peak exactly as the valve shuts.
+//
+// EXHAUST is a reflection comb. The blowdown pulse leaves at EVO, reflects off the collector as a
+// rarefaction (an area expansion inverts it), and comes back. Useful arrival is during overlap,
+// (theta_ex/2 + 90) crank degrees later. A 500 mm primary at 8000 rpm has a round trip of only 72
+// crank degrees against that 232 degree window, so the wave necessarily bounces about three times
+// on the way — k = 3 is the normal tuning order for a real header, and solving the relation for
+// length at k = 3 gives the 450-550 mm primaries people actually build.
+//
+// Neither wave is a free bonus. Both swing BOTH WAYS: -cos(pi·n) is +1 at the tuned orders and -1
+// between them, so a badly matched pipe costs VE, which is the real reason an over-sized header
+// guts the bottom end.
+const GAMMA_AIR=1.4, CP_EXH=1150;
+const sonic=T=>20.05*Math.sqrt(Math.max(120,T));         // sqrt(gamma·R·T), m/s
+// Pressure at the valve is not VE. Trapped mass follows DENSITY, and a charge that arrives rammed
+// has been slightly heated by the ramming, so the conversion is isentropic. This is why a +35%
+// pressure spike is not a +35% VE.
+const densFromP=dp=>Math.pow(Math.max(0.05,1+dp),1/GAMMA_AIR)-1;
+// Exhaust gas temperature, derived from the energy balance instead of assumed. Whatever the fuel
+// released that the cycle did not turn into work or hand to the coolant goes out of the port, so
+// EGT responds to mixture, compression and load the way it really does — rich runs cool, lean runs
+// hot, and a high-compression engine sends less heat down the pipe because it extracted more work.
+function exhaustGasT(load){
+  const e=engine;
+  const eta=clamp(0.36*(e.crFactor||1)*(e.typeBsfc?1/e.typeBsfc:1),0.20,0.52);
+  // Mixture at this load, not the live slider: full load runs rich for power and exhaust-temperature
+  // control (lambda ~0.88), light load sits at stoich. A diesel is quality-governed and always lean,
+  // which is exactly why diesel EGT is so much lower than petrol.
+  const lam=e.ci?1.35+0.9*(1-clamp(load,0,1)):1-0.12*clamp(load,0,1);
+  const afr=Math.max(6,(e.stoichAFR||14.7)*lam);
+  const dT=(e.fuelLHV||44)*1e6/(afr*CP_EXH)*Math.max(0.18,0.62-eta)*clamp(load,0.35,1.1);
+  return 300+dT;
+}
+// ---- intake: Helmholtz ----
+// Q of an intake tract measured on a flow rig is 3-6. It sets how fast the resonance dies and
+// therefore how much weaker each successive order is, so no separate order weighting is needed.
+const Q_INTAKE=4.0;
+const helmholtzHz=(A,L,V,T)=>sonic(T)/(2*Math.PI)*Math.sqrt(A/Math.max(1e-9,L*V));
+function intakeRamGain(rpm,chargeK){
+  const e=engine;
+  if(!e.runnerL||!e.ivDia_mm)return 0;
+  const nH=helmholtzHz(e.runnerA,e.runnerL,e.vEffCyl,chargeK)*e.camDur/(6*Math.max(500,rpm));
+  const u=(2*(e.stroke_mm/1000)*rpm/60)*Math.pow(e.bore_mm/e.runnerD_mm,2);   // acoustic piston relation
+  const A0=GAMMA_AIR*u/sonic(chargeK);
+  const amp=A0*Math.exp(-Math.PI*nH/Q_INTAKE);
+  return densFromP(amp*Math.cos(2*Math.PI*(nH-Math.round(nH))));
+}
+// ---- exhaust: reflection comb, then what the suction actually drags through ----
+const EX_ALPHA=0.35;    // amplitude lost per metre of pipe: viscous + thermal boundary layer
+const EX_ROPEN=0.88;    // amplitude reflected at an open end; the rest radiates away as noise
+const OVERLAP_LIFT=0.15;// valves are barely off their seats around TDC
+const overlapDeg=(dur,lsa)=>dur-2*lsa;                   // symmetric in/ex duration
+function exhaustWaveP(rpm,T){
+  const e=engine;
+  if(!e.primL)return 0;
+  const n=(e.camDur/2+90)*sonic(T)/(12*Math.max(500,rpm)*e.primL);
+  const vel=(e.dispCyl_L/1000)*(T/320)*(rpm/120)/(Math.PI/4*e.primD*e.primD)*3;
+  const A0=GAMMA_AIR*vel/sonic(T);
+  const damp=Math.exp(-EX_ALPHA*2*e.primL*n)*Math.pow(EX_ROPEN,n)
+            *Math.exp(-Math.pow(Math.PI*n*e.exhSigma,2)/2);
+  // A turbine housing is a RESTRICTION, not an open end, so it reflects a compression instead of a
+  // rarefaction. That is why turbo engines scavenge so poorly and are built with little overlap.
+  const sign=e.intake==='turbo'?+1:-1;
+  return A0*damp*sign*Math.cos(Math.PI*n);
+}
+// The returning suction pulls charge through the small curtain the valves have open near TDC, for
+// as long as the overlap lasts. Measured against the cylinder's own volume, that is a VE bonus —
+// or, if a compression comes back instead, reversion pushing burnt gas the wrong way.
+function scavengeGain(rpm,T){
+  const e=engine;
+  if(!e.overlap||e.overlap<=0)return 0;
+  const dp=exhaustWaveP(rpm,T);
+  if(!dp)return 0;
+  const u=Math.sign(dp)*Math.sqrt(2*Math.abs(dp)*101325/1.15);
+  const lift=OVERLAP_LIFT*0.25*e.ivDia_mm;
+  const A=e.ivCount*Math.PI*(e.ivDia_mm/1000)*(lift/1000);
+  return clamp(A*u*(e.overlap/(6*Math.max(500,rpm)))/(e.dispCyl_L/1000),-0.25,0.25);
+}
+// Back-pressure: Darcy-Weisbach down the primary at the velocity actually flowing, plus everything
+// after the collector, plus the cat as a porous plug. Raises the pressure the piston works against
+// AND leaves more residual in the cylinder, both of which cost VE.
+function backPressureBar(rpm,T){
+  const e=engine;
+  if(!e.primL)return 0;
+  const rho=101325/(287*Math.max(300,T));
+  const vP=(e.dispCyl_L/1000)*(T/320)*(rpm/120)/(Math.PI/4*e.primD*e.primD)*3;
+  const m3s=(e.dispCyl_L/1000)*(T/320)*e.cylinders*(rpm/120)/(e.sysPipes||1);
+  const vS=m3s/(Math.PI/4*e.sysD*e.sysD);
+  return (0.02*(e.primL/e.primD)*0.5*rho*vP*vP
+         +0.02*(e.sysL/e.sysD)*0.5*rho*vS*vS
+         +e.catRestrict*0.5*rho*vS*vS*350)/1e5;
+}
+// ---- late intake valve closing: why a big cam guts the bottom end ----
+// This is what CAM.lowLoss was standing in for, and it is pure geometry. A 284 degree cam does not
+// close the intake valve at BDC — it closes it 52 crank degrees LATER, by which time the piston is
+// already back up the bore on the compression stroke. At low rpm the charge has all the time it
+// needs to be pushed straight back out of the still-open valve, so what gets trapped is the volume
+// at IVC, not the volume at BDC. At high rpm the gas column's own inertia keeps it coming in and
+// the loss is repaid — which is exactly the ram term above, and exactly why VVT exists.
+//   trapped fraction = V(IVC) / V(BDC), from the crank-slider the engine already has
+// A stock 220 degree cam closes 20 degrees after BDC and loses about 2%; a 284 degree race cam
+// closes 52 degrees after BDC and loses about 13%. That is the trade a cam designer really makes.
+const ROD_STROKE=1.7;
+const VVT_AUTHORITY=45;   // crank degrees an intake cam phaser can advance the cam
+function pistonX(thetaDeg,r,l){
+  const t=thetaDeg*Math.PI/180;
+  return r*(1-Math.cos(t))+l-Math.sqrt(Math.max(0,l*l-r*r*Math.sin(t)*Math.sin(t)));
+}
+function trappedFraction(dur,cr){
+  const r=1,l=ROD_STROKE*2;                       // rod/crank from rod/stroke
+  const abd=Math.max(0,dur/2-90);                 // crank degrees IVC falls after BDC
+  const vc=2/Math.max(1.5,cr-1);                  // clearance volume in the same units as x
+  return (pistonX(180+abd,r,l)+vc)/(pistonX(180,r,l)+vc);
+}
+// Residual gas left behind because the cylinder never got below exhaust pressure. It occupies
+// volume the fresh charge wanted, so VE falls by roughly that fraction scaled by the clearance
+// volume it hides in.
+const residualLoss=(bpBar,cr)=>clamp(bpBar/(cr-1)*1.6,0,0.30);
+// Derive every pipe on the engine. A header is CUT for a target speed: solve the tuning relation
+// for length instead of for rpm, taking the lowest order that gives a primary you can physically
+// route round an engine bay (350-900 mm). That is how a fabricator actually works.
+function deriveGasDynamics(){
+  const e=engine;
+  const cam=CAM[e.cam]||CAM.stock, ex=EXHAUST[e.exhaust]||EXHAUST.stock;
+  e.camDur=cam.dur; e.camLSA=cam.lsa;
+  e.overlap=e.ports?0:overlapDeg(cam.dur,cam.lsa);
+  // VVT advances the intake cam down low, which IS closing the valve earlier — so it is a
+  // change of IVC timing, not a recovery percentage. Real intake phasers have 40-60 crank
+  // degrees of authority.
+  e.trapFrac=e.ports?1:trappedFraction(cam.dur-(e.vvt?VVT_AUTHORITY:0),e.compression);
+  e.dispCyl_L=e.displacement_L/Math.max(1,e.cylinders);
+  const Vd=e.dispCyl_L/1000;
+  e.vEffCyl=Vd/Math.max(1.5,e.compression-1)+Vd/2;       // mean cylinder volume over induction
+  // Runner bore matches the port behind it, which matches the valve throat it feeds.
+  e.runnerD_mm=e.ivDia_mm?Math.sqrt(e.ivCount)*THROAT_RATIO*e.ivDia_mm:0.42*e.bore_mm;
+  e.runnerA=Math.PI/4*Math.pow(e.runnerD_mm/1000,2);
+  const rn=RUNNER[e.runner]||RUNNER.medium;
+  e.runnerVariable=(e.runner==='variable');
+  const port=0.95*(e.bore_mm/1000);
+  e.runnerL=(rn.mm!=null?rn.mm/1000:RUNNER.long.mm/1000)+port;
+  e.runnerLShort=RUNNER.short.mm/1000+port;              // the flap's other position
+  const T=exhaustGasT(1.0);
+  e.exhSigma=ex.sigma; e.sysL=ex.sysL;
+  // Size the system pipe from the engine's own flow at the power peak, not from a fixed number.
+  const m3sPeak=(e.dispCyl_L/1000)*(T/320)*e.cylinders*(e.redline*0.9/120);
+  // One system per BANK: a V or a boxer has two heads pointing opposite ways and runs two pipes,
+  // and so does a big inline six. That is why a V12 does not need a 140 mm tailpipe.
+  e.sysPipes=(e.layout==='v'||e.layout==='boxer')?2:(e.cylinders>=6&&e.displacement_L>3?2:1);
+  e.sysD=clamp(Math.sqrt(4/Math.PI*(m3sPeak/e.sysPipes)/ex.sysV),0.030,0.110);
+  e.primD=ex.dOverBore*(e.bore_mm/1000);
+  if(ex.fixedL){e.primL=ex.fixedL;e.primK=0;}
+  else{
+    const theta=cam.dur/2+90, tgt=ex.targetRpm||e.redline*0.90;
+    e.primL=0;e.primK=3;
+    for(let k=1;k<=9;k+=2){
+      const L=theta*sonic(T)/(12*tgt*k);
+      if(L>=0.35&&L<=0.90){e.primL=L;e.primK=k;break;}
+    }
+    if(!e.primL)e.primL=clamp(theta*sonic(T)/(12*tgt*3),0.35,0.90);
+  }
+  // Where does this combination actually tune? Reported in the DESIGN panel, because it is the
+  // number that decides where the engine makes its power and it used to be asserted by peakShift.
+  let bestR=-9;e.ramPeakRpm=0;
+  for(let n=Math.max(1200,e.idleRpmEff||1200);n<=e.redline;n+=25){
+    let g=intakeRamGain(n,313);
+    if(e.runnerVariable){                       // the flap takes whichever position is better
+      const keep=e.runnerL;e.runnerL=e.runnerLShort;
+      g=Math.max(g,intakeRamGain(n,313));e.runnerL=keep;
+    }
+    if(g>bestR){bestR=g;e.ramPeakRpm=n;}
+  }
+  e.ramPeakGain=bestR;
+  let bestS=-9;e.scavPeakRpm=0;
+  for(let n=Math.max(1200,e.idleRpmEff||1200);n<=e.redline;n+=25){
+    const g=scavengeGain(n,T);
+    if(g>bestS){bestS=g;e.scavPeakRpm=n;}
+  }
+  e.scavPeakGain=bestS;
+  e.egtPeak=T-273;
 }
 // ================================================================================================
 // Induction / metering system. flowTop = top-end breathing adjustment (airflow: restrictive
@@ -944,7 +1191,7 @@ const DEFAULT_ENGINE={
   cylinders:4,bore_mm:81,stroke_mm:78,compression:12.5,layout:'inline',redline:7200,
   intake:'na',boost_bar:0,intercooler:'large',turboSize:'medium',turboConfig:'single',scType:'roots',antilag:false,nitrous:'none',exhaust:'sport',cat:'stock',
   intakeSys:'efi',airFilter:'perf',
-  cam:'stock',vvt:true,valves:4,valveMat:'steel',valveSpring:'stock',
+  cam:'stock',vvt:true,valves:4,valveMat:'steel',valveSpring:'stock',runner:'medium',
   fuel:'gasoline',octane:95,injector:'direct',ignitionAdv:22,ignitionType:'coil',timingMode:'auto',afrMode:'auto',
   radiator:'stock',fan:'electric',oilCooler:false,thermostat:88,
   alternator:'120'
@@ -1500,6 +1747,7 @@ function readEngineFromForm(){
     intakeSys:g('edIntakeSys').value,
     airFilter:g('edAirFilter').value,
     cam:g('edCam').value,
+    runner:g('edRunner').value,
     vvt:g('edVVT').value==='yes',
     valves:clamp(Math.round(+g('edValves').value||4),2,5),
     valveMat:g('edValveMat').value,
@@ -1530,7 +1778,7 @@ function applyEngineToForm(e){
   g('edTurboConfig').value=e.turboConfig||'single';g('edAntilag').value=e.antilag?'yes':'no';
   g('edScType').value=e.scType||'roots';g('edNitrous').value=e.nitrous||'none';
   g('edIntakeSys').value=e.intakeSys||'efi';g('edAirFilter').value=e.airFilter||'stock';
-  g('edCam').value=e.cam||'stock';g('edVVT').value=e.vvt?'yes':'no';
+  g('edRunner').value=e.runner||'medium';g('edCam').value=e.cam||'stock';g('edVVT').value=e.vvt?'yes':'no';
   g('edValves').value=String(e.valves||4);g('edValveMat').value=e.valveMat||'steel';
   g('edSpring').value=e.valveSpring||'stock';
   g('edFuel').value=e.fuel||'gasoline';
@@ -1602,6 +1850,13 @@ function buildEngine(){
   engine.boreStroke=engine.bore_mm/engine.stroke_mm;
   // VE shape: oversquare (bore>stroke) & higher redline peak higher up.
   engine.veAmp=0.95+(engine.injector==='direct'?0.02:0);
+  // Still asserted, and still on the list. Deriving it from Taylor's Mach knee was tried and is
+  // WRONG: Z = 0.5 is where the ports start to choke, which is near the POWER peak, not where
+  // volumetric filling peaks. It put vePeakRpm at 0.92-0.97 of redline on every engine and blew the
+  // real-car calibration out to 54% RMS. The base curve's peak is the TORQUE peak; what should
+  // eventually replace this is not a different formula for a bell, but no bell at all — a rising,
+  // port-flow-limited envelope with the Mach term providing the fall and ram/scavenging providing
+  // the structure. That is a bigger change than this conversion, and it is written up in the README.
   engine.vePeakRpm=clamp(engine.redline*0.60+(engine.boreStroke-1)*1500,3000,engine.redline*0.95);
   // Asymmetric generalized-bell breathing curve: a steeper low-rpm side (so torque
   // builds later and peaks up in the midrange) and a gentle high-rpm side (so power
@@ -1615,13 +1870,12 @@ function buildEngine(){
   const cam=CAM[engine.cam]||CAM.stock;
   deriveValvetrain();
   updateFloatLabel();
-  let loWiden=cam.loWiden,camLowLoss=cam.lowLoss,idlePenalty=cam.idleRpm;
-  if(engine.vvt){loWiden+= (1-loWiden)*0.8;camLowLoss*=0.3;idlePenalty*=0.3;engine.veWidthHi*=1.06;}
+  let loWiden=cam.loWiden,idlePenalty=cam.idleRpm;
+  if(engine.vvt){loWiden+= (1-loWiden)*0.8;idlePenalty*=0.3;engine.veWidthHi*=1.06;}
   engine.veAmp*=cam.ampMul;
-  engine.vePeakRpm=clamp(engine.vePeakRpm+cam.peakShift,3000,engine.redline*0.98);
   engine.veWidthLo*=loWiden;
-  engine.camLowLoss=camLowLoss;
-  engine.camScav=cam.scav;
+  // peakShift is gone: where the powerband sits now comes out of the intake runner length via the
+  // Helmholtz resonance, not from a per-cam constant asserting it.
   // Diesels breathe poorly up top (airflow/turbo-limited) and make their power low in the rev
   // range: pull the VE peak down and steepen the high-rpm falloff so torque tapers before the
   // (low) redline and peak power lands realistically early, instead of climbing to the limiter.
@@ -1642,6 +1896,8 @@ function buildEngine(){
   engine.intakeRespK=sys.resp;                // manifold fill speed (dynamic model)
   engine.idleRpmEff=IDLE_RPM+idlePenalty+sys.idle;   // wild cam / race intake idle higher & lumpier
   engine.crFactor=otto(engine.compression)/otto(10.5);   // 1.0 at CR 10.5
+  deriveGasDynamics();      // runner + header geometry; needs crFactor, catRestrict and idleRpmEff
+  updateGasLabels();
   engine.strokeFrictionMult=1+(engine.stroke_mm-86)/320;  // longer stroke = more friction
   engine.maxBoost=engine.intake==='na'?0:engine.boost_bar;
   engine.mapMax=engine.intake==='na'?1.05:1.0+engine.maxBoost;
@@ -1705,7 +1961,9 @@ function buildEngine(){
   engine.dwellLimit=DWELL_RPM[engine.ignitionType]||6800;
   // Engine "note" character: how lumpy/lopey the idle & low end sound. Big cams (overlap),
   // few cylinders, cross-plane V8s and anti-lag all add burble; VVT smooths it back out.
-  engine.lumpiness=clamp((CAM[engine.cam]||CAM.stock).scav*4.5
+  // Lope is overlap: burnt gas and fresh charge trading places at idle is literally what makes the
+  // sound. Now that overlap is derived, the note comes from the same number the physics uses.
+  engine.lumpiness=clamp(Math.max(0,engine.overlap||0)/90
     +(engine.layout==='v'&&engine.cylinders===8?0.25:0)
     +(engine.cylinders<=4?0.15:0)
     +(engine.antilag?0.20:0)
@@ -1989,9 +2247,28 @@ function computeVE(rpm,map){
   // wider (shoulders fall off far more gently than a Gaussian, so power holds up top).
   const w=rpm<peak?engine.veWidthLo:engine.veWidthHi;
   let ve=engine.veAmp/(1+Math.pow(Math.abs((rpm-peak)/w),2*engine.veShoulder));
-  const ex=EXHAUST[engine.exhaust]||EXHAUST.stock;
-  if(rpm>peak)ve*=1+(ex.topGain+engine.camScav)*clamp((rpm-peak)/engine.veWidthHi,0,1.2);  // exhaust + cam scavenging up top
-  else ve*=1-(ex.lowLoss+engine.camLowLoss)*clamp((peak-rpm)/peak,0,1);                    // race exhaust / big cam hurt low end
+  // ---- derived gas dynamics (see PHYSICS CORE) ----
+  // These four lines replace EXHAUST{topGain,lowLoss} and CAM{scav,lowLoss} — four fitted numbers
+  // for two physical effects. Both waves swing both ways, so a badly matched pipe COSTS VE here.
+  if(engine.primL){
+    const chargeK=effIAT(map)+273.15, Tex=exhaustGasT(clamp(map/Math.max(0.4,engine.mapMax),0.3,1.1));
+    // A variable-length manifold is a flap: take whichever runner position is better at this speed.
+    let ram=intakeRamGain(rpm,chargeK);
+    if(engine.runnerVariable){
+      const keep=engine.runnerL;engine.runnerL=engine.runnerLShort;
+      ram=Math.max(ram,intakeRamGain(rpm,chargeK));engine.runnerL=keep;
+    }
+    ve*=1+clamp(ram,-0.30,0.30);
+    // Late IVC: pay the geometric trapping loss, and let ram repay it as the gas column gains
+    // inertia. How much repayment: backflow stops when the runner delivers more pressure than the
+    // rising piston is generating, and that threshold is the trapping loss expressed as a pressure
+    // ratio, ((1/trap)^gamma - 1). No invented multiplier — the same geometry sets both the loss
+    // and the pressure needed to cancel it.
+    const need=Math.pow(1/Math.max(0.5,engine.trapFrac),GAMMA_AIR)-1;
+    ve*=engine.trapFrac+(1-engine.trapFrac)*clamp(Math.max(0,ram)/Math.max(1e-4,need),0,1);
+    ve*=1+scavengeGain(rpm,Tex);
+    ve*=1-residualLoss(backPressureBar(rpm,Tex),engine.compression);
+  }
   if(engine.intake==='turbo'&&rpm>peak)                                 // small turbo chokes up top
     ve*=1-engine.turboChoke*clamp((rpm-peak)/(engine.redline-peak),0,1);
   // Induction system + air filter: restriction/flow weighted by airflow demand (rpm).
@@ -2367,7 +2644,7 @@ function computeEmissions(){
     noxEO=2+55*Math.exp(-Math.pow((lam-1.08)/0.12,2))*tempF;
   }else{
     coEO =4+Math.max(0,1.0-lam)*300+meterSlop*140;
-    hcEO =3+Math.max(0,1.0-lam)*95+Math.max(0,lam-1.06)*280+engine.camScav*130+meterSlop*70+cold*45;
+    hcEO =3+Math.max(0,1.0-lam)*95+Math.max(0,lam-1.06)*280+Math.max(0,engine.overlap||0)/90*0.08*130+meterSlop*70+cold*45;
     noxEO=2+100*Math.exp(-Math.pow((lam-1.08)/0.11,2))*tempF;
   }
   if(state.fuelCut){coEO=Math.min(coEO,1);hcEO=Math.min(hcEO,2);noxEO=Math.min(noxEO,1);pmEO=0;}

@@ -20,6 +20,54 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 Working toward **v1.0 — every number derived, not fitted.**
 
+### Conversion 3 of 5 — gas dynamics  *(first round; two tests unresolved)*
+
+Retires **five** fitted numbers at once — `CAM{peakShift, scav, lowLoss}` and `EXHAUST{topGain,
+lowLoss}` — and replaces them with wave action derived from pipe geometry. `topGain` and `scav` had
+to go together: they were two knobs describing one event, the rarefaction returning from the
+collector during overlap, so deriving either alone would have left the other double-counting it.
+
+**Two mechanisms, because they really are different.** The intake is a **Helmholtz resonator**
+during induction — runner as neck, cylinder as volume — which is the textbook treatment with
+published experimental backing. The exhaust is a **reflection comb**: the blowdown pulse leaves at
+EVO, inverts off the collector, and must arrive back during overlap. Neither is a free bonus; both
+swing *both ways*, so a badly matched pipe costs VE, which is why an over-sized header guts the
+bottom end.
+
+**New inputs.** Intake runner length (LONG / MEDIUM / SHORT / **VARIABLE** — a variable-length
+manifold is just two lengths and a flap, which is all a DISA or VarioRam is). Exhaust grade is now
+geometry rather than a bonus: bore-scaled primary diameter, system pipe **sized from the engine's
+own flow**, and `sigma`, the path-length spread — literally what "equal-length header" claims.
+
+**Derived and shown in the DESIGN panel:** cam overlap (from duration and LSA, and correctly
+*negative* on a stock cam), runner length and where it rams, primary length with its tuning order,
+and where it scavenges. A header is **cut for the engine**: the tuning relation is solved for length
+at the lowest buildable order, which produces 525–768 mm primaries at k=3 — what people actually build.
+
+**Also now derived:** exhaust gas temperature, from the energy balance rather than assumed. Petrol
+743–828 °C, diesel 369 °C, rotary and two-stroke over 1150 °C — all correct, and it feeds back into
+the speed of sound and so into where the header tunes. Late intake valve closing too: a 284° cam
+closes 52° after BDC and traps ~13% less charge at low rpm, which is what `CAM.lowLoss` stood for and
+why VVT exists (modelled as 45° of phaser authority moving IVC, not as a recovery percentage).
+
+**Results.** Presets making peak power at the exact rev limiter: **2 → 0**, the target this
+conversion existed to hit. Real-car acceleration RMS 2.66% → **3.38%** (threshold 5%), top speed
+6.5% → **6.7%**. The acceleration regression is real and is not hidden: removing a fitted top-end
+bonus costs absolute output on several presets, and their specs were chosen when that bonus existed.
+
+**Unresolved, and left failing rather than papered over:** `test28` (a torque converter should hurt
+a peaky engine) and `test40` (an over-flowed turbo frame should be penalised on a lap). Both encode
+behaviour calibrated against the old fitted curve shape, and both now disagree with the derived one.
+They are honest disagreements, not crashes, and weakening them to go green is exactly what this
+project's rules forbid. Second round needed.
+
+**What was tried and rejected.** Deriving the base VE peak from Taylor's Mach knee. It is the wrong
+quantity — Z = 0.5 marks where the ports start to choke, which is near the *power* peak, not where
+volumetric filling peaks. It put the peak at 0.92–0.97 of redline on every engine and blew the
+calibration out to **54% RMS**. `vePeakRpm` stays asserted for now; what should replace it is not a
+better bell but *no bell* — a rising, port-flow-limited envelope with the Mach term providing the
+fall and wave action providing the structure.
+
 ### Investigation — the slip-ratio model, rotational inertia, and a defect in the shipped physics
 
 Not a release entry: nothing here shipped. It is recorded because the experiment **found a real

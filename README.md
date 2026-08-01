@@ -1,4 +1,4 @@
-# PIXEL ENGINE SIM v0.6 build 57
+# PIXEL ENGINE SIM v0.6 build 58
 
 **A lightweight, 8-bit style internal combustion engine *designer* & simulator** inspired by *Automation*.
 
@@ -647,12 +647,18 @@ documented in the GUIDE at the point where it matters:
 - **There is no engine braking above the limiter.** Past the rev limiter drive force is zero, but
   nothing pushes back, so a steep descent can carry a car a km/h or so beyond the speed its top
   gear allows. Real overrun would drag it back.
-- **Power peaks at the rev limiter on two presets** (2.0 ITB Screamer, 6.5 V12) — down from four
-  once the valvetrain was derived. Both are well-designed four-valve high-revvers that genuinely
-  are neither port-choked (Taylor Z = 0.54 and 0.47 at the limiter) nor float-limited (16124 and
-  14686 rpm), so nothing currently in the model has any reason to roll them off. What actually sets
-  their peak is intake wave tuning and charge trapping — the gas-dynamics conversion. `tests/test44.mjs`
-  holds this at a budget of 2 so it cannot silently grow.
+- **Power peaks at the rev limiter on one preset** (2.0 Turbo Hot-Hatch) — down from four before the
+  valvetrain conversion and two before gas dynamics. Every naturally-aspirated preset now rolls off
+  inside its own rev range for a stated reason. The one that remains is a *turbo*, and what sets a
+  turbo's peak position is boost taper as the compressor runs out of map — turbo-map physics, which
+  is conversion 4. `tests/test46.mjs` holds this at a budget of 1 and additionally fails outright if
+  any NA preset ever joins it.
+- **Two behavioural tests disagree with the derived curve shape and are left failing.** `test28`
+  asserts a torque converter should hurt a peaky engine; `test40` asserts an over-flowed turbo frame
+  should be penalised on a lap. Both were written against the old fitted powerband, which was made
+  peakier by `CAM.peakShift` and `EXHAUST.topGain` than the derived wave action turns out to be.
+  They are honest disagreements rather than crashes, and they are not being weakened to go green —
+  the second round of gas dynamics has to either satisfy them or show they were wrong.
 - **Rotational inertia is not charged during acceleration.** The engine, flywheel, gearbox and
   wheels all have to be spun up as well as the car pushed along, and reflected through first gear
   that is worth roughly +13 % of effective mass. `simulateAccel` accelerates the translating mass
@@ -689,14 +695,19 @@ Planned order, each validated against `tests/test41.mjs`, `tests/aero.mjs` and `
    deliberately *not* used to cap top speed. ⬜ **Parked:** the slip-ratio curve in place of the hard
    `min(driveF, μ·N)` grip clip. It was built and it works; wiring it in exposed a *different*
    missing physics — rotational inertia — and the two have to be fixed together. Written up below.
-3. **Gas dynamics** — intake ram and wave tuning, exhaust scavenging, back-pressure and valve
-   overlap, replacing `CAM{scav}` and `EXHAUST{topGain, lowLoss}` and eventually `CAM{peakShift}`.
-   Exhaust is folded in here rather than being its own step, deliberately: `EXHAUST.topGain` and
-   `CAM.scav` are two fitted knobs describing **one** physical effect — the pressure wave returning
-   down the primary during overlap. Deriving either alone would leave the other double-counting it.
-   This is also what sets the powerband *position*, so it is what should finally retire `peakShift`
-   and roll off the two remaining limiter-peaking presets. A first prototype has already failed
-   once; expect several rounds.
+3. **Gas dynamics** — ◐ *first round done.* ✅ Intake ram as a **Helmholtz resonance** (runner as
+   neck, cylinder as volume — the textbook treatment), exhaust scavenging as a **reflection comb**
+   whose rarefaction must arrive during overlap, back-pressure from Darcy-Weisbach through a system
+   pipe sized off the engine's own flow, overlap derived from duration and LSA, late-IVC trapping,
+   and exhaust gas temperature from the energy balance. **Five fitted numbers retired:**
+   `CAM{peakShift, scav, lowLoss}` and `EXHAUST{topGain, lowLoss}`. New input: intake runner length,
+   including VARIABLE — a variable-length manifold is two lengths and a flap, which is all a DISA or
+   a VarioRam is. **Presets peaking at the exact rev limiter: 2 → 0**, which is what this conversion
+   existed to fix. ⬜ Two behavioural tests still disagree with the derived curve shape and are left
+   failing rather than weakened; `vePeakRpm` is still asserted. Details below.
+   Exhaust was folded in here rather than being its own step, and that turned out to be the whole
+   game: `EXHAUST.topGain` and `CAM.scav` really are two knobs for one event, and deriving either
+   alone would have left the other double-counting it.
 4. **Turbo** — compressor and turbine maps instead of the lumped `{spool, choke, k, flow}` table.
 5. **Combustion** — a real cycle with heat release, replacing `IMEP_K` and friends. Biggest prize,
    biggest risk, so it goes last.
