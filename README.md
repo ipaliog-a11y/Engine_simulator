@@ -1,4 +1,4 @@
-# PIXEL ENGINE SIM v0.5
+# PIXEL ENGINE SIM v0.6 build 54
 
 **A lightweight, 8-bit style internal combustion engine *designer* & simulator** inspired by *Automation*.
 
@@ -37,7 +37,14 @@ screamer, 2JZ six, muscle V8, blown V8, V12 supercar…), or configure your own 
   mechanical injection, single-throttle EFI, or individual throttle bodies) and air filter
   (open stacks → restrictive). These set top-end breathing, AFR-metering precision (EFI is
   most efficient; carbs waste fuel), throttle response and idle quality.
-- **Valvetrain** — cam profile (stock / sport / race) and variable valve timing (VVT). A
+- **Valvetrain (derived physics)** — cam profile (stock / sport / race), variable valve timing,
+  **valves per cylinder** (2 / 4 / 5), **valve material** (steel / titanium) and **valve springs**
+  (stock / performance / race). Nothing here is a lookup multiplier: the intake valve diameter your
+  bore can physically fit, what that valve weighs, where it **floats**, and how badly the port
+  chokes are all derived from geometry and mechanics. Four valves give 22% more intake area than two
+  for the same bore, and five give *less than four* — which is why the industry abandoned them. The
+  panel shows the **valve float rpm**, and flags it red when it falls below your redline, because
+  then the engine cannot use the rev range it claims. A
   wilder cam moves the powerband up and adds top-end at the cost of low-end torque and idle
   quality; VVT recovers the bottom end for a broad powerband.
 - **Electrical** — alternator size (60 / 120 / 180 A). With a live **ELEC LOAD** control
@@ -378,7 +385,10 @@ Curve** tab remains a wide-open-throttle steady-state sweep for reading the full
   tractive force = wheel torque ÷ rolling radius, capped by traction (μ × the driven-axle load,
   including static weight distribution, longitudinal weight transfer under acceleration, and
   aero downforce). Aero drag (½ρ·CdA·v²) and rolling resistance oppose it; the car shifts at the
-  limiter, losing drive for the gearbox's shift time. The launch depends on the gearbox. A clutch
+  limiter, losing drive for the gearbox's shift time. In top gear there is nothing left to shift
+  into, so **the rev limiter cuts drive to zero** and drag brings the car back — both the
+  standing-start run and the lap solver are bound by the speed the gearing can actually reach,
+  never by drag alone. The launch depends on the gearbox. A clutch
   box (manual/sequential/DCT) models a **slipping clutch**: from a standstill the engine is held
   at its launch rpm (≈55 % of the redline) while road speed brings the gearbox input up to meet
   it, and only then locks to the wheels — which is why a peaky, high-revving engine can still
@@ -556,10 +566,27 @@ philosophy).
 ```
 .
 ├── index.html                     # Complete single-file app (HTML + CSS + JS)
+├── CHANGELOG.md                   # Release history; every commit carries a build number
 ├── favicon.svg / manifest.webmanifest / sw.js   # PWA (icon, manifest, offline SW)
 ├── assets/                        # Self-hosted font + PWA icons
 ├── docs/                          # README screenshots
+├── tests/                         # Headless Playwright suite — see tests/README.md
+│   └── run.mjs                    #   node tests/run.mjs   (reports by exit code)
+├── tools/stamp.mjs                # Stamps + verifies the build number
 └── .github/workflows/pages.yml    # Auto-deploy to GitHub Pages
+```
+
+**One file, on purpose.** `index.html` opens straight from `file://` with no server, no build step
+and no dependencies, works offline, and is a single artefact to share or archive. Splitting it into
+modules would cost all of that — ES modules are blocked from `file://` — so the seam is marked
+inside the file rather than cut. Worth revisiting past ~600 KB.
+
+**Versioning.** `MAJOR.MINOR` plus a unique build number per commit, which is simply the repository's
+commit count:
+
+```sh
+node tools/stamp.mjs            # write the next build number into index.html and README
+node tools/stamp.mjs --check    # verify a committed stamp matches its own history
 ```
 
 ## Roadmap / Future Expansion
@@ -603,11 +630,52 @@ documented in the GUIDE at the point where it matters:
   same line. It is the same half-percent for everyone, so build-to-build comparisons stay honest.
 - **A lap is a single best-case lap** — no tyre wear, no fuel burn, no traffic, no driver error.
 - **Imported circuits have modelled width, not surveyed width**, derived from the layout.
+- **There is no engine braking above the limiter.** Past the rev limiter drive force is zero, but
+  nothing pushes back, so a steep descent can carry a car a km/h or so beyond the speed its top
+  gear allows. Real overrun would drag it back.
+- **Power peaks at the rev limiter on four presets** (2.0 ITB Screamer, 5.0 V8 Muscle, 6.2 S/C V8,
+  6.5 V12) — the breathing model's valve-float term only bites *above* the redline, so those
+  curves never roll off inside their own rev range. Real engines peak at 90–98 % of redline. The
+  visible consequence is that taller gearing always raises their top speed, with no over-gearing
+  penalty to trade against.
 
-### What could come next
+### Next: v1.0 — every number derived, not fitted
 
-Nothing is in progress. Candidates, roughly in order of how much they'd add:
+This is the current direction, and it is a change of principle rather than a feature list.
 
+Parts of the model reach their accuracy through **lumped coefficients that were tuned until the
+outputs matched reality** — `CAM{peakShift, ampMul, scav}`, `EXHAUST{topGain, lowLoss}`,
+`TURBO{spool, choke, k, flow}`, `IMEP_K`, `DIFF_ASYM0`, `KVCAP`. They work, and they are honest
+approximations, but they are fitted rather than derived: they encode *the answer* instead of the
+mechanism that produces it.
+
+v1.0 replaces them component by component with quantities derived from geometry and physical law,
+and **accepts whatever accuracy that produces** rather than tuning back toward a target. A
+first-principles model will very likely score worse at first — the present 2.66% RMS exists partly
+*because* coefficients were fitted to produce it. The rule is that any regression must be
+explainable, traceable to a component not yet modelled, and every component added must improve the
+score.
+
+Planned order, each validated against `tests/test41.mjs`, `tests/aero.mjs` and `tests/test43.mjs`:
+
+1. ~~**Valvetrain and port flow**~~ ✅ — valve area and count, spring rate and valve mass, cam lift
+   and duration; port choking from Taylor's inlet Mach index, valve float from the inertia/spring
+   balance. Presets peaking at the exact rev limiter went **4 → 2**, and the two that were fixed are
+   both big-bore two-valve engines that now roll off for a stated reason. Calibration unchanged at
+   2.66% RMS. The two that remain are four-valve high-revvers that are genuinely neither choked nor
+   float-limited — their peak is set by intake dynamics, which is step 2.
+2. **Tyre** — speed rating, speed-dependent rolling resistance, and a slip-ratio curve in place of
+   the present hard grip clip.
+3. **Turbo** — compressor and turbine maps instead of the lumped `{spool, choke, k, flow}` table.
+4. **Combustion** — a real cycle with heat release, replacing `IMEP_K` and friends. Biggest prize,
+   biggest risk, so it goes last.
+
+Also queued: a **UI redesign** for the DESIGN and VEHICLE tabs, which are already crowded and will
+get more so as derived physics adds inputs. Progressive disclosure — headline inputs by default, a
+detail expander per subsystem — after the first conversion lands, when the final input set is known.
+
+Greek translation is **paused** for the duration. New strings are still wrapped in `tr()`, and the
+untranslated backlog is counted and printed on every test run rather than hidden.
 - **Charge the acceleration and lap solvers for spool lag**, closing the first limit above. It
   needs a transient pass rather than the current per-rpm steady solve.
 - **A hand-editable ignition map**, to match the fuel map editor — the last piece of item 2.
