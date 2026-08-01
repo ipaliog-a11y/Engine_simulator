@@ -378,7 +378,10 @@ Curve** tab remains a wide-open-throttle steady-state sweep for reading the full
   tractive force = wheel torque ÷ rolling radius, capped by traction (μ × the driven-axle load,
   including static weight distribution, longitudinal weight transfer under acceleration, and
   aero downforce). Aero drag (½ρ·CdA·v²) and rolling resistance oppose it; the car shifts at the
-  limiter, losing drive for the gearbox's shift time. The launch depends on the gearbox. A clutch
+  limiter, losing drive for the gearbox's shift time. In top gear there is nothing left to shift
+  into, so **the rev limiter cuts drive to zero** and drag brings the car back — both the
+  standing-start run and the lap solver are bound by the speed the gearing can actually reach,
+  never by drag alone. The launch depends on the gearbox. A clutch
   box (manual/sequential/DCT) models a **slipping clutch**: from a standstill the engine is held
   at its launch rpm (≈55 % of the redline) while road speed brings the gearbox input up to meet
   it, and only then locks to the wheels — which is why a peaky, high-revving engine can still
@@ -603,11 +606,22 @@ documented in the GUIDE at the point where it matters:
   same line. It is the same half-percent for everyone, so build-to-build comparisons stay honest.
 - **A lap is a single best-case lap** — no tyre wear, no fuel burn, no traffic, no driver error.
 - **Imported circuits have modelled width, not surveyed width**, derived from the layout.
+- **There is no engine braking above the limiter.** Past the rev limiter drive force is zero, but
+  nothing pushes back, so a steep descent can carry a car a km/h or so beyond the speed its top
+  gear allows. Real overrun would drag it back.
+- **Power peaks at the rev limiter on four presets** (2.0 ITB Screamer, 5.0 V8 Muscle, 6.2 S/C V8,
+  6.5 V12) — the breathing model's valve-float term only bites *above* the redline, so those
+  curves never roll off inside their own rev range. Real engines peak at 90–98 % of redline. The
+  visible consequence is that taller gearing always raises their top speed, with no over-gearing
+  penalty to trade against.
 
 ### What could come next
 
 Nothing is in progress. Candidates, roughly in order of how much they'd add:
 
+- **Roll power off before the rev limiter**, closing the last limit above. `computeVE`'s
+  valve-float term needs to start below the redline so peak power lands where a real engine's
+  does. It moves every dyno curve, so it needs the reference set re-calibrated with it.
 - **Charge the acceleration and lap solvers for spool lag**, closing the first limit above. It
   needs a transient pass rather than the current per-rpm steady solve.
 - **A hand-editable ignition map**, to match the fuel map editor — the last piece of item 2.
