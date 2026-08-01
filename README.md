@@ -1,4 +1,4 @@
-# PIXEL ENGINE SIM v0.5
+# PIXEL ENGINE SIM v0.6 build 53
 
 **A lightweight, 8-bit style internal combustion engine *designer* & simulator** inspired by *Automation*.
 
@@ -559,10 +559,27 @@ philosophy).
 ```
 .
 ├── index.html                     # Complete single-file app (HTML + CSS + JS)
+├── CHANGELOG.md                   # Release history; every commit carries a build number
 ├── favicon.svg / manifest.webmanifest / sw.js   # PWA (icon, manifest, offline SW)
 ├── assets/                        # Self-hosted font + PWA icons
 ├── docs/                          # README screenshots
+├── tests/                         # Headless Playwright suite — see tests/README.md
+│   └── run.mjs                    #   node tests/run.mjs   (reports by exit code)
+├── tools/stamp.mjs                # Stamps + verifies the build number
 └── .github/workflows/pages.yml    # Auto-deploy to GitHub Pages
+```
+
+**One file, on purpose.** `index.html` opens straight from `file://` with no server, no build step
+and no dependencies, works offline, and is a single artefact to share or archive. Splitting it into
+modules would cost all of that — ES modules are blocked from `file://` — so the seam is marked
+inside the file rather than cut. Worth revisiting past ~600 KB.
+
+**Versioning.** `MAJOR.MINOR` plus a unique build number per commit, which is simply the repository's
+commit count:
+
+```sh
+node tools/stamp.mjs            # write the next build number into index.html and README
+node tools/stamp.mjs --check    # verify a committed stamp matches its own history
 ```
 
 ## Roadmap / Future Expansion
@@ -615,13 +632,41 @@ documented in the GUIDE at the point where it matters:
   visible consequence is that taller gearing always raises their top speed, with no over-gearing
   penalty to trade against.
 
-### What could come next
+### Next: v1.0 — every number derived, not fitted
 
-Nothing is in progress. Candidates, roughly in order of how much they'd add:
+This is the current direction, and it is a change of principle rather than a feature list.
 
-- **Roll power off before the rev limiter**, closing the last limit above. `computeVE`'s
-  valve-float term needs to start below the redline so peak power lands where a real engine's
-  does. It moves every dyno curve, so it needs the reference set re-calibrated with it.
+Parts of the model reach their accuracy through **lumped coefficients that were tuned until the
+outputs matched reality** — `CAM{peakShift, ampMul, scav}`, `EXHAUST{topGain, lowLoss}`,
+`TURBO{spool, choke, k, flow}`, `IMEP_K`, `DIFF_ASYM0`, `KVCAP`. They work, and they are honest
+approximations, but they are fitted rather than derived: they encode *the answer* instead of the
+mechanism that produces it.
+
+v1.0 replaces them component by component with quantities derived from geometry and physical law,
+and **accepts whatever accuracy that produces** rather than tuning back toward a target. A
+first-principles model will very likely score worse at first — the present 2.66% RMS exists partly
+*because* coefficients were fitted to produce it. The rule is that any regression must be
+explainable, traceable to a component not yet modelled, and every component added must improve the
+score.
+
+Planned order, each validated against `tests/test41.mjs`, `tests/aero.mjs` and `tests/test43.mjs`:
+
+1. **Valvetrain and port flow** — valve area and count, spring rate and valve mass, cam lift and
+   duration. Port choking from the Mach index, valve float from the inertia/spring balance. This is
+   first because it blocks a known defect: four presets currently peak at the rev limiter, which no
+   real engine does.
+2. **Tyre** — speed rating, speed-dependent rolling resistance, and a slip-ratio curve in place of
+   the present hard grip clip.
+3. **Turbo** — compressor and turbine maps instead of the lumped `{spool, choke, k, flow}` table.
+4. **Combustion** — a real cycle with heat release, replacing `IMEP_K` and friends. Biggest prize,
+   biggest risk, so it goes last.
+
+Also queued: a **UI redesign** for the DESIGN and VEHICLE tabs, which are already crowded and will
+get more so as derived physics adds inputs. Progressive disclosure — headline inputs by default, a
+detail expander per subsystem — after the first conversion lands, when the final input set is known.
+
+Greek translation is **paused** for the duration. New strings are still wrapped in `tr()`, and the
+untranslated backlog is counted and printed on every test run rather than hidden.
 - **Charge the acceleration and lap solvers for spool lag**, closing the first limit above. It
   needs a transient pass rather than the current per-rpm steady solve.
 - **A hand-editable ignition map**, to match the fuel map editor — the last piece of item 2.
