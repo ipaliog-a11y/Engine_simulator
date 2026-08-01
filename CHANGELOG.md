@@ -20,7 +20,42 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 Working toward **v1.0 — every number derived, not fitted.**
 
-### Conversion 3 of 5 — gas dynamics  *(first round; two tests unresolved)*
+### Conversion 3 of 5 — gas dynamics, round 2
+
+Two corrections, both omissions rather than tuning, and one experiment rejected on measurement.
+
+- **Finite-aperture averaging.** Both waves were sampled at an *instant*, and neither valve event is
+  one. The cylinder sees the wave averaged over the window the valve is open for, which multiplies
+  it by `sinc(π·Δn/2)` — fast oscillations damp far more than slow ones, and it needs no new constant
+  because the crank angles are already in the model. Leaving it out let the ram and scavenge troughs
+  coincide at 6000 rpm on the ITB screamer and dig a 15% hole in the VE curve. Calibration 3.38% →
+  **3.33%**.
+- **Back-pressure belongs in the overlap driving pressure.** Flow across the overlap window is driven
+  by the difference between the ports, and the exhaust port does not sit at atmosphere — it sits at
+  atmosphere plus back-pressure, with the wave on top. Adding the steady term makes a big cam lope
+  and refuse to pull cleanly, which is reversion, and it **fixed `test28`**. Calibration 3.33% →
+  **3.78%**, still inside the 5% threshold. Worth noting the prediction that motivated it was wrong:
+  I expected reversion to grow as revs fell, and it comes out flat, because `u ∝ √(bp) ∝ N` while
+  the overlap window goes as `1/N`, so the product is rpm-independent. Right mechanism, wrong
+  reasoning about its shape.
+
+**Rejected: removing the base VE bell.** The plan said the fix for `vePeakRpm` was not a better bell
+but no bell — a flat, port-flow-limited envelope with the Mach term providing the fall and wave
+action providing the structure. Built and measured: real-car calibration **3.33% → 10.89%**, every
+car slower. Removing the bell exposed two mechanisms the model does not have — low-rpm charge
+short-circuiting through a big overlap, and whatever caps peak VE below the 1.2 clamp, which the
+screamer now pins against from 7500 rpm up. The thesis still looks right; it needs those two first.
+Reverted, and the base envelope it was replaced with (charge heating on the port walls, density
+following `T0/(T0+ΔT)` with ΔT ∝ 1/N) is recorded here because it is the right starting point when
+this is retried.
+
+**Test movement.** `test28` fixed. `test38` now fails: on the *fast* circuit the late-apex racing
+line costs 0.24 s where it gains 0.39–0.99 s on the other three. That is not a gas-dynamics defect —
+it says the late-apex bias is not universally beneficial and the heuristic needs a per-corner test
+rather than a blanket shift. `test40` still fails and is still turbo-map physics: a small frame
+159% over-flowed at 2.5 bar is not being penalised.
+
+### Conversion 3 of 5 — gas dynamics  *(round 1)*
 
 Retires **five** fitted numbers at once — `CAM{peakShift, scav, lowLoss}` and `EXHAUST{topGain,
 lowLoss}` — and replaces them with wave action derived from pipe geometry. `topGain` and `scav` had

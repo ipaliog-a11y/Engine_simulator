@@ -188,7 +188,7 @@ table.fuelmap td.live{box-shadow:inset 0 0 0 2px #fff;font-weight:bold}
 <body>
 <div class="container">
 <header>
-<h1>PIXEL ENGINE SIM v0.6 build 58</h1>
+<h1>PIXEL ENGINE SIM v0.6 build 59</h1>
 <div class="subtitle" id="subtitle">ENGINE DESIGNER • BUILD IT, THEN DRIVE IT</div>
 </header>
 <div class="main">
@@ -1015,6 +1015,7 @@ function exhaustGasT(load){
 // Q of an intake tract measured on a flow rig is 3-6. It sets how fast the resonance dies and
 // therefore how much weaker each successive order is, so no separate order weighting is needed.
 const Q_INTAKE=4.0;
+const IVC_WINDOW=40;      // crank degrees over which the intake valve actually seats
 const helmholtzHz=(A,L,V,T)=>sonic(T)/(2*Math.PI)*Math.sqrt(A/Math.max(1e-9,L*V));
 function intakeRamGain(rpm,chargeK){
   const e=engine;
@@ -1023,8 +1024,23 @@ function intakeRamGain(rpm,chargeK){
   const u=(2*(e.stroke_mm/1000)*rpm/60)*Math.pow(e.bore_mm/e.runnerD_mm,2);   // acoustic piston relation
   const A0=GAMMA_AIR*u/sonic(chargeK);
   const amp=A0*Math.exp(-Math.PI*nH/Q_INTAKE);
-  return densFromP(amp*Math.cos(2*Math.PI*(nH-Math.round(nH))));
+  // Trapping is not decided at a point: the valve takes IVC_WINDOW crank degrees to seat, and the
+  // charge is being trapped throughout. Average the resonance over that.
+  const dn=nH*IVC_WINDOW/Math.max(1,e.camDur);
+  return densFromP(amp*aperture(dn)*Math.cos(2*Math.PI*(nH-Math.round(nH))));
 }
+// Both waves were being sampled at a single INSTANT, and neither valve event is an instant. The
+// pressure the cylinder actually sees is the wave averaged over the window the valve is open for,
+// and averaging a cosine over a window of width dn multiplies it by sinc(pi·dn/2). This damps fast
+// oscillations far more than slow ones, which is the correct behaviour and needs no new constant:
+// it comes from the same crank angles the rest of the model already uses. It is also why wave
+// effects fade at low rpm — a fixed crank window is a longer wave window when the engine is slow.
+// Leaving it out let the ram and scavenge troughs coincide at 6000 rpm on the ITB screamer and dig
+// a 15% hole in the VE curve, and pinned VE against its 1.2 clamp from 7500 rpm up.
+const aperture=dn=>{
+  const x=Math.PI*Math.abs(dn)/2;
+  return x<1e-6?1:Math.sin(x)/x;
+};
 // ---- exhaust: reflection comb, then what the suction actually drags through ----
 const EX_ALPHA=0.35;    // amplitude lost per metre of pipe: viscous + thermal boundary layer
 const EX_ROPEN=0.88;    // amplitude reflected at an open end; the rest radiates away as noise
@@ -1041,7 +1057,10 @@ function exhaustWaveP(rpm,T){
   // A turbine housing is a RESTRICTION, not an open end, so it reflects a compression instead of a
   // rarefaction. That is why turbo engines scavenge so poorly and are built with little overlap.
   const sign=e.intake==='turbo'?+1:-1;
-  return A0*damp*sign*Math.cos(Math.PI*n);
+  // The wave acts across the whole overlap window, not at TDC alone. Over that window the phase
+  // advances by dn, so the cylinder sees the average, not the peak.
+  const dn=n*Math.max(0,e.overlap)/Math.max(1,e.camDur/2+90);
+  return A0*damp*aperture(dn)*sign*Math.cos(Math.PI*n);
 }
 // The returning suction pulls charge through the small curtain the valves have open near TDC, for
 // as long as the overlap lasts. Measured against the cylinder's own volume, that is a VE bonus —
@@ -1049,7 +1068,14 @@ function exhaustWaveP(rpm,T){
 function scavengeGain(rpm,T){
   const e=engine;
   if(!e.overlap||e.overlap<=0)return 0;
-  const dp=exhaustWaveP(rpm,T);
+  // The pressure driving flow across the overlap window is the difference between the intake port
+  // and the exhaust port, and the exhaust port does not sit at atmosphere — it sits at atmosphere
+  // plus back-pressure, with the wave on top. Leaving the steady term out was an omission, and it
+  // is the one that makes a big cam undriveable down low: at 1500 rpm the wave has nothing to give,
+  // so all that is left is a small adverse pressure acting through a long overlap window, pushing
+  // burnt gas back up the inlet. That is reversion, it is why a race cam lopes and will not pull
+  // from idle, and it scales with overlap and with 1/N exactly as the lore says it does.
+  const dp=exhaustWaveP(rpm,T)-backPressureBar(rpm,T);
   if(!dp)return 0;
   const u=Math.sign(dp)*Math.sqrt(2*Math.abs(dp)*101325/1.15);
   const lift=OVERLAP_LIFT*0.25*e.ivDia_mm;
