@@ -20,7 +20,97 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 Working toward **v1.0 — every number derived, not fitted.**
 
-### Conversion 2 of 4 — tyre  *(partly done)*
+### Conversion 3 of 5 — gas dynamics  *(first round; two tests unresolved)*
+
+Retires **five** fitted numbers at once — `CAM{peakShift, scav, lowLoss}` and `EXHAUST{topGain,
+lowLoss}` — and replaces them with wave action derived from pipe geometry. `topGain` and `scav` had
+to go together: they were two knobs describing one event, the rarefaction returning from the
+collector during overlap, so deriving either alone would have left the other double-counting it.
+
+**Two mechanisms, because they really are different.** The intake is a **Helmholtz resonator**
+during induction — runner as neck, cylinder as volume — which is the textbook treatment with
+published experimental backing. The exhaust is a **reflection comb**: the blowdown pulse leaves at
+EVO, inverts off the collector, and must arrive back during overlap. Neither is a free bonus; both
+swing *both ways*, so a badly matched pipe costs VE, which is why an over-sized header guts the
+bottom end.
+
+**New inputs.** Intake runner length (LONG / MEDIUM / SHORT / **VARIABLE** — a variable-length
+manifold is just two lengths and a flap, which is all a DISA or VarioRam is). Exhaust grade is now
+geometry rather than a bonus: bore-scaled primary diameter, system pipe **sized from the engine's
+own flow**, and `sigma`, the path-length spread — literally what "equal-length header" claims.
+
+**Derived and shown in the DESIGN panel:** cam overlap (from duration and LSA, and correctly
+*negative* on a stock cam), runner length and where it rams, primary length with its tuning order,
+and where it scavenges. A header is **cut for the engine**: the tuning relation is solved for length
+at the lowest buildable order, which produces 525–768 mm primaries at k=3 — what people actually build.
+
+**Also now derived:** exhaust gas temperature, from the energy balance rather than assumed. Petrol
+743–828 °C, diesel 369 °C, rotary and two-stroke over 1150 °C — all correct, and it feeds back into
+the speed of sound and so into where the header tunes. Late intake valve closing too: a 284° cam
+closes 52° after BDC and traps ~13% less charge at low rpm, which is what `CAM.lowLoss` stood for and
+why VVT exists (modelled as 45° of phaser authority moving IVC, not as a recovery percentage).
+
+**Results.** Presets making peak power at the exact rev limiter: **2 → 0**, the target this
+conversion existed to hit. Real-car acceleration RMS 2.66% → **3.38%** (threshold 5%), top speed
+6.5% → **6.7%**. The acceleration regression is real and is not hidden: removing a fitted top-end
+bonus costs absolute output on several presets, and their specs were chosen when that bonus existed.
+
+**Unresolved, and left failing rather than papered over:** `test28` (a torque converter should hurt
+a peaky engine) and `test40` (an over-flowed turbo frame should be penalised on a lap). Both encode
+behaviour calibrated against the old fitted curve shape, and both now disagree with the derived one.
+They are honest disagreements, not crashes, and weakening them to go green is exactly what this
+project's rules forbid. Second round needed.
+
+**What was tried and rejected.** Deriving the base VE peak from Taylor's Mach knee. It is the wrong
+quantity — Z = 0.5 marks where the ports start to choke, which is near the *power* peak, not where
+volumetric filling peaks. It put the peak at 0.92–0.97 of redline on every engine and blew the
+calibration out to **54% RMS**. `vePeakRpm` stays asserted for now; what should replace it is not a
+better bell but *no bell* — a rising, port-flow-limited envelope with the Mach term providing the
+fall and wave action providing the structure.
+
+### Investigation — the slip-ratio model, rotational inertia, and a defect in the shipped physics
+
+Not a release entry: nothing here shipped. It is recorded because the experiment **found a real
+defect in the model that is on `main`**, and because the failures are part of the finding.
+
+Wiring up the slip-ratio curve — `μ = μ_peak·sin(C·atan(B·s))` with a wheel-speed state variable and
+`I_eff = I_wheels + I_engine·ratio²` — moved the real-car 0–100 calibration from **2.66 % to 7.79 %
+RMS**, past the suite's 5 % threshold, with every car coming out slow.
+
+Isolating it: inertia alone costs **16.27 %**; inertia plus slip costs **7.78 %**; slip with engine
+inertia set to literally zero still costs **5.37 %**. So the regression is about half slip dynamics
+(≈2.7 pp) and half engine inertia (≈2.4 pp) — an early reading of "inertia dominates, the slip model
+is fine" was wrong and is corrected here.
+
+Three explanations were tested and all three are dead. **Driveline efficiency** would need 0.972 on
+an RWD manual against a real 0.88–0.93. **Engine inertia** would need 0.03 kg·m² against a real
+0.10–0.20. **Tyre grip** is backwards — cutting μ made it monotonically worse (7.22 → 9.08 → 14.10 %)
+because the cars are already too slow.
+
+What is left is the AWD WRX at **+5.9 %**, unmoved by a 15 % grip swing, which traction cannot
+explain. Reflected engine inertia in first gear is ≈21.6 kg·m² ≈ 190 kg of apparent mass on 1470 kg —
+**+13 % effective mass, ≈+5 % on 0–100.** The inertia term is right; **the shipped model has been
+giving every car a free ~6 % by never charging rotational inertia**, and the 2.66 % calibration was
+reached with that discount in place, against a hard grip clip that flatters the launch in the same
+direction. Two compensating errors reading as accuracy.
+
+Reverted rather than shipped. The fix is the **launch model** — the clutch as a torque-capacity limit
+rather than a kinematic rpm hold — after which slip and inertia go in together and the set is
+recalibrated once. Documented in full in the README, including two harness failures of the same kind
+(monkey-patching a script-scope `const`, which silently produced identical sweep rows and was briefly
+reported as a null result). **Rim material/weight** is deferred behind the same work.
+
+### Changed — the conversion plan
+
+Now **five** steps, not four. Exhaust is folded into a **gas dynamics** step rather than standing
+alone: `EXHAUST{topGain, lowLoss}` and `CAM{scav}` are separate fitted knobs for one physical
+effect — the pressure wave returning down the primary during overlap — so deriving either alone
+leaves the other double-counting it. That same step covers intake ram and wave tuning, and is what
+should finally retire `CAM{peakShift}` and roll off the two presets that still peak at the limiter.
+
+Order: valvetrain ✅ → tyre ◐ → **gas dynamics** → turbo maps → combustion cycle.
+
+### Conversion 2 of 5 — tyre  *(partly done)*
 
 Unlike the valvetrain, this mostly **adds physics that was missing** rather than replacing fitted
 coefficients — "identify the reason and add the functionality".
@@ -46,9 +136,10 @@ the real tyre is good for 390. Rating comes from the belt package and materials,
 does not represent, so it is an input rather than a bad derivation.
 
 **Still to do in this conversion:** the slip-ratio curve, replacing the hard `min(driveF, mu·N)` grip
-clip. It needs a wheel-speed state variable in the acceleration integrator, so it is its own step.
+clip. It was built, and it is **parked** — see the investigation above. It needs a wheel-speed state
+variable in the acceleration integrator, and it cannot land until the launch model is reworked.
 
-### Conversion 1 of 4 — valvetrain and port flow  *(done)*
+### Conversion 1 of 5 — valvetrain and port flow  *(done)*
 
 The head is now modelled from geometry and mechanics rather than assumed. New inputs: **valves per
 cylinder** (2/4/5), **valve material** (steel/titanium), **valve springs** (stock/performance/race).

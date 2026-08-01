@@ -35,6 +35,12 @@ These three are the ground truth for the v1.0 physics rewrite. A derived-from-fi
 cannot be tuned to fit, so the only honest way to judge it is to check it against reality afterwards
 and accept the answer.
 
+## `proto/` — parked models
+
+`run.mjs` reads `tests/*.mjs` and does not recurse, so anything in `proto/` is deliberately outside
+the suite. It holds standalone models that were built, measured and **not shipped** — currently the
+slip-ratio tyre model. See `proto/README.md`; the reasoning behind each is in the main README.
+
 ## Writing a new one
 
 - Import `chromium` from `./pw.mjs`, not from `playwright`.
