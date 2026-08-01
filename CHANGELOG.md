@@ -16,6 +16,40 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 Working toward **v1.0 — every number derived, not fitted.**
 
+### Conversion 1 of 4 — valvetrain and port flow  *(done)*
+
+The head is now modelled from geometry and mechanics rather than assumed. New inputs: **valves per
+cylinder** (2/4/5), **valve material** (steel/titanium), **valve springs** (stock/performance/race).
+Everything else is derived:
+
+- **Intake valve diameter** from a packing limit measurable off a real head (2-valve canted 0.50 of
+  bore, 4-valve pent-roof 0.39 each, 5-valve 0.31). Total intake area over bore area comes out
+  0.250 / 0.304 / 0.288 — five valves are *worse* than four, which is why the industry dropped them.
+- **Valve mass** from its own geometry: a head disc that scales with diameter on a stem that does
+  not, since stem length is set by deck height. Derived masses land inside real published bands
+  from 31 mm to 52 mm — a 3× mass range. (Scaling the stem too, the obvious mistake, put a 52 mm
+  valve at 227 g against a real 152 g and predicted a big V8 floating at 3800 rpm.)
+- **Valve float** from the spring/inertia balance: `m_eff·accel·(L/2)·(2π/θ)²·ω² ≤ F_seat + k·L`.
+  Shown in the DESIGN panel and flagged red when it falls below the redline, because then the
+  engine cannot use the rev range it claims.
+- **Port choking** from Taylor's inlet Mach index. The loss grows with the square of the excess
+  over Z = 0.5, which is what a dynamic-pressure loss does; the constants reproduce Taylor's
+  published curve and are not fitted to these engines.
+
+**What it fixed.** Presets making peak power at the exact rev limiter: **4 → 2**. The 5.0 V8 Muscle
+(peak 100% → 81% of redline) and the 6.2 S/C V8 (100% → 95%) are both big-bore two-valve engines,
+and both now roll off for a stated reason — Z = 0.69 and 0.58 at the limiter. Real-car acceleration
+calibration **unchanged at 2.66% RMS**.
+
+**What it did not fix, and why.** The ITB Screamer and the V12 still peak at the limiter. Both are
+well-designed four-valve high-revvers that genuinely are neither port-choked (Z = 0.54, 0.47) nor
+float-limited (16124, 14686 rpm). Their peak position is set by intake wave tuning and charge
+trapping — the next conversion. `test44` records this as a budget of 2 that cannot silently grow.
+
+**Still fitted, marked for removal:** `CAM{peakShift, ampMul, loWiden, lowLoss, scav}` still shapes
+the base VE bell curve. When wave tuning and trapping are derived, the powerband position will
+emerge from cam duration instead of being asserted by `peakShift`.
+
 The model currently reaches its accuracy partly through lumped coefficients that were tuned until
 the outputs matched reality (`CAM{peakShift, ampMul, scav}`, `EXHAUST{topGain, lowLoss}`,
 `TURBO{spool, choke, k, flow}`, `IMEP_K`, `DIFF_ASYM0`, `KVCAP`). v1.0 replaces them with quantities

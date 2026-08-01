@@ -1,4 +1,4 @@
-# PIXEL ENGINE SIM v0.6 build 53
+# PIXEL ENGINE SIM v0.6 build 54
 
 **A lightweight, 8-bit style internal combustion engine *designer* & simulator** inspired by *Automation*.
 
@@ -37,7 +37,14 @@ screamer, 2JZ six, muscle V8, blown V8, V12 supercar…), or configure your own 
   mechanical injection, single-throttle EFI, or individual throttle bodies) and air filter
   (open stacks → restrictive). These set top-end breathing, AFR-metering precision (EFI is
   most efficient; carbs waste fuel), throttle response and idle quality.
-- **Valvetrain** — cam profile (stock / sport / race) and variable valve timing (VVT). A
+- **Valvetrain (derived physics)** — cam profile (stock / sport / race), variable valve timing,
+  **valves per cylinder** (2 / 4 / 5), **valve material** (steel / titanium) and **valve springs**
+  (stock / performance / race). Nothing here is a lookup multiplier: the intake valve diameter your
+  bore can physically fit, what that valve weighs, where it **floats**, and how badly the port
+  chokes are all derived from geometry and mechanics. Four valves give 22% more intake area than two
+  for the same bore, and five give *less than four* — which is why the industry abandoned them. The
+  panel shows the **valve float rpm**, and flags it red when it falls below your redline, because
+  then the engine cannot use the rev range it claims. A
   wilder cam moves the powerband up and adds top-end at the cost of low-end torque and idle
   quality; VVT recovers the bottom end for a broad powerband.
 - **Electrical** — alternator size (60 / 120 / 180 A). With a live **ELEC LOAD** control
@@ -651,10 +658,12 @@ score.
 
 Planned order, each validated against `tests/test41.mjs`, `tests/aero.mjs` and `tests/test43.mjs`:
 
-1. **Valvetrain and port flow** — valve area and count, spring rate and valve mass, cam lift and
-   duration. Port choking from the Mach index, valve float from the inertia/spring balance. This is
-   first because it blocks a known defect: four presets currently peak at the rev limiter, which no
-   real engine does.
+1. ~~**Valvetrain and port flow**~~ ✅ — valve area and count, spring rate and valve mass, cam lift
+   and duration; port choking from Taylor's inlet Mach index, valve float from the inertia/spring
+   balance. Presets peaking at the exact rev limiter went **4 → 2**, and the two that were fixed are
+   both big-bore two-valve engines that now roll off for a stated reason. Calibration unchanged at
+   2.66% RMS. The two that remain are four-valve high-revvers that are genuinely neither choked nor
+   float-limited — their peak is set by intake dynamics, which is step 2.
 2. **Tyre** — speed rating, speed-dependent rolling resistance, and a slip-ratio curve in place of
    the present hard grip clip.
 3. **Turbo** — compressor and turbine maps instead of the lumped `{spool, choke, k, flow}` table.
