@@ -20,6 +20,34 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 Working toward **v1.0 — every number derived, not fitted.**
 
+### Conversion 2 of 4 — tyre  *(partly done)*
+
+Unlike the valvetrain, this mostly **adds physics that was missing** rather than replacing fitted
+coefficients — "identify the reason and add the functionality".
+
+- **Rolling resistance now rises with speed.** Hysteresis grows with how fast the carcass is
+  deformed, so Crr climbs roughly with v². Checked against Michelin passenger-tyre data (0.010 at
+  80 km/h, 0.013 at 160, 0.016 at 200); a fixed Crr was understating resistance by 60% at the speeds
+  a fast car actually reaches. Wired into the acceleration run, the top-speed scan and the lap solver.
+  **Top-speed accuracy against real cars: RMS 9.3% → 6.5%, mean bias +5.3% → +1.8%.** The Hellcat —
+  the one reference car that is genuinely neither governed nor rev-limited — went from +4.1% to +0.6%.
+- **Tyre speed rating** is now a spec you choose (T/H/V/W/Y/(Y)), defaulted per compound, shown in
+  the VEHICLE panel and flagged red when the build out-runs it. A drag radial rates below a touring
+  tyre, so fitting one for the strip caps what the car can safely do.
+
+**What it deliberately does not do.** The rating does *not* cap top speed. Four of the reference
+cars stop short of their drag-limited speed because of a manufacturer governor, and capping them
+with a tyre rating would produce the right number through the wrong mechanism — the residual +3 to
++8% on those four is a missing ECU limiter, not a missing tyre model.
+
+**What was tried and rejected.** Deriving the rating from tyre dimensions. Sidewall height is the
+obvious proxy and it is confidently wrong: it rates a McLaren F1's tall 315/45R17 at 170 km/h when
+the real tyre is good for 390. Rating comes from the belt package and materials, which the model
+does not represent, so it is an input rather than a bad derivation.
+
+**Still to do in this conversion:** the slip-ratio curve, replacing the hard `min(driveF, mu·N)` grip
+clip. It needs a wheel-speed state variable in the acceleration integrator, so it is its own step.
+
 ### Conversion 1 of 4 — valvetrain and port flow  *(done)*
 
 The head is now modelled from geometry and mechanics rather than assumed. New inputs: **valves per

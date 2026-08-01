@@ -1,4 +1,4 @@
-# PIXEL ENGINE SIM v0.6 build 55
+# PIXEL ENGINE SIM v0.6 build 56
 
 **A lightweight, 8-bit style internal combustion engine *designer* & simulator** inspired by *Automation*.
 
@@ -665,8 +665,10 @@ Planned order, each validated against `tests/test41.mjs`, `tests/aero.mjs` and `
    both big-bore two-valve engines that now roll off for a stated reason. Calibration unchanged at
    2.66% RMS. The two that remain are four-valve high-revvers that are genuinely neither choked nor
    float-limited — their peak is set by intake dynamics, which is step 2.
-2. **Tyre** — speed rating, speed-dependent rolling resistance, and a slip-ratio curve in place of
-   the present hard grip clip.
+2. **Tyre** — ✅ speed-dependent rolling resistance (top-speed RMS against real cars 9.3% → 6.5%)
+   and a tyre speed rating you choose, shown and flagged when exceeded but deliberately *not* used
+   to cap top speed. ⬜ Still to come: a slip-ratio curve in place of the hard grip clip, which
+   needs a wheel-speed state variable in the acceleration integrator.
 3. **Turbo** — compressor and turbine maps instead of the lumped `{spool, choke, k, flow}` table.
 4. **Combustion** — a real cycle with heat release, replacing `IMEP_K` and friends. Biggest prize,
    biggest risk, so it goes last.
