@@ -30,7 +30,18 @@ for (let i = 1; i < spool.length; i++) {
   if (!(spool[i].spool50 > spool[i - 1].spool50)) fails.push(`spool point did not rise from ${spool[i - 1].bar} to ${spool[i].bar} bar`);
   if (!(spool[i].t90 > spool[i - 1].t90)) fails.push(`spool time did not lengthen from ${spool[i - 1].bar} to ${spool[i].bar} bar`);
   if (!(spool[i].iat > spool[i - 1].iat)) fails.push(`charge temp did not rise from ${spool[i - 1].bar} to ${spool[i].bar} bar`);
-  if (!(spool[i].eff <= spool[i - 1].eff)) fails.push(`compressor efficiency did not fall from ${spool[i - 1].bar} to ${spool[i].bar} bar`);
+  // NOT a monotonic decline. That was true of the old fitted formula, which fell with pressure
+  // ratio by construction, and it is not true of a real compressor. A compressor has an efficiency
+  // ISLAND, and this kei engine starts at 32% of the frame's choke flow — deep on the surge side of
+  // it. Raising boost walks it TOWARD the island centre before it walks off the far side, so
+  // efficiency rises then falls. What must hold is that it ends below its peak, and that the charge
+  // gets hotter the whole way, which is the penalty that actually matters.
+}
+{
+  const effs = spool.map(s => s.eff), peak = Math.max(...effs);
+  console.log(`  efficiency traverses its island: ${effs.join(' -> ')} (peak ${peak})`);
+  if (!(effs[effs.length - 1] < peak)) fails.push('efficiency never falls off the island at high boost');
+  if (!(effs[0] < peak)) fails.push('efficiency should be poor at low flow too — the surge side of the island');
 }
 const lo = spool[0], hi = spool[spool.length - 1];
 if (!(hi.spool50 > lo.spool50 * 2)) fails.push(`2.5 bar should spool far later than 0.5 bar (${lo.spool50} -> ${hi.spool50})`);

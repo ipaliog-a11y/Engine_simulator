@@ -188,7 +188,7 @@ table.fuelmap td.live{box-shadow:inset 0 0 0 2px #fff;font-weight:bold}
 <body>
 <div class="container">
 <header>
-<h1>PIXEL ENGINE SIM v0.6 build 61</h1>
+<h1>PIXEL ENGINE SIM v0.6 build 62</h1>
 <div class="subtitle" id="subtitle">ENGINE DESIGNER • BUILD IT, THEN DRIVE IT</div>
 </header>
 <div class="main">
@@ -1597,6 +1597,13 @@ const INDUCER_RATIO=0.72;      // inducer/exducer, near-constant across a maker'
 // the efficiency island rather than hard choke.
 const compChokeFlow=exd=>COMP_BLOCKAGE*(101325/(287*298))
   *(Math.PI/4*Math.pow(INDUCER_RATIO*exd,2))*Math.sqrt(1.4*287*298)*132.28;   // lb/min
+const ISLAND_FLOW=0.62;    // best efficiency sits near 62% of choke flow
+const ISLAND_PEAK=0.78;    // island-centre efficiency for an automotive centrifugal wheel
+const ISLAND_WF=0.30;      // how fast efficiency falls either side, in flow fraction
+const ISLAND_WP=2.00;      // and with pressure ratio, past the point where losses start to bite
+const compIslandEff=(flowFrac,pr)=>clamp(
+  ISLAND_PEAK-0.22*Math.pow((clamp(flowFrac,0,2)-ISLAND_FLOW)/ISLAND_WF,2)
+             -0.10*Math.pow(Math.max(0,pr-2.2)/ISLAND_WP,2),0.35,ISLAND_PEAK);
 const TURBO_PR_REF=2.0;   // frames are characterised at 1.0 bar of boost
 // How strongly the spool point follows shaft speed. Calibrated (not guessed) so a small frame
 // keeps its early-spooling character at low boost and clearly gives it up at high boost.
@@ -2053,11 +2060,18 @@ function buildEngine(){
   engine.turboFlow=kgs*132.28;                            // kg/s → lb/min
   engine.turboCap=compChokeFlow(tb.exd)*cfg.flow;         // derived from the wheel, not tabulated
   engine.turboLoad=engine.intake==='turbo'?engine.turboFlow/engine.turboCap:0;   // 1.0 = at rating
-  // Compressor efficiency. Best on the island near the reference pressure ratio, falling as PR
-  // climbs and falling hard once the engine asks for more air than the frame is rated to move —
-  // which is what makes over-boosting a small frame a bad idea rather than a free lunch.
-  engine.compEff=engine.intake==='na'?1:clamp(
-    0.78-0.055*Math.max(0,PR-1.8)-0.30*Math.max(0,engine.turboLoad-1),0.42,0.78);
+  // Compressor efficiency, as a position on the frame's own map rather than a formula in PR.
+  // A compressor has an efficiency ISLAND: it peaks near a particular fraction of its choke flow
+  // and falls away in every direction — toward surge if you starve it, toward choke if you shove
+  // too much through, and with pressure ratio because the losses grow with the work done. Peak
+  // efficiency near 62% of choke flow and ~0.78 at the island centre are standard for an
+  // automotive centrifugal wheel, not fitted to these engines.
+  //
+  // This is what makes over-flowing a small frame a real penalty rather than a free lunch: past
+  // choke the wheel cannot pass more air however fast it spins, and the efficiency it does have
+  // collapses, so what does get through arrives hot. That heat then costs density through effIAT
+  // and knock margin on top — the punishment is paid in physics rather than by a `choke` constant.
+  engine.compEff=engine.intake==='na'?1:compIslandEff(engine.turboLoad,PR);
   // ---- Spool point and rate, both priced off pressure ratio ----
   // A compressor makes pressure by spinning, and shaft speed has to be bought with exhaust
   // energy. Turbine speed for a given pressure ratio goes like √(PR^0.283 − 1), so asking a
@@ -2071,7 +2085,10 @@ function buildEngine(){
   engine.spool50=tb.spool50*cfg.spool*als*prMul*engine.redline;
   engine.spoolWidth=tb.width*cfg.width*engine.redline;
   // Past its rated flow the compressor runs out of map and the top end chokes off in earnest.
-  engine.turboChoke=tb.choke*cfg.choke+0.32*Math.max(0,engine.turboLoad-1);
+  engine.turboChoke=tb.choke*cfg.choke+0.32*Math.max(0,engine.turboLoad-1);   // STILL FITTED: boost taper
+  // The hard airflow ceiling this frame can pass, in kg/s. Derived from the same inducer choke as
+  // the flow rating, so the rating and the limit cannot disagree.
+  engine.chokeFlow_kgs=engine.intake==='turbo'?compChokeFlow(tb.exd)*cfg.flow/132.28:0;
   engine.spoolK=tb.k*cfg.k*alsK*(engine.intake==='turbo'?(1-engine.icLag)/prMul:1);
   engine.nitrousBar=NITROUS_BAR[engine.nitrous]||0;
   state.boostActual=0;state.nitrousActive=false;state.nitrousCharge=1.0;   // fresh tanks
@@ -2403,8 +2420,23 @@ function computeVE(rpm,map){
     engine.boostNow=map;
     ve*=1-residualLoss(1+backPressureBar(rpm,Tex),Math.max(0.3,map),engine.compression);
   }
-  if(engine.intake==='turbo'&&rpm>peak)                                 // small turbo chokes up top
+  // TWO separate things make a turbo fall off up top, and only one of them is derived yet.
+  //   1. CHOKE — the compressor physically cannot pass more air past the inducer's sonic limit.
+  //      Derived below from the same inducer area as the flow rating, so the rating and the limit
+  //      cannot disagree.
+  //   2. BOOST TAPER — the compressor running out of shaft speed as the wastegate closes, which is
+  //      what rolls off a turbo that is NOT flow-limited. That needs the shaft power balance, which
+  //      is the remaining piece of conversion 4.
+  // `turboChoke` stays for (2) only, and is now labelled as the stand-in it is. Removing it before
+  // its replacement existed put the 2JZ back on the rev limiter, because nothing was left to roll
+  // off a frame that never actually chokes.
+  if(engine.intake==='turbo'&&rpm>peak)
     ve*=1-engine.turboChoke*clamp((rpm-peak)/(engine.redline-peak),0,1);
+  if(engine.chokeFlow_kgs>0){
+    const rho=map*101325/(287*(effIAT(map)+273.15));
+    const demand=(engine.displacement_L/1000)*ve*(rpm/120)*rho;
+    if(demand>engine.chokeFlow_kgs)ve*=engine.chokeFlow_kgs/demand;
+  }
   // Induction system + air filter: restriction/flow weighted by airflow demand (rpm).
   const breathe=clamp(rpm/engine.redline,0,1);
   ve*=1+engine.inductionFlowTop*breathe+engine.inductionFlowLow*(1-breathe);

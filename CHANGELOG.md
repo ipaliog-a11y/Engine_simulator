@@ -20,6 +20,43 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 Working toward **v1.0 — every number derived, not fitted.**
 
+### Conversion 4 of 5 — turbo, part 2: the compressor efficiency island
+
+**Efficiency is a position on the map, not a formula in pressure ratio.** A compressor has an
+efficiency *island*: it peaks near 62% of choke flow and falls away in every direction — toward
+surge if you starve it, toward choke if you shove too much through, and with pressure ratio as the
+losses grow. The old form fell monotonically with PR by construction, which is not what a real map
+does. Calibration **3.20% → 3.19%**.
+
+**This is what makes `test40`'s over-flow penalty land.** Asking a small frame for too much now
+collapses its efficiency, and the charge arrives hot — paid in physics rather than by a `choke`
+constant. That failure is gone.
+
+**And it corrected a test.** `test40` asserted compressor efficiency must fall monotonically with
+boost. It does not: the kei car it sweeps starts at **32% of the frame's choke flow**, deep on the
+surge side, so raising boost walks it *toward* the island centre before it walks off the far side —
+0.56 → 0.69 → 0.76 → 0.76 → 0.69. The assertion encoded the old fitted formula. Replaced with what
+must actually hold: efficiency ends below its peak, starts below its peak, and the charge gets
+hotter the whole way. Changed because it was wrong, not to go green.
+
+**Also derived: the choke ceiling.** A frame running out of breath up top is the compressor
+choking — past the inducer's sonic limit it cannot pass more air however hard it is driven. Now a
+hard airflow cap taken from the same inducer area as the flow rating, so the rating and the limit
+cannot disagree.
+
+**One thing tried and put back.** Removing `turboChoke` at the same time looked right — it is the
+symptom the choke ceiling explains — but it put the 2JZ back on the rev limiter, because choke only
+bites on a frame that actually chokes. What rolls off a turbo that *never* chokes is **boost taper**,
+the compressor running out of shaft speed as the wastegate closes, and that needs the shaft power
+balance still to come. `turboChoke` stays for that one job and is now labelled as the stand-in it is.
+The lesson is the ordering: do not remove a fitted term until the mechanism replacing it exists.
+
+**Still failing:** `test40`'s last assertion, that a small frame should be quicker off the line at
+low boost. It spools at 1711 rpm against the large frame's 3554 and is still slower to 100, because
+the acceleration solver uses **steady boost per rpm and models no transient at all** — the README
+has listed that as a known limit from the start. It is the shaft equation of motion, and it is the
+next piece.
+
 ### Conversion 4 of 5 — turbo, part 1: the turbine as a nozzle
 
 The first piece of the turbo conversion, and the one that unlocks the rest. Chosen first because it
