@@ -3,9 +3,13 @@
 All notable changes to Pixel Engine Sim.
 
 Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
-Versions are `MAJOR.MINOR`, and every commit carries a unique **build number** — the repository's
-commit count, stamped into the app by `tools/stamp.mjs` and verified by `--check`. So `v0.6 build 47`
-identifies exactly one commit, and any checkout can prove its own stamp.
+Versions are `MAJOR.MINOR`, and every commit carries a unique **build number** — a counter in the
+file that only ever goes up, bumped by `tools/stamp.mjs` and enforced by `--check`.
+
+It was originally the repository's commit count, which broke on the first squash-merge: three
+stamped commits collapse into one, so `main`'s count came out *below* the number already written
+into the file and `--check` failed on a repository that was perfectly correct. A count that can
+shrink cannot carry a number that must never repeat.
 
 This file starts at v0.6. Entries before it were reconstructed from the merged pull requests, so
 they are accurate about *what* shipped but not about the day it shipped.

@@ -1,4 +1,4 @@
-# PIXEL ENGINE SIM v0.6 build 54
+# PIXEL ENGINE SIM v0.6 build 55
 
 **A lightweight, 8-bit style internal combustion engine *designer* & simulator** inspired by *Automation*.
 
@@ -581,12 +581,13 @@ and no dependencies, works offline, and is a single artefact to share or archive
 modules would cost all of that — ES modules are blocked from `file://` — so the seam is marked
 inside the file rather than cut. Worth revisiting past ~600 KB.
 
-**Versioning.** `MAJOR.MINOR` plus a unique build number per commit, which is simply the repository's
-commit count:
+**Versioning.** `MAJOR.MINOR` plus a unique build number per commit — a counter in the file that
+only ever increases, so it survives squash-merging (a commit *count* does not: squashing three
+commits into one makes it go backwards):
 
 ```sh
-node tools/stamp.mjs            # write the next build number into index.html and README
-node tools/stamp.mjs --check    # verify a committed stamp matches its own history
+node tools/stamp.mjs            # bump the build number in index.html and README
+node tools/stamp.mjs --check    # verify it is consistent and ahead of origin/main
 ```
 
 ## Roadmap / Future Expansion
