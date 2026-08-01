@@ -188,7 +188,7 @@ table.fuelmap td.live{box-shadow:inset 0 0 0 2px #fff;font-weight:bold}
 <body>
 <div class="container">
 <header>
-<h1>PIXEL ENGINE SIM v0.6 build 54</h1>
+<h1>PIXEL ENGINE SIM v0.6 build 56</h1>
 <div class="subtitle" id="subtitle">ENGINE DESIGNER • BUILD IT, THEN DRIVE IT</div>
 </header>
 <div class="main">
@@ -638,6 +638,7 @@ experiment freely, then back on for consequences.</div>
 
 <div class="design-section">Wheels &amp; Tyres</div>
 <div class="design-grid">
+<div class="field"><label for="vhRating">TYRE SPEED RATING</label><select id="vhRating"><option value="T">T — 190 km/h</option><option value="H">H — 210</option><option value="V">V — 240</option><option value="W">W — 270</option><option value="Y">Y — 300</option><option value="YY">(Y) — 340+</option></select></div>
 <div class="field"><label for="vhTire">TYRE COMPOUND</label><select id="vhTire"><option value="eco">ECO/TOURING</option><option value="street">STREET</option><option value="sport">SPORT</option><option value="semi">SEMI-SLICK</option><option value="slick">RACE SLICK</option><option value="drag">DRAG RADIAL</option></select></div>
 <div class="field"><label for="vhWheel">WHEEL DIA (in)</label><input type="number" id="vhWheel" min="13" max="22" step="1" value="18"></div>
 <div class="field"><label for="vhTireW">TYRE WIDTH (mm)</label><input type="number" id="vhTireW" min="135" max="355" step="5" value="235"></div>
@@ -1297,14 +1298,42 @@ const CHASSIS={
   suv:      {label:'PERFORMANCE SUV',   mass:1950,area:2.95,cd:0.36,wb:2.95,cg:0.66,fWt:0.54,grip:0.96,drive:'awd',aero:0.4,cost:16000,
              fit:{tire:'sport',tw:275,ta:45,wheel:20,brake:'big',    rotor:350,susp:'sport',   aF:'none',    aR:'none',aFl:'none',     weight:'none',  gears:8,gearing:48,gearbox:'auto',diff:'visc'}}
 };
-// Tyre compound: mu = peak grip coefficient (dry), crr = rolling resistance, cost.
+// ================================================================================================
+// PHYSICS CORE — TYRE
+// ------------------------------------------------------------------------------------------------
+// Rolling resistance is not a constant. Hysteresis in a rolling tyre grows with how fast the
+// carcass is deformed, so Crr climbs roughly with v². Michelin passenger-tyre data: about 0.010 at
+// 80 km/h, 0.013 at 160, 0.016 at 200 — a 60% increase across the range a fast car actually uses,
+// which the old fixed Crr simply ignored. Catalogue Crr below is the value quoted at 80 km/h.
+const CRR_VREF=80/3.6;
+const CRR_BETA=(0.016/0.010-1)/(Math.pow(200/3.6,2)-CRR_VREF*CRR_VREF);   // ≈2.31e-4 per (m/s)²
+const crrAt=(crr0,v)=>crr0*(1+CRR_BETA*(v*v-CRR_VREF*CRR_VREF));
+// Speed rating is the carcass limit: above it a tyre builds heat faster than it sheds it and a
+// standing wave forms in the tread. The failure is delamination, not a gentle power cut.
+//
+// It is deliberately NOT derived here. Rating comes from the belt package and materials, and the
+// obvious geometric proxy — sidewall height — gets it badly wrong: it rates a McLaren F1's tall
+// 315/45R17 at 170 km/h when the real tyre is good for 390. So it is what it is in real life, a
+// spec you choose when you buy the tyre.
+//
+// Exceeding it does NOT silently cap top speed. Four of the reference cars stop short of their
+// drag-limited speed because of a manufacturer GOVERNOR, and capping them with a tyre rating would
+// produce the right number through the wrong mechanism. The model says so instead, and wears the
+// tyre out.
+const SPEED_RATING={
+  T:{kmh:190,label:'T (190)'},H:{kmh:210,label:'H (210)'},V:{kmh:240,label:'V (240)'},
+  W:{kmh:270,label:'W (270)'},Y:{kmh:300,label:'Y (300)'},YY:{kmh:340,label:'(Y) 340+'}
+};
+// ================================================================================================
+// Tyre compound: mu = peak grip coefficient (dry), crr = rolling resistance at 80 km/h, cost,
+// rating = the speed rating such a tyre is typically sold in (an editable default, not a law).
 const TIRE_TYPE={
-  eco:     {label:'ECO/TOURING', mu:0.90,crr:0.010,cost:400},
-  street:  {label:'STREET',      mu:1.00,crr:0.012,cost:600},
-  sport:   {label:'SPORT',       mu:1.15,crr:0.013,cost:1000},
-  semi:    {label:'SEMI-SLICK',  mu:1.35,crr:0.014,cost:1600},
-  slick:   {label:'RACE SLICK',  mu:1.55,crr:0.016,cost:2400},
-  drag:    {label:'DRAG RADIAL', mu:1.70,crr:0.018,cost:2000}
+  eco:     {label:'ECO/TOURING', mu:0.90,crr:0.010,cost:400, rating:'H'},
+  street:  {label:'STREET',      mu:1.00,crr:0.012,cost:600, rating:'V'},
+  sport:   {label:'SPORT',       mu:1.15,crr:0.013,cost:1000,rating:'Y'},
+  semi:    {label:'SEMI-SLICK',  mu:1.35,crr:0.014,cost:1600,rating:'YY'},
+  slick:   {label:'RACE SLICK',  mu:1.55,crr:0.016,cost:2400,rating:'YY'},
+  drag:    {label:'DRAG RADIAL', mu:1.70,crr:0.018,cost:2000,rating:'T'}
 };
 // Aero elements — each adds a downforce coefficient (Cl·A, m²) and a drag penalty (ΔCd). The
 // floor/diffuser is the efficient one (lots of downforce, little drag). Scaled by chassis.aero.
@@ -2453,6 +2482,7 @@ function applyChassisFit(key){
   g('vhDrive').value=ch.drive;g('vhGearbox').value=f.gearbox;g('vhDiff').value=f.diff;
   g('vhGears').value=f.gears;g('vhGearing').value=f.gearing;
   g('vhTire').value=f.tire;g('vhTireW').value=f.tw;g('vhTireA').value=f.ta;g('vhWheel').value=f.wheel;
+  g('vhRating').value=(TIRE_TYPE[f.tire]||TIRE_TYPE.sport).rating;
   g('vhAeroF').value=f.aF;g('vhAeroR').value=f.aR;g('vhAeroFl').value=f.aFl;g('vhWeight').value=f.weight;
   g('vhBrake').value=f.brake;g('vhRotor').value=f.rotor;g('vhSusp').value=f.susp;
   updateGearingLabel();
@@ -2501,6 +2531,8 @@ function buildVehicle(){
   const susp=SUSPENSION[vehicle.suspension]||SUSPENSION.sport;
   vehicle.mu=tt.mu*ch.grip*susp.grip*(1+0.25*widthBonus);
   vehicle.crr=tt.crr;
+  vehicle.speedRating=document.getElementById('vhRating').value||tt.rating;
+  vehicle.ratedKmh=(SPEED_RATING[vehicle.speedRating]||SPEED_RATING.Y).kmh;
   // Brakes: peak commanded deceleration (m/s²) and a heat-energy budget before fade sets in.
   const bt=BRAKE_TYPE[vehicle.brakeType]||BRAKE_TYPE.slotted, rotorF=0.85+clamp((vehicle.rotor-320)/100,0,1)*0.30;
   vehicle.brakeDecelCap=bt.cap*rotorF*G;
@@ -2621,7 +2653,7 @@ function simulateAccel(){
     // most of it, a spool all of it. This only bites while the car is traction-limited.
     const tqFrac=(driveF*r)/axleTqMax;                       // how hard the axle is being driven
     const F=Math.min(driveF,vehicle.mu*diffTractionAt(df,0,vehicle.cg,tqFrac)*Math.max(0,drivenN));
-    const drag=0.5*AIR_RHO*vehicle.cdA*v*v,roll=v>0.2?vehicle.crr*m*G:0;
+    const drag=0.5*AIR_RHO*vehicle.cdA*v*v,roll=v>0.2?crrAt(vehicle.crr,v)*m*G:0;
     a=(F-drag-roll)/m;v=Math.max(0,v+a*dt);x+=v*dt;t+=dt;
     if(!M.t100&&v>=V100)M.t100=t;
     if(!M.q400&&x>=400)M.q400={t,v};
@@ -2637,13 +2669,13 @@ function simulateAccel(){
   // top gear from walking pace — it gets there through the lower gears), and a peaky or
   // over-geared car genuinely reaches its top speed one gear down, on the cam, rather than
   // bogging in top.
-  const rollF=vehicle.crr*m*G;let vTop=0;
+  let vTop=0;
   for(const gr of ratios){
     const tot=gr*fd,vLim=rl*TWO_PI*r/60/tot;
     for(let vv=Math.min(vLim,160);vv>vTop;vv-=0.5){
       const rpm=clamp(vv*tot/r*60/TWO_PI,idle,rl);
       const F=tqAt(rpm)*tot*eff/r,drag=0.5*AIR_RHO*vehicle.cdA*vv*vv;
-      if(F>drag+rollF){vTop=vv;break;}
+      if(F>drag+crrAt(vehicle.crr,vv)*m*G){vTop=vv;break;}
     }
   }
   const vRedline=rl*TWO_PI*r/60/(ratios[ratios.length-1]*fd);
@@ -3152,7 +3184,7 @@ function simulateLap(key){
   const kvLoad=(i,vv)=>clamp(m*vv*vv*p[i].kv,-KVCAP,KVCAP);
   const normalLoad=(i,vv)=>Math.max(m*G*0.15,m*G*p[i].cosT+down(vv)+kvLoad(i,vv));
   const drag=v=>0.5*AIR_RHO*vehicle.cdA*v*v;
-  const rollF=vehicle.crr*m*G;
+  const rollF=v=>crrAt(vehicle.crr,v)*m*G;
   // Best gear at a road speed = the one giving the most wheel torque without over-revving.
   // Every gear that would over-rev is skipped — INCLUDING the top one. That last part is the rev
   // limiter, and leaving it out is not a small error: exempting top gear (so the car could keep
@@ -3225,7 +3257,7 @@ function simulateLap(key){
     const powerA=bg.F/m;
     accKind[i]=powerA<gripA?'power':'traction';latUse[i]=u;
     // Gravity along the slope again: a climb eats acceleration, a descent adds to it.
-    const aAcc=Math.min(powerA,gripA)-(drag(v[i])+rollF*p[i].cosT)/m-G*p[i].sinT;
+    const aAcc=Math.min(powerA,gripA)-(drag(v[i])+rollF(v[i])*p[i].cosT)/m-G*p[i].sinT;
     // aAcc may be NEGATIVE — a climb steep enough, or drag at terminal speed, genuinely slows the
     // car. Clamping it at zero (as this did) let the car hold speed up any gradient, which is why
     // a 43% climb used to cost nothing. Floored at 1 m/s so the profile can't collapse to zero.
@@ -3402,6 +3434,16 @@ function renderPerformance(){
     cell(tr('POWER/WT'),p.ptw.toFixed(0),'hp/tonne')+
     cell(tr('100–0 BRAKING'),b100,'')+
     cell(tr('0–200–0'),zz,zzU);
+  // A car that can out-run its own tyres is not a fast car, it is a tyre failure waiting to happen.
+  // Deliberately NOT a silent speed cap: the reference cars that stop short of their drag-limited
+  // speed do so because of a manufacturer governor, and capping them here would produce the right
+  // number by the wrong mechanism.
+  if(vehicle.ratedKmh&&p.topSpeed>vehicle.ratedKmh){
+    grid.innerHTML+='<div class="perf-cell" style="grid-column:1/-1;border-color:#ff6b6b">'+
+      '<span class="k" style="color:#ff6b6b">'+tr('TYRE SPEED RATING EXCEEDED')+'</span><div class="v" style="font-size:11px;color:#ff6b6b">'+
+      Math.round(p.topSpeed)+' km/h vs '+(SPEED_RATING[vehicle.speedRating]||{}).label+'</div>'+
+      '<span class="u">'+tr('the carcass overheats and the tread can delaminate — fit a higher rating')+'</span></div>';
+  }
   if(note)note.textContent=tr('Best-power run through the gearbox with a traction-limited launch, then braking (tyre- and brake-limited, with fade).');
 }
 

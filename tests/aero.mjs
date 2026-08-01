@@ -57,7 +57,10 @@ const ref = await page.evaluate(() => {
       for (let i = 0; i < 500; i++) {
         const P = hp * 745.7 * 0.90;
         const F = P / v;
-        const need = 0.5*1.2*cdA*v*v + 0.013*kg*9.81;
+        // same speed-dependent Crr law the sim uses, so this stays an independent check of the
+        // ARITHMETIC rather than accidentally testing a different physical model
+        const vref = 80/3.6, beta = (0.016/0.010 - 1)/(Math.pow(200/3.6,2) - vref*vref);
+        const need = 0.5*1.2*cdA*v*v + 0.013*(1 + beta*(v*v - vref*vref))*kg*9.81;
         v += (F - need) / (kg) * 0.5;
         if (v < 5) v = 5;
       }
