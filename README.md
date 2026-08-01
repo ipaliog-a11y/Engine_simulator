@@ -1,4 +1,4 @@
-# PIXEL ENGINE SIM v0.6 build 59
+# PIXEL ENGINE SIM v0.6 build 60
 
 **A lightweight, 8-bit style internal combustion engine *designer* & simulator** inspired by *Automation*.
 
@@ -715,6 +715,84 @@ Planned order, each validated against `tests/test41.mjs`, `tests/aero.mjs` and `
    game: `EXHAUST.topGain` and `CAM.scav` really are two knobs for one event, and deriving either
    alone would have left the other double-counting it.
 4. **Turbo** — compressor and turbine maps instead of the lumped `{spool, choke, k, flow}` table.
+   **Investigated, not yet built** — working model at `tests/proto/turbo.mjs`. 22 fitted numbers go:
+   `TURBO{spool50, width, choke, k, flow}` × 3 frames, `TURBO_CONFIG{...}` × 4, `TURBO_PR_REF` and
+   `SPOOL_PR_EXP`.
+
+   #### What the investigation established
+
+   **A frame size is a wheel diameter.** "Small / medium / large with a flow rating" is a
+   description of a compressor wheel, and real turbos are *named* by it — a GT2871R has a 71 mm
+   exducer. Everything follows from that diameter:
+
+   | quantity | derived from | check against real frames |
+   |---|---|---|
+   | flow rating | inducer choking, `ṁ = blockage·ρ·A·c` | +9% to +33% vs quoted, and the sign is right: makers quote usable flow at the island edge, not hard choke |
+   | boost | Euler, `PR = (1 + η·σ·U²/(cp·T01))^(γ/(γ−1))` | GT2871R ~2 bar near its speed limit ✓ |
+   | max shaft speed | the wheel's own tip-speed limit, ~520 m/s for cast aluminium | 140k for a 71 mm wheel ✓ |
+   | wheel inertia | mass × radius², so `D⁵` in a similar family | a 108 mm frame is 8× a 71 mm one |
+   | spool | `J·ω·dω/dt = P_turbine − P_compressor` | see below |
+
+   **Spool needs no spool constant.** Solving the shaft balance on a 2.0 L at a 1.0 bar wastegate
+   reproduces the whole familiar ordering: the small frame is wastegating from 1500 rpm and then
+   *falls off* to 0.88 bar by 6500 as it runs out of wheel; the 71 mm reaches full boost by 3000, the
+   82 mm by 4000, the 108 mm not until 6500. The small frame's high-rpm drop-off is precisely what
+   `TURBO.choke` was standing in for, and it emerges rather than being asserted.
+
+   **`test40`'s over-flow penalty lands on its own.** Asking a 49 mm frame for more and more boost on
+   a 2.0 L at 5000 rpm: at 1.0 bar it runs 84% of choke flow at 58% efficiency; past that it
+   saturates at 1.41 bar however high the wastegate is set, running 102% of choke at **39%
+   efficiency** and heating the charge by **+230 K**. No penalty term required.
+
+   #### The error that mattered most
+
+   The first transient model gave "no spool" for every frame at every rpm — net shaft power stuck at
+   0.01 kW. The cause was a modelling error, not a numerical one: **the turbine's expansion ratio was
+   set equal to the compressor's pressure ratio.** That makes spool impossible by construction — a
+   slow shaft makes no boost, so it gets no expansion, so it gets no power, so it stays slow, and a
+   turbo could never start from rest.
+
+   A turbine is a **nozzle of fixed effective area**. Exhaust cannot leave the manifold except
+   through it, so manifold pressure rises until the flow fits: `ṁ = A_eff·f(PR_t)`. Expansion ratio
+   comes from *mass flow and area*, not from what the compressor is doing, and even a stationary
+   shaft has full manifold pressure available to start it turning. That is also exactly what a
+   turbo's **A/R** spec means, and why people agonise over it: a small A/R is a small nozzle, so more
+   expansion, faster spool, more back-pressure up top. It has been buried inside `spool50` all along.
+
+   With the turbine as a nozzle, time to 90% boost on a 2.0 L comes out 61 ms / 23 ms / 14 ms at
+   3000–5000 rpm for the small frame (real: 200–400 ms, so still optimistic), 635/531/760 ms for the
+   71 mm (real 0.3–0.8 s ✓), 683/597 ms for the 82 mm above 4000, and never for the 108 mm — which is
+   correct, it is a 4-litre-plus frame.
+
+   #### A defect this found in conversion 3
+
+   Real boosted engines run **0.5–1.5 bar of exhaust manifold back-pressure, dominated by the
+   turbine**. Conversion 3 models only the pipe, so every turbo engine in the app is currently
+   missing most of its back-pressure — and therefore most of its residual-gas VE loss. The derived
+   turbine nozzle supplies exactly that number (0.29 bar for the 71 mm frame at 5000 rpm against
+   0.07 bar of pipe), so conversion 4 should feed conversion 3 rather than sit beside it.
+
+   #### Known gaps before building
+
+   - **Peak PR comes out identical (4.44) for every frame**, because one tip-speed limit sets them
+     all. Real frames spread 2.6–3.8: bigger wheels use stronger alloys and more backsweep. That is a
+     materials fact the model does not carry.
+   - The small frame's transient is **~4× too fast**. Bearing drag and heat soak into the housing are
+     both missing, and both slow a real turbo down.
+   - Turbo *configurations* (twin / sequential / compound) are not yet derived — twin is two smaller
+     wheels, sequential is a staged handover, compound is series stages. Each is expressible as
+     geometry rather than as a multiplier, but none of it is prototyped.
+
+   #### Two numerical traps hit on the way, both recorded because they looked plausible
+
+   Relaxed fixed-point iteration on the boost/flow feedback **does not converge** and fails quietly —
+   `balance` switches discontinuously between stalled, balanced and speed-limited, so the iterate
+   orbits and whatever value it stopped on gets returned. It produced a table where asking for
+   1.5 bar made 0.91, asking for 2.0 made 0.62 and asking for 2.5 made 2.27. Replaced with a
+   bracketed bisection on the residual. Separately, an early spool table read a suspiciously uniform
+   0.34 bar for three different frames because they were all pinned on the solver's `lo = 5000`
+   floor — the same class of artifact as patching a script-scope `const` or reading a value off a
+   clamp. A frame that cannot balance above the bracket is *not spooled*, and now says so.
 5. **Combustion** — a real cycle with heat release, replacing `IMEP_K` and friends. Biggest prize,
    biggest risk, so it goes last.
 
