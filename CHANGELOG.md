@@ -20,6 +20,50 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 Working toward **v1.0 — every number derived, not fitted.**
 
+### Conversion 4 of 5 — turbo, part 1: the turbine as a nozzle
+
+The first piece of the turbo conversion, and the one that unlocks the rest. Chosen first because it
+also repays conversion 3.
+
+**A frame is a wheel.** Solving the old fitted flow ratings (32 / 55 / 82 lb/min) for the exducer
+diameter that would produce them gives **54, 71 and 86 mm** — standard real wheel sizes (GT2554R,
+GT2871R, GT3586R). Those fitted numbers were consistent with real hardware all along, so `flow` is
+now derived from the wheel and lands on the old values to within 1%. `TURBO` gains `exd` and `ar`,
+the turbine housing A/R that people agonise over when choosing a turbo and that has been buried
+inside the lumped `spool50` until now.
+
+**A turbine is a nozzle of fixed effective area.** Exhaust cannot leave the manifold except through
+it, so manifold pressure rises until the flow fits: `ṁ = A·f(PR)`. Throat area comes straight from
+the A/R definition — volute throat over the radius to its centroid, so `A = (A/R)·R_wheel`, with no
+fudge factor. Getting this wrong makes spool impossible by construction, which is how the
+investigation found it: setting the turbine's expansion equal to the *compressor's* pressure ratio
+means no boost gives no expansion gives no power gives no boost, and a turbo could never start.
+
+**And a wastegate, because without one the model is wrong by 3×.** Routing every gram of exhaust
+through a fixed throat gave 3.5–4.5 bar of manifold pressure on the presets against a real 0.5–1.5.
+Holding boost is the gate's whole job, and the steady state is a power balance: the turbine only has
+to supply what the compressor draws, and the surplus goes around it. Solving `P_turbine(PR) =
+P_compressor` puts the presets at **0.4–1.65 bar**, where real boosted engines measure.
+
+**Residual gas is a pressure RATIO, not a back-pressure.** What decides how much burnt gas stays in
+the clearance volume is `p_exhaust/p_intake`, not exhaust against atmosphere. The distinction does
+not matter on an NA engine and matters enormously on a boosted one — the old absolute form would
+have charged a turbo running 2 bar intake against 3 bar exhaust a **38% VE loss**. This is the
+conversion-3 defect the investigation predicted: every turbo engine had been missing most of its
+back-pressure, and the fix needed both halves.
+
+**Result: real-car acceleration RMS 3.38% → 3.20%**, the first conversion to *improve* the
+calibration rather than cost it. Top speed unchanged at 6.7%.
+
+**One piece of authored content had to move.** The Grand Prix Pace challenge target was written when
+turbo engines carried no manifold back-pressure; its reference build now clears 60.0 s by only
+0.29 s, inside `test36`'s 0.5 s margin requirement. Target moved to 60.6 s. Challenge targets are
+content and have to track the physics, which is exactly what that test exists to catch.
+
+**Still to come in this conversion:** the compressor map proper (Euler tip-speed relation, the
+efficiency island, choke), and the shaft equation of motion for real transient spool. `test40` stays
+failing until those land — its over-flow penalty needs the efficiency island.
+
 ### Conversion 3 of 5 — gas dynamics, round 2
 
 Two corrections, both omissions rather than tuning, and one experiment rejected on measurement.

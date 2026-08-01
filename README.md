@@ -1,4 +1,4 @@
-# PIXEL ENGINE SIM v0.6 build 60
+# PIXEL ENGINE SIM v0.6 build 61
 
 **A lightweight, 8-bit style internal combustion engine *designer* & simulator** inspired by *Automation*.
 
@@ -715,7 +715,10 @@ Planned order, each validated against `tests/test41.mjs`, `tests/aero.mjs` and `
    game: `EXHAUST.topGain` and `CAM.scav` really are two knobs for one event, and deriving either
    alone would have left the other double-counting it.
 4. **Turbo** — compressor and turbine maps instead of the lumped `{spool, choke, k, flow}` table.
-   **Investigated, not yet built** — working model at `tests/proto/turbo.mjs`. 22 fitted numbers go:
+   ◐ **Part 1 shipped: the turbine as a nozzle** (frames are wheels, A/R is real geometry, the
+   wastegate closes the power balance, residual gas becomes a pressure ratio — calibration 3.38% →
+   **3.20%**, the first conversion to improve it). Compressor map and shaft dynamics still to come.
+   Working model at `tests/proto/turbo.mjs`. 22 fitted numbers go:
    `TURBO{spool50, width, choke, k, flow}` × 3 frames, `TURBO_CONFIG{...}` × 4, `TURBO_PR_REF` and
    `SPOOL_PR_EXP`.
 
