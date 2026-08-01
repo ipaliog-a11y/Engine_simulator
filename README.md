@@ -1,4 +1,4 @@
-# PIXEL ENGINE SIM v0.6 build 58
+# PIXEL ENGINE SIM v0.6 build 59
 
 **A lightweight, 8-bit style internal combustion engine *designer* & simulator** inspired by *Automation*.
 
@@ -653,12 +653,18 @@ documented in the GUIDE at the point where it matters:
   turbo's peak position is boost taper as the compressor runs out of map — turbo-map physics, which
   is conversion 4. `tests/test46.mjs` holds this at a budget of 1 and additionally fails outright if
   any NA preset ever joins it.
-- **Two behavioural tests disagree with the derived curve shape and are left failing.** `test28`
-  asserts a torque converter should hurt a peaky engine; `test40` asserts an over-flowed turbo frame
-  should be penalised on a lap. Both were written against the old fitted powerband, which was made
-  peakier by `CAM.peakShift` and `EXHAUST.topGain` than the derived wave action turns out to be.
-  They are honest disagreements rather than crashes, and they are not being weakened to go green —
-  the second round of gas dynamics has to either satisfy them or show they were wrong.
+- **Two behavioural tests fail.** `test40` asserts an over-flowed turbo frame should be penalised on
+  a lap — a small frame 159% over its rated flow at 2.5 bar currently is not, which is turbo-map
+  physics and therefore conversion 4. `test38` asserts the late-apex racing line never costs time;
+  on the *fast* circuit it now costs 0.24 s while gaining 0.39–0.99 s on the other three. That is a
+  finding about the racing line rather than about the engine: the late-apex bias is not universally
+  beneficial and wants a per-corner decision instead of a blanket shift.
+- **`vePeakRpm` is still asserted, and removing it has now failed twice.** Deriving it from Taylor's
+  Mach knee put every engine's peak at 0.92–0.97 of redline (54% RMS). Replacing the bell entirely
+  with a flat port-flow envelope gave 10.89% RMS. The second attempt is the more informative one: it
+  exposed two missing mechanisms — low-rpm charge short-circuiting through a big overlap, and
+  whatever caps peak VE below the 1.2 clamp that the ITB screamer now pins against above 7500 rpm.
+  The no-bell thesis still looks right, but those two have to exist first.
 - **Rotational inertia is not charged during acceleration.** The engine, flywheel, gearbox and
   wheels all have to be spun up as well as the car pushed along, and reflected through first gear
   that is worth roughly +13 % of effective mass. `simulateAccel` accelerates the translating mass
