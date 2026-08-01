@@ -20,7 +20,49 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 Working toward **v1.0 — every number derived, not fitted.**
 
-### Conversion 2 of 4 — tyre  *(partly done)*
+### Investigation — the slip-ratio model, rotational inertia, and a defect in the shipped physics
+
+Not a release entry: nothing here shipped. It is recorded because the experiment **found a real
+defect in the model that is on `main`**, and because the failures are part of the finding.
+
+Wiring up the slip-ratio curve — `μ = μ_peak·sin(C·atan(B·s))` with a wheel-speed state variable and
+`I_eff = I_wheels + I_engine·ratio²` — moved the real-car 0–100 calibration from **2.66 % to 7.79 %
+RMS**, past the suite's 5 % threshold, with every car coming out slow.
+
+Isolating it: inertia alone costs **16.27 %**; inertia plus slip costs **7.78 %**; slip with engine
+inertia set to literally zero still costs **5.37 %**. So the regression is about half slip dynamics
+(≈2.7 pp) and half engine inertia (≈2.4 pp) — an early reading of "inertia dominates, the slip model
+is fine" was wrong and is corrected here.
+
+Three explanations were tested and all three are dead. **Driveline efficiency** would need 0.972 on
+an RWD manual against a real 0.88–0.93. **Engine inertia** would need 0.03 kg·m² against a real
+0.10–0.20. **Tyre grip** is backwards — cutting μ made it monotonically worse (7.22 → 9.08 → 14.10 %)
+because the cars are already too slow.
+
+What is left is the AWD WRX at **+5.9 %**, unmoved by a 15 % grip swing, which traction cannot
+explain. Reflected engine inertia in first gear is ≈21.6 kg·m² ≈ 190 kg of apparent mass on 1470 kg —
+**+13 % effective mass, ≈+5 % on 0–100.** The inertia term is right; **the shipped model has been
+giving every car a free ~6 % by never charging rotational inertia**, and the 2.66 % calibration was
+reached with that discount in place, against a hard grip clip that flatters the launch in the same
+direction. Two compensating errors reading as accuracy.
+
+Reverted rather than shipped. The fix is the **launch model** — the clutch as a torque-capacity limit
+rather than a kinematic rpm hold — after which slip and inertia go in together and the set is
+recalibrated once. Documented in full in the README, including two harness failures of the same kind
+(monkey-patching a script-scope `const`, which silently produced identical sweep rows and was briefly
+reported as a null result). **Rim material/weight** is deferred behind the same work.
+
+### Changed — the conversion plan
+
+Now **five** steps, not four. Exhaust is folded into a **gas dynamics** step rather than standing
+alone: `EXHAUST{topGain, lowLoss}` and `CAM{scav}` are separate fitted knobs for one physical
+effect — the pressure wave returning down the primary during overlap — so deriving either alone
+leaves the other double-counting it. That same step covers intake ram and wave tuning, and is what
+should finally retire `CAM{peakShift}` and roll off the two presets that still peak at the limiter.
+
+Order: valvetrain ✅ → tyre ◐ → **gas dynamics** → turbo maps → combustion cycle.
+
+### Conversion 2 of 5 — tyre  *(partly done)*
 
 Unlike the valvetrain, this mostly **adds physics that was missing** rather than replacing fitted
 coefficients — "identify the reason and add the functionality".
@@ -46,9 +88,10 @@ the real tyre is good for 390. Rating comes from the belt package and materials,
 does not represent, so it is an input rather than a bad derivation.
 
 **Still to do in this conversion:** the slip-ratio curve, replacing the hard `min(driveF, mu·N)` grip
-clip. It needs a wheel-speed state variable in the acceleration integrator, so it is its own step.
+clip. It was built, and it is **parked** — see the investigation above. It needs a wheel-speed state
+variable in the acceleration integrator, and it cannot land until the launch model is reworked.
 
-### Conversion 1 of 4 — valvetrain and port flow  *(done)*
+### Conversion 1 of 5 — valvetrain and port flow  *(done)*
 
 The head is now modelled from geometry and mechanics rather than assumed. New inputs: **valves per
 cylinder** (2/4/5), **valve material** (steel/titanium), **valve springs** (stock/performance/race).

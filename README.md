@@ -1,4 +1,4 @@
-# PIXEL ENGINE SIM v0.6 build 56
+# PIXEL ENGINE SIM v0.6 build 57
 
 **A lightweight, 8-bit style internal combustion engine *designer* & simulator** inspired by *Automation*.
 
@@ -455,6 +455,18 @@ Curve** tab remains a wide-open-throttle steady-state sweep for reading the full
   the lesser of tyre grip (μ·(weight + downforce)) and what the brakes can command (capacity by
   type/rotor size, fading as they absorb heat), with aero drag also slowing the car — so big
   brakes and sticky tyres shorten 100–0, while undersized steel brakes fade in the 0–200–0.
+- **Rolling resistance rises with speed.** Hysteresis losses grow with how fast the carcass is
+  deformed, so `Crr` climbs roughly with v² — checked against Michelin passenger-tyre data (0.010 at
+  80 km/h, 0.013 at 160, 0.016 at 200) rather than against this simulator's own outputs. A fixed
+  `Crr` understated resistance by ~60 % at the speeds a fast car actually reaches. It feeds the
+  acceleration run, the top-speed scan and the lap solver alike. Each compound also carries the
+  **speed rating** it is really sold in (a drag radial rates *below* a touring tyre), shown in the
+  VEHICLE panel and flagged when the build out-runs it — but deliberately not used as a hidden
+  top-speed cap, because several real cars stop short of their drag-limited speed for a reason
+  (a manufacturer governor) that a tyre rating would only imitate.
+- **Grip is still a hard clip, and rotational inertia is still free.** Tractive force is capped at
+  `μ·N` with no slip, and only the car's translating mass is accelerated. Both are known defects
+  with a measured cost — see the inertia investigation in the roadmap.
 - Racing line: nobody drives the centreline — using the full width straightens a corner and raises
   the speed you can carry. The line is solved by **minimising total curvature** within the track
   edges (projected gradient on Σ|second difference|², run on a coarse node set because the
@@ -571,7 +583,8 @@ philosophy).
 ├── assets/                        # Self-hosted font + PWA icons
 ├── docs/                          # README screenshots
 ├── tests/                         # Headless Playwright suite — see tests/README.md
-│   └── run.mjs                    #   node tests/run.mjs   (reports by exit code)
+│   ├── run.mjs                    #   node tests/run.mjs   (reports by exit code)
+│   └── proto/                     #   parked models, not run by the suite — see tests/proto/README.md
 ├── tools/stamp.mjs                # Stamps + verifies the build number
 └── .github/workflows/pages.yml    # Auto-deploy to GitHub Pages
 ```
@@ -634,11 +647,17 @@ documented in the GUIDE at the point where it matters:
 - **There is no engine braking above the limiter.** Past the rev limiter drive force is zero, but
   nothing pushes back, so a steep descent can carry a car a km/h or so beyond the speed its top
   gear allows. Real overrun would drag it back.
-- **Power peaks at the rev limiter on four presets** (2.0 ITB Screamer, 5.0 V8 Muscle, 6.2 S/C V8,
-  6.5 V12) — the breathing model's valve-float term only bites *above* the redline, so those
-  curves never roll off inside their own rev range. Real engines peak at 90–98 % of redline. The
-  visible consequence is that taller gearing always raises their top speed, with no over-gearing
-  penalty to trade against.
+- **Power peaks at the rev limiter on two presets** (2.0 ITB Screamer, 6.5 V12) — down from four
+  once the valvetrain was derived. Both are well-designed four-valve high-revvers that genuinely
+  are neither port-choked (Taylor Z = 0.54 and 0.47 at the limiter) nor float-limited (16124 and
+  14686 rpm), so nothing currently in the model has any reason to roll them off. What actually sets
+  their peak is intake wave tuning and charge trapping — the gas-dynamics conversion. `tests/test44.mjs`
+  holds this at a budget of 2 so it cannot silently grow.
+- **Rotational inertia is not charged during acceleration.** The engine, flywheel, gearbox and
+  wheels all have to be spun up as well as the car pushed along, and reflected through first gear
+  that is worth roughly +13 % of effective mass. `simulateAccel` accelerates the translating mass
+  only. Every car is therefore flattered by about 6 % on 0–100, and the 2.66 % calibration below was
+  reached with that gift in place — see *The inertia investigation* under the v1.0 plan.
 
 ### Next: v1.0 — every number derived, not fitted
 
@@ -664,14 +683,110 @@ Planned order, each validated against `tests/test41.mjs`, `tests/aero.mjs` and `
    balance. Presets peaking at the exact rev limiter went **4 → 2**, and the two that were fixed are
    both big-bore two-valve engines that now roll off for a stated reason. Calibration unchanged at
    2.66% RMS. The two that remain are four-valve high-revvers that are genuinely neither choked nor
-   float-limited — their peak is set by intake dynamics, which is step 2.
-2. **Tyre** — ✅ speed-dependent rolling resistance (top-speed RMS against real cars 9.3% → 6.5%)
-   and a tyre speed rating you choose, shown and flagged when exceeded but deliberately *not* used
-   to cap top speed. ⬜ Still to come: a slip-ratio curve in place of the hard grip clip, which
-   needs a wheel-speed state variable in the acceleration integrator.
-3. **Turbo** — compressor and turbine maps instead of the lumped `{spool, choke, k, flow}` table.
-4. **Combustion** — a real cycle with heat release, replacing `IMEP_K` and friends. Biggest prize,
+   float-limited — their peak is set by intake wave tuning, which is step 3.
+2. **Tyre** — ◐ *partly done.* ✅ Speed-dependent rolling resistance (top-speed RMS against real
+   cars 9.3% → 6.5%) and a tyre speed rating you choose, shown and flagged when exceeded but
+   deliberately *not* used to cap top speed. ⬜ **Parked:** the slip-ratio curve in place of the hard
+   `min(driveF, μ·N)` grip clip. It was built and it works; wiring it in exposed a *different*
+   missing physics — rotational inertia — and the two have to be fixed together. Written up below.
+3. **Gas dynamics** — intake ram and wave tuning, exhaust scavenging, back-pressure and valve
+   overlap, replacing `CAM{scav}` and `EXHAUST{topGain, lowLoss}` and eventually `CAM{peakShift}`.
+   Exhaust is folded in here rather than being its own step, deliberately: `EXHAUST.topGain` and
+   `CAM.scav` are two fitted knobs describing **one** physical effect — the pressure wave returning
+   down the primary during overlap. Deriving either alone would leave the other double-counting it.
+   This is also what sets the powerband *position*, so it is what should finally retire `peakShift`
+   and roll off the two remaining limiter-peaking presets. A first prototype has already failed
+   once; expect several rounds.
+4. **Turbo** — compressor and turbine maps instead of the lumped `{spool, choke, k, flow}` table.
+5. **Combustion** — a real cycle with heat release, replacing `IMEP_K` and friends. Biggest prize,
    biggest risk, so it goes last.
+
+#### The inertia investigation — what happened when the slip model was wired in
+
+This is recorded in full, failures included, because the *result* is a defect found in the shipped
+model and the *method* is the decision rule this whole rewrite runs on.
+
+**The model.** Slip ratio `s = (ωr − v)/v` becomes a state variable, and grip follows a Pacejka-lite
+curve `μ = μ_peak · sin(C · atan(B·s))` with `B = tan(π/2C)/s_opt` placing the peak exactly at the
+compound's `s_opt` and `C = 1.4` giving a full-slide plateau at 0.81 of peak (measured tyres: 0.75–0.85).
+The driven wheels get their own equation of motion, `I_eff · dω/dt = T_axle − F·r`, with
+`I_eff = I_wheels + I_engine · ratio²`. Prototyped standalone in `slip.mjs` first, because the slip
+dynamics are far stiffer than the vehicle dynamics: it converges at the app's existing `dt = 0.005 s`,
+and it makes short gearing genuinely cost time on a powerful car — which the hard clip could never do,
+since a clipped launch is identical at every final drive.
+
+**And it made the calibration worse.** Real-car 0–100 RMS went **2.66 % → 7.79 %**, past the suite's
+5 % threshold. Every car came out *slow*, mean bias **+5.7 %**.
+
+Under the rule stated above that is not automatically a rejection — a regression is allowed if it is
+explainable and traceable to something not yet modelled. So the point was to find out which.
+
+| experiment | RMS | mean bias | what it says |
+|---|---|---|---|
+| shipped model (hard clip, no rotational inertia) | 2.66 % | — | the baseline being defended |
+| slip curve + `I_eng` 0.15, wheels full | 7.78 % | +6.10 % | the regression |
+| slip curve + `I_eng` 0.15, wheel inertia ×0.65 | 7.22 % | +5.66 % | wheels are not the driver |
+| slip curve + `I_eng` **0.00** | 5.37 % | +4.34 % | slip alone still costs 2.7 pp |
+| hard clip + rotational inertia as effective mass | 16.27 % | — | inertia alone is far worse |
+
+That last pair is the useful one, and it corrected a conclusion I had drawn too early. Inertia
+*alone* costs 16.27 %, inertia *plus* slip costs 7.78 % — so slip is recovering about half of it, and
+it is tempting to call the slip model sound and blame inertia entirely. Setting `I_eng` to literally
+zero kills that: the slip model on its own still gives **5.37 %** against the baseline's 2.66 %. The
+regression splits roughly in half — **≈2.7 pp from the slip dynamics themselves, ≈2.4 pp from engine
+inertia**. Both are real, and neither excuses the other.
+
+**Three hypotheses for the residual, all eliminated.**
+
+- **Driveline efficiency.** If the cars are slow because too much torque is being lost, `driveEff`
+  should be too pessimistic. Getting the bias to zero needs **0.972** for an RWD manual; real
+  measured driveline efficiency is 0.88–0.93. Rejected — it would be a fitted coefficient wearing a
+  physical name, which is exactly what v1.0 exists to remove.
+- **Engine inertia magnitude.** Perhaps `I_engine` is simply too large. Zeroing the bias needs
+  **≈0.03 kg·m²**; a real four-cylinder crank, flywheel and clutch pack is **0.10–0.20 kg·m²**.
+  Rejected for the same reason.
+- **Tyre grip.** The obvious remaining candidate: the μ curve is too stingy. It is **backwards** —
+  reducing grip made things monotonically worse (μ ×1.00 → 7.22 %, ×0.94 → 9.08 %, ×0.85 → 14.10 %)
+  because the cars are already too slow, not too fast. Rejected, and it was a useful correction to
+  a prediction I had made with some confidence in the wrong direction.
+
+**The signal that survives.** The AWD Subaru WRX sits at **+5.9 %** and barely moves — +5.9, +5.9,
++6.1 — across a 15 % swing in grip. Whatever is slowing it down is not traction, because a
+four-wheel-drive car on that much grip is not traction-limited at all. Work out the reflected
+inertia instead: `I_eng × ratio²` in first is ≈21.6 kg·m², which over `r²` is ≈190 kg of apparent
+mass on a 1470 kg car — **+13 % effective mass in first gear, ≈+5 % on the 0–100 run.** That is the
++5.9 % almost exactly.
+
+**So the inertia term is not wrong. The old model was giving every car a free ~6 % by never charging
+rotational inertia at all**, and the 2.66 % calibration was reached with that discount baked in. Two
+compensating errors read as accuracy: no inertia (too fast) against a hard grip clip that lets a car
+put down its full torque from a standstill (also too fast) against real cars that do neither.
+Removing one without the other is what produced the regression.
+
+**Not shipped.** Both halves were reverted; `main` carries neither. The standalone model is kept at
+**`tests/proto/slip.mjs`** — it runs on its own with `node`, and it is the spec to build from when
+the work resumes rather than something to reconstruct from this write-up. The browser harnesses that
+produced the sweep tables are *not* kept: they patched copies of `index.html` on a scratch disk and
+hard-coded absolute paths to them.
+
+The fix is not a coefficient, it is the **launch model**: the current clutch holds the engine at a
+fixed launch rpm and hands the wheels whatever torque grip allows, which is a kinematic assertion,
+not a mechanism. It should be a **torque-capacity limit** — the clutch transmits what its clamp load
+and friction radius can carry, the engine accelerates on the difference, and slip ends when the
+speeds meet. With that in place the slip curve and the inertia term can go in together and the whole
+set be recalibrated once. That is the next piece of step 2.
+
+**Two test failures worth remembering, both the same mistake.** Twice a sweep was set up by
+monkey-patching a value that is a `const` at script scope — first `crrAt` while proving `Crr(v)`
+reaches the solver, then `I_ENGINE` in the first inertia sweep. Neither patch does anything, and the
+second one silently produced *identical* numbers for `I` = 0.15, 0.10 and 0.06, which I read as
+"inertia is not the driver" and reported as such before catching it. Patch the **use site**, never
+the declaration; and a sweep whose rows do not differ is a broken harness, not a null result.
+
+**Deferred behind this:** **rim material and weight.** It is genuinely relevant once inertia counts —
+unsprung rotating mass is charged twice, once translating and once spinning, so forged vs cast is
+worth 1–2 % on 0–100. Adding it while the inertia term itself is still being reworked would just
+make the rework harder to read.
 
 Also queued: a **UI redesign** for the DESIGN and VEHICLE tabs, which are already crowded and will
 get more so as derived physics adds inputs. Progressive disclosure — headline inputs by default, a
