@@ -37,11 +37,19 @@ const ref = await page.evaluate(() => {
     document.getElementById('vhDiff').value = diff;
     document.getElementById('vhGearbox').value = gbx;
     buildVehicle();
-    const scale = hp / engine.score.peakHP, realCurve = buildTorqueCurve;
+    // Each car is matched to its real power by scaling the torque curve. simulateAccel now takes
+    // torque from a 2-D rpm x boost GRID during the run — boost is a state with history, so a 1-D
+    // curve cannot describe a turbo mid-spool — so the scale has to be applied to both seams. Patch
+    // only the curve and every car silently runs the unscaled base engine: the 460 hp M2 came out
+    // at 6.3 s and the 64 hp kei got FASTER, which is the tell that the harness, not the physics,
+    // had stopped matching power.
+    const scale = hp / engine.score.peakHP, realCurve = buildTorqueCurve, realGrid = buildTorqueGrid;
     window.buildTorqueCurve = () => realCurve().map(p => ({ rpm: p.rpm, tq: p.tq * scale }));
+    window.buildTorqueGrid = () => { const g = realGrid();
+      return { ...g, tq: g.tq.map(row => row.map(t => t * scale)) }; };
     vehicle.mass = kg;
     const p = simulateAccel();
-    window.buildTorqueCurve = realCurve;
+    window.buildTorqueCurve = realCurve; window.buildTorqueGrid = realGrid;
     return { label, hp, kg, drive, gbx, real: realT, model: +p.t100.toFixed(2),
       err: +((p.t100 / realT - 1) * 100).toFixed(1) };
   });

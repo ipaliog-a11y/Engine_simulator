@@ -20,7 +20,47 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 Working toward **v1.0 — every number derived, not fitted.**
 
-### Conversion 4 of 5 — turbo, part 3: the shaft equation of motion  *(partial — one open issue)*
+### Conversion 4 of 5 — turbo, part 4: lag reaches the acceleration solver
+
+`simulateAccel` took torque from a 1-D `tqAt(rpm)` curve built once before the run. That stopped
+being valid the moment boost became a state with history: at 4000 rpm a turbo might be at 0.1 bar
+because you just floored it or at full boost because you have been flat for two seconds, and a 1-D
+curve holds only the fully-spooled case. Every acceleration run started with the turbo already lit.
+
+Now a **2-D grid over rpm × boost**, built once and bilinearly interpolated — `computeVE` carries two
+wave solves and a nozzle bisection and is far too expensive per step. Shaft energy is a state
+variable in the run, advanced by the same `advanceShaft` the live engine uses so the two cannot
+drift apart. NA and supercharged engines keep a single boost row: a belt-driven blower has no shaft
+of its own to spin up.
+
+**Result:** lag is real. A large frame on a 2.0 L at 0.8 bar went 5.71 s → **6.39 s** to 100 km/h —
+0.68 s of lag that the steady curve could never show. Calibration unchanged at **3.19%**.
+
+Two wiring errors on the way, both worth recording because neither was in the physics:
+
+- **The shaft started from rest at launch.** A standing start is made with the engine already held
+  at its launch speed on a slipping clutch or stalled converter at full throttle — brake-boosting.
+- **A lift braked the shaft instead of letting it coast.** Closing the throttle cooled the exhaust
+  but left the compressor swallowing full airflow, so every upshift dumped all the boost. A throttle
+  plate throttles *both* sides.
+
+**And a harness artifact that looked exactly like a physics regression.** Calibration appeared to
+blow out to 24% with the turbo cars far too slow and the kei car *faster*. `test41` matches each car
+to its real power by monkey-patching `buildTorqueCurve`; the run now goes through `buildTorqueGrid`,
+which was not patched, so every car silently ran the unscaled base engine. The kei getting quicker
+was the tell — a lag model cannot make a car faster. Second time this session the harness, not the
+model, was the thing that had fallen behind.
+
+**Still failing:** `test40`'s frame comparison. The small frame is now only 0.13 s behind the large
+one rather than 0.68 s ahead of where it was, and what remains between them is `turboChoke` — the
+last fitted turbo number, docking the small frame 18% of its top end at 88% of choke flow, where
+nothing is actually choking. Removing it makes the small frame win (6.17 s vs 6.30 s) but costs
+calibration (3.19% → 3.44%) and puts the 2JZ back on the rev limiter. The shaft solver says the 2JZ
+genuinely holds boost flat to redline, which is honest for a medium frame at 0.9 bar, so what should
+roll its power off is VE falling up top — `vePeakRpm`, not turbo work. `turboChoke` stays until that
+lands, at which point it should come out with nothing left to paper over.
+
+### Conversion 4 of 5 — turbo, part 3: the shaft equation of motion
 
 **Steady boost is now solved, not asserted.** `spool50` and `spoolWidth` are gone. Where a turbo
 comes on song is where its turbine can finally supply what its compressor is drawing, which depends

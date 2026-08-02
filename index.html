@@ -188,7 +188,7 @@ table.fuelmap td.live{box-shadow:inset 0 0 0 2px #fff;font-weight:bold}
 <body>
 <div class="container">
 <header>
-<h1>PIXEL ENGINE SIM v0.6 build 65</h1>
+<h1>PIXEL ENGINE SIM v0.6 build 66</h1>
 <div class="subtitle" id="subtitle">ENGINE DESIGNER • BUILD IT, THEN DRIVE IT</div>
 </header>
 <div class="main">
@@ -2795,28 +2795,39 @@ function brakeTorqueRaw(rpm,map,fuelCut){
 // explicit integrator survives. E = 1/2.J.w^2 gives dE/dt = P_net and w = sqrt(2E/J), with no
 // division by w anywhere: a stationary shaft simply has E = 0 and gains energy. That formulation
 // replaces spoolK, the fitted lag rate.
+// One step of the turbo shaft, as a pure function of its own state. Shared by the live engine and
+// by simulateAccel, so the two cannot drift apart — the acceleration solver having its own idea of
+// spool is exactly the kind of divergence that took two bugs to find last time.
+function advanceShaft(shaftE,rpm,boostNow,throttle,dt){
+  const J=engine.shaftJ;
+  if(!J)return{shaftE:0,boost:boostAvail(rpm)};
+  const wMax=engine.shaftMax*2*Math.PI/60, Emax=0.5*J*wMax*wMax;
+  const th=clamp(throttle,0,1);
+  // Load for exhaust TEMPERATURE is throttle, not manifold pressure over its boosted maximum.
+  // map/mapMax made a turbo at wide open throttle that has not spooled read as 29% load — cold
+  // exhaust, weak turbine, never spools. Same bootstrap shape as taking the turbine's expansion
+  // ratio from the compressor's: the thing needed to start the process derived from the process
+  // having started.
+  const T3=exhaustGasT(clamp(th,0.3,1.1));
+  const sub=Math.max(1,Math.ceil(dt/0.002));   // the shaft is faster than the vehicle; sub-step it
+  const h=dt/sub;
+  let E=clamp(shaftE,0,Emax), b=clamp(boostNow,0,engine.maxBoost);
+  for(let k=0;k<sub;k++){
+    const n=Math.sqrt(2*E/J)*60/(2*Math.PI);
+    // Closing the throttle throttles BOTH sides. Cooling the exhaust while leaving the compressor
+    // swallowing full airflow makes a lift actively BRAKE the shaft rather than let it coast.
+    const r=shaftNetPower(n,airFlowAt(rpm,1+b)*Math.max(0.08,th),T3,effIAT(1+b)+273.15);
+    E=clamp(E+r.net*h,0,Emax);
+    b=clamp(r.pr-1,0,engine.maxBoost);
+  }
+  return{shaftE:E,boost:b};
+}
 function stepBoost(dt){
   if(engine.intake!=='turbo'||!engine.shaftJ){state.boostActual=boostAvail(state.rpm);return;}
-  const J=engine.shaftJ, wMax=engine.shaftMax*2*Math.PI/60;
   if(state.shaftE==null)state.shaftE=0;
-  // Load for exhaust TEMPERATURE is how hard the engine is working per unit of charge, which is
-  // throttle, NOT manifold pressure over its boosted maximum. Using map/mapMax made a turbo at wide
-  // open throttle that has not spooled yet read as 29% load — cold exhaust, weak turbine, never
-  // spools. A bootstrap failure of exactly the same shape as setting the turbine's expansion ratio
-  // from the compressor's: the thing needed to start the process was being derived from the process
-  // having already started. Total exhaust ENERGY still scales with mass flow, which is handled
-  // separately, so this argument is about mixture strength alone.
-  const T3=exhaustGasT(clamp(state.throttle!=null?state.throttle:1,0.3,1.1));
-  const sub=Math.max(1,Math.ceil(dt/0.002));      // the shaft is faster than the vehicle; sub-step it
-  const h=dt/sub;
-  for(let k=0;k<sub;k++){
-    const w=Math.sqrt(2*Math.max(0,state.shaftE)/J);
-    const n=w*60/(2*Math.PI);
-    const mAir=airFlowAt(state.rpm,1+state.boostActual);
-    const r=shaftNetPower(n,mAir,T3,effIAT(1+state.boostActual)+273.15);
-    state.shaftE=clamp(state.shaftE+r.net*h,0,0.5*J*wMax*wMax);
-    state.boostActual=clamp(r.pr-1,0,engine.maxBoost);
-  }
+  const r=advanceShaft(state.shaftE,state.rpm,state.boostActual,
+                       state.throttle!=null?state.throttle:1,dt);
+  state.shaftE=r.shaftE;state.boostActual=r.boost;
 }
 // Target manifold pressure from throttle opening, RPM and available boost.
 function mapTarget(){
@@ -3158,12 +3169,50 @@ function buildTorqueCurve(){
   Object.assign(state,sv);   // restore the exact live state (correct keys — no accidental heal)
   return pts;
 }
+// Torque over rpm AND boost. Once boost is a state variable with its own history, a 1-D curve in
+// rpm cannot describe the engine: at 4000 rpm a turbo might be at 0.1 bar because you just floored
+// it, or at full boost because you have been flat for two seconds. The old 1-D curve held only the
+// fully-spooled case, so every acceleration run started with the turbo already lit and lag cost
+// nothing at all. Built once and bilinearly interpolated, because computeVE now carries two wave
+// solves and a nozzle bisection and is far too expensive to call per step.
+function buildTorqueGrid(){
+  const sv={afr:state.afr,coolant:state.coolant,oil:state.oil,engineHealth:state.engineHealth,
+            blown:state.blown,iat:state.iat,systemVoltage:state.systemVoltage,nitrousActive:state.nitrousActive};
+  const savedAfrMode=engine.afrMode;engine.afrMode='fixed';
+  state.coolant=90;state.oil=100;state.engineHealth=1;state.blown=false;state.iat=20;
+  state.systemVoltage=14.0;state.nitrousActive=false;
+  state.afr=engine.ci?engine.stoichAFR*1.05:engine.stoichAFR*0.88;
+  const rpms=[];for(let r=1000;r<=engine.redline;r+=100)rpms.push(r);
+  // Only a turbo needs the boost axis. A supercharger is belt-driven, so its boost follows rpm with
+  // no shaft of its own to spin up, and an NA engine has none at all.
+  const laggy=engine.intake==='turbo'&&engine.maxBoost>0;
+  const boosts=laggy?Array.from({length:9},(_,i)=>engine.maxBoost*i/8):[engine.maxBoost||0];
+  const tq=boosts.map(b=>rpms.map(r=>calcAtRpm(r,1+b).torque));
+  engine.afrMode=savedAfrMode;Object.assign(state,sv);
+  return{rpms,boosts,tq,laggy};
+}
+function gridTorque(g,rpm,boost){
+  const R=g.rpms,B=g.boosts;
+  let i=1;while(i<R.length-1&&rpm>R[i])i++;
+  const fr=clamp((rpm-R[i-1])/(R[i]-R[i-1]),0,1);
+  if(B.length===1){const row=g.tq[0];return row[i-1]+(row[i]-row[i-1])*fr;}
+  let j=1;while(j<B.length-1&&boost>B[j])j++;
+  const fb=clamp((boost-B[j-1])/(B[j]-B[j-1]),0,1);
+  const lo=g.tq[j-1],hi=g.tq[j];
+  const a=lo[i-1]+(lo[i]-lo[i-1])*fr, c=hi[i-1]+(hi[i]-hi[i-1])*fr;
+  return a+(c-a)*fb;
+}
 // Integrate the standing-start acceleration run through the gearbox with a traction-limited
 // launch (weight transfer + downforce), aero drag and rolling resistance.
 function simulateAccel(){
   if(!engine.score)return null;
   const curve=buildTorqueCurve();
   const tqAt=rpm=>{if(rpm<=curve[0].rpm)return curve[0].tq;for(let i=1;i<curve.length;i++){if(rpm<=curve[i].rpm){const p=curve[i-1],q=curve[i];return p.tq+(q.tq-p.tq)*(rpm-p.rpm)/(q.rpm-p.rpm);}}return curve[curve.length-1].tq;};
+  // Torque during the RUN comes off the 2-D grid, because boost is a state with history. The 1-D
+  // curve above is still right for the top-speed scan: a car sitting at terminal velocity has been
+  // at full throttle a long time and is fully spooled by definition.
+  const grid=buildTorqueGrid();
+  let boostNow=grid.laggy?0:engine.maxBoost, shaftE=0;
   const m=vehicle.mass,r=vehicle.rTire,fd=vehicle.finalDrive,eff=vehicle.driveEff,ratios=vehicle.ratios;
   const idle=engine.idleRpmEff,rl=engine.redline,TWO_PI=Math.PI*2,dt=0.005;
   const gb=vehicle.gb||GEARBOX.manual;
@@ -3174,6 +3223,14 @@ function simulateAccel(){
   // stops being charged the launch penalty.
   const axleTqMax=Math.max(1,curve.reduce((a,p)=>Math.max(a,p.tq),0)*ratios[0]*fd*(gb.mult||1));
   const launchRpm=clamp(rl*0.55,idle+400,rl*0.72);
+  // The shaft does not start from rest. A standing start is made with the engine already held at
+  // its launch speed on a slipping clutch or a stalled converter, at full throttle — which is what
+  // brake-boosting is, and why a turbo car does not leave the line completely flat.
+  if(grid.laggy&&engine.shaftJ){
+    let E=0,b0=0;
+    for(let i=0;i<400;i++){const a=advanceShaft(E,launchRpm,b0,1,0.005);E=a.shaftE;b0=a.boost;}
+    shaftE=E;boostNow=b0;
+  }
   let v=0,x=0,t=0,gear=0,a=0,shiftT=0;
   const M={t100:null,q400:null,q800:null,q1000:null,v200:null},V100=100/3.6,V200=200/3.6;
   for(let step=0;step<48000&&t<150;step++){
@@ -3204,7 +3261,13 @@ function simulateAccel(){
     // ever, and the car keeps pulling past the fastest speed its gearing can actually reach.
     const overRev=rpm>rl;
     let driveF=0;
-    if(shiftT>0)shiftT-=dt; else if(!overRev)driveF=tqAt(engineRpm)*tqMult*totalRatio*eff/r;
+    // Spin the turbo up alongside the car. Off throttle during a shift the exhaust cools and the
+    // shaft coasts down, which is why an upshift costs boost and why it costs a big frame more.
+    if(grid.laggy){
+      const adv=advanceShaft(shaftE,engineRpm,boostNow,shiftT>0?0.15:1,dt);
+      shaftE=adv.shaftE;boostNow=adv.boost;
+    }
+    if(shiftT>0)shiftT-=dt; else if(!overRev)driveF=gridTorque(grid,engineRpm,boostNow)*tqMult*totalRatio*eff/r;
     const down=0.5*AIR_RHO*vehicle.clA*v*v,Wtot=m*G+down,transfer=m*a*vehicle.cg/vehicle.wb;
     let drivenN;
     if(vehicle.drive==='awd')drivenN=Wtot;
