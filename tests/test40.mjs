@@ -16,8 +16,12 @@ const KEI = { cylinders: 3, bore_mm: 73, stroke_mm: 79.6, compression: 9.5, redl
 console.log('== asking a frame for more boost moves its spool point and slows it down ==');
 const spool = await page.evaluate(({ base }) => [0.5, 1.0, 1.5, 2.0, 2.5].map(bar => {
   applyEngineToForm(Object.assign({}, DEFAULT_ENGINE, base, { boost_bar: bar })); buildEngine();
-  // time to 90% of target with the turbo fully lit, using the real integrator
-  state.rpm = 6000; state.boostActual = 0; let t = 0;
+  // Time to 90% of target at WIDE OPEN THROTTLE, using the real integrator.
+  // The throttle has to be set. Spool used to be a logistic curve in rpm that ignored throttle
+  // entirely; it is now the shaft power balance, and a turbo at part throttle genuinely does not
+  // spool — the exhaust is too cool. Leaving throttle at its idle value measured a part-throttle
+  // spool and reported it as lag, which is how this harness came to disagree with the steady solver.
+  state.rpm = 6000; state.throttle = 1; state.boostActual = 0; state.shaftE = 0; let t = 0;
   while (t < 30 && state.boostActual < 0.9 * bar) { stepBoost(1 / 240); t += 1 / 240; }
   return { bar, spool50: Math.round(engine.spool50), spoolK: +engine.spoolK.toFixed(2),
     t90: +t.toFixed(2), iat: Math.round(effIAT(1 + bar)),
@@ -30,7 +34,18 @@ for (let i = 1; i < spool.length; i++) {
   if (!(spool[i].spool50 > spool[i - 1].spool50)) fails.push(`spool point did not rise from ${spool[i - 1].bar} to ${spool[i].bar} bar`);
   if (!(spool[i].t90 > spool[i - 1].t90)) fails.push(`spool time did not lengthen from ${spool[i - 1].bar} to ${spool[i].bar} bar`);
   if (!(spool[i].iat > spool[i - 1].iat)) fails.push(`charge temp did not rise from ${spool[i - 1].bar} to ${spool[i].bar} bar`);
-  if (!(spool[i].eff <= spool[i - 1].eff)) fails.push(`compressor efficiency did not fall from ${spool[i - 1].bar} to ${spool[i].bar} bar`);
+  // NOT a monotonic decline. That was true of the old fitted formula, which fell with pressure
+  // ratio by construction, and it is not true of a real compressor. A compressor has an efficiency
+  // ISLAND, and this kei engine starts at 32% of the frame's choke flow — deep on the surge side of
+  // it. Raising boost walks it TOWARD the island centre before it walks off the far side, so
+  // efficiency rises then falls. What must hold is that it ends below its peak, and that the charge
+  // gets hotter the whole way, which is the penalty that actually matters.
+}
+{
+  const effs = spool.map(s => s.eff), peak = Math.max(...effs);
+  console.log(`  efficiency traverses its island: ${effs.join(' -> ')} (peak ${peak})`);
+  if (!(effs[effs.length - 1] < peak)) fails.push('efficiency never falls off the island at high boost');
+  if (!(effs[0] < peak)) fails.push('efficiency should be poor at low flow too — the surge side of the island');
 }
 const lo = spool[0], hi = spool[spool.length - 1];
 if (!(hi.spool50 > lo.spool50 * 2)) fails.push(`2.5 bar should spool far later than 0.5 bar (${lo.spool50} -> ${hi.spool50})`);

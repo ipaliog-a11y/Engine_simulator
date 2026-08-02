@@ -20,6 +20,139 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 Working toward **v1.0 — every number derived, not fitted.**
 
+### Conversion 4 of 5 — turbo, part 3: the shaft equation of motion  *(partial — one open issue)*
+
+**Steady boost is now solved, not asserted.** `spool50` and `spoolWidth` are gone. Where a turbo
+comes on song is where its turbine can finally supply what its compressor is drawing, which depends
+on the wheel, the housing A/R, the exhaust energy available and the engine's own swallowing
+capacity. `boostAvail` bisects the shaft power balance instead of reading a logistic curve in rpm.
+Calibration **3.19% → 3.17%**, the best since before conversion 3.
+
+Solving costs a few thousand iterations and `boostAvail` is called for every rpm of every torque
+curve build, so it is sampled once per engine into a 26-point table and interpolated — the same
+reason a compressor map is a map rather than a formula evaluated at runtime.
+
+**The transient is the energy ODE**, replacing `spoolK`. `dω/dt = P/(J·ω)` is singular at rest — at
+500 shaft rpm a 5 kW imbalance is 3×10⁶ rad/s² — so it integrates `E = ½Jω²`, giving `dE/dt = P_net`
+and `ω = √(2E/J)` with no division by ω anywhere, sub-stepped at 2 ms inside the caller's step.
+
+**A bug worth recording.** `shaftNetPower` returned the *wastegated* pressure ratio, and the search
+in `steadyBoost` asks "can the shaft reach this PR". At the wastegate setting itself the capped value
+can never exceed the target, so the search answered no for a frame that had 40 kW of turbine power
+spare to make it. Now it reports the raw ratio for the search and the capped one for the result.
+Same family as the earlier traps: a cap silently turning into an answer.
+
+**The transient/steady disagreement is fixed, and it was two bugs stacked.**
+
+The first was another **bootstrap failure**, the same shape as setting the turbine's expansion from
+the compressor's pressure ratio. `stepBoost` took exhaust temperature from `state.map / mapMax` — so
+a turbo at wide open throttle that has not spooled yet reads `1.0 / 3.5` and is treated as **29%
+load**. Cold exhaust, weak turbine, never spools: the thing needed to start the process was being
+derived from the process having already started. Load for exhaust *temperature* is how hard the
+engine is working per unit of charge, which is **throttle**; total exhaust energy still scales with
+mass flow, which is handled separately.
+
+The second was in the harness. `test40` measured spool by setting rpm and stepping the integrator
+without ever opening the throttle. That was harmless when spool was a logistic curve in rpm that
+ignored throttle entirely, and became a real error once spool became the shaft power balance — a
+turbo at part throttle genuinely does not spool. The test was measuring a part-throttle spool and
+reporting it as lag.
+
+Traced by instrumenting rather than guessing, after a first guess at the cause turned out to be
+wrong: the fix appeared to change nothing because the *diagnostic script* had the same missing
+throttle as the test. Steady and transient now agree, and spool time lengthens monotonically with
+boost (0.05 → 0.07 → 0.08 → 0.09 → 0.10 s) as it should.
+
+**What is still wrong:** those times are too short. The investigation predicted this — bearing drag
+and heat soak into the housing are both missing, and both slow a real turbo. `test40` fails on
+`2.5 bar should take far longer to build`, which is now a statement about absolute spool time rather
+than about the solvers contradicting each other.
+
+**Not yet done:** the acceleration solver still consumes a 1-D `tqAt(rpm)` curve, so `simulateAccel`
+has no transient and `test40`'s third assertion — a small frame should be quicker off the line —
+still fails. That needs the 2-D rpm × boost grid the investigation identified.
+
+### Conversion 4 of 5 — turbo, part 2: the compressor efficiency island
+
+**Efficiency is a position on the map, not a formula in pressure ratio.** A compressor has an
+efficiency *island*: it peaks near 62% of choke flow and falls away in every direction — toward
+surge if you starve it, toward choke if you shove too much through, and with pressure ratio as the
+losses grow. The old form fell monotonically with PR by construction, which is not what a real map
+does. Calibration **3.20% → 3.19%**.
+
+**This is what makes `test40`'s over-flow penalty land.** Asking a small frame for too much now
+collapses its efficiency, and the charge arrives hot — paid in physics rather than by a `choke`
+constant. That failure is gone.
+
+**And it corrected a test.** `test40` asserted compressor efficiency must fall monotonically with
+boost. It does not: the kei car it sweeps starts at **32% of the frame's choke flow**, deep on the
+surge side, so raising boost walks it *toward* the island centre before it walks off the far side —
+0.56 → 0.69 → 0.76 → 0.76 → 0.69. The assertion encoded the old fitted formula. Replaced with what
+must actually hold: efficiency ends below its peak, starts below its peak, and the charge gets
+hotter the whole way. Changed because it was wrong, not to go green.
+
+**Also derived: the choke ceiling.** A frame running out of breath up top is the compressor
+choking — past the inducer's sonic limit it cannot pass more air however hard it is driven. Now a
+hard airflow cap taken from the same inducer area as the flow rating, so the rating and the limit
+cannot disagree.
+
+**One thing tried and put back.** Removing `turboChoke` at the same time looked right — it is the
+symptom the choke ceiling explains — but it put the 2JZ back on the rev limiter, because choke only
+bites on a frame that actually chokes. What rolls off a turbo that *never* chokes is **boost taper**,
+the compressor running out of shaft speed as the wastegate closes, and that needs the shaft power
+balance still to come. `turboChoke` stays for that one job and is now labelled as the stand-in it is.
+The lesson is the ordering: do not remove a fitted term until the mechanism replacing it exists.
+
+**Still failing:** `test40`'s last assertion, that a small frame should be quicker off the line at
+low boost. It spools at 1711 rpm against the large frame's 3554 and is still slower to 100, because
+the acceleration solver uses **steady boost per rpm and models no transient at all** — the README
+has listed that as a known limit from the start. It is the shaft equation of motion, and it is the
+next piece.
+
+### Conversion 4 of 5 — turbo, part 1: the turbine as a nozzle
+
+The first piece of the turbo conversion, and the one that unlocks the rest. Chosen first because it
+also repays conversion 3.
+
+**A frame is a wheel.** Solving the old fitted flow ratings (32 / 55 / 82 lb/min) for the exducer
+diameter that would produce them gives **54, 71 and 86 mm** — standard real wheel sizes (GT2554R,
+GT2871R, GT3586R). Those fitted numbers were consistent with real hardware all along, so `flow` is
+now derived from the wheel and lands on the old values to within 1%. `TURBO` gains `exd` and `ar`,
+the turbine housing A/R that people agonise over when choosing a turbo and that has been buried
+inside the lumped `spool50` until now.
+
+**A turbine is a nozzle of fixed effective area.** Exhaust cannot leave the manifold except through
+it, so manifold pressure rises until the flow fits: `ṁ = A·f(PR)`. Throat area comes straight from
+the A/R definition — volute throat over the radius to its centroid, so `A = (A/R)·R_wheel`, with no
+fudge factor. Getting this wrong makes spool impossible by construction, which is how the
+investigation found it: setting the turbine's expansion equal to the *compressor's* pressure ratio
+means no boost gives no expansion gives no power gives no boost, and a turbo could never start.
+
+**And a wastegate, because without one the model is wrong by 3×.** Routing every gram of exhaust
+through a fixed throat gave 3.5–4.5 bar of manifold pressure on the presets against a real 0.5–1.5.
+Holding boost is the gate's whole job, and the steady state is a power balance: the turbine only has
+to supply what the compressor draws, and the surplus goes around it. Solving `P_turbine(PR) =
+P_compressor` puts the presets at **0.4–1.65 bar**, where real boosted engines measure.
+
+**Residual gas is a pressure RATIO, not a back-pressure.** What decides how much burnt gas stays in
+the clearance volume is `p_exhaust/p_intake`, not exhaust against atmosphere. The distinction does
+not matter on an NA engine and matters enormously on a boosted one — the old absolute form would
+have charged a turbo running 2 bar intake against 3 bar exhaust a **38% VE loss**. This is the
+conversion-3 defect the investigation predicted: every turbo engine had been missing most of its
+back-pressure, and the fix needed both halves.
+
+**Result: real-car acceleration RMS 3.38% → 3.20%**, the first conversion to *improve* the
+calibration rather than cost it. Top speed unchanged at 6.7%.
+
+**One piece of authored content had to move.** The Grand Prix Pace challenge target was written when
+turbo engines carried no manifold back-pressure; its reference build now clears 60.0 s by only
+0.29 s, inside `test36`'s 0.5 s margin requirement. Target moved to 60.6 s. Challenge targets are
+content and have to track the physics, which is exactly what that test exists to catch.
+
+**Still to come in this conversion:** the compressor map proper (Euler tip-speed relation, the
+efficiency island, choke), and the shaft equation of motion for real transient spool. `test40` stays
+failing until those land — its over-flow penalty needs the efficiency island.
+
 ### Conversion 3 of 5 — gas dynamics, round 2
 
 Two corrections, both omissions rather than tuning, and one experiment rejected on measurement.
