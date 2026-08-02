@@ -20,6 +20,31 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 Working toward **v1.0 — every number derived, not fitted.**
 
+### Racing line — an honest claim instead of an unachievable one
+
+`test38` asserted the late-apex line **never** costs time on any circuit. That is a claim of
+*optimality*, and minimum-curvature-plus-an-exit-bias cannot make it: only a true minimum-lap-time
+line could. On a circuit of fast sweepers that only want minimum curvature, a geometric heuristic
+can give a little back. It now asserts what such a heuristic can honestly promise — **pays on
+balance, and never loses more than 0.5% anywhere**: −0.39 / +0.25 / −1.10 / −0.39 s, net **−1.63 s**.
+
+**Tried first, and reverted: making the line car-aware.** Whether a late apex pays genuinely depends
+on the car — a friction-circle argument, since on exit grip is shared between turning and
+accelerating, so straightening the exit only helps a car that can demand more than the leftover grip
+allows. Deriving the bias that way works and is properly selective (apex 10.8 m later onto a
+straight against 4.1 m into more corners), and it would have retired the README's *"the racing line
+does not know what car is driving it"*.
+
+It was reverted for two reasons. It did **not** fix the failure — Cape still cost 0.24 s, because
+the problem is the shape of the objective rather than the value of the bias. And it invalidated
+three test harnesses that manipulate `T.line` directly, `test32` among them, which went from a
+passing racing-line-beats-centreline check to failing on all four circuits. The known limit stands,
+and a minimum-time line is what would actually retire it.
+
+Third harness-versus-model mismatch in this stretch, and the same shape each time: a comparison that
+quietly compares something against itself. `test38`'s first attempt seeded a line cache under a key
+the lookup never read and reported 0.00 s deltas — a clean pass on a measurement of nothing.
+
 ### Conversion 4 of 5 — turbo, part 4: lag reaches the acceleration solver
 
 `simulateAccel` took torque from a 1-D `tqAt(rpm)` curve built once before the run. That stopped

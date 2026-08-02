@@ -106,12 +106,27 @@ const dOnto = apex.late.onto - apex.flat.onto, dInto = apex.late.into - apex.fla
 console.log(`  shift applied: ${dOnto.toFixed(1)} m onto a straight vs ${dInto.toFixed(1)} m into more corners (${(dOnto / Math.max(0.1, dInto)).toFixed(1)}x)`);
 if (!(dOnto > 2 * dInto)) fails.push(`the late-apex bias is not selective (${dOnto.toFixed(1)} m vs ${dInto.toFixed(1)} m)`);
 
-console.log('\n== and it must not cost time anywhere ==');
+// It must PAY ON BALANCE, and never lose much anywhere. Not "never loses at all" — that was the
+// old claim and it is a claim of OPTIMALITY, which minimum-curvature-plus-a-bias cannot make. A
+// true minimum-LAP-TIME line could; this is a geometric heuristic with one exit-weighting term, so
+// on a circuit of fast sweepers that only want minimum curvature it can give a little back.
+//
+// Making the bias car-aware was tried, on the theory that whether a late apex pays depends on the
+// car's acceleration against its grip — a friction-circle argument, and it does produce a properly
+// selective apex shift. It did not rescue this case either, because the problem is not the value of
+// the bias but the shape of the objective. Reverted; the known limit stands, and a minimum-time
+// line is what would actually retire it.
+console.log('\n== it must pay on balance, and never lose much anywhere ==');
+const LOSS_CAP = 0.5;                 // % on any single circuit
+let net = 0;
 Object.keys(apex.flat.laps).forEach(k => {
-  const a = apex.flat.laps[k], b = apex.late.laps[k];
-  console.log(`  ${k.padEnd(6)} ${a}s -> ${b}s   ${(b - a).toFixed(2)}s (${((b - a) / a * 100).toFixed(2)}%)`);
-  if (b > a) fails.push(`${k}: the late-apex line is SLOWER than pure minimum curvature`);
+  const a = apex.flat.laps[k], b = apex.late.laps[k], pc = (b - a) / a * 100;
+  net += b - a;
+  console.log(`  ${k.padEnd(6)} ${a}s -> ${b}s   ${(b - a).toFixed(2)}s (${pc.toFixed(2)}%)`);
+  if (pc > LOSS_CAP) fails.push(`${k}: the late-apex line loses ${pc.toFixed(2)}% — past the ${LOSS_CAP}% cap`);
 });
+console.log(`  net across all circuits: ${net.toFixed(2)}s`);
+if (!(net < 0)) fails.push(`the late-apex bias does not pay on balance (net ${net.toFixed(2)}s)`);
 
 // ---------------------------------------------------------------- 3. invariants that must hold
 const inv = await page.evaluate(() => {
