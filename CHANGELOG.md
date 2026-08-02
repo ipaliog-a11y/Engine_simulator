@@ -42,13 +42,31 @@ can never exceed the target, so the search answered no for a frame that had 40 k
 spare to make it. Now it reports the raw ratio for the search and the capped one for the result.
 Same family as the earlier traps: a cap silently turning into an answer.
 
-**Open issue, and the reason this is partial.** The transient does not converge to the steady
-solution for high boost targets on a small frame: asking the kei preset for 1.5 bar or more leaves
-`stepBoost` short of 90% of target after 30 simulated seconds, while the steady solver says the
-frame can hold it. Two of `test40`'s assertions fail on that — spool time no longer lengthens from
-1.5 → 2.0 → 2.5 bar because all three time out identically. This is a defect in the transient, not
-a physical result, and it is stated rather than papered over. The steady path is unaffected, which
-is what the calibration and the lap solver use.
+**The transient/steady disagreement is fixed, and it was two bugs stacked.**
+
+The first was another **bootstrap failure**, the same shape as setting the turbine's expansion from
+the compressor's pressure ratio. `stepBoost` took exhaust temperature from `state.map / mapMax` — so
+a turbo at wide open throttle that has not spooled yet reads `1.0 / 3.5` and is treated as **29%
+load**. Cold exhaust, weak turbine, never spools: the thing needed to start the process was being
+derived from the process having already started. Load for exhaust *temperature* is how hard the
+engine is working per unit of charge, which is **throttle**; total exhaust energy still scales with
+mass flow, which is handled separately.
+
+The second was in the harness. `test40` measured spool by setting rpm and stepping the integrator
+without ever opening the throttle. That was harmless when spool was a logistic curve in rpm that
+ignored throttle entirely, and became a real error once spool became the shaft power balance — a
+turbo at part throttle genuinely does not spool. The test was measuring a part-throttle spool and
+reporting it as lag.
+
+Traced by instrumenting rather than guessing, after a first guess at the cause turned out to be
+wrong: the fix appeared to change nothing because the *diagnostic script* had the same missing
+throttle as the test. Steady and transient now agree, and spool time lengthens monotonically with
+boost (0.05 → 0.07 → 0.08 → 0.09 → 0.10 s) as it should.
+
+**What is still wrong:** those times are too short. The investigation predicted this — bearing drag
+and heat soak into the housing are both missing, and both slow a real turbo. `test40` fails on
+`2.5 bar should take far longer to build`, which is now a statement about absolute spool time rather
+than about the solvers contradicting each other.
 
 **Not yet done:** the acceleration solver still consumes a 1-D `tqAt(rpm)` curve, so `simulateAccel`
 has no transient and `test40`'s third assertion — a small frame should be quicker off the line —

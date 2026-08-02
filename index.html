@@ -188,7 +188,7 @@ table.fuelmap td.live{box-shadow:inset 0 0 0 2px #fff;font-weight:bold}
 <body>
 <div class="container">
 <header>
-<h1>PIXEL ENGINE SIM v0.6 build 64</h1>
+<h1>PIXEL ENGINE SIM v0.6 build 65</h1>
 <div class="subtitle" id="subtitle">ENGINE DESIGNER • BUILD IT, THEN DRIVE IT</div>
 </header>
 <div class="main">
@@ -2799,7 +2799,14 @@ function stepBoost(dt){
   if(engine.intake!=='turbo'||!engine.shaftJ){state.boostActual=boostAvail(state.rpm);return;}
   const J=engine.shaftJ, wMax=engine.shaftMax*2*Math.PI/60;
   if(state.shaftE==null)state.shaftE=0;
-  const T3=exhaustGasT(clamp(state.map/Math.max(0.4,engine.mapMax),0.3,1.1));
+  // Load for exhaust TEMPERATURE is how hard the engine is working per unit of charge, which is
+  // throttle, NOT manifold pressure over its boosted maximum. Using map/mapMax made a turbo at wide
+  // open throttle that has not spooled yet read as 29% load — cold exhaust, weak turbine, never
+  // spools. A bootstrap failure of exactly the same shape as setting the turbine's expansion ratio
+  // from the compressor's: the thing needed to start the process was being derived from the process
+  // having already started. Total exhaust ENERGY still scales with mass flow, which is handled
+  // separately, so this argument is about mixture strength alone.
+  const T3=exhaustGasT(clamp(state.throttle!=null?state.throttle:1,0.3,1.1));
   const sub=Math.max(1,Math.ceil(dt/0.002));      // the shaft is faster than the vehicle; sub-step it
   const h=dt/sub;
   for(let k=0;k<sub;k++){
