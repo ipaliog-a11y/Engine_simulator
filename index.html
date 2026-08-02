@@ -188,7 +188,7 @@ table.fuelmap td.live{box-shadow:inset 0 0 0 2px #fff;font-weight:bold}
 <body>
 <div class="container">
 <header>
-<h1>PIXEL ENGINE SIM v0.6 build 63</h1>
+<h1>PIXEL ENGINE SIM v0.6 build 64</h1>
 <div class="subtitle" id="subtitle">ENGINE DESIGNER • BUILD IT, THEN DRIVE IT</div>
 </header>
 <div class="main">
@@ -1186,6 +1186,78 @@ function manifoldPR(mAir,mEx,mapBar,T3,area,compEta){
   for(let i=0;i<60;i++){const m=(lo+hi)/2;if(tPower(m)<pComp)lo=m;else hi=m;}
   return hi;
 }
+// ---- the compressor, and the shaft that drives it ----
+// Boost is what the WHEEL IS DOING at the speed it is turning, not a curve fitted against engine
+// rpm. Euler's turbomachinery relation: a compressor raises stagnation temperature by sigma.U^2/cp,
+// and the pressure ratio that produces depends on how efficiently it was done.
+const COMP_SLIP=0.90;      // backswept centrifugal wheel; standard turbomachinery value
+const TIP_LIMIT=520;       // m/s — where a cast aluminium wheel lets go. Sets max shaft speed.
+const J_REF=3.2e-5, D_REF=0.071;   // a measured GT2871R cartridge; scales as D^5 in a similar family
+const wheelInertia=exd=>J_REF*Math.pow(exd/D_REF,5);
+const maxShaftRpm=exd=>TIP_LIMIT*60/(Math.PI*exd);
+// PR and efficiency are coupled — efficiency depends on where you sit on the map and where you sit
+// depends on PR — so they are solved together rather than one being assumed alongside the other.
+function compressorPR(exd,shaftRpm,flowFrac,T01){
+  const U=Math.PI*exd*Math.max(0,shaftRpm)/60, work=COMP_SLIP*U*U/(1005*Math.max(200,T01));
+  let eta=0.70,pr=1;
+  for(let i=0;i<30;i++){
+    pr=Math.pow(1+eta*work,3.5);
+    const e2=compIslandEff(flowFrac,pr);
+    if(Math.abs(e2-eta)<1e-6)break;
+    eta+=(e2-eta)*0.5;
+  }
+  return{pr,eta};
+}
+// Net power on the shaft: what the turbine extracts less what the compressor absorbs. This is the
+// quantity that spins a turbo up, and integrating it is what replaces spool50/spoolWidth/spoolK.
+function shaftNetPower(shaftRpm,mAir,T3,T01){
+  const e=engine;
+  if(!e.turbineArea)return 0;
+  const units=e.turbUnits||1;
+  const {pr,eta}=compressorPR(e.compExd,shaftRpm,mAir/Math.max(1e-9,e.chokeFlow_kgs),T01);
+  // Report the RAW pressure ratio the wheel is producing as well as the wastegated one. The search
+  // in steadyBoost asks "can the shaft reach this PR", and if it only ever sees the capped value it
+  // can never answer yes at the cap itself — which silently reported a frame as unable to make a
+  // boost it had 40 kW of turbine power spare to make.
+  const prCap=Math.min(pr,1+e.maxBoost);
+  const mEx=mAir*1.06/units, mA=mAir/units;
+  const prT=turbineManifoldPR(mEx,e.turbineArea,T3);
+  const Pt=mEx*CP_EXH*Math.max(300,T3)*0.70*(1-Math.pow(Math.max(1.0001,prT),-0.248));
+  const Pc=mA*1005*Math.max(200,T01)*(Math.pow(Math.max(1,prCap),0.286)-1)/clamp(eta,0.25,0.85);
+  return{net:Pt-Pc,pr:prCap,prRaw:pr,eta};
+}
+// Air the engine swallows at a given speed and boost. Deliberately uses the DESIGN VE amplitude
+// rather than the live computeVE: computeVE now depends on boost through effIAT and the residual
+// term, and calling it from here would close a loop that does not converge.
+function airFlowAt(rpm,pr){
+  const e=engine;
+  return (e.displacement_L/1000)*(e.veAmp||0.95)*(rpm/120)*(pr*101325/(287*313));
+}
+// Steady boost: the shaft speed where turbine and compressor balance, found by bracketing on boost
+// rather than by relaxation — the states switch discontinuously and a fixed point orbits them.
+function steadyBoost(rpm){
+  const e=engine;
+  if(!e.turbineArea||rpm<200)return 0;
+  const T3=exhaustGasT(clamp(rpm/(e.redline*0.8),0.35,1.1));
+  const nMax=maxShaftRpm(e.compExd);
+  const canHold=pr=>{
+    const mAir=airFlowAt(rpm,pr);
+    // Could the shaft, spun to whatever speed this PR needs, still be gaining energy there?
+    let lo=1000,hi=nMax,found=-1;
+    for(let i=0;i<28;i++){
+      const mid=(lo+hi)/2, r=shaftNetPower(mid,mAir,T3,313);
+      if(r.prRaw>=pr){hi=mid;found=mid;}else lo=mid;
+    }
+    if(found<0)return false;                      // cannot reach this PR at any shaft speed
+    return shaftNetPower(found,mAir,T3,313).net>=0;
+  };
+  const target=1+e.maxBoost;
+  if(canHold(target))return e.maxBoost;           // wastegating
+  if(!canHold(1.005))return 0;                    // not spooled
+  let lo=1.005,hi=target;
+  for(let i=0;i<24;i++){const m=(lo+hi)/2;if(canHold(m))lo=m;else hi=m;}
+  return lo-1;
+}
 // Residual gas left behind because the cylinder never got below exhaust pressure. It occupies
 // volume the fresh charge wanted, so VE falls by roughly that fraction scaled by the clearance
 // volume it hides in.
@@ -1229,7 +1301,10 @@ function deriveGasDynamics(){
     const tb=TURBO[e.turboSize]||TURBO.medium;
     e.turbineArea=(tb.ar*AR_INCH)*(TURB_WHEEL*tb.exd/2);
     e.turbUnits=(e.turboConfig==='twin')?2:1;
-  }else{e.turbineArea=0;e.turbUnits=1;}
+    e.compExd=tb.exd;
+    e.shaftJ=wheelInertia(tb.exd)*(e.turbUnits);
+    e.shaftMax=maxShaftRpm(tb.exd);
+  }else{e.turbineArea=0;e.turbUnits=1;e.compExd=0;e.shaftJ=0;e.shaftMax=0;}
   // Size the system pipe from the engine's own flow at the power peak, not from a fixed number.
   const m3sPeak=(e.dispCyl_L/1000)*(T/320)*e.cylinders*(e.redline*0.9/120);
   // One system per BANK: a V or a boxer has two heads pointing opposite ways and runs two pipes,
@@ -2090,6 +2165,15 @@ function buildEngine(){
   // the flow rating, so the rating and the limit cannot disagree.
   engine.chokeFlow_kgs=engine.intake==='turbo'?compChokeFlow(tb.exd)*cfg.flow/132.28:0;
   engine.spoolK=tb.k*cfg.k*alsK*(engine.intake==='turbo'?(1-engine.icLag)/prMul:1);
+  // Solving the shaft balance costs a few thousand iterations, and boostAvail is called for every
+  // rpm of every torque-curve build. Sample it once per engine into a table and interpolate — the
+  // same reason a compressor map is a map and not a formula evaluated at runtime.
+  engine.boostTable=null;
+  if(engine.intake==='turbo'&&engine.turbineArea>0){
+    const lo=Math.max(600,engine.idleRpmEff||800),hi=engine.redline,N=26,tb=[];
+    for(let i=0;i<=N;i++){const r=lo+(hi-lo)*i/N;tb.push({rpm:r,bar:steadyBoost(r)});}
+    engine.boostTable=tb;
+  }
   engine.nitrousBar=NITROUS_BAR[engine.nitrous]||0;
   state.boostActual=0;state.nitrousActive=false;state.nitrousCharge=1.0;   // fresh tanks
   state.engineHealth=1.0;state.blown=false;state.wearCause='';   // a fresh (rebuilt) engine
@@ -2352,7 +2436,19 @@ function spoolFrac(rpm){
 // Steady compressor pressure ratio above atmosphere at an RPM (turbo spools with RPM;
 // a supercharger is crank-driven so it makes boost almost from idle).
 function boostAvail(rpm){
-  if(engine.intake==='turbo')return engine.boost_bar*spoolFrac(rpm);
+  if(engine.intake==='turbo'){
+    // Steady boost is now SOLVED from the shaft power balance, not read off a logistic curve in
+    // rpm. spool50 and spoolWidth are gone: where a turbo comes on song is where its turbine can
+    // finally supply what its compressor is drawing, which depends on the wheel, the housing A/R,
+    // the exhaust energy available and the engine's own swallowing capacity.
+    const tb=engine.boostTable;
+    if(!tb||!tb.length)return engine.boost_bar*spoolFrac(rpm);
+    if(rpm<=tb[0].rpm)return tb[0].bar;
+    for(let i=1;i<tb.length;i++)if(rpm<=tb[i].rpm){
+      const a=tb[i-1],b=tb[i];return a.bar+(b.bar-a.bar)*(rpm-a.rpm)/(b.rpm-a.rpm);
+    }
+    return tb[tb.length-1].bar;
+  }
   if(engine.intake==='supercharger'){
     const sc=SC_TYPE[engine.scType]||SC_TYPE.roots;
     return engine.boost_bar*clamp(sc.lo+(sc.hi-sc.lo)*Math.pow(rpm/engine.redline,sc.exp),0,1);
@@ -2694,10 +2790,26 @@ function brakeTorqueRaw(rpm,map,fuelCut){
   return (bmep*1e5*(engine.displacement_L/1000))/engine.strokeDiv-electricalDragTorque(rpm);
 }
 // Advance the turbo's actual boost toward what it can make at the current RPM (spool lag).
+// Spool is the shaft equation of motion, integrated as ENERGY rather than angular velocity.
+// dw/dt = P/(J.w) is singular at rest — at 500 shaft rpm a 5 kW imbalance is 3e6 rad/s^2, which no
+// explicit integrator survives. E = 1/2.J.w^2 gives dE/dt = P_net and w = sqrt(2E/J), with no
+// division by w anywhere: a stationary shaft simply has E = 0 and gains energy. That formulation
+// replaces spoolK, the fitted lag rate.
 function stepBoost(dt){
-  if(engine.intake!=='turbo'){state.boostActual=boostAvail(state.rpm);return;}
-  const target=engine.boost_bar*spoolFrac(state.rpm);
-  state.boostActual+=(target-state.boostActual)*(1-Math.exp(-engine.spoolK*dt));
+  if(engine.intake!=='turbo'||!engine.shaftJ){state.boostActual=boostAvail(state.rpm);return;}
+  const J=engine.shaftJ, wMax=engine.shaftMax*2*Math.PI/60;
+  if(state.shaftE==null)state.shaftE=0;
+  const T3=exhaustGasT(clamp(state.map/Math.max(0.4,engine.mapMax),0.3,1.1));
+  const sub=Math.max(1,Math.ceil(dt/0.002));      // the shaft is faster than the vehicle; sub-step it
+  const h=dt/sub;
+  for(let k=0;k<sub;k++){
+    const w=Math.sqrt(2*Math.max(0,state.shaftE)/J);
+    const n=w*60/(2*Math.PI);
+    const mAir=airFlowAt(state.rpm,1+state.boostActual);
+    const r=shaftNetPower(n,mAir,T3,effIAT(1+state.boostActual)+273.15);
+    state.shaftE=clamp(state.shaftE+r.net*h,0,0.5*J*wMax*wMax);
+    state.boostActual=clamp(r.pr-1,0,engine.maxBoost);
+  }
 }
 // Target manifold pressure from throttle opening, RPM and available boost.
 function mapTarget(){

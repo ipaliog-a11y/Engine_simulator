@@ -20,6 +20,40 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 Working toward **v1.0 — every number derived, not fitted.**
 
+### Conversion 4 of 5 — turbo, part 3: the shaft equation of motion  *(partial — one open issue)*
+
+**Steady boost is now solved, not asserted.** `spool50` and `spoolWidth` are gone. Where a turbo
+comes on song is where its turbine can finally supply what its compressor is drawing, which depends
+on the wheel, the housing A/R, the exhaust energy available and the engine's own swallowing
+capacity. `boostAvail` bisects the shaft power balance instead of reading a logistic curve in rpm.
+Calibration **3.19% → 3.17%**, the best since before conversion 3.
+
+Solving costs a few thousand iterations and `boostAvail` is called for every rpm of every torque
+curve build, so it is sampled once per engine into a 26-point table and interpolated — the same
+reason a compressor map is a map rather than a formula evaluated at runtime.
+
+**The transient is the energy ODE**, replacing `spoolK`. `dω/dt = P/(J·ω)` is singular at rest — at
+500 shaft rpm a 5 kW imbalance is 3×10⁶ rad/s² — so it integrates `E = ½Jω²`, giving `dE/dt = P_net`
+and `ω = √(2E/J)` with no division by ω anywhere, sub-stepped at 2 ms inside the caller's step.
+
+**A bug worth recording.** `shaftNetPower` returned the *wastegated* pressure ratio, and the search
+in `steadyBoost` asks "can the shaft reach this PR". At the wastegate setting itself the capped value
+can never exceed the target, so the search answered no for a frame that had 40 kW of turbine power
+spare to make it. Now it reports the raw ratio for the search and the capped one for the result.
+Same family as the earlier traps: a cap silently turning into an answer.
+
+**Open issue, and the reason this is partial.** The transient does not converge to the steady
+solution for high boost targets on a small frame: asking the kei preset for 1.5 bar or more leaves
+`stepBoost` short of 90% of target after 30 simulated seconds, while the steady solver says the
+frame can hold it. Two of `test40`'s assertions fail on that — spool time no longer lengthens from
+1.5 → 2.0 → 2.5 bar because all three time out identically. This is a defect in the transient, not
+a physical result, and it is stated rather than papered over. The steady path is unaffected, which
+is what the calibration and the lap solver use.
+
+**Not yet done:** the acceleration solver still consumes a 1-D `tqAt(rpm)` curve, so `simulateAccel`
+has no transient and `test40`'s third assertion — a small frame should be quicker off the line —
+still fails. That needs the 2-D rpm × boost grid the investigation identified.
+
 ### Conversion 4 of 5 — turbo, part 2: the compressor efficiency island
 
 **Efficiency is a position on the map, not a formula in pressure ratio.** A compressor has an
