@@ -1002,13 +1002,23 @@ const densFromP=dp=>Math.pow(Math.max(0.05,1+dp),1/GAMMA_AIR)-1;
 // hot, and a high-compression engine sends less heat down the pipe because it extracted more work.
 function exhaustGasT(load){
   const e=engine;
-  const eta=clamp(0.36*(e.crFactor||1)*(e.typeBsfc?1/e.typeBsfc:1),0.20,0.52);
+  // Thermal efficiency from compression ratio ALONE. Multiplying crFactor by 1/typeBsfc as well
+  // double-counts: a diesel's better fuel consumption IS mostly its higher compression ratio, and
+  // charging it twice put diesel efficiency at 0.52 — above anything real, best-in-class being
+  // 0.42-0.45.
+  const eta=clamp(0.36*(e.crFactor||1),0.20,0.46);
   // Mixture at this load, not the live slider: full load runs rich for power and exhaust-temperature
   // control (lambda ~0.88), light load sits at stoich. A diesel is quality-governed and always lean,
   // which is exactly why diesel EGT is so much lower than petrol.
   const lam=e.ci?1.35+0.9*(1-clamp(load,0,1)):1-0.12*clamp(load,0,1);
   const afr=Math.max(6,(e.stoichAFR||14.7)*lam);
-  const dT=(e.fuelLHV||44)*1e6/(afr*CP_EXH)*Math.max(0.18,0.62-eta)*clamp(load,0.35,1.1);
+  // Roughly a third of fuel energy leaves through the exhaust port, whatever the engine. The old
+  // `0.62 - eta` form made that fraction collapse as efficiency rose — it floored a diesel at 0.18
+  // and gave it a 370 C exhaust against a real ~600 C pre-turbine, which left the turbine too weak
+  // to spool and the diesel presets making almost no torque at all. What actually makes a diesel's
+  // exhaust cooler is running LEAN, and the AFR term above already carries that.
+  const fExh=clamp(0.40-0.24*eta,0.24,0.36);
+  const dT=(e.fuelLHV||44)*1e6/(afr*CP_EXH)*fExh*clamp(load,0.35,1.1);
   return 300+dT;
 }
 // ---- intake: Helmholtz ----

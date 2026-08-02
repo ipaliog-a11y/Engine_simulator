@@ -25,13 +25,18 @@ if (!(ov[0].ov < ov[1].ov && ov[1].ov < ov[2].ov)) fails.push('overlap must grow
 
 // ==================================================================== 2. EGT from the energy balance
 // Checked against real measured exhaust temperatures, not against this simulator's own outputs.
-// Petrol runs 700-900 C at full load; a diesel is quality-governed and always lean, so it runs far
-// cooler; a rotary dumps combustion still in progress into the port and is famously hot.
+// These are PRE-TURBINE / turbine-inlet figures, which is what the model computes and what drives
+// a turbocharger. The first version of this test used tailpipe numbers by mistake and so demanded
+// a diesel below 550 C; a turbodiesel measures 600-800 C at the turbine inlet and 400-500 at the
+// pipe. That wrong band then hid a real defect: the diesel presets were being given a 370 C exhaust,
+// their turbines could not spool, and both of them made essentially no torque at all.
+// Petrol 850-950 at full load, turbodiesel 600-800, rotary 950-1100 — it dumps combustion still in
+// progress into the port and is famously hot.
 console.log('\n== exhaust gas temperature must land on real measured values ==');
 const egt = await page.evaluate(() => {
   const out = [];
-  for (const [n, lo, hi] of [['1.6 Sport NA I4', 650, 900], ['2.0 Turbo Diesel I4', 250, 550],
-                             ['1.3 Rotary NA (Renesis)', 900, 1250], ['6.6 V8 Turbodiesel', 250, 550]]) {
+  for (const [n, lo, hi] of [['1.6 Sport NA I4', 820, 980], ['2.0 Turbo Diesel I4', 560, 800],
+                             ['1.3 Rotary NA (Renesis)', 900, 1250], ['6.6 V8 Turbodiesel', 560, 800]]) {
     const pr = PRESETS.find(x => x.name === n);
     applyEngineToForm(Object.assign({}, DEFAULT_ENGINE, pr.engine)); buildEngine();
     out.push({ n, full: Math.round(exhaustGasT(1.0) - 273), part: Math.round(exhaustGasT(0.35) - 273), lo, hi });
