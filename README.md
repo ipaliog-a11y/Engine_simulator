@@ -1,4 +1,4 @@
-# PIXEL ENGINE SIM v0.6 build 62
+# PIXEL ENGINE SIM v0.6 build 63
 
 **A lightweight, 8-bit style internal combustion engine *designer* & simulator** inspired by *Automation*.
 
@@ -774,6 +774,50 @@ Planned order, each validated against `tests/test41.mjs`, `tests/aero.mjs` and `
    missing most of its back-pressure — and therefore most of its residual-gas VE loss. The derived
    turbine nozzle supplies exactly that number (0.29 bar for the 71 mm frame at 5000 rpm against
    0.07 bar of pipe), so conversion 4 should feed conversion 3 rather than sit beside it.
+
+   #### Part 3 investigated: the shaft equation of motion
+
+   The last piece, and the one that finally retires `spool50`, `spoolWidth` and `spoolK` — three
+   fitted numbers standing in for one ODE. Working model at `tests/proto/shaft.mjs`. Four questions
+   had to be settled first:
+
+   **1. The singularity is real, and avoidable.** `dω/dt = P/(J·ω)` blows up as ω → 0: at 500 shaft
+   rpm a 5 kW imbalance gives 3×10⁶ rad/s², which no explicit integrator survives. Integrating
+   **energy** instead removes it completely — `E = ½Jω²`, so `dE/dt = P_net` and `ω = √(2E/J)`, with
+   no division by ω anywhere. A stationary shaft simply has `E = 0` and gains energy. This is the
+   formulation to build.
+
+   **2. It is not stiff.** Time to 90% boost converges across two decades of step size — small frame
+   at 3000 rpm gives 100 / 70 / 60 / 59 ms at dt = 0.02 / 0.005 / 0.001 / 0.0002. The acceleration
+   integrator's existing **dt = 0.005 runs about 18% fast**; dt = 0.001 is converged. Either
+   sub-step the shaft or accept a known bias, but it does not need a smaller vehicle step.
+
+   **3. The architecture is the real cost.** Both `simulateAccel` and the lap solver call
+   `buildTorqueCurve()` **once** and interpolate `tqAt(rpm)`. With a shaft ODE, torque is a function
+   of *(rpm, boost)* and boost is a state variable, so a 1-D precomputed curve stops being valid.
+   The cheap fix is a 2-D grid over rpm × boost built once and bilinearly interpolated, rather than
+   recomputing VE — which now carries two wave solves and a nozzle bisection — at every step of
+   every run. This is the same class of change the slip model needed, and the reason both were left
+   until the physics under them was settled.
+
+   **4. It answers `test40`.** Spool-up to 90% boost on a 2.0 L at 0.8 bar, engine held at speed:
+
+   | frame | 2000 rpm | 2500 rpm | 3000 rpm | 4000 rpm |
+   |---|---|---|---|---|
+   | small (54 mm) | 428 ms | 120 ms | 58 ms | 26 ms |
+   | medium (71 mm) | not spooled | not spooled | not spooled | 270 ms |
+   | large (86 mm) | not spooled | not spooled | not spooled | not spooled |
+
+   The small frame is lit before the large one has started. A 0–100 run that *integrates* this must
+   favour it, which is exactly `test40`'s remaining assertion and exactly what a steady
+   boost-per-rpm curve can never show.
+
+   **A harness trap, recorded because it read as a physics result.** The first convergence check ran
+   the medium frame at 3000 rpm and reported "never" at every step size, which looks like divergence
+   and is not: that combination genuinely never reaches 0.8 bar, as the table above shows. A
+   convergence check has to be run on a case that converges. Reading that null as instability would
+   have been the same error as reading a value off a clamp — the fourth time this class of mistake
+   has appeared in these conversions.
 
    #### Known gaps before building
 
