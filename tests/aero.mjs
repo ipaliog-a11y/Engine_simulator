@@ -1,8 +1,10 @@
 import { chromium } from './pw.mjs';
-const repo = new URL('..', import.meta.url).pathname.replace(/\/$/, '');
+import { fileURLToPath, pathToFileURL } from 'url';
+import path from 'path';
+const repo = fileURLToPath(new URL('..', import.meta.url));
 const browser = await chromium.launch();
 const page = await browser.newPage({ viewport: { width: 1280, height: 950 } });
-await page.goto(`file://${repo}/index.html`, { waitUntil: 'networkidle' });
+await page.goto(pathToFileURL(path.join(repo, 'index.html')).href, { waitUntil: 'networkidle' });
 await page.waitForTimeout(600);
 
 // Does the TOP SPEED model reproduce real cars? test41 only ever checked 0-100, which is

@@ -1,12 +1,14 @@
 import { chromium } from './pw.mjs';
 import { readFileSync, statSync } from 'fs';
-const repo = new URL('..', import.meta.url).pathname.replace(/\/$/, '');
+import { fileURLToPath, pathToFileURL } from 'url';
+import path from 'path';
+const repo = fileURLToPath(new URL('..', import.meta.url));
 const browser = await chromium.launch();
 const page = await browser.newPage({ viewport: { width: 1200, height: 900 }, acceptDownloads: true });
 const errors = [];
 page.on('console', m => { if (m.type() === 'error') errors.push('console: ' + m.text()); });
 page.on('pageerror', e => errors.push('pageerror: ' + e.message));
-await page.goto(`file://${repo}/index.html`, { waitUntil: 'networkidle' });
+await page.goto(pathToFileURL(path.join(repo, 'index.html')).href, { waitUntil: 'networkidle' });
 await page.waitForTimeout(800);
 const fails = [];
 

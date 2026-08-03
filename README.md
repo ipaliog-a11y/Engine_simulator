@@ -1,4 +1,4 @@
-# PIXEL ENGINE SIM v0.6 build 67
+# PIXEL ENGINE SIM v0.6 build 71
 
 **A lightweight, 8-bit style internal combustion engine *designer* & simulator** inspired by *Automation*.
 
@@ -635,10 +635,20 @@ node tools/stamp.mjs --check    # verify it is consistent and ahead of origin/ma
 These are modelled approximations that are *stated* rather than hidden, each one measured and
 documented in the GUIDE at the point where it matters:
 
-- **Turbo lag doesn't reach the performance numbers.** Spool time is integrated on the live
-  ENGINE bench, but `simulateAccel` and `simulateLap` both work from the steady boost available
-  at each rpm, so they feel the spool *point* move and not the transient. A very laggy build is
-  flattered a little by its 0–100 and lap times.
+- **Turbo lag reaches 0–100 but not the lap.** `simulateAccel` now integrates the shaft alongside
+  the car and reads torque off a 2-D rpm × boost grid, because boost is a state with history and a
+  1-D curve cannot describe a turbo mid-spool. `simulateLap` still works from the steady boost
+  available at each rpm, so a very laggy build is still flattered a little by its lap time.
+- **The turbine housing is not matched to the engine.** A/R comes from the frame size class alone —
+  small 0.42, medium 0.64, large 0.86 — with nothing about the engine entering, so a 2.0 four and a
+  6.6 V8 on the same size class get the same throat. Measured: a 4× spread in exhaust flow per mm²
+  of throat across the presets, and boost thresholds up to 4275 rpm late. Findings and the proposed
+  replacement are parked at `tests/proto/housing.mjs`.
+- **A turbo cannot fail from overspeed.** The shaft has a tip-speed limit and the model respects it
+  as a *cap*, but nothing breaks. A grossly over-flowed frame therefore ends up running steadily at
+  an expansion ratio that would have destroyed it — a 2.0 four at 2.5 bar on a small frame reaches
+  7.4 bar of exhaust manifold pressure and simply becomes gutless, where the real outcome is a
+  scrapped cartridge.
 - **The racing line doesn't know what car is driving it.** The late-apex bias is priced from the
   geometry ahead, not the car's own speed, so a 90 hp hatchback and an 800 hp aero car take the
   same line. It is the same half-percent for everyone, so build-to-build comparisons stay honest.
@@ -650,15 +660,19 @@ documented in the GUIDE at the point where it matters:
 - **Power peaks at the rev limiter on one preset** (2.0 Turbo Hot-Hatch) — down from four before the
   valvetrain conversion and two before gas dynamics. Every naturally-aspirated preset now rolls off
   inside its own rev range for a stated reason. The one that remains is a *turbo*, and what sets a
-  turbo's peak position is boost taper as the compressor runs out of map — turbo-map physics, which
-  is conversion 4. `tests/test46.mjs` holds this at a budget of 1 and additionally fails outright if
-  any NA preset ever joins it.
-- **Two behavioural tests fail.** `test40` asserts an over-flowed turbo frame should be penalised on
-  a lap — a small frame 159% over its rated flow at 2.5 bar currently is not, which is turbo-map
-  physics and therefore conversion 4. `test38` asserts the late-apex racing line never costs time;
-  on the *fast* circuit it now costs 0.24 s while gaining 0.39–0.99 s on the other three. That is a
-  finding about the racing line rather than about the engine: the late-apex bias is not universally
-  beneficial and wants a per-corner decision instead of a blanket shift.
+  turbo's peak position is boost taper as the compressor runs out of map. Conversion 4 has since
+  shipped the compressor island and the shaft balance, but the last fitted stand-in for taper —
+  `turboChoke` — is still there, and it should retire with turbine housing sizing: real top-end
+  taper *is* back-pressure outrunning boost. `tests/test46.mjs` holds this at a budget of 1 and
+  additionally fails outright if any NA preset ever joins it.
+- **One behavioural test fails: `test40`,** on two assertions, and both are waiting on turbine
+  housing sizing. It asserts that spool time lengthens with the boost target, and that at low boost a
+  small frame is quicker off the line than a large one. Both are true of real turbos. The second is
+  currently held up only by a bearing-drag constant about 5× published magnitude — correct it and the
+  ordering flips by 0.05 s, against a 0.12 s margin, so the effect sits **inside the model's own
+  ~3% noise floor** and cannot yet be claimed honestly. (`test38` used to be the second failure; it
+  asserted the late-apex line *never* costs time, which is a claim of optimality a geometric
+  heuristic cannot make. It now asserts what one can — pays on balance, never loses more than 0.5%.)
 - **`vePeakRpm` is still asserted, and removing it has now failed twice.** Deriving it from Taylor's
   Mach knee put every engine's peak at 0.92–0.97 of redline (54% RMS). Replacing the bell entirely
   with a flat port-flow envelope gave 10.89% RMS. The second attempt is the more informative one: it
@@ -690,6 +704,28 @@ score.
 
 Planned order, each validated against `tests/test41.mjs`, `tests/aero.mjs` and `tests/test43.mjs`:
 
+#### The working queue — what is actually being built next
+
+The five conversions above are the *structure*. This is the current running order, which changes as
+measurement finds things. Each item is one PR.
+
+| # | item | state | why it is in this position |
+|---|---|---|---|
+| 1 | Exhaust pumping work (PMEP) | ✅ build 70 | The missing **constraint**. Without it a tighter turbine housing cost nothing at the top end, so housing sizing could not be derived at all. |
+| 2 | Residual-gas knock | ⬜ **next** | `knockAt()` has no residual term, so back-pressure never brings on knock and the petrol housing limit does not exist. This is what makes the petrol/diesel housing split fall out of physics instead of a per-type constant. |
+| 3 | Turbine housing sizing | ⬜ blocked on 2 | Retires the size-class A/R table, and is expected to retire `turboChoke` with it — real top-end boost taper *is* back-pressure outrunning boost. Predicted to take spool RMS 1940 → ~700 rpm. Findings parked at `tests/proto/housing.mjs`. |
+| 4 | `vePeakRpm` | ⬜ | Still asserted after two failed derivations, both recorded at the use site. |
+| 5 | Launch model | ⬜ | Unblocks the parked slip-ratio tyre model *and* rotational inertia — every car currently gets a free ~6% on 0–100. The three go in together and recalibrate once. |
+| 6 | Combustion (conversion 5) | ⬜ | The big one. |
+| 7 | Ground `test46`'s invented bands | ⬜ | Back-pressure caps, ram/scavenge magnitude and buildable header length are bands **I wrote**, not measurements. None currently fails, which is exactly the concern — a band you invented can only confirm your own reasoning. |
+
+Also carried, and labelled in place rather than quietly: `BEAR_C` (~5× published turbo bearing
+friction, and `D⁵` where Petroff gives `D³`), `FILL_E` (real effect, attached to compressor diameter
+when charge volume is what matters), `turboChoke`, and the `ci` factor on the intake half of the
+pumping loop (which compensates for `mapTarget()` giving diesels a throttle plate they should not
+have — the real fix is re-plumbing diesel load through fuelling).
+
+
 1. ~~**Valvetrain and port flow**~~ ✅ — valve area and count, spring rate and valve mass, cam lift
    and duration; port choking from Taylor's inlet Mach index, valve float from the inertia/spring
    balance. Presets peaking at the exact rev limiter went **4 → 2**, and the two that were fixed are
@@ -715,10 +751,17 @@ Planned order, each validated against `tests/test41.mjs`, `tests/aero.mjs` and `
    game: `EXHAUST.topGain` and `CAM.scav` really are two knobs for one event, and deriving either
    alone would have left the other double-counting it.
 4. **Turbo** — compressor and turbine maps instead of the lumped `{spool, choke, k, flow}` table.
-   ◐ **Part 1 shipped: the turbine as a nozzle** (frames are wheels, A/R is real geometry, the
+   ◐ **Parts 1–4 shipped.** ✅ The turbine as a nozzle (frames are wheels, A/R is real geometry, the
    wastegate closes the power balance, residual gas becomes a pressure ratio — calibration 3.38% →
-   **3.20%**, the first conversion to improve it). Compressor map and shaft dynamics still to come.
-   Working model at `tests/proto/turbo.mjs`. 22 fitted numbers go:
+   **3.20%**, the first conversion to improve it); the compressor efficiency island; the shaft
+   equation of motion integrated as energy; and lag reaching the acceleration solver through a 2-D
+   rpm × boost torque grid, because boost is a state with history and a 1-D curve cannot describe a
+   turbo mid-spool. ⬜ **Still open: the turbine housing.** A/R is picked from the frame size class
+   with nothing about the engine entering it, which leaves a 4× spread in exhaust flow per mm² of
+   throat across the presets and boost thresholds up to 4275 rpm late. Investigation parked with its
+   findings at `tests/proto/housing.mjs`; the remaining prerequisite is residual-gas knock. Two
+   transient losses (`BEAR_C`, `FILL_E`) are also still fitted and are labelled in place with the
+   measurements that say by how much. Working model at `tests/proto/turbo.mjs`. 22 fitted numbers go:
    `TURBO{spool50, width, choke, k, flow}` × 3 frames, `TURBO_CONFIG{...}` × 4, `TURBO_PR_REF` and
    `SPOOL_PR_EXP`.
 

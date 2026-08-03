@@ -1,11 +1,13 @@
 import { chromium } from './pw.mjs';
-const repo = new URL('..', import.meta.url).pathname.replace(/\/$/, '');
+import { fileURLToPath, pathToFileURL } from 'url';
+import path from 'path';
+const repo = fileURLToPath(new URL('..', import.meta.url));
 const browser = await chromium.launch();
 const page = await browser.newPage({ viewport: { width: 1200, height: 950 } });
 const errors = [];
 page.on('console', m => { if (m.type() === 'error') errors.push('console: ' + m.text()); });
 page.on('pageerror', e => errors.push('pageerror: ' + e.message));
-await page.goto(`file://${repo}/index.html`, { waitUntil: 'networkidle' });
+await page.goto(pathToFileURL(path.join(repo, 'index.html')).href, { waitUntil: 'networkidle' });
 await page.waitForTimeout(500);
 const fails = [];
 
@@ -74,15 +76,22 @@ const frames = await page.evaluate(() => {
       document.getElementById('vhDiff').value = 'clsd'; buildVehicle();
       out.push({ bar, sz, hp: engine.score.peakHP, load: +engine.turboLoad.toFixed(2),
         choke: +engine.turboChoke.toFixed(2), spool50: Math.round(engine.spool50),
-        iat: Math.round(effIAT(1 + bar)), t100: +perf.t100.toFixed(2),
+        // t100 is null when the car cannot reach 100 km/h at all. That is a legitimate model
+        // output, not an error: a grossly over-flowed frame can choke an engine on its own
+        // back-pressure badly enough that it never gets there. Carry the null through and let the
+        // assertions decide — throwing on it turns a real result into a harness crash.
+        iat: Math.round(effIAT(1 + bar)), t100: perf.t100 == null ? null : +perf.t100.toFixed(2),
         lap: +simulateLap('mixed').lap.toFixed(2) });
     }
   }
   return out;
 });
 console.log('boost  frame    hp   flow load   choke   spool50   charge   0-100    lap');
-frames.forEach(f => console.log(`${f.bar.toFixed(1)}   ${f.sz.padEnd(7)} ${String(f.hp).padStart(4)} ${String(f.load).padStart(10)} ${String(f.choke).padStart(8)} ${String(f.spool50).padStart(8)} ${String(f.iat + 'C').padStart(8)} ${String(f.t100 + 's').padStart(7)} ${String(f.lap + 's').padStart(8)}`));
+frames.forEach(f => console.log(`${f.bar.toFixed(1)}   ${f.sz.padEnd(7)} ${String(f.hp).padStart(4)} ${String(f.load).padStart(10)} ${String(f.choke).padStart(8)} ${String(f.spool50).padStart(8)} ${String(f.iat + 'C').padStart(8)} ${String(f.t100 === null ? 'never' : f.t100 + 's').padStart(7)} ${String(f.lap + 's').padStart(8)}`));
 const at = (b, s) => frames.find(f => f.bar === b && f.sz === s);
+// A frame that cannot get the car to 100 km/h at all is worse than any finite time, so order nulls
+// last rather than letting a comparison against null silently read as false.
+const t100 = f => f.t100 === null ? Infinity : f.t100;
 // Low boost: the small frame should be the right answer for a road car — it lights up far
 // earlier and is quicker off the line. NB not asserted on LAP TIME: a lap is spent almost
 // entirely above 3500 rpm, so the lap solver rewards the large frame's peak power and barely
@@ -90,7 +99,7 @@ const at = (b, s) => frames.find(f => f.bar === b && f.sz === s);
 // stated in the GUIDE rather than papered over here.
 if (!(at(0.8, 'small').spool50 < at(0.8, 'large').spool50 * 0.6))
   fails.push('at low boost the small frame should light up far earlier than the large one');
-if (!(at(0.8, 'small').t100 < at(0.8, 'large').t100))
+if (!(t100(at(0.8, 'small')) < t100(at(0.8, 'large'))))
   fails.push('at low boost the small frame should be quicker off the line than the large one');
 // high boost: it should NOT be — the small frame is out of its map
 if (!(at(2.5, 'small').load > 1)) fails.push('a 2.0 L at 2.5 bar does not over-flow the small frame');
@@ -101,7 +110,7 @@ if (!(at(2.5, 'small').choke > at(0.8, 'small').choke)) fails.push('over-flowing
 if (!(at(2.5, 'small').lap > at(0.8, 'small').lap)) fails.push('2.5 bar on an over-flowed small frame is still quicker on a lap — no penalty landed');
 // a frame that is far too big must spool too late to be worth having
 if (!(at(2.5, 'large').spool50 > at(2.5, 'medium').spool50)) fails.push('the large frame does not spool later than the medium one');
-console.log(`  at 0.8 bar the small frame lights up at ${at(0.8, 'small').spool50} rpm vs ${at(0.8, 'large').spool50}, and is ${(at(0.8, 'large').t100 - at(0.8, 'small').t100).toFixed(2)}s quicker to 100`);
+console.log(`  at 0.8 bar the small frame lights up at ${at(0.8, 'small').spool50} rpm vs ${at(0.8, 'large').spool50}, and is ${(t100(at(0.8, 'large')) - t100(at(0.8, 'small'))).toFixed(2)}s quicker to 100`);
 console.log(`  at 2.5 bar it is over-flowed (${at(2.5, 'small').load}x rated) and the medium frame makes ${at(2.5, 'medium').hp - at(2.5, 'small').hp} hp more`);
 
 // ---------------------------------------------------------------- 3. bigger frames flow more

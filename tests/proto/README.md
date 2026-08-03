@@ -47,3 +47,40 @@ recalibrated once.
 paths to those copies. The numbers they produced are in the write-up; the copies are gone. Note the
 trap they were built to avoid: monkey-patching a script-scope `const` from `page.evaluate` does
 nothing at all and silently yields identical rows for every value in a sweep.
+
+## `housing.mjs` — turbine housing sizing
+
+**Not standalone**, unlike the other two: `node tests/proto/housing.mjs` drives the shipped model
+through the browser, because the question is what the *app* does, not what a clean-room model would.
+
+`engine.turbineArea = (A/R) × R_wheel`, and A/R comes from the frame size class alone — small 0.42,
+medium 0.64, large 0.86. **Nothing about the engine enters.** A 2.0 four and a 6.6 V8 fitted with the
+same size class get the same turbine throat, which is not how anyone matches a turbo. The measured
+consequence: exhaust flow per mm² of throat spans **202 to 799 g/s** across the presets — a 4×
+spread, where a matched set would be roughly constant — and boost thresholds run up to **4275 rpm
+late** (the 13B lights at 7275 rpm against a real ~3000). RMS error ~1940 rpm.
+
+Sizing the housing instead to the **tightest that the engine tolerates at rated power** — which is
+what a real builder does — takes that to **~700 rpm**, with no per-frame table. And petrol and diesel
+split cleanly: petrol is best at a back-pressure ratio of 1.8, diesel is still improving past 3.0.
+
+That split must **not** be asserted as a per-type constant. What stops a petrol engine going tighter
+is **knock**: back-pressure raises the trapped residual fraction, and hot residual brings knock on. A
+diesel has no spark-knock limit at all, which is precisely why real turbodiesel housings are tight
+and why they make boost at 1600 rpm. The split should fall out of the knock model.
+
+**Why it is parked.** Two prerequisites, both found by measurement:
+
+1. ✅ **Pumping work** — `pumpFrictionMEP` charged only for intake depression against atmosphere, i.e.
+   the pumping loop with `p_exhaust` assumed to be 1 bar. A tight housing therefore cost *nothing* at
+   the top end, so nothing pushed back on tightening it. **Shipped in build 70.**
+2. ⬜ **Residual-gas knock** — `knockAt()` carries boost, compression, IAT, coolant, rpm, timing,
+   lambda, octane, DI and nitrous, and **no residual term**. Conversion 3 already computes residual
+   fraction from `(p_exh/p_int)^(1/γ)` for VE, but it never reaches knock, so the petrol limit does
+   not exist. This is the next step.
+
+**Anchor quality — read before tuning anything to these numbers.** Solid and published: VW 2.0 TDI
+~1750, Duramax 1600, Focus RS 2.5T ~2000, kei turbos ~2800–3000. Interpretation-dependent, weight
+lightly: the 2JZ 3600 (a big single behaves nothing like the factory sequential) and the 13B 3000
+(primary rotor only). Tuning to a number someone invented is the trap `test46`'s bands already fell
+into once.
