@@ -20,6 +20,50 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 Working toward **v1.0 — every number derived, not fitted.**
 
+### Turbo transient losses — integrated, and audited against real magnitudes
+
+Two transient shaft losses were added to `advanceShaft` (and deliberately **not** to the steady boost
+search, so a wastegated frame still holds target once lit): plumbing/intercooler **fill energy**
+while boost is rising, and **bearing drag**. Both are real effects. Both were also still fitted, so
+they were measured rather than taken on trust — by instrumenting the live model, not by reasoning
+about the constants.
+
+**Bearing drag is roughly 5× real, and its exponent is borrowed from the wrong argument.** On a 2.0
+four at 1.0 bar:
+
+| frame | shaft rpm | turbine kW | bearing kW | as % of turbine |
+|---|---|---|---|---|
+| small 54 mm | 183,900 | 46.8 | 1.42 | 3% |
+| medium 71 mm | 139,900 | 29.0 | 3.22 | 11% |
+| large 86 mm | 39,900 | 3.11 | 0.68 | 22% |
+
+Published journal-bearing cartridges run 0.2–0.8 kW at 100–150k rpm; the large frame here is paying
+0.68 kW at *40k*. And the `D⁵` came from the inertia scaling, which is a mass-distribution argument —
+Petroff's law gives friction power as `ω²·D³`.
+
+**That oversized term is exactly what buys `test40`'s frame-ordering assertion.** At 0.8 bar, small
+vs large 0–100: as committed 6.44 s vs 6.56 s, small quicker by **0.12 s**; with bearing drag at
+published magnitude and `D³`, 6.44 s vs 6.39 s, small **slower by 0.05 s**. A 0.17 s swing on a model
+whose calibration RMS is ~3% — about 0.2 s on a 6 s car. The claim is true of real turbos, but it
+currently sits **inside this model's noise floor**. Note the t90 boost ladder survives that
+correction: it is carried by the fill term, not by bearing drag.
+
+**The fill term is attached to the wrong variable.** It scales 6.4× across frame size and only 1.36×
+across intercooler size. The charge system that has to be pressurised is the core and the piping, so
+the physical dependence is the other way round. Deriving it (`dm = V·dp/RT` times compressor work per
+kg) gives 248 J for 2.5 L of plumbing and 894 J for 9 L, against the 280–381 J charged — but
+substituting that outright **stalls spool above 1.0 bar**, because the turbine cannot fill a
+realistically sized charge system. Same finger the diesel spool cliff pointed at: turbine housing
+sizing.
+
+One hypothesis checked and **disproved**: `dB = max(0, b2 − b)` looked like it might ratchet, charging
+the plumbing repeatedly on boost ripple. It does not — boost rises monotonically at constant engine
+speed, inflation 1.0× at 0.5, 1.0 and 2.0 bar.
+
+Also removed a dead housing heat-soak hook (`HEAT_SOAK` and `HEAT_PR` were both zero, so the term
+always evaluated to nothing). A term that can never do anything is not a placeholder; it reads like
+modelled physics.
+
 ### The pumping loop now includes the exhaust side
 
 `pumpFrictionMEP` charged only for intake depression against atmosphere — the pumping loop
