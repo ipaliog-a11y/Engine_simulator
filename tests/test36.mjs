@@ -1,11 +1,13 @@
 import { chromium } from './pw.mjs';
-const repo = new URL('..', import.meta.url).pathname.replace(/\/$/, '');
+import { fileURLToPath, pathToFileURL } from 'url';
+import path from 'path';
+const repo = fileURLToPath(new URL('..', import.meta.url));
 const browser = await chromium.launch();
 const page = await browser.newPage({ viewport: { width: 1200, height: 950 } });
 const errors = [];
 page.on('console', m => { if (m.type() === 'error') errors.push('console: ' + m.text()); });
 page.on('pageerror', e => errors.push('pageerror: ' + e.message));
-await page.goto(`file://${repo}/index.html`, { waitUntil: 'networkidle' });
+await page.goto(pathToFileURL(path.join(repo, 'index.html')).href, { waitUntil: 'networkidle' });
 await page.waitForTimeout(500);
 const fails = [];
 const fm = s => { const m = Math.floor(s / 60); return `${m}:${(s - m * 60).toFixed(2).padStart(5, '0')}`; };

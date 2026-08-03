@@ -11,8 +11,10 @@
 //   node tests/run.mjs --list       show what exists
 import { readdirSync } from 'fs';
 import { spawn } from 'child_process';
+import { fileURLToPath } from 'url';
+import path from 'path';
 
-const DIR = new URL('.', import.meta.url).pathname;
+const DIR = fileURLToPath(new URL('.', import.meta.url));
 const all = readdirSync(DIR).filter(f => f.endsWith('.mjs') && !['run.mjs','pw.mjs'].includes(f)).sort((a, b) => {
   const n = s => { const m = s.match(/(\d+)/); return m ? +m[1] : 1e9; };
   return n(a) - n(b) || a.localeCompare(b);
@@ -25,7 +27,7 @@ if (!run.length) { console.error('no tests matched ' + pick.join(' ')); process.
 
 const one = f => new Promise(res => {
   const t0 = Date.now();
-  const p = spawn(process.execPath, [DIR + f], { stdio: ['ignore', 'pipe', 'pipe'] });
+  const p = spawn(process.execPath, [path.join(DIR, f)], { stdio: ['ignore', 'pipe', 'pipe'] });
   let out = '';
   p.stdout.on('data', d => out += d); p.stderr.on('data', d => out += d);
   p.on('close', code => res({ f, code, ms: Date.now() - t0, out }));

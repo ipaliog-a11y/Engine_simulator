@@ -16,10 +16,12 @@
 // is the one thing you have to remember — which is exactly what --check enforces, by requiring the
 // working tree to be ahead of whatever origin/main carries.
 import { readFileSync, writeFileSync } from 'fs';
+import { fileURLToPath } from 'url';
+import path from 'path';
 import { execSync } from 'child_process';
 
 const VERSION = '0.6';
-const ROOT = new URL('..', import.meta.url).pathname;
+const ROOT = fileURLToPath(new URL('..', import.meta.url));
 const check = process.argv.includes('--check');
 const STAMP_RE = /PIXEL ENGINE SIM v[\d.]+ build (\d+)/;
 
@@ -29,7 +31,7 @@ const files = [
 ];
 
 const read = name => {
-  const src = readFileSync(ROOT + name, 'utf8');
+  const src = readFileSync(path.join(ROOT, name), 'utf8');
   const m = src.match(STAMP_RE);
   if (!m) { console.error(`  ${name}: no "PIXEL ENGINE SIM v… build N" stamp found`); process.exit(1); }
   return { src, build: +m[1] };
@@ -68,7 +70,7 @@ if (check) {
   const next = Math.max(current[0].build, mainBuild ?? 0) + 1;
   const stamp = `PIXEL ENGINE SIM v${VERSION} build ${next}`;
   current.forEach(f => {
-    writeFileSync(ROOT + f.name, f.src.replace(f.re, f.name === 'README.md' ? '# ' + stamp : stamp));
+    writeFileSync(path.join(ROOT, f.name), f.src.replace(f.re, f.name === 'README.md' ? '# ' + stamp : stamp));
     console.log(`  ${f.name.padEnd(12)} -> v${VERSION} build ${next}`);
   });
   console.log(`\nStamped build ${next}. It only ever goes up, so it survives a squash-merge.`);
