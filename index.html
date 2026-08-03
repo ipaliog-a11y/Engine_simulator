@@ -188,7 +188,7 @@ table.fuelmap td.live{box-shadow:inset 0 0 0 2px #fff;font-weight:bold}
 <body>
 <div class="container">
 <header>
-<h1>PIXEL ENGINE SIM v0.6 build 68</h1>
+<h1>PIXEL ENGINE SIM v0.6 build 69</h1>
 <div class="subtitle" id="subtitle">ENGINE DESIGNER • BUILD IT, THEN DRIVE IT</div>
 </header>
 <div class="main">
@@ -1212,12 +1212,25 @@ const maxShaftRpm=exd=>TIP_LIMIT*60/(Math.PI*exd);
 //     which is what keeps the high-boost kei traction ladder honest.
 //   · Mild D^5 bearing drag: large cartridges pay more, so a laggy large frame loses the low-boost
 //     standing start to a small one.
-//   · Housing heat soak: hook is here; scale currently zero (fill covers the ratio).
+// BOTH ARE STILL FITTED, and measurement says by how much. Instrumented on a 2.0 four at 1.0 bar,
+// BEAR_C gives 3.22 kW of bearing loss at 140k rpm on the reference cartridge and 0.68 kW on a large
+// frame turning only 40k; published journal-bearing cartridges run 0.2-0.8 kW at 100-150k. So it is
+// roughly 5x real. The D^5 was borrowed from the inertia scaling, but that is a mass-distribution
+// argument — Petroff's law gives friction power as omega^2 * D^3. Correcting both (BEAR_C 2.8e-6,
+// D^3) leaves the t90 boost ladder intact but flips test40's frame ordering at 0.8 bar from
+// small-quicker-by-0.12s to small-slower-by-0.05s. A 0.17 s swing on a model whose calibration RMS
+// is ~3% (~0.2 s on a 6 s car): the ordering claim currently sits inside the noise floor, and it is
+// this oversized term holding it up. Retire once the turbine can supply the spool power honestly.
 const BEAR_C=1.5e-5;
-const HEAT_SOAK=0.0;
-const HEAT_PR=0.0;
-const HEAT_N0=50000;
-const FILL_E=280;          // J per bar of boost rise at the reference wheel (× D^4 × IC lag)
+// J per bar of boost rise at the reference wheel (x D^4 x IC lag). ALSO STILL FITTED, and attached
+// to the wrong variable: the charge system that has to be pressurised is the intercooler core plus
+// the piping, not the compressor wheel. As written it scales 6.4x across frame size and only 1.36x
+// across intercooler size; the physical dependence is the other way round. Deriving it properly
+// (dm = V*dp/RT times compressor work per kg) gives 248 J for 2.5 L of plumbing and 894 J for 9 L
+// against the 280-381 J charged here — but substituting that outright STALLS spool above 1.0 bar,
+// because the turbine side cannot currently fill a realistically sized charge system. That is the
+// same missing mechanism as the diesel spool cliff: turbine housing sizing. Fix that first.
+const FILL_E=280;
 // PR and efficiency are coupled — efficiency depends on where you sit on the map and where you sit
 // depends on PR — so they are solved together rather than one being assumed alongside the other.
 function compressorPR(exd,shaftRpm,flowFrac,T01){
@@ -1252,9 +1265,11 @@ function shaftNetPower(shaftRpm,mAir,T3,T01){
   const Pc=mA*1005*Math.max(200,T01)*(Math.pow(Math.max(1,prCap),0.286)-1)/clamp(eta,0.25,0.85);
   return{net:Pt-Pc,pr:prCap,prRaw:pr,eta,Pt,Pc};
 }
-// Bearing drag + housing heat soak — the losses that make spool take real time. Applied only on
-// the transient path so a wastegated frame still holds its target once lit.
-function shaftLossPower(shaftRpm,pr,Pt){
+// Bearing drag — the loss that makes spool take real time. Applied only on the transient path so a
+// wastegated frame still holds its target once lit. (A housing heat-soak hook lived here with its
+// scale set to zero; a term that always evaluates to nothing is not a placeholder, it is dead code
+// that reads like modelled physics. Removed — heat soak goes in when it has a magnitude.)
+function shaftLossPower(shaftRpm){
   const e=engine, n=Math.max(0,shaftRpm), omega=n*2*Math.PI/60;
   // Viscous bearing drag ~ ω², scaled with wheel size. High-PR spool sits at high ω, so 2.5 bar
   // takes far longer than 0.5 bar rather than a flat multiple of the low-boost time.
@@ -1262,10 +1277,7 @@ function shaftLossPower(shaftRpm,pr,Pt){
   // large frame pays for its bearings instead of a small frame being punished for spinning faster
   // (ω ~ 1/D at a given pressure ratio would otherwise make Pbear ~ 1/D under linear size scaling).
   const size=Math.max(0.4,(e.compExd||D_REF)/D_REF);
-  const Pbear=BEAR_C*omega*omega*Math.pow(size,5);
-  // Housing heat soak: more while the shaft is slow, more again as compressor PR rises.
-  const heat=Math.min(0.55,HEAT_SOAK/(1+n/HEAT_N0)+HEAT_PR*Math.max(0,pr-1));
-  return Pbear+Math.max(0,Pt)*heat;
+  return BEAR_C*omega*omega*Math.pow(size,5);
 }
 // Air the engine swallows at a given speed and boost. Deliberately uses the DESIGN VE amplitude
 // rather than the live computeVE: computeVE now depends on boost through effIAT and the residual
@@ -2869,7 +2881,7 @@ function advanceShaft(shaftE,rpm,boostNow,throttle,dt){
     // Closing the throttle throttles BOTH sides. Cooling the exhaust while leaving the compressor
     // swallowing full airflow makes a lift actively BRAKE the shaft rather than let it coast.
     const r=shaftNetPower(n,airFlowAt(rpm,1+b)*Math.max(0.08,th),T3,effIAT(1+b)+273.15);
-    const loss=shaftLossPower(n,r.pr,r.Pt);
+    const loss=shaftLossPower(n);
     const b2=clamp(r.pr-1,0,engine.maxBoost);
     const dB=Math.max(0,b2-b);
     // Fill energy for this step: (1+b_mid)·Δb · scale  — higher targets cost more per bar.
