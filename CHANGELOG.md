@@ -20,6 +20,63 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 Working toward **v1.0 — every number derived, not fitted.**
 
+### The pumping loop now includes the exhaust side
+
+`pumpFrictionMEP` charged only for intake depression against atmosphere — the pumping loop
+`PMEP = p_exhaust − p_intake` with `p_exhaust` **assumed to be 1 bar**. On a boosted engine the
+piston is not pushing against the atmosphere, it is pushing against the turbine, and
+`backPressureBar` has computed that since the gas-dynamics conversion. The term was simply never
+connected to the work balance.
+
+The consequence was not a small error in a corner of the model, it was a **missing constraint**: a
+tighter turbine housing cost nothing at the top end, so nothing pushed back on making one tighter.
+That is why turbine housing sizing could not be derived, and it is why the housing has been picked
+from a frame size class — small 0.42, medium 0.64, large 0.86 — independent of the engine bolted to
+it. Measured across the presets, that gives a **4× spread in exhaust flow per mm² of throat**, and
+boost thresholds up to **4275 rpm late** (the 13B lights at 7275 rpm against a real ~3000).
+
+What it costs, peak power, against the same build without the term:
+
+| preset | before | after | |
+|---|---|---|---|
+| 1.0 Kei Turbo I3 | 114 | 106 | −7.0% |
+| 1.5 Turbo Eco I4 | 167 | 152 | −9.0% |
+| 2.0 Turbo Hot-Hatch I4 | 240 | 218 | −9.2% |
+| 2.5 Turbo I5 (RS) | 303 | 270 | −10.9% |
+| 3.0 Turbo I6 (2JZ) | 329 | 290 | −11.9% |
+| 2.0 Turbo Diesel I4 | 136 | 123 | −9.6% |
+| 6.6 V8 Turbodiesel | 476 | 402 | −15.5% |
+| 1.3 Rotary Turbo (13B) | 159 | 149 | −6.3% |
+
+Naturally aspirated engines lose only their pipe back-pressure (0.02–0.19 bar), so the NA
+calibration is untouched. Real-car acceleration RMS moves **3.02% → 3.19%** — a regression, and an
+explainable one: it is the cost of adding a term that was missing, and the housing sizing it unlocks
+is expected to take it back.
+
+Two consequences worth stating rather than hiding:
+
+- **The Grand Prix Pace power target moved 300 → 285 hp.** The reference 2JZ build went from 325 hp
+  to 290, so the challenge became unreachable by the build it was authored around. Authored content
+  tracks the physics, not the other way round — the same call already made when its lap target moved
+  60.0 → 60.6 s. (290 hp is not obviously wrong for the engine it models; a JDM 2JZ-GTE was 276.)
+- **A grossly over-flowed frame can now choke an engine into not reaching 100 km/h at all.** A 2.0
+  four asked for 2.5 bar on a small frame reaches **7.4 bar** of exhaust manifold pressure against
+  2.3 bar of boost; PMEP of 6.4 bar eats the entire bmep and torque falls to 24 Nm at 7000 rpm. The
+  car covers 400 m in 19.5 s and asymptotes at 97 km/h. Verified as a real collapse and not a NaN —
+  no non-finite cells in the torque grid, and the zero-boost column stays healthy at 176 Nm. `test40`
+  threw on the resulting `null`; it now carries it through, because "cannot reach 100 km/h" is a
+  legitimate model output and a harness that crashes on one turns a result into an error.
+
+  Not modelled, and flagged: at 7.4 bar expansion that turbine would be far past its 184k rpm limit.
+  The real outcome of that build is a **destroyed turbo**, not steady gutlessness.
+
+The intake half of the loop keeps its `ci` reduction, and that factor is **not** physics — it
+compensates for `mapTarget()` giving a diesel a throttle plate it should not have. A real diesel is
+quality-governed: the intake sits at ambient+boost at every load and torque is set by fuel quantity,
+which is also why a diesel has so little engine braking that trucks need exhaust brakes. Fixing it
+means re-plumbing diesel load through fuelling rather than through map, which is its own change.
+Labelled in place rather than quietly carried.
+
 ### Racing line — an honest claim instead of an unachievable one
 
 `test38` asserted the late-apex line **never** costs time on any circuit. That is a claim of

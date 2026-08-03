@@ -188,7 +188,7 @@ table.fuelmap td.live{box-shadow:inset 0 0 0 2px #fff;font-weight:bold}
 <body>
 <div class="container">
 <header>
-<h1>PIXEL ENGINE SIM v0.6 build 69</h1>
+<h1>PIXEL ENGINE SIM v0.6 build 70</h1>
 <div class="subtitle" id="subtitle">ENGINE DESIGNER • BUILD IT, THEN DRIVE IT</div>
 </header>
 <div class="main">
@@ -1482,7 +1482,11 @@ const CHALLENGES=[
     // 60.0 s was authored when turbo engines carried no exhaust manifold back-pressure. Once the
     // turbine was modelled the reference build cleared it by 0.29 s, inside test36's 0.5 s margin.
     // The target is authored content and has to track the physics, not the other way round.
-    targets:[{label:'Riverside lap',key:'lap',op:'<=',t:60.6,unit:'s'},{label:'Power',key:'peakHP',op:'>=',t:300,unit:'hp'}]},
+    // Same again for the power target: charging the exhaust half of the pumping loop took the
+    // reference 2JZ from 325 hp to 290, so 300 became unreachable for the build the challenge was
+    // authored around. 285 restores the intent. (290 is not obviously wrong for the engine it is
+    // modelled on — a JDM 2JZ-GTE was rated 276 hp.)
+    targets:[{label:'Riverside lap',key:'lap',op:'<=',t:60.6,unit:'s'},{label:'Power',key:'peakHP',op:'>=',t:285,unit:'hp'}]},
   {id:'greenhell',name:'Under Seven at the Ring',desc:'20 km, 40 corners and 290 m of elevation. No budget — just go and do the time.',
     circuit:'nord',
     targets:[{label:'Nordschleife lap',key:'lap',op:'<=',t:420,unit:'s'},{label:'Reliability',key:'reliability',op:'>=',t:45}]},
@@ -2764,13 +2768,40 @@ function activeAdvance(rpm,map){
   return clamp(mbt-retard,6,mbt);                       // pull timing to protect
 }
 function computeKnockRisk(rpm,map){return knockAt(rpm,map,activeAdvance(rpm,map));}
-// Friction + pumping mean effective pressure. Pumping loss grows with manifold vacuum
-// (throttling), which is what produces engine braking on a closed throttle.
+// The pumping loop: PMEP = p_exhaust - p_intake, both absolute. Charged in two halves, because
+// only one of them is honestly derived here.
+//
+//   EXHAUST side, (p_exh - 1). Fully derived, and it was missing ENTIRELY. The old term charged
+//   only for intake depression against atmosphere — i.e. the pumping loop with p_exhaust ASSUMED to
+//   be 1 bar. On a boosted engine the piston is not pushing against the atmosphere, it is pushing
+//   against the turbine, and backPressureBar already computes that. Leaving it out meant a tight
+//   turbine housing cost nothing at the top end, so nothing in the model pushed back on making one
+//   tighter — which is precisely why turbine housing sizing could not be derived.
+//
+//   INTAKE side, (1 - map). Throttling, unchanged, and it keeps its `ci` reduction. That factor is
+//   NOT physics: it compensates for mapTarget() giving a diesel a throttle plate it should not
+//   have. A real diesel is quality-governed — the intake sits at ambient+boost at every load and
+//   torque is set by fuel quantity, which is also why a diesel has so little engine braking that
+//   trucks need exhaust brakes. Fixing it means re-plumbing diesel load through fuelling rather
+//   than through map, which is its own change; labelled here rather than quietly carried.
+//
+// Deliberately NOT granting negative PMEP when boost exceeds back-pressure, even though positive
+// pumping work is real: this model's imep is a lumped correlation proportional to map, so it
+// already carries some of the pressure-level effect. Handing a supercharged engine +0.5 bar on top
+// of that would be a much larger claim than the missing exhaust term this change is fixing.
+function pumpingMEP(rpm,map){
+  const Tex=exhaustGasT(clamp(map/Math.max(0.4,engine.mapMax),0.3,1.1));
+  const prev=engine.boostNow;engine.boostNow=map;                  // backPressureBar reads it for the turbine
+  const pExh=1+backPressureBar(rpm,Tex);
+  engine.boostNow=prev;
+  return Math.max(0,pExh-1)+PUMP_K*Math.max(0,1.0-map)*(engine.ci?0.15:1);
+}
+// Friction + pumping mean effective pressure.
 function pumpFrictionMEP(rpm,map,oilFrictionMult){
   let fmep=(0.55+1.8e-8*rpm*rpm)*oilFrictionMult*engine.strokeFrictionMult;
   if(engine.intake==='supercharger')
     fmep+=0.18*(SC_TYPE[engine.scType]||SC_TYPE.roots).drag*Math.max(0,map-1.0)*(0.4+0.6*rpm/engine.redline);  // parasitic drive (by type)
-  fmep+=PUMP_K*Math.max(0,1.0-map)*(engine.ci?0.15:1);            // pumping / throttling loss (diesel is unthrottled)
+  fmep+=pumpingMEP(rpm,map);
   fmep+=engine.altDragMEP;                                         // alternator belt drag (baseline)
   return fmep;
 }
