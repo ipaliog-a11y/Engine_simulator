@@ -20,6 +20,30 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 Working toward **v1.0 — every number derived, not fitted.**
 
+### UI: tab names, firing order, Greek font, and a guide you can read
+
+- **Tabs renamed.** DESIGN → **ENGINE**, ENGINE → **LIVE**, everywhere they are referred to.
+- **Firing order on the LIVE bank.** Every engine used to fire 1-2-3-…-n (backwards, as it
+  turned out) under a caption reading "FIRING ORDER 1-4". Each layout and cylinder count now has
+  its production order (I4 1-3-4-2, I6 1-5-3-6-2-4, V8 1-5-4-8-6-3-7-2, V12 1-7-5-11-3-9-6-12-2-8-4-10,
+  flat-6 1-6-2-4-3-5), numbered bank by bank as BMW/Audi/Ferrari/Porsche do. That is also what
+  makes the drawing's crank geometry right: pistons 1 and 4 of a four now move together. Every
+  cylinder is numbered, and the number lights while it fires.
+- **Greek font.** The bundled pixel font was the latin subset only, so Greek fell back to the
+  system monospace and rendered far smaller. The Greek subset of the same font is now bundled.
+- **The guide is paged.** One 8 px sheet became an index of 28 pages in 7 sections, with
+  prev/next/index on every page, at 16 px, full width, remembering where you were. New pages:
+  the tabs, a first-build walkthrough, the firing order, the bottom end (bore/stroke, piston speed,
+  compression), options, and known limits. Two stale passages were corrected rather than carried:
+  the gearing slider is a bias about the derived final drive (since build 74), and turbo lag has
+  reached the 0–100 since build 66; their old Greek was dropped. Greek is kept per paragraph
+  wherever it still says what the English says; newer pages are English in Greek mode.
+- **Live builds actually reach you.** The service worker was cache-first for everything with a
+  cache name that never changed, so a browser that had opened the page kept serving that copy and
+  never saw a new build. The page is now network-first (cache only when offline).
+- New `tests/test51.mjs`: tab names, firing orders and inline-four crank geometry, every guide page
+  reachable and only one shown at a time, and the Greek face actually loaded.
+
 ### Shift at the wheel-torque crossover, not the limiter
 
 `simulateAccel` upshifted on one condition, `rpm >= redline`, in every gear of every car. It now

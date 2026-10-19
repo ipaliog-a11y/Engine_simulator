@@ -1,4 +1,4 @@
-# PIXEL ENGINE SIM v0.6 build 82
+# PIXEL ENGINE SIM v0.6 build 83
 
 **A lightweight, 8-bit style internal combustion engine *designer* & simulator** inspired by *Automation*.
 
@@ -16,7 +16,7 @@ watch the physics respond. Web-based, fully offline-capable, installable as a PW
 Load one of **16 preset builds** from the dropdown — petrol, diesel, rotary and 2-stroke
 (1.6 sport, kei turbo, hot-hatch, ITB
 screamer, 2JZ six, muscle V8, blown V8, V12 supercar…), or configure your own on the
-**DESIGN** tab and press **BUILD & DYNO**. Every parameter feeds the physics:
+**ENGINE** tab and press **BUILD & DYNO**. Every parameter feeds the physics:
 
 - **Engine type / cycle** — **petrol 4-stroke**, **diesel (compression-ignition)**,
   **2-stroke**, or **rotary (Wankel)**. Each reshapes the physics: a power stroke every rev
@@ -85,9 +85,10 @@ saps power; a large radiator, electric fan and oil cooler keep it cool.
 ### Simulation & live tuning
 - **Live outputs**: Power (HP), Torque (Nm), BMEP, Volumetric Efficiency, Thermal
   Efficiency, BSFC, Fuel Flow, Knock Risk, Engine Health.
-- **Seven tabs** — **DESIGN** (build the engine), **VEHICLE** (drop it in a car & read its
-  performance), **TRACK** (lap it round a circuit), **ENGINE** (live test-bench schematic),
-  **DYNO** (power/torque curve + scorecard), **GUIDE** (an in-app manual) and **OPTIONS** (sound,
+- **Seven tabs** — **ENGINE** (build the engine), **VEHICLE** (drop it in a car & read its
+  performance), **TRACK** (lap it round a circuit), **LIVE** (the engine running: cutaway, the
+  whole bank firing in its real order, and the controls), **DYNO** (power/torque curve +
+  scorecard), **GUIDE** (a paged manual with an index, 28 pages in 7 sections) and **OPTIONS** (sound,
   wear and **language**). The right column is context-aware: runtime Engine Controls while
   driving/on the dyno, the live **Performance** panel on VEHICLE and the **Lap Time** panel on
   TRACK.
@@ -143,7 +144,7 @@ saps power; a large radiator, electric fan and oil cooler keep it cool.
 
   ![test track](docs/track.png)
 
-- **Animated engine cutaway (new)** — the ENGINE tab is a live section through the engine you
+- **Animated engine cutaway** — the LIVE tab is a section through the engine you
   just designed, and everything on it moves because the simulation moved it:
 
   ![engine cutaway](docs/cutaway.png)
@@ -207,7 +208,7 @@ saps power; a large radiator, electric fan and oil cooler keep it cool.
   design summary and the dyno.
 - **Strategy / Career** — every build has a **parts cost** and a **reliability index** (a
   design estimate of how much abuse it invites), plus a **power-per-dollar** metric. Pick an
-  **OBJECTIVE** on the DESIGN tab (Budget Sleeper, Power per Dollar, Eco Cruiser, Track
+  **OBJECTIVE** on the ENGINE tab (Budget Sleeper, Power per Dollar, Eco Cruiser, Track
   Weapon, Reliability Run, Clean Machine, Specific-Output King…) — some cap your budget — and
   the challenge card ticks off each target live (✓/✗) with a PASS/FAIL verdict, mirrored on
   the dyno. Turns free design into a puzzle with real trade-offs.

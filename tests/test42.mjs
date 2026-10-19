@@ -199,10 +199,10 @@ if (i18nOk.missing.length > I18N_DEBT_MAX)
     i18nOk.missing.join(', ') + ' — translate them, or raise I18N_DEBT_MAX deliberately');
 
 await page.evaluate(() => applyLang('el')); await page.waitForTimeout(600);
-const el = await page.evaluate(() => (document.querySelector('[data-gk="subsystems"]') || {}).textContent || '');
+const el = await page.evaluate(() => document.getElementById('guidePanel').textContent);
 if (!/τομή|ΤΟΜΗ/i.test(el)) fails.push('Greek guide does not mention the cutaway');
 await page.evaluate(() => applyLang('en')); await page.waitForTimeout(300);
-const en = await page.evaluate(() => (document.querySelector('[data-gk="subsystems"]') || {}).textContent || '');
+const en = await page.evaluate(() => document.getElementById('guidePanel').textContent);
 if (!/cutaway/i.test(en)) fails.push('English guide does not mention the cutaway');
 
 // ---------------------------------------------------------------- 5. the other two tabs still work
