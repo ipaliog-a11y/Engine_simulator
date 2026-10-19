@@ -192,3 +192,36 @@ vehicle model.
 **Status (build 81): fixed.** `simulateAccel` now shifts at that crossover. TDI 13.75 s → 9.03 s,
 test48 0–100 RMS 24.4% → 10.2%, and the sawtooth is down to one shift's worth. Guarded by
 `tests/test50.mjs`.
+
+## `vePeakRpm`, attempt 3 — the bell is doing two jobs (build 82, measured, nothing changed)
+
+Re-measured after derived gearing (74) and crossover shifting (81), since both changed how torque
+shape turns into 0–100. The experiment was simply to remove the bell, nothing else, from:
+
+| | with bell | no bell anywhere | no bell, NA only |
+|---|---|---|---|
+| test41 (shape, power-matched) | **4.02%** | 9.51% | 4.02% (unchanged) |
+| test48 power RMS | 15.8% | 14.2% | **11.7%** |
+| test48 0–100, vehicle only | 7.8% | 10.4% | **6.7%** |
+| test47 NA presets over BMEP band | 1 | — | 2 |
+
+**test41's reference set is entirely turbocharged** (GTI, Type R, Supra, M2, STI, Alto), and every
+one slows without the bell. Above `vePeakRpm` the bell is quietly supplying the turbo's top-end
+taper: without it a wastegated frame holds target to the limiter, torque stays flat and peak power
+lands on the redline. So the bell does two jobs, NA breathing shape and turbo boost taper, and that
+is why both earlier attempts failed on the calibration.
+
+For NA engines alone, removing it is right for the high-revvers and wrong for the rest. S54
+−22% → −3%, S2000 −30% → −16%, but MX-5 −1% → +14% and the V12 preset 867 hp (14.05 bar BMEP,
+133 hp/L, against a real 6.5 V12's ~750). A high-rpm loss mechanism is missing. This is the
+"whatever caps peak VE" already named above.
+
+Two more things found in the decomposition:
+- `scavengeGain` charges race-cam engines **−15% to −19% at every rpm**, including 8000, where real
+  race-cam overlap helps. The steady term is the cycle-MEAN back-pressure, mostly the cat. At the
+  overlap instant the piston is at TDC, so the cylinder's own primary flow is near zero. The cat
+  and system pipe carry the other cylinders' merged flow, though, so the steady term does not
+  simply vanish. Needs its own measurement.
+- test48's LS3 runs the STOCK spring (250 N seat). A real LS3 is ~400 N, and with the stock spring
+  the model floats its valves from 5500 rpm, inside the real 6600 rpm redline (VE ×0.66 at 6500).
+  That is a test-input fidelity issue, like the TDI's VGT.
