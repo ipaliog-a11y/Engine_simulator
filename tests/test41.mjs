@@ -129,7 +129,15 @@ if (fix.weak.t - fix.strong.t > 0.5) fails.push('the kei is not actually tractio
 if (!(fix.lsd.t < fix.strong.t - 1)) fails.push('an LSD does not help a traction-capped car');
 if (!(fix.slicks.t < fix.lsd.t - 1)) fails.push('tyres do not help a traction-capped car');
 if (!(fix.awd.t < fix.slicks.t)) fails.push('AWD does not help a traction-capped car');
-if (!(fix.strong.t - fix.awd.t > 4)) fails.push('fixing traction should transform this car, not nudge it');
+// Asserted as a RATIO, not as a fixed number of seconds. The absolute span depends on how much
+// power the strong build makes, and that is no longer a free parameter: at 2.5 bar on a 9.5:1
+// engine the residual-gas knock term now makes this engine genuinely knock-limited, so the ECU
+// pulls timing and it makes 189 hp where it used to make 226. That is the correct direction — 2.5
+// bar at 9.5:1 on pump fuel detonates in the real world — but it shrinks the ladder from 4.4 s to
+// 3.6 s without the claim being any less true. The claim is that grip TRANSFORMS a capped car, so
+// measure it as a proportion of the car's own time.
+if (!(fix.awd.t < fix.strong.t * 0.7))
+  fails.push(`fixing traction should transform this car, not nudge it (${fix.strong.t}s -> ${fix.awd.t}s)`);
 
 // ==================================================================== 4. torque-scaled asymmetry
 console.log('\n== the open diff recovers in tall gears, and the launch is untouched ==');

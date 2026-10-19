@@ -188,7 +188,7 @@ table.fuelmap td.live{box-shadow:inset 0 0 0 2px #fff;font-weight:bold}
 <body>
 <div class="container">
 <header>
-<h1>PIXEL ENGINE SIM v0.6 build 74</h1>
+<h1>PIXEL ENGINE SIM v0.6 build 75</h1>
 <div class="subtitle" id="subtitle">ENGINE DESIGNER • BUILD IT, THEN DRIVE IT</div>
 </header>
 <div class="main">
@@ -1321,8 +1321,13 @@ function steadyBoost(rpm){
 // back-pressure, though the old absolute-difference form treated them the same and would have
 // charged the turbo a ~38% VE loss.
 //   f_res = 1/(CR-1) . (p_exh/p_int)^(1/gamma),  and the loss is the excess over the balanced case.
+const residualFrac=(pExhBar,pIntBar,cr)=>
+  Math.pow(Math.max(0.2,pExhBar)/Math.max(0.2,pIntBar),1/GAMMA_EXH)/Math.max(1.5,cr-1);
+// The VE loss is the EXCESS over the balanced case p_exh = p_int, where the fraction is 1/(CR-1).
+// Algebraically identical to the form this replaces; split out so the knock model can read the
+// fraction itself rather than only the loss.
 const residualLoss=(pExhBar,pIntBar,cr)=>clamp(
-  (Math.pow(Math.max(0.2,pExhBar)/Math.max(0.2,pIntBar),1/GAMMA_EXH)-1)/Math.max(1.5,cr-1),0,0.30);
+  residualFrac(pExhBar,pIntBar,cr)-1/Math.max(1.5,cr-1),0,0.30);
 // Derive every pipe on the engine. A header is CUT for a target speed: solve the tuning relation
 // for length instead of for rpm, taking the lowest order that gives a primary you can physically
 // route round an engine bay (350-900 mm). That is how a fabricator actually works.
@@ -2752,7 +2757,44 @@ function knockAt(rpm,map,adv){
   k-=engine.fuelKnockBonus;                             // alcohol extra knock margin
   if(engine.injector==='direct')k-=12;                  // DI charge cooling
   k+=nitrousImep()*4;                                   // nitrous raises cylinder pressure → more knock
+  k+=residualKnock(rpm,map);                            // hot burnt gas the exhaust could not push out
   return clamp(k,0,100);
+}
+// Back-pressure brings on knock, and until now nothing in this model said so. knockAt carried
+// boost, compression, intake temperature, coolant, rpm, timing, lambda, octane, DI and nitrous —
+// and no residual term at all, even though conversion 3 has computed the trapped fraction from
+// (p_exh/p_int)^(1/gamma) since it was written. It simply never reached the spark.
+//
+// That absence is why turbine housing sizing could not be derived. What stops a petrol engine
+// taking a tighter housing is knock: a tighter turbine raises manifold pressure, more burnt gas
+// stays in the clearance volume, and hot residual drags the end gas toward detonation. A diesel
+// has no spark to knock, so it tolerates a far tighter housing and makes boost at 1600 rpm. With
+// this in place that split comes out of the physics instead of being asserted per engine type —
+// knockAt already returns 0 for compression ignition, so the diesel exemption is automatic.
+//
+// NO NEW CONSTANT. The charge the spark has to light is fresh air mixed with trapped residual,
+//     T_mix = (1-f)*T_fresh + f*T_res
+// so a change in f is just a change in charge temperature, and the term immediately above already
+// prices charge temperature at 0.8 points per degree. What is charged here is only the EXCESS
+// residual that back-pressure causes, over the balanced case p_exh = p_int that every engine has
+// and that the existing calibration already absorbs:
+//     dT = (f_actual - f_balanced) * (T_res - T_fresh)
+// So a naturally-aspirated engine with a free-flowing exhaust is left exactly as it was, and only
+// an engine fighting its own exhaust pays.
+function residualKnock(rpm,map){
+  const e=engine;
+  if(!(e.compression>1))return 0;
+  const Tfresh=effIAT(map)+273.15;
+  const Tex=exhaustGasT(clamp(map/Math.max(0.4,e.mapMax),0.3,1.1));
+  const prev=e.boostNow;e.boostNow=map;                 // backPressureBar reads it for the turbine
+  const pExh=1+backPressureBar(rpm,Tex);
+  e.boostNow=prev;
+  const pInt=Math.max(0.3,map);
+  // The trapped gas does not arrive at port temperature: it expands back into the cylinder as the
+  // piston descends, and cools doing it.
+  const Tres=Math.max(Tfresh,Tex*Math.pow(Math.min(1,pInt/pExh),(GAMMA_EXH-1)/GAMMA_EXH));
+  const dF=clamp(residualFrac(pExh,pInt,e.compression)-1/Math.max(1.5,e.compression-1),0,0.30);
+  return dF*(Tres-Tfresh)*0.8;                          // same per-degree sensitivity as above
 }
 // The spark advance actually run at an operating point. FIXED = the designed value; AUTO =
 // an ECU that targets MBT and retards just enough to hold knock near KNOCK_TARGET.
