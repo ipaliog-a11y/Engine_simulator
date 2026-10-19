@@ -188,3 +188,7 @@ geometry over a curve the model already has, and it is what every real driver an
 automatic does. It will move every 0–100, every quarter mile and every lap time in the suite, so it
 is its own change — but on this evidence it is the largest single source of error left in the
 vehicle model.
+
+**Status (build 81): fixed.** `simulateAccel` now shifts at that crossover. TDI 13.75 s → 9.03 s,
+test48 0–100 RMS 24.4% → 10.2%, and the sawtooth is down to one shift's worth. Guarded by
+`tests/test50.mjs`.

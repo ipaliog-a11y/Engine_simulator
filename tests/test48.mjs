@@ -207,8 +207,11 @@ for (const r of out)
     fails.push(`${r.name}: power off by ${sg(pc(r.modHp, r.real.hp))} (cap ${POWER_WORST_CAP}%)`);
 
 // ---- the whole car -------------------------------------------------------------------------
-const T100_RMS_BUDGET = 28;      // currently 23.1
-const T100_WORST_CAP = 65;       // currently 58 (the TDI)
+// Ratcheted at build 81. Every car used to upshift only at the redline; shifting at the wheel-torque
+// crossover took the RMS from 24.4% to 10.2% and the TDI from +60% to +5%. Worst is now the Supra,
+// whose residual is an ENGINE error (-23% power) — power-matched it lands at +5%.
+const T100_RMS_BUDGET = 13;      // currently 10.2
+const T100_WORST_CAP = 26;       // currently 21 (the Supra)
 const tRms = rms(out.filter(r => r.t100).map(r => pc(r.t100, r.real.t100)));
 if (tRms > T100_RMS_BUDGET) fails.push(`0-100 RMS ${tRms.toFixed(1)}% over budget ${T100_RMS_BUDGET}%`);
 for (const r of out)
@@ -217,11 +220,13 @@ for (const r of out)
 
 // ---- attribution ---------------------------------------------------------------------------
 // The structural assertion, and the most useful one here: a car whose engine makes very nearly the
-// right power has no excuse for a badly wrong 0-100. Today exactly one does — the 2.0 TDI, whose
-// power is within 1% and whose 0-100 is 58% slow, because finalDrive is read off a slider and
-// never from the redline, so a 4800 rpm diesel is handed a 9000 rpm engine's ratios. Its top speed
-// is 24% down for the same reason: it runs out of gear, not power.
-const MISATTRIBUTED_BUDGET = 1;
+// right power has no excuse for a badly wrong 0-100. For a long time exactly one did: the 2.0 TDI,
+// power within 1% and 0-100 55-60% slow. The first suspect was gearing, read off a slider; deriving
+// the final drive (build 74) fixed its top speed, -24% to -1%, and left the 0-100 where it was. The
+// real cause was the shift rule: every car upshifted only at the redline, and this diesel's torque
+// has collapsed long before its 4800 rpm limiter. Shifting at the wheel-torque crossover (build 81)
+// took it from 13.75 s to 9.03 s against a real 8.6. None left, so the budget is now zero.
+const MISATTRIBUTED_BUDGET = 0;   // was 1 (the TDI) until the shift rule was fixed
 const mis = out.filter(r => r.t100 && Math.abs(pc(r.modHp, r.real.hp)) < 10 && Math.abs(pc(r.t100, r.real.t100)) > 25);
 console.log(`\n  right power but wrong car: ${mis.length} (budget ${MISATTRIBUTED_BUDGET})`);
 for (const r of mis)
@@ -230,7 +235,7 @@ if (mis.length > MISATTRIBUTED_BUDGET)
   fails.push(`cars with right power and wrong performance spread to ${mis.length} (budget ${MISATTRIBUTED_BUDGET})`);
 
 // ---- top speed, excluding the governed cars --------------------------------------------------
-const TOP_RMS_BUDGET = 20;       // currently ~14
+const TOP_RMS_BUDGET = 20;       // currently 3.5 since the derived final drive
 const TOP_WORST_CAP = 30;
 const free = out.filter(r => !r.real.limited);
 const topRms = rms(free.map(r => pc(r.top, r.real.top)));
