@@ -202,7 +202,7 @@ table.fuelmap td.live{box-shadow:inset 0 0 0 2px #fff;font-weight:bold}
 <body>
 <div class="container">
 <header>
-<h1>PIXEL ENGINE SIM v0.6 build 77</h1>
+<h1>PIXEL ENGINE SIM v0.6 build 78</h1>
 <div class="subtitle" id="subtitle">ENGINE DESIGNER • BUILD IT, THEN DRIVE IT</div>
 </header>
 <div class="main">
@@ -370,6 +370,16 @@ a <b>speed trap at every corner</b> — entry, apex and exit speed, gear and rad
 numbered T1…Tn and named per circuit (Riverside's are Millrace, Weir, Ferryman…). "Full throttle"
 means the car is accelerating at its limit, engine or tyres; the footer also reports how much of
 the lap is specifically engine-limited.<br>
+<b>Bring your own circuit.</b> The TRACK tab imports a <b>GPX</b> trace — the file any phone,
+watch or lap timer records — and turns it into a drivable layout: the points are projected to
+metres, resampled to even spacing, the lap is closed if you stopped the clock a few metres from
+where you started, and the <b>elevation is kept</b>, so climbs cost you power and descents give it
+back. Corner detection then names the turns T1…Tn. Imported tracks appear in the circuit dropdown
+alongside the built-in four and survive a reload. A real 20 km trace imports and solves in about a
+quarter of a second.<br>
+<span style="color:#c86">Imported circuits have <i>modelled</i> width rather than surveyed width,
+derived from the layout, and corners cannot carry real names because a GPX file does not hold
+any.</span><br>
 <b>DYNO REPORT</b> — the <b>REPORT PNG</b> / <b>REPORT PDF</b> buttons save the current pull as a
 printable sheet laid out like a real dynamometer print-out: the power and torque traces with their
 peaks called out, a peak-result band, the full engine specification, the conditions the run was
@@ -439,10 +449,14 @@ grows again as efficiency drops. A 2.0 L asking 2.5 bar of a small frame wants 1
 flow, and the charge reaches the valves at <b>74 °C</b> where the right frame delivers 58 °C —
 so it knocks, makes 120 hp <i>less</i> than the medium frame, and is slower round a lap than the
 same engine at 0.8 bar. Nothing stops you building it; it simply isn't the way to make power.<br>
-<span style="color:#c86">One limit: spool <i>lag</i> — the time to build boost — is modelled on
-the live ENGINE bench, but the performance and lap figures are solved from the steady boost
-available at each rpm, so they feel the spool <i>point</i> moving and not the transient. A very
-laggy build is therefore flattered slightly by its 0–100 and lap times.</span><br>
+<b>Lag is real in the 0–100 now.</b> The acceleration run spins the turbo shaft alongside the car
+and reads torque off a <i>two-dimensional</i> rpm × boost map, because boost is a state with a
+history: at 4000 rpm a turbo might be at 0.1 bar because you have just floored it, or at full boost
+because you have been flat for two seconds. A single curve can only describe the second. The car
+also leaves the line with the turbo already part-lit, which is what brake-boosting is.<br>
+<span style="color:#c86">One limit left: the <i>lap</i> solver still works from the steady boost
+available at each rpm, so it feels the spool <i>point</i> move but not the transient. A very laggy
+build is therefore still flattered slightly by its lap time, though no longer by its 0–100.</span><br>
 <b>Induction</b> — carbs → EFI → ITBs set breathing, metering precision and idle quality.<br>
 <b>Valvetrain</b> — wilder cams move power up top &amp; idle lumpy; VVT restores the bottom end. <b>Valves per cylinder</b>, <b>valve material</b> and <b>springs</b> are now modelled from real geometry rather than assumed. Four valves flow about 22% more than two for the same bore (and five flow no more than four — which is why nobody builds them any more). The app derives the valve diameter your bore can physically fit, works out what that valve weighs, and tells you the <b>valve float</b> rpm — the speed at which the spring can no longer pull the valve back down and it stops following the cam. <span style="color:#ff6b6b">If that number is below your redline, the engine cannot use the rev range it claims.</span> Fit stiffer springs, lighter titanium valves, less lift, or lower the redline. Big-bore two-valve engines also choke on inlet airflow near the limiter, which is the real reason a big pushrod V8 makes its power low and a four-valve screamer can rev.<br>
 <b>Fuel &amp; spark</b> — fuel type, octane, injector, ignition type, FIXED vs AUTO (ECU) timing, and
@@ -473,6 +487,64 @@ beside the canvas, where they are actual text; what stays on the cutaway is what
 being next to the part it describes — throttle plate angle, boost and compressor flow at the
 turbo, EGT at the exhaust, and the knock bar.
 </div>
+<div class="design-section">Gearing</div>
+<div class="guide-body" data-gk="gearing">
+<b>The final drive is chosen for your engine, not by the slider.</b> A car is geared for maximum
+speed when the engine sits at its <i>power peak</i> exactly as drag consumes that power — not at
+the limiter, where it is already past peak and cannot hold the speed. So the app solves the drag
+balance for the speed your car could theoretically hold,
+<i>P<sub>peak</sub>·η = ½ρ·C<sub>d</sub>A·v³ + C<sub>rr</sub>·m·g·v</i>, and picks the ratio that
+puts peak power there. A 3800 rpm diesel and a 9000 rpm screamer therefore get completely
+different ratios, as they should — before this, both got the same ones, and the diesel ran out of
+<i>gear</i> at 167 km/h while the air could not have stopped it until 219.<br>
+<b>The GEARING slider is now a bias about that</b> — roughly 1.28× shorter at one end for
+acceleration, 0.74× taller at the other for cruising, and neutral in the middle. Two consequences
+worth knowing. <b>Top speed has an optimum in the middle of the slider, not at the tall end</b>:
+gear taller than ideal and the engine can no longer reach the power it needs at that road speed,
+so the car gets <i>slower</i>. And on a twisty circuit short gearing costs you almost nothing,
+because you trade a top speed you never see for acceleration you use in every corner.<br>
+</div>
+
+<div class="design-section">Breathing — Waves, Back-Pressure and Boost</div>
+<div class="guide-body" data-gk="breathing">
+An engine is an air pump, and most of what separates a good one from a bad one happens in the
+pipes rather than the cylinder. Three things here are solved rather than assumed, and all three
+are yours to tune.<br>
+<b>The intake runner is a tuned organ pipe.</b> Every time a valve slams shut the column of air
+behind it bounces, and a well-chosen <b>runner length</b> puts that returning pressure wave at the
+valve just as it opens again — the engine is briefly supercharged by its own plumbing. Long
+runners tune low (torque down low), short runners tune high (power up top), and the
+<b>VARIABLE</b> setting is simply two lengths and a flap, which is all a DISA or a VarioRam ever
+was. Worth up to about <b>20–25%</b> of airflow at the tuned speed, and the reason a torque curve
+has humps rather than being a smooth arc.<br>
+<b>The exhaust header does the opposite job.</b> The blowdown pulse races down the primary, hits
+the collector and reflects back as a <i>rarefaction</i> — a suction wave. Time it to arrive during
+valve overlap and it pulls the last of the burnt gas out and fresh charge in behind it. Primary
+length sets the arrival time, which is why headers are cut to a target rpm. The app sizes them
+from the engine's own flow rather than from a table.<br>
+<b>Back-pressure is a tax on everything.</b> Whatever the piston cannot push out, it pays for
+twice: once as pumping work on the exhaust stroke, and again as <b>residual gas</b> — hot burnt
+charge left in the clearance volume that takes the place of fresh air. The pumping loop is simply
+<i>p<sub>exhaust</sub> − p<sub>intake</sub></i>, so a free-flowing exhaust is worth real power and
+a restrictive one is worth less than the back-pressure number alone suggests.<br>
+<b>A turbo is a restriction you chose on purpose.</b> The turbine sits in the exhaust and is a
+nozzle of fixed area: gas can only leave through it, so manifold pressure rises until the flow
+fits. That pressure is what spins the compressor — and it is also back-pressure the engine has to
+push against. Boost is never free; it is bought with exhaust energy and paid for in pumping work.
+The <b>wastegate</b> is what holds a target: once the turbine can make more power than the
+compressor needs, the gate opens and dumps the surplus around it. Without one, routing every gram
+of exhaust through a fixed throat gives 3.5–4.5 bar, not the 0.5–1.5 a real engine runs.<br>
+<b>Why boosted engines run low compression and lose timing.</b> Higher manifold pressure means
+more residual trapped, and residual is <i>hot</i> — it drags the end gas toward detonation before
+the flame gets there. That is why a turbo engine is built at 8.5–9.5:1 where an NA engine of the
+same era runs 11:1 or more, and why the ECU is pulling timing long before you see the knock bar
+move. Push boost up on a high-compression engine and you can watch it happen: the AUTO ignition
+retards, and the power stops following the boost.<br>
+<span style="color:#c86">Known limit: the turbine is fed by <i>mean</i> manifold pressure. A real
+one is fed by each cylinder's blowdown pulse, whose peak at low engine speed is far above the
+mean, so real turbos — small diesels especially — spool earlier than this model manages.</span>
+</div>
+
 <div class="design-section">Vehicle &amp; Performance</div>
 <div class="guide-body" data-gk="vehicle">
 On the <b>VEHICLE</b> tab you drop your engine into a car. Pick a <b>chassis</b> and it arrives on
@@ -498,6 +570,7 @@ diameter set grip and rolling radius), <b>aero</b> (front/rear/floor add downfor
 <b>Gearbox type</b> changes four things: how long the drive is cut on an upshift, how much of the
 engine's output survives the driveline, how the ratios are spaced, and how the car leaves the
 line.<br>
+
 · <b>Manual (H-pattern)</b> — the most efficient box, but you lose ~350 ms per shift lifting off,
 moving the lever and re-engaging. Cheap. Best where there are few shifts to make.<br>
 · <b>Sequential</b> — a race box that bangs the next dog in: ~60 ms shifts and close ratios that
@@ -1626,6 +1699,12 @@ const I18N={
   'Emissions':{el:'Εκπομπές'},'Grade':{el:'Βαθμός'},'Safety':{el:'Ασφάλεια'},'HP per litre':{el:'HP ανά λίτρο'}
 };
 // Guide body blocks (rich HTML), swapped by data-gk on language change.
+// A block with no entry here falls back to English, which is safe. A block WITH an entry does
+// not: the Greek text replaces the English wholesale, so anything added to an already-translated
+// block is invisible in Greek — and worse, a translation can go stale and keep asserting something
+// the model no longer does. `subsystems` is in that state now: its Greek still says turbo lag does
+// not reach the performance figures, which stopped being true at build 66. New guide content goes
+// in its OWN data-gk block for exactly this reason (see `gearing`, `breathing`).
 const GUIDE_I18N={
   loop:{el:'<b>1. ΣΧΕΔΙΑΣΗ</b> ενός κινητήρα (κάτω μέρος, διαδρομή αέρα, καύσιμο & σπινθήρας, ψύξη…), μετά πάτα <b>BUILD & DYNO</b>. <b>2. ΔΥΝΑΜΟ</b> δείχνει όλη την καμπύλη ισχύος/ροπής και μια βαθμολογία. <b>3. ΚΙΝΗΤΗΡΑΣ</b> είναι ζωντανός πάγκος δοκιμών: ρυθμίζεις <b>ΓΚΑΖΙ</b> και <b>ΦΟΡΤΙΟ</b> και βλέπεις τον κινητήρα να αποκρίνεται σε πραγματικό χρόνο. Δεν ορίζεις ποτέ απευθείας τις στροφές — τον οδηγείς.'},
   driving:{el:'<b>ΓΚΑΖΙ</b> — ανοίγει την εισαγωγή· αυξάνει την πίεση πολλαπλής → ροπή → στροφές.<br><b>ΦΟΡΤΙΟ (φρένο δυναμό)</b> — αντίσταση που ορίζει τις <i>στροφές κρατήματος</i>. 0% = ελεύθερες στροφές ως το όριο· 100% = κρατά κοντά στο ρελαντί. Αντιστέκεται μόνο <i>πάνω</i> από τον στόχο, οπότε κάθε κινητήρας ανεβαίνει πάντα ως εκεί.<br><b>ΗΛΕΚ. ΦΟΡΤΙΟ</b> — κατανάλωση παρελκομένων (φώτα/AC). Μεγάλο φορτίο + μικρό δυναμό στο ρελαντί αδειάζει την μπαταρία → χαμηλή τάση → αδύναμος σπινθήρας.<br><b>AFR</b> — αναλογία αέρα-καυσίμου. Μέγιστη ισχύς κοντά σε λ0.86 (πλούσιο), καλύτερη οικονομία κοντά σε λ1.05 (φτωχό).<br><b>IAT / ΨΥΚΤΙΚΟ / ΛΑΔΙ</b> — θερμοκρασίες χαρμανιού & κινητήρα (αυτόματα σε AUTO THERMAL).<br><b>ΝΙΤΡΟ</b> — αν υπάρχει, ψεκάζει με τέρμα γκάζι από φιάλη που αδειάζει.'},
