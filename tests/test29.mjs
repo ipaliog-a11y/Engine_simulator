@@ -25,10 +25,19 @@ if (!(strong[0].t100 - strong[3].t100 > 0.3)) fails.push('diff choice should mat
 
 // 2. An engine-limited car should barely care
 console.log('\n== 48 hp 2-stroke kei (engine-limited) ==');
+// On SLICKS, deliberately. The point of this case is a car limited by its ENGINE, and the final
+// drive is now derived rather than read off a slider: a 48 hp kei geared so peak power lands at
+// its (low) drag-limited top speed ends up very short, which puts enough torque at the contact
+// patch to make even this car partly traction-limited on eco tyres. It then gains 0.74 s from a
+// spool, which is not what "engine-limited" means. Giving it grip it cannot overwhelm restores
+// the condition the test is actually about. (Real kei cars are short-geared for the same reason,
+// so the short ratio is correct — it just stops this particular car being a clean example.)
 const weak = await page.evaluate(() => ['open', 'spool'].map(d => {
   const p = PRESETS.find(x => x.name === '500cc 2-Stroke Twin');
   applyEngineToForm(Object.assign({}, DEFAULT_ENGINE, p.engine)); buildEngine();
-  applyChassisFit('kei'); document.getElementById('vhDiff').value = d; buildVehicle();
+  applyChassisFit('kei');
+  document.getElementById('vhTire').value = 'slick';
+  document.getElementById('vhDiff').value = d; buildVehicle();
   return { d, t100: +perf.t100.toFixed(2), top: Math.round(perf.topSpeed) };
 }));
 weak.forEach(r => console.log(`  ${r.d.padEnd(6)} 0-100 ${r.t100}s  top ${r.top}`));

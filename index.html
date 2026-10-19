@@ -188,7 +188,7 @@ table.fuelmap td.live{box-shadow:inset 0 0 0 2px #fff;font-weight:bold}
 <body>
 <div class="container">
 <header>
-<h1>PIXEL ENGINE SIM v0.6 build 73</h1>
+<h1>PIXEL ENGINE SIM v0.6 build 74</h1>
 <div class="subtitle" id="subtitle">ENGINE DESIGNER • BUILD IT, THEN DRIVE IT</div>
 </header>
 <div class="main">
@@ -3119,6 +3119,30 @@ const numOr=(v,fallback)=>{const n=parseFloat(v);return Number.isFinite(n)?n:fal
 // gearbox type stretches or squeezes that spread about its geometric mean — a race sequential
 // keeps the ratios close (the engine stays in a narrow band), a torque-converter auto spreads
 // them wider (a lower 1st to get the load moving, a taller top for cruising).
+// Speed at which drag and rolling resistance consume exactly the power available at the wheels.
+// Bracketed bisection rather than a fixed point: the residual is monotonic in v, so this either
+// brackets the crossing or returns the bracket edge, and cannot quietly return a non-solution.
+function dragLimitedV(kW,cdA,crr,mass){
+  if(!(kW>0)||!(cdA>0))return 0;
+  const need=v=>(0.5*AIR_RHO*cdA*v*v*v+crrAt(crr,v)*mass*G*v)/1000;
+  let lo=1,hi=200;
+  if(need(hi)<kW)return hi;
+  for(let i=0;i<60;i++){const m=(lo+hi)/2;if(need(m)<kW)lo=m;else hi=m;}
+  return lo;
+}
+// The final drive a builder would choose for this engine in this car, biased by the gearing slider.
+// Falls back to the old slider-only ramp before an engine exists to gear for.
+function matchedFinalDrive(){
+  const bias=lerp(1.28,0.74,vehicle.gearing/100);   // 1.00 at the slider's default of 52
+  const s=engine&&engine.score;
+  const topGear=vehicle.ratios[vehicle.ratios.length-1];
+  if(!s||!(s.peakHP>0)||!(s.peakHPrpm>0)||!(topGear>0)||!(vehicle.rTire>0))
+    return lerp(4.9,2.6,vehicle.gearing/100);
+  const vMax=dragLimitedV(s.peakHP*0.7457*vehicle.driveEff,vehicle.cdA,vehicle.crr,vehicle.mass);
+  if(!(vMax>1))return lerp(4.9,2.6,vehicle.gearing/100);
+  const fd=s.peakHPrpm*2*Math.PI*vehicle.rTire/60/(vMax*topGear);
+  return clamp(fd*bias,2.2,6.0);   // mechanical range of a real final drive
+}
 function genRatios(n,spread){
   n=clamp(Math.round(n),4,8);const sp=spread||1;
   const r1=3.35,rn=0.82,mid=Math.sqrt(r1*rn),out=[];
@@ -3221,8 +3245,29 @@ function buildVehicle(){
   vehicle.df=df;vehicle.diffLabel=df.label;vehicle.diffTraction=df.traction;
   vehicle.shiftTime=gb.shift;
   vehicle.driveEff=(DRIVE_EFF[vehicle.drive]||0.90)*gb.eff;          // layout loss × gearbox loss
-  vehicle.finalDrive=lerp(4.9,2.6,vehicle.gearing/100);              // short → tall
   vehicle.ratios=genRatios(vehicle.gears,gb.spread);
+  // Final drive derived from the engine, not read off a slider.
+  //
+  // It used to be lerp(4.9, 2.6, gearing/100) and nothing else — so a 3800 rpm diesel was handed
+  // the same ratios as a 9000 rpm screamer. Measured against real cars the consequence was stark:
+  // the drag-limited top speed was already right (Golf TDI 219 km/h against a real 216, Corvette
+  // 310 against 306, GTI 252 against 246) and the cars simply ran out of GEAR before reaching it,
+  // topping out at 167, 260 and 242. Three builds were leaving 2-2.5x their top-speed drag power
+  // unused, and the TDI made its rated power to within 1% while being 58% slow to 100 km/h.
+  //
+  // A car is geared for maximum speed when the engine sits at its POWER PEAK exactly as drag
+  // consumes that power — not at the limiter, where it is already past peak and cannot hold the
+  // speed. So solve the drag balance for v, then pick the ratio that puts peakHPrpm there:
+  //     P_peak * eta = 0.5*rho*CdA*v^3 + Crr(v)*m*g*v        ->  v_max
+  //     fd = peakHPrpm * 2pi * r_tire / 60 / (v_max * topGearRatio)
+  // Gearing slightly longer than that is what makes top gear an overdrive and moves Vmax a gear
+  // down; the top-speed solver already scans every gear, so that falls out rather than being
+  // arranged. The slider survives as a BIAS about the derived value — 1.28x (short, for
+  // acceleration) to 0.74x (tall, for cruising), passing through 1.00 at its default of 52. That
+  // 1.73x span is close to the old slider's 1.88x, so the design choice stays as meaningful as it
+  // was; what changed is that it is now a choice ABOUT a sensible baseline instead of an absolute
+  // ratio handed to every engine alike.
+  vehicle.finalDrive=matchedFinalDrive();
   vehicle.cost=computeVehicleCost(ch,tt,wr);
   vehicle.powerToWeight=engine.score?engine.score.peakHP/(vehicle.mass/1000):0;   // hp per tonne
   perf=simulateAccel();

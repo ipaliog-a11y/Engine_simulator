@@ -20,17 +20,21 @@ const fails = [];
 // run, so quoting a DSG car's time against a modelled manual measures the gearbox, not traction.)
 console.log('== acceleration model vs real cars (power, mass, driveline and gearbox all matched) ==');
 const ref = await page.evaluate(() => {
+  // Each car's REDLINE is matched too, which it did not used to be. The final drive is now
+  // derived from where the engine makes peak power, so handing every car the same 6800 rpm ceiling
+  // meant gearing each one for an engine it does not have — the test's whole premise is that
+  // everything except the thing under test is matched to the real car.
   const REF = [
-    ['VW Golf GTI (Mk8)',        245, 1450, 6.2,  'hatch', 'fwd', 'sport', 'open', 'dct'],
-    ['Honda Civic Type R (FL5)', 329, 1430, 5.4,  'hatch', 'fwd', 'semi',  'clsd', 'manual'],
-    ['Toyota Supra RZ (A80)',    326, 1570, 4.9,  'coupe', 'rwd', 'sport', 'clsd', 'manual'],
-    ['BMW M2 (G87)',             460, 1725, 4.1,  'coupe', 'rwd', 'semi',  'clsd', 'auto'],
-    ['Subaru WRX STI (GD)',      280, 1470, 5.2,  'rally', 'awd', 'sport', 'clsd', 'manual'],
-    ['Suzuki Alto Works',         64,  720, 11.0, 'kei',   'fwd', 'eco',   'open', 'manual']
+    ['VW Golf GTI (Mk8)',        245, 1450, 6.2,  'hatch', 'fwd', 'sport', 'open', 'dct',    6500],
+    ['Honda Civic Type R (FL5)', 329, 1430, 5.4,  'hatch', 'fwd', 'semi',  'clsd', 'manual', 7000],
+    ['Toyota Supra RZ (A80)',    326, 1570, 4.9,  'coupe', 'rwd', 'sport', 'clsd', 'manual', 6800],
+    ['BMW M2 (G87)',             460, 1725, 4.1,  'coupe', 'rwd', 'semi',  'clsd', 'auto',   7200],
+    ['Subaru WRX STI (GD)',      280, 1470, 5.2,  'rally', 'awd', 'sport', 'clsd', 'manual', 7000],
+    ['Suzuki Alto Works',         64,  720, 11.0, 'kei',   'fwd', 'eco',   'open', 'manual', 7200]
   ];
-  return REF.map(([label, hp, kg, realT, ch, drive, tire, diff, gbx]) => {
+  return REF.map(([label, hp, kg, realT, ch, drive, tire, diff, gbx, redline]) => {
     applyEngineToForm(Object.assign({}, DEFAULT_ENGINE, { cylinders: 6, bore_mm: 84, stroke_mm: 90,
-      compression: 10, redline: 6800, intake: 'turbo', turboSize: 'medium', boost_bar: 0.5,
+      compression: 10, redline, intake: 'turbo', turboSize: 'medium', boost_bar: 0.5,
       octane: 98, injector: 'port', cam: 'sport' }));
     buildEngine();
     applyChassisFit(ch);
@@ -50,7 +54,18 @@ const ref = await page.evaluate(() => {
     window.buildTorqueGrid = () => { const g = realGrid();
       return { ...g, tq: g.tq.map(row => row.map(t => t * scale)) }; };
     vehicle.mass = kg;
+    // The final drive is DERIVED from peak power, mass and drag now, not read off a slider, so a
+    // harness that scales the torque curve and overrides the mass has to re-derive it too.
+    // buildVehicle() above ran on the unscaled generic engine in the chassis's default body, so
+    // without this every car is geared for the wrong engine in the wrong car — which read as a
+    // 3.19% -> 4.33% calibration regression that was entirely the harness. Exactly the same trap
+    // as scaling buildTorqueCurve but not buildTorqueGrid: patch one seam and miss the other.
+    const savedHp = engine.score.peakHP;
+    engine.score.peakHP = hp;
+    vehicle.powerToWeight = hp / (kg / 1000);
+    vehicle.finalDrive = matchedFinalDrive();
     const p = simulateAccel();
+    engine.score.peakHP = savedHp;
     window.buildTorqueCurve = realCurve; window.buildTorqueGrid = realGrid;
     return { label, hp, kg, drive, gbx, real: realT, model: +p.t100.toFixed(2),
       err: +((p.t100 / realT - 1) * 100).toFixed(1) };

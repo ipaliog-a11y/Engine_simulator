@@ -41,9 +41,17 @@ const ref = await page.evaluate(() => {
     for (let g = 0; g <= 100; g += 4) {
       document.getElementById('vhGearing').value = g; buildVehicle();
       vehicle.mass = kg; vehicle.cdA = cdA; vehicle.clA = 0;
+      // The final drive is derived from peak power, mass and drag now, and buildVehicle() above
+      // ran before the torque curve was scaled and before mass and cdA were overridden — so it
+      // geared for the unscaled engine in the wrong car. Re-derive it against what is actually
+      // being simulated; the slider still biases about it, so the sweep keeps its meaning.
+      const savedHp = engine.score.peakHP;
+      engine.score.peakHP = hp;
+      vehicle.finalDrive = matchedFinalDrive();
       const R = vehicle.ratios, tot = R[R.length-1] * vehicle.finalDrive;
       const vRed = engine.redline * Math.PI*2 * vehicle.rTire / 60 / tot * 3.6;
       const t = simulateAccel().topSpeed;
+      engine.score.peakHP = savedHp;
       if (t > best) { best = t; bestG = { g, vRed: Math.round(vRed), revLimited: t >= vRed - 1 }; }
     }
     window.buildTorqueCurve = realCurve;
