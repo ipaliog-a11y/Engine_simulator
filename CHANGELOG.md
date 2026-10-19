@@ -20,6 +20,35 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 Working toward **v1.0 — every number derived, not fitted.**
 
+### Variable-geometry turbine — the diesel spool gap, closed
+
+New **TURBINE** option: FIXED HOUSING or VARIABLE GEOMETRY. A ring of pivoting nozzle vanes makes the
+turbine throat a control input; the ECU schedules the *widest* throat that still supplies the
+compressor at target boost, so the vanes sit shut through every spool-up and open once target is
+made. Nothing fitted:
+
+- **Sweep and top-end loss are vane geometry**, `A(β) = h·(2πr₂·sinβ − Z·t)`, from 12 vanes of
+  1.5 mm swept 21–60°: a 2.8–3.1:1 range, and 8–13% blockage at full open, so a VGT flows *less* than
+  the plain housing of the same frame at the top.
+- **The petrol/diesel split is derived.** Vanes creep above ~1100 K; `exhaustGasT` gives a lean
+  diesel ~880 K and a rich petrol engine ~1235 K. A petrol VGT loses ~19 reliability points, a
+  diesel none. A vane ring costs 1.7× a plain housing.
+- 2.0 diesel: full boost **2575 → 1800 rpm**, torque peak 2700 → 1900 rpm, worst torque step
+  21.2% → 16%, −2 hp at the top. Both diesel presets and test48's Golf TDI (factory VTG) now use it.
+- New `tests/test49.mjs` pairs every gain with its price, and checks no build that did not ask for
+  a VGT has changed.
+
+Known limit, labelled in code: the throat convention (`A/R × R_wheel` instead of the centroid
+radius) undersizes every turbine, so the VGT still needs a wastegate at its open stop.
+
+### Found: `simulateAccel` upshifts at the redline
+
+Golf TDI 0–100 got *slower* with VGT (13.29 → 13.75 s) on a strictly better engine. Cause: every car
+upshifts only at the redline. Shifting the same TDI at 3800 rpm instead of 4800 gives **9.80 s vs
+13.75 s** (real 8.6 s) while giving up 12 hp. 0–100 also saw-tooths ±1.4 s with final drive.
+Measured and written up in `tests/proto/README.md`; the fix (shift at the wheel-torque crossover)
+is its own change. test48's 0–100 RMS moves 22.8% → 24.4%, inside budget and traced to this.
+
 ### Turbo transient losses — integrated, and audited against real magnitudes
 
 Two transient shaft losses were added to `advanceShaft` (and deliberately **not** to the steady boost

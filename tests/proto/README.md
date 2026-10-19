@@ -134,3 +134,57 @@ checked one.
 **Status.** Not wired in. Pulse energy is worth adding on its own merits — it is real, derived, and
 rewards divided manifolds — but it is not the fix for diesel spool, and shipping it as if it were
 would have been the wrong conclusion drawn from a right measurement.
+
+## VGT — shipped, and what it uncovered
+
+`pulse.mjs` ends on a prediction: the diesel spool gap is a VGT gap, and 0.45× throat closes it.
+That is now in the app as **TURBINE → VARIABLE GEOMETRY**, covered by `tests/test49.mjs`. The
+prediction held — a 2.0 diesel goes from full boost at 2575 rpm to **1800 rpm**, its torque peak
+from 2700 to 1900, and the worst 100-rpm torque step from 21.2% to 16%. Nothing was fitted: the
+sweep (2.8–3.1:1) and the top-end blockage (8–13%) both come out of vane count, vane thickness and
+the two end-stop angles, and the petrol/diesel split comes out of `exhaustGasT` and `residualKnock`
+rather than out of an `if (ci)`.
+
+**Two limits recorded in the code rather than papered over.** The throat convention is
+`A/R × R_wheel`, where `R` should be the radius to the volute throat *centroid* — roughly 1.5–1.8×
+further out — so every turbine here is smaller than the frame it names. That is why the VGT still
+needs a wastegate at the open end, where a properly sized real ring swallows the lot, and why the
+vanes reach their open stop by about 2250 rpm instead of modulating across the range. Correcting
+the convention recalibrates the whole turbo side, so it is a change of its own.
+
+## `simulateAccel` upshifts at the redline — and it is the biggest calibration defect left
+
+Found while checking that VGT had not made anything worse. It had: the Golf TDI's 0–100 went
+13.29 s → 13.75 s *while the engine got strictly better* (1500 rpm 206→266 Nm, 2000 rpm 230→338 Nm,
+−5% at 4500). A better engine cannot be a slower car, so the car model was the suspect.
+
+`simulateAccel` upshifts on one condition: `rpm >= redline` (index.html, in the step loop). Every
+gear, every car, every engine. For a 4800 rpm diesel whose torque peaks at 1900 and has collapsed to
+96 Nm by 4500, that is the worst possible shift point, and the run spends nearly all its time in the
+part of the curve a VGT makes *worse*.
+
+Measured by using the redline as a proxy for the shift point (which also truncates the curve, so the
+test is conservative):
+
+| shift at | peak power | 0–100 |
+|---|---|---|
+| 3400 rpm | 130 hp | 10.13 s |
+| 3800 rpm | 134 hp | **9.80 s** |
+| 4200 rpm | 139 hp | 10.45 s |
+| 4800 rpm (current) | 146 hp | **13.75 s** |
+
+Real car: 150 hp, 8.6 s. **Shifting 1000 rpm earlier is worth 3.95 s while giving up 12 hp** — a car
+with 8% less power is 29% quicker to 100 km/h, which no real car does. Roughly four of the TDI's
+5.1 s error is the shift rule, not the engine.
+
+A second symptom confirms it: 0–100 is non-monotonic in final drive with a ±1.4 s sawtooth
+(fd 3.0 → 13.97 s, 3.5 → 12.91, 4.0 → 14.36, 4.4 → 13.39, 4.8 → 13.49). A time that jumps around
+like that with gearing is a quantisation artefact — whether the gear spacing happens to force an
+extra shift just before the 100 km/h mark.
+
+**The fix needs no constant.** The optimal upshift point is where the next gear's wheel torque
+equals the current gear's: `tq(rpm) × ratio[g] = tq(rpm × ratio[g+1]/ratio[g]) × ratio[g+1]`. Pure
+geometry over a curve the model already has, and it is what every real driver and every real
+automatic does. It will move every 0–100, every quarter mile and every lap time in the suite, so it
+is its own change — but on this evidence it is the largest single source of error left in the
+vehicle model.

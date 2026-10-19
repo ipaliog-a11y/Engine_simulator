@@ -83,7 +83,10 @@ const CARS = [
 
   { name: 'VW Golf 2.0 TDI 150', year: 2013,
     eng: { type: 'diesel', cylinders: 4, bore_mm: 81.0, stroke_mm: 95.5, compression: 16.2,
+           // The EA288 runs a VARIABLE-GEOMETRY turbine (VW call it VTG), which is factory
+           // hardware, not a knob to turn: it is why this engine holds 320 Nm from 1750 rpm.
            layout: 'inline', redline: 4800, intake: 'turbo', boost_bar: 1.3, turboSize: 'small',
+           vgt: true,
            valves: 4, cam: 'stock', injector: 'direct', fuel: 'diesel', intercooler: 'large',
            intakeSys: 'efi', exhaust: 'stock', airFilter: 'stock' },
     car: { chassis: 'hatch', kg: 1375, drive: 'fwd', tire: 'eco', gbx: 'manual', gears: 6, diff: 'open' },
