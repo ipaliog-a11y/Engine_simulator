@@ -84,3 +84,53 @@ and why they make boost at 1600 rpm. The split should fall out of the knock mode
 lightly: the 2JZ 3600 (a big single behaves nothing like the factory sequential) and the 13B 3000
 (primary rotor only). Tuning to a number someone invented is the trap `test46`'s bands already fell
 into once.
+
+## `pulse.mjs` — exhaust pulse energy at the turbine
+
+Standalone: `node tests/proto/pulse.mjs`. The nozzle functions are copied verbatim from the app so
+the comparison is against the real thing.
+
+**Why it was written.** `housing.mjs` ends on a measurement: turbine housing sizing worked as
+designed and was reverted anyway, because it only reached real spool points if allowed to give away
+25% of rated power, and because high-boost builds went lag-dominated. Both said the turbine does not
+make enough power at low flow, and the suspected reason was that it is modelled as a fixed-area
+nozzle fed by the **mean** manifold pressure, while a real one is fed by each cylinder's blowdown
+pulse — mass arriving *when the pressure is high*. Averaging that correlation away is exactly what a
+mean-pressure model does.
+
+**The model, and it needs no new constant.** The duty cycle falls out of cam geometry the app
+already carries. The app defines overlap as `dur − 2·lsa`, which fixes the convention: the exhaust
+lobe centre sits `lsa` degrees BTDC, so the valve cracks at `lsa + dur/2` BTDC and BDC is 180 BTDC
+on that stroke — giving a blowdown angle of `(lsa + dur/2) − 180`, which is 44° on a stock cam and
+68° on a race one. Real numbers. The pressure swing is then a volume ratio: what the blowdown
+delivers, against the manifold volume one scroll sees. That ratio is also what separates **pulse**
+turbocharging (short, small, often divided runners) from **constant-pressure** turbocharging (a big
+plenum), which is why a twin-scroll housing is worth having — something the app does not currently
+reward at all.
+
+**The result is real, and negative.** Pulse energy is worth **+20% to +45%** of turbine work at the
+boost threshold, concentrated at low rpm and fading to nothing by 6000 — the right size, in the
+right place, with the right rpm shape. It still does **not** close the diesel gap:
+
+| engine | compressor needs | mean-pressure | with pulse |
+|---|---|---|---|
+| 2.0 TDI @ 1750 | 5.5 kW | 1.7 | **2.1** — still 2.6× short |
+| 2.0 petrol @ 1900 | 5.9 kW | 3.9 | **4.6** |
+| 2.0 twin-scroll @ 1700 | 5.2 kW | 2.9 | **4.2** |
+
+**So the diesel spool gap is a VGT gap, not a pulse gap.** Shrinking the diesel's effective throat
+at 1750 rpm reaches the compressor's 5.5 kW at **0.45× open area**, and a real variable-geometry
+turbine closes its vanes to roughly 30–50% at low speed. That is the one piece of hardware every
+modern turbodiesel has and this model has no concept of, and it is why a 2.0 TDI makes full boost at
+1750 rpm where a fixed-geometry petrol turbo of similar size does not.
+
+**Two bugs worth recording**, because both produced plausible-looking output. The pressure swing was
+first applied to the gauge excess `(PR − 1)` rather than to absolute manifold pressure, which made a
+27% swing worth 1% of work. And `turbineWork` omitted the `T3` factor, so every turbine read 2 watts
+instead of 2 kilowatts and every verdict read "neither" — it cancels in the gain *ratio*, which is
+why the ratio table looked sane while the power table was nonsense. A plausible column is not a
+checked one.
+
+**Status.** Not wired in. Pulse energy is worth adding on its own merits — it is real, derived, and
+rewards divided manifolds — but it is not the fix for diesel spool, and shipping it as if it were
+would have been the wrong conclusion drawn from a right measurement.
