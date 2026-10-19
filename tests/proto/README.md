@@ -225,3 +225,26 @@ Two more things found in the decomposition:
 - test48's LS3 runs the STOCK spring (250 N seat). A real LS3 is ~400 N, and with the stock spring
   the model floats its valves from 5500 rpm, inside the real 6600 rpm redline (VE ×0.66 at 6500).
   That is a test-input fidelity issue, like the TDI's VGT.
+
+### Attempt 3, continued — built, measured, parked (patch: `vebell-attempt3.diff`)
+
+The patch does three things:
+1. **Fixes a real geometry bug.** `trappedFraction` put the intake lobe centre at 90° ATDC while
+   `overlapDeg` (`dur − 2·lsa`) puts it at LSA. So every intake closed 16–24° early (stock at 20°
+   ABDC instead of 44°; a real B6 MX-5 closes at 51°). VVT also moved IVC by half its authority.
+2. **Removes the bell for non-turbo, non-diesel, poppet-valve engines.**
+3. **Corrects test48's factory inputs** (no VVT on the 1989 MX-5 or the LS3; LS3 on its real
+   ~400 N spring), and grounds test47's NA BMEP ceiling at 15 bar (S54 14.1, 458 15.1).
+
+Measured: test48 power RMS 15.8% → 11.4%, 0–100 car-only 7.8% → 6.8%, test41 3.97% (unchanged).
+
+**Why it is parked.** test44 and test46 fail: the 1.6 Sport, ITB screamer, supercharged V8 and V12
+presets (and the S2000 and S54 in test48) make peak power AT the limiter. The cause is precise: the
+intake ram term is still rising at the redline, because every runner's main Helmholtz resonance
+(nH = 1) lands at or just past it. Runner lengths are fixed (~400 mm including the port), not sized
+to the engine, and for these engines that puts nH = 1 at 7200, 8840, 6570 and 9190 rpm against
+redlines of 7200, 8800, 6400 and 8500. With the bell gone, nothing rolls the top end off. Two
+further things to check when this resumes: (a) as nH falls below 0.5 the Helmholtz term's cosine
+turns POSITIVE again, which is unphysical far above tuning (a column driven above its natural
+frequency cannot ram; its inertia costs filling); (b) whether runner length should follow the
+designer's target rpm, the way the final drive now follows the engine.
