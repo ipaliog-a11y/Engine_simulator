@@ -3,7 +3,12 @@ import { readFileSync } from 'fs';
 import { fileURLToPath, pathToFileURL } from 'url';
 import path from 'path';
 const repo = fileURLToPath(new URL('..', import.meta.url));
-const gpx = readFileSync('/root/.claude/uploads/367f578e-6004-580f-ae9f-7158e9c4f5ba/c1cc91f1-D21N_rburgringNordschleifeTrack.gpx', 'utf8');
+// The fixture is generated and committed — see tests/fixtures/make-track-gpx.mjs for what it is and
+// why it is not the real Nordschleife. This path used to be an absolute one under
+// /root/.claude/uploads/<session-id>/, which meant the test could only pass on the single machine
+// where that upload happened; on any fresh clone it threw ENOENT before reaching its first
+// assertion, so it had never actually run anywhere else.
+const gpx = readFileSync(path.join(repo, 'tests/fixtures/circuit-20km.gpx'), 'utf8');
 const browser = await chromium.launch();
 const page = await browser.newPage({ viewport: { width: 1200, height: 900 } });
 const errors = [];
