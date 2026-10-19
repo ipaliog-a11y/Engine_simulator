@@ -2,6 +2,8 @@
 
 **A lightweight, 8-bit style internal combustion engine *designer* & simulator** inspired by *Automation*.
 
+**▶ Play it live: [ipaliog-a11y.github.io/Engine_simulator](https://ipaliog-a11y.github.io/Engine_simulator/)** — redeployed automatically on every merge to `main`.
+
 Design an engine from the ground up — cylinders, bore & stroke, compression, forced
 induction, exhaust, fuel octane, injection and ignition — then run it on the dyno and
 watch the physics respond. Web-based, fully offline-capable, installable as a PWA.
