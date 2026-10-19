@@ -1,6 +1,8 @@
-# PIXEL ENGINE SIM v0.6 build 80
+# PIXEL ENGINE SIM v0.6 build 81
 
 **A lightweight, 8-bit style internal combustion engine *designer* & simulator** inspired by *Automation*.
+
+**▶ Play it live: [ipaliog-a11y.github.io/Engine_simulator](https://ipaliog-a11y.github.io/Engine_simulator/)** — redeployed automatically on every merge to `main`.
 
 Design an engine from the ground up — cylinders, bore & stroke, compression, forced
 induction, exhaust, fuel octane, injection and ignition — then run it on the dyno and
@@ -636,10 +638,6 @@ node tools/stamp.mjs --check    # verify it is consistent and ahead of origin/ma
 These are modelled approximations that are *stated* rather than hidden, each one measured and
 documented in the GUIDE at the point where it matters:
 
-- **Every car upshifts at the redline.** `simulateAccel` shifts only when `rpm >= redline`, the
-  worst possible point for a torquey diesel: the Golf TDI runs 13.75 s to 100 against a real 8.6, and
-  shifting at 3800 instead gives 9.80 s on 12 hp less. The fix (shift at the wheel-torque crossover)
-  is the next vehicle change; measurements in `tests/proto/README.md`.
 - **Turbine throats are undersized.** Throat = A/R × *wheel* radius rather than the volute centroid
   radius, so every turbine is smaller than the frame it names and the wastegate covers for it — which
   is also why a VGT here still needs one at its open stop.

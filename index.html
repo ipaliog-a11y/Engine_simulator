@@ -202,7 +202,7 @@ table.fuelmap td.live{box-shadow:inset 0 0 0 2px #fff;font-weight:bold}
 <body>
 <div class="container">
 <header>
-<h1>PIXEL ENGINE SIM v0.6 build 80</h1>
+<h1>PIXEL ENGINE SIM v0.6 build 81</h1>
 <div class="subtitle" id="subtitle">ENGINE DESIGNER • BUILD IT, THEN DRIVE IT</div>
 </header>
 <div class="main">
@@ -504,6 +504,13 @@ worth knowing. <b>Top speed has an optimum in the middle of the slider, not at t
 gear taller than ideal and the engine can no longer reach the power it needs at that road speed,
 so the car gets <i>slower</i>. And on a twisty circuit short gearing costs you almost nothing,
 because you trade a top speed you never see for acceleration you use in every corner.<br>
+<b>Where the car changes gear.</b> The 0–100 and quarter-mile runs upshift where the <i>next</i> gear
+pulls harder at the wheels than the current one — the torque crossover, which is what a good
+driver and a good automatic both do — or at the limiter if that comes first. For a peaky engine
+that is right up at the redline anyway. For a diesel it is not: its torque has faded long before
+the limiter, and holding it there used to cost a 2.0 TDI four seconds to 100 km/h. The lap uses the
+same rule. One step remains and it is real: if a taller final drive pushes 100 km/h into the next
+gear, the run makes one more shift and the time jumps by about one shift.<br>
 </div>
 
 <div class="design-section">Breathing — Waves, Back-Pressure and Boost</div>
@@ -3655,7 +3662,19 @@ function simulateAccel(){
   const M={t100:null,q400:null,q800:null,q1000:null,v200:null},V100=100/3.6,V200=200/3.6;
   for(let step=0;step<48000&&t<150;step++){
     let totalRatio=ratios[gear]*fd,rpm=v*totalRatio/r*60/TWO_PI;
-    if(shiftT<=0&&rpm>=rl&&gear<ratios.length-1){gear++;shiftT=shiftTime;totalRatio=ratios[gear]*fd;rpm=v*totalRatio/r*60/TWO_PI;}
+    // Upshift where the NEXT gear pulls harder at this road speed — the wheel-torque crossover,
+    //     tq(rpm)·ratio[g]  <=  tq(rpm·ratio[g+1]/ratio[g])·ratio[g+1]
+    // or at the limiter, whichever comes first. This used to be the limiter alone, in every gear of
+    // every car, which is the worst possible point for anything whose torque falls away before the
+    // redline: a 2.0 TDI held to 4800 rpm ran 13.75 s to 100 against a real 8.6 s, and shifting it at
+    // 3800 instead was four seconds quicker on 12 hp LESS. A car with less power cannot be that much
+    // quicker; the shift rule was. This is the same rule simulateLap's bestGear already used, so the
+    // straight-line run and the lap now drive the car the same way. Read off the steady curve, as a
+    // driver's shift light is — not off the momentary boost, which would hold a laggy turbo in gear
+    // waiting for torque the next gear would also get.
+    if(shiftT<=0&&gear<ratios.length-1&&(rpm>=rl||
+       tqAt(clamp(rpm*ratios[gear+1]/ratios[gear],idle,rl))*ratios[gear+1]>=tqAt(clamp(rpm,idle,rl))*ratios[gear])){
+      gear++;shiftT=shiftTime;totalRatio=ratios[gear]*fd;rpm=v*totalRatio/r*60/TWO_PI;}
     // `rpm` is what the gearbox input wants to turn at this road speed. How the engine couples to
     // it depends on the gearbox:
     //   Torque-converter auto — the impeller stalls up against a slow turbine and MULTIPLIES

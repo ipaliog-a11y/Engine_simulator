@@ -20,6 +20,22 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 Working toward **v1.0 — every number derived, not fitted.**
 
+### Shift at the wheel-torque crossover, not the limiter
+
+`simulateAccel` upshifted on one condition, `rpm >= redline`, in every gear of every car. It now
+shifts where the next gear gives more wheel force at the current road speed (or at the limiter),
+the rule `simulateLap`'s `bestGear` already used. No new constant.
+
+- Golf TDI 0–100: **13.75 → 9.03 s** (real 8.6). test48 0–100 RMS **24.4% → 10.2%**; vehicle-only
+  (power-matched) 22.2% → 7.8%. "Right power, wrong car": 1 → 0.
+- The ±1.4 s sawtooth of 0–100 against final drive is gone. What remains is one step per extra
+  shift (~0.45 s on a manual), which is real.
+- Peaky petrol engines are unchanged: their crossover is at the limiter.
+- test41 3.99% → 4.02%, aero unchanged at 6.4%.
+- New `tests/test50.mjs`: cutting the redline must not make a car quicker, and 0–100 may only step
+  by one shift against final drive. Both fail on the old rule (27% and 1.13 s).
+- test48 budgets ratcheted: 0–100 RMS 28 → 13, worst 65 → 26, misattributed 1 → 0.
+
 ### Variable-geometry turbine — the diesel spool gap, closed
 
 New **TURBINE** option: FIXED HOUSING or VARIABLE GEOMETRY. A ring of pivoting nozzle vanes makes the
