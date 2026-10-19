@@ -1,4 +1,4 @@
-# PIXEL ENGINE SIM v0.6 build 71
+# PIXEL ENGINE SIM v0.6 build 80
 
 **A lightweight, 8-bit style internal combustion engine *designer* & simulator** inspired by *Automation*.
 
@@ -26,7 +26,8 @@ screamer, 2JZ six, muscle V8, blown V8, V12 supercar…), or configure your own 
   bore, stroke, compression ratio, redline. Bore × stroke × cylinders sets the displacement.
 - **Air path** — naturally aspirated / turbo / supercharger, boost target, **intercooler size**
   (none / small / large core — a bigger core cools the charge more but adds a little spool lag),
-  turbo size, **turbo configuration** (single / twin / sequential / compound), **anti-lag**,
+  turbo size, **turbo configuration** (single / twin / sequential / compound), **turbine**
+  (fixed housing / **variable geometry** — vanes shut to spool, open at the top), **anti-lag**,
   **supercharger type** (roots / twin-screw / centrifugal), **nitrous** (small / big shot),
   exhaust (stock / sport / race) and a **catalytic converter** (none/decat / sport / stock).
   Twin/sequential/compound turbos spool earlier and flatter; PD superchargers make boost from
@@ -635,6 +636,13 @@ node tools/stamp.mjs --check    # verify it is consistent and ahead of origin/ma
 These are modelled approximations that are *stated* rather than hidden, each one measured and
 documented in the GUIDE at the point where it matters:
 
+- **Every car upshifts at the redline.** `simulateAccel` shifts only when `rpm >= redline`, the
+  worst possible point for a torquey diesel: the Golf TDI runs 13.75 s to 100 against a real 8.6, and
+  shifting at 3800 instead gives 9.80 s on 12 hp less. The fix (shift at the wheel-torque crossover)
+  is the next vehicle change; measurements in `tests/proto/README.md`.
+- **Turbine throats are undersized.** Throat = A/R × *wheel* radius rather than the volute centroid
+  radius, so every turbine is smaller than the frame it names and the wastegate covers for it — which
+  is also why a VGT here still needs one at its open stop.
 - **Turbo lag reaches 0–100 but not the lap.** `simulateAccel` now integrates the shaft alongside
   the car and reads torque off a 2-D rpm × boost grid, because boost is a state with history and a
   1-D curve cannot describe a turbo mid-spool. `simulateLap` still works from the steady boost

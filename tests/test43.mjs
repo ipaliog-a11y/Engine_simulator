@@ -93,15 +93,38 @@ const sweep = await page.evaluate(() => {
 });
 sweep.forEach(s => console.log(`  gearing ${String(s.gearing).padStart(3)} · top ${String(s.top).padStart(3)} km/h · lap ${s.lap}s`));
 const shortest = sweep[0], best = sweep.reduce((a, x) => x.lap < a.lap ? x : a);
+const fastestTop = sweep.reduce((a, x) => x.top > a.top ? x : a);
 console.log(`  shortest gearing ${shortest.lap}s vs best ${best.lap}s at gearing ${best.gearing}`);
-if (best.gearing === shortest.gearing)
-  fails.push('the shortest gearing is still the fastest lap — the limiter is not biting');
-if (shortest.lap - best.lap < 5)
-  fails.push(`short gearing only costs ${(shortest.lap-best.lap).toFixed(1)}s on the Nordschleife — too cheap`);
-// and top speed must rise monotonically with taller gearing while the car is rev-limited
-for (let i = 1; i < sweep.length; i++)
-  if (sweep[i].top < sweep[i-1].top)
-    fails.push(`top speed fell from gearing ${sweep[i-1].gearing} to ${sweep[i].gearing}`);
+console.log(`  top speed peaks at gearing ${fastestTop.gearing} (${fastestTop.top} km/h)`);
+
+// REWRITTEN when the final drive stopped being a slider.
+//
+// This block used to assert that top speed rises MONOTONICALLY with the gearing slider, and that
+// the shortest setting costs 5+ seconds on the Nordschleife. Both were true only because the
+// slider set the final drive outright — lerp(4.9, 2.6, gearing/100) — so every car got the same
+// ratio regardless of its redline and the short end was absurdly, unusably short for most engines.
+//
+// The final drive is now derived (peak power placed at the drag-limited top speed) and the slider
+// biases about it. Two consequences, and both are better physics:
+//   · Top speed has an INTERIOR OPTIMUM. Gearing taller than optimal does not keep raising top
+//     speed, it lowers it, because the engine can no longer reach the power it needs at that road
+//     speed. A monotonic rise was only ever visible because the baseline started far too short.
+//   · Mis-gearing costs far less on a 20 km circuit, because the slider can no longer produce an
+//     absurd ratio. On the Nordschleife a short-geared car trades top speed it rarely uses for
+//     acceleration it uses constantly, so the shortest setting being competitive is correct.
+// What is asserted now is the optimum itself, which is a stronger claim than monotonicity.
+if (!(fastestTop.gearing > sweep[0].gearing && fastestTop.gearing < sweep[sweep.length - 1].gearing))
+  fails.push(`top speed should peak at an interior gearing, not at an end (peaked at ${fastestTop.gearing})`);
+for (const s2 of sweep)
+  if (s2.top > fastestTop.top) fails.push('top-speed optimum search is inconsistent');
+// Falling off on BOTH sides is what makes it an optimum rather than a plateau.
+if (!(sweep[0].top < fastestTop.top - 5))
+  fails.push(`short gearing should cost top speed (${sweep[0].top} vs ${fastestTop.top})`);
+if (!(sweep[sweep.length - 1].top < fastestTop.top - 5))
+  fails.push(`tall gearing should cost top speed too (${sweep[sweep.length-1].top} vs ${fastestTop.top})`);
+// Gearing still has to MATTER somewhere, or the slider is inert.
+const topSpread = fastestTop.top - Math.min(...sweep.map(x => x.top));
+if (!(topSpread > 15)) fails.push(`gearing barely moves top speed (${topSpread} km/h across the slider)`);
 
 // ==================================================================== 4. drag still binds
 // The fix must not turn the limiter into the ONLY ceiling: a weak or draggy car should still be

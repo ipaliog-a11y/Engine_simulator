@@ -58,6 +58,43 @@
 //      boost at 1600 rpm. The split should fall out of the knock model.
 //
 // ---------------------------------------------------------------------------------------------
+// ATTEMPT 1 (build 76) — BUILT, MEASURED, REVERTED. Patch kept at tests/proto/housing-sizing.diff.
+//
+// Both prerequisites had landed, so the housing was sized in buildEngine by scanning A/R from
+// tight to loose and taking the TIGHTEST that satisfied two limits — neither of them asserted per
+// engine type:
+//     knock at rated power <= KNOCK_TARGET      (petrol only; knockAt returns 0 for diesel)
+//     rated torque >= (1 - TOP_END_TRADE) * best
+// It worked as designed. A/R stopped being a size-class constant and became a property of the
+// engine: a 0.7 bar kei chose 0.29, the same kei at 2.5 bar chose 1.30, and throat area spread
+// 182-643 mm2 where the size class gave a flat 259/519. Spool RMS went 1940 -> 1398 rpm, exhaust
+// flow per mm2 of throat tightened from a 4x spread to 2.4x, and test48 improved on every axis
+// (power RMS 15.8 -> 14.9, 0-100 RMS 22.8 -> 20.5).
+//
+// It was reverted anyway, for two findings that matter more than those numbers.
+//
+// 1. THE FIT ONLY REACHES REAL SPOOL POINTS IF YOU GIVE AWAY 25% OF RATED POWER. Sweeping the
+//    tolerance: 0.08 -> 1785 rpm RMS, 0.12 -> 1398, 0.18 -> 1138, 0.25 -> 922. It never stops
+//    improving within any plausible range. A real builder trades maybe 5-12% for response, so a
+//    model that needs 25% is not short of tolerance, it is short of TURBINE POWER at low flow.
+//
+// 2. HIGH-BOOST BUILDS BECAME LAG-DOMINATED AND THE TRACTION LADDER INVERTED. At 2.5 bar nothing
+//    tighter than AR_MAX survives the top-end test, so that build gets the loosest housing on the
+//    shelf and spools terribly. In test41's kei ladder the consequences were plainly wrong:
+//    2.2x the power made the car 0.77 s SLOWER, slicks (9.40 s) came out slower than sport tyres
+//    (9.32 s), and AWD (10.02 s) slower than FWD. Whatever the explanation, "more grip is slower"
+//    is not an output to ship.
+//
+// THE MISSING MECHANISM, and the prerequisite for attempt 2: EXHAUST PULSE ENERGY. The turbine is
+// modelled as a fixed-area nozzle fed by MEAN manifold pressure. A real turbine is fed by the
+// blowdown pulse of each cylinder, and at low engine speed the pulse peak is far above the mean,
+// so a real turbo extracts much more power down there than a steady-flow model can. That is
+// precisely why small diesels with pulse (divided) manifolds spool at 1600 rpm, and why this
+// model cannot get there without an implausible top-end sacrifice. Both findings above point at
+// the same gap: too little turbine power at low flow. Fix that, and the housing optimiser should
+// find interior optima instead of running to whichever end of the A/R range is least bad.
+//
+// ---------------------------------------------------------------------------------------------
 // WHY IT IS PARKED (two prerequisites, both since identified by measurement)
 //
 //   1. PUMPING WORK. pumpFrictionMEP charged only for intake depression against atmosphere — the

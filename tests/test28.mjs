@@ -13,15 +13,29 @@ const fails = [];
 
 // 1. All four gearboxes on the same car
 console.log('== same car (3.0T coupe), four gearboxes ==');
-const gbs = await page.evaluate(() => ['manual', 'sequential', 'dct', 'auto'].map(g => {
+// The final drive is PINNED across the four boxes. It is now derived per build — peak power
+// placed at the drag-limited top speed — and it depends on the gearbox through both its
+// efficiency and its ratio spread, so letting it float meant this comparison measured gearing as
+// well as shifting. With it floating, the sequential beat the DCT (3.95 vs 4.00) purely because
+// its narrower spread earned it a different ratio; pinned, the intended ordering returns
+// (DCT 3.98 < sequential 4.02 < manual 4.30). That is a real effect worth having in the model and
+// a confound worth removing from a test whose own comment says it is about shift speed.
+const gbs = await page.evaluate(() => {
   applyEngineToForm(Object.assign({}, DEFAULT_ENGINE, { cylinders: 6, bore_mm: 84, stroke_mm: 90, intake: 'turbo', boost_bar: 1.0, turboSize: 'medium' })); buildEngine();
-  applyVehicleToForm(Object.assign({}, DEFAULT_VEHICLE, { chassis: 'coupe', gearbox: g })); buildVehicle();
-  return {
-    g, label: vehicle.gbLabel, shift: vehicle.shiftTime, eff: +vehicle.driveEff.toFixed(3),
-    r1: +vehicle.ratios[0].toFixed(2), rn: +vehicle.ratios[vehicle.ratios.length - 1].toFixed(2),
-    t100: +perf.t100.toFixed(2), q400: +perf.q400.t.toFixed(2), top: Math.round(perf.topSpeed), cost: vehicle.cost
-  };
-}));
+  applyVehicleToForm(Object.assign({}, DEFAULT_VEHICLE, { chassis: 'coupe', gearbox: 'manual' })); buildVehicle();
+  const FD = vehicle.finalDrive;
+  return ['manual', 'sequential', 'dct', 'auto'].map(g => {
+    applyEngineToForm(Object.assign({}, DEFAULT_ENGINE, { cylinders: 6, bore_mm: 84, stroke_mm: 90, intake: 'turbo', boost_bar: 1.0, turboSize: 'medium' })); buildEngine();
+    applyVehicleToForm(Object.assign({}, DEFAULT_VEHICLE, { chassis: 'coupe', gearbox: g })); buildVehicle();
+    vehicle.finalDrive = FD;
+    const p = simulateAccel();
+    return {
+      g, label: vehicle.gbLabel, shift: vehicle.shiftTime, eff: +vehicle.driveEff.toFixed(3),
+      r1: +vehicle.ratios[0].toFixed(2), rn: +vehicle.ratios[vehicle.ratios.length - 1].toFixed(2),
+      t100: +p.t100.toFixed(2), q400: +p.q400.t.toFixed(2), top: Math.round(p.topSpeed), cost: vehicle.cost
+    };
+  });
+});
 console.log('  type        shift  drvEff  1st   top   0-100   400m    Vmax   cost');
 for (const r of gbs) console.log(`  ${r.g.padEnd(11)} ${String(r.shift * 1000).padStart(4)}ms ${r.eff}  ${r.r1}  ${r.rn}  ${String(r.t100).padStart(5)}s ${String(r.q400).padStart(6)}s ${String(r.top).padStart(4)}  ${r.cost}`);
 
@@ -64,13 +78,29 @@ const chars = await page.evaluate(() => [['6.6 V8 Turbodiesel', 'pickup', 'heavy
   for (const g of ['manual', 'auto']) {
     applyEngineToForm(Object.assign({}, DEFAULT_ENGINE, pr.engine)); buildEngine();
     applyChassisFit(ch); document.getElementById('vhGearbox').value = g; buildVehicle();
-    o[g] = +perf.t100.toFixed(2);
+    o[g] = +perf.t100.toFixed(2); o[g + 'Top'] = Math.round(perf.topSpeed);
   }
   return o;
 }));
-chars.forEach(c => console.log(`  ${c.desc.padEnd(14)} manual ${c.manual}s  auto ${c.auto}s  → auto is ${c.auto < c.manual ? 'BETTER' : 'WORSE'}`));
+chars.forEach(c => console.log(`  ${c.desc.padEnd(14)} manual ${c.manual}s (top ${c.manualTop})  auto ${c.auto}s (top ${c.autoTop})`));
 if (!(chars[0].auto < chars[0].manual)) fails.push('auto should help the heavy torquey engine');
-if (!(chars[1].auto > chars[1].manual)) fails.push('auto should hurt the light peaky engine (stall well below its launch rpm)');
+
+// REPLACED: this used to assert "auto should hurt the light peaky engine (stall well below its
+// launch rpm)". It passed only because every car was handed the same final drive regardless of
+// its engine; at the derived ratio the auto wins the standing start on BOTH engine characters,
+// and it still wins with the final drive pinned (4.96 vs 5.18), so the old result was an artifact
+// of the gearing, not a property of the converter.
+//
+// It is also a dubious claim for a 0-100 metric. A converter multiplies torque off the line and a
+// planetary box does not interrupt drive to shift, which is exactly why modern automatics
+// out-drag manuals. The real penalty of a converter on a narrow powerband is post-launch SLIP —
+// the engine held off its cam, and the box unable to just hold a gear — and this model does not
+// have it: the converter contributes launch multiplication plus a flat gb.eff loss and nothing
+// else. Recorded as a known limit rather than asserted as if it were modelled.
+//
+// What IS true and measured: the auto's driveline loss shows up at the top end, on both engines.
+if (!(chars[0].autoTop < chars[0].manualTop)) fails.push('the auto driveline loss should cost top speed (heavy torquey)');
+if (!(chars[1].autoTop < chars[1].manualTop)) fails.push('the auto driveline loss should cost top speed (light peaky)');
 
 // 3. Chassis fits carry a coherent gearbox and isFactoryFit round-trips
 console.log('\n== chassis factory gearboxes ==');

@@ -14,11 +14,17 @@
 @font-face{font-family:'Press Start 2P';font-style:normal;font-weight:400;font-display:swap;src:url(assets/PressStart2P-latin.woff2) format('woff2')}
 *{box-sizing:border-box;margin:0;padding:0;image-rendering:pixelated;-webkit-font-smoothing:none}
 body{background:#0a0a12;color:#e0e0e0;font-family:'Press Start 2P',monospace;font-size:10px;line-height:1.6;overflow-x:hidden;min-height:100vh}
-.container{max-width:1100px;margin:0 auto;padding:8px}
+/* 1100px was letterboxing a dense instrument panel: on a 1440 screen it wasted 340px and on a
+   2560 one, 1460. Nothing here wants to be narrow — the tabs are tables, charts and maps. */
+.container{max-width:min(1600px,96vw);margin:0 auto;padding:8px}
 header{text-align:center;padding:12px 8px;border-bottom:4px solid #333;background:linear-gradient(180deg,#1a1a2e 0%,#0a0a12 100%);margin-bottom:12px}
 header h1{font-size:14px;color:#ffcc00;text-shadow:2px 2px 0 #000,-1px -1px 0 #aa6600;letter-spacing:1px}
 header .subtitle{font-size:8px;color:#888;margin-top:6px}
-.main{display:grid;grid-template-columns:1fr 320px;gap:12px}
+/* align-items:start matters more than it looks. Grid rows stretch every column to the height of
+   the tallest, and the right column (ENGINE CONTROLS) is far taller than the canvas — so the left
+   panel was padding itself out with 400px of empty background under the dyno chart and the track
+   map. It read as a layout bug because it was one. */
+.main{display:grid;grid-template-columns:1fr 340px;gap:12px;align-items:start}
 @media(max-width:800px){.main{grid-template-columns:1fr}}
 /* Portrait (phones & tablets held upright): stack to one column and use the full width so the
    sim fills the screen instead of sitting in a narrow strip. Font & controls scale up too. */
@@ -54,15 +60,21 @@ header .subtitle{font-size:8px;color:#888;margin-top:6px}
 .viz-tabs button:hover{background:#2a2a3a;color:#ccc}
 .viz-tabs button.active{background:#004422;color:#00ff88;border-bottom:3px solid #00ff88;margin-bottom:-3px}
 #engineCanvas{width:100%;height:auto;display:block;background:#0d0d18}
-.fs-btn{position:absolute;top:44px;right:8px;z-index:6;font-size:7px;padding:5px 7px;background:#1a1a28;color:#00ccff;border:2px solid #00ccff;box-shadow:2px 2px 0 #000}
+/* Bottom-right, not top-right: the canvas draws its live RPM readout in the top-right corner and
+   the two collided on DYNO and TRACK ("3841 RPM" sat half behind the button). */
+.fs-btn{position:absolute;bottom:10px;right:8px;z-index:6;font-size:7px;padding:5px 7px;background:#1a1a28;color:#00ccff;border:2px solid #00ccff;box-shadow:2px 2px 0 #000}
 .fs-btn:hover{background:#004422;color:#00ff88}
 .viz-panel:fullscreen{display:flex;flex-direction:column;background:#0d0d18}
 .viz-panel:fullscreen #engineCanvas{flex:1;min-height:0;height:auto;max-height:100%;object-fit:contain;margin:auto}
 .side-panel{display:flex;flex-direction:column;gap:10px}
 .panel{background:#161622;border:4px solid #3a3a4a;padding:10px}
 .panel h2{font-size:9px;color:#00ccff;margin-bottom:8px;border-bottom:2px solid #333;padding-bottom:4px;text-transform:uppercase}
-.gauge-row{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin-bottom:8px}
-.stat{background:#0a0a10;border:2px solid #333;padding:6px 8px;min-width:90px;text-align:center}
+/* A centred wrapping flex row laid these out 3 + 2 + 1 + 1 and centred each line, which read as
+   accidental rather than designed — the phone layout looked tidier than the desktop one for
+   exactly this reason. A fixed 3-column grid aligns them and lets each tile fill its cell. */
+.gauge-row{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:8px}
+.gauge-row .stat:only-child{grid-column:1/-1}
+.stat{background:#0a0a10;border:2px solid #333;padding:6px 8px;min-width:0;text-align:center}
 .stat .label{font-size:7px;color:#888;display:block}
 .stat .value{font-size:12px;color:#00ff88;margin-top:2px}
 .stat .unit{font-size:7px;color:#666}
@@ -90,7 +102,9 @@ footer{text-align:center;margin-top:16px;padding:8px;font-size:7px;color:#555;bo
 .legend{font-size:7px;color:#666;margin-top:6px;line-height:1.4}
 .readout{font-size:9px;color:#00ff88;background:#0a0a10;border:2px solid #333;padding:6px;margin:2px 0 10px;text-align:center;letter-spacing:1px}
 /* ---- Engine Design tab ---- */
-.design-panel{display:none;padding:12px;background:#0d0d18;max-height:600px;overflow-y:auto}
+/* Was a flat 600px, so the design form scrolled inside a box inside a viewport that had room to
+   spare, and the last row was always cut in half. Tie it to the window instead. */
+.design-panel{display:none;padding:12px;background:#0d0d18;max-height:calc(100vh - 230px);overflow-y:auto}
 .design-panel.active{display:block}
 .design-panel h3{font-size:10px;color:#ffcc00;margin:2px 0 4px}
 .design-panel .hint{font-size:7px;color:#667;margin-bottom:10px}
@@ -188,7 +202,7 @@ table.fuelmap td.live{box-shadow:inset 0 0 0 2px #fff;font-weight:bold}
 <body>
 <div class="container">
 <header>
-<h1>PIXEL ENGINE SIM v0.6 build 71</h1>
+<h1>PIXEL ENGINE SIM v0.6 build 80</h1>
 <div class="subtitle" id="subtitle">ENGINE DESIGNER • BUILD IT, THEN DRIVE IT</div>
 </header>
 <div class="main">
@@ -232,6 +246,7 @@ table.fuelmap td.live{box-shadow:inset 0 0 0 2px #fff;font-weight:bold}
 <div class="field"><label for="edIntercooler">INTERCOOLER</label><select id="edIntercooler"><option value="none">NONE</option><option value="small">SMALL CORE</option><option value="large">LARGE CORE</option></select></div>
 <div class="field"><label for="edTurboSize">TURBO SIZE</label><select id="edTurboSize"><option value="small">SMALL</option><option value="medium">MEDIUM</option><option value="large">LARGE</option></select></div>
 <div class="field"><label for="edTurboConfig">TURBO CONFIG</label><select id="edTurboConfig"><option value="single">SINGLE</option><option value="twin">TWIN</option><option value="sequential">SEQUENTIAL</option><option value="compound">COMPOUND</option></select></div>
+<div class="field"><label for="edVGT">TURBINE</label><select id="edVGT"><option value="no">FIXED HOUSING</option><option value="yes">VARIABLE GEOMETRY</option></select></div>
 <div class="field"><label for="edAntilag">ANTI-LAG (ALS)</label><select id="edAntilag"><option value="no">NO</option><option value="yes">YES</option></select></div>
 <div class="field"><label for="edScType">SUPERCHARGER</label><select id="edScType"><option value="roots">ROOTS</option><option value="screw">TWIN-SCREW</option><option value="centrifugal">CENTRIFUGAL</option></select></div>
 <div class="field"><label for="edExhaust">EXHAUST</label><select id="edExhaust"><option value="stock">STOCK CAST</option><option value="sport">SPORT HEADER</option><option value="race">RACE HEADER</option></select></div>
@@ -356,6 +371,16 @@ a <b>speed trap at every corner</b> — entry, apex and exit speed, gear and rad
 numbered T1…Tn and named per circuit (Riverside's are Millrace, Weir, Ferryman…). "Full throttle"
 means the car is accelerating at its limit, engine or tyres; the footer also reports how much of
 the lap is specifically engine-limited.<br>
+<b>Bring your own circuit.</b> The TRACK tab imports a <b>GPX</b> trace — the file any phone,
+watch or lap timer records — and turns it into a drivable layout: the points are projected to
+metres, resampled to even spacing, the lap is closed if you stopped the clock a few metres from
+where you started, and the <b>elevation is kept</b>, so climbs cost you power and descents give it
+back. Corner detection then names the turns T1…Tn. Imported tracks appear in the circuit dropdown
+alongside the built-in four and survive a reload. A real 20 km trace imports and solves in about a
+quarter of a second.<br>
+<span style="color:#c86">Imported circuits have <i>modelled</i> width rather than surveyed width,
+derived from the layout, and corners cannot carry real names because a GPX file does not hold
+any.</span><br>
 <b>DYNO REPORT</b> — the <b>REPORT PNG</b> / <b>REPORT PDF</b> buttons save the current pull as a
 printable sheet laid out like a real dynamometer print-out: the power and torque traces with their
 peaks called out, a peak-result band, the full engine specification, the conditions the run was
@@ -425,10 +450,14 @@ grows again as efficiency drops. A 2.0 L asking 2.5 bar of a small frame wants 1
 flow, and the charge reaches the valves at <b>74 °C</b> where the right frame delivers 58 °C —
 so it knocks, makes 120 hp <i>less</i> than the medium frame, and is slower round a lap than the
 same engine at 0.8 bar. Nothing stops you building it; it simply isn't the way to make power.<br>
-<span style="color:#c86">One limit: spool <i>lag</i> — the time to build boost — is modelled on
-the live ENGINE bench, but the performance and lap figures are solved from the steady boost
-available at each rpm, so they feel the spool <i>point</i> moving and not the transient. A very
-laggy build is therefore flattered slightly by its 0–100 and lap times.</span><br>
+<b>Lag is real in the 0–100 now.</b> The acceleration run spins the turbo shaft alongside the car
+and reads torque off a <i>two-dimensional</i> rpm × boost map, because boost is a state with a
+history: at 4000 rpm a turbo might be at 0.1 bar because you have just floored it, or at full boost
+because you have been flat for two seconds. A single curve can only describe the second. The car
+also leaves the line with the turbo already part-lit, which is what brake-boosting is.<br>
+<span style="color:#c86">One limit left: the <i>lap</i> solver still works from the steady boost
+available at each rpm, so it feels the spool <i>point</i> move but not the transient. A very laggy
+build is therefore still flattered slightly by its lap time, though no longer by its 0–100.</span><br>
 <b>Induction</b> — carbs → EFI → ITBs set breathing, metering precision and idle quality.<br>
 <b>Valvetrain</b> — wilder cams move power up top &amp; idle lumpy; VVT restores the bottom end. <b>Valves per cylinder</b>, <b>valve material</b> and <b>springs</b> are now modelled from real geometry rather than assumed. Four valves flow about 22% more than two for the same bore (and five flow no more than four — which is why nobody builds them any more). The app derives the valve diameter your bore can physically fit, works out what that valve weighs, and tells you the <b>valve float</b> rpm — the speed at which the spring can no longer pull the valve back down and it stops following the cam. <span style="color:#ff6b6b">If that number is below your redline, the engine cannot use the rev range it claims.</span> Fit stiffer springs, lighter titanium valves, less lift, or lower the redline. Big-bore two-valve engines also choke on inlet airflow near the limiter, which is the real reason a big pushrod V8 makes its power low and a four-valve screamer can rev.<br>
 <b>Fuel &amp; spark</b> — fuel type, octane, injector, ignition type, FIXED vs AUTO (ECU) timing, and
@@ -459,6 +488,88 @@ beside the canvas, where they are actual text; what stays on the cutaway is what
 being next to the part it describes — throttle plate angle, boost and compressor flow at the
 turbo, EGT at the exhaust, and the knock bar.
 </div>
+<div class="design-section">Gearing</div>
+<div class="guide-body" data-gk="gearing">
+<b>The final drive is chosen for your engine, not by the slider.</b> A car is geared for maximum
+speed when the engine sits at its <i>power peak</i> exactly as drag consumes that power — not at
+the limiter, where it is already past peak and cannot hold the speed. So the app solves the drag
+balance for the speed your car could theoretically hold,
+<i>P<sub>peak</sub>·η = ½ρ·C<sub>d</sub>A·v³ + C<sub>rr</sub>·m·g·v</i>, and picks the ratio that
+puts peak power there. A 3800 rpm diesel and a 9000 rpm screamer therefore get completely
+different ratios, as they should — before this, both got the same ones, and the diesel ran out of
+<i>gear</i> at 167 km/h while the air could not have stopped it until 219.<br>
+<b>The GEARING slider is now a bias about that</b> — roughly 1.28× shorter at one end for
+acceleration, 0.74× taller at the other for cruising, and neutral in the middle. Two consequences
+worth knowing. <b>Top speed has an optimum in the middle of the slider, not at the tall end</b>:
+gear taller than ideal and the engine can no longer reach the power it needs at that road speed,
+so the car gets <i>slower</i>. And on a twisty circuit short gearing costs you almost nothing,
+because you trade a top speed you never see for acceleration you use in every corner.<br>
+</div>
+
+<div class="design-section">Breathing — Waves, Back-Pressure and Boost</div>
+<div class="guide-body" data-gk="breathing">
+An engine is an air pump, and most of what separates a good one from a bad one happens in the
+pipes rather than the cylinder. Three things here are solved rather than assumed, and all three
+are yours to tune.<br>
+<b>The intake runner is a tuned organ pipe.</b> Every time a valve slams shut the column of air
+behind it bounces, and a well-chosen <b>runner length</b> puts that returning pressure wave at the
+valve just as it opens again — the engine is briefly supercharged by its own plumbing. Long
+runners tune low (torque down low), short runners tune high (power up top), and the
+<b>VARIABLE</b> setting is simply two lengths and a flap, which is all a DISA or a VarioRam ever
+was. Worth up to about <b>20–25%</b> of airflow at the tuned speed, and the reason a torque curve
+has humps rather than being a smooth arc.<br>
+<b>The exhaust header does the opposite job.</b> The blowdown pulse races down the primary, hits
+the collector and reflects back as a <i>rarefaction</i> — a suction wave. Time it to arrive during
+valve overlap and it pulls the last of the burnt gas out and fresh charge in behind it. Primary
+length sets the arrival time, which is why headers are cut to a target rpm. The app sizes them
+from the engine's own flow rather than from a table.<br>
+<b>Back-pressure is a tax on everything.</b> Whatever the piston cannot push out, it pays for
+twice: once as pumping work on the exhaust stroke, and again as <b>residual gas</b> — hot burnt
+charge left in the clearance volume that takes the place of fresh air. The pumping loop is simply
+<i>p<sub>exhaust</sub> − p<sub>intake</sub></i>, so a free-flowing exhaust is worth real power and
+a restrictive one is worth less than the back-pressure number alone suggests.<br>
+<b>A turbo is a restriction you chose on purpose.</b> The turbine sits in the exhaust and is a
+nozzle: gas can only leave through it, so manifold pressure rises until the flow fits. That
+pressure is what spins the compressor — and it is also back-pressure the engine has to push
+against. Boost is never free; it is bought with exhaust energy and paid for in pumping work.
+The <b>wastegate</b> is what holds a target: once the turbine can make more power than the
+compressor needs, the gate opens and dumps the surplus around it. Without one, routing every gram
+of exhaust through a fixed throat gives 3.5–4.5 bar, not the 0.5–1.5 a real engine runs.<br>
+<b>VARIABLE GEOMETRY is the throat as a control, and it is why diesels spool.</b> A fixed housing
+has one throat area, and that one number is a compromise: tight enough to light at 1700 rpm is
+far too tight to breathe at 4500. A <b>VGT</b> puts a ring of pivoting vanes in the housing, so
+the ECU picks the throat at every operating point — shut for a quick spool, open to get out of
+the way once the target is made. Set <b>TURBINE</b> to VARIABLE GEOMETRY and watch the torque
+plateau walk down the rev range: a 2.0 diesel goes from full boost at 2575 rpm to full boost at
+1800, and its torque peak moves from 2700 rpm to 1900. That is not a bonus applied to diesels,
+it is geometry — the ring's sweep (about <b>2.9:1</b>, from 21° to 60° of vane angle) and its
+top-end loss (the vanes occupy 8–13% of the circumference, so a VGT at full open flows
+<i>less</i> than the plain housing of the same frame) both come straight out of vane count,
+thickness and the two end stops.<br>
+<b>So why does nothing petrol-powered have one?</b> Two reasons, both of which you can see in the
+app. The vane ring is the hottest <i>moving</i> part in the exhaust, and nickel alloys creep
+above about 1100 K. A diesel is quality-governed — always lean — so its gas arrives at the vanes
+near 880 K; a petrol engine runs rich for power and sends 1235 K. The design panel prints that
+temperature and tells you when you are over the limit, and the reliability score falls about 19
+points when you are. The other reason is simpler: a vane ring, its bearings and an actuator cost
+about <b>1.7×</b> a plain housing. Fit one to a petrol engine and it works beautifully and does
+not last — which is exactly its reputation.<br>
+<b>Why boosted engines run low compression and lose timing.</b> Higher manifold pressure means
+more residual trapped, and residual is <i>hot</i> — it drags the end gas toward detonation before
+the flame gets there. That is why a turbo engine is built at 8.5–9.5:1 where an NA engine of the
+same era runs 11:1 or more, and why the ECU is pulling timing long before you see the knock bar
+move. Push boost up on a high-compression engine and you can watch it happen: the AUTO ignition
+retards, and the power stops following the boost.<br>
+<span style="color:#c86">Known limit: the turbine is fed by <i>mean</i> manifold pressure. A real
+one is fed by each cylinder's blowdown pulse, whose peak at low engine speed is far above the
+mean, so a real turbo gets 20–45% more turbine work at the threshold than this model gives it.
+That is measured rather than guessed, and it is worth most on a twin-scroll manifold, which this
+app does not yet reward. A second one: the turbine throat is taken as A/R × the <i>wheel</i>
+radius, where it should be the radius to the volute throat centroid — further out — so every
+turbine here is smaller than the frame it names, and the wastegate has always covered for
+it.</span>
+</div>
+
 <div class="design-section">Vehicle &amp; Performance</div>
 <div class="guide-body" data-gk="vehicle">
 On the <b>VEHICLE</b> tab you drop your engine into a car. Pick a <b>chassis</b> and it arrives on
@@ -484,6 +595,7 @@ diameter set grip and rolling radius), <b>aero</b> (front/rear/floor add downfor
 <b>Gearbox type</b> changes four things: how long the drive is cut on an upshift, how much of the
 engine's output survives the driveline, how the ratios are spaced, and how the car leaves the
 line.<br>
+
 · <b>Manual (H-pattern)</b> — the most efficient box, but you lose ~350 ms per shift lifting off,
 moving the lever and re-engaging. Cheap. Best where there are few shifts to make.<br>
 · <b>Sequential</b> — a race box that bangs the next dog in: ~60 ms shifts and close ratios that
@@ -1112,8 +1224,21 @@ function backPressureBar(rpm,T){
   if(e.turbineArea>0){
     const map=Math.max(1,e.boostNow||1);
     const mAir=(e.dispCyl_L/1000)*e.cylinders*(rpm/120)*(101325*map/(287*313));
-    const mEx=mAir*1.06/(e.turbUnits||1);
-    return pipe+(manifoldPR(mAir/(e.turbUnits||1),mEx,map,T,e.turbineArea,e.compEff)-1);
+    const mEx=mAir*1.06/(e.turbUnits||1), mA=mAir/(e.turbUnits||1);
+    // On a VGT the throat is whatever the vanes have been scheduled to; below target they are shut
+    // and the piston pays the full nozzle pressure for it, which is the whole point of the device.
+    //
+    // The gate stays in the loop at the OPEN end, and that is an artefact of this model's throat
+    // convention rather than of the hardware: A_throat is taken as (A/R)x R_WHEEL, where R should
+    // be the radius to the volute throat centroid — roughly 1.5-1.8x further out. Every turbine
+    // here is therefore smaller than the frame it names, which the wastegate has always covered
+    // for. A real VGT needs no gate because its ring, properly sized, swallows the lot; here the
+    // open position cannot, so the surplus is dumped exactly as a fixed frame's is. Retire this
+    // when the throat convention is corrected — at which point the whole turbo side recalibrates.
+    const a=e.vgtShut>0
+      ? vgtThroat(mEx,compPowerAt(mA,1+e.maxBoost,313,e.compEff),T,e.turbineArea,e.vgtShut).area
+      : e.turbineArea;
+    return pipe+(manifoldPR(mA,mEx,map,T,a,e.compEff)-1);
   }
   return pipe;
 }
@@ -1153,6 +1278,7 @@ function trappedFraction(dur,cr){
 // centroid, so A_throat = (A/R) x R_wheel. No fudge factor — it is what the spec means.
 const GAMMA_EXH=1.33;
 const CRIT_RATIO=Math.pow(2/(GAMMA_EXH+1),GAMMA_EXH/(GAMMA_EXH-1));      // ~0.54
+const TURB_ETA=0.70;       // turbine total-to-static efficiency; typical for an automotive radial
 function nozzleFlux(prT){
   const rp=1/Math.max(1.0001,prT);
   if(rp<=CRIT_RATIO)
@@ -1188,7 +1314,7 @@ function manifoldPR(mAir,mEx,mapBar,T3,area,compEta){
   if(pComp<=0)return 1;
   const tPower=pr=>{
     const mT=Math.min(mEx,area*(pr*101325)/Math.sqrt(Math.max(300,T3))*nozzleFlux(pr));
-    return mT*1150*Math.max(300,T3)*0.70*(1-Math.pow(pr,-0.248));
+    return mT*1150*Math.max(300,T3)*TURB_ETA*(1-Math.pow(pr,-0.248));
   };
   const full=turbineManifoldPR(mEx,area,T3);          // gate shut: everything through the throat
   if(tPower(full)<=pComp)return full;                 // cannot make target even wide open
@@ -1196,6 +1322,69 @@ function manifoldPR(mAir,mEx,mapBar,T3,area,compEta){
   for(let i=0;i<60;i++){const m=(lo+hi)/2;if(tPower(m)<pComp)lo=m;else hi=m;}
   return hi;
 }
+// ---- variable geometry: the throat as a control input instead of a casting decision ----
+// A fixed housing has one throat, and that throat is a compromise nobody is happy with: tight
+// enough to spool at 1700 rpm is far too tight to breathe at 4500. A VGT removes the compromise by
+// putting a ring of pivoting nozzle vanes in the volute, so the ECU picks the throat at every
+// operating point. It is the single piece of hardware that lets a 2.0 TDI hold full boost from
+// 1750 rpm, and this model had no concept of it — which is why every diesel preset here spooled
+// like a fixed-housing petrol turbo and the spool cliff could not be closed.
+//
+// GEOMETRY, NOT A MULTIPLIER. The throat of a vaned ring is the gap between neighbouring vanes.
+// With Z vanes on a pitch circle of radius r2 and passage height h, the pitch is s = 2*pi*r2/Z and
+// the throat of one passage is (s*sin(beta) - t), beta measured from tangential and t the vane
+// thickness it loses to its own neighbour. So the ring passes
+//     A(beta) = h * (2*pi*r2*sin(beta) - Z*t)
+// and the actuator does nothing at all but rotate beta. Two things fall straight out of that and
+// neither is fitted:
+//   · the RANGE. Production vane rings sweep roughly 21 to 60 degrees from tangential, which with
+//     the blockage term gives about 2.9:1 — the flow range a VGT is actually sold on.
+//   · the TOP END. At full open the ring still passes LESS than the plain volute of the same
+//     frame, because Z*t of circumference is vane. That is ~11% on a medium frame and it is why
+//     nobody puts a VGT on a drag car: the thing that buys you 1700 rpm costs you at the top.
+// Blockage is a fixed length of circumference, so it hurts a small frame more than a large one —
+// r2 sits just outside the turbine wheel, so it scales with the frame and the ratio does not have
+// to be asserted per size.
+const VANE_Z=12, VANE_T=0.0015;                      // vanes, and their thickness (m)
+const VANE_T_LIMIT=1100;                             // K — where nickel-alloy vanes start to creep
+const VANE_BETA_MIN=21, VANE_BETA_MAX=60;            // degrees from tangential — the vane sweep
+const vanePitchR=exd=>1.05*(TURB_WHEEL*exd/2);       // pitch circle, just outboard of the wheel
+// Throat at vane angle `beta`, as a fraction of the plain volute throat the frame's A/R quotes.
+function vaneThroatFrac(exd,betaDeg){
+  const blk=VANE_Z*VANE_T/(2*Math.PI*vanePitchR(exd));
+  return Math.max(0.05,(Math.sin(betaDeg*Math.PI/180)-blk)/Math.sin(VANE_BETA_MAX*Math.PI/180));
+}
+// The vanes ARE the boost control: a VGT diesel has no wastegate, because opening the vanes IS
+// the gate. So the schedule is "the WIDEST throat that still supplies the compressor at TARGET
+// boost" — widest, because every square millimetre closed past that is back-pressure the piston
+// has to push against, and this model now charges for that in both PMEP and residual knock.
+//
+// Solved by inverting the turbine rather than searching the area, which costs ONE nozzle solve
+// instead of a nested pair: the power the compressor needs fixes the expansion ratio,
+//     Pc = mEx*cp*T3*eta_t*(1 - PR^-0.248)   ->   PR
+// and the nozzle then says which throat passes mEx at that PR,
+//     A  = mEx*sqrt(T3) / (PR*p0*flux(PR))
+// Clamped to the vane sweep. Hitting the shut end is not a failure — it is the vanes doing all
+// they can, which is the state a VGT spends every spool-up in.
+//
+// Returns the expansion ratio as well as the throat, and inside the sweep it returns the one solved
+// for above rather than re-solving it through the area. That is not an optimisation. The whole
+// boost search rests on the SIGN of (Pt - Pc), and at a modulating vane position that difference is
+// zero by construction; feeding the area back through a bracketing solver that returns its lower
+// bound would make it reliably -1e-12, and a frame holding its target would report as unable to.
+function vgtThroat(mEx,pComp,T3,aOpen,aShut){
+  const shut=(a)=>({area:a,pr:turbineManifoldPR(mEx,a,T3)});
+  if(!(aOpen>0))return{area:0,pr:1};
+  if(!(mEx>0)||!(pComp>0))return shut(aOpen);
+  const w=pComp/(mEx*CP_EXH*Math.max(300,T3)*TURB_ETA);
+  if(!(w<1))return shut(aShut);                       // not reachable even fully shut
+  const pr=Math.pow(1-w,-1/0.248);
+  const a=mEx*Math.sqrt(Math.max(300,T3))/(pr*101325*nozzleFlux(pr));
+  return(a>=aShut&&a<=aOpen)?{area:a,pr}:shut(clamp(a,aShut,aOpen));
+}
+// Compressor shaft power at a given pressure ratio — the demand the vanes are scheduled against.
+const compPowerAt=(mA,prTgt,T01,eta)=>
+  mA*1005*Math.max(200,T01)*(Math.pow(Math.max(1,prTgt),0.286)-1)/clamp(eta||0.72,0.30,0.85);
 // ---- the compressor, and the shaft that drives it ----
 // Boost is what the WHEEL IS DOING at the speed it is turning, not a curve fitted against engine
 // rpm. Euler's turbomachinery relation: a compressor raises stagnation temperature by sigma.U^2/cp,
@@ -1260,10 +1449,18 @@ function shaftNetPower(shaftRpm,mAir,T3,T01){
   // boost it had 40 kW of turbine power spare to make.
   const prCap=Math.min(pr,1+e.maxBoost);
   const mEx=mAir*1.06/units, mA=mAir/units;
-  const prT=turbineManifoldPR(mEx,e.turbineArea,T3);
-  const Pt=mEx*CP_EXH*Math.max(300,T3)*0.70*(1-Math.pow(Math.max(1.0001,prT),-0.248));
-  const Pc=mA*1005*Math.max(200,T01)*(Math.pow(Math.max(1,prCap),0.286)-1)/clamp(eta,0.25,0.85);
-  return{net:Pt-Pc,pr:prCap,prRaw:pr,eta,Pt,Pc};
+  // VGT vanes schedule against the BOOST TARGET, not against what the compressor happens to be
+  // drawing at this instant. That is both the real control law and the only one that works here:
+  // scheduling to the instantaneous draw would balance the shaft at EVERY speed, net would be zero
+  // everywhere, and the turbo would never accelerate. Below target the vanes sit shut, which is
+  // what a spool-up is; at target they open just enough to hold it.
+  const t=e.vgtShut>0
+    ? vgtThroat(mEx,compPowerAt(mA,1+e.maxBoost,T01,eta),T3,e.turbineArea,e.vgtShut)
+    : {area:e.turbineArea,pr:turbineManifoldPR(mEx,e.turbineArea,T3)};
+  const area=t.area, prT=t.pr;
+  const Pt=mEx*CP_EXH*Math.max(300,T3)*TURB_ETA*(1-Math.pow(Math.max(1.0001,prT),-0.248));
+  const Pc=compPowerAt(mA,prCap,T01,eta);
+  return{net:Pt-Pc,pr:prCap,prRaw:pr,eta,Pt,Pc,turbArea:area};
 }
 // Bearing drag — the loss that makes spool take real time. Applied only on the transient path so a
 // wastegated frame still holds its target once lit. (A housing heat-soak hook lived here with its
@@ -1321,8 +1518,13 @@ function steadyBoost(rpm){
 // back-pressure, though the old absolute-difference form treated them the same and would have
 // charged the turbo a ~38% VE loss.
 //   f_res = 1/(CR-1) . (p_exh/p_int)^(1/gamma),  and the loss is the excess over the balanced case.
+const residualFrac=(pExhBar,pIntBar,cr)=>
+  Math.pow(Math.max(0.2,pExhBar)/Math.max(0.2,pIntBar),1/GAMMA_EXH)/Math.max(1.5,cr-1);
+// The VE loss is the EXCESS over the balanced case p_exh = p_int, where the fraction is 1/(CR-1).
+// Algebraically identical to the form this replaces; split out so the knock model can read the
+// fraction itself rather than only the loss.
 const residualLoss=(pExhBar,pIntBar,cr)=>clamp(
-  (Math.pow(Math.max(0.2,pExhBar)/Math.max(0.2,pIntBar),1/GAMMA_EXH)-1)/Math.max(1.5,cr-1),0,0.30);
+  residualFrac(pExhBar,pIntBar,cr)-1/Math.max(1.5,cr-1),0,0.30);
 // Derive every pipe on the engine. A header is CUT for a target speed: solve the tuning relation
 // for length instead of for rpm, taking the lowest order that gives a primary you can physically
 // route round an engine bay (350-900 mm). That is how a fabricator actually works.
@@ -1352,12 +1554,18 @@ function deriveGasDynamics(){
   // split the exhaust between two turbines, so each sees half the flow.
   if(e.intake==='turbo'){
     const tb=TURBO[e.turboSize]||TURBO.medium;
-    e.turbineArea=(tb.ar*AR_INCH)*(TURB_WHEEL*tb.exd/2);
+    const a0=(tb.ar*AR_INCH)*(TURB_WHEEL*tb.exd/2);
+    // A vane ring replaces the fixed throat with a range. `turbineArea` stays the WIDEST the
+    // turbine can be, so every existing call site reads the open position by default; `vgtShut`
+    // is non-zero only on a VGT and is what tells the rest of the model there is anything to
+    // schedule at all.
+    e.turbineArea=e.vgt?a0*vaneThroatFrac(tb.exd,VANE_BETA_MAX):a0;
+    e.vgtShut=e.vgt?a0*vaneThroatFrac(tb.exd,VANE_BETA_MIN):0;
     e.turbUnits=(e.turboConfig==='twin')?2:1;
     e.compExd=tb.exd;
     e.shaftJ=wheelInertia(tb.exd)*(e.turbUnits);
     e.shaftMax=maxShaftRpm(tb.exd);
-  }else{e.turbineArea=0;e.turbUnits=1;e.compExd=0;e.shaftJ=0;e.shaftMax=0;}
+  }else{e.turbineArea=0;e.vgtShut=0;e.turbUnits=1;e.compExd=0;e.shaftJ=0;e.shaftMax=0;}
   // Size the system pipe from the engine's own flow at the power peak, not from a fixed number.
   const m3sPeak=(e.dispCyl_L/1000)*(T/320)*e.cylinders*(e.redline*0.9/120);
   // One system per BANK: a V or a boxer has two heads pointing opposite ways and runs two pipes,
@@ -1426,7 +1634,7 @@ const AIR_FILTER={
 const DEFAULT_ENGINE={
   type:'petrol4',
   cylinders:4,bore_mm:81,stroke_mm:78,compression:12.5,layout:'inline',redline:7200,
-  intake:'na',boost_bar:0,intercooler:'large',turboSize:'medium',turboConfig:'single',scType:'roots',antilag:false,nitrous:'none',exhaust:'sport',cat:'stock',
+  intake:'na',boost_bar:0,intercooler:'large',turboSize:'medium',turboConfig:'single',vgt:false,scType:'roots',antilag:false,nitrous:'none',exhaust:'sport',cat:'stock',
   intakeSys:'efi',airFilter:'perf',
   cam:'stock',vvt:true,valves:4,valveMat:'steel',valveSpring:'stock',runner:'medium',
   fuel:'gasoline',octane:95,injector:'direct',ignitionAdv:22,ignitionType:'coil',timingMode:'auto',afrMode:'auto',
@@ -1445,8 +1653,8 @@ const PRESETS=[
   {name:'5.0 V8 NA Muscle',       engine:{valves:2,valveSpring:'perf',cylinders:8,bore_mm:93,stroke_mm:92.7,compression:12,layout:'v',redline:7500,cam:'sport',exhaust:'sport',radiator:'large',oilCooler:true}},
   {name:'6.2 Supercharged V8',    engine:{valves:2,valveSpring:'race',cylinders:8,bore_mm:103.9,stroke_mm:90.9,compression:9.5,layout:'v',redline:6400,intake:'supercharger',boost_bar:0.65,octane:98,injector:'port',vvt:false,cam:'sport',exhaust:'sport',radiator:'large',oilCooler:true}},
   {name:'6.5 V12 NA Supercar',    engine:{valves:4,valveMat:'titanium',valveSpring:'race',cylinders:12,bore_mm:95,stroke_mm:76.4,compression:11.8,layout:'v',redline:8500,intakeSys:'itb',cam:'race',exhaust:'race',cat:'sport',octane:98,injector:'port',radiator:'large',oilCooler:true}},
-  {name:'2.0 Turbo Diesel I4',    engine:{type:'diesel',vvt:false,cylinders:4,bore_mm:84,stroke_mm:90,compression:17,redline:4800,intake:'turbo',boost_bar:1.2,turboSize:'medium',intakeSys:'efi',injector:'direct',exhaust:'stock',cat:'stock',radiator:'large',oilCooler:true}},
-  {name:'6.6 V8 Turbodiesel',     engine:{type:'diesel',vvt:false,cylinders:8,bore_mm:103,stroke_mm:99,compression:16.5,layout:'v',redline:3800,intake:'turbo',boost_bar:1.1,turboSize:'medium',turboConfig:'single',intakeSys:'efi',injector:'direct',exhaust:'stock',cat:'stock',radiator:'large',oilCooler:true}},
+  {name:'2.0 Turbo Diesel I4',    engine:{type:'diesel',vvt:false,cylinders:4,bore_mm:84,stroke_mm:90,compression:17,redline:4800,intake:'turbo',boost_bar:1.2,turboSize:'medium',vgt:true,intakeSys:'efi',injector:'direct',exhaust:'stock',cat:'stock',radiator:'large',oilCooler:true}},
+  {name:'6.6 V8 Turbodiesel',     engine:{type:'diesel',vvt:false,cylinders:8,bore_mm:103,stroke_mm:99,compression:16.5,layout:'v',redline:3800,intake:'turbo',boost_bar:1.1,turboSize:'medium',turboConfig:'single',vgt:true,intakeSys:'efi',injector:'direct',exhaust:'stock',cat:'stock',radiator:'large',oilCooler:true}},
   {name:'1.3 Rotary Turbo (13B)', engine:{type:'rotary',cylinders:2,bore_mm:80,stroke_mm:80,compression:9.4,redline:9000,intake:'turbo',boost_bar:0.7,turboSize:'medium',turboConfig:'sequential',intakeSys:'efi',injector:'port',exhaust:'sport',cat:'sport',octane:98,radiator:'large',oilCooler:true}},
   {name:'1.3 Rotary NA (Renesis)',engine:{type:'rotary',cylinders:2,bore_mm:80,stroke_mm:80,compression:10,redline:9000,intakeSys:'itb',injector:'port',exhaust:'sport',cat:'sport',octane:98,radiator:'large',oilCooler:true}},
   {name:'500cc 2-Stroke Twin',    engine:{type:'twostroke',cylinders:2,bore_mm:70,stroke_mm:64,compression:9,redline:9500,intakeSys:'carb2',airFilter:'perf',exhaust:'race',cat:'none',octane:98,injector:'port',ignitionType:'coil',radiator:'stock'}}
@@ -1607,6 +1815,12 @@ const I18N={
   'Emissions':{el:'Εκπομπές'},'Grade':{el:'Βαθμός'},'Safety':{el:'Ασφάλεια'},'HP per litre':{el:'HP ανά λίτρο'}
 };
 // Guide body blocks (rich HTML), swapped by data-gk on language change.
+// A block with no entry here falls back to English, which is safe. A block WITH an entry does
+// not: the Greek text replaces the English wholesale, so anything added to an already-translated
+// block is invisible in Greek — and worse, a translation can go stale and keep asserting something
+// the model no longer does. `subsystems` is in that state now: its Greek still says turbo lag does
+// not reach the performance figures, which stopped being true at build 66. New guide content goes
+// in its OWN data-gk block for exactly this reason (see `gearing`, `breathing`).
 const GUIDE_I18N={
   loop:{el:'<b>1. ΣΧΕΔΙΑΣΗ</b> ενός κινητήρα (κάτω μέρος, διαδρομή αέρα, καύσιμο & σπινθήρας, ψύξη…), μετά πάτα <b>BUILD & DYNO</b>. <b>2. ΔΥΝΑΜΟ</b> δείχνει όλη την καμπύλη ισχύος/ροπής και μια βαθμολογία. <b>3. ΚΙΝΗΤΗΡΑΣ</b> είναι ζωντανός πάγκος δοκιμών: ρυθμίζεις <b>ΓΚΑΖΙ</b> και <b>ΦΟΡΤΙΟ</b> και βλέπεις τον κινητήρα να αποκρίνεται σε πραγματικό χρόνο. Δεν ορίζεις ποτέ απευθείας τις στροφές — τον οδηγείς.'},
   driving:{el:'<b>ΓΚΑΖΙ</b> — ανοίγει την εισαγωγή· αυξάνει την πίεση πολλαπλής → ροπή → στροφές.<br><b>ΦΟΡΤΙΟ (φρένο δυναμό)</b> — αντίσταση που ορίζει τις <i>στροφές κρατήματος</i>. 0% = ελεύθερες στροφές ως το όριο· 100% = κρατά κοντά στο ρελαντί. Αντιστέκεται μόνο <i>πάνω</i> από τον στόχο, οπότε κάθε κινητήρας ανεβαίνει πάντα ως εκεί.<br><b>ΗΛΕΚ. ΦΟΡΤΙΟ</b> — κατανάλωση παρελκομένων (φώτα/AC). Μεγάλο φορτίο + μικρό δυναμό στο ρελαντί αδειάζει την μπαταρία → χαμηλή τάση → αδύναμος σπινθήρας.<br><b>AFR</b> — αναλογία αέρα-καυσίμου. Μέγιστη ισχύς κοντά σε λ0.86 (πλούσιο), καλύτερη οικονομία κοντά σε λ1.05 (φτωχό).<br><b>IAT / ΨΥΚΤΙΚΟ / ΛΑΔΙ</b> — θερμοκρασίες χαρμανιού & κινητήρα (αυτόματα σε AUTO THERMAL).<br><b>ΝΙΤΡΟ</b> — αν υπάρχει, ψεκάζει με τέρμα γκάζι από φιάλη που αδειάζει.'},
@@ -2014,6 +2228,7 @@ function readEngineFromForm(){
     intercooler:g('edIntercooler').value,
     turboSize:g('edTurboSize').value,
     turboConfig:g('edTurboConfig').value,
+    vgt:g('edVGT').value==='yes',
     antilag:g('edAntilag').value==='yes',
     scType:g('edScType').value,
     nitrous:g('edNitrous').value,
@@ -2050,7 +2265,8 @@ function applyEngineToForm(e){
   g('edIntake').value=e.intake;g('edBoost').value=e.boost_bar;
   g('edIntercooler').value=(e.intercooler===true?'large':e.intercooler===false?'none':(e.intercooler||'large'));
   g('edTurboSize').value=e.turboSize||'medium';
-  g('edTurboConfig').value=e.turboConfig||'single';g('edAntilag').value=e.antilag?'yes':'no';
+  g('edTurboConfig').value=e.turboConfig||'single';g('edVGT').value=e.vgt?'yes':'no';
+  g('edAntilag').value=e.antilag?'yes':'no';
   g('edScType').value=e.scType||'roots';g('edNitrous').value=e.nitrous||'none';
   g('edIntakeSys').value=e.intakeSys||'efi';g('edAirFilter').value=e.airFilter||'stock';
   g('edRunner').value=e.runner||'medium';g('edCam').value=e.cam||'stock';g('edVVT').value=e.vvt?'yes':'no';
@@ -2082,6 +2298,7 @@ function syncDesignEnable(){
   const turbo=intake==='turbo';
   g('edTurboSize').disabled=!turbo;
   g('edTurboConfig').disabled=!turbo;
+  g('edVGT').disabled=!turbo;
   g('edAntilag').disabled=!turbo;
   g('edScType').disabled=intake!=='supercharger';
   // No poppet valvetrain on 2-stroke / rotary.
@@ -2307,7 +2524,8 @@ function computeCost(){
   if(engine.redline>7500)c+=(engine.redline-7500)*0.9;           // high-rpm valvetrain/internals
   if(engine.compression>11)c+=(engine.compression-11)*250;       // forged high-compression pistons
   if(engine.intake==='turbo'){
-    c+=({small:1200,medium:1800,large:2600}[engine.turboSize]||1800)*({single:1,twin:1.8,sequential:2.6,compound:3.0}[engine.turboConfig]||1);
+    c+=({small:1200,medium:1800,large:2600}[engine.turboSize]||1800)*({single:1,twin:1.8,sequential:2.6,compound:3.0}[engine.turboConfig]||1)
+       *(engine.vgt?1.7:1);   // a vane ring, its bearings and an actuator, in nickel alloy
     if(engine.antilag)c+=700;
   }else if(engine.intake==='supercharger'){
     c+={roots:2200,screw:3200,centrifugal:2600}[engine.scType]||2200;
@@ -2433,13 +2651,22 @@ function updateDesignSummary(){
   const icTxt=engine.intercooler==='none'?' (no IC)':' ('+(engine.intercooler==='large'?'LG':'SM')+' IC)';
   if(engine.intake==='na')induction='Naturally aspirated';
   else if(engine.intake==='turbo'){
-    induction=TURBO_CONFIG[engine.turboConfig].label+' TURBO ('+engine.turboSize.toUpperCase()+')'+(engine.antilag?' +ALS':'')+' @ '+engine.boost_bar.toFixed(2)+' bar'+icTxt+', 50% boost @ '+Math.round(engine.spool50)+' rpm';
+    induction=TURBO_CONFIG[engine.turboConfig].label+' TURBO ('+engine.turboSize.toUpperCase()+')'+(engine.vgt?' VGT':'')+(engine.antilag?' +ALS':'')+' @ '+engine.boost_bar.toFixed(2)+' bar'+icTxt+', 50% boost @ '+Math.round(engine.spool50)+' rpm';
     // Say plainly when the engine is asking the frame for more air than it is rated to move —
     // otherwise the power just quietly stops arriving and there is nothing to learn from.
     induction+='<br>Compressor '+Math.round(engine.turboFlow)+' of '+Math.round(engine.turboCap)+' lb/min rated ('+
       Math.round(engine.turboLoad*100)+'%) • '+Math.round(engine.compEff*100)+'% efficient';
     if(engine.turboLoad>1)induction+=' • <span style="color:#ff5555">'+tr('OFF THE COMPRESSOR MAP — fit a bigger frame')+'</span>';
     else if(engine.turboLoad>0.9)induction+=' • <span style="color:#ffcc00">'+tr('at the limit of this frame')+'</span>';
+    // The vane sweep in the units a turbine is actually specified in, plus the warning that is the
+    // whole reason this is a diesel part: the vanes live in the gas stream.
+    if(engine.vgtShut>0){
+      induction+='<br>'+tr('Turbine throat')+' '+Math.round(engine.vgtShut*1e6)+'–'+Math.round(engine.turbineArea*1e6)+
+        ' mm² ('+(engine.turbineArea/engine.vgtShut).toFixed(1)+':1 '+tr('vane sweep')+') • '+tr('gas at the vanes')+' '+
+        Math.round(exhaustGasT(1.0)-273)+' °C';
+      if(exhaustGasT(1.0)>VANE_T_LIMIT)
+        induction+=' • <span style="color:#ffcc00">'+tr('above the vane material limit — it will not last')+'</span>';
+    }
   }
   else induction=SC_TYPE[engine.scType].label+' S/C @ '+engine.boost_bar.toFixed(2)+' bar'+icTxt;
   if(engine.nitrous!=='none')induction+=' • <span style="color:#ff66cc">'+(engine.nitrous==='large'?'BIG':'SMALL')+' NITROUS</span>';
@@ -2752,7 +2979,44 @@ function knockAt(rpm,map,adv){
   k-=engine.fuelKnockBonus;                             // alcohol extra knock margin
   if(engine.injector==='direct')k-=12;                  // DI charge cooling
   k+=nitrousImep()*4;                                   // nitrous raises cylinder pressure → more knock
+  k+=residualKnock(rpm,map);                            // hot burnt gas the exhaust could not push out
   return clamp(k,0,100);
+}
+// Back-pressure brings on knock, and until now nothing in this model said so. knockAt carried
+// boost, compression, intake temperature, coolant, rpm, timing, lambda, octane, DI and nitrous —
+// and no residual term at all, even though conversion 3 has computed the trapped fraction from
+// (p_exh/p_int)^(1/gamma) since it was written. It simply never reached the spark.
+//
+// That absence is why turbine housing sizing could not be derived. What stops a petrol engine
+// taking a tighter housing is knock: a tighter turbine raises manifold pressure, more burnt gas
+// stays in the clearance volume, and hot residual drags the end gas toward detonation. A diesel
+// has no spark to knock, so it tolerates a far tighter housing and makes boost at 1600 rpm. With
+// this in place that split comes out of the physics instead of being asserted per engine type —
+// knockAt already returns 0 for compression ignition, so the diesel exemption is automatic.
+//
+// NO NEW CONSTANT. The charge the spark has to light is fresh air mixed with trapped residual,
+//     T_mix = (1-f)*T_fresh + f*T_res
+// so a change in f is just a change in charge temperature, and the term immediately above already
+// prices charge temperature at 0.8 points per degree. What is charged here is only the EXCESS
+// residual that back-pressure causes, over the balanced case p_exh = p_int that every engine has
+// and that the existing calibration already absorbs:
+//     dT = (f_actual - f_balanced) * (T_res - T_fresh)
+// So a naturally-aspirated engine with a free-flowing exhaust is left exactly as it was, and only
+// an engine fighting its own exhaust pays.
+function residualKnock(rpm,map){
+  const e=engine;
+  if(!(e.compression>1))return 0;
+  const Tfresh=effIAT(map)+273.15;
+  const Tex=exhaustGasT(clamp(map/Math.max(0.4,e.mapMax),0.3,1.1));
+  const prev=e.boostNow;e.boostNow=map;                 // backPressureBar reads it for the turbine
+  const pExh=1+backPressureBar(rpm,Tex);
+  e.boostNow=prev;
+  const pInt=Math.max(0.3,map);
+  // The trapped gas does not arrive at port temperature: it expands back into the cylinder as the
+  // piston descends, and cools doing it.
+  const Tres=Math.max(Tfresh,Tex*Math.pow(Math.min(1,pInt/pExh),(GAMMA_EXH-1)/GAMMA_EXH));
+  const dF=clamp(residualFrac(pExh,pInt,e.compression)-1/Math.max(1.5,e.compression-1),0,0.30);
+  return dF*(Tres-Tfresh)*0.8;                          // same per-degree sensitivity as above
 }
 // The spark advance actually run at an operating point. FIXED = the designed value; AUTO =
 // an ECU that targets MBT and retards just enough to hold knock near KNOCK_TARGET.
@@ -3119,6 +3383,30 @@ const numOr=(v,fallback)=>{const n=parseFloat(v);return Number.isFinite(n)?n:fal
 // gearbox type stretches or squeezes that spread about its geometric mean — a race sequential
 // keeps the ratios close (the engine stays in a narrow band), a torque-converter auto spreads
 // them wider (a lower 1st to get the load moving, a taller top for cruising).
+// Speed at which drag and rolling resistance consume exactly the power available at the wheels.
+// Bracketed bisection rather than a fixed point: the residual is monotonic in v, so this either
+// brackets the crossing or returns the bracket edge, and cannot quietly return a non-solution.
+function dragLimitedV(kW,cdA,crr,mass){
+  if(!(kW>0)||!(cdA>0))return 0;
+  const need=v=>(0.5*AIR_RHO*cdA*v*v*v+crrAt(crr,v)*mass*G*v)/1000;
+  let lo=1,hi=200;
+  if(need(hi)<kW)return hi;
+  for(let i=0;i<60;i++){const m=(lo+hi)/2;if(need(m)<kW)lo=m;else hi=m;}
+  return lo;
+}
+// The final drive a builder would choose for this engine in this car, biased by the gearing slider.
+// Falls back to the old slider-only ramp before an engine exists to gear for.
+function matchedFinalDrive(){
+  const bias=lerp(1.28,0.74,vehicle.gearing/100);   // 1.00 at the slider's default of 52
+  const s=engine&&engine.score;
+  const topGear=vehicle.ratios[vehicle.ratios.length-1];
+  if(!s||!(s.peakHP>0)||!(s.peakHPrpm>0)||!(topGear>0)||!(vehicle.rTire>0))
+    return lerp(4.9,2.6,vehicle.gearing/100);
+  const vMax=dragLimitedV(s.peakHP*0.7457*vehicle.driveEff,vehicle.cdA,vehicle.crr,vehicle.mass);
+  if(!(vMax>1))return lerp(4.9,2.6,vehicle.gearing/100);
+  const fd=s.peakHPrpm*2*Math.PI*vehicle.rTire/60/(vMax*topGear);
+  return clamp(fd*bias,2.2,6.0);   // mechanical range of a real final drive
+}
 function genRatios(n,spread){
   n=clamp(Math.round(n),4,8);const sp=spread||1;
   const r1=3.35,rn=0.82,mid=Math.sqrt(r1*rn),out=[];
@@ -3221,8 +3509,29 @@ function buildVehicle(){
   vehicle.df=df;vehicle.diffLabel=df.label;vehicle.diffTraction=df.traction;
   vehicle.shiftTime=gb.shift;
   vehicle.driveEff=(DRIVE_EFF[vehicle.drive]||0.90)*gb.eff;          // layout loss × gearbox loss
-  vehicle.finalDrive=lerp(4.9,2.6,vehicle.gearing/100);              // short → tall
   vehicle.ratios=genRatios(vehicle.gears,gb.spread);
+  // Final drive derived from the engine, not read off a slider.
+  //
+  // It used to be lerp(4.9, 2.6, gearing/100) and nothing else — so a 3800 rpm diesel was handed
+  // the same ratios as a 9000 rpm screamer. Measured against real cars the consequence was stark:
+  // the drag-limited top speed was already right (Golf TDI 219 km/h against a real 216, Corvette
+  // 310 against 306, GTI 252 against 246) and the cars simply ran out of GEAR before reaching it,
+  // topping out at 167, 260 and 242. Three builds were leaving 2-2.5x their top-speed drag power
+  // unused, and the TDI made its rated power to within 1% while being 58% slow to 100 km/h.
+  //
+  // A car is geared for maximum speed when the engine sits at its POWER PEAK exactly as drag
+  // consumes that power — not at the limiter, where it is already past peak and cannot hold the
+  // speed. So solve the drag balance for v, then pick the ratio that puts peakHPrpm there:
+  //     P_peak * eta = 0.5*rho*CdA*v^3 + Crr(v)*m*g*v        ->  v_max
+  //     fd = peakHPrpm * 2pi * r_tire / 60 / (v_max * topGearRatio)
+  // Gearing slightly longer than that is what makes top gear an overdrive and moves Vmax a gear
+  // down; the top-speed solver already scans every gear, so that falls out rather than being
+  // arranged. The slider survives as a BIAS about the derived value — 1.28x (short, for
+  // acceleration) to 0.74x (tall, for cruising), passing through 1.00 at its default of 52. That
+  // 1.73x span is close to the old slider's 1.88x, so the design choice stays as meaningful as it
+  // was; what changed is that it is now a choice ABOUT a sensible baseline instead of an absolute
+  // ratio handed to every engine alike.
+  vehicle.finalDrive=matchedFinalDrive();
   vehicle.cost=computeVehicleCost(ch,tt,wr);
   vehicle.powerToWeight=engine.score?engine.score.peakHP/(vehicle.mass/1000):0;   // hp per tonne
   perf=simulateAccel();
@@ -4409,7 +4718,7 @@ function reportSpecRows(){
   let ind;
   const ic=e.intercooler==='none'?', no intercooler':', '+(e.intercooler==='large'?'large':'small')+' intercooler';
   if(e.intake==='na')ind='Naturally aspirated';
-  else if(e.intake==='turbo')ind=(TURBO_CONFIG[e.turboConfig]||{label:''}).label+' turbo, '+e.turboSize+' frame @ '+e.boost_bar.toFixed(2)+' bar'+ic+(e.antilag?', anti-lag':'');
+  else if(e.intake==='turbo')ind=(TURBO_CONFIG[e.turboConfig]||{label:''}).label+' turbo, '+e.turboSize+' frame @ '+e.boost_bar.toFixed(2)+' bar'+ic+(e.vgt?', variable geometry':'')+(e.antilag?', anti-lag':'');
   else ind=(SC_TYPE[e.scType]||{label:''}).label+' supercharger @ '+e.boost_bar.toFixed(2)+' bar'+ic;
   if(e.nitrous&&e.nitrous!=='none')ind+=' + '+(e.nitrous==='large'?'large':'small')+' nitrous shot';
   const rows=[
@@ -4960,6 +5269,15 @@ function scoreEngine(){
   rel-=Math.max(0,engine.maxBoost-0.5)*22;             // boost stress on internals
   rel-=Math.max(0,hpPerL-110)*0.30;                    // highly-strung specific output
   rel-=engine.antilag?15:0;                            // ALS cooks turbo/exhaust
+  // The vane ring is the hottest MOVING part in the exhaust, and this is the real reason VGT is a
+  // diesel technology rather than a universal one. The nickel-base alloys the vanes and their
+  // linkage are made from creep above ~1100 K, and soot and scale seize the bushings. A diesel is
+  // quality-governed and always lean, so its full-load gas arrives at 870-900 K; a petrol engine
+  // runs rich for power and sends 1200-1250 K at the vanes. exhaustGasT already derives that split
+  // from the mixture, so the penalty falls out of the build instead of being asserted per engine
+  // type — and a petrol VGT is then exactly what it is in life: it works, and it does not last.
+  if(engine.vgt&&engine.intake==='turbo')
+    rel-=clamp((exhaustGasT(1.0)-VANE_T_LIMIT)/100*14,0,28);
   rel-=engine.nitrous!=='none'?12:0;                   // chemical stress
   rel-=Math.max(0,engine.redline-(engine.ports?9800:7500))/100*2;   // sky-high redline (rotary/2-str rev high by design)
   const coolNeed=clamp(peakHP/260,0,1.6);

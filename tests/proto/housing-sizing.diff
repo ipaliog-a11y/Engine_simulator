@@ -1,0 +1,77 @@
+diff --git a/index.html b/index.html
+index 9ae76a0..6266821 100644
+--- a/index.html
++++ b/index.html
+@@ -1743,6 +1743,64 @@ const TURBO={
+   large: {exd:0.086,ar:0.86,spool50:0.54,width:0.10,choke:0.025,k:1.4}
+ };
+ const AR_INCH=0.0254;          // A/R is quoted in inches
++// ---- the turbine housing, sized to THIS engine rather than to a frame size class ----
++//
++// A/R used to come from the frame alone — small 0.42, medium 0.64, large 0.86 — so a 2.0 four and
++// a 6.6 V8 wearing the same size class were handed the same throat. Measured across the presets
++// that gave a 4x spread in exhaust flow per mm2 of throat and boost thresholds up to 4275 rpm late
++// (the 13B lit at 7275 rpm against a real ~3000), for an RMS error of about 1940 rpm.
++//
++// A housing is a compromise: tighter spools earlier and costs back-pressure at the top end. What
++// stops you going tighter is engine-specific, and BOTH limits are now modelled — knock, through
++// the residual-gas term, and pumping work, through the exhaust half of the pumping loop. So
++// neither has to be asserted, and there is no per-type constant: pick the housing that puts the
++// most torque under the curve and the limits price themselves. A petrol engine pushed too tight
++// loses timing to knock retard and its torque falls; a diesel has no spark to retard, so it keeps
++// gaining until back-pressure eats more than the extra boost is worth. That is exactly why real
++// turbodiesel housings are tight and why they make boost at 1600 rpm.
++const AR_MIN=0.25, AR_MAX=1.30;   // the span a maker actually offers for one frame
++const TOP_END_TRADE=0.12;         // rated power a builder will trade for response (design tolerance)
++function sizeTurbineHousing(){
++  const e=engine;
++  if(!(e.turbineArea>0)||!(e.compExd>0))return;
++  // Pin the bench exactly as buildTorqueCurve does. The housing is a DESIGN decision and must not
++  // depend on where the user happens to have left the AFR slider or how hot the engine is — a
++  // build that re-geared itself because the bench was warm would be a nasty kind of wrong.
++  const sv={afr:state.afr,coolant:state.coolant,oil:state.oil,engineHealth:state.engineHealth,
++            blown:state.blown,iat:state.iat,systemVoltage:state.systemVoltage,nitrousActive:state.nitrousActive};
++  const savedAfrMode=e.afrMode;e.afrMode='fixed';
++  state.coolant=90;state.oil=100;state.engineHealth=1;state.blown=false;state.iat=20;
++  state.systemVoltage=14.0;state.nitrousActive=false;
++  state.afr=e.ci?e.stoichAFR*1.05:e.stoichAFR*0.88;
++
++  const Rw=TURB_WHEEL*e.compExd/2, rated=Math.round(e.redline*0.9);
++  const ARs=[],tq=[],kn=[];
++  for(let i=0;i<=10;i++)ARs.push(AR_MIN*Math.pow(AR_MAX/AR_MIN,i/10));
++  for(const ar of ARs){
++    e.turbineArea=(ar*AR_INCH)*Rw;
++    tq.push(Math.max(0,calcAtRpm(rated).torque));
++    kn.push(computeKnockRisk(rated,wotMapAt(rated)));
++  }
++  // Tightest housing the engine tolerates at rated power. Tighter always spools earlier, so the
++  // choice is entirely about what stops you, and two things do:
++  //   KNOCK — only on a petrol engine, and it is not asserted here: residual-gas knock makes a
++  //     tight turbine raise the charge temperature until the ECU is retarding, which is why a
++  //     diesel (knockAt returns 0 for compression ignition) walks straight past this limit and
++  //     ends up with the tight housing real turbodiesels wear.
++  //   TOP-END POWER — back-pressure eventually costs more than the extra boost is worth.
++  // TOP_END_TRADE is the one judgement call left: how much rated power a builder will give up to
++  // get response. It is a design tolerance, named as such, and it replaces a 3-value A/R table
++  // plus a per-engine-type split, neither of which was derived from anything.
++  const bestTq=Math.max(...tq);
++  let bestA=(ARs[ARs.length-1]*AR_INCH)*Rw,bestAR=ARs[ARs.length-1];
++  for(let i=0;i<ARs.length;i++){
++    if(kn[i]>KNOCK_TARGET)continue;                       // retarding itself into the ground
++    if(tq[i]<bestTq*(1-TOP_END_TRADE))continue;           // too much top end given away
++    bestA=(ARs[i]*AR_INCH)*Rw;bestAR=ARs[i];break;        // ARs ascend, so the first is the tightest
++  }
++  e.turbineArea=bestA;e.turbineAR=bestAR;
++  e.afrMode=savedAfrMode;Object.assign(state,sv);
++}
+ const TURB_WHEEL=0.90;         // turbine wheel as a fraction of the compressor exducer
+ const COMP_BLOCKAGE=0.50;      // blade blockage + swirl at the inducer throat
+ const INDUCER_RATIO=0.72;      // inducer/exducer, near-constant across a maker's range
+@@ -2303,6 +2361,7 @@ function buildEngine(){
+     state.afr=clamp(lam*engine.stoichAFR,+afrEl.min,+afrEl.max);
+   }
+   syncSliders();
++  sizeTurbineHousing();
+ 
+   buildRev++;dynoCache=null;
+   engine.cost=computeCost();
