@@ -1534,7 +1534,7 @@ function turbineThroatAt(rpm,map,T){
   if(!(e.vgtShut>0))return e.turbineArea;
   const mAir=(e.dispCyl_L/1000)*e.cylinders*(rpm/120)*(101325*Math.max(1,map)/(287*313));
   const u=e.turbUnits||1, mEx=mAir*1.06/u, mA=mAir/u;
-  return vgtThroat(mEx,compPowerAt(mA,1+e.maxBoost,313,e.compEff),T,e.turbineArea,e.vgtShut).area;
+  return vgtThroat(mEx,compPowerAt(mA,1+e.maxBoost,313,e.compEff),T,e.turbineArea,e.vgtShut,map).area;
 }
 // ---- late intake valve closing: why a big cam guts the bottom end ----
 // This is what CAM.lowLoss was standing in for, and it is pure geometry. A cam does not close the
@@ -1610,13 +1610,66 @@ function turbineManifoldPR(mdot,area,T0){
 // and whatever exhaust the turbine does not swallow at that PR goes out of the gate. If the turbine
 // cannot reach that power even swallowing everything, the gate stays shut, the engine is below its
 // boost target, and manifold pressure is simply the nozzle solution for the full flow.
+// ---- exhaust PULSE energy: the turbine is fed by blowdowns, not by a mean pressure ----
+// The turbine here is a nozzle fed by the MEAN manifold flow. A real one is fed by each cylinder's
+// blowdown pulse: a large share of the gas leaves in a short burst at high pressure, and nozzle work
+// rises with pressure ratio, so the same mass does more work arriving in bursts than arriving
+// steadily. Averaging that away under-credits the turbine exactly where it matters: at low flow,
+// near the boost threshold. It is why turbine housing sizing could not find a housing that spooled
+// early without choking the top end (tests/proto/housing.mjs, pulse.mjs).
+//
+// Two states over each firing interval, defined by MASS, so mass is conserved by construction and
+// neither state can fall below ambient:
+//   · BLOWDOWN carries the share f_b of the gas, in the duty phi of the interval;
+//   · DISPLACEMENT, the piston pushing out the rest, carries 1 - f_b in the remaining 1 - phi.
+// Each state's manifold pressure is simply the nozzle solution for its own flow rate. Nothing fitted:
+//   · phi, from cam geometry. Overlap is dur - 2 lsa, so the exhaust valve cracks lsa + dur/2 BTDC and
+//     blowdown runs from there to BDC: lsa + dur/2 - 180 crank degrees (44 on a stock cam), times the
+//     cylinders sharing one turbine, over 720. When a scroll's pulses overlap (phi -> 1) they merge
+//     into steady flow — which is why divided manifolds exist.
+//   · f_b, from the cylinder at exhaust-valve opening. It still holds the trapped charge at about
+//     intake density, so p_EVO ~ p_int T_EVO/T_int, and blowdown expands it isentropically to manifold
+//     pressure, T3 = T_EVO (p_exh/p_EVO)^k. Together p_EVO^(1-k) = p_int (T3/T_int) p_exh^(-k), and the
+//     gas left behind is (p_exh/p_EVO)^(1/gamma) of the charge. (The prototype assumed 0.5.)
+//   · how much of the pulse SURVIVES to the turbine, from volumes: the manifold is a capacitance, and
+//     a blowdown of volume V_b (at manifold conditions) into a manifold of volume V_m keeps the share
+//     V_b/(V_b+V_m) of its excess. A tight manifold delivers the pulse; a big plenum smooths it to
+//     the mean — constant-pressure turbocharging, which large marine diesels choose on purpose.
+// Ported engines (rotary, two-stroke) have no cam to time a blowdown from, and are left on the mean.
+const K_EXH=(GAMMA_EXH-1)/GAMMA_EXH;
+const turbineWorkMean=(pr,T3)=>CP_EXH*Math.max(300,T3)*TURB_ETA*(1-Math.pow(Math.max(1.0001,pr),-K_EXH));
+function pulseShape(mEx,area,T3,mapBar){
+  const e=engine;
+  if(e.ports||!(e.primL>0)||!(e.camDur>0))return null;
+  const perTurbine=(e.cylinders||1)/(e.turbUnits||1);
+  const phi=clamp(Math.max(10,e.camLSA+e.camDur/2-180)*perTurbine/720,0.02,1);
+  if(phi>=1)return null;
+  const T=Math.max(300,T3), Tint=313, pInt=Math.max(0.3,mapBar||1);
+  const pExh=Math.max(1.0001,turbineManifoldPR(mEx,area,T));
+  const pEvo=Math.max(pExh,Math.pow(pInt*(T/Tint)*Math.pow(pExh,-K_EXH),1/(1-K_EXH)));
+  const fb=clamp(1-Math.pow(pExh/pEvo,1/GAMMA_EXH),0,1);
+  const vCyl=(e.displacement_L/1000)/Math.max(1,e.cylinders);
+  const vB=(pInt/pExh)*(T/Tint)*vCyl*(e.veAmp||0.95)*fb;       // one blowdown, at manifold conditions
+  const vMan=Math.PI/4*e.primD*e.primD*e.primL*perTurbine;
+  return {phi,fb,keep:vB/(vB+vMan),pExh};
+}
+// Turbine power (W) passing mEx through a throat, pulses included, and the mean manifold PR.
+function turbinePower(mEx,area,T3,mapBar){
+  const pr=turbineManifoldPR(mEx,area,T3);
+  const s=mEx>0&&area>0?pulseShape(mEx,area,T3,mapBar):null;
+  if(!s)return{P:mEx*turbineWorkMean(pr,T3),pr};
+  const mHi=mEx*(1+s.keep*(s.fb/s.phi-1)), mLo=mEx*(1+s.keep*((1-s.fb)/(1-s.phi)-1));   // phi mHi + (1-phi) mLo = mEx
+  const P=s.phi*mHi*turbineWorkMean(turbineManifoldPR(mHi,area,T3),T3)
+        +(1-s.phi)*Math.max(0,mLo)*turbineWorkMean(turbineManifoldPR(Math.max(0,mLo),area,T3),T3);
+  return{P,pr};
+}
 function manifoldPR(mAir,mEx,mapBar,T3,area,compEta){
   if(!(area>0))return 1;
   const pComp=mAir*1005*298*(Math.pow(Math.max(1,mapBar),0.286)-1)/clamp(compEta||0.72,0.30,0.85);
   if(pComp<=0)return 1;
   const tPower=pr=>{
     const mT=Math.min(mEx,area*(pr*101325)/Math.sqrt(Math.max(300,T3))*nozzleFlux(pr));
-    return mT*1150*Math.max(300,T3)*TURB_ETA*(1-Math.pow(pr,-0.248));
+    return turbinePower(mT,area,T3,mapBar).P;
   };
   const full=turbineManifoldPR(mEx,area,T3);          // gate shut: everything through the throat
   if(tPower(full)<=pComp)return full;                 // cannot make target even wide open
@@ -1661,28 +1714,32 @@ function vaneThroatFrac(exd,betaDeg){
 // boost" — widest, because every square millimetre closed past that is back-pressure the piston
 // has to push against, and this model now charges for that in both PMEP and residual knock.
 //
-// Solved by inverting the turbine rather than searching the area, which costs ONE nozzle solve
-// instead of a nested pair: the power the compressor needs fixes the expansion ratio,
-//     Pc = mEx*cp*T3*eta_t*(1 - PR^-0.248)   ->   PR
-// and the nozzle then says which throat passes mEx at that PR,
-//     A  = mEx*sqrt(T3) / (PR*p0*flux(PR))
 // Clamped to the vane sweep. Hitting the shut end is not a failure — it is the vanes doing all
 // they can, which is the state a VGT spends every spool-up in.
 //
-// Returns the expansion ratio as well as the throat, and inside the sweep it returns the one solved
-// for above rather than re-solving it through the area. That is not an optimisation. The whole
-// boost search rests on the SIGN of (Pt - Pc), and at a modulating vane position that difference is
-// zero by construction; feeding the area back through a bracketing solver that returns its lower
-// bound would make it reliably -1e-12, and a frame holding its target would report as unable to.
-function vgtThroat(mEx,pComp,T3,aOpen,aShut){
-  const shut=(a)=>({area:a,pr:turbineManifoldPR(mEx,a,T3)});
-  if(!(aOpen>0))return{area:0,pr:1};
+// Returns the throat, the mean expansion ratio and the turbine POWER at that throat, and the caller
+// uses that power rather than re-deriving it. That is not an optimisation. The whole boost search
+// rests on the SIGN of (Pt - Pc), and at a modulating vane position that difference is zero by
+// construction; recomputing it through another path would make it reliably -1e-12, and a frame
+// holding its target would report as unable to. (Until pulse energy this inverted the turbine in
+// closed form for PR; turbine power now has no closed-form inverse, so the area is bracketed.)
+function vgtThroat(mEx,pComp,T3,aOpen,aShut,mapBar){
+  const shut=a=>{const r=turbinePower(mEx,a,T3,mapBar);return{area:a,pr:r.pr,P:r.P};};
+  if(!(aOpen>0))return{area:0,pr:1,P:0};
   if(!(mEx>0)||!(pComp>0))return shut(aOpen);
-  const w=pComp/(mEx*CP_EXH*Math.max(300,T3)*TURB_ETA);
-  if(!(w<1))return shut(aShut);                       // not reachable even fully shut
-  const pr=Math.pow(1-w,-1/0.248);
-  const a=mEx*Math.sqrt(Math.max(300,T3))/(pr*101325*nozzleFlux(pr));
-  return(a>=aShut&&a<=aOpen)?{area:a,pr}:shut(clamp(a,aShut,aOpen));
+  // The widest throat whose turbine power supplies the compressor. With pulses the power is no
+  // longer invertible in closed form, so the AREA is bracketed (power falls as the throat opens),
+  // and the bracket end that still supplies it is returned with the power it makes: the sign of
+  // (Pt - Pc) at a modulating vane position must come out >= 0 by construction, not be re-derived
+  // through a second solver (see above).
+  const Pof=a=>turbinePower(mEx,a,T3,mapBar);
+  if(Pof(aOpen).P>=pComp){const r=Pof(aOpen);return{area:aOpen,pr:r.pr,P:r.P};}
+  const sh=Pof(aShut);
+  if(sh.P<pComp)return{area:aShut,pr:sh.pr,P:sh.P};          // not reachable even fully shut
+  let lo=aShut,hi=aOpen;
+  for(let i=0;i<40;i++){const m=(lo+hi)/2;if(Pof(m).P>=pComp)lo=m;else hi=m;}
+  const r=Pof(lo);
+  return{area:lo,pr:r.pr,P:r.P};
 }
 // Compressor shaft power at a given pressure ratio — the demand the vanes are scheduled against.
 const compPowerAt=(mA,prTgt,T01,eta)=>
@@ -1762,10 +1819,10 @@ function shaftNetPower(shaftRpm,mAir,T3,T01){
   // while the steady solver (which does not) said it held 1.20. A wastegated frame never showed it,
   // because it always has surplus to dump.
   const t=e.vgtShut>0
-    ? vgtThroat(mEx,compPowerAt(mA,1+e.maxBoost,T01,eta)+shaftLossPower(shaftRpm)/units,T3,e.turbineArea,e.vgtShut)
-    : {area:e.turbineArea,pr:turbineManifoldPR(mEx,e.turbineArea,T3)};
-  const area=t.area, prT=t.pr;
-  const Pt=mEx*CP_EXH*Math.max(300,T3)*TURB_ETA*(1-Math.pow(Math.max(1.0001,prT),-0.248));
+    ? vgtThroat(mEx,compPowerAt(mA,1+e.maxBoost,T01,eta)+shaftLossPower(shaftRpm)/units,T3,e.turbineArea,e.vgtShut,prCap)
+    : turbinePower(mEx,e.turbineArea,T3,prCap);
+  const area=t.area||e.turbineArea;
+  const Pt=t.P;
   const Pc=compPowerAt(mA,prCap,T01,eta);
   return{net:Pt-Pc,pr:prCap,prRaw:pr,eta,Pt,Pc,turbArea:area};
 }
