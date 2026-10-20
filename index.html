@@ -144,6 +144,28 @@ footer{text-align:center;margin-top:16px;padding:8px;font-size:7px;color:#555;bo
 /* 5 tabs — tighten padding so labels fit */
 .viz-tabs button{padding:10px 4px;font-size:7.5px;letter-spacing:0}
 /* ---- Guide & Options tabs (reuse the scrollable design-panel shell) ---- */
+/* DYNO RESULT — the pull as a static sheet, in real text, under the curve. */
+.dyno-result{padding:14px 18px 18px;background:#0d0d18;border:4px solid #444;grid-column:1}
+/* The side column spans both rows, so the result panel sits directly under the chart instead of
+   below the (taller) control column. One-column layouts are unaffected. */
+@media(min-width:801px) and (orientation:landscape){.side-panel{grid-column:2;grid-row:1 / span 2}}
+.dyno-result h4{font-size:12px;color:#ffcc00;margin:0 0 12px}
+.dr-cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:10px;margin-bottom:12px}
+.dr-card{background:#12121c;border:2px solid #2a2a3e;padding:10px 12px}
+.dr-card .k{font-size:9px;color:#889;margin-bottom:6px}
+.dr-card .v{font-size:20px;line-height:1.3}
+.dr-card .s{font-size:10px;color:#9ab;margin-top:4px;line-height:1.5}
+.dr-card.hp .v{color:#ffcc00}.dr-card.tq .v{color:#00ccff}
+.dr-note{font-size:9px;color:#889;line-height:1.8;margin:0 0 12px}
+.dr-note b{color:#cde}
+.dr-table{width:100%;border-collapse:collapse;font-size:10px}
+.dr-table th{color:#889;font-weight:normal;text-align:right;padding:6px 8px;border-bottom:2px solid #2a2a3e}
+.dr-table td{text-align:right;padding:5px 8px;color:#cde}
+.dr-table tr:nth-child(even) td{background:#12121c}
+.dr-table td.hp{color:#ffcc00}.dr-table td.tq{color:#00ccff}
+.dr-table tr.pk td{background:#262640;font-weight:bold}
+.dr-table th:first-child,.dr-table td:first-child{text-align:left}
+@media(max-width:600px){.dr-table{font-size:8px}.dr-table th,.dr-table td{padding:4px 3px}}
 /* GUIDE — paged, with an index. Type is 2x the old 8px: the guide is prose, and prose at 8px in a
    pixel font was a wall nobody read. It gets the whole width while open (.main.wide). */
 .main.wide{grid-template-columns:1fr}
@@ -227,7 +249,7 @@ table.fuelmap td.live{box-shadow:inset 0 0 0 2px #fff;font-weight:bold}
 <body>
 <div class="container">
 <header>
-<h1>PIXEL ENGINE SIM v0.6 build 85</h1>
+<h1>PIXEL ENGINE SIM v0.6 build 86</h1>
 <div class="subtitle" id="subtitle">ENGINE DESIGNER • BUILD IT, THEN DRIVE IT</div>
 </header>
 <div class="main">
@@ -378,6 +400,17 @@ the battery → low voltage → weak spark.<br>
 <b>IAT / COOLANT / OIL</b> — charge &amp; engine temps (auto in AUTO THERMAL mode).<br>
 <b>NITROUS</b> — if fitted, sprays at wide-open throttle from a bottle that depletes.
 </div>
+<div class="guide-body" data-gk="opButtons">
+<b>PEAK TORQUE · MAX POWER · ECO</b> — three buttons that put the engine you built on a real
+operating point and let it settle there. <b>MAX POWER</b> opens the throttle fully and has the dyno
+brake hold the rpm where this engine makes its peak power, at the best-power mixture (λ0.86 petrol,
+λ1.05 diesel) and the scorecard's conditions — so the LIVE OUTPUT should land on the same figure the
+DYNO tab prints. <b>PEAK TORQUE</b> does the same at the torque peak. <b>ECO</b> searches this
+engine's speed, load and mixture for the point that burns the <i>least fuel per kWh</i> — the lowest
+BSFC — and holds it; for a petrol engine that is usually a little lean of stoich at high load and
+modest rpm, for a diesel well lean. Each button flashes what it set and what to expect. With the
+mixture on AUTO, the ECU's fuel map chooses the mixture instead.
+</div>
 </section>
 <section class="guide-page" id="gp-live" data-cat="start" data-title="Watching it run" hidden>
 <h4 class="guide-title">Watching it run</h4>
@@ -398,6 +431,14 @@ the cycle is something you can watch rather than something you have to remember.
 shows ports uncovering in the liner instead of valves; a rotary shows a real epitrochoid housing
 with the rotor turning at a third of the eccentric shaft. The strip beside it draws every cylinder
 at its own phase, so you can see the firing order run through a V12.
+</div>
+<div class="guide-body" data-gk="liveRotary">
+<b>The Wankel view.</b> A rotary is drawn with the same instruments as a piston engine — throttle,
+turbo, exhaust and EGT, breathing, output, fuel and spark, and a rotor bank with each rotor numbered and
+lit as it fires. The housing is a true two-lobe epitrochoid. A Wankel has two "top dead centres", at
+the two waists of the housing: the ports sit at one and the spark plugs at the other. Each of the three
+chambers is coloured by what is in it, and unlike a piston engine every phase happens at a <i>fixed
+place</i> — intake in one lobe, power in the other — which is labelled on the drawing.
 </div>
 <div class="guide-body" data-gk="liveFiring">
 <b>The bank, and the firing order.</b> The panel on the right of the cutaway draws every cylinder, numbered, at its own point in the cycle. The number over a cylinder lights up while that cylinder fires, so you can read the order straight off the drawing, and the caption underneath spells it out.<br>Cylinders do not fire in the order they are numbered. An inline four fires <b>1-3-4-2</b>, which is also why pistons 1 and 4 are always at the top together and 2 and 3 at the bottom: the firing order and the crank geometry are the same fact. An inline six fires 1-5-3-6-2-4, a V8 1-5-4-8-6-3-7-2, a V12 1-7-5-11-3-9-6-12-2-8-4-10.<br>V and boxer engines are numbered <b>bank by bank</b> — bank A is 1 to n/2 on the top row, bank B the rest below — which is how BMW, Audi, Ferrari and Porsche number theirs, and the orders above are in that numbering. (GM numbers a V8 odd-left, even-right, so its familiar 1-8-4-3-6-5-7-2 is the same engine written differently.) Counts with no production layout, such as a V5, fire in sequence, which is still evenly spaced.
@@ -429,6 +470,14 @@ lean/hot; a catalytic converter only cleans all three near stoich.<br>
 <b>COST ($)</b> — total build price of the parts you chose. <b>REL (reliability)</b> — a
 design estimate of how much abuse the build invites (boost/knock/heat/high-rpm stress);
 higher is tougher. <b>hp/$1k</b> — power per thousand dollars: the value metric.
+</div>
+<div class="guide-body" data-gk="dynoResult">
+<b>DYNO RESULT</b> — under the chart on the DYNO tab, the pull as a static sheet: peak power and
+torque with their rpm, in hp, kW, Nm and lb-ft, and a run-data table. Two pulls are shown, because
+they answer two different questions. The <b>best-power pull</b> is the engine at its best — full
+throttle, best-power mixture, standard conditions — and is what the grade and the objectives use.
+<b>Your pull</b> is the curve drawn on the chart: the engine as you have it tuned right now. The PDF
+report tabulates the same pull.
 </div>
 </section>
 <section class="guide-page" id="gp-types" data-cat="engine" data-title="Engine types" hidden>
@@ -762,6 +811,11 @@ the test circuits a dip is worth about a third more corner speed than the same c
 Where the hills fall matters as much as how big they are: a climb in a braking zone lets you brake
 later and <i>gains</i> time, while the same climb on a straight simply costs you.
 </div>
+<div class="guide-body" data-gk="trackZoom">
+<b>Zoom and pan the map.</b> Scroll (or pinch on a phone) to zoom in on any corner, drag to move
+around, and double-click to fit the whole circuit again. The track is drawn to scale, so zoomed in you
+can see where the racing line uses the width.
+</div>
 <div class="guide-body" data-gk="tracklap">
 It is worth <b>5–7% of lap time</b>
 over driving the centreline, and a wider circuit is worth more. Then it finds the cornering speed at
@@ -1034,6 +1088,7 @@ This is a physics model, and like every model it leaves things out. These are th
 <input type="file" id="gpxInput" accept=".gpx,application/gpx+xml,text/xml" style="display:none">
 </div>
 </div>
+<div class="dyno-result" id="dynoResult" hidden aria-live="polite"></div>
 </div>
 <footer>PIXEL ENGINE SIM • Configurable engine designer • Expandable per subsystem<br>Physics simplified for education &amp; fun • Inspired by Automation</footer>
 </div>
@@ -1902,6 +1957,12 @@ let activeChallenge='free';
 // technical readouts (canvas schematic, status ticker, design-summary spec) stay in English —
 // their content is numbers and universal units.
 const I18N={
+  'ZOOM':{el:'ΖΟΥΜ'},'scroll or pinch to zoom • drag to pan • double-click to reset':{el:'κύλιση ή τσίμπημα για ζουμ • σύρε για μετακίνηση • διπλό κλικ για επαναφορά'},
+  'DYNO RESULT':{el:'ΑΠΟΤΕΛΕΣΜΑ ΔΥΝΑΜΟΜΕΤΡΟΥ'},'PEAK POWER':{el:'ΜΕΓΙΣΤΗ ΙΣΧΥΣ'},'BEST-POWER PULL':{el:'ΔΟΚΙΜΗ ΜΕΓΙΣΤΗΣ ΙΣΧΥΟΣ'},
+  'YOUR PULL (AS TUNED)':{el:'Η ΔΟΚΙΜΗ ΣΟΥ (ΩΣ ΕΧΕΙ ΡΥΘΜΙΣΤΕΙ)'},'ECU fuel map':{el:'χάρτης καυσίμου ECU'},'BOOST':{el:'BOOST'},
+  'wide open throttle at the best-power mixture, 25 °C intake, 90 °C coolant: the figures the grade and the objectives use, and what MAX POWER on the LIVE tab drives to.':{el:'τέρμα γκάζι με μείγμα μέγιστης ισχύος, εισαγωγή 25 °C, ψυκτικό 90 °C: τα νούμερα του βαθμού και των στόχων, και αυτά που πιάνει το ΜΕΓ. ΙΣΧΥΣ στην καρτέλα ΖΩΝΤΑΝΑ.'},
+  'the curve drawn above, at the mixture and conditions set right now':{el:'η καμπύλη επάνω, με το μείγμα και τις συνθήκες που έχουν οριστεί τώρα'},
+  'It is what the PDF report tabulates.':{el:'Αυτή πινακοποιεί η αναφορά PDF.'},'logged pull(s) overlaid on the chart.':{el:'αποθηκευμένες δοκιμές επάνω στο διάγραμμα.'},
   'expect':{el:'αναμένεται'},'the ECU map sets the mixture':{el:'το μείγμα το ορίζει ο χάρτης ECU'},
   'AT THE SHAFT':{el:'ΣΤΟΝ ΑΞΟΝΑ'},
   "How the app works":{el:"Πώς δουλεύει"},
@@ -6230,6 +6291,53 @@ function drawRotaryCutaway(px,py,S,F,LW,dt,m){
 // the racing line coloured by what is limiting the car at each point. ----
 const LIMC={corner:'#ffcc00',brake:'#ff5555',power:'#55dd66',traction:'#4aa3ff'};
 const LIMLBL={corner:'CORNERING (grip)',brake:'BRAKING',power:'POWER',traction:'TRACTION (diff/tyres)'};
+// Track map view: zoom (1 = fitted) and pan (canvas units), reset whenever the circuit changes.
+const trackView={key:'',z:1,x:0,y:0,mcx:320,mcy:210};
+const TRACK_ZMAX=16;
+// Zoom by factor f about the canvas point (vx,vy), keeping the map point under it fixed.
+function trackZoomAt(vx,vy,f){
+  const z0=trackView.z, z1=clamp(z0*f,1,TRACK_ZMAX);
+  if(z1===z0)return;
+  // map-space point under the cursor, in base (unzoomed) canvas coordinates
+  const bx=trackView.mcx+(vx-trackView.mcx-trackView.x)/z0, by=trackView.mcy+(vy-trackView.mcy-trackView.y)/z0;
+  trackView.z=z1;
+  trackView.x=vx-trackView.mcx-(bx-trackView.mcx)*z1;
+  trackView.y=vy-trackView.mcy-(by-trackView.mcy)*z1;
+  if(z1<=1.0001){trackView.x=0;trackView.y=0;}
+}
+function trackViewReset(){trackView.z=1;trackView.x=0;trackView.y=0;}
+function bindTrackZoom(){
+  // canvas CSS pixels -> the 640x420 drawing space
+  const toViz=e=>{const r=canvas.getBoundingClientRect();return {x:(e.clientX-r.left)*vizW/r.width,y:(e.clientY-r.top)*vizH/r.height};};
+  const active=()=>vizMode==='track'&&!!lapResult;
+  canvas.addEventListener('wheel',e=>{
+    if(!active())return;
+    e.preventDefault();
+    const p=toViz(e);trackZoomAt(p.x,p.y,Math.exp(-e.deltaY*0.0015));
+  },{passive:false});
+  canvas.addEventListener('dblclick',e=>{if(active())trackViewReset();});
+  // Pointer events cover mouse, pen and touch: one pointer drags, two pinch.
+  const ptrs=new Map();let last=null,pinch=null;
+  canvas.addEventListener('pointerdown',e=>{
+    if(!active())return;
+    canvas.setPointerCapture(e.pointerId);ptrs.set(e.pointerId,toViz(e));
+    if(ptrs.size===1)last=toViz(e);
+    if(ptrs.size===2){const [a,b]=[...ptrs.values()];pinch={d:Math.hypot(a.x-b.x,a.y-b.y)};}
+  });
+  canvas.addEventListener('pointermove',e=>{
+    if(!active()||!ptrs.has(e.pointerId))return;
+    const p=toViz(e);ptrs.set(e.pointerId,p);
+    if(ptrs.size>=2&&pinch){
+      const [a,b]=[...ptrs.values()],d=Math.hypot(a.x-b.x,a.y-b.y);
+      if(pinch.d>1)trackZoomAt((a.x+b.x)/2,(a.y+b.y)/2,d/pinch.d);
+      pinch.d=d;
+    }else if(last&&trackView.z>1.0001){
+      trackView.x+=p.x-last.x;trackView.y+=p.y-last.y;last=p;
+    }
+  });
+  const up=e=>{ptrs.delete(e.pointerId);if(ptrs.size<2)pinch=null;last=ptrs.size===1?[...ptrs.values()][0]:null;};
+  canvas.addEventListener('pointerup',up);canvas.addEventListener('pointercancel',up);
+}
 function drawTrack(){
   const W=vizW,H=vizH;
   ctx.fillStyle=C.bg;ctx.fillRect(0,0,W,H);
@@ -6245,19 +6353,28 @@ function drawTrack(){
   const sx=(W-pad*2)/(T.maxX-T.minX),sy=(H-topBar-botBar-pad)/(T.maxY-T.minY);
   const sc=Math.min(sx,sy);
   const ox=pad+((W-pad*2)-(T.maxX-T.minX)*sc)/2, oy=topBar+((H-topBar-botBar-pad)-(T.maxY-T.minY)*sc)/2;
-  const px=q=>ox+(q.x-T.minX)*sc, py=q=>oy+(q.y-T.minY)*sc;
+  // ZOOM AND PAN. The fitted map above is the base view; the view transform scales it about the map
+  // centre and shifts it, so zoom = 1 and pan = 0 is exactly the old drawing. Line widths that are
+  // drawn to scale (the track ribbon) grow with the zoom, which is the point: zoomed in you can see
+  // the racing line using the width of a hairpin.
+  if(trackView.key!==T.label){trackView.key=T.label;trackView.z=1;trackView.x=0;trackView.y=0;}
+  const z=trackView.z, mcx=W/2, mcy=(topBar+H-botBar)/2;
+  trackView.mcx=mcx;trackView.mcy=mcy;
+  const px=q=>mcx+(ox+(q.x-T.minX)*sc-mcx)*z+trackView.x, py=q=>mcy+(oy+(q.y-T.minY)*sc-mcy)*z+trackView.y;
+  const scV=sc*z;
+  ctx.save();ctx.beginPath();ctx.rect(0,topBar-8,W,H-topBar-botBar+8);ctx.clip();
   const pts=T.pts,line=T.line,n=pts.length;
   // Track surface: the full width of the circuit, drawn from the centreline. Width is to scale,
   // so you can see the racing line using it.
   ctx.lineCap='round';ctx.lineJoin='round';
-  ctx.fillStyle='#23232f';trackRibbon(ctx,T,px,py,sc,3);
+  ctx.fillStyle='#23232f';trackRibbon(ctx,T,px,py,scV,3);
   // Centreline, faint, so the racing line's use of the width reads clearly.
   ctx.strokeStyle='#34344a';ctx.lineWidth=1;ctx.setLineDash([4,6]);
   ctx.beginPath();ctx.moveTo(px(pts[0]),py(pts[0]));
   for(let i=1;i<n;i++)ctx.lineTo(px(pts[i]),py(pts[i]));
   ctx.closePath();ctx.stroke();ctx.setLineDash([]);
   // The optimised racing line, coloured per segment by the limiting factor.
-  ctx.lineWidth=Math.max(2.5,4*sc/1.2);
+  ctx.lineWidth=Math.min(9,Math.max(2.5,4*scV/1.2));
   for(let i=0;i<n;i++){
     const j=(i+1)%n;
     ctx.strokeStyle=LIMC[L.lim[i]]||'#888';
@@ -6270,6 +6387,11 @@ function drawTrack(){
   ctx.fillStyle=C.yellow;ctx.font='7px "Press Start 2P"';
   ctx.fillText(Math.round(L.v[slow]*3.6)+' km/h',px(line[slow])+8,py(line[slow])+3);
   ctx.fillStyle='#ff5555';ctx.fillRect(px(line[slow])-3,py(line[slow])-3,6,6);
+  ctx.restore();
+  // how to drive the view, and where it is
+  ctx.font='6px "Press Start 2P"';ctx.fillStyle='#556';ctx.textAlign='right';
+  ctx.fillText((z>1.01?tr('ZOOM')+' '+z.toFixed(1)+'×  •  ':'')+tr('scroll or pinch to zoom • drag to pan • double-click to reset'),W-12,H-botBar+4);
+  ctx.textAlign='left';
   // Legend along the bottom: how much of the lap distance each limit accounts for.
   ctx.font='7px "Press Start 2P"';
   let lx=14;const ly=H-30;
@@ -6343,6 +6465,48 @@ function refreshLap(){
   if(!engine.score||!vehicle.mass){lapResult=null;}
   else lapResult=simulateLap(trackKey);
   renderLap();
+}
+// ---- the dyno result as a static sheet ----
+// The DYNO canvas draws the pull with small tags, and the figures under it are the scorecard's — two
+// different pulls, never labelled as such, so "what is the peak power?" had no clear answer short of
+// exporting the PDF. This is the same information as the PDF's result band and run-data table, in
+// real text under the curve: the BEST-POWER pull (the scorecard / objective figures) and YOUR pull
+// as currently tuned (the curve drawn above, which is also what the PDF tabulates).
+let dynoResultKey='';
+function renderDynoResult(force){
+  const box=document.getElementById('dynoResult');
+  if(!box||box.hidden||!engine.score)return;
+  const data=getDynoData();
+  const key=buildRev+'|'+dynoCacheKey+'|'+dynoPulls.length+'|'+currentLang;
+  if(!force&&key===dynoResultKey)return;
+  dynoResultKey=key;
+  const s=engine.score, kW=hp=>hp*0.7457, lbft=nm=>nm*0.73756;
+  let pP={v:0,r:0},pT={v:0,r:0};
+  data.forEach(p=>{if(p.powerHP>pP.v)pP={v:p.powerHP,r:p.rpm};if(p.torque>pT.v)pT={v:p.torque,r:p.rpm};});
+  const at=r=>{for(let i=1;i<data.length;i++)if(r<=data[i].rpm){const a=data[i-1],b=data[i],t=(r-a.rpm)/(b.rpm-a.rpm);
+    return {hp:a.powerHP+(b.powerHP-a.powerHP)*t,tq:a.torque+(b.torque-a.torque)*t,map:(a.map||1)+((b.map||1)-(a.map||1))*t};}
+    const z=data[data.length-1];return {hp:z.powerHP,tq:z.torque,map:z.map||1};};
+  const lam=(state.afr/engine.stoichAFR).toFixed(2);
+  const tuned=engine.afrMode==='auto'?tr('ECU fuel map'):'AFR '+state.afr.toFixed(1)+' (λ'+lam+')';
+  const card=(cls,k,v,sub)=>'<div class="dr-card '+cls+'"><div class="k">'+k+'</div><div class="v">'+v+'</div><div class="s">'+sub+'</div></div>';
+  const step=engine.redline>8000?500:engine.redline>5000?500:250;
+  const rows=[];for(let r=1000;r<=engine.redline;r+=step)rows.push(r);
+  if(rows[rows.length-1]!==engine.redline)rows.push(engine.redline);
+  const boosted=engine.intake!=='na';
+  const near=(r,pk)=>Math.abs(r-pk)<step/2;
+  box.innerHTML='<h4>'+tr('DYNO RESULT')+'</h4>'+
+    '<div class="dr-cards">'+
+      card('hp',tr('PEAK POWER')+' — '+tr('BEST-POWER PULL'),s.peakHP+' hp',Math.round(kW(s.peakHP))+' kW @ '+s.peakHPrpm+' rpm')+
+      card('tq',tr('PEAK TORQUE')+' — '+tr('BEST-POWER PULL'),s.peakTQ+' Nm',Math.round(lbft(s.peakTQ))+' lb-ft @ '+s.peakTQrpm+' rpm')+
+      card('',tr('YOUR PULL (AS TUNED)'),pP.v.toFixed(1)+' hp',pT.v.toFixed(1)+' Nm @ '+pT.r+' • '+Math.round(kW(pP.v))+' kW @ '+pP.r)+
+    '</div>'+
+    '<p class="dr-note"><b>'+tr('BEST-POWER PULL')+'</b> — '+tr('wide open throttle at the best-power mixture, 25 °C intake, 90 °C coolant: the figures the grade and the objectives use, and what MAX POWER on the LIVE tab drives to.')+'<br>'+
+    '<b>'+tr('YOUR PULL (AS TUNED)')+'</b> — '+tr('the curve drawn above, at the mixture and conditions set right now')+' ('+tuned+', '+Math.round(state.iat)+' °C). '+
+    tr('It is what the PDF report tabulates.')+(dynoPulls.length?' '+dynoPulls.length+' '+tr('logged pull(s) overlaid on the chart.'):'')+'</p>'+
+    '<table class="dr-table"><thead><tr><th>RPM</th><th>HP</th><th>kW</th><th>Nm</th><th>lb-ft</th>'+(boosted?'<th>'+tr('BOOST')+' bar</th>':'')+'</tr></thead><tbody>'+
+    rows.map(r=>{const v=at(r);return '<tr'+(near(r,pP.r)||near(r,pT.r)?' class="pk"':'')+'><td>'+r+'</td><td class="hp">'+v.hp.toFixed(1)+'</td><td>'+kW(v.hp).toFixed(1)+
+      '</td><td class="tq">'+v.tq.toFixed(1)+'</td><td>'+lbft(v.tq).toFixed(1)+'</td>'+(boosted?'<td>'+Math.max(0,v.map-1).toFixed(2)+'</td>':'')+'</tr>';}).join('')+
+    '</tbody></table>';
 }
 function drawDyno(){
   const W=vizW,H=vizH,rMax=engine.redline;
@@ -6482,7 +6646,10 @@ function setTab(mode){
   document.getElementById('vehiclePanelTab').classList.toggle('active',mode==='vehicle');
   document.getElementById('guidePanel').classList.toggle('active',mode==='guide');
   document.querySelector('.main').classList.toggle('wide',mode==='guide');
+  // On the track map a touch drag pans the map; everywhere else it must still scroll the page.
+  canvas.style.touchAction=mode==='track'?'none':'';
   document.getElementById('optionsPanel').classList.toggle('active',mode==='options');
+  const dr=document.getElementById('dynoResult');if(dr){dr.hidden=(mode!=='dyno');if(mode==='dyno')renderDynoResult(true);}
   // Right column: runtime Engine Controls while driving/dyno; the Performance panel on VEHICLE.
   document.getElementById('controlsPanel').style.display=(mode==='engine'||mode==='dyno')?'':'none';
   document.getElementById('vehiclePanel').style.display=(mode==='vehicle')?'':'none';
@@ -6746,7 +6913,7 @@ function loop(now){
   stepWear(dt);
   updateSound();
   if(fullscreen||vizMode==='engine')drawEngine(dt);
-  else if(vizMode==='dyno')drawDyno();
+  else if(vizMode==='dyno'){drawDyno();renderDynoResult(false);}
   else if(vizMode==='track')drawTrack();
   updateUI();
   requestAnimationFrame(loop);
@@ -6756,6 +6923,7 @@ applyVehicleToForm(DEFAULT_VEHICLE);buildVehicle();updateVehicleSummary();
 loadFromHash();   // open a shared build if the URL carries one
 applyLang(currentLang);   // localise the UI (persisted choice)
 initGuide();               // index, or the page you were last reading
+bindTrackZoom();
 sizeCanvas();updatePhysics();updateUI();requestAnimationFrame(loop);
 
 // Register service worker for offline/installable PWA (no-op on file://).

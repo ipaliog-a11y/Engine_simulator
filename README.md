@@ -1,4 +1,4 @@
-# PIXEL ENGINE SIM v0.6 build 85
+# PIXEL ENGINE SIM v0.6 build 86
 
 **A lightweight, 8-bit style internal combustion engine *designer* & simulator** inspired by *Automation*.
 
@@ -87,8 +87,8 @@ saps power; a large radiator, electric fan and oil cooler keep it cool.
   Efficiency, BSFC, Fuel Flow, Knock Risk, Engine Health.
 - **Seven tabs** — **ENGINE** (build the engine), **VEHICLE** (drop it in a car & read its
   performance), **TRACK** (lap it round a circuit), **LIVE** (the engine running: cutaway, the
-  whole bank firing in its real order, and the controls), **DYNO** (power/torque curve +
-  scorecard), **GUIDE** (a paged manual with an index, 28 pages in 7 sections) and **OPTIONS** (sound,
+  whole bank firing in its real order, and the controls), **DYNO** (power/torque curve,
+  scorecard and a static result sheet with run data), **GUIDE** (a paged manual with an index, 28 pages in 7 sections) and **OPTIONS** (sound,
   wear and **language**). The right column is context-aware: runtime Engine Controls while
   driving/on the dyno, the live **Performance** panel on VEHICLE and the **Lap Time** panel on
   TRACK.

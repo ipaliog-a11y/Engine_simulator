@@ -97,6 +97,50 @@ console.log(`Greek face: ${font.status}; glyph width latin ${font.wl.toFixed(1)}
 if (font.status !== 'loaded') fails.push(`the Greek subset of the pixel font did not load (${font.status})`);
 if (Math.abs(font.wg - font.wl) > 0.5) fails.push('Greek glyphs are not set in the same pixel font as latin');
 
+// ---------------------------------------------------------------- 5. build 85 additions
+const b85 = await page.evaluate(() => {
+  const out = {};
+  // caps: 4 rotors, 6 two-stroke cylinders, offered counts above the cap disabled
+  const g = id => document.getElementById(id);
+  g('edType').value = 'rotary'; g('edType').dispatchEvent(new Event('change'));
+  out.rotary = [...g('edCyl').options].filter(o => !o.disabled).map(o => +o.value);
+  g('edType').value = 'twostroke'; g('edType').dispatchEvent(new Event('change'));
+  out.two = [...g('edCyl').options].filter(o => !o.disabled).map(o => +o.value);
+  g('edType').value = 'petrol4'; g('edType').dispatchEvent(new Event('change'));
+  // dyno result: the headline figures are the scorecard's
+  applyEngineToForm(Object.assign({}, DEFAULT_ENGINE, PRESETS.find(p => p.name === '2.0 Turbo Hot-Hatch I4').engine)); buildEngine();
+  setTab('dyno'); renderDynoResult(true);
+  const box = g('dynoResult');
+  out.dyno = { shown: !box.hidden, text: box.textContent, hp: engine.score.peakHP, tq: engine.score.peakTQ, rows: box.querySelectorAll('tbody tr').length };
+  setTab('engine'); out.dynoHiddenElsewhere = box.hidden;
+  // track zoom: the map point under the cursor must not move, and a new circuit resets the view
+  setTab('track'); drawTrack();
+  trackViewReset();
+  const vx = 200, vy = 260, base = { x: trackView.mcx + (vx - trackView.mcx - trackView.x) / trackView.z, y: trackView.mcy + (vy - trackView.mcy - trackView.y) / trackView.z };
+  trackZoomAt(vx, vy, 3.5);
+  const sx = trackView.mcx + (base.x - trackView.mcx) * trackView.z + trackView.x, sy = trackView.mcy + (base.y - trackView.mcy) * trackView.z + trackView.y;
+  out.zoom = { z: trackView.z, drift: Math.hypot(sx - vx, sy - vy) };
+  trackZoomAt(vx, vy, 0.01); out.zoomFloor = trackView.z;
+  trackZoomAt(vx, vy, 100); out.zoomCap = trackView.z;
+  trackView.key = 'some other circuit'; drawTrack(); out.resetOnTrackChange = trackView.z;
+  setTab('engine');
+  return out;
+});
+console.log(`caps: rotary ${b85.rotary.join(',')} · two-stroke ${b85.two.join(',')}`);
+console.log(`dyno result: shown ${b85.dyno.shown}, ${b85.dyno.rows} rows, hidden elsewhere ${b85.dynoHiddenElsewhere}`);
+console.log(`track zoom: ×${b85.zoom.z.toFixed(1)}, cursor drift ${b85.zoom.drift.toExponential(1)}, floor ${b85.zoomFloor}, cap ${b85.zoomCap}, after a circuit change ${b85.resetOnTrackChange}`);
+if (Math.max(...b85.rotary) !== 4) fails.push(`rotary should offer up to 4 rotors, offers ${b85.rotary.join(',')}`);
+if (Math.max(...b85.two) !== 6) fails.push(`two-stroke should offer up to 6 cylinders, offers ${b85.two.join(',')}`);
+if (!b85.dyno.shown) fails.push('the dyno result panel is not shown on the DYNO tab');
+if (!b85.dynoHiddenElsewhere) fails.push('the dyno result panel shows outside the DYNO tab');
+if (!b85.dyno.text.includes(b85.dyno.hp + ' hp') || !b85.dyno.text.includes(b85.dyno.tq + ' Nm'))
+  fails.push(`the dyno result does not headline the scorecard's ${b85.dyno.hp} hp / ${b85.dyno.tq} Nm`);
+if (b85.dyno.rows < 8) fails.push(`the run-data table has only ${b85.dyno.rows} rows`);
+if (!(b85.zoom.drift < 1e-6)) fails.push(`zooming moved the point under the cursor by ${b85.zoom.drift}`);
+if (b85.zoomFloor !== 1) fails.push(`zoom went below the fitted view (${b85.zoomFloor})`);
+if (!(b85.zoomCap <= 16)) fails.push(`zoom is not capped (${b85.zoomCap})`);
+if (b85.resetOnTrackChange !== 1) fails.push('changing circuit should reset the map view');
+
 if (errors.length) fails.push(...errors);
 console.log(fails.length ? '\nFAIL:\n  ' + fails.join('\n  ') : '\nPASS');
 await browser.close();
