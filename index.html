@@ -249,7 +249,7 @@ table.fuelmap td.live{box-shadow:inset 0 0 0 2px #fff;font-weight:bold}
 <body>
 <div class="container">
 <header>
-<h1>PIXEL ENGINE SIM v0.6 build 97</h1>
+<h1>PIXEL ENGINE SIM v0.6 build 98</h1>
 <div class="subtitle" id="subtitle">ENGINE DESIGNER • BUILD IT, THEN DRIVE IT</div>
 </header>
 <div class="main">
@@ -1385,13 +1385,75 @@ function exhaustHeatFrac(rpm){
   // constants above (test46: 1.6 NA I4 1474, 2.0 TDI 1210, 6.6 V8 TD 1054 mm.m/s; geometric mean
   // 1234), so those stay where they were checked. No ported engines: they have no bore and stroke in
   // this sense, and their exhaust fraction is calibrated separately.
-  if(rpm>0&&!e.ports){
-    const wall=Math.max(0,1-eta-f), BSp=e.bore_mm*2*(e.stroke_mm/1000)*Math.max(300,rpm)/60;
-    f+=wall*(1-Math.pow(BSp/WALL_BSP_REF,-0.2));
-  }
+  //
+  // The extra heat the walls take is not all the exhaust's to give (build 98). It leaves the gas around
+  // combustion, before expansion, so had it stayed it would have been worked like the rest of the
+  // charge's heat: a share eta of it is work the cycle loses (wallImepFactor), and only the remaining
+  // 1 - eta comes out of the exhaust. Until build 98 it all came out of the exhaust and none out of the
+  // work, which did not conserve energy, and left a slow engine as efficient as a fast one.
+  if(rpm>0&&!e.ports&&e.wallK>0)f-=(1-e.wallK)*wallHeatExtra(rpm,WALL_BSP_REF,eta,f);
   return f;
 }
 const WALL_BSP_REF=1234;   // mm.m/s — see exhaustHeatFrac
+// Share of the fuel's heat the walls take at this speed BEYOND what they take at bore x piston speed
+// bspRef: positive below it (a slow cycle gives the walls longer), negative above. The Woschni scaling
+// of exhaustHeatFrac, (B Sp)^-0.2, on the same wall share. eta and f are that function's work and
+// exhaust shares; they are rebuilt here when it is called from elsewhere.
+function wallHeatExtra(rpm,bspRef,eta,f){
+  const e=engine;
+  if(!(rpm>0)||e.ports)return 0;
+  if(eta==null){eta=clamp(0.36*(e.crFactor||1),0.20,0.46);
+    f=clamp(0.40-0.24*eta,0.24,0.36)+eta*(1-burnPhasing(rpm))+(e.rotaryLost?eta*e.rotaryLost:0);}
+  const wall=Math.max(0,1-eta-f), BSp=e.bore_mm*2*(e.stroke_mm/1000)*Math.max(300,rpm)/60;
+  return wall*(Math.pow(BSp/bspRef,-0.2)-1);
+}
+// What that heat costs the work depends on WHEN in the cycle the walls take it. A joule lost at crank
+// angle theta, had it stayed in the gas, would have been expanded from V(theta) to exhaust-valve
+// opening and earned 1 - (V/V_EVO)^(gamma-1) of itself as work; a joule lost after EVO, in blowdown or
+// on the exhaust stroke, earns nothing and would only have left in the exhaust. So the work's share
+// of the extra wall heat is the flux-weighted average of that, kappa (wallWorkShare), and
+//     W = W_ref - kappa dQ_wall   ->   gross IMEP factor 1 - kappa dQ_wall / (eta_i Q_fuel)
+// with the exhaust taking the other 1 - kappa (exhaustHeatFrac). Energy is conserved by construction.
+// Normalised where each engine type's efficiency anchor was measured, so the anchor still holds there:
+// a spark engine's 0.8 x fuel-air at the reference engines' rated speed (WALL_BSP_REF), a diesel's
+// ETA_GROSS_CI at 2000 rpm on a passenger-car DI diesel of 81 x 95.5 mm (WALL_BSP_REF_CI).
+const WALL_BSP_REF_CI=81*2*0.0955*2000/60;   // 515.7 mm.m/s
+const wallImepFactor=rpm=>engine.wallK>0?1-engine.wallK*wallHeatExtra(rpm,engine.ci?WALL_BSP_REF_CI:WALL_BSP_REF)/engine.wallEtaI:1;
+// kappa, from one full-load cycle at the anchor speed: intake BDC -> compression -> Wiebe heat release
+// (this model's own burn: SI_BURN_DEG / SI_CA50, or the diesel's fixed-time burn from SOC_CI) ->
+// expansion -> EVO, then blowdown to exhaust pressure by BDC and the exhaust stroke at that state. The
+// trace is the first law with ideal gas (gamma 1.3, the value wiebePhasingEff uses); the flux at each
+// angle is Woschni's h (B^-0.2 p^0.8 T^-0.55 w^0.8, w = C1 Sp + C2 Vd T1/(p1 V1) (p - p_motored); C1 2.28
+// closed, 6.18 gas exchange; C2 3.24e-3 burning and expanding, 0 compressing) times (T - T_wall) times
+// the wall the gas touches (head and crown plus the liner above the piston). Woschni's constants and
+// the 450 K wall are his published values; only the SHAPE of the flux matters here, so his 3.26 cancels.
+function wallWorkShare(e,rpm,map){
+  const g=1.30,R=287,cv=R/(g-1),cr=e.compression,B=e.bore_mm/1000,S=e.stroke_mm/1000,Sp=2*S*rpm/60;
+  const lam=e.ci?LAMBDA_REF_CI:0.9, q=(e.fuelLHV||43)*1e6/(lam*(e.stoichAFR||14.7));   // J per kg of charge
+  const burn=e.ci?6*rpm*BURN_T_CI:SI_BURN_DEG, soc=e.ci?SOC_CI:SI_CA50-wiebeX50()*SI_BURN_DEG;
+  const evo=360-e.camLSA-e.camDur/2, Vt=th=>pistonVol(th,cr), Vevo=Vt(evo);
+  const T1=330,p1=map*1e5,v1=R*T1/p1, Vd=Math.PI/4*B*B*S, hc=S/(cr-1);
+  const xb=th=>th<=soc?0:1-Math.exp(-WIEBE_A*Math.pow(Math.min(1,(th-soc)/burn),WIEBE_M+1));
+  const area=V=>Math.PI/2*B*B+Math.PI*B*hc*V;
+  const flux=(p,T,V,w)=>Math.pow(p/1000,0.8)*Math.pow(T,-0.55)*Math.pow(w,0.8)*(T-450)*area(V);
+  const d=0.5;let T=T1,num=0,den=0,pE=0,TE=0;
+  for(let th=-180;th<evo;th+=d){                       // closed: compression, burn, expansion
+    const V0=Vt(th),V1=Vt(th+d),v0=v1*V0/cr,dv=v1*(V1-V0)/cr;
+    const p=R*T/v0, pm=p1*Math.pow(cr/V0,g), burning=th>=soc;
+    const w=2.28*Sp+(burning?3.24e-3*Vd*T1/(p1*Vd*cr/(cr-1))*(p-pm):0);
+    const f=flux(p,T,V0,Math.max(0.1,w));
+    num+=f*(1-Math.pow(V0/Vevo,g-1));den+=f;
+    T+=(q*(xb(th+d)-xb(th))-p*dv)/cv;
+    pE=R*T/(v1*V1/cr);TE=T;
+  }
+  const pX=Math.max(1.05e5,p1), TX=TE*Math.pow(pX/pE,(g-1)/g);
+  for(let th=evo;th<360;th+=d){                        // blowdown to BDC, then the exhaust stroke
+    const s=th<180?(th-evo)/Math.max(1,180-evo):1;
+    const p=pE+(pX-pE)*s, T=TE+(TX-TE)*s;
+    den+=flux(p,T,Vt(th),6.18*Sp);
+  }
+  return den>0?num/den:0;
+}
 // EGT AT AN OPERATING POINT: its speed, its manifold pressure, and the mixture actually burned.
 // Every steady-state reader goes through this, and so do the tests. Until build 88 the tests called
 // exhaustGasT(1.0) — no rpm, an assumed mixture — which stopped being the number the engine used as
@@ -1972,6 +2034,16 @@ function deriveGasDynamics(){
   const cam=CAM[e.cam]||CAM.stock, ex=EXHAUST[e.exhaust]||EXHAUST.stock;
   e.camDur=cam.dur; e.camLSA=cam.lsa;
   e.overlap=e.ports?0:overlapDeg(cam.dur,cam.lsa);
+  // The work's share of extra wall heat (wallWorkShare), at the anchor where it is zero-referenced, and
+  // the gross indicated efficiency it is a share of there. Set here, from the cam just read and before
+  // the first exhaust temperature below. Ported engines carry no wall term. (maxBoost is set later.)
+  e.wallK=0;e.wallEtaI=1;
+  if(!e.ports){
+    const n=e.ci?BURN_REF_RPM:WALL_BSP_REF*60/(e.bore_mm*2*e.stroke_mm/1000);
+    e.wallK=wallWorkShare(e,n,1+(e.intake==='na'?0:(e.boost_bar||0)));
+    e.wallEtaI=e.ci?ETA_GROSS_CI*otto(e.compression)/otto(CR_REF_CI)
+                   :REAL_TO_FUELAIR*(1-Math.pow(Math.max(1.5,e.compression),1-GAMMA_FA))*(e.typeImep||1);
+  }
   // VVT advances the intake cam down low, which IS closing the valve earlier — so it is a
   // change of IVC timing, not a recovery percentage. Real intake phasers have 40-60 crank
   // degrees of authority.
@@ -3759,7 +3831,7 @@ const REAL_TO_FUELAIR=0.80, GAMMA_FA=1.28;
 function sparkGrossImep(rpm,map,ve){
   const e=engine,st=e.stoichAFR||14.7;
   const air=map*1e5/(287*(effIAT(map,rpm)+273.15))*ve;               // kg of trapped air per m3 swept
-  const eta=REAL_TO_FUELAIR*(1-Math.pow(Math.max(1.5,e.compression),1-GAMMA_FA));
+  const eta=REAL_TO_FUELAIR*(1-Math.pow(Math.max(1.5,e.compression),1-GAMMA_FA))*wallImepFactor(rpm);
   return eta*e.typeImep*air/st*(e.fuelLHV||44)*1e6*sparkMixture(curAFR(rpm,map)/st)/1e5;   // bar
 }
 function tempFactors(coolant,oil){
@@ -4060,7 +4132,7 @@ function dieselGrossImep(rpm,map,ve){
   const air=map*1e5/(287*(effIAT(map,rpm)+273.15))*ve;                 // kg of trapped air per m3 swept
   const lam=curAFR(rpm,map)/st;
   const eta=ETA_GROSS_CI*otto(e.compression)/otto(CR_REF_CI)
-           *faEta(1/lam)/faEta(1/LAMBDA_REF_CI)*burnPhasing(rpm);
+           *faEta(1/lam)/faEta(1/LAMBDA_REF_CI)*burnPhasing(rpm)*wallImepFactor(rpm);
   return eta*air/(lam*st)*(e.fuelLHV||42.8)*1e6/1e5;               // bar
 }
 // mapOverride lets the live view pass the integrated manifold pressure; the dyno omits

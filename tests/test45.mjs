@@ -57,7 +57,9 @@ const reach = await page.evaluate(() => {
     const c = curve0(), rpm = (top / 3.6) * t / vehicle.rTire * 60 / (2 * Math.PI);
     const q = c.reduce((a, x) => Math.abs(x.rpm - rpm) < Math.abs(a.rpm - rpm) ? x : a);
     const vv = top / 3.6, need = 0.5 * AIR_RHO * vehicle.cdA * vv * vv + crrAt(vehicle.crr, vv) * vehicle.mass * G;
-    if (top < vRed - 2 && q.tq * t * vehicle.driveEff / vehicle.rTire >= need * 0.98) break;
+    // No slack on the force: with 2% allowed, a car rev-limited a gear DOWN passed for one held by top
+    // gear (build 98: 5th short by 4 N, the top speed set by 4th's limiter at 198 km/h).
+    if (top < vRed - 2 && q.tq * t * vehicle.driveEff / vehicle.rTire >= need) break;
   }
   const v = top / 3.6;
   // Best wheel force available at exactly that speed, across all gears — the same quantity the
