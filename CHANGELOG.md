@@ -20,6 +20,25 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 Working toward **v1.0 — every number derived, not fitted.**
 
+### The 2.0 turbodiesel preset's curve, and a state leak in every turbo curve
+
+- **`engine.boostNow` leaked between calls.** `computeVE` set it only after the overlap term had
+  already read it through `backPressureBar`, so every turbo VE used the PREVIOUS call's boost — the
+  previous sweep point, or at the start of a sweep whatever ran last. The same point read 150.8 or
+  180.2 Nm on the 2.0 hot hatch depending on call order. It also made the 6% step in the diesel at
+  1600–1800 rpm. Set first now; test52 checks call-order independence on every turbo preset.
+- **The diesel ECU map fuelled a floored engine lean.** It measured load as MAP over best-case boost,
+  so below the boost threshold full pedal read as ~30% load and was fuelled at λ2.7. Load is now the
+  share of the air available at that rpm, and a diesel's editable fuel-map rows are load (15–100%)
+  rather than absolute MAP, which also stops the grid smearing λ through the spool-up. test52 checks
+  that every preset floored on the ECU map makes ≥85% of its best-power torque at every rpm.
+- **The 2.0 Turbo Diesel I4 preset carried a medium turbo frame**, which on a 2.0 L does not reach
+  full boost until 2800 rpm. Now the small VGT a real 2.0 TDI uses: full torque from 2000 rpm.
+- Still open: the diesel's top end falls to 45 Nm at the redline. That is the fitted VE bell diesels
+  still carry; removing it leaves torque flat to the limiter because the model has no diesel top-end
+  limit. Combustion time is the measured candidate (−15% to −24% from 3000 to 4800 rpm on a 2.5–3.5 ms
+  burn) — conversion 5.
+
 ### Dyno result sheet, track zoom, operating-point buttons, Wankel cutaway, mixture curve
 
 - **DYNO RESULT** panel under the chart: peak power and torque in hp/kW/Nm/lb-ft with their rpm, and
