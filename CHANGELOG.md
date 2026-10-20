@@ -20,6 +20,40 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 Working toward **v1.0 — every number derived, not fitted.**
 
+### Exhaust pulse energy at the turbine (build 90)
+
+- **The turbine is fed by blowdowns, not by a mean pressure.** A real turbine is fed by each
+  cylinder's blowdown pulse: a large share of the gas arrives in a short, high-pressure burst, and
+  nozzle work rises with pressure ratio, so bursts do more work than the same mass delivered steadily.
+  The model now uses two states defined by mass, so mass is conserved by construction and neither
+  state can fall below ambient:
+  - **Blowdown share f_b** comes from the cylinder at exhaust-valve opening: p_EVO from intake
+    density and T3, then isentropic expansion to manifold pressure. It is ~0.5–0.7 at full load;
+    the prototype assumed a constant 0.5.
+  - **Duty φ** comes from cam geometry: (lsa + dur/2 − 180)° × cylinders per turbine / 720.
+  - **How much of the pulse survives to the turbine** is a volume ratio, V_b/(V_b + V_m), against
+    the derived primaries.
+  - Nothing is fitted. Rotaries and two-strokes have no cam to time a blowdown from and stay on the
+    mean.
+- The prototype's ±A pressure swing about the mean (tests/proto/pulse.mjs) was replaced. Its low
+  state clamped at ambient invented mass, and a kei read 0.19 bar at 1500 rpm but 0.12 at 2000.
+- **The effect is real and small on these presets.** A kei goes from 0.30 to 0.43 bar at 3500 rpm.
+  The petrol presets carry 1.3–5.5 L of long tuned primaries, which keep only ~10–20% of each pulse
+  (the 2.0 hot hatch gains at most +1.6% turbine work). Real turbo manifolds are short, which is a
+  hardware question for later.
+- **Solver speed.** Pulse states cost extra nozzle solves, and a build went from 90 to 1878 ms.
+  The choked nozzle is now solved in closed form, sub-choke by bracketed Newton, and the wastegate
+  balance reuses the PR it already has. The nozzle matches the old 60-step bisection to 4×10⁻¹¹ in PR
+  over 612 cases; a build takes 205 ms and the suite 2 min 19 s. `vgtThroat` brackets the throat
+  area, since pulse power has no closed-form inverse, and returns the power it solved for.
+- Calibration (test48): 0–100 RMS 8.1% → 7.0% (Alto +16% → +11%), power RMS 8.6% → 9.1%
+  (Alto 64 → 72 hp), test41 3.39% → 3.38%.
+- test54: solver equality, work only ever added, mass conserved, the gain fading with flow, a tighter
+  manifold and divided turbines keeping more pulse, ported engines on the mean, and steady boost never
+  falling with rpm below target. test44 now shares test46's named limiter list.
+- Housing sizing's first rerun is parked at `tests/proto/housing-sizing-2.diff`, to be redone on top
+  of this.
+
 ### The tests measure what the engine runs — and two exhaust-temperature bugs they were hiding (build 89)
 
 An audit asked whether the tests still reflected the physics after build 88. Several did not.

@@ -135,6 +135,19 @@ checked one.
 rewards divided manifolds — but it is not the fix for diesel spool, and shipping it as if it were
 would have been the wrong conclusion drawn from a right measurement.
 
+**Status (build 90): wired in, reformulated.** The ±A swing about the mean pressure was replaced by
+two states defined by mass (blowdown share f_b in duty φ, the rest in 1 − φ), because the low state
+clamped at ambient invented mass: a kei read 0.19 bar at 1500 rpm and 0.12 at 2000. `BLOWDOWN_MASS`
+is derived from the cylinder at EVO instead of assumed, and the amplitude became the share of the
+pulse that survives the manifold volume, V_b/(V_b + V_m). Guarded by `tests/test54.mjs`.
+
+**Housing sizing, second attempt (build 89, parked at `housing-sizing-2.diff`).** Sized per engine by
+the minimum in-gear sweep time ∫dN/T(N): no tolerance constant. It improved test41 (3.39% → 3.06%),
+but sized housings landed at poor compromises, because the turbine could not spool early and breathe
+at the top at the same time: the 2.5 I5 still chose the loosest housing, peaks sat on the boost
+threshold, and the 2JZ and the V8 diesel peaked at the limiter. Average power as the objective was
+worse still, buying top end with spool. Redo on top of pulse energy.
+
 ## VGT — shipped, and what it uncovered
 
 `pulse.mjs` ends on a prediction: the diesel spool gap is a VGT gap, and 0.45× throat closes it.
