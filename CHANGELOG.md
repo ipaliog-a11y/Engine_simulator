@@ -20,6 +20,16 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 Working toward **v1.0 — every number derived, not fitted.**
 
+### Tyre cornering drag (build 119)
+
+- A tyre makes its side force by running at a slip angle, so the force leans back against the travel by
+  that angle: drag Fy alpha = Fy^2/(CC Fz), summed over the tyres (m ay)^2/(CC N), with the cornering
+  coefficient CC 0.2 per degree (Gillespie, ch. 10), linear to the limit (the least it can cost). It is a
+  resistance on the power, in a shift's coast and in the throttle the replay and the turbo's shaft read,
+  and it helps the brakes into a corner. At the limit it is about 0.09 g, several times the aero drag at
+  corner speeds. The racing line's optimiser solves with it too.
+- Laps 0.3-0.8 s slower (911 GT3 Cape 64.71 -> 65.00 s, MX-5 Ashdown 80.72 -> 81.50 s).
+
 ### Turbo lag on the lap (build 118)
 
 - The lap gave a turbo its full boost wherever it was flat, as if the shaft were always spun up. Now the
