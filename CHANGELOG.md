@@ -20,6 +20,27 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 Working toward **v1.0 — every number derived, not fitted.**
 
+### Tyre grip from load, not from three multipliers (build 109)
+
+- **Grip was a stack of fitted factors:** the compound's μ × a chassis grip factor (0.92-1.30) × a
+  suspension factor (0.95-1.10) × a width bonus (up to +7.5%). They stacked to μ ~1.7 on a supercar on
+  semi-slicks (a 23 m 100-0 against a real ~31) and pulled economy cars down (48 m against ~41).
+- **Now it is the tyre and the load on it.** Load sensitivity: μ = μ_ref (Fz/Fz_ref)^−0.15, about 10%
+  less per doubling of load. The reference load is 60% of the tyre's rating, and the rating follows the
+  tyre's air volume (π/4 (D² − d²) w at ~16,300 kg/m³, within 3% of real load indices). So a bigger
+  tyre, a lighter car, and less weight thrown onto the outside tyres grip harder, by one mechanism.
+- **Cornering:** lateral load transfer m·a_y·h/t over the axle's **track width** (new, per chassis), and
+  **camber**: the outside tyre's static camber plus the body roll the geometry does not recover, against
+  a best angle of −1.5° at 1.5% per degree. Suspensions are now a roll gradient and a static camber
+  (comfort 6°/g at −0.5° … race 1.5°/g at −2.5°). The lap solver iterates cornering speed and grip.
+- **Effect:** 100-0 coherent (GT3 27 m, Aygo 43 m, 812 32 m against ~31, ~41, ~31.5). Skidpad grip is
+  still 5-15% above published figures, and 0-100 slower for rear-drivers that lean on traction
+  (test48 8.7% own power). Race-prepared builds lost 5-8% of lap time; the challenge targets were set
+  under the old grip and are re-set with the margins they had (Club Sprint 89 s, Grand Prix Pace 66.0 s,
+  Lap per Dollar 78.4 s); Under Seven at the Ring keeps 7:00 with a 600 hp supercar as its reference.
+  The fast-circuit check is now relative, and the Supra, M2 and Hellcat are named for traction.
+- Next for grip: the compound μ values against skidpad data, and the brake pressure build-up.
+
 ### Brake temperature, live on the track (build 108)
 
 - **Brakes have a temperature now, and fade comes from it.** Each rotor is sized from its diameter

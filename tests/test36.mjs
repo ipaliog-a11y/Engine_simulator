@@ -22,7 +22,10 @@ const solve = await page.evaluate(() => {
     // ~2.7% less than the old fitted constant gave) left it 0.06 s inside 7:00 — the target is the
     // challenge's name, so the reference moved instead: a ~290 hp turbo roadster, still a believable
     // sub-7 Nordschleife car, with 6 s in hand.
-    greenhell: ['2.5 Turbo I5 (RS)', 'roadster', { vhTire: 'slick', vhAeroF: 'splitter', vhAeroR: 'wing', vhAeroFl: 'diffuser', vhWeight: 'race', vhSusp: 'race', vhDiff: 'clsd', vhGearbox: 'sequential' }],
+    // Build 109 took grip from tyre load instead of stacked multipliers and the 290 hp roadster ran 7:20;
+    // the target is the challenge's name, so the reference moved again: a 600 hp mid-engined supercar on
+    // slicks, 6:50, the sort of car that really goes under seven.
+    greenhell: ['6.2 Supercharged V8', 'super', { vhTire: 'slick', vhAeroF: 'splitter', vhAeroR: 'wing', vhAeroFl: 'diffuser', vhWeight: 'race', vhSusp: 'race', vhDiff: 'clsd', vhGearbox: 'sequential' }],
     'laptime$': ['2.0 Turbo Hot-Hatch I4', 'hatch', { vhTire: 'semi', vhSusp: 'coilover', vhWeight: 'sport' }]
   };
   return CHALLENGES.filter(c => c.circuit).map(ch => {
