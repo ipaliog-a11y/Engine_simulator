@@ -56,9 +56,12 @@ circ.forEach(x => console.log(`  amp ${String(x.amp).padStart(2)} m: lap ${x.lap
 for (let i = 1; i < circ.length; i++) {
   if (circ[i].lap <= circ[i - 1].lap) fails.push(`circle: amp ${circ[i].amp} m not slower than ${circ[i - 1].amp} m`);
   if (circ[i].vMin >= circ[i - 1].vMin) fails.push(`circle: min speed did not fall with elevation`);
-  // Rises until the compression's extra load hits the suspension's bump-stop cap (0.6 g), then holds:
-  // since build 115 each elevation gets its own minimum-time line, so a plateau may wander by <1%.
-  if (circ[i].vMax < circ[i - 1].vMax * (circ[i].amp >= 40 ? 0.99 : 1.0001)) fails.push(`circle: max speed did not rise with elevation`);
+  // Rises until the compression's extra load hits the suspension's bump-stop cap (0.6 g), then holds.
+  // Past the cap (40 m: grades to 53%) the slope itself takes load (cos 28 deg = 0.88) and, since build 119,
+  // tyre drag slows the run down each descent, so the fastest point moves onto a climb and reads ~3.5%
+  // under the 20 m case. It must still beat the flat circle.
+  if (circ[i].amp >= 40 ? !(circ[i].vMax > circ[0].vMax && circ[i].vMax > circ[i - 1].vMax * 0.95)
+                        : circ[i].vMax < circ[i - 1].vMax * 1.0001) fails.push(`circle: max speed did not rise with elevation`);
 }
 
 // 3. Gradient must actually cost time uphill — a car that can't climb must slow down

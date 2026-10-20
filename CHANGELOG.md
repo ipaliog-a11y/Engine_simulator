@@ -20,6 +20,65 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 Working toward **v1.0 — every number derived, not fitted.**
 
+### Turbo lag at a fifth of the cost; re-baselined checks (build 120)
+
+- The lap's turbo walk (build 118) added 1.3 s to a Nordschleife solve: it re-ran the shaft from rest and
+  stepped it every 2 ms. Now the shaft starts settled where the car is fastest (flat for a while, so spun
+  up to what the revs support) and one walk is the lap-to-lap state: identical laps on all 15 turbo
+  presets. And the lap steps it every 10 ms (no lap moves by more than 0.01 s against 2 ms; the 0-100 run
+  and the bench keep 2 ms). A turbo Nordschleife solve 1.36 -> 0.27 s; GPX import + solve 3.8 s.
+- **Lap per Dollar** target 73.0 -> 70.0 s: build 117 took the flat shift charge out (laps 1-2 s
+  quicker) and a 112 hp kei car got under 73.0 at 72.7 s. The reference build does 65.9 s.
+- test34: on the 150 m circle with 40 m hills (grades to 53%) the vertical load is past the bump-stop
+  cap, the slope itself takes load (cos 28 deg) and tyre drag slows each descent, so the fastest point is
+  3.5% under the 20 m case; it still has to beat the flat circle.
+
+### Tyre cornering drag (build 119)
+
+- A tyre makes its side force by running at a slip angle, so the force leans back against the travel by
+  that angle: drag Fy alpha = Fy^2/(CC Fz), summed over the tyres (m ay)^2/(CC N), with the cornering
+  coefficient CC 0.2 per degree (Gillespie, ch. 10), linear to the limit (the least it can cost). It is a
+  resistance on the power, in a shift's coast and in the throttle the replay and the turbo's shaft read,
+  and it helps the brakes into a corner. At the limit it is about 0.09 g, several times the aero drag at
+  corner speeds. The racing line's optimiser solves with it too.
+- Laps 0.3-0.8 s slower (911 GT3 Cape 64.71 -> 65.00 s, MX-5 Ashdown 80.72 -> 81.50 s).
+
+### Turbo lag on the lap (build 118)
+
+- The lap gave a turbo its full boost wherever it was flat, as if the shaft were always spun up. Now the
+  shaft (advanceShaft, the one the 0-100 run and the bench integrate) is run along the solved lap in time
+  order, at each point's revs and throttle, until it repeats lap to lap: boost bleeds off on a lift, under
+  braking and through a shift, and builds back on the power. The torque the boost there gives, against
+  full boost, scales the drive and the forward pass is solved again (twice: the throttle depends on the
+  drive available). The replay's boost gauge shows the boost the shaft has built.
+- **Result:** these turbos spool fast (a Supra's shaft is 3.2e-5 kg m^2) and the corner exits where the
+  boost is still building are mostly traction-limited, so lag costs 0-0.08 s a lap on the technical
+  circuit (WRX STI 0.08, GR Yaris 0.07). A shift skipped because the braking point came first can make a
+  lap up to 0.04 s quicker: the driver upshifts at the best-force point even just before braking, where a
+  real one holds the gear to the limiter (open).
+- The torque grid is built once per engine (0.15 s) and reused by every lap.
+- Fixed in build 117's shifts: the forward pass's second time round (for the lap's wrap) saw every point as
+  off the power, so it dropped the replay's shift marks and the gear state across the line.
+
+### Brake heat split from the hydraulics; gear shifts in the lap solve (build 117)
+
+- **Brake heat split.** The heat each axle's rotors took was the ideal load split at every deceleration,
+  floored at 50/50, so a light lift on a rear-engined car put half the heat into its small rear rotors: the
+  911 GT3's rears ran hotter than its fronts (650 vs 512 C on Cape), the Huracan's too. Now the hydraulics
+  set it: both axles see the same line pressure, so the pistons and rotor radii fix the front share (GT3
+  0.73, Huracan 0.64), until one axle's tyres reach their grip at the load the transfer leaves them; ABS
+  holds that axle there and the other takes the rest. GT3 fronts 653 / rears 416 C, Huracan 659 / 600 C.
+- **Gear shifts.** Every gear change, up or down, was charged half a shift time after the lap was solved,
+  and the clock spread it over the replay. Now the forward pass carries the gear: an upshift on the power
+  cuts the drive for the gearbox's shift time and the car coasts against drag, rolling resistance and the
+  slope for as far as it travels meanwhile (the last step only for the share of it the shift lasts); a
+  downshift, made braking or lifting, costs nothing, and on the power the driver keeps the gear just
+  selected. The SHIFTS cell shows the difference to the same lap with instant shifts: a 2JZ coupe on
+  Riverside 2.45 -> 0.54 s, a PDK 911 GT3 0.25 s. The replay's throttle reads zero mid-shift.
+- The manual's 0.35 s shift time is a driver's figure (a quick hand shift, clutch to clutch), not derived:
+  it stays an input.
+- test62's replay clock is the plain integral now.
+
 ### Engine breathing: valve overlap and exhaust waves (build 116)
 
 Found checking why the Lancer Evo IX felt lethargic (0-100 6.8 s against a real 5.0): its engine made

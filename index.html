@@ -282,7 +282,7 @@ table.fuelmap td.live{box-shadow:inset 0 0 0 2px #fff;font-weight:bold}
 <body>
 <div class="container">
 <header>
-<h1>PIXEL ENGINE SIM v0.6 build 116</h1>
+<h1>PIXEL ENGINE SIM v0.6 build 120</h1>
 <div class="subtitle" id="subtitle">ENGINE DESIGNER • BUILD IT, THEN DRIVE IT</div>
 </header>
 <div class="build-strip" id="buildStrip">
@@ -2514,8 +2514,8 @@ const CHALLENGES=[
   {id:'laptime$',name:'Lap per Dollar',desc:'The cheapest car that can still lap Riverside quickly. Every part has to earn its place.',
     circuit:'mixed',budget:38000,
     // 75 s until build 109's grip (see Club Sprint); the reference's 2.1% margin kept. 78.4 until build 111,
-    // 83.5 until build 114.
-    targets:[{label:'Riverside lap',key:'lap',op:'<=',t:73.0,unit:'s'}]}
+    // 83.5 until build 114, 73.0 until build 117 took the flat shift charge out and a 112 hp kei car got under.
+    targets:[{label:'Riverside lap',key:'lap',op:'<=',t:70.0,unit:'s'}]}
 ];
 let activeChallenge='free';
 
@@ -3169,7 +3169,10 @@ const BRAKE_RISE_S=0.2;
 function brakeForceCap(v){
   const bt=BRAKE_TYPE[v.brakeType]||BRAKE_TYPE.slotted, p=BRAKE_LINE_BAR*1e5;
   const axle=(pist,D)=>2*(2*bt.pad*p*pist.reduce((a,d)=>a+Math.PI/4*(d/1000)*(d/1000),0)*0.4*D);
-  return (axle(bt.caliper.f,v.rotor/1000)+axle(bt.caliper.r,0.9*v.rotor/1000))/v.rTire;
+  const f=axle(bt.caliper.f,v.rotor/1000),r=axle(bt.caliper.r,0.9*v.rotor/1000);
+  // Both axles see the same line pressure, so the pistons and rotor radii fix the split (build 117).
+  v.brakeFrontShare=f/(f+r);
+  return (f+r)/v.rTire;
 }
 // ---- brake temperature (build 107; cooling rebuilt in build 110) ----
 // Each rotor is a lump of material heated by the brakes and cooled by the air, and its pads lose grip
@@ -3239,7 +3242,19 @@ const brakeFadeAt=(T,th)=>1-FADE_MAX*clamp((T-th.onset)/FADE_SPAN,0,1);
 // Front/rear rotors through one braking step: decel a (m/s2) that the brakes do, at speed v.
 function brakeHeatStep(st,th,a,vCar,dt){
   const m=vehicle.mass, P=Math.max(0,m*a*vCar);
-  const fr=clamp(vehicle.fWt+(a/G)*vehicle.cg/Math.max(0.5,vehicle.wb),0.5,0.85);
+  // How the braking is shared (build 117). The hydraulics split it in a fixed ratio (the calipers and
+  // rotors: brakeFrontShare). That holds until one axle's tyres reach their grip at its load, which the
+  // load transfer moves forward as the car slows harder; ABS then holds that axle at its grip and the
+  // other takes the rest, so at the limit the split is the axle loads'. It was the ideal load split at
+  // every deceleration, floored at 50/50, so a light lift on a rear-engined car put half the heat in its
+  // small, unducted rears and they ran hotter than the fronts.
+  const fH=vehicle.brakeFrontShare||0.7, fL=clamp(vehicle.fWt+(a/G)*vehicle.cg/Math.max(0.5,vehicle.wb),0.05,0.95);
+  const lim=(vehicle.mu||1)*TYRE_MU_X*G;   // the tyres' longitudinal grip, as a deceleration
+  let fr=fH;
+  if(a>1e-6){
+    if(fH>fL)fr=Math.min(fH,lim*fL/a);            // the fronts saturate first: held at their grip
+    else fr=Math.max(fH,1-lim*(1-fL)/a);          // the rears do
+  }
   st.F=rotorStep(st.F,th.front,th,P*fr/2,vCar,dt);
   st.R=rotorStep(st.R,th.rear,th,P*(1-fr)/2,vCar,dt);
 }
@@ -3276,6 +3291,16 @@ function tyreMu(Fz){return vehicle.muRef*Math.pow(Math.max(200,Fz)/vehicle.FzRef
 // figure (skidpads); braking and traction take 1.15 of it, and combined use follows the ellipse.
 const TYRE_MU_X=1.15;
 function tyreMuX(Fz){return TYRE_MU_X*tyreMu(Fz);}
+// Cornering drag (build 119). A tyre makes its side force by running at a slip angle: its wheel points
+// alpha off the way the car is going, and the force it makes, square to the wheel, leans back against
+// the travel by that angle. Below the limit the side force is the cornering stiffness times the angle,
+// Fy = CC Fz alpha, so the drag is Fy alpha = Fy^2 / (CC Fz), and summed over four tyres each carrying
+// its share of the load, (m ay)^2 / (CC N). CC is the cornering coefficient, cornering stiffness per unit
+// load: about 0.2 per degree for a radial tyre (Gillespie, Fundamentals of Vehicle Dynamics, ch. 10).
+// Taken as linear right up to the limit, where a real tyre's slip angle runs further, so this is the
+// least it can cost.
+const TYRE_CC=0.2*180/Math.PI;   // per radian
+function corneringDrag(m,ay,N){return m*m*ay*ay/(Math.max(1,N)*TYRE_CC);}
 // The car's lateral grip as a share of its normal load N while cornering at ay (m/s2): each axle's two
 // tyres, with the lateral load transfer m ay h / t moved from the inside one to the outside one (shared
 // by the axles as their static loads are), and the outside tyre's roll camber.
@@ -4654,7 +4679,7 @@ function brakeTorqueRaw(rpm,map,fuelCut){
 // One step of the turbo shaft, as a pure function of its own state. Shared by the live engine and
 // by simulateAccel, so the two cannot drift apart — the acceleration solver having its own idea of
 // spool is exactly the kind of divergence that took two bugs to find last time.
-function advanceShaft(shaftE,rpm,boostNow,throttle,dt){
+function advanceShaft(shaftE,rpm,boostNow,throttle,dt,hMax=0.002){
   const J=engine.shaftJ;
   if(!J)return{shaftE:0,boost:boostAvail(rpm)};
   const wMax=engine.shaftMax*2*Math.PI/60, Emax=0.5*J*wMax*wMax;
@@ -4665,7 +4690,7 @@ function advanceShaft(shaftE,rpm,boostNow,throttle,dt){
   // ratio from the compressor's: the thing needed to start the process derived from the process
   // having started.
   const T3=exhaustGasT(clamp(th,0.3,1.1),rpm);
-  const sub=Math.max(1,Math.ceil(dt/0.002));   // the shaft is faster than the vehicle; sub-step it
+  const sub=Math.max(1,Math.ceil(dt/hMax));   // the shaft is faster than the vehicle; sub-step it
   const h=dt/sub;
   let E=clamp(shaftE,0,Emax), b=clamp(boostNow,0,engine.maxBoost);
   // Charge-system fill (see bearingCoeff's neighbour): only while boost is climbing, so a lit launch
@@ -4718,8 +4743,8 @@ function mapTarget(){
 // of full-throttle drive wants thr of the full-throttle pressure, 1 + boostAvail(rpm). It cannot fall
 // below what a closed throttle holds against the engine's pumping (mapTarget's own throttle law, with
 // the turbo's blow-off open: atmosphere upstream). A diesel has no throttle plate: its manifold stays at
-// atmosphere and only the boost follows the fuelling. Steady boost: the lap does not run the turbo's
-// shaft dynamics yet, so no lag.
+// atmosphere and only the boost follows the fuelling. Steady boost: simulateLap caps it with the boost
+// the turbo's shaft has actually built at each point (build 118).
 function steadyMapAt(rpm,thr){
   const b=boostAvail(rpm),t=clamp(thr,0,1);
   if(engine.ci)return 1+b*t;
@@ -5219,6 +5244,13 @@ function buildTorqueGrid(){
   const tq=boosts.map(b=>rpms.map(r=>calcAtRpm(r,1+b).torque));
   engine.afrMode=savedAfrMode;Object.assign(state,sv);
   return{rpms,boosts,tq,laggy};
+}
+// The grid depends only on the engine, and buildEngine makes a new engine.score every time it changes,
+// so the lap keeps the one it built until then (build 118: a lap needs it, and it costs ~0.15 s).
+let _lapGrid=null,TURBO_ITERS=2;
+function lapTorqueGrid(){
+  if(!_lapGrid||_lapGrid.score!==engine.score)_lapGrid={score:engine.score,g:buildTorqueGrid()};
+  return _lapGrid.g;
 }
 function gridTorque(g,rpm,boost){
   const R=g.rpms,B=g.boosts;
@@ -6136,7 +6168,7 @@ function simulateLap(key,opts){
     const N=loadAt(q,vi);
     const ayi=vi*vi/q.r,aLatMax=muLatAt(N,ayi)*N/m,u=clamp(ayi/Math.max(0.1,aLatMax),0,1);
     const aBrake=Math.min(vehicle.brakeDecelCap*fade,tyreMuX(N/4)*N/m*Math.sqrt(Math.max(0,1-u*u)))
-                 +drag(vi)/m+G*q.sinT;
+                 +(drag(vi)+corneringDrag(m,ayi,N))/m+G*q.sinT;
     cap=Math.sqrt(Math.max(0,vNext*vNext+2*Math.max(0.1,aBrake)*q.ds3));
     const nv=Math.min(vi0,cap);
     if(Math.abs(nv-vi)<1e-4)break;   // converged
@@ -6146,15 +6178,15 @@ function simulateLap(key,opts){
   }
   // Accelerating from q at vi: the fastest the car can be at the next point, what limits it, and the
   // share of the tyre in use sideways.
-  function accFrom(q,vi){
+  function accFrom(q,vi,boostShare=1){
     const N=loadAt(q,vi),dn=down(vi);
     const N0=(N-dn)*vehicle.drivenWt+dn*vehicle.drivenAero;
     const aLat=vi*vi/q.r;
     const aLatMax=muLatAt(N,aLat)*N/m,u=clamp(aLat/Math.max(0.1,aLatMax),0,1);
     // Diff traction is evaluated at the lateral load transfer actually happening here, so an
     // open diff falls apart on a fast corner exit while a locked one doesn't.
-    const bg=gearAt(vi);
-    const R=(drag(vi)+rollF(vi)*q.cosT)/m+G*q.sinT;
+    const g0=gearAt(vi),bg=boostShare<1?{gear:g0.gear,F:g0.F*boostShare,tqFrac:g0.tqFrac*boostShare}:g0;
+    const R=(drag(vi)+rollF(vi)*q.cosT+corneringDrag(m,aLat,N))/m+G*q.sinT;
     const kk=tyreMuX(N0/(vehicle.drive==='awd'?4:2))*diffTractionAt(df,aLat,vehicle.cg,bg.tqFrac)*Math.sqrt(Math.max(0,1-u*u));
     // On power the drive force also spins up the engine and wheels (vehicleMassEff, build 106): a = (F -
     // m R) / mE. On grip the tyres are slipping, the surplus only spins the wheels, and the car gets the
@@ -6170,7 +6202,8 @@ function simulateLap(key,opts){
     const aAcc=Math.min(aPow,aGrip);
     return {cap:Math.sqrt(Math.max(1,vi*vi+2*aAcc*q.ds3)),kind:aPow<aGrip?'power':'traction',u};
   }
-  let v,vB;
+  let v,vB,shiftsCut=false,boostShare=null;
+  const cutAt=new Uint8Array(n);
   function passes(){
     v=vC.slice();
   // 2. Backward pass: brake into every corner. Lateral grip in use eats the longitudinal budget
@@ -6197,15 +6230,44 @@ function simulateLap(key,opts){
   //    lost none to it). Grip depends on that load and the load on the acceleration, so solve it:
   //        a = k (N0 - s m R h/L) / (m (1 - s k h/L)),   k = mu x diff x sqrt(1 - u^2)
   //    with s = +1 RWD, -1 FWD, 0 AWD and R the resistances (the transfer follows the NET acceleration).
+  //    Gear shifts (build 117): an upshift taken on the power cuts the drive for the gearbox's shift time,
+  //    and the car rolls on against drag, rolling resistance and the slope for the distance it covers
+  //    meanwhile. A downshift costs nothing: it is made braking or lifting, with no drive to cut. Until
+  //    build 117 every gear change, up or down, was charged half a shift time after the lap was solved.
+  let held=-1,cut=0;
   for(let pass=0;pass<2;pass++)for(let k=0;k<n;k++){
     const i=k%n,j=(i+1)%n;
-    const st=accFrom(p[i],v[i]),cap=st.cap;
-    accKind[i]=st.kind;latUse[i]=st.u;
+    let cap;
+    if(cut>0){
+      const R=(drag(v[i])+rollF(v[i])*p[i].cosT+corneringDrag(m,v[i]*v[i]/p[i].r,loadAt(p[i],v[i])))/m+G*p[i].sinT;
+      // The shift ends part-way along its last step: coast that share of it, drive the rest. Cutting
+      // whole 5 m steps made a 0.35 s shift last anything up to 0.5 s, by where the steps happened to fall.
+      const dtS=p[i].ds3/Math.max(1,v[i]),f=Math.min(1,cut/dtS);
+      let sq=v[i]*v[i]-2*R*p[i].ds3;
+      if(f<1){const st=accFrom(p[i],v[i],boostShare?boostShare[i]:1);sq=f*sq+(1-f)*st.cap*st.cap;accKind[i]=st.kind;latUse[i]=st.u;}
+      cap=Math.sqrt(Math.max(1,sq));
+      cut-=dtS;
+      if(shiftsCut)cutAt[i]=1;
+    }else{
+      cutAt[i]=0;
+      const st=accFrom(p[i],v[i],boostShare?boostShare[i]:1);cap=st.cap;
+      accKind[i]=st.kind;latUse[i]=st.u;
+    }
+    // on the power = the car is accelerating as hard as it can here; on the second time round the speeds
+    // already equal that, so it is not "cap < v[j]"
+    const onPower=cap<=v[j]*(1+1e-9);
     if(cap<v[j])v[j]=cap;
+    if(shiftsCut){
+      const g=gearAt(v[j]).gear;
+      if(held<0)held=g;
+      if(g>held){if(onPower&&cut<=0)cut=vehicle.shiftTime;held=g;}
+      else if(g<held&&!onPower)held=g;   // on the power the driver stays in the gear just selected
+    }
   }
   }
   passes();
-  // the line optimiser only needs the speeds on a candidate line (no brake temperatures, no recording)
+  // the line optimiser only needs the speeds on a candidate line (no brake temperatures, no recording, and
+  // no gear shifts: the stretches it re-solves do not carry the gearbox's state)
   if(quick){let tq=0;for(let i=0;i<n;i++){const j=(i+1)%n;tq+=p[i].ds3/Math.max(2,(v[i]+v[j])/2);}return {lap:tq,v,vC,vB,kind:accKind,model:{ceilAt,brakeFrom,accFrom}};}
   // 2b. Brake temperature on the lap (build 107; build 105 counted heat per stop against a fitted
   //     budget). Run the solved profile through the rotors in time order, lap after lap until the
@@ -6233,6 +6295,55 @@ function simulateLap(key,opts){
     for(let i=0;i<n;i++){fadeF[i]=brakeFadeAt(BT.TF[i],th);if(fadeF[i]<0.999)faded=true;}
     if(faded){passes();BT=brakeTemps();}
   }
+  // what the shifts cost: the same lap with and without the drive cut
+  const lapOf=()=>{let tq=0;for(let i=0;i<n;i++){const j=(i+1)%n;tq+=p[i].ds3/Math.max(2,(v[i]+v[j])/2);}return tq;};
+  const tNoShift=lapOf();
+  shiftsCut=true;passes();
+  const shiftLoss=Math.max(0,lapOf()-tNoShift);
+  // Turbo lag on the lap (build 118). The solve so far gave a turbo its full boost wherever it was flat,
+  // as if the shaft were always spun up. Boost is a state with history (advanceShaft, the same shaft the
+  // 0-100 run and the bench integrate): it builds while the exhaust drives the shaft and bleeds off on
+  // a lift, under braking and through a shift. So run the shaft along the lap in time order, at each
+  // point's revs and throttle, until it repeats lap to lap; the torque the boost actually there gives,
+  // against what full boost gives, scales the drive, and the forward pass is solved again. The throttle
+  // depends on the drive available, so this goes round twice.
+  let boostLap=null;
+  if(engine.intake==='turbo'&&engine.maxBoost>0&&engine.shaftJ){
+    const grid=lapTorqueGrid(),iat0=state.iat;state.iat=20;   // design figures, like simulateAccel
+    boostShare=new Float64Array(n).fill(1);boostLap=new Float64Array(n);
+    const rpmOf=i=>{const g=gearAt(v[i]).gear;return clamp(v[i]*ratios[g]*fd/rT*60/TWO_PI,idle,rl);};
+    // Where the car is fastest it has been flat for a while, so the shaft is spun up to what the revs there
+    // support: start it settled there and one walk round the lap is the lap-to-lap state (the shaft's
+    // memory is well under a second). Re-walking from rest cost 1.3 s on the Nordschleife.
+    let i0=0;for(let i=1;i<n;i++)if(v[i]>v[i0])i0=i;
+    for(let it=0;it<TURBO_ITERS;it++){
+      // throttle = the drive force the speed profile asks for, against what the engine has here
+      const thrS=new Float64Array(n);
+      for(let i=0;i<n;i++){
+        if(cutAt[i]){thrS[i]=0.35;continue;}   // mid-shift, as the standing-start run lifts for it
+        const j=(i+1)%n,g=gearAt(v[i]),a=(v[j]*v[j]-v[i]*v[i])/(2*p[i].ds3);
+        const need=vehicleMassEff(ratios[g.gear]*fd)*a+drag(v[i])+rollF(v[i])*p[i].cosT+m*G*p[i].sinT
+                   +corneringDrag(m,v[i]*v[i]/p[i].r,loadAt(p[i],v[i]));
+        thrS[i]=need<=0?0:clamp(need/Math.max(1,g.F*boostShare[i]),0,1);
+      }
+      let E=0,b=0;
+      for(let k=0;k<200;k++){const r=advanceShaft(E,rpmOf(i0),b,1,0.01);E=r.shaftE;b=r.boost;}   // 2 s flat
+      for(let k=0;k<n;k++){
+        const i=(i0+k)%n,j=(i+1)%n;
+        const dt=p[i].ds3/Math.max(2,(v[i]+v[j])/2);
+        // 10 ms steps: against 2 ms no lap moves by more than 0.01 s, at a fifth of the cost
+        const r=advanceShaft(E,rpmOf(i),b,thrS[i],dt,0.01);E=r.shaftE;b=r.boost;
+        boostLap[i]=b;
+      }
+      for(let i=0;i<n;i++){
+        const rpm=rpmOf(i),full=gridTorque(grid,rpm,boostAvail(rpm));
+        boostShare[i]=full>1?clamp(gridTorque(grid,rpm,Math.min(boostLap[i],boostAvail(rpm)))/full,0,1):1;
+      }
+      passes();
+    }
+    state.iat=iat0;
+  }
+  BT=brakeTemps();   // the rotors through the lap as it is now driven
   // Classify from the FINISHED profile, not during the passes — the backward pass touches almost
   // every point on a twisty circuit, so labelling as it goes would call the whole lap "braking".
   // What's actually limiting the car is: losing speed → brakes; sitting on the cornering ceiling
@@ -6273,11 +6384,8 @@ function simulateLap(key,opts){
     }
     for(let i=0;i<n;i++)if(gears[i]!==gears[(i-1+n)%n])shifts++;
   }
-  const shiftLoss=shifts*vehicle.shiftTime*0.5;   // half a shift's drive-cut costs time on track
-  const tRaw=t;
-  t+=shiftLoss;sect[0]+=shiftLoss/3;sect[1]+=shiftLoss/3;sect[2]+=shiftLoss/3;
   // 5. The lap as a recording, for the live replay (build 104): what the car is doing at each point.
-  //   time    the clock at each point, the shift losses spread over the lap so it ends on the lap time
+  //   time    the clock at each point
   //   pedals  flat wherever the car accelerates as hard as it may (engine- or traction-limited). On the
   //           cornering ceiling the driver holds speed: the drive force that takes, against what this
   //           gear has, is the throttle. Slowing harder than drag and the slope do on their own is the
@@ -6286,19 +6394,21 @@ function simulateLap(key,opts){
   //   rpm     from the gear the car is in
   const tAt=new Array(n),thr=new Array(n),brk=new Array(n),gLat=new Array(n),gLong=new Array(n),rpmAt=new Array(n),mapAt=new Array(n);
   {
-    const k=t/Math.max(1e-9,tRaw);let tc=0;
+    let tc=0;
     for(let i=0;i<n;i++){
       const j=(i+1)%n,h=(i-1+n)%n;tAt[i]=tc;
-      tc+=p[i].ds3/Math.max(2,(v[i]+v[j])/2)*k;
-      const resist=drag(v[i])+rollF(v[i])*p[i].cosT+m*G*p[i].sinT, need=vehicleMassEff(ratios[gears[i]]*fd)*aL[i]+resist;
-      if(lim[i]==='power'||lim[i]==='traction'){thr[i]=1;brk[i]=0;}
-      else if(need>=0){thr[i]=clamp(need/Math.max(1,bestGear(v[i]).F),0,1);brk[i]=0;}
+      tc+=p[i].ds3/Math.max(2,(v[i]+v[j])/2);
+      const resist=drag(v[i])+rollF(v[i])*p[i].cosT+m*G*p[i].sinT+corneringDrag(m,v[i]*v[i]/p[i].r,loadAt(p[i],v[i])), need=vehicleMassEff(ratios[gears[i]]*fd)*aL[i]+resist;
+      if(cutAt[i]){thr[i]=0;brk[i]=0;}   // mid-shift: clutch in, no drive
+      else if(lim[i]==='power'||lim[i]==='traction'){thr[i]=1;brk[i]=0;}
+      else if(need>=0){thr[i]=clamp(need/Math.max(1,bestGear(v[i]).F*(boostShare?boostShare[i]:1)),0,1);brk[i]=0;}
       else{thr[i]=0;brk[i]=clamp(-need/m/Math.max(0.1,vehicle.brakeDecelCap),0,1);}
       const ax=p[i].x-p[h].x,ay=p[i].y-p[h].y,bx=p[j].x-p[i].x,by=p[j].y-p[i].y;
       gLat[i]=Math.sign(ax*by-ay*bx)*v[i]*v[i]/Math.max(1,p[i].r)/G;
       gLong[i]=aL[i]/G;
       rpmAt[i]=clamp(v[i]*ratios[gears[i]]*fd/rT*60/TWO_PI,idle,rl);
       mapAt[i]=steadyMapAt(rpmAt[i],thr[i]);
+      if(boostLap)mapAt[i]=Math.min(mapAt[i],1+boostLap[i]);   // what the shaft has built by here
     }
   }
   // Elevation summary for the readouts: metres climbed per lap and the height range.
@@ -6308,7 +6418,7 @@ function simulateLap(key,opts){
   for(let i=0;i<n;i++)counts[lim[i]]+=p[i].ds3;
   return {track:T,lap:t,sectors:sect,v,lim,vMin:vMin*3.6,vMax:vMax*3.6,
     avg:p.length_/t*3.6,shifts,shiftLoss,counts,gears,climb,zMin,zMax,length:T.length,lineLength:p.length_,
-    replay:{tAt,thr,brk,gLat,gLong,rpm:rpmAt,map:mapAt,tF:BT.TF,tR:BT.TR,fade:fadeF.slice()},
+    replay:{tAt,thr,brk,cut:Array.from(cutAt),gLat,gLong,rpm:rpmAt,map:mapAt,tF:BT.TF,tR:BT.TR,fade:fadeF.slice()},
     brakeMaxF:Math.max(...BT.TF),brakeMaxR:Math.max(...BT.TR),brakeOnset:th.onset,
     corners:T.corners,width:T.width,wLabel:T.wLabel};
 }
