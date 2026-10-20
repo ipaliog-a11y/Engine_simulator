@@ -45,7 +45,7 @@ const out = await page.evaluate(BUILDS => {
     engine.afrMode = 'fixed';                      // the buttons set the mixture; AUTO hands it to the ECU
     wearEnabled = false; setTab('engine');
     const s = engine.score, row = { nm, peakHP: s.peakHP, peakHPrpm: s.peakHPrpm, peakTQ: s.peakTQ, peakTQrpm: s.peakTQrpm,
-      stoich: engine.stoichAFR, ci: !!engine.ci, smoke: SMOKE_LAMBDA_CI };
+      stoich: engine.stoichAFR, ci: !!engine.ci, smoke: SMOKE_LAMBDA_CI, redline: engine.redline };
     for (const [btn, key] of [['btnMaxPower', 'power'], ['btnOptimal', 'torque'], ['btnEco', 'eco']]) {
       state.rpm = engine.idleRpmEff + 200; state.boostActual = 0; state.shaftE = 0;
       document.getElementById(btn).click();
@@ -69,7 +69,12 @@ for (const r of out) {
   }
   // MAX POWER lands on the dyno's peak power, at its rpm
   if (Math.abs(r.power.hp / r.peakHP - 1) > 0.02) fails.push(`${r.nm}: MAX POWER settles at ${r.power.hp} hp, the dyno says ${r.peakHP}`);
-  if (Math.abs(r.power.rpm - r.peakHPrpm) > 60) fails.push(`${r.nm}: MAX POWER holds ${r.power.rpm} rpm, the power peak is at ${r.peakHPrpm}`);
+  // A peak AT the redline cannot be held exactly: the limiter is a fuel cut, so a brake holding the
+  // engine there cuts its fuel. Such an engine (the 2.0 TDI's flat plateau) must settle just under the
+  // limiter instead — within its last 2.5% — while the power check above still holds it to 2%.
+  const atLimiter = r.peakHPrpm >= r.redline;
+  if (atLimiter ? !(r.power.rpm <= r.redline && r.power.rpm >= r.redline * 0.975) : Math.abs(r.power.rpm - r.peakHPrpm) > 60)
+    fails.push(`${r.nm}: MAX POWER holds ${r.power.rpm} rpm, the power peak is at ${r.peakHPrpm}${atLimiter ? ' (the limiter)' : ''}`);
   // PEAK TORQUE lands on the dyno's peak torque
   if (Math.abs(r.torque.tq / r.peakTQ - 1) > 0.02) fails.push(`${r.nm}: PEAK TORQUE settles at ${r.torque.tq} Nm, the dyno says ${r.peakTQ}`);
   // ECO burns less fuel per kWh than either full-load point
