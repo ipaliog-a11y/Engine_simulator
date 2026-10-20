@@ -118,12 +118,11 @@ peaks.forEach(p => console.log(`  ${p.name.slice(0, 24).padEnd(25)} peak at ${St
 const atLimiter = peaks.filter(p => p.pct >= 100);
 console.log(`  ${atLimiter.length} preset(s) still peak at the limiter: ${atLimiter.map(p => p.name).join(', ') || 'none'}`);
 // The same named list as test46, for the same reasons: the 2.0 Turbo Hot-Hatch (boost taper, not
-// valvetrain), the 2.0 Turbo Diesel (a flat derived plateau, build 88) and the 1.3 Rotary Turbo
-// (no trailing-pocket burn, so it cannot spool until the limiter — the rotary gap named in build
-// 89; its curve is flat enough there that this check and test46's land either side of 100%). This
+// valvetrain) and the 2.0 Turbo Diesel (a flat derived plateau, build 88). The 1.3 Rotary Turbo was
+// on it from build 89 to 91 and left in build 92, once its slow-burn heat reached the exhaust. This
 // test owns the valvetrain question, so any engine NOT on that list is still a failure here.
-const AT_LIMITER_BUDGET = 3;
-const AT_LIMITER_KNOWN = /^(2\.0 Turbo Hot-Hatch I4|2\.0 Turbo Diesel I4|1\.3 Rotary Turbo \(13B\))$/;
+const AT_LIMITER_BUDGET = 2;
+const AT_LIMITER_KNOWN = /^(2\.0 Turbo Hot-Hatch I4|2\.0 Turbo Diesel I4)$/;
 if (atLimiter.some(p => !AT_LIMITER_KNOWN.test(p.name)))
   fails.push(`not on the known list, at the limiter: ${atLimiter.filter(p => !AT_LIMITER_KNOWN.test(p.name)).map(p => p.name).join(', ')}`);
 if (atLimiter.length > AT_LIMITER_BUDGET)
