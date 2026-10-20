@@ -1362,8 +1362,22 @@ function exhaustHeatFrac(rpm){
   let f=clamp(0.40-0.24*eta,0.24,0.36);
   // Heat a diesel releases too late to turn into work is still hot when the exhaust valve opens.
   if(rpm>0)f+=eta*(1-burnPhasing(rpm));
+  // Heat the cylinder walls take per cycle, as a share of the fuel's, falls with speed and size.
+  // Woschni: h ~ B^-0.2 p^0.8 T^-0.55 w^0.8, with the gas velocity w following mean piston speed Sp.
+  // Over one cycle (time ~ 1/N) against the fuel's heat (~ B^2 S), that leaves the wall share going as
+  // (B Sp)^-0.2 — and what the walls do not take, the exhaust does. So a big, fast engine runs hotter
+  // at the port than a small slow one at the same mixture, which is what real full-load EGTs show.
+  // Referenced to bore x piston speed at rated power of the engines whose measured EGT validates the
+  // constants above (test46: 1.6 NA I4 1474, 2.0 TDI 1210, 6.6 V8 TD 1054 mm.m/s; geometric mean
+  // 1234), so those stay where they were checked. No ported engines: they have no bore and stroke in
+  // this sense, and their exhaust fraction is calibrated separately.
+  if(rpm>0&&!e.ports){
+    const wall=Math.max(0,1-eta-f), BSp=e.bore_mm*2*(e.stroke_mm/1000)*Math.max(300,rpm)/60;
+    f+=wall*(1-Math.pow(BSp/WALL_BSP_REF,-0.2));
+  }
   return f;
 }
+const WALL_BSP_REF=1234;   // mm.m/s — see exhaustHeatFrac
 // ---- intake: Helmholtz ----
 // Q of an intake tract measured on a flow rig is 3-6. It sets how fast the resonance dies and
 // therefore how much weaker each successive order is, so no separate order weighting is needed.
