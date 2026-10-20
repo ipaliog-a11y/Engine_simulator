@@ -249,7 +249,7 @@ table.fuelmap td.live{box-shadow:inset 0 0 0 2px #fff;font-weight:bold}
 <body>
 <div class="container">
 <header>
-<h1>PIXEL ENGINE SIM v0.6 build 94</h1>
+<h1>PIXEL ENGINE SIM v0.6 build 95</h1>
 <div class="subtitle" id="subtitle">ENGINE DESIGNER • BUILD IT, THEN DRIVE IT</div>
 </header>
 <div class="main">
@@ -2418,7 +2418,7 @@ function applyLang(lang){
 }
 
 const RAD_CAP={small:0.75,stock:1.0,large:1.35};   // relative heat-rejection capacity
-const IMEP_K=13.2;   // indicated MEP calibration (bar at map=1, ve=1, best-power AFR)
+const IMEP_K=13.2;   // bar — ONLY scales the dyno brake's reference torque now (loadRefTq); torque itself comes from fuel
 // Dynamic (throttle-driven) model tuning:
 const PUMP_K=0.9;    // pumping loss (bar) at full manifold vacuum → engine braking
 const MAP_K=9;       // manifold-pressure response rate (1/s) — fast
@@ -3565,14 +3565,33 @@ function updateFuelMapMarker(){
 // the new curve's own value at 0.86 and 1.0% over the old curve's — the one figure set that shifts.)
 const faEta=phi=>phi<=1?1+0.6*(1-phi)-0.4*(1-phi)*(1-phi):Math.max(0.3,1-0.71*(phi-1));
 const imepRel=lam=>{const phi=1/Math.max(0.3,lam);return phi*faEta(phi);};
-const AFR_ANCHOR_SI=1.08;   // the old curve at lambda 0.86, the scorecard's best-power mixture
-function afrPowerFactor(afr){
-  // Spark engines only: a diesel's torque is computed from its fuel directly (dieselGrossImep).
-  const lam=afr/engine.stoichAFR;
-  let f=AFR_ANCHOR_SI*imepRel(lam)/imepRel(0.86);
+// Work per unit of stoichiometric fuel energy, by mixture: phi x faEta(phi), with the two roll-offs a
+// real spark engine has at the extremes (rich misfire, lean-limit burn deterioration).
+function sparkMixture(lam){
+  let f=imepRel(lam);
   if(lam<0.75)f*=0.85+0.6*(lam-0.68);   // very rich: misfire
   if(lam>1.12)f*=1.0-1.5*(lam-1.12);    // very lean: burn deteriorates toward the lean limit
-  return clamp(f,0.05,1.12);
+  return Math.max(0.03,f);
+}
+// ---- A spark engine's torque, from the fuel it burns (build 95) ----
+// Spark engines took IMEP from AIR: IMEP_K (13.2) x typeImep x map x VE x a mixture factor anchored at
+// lambda 0.86 x crFactor. Air density times phi x faEta(phi) IS fuel times an efficiency, so the shape
+// was already right; what was fitted was the constant that carried the efficiency, and every fuel was
+// handed the same energy per kg of air. Now, as for the diesel (dieselGrossImep):
+//     gross IMEP = eta x (m_air / AFR_st) x LHV x sparkMixture(lambda)
+// with the efficiency from Heywood's rule that a real engine reaches ~0.8 of the FUEL-AIR cycle, whose
+// efficiency at phi 1 follows 1 - CR^-(gamma-1) with an effective gamma ~1.28 (0.47 at CR 10, Heywood
+// fig. 5-9). Spark timing (ignF), ignition health, coolant, engine health and nitrous stay as they were.
+// The model's old constant implied 0.383 at CR 9.4 and lambda 1; this gives 0.373, so spark torque
+// falls ~2.7% across the board — the honest cost of replacing the fit. Methanol now carries the 3% more
+// energy per kg of air it really does. Rotary and two-stroke keep their measured type factors
+// (typeImep 0.70 / 0.60), still fitted and labelled.
+const REAL_TO_FUELAIR=0.80, GAMMA_FA=1.28;
+function sparkGrossImep(rpm,map,ve){
+  const e=engine,st=e.stoichAFR||14.7;
+  const air=map*1e5/(287*(effIAT(map,rpm)+273.15))*ve;               // kg of trapped air per m3 swept
+  const eta=REAL_TO_FUELAIR*(1-Math.pow(Math.max(1.5,e.compression),1-GAMMA_FA));
+  return eta*e.typeImep*air/st*(e.fuelLHV||44)*1e6*sparkMixture(curAFR(rpm,map)/st)/1e5;   // bar
 }
 function tempFactors(coolant,oil){
   let coolF=1.0-0.00045*Math.pow(coolant-91,2);
@@ -3885,10 +3904,8 @@ function calcAtRpm(rpm,mapOverride){
   if(engine.ci){
     imep=(dieselGrossImep(rpm,map,ve)*coolF+nitrousImep())*healthFactor();
   }else{
-    const afrP=afrPowerFactor(curAFR(rpm,map));
     const ignF=clamp(1-0.004*Math.pow(activeAdvance(rpm,map)-mbtAdvance(rpm,map),2),0.72,1.0);
-    imep=IMEP_K*engine.typeImep*map*ve*afrP*coolF*engine.crFactor*ignF*ignitionHealth(rpm)*healthFactor()+nitrousImep()*healthFactor();
-    imep*=298.15/(effIAT(map,rpm)+273.15);   // intake-air density correction (ref 25°C)
+    imep=(sparkGrossImep(rpm,map,ve)*coolF*ignF*ignitionHealth(rpm)+nitrousImep())*healthFactor();
   }
   imep=dieselImepLimit(imep);          // diesel peak-cylinder-pressure / smoke ceiling
 
@@ -3912,9 +3929,8 @@ function brakeTorqueRaw(rpm,map,fuelCut){
     const ve=computeVE(rpm,map);
     if(engine.ci)imep=(dieselGrossImep(rpm,map,ve)*coolF+nitrousImep())*healthFactor();
     else{
-      const afrP=afrPowerFactor(curAFR(rpm,map));
       const ignF=clamp(1-0.004*Math.pow(activeAdvance(rpm,map)-mbtAdvance(rpm,map),2),0.72,1.0);
-      imep=IMEP_K*engine.typeImep*map*ve*afrP*coolF*engine.crFactor*ignF*ignitionHealth(rpm)*healthFactor()*(298.15/(effIAT(map,rpm)+273.15))+nitrousImep()*healthFactor();
+      imep=(sparkGrossImep(rpm,map,ve)*coolF*ignF*ignitionHealth(rpm)+nitrousImep())*healthFactor();
     }
     imep=dieselImepLimit(imep);
     const knock=computeKnockRisk(rpm,map);
