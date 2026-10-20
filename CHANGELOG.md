@@ -20,6 +20,29 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 Working toward **v1.0 — every number derived, not fitted.**
 
+### Engine breathing: valve overlap and exhaust waves (build 116)
+
+Found checking why the Lancer Evo IX felt lethargic (0-100 6.8 s against a real 5.0): its engine made
+242 hp of its 286.
+- **A turbo's boost was read as reverse flow.** The flow across the valve overlap was driven by the exhaust
+  wave less the exhaust back-pressure, leaving out that a boosted intake sits at the boost: an Evo at
+  1.3 bar, its turbine holding about that in the manifold, lost a quarter of its charge. Now the intake's
+  pressure is in the balance, and what blows through can at most refill the clearance volume (1/(CR-1)).
+- **The overlap's flow area was a constant.** OVERLAP_LIFT held both valves at 15% of full lift across the
+  whole window on every cam: a 72-degree race cam's lift at TDC, four times a road cam's. Now the mean of the
+  smaller curtain over the window, from each cam's duration and overlap (sin^2 lift), with a curtain's
+  discharge coefficient 0.6 (Heywood). It had cost every NA engine 10-12% to reverse flow.
+- **The exhaust wave's pipe friction was a constant.** 0.35 per metre, about 20x what the boundary layers
+  take (Kirchhoff: sqrt(omega nu/2)(1 + (gamma-1)/sqrt Pr)/(r c)); a tuned header's suction now arrives
+  at 0.13-0.16 bar.
+- **Result:** Evo IX 290 hp (real 286), 0-100 5.2 s; Huracan 625/602, GT3 529/493, 812 831/789, LS3 408/430,
+  S2000 237/240. Still short: Z06 417/505, 4A-GE 108/128, the rotaries (port breathing, queued). Turbo
+  engines now read high at the top (Supra 410/320): they hold full boost to the limiter, where real ECUs
+  taper it.
+- Tests re-baselined with reasons: test46 (scavenging floor 2%), test40 (over-flowed frame against one that
+  feeds), test43, test35, test48 (power RMS 14, Supra and S54 named), test60 (812 flat top), test61 (812
+  launch listed; RS3 and Duramax fixed), test63, Club Sprint reliability 50.
+
 ### Each car's own minimum-time racing line (build 115)
 
 From the driving review. The line was one minimum-curvature shape for every car, bent by a fitted late-apex

@@ -282,7 +282,7 @@ table.fuelmap td.live{box-shadow:inset 0 0 0 2px #fff;font-weight:bold}
 <body>
 <div class="container">
 <header>
-<h1>PIXEL ENGINE SIM v0.6 build 115</h1>
+<h1>PIXEL ENGINE SIM v0.6 build 116</h1>
 <div class="subtitle" id="subtitle">ENGINE DESIGNER • BUILD IT, THEN DRIVE IT</div>
 </header>
 <div class="build-strip" id="buildStrip">
@@ -2493,7 +2493,9 @@ const CHALLENGES=[
     // 89 s until build 111 set lateral grip to road asphalt (skidpad data); re-set the same way.
     // 94.5 until build 114 fixed the braking pass (it read the friction circle at the cornering ceiling,
     // not at the speed being solved, and braked far too early); re-set the same way.
-    targets:[{label:'Ashdown lap',key:'lap',op:'<=',t:80.5,unit:'s'},{label:'Reliability',key:'reliability',op:'>=',t:55}]},
+    // Reliability 55 until build 116: the reference 2.0 turbo went 250 -> 331 hp on the same parts when the
+    // valve overlap stopped reading its boost as reverse flow, and the score fell 66 -> 54 with the stress.
+    targets:[{label:'Ashdown lap',key:'lap',op:'<=',t:80.5,unit:'s'},{label:'Reliability',key:'reliability',op:'>=',t:50}]},
   {id:'gppace',name:'Grand Prix Pace',desc:'A proper lap of Riverside. Balance power against the grip to use it.',
     circuit:'mixed',budget:70000,
     // 60.0 s was authored when turbo engines carried no exhaust manifold back-pressure. Once the

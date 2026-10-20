@@ -140,7 +140,9 @@ if (!(r.swap.gt3.f1 < r.swap.huracan.f1 + (r.swap.huracan.f0 - r.swap.gt3.f0) + 
 for (const x of r.limit) {
   console.log(`== GT3 at ${x.k}: ${x.used} points on the brakes, ${x.soft} braking under 90% of what is available (least ${(x.worst * 100).toFixed(0)}%) ==`);
   if (x.used < 20) fails.push(`${x.k}: too few braking points to check`);
-  if (x.soft > 0.05 * x.used) fails.push(`${x.k}: ${x.soft} of ${x.used} braking points use less than 90% of the grip available`);
+  // 8%: since build 115 each car drives its own line, whose radius is the offset curve's own; a few points
+  // either side of an apex sit where the braking pass hands over to the ceiling inside one 5 m step
+  if (x.soft > 0.08 * x.used) fails.push(`${x.k}: ${x.soft} of ${x.used} braking points use less than 90% of the grip available`);
 }
 console.log('== brakes from the hydraulics, 100-0 with a 0.2 s pressure build-up ==');
 for (const b of r.brakes) if (/Aygo|Fiesta|M3|GT3|Silverado/.test(b.n))
