@@ -249,7 +249,7 @@ table.fuelmap td.live{box-shadow:inset 0 0 0 2px #fff;font-weight:bold}
 <body>
 <div class="container">
 <header>
-<h1>PIXEL ENGINE SIM v0.6 build 87</h1>
+<h1>PIXEL ENGINE SIM v0.6 build 88</h1>
 <div class="subtitle" id="subtitle">ENGINE DESIGNER • BUILD IT, THEN DRIVE IT</div>
 </header>
 <div class="main">
@@ -396,7 +396,8 @@ limiter; 100% = holds near idle. It only resists <i>above</i> its target, so any
 always rev up to it.<br>
 <b>ELEC LOAD</b> — accessory draw (lights/AC). Heavy load + small alternator at idle drains
 the battery → low voltage → weak spark.<br>
-<b>AFR</b> — air-fuel ratio. Peak power near λ0.86 (rich), best economy near λ1.05 (lean).<br>
+<b>AFR</b> — air-fuel ratio. Petrol: peak power near λ0.86 (rich), best economy near λ1.1 (lean).
+Diesel: full fuel at the smoke limit, λ1.2; leaner is less torque but less fuel per kWh.<br>
 <b>IAT / COOLANT / OIL</b> — charge &amp; engine temps (auto in AUTO THERMAL mode).<br>
 <b>NITROUS</b> — if fitted, sprays at wide-open throttle from a bottle that depletes.
 </div>
@@ -404,7 +405,7 @@ the battery → low voltage → weak spark.<br>
 <b>PEAK TORQUE · MAX POWER · ECO</b> — three buttons that put the engine you built on a real
 operating point and let it settle there. <b>MAX POWER</b> opens the throttle fully and has the dyno
 brake hold the rpm where this engine makes its peak power, at the best-power mixture (λ0.86 petrol,
-λ1.05 diesel) and the scorecard's conditions — so the LIVE OUTPUT should land on the same figure the
+λ1.2 diesel) and the scorecard's conditions — so the LIVE OUTPUT should land on the same figure the
 DYNO tab prints. <b>PEAK TORQUE</b> does the same at the torque peak. <b>ECO</b> searches this
 engine's speed, load and mixture for the point that burns the <i>least fuel per kWh</i> — the lowest
 BSFC — and holds it; for a petrol engine that is usually a little lean of stoich at high load and
@@ -2148,7 +2149,7 @@ const I18N={
 // (untrue since build 74). New guide content goes in its OWN block for exactly this reason.
 const GUIDE_I18N={
   loop:{el:"<b>1. ΚΙΝΗΤΗΡΑΣ</b> — σχεδίασε έναν κινητήρα (κάτω μέρος, διαδρομή αέρα, καύσιμο & σπινθήρας, ψύξη…), μετά πάτα <b>BUILD & DYNO</b>. <b>2. ΔΥΝΑΜΟ</b> δείχνει όλη την καμπύλη ισχύος/ροπής και μια βαθμολογία. <b>3. ΖΩΝΤΑΝΑ</b> είναι πάγκος δοκιμών σε λειτουργία: ρυθμίζεις <b>ΓΚΑΖΙ</b> και <b>ΦΟΡΤΙΟ</b> και βλέπεις τον κινητήρα να αποκρίνεται σε πραγματικό χρόνο. Δεν ορίζεις ποτέ απευθείας τις στροφές — τον οδηγείς.<br>Μετά βάλ' τον σε αυτοκίνητο στο <b>ΟΧΗΜΑ</b> και πήγαινέ τον σε πίστα στην <b>ΠΙΣΤΑ</b>. Κάθε αριθμός βγαίνει από την ίδια φυσική, οπότε μια αλλαγή στην καρτέλα ΚΙΝΗΤΗΡΑΣ φαίνεται στο 0–100, στην τελική και στον χρόνο γύρου."},
-  driving:{el:"<b>ΓΚΑΖΙ</b> — ανοίγει την εισαγωγή· αυξάνει την πίεση πολλαπλής → ροπή → στροφές.<br><b>ΦΟΡΤΙΟ (φρένο δυναμό)</b> — αντίσταση που ορίζει τις <i>στροφές κρατήματος</i>. 0% = ελεύθερες στροφές ως το όριο· 100% = κρατά κοντά στο ρελαντί. Αντιστέκεται μόνο <i>πάνω</i> από τον στόχο, οπότε κάθε κινητήρας ανεβαίνει πάντα ως εκεί.<br><b>ΗΛΕΚ. ΦΟΡΤΙΟ</b> — κατανάλωση παρελκομένων (φώτα/AC). Μεγάλο φορτίο + μικρό δυναμό στο ρελαντί αδειάζει την μπαταρία → χαμηλή τάση → αδύναμος σπινθήρας.<br><b>AFR</b> — αναλογία αέρα-καυσίμου. Μέγιστη ισχύς κοντά σε λ0.86 (πλούσιο), καλύτερη οικονομία κοντά σε λ1.05 (φτωχό).<br><b>IAT / ΨΥΚΤΙΚΟ / ΛΑΔΙ</b> — θερμοκρασίες χαρμανιού & κινητήρα (αυτόματα σε AUTO THERMAL).<br><b>ΝΙΤΡΟ</b> — αν υπάρχει, ψεκάζει με τέρμα γκάζι από φιάλη που αδειάζει."},
+  driving:{el:"<b>ΓΚΑΖΙ</b> — ανοίγει την εισαγωγή· αυξάνει την πίεση πολλαπλής → ροπή → στροφές.<br><b>ΦΟΡΤΙΟ (φρένο δυναμό)</b> — αντίσταση που ορίζει τις <i>στροφές κρατήματος</i>. 0% = ελεύθερες στροφές ως το όριο· 100% = κρατά κοντά στο ρελαντί. Αντιστέκεται μόνο <i>πάνω</i> από τον στόχο, οπότε κάθε κινητήρας ανεβαίνει πάντα ως εκεί.<br><b>ΗΛΕΚ. ΦΟΡΤΙΟ</b> — κατανάλωση παρελκομένων (φώτα/AC). Μεγάλο φορτίο + μικρό δυναμό στο ρελαντί αδειάζει την μπαταρία → χαμηλή τάση → αδύναμος σπινθήρας.<br><b>AFR</b> — αναλογία αέρα-καυσίμου. Βενζίνη: μέγιστη ισχύς κοντά σε λ0.86 (πλούσιο), καλύτερη οικονομία κοντά σε λ1.1 (φτωχό). Ντίζελ: πλήρες καύσιμο στο όριο καπνού, λ1.2· φτωχότερο δίνει λιγότερη ροπή αλλά λιγότερο καύσιμο ανά kWh.<br><b>IAT / ΨΥΚΤΙΚΟ / ΛΑΔΙ</b> — θερμοκρασίες χαρμανιού & κινητήρα (αυτόματα σε AUTO THERMAL).<br><b>ΝΙΤΡΟ</b> — αν υπάρχει, ψεκάζει με τέρμα γκάζι από φιάλη που αδειάζει."},
   live:{el:"<b>Η καρτέλα ΖΩΝΤΑΝΑ είναι τομή</b> του κινητήρα που μόλις σχεδίασες. Όλα κινούνται επειδή τα κίνησε η προσομοίωση. Δεν σχεδιάζεται όμως σε πραγματικό χρόνο: ένας στρόφαλος στις 5000 σ.α.λ. κάνει 83 στροφές το <i>δευτερόλεπτο</i>, που στα 60 fps είναι στροβοσκόπιο και όχι εικόνα — δεν θα μπορούσες να δεις μια βαλβίδα να ανοίγει. Έτσι ο κύκλος τρέχει με ρυθμό που διαβάζεται, περίπου 3.3 έως 1.1 δευτερόλεπτα ανά πλήρη κύκλο, πάντα καταταγμένος με τις στροφές ώστε το ρελαντί να είναι ορατά πιο νωθρό από το όριο. Η πραγματική ταχύτητα φαίνεται στο στροφόμετρο και ακούγεται στον ήχο. Το έμβολο ακολουθεί σωστή γεωμετρία στροφάλου-διωστήρα (<i>όχι</i> ημίτονο — ένας πραγματικός διωστήρας κάνει το έμβολο να αργοπορεί κάτω και να «κόβει» πάνω), η διάμετρος σχεδιάζεται στη δική σου αναλογία διαμέτρου/διαδρομής, και οι βαλβίδες ανοίγουν με αληθινό χρονισμό τεσσάρων χρόνων, με την επικάλυψη σάρωσης ορατή γύρω από το ΑΝΣ. Ο θάλαμος χρωματίζεται με βάση το τι υπάρχει μέσα του αυτή τη στιγμή — φρέσκο μείγμα, συμπιεσμένο, καιγόμενο, καμένο — και ο χρόνος ονομάζεται πάνω από την κεφαλή. Ένας δίχρονος δείχνει θυρίδες αντί για βαλβίδες· ένας ρότορας δείχνει πραγματικό επιτροχοειδές περίβλημα με τον ρότορα στο 1/3 του εκκεντροφόρου άξονα. Η λωρίδα δίπλα σχεδιάζει κάθε κύλινδρο στη δική του φάση, ώστε να βλέπεις τη σειρά ανάφλεξης σε έναν V12."},
   liveOut:{el:"Οι αριθμοί που τυπώνονταν εδώ σε γράμματα 7 px βρίσκονται πλέον στο πλαίσιο <b>ΖΩΝΤΑΝΗ ΕΞΟΔΟΣ</b> δίπλα στον καμβά, όπου είναι πραγματικό κείμενο."},
   numbers:{el:"<b>HP / kW</b> — ισχύς = ροπή × στροφές. <b>ΡΟΠΗ (Nm)</b> — δύναμη στρέψης· κορυφώνεται χαμηλότερα από την ισχύ.<br><b>BMEP (bar)</b> — μέση πραγματική πίεση πέδης: ροπή ανά κυβισμό, για σύγκριση κινητήρων κάθε μεγέθους. <b>VE (%)</b> — ογκομετρική απόδοση: πόσο καλά αναπνέει σε σχέση με τον κυβισμό (το boost ξεπερνά το 100%).<br><b>ΘΕΡΜ. ΑΠΟΔ. (%)</b> — ποσοστό ενέργειας καυσίμου που γίνεται έργο. <b>BSFC (g/kWh)</b> — καύσιμο ανά μονάδα ισχύος· <i>όσο χαμηλότερο τόσο καλύτερο</i>.<br><b>ΡΟΗ ΚΑΥΣΙΜΟΥ (L/h)</b> — ζωντανή κατανάλωση. <b>MAP / BOOST (bar)</b> — πίεση πολλαπλής· boost = MAP πάνω από 1.0.<br><b>ΠΕΙΡΑΚΙ (LOW/MED/HIGH)</b> — κίνδυνος πειρακίου. Ο χρονισμός AUTO καθυστερεί για έλεγχο· παρατεταμένο HIGH κάνει ζημιά. <b>ΥΓΕΙΑ (%)</b> — κατάσταση· 0 = καμένος κινητήρας.<br><b>ΕΚΠΟΜΠΕΣ (CLEAN/OK/DIRTY)</b> — από τον αναλυτή: CO & HC ανεβαίνουν στο πλούσιο, NOx στο φτωχό/καυτό· ο καταλύτης καθαρίζει και τα τρία μόνο κοντά στο στοιχειομετρικό.<br><b>λ (λάμδα)</b> — AFR ÷ στοιχειομετρικό: λ&lt;1 πλούσιο, 1 = στοιχειομετρικό, &gt;1 φτωχό.<br><b>ΚΟΣΤΟΣ ($)</b> — συνολικό κόστος εξαρτημάτων. <b>REL (αξιοπιστία)</b> — εκτίμηση αντοχής (boost/πειράκι/θερμότητα/στροφές). <b>hp/$1k</b> — ισχύς ανά χίλια δολάρια."},
@@ -2855,10 +2856,10 @@ function buildEngine(){
   // by how much fuel is injected, so it always runs lean (λ≥1) from the smoke limit to idle.
   const afrEl=document.getElementById('afr'),lam=state.afr/prevStoich;
   if(engine.ci){
-    afrEl.min=(engine.stoichAFR*1.02).toFixed(1);   // smoke limit (full fuelling)
+    afrEl.min=(engine.stoichAFR*SMOKE_LAMBDA_CI).toFixed(1);   // smoke limit (full fuelling)
     afrEl.max=(engine.stoichAFR*4.2).toFixed(1);    // light-load / idle (very lean)
     afrEl.step=0.2;
-    state.afr=clamp(engine.ci&&state.afr<engine.stoichAFR*1.02?engine.stoichAFR*1.15:lam*engine.stoichAFR,+afrEl.min,+afrEl.max);
+    state.afr=clamp(state.afr<engine.stoichAFR*SMOKE_LAMBDA_CI?engine.stoichAFR*1.4:lam*engine.stoichAFR,+afrEl.min,+afrEl.max);
   }else{
     afrEl.min=(engine.stoichAFR*0.68).toFixed(1);
     afrEl.max=(engine.stoichAFR*1.22).toFixed(1);
