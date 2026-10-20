@@ -120,7 +120,8 @@ for (const s2 of sweep)
 // Falling off on BOTH sides is what makes it an optimum rather than a plateau.
 if (!(sweep[0].top < fastestTop.top - 5))
   fails.push(`short gearing should cost top speed (${sweep[0].top} vs ${fastestTop.top})`);
-if (!(sweep[sweep.length - 1].top < fastestTop.top - 5))
+// (4 km/h: since build 116 the power curves are flatter over the top, so over-gearing costs a little less)
+if (!(sweep[sweep.length - 1].top <= fastestTop.top - 4))
   fails.push(`tall gearing should cost top speed too (${sweep[sweep.length-1].top} vs ${fastestTop.top})`);
 // Gearing still has to MATTER somewhere, or the slider is inert.
 const topSpread = fastestTop.top - Math.min(...sweep.map(x => x.top));

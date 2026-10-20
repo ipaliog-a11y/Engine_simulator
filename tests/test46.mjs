@@ -149,7 +149,12 @@ console.log(`  exhaust scavenge ${swing.slo}% .. +${swing.shi}%`);
 if (!(swing.rlo < -0.5)) fails.push('intake ram never goes negative — it is still a free bonus');
 if (!(swing.rhi > 5 && swing.rhi < 25)) fails.push(`peak ram ${swing.rhi}% is outside the real 8-20% band`);
 if (!(swing.slo < -0.5)) fails.push('scavenging never goes negative — reversion is not modelled');
-if (!(swing.shi > 4 && swing.shi < 25)) fails.push(`peak scavenging ${swing.shi}% is outside the real band`);
+// Build 116: the overlap's flow area comes from the cam (the smaller of the two curtains across the window,
+// Cd 0.6), not a fixed 15% of full lift held across it, and the exhaust wave's pipe friction from the
+// boundary layers, not 0.35/m. On this race cam the suction pulse arrives at 0.13-0.16 bar, and the valves
+// are barely open while it does, so the charge it pulls through tops out near 3%; the floor was 4% when the
+// curtain was four times too big. Most of a tuned header's gain on a real engine is the residual it clears.
+if (!(swing.shi > 2 && swing.shi < 25)) fails.push(`peak scavenging ${swing.shi}% is outside the real band`);
 
 // ==================================================================== 6. runner length moves the peak
 // This is what replaces CAM.peakShift: the powerband position is now a consequence of a length you

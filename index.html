@@ -1699,7 +1699,17 @@ const aperture=dn=>{
   return x<1e-6?1:Math.sin(x)/x;
 };
 // ---- exhaust: reflection comb, then what the suction actually drags through ----
-const EX_ALPHA=0.35;    // amplitude lost per metre of pipe: viscous + thermal boundary layer
+// Amplitude lost per metre of pipe to the viscous and thermal boundary layers (Kirchhoff):
+//     alpha = sqrt(omega nu / 2) (1 + (gamma - 1)/sqrt(Pr)) / (r c)
+// for a pipe of radius r, the gas at T (nu from Sutherland's viscosity, Pr 0.7, gamma 1.35 for exhaust),
+// at the frequency of one round trip of the pipe, c/2L. Build 116: this was EX_ALPHA, a flat 0.35 per
+// metre, ~20x what the boundary layers take from a 48 mm primary at 1000 K, so a tuned header's
+// suction pulse was gone after a couple of round trips and no header could scavenge.
+function exAlpha(T,r,L){
+  const c=sonic(T),mu=1.716e-5*Math.pow(T/273,1.5)*(273+111)/(T+111),nu=mu/(101325/(287*T));
+  const w=Math.PI*c/Math.max(0.05,L);
+  return Math.sqrt(w*nu/2)*(1+0.35/Math.sqrt(0.7))/(Math.max(0.005,r)*c);
+}
 const EX_ROPEN=0.88;    // amplitude reflected at an open end; the rest radiates away as noise
 const OVERLAP_CD=0.6;   // discharge coefficient of a valve curtain at low lift (Heywood)
 // Mean over the overlap window of the smaller of the two valves' lifts, as a share of full lift: the
@@ -1718,7 +1728,7 @@ function exhaustWaveP(rpm,T){
   const n=(e.camDur/2+90)*sonic(T)/(12*Math.max(500,rpm)*e.primL);
   const vel=(e.dispCyl_L/1000)*(T/320)*(rpm/60*(e.chargesPerRev||0.5))/(Math.PI/4*e.primD*e.primD)*3;
   const A0=GAMMA_AIR*vel/sonic(T);
-  const damp=Math.exp(-EX_ALPHA*2*e.primL*n)*Math.pow(EX_ROPEN,n)
+  const damp=Math.exp(-exAlpha(T,e.primD/2,e.primL)*2*e.primL*n)*Math.pow(EX_ROPEN,n)
             *Math.exp(-Math.pow(Math.PI*n*e.exhSigma,2)/2);
   // A turbine housing is a RESTRICTION, not an open end, so it reflects a compression instead of a
   // rarefaction. That is why turbo engines scavenge so poorly and are built with little overlap.

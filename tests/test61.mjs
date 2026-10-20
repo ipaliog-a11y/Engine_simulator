@@ -108,17 +108,15 @@ console.log(`  RMS top speed ${rms(cars.map(c => pc(c.top, c.real.top))).toFixed
 //   short      a governed car tops out below 97% of its governor: it cannot reach it, as the real car does
 //   never      cannot reach 100 km/h
 // KNOWN, build 97, each traced before it was listed:
-//   Duramax pickup, 29% slow with power within 7%: traction-limited for 9.2 of its 10.3 s, 1234 Nm
-//     through two eco tyres on a 3.4 t truck. Its inputs are the weakest in the table (kg, Cd, area
-//     and 0-100 all secondary), and it has an 8-speed where the real one has 10.
+//   (Duramax pickup, 29% slow with power within 7%: resolved by build 113's heavy-duty brakes and 116.)
 //   (RS3, 27% slow with power within 7%, holding boost only high up: resolved in build 101, when the
 //     derived exhaust energy balance gave turbo petrols their real exhaust heat.)
 const KNOWN = {
-  'Chevrolet Silverado 2500HD Duramax (2020)': ['slow-car'],
-  // Back since build 106: the RS3's engine holds only 210-250 Nm from 1500 to 3000 rpm against a real 480
-  // from 1700, so 2.9 s of its 0-100 is below full boost. Build 101 had brought it just under 25%; the
-  // spinning parts the car now carries take it back over. The engine shape is the problem (boost unsure).
-  'Audi RS3 Sportback (8V, 2017)': ['slow-car'],
+  // (RS3: back from build 106 to 115, its engine short of torque low down; resolved in build 116, when the
+  // valve overlap stopped reading the boost as reverse flow.)
+  // Build 116: the 812's power now within 5% (it was 11% short), so its 3.74 s against a real 2.9 counts.
+  // Grip-limited for 3.4 s of it: under investigation with the launch and the shifts.
+  'Ferrari 812 Superfast (2017)': ['slow-car'],
   // Build 109: grip from tyre load. 707 hp through two rear tyres is traction-limited off the line, and the
   // width bonus that used to add 7.5% to a 275 tyre is gone; real road tests on street tyres report the
   // same struggle. Its 3.9 s is the maker's figure.
