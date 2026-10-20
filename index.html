@@ -164,6 +164,7 @@ footer{text-align:center;margin-top:16px;padding:8px;font-size:7px;color:#555;bo
 .replay-row{display:flex;gap:6px;align-items:stretch;margin:4px 0 10px}
 .replay-row button{flex:1;padding:6px 4px}
 .replay-row select{flex:0 0 64px;min-width:0}
+.replay-row #replayGauges{flex:0 0 86px}
 .garage-empty{font-size:7px;color:#667;line-height:1.7;padding:8px;background:#0a0a10;border:2px dashed #2a2a3a}
 /* In its own tab the garage is a wall of cards, not a scrolling strip. */
 .garage-panel .garage-list{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));max-height:none;overflow:visible;align-items:start}
@@ -281,7 +282,7 @@ table.fuelmap td.live{box-shadow:inset 0 0 0 2px #fff;font-weight:bold}
 <body>
 <div class="container">
 <header>
-<h1>PIXEL ENGINE SIM v0.6 build 111</h1>
+<h1>PIXEL ENGINE SIM v0.6 build 112</h1>
 <div class="subtitle" id="subtitle">ENGINE DESIGNER • BUILD IT, THEN DRIVE IT</div>
 </header>
 <div class="build-strip" id="buildStrip">
@@ -1171,6 +1172,7 @@ This is a physics model, and like every model it leaves things out. These are th
 <button id="btnReplay" class="toggle on" aria-pressed="true">PAUSE</button>
 <button id="btnReplayRestart">RESTART</button>
 <select id="replaySpeed" class="opt-select" aria-label="Replay speed"><option value="1">1×</option><option value="2">2×</option><option value="4">4×</option></select>
+<select id="replayGauges" class="opt-select" aria-label="Gauges"><option value="digital">DIGITAL</option><option value="analog">ANALOG</option></select>
 </div>
 <div class="perf-grid" id="lapGrid"></div>
 <div class="perf-note" id="lapNote"></div>
@@ -4652,6 +4654,19 @@ function mapTarget(){
   const frac=tArea/(tArea+THR_K*(state.rpm/1000)*(1-tArea));
   return clamp(Pup*frac,0.12,Pup);
 }
+// Steady manifold pressure (bar abs) at an rpm and a share of full-throttle torque, for the live-timing
+// boost gauge (build 112). The charge, and so the torque, scales with manifold pressure, so a share thr
+// of full-throttle drive wants thr of the full-throttle pressure, 1 + boostAvail(rpm). It cannot fall
+// below what a closed throttle holds against the engine's pumping (mapTarget's own throttle law, with
+// the turbo's blow-off open: atmosphere upstream). A diesel has no throttle plate: its manifold stays at
+// atmosphere and only the boost follows the fuelling. Steady boost: the lap does not run the turbo's
+// shaft dynamics yet, so no lag.
+function steadyMapAt(rpm,thr){
+  const b=boostAvail(rpm),t=clamp(thr,0,1);
+  if(engine.ci)return 1+b*t;
+  const closed=Math.max(0.12,IDLE_AIR/(IDLE_AIR+THR_K*(rpm/1000)*(1-IDLE_AIR)));   // mapTarget's floor
+  return Math.max(closed,t*(1+b));
+}
 // Deceleration (overrun) fuel cut-off: on a closed throttle above idle, an injection system
 // cuts fuel entirely (no combustion, zero fuel flow) — saves fuel and adds engine braking.
 function overrunFuelCut(){
@@ -6014,7 +6029,7 @@ function simulateLap(key){
   //           brake, as a share of what the brakes can command.
   //   g       lateral v^2/r, signed by which way the line turns; longitudinal from the speed change
   //   rpm     from the gear the car is in
-  const tAt=new Array(n),thr=new Array(n),brk=new Array(n),gLat=new Array(n),gLong=new Array(n),rpmAt=new Array(n);
+  const tAt=new Array(n),thr=new Array(n),brk=new Array(n),gLat=new Array(n),gLong=new Array(n),rpmAt=new Array(n),mapAt=new Array(n);
   {
     const k=t/Math.max(1e-9,tRaw);let tc=0;
     for(let i=0;i<n;i++){
@@ -6028,6 +6043,7 @@ function simulateLap(key){
       gLat[i]=Math.sign(ax*by-ay*bx)*v[i]*v[i]/Math.max(1,p[i].r)/G;
       gLong[i]=aL[i]/G;
       rpmAt[i]=clamp(v[i]*ratios[gears[i]]*fd/rT*60/TWO_PI,idle,rl);
+      mapAt[i]=steadyMapAt(rpmAt[i],thr[i]);
     }
   }
   // Elevation summary for the readouts: metres climbed per lap and the height range.
@@ -6037,7 +6053,7 @@ function simulateLap(key){
   for(let i=0;i<n;i++)counts[lim[i]]+=p[i].ds3;
   return {track:T,lap:t,sectors:sect,v,lim,vMin:vMin*3.6,vMax:vMax*3.6,
     avg:p.length_/t*3.6,shifts,shiftLoss,counts,gears,climb,zMin,zMax,length:T.length,lineLength:p.length_,
-    replay:{tAt,thr,brk,gLat,gLong,rpm:rpmAt,tF:BT.TF,tR:BT.TR,fade:fadeF.slice()},
+    replay:{tAt,thr,brk,gLat,gLong,rpm:rpmAt,map:mapAt,tF:BT.TF,tR:BT.TR,fade:fadeF.slice()},
     brakeMaxF:Math.max(...BT.TF),brakeMaxR:Math.max(...BT.TR),brakeOnset:th.onset,
     corners:T.corners,width:T.width,wLabel:T.wLabel};
 }
@@ -8177,7 +8193,8 @@ function bindTrackZoom(){
 // ---- live timing: the solved lap, replayed against the clock (build 104) ----
 // No new physics: simulateLap already knows the speed, gear, limit and pedals at every point of the
 // racing line (its .replay), so this only runs a clock along it and reads them off.
-const lapReplay={playing:true,t:0,speed:1,src:null,laps:0};
+const lapReplay={playing:true,t:0,speed:1,src:null,laps:0,gauges:'digital'};
+try{if(localStorage.getItem('pes.gauges')==='analog')lapReplay.gauges='analog';}catch(e){}
 function stepReplay(dt){
   const L=lapResult;if(!L||!L.replay)return;
   if(lapReplay.src!==L){lapReplay.src=L;lapReplay.t=0;lapReplay.laps=0;}
@@ -8195,7 +8212,7 @@ function replayAt(L,t){
   const third=L.lineLength/3,sAt=mix(line[i].s,j?line[j].s:L.lineLength);
   return {i,x:mix(line[i].x,line[j].x),y:mix(line[i].y,line[j].y),
     hd:Math.atan2(line[j].y-line[i].y,line[j].x-line[i].x),
-    v:mix(L.v[i],L.v[j])*3.6,gear:L.gears[i]+1,rpm:mix(R.rpm[i],R.rpm[j]),
+    v:mix(L.v[i],L.v[j])*3.6,gear:L.gears[i]+1,rpm:mix(R.rpm[i],R.rpm[j]),map:R.map?mix(R.map[i],R.map[j]):1,
     thr:R.thr[i],brk:R.brk[i],gLat:mix(R.gLat[i],R.gLat[j]),gLong:mix(R.gLong[i],R.gLong[j]),
     tF:R.tF?mix(R.tF[i],R.tF[j]):null,tR:R.tR?mix(R.tR[i],R.tR[j]):null,fade:R.fade?R.fade[i]:1,
     sector:Math.min(2,Math.floor(sAt/third))};
@@ -8235,9 +8252,15 @@ function drawReplayHud(L,st,W,y0){
   bar('THR',st.thr,'#00ff88',y0+70);bar('BRK',st.brk,st.fade<0.999?'#ff8800':'#ff5555',y0+84);
   ctx.fillStyle='#667';ctx.font='6px '+PS;
   ctx.fillText(Math.round(st.thr*100)+'% / '+Math.round(st.brk*100)+'%',x0+10,y0+106);
-  // g-meter: lateral across, longitudinal up for braking (the way a driver is thrown), rings at 1 g
-  // and at the tyre's grip
-  const cx=x0+146,cy=y0+86,R=30,gMax=Math.max(1.5,vehicle.mu*1.2),sc=R/gMax;
+  if(engine.intake!=='na'){const b=st.map-1;ctx.fillStyle=b>0.02?'#ff8800':'#99a';
+    ctx.fillText(tr('BOOST')+' '+(b>=0?'+':'')+b.toFixed(2)+' bar',x0+10,y0+124);}
+  drawGMeter(st,x0+146,y0+86,30,y0+128);
+  drawBrakeCells(L,st,x0,y0+h-30);
+}
+// g-meter: lateral across, longitudinal up for braking (the way a driver is thrown), rings at 1 g
+// and at the tyre's grip. Shared by both instrument sets.
+function drawGMeter(st,cx,cy,R,yTxt){
+  const PS='"Press Start 2P"',gMax=Math.max(1.5,vehicle.mu*1.2),sc=R/gMax;
   ctx.strokeStyle='#26263a';ctx.lineWidth=1;ctx.beginPath();ctx.arc(cx,cy,R,0,Math.PI*2);ctx.stroke();
   ctx.beginPath();ctx.moveTo(cx-R,cy);ctx.lineTo(cx+R,cy);ctx.moveTo(cx,cy-R);ctx.lineTo(cx,cy+R);ctx.stroke();
   ctx.strokeStyle='#44445e';ctx.beginPath();ctx.arc(cx,cy,sc,0,Math.PI*2);ctx.stroke();
@@ -8245,11 +8268,13 @@ function drawReplayHud(L,st,W,y0){
   const gx=cx+clamp(st.gLat,-gMax,gMax)*sc,gy=cy-clamp(-st.gLong,-gMax,gMax)*sc;
   ctx.fillStyle=C.yellow;ctx.fillRect(gx-3,gy-3,6,6);
   ctx.fillStyle='#99a';ctx.font='6px '+PS;ctx.textAlign='center';
-  ctx.fillText(Math.hypot(st.gLat,st.gLong).toFixed(2)+' g',cx,y0+h-10);ctx.textAlign='left';
+  ctx.fillText(Math.hypot(st.gLat,st.gLong).toFixed(2)+' g',cx,yTxt);ctx.textAlign='left';
   ctx.fillStyle='#556';ctx.fillText('1g',cx+sc*0.72+2,cy-sc*0.72);
-  // Brake temperatures, front and rear, with the pads' fade showing when the fronts pass their onset.
+}
+// Brake temperatures, front and rear, with the pads' fade showing when the fronts pass their onset.
+function drawBrakeCells(L,st,x0,yb){
   if(st.tF!=null){
-    const on=L.brakeOnset,yb=y0+h-30,PS2='6px "Press Start 2P"';
+    const on=L.brakeOnset,PS2='6px "Press Start 2P"';
     const cell=(lbl,T,xx)=>{ctx.fillStyle='#778';ctx.font=PS2;ctx.fillText(lbl,xx,yb);
       ctx.fillStyle=brakeTempColour(T,on);ctx.fillRect(xx+8,yb-7,8,8);
       ctx.font='8px "Press Start 2P"';ctx.fillText(Math.round(T)+'°',xx+20,yb+1);};
@@ -8258,6 +8283,59 @@ function drawReplayHud(L,st,W,y0){
     if(st.fade<0.999){ctx.fillStyle='#ff4444';ctx.fillText(tr('BRAKE FADE')+' −'+Math.round((1-st.fade)*100)+'%',x0+10,yb+14);}
     else{ctx.fillStyle='#556';ctx.fillText(tr('BRAKES')+' • '+tr('fade from')+' '+on+'°C',x0+10,yb+14);}
   }
+}
+// Analog instruments (build 112): a rev counter, a speedometer and, on a turbo or supercharged engine, a
+// boost gauge reading manifold pressure against atmosphere (vacuum below zero), the way a dashboard does.
+// Same readings as the digital set, from the same replay.
+const niceStep=(span,n)=>{const raw=span/n;for(const s of [0.25,0.5,1,2,5,10,20,25,40,50,100])if(s>=raw)return s;return 100;};
+// One dial: value v on a scale lo..hi swept over 270 degrees from bottom-left; red from `red` up.
+function drawDial(cx,cy,R,lo,hi,v,step,lbl,red,fmt){
+  const PS='"Press Start 2P"',a0=0.75*Math.PI,sw=1.5*Math.PI,ang=x=>a0+sw*clamp((x-lo)/(hi-lo),0,1);
+  ctx.fillStyle='#0c0c14';ctx.beginPath();ctx.arc(cx,cy,R,0,Math.PI*2);ctx.fill();
+  ctx.strokeStyle='#44445e';ctx.lineWidth=2;ctx.beginPath();ctx.arc(cx,cy,R,0,Math.PI*2);ctx.stroke();
+  if(red!=null&&red<hi){ctx.strokeStyle='#aa2222';ctx.lineWidth=4;ctx.beginPath();ctx.arc(cx,cy,R-4,ang(red),ang(hi));ctx.stroke();}
+  ctx.lineWidth=1;ctx.font='5px '+PS;ctx.textAlign='center';ctx.textBaseline='middle';
+  const nT=Math.round((hi-lo)/step),every=nT>8?2:1;
+  for(let k=0;k<=nT;k++){
+    const x=lo+k*step,a=ang(x),c=Math.cos(a),sn=Math.sin(a),big=k%every===0;
+    ctx.strokeStyle=red!=null&&x>=red?'#ff5555':'#99a';
+    ctx.beginPath();ctx.moveTo(cx+c*(R-2),cy+sn*(R-2));ctx.lineTo(cx+c*(R-(big?8:5)),cy+sn*(R-(big?8:5)));ctx.stroke();
+    if(big){ctx.fillStyle='#bbc';ctx.fillText(fmt(x),cx+c*(R-14),cy+sn*(R-14));}
+  }
+  ctx.fillStyle='#667';ctx.fillText(lbl,cx,cy+R*0.38);
+  const a=ang(v);
+  ctx.strokeStyle='#ff6633';ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(cx-Math.cos(a)*4,cy-Math.sin(a)*4);
+  ctx.lineTo(cx+Math.cos(a)*(R-6),cy+Math.sin(a)*(R-6));ctx.stroke();
+  ctx.fillStyle='#ccccd8';ctx.fillRect(cx-2,cy-2,4,4);
+  ctx.textAlign='left';ctx.textBaseline='alphabetic';ctx.lineWidth=1;
+}
+function drawAnalogHud(L,st,W,y0){
+  const w=REPLAY_HUD_W,h=206,x0=W-w-10,PS='"Press Start 2P"';
+  ctx.fillStyle='rgba(10,10,18,0.86)';ctx.fillRect(x0,y0,w,h);
+  ctx.strokeStyle='#33334a';ctx.lineWidth=2;ctx.strokeRect(x0,y0,w,h);
+  // rev counter in thousands, red from the redline; the gear in its face
+  const rl=Math.max(1000,engine.redline),rMax=Math.ceil(rl/1000+0.5)*1000;
+  drawDial(x0+47,y0+47,40,0,rMax,st.rpm,1000,'x1000',rl,x=>String(x/1000));
+  ctx.fillStyle=C.yellow;ctx.font='8px '+PS;ctx.textAlign='center';ctx.fillText(String(st.gear),x0+47,y0+79);
+  // speedometer to the car's top speed with some room above it
+  const top=Math.max(160,(perf&&perf.topSpeed)||L.vMax||160),vMax=Math.ceil(top*1.1/20)*20,vs=niceStep(vMax,7);
+  drawDial(x0+137,y0+47,40,0,Math.ceil(vMax/vs)*vs,st.v,vs,'km/h',null,x=>String(x));
+  ctx.fillStyle=C.green;ctx.font='7px '+PS;ctx.textAlign='center';ctx.fillText(String(Math.round(st.v)),x0+137,y0+80);
+  ctx.textAlign='left';
+  // boost gauge on a forced engine; the pedals beside it either way
+  const yb=y0+126;
+  if(engine.intake!=='na'){
+    const peak=Math.max(0.5,...(L.replay.map||[1]).map(x=>x-1)),bHi=Math.ceil((peak+0.25)*2)/2;
+    drawDial(x0+34,yb,26,-1,bHi,st.map-1,0.5,'bar',null,x=>x===0?'0':(Math.abs(x%1)<1e-9?String(x):''));
+    ctx.fillStyle='#778';ctx.font='5px '+PS;ctx.textAlign='center';ctx.fillText(tr('BOOST'),x0+34,yb+33);ctx.textAlign='left';
+  }
+  const pedal=(xx,val,col,lbl)=>{ctx.fillStyle='#1d1d2b';ctx.fillRect(xx,yb-26,10,52);
+    const hh=52*clamp(val,0,1);ctx.fillStyle=col;ctx.fillRect(xx,yb+26-hh,10,hh);
+    ctx.fillStyle='#778';ctx.font='5px '+PS;ctx.fillText(lbl,xx-1,yb+34);};
+  const px0=engine.intake!=='na'?x0+70:x0+40;
+  pedal(px0,st.thr,'#00ff88','T');pedal(px0+16,st.brk,st.fade<0.999?'#ff8800':'#ff5555','B');
+  drawGMeter(st,x0+148,yb,26,yb+36);
+  drawBrakeCells(L,st,x0,y0+h-22);
 }
 function drawTrack(){
   const W=vizW,H=vizH;
@@ -8333,7 +8411,7 @@ function drawTrack(){
     drawTopCar(ctx,px(live),py(live),live.hd,carLivery(vehicle),live.brk>0.05?'brk':live.thr>0.95?'thr':'coast');
   }
   ctx.restore();
-  if(live)drawReplayHud(L,live,W,topBar);
+  if(live)(lapReplay.gauges==='analog'?drawAnalogHud:drawReplayHud)(L,live,W,topBar);
   // how to drive the view, and where it is
   ctx.font='6px "Press Start 2P"';ctx.fillStyle='#556';ctx.textAlign='right';
   ctx.fillText((z>1.01?tr('ZOOM')+' '+z.toFixed(1)+'×  •  ':'')+tr('scroll or pinch to zoom • drag to pan • double-click to reset'),W-12,H-botBar+4);
@@ -8754,6 +8832,9 @@ function bindControls(){
     rb.setAttribute('aria-pressed',String(lapReplay.playing));rb.textContent=tr(lapReplay.playing?'PAUSE':'PLAY');});
   document.getElementById('btnReplayRestart').addEventListener('click',()=>{lapReplay.t=0;lapReplay.laps=0;});
   document.getElementById('replaySpeed').addEventListener('change',e=>{lapReplay.speed=+e.target.value||1;});
+  const gs=document.getElementById('replayGauges');gs.value=lapReplay.gauges;
+  gs.addEventListener('change',e=>{lapReplay.gauges=e.target.value==='analog'?'analog':'digital';
+    try{localStorage.setItem('pes.gauges',lapReplay.gauges);}catch(err){}});
   // Vehicle design: recompute performance live on any change. Picking a chassis fits its whole
   // factory spec (drivetrain, gearbox, tyres/wheels, brakes, suspension, aero, weight).
   ['vhChassis','vhDrive','vhGearbox','vhDiff','vhGears','vhGearing','vhLimiter','vhLimitKmh','vhRating','vhTire','vhTireW','vhTireA','vhWheel','vhAeroF','vhAeroR','vhAeroFl','vhWeight','vhBrake','vhRotor','vhSusp'].forEach(id=>{

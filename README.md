@@ -1,4 +1,4 @@
-# PIXEL ENGINE SIM v0.6 build 111
+# PIXEL ENGINE SIM v0.6 build 112
 
 **A lightweight, 8-bit style internal combustion engine *designer* & simulator** inspired by *Automation*.
 
@@ -758,6 +758,7 @@ measurement finds things. Each item is one PR.
 | — | Tyre grip from load | ✅ build 109 | Load sensitivity (tyre rating from its volume), lateral load transfer over the track width, roll and static camber; the chassis, suspension and width grip multipliers are gone. Challenge targets re-set. Next: compound μ vs skidpad data, brake build-up time. |
 | — | Brake cooling | ✅ build 110 | Rotor faces at the car's speed, vented rotors pump air through their vanes as the wheel turns, big-brake/carbon kits add a front brake duct, radiation from the outside only (Limpert). A 911 GT3 rotor cools 600→300 C in ~100 s at 150 km/h, half the old time. |
 | — | Tyre grip on asphalt | ✅ build 111 | Compound mu is the lateral figure on road asphalt (skidpads: sport cars 0.90-0.98 g, GT3 1.11 g); braking and traction take 1.15 of it (friction ellipse, RCVD). Next: brake pressure build-up time, the manual shift time. |
+| — | Analog gauges | ✅ build 112 | Live timing can switch to analog instruments: rev counter, speedometer, and a boost gauge (manifold pressure vs atmosphere) on turbo and supercharged engines, also shown in the digital set. |
 | — | Spark torque from fuel | ✅ build 95 | `IMEP_K` replaced by Heywood's 0.8 × fuel-air cycle efficiency; each fuel's LHV/AFR_st enters. Spark torque −2.7%, full-load BSFC 280 g/kWh (real 270–300). Rotary/two-stroke type factors still fitted. |
 | — | `turboChoke` (boost taper) | ✅ build 94 | Retired. Turbine efficiency from blade speed ratio U/C, per-point compressor efficiency, a continuous rich-knock slope in place of a step, and sequential turbos staged as two turbines. Calibration improved on every measure. |
 | — | Rotary exhaust heat | ✅ build 92 | The slow, late Wankel burn (130° ES, CA50 37.5° ATDC) leaves ~10% of the expansion work undone, and that heat now reaches the exhaust: 13B 775 → 942 °C, off the limiter. |

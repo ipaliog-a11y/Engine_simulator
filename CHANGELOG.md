@@ -20,6 +20,20 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 Working toward **v1.0 — every number derived, not fitted.**
 
+### Analog gauges and a boost gauge in live timing (build 112)
+
+- **GAUGES: DIGITAL / ANALOG** beside the replay controls (remembered). Analog draws a rev counter
+  (thousands, red from the redline, gear in its face), a speedometer scaled to the car's top speed,
+  vertical pedals, the g-meter and the brake temperatures.
+- **Boost gauge** on turbo and supercharged engines, in both sets: manifold pressure against atmosphere,
+  vacuum below zero. The replay records it per point (steadyMapAt): a share of full-throttle drive wants
+  that share of full-throttle pressure, 1 + boostAvail(rpm), no lower than a closed throttle holds
+  (mapTarget's own throttle law, floor 0.12 bar abs); a diesel has no throttle plate. Steady boost:
+  the lap has no turbo lag yet (queued).
+- The digital set's g readout no longer overlaps the brake line. test62 checks the gauge reads the
+  engine's own boost at full throttle, pulls vacuum on a closed throttle, stays at zero on an NA engine,
+  and that the option switches.
+
 ### Tyre grip on asphalt, and the friction ellipse (build 111)
 
 - **Cornering read 10-20% high.** On sport tyres the cars pulled 1.02-1.11 g on a skidpad against the
