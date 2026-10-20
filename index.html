@@ -281,7 +281,7 @@ table.fuelmap td.live{box-shadow:inset 0 0 0 2px #fff;font-weight:bold}
 <body>
 <div class="container">
 <header>
-<h1>PIXEL ENGINE SIM v0.6 build 109</h1>
+<h1>PIXEL ENGINE SIM v0.6 build 110</h1>
 <div class="subtitle" id="subtitle">ENGINE DESIGNER • BUILD IT, THEN DRIVE IT</div>
 </header>
 <div class="build-strip" id="buildStrip">
@@ -3093,40 +3093,77 @@ const WEIGHT_RED={none:{kg:0,cost:0},street:{kg:45,cost:1200},sport:{kg:95,cost:
 // Brakes: cap = peak deceleration the brakes can command (g, before fade), fade = resistance
 // to heat build-up (1 = none). A bigger rotor adds both capacity and thermal mass.
 // Since build 107 fade comes from TEMPERATURE (brakeThermal): mat is the rotor material, vented whether
-// it has cooling vanes, and onset the rotor temperature (C) at which its pads begin to lose friction:
+// it has cooling vanes, duct whether the kit brings a brake duct to the front rotors (build 110), and onset the rotor temperature (C) at which its pads begin to lose friction:
 // a street pad ~400, a performance street pad ~550, a track pad ~650, carbon-ceramic ~1000.
 const BRAKE_TYPE={
   steel:  {label:'STEEL DISC',     cap:1.05,mat:'iron',vented:false,onset:400, cost:600},
   slotted:{label:'SLOTTED/VENTED', cap:1.35,mat:'iron',vented:true, onset:550, cost:1400},
-  big:    {label:'BIG BRAKE KIT',  cap:1.65,mat:'iron',vented:true, onset:650, cost:3200},
-  carbon: {label:'CARBON-CERAMIC', cap:1.95,mat:'ccm', vented:true, onset:1000,cost:7000}
+  big:    {label:'BIG BRAKE KIT',  cap:1.65,mat:'iron',vented:true, onset:650, duct:true,cost:3200},
+  carbon: {label:'CARBON-CERAMIC', cap:1.95,mat:'ccm', vented:true, onset:1000,duct:true,cost:7000}
 };
-// ---- brake temperature (build 107) ----
+// ---- brake temperature (build 107; cooling rebuilt in build 110) ----
 // Each rotor is a lump of material heated by the brakes and cooled by the air, and its pads lose grip
 // above their onset temperature. The rotor, from its diameter D: a friction ring from 0.6 D to D, ~9% of
-// D thick on a vented disc (70% solid) and ~4.5% on a solid one; rears 0.9 of the fronts. Materials:
-// grey iron 7200 kg/m3, cp 500 J/kgK, emissivity 0.55; carbon-ceramic 2450, 800, 0.8.
+// D thick on a vented disc (two cheeks, 70% solid, around a vane gap of 0.4 of the thickness) and ~4.5%
+// on a solid one; rears 0.9 of the fronts. Materials: grey iron 7200 kg/m3, cp 500 J/kgK, emissivity
+// 0.55; carbon-ceramic 2450, 800, 0.8.
 // Heat in: what the brakes (not the air, the tyres' rolling or the hill) take out of the car, m a v,
 // shared front/rear by the axle loads while braking (ideal bias: f + (a/g) h/L), 90% into the rotor.
-// Heat out: convection from both faces (and the vanes, ~0.8 more on a vented disc) at the turbulent
-// flat-plate rate, Nu = 0.037 Re^0.8 Pr^(1/3) over the disc's diameter, the air reaching it at about half
-// the car's speed; and radiation. Fade: pad friction falls from the onset, to the 35% loss the stops
-// have always allowed, over 150 C.
+// Heat out, three ways (Limpert, Brake Design and Safety, ch. 3):
+//  - the two faces and the rim, in the air the car drives through: h = 0.04 (k/D) Re^0.8 at the car's
+//    speed (turbulent, Re > 2.4e5; 0.70 (k/D) Re^0.55 below);
+//  - on a vented disc, the vanes, which are a centrifugal pump: the wheel turning at n rpm drives air
+//    through them at 0.0158 n sqrt(Do^2 - Di^2) m/s, and they lose heat as a short duct does,
+//    h = 0.023 [1 + (dh/l)^0.67] Re^0.8 Pr^0.33 (k/dh), no more than the air passing through can carry;
+//  - radiation, from the outside surfaces only (the vanes face each other).
+// Build 110: until then the faces saw half the car's speed in a flat-plate correlation, and the vanes
+// were counted as 0.8 of extra face area in the outside air, radiating too; the 911 GT3 took 200 s to
+// cool from 600 to 300 C at 150 km/h. Track kits (duct) also feed the front vanes from a brake duct:
+// a 76 mm (3 in) hose whose inlet sees the car's dynamic pressure, against the hose's losses (entry
+// 0.5, two bends 0.3 each, ~1 m of hose at f L/d 0.4, the dump into the rotor 1.0: K 2.5).
+// Fade: pad friction falls from the onset, to the 35% loss the stops have always allowed, over 150 C.
 const ROTOR_MAT={iron:{rho:7200,cp:500,eps:0.55},ccm:{rho:2450,cp:800,eps:0.80}};
 const BRAKE_AMBIENT=25, FADE_SPAN=150, FADE_MAX=0.35;
+// air at a typical film temperature (~150 C): conductivity, kinematic viscosity, Prandtl, density, cp
+const BRAKE_AIR={k:0.034,nu:2.9e-5,pr:0.70,rho:0.83,cp:1015};
+const BRAKE_DUCT={d:0.076,K:2.5};
 function brakeThermal(v){
   const bt=BRAKE_TYPE[v.brakeType]||BRAKE_TYPE.slotted, mat=ROTOR_MAT[bt.mat];
-  const disc=D=>{const t=(bt.vented?0.09:0.045)*D, ring=Math.PI/4*(D*D-Math.pow(0.6*D,2));
-    return {D,m:mat.rho*ring*t*(bt.vented?0.7:1),A:2*ring*(bt.vented?1.8:1)};};
-  const f=disc(v.rotor/1000), r=disc(0.9*v.rotor/1000);
-  return {front:f,rear:r,cp:mat.cp,eps:mat.eps,onset:bt.onset};
+  const disc=(D,duct)=>{
+    const Di=0.6*D, t=(bt.vented?0.09:0.045)*D, ring=Math.PI/4*(D*D-Di*Di);
+    const d={D,m:mat.rho*ring*t*(bt.vented?0.7:1),Aout:2*ring+Math.PI*D*t,vented:bt.vented,duct:0};
+    if(bt.vented){
+      // vanes: gap g, radial length l, pitch 1.5 g around the mean circumference; the channel faces are
+      // the inside of both cheeks (less the vanes' footprint) and the two sides of every vane
+      const g=0.4*t, l=(D-Di)/2, N=Math.PI*(D+Di)/2/(1.5*g);
+      Object.assign(d,{g,l,dh:g,pump:0.0158*Math.sqrt(D*D-Di*Di),
+        Avane:2*ring/1.5+2*N*l*g, Aflow:Math.PI*Di*g/1.5});
+      if(duct) d.duct=Math.PI/4*BRAKE_DUCT.d*BRAKE_DUCT.d/Math.sqrt(BRAKE_DUCT.K);   // m3/s per m/s of car speed
+    }
+    return d;
+  };
+  const f=disc(v.rotor/1000,!!bt.duct), r=disc(0.9*v.rotor/1000,false);
+  return {front:f,rear:r,cp:mat.cp,eps:mat.eps,onset:bt.onset,rTire:v.rTire};
+}
+// The heat the air takes from a rotor at T (C), the car at vCar (m/s): W.
+function rotorCooling(T,disc,th,vCar){
+  const A=BRAKE_AIR, dT=T-BRAKE_AMBIENT, v=Math.max(1,vCar);
+  const Re=v*disc.D/A.nu, h=(Re>2.4e5?0.04*Math.pow(Re,0.8):0.70*Math.pow(Re,0.55))*A.k/disc.D;
+  const Tk=T+273.15, Ta=BRAKE_AMBIENT+273.15;
+  let q=h*disc.Aout*dT+th.eps*5.67e-8*disc.Aout*(Tk*Tk*Tk*Tk-Ta*Ta*Ta*Ta);
+  if(disc.vented){
+    const rpm=vCar/th.rTire*60/(2*Math.PI), uPump=disc.pump*rpm, uDuct=disc.duct*vCar/disc.Aflow;
+    const u=Math.max(0.1,Math.hypot(uPump,uDuct)), Rd=u*disc.dh/A.nu;
+    const hv=0.023*(1+Math.pow(disc.dh/disc.l,0.67))*Math.pow(Rd,0.8)*Math.pow(A.pr,0.33)*A.k/disc.dh;
+    // the air through the vanes warms as it goes: an exchanger of NTU = hA / (m cp)
+    const mcp=A.rho*u*disc.Aflow*A.cp;
+    q+=mcp*dT*(1-Math.exp(-hv*disc.Avane/mcp));
+  }
+  return q;
 }
 // One rotor over a time step: heat in (W), car speed (m/s). Returns the new temperature (C).
 function rotorStep(T,disc,th,P,vCar,dt){
-  const air=Math.max(1,0.5*vCar), Re=air*disc.D/2.5e-5, h=0.037*Math.pow(Re,0.8)*0.89*0.032/disc.D;
-  const Tk=T+273.15, Ta=BRAKE_AMBIENT+273.15;
-  const out=h*disc.A*(T-BRAKE_AMBIENT)+th.eps*5.67e-8*disc.A*(Tk*Tk*Tk*Tk-Ta*Ta*Ta*Ta);
-  return T+(0.9*P-out)*dt/(disc.m*th.cp);
+  return T+(0.9*P-rotorCooling(T,disc,th,vCar))*dt/(disc.m*th.cp);
 }
 const brakeFadeAt=(T,th)=>1-FADE_MAX*clamp((T-th.onset)/FADE_SPAN,0,1);
 // Front/rear rotors through one braking step: decel a (m/s2) that the brakes do, at speed v.
