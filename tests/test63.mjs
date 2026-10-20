@@ -39,6 +39,12 @@ const r = await page.evaluate(() => {
     const keep = vehicle.brakeTh.onset; vehicle.brakeTh.onset = Infinity; const C = simulateLap('nord'); vehicle.brakeTh.onset = keep;
     return { lap: L.lap, cold: C.lap }; };
   out.fade = { steel: fadeLap('steel'), carbon: fadeLap('carbon') };
+  // ---- 3b. cooling (build 110): the vanes pump air as the wheel turns, a duct feeds them more ----
+  loadVehiclePreset(VEHICLE_PRESETS.find(v => v.name === 'Porsche 911 GT3 (991.2, 2017)'));
+  { const th = vehicle.brakeTh, d = th.front, v = 150 / 3.6, noDuct = Object.assign({}, d, { duct: 0 }), solid = Object.assign({}, d, { vented: false });
+    let T = 600, t = 0; while (T > 300 && t < 1000) { T = rotorStep(T, d, th, 0, v, 0.1); t += 0.1; }
+    out.cool = { t300: t, duct: rotorCooling(600, d, th, v), plain: rotorCooling(600, noDuct, th, v), solid: rotorCooling(600, solid, th, v),
+      still: rotorCooling(600, noDuct, th, 0) - rotorCooling(600, solid, th, 0) }; }
   // ---- 4. a locked diff scrubs in corners, not in a straight line under braking ----
   engineOf('2.0 Turbo Hot-Hatch I4'); applyChassisFit('coupe'); set('vhDrive', 'rwd');
   // fade off: since build 107 the brakes have a temperature, and two cars that corner differently heat
@@ -86,6 +92,12 @@ console.log(`== Nordschleife, V12 GT: steel ${f.steel.lap.toFixed(1)} s (unfaded
 if (!(f.steel.lap > f.steel.cold + 0.05)) fails.push('steel brakes do not fade on a Nordschleife lap');
 if (!(f.steel.lap - f.steel.cold > f.carbon.lap - f.carbon.cold)) fails.push('carbon-ceramics should fade less than steel');
 if (f.carbon.lap < f.carbon.cold - 1e-6) fails.push('fade made a lap quicker');
+
+const c = r.cool;
+console.log(`== 911 GT3 front rotor at 600 C, 150 km/h: ${(c.solid / 1000).toFixed(1)} kW outside, ${(c.plain / 1000).toFixed(1)} with the vanes, ${(c.duct / 1000).toFixed(1)} ducted; 600 -> 300 C in ${c.t300.toFixed(0)} s ==`);
+if (!(c.plain > c.solid && c.duct > c.plain)) fails.push('the vanes and the brake duct should each add cooling');
+if (!(c.still < 0.1 * (c.plain - c.solid))) fails.push('the vanes pump air only when the wheel turns');
+if (!(c.t300 < 150)) fails.push(`a ducted 911 GT3 rotor takes ${c.t300.toFixed(0)} s to cool from 600 to 300 C at 150 km/h`);
 
 const df = r.diff;
 console.log(`== straight-line braking (${df.open.n} points): open ${df.open.mech.toFixed(2)} m/s2, spool ${df.spool.mech.toFixed(2)} m/s2 (tyre/brake limit ${df.open.cap.toFixed(2)}) ==`);

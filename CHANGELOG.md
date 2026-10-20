@@ -20,6 +20,24 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 Working toward **v1.0 — every number derived, not fitted.**
 
+### Brake cooling from the rotor's real airflow (build 110)
+
+- **The rotors cooled too slowly.** A 911 GT3's front rotor took 200 s to go from 600 to 300 C at
+  150 km/h, and carbon-ceramics ~100 s. The cooling had three faults: the faces saw half the car's
+  speed in a flat-plate correlation; the vanes were counted as 0.8 of extra face area in the outside
+  air (and radiated, though they face each other); and no car had brake ducts.
+- **Now, from Limpert (Brake Design and Safety):**
+  - faces and rim at the car's speed, h = 0.04 (k/D) Re^0.8 (laminar 0.70 (k/D) Re^0.55 below Re 2.4e5);
+  - the vanes as a centrifugal pump, 0.0158 n sqrt(Do² − Di²) m/s at wheel rpm n, losing heat as a
+    short duct does, h = 0.023 [1 + (dh/l)^0.67] Re^0.8 Pr^0.33 (k/dh), capped by what the air passing
+    through can carry (NTU);
+  - radiation from the outside surfaces only;
+  - big-brake and carbon kits bring a 76 mm duct to the front rotors, its flow from the car's dynamic
+    pressure against the hose's standard losses (K 2.5).
+- **Result:** 911 GT3 600→300 C at 150 km/h in 99 s (was 200), Huracán 52 s (was 100), MX-5 77 s
+  (was 158). Peak front temperatures on a Nordschleife lap: 911 GT3 483 C (was 736), Huracán 577 C
+  (was 792), M3 741 C (was 857). test63 checks the vanes, the duct and the 911's cooling time.
+
 ### Tyre grip from load, not from three multipliers (build 109)
 
 - **Grip was a stack of fitted factors:** the compound's μ × a chassis grip factor (0.92-1.30) × a
