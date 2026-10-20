@@ -20,6 +20,28 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 Working toward **v1.0 — every number derived, not fitted.**
 
+### Vehicle dynamics: five inconsistencies fixed (build 105)
+
+From the vehicle review: places where the straight-line run and the lap solver, two integrations of
+one car, disagreed, or where a part did something it physically cannot.
+
+- **Load transfer on the lap.** The lap gave the driven axle its static share and nothing more, so a
+  rear-driver got no exit traction from squat and a front-driver lost none. It now carries the weight
+  acceleration moves onto the rear, m·a·h/L, solved in closed form because grip depends on the load and
+  the load on the acceleration. The 0-100 run already had it.
+- **Aero balance.** Downforce went 50/50 to the axles whatever was fitted, so a rear wing helped a
+  front-driver's traction as much as a rear-driver's. Front parts now load the front axle, rear parts
+  the rear, an undertray mid-wheelbase and a diffuser 35/65; both the run and the lap use it.
+- **Brake fade on the lap.** Brakes faded on the 100-0 stop but never on a lap. The lap now uses the same
+  per-stop fade, heat counted from the start of each braking zone, and solves again where it bites.
+- **A locked diff scrubs in corners, not under straight braking.** Its cornering penalty was cutting
+  the braking budget too; braking now uses the tyre's own μ, with the scrub on the lateral side only.
+- **An engine swap moves the weight split,** by the change in engine mass at the engine's position
+  (front-engined ~0.9 of it on the front axle, mid ~0.3, rear ~−0.1). Real cars only, whose factory
+  engine is known; the factory engine still gives the published split exactly.
+- Effect on the real cars at Riverside GP: rear-drivers 0.2-0.6 s quicker, front-drivers 0.2-0.3 s
+  slower, 0-100 unchanged; on the Nordschleife a car on slotted steel loses ~4 s to fade. test63.
+
 ### Live timing on the track (build 104)
 
 - **The solved lap, replayed in real time** on the track map: the car runs along the racing line with a
