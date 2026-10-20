@@ -20,6 +20,46 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 Working toward **v1.0 — every number derived, not fitted.**
 
+### Brake temperature, live on the track (build 108)
+
+- **Brakes have a temperature now, and fade comes from it.** Each rotor is sized from its diameter
+  (friction ring 0.6-1.0 D, ~9% of D thick vented and 70% solid, ~4.5% solid; rears 0.9 of the fronts)
+  in grey iron or carbon-ceramic. It is heated by what the brakes take out of the car (m·a·v, shared by
+  the axle loads while braking, 90% into the rotor) and cooled by convection (turbulent flat plate,
+  Nu = 0.037 Re^0.8 Pr^⅓, air at half the car's speed; vanes add 80% area) and radiation. Pads lose
+  friction above their onset: street 400 °C, performance 550, track 650, carbon-ceramic 1000, to the
+  same 35% the stops always allowed. This replaces the fitted fade budget (1.1 MJ × a factor).
+- **On the lap** the solved profile runs through the rotors lap after lap until the temperature at the
+  line repeats (sustained running), fade feeds back into the lap, and the replay carries it.
+- **Live:** the instruments show front and rear rotor temperature, blue cold, green working, yellow near
+  the pads' onset, red past it with the fade in %; the brake bar turns orange while fading. The lap panel
+  shows the lap's peak and the worst fade.
+- A single stop from 100 km/h no longer fades (it never should have), which exposes the fitted grip
+  multipliers: the archetype supercars on semi-slicks (μ ~1.7) stop in ~24 m, named in test47; the
+  tyre item is the fix. test63's diff check now compares the straight-line braking ceiling with fade
+  off, which is what it is about.
+
+### Spinning parts, and the energy a launch takes from the flywheel (build 107)
+
+- **The car now spins up its engine and wheels as it accelerates.** The effective mass in a gear is
+  m + [I_wheels + I_engine·(gear × final)²·η]/r² (Gillespie): 15-40% more than the car in first, ~10%
+  in third. It applies while the tyres hold; when they slip the surplus only spins the wheels and the
+  car gets the tyre's force over its own mass. The engine counts only while coupled (not mid-shift,
+  not on a slipping clutch or a converter below stall). Same in the lap solver.
+- **Engine inertia is derived.** It was a feel for how the live bench revs (a 6.2 V8 got ~1.0 kg·m²,
+  about three times real). The flywheel is now sized by the clutch, and the clutch by the torque it
+  carries (1.3× peak; two faces, μ 0.3, 0.25 MPa, inner/outer 0.65), plus cover and crank shares:
+  ~0.10 kg·m² for a 2.0, ~0.23 for a V8. **Wheel and tyre inertia** come from the fitted tyre size.
+- **The clutch launch draws on the flywheel.** The clutch passes what the tyres can take up to its
+  capacity, and where that is more than the engine makes the flywheel slows and gives up its energy
+  until the clutch locks.
+- **Effect:** 0-100 is honestly slower. test48 RMS 4.8% → 6.2% (power-matched 7.7% → 9.2%); real cars
+  in test61 21.1% on own power, 11.4% power-matched (the car alone, unchanged). test41's harness now
+  gives each power-matched car the flywheel of its matched torque (a 64 hp kei was spinning a 3.0 six's
+  flywheel), and its budgets are set at today's state with the Supra and STI named: the 5% it met
+  before was met with no spinning mass, so another term was compensating. Candidates: the manual
+  gearbox's fitted 0.35 s drive cut and the traction multipliers. The RS3 is back on test61's list
+  (its engine's late boost; the added mass takes it over 25% again).
 ### Pixel-art car and engine (build 106)
 
 - **The car, side on**, at the top of the VEHICLE tab, drawn from the build rather than chosen from a
