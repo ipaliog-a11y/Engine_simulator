@@ -20,6 +20,24 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 Working toward **v1.0 — every number derived, not fitted.**
 
+### Brakes from the hydraulics, and pressure build-up (build 113)
+
+- **The brakes' peak deceleration was a fitted figure** (1.05-1.95 g per kit, x a rotor factor). It held
+  every steel-braked small car at 0.89 g, short of its own tyres, so they stopped in 43 m against a
+  real ~37-42, and it gave kits a single-stop advantage real road brakes do not have.
+- **Now from the hydraulics:** per wheel, 2 pads x pad mu x line pressure x piston area x the friction
+  ring's effective radius (0.4 D), over the tyre radius. Catalogue caliper sizes per kit (a sliding
+  54-57 mm single piston, an opposed 4-pot, a 6-pot), pad mu 0.38-0.45, ~100 bar of line pressure in
+  an emergency stop. Every factory car's brakes out-pull its tyres (1.3-2.9 g of brake against
+  1.0-1.4 g of tyre), as road brakes do; kits differ by heat, fade headroom and pad.
+- **New HEAVY-DUTY brakes** (twin 60 mm pistons) for the pickups: car calipers gave a 3.4 t Silverado
+  HD 0.60 g.
+- **Pressure build-up:** the stop's deceleration rises over 0.2 s (Limpert: 0.2-0.3 s with a booster),
+  ~2.8 m from 100 km/h. 100-0 now: Aygo 39.1 m, Fiesta 40.4, GTI 36.0, M3 35.7, GT3 31.1, Silverado
+  39.5. (On a lap the build-up costs ~0.01 s a braking zone and is left out.)
+- test63 checks every factory car's brakes reach its tyres, and small cars / the GT3 against published
+  100-0 ranges. The replay's brake bar is the share of the system's line pressure.
+
 ### Analog gauges and a boost gauge in live timing (build 112)
 
 - **GAUGES: DIGITAL / ANALOG** beside the replay controls (remembered). Analog draws a rev counter

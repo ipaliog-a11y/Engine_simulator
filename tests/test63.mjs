@@ -71,6 +71,9 @@ const r = await page.evaluate(() => {
   out.swap = { mx5: swap('Mazda MX-5 1.6 (NA, 1989)', 'GM LS7 (Corvette Z06 C6)'),
     huracan: swap('Lamborghini Huracán LP610-4 (2014)', 'Dodge 6.2 Hellcat (Challenger SRT)'),
     gt3: swap('Porsche 911 GT3 (991.2, 2017)', 'Dodge 6.2 Hellcat (Challenger SRT)') };
+  // ---- 6. brakes from the hydraulics (build 113): a road car's brakes out-pull its tyres ----
+  out.brakes = VEHICLE_PRESETS.map(pr => { loadVehiclePreset(pr);
+    return { n: pr.name, cap: vehicle.brakeDecelCap / G, grip: tyreMuX(vehicle.mass * G / 4), d: perf.brake100.dist, type: vehicle.brakeType }; });
   return out;
 });
 
@@ -111,6 +114,15 @@ for (const [k, s] of Object.entries(r.swap)) if (Math.abs(s.f0 - s.body) > 1e-9)
 if (!(r.swap.mx5.f1 > r.swap.mx5.f0)) fails.push('a heavier engine in a front-engined car should move weight forward');
 if (!(r.swap.huracan.f1 < r.swap.huracan.f0)) fails.push('a heavier engine in a mid-engined car should move weight back');
 if (!(r.swap.gt3.f1 < r.swap.huracan.f1 + (r.swap.huracan.f0 - r.swap.gt3.f0) + 1e-9 && r.swap.gt3.f1 < r.swap.gt3.f0)) fails.push('a heavier engine behind a 911\'s rear axle should move weight back');
+
+console.log('== brakes from the hydraulics, 100-0 with a 0.2 s pressure build-up ==');
+for (const b of r.brakes) if (/Aygo|Fiesta|M3|GT3|Silverado/.test(b.n))
+  console.log(`  ${b.n.slice(0, 34).padEnd(34)} ${b.type.padEnd(7)} brakes ${b.cap.toFixed(2)} g vs tyres ${b.grip.toFixed(2)} g  100-0 ${b.d.toFixed(1)} m`);
+for (const b of r.brakes) if (!(b.cap > b.grip)) fails.push(`${b.n}: its factory brakes cannot reach its tyres' limit`);
+// published 100-0 (km/h) distances: small cars ~37-42 m, a 911 GT3 ~31-33 m
+const stop = nm => r.brakes.find(b => b.n.includes(nm)).d;
+for (const nm of ['Aygo', 'Fiesta', 'Fiat 500']) if (!(stop(nm) > 36 && stop(nm) < 43)) fails.push(`${nm} stops in ${stop(nm).toFixed(1)} m (real ~37-42)`);
+if (!(stop('GT3') > 29.5 && stop('GT3') < 33.5)) fails.push(`911 GT3 stops in ${stop('GT3').toFixed(1)} m (real ~31-33)`);
 
 if (errors.length) fails.push(...errors);
 console.log(fails.length ? '\nFAIL:\n  ' + fails.join('\n  ') : '\nPASS');
