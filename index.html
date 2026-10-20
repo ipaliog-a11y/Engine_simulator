@@ -1590,14 +1590,32 @@ function nozzleFlux(prT){
 }
 // Manifold pressure ratio that passes mdot through the throat. Bracketed, so it cannot silently
 // return a floor value the way an unbracketed solver does.
+// Called several times per turbine evaluation since pulse energy (each pulse state is its own nozzle
+// solve), so it is solved rather than bisected blindly. Choked, the flux is a constant and PR has a
+// closed form; below choke, flow rises monotonically with PR, so a Newton step kept inside a
+// shrinking bracket converges in a few iterations to the same root the old 60-step bisection found.
+const CHOKED_FLUX=Math.sqrt(GAMMA_EXH/287)*Math.pow(2/(GAMMA_EXH+1),(GAMMA_EXH+1)/(2*(GAMMA_EXH-1)));
 function turbineManifoldPR(mdot,area,T0){
   if(!(area>0)||!(mdot>0))return 1;
-  const f=pr=>area*(pr*101325)/Math.sqrt(Math.max(300,T0))*nozzleFlux(pr)-mdot;
+  const k=area*101325/Math.sqrt(Math.max(300,T0));
+  const f=pr=>k*pr*nozzleFlux(pr)-mdot;
   let lo=1.0001,hi=8;
   if(f(hi)<0)return hi;
   if(f(lo)>0)return 1;
-  for(let i=0;i<60;i++){const m=(lo+hi)/2;if(f(m)<0)lo=m;else hi=m;}
-  return lo;
+  const prChoked=mdot/(k*CHOKED_FLUX);
+  if(prChoked>=1/CRIT_RATIO)return Math.min(hi,prChoked);
+  hi=Math.min(hi,1/CRIT_RATIO);
+  let x=Math.min(hi,Math.max(lo,prChoked));
+  for(let i=0;i<30;i++){
+    const fx=f(x);
+    if(fx<0)lo=x;else hi=x;
+    if(Math.abs(fx)<=mdot*1e-10||hi-lo<1e-12)break;
+    const d=(f(x+1e-7)-fx)/1e-7;
+    let xn=d>0?x-fx/d:(lo+hi)/2;
+    if(!(xn>lo&&xn<hi))xn=(lo+hi)/2;          // keep the step inside the bracket
+    x=xn;
+  }
+  return x;
 }
 // A turbine on its own would let manifold pressure run away — routing every gram of exhaust through
 // a fixed throat gave 3.5-4.5 bar on the presets, against a real 0.5-1.5. What stops that is the
@@ -1638,14 +1656,14 @@ function turbineManifoldPR(mdot,area,T0){
 // Ported engines (rotary, two-stroke) have no cam to time a blowdown from, and are left on the mean.
 const K_EXH=(GAMMA_EXH-1)/GAMMA_EXH;
 const turbineWorkMean=(pr,T3)=>CP_EXH*Math.max(300,T3)*TURB_ETA*(1-Math.pow(Math.max(1.0001,pr),-K_EXH));
-function pulseShape(mEx,area,T3,mapBar){
+function pulseShape(mEx,area,T3,mapBar,prMean){
   const e=engine;
   if(e.ports||!(e.primL>0)||!(e.camDur>0))return null;
   const perTurbine=(e.cylinders||1)/(e.turbUnits||1);
   const phi=clamp(Math.max(10,e.camLSA+e.camDur/2-180)*perTurbine/720,0.02,1);
   if(phi>=1)return null;
   const T=Math.max(300,T3), Tint=313, pInt=Math.max(0.3,mapBar||1);
-  const pExh=Math.max(1.0001,turbineManifoldPR(mEx,area,T));
+  const pExh=Math.max(1.0001,prMean>0?prMean:turbineManifoldPR(mEx,area,T));
   const pEvo=Math.max(pExh,Math.pow(pInt*(T/Tint)*Math.pow(pExh,-K_EXH),1/(1-K_EXH)));
   const fb=clamp(1-Math.pow(pExh/pEvo,1/GAMMA_EXH),0,1);
   const vCyl=(e.displacement_L/1000)/Math.max(1,e.cylinders);
@@ -1654,9 +1672,10 @@ function pulseShape(mEx,area,T3,mapBar){
   return {phi,fb,keep:vB/(vB+vMan),pExh};
 }
 // Turbine power (W) passing mEx through a throat, pulses included, and the mean manifold PR.
-function turbinePower(mEx,area,T3,mapBar){
-  const pr=turbineManifoldPR(mEx,area,T3);
-  const s=mEx>0&&area>0?pulseShape(mEx,area,T3,mapBar):null;
+// prMean, when the caller already has it (the nozzle PR that passes exactly mEx), saves a solve.
+function turbinePower(mEx,area,T3,mapBar,prMean){
+  const pr=prMean>0?prMean:turbineManifoldPR(mEx,area,T3);
+  const s=mEx>0&&area>0?pulseShape(mEx,area,T3,mapBar,pr):null;
   if(!s)return{P:mEx*turbineWorkMean(pr,T3),pr};
   const mHi=mEx*(1+s.keep*(s.fb/s.phi-1)), mLo=mEx*(1+s.keep*((1-s.fb)/(1-s.phi)-1));   // phi mHi + (1-phi) mLo = mEx
   const P=s.phi*mHi*turbineWorkMean(turbineManifoldPR(mHi,area,T3),T3)
@@ -1668,13 +1687,14 @@ function manifoldPR(mAir,mEx,mapBar,T3,area,compEta){
   const pComp=mAir*1005*298*(Math.pow(Math.max(1,mapBar),0.286)-1)/clamp(compEta||0.72,0.30,0.85);
   if(pComp<=0)return 1;
   const tPower=pr=>{
+    // pr never exceeds the gate-shut solution, so mT is the nozzle flow AT pr and its mean PR is pr
     const mT=Math.min(mEx,area*(pr*101325)/Math.sqrt(Math.max(300,T3))*nozzleFlux(pr));
-    return turbinePower(mT,area,T3,mapBar).P;
+    return turbinePower(mT,area,T3,mapBar,pr).P;
   };
   const full=turbineManifoldPR(mEx,area,T3);          // gate shut: everything through the throat
   if(tPower(full)<=pComp)return full;                 // cannot make target even wide open
   let lo=1.0001,hi=full;                              // gate opens: balance at lower manifold pressure
-  for(let i=0;i<60;i++){const m=(lo+hi)/2;if(tPower(m)<pComp)lo=m;else hi=m;}
+  for(let i=0;i<40;i++){const m=(lo+hi)/2;if(tPower(m)<pComp)lo=m;else hi=m;}
   return hi;
 }
 // ---- variable geometry: the throat as a control input instead of a casting decision ----
@@ -1737,7 +1757,7 @@ function vgtThroat(mEx,pComp,T3,aOpen,aShut,mapBar){
   const sh=Pof(aShut);
   if(sh.P<pComp)return{area:aShut,pr:sh.pr,P:sh.P};          // not reachable even fully shut
   let lo=aShut,hi=aOpen;
-  for(let i=0;i<40;i++){const m=(lo+hi)/2;if(Pof(m).P>=pComp)lo=m;else hi=m;}
+  for(let i=0;i<30;i++){const m=(lo+hi)/2;if(Pof(m).P>=pComp)lo=m;else hi=m;}   // 1e-9 of the sweep
   const r=Pof(lo);
   return{area:lo,pr:r.pr,P:r.P};
 }
