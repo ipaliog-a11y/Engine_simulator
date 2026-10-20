@@ -75,7 +75,10 @@ const frames = await page.evaluate(() => {
       applyChassisFit('coupe'); document.getElementById('vhTire').value = 'slick';
       document.getElementById('vhDiff').value = 'clsd'; buildVehicle();
       out.push({ bar, sz, hp: engine.score.peakHP, load: +engine.turboLoad.toFixed(2),
-        choke: +engine.turboChoke.toFixed(2), spool50: Math.round(engine.spool50),
+        // top-end falloff: how far below its own peak the engine is at the limiter. Until build 94 this
+        // read the fitted taper constant, which is gone; what it stood for is this, measured.
+        choke: +(() => { const c = buildTorqueCurve(), hp = q => q.tq * q.rpm, pk = Math.max(...c.map(hp));
+          return 1 - hp(c[c.length - 1]) / pk; })().toFixed(2), spool50: Math.round(engine.spool50),
         // t100 is null when the car cannot reach 100 km/h at all. That is a legitimate model
         // output, not an error: a grossly over-flowed frame can choke an engine on its own
         // back-pressure badly enough that it never gets there. Carry the null through and let the
@@ -86,7 +89,7 @@ const frames = await page.evaluate(() => {
   }
   return out;
 });
-console.log('boost  frame    hp   flow load   choke   spool50   charge   0-100    lap');
+console.log('boost  frame    hp   flow load  falloff  spool50   charge   0-100    lap');
 frames.forEach(f => console.log(`${f.bar.toFixed(1)}   ${f.sz.padEnd(7)} ${String(f.hp).padStart(4)} ${String(f.load).padStart(10)} ${String(f.choke).padStart(8)} ${String(f.spool50).padStart(8)} ${String(f.iat + 'C').padStart(8)} ${String(f.t100 === null ? 'never' : f.t100 + 's').padStart(7)} ${String(f.lap + 's').padStart(8)}`));
 const at = (b, s) => frames.find(f => f.bar === b && f.sz === s);
 // A frame that cannot get the car to 100 km/h at all is worse than any finite time, so order nulls
@@ -120,7 +123,7 @@ if (!(t100(lowBoost[0]) < t100(lowBoost[1])))
 if (!(at(2.5, 'small').load > 1)) fails.push('a 2.0 L at 2.5 bar does not over-flow the small frame');
 if (!(at(2.5, 'medium').hp > at(2.5, 'small').hp)) fails.push('at 2.5 bar the medium frame should out-power the small one');
 if (!(at(2.5, 'small').iat > at(2.5, 'medium').iat + 5)) fails.push('over-flowing the small frame should cook the charge');
-if (!(at(2.5, 'small').choke > at(0.8, 'small').choke)) fails.push('over-flowing a frame should deepen the top-end choke');
+if (!(at(2.5, 'small').choke > at(0.8, 'small').choke)) fails.push('over-flowing a frame should cost more of its power at the top');
 // and over-boosting the small frame should not be a free lap-time win
 if (!(at(2.5, 'small').lap > at(0.8, 'small').lap)) fails.push('2.5 bar on an over-flowed small frame is still quicker on a lap — no penalty landed');
 // a frame that is far too big must spool too late to be worth having

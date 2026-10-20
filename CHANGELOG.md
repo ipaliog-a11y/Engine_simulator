@@ -20,6 +20,52 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 Working toward **v1.0 — every number derived, not fitted.**
 
+### `turboChoke` retired: what rolls a turbo off at the top, derived (build 94)
+
+`turboChoke` was a fitted VE taper, 2.5–10% per frame from the VE peak to the redline, standing in
+for boost taper. Removing it on its own put five turbo presets on the limiter. Four pieces of physics
+replace it:
+
+- **Turbine efficiency from blade speed ratio U/C** (Watson & Janota): η/η_max = 2x − x², x =
+  (U/C)/0.7. With a constant efficiency, a wastegated turbine made its compressor's power from so
+  little expansion that manifold pressure sat *below* boost (0.8–1.1 × on the hot hatch). Now, at high
+  flow with the gate open, C is small while the shaft still spins fast. Efficiency falls and
+  back-pressure rises: 0.93 → 1.36 × boost from 60% to 100% of redline. The shaft speed comes from the
+  integrator, or in the steady solves from the compressor's Euler relation for the boost being held.
+- **Charge temperature at the compressor's efficiency at the operating point**, not one design figure
+  for the whole map. At its redline the 2JZ's frame runs at 0.59 against a design 0.74, and the charge
+  arrives 3.5 °C hotter.
+- **The knock score's rich step is gone.** `if (lam < 0.87) k *= 0.5` let a 2% mixture change move knock
+  by up to 40 points. At high boost the design curve (λ0.88) collapsed into knock retard while the
+  scorecard (λ0.86) did not: a 33% torque disagreement between two views of one engine, which made
+  any taper measurement meaningless. Its twin in `activeAdvance` (a 0.5 divisor on the retard) went
+  with it. The replacement is continuous: knock-limited advance gains ~3° per 0.1 of enrichment, at the
+  score's 2.5 points per degree, so `KNOCK_RICH` = 75. That is a measured trend, labelled as such. The
+  derivation would be an end-gas autoignition integral.
+- **Sequential turbos as two turbines.** 'Sequential' was one turbine for all the exhaust with a
+  compressor-flow multiplier. That cost nothing at constant efficiency, and 1.58 × boost in
+  back-pressure once efficiency was real. Now the primary runs alone, and the secondary comes in at
+  the lowest speed where the pair can hold target: a derived control law. The test48 2JZ-GTE stages at
+  **4000 rpm, where the real one does**, and makes 330 hp (real 320, was −10%). The pair shares one
+  manifold fed by every cylinder; a compressor's map position is per active wheel.
+- **Bug: the spool integrator fed the compressor charge-temperature air as its inlet.** That is the
+  air after the compressor and intercooler. With no intercooler it paid ~25% extra compressor work,
+  which hid the fill cost of a large core. The inlet is now ambient: 0.29 s with no intercooler
+  against 0.36 s with the large core.
+- **Results.** No new limiter cases (the hot hatch is a plateau within 1%; the TDI is known). The kei,
+  2JZ and I5 now roll off on their own at 90–93% of redline, and the V8 diesel at 84%. Calibration
+  (test48), build 93 → 94: power RMS 10.2% → 8.3%, torque 10.4% → 9.2%, 0–100 5.6% → 5.2%; test41
+  3.36% → 3.28%.
+- Tests:
+  - test40's "over-flowing deepens the choke" read the fitted constant; it now measures top-end
+    falloff.
+  - test49 checks the vane penalty itself (11 points) rather than a net score that power changes also
+    move.
+  - test56's 13B spool ceiling is ratcheted 8600 → 7500 (it reaches boost at 7400; it never stages).
+  - test58 covers the U/C curve, back-pressure above boost and rising with flow, the charge
+    temperature following point efficiency, knock continuity in mixture, the staging speed, and fill
+    against intercooler size.
+
 ### Turbo spool timing from the hardware — and test40 passes (build 93)
 
 - **Bearing drag from Petroff's law.** It was `BEAR_C`, about 5× published cartridge losses with a

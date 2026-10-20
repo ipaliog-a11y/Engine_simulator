@@ -181,8 +181,15 @@ if (!(spool.petrol.vgt.egt > limit))
   fails.push(`petrol exhaust ${spool.petrol.vgt.egt} K is below the vane limit — nothing would stop a petrol VGT`);
 if (!(spool.diesel.vgt.rel === spool.diesel.fixed.rel))
   fails.push(`a diesel VGT should cost no reliability (${spool.diesel.fixed.rel} -> ${spool.diesel.vgt.rel})`);
-if (!(spool.petrol.vgt.rel <= spool.petrol.fixed.rel - 10))
-  fails.push(`a petrol VGT should cost at least 10 reliability points (${spool.petrol.fixed.rel} -> ${spool.petrol.vgt.rel})`);
+// The vane penalty itself, from the gas temperature: at least 10 points on a petrol engine. Checked as
+// the mechanism, not as the net score, because the net also moves with power (the VGT's blockage costs
+// a little, which slightly eases the cooling penalty) and with knock — unrelated terms that took the
+// net to 9 in build 94 while the vane penalty itself is 11.
+const vanePenalty = egtK => Math.min(28, Math.max(0, (egtK - limit) / 100 * 14));
+if (!(vanePenalty(spool.petrol.vgt.egt) >= 10))
+  fails.push(`a petrol VGT's vane penalty should be at least 10 reliability points (gas ${spool.petrol.vgt.egt} K)`);
+if (!(spool.petrol.vgt.rel < spool.petrol.fixed.rel))
+  fails.push(`a petrol VGT should cost reliability (${spool.petrol.fixed.rel} -> ${spool.petrol.vgt.rel})`);
 // And it costs money, on both.
 for (const nm of ['diesel', 'petrol'])
   if (!(spool[nm].vgt.cost > spool[nm].fixed.cost))

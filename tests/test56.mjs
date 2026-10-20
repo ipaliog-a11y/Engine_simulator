@@ -60,7 +60,9 @@ for (const e of r.engines) {
 // exhaust is hot enough now; what it lacks is pulse energy, which the model times from cam geometry
 // and a rotary has ports. That needs the rotary's own port timing, from a firmer source than the one
 // figure found so far (75 deg BBDC on the 13B-REW, quoted second-hand from the FD shop manual).
-const SPOOL_CEILING = 8600;
+// Ratcheted in build 94 (8600 -> 7500): sequential staging and per-wheel compressor flow brought it
+// from ~8500 to 7400 rpm. It still never stages its secondary: the pair cannot hold target anywhere.
+const SPOOL_CEILING = 7500;
 console.log(`\n== 13B: EGT ${r.b13.egt} C, 90% boost at ${r.b13.r90} rpm (real ~3000; ceiling ${SPOOL_CEILING}), power peak ${r.b13.peak} of ${r.b13.redline} ==`);
 if (!(r.b13.egt >= 850)) fails.push(`13B exhaust ${r.b13.egt} C is below a rotary's real 850+`);
 if (!(r.b13.r90 <= SPOOL_CEILING)) fails.push(`13B now reaches 90% boost only at ${r.b13.r90} rpm (ceiling ${SPOOL_CEILING})`);
