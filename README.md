@@ -1,4 +1,4 @@
-# PIXEL ENGINE SIM v0.6 build 105
+# PIXEL ENGINE SIM v0.6 build 106
 
 **A lightweight, 8-bit style internal combustion engine *designer* & simulator** inspired by *Automation*.
 
@@ -223,6 +223,16 @@ saps power; a large radiator, electric fan and oil cooler keep it cool.
   highlights that card and saving overwrites it.
 
   ![garage](docs/garage.png)
+
+- **Pixel-art car and engine (new)** — the VEHICLE tab shows your car side on and the ENGINE tab
+  shows your engine from outside, both drawn from the build:
+  - the car's wheelbase, wheels, ride height, aero parts, driven wheels and engine position
+  - the engine's layout and bank angle, its turbos or blower, induction, headers, intercooler and
+    radiator
+
+  Garage cards carry the same pictures, and the car runs the TRACK map in its own livery.
+
+  ![Engine view](docs/engine-view.png)
 
 - **Save / Load / Share** — quick-save to `localStorage` (a single slot, distinct from the
   garage); **save to a named file** (with a note) and **open** one back; or **Share** a build as

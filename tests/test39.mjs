@@ -129,7 +129,8 @@ const guard = await page.evaluate(() => {
   // a name with markup in it must not be able to inject anything
   document.getElementById('garageName').value = '<img src=x onerror=alert(1)>';
   garageSave();
-  out.injected = document.getElementById('garageList').querySelectorAll('img').length;
+  // the card's own thumbnail is an <img>; anything else is the name getting through
+  out.injected = document.getElementById('garageList').querySelectorAll('img:not(.garage-thumb)').length;
   out.escaped = /&lt;img/.test(document.getElementById('garageList').innerHTML);
   garage = garage.filter(g => !/img/.test(g.name)); persistGarage(); renderGarage();
   // corrupt storage must not throw or wipe the app
