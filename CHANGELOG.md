@@ -20,6 +20,22 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 Working toward **v1.0 — every number derived, not fitted.**
 
+### The lap brakes at the limit (build 114)
+
+- **A solver bug, found reviewing the driving model.** The lap's backward (braking) pass read the
+  friction circle at each point's cornering ceiling instead of at the speed it was solving for. At the
+  ceiling the tyre is all used sideways, so almost no braking was left, the pass fell back to its
+  0.1 m/s2 floor, and the car crept into corners. On the Nordschleife a 911 GT3 rolled 250 m at 82 km/h
+  down a 13% hill into a 42 m corner; on a test, 281 of 486 braking points used under 90% of the grip
+  there was. Now it iterates the grip at the speed being solved.
+- **Laps 6-22% faster:** 911 GT3 Nordschleife 8:22 -> 7:25 (real 7:12.7 on the 20.6 km layout),
+  Riverside 78.4 -> 63.5 s.
+- test63 checks that inside every braking zone the car slows at 90%+ of what the tyres and brakes allow
+  at its speed (fails 281/486 on the old solver). Challenge targets re-set with the reference margins
+  (Club Sprint 80.5 s, Grand Prix Pace 61.2 s, Lap per Dollar 73.0 s; Under Seven back on the supercar
+  body). test30/32: the authored "light car wins the technical circuit" dropped (the bug had held it up;
+  the relative claim stays), the spool's lap loss checked as 1% not 1 s.
+
 ### Brakes from the hydraulics, and pressure build-up (build 113)
 
 - **The brakes' peak deceleration was a fitted figure** (1.05-1.95 g per kit, x a rotor factor). It held
