@@ -20,6 +20,36 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 Working toward **v1.0 — every number derived, not fitted.**
 
+### The diesel, from its fuel — the last fitted VE bell on a piston engine is gone (build 88)
+
+- **Diesel torque is computed from the fuel it burns.** It used to come from AIR times a constant
+  calibrated on spark engines. To make a real 2.0 TDI's 320 Nm that way the model had to fuel it at
+  λ1.02–1.05, about 20% more fuel than a real engine, while its exhaust-temperature model assumed a
+  realistic λ1.35. The two never agreed, and BSFC read 120–160 g/kWh. Now gross IMEP is
+  η × fuel × LHV / Vd. η is built from compression ratio, the fuel-air cycle and burn phasing around
+  one published reference: 0.46 gross for a passenger-car DI diesel at full load. Full-load BSFC reads
+  202 g/kWh at 2000 rpm (real 200–215). The smoke limit is λ1.20, the common-rail figure (was 1.02).
+- **The burn takes time.** A spark engine's flame rides turbulence that scales with piston speed, so
+  its burn takes the same crank angle at every rpm. A diesel's is set by injection and mixing: about
+  2.5 ms, which is 30° at 2000 rpm and 72° at 4800. A Wiebe burn from 6° BTDC gives the efficiency
+  of each heat increment, and the late heat goes down the exhaust.
+- **The ECU will not cook the turbine.** Full-load fuel is capped where the exhaust reaches the
+  vane-material limit (`VANE_T_LIMIT`, 1100 K), solved from the exhaust energy balance. On the
+  2.0 TDI it leans the engine from λ1.20 to λ1.24 over the last 300 rpm.
+- **Wall heat falls with speed and size** (Woschni: the wall share goes as (bore × piston speed)^-0.2).
+  It is referenced to the engines whose measured EGT validates the exhaust constants, so those stay put.
+- **Gas exchange is signed for the diesel.** With gross IMEP the pumping loop is p_exh − p_int, so
+  boost above back-pressure is work given back. That is 0.1 bar at 2000 rpm where 1.25 was charged.
+- **The diesel VE bell is retired.** Only ported engines (rotary, two-stroke) keep it.
+- Golf 2.0 TDI (test48): 156 hp / 344 Nm / 0–100 8.64 s against a real 150 / 320 / 8.6
+  (was 143 / 339 / 9.11). test41 3.41% → 3.34%. Petrol engines: unchanged except through wall heat.
+- **Known, and documented in test46:** the 2.0 TDI preset's power is a plateau, within ~4% from
+  3500 rpm to the limiter, so it counts as peaking there. A real TDI's sharper fall over its last
+  600 rpm is the maker's torque-limit calibration. A 12% droop governor was tried and rejected: it
+  put the peak at 4200 but cut torque at 4500 to 114 Nm (real ~212) and slowed the Golf to 9.20 s.
+- test53: the bell, burn phasing, the turbine-temperature cap, the smoke limit, BSFC against
+  published figures, torque-follows-fuel and signed pumping.
+
 ### The 2.0 turbodiesel preset's curve, and a state leak in every turbo curve
 
 - **`engine.boostNow` leaked between calls.** `computeVE` set it only after the overlap term had
@@ -34,10 +64,7 @@ Working toward **v1.0 — every number derived, not fitted.**
   that every preset floored on the ECU map makes ≥85% of its best-power torque at every rpm.
 - **The 2.0 Turbo Diesel I4 preset carried a medium turbo frame**, which on a 2.0 L does not reach
   full boost until 2800 rpm. Now the small VGT a real 2.0 TDI uses: full torque from 2000 rpm.
-- Still open: the diesel's top end falls to 45 Nm at the redline. That is the fitted VE bell diesels
-  still carry; removing it leaves torque flat to the limiter because the model has no diesel top-end
-  limit. Combustion time is the measured candidate (−15% to −24% from 3000 to 4800 rpm on a 2.5–3.5 ms
-  burn) — conversion 5.
+- The diesel top end that collapsed to 45 Nm at the redline was fixed in build 88 (above).
 
 ### Dyno result sheet, track zoom, operating-point buttons, Wankel cutaway, mixture curve
 

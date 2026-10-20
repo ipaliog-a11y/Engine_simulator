@@ -249,7 +249,7 @@ table.fuelmap td.live{box-shadow:inset 0 0 0 2px #fff;font-weight:bold}
 <body>
 <div class="container">
 <header>
-<h1>PIXEL ENGINE SIM v0.6 build 87</h1>
+<h1>PIXEL ENGINE SIM v0.6 build 88</h1>
 <div class="subtitle" id="subtitle">ENGINE DESIGNER • BUILD IT, THEN DRIVE IT</div>
 </header>
 <div class="main">
@@ -396,7 +396,8 @@ limiter; 100% = holds near idle. It only resists <i>above</i> its target, so any
 always rev up to it.<br>
 <b>ELEC LOAD</b> — accessory draw (lights/AC). Heavy load + small alternator at idle drains
 the battery → low voltage → weak spark.<br>
-<b>AFR</b> — air-fuel ratio. Peak power near λ0.86 (rich), best economy near λ1.05 (lean).<br>
+<b>AFR</b> — air-fuel ratio. Petrol: peak power near λ0.86 (rich), best economy near λ1.1 (lean).
+Diesel: full fuel at the smoke limit, λ1.2; leaner is less torque but less fuel per kWh.<br>
 <b>IAT / COOLANT / OIL</b> — charge &amp; engine temps (auto in AUTO THERMAL mode).<br>
 <b>NITROUS</b> — if fitted, sprays at wide-open throttle from a bottle that depletes.
 </div>
@@ -404,7 +405,7 @@ the battery → low voltage → weak spark.<br>
 <b>PEAK TORQUE · MAX POWER · ECO</b> — three buttons that put the engine you built on a real
 operating point and let it settle there. <b>MAX POWER</b> opens the throttle fully and has the dyno
 brake hold the rpm where this engine makes its peak power, at the best-power mixture (λ0.86 petrol,
-λ1.05 diesel) and the scorecard's conditions — so the LIVE OUTPUT should land on the same figure the
+λ1.2 diesel) and the scorecard's conditions — so the LIVE OUTPUT should land on the same figure the
 DYNO tab prints. <b>PEAK TORQUE</b> does the same at the torque peak. <b>ECO</b> searches this
 engine's speed, load and mixture for the point that burns the <i>least fuel per kWh</i> — the lowest
 BSFC — and holds it; for a petrol engine that is usually a little lean of stoich at high load and
@@ -1113,7 +1114,7 @@ const FUELS={
 const ENGINE_TYPE={
   petrol4:  {label:'PETROL 4-STROKE',strokeDiv:4*Math.PI,ci:false,ports:false,imep:1.00,eff:1.00,bsfc:1.00,
              crDef:11,crMin:8,crMax:14,redlineDef:7000,redMin:5000,redMax:9500,fuel:null,maxCyl:12},
-  diesel:   {label:'DIESEL (CI)',    strokeDiv:4*Math.PI,ci:true, ports:false,imep:1.02,eff:1.30,bsfc:0.72,
+  diesel:   {label:'DIESEL (CI)',    strokeDiv:4*Math.PI,ci:true, ports:false,imep:1.02,eff:1.30,bsfc:1.00,
              crDef:18,crMin:15,crMax:24,redlineDef:4800,redMin:3500,redMax:5800,fuel:'diesel',maxCyl:12},
   twostroke:{label:'2-STROKE',       strokeDiv:2*Math.PI,ci:false,ports:true, imep:0.60,eff:0.80,bsfc:1.45,
              crDef:9, crMin:7,crMax:12,redlineDef:8000,redMin:5500,redMax:11000,fuel:null,maxCyl:6},
@@ -1334,27 +1335,50 @@ const densFromP=dp=>Math.pow(Math.max(0.05,1+dp),1/GAMMA_AIR)-1;
 // released that the cycle did not turn into work or hand to the coolant goes out of the port, so
 // EGT responds to mixture, compression and load the way it really does — rich runs cool, lean runs
 // hot, and a high-compression engine sends less heat down the pipe because it extracted more work.
-function exhaustGasT(load){
+// rpm and lambda are optional. Without rpm there is no late-burn heat (see burnPhasing); without
+// lambda the mixture is the one a calibrated engine runs at this load.
+function exhaustGasT(load,rpm,lambda){
+  const e=engine;
+  // Mixture at this load, not the live slider: full load runs rich for power and exhaust-temperature
+  // control (lambda ~0.88), light load sits at stoich. A diesel is quality-governed and always lean,
+  // which is exactly why diesel EGT is so much lower than petrol.
+  const lam=lambda>0?lambda:e.ci?1.35+0.9*(1-clamp(load,0,1)):1-0.12*clamp(load,0,1);
+  const afr=Math.max(6,(e.stoichAFR||14.7)*lam);
+  const dT=(e.fuelLHV||44)*1e6/(afr*CP_EXH)*exhaustHeatFrac(rpm)*clamp(load,0.35,1.1);
+  return 300+dT;
+}
+// Share of the fuel's heat that leaves through the exhaust port.
+function exhaustHeatFrac(rpm){
   const e=engine;
   // Thermal efficiency from compression ratio ALONE. Multiplying crFactor by 1/typeBsfc as well
   // double-counts: a diesel's better fuel consumption IS mostly its higher compression ratio, and
   // charging it twice put diesel efficiency at 0.52 — above anything real, best-in-class being
   // 0.42-0.45.
   const eta=clamp(0.36*(e.crFactor||1),0.20,0.46);
-  // Mixture at this load, not the live slider: full load runs rich for power and exhaust-temperature
-  // control (lambda ~0.88), light load sits at stoich. A diesel is quality-governed and always lean,
-  // which is exactly why diesel EGT is so much lower than petrol.
-  const lam=e.ci?1.35+0.9*(1-clamp(load,0,1)):1-0.12*clamp(load,0,1);
-  const afr=Math.max(6,(e.stoichAFR||14.7)*lam);
   // Roughly a third of fuel energy leaves through the exhaust port, whatever the engine. The old
   // `0.62 - eta` form made that fraction collapse as efficiency rose — it floored a diesel at 0.18
   // and gave it a 370 C exhaust against a real ~600 C pre-turbine, which left the turbine too weak
   // to spool and the diesel presets making almost no torque at all. What actually makes a diesel's
   // exhaust cooler is running LEAN, and the AFR term above already carries that.
-  const fExh=clamp(0.40-0.24*eta,0.24,0.36);
-  const dT=(e.fuelLHV||44)*1e6/(afr*CP_EXH)*fExh*clamp(load,0.35,1.1);
-  return 300+dT;
+  let f=clamp(0.40-0.24*eta,0.24,0.36);
+  // Heat a diesel releases too late to turn into work is still hot when the exhaust valve opens.
+  if(rpm>0)f+=eta*(1-burnPhasing(rpm));
+  // Heat the cylinder walls take per cycle, as a share of the fuel's, falls with speed and size.
+  // Woschni: h ~ B^-0.2 p^0.8 T^-0.55 w^0.8, with the gas velocity w following mean piston speed Sp.
+  // Over one cycle (time ~ 1/N) against the fuel's heat (~ B^2 S), that leaves the wall share going as
+  // (B Sp)^-0.2 — and what the walls do not take, the exhaust does. So a big, fast engine runs hotter
+  // at the port than a small slow one at the same mixture, which is what real full-load EGTs show.
+  // Referenced to bore x piston speed at rated power of the engines whose measured EGT validates the
+  // constants above (test46: 1.6 NA I4 1474, 2.0 TDI 1210, 6.6 V8 TD 1054 mm.m/s; geometric mean
+  // 1234), so those stay where they were checked. No ported engines: they have no bore and stroke in
+  // this sense, and their exhaust fraction is calibrated separately.
+  if(rpm>0&&!e.ports){
+    const wall=Math.max(0,1-eta-f), BSp=e.bore_mm*2*(e.stroke_mm/1000)*Math.max(300,rpm)/60;
+    f+=wall*(1-Math.pow(BSp/WALL_BSP_REF,-0.2));
+  }
+  return f;
 }
+const WALL_BSP_REF=1234;   // mm.m/s — see exhaustHeatFrac
 // ---- intake: Helmholtz ----
 // Q of an intake tract measured on a flow rig is 3-6. It sets how fast the resonance dies and
 // therefore how much weaker each successive order is, so no separate order weighting is needed.
@@ -1736,7 +1760,7 @@ function airFlowAt(rpm,pr){
 function steadyBoost(rpm){
   const e=engine;
   if(!e.turbineArea||rpm<200)return 0;
-  const T3=exhaustGasT(clamp(rpm/(e.redline*0.8),0.35,1.1));
+  const T3=exhaustGasT(clamp(rpm/(e.redline*0.8),0.35,1.1),rpm);
   const nMax=maxShaftRpm(e.compExd);
   const canHold=pr=>{
     const mAir=airFlowAt(rpm,pr);
@@ -2125,7 +2149,7 @@ const I18N={
 // (untrue since build 74). New guide content goes in its OWN block for exactly this reason.
 const GUIDE_I18N={
   loop:{el:"<b>1. ΚΙΝΗΤΗΡΑΣ</b> — σχεδίασε έναν κινητήρα (κάτω μέρος, διαδρομή αέρα, καύσιμο & σπινθήρας, ψύξη…), μετά πάτα <b>BUILD & DYNO</b>. <b>2. ΔΥΝΑΜΟ</b> δείχνει όλη την καμπύλη ισχύος/ροπής και μια βαθμολογία. <b>3. ΖΩΝΤΑΝΑ</b> είναι πάγκος δοκιμών σε λειτουργία: ρυθμίζεις <b>ΓΚΑΖΙ</b> και <b>ΦΟΡΤΙΟ</b> και βλέπεις τον κινητήρα να αποκρίνεται σε πραγματικό χρόνο. Δεν ορίζεις ποτέ απευθείας τις στροφές — τον οδηγείς.<br>Μετά βάλ' τον σε αυτοκίνητο στο <b>ΟΧΗΜΑ</b> και πήγαινέ τον σε πίστα στην <b>ΠΙΣΤΑ</b>. Κάθε αριθμός βγαίνει από την ίδια φυσική, οπότε μια αλλαγή στην καρτέλα ΚΙΝΗΤΗΡΑΣ φαίνεται στο 0–100, στην τελική και στον χρόνο γύρου."},
-  driving:{el:"<b>ΓΚΑΖΙ</b> — ανοίγει την εισαγωγή· αυξάνει την πίεση πολλαπλής → ροπή → στροφές.<br><b>ΦΟΡΤΙΟ (φρένο δυναμό)</b> — αντίσταση που ορίζει τις <i>στροφές κρατήματος</i>. 0% = ελεύθερες στροφές ως το όριο· 100% = κρατά κοντά στο ρελαντί. Αντιστέκεται μόνο <i>πάνω</i> από τον στόχο, οπότε κάθε κινητήρας ανεβαίνει πάντα ως εκεί.<br><b>ΗΛΕΚ. ΦΟΡΤΙΟ</b> — κατανάλωση παρελκομένων (φώτα/AC). Μεγάλο φορτίο + μικρό δυναμό στο ρελαντί αδειάζει την μπαταρία → χαμηλή τάση → αδύναμος σπινθήρας.<br><b>AFR</b> — αναλογία αέρα-καυσίμου. Μέγιστη ισχύς κοντά σε λ0.86 (πλούσιο), καλύτερη οικονομία κοντά σε λ1.05 (φτωχό).<br><b>IAT / ΨΥΚΤΙΚΟ / ΛΑΔΙ</b> — θερμοκρασίες χαρμανιού & κινητήρα (αυτόματα σε AUTO THERMAL).<br><b>ΝΙΤΡΟ</b> — αν υπάρχει, ψεκάζει με τέρμα γκάζι από φιάλη που αδειάζει."},
+  driving:{el:"<b>ΓΚΑΖΙ</b> — ανοίγει την εισαγωγή· αυξάνει την πίεση πολλαπλής → ροπή → στροφές.<br><b>ΦΟΡΤΙΟ (φρένο δυναμό)</b> — αντίσταση που ορίζει τις <i>στροφές κρατήματος</i>. 0% = ελεύθερες στροφές ως το όριο· 100% = κρατά κοντά στο ρελαντί. Αντιστέκεται μόνο <i>πάνω</i> από τον στόχο, οπότε κάθε κινητήρας ανεβαίνει πάντα ως εκεί.<br><b>ΗΛΕΚ. ΦΟΡΤΙΟ</b> — κατανάλωση παρελκομένων (φώτα/AC). Μεγάλο φορτίο + μικρό δυναμό στο ρελαντί αδειάζει την μπαταρία → χαμηλή τάση → αδύναμος σπινθήρας.<br><b>AFR</b> — αναλογία αέρα-καυσίμου. Βενζίνη: μέγιστη ισχύς κοντά σε λ0.86 (πλούσιο), καλύτερη οικονομία κοντά σε λ1.1 (φτωχό). Ντίζελ: πλήρες καύσιμο στο όριο καπνού, λ1.2· φτωχότερο δίνει λιγότερη ροπή αλλά λιγότερο καύσιμο ανά kWh.<br><b>IAT / ΨΥΚΤΙΚΟ / ΛΑΔΙ</b> — θερμοκρασίες χαρμανιού & κινητήρα (αυτόματα σε AUTO THERMAL).<br><b>ΝΙΤΡΟ</b> — αν υπάρχει, ψεκάζει με τέρμα γκάζι από φιάλη που αδειάζει."},
   live:{el:"<b>Η καρτέλα ΖΩΝΤΑΝΑ είναι τομή</b> του κινητήρα που μόλις σχεδίασες. Όλα κινούνται επειδή τα κίνησε η προσομοίωση. Δεν σχεδιάζεται όμως σε πραγματικό χρόνο: ένας στρόφαλος στις 5000 σ.α.λ. κάνει 83 στροφές το <i>δευτερόλεπτο</i>, που στα 60 fps είναι στροβοσκόπιο και όχι εικόνα — δεν θα μπορούσες να δεις μια βαλβίδα να ανοίγει. Έτσι ο κύκλος τρέχει με ρυθμό που διαβάζεται, περίπου 3.3 έως 1.1 δευτερόλεπτα ανά πλήρη κύκλο, πάντα καταταγμένος με τις στροφές ώστε το ρελαντί να είναι ορατά πιο νωθρό από το όριο. Η πραγματική ταχύτητα φαίνεται στο στροφόμετρο και ακούγεται στον ήχο. Το έμβολο ακολουθεί σωστή γεωμετρία στροφάλου-διωστήρα (<i>όχι</i> ημίτονο — ένας πραγματικός διωστήρας κάνει το έμβολο να αργοπορεί κάτω και να «κόβει» πάνω), η διάμετρος σχεδιάζεται στη δική σου αναλογία διαμέτρου/διαδρομής, και οι βαλβίδες ανοίγουν με αληθινό χρονισμό τεσσάρων χρόνων, με την επικάλυψη σάρωσης ορατή γύρω από το ΑΝΣ. Ο θάλαμος χρωματίζεται με βάση το τι υπάρχει μέσα του αυτή τη στιγμή — φρέσκο μείγμα, συμπιεσμένο, καιγόμενο, καμένο — και ο χρόνος ονομάζεται πάνω από την κεφαλή. Ένας δίχρονος δείχνει θυρίδες αντί για βαλβίδες· ένας ρότορας δείχνει πραγματικό επιτροχοειδές περίβλημα με τον ρότορα στο 1/3 του εκκεντροφόρου άξονα. Η λωρίδα δίπλα σχεδιάζει κάθε κύλινδρο στη δική του φάση, ώστε να βλέπεις τη σειρά ανάφλεξης σε έναν V12."},
   liveOut:{el:"Οι αριθμοί που τυπώνονταν εδώ σε γράμματα 7 px βρίσκονται πλέον στο πλαίσιο <b>ΖΩΝΤΑΝΗ ΕΞΟΔΟΣ</b> δίπλα στον καμβά, όπου είναι πραγματικό κείμενο."},
   numbers:{el:"<b>HP / kW</b> — ισχύς = ροπή × στροφές. <b>ΡΟΠΗ (Nm)</b> — δύναμη στρέψης· κορυφώνεται χαμηλότερα από την ισχύ.<br><b>BMEP (bar)</b> — μέση πραγματική πίεση πέδης: ροπή ανά κυβισμό, για σύγκριση κινητήρων κάθε μεγέθους. <b>VE (%)</b> — ογκομετρική απόδοση: πόσο καλά αναπνέει σε σχέση με τον κυβισμό (το boost ξεπερνά το 100%).<br><b>ΘΕΡΜ. ΑΠΟΔ. (%)</b> — ποσοστό ενέργειας καυσίμου που γίνεται έργο. <b>BSFC (g/kWh)</b> — καύσιμο ανά μονάδα ισχύος· <i>όσο χαμηλότερο τόσο καλύτερο</i>.<br><b>ΡΟΗ ΚΑΥΣΙΜΟΥ (L/h)</b> — ζωντανή κατανάλωση. <b>MAP / BOOST (bar)</b> — πίεση πολλαπλής· boost = MAP πάνω από 1.0.<br><b>ΠΕΙΡΑΚΙ (LOW/MED/HIGH)</b> — κίνδυνος πειρακίου. Ο χρονισμός AUTO καθυστερεί για έλεγχο· παρατεταμένο HIGH κάνει ζημιά. <b>ΥΓΕΙΑ (%)</b> — κατάσταση· 0 = καμένος κινητήρας.<br><b>ΕΚΠΟΜΠΕΣ (CLEAN/OK/DIRTY)</b> — από τον αναλυτή: CO & HC ανεβαίνουν στο πλούσιο, NOx στο φτωχό/καυτό· ο καταλύτης καθαρίζει και τα τρία μόνο κοντά στο στοιχειομετρικό.<br><b>λ (λάμδα)</b> — AFR ÷ στοιχειομετρικό: λ&lt;1 πλούσιο, 1 = στοιχειομετρικό, &gt;1 φτωχό.<br><b>ΚΟΣΤΟΣ ($)</b> — συνολικό κόστος εξαρτημάτων. <b>REL (αξιοπιστία)</b> — εκτίμηση αντοχής (boost/πειράκι/θερμότητα/στροφές). <b>hp/$1k</b> — ισχύς ανά χίλια δολάρια."},
@@ -2689,7 +2713,7 @@ function buildEngine(){
   //   · diesels keep it (their load runs through a throttle they should not have; see pumpingMEP),
   //   · rotaries and two-strokes keep it (no poppet valves, so no trapping/Mach/float physics),
   //   · CAM.ampMul still scales veAmp by cam grade (+4% sport, +8% race).
-  engine.veBell=!!(et.ci||et.ports);
+  engine.veBell=!!et.ports;
   // For the engines that keep it, vePeakRpm is still asserted:
   engine.vePeakRpm=clamp(engine.redline*0.60+(engine.boreStroke-1)*1500,3000,engine.redline*0.95);
   // Asymmetric generalized-bell breathing curve: a steeper low-rpm side (so torque
@@ -2713,7 +2737,6 @@ function buildEngine(){
   // Diesels breathe poorly up top (airflow/turbo-limited) and make their power low in the rev
   // range: pull the VE peak down and steepen the high-rpm falloff so torque tapers before the
   // (low) redline and peak power lands realistically early, instead of climbing to the limiter.
-  if(engine.ci){engine.vePeakRpm=clamp(engine.vePeakRpm*0.78,2000,engine.redline*0.9);engine.veWidthHi*=0.55;}
   // Induction system (metering + throttle) and air filter → breathing, AFR precision,
   // manifold response, idle quality. Direct injection is only possible on EFI systems.
   const sys=INTAKE_SYS[engine.intakeSys]||INTAKE_SYS.efi,filt=AIR_FILTER[engine.airFilter]||AIR_FILTER.stock;
@@ -2730,6 +2753,7 @@ function buildEngine(){
   engine.intakeRespK=sys.resp;                // manifold fill speed (dynamic model)
   engine.idleRpmEff=IDLE_RPM+idlePenalty+sys.idle;   // wild cam / race intake idle higher & lumpier
   engine.crFactor=otto(engine.compression)/otto(10.5);   // 1.0 at CR 10.5
+  buildBurnTable();         // diesel burn phasing vs rpm; exhaustGasT reads it from here on
   deriveGasDynamics();      // runner + header geometry; needs crFactor, catRestrict and idleRpmEff
   updateGasLabels();
   engine.strokeFrictionMult=1+(engine.stroke_mm-86)/320;  // longer stroke = more friction
@@ -2832,10 +2856,10 @@ function buildEngine(){
   // by how much fuel is injected, so it always runs lean (λ≥1) from the smoke limit to idle.
   const afrEl=document.getElementById('afr'),lam=state.afr/prevStoich;
   if(engine.ci){
-    afrEl.min=(engine.stoichAFR*1.02).toFixed(1);   // smoke limit (full fuelling)
+    afrEl.min=(engine.stoichAFR*SMOKE_LAMBDA_CI).toFixed(1);   // smoke limit (full fuelling)
     afrEl.max=(engine.stoichAFR*4.2).toFixed(1);    // light-load / idle (very lean)
     afrEl.step=0.2;
-    state.afr=clamp(engine.ci&&state.afr<engine.stoichAFR*1.02?engine.stoichAFR*1.15:lam*engine.stoichAFR,+afrEl.min,+afrEl.max);
+    state.afr=clamp(state.afr<engine.stoichAFR*SMOKE_LAMBDA_CI?engine.stoichAFR*1.4:lam*engine.stoichAFR,+afrEl.min,+afrEl.max);
   }else{
     afrEl.min=(engine.stoichAFR*0.68).toFixed(1);
     afrEl.max=(engine.stoichAFR*1.22).toFixed(1);
@@ -3135,7 +3159,7 @@ function computeVE(rpm,map){
   // These four lines replace EXHAUST{topGain,lowLoss} and CAM{scav,lowLoss} — four fitted numbers
   // for two physical effects. Both waves swing both ways, so a badly matched pipe COSTS VE here.
   if(engine.primL){
-    const chargeK=effIAT(map)+273.15, Tex=exhaustGasT(clamp(map/Math.max(0.4,engine.mapMax),0.3,1.1));
+    const chargeK=effIAT(map)+273.15, Tex=exhaustGasT(clamp(map/Math.max(0.4,engine.mapMax),0.3,1.1),rpm);
     // A variable-length manifold is a flap: take whichever runner position is better at this speed.
     let ram=intakeRamGain(rpm,chargeK);
     if(engine.runnerVariable){
@@ -3199,7 +3223,7 @@ function baseFuelLambda(rpm,map){
     // and was fuelled at lambda 2.7 — about 40% of the torque a full rack gives. A real diesel at full
     // pedal injects up to the smoke limit for whatever air it has, at every speed.
     const l=clamp((map/Math.max(0.3,wotMapAt(rpm))-0.45)/0.55,0,1);
-    return 3.4-2.35*l;
+    return 3.4-(3.4-SMOKE_LAMBDA_CI)*l;
   }
   const boost=Math.max(0,map-1.0);
   let lam=1.02-0.16*clamp((map-0.35)/0.65,0,1);                          // ~stoich cruise → ~λ0.86 WOT
@@ -3220,7 +3244,12 @@ function mappedAFR(rpm,map){
   return st*baseFuelLambda(rpm,map);
 }
 // The AFR actually run at an operating point: the ECU map (AUTO) or the fixed slider (MANUAL).
-function curAFR(rpm,map){return engine.afrMode==='auto'?mappedAFR(rpm,map):state.afr;}
+// The mixture actually burned. A diesel's injection system will not fuel past its full-load floor
+// (smoke, turbine temperature), whatever the map or the slider asks for.
+function curAFR(rpm,map){
+  const afr=engine.afrMode==='auto'?mappedAFR(rpm,map):state.afr;
+  return engine.ci?Math.max(afr,engine.stoichAFR*dieselLambdaFloor(rpm)):afr;
+}
 // ---- Fuel-map visualiser: a load×RPM grid of the target AFR (shown when the mixture is AUTO) ----
 const FM_COLS=8, FM_ROWS=6;
 const fmRpmAt=c=>Math.round(lerp(1000,engine.redline,c/(FM_COLS-1)));
@@ -3326,14 +3355,9 @@ function updateFuelMapMarker(){
 const faEta=phi=>phi<=1?1+0.6*(1-phi)-0.4*(1-phi)*(1-phi):Math.max(0.3,1-0.71*(phi-1));
 const imepRel=lam=>{const phi=1/Math.max(0.3,lam);return phi*faEta(phi);};
 const AFR_ANCHOR_SI=1.08;   // the old curve at lambda 0.86, the scorecard's best-power mixture
-const AFR_ANCHOR_CI=1.06*Math.exp(-Math.pow((1.05-1.0)/0.85,2));    // the old curve at lambda 1.05
 function afrPowerFactor(afr){
+  // Spark engines only: a diesel's torque is computed from its fuel directly (dieselGrossImep).
   const lam=afr/engine.stoichAFR;
-  if(engine.ci){
-    // Quality-governed: torque follows the fuel injected. Richer than the smoke limit (lambda ~1.02)
-    // the extra fuel only makes soot, so torque stops rising there.
-    return clamp(AFR_ANCHOR_CI*imepRel(Math.max(1.02,lam))/imepRel(1.05),0.05,1.08);
-  }
   let f=AFR_ANCHOR_SI*imepRel(lam)/imepRel(0.86);
   if(lam<0.75)f*=0.85+0.6*(lam-0.68);   // very rich: misfire
   if(lam>1.12)f*=1.0-1.5*(lam-1.12);    // very lean: burn deteriorates toward the lean limit
@@ -3398,7 +3422,7 @@ function residualKnock(rpm,map){
   const e=engine;
   if(!(e.compression>1))return 0;
   const Tfresh=effIAT(map)+273.15;
-  const Tex=exhaustGasT(clamp(map/Math.max(0.4,e.mapMax),0.3,1.1));
+  const Tex=exhaustGasT(clamp(map/Math.max(0.4,e.mapMax),0.3,1.1),rpm);
   const prev=e.boostNow;e.boostNow=map;                 // backPressureBar reads it for the turbine
   const pExh=1+backPressureBar(rpm,Tex);
   e.boostNow=prev;
@@ -3445,11 +3469,15 @@ function computeKnockRisk(rpm,map){return knockAt(rpm,map,activeAdvance(rpm,map)
 // already carries some of the pressure-level effect. Handing a supercharged engine +0.5 bar on top
 // of that would be a much larger claim than the missing exhaust term this change is fixing.
 function pumpingMEP(rpm,map){
-  const Tex=exhaustGasT(clamp(map/Math.max(0.4,engine.mapMax),0.3,1.1));
+  const Tex=exhaustGasT(clamp(map/Math.max(0.4,engine.mapMax),0.3,1.1),rpm);
   const prev=engine.boostNow;engine.boostNow=map;                  // backPressureBar reads it for the turbine
   const pExh=1+backPressureBar(rpm,Tex);
   engine.boostNow=prev;
-  return Math.max(0,pExh-1)+PUMP_K*Math.max(0,1.0-map)*(engine.ci?0.15:1);
+  // A diesel's IMEP is gross (fuel-based), so its gas exchange is the whole loop, signed: the piston
+  // pushes out against p_exh and is pushed down by p_int. A turbo that makes more boost than
+  // back-pressure gives work back. Below atmosphere the throttle term stays as described above.
+  if(engine.ci)return pExh-Math.max(1,map)+PUMP_K*Math.max(0,1.0-map)*0.15;
+  return Math.max(0,pExh-1)+PUMP_K*Math.max(0,1.0-map);
 }
 // Friction + pumping mean effective pressure.
 function pumpFrictionMEP(rpm,map,oilFrictionMult){
@@ -3491,17 +3519,126 @@ function dieselImepLimit(imep){
   const knee=17,span=7;   // → asymptotes near ~24 bar IMEP (~22 bar BMEP)
   return imep>knee?knee+span*Math.tanh((imep-knee)/span):imep;
 }
+// ---- Combustion takes TIME, and a diesel cannot buy it back with rpm ----
+// This replaces the diesel's fitted VE bell, which was what made its torque fall above 3000 rpm.
+// That fall is not a breathing problem: with the bell removed the derived breathing holds VE at
+// 0.77-0.85 to the redline, and the torque stays flat to 4800 rpm (214 hp from an engine sold at 150).
+//
+// In a spark engine the flame front is carried by in-cylinder turbulence, and turbulence scales
+// with piston speed, so the burn takes roughly the same number of CRANK DEGREES at every rpm. Its
+// phasing loss is the same everywhere and already lives in typeImep. A diesel's burn is set by how
+// fast the injector can deliver fuel and the spray can find air: a fixed TIME. At 2000 rpm 2.5 ms
+// is 30 crank degrees; at 4800 it is 72, and the heat released late into the expansion stroke does
+// less work. Each increment of heat is worth the Otto efficiency of the expansion still ahead of it,
+//     eta(theta) = 1 - (V_bdc/V(theta))^(1-gamma),
+// weighted by a Wiebe burn x = 1 - exp(-a (t/t_burn)^(m+1)) (Heywood's a = 5, m = 2).
+//
+// Why the ECU does not simply inject earlier to recentre the burn: that recovers almost all of the
+// loss on paper (a free start of combustion leaves 96% at 4800 rpm), but a full-load diesel is
+// already at its peak-pressure and NOx limits, so production calibrations hold the start of
+// combustion a few degrees before TDC. That limit is a calibration constant, stated here, not fitted.
+//
+// What is NOT burned into work goes down the exhaust (exhaustGasT), and that is the second half: it
+// pushes the exhaust toward the turbine's material limit, and the ECU stops adding fuel there
+// (dieselLambdaFloor). Neither half needs a shape asserted.
+//
+// Anchored at 2000 rpm, where the diesel type constants (ENGINE_TYPE.diesel.imep) were calibrated,
+// so the low-speed figures do not move: the factor is efficiency relative to that point.
+const BURN_T_CI=0.0025;     // s — DI diesel full-load burn, injection + mixing-controlled (Heywood ch. 10)
+const SOC_CI=-6;            // crank degrees — start of combustion, held near TDC by peak pressure / NOx
+const WIEBE_A=5, WIEBE_M=2;
+const BURN_REF_RPM=2000;
+const ROD_RATIO=3.2;
+function wiebePhasingEff(durDeg,socDeg,cr){
+  const g=1.30, Vt=th=>{const t=th*Math.PI/180,s=Math.sin(t);
+    return 1+(cr-1)*((1-Math.cos(t))+ROD_RATIO-Math.sqrt(ROD_RATIO*ROD_RATIO-s*s))/2;};
+  const N=120;let e=0,xp=0;
+  for(let i=1;i<=N;i++){
+    const x=1-Math.exp(-WIEBE_A*Math.pow(i/N,WIEBE_M+1));
+    e+=(x-xp)*(1-Math.pow(cr/Vt(socDeg+durDeg*(i-0.5)/N),1-g));xp=x;
+  }
+  return e/(1-Math.pow(cr,1-g));   // relative to all the heat released at TDC
+}
+// Tabulated per build (it depends only on rpm and compression ratio), since calcAtRpm is hot.
+function buildBurnTable(){
+  const e=engine;
+  e.burnTab=null;
+  if(!e.ci)return;
+  const ref=wiebePhasingEff(6*BURN_REF_RPM*BURN_T_CI,SOC_CI,e.compression),tab=[];
+  for(let r=0;r<=e.redline*1.3+200;r+=100)tab.push(wiebePhasingEff(6*Math.max(r,300)*BURN_T_CI,SOC_CI,e.compression)/ref);
+  e.burnTab=tab;
+}
+function burnPhasing(rpm){
+  const t=engine.burnTab;
+  if(!t)return 1;
+  const f=clamp(rpm/100,0,t.length-1.001),i=Math.floor(f);
+  return t[i]+(t[i+1]-t[i])*(f-i);
+}
+// The ECU's full-load fuel limit. Richer than the smoke limit the extra fuel only makes soot, and on
+// a turbo diesel it may not push the gas at the turbine past what the vanes (or wheel) survive —
+// VANE_T_LIMIT, the same figure the reliability score already warns on. Solved from the exhaust
+// energy balance in closed form: T = 300 + LHV/(AFR cp) * f_exh at full load, so
+//     lambda_min = LHV f_exh / (AFR_stoich cp (T_lim - 300)).
+// At low rpm this sits below the smoke limit and changes nothing; at high rpm the late burn raises
+// f_exh, and the floor rises with it.
+// The smoke limit: the richest a diesel can be fuelled before the fuel cannot find air in the time it
+// has, and comes out as soot. A modern common-rail engine at full load sits at lambda 1.15-1.25
+// (Bosch, Diesel-Engine Management). This used to be 1.02, which only worked because torque was taken
+// from AIR times a fitted constant: the model needed 20% more fuel than a real engine to make a real
+// engine's torque, and its exhaust-temperature model (which assumed a realistic lambda) never agreed
+// with the mixture actually burned.
+const SMOKE_LAMBDA_CI=1.20;
+function dieselLambdaFloor(rpm){
+  const e=engine;
+  if(!e.ci)return 0;
+  if(e.intake!=='turbo')return SMOKE_LAMBDA_CI;
+  const f=exhaustHeatFrac(rpm);
+  return Math.max(SMOKE_LAMBDA_CI,(e.fuelLHV||44)*1e6*f/((e.stoichAFR||14.5)*CP_EXH*(VANE_T_LIMIT-300)));
+}
+// ---- A diesel's torque, from the fuel it burns ----
+// Every other engine here takes IMEP from AIR: IMEP_K x typeImep x map x VE x a mixture factor, a
+// correlation calibrated on spark engines. A diesel used it too, with typeImep = 1.02 and its own
+// mixture anchor, and that is what forced the lambda 1.02 above: to make 320 Nm from the air a real
+// TDI has, the correlation needed the fuel of lambda 1.05.
+//
+// A diesel is quality-governed — torque IS fuel quantity — so here it is computed as exactly that:
+//     gross IMEP = eta_gross x (m_fuel x LHV) / V_d,     m_fuel = m_air / (lambda x AFR_st)
+// with m_air the charge the cylinder actually traps (density at the valve x VE), the same mass the
+// fuel-flow readout meters. The efficiency is built from the pieces this model already derives:
+//   · compression ratio — the Otto efficiency ratio, as crFactor does for the spark engines;
+//   · mixture — the fuel-air cycle (faEta): leaner burns more efficiently;
+//   · burn phasing — the fixed-time diesel burn (burnPhasing).
+// One reference figure: ETA_GROSS_CI, the gross indicated efficiency of a passenger-car DI diesel at
+// full load (CR 17, lambda 1.2, 2000 rpm). Production engines run 200-210 g/kWh there, i.e. ~0.40
+// brake; with ~0.88 mechanical efficiency and a little pumping work that is 0.45-0.47 gross. Taken as
+// 0.46, from those published figures, not fitted to any engine in this file.
+//
+// GROSS, because the gas exchange is now charged separately and with its sign (pumpingMEP): the
+// textbook split of the cycle, which the air correlation could not use.
+const ETA_GROSS_CI=0.46, CR_REF_CI=17, LAMBDA_REF_CI=1.20;
+function dieselGrossImep(rpm,map,ve){
+  const e=engine,st=e.stoichAFR||14.5;
+  const air=map*1e5/(287*(effIAT(map)+273.15))*ve;                 // kg of trapped air per m3 swept
+  const lam=curAFR(rpm,map)/st;
+  const eta=ETA_GROSS_CI*otto(e.compression)/otto(CR_REF_CI)
+           *faEta(1/lam)/faEta(1/LAMBDA_REF_CI)*burnPhasing(rpm);
+  return eta*air/(lam*st)*(e.fuelLHV||42.8)*1e6/1e5;               // bar
+}
 // mapOverride lets the live view pass the integrated manifold pressure; the dyno omits
 // it and uses wide-open throttle (steady state) at each RPM.
 function calcAtRpm(rpm,mapOverride){
   const map=mapOverride!=null?mapOverride:wotMapAt(rpm);
   const {coolF,oilFrictionMult}=tempFactors(state.coolant,state.oil);
   const ve=computeVE(rpm,map);
-  const afrP=afrPowerFactor(curAFR(rpm,map));
-  const ignF=clamp(1-0.004*Math.pow(activeAdvance(rpm,map)-mbtAdvance(rpm,map),2),0.72,1.0);
-
-  let imep=IMEP_K*engine.typeImep*map*ve*afrP*coolF*engine.crFactor*ignF*ignitionHealth(rpm)*healthFactor()+nitrousImep()*healthFactor();
-  imep*=298.15/(effIAT(map)+273.15);   // intake-air density correction (ref 25°C)
+  let imep;
+  if(engine.ci){
+    imep=(dieselGrossImep(rpm,map,ve)*coolF+nitrousImep())*healthFactor();
+  }else{
+    const afrP=afrPowerFactor(curAFR(rpm,map));
+    const ignF=clamp(1-0.004*Math.pow(activeAdvance(rpm,map)-mbtAdvance(rpm,map),2),0.72,1.0);
+    imep=IMEP_K*engine.typeImep*map*ve*afrP*coolF*engine.crFactor*ignF*ignitionHealth(rpm)*healthFactor()+nitrousImep()*healthFactor();
+    imep*=298.15/(effIAT(map)+273.15);   // intake-air density correction (ref 25°C)
+  }
   imep=dieselImepLimit(imep);          // diesel peak-cylinder-pressure / smoke ceiling
 
   let bmep=Math.max(0.05,imep-pumpFrictionMEP(rpm,map,oilFrictionMult));
@@ -3521,9 +3658,13 @@ function brakeTorqueRaw(rpm,map,fuelCut){
   const {coolF,oilFrictionMult}=tempFactors(state.coolant,state.oil);
   let imep=0;
   if(!fuelCut){
-    const ve=computeVE(rpm,map),afrP=afrPowerFactor(curAFR(rpm,map));
-    const ignF=clamp(1-0.004*Math.pow(activeAdvance(rpm,map)-mbtAdvance(rpm,map),2),0.72,1.0);
-    imep=IMEP_K*engine.typeImep*map*ve*afrP*coolF*engine.crFactor*ignF*ignitionHealth(rpm)*healthFactor()*(298.15/(effIAT(map)+273.15))+nitrousImep()*healthFactor();
+    const ve=computeVE(rpm,map);
+    if(engine.ci)imep=(dieselGrossImep(rpm,map,ve)*coolF+nitrousImep())*healthFactor();
+    else{
+      const afrP=afrPowerFactor(curAFR(rpm,map));
+      const ignF=clamp(1-0.004*Math.pow(activeAdvance(rpm,map)-mbtAdvance(rpm,map),2),0.72,1.0);
+      imep=IMEP_K*engine.typeImep*map*ve*afrP*coolF*engine.crFactor*ignF*ignitionHealth(rpm)*healthFactor()*(298.15/(effIAT(map)+273.15))+nitrousImep()*healthFactor();
+    }
     imep=dieselImepLimit(imep);
     const knock=computeKnockRisk(rpm,map);
     if(knock>60)imep*=1-0.32*((knock-60)/40);
@@ -3550,7 +3691,7 @@ function advanceShaft(shaftE,rpm,boostNow,throttle,dt){
   // exhaust, weak turbine, never spools. Same bootstrap shape as taking the turbine's expansion
   // ratio from the compressor's: the thing needed to start the process derived from the process
   // having started.
-  const T3=exhaustGasT(clamp(th,0.3,1.1));
+  const T3=exhaustGasT(clamp(th,0.3,1.1),rpm);
   const sub=Math.max(1,Math.ceil(dt/0.002));   // the shaft is faster than the vehicle; sub-step it
   const h=dt/sub;
   let E=clamp(shaftE,0,Emax), b=clamp(boostNow,0,engine.maxBoost);
@@ -3742,8 +3883,8 @@ function updatePhysics(){
   const airMass_kg_s=(MAP_pa*Vd*(state.rpm/60)*state.ve)/(287*T_k*2);
   // Imprecise metering (carbs / mechanical injection) wastes fuel; the cycle's thirst factor
   // (typeBsfc) captures combustion/scavenging losses — a 2-stroke short-circuits fresh charge
-  // out the exhaust (>1, thirsty), while a diesel's complete lean CI burns less (<1).
-  const meteredFuel=(airMass_kg_s/state.afr)/engine.meteringEff*engine.typeBsfc;
+  // out the exhaust (>1, thirsty). A diesel is 1: its torque is computed from this same fuel.
+  const meteredFuel=(airMass_kg_s/curAFR(state.rpm,map))/engine.meteringEff*engine.typeBsfc;
   state.fuelFlowLph=(meteredFuel*3600)/engine.fuelDensity;
   const fuelPower=meteredFuel*engine.fuelLHV*1e6/1000;
   state.thermalEff=fuelPower>0.1?clamp((state.powerKW/fuelPower)*100,0,46):0;
@@ -3962,7 +4103,7 @@ function simulateBraking(v0){
 // The conditions and mixture the SCORECARD rates peak power at (scoreEngine), so that the LIVE
 // tab's MAX POWER button lands on the number the DYNO tab prints.
 const DYNO_STD={iat:25,coolant:90,oil:100};
-const bestPowerLambda=()=>engine.ci?1.05:0.86;
+const bestPowerLambda=()=>engine.ci?SMOKE_LAMBDA_CI:0.86;
 // LOAD slider value that makes the dyno brake hold this rpm: target = redline - load*(redline - idle).
 const loadForRpm=rpm=>clamp((engine.redline-rpm)/Math.max(1,engine.redline-engine.idleRpmEff),0,1);
 // Throttle opening that gives manifold fraction f of upstream pressure at this rpm — mapTarget()
@@ -4012,7 +4153,7 @@ function buildTorqueCurve(){
   const sv={afr:state.afr,coolant:state.coolant,oil:state.oil,engineHealth:state.engineHealth,blown:state.blown,iat:state.iat,systemVoltage:state.systemVoltage,nitrousActive:state.nitrousActive};
   const savedAfrMode=engine.afrMode;engine.afrMode='fixed';   // use the fixed best-power AFR below
   state.coolant=90;state.oil=100;state.engineHealth=1;state.blown=false;state.iat=20;state.systemVoltage=14.0;state.nitrousActive=false;
-  state.afr=engine.ci?engine.stoichAFR*1.05:engine.stoichAFR*0.88;
+  state.afr=engine.ci?engine.stoichAFR*SMOKE_LAMBDA_CI:engine.stoichAFR*0.88;
   const pts=[];for(let r=1000;r<=engine.redline;r+=100)pts.push({rpm:r,tq:calcAtRpm(r).torque});
   engine.afrMode=savedAfrMode;
   Object.assign(state,sv);   // restore the exact live state (correct keys — no accidental heal)
@@ -4030,7 +4171,7 @@ function buildTorqueGrid(){
   const savedAfrMode=engine.afrMode;engine.afrMode='fixed';
   state.coolant=90;state.oil=100;state.engineHealth=1;state.blown=false;state.iat=20;
   state.systemVoltage=14.0;state.nitrousActive=false;
-  state.afr=engine.ci?engine.stoichAFR*1.05:engine.stoichAFR*0.88;
+  state.afr=engine.ci?engine.stoichAFR*SMOKE_LAMBDA_CI:engine.stoichAFR*0.88;
   const rpms=[];for(let r=1000;r<=engine.redline;r+=100)rpms.push(r);
   // Only a turbo needs the boost axis. A supercharger is belt-driven, so its boost follows rpm with
   // no shaft of its own to spin up, and an NA engine has none at all.
@@ -5671,9 +5812,9 @@ function scoreEngine(){
   state.iat=25;state.coolant=90;state.oil=100;state.engineHealth=1;state.blown=false;state.elecLoad=0.3;
   const rMax=engine.redline;
   // best-power WOT sweep → peaks, powerband, low-end torque. Diesel makes peak power lean,
-  // near the smoke limit (λ≈1.05); spark engines peak rich (λ≈0.86).
-  const powerAfr=engine.ci?engine.stoichAFR*1.05:engine.stoichAFR*0.86;
-  const effAfr=engine.ci?engine.stoichAFR*1.15:engine.stoichAFR;
+  // at the smoke limit (SMOKE_LAMBDA_CI); spark engines peak rich (λ≈0.86).
+  const powerAfr=engine.ci?engine.stoichAFR*SMOKE_LAMBDA_CI:engine.stoichAFR*0.86;
+  const effAfr=engine.ci?engine.stoichAFR*1.5:engine.stoichAFR;
   state.afr=powerAfr;
   let peakHP=0,peakHPrpm=0,peakTQ=0,peakTQrpm=0;const pts=[];
   for(let r=1000;r<=rMax;r+=100){const p=calcAtRpm(r);pts.push(p);
@@ -5692,7 +5833,7 @@ function scoreEngine(){
     for(const rf of [0.6,0.85,1.05]){const rr=Math.round(clamp(peakTQrpm*rf,1200,rMax));
       const cr=calcAtRpm(rr,cm);
       const airMass=(cm*1e5*(engine.displacement_L/1000)*(rr/60)*cr.ve)/(287*(effIAT(cm)+273.15)*2);
-      const fuelPower=((airMass/state.afr)/engine.meteringEff*engine.typeBsfc)*engine.fuelLHV*1e6/1000;
+      const fuelPower=((airMass/curAFR(rr,cm))/engine.meteringEff*engine.typeBsfc)*engine.fuelLHV*1e6/1000;
       if(fuelPower>0.1)thEff=Math.max(thEff,clamp((cr.powerKW/fuelPower)*100,0,46));
     }}
   // emissions: cleanliness at a representative stoich cruise + part-load (where a modern
@@ -5953,7 +6094,7 @@ function drawExhaustSide(px,py,S,F,LW,m,portYc,exX){
   // The model's own exhaust temperature at this load — the same call back-pressure uses. This read
   // 320 + 520 x (power / peak power) until build 85: a display formula with no physics in it, which
   // showed a diesel at full power as hot as a petrol engine.
-  const egtK=exhaustGasT(clamp(m/Math.max(0.4,engine.mapMax||1),0.3,1.1));
+  const egtK=exhaustGasT(clamp(m/Math.max(0.4,engine.mapMax||1),0.3,1.1),state.rpm,curAFR(state.rpm,m)/engine.stoichAFR);
   ctx.fillText(tr('EGT')+' '+Math.round(state.powerHP>1?egtK-273:state.coolant)+'C',px(330),py(portYc+30));
 }
 function drawFuelSpark(px,py,S,F,m){

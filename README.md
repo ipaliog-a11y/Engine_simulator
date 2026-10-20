@@ -1,4 +1,4 @@
-# PIXEL ENGINE SIM v0.6 build 87
+# PIXEL ENGINE SIM v0.6 build 88
 
 **A lightweight, 8-bit style internal combustion engine *designer* & simulator** inspired by *Automation*.
 
@@ -664,7 +664,10 @@ documented in the GUIDE at the point where it matters:
 - **There is no engine braking above the limiter.** Past the rev limiter drive force is zero, but
   nothing pushes back, so a steep descent can carry a car a km/h or so beyond the speed its top
   gear allows. Real overrun would drag it back.
-- **Power peaks at the rev limiter on one preset** (2.0 Turbo Hot-Hatch) — down from four before the
+- **Power peaks at the rev limiter on two presets.** The 2.0 Turbo Diesel I4 is a *plateau* (within
+  ~4% from 3500 rpm) left by derived diesel physics. A real TDI's sharper fall over its last 600 rpm is
+  the maker's torque-limit calibration, not combustion. A droop governor was tried and fitted real
+  data worse (see test46). The other is the 2.0 Turbo Hot-Hatch, down from four before the
   valvetrain conversion and two before gas dynamics. Every naturally-aspirated preset now rolls off
   inside its own rev range for a stated reason. The one that remains is a *turbo*, and what sets a
   turbo's peak position is boost taper as the compressor runs out of map. Conversion 4 has since
@@ -684,8 +687,9 @@ documented in the GUIDE at the point where it matters:
   attempts. The third (builds 82–84) found the bell had been covering for two errors: the trapping
   calculation closed every intake valve 16–24° early, and the intake ram put its tuning peak 22–57%
   too high in rpm against Engelman's published ratio, so every runner rang at the redline. With both
-  fixed, test41 improves (4.02% → 3.34%) and test48's power error halves (15.8% → 8.6%). Diesels,
-  rotaries and two-strokes still use the fitted bell, and `CAM.ampMul` still scales VE by cam grade.
+  fixed, test41 improves (4.02% → 3.34%) and test48's power error halves (15.8% → 8.6%). Diesels
+  followed in build 88, once their torque came from fuel and their burn from time. Rotaries and
+  two-strokes still use the fitted bell, and `CAM.ampMul` still scales VE by cam grade.
   The S2000 and S54 in test48 now carry their factory high-rpm intake and header; on the app's
   mid-range defaults they read 23–35% short, so check those two hardware calls if you know the cars.
 - **Rotational inertia is not charged during acceleration.** The engine, flywheel, gearbox and
@@ -725,9 +729,9 @@ measurement finds things. Each item is one PR.
 | — | Variable-geometry turbine | ✅ build 80 | The diesel spool gap was a VGT gap, not pulse energy. |
 | — | Shift at the torque crossover | ✅ build 81 | Every car used to upshift at the redline; 0–100 RMS 24.4% → 10.2%. |
 | 3 | Turbine housing sizing | ⬜ **next** | Retires the size-class A/R table and `turboChoke`. The VGT was its missing prerequisite. Findings parked at `tests/proto/housing.mjs`, patch at `housing-sizing.diff`. |
-| 4 | VE bell (`vePeakRpm`) | ✅ build 84 | Retired for poppet-valve petrol engines after two hidden errors were fixed (IVC geometry, Engelman tuning ratio). Still fitted for diesels and ported engines. |
+| 4 | VE bell (`vePeakRpm`) | ✅ build 84 / 88 | Retired for poppet-valve petrol engines after two hidden errors were fixed (IVC geometry, Engelman tuning ratio), and for diesels in build 88. Still fitted for ported engines. |
 | 5 | Launch model | ⬜ | Unblocks the parked slip-ratio tyre model *and* rotational inertia — every car currently gets a free ~6% on 0–100. The three go in together and recalibrate once. |
-| 6 | Combustion (conversion 5) | ⬜ | The big one. |
+| 6 | Combustion (conversion 5) | 🟨 diesel ✅ build 88 | Diesel: torque from fuel, fixed-time Wiebe burn, wall heat, turbine-temperature fuel cap, signed gas exchange. Spark engines still take IMEP from air (`IMEP_K`, `typeImep`); petrol full-load BSFC still reads ~240 against a real 270–300. |
 | 7 | Ground `test46`'s invented bands | ⬜ | Back-pressure caps, ram/scavenge magnitude and buildable header length are bands **I wrote**, not measurements. None currently fails, which is exactly the concern — a band you invented can only confirm your own reasoning. |
 
 Also carried, and labelled in place rather than quietly: `BEAR_C` (~5× published turbo bearing
