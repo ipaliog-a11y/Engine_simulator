@@ -1,4 +1,4 @@
-# PIXEL ENGINE SIM v0.6 build 103
+# PIXEL ENGINE SIM v0.6 build 104
 
 **A lightweight, 8-bit style internal combustion engine *designer* & simulator** inspired by *Automation*.
 
@@ -741,6 +741,7 @@ measurement finds things. Each item is one PR.
 | — | Exhaust energy balance | ✅ build 101 | Exhaust share = 1 − work − wall (Woschni, traced) − port (Caton–Heywood) − unburned fuel, replacing "roughly a third". Mass-averaged gas drives the turbine and the vane limit; reported EGT is the thermocouple (time-averaged) reading. NA 818–938 C, turbo petrols 880–1048 C. Next: turbo manifold heat loss; the turbine throat convention. |
 | — | UI pass 1 | ✅ build 102 | Compact form grid; family → build pickers for engines and cars; a strip showing the loaded engine and car; tyre rating warning refreshes, and (Y) has no ceiling. Next: garage tab, live timing. |
 | — | Garage tab | ✅ build 103 | Saved cars and saved engines in their own tab, with VIEW / LOAD / DELETE; an engine loads into the current car; older saves appear as cars. Next: live timing. |
+| — | Live timing | ✅ build 104 | The solved lap replayed in real time on the track map: car and trail, live clock and sector splits, speed/gear/rpm, throttle and brake, g-meter; 1×/2×/4×, pause, restart. Read off the lap solver's own recording. |
 | — | Spark torque from fuel | ✅ build 95 | `IMEP_K` replaced by Heywood's 0.8 × fuel-air cycle efficiency; each fuel's LHV/AFR_st enters. Spark torque −2.7%, full-load BSFC 280 g/kWh (real 270–300). Rotary/two-stroke type factors still fitted. |
 | — | `turboChoke` (boost taper) | ✅ build 94 | Retired. Turbine efficiency from blade speed ratio U/C, per-point compressor efficiency, a continuous rich-knock slope in place of a step, and sequential turbos staged as two turbines. Calibration improved on every measure. |
 | — | Rotary exhaust heat | ✅ build 92 | The slow, late Wankel burn (130° ES, CA50 37.5° ATDC) leaves ~10% of the expansion work undone, and that heat now reaches the exhaust: 13B 775 → 942 °C, off the limiter. |
