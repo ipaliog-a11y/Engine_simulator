@@ -86,6 +86,28 @@ if (!/PLAY/.test(p1.label)) fails.push('the paused button does not offer PLAY');
 if (!((s1 - s0) > 2.5 * (t1 - t0))) fails.push('4x does not run the clock faster than 1x');
 if (r0 > 0.2) fails.push('RESTART did not put the clock back to the start');
 
+// ---- 3. the instruments (build 112): analog gauges, and a boost gauge that reads the engine ----
+const gz = await page.evaluate(() => {
+  const out = {};
+  for (const [k, car] of [['turbo', 'Toyota Supra RZ (A80, 1993)'], ['na', 'Porsche 911 GT3 (991.2, 2017)']]) {
+    loadVehiclePreset(VEHICLE_PRESETS.find(v => v.name === car));
+    const L = simulateLap('mixed'), R = L.replay; let bad = 0, wot = 0;
+    for (let i = 0; i < R.map.length; i++) if (R.thr[i] === 1) { wot++; if (Math.abs(R.map[i] - (1 + boostAvail(R.rpm[i]))) > 1e-9) bad++; }
+    out[k] = { maxMap: Math.max(...R.map), minMap: Math.min(...R.map), bad, wot, boost: engine.boost_bar };
+  }
+  return out;
+});
+console.log(`\n== boost gauge: Supra ${(gz.turbo.minMap - 1).toFixed(2)} to +${(gz.turbo.maxMap - 1).toFixed(2)} bar (set ${gz.turbo.boost}) · GT3 (NA) up to ${(gz.na.maxMap - 1).toFixed(2)} bar ==`);
+if (gz.turbo.bad || gz.na.bad) fails.push('at full throttle the gauge does not read the engine\'s own boost at that rpm');
+if (!(gz.turbo.maxMap > 1.3)) fails.push('the turbo car never shows boost on a lap');
+if (!(gz.turbo.minMap < 0.5)) fails.push('a closed throttle does not pull vacuum');
+if (gz.na.maxMap > 1 + 1e-9) fails.push('an NA engine shows boost');
+await page.selectOption('#replayGauges', 'analog'); await page.waitForTimeout(300);
+const an = await page.evaluate(() => { let st = null; try { st = localStorage.getItem('pes.gauges'); } catch (e) {} return { mode: lapReplay.gauges, st }; });
+await page.selectOption('#replayGauges', 'digital'); await page.waitForTimeout(200);
+console.log(`== gauges: analog selected -> mode ${an.mode}, remembered "${an.st}" ==`);
+if (an.mode !== 'analog') fails.push('the ANALOG option does not switch the instruments');
+
 if (errors.length) fails.push(...errors);
 console.log(fails.length ? '\nFAIL:\n  ' + fails.join('\n  ') : '\nPASS');
 await browser.close();
