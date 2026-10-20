@@ -1,4 +1,4 @@
-# PIXEL ENGINE SIM v0.6 build 93
+# PIXEL ENGINE SIM v0.6 build 94
 
 **A lightweight, 8-bit style internal combustion engine *designer* & simulator** inspired by *Automation*.
 
@@ -672,12 +672,11 @@ documented in the GUIDE at the point where it matters:
   the maker's torque-limit calibration, not combustion. A droop governor was tried and fitted real
   data worse (see test46). The other is the 2.0 Turbo Hot-Hatch, down from four before the
   valvetrain conversion and two before gas dynamics. Every naturally-aspirated preset now rolls off
-  inside its own rev range for a stated reason. The one that remains is a *turbo*, and what sets a
-  turbo's peak position is boost taper as the compressor runs out of map. Conversion 4 has since
-  shipped the compressor island and the shaft balance, but the last fitted stand-in for taper —
-  `turboChoke` — is still there, and it should retire with turbine housing sizing: real top-end
-  taper *is* back-pressure outrunning boost. `tests/test46.mjs` holds this at a budget of 1 and
-  additionally fails outright if any NA preset ever joins it.
+  inside its own rev range for a stated reason. The Hot-Hatch's power is a plateau to its limiter
+  (within 1% over the last 5% of revs). The fitted taper that used to roll turbos off, `turboChoke`,
+  is gone (build 94): turbine efficiency from blade speed ratio, per-point compressor efficiency and
+  sequential staging do the job. `tests/test46.mjs` holds the list by name and fails outright if any
+  NA preset ever joins it.
 - **The whole suite passes** as of build 93. `test40` failed for many builds; its two claims stood on
   fitted spool losses, and with bearings from Petroff's law, a real charge volume and boost as a state,
   one holds on the physics and the other is checked where its premise holds (see the changelog). It asserts that spool time lengthens with the boost target, and that at low boost a
@@ -708,7 +707,7 @@ This is the current direction, and it is a change of principle rather than a fea
 
 Parts of the model reach their accuracy through **lumped coefficients that were tuned until the
 outputs matched reality** — `CAM{peakShift, ampMul, scav}`, `EXHAUST{topGain, lowLoss}`,
-`TURBO{spool, choke, flow}`, `IMEP_K`, `DIFF_ASYM0`, `KVCAP`. They work, and they are honest
+`TURBO{spool, flow}`, `IMEP_K`, `DIFF_ASYM0`, `KVCAP`. They work, and they are honest
 approximations, but they are fitted rather than derived: they encode *the answer* instead of the
 mechanism that produces it.
 
@@ -733,7 +732,8 @@ measurement finds things. Each item is one PR.
 | — | Variable-geometry turbine | ✅ build 80 | The diesel spool gap was a VGT gap, not pulse energy. |
 | — | Shift at the torque crossover | ✅ build 81 | Every car used to upshift at the redline; 0–100 RMS 24.4% → 10.2%. |
 | — | Exhaust pulse energy | ✅ build 90 | The turbine fed by blowdown pulses, from cam timing and cylinder state; the prerequisite housing sizing kept running into. Small on presets with long tuned primaries. |
-| 3 | Turbine housing sizing | ✅ build 91, as a choice | Not derivable: which side of the spool/top-end compromise to take is design intent, and every objective tried decided it silently (sweep time gave the GTI 287 hp vs 220). Shipped as TURBINE A/R (tight/stock/loose per frame), plus the real physics found on the way: turbo manifolds are packaging-short, not tuned headers. `turboChoke` remains. The Alto's frame-size gap remains (no frame small enough for 660 cc). |
+| 3 | Turbine housing sizing | ✅ build 91, as a choice | Not derivable: which side of the spool/top-end compromise to take is design intent, and every objective tried decided it silently (sweep time gave the GTI 287 hp vs 220). Shipped as TURBINE A/R (tight/stock/loose per frame), plus the real physics found on the way: turbo manifolds are packaging-short, not tuned headers. The Alto's frame-size gap remains (no frame small enough for 660 cc). |
+| — | `turboChoke` (boost taper) | ✅ build 94 | Retired. Turbine efficiency from blade speed ratio U/C, per-point compressor efficiency, a continuous rich-knock slope in place of a step, and sequential turbos staged as two turbines. Calibration improved on every measure. |
 | — | Rotary exhaust heat | ✅ build 92 | The slow, late Wankel burn (130° ES, CA50 37.5° ATDC) leaves ~10% of the expansion work undone, and that heat now reaches the exhaust: 13B 775 → 942 °C, off the limiter. |
 | — | Rotary pulse energy | ⬜ | The 13B still reaches boost near 8500 rpm (real ~3000). It needs blowdown timing from the rotary's ports, and a firmer port-timing source. Ceiling in test56. |
 | 4 | VE bell (`vePeakRpm`) | ✅ build 84 / 88 | Retired for poppet-valve petrol engines after two hidden errors were fixed (IVC geometry, Engelman tuning ratio), and for diesels in build 88. Still fitted for ported engines. |
@@ -741,7 +741,7 @@ measurement finds things. Each item is one PR.
 | 6 | Combustion (conversion 5) | 🟨 diesel ✅ build 88 | Diesel: torque from fuel, fixed-time Wiebe burn, wall heat, turbine-temperature fuel cap, signed gas exchange. Spark engines still take IMEP from air (`IMEP_K`, `typeImep`); petrol full-load BSFC still reads ~240 against a real 270–300. |
 | 7 | Ground `test46`'s invented bands | ⬜ | Back-pressure caps, ram/scavenge magnitude and buildable header length are bands **I wrote**, not measurements. None currently fails, which is exactly the concern — a band you invented can only confirm your own reasoning. |
 
-Also carried, and labelled in place rather than quietly: `turboChoke`, and the `ci` factor on the intake half of the
+Also carried, and labelled in place rather than quietly: the knock score's points (KNOCK_RICH is a measured trend, not a derivation — the real one is an end-gas autoignition integral), and the `ci` factor on the intake half of the
 pumping loop (which compensates for `mapTarget()` giving diesels a throttle plate they should not
 have — the real fix is re-plumbing diesel load through fuelling).
 
@@ -779,7 +779,7 @@ have — the real fix is re-plumbing diesel load through fuelling).
    turbo mid-spool. The turbine housing is settled as a builder's choice (TURBINE A/R, build 91):
    which side of the spool/top-end compromise to take is design intent, not physics. The two
    transient losses are derived as of build 93 (Petroff bearings, charge-system fill, boost as a
-   state). Still fitted: `turboChoke`, the stand-in for boost taper. Working model at
+   state), and the boost-taper stand-in `turboChoke` is retired (build 94). Working model at
    `tests/proto/turbo.mjs`. 22 fitted numbers go:
    `TURBO{spool50, width, choke, k, flow}` × 3 frames, `TURBO_CONFIG{...}` × 4, `TURBO_PR_REF` and
    `SPOOL_PR_EXP`.

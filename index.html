@@ -249,7 +249,7 @@ table.fuelmap td.live{box-shadow:inset 0 0 0 2px #fff;font-weight:bold}
 <body>
 <div class="container">
 <header>
-<h1>PIXEL ENGINE SIM v0.6 build 93</h1>
+<h1>PIXEL ENGINE SIM v0.6 build 94</h1>
 <div class="subtitle" id="subtitle">ENGINE DESIGNER • BUILD IT, THEN DRIVE IT</div>
 </header>
 <div class="main">
@@ -1520,7 +1520,7 @@ function backPressureBar(rpm,T){
   if(e.turbineArea>0){
     const map=Math.max(1,e.boostNow||1);
     const mAir=(e.dispCyl_L/1000)*e.cylinders*(rpm/120)*(101325*map/(287*313));
-    const mEx=mAir*1.06/(e.turbUnits||1), mA=mAir/(e.turbUnits||1);
+    const u=unitsAt(rpm), mEx=mAir*1.06/u, mA=mAir/u;
     // On a VGT the throat is whatever the vanes have been scheduled to; below target they are shut
     // and the piston pays the full nozzle pressure for it, which is the whole point of the device.
     //
@@ -1531,17 +1531,35 @@ function backPressureBar(rpm,T){
     // for. A real VGT needs no gate because its ring, properly sized, swallows the lot; here the
     // open position cannot, so the surplus is dumped exactly as a fixed frame's is. Retire this
     // when the throat convention is corrected — at which point the whole turbo side recalibrates.
-    return pipe+(manifoldPR(mA,mEx,map,T,turbineThroatAt(rpm,map,T),e.compEff)-1);
+    return pipe+(manifoldPR(mA,mEx,map,T,turbineThroatAt(rpm,map,T),e.compEff,compFlowFrac(rpm,mAir))-1);
   }
   return pipe;
+}
+// ---- SEQUENTIAL turbos: one turbine down low, two up top ----
+// A sequential pair (2JZ-GTE, 13B-REW) runs on its primary alone for early spool and brings the
+// secondary in once one turbine would choke the exhaust. Until build 94 'sequential' was modelled as a
+// single turbine for all the exhaust, with only a compressor-flow multiplier, which cost nothing while
+// the turbine had a constant efficiency — and 1.58 x boost in back-pressure once it did not. WHERE it
+// stages is a control law, and it is derived rather than asserted: at the lowest speed at which the
+// pair can hold the boost target. Below it the primary alone holds boost and spools sooner; above it,
+// two throats halve the back-pressure for the same boost.
+function unitsAt(rpm){
+  const e=engine;
+  if(e.turboConfig==='sequential')return rpm>=e.seqStageRpm?2:1;
+  return e.turbUnits||1;
+}
+// Where a compressor sits on its map: the flow through ONE active wheel over ONE wheel's choke flow.
+function compFlowFrac(rpm,mAirTotal){
+  const e=engine;
+  return (mAirTotal/unitsAt(rpm))/Math.max(1e-9,e.chokeFlow_kgs/(e.turbUnits||1));
 }
 // The turbine throat in use at an operating point: fixed, or wherever the vanes are scheduled.
 function turbineThroatAt(rpm,map,T){
   const e=engine;
   if(!(e.vgtShut>0))return e.turbineArea;
   const mAir=(e.dispCyl_L/1000)*e.cylinders*(rpm/120)*(101325*Math.max(1,map)/(287*313));
-  const u=e.turbUnits||1, mEx=mAir*1.06/u, mA=mAir/u;
-  const Ut=turbineTipFor(1+e.maxBoost,mA/Math.max(1e-9,e.chokeFlow_kgs/u),298);
+  const u=unitsAt(rpm), mEx=mAir*1.06/u, mA=mAir/u;
+  const Ut=turbineTipFor(1+e.maxBoost,compFlowFrac(rpm,mAir),298);
   return vgtThroat(mEx,compPowerAt(mA,1+e.maxBoost,313,e.compEff),T,e.turbineArea,e.vgtShut,map,Ut).area;
 }
 // ---- late intake valve closing: why a big cam guts the bottom end ----
@@ -1692,7 +1710,7 @@ function turbineTipFor(pr,flowFrac,T01){
 function pulseShape(mEx,area,T3,mapBar,prMean){
   const e=engine;
   if(e.ports||!(e.primL>0)||!(e.camDur>0))return null;
-  const perTurbine=(e.cylinders||1)/(e.turbUnits||1);
+  const perTurbine=e.turboConfig==='sequential'?(e.cylinders||1):(e.cylinders||1)/(e.turbUnits||1);   // a sequential pair shares one manifold
   const phi=clamp(Math.max(10,e.camLSA+e.camDur/2-180)*perTurbine/720,0.02,1);
   if(phi>=1)return null;
   const T=Math.max(300,T3), Tint=313, pInt=Math.max(0.3,mapBar||1);
@@ -1715,11 +1733,11 @@ function turbinePower(mEx,area,T3,mapBar,prMean,Ut){
         +(1-s.phi)*Math.max(0,mLo)*turbineWorkMean(turbineManifoldPR(Math.max(0,mLo),area,T3),T3,Ut);
   return{P,pr};
 }
-function manifoldPR(mAir,mEx,mapBar,T3,area,compEta){
+function manifoldPR(mAir,mEx,mapBar,T3,area,compEta,flowFrac){
   if(!(area>0))return 1;
   const pComp=mAir*1005*298*(Math.pow(Math.max(1,mapBar),0.286)-1)/clamp(compEta||0.72,0.30,0.85);
   if(pComp<=0)return 1;
-  const Ut=turbineTipFor(Math.max(1,mapBar),mAir*(engine.turbUnits||1)/Math.max(1e-9,engine.chokeFlow_kgs),298);
+  const Ut=turbineTipFor(Math.max(1,mapBar),flowFrac>0?flowFrac:mAir/Math.max(1e-9,engine.chokeFlow_kgs),298);
   const tPower=pr=>{
     // pr never exceeds the gate-shut solution, so mT is the nozzle flow AT pr and its mean PR is pr
     const mT=Math.min(mEx,area*(pr*101325)/Math.sqrt(Math.max(300,T3))*nozzleFlux(pr));
@@ -1851,11 +1869,11 @@ function compressorPR(exd,shaftRpm,flowFrac,T01){
 // takes to get there, not whether it can). Transient losses live in shaftLossPower and are
 // applied only by advanceShaft — putting them in the steady search collapsed high-boost power
 // curves and put the rotary turbo back on the rev limiter.
-function shaftNetPower(shaftRpm,mAir,T3,T01){
+function shaftNetPower(shaftRpm,mAir,T3,T01,rpm){
   const e=engine;
   if(!e.turbineArea)return 0;
-  const units=e.turbUnits||1;
-  const {pr,eta}=compressorPR(e.compExd,shaftRpm,mAir/Math.max(1e-9,e.chokeFlow_kgs),T01);
+  const units=unitsAt(rpm||0);
+  const {pr,eta}=compressorPR(e.compExd,shaftRpm,compFlowFrac(rpm||0,mAir),T01);
   // Report the RAW pressure ratio the wheel is producing as well as the wastegated one. The search
   // in steadyBoost asks "can the shaft reach this PR", and if it only ever sees the capped value it
   // can never answer yes at the cap itself — which silently reported a frame as unable to make a
@@ -1915,11 +1933,11 @@ function steadyBoost(rpm){
     // Could the shaft, spun to whatever speed this PR needs, still be gaining energy there?
     let lo=1000,hi=nMax,found=-1;
     for(let i=0;i<28;i++){
-      const mid=(lo+hi)/2, r=shaftNetPower(mid,mAir,T3,313);
+      const mid=(lo+hi)/2, r=shaftNetPower(mid,mAir,T3,313,rpm);
       if(r.prRaw>=pr){hi=mid;found=mid;}else lo=mid;
     }
     if(found<0)return false;                      // cannot reach this PR at any shaft speed
-    return shaftNetPower(found,mAir,T3,313).net>=0;
+    return shaftNetPower(found,mAir,T3,313,rpm).net>=0;
   };
   const target=1+e.maxBoost;
   if(canHold(target))return e.maxBoost;           // wastegating
@@ -1982,8 +2000,9 @@ function deriveGasDynamics(){
     // schedule at all.
     e.compExd=tb.exd;
     setTurbineAR(tb.ars[TURBINE_HOUSING[e.housing]??1]);   // the housing the build chose for this frame
-    e.turbUnits=(e.turboConfig==='twin')?2:1;
-    e.shaftJ=wheelInertia(tb.exd)*(e.turbUnits);
+    e.turbUnits=(e.turboConfig==='twin'||e.turboConfig==='sequential')?2:1;
+    e.shaftJ=wheelInertia(tb.exd)*(e.turboConfig==='twin'?2:1);   // a sequential secondary is pre-spooled
+    e.seqStageRpm=0;                                               // set once the engine is built
     e.shaftMax=maxShaftRpm(tb.exd);
   }else{e.turbineArea=0;e.vgtShut=0;e.turbUnits=1;e.compExd=0;e.shaftJ=0;e.shaftMax=0;}
   // Size the system pipe from the engine's own flow at the power peak, not from a fixed number.
@@ -2433,14 +2452,11 @@ const DWELL_RPM={distributor:5200,wasted:6800,coil:9000};
 // inside the lumped `spool50` until now. Frames are sold with a matched housing, so it scales with
 // the wheel.
 const TURBO={
-  // choke is the remaining fitted stand-in for boost taper (retired once vePeakRpm is derived).
-  // Values kept modest so a correctly-sized small frame is not docked out of a fair fight with a
-  // laggy large one on a low-boost standing start — over-flow still adds the 0.32·max(0,load−1) term.
   // ars: the housings a maker sells for the frame (tight / stock / loose), on this model's R_wheel
   // convention (see backPressureBar) — the stock step is the single A/R each frame used to have.
-  small: {exd:0.054,ars:[0.35,0.42,0.50],spool50:0.26,width:0.06,choke:0.10},
-  medium:{exd:0.071,ars:[0.48,0.64,0.82],spool50:0.40,width:0.08,choke:0.055},
-  large: {exd:0.086,ars:[0.63,0.86,1.06],spool50:0.54,width:0.10,choke:0.025}
+  small: {exd:0.054,ars:[0.35,0.42,0.50],spool50:0.26,width:0.06},
+  medium:{exd:0.071,ars:[0.48,0.64,0.82],spool50:0.40,width:0.08},
+  large: {exd:0.086,ars:[0.63,0.86,1.06],spool50:0.54,width:0.10}
 };
 const AR_INCH=0.0254;          // A/R is quoted in inches
 const TURB_WHEEL=0.90;         // turbine wheel as a fraction of the compressor exducer
@@ -2493,10 +2509,10 @@ const SPOOL_PR_EXP=1.45;
 // response / rated flow. Twin spools earlier & flows better; sequential spools very early and
 // stays flat; compound stages two compressors, so it makes big low-end and flows the most.
 const TURBO_CONFIG={
-  single:    {label:'SINGLE',     spool:1.00,width:1.00,choke:1.00,flow:1.00},
-  twin:      {label:'TWIN',       spool:0.82,width:1.10,choke:0.55,flow:1.85},
-  sequential:{label:'SEQUENTIAL', spool:0.60,width:1.55,choke:0.30,flow:1.55},
-  compound:  {label:'COMPOUND',   spool:0.68,width:1.35,choke:0.18,flow:2.30}
+  single:    {label:'SINGLE',     spool:1.00,width:1.00,flow:1.00},
+  twin:      {label:'TWIN',       spool:0.82,width:1.10,flow:1.85},
+  sequential:{label:'SEQUENTIAL', spool:0.60,width:1.55,flow:1.55},
+  compound:  {label:'COMPOUND',   spool:0.68,width:1.35,flow:2.30}
 };
 // Supercharger types: boost fraction vs rpm = clamp(lo + (hi-lo)*(rpm/redline)^exp). Roots &
 // twin-screw are positive-displacement (near-full boost from low rpm); centrifugal is a
@@ -2994,13 +3010,18 @@ function buildEngine(){
   engine.spool50=tb.spool50*cfg.spool*als*prMul*engine.redline;
   engine.spoolWidth=tb.width*cfg.width*engine.redline;
   // Past its rated flow the compressor runs out of map and the top end chokes off in earnest.
-  engine.turboChoke=tb.choke*cfg.choke+0.32*Math.max(0,engine.turboLoad-1);   // STILL FITTED: boost taper
   // The hard airflow ceiling this frame can pass, in kg/s. Derived from the same inducer choke as
   // the flow rating, so the rating and the limit cannot disagree.
   engine.chokeFlow_kgs=engine.intake==='turbo'?compChokeFlow(tb.exd)*cfg.flow/132.28:0;
   // Solving the shaft balance costs a few thousand iterations, and boostAvail is called for every
   // rpm of every torque-curve build. Sample it once per engine into a table and interpolate — the
   // same reason a compressor map is a map and not a formula evaluated at runtime.
+  if(engine.turboConfig==='sequential'&&engine.intake==='turbo'&&engine.turbineArea>0){
+    engine.seqStageRpm=0;                                    // both turbines everywhere, to find where the pair holds
+    let st=engine.redline+1;
+    for(let r=1000;r<=engine.redline;r+=100)if(steadyBoost(r)>=0.98*engine.maxBoost){st=r;break;}
+    engine.seqStageRpm=st;
+  }
   buildBoostTable(26);
   engine.nitrousBar=NITROUS_BAR[engine.nitrous]||0;
   state.boostActual=0;state.nitrousActive=false;state.nitrousCharge=1.0;   // fresh tanks
@@ -3321,7 +3342,7 @@ function effIAT(map,rpm){
     // part of why a turbo engine rolls off before its limiter. (Turbos only; a supercharger's
     // efficiency is another law, and it keeps its design value.)
     const eta=(rpm>0&&engine.intake==='turbo'&&engine.chokeFlow_kgs>0)
-      ?compIslandEff(airFlowAt(rpm,PR)/engine.chokeFlow_kgs,PR):engine.compEff;
+      ?compIslandEff(compFlowFrac(rpm,airFlowAt(rpm,PR)),PR):engine.compEff;
     const rise=(t+273.15)*(Math.pow(PR,0.283)-1)/clamp(eta||0.72,0.30,0.85);
     t+=rise*(1-(engine.icEff!=null?engine.icEff:0.82));
   }
@@ -3371,18 +3392,15 @@ function computeVE(rpm,map){
     engine.boostNow=map;
     ve*=1-residualLoss(1+backPressureBar(rpm,Tex),Math.max(0.3,map),engine.compression);
   }
-  // TWO separate things make a turbo fall off up top, and only one of them is derived yet.
-  //   1. CHOKE — the compressor physically cannot pass more air past the inducer's sonic limit.
-  //      Derived below from the same inducer area as the flow rating, so the rating and the limit
-  //      cannot disagree.
-  //   2. BOOST TAPER — the compressor running out of shaft speed as the wastegate closes, which is
-  //      what rolls off a turbo that is NOT flow-limited. That needs the shaft power balance, which
-  //      is the remaining piece of conversion 4.
-  // `turboChoke` stays for (2) only, and is now labelled as the stand-in it is. Removing it before
-  // its replacement existed put the 2JZ back on the rev limiter, because nothing was left to roll
-  // off a frame that never actually chokes.
-  if(engine.intake==='turbo'&&rpm>peak)
-    ve*=1-engine.turboChoke*clamp((rpm-peak)/(engine.redline-peak),0,1);
+  // What makes a turbo fall off up top, all derived now:
+  //   · CHOKE — the compressor cannot pass more air past the inducer's sonic limit (below, from the
+  //     same inducer area as the flow rating, so the rating and the limit cannot disagree);
+  //   · the compressor off its island near choke, so the charge arrives hotter (effIAT, per point);
+  //   · the turbine off its best blade-speed ratio at high flow, so back-pressure rises to make the
+  //     compressor's work (turbineWorkMean), costing pumping work and residual knock.
+  // `turboChoke` — a fitted VE taper of 2.5-10% per frame from the VE peak to the redline — stood in for
+  // all of this until build 94. It came out once a fitted knock step stopped deciding whether turbo
+  // engines collapsed at the top (knockAt).
   if(engine.chokeFlow_kgs>0){
     const rho=map*101325/(287*(effIAT(map,rpm)+273.15));
     const demand=(engine.displacement_L/1000)*ve*(rpm/120)*rho;
@@ -3582,7 +3600,17 @@ function knockAt(rpm,map,adv){
   k+=(adv-mbt-ignBonus())*2.5;                          // spark timing vs MBT (signed)
   const lam=curAFR(rpm,map)/engine.stoichAFR;
   k+=Math.max(0,(lam-0.95))*60;                         // lean burns hotter
-  if(lam<0.87)k*=0.5;                                   // rich charge-cools
+  // Rich suppresses knock — continuously. This was `if (lam < 0.87) k *= 0.5`: a step that halved the
+  // whole score, so lambda 0.86 and 0.88 differed by up to 40 points, and at high boost the design curve
+  // (rated at 0.88) collapsed into knock retard while the scorecard (0.86) did not — a 33% torque
+  // disagreement between two views of one engine, from a 2% mixture change. It is not evaporative
+  // cooling: the extra fuel at 0.86 cools the charge by ~1 K after port-wall losses. It is end-gas
+  // chemistry, which this points-based score does not represent, so the replacement is the measured
+  // TREND, labelled as such: knock-limited spark advance gains ~3 degrees per 0.1 of enrichment below
+  // ~0.95, and this score prices a degree of timing at 2.5 points. (The real derivation is an end-gas
+  // autoignition integral, Livengood-Wu — a conversion of its own.)
+  const KNOCK_RICH=75;                                  // points per unit lambda: 3 deg/0.1 x 2.5 pts/deg
+  k-=Math.max(0,(0.95-lam))*KNOCK_RICH;
   k-=(engine.effOctane-90)*2.2;                         // fuel octane resists knock
   k-=engine.fuelKnockBonus;                             // alcohol extra knock margin
   if(engine.injector==='direct')k-=12;                  // DI charge cooling
@@ -3635,8 +3663,10 @@ function activeAdvance(rpm,map){
   if(engine.timingMode!=='auto')return engine.ignitionAdv;
   const knockAtMbt=knockAt(rpm,map,mbt);
   if(knockAtMbt<=KNOCK_TARGET)return mbt;               // clean at MBT → run full timing
-  const lam=curAFR(rpm,map)/engine.stoichAFR,rich=lam<0.87?0.5:1;
-  const retard=(knockAtMbt-KNOCK_TARGET)/(2.5*Math.max(rich,0.3));
+  // knockAt prices a degree of advance at 2.5 points at every mixture (the rich step that halved it,
+  // and this divisor's matching 0.5, went in build 94), so the retard that brings knock to target is
+  // exactly the excess over 2.5.
+  const retard=(knockAtMbt-KNOCK_TARGET)/2.5;
   return clamp(mbt-retard,6,mbt);                       // pull timing to protect
 }
 function computeKnockRisk(rpm,map){return knockAt(rpm,map,activeAdvance(rpm,map));}
@@ -3923,7 +3953,10 @@ function advanceShaft(shaftE,rpm,boostNow,throttle,dt){
     const n=Math.sqrt(2*E/J)*60/(2*Math.PI);
     // Closing the throttle throttles BOTH sides. Cooling the exhaust while leaving the compressor
     // swallowing full airflow makes a lift actively BRAKE the shaft rather than let it coast.
-    const r=shaftNetPower(n,airFlowAt(rpm,1+b)*Math.max(0.08,th),T3,effIAT(1+b,rpm)+273.15);
+    // The compressor draws AMBIENT air. This passed the charge temperature after the compressor and the
+    // intercooler as its inlet, so a build with no intercooler paid ~25% extra compressor work on every
+    // spool — enough to hide the larger fill a front-mount core really costs.
+    const r=shaftNetPower(n,airFlowAt(rpm,1+b)*Math.max(0.08,th),T3,T01,rpm);
     const loss=shaftLossPower(n);
     // Boost is the pressure in the charge volume, so it is a STATE, not a readout of shaft speed. It
     // rises when the shaft supports more, and pays the fill energy below for the air that takes. It
