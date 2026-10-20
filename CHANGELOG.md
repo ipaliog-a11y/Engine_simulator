@@ -20,6 +20,33 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 Working toward **v1.0 — every number derived, not fitted.**
 
+### Real engines as presets, in categories (build 96)
+
+- **28 presets modelled on real engines**, from published geometry and hardware, each carrying the
+  maker's rating (hp and Nm, with rpm) for comparison. Categories: Kei & City, Compact Turbo, NA Sports,
+  Turbo Performance, American V8, Exotic, Diesel, Two-Stroke. The 15 original presets are grouped as
+  Archetypes. The preset dropdown groups by category as a stopgap until the UI pass.
+- **Nothing is tuned to land on a rating; the gap is the content.** Inputs that are not in the maker's
+  data are marked `unsure` (mostly boost pressure). Gentlemen's-agreement ratings (JDM 280 PS, kei
+  64 PS) are marked with a `note` and left out of the error summary.
+- **How the model compares** (test60): RMS 15.8% on power and 14.5% on torque across 25 engines.
+  - Close: EA888 +3%, 1KR-FE +1%, Coyote −1%, Hellcat −3%, S54 +2%, EcoBoost −1%, MX-5 −5%.
+  - Far off, each traced: the 2-stroke −48% (fitted type factor, no expansion-chamber tuning); the LS7
+    −28% and 4A-GE −27%; the EJ257 −26% and Evo IX −17% (boost estimated).
+- **A model gap the real engines exposed:** an NA spark engine breathes as well at 1000 rpm as at
+  4000. The Coyote, F140 and 4A-GE report peak torque at 1000–1400 rpm. Nothing models the low-speed
+  losses a real engine has (charge heating over long residence times, off-tune intakes). Queued.
+- **A model fix this needs, not done here:** rotary displacement uses the piston formula (π/4 R² W
+  per rotor). The real 13B (R 105, W 80 mm) is 654 cc per rotor by the Wankel formula 3√3·e·R·W.
+  The rotary's fitted type factor was calibrated against the understated figure, so real rotaries
+  are left out until the geometry is corrected.
+- Bore and stroke now go to 110 / 130 mm (a Cummins 6.7 is 107 × 124).
+- **The per-preset budget tests now run on the archetypes only** (test40, 44, 46, 47, 54). Their budgets
+  and named lists were written for that set. Real engines run the same sanity checks in test60 against
+  a named list of today's anomalies, each traced to a model limit: diesel plateaus at the limiter,
+  big diesels' boost falling at the top, the low-speed gap above, and the 2-stroke. A new anomaly fails;
+  a resolved one is reported.
+
 ### A spark engine's torque, from the fuel it burns (build 95)
 
 - **`IMEP_K` no longer sets spark torque.** Spark IMEP was 13.2 × typeImep × map × VE × an anchored

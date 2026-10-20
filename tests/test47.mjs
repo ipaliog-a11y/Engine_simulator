@@ -33,7 +33,10 @@ const fails = [];
 console.log('== every preset has to be an engine that could exist ==');
 const eng = await page.evaluate(() => {
   const rows = [];
-  for (const pr of PRESETS) {
+  // The ARCHETYPE presets only (build 96): this check carries budgets and named lists written for the
+  // model's own preset set. Real engines (PRESETS with `real`) are compared, and run against the same
+  // sanity checks with their own named anomaly list, in test60.
+  for (const pr of PRESETS.filter(p => !p.real)) {
     applyEngineToForm(Object.assign({}, DEFAULT_ENGINE, pr.engine)); buildEngine();
     const Vd = engine.displacement_L, rl = engine.redline, curve = buildTorqueCurve();
 

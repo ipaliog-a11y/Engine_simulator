@@ -249,7 +249,7 @@ table.fuelmap td.live{box-shadow:inset 0 0 0 2px #fff;font-weight:bold}
 <body>
 <div class="container">
 <header>
-<h1>PIXEL ENGINE SIM v0.6 build 95</h1>
+<h1>PIXEL ENGINE SIM v0.6 build 96</h1>
 <div class="subtitle" id="subtitle">ENGINE DESIGNER • BUILD IT, THEN DRIVE IT</div>
 </header>
 <div class="main">
@@ -280,8 +280,8 @@ table.fuelmap td.live{box-shadow:inset 0 0 0 2px #fff;font-weight:bold}
 <div class="field"><label for="edType">ENGINE TYPE</label><select id="edType"><option value="petrol4">PETROL 4-STROKE</option><option value="diesel">DIESEL (CI)</option><option value="twostroke">2-STROKE</option><option value="rotary">ROTARY (WANKEL)</option></select></div>
 <div class="field"><label for="edCyl"><span id="lblCyl">CYLINDERS</span></label><select id="edCyl"><option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option><option value="6">6</option><option value="8">8</option><option value="10">10</option><option value="12">12</option></select></div>
 <div class="field"><label for="edLayout">LAYOUT</label><select id="edLayout"><option value="inline">INLINE</option><option value="v">V</option><option value="boxer">BOXER</option></select></div>
-<div class="field"><label for="edBore"><span id="lblBore">BORE (mm)</span></label><input type="number" id="edBore" min="60" max="105" step="0.5" value="86"></div>
-<div class="field"><label for="edStroke"><span id="lblStroke">STROKE (mm)</span></label><input type="number" id="edStroke" min="50" max="110" step="0.5" value="86"></div>
+<div class="field"><label for="edBore"><span id="lblBore">BORE (mm)</span></label><input type="number" id="edBore" min="60" max="110" step="0.5" value="86"></div>
+<div class="field"><label for="edStroke"><span id="lblStroke">STROKE (mm)</span></label><input type="number" id="edStroke" min="50" max="130" step="0.5" value="86"></div>
 <div class="field"><label for="edCR">COMPRESSION</label><input type="number" id="edCR" min="7" max="24" step="0.1" value="10.5"></div>
 <div class="field"><label for="edRedline">REDLINE (rpm)</label><input type="number" id="edRedline" min="3500" max="11000" step="100" value="7000"></div>
 </div>
@@ -2090,24 +2090,88 @@ const DEFAULT_ENGINE={
 };
 // Ready-made popular builds (deltas over DEFAULT_ENGINE). Loaded from the DESIGN dropdown.
 const PRESETS=[
-  {name:'1.6 Sport NA I4',        engine:{}},
-  {name:'1.0 Kei Turbo I3',       engine:{cylinders:3,bore_mm:73,stroke_mm:79.6,compression:9.5,redline:7000,intake:'turbo',boost_bar:0.7,turboSize:'small',injector:'port'}},
-  {name:'1.5 Turbo Eco I4',       engine:{cylinders:4,bore_mm:73,stroke_mm:89.5,compression:10.5,redline:6500,intake:'turbo',boost_bar:0.8,turboSize:'small',airFilter:'stock',exhaust:'stock'}},
-  {name:'2.0 Turbo Hot-Hatch I4', engine:{valveSpring:'perf',cylinders:4,bore_mm:86,stroke_mm:86,compression:9.8,redline:7000,intake:'turbo',boost_bar:1.0,turboSize:'medium',octane:98,cam:'sport',exhaust:'sport',radiator:'large',oilCooler:true}},
-  {name:'2.0 ITB NA Screamer I4', engine:{valves:4,valveMat:'titanium',valveSpring:'race',cylinders:4,bore_mm:87,stroke_mm:84,compression:11.7,redline:8800,intakeSys:'itb',airFilter:'none',cam:'race',exhaust:'race',cat:'none',octane:98,injector:'port',radiator:'large',oilCooler:true}},
-  {name:'2.5 Turbo I5 (RS)',      engine:{valveSpring:'perf',cylinders:5,bore_mm:82.5,stroke_mm:92.8,compression:10,redline:7000,intake:'turbo',boost_bar:1.1,turboSize:'medium',octane:98,cam:'sport',exhaust:'sport',radiator:'large',oilCooler:true}},
-  {name:'3.0 Turbo I6 (2JZ)',     engine:{valveSpring:'perf',cylinders:6,bore_mm:84,stroke_mm:90,compression:10.2,redline:7000,intake:'turbo',boost_bar:0.9,turboSize:'medium',octane:98,cam:'sport',exhaust:'sport',radiator:'large',oilCooler:true}},
-  {name:'5.0 V8 NA Muscle',       engine:{valves:2,valveSpring:'perf',cylinders:8,bore_mm:93,stroke_mm:92.7,compression:12,layout:'v',redline:7500,cam:'sport',exhaust:'sport',radiator:'large',oilCooler:true}},
-  {name:'6.2 Supercharged V8',    engine:{valves:2,valveSpring:'race',cylinders:8,bore_mm:103.9,stroke_mm:90.9,compression:9.5,layout:'v',redline:6400,intake:'supercharger',boost_bar:0.65,octane:98,injector:'port',vvt:false,cam:'sport',exhaust:'sport',radiator:'large',oilCooler:true}},
-  {name:'6.5 V12 NA Supercar',    engine:{valves:4,valveMat:'titanium',valveSpring:'race',cylinders:12,bore_mm:95,stroke_mm:76.4,compression:11.8,layout:'v',redline:8500,intakeSys:'itb',cam:'race',exhaust:'race',cat:'sport',octane:98,injector:'port',radiator:'large',oilCooler:true}},
+  {cat:'Archetypes',name:'1.6 Sport NA I4',        engine:{}},
+  {cat:'Archetypes',name:'1.0 Kei Turbo I3',       engine:{cylinders:3,bore_mm:73,stroke_mm:79.6,compression:9.5,redline:7000,intake:'turbo',boost_bar:0.7,turboSize:'small',injector:'port'}},
+  {cat:'Archetypes',name:'1.5 Turbo Eco I4',       engine:{cylinders:4,bore_mm:73,stroke_mm:89.5,compression:10.5,redline:6500,intake:'turbo',boost_bar:0.8,turboSize:'small',airFilter:'stock',exhaust:'stock'}},
+  {cat:'Archetypes',name:'2.0 Turbo Hot-Hatch I4', engine:{valveSpring:'perf',cylinders:4,bore_mm:86,stroke_mm:86,compression:9.8,redline:7000,intake:'turbo',boost_bar:1.0,turboSize:'medium',octane:98,cam:'sport',exhaust:'sport',radiator:'large',oilCooler:true}},
+  {cat:'Archetypes',name:'2.0 ITB NA Screamer I4', engine:{valves:4,valveMat:'titanium',valveSpring:'race',cylinders:4,bore_mm:87,stroke_mm:84,compression:11.7,redline:8800,intakeSys:'itb',airFilter:'none',cam:'race',exhaust:'race',cat:'none',octane:98,injector:'port',radiator:'large',oilCooler:true}},
+  {cat:'Archetypes',name:'2.5 Turbo I5 (RS)',      engine:{valveSpring:'perf',cylinders:5,bore_mm:82.5,stroke_mm:92.8,compression:10,redline:7000,intake:'turbo',boost_bar:1.1,turboSize:'medium',octane:98,cam:'sport',exhaust:'sport',radiator:'large',oilCooler:true}},
+  {cat:'Archetypes',name:'3.0 Turbo I6 (2JZ)',     engine:{valveSpring:'perf',cylinders:6,bore_mm:84,stroke_mm:90,compression:10.2,redline:7000,intake:'turbo',boost_bar:0.9,turboSize:'medium',octane:98,cam:'sport',exhaust:'sport',radiator:'large',oilCooler:true}},
+  {cat:'Archetypes',name:'5.0 V8 NA Muscle',       engine:{valves:2,valveSpring:'perf',cylinders:8,bore_mm:93,stroke_mm:92.7,compression:12,layout:'v',redline:7500,cam:'sport',exhaust:'sport',radiator:'large',oilCooler:true}},
+  {cat:'Archetypes',name:'6.2 Supercharged V8',    engine:{valves:2,valveSpring:'race',cylinders:8,bore_mm:103.9,stroke_mm:90.9,compression:9.5,layout:'v',redline:6400,intake:'supercharger',boost_bar:0.65,octane:98,injector:'port',vvt:false,cam:'sport',exhaust:'sport',radiator:'large',oilCooler:true}},
+  {cat:'Archetypes',name:'6.5 V12 NA Supercar',    engine:{valves:4,valveMat:'titanium',valveSpring:'race',cylinders:12,bore_mm:95,stroke_mm:76.4,compression:11.8,layout:'v',redline:8500,intakeSys:'itb',cam:'race',exhaust:'race',cat:'sport',octane:98,injector:'port',radiator:'large',oilCooler:true}},
   // A 2.0 turbodiesel runs a SMALL variable-geometry frame (a ~49 mm compressor, BV43/GTB1749V class).
   // It carried the medium frame until build 87, which on a 2.0 L does not make full boost until 2800 rpm.
-  {name:'2.0 Turbo Diesel I4',    engine:{type:'diesel',vvt:false,cylinders:4,bore_mm:84,stroke_mm:90,compression:17,redline:4800,intake:'turbo',boost_bar:1.2,turboSize:'small',vgt:true,intakeSys:'efi',injector:'direct',exhaust:'stock',cat:'stock',radiator:'large',oilCooler:true}},
-  {name:'6.6 V8 Turbodiesel',     engine:{type:'diesel',vvt:false,cylinders:8,bore_mm:103,stroke_mm:99,compression:16.5,layout:'v',redline:3800,intake:'turbo',boost_bar:1.1,turboSize:'medium',turboConfig:'single',vgt:true,intakeSys:'efi',injector:'direct',exhaust:'stock',cat:'stock',radiator:'large',oilCooler:true}},
-  {name:'1.3 Rotary Turbo (13B)', engine:{type:'rotary',cylinders:2,bore_mm:80,stroke_mm:80,compression:9.4,redline:9000,intake:'turbo',boost_bar:0.7,turboSize:'medium',turboConfig:'sequential',intakeSys:'efi',injector:'port',exhaust:'sport',cat:'sport',octane:98,radiator:'large',oilCooler:true}},
-  {name:'1.3 Rotary NA (Renesis)',engine:{type:'rotary',cylinders:2,bore_mm:80,stroke_mm:80,compression:10,redline:9000,intakeSys:'itb',injector:'port',exhaust:'sport',cat:'sport',octane:98,radiator:'large',oilCooler:true}},
-  {name:'500cc 2-Stroke Twin',    engine:{type:'twostroke',cylinders:2,bore_mm:70,stroke_mm:64,compression:9,redline:9500,intakeSys:'carb2',airFilter:'perf',exhaust:'race',cat:'none',octane:98,injector:'port',ignitionType:'coil',radiator:'stock'}}
+  {cat:'Archetypes',name:'2.0 Turbo Diesel I4',    engine:{type:'diesel',vvt:false,cylinders:4,bore_mm:84,stroke_mm:90,compression:17,redline:4800,intake:'turbo',boost_bar:1.2,turboSize:'small',vgt:true,intakeSys:'efi',injector:'direct',exhaust:'stock',cat:'stock',radiator:'large',oilCooler:true}},
+  {cat:'Archetypes',name:'6.6 V8 Turbodiesel',     engine:{type:'diesel',vvt:false,cylinders:8,bore_mm:103,stroke_mm:99,compression:16.5,layout:'v',redline:3800,intake:'turbo',boost_bar:1.1,turboSize:'medium',turboConfig:'single',vgt:true,intakeSys:'efi',injector:'direct',exhaust:'stock',cat:'stock',radiator:'large',oilCooler:true}},
+  {cat:'Archetypes',name:'1.3 Rotary Turbo (13B)', engine:{type:'rotary',cylinders:2,bore_mm:80,stroke_mm:80,compression:9.4,redline:9000,intake:'turbo',boost_bar:0.7,turboSize:'medium',turboConfig:'sequential',intakeSys:'efi',injector:'port',exhaust:'sport',cat:'sport',octane:98,radiator:'large',oilCooler:true}},
+  {cat:'Archetypes',name:'1.3 Rotary NA (Renesis)',engine:{type:'rotary',cylinders:2,bore_mm:80,stroke_mm:80,compression:10,redline:9000,intakeSys:'itb',injector:'port',exhaust:'sport',cat:'sport',octane:98,radiator:'large',oilCooler:true}},
+  {cat:'Archetypes',name:'500cc 2-Stroke Twin',    engine:{type:'twostroke',cylinders:2,bore_mm:70,stroke_mm:64,compression:9,redline:9500,intakeSys:'carb2',airFilter:'perf',exhaust:'race',cat:'none',octane:98,injector:'port',ignitionType:'coil',radiator:'stock'}},
+  // ---- Real engines (build 96) ----------------------------------------------------------------
+  // Geometry and hardware from published specifications, so the model can be compared with the real
+  // thing; `real` carries the maker's rating (hp, rpm; Nm, rpm). Nothing here is tuned to land on it —
+  // the gap between the dyno and `real` IS the comparison. `unsure` names the inputs that are not in
+  // the maker's published data and were set from typical practice (mostly boost pressure). Ratings
+  // marked `note` are not what the engine makes: the JDM 280 PS / kei 64 PS gentlemen's agreements.
+  {cat:'Kei & City',name:'Suzuki K6A turbo (Alto Works)',real:{hp:64,hpRpm:6000,tq:100,tqRpm:3000},note:'kei-class 64 PS legal cap',
+   engine:{cylinders:3,bore_mm:68.0,stroke_mm:60.4,compression:8.9,redline:7200,intake:'turbo',boost_bar:0.75,turboSize:'small',cam:'stock',injector:'port',octane:95,intercooler:'small',exhaust:'stock',airFilter:'stock'}},
+  {cat:'Kei & City',name:'Toyota 1KR-FE (Aygo 1.0)',real:{hp:68,hpRpm:6000,tq:93,tqRpm:3600},
+   engine:{cylinders:3,bore_mm:71.0,stroke_mm:84.0,compression:10.5,redline:6500,cam:'stock',vvt:true,injector:'port',octane:95,exhaust:'stock',airFilter:'stock',runner:'long'}},
+  {cat:'Kei & City',name:'Fiat 0.9 TwinAir turbo',real:{hp:84,hpRpm:5500,tq:145,tqRpm:1900},unsure:['boost_bar'],
+   engine:{cylinders:2,bore_mm:80.5,stroke_mm:86.0,compression:10.0,redline:6000,intake:'turbo',boost_bar:1.0,turboSize:'small',cam:'stock',vvt:true,injector:'port',octane:95,intercooler:'small',exhaust:'stock',airFilter:'stock'}},
+  {cat:'Compact Turbo',name:'Ford 1.0 EcoBoost (Fiesta 125)',real:{hp:123,hpRpm:6000,tq:170,tqRpm:1400},unsure:['boost_bar'],
+   engine:{cylinders:3,bore_mm:71.9,stroke_mm:82.0,compression:10.0,redline:6500,intake:'turbo',boost_bar:1.2,turboSize:'small',cam:'stock',vvt:true,injector:'direct',octane:95,intercooler:'small',exhaust:'stock',airFilter:'stock'}},
+  {cat:'Compact Turbo',name:'VW EA888 2.0 TSI (Golf GTI Mk7)',real:{hp:220,hpRpm:4500,tq:350,tqRpm:1500},
+   engine:{cylinders:4,bore_mm:82.5,stroke_mm:92.8,compression:9.6,redline:6500,intake:'turbo',boost_bar:1.1,turboSize:'small',cam:'stock',injector:'direct',octane:98,intercooler:'large',exhaust:'stock',airFilter:'stock'}},
+  {cat:'Compact Turbo',name:'Toyota G16E-GTS (GR Yaris)',real:{hp:257,hpRpm:6500,tq:360,tqRpm:3000},unsure:['boost_bar'],
+   engine:{cylinders:3,bore_mm:87.5,stroke_mm:89.7,compression:10.5,redline:7000,intake:'turbo',boost_bar:1.4,turboSize:'medium',cam:'sport',vvt:true,injector:'direct',octane:98,intercooler:'large',exhaust:'sport',airFilter:'perf'}},
+  {cat:'Compact Turbo',name:'Honda K20C1 (Civic Type R FK8)',real:{hp:316,hpRpm:6500,tq:400,tqRpm:2500},unsure:['boost_bar'],
+   engine:{cylinders:4,bore_mm:86.0,stroke_mm:85.9,compression:9.8,redline:7000,intake:'turbo',boost_bar:1.6,turboSize:'medium',cam:'sport',vvt:true,injector:'direct',octane:98,intercooler:'large',exhaust:'sport',airFilter:'perf'}},
+  {cat:'NA Sports',name:'Mazda B6-ZE (MX-5 NA)',real:{hp:115,hpRpm:6500,tq:136,tqRpm:5500},
+   engine:{cylinders:4,bore_mm:78.0,stroke_mm:83.6,compression:9.4,redline:7200,cam:'stock',vvt:false,injector:'port',octane:95,exhaust:'stock',airFilter:'stock'}},
+  {cat:'NA Sports',name:'Toyota 4A-GE (AE86)',real:{hp:128,hpRpm:6600,tq:149,tqRpm:5200},
+   engine:{cylinders:4,bore_mm:81.0,stroke_mm:77.0,compression:9.4,redline:7600,cam:'sport',vvt:false,injector:'port',octane:95,exhaust:'stock',airFilter:'stock',runner:'medium'}},
+  {cat:'NA Sports',name:'Honda F20C (S2000 AP1)',real:{hp:240,hpRpm:8300,tq:208,tqRpm:7500},
+   engine:{cylinders:4,bore_mm:87.0,stroke_mm:84.0,compression:11.0,redline:8900,cam:'race',injector:'port',octane:98,airFilter:'perf',runner:'short',exhaust:'race'}},
+  {cat:'NA Sports',name:'BMW S54 (M3 E46)',real:{hp:343,hpRpm:7900,tq:365,tqRpm:4900},
+   engine:{cylinders:6,bore_mm:87.0,stroke_mm:91.0,compression:11.5,redline:8000,cam:'race',injector:'port',octane:98,intakeSys:'itb',airFilter:'perf',runner:'short',exhaust:'race'}},
+  {cat:'NA Sports',name:'Porsche 4.0 flat-six (911 GT3 991.2)',real:{hp:493,hpRpm:8250,tq:460,tqRpm:6000},
+   engine:{cylinders:6,layout:'boxer',bore_mm:102.0,stroke_mm:81.5,compression:13.3,redline:9000,cam:'race',vvt:true,valveSpring:'race',valveMat:'titanium',injector:'direct',octane:98,exhaust:'race',airFilter:'perf',runner:'variable'}},
+  {cat:'Turbo Performance',name:'Toyota 2JZ-GTE (Supra A80)',real:{hp:320,hpRpm:5600,tq:427,tqRpm:4000},note:'export rating; JDM cars were quoted at 280 PS',
+   engine:{cylinders:6,bore_mm:86.0,stroke_mm:86.0,compression:8.5,redline:6800,intake:'turbo',boost_bar:0.75,turboSize:'medium',turboConfig:'sequential',cam:'sport',injector:'port',octane:98,intercooler:'large',exhaust:'sport',airFilter:'perf'}},
+  {cat:'Turbo Performance',name:'Nissan RB26DETT (Skyline GT-R R34)',real:{hp:276,hpRpm:6800,tq:392,tqRpm:4400},note:'JDM 280 PS gentlemen\'s agreement; real output is higher',
+   engine:{cylinders:6,bore_mm:86.0,stroke_mm:73.7,compression:8.5,redline:8000,intake:'turbo',boost_bar:0.7,turboSize:'small',turboConfig:'twin',cam:'sport',vvt:false,injector:'port',intakeSys:'itb',octane:98,intercooler:'large',exhaust:'sport',airFilter:'perf'}},
+  {cat:'Turbo Performance',name:'Subaru EJ257 (Impreza WRX STI)',real:{hp:296,hpRpm:6000,tq:407,tqRpm:4000},unsure:['boost_bar'],
+   engine:{cylinders:4,layout:'boxer',bore_mm:99.5,stroke_mm:79.0,compression:8.2,redline:7000,intake:'turbo',boost_bar:1.0,turboSize:'medium',cam:'sport',vvt:true,injector:'port',octane:98,intercooler:'small',exhaust:'sport',airFilter:'perf'}},
+  {cat:'Turbo Performance',name:'Mitsubishi 4G63T (Lancer Evo IX)',real:{hp:286,hpRpm:6500,tq:392,tqRpm:3500},unsure:['boost_bar'],
+   engine:{cylinders:4,bore_mm:85.0,stroke_mm:88.0,compression:8.8,redline:7000,intake:'turbo',boost_bar:1.3,turboSize:'medium',cam:'sport',vvt:true,injector:'port',octane:98,intercooler:'large',exhaust:'sport',airFilter:'perf'}},
+  {cat:'Turbo Performance',name:'Audi 2.5 TFSI (RS3 8V)',real:{hp:394,hpRpm:5850,tq:480,tqRpm:1700},unsure:['boost_bar'],
+   engine:{cylinders:5,bore_mm:82.5,stroke_mm:92.8,compression:10.0,redline:7000,intake:'turbo',boost_bar:1.4,turboSize:'large',cam:'sport',vvt:true,injector:'direct',octane:98,intercooler:'large',exhaust:'sport',airFilter:'perf'}},
+  {cat:'American V8',name:'GM LS3 (Corvette C6)',real:{hp:430,hpRpm:5900,tq:575,tqRpm:4600},
+   engine:{cylinders:8,layout:'v',bore_mm:103.25,stroke_mm:92.0,compression:10.7,redline:6600,valves:2,cam:'sport',vvt:false,valveSpring:'perf',injector:'port',octane:98,exhaust:'sport',airFilter:'perf'}},
+  {cat:'American V8',name:'GM LS7 (Corvette Z06 C6)',real:{hp:505,hpRpm:6300,tq:637,tqRpm:4800},
+   engine:{cylinders:8,layout:'v',bore_mm:104.8,stroke_mm:101.6,compression:11.0,redline:7000,valves:2,cam:'race',vvt:false,valveSpring:'race',valveMat:'titanium',injector:'port',octane:98,exhaust:'sport',airFilter:'perf'}},
+  {cat:'American V8',name:'Ford Coyote 5.0 (Mustang GT 2018)',real:{hp:460,hpRpm:7000,tq:569,tqRpm:4600},
+   engine:{cylinders:8,layout:'v',bore_mm:93.0,stroke_mm:92.7,compression:12.0,redline:7500,cam:'sport',vvt:true,injector:'direct',octane:98,exhaust:'sport',airFilter:'perf',runner:'variable'}},
+  {cat:'American V8',name:'Dodge 6.2 Hellcat (Challenger SRT)',real:{hp:707,hpRpm:6000,tq:881,tqRpm:4000},
+   engine:{cylinders:8,layout:'v',bore_mm:103.9,stroke_mm:90.9,compression:9.5,redline:6200,intake:'supercharger',boost_bar:0.8,scType:'screw',valves:2,cam:'sport',vvt:true,injector:'port',octane:98,intercooler:'large',exhaust:'sport',airFilter:'perf'}},
+  {cat:'Exotic',name:'Lamborghini 5.2 V10 (Huracán LP610-4)',real:{hp:602,hpRpm:8250,tq:560,tqRpm:6500},
+   engine:{cylinders:10,layout:'v',bore_mm:84.5,stroke_mm:92.8,compression:12.7,redline:8500,cam:'race',vvt:true,valveSpring:'race',injector:'direct',octane:98,exhaust:'race',airFilter:'perf',runner:'variable'}},
+  {cat:'Exotic',name:'Ferrari F140 V12 (812 Superfast)',real:{hp:789,hpRpm:8500,tq:718,tqRpm:7000},
+   engine:{cylinders:12,layout:'v',bore_mm:94.0,stroke_mm:78.0,compression:13.6,redline:8900,cam:'race',vvt:true,valveSpring:'race',valveMat:'titanium',injector:'direct',octane:98,exhaust:'race',airFilter:'perf',runner:'variable'}},
+  {cat:'Diesel',name:'VW EA288 2.0 TDI (Golf 150)',real:{hp:148,hpRpm:3500,tq:320,tqRpm:1750},
+   engine:{type:'diesel',vvt:false,cylinders:4,bore_mm:81.0,stroke_mm:95.5,compression:16.2,redline:4800,intake:'turbo',boost_bar:1.3,turboSize:'small',vgt:true,injector:'direct',intercooler:'large',exhaust:'stock',airFilter:'stock'}},
+  {cat:'Diesel',name:'BMW N57 3.0d (330d F30)',real:{hp:254,hpRpm:4000,tq:560,tqRpm:2000},unsure:['boost_bar'],
+   engine:{type:'diesel',vvt:false,cylinders:6,bore_mm:84.0,stroke_mm:90.0,compression:16.5,redline:5000,intake:'turbo',boost_bar:1.5,turboSize:'medium',vgt:true,injector:'direct',intercooler:'large',exhaust:'stock',airFilter:'stock'}},
+  {cat:'Diesel',name:'GM Duramax L5P 6.6 (Silverado HD)',real:{hp:445,hpRpm:2800,tq:1234,tqRpm:1600},unsure:['boost_bar','redline'],
+   engine:{type:'diesel',vvt:false,cylinders:8,layout:'v',bore_mm:103.0,stroke_mm:99.0,compression:16.0,redline:3800,intake:'turbo',boost_bar:1.9,turboSize:'large',vgt:true,injector:'direct',intercooler:'large',exhaust:'stock',airFilter:'stock'}},
+  {cat:'Diesel',name:'Cummins 6.7 (Ram HD 2019 HO)',real:{hp:400,hpRpm:2800,tq:1356,tqRpm:1800},unsure:['boost_bar','compression','redline'],
+   engine:{type:'diesel',vvt:false,cylinders:6,bore_mm:107.0,stroke_mm:124.0,compression:17.3,redline:3500,intake:'turbo',boost_bar:2.0,turboSize:'large',vgt:true,injector:'direct',intercooler:'large',exhaust:'stock',airFilter:'stock'}},
+  {cat:'Two-Stroke',name:'Yamaha RD350LC (2-stroke twin)',real:{hp:46,hpRpm:8500,tq:40,tqRpm:8000},unsure:['compression','redline'],
+   engine:{type:'twostroke',cylinders:2,bore_mm:64.0,stroke_mm:54.0,compression:7,redline:9500,intakeSys:'carb2',octane:95,exhaust:'race',airFilter:'stock'}},
 ];
+// Category order for the preset list (the dropdown groups by it; the UI pass will build on this).
+const PRESET_CATS=['Archetypes','Kei & City','Compact Turbo','NA Sports','Turbo Performance','American V8','Exotic','Diesel','Two-Stroke'];
 const STD_TUNE={throttle:0.85,load:0.40,elecLoad:0.30,afr:13.2,iat:25,coolant:90,oil:100,autoThermal:false};
 
 // ---- Strategy layer: objective challenges ----
@@ -2768,8 +2832,8 @@ function readEngineFromForm(){
   return {
     type,
     cylinders:clamp(Math.round(+g('edCyl').value||4),1,maxCyl),
-    bore_mm:clamp(+g('edBore').value||86,60,105),
-    stroke_mm:clamp(+g('edStroke').value||86,50,110),
+    bore_mm:clamp(+g('edBore').value||86,60,110),
+    stroke_mm:clamp(+g('edStroke').value||86,50,130),   // to 130: a Cummins 6.7 is 107 x 124
     compression:clamp(+g('edCR').value||tp.crDef,tp.crMin,tp.crMax),
     layout:type==='rotary'?'rotary':g('edLayout').value,
     redline:clamp(Math.round(+g('edRedline').value||tp.redlineDef),tp.redMin,tp.redMax),
@@ -7318,7 +7382,12 @@ function bindControls(){
   if(fmReset)fmReset.addEventListener('click',resetFuelMap);
   // Populate & wire the preset dropdown
   const presetSel=document.getElementById('edPreset');
-  PRESETS.forEach((p,i)=>{const o=document.createElement('option');o.value=i;o.textContent=p.name;presetSel.appendChild(o);});
+  PRESET_CATS.forEach(cat=>{
+    const grp=document.createElement('optgroup');grp.label=cat;
+    PRESETS.forEach((p,i)=>{if((p.cat||'Archetypes')!==cat)return;
+      const o=document.createElement('option');o.value=i;o.textContent=p.name;grp.appendChild(o);});
+    if(grp.children.length)presetSel.appendChild(grp);
+  });
   presetSel.addEventListener('change',e=>{
     if(e.target.value==='')return;
     const p=PRESETS[+e.target.value];

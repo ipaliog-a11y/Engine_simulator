@@ -166,7 +166,9 @@ if (!(ic[0].iat > 120)) fails.push(`no intercooler at 1.8 bar should be brutally
 
 // ---------------------------------------------------------------- 5. nothing sensible got broken
 console.log('\n== every preset still holds together ==');
-const pre = await page.evaluate(() => PRESETS.map(pr => {
+// Archetype presets only (build 96): budgets and named lists here were written for the model's own
+// preset set. Real engines are compared, with the same sanity checks and their own anomaly list, in test60.
+const pre = await page.evaluate(() => PRESETS.filter(p => !p.real).map(pr => {
   applyEngineToForm(Object.assign({}, DEFAULT_ENGINE, pr.engine)); buildEngine();
   const s = engine.score;
   return { name: pr.name, turbo: engine.intake === 'turbo', hp: s.peakHP, grade: s.grade, overall: s.overall,
