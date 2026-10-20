@@ -249,7 +249,7 @@ table.fuelmap td.live{box-shadow:inset 0 0 0 2px #fff;font-weight:bold}
 <body>
 <div class="container">
 <header>
-<h1>PIXEL ENGINE SIM v0.6 build 99</h1>
+<h1>PIXEL ENGINE SIM v0.6 build 100</h1>
 <div class="subtitle" id="subtitle">ENGINE DESIGNER • BUILD IT, THEN DRIVE IT</div>
 </header>
 <div class="main">
@@ -282,6 +282,7 @@ table.fuelmap td.live{box-shadow:inset 0 0 0 2px #fff;font-weight:bold}
 <div class="field"><label for="edLayout">LAYOUT</label><select id="edLayout"><option value="inline">INLINE</option><option value="v">V</option><option value="boxer">BOXER</option></select></div>
 <div class="field"><label for="edBore"><span id="lblBore">BORE (mm)</span></label><input type="number" id="edBore" min="60" max="110" step="0.5" value="86"></div>
 <div class="field"><label for="edStroke"><span id="lblStroke">STROKE (mm)</span></label><input type="number" id="edStroke" min="50" max="130" step="0.5" value="86"></div>
+<div class="field"><label for="edEcc">ECCENTRICITY e (mm)</label><input type="number" id="edEcc" min="8" max="25" step="0.5" value="15"></div>
 <div class="field"><label for="edCR">COMPRESSION</label><input type="number" id="edCR" min="7" max="24" step="0.1" value="10.5"></div>
 <div class="field"><label for="edRedline">REDLINE (rpm)</label><input type="number" id="edRedline" min="3500" max="11000" step="100" value="7000"></div>
 </div>
@@ -1126,7 +1127,13 @@ const ENGINE_TYPE={
              crDef:18,crMin:15,crMax:24,redlineDef:4800,redMin:3500,redMax:5800,fuel:'diesel',maxCyl:12},
   twostroke:{label:'2-STROKE',       strokeDiv:2*Math.PI,ci:false,ports:true, imep:0.60,eff:0.80,bsfc:1.45,
              crDef:9, crMin:7,crMax:12,redlineDef:8000,redMin:5500,redMax:11000,fuel:null,maxCyl:6},
-  rotary:   {label:'ROTARY (WANKEL)',strokeDiv:2*Math.PI,ci:false,ports:true, imep:0.70,eff:0.74,bsfc:1.48,
+  // bsfc is fuel delivered per unit of fuel trapped, the charge that leaves unburned: a two-stroke
+  // short-circuits ~30% of what it delivers (1/0.69 = 1.45). A rotary was 1.48 until build 100, which
+  // only offset air flow being counted at half its real rate (one charge per two turns, the
+  // four-stroke's): with the rate right it is 1, since a side-ported rotor has almost no overlap
+  // to lose fresh charge through, and its thirst comes from what its charge does (imep), not from
+  // charge it never burns.
+  rotary:   {label:'ROTARY (WANKEL)',strokeDiv:2*Math.PI,ci:false,ports:true, imep:0.70,eff:0.74,bsfc:1.00,
              crDef:9.4,crMin:8.5,crMax:11,redlineDef:9000,redMin:6500,redMax:11000,fuel:null,maxCyl:4}
 };
 const LAYOUT_LABEL={inline:'INLINE',v:'V',boxer:'BOXER',rotary:'ROTARY'};
@@ -1533,7 +1540,7 @@ function exhaustWaveP(rpm,T){
   const e=engine;
   if(!e.primL)return 0;
   const n=(e.camDur/2+90)*sonic(T)/(12*Math.max(500,rpm)*e.primL);
-  const vel=(e.dispCyl_L/1000)*(T/320)*(rpm/120)/(Math.PI/4*e.primD*e.primD)*3;
+  const vel=(e.dispCyl_L/1000)*(T/320)*(rpm/60*(e.chargesPerRev||0.5))/(Math.PI/4*e.primD*e.primD)*3;
   const A0=GAMMA_AIR*vel/sonic(T);
   const damp=Math.exp(-EX_ALPHA*2*e.primL*n)*Math.pow(EX_ROPEN,n)
             *Math.exp(-Math.pow(Math.PI*n*e.exhSigma,2)/2);
@@ -1572,8 +1579,8 @@ function backPressureBar(rpm,T){
   const e=engine;
   if(!e.primL)return 0;
   const rho=101325/(287*Math.max(300,T));
-  const vP=(e.dispCyl_L/1000)*(T/320)*(rpm/120)/(Math.PI/4*e.primD*e.primD)*3;
-  const m3s=(e.dispCyl_L/1000)*(T/320)*e.cylinders*(rpm/120)/(e.sysPipes||1);
+  const vP=(e.dispCyl_L/1000)*(T/320)*(rpm/60*(e.chargesPerRev||0.5))/(Math.PI/4*e.primD*e.primD)*3;
+  const m3s=(e.dispCyl_L/1000)*(T/320)*e.cylinders*(rpm/60*(e.chargesPerRev||0.5))/(e.sysPipes||1);
   const vS=m3s/(Math.PI/4*e.sysD*e.sysD);
   const pipe=(0.02*(e.primL/e.primD)*0.5*rho*vP*vP
              +0.02*(e.sysL/e.sysD)*0.5*rho*vS*vS
@@ -1584,7 +1591,7 @@ function backPressureBar(rpm,T){
   // this app missing most of its back-pressure, and therefore most of its residual-gas VE loss.
   if(e.turbineArea>0){
     const map=Math.max(1,e.boostNow||1);
-    const mAir=(e.dispCyl_L/1000)*e.cylinders*(rpm/120)*(101325*map/(287*313));
+    const mAir=(e.dispCyl_L/1000)*e.cylinders*(rpm/60*(e.chargesPerRev||0.5))*(101325*map/(287*313));
     const u=unitsAt(rpm), mEx=mAir*1.06/u, mA=mAir/u;
     // On a VGT the throat is whatever the vanes have been scheduled to; below target they are shut
     // and the piston pays the full nozzle pressure for it, which is the whole point of the device.
@@ -1622,7 +1629,7 @@ function compFlowFrac(rpm,mAirTotal){
 function turbineThroatAt(rpm,map,T){
   const e=engine;
   if(!(e.vgtShut>0))return e.turbineArea;
-  const mAir=(e.dispCyl_L/1000)*e.cylinders*(rpm/120)*(101325*Math.max(1,map)/(287*313));
+  const mAir=(e.dispCyl_L/1000)*e.cylinders*(rpm/60*(e.chargesPerRev||0.5))*(101325*Math.max(1,map)/(287*313));
   const u=unitsAt(rpm), mEx=mAir*1.06/u, mA=mAir/u;
   const Ut=turbineTipFor(1+e.maxBoost,compFlowFrac(rpm,mAir),298);
   return vgtThroat(mEx,compPowerAt(mA,1+e.maxBoost,313,e.compEff),T,e.turbineArea,e.vgtShut,map,Ut).area;
@@ -1978,7 +1985,7 @@ function shaftLossPower(shaftRpm){
 // term, and calling it from here would close a loop that does not converge.
 function airFlowAt(rpm,pr){
   const e=engine;
-  return (e.displacement_L/1000)*(e.veAmp||0.95)*(rpm/120)*(pr*101325/(287*313));
+  return (e.displacement_L/1000)*(e.veAmp||0.95)*(rpm/60*(e.chargesPerRev||0.5))*(pr*101325/(287*313));
 }
 // Steady boost: the shaft speed where turbine and compressor balance, found by bracketing on boost
 // rather than by relaxation — the states switch discontinuously and a fixed point orbits them.
@@ -2081,7 +2088,7 @@ function deriveGasDynamics(){
     e.shaftMax=maxShaftRpm(tb.exd);
   }else{e.turbineArea=0;e.vgtShut=0;e.turbUnits=1;e.compExd=0;e.shaftJ=0;e.shaftMax=0;}
   // Size the system pipe from the engine's own flow at the power peak, not from a fixed number.
-  const m3sPeak=(e.dispCyl_L/1000)*(T/320)*e.cylinders*(e.redline*0.9/120);
+  const m3sPeak=(e.dispCyl_L/1000)*(T/320)*e.cylinders*(e.redline*0.9/60*(e.chargesPerRev||0.5));
   // One system per BANK: a V or a boxer has two heads pointing opposite ways and runs two pipes,
   // and so does a big inline six. That is why a V12 does not need a 140 mm tailpipe.
   e.sysPipes=(e.layout==='v'||e.layout==='boxer')?2:(e.cylinders>=6&&e.displacement_L>3?2:1);
@@ -2179,8 +2186,8 @@ const PRESETS=[
   // It carried the medium frame until build 87, which on a 2.0 L does not make full boost until 2800 rpm.
   {cat:'Archetypes',name:'2.0 Turbo Diesel I4',    engine:{type:'diesel',vvt:false,cylinders:4,bore_mm:84,stroke_mm:90,compression:17,redline:4800,intake:'turbo',boost_bar:1.2,turboSize:'small',vgt:true,intakeSys:'efi',injector:'direct',exhaust:'stock',cat:'stock',radiator:'large',oilCooler:true}},
   {cat:'Archetypes',name:'6.6 V8 Turbodiesel',     engine:{type:'diesel',vvt:false,cylinders:8,bore_mm:103,stroke_mm:99,compression:16.5,layout:'v',redline:3800,intake:'turbo',boost_bar:1.1,turboSize:'medium',turboConfig:'single',vgt:true,intakeSys:'efi',injector:'direct',exhaust:'stock',cat:'stock',radiator:'large',oilCooler:true}},
-  {cat:'Archetypes',name:'1.3 Rotary Turbo (13B)', engine:{type:'rotary',cylinders:2,bore_mm:80,stroke_mm:80,compression:9.4,redline:9000,intake:'turbo',boost_bar:0.7,turboSize:'medium',turboConfig:'sequential',intakeSys:'efi',injector:'port',exhaust:'sport',cat:'sport',octane:98,radiator:'large',oilCooler:true}},
-  {cat:'Archetypes',name:'1.3 Rotary NA (Renesis)',engine:{type:'rotary',cylinders:2,bore_mm:80,stroke_mm:80,compression:10,redline:9000,intakeSys:'itb',injector:'port',exhaust:'sport',cat:'sport',octane:98,radiator:'large',oilCooler:true}},
+  {cat:'Archetypes',name:'1.3 Rotary Turbo (13B)', engine:{type:'rotary',cylinders:2,bore_mm:105,stroke_mm:80,ecc_mm:15,compression:9.4,redline:9000,intake:'turbo',boost_bar:0.7,turboSize:'medium',turboConfig:'sequential',intakeSys:'efi',injector:'port',exhaust:'sport',cat:'sport',octane:98,radiator:'large',oilCooler:true}},
+  {cat:'Archetypes',name:'1.3 Rotary NA (Renesis)',engine:{type:'rotary',cylinders:2,bore_mm:105,stroke_mm:80,ecc_mm:15,compression:10,redline:9000,intakeSys:'itb',injector:'port',exhaust:'sport',cat:'sport',octane:98,radiator:'large',oilCooler:true}},
   {cat:'Archetypes',name:'500cc 2-Stroke Twin',    engine:{type:'twostroke',cylinders:2,bore_mm:70,stroke_mm:64,compression:9,redline:9500,intakeSys:'carb2',airFilter:'perf',exhaust:'race',cat:'none',octane:98,injector:'port',ignitionType:'coil',radiator:'stock'}},
   // ---- Real engines (build 96) ----------------------------------------------------------------
   // Geometry and hardware from published specifications, so the model can be compared with the real
@@ -2234,6 +2241,12 @@ const PRESETS=[
    engine:{cylinders:10,layout:'v',bore_mm:84.5,stroke_mm:92.8,compression:12.7,redline:8500,cam:'race',vvt:true,valveSpring:'race',injector:'direct',octane:98,exhaust:'race',airFilter:'perf',runner:'variable'}},
   {cat:'Exotic',name:'Ferrari F140 V12 (812 Superfast)',real:{hp:789,hpRpm:8500,tq:718,tqRpm:7000},
    engine:{cylinders:12,layout:'v',bore_mm:94.0,stroke_mm:78.0,compression:13.6,redline:8900,cam:'race',vvt:true,valveSpring:'race',valveMat:'titanium',injector:'direct',octane:98,exhaust:'race',airFilter:'perf',runner:'variable'}},
+  // Rotary: both on the 13B rotor (e 15, R 105, W 80: 654 cc a rotor). The FD is quoted at its 1993 US
+  // rating, not the later JDM 280 PS, which is the gentlemen's-agreement figure.
+  {cat:'Rotary',name:'Mazda 13B-REW (RX-7 FD)',real:{hp:255,hpRpm:6500,tq:294,tqRpm:5000},unsure:['boost_bar'],
+   engine:{type:'rotary',cylinders:2,bore_mm:105,stroke_mm:80,ecc_mm:15,compression:9.0,redline:8000,intake:'turbo',boost_bar:0.7,turboSize:'small',turboConfig:'sequential',injector:'port',octane:98,intercooler:'small',exhaust:'stock',airFilter:'stock',radiator:'large',oilCooler:true}},
+  {cat:'Rotary',name:'Mazda 13B-MSP Renesis (RX-8)',real:{hp:232,hpRpm:8200,tq:211,tqRpm:5500},
+   engine:{type:'rotary',cylinders:2,bore_mm:105,stroke_mm:80,ecc_mm:15,compression:10.0,redline:9000,injector:'port',octane:98,exhaust:'stock',airFilter:'stock',radiator:'large',oilCooler:true}},
   {cat:'Diesel',name:'VW EA288 2.0 TDI (Golf 150)',real:{hp:148,hpRpm:3500,tq:320,tqRpm:1750},
    engine:{type:'diesel',vvt:false,cylinders:4,bore_mm:81.0,stroke_mm:95.5,compression:16.2,redline:4800,intake:'turbo',boost_bar:1.3,turboSize:'small',vgt:true,injector:'direct',intercooler:'large',exhaust:'stock',airFilter:'stock'}},
   {cat:'Diesel',name:'BMW N57 3.0d (330d F30)',real:{hp:254,hpRpm:4000,tq:560,tqRpm:2000},unsure:['boost_bar'],
@@ -2246,7 +2259,7 @@ const PRESETS=[
    engine:{type:'twostroke',cylinders:2,bore_mm:64.0,stroke_mm:54.0,compression:7,redline:9500,intakeSys:'carb2',octane:95,exhaust:'race',airFilter:'stock'}},
 ];
 // Category order for the preset list (the dropdown groups by it; the UI pass will build on this).
-const PRESET_CATS=['Archetypes','Kei & City','Compact Turbo','NA Sports','Turbo Performance','American V8','Exotic','Diesel','Two-Stroke'];
+const PRESET_CATS=['Archetypes','Kei & City','Compact Turbo','NA Sports','Turbo Performance','American V8','Exotic','Rotary','Diesel','Two-Stroke'];
 const STD_TUNE={throttle:0.85,load:0.40,elecLoad:0.30,afr:13.2,iat:25,coolant:90,oil:100,autoThermal:false};
 
 // ---- Strategy layer: objective challenges ----
@@ -2801,6 +2814,12 @@ const VEHICLE_PRESETS=[
   {cat:'Exotic',name:'Ferrari 812 Superfast (2017)',engine:'Ferrari F140 V12 (812 Superfast)',chassis:'gt',
    body:{kg:1745,cd:0.37,area:2.05,wb:2.72,fWt:0.47},fit:{drive:'rwd',tire:'sport',tw:315,ta:35,wheel:20,brake:'carbon',rotor:400,susp:'sport',gears:7,gearbox:'dct',diff:'clsd'},
    real:{t100:2.9,top:340},unsure:['cd','area','kg']},
+  {cat:'Rotary',name:'Mazda RX-7 (FD, 1993)',engine:'Mazda 13B-REW (RX-7 FD)',chassis:'coupe',
+   body:{kg:1280,cd:0.29,area:1.80,wb:2.425,fWt:0.50},fit:{drive:'rwd',tire:'sport',tw:225,ta:50,wheel:16,brake:'slotted',rotor:290,susp:'sport',gears:5,gearbox:'manual',diff:'clsd'},
+   real:{t100:5.3,top:250,limited:true},unsure:['area','t100','top']},
+  {cat:'Rotary',name:'Mazda RX-8 (2004)',engine:'Mazda 13B-MSP Renesis (RX-8)',chassis:'coupe',
+   body:{kg:1310,cd:0.30,area:2.05,wb:2.70,fWt:0.50},fit:{drive:'rwd',tire:'sport',tw:225,ta:45,wheel:18,brake:'slotted',rotor:320,susp:'sport',gears:6,gearbox:'manual',diff:'clsd'},
+   real:{t100:6.4,top:235},unsure:['area','top']},
   {cat:'Diesel',name:'VW Golf 2.0 TDI 150 (Mk7, 2013)',engine:'VW EA288 2.0 TDI (Golf 150)',chassis:'hatch',
    body:{kg:1375,cd:0.30,area:2.19,wb:2.637,fWt:0.62},fit:{drive:'fwd',tire:'eco',tw:205,ta:55,wheel:16,brake:'slotted',rotor:290,susp:'comfort',gears:6,gearbox:'manual',diff:'open'},
    real:{t100:8.6,top:216}},
@@ -3014,6 +3033,7 @@ function readEngineFromForm(){
     cylinders:clamp(Math.round(+g('edCyl').value||4),1,maxCyl),
     bore_mm:clamp(+g('edBore').value||86,60,110),
     stroke_mm:clamp(+g('edStroke').value||86,50,130),   // to 130: a Cummins 6.7 is 107 x 124
+    ecc_mm:clamp(+g('edEcc').value||15,8,25),           // rotary only: crank throw of the eccentric shaft
     compression:clamp(+g('edCR').value||tp.crDef,tp.crMin,tp.crMax),
     layout:type==='rotary'?'rotary':g('edLayout').value,
     redline:clamp(Math.round(+g('edRedline').value||tp.redlineDef),tp.redMin,tp.redMax),
@@ -3055,6 +3075,8 @@ function applyEngineToForm(e){
   g('edType').value=e.type||'petrol4';
   g('edCyl').value=e.cylinders;g('edLayout').value=(e.layout==='rotary'?'inline':e.layout);g('edBore').value=e.bore_mm;
   g('edStroke').value=e.stroke_mm;g('edCR').value=e.compression;g('edRedline').value=e.redline;
+  // Builds saved before the eccentricity existed: every production Mazda rotor has R/e = 7.
+  g('edEcc').value=e.ecc_mm||+(e.bore_mm/7).toFixed(1);
   // Migrate legacy boolean intercooler (true→large, false→none) from older saved builds.
   g('edIntake').value=e.intake;g('edBoost').value=e.boost_bar;
   g('edIntercooler').value=(e.intercooler===true?'large':e.intercooler===false?'none':(e.intercooler||'large'));
@@ -3084,6 +3106,7 @@ function syncDesignEnable(){
   g('lblBore').textContent=tr(type==='rotary'?'ROTOR R (mm)':'BORE (mm)');
   g('lblStroke').textContent=tr(type==='rotary'?'ROTOR W (mm)':'STROKE (mm)');
   g('edLayout').disabled=type==='rotary';
+  g('edEcc').disabled=type!=='rotary';
   // Cylinder / rotor count is capped per type: production Wankels top out at four rotors (Mazda
   // 26B) and two-strokes at six cylinders. Counts above the cap are shown disabled rather than
   // silently clamped at build time, which used to turn a 12-rotor choice into 3 with no word said.
@@ -3129,6 +3152,10 @@ function buildEngine(){
   const et=ENGINE_TYPE[engine.type]||ENGINE_TYPE.petrol4;
   engine.strokeDiv=et.strokeDiv;engine.ci=et.ci;engine.ports=et.ports;
   engine.typeImep=et.imep;engine.typeBsfc=et.bsfc;engine.typeLabel=et.label;
+  // Charges drawn per shaft revolution, per cylinder or rotor: a four-stroke breathes every other turn;
+  // a two-stroke every turn; a rotor fills one of its three chambers every shaft turn (it turns once
+  // for three of the shaft). Every air-flow rate below is displacement x rpm x this.
+  engine.chargesPerRev=2*Math.PI/engine.strokeDiv;
   if(engine.ports){engine.cam='stock';engine.vvt=false;}   // 2-stroke / rotary: no poppet valvetrain
   if(engine.ci)engine.injector='direct';                   // diesel: direct injection
   // Fuel: energy content, stoichiometry, knock rating and charge cooling.
@@ -3137,7 +3164,17 @@ function buildEngine(){
   engine.effOctane=fp.octane!=null?fp.octane:engine.octane;
   engine.fuelKnockBonus=fp.knockBonus;engine.chargeCool=fp.chargeCool;
   // Geometry → displacement (bore/stroke in mm → cm³ → L).
-  const vcyl_cc=Math.PI/4*Math.pow(engine.bore_mm/10,2)*(engine.stroke_mm/10);
+  // A Wankel chamber is not a cylinder. Its swept volume is the difference between the largest and
+  // smallest volume one rotor flank encloses in the epitrochoid housing, 3√3·e·R·W per chamber, with
+  // e the eccentricity, R the generating radius (centre to apex) and W the rotor width. Each rotor
+  // fills one chamber per shaft turn, which is why displacement counts one chamber per rotor: the
+  // 13B (e 15, R 105, W 80) is 654 cc a rotor, 1308 cc in all. Until build 100 this was the piston
+  // formula on R and W, π/4·R²·W, which has no eccentricity in it at all. The eccentricity is held
+  // under R/5, beyond which the apex seals lean too far over the housing to seal.
+  if(engine.type==='rotary')engine.ecc_mm=Math.min(engine.ecc_mm||engine.bore_mm/7,engine.bore_mm/5);
+  const vcyl_cc=engine.type==='rotary'
+    ?3*Math.sqrt(3)*(engine.ecc_mm/10)*(engine.bore_mm/10)*(engine.stroke_mm/10)
+    :Math.PI/4*Math.pow(engine.bore_mm/10,2)*(engine.stroke_mm/10);
   engine.displacement_L=vcyl_cc*engine.cylinders/1000;
   engine.boreStroke=engine.bore_mm/engine.stroke_mm;
   // The VE ceiling: the plateau the derived terms below shape (or the bell's height, where kept).
@@ -3223,7 +3260,7 @@ function buildEngine(){
   // temperature rather than the live VE/IAT solution: those depend on compressor efficiency,
   // which depends on this, and the loop would not close.
   const PR=1+engine.maxBoost;
-  const perRev=(engine.strokeDiv===2*Math.PI)?1:0.5;      // intake events per revolution
+  const perRev=engine.chargesPerRev;                      // intake events per revolution
   const rhoRef=PR*1e5/(287*(273+40));
   const kgs=rhoRef*(engine.displacement_L/1000)*perRev*(engine.redline*0.85/60)*engine.veAmp;
   engine.turboFlow=kgs*132.28;                            // kg/s → lb/min
@@ -3647,7 +3684,7 @@ function computeVE(rpm,map){
   // engines collapsed at the top (knockAt).
   if(engine.chokeFlow_kgs>0){
     const rho=map*101325/(287*(effIAT(map,rpm)+273.15));
-    const demand=(engine.displacement_L/1000)*ve*(rpm/120)*rho;
+    const demand=(engine.displacement_L/1000)*ve*(rpm/60*engine.chargesPerRev)*rho;
     if(demand>engine.chokeFlow_kgs)ve*=engine.chokeFlow_kgs/demand;
   }
   // Induction system + air filter: restriction/flow weighted by airflow demand (rpm).
@@ -4399,7 +4436,7 @@ function updatePhysics(){
     return;
   }
   const T_k=effIAT(map,state.rpm)+273.15,MAP_pa=map*1e5,Vd=engine.displacement_L/1000;
-  const airMass_kg_s=(MAP_pa*Vd*(state.rpm/60)*state.ve)/(287*T_k*2);
+  const airMass_kg_s=(MAP_pa*Vd*(state.rpm/60)*engine.chargesPerRev*state.ve)/(287*T_k);
   // Imprecise metering (carbs / mechanical injection) wastes fuel; the cycle's thirst factor
   // (typeBsfc) captures combustion/scavenging losses — a 2-stroke short-circuits fresh charge
   // out the exhaust (>1, thirsty). A diesel is 1: its torque is computed from this same fuel.
@@ -4657,7 +4694,7 @@ function steadyBSFC(rpm,map){
   const r=calcAtRpm(rpm,map);
   if(!(r.powerKW>0.5))return {bsfc:Infinity,r};
   const T=effIAT(map,rpm)+273.15, Vd=engine.displacement_L/1000;
-  const air=(map*1e5*Vd*(rpm/60)*r.ve)/(287*T*2);
+  const air=(map*1e5*Vd*(rpm/60)*engine.chargesPerRev*r.ve)/(287*T);
   const fuel=(air/curAFR(rpm,map))/engine.meteringEff*engine.typeBsfc;
   return {bsfc:fuel*3600*1000/r.powerKW,r};
 }
@@ -6391,7 +6428,7 @@ function scoreEngine(){
   for(const mm of [0.8,1.0,Math.min(1.2,engine.mapMax)]){const cm=Math.min(mm,engine.mapMax);
     for(const rf of [0.6,0.85,1.05]){const rr=Math.round(clamp(peakTQrpm*rf,1200,rMax));
       const cr=calcAtRpm(rr,cm);
-      const airMass=(cm*1e5*(engine.displacement_L/1000)*(rr/60)*cr.ve)/(287*(effIAT(cm,rr)+273.15)*2);
+      const airMass=(cm*1e5*(engine.displacement_L/1000)*(rr/60)*engine.chargesPerRev*cr.ve)/(287*(effIAT(cm,rr)+273.15));
       const fuelPower=((airMass/curAFR(rr,cm))/engine.meteringEff*engine.typeBsfc)*engine.fuelLHV*1e6/1000;
       if(fuelPower>0.1)thEff=Math.max(thEff,clamp((cr.powerKW/fuelPower)*100,0,46));
     }}

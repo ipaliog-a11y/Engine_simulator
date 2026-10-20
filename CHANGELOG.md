@@ -20,6 +20,27 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 Working toward **v1.0 — every number derived, not fitted.**
 
+### Rotary geometry, and a charge every turn (build 100)
+
+- **Wankel displacement is a Wankel's.** A chamber sweeps 3√3·e·R·W (e the eccentricity, R the
+  generating radius, W the rotor width), and each rotor fills one chamber per shaft turn. It was the
+  piston formula on R and W, π/4·R²·W, which has no eccentricity at all. New input: ECCENTRICITY e
+  (rotary only; builds saved without it take R/7, Mazda's ratio on every production rotor). The
+  archetype rotaries now carry the real 13B rotor (e 15, R 105, W 80): 1308 cc, where they were 804.
+- **Ported engines draw a charge every shaft turn, in every air-flow rate.** Every flow (turbo,
+  compressor choke, exhaust pulses, header sizing, fuel flow, BSFC) counted one charge per two turns,
+  a four-stroke's, while the torque already counted one per turn. A rotary and a two-stroke were
+  breathing half their air everywhere except the torque.
+- **The rotary's thirst factor goes from 1.48 to 1.** It offset the half-rate air; with the rate right,
+  a side-ported rotor has almost no overlap to lose fresh charge through, so it burns what it traps.
+  Rotary full-load BSFC 400-423 g/kWh. (The two-stroke's 1.45 is short-circuited charge, 1/0.69, and
+  now applies to the right air; its BSFC, 700-800 against a real 450-600, exposes its fitted 0.60.)
+- **The 13B spools like an FD:** 90% boost at ~2400 rpm, where it was ~7400 (real ~3000). test56
+  carried this as a known gap blamed on missing pulse energy; the cause was half the exhaust flow.
+- **Real rotaries, in a new Rotary category:** 13B-REW (RX-7 FD, 1993 US rating) and 13B-MSP Renesis
+  (RX-8), with the RX-7 FD and RX-8 cars. They read −32% and −45% on power: the rotary's IMEP factor
+  (0.70) is still fitted, and a rotary's port breathing is not modelled. That is the next rotary item.
+
 ### Speed limiter, removable (build 99)
 
 - **A road-speed governor on the vehicle tab:** SPEED LIMITER on/off and its km/h. When on, the engine
