@@ -227,7 +227,7 @@ table.fuelmap td.live{box-shadow:inset 0 0 0 2px #fff;font-weight:bold}
 <body>
 <div class="container">
 <header>
-<h1>PIXEL ENGINE SIM v0.6 build 84</h1>
+<h1>PIXEL ENGINE SIM v0.6 build 85</h1>
 <div class="subtitle" id="subtitle">ENGINE DESIGNER • BUILD IT, THEN DRIVE IT</div>
 </header>
 <div class="main">
@@ -984,9 +984,9 @@ This is a physics model, and like every model it leaves things out. These are th
 <div class="control-group"><label for="coolant"><span class="ctl-lbl">COOLANT TEMP</span> <span class="val" id="valCool">90</span> °C</label><input type="range" id="coolant" min="40" max="130" step="1" value="90" aria-label="Coolant temperature in Celsius"></div>
 <div class="control-group"><label for="oil"><span class="ctl-lbl">OIL TEMP</span> <span class="val" id="valOil">100</span> °C</label><input type="range" id="oil" min="40" max="150" step="1" value="100" aria-label="Oil temperature in Celsius"></div>
 <div class="btn-row">
-<button id="btnOptimal">OPTIMAL</button>
-<button id="btnMaxPower">MAX POWER</button>
-<button id="btnEco">ECO</button>
+<button id="btnOptimal" title="Wide open throttle, held at this engine's peak-torque rpm">PEAK TORQUE</button>
+<button id="btnMaxPower" title="Wide open throttle, held at this engine's peak-power rpm">MAX POWER</button>
+<button id="btnEco" title="The operating point where this engine burns the least fuel per kWh">ECO</button>
 <button id="btnReset" class="danger">RESET</button>
 </div>
 <div class="btn-row">
@@ -1057,13 +1057,13 @@ const FUELS={
 // thermal efficiency and thirst; the cr/redline/afr ranges retarget the design sliders.
 const ENGINE_TYPE={
   petrol4:  {label:'PETROL 4-STROKE',strokeDiv:4*Math.PI,ci:false,ports:false,imep:1.00,eff:1.00,bsfc:1.00,
-             crDef:11,crMin:8,crMax:14,redlineDef:7000,redMin:5000,redMax:9500,fuel:null},
+             crDef:11,crMin:8,crMax:14,redlineDef:7000,redMin:5000,redMax:9500,fuel:null,maxCyl:12},
   diesel:   {label:'DIESEL (CI)',    strokeDiv:4*Math.PI,ci:true, ports:false,imep:1.02,eff:1.30,bsfc:0.72,
-             crDef:18,crMin:15,crMax:24,redlineDef:4800,redMin:3500,redMax:5800,fuel:'diesel'},
+             crDef:18,crMin:15,crMax:24,redlineDef:4800,redMin:3500,redMax:5800,fuel:'diesel',maxCyl:12},
   twostroke:{label:'2-STROKE',       strokeDiv:2*Math.PI,ci:false,ports:true, imep:0.60,eff:0.80,bsfc:1.45,
-             crDef:9, crMin:7,crMax:12,redlineDef:8000,redMin:5500,redMax:11000,fuel:null},
+             crDef:9, crMin:7,crMax:12,redlineDef:8000,redMin:5500,redMax:11000,fuel:null,maxCyl:6},
   rotary:   {label:'ROTARY (WANKEL)',strokeDiv:2*Math.PI,ci:false,ports:true, imep:0.70,eff:0.74,bsfc:1.48,
-             crDef:9.4,crMin:8.5,crMax:11,redlineDef:9000,redMin:6500,redMax:11000,fuel:null}
+             crDef:9.4,crMin:8.5,crMax:11,redlineDef:9000,redMin:6500,redMax:11000,fuel:null,maxCyl:4}
 };
 const LAYOUT_LABEL={inline:'INLINE',v:'V',boxer:'BOXER',rotary:'ROTARY'};
 // Exhaust systems, as GEOMETRY rather than as an asserted VE bonus. What each grade means:
@@ -1642,8 +1642,13 @@ function shaftNetPower(shaftRpm,mAir,T3,T01){
   // scheduling to the instantaneous draw would balance the shaft at EVERY speed, net would be zero
   // everywhere, and the turbo would never accelerate. Below target the vanes sit shut, which is
   // what a spool-up is; at target they open just enough to hold it.
+  // The vanes close until the target is HELD, which means covering the shaft's own bearing drag as
+  // well as the compressor. Scheduling to the compressor alone left exactly zero surplus, so on the
+  // live bench (which charges bearing drag) a VGT diesel settled at 1.05 bar against a 1.20 target,
+  // while the steady solver (which does not) said it held 1.20. A wastegated frame never showed it,
+  // because it always has surplus to dump.
   const t=e.vgtShut>0
-    ? vgtThroat(mEx,compPowerAt(mA,1+e.maxBoost,T01,eta),T3,e.turbineArea,e.vgtShut)
+    ? vgtThroat(mEx,compPowerAt(mA,1+e.maxBoost,T01,eta)+shaftLossPower(shaftRpm)/units,T3,e.turbineArea,e.vgtShut)
     : {area:e.turbineArea,pr:turbineManifoldPR(mEx,e.turbineArea,T3)};
   const area=t.area, prT=t.pr;
   const Pt=mEx*CP_EXH*Math.max(300,T3)*TURB_ETA*(1-Math.pow(Math.max(1.0001,prT),-0.248));
@@ -1897,6 +1902,8 @@ let activeChallenge='free';
 // technical readouts (canvas schematic, status ticker, design-summary spec) stay in English —
 // their content is numbers and universal units.
 const I18N={
+  'expect':{el:'αναμένεται'},'the ECU map sets the mixture':{el:'το μείγμα το ορίζει ο χάρτης ECU'},
+  'AT THE SHAFT':{el:'ΣΤΟΝ ΑΞΟΝΑ'},
   "How the app works":{el:"Πώς δουλεύει"},
   "The tabs":{el:"Οι καρτέλες"},
   "Your first build":{el:"Η πρώτη σου κατασκευή"},
@@ -1978,7 +1985,7 @@ const I18N={
   'Engine Controls':{el:'Χειριστήρια'},
   'THROTTLE':{el:'ΓΚΑΖΙ'},'LOAD (DYNO BRAKE)':{el:'ΦΟΡΤΙΟ (ΦΡΕΝΟ)'},'ELEC LOAD (LIGHTS/AC)':{el:'ΗΛΕΚ. ΦΟΡΤΙΟ (ΦΩΤΑ/AC)'},
   'AIR-FUEL RATIO':{el:'ΑΝΑΛΟΓΙΑ ΑΕΡΑ-ΚΑΥΣΙΜΟΥ'},'INTAKE AIR TEMP':{el:'ΘΕΡΜ. ΑΕΡΑ ΕΙΣΑΓ.'},'COOLANT TEMP':{el:'ΘΕΡΜ. ΨΥΚΤΙΚΟΥ'},'OIL TEMP':{el:'ΘΕΡΜ. ΛΑΔΙΟΥ'},
-  'OPTIMAL':{el:'ΒΕΛΤΙΣΤΟ'},'MAX POWER':{el:'ΜΕΓ. ΙΣΧΥΣ'},'ECO':{el:'ΟΙΚΟΝΟΜΙΑ'},'RESET':{el:'ΕΠΑΝΑΦΟΡΑ'},
+  'OPTIMAL':{el:'ΒΕΛΤΙΣΤΟ'},'PEAK TORQUE':{el:'ΜΕΓ. ΡΟΠΗ'},'MAX POWER':{el:'ΜΕΓ. ΙΣΧΥΣ'},'ECO':{el:'ΟΙΚΟΝΟΜΙΑ'},'RESET':{el:'ΕΠΑΝΑΦΟΡΑ'},
   'AUTO THERMAL':{el:'ΑΥΤ. ΘΕΡΜΙΚΟ'},'NITROUS':{el:'ΝΙΤΡΟ'},'LOG PULL':{el:'ΚΑΤΑΓΡΑΦΗ'},'CLR PULLS':{el:'ΚΑΘΑΡΙΣΜΟΣ'},
   'SAVE':{el:'ΑΠΟΘΗΚ.'},'LOAD':{el:'ΦΟΡΤΩΣΗ'},'SAVE FILE':{el:'ΑΠΟΘ. ΑΡΧΕΙΟΥ'},'OPEN FILE':{el:'ΑΝΟΙΓΜΑ ΑΡΧΕΙΟΥ'},'SHARE':{el:'ΚΟΙΝΟΠΟΙΗΣΗ'},
   'Vehicle Designer':{el:'Σχεδιαστής Οχήματος'},
@@ -2463,7 +2470,7 @@ function readEngineFromForm(){
   const g=id=>document.getElementById(id);
   const intake=g('edIntake').value;
   const type=g('edType').value, tp=ENGINE_TYPE[type]||ENGINE_TYPE.petrol4;
-  const maxCyl=type==='rotary'?3:12;   // rotaries: 1-3 rotors
+  const maxCyl=(ENGINE_TYPE[type]||ENGINE_TYPE.petrol4).maxCyl||12;   // rotary 4 rotors, 2-stroke 6 cylinders
   let fuel=g('edFuel').value;
   if(tp.ci)fuel='diesel'; else if(fuel==='diesel')fuel='gasoline';   // fuel follows the cycle
   return {
@@ -2541,6 +2548,12 @@ function syncDesignEnable(){
   g('lblBore').textContent=tr(type==='rotary'?'ROTOR R (mm)':'BORE (mm)');
   g('lblStroke').textContent=tr(type==='rotary'?'ROTOR W (mm)':'STROKE (mm)');
   g('edLayout').disabled=type==='rotary';
+  // Cylinder / rotor count is capped per type: production Wankels top out at four rotors (Mazda
+  // 26B) and two-strokes at six cylinders. Counts above the cap are shown disabled rather than
+  // silently clamped at build time, which used to turn a 12-rotor choice into 3 with no word said.
+  const maxCyl=tp.maxCyl||12, cylSel=g('edCyl');
+  [...cylSel.options].forEach(o=>{o.disabled=+o.value>maxCyl;});
+  if(+cylSel.value>maxCyl)cylSel.value=String(Math.min(maxCyl,4));
   g('edFuel').disabled=tp.ci;                              // diesel fuel is fixed
   // Boost / intercooler only matter for forced induction; turbo size only for turbos.
   const intake=g('edIntake').value,na=intake==='na';
@@ -3201,19 +3214,44 @@ function updateFuelMapMarker(){
   const prev=box.querySelector('td.live');if(prev)prev.classList.remove('live');
   const cell=box.querySelector('td[data-c="'+c+'"][data-r="'+r+'"]');if(cell)cell.classList.add('live');
 }
+// MIXTURE -> TORQUE, from the fuel-air cycle rather than a fitted bell.
+// This was a Gaussian 0.19 wide in lambda, centred on 0.86. It got best power right and nothing else:
+// at stoichiometric it said a petrol engine makes 41% less torque than at best power (real engines:
+// about 3% less), and at lambda 1.10 it had already hit its floor. That made rich the most economical
+// mixture in the model, and it ran every light-load point of the AUTO fuel map — which sits at
+// stoich, where a catalyst works — 37% weak. The diesel side was as steep the other way.
+//
+// What actually happens: torque follows the fuel that BURNS times how efficiently it burns.
+//   · Lean of stoich every gram burns, so heat release goes as fuel, phi = 1/lambda, and the
+//     indicated efficiency RISES as the mixture leans out (higher gamma, less dissociation, cooler
+//     gas) — from Heywood's fuel-air cycle results, about +12% from phi 1.0 to 0.8, flattening by
+//     phi 0.25.
+//   · Rich of stoich the oxygen runs out first, so the extra fuel cannot all burn and efficiency
+//     falls: about -14% at phi 1.2 and -28% at phi 1.4 in the same tables.
+// imep is proportional to phi * eta(phi), which gives a maximum near phi 1.2 (lambda 0.83) about 3%
+// above stoich, 4% down at lambda 1.10 and 9% down at 1.20 — the shape a real SI engine shows.
+// The two roll-offs that limit a real engine at the extremes stay as they were: lean-limit burn
+// deterioration past lambda 1.12, and rich misfire below 0.75.
+//
+// ANCHORED, so the scorecard does not move: the curve is scaled to equal the old one's value at the
+// mixture the scorecard rates peak power at (lambda 0.86 spark, 1.05 diesel). Only the shape away
+// from best power changes. (The acceleration curve is built at 0.88, where this reads 0.2% under
+// the new curve's own value at 0.86 and 1.0% over the old curve's — the one figure set that shifts.)
+const faEta=phi=>phi<=1?1+0.6*(1-phi)-0.4*(1-phi)*(1-phi):Math.max(0.3,1-0.71*(phi-1));
+const imepRel=lam=>{const phi=1/Math.max(0.3,lam);return phi*faEta(phi);};
+const AFR_ANCHOR_SI=1.08;   // the old curve at lambda 0.86, the scorecard's best-power mixture
+const AFR_ANCHOR_CI=1.06*Math.exp(-Math.pow((1.05-1.0)/0.85,2));    // the old curve at lambda 1.05
 function afrPowerFactor(afr){
   const lam=afr/engine.stoichAFR;
   if(engine.ci){
-    // Diesel is quality-governed: torque tracks how much fuel is injected. Most fuel (near
-    // the smoke limit, λ≈1.0) makes peak torque; leaning out (less fuel) drops it steadily.
-    return clamp(1.06*Math.exp(-Math.pow(Math.max(0,lam-1.0)/0.85,2)),0.10,1.06);
+    // Quality-governed: torque follows the fuel injected. Richer than the smoke limit (lambda ~1.02)
+    // the extra fuel only makes soot, so torque stops rising there.
+    return clamp(AFR_ANCHOR_CI*imepRel(Math.max(1.02,lam))/imepRel(1.05),0.05,1.08);
   }
-  // Spark-ignition: peak power at λ≈0.86 (rich), stoich at λ=1, lean beyond.
-  const peak=0.86,width=0.19;
-  let f=1.08*Math.exp(-Math.pow((lam-peak)/width,2));
-  if(lam<0.75)f*=0.85+0.6*(lam-0.68);   // very rich rolloff
-  if(lam>1.12)f*=1.0-1.5*(lam-1.12);    // very lean rolloff
-  return clamp(f,0.25,1.12);
+  let f=AFR_ANCHOR_SI*imepRel(lam)/imepRel(0.86);
+  if(lam<0.75)f*=0.85+0.6*(lam-0.68);   // very rich: misfire
+  if(lam>1.12)f*=1.0-1.5*(lam-1.12);    // very lean: burn deteriorates toward the lean limit
+  return clamp(f,0.05,1.12);
 }
 function tempFactors(coolant,oil){
   let coolF=1.0-0.00045*Math.pow(coolant-91,2);
@@ -3835,6 +3873,55 @@ function simulateBraking(v0){
 // temps, engine health, battery voltage (spark strength) and any armed nitrous — is set to its
 // ideal value here, then fully restored, so 0-100 etc. depend only on the engine + vehicle
 // build, never on throttle history, temperature or a drained battery.
+// The conditions and mixture the SCORECARD rates peak power at (scoreEngine), so that the LIVE
+// tab's MAX POWER button lands on the number the DYNO tab prints.
+const DYNO_STD={iat:25,coolant:90,oil:100};
+const bestPowerLambda=()=>engine.ci?1.05:0.86;
+// LOAD slider value that makes the dyno brake hold this rpm: target = redline - load*(redline - idle).
+const loadForRpm=rpm=>clamp((engine.redline-rpm)/Math.max(1,engine.redline-engine.idleRpmEff),0,1);
+// Throttle opening that gives manifold fraction f of upstream pressure at this rpm — mapTarget()
+// solved backwards.
+function throttleForMapFrac(f,rpm){
+  const c=THR_K*rpm/1000, F=clamp(f,0.01,0.999), tA=F*c/(1-F+F*c);
+  return clamp(Math.pow(Math.max(0,(tA-IDLE_AIR)/(1-IDLE_AIR)),1/1.2),0,1);
+}
+// Brake specific fuel consumption at a steady operating point, by the same arithmetic the live
+// readout uses (updatePhysics), so the ECO point is the one the BSFC tile will agree with.
+function steadyBSFC(rpm,map){
+  const r=calcAtRpm(rpm,map);
+  if(!(r.powerKW>0.5))return {bsfc:Infinity,r};
+  const T=effIAT(map)+273.15, Vd=engine.displacement_L/1000;
+  const air=(map*1e5*Vd*(rpm/60)*r.ve)/(287*T*2);
+  const fuel=(air/curAFR(rpm,map))/engine.meteringEff*engine.typeBsfc;
+  return {bsfc:fuel*3600*1000/r.powerKW,r};
+}
+function operatingPoint(kind){
+  const s=engine.score;
+  if(kind==='power')return {rpm:s.peakHPrpm,throttle:1,lambda:bestPowerLambda(),expect:s.peakHP+' hp',
+                           tq:s.peakHP*745.7/(s.peakHPrpm*2*Math.PI/60)};
+  if(kind==='torque')return {rpm:s.peakTQrpm,throttle:1,lambda:bestPowerLambda(),expect:s.peakTQ+' Nm',tq:s.peakTQ};
+  // ECO: the eye of the BSFC map — the speed, load and mixture that burn the least fuel per kWh.
+  // Searched rather than asserted, because where it sits depends on the build: friction and
+  // pumping losses push it toward high load and modest rpm, knock pulls a boosted engine off WOT.
+  const sv={afr:state.afr,iat:state.iat,coolant:state.coolant,oil:state.oil};
+  Object.assign(state,DYNO_STD);
+  const lams=engine.ci?[1.2,1.4,1.6,1.8,2.0,2.4]:[0.95,1.0,1.05,1.1,1.15,1.2];
+  const r0=Math.max(engine.idleRpmEff+300,1200), r1=engine.redline*0.85;
+  let best={bsfc:Infinity};
+  for(let rpm=r0;rpm<=r1;rpm+=(r1-r0)/14)
+    for(const fr of [0.35,0.45,0.55,0.65,0.75,0.85,0.95,1])
+      for(const lam of lams){
+        state.afr=lam*engine.stoichAFR;
+        const map=fr>=1?wotMapAt(rpm):fr;
+        const {bsfc,r}=steadyBSFC(rpm,map);
+        if(r.knock>KNOCK_TARGET||r.powerHP<0.15*s.peakHP)continue;   // a real point, not a knocking one
+        if(bsfc<best.bsfc)best={bsfc,rpm,throttle:fr>=1?1:throttleForMapFrac(fr,rpm),lambda:lam,hp:r.powerHP,tq:r.torque};
+      }
+  Object.assign(state,sv);
+  if(!isFinite(best.bsfc))return {rpm:s.peakTQrpm,throttle:0.5,lambda:engine.ci?1.4:1.0,expect:'—'};
+  return {rpm:best.rpm,throttle:best.throttle,lambda:best.lambda,tq:best.tq,
+          expect:Math.round(best.bsfc)+' g/kWh at '+Math.round(best.hp)+' hp'};
+}
 function buildTorqueCurve(){
   const sv={afr:state.afr,coolant:state.coolant,oil:state.oil,engineHealth:state.engineHealth,blown:state.blown,iat:state.iat,systemVoltage:state.systemVoltage,nitrousActive:state.nitrousActive};
   const savedAfrMode=engine.afrMode;engine.afrMode='fixed';   // use the fixed best-power AFR below
@@ -5709,7 +5796,7 @@ function drawEngine(dt){
   const rf=clamp(rpm/rl,0,1);
   ctx.fillStyle=rf>0.92?C.red:C.green;ctx.fillRect(px(tbX),py(tbY),tbW*rf*S,tbH*S);
 
-  if(rotary)drawRotaryCutaway(px,py,S,F,LW,dt);
+  if(rotary)drawRotaryCutaway(px,py,S,F,LW,dt,m);
   else drawPistonCutaway(px,py,S,F,LW,deg,nCyl,rodRatio,bsr,two,m,detailed);
 
   // ---------- status strip ----------
@@ -5727,6 +5814,95 @@ function drawEngine(dt){
 }
 
 // ---- Four-stroke / two-stroke: one cylinder drawn large, the whole bank drawn small ----
+// ---- the instruments round a cutaway, shared by the piston and the rotary views ----
+// These were written inside drawPistonCutaway, so the Wankel view had none of them: no turbo, no
+// exhaust, no EGT, no ignition advance, no output. Shared now, so both engine types show the same
+// information in the same place.
+function drawIntakeSide(px,py,S,F,LW,m,portYc,itX,turboY){
+  const e=engine;
+  ctx.strokeStyle=C.intake;ctx.lineWidth=LW(8);
+  ctx.beginPath();ctx.moveTo(px(52),py(portYc));ctx.lineTo(px(itX),py(portYc));ctx.stroke();
+  const thr=state.throttle,bx=112;
+  ctx.strokeStyle='#cfe';ctx.lineWidth=LW(3);
+  ctx.beginPath();
+  ctx.moveTo(px(bx-8*Math.cos(thr*1.4)),py(portYc-8*Math.sin(thr*1.4)));
+  ctx.lineTo(px(bx+8*Math.cos(thr*1.4)),py(portYc+8*Math.sin(thr*1.4)));ctx.stroke();
+  ctx.fillStyle=C.intake;ctx.font=F(6.5);
+  ctx.fillText(tr('THROTTLE')+' '+Math.round(thr*100)+'%',px(52),py(portYc-14));
+  ctx.fillStyle='#89b';ctx.font=F(6);
+  ctx.fillText('MAP '+m.toFixed(2)+' bar',px(52),py(portYc+20));
+  ctx.fillText('IAT '+Math.round(effIAT(m))+'C',px(52),py(portYc+30));
+
+  // ---- forced induction ----
+  if(e.intake!=='na'){
+    const tx=84,ty=turboY;
+    ctx.fillStyle='#10101a';ctx.beginPath();ctx.arc(px(tx),py(ty),22*S,0,6.284);ctx.fill();
+    ctx.strokeStyle=e.intake==='turbo'?C.exhaust:C.yellow;ctx.lineWidth=LW(2);
+    ctx.beginPath();ctx.arc(px(tx),py(ty),22*S,0,6.284);ctx.stroke();
+    ctx.strokeStyle=C.metalLight;ctx.lineWidth=LW(2.5);
+    for(let i=0;i<6;i++){const a=turboAngle+i*Math.PI/3;
+      ctx.beginPath();ctx.moveTo(px(tx),py(ty));
+      ctx.lineTo(px(tx+Math.cos(a)*17),py(ty+Math.sin(a)*17));ctx.stroke();}
+    ctx.fillStyle=C.metalLight;ctx.beginPath();ctx.arc(px(tx),py(ty),4*S,0,6.284);ctx.fill();
+    ctx.strokeStyle=C.intake;ctx.lineWidth=LW(5);
+    ctx.beginPath();ctx.moveTo(px(tx),py(ty-22));ctx.lineTo(px(tx),py(portYc));ctx.stroke();
+    const boost=Math.max(0,m-1);
+    ctx.fillStyle=boost>0.02?C.yellow:'#667';ctx.font=F(6);ctx.textAlign='center';
+    ctx.fillText((e.intake==='turbo'?tr('TURBO'):tr('BLOWER'))+' +'+boost.toFixed(2),px(tx),py(ty+34));
+    if(e.intake==='turbo'){ctx.fillStyle='#89b';
+      ctx.fillText(Math.round(engine.turboLoad*100)+'% '+tr('of rated flow'),px(tx),py(ty+44));}
+    ctx.textAlign='left';
+  }
+}
+function drawExhaustSide(px,py,S,F,LW,m,portYc,exX){
+  const e=engine;
+  const exHot=clamp(state.powerHP/Math.max(60,engine.score?engine.score.peakHP:200),0,1);
+  ctx.strokeStyle=state.blown?'#444':`rgb(${Math.round(120+120*exHot)},${Math.round(60+30*exHot)},40)`;
+  ctx.lineWidth=LW(7);
+  ctx.beginPath();ctx.moveTo(px(exX),py(portYc));ctx.lineTo(px(392),py(portYc));ctx.stroke();
+  ctx.fillStyle=C.exhaust;ctx.font=F(6.5);
+  ctx.fillText(tr('EXHAUST'),px(330),py(portYc-14));
+  ctx.fillStyle='#89b';ctx.font=F(6);
+  ctx.fillText(e.exhaust.toUpperCase()+' • '+tr('CAT')+' '+CAT[e.cat].label.split(' ')[0],px(330),py(portYc+20));
+  // The model's own exhaust temperature at this load — the same call back-pressure uses. This read
+  // 320 + 520 x (power / peak power) until build 85: a display formula with no physics in it, which
+  // showed a diesel at full power as hot as a petrol engine.
+  const egtK=exhaustGasT(clamp(m/Math.max(0.4,engine.mapMax||1),0.3,1.1));
+  ctx.fillText(tr('EGT')+' '+Math.round(state.powerHP>1?egtK-273:state.coolant)+'C',px(330),py(portYc+30));
+}
+function drawFuelSpark(px,py,S,F,m){
+  const e=engine;
+  const fx=22,fy=286;
+  ctx.fillStyle='#778';ctx.font=F(6);ctx.fillText(tr('FUEL & SPARK'),px(fx),py(fy-4));
+  const lam=state.afr/engine.stoichAFR;
+  const lamCol=lam<0.85?C.yellow:lam>1.08?C.red:C.green;
+  ctx.font=F(6.5);
+  ctx.fillStyle='#cde';ctx.fillText(FUELS[e.fuel].label+(e.fuel==='gasoline'?' '+e.octane+' RON':''),px(fx),py(fy+10));
+  ctx.fillStyle=state.fuelCut&&state.rpm<e.redline?C.cyan:'#cde';
+  ctx.fillText(state.fuelCut&&state.rpm<e.redline?tr('OVERRUN CUT — 0 L/h'):state.fuelFlowLph.toFixed(1)+' L/h',px(fx),py(fy+22));
+  ctx.fillStyle=lamCol;ctx.fillText('AFR '+state.afr.toFixed(1)+'  λ'+lam.toFixed(2),px(fx),py(fy+34));
+  ctx.fillStyle='#cde';
+  ctx.fillText(e.ci?tr('COMPRESSION IGNITION'):tr('ADV')+' '+Math.round(activeAdvance(state.rpm,m))+'°'+(e.timingMode==='auto'?' '+tr('AUTO'):''),px(fx),py(fy+46));
+  // knock bar — the readout that decides whether the build survives
+  ctx.fillStyle='#778';ctx.font=F(6);ctx.fillText(tr('KNOCK RISK'),px(fx),py(fy+62));
+  ctx.fillStyle='#1a1a28';ctx.fillRect(px(fx),py(fy+66),150*S,9*S);
+  const kf=clamp(state.knockRisk/100,0,1);
+  ctx.fillStyle=state.knockRisk>60?C.red:state.knockRisk>30?C.yellow:C.green;
+  ctx.fillRect(px(fx),py(fy+66),150*kf*S,9*S);
+  ctx.fillStyle='#cde';ctx.textAlign='right';ctx.fillText(Math.round(state.knockRisk),px(fx+147),py(fy+73));ctx.textAlign='left';
+}
+function drawShaftOutput(px,py,F,x,y,label){
+  ctx.font=F(7);ctx.textAlign='center';
+  ctx.fillStyle='#778';ctx.font=F(6);ctx.fillText(label,px(x),py(y));
+  ctx.font=F(8);
+  ctx.fillStyle=C.green;ctx.fillText(state.powerHP.toFixed(0)+' HP',px(x),py(y+16));
+  ctx.fillStyle=C.cyan;ctx.fillText(state.torque.toFixed(0)+' Nm',px(x),py(y+30));
+  ctx.textAlign='left';
+}
+function drawTempGauges(px,py,S,F,LW,x,y,w){
+  gaugeBar(px,py,S,F,LW,x,y+12,w,tr('COOLANT'),state.coolant,60,125,108,115);
+  gaugeBar(px,py,S,F,LW,x,y+34,w,tr('OIL'),state.oil,60,140,115,125);
+}
 function drawPistonCutaway(px,py,S,F,LW,deg,nCyl,rodRatio,bsr,two,m,detailed){
   const e=engine;
   // Geometry of the big cylinder. Bore/stroke ratio decides how wide and how tall it is, so an
@@ -5796,13 +5972,7 @@ function drawPistonCutaway(px,py,S,F,LW,deg,nCyl,rodRatio,bsr,two,m,detailed){
   ctx.fillStyle=C.metalLight;ctx.beginPath();ctx.arc(px(crankX),py(crankPinY),4*S,0,6.284);ctx.fill();
   ctx.fillStyle=C.metalLight;ctx.beginPath();ctx.arc(px(cx),py(crankY),8*S,0,6.284);ctx.fill();
   ctx.fillStyle='#0c0c14';ctx.beginPath();ctx.arc(px(cx),py(crankY),3*S,0,6.284);ctx.fill();
-  // what the crank is actually delivering, written on the crank
-  ctx.font=F(7);ctx.textAlign='center';
-  ctx.fillStyle='#778';ctx.font=F(6);ctx.fillText(tr('AT THE CRANK'),px(cx),py(crankY+62));
-  ctx.font=F(8);
-  ctx.fillStyle=C.green;ctx.fillText(state.powerHP.toFixed(0)+' HP',px(cx),py(crankY+78));
-  ctx.fillStyle=C.cyan;ctx.fillText(state.torque.toFixed(0)+' Nm',px(cx),py(crankY+92));
-  ctx.textAlign='left';
+  drawShaftOutput(px,py,F,cx,crankY+62,tr('AT THE CRANK'));
 
   // ---- head: valves (or ports on a two-stroke) ----
   const headTop=headY+6;
@@ -5855,53 +6025,12 @@ function drawPistonCutaway(px,py,S,F,LW,deg,nCyl,rodRatio,bsr,two,m,detailed){
   ctx.fillText(e.ports?tr('PORTS'):e.cam.toUpperCase(),px(labX),py(boreTop+82));
   if(e.vvt&&!e.ports){ctx.font=F(6);ctx.fillStyle=C.cyan;ctx.fillText('+ VVT',px(labX),py(boreTop+92));}
 
-  // ---- intake tract with a throttle butterfly ----
-  const portYc=headY+20, itX=cx-bore/2-20;
-  ctx.strokeStyle=C.intake;ctx.lineWidth=LW(8);
-  ctx.beginPath();ctx.moveTo(px(52),py(portYc));ctx.lineTo(px(itX),py(portYc));ctx.stroke();
-  const thr=state.throttle,bx=112;
-  ctx.strokeStyle='#cfe';ctx.lineWidth=LW(3);
-  ctx.beginPath();
-  ctx.moveTo(px(bx-8*Math.cos(thr*1.4)),py(portYc-8*Math.sin(thr*1.4)));
-  ctx.lineTo(px(bx+8*Math.cos(thr*1.4)),py(portYc+8*Math.sin(thr*1.4)));ctx.stroke();
-  ctx.fillStyle=C.intake;ctx.font=F(6.5);
-  ctx.fillText(tr('THROTTLE')+' '+Math.round(thr*100)+'%',px(52),py(portYc-14));
-  ctx.fillStyle='#89b';ctx.font=F(6);
-  ctx.fillText('MAP '+m.toFixed(2)+' bar',px(52),py(portYc+20));
-  ctx.fillText('IAT '+Math.round(effIAT(m))+'C',px(52),py(portYc+30));
-
-  // ---- forced induction ----
-  if(e.intake!=='na'){
-    const tx=84,ty=headY+118;
-    ctx.fillStyle='#10101a';ctx.beginPath();ctx.arc(px(tx),py(ty),22*S,0,6.284);ctx.fill();
-    ctx.strokeStyle=e.intake==='turbo'?C.exhaust:C.yellow;ctx.lineWidth=LW(2);
-    ctx.beginPath();ctx.arc(px(tx),py(ty),22*S,0,6.284);ctx.stroke();
-    ctx.strokeStyle=C.metalLight;ctx.lineWidth=LW(2.5);
-    for(let i=0;i<6;i++){const a=turboAngle+i*Math.PI/3;
-      ctx.beginPath();ctx.moveTo(px(tx),py(ty));
-      ctx.lineTo(px(tx+Math.cos(a)*17),py(ty+Math.sin(a)*17));ctx.stroke();}
-    ctx.fillStyle=C.metalLight;ctx.beginPath();ctx.arc(px(tx),py(ty),4*S,0,6.284);ctx.fill();
-    ctx.strokeStyle=C.intake;ctx.lineWidth=LW(5);
-    ctx.beginPath();ctx.moveTo(px(tx),py(ty-22));ctx.lineTo(px(tx),py(portYc));ctx.stroke();
-    const boost=Math.max(0,m-1);
-    ctx.fillStyle=boost>0.02?C.yellow:'#667';ctx.font=F(6);ctx.textAlign='center';
-    ctx.fillText((e.intake==='turbo'?tr('TURBO'):tr('BLOWER'))+' +'+boost.toFixed(2),px(tx),py(ty+34));
-    if(e.intake==='turbo'){ctx.fillStyle='#89b';
-      ctx.fillText(Math.round(engine.turboLoad*100)+'% '+tr('of rated flow'),px(tx),py(ty+44));}
-    ctx.textAlign='left';
-  }
+  // ---- intake tract with a throttle butterfly, and the blower or turbo feeding it ----
+  const portYc=headY+20;
+  drawIntakeSide(px,py,S,F,LW,m,portYc,cx-bore/2-20,headY+118);
 
   // ---- exhaust tract, hot when it is flowing ----
-  const exX=cx+bore/2+20;
-  const exHot=clamp(state.powerHP/Math.max(60,engine.score?engine.score.peakHP:200),0,1);
-  ctx.strokeStyle=state.blown?'#444':`rgb(${Math.round(120+120*exHot)},${Math.round(60+30*exHot)},40)`;
-  ctx.lineWidth=LW(7);
-  ctx.beginPath();ctx.moveTo(px(exX),py(portYc));ctx.lineTo(px(392),py(portYc));ctx.stroke();
-  ctx.fillStyle=C.exhaust;ctx.font=F(6.5);
-  ctx.fillText(tr('EXHAUST'),px(330),py(portYc-14));
-  ctx.fillStyle='#89b';ctx.font=F(6);
-  ctx.fillText(e.exhaust.toUpperCase()+' • '+tr('CAT')+' '+CAT[e.cat].label.split(' ')[0],px(330),py(portYc+20));
-  ctx.fillText(tr('EGT')+' '+Math.round(320+520*exHot)+'C',px(330),py(portYc+30));
+  drawExhaustSide(px,py,S,F,LW,m,portYc,cx+bore/2+20);
 
   // ---- knock: shake the block and flag it, because it is the thing that kills engines ----
   if(state.knockRisk>55&&!state.blown){
@@ -5950,29 +6079,9 @@ function drawPistonCutaway(px,py,S,F,LW,deg,nCyl,rodRatio,bsr,two,m,detailed){
   ctx.fillText(foTxt,px(bx0+8),py(by0+bh-14));ctx.font=F(6);
   ctx.fillText(engine.ports?tr('PORTS'):e.cam.toUpperCase()+(e.vvt?'+VVT':''),px(bx0+8),py(by0+bh-5));
 
-  // ---- oil + coolant, as gauges rather than numbers in a box ----
-  gaugeBar(px,py,S,F,LW,bx0,by0+bh+12,bw,tr('COOLANT'),state.coolant,60,125,108,115);
-  gaugeBar(px,py,S,F,LW,bx0,by0+bh+34,bw,tr('OIL'),state.oil,60,140,115,125);
+  drawTempGauges(px,py,S,F,LW,bx0,by0+bh,bw);
 
-  // ---- fuel & spark, bottom-left: the two things you actually tune while it runs ----
-  const fx=22,fy=286;
-  ctx.fillStyle='#778';ctx.font=F(6);ctx.fillText(tr('FUEL & SPARK'),px(fx),py(fy-4));
-  const lam=state.afr/engine.stoichAFR;
-  const lamCol=lam<0.85?C.yellow:lam>1.08?C.red:C.green;
-  ctx.font=F(6.5);
-  ctx.fillStyle='#cde';ctx.fillText(FUELS[e.fuel].label+(e.fuel==='gasoline'?' '+e.octane+' RON':''),px(fx),py(fy+10));
-  ctx.fillStyle=state.fuelCut&&state.rpm<e.redline?C.cyan:'#cde';
-  ctx.fillText(state.fuelCut&&state.rpm<e.redline?tr('OVERRUN CUT — 0 L/h'):state.fuelFlowLph.toFixed(1)+' L/h',px(fx),py(fy+22));
-  ctx.fillStyle=lamCol;ctx.fillText('AFR '+state.afr.toFixed(1)+'  λ'+lam.toFixed(2),px(fx),py(fy+34));
-  ctx.fillStyle='#cde';
-  ctx.fillText(e.ci?tr('COMPRESSION IGNITION'):tr('ADV')+' '+Math.round(activeAdvance(state.rpm,m))+'°'+(e.timingMode==='auto'?' '+tr('AUTO'):''),px(fx),py(fy+46));
-  // knock bar — the readout that decides whether the build survives
-  ctx.fillStyle='#778';ctx.font=F(6);ctx.fillText(tr('KNOCK RISK'),px(fx),py(fy+62));
-  ctx.fillStyle='#1a1a28';ctx.fillRect(px(fx),py(fy+66),150*S,9*S);
-  const kf=clamp(state.knockRisk/100,0,1);
-  ctx.fillStyle=state.knockRisk>60?C.red:state.knockRisk>30?C.yellow:C.green;
-  ctx.fillRect(px(fx),py(fy+66),150*kf*S,9*S);
-  ctx.fillStyle='#cde';ctx.textAlign='right';ctx.fillText(Math.round(state.knockRisk),px(fx+147),py(fy+73));ctx.textAlign='left';
+  drawFuelSpark(px,py,S,F,m);
 }
 
 // Small labelled bar with warn/danger thresholds — legible where a 6 px number was not.
@@ -5992,73 +6101,130 @@ function gaugeBar(px,py,S,F,LW,x,y,w,label,val,lo,hi,warn,danger){
 // housing centre at radius e. That geometry is what forces the 3:1 relationship: the eccentric
 // shaft turns three times for every one turn of the rotor, which is why a 1.3 L rotary sounds and
 // revs like something far smaller than its torque suggests.
-function drawRotaryCutaway(px,py,S,F,LW,dt){
-  // R/e is 7 on a real Wankel, which makes the lobing almost invisible at this size; 5.5 keeps
-  // the shape honest while letting you actually see it is not a circle.
-  const cx=236,cy=196,R=72,ecc=R/5.5;
-  // housing
+// The Wankel, drawn with the same instruments as a piston engine. The housing is a true two-lobe
+// epitrochoid, x = R·cosθ + e·cos3θ, y = R·sinθ + e·sin3θ, and the rotor's centre orbits the shaft
+// at radius e three times for every turn of the rotor — which is what forces the 3:1 relationship.
+//
+// WHERE THINGS ARE. The chamber reaches minimum volume at the housing's two WAISTS (the minor axis),
+// so a Wankel has two "top dead centres": one between exhaust and intake, where the ports sit, and
+// one between compression and power, where the spark plugs sit. This used to draw the ports at the
+// end of the long axis, which is where a chamber is at its LARGEST. Ports are now at the top waist —
+// which also lines them up with the intake and exhaust tracts the piston view uses — and the plugs at
+// the bottom one. The rotor turns anticlockwise on screen, so a face goes intake (left lobe) →
+// compression → fires at the bottom waist → power (right lobe) → exhaust → back to the top.
+// Every phase happens at a FIXED PLACE in the housing, which is the thing worth seeing, so the four
+// are labelled where they happen and each chamber is coloured by what is in it, with the same
+// colours as the piston chamber.
+const ROTARY_PHASE_COL={intake:'#12304a',compression:'#1b3a55',power:'#5a2a18',exhaust:'#3a2420'};
+function rotaryFacePhase(faceAng){
+  // faceAng: direction of a face's midpoint from the housing centre, canvas radians (y down).
+  const d=((faceAng*180/Math.PI)%360+360)%360;
+  return d>=180&&d<270?'intake':d>=90&&d<180?'compression':d<90?'power':'exhaust';
+}
+function drawRotorAt(px,py,S,LW,cx,cy,R,ecc,theta,opts){
+  // theta: rotor angle, already in screen sense. Apex i sits on the housing at parameter theta+i·120°.
+  const ex=cx+ecc*Math.cos(3*theta), ey=cy+ecc*Math.sin(3*theta);
+  const apexA=i=>theta+i*2.0944;
+  const hp=a=>({x:cx+R*Math.cos(a)+ecc*Math.cos(3*a),y:cy+R*Math.sin(a)+ecc*Math.sin(3*a)});
+  let firing=false;
+  for(let i=0;i<3;i++){
+    const a0=apexA(i),a1=apexA(i+1),mid=hp((a0+a1)/2);
+    const ph=rotaryFacePhase(Math.atan2(mid.y-cy,mid.x-cx));
+    const fireNow=ph==='power'&&Math.abs(Math.atan2(mid.y-cy,mid.x-cx)-Math.PI/2)<0.35;
+    if(fireNow)firing=true;
+    if(opts.fill){
+      ctx.fillStyle=fireNow&&opts.burning?'#ffcc44':ROTARY_PHASE_COL[ph];
+      ctx.beginPath();
+      for(let a=a0;a<=a1+1e-6;a+=0.06){const p=hp(a);a===a0?ctx.moveTo(px(p.x),py(p.y)):ctx.lineTo(px(p.x),py(p.y));}
+      const p1=hp(a1),p0=hp(a0);ctx.lineTo(px(p1.x),py(p1.y));ctx.lineTo(px(p0.x),py(p0.y));ctx.closePath();ctx.fill();
+    }
+  }
+  ctx.fillStyle=state.blown?'#5a5a3a':C.piston;ctx.beginPath();
+  for(let i=0;i<3;i++){const p=hp(apexA(i));i?ctx.lineTo(px(p.x),py(p.y)):ctx.moveTo(px(p.x),py(p.y));}
+  ctx.closePath();ctx.fill();
+  ctx.strokeStyle=C.metalLight;ctx.lineWidth=LW(opts.small?1:1.5);ctx.stroke();
+  if(!opts.small){
+    ctx.fillStyle='#e8e8f0';
+    for(let i=0;i<3;i++){const p=hp(apexA(i));ctx.beginPath();ctx.arc(px(p.x),py(p.y),2.4*S,0,6.284);ctx.fill();}
+    ctx.strokeStyle='#3a3a4e';ctx.lineWidth=LW(2);
+    ctx.beginPath();ctx.arc(px(cx),py(cy),ecc*S,0,6.284);ctx.stroke();
+    ctx.fillStyle=C.metalLight;ctx.beginPath();ctx.arc(px(ex),py(ey),9*S,0,6.284);ctx.fill();
+    ctx.fillStyle='#0c0c14';ctx.beginPath();ctx.arc(px(cx),py(cy),4*S,0,6.284);ctx.fill();
+  }
+  return firing;
+}
+function drawHousing(px,py,LW,cx,cy,R,ecc,lw){
   ctx.fillStyle='#15151f';ctx.beginPath();
   for(let a=0;a<=6.2832;a+=0.04){
     const x=cx+R*Math.cos(a)+ecc*Math.cos(3*a), y=cy+R*Math.sin(a)+ecc*Math.sin(3*a);
     a?ctx.lineTo(px(x),py(y)):ctx.moveTo(px(x),py(y));
   }
-  ctx.closePath();ctx.fill();
-  ctx.strokeStyle=C.metal;ctx.lineWidth=LW(2);ctx.stroke();
-  // three working chambers, shaded by what each is doing right now
-  const ex=cx+ecc*Math.cos(3*rotorAngle), ey=cy+ecc*Math.sin(3*rotorAngle);
-  const apex=i=>({x:ex+R*0.985*Math.cos(rotorAngle+i*2.0944),y:ey+R*0.985*Math.sin(rotorAngle+i*2.0944)});
+  ctx.closePath();ctx.fill();ctx.strokeStyle=C.metal;ctx.lineWidth=LW(lw);ctx.stroke();
+}
+function drawRotaryCutaway(px,py,S,F,LW,dt,m){
+  const e=engine;
+  // R/e is 7 on a real Wankel, which makes the lobing almost invisible at this size; 5.5 keeps
+  // the shape honest while letting you actually see it is not a circle.
+  const cx=236,cy=176,R=72,ecc=R/5.5;
+  const topW=cy-(R-ecc), botW=cy+(R-ecc);             // the two waists
+  const theta=-rotorAngle;                            // anticlockwise on screen
+  drawHousing(px,py,LW,cx,cy,R,ecc,2);
   const burning=flashT>0;
-  if(!state.blown&&state.powerHP>1&&flashT<=0&&Math.abs(((rotorAngle*3)%6.2832)-3.0)<0.25)flashT=0.09;
-  // rotor
-  ctx.fillStyle=state.blown?'#5a5a3a':C.piston;ctx.beginPath();
-  for(let i=0;i<3;i++){const p=apex(i);i?ctx.lineTo(px(p.x),py(p.y)):ctx.moveTo(px(p.x),py(p.y));}
-  ctx.closePath();ctx.fill();
-  ctx.strokeStyle=C.metalLight;ctx.lineWidth=LW(1.5);ctx.stroke();
-  // apex seals
-  ctx.fillStyle='#e8e8f0';
-  for(let i=0;i<3;i++){const p=apex(i);ctx.beginPath();ctx.arc(px(p.x),py(p.y),2.4*S,0,6.284);ctx.fill();}
-  // eccentric + output shaft
-  ctx.strokeStyle='#3a3a4e';ctx.lineWidth=LW(2);
-  ctx.beginPath();ctx.arc(px(cx),py(cy),ecc*S,0,6.284);ctx.stroke();
-  ctx.fillStyle=C.metalLight;ctx.beginPath();ctx.arc(px(ex),py(ey),9*S,0,6.284);ctx.fill();
-  ctx.fillStyle='#0c0c14';ctx.beginPath();ctx.arc(px(cx),py(cy),4*S,0,6.284);ctx.fill();
-  // spark plugs fire on the right-hand flank, where the chamber is at minimum volume
+  const fires=drawRotorAt(px,py,S,LW,cx,cy,R,ecc,theta,{fill:true,burning});
+  if(!state.blown&&state.powerHP>1&&flashT<=0&&fires)flashT=0.09;
+  // spark plugs at the bottom waist — a leading and a trailing plug, as on a 13B
   ctx.strokeStyle=burning?'#fff2a8':'#8898aa';ctx.lineWidth=LW(2.5);
-  const plugX=cx+R+ecc;                       // the housing wall on the minor axis
-  ctx.beginPath();ctx.moveTo(px(plugX),py(cy-7));ctx.lineTo(px(plugX-14),py(cy-7));ctx.stroke();
-  ctx.beginPath();ctx.moveTo(px(plugX),py(cy+7));ctx.lineTo(px(plugX-14),py(cy+7));ctx.stroke();
-  if(burning){ctx.fillStyle='#fff2a8';ctx.beginPath();ctx.arc(px(plugX-22),py(cy),8*S,0,6.284);ctx.fill();}
-  // intake and exhaust ports in the housing wall
-  ctx.fillStyle=C.intake;ctx.fillRect(px(cx-R-ecc-8),py(cy-16),8*S,20*S);
-  ctx.fillStyle=C.exhaust;ctx.fillRect(px(cx-R-ecc-8),py(cy+10),8*S,20*S);
-  ctx.font=F(6);ctx.fillStyle=C.intake;ctx.textAlign='right';
-  ctx.fillText(tr('INTAKE'),px(cx-R-ecc-12),py(cy-4));
-  ctx.fillStyle=C.exhaust;ctx.fillText(tr('EXHAUST'),px(cx-R-ecc-12),py(cy+24));ctx.textAlign='left';
-
-  ctx.fillStyle=C.cyan;ctx.font=F(7);ctx.textAlign='center';
-  ctx.fillText(engine.cylinders+'-ROTOR WANKEL '+engine.displacement_L.toFixed(2)+'L',px(cx),py(cy+R+30));
-  ctx.fillStyle='#778';ctx.font=F(6);
-  ctx.fillText(tr('ROTOR TURNS AT 1/3 SHAFT SPEED'),px(cx),py(cy+R+42));
+  for(const dx of [-10,10]){ctx.beginPath();ctx.moveTo(px(cx+dx),py(botW));ctx.lineTo(px(cx+dx),py(botW+14));ctx.stroke();}
+  if(burning){ctx.fillStyle='#fff2a8';ctx.beginPath();ctx.arc(px(cx),py(botW-6),7*S,0,6.284);ctx.fill();}
+  // ports at the top waist, fed by the same intake and exhaust tracts as the piston view
+  const portYc=74, inX=cx-26, exX=cx+26;
+  drawIntakeSide(px,py,S,F,LW,m,portYc,inX,172);
+  ctx.strokeStyle=C.intake;ctx.lineWidth=LW(8);
+  ctx.beginPath();ctx.moveTo(px(inX),py(portYc));ctx.lineTo(px(inX),py(topW+4));ctx.stroke();
+  drawExhaustSide(px,py,S,F,LW,m,portYc,exX);
+  const exHot=clamp(state.powerHP/Math.max(60,engine.score?engine.score.peakHP:200),0,1);
+  ctx.strokeStyle=state.blown?'#444':`rgb(${Math.round(120+120*exHot)},${Math.round(60+30*exHot)},40)`;
+  ctx.lineWidth=LW(7);
+  ctx.beginPath();ctx.moveTo(px(exX),py(portYc));ctx.lineTo(px(exX),py(topW+4));ctx.stroke();
+  // where each phase happens — fixed in the housing, unlike a piston engine
+  ctx.font=F(6);
+  const lab=(t,x,y,col,al)=>{ctx.fillStyle=col;ctx.textAlign=al;ctx.fillText(tr(t),px(x),py(y));};
+  lab('INTAKE',cx-R-ecc-4,cy-14,'#5aa0d0','right');
+  lab('COMPRESSION',cx-56,botW+22,'#7fa8c8','right');
+  lab('POWER',cx+56,botW+22,'#e0905a','left');
+  lab('EXHAUST',cx+R+ecc+4,cy-14,'#c07050','left');
   ctx.textAlign='left';
-
-  // same right-hand column as the piston view, so switching type does not move the readouts
-  const bx0=396,by0=90;
-  ctx.fillStyle='#778';ctx.font=F(6);ctx.fillText(tr('THROTTLE')+' '+Math.round(state.throttle*100)+'%',px(bx0),py(by0));
-  ctx.fillStyle='#cde';ctx.font=F(6.5);
-  ctx.fillText('MAP '+liveMap().toFixed(2)+' bar',px(bx0),py(by0+14));
-  ctx.fillText('IAT '+Math.round(effIAT(liveMap()))+'C',px(bx0),py(by0+26));
-  ctx.fillText(FUELS[engine.fuel].label,px(bx0),py(by0+38));
-  const lam=state.afr/engine.stoichAFR;
-  ctx.fillStyle=lam<0.85?C.yellow:lam>1.08?C.red:C.green;
-  ctx.fillText('AFR '+state.afr.toFixed(1)+'  λ'+lam.toFixed(2),px(bx0),py(by0+50));
-  ctx.fillStyle='#cde';ctx.fillText(state.fuelFlowLph.toFixed(1)+' L/h',px(bx0),py(by0+62));
-  ctx.fillStyle='#778';ctx.font=F(6);ctx.fillText(tr('KNOCK RISK'),px(bx0),py(by0+80));
-  ctx.fillStyle='#1a1a28';ctx.fillRect(px(bx0),py(by0+84),190*S,9*S);
-  ctx.fillStyle=state.knockRisk>60?C.red:state.knockRisk>30?C.yellow:C.green;
-  ctx.fillRect(px(bx0),py(by0+84),190*clamp(state.knockRisk/100,0,1)*S,9*S);
-  ctx.fillStyle='#cde';ctx.textAlign='right';ctx.fillText(Math.round(state.knockRisk),px(bx0+187),py(by0+91));ctx.textAlign='left';
-  gaugeBar(px,py,S,F,LW,bx0,by0+118,190,tr('COOLANT'),state.coolant,60,125,108,115);
-  gaugeBar(px,py,S,F,LW,bx0,by0+140,190,tr('OIL'),state.oil,60,140,115,125);
+  // breathing column, as on the piston view
+  const labX=cx+R+ecc+6;
+  ctx.font=F(6);ctx.fillStyle='#778';ctx.fillText(tr('BREATHING'),px(labX),py(cy+14));
+  ctx.font=F(7);ctx.fillStyle='#cde';ctx.fillText('VE '+(state.ve*100).toFixed(0)+'%',px(labX),py(cy+26));
+  ctx.font=F(6);ctx.fillStyle='#778';ctx.fillText(tr('PORTS'),px(labX),py(cy+40));
+  // output on the eccentric shaft
+  drawShaftOutput(px,py,F,cx,botW+44,tr('AT THE SHAFT'));
+  // ---- the rotor bank: every rotor at its own phase, numbered, lit as it fires ----
+  const n=Math.max(1,e.cylinders);
+  const bx0=396,by0=132,bw=200,bh=150;
+  ctx.fillStyle='#10101a';ctx.fillRect(px(bx0),py(by0),bw*S,bh*S);
+  ctx.strokeStyle=C.metal;ctx.lineWidth=LW(1.2);ctx.strokeRect(px(bx0),py(by0),bw*S,bh*S);
+  ctx.fillStyle=C.metal;ctx.font=F(6.5);
+  ctx.fillText(n+'-ROTOR WANKEL  '+e.displacement_L.toFixed(2)+'L',px(bx0+8),py(by0+14));
+  // Rotors sit on an eccentric shaft with their lobes 360/n degrees apart, so they fire evenly, one
+  // every 360/n degrees of SHAFT rotation, in sequence along the shaft.
+  const slot=(bw-16)/n, r=Math.min(26,slot*0.40), ee=r/5.5;
+  const order=Array.from({length:n},(_,i)=>i+1);
+  for(let k=0;k<n;k++){
+    const mx=bx0+8+slot*(k+0.5), my=by0+70;
+    drawHousing(px,py,LW,mx,my,r,ee,1);
+    const fk=drawRotorAt(px,py,S,LW,mx,my,r,ee,-(rotorAngle-k*(2*Math.PI/n)/3),{fill:true,small:true,burning:true});
+    const lit=fk&&!state.blown&&state.powerHP>1;
+    ctx.fillStyle=lit?'#ffcc44':'#9ab';ctx.font=F(6);ctx.textAlign='center';
+    ctx.fillText(String(k+1),px(mx),py(my-r-8));ctx.textAlign='left';
+  }
+  ctx.fillStyle='#778';ctx.font=F(6);
+  ctx.fillText(tr('FIRING ORDER')+' '+order.join('-'),px(bx0+8),py(by0+bh-14));
+  ctx.fillText(tr('ROTOR TURNS AT 1/3 SHAFT SPEED'),px(bx0+8),py(by0+bh-5));
+  drawTempGauges(px,py,S,F,LW,bx0,by0+bh,bw);
+  drawFuelSpark(px,py,S,F,m);
 }
 // ---- TRACK map: the circuit drawn from the same sampled centreline the lap solver used, with
 // the racing line coloured by what is limiting the car at each point. ----
@@ -6385,15 +6551,35 @@ function bindControls(){
       dynoCache=null;
     });
   });
+  // The three operating-point buttons. Until build 85 these were three fixed sets of slider values
+  // shared by every engine: MAX POWER held 50% load (halfway between idle and redline, wherever the
+  // power peak really was) at a petrol AFR of 12.6 — sooty-rich on a diesel — and quietly cooled the
+  // intake air to 15 C, which is changing the weather, not the driving. Each one is now a real point
+  // on the engine you built, at the standard conditions the dyno uses, so MAX POWER on the LIVE tab
+  // lands on the DYNO tab's peak figure.
+  function applyOperatingPoint(kind){
+    if(!engine.score){flash(tr('BUILD AN ENGINE FIRST'),'warn');return;}
+    const op=operatingPoint(kind);
+    // The dyno brake only pushes back ABOVE its target, so the engine settles where brake torque
+    // equals engine torque: over = torque / brakeGain. Aim that much low, or every point sits
+    // 100-200 rpm past where it was meant to be.
+    const aim=op.rpm-Math.max(0,op.tq||0)/Math.max(1e-6,engine.brakeGain);
+    applyPreset({throttle:op.throttle,load:loadForRpm(aim),afr:op.lambda*engine.stoichAFR,
+                 iat:DYNO_STD.iat,coolant:DYNO_STD.coolant,oil:DYNO_STD.oil});
+    const what=kind==='power'?'MAX POWER':kind==='torque'?'PEAK TORQUE':'ECO';
+    flash(tr(what)+' • '+(op.throttle>=0.999?'WOT':Math.round(op.throttle*100)+'% '+tr('THROTTLE'))+' @ '+
+      Math.round(op.rpm)+' rpm • λ'+op.lambda.toFixed(2)+' • '+tr('expect')+' '+op.expect+
+      (engine.afrMode==='auto'?' • '+tr('the ECU map sets the mixture'):''));
+  }
   function applyPreset(p){
     state.throttle=p.throttle;state.load=p.load;
     if(p.elec!=null)state.elecLoad=p.elec;
     state.afr=p.afr;state.iat=p.iat;state.coolant=p.coolant;state.oil=p.oil;
     dynoCache=null;syncSliders();
   }
-  document.getElementById('btnOptimal').addEventListener('click',()=>applyPreset({throttle:0.60,load:0.40,afr:13.5,iat:25,coolant:90,oil:100}));
-  document.getElementById('btnMaxPower').addEventListener('click',()=>applyPreset({throttle:1.00,load:0.50,afr:12.6,iat:15,coolant:88,oil:105}));
-  document.getElementById('btnEco').addEventListener('click',()=>applyPreset({throttle:0.35,load:0.30,afr:15.8,iat:30,coolant:92,oil:98}));
+  document.getElementById('btnOptimal').addEventListener('click',()=>applyOperatingPoint('torque'));
+  document.getElementById('btnMaxPower').addEventListener('click',()=>applyOperatingPoint('power'));
+  document.getElementById('btnEco').addEventListener('click',()=>applyOperatingPoint('eco'));
   document.getElementById('btnReset').addEventListener('click',()=>{setAutoThermal(false);state.engineHealth=1.0;state.blown=false;state.wearCause='';state.coolant=90;state.oil=100;state.batterySOC=1.0;applyPreset({throttle:0.10,load:0.20,afr:14.7,iat:25,coolant:90,oil:100})});
   document.getElementById('btnAutoThermal').addEventListener('click',()=>setAutoThermal(!autoThermal));
   document.getElementById('btnWear').addEventListener('click',()=>{
@@ -6503,7 +6689,7 @@ function bindControls(){
   document.getElementById('edType').addEventListener('change',e=>{
     const tp=ENGINE_TYPE[e.target.value]||ENGINE_TYPE.petrol4,g=id=>document.getElementById(id);
     g('edCR').value=tp.crDef;g('edRedline').value=tp.redlineDef;
-    if(e.target.value==='rotary'&&+g('edCyl').value>3)g('edCyl').value=2;
+    if(e.target.value==='rotary'&&+g('edCyl').value>(tp.maxCyl||12))g('edCyl').value=2;
     if(tp.ports){g('edCam').value='stock';g('edVVT').value='no';}
     syncDesignEnable();
   });
