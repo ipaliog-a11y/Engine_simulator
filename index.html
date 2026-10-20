@@ -1701,7 +1701,16 @@ const aperture=dn=>{
 // ---- exhaust: reflection comb, then what the suction actually drags through ----
 const EX_ALPHA=0.35;    // amplitude lost per metre of pipe: viscous + thermal boundary layer
 const EX_ROPEN=0.88;    // amplitude reflected at an open end; the rest radiates away as noise
-const OVERLAP_LIFT=0.15;// valves are barely off their seats around TDC
+const OVERLAP_CD=0.6;   // discharge coefficient of a valve curtain at low lift (Heywood)
+// Mean over the overlap window of the smaller of the two valves' lifts, as a share of full lift: the
+// intake opening from IVO, the exhaust closing to EVC, each ~ sin^2 over its own duration.
+function overlapLiftShare(ov,dur){
+  if(!(ov>0)||!(dur>0))return 0;
+  let acc=0;const N=24;
+  for(let k=0;k<N;k++){const ph=(k+0.5)/N*ov;
+    acc+=Math.min(Math.pow(Math.sin(Math.PI*ph/dur),2),Math.pow(Math.sin(Math.PI*(ov-ph)/dur),2));}
+  return acc/N;
+}
 const overlapDeg=(dur,lsa)=>dur-2*lsa;                   // symmetric in/ex duration
 function exhaustWaveP(rpm,T){
   const e=engine;
@@ -1732,12 +1741,25 @@ function scavengeGain(rpm,T){
   // so all that is left is a small adverse pressure acting through a long overlap window, pushing
   // burnt gas back up the inlet. That is reversion, it is why a race cam lopes and will not pull
   // from idle, and it scales with overlap and with 1/N exactly as the lore says it does.
-  const dp=exhaustWaveP(rpm,T)-backPressureBar(rpm,T);
+  // And the intake port does not sit at atmosphere either on a boosted engine: it sits at the boost.
+  // Until build 116 that side was left out, so a turbo engine at 1.3 bar of boost, its turbine holding
+  // a similar pressure in the exhaust manifold, read as 1.3 bar of reverse flow across the overlap and
+  // lost a quarter of its charge (an Evo IX made 242 hp of its 286).
+  const dp=Math.max(0,(e.boostNow||1)-1)+exhaustWaveP(rpm,T)-backPressureBar(rpm,T);
   if(!dp)return 0;
   const u=Math.sign(dp)*Math.sqrt(2*Math.abs(dp)*101325/1.15);
-  const lift=OVERLAP_LIFT*0.25*e.ivDia_mm;
-  const A=e.ivCount*Math.PI*(e.ivDia_mm/1000)*(lift/1000);
-  return clamp(A*u*(e.overlap/(6*Math.max(500,rpm)))/(e.dispCyl_L/1000),-0.25,0.25);
+  // The gap the gas crosses: through the overlap window the intake valve is opening and the exhaust
+  // closing, and flow is held to the smaller curtain of the two. With each valve's lift ~ Lmax sin^2
+  // over its duration (Lmax = D/4), its mean over the window is overlapLiftShare x Lmax, set by the cam
+  // alone; a discharge coefficient of 0.6 is a curtain's at low lift (Heywood). Build 116: this was
+  // OVERLAP_LIFT, a fixed 15% of full lift held across the whole window on every cam, which is about
+  // a 72-degree race cam's lift AT TDC: four times a 32-degree road cam's, and it never averaged down.
+  const lift=overlapLiftShare(e.overlap,e.camDur)*0.25*e.ivDia_mm;
+  const A=OVERLAP_CD*e.ivCount*Math.PI*(e.ivDia_mm/1000)*(lift/1000);
+  // What crosses with the pressure behind it can do no more than sweep the residual out of the
+  // clearance volume and fill it with fresh charge: Vc/Vd = 1/(CR-1). Anything more blows straight
+  // through to the exhaust and is not trapped. (It was a flat +25% cap.)
+  return clamp(A*u*(e.overlap/(6*Math.max(500,rpm)))/(e.dispCyl_L/1000),-0.25,1/Math.max(2,e.compression-1));
 }
 // Back-pressure: Darcy-Weisbach down the primary at the velocity actually flowing, plus everything
 // after the collector, plus the cat as a porous plug. Raises the pressure the piston works against
