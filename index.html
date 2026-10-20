@@ -1541,7 +1541,8 @@ function turbineThroatAt(rpm,map,T){
   if(!(e.vgtShut>0))return e.turbineArea;
   const mAir=(e.dispCyl_L/1000)*e.cylinders*(rpm/120)*(101325*Math.max(1,map)/(287*313));
   const u=e.turbUnits||1, mEx=mAir*1.06/u, mA=mAir/u;
-  return vgtThroat(mEx,compPowerAt(mA,1+e.maxBoost,313,e.compEff),T,e.turbineArea,e.vgtShut,map).area;
+  const Ut=turbineTipFor(1+e.maxBoost,mA/Math.max(1e-9,e.chokeFlow_kgs/u),298);
+  return vgtThroat(mEx,compPowerAt(mA,1+e.maxBoost,313,e.compEff),T,e.turbineArea,e.vgtShut,map,Ut).area;
 }
 // ---- late intake valve closing: why a big cam guts the bottom end ----
 // This is what CAM.lowLoss was standing in for, and it is pure geometry. A cam does not close the
@@ -1662,7 +1663,32 @@ function turbineManifoldPR(mdot,area,T0){
 //     the mean — constant-pressure turbocharging, which large marine diesels choose on purpose.
 // Ported engines (rotary, two-stroke) have no cam to time a blowdown from, and are left on the mean.
 const K_EXH=(GAMMA_EXH-1)/GAMMA_EXH;
-const turbineWorkMean=(pr,T3)=>CP_EXH*Math.max(300,T3)*TURB_ETA*(1-Math.pow(Math.max(1.0001,pr),-K_EXH));
+// Specific work at a pressure ratio. With the turbine's tip speed Ut known, efficiency follows the
+// BLADE SPEED RATIO U/C — tip speed over the isentropic jet speed C = sqrt(2 cp T3 (1 - PR^-k)). A
+// radial turbine peaks near U/C = 0.7 and falls off either side, eta/eta_max = 2x - x^2 with
+// x = (U/C)/0.7 (Watson & Janota). So eta C^2/2 = eta_max (Ut C/0.7 - Ut^2/0.98): a shaft spun
+// faster than its gas can drive extracts nothing (floored at zero; it windmills).
+// This is what was missing at the top end. With a constant efficiency, a wastegated turbine at high
+// flow made its compressor's power from a tiny expansion — manifold pressure came out BELOW boost —
+// so nothing rolled a turbo engine off before its limiter and `turboChoke` was fitted to do it. At
+// high flow with the gate open, C is small while the shaft still spins fast enough to hold boost:
+// U/C rises, efficiency falls, and back-pressure has to rise to make up the work.
+const UC_OPT=0.7;
+function turbineWorkMean(pr,T3,Ut){
+  const iso=CP_EXH*Math.max(300,T3)*(1-Math.pow(Math.max(1.0001,pr),-K_EXH));   // C^2/2
+  if(!(Ut>0))return TURB_ETA*iso;
+  const C=Math.sqrt(2*iso);
+  return Math.max(0,TURB_ETA*(Ut*C/UC_OPT-Ut*Ut/(2*UC_OPT*UC_OPT)));
+}
+// Turbine tip speed at the shaft speed the compressor needs for a pressure ratio at a flow — Euler's
+// relation inverted, on the frame's own efficiency island. For the steady solves, where the shaft
+// speed is not integrated but implied by the boost being held.
+function turbineTipFor(pr,flowFrac,T01){
+  const e=engine;
+  if(!(e.compExd>0)||!(pr>1))return 0;
+  const eta=compIslandEff(flowFrac,pr), Uc=Math.sqrt(1005*Math.max(200,T01)*(Math.pow(pr,0.286)-1)/(COMP_SLIP*eta));
+  return TURB_WHEEL*Uc;
+}
 function pulseShape(mEx,area,T3,mapBar,prMean){
   const e=engine;
   if(e.ports||!(e.primL>0)||!(e.camDur>0))return null;
@@ -1680,23 +1706,24 @@ function pulseShape(mEx,area,T3,mapBar,prMean){
 }
 // Turbine power (W) passing mEx through a throat, pulses included, and the mean manifold PR.
 // prMean, when the caller already has it (the nozzle PR that passes exactly mEx), saves a solve.
-function turbinePower(mEx,area,T3,mapBar,prMean){
+function turbinePower(mEx,area,T3,mapBar,prMean,Ut){
   const pr=prMean>0?prMean:turbineManifoldPR(mEx,area,T3);
   const s=mEx>0&&area>0?pulseShape(mEx,area,T3,mapBar,pr):null;
-  if(!s)return{P:mEx*turbineWorkMean(pr,T3),pr};
+  if(!s)return{P:mEx*turbineWorkMean(pr,T3,Ut),pr};
   const mHi=mEx*(1+s.keep*(s.fb/s.phi-1)), mLo=mEx*(1+s.keep*((1-s.fb)/(1-s.phi)-1));   // phi mHi + (1-phi) mLo = mEx
-  const P=s.phi*mHi*turbineWorkMean(turbineManifoldPR(mHi,area,T3),T3)
-        +(1-s.phi)*Math.max(0,mLo)*turbineWorkMean(turbineManifoldPR(Math.max(0,mLo),area,T3),T3);
+  const P=s.phi*mHi*turbineWorkMean(turbineManifoldPR(mHi,area,T3),T3,Ut)
+        +(1-s.phi)*Math.max(0,mLo)*turbineWorkMean(turbineManifoldPR(Math.max(0,mLo),area,T3),T3,Ut);
   return{P,pr};
 }
 function manifoldPR(mAir,mEx,mapBar,T3,area,compEta){
   if(!(area>0))return 1;
   const pComp=mAir*1005*298*(Math.pow(Math.max(1,mapBar),0.286)-1)/clamp(compEta||0.72,0.30,0.85);
   if(pComp<=0)return 1;
+  const Ut=turbineTipFor(Math.max(1,mapBar),mAir*(engine.turbUnits||1)/Math.max(1e-9,engine.chokeFlow_kgs),298);
   const tPower=pr=>{
     // pr never exceeds the gate-shut solution, so mT is the nozzle flow AT pr and its mean PR is pr
     const mT=Math.min(mEx,area*(pr*101325)/Math.sqrt(Math.max(300,T3))*nozzleFlux(pr));
-    return turbinePower(mT,area,T3,mapBar,pr).P;
+    return turbinePower(mT,area,T3,mapBar,pr,Ut).P;
   };
   const full=turbineManifoldPR(mEx,area,T3);          // gate shut: everything through the throat
   if(tPower(full)<=pComp)return full;                 // cannot make target even wide open
@@ -1750,8 +1777,8 @@ function vaneThroatFrac(exd,betaDeg){
 // construction; recomputing it through another path would make it reliably -1e-12, and a frame
 // holding its target would report as unable to. (Until pulse energy this inverted the turbine in
 // closed form for PR; turbine power now has no closed-form inverse, so the area is bracketed.)
-function vgtThroat(mEx,pComp,T3,aOpen,aShut,mapBar){
-  const shut=a=>{const r=turbinePower(mEx,a,T3,mapBar);return{area:a,pr:r.pr,P:r.P};};
+function vgtThroat(mEx,pComp,T3,aOpen,aShut,mapBar,Ut){
+  const shut=a=>{const r=turbinePower(mEx,a,T3,mapBar,0,Ut);return{area:a,pr:r.pr,P:r.P};};
   if(!(aOpen>0))return{area:0,pr:1,P:0};
   if(!(mEx>0)||!(pComp>0))return shut(aOpen);
   // The widest throat whose turbine power supplies the compressor. With pulses the power is no
@@ -1759,7 +1786,7 @@ function vgtThroat(mEx,pComp,T3,aOpen,aShut,mapBar){
   // and the bracket end that still supplies it is returned with the power it makes: the sign of
   // (Pt - Pc) at a modulating vane position must come out >= 0 by construction, not be re-derived
   // through a second solver (see above).
-  const Pof=a=>turbinePower(mEx,a,T3,mapBar);
+  const Pof=a=>turbinePower(mEx,a,T3,mapBar,0,Ut);
   if(Pof(aOpen).P>=pComp){const r=Pof(aOpen);return{area:aOpen,pr:r.pr,P:r.P};}
   const sh=Pof(aShut);
   if(sh.P<pComp)return{area:aShut,pr:sh.pr,P:sh.P};          // not reachable even fully shut
@@ -1835,6 +1862,7 @@ function shaftNetPower(shaftRpm,mAir,T3,T01){
   // boost it had 40 kW of turbine power spare to make.
   const prCap=Math.min(pr,1+e.maxBoost);
   const mEx=mAir*1.06/units, mA=mAir/units;
+  const Ut=Math.PI*TURB_WHEEL*e.compExd*Math.max(0,shaftRpm)/60;   // turbine tip speed
   // VGT vanes schedule against the BOOST TARGET, not against what the compressor happens to be
   // drawing at this instant. That is both the real control law and the only one that works here:
   // scheduling to the instantaneous draw would balance the shaft at EVERY speed, net would be zero
@@ -1846,8 +1874,8 @@ function shaftNetPower(shaftRpm,mAir,T3,T01){
   // while the steady solver (which does not) said it held 1.20. A wastegated frame never showed it,
   // because it always has surplus to dump.
   const t=e.vgtShut>0
-    ? vgtThroat(mEx,compPowerAt(mA,1+e.maxBoost,T01,eta)+shaftLossPower(shaftRpm)/units,T3,e.turbineArea,e.vgtShut,prCap)
-    : turbinePower(mEx,e.turbineArea,T3,prCap);
+    ? vgtThroat(mEx,compPowerAt(mA,1+e.maxBoost,T01,eta)+shaftLossPower(shaftRpm)/units,T3,e.turbineArea,e.vgtShut,prCap,Ut)
+    : turbinePower(mEx,e.turbineArea,T3,prCap,0,Ut);
   const area=t.area||e.turbineArea;
   const Pt=t.P;
   const Pc=compPowerAt(mA,prCap,T01,eta);
@@ -3275,7 +3303,7 @@ function wotMapAt(rpm){return 1.0+boostAvail(rpm);}
 function liveMap(){return state.map;}
 
 // ---- Physics (all derived from the engine spec + live state) ----
-function effIAT(map){
+function effIAT(map,rpm){
   // Forced induction heats the charge; an intercooler removes most of it. High-enthalpy
   // fuels (ethanol/methanol) evaporatively cool the charge — denser air and less knock.
   let t=state.iat;
@@ -3288,7 +3316,13 @@ function effIAT(map){
     // frame: at PR 3.5 on a frame running 0.59 efficient, the charge arrives ~240 °C before the
     // core and still ~70 °C after it, where a flat 5 °C/bar said 38 °C.
     const PR=Math.max(1,map);
-    const rise=(t+273.15)*(Math.pow(PR,0.283)-1)/clamp(engine.compEff||0.72,0.30,0.85);
+    // At the efficiency the compressor has AT THIS FLOW, not one design figure for the whole map: near
+    // choke at the top end a frame runs well off its island and the charge arrives hotter — a real
+    // part of why a turbo engine rolls off before its limiter. (Turbos only; a supercharger's
+    // efficiency is another law, and it keeps its design value.)
+    const eta=(rpm>0&&engine.intake==='turbo'&&engine.chokeFlow_kgs>0)
+      ?compIslandEff(airFlowAt(rpm,PR)/engine.chokeFlow_kgs,PR):engine.compEff;
+    const rise=(t+273.15)*(Math.pow(PR,0.283)-1)/clamp(eta||0.72,0.30,0.85);
     t+=rise*(1-(engine.icEff!=null?engine.icEff:0.82));
   }
   t-=engine.chargeCool*(engine.injector==='direct'?1.15:1.0);   // DI cools the charge slightly more
@@ -3318,7 +3352,7 @@ function computeVE(rpm,map){
   // These four lines replace EXHAUST{topGain,lowLoss} and CAM{scav,lowLoss} — four fitted numbers
   // for two physical effects. Both waves swing both ways, so a badly matched pipe COSTS VE here.
   if(engine.primL){
-    const chargeK=effIAT(map)+273.15, Tex=egtAt(rpm,map);
+    const chargeK=effIAT(map,rpm)+273.15, Tex=egtAt(rpm,map);
     // A variable-length manifold is a flap: take whichever runner position is better at this speed.
     let ram=intakeRamGain(rpm,chargeK);
     if(engine.runnerVariable){
@@ -3350,7 +3384,7 @@ function computeVE(rpm,map){
   if(engine.intake==='turbo'&&rpm>peak)
     ve*=1-engine.turboChoke*clamp((rpm-peak)/(engine.redline-peak),0,1);
   if(engine.chokeFlow_kgs>0){
-    const rho=map*101325/(287*(effIAT(map)+273.15));
+    const rho=map*101325/(287*(effIAT(map,rpm)+273.15));
     const demand=(engine.displacement_L/1000)*ve*(rpm/120)*rho;
     if(demand>engine.chokeFlow_kgs)ve*=engine.chokeFlow_kgs/demand;
   }
@@ -3364,7 +3398,7 @@ function computeVE(rpm,map){
   // something no real engine does. Port choking and valve float now come out of the head's own
   // geometry and the spring's own rate.
   if(engine.ivDia_mm){
-    ve*=veMachLoss(inletMachZ(rpm,effIAT(map)+273.15));
+    ve*=veMachLoss(inletMachZ(rpm,effIAT(map,rpm)+273.15));
     ve*=veFloatLoss(rpm);
   }
   return clamp(ve,0.2,1.2);
@@ -3542,7 +3576,7 @@ function knockAt(rpm,map,adv){
   let k=0;
   k+=Math.max(0,map-1.0)*30;                            // boost
   k+=Math.max(0,engine.compression-9)*8;                // static compression
-  k+=Math.max(0,effIAT(map)-30)*0.8;                    // hot intake charge
+  k+=Math.max(0,effIAT(map,rpm)-30)*0.8;                    // hot intake charge
   k+=Math.max(0,state.coolant-95)*1.0;                  // hot chamber
   k+=Math.max(0,rpm-engine.redline*0.8)/60;             // less time = more heat soak
   k+=(adv-mbt-ignBonus())*2.5;                          // spark timing vs MBT (signed)
@@ -3580,7 +3614,7 @@ function knockAt(rpm,map,adv){
 function residualKnock(rpm,map){
   const e=engine;
   if(!(e.compression>1))return 0;
-  const Tfresh=effIAT(map)+273.15;
+  const Tfresh=effIAT(map,rpm)+273.15;
   const Tex=egtAt(rpm,map);
   const prev=e.boostNow;e.boostNow=map;                 // backPressureBar reads it for the turbine
   const pExh=1+backPressureBar(rpm,Tex);
@@ -3805,7 +3839,7 @@ function dieselLambdaFloor(rpm){
 const ETA_GROSS_CI=0.46, CR_REF_CI=17, LAMBDA_REF_CI=1.20;
 function dieselGrossImep(rpm,map,ve){
   const e=engine,st=e.stoichAFR||14.5;
-  const air=map*1e5/(287*(effIAT(map)+273.15))*ve;                 // kg of trapped air per m3 swept
+  const air=map*1e5/(287*(effIAT(map,rpm)+273.15))*ve;                 // kg of trapped air per m3 swept
   const lam=curAFR(rpm,map)/st;
   const eta=ETA_GROSS_CI*otto(e.compression)/otto(CR_REF_CI)
            *faEta(1/lam)/faEta(1/LAMBDA_REF_CI)*burnPhasing(rpm);
@@ -3824,7 +3858,7 @@ function calcAtRpm(rpm,mapOverride){
     const afrP=afrPowerFactor(curAFR(rpm,map));
     const ignF=clamp(1-0.004*Math.pow(activeAdvance(rpm,map)-mbtAdvance(rpm,map),2),0.72,1.0);
     imep=IMEP_K*engine.typeImep*map*ve*afrP*coolF*engine.crFactor*ignF*ignitionHealth(rpm)*healthFactor()+nitrousImep()*healthFactor();
-    imep*=298.15/(effIAT(map)+273.15);   // intake-air density correction (ref 25°C)
+    imep*=298.15/(effIAT(map,rpm)+273.15);   // intake-air density correction (ref 25°C)
   }
   imep=dieselImepLimit(imep);          // diesel peak-cylinder-pressure / smoke ceiling
 
@@ -3850,7 +3884,7 @@ function brakeTorqueRaw(rpm,map,fuelCut){
     else{
       const afrP=afrPowerFactor(curAFR(rpm,map));
       const ignF=clamp(1-0.004*Math.pow(activeAdvance(rpm,map)-mbtAdvance(rpm,map),2),0.72,1.0);
-      imep=IMEP_K*engine.typeImep*map*ve*afrP*coolF*engine.crFactor*ignF*ignitionHealth(rpm)*healthFactor()*(298.15/(effIAT(map)+273.15))+nitrousImep()*healthFactor();
+      imep=IMEP_K*engine.typeImep*map*ve*afrP*coolF*engine.crFactor*ignF*ignitionHealth(rpm)*healthFactor()*(298.15/(effIAT(map,rpm)+273.15))+nitrousImep()*healthFactor();
     }
     imep=dieselImepLimit(imep);
     const knock=computeKnockRisk(rpm,map);
@@ -3889,7 +3923,7 @@ function advanceShaft(shaftE,rpm,boostNow,throttle,dt){
     const n=Math.sqrt(2*E/J)*60/(2*Math.PI);
     // Closing the throttle throttles BOTH sides. Cooling the exhaust while leaving the compressor
     // swallowing full airflow makes a lift actively BRAKE the shaft rather than let it coast.
-    const r=shaftNetPower(n,airFlowAt(rpm,1+b)*Math.max(0.08,th),T3,effIAT(1+b)+273.15);
+    const r=shaftNetPower(n,airFlowAt(rpm,1+b)*Math.max(0.08,th),T3,effIAT(1+b,rpm)+273.15);
     const loss=shaftLossPower(n);
     // Boost is the pressure in the charge volume, so it is a STATE, not a readout of shaft speed. It
     // rises when the shaft supports more, and pays the fill energy below for the air that takes. It
@@ -3899,11 +3933,11 @@ function advanceShaft(shaftE,rpm,boostNow,throttle,dt){
     const bShaft=clamp(r.pr-1,0,engine.maxBoost);
     let b2=bShaft;
     if(bShaft<b){
-      const Tch=effIAT(1+b)+273.15, held=V*(1+b)*1e5/(287*Tch), swallow=Math.max(1e-4,airFlowAt(rpm,1+b)*Math.max(0.08,th));
+      const Tch=effIAT(1+b,rpm)+273.15, held=V*(1+b)*1e5/(287*Tch), swallow=Math.max(1e-4,airFlowAt(rpm,1+b)*Math.max(0.08,th));
       b2=bShaft+(b-bShaft)*Math.exp(-h*swallow/Math.max(1e-6,held));
     }
     const dB=Math.max(0,b2-b);
-    const pr=1+0.5*(b+b2), dm=V*dB*1e5/(287*(effIAT(pr)+273.15));
+    const pr=1+0.5*(b+b2), dm=V*dB*1e5/(287*(effIAT(pr,rpm)+273.15));
     const fill=dm*1005*T01*(Math.pow(pr,0.286)-1)/clamp(r.eta||0.7,0.3,0.85);
     E=clamp(E+(r.net-loss)*h-fill,0,Emax);
     b=b2;
@@ -4004,7 +4038,7 @@ function computeEmissions(){
   const load=clamp((state.rpm-800)/(engine.redline-800),0,1)*0.5+clamp((map-0.3)/(engine.mapMax-0.3),0,1)*0.5;
   const adv=activeAdvance(state.rpm,map),mbt=mbtAdvance(state.rpm,map);
   const tempF=clamp(0.4+load*0.9+Math.max(0,engine.compression-9)*0.05
-    +Math.max(0,effIAT(map)-30)*0.006+Math.max(0,adv-mbt+8)*0.010
+    +Math.max(0,effIAT(map,state.rpm)-30)*0.006+Math.max(0,adv-mbt+8)*0.010
     +Math.max(0,state.coolant-90)*0.004,0.2,2.4);
   const cold=state.coolant<60?(60-state.coolant)/60:0;
   const meterSlop=1-engine.meteringEff;   // carbs/mech injection run imprecise & rich
@@ -4071,7 +4105,7 @@ function updatePhysics(){
     if(state.rpm<engine.redline){state.torque=Math.min(0,brakeTorqueRaw(state.rpm,map,true));state.powerKW=state.torque*state.rpm*2*Math.PI/60/1000;state.powerHP=state.powerKW/0.7457;}
     return;
   }
-  const T_k=effIAT(map)+273.15,MAP_pa=map*1e5,Vd=engine.displacement_L/1000;
+  const T_k=effIAT(map,state.rpm)+273.15,MAP_pa=map*1e5,Vd=engine.displacement_L/1000;
   const airMass_kg_s=(MAP_pa*Vd*(state.rpm/60)*state.ve)/(287*T_k*2);
   // Imprecise metering (carbs / mechanical injection) wastes fuel; the cycle's thirst factor
   // (typeBsfc) captures combustion/scavenging losses — a 2-stroke short-circuits fresh charge
@@ -4309,7 +4343,7 @@ function throttleForMapFrac(f,rpm){
 function steadyBSFC(rpm,map){
   const r=calcAtRpm(rpm,map);
   if(!(r.powerKW>0.5))return {bsfc:Infinity,r};
-  const T=effIAT(map)+273.15, Vd=engine.displacement_L/1000;
+  const T=effIAT(map,rpm)+273.15, Vd=engine.displacement_L/1000;
   const air=(map*1e5*Vd*(rpm/60)*r.ve)/(287*T*2);
   const fuel=(air/curAFR(rpm,map))/engine.meteringEff*engine.typeBsfc;
   return {bsfc:fuel*3600*1000/r.powerKW,r};
@@ -6028,7 +6062,7 @@ function scoreEngine(){
   for(const mm of [0.8,1.0,Math.min(1.2,engine.mapMax)]){const cm=Math.min(mm,engine.mapMax);
     for(const rf of [0.6,0.85,1.05]){const rr=Math.round(clamp(peakTQrpm*rf,1200,rMax));
       const cr=calcAtRpm(rr,cm);
-      const airMass=(cm*1e5*(engine.displacement_L/1000)*(rr/60)*cr.ve)/(287*(effIAT(cm)+273.15)*2);
+      const airMass=(cm*1e5*(engine.displacement_L/1000)*(rr/60)*cr.ve)/(287*(effIAT(cm,rr)+273.15)*2);
       const fuelPower=((airMass/curAFR(rr,cm))/engine.meteringEff*engine.typeBsfc)*engine.fuelLHV*1e6/1000;
       if(fuelPower>0.1)thEff=Math.max(thEff,clamp((cr.powerKW/fuelPower)*100,0,46));
     }}
@@ -6254,7 +6288,7 @@ function drawIntakeSide(px,py,S,F,LW,m,portYc,itX,turboY){
   ctx.fillText(tr('THROTTLE')+' '+Math.round(thr*100)+'%',px(52),py(portYc-14));
   ctx.fillStyle='#89b';ctx.font=F(6);
   ctx.fillText('MAP '+m.toFixed(2)+' bar',px(52),py(portYc+20));
-  ctx.fillText('IAT '+Math.round(effIAT(m))+'C',px(52),py(portYc+30));
+  ctx.fillText('IAT '+Math.round(effIAT(m,state.rpm))+'C',px(52),py(portYc+30));
 
   // ---- forced induction ----
   if(e.intake!=='na'){
