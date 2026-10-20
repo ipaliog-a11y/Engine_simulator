@@ -20,6 +20,37 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 Working toward **v1.0 — every number derived, not fitted.**
 
+### Pixel-art car and engine (build 106)
+
+- **The car, side on**, at the top of the VEHICLE tab, drawn from the build rather than chosen from a
+  gallery:
+  - each of the 13 chassis has its own silhouette
+  - the length comes from the wheelbase, and a real car uses its own wheelbase
+  - the wheels come from the rim and tyre sizes, and the ride height from the suspension
+  - the splitter, front wing, lip, rear wing, undertray and diffuser are drawn when fitted
+  - the brake calipers are coloured by brake type, and the driven wheels have green hubs
+  - a green block marks the engine in front of the cabin, behind it, or behind the rear axle, from
+    the same engine position the weight split uses
+- **The engine, from outside**, at the top of the ENGINE tab, following the form as you edit:
+  - an inline is drawn side on and a V or boxer from the front, so the bank angle shows; a rotary is
+    drawn as its stack of housings
+  - bore and stroke set the block's proportions, and the cam sets the valve-cover colour
+  - induction: carbs, sidedrafts, ITBs, mechanical injection or EFI; single, twin, sequential or
+    compound turbos, with VGT; roots, twin-screw or centrifugal blowers
+  - the intercooler and the radiator are drawn to size, and the nitrous bottle, headers by exhaust
+    grade, the cat and the fuel are shown too
+- **GARAGE thumbnails**: every saved car and engine card shows its picture. It is drawn from the
+  saved record, so an old record with missing fields falls back to the defaults.
+- **TRACK**: the arrow on the map is now a top-down car in the chassis livery. It glows green on the
+  throttle, and on the brake it glows red with lit brake lamps.
+- Everything is drawn into a grid of whole cells and scaled up with smoothing off, so the pixels stay
+  crisp at any size. The animation stops when the system asks for reduced motion.
+- `tests/test64.mjs`:
+  - every chassis × drive × aero combination and every engine type × layout × count × induction
+    combination draws
+  - a wing, bigger wheels, a turbo and a mid-engine layout each change the picture the right way
+  - the tab previews follow the form, and saved builds get thumbnails
+
 ### Vehicle dynamics: five inconsistencies fixed (build 105)
 
 From the vehicle review: places where the straight-line run and the lap solver, two integrations of
