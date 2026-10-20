@@ -110,7 +110,7 @@ const fix = await page.evaluate(() => {
     applyChassisFit('kei');
     Object.entries(mods).forEach(([k, v]) => { const e = document.getElementById(k); if (e) e.value = v; });
     buildVehicle();
-    return { hp: engine.score.peakHP, t: +perf.t100.toFixed(2) };
+    return { hp: engine.score.peakHP, t: +perf.t100.toFixed(2), grip: +perf.gripT.toFixed(2), lag: +perf.lagT.toFixed(2) };
   };
   return {
     weak: run(0.7, {}), strong: run(2.5, {}),
@@ -128,7 +128,18 @@ if (fix.weak.t - fix.strong.t > 0.5) fails.push('the kei is not actually tractio
 // ...while grip must transform it
 if (!(fix.lsd.t < fix.strong.t - 1)) fails.push('an LSD does not help a traction-capped car');
 if (!(fix.slicks.t < fix.lsd.t - 1)) fails.push('tyres do not help a traction-capped car');
-if (!(fix.awd.t < fix.slicks.t)) fails.push('AWD does not help a traction-capped car');
+// AWD can only help while the car is still GRIP-limited. Whether it is, on slicks, is not something
+// this test gets to assume: it depends on how hard the frame lags at 2.5 bar, and when the exhaust
+// stopped being credited with heat from fuel that cannot burn (rich of stoich), the slick kei went
+// from grip-limited to boost-limited — 1.0 s of a 6.4 s run on the grip limit, 3.5 s below boost.
+// (A shift-throttle floor in simulateAccel had been tuned to hold this ordering once before.) So the
+// claim is checked as stated: while grip still caps the car, AWD must help; once it does not, AWD
+// may cost only its drivetrain losses.
+console.log(`  on slicks: ${fix.slicks.grip}s grip-limited, ${fix.slicks.lag}s below boost · AWD: ${fix.awd.grip}s grip-limited`);
+if (fix.slicks.grip > 0.25 * fix.slicks.t) {
+  if (!(fix.awd.t < fix.slicks.t)) fails.push('AWD does not help a car that is still traction-capped on slicks');
+} else if (fix.awd.t > fix.slicks.t * 1.03)
+  fails.push(`AWD costs more than drivetrain losses on a car no longer grip-capped (${fix.slicks.t}s -> ${fix.awd.t}s)`);
 // Asserted as a RATIO, not as a fixed number of seconds. The absolute span depends on how much
 // power the strong build makes, and that is no longer a free parameter: at 2.5 bar on a 9.5:1
 // engine the residual-gas knock term now makes this engine genuinely knock-limited, so the ECU
@@ -136,8 +147,9 @@ if (!(fix.awd.t < fix.slicks.t)) fails.push('AWD does not help a traction-capped
 // bar at 9.5:1 on pump fuel detonates in the real world — but it shrinks the ladder from 4.4 s to
 // 3.6 s without the claim being any less true. The claim is that grip TRANSFORMS a capped car, so
 // measure it as a proportion of the car's own time.
-if (!(fix.awd.t < fix.strong.t * 0.7))
-  fails.push(`fixing traction should transform this car, not nudge it (${fix.strong.t}s -> ${fix.awd.t}s)`);
+const bestGrip = Math.min(fix.slicks.t, fix.awd.t);
+if (!(bestGrip < fix.strong.t * 0.7))
+  fails.push(`fixing traction should transform this car, not nudge it (${fix.strong.t}s -> ${bestGrip}s)`);
 
 // ==================================================================== 4. torque-scaled asymmetry
 console.log('\n== the open diff recovers in tall gears, and the launch is untouched ==');

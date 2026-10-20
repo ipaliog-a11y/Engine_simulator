@@ -249,7 +249,7 @@ table.fuelmap td.live{box-shadow:inset 0 0 0 2px #fff;font-weight:bold}
 <body>
 <div class="container">
 <header>
-<h1>PIXEL ENGINE SIM v0.6 build 88</h1>
+<h1>PIXEL ENGINE SIM v0.6 build 89</h1>
 <div class="subtitle" id="subtitle">ENGINE DESIGNER • BUILD IT, THEN DRIVE IT</div>
 </header>
 <div class="main">
@@ -4277,7 +4277,7 @@ function simulateAccel(){
     shaftE=E;boostNow=b0;
   }
   let v=0,x=0,t=0,gear=0,a=0,shiftT=0;
-  const M={t100:null,q400:null,q800:null,q1000:null,v200:null},V100=100/3.6,V200=200/3.6;
+  const M={t100:null,q400:null,q800:null,q1000:null,v200:null,gripT:0,lagT:0},V100=100/3.6,V200=200/3.6;
   for(let step=0;step<48000&&t<150;step++){
     let totalRatio=ratios[gear]*fd,rpm=v*totalRatio/r*60/TWO_PI;
     // Upshift where the NEXT gear pulls harder at this road speed — the wheel-torque crossover,
@@ -4340,6 +4340,7 @@ function simulateAccel(){
     const tqFrac=(driveF*r)/axleTqMax;                       // how hard the axle is being driven
     const F=Math.min(driveF,vehicle.mu*diffTractionAt(df,0,vehicle.cg,tqFrac)*Math.max(0,drivenN));
     const drag=0.5*AIR_RHO*vehicle.cdA*v*v,roll=v>0.2?crrAt(vehicle.crr,v)*m*G:0;
+    if(!M.t100){if(F<driveF-1e-6)M.gripT+=dt;if(shiftT<=0&&grid.laggy&&boostNow<0.9*engine.maxBoost)M.lagT+=dt;}
     a=(F-drag-roll)/m;v=Math.max(0,v+a*dt);x+=v*dt;t+=dt;
     if(!M.t100&&v>=V100)M.t100=t;
     if(!M.q400&&x>=400)M.q400={t,v};
@@ -4367,7 +4368,10 @@ function simulateAccel(){
   const vRedline=rl*TWO_PI*r/60/(ratios[ratios.length-1]*fd);
   const topSpeed=(vTop||vRedline)*3.6;
   Object.assign(state,svLive);
+  // gripT / lagT: seconds of the 0-100 spent traction-limited, and on throttle below 90% of target
+  // boost — WHY a car takes the time it takes, so a claim about what limits it can be checked.
   return {t100:M.t100,q400:M.q400,q800:M.q800,q1000:M.q1000,topSpeed,mass:m,ptw:vehicle.powerToWeight,
+    gripT:M.gripT,lagT:M.lagT,
     t200:M.v200?M.v200.t:null,x200:M.v200?M.v200.x:null};
 }
 // ====== TEST TRACK: circuits, lap solver ======
