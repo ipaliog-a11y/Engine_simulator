@@ -276,7 +276,7 @@ table.fuelmap td.live{box-shadow:inset 0 0 0 2px #fff;font-weight:bold}
 <body>
 <div class="container">
 <header>
-<h1>PIXEL ENGINE SIM v0.6 build 104</h1>
+<h1>PIXEL ENGINE SIM v0.6 build 105</h1>
 <div class="subtitle" id="subtitle">ENGINE DESIGNER • BUILD IT, THEN DRIVE IT</div>
 </header>
 <div class="build-strip" id="buildStrip">
@@ -2944,7 +2944,7 @@ const VEHICLE_PRESETS=[
    body:{kg:1495,cd:0.32,area:2.07,wb:2.73,fWt:0.51},fit:{drive:'rwd',tire:'sport',tw:255,ta:40,wheel:18,brake:'slotted',rotor:330,susp:'sport',gears:6,gearbox:'manual',diff:'visc'},
    real:{t100:5.2,top:250,limited:true}},
   {cat:'NA Sports',name:'Porsche 911 GT3 (991.2, 2017)',engine:'Porsche 4.0 flat-six (911 GT3 991.2)',chassis:'super',
-   body:{kg:1430,cd:0.34,area:2.05,wb:2.457,fWt:0.39},fit:{drive:'rwd',tire:'semi',tw:305,ta:30,wheel:20,brake:'big',rotor:380,susp:'coilover',gears:7,gearbox:'dct',diff:'clsd'},
+   body:{kg:1430,cd:0.34,area:2.05,wb:2.457,fWt:0.39,engPos:'rear'},fit:{drive:'rwd',tire:'semi',tw:305,ta:30,wheel:20,brake:'big',rotor:380,susp:'coilover',gears:7,gearbox:'dct',diff:'clsd'},
    real:{t100:3.4,top:318},unsure:['cd','area']},
   {cat:'Turbo Performance',name:'Toyota Supra RZ (A80, 1993)',engine:'Toyota 2JZ-GTE (Supra A80)',chassis:'coupe',
    body:{kg:1570,cd:0.31,area:1.94,wb:2.55,fWt:0.53},fit:{drive:'rwd',tire:'sport',tw:255,ta:40,wheel:17,brake:'slotted',rotor:320,susp:'sport',gears:6,gearbox:'manual',diff:'clsd'},
@@ -3056,7 +3056,9 @@ const TIRE_TYPE={
 // floor/diffuser is the efficient one (lots of downforce, little drag). Scaled by chassis.aero.
 const AERO_FRONT={none:{cl:0,cd:0},splitter:{cl:0.25,cd:0.010},wing:{cl:0.60,cd:0.028}};
 const AERO_REAR ={none:{cl:0,cd:0},lip:{cl:0.20,cd:0.008},wing:{cl:0.75,cd:0.035}};
-const AERO_FLOOR={none:{cl:0,cd:0},undertray:{cl:0.35,cd:0.006},diffuser:{cl:0.80,cd:0.014}};
+// front = the share of a floor's downforce on the front axle: a flat undertray works the whole floor and
+// acts near mid-wheelbase; a diffuser's suction peaks at its throat, ahead of the rear axle.
+const AERO_FLOOR={none:{cl:0,cd:0},undertray:{cl:0.35,cd:0.006,front:0.5},diffuser:{cl:0.80,cd:0.014,front:0.35}};
 const AERO_COST={none:0,splitter:600,wing:1800,lip:400,undertray:900,diffuser:2200};
 // Weight reduction stages: kg removed and cost.
 const WEIGHT_RED={none:{kg:0,cost:0},street:{kg:45,cost:1200},sport:{kg:95,cost:3500},race:{kg:170,cost:9000}};
@@ -3148,6 +3150,11 @@ function diffTractionAt(df,aLat,cgH,tqFrac){
 }
 // Cornering-only form, kept for the lap solver's readability.
 function lapDiffTraction(df,aLat,cgH){return diffTractionAt(df,aLat,cgH,1);}
+// Share of the ENGINE's weight on the front axle, from where it sits: a front-engined car carries it
+// just behind the front axle (~0.1 of the wheelbase), a mid-engined one ahead of the rear axle (~0.7), a
+// rear-engined one behind it (~1.1), so 1 - x/wheelbase. Used only for the CHANGE an engine swap makes.
+const ENGINE_FRONT_SHARE={front:0.9,mid:0.3,rear:-0.1};
+const engineLayoutOf=(chassis,body)=>(body&&body.engPos)||(['super','hyper','proto'].includes(chassis)?'mid':'front');
 // Drivetrain: driveline efficiency (crank→wheels) and the driven-axle description.
 const DRIVE_EFF={fwd:0.92,rwd:0.90,awd:0.86};
 const AIR_RHO=1.20;   // air density kg/m³
@@ -4782,10 +4789,28 @@ function buildVehicle(){
   // that engine comes out, taken once from the engine first fitted, so a swap then moves the mass by
   // the difference between the two engines, as it would on the real car.
   if(body&&!(body.mass>0))body.mass=Math.max(250,body.kg-vehicle.engineMass);
+  if(body&&!(body.engKg>0))body.engKg=vehicle.engineMass;   // the factory engine, for the weight split below
   vehicle.mass=Math.max(380,(body?body.mass:ch.mass)+vehicle.engineMass-wr.kg);
-  vehicle.wb=body?body.wb:ch.wb;vehicle.cg=ch.cg;vehicle.fWt=body?body.fWt:ch.fWt;vehicle.area=body?body.area:ch.area;
+  vehicle.wb=body?body.wb:ch.wb;vehicle.cg=ch.cg;vehicle.area=body?body.area:ch.area;
+  // The weight split moves with an engine swap, by the difference in engine mass at the engine's
+  // position (build 105). A real car's split is quoted with its own engine in it; a heavier one in a
+  // front-engined car loads the nose, in a mid-engined car the tail. Archetypes keep their class split,
+  // which is not tied to any one engine.
+  vehicle.fWt=ch.fWt;
+  if(body){
+    const dm=vehicle.engineMass-body.engKg, share=ENGINE_FRONT_SHARE[engineLayoutOf(vehicle.chassis,body)];
+    vehicle.fWt=clamp((body.fWt*body.kg+dm*share)/Math.max(1,body.kg+dm),0.25,0.75);
+  }
   const af=AERO_FRONT[vehicle.aeroFront]||AERO_FRONT.none, ar=AERO_REAR[vehicle.aeroRear]||AERO_REAR.none, al=AERO_FLOOR[vehicle.aeroFloor]||AERO_FLOOR.none;
   vehicle.clA=(af.cl+ar.cl+al.cl)*ch.aero;                            // downforce coefficient·area
+  // Where that downforce lands (build 105). It was split 50/50 whatever was fitted, so a rear wing helped
+  // a front-driver's traction as much as a rear-driver's. Front parts load the front axle, rear parts the
+  // rear, and the floor at its centre of pressure (AERO_FLOOR.front).
+  const clF=(af.cl+al.cl*(al.front!=null?al.front:0.5))*ch.aero;
+  vehicle.aeroBal=vehicle.clA>0?clF/vehicle.clA:0.5;   // share of the downforce on the front axle
+  // the driven axle's share of the weight (static) and of the downforce
+  vehicle.drivenWt=vehicle.drive==='awd'?1:vehicle.drive==='rwd'?1-vehicle.fWt:vehicle.fWt;
+  vehicle.drivenAero=vehicle.drive==='awd'?1:vehicle.drive==='rwd'?1-vehicle.aeroBal:vehicle.aeroBal;
   vehicle.cdA=((body?body.cd:ch.cd)+af.cd+ar.cd+al.cd)*vehicle.area;  // drag coefficient·area
   const gb=GEARBOX[vehicle.gearbox]||GEARBOX.manual,df=DIFF[vehicle.diff]||DIFF.open;
   vehicle.gb=gb;vehicle.gbLabel=gb.label;
@@ -5041,8 +5066,8 @@ function simulateAccel(){
     const down=0.5*AIR_RHO*vehicle.clA*v*v,Wtot=m*G+down,transfer=m*a*vehicle.cg/vehicle.wb;
     let drivenN;
     if(vehicle.drive==='awd')drivenN=Wtot;
-    else if(vehicle.drive==='rwd')drivenN=m*G*(1-vehicle.fWt)+down*0.5+Math.max(0,transfer);
-    else drivenN=m*G*vehicle.fWt+down*0.5-Math.max(0,transfer);
+    else if(vehicle.drive==='rwd')drivenN=m*G*(1-vehicle.fWt)+down*vehicle.drivenAero+Math.max(0,transfer);
+    else drivenN=m*G*vehicle.fWt+down*vehicle.drivenAero-Math.max(0,transfer);
     // The differential decides how much of the driven axle's grip is actually usable: an open
     // diff is governed by the lighter-loaded wheel and throws the rest away, an LSD recovers
     // most of it, a spool all of it. This only bites while the car is traction-limited.
@@ -5633,41 +5658,71 @@ function simulateLap(key){
     }
     vC[i]=vv;lim[i]='corner';
   }
-  const v=vC.slice(),accKind=new Array(n).fill('power'),latUse=new Array(n).fill(0);
+  const accKind=new Array(n).fill('power'),latUse=new Array(n).fill(0);
+  const fadeF=new Array(n).fill(1);   // brake capacity left at each point (see 2b below)
+  const hL=vehicle.cg/Math.max(0.5,vehicle.wb), sgn=vehicle.drive==='rwd'?1:vehicle.drive==='fwd'?-1:0;
+  let v;
+  function passes(){
+    v=vC.slice();
   // 2. Backward pass: brake into every corner. Lateral grip in use eats the longitudinal budget
-  //    (friction circle), and the brakes' own capacity caps it too.
+  //    (friction circle), and the brakes' own capacity caps it too. The cornering grip carries the
+  //    diff's scrub (muLat); braking in a straight line does not — a locked diff binds only when the
+  //    wheels must turn at different speeds, so the longitudinal budget is the tyre's own mu (build 105).
   for(let pass=0;pass<2;pass++)for(let k=n;k>0;k--){
     const i=(k-1+n)%n,j=(i+1)%n;
     const N=normalLoad(i,v[i]);
     const aLatMax=muLat*N/m,u=clamp((v[i]*v[i]/p[i].r)/Math.max(0.1,aLatMax),0,1);
     // Gravity along the slope: climbing helps you stop, descending fights the brakes.
-    const aBrake=Math.min(vehicle.brakeDecelCap,aLatMax*Math.sqrt(Math.max(0,1-u*u)))
+    const aBrake=Math.min(vehicle.brakeDecelCap*fadeF[i],vehicle.mu*N/m*Math.sqrt(Math.max(0,1-u*u)))
                  +drag(v[i])/m+G*p[i].sinT;
     const cap=Math.sqrt(Math.max(0,v[j]*v[j]+2*Math.max(0.1,aBrake)*p[i].ds3));
     if(cap<v[i])v[i]=cap;
   }
   // 3. Forward pass: accelerate out. Drive force is capped by the driven axle's grip (via the
   //    diff) and again by the friction circle, then drag and rolling resistance are subtracted.
+  //    The driven axle's load is its share of the weight and of the downforce (aero balance), plus
+  //    the load acceleration moves onto the rear, m a h/L (build 105; the straight-line run always
+  //    had it, the lap did not, so a rear-driver got no exit traction from squat and a front-driver
+  //    lost none to it). Grip depends on that load and the load on the acceleration, so solve it:
+  //        a = k (N0 - s m R h/L) / (m (1 - s k h/L)),   k = mu x diff x sqrt(1 - u^2)
+  //    with s = +1 RWD, -1 FWD, 0 AWD and R the resistances (the transfer follows the NET acceleration).
   for(let pass=0;pass<2;pass++)for(let k=0;k<n;k++){
     const i=k%n,j=(i+1)%n;
     const N=normalLoad(i,v[i]),dn=down(v[i]);
-    // The driven axle carries its share of whatever normal load there actually is here.
-    const drivenN=vehicle.drive==='awd'?N:(vehicle.drive==='rwd'?N*(1-vehicle.fWt):N*vehicle.fWt);
+    const N0=(N-dn)*vehicle.drivenWt+dn*vehicle.drivenAero;
     const aLat=v[i]*v[i]/p[i].r;
     const aLatMax=muLat*N/m,u=clamp(aLat/Math.max(0.1,aLatMax),0,1);
     // Diff traction is evaluated at the lateral load transfer actually happening here, so an
     // open diff falls apart on a fast corner exit while a locked one doesn't.
     const bg=bestGear(v[i]);
-    const gripA=vehicle.mu*diffTractionAt(df,aLat,vehicle.cg,bg.tqFrac)*drivenN/m*Math.sqrt(Math.max(0,1-u*u));
+    const R=(drag(v[i])+rollF(v[i])*p[i].cosT)/m+G*p[i].sinT;
+    const kk=vehicle.mu*diffTractionAt(df,aLat,vehicle.cg,bg.tqFrac)*Math.sqrt(Math.max(0,1-u*u));
+    const gripA=Math.max(0,kk*(N0-sgn*m*R*hL)/(m*Math.max(0.2,1-sgn*kk*hL)));
     const powerA=bg.F/m;
     accKind[i]=powerA<gripA?'power':'traction';latUse[i]=u;
     // Gravity along the slope again: a climb eats acceleration, a descent adds to it.
-    const aAcc=Math.min(powerA,gripA)-(drag(v[i])+rollF(v[i])*p[i].cosT)/m-G*p[i].sinT;
+    const aAcc=Math.min(powerA,gripA)-R;
     // aAcc may be NEGATIVE — a climb steep enough, or drag at terminal speed, genuinely slows the
     // car. Clamping it at zero (as this did) let the car hold speed up any gradient, which is why
     // a 43% climb used to cost nothing. Floored at 1 m/s so the profile can't collapse to zero.
     const cap=Math.sqrt(Math.max(1,v[i]*v[i]+2*aAcc*p[i].ds3));
     if(cap<v[j])v[j]=cap;
+  }
+  }
+  passes();
+  // 2b. Brake fade on the lap (build 105), the model the 100-0 and 0-200-0 stops use: capacity falls as
+  //     the brakes absorb heat in one stop, by up to 35% at vehicle.brakeFadeE. Heat is counted from the
+  //     start of each braking zone; between zones the brakes are taken as cooled, which is what that
+  //     model assumes of a stop from rest. If any zone fades, solve the lap again with it.
+  {
+    let heat=0,faded=false;
+    for(let i=0;i<n;i++){
+      const j=(i+1)%n,aLong=(v[j]*v[j]-v[i]*v[i])/(2*p[i].ds3);
+      const mech=-aLong-drag(v[i])/m-G*p[i].sinT;            // what the brakes, not the air or hill, did
+      if(mech>0.05){heat+=m*mech*p[i].ds3;fadeF[i]=1-clamp(heat/vehicle.brakeFadeE,0,1)*0.35;if(fadeF[i]<0.999)faded=true;}
+      else heat=0;
+    }
+    if(faded)passes();
   }
   // Classify from the FINISHED profile, not during the passes — the backward pass touches almost
   // every point on a twisty circuit, so labelling as it goes would call the whole lap "braking".
