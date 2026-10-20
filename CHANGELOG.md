@@ -20,6 +20,29 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 Working toward **v1.0 — every number derived, not fitted.**
 
+### The rotary's slow burn, and where its heat goes (build 92)
+
+- **A Wankel burns slowly, and late.** Its long, thin chamber takes 120–140° of eccentric shaft to
+  burn, roughly constant from 3000 to 6000 rpm (Vorraro, Turner & Akehurst, SAE 2022-01-0591). It
+  makes best torque with CA50 35–40° after TDC. A piston SI engine burns in ~50° with CA50 near 8°.
+  A Wiebe burn on each engine's own volume curve gives a phasing efficiency of 0.86 for the rotary
+  (TDC to BDC over 270° of shaft, near-sinusoidal) against 0.96 for the piston: about a tenth of the
+  expansion work is never done.
+- **The torque already carried it; the exhaust did not.** The rotary's low output is part of its
+  measured type constant (`imep` 0.70). What was missing was where the heat goes, so the undone work
+  is routed to the exhaust, as the diesel's late burn is. Exhaust share 0.316 → 0.351. None of the burn
+  outlasts exhaust-port opening, so this is late phasing, not burning in the port.
+- **13B turbo:** EGT 775 → 942 °C (real 900+), and it makes boost before its limiter. It peaks at
+  8700 of 9000 rpm, so it leaves the limiter lists (test44, test46 budgets 3 → 2). **Renesis:** 807 →
+  897 °C, 3 °C short of test46's band, with its floor ratcheted to 890. A Renesis cooler than a
+  peripheral-port 13B is the right direction: Mazda retarded its side-port opening for efficiency.
+- **Still open:** the 13B reaches 90% boost near 8500 rpm against a real ~3000. Its exhaust is hot
+  enough now. What it lacks is pulse energy, which the model times from cam geometry, and a rotary
+  has ports. That needs the rotary's port timing from a firmer source than the one found (75° BBDC
+  on the 13B-REW, second-hand from the FD shop manual). It is held at a ceiling in test56.
+- test56: phasing on both volume curves, the Wankel volume curve itself, slow-burn heat reaching the
+  exhaust and only on rotaries, independence from rpm, and the 13B's EGT, spool ceiling and peak.
+
 ### Turbo manifolds as short as they can be built; turbine housing as the builder's choice (build 91)
 
 - **A turbo manifold is not a tuned header.** Turbo engines carried the 550–780 mm primaries

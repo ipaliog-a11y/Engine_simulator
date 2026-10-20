@@ -110,7 +110,8 @@ for (const r of eng) {
   // richer than stoichiometric with heat it cannot release; with that fixed, the rotaries read cool.
   // Held at a floor (current value, rounded down) so it cannot get worse unnoticed; remove the entry
   // when the rotary burn is modelled.
-  const KNOWN_LOW = { '1.3 Rotary Turbo (13B)': 770, '1.3 Rotary NA (Renesis)': 800 };
+  // build 92: the 13B is back in band (942 C); the Renesis reads 897, floor ratcheted
+  const KNOWN_LOW = { '1.3 Rotary NA (Renesis)': 890 };
   if (KNOWN_LOW[r.nm] != null && r.egt < egtBand[0]) {
     if (r.egt < KNOWN_LOW[r.nm]) fails.push(`${r.nm}: EGT ${r.egt} C fell below its known-gap floor ${KNOWN_LOW[r.nm]} C`);
   } else if (r.egt < egtBand[0] || r.egt > egtBand[1])

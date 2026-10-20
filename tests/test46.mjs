@@ -60,7 +60,10 @@ egt.forEach(e => {
   // richer than stoichiometric with heat it cannot release; with that fixed, the rotaries read cool.
   // Held at a floor (current value, rounded down) so it cannot get worse unnoticed; remove the entry
   // when the rotary burn is modelled.
-  const KNOWN_LOW = { '1.3 Rotary NA (Renesis)': 800 };
+  // Build 92 routed the rotary's slow-burn heat to the exhaust (rotaryLostWork): 807 -> 897 C, 3 C
+  // short of this band. Floor ratcheted to 890. (Mazda retarded the Renesis's side-port opening for
+  // efficiency, so a cooler Renesis than a peripheral-port 13B is the right direction.)
+  const KNOWN_LOW = { '1.3 Rotary NA (Renesis)': 890 };
   if (KNOWN_LOW[e.n] != null && e.full < e.lo) {
     console.log(`    ${e.n}: KNOWN GAP — rotary exhaust heat not modelled (floor ${KNOWN_LOW[e.n]} C)`);
     if (e.full < KNOWN_LOW[e.n]) fails.push(`${e.n} EGT ${e.full} C fell below its known-gap floor ${KNOWN_LOW[e.n]} C`);
@@ -195,8 +198,10 @@ lim.forEach(x => console.log(`  ${x.n.padEnd(28)} peak power at ${(x.frac * 100)
 // no trailing-pocket burn its exhaust is too cool to spool the turbo, which reaches only 0.54 bar at
 // the 9000 rpm limiter (a real 13B boosts from ~3000), so power climbs with boost to the limiter. It
 // reached boost at 8000 rpm before only on heat from fuel that cannot burn.
-const AT_LIMITER_BUDGET = 3;
-const AT_LIMITER_KNOWN = /^(2\.0 Turbo Hot-Hatch I4|2\.0 Turbo Diesel I4|1\.3 Rotary Turbo \(13B\))$/;
+// Back to 2 in build 92: with its slow-burn heat in the exhaust the 13B makes boost before the
+// limiter and peaks at 94% of redline. (It still spools far too late — see test56.)
+const AT_LIMITER_BUDGET = 2;
+const AT_LIMITER_KNOWN = /^(2\.0 Turbo Hot-Hatch I4|2\.0 Turbo Diesel I4)$/;
 if (atLimit.some(x => !AT_LIMITER_KNOWN.test(x.n)))
   fails.push(`a preset not on the known list peaks at the limiter: ${atLimit.filter(x => !AT_LIMITER_KNOWN.test(x.n)).map(x => x.n).join(', ')}`);
 if (atLimit.length && !atLimit.every(x => /Turbo|Supercharged/.test(x.n)))
