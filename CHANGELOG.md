@@ -20,6 +20,29 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 Working toward **v1.0 — every number derived, not fitted.**
 
+### Real cars as presets, with their own bodies (build 97)
+
+- **A real car is one member of its chassis class, with its own body.** Each car carries its curb mass,
+  measured Cd, frontal area, wheelbase and front weight share over its archetype; the archetype still
+  supplies CG height and mechanical grip, which are not published car by car. The platform mass is curb
+  mass less the factory engine, so an engine swap moves the mass by the difference between the engines.
+  The body is saved with every build, and picking a generic chassis drops it.
+- **26 cars, paired with their factory engines** from build 96, in the same categories: Alto Works,
+  Aygo, 500 TwinAir, Fiesta EcoBoost, GTI Mk7, GR Yaris, Civic Type R, MX-5 NA, AE86, S2000, E46 M3,
+  911 GT3, Supra A80, R34 GT-R, Impreza STI, Evo IX, RS3, Corvette C6 and Z06, Mustang GT, Challenger
+  Hellcat, Huracán, 812 Superfast, Golf TDI, 330d, Silverado HD Duramax. Each arrives on its factory
+  fitment (tyres, brakes, gearbox, diff) with tyres rated for its top speed. A FACTORY CAR picker sits
+  at the top of the vehicle tab.
+- **How the model compares** (test61): 0-100 RMS 13.9% on the model's own power, 11.6% with power
+  matched to the rating; top speed RMS 5.1% over the 14 ungoverned cars. Close: Fiesta −1%, Civic Type R
+  −1%, MX-5 −2%, GR Yaris +2%, Corvette C6 −3%. The cars that are far off are mostly the engines already
+  off in build 96 (R34, STI, Evo IX, Z06). Two are slow with the right power, each traced: the RS3 holds
+  boost only high up (torque peak 5500 rpm against a real 1700), and the Duramax pickup is
+  traction-limited for 9.2 of its 10.3 s.
+- **Not included:** the rotaries (RX-7, RX-8) wait for the rotary displacement fix; the RD350LC is a
+  motorcycle; the Cummins Ram lacks a solid road-test figure. Governed cars run past their governor,
+  since the model has no speed limiter.
+
 ### Real engines as presets, in categories (build 96)
 
 - **28 presets modelled on real engines**, from published geometry and hardware, each carrying the
