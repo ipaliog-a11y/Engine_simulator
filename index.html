@@ -282,7 +282,7 @@ table.fuelmap td.live{box-shadow:inset 0 0 0 2px #fff;font-weight:bold}
 <body>
 <div class="container">
 <header>
-<h1>PIXEL ENGINE SIM v0.6 build 112</h1>
+<h1>PIXEL ENGINE SIM v0.6 build 113</h1>
 <div class="subtitle" id="subtitle">ENGINE DESIGNER • BUILD IT, THEN DRIVE IT</div>
 </header>
 <div class="build-strip" id="buildStrip">
@@ -1072,7 +1072,7 @@ This is a physics model, and like every model it leaves things out. These are th
 
 <div class="design-section">Brakes &amp; Suspension</div>
 <div class="design-grid">
-<div class="field"><label for="vhBrake">BRAKES</label><select id="vhBrake"><option value="steel">STEEL DISC</option><option value="slotted">SLOTTED/VENTED</option><option value="big">BIG BRAKE KIT</option><option value="carbon">CARBON-CERAMIC</option></select></div>
+<div class="field"><label for="vhBrake">BRAKES</label><select id="vhBrake"><option value="steel">STEEL DISC</option><option value="slotted">SLOTTED/VENTED</option><option value="big">BIG BRAKE KIT</option><option value="carbon">CARBON-CERAMIC</option><option value="hd">HEAVY-DUTY</option></select></div>
 <div class="field"><label for="vhRotor">ROTOR SIZE (mm)</label><input type="number" id="vhRotor" min="250" max="420" step="10" value="330"></div>
 <div class="field"><label for="vhSusp">SUSPENSION</label><select id="vhSusp"><option value="comfort">COMFORT</option><option value="sport">SPORT</option><option value="coilover">COILOVERS</option><option value="race">RACE/ADJUST</option></select></div>
 </div>
@@ -2929,7 +2929,7 @@ const CHASSIS={
   proto:    {label:'TRACK PROTOTYPE',   mass:620, area:1.55,cd:0.60,wb:2.80,cg:0.32,fWt:0.46,track:1.75,drive:'rwd',aero:3.0,cost:45000,
              fit:{tire:'slick',tw:305,ta:30,wheel:18,brake:'carbon', rotor:380,susp:'race',    aF:'wing',    aR:'wing',aFl:'diffuser', weight:'race',  gears:6,gearing:50,gearbox:'sequential',diff:'spool'}},
   pickup:   {label:'PICKUP TRUCK',      mass:2050,area:3.20,cd:0.45,wb:3.60,cg:0.68,fWt:0.58,track:1.75,drive:'rwd',aero:0.2,cost:11000,
-             fit:{tire:'eco',  tw:265,ta:65,wheel:17,brake:'slotted',rotor:330,susp:'comfort', aF:'none',    aR:'none',aFl:'none',     weight:'none',  gears:6,gearing:42,gearbox:'auto',diff:'open'}},
+             fit:{tire:'eco',  tw:265,ta:65,wheel:17,brake:'hd',     rotor:330,susp:'comfort', aF:'none',    aR:'none',aFl:'none',     weight:'none',  gears:6,gearing:42,gearbox:'auto',diff:'open'}},
   suv:      {label:'PERFORMANCE SUV',   mass:1950,area:2.95,cd:0.36,wb:2.95,cg:0.66,fWt:0.54,track:1.65,drive:'awd',aero:0.4,cost:16000,
              fit:{tire:'sport',tw:275,ta:45,wheel:20,brake:'big',    rotor:350,susp:'sport',   aF:'none',    aR:'none',aFl:'none',     weight:'none',  gears:8,gearing:48,gearbox:'auto',diff:'visc'}}
 };
@@ -3024,7 +3024,7 @@ const VEHICLE_PRESETS=[
    body:{kg:1570,cd:0.26,area:2.20,wb:2.81,fWt:0.52},fit:{drive:'rwd',tire:'sport',tw:225,ta:50,wheel:17,brake:'slotted',rotor:330,susp:'sport',gears:8,gearbox:'auto',diff:'open'},
    real:{t100:5.6,top:250,limited:true},unsure:['area']},
   {cat:'Diesel',name:'Chevrolet Silverado 2500HD Duramax (2020)',engine:'GM Duramax L5P 6.6 (Silverado HD)',chassis:'pickup',
-   body:{kg:3400,cd:0.50,area:3.80,wb:4.08,fWt:0.62},fit:{drive:'rwd',tire:'eco',tw:265,ta:70,wheel:18,brake:'slotted',rotor:360,susp:'comfort',gears:8,gearbox:'auto',diff:'open'},
+   body:{kg:3400,cd:0.50,area:3.80,wb:4.08,fWt:0.62},fit:{drive:'rwd',tire:'eco',tw:265,ta:70,wheel:18,brake:'hd',rotor:360,susp:'comfort',gears:8,gearbox:'auto',diff:'open'},
    real:{t100:8.0,top:160,limited:true},note:'the real truck has a 10-speed; the model offers up to 8',unsure:['kg','cd','area','fWt','t100','top']}
 ];
 const VEHICLE_CATS=PRESET_CATS.filter(c=>VEHICLE_PRESETS.some(p=>p.cat===c));
@@ -3101,17 +3101,37 @@ const AERO_FLOOR={none:{cl:0,cd:0},undertray:{cl:0.35,cd:0.006,front:0.5},diffus
 const AERO_COST={none:0,splitter:600,wing:1800,lip:400,undertray:900,diffuser:2200};
 // Weight reduction stages: kg removed and cost.
 const WEIGHT_RED={none:{kg:0,cost:0},street:{kg:45,cost:1200},sport:{kg:95,cost:3500},race:{kg:170,cost:9000}};
-// Brakes: cap = peak deceleration the brakes can command (g, before fade), fade = resistance
-// to heat build-up (1 = none). A bigger rotor adds both capacity and thermal mass.
-// Since build 107 fade comes from TEMPERATURE (brakeThermal): mat is the rotor material, vented whether
-// it has cooling vanes, duct whether the kit brings a brake duct to the front rotors (build 110), and onset the rotor temperature (C) at which its pads begin to lose friction:
-// a street pad ~400, a performance street pad ~550, a track pad ~650, carbon-ceramic ~1000.
+// Brakes. Since build 107 fade comes from TEMPERATURE (brakeThermal): mat is the rotor material, vented
+// whether it has cooling vanes, duct whether the kit brings a brake duct to the front rotors (build 110),
+// and onset the rotor temperature (C) at which its pads begin to lose friction: a street pad ~400, a
+// performance street pad ~550, a track pad ~650, carbon-ceramic ~1000.
+// Since build 113 the torque comes from the hydraulics (brakeTorqueCap), not a fitted peak deceleration:
+// pad = the pad's friction coefficient (an OE street pad ~0.38, a performance pad ~0.40, a track or
+// carbon-ceramic pad ~0.45), and caliper = the piston diameters (mm) acting on ONE side of the rotor,
+// front and rear: a sliding caliper's single piston (its reaction clamps the other pad with the same
+// force), an opposed 4- or 6-pot's two or three per side. Catalogue sizes for each class of system.
 const BRAKE_TYPE={
-  steel:  {label:'STEEL DISC',     cap:1.05,mat:'iron',vented:false,onset:400, cost:600},
-  slotted:{label:'SLOTTED/VENTED', cap:1.35,mat:'iron',vented:true, onset:550, cost:1400},
-  big:    {label:'BIG BRAKE KIT',  cap:1.65,mat:'iron',vented:true, onset:650, duct:true,cost:3200},
-  carbon: {label:'CARBON-CERAMIC', cap:1.95,mat:'ccm', vented:true, onset:1000,duct:true,cost:7000}
+  steel:  {label:'STEEL DISC',     pad:0.38,caliper:{f:[54],r:[34]},         mat:'iron',vented:false,onset:400, cost:600},
+  slotted:{label:'SLOTTED/VENTED', pad:0.40,caliper:{f:[57],r:[38]},         mat:'iron',vented:true, onset:550, cost:1400},
+  big:    {label:'BIG BRAKE KIT',  pad:0.45,caliper:{f:[40,44],r:[38]},      mat:'iron',vented:true, onset:650, duct:true,cost:3200},
+  carbon: {label:'CARBON-CERAMIC', pad:0.45,caliper:{f:[34,38,44],r:[36,40]},mat:'ccm', vented:true, onset:1000,duct:true,cost:7000},
+  // a heavy-duty truck's: twin-piston sliding calipers (two 60 mm pistons on one side), sized for 3+ tonnes
+  hd:     {label:'HEAVY-DUTY',     pad:0.40,caliper:{f:[60,60],r:[54]},      mat:'iron',vented:true, onset:550, cost:1800}
 };
+// The most line pressure a driver can make in an emergency stop: the vacuum booster's run-out pressure
+// plus what a hard push adds unassisted, ~100 bar on a road car.
+const BRAKE_LINE_BAR=100;
+// Pressure build-up (build 113): from the pedal going down to the brakes reaching the limit of the stop
+// takes ~0.2 s (Limpert, Brake Design and Safety: 0.2-0.3 s for a hydraulic system with a booster; brake
+// assist sits at the short end). Deceleration rises through it, which costs a 100-0 stop ~v x 0.1 s.
+const BRAKE_RISE_S=0.2;
+// Brake force the system can put on the road (N), pre-fade: per wheel 2 pads x pad mu x line pressure x
+// piston area x effective radius (the middle of the friction ring, 0.4 D), over the tyre's radius.
+function brakeForceCap(v){
+  const bt=BRAKE_TYPE[v.brakeType]||BRAKE_TYPE.slotted, p=BRAKE_LINE_BAR*1e5;
+  const axle=(pist,D)=>2*(2*bt.pad*p*pist.reduce((a,d)=>a+Math.PI/4*(d/1000)*(d/1000),0)*0.4*D);
+  return (axle(bt.caliper.f,v.rotor/1000)+axle(bt.caliper.r,0.9*v.rotor/1000))/v.rTire;
+}
 // ---- brake temperature (build 107; cooling rebuilt in build 110) ----
 // Each rotor is a lump of material heated by the brakes and cooled by the air, and its pads lose grip
 // above their onset temperature. The rotor, from its diameter D: a friction ring from 0.6 D to D, ~9% of
@@ -4980,9 +5000,6 @@ function buildVehicle(){
   vehicle.crr=tt.crr;
   vehicle.speedRating=document.getElementById('vhRating').value||tt.rating;
   vehicle.ratedKmh=(SPEED_RATING[vehicle.speedRating]||SPEED_RATING.Y).kmh;
-  // Brakes: peak commanded deceleration (m/s²) and a heat-energy budget before fade sets in.
-  const bt=BRAKE_TYPE[vehicle.brakeType]||BRAKE_TYPE.slotted, rotorF=0.85+clamp((vehicle.rotor-320)/100,0,1)*0.30;
-  vehicle.brakeDecelCap=bt.cap*rotorF*G;
   vehicle.brakeTh=brakeThermal(vehicle);   // rotors, material and pads: brake temperature and fade (build 107)
   vehicle.engineMass=engineMass();
   // A real car is quoted at curb mass with its own engine in it. The platform is what is left when
@@ -4991,6 +5008,8 @@ function buildVehicle(){
   if(body&&!(body.mass>0))body.mass=Math.max(250,body.kg-vehicle.engineMass);
   if(body&&!(body.engKg>0))body.engKg=vehicle.engineMass;   // the factory engine, for the weight split below
   vehicle.mass=Math.max(380,(body?body.mass:ch.mass)+vehicle.engineMass-wr.kg);
+  // Brakes: the deceleration the hydraulics can command (m/s2, before fade).
+  vehicle.brakeDecelCap=brakeForceCap(vehicle)/vehicle.mass;
   vehicle.wb=body?body.wb:ch.wb;vehicle.cg=ch.cg;vehicle.area=body?body.area:ch.area;
   vehicle.track=(body&&body.track)||ch.track;
   // The headline mu (summary, g-meter): the tyre's, at the car's own weight shared over four tyres.
@@ -5068,7 +5087,8 @@ function simulateBraking(v0,T0){
     const down=0.5*AIR_RHO*vehicle.clA*v*v;
     const gripDecel=tyreMuX((m*G+down)/4)*(m*G+down)/m;             // tyre-limited, at the load on each tyre
     const brakeDecel=vehicle.brakeDecelCap*brakeFadeAt(st.F,th);   // brake-limited, at the rotor's temperature
-    const mech=Math.min(gripDecel,brakeDecel);                    // mechanical (tyre/brake) decel
+    // mechanical (tyre/brake) decel, rising to it over the pressure build-up time
+    const mech=Math.min(gripDecel,brakeDecel)*Math.min(1,t/BRAKE_RISE_S);
     const aero=(0.5*AIR_RHO*vehicle.cdA*v*v)/m;                    // drag also decelerates
     brakeHeatStep(st,th,mech,v,dt);                               // the work, into the rotors
     v=Math.max(0,v-(mech+aero)*dt);x+=v*dt;t+=dt;
