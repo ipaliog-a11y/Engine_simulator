@@ -1,4 +1,4 @@
-# PIXEL ENGINE SIM v0.6 build 101
+# PIXEL ENGINE SIM v0.6 build 102
 
 **A lightweight, 8-bit style internal combustion engine *designer* & simulator** inspired by *Automation*.
 
@@ -739,6 +739,7 @@ measurement finds things. Each item is one PR.
 | — | Speed limiter | ✅ build 99 | A removable road-speed governor (on/off + km/h); real cars arrive with their factory one. It holds the car at its set speed in the run and on track; removed, the car runs to its free top speed. Top-speed RMS over all 26 real cars 4.0%. |
 | — | Rotary geometry | ✅ build 100 | Wankel displacement 3√3·e·R·W with an eccentricity input (was the piston formula on R and W: 804 cc for a 1308 cc 13B); ported engines draw a charge every turn in every flow rate; the rotary's thirst factor 1.48, which offset the half-rate air, is 1. Real 13B-REW and Renesis presets, RX-7 FD and RX-8 cars. Still fitted: the rotary's 0.70 IMEP factor (Renesis reads −31%). |
 | — | Exhaust energy balance | ✅ build 101 | Exhaust share = 1 − work − wall (Woschni, traced) − port (Caton–Heywood) − unburned fuel, replacing "roughly a third". Mass-averaged gas drives the turbine and the vane limit; reported EGT is the thermocouple (time-averaged) reading. NA 818–938 C, turbo petrols 880–1048 C. Next: turbo manifold heat loss; the turbine throat convention. |
+| — | UI pass 1 | ✅ build 102 | Compact form grid; family → build pickers for engines and cars; a strip showing the loaded engine and car; tyre rating warning refreshes, and (Y) has no ceiling. Next: garage tab, live timing. |
 | — | Spark torque from fuel | ✅ build 95 | `IMEP_K` replaced by Heywood's 0.8 × fuel-air cycle efficiency; each fuel's LHV/AFR_st enters. Spark torque −2.7%, full-load BSFC 280 g/kWh (real 270–300). Rotary/two-stroke type factors still fitted. |
 | — | `turboChoke` (boost taper) | ✅ build 94 | Retired. Turbine efficiency from blade speed ratio U/C, per-point compressor efficiency, a continuous rich-knock slope in place of a step, and sequential turbos staged as two turbines. Calibration improved on every measure. |
 | — | Rotary exhaust heat | ✅ build 92 | The slow, late Wankel burn (130° ES, CA50 37.5° ATDC) leaves ~10% of the expansion work undone, and that heat now reaches the exhaust: 13B 775 → 942 °C, off the limiter. |

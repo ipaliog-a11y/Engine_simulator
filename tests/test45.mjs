@@ -106,7 +106,7 @@ const rating = await page.evaluate(() => {
     return { top: Math.round(simulateAccel().topSpeed), rated: vehicle.ratedKmh, code: vehicle.speedRating }; };
   return { high: run('YY'), low: run('H') };
 });
-console.log(`  (Y) 340+ rated: top ${rating.high.top} km/h, rated ${rating.high.rated}`);
+console.log(`  (Y) rated:      top ${rating.high.top} km/h, rated ${rating.high.rated} (no ceiling: tested to the car)`);
 console.log(`  H 210 rated:    top ${rating.low.top} km/h, rated ${rating.low.rated}` +
   (rating.low.top > rating.low.rated ? '  <-- exceeds, and is flagged' : ''));
 if (rating.low.top !== rating.high.top)
@@ -114,11 +114,25 @@ if (rating.low.top !== rating.high.top)
 if (!(rating.low.top > rating.low.rated))
   fails.push('an H-rated tyre on a 350 km/h supercar should be flagged as exceeded');
 const warned = await page.evaluate(() => {
+  // render the panel for the H-rated car just built (it used to pass on a stale (Y) warning: a 350
+  // km/h car tripped the old 340 km/h (Y) ceiling)
+  updateVehicleSummary();
   const el = document.querySelector('#perfGrid') || document.body;
   return /TYRE SPEED RATING EXCEEDED/i.test(el.textContent || '');
 });
 console.log(`  warning shown in the performance panel: ${warned}`);
 if (!warned) fails.push('the performance panel does not surface the exceeded rating');
+// Changing the rating in the UI must re-check it, and the best rating there is must never warn. Until
+// build 102 the rating select was not wired to a rebuild, and (Y) was stored as a 340 km/h ceiling.
+const ui = await page.evaluate(() => {
+  const rs = document.getElementById('vhRating'), shown = () => /TYRE SPEED RATING EXCEEDED/i.test(document.getElementById('perfGrid').textContent || '');
+  rs.value = 'YY'; rs.dispatchEvent(new Event('input')); const afterY = shown();
+  rs.value = 'H'; rs.dispatchEvent(new Event('input')); const afterH = shown();
+  return { afterY, afterH };
+});
+console.log(`  via the UI: (Y) -> warning ${ui.afterY}, H -> warning ${ui.afterH}`);
+if (ui.afterY) fails.push('a (Y)-rated tyre still shows the speed-rating warning, or the select does not re-check');
+if (!ui.afterH) fails.push('switching back to H in the UI does not bring the warning back');
 
 // ==================================================================== 4. compound defaults
 console.log('\n== each compound carries the rating it is really sold in ==');

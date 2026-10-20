@@ -20,6 +20,22 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 Working toward **v1.0 — every number derived, not fitted.**
 
+### UI: compact forms, two-step presets, what is loaded, tyre rating fixes (build 102)
+
+- **Fields are a size, not half the panel.** The design forms were a fixed two-column grid, so every
+  select and number box stretched to ~600 px. They now pack as 170-220 px cells, four to a row on a
+  desktop and two on a phone.
+- **Presets in two steps:** pick a family (the categories), then a build in it, on both the engine and
+  the vehicle tab. The chosen build stays selected after loading.
+- **What is loaded, on every tab:** a strip under the title shows the engine and the car (with peak hp
+  and 0-100), marks them "(modified)" once you change them, and takes you to their tab when clicked.
+  Loading an engine still opens the dyno, and the strip says what it was. An engine build now drops into
+  the car you have instead of resetting it to the default coupe.
+- **Tyre speed rating:** changing the rating now re-checks the warning (the select was never wired to a
+  rebuild), and a new compound raises the rating to the one it is sold in. "(Y)" was stored as a 340
+  km/h ceiling, so it warned on every faster car; it means above 300, tested to the car, and no longer
+  has a ceiling. test45 checks both through the UI.
+
 ### The exhaust share from the energy balance, read as a thermocouple reads it (build 101)
 
 - **The exhaust's share of the fuel's heat is what the balance leaves**, for every poppet-valve engine:
