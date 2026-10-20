@@ -155,13 +155,14 @@ await page.click('#tabVehicle'); await page.waitForTimeout(400);
 const ui = await page.evaluate(({ a }) => {
   eval(a); document.getElementById('garageName').value = 'UI check';
   document.getElementById('btnGarageSave').click();
+  setTab('garage');   // since build 103 the lists live in their own tab
   const item = document.querySelector('.garage-item');
   return { visible: !!document.getElementById('garageList').offsetParent, saved: garage.length,
     hasLoad: !!item.querySelector('[data-gload]'), hasDel: !!item.querySelector('[data-gdel]'),
     current: item.classList.contains('current'), btn: document.getElementById('btnGarageSave').textContent };
 }, { a: fit('2.0 ITB NA Screamer I4', 'roadster') });
 console.log(`\nUI: panel visible ${ui.visible} · saved via the button ${ui.saved} · LOAD ${ui.hasLoad} · DELETE ${ui.hasDel} · current card highlighted ${ui.current}`);
-if (!ui.visible) fails.push('garage is not visible on the VEHICLE tab');
+if (!ui.visible) fails.push('the garage list is not visible on the GARAGE tab');
 if (ui.saved !== 1) fails.push('the SAVE TO GARAGE button did not save');
 if (!ui.hasLoad || !ui.hasDel) fails.push('cards are missing their LOAD/DELETE buttons');
 if (!ui.current) fails.push('the card matching the typed name is not highlighted');
@@ -176,7 +177,7 @@ if (back.ch !== 'LIGHT ROADSTER') fails.push('clicking LOAD on a card did not lo
 
 await page.evaluate(() => applyLang('el')); await page.waitForTimeout(300);
 const el = await page.evaluate(() => ({
-  section: [...document.querySelectorAll('.design-section')].map(e => e.textContent).join('|'),
+  section: document.getElementById('tabGarage').textContent + '|' + document.querySelector('#garagePanel h3').textContent,
   btn: document.getElementById('btnGarageSave').textContent,
   label: document.querySelector('label[for="garageName"]').textContent,
   ph: document.getElementById('garageName').placeholder,
@@ -184,7 +185,7 @@ const el = await page.evaluate(() => ({
   guide: document.getElementById('guidePanel').textContent
 }));
 console.log(`EL: section "${/ΓΚΑΡΑΖ/.test(el.section)}" · button "${el.btn}" · label "${el.label}" · card "${el.card.replace(/\s+/g, ' ').slice(0, 60)}"`);
-if (!/ΓΚΑΡΑΖ/.test(el.section)) fails.push('Garage section heading not translated');
+if (!/ΓΚΑΡΑΖ/.test(el.section)) fails.push('GARAGE tab / heading not translated');
 if (!/ΓΚΑΡΑΖ/.test(el.btn)) fails.push('SAVE TO GARAGE not translated');
 if (!/ΟΝΟΜΑ/.test(el.label)) fails.push('BUILD NAME not translated');
 if (!/ΦΟΡΤΩΣΗ|ΔΙΑΓΡΑΦΗ/.test(el.card)) fails.push('card buttons not translated');
@@ -192,6 +193,37 @@ if (!/ΓΚΑΡΑΖ/.test(el.guide)) fails.push('Greek guide does not cover the g
 await page.evaluate(() => applyLang('en'));
 const en = await page.evaluate(() => document.getElementById('guidePanel').textContent);
 if (!/SAVE TO GARAGE/.test(en)) fails.push('English guide does not cover the garage');
+
+// ---------------------------------------------------------------- 6. engines (build 103)
+// An engine entry holds the engine and its tune only; loading it drops it into the car you have.
+// Entries saved before engines existed carry no kind and are cars.
+const eng = await page.evaluate(({ a, b }) => {
+  localStorage.removeItem('pes.garage'); loadGarage();
+  eval(a);                                            // a V12 in a hypercar
+  document.getElementById('engSaveName').value = 'Big V12'; garageSave('engine');
+  const e = garage.find(g => g.name === 'Big V12');
+  eval(b);                                            // now a different engine in a roadster
+  const carBefore = vehicle.chLabel;
+  garageLoad(e.id);
+  const out = { kind: e.kind, hasVehicle: !!e.build.vehicle, hp: engine.score.peakHP, savedHp: e.stats.hp,
+    car: vehicle.chLabel, carBefore, strip: document.getElementById('bsEngine').textContent };
+  // a pre-103 entry: no kind field
+  const legacy = { id: 'legacy1', name: 'Old save', date: '2025-01-01', stats: {}, build: serializeBuild('Old save', '') };
+  localStorage.setItem('pes.garage', JSON.stringify([legacy])); loadGarage(); renderGarage();
+  out.legacyInCars = !!document.querySelector('#garageList [data-gload="legacy1"]');
+  out.legacyInEngines = !!document.querySelector('#garageEngList [data-gload="legacy1"]');
+  document.querySelector('#garageList [data-gview="legacy1"]').click();
+  out.viewOpens = !!document.querySelector('#garageList .garage-detail');
+  return out;
+}, { a: fit('6.5 V12 NA Supercar', 'hyper'), b: fit('2.0 ITB NA Screamer I4', 'roadster') });
+console.log(`\nengine entry: kind ${eng.kind}, carries a vehicle ${eng.hasVehicle}; loaded ${eng.hp} hp (saved ${eng.savedHp}) into the ${eng.car} (was ${eng.carBefore}); strip "${eng.strip}"`);
+console.log(`legacy entry listed under cars ${eng.legacyInCars}, engines ${eng.legacyInEngines}; VIEW opens the spec ${eng.viewOpens}`);
+if (eng.kind !== 'engine' || eng.hasVehicle) fails.push('an engine entry should be kind engine and carry no vehicle');
+if (eng.hp !== eng.savedHp) fails.push('loading an engine entry did not bring its engine back');
+if (eng.car !== eng.carBefore) fails.push('loading an engine replaced the car — it should go into the car you have');
+if (!/Big V12/.test(eng.strip)) fails.push('the loaded-build strip does not show the garage engine');
+if (!eng.legacyInCars || eng.legacyInEngines) fails.push('a pre-103 entry without a kind is not listed as a car');
+if (!eng.viewOpens) fails.push('VIEW does not open the saved spec');
 
 console.log('\nERRORS:', errors.length ? errors : 'none');
 console.log(fails.length ? 'FAIL:\n  ' + fails.join('\n  ') : '\nPASS');
