@@ -1,4 +1,4 @@
-# PIXEL ENGINE SIM v0.6 build 117
+# PIXEL ENGINE SIM v0.6 build 118
 
 **A lightweight, 8-bit style internal combustion engine *designer* & simulator** inspired by *Automation*.
 
@@ -764,6 +764,7 @@ measurement finds things. Each item is one PR.
 | — | Minimum-time racing line | ✅ build 115 | Each car drives its own minimum-time line (local search with the lap solver's physics), minus its width, on a centripetal-spline centreline; late apexes emerge, the fitted bias is gone. GPS traces de-noised within 2.5 m. |
 | — | Engine breathing | ✅ build 116 | Valve overlap sees a turbo's boost; overlap curtain from the cam; exhaust-wave friction from the boundary layers. Evo IX 290/286 hp. Open: turbo boost taper at high rpm, Z06/4A-GE/rotaries short. |
 | — | Brake split, shifts on track | ✅ build 117 | Brake heat shared by the calipers' hydraulic split until ABS holds the saturated axle (fronts now hotter on the GT3/Huracan); upshifts on the power cut the drive in the lap solve, downshifts free. |
+| — | Turbo lag on track | ✅ build 118 | The turbo's shaft is run along the lap (lift, braking and shifts bleed boost); the drive uses the boost actually built, and the replay gauge shows it. 0-0.08 s a lap. |
 | — | Spark torque from fuel | ✅ build 95 | `IMEP_K` replaced by Heywood's 0.8 × fuel-air cycle efficiency; each fuel's LHV/AFR_st enters. Spark torque −2.7%, full-load BSFC 280 g/kWh (real 270–300). Rotary/two-stroke type factors still fitted. |
 | — | `turboChoke` (boost taper) | ✅ build 94 | Retired. Turbine efficiency from blade speed ratio U/C, per-point compressor efficiency, a continuous rich-knock slope in place of a step, and sequential turbos staged as two turbines. Calibration improved on every measure. |
 | — | Rotary exhaust heat | ✅ build 92 | The slow, late Wankel burn (130° ES, CA50 37.5° ATDC) leaves ~10% of the expansion work undone, and that heat now reaches the exhaust: 13B 775 → 942 °C, off the limiter. |

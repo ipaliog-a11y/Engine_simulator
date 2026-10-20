@@ -20,6 +20,23 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 Working toward **v1.0 — every number derived, not fitted.**
 
+### Turbo lag on the lap (build 118)
+
+- The lap gave a turbo its full boost wherever it was flat, as if the shaft were always spun up. Now the
+  shaft (advanceShaft, the one the 0-100 run and the bench integrate) is run along the solved lap in time
+  order, at each point's revs and throttle, until it repeats lap to lap: boost bleeds off on a lift, under
+  braking and through a shift, and builds back on the power. The torque the boost there gives, against
+  full boost, scales the drive and the forward pass is solved again (twice: the throttle depends on the
+  drive available). The replay's boost gauge shows the boost the shaft has built.
+- **Result:** these turbos spool fast (a Supra's shaft is 3.2e-5 kg m^2) and the corner exits where the
+  boost is still building are mostly traction-limited, so lag costs 0-0.08 s a lap on the technical
+  circuit (WRX STI 0.08, GR Yaris 0.07). A shift skipped because the braking point came first can make a
+  lap up to 0.04 s quicker: the driver upshifts at the best-force point even just before braking, where a
+  real one holds the gear to the limiter (open).
+- The torque grid is built once per engine (0.15 s) and reused by every lap.
+- Fixed in build 117's shifts: the forward pass's second time round (for the lap's wrap) saw every point as
+  off the power, so it dropped the replay's shift marks and the gear state across the line.
+
 ### Brake heat split from the hydraulics; gear shifts in the lap solve (build 117)
 
 - **Brake heat split.** The heat each axle's rotors took was the ideal load split at every deceleration,

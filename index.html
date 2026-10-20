@@ -282,7 +282,7 @@ table.fuelmap td.live{box-shadow:inset 0 0 0 2px #fff;font-weight:bold}
 <body>
 <div class="container">
 <header>
-<h1>PIXEL ENGINE SIM v0.6 build 117</h1>
+<h1>PIXEL ENGINE SIM v0.6 build 118</h1>
 <div class="subtitle" id="subtitle">ENGINE DESIGNER • BUILD IT, THEN DRIVE IT</div>
 </header>
 <div class="build-strip" id="buildStrip">
@@ -4733,8 +4733,8 @@ function mapTarget(){
 // of full-throttle drive wants thr of the full-throttle pressure, 1 + boostAvail(rpm). It cannot fall
 // below what a closed throttle holds against the engine's pumping (mapTarget's own throttle law, with
 // the turbo's blow-off open: atmosphere upstream). A diesel has no throttle plate: its manifold stays at
-// atmosphere and only the boost follows the fuelling. Steady boost: the lap does not run the turbo's
-// shaft dynamics yet, so no lag.
+// atmosphere and only the boost follows the fuelling. Steady boost: simulateLap caps it with the boost
+// the turbo's shaft has actually built at each point (build 118).
 function steadyMapAt(rpm,thr){
   const b=boostAvail(rpm),t=clamp(thr,0,1);
   if(engine.ci)return 1+b*t;
@@ -5234,6 +5234,13 @@ function buildTorqueGrid(){
   const tq=boosts.map(b=>rpms.map(r=>calcAtRpm(r,1+b).torque));
   engine.afrMode=savedAfrMode;Object.assign(state,sv);
   return{rpms,boosts,tq,laggy};
+}
+// The grid depends only on the engine, and buildEngine makes a new engine.score every time it changes,
+// so the lap keeps the one it built until then (build 118: a lap needs it, and it costs ~0.15 s).
+let _lapGrid=null;
+function lapTorqueGrid(){
+  if(!_lapGrid||_lapGrid.score!==engine.score)_lapGrid={score:engine.score,g:buildTorqueGrid()};
+  return _lapGrid.g;
 }
 function gridTorque(g,rpm,boost){
   const R=g.rpms,B=g.boosts;
@@ -6161,14 +6168,14 @@ function simulateLap(key,opts){
   }
   // Accelerating from q at vi: the fastest the car can be at the next point, what limits it, and the
   // share of the tyre in use sideways.
-  function accFrom(q,vi){
+  function accFrom(q,vi,boostShare=1){
     const N=loadAt(q,vi),dn=down(vi);
     const N0=(N-dn)*vehicle.drivenWt+dn*vehicle.drivenAero;
     const aLat=vi*vi/q.r;
     const aLatMax=muLatAt(N,aLat)*N/m,u=clamp(aLat/Math.max(0.1,aLatMax),0,1);
     // Diff traction is evaluated at the lateral load transfer actually happening here, so an
     // open diff falls apart on a fast corner exit while a locked one doesn't.
-    const bg=gearAt(vi);
+    const g0=gearAt(vi),bg=boostShare<1?{gear:g0.gear,F:g0.F*boostShare,tqFrac:g0.tqFrac*boostShare}:g0;
     const R=(drag(vi)+rollF(vi)*q.cosT)/m+G*q.sinT;
     const kk=tyreMuX(N0/(vehicle.drive==='awd'?4:2))*diffTractionAt(df,aLat,vehicle.cg,bg.tqFrac)*Math.sqrt(Math.max(0,1-u*u));
     // On power the drive force also spins up the engine and wheels (vehicleMassEff, build 106): a = (F -
@@ -6185,7 +6192,7 @@ function simulateLap(key,opts){
     const aAcc=Math.min(aPow,aGrip);
     return {cap:Math.sqrt(Math.max(1,vi*vi+2*aAcc*q.ds3)),kind:aPow<aGrip?'power':'traction',u};
   }
-  let v,vB,shiftsCut=false;
+  let v,vB,shiftsCut=false,boostShare=null;
   const cutAt=new Uint8Array(n);
   function passes(){
     v=vC.slice();
@@ -6227,17 +6234,19 @@ function simulateLap(key,opts){
       // whole 5 m steps made a 0.35 s shift last anything up to 0.5 s, by where the steps happened to fall.
       const dtS=p[i].ds3/Math.max(1,v[i]),f=Math.min(1,cut/dtS);
       let sq=v[i]*v[i]-2*R*p[i].ds3;
-      if(f<1){const st=accFrom(p[i],v[i]);sq=f*sq+(1-f)*st.cap*st.cap;accKind[i]=st.kind;latUse[i]=st.u;}
+      if(f<1){const st=accFrom(p[i],v[i],boostShare?boostShare[i]:1);sq=f*sq+(1-f)*st.cap*st.cap;accKind[i]=st.kind;latUse[i]=st.u;}
       cap=Math.sqrt(Math.max(1,sq));
       cut-=dtS;
       if(shiftsCut)cutAt[i]=1;
     }else{
       cutAt[i]=0;
-      const st=accFrom(p[i],v[i]);cap=st.cap;
+      const st=accFrom(p[i],v[i],boostShare?boostShare[i]:1);cap=st.cap;
       accKind[i]=st.kind;latUse[i]=st.u;
     }
-    const onPower=cap<v[j];
-    if(onPower)v[j]=cap;
+    // on the power = the car is accelerating as hard as it can here; on the second time round the speeds
+    // already equal that, so it is not "cap < v[j]"
+    const onPower=cap<=v[j]*(1+1e-9);
+    if(cap<v[j])v[j]=cap;
     if(shiftsCut){
       const g=gearAt(v[j]).gear;
       if(held<0)held=g;
@@ -6281,6 +6290,42 @@ function simulateLap(key,opts){
   const tNoShift=lapOf();
   shiftsCut=true;passes();
   const shiftLoss=Math.max(0,lapOf()-tNoShift);
+  // Turbo lag on the lap (build 118). The solve so far gave a turbo its full boost wherever it was flat,
+  // as if the shaft were always spun up. Boost is a state with history (advanceShaft, the same shaft the
+  // 0-100 run and the bench integrate): it builds while the exhaust drives the shaft and bleeds off on
+  // a lift, under braking and through a shift. So run the shaft along the lap in time order, at each
+  // point's revs and throttle, until it repeats lap to lap; the torque the boost actually there gives,
+  // against what full boost gives, scales the drive, and the forward pass is solved again. The throttle
+  // depends on the drive available, so this goes round twice.
+  let boostLap=null;
+  if(engine.intake==='turbo'&&engine.maxBoost>0&&engine.shaftJ){
+    const grid=lapTorqueGrid(),iat0=state.iat;state.iat=20;   // design figures, like simulateAccel
+    boostShare=new Float64Array(n).fill(1);boostLap=new Float64Array(n);
+    const rpmOf=i=>{const g=gearAt(v[i]).gear;return clamp(v[i]*ratios[g]*fd/rT*60/TWO_PI,idle,rl);};
+    let E=0,b=0;
+    for(let it=0;it<2;it++){
+      // throttle = the drive force the speed profile asks for, against what the engine has here
+      const thrS=new Float64Array(n);
+      for(let i=0;i<n;i++){
+        if(cutAt[i]){thrS[i]=0.35;continue;}   // mid-shift, as the standing-start run lifts for it
+        const j=(i+1)%n,g=gearAt(v[i]),a=(v[j]*v[j]-v[i]*v[i])/(2*p[i].ds3);
+        const need=vehicleMassEff(ratios[g.gear]*fd)*a+drag(v[i])+rollF(v[i])*p[i].cosT+m*G*p[i].sinT;
+        thrS[i]=need<=0?0:clamp(need/Math.max(1,g.F*boostShare[i]),0,1);
+      }
+      // from rest the first time round; after that the shaft carries on from where the last lap left it
+      for(let lap=0;lap<(it?1:2);lap++)for(let i=0;i<n;i++){
+        const j=(i+1)%n,dt=p[i].ds3/Math.max(2,(v[i]+v[j])/2);
+        const r=advanceShaft(E,rpmOf(i),b,thrS[i],dt);E=r.shaftE;b=r.boost;
+        boostLap[i]=b;
+      }
+      for(let i=0;i<n;i++){
+        const rpm=rpmOf(i),full=gridTorque(grid,rpm,boostAvail(rpm));
+        boostShare[i]=full>1?clamp(gridTorque(grid,rpm,Math.min(boostLap[i],boostAvail(rpm)))/full,0,1):1;
+      }
+      passes();
+    }
+    state.iat=iat0;
+  }
   BT=brakeTemps();   // the rotors through the lap as it is now driven
   // Classify from the FINISHED profile, not during the passes — the backward pass touches almost
   // every point on a twisty circuit, so labelling as it goes would call the whole lap "braking".
@@ -6339,13 +6384,14 @@ function simulateLap(key,opts){
       const resist=drag(v[i])+rollF(v[i])*p[i].cosT+m*G*p[i].sinT, need=vehicleMassEff(ratios[gears[i]]*fd)*aL[i]+resist;
       if(cutAt[i]){thr[i]=0;brk[i]=0;}   // mid-shift: clutch in, no drive
       else if(lim[i]==='power'||lim[i]==='traction'){thr[i]=1;brk[i]=0;}
-      else if(need>=0){thr[i]=clamp(need/Math.max(1,bestGear(v[i]).F),0,1);brk[i]=0;}
+      else if(need>=0){thr[i]=clamp(need/Math.max(1,bestGear(v[i]).F*(boostShare?boostShare[i]:1)),0,1);brk[i]=0;}
       else{thr[i]=0;brk[i]=clamp(-need/m/Math.max(0.1,vehicle.brakeDecelCap),0,1);}
       const ax=p[i].x-p[h].x,ay=p[i].y-p[h].y,bx=p[j].x-p[i].x,by=p[j].y-p[i].y;
       gLat[i]=Math.sign(ax*by-ay*bx)*v[i]*v[i]/Math.max(1,p[i].r)/G;
       gLong[i]=aL[i]/G;
       rpmAt[i]=clamp(v[i]*ratios[gears[i]]*fd/rT*60/TWO_PI,idle,rl);
       mapAt[i]=steadyMapAt(rpmAt[i],thr[i]);
+      if(boostLap)mapAt[i]=Math.min(mapAt[i],1+boostLap[i]);   // what the shaft has built by here
     }
   }
   // Elevation summary for the readouts: metres climbed per lap and the height range.
