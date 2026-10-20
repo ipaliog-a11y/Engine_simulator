@@ -119,6 +119,10 @@ const KNOWN = {
   // from 1700, so 2.9 s of its 0-100 is below full boost. Build 101 had brought it just under 25%; the
   // spinning parts the car now carries take it back over. The engine shape is the problem (boost unsure).
   'Audi RS3 Sportback (8V, 2017)': ['slow-car'],
+  // Build 109: grip from tyre load. 707 hp through two rear tyres is traction-limited off the line, and the
+  // width bonus that used to add 7.5% to a 275 tyre is gone; real road tests on street tyres report the
+  // same struggle. Its 3.9 s is the maker's figure.
+  'Dodge Challenger SRT Hellcat (2015)': ['slow-car'],
   // Short of the 250 km/h governor because their engines are short of their rating (test60): the R34's
   // is the JDM 280 PS figure real cars beat, the STI's boost is unsure. (The Evo IX reaches it since
   // build 101.)

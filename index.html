@@ -281,7 +281,7 @@ table.fuelmap td.live{box-shadow:inset 0 0 0 2px #fff;font-weight:bold}
 <body>
 <div class="container">
 <header>
-<h1>PIXEL ENGINE SIM v0.6 build 108</h1>
+<h1>PIXEL ENGINE SIM v0.6 build 109</h1>
 <div class="subtitle" id="subtitle">ENGINE DESIGNER • BUILD IT, THEN DRIVE IT</div>
 </header>
 <div class="build-strip" id="buildStrip">
@@ -755,8 +755,11 @@ clearing site data clears the garage, and <b>SAVE FILE</b> is what makes a build
 From that baseline you tune the <b>drivetrain</b> (FWD/RWD/AWD — AWD launches hardest),
 the <b>gearbox</b> (type, speeds and the gearing slider), <b>tyres</b> (compound + width/profile/
 diameter set grip and rolling radius), <b>aero</b> (front/rear/floor add downforce and drag),
-<b>brakes</b> (type + rotor size set stopping power and fade resistance) and <b>suspension</b>
-(a mechanical-grip multiplier).
+<b>brakes</b> (type + rotor size set stopping power, how hot the rotors run and when the pads fade) and
+<b>suspension</b> (how far the body rolls and the camber it runs). Grip is not a multiplier on any of
+these: a tyre grips harder the less load it carries for its size, so a bigger tyre, a lighter car and
+less weight thrown onto the outside tyres in a corner (a low, wide car) all corner faster, and roll that
+tips the loaded tyre off its best camber angle costs grip.
 </div>
 </section>
 <section class="guide-page" id="gp-gearbox" data-cat="car" data-title="Gearboxes" hidden>
@@ -2449,7 +2452,9 @@ const CHALLENGES=[
   // vehicle as well as the engine, and `circuit` says which lap is being timed.
   {id:'clubsprint',name:'Club Sprint',desc:'Get round the tight club circuit inside the target on a modest budget. Grip and weight beat power here.',
     circuit:'tech',budget:40000,
-    targets:[{label:'Ashdown lap',key:'lap',op:'<=',t:85,unit:'s'},{label:'Reliability',key:'reliability',op:'>=',t:55}]},
+    // 85 s until build 109, when grip came from tyre load in place of three stacked fitted multipliers
+    // and every race-prepared car lost 5-8%. Re-set from the reference build with the margin it had (2.5%).
+    targets:[{label:'Ashdown lap',key:'lap',op:'<=',t:89,unit:'s'},{label:'Reliability',key:'reliability',op:'>=',t:55}]},
   {id:'gppace',name:'Grand Prix Pace',desc:'A proper lap of Riverside. Balance power against the grip to use it.',
     circuit:'mixed',budget:70000,
     // 60.0 s was authored when turbo engines carried no exhaust manifold back-pressure. Once the
@@ -2459,13 +2464,15 @@ const CHALLENGES=[
     // reference 2JZ from 325 hp to 290, so 300 became unreachable for the build the challenge was
     // authored around. 285 restores the intent. (290 is not obviously wrong for the engine it is
     // modelled on — a JDM 2JZ-GTE was rated 276 hp.)
-    targets:[{label:'Riverside lap',key:'lap',op:'<=',t:60.6,unit:'s'},{label:'Power',key:'peakHP',op:'>=',t:285,unit:'hp'}]},
+    // And for build 109's grip (see Club Sprint): 60.6 -> 66.0, the reference's margin (1.1%) kept.
+    targets:[{label:'Riverside lap',key:'lap',op:'<=',t:66.0,unit:'s'},{label:'Power',key:'peakHP',op:'>=',t:285,unit:'hp'}]},
   {id:'greenhell',name:'Under Seven at the Ring',desc:'20 km, 40 corners and 290 m of elevation. No budget — just go and do the time.',
     circuit:'nord',
     targets:[{label:'Nordschleife lap',key:'lap',op:'<=',t:420,unit:'s'},{label:'Reliability',key:'reliability',op:'>=',t:45}]},
   {id:'laptime$',name:'Lap per Dollar',desc:'The cheapest car that can still lap Riverside quickly. Every part has to earn its place.',
     circuit:'mixed',budget:38000,
-    targets:[{label:'Riverside lap',key:'lap',op:'<=',t:75,unit:'s'}]}
+    // 75 s until build 109's grip (see Club Sprint); the reference's 2.1% margin kept.
+    targets:[{label:'Riverside lap',key:'lap',op:'<=',t:78.4,unit:'s'}]}
 ];
 let activeChallenge='free';
 
@@ -2674,7 +2681,7 @@ const GUIDE_I18N={
   pixart:{el:"<b>Οι εικόνες σχεδιάζονται από το δικό σου σύνολο.</b> Το αυτοκίνητο στην κορυφή της καρτέλας ΟΧΗΜΑ παίρνει το μήκος του από το μεταξόνιο, τους τροχούς από τα μεγέθη ζάντας και ελαστικού και το ύψος από την ανάρτηση. Φοράει το splitter, την αεροτομή και τον diffuser που τοποθετείς. Οι κινητήριοι τροχοί έχουν πράσινες πλήμνες και ένα πράσινο μπλοκ δείχνει πού κάθεται ο κινητήρας: μπροστά από την καμπίνα, πίσω της ή πίσω από τον πίσω άξονα. Ο κινητήρας στην κορυφή της καρτέλας ΚΙΝΗΤΗΡΑΣ ακολουθεί τη φόρμα καθώς την αλλάζεις, πριν το BUILD: ένας εν σειρά σχεδιάζεται από το πλάι ώστε να μετράς τους κυλίνδρους του, ενώ ένας V ή boxer σχεδιάζεται από μπροστά για να φαίνεται η γωνία των συστοιχιών του. Σχεδιάζονται όλα: τα turbo, ο υπερσυμπιεστής, τα καρμπιρατέρ ή οι πεταλούδες, οι εξαγωγές, ο καταλύτης, το intercooler, το ψυγείο και η φιάλη νιτρικών. Τα αποθηκευμένα αυτοκίνητα και οι κινητήρες δείχνουν τις ίδιες εικόνες στις κάρτες του ΓΚΑΡΑΖ, και στον χάρτη της ΠΙΣΤΑΣ το αυτοκίνητο τρέχει τον γύρο με τα δικά του χρώματα."},
   chassis:{el:"Στην καρτέλα <b>ΟΧΗΜΑ</b> βάζεις τον κινητήρα σου σε αυτοκίνητο. Διάλεξε <b>σασί</b> και έρχεται με τον <b>εργοστασιακό του εξοπλισμό</b> — τα ελαστικά, ζάντες, φρένα, ανάρτηση, αεροδυναμική και κιβώτιο που θα φορούσε πραγματικά: ένα kei εμφανίζεται με στενά οικονομικά ελαστικά και μικρούς ατσάλινους δίσκους, ενώ ένα hypercar παίρνει φαρδιά semi-slick, carbon-ceramic φρένα και πακέτο αεροτομής/diffuser. Όλα παραμένουν επεξεργάσιμα· το <b>ΕΡΓΟΣΤΑΣΙΑΚΟΣ ΕΞΟΠΛΙΣΜΟΣ</b> τα επαναφέρει."},
   garage:{el:"Η καρτέλα <b>ΓΚΑΡΑΖ</b> κρατά τα αυτοκίνητα και τους κινητήρες σου. Δώσε όνομα σε ένα αυτοκίνητο στο κάτω μέρος αυτής της καρτέλας και πάτησε <b>ΑΠΟΘΗΚΕΥΣΗ ΣΤΟ ΓΚΑΡΑΖ</b> και αποθηκεύεται το σύνολο — το αμάξωμα, κάθε εξάρτημα πάνω του, <i>και</i> ο κινητήρας μέσα, μέχρι και ο χειροκίνητα ρυθμισμένος χάρτης καυσίμου. Στην καρτέλα ΚΙΝΗΤΗΡΑΣ, η <b>ΑΠΟΘΗΚΕΥΣΗ ΚΙΝΗΤΗΡΑ</b> κρατά μόνο τον κινητήρα, που μπαίνει σε όποιο αυτοκίνητο έχεις όταν τον φορτώσεις. Η <b>ΠΡΟΒΟΛΗ</b> σε μια κάρτα δείχνει τι θα φορτώσει. Κάθε κάρτα δείχνει τα βασικά νούμερα που είχε όταν την αποθήκευσες (ισχύ, βάρος, 0–100, τελική, χρόνο γύρου και συνολικό κόστος), οπότε μπορείς να παρατάξεις τρεις κατασκευές και να τις συγκρίνεις χωρίς να ξαναφτιάξεις καμία. Η <b>ΦΟΡΤΩΣΗ</b> επαναφέρει το αυτοκίνητο ακριβώς όπως ήταν· αν γράψεις όνομα που υπάρχει ήδη, η κάρτα του τονίζεται και η αποθήκευση το αντικαθιστά. Αυτό είναι ξεχωριστό από τα <b>ΑΠΟΘΗΚ.</b>/<b>ΦΟΡΤΩΣΗ</b>, που είναι μία μοναδική θέση γρήγορης αποθήκευσης. Μια εγγραφή του γκαράζ είναι η ίδια που γράφει η <b>ΑΠΟΘ. ΑΡΧΕΙΟΥ</b> και μεταφέρει ένα σύνδεσμος κοινοποίησης. Όλα μένουν μόνο σε αυτόν τον browser — αν καθαρίσεις τα δεδομένα ιστότοπου, χάνεται το γκαράζ, και η <b>ΑΠΟΘ. ΑΡΧΕΙΟΥ</b> είναι αυτή που σώζει μια κατασκευή από αυτό."},
-  tuning:{el:"Από εκεί ρυθμίζεις <b>μετάδοση</b> (FWD/RWD/AWD — το AWD ξεκινά καλύτερα), <b>κιβώτιο</b> (τύπος, σχέσεις + ρυθμιστικό τελικής), <b>ελαστικά</b> (τύπος + πλάτος/προφίλ/διάμετρος), <b>αεροδυναμική</b> (εμπρός/πίσω/πάτωμα = κάθετη δύναμη & οπισθέλκουσα), <b>φρένα</b> (τύπος + διάμετρος δίσκου) και <b>ανάρτηση</b> (πολλαπλασιαστής μηχανικής πρόσφυσης)."},
+  tuning:{el:"Από εκεί ρυθμίζεις <b>μετάδοση</b> (FWD/RWD/AWD — το AWD ξεκινά καλύτερα), <b>κιβώτιο</b> (τύπος, σχέσεις + ρυθμιστικό τελικής), <b>ελαστικά</b> (τύπος + πλάτος/προφίλ/διάμετρος), <b>αεροδυναμική</b> (εμπρός/πίσω/πάτωμα = κάθετη δύναμη & οπισθέλκουσα), <b>φρένα</b> (τύπος + διάμετρος δίσκου) και <b>ανάρτηση</b> (πόσο γέρνει το αμάξωμα και η κλίση των τροχών). Η πρόσφυση δεν είναι πολλαπλασιαστής: ένα ελαστικό πιάνει περισσότερο όσο λιγότερο φορτίο σηκώνει για το μέγεθός του, οπότε μεγαλύτερο ελαστικό, ελαφρύτερο αυτοκίνητο και λιγότερη μεταφορά βάρους στους εξωτερικούς τροχούς (χαμηλό, φαρδύ αυτοκίνητο) στρίβουν γρηγορότερα· το γέρσιμο που βγάζει το φορτωμένο ελαστικό από την καλύτερη γωνία του κοστίζει πρόσφυση."},
   gearbox:{el:"<b>Ο τύπος κιβωτίου</b> αλλάζει τέσσερα πράγματα: πόσο κόβεται η μετάδοση σε κάθε αλλαγή, πόση από την ισχύ του κινητήρα φτάνει στους τροχούς, πώς είναι κλιμακωμένες οι σχέσεις, και πώς ξεκινά το αυτοκίνητο.<br>· <b>Χειροκίνητο (H)</b> — το πιο αποδοτικό, αλλά χάνεις ~350 ms σε κάθε αλλαγή. Φθηνό.<br>· <b>Σειριακό</b> — αγωνιστικό: αλλαγές ~60 ms και κοντές σχέσεις που κρατούν έναν «αιχμηρό» κινητήρα στην περιοχή του. Ακριβό.<br>· <b>Διπλού συμπλέκτη (DCT)</b> — η επόμενη σχέση είναι ήδη επιλεγμένη στον δεύτερο συμπλέκτη, άρα σχεδόν αδιάλειπτες αλλαγές (~30 ms). Το ταχύτερο, και ανάλογα ακριβό.<br>· <b>Αυτόματο με μετατροπέα ροπής</b> — οι πιο αργές αλλαγές (~200 ms) και οι μεγαλύτερες απώλειες, γιατί μεταδίδει μέσω υγρού. Το κερδίζει στην <b>εκκίνηση</b>: ο μετατροπέας «φορτίζει» πάνω στα φρένα και <i>πολλαπλασιάζει</i> τη ροπή (έως ~1.9× σε στάλλ 2400 σ.α.λ.), σβήνοντας στο 1:1 καθώς ο στρόβιλος προλαβαίνει. Γι’ αυτό ένα αυτόματο ξεκινά καλύτερα από ένα χειροκίνητο παρότι χάνει ισχύ παντού αλλού — και γι’ αυτό ταιριάζει σε βαρύ, ροπάτο αυτοκίνητο, όχι σε ελαφρύ και «αιχμηρό». Επίσης απλώνει περισσότερο τις σχέσεις: πιο κοντή 1η, πιο μακριά τελευταία."},
   diff:{el:"<b>Το διαφορικό</b> μοιράζει την κίνηση στους δύο τροχούς του άξονα — και καθορίζει πόση από την πρόσφυση του άξονα μπορείς πραγματικά να χρησιμοποιήσεις. Οι δύο τροχοί δεν είναι ποτέ φορτωμένοι το ίδιο (κλίση δρόμου, αντίδραση ροπής, στρέψη άξονα, γεωμετρία ανάρτησης), και ένα <b>ανοιχτό</b> διαφορικό δίνει σε κάθε τροχό μόνο όση ροπή αντέχει ο <i>λιγότερο φορτωμένος</i>: στρίβει αυτόν τον τροχό και πετάει τα υπόλοιπα, αφήνοντας περίπου 78% της πρόσφυσης αξιοποιήσιμο <i>στην εκκίνηση</i>. Αυτό το 78% δεν είναι σταθερό — η ασυμμετρία που αντιμετωπίζει προέρχεται κυρίως από την <b>αντίδραση ροπής</b> (στρέψη ημιαξονίων, γεωμετρία ανάρτησης, torque steer), που είναι ανάλογη με τη ροπή που περνά πράγματι από τον άξονα. Στην πρώτη σχέση με πλήρη πολλαπλασιασμό είναι στο χειρότερό της· στην τρίτη στα 100&nbsp;χλμ/ώρα ο άξονας βλέπει ένα κλάσμα αυτής της ροπής και μένει λίγο παραπάνω από την κλίση του δρόμου, οπότε το ανοιχτό διαφορικό ανακτά προς ~94%. Ένα <b>ιξώδες LSD</b> τους δένει μεταξύ τους και ανακτά τα περισσότερα (~92%)· ένα <b>LSD με δίσκους</b> ουσιαστικά όλα· ένα <b>μπλοκέ (spool)</b> τους ενώνει μόνιμα και είναι το καλύτερο σε ευθεία — γι’ αυτό το χρησιμοποιούν τα dragster.<br>Το βασικό: το διαφορικό μετράει μόνο όσο είσαι <b>περιορισμένος από πρόσφυση</b>. Βάλε spool σε αργό αυτοκίνητο και δεν αλλάζει τίποτα. Βάλ’ το σε ένα που πατινάρει στην εκκίνηση και αξίζει περισσότερο από αναβάθμιση ισχύος."},
   fwd:{el:"<b>Γιατί ένα προσθιοκίνητο ξεμένει από πρόσφυση τόσο νωρίς.</b> Τρία πράγματα πολλαπλασιάζονται, και το πρώτο ξαφνιάζει: ένα FWD κινεί μόνο τον εμπρός άξονα, που σηκώνει περίπου το 60% του βάρους σταματημένο — και η επιτάχυνση μεταφέρει βάρος <i>μακριά</i> από αυτόν, στο ~53%. Πολλαπλασίασε με ανοιχτό διαφορικό (0.78) και οικονομικά ελαστικά (μ 0.81) και όλο το αυτοκίνητο περιορίζεται στα <b>0.33&nbsp;g</b>, ό,τι κι αν βγάζει ο κινητήρας. Στα 100&nbsp;χλμ/ώρα αυτό το ταβάνι είναι ~2500&nbsp;N, και ήδη ένας κινητήρας 109&nbsp;hp ζητά 2700&nbsp;N — οπότε μια έκδοση 217&nbsp;hp του ίδιου αυτοκινήτου φτάνει τα 100&nbsp;χλμ/ώρα στον <i>ίδιο ακριβώς χρόνο</i>. Και τα δύο απλώς «κάθονται» στο ταβάνι. Δεν είναι ιδιοτροπία της προσομοίωσης· γι’ αυτό κανείς δεν φτιάχνει προσθιοκίνητο kei 200&nbsp;hp. Η λύση είναι πρόσφυση, όχι ισχύς — στο ίδιο αυτοκίνητο των 217&nbsp;hp: μόνο ένα LSD με δίσκους το πάει από 9.9&nbsp;s σε 8.0&nbsp;s, σπορ ελαστικά 6.6&nbsp;s, slick 5.5&nbsp;s, και μετατροπή σε AWD 4.4&nbsp;s. Με τον ίδιο κινητήρα."},
@@ -2887,38 +2894,39 @@ const CAT={
 // Chassis archetypes: mass is the rolling platform WITHOUT the engine (kg); the engine's mass
 // is estimated from its spec and added. area = frontal area (m²), cd = base drag coefficient,
 // wb = wheelbase (m), cg = centre-of-gravity height (m), fWt = static front weight fraction,
-// grip = mechanical grip factor, drive = default driven layout, aero = how much downforce the
+// track = track width (m: how far apart the wheels on an axle are, which sets the lateral load
+// transfer — build 109, in place of a fitted mechanical-grip factor), drive = default driven layout, aero = how much downforce the
 // body can carry (a formula car a lot, a truck little), cost = chassis price.
 // Each chassis carries a `fit`: the coherent factory-spec parts it ships with (tyres, wheels,
 // brakes, suspension, aero, weight, gearbox). Selecting a chassis applies its fit so every car is
 // a believable whole — a kei car on skinny eco tyres & steel discs, a hypercar on wide slicks,
 // carbon-ceramics and a full wing/diffuser package — which the user can then tune from.
 const CHASSIS={
-  kei:      {label:'KEI CAR',           mass:640, area:1.85,cd:0.34,wb:2.40,cg:0.52,fWt:0.60,grip:0.98,drive:'fwd',aero:0.4,cost:5000,
+  kei:      {label:'KEI CAR',           mass:640, area:1.85,cd:0.34,wb:2.40,cg:0.52,fWt:0.60,track:1.30,drive:'fwd',aero:0.4,cost:5000,
              fit:{tire:'eco',  tw:165,ta:60,wheel:15,brake:'steel',  rotor:260,susp:'comfort', aF:'none',    aR:'none',aFl:'none',     weight:'none',  gears:5,gearing:44,gearbox:'manual',diff:'open'}},
-  hatch:    {label:'HOT HATCH',         mass:1080,area:2.10,cd:0.32,wb:2.60,cg:0.52,fWt:0.62,grip:1.00,drive:'fwd',aero:0.6,cost:8000,
+  hatch:    {label:'HOT HATCH',         mass:1080,area:2.10,cd:0.32,wb:2.60,cg:0.52,fWt:0.62,track:1.53,drive:'fwd',aero:0.6,cost:8000,
              fit:{tire:'sport',tw:205,ta:45,wheel:17,brake:'slotted',rotor:300,susp:'sport',   aF:'none',    aR:'none',aFl:'none',     weight:'none',  gears:6,gearing:50,gearbox:'manual',diff:'open'}},
-  roadster: {label:'LIGHT ROADSTER',    mass:980, area:1.90,cd:0.35,wb:2.30,cg:0.46,fWt:0.52,grip:1.04,drive:'rwd',aero:0.6,cost:9000,
+  roadster: {label:'LIGHT ROADSTER',    mass:980, area:1.90,cd:0.35,wb:2.30,cg:0.46,fWt:0.52,track:1.42,drive:'rwd',aero:0.6,cost:9000,
              fit:{tire:'sport',tw:195,ta:50,wheel:16,brake:'slotted',rotor:290,susp:'sport',   aF:'none',    aR:'none',aFl:'none',     weight:'street',gears:6,gearing:52,gearbox:'manual',diff:'visc'}},
-  coupe:    {label:'SPORTS COUPE',      mass:1200,area:2.05,cd:0.31,wb:2.65,cg:0.48,fWt:0.54,grip:1.03,drive:'rwd',aero:0.8,cost:11000,
+  coupe:    {label:'SPORTS COUPE',      mass:1200,area:2.05,cd:0.31,wb:2.65,cg:0.48,fWt:0.54,track:1.55,drive:'rwd',aero:0.8,cost:11000,
              fit:{tire:'sport',tw:245,ta:40,wheel:18,brake:'slotted',rotor:330,susp:'sport',   aF:'none',    aR:'lip', aFl:'none',     weight:'none',  gears:6,gearing:52,gearbox:'manual',diff:'clsd'}},
-  sedan:    {label:'SPORTS SEDAN',      mass:1420,area:2.20,cd:0.29,wb:2.85,cg:0.52,fWt:0.55,grip:1.00,drive:'rwd',aero:0.7,cost:12000,
+  sedan:    {label:'SPORTS SEDAN',      mass:1420,area:2.20,cd:0.29,wb:2.85,cg:0.52,fWt:0.55,track:1.56,drive:'rwd',aero:0.7,cost:12000,
              fit:{tire:'sport',tw:245,ta:40,wheel:18,brake:'slotted',rotor:330,susp:'sport',   aF:'none',    aR:'none',aFl:'none',     weight:'none',  gears:7,gearing:56,gearbox:'auto',diff:'visc'}},
-  muscle:   {label:'MUSCLE CAR',        mass:1620,area:2.25,cd:0.36,wb:2.95,cg:0.50,fWt:0.56,grip:0.98,drive:'rwd',aero:0.5,cost:13000,
+  muscle:   {label:'MUSCLE CAR',        mass:1620,area:2.25,cd:0.36,wb:2.95,cg:0.50,fWt:0.56,track:1.60,drive:'rwd',aero:0.5,cost:13000,
              fit:{tire:'sport',tw:275,ta:40,wheel:18,brake:'big',    rotor:340,susp:'sport',   aF:'none',    aR:'none',aFl:'none',     weight:'none',  gears:6,gearing:48,gearbox:'auto',diff:'clsd'}},
-  rally:    {label:'RALLY AWD HATCH',   mass:1300,area:2.15,cd:0.34,wb:2.60,cg:0.52,fWt:0.58,grip:1.06,drive:'awd',aero:0.7,cost:14000,
+  rally:    {label:'RALLY AWD HATCH',   mass:1300,area:2.15,cd:0.34,wb:2.60,cg:0.52,fWt:0.58,track:1.52,drive:'awd',aero:0.7,cost:14000,
              fit:{tire:'sport',tw:225,ta:45,wheel:17,brake:'slotted',rotor:320,susp:'coilover',aF:'splitter',aR:'lip', aFl:'none',     weight:'street',gears:6,gearing:50,gearbox:'manual',diff:'clsd'}},
-  gt:       {label:'GRAND TOURER',      mass:1580,area:2.15,cd:0.30,wb:2.90,cg:0.48,fWt:0.52,grip:1.04,drive:'rwd',aero:0.9,cost:20000,
+  gt:       {label:'GRAND TOURER',      mass:1580,area:2.15,cd:0.30,wb:2.90,cg:0.48,fWt:0.52,track:1.63,drive:'rwd',aero:0.9,cost:20000,
              fit:{tire:'sport',tw:265,ta:35,wheel:19,brake:'big',    rotor:350,susp:'coilover',aF:'splitter',aR:'lip', aFl:'none',     weight:'none',  gears:7,gearing:58,gearbox:'dct',diff:'clsd'}},
-  super:    {label:'MID-ENGINE SUPER',  mass:1340,area:1.95,cd:0.33,wb:2.65,cg:0.44,fWt:0.42,grip:1.12,drive:'rwd',aero:1.2,cost:30000,
+  super:    {label:'MID-ENGINE SUPER',  mass:1340,area:1.95,cd:0.33,wb:2.65,cg:0.44,fWt:0.42,track:1.67,drive:'rwd',aero:1.2,cost:30000,
              fit:{tire:'semi', tw:285,ta:35,wheel:19,brake:'big',    rotor:360,susp:'coilover',aF:'splitter',aR:'wing',aFl:'undertray',weight:'sport', gears:7,gearing:54,gearbox:'dct',diff:'clsd'}},
-  hyper:    {label:'CARBON HYPERCAR',   mass:1240,area:1.92,cd:0.35,wb:2.70,cg:0.44,fWt:0.44,grip:1.18,drive:'awd',aero:1.6,cost:60000,
+  hyper:    {label:'CARBON HYPERCAR',   mass:1240,area:1.92,cd:0.35,wb:2.70,cg:0.44,fWt:0.44,track:1.70,drive:'awd',aero:1.6,cost:60000,
              fit:{tire:'semi', tw:305,ta:30,wheel:20,brake:'carbon', rotor:390,susp:'race',    aF:'wing',    aR:'wing',aFl:'diffuser', weight:'sport', gears:7,gearing:56,gearbox:'dct',diff:'clsd'}},
-  proto:    {label:'TRACK PROTOTYPE',   mass:620, area:1.55,cd:0.60,wb:2.80,cg:0.32,fWt:0.46,grip:1.30,drive:'rwd',aero:3.0,cost:45000,
+  proto:    {label:'TRACK PROTOTYPE',   mass:620, area:1.55,cd:0.60,wb:2.80,cg:0.32,fWt:0.46,track:1.75,drive:'rwd',aero:3.0,cost:45000,
              fit:{tire:'slick',tw:305,ta:30,wheel:18,brake:'carbon', rotor:380,susp:'race',    aF:'wing',    aR:'wing',aFl:'diffuser', weight:'race',  gears:6,gearing:50,gearbox:'sequential',diff:'spool'}},
-  pickup:   {label:'PICKUP TRUCK',      mass:2050,area:3.20,cd:0.45,wb:3.60,cg:0.68,fWt:0.58,grip:0.92,drive:'rwd',aero:0.2,cost:11000,
+  pickup:   {label:'PICKUP TRUCK',      mass:2050,area:3.20,cd:0.45,wb:3.60,cg:0.68,fWt:0.58,track:1.75,drive:'rwd',aero:0.2,cost:11000,
              fit:{tire:'eco',  tw:265,ta:65,wheel:17,brake:'slotted',rotor:330,susp:'comfort', aF:'none',    aR:'none',aFl:'none',     weight:'none',  gears:6,gearing:42,gearbox:'auto',diff:'open'}},
-  suv:      {label:'PERFORMANCE SUV',   mass:1950,area:2.95,cd:0.36,wb:2.95,cg:0.66,fWt:0.54,grip:0.96,drive:'awd',aero:0.4,cost:16000,
+  suv:      {label:'PERFORMANCE SUV',   mass:1950,area:2.95,cd:0.36,wb:2.95,cg:0.66,fWt:0.54,track:1.65,drive:'awd',aero:0.4,cost:16000,
              fit:{tire:'sport',tw:275,ta:45,wheel:20,brake:'big',    rotor:350,susp:'sport',   aF:'none',    aR:'none',aFl:'none',     weight:'none',  gears:8,gearing:48,gearbox:'auto',diff:'visc'}}
 };
 // Real cars, paired with their factory engine from PRESETS. A chassis archetype is a class; a real car
@@ -3128,13 +3136,45 @@ function brakeHeatStep(st,th,a,vCar,dt){
   st.F=rotorStep(st.F,th.front,th,P*fr/2,vCar,dt);
   st.R=rotorStep(st.R,th.rear,th,P*(1-fr)/2,vCar,dt);
 }
-// Suspension: a mechanical-grip multiplier (better damping puts more of the tyre down).
+// Suspension: how far the body rolls per g of cornering (deg/g), the figure that separates them on a
+// skidpad — a soft road car ~6, a sports setup ~4, coilovers ~2.5, a race car ~1.5. Roll tips the loaded
+// outside tyre over onto positive camber, which costs it grip (latMuEff). Build 109: this replaces a
+// fitted grip multiplier (0.95-1.10).
+// camber = the static negative camber each is set up with (deg): a road alignment ~-0.5, a sports one ~-1,
+// track coilovers ~-1.8, a race car ~-2.5, so that under roll the loaded tyre stands near its best angle.
 const SUSPENSION={
-  comfort: {label:'COMFORT',    grip:0.95,cost:400},
-  sport:   {label:'SPORT',      grip:1.00,cost:1500},
-  coilover:{label:'COILOVERS',  grip:1.05,cost:3200},
-  race:    {label:'RACE/ADJUST',grip:1.10,cost:6500}
+  comfort: {label:'COMFORT',    roll:6.0,camber:-0.5,cost:400},
+  sport:   {label:'SPORT',      roll:4.0,camber:-1.0,cost:1500},
+  coilover:{label:'COILOVERS',  roll:2.5,camber:-1.8,cost:3200},
+  race:    {label:'RACE/ADJUST',roll:1.5,camber:-2.5,cost:6500}
 };
+// ---- tyre grip from load (build 109) ----
+// A tyre's friction coefficient falls as it is loaded harder — load sensitivity: about 10% less mu each
+// time the load doubles, mu = mu_ref (Fz/Fz_ref)^-0.15. The compound's mu (TIRE_TYPE) is taken at 60%
+// of the tyre's rated load, near what a road car puts on a tyre at rest. The rated load follows the
+// tyre's air volume, pi/4 (D^2 - d^2) w, at ~16,300 kg per m3: it reproduces the load index of a
+// 165/65R14 (437 kg), 205/55R16 (615) and 305/30R20 (875) within 3%. So a bigger tyre grips harder at
+// the same load, a light car on big tyres harder still, and a heavy one less: the work three fitted
+// multipliers did (chassis grip, suspension grip, a width bonus), done by one mechanism.
+const LOAD_SENS=0.15, TYRE_RATED_KG_M3=16300, TYRE_REF_SHARE=0.6;
+// Camber: a tyre makes its most lateral force leaning slightly into the turn, ~-1.5 deg, and loses ~1.5%
+// of it per degree either side. The loaded outside tyre's angle is the static camber plus the body roll
+// the suspension geometry does not claw back (about half).
+const CAMBER_RECOVERY=0.5, CAMBER_LOSS=0.015, CAMBER_BEST=-1.5;
+function tyreMu(Fz){return vehicle.muRef*Math.pow(Math.max(200,Fz)/vehicle.FzRef,-LOAD_SENS);}
+// The car's lateral grip as a share of its normal load N while cornering at ay (m/s2): each axle's two
+// tyres, with the lateral load transfer m ay h / t moved from the inside one to the outside one (shared
+// by the axles as their static loads are), and the outside tyre's roll camber.
+function latMuEff(N,ay){
+  const m=vehicle.mass, dW=m*Math.abs(ay)*vehicle.cg/Math.max(0.8,vehicle.track);
+  let cap=0;
+  for(const share of [vehicle.fWt,1-vehicle.fWt]){
+    const F=N*share/2, d=dW*share, o=F+d, inr=Math.max(0,F-d);
+    cap+=tyreMu(o)*o+(inr>0?tyreMu(inr)*inr:0);
+  }
+  const camber=vehicle.camber+vehicle.rollGrad*Math.abs(ay)/G*(1-CAMBER_RECOVERY);
+  return cap/Math.max(1,N)*(1-CAMBER_LOSS*Math.abs(camber-CAMBER_BEST));
+}
 // Gearbox type. Four things separate them:
 //   shift  — time the drive is cut on an upshift (s). A manual has to unload the clutch, move a
 //            lever and re-engage; a sequential just bangs the next dog in; a DCT has the next
@@ -4864,9 +4904,11 @@ function buildVehicle(){
   const sidewall=vehicle.tireWidth*(vehicle.tireAspect/100);           // mm
   vehicle.rTire=((vehicle.wheelDia*25.4)/2+sidewall)/1000;            // rolling radius (m)
   vehicle.wheelI=roadWheelInertia(vehicle);                                // kg m2, all four
-  const widthBonus=clamp((vehicle.tireWidth-205)/205,-0.15,0.30);
   const susp=SUSPENSION[vehicle.suspension]||SUSPENSION.sport;
-  vehicle.mu=tt.mu*ch.grip*susp.grip*(1+0.25*widthBonus);
+  {const D=2*vehicle.rTire,d=vehicle.wheelDia*0.0254;
+   vehicle.tyreRatedKg=TYRE_RATED_KG_M3*Math.PI/4*(D*D-d*d)*(vehicle.tireWidth/1000);}
+  vehicle.muRef=tt.mu;vehicle.FzRef=TYRE_REF_SHARE*vehicle.tyreRatedKg*G;
+  vehicle.rollGrad=susp.roll;vehicle.camber=susp.camber;
   vehicle.crr=tt.crr;
   vehicle.speedRating=document.getElementById('vhRating').value||tt.rating;
   vehicle.ratedKmh=(SPEED_RATING[vehicle.speedRating]||SPEED_RATING.Y).kmh;
@@ -4882,6 +4924,9 @@ function buildVehicle(){
   if(body&&!(body.engKg>0))body.engKg=vehicle.engineMass;   // the factory engine, for the weight split below
   vehicle.mass=Math.max(380,(body?body.mass:ch.mass)+vehicle.engineMass-wr.kg);
   vehicle.wb=body?body.wb:ch.wb;vehicle.cg=ch.cg;vehicle.area=body?body.area:ch.area;
+  vehicle.track=(body&&body.track)||ch.track;
+  // The headline mu (summary, g-meter): the tyre's, at the car's own weight shared over four tyres.
+  vehicle.mu=tyreMu(vehicle.mass*G/4);
   // The weight split moves with an engine swap, by the difference in engine mass at the engine's
   // position (build 105). A real car's split is quoted with its own engine in it; a heavier one in a
   // front-engined car loads the nose, in a mid-engined car the tail. Archetypes keep their class split,
@@ -4953,7 +4998,7 @@ function simulateBraking(v0,T0){
   const st={F:T0!=null?T0:BRAKE_AMBIENT,R:T0!=null?T0:BRAKE_AMBIENT};   // a stop from cold unless told
   while(v>0.15&&t<25){
     const down=0.5*AIR_RHO*vehicle.clA*v*v;
-    const gripDecel=vehicle.mu*(m*G+down)/m;                       // tyre-limited
+    const gripDecel=tyreMu((m*G+down)/4)*(m*G+down)/m;             // tyre-limited, at the load on each tyre
     const brakeDecel=vehicle.brakeDecelCap*brakeFadeAt(st.F,th);   // brake-limited, at the rotor's temperature
     const mech=Math.min(gripDecel,brakeDecel);                    // mechanical (tyre/brake) decel
     const aero=(0.5*AIR_RHO*vehicle.cdA*v*v)/m;                    // drag also decelerates
@@ -5168,7 +5213,7 @@ function simulateAccel(){
     else if(!overRev){
       const Teng=gridTorque(grid,engineRpm,boostNow)*tqMult;
       if(slipping){
-        const want=vehicle.mu*diffTractionAt(df,0,vehicle.cg,1)*Math.max(0,drivenN)*r/(totalRatio*eff);
+        const want=tyreMu(drivenN/(vehicle.drive==='awd'?4:2))*diffTractionAt(df,0,vehicle.cg,1)*Math.max(0,drivenN)*r/(totalRatio*eff);
         const Tcl=Math.min(tqCap,Math.max(Teng,want));
         slipW=Math.max(rpm*TWO_PI/60,slipW+(Teng-Tcl)/Ie*dt);       // the flywheel pays the difference
         driveF=Tcl*totalRatio*eff/r;
@@ -5178,7 +5223,7 @@ function simulateAccel(){
     // diff is governed by the lighter-loaded wheel and throws the rest away, an LSD recovers
     // most of it, a spool all of it. This only bites while the car is traction-limited.
     const tqFrac=(driveF*r)/axleTqMax;                       // how hard the axle is being driven
-    const trac=vehicle.mu*diffTractionAt(df,0,vehicle.cg,tqFrac)*Math.max(0,drivenN);
+    const trac=tyreMu(drivenN/(vehicle.drive==='awd'?4:2))*diffTractionAt(df,0,vehicle.cg,tqFrac)*Math.max(0,drivenN);
     let F=Math.min(driveF,trac);
     const drag=0.5*AIR_RHO*vehicle.cdA*v*v,roll=v>0.2?crrAt(vehicle.crr,v)*m*G:0;
     // A road-speed governor cuts fuel at its set speed: past it the engine gives only what holds it.
@@ -5715,7 +5760,10 @@ function simulateLap(key){
   const m=vehicle.mass,rT=vehicle.rTire,fd=vehicle.finalDrive,eff=vehicle.driveEff,ratios=vehicle.ratios;
   const idle=engine.idleRpmEff,rl=engine.redline,TWO_PI=Math.PI*2;
   const df=vehicle.df||DIFF.open;
-  const muLat=vehicle.mu*(df.corner!=null?df.corner:1);   // locking the diff scrubs lateral grip
+  const dCorner=df.corner!=null?df.corner:1;   // locking the diff scrubs lateral grip
+  // Lateral grip at a normal load and lateral acceleration: the tyres under load transfer and roll
+  // camber (latMuEff, build 109), less the diff's scrub.
+  const muLatAt=(N,ay)=>latMuEff(N,ay)*dCorner;
   const axleTqMax=Math.max(1,curve.reduce((a,q)=>Math.max(a,q.tq),0)*ratios[0]*fd*(vehicle.gb&&vehicle.gb.mult||1));
   const down=v=>0.5*AIR_RHO*vehicle.clA*v*v;
   // Normal load at a point: weight resolved onto the slope + downforce − vertical-curvature term.
@@ -5762,7 +5810,10 @@ function simulateLap(key){
     // Two passes: solve the closed form ignoring the cap, then re-solve with the vertical term
     // evaluated (and clamped) at that speed. Converges immediately because the cap only binds
     // where the uncapped answer was already unphysically high.
-    let vv=0;
+    let vv=0,muLat=vehicle.mu*dCorner;
+    // The grip depends on the load and the cornering it is doing (build 109), and both on the speed: solve
+    // at a grip, take the grip at that speed's load and lateral acceleration, and solve again.
+    for(let outer=0;outer<3;outer++){
     for(let it=0;it<2;it++){
       // pass 0: closed form with the vertical term inside the v² coefficient (uncapped)
       // pass 1: re-solve with that term evaluated and clamped at the speed just found
@@ -5771,6 +5822,8 @@ function simulateLap(key){
       const denom=m/p[i].r-0.5*AIR_RHO*vehicle.clA*muLat+kvTerm;
       const num=muLat*m*G*p[i].cosT+extra;
       vv=denom>1e-6?Math.min(VMAX,Math.sqrt(Math.max(0,num/denom))):VMAX;
+    }
+    muLat=muLatAt(normalLoad(i,vv),vv*vv/p[i].r);
     }
     vC[i]=vv;lim[i]='corner';
   }
@@ -5787,9 +5840,9 @@ function simulateLap(key){
   for(let pass=0;pass<2;pass++)for(let k=n;k>0;k--){
     const i=(k-1+n)%n,j=(i+1)%n;
     const N=normalLoad(i,v[i]);
-    const aLatMax=muLat*N/m,u=clamp((v[i]*v[i]/p[i].r)/Math.max(0.1,aLatMax),0,1);
+    const ayi=v[i]*v[i]/p[i].r,aLatMax=muLatAt(N,ayi)*N/m,u=clamp(ayi/Math.max(0.1,aLatMax),0,1);
     // Gravity along the slope: climbing helps you stop, descending fights the brakes.
-    const aBrake=Math.min(vehicle.brakeDecelCap*fadeF[i],vehicle.mu*N/m*Math.sqrt(Math.max(0,1-u*u)))
+    const aBrake=Math.min(vehicle.brakeDecelCap*fadeF[i],tyreMu(N/4)*N/m*Math.sqrt(Math.max(0,1-u*u)))
                  +drag(v[i])/m+G*p[i].sinT;
     const cap=Math.sqrt(Math.max(0,v[j]*v[j]+2*Math.max(0.1,aBrake)*p[i].ds3));
     if(cap<v[i])v[i]=cap;
@@ -5807,12 +5860,12 @@ function simulateLap(key){
     const N=normalLoad(i,v[i]),dn=down(v[i]);
     const N0=(N-dn)*vehicle.drivenWt+dn*vehicle.drivenAero;
     const aLat=v[i]*v[i]/p[i].r;
-    const aLatMax=muLat*N/m,u=clamp(aLat/Math.max(0.1,aLatMax),0,1);
+    const aLatMax=muLatAt(N,aLat)*N/m,u=clamp(aLat/Math.max(0.1,aLatMax),0,1);
     // Diff traction is evaluated at the lateral load transfer actually happening here, so an
     // open diff falls apart on a fast corner exit while a locked one doesn't.
     const bg=bestGear(v[i]);
     const R=(drag(v[i])+rollF(v[i])*p[i].cosT)/m+G*p[i].sinT;
-    const kk=vehicle.mu*diffTractionAt(df,aLat,vehicle.cg,bg.tqFrac)*Math.sqrt(Math.max(0,1-u*u));
+    const kk=tyreMu(N0/(vehicle.drive==='awd'?4:2))*diffTractionAt(df,aLat,vehicle.cg,bg.tqFrac)*Math.sqrt(Math.max(0,1-u*u));
     // On power the drive force also spins up the engine and wheels (vehicleMassEff, build 106): a = (F -
     // m R) / mE. On grip the tyres are slipping, the surplus only spins the wheels, and the car gets the
     // tyre's force over its own mass, with the load transfer following that acceleration:

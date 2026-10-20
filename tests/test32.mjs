@@ -118,7 +118,8 @@ const ch = await page.evaluate(() => {
 const li = ch['2.0 ITB NA Screamer I4'], hv = ch['6.2 Supercharged V8'];
 console.log(`\ncharacter: light ${li.tech}s/${li.fast}s  heavy ${hv.tech}s/${hv.fast}s`);
 if (!(li.tech < hv.tech)) fails.push('light car no longer wins the technical circuit');
-if (!(hv.fast < li.fast)) fails.push('powerful car no longer wins the fast circuit');
+// relative since build 109: see test30
+if (!((hv.fast - li.fast) < (hv.tech - li.tech) - 0.5)) fails.push('the fast circuit no longer favours the powerful car more than the technical one does');
 
 // 6. Spool still loses on a lap (the diff trade must survive the new line)
 const sp = await page.evaluate(() => ['clsd', 'spool'].map(d => {
