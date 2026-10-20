@@ -42,7 +42,7 @@ const eng = await page.evaluate(() => {
     const savedAfrMode = engine.afrMode; engine.afrMode = 'fixed';
     state.coolant = 90; state.oil = 100; state.engineHealth = 1; state.blown = false;
     state.iat = 20; state.systemVoltage = 14.0; state.nitrousActive = false;
-    state.afr = engine.ci ? engine.stoichAFR * 1.05 : engine.stoichAFR * 0.88;
+    state.afr = engine.ci ? engine.stoichAFR * bestPowerLambda() : engine.stoichAFR * 0.88;
 
     const peakTq = Math.max(...curve.map(p => p.tq));
     const peakTqRpm = curve.find(p => p.tq === peakTq).rpm;
@@ -59,13 +59,13 @@ const eng = await page.evaluate(() => {
     }
     engine.afrMode = savedAfrMode; Object.assign(state, sv);
 
-    rows.push({ nm: pr.name, ci: !!engine.ci, ports: !!engine.ports, rotary: engine.type === 'rotary',
+    rows.push({ nm: pr.name, ci: !!engine.ci, vaneLim: VANE_T_LIMIT - 273, ports: !!engine.ports, rotary: engine.type === 'rotary',
       na: engine.intake === 'na', Vd: +Vd.toFixed(2), rl,
       hp: +peakHp.toFixed(0), hpRpm: peakHpRpm, tq: +peakTq.toFixed(0), tqRpm: peakTqRpm,
       hpPerL: +(peakHp / Vd).toFixed(1),
       bmep: +(peakTq * engine.strokeDiv / ((Vd / 1000) * 1e5)).toFixed(2),
       piston: +(2 * engine.stroke_mm / 1000 * rl / 60).toFixed(1),
-      egt: Math.round(exhaustGasT(1) - 273), thEff: engine.score.thEff,
+      egt: Math.round(engine.peakEgt - 273), thEff: engine.score.thEff,
       jump: +(jump * 100).toFixed(0), jumpRpm });
   }
   return rows;
@@ -103,7 +103,7 @@ for (const r of eng) {
   if (r.piston < 8) fails.push(`${r.nm}: mean piston speed ${r.piston} m/s — the redline cannot be right`);
 
   // Exhaust gas temperature, pre-turbine.
-  const egtBand = r.ci ? [500, 800] : r.rotary ? [850, 1250] : [780, 1000];
+  const egtBand = r.ci ? [500, r.vaneLim] : r.rotary ? [850, 1250] : [780, 1000];
   if (r.egt < egtBand[0] || r.egt > egtBand[1])
     fails.push(`${r.nm}: pre-turbine EGT ${r.egt} C outside ${egtBand[0]}-${egtBand[1]}`);
 

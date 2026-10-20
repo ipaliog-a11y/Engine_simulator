@@ -49,7 +49,7 @@ const r = await page.evaluate(() => {
   out.fuel = { tq12: tqAt(1.2), tq16: tqAt(1.6), tq20: tqAt(2.0), bs12: bsAt(1.2), bs16: bsAt(1.6) };
   // 7. gas exchange is signed for the diesel: boost above back-pressure is work given back
   const map = wotMapAt(1800); engine.boostNow = map;
-  const pExh = 1 + backPressureBar(1800, exhaustGasT(clamp(map / Math.max(0.4, engine.mapMax), 0.3, 1.1), 1800));
+  const pExh = 1 + backPressureBar(1800, egtAt(1800, map));
   out.pump = { pumping: pumpingMEP(1800, map), pExh, map };
   return out;
 });

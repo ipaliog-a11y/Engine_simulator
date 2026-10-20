@@ -35,11 +35,20 @@ if (!(ov[0].ov < ov[1].ov && ov[1].ov < ov[2].ov)) fails.push('overlap must grow
 console.log('\n== exhaust gas temperature must land on real measured values ==');
 const egt = await page.evaluate(() => {
   const out = [];
-  for (const [n, lo, hi] of [['1.6 Sport NA I4', 820, 980], ['2.0 Turbo Diesel I4', 560, 800],
-                             ['1.3 Rotary NA (Renesis)', 900, 1250], ['6.6 V8 Turbodiesel', 560, 800]]) {
+  // The diesels' upper bound is the turbine vane rating (VANE_T_LIMIT, 827 C): a VNT turbine is sold
+  // at ~830 C continuous, and the ECU fuels up to it, so a band of 800 contradicted the model's own
+  // hardware limit.
+  const ciHi = VANE_T_LIMIT - 273;
+  for (const [n, lo, hi] of [['1.6 Sport NA I4', 820, 980], ['2.0 Turbo Diesel I4', 560, ciHi],
+                             ['1.3 Rotary NA (Renesis)', 900, 1250], ['6.6 V8 Turbodiesel', 560, ciHi]]) {
     const pr = PRESETS.find(x => x.name === n);
     applyEngineToForm(Object.assign({}, DEFAULT_ENGINE, pr.engine)); buildEngine();
-    out.push({ n, full: Math.round(exhaustGasT(1.0) - 273), part: Math.round(exhaustGasT(0.35) - 273), lo, hi });
+    // At the engine's own operating points, at the mixture its hardware runs (fullLoadLambda) — the
+    // conditions a real engine's EGT is measured under. Light load: the same speed at a third of the
+    // manifold pressure, on the engine's own part-load mixture.
+    const rpm = engine.score.peakHPrpm, lightMap = 0.35 * engine.mapMax;
+    out.push({ n, full: Math.round(engine.peakEgt - 273),
+      part: Math.round(egtAt(rpm, lightMap, engine.canAutoAFR ? baseFuelLambda(rpm, lightMap) : 1.0) - 273), lo, hi });
   }
   return out;
 });
@@ -75,7 +84,9 @@ console.log('\n== back-pressure must land where real systems measure ==');
 const bp = await page.evaluate(() => ['stock', 'sport', 'race'].map(x => {
   const pr = PRESETS.find(p => p.name === '1.6 Sport NA I4');
   applyEngineToForm(Object.assign({}, DEFAULT_ENGINE, pr.engine, { exhaust: x })); buildEngine();
-  return { x, bar: +backPressureBar(engine.redline * 0.9, exhaustGasT(1.0)).toFixed(3) };
+  const n = engine.redline * 0.9, map = wotMapAt(n);
+  engine.boostNow = map;
+  return { x, bar: +backPressureBar(n, egtAt(n, map, fullLoadLambda(n, map))).toFixed(3) };
 }));
 bp.forEach(b => console.log(`  ${b.x.padEnd(6)} ${b.bar} bar near the power peak`));
 if (!(bp[0].bar > bp[1].bar && bp[1].bar > bp[2].bar))
@@ -92,8 +103,9 @@ const swing = await page.evaluate(() => {
   const pr = PRESETS.find(p => p.name === '2.0 ITB NA Screamer I4');
   applyEngineToForm(Object.assign({}, DEFAULT_ENGINE, pr.engine)); buildEngine();
   let rlo = 9, rhi = -9, slo = 9, shi = -9;
-  const T = exhaustGasT(1.0);
   for (let n = 1500; n <= engine.redline; n += 50) {
+    const map = wotMapAt(n), T = egtAt(n, map, fullLoadLambda(n, map));
+    engine.boostNow = map;
     const r = intakeRamGain(n, 313), s = scavengeGain(n, T);
     rlo = Math.min(rlo, r); rhi = Math.max(rhi, r); slo = Math.min(slo, s); shi = Math.max(shi, s);
   }

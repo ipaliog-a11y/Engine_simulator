@@ -89,7 +89,7 @@ const spool = await page.evaluate(({ TDI, GTI }) => {
       jump = Math.max(jump, Math.abs(curve[i].tq - curve[i - 1].tq) / Math.max(1, curve[i - 1].tq));
     return { r90, tq90, peakTq: Math.round(peakTq), hp: engine.score.peakHP,
       rel: engine.score.reliability, cost: engine.cost,
-      egt: Math.round(exhaustGasT(1.0)), jump: +(jump * 100).toFixed(1) };
+      egt: Math.round(engine.peakEgt), jump: +(jump * 100).toFixed(1) };
   };
   const out = {};
   for (const [nm, base] of [['diesel', TDI], ['petrol', GTI]])
@@ -126,20 +126,20 @@ const price = await page.evaluate(({ TDI, GTI }) => {
     const at = f => {
       const n = Math.round(engine.redline * f), prev = engine.boostNow;
       engine.boostNow = 1 + steadyBoost(n);
-      const bp = backPressureBar(n, exhaustGasT(1.0)), kn = computeKnockRisk(n, engine.boostNow);
+      const bp = backPressureBar(n, egtAt(n, engine.boostNow, fullLoadLambda(n, engine.boostNow))), kn = computeKnockRisk(n, engine.boostNow);
       engine.boostNow = prev;
       return { n, bp: +bp.toFixed(2), kn: Math.round(kn) };
     };
     // the throat the vanes are actually holding, swept across the rev range
-    const throat = [0.3, 0.5, 0.7, 0.92].map(f => {
+    // from just off idle, so the sweep starts below EVERY engine's boost threshold: at wide open
+    // throttle a petrol's gas is hot enough to hold a 0.9 bar target from ~2000 rpm with the vanes
+    // already at their open stop, so a sweep starting at 30% of redline never sees them move
+    const throat = [0.15, 0.3, 0.5, 0.7, 0.92].map(f => {
       const n = Math.round(engine.redline * f);
       if (!(engine.vgtShut > 0)) return { n, a: +(engine.turbineArea * 1e6).toFixed(0) };
-      const u = engine.turbUnits || 1, b = steadyBoost(n);
-      const mTot = airFlowAt(n, 1 + b), mEx = mTot * 1.06 / u, mA = mTot / u;
-      const T3 = exhaustGasT(clamp(n / (engine.redline * 0.8), 0.35, 1.1));
-      const v = vgtThroat(mEx, compPowerAt(mA, 1 + engine.maxBoost, 313, engine.compEff), T3,
-        engine.turbineArea, engine.vgtShut);
-      return { n, a: +(v.area * 1e6).toFixed(0) };
+      // the engine's own throat schedule, not a copy of it
+      const map = 1 + steadyBoost(n);
+      return { n, a: +(turbineThroatAt(n, map, egtAt(n, map, fullLoadLambda(n, map))) * 1e6).toFixed(0) };
     });
     return { hp: engine.score.peakHP, lo: at(0.35), hi: at(0.92), throat };
   };
@@ -173,7 +173,9 @@ console.log(`diesel  gas at the vanes ${spool.diesel.vgt.egt} K   reliability ${
 console.log(`petrol  gas at the vanes ${spool.petrol.vgt.egt} K   reliability ${spool.petrol.fixed.rel} -> ${spool.petrol.vgt.rel}`);
 const limit = await page.evaluate(() => VANE_T_LIMIT);
 console.log(`vane material creep limit ${limit} K`);
-if (!(spool.diesel.vgt.egt < limit))
+// The diesel ECU fuels UP TO the vane limit at the top end (dieselLambdaFloor), so "at" is correct and
+// only "above" is a failure.
+if (!(spool.diesel.vgt.egt <= limit + 1))
   fails.push(`diesel exhaust ${spool.diesel.vgt.egt} K is above the vane limit — the lean-mixture EGT derivation has regressed`);
 if (!(spool.petrol.vgt.egt > limit))
   fails.push(`petrol exhaust ${spool.petrol.vgt.egt} K is below the vane limit — nothing would stop a petrol VGT`);
