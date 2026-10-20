@@ -20,6 +20,37 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 Working toward **v1.0 — every number derived, not fitted.**
 
+### Turbo spool timing from the hardware — and test40 passes (build 93)
+
+- **Bearing drag from Petroff's law.** It was `BEAR_C`, about 5× published cartridge losses with a
+  D⁵ borrowed from the inertia scaling. Now it is two floating-ring journals plus a thrust bearing,
+  each P = 2π μ r³ L ω²/c, from published geometry and properties: journal 0.11 × wheel, L/d 0.8,
+  clearance 0.4% of r, hot 5W-30 μ 0.010 Pa·s, ring speed ratio 0.3. That gives 0.42 kW at 100k and
+  0.83 kW at 140k on the reference cartridge (published 0.2–0.8), scaling as D³.
+- **Charge-fill energy from the plumbing.** It was `FILL_E`, J per bar attached to the compressor
+  wheel. Now it is the air needed to raise the pressure in the real volume between compressor and
+  throttle: ducting at ~0.72 of the exducer (a GT28 has a 2-inch outlet on a 71 mm wheel) plus the
+  intercooler core. That is 1.2–13.5 L, with dm = V dp/RT at the compressor's specific work.
+- **Boost is a state.** It was a readout of shaft speed in both directions, so each dip dumped the
+  charge volume instantly and the refill was charged again: with a real-sized volume that burned
+  energy in a loop and stalled spool above 1 bar. That is why deriving the fill was blocked before.
+  Now boost rises as the shaft can afford the air, and falls only as fast as the engine empties the
+  volume, τ = air held / air swallowed.
+- **test40 passes in full**, its first time in many builds:
+  - Time to 90% boost goes 0.06 s → 0.19 s from 0.5 to 2.5 bar (3.2×).
+  - The frame-ordering claim was held up by the oversized bearing constant. With real bearings, a
+    small frame at 0.88 of its rated flow on a 7500 rpm 2.0 makes 171 hp against the large frame's
+    257, and loses. The claim is now checked where its premise holds: on a 1.4 the small frame can
+    feed (load 0.53), it beats the large by 1.5 s (the large spends 9.4 s below boost).
+- Removed dead code: `spoolK`, and the `k` and `lag` table fields it read.
+- test52: an engine whose power peak is AT the redline (the 2.0 TDI's plateau) cannot be held there,
+  because the limiter is a fuel cut. It must settle within the last 2.5% below it, with power still
+  within 2%.
+- Calibration unchanged (test41 3.36%, 0–100 RMS 5.6%). test57: bearing loss against published
+  figures and D³, charge volumes, boost holding after a lift, and a bigger charge system filling
+  slower. The volume upstream of a closed throttle holds its pressure (1.00 → 0.95 bar in 0.5 s);
+  that is what blow-off valves exist to vent, and the model has none.
+
 ### The rotary's slow burn, and where its heat goes (build 92)
 
 - **A Wankel burns slowly, and late.** Its long, thin chamber takes 120–140° of eccentric shaft to

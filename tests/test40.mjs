@@ -25,7 +25,7 @@ const spool = await page.evaluate(({ base }) => [0.5, 1.0, 1.5, 2.0, 2.5].map(ba
   // spool and reported it as lag, which is how this harness came to disagree with the steady solver.
   state.rpm = 6000; state.throttle = 1; state.boostActual = 0; state.shaftE = 0; let t = 0;
   while (t < 30 && state.boostActual < 0.9 * bar) { stepBoost(1 / 240); t += 1 / 240; }
-  return { bar, spool50: Math.round(engine.spool50), spoolK: +engine.spoolK.toFixed(2),
+  return { bar, spool50: Math.round(engine.spool50), 
     t90: +t.toFixed(2), iat: Math.round(effIAT(1 + bar)),
     knock: Math.round(computeKnockRisk(engine.score.peakHPrpm, 1 + bar)),
     eff: +engine.compEff.toFixed(2), load: +engine.turboLoad.toFixed(2), hp: engine.score.peakHP };
@@ -99,8 +99,23 @@ const t100 = f => f.t100 === null ? Infinity : f.t100;
 // stated in the GUIDE rather than papered over here.
 if (!(at(0.8, 'small').spool50 < at(0.8, 'large').spool50 * 0.6))
   fails.push('at low boost the small frame should light up far earlier than the large one');
-if (!(t100(at(0.8, 'small')) < t100(at(0.8, 'large'))))
-  fails.push('at low boost the small frame should be quicker off the line than the large one');
+// Quicker off the line is only the small frame's to win where it can FEED the engine. On this 2.0 at
+// 7500 rpm it cannot: it runs at ~0.9 of its rated flow and chokes, so the large frame makes half as
+// much power again and wins regardless of lag. (Until build 93 the small frame won here anyway, held
+// up by a bearing-drag constant 5x published and a fill cost attached to the wheel; with both derived,
+// it does not, which is the honest answer.) So the claim is checked where its premise holds: a 1.4,
+// where the small frame sits near the middle of its map and the large one spends the run below boost.
+const lowBoost = await page.evaluate(() => ['small', 'large'].map(sz => {
+  applyEngineToForm(Object.assign({}, DEFAULT_ENGINE, { cylinders: 4, bore_mm: 74.5, stroke_mm: 80, compression: 9.0,
+    redline: 6500, intake: 'turbo', turboConfig: 'single', injector: 'direct', octane: 98, cam: 'sport', exhaust: 'sport',
+    radiator: 'large', oilCooler: true, intercooler: 'large', boost_bar: 0.8, turboSize: sz })); buildEngine();
+  applyChassisFit('coupe'); document.getElementById('vhTire').value = 'slick'; document.getElementById('vhDiff').value = 'clsd'; buildVehicle();
+  return { sz, hp: engine.score.peakHP, load: +engine.turboLoad.toFixed(2), t100: perf.t100 == null ? null : +perf.t100.toFixed(2), lag: +perf.lagT.toFixed(2) };
+}));
+lowBoost.forEach(f => console.log(`  1.4 at 0.8 bar, ${f.sz.padEnd(5)} frame: ${f.hp} hp, flow load ${f.load}, 0-100 ${f.t100}s (${f.lag}s below boost)`));
+if (!(lowBoost[0].load < 0.7)) fails.push(`the 1.4 fixture no longer sits inside the small frame's map (load ${lowBoost[0].load})`);
+if (!(t100(lowBoost[0]) < t100(lowBoost[1])))
+  fails.push('at low boost, on an engine it can feed, the small frame should be quicker off the line than the large one');
 // high boost: it should NOT be — the small frame is out of its map
 if (!(at(2.5, 'small').load > 1)) fails.push('a 2.0 L at 2.5 bar does not over-flow the small frame');
 if (!(at(2.5, 'medium').hp > at(2.5, 'small').hp)) fails.push('at 2.5 bar the medium frame should out-power the small one');

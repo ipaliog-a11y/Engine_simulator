@@ -1,4 +1,4 @@
-# PIXEL ENGINE SIM v0.6 build 92
+# PIXEL ENGINE SIM v0.6 build 93
 
 **A lightweight, 8-bit style internal combustion engine *designer* & simulator** inspired by *Automation*.
 
@@ -678,10 +678,9 @@ documented in the GUIDE at the point where it matters:
   `turboChoke` — is still there, and it should retire with turbine housing sizing: real top-end
   taper *is* back-pressure outrunning boost. `tests/test46.mjs` holds this at a budget of 1 and
   additionally fails outright if any NA preset ever joins it.
-- **One behavioural test fails: `test40`,** on two assertions. They used to be listed as waiting on
-  turbine housing sizing; they are not. Spool to 90% in 0.06–0.12 s at fixed rpm is far quicker than
-  real turbos manage, so what they wait on is the transient shaft model (inertia, fill, bearing
-  drag). It asserts that spool time lengthens with the boost target, and that at low boost a
+- **The whole suite passes** as of build 93. `test40` failed for many builds; its two claims stood on
+  fitted spool losses, and with bearings from Petroff's law, a real charge volume and boost as a state,
+  one holds on the physics and the other is checked where its premise holds (see the changelog). It asserts that spool time lengthens with the boost target, and that at low boost a
   small frame is quicker off the line than a large one. Both are true of real turbos. The second is
   currently held up only by a bearing-drag constant about 5× published magnitude — correct it and the
   ordering flips by 0.05 s, against a 0.12 s margin, so the effect sits **inside the model's own
@@ -709,7 +708,7 @@ This is the current direction, and it is a change of principle rather than a fea
 
 Parts of the model reach their accuracy through **lumped coefficients that were tuned until the
 outputs matched reality** — `CAM{peakShift, ampMul, scav}`, `EXHAUST{topGain, lowLoss}`,
-`TURBO{spool, choke, k, flow}`, `IMEP_K`, `DIFF_ASYM0`, `KVCAP`. They work, and they are honest
+`TURBO{spool, choke, flow}`, `IMEP_K`, `DIFF_ASYM0`, `KVCAP`. They work, and they are honest
 approximations, but they are fitted rather than derived: they encode *the answer* instead of the
 mechanism that produces it.
 
@@ -742,9 +741,7 @@ measurement finds things. Each item is one PR.
 | 6 | Combustion (conversion 5) | 🟨 diesel ✅ build 88 | Diesel: torque from fuel, fixed-time Wiebe burn, wall heat, turbine-temperature fuel cap, signed gas exchange. Spark engines still take IMEP from air (`IMEP_K`, `typeImep`); petrol full-load BSFC still reads ~240 against a real 270–300. |
 | 7 | Ground `test46`'s invented bands | ⬜ | Back-pressure caps, ram/scavenge magnitude and buildable header length are bands **I wrote**, not measurements. None currently fails, which is exactly the concern — a band you invented can only confirm your own reasoning. |
 
-Also carried, and labelled in place rather than quietly: `BEAR_C` (~5× published turbo bearing
-friction, and `D⁵` where Petroff gives `D³`), `FILL_E` (real effect, attached to compressor diameter
-when charge volume is what matters), `turboChoke`, and the `ci` factor on the intake half of the
+Also carried, and labelled in place rather than quietly: `turboChoke`, and the `ci` factor on the intake half of the
 pumping loop (which compensates for `mapTarget()` giving diesels a throttle plate they should not
 have — the real fix is re-plumbing diesel load through fuelling).
 
@@ -779,12 +776,11 @@ have — the real fix is re-plumbing diesel load through fuelling).
    **3.20%**, the first conversion to improve it); the compressor efficiency island; the shaft
    equation of motion integrated as energy; and lag reaching the acceleration solver through a 2-D
    rpm × boost torque grid, because boost is a state with history and a 1-D curve cannot describe a
-   turbo mid-spool. ⬜ **Still open: the turbine housing.** A/R is picked from the frame size class
-   with nothing about the engine entering it, which leaves a 4× spread in exhaust flow per mm² of
-   throat across the presets and boost thresholds up to 4275 rpm late. Investigation parked with its
-   findings at `tests/proto/housing.mjs`; the remaining prerequisite is residual-gas knock. Two
-   transient losses (`BEAR_C`, `FILL_E`) are also still fitted and are labelled in place with the
-   measurements that say by how much. Working model at `tests/proto/turbo.mjs`. 22 fitted numbers go:
+   turbo mid-spool. The turbine housing is settled as a builder's choice (TURBINE A/R, build 91):
+   which side of the spool/top-end compromise to take is design intent, not physics. The two
+   transient losses are derived as of build 93 (Petroff bearings, charge-system fill, boost as a
+   state). Still fitted: `turboChoke`, the stand-in for boost taper. Working model at
+   `tests/proto/turbo.mjs`. 22 fitted numbers go:
    `TURBO{spool50, width, choke, k, flow}` × 3 frames, `TURBO_CONFIG{...}` × 4, `TURBO_PR_REF` and
    `SPOOL_PR_EXP`.
 

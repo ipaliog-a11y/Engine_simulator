@@ -249,7 +249,7 @@ table.fuelmap td.live{box-shadow:inset 0 0 0 2px #fff;font-weight:bold}
 <body>
 <div class="container">
 <header>
-<h1>PIXEL ENGINE SIM v0.6 build 92</h1>
+<h1>PIXEL ENGINE SIM v0.6 build 93</h1>
 <div class="subtitle" id="subtitle">ENGINE DESIGNER • BUILD IT, THEN DRIVE IT</div>
 </header>
 <div class="main">
@@ -1781,31 +1781,31 @@ const J_REF=3.2e-5, D_REF=0.071;   // a measured GT2871R cartridge; scales as D^
 const wheelInertia=exd=>J_REF*Math.pow(exd/D_REF,5);
 const maxShaftRpm=exd=>TIP_LIMIT*60/(Math.PI*exd);
 // Transient shaft losses the pure Pt−Pc balance omitted. Applied only in advanceShaft — not in the
-// steady boost search — so a wastegated frame still holds its target once lit.
-//   · Plumbing / IC fill energy: costs only while boost is RISING. High targets cost more joules
-//     from rest (so t90 at 2.5 bar is >2× t90 at 0.5 bar) without re-taxing a fully lit launch,
-//     which is what keeps the high-boost kei traction ladder honest.
-//   · Mild D^5 bearing drag: large cartridges pay more, so a laggy large frame loses the low-boost
-//     standing start to a small one.
-// BOTH ARE STILL FITTED, and measurement says by how much. Instrumented on a 2.0 four at 1.0 bar,
-// BEAR_C gives 3.22 kW of bearing loss at 140k rpm on the reference cartridge and 0.68 kW on a large
-// frame turning only 40k; published journal-bearing cartridges run 0.2-0.8 kW at 100-150k. So it is
-// roughly 5x real. The D^5 was borrowed from the inertia scaling, but that is a mass-distribution
-// argument — Petroff's law gives friction power as omega^2 * D^3. Correcting both (BEAR_C 2.8e-6,
-// D^3) leaves the t90 boost ladder intact but flips test40's frame ordering at 0.8 bar from
-// small-quicker-by-0.12s to small-slower-by-0.05s. A 0.17 s swing on a model whose calibration RMS
-// is ~3% (~0.2 s on a 6 s car): the ordering claim currently sits inside the noise floor, and it is
-// this oversized term holding it up. Retire once the turbine can supply the spool power honestly.
-const BEAR_C=1.5e-5;
-// J per bar of boost rise at the reference wheel (x D^4 x IC lag). ALSO STILL FITTED, and attached
-// to the wrong variable: the charge system that has to be pressurised is the intercooler core plus
-// the piping, not the compressor wheel. As written it scales 6.4x across frame size and only 1.36x
-// across intercooler size; the physical dependence is the other way round. Deriving it properly
-// (dm = V*dp/RT times compressor work per kg) gives 248 J for 2.5 L of plumbing and 894 J for 9 L
-// against the 280-381 J charged here — but substituting that outright STALLS spool above 1.0 bar,
-// because the turbine side cannot currently fill a realistically sized charge system. That is the
-// same missing mechanism as the diesel spool cliff: turbine housing sizing. Fix that first.
-const FILL_E=280;
+// steady boost search — so a wastegated frame still holds its target once lit. Both were fitted until
+// build 93 (BEAR_C ~5x published bearing loss with a borrowed D^5; FILL_E charged per bar of boost and
+// attached to the compressor wheel instead of the charge system). Both are now derived.
+//
+// BEARINGS — Petroff's law for a lightly loaded journal: friction power P = 2 pi mu r^3 L w^2 / c per
+// film. A turbo cartridge carries two floating-ring journals and a thrust bearing. The ring turns at a
+// fraction rho of shaft speed, so the inner film shears at (1-rho)w and the outer (radius ~1.6 r) at
+// rho w; the thrust bearing adds about half again. Every input is a published geometry or property:
+// journal 0.11 x wheel diameter (a GT28: 7.9 mm on 71 mm), L/d 0.8, radial clearance 0.4% of r
+// (~15 um), hot 5W-30 at ~110 C mu 0.010 Pa.s, ring speed ratio 0.3. That gives ~0.8 kW at 140k rpm on
+// the reference cartridge against a published 0.2-0.8 kW at 100-150k, and it scales as D^3 — r^3 L/c
+// with L and c both proportional to r — not the D^5 that was borrowed from the inertia scaling.
+const BRG_D=0.11, BRG_LD=0.8, BRG_CR=0.004, BRG_MU=0.010, BRG_RING=0.3, BRG_THRUST=1.5;
+const bearingCoeff=exd=>{                 // W per (rad/s)^2
+  const r=BRG_D*exd/2, L=BRG_LD*2*r, c=BRG_CR*r;
+  const films=Math.pow(1-BRG_RING,2)+Math.pow(1.6,3)*BRG_RING*BRG_RING;
+  return 2*(2*Math.PI*BRG_MU*r*r*r*L/c)*films*BRG_THRUST;
+};
+// CHARGE-SYSTEM FILL — boost is pressure in a volume, and raising it means pushing in extra air
+// beyond what the engine swallows: dm = V dp / (R T), each kilogram costing the compressor's
+// specific work at that pressure ratio. V is the hardware between compressor and throttle: the outlet
+// ducting (its bore follows the compressor outlet, ~0.72 of the exducer) and the intercooler core. That is
+// what the old FILL_E was standing in for, attached to the wheel instead of the plumbing. (Substituting
+// this was tried before build 90 and stalled spool above 1.0 bar; pulse energy and packaging-short
+// turbo manifolds are what made the turbine able to fill a real charge system.)
 // PR and efficiency are coupled — efficiency depends on where you sit on the map and where you sit
 // depends on PR — so they are solved together rather than one being assumed alongside the other.
 function compressorPR(exd,shaftRpm,flowFrac,T01){
@@ -1859,13 +1859,8 @@ function shaftNetPower(shaftRpm,mAir,T3,T01){
 // that reads like modelled physics. Removed — heat soak goes in when it has a magnitude.)
 function shaftLossPower(shaftRpm){
   const e=engine, n=Math.max(0,shaftRpm), omega=n*2*Math.PI/60;
-  // Viscous bearing drag ~ ω², scaled with wheel size. High-PR spool sits at high ω, so 2.5 bar
-  // takes far longer than 0.5 bar rather than a flat multiple of the low-boost time.
-  // Bearing drag ~ ω² · (D/Dref)^5. The D^5 tracks cartridge size the same way inertia does, so a
-  // large frame pays for its bearings instead of a small frame being punished for spinning faster
-  // (ω ~ 1/D at a given pressure ratio would otherwise make Pbear ~ 1/D under linear size scaling).
-  const size=Math.max(0.4,(e.compExd||D_REF)/D_REF);
-  return BEAR_C*omega*omega*Math.pow(size,5);
+  // Petroff journal and thrust bearing friction, ~ w^2 D^3 (see bearingCoeff).
+  return bearingCoeff(e.compExd||D_REF)*omega*omega;
 }
 // Air the engine swallows at a given speed and boost. Deliberately uses the DESIGN VE amplitude
 // rather than the live computeVE: computeVE now depends on boost through effIAT and the residual
@@ -2415,9 +2410,9 @@ const TURBO={
   // laggy large one on a low-boost standing start — over-flow still adds the 0.32·max(0,load−1) term.
   // ars: the housings a maker sells for the frame (tight / stock / loose), on this model's R_wheel
   // convention (see backPressureBar) — the stock step is the single A/R each frame used to have.
-  small: {exd:0.054,ars:[0.35,0.42,0.50],spool50:0.26,width:0.06,choke:0.10,k:3.5},
-  medium:{exd:0.071,ars:[0.48,0.64,0.82],spool50:0.40,width:0.08,choke:0.055,k:2.2},
-  large: {exd:0.086,ars:[0.63,0.86,1.06],spool50:0.54,width:0.10,choke:0.025,k:1.4}
+  small: {exd:0.054,ars:[0.35,0.42,0.50],spool50:0.26,width:0.06,choke:0.10},
+  medium:{exd:0.071,ars:[0.48,0.64,0.82],spool50:0.40,width:0.08,choke:0.055},
+  large: {exd:0.086,ars:[0.63,0.86,1.06],spool50:0.54,width:0.10,choke:0.025}
 };
 const AR_INCH=0.0254;          // A/R is quoted in inches
 const TURB_WHEEL=0.90;         // turbine wheel as a fraction of the compressor exducer
@@ -2470,10 +2465,10 @@ const SPOOL_PR_EXP=1.45;
 // response / rated flow. Twin spools earlier & flows better; sequential spools very early and
 // stays flat; compound stages two compressors, so it makes big low-end and flows the most.
 const TURBO_CONFIG={
-  single:    {label:'SINGLE',     spool:1.00,width:1.00,choke:1.00,k:1.00,flow:1.00},
-  twin:      {label:'TWIN',       spool:0.82,width:1.10,choke:0.55,k:1.15,flow:1.85},
-  sequential:{label:'SEQUENTIAL', spool:0.60,width:1.55,choke:0.30,k:1.30,flow:1.55},
-  compound:  {label:'COMPOUND',   spool:0.68,width:1.35,choke:0.18,k:1.10,flow:2.30}
+  single:    {label:'SINGLE',     spool:1.00,width:1.00,choke:1.00,flow:1.00},
+  twin:      {label:'TWIN',       spool:0.82,width:1.10,choke:0.55,flow:1.85},
+  sequential:{label:'SEQUENTIAL', spool:0.60,width:1.55,choke:0.30,flow:1.55},
+  compound:  {label:'COMPOUND',   spool:0.68,width:1.35,choke:0.18,flow:2.30}
 };
 // Supercharger types: boost fraction vs rpm = clamp(lo + (hi-lo)*(rpm/redline)^exp). Roots &
 // twin-screw are positive-displacement (near-full boost from low rpm); centrifugal is a
@@ -2491,9 +2486,11 @@ const NITROUS_BAR={none:0,small:2.2,large:4.2};   // extra IMEP (bar) from a nit
 // temperature rise it gives back to ambient, which is how a core is actually rated. `lag` is the
 // extra volume to fill, which costs spool response.
 const INTERCOOLER={
-  none: {label:'NONE',      eff:0.00,lag:0.00},
-  small:{label:'SMALL CORE',eff:0.62,lag:0.05},
-  large:{label:'LARGE CORE',eff:0.82,lag:0.12}
+  // pipe: metres of charge ducting compressor -> throttle; core: litres inside the intercooler. A
+  // top-mount small core sits close; a front-mount large core runs the ducting the length of the bay.
+  none: {label:'NONE',      eff:0.00,pipe:1.0,core:0.0},
+  small:{label:'SMALL CORE',eff:0.62,pipe:1.5,core:1.2},
+  large:{label:'LARGE CORE',eff:0.82,pipe:3.0,core:4.5}
 };
 // Catalytic converter: a three-way cat only cleans efficiently in a narrow window around
 // stoich. conv = peak conversion efficiency; restrict = exhaust back-pressure (a small
@@ -2923,11 +2920,15 @@ function buildEngine(){
   engine.mapMax=engine.intake==='na'?1.05:1.0+engine.maxBoost;
   // Intercooler core: charge-heat residual (feeds effIAT) and its spool-lag penalty.
   const ic=INTERCOOLER[engine.intercooler]||INTERCOOLER.large;
-  engine.icEff=ic.eff;engine.icLag=ic.lag;
+  engine.icEff=ic.eff;
+  // charge volume between compressor and throttle, m3 — ducting bore follows the compressor OUTLET,
+  // ~0.72 of the exducer (a GT28: 2-inch outlet on a 71 mm wheel)
+  const duct=0.72*(TURBO[engine.turboSize]||TURBO.medium).exd;
+  engine.chargeVol=ic.pipe*Math.PI/4*duct*duct+ic.core/1000;
   // Turbo spool characteristics scaled to redline, then modified by the turbo config
   // (twin/sequential/compound), anti-lag (keeps it spooled) and intercooler volume (lag).
   const tb=TURBO[engine.turboSize]||TURBO.medium, cfg=TURBO_CONFIG[engine.turboConfig]||TURBO_CONFIG.single;
-  const als=engine.antilag?0.62:1.0, alsK=engine.antilag?1.5:1.0;
+  const als=engine.antilag?0.62:1.0;
   // ---- How hard is this engine leaning on that frame? ----
   // Air demanded at peak power, in lb/min — the axis a real compressor map is drawn against.
   // Deliberately computed from the DESIGN VE amplitude and a fixed reference charge
@@ -2969,7 +2970,6 @@ function buildEngine(){
   // The hard airflow ceiling this frame can pass, in kg/s. Derived from the same inducer choke as
   // the flow rating, so the rating and the limit cannot disagree.
   engine.chokeFlow_kgs=engine.intake==='turbo'?compChokeFlow(tb.exd)*cfg.flow/132.28:0;
-  engine.spoolK=tb.k*cfg.k*alsK*(engine.intake==='turbo'?(1-engine.icLag)/prMul:1);
   // Solving the shaft balance costs a few thousand iterations, and boostAvail is called for every
   // rpm of every torque-curve build. Sample it once per engine into a table and interpolate — the
   // same reason a compressor map is a map and not a formula evaluated at runtime.
@@ -3882,24 +3882,29 @@ function advanceShaft(shaftE,rpm,boostNow,throttle,dt){
   const sub=Math.max(1,Math.ceil(dt/0.002));   // the shaft is faster than the vehicle; sub-step it
   const h=dt/sub;
   let E=clamp(shaftE,0,Emax), b=clamp(boostNow,0,engine.maxBoost);
-  // Plumbing / intercooler fill: pressurising the charge pipe takes shaft work proportional to the
-  // boost rise and to how much volume there is (icLag). Applied only while boost is climbing, so
-  // a fully lit launch is free and a high boost target costs far more joules from rest than a low
-  // one — which is exactly what stretches t90(2.5 bar) past 2× t90(0.5 bar).
-  // D^4: a large frame has more volute / compressor housing to pressurise. Keeps the fill cost
-  // off the small frame (so a high-boost kei launch stays free once lit) while a large frame
-  // still pays during the climb from rest — which is what flips the 0–100 frame ordering.
-  const fillScale=FILL_E*(1+3*(engine.icLag||0))*Math.pow((engine.compExd||D_REF)/D_REF,4);
+  // Charge-system fill (see bearingCoeff's neighbour): only while boost is climbing, so a lit launch
+  // pays nothing; the air to raise the charge volume from b to b2 costs the compressor's work per kg.
+  const V=engine.chargeVol||0, T01=(state.iat!=null?state.iat:20)+273.15;
   for(let k=0;k<sub;k++){
     const n=Math.sqrt(2*E/J)*60/(2*Math.PI);
     // Closing the throttle throttles BOTH sides. Cooling the exhaust while leaving the compressor
     // swallowing full airflow makes a lift actively BRAKE the shaft rather than let it coast.
     const r=shaftNetPower(n,airFlowAt(rpm,1+b)*Math.max(0.08,th),T3,effIAT(1+b)+273.15);
     const loss=shaftLossPower(n);
-    const b2=clamp(r.pr-1,0,engine.maxBoost);
+    // Boost is the pressure in the charge volume, so it is a STATE, not a readout of shaft speed. It
+    // rises when the shaft supports more, and pays the fill energy below for the air that takes. It
+    // FALLS only as fast as the engine empties the volume: tau = (air held) / (air swallowed). Letting
+    // it fall instantly with every dip in shaft speed, and charging the refill each time, burned
+    // energy in a loop — with a real-sized charge volume that stalled spool above 1 bar.
+    const bShaft=clamp(r.pr-1,0,engine.maxBoost);
+    let b2=bShaft;
+    if(bShaft<b){
+      const Tch=effIAT(1+b)+273.15, held=V*(1+b)*1e5/(287*Tch), swallow=Math.max(1e-4,airFlowAt(rpm,1+b)*Math.max(0.08,th));
+      b2=bShaft+(b-bShaft)*Math.exp(-h*swallow/Math.max(1e-6,held));
+    }
     const dB=Math.max(0,b2-b);
-    // Fill energy for this step: (1+b_mid)·Δb · scale  — higher targets cost more per bar.
-    const fill=fillScale*(1+0.5*(b+b2))*dB;
+    const pr=1+0.5*(b+b2), dm=V*dB*1e5/(287*(effIAT(pr)+273.15));
+    const fill=dm*1005*T01*(Math.pow(pr,0.286)-1)/clamp(r.eta||0.7,0.3,0.85);
     E=clamp(E+(r.net-loss)*h-fill,0,Emax);
     b=b2;
   }
