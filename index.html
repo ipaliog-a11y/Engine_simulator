@@ -5670,7 +5670,7 @@ function buildTrack(key){
     p[i].ds3=Math.hypot(p[i].ds,dz);               // true distance along the surface
   }
   // Vertical curvature from the grade's rate of change: kv = d(grade)/ds / (1+grade²)^1.5.
-  // Positive = crest (convex, unloads), negative = compression (concave, loads).
+  // Negative = crest (the grade falls away: convex, unloads), positive = compression (concave, loads).
   for(let i=0;i<n;i++){
     const a2=p[(i-3+n)%n],b2=p[(i+3)%n];
     let span=0;for(let k=-3;k<3;k++)span+=p[(i+k+n)%n].ds;
@@ -5890,8 +5890,8 @@ function simulateLap(key){
   }
   // 1. Cornering ceiling. m·v²/r = muLat·N, where the normal load N is the weight resolved onto
   //    the slope, plus downforce, minus what vertical curvature takes away:
-  //        N = m·g·cosθ + ½ρ·ClA·v² − m·v²·kv
-  //    kv > 0 is a crest, which throws the car light exactly when it is going fastest; kv < 0 is a
+  //        N = m·g·cosθ + ½ρ·ClA·v² + m·v²·kv
+  //    kv < 0 is a crest, which throws the car light exactly when it is going fastest; kv > 0 is a
   //    compression, which presses it down and lets it carry far more speed. Both the downforce and
   //    the crest terms scale with v², so this still solves for v² in closed form.
   const vC=new Array(n),lim=new Array(n);
