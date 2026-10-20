@@ -114,9 +114,19 @@ for (const r of eng) {
   // Held at a floor (current value, rounded down) so it cannot get worse unnoticed; remove the entry
   // when the rotary burn is modelled.
   // build 92: the 13B is back in band (942 C); the Renesis reads 897, floor ratcheted
-  const KNOWN_LOW = { '1.3 Rotary NA (Renesis)': 890 };
+  // build 101: the exhaust is now heated as air AND fuel (afr + 1), which cools the ported engines,
+  // still on the old hand-set exhaust share, by ~6%: Renesis 897 -> 842, the two-stroke 814 -> 764.
+  // Floors moved with that, for the reason stated; deriving the ported engines' work (the queued
+  // rotary/two-stroke efficiency item) is what replaces their rule.
+  const KNOWN_LOW = { '1.3 Rotary NA (Renesis)': 840, '500cc 2-Stroke Twin': 760 };
+  // build 101: the 2JZ archetype reads 1001 C as a probe at the turbine inlet. The manifold run from the
+  // port to the turbine (its length is derived, build 91) loses heat this model does not count yet,
+  // worth some tens of kelvin; held at a ceiling until it does.
+  const KNOWN_HIGH = { '3.0 Turbo I6 (2JZ)': 1005 };
   if (KNOWN_LOW[r.nm] != null && r.egt < egtBand[0]) {
     if (r.egt < KNOWN_LOW[r.nm]) fails.push(`${r.nm}: EGT ${r.egt} C fell below its known-gap floor ${KNOWN_LOW[r.nm]} C`);
+  } else if (KNOWN_HIGH[r.nm] != null && r.egt > egtBand[1]) {
+    if (r.egt > KNOWN_HIGH[r.nm]) fails.push(`${r.nm}: EGT ${r.egt} C rose above its known-gap ceiling ${KNOWN_HIGH[r.nm]} C`);
   } else if (r.egt < egtBand[0] || r.egt > egtBand[1])
     fails.push(`${r.nm}: pre-turbine EGT ${r.egt} C outside ${egtBand[0]}-${egtBand[1]}`);
 

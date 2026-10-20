@@ -111,17 +111,15 @@ console.log(`  RMS top speed ${rms(cars.map(c => pc(c.top, c.real.top))).toFixed
 //   Duramax pickup, 29% slow with power within 7%: traction-limited for 9.2 of its 10.3 s, 1234 Nm
 //     through two eco tyres on a 3.4 t truck. Its inputs are the weakest in the table (kg, Cd, area
 //     and 0-100 all secondary), and it has an 8-speed where the real one has 10.
-//   RS3, 27% slow with power within 7%: an ENGINE shape problem the power column cannot see. It holds
-//     boost only high up (torque peak 5500 rpm against a real 1700), so 3.3 s of the run is below 90%
-//     boost; power-matched it is still +19%. Its boost pressure is an unsure input in PRESETS.
+//   (RS3, 27% slow with power within 7%, holding boost only high up: resolved in build 101, when the
+//     derived exhaust energy balance gave turbo petrols their real exhaust heat.)
 const KNOWN = {
   'Chevrolet Silverado 2500HD Duramax (2020)': ['slow-car'],
-  'Audi RS3 Sportback (8V, 2017)': ['slow-car'],
-  // Short of the 250 km/h governor (233-242) because their engines are 17-26% short of their rating
-  // (test60): the R34's is the JDM 280 PS figure real cars beat, the STI's and Evo's boost is unsure.
+  // Short of the 250 km/h governor because their engines are short of their rating (test60): the R34's
+  // is the JDM 280 PS figure real cars beat, the STI's boost is unsure. (The Evo IX reaches it since
+  // build 101.)
   'Nissan Skyline GT-R V-spec (R34, 1999)': ['short'],
   'Subaru Impreza WRX STI (GD, 2004)': ['short'],
-  'Mitsubishi Lancer Evolution IX (2006)': ['short'],
 };
 const found = {};
 for (const c of cars) {

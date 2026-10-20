@@ -20,6 +20,34 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 Working toward **v1.0 — every number derived, not fitted.**
 
+### The exhaust share from the energy balance, read as a thermocouple reads it (build 101)
+
+- **The exhaust's share of the fuel's heat is what the balance leaves**, for every poppet-valve engine:
+  1 − gross indicated work − heat to the cylinder walls − heat to the exhaust port − fuel left unburned.
+  It replaces "roughly a third" (0.40 − 0.24·η on a brake efficiency of 0.36 × crFactor), two hand-set
+  rules checked against measured EGT while the wall split did not conserve energy.
+  - **Work:** the same gross efficiency the torque uses, by speed and mixture.
+  - **Wall heat:** Woschni (3.26, his combustion term included) over a traced, closed-loop cycle, tabulated
+    by rpm, on the wall the gas really touches: a pent-roof head tilted by half the valve angle, a DI
+    diesel's bowl. ~0.10-0.12 of the heat at rated speed, ~0.3 at 1000 rpm. Build 98's low-end torque
+    loss now uses this table; the curves barely move.
+  - **Port:** Caton & Heywood's exhaust-port correlation, Nu = 0.0483 Re^0.783: ~3-4%.
+  - **Unburned fuel:** Heywood's 2-5% (spark) and ~2% (diesel), midpoints.
+  - **The heated gas is air and fuel** (afr + 1), not air alone. The exhaust cp of 1150 was checked against
+    product composition (~1160 over 300-1100 K) and stands.
+- **Two temperatures, because there are two:** the balance gives the MASS-averaged gas temperature, which
+  drives the turbine and heats its vanes (h ~ Re^0.8 weights the blowdown hard), so the vane limit and
+  the diesel's fuel cap stay on it. A thermocouple reads close to the TIME average (Caton 1982), lower
+  because the hottest gas passes fastest; derived from the blowdown (isentropic from p_EVO, a share
+  1 − r^(−1/γ) of the gas in the cam's blowdown duty) and the displacement phase. Reported EGT and the
+  tests' measured bands use that.
+- **Results:** NA engines 818-938 C, turbo petrols 880-1048 C, diesels held at the vane limit as before.
+  The RS3's 'slow-car' and the Evo IX's 'short' resolve (test61). Named: the 1.6 NA reads 818 against a
+  band from 820 and the 2JZ archetype 1001 against a 1000 ceiling (the turbo manifold's heat loss is not
+  counted yet); the ported engines, still on the old hand-set share, cool with the air + fuel mass; the
+  petrol VGT now holds boost from idle (realistic low-rpm gas; the turbine throat convention makes every
+  turbine smaller than its frame).
+
 ### Rotary geometry, and a charge every turn (build 100)
 
 - **Wankel displacement is a Wankel's.** A chamber sweeps 3√3·e·R·W (e the eccentricity, R the
