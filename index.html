@@ -282,7 +282,7 @@ table.fuelmap td.live{box-shadow:inset 0 0 0 2px #fff;font-weight:bold}
 <body>
 <div class="container">
 <header>
-<h1>PIXEL ENGINE SIM v0.6 build 113</h1>
+<h1>PIXEL ENGINE SIM v0.6 build 114</h1>
 <div class="subtitle" id="subtitle">ENGINE DESIGNER • BUILD IT, THEN DRIVE IT</div>
 </header>
 <div class="build-strip" id="buildStrip">
@@ -2457,7 +2457,9 @@ const CHALLENGES=[
     // 85 s until build 109, when grip came from tyre load in place of three stacked fitted multipliers
     // and every race-prepared car lost 5-8%. Re-set from the reference build with the margin it had (2.5%).
     // 89 s until build 111 set lateral grip to road asphalt (skidpad data); re-set the same way.
-    targets:[{label:'Ashdown lap',key:'lap',op:'<=',t:94.5,unit:'s'},{label:'Reliability',key:'reliability',op:'>=',t:55}]},
+    // 94.5 until build 114 fixed the braking pass (it read the friction circle at the cornering ceiling,
+    // not at the speed being solved, and braked far too early); re-set the same way.
+    targets:[{label:'Ashdown lap',key:'lap',op:'<=',t:80.5,unit:'s'},{label:'Reliability',key:'reliability',op:'>=',t:55}]},
   {id:'gppace',name:'Grand Prix Pace',desc:'A proper lap of Riverside. Balance power against the grip to use it.',
     circuit:'mixed',budget:70000,
     // 60.0 s was authored when turbo engines carried no exhaust manifold back-pressure. Once the
@@ -2468,15 +2470,16 @@ const CHALLENGES=[
     // authored around. 285 restores the intent. (290 is not obviously wrong for the engine it is
     // modelled on — a JDM 2JZ-GTE was rated 276 hp.)
     // And for build 109's grip (see Club Sprint): 60.6 -> 66.0, the reference's margin (1.1%) kept.
-    // Build 111's asphalt grip: 66.0 -> 70.5, the same margin.
-    targets:[{label:'Riverside lap',key:'lap',op:'<=',t:70.5,unit:'s'},{label:'Power',key:'peakHP',op:'>=',t:285,unit:'hp'}]},
+    // Build 111's asphalt grip: 66.0 -> 70.5, the same margin. Build 114's braking-pass fix: 70.5 -> 61.2.
+    targets:[{label:'Riverside lap',key:'lap',op:'<=',t:61.2,unit:'s'},{label:'Power',key:'peakHP',op:'>=',t:285,unit:'hp'}]},
   {id:'greenhell',name:'Under Seven at the Ring',desc:'20 km, 40 corners and 290 m of elevation. No budget — just go and do the time.',
     circuit:'nord',
     targets:[{label:'Nordschleife lap',key:'lap',op:'<=',t:420,unit:'s'},{label:'Reliability',key:'reliability',op:'>=',t:45}]},
   {id:'laptime$',name:'Lap per Dollar',desc:'The cheapest car that can still lap Riverside quickly. Every part has to earn its place.',
     circuit:'mixed',budget:38000,
-    // 75 s until build 109's grip (see Club Sprint); the reference's 2.1% margin kept. 78.4 until build 111.
-    targets:[{label:'Riverside lap',key:'lap',op:'<=',t:83.5,unit:'s'}]}
+    // 75 s until build 109's grip (see Club Sprint); the reference's 2.1% margin kept. 78.4 until build 111,
+    // 83.5 until build 114.
+    targets:[{label:'Riverside lap',key:'lap',op:'<=',t:73.0,unit:'s'}]}
 ];
 let activeChallenge='free';
 
@@ -5927,12 +5930,21 @@ function simulateLap(key){
   //    wheels must turn at different speeds, so the longitudinal budget is the tyre's own mu (build 105).
   for(let pass=0;pass<2;pass++)for(let k=n;k>0;k--){
     const i=(k-1+n)%n,j=(i+1)%n;
-    const N=normalLoad(i,v[i]);
-    const ayi=v[i]*v[i]/p[i].r,aLatMax=muLatAt(N,ayi)*N/m,u=clamp(ayi/Math.max(0.1,aLatMax),0,1);
+    // The grip left for braking depends on how much cornering the car is doing AT THE SPEED IT WILL HAVE
+    // HERE, which is what this pass is solving for, so iterate it (build 114). It used to read the friction
+    // circle at v[i] as it stood, the cornering ceiling, where the tyre is all used sideways: almost no
+    // braking left, so the car crept into corners. On the Nordschleife a 911 GT3 rolled 250 m at 82 km/h
+    // down a 13% hill into a 42 m corner, and laps came out 6-20% slow.
     // Gravity along the slope: climbing helps you stop, descending fights the brakes.
+    let vi=Math.min(v[i],v[j]),cap=v[i];
+    for(let it=0;it<4;it++){
+    const N=normalLoad(i,vi);
+    const ayi=vi*vi/p[i].r,aLatMax=muLatAt(N,ayi)*N/m,u=clamp(ayi/Math.max(0.1,aLatMax),0,1);
     const aBrake=Math.min(vehicle.brakeDecelCap*fadeF[i],tyreMuX(N/4)*N/m*Math.sqrt(Math.max(0,1-u*u)))
-                 +drag(v[i])/m+G*p[i].sinT;
-    const cap=Math.sqrt(Math.max(0,v[j]*v[j]+2*Math.max(0.1,aBrake)*p[i].ds3));
+                 +drag(vi)/m+G*p[i].sinT;
+    cap=Math.sqrt(Math.max(0,v[j]*v[j]+2*Math.max(0.1,aBrake)*p[i].ds3));
+    vi=Math.min(v[i],cap);
+    }
     if(cap<v[i])v[i]=cap;
   }
   // 3. Forward pass: accelerate out. Drive force is capped by the driven axle's grip (via the

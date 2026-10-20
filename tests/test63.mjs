@@ -71,6 +71,28 @@ const r = await page.evaluate(() => {
   out.swap = { mx5: swap('Mazda MX-5 1.6 (NA, 1989)', 'GM LS7 (Corvette Z06 C6)'),
     huracan: swap('Lamborghini Huracán LP610-4 (2014)', 'Dodge 6.2 Hellcat (Challenger SRT)'),
     gt3: swap('Porsche 911 GT3 (991.2, 2017)', 'Dodge 6.2 Hellcat (Challenger SRT)') };
+  // ---- 5b. the lap brakes at the limit (build 114): wherever the brakes are on, the car slows as hard
+  // as the tyres (less what cornering takes) and the brakes allow AT THE SPEED IT IS DOING. Until build 114
+  // the braking pass read the friction circle at the cornering ceiling instead, where the tyre is all
+  // used sideways, found almost no braking left and crept towards corners: 250 m at 82 km/h down a 13%
+  // hill into a 42 m corner on the Nordschleife.
+  out.limit = ['tech', 'nord'].map(k => { loadVehiclePreset(VEHICLE_PRESETS.find(v => v.name === 'Porsche 911 GT3 (991.2, 2017)'));
+    const L = simulateLap(k), p = L.track.line, n = p.length, m = vehicle.mass; let used = 0, soft = 0, worst = 1;
+    const res = i => (0.5 * AIR_RHO * vehicle.cdA * L.v[i] ** 2) / m + G * p[i].sinT;
+    const dec = i => { const j = (i + 1) % n; return (L.v[i] ** 2 - L.v[j] ** 2) / (2 * p[i].ds3); };
+    const braking = i => dec(i) - res(i) >= 1.5;          // on the brakes, not just lifting, drag or the hill
+    for (let i = 0; i < n; i++) {
+      // inside a braking zone: the segments at each end are part braking, part not (the solver's two
+      // passes cross inside them), so they are not a measure of how hard it brakes
+      if (!(braking(i) && braking((i - 1 + n) % n) && braking((i + 1) % n))) continue;
+      const v = L.v[i], a = dec(i), dn = 0.5 * AIR_RHO * vehicle.clA * v * v;
+      const N = Math.max(m * G * 0.15, m * G * p[i].cosT + dn + clamp(m * v * v * p[i].kv, -0.6 * m * G, 0.6 * m * G));
+      const rs = res(i);
+      const ay = v * v / p[i].r, u = clamp(ay / Math.max(0.1, latMuEff(N, ay) * (vehicle.df.corner || 1) * N / m), 0, 1);
+      const avail = Math.min(vehicle.brakeDecelCap * L.replay.fade[i], tyreMuX(N / 4) * N / m * Math.sqrt(Math.max(0, 1 - u * u)));
+      used++; const f = (a - rs) / avail; worst = Math.min(worst, f); if (f < 0.9) soft++;
+    }
+    return { k, used, soft, worst }; });
   // ---- 6. brakes from the hydraulics (build 113): a road car's brakes out-pull its tyres ----
   out.brakes = VEHICLE_PRESETS.map(pr => { loadVehiclePreset(pr);
     return { n: pr.name, cap: vehicle.brakeDecelCap / G, grip: tyreMuX(vehicle.mass * G / 4), d: perf.brake100.dist, type: vehicle.brakeType }; });
@@ -115,6 +137,11 @@ if (!(r.swap.mx5.f1 > r.swap.mx5.f0)) fails.push('a heavier engine in a front-en
 if (!(r.swap.huracan.f1 < r.swap.huracan.f0)) fails.push('a heavier engine in a mid-engined car should move weight back');
 if (!(r.swap.gt3.f1 < r.swap.huracan.f1 + (r.swap.huracan.f0 - r.swap.gt3.f0) + 1e-9 && r.swap.gt3.f1 < r.swap.gt3.f0)) fails.push('a heavier engine behind a 911\'s rear axle should move weight back');
 
+for (const x of r.limit) {
+  console.log(`== GT3 at ${x.k}: ${x.used} points on the brakes, ${x.soft} braking under 90% of what is available (least ${(x.worst * 100).toFixed(0)}%) ==`);
+  if (x.used < 20) fails.push(`${x.k}: too few braking points to check`);
+  if (x.soft > 0.05 * x.used) fails.push(`${x.k}: ${x.soft} of ${x.used} braking points use less than 90% of the grip available`);
+}
 console.log('== brakes from the hydraulics, 100-0 with a 0.2 s pressure build-up ==');
 for (const b of r.brakes) if (/Aygo|Fiesta|M3|GT3|Silverado/.test(b.n))
   console.log(`  ${b.n.slice(0, 34).padEnd(34)} ${b.type.padEnd(7)} brakes ${b.cap.toFixed(2)} g vs tyres ${b.grip.toFixed(2)} g  100-0 ${b.d.toFixed(1)} m`);

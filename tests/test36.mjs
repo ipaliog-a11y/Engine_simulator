@@ -26,8 +26,9 @@ const solve = await page.evaluate(() => {
     // the target is the challenge's name, so the reference moved again: a 600 hp mid-engined supercar on
     // slicks, 6:50, the sort of car that really goes under seven.
     // Build 111 set lateral grip to road asphalt (skidpad data) and that car ran 7:13; the same engine in
-    // the lighter hypercar body runs 6:54.
-    greenhell: ['6.2 Supercharged V8', 'hyper', { vhTire: 'slick', vhAeroF: 'splitter', vhAeroR: 'wing', vhAeroFl: 'diffuser', vhWeight: 'race', vhSusp: 'race', vhDiff: 'clsd', vhGearbox: 'sequential' }],
+    // the lighter hypercar body ran 6:54. Build 114 fixed the braking pass (it braked far too early) and
+    // the hypercar ran 6:26, so the reference went back to the supercar body.
+    greenhell: ['6.2 Supercharged V8', 'super', { vhTire: 'slick', vhAeroF: 'splitter', vhAeroR: 'wing', vhAeroFl: 'diffuser', vhWeight: 'race', vhSusp: 'race', vhDiff: 'clsd', vhGearbox: 'sequential' }],
     'laptime$': ['2.0 Turbo Hot-Hatch I4', 'hatch', { vhTire: 'semi', vhSusp: 'coilover', vhWeight: 'sport' }]
   };
   return CHALLENGES.filter(c => c.circuit).map(ch => {
