@@ -249,7 +249,7 @@ table.fuelmap td.live{box-shadow:inset 0 0 0 2px #fff;font-weight:bold}
 <body>
 <div class="container">
 <header>
-<h1>PIXEL ENGINE SIM v0.6 build 86</h1>
+<h1>PIXEL ENGINE SIM v0.6 build 87</h1>
 <div class="subtitle" id="subtitle">ENGINE DESIGNER • BUILD IT, THEN DRIVE IT</div>
 </header>
 <div class="main">
@@ -1901,7 +1901,9 @@ const PRESETS=[
   {name:'5.0 V8 NA Muscle',       engine:{valves:2,valveSpring:'perf',cylinders:8,bore_mm:93,stroke_mm:92.7,compression:12,layout:'v',redline:7500,cam:'sport',exhaust:'sport',radiator:'large',oilCooler:true}},
   {name:'6.2 Supercharged V8',    engine:{valves:2,valveSpring:'race',cylinders:8,bore_mm:103.9,stroke_mm:90.9,compression:9.5,layout:'v',redline:6400,intake:'supercharger',boost_bar:0.65,octane:98,injector:'port',vvt:false,cam:'sport',exhaust:'sport',radiator:'large',oilCooler:true}},
   {name:'6.5 V12 NA Supercar',    engine:{valves:4,valveMat:'titanium',valveSpring:'race',cylinders:12,bore_mm:95,stroke_mm:76.4,compression:11.8,layout:'v',redline:8500,intakeSys:'itb',cam:'race',exhaust:'race',cat:'sport',octane:98,injector:'port',radiator:'large',oilCooler:true}},
-  {name:'2.0 Turbo Diesel I4',    engine:{type:'diesel',vvt:false,cylinders:4,bore_mm:84,stroke_mm:90,compression:17,redline:4800,intake:'turbo',boost_bar:1.2,turboSize:'medium',vgt:true,intakeSys:'efi',injector:'direct',exhaust:'stock',cat:'stock',radiator:'large',oilCooler:true}},
+  // A 2.0 turbodiesel runs a SMALL variable-geometry frame (a ~49 mm compressor, BV43/GTB1749V class).
+  // It carried the medium frame until build 87, which on a 2.0 L does not make full boost until 2800 rpm.
+  {name:'2.0 Turbo Diesel I4',    engine:{type:'diesel',vvt:false,cylinders:4,bore_mm:84,stroke_mm:90,compression:17,redline:4800,intake:'turbo',boost_bar:1.2,turboSize:'small',vgt:true,intakeSys:'efi',injector:'direct',exhaust:'stock',cat:'stock',radiator:'large',oilCooler:true}},
   {name:'6.6 V8 Turbodiesel',     engine:{type:'diesel',vvt:false,cylinders:8,bore_mm:103,stroke_mm:99,compression:16.5,layout:'v',redline:3800,intake:'turbo',boost_bar:1.1,turboSize:'medium',turboConfig:'single',vgt:true,intakeSys:'efi',injector:'direct',exhaust:'stock',cat:'stock',radiator:'large',oilCooler:true}},
   {name:'1.3 Rotary Turbo (13B)', engine:{type:'rotary',cylinders:2,bore_mm:80,stroke_mm:80,compression:9.4,redline:9000,intake:'turbo',boost_bar:0.7,turboSize:'medium',turboConfig:'sequential',intakeSys:'efi',injector:'port',exhaust:'sport',cat:'sport',octane:98,radiator:'large',oilCooler:true}},
   {name:'1.3 Rotary NA (Renesis)',engine:{type:'rotary',cylinders:2,bore_mm:80,stroke_mm:80,compression:10,redline:9000,intakeSys:'itb',injector:'port',exhaust:'sport',cat:'sport',octane:98,radiator:'large',oilCooler:true}},
@@ -1957,6 +1959,8 @@ let activeChallenge='free';
 // technical readouts (canvas schematic, status ticker, design-summary spec) stay in English —
 // their content is numbers and universal units.
 const I18N={
+  'Rows = load (share of the air available at that rpm, top = full pedal) · Columns = RPM · cell = target':{el:'Γραμμές = φορτίο (ποσοστό του διαθέσιμου αέρα σε αυτές τις στροφές, πάνω = τέρμα πεντάλ) · Στήλες = στροφές · κελί = στόχος'},
+  'LOAD':{el:'ΦΟΡΤΙΟ'},'load':{el:'φορτίο'},
   'ZOOM':{el:'ΖΟΥΜ'},'scroll or pinch to zoom • drag to pan • double-click to reset':{el:'κύλιση ή τσίμπημα για ζουμ • σύρε για μετακίνηση • διπλό κλικ για επαναφορά'},
   'DYNO RESULT':{el:'ΑΠΟΤΕΛΕΣΜΑ ΔΥΝΑΜΟΜΕΤΡΟΥ'},'PEAK POWER':{el:'ΜΕΓΙΣΤΗ ΙΣΧΥΣ'},'BEST-POWER PULL':{el:'ΔΟΚΙΜΗ ΜΕΓΙΣΤΗΣ ΙΣΧΥΟΣ'},
   'YOUR PULL (AS TUNED)':{el:'Η ΔΟΚΙΜΗ ΣΟΥ (ΩΣ ΕΧΕΙ ΡΥΘΜΙΣΤΕΙ)'},'ECU fuel map':{el:'χάρτης καυσίμου ECU'},'BOOST':{el:'BOOST'},
@@ -3112,6 +3116,12 @@ function mbtAdvance(rpm,map){
   return clamp(18+(rpm/engine.redline)*14-(map-1)*6,8,40);
 }
 function computeVE(rpm,map){
+  // backPressureBar reads engine.boostNow, and the overlap term (scavengeGain) calls it below. This was
+  // only set further down, AFTER scavengeGain had run, so every turbo VE was computed with the PREVIOUS
+  // call's boost: within a sweep the point 100 rpm earlier, and at the start of a sweep whatever ran
+  // last — often the last sweep's redline. On a 2.0 turbo that was a 16% torque error at 1200 rpm,
+  // and the dyno, the design curve and the live bench could disagree depending on call order.
+  engine.boostNow=map;
   const peak=engine.vePeakRpm;
   // Asymmetric generalized-bell (Cauchy/Lorentzian-family) curve: flat plateau around
   // the peak; the low-rpm side is narrower (torque builds later) and the high-rpm side
@@ -3183,8 +3193,12 @@ function computeVE(rpm,map){
 // cell. In AUTO mode the mixture is looked up here; in MANUAL mode the AFR slider is used.
 function baseFuelLambda(rpm,map){
   if(engine.ci){
-    // Diesel: quality-governed fuelling — very lean at light load, toward the smoke limit at full.
-    const l=clamp((map-0.5)/Math.max(0.3,engine.mapMax-0.5),0,1);
+    // Diesel: quality-governed fuelling — very lean at light load, to the smoke limit at full pedal.
+    // LOAD is the share of the air available AT THIS RPM, not of the engine's best-case boost. It used
+    // to be map / mapMax, so a diesel floored at 2000 rpm, before its turbo had lit, read as 29% load
+    // and was fuelled at lambda 2.7 — about 40% of the torque a full rack gives. A real diesel at full
+    // pedal injects up to the smoke limit for whatever air it has, at every speed.
+    const l=clamp((map/Math.max(0.3,wotMapAt(rpm))-0.45)/0.55,0,1);
     return 3.4-2.35*l;
   }
   const boost=Math.max(0,map-1.0);
@@ -3197,7 +3211,7 @@ function mappedAFR(rpm,map){
   const st=engine.stoichAFR;
   if(fuelMap){   // bilinear-interpolate the (editable) λ grid over its breakpoints
     const fc=clamp((rpm-1000)/Math.max(1,engine.redline-1000)*(FM_COLS-1),0,FM_COLS-1);
-    const fr=clamp((map-0.3)/Math.max(0.1,engine.mapMax-0.3)*(FM_ROWS-1),0,FM_ROWS-1);
+    const fr=fmRowOf(rpm,map);
     const c0=Math.floor(fc),c1=Math.min(c0+1,FM_COLS-1),tc=fc-c0;
     const r0=Math.floor(fr),r1=Math.min(r0+1,FM_ROWS-1),trr=fr-r0;
     const lam=(fuelMap[r0][c0]*(1-tc)+fuelMap[r0][c1]*tc)*(1-trr)+(fuelMap[r1][c0]*(1-tc)+fuelMap[r1][c1]*tc)*trr;
@@ -3211,9 +3225,20 @@ function curAFR(rpm,map){return engine.afrMode==='auto'?mappedAFR(rpm,map):state
 const FM_COLS=8, FM_ROWS=6;
 const fmRpmAt=c=>Math.round(lerp(1000,engine.redline,c/(FM_COLS-1)));
 const fmMapAt=r=>lerp(0.3,engine.mapMax,r/(FM_ROWS-1));   // r=0 light load … r=ROWS-1 full load
+// A DIESEL's rows are load — the share of the air available at that rpm, 15% to full pedal — not an
+// absolute manifold pressure. A diesel's full-load line moves with boost, so on absolute-MAP rows a
+// floored diesel crossed rows as its turbo lit and the interpolation smeared it to lambda 1.2-1.43
+// at 1600-1800 rpm where the map itself said 1.05. A petrol ECU really does schedule on MAP, so its
+// rows stay as they were.
+const FM_LOAD0=0.15;
+const fmLoadAt=r=>lerp(FM_LOAD0,1,r/(FM_ROWS-1));
+const fmMapAtRC=(r,c)=>engine.ci?fmLoadAt(r)*wotMapAt(fmRpmAt(c)):fmMapAt(r);
+const fmRowOf=(rpm,map)=>engine.ci
+  ?clamp((map/Math.max(0.3,wotMapAt(rpm))-FM_LOAD0)/(1-FM_LOAD0)*(FM_ROWS-1),0,FM_ROWS-1)
+  :clamp((map-0.3)/Math.max(0.1,engine.mapMax-0.3)*(FM_ROWS-1),0,FM_ROWS-1);
 // Fill a fresh λ grid from the factory curve at each breakpoint.
 function generateFuelMap(){
-  const g=[];for(let r=0;r<FM_ROWS;r++){const row=[];for(let c=0;c<FM_COLS;c++)row.push(baseFuelLambda(fmRpmAt(c),fmMapAt(r)));g.push(row);}
+  const g=[];for(let r=0;r<FM_ROWS;r++){const row=[];for(let c=0;c<FM_COLS;c++)row.push(baseFuelLambda(fmRpmAt(c),fmMapAtRC(r,c)));g.push(row);}
   return g;
 }
 // Keep the map in sync with the engine: regenerate (discarding edits) when the map-relevant
@@ -3240,29 +3265,29 @@ function renderFuelMap(){
   const edHide=document.getElementById('fuelMapEdit');if(edHide&&!show)edHide.style.display='none';
   if(!show){box.innerHTML='';return;}
   const st=engine.stoichAFR;
-  let h='<table class="fuelmap"><tr><th>MAP\\RPM</th>';
+  let h='<table class="fuelmap"><tr><th>'+(engine.ci?tr('LOAD'):'MAP')+'\\RPM</th>';
   for(let c=0;c<FM_COLS;c++){const rp=fmRpmAt(c);h+='<th>'+(rp>=1000?(rp/1000).toFixed(1)+'k':rp)+'</th>';}
   h+='</tr>';
   for(let r=FM_ROWS-1;r>=0;r--){
     const mp=fmMapAt(r);
-    h+='<tr><th>'+(mp>1.001?'+'+(mp-1).toFixed(1):mp.toFixed(1))+'</th>';
+    h+='<tr><th>'+(engine.ci?Math.round(fmLoadAt(r)*100)+'%':(mp>1.001?'+'+(mp-1).toFixed(1):mp.toFixed(1)))+'</th>';
     for(let c=0;c<FM_COLS;c++){
-      const afr=mappedAFR(fmRpmAt(c),mp),lam=afr/st;
+      const afr=mappedAFR(fmRpmAt(c),fmMapAtRC(r,c)),lam=afr/st;
       const rr=clamp((1.12-lam)/0.34,0,1),hue=Math.round(lerp(210,12,rr));
       const selCls=fmSel&&fmSel.c===c&&fmSel.r===r?' sel':'';
       h+='<td class="fm-cell'+selCls+'" data-c="'+c+'" data-r="'+r+'" style="background:hsl('+hue+',60%,40%)">'+(engine.ci?lam.toFixed(1):afr.toFixed(1))+'</td>';
     }
     h+='</tr>';
   }
-  h+='</table><div class="fuelmap-note">'+tr('Rows = load (MAP bar, top = full) · Columns = RPM · cell = target')+' '+(engine.ci?'λ':'AFR')+'. '+tr('Warm = rich, blue = lean. Tap a cell to tune it; outlined = live point.')+(fuelMapCustom?' <b style="color:#ffcc00">'+tr('CUSTOM MAP')+'</b>':'')+'</div>';
+  h+='</table><div class="fuelmap-note">'+tr(engine.ci?'Rows = load (share of the air available at that rpm, top = full pedal) · Columns = RPM · cell = target':'Rows = load (MAP bar, top = full) · Columns = RPM · cell = target')+' '+(engine.ci?'λ':'AFR')+'. '+tr('Warm = rich, blue = lean. Tap a cell to tune it; outlined = live point.')+(fuelMapCustom?' <b style="color:#ffcc00">'+tr('CUSTOM MAP')+'</b>':'')+'</div>';
   box.innerHTML=h;
   // Edit controls
   const ed=document.getElementById('fuelMapEdit');
   if(ed){
     ed.style.display='flex';
     const info=document.getElementById('fmSelInfo');
-    if(fmSel){const afr=mappedAFR(fmRpmAt(fmSel.c),fmMapAt(fmSel.r)),mp=fmMapAt(fmSel.r);
-      info.textContent=Math.round(fmRpmAt(fmSel.c))+'rpm • '+(mp>1.001?'+'+(mp-1).toFixed(1):mp.toFixed(1))+'bar → '+(engine.ci?'λ'+(afr/st).toFixed(2):afr.toFixed(1)+' AFR');
+    if(fmSel){const afr=mappedAFR(fmRpmAt(fmSel.c),fmMapAtRC(fmSel.r,fmSel.c)),mp=fmMapAt(fmSel.r);
+      info.textContent=Math.round(fmRpmAt(fmSel.c))+'rpm • '+(engine.ci?Math.round(fmLoadAt(fmSel.r)*100)+'% '+tr('load'):(mp>1.001?'+'+(mp-1).toFixed(1):mp.toFixed(1))+'bar')+' → '+(engine.ci?'λ'+(afr/st).toFixed(2):afr.toFixed(1)+' AFR');
     }else info.textContent=tr('Tap a cell to select');
   }
   updateFuelMapMarker();
@@ -3271,7 +3296,7 @@ function updateFuelMapMarker(){
   const box=document.getElementById('fuelMapBox');
   if(!box||engine.afrMode!=='auto'||box.style.display==='none')return;
   const c=clamp(Math.round((state.rpm-1000)/(engine.redline-1000)*(FM_COLS-1)),0,FM_COLS-1);
-  const r=clamp(Math.round((state.map-0.3)/(engine.mapMax-0.3)*(FM_ROWS-1)),0,FM_ROWS-1);
+  const r=Math.round(fmRowOf(state.rpm,state.map));
   const prev=box.querySelector('td.live');if(prev)prev.classList.remove('live');
   const cell=box.querySelector('td[data-c="'+c+'"][data-r="'+r+'"]');if(cell)cell.classList.add('live');
 }

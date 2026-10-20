@@ -83,6 +83,47 @@ for (const r of out) {
   }
 }
 
+// ---- the ECU map at full pedal ----------------------------------------------------------------
+// A floored engine on the AUTO fuel map should make close to its best-power torque at every rpm: the
+// map's job at full load is to fuel for power. Until build 87 a diesel's map measured load as MAP over
+// its best-case boost, so a floored diesel below its boost threshold read as ~30% load and was fuelled
+// at lambda 2.7 — 0-5 Nm against a best-power 169 at 1000-2000 rpm. Every preset, at every rpm.
+const autoWot = await page.evaluate(() => PRESETS.map(pr => {
+  applyEngineToForm(Object.assign({}, DEFAULT_ENGINE, pr.engine)); buildEngine();
+  const best = buildTorqueCurve();
+  const sv = { mode: engine.afrMode, afr: state.afr };
+  engine.afrMode = 'auto'; fuelMap = null; generateFuelMap && (fuelMap = generateFuelMap());
+  // the same conditions buildTorqueCurve pins, battery included: a sagging battery weakens the spark
+  Object.assign(state, { iat: 20, coolant: 90, oil: 100, engineHealth: 1, blown: false, systemVoltage: 14.0, nitrousActive: false });
+  let worst = 1, worstRpm = 0;
+  for (const p of best) {
+    if (p.rpm < 1200) continue;
+    const t = calcAtRpm(p.rpm).torque, f = t / Math.max(1, p.tq);
+    if (f < worst) { worst = f; worstRpm = p.rpm; }
+  }
+  engine.afrMode = sv.mode; state.afr = sv.afr;
+  return { nm: pr.name, worst: +worst.toFixed(3), worstRpm };
+}));
+console.log('\nAUTO fuel map at full pedal, worst fraction of best-power torque:');
+for (const r of autoWot) console.log(`  ${r.nm.padEnd(26)} ${(r.worst * 100).toFixed(0)}% @ ${r.worstRpm}`);
+for (const r of autoWot)
+  if (r.worst < 0.85) fails.push(`${r.nm}: floored on the ECU map it makes only ${(r.worst * 100).toFixed(0)}% of best-power torque at ${r.worstRpm} rpm`);
+
+// ---- call-order independence -----------------------------------------------------------------
+// computeVE used to read the PREVIOUS call's boost (engine.boostNow) in its overlap term, so the same
+// operating point gave 150.8 or 180.2 Nm depending on what had been computed before it. A physics
+// function of (rpm, map) must not care what ran last.
+const order = await page.evaluate(() => PRESETS.filter(p => p.engine.intake === 'turbo').map(pr => {
+  applyEngineToForm(Object.assign({}, DEFAULT_ENGINE, pr.engine)); buildEngine();
+  engine.afrMode = 'fixed'; state.afr = engine.stoichAFR * (engine.ci ? 1.05 : 0.86);
+  calcAtRpm(engine.redline); const a = calcAtRpm(1500).torque;
+  calcAtRpm(1000, 1.0); const b = calcAtRpm(1500).torque;
+  return { nm: pr.name, a, b };
+}));
+for (const r of order)
+  if (Math.abs(r.a - r.b) > 1e-6) fails.push(`${r.nm}: torque at 1500 rpm depends on the previous call (${r.a.toFixed(1)} vs ${r.b.toFixed(1)} Nm)`);
+console.log(`\ncall-order independence: ${order.length} turbo presets checked`);
+
 if (errors.length) fails.push(...errors);
 console.log(fails.length ? '\nFAIL:\n  ' + fails.join('\n  ') : '\nPASS');
 await browser.close();
