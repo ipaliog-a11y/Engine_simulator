@@ -20,6 +20,36 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 Working toward **v1.0 — every number derived, not fitted.**
 
+### Each car's own minimum-time racing line (build 115)
+
+From the driving review. The line was one minimum-curvature shape for every car, bent by a fitted late-apex
+bias (3 x how open the next 90 m were), and the review found the geometry under it was not sound either.
+- **The car's width:** its centre now comes no closer to an edge than half the width over its tyres.
+- **The curvature it minimised was not curvature.** Sum |Q''|^2 is ~ length^2 x turn per node, so a shorter
+  line scored better: a 150 m circle was driven at 145 m, on the inside. Now sum kappa^2 l.
+- **The centreline had kinks.** A uniform Catmull-Rom through unevenly spaced control points overshoots and
+  nearly cusps (a 25 m corner carried 4 m kinks), and stepping it evenly in its parameter bunched the
+  samples. Now a centripetal Catmull-Rom (cannot cusp; Yuksel et al. 2011), resampled every 5 m.
+- **The line's radius** is now the offset curve's own (from the centreline's curvature and the offset's
+  slope and bend), not a circle through points 3 either side: that 30 m chord rounded off curvature peaks
+  the car still has to drive, and through the neighbouring points instead the radius was all noise.
+- **GPS traces** (the Nordschleife, imported tracks) are smoothed only within the receiver's 2.5 m accuracy,
+  so their noise stops inventing corners.
+- **Minimum time, for each car:** from minimum curvature, the line is moved by smooth bumps; the car's speed
+  is re-solved only where a move can change it (out until the speeds rejoin the solved ones), with the lap
+  solver's own per-point physics, and every move that makes the lap quicker is kept. Late apexes come out
+  of it where a corner opens onto a straight (2.3 m later onto the long side of a test rectangle, 2.3 m
+  earlier onto the short one) and the fitted bias is gone. 0.2-0.4 s per car per circuit, ~3 s on the
+  Nordschleife, cached per car.
+- **Laps:** 911 GT3 Nordschleife 7:25 -> 6:53 (real 7:12.7 on the 20.6 km layout; this trace is 20.2 km).
+- **The lap solver's steps are functions of a point** (ceilAt, brakeFrom, accFrom) so the optimiser runs the
+  same physics; the gear search is tabulated per 0.05 m/s.
+- **GT3 preset:** a splitter and lip for the real car's wing and lip (aero marked unsure).
+- **The live engine readout is hidden on the TRACK tab**, which has its own instruments.
+- Tests: test32 (centreline comparison on the car's line; each car its own line), test38 (late apex on a
+  controlled rectangle; never slower than minimum curvature), test34 (top speed may plateau at the bump
+  stop), test36 (Ring reference on semi-slicks), guide text in both languages.
+
 ### The lap brakes at the limit (build 114)
 
 - **A solver bug, found reviewing the driving model.** The lap's backward (braking) pass read the

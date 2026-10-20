@@ -1,4 +1,4 @@
-# PIXEL ENGINE SIM v0.6 build 114
+# PIXEL ENGINE SIM v0.6 build 115
 
 **A lightweight, 8-bit style internal combustion engine *designer* & simulator** inspired by *Automation*.
 
@@ -761,6 +761,7 @@ measurement finds things. Each item is one PR.
 | — | Analog gauges | ✅ build 112 | Live timing can switch to analog instruments: rev counter, speedometer, and a boost gauge (manifold pressure vs atmosphere) on turbo and supercharged engines, also shown in the digital set. |
 | — | Brakes from the hydraulics | ✅ build 113 | Brake torque from line pressure, caliper pistons, pad mu and rotor radius (no fitted peak g); 0.2 s pressure build-up in the stop; heavy-duty truck brakes. 100-0: small cars 38-40 m, GT3 31 m. Next: the manual shift time. |
 | — | Lap brakes at the limit | ✅ build 114 | Braking-pass bug fixed: grip for braking is read at the speed being solved, not the cornering ceiling. Laps 6-22% faster; 911 GT3 Nordschleife 7:25 (real 7:12.7). |
+| — | Minimum-time racing line | ✅ build 115 | Each car drives its own minimum-time line (local search with the lap solver's physics), minus its width, on a centripetal-spline centreline; late apexes emerge, the fitted bias is gone. GPS traces de-noised within 2.5 m. |
 | — | Spark torque from fuel | ✅ build 95 | `IMEP_K` replaced by Heywood's 0.8 × fuel-air cycle efficiency; each fuel's LHV/AFR_st enters. Spark torque −2.7%, full-load BSFC 280 g/kWh (real 270–300). Rotary/two-stroke type factors still fitted. |
 | — | `turboChoke` (boost taper) | ✅ build 94 | Retired. Turbine efficiency from blade speed ratio U/C, per-point compressor efficiency, a continuous rich-knock slope in place of a step, and sequential turbos staged as two turbines. Calibration improved on every measure. |
 | — | Rotary exhaust heat | ✅ build 92 | The slow, late Wankel burn (130° ES, CA50 37.5° ATDC) leaves ~10% of the expansion work undone, and that heat now reaches the exhaust: 13B 775 → 942 °C, off the limiter. |
