@@ -20,6 +20,19 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 Working toward **v1.0 — every number derived, not fitted.**
 
+### Turbo lag at a fifth of the cost; re-baselined checks (build 120)
+
+- The lap's turbo walk (build 118) added 1.3 s to a Nordschleife solve: it re-ran the shaft from rest and
+  stepped it every 2 ms. Now the shaft starts settled where the car is fastest (flat for a while, so spun
+  up to what the revs support) and one walk is the lap-to-lap state: identical laps on all 15 turbo
+  presets. And the lap steps it every 10 ms (no lap moves by more than 0.01 s against 2 ms; the 0-100 run
+  and the bench keep 2 ms). A turbo Nordschleife solve 1.36 -> 0.27 s; GPX import + solve 3.8 s.
+- **Lap per Dollar** target 73.0 -> 70.0 s: build 117 took the flat shift charge out (laps 1-2 s
+  quicker) and a 112 hp kei car got under 73.0 at 72.7 s. The reference build does 65.9 s.
+- test34: on the 150 m circle with 40 m hills (grades to 53%) the vertical load is past the bump-stop
+  cap, the slope itself takes load (cos 28 deg) and tyre drag slows each descent, so the fastest point is
+  3.5% under the 20 m case; it still has to beat the flat circle.
+
 ### Tyre cornering drag (build 119)
 
 - A tyre makes its side force by running at a slip angle, so the force leans back against the travel by

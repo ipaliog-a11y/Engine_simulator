@@ -282,7 +282,7 @@ table.fuelmap td.live{box-shadow:inset 0 0 0 2px #fff;font-weight:bold}
 <body>
 <div class="container">
 <header>
-<h1>PIXEL ENGINE SIM v0.6 build 119</h1>
+<h1>PIXEL ENGINE SIM v0.6 build 120</h1>
 <div class="subtitle" id="subtitle">ENGINE DESIGNER • BUILD IT, THEN DRIVE IT</div>
 </header>
 <div class="build-strip" id="buildStrip">
@@ -2514,8 +2514,8 @@ const CHALLENGES=[
   {id:'laptime$',name:'Lap per Dollar',desc:'The cheapest car that can still lap Riverside quickly. Every part has to earn its place.',
     circuit:'mixed',budget:38000,
     // 75 s until build 109's grip (see Club Sprint); the reference's 2.1% margin kept. 78.4 until build 111,
-    // 83.5 until build 114.
-    targets:[{label:'Riverside lap',key:'lap',op:'<=',t:73.0,unit:'s'}]}
+    // 83.5 until build 114, 73.0 until build 117 took the flat shift charge out and a 112 hp kei car got under.
+    targets:[{label:'Riverside lap',key:'lap',op:'<=',t:70.0,unit:'s'}]}
 ];
 let activeChallenge='free';
 
@@ -4679,7 +4679,7 @@ function brakeTorqueRaw(rpm,map,fuelCut){
 // One step of the turbo shaft, as a pure function of its own state. Shared by the live engine and
 // by simulateAccel, so the two cannot drift apart — the acceleration solver having its own idea of
 // spool is exactly the kind of divergence that took two bugs to find last time.
-function advanceShaft(shaftE,rpm,boostNow,throttle,dt){
+function advanceShaft(shaftE,rpm,boostNow,throttle,dt,hMax=0.002){
   const J=engine.shaftJ;
   if(!J)return{shaftE:0,boost:boostAvail(rpm)};
   const wMax=engine.shaftMax*2*Math.PI/60, Emax=0.5*J*wMax*wMax;
@@ -4690,7 +4690,7 @@ function advanceShaft(shaftE,rpm,boostNow,throttle,dt){
   // ratio from the compressor's: the thing needed to start the process derived from the process
   // having started.
   const T3=exhaustGasT(clamp(th,0.3,1.1),rpm);
-  const sub=Math.max(1,Math.ceil(dt/0.002));   // the shaft is faster than the vehicle; sub-step it
+  const sub=Math.max(1,Math.ceil(dt/hMax));   // the shaft is faster than the vehicle; sub-step it
   const h=dt/sub;
   let E=clamp(shaftE,0,Emax), b=clamp(boostNow,0,engine.maxBoost);
   // Charge-system fill (see bearingCoeff's neighbour): only while boost is climbing, so a lit launch
@@ -5247,7 +5247,7 @@ function buildTorqueGrid(){
 }
 // The grid depends only on the engine, and buildEngine makes a new engine.score every time it changes,
 // so the lap keeps the one it built until then (build 118: a lap needs it, and it costs ~0.15 s).
-let _lapGrid=null;
+let _lapGrid=null,TURBO_ITERS=2;
 function lapTorqueGrid(){
   if(!_lapGrid||_lapGrid.score!==engine.score)_lapGrid={score:engine.score,g:buildTorqueGrid()};
   return _lapGrid.g;
@@ -6312,8 +6312,11 @@ function simulateLap(key,opts){
     const grid=lapTorqueGrid(),iat0=state.iat;state.iat=20;   // design figures, like simulateAccel
     boostShare=new Float64Array(n).fill(1);boostLap=new Float64Array(n);
     const rpmOf=i=>{const g=gearAt(v[i]).gear;return clamp(v[i]*ratios[g]*fd/rT*60/TWO_PI,idle,rl);};
-    let E=0,b=0;
-    for(let it=0;it<2;it++){
+    // Where the car is fastest it has been flat for a while, so the shaft is spun up to what the revs there
+    // support: start it settled there and one walk round the lap is the lap-to-lap state (the shaft's
+    // memory is well under a second). Re-walking from rest cost 1.3 s on the Nordschleife.
+    let i0=0;for(let i=1;i<n;i++)if(v[i]>v[i0])i0=i;
+    for(let it=0;it<TURBO_ITERS;it++){
       // throttle = the drive force the speed profile asks for, against what the engine has here
       const thrS=new Float64Array(n);
       for(let i=0;i<n;i++){
@@ -6323,10 +6326,13 @@ function simulateLap(key,opts){
                    +corneringDrag(m,v[i]*v[i]/p[i].r,loadAt(p[i],v[i]));
         thrS[i]=need<=0?0:clamp(need/Math.max(1,g.F*boostShare[i]),0,1);
       }
-      // from rest the first time round; after that the shaft carries on from where the last lap left it
-      for(let lap=0;lap<(it?1:2);lap++)for(let i=0;i<n;i++){
-        const j=(i+1)%n,dt=p[i].ds3/Math.max(2,(v[i]+v[j])/2);
-        const r=advanceShaft(E,rpmOf(i),b,thrS[i],dt);E=r.shaftE;b=r.boost;
+      let E=0,b=0;
+      for(let k=0;k<200;k++){const r=advanceShaft(E,rpmOf(i0),b,1,0.01);E=r.shaftE;b=r.boost;}   // 2 s flat
+      for(let k=0;k<n;k++){
+        const i=(i0+k)%n,j=(i+1)%n;
+        const dt=p[i].ds3/Math.max(2,(v[i]+v[j])/2);
+        // 10 ms steps: against 2 ms no lap moves by more than 0.01 s, at a fifth of the cost
+        const r=advanceShaft(E,rpmOf(i),b,thrS[i],dt,0.01);E=r.shaftE;b=r.boost;
         boostLap[i]=b;
       }
       for(let i=0;i<n;i++){
