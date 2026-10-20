@@ -26,12 +26,12 @@ const rec = await page.evaluate(() => {
     for (const k of Object.keys(TRACKS)) {
       const L = simulateLap(k), R = L.replay, n = R.tAt.length, line = L.track.line;
       // the clock at the end of the last segment, the way replayAt advances it
-      const kT = L.lap / (L.lap - L.shiftLoss);
-      const end = R.tAt[n - 1] + line[n - 1].ds3 / Math.max(2, (L.v[n - 1] + L.v[0]) / 2) * kT;
+      // since build 117 the shifts are in the speeds, so the clock is the plain integral
+      const end = R.tAt[n - 1] + line[n - 1].ds3 / Math.max(2, (L.v[n - 1] + L.v[0]) / 2);
       const atStart = replayAt(L, 0), atEnd = replayAt(L, L.lap - 1e-6);
       let thrBad = 0, brkBad = 0, gBad = 0, mono = 0, braked = 0;
       for (let i = 0; i < n; i++) {
-        if (L.lim[i] === 'power' && R.thr[i] !== 1) thrBad++;
+        if (L.lim[i] === 'power' && !R.cut[i] && R.thr[i] !== 1) thrBad++;   // mid-shift the drive is cut
         // 'brake' in the solver means slowing faster than 1 m/s2. Drag and a climb can do that alone at
         // speed, and then the driver lifts rather than brakes, so the check is that nobody is flat on
         // the throttle there, and that the brake is used somewhere on the lap.

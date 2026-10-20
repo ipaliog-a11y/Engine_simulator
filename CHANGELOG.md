@@ -20,6 +20,25 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 Working toward **v1.0 — every number derived, not fitted.**
 
+### Brake heat split from the hydraulics; gear shifts in the lap solve (build 117)
+
+- **Brake heat split.** The heat each axle's rotors took was the ideal load split at every deceleration,
+  floored at 50/50, so a light lift on a rear-engined car put half the heat into its small rear rotors: the
+  911 GT3's rears ran hotter than its fronts (650 vs 512 C on Cape), the Huracan's too. Now the hydraulics
+  set it: both axles see the same line pressure, so the pistons and rotor radii fix the front share (GT3
+  0.73, Huracan 0.64), until one axle's tyres reach their grip at the load the transfer leaves them; ABS
+  holds that axle there and the other takes the rest. GT3 fronts 653 / rears 416 C, Huracan 659 / 600 C.
+- **Gear shifts.** Every gear change, up or down, was charged half a shift time after the lap was solved,
+  and the clock spread it over the replay. Now the forward pass carries the gear: an upshift on the power
+  cuts the drive for the gearbox's shift time and the car coasts against drag, rolling resistance and the
+  slope for as far as it travels meanwhile (the last step only for the share of it the shift lasts); a
+  downshift, made braking or lifting, costs nothing, and on the power the driver keeps the gear just
+  selected. The SHIFTS cell shows the difference to the same lap with instant shifts: a 2JZ coupe on
+  Riverside 2.45 -> 0.54 s, a PDK 911 GT3 0.25 s. The replay's throttle reads zero mid-shift.
+- The manual's 0.35 s shift time is a driver's figure (a quick hand shift, clutch to clutch), not derived:
+  it stays an input.
+- test62's replay clock is the plain integral now.
+
 ### Engine breathing: valve overlap and exhaust waves (build 116)
 
 Found checking why the Lancer Evo IX felt lethargic (0-100 6.8 s against a real 5.0): its engine made

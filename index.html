@@ -282,7 +282,7 @@ table.fuelmap td.live{box-shadow:inset 0 0 0 2px #fff;font-weight:bold}
 <body>
 <div class="container">
 <header>
-<h1>PIXEL ENGINE SIM v0.6 build 116</h1>
+<h1>PIXEL ENGINE SIM v0.6 build 117</h1>
 <div class="subtitle" id="subtitle">ENGINE DESIGNER • BUILD IT, THEN DRIVE IT</div>
 </header>
 <div class="build-strip" id="buildStrip">
@@ -3169,7 +3169,10 @@ const BRAKE_RISE_S=0.2;
 function brakeForceCap(v){
   const bt=BRAKE_TYPE[v.brakeType]||BRAKE_TYPE.slotted, p=BRAKE_LINE_BAR*1e5;
   const axle=(pist,D)=>2*(2*bt.pad*p*pist.reduce((a,d)=>a+Math.PI/4*(d/1000)*(d/1000),0)*0.4*D);
-  return (axle(bt.caliper.f,v.rotor/1000)+axle(bt.caliper.r,0.9*v.rotor/1000))/v.rTire;
+  const f=axle(bt.caliper.f,v.rotor/1000),r=axle(bt.caliper.r,0.9*v.rotor/1000);
+  // Both axles see the same line pressure, so the pistons and rotor radii fix the split (build 117).
+  v.brakeFrontShare=f/(f+r);
+  return (f+r)/v.rTire;
 }
 // ---- brake temperature (build 107; cooling rebuilt in build 110) ----
 // Each rotor is a lump of material heated by the brakes and cooled by the air, and its pads lose grip
@@ -3239,7 +3242,19 @@ const brakeFadeAt=(T,th)=>1-FADE_MAX*clamp((T-th.onset)/FADE_SPAN,0,1);
 // Front/rear rotors through one braking step: decel a (m/s2) that the brakes do, at speed v.
 function brakeHeatStep(st,th,a,vCar,dt){
   const m=vehicle.mass, P=Math.max(0,m*a*vCar);
-  const fr=clamp(vehicle.fWt+(a/G)*vehicle.cg/Math.max(0.5,vehicle.wb),0.5,0.85);
+  // How the braking is shared (build 117). The hydraulics split it in a fixed ratio (the calipers and
+  // rotors: brakeFrontShare). That holds until one axle's tyres reach their grip at its load, which the
+  // load transfer moves forward as the car slows harder; ABS then holds that axle at its grip and the
+  // other takes the rest, so at the limit the split is the axle loads'. It was the ideal load split at
+  // every deceleration, floored at 50/50, so a light lift on a rear-engined car put half the heat in its
+  // small, unducted rears and they ran hotter than the fronts.
+  const fH=vehicle.brakeFrontShare||0.7, fL=clamp(vehicle.fWt+(a/G)*vehicle.cg/Math.max(0.5,vehicle.wb),0.05,0.95);
+  const lim=(vehicle.mu||1)*TYRE_MU_X*G;   // the tyres' longitudinal grip, as a deceleration
+  let fr=fH;
+  if(a>1e-6){
+    if(fH>fL)fr=Math.min(fH,lim*fL/a);            // the fronts saturate first: held at their grip
+    else fr=Math.max(fH,1-lim*(1-fL)/a);          // the rears do
+  }
   st.F=rotorStep(st.F,th.front,th,P*fr/2,vCar,dt);
   st.R=rotorStep(st.R,th.rear,th,P*(1-fr)/2,vCar,dt);
 }
@@ -6170,7 +6185,8 @@ function simulateLap(key,opts){
     const aAcc=Math.min(aPow,aGrip);
     return {cap:Math.sqrt(Math.max(1,vi*vi+2*aAcc*q.ds3)),kind:aPow<aGrip?'power':'traction',u};
   }
-  let v,vB;
+  let v,vB,shiftsCut=false;
+  const cutAt=new Uint8Array(n);
   function passes(){
     v=vC.slice();
   // 2. Backward pass: brake into every corner. Lateral grip in use eats the longitudinal budget
@@ -6197,15 +6213,42 @@ function simulateLap(key,opts){
   //    lost none to it). Grip depends on that load and the load on the acceleration, so solve it:
   //        a = k (N0 - s m R h/L) / (m (1 - s k h/L)),   k = mu x diff x sqrt(1 - u^2)
   //    with s = +1 RWD, -1 FWD, 0 AWD and R the resistances (the transfer follows the NET acceleration).
+  //    Gear shifts (build 117): an upshift taken on the power cuts the drive for the gearbox's shift time,
+  //    and the car rolls on against drag, rolling resistance and the slope for the distance it covers
+  //    meanwhile. A downshift costs nothing: it is made braking or lifting, with no drive to cut. Until
+  //    build 117 every gear change, up or down, was charged half a shift time after the lap was solved.
+  let held=-1,cut=0;
   for(let pass=0;pass<2;pass++)for(let k=0;k<n;k++){
     const i=k%n,j=(i+1)%n;
-    const st=accFrom(p[i],v[i]),cap=st.cap;
-    accKind[i]=st.kind;latUse[i]=st.u;
-    if(cap<v[j])v[j]=cap;
+    let cap;
+    if(cut>0){
+      const R=(drag(v[i])+rollF(v[i])*p[i].cosT)/m+G*p[i].sinT;
+      // The shift ends part-way along its last step: coast that share of it, drive the rest. Cutting
+      // whole 5 m steps made a 0.35 s shift last anything up to 0.5 s, by where the steps happened to fall.
+      const dtS=p[i].ds3/Math.max(1,v[i]),f=Math.min(1,cut/dtS);
+      let sq=v[i]*v[i]-2*R*p[i].ds3;
+      if(f<1){const st=accFrom(p[i],v[i]);sq=f*sq+(1-f)*st.cap*st.cap;accKind[i]=st.kind;latUse[i]=st.u;}
+      cap=Math.sqrt(Math.max(1,sq));
+      cut-=dtS;
+      if(shiftsCut)cutAt[i]=1;
+    }else{
+      cutAt[i]=0;
+      const st=accFrom(p[i],v[i]);cap=st.cap;
+      accKind[i]=st.kind;latUse[i]=st.u;
+    }
+    const onPower=cap<v[j];
+    if(onPower)v[j]=cap;
+    if(shiftsCut){
+      const g=gearAt(v[j]).gear;
+      if(held<0)held=g;
+      if(g>held){if(onPower&&cut<=0)cut=vehicle.shiftTime;held=g;}
+      else if(g<held&&!onPower)held=g;   // on the power the driver stays in the gear just selected
+    }
   }
   }
   passes();
-  // the line optimiser only needs the speeds on a candidate line (no brake temperatures, no recording)
+  // the line optimiser only needs the speeds on a candidate line (no brake temperatures, no recording, and
+  // no gear shifts: the stretches it re-solves do not carry the gearbox's state)
   if(quick){let tq=0;for(let i=0;i<n;i++){const j=(i+1)%n;tq+=p[i].ds3/Math.max(2,(v[i]+v[j])/2);}return {lap:tq,v,vC,vB,kind:accKind,model:{ceilAt,brakeFrom,accFrom}};}
   // 2b. Brake temperature on the lap (build 107; build 105 counted heat per stop against a fitted
   //     budget). Run the solved profile through the rotors in time order, lap after lap until the
@@ -6233,6 +6276,12 @@ function simulateLap(key,opts){
     for(let i=0;i<n;i++){fadeF[i]=brakeFadeAt(BT.TF[i],th);if(fadeF[i]<0.999)faded=true;}
     if(faded){passes();BT=brakeTemps();}
   }
+  // what the shifts cost: the same lap with and without the drive cut
+  const lapOf=()=>{let tq=0;for(let i=0;i<n;i++){const j=(i+1)%n;tq+=p[i].ds3/Math.max(2,(v[i]+v[j])/2);}return tq;};
+  const tNoShift=lapOf();
+  shiftsCut=true;passes();
+  const shiftLoss=Math.max(0,lapOf()-tNoShift);
+  BT=brakeTemps();   // the rotors through the lap as it is now driven
   // Classify from the FINISHED profile, not during the passes — the backward pass touches almost
   // every point on a twisty circuit, so labelling as it goes would call the whole lap "braking".
   // What's actually limiting the car is: losing speed → brakes; sitting on the cornering ceiling
@@ -6273,11 +6322,8 @@ function simulateLap(key,opts){
     }
     for(let i=0;i<n;i++)if(gears[i]!==gears[(i-1+n)%n])shifts++;
   }
-  const shiftLoss=shifts*vehicle.shiftTime*0.5;   // half a shift's drive-cut costs time on track
-  const tRaw=t;
-  t+=shiftLoss;sect[0]+=shiftLoss/3;sect[1]+=shiftLoss/3;sect[2]+=shiftLoss/3;
   // 5. The lap as a recording, for the live replay (build 104): what the car is doing at each point.
-  //   time    the clock at each point, the shift losses spread over the lap so it ends on the lap time
+  //   time    the clock at each point
   //   pedals  flat wherever the car accelerates as hard as it may (engine- or traction-limited). On the
   //           cornering ceiling the driver holds speed: the drive force that takes, against what this
   //           gear has, is the throttle. Slowing harder than drag and the slope do on their own is the
@@ -6286,12 +6332,13 @@ function simulateLap(key,opts){
   //   rpm     from the gear the car is in
   const tAt=new Array(n),thr=new Array(n),brk=new Array(n),gLat=new Array(n),gLong=new Array(n),rpmAt=new Array(n),mapAt=new Array(n);
   {
-    const k=t/Math.max(1e-9,tRaw);let tc=0;
+    let tc=0;
     for(let i=0;i<n;i++){
       const j=(i+1)%n,h=(i-1+n)%n;tAt[i]=tc;
-      tc+=p[i].ds3/Math.max(2,(v[i]+v[j])/2)*k;
+      tc+=p[i].ds3/Math.max(2,(v[i]+v[j])/2);
       const resist=drag(v[i])+rollF(v[i])*p[i].cosT+m*G*p[i].sinT, need=vehicleMassEff(ratios[gears[i]]*fd)*aL[i]+resist;
-      if(lim[i]==='power'||lim[i]==='traction'){thr[i]=1;brk[i]=0;}
+      if(cutAt[i]){thr[i]=0;brk[i]=0;}   // mid-shift: clutch in, no drive
+      else if(lim[i]==='power'||lim[i]==='traction'){thr[i]=1;brk[i]=0;}
       else if(need>=0){thr[i]=clamp(need/Math.max(1,bestGear(v[i]).F),0,1);brk[i]=0;}
       else{thr[i]=0;brk[i]=clamp(-need/m/Math.max(0.1,vehicle.brakeDecelCap),0,1);}
       const ax=p[i].x-p[h].x,ay=p[i].y-p[h].y,bx=p[j].x-p[i].x,by=p[j].y-p[i].y;
@@ -6308,7 +6355,7 @@ function simulateLap(key,opts){
   for(let i=0;i<n;i++)counts[lim[i]]+=p[i].ds3;
   return {track:T,lap:t,sectors:sect,v,lim,vMin:vMin*3.6,vMax:vMax*3.6,
     avg:p.length_/t*3.6,shifts,shiftLoss,counts,gears,climb,zMin,zMax,length:T.length,lineLength:p.length_,
-    replay:{tAt,thr,brk,gLat,gLong,rpm:rpmAt,map:mapAt,tF:BT.TF,tR:BT.TR,fade:fadeF.slice()},
+    replay:{tAt,thr,brk,cut:Array.from(cutAt),gLat,gLong,rpm:rpmAt,map:mapAt,tF:BT.TF,tR:BT.TR,fade:fadeF.slice()},
     brakeMaxF:Math.max(...BT.TF),brakeMaxR:Math.max(...BT.TR),brakeOnset:th.onset,
     corners:T.corners,width:T.width,wLabel:T.wLabel};
 }
