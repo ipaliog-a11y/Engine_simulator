@@ -20,6 +20,30 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 Working toward **v1.0 — every number derived, not fitted.**
 
+### A spark engine's torque, from the fuel it burns (build 95)
+
+- **`IMEP_K` no longer sets spark torque.** Spark IMEP was 13.2 × typeImep × map × VE × an anchored
+  mixture factor × crFactor. Air density × φ·faEta(φ) is already fuel × an efficiency, so the shape
+  was right. What was fitted was the constant carrying the efficiency, and every fuel got the same
+  energy per kg of air. It is now `gross IMEP = η × (m_air / AFR_st) × LHV × sparkMixture(λ)`, the
+  diesel's form from build 88.
+- **The efficiency is Heywood's.** A real engine reaches ~0.8 of the fuel-air cycle, whose efficiency
+  at φ 1 is 1 − CR^−0.28 (0.47 at CR 10, fig. 5-9). The old constant implied 0.383 on the MX-5 at λ1;
+  this gives 0.373, so spark torque falls ~2.7% across the board — the honest cost of replacing the
+  fit. Full-load BSFC at λ0.86 is 280 g/kWh on the MX-5 (real 270–300).
+- **Fuels carry their own energy per kg of air**, LHV/AFR_st: methanol +3.1%, race gas −1.1%, E85
+  −0.5% against gasoline. So race gas makes slightly *less* power where an engine is not knock-limited.
+- Spark timing, ignition health, coolant, engine health and nitrous are unchanged. `IMEP_K` survives
+  only to scale the dyno brake's reference torque. Rotary and two-stroke keep their type factors
+  (0.70 / 0.60), still fitted.
+- Calibration: test41 3.28% → 3.32%, power RMS 8.3% → 8.5%, 0–100 5.2% → 5.1%, torque RMS 9.2% →
+  11.0%. The NA engines read 2–3% lower; the turbos are roughly unchanged.
+- test36: the Nordschleife challenge's reference build (the 2.0 ITB NA Screamer) was left 0.06 s
+  inside 7:00. The target is the challenge's name, so the reference moved to the 2.5 Turbo I5 in
+  the same race roadster, which clears it by 6.1 s.
+- test59: the fuel-air efficiency against Heywood, the implied gross efficiency equal to 0.8 × fuel-air,
+  full-load BSFC in the measured band, and IMEP per kg of air following each fuel's LHV/AFR_st.
+
 ### `turboChoke` retired: what rolls a turbo off at the top, derived (build 94)
 
 `turboChoke` was a fitted VE taper, 2.5–10% per frame from the VE peak to the redline, standing in

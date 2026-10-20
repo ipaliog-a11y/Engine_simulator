@@ -1,4 +1,4 @@
-# PIXEL ENGINE SIM v0.6 build 94
+# PIXEL ENGINE SIM v0.6 build 95
 
 **A lightweight, 8-bit style internal combustion engine *designer* & simulator** inspired by *Automation*.
 
@@ -707,7 +707,7 @@ This is the current direction, and it is a change of principle rather than a fea
 
 Parts of the model reach their accuracy through **lumped coefficients that were tuned until the
 outputs matched reality** — `CAM{peakShift, ampMul, scav}`, `EXHAUST{topGain, lowLoss}`,
-`TURBO{spool, flow}`, `IMEP_K`, `DIFF_ASYM0`, `KVCAP`. They work, and they are honest
+`TURBO{spool, flow}`, `IMEP_K` (retired from torque in build 95), `DIFF_ASYM0`, `KVCAP`. They work, and they are honest
 approximations, but they are fitted rather than derived: they encode *the answer* instead of the
 mechanism that produces it.
 
@@ -733,6 +733,7 @@ measurement finds things. Each item is one PR.
 | — | Shift at the torque crossover | ✅ build 81 | Every car used to upshift at the redline; 0–100 RMS 24.4% → 10.2%. |
 | — | Exhaust pulse energy | ✅ build 90 | The turbine fed by blowdown pulses, from cam timing and cylinder state; the prerequisite housing sizing kept running into. Small on presets with long tuned primaries. |
 | 3 | Turbine housing sizing | ✅ build 91, as a choice | Not derivable: which side of the spool/top-end compromise to take is design intent, and every objective tried decided it silently (sweep time gave the GTI 287 hp vs 220). Shipped as TURBINE A/R (tight/stock/loose per frame), plus the real physics found on the way: turbo manifolds are packaging-short, not tuned headers. The Alto's frame-size gap remains (no frame small enough for 660 cc). |
+| — | Spark torque from fuel | ✅ build 95 | `IMEP_K` replaced by Heywood's 0.8 × fuel-air cycle efficiency; each fuel's LHV/AFR_st enters. Spark torque −2.7%, full-load BSFC 280 g/kWh (real 270–300). Rotary/two-stroke type factors still fitted. |
 | — | `turboChoke` (boost taper) | ✅ build 94 | Retired. Turbine efficiency from blade speed ratio U/C, per-point compressor efficiency, a continuous rich-knock slope in place of a step, and sequential turbos staged as two turbines. Calibration improved on every measure. |
 | — | Rotary exhaust heat | ✅ build 92 | The slow, late Wankel burn (130° ES, CA50 37.5° ATDC) leaves ~10% of the expansion work undone, and that heat now reaches the exhaust: 13B 775 → 942 °C, off the limiter. |
 | — | Rotary pulse energy | ⬜ | The 13B still reaches boost near 8500 rpm (real ~3000). It needs blowdown timing from the rotary's ports, and a firmer port-timing source. Ceiling in test56. |

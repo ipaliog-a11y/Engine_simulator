@@ -18,7 +18,11 @@ const solve = await page.evaluate(() => {
   const spec = {
     clubsprint: ['2.0 Turbo Hot-Hatch I4', 'hatch', { vhTire: 'semi', vhSusp: 'coilover', vhWeight: 'sport' }],
     gppace: ['3.0 Turbo I6 (2JZ)', 'coupe', { vhTire: 'slick', vhAeroF: 'splitter', vhAeroR: 'wing', vhAeroFl: 'diffuser', vhWeight: 'race', vhSusp: 'race', vhGearbox: 'dct' }],
-    greenhell: ['2.0 ITB NA Screamer I4', 'roadster', { vhTire: 'slick', vhAeroF: 'splitter', vhAeroR: 'wing', vhAeroFl: 'diffuser', vhWeight: 'race', vhSusp: 'race', vhDiff: 'clsd', vhGearbox: 'sequential' }],
+    // The reference was the 2.0 ITB NA Screamer until build 95. Spark torque from fuel (an honest
+    // ~2.7% less than the old fitted constant gave) left it 0.06 s inside 7:00 — the target is the
+    // challenge's name, so the reference moved instead: a ~290 hp turbo roadster, still a believable
+    // sub-7 Nordschleife car, with 6 s in hand.
+    greenhell: ['2.5 Turbo I5 (RS)', 'roadster', { vhTire: 'slick', vhAeroF: 'splitter', vhAeroR: 'wing', vhAeroFl: 'diffuser', vhWeight: 'race', vhSusp: 'race', vhDiff: 'clsd', vhGearbox: 'sequential' }],
     'laptime$': ['2.0 Turbo Hot-Hatch I4', 'hatch', { vhTire: 'semi', vhSusp: 'coilover', vhWeight: 'sport' }]
   };
   return CHALLENGES.filter(c => c.circuit).map(ch => {
