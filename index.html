@@ -112,8 +112,22 @@ footer{text-align:center;margin-top:16px;padding:8px;font-size:7px;color:#555;bo
 .design-panel h3{font-size:10px;color:#ffcc00;margin:2px 0 4px}
 .design-panel .hint{font-size:7px;color:#667;margin-bottom:10px}
 .design-section{font-size:8px;color:#00ccff;margin:12px 0 6px;border-bottom:2px solid #26263a;padding-bottom:3px;text-transform:uppercase}
-.design-grid{display:grid;grid-template-columns:1fr 1fr;gap:9px}
-.field{display:flex;flex-direction:column;gap:4px}
+/* Fields are a size, not a share of the panel. A 1fr/1fr grid stretched every select and number box to
+   half of a ~1200px panel, which read as two long horizontal lines per row. Cells of 170-220px pack as
+   many to a row as fit and stay put on the left; the phone layout below keeps two to a row. */
+.design-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,220px));gap:9px 12px;justify-content:start}
+.field{display:flex;flex-direction:column;gap:4px;min-width:0}
+.pick-row{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,280px));gap:9px 12px;justify-content:start;margin-bottom:6px}
+/* What is loaded right now, on every tab. */
+.build-strip{display:flex;flex-wrap:wrap;gap:6px 14px;align-items:center;font-size:8px;color:#889;padding:6px 10px;margin:-6px 0 10px;background:#0d0d18;border:2px solid #26263a}
+.build-strip button{font-size:8px;padding:4px 8px;box-shadow:none;border:2px solid #33334a;background:#151522;color:#00ff88;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.build-strip button:hover{border-color:#ffcc00;color:#ffcc00}
+.build-strip .k{color:#667}
+/* Phones: two to a row (this has to follow the rules above to win over them). */
+@media(orientation:portrait){
+  .design-grid,.pick-row{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .build-strip{font-size:10px}
+}
 .field label{font-size:7px;color:#88aacc;line-height:1.3}
 .field input,.field select{font-family:'Press Start 2P',monospace;font-size:8px;padding:6px;background:#12121c;color:#00ff88;border:2px solid #555;outline:none}
 .field input:focus,.field select:focus{border-color:#00ccff}
@@ -249,9 +263,13 @@ table.fuelmap td.live{box-shadow:inset 0 0 0 2px #fff;font-weight:bold}
 <body>
 <div class="container">
 <header>
-<h1>PIXEL ENGINE SIM v0.6 build 101</h1>
+<h1>PIXEL ENGINE SIM v0.6 build 102</h1>
 <div class="subtitle" id="subtitle">ENGINE DESIGNER • BUILD IT, THEN DRIVE IT</div>
 </header>
+<div class="build-strip" id="buildStrip">
+<span class="k" id="bsEngineK">ENGINE</span><button id="bsEngine" title="Go to the engine">—</button>
+<span class="k" id="bsCarK">CAR</span><button id="bsCar" title="Go to the car">—</button>
+</div>
 <div class="main">
 <div class="viz-panel">
 <div class="viz-tabs">
@@ -269,10 +287,13 @@ table.fuelmap td.live{box-shadow:inset 0 0 0 2px #fff;font-weight:bold}
 <h3>ENGINE DESIGN</h3>
 <div class="hint">Load a preset, or configure a build and press BUILD &amp; DYNO. Physics update live.</div>
 
-<div class="field" style="margin-bottom:6px"><label for="edPreset">LOAD A PRESET</label><select id="edPreset"><option value="">— choose a popular build —</option></select></div>
+<div class="pick-row">
+<div class="field"><label for="edFamily">ENGINE FAMILY</label><select id="edFamily"></select></div>
+<div class="field"><label for="edPreset">LOAD A BUILD</label><select id="edPreset"><option value="">— choose a build —</option></select></div>
+</div>
 
 <div class="design-section">Career / Challenge</div>
-<div class="field" style="margin-bottom:6px"><label for="edChallenge">OBJECTIVE</label><select id="edChallenge"></select></div>
+<div class="pick-row"><div class="field"><label for="edChallenge">OBJECTIVE</label><select id="edChallenge"></select></div></div>
 <div class="challenge-card" id="challengeCard"></div>
 
 <div class="design-section">Bottom End</div>
@@ -965,9 +986,13 @@ This is a physics model, and like every model it leaves things out. These are th
 <h3>VEHICLE DESIGN</h3>
 <div class="hint">Pick a chassis and it arrives on its factory spec — matching tyres, wheels, brakes, suspension and aero. Swap any part from there; your current engine is dropped in and the performance is computed live.</div>
 
+<div class="pick-row">
+<div class="field"><label for="vhFamily">CAR FAMILY</label><select id="vhFamily"></select></div>
+<div class="field"><label for="vhPreset">FACTORY CAR</label><select id="vhPreset"><option value="">— load a real car —</option></select></div>
+</div>
+
 <div class="design-section">Chassis &amp; Drivetrain</div>
 <div class="design-grid">
-<div class="field"><label for="vhPreset">FACTORY CAR</label><select id="vhPreset"><option value="">— load a real car —</option></select></div>
 <div class="field"><label for="vhChassis">CHASSIS</label><select id="vhChassis">
 <option value="kei">KEI CAR</option><option value="hatch">HOT HATCH</option><option value="roadster">LIGHT ROADSTER</option>
 <option value="coupe">SPORTS COUPE</option><option value="sedan">SPORTS SEDAN</option><option value="muscle">MUSCLE CAR</option>
@@ -985,7 +1010,7 @@ This is a physics model, and like every model it leaves things out. These are th
 
 <div class="design-section">Wheels &amp; Tyres</div>
 <div class="design-grid">
-<div class="field"><label for="vhRating">TYRE SPEED RATING</label><select id="vhRating"><option value="T">T — 190 km/h</option><option value="H">H — 210</option><option value="V">V — 240</option><option value="W">W — 270</option><option value="Y">Y — 300</option><option value="YY">(Y) — 340+</option></select></div>
+<div class="field"><label for="vhRating">TYRE SPEED RATING</label><select id="vhRating"><option value="T">T — 190 km/h</option><option value="H">H — 210</option><option value="V">V — 240</option><option value="W">W — 270</option><option value="Y">Y — 300</option><option value="YY">(Y) — over 300</option></select></div>
 <div class="field"><label for="vhTire">TYRE COMPOUND</label><select id="vhTire"><option value="eco">ECO/TOURING</option><option value="street">STREET</option><option value="sport">SPORT</option><option value="semi">SEMI-SLICK</option><option value="slick">RACE SLICK</option><option value="drag">DRAG RADIAL</option></select></div>
 <div class="field"><label for="vhWheel">WHEEL DIA (in)</label><input type="number" id="vhWheel" min="13" max="22" step="1" value="18"></div>
 <div class="field"><label for="vhTireW">TYRE WIDTH (mm)</label><input type="number" id="vhTireW" min="135" max="355" step="5" value="235"></div>
@@ -2622,7 +2647,7 @@ function applyLang(lang){
     el.innerHTML=(currentLang==='el'&&GUIDE_I18N[k])?GUIDE_I18N[k].el:el.dataset.enHtml;
   });
   // Preset placeholder, language selector, footer, vehicle placeholder
-  const pp=document.getElementById('edPreset');if(pp&&pp.options[0])pp.options[0].textContent=tr('— choose a popular build —');
+  const pp=document.getElementById('edPreset');if(pp&&pp.options[0])pp.options[0].textContent=tr('— choose a build —');
   const lg=document.getElementById('edLang');if(lg)lg.value=currentLang;
   const foot=document.querySelector('footer');
   if(foot){if(foot.dataset.en===undefined)foot.dataset.en=foot.innerHTML;
@@ -2952,8 +2977,11 @@ const crrAt=(crr0,v)=>crr0*(1+CRR_BETA*(v*v-CRR_VREF*CRR_VREF));
 // tyre out.
 const SPEED_RATING={
   T:{kmh:190,label:'T (190)'},H:{kmh:210,label:'H (210)'},V:{kmh:240,label:'V (240)'},
-  W:{kmh:270,label:'W (270)'},Y:{kmh:300,label:'Y (300)'},YY:{kmh:340,label:'(Y) 340+'}
+  W:{kmh:270,label:'W (270)'},Y:{kmh:300,label:'Y (300)'},YY:{kmh:Infinity,label:'(Y) over 300'}
 };
+// "(Y)", the rating in brackets, is not a higher fixed figure. It means above 300 km/h, with the tyre
+// tested to the top speed of the car it is made for, so it has no ceiling of its own to exceed. It was
+// stored as 340, which warned on every car faster than that even on the best tyre there is.
 // ================================================================================================
 // Tyre compound: mu = peak grip coefficient (dry), crr = rolling resistance at 80 km/h, cost,
 // rating = the speed rating such a tyre is typically sold in (an editable default, not a law).
@@ -4741,6 +4769,7 @@ function buildVehicle(){
   }
   // The lap solver is heavier than the straight-line runs, so only re-run it while it's on screen.
   if(typeof vizMode!=='undefined'&&vizMode==='track'&&typeof refreshLap==='function')refreshLap();
+  if(typeof updateBuildStrip==='function')updateBuildStrip();
 }
 // Braking run from v0 (m/s) to a stop: decel is the lesser of tyre grip (μ·(weight+downforce))
 // and what the brakes can command (capacity, fading as they absorb heat), with aero drag also
@@ -5866,6 +5895,49 @@ function applyBuild(s){
   setAutoThermal(!!t.autoThermal);
   dynoCache=null;syncSliders();
   return s.name||'engine';
+}
+// ---- picking a preset in two steps: a family, then a build in it ----
+// One long list of 43 engines (and 28 cars) was the problem; each family holds a handful. The chosen
+// build stays selected after loading, so the page always says what it came from.
+let enginePicker=null,carPicker=null;
+function wireFamilyPicker(famId,itemId,cats,items,catOf,placeholder,onPick){
+  const fam=document.getElementById(famId),sel=document.getElementById(itemId);
+  if(!fam||!sel)return null;
+  const used=cats.filter(c=>items.some(p=>catOf(p)===c));
+  fam.innerHTML=used.map(c=>'<option value="'+esc(c)+'">'+esc(tr(c))+'</option>').join('');
+  const fill=(keep)=>{
+    sel.innerHTML='<option value="">'+esc(tr(placeholder))+'</option>'+
+      items.map((p,i)=>catOf(p)===fam.value?'<option value="'+i+'">'+esc(p.name)+'</option>':'').join('');
+    sel.value=keep!=null?String(keep):'';
+  };
+  fam.addEventListener('change',()=>fill());
+  sel.addEventListener('change',()=>{if(sel.value!=='')onPick(+sel.value);});
+  fill();
+  // show a build as the current choice without loading it (garage loads, saved sessions)
+  return {show(i){if(i==null||!items[i]){sel.value='';return;}fam.value=catOf(items[i]);fill(i);}};
+}
+// What was last loaded, and the form it produced, so the strip can say when you have changed it since.
+const loaded={engine:null,car:null};
+function markLoaded(kind,name){
+  loaded[kind]={name,form:kind==='engine'?JSON.stringify(readEngineFromForm()):null};
+  updateBuildStrip();
+}
+function updateBuildStrip(){
+  const be=document.getElementById('bsEngine'),bc=document.getElementById('bsCar');
+  if(!be||!bc||!engine)return;
+  const disp=engine.displacement_L?engine.displacement_L.toFixed(engine.displacement_L<1?2:1)+'L':'';
+  const L=loaded.engine;
+  let et;
+  if(L&&L.form===JSON.stringify(readEngineFromForm()))et=L.name;
+  else if(L)et=L.name+' ('+tr('modified')+')';
+  else et=disp+' '+tr('custom');
+  if(engine.score)et+=' • '+engine.score.peakHP+' hp';
+  be.textContent=et;be.title=et;
+  let ct=(vehicle&&vehicle.chLabel)||'—';
+  if(vehicle&&vehicle.chLabel&&!isFactoryFit(readVehicleFromForm()))ct+=' ('+tr('modified')+')';
+  if(perf&&perf.t100)ct+=' • 0–100 '+perf.t100.toFixed(1)+'s';
+  bc.textContent=ct;bc.title=ct;
+  document.getElementById('bsEngineK').textContent=tr('ENGINE');document.getElementById('bsCarK').textContent=tr('CAR');
 }
 // A real car from VEHICLE_PRESETS: its factory engine, then its body and fitment.
 function loadVehiclePreset(p){
@@ -7650,13 +7722,19 @@ function bindControls(){
   document.getElementById('tabOptions').addEventListener('click',()=>setTab('options'));
   // Vehicle design: recompute performance live on any change. Picking a chassis fits its whole
   // factory spec (drivetrain, gearbox, tyres/wheels, brakes, suspension, aero, weight).
-  ['vhChassis','vhDrive','vhGearbox','vhDiff','vhGears','vhGearing','vhLimiter','vhLimitKmh','vhTire','vhTireW','vhTireA','vhWheel','vhAeroF','vhAeroR','vhAeroFl','vhWeight','vhBrake','vhRotor','vhSusp'].forEach(id=>{
+  ['vhChassis','vhDrive','vhGearbox','vhDiff','vhGears','vhGearing','vhLimiter','vhLimitKmh','vhRating','vhTire','vhTireW','vhTireA','vhWheel','vhAeroF','vhAeroR','vhAeroFl','vhWeight','vhBrake','vhRotor','vhSusp'].forEach(id=>{
     const el=document.getElementById(id);if(!el)return;
     el.addEventListener('input',()=>{
       if(id==='vhChassis'){
         vehBody=null;   // a generic chassis, not the real car any more
         const ch=applyChassisFit(el.value);
         if(ch)flash(tr('FITTED')+': '+tr(ch.label)+' • '+fitmentLabel(readVehicleFromForm()));
+      }
+      // A compound is sold in at least its usual rating, so a new compound raises the rating to that
+      // if it was lower; it never lowers one you chose.
+      if(id==='vhTire'){
+        const keys=Object.keys(SPEED_RATING),rs=document.getElementById('vhRating'),want=(TIRE_TYPE[el.value]||{}).rating;
+        if(want&&keys.indexOf(rs.value)<keys.indexOf(want))rs.value=want;
       }
       updateGearingLabel();
       buildVehicle();updateVehicleSummary();
@@ -7671,21 +7749,13 @@ function bindControls(){
     if(ch)flash(tr('REFITTED TO FACTORY SPEC')+': '+(vehBody?vehBody.name:tr(ch.label)));
   });
   // Real cars: the factory engine and the car's own body and fitment, together.
-  const vpSel=document.getElementById('vhPreset');
-  if(vpSel){
-    VEHICLE_CATS.forEach(cat=>{
-      const grp=document.createElement('optgroup');grp.label=cat;
-      VEHICLE_PRESETS.forEach((p,i)=>{if(p.cat!==cat)return;
-        const o=document.createElement('option');o.value=i;o.textContent=p.name;grp.appendChild(o);});
-      vpSel.appendChild(grp);
-    });
-    vpSel.addEventListener('change',e=>{
-      if(e.target.value==='')return;
-      const name=loadVehiclePreset(VEHICLE_PRESETS[+e.target.value]);
-      e.target.value='';
-      flash('LOADED: '+name+(perf&&perf.t100?' • 0–100 '+perf.t100.toFixed(1)+'s':''));
-    });
-  }
+  carPicker=wireFamilyPicker('vhFamily','vhPreset',VEHICLE_CATS,VEHICLE_PRESETS,p=>p.cat,'— load a real car —',i=>{
+    const name=loadVehiclePreset(VEHICLE_PRESETS[i]);
+    const ei=PRESETS.findIndex(p=>p.name===VEHICLE_PRESETS[i].engine);
+    if(enginePicker)enginePicker.show(ei);
+    markLoaded('engine',VEHICLE_PRESETS[i].engine);markLoaded('car',name);
+    flash('LOADED: '+name+(perf&&perf.t100?' • 0–100 '+perf.t100.toFixed(1)+'s':''));
+  });
   // Garage. The list is rebuilt on every change, so LOAD/DELETE are delegated off the container
   // rather than rebound per card.
   const gSave=document.getElementById('btnGarageSave'),gName=document.getElementById('garageName'),gList=document.getElementById('garageList');
@@ -7739,22 +7809,18 @@ function bindControls(){
   if(fmRich)fmRich.addEventListener('click',()=>adjustFmCell(-fmStep()));   // richer = lower λ
   if(fmReset)fmReset.addEventListener('click',resetFuelMap);
   // Populate & wire the preset dropdown
-  const presetSel=document.getElementById('edPreset');
-  PRESET_CATS.forEach(cat=>{
-    const grp=document.createElement('optgroup');grp.label=cat;
-    PRESETS.forEach((p,i)=>{if((p.cat||'Archetypes')!==cat)return;
-      const o=document.createElement('option');o.value=i;o.textContent=p.name;grp.appendChild(o);});
-    if(grp.children.length)presetSel.appendChild(grp);
-  });
-  presetSel.addEventListener('change',e=>{
-    if(e.target.value==='')return;
-    const p=PRESETS[+e.target.value];
-    applyBuild({engine:Object.assign({},p.engine),tune:Object.assign({},STD_TUNE),name:p.name});
+  enginePicker=wireFamilyPicker('edFamily','edPreset',PRESET_CATS,PRESETS,p=>p.cat||'Archetypes','— choose a build —',i=>{
+    const p=PRESETS[i];
+    // The car you have stays: an engine preset is an engine, dropped into whatever car is built.
+    applyBuild({engine:Object.assign({},p.engine),tune:Object.assign({},STD_TUNE),vehicle:readVehicleFromForm(),name:p.name});
     engine.name=p.name;
-    e.target.value='';
+    markLoaded('engine',p.name);
     flash('LOADED: '+p.name+' • '+engine.displacement_L.toFixed(engine.displacement_L<1?2:1)+'L'+(engine.score?' • '+engine.score.grade:''));
     setTab('dyno');
   });
+  document.getElementById('bsEngine').addEventListener('click',()=>setTab('design'));
+  document.getElementById('bsCar').addEventListener('click',()=>setTab('vehicle'));
+  updateBuildStrip();
   // Career / challenge selector
   const chSel=document.getElementById('edChallenge');
   CHALLENGES.forEach(c=>{const o=document.createElement('option');o.value=c.id;o.textContent=chName(c);chSel.appendChild(o);});
