@@ -41,7 +41,7 @@ bias (3 x how open the next 90 m were), and the review found the geometry under 
   of it where a corner opens onto a straight (2.3 m later onto the long side of a test rectangle, 2.3 m
   earlier onto the short one) and the fitted bias is gone. 0.2-0.4 s per car per circuit, ~3 s on the
   Nordschleife, cached per car.
-- **Laps:** 911 GT3 Nordschleife 7:25 -> 6:53 (real 7:12.7 on the 20.6 km layout; this trace is 20.2 km).
+- **Laps:** 911 GT3 Nordschleife 7:25 -> 7:01 (real 7:12.7 on the 20.6 km layout; this trace is 20.2 km), Riverside 63.5 -> 59.5 s.
 - **The lap solver's steps are functions of a point** (ceilAt, brakeFrom, accFrom) so the optimiser runs the
   same physics; the gear search is tabulated per 0.05 m/s.
 - **GT3 preset:** a splitter and lip for the real car's wing and lip (aero marked unsure).
