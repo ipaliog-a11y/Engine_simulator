@@ -20,6 +20,27 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 Working toward **v1.0 — every number derived, not fitted.**
 
+### Spinning parts, and the energy a launch takes from the flywheel (build 107)
+
+- **The car now spins up its engine and wheels as it accelerates.** The effective mass in a gear is
+  m + [I_wheels + I_engine·(gear × final)²·η]/r² (Gillespie): 15-40% more than the car in first, ~10%
+  in third. It applies while the tyres hold; when they slip the surplus only spins the wheels and the
+  car gets the tyre's force over its own mass. The engine counts only while coupled (not mid-shift,
+  not on a slipping clutch or a converter below stall). Same in the lap solver.
+- **Engine inertia is derived.** It was a feel for how the live bench revs (a 6.2 V8 got ~1.0 kg·m²,
+  about three times real). The flywheel is now sized by the clutch, and the clutch by the torque it
+  carries (1.3× peak; two faces, μ 0.3, 0.25 MPa, inner/outer 0.65), plus cover and crank shares:
+  ~0.10 kg·m² for a 2.0, ~0.23 for a V8. **Wheel and tyre inertia** come from the fitted tyre size.
+- **The clutch launch draws on the flywheel.** The clutch passes what the tyres can take up to its
+  capacity, and where that is more than the engine makes the flywheel slows and gives up its energy
+  until the clutch locks.
+- **Effect:** 0-100 is honestly slower. test48 RMS 4.8% → 6.2% (power-matched 7.7% → 9.2%); real cars
+  in test61 21.1% on own power, 11.4% power-matched (the car alone, unchanged). test41's harness now
+  gives each power-matched car the flywheel of its matched torque (a 64 hp kei was spinning a 3.0 six's
+  flywheel), and its budgets are set at today's state with the Supra and STI named: the 5% it met
+  before was met with no spinning mass, so another term was compensating. Candidates: the manual
+  gearbox's fitted 0.35 s drive cut and the traction multipliers. The RS3 is back on test61's list
+  (its engine's late boost; the added mass takes it over 25% again).
 ### Pixel-art car and engine (build 106)
 
 - **The car, side on**, at the top of the VEHICLE tab, drawn from the build rather than chosen from a

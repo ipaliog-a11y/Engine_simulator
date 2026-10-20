@@ -281,7 +281,7 @@ table.fuelmap td.live{box-shadow:inset 0 0 0 2px #fff;font-weight:bold}
 <body>
 <div class="container">
 <header>
-<h1>PIXEL ENGINE SIM v0.6 build 106</h1>
+<h1>PIXEL ENGINE SIM v0.6 build 107</h1>
 <div class="subtitle" id="subtitle">ENGINE DESIGNER • BUILD IT, THEN DRIVE IT</div>
 </header>
 <div class="build-strip" id="buildStrip">
@@ -3174,6 +3174,36 @@ function lapDiffTraction(df,aLat,cgH){return diffTractionAt(df,aLat,cgH,1);}
 // rear-engined one behind it (~1.1), so 1 - x/wheelbase. Used only for the CHANGE an engine swap makes.
 const ENGINE_FRONT_SHARE={front:0.9,mid:0.3,rear:-0.1};
 const engineLayoutOf=(chassis,body)=>(body&&body.engPos)||(['super','hyper','proto'].includes(chassis)?'mid':'front');
+// ---- rotating parts (build 106) ----
+// The flywheel is sized by the clutch it carries, and the clutch by the torque it must hold: ~1.3x peak,
+// the usual design margin. A single dry plate has two faces, mu ~0.3, at a face pressure ~0.25 MPa with
+// the inner radius 0.65 of the outer; its capacity n mu p pi (Ro^2 - Ri^2) r_mean comes to 0.226e6 Ro^3,
+// so Ro = (T_cap / 0.226e6)^(1/3): 252 mm across for a 2.0 turbo, 298 for an LS, as real ones are. The
+// flywheel is a steel disc 15% larger and 25 mm thick, 1/2 rho pi R^4 t; the clutch cover and plate add
+// ~30% of that and the crank, rods and pistons ~25%. ~0.10 kg m2 for a 2.0, ~0.23 for a V8.
+const CLUTCH_MARGIN=1.3;
+const clutchRadius=tq=>Math.cbrt(Math.max(5,tq*CLUTCH_MARGIN)/0.226e6);
+function engineInertia(peakTq){
+  const R=1.15*clutchRadius(peakTq), fly=0.5*7800*Math.PI*Math.pow(R,4)*0.025;
+  return fly*(1+0.30+0.25);
+}
+// The wheels and tyres, all four, from the fitted size. A tyre's mass is mostly tread and belts across
+// its width at the outside (~15 kg/m2) and sidewall (~6 kg/m2); an alloy wheel ~0.075 kg per square inch
+// of diameter x rim width, the rim ~0.8 of the tyre's width. That gives 8-11 kg tyres and 8-12 kg
+// wheels across 15-20 inch fitments, as they weigh. Radii of gyration: 0.85 of the tyre's outer radius
+// (the mass is at the tread), 0.7 of the rim's.
+function roadWheelInertia(v){
+  const D=2*v.rTire,dr=v.wheelDia*0.0254,w=v.tireWidth/1000;
+  const mt=15*Math.PI*D*w+6*2*Math.PI/4*(D*D-dr*dr), mw=0.075*v.wheelDia*(0.8*w/0.0254);
+  return 4*(mt*Math.pow(0.85*D/2,2)+mw*Math.pow(0.7*dr/2,2));
+}
+// The mass a drive force has to accelerate in a gear: the car, plus its spinning parts seen through the
+// gearing, I/r^2 at the wheel (Gillespie). The engine counts only while it is coupled to the wheels:
+// not while the clutch slips or a shift is under way. (Ratio 0 = not coupled.)
+function vehicleMassEff(totalRatio){
+  const r=vehicle.rTire;
+  return vehicle.mass+((vehicle.wheelI||0)+(totalRatio>0?(engine.inertia||0)*totalRatio*totalRatio*vehicle.driveEff:0))/(r*r);
+}
 // Drivetrain: driveline efficiency (crank→wheels) and the driven-axle description.
 const DRIVE_EFF={fwd:0.92,rwd:0.90,awd:0.86};
 const AIR_RHO=1.20;   // air density kg/m³
@@ -3501,12 +3531,12 @@ function buildEngine(){
   engine.nitrousBar=NITROUS_BAR[engine.nitrous]||0;
   state.boostActual=0;state.nitrousActive=false;state.nitrousCharge=1.0;   // fresh tanks
   state.engineHealth=1.0;state.blown=false;state.wearCause='';   // a fresh (rebuilt) engine
-  // Rotating-assembly + flywheel inertia grows faster than torque with engine size
-  // (bigger displacement, longer stroke, heavier flywheel), so a big long-stroke engine
-  // revs lazily while a small oversquare one snaps up.
-  engine.inertia=0.04+0.06*Math.pow(engine.displacement_L,1.5)*(engine.stroke_mm/86);
   // Reference brake torque (~peak) used to scale the dyno brake load.
   engine.loadRefTq=(IMEP_K*engine.typeImep*engine.mapMax*0.95*1e5*(engine.displacement_L/1000))/engine.strokeDiv;
+  // Rotating inertia, from the parts that spin (build 106). It was 0.04 + 0.06 L^1.5 x stroke/86, a
+  // feel for how the live bench revs, which gave a 6.2 V8 ~1.0 kg m2, about three times a real one; it
+  // did not matter while only the bench used it, and the car now does (vehicleMassEff).
+  engine.inertia=engineInertia(engine.loadRefTq);   // provisional; re-sized on the real peak below
   engine.brakeGain=engine.loadRefTq/220;   // dyno-brake torque per rpm over the hold target
   engine.canDFCO=(engine.intakeSys==='efi'||engine.intakeSys==='itb');   // injection can cut fuel on overrun
   // Cooling: radiator core capacity, plus a fixed fan contribution to airflow
@@ -3554,6 +3584,7 @@ function buildEngine(){
   buildRev++;dynoCache=null;
   engine.cost=computeCost();
   engine.score=scoreEngine();
+  engine.inertia=engineInertia(engine.score.peakTQ);   // the clutch is sized for the torque it carries
   updateEngineLabels();
   updateDesignSummary();
   renderChallenge();
@@ -4793,6 +4824,7 @@ function buildVehicle(){
   vehicle.chLabel=body?body.name:ch.label;
   const sidewall=vehicle.tireWidth*(vehicle.tireAspect/100);           // mm
   vehicle.rTire=((vehicle.wheelDia*25.4)/2+sidewall)/1000;            // rolling radius (m)
+  vehicle.wheelI=roadWheelInertia(vehicle);                                // kg m2, all four
   const widthBonus=clamp((vehicle.tireWidth-205)/205,-0.15,0.30);
   const susp=SUSPENSION[vehicle.suspension]||SUSPENSION.sport;
   vehicle.mu=tt.mu*ch.grip*susp.grip*(1+0.25*widthBonus);
@@ -5029,6 +5061,13 @@ function simulateAccel(){
     for(let i=0;i<240;i++){const a=advanceShaft(E,launchRpm,b0,1,0.005);E=a.shaftE;b0=a.boost;}
     shaftE=E;boostNow=b0;
   }
+  // The clutch launch (build 106). The engine waits at launchRpm and the clutch passes what the tyres
+  // can take, up to its own capacity (CLUTCH_MARGIN x peak torque). Where that is more than the engine
+  // makes, the difference comes out of the flywheel, which slows until it meets the gearbox and the
+  // clutch locks: the energy a dumped clutch puts into a launch. Until it locks the engine is not
+  // coupled, so the car carries only its own and the wheels' inertia.
+  const Ie=engine.inertia||0.1, tqCap=CLUTCH_MARGIN*curve.reduce((q,p)=>Math.max(q,p.tq),0);
+  let slipping=!tcStall, slipW=launchRpm*TWO_PI/60;
   let v=0,x=0,t=0,gear=0,a=0,shiftT=0;
   const M={t100:null,q400:null,q800:null,q1000:null,v200:null,gripT:0,lagT:0},V100=100/3.6,V200=200/3.6;
   for(let step=0;step<48000&&t<150;step++){
@@ -5062,8 +5101,8 @@ function simulateAccel(){
       if(rpm<tcStall){engineRpm=tcStall;tqMult=1+(gb.mult-1)*(1-rpm/tcStall);}else engineRpm=rpm;
       engineRpm=clamp(engineRpm,idle,rl);
     }else{
-      const clutchSlip=gear===0&&rpm<launchRpm;
-      engineRpm=clamp(clutchSlip?launchRpm:rpm,idle,rl);
+      if(slipping&&(gear>0||rpm*TWO_PI/60>=slipW))slipping=false;   // the clutch has locked
+      engineRpm=clamp(slipping?slipW*60/TWO_PI:rpm,idle,rl);
     }
     // The rev limiter. In any gear below top the loop above has already upshifted, so the only way
     // to be over the redline here is to be in top gear with nowhere left to go — and then the
@@ -5081,22 +5120,41 @@ function simulateAccel(){
       const adv=advanceShaft(shaftE,engineRpm,boostNow,shiftT>0?0.35:1,dt);
       shaftE=adv.shaftE;boostNow=adv.boost;
     }
-    if(shiftT>0)shiftT-=dt; else if(!overRev)driveF=gridTorque(grid,engineRpm,boostNow)*tqMult*totalRatio*eff/r;
     const down=0.5*AIR_RHO*vehicle.clA*v*v,Wtot=m*G+down,transfer=m*a*vehicle.cg/vehicle.wb;
     let drivenN;
     if(vehicle.drive==='awd')drivenN=Wtot;
     else if(vehicle.drive==='rwd')drivenN=m*G*(1-vehicle.fWt)+down*vehicle.drivenAero+Math.max(0,transfer);
     else drivenN=m*G*vehicle.fWt+down*vehicle.drivenAero-Math.max(0,transfer);
+    if(shiftT>0)shiftT-=dt;
+    else if(!overRev){
+      const Teng=gridTorque(grid,engineRpm,boostNow)*tqMult;
+      if(slipping){
+        const want=vehicle.mu*diffTractionAt(df,0,vehicle.cg,1)*Math.max(0,drivenN)*r/(totalRatio*eff);
+        const Tcl=Math.min(tqCap,Math.max(Teng,want));
+        slipW=Math.max(rpm*TWO_PI/60,slipW+(Teng-Tcl)/Ie*dt);       // the flywheel pays the difference
+        driveF=Tcl*totalRatio*eff/r;
+      }else driveF=Teng*totalRatio*eff/r;
+    }
     // The differential decides how much of the driven axle's grip is actually usable: an open
     // diff is governed by the lighter-loaded wheel and throws the rest away, an LSD recovers
     // most of it, a spool all of it. This only bites while the car is traction-limited.
     const tqFrac=(driveF*r)/axleTqMax;                       // how hard the axle is being driven
-    let F=Math.min(driveF,vehicle.mu*diffTractionAt(df,0,vehicle.cg,tqFrac)*Math.max(0,drivenN));
+    const trac=vehicle.mu*diffTractionAt(df,0,vehicle.cg,tqFrac)*Math.max(0,drivenN);
+    let F=Math.min(driveF,trac);
     const drag=0.5*AIR_RHO*vehicle.cdA*v*v,roll=v>0.2?crrAt(vehicle.crr,v)*m*G:0;
     // A road-speed governor cuts fuel at its set speed: past it the engine gives only what holds it.
     if(vGov>0&&v>=vGov)F=Math.min(F,drag+roll);
-    if(!M.t100){if(F<driveF-1e-6)M.gripT+=dt;if(shiftT<=0&&grid.laggy&&boostNow<0.9*engine.maxBoost)M.lagT+=dt;}
-    a=(F-drag-roll)/m;v=Math.max(0,v+a*dt);x+=v*dt;t+=dt;
+    // Spinning parts (build 106). With the tyres holding, the drive force accelerates the car AND its
+    // spinning engine and wheels: a = (F - R) / mE. The tyre then carries only what moves the car,
+    // m a + R; if that is more than it can hold the tyres slip, the surplus torque only spins the
+    // wheels, and the car gets the tyre's force over its own mass. The engine is coupled to the wheels
+    // only in gear with the clutch locked and the converter past stall.
+    const coupled=shiftT<=0&&!slipping&&!(tcStall&&rpm<tcStall);
+    const res=drag+roll, aHold=(driveF-res)/vehicleMassEff(coupled?totalRatio:0);
+    const spin=m*aHold+res>trac+1e-6;
+    a=spin?(F-res)/m:aHold;
+    if(!M.t100){if(spin)M.gripT+=dt;if(shiftT<=0&&grid.laggy&&boostNow<0.9*engine.maxBoost)M.lagT+=dt;}
+    v=Math.max(0,v+a*dt);x+=v*dt;t+=dt;
     if(!M.t100&&v>=V100)M.t100=t;
     if(!M.q400&&x>=400)M.q400={t,v};
     if(!M.q800&&x>=800)M.q800={t,v};
@@ -5716,11 +5774,16 @@ function simulateLap(key){
     const bg=bestGear(v[i]);
     const R=(drag(v[i])+rollF(v[i])*p[i].cosT)/m+G*p[i].sinT;
     const kk=vehicle.mu*diffTractionAt(df,aLat,vehicle.cg,bg.tqFrac)*Math.sqrt(Math.max(0,1-u*u));
-    const gripA=Math.max(0,kk*(N0-sgn*m*R*hL)/(m*Math.max(0.2,1-sgn*kk*hL)));
-    const powerA=bg.F/m;
-    accKind[i]=powerA<gripA?'power':'traction';latUse[i]=u;
-    // Gravity along the slope again: a climb eats acceleration, a descent adds to it.
-    const aAcc=Math.min(powerA,gripA)-R;
+    // On power the drive force also spins up the engine and wheels (vehicleMassEff, build 106): a = (F -
+    // m R) / mE. On grip the tyres are slipping, the surplus only spins the wheels, and the car gets the
+    // tyre's force over its own mass, with the load transfer following that acceleration:
+    //     a = (k N0 - m R) / (m (1 - s k h/L))
+    // The tyres hold exactly while the power figure is the smaller, so the car takes the lesser.
+    const mE=vehicleMassEff(ratios[bg.gear]*fd);
+    const aGrip=(kk*N0-m*R)/(m*Math.max(0.2,1-sgn*kk*hL)), aPow=(bg.F-m*R)/mE;
+    accKind[i]=aPow<aGrip?'power':'traction';latUse[i]=u;
+    // Gravity along the slope is in R: a climb eats acceleration, a descent adds to it.
+    const aAcc=Math.min(aPow,aGrip);
     // aAcc may be NEGATIVE — a climb steep enough, or drag at terminal speed, genuinely slows the
     // car. Clamping it at zero (as this did) let the car hold speed up any gradient, which is why
     // a 43% climb used to cost nothing. Floored at 1 m/s so the profile can't collapse to zero.
@@ -5800,7 +5863,7 @@ function simulateLap(key){
     for(let i=0;i<n;i++){
       const j=(i+1)%n,h=(i-1+n)%n;tAt[i]=tc;
       tc+=p[i].ds3/Math.max(2,(v[i]+v[j])/2)*k;
-      const resist=drag(v[i])+rollF(v[i])*p[i].cosT+m*G*p[i].sinT, need=m*aL[i]+resist;
+      const resist=drag(v[i])+rollF(v[i])*p[i].cosT+m*G*p[i].sinT, need=vehicleMassEff(ratios[gears[i]]*fd)*aL[i]+resist;
       if(lim[i]==='power'||lim[i]==='traction'){thr[i]=1;brk[i]=0;}
       else if(need>=0){thr[i]=clamp(need/Math.max(1,bestGear(v[i]).F),0,1);brk[i]=0;}
       else{thr[i]=0;brk[i]=clamp(-need/m/Math.max(0.1,vehicle.brakeDecelCap),0,1);}

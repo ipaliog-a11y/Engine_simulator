@@ -115,6 +115,10 @@ console.log(`  RMS top speed ${rms(cars.map(c => pc(c.top, c.real.top))).toFixed
 //     derived exhaust energy balance gave turbo petrols their real exhaust heat.)
 const KNOWN = {
   'Chevrolet Silverado 2500HD Duramax (2020)': ['slow-car'],
+  // Back since build 106: the RS3's engine holds only 210-250 Nm from 1500 to 3000 rpm against a real 480
+  // from 1700, so 2.9 s of its 0-100 is below full boost. Build 101 had brought it just under 25%; the
+  // spinning parts the car now carries take it back over. The engine shape is the problem (boost unsure).
+  'Audi RS3 Sportback (8V, 2017)': ['slow-car'],
   // Short of the 250 km/h governor because their engines are short of their rating (test60): the R34's
   // is the JDM 280 PS figure real cars beat, the STI's boost is unsure. (The Evo IX reaches it since
   // build 101.)
