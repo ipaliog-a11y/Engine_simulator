@@ -281,7 +281,7 @@ table.fuelmap td.live{box-shadow:inset 0 0 0 2px #fff;font-weight:bold}
 <body>
 <div class="container">
 <header>
-<h1>PIXEL ENGINE SIM v0.6 build 107</h1>
+<h1>PIXEL ENGINE SIM v0.6 build 108</h1>
 <div class="subtitle" id="subtitle">ENGINE DESIGNER • BUILD IT, THEN DRIVE IT</div>
 </header>
 <div class="build-strip" id="buildStrip">
@@ -2588,7 +2588,8 @@ const I18N={
   'GEARBOX TYPE':{el:'ΤΥΠΟΣ ΚΙΒΩΤΙΟΥ'},'MANUAL (H-PATTERN)':{el:'ΧΕΙΡΟΚΙΝΗΤΟ (H)'},'SEQUENTIAL':{el:'ΣΕΙΡΙΑΚΟ'},'DUAL-CLUTCH (DCT)':{el:'ΔΙΠΛΟΥ ΣΥΜΠΛΕΚΤΗ (DCT)'},'TORQUE-CONV AUTO':{el:'ΑΥΤΟΜΑΤΟ (ΜΕΤΑΤΡΟΠΕΑΣ)'},
   // Garage
   'Garage':{el:'ΓΚΑΡΑΖ'},'GARAGE':{el:'ΓΚΑΡΑΖ'},
-  'Live timing':{el:'Ζωντανή χρονομέτρηση'},'PAUSE':{el:'ΠΑΥΣΗ'},'PLAY':{el:'ΑΝΑΠΑΡΑΓΩΓΗ'},'RESTART':{el:'ΑΠΟ ΤΗΝ ΑΡΧΗ'},'LAP':{el:'ΓΥΡΟΣ'},'BUILD NAME':{el:'ΟΝΟΜΑ ΚΑΤΑΣΚΕΥΗΣ'},
+  'Live timing':{el:'Ζωντανή χρονομέτρηση'},'BRAKE FADE':{el:'ΕΞΑΣΘΕΝΗΣΗ ΦΡΕΝΩΝ'},'BRAKES':{el:'ΦΡΕΝΑ'},'fade from':{el:'εξασθένηση από'},
+  'BRAKE TEMP':{el:'ΘΕΡΜ. ΦΡΕΝΩΝ'},'PAUSE':{el:'ΠΑΥΣΗ'},'PLAY':{el:'ΑΝΑΠΑΡΑΓΩΓΗ'},'RESTART':{el:'ΑΠΟ ΤΗΝ ΑΡΧΗ'},'LAP':{el:'ΓΥΡΟΣ'},'BUILD NAME':{el:'ΟΝΟΜΑ ΚΑΤΑΣΚΕΥΗΣ'},
   'Save this car':{el:'Αποθήκευση αυτοκινήτου'},'Save this engine':{el:'Αποθήκευση κινητήρα'},
   'CAR NAME':{el:'ΟΝΟΜΑ ΑΥΤΟΚΙΝΗΤΟΥ'},'ENGINE NAME':{el:'ΟΝΟΜΑ ΚΙΝΗΤΗΡΑ'},
   'SAVE CAR':{el:'ΑΠΟΘΗΚΕΥΣΗ ΣΤΟ ΓΚΑΡΑΖ'},'SAVE ENGINE':{el:'ΑΠΟΘΗΚΕΥΣΗ ΚΙΝΗΤΗΡΑ ΣΤΟ ΓΚΑΡΑΖ'},
@@ -3083,12 +3084,50 @@ const AERO_COST={none:0,splitter:600,wing:1800,lip:400,undertray:900,diffuser:22
 const WEIGHT_RED={none:{kg:0,cost:0},street:{kg:45,cost:1200},sport:{kg:95,cost:3500},race:{kg:170,cost:9000}};
 // Brakes: cap = peak deceleration the brakes can command (g, before fade), fade = resistance
 // to heat build-up (1 = none). A bigger rotor adds both capacity and thermal mass.
+// Since build 107 fade comes from TEMPERATURE (brakeThermal): mat is the rotor material, vented whether
+// it has cooling vanes, and onset the rotor temperature (C) at which its pads begin to lose friction:
+// a street pad ~400, a performance street pad ~550, a track pad ~650, carbon-ceramic ~1000.
 const BRAKE_TYPE={
-  steel:  {label:'STEEL DISC',     cap:1.05,fade:0.45,cost:600},
-  slotted:{label:'SLOTTED/VENTED', cap:1.35,fade:0.70,cost:1400},
-  big:    {label:'BIG BRAKE KIT',  cap:1.65,fade:0.88,cost:3200},
-  carbon: {label:'CARBON-CERAMIC', cap:1.95,fade:1.00,cost:7000}
+  steel:  {label:'STEEL DISC',     cap:1.05,mat:'iron',vented:false,onset:400, cost:600},
+  slotted:{label:'SLOTTED/VENTED', cap:1.35,mat:'iron',vented:true, onset:550, cost:1400},
+  big:    {label:'BIG BRAKE KIT',  cap:1.65,mat:'iron',vented:true, onset:650, cost:3200},
+  carbon: {label:'CARBON-CERAMIC', cap:1.95,mat:'ccm', vented:true, onset:1000,cost:7000}
 };
+// ---- brake temperature (build 107) ----
+// Each rotor is a lump of material heated by the brakes and cooled by the air, and its pads lose grip
+// above their onset temperature. The rotor, from its diameter D: a friction ring from 0.6 D to D, ~9% of
+// D thick on a vented disc (70% solid) and ~4.5% on a solid one; rears 0.9 of the fronts. Materials:
+// grey iron 7200 kg/m3, cp 500 J/kgK, emissivity 0.55; carbon-ceramic 2450, 800, 0.8.
+// Heat in: what the brakes (not the air, the tyres' rolling or the hill) take out of the car, m a v,
+// shared front/rear by the axle loads while braking (ideal bias: f + (a/g) h/L), 90% into the rotor.
+// Heat out: convection from both faces (and the vanes, ~0.8 more on a vented disc) at the turbulent
+// flat-plate rate, Nu = 0.037 Re^0.8 Pr^(1/3) over the disc's diameter, the air reaching it at about half
+// the car's speed; and radiation. Fade: pad friction falls from the onset, to the 35% loss the stops
+// have always allowed, over 150 C.
+const ROTOR_MAT={iron:{rho:7200,cp:500,eps:0.55},ccm:{rho:2450,cp:800,eps:0.80}};
+const BRAKE_AMBIENT=25, FADE_SPAN=150, FADE_MAX=0.35;
+function brakeThermal(v){
+  const bt=BRAKE_TYPE[v.brakeType]||BRAKE_TYPE.slotted, mat=ROTOR_MAT[bt.mat];
+  const disc=D=>{const t=(bt.vented?0.09:0.045)*D, ring=Math.PI/4*(D*D-Math.pow(0.6*D,2));
+    return {D,m:mat.rho*ring*t*(bt.vented?0.7:1),A:2*ring*(bt.vented?1.8:1)};};
+  const f=disc(v.rotor/1000), r=disc(0.9*v.rotor/1000);
+  return {front:f,rear:r,cp:mat.cp,eps:mat.eps,onset:bt.onset};
+}
+// One rotor over a time step: heat in (W), car speed (m/s). Returns the new temperature (C).
+function rotorStep(T,disc,th,P,vCar,dt){
+  const air=Math.max(1,0.5*vCar), Re=air*disc.D/2.5e-5, h=0.037*Math.pow(Re,0.8)*0.89*0.032/disc.D;
+  const Tk=T+273.15, Ta=BRAKE_AMBIENT+273.15;
+  const out=h*disc.A*(T-BRAKE_AMBIENT)+th.eps*5.67e-8*disc.A*(Tk*Tk*Tk*Tk-Ta*Ta*Ta*Ta);
+  return T+(0.9*P-out)*dt/(disc.m*th.cp);
+}
+const brakeFadeAt=(T,th)=>1-FADE_MAX*clamp((T-th.onset)/FADE_SPAN,0,1);
+// Front/rear rotors through one braking step: decel a (m/s2) that the brakes do, at speed v.
+function brakeHeatStep(st,th,a,vCar,dt){
+  const m=vehicle.mass, P=Math.max(0,m*a*vCar);
+  const fr=clamp(vehicle.fWt+(a/G)*vehicle.cg/Math.max(0.5,vehicle.wb),0.5,0.85);
+  st.F=rotorStep(st.F,th.front,th,P*fr/2,vCar,dt);
+  st.R=rotorStep(st.R,th.rear,th,P*(1-fr)/2,vCar,dt);
+}
 // Suspension: a mechanical-grip multiplier (better damping puts more of the tyre down).
 const SUSPENSION={
   comfort: {label:'COMFORT',    grip:0.95,cost:400},
@@ -4834,7 +4873,7 @@ function buildVehicle(){
   // Brakes: peak commanded deceleration (m/s²) and a heat-energy budget before fade sets in.
   const bt=BRAKE_TYPE[vehicle.brakeType]||BRAKE_TYPE.slotted, rotorF=0.85+clamp((vehicle.rotor-320)/100,0,1)*0.30;
   vehicle.brakeDecelCap=bt.cap*rotorF*G;
-  vehicle.brakeFadeE=1.1e6*bt.fade*rotorF;   // joules absorbed before capacity starts fading
+  vehicle.brakeTh=brakeThermal(vehicle);   // rotors, material and pads: brake temperature and fade (build 107)
   vehicle.engineMass=engineMass();
   // A real car is quoted at curb mass with its own engine in it. The platform is what is left when
   // that engine comes out, taken once from the engine first fitted, so a swap then moves the mass by
@@ -4909,19 +4948,19 @@ function buildVehicle(){
 // Braking run from v0 (m/s) to a stop: decel is the lesser of tyre grip (μ·(weight+downforce))
 // and what the brakes can command (capacity, fading as they absorb heat), with aero drag also
 // helping to slow the car. Returns stopping distance (m) and time (s).
-function simulateBraking(v0){
-  const m=vehicle.mass,dt=0.005;let v=v0,x=0,t=0,heat=0;
+function simulateBraking(v0,T0){
+  const m=vehicle.mass,dt=0.005,th=vehicle.brakeTh;let v=v0,x=0,t=0;
+  const st={F:T0!=null?T0:BRAKE_AMBIENT,R:T0!=null?T0:BRAKE_AMBIENT};   // a stop from cold unless told
   while(v>0.15&&t<25){
     const down=0.5*AIR_RHO*vehicle.clA*v*v;
     const gripDecel=vehicle.mu*(m*G+down)/m;                       // tyre-limited
-    const fade=1-clamp(heat/vehicle.brakeFadeE,0,1)*0.35;          // capacity fades with absorbed heat
-    const brakeDecel=vehicle.brakeDecelCap*fade;                   // brake-limited
+    const brakeDecel=vehicle.brakeDecelCap*brakeFadeAt(st.F,th);   // brake-limited, at the rotor's temperature
     const mech=Math.min(gripDecel,brakeDecel);                    // mechanical (tyre/brake) decel
     const aero=(0.5*AIR_RHO*vehicle.cdA*v*v)/m;                    // drag also decelerates
-    heat+=m*mech*v*dt;                                            // work turned into brake heat
+    brakeHeatStep(st,th,mech,v,dt);                               // the work, into the rotors
     v=Math.max(0,v-(mech+aero)*dt);x+=v*dt;t+=dt;
   }
-  return {dist:x,time:t};
+  return {dist:x,time:t,tF:st.F,tR:st.R};
 }
 // A best-power torque curve (Nm vs rpm) so performance reflects the engine's DESIGN potential,
 // independent of the live driving state. Every live variable that feeds torque — mixture,
@@ -5792,19 +5831,31 @@ function simulateLap(key){
   }
   }
   passes();
-  // 2b. Brake fade on the lap (build 105), the model the 100-0 and 0-200-0 stops use: capacity falls as
-  //     the brakes absorb heat in one stop, by up to 35% at vehicle.brakeFadeE. Heat is counted from the
-  //     start of each braking zone; between zones the brakes are taken as cooled, which is what that
-  //     model assumes of a stop from rest. If any zone fades, solve the lap again with it.
-  {
-    let heat=0,faded=false;
-    for(let i=0;i<n;i++){
-      const j=(i+1)%n,aLong=(v[j]*v[j]-v[i]*v[i])/(2*p[i].ds3);
-      const mech=-aLong-drag(v[i])/m-G*p[i].sinT;            // what the brakes, not the air or hill, did
-      if(mech>0.05){heat+=m*mech*p[i].ds3;fadeF[i]=1-clamp(heat/vehicle.brakeFadeE,0,1)*0.35;if(fadeF[i]<0.999)faded=true;}
-      else heat=0;
+  // 2b. Brake temperature on the lap (build 107; build 105 counted heat per stop against a fitted
+  //     budget). Run the solved profile through the rotors in time order, lap after lap until the
+  //     temperature at the line repeats, set each point's brake capacity from the front rotor's
+  //     temperature there, and solve again if it bites. The last pass is kept for the replay.
+  const th=vehicle.brakeTh;
+  function brakeTemps(){
+    const st={F:BRAKE_AMBIENT,R:BRAKE_AMBIENT},TF=new Array(n),TR=new Array(n);
+    for(let lap=0;lap<6;lap++){
+      const F0=st.F;
+      for(let i=0;i<n;i++){
+        const j=(i+1)%n,va=Math.max(2,(v[i]+v[j])/2),dt=p[i].ds3/va;
+        const aLong=(v[j]*v[j]-v[i]*v[i])/(2*p[i].ds3);
+        const mech=-aLong-(drag(v[i])+rollF(v[i])*p[i].cosT)/m-G*p[i].sinT;   // what the brakes did
+        brakeHeatStep(st,th,Math.max(0,mech),va,dt);
+        TF[i]=st.F;TR[i]=st.R;
+      }
+      if(lap>=2&&Math.abs(st.F-F0)<1)break;                 // a lap that ends where it began
     }
-    if(faded)passes();
+    return {TF,TR};
+  }
+  let BT=brakeTemps();
+  {
+    let faded=false;
+    for(let i=0;i<n;i++){fadeF[i]=brakeFadeAt(BT.TF[i],th);if(fadeF[i]<0.999)faded=true;}
+    if(faded){passes();BT=brakeTemps();}
   }
   // Classify from the FINISHED profile, not during the passes — the backward pass touches almost
   // every point on a twisty circuit, so labelling as it goes would call the whole lap "braking".
@@ -5880,7 +5931,8 @@ function simulateLap(key){
   for(let i=0;i<n;i++)counts[lim[i]]+=p[i].ds3;
   return {track:T,lap:t,sectors:sect,v,lim,vMin:vMin*3.6,vMax:vMax*3.6,
     avg:p.length_/t*3.6,shifts,shiftLoss,counts,gears,climb,zMin,zMax,length:T.length,lineLength:p.length_,
-    replay:{tAt,thr,brk,gLat,gLong,rpm:rpmAt},
+    replay:{tAt,thr,brk,gLat,gLong,rpm:rpmAt,tF:BT.TF,tR:BT.TR,fade:fadeF.slice()},
+    brakeMaxF:Math.max(...BT.TF),brakeMaxR:Math.max(...BT.TR),brakeOnset:th.onset,
     corners:T.corners,width:T.width,wLabel:T.wLabel};
 }
 // ---- Corners: find them on the racing line, number and name them, and take a speed trap ----
@@ -8039,6 +8091,7 @@ function replayAt(L,t){
     hd:Math.atan2(line[j].y-line[i].y,line[j].x-line[i].x),
     v:mix(L.v[i],L.v[j])*3.6,gear:L.gears[i]+1,rpm:mix(R.rpm[i],R.rpm[j]),
     thr:R.thr[i],brk:R.brk[i],gLat:mix(R.gLat[i],R.gLat[j]),gLong:mix(R.gLong[i],R.gLong[j]),
+    tF:R.tF?mix(R.tF[i],R.tF[j]):null,tR:R.tR?mix(R.tR[i],R.tR[j]):null,fade:R.fade?R.fade[i]:1,
     sector:Math.min(2,Math.floor(sAt/third))};
 }
 // The clock at which each sector ends, from the same recording (equal thirds of the line, as L.sectors).
@@ -8051,8 +8104,15 @@ function sectorEnds(L){
 }
 // The instruments, drawn over the map: speed, gear, rpm, the two pedals and a g-meter.
 const REPLAY_HUD_W=184;
+// Brake temperature colour: blue cold, green working, yellow near the pads' onset, red past it (fading).
+function brakeTempColour(T,onset){
+  if(T>=onset)return '#ff4444';
+  if(T>=0.85*onset)return '#ffcc00';
+  if(T>=150)return '#00ff88';
+  return '#00ccff';
+}
 function drawReplayHud(L,st,W,y0){
-  const w=REPLAY_HUD_W,h=150,x0=W-w-10,PS='"Press Start 2P"';
+  const w=REPLAY_HUD_W,h=182,x0=W-w-10,PS='"Press Start 2P"';
   ctx.fillStyle='rgba(10,10,18,0.86)';ctx.fillRect(x0,y0,w,h);
   ctx.strokeStyle='#33334a';ctx.lineWidth=2;ctx.strokeRect(x0,y0,w,h);
   ctx.fillStyle=C.green;ctx.font='16px '+PS;ctx.fillText(String(Math.round(st.v)),x0+10,y0+26);
@@ -8066,7 +8126,7 @@ function drawReplayHud(L,st,W,y0){
   // pedals
   const bar=(lbl,val,col,yy)=>{ctx.fillStyle='#778';ctx.font='6px '+PS;ctx.fillText(lbl,x0+10,yy+6);
     ctx.fillStyle='#1d1d2b';ctx.fillRect(x0+40,yy,66,7);ctx.fillStyle=col;ctx.fillRect(x0+40,yy,66*clamp(val,0,1),7);};
-  bar('THR',st.thr,'#00ff88',y0+70);bar('BRK',st.brk,'#ff5555',y0+84);
+  bar('THR',st.thr,'#00ff88',y0+70);bar('BRK',st.brk,st.fade<0.999?'#ff8800':'#ff5555',y0+84);
   ctx.fillStyle='#667';ctx.font='6px '+PS;
   ctx.fillText(Math.round(st.thr*100)+'% / '+Math.round(st.brk*100)+'%',x0+10,y0+106);
   // g-meter: lateral across, longitudinal up for braking (the way a driver is thrown), rings at 1 g
@@ -8081,6 +8141,17 @@ function drawReplayHud(L,st,W,y0){
   ctx.fillStyle='#99a';ctx.font='6px '+PS;ctx.textAlign='center';
   ctx.fillText(Math.hypot(st.gLat,st.gLong).toFixed(2)+' g',cx,y0+h-10);ctx.textAlign='left';
   ctx.fillStyle='#556';ctx.fillText('1g',cx+sc*0.72+2,cy-sc*0.72);
+  // Brake temperatures, front and rear, with the pads' fade showing when the fronts pass their onset.
+  if(st.tF!=null){
+    const on=L.brakeOnset,yb=y0+h-30,PS2='6px "Press Start 2P"';
+    const cell=(lbl,T,xx)=>{ctx.fillStyle='#778';ctx.font=PS2;ctx.fillText(lbl,xx,yb);
+      ctx.fillStyle=brakeTempColour(T,on);ctx.fillRect(xx+8,yb-7,8,8);
+      ctx.font='8px "Press Start 2P"';ctx.fillText(Math.round(T)+'°',xx+20,yb+1);};
+    cell('F',st.tF,x0+10);cell('R',st.tR,x0+80);
+    ctx.font=PS2;
+    if(st.fade<0.999){ctx.fillStyle='#ff4444';ctx.fillText(tr('BRAKE FADE')+' −'+Math.round((1-st.fade)*100)+'%',x0+10,yb+14);}
+    else{ctx.fillStyle='#556';ctx.fillText(tr('BRAKES')+' • '+tr('fade from')+' '+on+'°C',x0+10,yb+14);}
+  }
 }
 function drawTrack(){
   const W=vizW,H=vizH;
@@ -8188,7 +8259,9 @@ function renderLap(){
     cell(tr('SECTOR 3'),L.sectors[2].toFixed(2),'s')+
     cell(tr('SLOWEST'),Math.round(L.vMin),'km/h')+
     cell(tr('FASTEST'),Math.round(L.vMax),'km/h')+
-    cell(tr('SHIFTS'),L.shifts,'−'+L.shiftLoss.toFixed(2)+'s');
+    cell(tr('SHIFTS'),L.shifts,'−'+L.shiftLoss.toFixed(2)+'s')+
+    (L.brakeMaxF!=null?cell(tr('BRAKE TEMP'),'<span style="color:'+brakeTempColour(L.brakeMaxF,L.brakeOnset)+'">'+Math.round(L.brakeMaxF)+'°C</span>',
+      L.brakeMaxF>=L.brakeOnset?tr('BRAKE FADE')+' −'+Math.round((1-Math.min(...L.replay.fade))*100)+'%':tr('fade from')+' '+L.brakeOnset+'°C'):'');
   if(note)note.textContent=tr(L.track.blurb);
 }
 // Imported circuits live alongside the built-in ones and persist in localStorage, so a track you

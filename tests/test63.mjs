@@ -36,20 +36,28 @@ const r = await page.evaluate(() => {
   // ---- 3. brake fade on the lap ----
   engineOf('6.5 V12 NA Supercar'); applyChassisFit('gt');
   const fadeLap = brake => { set('vhBrake', brake); buildVehicle(); const L = simulateLap('nord');
-    const keep = vehicle.brakeFadeE; vehicle.brakeFadeE = Infinity; const C = simulateLap('nord'); vehicle.brakeFadeE = keep;
+    const keep = vehicle.brakeTh.onset; vehicle.brakeTh.onset = Infinity; const C = simulateLap('nord'); vehicle.brakeTh.onset = keep;
     return { lap: L.lap, cold: C.lap }; };
   out.fade = { steel: fadeLap('steel'), carbon: fadeLap('carbon') };
   // ---- 4. a locked diff scrubs in corners, not in a straight line under braking ----
   engineOf('2.0 Turbo Hot-Hatch I4'); applyChassisFit('coupe'); set('vhDrive', 'rwd');
-  const straightBrake = diff => { set('vhDiff', diff); buildVehicle(); const L = simulateLap('nord'), p = L.track.line, n = p.length;
-    let sum = 0, c = 0;
+  // fade off: since build 107 the brakes have a temperature, and two cars that corner differently heat
+  // them differently, which is not what this check is about
+  const straightBrake = diff => { set('vhDiff', diff); buildVehicle(); vehicle.brakeTh.onset = Infinity;
+    const L = simulateLap('nord'), p = L.track.line, n = p.length, mech = new Array(n).fill(null);
     for (let i = 0; i < n; i++) {
-      if (L.lim[i] !== 'brake' || p[i].r < 1500) continue;
+      if (L.lim[i] !== 'brake' || p[i].r < 3000) continue;
       const j = (i + 1) % n, aLong = (L.v[j] ** 2 - L.v[i] ** 2) / (2 * p[i].ds3);
-      sum += -aLong - 0.5 * AIR_RHO * vehicle.cdA * L.v[i] ** 2 / vehicle.mass - G * p[i].sinT; c++;
+      mech[i] = -aLong - 0.5 * AIR_RHO * vehicle.cdA * L.v[i] ** 2 / vehicle.mass - G * p[i].sinT;
     }
-    return { mech: sum / Math.max(1, c), n: c, cap: Math.min(vehicle.brakeDecelCap, vehicle.mu * G) }; };
-  out.diff = { open: straightBrake('open'), spool: straightBrake('spool') };
+    return { mech, cap: Math.min(vehicle.brakeDecelCap, vehicle.mu * G) }; };
+  // The ceiling is what the fix is about: hard on the brakes in a straight line, both cars must reach the
+  // same deceleration. (An average over "braking" points is not that: the spool corners slower, so its
+  // braking zones are longer and more of them sit at the ceiling.) So compare the top of each car's
+  // straight-line braking, its 90th percentile.
+  const top = arr => { const a = arr.filter(x => x != null).sort((x, y) => x - y); return { mech: a[Math.floor(a.length * 0.9)] || 0, n: a.length }; };
+  const o = straightBrake('open'), sp = straightBrake('spool');
+  out.diff = { open: Object.assign(top(o.mech), { cap: o.cap }), spool: top(sp.mech) };
   // ---- 5. an engine swap moves the weight split by the engine's mass at its position ----
   const swap = (car, eng) => {
     loadVehiclePreset(VEHICLE_PRESETS.find(v => v.name === car)); const f0 = vehicle.fWt, body = vehicle.body.fWt, m0 = vehicle.engineMass;

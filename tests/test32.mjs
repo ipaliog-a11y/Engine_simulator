@@ -135,7 +135,7 @@ if (!(sp[1].lap > sp[0].lap)) fails.push('spool no longer loses on a lap');
 await page.click('#tabTrack'); await page.waitForTimeout(400);
 const ui = await page.evaluate(() => ({ head: document.getElementById('lapHead').textContent, cells: document.querySelectorAll('#lapGrid .perf-cell').length }));
 console.log('\nUI:', ui.head.trim(), '|', ui.cells, 'cells');
-if (ui.cells !== 8) fails.push('lap grid broken');
+if (ui.cells !== 9) fails.push('lap grid broken');
 
 console.log('\nERRORS:', errors.length ? errors : 'none');
 console.log(fails.length ? 'FAIL:\n  ' + fails.join('\n  ') : '\nPASS');

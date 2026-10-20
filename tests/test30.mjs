@@ -112,7 +112,7 @@ const ui = await page.evaluate(() => ({
 console.log('\nlap cells:', ui.cells.join(' | '));
 console.log('canvas visible:', ui.canvasShown, '| panel visible:', ui.panelShown);
 if (!ui.canvasShown || !ui.panelShown) fails.push('TRACK tab does not show both the map and the panel');
-if (ui.cells.length !== 8) fails.push('lap grid should have 8 cells');
+if (ui.cells.length !== 9) fails.push('lap grid should have 9 cells (8 + brake temperature, build 107)');
 // switching circuit updates the readout
 await page.selectOption('#trkSel', 'fast'); await page.waitForTimeout(300);
 const sw = await page.evaluate(() => document.getElementById('lapHead').textContent);

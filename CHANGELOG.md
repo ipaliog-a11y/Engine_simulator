@@ -20,6 +20,25 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 Working toward **v1.0 — every number derived, not fitted.**
 
+### Brake temperature, live on the track (build 108)
+
+- **Brakes have a temperature now, and fade comes from it.** Each rotor is sized from its diameter
+  (friction ring 0.6-1.0 D, ~9% of D thick vented and 70% solid, ~4.5% solid; rears 0.9 of the fronts)
+  in grey iron or carbon-ceramic. It is heated by what the brakes take out of the car (m·a·v, shared by
+  the axle loads while braking, 90% into the rotor) and cooled by convection (turbulent flat plate,
+  Nu = 0.037 Re^0.8 Pr^⅓, air at half the car's speed; vanes add 80% area) and radiation. Pads lose
+  friction above their onset: street 400 °C, performance 550, track 650, carbon-ceramic 1000, to the
+  same 35% the stops always allowed. This replaces the fitted fade budget (1.1 MJ × a factor).
+- **On the lap** the solved profile runs through the rotors lap after lap until the temperature at the
+  line repeats (sustained running), fade feeds back into the lap, and the replay carries it.
+- **Live:** the instruments show front and rear rotor temperature, blue cold, green working, yellow near
+  the pads' onset, red past it with the fade in %; the brake bar turns orange while fading. The lap panel
+  shows the lap's peak and the worst fade.
+- A single stop from 100 km/h no longer fades (it never should have), which exposes the fitted grip
+  multipliers: the archetype supercars on semi-slicks (μ ~1.7) stop in ~24 m, named in test47; the
+  tyre item is the fix. test63's diff check now compares the straight-line braking ceiling with fade
+  off, which is what it is about.
+
 ### Spinning parts, and the energy a launch takes from the flywheel (build 107)
 
 - **The car now spins up its engine and wheels as it accelerates.** The effective mass in a gear is
