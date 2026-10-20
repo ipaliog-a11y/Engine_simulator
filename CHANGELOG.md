@@ -20,6 +20,45 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 Working toward **v1.0 — every number derived, not fitted.**
 
+### Speed limiter, removable (build 99)
+
+- **A road-speed governor on the vehicle tab:** SPEED LIMITER on/off and its km/h. When on, the engine
+  gives only the force that holds the set speed once the car reaches it, as a fuel-cut governor does,
+  so it shapes the run, the trap speeds and the track lap (a lower speed ceiling), not only the top-speed
+  figure. It cannot add speed the car does not have. Turn it OFF to remove it; the summary then shows
+  the car's free top speed, and the car reads as modified.
+- **Real cars arrive with their factory governor** (GTI 246, M3 250, Alto 140, …); archetype chassis
+  arrive without one. The setting travels with saved builds.
+- **test61:** a governed car holds exactly its governor, removing it frees the car (M3 E46 250 → 289
+  km/h) without touching the 0-100, and top-speed error is now reported over all 26 cars: RMS 4.0%. The
+  "reaches its governor" check is now 97%, which names the R34, STI and Evo IX (233-242 km/h): their
+  engines are the three already 17-26% short of their ratings.
+
+### Wall heat comes out of the work, not only the exhaust (build 98)
+
+- **A slow engine is no longer as efficient as a fast one.** The model already said the walls take more
+  of the fuel's heat at low speed (Woschni, (B·Sp)^−0.2), but it took all of that heat from the exhaust
+  and none from the work, which did not conserve energy. NA spark engines therefore breathed and burned
+  as well at 1000 rpm as at 4000, and the Coyote, F140 and 4A-GE peaked at 1000–1400 rpm.
+- **How much comes out of the work is derived from when the walls take it.** One full-load cycle is
+  traced at the anchor speed: compression, the model's own Wiebe burn, expansion, blowdown and the
+  exhaust stroke, with Woschni's heat-transfer coefficient (including its combustion term) on the wall
+  area the gas touches. A joule lost before the exhaust valve opens would have earned the expansion
+  still ahead of it, 1 − (V/V_EVO)^(γ−1); one lost after earns nothing. The flux-weighted average,
+  κ ≈ 0.25 for spark engines and 0.36 for diesels, is the work's share; the exhaust takes the rest.
+- **Anchored where each efficiency figure was measured,** so the anchors still hold: a spark engine's
+  0.8 × fuel-air cycle at the reference rated speed, a diesel's 0.46 at 2000 rpm on a 2.0 TDI.
+- **Results:** torque peaks Coyote 4700 rpm (real 4600), F140 4900 (7000), 4A-GE 5600 (5200); test60
+  retires all three 'flat-low-end' entries. Real-engine RMS 15.6% power, 14.7% torque.
+- **Named with floors, each traced to one cause:** the 1.6 NA's full-load EGT reads 816 C against a
+  band from 820, and the petrol VGT's vane penalty is 9 points (was 10). Conserving energy took ~14 K
+  off the top-end gas; the base exhaust share ("roughly a third") was set under the old split and is
+  the next thing to derive. The 2.0 TDI in test48 reads +16% (cap 15): it already peaked at its limiter,
+  and above its 2000 rpm anchor the walls take less.
+- **Test fixes found on the way:** test45's car search accepted a car rev-limited a gear down (no slack
+  now); test49's vane sweep starts at idle, below any boost threshold; test59's fuel check allows the
+  1e-4 the fuel's flame temperature now moves the wall-heat timing.
+
 ### Real cars as presets, with their own bodies (build 97)
 
 - **A real car is one member of its chassis class, with its own body.** Each car carries its curb mass,

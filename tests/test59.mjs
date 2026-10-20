@@ -59,7 +59,10 @@ const g = r.fuels.find(x => x.f === 'gasoline');
 for (const x of r.fuels) console.log(`  ${x.f.padEnd(9)} LHV/AFR ${x.energy.toFixed(3)} MJ/kg air   IMEP per air ${(x.perAir / g.perAir).toFixed(3)} x gasoline`);
 for (const x of r.fuels) {
   const ratio = (x.perAir / g.perAir) / (x.energy / g.energy);
-  if (Math.abs(ratio - 1) > 1e-6) fails.push(`${x.f}: IMEP per air does not follow LHV/AFR (${ratio.toFixed(4)})`);
+  // 1e-3, not 1e-6: since build 98 the timing of the wall heat comes from a cycle trace whose flame
+  // temperature depends on the fuel's energy per kg of charge, so a hotter fuel loses a little more of
+  // its heat early. A real second-order effect, ~1e-4 here; anything larger is a broken energy path.
+  if (Math.abs(ratio - 1) > 1e-3) fails.push(`${x.f}: IMEP per air does not follow LHV/AFR (${ratio.toFixed(4)})`);
 }
 
 if (errors.length) fails.push(...errors);

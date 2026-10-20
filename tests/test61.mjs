@@ -42,6 +42,12 @@ const mech = await page.evaluate(() => {
   // picking a generic chassis leaves the real car
   const sel = document.getElementById('vhChassis'); sel.value = 'hatch'; sel.dispatchEvent(new Event('input'));
   out.generic = { body: vehicle.body, label: vehicle.chLabel, kg: vehicle.mass, arche: CHASSIS.hatch.mass + vehicle.engineMass };
+  // the speed limiter (build 99): a governed car holds its governor; removing it frees the car, and
+  // nothing below the governor changes
+  loadVehiclePreset(VEHICLE_PRESETS.find(x => x.name === 'BMW M3 (E46, 2000)'));
+  const on = { top: perf.topSpeed, gov: vehicle.governor, governed: perf.governed, t100: perf.t100, free: perf.freeSpeed };
+  const lim = document.getElementById('vhLimiter'); lim.value = 'off'; lim.dispatchEvent(new Event('input'));
+  out.limiter = { on, off: { top: perf.topSpeed, t100: perf.t100, gov: vehicle.governor, stock: isFactoryFit(readVehicleFromForm()) } };
   // every preset names an engine that exists, and arrives on its own factory fit
   out.bad = VEHICLE_PRESETS.filter(v => !PRESETS.some(e => e.name === v.engine) || !CHASSIS[v.chassis]).map(v => v.name);
   return out;
@@ -56,6 +62,12 @@ if (mech.swap.still !== mech.label) fails.push('an engine swap dropped the car b
 if (mech.cleared) fails.push('loading a build without a body kept the previous car body');
 if (Math.abs(mech.reload.mass - mech.reload.m0) > 1e-6 || mech.reload.label !== mech.label) fails.push('a saved build does not bring its car body back');
 if (mech.generic.body || Math.abs(mech.generic.kg - mech.generic.arche) > 1e-6) fails.push('a generic chassis still carries the real car body');
+const L = mech.limiter;
+console.log(`== M3 E46 limiter: on ${L.on.gov} km/h -> top ${L.on.top.toFixed(1)}; removed -> top ${L.off.top.toFixed(1)} (free ${L.on.free.toFixed(1)}) ==`);
+if (!(L.on.governed && Math.abs(L.on.top - L.on.gov) < 1e-6)) fails.push('a governed car does not hold its governor');
+if (!(L.off.gov === 0 && Math.abs(L.off.top - L.on.free) < 0.6 && L.off.top > L.on.top)) fails.push('removing the limiter does not free the car');
+if (Math.abs(L.off.t100 - L.on.t100) > 1e-9) fails.push('a governor above 100 km/h changed the 0-100');
+if (L.off.stock) fails.push('a car with its limiter removed still reads as factory spec');
 if (mech.bad.length) fails.push('presets with a missing engine or chassis: ' + mech.bad.join(', '));
 
 // ---- 2. every car against its maker ------------------------------------------------------------
@@ -71,7 +83,7 @@ const cars = await page.evaluate(() => VEHICLE_PRESETS.map(p => {
   const matched = simulateAccel();
   window.buildTorqueCurve = c0; window.buildTorqueGrid = g0;
   return { n: p.name, real: p.real, rhp: ep.real.hp, note: ep.note || p.note, hp, stock, kgOk,
-    t100: own.t100, top: own.topSpeed, t100m: matched.t100 };
+    t100: own.t100, top: own.topSpeed, t100m: matched.t100, governed: own.governed };
 }));
 await browser.close();
 
@@ -88,11 +100,12 @@ const scored = cars.filter(c => !c.note && c.t100);
 console.log(`\n  RMS 0-100 ${rms(scored.map(c => pc(c.t100, c.real.t100))).toFixed(1)}% on the model's own power, ` +
   `${rms(scored.map(c => pc(c.t100m, c.real.t100))).toFixed(1)}% power-matched (the car alone), over ${scored.length} cars`);
 const free = cars.filter(c => !c.real.limited);
-console.log(`  RMS top speed ${rms(free.map(c => pc(c.top, c.real.top))).toFixed(1)}% over the ${free.length} ungoverned cars`);
+console.log(`  RMS top speed ${rms(cars.map(c => pc(c.top, c.real.top))).toFixed(1)}% over all ${cars.length} cars (governors fitted), ` +
+  `${rms(free.map(c => pc(c.top, c.real.top))).toFixed(1)}% over the ${free.length} ungoverned`);
 
 // ---- 3. health checks, against each car's known problems ---------------------------------------
 //   slow-car   right power (within 10%) but 0-100 off by more than 25%: the car model is wrong
-//   short      a governed car tops out below 85% of its governor: slower than the real car
+//   short      a governed car tops out below 97% of its governor: it cannot reach it, as the real car does
 //   never      cannot reach 100 km/h
 // KNOWN, build 97, each traced before it was listed:
 //   Duramax pickup, 29% slow with power within 7%: traction-limited for 9.2 of its 10.3 s, 1234 Nm
@@ -104,13 +117,18 @@ console.log(`  RMS top speed ${rms(free.map(c => pc(c.top, c.real.top))).toFixed
 const KNOWN = {
   'Chevrolet Silverado 2500HD Duramax (2020)': ['slow-car'],
   'Audi RS3 Sportback (8V, 2017)': ['slow-car'],
+  // Short of the 250 km/h governor (233-242) because their engines are 17-26% short of their rating
+  // (test60): the R34's is the JDM 280 PS figure real cars beat, the STI's and Evo's boost is unsure.
+  'Nissan Skyline GT-R V-spec (R34, 1999)': ['short'],
+  'Subaru Impreza WRX STI (GD, 2004)': ['short'],
+  'Mitsubishi Lancer Evolution IX (2006)': ['short'],
 };
 const found = {};
 for (const c of cars) {
   const f = [];
   if (!c.t100) f.push('never');
   else if (Math.abs(pc(c.hp, c.rhp)) < 10 && Math.abs(pc(c.t100, c.real.t100)) > 25) f.push('slow-car');
-  if (c.real.limited && c.top < 0.85 * c.real.top) f.push('short');
+  if (c.real.limited && c.top < 0.97 * c.real.top) f.push('short');
   if (!c.stock) fails.push(`${c.n}: does not load as factory spec`);
   if (!c.kgOk) fails.push(`${c.n}: does not load at its real curb mass`);
   found[c.n] = f;

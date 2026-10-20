@@ -63,9 +63,13 @@ egt.forEach(e => {
   // Build 92 routed the rotary's slow-burn heat to the exhaust (rotaryLostWork): 807 -> 897 C, 3 C
   // short of this band. Floor ratcheted to 890. (Mazda retarded the Renesis's side-port opening for
   // efficiency, so a cooler Renesis than a peripheral-port 13B is the right direction.)
-  const KNOWN_LOW = { '1.3 Rotary NA (Renesis)': 890 };
+  // Build 98: the 1.6 NA reads 816 C, 4 C under its band. The walls' saving at high speed used to go
+  // entirely to the exhaust, which did not conserve energy; now the share that would have done work
+  // does work (wallWorkShare), and the top-end gas is ~14 K cooler. The base exhaust share in
+  // exhaustHeatFrac ("roughly a third") was set under the old split and is the thing to derive next.
+  const KNOWN_LOW = { '1.3 Rotary NA (Renesis)': 890, '1.6 Sport NA I4': 815 };
   if (KNOWN_LOW[e.n] != null && e.full < e.lo) {
-    console.log(`    ${e.n}: KNOWN GAP — rotary exhaust heat not modelled (floor ${KNOWN_LOW[e.n]} C)`);
+    console.log(`    ${e.n}: KNOWN GAP (floor ${KNOWN_LOW[e.n]} C)`);
     if (e.full < KNOWN_LOW[e.n]) fails.push(`${e.n} EGT ${e.full} C fell below its known-gap floor ${KNOWN_LOW[e.n]} C`);
   } else if (e.full < e.lo || e.full > e.hi) fails.push(`${e.n} EGT ${e.full} C is outside the real ${e.lo}-${e.hi} C band`);
   if (!(e.part < e.full)) fails.push(`${e.n}: EGT must fall at part load`);

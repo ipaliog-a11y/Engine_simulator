@@ -49,10 +49,8 @@ const KNOWN = {
   'GM Duramax L5P 6.6 (Silverado HD)': ['boost-falls'],
   // a flat plateau; the scorecard's conditions put the peak at the limiter, the design curve's not
   'Toyota 2JZ-GTE (Supra A80)': ['limiter'],
-  // NA spark engines breathe as well at 1000 rpm as at 4000: no low-speed charge-heating/backflow loss
-  'Ford Coyote 5.0 (Mustang GT 2018)': ['flat-low-end'],
-  'Ferrari F140 V12 (812 Superfast)': ['flat-low-end'],
-  'Toyota 4A-GE (AE86)': ['flat-low-end'],
+  // (Coyote, F140 and 4A-GE showed 'flat-low-end', torque peaks at 1000-1400 rpm, until build 98 put
+  // the walls' extra heat at low speed into the work: peaks now 4700, 4900 and 5600 rpm.)
   // the two-stroke's fitted type factor and no expansion-chamber tuning
   'Yamaha RD350LC (2-stroke twin)': ['na-step'],
 };
