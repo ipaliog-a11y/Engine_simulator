@@ -27,7 +27,7 @@ const fails = [];
 
 // Manufacturer figures. Geometry is from published engine specs; performance is the maker's own
 // claim or the commonly-quoted road-test figure. Where a car was speed-limited the limiter value is
-// given and marked, because the model has no governor and will sail past it — those are excluded
+// given and marked, because these cars are built here with no limiter fitted and will sail past it — those are excluded
 // from the top-speed comparison rather than counted as a miss.
 //
 // ANCHOR QUALITY, since a test is only as good as its reference. Power, torque and geometry here

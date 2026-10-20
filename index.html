@@ -249,7 +249,7 @@ table.fuelmap td.live{box-shadow:inset 0 0 0 2px #fff;font-weight:bold}
 <body>
 <div class="container">
 <header>
-<h1>PIXEL ENGINE SIM v0.6 build 98</h1>
+<h1>PIXEL ENGINE SIM v0.6 build 99</h1>
 <div class="subtitle" id="subtitle">ENGINE DESIGNER • BUILD IT, THEN DRIVE IT</div>
 </header>
 <div class="main">
@@ -978,6 +978,8 @@ This is a physics model, and like every model it leaves things out. These are th
 <div class="field"><label for="vhGearbox">GEARBOX TYPE</label><select id="vhGearbox"><option value="manual">MANUAL (H-PATTERN)</option><option value="sequential">SEQUENTIAL</option><option value="dct">DUAL-CLUTCH (DCT)</option><option value="auto">TORQUE-CONV AUTO</option></select></div>
 <div class="field"><label for="vhGears">GEARBOX (SPEEDS)</label><select id="vhGears"><option value="4">4</option><option value="5">5</option><option value="6">6</option><option value="7">7</option><option value="8">8</option></select></div>
 <div class="field"><label for="vhGearing"><span id="lblGearing" class="ctl-lbl">GEARING (FINAL DRIVE)</span> <span class="val" id="valGearing">52</span></label><input type="range" id="vhGearing" min="0" max="100" step="1" value="52" aria-label="Gearing short to tall"></div>
+<div class="field"><label for="vhLimiter">SPEED LIMITER</label><select id="vhLimiter"><option value="off">OFF (REMOVED)</option><option value="on">ON</option></select></div>
+<div class="field"><label for="vhLimitKmh">LIMIT (km/h)</label><input type="number" id="vhLimitKmh" min="80" max="400" step="5" value="250"></div>
 </div>
 
 <div class="design-section">Wheels &amp; Tyres</div>
@@ -2816,13 +2818,14 @@ const VEHICLE_CATS=PRESET_CATS.filter(c=>VEHICLE_PRESETS.some(p=>p.cat===c));
 // that on a governed car, which could run past its governor if it were removed.
 function vehicleFromPreset(p){
   const ch=CHASSIS[p.chassis];
-  const fit=Object.assign({},ch.fit,{aF:'none',aR:'none',aFl:'none',weight:'none',gearing:52},p.fit);
+  const fit=Object.assign({},ch.fit,{aF:'none',aR:'none',aFl:'none',weight:'none',gearing:52,
+    gov:p.real.limited?p.real.top:0},p.fit);
   const keys=Object.keys(SPEED_RATING), i=keys.findIndex(k=>SPEED_RATING[k].kmh>=p.real.top);
   const rating=keys[Math.min(keys.length-1,(i<0?keys.length-1:i)+(p.real.limited?1:0))];
   return {chassis:p.chassis,drive:fit.drive,gearbox:fit.gearbox,diff:fit.diff,gears:fit.gears,gearing:fit.gearing,
     tireType:fit.tire,tireWidth:fit.tw,tireAspect:fit.ta,wheelDia:fit.wheel,
     aeroFront:fit.aF,aeroRear:fit.aR,aeroFloor:fit.aFl,weightRed:fit.weight,
-    brakeType:fit.brake,rotor:fit.rotor,suspension:fit.susp,speedRating:rating,
+    brakeType:fit.brake,rotor:fit.rotor,suspension:fit.susp,speedRating:rating,governor:fit.gov,limitKmh:fit.gov||250,
     body:Object.assign({name:p.name,fit},p.body)};
 }
 // ================================================================================================
@@ -2967,7 +2970,7 @@ const DEFAULT_VEHICLE={
   chassis:'coupe',drive:'rwd',gearbox:'manual',diff:'clsd',gears:6,gearing:52,
   tireType:'sport',tireWidth:245,tireAspect:40,wheelDia:18,
   aeroFront:'none',aeroRear:'lip',aeroFloor:'none',weightRed:'none',
-  brakeType:'slotted',rotor:330,suspension:'sport'
+  brakeType:'slotted',rotor:330,suspension:'sport',governor:0,limitKmh:250
 };
 let vehicle=Object.assign({},DEFAULT_VEHICLE);
 let perf=null;   // last computed performance result
@@ -4471,7 +4474,10 @@ function readVehicleFromForm(){
     tireAspect:clamp(Math.round(+g('vhTireA').value||40),25,70),wheelDia:clamp(Math.round(+g('vhWheel').value||18),13,22),
     aeroFront:g('vhAeroF').value,aeroRear:g('vhAeroR').value,aeroFloor:g('vhAeroFl').value,weightRed:g('vhWeight').value,
     brakeType:g('vhBrake').value,rotor:clamp(Math.round(+g('vhRotor').value||330),250,420),suspension:g('vhSusp').value,
-    speedRating:g('vhRating').value,body:vehBody
+    speedRating:g('vhRating').value,body:vehBody,
+    // Road-speed governor in km/h, 0 when removed. limitKmh keeps the set figure while it is off.
+    governor:g('vhLimiter').value==='on'?clamp(Math.round(+g('vhLimitKmh').value||250),80,400):0,
+    limitKmh:clamp(Math.round(+g('vhLimitKmh').value||250),80,400)
   };
 }
 // The real car's body when one is loaded (see VEHICLE_PRESETS), else null and the archetype stands.
@@ -4481,6 +4487,7 @@ function applyVehicleToForm(v){
   const g=id=>document.getElementById(id);
   vehBody=v.body||null;
   if(v.speedRating&&SPEED_RATING[v.speedRating])g('vhRating').value=v.speedRating;
+  g('vhLimiter').value=v.governor>0?'on':'off';g('vhLimitKmh').value=v.governor>0?v.governor:(v.limitKmh||250);
   g('vhChassis').value=v.chassis||'coupe';g('vhDrive').value=v.drive||'rwd';g('vhGearbox').value=v.gearbox||'manual';g('vhDiff').value=v.diff||'open';
   g('vhGears').value=v.gears||6;g('vhGearing').value=v.gearing!=null?v.gearing:52;
   g('vhTire').value=v.tireType||'sport';g('vhTireW').value=v.tireWidth||235;g('vhTireA').value=v.tireAspect||40;g('vhWheel').value=v.wheelDia||18;
@@ -4501,6 +4508,8 @@ function applyChassisFit(key,body){
   g('vhRating').value=(TIRE_TYPE[f.tire]||TIRE_TYPE.sport).rating;
   if(body){const top=VEHICLE_PRESETS.find(p=>p.name===body.name);
     if(top)g('vhRating').value=vehicleFromPreset(top).speedRating;}
+  // A governor is factory equipment of a real car; an archetype ships without one.
+  g('vhLimiter').value=f.gov>0?'on':'off';if(f.gov>0)g('vhLimitKmh').value=f.gov;
   g('vhAeroF').value=f.aF;g('vhAeroR').value=f.aR;g('vhAeroFl').value=f.aFl;g('vhWeight').value=f.weight;
   g('vhBrake').value=f.brake;g('vhRotor').value=f.rotor;g('vhSusp').value=f.susp;
   updateGearingLabel();
@@ -4521,7 +4530,7 @@ function fitmentLabel(v){
 // True when every fitted part still matches the chassis' factory spec.
 function isFactoryFit(v){
   const ch=CHASSIS[v.chassis];if(!ch||!ch.fit)return false;const f=v.body?v.body.fit:ch.fit;
-  return v.drive===(v.body?f.drive:ch.drive)&&v.gears===f.gears&&v.gearing===f.gearing&&v.gearbox===f.gearbox&&v.diff===f.diff&&
+  return v.drive===(v.body?f.drive:ch.drive)&&(v.governor||0)===(f.gov||0)&&v.gears===f.gears&&v.gearing===f.gearing&&v.gearbox===f.gearbox&&v.diff===f.diff&&
     v.tireType===f.tire&&v.tireWidth===f.tw&&v.tireAspect===f.ta&&v.wheelDia===f.wheel&&
     v.aeroFront===f.aF&&v.aeroRear===f.aR&&v.aeroFloor===f.aFl&&v.weightRed===f.weight&&
     v.brakeType===f.brake&&v.rotor===f.rotor&&v.suspension===f.susp;
@@ -4742,6 +4751,7 @@ function simulateAccel(){
   const grid=buildTorqueGrid();
   let boostNow=grid.laggy?0:engine.maxBoost, shaftE=0;
   const m=vehicle.mass,r=vehicle.rTire,fd=vehicle.finalDrive,eff=vehicle.driveEff,ratios=vehicle.ratios;
+  const vGov=(vehicle.governor||0)/3.6;   // m/s, 0 when the limiter is removed
   const idle=engine.idleRpmEff,rl=engine.redline,TWO_PI=Math.PI*2,dt=0.005;
   const gb=vehicle.gb||GEARBOX.manual;
   const shiftTime=gb.shift,tcStall=gb.stall>0?clamp(gb.stall,idle,rl*0.85):0;
@@ -4824,8 +4834,10 @@ function simulateAccel(){
     // diff is governed by the lighter-loaded wheel and throws the rest away, an LSD recovers
     // most of it, a spool all of it. This only bites while the car is traction-limited.
     const tqFrac=(driveF*r)/axleTqMax;                       // how hard the axle is being driven
-    const F=Math.min(driveF,vehicle.mu*diffTractionAt(df,0,vehicle.cg,tqFrac)*Math.max(0,drivenN));
+    let F=Math.min(driveF,vehicle.mu*diffTractionAt(df,0,vehicle.cg,tqFrac)*Math.max(0,drivenN));
     const drag=0.5*AIR_RHO*vehicle.cdA*v*v,roll=v>0.2?crrAt(vehicle.crr,v)*m*G:0;
+    // A road-speed governor cuts fuel at its set speed: past it the engine gives only what holds it.
+    if(vGov>0&&v>=vGov)F=Math.min(F,drag+roll);
     if(!M.t100){if(F<driveF-1e-6)M.gripT+=dt;if(shiftT<=0&&grid.laggy&&boostNow<0.9*engine.maxBoost)M.lagT+=dt;}
     a=(F-drag-roll)/m;v=Math.max(0,v+a*dt);x+=v*dt;t+=dt;
     if(!M.t100&&v>=V100)M.t100=t;
@@ -4852,11 +4864,13 @@ function simulateAccel(){
     }
   }
   const vRedline=rl*TWO_PI*r/60/(ratios[ratios.length-1]*fd);
-  const topSpeed=(vTop||vRedline)*3.6;
+  const vFree=vTop||vRedline;
+  // The governor caps what the car could otherwise hold; it cannot add speed the car does not have.
+  const governed=vGov>0&&vFree>vGov, topSpeed=(governed?vGov:vFree)*3.6;
   Object.assign(state,svLive);
   // gripT / lagT: seconds of the 0-100 spent traction-limited, and on throttle below 90% of target
   // boost — WHY a car takes the time it takes, so a claim about what limits it can be checked.
-  return {t100:M.t100,q400:M.q400,q800:M.q800,q1000:M.q1000,topSpeed,mass:m,ptw:vehicle.powerToWeight,
+  return {t100:M.t100,q400:M.q400,q800:M.q800,q1000:M.q1000,topSpeed,governed,freeSpeed:vFree*3.6,mass:m,ptw:vehicle.powerToWeight,
     gripT:M.gripT,lagT:M.lagT,
     t200:M.v200?M.v200.t:null,x200:M.v200?M.v200.x:null};
 }
@@ -5388,7 +5402,8 @@ function simulateLap(key){
   //    compression, which presses it down and lets it carry far more speed. Both the downforce and
   //    the crest terms scale with v², so this still solves for v² in closed form.
   const vC=new Array(n),lim=new Array(n);
-  const VMAX=140;   // 504 km/h ceiling, so a straight is bounded
+  // 504 km/h ceiling, so a straight is bounded; a fitted speed limiter is a lower one.
+  const VMAX=vehicle.governor>0?Math.min(140,vehicle.governor/3.6):140;
   for(let i=0;i<n;i++){
     // Two passes: solve the closed form ignoring the cap, then re-solve with the vertical term
     // evaluated (and clamped) at that speed. Converges immediately because the cap only binds
@@ -5589,6 +5604,7 @@ function updateVehicleSummary(){
     '<br>Brakes <b>'+(BRAKE_TYPE[vehicle.brakeType]||BRAKE_TYPE.slotted).label+'</b> '+vehicle.rotor+'mm ('+(vehicle.brakeDecelCap/G).toFixed(2)+'g) • Susp <b>'+(SUSPENSION[vehicle.suspension]||SUSPENSION.sport).label+'</b>'+
     '<br>Gearbox <b>'+tr(vehicle.gbLabel)+'</b> • shift '+(vehicle.shiftTime*1000).toFixed(0)+' ms • driveline '+(vehicle.driveEff*100).toFixed(0)+'%'+(vehicle.gb.stall?' • converter stall '+vehicle.gb.stall+' rpm ×'+vehicle.gb.mult.toFixed(1):'')+
     '<br>Diff <b>'+tr(vehicle.diffLabel)+'</b> • puts down '+(vehicle.diffTraction*100).toFixed(0)+'% of axle grip'+
+    '<br>Speed limiter <b>'+(vehicle.governor>0?vehicle.governor+' km/h':tr('removed'))+'</b>'+(perf&&perf.governed?' • free top speed '+Math.round(perf.freeSpeed)+' km/h':'')+
     '<br>Drag CdA <b>'+vehicle.cdA.toFixed(2)+'</b> • downforce ClA <b>'+vehicle.clA.toFixed(2)+'</b> • final drive <b>'+vehicle.finalDrive.toFixed(2)+'</b>'+
     '<br>Vehicle cost <b>'+fmtCost(vehicle.cost)+'</b> • with engine <b>'+fmtCost(vehicle.cost+(engine.cost||0))+'</b>';
   renderPerformance();
@@ -5605,7 +5621,7 @@ function renderPerformance(){
   const zzU=(p.zd!=null)?Math.round(p.zd)+' m total':'not reached';
   grid.innerHTML=
     cell(tr('0–100 km/h'),fmtT(p.t100),'',' hero')+
-    cell(tr('TOP SPEED'),Math.round(p.topSpeed),'km/h','hero')+
+    cell(tr('TOP SPEED'),Math.round(p.topSpeed),p.governed?'km/h · '+tr('limited'):'km/h','hero')+
     cell('400 m',fmtT(p.q400&&p.q400.t),fmtTrap(p.q400))+
     cell('800 m',fmtT(p.q800&&p.q800.t),fmtTrap(p.q800))+
     cell('1000 m',fmtT(p.q1000&&p.q1000.t),fmtTrap(p.q1000))+
@@ -7509,7 +7525,7 @@ function bindControls(){
   document.getElementById('tabOptions').addEventListener('click',()=>setTab('options'));
   // Vehicle design: recompute performance live on any change. Picking a chassis fits its whole
   // factory spec (drivetrain, gearbox, tyres/wheels, brakes, suspension, aero, weight).
-  ['vhChassis','vhDrive','vhGearbox','vhDiff','vhGears','vhGearing','vhTire','vhTireW','vhTireA','vhWheel','vhAeroF','vhAeroR','vhAeroFl','vhWeight','vhBrake','vhRotor','vhSusp'].forEach(id=>{
+  ['vhChassis','vhDrive','vhGearbox','vhDiff','vhGears','vhGearing','vhLimiter','vhLimitKmh','vhTire','vhTireW','vhTireA','vhWheel','vhAeroF','vhAeroR','vhAeroFl','vhWeight','vhBrake','vhRotor','vhSusp'].forEach(id=>{
     const el=document.getElementById(id);if(!el)return;
     el.addEventListener('input',()=>{
       if(id==='vhChassis'){

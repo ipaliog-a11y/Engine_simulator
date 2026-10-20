@@ -1,4 +1,4 @@
-# PIXEL ENGINE SIM v0.6 build 98
+# PIXEL ENGINE SIM v0.6 build 99
 
 **A lightweight, 8-bit style internal combustion engine *designer* & simulator** inspired by *Automation*.
 
@@ -736,6 +736,7 @@ measurement finds things. Each item is one PR.
 | — | Real-engine presets | ✅ build 96 | 28 real engines in 8 categories with the maker's figures; test60 reports the model against them (RMS 15.8% power). Exposed: NA engines breathe as well at 1000 rpm as at 4000; rotary displacement uses the piston formula. Vehicles next. |
 | — | Real-car presets | ✅ build 97 | 26 real cars, each with its own body (curb mass, Cd, area, wheelbase, weight split) over its chassis class, paired with its factory engine; test61 reports them against the maker (0-100 RMS 13.9%, top speed 5.1%). Rotaries wait for the displacement fix; no vehicle speed governor yet. |
 | — | Wall heat in the work | ✅ build 98 | The extra wall heat at low speed now comes out of the work as well as the exhaust, in the share set by when the walls take it (a Woschni flux over a traced cycle, κ ≈ 0.25 spark, 0.36 diesel). NA torque peaks move off 1000 rpm (Coyote 4700, real 4600). Next: derive the base exhaust share. |
+| — | Speed limiter | ✅ build 99 | A removable road-speed governor (on/off + km/h); real cars arrive with their factory one. It holds the car at its set speed in the run and on track; removed, the car runs to its free top speed. Top-speed RMS over all 26 real cars 4.0%. |
 | — | Spark torque from fuel | ✅ build 95 | `IMEP_K` replaced by Heywood's 0.8 × fuel-air cycle efficiency; each fuel's LHV/AFR_st enters. Spark torque −2.7%, full-load BSFC 280 g/kWh (real 270–300). Rotary/two-stroke type factors still fitted. |
 | — | `turboChoke` (boost taper) | ✅ build 94 | Retired. Turbine efficiency from blade speed ratio U/C, per-point compressor efficiency, a continuous rich-knock slope in place of a step, and sequential turbos staged as two turbines. Calibration improved on every measure. |
 | — | Rotary exhaust heat | ✅ build 92 | The slow, late Wankel burn (130° ES, CA50 37.5° ATDC) leaves ~10% of the expansion work undone, and that heat now reaches the exhaust: 13B 775 → 942 °C, off the limiter. |

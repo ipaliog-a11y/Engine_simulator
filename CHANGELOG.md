@@ -20,6 +20,20 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 Working toward **v1.0 — every number derived, not fitted.**
 
+### Speed limiter, removable (build 99)
+
+- **A road-speed governor on the vehicle tab:** SPEED LIMITER on/off and its km/h. When on, the engine
+  gives only the force that holds the set speed once the car reaches it, as a fuel-cut governor does,
+  so it shapes the run, the trap speeds and the track lap (a lower speed ceiling), not only the top-speed
+  figure. It cannot add speed the car does not have. Turn it OFF to remove it; the summary then shows
+  the car's free top speed, and the car reads as modified.
+- **Real cars arrive with their factory governor** (GTI 246, M3 250, Alto 140, …); archetype chassis
+  arrive without one. The setting travels with saved builds.
+- **test61:** a governed car holds exactly its governor, removing it frees the car (M3 E46 250 → 289
+  km/h) without touching the 0-100, and top-speed error is now reported over all 26 cars: RMS 4.0%. The
+  "reaches its governor" check is now 97%, which names the R34, STI and Evo IX (233-242 km/h): their
+  engines are the three already 17-26% short of their ratings.
+
 ### Wall heat comes out of the work, not only the exhaust (build 98)
 
 - **A slow engine is no longer as efficient as a fast one.** The model already said the walls take more
