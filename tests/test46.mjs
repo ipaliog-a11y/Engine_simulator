@@ -76,7 +76,9 @@ egt.forEach(e => {
 // gives a primary you can physically route. If this comes out at a metre and a half, the tuning
 // order is being ignored — which is exactly the bug that a single-reflection model produces.
 console.log('\n== a derived header must be a length someone could actually fabricate ==');
-const hdr = await page.evaluate(() => PRESETS.filter(p => !/Rotary|2-Stroke/.test(p.name)).map(p => {
+// Archetype presets only (build 96): budgets and named lists here were written for the model's own
+// preset set. Real engines are compared, with the same sanity checks and their own anomaly list, in test60.
+const hdr = await page.evaluate(() => PRESETS.filter(p => !p.real && !/Rotary|2-Stroke/.test(p.name)).map(p => {
   // A turbo manifold is not a tuned header (build 91): against a turbine the reflected wave is a
   // compression, which only hurts, and manifold volume smooths away the blowdown pulse, so it is as
   // short as packaging allows. The tuning band below is for headers; a turbo manifold must instead
@@ -170,7 +172,7 @@ if (trap.race < 0.75 || trap.race > 0.95) fails.push(`race-cam trapping ${trap.r
 // The outcome this whole conversion existed to deliver. Real engines peak at 90-98% of redline;
 // four presets used to peak at exactly 100%, then two after the valvetrain conversion.
 console.log('\n== no preset may make peak power at the exact rev limiter ==');
-const lim = await page.evaluate(() => PRESETS.map(pr => {
+const lim = await page.evaluate(() => PRESETS.filter(p => !p.real).map(pr => {
   applyEngineToForm(Object.assign({}, DEFAULT_ENGINE, pr.engine)); buildEngine();
   const c = buildTorqueCurve();
   let bp = 0, bhp = -1;

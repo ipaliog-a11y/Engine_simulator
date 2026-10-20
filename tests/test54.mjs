@@ -66,7 +66,10 @@ const r = await page.evaluate(() => {
 
   // 7. steady boost never FALLS as rpm rises below the target — the first prototype's clamp made a
   //    kei read 0.19 bar at 1500 and 0.12 at 2000 by inventing mass at the low state
-  out.mono = PRESETS.filter(p => p.engine.intake === 'turbo').map(p => {
+  // The ARCHETYPE presets only (build 96): this check carries budgets and named lists written for the
+  // model's own preset set. Real engines (PRESETS with `real`) are compared, and run against the same
+  // sanity checks with their own named anomaly list, in test60.
+  out.mono = PRESETS.filter(p => !p.real && p.engine.intake === 'turbo').map(p => {   // archetypes; real engines: test60
     load(p.name); let prev = -1, bad = null;
     for (let rpm = 1000; rpm <= engine.redline; rpm += 250) { const b = steadyBoost(rpm);
       if (b < prev - 1e-3 && prev < engine.maxBoost - 1e-3) { bad = rpm; break; } prev = b; }

@@ -104,7 +104,9 @@ if (!(cam.harsherRamp < cam.baseline))
 // Four presets used to make peak power at the exact rev limiter, which no real engine does,
 // because the old valve-float term only fired ABOVE the redline and so never ran at all.
 console.log('\n== no engine may make peak power at the exact rev limiter without a reason ==');
-const peaks = await page.evaluate(() => PRESETS.map(pr => {
+// Archetype presets only (build 96): budgets and named lists here were written for the model's own
+// preset set. Real engines are compared, with the same sanity checks and their own anomaly list, in test60.
+const peaks = await page.evaluate(() => PRESETS.filter(p => !p.real).map(pr => {
   applyEngineToForm(Object.assign({}, DEFAULT_ENGINE, pr.engine)); buildEngine();
   const c = buildTorqueCurve(), pts = c.map(q => ({ rpm: q.rpm, hp: q.tq * q.rpm / 7127 }));
   const pk = pts.reduce((a, x) => x.hp > a.hp ? x : a);
