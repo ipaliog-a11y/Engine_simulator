@@ -1,0 +1,115 @@
+diff --git a/index.html b/index.html
+index a1e1d40..50a20fe 100644
+--- a/index.html
++++ b/index.html
+@@ -1874,10 +1874,9 @@ function deriveGasDynamics(){
+     // turbine can be, so every existing call site reads the open position by default; `vgtShut`
+     // is non-zero only on a VGT and is what tells the rest of the model there is anything to
+     // schedule at all.
+-    e.turbineArea=e.vgt?a0*vaneThroatFrac(tb.exd,VANE_BETA_MAX):a0;
+-    e.vgtShut=e.vgt?a0*vaneThroatFrac(tb.exd,VANE_BETA_MIN):0;
+-    e.turbUnits=(e.turboConfig==='twin')?2:1;
+     e.compExd=tb.exd;
++    setTurbineAR(tb.ar);        // the frame's catalogue housing; sizeTurbineHousing picks the real one
++    e.turbUnits=(e.turboConfig==='twin')?2:1;
+     e.shaftJ=wheelInertia(tb.exd)*(e.turbUnits);
+     e.shaftMax=maxShaftRpm(tb.exd);
+   }else{e.turbineArea=0;e.vgtShut=0;e.turbUnits=1;e.compExd=0;e.shaftJ=0;e.shaftMax=0;}
+@@ -2329,6 +2328,71 @@ const TURBO={
+ };
+ const AR_INCH=0.0254;          // A/R is quoted in inches
+ const TURB_WHEEL=0.90;         // turbine wheel as a fraction of the compressor exducer
++// Turbine throat for a housing A/R. A/R is the volute throat area over the radius to its centroid,
++// so A_throat = (A/R) x R; a vane ring is the same volute with vanes in it.
++function setTurbineAR(ar){
++  const e=engine, exd=e.compExd;
++  const a0=(ar*AR_INCH)*(TURB_WHEEL*exd/2);
++  e.turbineAR=ar;
++  e.turbineArea=e.vgt?a0*vaneThroatFrac(exd,VANE_BETA_MAX):a0;
++  e.vgtShut=e.vgt?a0*vaneThroatFrac(exd,VANE_BETA_MIN):0;
++}
++// Steady wide-open-throttle boost against rpm, sampled once per engine: solving the shaft balance
++// costs a few thousand iterations, and boostAvail is called for every rpm of every curve build.
++function buildBoostTable(N){
++  const e=engine;
++  e.boostTable=null;
++  if(e.intake!=='turbo'||!(e.turbineArea>0))return;
++  const lo=Math.max(600,e.idleRpmEff||800),hi=e.redline,tb=[];
++  for(let i=0;i<=N;i++){const r=lo+(hi-lo)*i/N;tb.push({rpm:r,bar:steadyBoost(r)});}
++  e.boostTable=tb;
++}
++// ---- the turbine housing, sized to THIS engine rather than to a frame size class ----
++// A/R used to come from the frame alone — small 0.42, medium 0.64, large 0.86 — so a 2.0 four and a
++// 6.6 V8 on the same size class got the same throat: a 4x spread in exhaust flow per mm2 of throat
++// across the presets, and boost thresholds up to 4000 rpm late. Nobody matches a turbo that way.
++//
++// A housing is a compromise: tighter spools earlier and costs back-pressure at the top. Every limit
++// on going tighter is now modelled — pumping work (the exhaust half of the loop), residual-gas
++// knock and the timing the ECU pulls for it, residual dilution of VE, and the turbine-temperature
++// fuel cap — so none has to be asserted. The builder's objective is the one the car feels: the
++// most AVERAGE POWER across the engine's own rev range, idle to redline. A lazy low end and a choked
++// top end both lower it; acceleration is power. No tolerance constant (the first attempt used "give
++// up at most 12% of rated power", a judgement call), and no per-type split: a diesel, with no spark
++// to retard, ends up tight because nothing stops it, which is what real turbodiesel housings are.
++//
++// The candidates are the span of housings makers sell for a frame. The throat convention caveat
++// (backPressureBar) still applies: A/R here is quoted on R_wheel, so it reads small against catalogue
++// figures quoted on the volute centroid.
++const AR_MIN=0.25, AR_MAX=1.30;
++function sizeTurbineHousing(){
++  const e=engine;
++  if(e.intake!=='turbo'||!(e.compExd>0))return;
++  // Pinned exactly as buildTorqueCurve pins the bench: a design decision must not depend on where the
++  // user left the AFR slider or how warm the engine is.
++  const sv={afr:state.afr,coolant:state.coolant,oil:state.oil,engineHealth:state.engineHealth,blown:state.blown,
++            iat:state.iat,systemVoltage:state.systemVoltage,nitrousActive:state.nitrousActive};
++  const savedAfrMode=e.afrMode;e.afrMode='fixed';
++  Object.assign(state,{coolant:90,oil:100,engineHealth:1,blown:false,iat:20,systemVoltage:14,nitrousActive:false});
++  state.afr=e.stoichAFR*(e.ci?SMOKE_LAMBDA_CI:0.88);
++  const lo=Math.max(1000,(e.idleRpmEff||800)+200),hi=e.redline,K=16;
++  const meanPower=ar=>{
++    setTurbineAR(ar);buildBoostTable(8);
++    let p=0;
++    for(let i=0;i<=K;i++){const r=lo+(hi-lo)*i/K;p+=1/Math.max(1,calcAtRpm(r).torque);}
++    return -p;   // minus the sweep time: higher is better
++  };
++  // coarse log-spaced sweep, then one refinement either side of the best
++  const L=Math.log(AR_MIN),H=Math.log(AR_MAX),N=6;
++  let best={ar:e.turbineAR,p:-1};
++  for(let i=0;i<=N;i++){const ar=Math.exp(L+(H-L)*i/N),p=meanPower(ar);if(p>best.p)best={ar,p};}
++  const step=(H-L)/N/2;
++  for(const d of [-step,step]){
++    const ar=Math.exp(clamp(Math.log(best.ar)+d,L,H)),p=meanPower(ar);if(p>best.p)best={ar,p};
++  }
++  setTurbineAR(best.ar);
++  e.afrMode=savedAfrMode;Object.assign(state,sv);
++}
+ const COMP_BLOCKAGE=0.50;      // blade blockage + swirl at the inducer throat
+ const INDUCER_RATIO=0.72;      // inducer/exducer, near-constant across a maker's range
+ // Flow rating = the inducer choking. Checked against quoted ratings for real frames: derived comes
+@@ -2854,13 +2918,7 @@ function buildEngine(){
+   // Solving the shaft balance costs a few thousand iterations, and boostAvail is called for every
+   // rpm of every torque-curve build. Sample it once per engine into a table and interpolate — the
+   // same reason a compressor map is a map and not a formula evaluated at runtime.
+-  engine.boostTable=null;
+-  if(engine.intake==='turbo'&&engine.turbineArea>0){
+-    const lo=Math.max(600,engine.idleRpmEff||800),hi=engine.redline,N=26,tb=[];
+-    for(let i=0;i<=N;i++){const r=lo+(hi-lo)*i/N;tb.push({rpm:r,bar:steadyBoost(r)});}
+-    engine.boostTable=tb;
+-  }
+-  engine.peakEgt=peakEgt();   // needs the boost table (wotMapAt) and the burn table
++  buildBoostTable(26);   // with the frame's catalogue housing; resized below once the engine is complete
+   engine.nitrousBar=NITROUS_BAR[engine.nitrous]||0;
+   state.boostActual=0;state.nitrousActive=false;state.nitrousCharge=1.0;   // fresh tanks
+   state.engineHealth=1.0;state.blown=false;state.wearCause='';   // a fresh (rebuilt) engine
+@@ -2911,6 +2969,10 @@ function buildEngine(){
+     state.afr=clamp(lam*engine.stoichAFR,+afrEl.min,+afrEl.max);
+   }
+   syncSliders();
++  // Size the turbine housing now that everything calcAtRpm reads is set, then rebuild what depends on it.
++  sizeTurbineHousing();
++  buildBoostTable(26);
++  engine.peakEgt=peakEgt();   // needs the boost table (wotMapAt) and the burn table
+ 
+   buildRev++;dynoCache=null;
+   engine.cost=computeCost();

@@ -1,4 +1,4 @@
-# PIXEL ENGINE SIM v0.6 build 89
+# PIXEL ENGINE SIM v0.6 build 90
 
 **A lightweight, 8-bit style internal combustion engine *designer* & simulator** inspired by *Automation*.
 
@@ -732,6 +732,7 @@ measurement finds things. Each item is one PR.
 | 2 | Residual-gas knock | ✅ build 75 | Back-pressure now brings on knock, so the petrol/diesel housing split falls out of physics. |
 | — | Variable-geometry turbine | ✅ build 80 | The diesel spool gap was a VGT gap, not pulse energy. |
 | — | Shift at the torque crossover | ✅ build 81 | Every car used to upshift at the redline; 0–100 RMS 24.4% → 10.2%. |
+| — | Exhaust pulse energy | ✅ build 90 | The turbine fed by blowdown pulses, from cam timing and cylinder state; the prerequisite housing sizing kept running into. Small on presets with long tuned primaries. |
 | 3 | Turbine housing sizing | ⬜ **next** | Retires the size-class A/R table and `turboChoke`. The VGT was its missing prerequisite. Also the Alto Works' gap: no frame is small enough for 660 cc. Findings parked at `tests/proto/housing.mjs`, patch at `housing-sizing.diff`. |
 | — | Rotary exhaust heat | ⬜ | The trailing combustion pocket burning at exhaust-port opening: rotary EGT and the 13B's spool (budgeted in test46/47). |
 | 4 | VE bell (`vePeakRpm`) | ✅ build 84 / 88 | Retired for poppet-valve petrol engines after two hidden errors were fixed (IVC geometry, Engelman tuning ratio), and for diesels in build 88. Still fitted for ported engines. |
