@@ -1,4 +1,4 @@
-# PIXEL ENGINE SIM v0.6 build 88
+# PIXEL ENGINE SIM v0.6 build 89
 
 **A lightweight, 8-bit style internal combustion engine *designer* & simulator** inspired by *Automation*.
 
@@ -664,7 +664,11 @@ documented in the GUIDE at the point where it matters:
 - **There is no engine braking above the limiter.** Past the rev limiter drive force is zero, but
   nothing pushes back, so a steep descent can carry a car a km/h or so beyond the speed its top
   gear allows. Real overrun would drag it back.
-- **Power peaks at the rev limiter on two presets.** The 2.0 Turbo Diesel I4 is a *plateau* (within
+- **Known gaps the tests now name** (build 89): the rotaries' exhaust runs ~100 °C too cool and the
+  13B turbo cannot spool, because the trailing combustion pocket that is still burning at exhaust-port
+  opening is not modelled; and the Alto Works barely spools because the smallest turbo frame is far
+  too big for 660 cc. Each is budgeted by name in test46/47/48 at a floor it may not fall below.
+- **Power peaks at the rev limiter on three presets** (the 13B as above). The 2.0 Turbo Diesel I4 is a *plateau* (within
   ~4% from 3500 rpm) left by derived diesel physics. A real TDI's sharper fall over its last 600 rpm is
   the maker's torque-limit calibration, not combustion. A droop governor was tried and fitted real
   data worse (see test46). The other is the 2.0 Turbo Hot-Hatch, down from four before the
@@ -728,7 +732,8 @@ measurement finds things. Each item is one PR.
 | 2 | Residual-gas knock | ✅ build 75 | Back-pressure now brings on knock, so the petrol/diesel housing split falls out of physics. |
 | — | Variable-geometry turbine | ✅ build 80 | The diesel spool gap was a VGT gap, not pulse energy. |
 | — | Shift at the torque crossover | ✅ build 81 | Every car used to upshift at the redline; 0–100 RMS 24.4% → 10.2%. |
-| 3 | Turbine housing sizing | ⬜ **next** | Retires the size-class A/R table and `turboChoke`. The VGT was its missing prerequisite. Findings parked at `tests/proto/housing.mjs`, patch at `housing-sizing.diff`. |
+| 3 | Turbine housing sizing | ⬜ **next** | Retires the size-class A/R table and `turboChoke`. The VGT was its missing prerequisite. Also the Alto Works' gap: no frame is small enough for 660 cc. Findings parked at `tests/proto/housing.mjs`, patch at `housing-sizing.diff`. |
+| — | Rotary exhaust heat | ⬜ | The trailing combustion pocket burning at exhaust-port opening: rotary EGT and the 13B's spool (budgeted in test46/47). |
 | 4 | VE bell (`vePeakRpm`) | ✅ build 84 / 88 | Retired for poppet-valve petrol engines after two hidden errors were fixed (IVC geometry, Engelman tuning ratio), and for diesels in build 88. Still fitted for ported engines. |
 | 5 | Launch model | ⬜ | Unblocks the parked slip-ratio tyre model *and* rotational inertia — every car currently gets a free ~6% on 0–100. The three go in together and recalibrate once. |
 | 6 | Combustion (conversion 5) | 🟨 diesel ✅ build 88 | Diesel: torque from fuel, fixed-time Wiebe burn, wall heat, turbine-temperature fuel cap, signed gas exchange. Spark engines still take IMEP from air (`IMEP_K`, `typeImep`); petrol full-load BSFC still reads ~240 against a real 270–300. |

@@ -20,6 +20,44 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 Working toward **v1.0 — every number derived, not fitted.**
 
+### The tests measure what the engine runs — and two exhaust-temperature bugs they were hiding (build 89)
+
+An audit asked whether the tests still reflected the physics after build 88. Several did not.
+- **The EGT checks measured a temperature nothing ran at.** test46, test47 and test49 called
+  `exhaustGasT(1.0)`, with no rpm and an assumed mixture. Since build 88 EGT depends on rpm (burn
+  time, wall heat), so the checks passed while the engine ran up to 90 °C hotter. There is now one
+  function, `egtAt(rpm, map)`: the operating point's speed, boost and the mixture actually burned.
+  The engine's own callers and the tests both use it. Real engines' EGT is measured on their own
+  ECU, so the tests compare at the full-load mixture the hardware runs (`fullLoadLambda`).
+- **Bug: rich mixtures ran hotter.** `exhaustGasT` credited every gram of fuel with heat. Rich of
+  stoichiometric the oxygen runs out and the excess leaves as CO and H₂, so the release is now
+  capped. Turbo petrols on their ECU map read ~900 °C (real 900–980) instead of 1136 °C. It went
+  unseen while the function was only called at one assumed mixture per load.
+- **Bug: the dyno's boost table spooled on cold gas.** `steadyBoost` is a wide-open-throttle solve
+  but took load = rpm/(0.8 × redline): 550 K gas at 2000 rpm, against ~950 K on the LIVE bench's
+  shaft at the same point. Both now use full-load gas. The extra wall-heat time at low rpm is what
+  legitimately cools it.
+- **Diesel EGT band = the vane rating** (827 °C). It was 800, below the limit the ECU fuels up to.
+- **test49 used its own copy of the VGT throat schedule**, which had drifted from the engine. It now
+  calls the engine's `turbineThroatAt`, and sweeps from just off idle so it sees the petrol vanes
+  move. At wide-open throttle a petrol holds 0.9 bar from ~2000 rpm with the vanes at the open stop.
+- **test52** reads the mixture burned (not the slider) against `SMOKE_LAMBDA_CI`; test47 rates a
+  diesel at `bestPowerLambda()`.
+- **The 0–100 run now reports why it takes the time it takes**: `gripT` (traction-limited) and
+  `lagT` (below 90% of target boost). test41's kei ladder had assumed the car was still grip-capped
+  on slicks. With honest exhaust heat it is boost-limited (1.0 s on the grip limit, 3.5 s below
+  boost), so AWD only adds drivetrain loss. The test now checks the claim on its premise. A
+  shift-throttle floor in `simulateAccel` had been tuned once before to hold that ordering.
+- **Known gaps, now visible and budgeted by name** (each held at a floor so it cannot get worse):
+  - Rotary EGT, both rotaries (775–807 °C against a real 900+), and the 13B turbo peaking at its
+    limiter. Both come from the trailing combustion pocket still burning at exhaust-port opening,
+    which is not modelled. They used to pass only on the rich-mixture bug.
+  - Alto Works 0–100 +16% (own cap 20%). Its K6A barely spools because the smallest turbo frame
+    (54 mm wheel) is far too big for 660 cc; the real car uses a ~40 mm IHI RHF3. That is
+    frame/housing sizing, next in the queue.
+- Calibration: test41 3.34% → 3.39%, power RMS 8.6%, 0–100 RMS 7.2% → 8.1%. The spool calibration
+  had been sitting on overstated exhaust heat.
+
 ### The diesel, from its fuel — the last fitted VE bell on a piston engine is gone (build 88)
 
 - **Diesel torque is computed from the fuel it burns.** It used to come from AIR times a constant
