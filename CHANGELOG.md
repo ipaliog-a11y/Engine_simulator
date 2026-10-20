@@ -20,6 +20,22 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 Working toward **v1.0 — every number derived, not fitted.**
 
+### Live timing on the track (build 104)
+
+- **The solved lap, replayed in real time** on the track map: the car runs along the racing line with a
+  two-second trail, green on the throttle, red on the brake. 1×, 2× or 4×, PAUSE and RESTART in the
+  track panel; it loops, and starts again whenever the lap is recomputed.
+- **Live clock and sector splits** at the top of the map, beside the solved lap time.
+- **Instruments:** speed, gear and rpm with a rev bar to the redline; throttle and brake bars; a
+  g-meter (lateral across, braking up) with rings at 1 g and at the tyre's grip.
+- **No new physics:** the lap solver now records what the car does at each point (its clock, the
+  pedals, signed lateral and longitudinal g, rpm), from the terms it already uses. Throttle is full
+  where the car accelerates as hard as it may; on the cornering ceiling it is the drive force needed to
+  hold speed against drag and slope, against what the gear has; brake is the deceleration beyond what
+  drag and slope give, against what the brakes command. Where drag alone slows the car, the driver lifts.
+- The map fits the space beside the instruments. test62 checks the replay against the lap on every
+  circuit, for a light and a heavy car, and the controls.
+
 ### A GARAGE tab, for engines and cars (build 103)
 
 - **The garage has its own tab** instead of a strip at the bottom of the vehicle tab: CARS and ENGINES

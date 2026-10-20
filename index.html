@@ -157,6 +157,9 @@ footer{text-align:center;margin-top:16px;padding:8px;font-size:7px;color:#555;bo
 .garage-btns{display:flex;gap:6px;margin-top:7px}
 .garage-btns button{flex:1;padding:6px 4px;font-size:7px}
 .garage-btns .del{border-color:#663333;color:#cc7777}
+.replay-row{display:flex;gap:6px;align-items:stretch;margin:4px 0 10px}
+.replay-row button{flex:1;padding:6px 4px}
+.replay-row select{flex:0 0 64px;min-width:0}
 .garage-empty{font-size:7px;color:#667;line-height:1.7;padding:8px;background:#0a0a10;border:2px dashed #2a2a3a}
 /* In its own tab the garage is a wall of cards, not a scrolling strip. */
 .garage-panel .garage-list{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));max-height:none;overflow:visible;align-items:start}
@@ -273,7 +276,7 @@ table.fuelmap td.live{box-shadow:inset 0 0 0 2px #fff;font-weight:bold}
 <body>
 <div class="container">
 <header>
-<h1>PIXEL ENGINE SIM v0.6 build 103</h1>
+<h1>PIXEL ENGINE SIM v0.6 build 104</h1>
 <div class="subtitle" id="subtitle">ENGINE DESIGNER • BUILD IT, THEN DRIVE IT</div>
 </header>
 <div class="build-strip" id="buildStrip">
@@ -1142,6 +1145,12 @@ This is a physics model, and like every model it leaves things out. These are th
 <h2>Lap Time</h2>
 <div class="field"><label for="trkSel">CIRCUIT</label><select id="trkSel"><option value="tech">ASHDOWN PARK</option><option value="fast">CAPE SPEEDWAY</option><option value="mixed" selected>RIVERSIDE GP</option><option value="nord">NORDSCHLEIFE</option></select></div>
 <div class="perf-head" id="lapHead">—</div>
+<div class="design-section">Live timing</div>
+<div class="replay-row">
+<button id="btnReplay" class="toggle on" aria-pressed="true">PAUSE</button>
+<button id="btnReplayRestart">RESTART</button>
+<select id="replaySpeed" class="opt-select" aria-label="Replay speed"><option value="1">1×</option><option value="2">2×</option><option value="4">4×</option></select>
+</div>
 <div class="perf-grid" id="lapGrid"></div>
 <div class="perf-note" id="lapNote"></div>
 <div class="build-row">
@@ -2560,7 +2569,8 @@ const I18N={
   'DIFFERENTIAL':{el:'ΔΙΑΦΟΡΙΚΟ'},'OPEN':{el:'ΑΝΟΙΧΤΟ'},'VISCOUS LSD':{el:'ΙΞΩΔΕΣ LSD'},'CLUTCH-PLATE LSD':{el:'LSD ΜΕ ΔΙΣΚΟΥΣ'},'SPOOL / LOCKED':{el:'ΜΠΛΟΚΕ / SPOOL'},
   'GEARBOX TYPE':{el:'ΤΥΠΟΣ ΚΙΒΩΤΙΟΥ'},'MANUAL (H-PATTERN)':{el:'ΧΕΙΡΟΚΙΝΗΤΟ (H)'},'SEQUENTIAL':{el:'ΣΕΙΡΙΑΚΟ'},'DUAL-CLUTCH (DCT)':{el:'ΔΙΠΛΟΥ ΣΥΜΠΛΕΚΤΗ (DCT)'},'TORQUE-CONV AUTO':{el:'ΑΥΤΟΜΑΤΟ (ΜΕΤΑΤΡΟΠΕΑΣ)'},
   // Garage
-  'Garage':{el:'ΓΚΑΡΑΖ'},'GARAGE':{el:'ΓΚΑΡΑΖ'},'BUILD NAME':{el:'ΟΝΟΜΑ ΚΑΤΑΣΚΕΥΗΣ'},
+  'Garage':{el:'ΓΚΑΡΑΖ'},'GARAGE':{el:'ΓΚΑΡΑΖ'},
+  'Live timing':{el:'Ζωντανή χρονομέτρηση'},'PAUSE':{el:'ΠΑΥΣΗ'},'PLAY':{el:'ΑΝΑΠΑΡΑΓΩΓΗ'},'RESTART':{el:'ΑΠΟ ΤΗΝ ΑΡΧΗ'},'LAP':{el:'ΓΥΡΟΣ'},'BUILD NAME':{el:'ΟΝΟΜΑ ΚΑΤΑΣΚΕΥΗΣ'},
   'Save this car':{el:'Αποθήκευση αυτοκινήτου'},'Save this engine':{el:'Αποθήκευση κινητήρα'},
   'CAR NAME':{el:'ΟΝΟΜΑ ΑΥΤΟΚΙΝΗΤΟΥ'},'ENGINE NAME':{el:'ΟΝΟΜΑ ΚΙΝΗΤΗΡΑ'},
   'SAVE CAR':{el:'ΑΠΟΘΗΚΕΥΣΗ ΣΤΟ ΓΚΑΡΑΖ'},'SAVE ENGINE':{el:'ΑΠΟΘΗΚΕΥΣΗ ΚΙΝΗΤΗΡΑ ΣΤΟ ΓΚΑΡΑΖ'},
@@ -2682,7 +2692,7 @@ function applyLang(lang){
   currentLang=(lang==='el')?'el':'en';
   try{localStorage.setItem('pes.lang',currentLang);}catch(e){}
   document.documentElement.lang=currentLang;
-  const sel='.viz-tabs button, #btnFullscreen, .design-panel h3, .design-section, .guide-title, .hint, .panel h2, .stat .label, .opt-note, .opt-row>div>b, .ctl-lbl, .field>label, .build-row button, #controlsPanel .btn-row button, .fuelmap-edit button, .garage-row button';
+  const sel='.viz-tabs button, #btnFullscreen, .design-panel h3, .design-section, .guide-title, .hint, .panel h2, .stat .label, .opt-note, .opt-row>div>b, .ctl-lbl, .field>label, .build-row button, #controlsPanel .btn-row button, .fuelmap-edit button, .garage-row button, #btnReplayRestart';
   document.querySelectorAll(sel).forEach(el=>{
     if(el.children.length>0)return;                       // skip nodes with child elements
     if(el.dataset.en===undefined)el.dataset.en=el.textContent.trim();
@@ -2696,6 +2706,7 @@ function applyLang(lang){
   });
   // Preset placeholder, language selector, footer, vehicle placeholder
   const pp=document.getElementById('edPreset');if(pp&&pp.options[0])pp.options[0].textContent=tr('— choose a build —');
+  const rpb=document.getElementById('btnReplay');if(rpb&&typeof lapReplay!=='undefined')rpb.textContent=tr(lapReplay.playing?'PAUSE':'PLAY');
   const lg=document.getElementById('edLang');if(lg)lg.value=currentLang;
   const foot=document.querySelector('footer');
   if(foot){if(foot.dataset.en===undefined)foot.dataset.en=foot.innerHTML;
@@ -5662,9 +5673,11 @@ function simulateLap(key){
   // every point on a twisty circuit, so labelling as it goes would call the whole lap "braking".
   // What's actually limiting the car is: losing speed → brakes; sitting on the cornering ceiling
   // → grip; otherwise gaining speed, capped by either engine output or the driven axle.
+  const aL=new Array(n);
   for(let i=0;i<n;i++){
     const j=(i+1)%n;
     const aLong=(v[j]*v[j]-v[i]*v[i])/(2*p[i].ds3);   // m/s², negative = slowing
+    aL[i]=aLong;
     // Order matters. Hard deceleration is braking. Otherwise, if most of the tyre is already
     // committed sideways the car is grip-limited — call that cornering, not "traction", even
     // though the friction circle has squeezed the longitudinal budget to nearly nothing.
@@ -5697,7 +5710,32 @@ function simulateLap(key){
     for(let i=0;i<n;i++)if(gears[i]!==gears[(i-1+n)%n])shifts++;
   }
   const shiftLoss=shifts*vehicle.shiftTime*0.5;   // half a shift's drive-cut costs time on track
+  const tRaw=t;
   t+=shiftLoss;sect[0]+=shiftLoss/3;sect[1]+=shiftLoss/3;sect[2]+=shiftLoss/3;
+  // 5. The lap as a recording, for the live replay (build 104): what the car is doing at each point.
+  //   time    the clock at each point, the shift losses spread over the lap so it ends on the lap time
+  //   pedals  flat wherever the car accelerates as hard as it may (engine- or traction-limited). On the
+  //           cornering ceiling the driver holds speed: the drive force that takes, against what this
+  //           gear has, is the throttle. Slowing harder than drag and the slope do on their own is the
+  //           brake, as a share of what the brakes can command.
+  //   g       lateral v^2/r, signed by which way the line turns; longitudinal from the speed change
+  //   rpm     from the gear the car is in
+  const tAt=new Array(n),thr=new Array(n),brk=new Array(n),gLat=new Array(n),gLong=new Array(n),rpmAt=new Array(n);
+  {
+    const k=t/Math.max(1e-9,tRaw);let tc=0;
+    for(let i=0;i<n;i++){
+      const j=(i+1)%n,h=(i-1+n)%n;tAt[i]=tc;
+      tc+=p[i].ds3/Math.max(2,(v[i]+v[j])/2)*k;
+      const resist=drag(v[i])+rollF(v[i])*p[i].cosT+m*G*p[i].sinT, need=m*aL[i]+resist;
+      if(lim[i]==='power'||lim[i]==='traction'){thr[i]=1;brk[i]=0;}
+      else if(need>=0){thr[i]=clamp(need/Math.max(1,bestGear(v[i]).F),0,1);brk[i]=0;}
+      else{thr[i]=0;brk[i]=clamp(-need/m/Math.max(0.1,vehicle.brakeDecelCap),0,1);}
+      const ax=p[i].x-p[h].x,ay=p[i].y-p[h].y,bx=p[j].x-p[i].x,by=p[j].y-p[i].y;
+      gLat[i]=Math.sign(ax*by-ay*bx)*v[i]*v[i]/Math.max(1,p[i].r)/G;
+      gLong[i]=aL[i]/G;
+      rpmAt[i]=clamp(v[i]*ratios[gears[i]]*fd/rT*60/TWO_PI,idle,rl);
+    }
+  }
   // Elevation summary for the readouts: metres climbed per lap and the height range.
   let climb=0,zMin=1e9,zMax=-1e9;
   for(let i=0;i<n;i++){const dz=p[(i+1)%n].z-p[i].z;if(dz>0)climb+=dz;zMin=Math.min(zMin,p[i].z);zMax=Math.max(zMax,p[i].z);}
@@ -5705,6 +5743,7 @@ function simulateLap(key){
   for(let i=0;i<n;i++)counts[lim[i]]+=p[i].ds3;
   return {track:T,lap:t,sectors:sect,v,lim,vMin:vMin*3.6,vMax:vMax*3.6,
     avg:p.length_/t*3.6,shifts,shiftLoss,counts,gears,climb,zMin,zMax,length:T.length,lineLength:p.length_,
+    replay:{tAt,thr,brk,gLat,gLong,rpm:rpmAt},
     corners:T.corners,width:T.width,wLabel:T.wLabel};
 }
 // ---- Corners: find them on the racing line, number and name them, and take a speed trap ----
@@ -7356,6 +7395,72 @@ function bindTrackZoom(){
   const up=e=>{ptrs.delete(e.pointerId);if(ptrs.size<2)pinch=null;last=ptrs.size===1?[...ptrs.values()][0]:null;};
   canvas.addEventListener('pointerup',up);canvas.addEventListener('pointercancel',up);
 }
+// ---- live timing: the solved lap, replayed against the clock (build 104) ----
+// No new physics: simulateLap already knows the speed, gear, limit and pedals at every point of the
+// racing line (its .replay), so this only runs a clock along it and reads them off.
+const lapReplay={playing:true,t:0,speed:1,src:null,laps:0};
+function stepReplay(dt){
+  const L=lapResult;if(!L||!L.replay)return;
+  if(lapReplay.src!==L){lapReplay.src=L;lapReplay.t=0;lapReplay.laps=0;}
+  if(!lapReplay.playing)return;
+  lapReplay.t+=dt*lapReplay.speed;
+  if(lapReplay.t>=L.lap){lapReplay.t-=L.lap;lapReplay.laps++;}
+}
+// Everything the car is doing at time t into the lap, interpolated between the solver's points.
+function replayAt(L,t){
+  const R=L.replay,line=L.track.line,n=line.length,tt=R.tAt;
+  let lo=0,hi=n-1;
+  while(hi-lo>1){const mid=(lo+hi)>>1;if(tt[mid]<=t)lo=mid;else hi=mid;}
+  const i=t>=tt[n-1]?n-1:lo,j=(i+1)%n,tEnd=j?tt[j]:L.lap;
+  const f=clamp((t-tt[i])/Math.max(1e-6,tEnd-tt[i]),0,1),mix=(a,b)=>a+(b-a)*f;
+  const third=L.lineLength/3,sAt=mix(line[i].s,j?line[j].s:L.lineLength);
+  return {i,x:mix(line[i].x,line[j].x),y:mix(line[i].y,line[j].y),
+    hd:Math.atan2(line[j].y-line[i].y,line[j].x-line[i].x),
+    v:mix(L.v[i],L.v[j])*3.6,gear:L.gears[i]+1,rpm:mix(R.rpm[i],R.rpm[j]),
+    thr:R.thr[i],brk:R.brk[i],gLat:mix(R.gLat[i],R.gLat[j]),gLong:mix(R.gLong[i],R.gLong[j]),
+    sector:Math.min(2,Math.floor(sAt/third))};
+}
+// The clock at which each sector ends, from the same recording (equal thirds of the line, as L.sectors).
+function sectorEnds(L){
+  if(L._sectorEnds)return L._sectorEnds;
+  const line=L.track.line,third=L.lineLength/3,out=[];
+  for(const b of [third,2*third]){let i=0;while(i<line.length-1&&line[i].s<b)i++;out.push(L.replay.tAt[i]);}
+  out.push(L.lap);
+  return (L._sectorEnds=out);
+}
+// The instruments, drawn over the map: speed, gear, rpm, the two pedals and a g-meter.
+const REPLAY_HUD_W=184;
+function drawReplayHud(L,st,W,y0){
+  const w=REPLAY_HUD_W,h=150,x0=W-w-10,PS='"Press Start 2P"';
+  ctx.fillStyle='rgba(10,10,18,0.86)';ctx.fillRect(x0,y0,w,h);
+  ctx.strokeStyle='#33334a';ctx.lineWidth=2;ctx.strokeRect(x0,y0,w,h);
+  ctx.fillStyle=C.green;ctx.font='16px '+PS;ctx.fillText(String(Math.round(st.v)),x0+10,y0+26);
+  ctx.fillStyle='#778';ctx.font='7px '+PS;ctx.fillText('km/h',x0+12+ctx.measureText(String(Math.round(st.v))).width*16/7,y0+26);
+  ctx.fillStyle=C.yellow;ctx.font='12px '+PS;ctx.fillText('G'+st.gear,x0+10,y0+48);
+  ctx.fillStyle='#99a';ctx.font='7px '+PS;ctx.fillText(Math.round(st.rpm)+' rpm',x0+48,y0+46);
+  // rev bar to the redline
+  const rf=clamp(st.rpm/Math.max(1,engine.redline),0,1);
+  ctx.fillStyle='#1d1d2b';ctx.fillRect(x0+10,y0+54,96,6);
+  ctx.fillStyle=rf>0.92?'#ff5555':rf>0.8?C.yellow:'#00ccff';ctx.fillRect(x0+10,y0+54,96*rf,6);
+  // pedals
+  const bar=(lbl,val,col,yy)=>{ctx.fillStyle='#778';ctx.font='6px '+PS;ctx.fillText(lbl,x0+10,yy+6);
+    ctx.fillStyle='#1d1d2b';ctx.fillRect(x0+40,yy,66,7);ctx.fillStyle=col;ctx.fillRect(x0+40,yy,66*clamp(val,0,1),7);};
+  bar('THR',st.thr,'#00ff88',y0+70);bar('BRK',st.brk,'#ff5555',y0+84);
+  ctx.fillStyle='#667';ctx.font='6px '+PS;
+  ctx.fillText(Math.round(st.thr*100)+'% / '+Math.round(st.brk*100)+'%',x0+10,y0+106);
+  // g-meter: lateral across, longitudinal up for braking (the way a driver is thrown), rings at 1 g
+  // and at the tyre's grip
+  const cx=x0+146,cy=y0+86,R=30,gMax=Math.max(1.5,vehicle.mu*1.2),sc=R/gMax;
+  ctx.strokeStyle='#26263a';ctx.lineWidth=1;ctx.beginPath();ctx.arc(cx,cy,R,0,Math.PI*2);ctx.stroke();
+  ctx.beginPath();ctx.moveTo(cx-R,cy);ctx.lineTo(cx+R,cy);ctx.moveTo(cx,cy-R);ctx.lineTo(cx,cy+R);ctx.stroke();
+  ctx.strokeStyle='#44445e';ctx.beginPath();ctx.arc(cx,cy,sc,0,Math.PI*2);ctx.stroke();
+  ctx.setLineDash([2,3]);ctx.strokeStyle='#886622';ctx.beginPath();ctx.arc(cx,cy,vehicle.mu*sc,0,Math.PI*2);ctx.stroke();ctx.setLineDash([]);
+  const gx=cx+clamp(st.gLat,-gMax,gMax)*sc,gy=cy-clamp(-st.gLong,-gMax,gMax)*sc;
+  ctx.fillStyle=C.yellow;ctx.fillRect(gx-3,gy-3,6,6);
+  ctx.fillStyle='#99a';ctx.font='6px '+PS;ctx.textAlign='center';
+  ctx.fillText(Math.hypot(st.gLat,st.gLong).toFixed(2)+' g',cx,y0+h-10);ctx.textAlign='left';
+  ctx.fillStyle='#556';ctx.fillText('1g',cx+sc*0.72+2,cy-sc*0.72);
+}
 function drawTrack(){
   const W=vizW,H=vizH;
   ctx.fillStyle=C.bg;ctx.fillRect(0,0,W,H);
@@ -7365,12 +7470,27 @@ function drawTrack(){
   ctx.fillText(tr('TEST TRACK')+' • '+(L?L.track.label:''),12,19);
   if(!L){ctx.fillStyle='#778';ctx.font='8px "Press Start 2P"';ctx.fillText(tr('BUILD AN ENGINE FIRST'),12,60);return;}
   // Lap time sits below the title bar, clear of the ⛶ FULL button in the top-right corner.
-  ctx.fillStyle=C.green;ctx.font='14px "Press Start 2P"';ctx.fillText(fmtLap(L.lap),12,50);
-  ctx.font='7px "Press Start 2P"';ctx.fillStyle='#778';ctx.fillText(tr('LAP TIME'),14+ctx.measureText(fmtLap(L.lap)).width*2,50);
+  // Live clock, with the solved lap beside it and the sector splits as they are crossed.
+  const live=L.replay?replayAt(L,lapReplay.t):null;
+  ctx.fillStyle=C.green;ctx.font='14px "Press Start 2P"';ctx.fillText(fmtLap(live?lapReplay.t:L.lap),12,50);
+  ctx.font='7px "Press Start 2P"';ctx.fillStyle='#778';
+  let lx0=14+ctx.measureText(fmtLap(L.lap)).width*2;
+  ctx.fillText(live?tr('LAP')+' '+fmtLap(L.lap):tr('LAP TIME'),lx0,50);
+  if(live){
+    const ends=sectorEnds(L);lx0+=ctx.measureText(tr('LAP')+' '+fmtLap(L.lap)).width+16;
+    for(let k=0;k<3;k++){
+      const done=k<live.sector,cur=k===live.sector;
+      ctx.fillStyle=done?C.yellow:cur?'#00ccff':'#556';
+      const txt='S'+(k+1)+' '+(done?L.sectors[k].toFixed(2):cur?(lapReplay.t-(k?ends[k-1]:0)).toFixed(1):'—');
+      ctx.fillText(txt,lx0,50);lx0+=ctx.measureText(txt).width+12;
+    }
+  }
   const T=L.track,pad=40,topBar=62,botBar=52;
-  const sx=(W-pad*2)/(T.maxX-T.minX),sy=(H-topBar-botBar-pad)/(T.maxY-T.minY);
+  // with the instruments up, the map fits the width beside them rather than under them
+  const Wm=live?W-REPLAY_HUD_W-14:W;
+  const sx=(Wm-pad*2)/(T.maxX-T.minX),sy=(H-topBar-botBar-pad)/(T.maxY-T.minY);
   const sc=Math.min(sx,sy);
-  const ox=pad+((W-pad*2)-(T.maxX-T.minX)*sc)/2, oy=topBar+((H-topBar-botBar-pad)-(T.maxY-T.minY)*sc)/2;
+  const ox=pad+((Wm-pad*2)-(T.maxX-T.minX)*sc)/2, oy=topBar+((H-topBar-botBar-pad)-(T.maxY-T.minY)*sc)/2;
   // ZOOM AND PAN. The fitted map above is the base view; the view transform scales it about the map
   // centre and shifts it, so zoom = 1 and pan = 0 is exactly the old drawing. Line widths that are
   // drawn to scale (the track ribbon) grow with the zoom, which is the point: zoomed in you can see
@@ -7405,7 +7525,21 @@ function drawTrack(){
   ctx.fillStyle=C.yellow;ctx.font='7px "Press Start 2P"';
   ctx.fillText(Math.round(L.v[slow]*3.6)+' km/h',px(line[slow])+8,py(line[slow])+3);
   ctx.fillStyle='#ff5555';ctx.fillRect(px(line[slow])-3,py(line[slow])-3,6,6);
+  // The car: a trail over the last two seconds, then the car pointing along the line, green on the
+  // throttle, red on the brake, white in between.
+  if(live){
+    const tt=L.replay.tAt;let k=live.i,steps=0;
+    ctx.strokeStyle='rgba(255,255,255,0.35)';ctx.lineWidth=3;ctx.beginPath();ctx.moveTo(px(live),py(live));
+    while(steps<n&&lapReplay.t-tt[k]<2&&lapReplay.t>=tt[k]){ctx.lineTo(px(line[k]),py(line[k]));k=(k-1+n)%n;steps++;}
+    ctx.stroke();
+    const cxp=px(live),cyp=py(live),a=live.hd,sz=7;
+    ctx.fillStyle=live.brk>0.05?'#ff5555':live.thr>0.95?'#00ff88':'#ffffff';
+    ctx.beginPath();ctx.moveTo(cxp+Math.cos(a)*sz*1.4,cyp+Math.sin(a)*sz*1.4);
+    ctx.lineTo(cxp+Math.cos(a+2.5)*sz,cyp+Math.sin(a+2.5)*sz);ctx.lineTo(cxp+Math.cos(a-2.5)*sz,cyp+Math.sin(a-2.5)*sz);
+    ctx.closePath();ctx.fill();ctx.strokeStyle='#000';ctx.lineWidth=1.5;ctx.stroke();
+  }
   ctx.restore();
+  if(live)drawReplayHud(L,live,W,topBar);
   // how to drive the view, and where it is
   ctx.font='6px "Press Start 2P"';ctx.fillStyle='#556';ctx.textAlign='right';
   ctx.fillText((z>1.01?tr('ZOOM')+' '+z.toFixed(1)+'×  •  ':'')+tr('scroll or pinch to zoom • drag to pan • double-click to reset'),W-12,H-botBar+4);
@@ -7819,6 +7953,11 @@ function bindControls(){
   document.getElementById('tabGuide').addEventListener('click',()=>setTab('guide'));
   document.getElementById('tabOptions').addEventListener('click',()=>setTab('options'));
   document.getElementById('tabGarage').addEventListener('click',()=>setTab('garage'));
+  const rb=document.getElementById('btnReplay');
+  rb.addEventListener('click',()=>{lapReplay.playing=!lapReplay.playing;rb.classList.toggle('on',lapReplay.playing);
+    rb.setAttribute('aria-pressed',String(lapReplay.playing));rb.textContent=tr(lapReplay.playing?'PAUSE':'PLAY');});
+  document.getElementById('btnReplayRestart').addEventListener('click',()=>{lapReplay.t=0;lapReplay.laps=0;});
+  document.getElementById('replaySpeed').addEventListener('change',e=>{lapReplay.speed=+e.target.value||1;});
   // Vehicle design: recompute performance live on any change. Picking a chassis fits its whole
   // factory spec (drivetrain, gearbox, tyres/wheels, brakes, suspension, aero, weight).
   ['vhChassis','vhDrive','vhGearbox','vhDiff','vhGears','vhGearing','vhLimiter','vhLimitKmh','vhRating','vhTire','vhTireW','vhTireA','vhWheel','vhAeroF','vhAeroR','vhAeroFl','vhWeight','vhBrake','vhRotor','vhSusp'].forEach(id=>{
@@ -7957,7 +8096,7 @@ function loop(now){
   updateSound();
   if(fullscreen||vizMode==='engine')drawEngine(dt);
   else if(vizMode==='dyno'){drawDyno();renderDynoResult(false);}
-  else if(vizMode==='track')drawTrack();
+  else if(vizMode==='track'){stepReplay(dt);drawTrack();}
   updateUI();
   requestAnimationFrame(loop);
 }
