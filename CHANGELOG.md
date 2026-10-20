@@ -20,6 +20,36 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 Working toward **v1.0 — every number derived, not fitted.**
 
+### Turbo manifolds as short as they can be built; turbine housing as the builder's choice (build 91)
+
+- **A turbo manifold is not a tuned header.** Turbo engines carried the 550–780 mm primaries
+  derived for naturally-aspirated wave tuning. Against a turbine the returning wave is a compression,
+  which only hurts (the model already flips its sign), and every litre of manifold smooths away the
+  blowdown pulse the turbine runs on. So a turbo manifold is now as short as packaging allows: runners
+  from each port to a turbine at mid-bank, 0.1 m + (n−1)/2 cylinder pitches (1.15 × bore). That gives
+  0.3–2.7 L per turbine instead of 1.3–5.5, and the 2.0 hot hatch keeps 37% of each pulse instead
+  of 14%. The kei reaches 90% boost at 2950 rpm (real 2800–3000, was 3875), the 2.5 I5 at 2525 (was
+  2750).
+- **TURBINE A/R: TIGHT / STOCK / LOOSE**, three catalogue housings per frame (small 0.35/0.42/0.50,
+  medium 0.48/0.64/0.82, large 0.63/0.86/1.06). STOCK is the A/R each frame always had, so nothing
+  moves unless the build asks. Tight spools earlier and costs top end; on the hot hatch it is 2750 rpm
+  and 235 hp, against loose at 3225 rpm and 274 hp.
+- **Why not derived.** Two attempts sized the housing per engine. Minimum in-gear sweep time
+  improved test41 to 3.05% but gave the GTI 287 hp against the real 220. Average power bought top end
+  with spool. Which side of the compromise to take is a design intent: VW fits the GTI a small, tight
+  turbine for response. Any objective decides that silently for every engine, so the choice is
+  offered, the way a maker offers it.
+- Calibration: test48 0–100 RMS 7.0% → 5.6%, torque RMS 11.5% → 10.4%, power RMS 9.1% → 10.2%,
+  test41 3.38% → 3.36%. The Alto's 0–100 went from +11% to +1%, so its known-gap cap is retired; its
+  gap now shows as power (+17%, named in test48). The cause is the same: the smallest frame (54 mm)
+  is too big for 660 cc, so nothing chokes its top end the way the real ~40 mm IHI does.
+- test46's buildable-header band applies to headers; a turbo manifold must instead be shorter than
+  the header the same engine gets NA. test55 covers the housing choice (ordering, the STOCK = old
+  A/R guarantee, the form) and the manifold. The `setTurbineAR` / `buildBoostTable` refactor stays.
+- test40's two failures were listed as waiting on housing sizing. They are not: spool to 90% in
+  0.06–0.12 s at fixed rpm is far quicker than real turbos manage, so what they wait on is the
+  transient shaft model (inertia, fill, bearing drag).
+
 ### Exhaust pulse energy at the turbine (build 90)
 
 - **The turbine is fed by blowdowns, not by a mean pressure.** A real turbine is fed by each

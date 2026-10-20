@@ -148,6 +148,15 @@ at the top at the same time: the 2.5 I5 still chose the loosest housing, peaks s
 threshold, and the 2JZ and the V8 diesel peaked at the limiter. Average power as the objective was
 worse still, buying top end with spool. Redo on top of pulse energy.
 
+**Housing sizing, third attempt (build 91) — concluded: a choice, not a derivation.** Rerun on top of
+pulse energy, it still chose loose housings for the high-boost petrols. The diagnosis was the
+manifold: turbo engines carried tuned NA headers (550–780 mm, 1.3–5.5 L), which smooth away the
+pulse. Making turbo manifolds packaging-short fixed spool by itself (kei 3875 → 2950 rpm, real
+2800–3000). With that in, sweep-time sizing still put the GTI at 287 hp against 220. The real GTI
+is not limited by physics there; VW chose a small, tight turbine for response. So the objective IS
+the design intent, and the housing became a user option (TIGHT/STOCK/LOOSE per frame) instead of a
+derived value.
+
 ## VGT — shipped, and what it uncovered
 
 `pulse.mjs` ends on a prediction: the diesel spool gap is a VGT gap, and 0.45× throat closes it.
