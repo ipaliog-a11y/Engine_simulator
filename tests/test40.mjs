@@ -123,7 +123,11 @@ if (!(t100(lowBoost[0]) < t100(lowBoost[1])))
 if (!(at(2.5, 'small').load > 1)) fails.push('a 2.0 L at 2.5 bar does not over-flow the small frame');
 if (!(at(2.5, 'medium').hp > at(2.5, 'small').hp)) fails.push('at 2.5 bar the medium frame should out-power the small one');
 if (!(at(2.5, 'small').iat > at(2.5, 'medium').iat + 5)) fails.push('over-flowing the small frame should cook the charge');
-if (!(at(2.5, 'small').choke > at(0.8, 'small').choke)) fails.push('over-flowing a frame should cost more of its power at the top');
+// Measured against the frame that CAN feed the engine. (It compared the small frame's top-end falloff from
+// its own peak; since build 116, when the overlap stopped reading the boost as reverse flow, the over-flowed
+// frame chokes the engine at every speed, so its own peak collapses with its top and the ratio says nothing.)
+if (!(at(2.5, 'small').hp / at(2.5, 'medium').hp < at(0.8, 'small').hp / at(0.8, 'medium').hp - 0.1))
+  fails.push('over-flowing a frame should cost it more power against a frame that can feed the engine');
 // and over-boosting the small frame should not be a free lap-time win
 if (!(at(2.5, 'small').lap > at(0.8, 'small').lap)) fails.push('2.5 bar on an over-flowed small frame is still quicker on a lap — no penalty landed');
 // a frame that is far too big must spool too late to be worth having

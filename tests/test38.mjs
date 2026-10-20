@@ -54,17 +54,21 @@ for (let i = 1; i < scale.length; i++) if (!(scale[i].min > scale[i - 1].min && 
   fails.push('scaling the nominal width no longer scales the profile');
 
 // ---------------------------------------------------------------- 2. late apex
+// Until build 115 a fitted bias (3 x how open the next 90 m were) bent a minimum-curvature line into a
+// late apex. The line each car drives is now its minimum-TIME line, refined from the lap itself, so the
+// late apex has to come out of the physics: where a corner leads onto a straight the exit speed is
+// carried down it, and the line should give up entry radius for exit radius. Compared against the same
+// car's minimum-curvature line (same width allowance), so only the refinement is being measured.
 // Apex position measured free of the solver's node spacing: the arc-length centroid of how deep
 // the line sits toward the inside, minus the centreline's own curvature centroid.
 // > 0 means the line reaches its deepest point LATER than the corner's geometric middle.
 console.log('\n== late apex: only where a corner leads onto a straight ==');
 const apex = await page.evaluate(() => {
-  const src = optimiseLine.toString();
-  function measure() {
+  function measure(lineOf) {
     const onto = [], into = [];
     for (const key of Object.keys(TRACKS)) {
-      const T = buildTrack(key), C = T.pts, L = T.line, n = L.length;
-      for (const ci of detectCorners(L)) {
+      const T = buildTrack(key), C = T.pts, L = lineOf(T, key), n = L.length;
+      for (const ci of detectCorners(T.line)) {
         let a = ci, b = ci;
         for (let k = 1; k < n / 2; k++) { const i = (ci - k + n) % n; if (C[i].r > 250) break; a = i; }
         for (let k = 1; k < n / 2; k++) { const i = (ci + k) % n; if (C[i].r > 250) break; b = i; }
@@ -87,48 +91,49 @@ const apex = await page.evaluate(() => {
   const pr = PRESETS.find(x => x.name === '3.0 Turbo I6 (2JZ)');
   applyEngineToForm(Object.assign({}, DEFAULT_ENGINE, pr.engine)); buildEngine();
   applyChassisFit('coupe'); buildVehicle();
-  const laps = () => { const o = {}; for (const k of Object.keys(TRACKS)) o[k] = +simulateLap(k).lap.toFixed(2); return o; };
-  // A: pure minimum curvature (LATE_APEX disabled)
-  window.optimiseLine = eval('(' + src.replace(/const LATE_APEX=[\d.]+;/, 'const LATE_APEX=0;') + ')');
-  Object.keys(trackCache).forEach(k => delete trackCache[k]);
-  const flat = { ...measure(), laps: laps() };
-  // B: as shipped
-  window.optimiseLine = eval('(' + src + ')');
-  Object.keys(trackCache).forEach(k => delete trackCache[k]);
-  const late = { ...measure(), laps: laps() };
+  const minCurv = {}, lapsOf = lineOf => { const o = {}; for (const k of Object.keys(TRACKS)) o[k] = +simulateLap(k, { line: lineOf(buildTrack(k), k) }).lap.toFixed(2); return o; };
+  const curvLine = (T, k) => minCurv[k] || (minCurv[k] = optimiseLine(T, carHalfWidth(), null));
+  const flat = { ...measure(curvLine), laps: lapsOf(curvLine) };
+  const late = { ...measure(lineFor), laps: lapsOf(lineFor) };
   return { flat, late };
 });
-console.log(`  minimum curvature only: onto a straight ${apex.flat.onto} m (${apex.flat.nOnto} corners) · into more corners ${apex.flat.into} m (${apex.flat.nInto})`);
-console.log(`  as shipped            : onto a straight ${apex.late.onto} m (${apex.late.nOnto} corners) · into more corners ${apex.late.into} m (${apex.late.nInto})`);
-if (!(apex.late.onto > apex.flat.onto + 5)) fails.push('the apex did not move later on corners that lead onto a straight');
-if (!(apex.late.onto > 5)) fails.push('the apex is not actually late (should be several metres past the geometric middle)');
-// Selectivity is the real claim: the shift has to land mostly on the corners that lead somewhere
-// fast, not be a uniform rotation of every apex on the circuit.
-const dOnto = apex.late.onto - apex.flat.onto, dInto = apex.late.into - apex.flat.into;
-console.log(`  shift applied: ${dOnto.toFixed(1)} m onto a straight vs ${dInto.toFixed(1)} m into more corners (${(dOnto / Math.max(0.1, dInto)).toFixed(1)}x)`);
-if (!(dOnto > 2 * dInto)) fails.push(`the late-apex bias is not selective (${dOnto.toFixed(1)} m vs ${dInto.toFixed(1)} m)`);
+console.log(`  real circuits, minimum curvature: onto a straight ${apex.flat.onto} m (${apex.flat.nOnto} corners) · into more corners ${apex.flat.into} m (${apex.flat.nInto})`);
+console.log(`  real circuits, minimum time     : onto a straight ${apex.late.onto} m · into more corners ${apex.late.into} m`);
+// On real circuits the corners differ in every way at once, so the clean test is a controlled one: a
+// rectangle whose four identical 25 m corners lead alternately onto a 750 m straight and a 150 m one.
+// The exit speed onto the long side is carried 5x as far, so the minimum-time line must apex LATER
+// there than onto the short side, relative to where minimum curvature puts each.
+const rect = await page.evaluate(() => {
+  const R = 25, W = 800, H = 200, pts = [];
+  const side = (x0, y0, x1, y1) => { const L = Math.hypot(x1 - x0, y1 - y0), N = Math.max(1, Math.round(L / 40)); for (let k = 0; k < N; k++) pts.push({ x: x0 + (x1 - x0) * k / N, y: y0 + (y1 - y0) * k / N, z: 0 }); };
+  const arc = (cx, cy, a0) => { for (let k = 0; k < 4; k++) { const a = a0 + k * Math.PI / 8; pts.push({ x: cx + R * Math.cos(a), y: cy + R * Math.sin(a), z: 0 }); } };
+  side(R, 0, W - R, 0); arc(W - R, R, -Math.PI / 2); side(W, R, W, H - R); arc(W - R, H - R, 0); side(W - R, H, R, H); arc(R, H - R, Math.PI / 2); side(0, H - R, 0, R); arc(R, R, Math.PI);
+  TRACKS.__r = { label: 'RECT', width: 12, names: [], blurb: '', pts }; delete trackCache.__r;
+  const T = buildTrack('__r'), n = T.pts.length, A = optimiseLine(T, carHalfWidth(), null), Bl = lineFor(T, '__r');
+  const apexAt = (L, cx, cy) => { let im = 0, dm = 1e9; for (let i = 0; i < n; i++) { const d = Math.hypot(T.pts[i].x - cx, T.pts[i].y - cy); if (d < dm) { dm = d; im = i; } }
+    let N = 0, D = 0; for (let k = -30; k <= 30; k++) { const i = (im + k + n) % n, d = Math.max(0, L[i].off) ** 3; N += d * T.pts[i].ds * k; D += d * T.pts[i].ds / 1; } return N / D * T.pts[im].ds; };
+  const shift = (cx, cy) => apexAt(Bl, cx, cy) - apexAt(A, cx, cy);
+  const out = { long: (shift(W, H) + shift(0, 0)) / 2, short: (shift(W, 0) + shift(0, H)) / 2,
+    lapA: simulateLap('__r', { line: A }).lap, lapB: simulateLap('__r', { line: Bl }).lap };
+  delete TRACKS.__r; delete trackCache.__r; return out;
+});
+console.log(`  rectangle: apex moved ${rect.long.toFixed(1)} m onto the long straights, ${rect.short.toFixed(1)} m onto the short ones · lap ${rect.lapA.toFixed(2)} -> ${rect.lapB.toFixed(2)} s`);
+if (!(rect.long > 0.5)) fails.push(`the minimum-time line does not apex later onto a long straight (${rect.long.toFixed(1)} m)`);
+if (!(rect.long > rect.short + 1)) fails.push(`the apex is not later onto the long straight than onto the short one (${rect.long.toFixed(1)} vs ${rect.short.toFixed(1)} m)`);
+if (!(rect.lapB < rect.lapA)) fails.push('on the rectangle the minimum-time line is not quicker than minimum curvature');
 
-// It must PAY ON BALANCE, and never lose much anywhere. Not "never loses at all" — that was the
-// old claim and it is a claim of OPTIMALITY, which minimum-curvature-plus-a-bias cannot make. A
-// true minimum-LAP-TIME line could; this is a geometric heuristic with one exit-weighting term, so
-// on a circuit of fast sweepers that only want minimum curvature it can give a little back.
-//
-// Making the bias car-aware was tried, on the theory that whether a late apex pays depends on the
-// car's acceleration against its grip — a friction-circle argument, and it does produce a properly
-// selective apex shift. It did not rescue this case either, because the problem is not the value of
-// the bias but the shape of the objective. Reverted; the known limit stands, and a minimum-time
-// line is what would actually retire it.
-console.log('\n== it must pay on balance, and never lose much anywhere ==');
-const LOSS_CAP = 0.5;                 // % on any single circuit
+// A minimum-time line can make the claim a heuristic could not: it is never slower than where it
+// started, on any circuit.
+console.log('\n== the minimum-time line against minimum curvature, same car ==');
 let net = 0;
 Object.keys(apex.flat.laps).forEach(k => {
   const a = apex.flat.laps[k], b = apex.late.laps[k], pc = (b - a) / a * 100;
   net += b - a;
   console.log(`  ${k.padEnd(6)} ${a}s -> ${b}s   ${(b - a).toFixed(2)}s (${pc.toFixed(2)}%)`);
-  if (pc > LOSS_CAP) fails.push(`${k}: the late-apex line loses ${pc.toFixed(2)}% — past the ${LOSS_CAP}% cap`);
+  if (b > a + 0.02) fails.push(`${k}: the minimum-time line is slower than minimum curvature (${pc.toFixed(2)}%)`);
 });
 console.log(`  net across all circuits: ${net.toFixed(2)}s`);
-if (!(net < 0)) fails.push(`the late-apex bias does not pay on balance (net ${net.toFixed(2)}s)`);
+if (!(net < 0)) fails.push(`the minimum-time line does not pay (net ${net.toFixed(2)}s)`);
 
 // ---------------------------------------------------------------- 3. invariants that must hold
 const inv = await page.evaluate(() => {

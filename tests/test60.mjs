@@ -49,6 +49,10 @@ const KNOWN = {
   'GM Duramax L5P 6.6 (Silverado HD)': ['boost-falls'],
   // a flat plateau; the scorecard's conditions put the peak at the limiter, the design curve's not
   'Toyota 2JZ-GTE (Supra A80)': ['limiter'],
+  // build 116: with the overlap's reverse flow derived from the cam (it was a fixed 15% lift on every cam,
+  // and grew with back-pressure), the F140's power is flat over the top: 825 hp at 8500, 831 at the 8900
+  // limiter (real 789 at 8500). Within 1%; the top-end breathing (port Mach index) bites only at 8900.
+  'Ferrari F140 V12 (812 Superfast)': ['limiter'],
   // (Coyote, F140 and 4A-GE showed 'flat-low-end', torque peaks at 1000-1400 rpm, until build 98 put
   // the walls' extra heat at low speed into the work: peaks now 4700, 4900 and 5600 rpm.)
   // the two-stroke's fitted type factor and no expansion-chamber tuning

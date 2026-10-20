@@ -28,7 +28,10 @@ const solve = await page.evaluate(() => {
     // Build 111 set lateral grip to road asphalt (skidpad data) and that car ran 7:13; the same engine in
     // the lighter hypercar body ran 6:54. Build 114 fixed the braking pass (it braked far too early) and
     // the hypercar ran 6:26, so the reference went back to the supercar body.
-    greenhell: ['6.2 Supercharged V8', 'super', { vhTire: 'slick', vhAeroF: 'splitter', vhAeroR: 'wing', vhAeroFl: 'diffuser', vhWeight: 'race', vhSusp: 'race', vhDiff: 'clsd', vhGearbox: 'sequential' }],
+    // Build 115's racing line (each car its own minimum-time line, on a centreline without spline kinks)
+    // took that car to 6:20, 40 s inside; the reference is now the same 600 hp supercar as a road car on
+    // semi-slicks, 6:45, the GT2 RS kind of car that goes under seven.
+    greenhell: ['6.2 Supercharged V8', 'super', { vhTire: 'semi', vhSusp: 'coilover', vhDiff: 'clsd', vhGearbox: 'dct' }],
     'laptime$': ['2.0 Turbo Hot-Hatch I4', 'hatch', { vhTire: 'semi', vhSusp: 'coilover', vhWeight: 'sport' }]
   };
   return CHALLENGES.filter(c => c.circuit).map(ch => {

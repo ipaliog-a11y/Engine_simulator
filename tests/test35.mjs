@@ -78,7 +78,9 @@ const rep = await page.evaluate(async () => {
 });
 console.log(`\n  report ${rep.size}, ${rep.corners} corners (${rep.named} fall back to "Turn n" — imported tracks carry no names)`);
 if (rep.size !== '2480x3508') fails.push('report failed for imported track');
-if (rep.corners < 15) fails.push('report corner list too short');
+// counted on the car's own line, of a trace de-noised within GPS accuracy (build 115): a marginal kink
+// or two that was receiver noise no longer counts, so the floor is 12, not 15
+if (rep.corners < 12) fails.push('report corner list too short');
 
 // 4. Persistence across a reload
 await page.reload({ waitUntil: 'networkidle' }); await page.waitForTimeout(600);

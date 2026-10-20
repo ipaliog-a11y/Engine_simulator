@@ -20,6 +20,59 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 Working toward **v1.0 — every number derived, not fitted.**
 
+### Engine breathing: valve overlap and exhaust waves (build 116)
+
+Found checking why the Lancer Evo IX felt lethargic (0-100 6.8 s against a real 5.0): its engine made
+242 hp of its 286.
+- **A turbo's boost was read as reverse flow.** The flow across the valve overlap was driven by the exhaust
+  wave less the exhaust back-pressure, leaving out that a boosted intake sits at the boost: an Evo at
+  1.3 bar, its turbine holding about that in the manifold, lost a quarter of its charge. Now the intake's
+  pressure is in the balance, and what blows through can at most refill the clearance volume (1/(CR-1)).
+- **The overlap's flow area was a constant.** OVERLAP_LIFT held both valves at 15% of full lift across the
+  whole window on every cam: a 72-degree race cam's lift at TDC, four times a road cam's. Now the mean of the
+  smaller curtain over the window, from each cam's duration and overlap (sin^2 lift), with a curtain's
+  discharge coefficient 0.6 (Heywood). It had cost every NA engine 10-12% to reverse flow.
+- **The exhaust wave's pipe friction was a constant.** 0.35 per metre, about 20x what the boundary layers
+  take (Kirchhoff: sqrt(omega nu/2)(1 + (gamma-1)/sqrt Pr)/(r c)); a tuned header's suction now arrives
+  at 0.13-0.16 bar.
+- **Result:** Evo IX 290 hp (real 286), 0-100 5.2 s; Huracan 625/602, GT3 529/493, 812 831/789, LS3 408/430,
+  S2000 237/240. Still short: Z06 417/505, 4A-GE 108/128, the rotaries (port breathing, queued). Turbo
+  engines now read high at the top (Supra 410/320): they hold full boost to the limiter, where real ECUs
+  taper it.
+- Tests re-baselined with reasons: test46 (scavenging floor 2%), test40 (over-flowed frame against one that
+  feeds), test43, test35, test48 (power RMS 14, Supra and S54 named), test60 (812 flat top), test61 (812
+  launch listed; RS3 and Duramax fixed), test63, Club Sprint reliability 50.
+
+### Each car's own minimum-time racing line (build 115)
+
+From the driving review. The line was one minimum-curvature shape for every car, bent by a fitted late-apex
+bias (3 x how open the next 90 m were), and the review found the geometry under it was not sound either.
+- **The car's width:** its centre now comes no closer to an edge than half the width over its tyres.
+- **The curvature it minimised was not curvature.** Sum |Q''|^2 is ~ length^2 x turn per node, so a shorter
+  line scored better: a 150 m circle was driven at 145 m, on the inside. Now sum kappa^2 l.
+- **The centreline had kinks.** A uniform Catmull-Rom through unevenly spaced control points overshoots and
+  nearly cusps (a 25 m corner carried 4 m kinks), and stepping it evenly in its parameter bunched the
+  samples. Now a centripetal Catmull-Rom (cannot cusp; Yuksel et al. 2011), resampled every 5 m.
+- **The line's radius** is now the offset curve's own (from the centreline's curvature and the offset's
+  slope and bend), not a circle through points 3 either side: that 30 m chord rounded off curvature peaks
+  the car still has to drive, and through the neighbouring points instead the radius was all noise.
+- **GPS traces** (the Nordschleife, imported tracks) are smoothed only within the receiver's 2.5 m accuracy,
+  so their noise stops inventing corners.
+- **Minimum time, for each car:** from minimum curvature, the line is moved by smooth bumps; the car's speed
+  is re-solved only where a move can change it (out until the speeds rejoin the solved ones), with the lap
+  solver's own per-point physics, and every move that makes the lap quicker is kept. Late apexes come out
+  of it where a corner opens onto a straight (2.3 m later onto the long side of a test rectangle, 2.3 m
+  earlier onto the short one) and the fitted bias is gone. 0.2-0.4 s per car per circuit, ~3 s on the
+  Nordschleife, cached per car.
+- **Laps:** 911 GT3 Nordschleife 7:25 -> 7:01 (real 7:12.7 on the 20.6 km layout; this trace is 20.2 km), Riverside 63.5 -> 59.5 s.
+- **The lap solver's steps are functions of a point** (ceilAt, brakeFrom, accFrom) so the optimiser runs the
+  same physics; the gear search is tabulated per 0.05 m/s.
+- **GT3 preset:** a splitter and lip for the real car's wing and lip (aero marked unsure).
+- **The live engine readout is hidden on the TRACK tab**, which has its own instruments.
+- Tests: test32 (centreline comparison on the car's line; each car its own line), test38 (late apex on a
+  controlled rectangle; never slower than minimum curvature), test34 (top speed may plateau at the bump
+  stop), test36 (Ring reference on semi-slicks), guide text in both languages.
+
 ### The lap brakes at the limit (build 114)
 
 - **A solver bug, found reviewing the driving model.** The lap's backward (braking) pass read the
