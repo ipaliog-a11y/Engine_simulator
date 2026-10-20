@@ -249,7 +249,7 @@ table.fuelmap td.live{box-shadow:inset 0 0 0 2px #fff;font-weight:bold}
 <body>
 <div class="container">
 <header>
-<h1>PIXEL ENGINE SIM v0.6 build 88</h1>
+<h1>PIXEL ENGINE SIM v0.6 build 89</h1>
 <div class="subtitle" id="subtitle">ENGINE DESIGNER • BUILD IT, THEN DRIVE IT</div>
 </header>
 <div class="main">
@@ -1342,8 +1342,13 @@ function exhaustGasT(load,rpm,lambda){
   // Mixture at this load, not the live slider: full load runs rich for power and exhaust-temperature
   // control (lambda ~0.88), light load sits at stoich. A diesel is quality-governed and always lean,
   // which is exactly why diesel EGT is so much lower than petrol.
-  const lam=lambda>0?lambda:e.ci?1.35+0.9*(1-clamp(load,0,1)):1-0.12*clamp(load,0,1);
-  const afr=Math.max(6,(e.stoichAFR||14.7)*lam);
+  const lam=lambda>0?lambda:e.ci?SMOKE_LAMBDA_CI+(2.25-SMOKE_LAMBDA_CI)*(1-clamp(load,0,1)):1-0.12*clamp(load,0,1);
+  // Heat is released only by fuel that finds oxygen. Rich of stoichiometric the air runs out first,
+  // and the excess leaves as CO and H2 — chemical energy, not heat — so the release is capped at the
+  // stoichiometric amount. Without the cap a richer mixture came out HOTTER, the opposite of why a
+  // turbo petrol ECU enriches under boost; it went unseen while this function was only ever called
+  // at one assumed mixture per load.
+  const afr=Math.max(6,(e.stoichAFR||14.7)*Math.max(1,lam));
   const dT=(e.fuelLHV||44)*1e6/(afr*CP_EXH)*exhaustHeatFrac(rpm)*clamp(load,0.35,1.1);
   return 300+dT;
 }
@@ -1379,6 +1384,31 @@ function exhaustHeatFrac(rpm){
   return f;
 }
 const WALL_BSP_REF=1234;   // mm.m/s — see exhaustHeatFrac
+// EGT AT AN OPERATING POINT: its speed, its manifold pressure, and the mixture actually burned.
+// Every steady-state reader goes through this, and so do the tests. Until build 88 the tests called
+// exhaustGasT(1.0) — no rpm, an assumed mixture — which stopped being the number the engine used as
+// soon as EGT gained its rpm terms, so they validated a temperature nothing ran at.
+function egtAt(rpm,map,lambda){
+  const lam=lambda>0?lambda:curAFR(rpm,map)/engine.stoichAFR;
+  return exhaustGasT(clamp(map/Math.max(0.4,engine.mapMax),0.3,1.1),rpm,lam);
+}
+// The full-load mixture this hardware runs at: the factory ECU map where there is one (a turbo
+// petrol enriches under boost precisely to hold this temperature down), the best-power mixture
+// where the metering is mechanical, and never richer than a diesel's fuel floor.
+function fullLoadLambda(rpm,map){
+  let lam=engine.canAutoAFR?baseFuelLambda(rpm,map):bestPowerLambda();
+  return engine.ci?Math.max(lam,dieselLambdaFloor(rpm)):lam;
+}
+// The hottest full-load point of the design — what the turbine and its vanes have to survive, and
+// the figure a real engine's measured full-load EGT is compared with.
+function peakEgt(){
+  let t=0;
+  for(let r=Math.max(1000,engine.idleRpmEff||800);r<=engine.redline;r+=100){
+    const map=wotMapAt(r);
+    t=Math.max(t,egtAt(r,map,fullLoadLambda(r,map)));
+  }
+  return t;
+}
 // ---- intake: Helmholtz ----
 // Q of an intake tract measured on a flow rig is 3-6. It sets how fast the resonance dies and
 // therefore how much weaker each successive order is, so no separate order weighting is needed.
@@ -1494,12 +1524,17 @@ function backPressureBar(rpm,T){
     // for. A real VGT needs no gate because its ring, properly sized, swallows the lot; here the
     // open position cannot, so the surplus is dumped exactly as a fixed frame's is. Retire this
     // when the throat convention is corrected — at which point the whole turbo side recalibrates.
-    const a=e.vgtShut>0
-      ? vgtThroat(mEx,compPowerAt(mA,1+e.maxBoost,313,e.compEff),T,e.turbineArea,e.vgtShut).area
-      : e.turbineArea;
-    return pipe+(manifoldPR(mA,mEx,map,T,a,e.compEff)-1);
+    return pipe+(manifoldPR(mA,mEx,map,T,turbineThroatAt(rpm,map,T),e.compEff)-1);
   }
   return pipe;
+}
+// The turbine throat in use at an operating point: fixed, or wherever the vanes are scheduled.
+function turbineThroatAt(rpm,map,T){
+  const e=engine;
+  if(!(e.vgtShut>0))return e.turbineArea;
+  const mAir=(e.dispCyl_L/1000)*e.cylinders*(rpm/120)*(101325*Math.max(1,map)/(287*313));
+  const u=e.turbUnits||1, mEx=mAir*1.06/u, mA=mAir/u;
+  return vgtThroat(mEx,compPowerAt(mA,1+e.maxBoost,313,e.compEff),T,e.turbineArea,e.vgtShut).area;
 }
 // ---- late intake valve closing: why a big cam guts the bottom end ----
 // This is what CAM.lowLoss was standing in for, and it is pure geometry. A cam does not close the
@@ -1760,7 +1795,13 @@ function airFlowAt(rpm,pr){
 function steadyBoost(rpm){
   const e=engine;
   if(!e.turbineArea||rpm<200)return 0;
-  const T3=exhaustGasT(clamp(rpm/(e.redline*0.8),0.35,1.1),rpm);
+  // This is a WIDE-OPEN-THROTTLE solve, so the gas is full-load gas at this speed and mixture. It
+  // used to take load = rpm/(0.8 x redline), which handed the turbine 550 K gas at 2000 rpm with the
+  // throttle wide open, while the live shaft (advanceShaft, load = throttle) got ~950 K at the same
+  // point — so the dyno and the bench spooled on different physics. What really does make low-rpm
+  // gas cooler is the extra time the walls get per cycle, and exhaustHeatFrac now carries that.
+  // Rich of stoich adds nothing (exhaustGasT caps the release), so a petrol engine's mixture is 1.
+  const T3=exhaustGasT(1.0,rpm,e.ci?dieselLambdaFloor(rpm):1);
   const nMax=maxShaftRpm(e.compExd);
   const canHold=pr=>{
     const mAir=airFlowAt(rpm,pr);
@@ -1820,7 +1861,9 @@ function deriveGasDynamics(){
   const port=0.95*(e.bore_mm/1000);
   e.runnerL=(rn.mm!=null?rn.mm/1000:RUNNER.long.mm/1000)+port;
   e.runnerLShort=RUNNER.short.mm/1000+port;              // the flap's other position
-  const T=exhaustGasT(1.0);
+  // The header is cut for the gas that flows at its target speed, so take the temperature there.
+  const tgtRpm=ex.targetRpm||e.redline*0.90;
+  const T=exhaustGasT(1.0,tgtRpm);
   e.exhSigma=ex.sigma; e.sysL=ex.sysL;
   // Turbine throat, from the housing A/R and the turbine wheel it is wrapped around. Twin frames
   // split the exhaust between two turbines, so each sees half the flow.
@@ -1847,7 +1890,7 @@ function deriveGasDynamics(){
   e.primD=ex.dOverBore*(e.bore_mm/1000);
   if(ex.fixedL){e.primL=ex.fixedL;e.primK=0;}
   else{
-    const theta=cam.dur/2+90, tgt=ex.targetRpm||e.redline*0.90;
+    const theta=cam.dur/2+90, tgt=tgtRpm;
     e.primL=0;e.primK=3;
     for(let k=1;k<=9;k+=2){
       const L=theta*sonic(T)/(12*tgt*k);
@@ -2817,6 +2860,7 @@ function buildEngine(){
     for(let i=0;i<=N;i++){const r=lo+(hi-lo)*i/N;tb.push({rpm:r,bar:steadyBoost(r)});}
     engine.boostTable=tb;
   }
+  engine.peakEgt=peakEgt();   // needs the boost table (wotMapAt) and the burn table
   engine.nitrousBar=NITROUS_BAR[engine.nitrous]||0;
   state.boostActual=0;state.nitrousActive=false;state.nitrousCharge=1.0;   // fresh tanks
   state.engineHealth=1.0;state.blown=false;state.wearCause='';   // a fresh (rebuilt) engine
@@ -3029,8 +3073,8 @@ function updateDesignSummary(){
     if(engine.vgtShut>0){
       induction+='<br>'+tr('Turbine throat')+' '+Math.round(engine.vgtShut*1e6)+'–'+Math.round(engine.turbineArea*1e6)+
         ' mm² ('+(engine.turbineArea/engine.vgtShut).toFixed(1)+':1 '+tr('vane sweep')+') • '+tr('gas at the vanes')+' '+
-        Math.round(exhaustGasT(1.0)-273)+' °C';
-      if(exhaustGasT(1.0)>VANE_T_LIMIT)
+        Math.round(engine.peakEgt-273)+' °C';
+      if(engine.peakEgt>VANE_T_LIMIT+1)
         induction+=' • <span style="color:#ffcc00">'+tr('above the vane material limit — it will not last')+'</span>';
     }
   }
@@ -3159,7 +3203,7 @@ function computeVE(rpm,map){
   // These four lines replace EXHAUST{topGain,lowLoss} and CAM{scav,lowLoss} — four fitted numbers
   // for two physical effects. Both waves swing both ways, so a badly matched pipe COSTS VE here.
   if(engine.primL){
-    const chargeK=effIAT(map)+273.15, Tex=exhaustGasT(clamp(map/Math.max(0.4,engine.mapMax),0.3,1.1),rpm);
+    const chargeK=effIAT(map)+273.15, Tex=egtAt(rpm,map);
     // A variable-length manifold is a flap: take whichever runner position is better at this speed.
     let ram=intakeRamGain(rpm,chargeK);
     if(engine.runnerVariable){
@@ -3422,7 +3466,7 @@ function residualKnock(rpm,map){
   const e=engine;
   if(!(e.compression>1))return 0;
   const Tfresh=effIAT(map)+273.15;
-  const Tex=exhaustGasT(clamp(map/Math.max(0.4,e.mapMax),0.3,1.1),rpm);
+  const Tex=egtAt(rpm,map);
   const prev=e.boostNow;e.boostNow=map;                 // backPressureBar reads it for the turbine
   const pExh=1+backPressureBar(rpm,Tex);
   e.boostNow=prev;
@@ -3469,7 +3513,7 @@ function computeKnockRisk(rpm,map){return knockAt(rpm,map,activeAdvance(rpm,map)
 // already carries some of the pressure-level effect. Handing a supercharged engine +0.5 bar on top
 // of that would be a much larger claim than the missing exhaust term this change is fixing.
 function pumpingMEP(rpm,map){
-  const Tex=exhaustGasT(clamp(map/Math.max(0.4,engine.mapMax),0.3,1.1),rpm);
+  const Tex=egtAt(rpm,map);
   const prev=engine.boostNow;engine.boostNow=map;                  // backPressureBar reads it for the turbine
   const pExh=1+backPressureBar(rpm,Tex);
   engine.boostNow=prev;
@@ -4233,7 +4277,7 @@ function simulateAccel(){
     shaftE=E;boostNow=b0;
   }
   let v=0,x=0,t=0,gear=0,a=0,shiftT=0;
-  const M={t100:null,q400:null,q800:null,q1000:null,v200:null},V100=100/3.6,V200=200/3.6;
+  const M={t100:null,q400:null,q800:null,q1000:null,v200:null,gripT:0,lagT:0},V100=100/3.6,V200=200/3.6;
   for(let step=0;step<48000&&t<150;step++){
     let totalRatio=ratios[gear]*fd,rpm=v*totalRatio/r*60/TWO_PI;
     // Upshift where the NEXT gear pulls harder at this road speed — the wheel-torque crossover,
@@ -4296,6 +4340,7 @@ function simulateAccel(){
     const tqFrac=(driveF*r)/axleTqMax;                       // how hard the axle is being driven
     const F=Math.min(driveF,vehicle.mu*diffTractionAt(df,0,vehicle.cg,tqFrac)*Math.max(0,drivenN));
     const drag=0.5*AIR_RHO*vehicle.cdA*v*v,roll=v>0.2?crrAt(vehicle.crr,v)*m*G:0;
+    if(!M.t100){if(F<driveF-1e-6)M.gripT+=dt;if(shiftT<=0&&grid.laggy&&boostNow<0.9*engine.maxBoost)M.lagT+=dt;}
     a=(F-drag-roll)/m;v=Math.max(0,v+a*dt);x+=v*dt;t+=dt;
     if(!M.t100&&v>=V100)M.t100=t;
     if(!M.q400&&x>=400)M.q400={t,v};
@@ -4323,7 +4368,10 @@ function simulateAccel(){
   const vRedline=rl*TWO_PI*r/60/(ratios[ratios.length-1]*fd);
   const topSpeed=(vTop||vRedline)*3.6;
   Object.assign(state,svLive);
+  // gripT / lagT: seconds of the 0-100 spent traction-limited, and on throttle below 90% of target
+  // boost — WHY a car takes the time it takes, so a claim about what limits it can be checked.
   return {t100:M.t100,q400:M.q400,q800:M.q800,q1000:M.q1000,topSpeed,mass:m,ptw:vehicle.powerToWeight,
+    gripT:M.gripT,lagT:M.lagT,
     t200:M.v200?M.v200.t:null,x200:M.v200?M.v200.x:null};
 }
 // ====== TEST TRACK: circuits, lap solver ======
@@ -5870,7 +5918,7 @@ function scoreEngine(){
   // from the mixture, so the penalty falls out of the build instead of being asserted per engine
   // type — and a petrol VGT is then exactly what it is in life: it works, and it does not last.
   if(engine.vgt&&engine.intake==='turbo')
-    rel-=clamp((exhaustGasT(1.0)-VANE_T_LIMIT)/100*14,0,28);
+    rel-=clamp((engine.peakEgt-VANE_T_LIMIT)/100*14,0,28);
   rel-=engine.nitrous!=='none'?12:0;                   // chemical stress
   rel-=Math.max(0,engine.redline-(engine.ports?9800:7500))/100*2;   // sky-high redline (rotary/2-str rev high by design)
   const coolNeed=clamp(peakHP/260,0,1.6);
@@ -6094,7 +6142,7 @@ function drawExhaustSide(px,py,S,F,LW,m,portYc,exX){
   // The model's own exhaust temperature at this load — the same call back-pressure uses. This read
   // 320 + 520 x (power / peak power) until build 85: a display formula with no physics in it, which
   // showed a diesel at full power as hot as a petrol engine.
-  const egtK=exhaustGasT(clamp(m/Math.max(0.4,engine.mapMax||1),0.3,1.1),state.rpm,curAFR(state.rpm,m)/engine.stoichAFR);
+  const egtK=egtAt(state.rpm,m);
   ctx.fillText(tr('EGT')+' '+Math.round(state.powerHP>1?egtK-273:state.coolant)+'C',px(330),py(portYc+30));
 }
 function drawFuelSpark(px,py,S,F,m){

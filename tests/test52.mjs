@@ -45,13 +45,14 @@ const out = await page.evaluate(BUILDS => {
     engine.afrMode = 'fixed';                      // the buttons set the mixture; AUTO hands it to the ECU
     wearEnabled = false; setTab('engine');
     const s = engine.score, row = { nm, peakHP: s.peakHP, peakHPrpm: s.peakHPrpm, peakTQ: s.peakTQ, peakTQrpm: s.peakTQrpm,
-      stoich: engine.stoichAFR, ci: !!engine.ci };
+      stoich: engine.stoichAFR, ci: !!engine.ci, smoke: SMOKE_LAMBDA_CI };
     for (const [btn, key] of [['btnMaxPower', 'power'], ['btnOptimal', 'torque'], ['btnEco', 'eco']]) {
       state.rpm = engine.idleRpmEff + 200; state.boostActual = 0; state.shaftE = 0;
       document.getElementById(btn).click();
       settle(12);
       row[key] = { rpm: Math.round(state.rpm), hp: +state.powerHP.toFixed(1), tq: +state.torque.toFixed(1),
-        bsfc: Math.round(state.bsfc), lambda: +(state.afr / engine.stoichAFR).toFixed(3), iat: state.iat,
+        // the mixture actually BURNED, which on a diesel the injection system may lean past what is asked
+        bsfc: Math.round(state.bsfc), lambda: +(curAFR(state.rpm, state.map) / engine.stoichAFR).toFixed(3), iat: state.iat,
         throttle: +state.throttle.toFixed(2), knock: Math.round(state.knockRisk) };
     }
     res.push(row);
@@ -77,7 +78,7 @@ for (const r of out) {
   // the mixture is a lambda, so it suits the fuel: a diesel stays lean, nothing is wildly off stoich
   for (const k of ['power', 'torque', 'eco']) {
     const l = r[k].lambda;
-    if (r.ci && !(l >= 1.02)) fails.push(`${r.nm}: ${k} puts a diesel at λ${l} — richer than its smoke limit`);
+    if (r.ci && !(l >= r.smoke - 1e-9)) fails.push(`${r.nm}: ${k} puts a diesel at λ${l} — richer than its smoke limit`);
     if (!r.ci && !(l >= 0.8 && l <= 1.2)) fails.push(`${r.nm}: ${k} puts a spark engine at λ${l}`);
     if (r[k].iat !== 25) fails.push(`${r.nm}: ${k} set the intake air to ${r[k].iat} C — the scorecard rates at 25`);
   }
@@ -115,7 +116,7 @@ for (const r of autoWot)
 // function of (rpm, map) must not care what ran last.
 const order = await page.evaluate(() => PRESETS.filter(p => p.engine.intake === 'turbo').map(pr => {
   applyEngineToForm(Object.assign({}, DEFAULT_ENGINE, pr.engine)); buildEngine();
-  engine.afrMode = 'fixed'; state.afr = engine.stoichAFR * (engine.ci ? 1.05 : 0.86);
+  engine.afrMode = 'fixed'; state.afr = engine.stoichAFR * bestPowerLambda();
   calcAtRpm(engine.redline); const a = calcAtRpm(1500).torque;
   calcAtRpm(1000, 1.0); const b = calcAtRpm(1500).torque;
   return { nm: pr.name, a, b };
