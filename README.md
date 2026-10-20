@@ -1,4 +1,4 @@
-# PIXEL ENGINE SIM v0.6 build 83
+# PIXEL ENGINE SIM v0.6 build 84
 
 **A lightweight, 8-bit style internal combustion engine *designer* & simulator** inspired by *Automation*.
 
@@ -680,12 +680,14 @@ documented in the GUIDE at the point where it matters:
   ~3% noise floor** and cannot yet be claimed honestly. (`test38` used to be the second failure; it
   asserted the late-apex line *never* costs time, which is a claim of optimality a geometric
   heuristic cannot make. It now asserts what one can — pays on balance, never loses more than 0.5%.)
-- **`vePeakRpm` is still asserted, and removing it has now failed twice.** Deriving it from Taylor's
-  Mach knee put every engine's peak at 0.92–0.97 of redline (54% RMS). Replacing the bell entirely
-  with a flat port-flow envelope gave 10.89% RMS. The second attempt is the more informative one: it
-  exposed two missing mechanisms — low-rpm charge short-circuiting through a big overlap, and
-  whatever caps peak VE below the 1.2 clamp that the ITB screamer now pins against above 7500 rpm.
-  The no-bell thesis still looks right, but those two have to exist first.
+- **The VE bell is gone from every poppet-valve petrol engine, and kept for the rest.** It took three
+  attempts. The third (builds 82–84) found the bell had been covering for two errors: the trapping
+  calculation closed every intake valve 16–24° early, and the intake ram put its tuning peak 22–57%
+  too high in rpm against Engelman's published ratio, so every runner rang at the redline. With both
+  fixed, test41 improves (4.02% → 3.34%) and test48's power error halves (15.8% → 8.6%). Diesels,
+  rotaries and two-strokes still use the fitted bell, and `CAM.ampMul` still scales VE by cam grade.
+  The S2000 and S54 in test48 now carry their factory high-rpm intake and header; on the app's
+  mid-range defaults they read 23–35% short, so check those two hardware calls if you know the cars.
 - **Rotational inertia is not charged during acceleration.** The engine, flywheel, gearbox and
   wheels all have to be spun up as well as the car pushed along, and reflected through first gear
   that is worth roughly +13 % of effective mass. `simulateAccel` accelerates the translating mass
@@ -719,9 +721,11 @@ measurement finds things. Each item is one PR.
 | # | item | state | why it is in this position |
 |---|---|---|---|
 | 1 | Exhaust pumping work (PMEP) | ✅ build 70 | The missing **constraint**. Without it a tighter turbine housing cost nothing at the top end, so housing sizing could not be derived at all. |
-| 2 | Residual-gas knock | ⬜ **next** | `knockAt()` has no residual term, so back-pressure never brings on knock and the petrol housing limit does not exist. This is what makes the petrol/diesel housing split fall out of physics instead of a per-type constant. |
-| 3 | Turbine housing sizing | ⬜ blocked on 2 | Retires the size-class A/R table, and is expected to retire `turboChoke` with it — real top-end boost taper *is* back-pressure outrunning boost. Predicted to take spool RMS 1940 → ~700 rpm. Findings parked at `tests/proto/housing.mjs`. |
-| 4 | `vePeakRpm` | ⬜ | Still asserted after two failed derivations, both recorded at the use site. |
+| 2 | Residual-gas knock | ✅ build 75 | Back-pressure now brings on knock, so the petrol/diesel housing split falls out of physics. |
+| — | Variable-geometry turbine | ✅ build 80 | The diesel spool gap was a VGT gap, not pulse energy. |
+| — | Shift at the torque crossover | ✅ build 81 | Every car used to upshift at the redline; 0–100 RMS 24.4% → 10.2%. |
+| 3 | Turbine housing sizing | ⬜ **next** | Retires the size-class A/R table and `turboChoke`. The VGT was its missing prerequisite. Findings parked at `tests/proto/housing.mjs`, patch at `housing-sizing.diff`. |
+| 4 | VE bell (`vePeakRpm`) | ✅ build 84 | Retired for poppet-valve petrol engines after two hidden errors were fixed (IVC geometry, Engelman tuning ratio). Still fitted for diesels and ported engines. |
 | 5 | Launch model | ⬜ | Unblocks the parked slip-ratio tyre model *and* rotational inertia — every car currently gets a free ~6% on 0–100. The three go in together and recalibrate once. |
 | 6 | Combustion (conversion 5) | ⬜ | The big one. |
 | 7 | Ground `test46`'s invented bands | ⬜ | Back-pressure caps, ram/scavenge magnitude and buildable header length are bands **I wrote**, not measurements. None currently fails, which is exactly the concern — a band you invented can only confirm your own reasoning. |

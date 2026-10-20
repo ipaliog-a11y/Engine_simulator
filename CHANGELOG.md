@@ -20,6 +20,38 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 Working toward **v1.0 — every number derived, not fitted.**
 
+### The VE bell comes off every poppet-valve petrol engine
+
+The fitted VE "bell" (`vePeakRpm`, widths, shoulder) had resisted two removal attempts. The third
+found it was covering for two errors, both now fixed, and with them fixed it is not needed:
+
+1. **Intake valve closing was in the wrong place.** `trappedFraction` put the intake lobe centre at
+   90° ATDC while `overlapDeg` (`dur − 2·lsa`) puts it at LSA, so every intake closed 16–24° early
+   (stock 20° ABDC instead of 44°; a real B6 MX-5 closes at 51°) and low-rpm backflow was
+   understated. A cam phaser also moved IVC by half its authority instead of all of it.
+2. **The intake ram was tuned 22–57% too high in rpm.** The model put the main Helmholtz peak where
+   one oscillation fits in the intake event (f_H/(N/60) = 360/duration: 1.64 stock, 1.27 race).
+   Engelman's experiments, the source of the model's effective-volume formula, put it near 2; a
+   later SAE study measured 2.42. Every runner was ringing at the redline, which is why removing the
+   bell put peak power on the limiter, and why removing it from turbos looked like missing boost
+   taper: the bell's right side had been rolling torque off to hide the misplaced resonance.
+
+Results: test41 **4.02% → 3.34%** (all turbos, shape only); test48 power RMS **15.8% → 8.6%**, no
+car more than 11% off (was 30%), torque RMS 14.6% → 11.9%, 0–100 on own power 10.2% → 7.1%, top
+speed 3.5% → 1.8%; boost-threshold torque cliffs 5 → 4; aero unchanged at 6.4%. One number got
+worse: test48's car-only 0–100 (power matched) 7.8% → 9.7%, because the S2000 and S54 curves are now
+fuller than the real engines'. Kept, recorded, and next in line.
+
+Kept fitted: the bell for diesels, rotaries and two-strokes, and `CAM.ampMul`.
+
+Test inputs corrected to factory hardware, each noted in place: no VVT on the 1989 MX-5 or the C6
+LS3, the LS3 on its real ~400 N spring (the stock spring floated it at 5500 rpm, inside its
+redline), and the S2000 and S54 on short runners and high-rpm headers (the S54 was specified with
+individual throttle bodies AND a 320 mm runner at once). test47's NA BMEP ceiling grounded at 15 bar
+by real engines (S54 14.1, Ferrari 458 15.1); its diesel-cliff cap 40 → 42, because correct IVC
+lowers pre-boost diesel torque. test45's fixture now searches for a gearing where top gear itself
+holds top speed, after the kei became over-geared at the old fixed setting.
+
 ### UI: tab names, firing order, Greek font, and a guide you can read
 
 - **Tabs renamed.** DESIGN → **ENGINE**, ENGINE → **LIVE**, everywhere they are referred to.

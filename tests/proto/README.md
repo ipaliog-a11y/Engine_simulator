@@ -248,3 +248,12 @@ further things to check when this resumes: (a) as nH falls below 0.5 the Helmhol
 turns POSITIVE again, which is unphysical far above tuning (a column driven above its natural
 frequency cannot ram; its inertia costs filling); (b) whether runner length should follow the
 designer's target rpm, the way the final drive now follows the engine.
+
+### Attempt 3 — landed (build 84)
+
+The runner was not the problem; the TUNING CONDITION was. The model put the main ram peak where one
+Helmholtz oscillation fits in the intake event (f_H/(N/60) = 360/dur), and Engelman's experiments
+put it near 2. With `ENGELMAN_K = 2.0` no preset peaks on the limiter, and the bell can come off
+turbos too: test41 4.02% → 3.34%, test48 power 15.8% → 8.6%. Note (b) above, sizing runners to a
+target rpm, is not needed and was not done; runner lengths stay absolute geometry. `vebell-attempt3.diff`
+is removed because it is applied.

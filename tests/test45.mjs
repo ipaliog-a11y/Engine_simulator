@@ -38,10 +38,28 @@ console.log('\n== the speed-dependent Crr must actually reach the top-speed solv
 const reach = await page.evaluate(() => {
   const pr = PRESETS.find(x => x.name === '1.0 Kei Turbo I3');
   applyEngineToForm(Object.assign({}, DEFAULT_ENGINE, pr.engine)); buildEngine();
-  applyChassisFit('kei'); document.getElementById('vhGearing').value = 100; buildVehicle();
-  const R = vehicle.ratios, tot = R[R.length - 1] * vehicle.finalDrive;
-  const vRed = engine.redline * Math.PI * 2 * vehicle.rTire / 60 / tot * 3.6;
-  const top = simulateAccel().topSpeed, v = top / 3.6;
+  applyChassisFit('kei');
+  // The car has to be DRAG-limited IN TOP GEAR at its top speed for this to show anything. This used
+  // to fix the gearing at 100 and check only that top gear's limiter was clear. When the kei's
+  // torque shape changed (build 84) that setting became over-geared: 5th cannot pull past ~192 km/h,
+  // so the car tops out in 4th at 6900 rpm — correctly; an over-geared car does reach its maximum a
+  // gear down — where torque is falling 5% per 100 rpm toward the limiter. On a slope that steep the
+  // scan's 0.5 m/s step leaves a 60 N margin, which read as a constant-Crr bug. So search the gearing
+  // for a point where top gear itself is holding the speed, instead of assuming one.
+  let top = 0, vRed = 0, R = null;
+  const curve0 = () => buildTorqueCurve();
+  for (const gearing of [100, 85, 70, 55, 40, 25]) {
+    document.getElementById('vhGearing').value = gearing; buildVehicle();
+    R = vehicle.ratios;
+    const t = R[R.length - 1] * vehicle.finalDrive;
+    vRed = engine.redline * Math.PI * 2 * vehicle.rTire / 60 / t * 3.6;
+    top = simulateAccel().topSpeed;
+    const c = curve0(), rpm = (top / 3.6) * t / vehicle.rTire * 60 / (2 * Math.PI);
+    const q = c.reduce((a, x) => Math.abs(x.rpm - rpm) < Math.abs(a.rpm - rpm) ? x : a);
+    const vv = top / 3.6, need = 0.5 * AIR_RHO * vehicle.cdA * vv * vv + crrAt(vehicle.crr, vv) * vehicle.mass * G;
+    if (top < vRed - 2 && q.tq * t * vehicle.driveEff / vehicle.rTire >= need * 0.98) break;
+  }
+  const v = top / 3.6;
   // Best wheel force available at exactly that speed, across all gears — the same quantity the
   // top-speed scan balances against resistance.
   const curve = buildTorqueCurve();
