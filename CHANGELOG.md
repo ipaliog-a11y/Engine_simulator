@@ -20,6 +20,18 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 Working toward **v1.0 — every number derived, not fitted.**
 
+### A GARAGE tab, for engines and cars (build 103)
+
+- **The garage has its own tab** instead of a strip at the bottom of the vehicle tab: CARS and ENGINES
+  as two walls of cards, each with its headline numbers, **VIEW** (the spec it will load: engine,
+  bore and stroke, compression, induction, fuel, output, and for a car its body, drivetrain, tyres and
+  limiter), **LOAD** and **DELETE**.
+- **Engines can be saved on their own:** SAVE ENGINE at the bottom of the engine tab. Loading one drops it
+  into the car you have now. SAVE CAR (at the bottom of the vehicle tab) keeps the whole car as before.
+- Saves made before this build carry no kind and are listed as cars, which is what they are. 24 of each.
+- The loaded-build strip shows a garage name after loading. Greek translations and the guide cover it.
+- **Phones:** eight tabs no longer fit one row, so they wrap to two rows of four.
+
 ### UI: compact forms, two-step presets, what is loaded, tyre rating fixes (build 102)
 
 - **Fields are a size, not half the panel.** The design forms were a fixed two-column grid, so every
