@@ -74,13 +74,20 @@ egt.forEach(e => {
 // order is being ignored — which is exactly the bug that a single-reflection model produces.
 console.log('\n== a derived header must be a length someone could actually fabricate ==');
 const hdr = await page.evaluate(() => PRESETS.filter(p => !/Rotary|2-Stroke/.test(p.name)).map(p => {
+  // A turbo manifold is not a tuned header (build 91): against a turbine the reflected wave is a
+  // compression, which only hurts, and manifold volume smooths away the blowdown pulse, so it is as
+  // short as packaging allows. The tuning band below is for headers; a turbo manifold must instead
+  // come out SHORTER than the header the same engine would be given naturally aspirated.
+  const naL = (() => { applyEngineToForm(Object.assign({}, DEFAULT_ENGINE, p.engine, { exhaust: 'race', intake: 'na' })); buildEngine(); return Math.round(engine.primL * 1000); })();
   applyEngineToForm(Object.assign({}, DEFAULT_ENGINE, p.engine, { exhaust: 'race' })); buildEngine();
-  return { n: p.name, L: Math.round(engine.primL * 1000), k: engine.primK,
+  return { n: p.name, L: Math.round(engine.primL * 1000), k: engine.primK, turbo: engine.intake === 'turbo', naL,
     D: +(engine.primD * 1000).toFixed(1), sys: +(engine.sysD * 1000).toFixed(0) };
 }));
 hdr.forEach(h => {
-  console.log(`  ${h.n.padEnd(24)} primary ${String(h.L).padStart(3)} mm  k=${h.k}  ${h.D} mm bore  ·  system ${h.sys} mm`);
-  if (h.L < 350 || h.L > 900) fails.push(`${h.n}: ${h.L} mm primary is not a buildable header`);
+  console.log(`  ${h.n.padEnd(24)} ${h.turbo ? 'manifold' : 'primary '} ${String(h.L).padStart(3)} mm  ${h.turbo ? `(tuned NA header ${h.naL} mm)` : `k=${h.k}`}  ${h.D} mm bore  ·  system ${h.sys} mm`);
+  if (h.turbo) {
+    if (!(h.L < h.naL && h.L >= 100)) fails.push(`${h.n}: ${h.L} mm turbo runner should be shorter than its ${h.naL} mm tuned header`);
+  } else if (h.L < 350 || h.L > 900) fails.push(`${h.n}: ${h.L} mm primary is not a buildable header`);
   if (h.sys < 35 || h.sys > 110) fails.push(`${h.n}: ${h.sys} mm system pipe is not a real size`);
 });
 // The system pipe must scale with the engine, not be a fixed number — a V12 and a kei car do not

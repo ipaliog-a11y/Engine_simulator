@@ -1,4 +1,4 @@
-# PIXEL ENGINE SIM v0.6 build 90
+# PIXEL ENGINE SIM v0.6 build 91
 
 **A lightweight, 8-bit style internal combustion engine *designer* & simulator** inspired by *Automation*.
 
@@ -679,8 +679,10 @@ documented in the GUIDE at the point where it matters:
   `turboChoke` — is still there, and it should retire with turbine housing sizing: real top-end
   taper *is* back-pressure outrunning boost. `tests/test46.mjs` holds this at a budget of 1 and
   additionally fails outright if any NA preset ever joins it.
-- **One behavioural test fails: `test40`,** on two assertions, and both are waiting on turbine
-  housing sizing. It asserts that spool time lengthens with the boost target, and that at low boost a
+- **One behavioural test fails: `test40`,** on two assertions. They used to be listed as waiting on
+  turbine housing sizing; they are not. Spool to 90% in 0.06–0.12 s at fixed rpm is far quicker than
+  real turbos manage, so what they wait on is the transient shaft model (inertia, fill, bearing
+  drag). It asserts that spool time lengthens with the boost target, and that at low boost a
   small frame is quicker off the line than a large one. Both are true of real turbos. The second is
   currently held up only by a bearing-drag constant about 5× published magnitude — correct it and the
   ordering flips by 0.05 s, against a 0.12 s margin, so the effect sits **inside the model's own
@@ -733,7 +735,7 @@ measurement finds things. Each item is one PR.
 | — | Variable-geometry turbine | ✅ build 80 | The diesel spool gap was a VGT gap, not pulse energy. |
 | — | Shift at the torque crossover | ✅ build 81 | Every car used to upshift at the redline; 0–100 RMS 24.4% → 10.2%. |
 | — | Exhaust pulse energy | ✅ build 90 | The turbine fed by blowdown pulses, from cam timing and cylinder state; the prerequisite housing sizing kept running into. Small on presets with long tuned primaries. |
-| 3 | Turbine housing sizing | ⬜ **next** | Retires the size-class A/R table and `turboChoke`. The VGT was its missing prerequisite. Also the Alto Works' gap: no frame is small enough for 660 cc. Findings parked at `tests/proto/housing.mjs`, patch at `housing-sizing.diff`. |
+| 3 | Turbine housing sizing | ✅ build 91, as a choice | Not derivable: which side of the spool/top-end compromise to take is design intent, and every objective tried decided it silently (sweep time gave the GTI 287 hp vs 220). Shipped as TURBINE A/R (tight/stock/loose per frame), plus the real physics found on the way: turbo manifolds are packaging-short, not tuned headers. `turboChoke` remains. The Alto's frame-size gap remains (no frame small enough for 660 cc). |
 | — | Rotary exhaust heat | ⬜ | The trailing combustion pocket burning at exhaust-port opening: rotary EGT and the 13B's spool (budgeted in test46/47). |
 | 4 | VE bell (`vePeakRpm`) | ✅ build 84 / 88 | Retired for poppet-valve petrol engines after two hidden errors were fixed (IVC geometry, Engelman tuning ratio), and for diesels in build 88. Still fitted for ported engines. |
 | 5 | Launch model | ⬜ | Unblocks the parked slip-ratio tyre model *and* rotational inertia — every car currently gets a free ~6% on 0–100. The three go in together and recalibrate once. |

@@ -249,7 +249,7 @@ table.fuelmap td.live{box-shadow:inset 0 0 0 2px #fff;font-weight:bold}
 <body>
 <div class="container">
 <header>
-<h1>PIXEL ENGINE SIM v0.6 build 90</h1>
+<h1>PIXEL ENGINE SIM v0.6 build 91</h1>
 <div class="subtitle" id="subtitle">ENGINE DESIGNER • BUILD IT, THEN DRIVE IT</div>
 </header>
 <div class="main">
@@ -293,6 +293,7 @@ table.fuelmap td.live{box-shadow:inset 0 0 0 2px #fff;font-weight:bold}
 <div class="field"><label for="edIntercooler">INTERCOOLER</label><select id="edIntercooler"><option value="none">NONE</option><option value="small">SMALL CORE</option><option value="large">LARGE CORE</option></select></div>
 <div class="field"><label for="edTurboSize">TURBO SIZE</label><select id="edTurboSize"><option value="small">SMALL</option><option value="medium">MEDIUM</option><option value="large">LARGE</option></select></div>
 <div class="field"><label for="edTurboConfig">TURBO CONFIG</label><select id="edTurboConfig"><option value="single">SINGLE</option><option value="twin">TWIN</option><option value="sequential">SEQUENTIAL</option><option value="compound">COMPOUND</option></select></div>
+<div class="field"><label for="edHousing">TURBINE A/R</label><select id="edHousing"><option value="tight">TIGHT (RESPONSE)</option><option value="stock">STOCK</option><option value="loose">LOOSE (TOP END)</option></select></div>
 <div class="field"><label for="edVGT">TURBINE</label><select id="edVGT"><option value="no">FIXED HOUSING</option><option value="yes">VARIABLE GEOMETRY</option></select></div>
 <div class="field"><label for="edAntilag">ANTI-LAG (ALS)</label><select id="edAntilag"><option value="no">NO</option><option value="yes">YES</option></select></div>
 <div class="field"><label for="edScType">SUPERCHARGER</label><select id="edScType"><option value="roots">ROOTS</option><option value="screw">TWIN-SCREW</option><option value="centrifugal">CENTRIFUGAL</option></select></div>
@@ -629,6 +630,10 @@ it.</span>
 <section class="guide-page" id="gp-vgt" data-cat="air" data-title="Variable geometry" hidden>
 <h4 class="guide-title">Variable geometry</h4>
 <div class="guide-body" data-gk="vgt">
+<b>TURBINE A/R is the housing itself, and it is your call.</b> TIGHT spools earlier and costs top
+end; LOOSE breathes at the top and spools later; STOCK is the frame's usual housing. Which side to
+take is a design decision, not physics — VW fits the GTI a small, tight turbine for response and
+accepts the power it costs. The model will not choose for you.<br><br>
 <b>VARIABLE GEOMETRY is the throat as a control, and it is why diesels spool.</b> A fixed housing
 has one throat area, and that one number is a compromise: tight enough to light at 1700 rpm is
 far too tight to breathe at 4500. A <b>VGT</b> puts a ring of pivoting vanes in the housing, so
@@ -1946,15 +1951,13 @@ function deriveGasDynamics(){
   // split the exhaust between two turbines, so each sees half the flow.
   if(e.intake==='turbo'){
     const tb=TURBO[e.turboSize]||TURBO.medium;
-    const a0=(tb.ar*AR_INCH)*(TURB_WHEEL*tb.exd/2);
     // A vane ring replaces the fixed throat with a range. `turbineArea` stays the WIDEST the
     // turbine can be, so every existing call site reads the open position by default; `vgtShut`
     // is non-zero only on a VGT and is what tells the rest of the model there is anything to
     // schedule at all.
-    e.turbineArea=e.vgt?a0*vaneThroatFrac(tb.exd,VANE_BETA_MAX):a0;
-    e.vgtShut=e.vgt?a0*vaneThroatFrac(tb.exd,VANE_BETA_MIN):0;
-    e.turbUnits=(e.turboConfig==='twin')?2:1;
     e.compExd=tb.exd;
+    setTurbineAR(tb.ars[TURBINE_HOUSING[e.housing]??1]);   // the housing the build chose for this frame
+    e.turbUnits=(e.turboConfig==='twin')?2:1;
     e.shaftJ=wheelInertia(tb.exd)*(e.turbUnits);
     e.shaftMax=maxShaftRpm(tb.exd);
   }else{e.turbineArea=0;e.vgtShut=0;e.turbUnits=1;e.compExd=0;e.shaftJ=0;e.shaftMax=0;}
@@ -1965,7 +1968,15 @@ function deriveGasDynamics(){
   e.sysPipes=(e.layout==='v'||e.layout==='boxer')?2:(e.cylinders>=6&&e.displacement_L>3?2:1);
   e.sysD=clamp(Math.sqrt(4/Math.PI*(m3sPeak/e.sysPipes)/ex.sysV),0.030,0.110);
   e.primD=ex.dOverBore*(e.bore_mm/1000);
-  if(ex.fixedL){e.primL=ex.fixedL;e.primK=0;}
+  if(e.intake==='turbo'){
+    // A turbo manifold is not tuned. Against a turbine the returning wave is a compression, which only
+    // hurts (exhaustWaveP flips its sign), and every litre of manifold smooths away the blowdown pulse
+    // the turbine lives on — so it is made as SHORT as packaging allows: runners reaching from each
+    // port to a turbine at mid-bank, (n-1)/2 cylinder pitches plus the port exit.
+    const perBank=(e.layout==='v'||e.layout==='boxer')?Math.ceil(e.cylinders/2):e.cylinders;
+    e.primL=0.10+Math.max(0,perBank-1)/2*1.15*(e.bore_mm/1000);e.primK=0;
+  }
+  else if(ex.fixedL){e.primL=ex.fixedL;e.primK=0;}
   else{
     const theta=cam.dur/2+90, tgt=tgtRpm;
     e.primL=0;e.primK=3;
@@ -2026,7 +2037,7 @@ const AIR_FILTER={
 const DEFAULT_ENGINE={
   type:'petrol4',
   cylinders:4,bore_mm:81,stroke_mm:78,compression:12.5,layout:'inline',redline:7200,
-  intake:'na',boost_bar:0,intercooler:'large',turboSize:'medium',turboConfig:'single',vgt:false,scType:'roots',antilag:false,nitrous:'none',exhaust:'sport',cat:'stock',
+  intake:'na',boost_bar:0,intercooler:'large',turboSize:'medium',turboConfig:'single',housing:'stock',vgt:false,scType:'roots',antilag:false,nitrous:'none',exhaust:'sport',cat:'stock',
   intakeSys:'efi',airFilter:'perf',
   cam:'stock',vvt:true,valves:4,valveMat:'steel',valveSpring:'stock',runner:'medium',
   fuel:'gasoline',octane:95,injector:'direct',ignitionAdv:22,ignitionType:'coil',timingMode:'auto',afrMode:'auto',
@@ -2167,7 +2178,7 @@ const I18N={
   'COMPRESSION':{el:'ΣΥΜΠΙΕΣΗ'},'REDLINE (rpm)':{el:'ΟΡΙΟ ΣΤΡΟΦΩΝ (rpm)'},
   'Air Path':{el:'Διαδρομή Αέρα'},'INTAKE TYPE':{el:'ΤΥΠΟΣ ΕΙΣΑΓΩΓΗΣ'},
   'BOOST TARGET (bar)':{el:'ΣΤΟΧΟΣ BOOST (bar)'},'INTERCOOLER':{el:'INTERCOOLER'},
-  'TURBO SIZE':{el:'ΜΕΓΕΘΟΣ ΤΟΥΡΜΠΟ'},'TURBO CONFIG':{el:'ΔΙΑΤΑΞΗ ΤΟΥΡΜΠΟ'},
+  'TURBO SIZE':{el:'ΜΕΓΕΘΟΣ ΤΟΥΡΜΠΟ'},'TURBO CONFIG':{el:'ΔΙΑΤΑΞΗ ΤΟΥΡΜΠΟ'},'TURBINE A/R':{el:'A/R ΤΟΥΡΜΠΙΝΑΣ'},
   'ANTI-LAG (ALS)':{el:'ANTI-LAG (ALS)'},'SUPERCHARGER':{el:'ΥΠΕΡΣΥΜΠΙΕΣΤΗΣ'},
   'EXHAUST':{el:'ΕΞΑΤΜΙΣΗ'},'CATALYTIC CONV.':{el:'ΚΑΤΑΛΥΤΗΣ'},'NITROUS (N2O)':{el:'ΝΙΤΡΟ (N2O)'},
   'Induction (Metering)':{el:'Εισαγωγή (Τροφοδοσία)'},'INTAKE SYSTEM':{el:'ΣΥΣΤΗΜΑ ΕΙΣΑΓΩΓΗΣ'},'AIR FILTER':{el:'ΦΙΛΤΡΟ ΑΕΡΑ'},
@@ -2400,12 +2411,41 @@ const TURBO={
   // choke is the remaining fitted stand-in for boost taper (retired once vePeakRpm is derived).
   // Values kept modest so a correctly-sized small frame is not docked out of a fair fight with a
   // laggy large one on a low-boost standing start — over-flow still adds the 0.32·max(0,load−1) term.
-  small: {exd:0.054,ar:0.42,spool50:0.26,width:0.06,choke:0.10,k:3.5},
-  medium:{exd:0.071,ar:0.64,spool50:0.40,width:0.08,choke:0.055,k:2.2},
-  large: {exd:0.086,ar:0.86,spool50:0.54,width:0.10,choke:0.025,k:1.4}
+  // ars: the housings a maker sells for the frame (tight / stock / loose), on this model's R_wheel
+  // convention (see backPressureBar) — the stock step is the single A/R each frame used to have.
+  small: {exd:0.054,ars:[0.35,0.42,0.50],spool50:0.26,width:0.06,choke:0.10,k:3.5},
+  medium:{exd:0.071,ars:[0.48,0.64,0.82],spool50:0.40,width:0.08,choke:0.055,k:2.2},
+  large: {exd:0.086,ars:[0.63,0.86,1.06],spool50:0.54,width:0.10,choke:0.025,k:1.4}
 };
 const AR_INCH=0.0254;          // A/R is quoted in inches
 const TURB_WHEEL=0.90;         // turbine wheel as a fraction of the compressor exducer
+// Turbine throat for a housing A/R. A/R is the volute throat area over the radius to its centroid,
+// so A_throat = (A/R) x R; a vane ring is the same volute with vanes in it.
+function setTurbineAR(ar){
+  const e=engine, exd=e.compExd;
+  const a0=(ar*AR_INCH)*(TURB_WHEEL*exd/2);
+  e.turbineAR=ar;
+  e.turbineArea=e.vgt?a0*vaneThroatFrac(exd,VANE_BETA_MAX):a0;
+  e.vgtShut=e.vgt?a0*vaneThroatFrac(exd,VANE_BETA_MIN):0;
+}
+// Steady wide-open-throttle boost against rpm, sampled once per engine: solving the shaft balance
+// costs a few thousand iterations, and boostAvail is called for every rpm of every curve build.
+function buildBoostTable(N){
+  const e=engine;
+  e.boostTable=null;
+  if(e.intake!=='turbo'||!(e.turbineArea>0))return;
+  const lo=Math.max(600,e.idleRpmEff||800),hi=e.redline,tb=[];
+  for(let i=0;i<=N;i++){const r=lo+(hi-lo)*i/N;tb.push({rpm:r,bar:steadyBoost(r)});}
+  e.boostTable=tb;
+}
+// ---- the turbine housing: a hardware choice, and the user's ----
+// A housing is a compromise — tighter spools earlier, looser breathes at the top — and WHICH side of
+// it to take is a design intent, not physics. Build 91 tried deriving it (tests/proto/README.md,
+// housing sizing attempts 2 and 3): every objective tried decides that intent silently for every
+// engine. Minimum in-gear sweep time handed the GTI a loose housing and 287 hp against the 220 VW
+// chose to make with a small turbine for response; average power bought top end with spool. So the
+// housing is offered the way a maker offers it, three A/R steps per frame, and the build says which.
+const TURBINE_HOUSING={tight:0,stock:1,loose:2};
 const COMP_BLOCKAGE=0.50;      // blade blockage + swirl at the inducer throat
 const INDUCER_RATIO=0.72;      // inducer/exducer, near-constant across a maker's range
 // Flow rating = the inducer choking. Checked against quoted ratings for real frames: derived comes
@@ -2695,7 +2735,7 @@ function readEngineFromForm(){
     intercooler:g('edIntercooler').value,
     turboSize:g('edTurboSize').value,
     turboConfig:g('edTurboConfig').value,
-    vgt:g('edVGT').value==='yes',
+    vgt:g('edVGT').value==='yes',housing:g('edHousing').value,
     antilag:g('edAntilag').value==='yes',
     scType:g('edScType').value,
     nitrous:g('edNitrous').value,
@@ -2732,7 +2772,7 @@ function applyEngineToForm(e){
   g('edIntake').value=e.intake;g('edBoost').value=e.boost_bar;
   g('edIntercooler').value=(e.intercooler===true?'large':e.intercooler===false?'none':(e.intercooler||'large'));
   g('edTurboSize').value=e.turboSize||'medium';
-  g('edTurboConfig').value=e.turboConfig||'single';g('edVGT').value=e.vgt?'yes':'no';
+  g('edTurboConfig').value=e.turboConfig||'single';g('edVGT').value=e.vgt?'yes':'no';g('edHousing').value=e.housing||'stock';
   g('edAntilag').value=e.antilag?'yes':'no';
   g('edScType').value=e.scType||'roots';g('edNitrous').value=e.nitrous||'none';
   g('edIntakeSys').value=e.intakeSys||'efi';g('edAirFilter').value=e.airFilter||'stock';
@@ -2771,7 +2811,7 @@ function syncDesignEnable(){
   const turbo=intake==='turbo';
   g('edTurboSize').disabled=!turbo;
   g('edTurboConfig').disabled=!turbo;
-  g('edVGT').disabled=!turbo;
+  g('edVGT').disabled=!turbo;g('edHousing').disabled=!turbo;
   g('edAntilag').disabled=!turbo;
   g('edScType').disabled=intake!=='supercharger';
   // No poppet valvetrain on 2-stroke / rotary.
@@ -2931,13 +2971,7 @@ function buildEngine(){
   // Solving the shaft balance costs a few thousand iterations, and boostAvail is called for every
   // rpm of every torque-curve build. Sample it once per engine into a table and interpolate — the
   // same reason a compressor map is a map and not a formula evaluated at runtime.
-  engine.boostTable=null;
-  if(engine.intake==='turbo'&&engine.turbineArea>0){
-    const lo=Math.max(600,engine.idleRpmEff||800),hi=engine.redline,N=26,tb=[];
-    for(let i=0;i<=N;i++){const r=lo+(hi-lo)*i/N;tb.push({rpm:r,bar:steadyBoost(r)});}
-    engine.boostTable=tb;
-  }
-  engine.peakEgt=peakEgt();   // needs the boost table (wotMapAt) and the burn table
+  buildBoostTable(26);
   engine.nitrousBar=NITROUS_BAR[engine.nitrous]||0;
   state.boostActual=0;state.nitrousActive=false;state.nitrousCharge=1.0;   // fresh tanks
   state.engineHealth=1.0;state.blown=false;state.wearCause='';   // a fresh (rebuilt) engine
@@ -2988,6 +3022,8 @@ function buildEngine(){
     state.afr=clamp(lam*engine.stoichAFR,+afrEl.min,+afrEl.max);
   }
   syncSliders();
+  buildBoostTable(26);
+  engine.peakEgt=peakEgt();   // needs the boost table (wotMapAt) and the burn table
 
   buildRev++;dynoCache=null;
   engine.cost=computeCost();
@@ -3138,7 +3174,7 @@ function updateDesignSummary(){
   const icTxt=engine.intercooler==='none'?' (no IC)':' ('+(engine.intercooler==='large'?'LG':'SM')+' IC)';
   if(engine.intake==='na')induction='Naturally aspirated';
   else if(engine.intake==='turbo'){
-    induction=TURBO_CONFIG[engine.turboConfig].label+' TURBO ('+engine.turboSize.toUpperCase()+')'+(engine.vgt?' VGT':'')+(engine.antilag?' +ALS':'')+' @ '+engine.boost_bar.toFixed(2)+' bar'+icTxt+', 50% boost @ '+Math.round(engine.spool50)+' rpm';
+    induction=TURBO_CONFIG[engine.turboConfig].label+' TURBO ('+engine.turboSize.toUpperCase()+', A/R '+(engine.turbineAR||0).toFixed(2)+')'+(engine.vgt?' VGT':'')+(engine.antilag?' +ALS':'')+' @ '+engine.boost_bar.toFixed(2)+' bar'+icTxt+', 50% boost @ '+Math.round(engine.spool50)+' rpm';
     // Say plainly when the engine is asking the frame for more air than it is rated to move —
     // otherwise the power just quietly stops arriving and there is nothing to learn from.
     induction+='<br>Compressor '+Math.round(engine.turboFlow)+' of '+Math.round(engine.turboCap)+' lb/min rated ('+
