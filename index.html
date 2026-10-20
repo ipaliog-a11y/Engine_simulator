@@ -249,7 +249,7 @@ table.fuelmap td.live{box-shadow:inset 0 0 0 2px #fff;font-weight:bold}
 <body>
 <div class="container">
 <header>
-<h1>PIXEL ENGINE SIM v0.6 build 99</h1>
+<h1>PIXEL ENGINE SIM v0.6 build 101</h1>
 <div class="subtitle" id="subtitle">ENGINE DESIGNER • BUILD IT, THEN DRIVE IT</div>
 </header>
 <div class="main">
@@ -282,6 +282,7 @@ table.fuelmap td.live{box-shadow:inset 0 0 0 2px #fff;font-weight:bold}
 <div class="field"><label for="edLayout">LAYOUT</label><select id="edLayout"><option value="inline">INLINE</option><option value="v">V</option><option value="boxer">BOXER</option></select></div>
 <div class="field"><label for="edBore"><span id="lblBore">BORE (mm)</span></label><input type="number" id="edBore" min="60" max="110" step="0.5" value="86"></div>
 <div class="field"><label for="edStroke"><span id="lblStroke">STROKE (mm)</span></label><input type="number" id="edStroke" min="50" max="130" step="0.5" value="86"></div>
+<div class="field"><label for="edEcc">ECCENTRICITY e (mm)</label><input type="number" id="edEcc" min="8" max="25" step="0.5" value="15"></div>
 <div class="field"><label for="edCR">COMPRESSION</label><input type="number" id="edCR" min="7" max="24" step="0.1" value="10.5"></div>
 <div class="field"><label for="edRedline">REDLINE (rpm)</label><input type="number" id="edRedline" min="3500" max="11000" step="100" value="7000"></div>
 </div>
@@ -1126,7 +1127,13 @@ const ENGINE_TYPE={
              crDef:18,crMin:15,crMax:24,redlineDef:4800,redMin:3500,redMax:5800,fuel:'diesel',maxCyl:12},
   twostroke:{label:'2-STROKE',       strokeDiv:2*Math.PI,ci:false,ports:true, imep:0.60,eff:0.80,bsfc:1.45,
              crDef:9, crMin:7,crMax:12,redlineDef:8000,redMin:5500,redMax:11000,fuel:null,maxCyl:6},
-  rotary:   {label:'ROTARY (WANKEL)',strokeDiv:2*Math.PI,ci:false,ports:true, imep:0.70,eff:0.74,bsfc:1.48,
+  // bsfc is fuel delivered per unit of fuel trapped, the charge that leaves unburned: a two-stroke
+  // short-circuits ~30% of what it delivers (1/0.69 = 1.45). A rotary was 1.48 until build 100, which
+  // only offset air flow being counted at half its real rate (one charge per two turns, the
+  // four-stroke's): with the rate right it is 1, since a side-ported rotor has almost no overlap
+  // to lose fresh charge through, and its thirst comes from what its charge does (imep), not from
+  // charge it never burns.
+  rotary:   {label:'ROTARY (WANKEL)',strokeDiv:2*Math.PI,ci:false,ports:true, imep:0.70,eff:0.74,bsfc:1.00,
              crDef:9.4,crMin:8.5,crMax:11,redlineDef:9000,redMin:6500,redMax:11000,fuel:null,maxCyl:4}
 };
 const LAYOUT_LABEL={inline:'INLINE',v:'V',boxer:'BOXER',rotary:'ROTARY'};
@@ -1333,6 +1340,10 @@ function deriveValvetrain(){
 // Neither wave is a free bonus. Both swing BOTH WAYS: -cos(pi·n) is +1 at the tuned orders and -1
 // between them, so a badly matched pipe costs VE, which is the real reason an over-sized header
 // guts the bottom end.
+// CP_EXH is the mean specific heat of the exhaust over the rise it is used for, 300 K to ~1100 K.
+// Checked against composition (build 101): stoichiometric petrol products are N2 72%, CO2 20%, H2O 8% by
+// mass, with mean cp over that range ~1.08, ~1.13 and ~2.08 kJ/kgK, which gives ~1.16. Lean, it tends to
+// air's ~1.08. 1150 stands.
 const GAMMA_AIR=1.4, CP_EXH=1150;
 const sonic=T=>20.05*Math.sqrt(Math.max(120,T));         // sqrt(gamma·R·T), m/s
 // Pressure at the valve is not VE. Trapped mass follows DENSITY, and a charge that arrives rammed
@@ -1357,57 +1368,79 @@ function exhaustGasT(load,rpm,lambda){
   // turbo petrol ECU enriches under boost; it went unseen while this function was only ever called
   // at one assumed mixture per load.
   const afr=Math.max(6,(e.stoichAFR||14.7)*Math.max(1,lam));
-  const dT=(e.fuelLHV||44)*1e6/(afr*CP_EXH)*exhaustHeatFrac(rpm)*clamp(load,0.35,1.1);
+  // The gas heated is the air AND the fuel burned in it (afr + 1); it was the air alone until build 101.
+  const dT=(e.fuelLHV||44)*1e6/((afr+1)*CP_EXH)*exhaustHeatFrac(rpm,lam)*clamp(load,0.35,1.1);
   return 300+dT;
 }
-// Share of the fuel's heat that leaves through the exhaust port.
-function exhaustHeatFrac(rpm){
+// Share of the fuel's heat (the heat RELEASED: rich of stoich it is capped, see exhaustGasT) that
+// leaves through the exhaust port, at the mixture lam.
+//
+// For a poppet-valve engine this is the energy balance, closed (build 101):
+//     exhaust = 1 - gross indicated work - heat to the cylinder walls - heat to the exhaust port
+// with each term the model's own: the work from the same efficiency the torque uses (grossEtaReleased),
+// the wall heat from Woschni over a traced cycle (wallTrace, tabulated by rpm), and the port from Caton
+// & Heywood's exhaust-port correlation (portLossShare). It replaces "roughly a third" (0.40 - 0.24 eta,
+// on a brake efficiency of 0.36 x crFactor), two hand-set rules that were checked against measured EGT
+// while the wall split did not conserve energy (build 98).
+//
+// Ported engines keep the old rule for now: a rotary's and a two-stroke's work still rests on a fitted
+// type factor, so a balance against it would only move the fit into the exhaust.
+function exhaustHeatFrac(rpm,lam){
   const e=engine;
-  // Thermal efficiency from compression ratio ALONE. Multiplying crFactor by 1/typeBsfc as well
-  // double-counts: a diesel's better fuel consumption IS mostly its higher compression ratio, and
-  // charging it twice put diesel efficiency at 0.52 — above anything real, best-in-class being
-  // 0.42-0.45.
-  const eta=clamp(0.36*(e.crFactor||1),0.20,0.46);
-  // Roughly a third of fuel energy leaves through the exhaust port, whatever the engine. The old
-  // `0.62 - eta` form made that fraction collapse as efficiency rose — it floored a diesel at 0.18
-  // and gave it a 370 C exhaust against a real ~600 C pre-turbine, which left the turbine too weak
-  // to spool and the diesel presets making almost no torque at all. What actually makes a diesel's
-  // exhaust cooler is running LEAN, and the AFR term above already carries that.
-  let f=clamp(0.40-0.24*eta,0.24,0.36);
-  // Heat a diesel releases too late to turn into work is still hot when the exhaust valve opens.
-  if(rpm>0)f+=eta*(1-burnPhasing(rpm));
-  // ...and so is a rotary's, whose slow burn is a fixed angle (no rpm needed): see rotaryLostWork.
-  if(e.rotaryLost)f+=eta*e.rotaryLost;
-  // Heat the cylinder walls take per cycle, as a share of the fuel's, falls with speed and size.
-  // Woschni: h ~ B^-0.2 p^0.8 T^-0.55 w^0.8, with the gas velocity w following mean piston speed Sp.
-  // Over one cycle (time ~ 1/N) against the fuel's heat (~ B^2 S), that leaves the wall share going as
-  // (B Sp)^-0.2 — and what the walls do not take, the exhaust does. So a big, fast engine runs hotter
-  // at the port than a small slow one at the same mixture, which is what real full-load EGTs show.
-  // Referenced to bore x piston speed at rated power of the engines whose measured EGT validates the
-  // constants above (test46: 1.6 NA I4 1474, 2.0 TDI 1210, 6.6 V8 TD 1054 mm.m/s; geometric mean
-  // 1234), so those stay where they were checked. No ported engines: they have no bore and stroke in
-  // this sense, and their exhaust fraction is calibrated separately.
-  //
-  // The extra heat the walls take is not all the exhaust's to give (build 98). It leaves the gas around
-  // combustion, before expansion, so had it stayed it would have been worked like the rest of the
-  // charge's heat: a share eta of it is work the cycle loses (wallImepFactor), and only the remaining
-  // 1 - eta comes out of the exhaust. Until build 98 it all came out of the exhaust and none out of the
-  // work, which did not conserve energy, and left a slow engine as efficient as a fast one.
-  if(rpm>0&&!e.ports&&e.wallK>0)f-=(1-e.wallK)*wallHeatExtra(rpm,WALL_BSP_REF,eta,f);
-  return f;
+  if(e.ports||!e.wallTab){
+    const eta=clamp(0.36*(e.crFactor||1),0.20,0.46);
+    let f=clamp(0.40-0.24*eta,0.24,0.36);
+    if(rpm>0)f+=eta*(1-burnPhasing(rpm));
+    if(e.rotaryLost)f+=eta*e.rotaryLost;   // a rotary's slow burn: see rotaryLostWork
+    return f;
+  }
+  const n=rpm>0?rpm:e.wallRefRpm, l=lam>0?lam:(e.ci?SMOKE_LAMBDA_CI:1);
+  const f0=1-grossEtaReleased(n,l)-wallShareAt(n)-(e.ci?COMB_INEFF_CI:COMB_INEFF_SI);
+  return clamp(f0-portLossShare(n,l,f0),0.05,0.80);
 }
-const WALL_BSP_REF=1234;   // mm.m/s — see exhaustHeatFrac
-// Share of the fuel's heat the walls take at this speed BEYOND what they take at bore x piston speed
-// bspRef: positive below it (a slow cycle gives the walls longer), negative above. The Woschni scaling
-// of exhaustHeatFrac, (B Sp)^-0.2, on the same wall share. eta and f are that function's work and
-// exhaust shares; they are rebuilt here when it is called from elsewhere.
-function wallHeatExtra(rpm,bspRef,eta,f){
+// Gross indicated work per unit of heat released, at speed n and mixture lam: what the torque path
+// uses. Spark: 0.8 x fuel-air (sparkGrossImep) with its mixture curve, which is work per unit of AIR,
+// so lean it is divided back by the fuel's share (x lam); rich the release is capped and it stands.
+// Diesel: dieselGrossImep's efficiency, which is already per unit of fuel burned.
+function grossEtaReleased(n,lam){
   const e=engine;
-  if(!(rpm>0)||e.ports)return 0;
-  if(eta==null){eta=clamp(0.36*(e.crFactor||1),0.20,0.46);
-    f=clamp(0.40-0.24*eta,0.24,0.36)+eta*(1-burnPhasing(rpm))+(e.rotaryLost?eta*e.rotaryLost:0);}
-  const wall=Math.max(0,1-eta-f), BSp=e.bore_mm*2*(e.stroke_mm/1000)*Math.max(300,rpm)/60;
-  return wall*(Math.pow(BSp/bspRef,-0.2)-1);
+  if(e.ci)return ETA_GROSS_CI*otto(e.compression)/otto(CR_REF_CI)*faEta(1/lam)/faEta(1/LAMBDA_REF_CI)*burnPhasing(n)*wallImepFactor(n);
+  return REAL_TO_FUELAIR*(1-Math.pow(Math.max(1.5,e.compression),1-GAMMA_FA))*(e.typeImep||1)*wallImepFactor(n)
+        *sparkMixture(lam)*Math.max(1,lam);
+}
+// Heat to the cylinder walls at full load, as a share of the heat released, from the traced cycle.
+function wallShareAt(rpm){
+  const t=engine.wallTab;
+  if(!t)return 0;
+  const f=clamp(rpm/100,3,t.length-1.001),i=Math.floor(f);
+  return t[i]+(t[i+1]-t[i])*(f-i);
+}
+// Heat to the exhaust port, as a share of the heat released. Caton & Heywood (Int. J. Heat Mass
+// Transfer 24, 1981) measured it on a running engine and fitted Nu = 0.0483 Re^0.783, with Re on the
+// mean flow while the valve is open. Port size from the head's own valves: exhaust valve heads 0.83 of
+// the intake (the usual design ratio, Heywood ch. 5), the port bore its throat (THROAT_RATIO), and the
+// port one bore long, valve seat to manifold face. The gas is at the temperature the balance before
+// this term gives it; properties are air's (Sutherland viscosity, Pr 0.7), which the products are close
+// to at these temperatures.
+const EV_RATIO=0.83;
+function portLossShare(n,lam,f0){
+  const e=engine;
+  if(!e.ivDia_mm)return 0;
+  const nEx=Math.max(1,(e.valves||4)-e.ivCount), D=THROAT_RATIO*EV_RATIO*e.ivDia_mm/1000, L=e.bore_mm/1000;
+  const st=e.stoichAFR||14.7, afr=st*Math.max(1,lam);
+  const rho=(1+(e.intake==='na'?0:(e.boost_bar||0)))*1e5/(287*313);
+  const air=rho*(e.dispCyl_L/1000)*(e.veAmp||0.95)*n/60*(e.chargesPerRev||0.5);   // kg/s per cylinder
+  const open=clamp((e.camDur||240)/720,0.2,1), mdot=air*(1+1/afr)/open/nEx;         // per port, while open
+  const Tg=300+(e.fuelLHV||44)*1e6*f0/((afr+1)*CP_EXH);
+  const mu=1.716e-5*Math.pow(Tg/273,1.5)*(273+111)/(Tg+111), k=mu*CP_EXH/0.7;
+  const Re=mdot/(Math.PI/4*D*D)*D/mu, h=0.0483*Math.pow(Re,0.783)*k/D;
+  const q=h*Math.PI*D*L*nEx*(Tg-T_WALL)*open;                                       // W per cylinder
+  return q/Math.max(1e-6,air/afr*(e.fuelLHV||44)*1e6);
+}
+// Share of the fuel's heat the walls take at this speed BEYOND what they take at the anchor speed
+// (wallRefRpm): positive below it (a slow cycle gives the walls longer), negative above.
+function wallHeatExtra(rpm){
+  return engine.wallTab?wallShareAt(rpm)-engine.wallRefShare:0;
 }
 // What that heat costs the work depends on WHEN in the cycle the walls take it. A joule lost at crank
 // angle theta, had it stayed in the gas, would have been expanded from V(theta) to exhaust-valve
@@ -1418,9 +1451,10 @@ function wallHeatExtra(rpm,bspRef,eta,f){
 // with the exhaust taking the other 1 - kappa (exhaustHeatFrac). Energy is conserved by construction.
 // Normalised where each engine type's efficiency anchor was measured, so the anchor still holds there:
 // a spark engine's 0.8 x fuel-air at the reference engines' rated speed (WALL_BSP_REF), a diesel's
-// ETA_GROSS_CI at 2000 rpm on a passenger-car DI diesel of 81 x 95.5 mm (WALL_BSP_REF_CI).
-const WALL_BSP_REF_CI=81*2*0.0955*2000/60;   // 515.7 mm.m/s
-const wallImepFactor=rpm=>engine.wallK>0?1-engine.wallK*wallHeatExtra(rpm,engine.ci?WALL_BSP_REF_CI:WALL_BSP_REF)/engine.wallEtaI:1;
+// ETA_GROSS_CI at 2000 rpm on a passenger-car DI diesel (BURN_REF_RPM). Since build 101 the wall share at
+// each speed is Woschni's own, traced (wallTrace), not a (B Sp)^-0.2 scaling about a reference.
+const wallImepFactor=rpm=>engine.wallK>0&&engine.wallTab?1-engine.wallK*wallHeatExtra(rpm)/engine.wallEtaI:1;
+const WALL_BSP_REF=1234;   // mm.m/s: bore x piston speed at rated power of the reference spark engines
 // kappa, from one full-load cycle at the anchor speed: intake BDC -> compression -> Wiebe heat release
 // (this model's own burn: SI_BURN_DEG / SI_CA50, or the diesel's fixed-time burn from SOC_CI) ->
 // expansion -> EVO, then blowdown to exhaust pressure by BDC and the exhaust stroke at that state. The
@@ -1429,33 +1463,48 @@ const wallImepFactor=rpm=>engine.wallK>0?1-engine.wallK*wallHeatExtra(rpm,engine
 // closed, 6.18 gas exchange; C2 3.24e-3 burning and expanding, 0 compressing) times (T - T_wall) times
 // the wall the gas touches (head and crown plus the liner above the piston). Woschni's constants and
 // the 450 K wall are his published values; only the SHAPE of the flux matters here, so his 3.26 cancels.
-function wallWorkShare(e,rpm,map){
+function wallTrace(e,rpm,map){
   const g=1.30,R=287,cv=R/(g-1),cr=e.compression,B=e.bore_mm/1000,S=e.stroke_mm/1000,Sp=2*S*rpm/60;
-  const lam=e.ci?LAMBDA_REF_CI:0.9, q=(e.fuelLHV||43)*1e6/(lam*(e.stoichAFR||14.7));   // J per kg of charge
+  const lam=e.ci?LAMBDA_REF_CI:0.9, q=(e.fuelLHV||43)*1e6/(Math.max(1,lam)*(e.stoichAFR||14.7));   // J per kg of charge, released
   const burn=e.ci?6*rpm*BURN_T_CI:SI_BURN_DEG, soc=e.ci?SOC_CI:SI_CA50-wiebeX50()*SI_BURN_DEG;
   const evo=360-e.camLSA-e.camDur/2, Vt=th=>pistonVol(th,cr), Vevo=Vt(evo);
-  const T1=330,p1=map*1e5,v1=R*T1/p1, Vd=Math.PI/4*B*B*S, hc=S/(cr-1);
+  const T1=330,p1=map*1e5,v1=R*T1/p1, Vd=Math.PI/4*B*B*S, hc=S/(cr-1), V1=Vd*cr/(cr-1), m=p1*V1/(R*T1);
   const xb=th=>th<=soc?0:1-Math.exp(-WIEBE_A*Math.pow(Math.min(1,(th-soc)/burn),WIEBE_M+1));
-  const area=V=>Math.PI/2*B*B+Math.PI*B*hc*V;
-  const flux=(p,T,V,w)=>Math.pow(p/1000,0.8)*Math.pow(T,-0.55)*Math.pow(w,0.8)*(T-450)*area(V);
-  const d=0.5;let T=T1,num=0,den=0,pE=0,TE=0;
+  // The wall the gas touches: the head, the piston crown and the liner above the piston. Neither end is a
+  // flat disc. A pent-roof head's two faces sit square to the valve stems, so each is tilted by half the
+  // included valve angle (~45 deg on a 4-valve head): 1/cos(22.5) = 1.08 of the bore area. A DI diesel's
+  // head is flat, but its piston carries the combustion bowl, ~0.55 bore across and ~0.17 bore deep (the
+  // usual proportions), whose side wall adds pi x 0.55 x 0.17 B^2.
+  const disc=Math.PI/4*B*B, head=e.ci?disc:disc/Math.cos(SI_ROOF_DEG*Math.PI/180);
+  const crown=e.ci?disc+Math.PI*0.55*0.17*B*B:disc;
+  const area=V=>head+crown+Math.PI*B*hc*V;
+  // Woschni's coefficient in W/m2K, with B in m, p in kPa, T in K, w in m/s: his published 3.26.
+  const hW=(p,T,w)=>WOSCHNI_C*Math.pow(B,-0.2)*Math.pow(p/1000,0.8)*Math.pow(T,-0.55)*Math.pow(w,0.8);
+  const d=0.5, dt=d/(6*Math.max(300,rpm));               // seconds per step
+  let T=T1,num=0,den=0,pE=0,TE=0;
   for(let th=-180;th<evo;th+=d){                       // closed: compression, burn, expansion
-    const V0=Vt(th),V1=Vt(th+d),v0=v1*V0/cr,dv=v1*(V1-V0)/cr;
+    const V0=Vt(th),Vn=Vt(th+d),v0=v1*V0/cr,dv=v1*(Vn-V0)/cr;
     const p=R*T/v0, pm=p1*Math.pow(cr/V0,g), burning=th>=soc;
-    const w=2.28*Sp+(burning?3.24e-3*Vd*T1/(p1*Vd*cr/(cr-1))*(p-pm):0);
-    const f=flux(p,T,V0,Math.max(0.1,w));
-    num+=f*(1-Math.pow(V0/Vevo,g-1));den+=f;
-    T+=(q*(xb(th+d)-xb(th))-p*dv)/cv;
-    pE=R*T/(v1*V1/cr);TE=T;
+    const w=Math.max(0.1,2.28*Sp+(burning?3.24e-3*Vd*T1/(p1*V1)*(p-pm):0));
+    const Q=hW(p,T,w)*area(V0)*(T-T_WALL)*dt;           // J lost this step
+    num+=Q*(1-Math.pow(V0/Vevo,g-1));den+=Q;
+    T+=(q*(xb(th+d)-xb(th))-p*dv-Q/m)/cv;
+    pE=R*T/(v1*Vn/cr);TE=T;
   }
   const pX=Math.max(1.05e5,p1), TX=TE*Math.pow(pX/pE,(g-1)/g);
   for(let th=evo;th<360;th+=d){                        // blowdown to BDC, then the exhaust stroke
     const s=th<180?(th-evo)/Math.max(1,180-evo):1;
     const p=pE+(pX-pE)*s, T=TE+(TX-TE)*s;
-    den+=flux(p,T,Vt(th),6.18*Sp);
+    den+=hW(p,T,6.18*Sp)*area(Vt(th))*(T-T_WALL)*dt;
   }
-  return den>0?num/den:0;
+  return {k:den>0?num/den:0, share:den/(m*q)};
 }
+const WOSCHNI_C=3.26, T_WALL=450, SI_ROOF_DEG=22.5;
+// Fuel that leaves unburned (HC, CO, H2), as a share of what is supplied up to stoichiometric: Heywood
+// fig. 3-9 puts a spark engine at 2-5% and a diesel near 2% when not rich. Midpoints. Rich of stoich the
+// release is already capped (exhaustGasT); this is what is lost even with oxygen to spare.
+const COMB_INEFF_SI=0.035, COMB_INEFF_CI=0.02;
+const wallWorkShare=(e,rpm,map)=>wallTrace(e,rpm,map).k;
 // EGT AT AN OPERATING POINT: its speed, its manifold pressure, and the mixture actually burned.
 // Every steady-state reader goes through this, and so do the tests. Until build 88 the tests called
 // exhaustGasT(1.0) — no rpm, an assumed mixture — which stopped being the number the engine used as
@@ -1471,15 +1520,50 @@ function fullLoadLambda(rpm,map){
   let lam=engine.canAutoAFR?baseFuelLambda(rpm,map):bestPowerLambda();
   return engine.ci?Math.max(lam,dieselLambdaFloor(rpm)):lam;
 }
-// The hottest full-load point of the design — what the turbine and its vanes have to survive, and
-// the figure a real engine's measured full-load EGT is compared with.
-function peakEgt(){
-  let t=0;
+// The hottest full-load point of the design, two ways (build 101):
+//   · gas: the mass average, what the turbine works on and what its vanes are heated by. Metal is heated
+//     through h ~ Re^0.8, weighted hard toward the high-flow blowdown, so its temperature follows the
+//     mass average closely, and a creep limit is a metal temperature (VANE_T_LIMIT).
+//   · probe: what a thermocouple reads (egtProbeRatio). A bead in cross-flow has h ~ Re^0.5 and reads
+//     close to the TIME average, so measured full-load EGT figures are compared against this.
+function peakEgts(){
+  let gas=0,probe=0;
   for(let r=Math.max(1000,engine.idleRpmEff||800);r<=engine.redline;r+=100){
-    const map=wotMapAt(r);
-    t=Math.max(t,egtAt(r,map,fullLoadLambda(r,map)));
+    const map=wotMapAt(r), T=egtAt(r,map,fullLoadLambda(r,map));
+    gas=Math.max(gas,T);probe=Math.max(probe,T*egtProbeRatio(map,T));
   }
-  return t;
+  return {gas,probe};
+}
+// WHAT A THERMOCOUPLE READS, against the temperature the energy balance gives (build 101).
+// The balance gives the MASS-averaged exhaust temperature, the one that carries the enthalpy, and the
+// turbine works on that. A probe in a pulsing exhaust reads close to the TIME average (Caton, SAE 820050,
+// 1982), and the two differ because the hottest gas passes in the shortest time. Over one firing interval:
+//   · blowdown: the valve opens on cylinder gas at p_EVO, and each parcel leaves at the cylinder's
+//     temperature as it expands isentropically to manifold pressure. With x = p/p_exh, T = T_e x^k and
+//     mass leaves as x^(1/gamma), so its mass average is T_e (r - 1)/(gamma (r^(1/gamma) - 1)), r = p_EVO/p_exh
+//     (k + 1/gamma = 1 makes the integral exact). It carries 1 - r^(-1/gamma) of the gas, in the duty phi.
+//   · displacement: the piston pushes out the rest at the expanded state T_e, for the remaining 1 - phi.
+// So   T_mass  = T_e ((r - 1)/gamma + 1) / r^(1/gamma)
+//      T_probe = T_e (phi (r - 1)/(gamma (r^(1/gamma) - 1)) + 1 - phi)
+// phi and p_EVO as pulseShape has them (the cam's blowdown angle times the cylinders sharing the probe's
+// pipe; p_EVO from the trapped charge at intake density), solved here on T_e. Manifold pressure is the
+// full-load one: ~1.05 bar on an NA header, and near boost on a turbo, where a wastegated turbine holds
+// it. Ported engines have no blowdown to time and read the mass average.
+function egtProbeRatio(map,Tm){
+  const e=engine;
+  if(e.ports||!(e.camDur>0)||!(Tm>300))return 1;
+  const share=e.intake==='turbo'?(e.turboConfig==='sequential'?(e.cylinders||1):(e.cylinders||1)/(e.turbUnits||1))
+             :(e.layout==='inline'?(e.cylinders||1):(e.cylinders||1)/2);
+  const phi=clamp(Math.max(10,e.camLSA+e.camDur/2-180)*share/720,0.02,1);
+  if(phi>=1)return 1;                              // pulses merge: steady flow, the averages agree
+  const g=GAMMA_EXH,k=K_EXH,pInt=Math.max(0.3,map||1),pExh=Math.max(1.05,pInt);
+  let Te=Tm,ratio=1;
+  for(let i=0;i<4;i++){
+    const pEvo=Math.max(pExh*1.0001,Math.pow(pInt*(Te/313)*Math.pow(pExh,-k),1/(1-k))), r=pEvo/pExh, a=Math.pow(r,1/g);
+    const mass=((r-1)/g+1)/a, blow=(r-1)/(g*(a-1));
+    Te=Tm/mass;ratio=(phi*blow+1-phi)/mass;
+  }
+  return ratio;
 }
 // ---- intake: Helmholtz ----
 // Q of an intake tract measured on a flow rig is 3-6. It sets how fast the resonance dies and
@@ -1533,7 +1617,7 @@ function exhaustWaveP(rpm,T){
   const e=engine;
   if(!e.primL)return 0;
   const n=(e.camDur/2+90)*sonic(T)/(12*Math.max(500,rpm)*e.primL);
-  const vel=(e.dispCyl_L/1000)*(T/320)*(rpm/120)/(Math.PI/4*e.primD*e.primD)*3;
+  const vel=(e.dispCyl_L/1000)*(T/320)*(rpm/60*(e.chargesPerRev||0.5))/(Math.PI/4*e.primD*e.primD)*3;
   const A0=GAMMA_AIR*vel/sonic(T);
   const damp=Math.exp(-EX_ALPHA*2*e.primL*n)*Math.pow(EX_ROPEN,n)
             *Math.exp(-Math.pow(Math.PI*n*e.exhSigma,2)/2);
@@ -1572,8 +1656,8 @@ function backPressureBar(rpm,T){
   const e=engine;
   if(!e.primL)return 0;
   const rho=101325/(287*Math.max(300,T));
-  const vP=(e.dispCyl_L/1000)*(T/320)*(rpm/120)/(Math.PI/4*e.primD*e.primD)*3;
-  const m3s=(e.dispCyl_L/1000)*(T/320)*e.cylinders*(rpm/120)/(e.sysPipes||1);
+  const vP=(e.dispCyl_L/1000)*(T/320)*(rpm/60*(e.chargesPerRev||0.5))/(Math.PI/4*e.primD*e.primD)*3;
+  const m3s=(e.dispCyl_L/1000)*(T/320)*e.cylinders*(rpm/60*(e.chargesPerRev||0.5))/(e.sysPipes||1);
   const vS=m3s/(Math.PI/4*e.sysD*e.sysD);
   const pipe=(0.02*(e.primL/e.primD)*0.5*rho*vP*vP
              +0.02*(e.sysL/e.sysD)*0.5*rho*vS*vS
@@ -1584,7 +1668,7 @@ function backPressureBar(rpm,T){
   // this app missing most of its back-pressure, and therefore most of its residual-gas VE loss.
   if(e.turbineArea>0){
     const map=Math.max(1,e.boostNow||1);
-    const mAir=(e.dispCyl_L/1000)*e.cylinders*(rpm/120)*(101325*map/(287*313));
+    const mAir=(e.dispCyl_L/1000)*e.cylinders*(rpm/60*(e.chargesPerRev||0.5))*(101325*map/(287*313));
     const u=unitsAt(rpm), mEx=mAir*1.06/u, mA=mAir/u;
     // On a VGT the throat is whatever the vanes have been scheduled to; below target they are shut
     // and the piston pays the full nozzle pressure for it, which is the whole point of the device.
@@ -1622,7 +1706,7 @@ function compFlowFrac(rpm,mAirTotal){
 function turbineThroatAt(rpm,map,T){
   const e=engine;
   if(!(e.vgtShut>0))return e.turbineArea;
-  const mAir=(e.dispCyl_L/1000)*e.cylinders*(rpm/120)*(101325*Math.max(1,map)/(287*313));
+  const mAir=(e.dispCyl_L/1000)*e.cylinders*(rpm/60*(e.chargesPerRev||0.5))*(101325*Math.max(1,map)/(287*313));
   const u=unitsAt(rpm), mEx=mAir*1.06/u, mA=mAir/u;
   const Ut=turbineTipFor(1+e.maxBoost,compFlowFrac(rpm,mAir),298);
   return vgtThroat(mEx,compPowerAt(mA,1+e.maxBoost,313,e.compEff),T,e.turbineArea,e.vgtShut,map,Ut).area;
@@ -1978,7 +2062,7 @@ function shaftLossPower(shaftRpm){
 // term, and calling it from here would close a loop that does not converge.
 function airFlowAt(rpm,pr){
   const e=engine;
-  return (e.displacement_L/1000)*(e.veAmp||0.95)*(rpm/120)*(pr*101325/(287*313));
+  return (e.displacement_L/1000)*(e.veAmp||0.95)*(rpm/60*(e.chargesPerRev||0.5))*(pr*101325/(287*313));
 }
 // Steady boost: the shaft speed where turbine and compressor balance, found by bracketing on boost
 // rather than by relaxation — the states switch discontinuously and a fixed point orbits them.
@@ -2039,10 +2123,14 @@ function deriveGasDynamics(){
   // The work's share of extra wall heat (wallWorkShare), at the anchor where it is zero-referenced, and
   // the gross indicated efficiency it is a share of there. Set here, from the cam just read and before
   // the first exhaust temperature below. Ported engines carry no wall term. (maxBoost is set later.)
-  e.wallK=0;e.wallEtaI=1;
+  e.wallK=0;e.wallEtaI=1;e.wallTab=null;
   if(!e.ports){
     const n=e.ci?BURN_REF_RPM:WALL_BSP_REF*60/(e.bore_mm*2*e.stroke_mm/1000);
-    e.wallK=wallWorkShare(e,n,1+(e.intake==='na'?0:(e.boost_bar||0)));
+    const map=1+(e.intake==='na'?0:(e.boost_bar||0));
+    e.wallK=wallWorkShare(e,n,map);
+    // the absolute wall share by rpm, every 100, for the energy balance (exhaustHeatFrac)
+    e.wallTab=[];for(let r=0;r<=e.redline*1.3+200;r+=100)e.wallTab.push(wallTrace(e,Math.max(300,r),map).share);
+    e.wallRefRpm=n;e.wallRefShare=wallShareAt(n);
     e.wallEtaI=e.ci?ETA_GROSS_CI*otto(e.compression)/otto(CR_REF_CI)
                    :REAL_TO_FUELAIR*(1-Math.pow(Math.max(1.5,e.compression),1-GAMMA_FA))*(e.typeImep||1);
   }
@@ -2081,7 +2169,7 @@ function deriveGasDynamics(){
     e.shaftMax=maxShaftRpm(tb.exd);
   }else{e.turbineArea=0;e.vgtShut=0;e.turbUnits=1;e.compExd=0;e.shaftJ=0;e.shaftMax=0;}
   // Size the system pipe from the engine's own flow at the power peak, not from a fixed number.
-  const m3sPeak=(e.dispCyl_L/1000)*(T/320)*e.cylinders*(e.redline*0.9/120);
+  const m3sPeak=(e.dispCyl_L/1000)*(T/320)*e.cylinders*(e.redline*0.9/60*(e.chargesPerRev||0.5));
   // One system per BANK: a V or a boxer has two heads pointing opposite ways and runs two pipes,
   // and so does a big inline six. That is why a V12 does not need a 140 mm tailpipe.
   e.sysPipes=(e.layout==='v'||e.layout==='boxer')?2:(e.cylinders>=6&&e.displacement_L>3?2:1);
@@ -2179,8 +2267,8 @@ const PRESETS=[
   // It carried the medium frame until build 87, which on a 2.0 L does not make full boost until 2800 rpm.
   {cat:'Archetypes',name:'2.0 Turbo Diesel I4',    engine:{type:'diesel',vvt:false,cylinders:4,bore_mm:84,stroke_mm:90,compression:17,redline:4800,intake:'turbo',boost_bar:1.2,turboSize:'small',vgt:true,intakeSys:'efi',injector:'direct',exhaust:'stock',cat:'stock',radiator:'large',oilCooler:true}},
   {cat:'Archetypes',name:'6.6 V8 Turbodiesel',     engine:{type:'diesel',vvt:false,cylinders:8,bore_mm:103,stroke_mm:99,compression:16.5,layout:'v',redline:3800,intake:'turbo',boost_bar:1.1,turboSize:'medium',turboConfig:'single',vgt:true,intakeSys:'efi',injector:'direct',exhaust:'stock',cat:'stock',radiator:'large',oilCooler:true}},
-  {cat:'Archetypes',name:'1.3 Rotary Turbo (13B)', engine:{type:'rotary',cylinders:2,bore_mm:80,stroke_mm:80,compression:9.4,redline:9000,intake:'turbo',boost_bar:0.7,turboSize:'medium',turboConfig:'sequential',intakeSys:'efi',injector:'port',exhaust:'sport',cat:'sport',octane:98,radiator:'large',oilCooler:true}},
-  {cat:'Archetypes',name:'1.3 Rotary NA (Renesis)',engine:{type:'rotary',cylinders:2,bore_mm:80,stroke_mm:80,compression:10,redline:9000,intakeSys:'itb',injector:'port',exhaust:'sport',cat:'sport',octane:98,radiator:'large',oilCooler:true}},
+  {cat:'Archetypes',name:'1.3 Rotary Turbo (13B)', engine:{type:'rotary',cylinders:2,bore_mm:105,stroke_mm:80,ecc_mm:15,compression:9.4,redline:9000,intake:'turbo',boost_bar:0.7,turboSize:'medium',turboConfig:'sequential',intakeSys:'efi',injector:'port',exhaust:'sport',cat:'sport',octane:98,radiator:'large',oilCooler:true}},
+  {cat:'Archetypes',name:'1.3 Rotary NA (Renesis)',engine:{type:'rotary',cylinders:2,bore_mm:105,stroke_mm:80,ecc_mm:15,compression:10,redline:9000,intakeSys:'itb',injector:'port',exhaust:'sport',cat:'sport',octane:98,radiator:'large',oilCooler:true}},
   {cat:'Archetypes',name:'500cc 2-Stroke Twin',    engine:{type:'twostroke',cylinders:2,bore_mm:70,stroke_mm:64,compression:9,redline:9500,intakeSys:'carb2',airFilter:'perf',exhaust:'race',cat:'none',octane:98,injector:'port',ignitionType:'coil',radiator:'stock'}},
   // ---- Real engines (build 96) ----------------------------------------------------------------
   // Geometry and hardware from published specifications, so the model can be compared with the real
@@ -2234,6 +2322,12 @@ const PRESETS=[
    engine:{cylinders:10,layout:'v',bore_mm:84.5,stroke_mm:92.8,compression:12.7,redline:8500,cam:'race',vvt:true,valveSpring:'race',injector:'direct',octane:98,exhaust:'race',airFilter:'perf',runner:'variable'}},
   {cat:'Exotic',name:'Ferrari F140 V12 (812 Superfast)',real:{hp:789,hpRpm:8500,tq:718,tqRpm:7000},
    engine:{cylinders:12,layout:'v',bore_mm:94.0,stroke_mm:78.0,compression:13.6,redline:8900,cam:'race',vvt:true,valveSpring:'race',valveMat:'titanium',injector:'direct',octane:98,exhaust:'race',airFilter:'perf',runner:'variable'}},
+  // Rotary: both on the 13B rotor (e 15, R 105, W 80: 654 cc a rotor). The FD is quoted at its 1993 US
+  // rating, not the later JDM 280 PS, which is the gentlemen's-agreement figure.
+  {cat:'Rotary',name:'Mazda 13B-REW (RX-7 FD)',real:{hp:255,hpRpm:6500,tq:294,tqRpm:5000},unsure:['boost_bar'],
+   engine:{type:'rotary',cylinders:2,bore_mm:105,stroke_mm:80,ecc_mm:15,compression:9.0,redline:8000,intake:'turbo',boost_bar:0.7,turboSize:'small',turboConfig:'sequential',injector:'port',octane:98,intercooler:'small',exhaust:'stock',airFilter:'stock',radiator:'large',oilCooler:true}},
+  {cat:'Rotary',name:'Mazda 13B-MSP Renesis (RX-8)',real:{hp:232,hpRpm:8200,tq:211,tqRpm:5500},
+   engine:{type:'rotary',cylinders:2,bore_mm:105,stroke_mm:80,ecc_mm:15,compression:10.0,redline:9000,injector:'port',octane:98,exhaust:'stock',airFilter:'stock',radiator:'large',oilCooler:true}},
   {cat:'Diesel',name:'VW EA288 2.0 TDI (Golf 150)',real:{hp:148,hpRpm:3500,tq:320,tqRpm:1750},
    engine:{type:'diesel',vvt:false,cylinders:4,bore_mm:81.0,stroke_mm:95.5,compression:16.2,redline:4800,intake:'turbo',boost_bar:1.3,turboSize:'small',vgt:true,injector:'direct',intercooler:'large',exhaust:'stock',airFilter:'stock'}},
   {cat:'Diesel',name:'BMW N57 3.0d (330d F30)',real:{hp:254,hpRpm:4000,tq:560,tqRpm:2000},unsure:['boost_bar'],
@@ -2246,7 +2340,7 @@ const PRESETS=[
    engine:{type:'twostroke',cylinders:2,bore_mm:64.0,stroke_mm:54.0,compression:7,redline:9500,intakeSys:'carb2',octane:95,exhaust:'race',airFilter:'stock'}},
 ];
 // Category order for the preset list (the dropdown groups by it; the UI pass will build on this).
-const PRESET_CATS=['Archetypes','Kei & City','Compact Turbo','NA Sports','Turbo Performance','American V8','Exotic','Diesel','Two-Stroke'];
+const PRESET_CATS=['Archetypes','Kei & City','Compact Turbo','NA Sports','Turbo Performance','American V8','Exotic','Rotary','Diesel','Two-Stroke'];
 const STD_TUNE={throttle:0.85,load:0.40,elecLoad:0.30,afr:13.2,iat:25,coolant:90,oil:100,autoThermal:false};
 
 // ---- Strategy layer: objective challenges ----
@@ -2801,6 +2895,12 @@ const VEHICLE_PRESETS=[
   {cat:'Exotic',name:'Ferrari 812 Superfast (2017)',engine:'Ferrari F140 V12 (812 Superfast)',chassis:'gt',
    body:{kg:1745,cd:0.37,area:2.05,wb:2.72,fWt:0.47},fit:{drive:'rwd',tire:'sport',tw:315,ta:35,wheel:20,brake:'carbon',rotor:400,susp:'sport',gears:7,gearbox:'dct',diff:'clsd'},
    real:{t100:2.9,top:340},unsure:['cd','area','kg']},
+  {cat:'Rotary',name:'Mazda RX-7 (FD, 1993)',engine:'Mazda 13B-REW (RX-7 FD)',chassis:'coupe',
+   body:{kg:1280,cd:0.29,area:1.80,wb:2.425,fWt:0.50},fit:{drive:'rwd',tire:'sport',tw:225,ta:50,wheel:16,brake:'slotted',rotor:290,susp:'sport',gears:5,gearbox:'manual',diff:'clsd'},
+   real:{t100:5.3,top:250,limited:true},unsure:['area','t100','top']},
+  {cat:'Rotary',name:'Mazda RX-8 (2004)',engine:'Mazda 13B-MSP Renesis (RX-8)',chassis:'coupe',
+   body:{kg:1310,cd:0.30,area:2.05,wb:2.70,fWt:0.50},fit:{drive:'rwd',tire:'sport',tw:225,ta:45,wheel:18,brake:'slotted',rotor:320,susp:'sport',gears:6,gearbox:'manual',diff:'clsd'},
+   real:{t100:6.4,top:235},unsure:['area','top']},
   {cat:'Diesel',name:'VW Golf 2.0 TDI 150 (Mk7, 2013)',engine:'VW EA288 2.0 TDI (Golf 150)',chassis:'hatch',
    body:{kg:1375,cd:0.30,area:2.19,wb:2.637,fWt:0.62},fit:{drive:'fwd',tire:'eco',tw:205,ta:55,wheel:16,brake:'slotted',rotor:290,susp:'comfort',gears:6,gearbox:'manual',diff:'open'},
    real:{t100:8.6,top:216}},
@@ -3014,6 +3114,7 @@ function readEngineFromForm(){
     cylinders:clamp(Math.round(+g('edCyl').value||4),1,maxCyl),
     bore_mm:clamp(+g('edBore').value||86,60,110),
     stroke_mm:clamp(+g('edStroke').value||86,50,130),   // to 130: a Cummins 6.7 is 107 x 124
+    ecc_mm:clamp(+g('edEcc').value||15,8,25),           // rotary only: crank throw of the eccentric shaft
     compression:clamp(+g('edCR').value||tp.crDef,tp.crMin,tp.crMax),
     layout:type==='rotary'?'rotary':g('edLayout').value,
     redline:clamp(Math.round(+g('edRedline').value||tp.redlineDef),tp.redMin,tp.redMax),
@@ -3055,6 +3156,8 @@ function applyEngineToForm(e){
   g('edType').value=e.type||'petrol4';
   g('edCyl').value=e.cylinders;g('edLayout').value=(e.layout==='rotary'?'inline':e.layout);g('edBore').value=e.bore_mm;
   g('edStroke').value=e.stroke_mm;g('edCR').value=e.compression;g('edRedline').value=e.redline;
+  // Builds saved before the eccentricity existed: every production Mazda rotor has R/e = 7.
+  g('edEcc').value=e.ecc_mm||+(e.bore_mm/7).toFixed(1);
   // Migrate legacy boolean intercooler (true→large, false→none) from older saved builds.
   g('edIntake').value=e.intake;g('edBoost').value=e.boost_bar;
   g('edIntercooler').value=(e.intercooler===true?'large':e.intercooler===false?'none':(e.intercooler||'large'));
@@ -3084,6 +3187,7 @@ function syncDesignEnable(){
   g('lblBore').textContent=tr(type==='rotary'?'ROTOR R (mm)':'BORE (mm)');
   g('lblStroke').textContent=tr(type==='rotary'?'ROTOR W (mm)':'STROKE (mm)');
   g('edLayout').disabled=type==='rotary';
+  g('edEcc').disabled=type!=='rotary';
   // Cylinder / rotor count is capped per type: production Wankels top out at four rotors (Mazda
   // 26B) and two-strokes at six cylinders. Counts above the cap are shown disabled rather than
   // silently clamped at build time, which used to turn a 12-rotor choice into 3 with no word said.
@@ -3129,6 +3233,10 @@ function buildEngine(){
   const et=ENGINE_TYPE[engine.type]||ENGINE_TYPE.petrol4;
   engine.strokeDiv=et.strokeDiv;engine.ci=et.ci;engine.ports=et.ports;
   engine.typeImep=et.imep;engine.typeBsfc=et.bsfc;engine.typeLabel=et.label;
+  // Charges drawn per shaft revolution, per cylinder or rotor: a four-stroke breathes every other turn;
+  // a two-stroke every turn; a rotor fills one of its three chambers every shaft turn (it turns once
+  // for three of the shaft). Every air-flow rate below is displacement x rpm x this.
+  engine.chargesPerRev=2*Math.PI/engine.strokeDiv;
   if(engine.ports){engine.cam='stock';engine.vvt=false;}   // 2-stroke / rotary: no poppet valvetrain
   if(engine.ci)engine.injector='direct';                   // diesel: direct injection
   // Fuel: energy content, stoichiometry, knock rating and charge cooling.
@@ -3137,7 +3245,17 @@ function buildEngine(){
   engine.effOctane=fp.octane!=null?fp.octane:engine.octane;
   engine.fuelKnockBonus=fp.knockBonus;engine.chargeCool=fp.chargeCool;
   // Geometry → displacement (bore/stroke in mm → cm³ → L).
-  const vcyl_cc=Math.PI/4*Math.pow(engine.bore_mm/10,2)*(engine.stroke_mm/10);
+  // A Wankel chamber is not a cylinder. Its swept volume is the difference between the largest and
+  // smallest volume one rotor flank encloses in the epitrochoid housing, 3√3·e·R·W per chamber, with
+  // e the eccentricity, R the generating radius (centre to apex) and W the rotor width. Each rotor
+  // fills one chamber per shaft turn, which is why displacement counts one chamber per rotor: the
+  // 13B (e 15, R 105, W 80) is 654 cc a rotor, 1308 cc in all. Until build 100 this was the piston
+  // formula on R and W, π/4·R²·W, which has no eccentricity in it at all. The eccentricity is held
+  // under R/5, beyond which the apex seals lean too far over the housing to seal.
+  if(engine.type==='rotary')engine.ecc_mm=Math.min(engine.ecc_mm||engine.bore_mm/7,engine.bore_mm/5);
+  const vcyl_cc=engine.type==='rotary'
+    ?3*Math.sqrt(3)*(engine.ecc_mm/10)*(engine.bore_mm/10)*(engine.stroke_mm/10)
+    :Math.PI/4*Math.pow(engine.bore_mm/10,2)*(engine.stroke_mm/10);
   engine.displacement_L=vcyl_cc*engine.cylinders/1000;
   engine.boreStroke=engine.bore_mm/engine.stroke_mm;
   // The VE ceiling: the plateau the derived terms below shape (or the bell's height, where kept).
@@ -3223,7 +3341,7 @@ function buildEngine(){
   // temperature rather than the live VE/IAT solution: those depend on compressor efficiency,
   // which depends on this, and the loop would not close.
   const PR=1+engine.maxBoost;
-  const perRev=(engine.strokeDiv===2*Math.PI)?1:0.5;      // intake events per revolution
+  const perRev=engine.chargesPerRev;                      // intake events per revolution
   const rhoRef=PR*1e5/(287*(273+40));
   const kgs=rhoRef*(engine.displacement_L/1000)*perRev*(engine.redline*0.85/60)*engine.veAmp;
   engine.turboFlow=kgs*132.28;                            // kg/s → lb/min
@@ -3318,7 +3436,7 @@ function buildEngine(){
   }
   syncSliders();
   buildBoostTable(26);
-  engine.peakEgt=peakEgt();   // needs the boost table (wotMapAt) and the burn table
+  {const p=peakEgts();engine.peakEgt=p.probe;engine.peakEgtGas=p.gas;}   // needs the boost table (wotMapAt) and the burn table
 
   buildRev++;dynoCache=null;
   engine.cost=computeCost();
@@ -3482,7 +3600,7 @@ function updateDesignSummary(){
       induction+='<br>'+tr('Turbine throat')+' '+Math.round(engine.vgtShut*1e6)+'–'+Math.round(engine.turbineArea*1e6)+
         ' mm² ('+(engine.turbineArea/engine.vgtShut).toFixed(1)+':1 '+tr('vane sweep')+') • '+tr('gas at the vanes')+' '+
         Math.round(engine.peakEgt-273)+' °C';
-      if(engine.peakEgt>VANE_T_LIMIT+1)
+      if(engine.peakEgtGas>VANE_T_LIMIT+1)
         induction+=' • <span style="color:#ffcc00">'+tr('above the vane material limit — it will not last')+'</span>';
     }
   }
@@ -3647,7 +3765,7 @@ function computeVE(rpm,map){
   // engines collapsed at the top (knockAt).
   if(engine.chokeFlow_kgs>0){
     const rho=map*101325/(287*(effIAT(map,rpm)+273.15));
-    const demand=(engine.displacement_L/1000)*ve*(rpm/120)*rho;
+    const demand=(engine.displacement_L/1000)*ve*(rpm/60*engine.chargesPerRev)*rho;
     if(demand>engine.chokeFlow_kgs)ve*=engine.chokeFlow_kgs/demand;
   }
   // Induction system + air filter: restriction/flow weighted by airflow demand (rpm).
@@ -4106,8 +4224,15 @@ function dieselLambdaFloor(rpm){
   const e=engine;
   if(!e.ci)return 0;
   if(e.intake!=='turbo')return SMOKE_LAMBDA_CI;
-  const f=exhaustHeatFrac(rpm);
-  return Math.max(SMOKE_LAMBDA_CI,(e.fuelLHV||44)*1e6*f/((e.stoichAFR||14.5)*CP_EXH*(VANE_T_LIMIT-300)));
+  // T = 300 + LHV f / ((AFR_st lam + 1) cp), and f itself moves with lam (a leaner diesel works its
+  // fuel harder), so solve by fixed point from the smoke limit: three steps settle it to <0.1%.
+  let lam=SMOKE_LAMBDA_CI;
+  for(let i=0;i<4;i++){
+    // against the GAS temperature, not the probe's: see peakEgt for why the vanes follow the mass average
+    const f=exhaustHeatFrac(rpm,lam);
+    lam=Math.max(SMOKE_LAMBDA_CI,((e.fuelLHV||44)*1e6*f/(CP_EXH*(VANE_T_LIMIT-300))-1)/(e.stoichAFR||14.5));
+  }
+  return lam;
 }
 // ---- A diesel's torque, from the fuel it burns ----
 // Every other engine here takes IMEP from AIR: IMEP_K x typeImep x map x VE x a mixture factor, a
@@ -4399,7 +4524,7 @@ function updatePhysics(){
     return;
   }
   const T_k=effIAT(map,state.rpm)+273.15,MAP_pa=map*1e5,Vd=engine.displacement_L/1000;
-  const airMass_kg_s=(MAP_pa*Vd*(state.rpm/60)*state.ve)/(287*T_k*2);
+  const airMass_kg_s=(MAP_pa*Vd*(state.rpm/60)*engine.chargesPerRev*state.ve)/(287*T_k);
   // Imprecise metering (carbs / mechanical injection) wastes fuel; the cycle's thirst factor
   // (typeBsfc) captures combustion/scavenging losses — a 2-stroke short-circuits fresh charge
   // out the exhaust (>1, thirsty). A diesel is 1: its torque is computed from this same fuel.
@@ -4657,7 +4782,7 @@ function steadyBSFC(rpm,map){
   const r=calcAtRpm(rpm,map);
   if(!(r.powerKW>0.5))return {bsfc:Infinity,r};
   const T=effIAT(map,rpm)+273.15, Vd=engine.displacement_L/1000;
-  const air=(map*1e5*Vd*(rpm/60)*r.ve)/(287*T*2);
+  const air=(map*1e5*Vd*(rpm/60)*engine.chargesPerRev*r.ve)/(287*T);
   const fuel=(air/curAFR(rpm,map))/engine.meteringEff*engine.typeBsfc;
   return {bsfc:fuel*3600*1000/r.powerKW,r};
 }
@@ -6391,7 +6516,7 @@ function scoreEngine(){
   for(const mm of [0.8,1.0,Math.min(1.2,engine.mapMax)]){const cm=Math.min(mm,engine.mapMax);
     for(const rf of [0.6,0.85,1.05]){const rr=Math.round(clamp(peakTQrpm*rf,1200,rMax));
       const cr=calcAtRpm(rr,cm);
-      const airMass=(cm*1e5*(engine.displacement_L/1000)*(rr/60)*cr.ve)/(287*(effIAT(cm,rr)+273.15)*2);
+      const airMass=(cm*1e5*(engine.displacement_L/1000)*(rr/60)*engine.chargesPerRev*cr.ve)/(287*(effIAT(cm,rr)+273.15));
       const fuelPower=((airMass/curAFR(rr,cm))/engine.meteringEff*engine.typeBsfc)*engine.fuelLHV*1e6/1000;
       if(fuelPower>0.1)thEff=Math.max(thEff,clamp((cr.powerKW/fuelPower)*100,0,46));
     }}
@@ -6429,7 +6554,7 @@ function scoreEngine(){
   // from the mixture, so the penalty falls out of the build instead of being asserted per engine
   // type — and a petrol VGT is then exactly what it is in life: it works, and it does not last.
   if(engine.vgt&&engine.intake==='turbo')
-    rel-=clamp((engine.peakEgt-VANE_T_LIMIT)/100*14,0,28);
+    rel-=clamp((engine.peakEgtGas-VANE_T_LIMIT)/100*14,0,28);
   rel-=engine.nitrous!=='none'?12:0;                   // chemical stress
   rel-=Math.max(0,engine.redline-(engine.ports?9800:7500))/100*2;   // sky-high redline (rotary/2-str rev high by design)
   const coolNeed=clamp(peakHP/260,0,1.6);
