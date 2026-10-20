@@ -113,7 +113,7 @@ footer{text-align:center;margin-top:16px;padding:8px;font-size:7px;color:#555;bo
 .design-panel .hint{font-size:7px;color:#667;margin-bottom:10px}
 /* The car and engine as pixel art, drawn from the build (see PixBuf). */
 .pix-preview{display:block;width:100%;max-width:560px;margin:2px auto 10px;border:2px solid #333;background:#0a0a10;image-rendering:pixelated}
-.pix-preview.car{aspect-ratio:168/74}
+.pix-preview.car{aspect-ratio:168/68}
 .pix-preview.eng{aspect-ratio:150/90}
 .design-section{font-size:8px;color:#00ccff;margin:12px 0 6px;border-bottom:2px solid #26263a;padding-bottom:3px;text-transform:uppercase}
 /* Fields are a size, not a share of the panel. A 1fr/1fr grid stretched every select and number box to
@@ -281,7 +281,7 @@ table.fuelmap td.live{box-shadow:inset 0 0 0 2px #fff;font-weight:bold}
 <body>
 <div class="container">
 <header>
-<h1>PIXEL ENGINE SIM v0.6 build 106</h1>
+<h1>PIXEL ENGINE SIM v0.6 build 107</h1>
 <div class="subtitle" id="subtitle">ENGINE DESIGNER • BUILD IT, THEN DRIVE IT</div>
 </header>
 <div class="build-strip" id="buildStrip">
@@ -2928,18 +2928,19 @@ const CHASSIS={
 // Fit is the factory fitment, driven-axle tyre for staggered setups; omitted fields take the
 // archetype's. real = the maker's 0-100 km/h (s) and top speed (km/h); limited = the top speed is a
 // governor, which the model does not have. unsure = inputs from secondary sources, worth checking.
+// body.look names the car's side profile in CAR_PROFILE when it is not its class's own car.
 const VEHICLE_PRESETS=[
   {cat:'Kei & City',name:'Suzuki Alto Works (HA36S, 2015)',engine:'Suzuki K6A turbo (Alto Works)',chassis:'kei',
    body:{kg:670,cd:0.36,area:1.80,wb:2.46,fWt:0.62},fit:{drive:'fwd',tire:'eco',tw:165,ta:55,wheel:15,brake:'steel',rotor:250,susp:'comfort',gears:5,gearbox:'manual',diff:'open'},
    real:{t100:11.0,top:140,limited:true},note:'0-100 is a road-test midpoint, not a factory figure',unsure:['cd','area','fWt']},
   {cat:'Kei & City',name:'Toyota Aygo 1.0 (2014)',engine:'Toyota 1KR-FE (Aygo 1.0)',chassis:'kei',
-   body:{kg:840,cd:0.30,area:2.00,wb:2.34,fWt:0.63},fit:{drive:'fwd',tire:'eco',tw:165,ta:65,wheel:14,brake:'steel',rotor:250,susp:'comfort',gears:5,gearbox:'manual',diff:'open'},
+   body:{kg:840,cd:0.30,area:2.00,wb:2.34,fWt:0.63,look:'aygo'},fit:{drive:'fwd',tire:'eco',tw:165,ta:65,wheel:14,brake:'steel',rotor:250,susp:'comfort',gears:5,gearbox:'manual',diff:'open'},
    real:{t100:14.2,top:160},unsure:['cd','area','fWt']},
   {cat:'Kei & City',name:'Fiat 500 TwinAir 85 (2011)',engine:'Fiat 0.9 TwinAir turbo',chassis:'kei',
-   body:{kg:930,cd:0.32,area:2.10,wb:2.30,fWt:0.64},fit:{drive:'fwd',tire:'eco',tw:185,ta:55,wheel:15,brake:'steel',rotor:260,susp:'comfort',gears:5,gearbox:'manual',diff:'open'},
+   body:{kg:930,cd:0.32,area:2.10,wb:2.30,fWt:0.64,look:'fiat500'},fit:{drive:'fwd',tire:'eco',tw:185,ta:55,wheel:15,brake:'steel',rotor:260,susp:'comfort',gears:5,gearbox:'manual',diff:'open'},
    real:{t100:11.0,top:173},unsure:['area','fWt']},
   {cat:'Compact Turbo',name:'Ford Fiesta 1.0 EcoBoost 125 (2013)',engine:'Ford 1.0 EcoBoost (Fiesta 125)',chassis:'hatch',
-   body:{kg:1091,cd:0.33,area:2.12,wb:2.49,fWt:0.63},fit:{drive:'fwd',tire:'eco',tw:195,ta:45,wheel:16,brake:'steel',rotor:260,susp:'comfort',gears:5,gearbox:'manual',diff:'open'},
+   body:{kg:1091,cd:0.33,area:2.12,wb:2.49,fWt:0.63,look:'fiesta'},fit:{drive:'fwd',tire:'eco',tw:195,ta:45,wheel:16,brake:'steel',rotor:260,susp:'comfort',gears:5,gearbox:'manual',diff:'open'},
    real:{t100:9.4,top:196},unsure:['area','fWt']},
   {cat:'Compact Turbo',name:'VW Golf GTI (Mk7, 2013)',engine:'VW EA888 2.0 TSI (Golf GTI Mk7)',chassis:'hatch',
    body:{kg:1351,cd:0.32,area:2.19,wb:2.637,fWt:0.61},fit:{drive:'fwd',tire:'sport',tw:225,ta:45,wheel:17,brake:'slotted',rotor:310,susp:'sport',gears:6,gearbox:'manual',diff:'open'},
@@ -2948,49 +2949,49 @@ const VEHICLE_PRESETS=[
    body:{kg:1280,cd:0.34,area:2.10,wb:2.56,fWt:0.60},fit:{drive:'awd',tire:'sport',tw:225,ta:40,wheel:18,brake:'big',rotor:360,susp:'sport',gears:6,gearbox:'manual',diff:'clsd'},
    real:{t100:5.5,top:230,limited:true},unsure:['cd','area','fWt']},
   {cat:'Compact Turbo',name:'Honda Civic Type R (FK8, 2017)',engine:'Honda K20C1 (Civic Type R FK8)',chassis:'hatch',
-   body:{kg:1380,cd:0.33,area:2.20,wb:2.70,fWt:0.62},fit:{drive:'fwd',tire:'sport',tw:245,ta:30,wheel:20,brake:'big',rotor:350,susp:'sport',gears:6,gearbox:'manual',diff:'clsd'},
+   body:{kg:1380,cd:0.33,area:2.20,wb:2.70,fWt:0.62,look:'civic'},fit:{drive:'fwd',tire:'sport',tw:245,ta:30,wheel:20,brake:'big',rotor:350,susp:'sport',gears:6,gearbox:'manual',diff:'clsd'},
    real:{t100:5.8,top:272},unsure:['cd','area']},
   {cat:'NA Sports',name:'Mazda MX-5 1.6 (NA, 1989)',engine:'Mazda B6-ZE (MX-5 NA)',chassis:'roadster',
    body:{kg:955,cd:0.38,area:1.72,wb:2.265,fWt:0.52},fit:{drive:'rwd',tire:'eco',tw:185,ta:60,wheel:14,brake:'steel',rotor:250,susp:'sport',gears:5,gearbox:'manual',diff:'open'},
    real:{t100:8.8,top:195}},
   {cat:'NA Sports',name:'Toyota Corolla Levin GT-APEX (AE86)',engine:'Toyota 4A-GE (AE86)',chassis:'coupe',
-   body:{kg:940,cd:0.38,area:1.75,wb:2.40,fWt:0.53},fit:{drive:'rwd',tire:'eco',tw:185,ta:60,wheel:14,brake:'steel',rotor:250,susp:'sport',gears:5,gearbox:'manual',diff:'open'},
+   body:{kg:940,cd:0.38,area:1.75,wb:2.40,fWt:0.53,look:'ae86'},fit:{drive:'rwd',tire:'eco',tw:185,ta:60,wheel:14,brake:'steel',rotor:250,susp:'sport',gears:5,gearbox:'manual',diff:'open'},
    real:{t100:8.5,top:200},unsure:['cd','area','t100','top']},
   {cat:'NA Sports',name:'Honda S2000 (AP1, 2000)',engine:'Honda F20C (S2000 AP1)',chassis:'roadster',
-   body:{kg:1250,cd:0.33,area:1.80,wb:2.40,fWt:0.50},fit:{drive:'rwd',tire:'sport',tw:225,ta:50,wheel:16,brake:'slotted',rotor:300,susp:'sport',gears:6,gearbox:'manual',diff:'clsd'},
+   body:{kg:1250,cd:0.33,area:1.80,wb:2.40,fWt:0.50,look:'s2000'},fit:{drive:'rwd',tire:'sport',tw:225,ta:50,wheel:16,brake:'slotted',rotor:300,susp:'sport',gears:6,gearbox:'manual',diff:'clsd'},
    real:{t100:6.2,top:240},unsure:['area']},
   {cat:'NA Sports',name:'BMW M3 (E46, 2000)',engine:'BMW S54 (M3 E46)',chassis:'coupe',
    body:{kg:1495,cd:0.32,area:2.07,wb:2.73,fWt:0.51},fit:{drive:'rwd',tire:'sport',tw:255,ta:40,wheel:18,brake:'slotted',rotor:330,susp:'sport',gears:6,gearbox:'manual',diff:'visc'},
    real:{t100:5.2,top:250,limited:true}},
   {cat:'NA Sports',name:'Porsche 911 GT3 (991.2, 2017)',engine:'Porsche 4.0 flat-six (911 GT3 991.2)',chassis:'super',
-   body:{kg:1430,cd:0.34,area:2.05,wb:2.457,fWt:0.39,engPos:'rear'},fit:{drive:'rwd',tire:'semi',tw:305,ta:30,wheel:20,brake:'big',rotor:380,susp:'coilover',gears:7,gearbox:'dct',diff:'clsd'},
+   body:{kg:1430,cd:0.34,area:2.05,wb:2.457,fWt:0.39,engPos:'rear',look:'gt3'},fit:{drive:'rwd',tire:'semi',tw:305,ta:30,wheel:20,brake:'big',rotor:380,susp:'coilover',gears:7,gearbox:'dct',diff:'clsd'},
    real:{t100:3.4,top:318},unsure:['cd','area']},
   {cat:'Turbo Performance',name:'Toyota Supra RZ (A80, 1993)',engine:'Toyota 2JZ-GTE (Supra A80)',chassis:'coupe',
-   body:{kg:1570,cd:0.31,area:1.94,wb:2.55,fWt:0.53},fit:{drive:'rwd',tire:'sport',tw:255,ta:40,wheel:17,brake:'slotted',rotor:320,susp:'sport',gears:6,gearbox:'manual',diff:'clsd'},
+   body:{kg:1570,cd:0.31,area:1.94,wb:2.55,fWt:0.53,look:'supra'},fit:{drive:'rwd',tire:'sport',tw:255,ta:40,wheel:17,brake:'slotted',rotor:320,susp:'sport',gears:6,gearbox:'manual',diff:'clsd'},
    real:{t100:4.9,top:250,limited:true},unsure:['area']},
   {cat:'Turbo Performance',name:'Nissan Skyline GT-R V-spec (R34, 1999)',engine:'Nissan RB26DETT (Skyline GT-R R34)',chassis:'coupe',
-   body:{kg:1560,cd:0.36,area:2.00,wb:2.665,fWt:0.56},fit:{drive:'awd',tire:'sport',tw:245,ta:40,wheel:18,brake:'big',rotor:320,susp:'sport',gears:6,gearbox:'manual',diff:'clsd'},
+   body:{kg:1560,cd:0.36,area:2.00,wb:2.665,fWt:0.56,look:'r34'},fit:{drive:'awd',tire:'sport',tw:245,ta:40,wheel:18,brake:'big',rotor:320,susp:'sport',gears:6,gearbox:'manual',diff:'clsd'},
    real:{t100:5.0,top:250,limited:true},note:'rated at the JDM 280 PS; road-test cars made more',unsure:['cd','area','fWt','t100']},
   {cat:'Turbo Performance',name:'Subaru Impreza WRX STI (GD, 2004)',engine:'Subaru EJ257 (Impreza WRX STI)',chassis:'rally',
-   body:{kg:1495,cd:0.33,area:2.10,wb:2.525,fWt:0.59},fit:{drive:'awd',tire:'sport',tw:225,ta:45,wheel:17,brake:'big',rotor:330,susp:'sport',gears:6,gearbox:'manual',diff:'clsd'},
+   body:{kg:1495,cd:0.33,area:2.10,wb:2.525,fWt:0.59,look:'sti'},fit:{drive:'awd',tire:'sport',tw:225,ta:45,wheel:17,brake:'big',rotor:330,susp:'sport',gears:6,gearbox:'manual',diff:'clsd'},
    real:{t100:5.0,top:250,limited:true},unsure:['cd','area','t100','top']},
   {cat:'Turbo Performance',name:'Mitsubishi Lancer Evolution IX (2006)',engine:'Mitsubishi 4G63T (Lancer Evo IX)',chassis:'rally',
-   body:{kg:1490,cd:0.34,area:2.10,wb:2.625,fWt:0.61},fit:{drive:'awd',tire:'sport',tw:235,ta:45,wheel:17,brake:'big',rotor:320,susp:'sport',gears:5,gearbox:'manual',diff:'clsd'},
+   body:{kg:1490,cd:0.34,area:2.10,wb:2.625,fWt:0.61,look:'evo'},fit:{drive:'awd',tire:'sport',tw:235,ta:45,wheel:17,brake:'big',rotor:320,susp:'sport',gears:5,gearbox:'manual',diff:'clsd'},
    real:{t100:5.0,top:250,limited:true},unsure:['cd','area','t100','top']},
   {cat:'Turbo Performance',name:'Audi RS3 Sportback (8V, 2017)',engine:'Audi 2.5 TFSI (RS3 8V)',chassis:'rally',
-   body:{kg:1510,cd:0.34,area:2.15,wb:2.63,fWt:0.60},fit:{drive:'awd',tire:'sport',tw:235,ta:35,wheel:19,brake:'big',rotor:370,susp:'sport',gears:7,gearbox:'dct',diff:'visc'},
+   body:{kg:1510,cd:0.34,area:2.15,wb:2.63,fWt:0.60,look:'rs3'},fit:{drive:'awd',tire:'sport',tw:235,ta:35,wheel:19,brake:'big',rotor:370,susp:'sport',gears:7,gearbox:'dct',diff:'visc'},
    real:{t100:4.1,top:250,limited:true},unsure:['cd','area']},
   {cat:'American V8',name:'Chevrolet Corvette (C6, LS3, 2008)',engine:'GM LS3 (Corvette C6)',chassis:'coupe',
-   body:{kg:1450,cd:0.28,area:2.00,wb:2.685,fWt:0.51},fit:{drive:'rwd',tire:'sport',tw:285,ta:35,wheel:19,brake:'slotted',rotor:330,susp:'sport',gears:6,gearbox:'manual',diff:'clsd'},
+   body:{kg:1450,cd:0.28,area:2.00,wb:2.685,fWt:0.51,look:'c6'},fit:{drive:'rwd',tire:'sport',tw:285,ta:35,wheel:19,brake:'slotted',rotor:330,susp:'sport',gears:6,gearbox:'manual',diff:'clsd'},
    real:{t100:4.2,top:306},unsure:['area']},
   {cat:'American V8',name:'Chevrolet Corvette Z06 (C6, 2006)',engine:'GM LS7 (Corvette Z06 C6)',chassis:'coupe',
-   body:{kg:1420,cd:0.34,area:2.05,wb:2.686,fWt:0.52},fit:{drive:'rwd',tire:'sport',tw:325,ta:30,wheel:19,brake:'big',rotor:360,susp:'sport',gears:6,gearbox:'manual',diff:'clsd'},
+   body:{kg:1420,cd:0.34,area:2.05,wb:2.686,fWt:0.52,look:'c6'},fit:{drive:'rwd',tire:'sport',tw:325,ta:30,wheel:19,brake:'big',rotor:360,susp:'sport',gears:6,gearbox:'manual',diff:'clsd'},
    real:{t100:3.7,top:318},unsure:['area']},
   {cat:'American V8',name:'Ford Mustang GT (2018)',engine:'Ford Coyote 5.0 (Mustang GT 2018)',chassis:'muscle',
    body:{kg:1705,cd:0.35,area:2.20,wb:2.72,fWt:0.53},fit:{drive:'rwd',tire:'sport',tw:275,ta:40,wheel:19,brake:'big',rotor:380,susp:'sport',gears:6,gearbox:'manual',diff:'clsd'},
    real:{t100:4.6,top:250,limited:true},unsure:['cd','area','t100']},
   {cat:'American V8',name:'Dodge Challenger SRT Hellcat (2015)',engine:'Dodge 6.2 Hellcat (Challenger SRT)',chassis:'muscle',
-   body:{kg:2020,cd:0.38,area:2.40,wb:2.95,fWt:0.57},fit:{drive:'rwd',tire:'sport',tw:275,ta:40,wheel:20,brake:'big',rotor:390,susp:'sport',gears:8,gearbox:'auto',diff:'clsd'},
+   body:{kg:2020,cd:0.38,area:2.40,wb:2.95,fWt:0.57,look:'challenger'},fit:{drive:'rwd',tire:'sport',tw:275,ta:40,wheel:20,brake:'big',rotor:390,susp:'sport',gears:8,gearbox:'auto',diff:'clsd'},
    real:{t100:3.9,top:320},unsure:['cd','area']},
   {cat:'Exotic',name:'Lamborghini Huracán LP610-4 (2014)',engine:'Lamborghini 5.2 V10 (Huracán LP610-4)',chassis:'super',
    body:{kg:1550,cd:0.39,area:1.95,wb:2.62,fWt:0.43},fit:{drive:'awd',tire:'sport',tw:305,ta:30,wheel:20,brake:'carbon',rotor:380,susp:'sport',gears:7,gearbox:'dct',diff:'clsd'},
@@ -2999,10 +3000,10 @@ const VEHICLE_PRESETS=[
    body:{kg:1745,cd:0.37,area:2.05,wb:2.72,fWt:0.47},fit:{drive:'rwd',tire:'sport',tw:315,ta:35,wheel:20,brake:'carbon',rotor:400,susp:'sport',gears:7,gearbox:'dct',diff:'clsd'},
    real:{t100:2.9,top:340},unsure:['cd','area','kg']},
   {cat:'Rotary',name:'Mazda RX-7 (FD, 1993)',engine:'Mazda 13B-REW (RX-7 FD)',chassis:'coupe',
-   body:{kg:1280,cd:0.29,area:1.80,wb:2.425,fWt:0.50},fit:{drive:'rwd',tire:'sport',tw:225,ta:50,wheel:16,brake:'slotted',rotor:290,susp:'sport',gears:5,gearbox:'manual',diff:'clsd'},
+   body:{kg:1280,cd:0.29,area:1.80,wb:2.425,fWt:0.50,look:'rx7'},fit:{drive:'rwd',tire:'sport',tw:225,ta:50,wheel:16,brake:'slotted',rotor:290,susp:'sport',gears:5,gearbox:'manual',diff:'clsd'},
    real:{t100:5.3,top:250,limited:true},unsure:['area','t100','top']},
   {cat:'Rotary',name:'Mazda RX-8 (2004)',engine:'Mazda 13B-MSP Renesis (RX-8)',chassis:'coupe',
-   body:{kg:1310,cd:0.30,area:2.05,wb:2.70,fWt:0.50},fit:{drive:'rwd',tire:'sport',tw:225,ta:45,wheel:18,brake:'slotted',rotor:320,susp:'sport',gears:6,gearbox:'manual',diff:'clsd'},
+   body:{kg:1310,cd:0.30,area:2.05,wb:2.70,fWt:0.50,look:'rx8'},fit:{drive:'rwd',tire:'sport',tw:225,ta:45,wheel:18,brake:'slotted',rotor:320,susp:'sport',gears:6,gearbox:'manual',diff:'clsd'},
    real:{t100:6.4,top:235},unsure:['area','top']},
   {cat:'Diesel',name:'VW Golf 2.0 TDI 150 (Mk7, 2013)',engine:'VW EA288 2.0 TDI (Golf 150)',chassis:'hatch',
    body:{kg:1375,cd:0.30,area:2.19,wb:2.637,fWt:0.62},fit:{drive:'fwd',tire:'eco',tw:205,ta:55,wheel:16,brake:'slotted',rotor:290,susp:'comfort',gears:6,gearbox:'manual',diff:'open'},
@@ -6989,116 +6990,258 @@ function pixCaption(g,k,ox,gw,gh,title,sub){
   g.fillStyle='#00ccff';g.textAlign='right';g.fillText(sub,ox+(gw-4)*k,y);g.textAlign='left';
 }
 // ---- the car, side on ----
-// u runs from the rear bumper (0) to the nose (1); heights are shares of the body's own height.
-// ws = base of the windscreen, rf/rr = the roof's front and rear, bk = base of the rear glass.
-// ovF/ovR are the overhangs as a share of the wheelbase. Length then comes from the wheelbase
-// itself, so a kei is short and a pickup long without either being drawn to a fixed size.
-const CAR_LOOK={
-  kei:     {h:1.55,ovF:0.20,ovR:0.14,nose:0.40,hood:0.52,ws:0.80,rf:0.70,rr:0.10,bk:0.04,deck:0.55,tail:0.50,col:'#ffcc00'},
-  hatch:   {h:1.44,ovF:0.30,ovR:0.18,nose:0.36,hood:0.50,ws:0.70,rf:0.56,rr:0.14,bk:0.06,deck:0.55,tail:0.50,col:'#ff4444'},
-  roadster:{h:1.24,ovF:0.30,ovR:0.26,nose:0.32,hood:0.52,ws:0.56,rf:0.50,rr:0.36,bk:0.28,deck:0.58,tail:0.52,col:'#44aaff'},
-  coupe:   {h:1.32,ovF:0.34,ovR:0.30,nose:0.30,hood:0.48,ws:0.66,rf:0.54,rr:0.34,bk:0.14,deck:0.58,tail:0.54,col:'#00ccff'},
-  sedan:   {h:1.44,ovF:0.34,ovR:0.36,nose:0.36,hood:0.52,ws:0.68,rf:0.58,rr:0.30,bk:0.18,deck:0.58,tail:0.54,col:'#9a9aaa'},
-  muscle:  {h:1.36,ovF:0.40,ovR:0.36,nose:0.40,hood:0.56,ws:0.62,rf:0.52,rr:0.34,bk:0.14,deck:0.58,tail:0.56,col:'#ff6600',stripe:1},
-  rally:   {h:1.44,ovF:0.30,ovR:0.18,nose:0.36,hood:0.50,ws:0.70,rf:0.56,rr:0.14,bk:0.06,deck:0.55,tail:0.50,col:'#3355ff',stripe:1},
-  gt:      {h:1.30,ovF:0.38,ovR:0.30,nose:0.30,hood:0.48,ws:0.58,rf:0.48,rr:0.30,bk:0.12,deck:0.56,tail:0.52,col:'#2a9a6a'},
-  super:   {h:1.16,ovF:0.36,ovR:0.36,nose:0.24,hood:0.36,ws:0.70,rf:0.60,rr:0.44,bk:0.16,deck:0.62,tail:0.58,col:'#ff2244'},
-  hyper:   {h:1.12,ovF:0.36,ovR:0.40,nose:0.22,hood:0.34,ws:0.70,rf:0.60,rr:0.46,bk:0.18,deck:0.62,tail:0.60,col:'#c0c0d0'},
-  proto:   {h:1.02,ovF:0.30,ovR:0.36,nose:0.24,hood:0.34,ws:0.66,rf:0.56,rr:0.44,bk:0.22,deck:0.66,tail:0.62,col:'#e8e8f0',stripe:1},
-  pickup:  {h:1.86,ovF:0.26,ovR:0.34,nose:0.50,hood:0.60,ws:0.72,rf:0.66,rr:0.47,bk:0.46,deck:0.60,tail:0.60,col:'#a0603a',bed:1},
-  suv:     {h:1.70,ovF:0.30,ovR:0.26,nose:0.46,hood:0.58,ws:0.72,rf:0.62,rr:0.08,bk:0.04,deck:0.60,tail:0.56,col:'#556677'}
+// Every car is drawn from a real car's side elevation, in metres: x from the rear bumper, y up from
+// the ground, at its factory stance on its factory tyres (r = that tyre's radius). L, W, H and wb are
+// the maker's published figures (src). The split of L - wb into the two overhangs and the hardpoints
+// between them (tail, deck, rear-glass base, roof, windscreen top, cowl, hood, nose) are read off the
+// car's proportions, because no maker publishes them; the hood length, nose to cowl, is the number
+// that most tells a long-nosed GT from a cab-forward hatch, so it is the one set with most care.
+//   top   tail bottom, over the car, to the nose bottom; the underside and the arches are built from
+//         sill (the rocker) and the axles, arch = arch radius / tyre radius (1.18 if not given)
+//   belt  bottom of the side glass at the rear and front ends of dlo, the run of the glass; pil are
+//         the B (and C) pillars that cut it, door the shut-lines
+//   open  no roof: scr = screen base x,y and top x,y, cock = the cockpit opening, hr a headrest or
+//         roll hoop, helm a driver's helmet
+//   fw    a wing worn from the factory (x from, x to, height), drawn unless a wing is fitted
+//   rs    the factory suspension, the stance the profile was measured at; vent a side intake
+// The class profiles are the car named in each; real cars in VEHICLE_PRESETS carry body.look when
+// they differ from their class's car. No photographs or badges ship: these are only numbers.
+const CAR_PROFILE={
+  kei:{n:'Suzuki Alto Works (HA36S)',src:'Suzuki catalogue: L3395 W1475 H1500 WB2460',L:3.395,W:1.475,H:1.500,wb:2.460,ovR:0.40,r:0.281,sill:0.22,rs:'comfort',
+    top:[0.03,0.30, 0,0.62, 0.02,0.95, 0.08,1.38, 0.15,1.48, 0.40,1.50, 1.80,1.50, 1.98,1.46, 2.65,0.98, 3.05,0.88, 3.33,0.76, 3.395,0.56, 3.37,0.30],
+    belt:[0.98,0.97],dlo:[0.18,2.62],pil:[0.62,1.58],door:[0.72,1.60,2.62]},
+  hatch:{n:'VW Golf GTI (Mk7)',src:'VW press data: L4268 W1799 H1442 WB2631',L:4.268,W:1.799,H:1.442,wb:2.631,ovR:0.77,r:0.317,sill:0.24,
+    top:[0.03,0.32, 0,0.66, 0.04,0.97, 0.18,1.30, 0.32,1.40, 0.70,1.442, 1.90,1.44, 2.30,1.40, 3.10,0.99, 3.85,0.86, 4.22,0.74, 4.268,0.50, 4.24,0.30],
+    belt:[1.00,0.96],dlo:[0.85,3.05],pil:[1.80],door:[0.90,1.80,3.05]},
+  roadster:{n:'Mazda MX-5 (NA)',src:'Mazda 1989: L3970 W1675 H1235 WB2265',L:3.970,W:1.675,H:1.235,wb:2.265,ovR:0.80,r:0.289,sill:0.20,open:1,
+    top:[0.03,0.30, 0,0.62, 0.05,0.80, 0.40,0.85, 1.05,0.86, 2.52,0.88, 3.30,0.78, 3.80,0.66, 3.97,0.50, 3.94,0.28],
+    belt:[0.86,0.88],scr:[2.52,0.88,2.15,1.235],cock:[1.05,2.45],hr:[1.20,1.05],door:[1.25,2.45]},
+  coupe:{n:'BMW M3 (E46) coupé',src:'BMW 2000: L4492 W1780 H1372 WB2731',L:4.492,W:1.780,H:1.372,wb:2.731,ovR:0.92,r:0.330,sill:0.24,
+    top:[0.03,0.32, 0,0.66, 0.04,0.93, 0.18,0.99, 0.85,1.02, 1.55,1.34, 1.85,1.372, 2.35,1.36, 3.10,0.99, 4.05,0.86, 4.44,0.74, 4.492,0.50, 4.46,0.30],
+    belt:[0.99,0.95],dlo:[1.05,3.05],pil:[1.95],door:[1.98,3.08]},
+  sedan:{n:'BMW 3 Series (F30)',src:'BMW 2012: L4624 W1811 H1429 WB2810',L:4.624,W:1.811,H:1.429,wb:2.810,ovR:1.00,r:0.328,sill:0.24,
+    top:[0.03,0.32, 0,0.68, 0.04,0.96, 0.15,1.02, 0.80,1.06, 1.45,1.39, 1.80,1.429, 2.45,1.42, 3.25,1.00, 4.15,0.87, 4.57,0.75, 4.624,0.50, 4.60,0.30],
+    belt:[1.02,0.97],dlo:[0.95,3.20],pil:[1.30,2.40],door:[1.35,2.45,3.22]},
+  muscle:{n:'Ford Mustang GT (S550) fastback',src:'Ford 2018: L4784 W1916 H1381 WB2720',L:4.784,W:1.916,H:1.381,wb:2.720,ovR:1.00,r:0.343,sill:0.25,grille:1,
+    top:[0.03,0.34, 0,0.72, 0.03,0.98, 0.30,1.03, 0.60,1.06, 1.75,1.36, 2.15,1.381, 2.40,1.37, 3.05,1.04, 4.30,0.94, 4.72,0.86, 4.784,0.66, 4.76,0.34],
+    belt:[1.03,1.00],dlo:[1.05,3.00],pil:[1.70],door:[1.80,3.05]},
+  rally:{n:'Toyota GR Yaris',src:'Toyota 2020: L3995 W1805 H1455 WB2560',L:3.995,W:1.805,H:1.455,wb:2.560,ovR:0.62,r:0.319,sill:0.24,rs:'coilover',arch:1.24,
+    top:[0.03,0.32, 0,0.66, 0.04,0.96, 0.25,1.16, 0.60,1.32, 1.10,1.43, 1.55,1.455, 2.15,1.40, 2.95,0.99, 3.55,0.88, 3.95,0.72, 3.995,0.48, 3.97,0.30],
+    belt:[1.02,0.96],dlo:[0.80,2.90],pil:[1.30],door:[1.30,2.92]},
+  gt:{n:'Ferrari 812 Superfast',src:'Ferrari 2017: L4657 W1971 H1276 WB2720',L:4.657,W:1.971,H:1.276,wb:2.720,ovR:0.88,r:0.350,sill:0.22,rs:'coilover',
+    top:[0.03,0.30, 0,0.66, 0.03,0.92, 0.35,0.97, 0.80,1.04, 1.65,1.25, 1.95,1.276, 2.15,1.26, 2.80,0.98, 3.90,0.84, 4.45,0.68, 4.657,0.46, 4.63,0.28],
+    belt:[0.97,0.90],dlo:[1.35,2.75],pil:[],door:[1.55,2.80]},
+  super:{n:'Lamborghini Huracán LP610-4',src:'Lamborghini 2014: L4459 W1924 H1165 WB2620',L:4.459,W:1.924,H:1.165,wb:2.620,ovR:0.81,r:0.3455,sill:0.18,rs:'coilover',
+    top:[0.03,0.28, 0,0.62, 0.03,0.94, 0.45,0.98, 1.10,1.05, 1.85,1.15, 2.10,1.165, 2.35,1.14, 3.10,0.85, 3.90,0.66, 4.35,0.50, 4.459,0.36, 4.44,0.22],
+    belt:[0.90,0.82],dlo:[1.60,3.05],pil:[],door:[1.75,3.10],vent:[1.25,0.50,1.65,0.80]},
+  hyper:{n:'McLaren P1',src:'McLaren 2013: L4588 W1946 H1188 WB2670',L:4.588,W:1.946,H:1.188,wb:2.670,ovR:0.94,r:0.348,sill:0.16,rs:'race',
+    top:[0.03,0.28, 0,0.66, 0.05,0.94, 0.50,0.99, 1.15,1.06, 1.85,1.17, 2.20,1.188, 2.50,1.16, 3.20,0.86, 3.95,0.68, 4.45,0.48, 4.588,0.34, 4.57,0.20],
+    belt:[0.92,0.84],dlo:[1.75,3.15],pil:[],door:[1.95,3.18],vent:[1.40,0.48,1.80,0.82]},
+  proto:{n:'Radical SR3 RSX',src:'Radical: L4077 W1799 H1093; WB2370 (SR3)',L:4.077,W:1.799,H:1.093,wb:2.370,ovR:0.85,r:0.290,sill:0.08,rs:'race',open:1,
+    top:[0.03,0.20, 0,0.50, 0.10,0.80, 0.55,0.86, 1.05,0.92, 1.25,1.093, 1.45,1.00, 1.60,0.84, 2.45,0.76, 2.70,0.80, 2.95,0.70, 3.22,0.68, 3.55,0.54, 3.95,0.32, 4.077,0.22, 4.06,0.12],
+    belt:[0.80,0.80],scr:[2.70,0.80,2.50,0.94],cock:[1.60,2.50],helm:[2.02,0.96],door:[]},
+  pickup:{n:'Chevrolet Silverado 2500HD crew cab',src:'Chevrolet 2020: L6350 W2078 H2027 WB4036',L:6.350,W:2.078,H:2.027,wb:4.036,ovR:1.30,r:0.414,sill:0.55,rs:'comfort',grille:1,arch:1.14,
+    top:[0.03,0.62, 0,1.00, 0.02,1.42, 2.10,1.45, 2.15,1.92, 2.30,2.00, 2.50,2.027, 3.70,2.02, 3.90,1.98, 4.45,1.55, 5.40,1.48, 6.25,1.45, 6.35,1.30, 6.34,0.62],
+    belt:[1.50,1.52],dlo:[2.25,4.35],pil:[3.15],door:[2.20,3.20,4.35],bed:[0.05,2.10,1.45]},
+  suv:{n:'BMW X5 M (F95)',src:'BMW 2020: L4938 W2015 H1747 WB2975',L:4.938,W:2.015,H:1.747,wb:2.975,ovR:1.05,r:0.370,sill:0.40,grille:1,
+    top:[0.03,0.45, 0,0.90, 0.04,1.18, 0.15,1.62, 0.40,1.72, 1.20,1.747, 2.80,1.73, 3.10,1.68, 3.65,1.22, 4.45,1.10, 4.88,0.96, 4.938,0.72, 4.91,0.42],
+    belt:[1.24,1.20],dlo:[0.35,3.60],pil:[0.85,2.05],door:[1.00,2.08,3.62]},
+  // real cars that do not look like their class's car
+  fiat500:{n:'Fiat 500',src:'Fiat 2011: L3546 W1627 H1488 WB2300',L:3.546,W:1.627,H:1.488,wb:2.300,ovR:0.55,r:0.292,sill:0.22,rs:'comfort',
+    top:[0.03,0.30, 0,0.66, 0.03,0.98, 0.12,1.38, 0.40,1.488, 1.70,1.48, 2.05,1.40, 2.70,1.00, 3.20,0.90, 3.48,0.76, 3.546,0.52, 3.52,0.30],
+    belt:[1.02,1.00],dlo:[0.30,2.65],pil:[1.05],door:[1.05,2.65]},
+  aygo:{n:'Toyota Aygo (AB40)',src:'Toyota 2014: L3455 W1615 H1460 WB2340',L:3.455,W:1.615,H:1.460,wb:2.340,ovR:0.45,r:0.285,sill:0.22,rs:'comfort',
+    top:[0.03,0.30, 0,0.68, 0.03,0.96, 0.12,1.38, 0.30,1.46, 1.60,1.45, 1.90,1.40, 2.60,0.98, 3.15,0.84, 3.42,0.70, 3.455,0.48, 3.43,0.30],
+    belt:[1.00,0.96],dlo:[0.22,2.56],pil:[0.55,1.55],door:[0.62,1.58,2.56]},
+  fiesta:{n:'Ford Fiesta (Mk7)',src:'Ford 2013: L3950 W1722 H1481 WB2489',L:3.950,W:1.722,H:1.481,wb:2.489,ovR:0.62,r:0.291,sill:0.22,rs:'comfort',
+    top:[0.03,0.30, 0,0.66, 0.04,0.96, 0.20,1.36, 0.45,1.47, 1.70,1.481, 2.15,1.40, 2.95,0.98, 3.60,0.84, 3.92,0.70, 3.95,0.48, 3.93,0.28],
+    belt:[1.02,0.96],dlo:[0.50,2.90],pil:[0.80,1.65],door:[0.85,1.68,2.92]},
+  civic:{n:'Honda Civic Type R (FK8)',src:'Honda 2017: L4557 W1877 H1434 WB2700',L:4.557,W:1.877,H:1.434,wb:2.700,ovR:0.92,r:0.3275,sill:0.20,
+    top:[0.03,0.30, 0,0.66, 0.05,0.98, 0.28,1.08, 0.90,1.30, 1.45,1.42, 1.85,1.434, 2.50,1.40, 3.40,0.96, 4.15,0.82, 4.52,0.66, 4.557,0.42, 4.53,0.26],
+    belt:[1.01,0.94],dlo:[1.00,3.35],pil:[1.30,2.30],door:[1.25,2.35,3.38],fw:[0.00,0.40,1.24]},
+  ae86:{n:'Toyota Corolla Levin (AE86)',src:'Toyota 1983: L4180 W1625 H1335 WB2400',L:4.180,W:1.625,H:1.335,wb:2.400,ovR:0.90,r:0.289,sill:0.22,
+    top:[0.03,0.30, 0,0.66, 0.03,0.93, 0.15,0.98, 0.95,1.01, 1.55,1.32, 1.80,1.335, 2.35,1.33, 2.98,0.97, 3.95,0.87, 4.16,0.82, 4.18,0.50, 4.16,0.30],
+    belt:[0.98,0.96],dlo:[1.10,2.93],pil:[1.80],door:[1.85,2.95]},
+  s2000:{n:'Honda S2000 (AP1)',src:'Honda 1999: L4135 W1750 H1285 WB2400',L:4.135,W:1.750,H:1.285,wb:2.400,ovR:0.80,r:0.316,sill:0.20,open:1,
+    top:[0.03,0.30, 0,0.64, 0.05,0.88, 0.40,0.92, 1.05,0.93, 2.63,0.92, 3.50,0.80, 4.00,0.66, 4.135,0.48, 4.11,0.28],
+    belt:[0.92,0.92],scr:[2.63,0.92,2.25,1.285],cock:[1.10,2.55],hr:[1.15,1.12],door:[1.25,2.55]},
+  gt3:{n:'Porsche 911 GT3 (991.2)',src:'Porsche 2017: L4562 W1852 H1271 WB2457',L:4.562,W:1.852,H:1.271,wb:2.457,ovR:1.05,r:0.3455,sill:0.18,rs:'coilover',
+    top:[0.03,0.28, 0,0.62, 0.05,0.90, 0.35,0.98, 0.90,1.08, 1.55,1.24, 2.05,1.271, 2.50,1.23, 3.20,0.90, 3.75,0.82, 4.20,0.70, 4.50,0.52, 4.562,0.40, 4.54,0.24],
+    belt:[0.92,0.88],dlo:[1.30,3.15],pil:[1.80],door:[1.90,3.18],fw:[0.05,0.55,1.18]},
+  supra:{n:'Toyota Supra RZ (A80)',src:'Toyota 1993: L4520 W1810 H1275 WB2550',L:4.520,W:1.810,H:1.275,wb:2.550,ovR:0.95,r:0.318,sill:0.22,
+    top:[0.03,0.30, 0,0.64, 0.04,0.92, 0.45,0.98, 1.10,1.03, 1.65,1.24, 1.95,1.275, 2.35,1.26, 3.07,0.92, 4.05,0.76, 4.45,0.62, 4.52,0.45, 4.50,0.28],
+    belt:[0.96,0.92],dlo:[1.25,3.02],pil:[1.85],door:[1.90,3.05],fw:[0.05,0.60,1.12]},
+  r34:{n:'Nissan Skyline GT-R (R34)',src:'Nissan 1999: L4600 W1785 H1360 WB2665',L:4.600,W:1.785,H:1.360,wb:2.665,ovR:0.92,r:0.3266,sill:0.22,
+    top:[0.03,0.32, 0,0.68, 0.04,0.98, 0.20,1.02, 1.05,1.06, 1.65,1.34, 1.95,1.36, 2.55,1.35, 3.25,0.99, 4.40,0.87, 4.58,0.76, 4.60,0.48, 4.58,0.30],
+    belt:[1.01,0.97],dlo:[1.25,3.20],pil:[2.00],door:[2.02,3.22],fw:[0.06,0.50,1.15]},
+  sti:{n:'Subaru Impreza WRX STI (GD)',src:'Subaru 2004: L4465 W1740 H1425 WB2525',L:4.465,W:1.740,H:1.425,wb:2.525,ovR:0.95,r:0.317,sill:0.24,
+    top:[0.03,0.32, 0,0.68, 0.04,0.96, 0.15,1.00, 0.85,1.03, 1.45,1.40, 1.75,1.425, 2.40,1.42, 3.17,0.98, 3.45,1.01, 3.70,0.97, 4.25,0.86, 4.44,0.74, 4.465,0.50, 4.44,0.30],
+    belt:[1.00,0.97],dlo:[0.95,3.12],pil:[1.30,2.25],door:[1.30,2.30,3.15],fw:[0.05,0.55,1.24]},
+  evo:{n:'Mitsubishi Lancer Evolution IX',src:'Mitsubishi 2006: L4490 W1770 H1450 WB2625',L:4.490,W:1.770,H:1.450,wb:2.625,ovR:0.92,r:0.317,sill:0.24,
+    top:[0.03,0.32, 0,0.68, 0.04,0.98, 0.15,1.02, 0.88,1.05, 1.48,1.43, 1.80,1.45, 2.42,1.44, 3.19,0.99, 4.28,0.86, 4.47,0.74, 4.49,0.50, 4.47,0.30],
+    belt:[1.01,0.98],dlo:[0.98,3.14],pil:[1.30,2.30],door:[1.30,2.35,3.16],fw:[0.04,0.62,1.27]},
+  rs3:{n:'Audi RS3 Sportback (8V)',src:'Audi 2017: L4335 W1800 H1411 WB2631',L:4.335,W:1.800,H:1.411,wb:2.631,ovR:0.80,r:0.323,sill:0.22,
+    top:[0.03,0.30, 0,0.64, 0.05,0.96, 0.22,1.30, 0.40,1.39, 0.75,1.411, 1.85,1.41, 2.33,1.35, 3.13,0.97, 3.95,0.83, 4.30,0.70, 4.335,0.46, 4.31,0.28],
+    belt:[0.99,0.95],dlo:[0.85,3.08],pil:[1.80],door:[0.92,1.82,3.10]},
+  c6:{n:'Chevrolet Corvette (C6)',src:'Chevrolet 2008: L4435 W1844 H1244 WB2686',L:4.435,W:1.844,H:1.244,wb:2.686,ovR:0.77,r:0.341,sill:0.20,
+    top:[0.03,0.30, 0,0.64, 0.03,0.95, 0.35,0.99, 0.75,1.04, 1.55,1.22, 1.85,1.244, 2.25,1.22, 2.85,0.90, 3.80,0.74, 4.30,0.60, 4.435,0.44, 4.41,0.26],
+    belt:[0.94,0.88],dlo:[1.35,2.80],pil:[],door:[1.50,2.85]},
+  challenger:{n:'Dodge Challenger (LC)',src:'Dodge 2015: L5027 W1923 H1460 WB2951',L:5.027,W:1.923,H:1.460,wb:2.951,ovR:1.05,r:0.364,sill:0.26,grille:1,
+    top:[0.03,0.34, 0,0.72, 0.03,1.02, 0.55,1.06, 1.05,1.10, 1.65,1.43, 1.95,1.46, 2.50,1.45, 3.18,1.06, 3.55,1.10, 3.85,1.06, 4.90,1.01, 5.00,0.97, 5.027,0.55, 5.00,0.34],
+    belt:[1.06,1.04],dlo:[1.20,3.12],pil:[1.85],door:[1.95,3.15]},
+  rx7:{n:'Mazda RX-7 (FD)',src:'Mazda 1993: L4295 W1760 H1230 WB2425',L:4.295,W:1.760,H:1.230,wb:2.425,ovR:0.95,r:0.316,sill:0.20,
+    top:[0.03,0.28, 0,0.62, 0.04,0.88, 0.45,0.93, 1.05,1.00, 1.60,1.20, 1.90,1.23, 2.30,1.20, 2.95,0.88, 3.70,0.72, 4.20,0.58, 4.295,0.42, 4.27,0.26],
+    belt:[0.92,0.86],dlo:[1.30,2.90],pil:[1.85],door:[1.90,2.92],fw:[0.05,0.55,1.04]},
+  rx8:{n:'Mazda RX-8',src:'Mazda 2004: L4435 W1770 H1340 WB2700',L:4.435,W:1.770,H:1.340,wb:2.700,ovR:0.85,r:0.330,sill:0.22,
+    top:[0.03,0.30, 0,0.66, 0.04,0.95, 0.25,0.99, 0.80,1.04, 1.50,1.31, 1.85,1.34, 2.45,1.32, 3.23,0.95, 4.15,0.80, 4.41,0.66, 4.435,0.45, 4.41,0.28],
+    belt:[0.98,0.94],dlo:[1.00,3.18],pil:[1.95],door:[1.10,1.95,3.20]}
 };
-const CAR_GW=168,CAR_GH=62,CAR_GY=56,CAR_PXM=26;      // grid, ground row, cells per metre
+// Livery and the class's own touches; the shape is the profile's.
+const CAR_LOOK={
+  kei:{col:'#ffcc00'},hatch:{col:'#ff4444'},roadster:{col:'#44aaff'},coupe:{col:'#00ccff'},sedan:{col:'#9a9aaa'},
+  muscle:{col:'#ff6600',stripe:1},rally:{col:'#3355ff',stripe:1},gt:{col:'#2a9a6a'},super:{col:'#ff2244'},
+  hyper:{col:'#c0c0d0'},proto:{col:'#e8e8f0',stripe:1},pickup:{col:'#a0603a'},suv:{col:'#556677'}
+};
+const CAR_GW=168,CAR_GH=56,CAR_GY=50,CAR_PXM=34;      // grid, ground row, most cells per metre
 const RIDE_M={comfort:0.16,sport:0.13,coilover:0.11,race:0.085};
 const CALIPER_COL={steel:'#6a6a7a',slotted:'#ff4444',big:'#ff4444',carbon:'#ffcc00'};
 function carLivery(v){return (CAR_LOOK[(v&&v.chassis)||'coupe']||CAR_LOOK.coupe).col;}
+// A real car's own profile if it has one, else its class's.
+function profileKey(v){const b=v&&v.body;
+  return b&&CAR_PROFILE[b.look]?b.look:CAR_PROFILE[v&&v.chassis]?v.chassis:'coupe';}
+function profileOf(v){return CAR_PROFILE[profileKey(v)];}
 // Where the engine sits: the same answer the weight split uses (engineLayoutOf), so the picture and
 // the physics cannot disagree about a 911.
 function enginePlace(v){return engineLayoutOf(v.chassis,v.body);}
 // The shape of the car from its record alone (never from what is loaded now), so a garage thumbnail
 // shows the car that was saved. Old records may lack fields; each falls back to the archetype.
+// A wheelbase other than the profile's stretches the car between the axles only, the overhangs keep
+// their length. The body rides up on a taller tyre and down on a lower spring than the profile's.
+// One scale serves every car up to the length of a big saloon; only longer or taller ones are
+// drawn smaller, so a low car fills its frame instead of sitting under a band of empty sky.
 function carGeometry(v){
-  const ch=CHASSIS[v.chassis]||CHASSIS.coupe,L=CAR_LOOK[v.chassis]||CAR_LOOK.coupe;
-  const wb=(v.body&&v.body.wb)||ch.wb;
+  const P=profileOf(v),ch=CHASSIS[v.chassis]||CHASSIS.coupe;
+  const wb=(v.body&&v.body.wb)||ch.wb,dw=wb-P.wb,L=P.L+dw;
   const wheel=v.wheelDia||18,tw=v.tireWidth||225,ta=v.tireAspect||40;
   const rTyre=((wheel*25.4)/2+tw*ta/100)/1000;                       // m, the same sum buildVehicle does
-  let clear=(RIDE_M[v.suspension]||RIDE_M.sport)+(v.chassis==='pickup'||v.chassis==='suv'?0.08:0)-(v.chassis==='proto'?0.03:0);
-  clear=Math.max(0.05,clear);
-  const wbPx=wb*CAR_PXM,lenPx=wbPx*(1+L.ovF+L.ovR);
-  const x0=(CAR_GW-lenPx)/2;
-  return {L,wb,wbPx,lenPx,x0,clear,rTyre,rPx:rTyre*CAR_PXM,rimFrac:(wheel*25.4/2)/(rTyre*1000),
-    xr:x0+L.ovR*wbPx,xf:x0+(L.ovR+1)*wbPx,
-    bodyBot:CAR_GY-clear*CAR_PXM,bodyH:(L.h-clear)*CAR_PXM};
+  const ride=(RIDE_M[v.suspension]||RIDE_M.sport)-(RIDE_M[P.rs]||RIDE_M.sport);
+  const lift=Math.max(0.04-P.sill,rTyre-P.r+ride);
+  const pxm=Math.min(CAR_PXM,(CAR_GW-12)/L,(CAR_GY-4)/(P.H+lift+0.06));
+  const lenPx=L*pxm,x0=(CAR_GW-lenPx)/2;
+  const mapX=x=>x<=P.ovR?x:x<=P.ovR+P.wb?P.ovR+(x-P.ovR)*wb/P.wb:x+dw;
+  const X=x=>x0+mapX(x)*pxm,Y=y=>CAR_GY-(y+lift)*pxm;
+  return {P,L,wb,pxm,lenPx,x0,X,Y,lift,ride,rTyre,rPx:rTyre*pxm,rimFrac:(wheel*25.4/2)/(rTyre*1000),
+    xr:X(P.ovR),xf:X(P.ovR+P.wb),wbPx:wb*pxm,bodyBot:Y(P.sill),bodyH:(P.H-P.sill)*pxm,
+    archR:Math.max((P.arch||1.18)*P.r,rTyre+0.06-Math.min(0,ride))*pxm};
 }
 function drawCarSprite(buf,v,e,t){
   v=v||DEFAULT_VEHICLE;t=t||0;
-  const G=carGeometry(v),L=G.L,col=L.col;
-  const X=u=>G.x0+u*G.lenPx,Y=f=>G.bodyBot-f*G.bodyH;
-  // the silhouette, rear bumper to nose
-  const top=[[0,L.tail],[0.03,L.deck],[L.bk,L.deck],[L.rr,1],[L.rf,1],[L.ws,L.hood],[0.95,L.nose+0.06],[1,L.nose]];
-  const pts=top.map(p=>[X(p[0]),Y(p[1])]);
-  pts.push([X(1),Y(0.16)],[X(0.985),Y(0)],[X(0.015),Y(0)],[X(0),Y(0.18)]);
-  buf.poly(pts,col);
-  // roof line per column, for the glass, the highlight and the stripes
-  const topAt=x=>{const u=(x-G.x0)/G.lenPx;
-    for(let k=0;k+1<top.length;k++){const a=top[k],b=top[k+1];if(u>=a[0]&&u<=b[0])return Y(a[1]+(b[1]-a[1])*(u-a[0])/Math.max(1e-6,b[0]-a[0]));}
-    return Y(L.nose);};
-  const belt=Y(Math.max(L.hood,L.deck)+0.02),lower=Y(0.30);
-  const hi=shadeHex(col,0.4),lo=shadeHex(col,-0.3),glass='#1a2a3a';
-  for(let x=Math.ceil(X(0));x<=Math.floor(X(1));x++){
-    const ty=Math.ceil(topAt(x+0.5)-0.5);
-    if(buf.get(x,ty)===col)buf.set(x,ty,hi);
-    for(let y=Math.ceil(lower);y<G.bodyBot;y++)if(buf.get(x,y)===col)buf.set(x,y,lo);
-    const u=(x+0.5-G.x0)/G.lenPx;
-    if(u>L.bk+0.02&&u<L.ws-0.015&&ty+2<belt){
-      const pillar=Math.abs(u-(L.rf+L.rr)/2)*G.lenPx<1.2&&v.chassis!=='roadster';
-      for(let y=ty+1;y<belt;y++)buf.set(x,y,pillar?col:glass);
+  const G=carGeometry(v),P=G.P,X=G.X,Y=G.Y,pxm=G.pxm;
+  const look=CAR_LOOK[v.chassis]||CAR_LOOK.coupe,col=look.col;
+  const hi=shadeHex(col,0.4),lo=shadeHex(col,-0.3),seam=shadeHex(col,-0.45),dark='#3a3a4a';
+  const glass='#1a2a3a',glint='#2c4660',W=CAR_GW,H=CAR_GH;
+  // the silhouette: over the top from tail to nose, then back along the sill with an arch over each wheel
+  const pts=[];for(let k=0;k<P.top.length;k+=2)pts.push([X(P.top[k]),Y(P.top[k+1])]);
+  const R=G.archR,acy=Y(P.r),s=Math.max(-1,Math.min(1,(P.sill-P.r)*pxm/R)),a0=Math.asin(s);
+  for(const ax of [G.xf,G.xr])for(let k=0;k<=14;k++){const a=a0+(Math.PI-2*a0)*k/14;pts.push([ax+R*Math.cos(a),acy-R*Math.sin(a)]);}
+  const M=new PixBuf(W,H);M.poly(pts,'#ffffff');
+  const inB=(x,y)=>!!M.get(x,y);
+  const tops=[];for(let x=0;x<W;x++){tops[x]=H;for(let y=0;y<H;y++)if(M.c[y*W+x]){tops[x]=y;break;}}
+  const topAt=xm=>tops[Math.max(0,Math.min(W-1,Math.floor(X(xm))))];
+  const sillY=Y(P.sill);
+  for(let k=0;k<M.c.length;k++)if(M.c[k])buf.c[k]=col;
+  for(let x=0;x<W;x++){if(tops[x]>=H)continue;buf.set(x,tops[x],hi);
+    for(let y=Math.ceil(sillY-0.10*pxm);y<H;y++)if(buf.get(x,y)===col)buf.set(x,y,lo);}
+  const beltAt=xm=>{const d=P.dlo||[0,P.L],f=Math.max(0,Math.min(1,(xm-d[0])/Math.max(1e-6,d[1]-d[0])));return P.belt[0]+(P.belt[1]-P.belt[0])*f;};
+  const xmOf=x=>{for(let xm=-0.2;xm<=P.L+0.2;xm+=0.01)if(X(xm)>=x)return xm;return P.L;};
+  // the glass: what lies above the beltline and at least a pillar's width inside the body, so the
+  // windscreen's rake leaves an A-pillar and the hatch a D-pillar, then cut by the B and C pillars
+  const isGlass=(x,y)=>buf.get(x,y)===glass||buf.get(x,y)===glint;
+  if(!P.open){
+    const pw=Math.max(2,Math.round(0.07*pxm));
+    for(let x=Math.ceil(X(P.dlo[0]));x<=Math.floor(X(P.dlo[1]));x++){
+      const by=Y(beltAt(xmOf(x+0.5)));
+      for(let y=tops[x]+1;y<by;y++)
+        if(inB(x,y)&&inB(x-2,y-1)&&inB(x+2,y-1)&&inB(x,y-2))buf.set(x,y,(x+y)%9===0?glint:glass);
     }
+    for(const p of P.pil){const px=X(p);for(let x=Math.round(px-pw/2);x<Math.round(px+pw/2);x++)for(let y=0;y<H;y++)if(isGlass(x,y))buf.set(x,y,col);}
+  }else{
+    // an open car: the cockpit is a dark slot in the body's top, the screen a raked bar above the cowl
+    for(let x=Math.ceil(X(P.cock[0]));x<=Math.floor(X(P.cock[1]));x++){buf.set(x,tops[x],'#111118');buf.set(x,tops[x]+1,lo);}
+    if(P.hr){const hx=X(P.hr[0]);buf.rect(hx-1,Y(P.hr[1]),3,topAt(P.hr[0])-Y(P.hr[1])+1,'#2a2a3a');}
+    if(P.helm){const hx=X(P.helm[0]),hy=Y(P.helm[1])+0.12*pxm;buf.disc(hx,hy,0.13*pxm,'#ffcc00');buf.rect(hx,hy-1,0.13*pxm,2,'#111118');}
+    buf.line(X(P.scr[0]),Y(P.scr[1]),X(P.scr[2]),Y(P.scr[3]),glass);
+    buf.line(X(P.scr[0])+1,Y(P.scr[1]),X(P.scr[2])+1,Y(P.scr[3]),'#9a9aaa');
   }
-  // the pickup's bed is open
-  if(L.bed)for(let x=Math.ceil(X(0.04));x<X(L.bk-0.02);x++){buf.set(x,Math.ceil(Y(L.deck)),'#2a2a3a');buf.set(x,Math.ceil(Y(L.deck))+1,lo);}
-  // glint on the screen, door shut-line, lamps
-  buf.set(X(L.ws)-4,belt-3,'#00ccff');buf.set(X(L.ws)-5,belt-4,'#00ccff');
-  for(let y=Math.ceil(belt);y<G.bodyBot-2;y++)buf.set(X((L.rf+L.ws)/2),y,shadeHex(col,-0.45));
-  buf.rect(X(1)-2,Y(L.nose)+1,2,1,'#fff2a8');
-  buf.rect(X(0),Y(L.tail)+1,1,2,'#ff4444');
-  if(L.stripe)buf.rect(X(0.06),belt+2,G.lenPx*0.86,1,v.chassis==='proto'?'#00ff88':'#f0f0f0');
-  // a race-stripped car wears a number
-  if(v.weightRed==='race'){const cx=X((L.rf+L.rr)/2),cy=(belt+G.bodyBot)/2;buf.disc(cx,cy,3,'#f0f0f0');buf.rect(cx-0.5,cy-1.5,1,3,'#111118');}
-  // the engine, x-rayed where it sits, so front-, mid- and rear-engined cars read differently
-  const place=enginePlace(v);
-  const eu=(place==='front'?G.xf-G.wbPx*0.14:place==='mid'?G.xr+G.wbPx*0.24:G.xr-G.wbPx*0.10)-G.x0;
-  const ex=X(Math.min(0.93,Math.max(0.07,eu/G.lenPx))),ey=G.bodyBot-G.bodyH*0.24;
-  buf.rect(ex-4,ey-2,8,4,'#0d0d18');buf.rect(ex-3,ey-1,6,2,'#00ff88');
-  if(e&&e.intake==='turbo')buf.rect(ex-6,ey-1,2,2,'#ff6600');
-  if(e&&e.intake==='supercharger')buf.rect(ex-1,ey-4,3,2,'#ffcc00');
-  // aero
-  const dark='#3a3a4a';
-  if(v.aeroFront==='splitter')buf.rect(X(0.94),G.bodyBot,X(1)-X(0.94)+3,1,dark);
-  if(v.aeroFront==='wing'){buf.rect(X(0.96),G.bodyBot-1,X(1)-X(0.96)+5,2,dark);buf.rect(X(1)+4,G.bodyBot-3,1,4,dark);}
-  if(v.aeroRear==='lip')buf.rect(X(0.01),Y(L.deck)-1,4,1,lo);
+  // the pickup's bed is open, a dark well under the rail
+  if(P.bed)for(let x=Math.ceil(X(P.bed[0]));x<X(P.bed[1]);x++){buf.set(x,Y(P.bed[2])+1,'#2a2a3a');buf.set(x,Y(P.bed[2])+2,lo);}
+  if(look.stripe){const sy=Math.round(Y(beltAt(P.L/2)))+3;
+    for(let x=Math.round(X(0.08));x<X(P.L-0.12);x++)if(buf.get(x,sy)===col)buf.set(x,sy,v.chassis==='proto'?'#00ff88':'#f0f0f0');}
+  // shut-lines, the mirror, a side intake, lamps where the car has them, a grille on a blunt nose
+  for(const d of P.door){const x=Math.round(X(d));
+    for(let y=Math.round(Y(beltAt(d)))+1;y<sillY-2;y++)if(buf.get(x,y)===col||buf.get(x,y)===lo)buf.set(x,y,seam);}
+  if(P.door.length)buf.rect(X(P.door[P.door.length-1]-0.35),Y(beltAt(P.door[P.door.length-1])-0.10),2,1,seam);
+  const mx=P.open?P.scr[0]-0.10:P.dlo[1]-0.16;
+  if(!P.open||P.hr)buf.rect(X(mx)-1,Y(beltAt(mx)+0.08),3,2,lo);
+  if(P.vent)buf.poly([[X(P.vent[0]),Y(P.vent[1])],[X(P.vent[2]),Y(P.vent[3])],[X(P.vent[2]),Y(P.vent[1])]],'#111118');
+  const hx=Math.round(X(P.L-0.10));buf.rect(hx-2,topAt(P.L-0.10)+1,3,1,'#fff2a8');
+  const tx=Math.round(X(0.02));buf.rect(tx,topAt(0.04)+1,2,2,'#ff4444');
+  if(P.grille){const gx=Math.floor(X(P.L))-1;for(let y=topAt(P.L-0.02)+3;y<Y(P.sill+0.18);y++)if(buf.get(gx,y))buf.set(gx,y,'#111118');}
+  // a race-stripped car wears a number on its door
+  if(v.weightRed==='race'){const d=P.door,dx=d.length>1?(d[d.length-2]+d[d.length-1])/2:P.ovR+P.wb/2;
+    const cx=X(dx),cy=(Y(beltAt(dx))+sillY)/2;buf.disc(cx,cy,3,'#f0f0f0');buf.rect(cx-0.5,cy-1.5,1,3,'#111118');}
+  // the engine, x-rayed where it sits: ahead of the cowl, behind the seats, or behind the rear axle
+  const place=enginePlace(v),cowl=P.open?P.scr[0]:P.dlo[1],seat=P.open?P.cock[0]:P.dlo[0];
+  const exm=place==='front'?(P.ovR+P.wb+cowl)/2:place==='mid'?(P.ovR+Math.max(seat,P.ovR+0.2))/2+0.05:P.ovR*0.5;
+  const fits=(x,y,w,h)=>{for(let j=y-1;j<=y+h;j++)for(let i=x-1;i<=x+w;i++)if(!inB(i,j)||isGlass(i,j)||buf.get(i,j)==='#111118')return false;return true;};
+  // nearest spot to there that holds the whole block clear of glass, arches and the body's edge
+  let eb=null,best=1e9;
+  for(const [w,h] of [[8,4],[6,3]]){
+    for(let dx=-Math.round(0.45*pxm);dx<=Math.round(0.45*pxm);dx++){
+      const ex=Math.round(X(exm))+dx,eTop=tops[ex]||0,mid=Math.round((eTop+sillY)/2-h/2);
+      for(let dy=-4;dy<=4;dy++){const d=Math.abs(dx)+Math.abs(dy)*0.5;
+        if(d<best&&fits(ex-w/2,mid+dy,w,h)){best=d;eb=[ex-w/2,mid+dy,w,h];}}
+    }
+    if(eb)break;
+  }
+  if(eb){buf.rect(eb[0],eb[1],eb[2],eb[3],'#0d0d18');buf.rect(eb[0]+1,eb[1]+1,eb[2]-2,eb[3]-2,'#00ff88');
+    if(e&&e.intake==='turbo')buf.rect(eb[0]-2,eb[1]+1,2,2,'#ff6600');
+    if(e&&e.intake==='supercharger')buf.rect(eb[0]+eb[2]/2-1,eb[1]-2,3,2,'#ffcc00');}
+  // aero, standing on the body where it bolts on
+  const nb=P.top[P.top.length-1],nby=Math.round(Y(nb)),groundUp=CAR_GY-2;
+  const lowY=y=>Math.min(groundUp,y);
+  if(v.aeroFront==='splitter')buf.rect(X(P.L-0.30),lowY(nby),X(P.L)-X(P.L-0.30)+3,1,dark);
+  if(v.aeroFront==='wing'){const wy=lowY(nby+1);buf.rect(X(P.L-0.20),wy,X(P.L)-X(P.L-0.20)+5,2,dark);buf.rect(X(P.L)+4,wy-3,1,5,dark);}
+  if(v.aeroRear==='lip')buf.rect(X(0.02),topAt(0.10)-1,X(0.22)-X(0.02),1,lo);
+  const roofY=Math.min(...tops);
+  const wingAt=(xa,xb,yBlade,blade)=>{
+    for(const xm of [xa+(xb-xa)*0.3,xa+(xb-xa)*0.75]){const ux=Math.round(X(xm));for(let y=yBlade+2;y<topAt(xm);y++)buf.set(ux,y,dark);}
+    buf.rect(X(xa)-1,yBlade,X(xb)-X(xa)+2,2,blade);buf.rect(X(xa)-1,yBlade-2,1,5,dark);};
   if(v.aeroRear==='wing'){
-    const wy=Y(L.deck)-6;
-    buf.rect(X(0.05),wy,1,6,dark);buf.rect(X(0.10),wy,1,6,dark);
-    buf.rect(X(0)-1,wy-2,X(0.13)-X(0)+2,2,lo);buf.rect(X(0)-1,wy-4,1,6,dark);
-  }
-  if(v.aeroFloor==='undertray')buf.rect(X(0.05),G.bodyBot,G.lenPx*0.9,1,'#26263a');
-  if(v.aeroFloor==='diffuser')for(let k=0;k<3;k++)buf.line(X(0)+k*3,G.bodyBot+1,X(0)+k*3+4,G.bodyBot-2,dark);
-  // wheels: a dark arch first, then tyre, rim, spokes, caliper and the hub
+    const deck=Math.min(topAt(0.12),topAt(0.36));
+    let wy=deck-Math.round(0.26*pxm);if(v.chassis!=='proto')wy=Math.max(wy,roofY-2);
+    wingAt(-0.02,0.46,Math.min(wy,deck-4),lo);
+  }else if(P.fw)wingAt(P.fw[0],P.fw[1],Math.round(Y(P.fw[2])),col);
+  const rb=Math.ceil(sillY);
+  if(v.aeroFloor==='undertray')buf.rect(G.xr+R,rb,G.xf-G.xr-2*R,1,'#26263a');
+  if(v.aeroFloor==='diffuser')for(let k=0;k<3;k++)buf.line(X(0)+k*3,rb+1,X(0)+k*3+4,rb-2,dark);
+  // wheels: the wheel well first, then tyre, rim, spokes, caliper and the hub
   const driven=v.drive||'rwd',slick=v.tireType==='slick',calip=CALIPER_COL[v.brakeType]||CALIPER_COL.slotted;
   for(const [wx,isFront] of [[G.xr,false],[G.xf,true]]){
     const r=G.rPx,cy=CAR_GY-r,rr=r*G.rimFrac;
-    buf.disc(wx,cy,r+1.6,'#05050a');
+    for(let y=Math.floor(acy-R);y<=sillY;y++)for(let x=Math.floor(wx-R);x<=Math.ceil(wx+R);x++){
+      const dx=x+0.5-wx,dy=y+0.5-acy;if(dx*dx+dy*dy<=R*R&&!buf.get(x,y))buf.set(x,y,'#0b0b12');}
     buf.disc(wx,cy,r,'#1c1c26');
     if(!slick)for(let k=0;k<12;k++){const a=t+k*Math.PI/6;buf.set(wx+Math.cos(a)*(r-0.7)-0.5,cy+Math.sin(a)*(r-0.7)-0.5,'#33334a');}
     buf.disc(wx,cy,rr,'#6a6a7a');buf.disc(wx,cy,rr-1,'#9a9aaa');
-    for(let k=0;k<5;k++){const a=t+k*Math.PI*2/5;buf.line(wx-0.5,cy-0.5,wx-0.5+Math.cos(a)*(rr-1),cy-0.5+Math.sin(a)*(rr-1),'#c0c0d0');}
-    for(let k=-1;k<=1;k++){const a=-Math.PI*0.62+k*0.32;buf.set(wx-0.5+Math.cos(a)*(rr-1.2),cy-0.5+Math.sin(a)*(rr-1.2),calip);}
+    for(let k=0;k<5;k++){const a=t+k*Math.PI*2/5;buf.line(wx-0.5,cy-0.5,wx-0.5+Math.cos(a)*(rr-1.5),cy-0.5+Math.sin(a)*(rr-1.5),'#c0c0d0');}
+    for(let k=-1;k<=1;k++){const a=-Math.PI*0.62+k*0.32;buf.set(wx-0.5+Math.cos(a)*(rr-1.6),cy-0.5+Math.sin(a)*(rr-1.6),calip);}
     const powered=driven==='awd'||(driven==='fwd')===isFront;
     buf.rect(wx-1,cy-1,2,2,powered?'#00ff88':'#3a3a4a');
   }
   buf.outline('#05050a');
   buf.under(G.x0-2,CAR_GY,G.lenPx+4,1,'#05050a');                      // contact shadow
+  G.topRow=H;for(let k=0;k<buf.c.length;k++)if(buf.c[k]){G.topRow=Math.floor(k/W);break;}
   return G;
 }
 // Paint a car into a canvas: backdrop, sprite and (optionally) the caption band under it.
@@ -7343,23 +7486,31 @@ function stepPreviews(dt){
   else if(vizMode==='vehicle')renderCarPreview();
 }
 // ---- top-down car for the track map ----
-// 14 x 8 cells, built once per livery and pedal state and then rotated: a car you can see turning,
-// still green on the throttle and red on the brake like the arrow it replaces.
+// Built once per shape, livery and pedal state and then rotated: a car you can see turning, still
+// green on the throttle and red on the brake like the arrow it replaces. Its length and width come
+// from the profile (3.4 cells a metre), so a kei is a stubby box and the pickup a long one with a bed.
 const topCarCache={};
-function topCarSprite(col,state){
-  const key=col+state;if(topCarCache[key])return topCarCache[key];
-  const b=new PixBuf(16,10),hi=shadeHex(col,0.35),lo=shadeHex(col,-0.35);
-  b.rect(2,1,3,1,'#1c1c26');b.rect(10,1,3,1,'#1c1c26');b.rect(2,8,3,1,'#1c1c26');b.rect(10,8,3,1,'#1c1c26');   // tyres
-  b.rect(1,2,14,6,col);b.rect(1,2,14,1,hi);b.rect(1,7,14,1,lo);
-  b.rect(9,3,2,4,'#1a2a3a');b.rect(4,3,1,4,'#1a2a3a');               // windscreen, rear glass
-  b.rect(5,3,4,4,shadeHex(col,0.15));                                 // roof
-  b.rect(15,2,1,2,'#fff2a8');b.rect(15,6,1,2,'#fff2a8');              // headlamps
-  b.rect(0,2,1,2,state==='brk'?'#ff2222':'#882222');b.rect(0,6,1,2,state==='brk'?'#ff2222':'#882222');
+function topCarSprite(col,state,shape){
+  const key=col+state+(shape||'');if(topCarCache[key])return topCarCache[key];
+  const P=CAR_PROFILE[shape]||CAR_PROFILE.coupe;
+  const n=Math.max(11,Math.min(21,Math.round(P.L*3.4))),w=Math.max(5,Math.min(8,Math.round(P.W*3.6)));
+  const b=new PixBuf(n+2,w+4),hi=shadeHex(col,0.35),lo=shadeHex(col,-0.35),at=xm=>1+Math.round(xm/P.L*(n-1));
+  for(const ax of [at(P.ovR),at(P.ovR+P.wb)]){b.rect(ax-1,1,3,1,'#1c1c26');b.rect(ax-1,w+2,3,1,'#1c1c26');}   // tyres
+  b.rect(1,2,n,w,col);b.rect(1,2,n,1,hi);b.rect(1,w+1,n,1,lo);
+  if(P.open){b.rect(at(P.cock[0]),3,Math.max(2,at(P.cock[1])-at(P.cock[0])),w-2,'#111118');
+    if(P.helm)b.rect(at(P.helm[0]),Math.floor(w/2)+1,2,2,'#ffcc00');
+    b.rect(at(P.scr[0])-1,3,1,w-2,'#1a2a3a');}
+  else{const ws=at(P.dlo[1])-1,rg=at(P.dlo[0]);
+    b.rect(ws-1,3,2,w-2,'#1a2a3a');b.rect(rg,3,1,w-2,'#1a2a3a');             // windscreen, rear glass
+    b.rect(rg+1,3,Math.max(1,ws-rg-2),w-2,shadeHex(col,0.15));}               // roof
+  if(P.bed)b.rect(2,3,Math.max(1,at(P.bed[1])-3),w-2,'#2a2a3a');
+  b.rect(n,2,1,2,'#fff2a8');b.rect(n,w,1,2,'#fff2a8');                     // headlamps
+  b.rect(1,2,1,2,state==='brk'?'#ff2222':'#882222');b.rect(1,w,1,2,state==='brk'?'#ff2222':'#882222');
   b.outline('#000000');
   const cv=b.canvas();topCarCache[key]=cv;return cv;
 }
-function drawTopCar(g,x,y,heading,col,state){
-  const spr=topCarSprite(col,state),s=1.5;
+function drawTopCar(g,x,y,heading,col,state,shape){
+  const spr=topCarSprite(col,state,shape),s=1.5;
   g.save();g.translate(x,y);g.rotate(heading);g.imageSmoothingEnabled=false;
   if(state!=='coast'){g.fillStyle=state==='brk'?'rgba(255,85,85,0.35)':'rgba(0,255,136,0.35)';
     g.fillRect(-spr.width*s/2-2,-spr.height*s/2-2,spr.width*s+4,spr.height*s+4);}
@@ -8090,7 +8241,7 @@ function drawTrack(){
     ctx.strokeStyle='rgba(255,255,255,0.35)';ctx.lineWidth=3;ctx.beginPath();ctx.moveTo(px(live),py(live));
     while(steps<n&&lapReplay.t-tt[k]<2&&lapReplay.t>=tt[k]){ctx.lineTo(px(line[k]),py(line[k]));k=(k-1+n)%n;steps++;}
     ctx.stroke();
-    drawTopCar(ctx,px(live),py(live),live.hd,carLivery(vehicle),live.brk>0.05?'brk':live.thr>0.95?'thr':'coast');
+    drawTopCar(ctx,px(live),py(live),live.hd,carLivery(vehicle),live.brk>0.05?'brk':live.thr>0.95?'thr':'coast',profileKey(vehicle));
   }
   ctx.restore();
   if(live)drawReplayHud(L,live,W,topBar);

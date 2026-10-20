@@ -20,6 +20,61 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 Working toward **v1.0 — every number derived, not fitted.**
 
+### Car sprites from real profiles (build 107)
+
+- **Every car is drawn from a real car's side elevation** (CAR_PROFILE), not from hand-tuned shares
+  of an arbitrary height. Each profile is in metres, at the car's factory stance and on its factory
+  tyres. The maker's published length, width, height and wheelbase are recorded with their source.
+  The overhang split and the hardpoints are read off the car's proportions, because no maker
+  publishes them: tail, deck, rear-glass base, roof, windscreen top, cowl, hood and nose.
+- **One reference car per class**, and the real presets that look different carry their own
+  profile (body.look):
+
+  | Class | Reference car | Published L / W / H / WB (mm) |
+  |---|---|---|
+  | kei | Suzuki Alto Works HA36S | 3395 / 1475 / 1500 / 2460 |
+  | hatch | VW Golf GTI Mk7 | 4268 / 1799 / 1442 / 2631 |
+  | roadster | Mazda MX-5 NA | 3970 / 1675 / 1235 / 2265 |
+  | coupe | BMW M3 E46 | 4492 / 1780 / 1372 / 2731 |
+  | sedan | BMW 3 Series F30 | 4624 / 1811 / 1429 / 2810 |
+  | muscle | Ford Mustang GT S550 | 4784 / 1916 / 1381 / 2720 |
+  | rally | Toyota GR Yaris | 3995 / 1805 / 1455 / 2560 |
+  | gt | Ferrari 812 Superfast | 4657 / 1971 / 1276 / 2720 |
+  | super | Lamborghini Huracán LP610-4 | 4459 / 1924 / 1165 / 2620 |
+  | hyper | McLaren P1 | 4588 / 1946 / 1188 / 2670 |
+  | proto | Radical SR3 RSX | 4077 / 1799 / 1093 / 2370 |
+  | pickup | Chevrolet Silverado 2500HD crew cab | 6350 / 2078 / 2027 / 4036 |
+  | suv | BMW X5 M F95 | 4938 / 2015 / 1747 / 2975 |
+
+  Own profiles: Fiat 500, Toyota Aygo, Ford Fiesta, Civic Type R FK8, AE86, S2000, 911 GT3 991.2,
+  Supra A80, Skyline R34, Impreza STI GD, Lancer Evo IX, RS3 8V, Corvette C6 (both), Challenger,
+  RX-7 FD and RX-8. Only numbers ship: no photographs, outlines or badges.
+- **Flaws fixed from build 106:**
+  - **Glass:** windows are cut by the A, B and C (or D) pillars where the car has them.
+  - **Arches:** real cut-outs with a dark wheel well, and they stay open when the car is lowered.
+  - **Empty band:** one scale (up to 34 cells a metre) serves every car up to a big saloon, so a
+    low car fills its frame. The preview is shorter (168 × 68).
+  - **Engine marker:** placed ahead of the cowl, behind the seats or behind the rear axle, then
+    moved to the nearest spot where the whole block sits inside the body.
+  - **Aero:** the rear wing stands on the deck and stays within two cells of the roof (except on
+    the prototype). The front wing and splitter sit under the nose.
+  - **Factory wings:** cars that wear one from the factory now draw it (Type R, GT3, Supra, R34,
+    STI, Evo, RX-7).
+  - **Wheels:** sit on the published axles, sized from the fitted tyre. The body rides up on a
+    taller tyre and down on a lower spring.
+  - **Classes:** hatch and rally are no longer the same shape, and coupe, sedan and GT now differ.
+  - **Details:** lamps where the car has them, door shut-lines, mirrors, grilles on blunt noses,
+    side intakes on mid-engined cars, the pickup's open bed, and the open cockpit, headrest and
+    helmet on open cars.
+- **The track map's car** takes each car's length and width (3.4 cells a metre), so a kei is
+  stubby and the pickup long, with a bed.
+- tests/test64 checks every profile and sprite against the published numbers:
+  - length and height to within a cell or two
+  - wheels on the axles under an arch, and glass with pillars
+  - the engine inside the body, and wings attached
+  - the classes distinct, and no empty band over low cars
+  - the top-down proportions
+
 ### Pixel-art car and engine (build 106)
 
 - **The car, side on**, at the top of the VEHICLE tab, drawn from the build rather than chosen from a

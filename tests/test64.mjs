@@ -4,7 +4,8 @@
 // the engine (ENGINE tab, garage cards). They are drawn from the parts you chose, so the checks are
 // that every combination draws without throwing, that the picture actually changes when a part does
 // (a wing appears, bigger wheels are bigger, a mid-engined car carries its engine behind the cabin),
-// and that a saved build gets its own thumbnail even from an old record missing fields.
+// and that a saved build gets its own thumbnail even from an old record missing fields. Build 107 draws
+// each car from a real car's published dimensions, so 1b checks the sprite against those numbers.
 import { chromium } from './pw.mjs';
 import { fileURLToPath, pathToFileURL } from 'url';
 import path from 'path';
@@ -62,6 +63,85 @@ if (!(car.coupeEng > car.coupeMid)) fails.push('a front-engined coupe does not s
 if (!(car.superEng >= 0 && car.superEng < car.superMid)) fails.push('a mid-engined super does not show its engine behind the cabin');
 if (!(car.pickup > car.kei * 1.3)) fails.push('a pickup is not drawn longer than a kei car');
 if (car.enginePlace911 !== 'rear') fails.push(`a rear-engined real car reads as ${car.enginePlace911}-engined, not rear`);
+
+// ---- 1b. the car is drawn from a real car's measured profile ----
+// Each profile carries the maker's published L, H and wheelbase; the sprite must be that car at
+// scale: as long and as tall as published, wheels on the axles under real arch cut-outs, glass cut
+// by pillars, the engine block inside the body and aero standing on it. The classes must differ.
+const prof = await page.evaluate(() => {
+  const out = { bad: [], n: 0 };
+  const bad = m => out.bad.push(m);
+  for (const [k, P] of Object.entries(CAR_PROFILE)) {
+    out.n++;
+    if (!P.src || !P.n) bad(k + ': no source');
+    const xs = [], ys = []; for (let j = 0; j < P.top.length; j += 2) { xs.push(P.top[j]); ys.push(P.top[j + 1]); }
+    if (Math.abs(Math.max(...xs) - P.L) > 0.02 * P.L) bad(k + ': top does not reach the published length');
+    const roof = Math.max(P.open ? P.scr[3] : 0, ...ys);                 // an open car may stand to its screen
+    if (Math.abs(roof - P.H) > 0.03 * P.H) bad(k + `: roof ${roof} m vs published ${P.H} m`);
+    if (!(P.ovR > 0.2 && P.L - P.wb - P.ovR > 0.2)) bad(k + ': overhangs do not add up');
+  }
+  for (const p of VEHICLE_PRESETS) if (p.body.look && !CAR_PROFILE[p.body.look]) bad(p.name + ': look ' + p.body.look + ' missing');
+  const base = Object.assign({}, DEFAULT_VEHICLE);
+  const draw = v => { const b = new PixBuf(CAR_GW, CAR_GH); const G = drawCarSprite(b, v, DEFAULT_ENGINE, 0); return { b, G }; };
+  const cases = Object.keys(CHASSIS).map(c => ({ name: c, v: Object.assign({}, base, { chassis: c, aeroFront: 'none', aeroRear: 'none', aeroFloor: 'none' }) }));
+  for (const p of VEHICLE_PRESETS) { const v = vehicleFromPreset(p); v.body = Object.assign({}, p.body); cases.push({ name: p.name, v }); }
+  const sprites = {};
+  for (const { name, v } of cases) {
+    let r; try { r = draw(v); } catch (e) { bad(name + ' threw ' + e.message); continue; }
+    const { b, G } = r, P = G.P, col = carLivery(v);
+    sprites[name] = b.c.join();
+    // size: body rows from the top of the roof to the ground, and its length
+    let top = CAR_GH, x0 = CAR_GW, x1 = 0;
+    for (let y = 0; y < CAR_GY; y++) for (let x = 0; x < CAR_GW; x++) { const c = b.get(x, y); if (c === col || c === shadeHex(col, 0.4)) { top = Math.min(top, y); x0 = Math.min(x0, x); x1 = Math.max(x1, x); } }
+    const hPx = CAR_GY - top, hWant = ((P.open ? Math.max(...P.top.filter((_, j) => j % 2)) : P.H) + G.lift) * G.pxm;
+    if (Math.abs(hPx - hWant) > 2) bad(`${name}: drawn ${hPx} cells tall, its ${P.H} m make ${hWant.toFixed(1)}`);
+    if (Math.abs((x1 - x0 + 1) - G.lenPx) > 3) bad(`${name}: drawn ${x1 - x0 + 1} cells long, its ${G.L.toFixed(2)} m make ${G.lenPx.toFixed(1)}`);
+    // wheels on the axles, under an arch: the cell just above the tyre is not body
+    for (const wx of [G.xr, G.xf]) {
+      const cx = Math.floor(wx), ty = Math.floor(CAR_GY - 2 * G.rPx);
+      if (b.get(cx, Math.floor(CAR_GY - G.rPx)) == null) bad(name + ': no wheel on the axle');
+      if (b.get(cx, ty - 1) === col) bad(name + ': no arch over the wheel');
+    }
+    // glass with pillars between the panes (closed cars), none on an open one
+    const glassCols = []; for (let x = 0; x < CAR_GW; x++) { let g = 0; for (let y = 0; y < CAR_GY; y++) if (b.get(x, y) === '#1a2a3a' || b.get(x, y) === '#2c4660') g++; glassCols.push(g); }
+    if (!P.open) {
+      const lit = glassCols.map((g, x) => g ? x : -1).filter(x => x >= 0);
+      if (lit.length < 10) bad(name + ': hardly any glass');
+      else if (P.pil.length) { let gaps = 0; for (let x = lit[0]; x <= lit[lit.length - 1]; x++) if (!glassCols[x]) gaps++; if (gaps < 2) bad(name + ': side glass has no pillar'); }
+    }
+    // the engine block (its dark frame) sits wholly inside the body
+    let eIn = true, eAny = false;
+    for (let y = 0; y < CAR_GH; y++) for (let x = 0; x < CAR_GW; x++) if (b.get(x, y) === '#0d0d18') {
+      eAny = true; for (const [dx, dy] of [[-1, 0], [1, 0], [0, -1], [0, 1]]) { const c = b.get(x + dx, y + dy); if (c == null || c === '#05050a') eIn = false; }
+    }
+    if (!eAny) bad(name + ': no engine drawn'); else if (!eIn) bad(name + ': engine pokes out of the body');
+  }
+  // a rear wing stands on the deck: its uprights reach a body cell; a front wing reaches past the nose
+  for (const c of ['coupe', 'super', 'hyper', 'proto', 'pickup']) {
+    const { b, G } = draw(Object.assign({}, base, { chassis: c, aeroRear: 'wing', aeroFront: 'wing' }));
+    const ux = Math.round(G.X(-0.02 + 0.48 * 0.3)); let y = 0; while (y < CAR_GY && b.get(ux, y) !== '#3a3a4a') y++;
+    while (y < CAR_GY && b.get(ux, y) === '#3a3a4a') y++;
+    const below = b.get(ux, y); if (!(below && below !== '#05050a')) bad(c + ': rear wing floats above the deck');
+    let front = 0; for (let x = 0; x < CAR_GW; x++) for (let yy = 0; yy < CAR_GH; yy++) if (b.get(x, yy) === '#3a3a4a') front = Math.max(front, x);
+    if (!(front > G.X(G.P.L) + 1)) bad(c + ': front wing not ahead of the nose');
+  }
+  // classes that used to share a shape no longer do
+  const diff = (a, z) => { const A = sprites[a].split(','), Z = sprites[z].split(','); let n = 0; for (let k = 0; k < A.length; k++) if ((A[k] === '') !== (Z[k] === '')) n++; return n; };
+  out.diffs = { 'hatch/rally': diff('hatch', 'rally'), 'coupe/sedan': diff('coupe', 'sedan'), 'coupe/gt': diff('coupe', 'gt'), 'sedan/gt': diff('sedan', 'gt') };
+  for (const [k, n] of Object.entries(out.diffs)) if (n < 150) bad(k + ` differ in only ${n} cells`);
+  const p911 = VEHICLE_PRESETS.find(p => p.body.look === 'gt3');
+  if (diff(p911.name, 'super') < 150) bad('the 911 is drawn like the class supercar');
+  // no band of empty sky over a low car
+  for (const c of ['proto', 'super', 'hyper']) { const { G } = draw(Object.assign({}, base, { chassis: c })); if (G.topRow > 18) bad(`${c}: first lit row ${G.topRow}, a band of empty sky`); out[c + 'Top'] = G.topRow; }
+  // top-down: follows each car's length and width
+  const kei = topCarSprite('#ff0000', 'coast', 'kei'), pick = topCarSprite('#ff0000', 'coast', 'pickup'), cp = topCarSprite('#ff0000', 'coast', 'coupe');
+  out.top = [kei.width, kei.height, cp.width, cp.height, pick.width, pick.height];
+  if (!(pick.width > cp.width && cp.width > kei.width)) bad('top-down sprites do not follow length (kei < coupe < pickup)');
+  if (!(pick.height >= kei.height)) bad('top-down pickup is not as wide as the kei');
+  return out;
+});
+console.log(`== profiles: ${prof.n} checked · class shape differences ${JSON.stringify(prof.diffs)} · first lit row proto ${prof.protoTop}, super ${prof.superTop} · top-down kei/coupe/pickup ${prof.top} ==`);
+if (prof.bad.length) fails.push(...prof.bad.slice(0, 20));
 
 // ---- 2. every engine type x layout x count x induction draws; parts change the picture ----
 const eng = await page.evaluate(() => {
