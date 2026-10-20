@@ -869,11 +869,14 @@ esses and linked complexes all fall out of that on their own. Two things bend it
 minimum curvature. First, <b>the track is not one width</b>: every circuit here narrows through its
 tight sections and opens out on the fast ones, and a 7 m corner simply cannot be straightened as
 much as a 13 m one — the figure quoted on the map is the range, and the circuit's headline width is
-its average. Second, a <b>late apex</b>: a metre of radius at a corner <i>exit</i> is worth far more
-than a metre at the entry, because exit speed is carried the whole length of whatever follows while
-at the entry you are braking anyway. The solver prices curvature by how open the track is ahead, so
-it gives up entry radius to straighten the exit — moving the apex about 11 m later on corners that
-lead onto a straight, and leaving corners that lead into more corners exactly where they were.
+its average, and the car's centre can come no closer to an edge than half the car's width. Second,
+minimum curvature is not minimum <b>time</b>, and the line each car drives is its own: starting from
+minimum curvature, the solver moves the line a little at a time, re-solves the car's speed where the
+move can change it, and keeps every move that makes the lap quicker. Nothing in that describes a racing
+line, yet the familiar shapes come out of it: a <b>late apex</b> where a corner opens onto a straight
+(exit speed is carried the whole length of what follows, while at the entry you are braking anyway), a
+tighter line where the next corner comes quickly, and a different line for a 90 hp hatchback than for
+an 800 hp aero car, because their grip, power and brakes trade differently.
 Circuits are three-dimensional, so the
 lap also accounts for <b>elevation</b>: gravity pulling you back up a climb and pushing you down a
 descent, the slightly reduced weight-on-tyres of a slope, and — the one that really bites —
@@ -902,11 +905,11 @@ one mostly <span style="color:#4aa3ff">traction</span> out of slow corners. Shif
 per gear change around the lap, so a slow-shifting box loses real time.
 </div>
 <div class="guide-body" data-gk="tracklimit">
-<span style="color:#c86">One limit worth knowing: the line is still only an approximation of the
-minimum-<i>time</i> line. The late-apex bias is priced from the geometry ahead, not from the car's
-own speed, so the same line is driven by a 90 hp hatchback and an 800 hp aero car — where in
-reality the fast car would brake later and apex later still. It is worth about half a percent, and
-it is the same half percent for everyone, so build-to-build comparisons stay honest.</span>
+<span style="color:#c86">One limit worth knowing: the lap is quasi-steady. The car is always exactly
+on the speed its grip, power and brakes allow at each point of the line, so there is no yaw inertia
+(turning in takes no time), and the driver never makes a mistake. The minimum-time line is found by
+small moves that each make the lap quicker, so it is the best line near minimum curvature: a very
+different line (taking a corner on the other side entirely) would not be found.</span>
 </div>
 </section>
 <section class="guide-page" id="gp-gpx" data-cat="track" data-title="Importing a circuit" hidden>
@@ -923,8 +926,7 @@ your browser only — nothing is uploaded, and nothing ships with the app.
 <span style="color:#c86">On accuracy: an imported circuit's lap time will read a little slow. A GPX
 trace carries no width at all, so the width profile is <i>modelled</i> from the layout — roads are
 built wide where they are fast and narrow where they are tight — rather than surveyed. The line is
-still an approximation of the minimum-time line, and the driver never makes a mistake or takes a
-compromise line. Treat it as a consistent yardstick for comparing your own builds, not as a real lap
+the car's own minimum-time line, and the driver never makes a mistake or takes a compromise line. Treat it as a consistent yardstick for comparing your own builds, not as a real lap
 record.</span>
 </div>
 </section>
@@ -1001,7 +1003,7 @@ experiment freely, then back on for consequences.
 <section class="guide-page" id="gp-limits" data-cat="more" data-title="Known limits" hidden>
 <h4 class="guide-title">Known limits</h4>
 <div class="guide-body" data-gk="limits">
-This is a physics model, and like every model it leaves things out. These are the ones worth knowing, because they can move a result you care about:<br>· <b>The VE curve is still partly fitted for some engines.</b> Petrol engines with poppet valves get their breathing shape from the parts: valve timing, the tuned intake and exhaust, port flow and valve float. Diesels, rotaries and two-strokes still use a fitted curve.<br>· <b>Turbines are fed by mean pressure.</b> Real ones get 20–45% more work from each cylinder's exhaust pulse at low rpm, so turbos here spool a little later than real ones, and twin-scroll manifolds are not yet rewarded.<br>· <b>The lap uses steady boost.</b> The 0–100 integrates turbo lag; the lap solver does not, so a very laggy build is slightly flattered on track.<br>· <b>The racing line is an approximation</b> of the minimum-time line, and the driver never makes a mistake.<br>· <b>Imported circuits have modelled width</b>, because a GPX file carries none.<br>Each of these is measured and written up in the project, and each one is on the list.
+This is a physics model, and like every model it leaves things out. These are the ones worth knowing, because they can move a result you care about:<br>· <b>The VE curve is still partly fitted for some engines.</b> Petrol engines with poppet valves get their breathing shape from the parts: valve timing, the tuned intake and exhaust, port flow and valve float. Diesels, rotaries and two-strokes still use a fitted curve.<br>· <b>Turbines are fed by mean pressure.</b> Real ones get 20–45% more work from each cylinder's exhaust pulse at low rpm, so turbos here spool a little later than real ones, and twin-scroll manifolds are not yet rewarded.<br>· <b>The lap uses steady boost.</b> The 0–100 integrates turbo lag; the lap solver does not, so a very laggy build is slightly flattered on track.<br>· <b>The lap is quasi-steady:</b> the line is each car's minimum-time line, but turning in takes no time (no yaw inertia) and the driver never makes a mistake.<br>· <b>Imported circuits have modelled width</b>, because a GPX file carries none.<br>Each of these is measured and written up in the project, and each one is on the list.
 </div>
 </section>
 <div class="guide-nav guide-nav-foot" id="guideNavFoot"></div>
@@ -2694,11 +2696,11 @@ const GUIDE_I18N={
   fwd:{el:"<b>Γιατί ένα προσθιοκίνητο ξεμένει από πρόσφυση τόσο νωρίς.</b> Τρία πράγματα πολλαπλασιάζονται, και το πρώτο ξαφνιάζει: ένα FWD κινεί μόνο τον εμπρός άξονα, που σηκώνει περίπου το 60% του βάρους σταματημένο — και η επιτάχυνση μεταφέρει βάρος <i>μακριά</i> από αυτόν, στο ~53%. Πολλαπλασίασε με ανοιχτό διαφορικό (0.78) και οικονομικά ελαστικά (μ 0.81) και όλο το αυτοκίνητο περιορίζεται στα <b>0.33&nbsp;g</b>, ό,τι κι αν βγάζει ο κινητήρας. Στα 100&nbsp;χλμ/ώρα αυτό το ταβάνι είναι ~2500&nbsp;N, και ήδη ένας κινητήρας 109&nbsp;hp ζητά 2700&nbsp;N — οπότε μια έκδοση 217&nbsp;hp του ίδιου αυτοκινήτου φτάνει τα 100&nbsp;χλμ/ώρα στον <i>ίδιο ακριβώς χρόνο</i>. Και τα δύο απλώς «κάθονται» στο ταβάνι. Δεν είναι ιδιοτροπία της προσομοίωσης· γι’ αυτό κανείς δεν φτιάχνει προσθιοκίνητο kei 200&nbsp;hp. Η λύση είναι πρόσφυση, όχι ισχύς — στο ίδιο αυτοκίνητο των 217&nbsp;hp: μόνο ένα LSD με δίσκους το πάει από 9.9&nbsp;s σε 8.0&nbsp;s, σπορ ελαστικά 6.6&nbsp;s, slick 5.5&nbsp;s, και μετατροπή σε AWD 4.4&nbsp;s. Με τον ίδιο κινητήρα."},
   difftrade:{el:"Και τώρα το αντιστάθμισμα μετριέται. Στην καρτέλα ΠΙΣΤΑ ένα μπλοκέ διαφορικό πληρώνει το πλεονέκτημά του στην ευθεία: τρίβει σε κάθε στροφή. Σε ένα muscle 842&nbsp;hp το spool είναι ~0.2&nbsp;s ταχύτερο στο 0–100 και ~2.5&nbsp;s <i>πιο αργό</i> ανά γύρο, ενώ το ανοιχτό είναι το χειρότερο και στα δύο."},
   performance:{el:"Ο κινητήρας προστίθεται και το ταμπλό <b>Επιδόσεις</b> υπολογίζει <b>0–100 km/h</b>, <b>400/800/1000 m</b>, <b>τελική</b>, <b>φρενάρισμα 100–0</b> και το τεστ <b>0–200–0</b> ζωντανά — εκκίνηση περιορισμένη από πρόσφυση και φρενάρισμα με όριο ελαστικών/φρένων και εξασθένηση. Κολλώδη ελαστικά, μεγάλα φρένα και AWD βοηθούν πιο πολύ."},
-  trackline:{el:"<b>Η καρτέλα ΠΙΣΤΑ</b> βάζει το αυτοκίνητο σε κυκλική πίστα και λύνει έναν γύρο. Πρώτα υπολογίζει την <b>ιδανική γραμμή</b>: κανείς δεν οδηγεί στον άξονα της πίστας, γιατί χρησιμοποιώντας όλο το πλάτος «ισιώνει» η στροφή και περνάς πιο γρήγορα. Η γραμμή βρίσκεται ελαχιστοποιώντας τη συνολική καμπυλότητα μέσα στα όρια της πίστας — και το έξω-μέσα-έξω προκύπτει μόνο του. Δύο πράγματα την απομακρύνουν από την καθαρή ελάχιστη καμπυλότητα. Πρώτον, <b>η πίστα δεν έχει ένα πλάτος</b>: κάθε πίστα εδώ στενεύει στα τεχνικά της σημεία και ανοίγει στα γρήγορα, και μια στροφή 7 m απλώς δεν «ισιώνει» όσο μία 13 m — ο αριθμός στον χάρτη είναι το εύρος, και το πλάτος της πίστας είναι ο μέσος όρος. Δεύτερον, το <b>καθυστερημένο apex</b>: ένα μέτρο ακτίνας στην <i>έξοδο</i> αξίζει πολύ περισσότερο από ένα μέτρο στην είσοδο, γιατί η ταχύτητα εξόδου μεταφέρεται σε όλο το μήκος αυτού που ακολουθεί, ενώ στην είσοδο ούτως ή άλλως φρενάρεις. Ο λύτης «τιμολογεί» την καμπυλότητα με βάση το πόσο ανοιχτή είναι η πίστα μπροστά, οπότε θυσιάζει ακτίνα εισόδου για να ισιώσει την έξοδο — μετακινώντας το apex περίπου 11 m αργότερα στις στροφές που βγάζουν σε ευθεία, και αφήνοντας ανέπαφες όσες οδηγούν σε άλλες στροφές. Οι πίστες είναι τρισδιάστατες, οπότε ο γύρος λαμβάνει υπόψη και το <b>υψόμετρο</b>: η βαρύτητα σε κρατά πίσω στην ανηφόρα και σε σπρώχνει στην κατηφόρα, και — το πιο σημαντικό — η <b>κατακόρυφη καμπυλότητα</b>. Σε μια κορυφή το αυτοκίνητο «ελαφραίνει» και χάνει πρόσφυση ακριβώς εκεί που πάει γρήγορα· σε μια κοιλάδα πιέζεται στο οδόστρωμα και περνά πολύ πιο γρήγορα. Μετράει και το πού πέφτουν οι λόφοι: μια ανηφόρα σε ζώνη φρεναρίσματος σε αφήνει να φρενάρεις αργότερα και <i>κερδίζει</i> χρόνο."},
+  trackline:{el:"<b>Η καρτέλα ΠΙΣΤΑ</b> βάζει το αυτοκίνητο σε κυκλική πίστα και λύνει έναν γύρο. Πρώτα υπολογίζει την <b>ιδανική γραμμή</b>: κανείς δεν οδηγεί στον άξονα της πίστας, γιατί χρησιμοποιώντας όλο το πλάτος «ισιώνει» η στροφή και περνάς πιο γρήγορα. Η γραμμή βρίσκεται ελαχιστοποιώντας τη συνολική καμπυλότητα μέσα στα όρια της πίστας — και το έξω-μέσα-έξω προκύπτει μόνο του. Δύο πράγματα την απομακρύνουν από την καθαρή ελάχιστη καμπυλότητα. Πρώτον, <b>η πίστα δεν έχει ένα πλάτος</b>: κάθε πίστα εδώ στενεύει στα τεχνικά της σημεία και ανοίγει στα γρήγορα, και μια στροφή 7 m απλώς δεν «ισιώνει» όσο μία 13 m — ο αριθμός στον χάρτη είναι το εύρος, και το πλάτος της πίστας είναι ο μέσος όρος· και το κέντρο του αυτοκινήτου δεν πλησιάζει την άκρη πιο κοντά από το μισό του πλάτος του. Δεύτερον, η ελάχιστη καμπυλότητα δεν είναι ελάχιστος <b>χρόνος</b>, και κάθε αυτοκίνητο οδηγεί τη δική του γραμμή: ξεκινώντας από την ελάχιστη καμπυλότητα, ο λύτης μετακινεί τη γραμμή λίγο-λίγο, ξαναλύνει την ταχύτητα εκεί που αλλάζει, και κρατά κάθε κίνηση που κάνει τον γύρο πιο γρήγορο. Τίποτα από αυτά δεν περιγράφει γραμμή αγώνα, κι όμως προκύπτουν τα γνωστά σχήματα: <b>καθυστερημένο apex</b> όπου η στροφή βγάζει σε ευθεία (η ταχύτητα εξόδου μεταφέρεται σε όλο το μήκος που ακολουθεί, ενώ στην είσοδο ούτως ή άλλως φρενάρεις), πιο κλειστή γραμμή όταν η επόμενη στροφή έρχεται γρήγορα, και άλλη γραμμή για ένα hatchback 90 hp από ένα αγωνιστικό 800 hp. Οι πίστες είναι τρισδιάστατες, οπότε ο γύρος λαμβάνει υπόψη και το <b>υψόμετρο</b>: η βαρύτητα σε κρατά πίσω στην ανηφόρα και σε σπρώχνει στην κατηφόρα, και — το πιο σημαντικό — η <b>κατακόρυφη καμπυλότητα</b>. Σε μια κορυφή το αυτοκίνητο «ελαφραίνει» και χάνει πρόσφυση ακριβώς εκεί που πάει γρήγορα· σε μια κοιλάδα πιέζεται στο οδόστρωμα και περνά πολύ πιο γρήγορα. Μετράει και το πού πέφτουν οι λόφοι: μια ανηφόρα σε ζώνη φρεναρίσματος σε αφήνει να φρενάρεις αργότερα και <i>κερδίζει</i> χρόνο."},
   tracklap:{el:"Αξίζει <b>5–7% του χρόνου γύρου</b> σε σχέση με τον άξονα, και όσο πιο φαρδιά η πίστα τόσο περισσότερο. Μετά βρίσκει την ταχύτητα στροφής σε κάθε σημείο (<i>v = &radic;(μ&middot;(mg + κάθετη δύναμη)&middot;r / m)</i>), μετά δουλεύει ανάποδα από κάθε στροφή για τα σημεία φρεναρίσματος και προς τα εμπρός στην έξοδο με τη διαθέσιμη κίνηση, κρατώντας τη μικρότερη ταχύτητα σε κάθε σημείο. Ο <b>κύκλος τριβής</b> τα δένει: η πρόσφυση που ξοδεύεται στο στρίψιμο δεν είναι διαθέσιμη για επιτάχυνση ή φρενάρισμα. Η χρωματιστή γραμμή στον χάρτη δείχνει τι περιορίζει το αυτοκίνητο σε κάθε σημείο και η λεζάντα αθροίζει τα ποσοστά του γύρου. Ο χρόνος αλλαγής σχέσης χρεώνεται σε κάθε αλλαγή, οπότε ένα αργό κιβώτιο χάνει πραγματικό χρόνο."},
-  tracklimit:{el:"<span style=\"color:#c86\">Ένα όριο: η γραμμή παραμένει μόνο προσέγγιση της γραμμής ελάχιστου <i>χρόνου</i>. Η τάση για καθυστερημένο apex υπολογίζεται από τη γεωμετρία μπροστά, όχι από την ταχύτητα του ίδιου του αυτοκινήτου, οπότε την ίδια γραμμή οδηγεί ένα hatchback 90&nbsp;hp και ένα αγωνιστικό 800&nbsp;hp — ενώ στην πραγματικότητα το γρήγορο θα φρέναρε αργότερα και θα έκανε ακόμα πιο καθυστερημένο apex. Αξίζει περίπου μισό τοις εκατό, και είναι το ίδιο μισό τοις εκατό για όλους, οπότε οι συγκρίσεις μεταξύ κατασκευών παραμένουν έντιμες.</span>"},
+  tracklimit:{el:"<span style=\"color:#c86\">Ένα όριο: ο γύρος είναι οιονεί στατικός. Το αυτοκίνητο είναι πάντα ακριβώς στην ταχύτητα που επιτρέπουν η πρόσφυση, η ισχύς και τα φρένα σε κάθε σημείο, οπότε δεν υπάρχει αδράνεια εκτροπής (η είσοδος στη στροφή δεν παίρνει χρόνο) και ο οδηγός δεν κάνει ποτέ λάθος. Η γραμμή ελάχιστου χρόνου βρίσκεται με μικρές κινήσεις που η καθεμία κάνει τον γύρο πιο γρήγορο, οπότε είναι η καλύτερη γραμμή κοντά στην ελάχιστη καμπυλότητα· μια εντελώς διαφορετική γραμμή δεν θα βρεθεί.</span>"},
   gpx:{el:"<b>ΕΙΣΑΓΩΓΗ GPX</b> φορτώνει πραγματική πίστα από αρχείο GPX: προβάλλεται σε μέτρα, ξαναδειγματοληπτείται σε σταθερό βήμα και εξομαλύνεται ελαφρά ώστε ο θόρυβος GPS να μη γίνει «στροφές». Το υψόμετρο έρχεται από το αρχείο. Οι εισαγόμενες πίστες μένουν μόνο στον browser σου."},
-  gpxacc:{el:"<span style=\"color:#c86\">Ο χρόνος θα βγει λίγο αργός: ένα αρχείο GPX δεν περιέχει καθόλου πλάτος, οπότε το προφίλ πλάτους <i>μοντελοποιείται</i> από τη χάραξη — οι δρόμοι φτιάχνονται φαρδιοί εκεί που είναι γρήγοροι και στενοί εκεί που είναι τεχνικοί — δεν είναι μετρημένο. Η γραμμή παραμένει προσέγγιση της γραμμής ελάχιστου χρόνου και ο οδηγός δεν κάνει ποτέ λάθος. Χρησιμοποίησέ το για σύγκριση των δικών σου κατασκευών.</span>"},
+  gpxacc:{el:"<span style=\"color:#c86\">Ο χρόνος θα βγει λίγο αργός: ένα αρχείο GPX δεν περιέχει καθόλου πλάτος, οπότε το προφίλ πλάτους <i>μοντελοποιείται</i> από τη χάραξη — οι δρόμοι φτιάχνονται φαρδιοί εκεί που είναι γρήγοροι και στενοί εκεί που είναι τεχνικοί — δεν είναι μετρημένο. Η γραμμή είναι η γραμμή ελάχιστου χρόνου του ίδιου του αυτοκινήτου και ο οδηγός δεν κάνει ποτέ λάθος. Χρησιμοποίησέ το για σύγκριση των δικών σου κατασκευών.</span>"},
   scorecard:{el:"<b>ΑΝΑΦΟΡΑ ΓΥΡΟΥ</b> — στην καρτέλα ΠΙΣΤΑ, τα κουμπιά ΑΝΑΦΟΡΑ ΓΥΡΟΥ PNG/PDF αποθηκεύουν τον γύρο ως φύλλο τηλεμετρίας: χάρτης με τα σημεία <span style=\"color:#1a7f37\">τέρμα γκάζι</span> και <span style=\"color:#c1121f\">φρεναρίσματος</span>, κάθε στροφή αριθμημένη, γράφημα ταχύτητας ανά απόσταση, χρόνοι γύρου και τομέων, πλήρης προδιαγραφή αυτοκινήτου και <b>παγίδα ταχύτητας σε κάθε στροφή</b> (είσοδος, apex, έξοδος, σχέση, ακτίνα). Οι στροφές έχουν αριθμούς T1…Tn και ονόματα ανά πίστα.<br><b>ΑΝΑΦΟΡΑ ΔΥΝΑΜΟ</b> — τα κουμπιά ΑΝΑΦΟΡΑ PNG/PDF αποθηκεύουν την τρέχουσα μέτρηση ως εκτυπώσιμο φύλλο με τη διάταξη πραγματικού δυναμόμετρου: καμπύλες ισχύος και ροπής με τις κορυφές, μπάντα αποτελεσμάτων, πλήρη προδιαγραφή κινητήρα, συνθήκες μέτρησης και πίνακα δεδομένων. Οι καταγεγραμμένες μετρήσεις εμφανίζονται αχνά για σύγκριση. Το γράφημα είναι ο κινητήρας <i>όπως είναι ρυθμισμένος τώρα</i>, γι’ αυτό τυπώνεται και το <b>δυναμικό σχεδίασης</b>. Όλα παράγονται εκτός σύνδεσης· τίποτα δεν ανεβαίνει.<br>Κάθε build βαθμολογείται <b>S → F</b> από επτά στοιχεία: ειδική <b>ισχύ</b> & <b>ροπή</b> (ανά λίτρο), εύρος <b>περιοχής ισχύος</b>, θερμική <b>απόδοση</b>, <b>ασφάλεια</b> από πειράκι, <b>οδηγησιμότητα</b> (ροπή στις χαμηλές) και <b>εκπομπές</b>. Το κυνήγι μέγιστης ισχύος κοστίζει σε οδηγησιμότητα, ασφάλεια και εκπομπές — η βαθμολογία επιβραβεύει το ισορροπημένο build."},
   career:{el:"<b>Στόχοι πίστας</b> κρίνουν ολόκληρο το αυτοκίνητο: τέσσερις βάζουν στόχο χρόνου γύρου σε συγκεκριμένη πίστα, και το μπάτζετ τους καλύπτει κινητήρα <i>και</i> όχημα. Ο πίνακας βαθμολογίας δείχνει επίσης τον χρόνο γύρου σου — ως ένδειξη, όχι μέσα στον βαθμό: ο βαθμός αφορά τον <i>κινητήρα</i> και δεν πρέπει να αλλάζει επειδή έβαλες άλλα ελαστικά.<br>Διάλεξε έναν <b>ΣΤΟΧΟ</b> στην κορυφή της καρτέλας ΚΙΝΗΤΗΡΑΣ για να κάνεις τη σχεδίαση γρίφο. Κάθε πρόκληση θέτει κριτήρια — ισχύ, οικονομία, εκπομπές, <b>αξιοπιστία</b> ή <b>ισχύ ανά δολάριο</b> — και κάποιες βάζουν όριο <b>προϋπολογισμού</b>. Η κάρτα τσεκάρει κάθε κριτήριο ζωντανά (✓/✗) και δείχνει <b>ΕΠΙΤΥΧΙΑ</b> όταν καλυφθούν όλα· κόστος και αξιοπιστία φαίνονται πάντα. Ο μεγάλος κυβισμός κερδίζει σε αξία· boost και αγωνιστικά μέρη κερδίζουν σε ισχύ αλλά κοστίζουν σε χρήμα και αξιοπιστία."},
   tip:{el:"Συμβουλή: κλείσε τη ΦΘΟΡΑ στις ΕΠΙΛΟΓΕΣ για ελεύθερο πειραματισμό, μετά ξανάνοιξέ την για συνέπειες."}
@@ -2979,8 +2981,8 @@ const VEHICLE_PRESETS=[
    body:{kg:1495,cd:0.32,area:2.07,wb:2.73,fWt:0.51},fit:{drive:'rwd',tire:'sport',tw:255,ta:40,wheel:18,brake:'slotted',rotor:330,susp:'sport',gears:6,gearbox:'manual',diff:'visc'},
    real:{t100:5.2,top:250,limited:true}},
   {cat:'NA Sports',name:'Porsche 911 GT3 (991.2, 2017)',engine:'Porsche 4.0 flat-six (911 GT3 991.2)',chassis:'super',
-   body:{kg:1430,cd:0.34,area:2.05,wb:2.457,fWt:0.39,engPos:'rear'},fit:{drive:'rwd',tire:'semi',tw:305,ta:30,wheel:20,brake:'big',rotor:380,susp:'coilover',gears:7,gearbox:'dct',diff:'clsd'},
-   real:{t100:3.4,top:318},unsure:['cd','area']},
+   body:{kg:1430,cd:0.34,area:2.05,wb:2.457,fWt:0.39,engPos:'rear'},fit:{drive:'rwd',tire:'semi',tw:305,ta:30,wheel:20,brake:'big',rotor:380,susp:'coilover',gears:7,gearbox:'dct',diff:'clsd',aF:'splitter',aR:'lip'},
+   real:{t100:3.4,top:318},unsure:['cd','area','aero'],note:'the real car has a fixed rear wing and a front lip; a splitter and lip are the closest parts'},
   {cat:'Turbo Performance',name:'Toyota Supra RZ (A80, 1993)',engine:'Toyota 2JZ-GTE (Supra A80)',chassis:'coupe',
    body:{kg:1570,cd:0.31,area:1.94,wb:2.55,fWt:0.53},fit:{drive:'rwd',tire:'sport',tw:255,ta:40,wheel:17,brake:'slotted',rotor:320,susp:'sport',gears:6,gearbox:'manual',diff:'clsd'},
    real:{t100:4.9,top:250,limited:true},unsure:['area']},
@@ -5387,7 +5389,7 @@ const TRACKS={
   // No survey data ships with a GPX trace, so the width profile is DERIVED from the layout —
   // narrow through the twisty wooded sections, opening out on the fast ones — which is how the
   // road was actually built. Modelled width, not measured width, and said so in the blurb.
-  nord: {label:'NORDSCHLEIFE',  width:9,wvar:[0.88,1.45],names:[],
+  nord: {label:'NORDSCHLEIFE',  width:9,wvar:[0.88,1.45],names:[],gps:true,
     blurb:'A 20 km road course through wooded hills: 290 m of elevation, blind crests, long descents and a 3 km straight. Geometry and gradients from a recorded GPX trace; corners are numbered, not named, because the detector cannot reliably align with the circuit\'s real corner names. Track width is modelled from the layout — tight sections narrow, fast sections open — not surveyed.',
     pts:[
          {x:3235.7,y:3888,z:236.1},{x:3216.5,y:3903.7,z:236.9},{x:3198.8,y:3920.7,z:237.7},{x:3179.7,y:3936.6,z:238.5},{x:3158.5,y:3951.1,z:239.5},{x:3136.7,y:3965.2,z:240.6},
@@ -5530,20 +5532,37 @@ const TRACKS={
     pts:[{x:90,y:430,z:-2},{x:80,y:280,z:6},{x:160,y:180,z:14},{x:300,y:150,z:20},{x:420,y:190,z:22},{x:520,y:130,z:16},{x:660,y:100,z:8},{x:820,y:130,z:2},{x:880,y:250,z:-4},{x:840,y:370,z:-8},{x:720,y:420,z:-6},{x:640,y:350,z:-2},{x:560,y:380,z:0},{x:540,y:470,z:-6},{x:420,y:500,z:-14},{x:330,y:440,z:-20},{x:240,y:470,z:-18},{x:150,y:510,z:-10}]}
 };
 // Closed Catmull-Rom through the control points, sampled at roughly `step` metres.
+// The centreline through the circuit's control points: a CENTRIPETAL Catmull-Rom spline (knots spaced by
+// the square root of the distance between points), then resampled at a uniform step along its length
+// (build 115). It was the uniform spline, stepped evenly in its parameter: with control points unevenly
+// spaced (a 40 m gap beside a 10 m one) that one overshoots and nearly cusps, and its samples bunch
+// and spread, so a 25 m corner carried 4 m kinks the racing line then had to drive. The centripetal
+// form cannot cusp or loop (Yuksel, Schaefer & Keyser 2011).
 function catmullClosed(cp,step){
-  const n=cp.length,out=[];
+  const n=cp.length,dense=[];
+  const lerp=(a,b,ta,tb,t)=>{const w=(tb-ta)>1e-9?(t-ta)/(tb-ta):0;return {x:a.x+(b.x-a.x)*w,y:a.y+(b.y-a.y)*w,z:(a.z||0)+((b.z||0)-(a.z||0))*w};};
   for(let i=0;i<n;i++){
     const p0=cp[(i-1+n)%n],p1=cp[i],p2=cp[(i+1)%n],p3=cp[(i+2)%n];
-    const steps=Math.max(4,Math.ceil(Math.hypot(p2.x-p1.x,p2.y-p1.y)/step));
+    const kn=(a,b)=>Math.max(1e-6,Math.sqrt(Math.hypot(b.x-a.x,b.y-a.y)));
+    const t0=0,t1=t0+kn(p0,p1),t2=t1+kn(p1,p2),t3=t2+kn(p2,p3);
+    const steps=Math.max(8,Math.ceil(Math.hypot(p2.x-p1.x,p2.y-p1.y)/step*4));
     for(let j=0;j<steps;j++){
-      const t=j/steps,t2=t*t,t3=t2*t;
-      const cm=(a0,a1,a2,a3)=>0.5*(2*a1+(-a0+a2)*t+(2*a0-5*a1+4*a2-a3)*t2+(-a0+3*a1-3*a2+a3)*t3);
-      out.push({
-        x:cm(p0.x,p1.x,p2.x,p3.x),
-        y:cm(p0.y,p1.y,p2.y,p3.y),
-        z:cm(p0.z||0,p1.z||0,p2.z||0,p3.z||0)
-      });
+      const t=t1+(t2-t1)*j/steps;
+      const A1=lerp(p0,p1,t0,t1,t),A2=lerp(p1,p2,t1,t2,t),A3=lerp(p2,p3,t2,t3,t);
+      const B1=lerp(A1,A2,t0,t2,t),B2=lerp(A2,A3,t1,t3,t);
+      dense.push(lerp(B1,B2,t1,t2,t));
     }
+  }
+  // resample at a uniform step along the curve
+  const m=dense.length;let total=0;const cum=[0];
+  for(let i=0;i<m;i++){const a=dense[i],b=dense[(i+1)%m];total+=Math.hypot(b.x-a.x,b.y-a.y);cum.push(total);}
+  const N=Math.max(8,Math.round(total/step)),out=[];
+  let k=0;
+  for(let j=0;j<N;j++){
+    const want=j*total/N;
+    while(cum[k+1]<want)k++;
+    const a=dense[k],b=dense[(k+1)%m],seg=cum[k+1]-cum[k],w=seg>1e-9?(want-cum[k])/seg:0;
+    out.push({x:a.x+(b.x-a.x)*w,y:a.y+(b.y-a.y)*w,z:(a.z||0)+((b.z||0)-(a.z||0))*w});
   }
   return out;
 }
@@ -5641,12 +5660,32 @@ function trackRibbon(g,T,MX,MY,sc,minPx){
   g.closePath();g.fill();
 }
 const trackCache={};
+// A GPS trace is the road plus the receiver's error, and the error reads as curvature: a wobble of a
+// couple of metres every 25 m invents corners the road does not have, and the lap slows for them.
+// Smooth it (a [1 2 1] filter, repeated to convergence) but never move a point further from where it
+// was recorded than the receiver's own accuracy, so every real bend survives (build 115). 2.5 m is a
+// consumer GNSS receiver's horizontal accuracy (CEP); the curvature that remains is the road's.
+const GPS_TOL=2.5;
+function denoiseTrace(pts,tol){
+  const n=pts.length,q=pts.map(p=>Object.assign({},p));
+  for(let k=0;k<200;k++){
+    const pr=q.map(p=>({x:p.x,y:p.y}));
+    for(let i=0;i<n;i++){
+      const a=pr[(i-1+n)%n],c=pr[(i+1)%n];
+      let x=(a.x+2*pr[i].x+c.x)/4,y=(a.y+2*pr[i].y+c.y)/4;
+      const dx=x-pts[i].x,dy=y-pts[i].y,d=Math.hypot(dx,dy);
+      if(d>tol){x=pts[i].x+dx/d*tol;y=pts[i].y+dy/d*tol;}
+      q[i].x=x;q[i].y=y;
+    }
+  }
+  return q;
+}
 // Sample a circuit into {x,y,ds,s,r} points. Radius comes from the Menger curvature of a window
 // of three samples — huge on a straight, small in a hairpin.
 function buildTrack(key){
   if(trackCache[key])return trackCache[key];
   const def=TRACKS[key]||TRACKS.mixed;
-  const p=catmullClosed(def.pts,5),n=p.length;
+  const p=catmullClosed(def.gps||def.imported?denoiseTrace(def.pts,GPS_TOL):def.pts,5),n=p.length;
   for(let i=0;i<n;i++){const q=p[(i+1)%n];p[i].ds=Math.hypot(q.x-p[i].x,q.y-p[i].y);}
   let s=0;for(let i=0;i<n;i++){p[i].s=s;s+=p[i].ds;}
   for(let i=0;i<n;i++){
@@ -5715,22 +5754,23 @@ function buildTrack(key){
   const T={key,label:def.label,blurb:def.blurb,names:def.names||[],pts:p,length:s,corners,width:W0,
     wMin,wMax,wLabel:(wMax-wMin<0.4?Math.round(W0)+' m':Math.round(wMin)+'–'+Math.round(wMax)+' m'),
     minX:Math.min(...xs),maxX:Math.max(...xs),minY:Math.min(...ys),maxY:Math.max(...ys)};
-  T.line=optimiseLine(T);       // depends only on geometry + width, so cache it with the track
+  T.line=optimiseLine(T);       // minimum curvature over the whole width: the map's reference line and corner count
   T.corners=detectCorners(T.line).length;
   trackCache[key]=T;return T;
 }
-// ---- Racing line: minimum curvature within the track width ----
+// ---- Racing line: minimum time for the car, within the track width (build 115) ----
 // Nobody drives the centreline. A driver uses the full width to straighten a corner, which raises
-// the radius and so the speed. The classic first-pass model of that is the MINIMUM-CURVATURE
-// line: hold each point on its own cross-track normal, then repeatedly slide it toward the
-// midpoint of its neighbours — the move that reduces curvature — and clamp it at the track edge.
-// This is projected Gauss-Seidel on ∫κ²ds; out-in-out through corners, straightened esses and
-// linked complexes all emerge from it rather than being scripted.
-// Minimum curvature on its own is not minimum TIME, because it is symmetric: it values a metre of
-// radius at corner entry exactly as much as a metre at the exit. LATE_APEX below breaks that
-// symmetry, which is what puts a real late apex into the line.
-function optimiseLine(T){
-  const c=T.pts,n=c.length,half=T.width/2;
+// the radius and so the speed. The first step is the MINIMUM-CURVATURE line: hold each point on its
+// own cross-track normal and move them together to the least total bending, clamped at the edge.
+// Out-in-out through corners, straightened esses and linked complexes all emerge from it.
+// Minimum curvature is not minimum TIME, for two reasons. It is symmetric, valuing a metre of radius at
+// corner entry as much as at the exit, though exit speed is carried down whatever follows; and it pays
+// no attention to distance. Until build 115 a fitted bias (3 x how open the next 90 m were) faked the
+// first. Now the line is refined for the car (step 2 below), from the lap time itself.
+// T = the track, margin = half the car's width (its centre may come no closer to an edge), lapOf =
+// a function that solves the car's speed on a candidate line (null: minimum curvature only).
+function optimiseLine(T,margin,lapOf){
+  const c=T.pts,n=c.length,half=T.width/2,mg=margin||0;
   const nx=new Array(n),ny=new Array(n),lim=new Array(n);
   for(let i=0;i<n;i++){
     const a=c[(i-1+n)%n],b=c[(i+1)%n];
@@ -5739,113 +5779,232 @@ function optimiseLine(T){
     c[i].nx=nx[i];c[i].ny=ny[i];              // the map draws its edges from these
     // Track width varies around the lap, so the room available is per-point, not a constant.
     // Also don't let the line cut so far inside a tight corner that the geometry folds on itself.
-    lim[i]=Math.min(c[i].hw!=null?c[i].hw:half,Math.max(1,c[i].r*0.45));
+    // The car's CENTRE runs on the line, so it may come no closer to the edge than half the car (build 115).
+    lim[i]=Math.max(0,Math.min((c[i].hw!=null?c[i].hw:half)-mg,Math.max(1,c[i].r*0.45)));
   }
-  const off=new Array(n).fill(0),px=new Array(n),py=new Array(n);
-  const sync=i=>{px[i]=c[i].x+off[i]*nx[i];py[i]=c[i].y+off[i]*ny[i];};
-  // Minimise Σ|Q[j-1] − 2Q[j] + Q[j+1]|² — the discrete SECOND difference, i.e. curvature.
-  // (Averaging with the immediate neighbours instead minimises Σ|Q[j+1] − Q[j]|², which is edge
-  // LENGTH: that gives the shortest path, which cuts every apex as tight as it can and makes the
-  // slow corners *slower*.)
-  // Solved on a COARSE subset of the samples, not all of them. The curvature gradient scales like
-  // ds⁴/R³, so at 5 m spacing it is ~1e-4 and the solver crawls — worse, the centreline is itself
-  // a Catmull-Rom cubic, which satisfies the stationarity condition exactly, so a fine-grid solve
-  // starts at a fixed point and never leaves it. Coarse nodes (~40 m apart) make the same problem
-  // well conditioned; the offsets are then interpolated back over the fine grid.
+  // Solved on a COARSE subset of the samples, not all of them. At 5 m spacing the bending of one point
+  // barely changes and the solver crawls; worse, the centreline is a Catmull-Rom cubic, which already
+  // sits at a stationary point. Coarse nodes (~25 m apart) make the same problem well conditioned; the
+  // offsets are then interpolated back over the fine grid.
   const K=Math.max(4,Math.round(25/Math.max(1,c[0].ds||5))),m=Math.floor(n/K);
   const idx=[];for(let j=0;j<m;j++)idx.push(Math.round(j*n/m));
   const co=new Array(m).fill(0);
   const qx=new Array(m),qy=new Array(m);
   const qsync=j=>{const i=idx[j];qx[j]=c[i].x+co[j]*nx[i];qy[j]=c[i].y+co[j]*ny[i];};
   for(let j=0;j<m;j++)qsync(j);
-  // ---- Late apex ----
-  // A metre of radius is not worth the same everywhere. At a corner EXIT the car is on the power
-  // and whatever speed it gains there is carried the whole length of what follows; at the ENTRY it
-  // is braking anyway, so a tighter arc costs almost nothing. So weight the curvature cost by how
-  // OPEN the track is ahead: the solver then trades entry radius away to straighten the exit,
-  // which is precisely a late apex — and it appears only where a corner actually leads somewhere
-  // fast, which is exactly where a driver would use one.
-  // Both constants are calibrated, not guessed: swept against measured laps on all four circuits.
-  // 3 / 90 m is the setting at which EVERY circuit gains — a shorter span buys a lot at Ashdown
-  // but costs time at Cape and the Ring, which is the model over-applying a late apex to a fast
-  // sweeper that only wants minimum curvature. It moves the apex ~11 m later on corners that lead
-  // onto a straight and leaves corners that lead into more corners where they were.
-  const LATE_APEX=3;                         // strength of the exit bias (0 = pure min-curvature)
-  const APEX_SPAN=90;                        // m — how far ahead a corner exit "sees"
-  const sp=Math.max(1,(T.length||n*5)/m);    // metres between coarse nodes
-  const open=new Array(m),wg=new Array(m);
-  for(let j=0;j<m;j++)open[j]=clamp((c[idx[j]].r-70)/(420-70),0,1);   // 0 = hairpin, 1 = straight
-  const LOOK=Math.max(2,Math.min(m-1,Math.round(3*APEX_SPAN/sp)));
-  for(let j=0;j<m;j++){
-    let acc=0,tot=0;
-    for(let k=1;k<=LOOK;k++){const dcy=Math.exp(-k*sp/APEX_SPAN);acc+=dcy*open[(j+k)%m];tot+=dcy;}
-    wg[j]=1+LATE_APEX*(tot?acc/tot:0);
+  const curv=j=>{const a=(j-1+m)%m,b=(j+1)%m;
+    const ax=qx[j]-qx[a],ay=qy[j]-qy[a],bx=qx[b]-qx[j],by=qy[b]-qy[j],cx=qx[b]-qx[a],cy=qy[b]-qy[a];
+    const la=Math.hypot(ax,ay),lb=Math.hypot(bx,by),lc=Math.hypot(cx,cy);
+    return {k:la*lb*lc>1e-9?2*Math.abs(ax*by-ay*bx)/(la*lb*lc):0,l:(la+lb)/2};};
+  const seg=j=>{const b=(j+1)%m;return Math.hypot(qx[b]-qx[j],qy[b]-qy[j]);};
+  // Projected gradient descent of an objective made of terms that each depend on a node and its
+  // neighbours: gradient by central difference along each node's normal, all nodes moved together
+  // (one node alone cannot move a whole bend outwards), the largest move per pass shrinking to settle.
+  function descend(local,iters,lo,hi,maxMove){
+    const gr=new Array(m),H=0.05;
+    for(let k=0;k<iters;k++){
+      let gmax=0;
+      for(let j=0;j<m;j++){
+        const c0=co[j];
+        co[j]=c0+H;qsync(j);const ep=local(j);
+        co[j]=c0-H;qsync(j);const em=local(j);
+        co[j]=c0;qsync(j);
+        gr[j]=(ep-em)/(2*H);gmax=Math.max(gmax,Math.abs(gr[j]));
+      }
+      if(gmax<1e-12)break;
+      const step=(maxMove*(1-k/iters)+0.02)/gmax;
+      for(let j=0;j<m;j++){co[j]=clamp(co[j]-step*gr[j],lo[j],hi[j]);qsync(j);}
+    }
   }
-  const gx=new Array(m),gy=new Array(m),dx=new Array(m),dy=new Array(m);
-  for(let k=0;k<600;k++){
-    for(let j=0;j<m;j++){const a=(j-1+m)%m,b=(j+1)%m;dx[j]=qx[a]-2*qx[j]+qx[b];dy[j]=qy[a]-2*qy[j]+qy[b];}
-    let gmax=0;
+  const lo=idx.map(i=>-lim[i]),hi=idx.map(i=>lim[i]);
+  // 1. Minimum curvature: the least bending, sum of kappa^2 l. (Build 115: this used to be sum |Q''|^2,
+  //    the raw second difference, which is not curvature: per node it is ~ l^2 x the turn, so a SHORTER
+  //    line scored better, and on a constant bend, where the turning cannot be spread out, it pulled the
+  //    line to the inside: a 150 m circle was driven at 145 m, not 155. Averaging with the neighbours
+  //    instead would minimise edge length, the shortest path, which cuts every apex tight.)
+  const bend=j=>{const q=curv(j);return q.k*q.k*q.l;};
+  descend(j=>bend((j-1+m)%m)+bend(j)+bend((j+1)%m),600,lo,hi,0.6);
+  // The fine line from the coarse offsets: interpolated (a cosine blend keeps it smooth), a few gentle
+  // passes to take out the kinks where it runs onto and off the edge, then measured: its own spacing,
+  // distance and curvature. Elevation is the centreline's at the same station: the line moves a few
+  // metres sideways, the elevation changes over hundreds.
+  function build(){
+    // Catmull-Rom through the coarse offsets: smooth slope at every node. (Until build 115 a cosine blend,
+    // flat at every node, so the offset made an S between each pair: curvature ripples of up to ~1/60 m
+    // laid over the line, which the solver then had to drive.)
+    const off=new Array(n).fill(0);
     for(let j=0;j<m;j++){
-      const a=(j-1+m)%m,b=(j+1)%m;
-      // ∂/∂Q_j of Σ w|Q''|² — the weights are what make the exit side expensive.
-      gx[j]=wg[a]*dx[a]-2*wg[j]*dx[j]+wg[b]*dx[b];
-      gy[j]=wg[a]*dy[a]-2*wg[j]*dy[j]+wg[b]*dy[b];
-      const i=idx[j];const g=gx[j]*nx[i]+gy[j]*ny[i];
-      gx[j]=g;gmax=Math.max(gmax,Math.abs(g));
+      const i0=idx[j],i1=idx[(j+1)%m],span=((i1-i0)+n)%n||n;
+      const p0=co[(j-1+m)%m],p1=co[j],p2=co[(j+1)%m],p3=co[(j+2)%m];
+      for(let d=0;d<span;d++){
+        const t=d/span,t2=t*t,t3=t2*t,i=(i0+d)%n;
+        const o=0.5*(2*p1+(-p0+p2)*t+(2*p0-5*p1+4*p2-p3)*t2+(-p0+3*p1-3*p2+p3)*t3);
+        off[i]=clamp(o,-lim[i],lim[i]);
+      }
     }
-    if(gmax<1e-9)break;
-    const step=0.6/gmax;                       // adaptive: largest move is ~0.6 m per pass
-    for(let j=0;j<m;j++){
-      const i=idx[j];
-      co[j]=clamp(co[j]-step*gx[j],-lim[i],lim[i]);
-      qsync(j);
+    // a few gentle passes to round off where the line runs onto and off the edge
+    for(let k=0;k<4;k++){
+      const prev=off.slice();
+      for(let i=0;i<n;i++){
+        const a=(i-1+n)%n,b=(i+1)%n;
+        off[i]=clamp((prev[a]+2*prev[i]+prev[b])/4,-lim[i],lim[i]);
+      }
     }
+    return measure(off);
   }
-  // Interpolate the coarse offsets back over every sample (cosine blend keeps it smooth), then a
-  // few gentle passes to take out the kinks where the line runs onto and off the track edge.
-  for(let j=0;j<m;j++){
-    const i0=idx[j],i1=idx[(j+1)%m],span=((i1-i0)+n)%n||n;
-    for(let d=0;d<span;d++){
-      const t=(1-Math.cos(Math.PI*d/span))/2,i=(i0+d)%n;
-      off[i]=clamp(co[j]+(co[(j+1)%m]-co[j])*t,-lim[i],lim[i]);
-    }
-  }
-  for(let k=0;k<20;k++){
-    const prev=off.slice();
-    for(let i=0;i<n;i++){
-      const a=(i-1+n)%n,b=(i+1)%n;
-      off[i]=clamp((prev[a]+2*prev[i]+prev[b])/4,-lim[i],lim[i]);
-    }
-  }
-  for(let i=0;i<n;i++)sync(i);
-  // Re-measure the optimised line: its own spacing, distance and curvature. Elevation is taken
-  // from the centreline at the same station — the line only moves a few metres sideways, while
-  // the elevation profile varies over hundreds, so the difference is far below the noise floor.
-  const L=[];
-  for(let i=0;i<n;i++)L.push({x:px[i],y:py[i],z:c[i].z||0,off:off[i],
+  // A line point from its offset, and the measures that need its neighbours: the step to the next
+  // point (ds, and ds3 along the surface) and the radius of the path there.
+  // The radius is the offset curve's own, from the centreline's curvature kc (signed, positive turning
+  // towards +normal) and the offset's slope and bend along it (build 115):
+  //     kappa = [A (o'' + kc A) + o' (2 kc o' + kc' o)] / (A^2 + o'^2)^1.5,   A = 1 - kc o
+  // It used to be the circle through the line's points 3 either side: a 30 m chord that rounds off a
+  // curvature peak the car still has to drive, and that the line optimiser learned to hide curvature
+  // between. Through the neighbouring points instead, it is all noise: the spacing of the line's points
+  // bunches on the inside of a bend, and a 25 m corner read radii of 3 m. The offset curve's curvature
+  // depends on neither.
+  const kc=new Array(n),dkc=new Array(n);
+  for(let i=0;i<n;i++){const a=c[(i-1+n)%n],b=c[(i+1)%n],q=c[i];
+    const cr=(q.x-a.x)*(b.y-q.y)-(q.y-a.y)*(b.x-q.x);kc[i]=(cr>=0?1:-1)/Math.max(1,q.r);}
+  for(let i=0;i<n;i++){const a=(i-1+n)%n,b=(i+1)%n;dkc[i]=(kc[b]-kc[a])/Math.max(0.1,c[a].ds+c[i].ds);}
+  const radiusAt=(i,oa,o,ob)=>{
+    const a=(i-1+n)%n,h1=Math.max(0.1,c[a].ds),h2=Math.max(0.1,c[i].ds);
+    const o1=(ob-oa)/(h1+h2),o2=2*(ob*h1-o*(h1+h2)+oa*h2)/(h1*h2*(h1+h2));
+    const A=1-kc[i]*o,num=A*(o2+kc[i]*A)+o1*(2*kc[i]*o1+dkc[i]*o),den=Math.pow(A*A+o1*o1,1.5);
+    const k=Math.abs(num/Math.max(1e-9,den));
+    return k>1e-6?Math.min(1e6,1/k):1e6;};
+  const pointAt=(i,o)=>({x:c[i].x+o*nx[i],y:c[i].y+o*ny[i],z:c[i].z||0,off:o,
     grade:c[i].grade||0,sinT:c[i].sinT||0,cosT:c[i].cosT!=null?c[i].cosT:1,kv:c[i].kv||0});
-  for(let i=0;i<n;i++){
-    const q=L[(i+1)%n];
-    L[i].ds=Math.max(0.05,Math.hypot(q.x-L[i].x,q.y-L[i].y));
-    L[i].ds3=Math.max(0.05,Math.hypot(L[i].ds,q.z-L[i].z));   // true travelled distance
-  }
-  let s=0;for(let i=0;i<n;i++){L[i].s=s;s+=L[i].ds3;}
-  for(let i=0;i<n;i++){
-    const a=L[(i-3+n)%n],b=L[i],d=L[(i+3)%n];
+  const stepOf=(q,nq)=>{q.ds=Math.max(0.05,Math.hypot(nq.x-q.x,nq.y-q.y));q.ds3=Math.max(0.05,Math.hypot(q.ds,nq.z-q.z));};
+  const radiusOf=(a,b,d)=>{
     const ab=Math.hypot(b.x-a.x,b.y-a.y),bd=Math.hypot(d.x-b.x,d.y-b.y),da=Math.hypot(a.x-d.x,a.y-d.y);
     const area=Math.abs((b.x-a.x)*(d.y-a.y)-(d.x-a.x)*(b.y-a.y))/2;
     const kk=(ab*bd*da)>1e-6?4*area/(ab*bd*da):0;
-    L[i].r=kk>1e-5?1/kk:1e6;
+    return kk>1e-5?1/kk:1e6;};
+  function measure(off){
+    const L=[];
+    for(let i=0;i<n;i++)L.push(pointAt(i,off[i]));
+    for(let i=0;i<n;i++)stepOf(L[i],L[(i+1)%n]);
+    for(let i=0;i<n;i++)L[i].r=radiusAt(i,off[(i-1+n)%n],off[i],off[(i+1)%n]);
+    return finish(L);
   }
-  L.length_=s;
-  return L;
+  function finish(L){
+    let s=0;for(let i=0;i<n;i++){L[i].s=s;s+=L[i].ds3;}
+    L.length_=s;
+    return L;
+  }
+  let best=build();
+  if(!lapOf)return best;
+  // 2. Minimum time for this car. Move the line by a smooth bump around one point, re-solve the car's
+  //    speed where that can change it, and keep the move if the lap is quicker. Where it can change it
+  //    is bounded: the speed profile is pinned wherever the car is on its cornering limit, so a move
+  //    between two such points changes speeds only between them. Re-solving that stretch with the lap
+  //    solver's own per-point physics (lapOf(...).model) gives the exact lap-time change of the move,
+  //    at a cost that does not grow with the circuit. A move that would shift a pin is not taken.
+  //    Nothing here describes a racing line: late apexes, wide entries and straightened exits are
+  //    whatever the car's own grip, power and brakes make quickest. Sweeps from coarse to fine moves.
+  const res=lapOf(best),M=res.model,v=res.v.slice(),vC=res.vC.slice(),vB=res.vB.slice(),L=best,off=L.map(q=>q.off);
+  let B=2*K,EDGE=B+4;const REACH=Math.min(600,n>>1),EPS=1e-9;
+  const segT=(q,a,b)=>q.ds3/Math.max(2,(a+b)/2);
+  const wrap=i=>((i%n)+n)%n;
+  let lastLo=0,lastHi=0;
+  function tryMove(ctr,d){
+    // the moved offsets, and the points whose geometry changes (the radius looks one either side)
+    const no=new Map();
+    for(let k=-B;k<=B;k++){const i=wrap(ctr+k),o=clamp(off[i]+d*(1+Math.cos(Math.PI*k/B))/2,-lim[i],lim[i]);
+      if(Math.abs(o-off[i])>1e-9)no.set(i,o);}
+    if(!no.size)return 0;
+    const P=new Map(),get=i=>P.get(i)||L[i];
+    for(let k=-EDGE;k<=EDGE;k++){const i=wrap(ctr+k);P.set(i,pointAt(i,no.has(i)?no.get(i):off[i]));}
+    for(let k=-EDGE;k<=EDGE;k++){const i=wrap(ctr+k);stepOf(P.get(i),get(wrap(i+1)));P.get(i).r=L[i].r;}
+    const offAt=i=>no.has(i)?no.get(i):off[i];
+    for(let k=-B-1;k<=B+1;k++){const i=wrap(ctr+k);P.get(i).r=radiusAt(i,offAt(wrap(i-1)),offAt(i),offAt(wrap(i+1)));}
+    // Re-solve outward from the change, and stop where the speeds come back to the ones already solved:
+    // past that point nothing the move touched can reach. Exact, and only as long as the move's reach.
+    // braking pass, leftwards from the right edge of the change (to its right nothing changed)
+    const nb=new Map(),nc=new Map(),vbAt=i=>nb.has(i)?nb.get(i):vB[i];
+    let k=EDGE,lo;
+    for(;;k--){
+      if(k<-REACH)return 0;
+      const i=wrap(ctr+k),q=get(i),c0=P.has(i)?(nc.has(i)?nc.get(i):(nc.set(i,M.ceilAt(q)),nc.get(i))):vC[i];
+      const b=Math.min(c0,M.brakeFrom(q,c0,vbAt(wrap(i+1)),1));
+      if(k<-EDGE&&Math.abs(b-vB[i])<EPS){lo=k;break;}
+      nb.set(i,b);
+    }
+    // forward pass, from the last unchanged point rightwards, until it rejoins the solved speeds
+    const nv=new Map(),vAt=i=>nv.has(i)?nv.get(i):v[i];
+    let hi;
+    for(k=lo;;k++){
+      if(k>REACH)return 0;
+      const i=wrap(ctr+k),j=wrap(i+1),q=get(i);
+      const f=Math.min(vbAt(j),M.accFrom(q,vAt(i)).cap);
+      if(k+1>EDGE&&Math.abs(f-v[j])<EPS){hi=k+1;break;}
+      nv.set(j,f);
+    }
+    let dt=0;
+    for(k=lo;k<hi;k++){const i=wrap(ctr+k),j=wrap(i+1);dt+=segT(get(i),vAt(i),vAt(j))-segT(L[i],v[i],v[j]);}
+    if(!(dt<-1e-6))return 0;
+    // keep it
+    for(const [i,o] of no)off[i]=o;
+    for(const [i,q] of P)L[i]=q;
+    for(const [i,x] of nc)vC[i]=x;
+    for(const [i,x] of nb)vB[i]=x;
+    for(const [i,x] of nv)v[i]=x;
+    lastLo=ctr+lo;lastHi=ctr+hi;
+    return dt;
+  }
+  // Move centres every K points, shifted by half a step on alternate sweeps. A centre is tried again
+  // only once a move nearby has changed the speeds around it (dirty), and the way it last paid first.
+  const H2=K>>1,dirty=new Uint8Array(n),pref=new Int8Array(n).fill(1);
+  // wide, large moves first to reshape whole corners, then finer ones to settle
+  for(const [bw,d] of [[4,1.2],[2,0.6],[2,0.25],[2,0.1]]){
+    B=bw*K;EDGE=B+4;
+    dirty.fill(1);
+    for(let sweep=0;sweep<4;sweep++){
+      let gain=0,tried=0;
+      for(let ctr=(sweep&1)*H2;ctr<n;ctr+=K){
+        if(!dirty[ctr])continue;
+        // a move only pays where the car is cornering: skip straights
+        let bendy=false;for(let k=-B;k<=B&&!bendy;k+=2)if(L[(ctr+k+n)%n].r<1500)bendy=true;
+        dirty[ctr]=0;
+        if(!bendy)continue;
+        tried++;
+        let g=tryMove(ctr,pref[ctr]*d);
+        if(!g){g=tryMove(ctr,-pref[ctr]*d);if(g)pref[ctr]=-pref[ctr];}
+        if(g){gain+=g;for(let k=lastLo-B;k<=lastHi+B;k++)dirty[(k%n+n)%n]=1;}
+      }
+      if(!tried||(gain>-1e-3&&sweep>0))break;
+    }
+  }
+  best=finish(L);
+  return best;
+}
+// The racing line for the car being driven (build 115), cached per car. Half the width over the tyres'
+// outer walls (the track between the tyre centres plus one tyre) keeps the car on the tarmac, and the
+// minimum-time refinement solves this car's own speeds on each candidate line.
+const carHalfWidth=()=>((vehicle.track||1.6)+(vehicle.tireWidth||225)/1000)/2;
+function carLineKey(){
+  const v=vehicle,s=engine.score||{};
+  return [v.mass,v.muRef,v.FzRef,v.clA,v.cdA,v.aeroBal,v.drivenAero,v.drivenWt,v.track,v.tireWidth,v.cg,v.wb,v.fWt,
+    v.finalDrive,(v.ratios||[]).join('/'),v.driveEff,v.drive,v.diff,v.brakeDecelCap,v.governor,v.camber,v.rollGrad,
+    s.peakHP,s.peakTQ,engine.redline].map(x=>typeof x==='number'?+x.toFixed(4):x).join('|');
+}
+function lineFor(T,key){
+  const k=carLineKey();
+  T.lines=T.lines||{};
+  if(!T.lines[k]){
+    const names=Object.keys(T.lines);if(names.length>12)delete T.lines[names[0]];   // a few cars per circuit
+    T.lines[k]=optimiseLine(T,carHalfWidth(),line=>simulateLap(key,{line,quick:true}));
+  }
+  return T.lines[k];
 }
 // Quasi-steady-state lap: a cornering-speed ceiling at every point, then a backward braking pass
 // and a forward traction/power pass, taking the lower speed at each point. Gearbox shift time is
 // charged per gear change around the lap, so a slow-shifting box loses real time on a circuit.
-function simulateLap(key){
+function simulateLap(key,opts){
   if(!engine.score||!vehicle.mass)return null;
-  const T=buildTrack(key),p=T.line,n=p.length;   // solve on the racing line, not the centreline
+  const quick=!!(opts&&opts.quick);
+  const T0=buildTrack(key),T=Object.assign({},T0,{line:opts&&opts.line||lineFor(T0,key)}),p=T.line,n=p.length;   // this car's racing line
+  if(!quick){if(p._corners==null)p._corners=detectCorners(p).length;T.corners=p._corners;}   // counted on the line it drives
   const curve=buildTorqueCurve();
   const tqAt=rpm=>{if(rpm<=curve[0].rpm)return curve[0].tq;for(let i=1;i<curve.length;i++){if(rpm<=curve[i].rpm){const a=curve[i-1],b=curve[i];return a.tq+(b.tq-a.tq)*(rpm-a.rpm)/(b.rpm-a.rpm);}}return curve[curve.length-1].tq;};
   const m=vehicle.mass,rT=vehicle.rTire,fd=vehicle.finalDrive,eff=vehicle.driveEff,ratios=vehicle.ratios;
@@ -5865,8 +6024,8 @@ function simulateLap(key){
   // Sign: kv < 0 is a crest (the grade falls away), and there N = m·g·cosθ + m·v²·kv, i.e. the
   // car is unloaded. kv > 0 is a compression and loads it up. Adding the term, not subtracting.
   const KVCAP=0.6*m*G;
-  const kvLoad=(i,vv)=>clamp(m*vv*vv*p[i].kv,-KVCAP,KVCAP);
-  const normalLoad=(i,vv)=>Math.max(m*G*0.15,m*G*p[i].cosT+down(vv)+kvLoad(i,vv));
+  const loadAt=(q,vv)=>Math.max(m*G*0.15,m*G*q.cosT+down(vv)+clamp(m*vv*vv*q.kv,-KVCAP,KVCAP));
+  const normalLoad=(i,vv)=>loadAt(p[i],vv);
   const drag=v=>0.5*AIR_RHO*vehicle.cdA*v*v;
   const rollF=v=>crrAt(vehicle.crr,v)*m*G;
   // Best gear at a road speed = the one giving the most wheel torque without over-revving.
@@ -5878,6 +6037,7 @@ function simulateLap(key){
   // is exactly what a fuel cut does; drag then brings the car back to the top-gear redline speed.
   // The gear index still defaults to top so the gear readout and shift count stay sensible up
   // there rather than snapping back to first.
+  const VMAX_BG=vehicle.governor>0?Math.min(140,vehicle.governor/3.6):140;
   function bestGear(v){
     let bi=ratios.length-1,bf=-1,bq=0;
     for(let i=0;i<ratios.length;i++){
@@ -5888,6 +6048,16 @@ function simulateLap(key){
     }
     return{gear:bi,F:Math.max(0,bf),tqFrac:bq/axleTqMax};
   }
+  // The same, tabulated every 0.05 m/s and interpolated: it depends only on the speed, and the line
+  // optimiser asks for it hundreds of thousands of times (build 115).
+  const BG_DV=0.05,bgTab=[];
+  for(let k=0;k*BG_DV<=VMAX_BG;k++)bgTab.push(bestGear(k*BG_DV));
+  function gearAt(v){
+    const x=v/BG_DV,k=Math.floor(x);
+    if(k<0||k>=bgTab.length-1)return bestGear(v);
+    const a=bgTab[k],b=bgTab[k+1],t=x-k;
+    return {gear:t<0.5?a.gear:b.gear,F:a.F+(b.F-a.F)*t,tqFrac:a.tqFrac+(b.tqFrac-a.tqFrac)*t};
+  }
   // 1. Cornering ceiling. m·v²/r = muLat·N, where the normal load N is the weight resolved onto
   //    the slope, plus downforce, minus what vertical curvature takes away:
   //        N = m·g·cosθ + ½ρ·ClA·v² + m·v²·kv
@@ -5897,7 +6067,9 @@ function simulateLap(key){
   const vC=new Array(n),lim=new Array(n);
   // 504 km/h ceiling, so a straight is bounded; a fitted speed limiter is a lower one.
   const VMAX=vehicle.governor>0?Math.min(140,vehicle.governor/3.6):140;
-  for(let i=0;i<n;i++){
+  // Each step of the solver is a function of one point of the line (q), so the racing-line optimiser
+  // can re-solve a stretch of a candidate line with exactly this physics (build 115).
+  function ceilAt(q){
     // Two passes: solve the closed form ignoring the cap, then re-solve with the vertical term
     // evaluated (and clamped) at that speed. Converges immediately because the cap only binds
     // where the uncapped answer was already unphysically high.
@@ -5908,20 +6080,63 @@ function simulateLap(key){
     for(let it=0;it<2;it++){
       // pass 0: closed form with the vertical term inside the v² coefficient (uncapped)
       // pass 1: re-solve with that term evaluated and clamped at the speed just found
-      const kvTerm=it===0?-m*p[i].kv*muLat:0;
-      const extra=it===0?0:clamp(m*vv*vv*p[i].kv,-KVCAP,KVCAP)*muLat;
-      const denom=m/p[i].r-0.5*AIR_RHO*vehicle.clA*muLat+kvTerm;
-      const num=muLat*m*G*p[i].cosT+extra;
+      const kvTerm=it===0?-m*q.kv*muLat:0;
+      const extra=it===0?0:clamp(m*vv*vv*q.kv,-KVCAP,KVCAP)*muLat;
+      const denom=m/q.r-0.5*AIR_RHO*vehicle.clA*muLat+kvTerm;
+      const num=muLat*m*G*q.cosT+extra;
       vv=denom>1e-6?Math.min(VMAX,Math.sqrt(Math.max(0,num/denom))):VMAX;
     }
-    muLat=muLatAt(normalLoad(i,vv),vv*vv/p[i].r);
+    muLat=muLatAt(loadAt(q,vv),vv*vv/q.r);
     }
-    vC[i]=vv;lim[i]='corner';
+    return vv;
   }
+  for(let i=0;i<n;i++){vC[i]=ceilAt(p[i]);lim[i]='corner';}
   const accKind=new Array(n).fill('power'),latUse=new Array(n).fill(0);
   const fadeF=new Array(n).fill(1);   // brake capacity left at each point (see 2b below)
   const hL=vehicle.cg/Math.max(0.5,vehicle.wb), sgn=vehicle.drive==='rwd'?1:vehicle.drive==='fwd'?-1:0;
-  let v;
+  // Braking into point q's successor at vNext: the fastest the car can be at q (vi0 = the most it may
+  // be there anyway). fade = the brakes' capacity left.
+  function brakeFrom(q,vi0,vNext,fade){
+    let vi=Math.min(vi0,vNext),cap=vi0;
+    for(let it=0;it<4;it++){
+    const N=loadAt(q,vi);
+    const ayi=vi*vi/q.r,aLatMax=muLatAt(N,ayi)*N/m,u=clamp(ayi/Math.max(0.1,aLatMax),0,1);
+    const aBrake=Math.min(vehicle.brakeDecelCap*fade,tyreMuX(N/4)*N/m*Math.sqrt(Math.max(0,1-u*u)))
+                 +drag(vi)/m+G*q.sinT;
+    cap=Math.sqrt(Math.max(0,vNext*vNext+2*Math.max(0.1,aBrake)*q.ds3));
+    const nv=Math.min(vi0,cap);
+    if(Math.abs(nv-vi)<1e-4)break;   // converged
+    vi=nv;
+    }
+    return cap;
+  }
+  // Accelerating from q at vi: the fastest the car can be at the next point, what limits it, and the
+  // share of the tyre in use sideways.
+  function accFrom(q,vi){
+    const N=loadAt(q,vi),dn=down(vi);
+    const N0=(N-dn)*vehicle.drivenWt+dn*vehicle.drivenAero;
+    const aLat=vi*vi/q.r;
+    const aLatMax=muLatAt(N,aLat)*N/m,u=clamp(aLat/Math.max(0.1,aLatMax),0,1);
+    // Diff traction is evaluated at the lateral load transfer actually happening here, so an
+    // open diff falls apart on a fast corner exit while a locked one doesn't.
+    const bg=gearAt(vi);
+    const R=(drag(vi)+rollF(vi)*q.cosT)/m+G*q.sinT;
+    const kk=tyreMuX(N0/(vehicle.drive==='awd'?4:2))*diffTractionAt(df,aLat,vehicle.cg,bg.tqFrac)*Math.sqrt(Math.max(0,1-u*u));
+    // On power the drive force also spins up the engine and wheels (vehicleMassEff, build 106): a = (F -
+    // m R) / mE. On grip the tyres are slipping, the surplus only spins the wheels, and the car gets the
+    // tyre's force over its own mass, with the load transfer following that acceleration:
+    //     a = (k N0 - m R) / (m (1 - s k h/L))
+    // The tyres hold exactly while the power figure is the smaller, so the car takes the lesser.
+    const mE=vehicleMassEff(ratios[bg.gear]*fd);
+    const aGrip=(kk*N0-m*R)/(m*Math.max(0.2,1-sgn*kk*hL)), aPow=(bg.F-m*R)/mE;
+    // Gravity along the slope is in R: a climb eats acceleration, a descent adds to it.
+    // aAcc may be NEGATIVE — a climb steep enough, or drag at terminal speed, genuinely slows the
+    // car. Clamping it at zero (as this did) let the car hold speed up any gradient, which is why
+    // a 43% climb used to cost nothing. Floored at 1 m/s so the profile can't collapse to zero.
+    const aAcc=Math.min(aPow,aGrip);
+    return {cap:Math.sqrt(Math.max(1,vi*vi+2*aAcc*q.ds3)),kind:aPow<aGrip?'power':'traction',u};
+  }
+  let v,vB;
   function passes(){
     v=vC.slice();
   // 2. Backward pass: brake into every corner. Lateral grip in use eats the longitudinal budget
@@ -5936,17 +6151,10 @@ function simulateLap(key){
     // braking left, so the car crept into corners. On the Nordschleife a 911 GT3 rolled 250 m at 82 km/h
     // down a 13% hill into a 42 m corner, and laps came out 6-20% slow.
     // Gravity along the slope: climbing helps you stop, descending fights the brakes.
-    let vi=Math.min(v[i],v[j]),cap=v[i];
-    for(let it=0;it<4;it++){
-    const N=normalLoad(i,vi);
-    const ayi=vi*vi/p[i].r,aLatMax=muLatAt(N,ayi)*N/m,u=clamp(ayi/Math.max(0.1,aLatMax),0,1);
-    const aBrake=Math.min(vehicle.brakeDecelCap*fadeF[i],tyreMuX(N/4)*N/m*Math.sqrt(Math.max(0,1-u*u)))
-                 +drag(vi)/m+G*p[i].sinT;
-    cap=Math.sqrt(Math.max(0,v[j]*v[j]+2*Math.max(0.1,aBrake)*p[i].ds3));
-    vi=Math.min(v[i],cap);
-    }
+    const cap=brakeFrom(p[i],v[i],v[j],fadeF[i]);
     if(cap<v[i])v[i]=cap;
   }
+  vB=v.slice();   // the braking pass's speeds, before the forward pass: the line optimiser re-solves from them
   // 3. Forward pass: accelerate out. Drive force is capped by the driven axle's grip (via the
   //    diff) and again by the friction circle, then drag and rolling resistance are subtracted.
   //    The driven axle's load is its share of the weight and of the downforce (aero balance), plus
@@ -5957,33 +6165,14 @@ function simulateLap(key){
   //    with s = +1 RWD, -1 FWD, 0 AWD and R the resistances (the transfer follows the NET acceleration).
   for(let pass=0;pass<2;pass++)for(let k=0;k<n;k++){
     const i=k%n,j=(i+1)%n;
-    const N=normalLoad(i,v[i]),dn=down(v[i]);
-    const N0=(N-dn)*vehicle.drivenWt+dn*vehicle.drivenAero;
-    const aLat=v[i]*v[i]/p[i].r;
-    const aLatMax=muLatAt(N,aLat)*N/m,u=clamp(aLat/Math.max(0.1,aLatMax),0,1);
-    // Diff traction is evaluated at the lateral load transfer actually happening here, so an
-    // open diff falls apart on a fast corner exit while a locked one doesn't.
-    const bg=bestGear(v[i]);
-    const R=(drag(v[i])+rollF(v[i])*p[i].cosT)/m+G*p[i].sinT;
-    const kk=tyreMuX(N0/(vehicle.drive==='awd'?4:2))*diffTractionAt(df,aLat,vehicle.cg,bg.tqFrac)*Math.sqrt(Math.max(0,1-u*u));
-    // On power the drive force also spins up the engine and wheels (vehicleMassEff, build 106): a = (F -
-    // m R) / mE. On grip the tyres are slipping, the surplus only spins the wheels, and the car gets the
-    // tyre's force over its own mass, with the load transfer following that acceleration:
-    //     a = (k N0 - m R) / (m (1 - s k h/L))
-    // The tyres hold exactly while the power figure is the smaller, so the car takes the lesser.
-    const mE=vehicleMassEff(ratios[bg.gear]*fd);
-    const aGrip=(kk*N0-m*R)/(m*Math.max(0.2,1-sgn*kk*hL)), aPow=(bg.F-m*R)/mE;
-    accKind[i]=aPow<aGrip?'power':'traction';latUse[i]=u;
-    // Gravity along the slope is in R: a climb eats acceleration, a descent adds to it.
-    const aAcc=Math.min(aPow,aGrip);
-    // aAcc may be NEGATIVE — a climb steep enough, or drag at terminal speed, genuinely slows the
-    // car. Clamping it at zero (as this did) let the car hold speed up any gradient, which is why
-    // a 43% climb used to cost nothing. Floored at 1 m/s so the profile can't collapse to zero.
-    const cap=Math.sqrt(Math.max(1,v[i]*v[i]+2*aAcc*p[i].ds3));
+    const st=accFrom(p[i],v[i]),cap=st.cap;
+    accKind[i]=st.kind;latUse[i]=st.u;
     if(cap<v[j])v[j]=cap;
   }
   }
   passes();
+  // the line optimiser only needs the speeds on a candidate line (no brake temperatures, no recording)
+  if(quick){let tq=0;for(let i=0;i<n;i++){const j=(i+1)%n;tq+=p[i].ds3/Math.max(2,(v[i]+v[j])/2);}return {lap:tq,v,vC,vB,kind:accKind,model:{ceilAt,brakeFrom,accFrom}};}
   // 2b. Brake temperature on the lap (build 107; build 105 counted heat per stop against a fitted
   //     budget). Run the solved profile through the rotors in time order, lap after lap until the
   //     temperature at the line repeats, set each point's brake capacity from the front rotor's

@@ -42,25 +42,19 @@ const ab = await page.evaluate(() => {
   const pr = PRESETS.find(x => x.name === '3.0 Turbo I6 (2JZ)');
   applyEngineToForm(Object.assign({}, DEFAULT_ENGINE, pr.engine)); buildEngine();
   applyChassisFit('coupe'); buildVehicle();
+  // Compare line SHAPE only: the same car on its own racing line and on the centreline, elevation
+  // zeroed on both (so gradient cannot confound it), each line's radius measured the same way.
+  const flat = (pts, offs) => { const n = pts.length, L = pts.map((q, i) => ({ x: q.x, y: q.y, z: 0, off: offs ? offs[i] : 0, grade: 0, sinT: 0, cosT: 1, kv: 0 }));
+    let s = 0;
+    for (let i = 0; i < n; i++) { const q = L[(i + 1) % n]; L[i].ds = Math.hypot(q.x - L[i].x, q.y - L[i].y); L[i].ds3 = L[i].ds; L[i].s = s; s += L[i].ds; }
+    for (let i = 0; i < n; i++) { const a = L[(i - 1 + n) % n], b = L[i], d = L[(i + 1) % n];
+      const ab = Math.hypot(b.x - a.x, b.y - a.y), bd = Math.hypot(d.x - b.x, d.y - b.y), da = Math.hypot(a.x - d.x, a.y - d.y);
+      const k = 4 * Math.abs((b.x - a.x) * (d.y - a.y) - (d.x - a.x) * (b.y - a.y)) / 2 / (ab * bd * da); b.r = k > 1e-5 ? 1 / k : 1e6; }
+    L.length_ = s; return L; };
   const out = [];
   for (const k of Object.keys(TRACKS)) {
-    const T = buildTrack(k);
-    const saved = T.line.map(q => ({ ...q })), savedLen = T.line.length_;
-    // optimised line, elevation zeroed
-    let a0 = 0;
-    T.line.forEach(q => { q.ds3 = q.ds; q.z = 0; q.grade = 0; q.sinT = 0; q.cosT = 1; q.kv = 0; q.s = a0; a0 += q.ds; });
-    T.line.length_ = a0;
-    const opt = simulateLap(k);
-    T.line.forEach((q, i) => Object.assign(q, saved[i])); T.line.length_ = savedLen;
-    // Compare line SHAPE only: flatten onto the centreline and zero the elevation on both sides,
-    // so gradient can't confound the result (and keep ds3 consistent with ds).
-    let acc = 0;
-    T.line.forEach((q, i) => { q.x = T.pts[i].x; q.y = T.pts[i].y; q.off = 0; q.r = T.pts[i].r;
-      q.ds = T.pts[i].ds; q.ds3 = T.pts[i].ds; q.z = 0; q.grade = 0; q.sinT = 0; q.cosT = 1; q.kv = 0;
-      q.s = acc; acc += q.ds; });
-    T.line.length_ = acc;
-    const cen = simulateLap(k);
-    T.line.forEach((q, i) => Object.assign(q, saved[i])); T.line.length_ = savedLen;
+    const T = buildTrack(k), car = lineFor(T, k);
+    const opt = simulateLap(k, { line: flat(car, car.map(q => q.off)) }), cen = simulateLap(k, { line: flat(T.pts) });
     out.push({ label: T.label, cen: +cen.lap.toFixed(2), opt: +opt.lap.toFixed(2), gain: +(cen.lap - opt.lap).toFixed(2), pct: +((cen.lap - opt.lap) / cen.lap * 100).toFixed(1), cAvg: Math.round(cen.avg), oAvg: Math.round(opt.avg) });
   }
   return out;
@@ -92,17 +86,24 @@ const wid = await page.evaluate(() => {
 wid.forEach(x => console.log(`  ${String(x.w).padStart(2)}m wide: ${x.lap}s`));
 for (let i = 1; i < wid.length; i++) if (wid[i].lap >= wid[i - 1].lap) fails.push(`width ${wid[i].w}m is not quicker than ${wid[i - 1].w}m`);
 
-// 4. Determinism: line depends only on geometry, not on the car
+// 4. Determinism. The map's reference line (minimum curvature over the whole width) depends only on the
+// circuit. Since build 115 the line each car DRIVES is its own minimum-time line: the same car must get
+// the same line every time, and a very different car a different one.
 const det = await page.evaluate(() => {
-  const sig = () => buildTrack('mixed').line.map(q => q.off.toFixed(4)).join(',');
-  const a = sig();
-  const pr = PRESETS.find(x => x.name === '6.5 V12 NA Supercar');
-  applyEngineToForm(Object.assign({}, DEFAULT_ENGINE, pr.engine)); buildEngine();
-  applyChassisFit('super'); buildVehicle(); simulateLap('mixed');
-  return { same: a === sig() };
+  const sig = L => L.map(q => q.off.toFixed(4)).join(',');
+  const ref = sig(buildTrack('mixed').line);
+  const pr = PRESETS.find(x => x.name === '3.0 Turbo I6 (2JZ)');
+  applyEngineToForm(Object.assign({}, DEFAULT_ENGINE, pr.engine)); buildEngine(); applyChassisFit('coupe'); buildVehicle();
+  const a1 = sig(simulateLap('mixed').track.line); delete buildTrack('mixed').lines; const a2 = sig(simulateLap('mixed').track.line);
+  const pv = PRESETS.find(x => x.name === '6.5 V12 NA Supercar');
+  applyEngineToForm(Object.assign({}, DEFAULT_ENGINE, pv.engine)); buildEngine(); applyChassisFit('super'); buildVehicle();
+  const b = sig(simulateLap('mixed').track.line);
+  return { refSame: ref === sig(buildTrack('mixed').line), carSame: a1 === a2, carsDiffer: a1 !== b };
 });
-console.log('\nline independent of the car:', det.same);
-if (!det.same) fails.push('racing line changed with the vehicle');
+console.log(`\nreference line independent of the car: ${det.refSame} · same car, same line: ${det.carSame} · another car, another line: ${det.carsDiffer}`);
+if (!det.refSame) fails.push('the reference line changed with the vehicle');
+if (!det.carSame) fails.push('the same car got a different racing line');
+if (!det.carsDiffer) fails.push('a very different car drives the same line');
 
 // 5. Circuit character still holds after the change
 const ch = await page.evaluate(() => {
