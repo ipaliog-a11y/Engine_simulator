@@ -281,7 +281,7 @@ table.fuelmap td.live{box-shadow:inset 0 0 0 2px #fff;font-weight:bold}
 <body>
 <div class="container">
 <header>
-<h1>PIXEL ENGINE SIM v0.6 build 110</h1>
+<h1>PIXEL ENGINE SIM v0.6 build 111</h1>
 <div class="subtitle" id="subtitle">ENGINE DESIGNER • BUILD IT, THEN DRIVE IT</div>
 </header>
 <div class="build-strip" id="buildStrip">
@@ -2454,7 +2454,8 @@ const CHALLENGES=[
     circuit:'tech',budget:40000,
     // 85 s until build 109, when grip came from tyre load in place of three stacked fitted multipliers
     // and every race-prepared car lost 5-8%. Re-set from the reference build with the margin it had (2.5%).
-    targets:[{label:'Ashdown lap',key:'lap',op:'<=',t:89,unit:'s'},{label:'Reliability',key:'reliability',op:'>=',t:55}]},
+    // 89 s until build 111 set lateral grip to road asphalt (skidpad data); re-set the same way.
+    targets:[{label:'Ashdown lap',key:'lap',op:'<=',t:94.5,unit:'s'},{label:'Reliability',key:'reliability',op:'>=',t:55}]},
   {id:'gppace',name:'Grand Prix Pace',desc:'A proper lap of Riverside. Balance power against the grip to use it.',
     circuit:'mixed',budget:70000,
     // 60.0 s was authored when turbo engines carried no exhaust manifold back-pressure. Once the
@@ -2465,14 +2466,15 @@ const CHALLENGES=[
     // authored around. 285 restores the intent. (290 is not obviously wrong for the engine it is
     // modelled on — a JDM 2JZ-GTE was rated 276 hp.)
     // And for build 109's grip (see Club Sprint): 60.6 -> 66.0, the reference's margin (1.1%) kept.
-    targets:[{label:'Riverside lap',key:'lap',op:'<=',t:66.0,unit:'s'},{label:'Power',key:'peakHP',op:'>=',t:285,unit:'hp'}]},
+    // Build 111's asphalt grip: 66.0 -> 70.5, the same margin.
+    targets:[{label:'Riverside lap',key:'lap',op:'<=',t:70.5,unit:'s'},{label:'Power',key:'peakHP',op:'>=',t:285,unit:'hp'}]},
   {id:'greenhell',name:'Under Seven at the Ring',desc:'20 km, 40 corners and 290 m of elevation. No budget — just go and do the time.',
     circuit:'nord',
     targets:[{label:'Nordschleife lap',key:'lap',op:'<=',t:420,unit:'s'},{label:'Reliability',key:'reliability',op:'>=',t:45}]},
   {id:'laptime$',name:'Lap per Dollar',desc:'The cheapest car that can still lap Riverside quickly. Every part has to earn its place.',
     circuit:'mixed',budget:38000,
-    // 75 s until build 109's grip (see Club Sprint); the reference's 2.1% margin kept.
-    targets:[{label:'Riverside lap',key:'lap',op:'<=',t:78.4,unit:'s'}]}
+    // 75 s until build 109's grip (see Club Sprint); the reference's 2.1% margin kept. 78.4 until build 111.
+    targets:[{label:'Riverside lap',key:'lap',op:'<=',t:83.5,unit:'s'}]}
 ];
 let activeChallenge='free';
 
@@ -3072,12 +3074,19 @@ const SPEED_RATING={
 // ================================================================================================
 // Tyre compound: mu = peak grip coefficient (dry), crr = rolling resistance at 80 km/h, cost,
 // rating = the speed rating such a tyre is typically sold in (an editable default, not a law).
+// mu is the tyre on road asphalt at its reference load (tyreMu), the surface skidpads and brake tests
+// are run on. Build 111: the sport, street, semi and slick values had been set nearer test-rig figures
+// (abrasive belt surfaces grip ~15% harder than asphalt), so with build 109's load model the sport-tyre
+// cars pulled 1.02-1.11 g against published 0.87-1.00, and the GT3 on Cup 2s 1.31 against ~1.10. Eco
+// already matched. Re-set to asphalt, the skidpads land in the published range and the 100-0 stops
+// lengthen with them, by the same amount (an E46 M3: 37.8 m against ~38.6 from its 161 ft from 70 mph).
+// The drag radial keeps 1.70, a prepared drag strip's figure: that is the surface it is made for.
 const TIRE_TYPE={
   eco:     {label:'ECO/TOURING', mu:0.90,crr:0.010,cost:400, rating:'H'},
-  street:  {label:'STREET',      mu:1.00,crr:0.012,cost:600, rating:'V'},
-  sport:   {label:'SPORT',       mu:1.15,crr:0.013,cost:1000,rating:'Y'},
-  semi:    {label:'SEMI-SLICK',  mu:1.35,crr:0.014,cost:1600,rating:'YY'},
-  slick:   {label:'RACE SLICK',  mu:1.55,crr:0.016,cost:2400,rating:'YY'},
+  street:  {label:'STREET',      mu:0.95,crr:0.012,cost:600, rating:'V'},
+  sport:   {label:'SPORT',       mu:1.00,crr:0.013,cost:1000,rating:'Y'},
+  semi:    {label:'SEMI-SLICK',  mu:1.13,crr:0.014,cost:1600,rating:'YY'},
+  slick:   {label:'RACE SLICK',  mu:1.30,crr:0.016,cost:2400,rating:'YY'},
   drag:    {label:'DRAG RADIAL', mu:1.70,crr:0.018,cost:2000,rating:'T'}
 };
 // Aero elements — each adds a downforce coefficient (Cl·A, m²) and a drag penalty (ΔCd). The
@@ -3199,6 +3208,13 @@ const LOAD_SENS=0.15, TYRE_RATED_KG_M3=16300, TYRE_REF_SHARE=0.6;
 // the suspension geometry does not claw back (about half).
 const CAMBER_RECOVERY=0.5, CAMBER_LOSS=0.015, CAMBER_BEST=-1.5;
 function tyreMu(Fz){return vehicle.muRef*Math.pow(Math.max(200,Fz)/vehicle.FzRef,-LOAD_SENS);}
+// The friction ellipse (build 111): a tyre pulls harder along its length than across it. Peak
+// longitudinal force runs 10-20% over peak lateral in tyre test data (Milliken & Milliken, RCVD ch. 2):
+// driving or braking, the whole contact patch shears the same way at once, while a cornering tyre builds
+// its force along the patch and only its rear part slides at the peak. The compound mu is the lateral
+// figure (skidpads); braking and traction take 1.15 of it, and combined use follows the ellipse.
+const TYRE_MU_X=1.15;
+function tyreMuX(Fz){return TYRE_MU_X*tyreMu(Fz);}
 // The car's lateral grip as a share of its normal load N while cornering at ay (m/s2): each axle's two
 // tyres, with the lateral load transfer m ay h / t moved from the inside one to the outside one (shared
 // by the axles as their static loads are), and the outside tyre's roll camber.
@@ -5035,7 +5051,7 @@ function simulateBraking(v0,T0){
   const st={F:T0!=null?T0:BRAKE_AMBIENT,R:T0!=null?T0:BRAKE_AMBIENT};   // a stop from cold unless told
   while(v>0.15&&t<25){
     const down=0.5*AIR_RHO*vehicle.clA*v*v;
-    const gripDecel=tyreMu((m*G+down)/4)*(m*G+down)/m;             // tyre-limited, at the load on each tyre
+    const gripDecel=tyreMuX((m*G+down)/4)*(m*G+down)/m;             // tyre-limited, at the load on each tyre
     const brakeDecel=vehicle.brakeDecelCap*brakeFadeAt(st.F,th);   // brake-limited, at the rotor's temperature
     const mech=Math.min(gripDecel,brakeDecel);                    // mechanical (tyre/brake) decel
     const aero=(0.5*AIR_RHO*vehicle.cdA*v*v)/m;                    // drag also decelerates
@@ -5250,7 +5266,7 @@ function simulateAccel(){
     else if(!overRev){
       const Teng=gridTorque(grid,engineRpm,boostNow)*tqMult;
       if(slipping){
-        const want=tyreMu(drivenN/(vehicle.drive==='awd'?4:2))*diffTractionAt(df,0,vehicle.cg,1)*Math.max(0,drivenN)*r/(totalRatio*eff);
+        const want=tyreMuX(drivenN/(vehicle.drive==='awd'?4:2))*diffTractionAt(df,0,vehicle.cg,1)*Math.max(0,drivenN)*r/(totalRatio*eff);
         const Tcl=Math.min(tqCap,Math.max(Teng,want));
         slipW=Math.max(rpm*TWO_PI/60,slipW+(Teng-Tcl)/Ie*dt);       // the flywheel pays the difference
         driveF=Tcl*totalRatio*eff/r;
@@ -5260,7 +5276,7 @@ function simulateAccel(){
     // diff is governed by the lighter-loaded wheel and throws the rest away, an LSD recovers
     // most of it, a spool all of it. This only bites while the car is traction-limited.
     const tqFrac=(driveF*r)/axleTqMax;                       // how hard the axle is being driven
-    const trac=tyreMu(drivenN/(vehicle.drive==='awd'?4:2))*diffTractionAt(df,0,vehicle.cg,tqFrac)*Math.max(0,drivenN);
+    const trac=tyreMuX(drivenN/(vehicle.drive==='awd'?4:2))*diffTractionAt(df,0,vehicle.cg,tqFrac)*Math.max(0,drivenN);
     let F=Math.min(driveF,trac);
     const drag=0.5*AIR_RHO*vehicle.cdA*v*v,roll=v>0.2?crrAt(vehicle.crr,v)*m*G:0;
     // A road-speed governor cuts fuel at its set speed: past it the engine gives only what holds it.
@@ -5879,7 +5895,7 @@ function simulateLap(key){
     const N=normalLoad(i,v[i]);
     const ayi=v[i]*v[i]/p[i].r,aLatMax=muLatAt(N,ayi)*N/m,u=clamp(ayi/Math.max(0.1,aLatMax),0,1);
     // Gravity along the slope: climbing helps you stop, descending fights the brakes.
-    const aBrake=Math.min(vehicle.brakeDecelCap*fadeF[i],tyreMu(N/4)*N/m*Math.sqrt(Math.max(0,1-u*u)))
+    const aBrake=Math.min(vehicle.brakeDecelCap*fadeF[i],tyreMuX(N/4)*N/m*Math.sqrt(Math.max(0,1-u*u)))
                  +drag(v[i])/m+G*p[i].sinT;
     const cap=Math.sqrt(Math.max(0,v[j]*v[j]+2*Math.max(0.1,aBrake)*p[i].ds3));
     if(cap<v[i])v[i]=cap;
@@ -5902,7 +5918,7 @@ function simulateLap(key){
     // open diff falls apart on a fast corner exit while a locked one doesn't.
     const bg=bestGear(v[i]);
     const R=(drag(v[i])+rollF(v[i])*p[i].cosT)/m+G*p[i].sinT;
-    const kk=tyreMu(N0/(vehicle.drive==='awd'?4:2))*diffTractionAt(df,aLat,vehicle.cg,bg.tqFrac)*Math.sqrt(Math.max(0,1-u*u));
+    const kk=tyreMuX(N0/(vehicle.drive==='awd'?4:2))*diffTractionAt(df,aLat,vehicle.cg,bg.tqFrac)*Math.sqrt(Math.max(0,1-u*u));
     // On power the drive force also spins up the engine and wheels (vehicleMassEff, build 106): a = (F -
     // m R) / mE. On grip the tyres are slipping, the surplus only spins the wheels, and the car gets the
     // tyre's force over its own mass, with the load transfer following that acceleration:

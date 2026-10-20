@@ -20,6 +20,24 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 Working toward **v1.0 — every number derived, not fitted.**
 
+### Tyre grip on asphalt, and the friction ellipse (build 111)
+
+- **Cornering read 10-20% high.** On sport tyres the cars pulled 1.02-1.11 g on a skidpad against the
+  published 0.87-1.00 (an E46 M3: 1.09 g against Car and Driver's 0.87), and the 911 GT3 on Cup 2s
+  1.31 g against ~1.10. Eco tyres already matched. The sport, street, semi and slick figures had been
+  set nearer test-rig values (abrasive belts grip ~15% harder than road asphalt).
+- **But lowering them slowed every launch** (Corvette 0-100 +32%), while braking and acceleration had
+  matched. That is a real mechanism the model lacked: **a tyre grips harder along its length than
+  across it**, peak longitudinal force 10-20% over peak lateral (Milliken & Milliken, RCVD ch. 2).
+- **Now:** the compound mu is the lateral figure, on asphalt: eco 0.90, street 0.95, sport 1.00,
+  semi 1.13, slick 1.30 (drag radial unchanged at a prepared strip's 1.70). Braking and traction take
+  1.15 of it, and combined use follows the ellipse.
+- **Result:** sport-tyre skidpads 0.90-0.98 g, the GT3 1.11 g; sport cars' 0-100 and 100-0 unchanged;
+  laps ~6% slower. Challenge targets re-set with the reference builds' margins (Club Sprint 94.5 s,
+  Grand Prix Pace 70.5 s, Lap per Dollar 83.5 s); Under Seven keeps 7:00 with the reference V8 moved
+  to the hypercar body (6:54). test41: M2 cap 11 -> 13%, RMS budget 9 -> 9.5, the kei grip ladder
+  checked as shares of its time.
+
 ### Brake cooling from the rotor's real airflow (build 110)
 
 - **The rotors cooled too slowly.** A 911 GT3's front rotor took 200 s to go from 600 to 300 C at
