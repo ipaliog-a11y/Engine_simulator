@@ -181,14 +181,14 @@ if (!ui.reportW) fails.push('hot lap report failed to render');
 await page.evaluate(() => applyLang('el')); await page.waitForTimeout(250);
 const el = await page.evaluate(() => ({
   note: document.getElementById('lapNote').textContent.slice(0, 60),
-  guide: (document.querySelector('[data-gk="vehicle"]') || {}).textContent || ''
+  guide: document.getElementById('guidePanel').textContent
 }));
 console.log('EL blurb:', el.note);
 if (/^A 20 km|^A balanced|^Tight|^Long/.test(el.note)) fails.push('Greek circuit blurb not translated');
 if (!/καθυστερημένο apex/.test(el.guide)) fails.push('Greek guide does not cover the late apex');
 if (!/δεν έχει ένα πλάτος/.test(el.guide)) fails.push('Greek guide does not cover variable width');
 await page.evaluate(() => applyLang('en'));
-const en = await page.evaluate(() => (document.querySelector('[data-gk="vehicle"]') || {}).textContent || '');
+const en = await page.evaluate(() => document.getElementById('guidePanel').textContent);
 if (!/late apex/.test(en)) fails.push('English guide does not cover the late apex');
 if (!/the track is not one width/.test(en)) fails.push('English guide does not cover variable width');
 if (/doesn't model that yet/.test(en)) fails.push('guide still claims the late apex is not modelled');

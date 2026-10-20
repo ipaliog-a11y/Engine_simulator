@@ -181,7 +181,7 @@ const el = await page.evaluate(() => ({
   label: document.querySelector('label[for="garageName"]').textContent,
   ph: document.getElementById('garageName').placeholder,
   card: document.querySelector('.garage-item').textContent,
-  guide: (document.querySelector('[data-gk="vehicle"]') || {}).textContent || ''
+  guide: document.getElementById('guidePanel').textContent
 }));
 console.log(`EL: section "${/ΓΚΑΡΑΖ/.test(el.section)}" · button "${el.btn}" · label "${el.label}" · card "${el.card.replace(/\s+/g, ' ').slice(0, 60)}"`);
 if (!/ΓΚΑΡΑΖ/.test(el.section)) fails.push('Garage section heading not translated');
@@ -190,7 +190,7 @@ if (!/ΟΝΟΜΑ/.test(el.label)) fails.push('BUILD NAME not translated');
 if (!/ΦΟΡΤΩΣΗ|ΔΙΑΓΡΑΦΗ/.test(el.card)) fails.push('card buttons not translated');
 if (!/ΓΚΑΡΑΖ/.test(el.guide)) fails.push('Greek guide does not cover the garage');
 await page.evaluate(() => applyLang('en'));
-const en = await page.evaluate(() => (document.querySelector('[data-gk="vehicle"]') || {}).textContent || '');
+const en = await page.evaluate(() => document.getElementById('guidePanel').textContent);
 if (!/SAVE TO GARAGE/.test(en)) fails.push('English guide does not cover the garage');
 
 console.log('\nERRORS:', errors.length ? errors : 'none');

@@ -40,28 +40,44 @@ const CARS = [
   { name: 'Mazda MX-5 1.6 (NA)', year: 1989,
     eng: { type: 'petrol4', cylinders: 4, bore_mm: 78.0, stroke_mm: 83.6, compression: 9.4,
            layout: 'inline', redline: 7200, intake: 'na', valves: 4, cam: 'stock',
-           injector: 'port', octane: 95, intakeSys: 'efi', exhaust: 'stock', airFilter: 'stock' },
+           injector: 'port', octane: 95, intakeSys: 'efi', exhaust: 'stock', airFilter: 'stock',
+           vvt: false },   // the 1989 B6 has fixed cam timing; the app's default is VVT on
     car: { chassis: 'roadster', kg: 955, drive: 'rwd', tire: 'eco', gbx: 'manual', gears: 5, diff: 'open' },
     real: { hp: 115, tq: 136, t100: 8.8, top: 195 } },
 
   { name: 'Honda S2000 AP1', year: 2000,
     eng: { type: 'petrol4', cylinders: 4, bore_mm: 87.0, stroke_mm: 84.0, compression: 11.0,
            layout: 'inline', redline: 8900, intake: 'na', valves: 4, cam: 'race',
-           injector: 'port', octane: 98, intakeSys: 'efi', exhaust: 'sport', airFilter: 'perf' },
+           injector: 'port', octane: 98, intakeSys: 'efi', exhaust: 'sport', airFilter: 'perf',
+           // The F20C is tuned for the top of its range (torque peak 7500, power 8300): a short-
+           // runner intake and a 4-into-1 header cut for high rpm. The app's defaults are a 320 mm
+           // runner and a mid-range header tuned to 5200, which on this engine gives -35% power
+           // with the peak at 6600. With its own hardware: -10%, peak at 8300, torque peak 7600.
+           // CHECK ME — set from the engine's published character, not from a drawing of the parts.
+           runner: 'short', exhaust: 'race' },
     car: { chassis: 'roadster', kg: 1250, drive: 'rwd', tire: 'sport', gbx: 'manual', gears: 6, diff: 'clsd' },
     real: { hp: 240, tq: 208, t100: 6.2, top: 240 } },
 
   { name: 'BMW M3 E46 (S54)', year: 2000,
     eng: { type: 'petrol4', cylinders: 6, bore_mm: 87.0, stroke_mm: 91.0, compression: 11.5,
            layout: 'inline', redline: 8000, intake: 'na', valves: 4, cam: 'race',
-           injector: 'port', octane: 98, intakeSys: 'itb', exhaust: 'sport', airFilter: 'perf' },
+           injector: 'port', octane: 98, intakeSys: 'itb', exhaust: 'sport', airFilter: 'perf',
+           // The S54 breathes through six INDIVIDUAL THROTTLE BODIES, which are short stacks by
+           // construction, and a tubular 6-into-2 manifold tuned high. This test gave it ITBs and
+           // the default 320 mm runner at once, which is a contradiction: -23% power, peak at 6400.
+           // With short runners and a high-rpm header: +6%, peak at 7800 against a real 7900.
+           runner: 'short', exhaust: 'race' },
     car: { chassis: 'coupe', kg: 1495, drive: 'rwd', tire: 'sport', gbx: 'manual', gears: 6, diff: 'clsd' },
     real: { hp: 343, tq: 365, t100: 5.2, top: 250, limited: true } },
 
   { name: 'Chevrolet Corvette C6 (LS3)', year: 2008,
     eng: { type: 'petrol4', cylinders: 8, bore_mm: 103.25, stroke_mm: 92.0, compression: 10.7,
            layout: 'v', redline: 6600, intake: 'na', valves: 2, cam: 'sport',
-           injector: 'port', octane: 98, intakeSys: 'efi', exhaust: 'sport', airFilter: 'perf' },
+           injector: 'port', octane: 98, intakeSys: 'efi', exhaust: 'sport', airFilter: 'perf',
+           // Pushrod V8 with a single cam: no phaser on the C6 LS3. Its springs are ~400 N on the seat,
+           // the app's PERFORMANCE spring; on the default STOCK spring the model floats it at 5500 rpm,
+           // inside its real 6600 rpm redline.
+           vvt: false, valveSpring: 'perf' },
     car: { chassis: 'coupe', kg: 1450, drive: 'rwd', tire: 'sport', gbx: 'manual', gears: 6, diff: 'clsd' },
     real: { hp: 430, tq: 575, t100: 4.2, top: 306 } },
 
@@ -169,32 +185,25 @@ for (const r of out) {
 }
 
 // ---- the engine model ----------------------------------------------------------------------
-// Every badly under-powered car is a high-specific-output engine: the S2000 makes 120 hp/L, the
-// S54 106 hp/L, the 2JZ 107 hp/L on boost. Everything more modest — MX-5, LS3, GTI, TDI, Alto —
-// lands inside 8%. Two separate defects compound to produce that, and it is worth keeping them
-// apart because they have different fixes.
+// Until build 84 every badly under-powered car here was a high-specific-output engine (S2000 -30%,
+// S54 -22%, 2JZ -23%) while the modest ones landed inside 8%, and the torque peak of every NA engine
+// sat 600-3000 rpm too low. Both were traced to the fitted VE bell (vePeakRpm = redline*0.60 +
+// (boreStroke-1)*1500), and both turned out to be the bell covering for two errors rather than a
+// missing engine shape: intake valves closing 16-24 deg early in the trapping calculation, and the
+// intake ram tuned 22-57% too high in rpm against Engelman's ratio. With those fixed and the bell
+// removed from every poppet-valve petrol engine, all eight are inside 11% on power, and the S2000
+// peaks at 8300 rpm against a real 8300, its torque at 7600 against 7500.
 //
-// 1. THE TORQUE PEAK SITS TOO LOW, on every NA engine measured, by 600 to 3000 rpm:
-//      MX-5   real 5500  model 3500        S54   real 4900  model 4300
-//      S2000  real 7500  model 4500        LS3   real 4600  model 3400
-//    That is vePeakRpm, still asserted as redline*0.60 + (boreStroke-1)*1500 — a formula in which
-//    nothing about how the engine actually breathes appears. Item 4 in the v1.0 queue, and this is
-//    the sharpest measurement of why it matters. Note the POWER peak lands close (S2000 8200 model
-//    vs 8300 real), because hp = tq*rpm pushes the power peak up the range regardless; looking only
-//    at where power peaks hides this entirely.
-//
-// 2. PEAK BMEP DOES NOT REACH WHAT A WELL-BREATHING NA ENGINE MAKES. At their real compression
-//    ratios the two high-output engines come out well short, while the two modest ones are right:
-//      S2000  13.09 bar real  10.82 model  -17%      MX-5  10.70 real  11.40 model  +7%
-//      S54    14.13 bar real  11.50 model  -19%      LS3   11.73 real  11.85 model  +1%
-//    So the model tops out near 11.5-11.9 bar for an NA engine at CR 11-11.5, where the real
-//    articles reach 13-14. It CAN produce 16 bar — the ITB screamer preset does — but only at CR
-//    12.5 and with VE pinned against the 1.2 clamp, which says the model leans on compression
-//    ratio where the real engines lean on breathing. Stated as the measurement, not as a diagnosis:
-//    which of VE, IMEP_K or the valve/port model is responsible has not been established here.
-const POWER_RMS_BUDGET = 20;     // currently 15.8
-const POWER_WORST_CAP = 35;      // currently 30 (S2000)
-const POWER_OVER_15_BUDGET = 3;  // S2000, M3, Supra — all high-rpm
+// Two caveats travel with that. The S2000 and S54 now carry their factory high-rpm hardware (short
+// runners, high-rpm header) where they used to take the app's mid-range defaults; that is noted at
+// each car. And with power matched to the real figure (the car-only column above), they come out
+// 6-8% quick, which says their curves are now FULLER than the real engines' — a shape question for
+// the next step, not something to tune away here.
+// Ratcheted at build 84, when the VE bell came off every poppet-valve petrol engine: RMS 15.8% ->
+// 8.6%, worst 30% -> 11%, and the three high-rpm engines that were 22-30% short are all inside 10%.
+const POWER_RMS_BUDGET = 11;     // currently 8.6
+const POWER_WORST_CAP = 15;      // currently 11 (GTI +11, Alto +11)
+const POWER_OVER_15_BUDGET = 0;
 const pErr = out.map(r => pc(r.modHp, r.real.hp));
 const pRms = rms(pErr);
 const bigP = out.filter(r => Math.abs(pc(r.modHp, r.real.hp)) > 15);
@@ -210,8 +219,8 @@ for (const r of out)
 // Ratcheted at build 81. Every car used to upshift only at the redline; shifting at the wheel-torque
 // crossover took the RMS from 24.4% to 10.2% and the TDI from +60% to +5%. Worst is now the Supra,
 // whose residual is an ENGINE error (-23% power) — power-matched it lands at +5%.
-const T100_RMS_BUDGET = 13;      // currently 10.2
-const T100_WORST_CAP = 26;       // currently 21 (the Supra)
+const T100_RMS_BUDGET = 10;      // currently 7.1 (was 10.2 before build 84)
+const T100_WORST_CAP = 15;       // currently 11 (the Alto)
 const tRms = rms(out.filter(r => r.t100).map(r => pc(r.t100, r.real.t100)));
 if (tRms > T100_RMS_BUDGET) fails.push(`0-100 RMS ${tRms.toFixed(1)}% over budget ${T100_RMS_BUDGET}%`);
 for (const r of out)
@@ -235,8 +244,8 @@ if (mis.length > MISATTRIBUTED_BUDGET)
   fails.push(`cars with right power and wrong performance spread to ${mis.length} (budget ${MISATTRIBUTED_BUDGET})`);
 
 // ---- top speed, excluding the governed cars --------------------------------------------------
-const TOP_RMS_BUDGET = 20;       // currently 3.5 since the derived final drive
-const TOP_WORST_CAP = 30;
+const TOP_RMS_BUDGET = 5;        // currently 1.8
+const TOP_WORST_CAP = 10;
 const free = out.filter(r => !r.real.limited);
 const topRms = rms(free.map(r => pc(r.top, r.real.top)));
 console.log(`\n  top speed (ungoverned cars only): RMS ${topRms.toFixed(1)}% (budget ${TOP_RMS_BUDGET})`);

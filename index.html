@@ -12,6 +12,9 @@
 <style>
 /* Self-hosted retro font so the sim works fully offline (no CDN dependency). */
 @font-face{font-family:'Press Start 2P';font-style:normal;font-weight:400;font-display:swap;src:url(assets/PressStart2P-latin.woff2) format('woff2')}
+/* Greek glyphs. The latin file has none, so Greek text was falling back to the system monospace,
+   which at the same pixel size renders far smaller than this font and was unreadable. */
+@font-face{font-family:'Press Start 2P';font-style:normal;font-weight:400;font-display:swap;src:url(assets/PressStart2P-greek.woff2) format('woff2');unicode-range:U+0370-0377,U+037A-037F,U+0384-038A,U+038C,U+038E-03A1,U+03A3-03FF}
 *{box-sizing:border-box;margin:0;padding:0;image-rendering:pixelated;-webkit-font-smoothing:none}
 body{background:#0a0a12;color:#e0e0e0;font-family:'Press Start 2P',monospace;font-size:10px;line-height:1.6;overflow-x:hidden;min-height:100vh}
 /* 1100px was letterboxing a dense instrument panel: on a 1440 screen it wasted 340px and on a
@@ -141,7 +144,29 @@ footer{text-align:center;margin-top:16px;padding:8px;font-size:7px;color:#555;bo
 /* 5 tabs — tighten padding so labels fit */
 .viz-tabs button{padding:10px 4px;font-size:7.5px;letter-spacing:0}
 /* ---- Guide & Options tabs (reuse the scrollable design-panel shell) ---- */
-.guide-body{font-size:8px;color:#b8c4d0;line-height:1.9;margin-bottom:4px}
+/* GUIDE — paged, with an index. Type is 2x the old 8px: the guide is prose, and prose at 8px in a
+   pixel font was a wall nobody read. It gets the whole width while open (.main.wide). */
+.main.wide{grid-template-columns:1fr}
+.main.wide .side-panel{display:none}
+.guide-body{font-size:16px;color:#b8c4d0;line-height:1.85;margin-bottom:16px}
+.guide-title{font-size:18px;color:#ffcc00;margin:4px 0 18px;line-height:1.5}
+.guide-nav{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin:4px 0 16px}
+.guide-nav button{font-size:12px;padding:10px 14px}
+.guide-nav button:disabled{opacity:.35;cursor:default}
+.guide-nav .crumb{flex:1;min-width:220px;font-size:12px;color:#00ccff;line-height:1.6}
+.guide-nav-foot{margin-top:24px;padding-top:14px;border-top:2px solid #26263a}
+#guidePanel [hidden]{display:none!important}   /* the index and nav are display:grid/flex, which beats [hidden] */
+.guide-index{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:8px 28px}
+.guide-index .gcat{font-size:14px;color:#00ccff;margin:14px 0 8px;padding-bottom:6px;border-bottom:2px solid #26263a}
+.guide-index button{display:block;width:100%;text-align:left;font-size:13px;line-height:1.5;padding:10px 12px;
+  margin:0 0 8px;background:#151522;border:2px solid #2a2a3e;box-shadow:none;color:#dde}
+.guide-index button:hover{border-color:#ffcc00;color:#ffcc00}
+.guide-index button .n{color:#667;margin-right:10px}
+@media(max-width:600px){
+  .guide-body{font-size:12px}
+  .guide-title{font-size:14px}
+  .guide-index button{font-size:11px}
+}
 .guide-body b{color:#ffcc00}
 .guide-body i{color:#00ccff;font-style:normal}
 .opt-row{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:8px 0;border-bottom:2px solid #17172a}
@@ -202,16 +227,16 @@ table.fuelmap td.live{box-shadow:inset 0 0 0 2px #fff;font-weight:bold}
 <body>
 <div class="container">
 <header>
-<h1>PIXEL ENGINE SIM v0.6 build 81</h1>
+<h1>PIXEL ENGINE SIM v0.6 build 84</h1>
 <div class="subtitle" id="subtitle">ENGINE DESIGNER • BUILD IT, THEN DRIVE IT</div>
 </header>
 <div class="main">
 <div class="viz-panel">
 <div class="viz-tabs">
-<button id="tabDesign">DESIGN</button>
+<button id="tabDesign">ENGINE</button>
 <button id="tabVehicle">VEHICLE</button>
 <button id="tabTrack">TRACK</button>
-<button id="tabEngine" class="active">ENGINE</button>
+<button id="tabEngine" class="active">LIVE</button>
 <button id="tabDyno">DYNO</button>
 <button id="tabGuide">GUIDE</button>
 <button id="tabOptions">OPTIONS</button>
@@ -319,18 +344,30 @@ table.fuelmap td.live{box-shadow:inset 0 0 0 2px #fff;font-weight:bold}
 <!-- GUIDE: in-app documentation (kept in-app so the offline PWA stays self-contained) -->
 <div class="design-panel guide-panel" id="guidePanel">
 <h3>GUIDE • HOW IT WORKS</h3>
-<div class="hint">A quick manual for the sim and its numbers. Design → BUILD &amp; DYNO → drive it.</div>
-
-<div class="design-section">The Loop</div>
+<div class="guide-nav" id="guideNav"></div>
+<div class="guide-index" id="guideIndex"></div>
+<section class="guide-page" id="gp-welcome" data-cat="start" data-title="How the app works" hidden>
+<h4 class="guide-title">How the app works</h4>
 <div class="guide-body" data-gk="loop">
-<b>1. DESIGN</b> an engine (bottom end, air path, fuel &amp; spark, cooling…), then press
-<b>BUILD &amp; DYNO</b>. <b>2. DYNO</b> reads the full power/torque curve and a graded scorecard.
-<b>3. ENGINE</b> is a live test bench: you set <b>THROTTLE</b> and <b>LOAD</b> and watch the
-engine respond in real time. You never set RPM directly — you drive it.
+<b>1. ENGINE</b> — design an engine (bottom end, air path, fuel &amp; spark, cooling…), then press <b>BUILD &amp; DYNO</b>. <b>2. DYNO</b> reads the full power/torque curve and a graded scorecard. <b>3. LIVE</b> is a running test bench: you set <b>THROTTLE</b> and <b>LOAD</b> and watch the engine respond in real time. You never set RPM directly — you drive it.<br>Then put it in a car on <b>VEHICLE</b> and take it to a circuit on <b>TRACK</b>. Every number in the app comes out of the same physics, so a change you make on the ENGINE tab shows up in the 0–100, the top speed and the lap time.
 </div>
-
-<div class="design-section">Driving Controls</div>
+</section>
+<section class="guide-page" id="gp-tabs" data-cat="start" data-title="The tabs" hidden>
+<h4 class="guide-title">The tabs</h4>
+<div class="guide-body" data-gk="tabs">
+<b>ENGINE</b> — the design form: every part of the engine, a preset list to start from, an objective to aim at, and <b>BUILD &amp; DYNO</b>.<br><b>VEHICLE</b> — drop the engine into a chassis, choose tyres, gearbox, aero and brakes, and read the performance figures. The garage lives at the bottom.<br><b>TRACK</b> — a solved lap of a real or imported circuit, with the racing line and what limits the car at every point.<br><b>LIVE</b> — the engine running: a cutaway of one cylinder, the whole bank firing in order, and the controls on the right to drive it.<br><b>DYNO</b> — the power and torque curves, the scorecard, and printable reports.<br><b>GUIDE</b> — this manual. <b>OPTIONS</b> — sound, wear and language.
+</div>
+</section>
+<section class="guide-page" id="gp-firstbuild" data-cat="start" data-title="Your first build" hidden>
+<h4 class="guide-title">Your first build</h4>
+<div class="guide-body" data-gk="firstbuild">
+<b>Start from a preset.</b> On the ENGINE tab, open the build list at the top and pick something close to what you want — a 1.6 sport four, a turbo hot hatch, a V8. Press <b>BUILD &amp; DYNO</b>.<br><b>Read the DYNO tab.</b> Note the peak power, where it arrives, and the grade. The scorecard tells you what is costing you: a low <b>band</b> score means the power is peaky, a low <b>safety</b> score means it is close to knocking.<br><b>Change one thing.</b> Swap the cam, the runner length or the boost, build again and compare. One change at a time is the only way to learn what each part does — the <b>LOG PULL</b> button on the LIVE tab keeps the previous curve on the dyno as a faint overlay.<br><b>Drive it.</b> On LIVE, raise the throttle and use LOAD to hold an rpm. Watch the knock bar, the charge temperature and the EGT; with WEAR on, abuse breaks things.<br><b>Put it in a car.</b> On VEHICLE, pick a chassis. The final drive is matched to your engine automatically, so the 0–100 and top speed are fair from the start. Then try TRACK.
+</div>
+</section>
+<section class="guide-page" id="gp-driving" data-cat="start" data-title="Driving controls" hidden>
+<h4 class="guide-title">Driving controls</h4>
 <div class="guide-body" data-gk="driving">
+
 <b>THROTTLE</b> — opens the intake; raises manifold pressure → torque → revs.<br>
 <b>LOAD (dyno brake)</b> — resistance that sets the <i>hold RPM</i>. 0% = free-rev to the
 limiter; 100% = holds near idle. It only resists <i>above</i> its target, so any engine can
@@ -341,9 +378,41 @@ the battery → low voltage → weak spark.<br>
 <b>IAT / COOLANT / OIL</b> — charge &amp; engine temps (auto in AUTO THERMAL mode).<br>
 <b>NITROUS</b> — if fitted, sprays at wide-open throttle from a bottle that depletes.
 </div>
-
-<div class="design-section">Reading the Numbers</div>
+</section>
+<section class="guide-page" id="gp-live" data-cat="start" data-title="Watching it run" hidden>
+<h4 class="guide-title">Watching it run</h4>
+<div class="guide-body" data-gk="live">
+<b>The LIVE tab is a cutaway</b> of the engine you just designed. Everything on it moves
+because the simulation moved it. It is deliberately <b>not</b> drawn in real time: a crank at
+5000&nbsp;rpm turns 83 times a <i>second</i>, which at 60&nbsp;fps is a strobe rather than a
+picture — you could not watch a valve open. So the cycle runs at a pace you can read, between
+about 3.3&nbsp;s and 1.1&nbsp;s per full four-stroke cycle, still ranked by rpm so idle is
+visibly lazier than the limiter. The true speed is on the tachometer above it and in the note;
+the animation's job is to make the <i>cycle</i> legible. The piston follows proper
+crank-slider geometry (<i>not</i> a sine wave — a real rod of finite length makes the piston
+linger at the bottom and snap through the top), the bore is drawn to your actual bore/stroke ratio
+so an oversquare engine really is short and wide, and the valves open on true four-stroke timing
+with the scavenging overlap visible around TDC. The chamber is colour-coded by what is in it right
+now — fresh charge, compressed charge, burning, burnt — and the stroke is named above the head, so
+the cycle is something you can watch rather than something you have to remember. A two-stroke
+shows ports uncovering in the liner instead of valves; a rotary shows a real epitrochoid housing
+with the rotor turning at a third of the eccentric shaft. The strip beside it draws every cylinder
+at its own phase, so you can see the firing order run through a V12.
+</div>
+<div class="guide-body" data-gk="liveFiring">
+<b>The bank, and the firing order.</b> The panel on the right of the cutaway draws every cylinder, numbered, at its own point in the cycle. The number over a cylinder lights up while that cylinder fires, so you can read the order straight off the drawing, and the caption underneath spells it out.<br>Cylinders do not fire in the order they are numbered. An inline four fires <b>1-3-4-2</b>, which is also why pistons 1 and 4 are always at the top together and 2 and 3 at the bottom: the firing order and the crank geometry are the same fact. An inline six fires 1-5-3-6-2-4, a V8 1-5-4-8-6-3-7-2, a V12 1-7-5-11-3-9-6-12-2-8-4-10.<br>V and boxer engines are numbered <b>bank by bank</b> — bank A is 1 to n/2 on the top row, bank B the rest below — which is how BMW, Audi, Ferrari and Porsche number theirs, and the orders above are in that numbering. (GM numbers a V8 odd-left, even-right, so its familiar 1-8-4-3-6-5-7-2 is the same engine written differently.) Counts with no production layout, such as a V5, fire in sequence, which is still evenly spaced.
+</div>
+<div class="guide-body" data-gk="liveOut">
+The numbers that used to be printed here in 7 px type now live in the <b>LIVE OUTPUT</b> panel
+beside the canvas, where they are actual text; what stays on the cutaway is what benefits from
+being next to the part it describes — throttle plate angle, boost and compressor flow at the
+turbo, EGT at the exhaust, and the knock bar.
+</div>
+</section>
+<section class="guide-page" id="gp-numbers" data-cat="start" data-title="Reading the numbers" hidden>
+<h4 class="guide-title">Reading the numbers</h4>
 <div class="guide-body" data-gk="numbers">
+
 <b>HP / kW</b> — power = torque × rpm. <b>TORQUE (Nm)</b> — twisting force; peaks lower than power.<br>
 <b>BMEP (bar)</b> — brake mean effective pressure: torque normalised to displacement, so you can
 compare engines of any size. <b>VE (%)</b> — volumetric efficiency: how well the engine breathes
@@ -361,8 +430,381 @@ lean/hot; a catalytic converter only cleans all three near stoich.<br>
 design estimate of how much abuse the build invites (boost/knock/heat/high-rpm stress);
 higher is tougher. <b>hp/$1k</b> — power per thousand dollars: the value metric.
 </div>
+</section>
+<section class="guide-page" id="gp-types" data-cat="engine" data-title="Engine types" hidden>
+<h4 class="guide-title">Engine types</h4>
+<div class="guide-body" data-gk="types">
 
-<div class="design-section">The Scorecard</div>
+<b>Petrol 4-stroke</b> — the all-rounder: spark ignition, one power stroke every two revs.<br>
+<b>Diesel (CI)</b> — compression ignition (no spark, no spark-knock), very high compression,
+runs lean and unthrottled. Big low-end <b>torque</b>, low redline, and the best <b>efficiency</b>
+— but heavy, and its emissions signature is <b>NOx + soot (PM)</b>, cleaned by a DPF/SCR system.<br>
+<b>2-stroke</b> — a power stroke <i>every</i> rev (ported, no valvetrain): high specific output
+for its size but thirsty and <b>HC</b>-dirty (it burns oil and short-circuits fresh charge).<br>
+<b>Rotary (Wankel)</b> — a spinning rotor firing every rev: turbine-smooth, revs sky-high, high
+power per litre, but thirsty, <b>HC</b>-heavy and hard on apex seals (lower reliability).<br>
+Switching type retargets the compression, redline and AFR ranges and disables what doesn't
+apply (spark for diesel; cam/VVT for ported engines).
+</div>
+</section>
+<section class="guide-page" id="gp-bottom" data-cat="engine" data-title="Bottom end &amp; firing order" hidden>
+<h4 class="guide-title">Bottom end &amp; firing order</h4>
+<div class="guide-body" data-gk="bottom">
+<b>Bottom end</b> — engine type, bore × stroke × cylinders = displacement; oversquare &amp; higher
+redline shift the powerband up.
+</div>
+<div class="guide-body" data-gk="bottomMore">
+<b>Bore and stroke.</b> Displacement is bore area × stroke × cylinders, but the <i>shape</i> matters as much as the size. A short stroke (oversquare) means the piston travels less per revolution, so the engine can rev higher before the piston speed becomes dangerous, and a wide bore leaves room for bigger valves. A long stroke (undersquare) gives more leverage and fills well at low rpm.<br><b>Mean piston speed</b> is the limit that actually stops an engine revving: <i>2 × stroke × rpm / 60</i>. Road engines sit at 15–25 m/s at the limiter and race engines reach about 30. Set a redline far past that and the reciprocating parts are no longer a road engine.<br><b>Compression ratio</b> sets thermal efficiency — a higher ratio extracts more work from the same fuel — and it sets knock: the more the charge is squeezed, the hotter the end gas and the closer it is to detonating. An NA petrol engine runs 10.5–12.5:1, a turbo engine 8.5–10:1, a diesel 15–20:1.<br><b>Layout</b> — inline, V or boxer — decides how the cylinders are arranged and, with the cylinder count, the firing order you see on the LIVE tab. A V or a boxer runs one exhaust system per bank.
+</div>
+</section>
+<section class="guide-page" id="gp-valvetrain" data-cat="engine" data-title="Valvetrain" hidden>
+<h4 class="guide-title">Valvetrain</h4>
+<div class="guide-body" data-gk="valvetrain">
+<b>Valvetrain</b> — wilder cams move power up top &amp; idle lumpy; VVT restores the bottom end. <b>Valves per cylinder</b>, <b>valve material</b> and <b>springs</b> are now modelled from real geometry rather than assumed. Four valves flow about 22% more than two for the same bore (and five flow no more than four — which is why nobody builds them any more). The app derives the valve diameter your bore can physically fit, works out what that valve weighs, and tells you the <b>valve float</b> rpm — the speed at which the spring can no longer pull the valve back down and it stops following the cam. <span style="color:#ff6b6b">If that number is below your redline, the engine cannot use the rev range it claims.</span> Fit stiffer springs, lighter titanium valves, less lift, or lower the redline. Big-bore two-valve engines also choke on inlet airflow near the limiter, which is the real reason a big pushrod V8 makes its power low and a four-valve screamer can rev.
+</div>
+</section>
+<section class="guide-page" id="gp-fuel" data-cat="engine" data-title="Induction, fuel &amp; spark" hidden>
+<h4 class="guide-title">Induction, fuel &amp; spark</h4>
+<div class="guide-body" data-gk="induction">
+<b>Induction</b> — carbs → EFI → ITBs set breathing, metering precision and idle quality.
+</div>
+<div class="guide-body" data-gk="fuel">
+<b>Fuel &amp; spark</b> — fuel type, octane, injector, ignition type, FIXED vs AUTO (ECU) timing, and
+the fuel mixture: MANUAL (you set one AFR) or AUTO, a 3D ECU map that runs near stoich at light
+load and enriches under load/boost for power — just like a real fuel map. In AUTO you can
+<b>tune the map</b>: tap any cell to select it, then − LEAN / + RICH to shift that load×rpm
+target (RESET MAP restores the factory grid).
+</div>
+</section>
+<section class="guide-page" id="gp-cooling" data-cat="engine" data-title="Cooling &amp; electrical" hidden>
+<h4 class="guide-title">Cooling &amp; electrical</h4>
+<div class="guide-body" data-gk="cooling">
+<b>Cooling &amp; electrical</b> — radiator/fan/oil-cooler/thermostat set temps; alternator size and
+ignition type set charging and the misfire RPM limit.
+</div>
+</section>
+<section class="guide-page" id="gp-airpath" data-cat="air" data-title="The air path" hidden>
+<h4 class="guide-title">The air path</h4>
+<div class="guide-body" data-gk="airpath">
+<b>Air path</b> — turbo (spools with rpm; size/config trade lag vs top-end) or supercharger (boost
+from idle); intercooler size cools the charge (denser, less knock) with a little lag; exhaust and
+catalytic converter trade flow vs back-pressure/emissions; nitrous is bottled power.
+</div>
+</section>
+<section class="guide-page" id="gp-waves" data-cat="air" data-title="Waves &amp; back-pressure" hidden>
+<h4 class="guide-title">Waves &amp; back-pressure</h4>
+<div class="guide-body" data-gk="wavesIntro">
+An engine is an air pump, and most of what separates a good one from a bad one happens in the
+pipes rather than the cylinder. Three things here are solved rather than assumed, and all three
+are yours to tune.
+</div>
+<div class="guide-body" data-gk="runner">
+<b>The intake runner is a tuned organ pipe.</b> Every time a valve slams shut the column of air
+behind it bounces, and a well-chosen <b>runner length</b> puts that returning pressure wave at the
+valve just as it opens again — the engine is briefly supercharged by its own plumbing. Long
+runners tune low (torque down low), short runners tune high (power up top), and the
+<b>VARIABLE</b> setting is simply two lengths and a flap, which is all a DISA or a VarioRam ever
+was. Worth up to about <b>20–25%</b> of airflow at the tuned speed, and the reason a torque curve
+has humps rather than being a smooth arc.
+</div>
+<div class="guide-body" data-gk="header">
+<b>The exhaust header does the opposite job.</b> The blowdown pulse races down the primary, hits
+the collector and reflects back as a <i>rarefaction</i> — a suction wave. Time it to arrive during
+valve overlap and it pulls the last of the burnt gas out and fresh charge in behind it. Primary
+length sets the arrival time, which is why headers are cut to a target rpm. The app sizes them
+from the engine's own flow rather than from a table.
+</div>
+<div class="guide-body" data-gk="backpressure">
+<b>Back-pressure is a tax on everything.</b> Whatever the piston cannot push out, it pays for
+twice: once as pumping work on the exhaust stroke, and again as <b>residual gas</b> — hot burnt
+charge left in the clearance volume that takes the place of fresh air. The pumping loop is simply
+<i>p<sub>exhaust</sub> − p<sub>intake</sub></i>, so a free-flowing exhaust is worth real power and
+a restrictive one is worth less than the back-pressure number alone suggests.
+</div>
+</section>
+<section class="guide-page" id="gp-turbo" data-cat="air" data-title="Turbochargers" hidden>
+<h4 class="guide-title">Turbochargers</h4>
+<div class="guide-body" data-gk="turbine">
+<b>A turbo is a restriction you chose on purpose.</b> The turbine sits in the exhaust and is a
+nozzle: gas can only leave through it, so manifold pressure rises until the flow fits. That
+pressure is what spins the compressor — and it is also back-pressure the engine has to push
+against. Boost is never free; it is bought with exhaust energy and paid for in pumping work.
+The <b>wastegate</b> is what holds a target: once the turbine can make more power than the
+compressor needs, the gate opens and dumps the surplus around it. Without one, routing every gram
+of exhaust through a fixed throat gives 3.5–4.5 bar, not the 0.5–1.5 a real engine runs.
+</div>
+<div class="guide-body" data-gk="boostCost">
+<b>Boost is not free, and the frame has a size.</b> A compressor makes pressure by spinning, and
+that shaft speed has to be bought with exhaust energy — so <i>the more boost you ask a given turbo
+for, the later it arrives and the longer it takes to build</i>. The same small frame that is fully
+lit by 1200 rpm at 0.5 bar does not reach half of 2.5 bar until nearly 3000 rpm. The spool figure
+quoted in the design summary is for the boost you actually asked for, not a fixed property of the
+frame.
+</div>
+<div class="guide-body" data-gk="ratedFlow">
+Each frame also has a <b>rated flow</b> — small 32, medium 55, large 82 lb/min, and multi-turbo
+configs flow more (twin ×1.85, sequential ×1.55, compound ×2.3). That is the axis a real
+compressor map is drawn against. Ask an engine to move more air than its turbo is rated for and
+you are off the map: compressor efficiency falls away, the top end chokes off, and — the one that
+really bites — the charge arrives <b>hot</b>. Squeezing air heats it by
+<i>T&middot;(PR<sup>0.283</sup> − 1) / efficiency</i>, which grows faster than the boost does and
+grows again as efficiency drops. A 2.0 L asking 2.5 bar of a small frame wants 1.7× its rated
+flow, and the charge reaches the valves at <b>74 °C</b> where the right frame delivers 58 °C —
+so it knocks, makes 120 hp <i>less</i> than the medium frame, and is slower round a lap than the
+same engine at 0.8 bar. Nothing stops you building it; it simply isn't the way to make power.
+</div>
+<div class="guide-body" data-gk="lag">
+<b>Lag is real in the 0–100 now.</b> The acceleration run spins the turbo shaft alongside the car
+and reads torque off a <i>two-dimensional</i> rpm × boost map, because boost is a state with a
+history: at 4000 rpm a turbo might be at 0.1 bar because you have just floored it, or at full boost
+because you have been flat for two seconds. A single curve can only describe the second. The car
+also leaves the line with the turbo already part-lit, which is what brake-boosting is.
+</div>
+<div class="guide-body" data-gk="lagLimit">
+<span style="color:#c86">One limit left: the <i>lap</i> solver still works from the steady boost
+available at each rpm, so it feels the spool <i>point</i> move but not the transient. A very laggy
+build is therefore still flattered slightly by its lap time, though no longer by its 0–100.</span>
+</div>
+<div class="guide-body" data-gk="turboLimit">
+<span style="color:#c86">Known limit: the turbine is fed by <i>mean</i> manifold pressure. A real
+one is fed by each cylinder's blowdown pulse, whose peak at low engine speed is far above the
+mean, so a real turbo gets 20–45% more turbine work at the threshold than this model gives it.
+That is measured rather than guessed, and it is worth most on a twin-scroll manifold, which this
+app does not yet reward. A second one: the turbine throat is taken as A/R × the <i>wheel</i>
+radius, where it should be the radius to the volute throat centroid — further out — so every
+turbine here is smaller than the frame it names, and the wastegate has always covered for
+it.</span>
+</div>
+</section>
+<section class="guide-page" id="gp-vgt" data-cat="air" data-title="Variable geometry" hidden>
+<h4 class="guide-title">Variable geometry</h4>
+<div class="guide-body" data-gk="vgt">
+<b>VARIABLE GEOMETRY is the throat as a control, and it is why diesels spool.</b> A fixed housing
+has one throat area, and that one number is a compromise: tight enough to light at 1700 rpm is
+far too tight to breathe at 4500. A <b>VGT</b> puts a ring of pivoting vanes in the housing, so
+the ECU picks the throat at every operating point — shut for a quick spool, open to get out of
+the way once the target is made. Set <b>TURBINE</b> to VARIABLE GEOMETRY and watch the torque
+plateau walk down the rev range: a 2.0 diesel goes from full boost at 2575 rpm to full boost at
+1800, and its torque peak moves from 2700 rpm to 1900. That is not a bonus applied to diesels,
+it is geometry — the ring's sweep (about <b>2.9:1</b>, from 21° to 60° of vane angle) and its
+top-end loss (the vanes occupy 8–13% of the circumference, so a VGT at full open flows
+<i>less</i> than the plain housing of the same frame) both come straight out of vane count,
+thickness and the two end stops.
+</div>
+<div class="guide-body" data-gk="vgtPetrol">
+<b>So why does nothing petrol-powered have one?</b> Two reasons, both of which you can see in the
+app. The vane ring is the hottest <i>moving</i> part in the exhaust, and nickel alloys creep
+above about 1100 K. A diesel is quality-governed — always lean — so its gas arrives at the vanes
+near 880 K; a petrol engine runs rich for power and sends 1235 K. The design panel prints that
+temperature and tells you when you are over the limit, and the reliability score falls about 19
+points when you are. The other reason is simpler: a vane ring, its bearings and an actuator cost
+about <b>1.7×</b> a plain housing. Fit one to a petrol engine and it works beautifully and does
+not last — which is exactly its reputation.
+</div>
+</section>
+<section class="guide-page" id="gp-knock" data-cat="air" data-title="Compression &amp; knock" hidden>
+<h4 class="guide-title">Compression &amp; knock</h4>
+<div class="guide-body" data-gk="knock">
+<b>Why boosted engines run low compression and lose timing.</b> Higher manifold pressure means
+more residual trapped, and residual is <i>hot</i> — it drags the end gas toward detonation before
+the flame gets there. That is why a turbo engine is built at 8.5–9.5:1 where an NA engine of the
+same era runs 11:1 or more, and why the ECU is pulling timing long before you see the knock bar
+move. Push boost up on a high-compression engine and you can watch it happen: the AUTO ignition
+retards, and the power stops following the boost.
+</div>
+</section>
+<section class="guide-page" id="gp-vehicle" data-cat="car" data-title="Chassis &amp; garage" hidden>
+<h4 class="guide-title">Chassis &amp; garage</h4>
+<div class="guide-body" data-gk="chassis">
+On the <b>VEHICLE</b> tab you drop your engine into a car. Pick a <b>chassis</b> and it arrives on
+its <b>factory spec</b> — the tyres, wheels, brakes, suspension, aero and gearbox that car would
+really wear, so a kei car turns up on skinny eco tyres and small steel discs while a hypercar gets
+wide semi-slicks, carbon-ceramics and a wing/diffuser package. Everything stays editable from
+there; <b>REFIT FACTORY SPEC</b> puts it all back.
+</div>
+<div class="guide-body" data-gk="garage">
+<b>The GARAGE</b> at the bottom of the tab keeps as many finished cars as you like. Name one and
+press <b>SAVE TO GARAGE</b> and the whole thing is stored together — the chassis, every part bolted
+to it, <i>and</i> the engine inside, down to a hand-tuned fuel map. Each card shows the headline
+numbers it had when you saved it (power, weight, 0–100, top speed, lap time and total cost), so you
+can line three builds up and compare them without rebuilding any of them. <b>LOAD</b> puts a car
+back exactly as it was; typing a name that already exists highlights that card and saving
+overwrites it. This is separate from <b>SAVE</b>/<b>LOAD</b>, which is a single quicksave slot that
+each save overwrites. A garage entry is the same record <b>SAVE FILE</b> writes and a share link
+carries, so a build is portable between all three. Everything lives in this browser only —
+clearing site data clears the garage, and <b>SAVE FILE</b> is what makes a build survive that.
+</div>
+<div class="guide-body" data-gk="tuning">
+From that baseline you tune the <b>drivetrain</b> (FWD/RWD/AWD — AWD launches hardest),
+the <b>gearbox</b> (type, speeds and the gearing slider), <b>tyres</b> (compound + width/profile/
+diameter set grip and rolling radius), <b>aero</b> (front/rear/floor add downforce and drag),
+<b>brakes</b> (type + rotor size set stopping power and fade resistance) and <b>suspension</b>
+(a mechanical-grip multiplier).
+</div>
+</section>
+<section class="guide-page" id="gp-gearbox" data-cat="car" data-title="Gearboxes" hidden>
+<h4 class="guide-title">Gearboxes</h4>
+<div class="guide-body" data-gk="gearbox">
+<b>Gearbox type</b> changes four things: how long the drive is cut on an upshift, how much of the
+engine's output survives the driveline, how the ratios are spaced, and how the car leaves the
+line.<br>· <b>Manual (H-pattern)</b> — the most efficient box, but you lose ~350 ms per shift lifting off,
+moving the lever and re-engaging. Cheap. Best where there are few shifts to make.<br>· <b>Sequential</b> — a race box that bangs the next dog in: ~60 ms shifts and close ratios that
+keep a peaky engine in its band. Expensive.<br>· <b>Dual-clutch (DCT)</b> — the next gear is already engaged on the second clutch, so shifts are
+near-seamless (~30 ms). The quickest thing here, and priced like it.<br>· <b>Torque-converter auto</b> — slowest shifts of the modern boxes (~200 ms) and the worst
+driveline losses, because it drives through fluid. What it buys you is the <b>launch</b>: the
+converter stalls up against the brakes and <i>multiplies</i> engine torque (up to ~1.9× at a
+2400 rpm stall), fading to 1:1 as the turbine catches up. That's why an automatic can out-launch a
+manual despite giving away power everywhere else — and why it suits a heavy, torquey car far
+better than a light, peaky one. It also spreads its ratios wider: a lower 1st to get the load
+moving, a taller top for cruising.
+</div>
+</section>
+<section class="guide-page" id="gp-gearing" data-cat="car" data-title="Gearing &amp; shifting" hidden>
+<h4 class="guide-title">Gearing &amp; shifting</h4>
+<div class="guide-body" data-gk="gearing">
+<b>The final drive is chosen for your engine, not by the slider.</b> A car is geared for maximum
+speed when the engine sits at its <i>power peak</i> exactly as drag consumes that power — not at
+the limiter, where it is already past peak and cannot hold the speed. So the app solves the drag
+balance for the speed your car could theoretically hold,
+<i>P<sub>peak</sub>·η = ½ρ·C<sub>d</sub>A·v³ + C<sub>rr</sub>·m·g·v</i>, and picks the ratio that
+puts peak power there. A 3800 rpm diesel and a 9000 rpm screamer therefore get completely
+different ratios, as they should — before this, both got the same ones, and the diesel ran out of
+<i>gear</i> at 167 km/h while the air could not have stopped it until 219.<br><b>The GEARING slider is now a bias about that</b> — roughly 1.28× shorter at one end for
+acceleration, 0.74× taller at the other for cruising, and neutral in the middle. Two consequences
+worth knowing. <b>Top speed has an optimum in the middle of the slider, not at the tall end</b>:
+gear taller than ideal and the engine can no longer reach the power it needs at that road speed,
+so the car gets <i>slower</i>. And on a twisty circuit short gearing costs you almost nothing,
+because you trade a top speed you never see for acceleration you use in every corner.<br><b>Where the car changes gear.</b> The 0–100 and quarter-mile runs upshift where the <i>next</i> gear
+pulls harder at the wheels than the current one — the torque crossover, which is what a good
+driver and a good automatic both do — or at the limiter if that comes first. For a peaky engine
+that is right up at the redline anyway. For a diesel it is not: its torque has faded long before
+the limiter, and holding it there used to cost a 2.0 TDI four seconds to 100 km/h. The lap uses the
+same rule. One step remains and it is real: if a taller final drive pushes 100 km/h into the next
+gear, the run makes one more shift and the time jumps by about one shift.
+</div>
+<div class="guide-body" data-gk="gearnum">
+<b>The GEARING slider</b> — moving it shortens or lengthens the final drive about the ratio the app matched to your engine: about 1.28× shorter at 0 and 0.74× taller at 100, neutral near the middle. The resulting ratio is shown next to it. Short gearing multiplies torque at the wheels, so the car accelerates harder and reaches the limiter sooner in every gear; tall gearing does the opposite. Top gear at the limiter is a <b>hard ceiling</b> — the limiter cuts fuel there, so no amount of power pushes the car past the speed its own gearing allows. The final drive is held to 2.2–6.0:1, the mechanical range of a real one.
+</div>
+</section>
+<section class="guide-page" id="gp-traction" data-cat="car" data-title="Differential &amp; traction" hidden>
+<h4 class="guide-title">Differential &amp; traction</h4>
+<div class="guide-body" data-gk="diff">
+<b>The differential</b> splits drive between the two wheels on an axle — and decides how much of
+that axle's grip you can actually use. The two wheels are never loaded identically (road camber,
+engine torque reaction, axle wind-up, suspension geometry), and an <b>open</b> diff can only feed
+each wheel what the <i>lighter-loaded</i> one will hold: it spins that wheel and throws the rest
+away, leaving about 78% of the axle's grip usable <i>at launch</i>. That 78% is not a constant —
+most of the asymmetry it is fighting is <b>torque reaction</b> (driveshaft wind-up, anti-lift
+geometry, torque steer), which is proportional to the torque actually going through the axle. In
+first gear under full multiplication it is at its worst; in third at 100&nbsp;km/h the axle sees a
+fraction of that torque and little more than road camber is left, so an open diff recovers toward
+~94%. A <b>viscous LSD</b> ties the two together
+through fluid shear and recovers most of it (~92%); a <b>clutch-plate LSD</b> locks them against a
+preload for effectively all of it; a <b>spool</b> welds them solid and is the best of all in a
+straight line, which is why drag cars run one.<br>The key thing: a diff only matters while you're <b>traction-limited</b>. Fit a spool to a slow car
+and nothing changes — it never troubles its tyres. Fit one to a car that's spinning up off the
+line and it can be worth more than a power upgrade. Watch the LIMITED-BY behaviour: if your 0–100
+barely moves when you change diff, the engine is the limit, not grip.
+</div>
+<div class="guide-body" data-gk="fwd">
+<b>Why a front-driver runs out of grip so early.</b> Three things multiply, and the first one
+surprises people: a FWD car only drives the front axle, which carries about 60% of the weight
+standing — and accelerating transfers weight <i>off</i> it, down to roughly 53%. Multiply that by
+an open diff (0.78) and by eco tyres (&mu; 0.81) and the whole car is capped at
+<b>0.33&nbsp;g</b>, whatever the engine makes. At 100&nbsp;km/h that ceiling is about 2500&nbsp;N,
+and even a 109&nbsp;hp engine is already asking for 2700&nbsp;N — so a 217&nbsp;hp version of the
+same car reaches 100&nbsp;km/h at <i>exactly the same time</i>. Both are just riding the ceiling.
+This is not a quirk of the simulation; it is why nobody builds a 200&nbsp;hp front-drive kei car.
+The fix is grip, not power — on that same 217&nbsp;hp car: a clutch LSD alone takes 9.9&nbsp;s to
+8.0&nbsp;s, sport tyres 6.6&nbsp;s, slicks 5.5&nbsp;s, and switching to AWD 4.4&nbsp;s. Same
+engine throughout.
+</div>
+<div class="guide-body" data-gk="difftrade">
+And now the trade is measurable. On the TRACK tab a locked diff pays for its straight-line
+advantage: it scrubs in every corner (less lateral grip) even though it never wastes drive. On an
+842&nbsp;hp muscle car a spool is ~0.2&nbsp;s quicker to 100&nbsp;km/h than a clutch LSD and
+~2.5&nbsp;s <i>slower</i> per lap, while an open diff is worst at both — it spins the inside wheel
+hardest exactly when cornering has already unloaded it.
+</div>
+</section>
+<section class="guide-page" id="gp-performance" data-cat="car" data-title="Performance tests" hidden>
+<h4 class="guide-title">Performance tests</h4>
+<div class="guide-body" data-gk="performance">
+The engine's mass and torque curve are added in and the
+<b>Performance</b> panel computes <b>0–100 km/h</b>, <b>400/800/1000 m</b> (time + trap speed),
+<b>top speed</b>, <b>100–0 braking</b> and the <b>0–200–0</b> test live — a traction-limited launch
+and a tyre/brake-limited stop with fade, weight transfer, downforce, drag and rolling resistance.
+Sticky tyres, big brakes and AWD help most.
+</div>
+</section>
+<section class="guide-page" id="gp-trackline" data-cat="track" data-title="The racing line" hidden>
+<h4 class="guide-title">The racing line</h4>
+<div class="guide-body" data-gk="trackline">
+<b>The TRACK tab</b> puts the car on a circuit and solves a lap. First it works out the
+<b>racing line</b>: nobody drives the centreline, because using the full width of the track
+straightens a corner and so raises the speed you can carry through it. The line is found by
+minimising its total curvature inside the track edges, and out-in-out through corners, straightened
+esses and linked complexes all fall out of that on their own. Two things bend it away from pure
+minimum curvature. First, <b>the track is not one width</b>: every circuit here narrows through its
+tight sections and opens out on the fast ones, and a 7 m corner simply cannot be straightened as
+much as a 13 m one — the figure quoted on the map is the range, and the circuit's headline width is
+its average. Second, a <b>late apex</b>: a metre of radius at a corner <i>exit</i> is worth far more
+than a metre at the entry, because exit speed is carried the whole length of whatever follows while
+at the entry you are braking anyway. The solver prices curvature by how open the track is ahead, so
+it gives up entry radius to straighten the exit — moving the apex about 11 m later on corners that
+lead onto a straight, and leaving corners that lead into more corners exactly where they were.
+Circuits are three-dimensional, so the
+lap also accounts for <b>elevation</b>: gravity pulling you back up a climb and pushing you down a
+descent, the slightly reduced weight-on-tyres of a slope, and — the one that really bites —
+<b>vertical curvature</b>. Over a crest the car is thrown light and loses grip exactly where it is
+going fastest; through a compression it is pressed into the road and can carry far more speed. On
+the test circuits a dip is worth about a third more corner speed than the same corner on a brow.
+Where the hills fall matters as much as how big they are: a climb in a braking zone lets you brake
+later and <i>gains</i> time, while the same climb on a straight simply costs you.
+</div>
+<div class="guide-body" data-gk="tracklap">
+It is worth <b>5–7% of lap time</b>
+over driving the centreline, and a wider circuit is worth more. Then it finds the cornering speed at
+every point (<i>v = &radic;(&mu;&middot;(mg + downforce)&middot;r / m)</i>), then works backwards from each
+corner to find the braking points and forwards out of each corner on the available drive, taking
+the lower speed at every point. A <b>friction circle</b> ties the two together: grip already spent
+turning isn't available for accelerating or braking, so a car at the cornering limit can't also
+put its power down. The coloured line on the map shows what is limiting the car at each point, and
+the legend totals how much of the lap each one accounts for — a fast circuit is mostly
+<span style="color:#55dd66">power</span> and <span style="color:#ff5555">braking</span>, a tight
+one mostly <span style="color:#4aa3ff">traction</span> out of slow corners. Shift time is charged
+per gear change around the lap, so a slow-shifting box loses real time.
+</div>
+<div class="guide-body" data-gk="tracklimit">
+<span style="color:#c86">One limit worth knowing: the line is still only an approximation of the
+minimum-<i>time</i> line. The late-apex bias is priced from the geometry ahead, not from the car's
+own speed, so the same line is driven by a 90 hp hatchback and an 800 hp aero car — where in
+reality the fast car would brake later and apex later still. It is worth about half a percent, and
+it is the same half percent for everyone, so build-to-build comparisons stay honest.</span>
+</div>
+</section>
+<section class="guide-page" id="gp-gpx" data-cat="track" data-title="Importing a circuit" hidden>
+<h4 class="guide-title">Importing a circuit</h4>
+<div class="guide-body" data-gk="gpx">
+<b>IMPORT GPX TRACK</b> loads a real circuit from a GPX trace — a recorded lap, an export from a
+mapping tool, anything with track points. The trace is projected to metres, resampled to an even
+spacing (GPX points are wildly uneven, and a starved spline invents corners) and lightly smoothed
+so GPS jitter doesn't read as curvature. Elevation comes straight from the file, so an imported
+circuit gets its real gradients. Imported tracks are marked <b>*</b> in the list and are kept in
+your browser only — nothing is uploaded, and nothing ships with the app.
+</div>
+<div class="guide-body" data-gk="gpxacc">
+<span style="color:#c86">On accuracy: an imported circuit's lap time will read a little slow. A GPX
+trace carries no width at all, so the width profile is <i>modelled</i> from the layout — roads are
+built wide where they are fast and narrow where they are tight — rather than surveyed. The line is
+still an approximation of the minimum-time line, and the driver never makes a mistake or takes a
+compromise line. Treat it as a consistent yardstick for comparing your own builds, not as a real lap
+record.</span>
+</div>
+</section>
+<section class="guide-page" id="gp-reports" data-cat="track" data-title="Reports" hidden>
+<h4 class="guide-title">Reports</h4>
+<div class="guide-body" data-gk="reports">
 <b>HOT LAP REPORT</b> — on the TRACK tab, <b>LAP REPORT PNG</b> / <b>PDF</b> saves the lap as a
 telemetry sheet: the circuit map with <span style="color:#1a7f37">full-throttle</span> and
 <span style="color:#c1121f">braking</span> sections picked out and every corner tagged, a speed
@@ -388,15 +830,22 @@ made under, and a tabulated run-data list. Any pulls you've logged are overlaid 
 comparison. The graph is the engine <i>as tuned right now</i>, so the sheet also prints the
 <b>design potential</b> (the best-power figure the scorecard grades) — that's why the two numbers
 can differ. Everything is generated offline in the browser; nothing is uploaded.<br>
+</div>
+</section>
+<section class="guide-page" id="gp-scorecard" data-cat="score" data-title="The scorecard" hidden>
+<h4 class="guide-title">The scorecard</h4>
 <div class="guide-body" data-gk="scorecard">
+
 Every build is graded <b>S → F</b> from seven things: specific <b>power</b> &amp; <b>torque</b>
 (per litre), power<b>band</b> width, thermal <b>eff</b>iciency, knock <b>safety</b>,
 <b>drive</b>ability (low-end torque) and <b>emit</b> (emissions). Chasing peak power usually
 costs drivability, safety and emissions — the score rewards a balanced build.
 </div>
-
-<div class="design-section">Career &amp; Budget</div>
+</section>
+<section class="guide-page" id="gp-career" data-cat="score" data-title="Objectives &amp; budget" hidden>
+<h4 class="guide-title">Objectives &amp; budget</h4>
 <div class="guide-body" data-gk="career">
+
 <b>Track objectives</b> judge the whole car, not just the engine: four of them set a lap target on a
 named circuit (Club Sprint at Ashdown, Grand Prix Pace at Riverside, Under Seven at the Ring on the
 Nordschleife, and Lap per Dollar for the cheapest car that can still lap quickly). Their budget
@@ -405,320 +854,31 @@ build the car on the VEHICLE tab, then watch the objective card.<br>
 The scorecard also reports your <b>lap time</b> for the circuit selected on the TRACK tab. It is
 reported, not folded into the letter grade: the grade rates the <i>engine</i>, and an engine's grade
 should not move because you fitted different tyres.<br>
-Pick an <b>OBJECTIVE</b> at the top of the DESIGN tab to turn free building into a puzzle.
+Pick an <b>OBJECTIVE</b> at the top of the ENGINE tab to turn free building into a puzzle.
 Each challenge sets targets — power, economy, emissions, <b>reliability</b> or
 <b>power-per-dollar</b> — and some cap your <b>budget</b>. The card ticks off each target
 live (✓/✗) and shows a <b>PASSED</b> verdict when the whole brief is met; the build's
 <b>cost</b> and reliability are always on show. Cheap displacement wins on value; boost and
 race parts win on power but cost money and reliability. Balance the brief.
 </div>
-
-<div class="design-section">Engine Types</div>
-<div class="guide-body" data-gk="types">
-<b>Petrol 4-stroke</b> — the all-rounder: spark ignition, one power stroke every two revs.<br>
-<b>Diesel (CI)</b> — compression ignition (no spark, no spark-knock), very high compression,
-runs lean and unthrottled. Big low-end <b>torque</b>, low redline, and the best <b>efficiency</b>
-— but heavy, and its emissions signature is <b>NOx + soot (PM)</b>, cleaned by a DPF/SCR system.<br>
-<b>2-stroke</b> — a power stroke <i>every</i> rev (ported, no valvetrain): high specific output
-for its size but thirsty and <b>HC</b>-dirty (it burns oil and short-circuits fresh charge).<br>
-<b>Rotary (Wankel)</b> — a spinning rotor firing every rev: turbine-smooth, revs sky-high, high
-power per litre, but thirsty, <b>HC</b>-heavy and hard on apex seals (lower reliability).<br>
-Switching type retargets the compression, redline and AFR ranges and disables what doesn't
-apply (spark for diesel; cam/VVT for ported engines).
+</section>
+<section class="guide-page" id="gp-options" data-cat="more" data-title="Options &amp; tips" hidden>
+<h4 class="guide-title">Options &amp; tips</h4>
+<div class="guide-body" data-gk="options">
+<b>ENGINE SOUND</b> — a synthesised engine note pitched to the firing frequency; a wild cam makes the idle lope.<br><b>WEAR &amp; DAMAGE</b> — with wear on, detonation, overheating, running lean under boost and over-revving damage the engine and can blow it; with it off the engine is invincible, which is the way to experiment.<br><b>LANGUAGE</b> — English or Greek. Pages added since the Greek translation was made appear in English.
 </div>
-
-<div class="design-section">Design Subsystems</div>
-<div class="guide-body" data-gk="subsystems">
-<b>Bottom end</b> — engine type, bore × stroke × cylinders = displacement; oversquare &amp; higher
-redline shift the powerband up.<br>
-<b>Air path</b> — turbo (spools with rpm; size/config trade lag vs top-end) or supercharger (boost
-from idle); intercooler size cools the charge (denser, less knock) with a little lag; exhaust and
-catalytic converter trade flow vs back-pressure/emissions; nitrous is bottled power.<br>
-<b>Boost is not free, and the frame has a size.</b> A compressor makes pressure by spinning, and
-that shaft speed has to be bought with exhaust energy — so <i>the more boost you ask a given turbo
-for, the later it arrives and the longer it takes to build</i>. The same small frame that is fully
-lit by 1200 rpm at 0.5 bar does not reach half of 2.5 bar until nearly 3000 rpm. The spool figure
-quoted in the design summary is for the boost you actually asked for, not a fixed property of the
-frame.<br>
-Each frame also has a <b>rated flow</b> — small 32, medium 55, large 82 lb/min, and multi-turbo
-configs flow more (twin ×1.85, sequential ×1.55, compound ×2.3). That is the axis a real
-compressor map is drawn against. Ask an engine to move more air than its turbo is rated for and
-you are off the map: compressor efficiency falls away, the top end chokes off, and — the one that
-really bites — the charge arrives <b>hot</b>. Squeezing air heats it by
-<i>T&middot;(PR<sup>0.283</sup> − 1) / efficiency</i>, which grows faster than the boost does and
-grows again as efficiency drops. A 2.0 L asking 2.5 bar of a small frame wants 1.7× its rated
-flow, and the charge reaches the valves at <b>74 °C</b> where the right frame delivers 58 °C —
-so it knocks, makes 120 hp <i>less</i> than the medium frame, and is slower round a lap than the
-same engine at 0.8 bar. Nothing stops you building it; it simply isn't the way to make power.<br>
-<b>Lag is real in the 0–100 now.</b> The acceleration run spins the turbo shaft alongside the car
-and reads torque off a <i>two-dimensional</i> rpm × boost map, because boost is a state with a
-history: at 4000 rpm a turbo might be at 0.1 bar because you have just floored it, or at full boost
-because you have been flat for two seconds. A single curve can only describe the second. The car
-also leaves the line with the turbo already part-lit, which is what brake-boosting is.<br>
-<span style="color:#c86">One limit left: the <i>lap</i> solver still works from the steady boost
-available at each rpm, so it feels the spool <i>point</i> move but not the transient. A very laggy
-build is therefore still flattered slightly by its lap time, though no longer by its 0–100.</span><br>
-<b>Induction</b> — carbs → EFI → ITBs set breathing, metering precision and idle quality.<br>
-<b>Valvetrain</b> — wilder cams move power up top &amp; idle lumpy; VVT restores the bottom end. <b>Valves per cylinder</b>, <b>valve material</b> and <b>springs</b> are now modelled from real geometry rather than assumed. Four valves flow about 22% more than two for the same bore (and five flow no more than four — which is why nobody builds them any more). The app derives the valve diameter your bore can physically fit, works out what that valve weighs, and tells you the <b>valve float</b> rpm — the speed at which the spring can no longer pull the valve back down and it stops following the cam. <span style="color:#ff6b6b">If that number is below your redline, the engine cannot use the rev range it claims.</span> Fit stiffer springs, lighter titanium valves, less lift, or lower the redline. Big-bore two-valve engines also choke on inlet airflow near the limiter, which is the real reason a big pushrod V8 makes its power low and a four-valve screamer can rev.<br>
-<b>Fuel &amp; spark</b> — fuel type, octane, injector, ignition type, FIXED vs AUTO (ECU) timing, and
-the fuel mixture: MANUAL (you set one AFR) or AUTO, a 3D ECU map that runs near stoich at light
-load and enriches under load/boost for power — just like a real fuel map. In AUTO you can
-<b>tune the map</b>: tap any cell to select it, then − LEAN / + RICH to shift that load×rpm
-target (RESET MAP restores the factory grid).<br>
-<b>Cooling &amp; electrical</b> — radiator/fan/oil-cooler/thermostat set temps; alternator size and
-ignition type set charging and the misfire RPM limit.<br>
-<b>The ENGINE tab is a live cutaway</b> of the engine you just designed. Everything on it moves
-because the simulation moved it. It is deliberately <b>not</b> drawn in real time: a crank at
-5000&nbsp;rpm turns 83 times a <i>second</i>, which at 60&nbsp;fps is a strobe rather than a
-picture — you could not watch a valve open. So the cycle runs at a pace you can read, between
-about 3.3&nbsp;s and 1.1&nbsp;s per full four-stroke cycle, still ranked by rpm so idle is
-visibly lazier than the limiter. The true speed is on the tachometer above it and in the note;
-the animation's job is to make the <i>cycle</i> legible. The piston follows proper
-crank-slider geometry (<i>not</i> a sine wave — a real rod of finite length makes the piston
-linger at the bottom and snap through the top), the bore is drawn to your actual bore/stroke ratio
-so an oversquare engine really is short and wide, and the valves open on true four-stroke timing
-with the scavenging overlap visible around TDC. The chamber is colour-coded by what is in it right
-now — fresh charge, compressed charge, burning, burnt — and the stroke is named above the head, so
-the cycle is something you can watch rather than something you have to remember. A two-stroke
-shows ports uncovering in the liner instead of valves; a rotary shows a real epitrochoid housing
-with the rotor turning at a third of the eccentric shaft. The strip beside it draws every cylinder
-at its own phase, so you can see the firing order run through a V12.<br>
-The numbers that used to be printed here in 7 px type now live in the <b>LIVE OUTPUT</b> panel
-beside the canvas, where they are actual text; what stays on the cutaway is what benefits from
-being next to the part it describes — throttle plate angle, boost and compressor flow at the
-turbo, EGT at the exhaust, and the knock bar.
+<div class="guide-body" data-gk="tip">
+Tip: turn WEAR off in OPTIONS to
+experiment freely, then back on for consequences.
 </div>
-<div class="design-section">Gearing</div>
-<div class="guide-body" data-gk="gearing">
-<b>The final drive is chosen for your engine, not by the slider.</b> A car is geared for maximum
-speed when the engine sits at its <i>power peak</i> exactly as drag consumes that power — not at
-the limiter, where it is already past peak and cannot hold the speed. So the app solves the drag
-balance for the speed your car could theoretically hold,
-<i>P<sub>peak</sub>·η = ½ρ·C<sub>d</sub>A·v³ + C<sub>rr</sub>·m·g·v</i>, and picks the ratio that
-puts peak power there. A 3800 rpm diesel and a 9000 rpm screamer therefore get completely
-different ratios, as they should — before this, both got the same ones, and the diesel ran out of
-<i>gear</i> at 167 km/h while the air could not have stopped it until 219.<br>
-<b>The GEARING slider is now a bias about that</b> — roughly 1.28× shorter at one end for
-acceleration, 0.74× taller at the other for cruising, and neutral in the middle. Two consequences
-worth knowing. <b>Top speed has an optimum in the middle of the slider, not at the tall end</b>:
-gear taller than ideal and the engine can no longer reach the power it needs at that road speed,
-so the car gets <i>slower</i>. And on a twisty circuit short gearing costs you almost nothing,
-because you trade a top speed you never see for acceleration you use in every corner.<br>
-<b>Where the car changes gear.</b> The 0–100 and quarter-mile runs upshift where the <i>next</i> gear
-pulls harder at the wheels than the current one — the torque crossover, which is what a good
-driver and a good automatic both do — or at the limiter if that comes first. For a peaky engine
-that is right up at the redline anyway. For a diesel it is not: its torque has faded long before
-the limiter, and holding it there used to cost a 2.0 TDI four seconds to 100 km/h. The lap uses the
-same rule. One step remains and it is real: if a taller final drive pushes 100 km/h into the next
-gear, the run makes one more shift and the time jumps by about one shift.<br>
+</section>
+<section class="guide-page" id="gp-limits" data-cat="more" data-title="Known limits" hidden>
+<h4 class="guide-title">Known limits</h4>
+<div class="guide-body" data-gk="limits">
+This is a physics model, and like every model it leaves things out. These are the ones worth knowing, because they can move a result you care about:<br>· <b>The VE curve is still partly fitted for some engines.</b> Petrol engines with poppet valves get their breathing shape from the parts: valve timing, the tuned intake and exhaust, port flow and valve float. Diesels, rotaries and two-strokes still use a fitted curve.<br>· <b>Turbines are fed by mean pressure.</b> Real ones get 20–45% more work from each cylinder's exhaust pulse at low rpm, so turbos here spool a little later than real ones, and twin-scroll manifolds are not yet rewarded.<br>· <b>The lap uses steady boost.</b> The 0–100 integrates turbo lag; the lap solver does not, so a very laggy build is slightly flattered on track.<br>· <b>The racing line is an approximation</b> of the minimum-time line, and the driver never makes a mistake.<br>· <b>Imported circuits have modelled width</b>, because a GPX file carries none.<br>Each of these is measured and written up in the project, and each one is on the list.
 </div>
-
-<div class="design-section">Breathing — Waves, Back-Pressure and Boost</div>
-<div class="guide-body" data-gk="breathing">
-An engine is an air pump, and most of what separates a good one from a bad one happens in the
-pipes rather than the cylinder. Three things here are solved rather than assumed, and all three
-are yours to tune.<br>
-<b>The intake runner is a tuned organ pipe.</b> Every time a valve slams shut the column of air
-behind it bounces, and a well-chosen <b>runner length</b> puts that returning pressure wave at the
-valve just as it opens again — the engine is briefly supercharged by its own plumbing. Long
-runners tune low (torque down low), short runners tune high (power up top), and the
-<b>VARIABLE</b> setting is simply two lengths and a flap, which is all a DISA or a VarioRam ever
-was. Worth up to about <b>20–25%</b> of airflow at the tuned speed, and the reason a torque curve
-has humps rather than being a smooth arc.<br>
-<b>The exhaust header does the opposite job.</b> The blowdown pulse races down the primary, hits
-the collector and reflects back as a <i>rarefaction</i> — a suction wave. Time it to arrive during
-valve overlap and it pulls the last of the burnt gas out and fresh charge in behind it. Primary
-length sets the arrival time, which is why headers are cut to a target rpm. The app sizes them
-from the engine's own flow rather than from a table.<br>
-<b>Back-pressure is a tax on everything.</b> Whatever the piston cannot push out, it pays for
-twice: once as pumping work on the exhaust stroke, and again as <b>residual gas</b> — hot burnt
-charge left in the clearance volume that takes the place of fresh air. The pumping loop is simply
-<i>p<sub>exhaust</sub> − p<sub>intake</sub></i>, so a free-flowing exhaust is worth real power and
-a restrictive one is worth less than the back-pressure number alone suggests.<br>
-<b>A turbo is a restriction you chose on purpose.</b> The turbine sits in the exhaust and is a
-nozzle: gas can only leave through it, so manifold pressure rises until the flow fits. That
-pressure is what spins the compressor — and it is also back-pressure the engine has to push
-against. Boost is never free; it is bought with exhaust energy and paid for in pumping work.
-The <b>wastegate</b> is what holds a target: once the turbine can make more power than the
-compressor needs, the gate opens and dumps the surplus around it. Without one, routing every gram
-of exhaust through a fixed throat gives 3.5–4.5 bar, not the 0.5–1.5 a real engine runs.<br>
-<b>VARIABLE GEOMETRY is the throat as a control, and it is why diesels spool.</b> A fixed housing
-has one throat area, and that one number is a compromise: tight enough to light at 1700 rpm is
-far too tight to breathe at 4500. A <b>VGT</b> puts a ring of pivoting vanes in the housing, so
-the ECU picks the throat at every operating point — shut for a quick spool, open to get out of
-the way once the target is made. Set <b>TURBINE</b> to VARIABLE GEOMETRY and watch the torque
-plateau walk down the rev range: a 2.0 diesel goes from full boost at 2575 rpm to full boost at
-1800, and its torque peak moves from 2700 rpm to 1900. That is not a bonus applied to diesels,
-it is geometry — the ring's sweep (about <b>2.9:1</b>, from 21° to 60° of vane angle) and its
-top-end loss (the vanes occupy 8–13% of the circumference, so a VGT at full open flows
-<i>less</i> than the plain housing of the same frame) both come straight out of vane count,
-thickness and the two end stops.<br>
-<b>So why does nothing petrol-powered have one?</b> Two reasons, both of which you can see in the
-app. The vane ring is the hottest <i>moving</i> part in the exhaust, and nickel alloys creep
-above about 1100 K. A diesel is quality-governed — always lean — so its gas arrives at the vanes
-near 880 K; a petrol engine runs rich for power and sends 1235 K. The design panel prints that
-temperature and tells you when you are over the limit, and the reliability score falls about 19
-points when you are. The other reason is simpler: a vane ring, its bearings and an actuator cost
-about <b>1.7×</b> a plain housing. Fit one to a petrol engine and it works beautifully and does
-not last — which is exactly its reputation.<br>
-<b>Why boosted engines run low compression and lose timing.</b> Higher manifold pressure means
-more residual trapped, and residual is <i>hot</i> — it drags the end gas toward detonation before
-the flame gets there. That is why a turbo engine is built at 8.5–9.5:1 where an NA engine of the
-same era runs 11:1 or more, and why the ECU is pulling timing long before you see the knock bar
-move. Push boost up on a high-compression engine and you can watch it happen: the AUTO ignition
-retards, and the power stops following the boost.<br>
-<span style="color:#c86">Known limit: the turbine is fed by <i>mean</i> manifold pressure. A real
-one is fed by each cylinder's blowdown pulse, whose peak at low engine speed is far above the
-mean, so a real turbo gets 20–45% more turbine work at the threshold than this model gives it.
-That is measured rather than guessed, and it is worth most on a twin-scroll manifold, which this
-app does not yet reward. A second one: the turbine throat is taken as A/R × the <i>wheel</i>
-radius, where it should be the radius to the volute throat centroid — further out — so every
-turbine here is smaller than the frame it names, and the wastegate has always covered for
-it.</span>
-</div>
-
-<div class="design-section">Vehicle &amp; Performance</div>
-<div class="guide-body" data-gk="vehicle">
-On the <b>VEHICLE</b> tab you drop your engine into a car. Pick a <b>chassis</b> and it arrives on
-its <b>factory spec</b> — the tyres, wheels, brakes, suspension, aero and gearbox that car would
-really wear, so a kei car turns up on skinny eco tyres and small steel discs while a hypercar gets
-wide semi-slicks, carbon-ceramics and a wing/diffuser package. Everything stays editable from
-there; <b>REFIT FACTORY SPEC</b> puts it all back.<br>
-<b>The GARAGE</b> at the bottom of the tab keeps as many finished cars as you like. Name one and
-press <b>SAVE TO GARAGE</b> and the whole thing is stored together — the chassis, every part bolted
-to it, <i>and</i> the engine inside, down to a hand-tuned fuel map. Each card shows the headline
-numbers it had when you saved it (power, weight, 0–100, top speed, lap time and total cost), so you
-can line three builds up and compare them without rebuilding any of them. <b>LOAD</b> puts a car
-back exactly as it was; typing a name that already exists highlights that card and saving
-overwrites it. This is separate from <b>SAVE</b>/<b>LOAD</b>, which is a single quicksave slot that
-each save overwrites. A garage entry is the same record <b>SAVE FILE</b> writes and a share link
-carries, so a build is portable between all three. Everything lives in this browser only —
-clearing site data clears the garage, and <b>SAVE FILE</b> is what makes a build survive that.<br>
-From that baseline you tune the <b>drivetrain</b> (FWD/RWD/AWD — AWD launches hardest),
-the <b>gearbox</b> (type, speeds and the gearing slider), <b>tyres</b> (compound + width/profile/
-diameter set grip and rolling radius), <b>aero</b> (front/rear/floor add downforce and drag),
-<b>brakes</b> (type + rotor size set stopping power and fade resistance) and <b>suspension</b>
-(a mechanical-grip multiplier).<br>
-<b>Gearbox type</b> changes four things: how long the drive is cut on an upshift, how much of the
-engine's output survives the driveline, how the ratios are spaced, and how the car leaves the
-line.<br>
-
-· <b>Manual (H-pattern)</b> — the most efficient box, but you lose ~350 ms per shift lifting off,
-moving the lever and re-engaging. Cheap. Best where there are few shifts to make.<br>
-· <b>Sequential</b> — a race box that bangs the next dog in: ~60 ms shifts and close ratios that
-keep a peaky engine in its band. Expensive.<br>
-· <b>Dual-clutch (DCT)</b> — the next gear is already engaged on the second clutch, so shifts are
-near-seamless (~30 ms). The quickest thing here, and priced like it.<br>
-· <b>Torque-converter auto</b> — slowest shifts of the modern boxes (~200 ms) and the worst
-driveline losses, because it drives through fluid. What it buys you is the <b>launch</b>: the
-converter stalls up against the brakes and <i>multiplies</i> engine torque (up to ~1.9× at a
-2400 rpm stall), fading to 1:1 as the turbine catches up. That's why an automatic can out-launch a
-manual despite giving away power everywhere else — and why it suits a heavy, torquey car far
-better than a light, peaky one. It also spreads its ratios wider: a lower 1st to get the load
-moving, a taller top for cruising.<br>
-<b>The TRACK tab</b> puts the car on a circuit and solves a lap. First it works out the
-<b>racing line</b>: nobody drives the centreline, because using the full width of the track
-straightens a corner and so raises the speed you can carry through it. The line is found by
-minimising its total curvature inside the track edges, and out-in-out through corners, straightened
-esses and linked complexes all fall out of that on their own. Two things bend it away from pure
-minimum curvature. First, <b>the track is not one width</b>: every circuit here narrows through its
-tight sections and opens out on the fast ones, and a 7 m corner simply cannot be straightened as
-much as a 13 m one — the figure quoted on the map is the range, and the circuit's headline width is
-its average. Second, a <b>late apex</b>: a metre of radius at a corner <i>exit</i> is worth far more
-than a metre at the entry, because exit speed is carried the whole length of whatever follows while
-at the entry you are braking anyway. The solver prices curvature by how open the track is ahead, so
-it gives up entry radius to straighten the exit — moving the apex about 11 m later on corners that
-lead onto a straight, and leaving corners that lead into more corners exactly where they were.
-Circuits are three-dimensional, so the
-lap also accounts for <b>elevation</b>: gravity pulling you back up a climb and pushing you down a
-descent, the slightly reduced weight-on-tyres of a slope, and — the one that really bites —
-<b>vertical curvature</b>. Over a crest the car is thrown light and loses grip exactly where it is
-going fastest; through a compression it is pressed into the road and can carry far more speed. On
-the test circuits a dip is worth about a third more corner speed than the same corner on a brow.
-Where the hills fall matters as much as how big they are: a climb in a braking zone lets you brake
-later and <i>gains</i> time, while the same climb on a straight simply costs you.<br>
-<b>IMPORT GPX TRACK</b> loads a real circuit from a GPX trace — a recorded lap, an export from a
-mapping tool, anything with track points. The trace is projected to metres, resampled to an even
-spacing (GPX points are wildly uneven, and a starved spline invents corners) and lightly smoothed
-so GPS jitter doesn't read as curvature. Elevation comes straight from the file, so an imported
-circuit gets its real gradients. Imported tracks are marked <b>*</b> in the list and are kept in
-your browser only — nothing is uploaded, and nothing ships with the app.<br>
-<span style="color:#c86">On accuracy: an imported circuit's lap time will read a little slow. A GPX
-trace carries no width at all, so the width profile is <i>modelled</i> from the layout — roads are
-built wide where they are fast and narrow where they are tight — rather than surveyed. The line is
-still an approximation of the minimum-time line, and the driver never makes a mistake or takes a
-compromise line. Treat it as a consistent yardstick for comparing your own builds, not as a real lap
-record.</span><br> It is worth <b>5–7% of lap time</b>
-over driving the centreline, and a wider circuit is worth more. Then it finds the cornering speed at
-every point (<i>v = &radic;(&mu;&middot;(mg + downforce)&middot;r / m)</i>), then works backwards from each
-corner to find the braking points and forwards out of each corner on the available drive, taking
-the lower speed at every point. A <b>friction circle</b> ties the two together: grip already spent
-turning isn't available for accelerating or braking, so a car at the cornering limit can't also
-put its power down. The coloured line on the map shows what is limiting the car at each point, and
-the legend totals how much of the lap each one accounts for — a fast circuit is mostly
-<span style="color:#55dd66">power</span> and <span style="color:#ff5555">braking</span>, a tight
-one mostly <span style="color:#4aa3ff">traction</span> out of slow corners. Shift time is charged
-per gear change around the lap, so a slow-shifting box loses real time.<br>
-<span style="color:#c86">One limit worth knowing: the line is still only an approximation of the
-minimum-<i>time</i> line. The late-apex bias is priced from the geometry ahead, not from the car's
-own speed, so the same line is driven by a 90 hp hatchback and an 800 hp aero car — where in
-reality the fast car would brake later and apex later still. It is worth about half a percent, and
-it is the same half percent for everyone, so build-to-build comparisons stay honest.</span><br>
-<b>The differential</b> splits drive between the two wheels on an axle — and decides how much of
-that axle's grip you can actually use. The two wheels are never loaded identically (road camber,
-engine torque reaction, axle wind-up, suspension geometry), and an <b>open</b> diff can only feed
-each wheel what the <i>lighter-loaded</i> one will hold: it spins that wheel and throws the rest
-away, leaving about 78% of the axle's grip usable <i>at launch</i>. That 78% is not a constant —
-most of the asymmetry it is fighting is <b>torque reaction</b> (driveshaft wind-up, anti-lift
-geometry, torque steer), which is proportional to the torque actually going through the axle. In
-first gear under full multiplication it is at its worst; in third at 100&nbsp;km/h the axle sees a
-fraction of that torque and little more than road camber is left, so an open diff recovers toward
-~94%. A <b>viscous LSD</b> ties the two together
-through fluid shear and recovers most of it (~92%); a <b>clutch-plate LSD</b> locks them against a
-preload for effectively all of it; a <b>spool</b> welds them solid and is the best of all in a
-straight line, which is why drag cars run one.<br>
-The key thing: a diff only matters while you're <b>traction-limited</b>. Fit a spool to a slow car
-and nothing changes — it never troubles its tyres. Fit one to a car that's spinning up off the
-line and it can be worth more than a power upgrade. Watch the LIMITED-BY behaviour: if your 0–100
-barely moves when you change diff, the engine is the limit, not grip.<br>
-<b>Why a front-driver runs out of grip so early.</b> Three things multiply, and the first one
-surprises people: a FWD car only drives the front axle, which carries about 60% of the weight
-standing — and accelerating transfers weight <i>off</i> it, down to roughly 53%. Multiply that by
-an open diff (0.78) and by eco tyres (&mu; 0.81) and the whole car is capped at
-<b>0.33&nbsp;g</b>, whatever the engine makes. At 100&nbsp;km/h that ceiling is about 2500&nbsp;N,
-and even a 109&nbsp;hp engine is already asking for 2700&nbsp;N — so a 217&nbsp;hp version of the
-same car reaches 100&nbsp;km/h at <i>exactly the same time</i>. Both are just riding the ceiling.
-This is not a quirk of the simulation; it is why nobody builds a 200&nbsp;hp front-drive kei car.
-The fix is grip, not power — on that same 217&nbsp;hp car: a clutch LSD alone takes 9.9&nbsp;s to
-8.0&nbsp;s, sport tyres 6.6&nbsp;s, slicks 5.5&nbsp;s, and switching to AWD 4.4&nbsp;s. Same
-engine throughout.<br>
-And now the trade is measurable. On the TRACK tab a locked diff pays for its straight-line
-advantage: it scrubs in every corner (less lateral grip) even though it never wastes drive. On an
-842&nbsp;hp muscle car a spool is ~0.2&nbsp;s quicker to 100&nbsp;km/h than a clutch LSD and
-~2.5&nbsp;s <i>slower</i> per lap, while an open diff is worst at both — it spins the inside wheel
-hardest exactly when cornering has already unloaded it.<br>
-<b>The gearing number</b> — the 0–100 slider is your <b>final drive ratio</b>, how many times the
-driveshaft turns per turn of the wheels. It runs from <b>0 = 4.90:1</b> (the <i>shortest</i>,
-lowest gearing) to <b>100 = 2.60:1</b> (the <i>tallest</i>); the ratio is shown next to the number.
-Short gearing multiplies torque at the wheels, so the car accelerates harder and reaches the rev
-limiter sooner — quick 0–100, but each gear runs out of revs early. Tall gearing does the
-opposite: lazier acceleration, more speed per 1000 rpm and calmer cruising revs. Whatever you pick,
-top gear at the rev limiter is a <b>hard ceiling</b> — the limiter cuts fuel there, so no amount of
-power will push the car past the speed its own gearing allows, on the drag strip or on track.
-The sweet spot is
-the tallest gearing your engine can still pull to its power peak in top gear. Go taller than that
-and top speed simply <i>stops improving</i> — the car reaches its maximum a gear lower instead of
-bogging in top — while acceleration keeps getting worse, so you're paying for nothing. Big power
-and low drag can use very tall gearing and keep gaining speed all the way out; heavy, low-power or
-draggy cars plateau early and want shorter gearing.<br>
-The engine's mass and torque curve are added in and the
-<b>Performance</b> panel computes <b>0–100 km/h</b>, <b>400/800/1000 m</b> (time + trap speed),
-<b>top speed</b>, <b>100–0 braking</b> and the <b>0–200–0</b> test live — a traction-limited launch
-and a tyre/brake-limited stop with fade, weight transfer, downforce, drag and rolling resistance.
-Sticky tyres, big brakes and AWD help most.
-</div>
-<div class="guide-body" data-gk="tip" style="color:#667;margin-top:12px">Tip: turn WEAR off in OPTIONS to
-experiment freely, then back on for consequences.</div>
+</section>
+<div class="guide-nav guide-nav-foot" id="guideNavFoot"></div>
 </div>
 
 <!-- OPTIONS: sim preferences (sound, wear, language) -->
@@ -850,7 +1010,7 @@ experiment freely, then back on for consequences.</div>
 </div>
 <input type="file" id="fileInput" accept="application/json,.json" style="display:none">
 <div class="status-bar" id="status">READY • DESIGN AN ENGINE • THEN DYNO IT</div>
-<div class="legend" id="legend">Use the DESIGN tab to build your engine, then tune it here.</div>
+<div class="legend" id="legend">Use the ENGINE tab to build your engine, then tune it here.</div>
 </div>
 <div class="panel" id="vehiclePanel" style="display:none">
 <h2>Performance</h2>
@@ -1146,17 +1306,30 @@ function exhaustGasT(load){
 const Q_INTAKE=4.0;
 const IVC_WINDOW=40;      // crank degrees over which the intake valve actually seats
 const helmholtzHz=(A,L,V,T)=>sonic(T)/(2*Math.PI)*Math.sqrt(A/Math.max(1e-9,L*V));
+// WHERE THE TUNING PEAK SITS. Engelman's tuned-intake experiments (the source of the vEffCyl formula
+// above) put the main ram peak where the Helmholtz frequency is about TWICE the engine's rotational
+// frequency: f_H / (N/60) ~ 2. A later SAE study measured 2.42 on its engine, inside his range.
+// This model used to put the peak where exactly one oscillation fits in the intake event instead,
+// f_H / (N/60) = 360/duration — 1.64 on the stock cam, 1.27 on the race cam — which tuned every
+// runner 22-57% too high in rpm. That is why a 320 mm runner rang at the redline of every preset,
+// and why removing the VE bell left their power peaking on the limiter (tests/proto/README.md).
+// The ratio is published experiment, not a fit to these engines, and the headline value is used.
+// It sets only the PHASE; the damping and the valve-window averaging below stay on the time the
+// valve is actually open, because that is genuinely what sets them.
+const ENGELMAN_K=2.0;
 function intakeRamGain(rpm,chargeK){
   const e=engine;
   if(!e.runnerL||!e.ivDia_mm)return 0;
-  const nH=helmholtzHz(e.runnerA,e.runnerL,e.vEffCyl,chargeK)*e.camDur/(6*Math.max(500,rpm));
+  const fH=helmholtzHz(e.runnerA,e.runnerL,e.vEffCyl,chargeK);
+  const nH=fH*e.camDur/(6*Math.max(500,rpm));                    // oscillations while the valve is open
+  const nT=fH/(ENGELMAN_K*Math.max(500,rpm)/60);                 // tuning order: 1 = Engelman's main peak
   const u=(2*(e.stroke_mm/1000)*rpm/60)*Math.pow(e.bore_mm/e.runnerD_mm,2);   // acoustic piston relation
   const A0=GAMMA_AIR*u/sonic(chargeK);
   const amp=A0*Math.exp(-Math.PI*nH/Q_INTAKE);
   // Trapping is not decided at a point: the valve takes IVC_WINDOW crank degrees to seat, and the
   // charge is being trapped throughout. Average the resonance over that.
   const dn=nH*IVC_WINDOW/Math.max(1,e.camDur);
-  return densFromP(amp*aperture(dn)*Math.cos(2*Math.PI*(nH-Math.round(nH))));
+  return densFromP(amp*aperture(dn)*Math.cos(2*Math.PI*(nT-Math.round(nT))));
 }
 // Both waves were being sampled at a single INSTANT, and neither valve event is an instant. The
 // pressure the cylinder actually sees is the wave averaged over the window the valve is open for,
@@ -1250,24 +1423,32 @@ function backPressureBar(rpm,T){
   return pipe;
 }
 // ---- late intake valve closing: why a big cam guts the bottom end ----
-// This is what CAM.lowLoss was standing in for, and it is pure geometry. A 284 degree cam does not
-// close the intake valve at BDC — it closes it 52 crank degrees LATER, by which time the piston is
-// already back up the bore on the compression stroke. At low rpm the charge has all the time it
-// needs to be pushed straight back out of the still-open valve, so what gets trapped is the volume
-// at IVC, not the volume at BDC. At high rpm the gas column's own inertia keeps it coming in and
-// the loss is repaid — which is exactly the ram term above, and exactly why VVT exists.
+// This is what CAM.lowLoss was standing in for, and it is pure geometry. A cam does not close the
+// intake valve at BDC — it closes it well after, by which time the piston is already back up the
+// bore on the compression stroke. At low rpm the charge has all the time it needs to be pushed
+// straight back out of the still-open valve, so what gets trapped is the volume at IVC, not the
+// volume at BDC. At high rpm the gas column's own inertia keeps it coming in and the loss is repaid
+// — which is exactly the ram term above, and exactly why VVT exists.
 //   trapped fraction = V(IVC) / V(BDC), from the crank-slider the engine already has
-// A stock 220 degree cam closes 20 degrees after BDC and loses about 2%; a 284 degree race cam
-// closes 52 degrees after BDC and loses about 13%. That is the trade a cam designer really makes.
+// WHERE IVC IS. The model defines overlap as dur - 2*lsa, and that fixes the convention: each lobe
+// centre sits lsa degrees from TDC, so the intake closes at lsa + dur/2 after TDC, which is
+//     IVC = lsa + dur/2 - 180   degrees after BDC.
+// This used to take the lobe centre at 90 degrees ATDC instead (IVC = dur/2 - 90), contradicting the
+// overlap calculation three lines from where it is called. That closed every intake 16-24 degrees
+// early: stock 20 instead of 44 ABDC, race 52 instead of 68 — and a real B6 MX-5 closes at 51. It
+// understated low-rpm backflow on every engine, and the fitted VE bell's low side was covering for
+// it. A phaser ADVANCES the whole lobe, so it moves IVC by its full authority — not half of it, which
+// is what subtracting it from duration did.
 const ROD_STROKE=1.7;
 const VVT_AUTHORITY=45;   // crank degrees an intake cam phaser can advance the cam
 function pistonX(thetaDeg,r,l){
   const t=thetaDeg*Math.PI/180;
   return r*(1-Math.cos(t))+l-Math.sqrt(Math.max(0,l*l-r*r*Math.sin(t)*Math.sin(t)));
 }
-function trappedFraction(dur,cr){
+const ivcAbdc=(dur,lsa,advance)=>Math.max(0,lsa+dur/2-180-(advance||0));
+function trappedFraction(dur,lsa,cr,advance){
   const r=1,l=ROD_STROKE*2;                       // rod/crank from rod/stroke
-  const abd=Math.max(0,dur/2-90);                 // crank degrees IVC falls after BDC
+  const abd=ivcAbdc(dur,lsa,advance);
   const vc=2/Math.max(1.5,cr-1);                  // clearance volume in the same units as x
   return (pistonX(180+abd,r,l)+vc)/(pistonX(180,r,l)+vc);
 }
@@ -1543,7 +1724,7 @@ function deriveGasDynamics(){
   // VVT advances the intake cam down low, which IS closing the valve earlier — so it is a
   // change of IVC timing, not a recovery percentage. Real intake phasers have 40-60 crank
   // degrees of authority.
-  e.trapFrac=e.ports?1:trappedFraction(cam.dur-(e.vvt?VVT_AUTHORITY:0),e.compression);
+  e.trapFrac=e.ports?1:trappedFraction(cam.dur,cam.lsa,e.compression,e.vvt?VVT_AUTHORITY:0);
   e.dispCyl_L=e.displacement_L/Math.max(1,e.cylinders);
   const Vd=e.dispCyl_L/1000;
   e.vEffCyl=Vd/Math.max(1.5,e.compression-1)+Vd/2;       // mean cylinder volume over induction
@@ -1716,7 +1897,47 @@ let activeChallenge='free';
 // technical readouts (canvas schematic, status ticker, design-summary spec) stay in English —
 // their content is numbers and universal units.
 const I18N={
-  'DESIGN':{el:'ΣΧΕΔΙΑΣΗ'},'ENGINE':{el:'ΚΙΝΗΤΗΡΑΣ'},'DYNO':{el:'ΔΥΝΑΜΟ'},'GUIDE':{el:'ΟΔΗΓΟΣ'},'OPTIONS':{el:'ΕΠΙΛΟΓΕΣ'},
+  "How the app works":{el:"Πώς δουλεύει"},
+  "The tabs":{el:"Οι καρτέλες"},
+  "Your first build":{el:"Η πρώτη σου κατασκευή"},
+  "Driving controls":{el:"Χειριστήρια"},
+  "Watching it run":{el:"Ο κινητήρας σε λειτουργία"},
+  "Reading the numbers":{el:"Οι αριθμοί"},
+  "Engine types":{el:"Τύποι κινητήρα"},
+  "Bottom end & firing order":{el:"Κάτω μέρος & σειρά ανάφλεξης"},
+  "Valvetrain":{el:"Χρονισμός βαλβίδων"},
+  "Induction, fuel & spark":{el:"Εισαγωγή, καύσιμο & σπινθήρας"},
+  "Cooling & electrical":{el:"Ψύξη & ηλεκτρικά"},
+  "The air path":{el:"Η διαδρομή του αέρα"},
+  "Waves & back-pressure":{el:"Κύματα & αντίθλιψη"},
+  "Turbochargers":{el:"Τούρμπο"},
+  "Variable geometry":{el:"Μεταβλητή γεωμετρία"},
+  "Compression & knock":{el:"Συμπίεση & πειράκια"},
+  "Chassis & garage":{el:"Σασί & γκαράζ"},
+  "Gearboxes":{el:"Κιβώτια"},
+  "Gearing & shifting":{el:"Σχέσεις & αλλαγές"},
+  "Differential & traction":{el:"Διαφορικό & πρόσφυση"},
+  "Performance tests":{el:"Δοκιμές επιδόσεων"},
+  "The racing line":{el:"Η γραμμή αγώνα"},
+  "Importing a circuit":{el:"Εισαγωγή πίστας"},
+  "Reports":{el:"Αναφορές"},
+  "The scorecard":{el:"Η βαθμολογία"},
+  "Objectives & budget":{el:"Στόχοι & προϋπολογισμός"},
+  "Options & tips":{el:"Επιλογές & συμβουλές"},
+  "Known limits":{el:"Γνωστά όρια"},
+  "Getting started":{el:"Ξεκινώντας"},
+  "Designing the engine":{el:"Σχεδίαση κινητήρα"},
+  "Breathing & boost":{el:"Αναπνοή & υπερπλήρωση"},
+  "The car":{el:"Το αυτοκίνητο"},
+  "The track":{el:"Η πίστα"},
+  "Scoring & career":{el:"Βαθμολογία & καριέρα"},
+  "Options & limits":{el:"Επιλογές & όρια"},
+  "INDEX":{el:"ΕΥΡΕΤΗΡΙΟ"},
+  "PREV":{el:"ΠΡΟΗΓ."},
+  "NEXT":{el:"ΕΠΟΜ."},
+  "page":{el:"σελίδα"},
+  "of":{el:"από"},
+  'DESIGN':{el:'ΣΧΕΔΙΑΣΗ'},'ENGINE':{el:'ΚΙΝΗΤΗΡΑΣ'},'LIVE':{el:'ΖΩΝΤΑΝΑ'},'DYNO':{el:'ΔΥΝΑΜΟ'},'GUIDE':{el:'ΟΔΗΓΟΣ'},'OPTIONS':{el:'ΕΠΙΛΟΓΕΣ'},
   '⛶ FULL':{el:'⛶ ΠΛΗΡΗΣ'},
   'ENGINE DESIGN':{el:'ΣΧΕΔΙΑΣΗ ΚΙΝΗΤΗΡΑ'},
   'Load a preset, or configure a build and press BUILD & DYNO. Physics update live.':{el:'Φόρτωσε προεπιλογή ή στήσε ένα build και πάτα BUILD & DYNO. Η φυσική ενημερώνεται ζωντανά.'},
@@ -1824,20 +2045,42 @@ const I18N={
 // Guide body blocks (rich HTML), swapped by data-gk on language change.
 // A block with no entry here falls back to English, which is safe. A block WITH an entry does
 // not: the Greek text replaces the English wholesale, so anything added to an already-translated
-// block is invisible in Greek — and worse, a translation can go stale and keep asserting something
-// the model no longer does. `subsystems` is in that state now: its Greek still says turbo lag does
-// not reach the performance figures, which stopped being true at build 66. New guide content goes
-// in its OWN data-gk block for exactly this reason (see `gearing`, `breathing`).
+// block is invisible in Greek, and a translation can go stale and keep asserting something the
+// model no longer does. So the guide is cut into one block per paragraph-group (build 83), and a
+// block only has Greek here while the Greek still says what the English says. Two stale ones were
+// dropped rather than carried: the old claim that turbo lag never reaches the performance figures
+// (untrue since build 66) and the old description of the gearing slider as the final drive itself
+// (untrue since build 74). New guide content goes in its OWN block for exactly this reason.
 const GUIDE_I18N={
-  loop:{el:'<b>1. ΣΧΕΔΙΑΣΗ</b> ενός κινητήρα (κάτω μέρος, διαδρομή αέρα, καύσιμο & σπινθήρας, ψύξη…), μετά πάτα <b>BUILD & DYNO</b>. <b>2. ΔΥΝΑΜΟ</b> δείχνει όλη την καμπύλη ισχύος/ροπής και μια βαθμολογία. <b>3. ΚΙΝΗΤΗΡΑΣ</b> είναι ζωντανός πάγκος δοκιμών: ρυθμίζεις <b>ΓΚΑΖΙ</b> και <b>ΦΟΡΤΙΟ</b> και βλέπεις τον κινητήρα να αποκρίνεται σε πραγματικό χρόνο. Δεν ορίζεις ποτέ απευθείας τις στροφές — τον οδηγείς.'},
-  driving:{el:'<b>ΓΚΑΖΙ</b> — ανοίγει την εισαγωγή· αυξάνει την πίεση πολλαπλής → ροπή → στροφές.<br><b>ΦΟΡΤΙΟ (φρένο δυναμό)</b> — αντίσταση που ορίζει τις <i>στροφές κρατήματος</i>. 0% = ελεύθερες στροφές ως το όριο· 100% = κρατά κοντά στο ρελαντί. Αντιστέκεται μόνο <i>πάνω</i> από τον στόχο, οπότε κάθε κινητήρας ανεβαίνει πάντα ως εκεί.<br><b>ΗΛΕΚ. ΦΟΡΤΙΟ</b> — κατανάλωση παρελκομένων (φώτα/AC). Μεγάλο φορτίο + μικρό δυναμό στο ρελαντί αδειάζει την μπαταρία → χαμηλή τάση → αδύναμος σπινθήρας.<br><b>AFR</b> — αναλογία αέρα-καυσίμου. Μέγιστη ισχύς κοντά σε λ0.86 (πλούσιο), καλύτερη οικονομία κοντά σε λ1.05 (φτωχό).<br><b>IAT / ΨΥΚΤΙΚΟ / ΛΑΔΙ</b> — θερμοκρασίες χαρμανιού & κινητήρα (αυτόματα σε AUTO THERMAL).<br><b>ΝΙΤΡΟ</b> — αν υπάρχει, ψεκάζει με τέρμα γκάζι από φιάλη που αδειάζει.'},
-  numbers:{el:'<b>HP / kW</b> — ισχύς = ροπή × στροφές. <b>ΡΟΠΗ (Nm)</b> — δύναμη στρέψης· κορυφώνεται χαμηλότερα από την ισχύ.<br><b>BMEP (bar)</b> — μέση πραγματική πίεση πέδης: ροπή ανά κυβισμό, για σύγκριση κινητήρων κάθε μεγέθους. <b>VE (%)</b> — ογκομετρική απόδοση: πόσο καλά αναπνέει σε σχέση με τον κυβισμό (το boost ξεπερνά το 100%).<br><b>ΘΕΡΜ. ΑΠΟΔ. (%)</b> — ποσοστό ενέργειας καυσίμου που γίνεται έργο. <b>BSFC (g/kWh)</b> — καύσιμο ανά μονάδα ισχύος· <i>όσο χαμηλότερο τόσο καλύτερο</i>.<br><b>ΡΟΗ ΚΑΥΣΙΜΟΥ (L/h)</b> — ζωντανή κατανάλωση. <b>MAP / BOOST (bar)</b> — πίεση πολλαπλής· boost = MAP πάνω από 1.0.<br><b>ΠΕΙΡΑΚΙ (LOW/MED/HIGH)</b> — κίνδυνος πειρακίου. Ο χρονισμός AUTO καθυστερεί για έλεγχο· παρατεταμένο HIGH κάνει ζημιά. <b>ΥΓΕΙΑ (%)</b> — κατάσταση· 0 = καμένος κινητήρας.<br><b>ΕΚΠΟΜΠΕΣ (CLEAN/OK/DIRTY)</b> — από τον αναλυτή: CO & HC ανεβαίνουν στο πλούσιο, NOx στο φτωχό/καυτό· ο καταλύτης καθαρίζει και τα τρία μόνο κοντά στο στοιχειομετρικό.<br><b>λ (λάμδα)</b> — AFR ÷ στοιχειομετρικό: λ&lt;1 πλούσιο, 1 = στοιχειομετρικό, &gt;1 φτωχό.<br><b>ΚΟΣΤΟΣ ($)</b> — συνολικό κόστος εξαρτημάτων. <b>REL (αξιοπιστία)</b> — εκτίμηση αντοχής (boost/πειράκι/θερμότητα/στροφές). <b>hp/$1k</b> — ισχύς ανά χίλια δολάρια.'},
-  scorecard:{el:'<b>ΑΝΑΦΟΡΑ ΓΥΡΟΥ</b> — στην καρτέλα ΠΙΣΤΑ, τα κουμπιά ΑΝΑΦΟΡΑ ΓΥΡΟΥ PNG/PDF αποθηκεύουν τον γύρο ως φύλλο τηλεμετρίας: χάρτης με τα σημεία <span style="color:#1a7f37">τέρμα γκάζι</span> και <span style="color:#c1121f">φρεναρίσματος</span>, κάθε στροφή αριθμημένη, γράφημα ταχύτητας ανά απόσταση, χρόνοι γύρου και τομέων, πλήρης προδιαγραφή αυτοκινήτου και <b>παγίδα ταχύτητας σε κάθε στροφή</b> (είσοδος, apex, έξοδος, σχέση, ακτίνα). Οι στροφές έχουν αριθμούς T1…Tn και ονόματα ανά πίστα.<br><b>ΑΝΑΦΟΡΑ ΔΥΝΑΜΟ</b> — τα κουμπιά ΑΝΑΦΟΡΑ PNG/PDF αποθηκεύουν την τρέχουσα μέτρηση ως εκτυπώσιμο φύλλο με τη διάταξη πραγματικού δυναμόμετρου: καμπύλες ισχύος και ροπής με τις κορυφές, μπάντα αποτελεσμάτων, πλήρη προδιαγραφή κινητήρα, συνθήκες μέτρησης και πίνακα δεδομένων. Οι καταγεγραμμένες μετρήσεις εμφανίζονται αχνά για σύγκριση. Το γράφημα είναι ο κινητήρας <i>όπως είναι ρυθμισμένος τώρα</i>, γι’ αυτό τυπώνεται και το <b>δυναμικό σχεδίασης</b>. Όλα παράγονται εκτός σύνδεσης· τίποτα δεν ανεβαίνει.<br>Κάθε build βαθμολογείται <b>S → F</b> από επτά στοιχεία: ειδική <b>ισχύ</b> & <b>ροπή</b> (ανά λίτρο), εύρος <b>περιοχής ισχύος</b>, θερμική <b>απόδοση</b>, <b>ασφάλεια</b> από πειράκι, <b>οδηγησιμότητα</b> (ροπή στις χαμηλές) και <b>εκπομπές</b>. Το κυνήγι μέγιστης ισχύος κοστίζει σε οδηγησιμότητα, ασφάλεια και εκπομπές — η βαθμολογία επιβραβεύει το ισορροπημένο build.'},
-  career:{el:'<b>Στόχοι πίστας</b> κρίνουν ολόκληρο το αυτοκίνητο: τέσσερις βάζουν στόχο χρόνου γύρου σε συγκεκριμένη πίστα, και το μπάτζετ τους καλύπτει κινητήρα <i>και</i> όχημα. Ο πίνακας βαθμολογίας δείχνει επίσης τον χρόνο γύρου σου — ως ένδειξη, όχι μέσα στον βαθμό: ο βαθμός αφορά τον <i>κινητήρα</i> και δεν πρέπει να αλλάζει επειδή έβαλες άλλα ελαστικά.<br>Διάλεξε έναν <b>ΣΤΟΧΟ</b> στην κορυφή της ΣΧΕΔΙΑΣΗΣ για να κάνεις τη σχεδίαση γρίφο. Κάθε πρόκληση θέτει κριτήρια — ισχύ, οικονομία, εκπομπές, <b>αξιοπιστία</b> ή <b>ισχύ ανά δολάριο</b> — και κάποιες βάζουν όριο <b>προϋπολογισμού</b>. Η κάρτα τσεκάρει κάθε κριτήριο ζωντανά (✓/✗) και δείχνει <b>ΕΠΙΤΥΧΙΑ</b> όταν καλυφθούν όλα· κόστος και αξιοπιστία φαίνονται πάντα. Ο μεγάλος κυβισμός κερδίζει σε αξία· boost και αγωνιστικά μέρη κερδίζουν σε ισχύ αλλά κοστίζουν σε χρήμα και αξιοπιστία.'},
-  types:{el:'<b>Βενζίνη 4-χρονη</b> — η ισορροπημένη επιλογή: ανάφλεξη με σπινθήρα, μία εκρηκτική διαδρομή ανά δύο στροφές.<br><b>Πετρέλαιο (CI)</b> — ανάφλεξη με συμπίεση (χωρίς μπουζί, χωρίς πειράκι), πολύ υψηλή συμπίεση, φτωχό χωρίς πεταλούδα. Μεγάλη <b>ροπή</b> στις χαμηλές, χαμηλό όριο στροφών, η καλύτερη <b>απόδοση</b> — αλλά βαρύ, με εκπομπές <b>NOx + αιθάλη (PM)</b> που καθαρίζει σύστημα DPF/SCR.<br><b>2-χρονη</b> — εκρηκτική διαδρομή σε <i>κάθε</i> στροφή (θυρίδες, χωρίς εκκεντροφόρο): υψηλή ειδική ισχύς αλλά λαίμαργη και <b>HC</b>-βρόμικη.<br><b>Wankel (ρότορας)</b> — περιστρεφόμενος ρότορας που ανάβει σε κάθε στροφή: ομαλός σαν τουρμπίνα, τεράστιες στροφές, υψηλή ισχύς ανά λίτρο, αλλά λαίμαργος, <b>HC</b>-βαρύς και σκληρός στα ελάσματα κορυφής.<br>Η αλλαγή τύπου προσαρμόζει τα εύρη συμπίεσης/στροφών/AFR και απενεργοποιεί ό,τι δεν ισχύει.'},
-  subsystems:{el:'<b>Κάτω μέρος</b> — τύπος κινητήρα, διάμετρος × διαδρομή × κύλινδροι = κυβισμός· υπερτετράγωνος & υψηλότερο όριο ανεβάζουν την περιοχή ισχύος.<br><b>Διαδρομή αέρα</b> — τούρμπο (γεμίζει με τις στροφές) ή υπερσυμπιεστής (boost από ρελαντί)· το intercooler ψύχει το χάρμανι· εξάτμιση & καταλύτης ανταλλάσσουν ροή με αντίθλιψη/εκπομπές· το νιτρό είναι εμφιαλωμένη ισχύς.<br><b>Το boost δεν είναι δωρεάν, και το τούρμπο έχει μέγεθος.</b> Ένας συμπιεστής παράγει πίεση περιστρεφόμενος, και αυτές οι στροφές πληρώνονται με ενέργεια από την εξάτμιση — άρα <i>όσο περισσότερο boost ζητάς από ένα δεδομένο τούρμπο, τόσο αργότερα έρχεται και τόσο πιο αργά χτίζεται</i>. Το ίδιο μικρό τούρμπο που έχει γεμίσει στις 1200 σ.α.λ. με 0.5 bar δεν φτάνει το μισό των 2.5 bar πριν τις ~3000. Ο αριθμός γεμίσματος στη σύνοψη σχεδίασης αφορά το boost που ζήτησες, δεν είναι σταθερή ιδιότητα του τούρμπο.<br>Κάθε τούρμπο έχει επίσης <b>ονομαστική παροχή</b> — μικρό 32, μεσαίο 55, μεγάλο 82 lb/min, και οι διατάξεις με πολλά τούρμπο περνούν περισσότερο (twin ×1.85, sequential ×1.55, compound ×2.3). Αυτός είναι ο άξονας πάνω στον οποίο σχεδιάζεται ένας πραγματικός χάρτης συμπιεστή. Αν ζητήσεις από τον κινητήρα να περάσει περισσότερο αέρα από όσο αντέχει το τούρμπο, βγαίνεις εκτός χάρτη: η απόδοση του συμπιεστή καταρρέει, οι ψηλές στροφές πνίγονται και — το χειρότερο — το χάρμανι φτάνει <b>καυτό</b>. Η συμπίεση του αέρα τον θερμαίνει κατά <i>T&middot;(PR<sup>0.283</sup> − 1) / απόδοση</i>, που αυξάνεται πιο γρήγορα από το boost και ακόμη περισσότερο καθώς πέφτει η απόδοση. Ένας 2.0 L που ζητά 2.5 bar από μικρό τούρμπο θέλει 1.7× την ονομαστική του παροχή, και το χάρμανι φτάνει στις βαλβίδες στους <b>74 °C</b> εκεί που το σωστό τούρμπο δίνει 58 °C — οπότε κάνει πειράκια, βγάζει 120 hp <i>λιγότερα</i> από το μεσαίο, και είναι πιο αργός στον γύρο από τον ίδιο κινητήρα στα 0.8 bar. Τίποτα δεν σε εμποδίζει να τον φτιάξεις· απλώς δεν είναι έτσι που βγαίνει ισχύς.<br><span style="color:#c86">Ένα όριο: η καθυστέρηση γεμίσματος — ο <i>χρόνος</i> να χτιστεί το boost — μοντελοποιείται στον ζωντανό πάγκο ΚΙΝΗΤΗΡΑ, αλλά οι επιδόσεις και οι χρόνοι γύρου λύνονται από το σταθερό boost που είναι διαθέσιμο σε κάθε στροφή, οπότε βλέπουν το <i>σημείο</i> γεμίσματος να μετακινείται, όχι το μεταβατικό φαινόμενο. Μια πολύ «τεμπέλικη» κατασκευή ευνοείται λίγο στα 0–100 και στον γύρο.</span><br><b>Εισαγωγή</b> — καρμπιρατέρ → EFI → ITB ορίζουν αναπνοή, ακρίβεια & ρελαντί.<br><b>Χρονισμός βαλβίδων</b> — άγριες εκκεντροφόροι ανεβάζουν την ισχύ ψηλά· το VVT επαναφέρει τις χαμηλές.<br><b>Καύσιμο & σπινθήρας</b> — τύπος καυσίμου, οκτάνια, μπεκ, ανάφλεξη, χρονισμός FIXED/AUTO και το μείγμα: MANUAL (ένα σταθερό AFR) ή AUTO — ένας 3D χάρτης ECU που τρέχει κοντά στο στοιχειομετρικό στο ελαφρύ φορτίο και εμπλουτίζει υπό φορτίο/boost, όπως ένας πραγματικός χάρτης καυσίμου. Στο AUTO μπορείς να <b>ρυθμίσεις τον χάρτη</b>: πάτησε ένα κελί και μετά − ΦΤΩΧΟ / + ΠΛΟΥΣΙΟ για να αλλάξεις τον στόχο σε εκείνο το φορτίο×στροφές (ΕΠΑΝΑΦΟΡΑ ΧΑΡΤΗ επαναφέρει το εργοστασιακό).<br><b>Ψύξη & ηλεκτρικά</b> — ψυγείο/βεντιλατέρ/ψυγείο λαδιού/θερμοστάτης ορίζουν θερμοκρασίες· δυναμό & ανάφλεξη ορίζουν φόρτιση και όριο μισφάιρ.<br><b>Η καρτέλα ΚΙΝΗΤΗΡΑΣ είναι ζωντανή τομή</b> του κινητήρα που μόλις σχεδίασες. Όλα κινούνται επειδή τα κίνησε η προσομοίωση. Δεν σχεδιάζεται όμως σε πραγματικό χρόνο: ένας στρόφαλος στις 5000 σ.α.λ. κάνει 83 στροφές το <i>δευτερόλεπτο</i>, που στα 60 fps είναι στροβοσκόπιο και όχι εικόνα — δεν θα μπορούσες να δεις μια βαλβίδα να ανοίγει. Έτσι ο κύκλος τρέχει με ρυθμό που διαβάζεται, περίπου 3.3 έως 1.1 δευτερόλεπτα ανά πλήρη κύκλο, πάντα καταταγμένος με τις στροφές ώστε το ρελαντί να είναι ορατά πιο νωθρό από το όριο. Η πραγματική ταχύτητα φαίνεται στο στροφόμετρο και ακούγεται στον ήχο. Το έμβολο ακολουθεί σωστή γεωμετρία στροφάλου-διωστήρα (<i>όχι</i> ημίτονο — ένας πραγματικός διωστήρας κάνει το έμβολο να αργοπορεί κάτω και να «κόβει» πάνω), η διάμετρος σχεδιάζεται στη δική σου αναλογία διαμέτρου/διαδρομής, και οι βαλβίδες ανοίγουν με αληθινό χρονισμό τεσσάρων χρόνων, με την επικάλυψη σάρωσης ορατή γύρω από το ΑΝΣ. Ο θάλαμος χρωματίζεται με βάση το τι υπάρχει μέσα του αυτή τη στιγμή — φρέσκο μείγμα, συμπιεσμένο, καιγόμενο, καμένο — και ο χρόνος ονομάζεται πάνω από την κεφαλή. Ένας δίχρονος δείχνει θυρίδες αντί για βαλβίδες· ένας ρότορας δείχνει πραγματικό επιτροχοειδές περίβλημα με τον ρότορα στο 1/3 του εκκεντροφόρου άξονα. Η λωρίδα δίπλα σχεδιάζει κάθε κύλινδρο στη δική του φάση, ώστε να βλέπεις τη σειρά ανάφλεξης σε έναν V12.<br>Οι αριθμοί που τυπώνονταν εδώ σε γράμματα 7 px βρίσκονται πλέον στο πλαίσιο <b>ΖΩΝΤΑΝΗ ΕΞΟΔΟΣ</b> δίπλα στον καμβά, όπου είναι πραγματικό κείμενο.'},
-  vehicle:{el:'Στην καρτέλα <b>ΟΧΗΜΑ</b> βάζεις τον κινητήρα σου σε αυτοκίνητο. Διάλεξε <b>σασί</b> και έρχεται με τον <b>εργοστασιακό του εξοπλισμό</b> — τα ελαστικά, ζάντες, φρένα, ανάρτηση, αεροδυναμική και κιβώτιο που θα φορούσε πραγματικά: ένα kei εμφανίζεται με στενά οικονομικά ελαστικά και μικρούς ατσάλινους δίσκους, ενώ ένα hypercar παίρνει φαρδιά semi-slick, carbon-ceramic φρένα και πακέτο αεροτομής/diffuser. Όλα παραμένουν επεξεργάσιμα· το <b>ΕΡΓΟΣΤΑΣΙΑΚΟΣ ΕΞΟΠΛΙΣΜΟΣ</b> τα επαναφέρει.<br><b>Το ΓΚΑΡΑΖ</b> στο κάτω μέρος της καρτέλας κρατά όσα ολοκληρωμένα αυτοκίνητα θέλεις. Δώσε όνομα και πάτησε <b>ΑΠΟΘΗΚΕΥΣΗ ΣΤΟ ΓΚΑΡΑΖ</b> και αποθηκεύεται το σύνολο — το σασί, κάθε εξάρτημα πάνω του, <i>και</i> ο κινητήρας μέσα, μέχρι και ο χειροκίνητα ρυθμισμένος χάρτης καυσίμου. Κάθε κάρτα δείχνει τα βασικά νούμερα που είχε όταν την αποθήκευσες (ισχύ, βάρος, 0–100, τελική, χρόνο γύρου και συνολικό κόστος), οπότε μπορείς να παρατάξεις τρεις κατασκευές και να τις συγκρίνεις χωρίς να ξαναφτιάξεις καμία. Η <b>ΦΟΡΤΩΣΗ</b> επαναφέρει το αυτοκίνητο ακριβώς όπως ήταν· αν γράψεις όνομα που υπάρχει ήδη, η κάρτα του τονίζεται και η αποθήκευση το αντικαθιστά. Αυτό είναι ξεχωριστό από τα <b>ΑΠΟΘΗΚ.</b>/<b>ΦΟΡΤΩΣΗ</b>, που είναι μία μοναδική θέση γρήγορης αποθήκευσης. Μια εγγραφή του γκαράζ είναι η ίδια που γράφει η <b>ΑΠΟΘ. ΑΡΧΕΙΟΥ</b> και μεταφέρει ένα σύνδεσμος κοινοποίησης. Όλα μένουν μόνο σε αυτόν τον browser — αν καθαρίσεις τα δεδομένα ιστότοπου, χάνεται το γκαράζ, και η <b>ΑΠΟΘ. ΑΡΧΕΙΟΥ</b> είναι αυτή που σώζει μια κατασκευή από αυτό.<br>Από εκεί ρυθμίζεις <b>μετάδοση</b> (FWD/RWD/AWD — το AWD ξεκινά καλύτερα), <b>κιβώτιο</b> (τύπος, σχέσεις + ρυθμιστικό τελικής), <b>ελαστικά</b> (τύπος + πλάτος/προφίλ/διάμετρος), <b>αεροδυναμική</b> (εμπρός/πίσω/πάτωμα = κάθετη δύναμη & οπισθέλκουσα), <b>φρένα</b> (τύπος + διάμετρος δίσκου) και <b>ανάρτηση</b> (πολλαπλασιαστής μηχανικής πρόσφυσης).<br><b>Ο τύπος κιβωτίου</b> αλλάζει τέσσερα πράγματα: πόσο κόβεται η μετάδοση σε κάθε αλλαγή, πόση από την ισχύ του κινητήρα φτάνει στους τροχούς, πώς είναι κλιμακωμένες οι σχέσεις, και πώς ξεκινά το αυτοκίνητο.<br>· <b>Χειροκίνητο (H)</b> — το πιο αποδοτικό, αλλά χάνεις ~350 ms σε κάθε αλλαγή. Φθηνό.<br>· <b>Σειριακό</b> — αγωνιστικό: αλλαγές ~60 ms και κοντές σχέσεις που κρατούν έναν «αιχμηρό» κινητήρα στην περιοχή του. Ακριβό.<br>· <b>Διπλού συμπλέκτη (DCT)</b> — η επόμενη σχέση είναι ήδη επιλεγμένη στον δεύτερο συμπλέκτη, άρα σχεδόν αδιάλειπτες αλλαγές (~30 ms). Το ταχύτερο, και ανάλογα ακριβό.<br>· <b>Αυτόματο με μετατροπέα ροπής</b> — οι πιο αργές αλλαγές (~200 ms) και οι μεγαλύτερες απώλειες, γιατί μεταδίδει μέσω υγρού. Το κερδίζει στην <b>εκκίνηση</b>: ο μετατροπέας «φορτίζει» πάνω στα φρένα και <i>πολλαπλασιάζει</i> τη ροπή (έως ~1.9× σε στάλλ 2400 σ.α.λ.), σβήνοντας στο 1:1 καθώς ο στρόβιλος προλαβαίνει. Γι’ αυτό ένα αυτόματο ξεκινά καλύτερα από ένα χειροκίνητο παρότι χάνει ισχύ παντού αλλού — και γι’ αυτό ταιριάζει σε βαρύ, ροπάτο αυτοκίνητο, όχι σε ελαφρύ και «αιχμηρό». Επίσης απλώνει περισσότερο τις σχέσεις: πιο κοντή 1η, πιο μακριά τελευταία.<br><b>Η καρτέλα ΠΙΣΤΑ</b> βάζει το αυτοκίνητο σε κυκλική πίστα και λύνει έναν γύρο. Πρώτα υπολογίζει την <b>ιδανική γραμμή</b>: κανείς δεν οδηγεί στον άξονα της πίστας, γιατί χρησιμοποιώντας όλο το πλάτος «ισιώνει» η στροφή και περνάς πιο γρήγορα. Η γραμμή βρίσκεται ελαχιστοποιώντας τη συνολική καμπυλότητα μέσα στα όρια της πίστας — και το έξω-μέσα-έξω προκύπτει μόνο του. Δύο πράγματα την απομακρύνουν από την καθαρή ελάχιστη καμπυλότητα. Πρώτον, <b>η πίστα δεν έχει ένα πλάτος</b>: κάθε πίστα εδώ στενεύει στα τεχνικά της σημεία και ανοίγει στα γρήγορα, και μια στροφή 7 m απλώς δεν «ισιώνει» όσο μία 13 m — ο αριθμός στον χάρτη είναι το εύρος, και το πλάτος της πίστας είναι ο μέσος όρος. Δεύτερον, το <b>καθυστερημένο apex</b>: ένα μέτρο ακτίνας στην <i>έξοδο</i> αξίζει πολύ περισσότερο από ένα μέτρο στην είσοδο, γιατί η ταχύτητα εξόδου μεταφέρεται σε όλο το μήκος αυτού που ακολουθεί, ενώ στην είσοδο ούτως ή άλλως φρενάρεις. Ο λύτης «τιμολογεί» την καμπυλότητα με βάση το πόσο ανοιχτή είναι η πίστα μπροστά, οπότε θυσιάζει ακτίνα εισόδου για να ισιώσει την έξοδο — μετακινώντας το apex περίπου 11 m αργότερα στις στροφές που βγάζουν σε ευθεία, και αφήνοντας ανέπαφες όσες οδηγούν σε άλλες στροφές. Οι πίστες είναι τρισδιάστατες, οπότε ο γύρος λαμβάνει υπόψη και το <b>υψόμετρο</b>: η βαρύτητα σε κρατά πίσω στην ανηφόρα και σε σπρώχνει στην κατηφόρα, και — το πιο σημαντικό — η <b>κατακόρυφη καμπυλότητα</b>. Σε μια κορυφή το αυτοκίνητο «ελαφραίνει» και χάνει πρόσφυση ακριβώς εκεί που πάει γρήγορα· σε μια κοιλάδα πιέζεται στο οδόστρωμα και περνά πολύ πιο γρήγορα. Μετράει και το πού πέφτουν οι λόφοι: μια ανηφόρα σε ζώνη φρεναρίσματος σε αφήνει να φρενάρεις αργότερα και <i>κερδίζει</i> χρόνο.<br><b>ΕΙΣΑΓΩΓΗ GPX</b> φορτώνει πραγματική πίστα από αρχείο GPX: προβάλλεται σε μέτρα, ξαναδειγματοληπτείται σε σταθερό βήμα και εξομαλύνεται ελαφρά ώστε ο θόρυβος GPS να μη γίνει «στροφές». Το υψόμετρο έρχεται από το αρχείο. Οι εισαγόμενες πίστες μένουν μόνο στον browser σου.<br><span style="color:#c86">Ο χρόνος θα βγει λίγο αργός: ένα αρχείο GPX δεν περιέχει καθόλου πλάτος, οπότε το προφίλ πλάτους <i>μοντελοποιείται</i> από τη χάραξη — οι δρόμοι φτιάχνονται φαρδιοί εκεί που είναι γρήγοροι και στενοί εκεί που είναι τεχνικοί — δεν είναι μετρημένο. Η γραμμή παραμένει προσέγγιση της γραμμής ελάχιστου χρόνου και ο οδηγός δεν κάνει ποτέ λάθος. Χρησιμοποίησέ το για σύγκριση των δικών σου κατασκευών.</span> Αξίζει <b>5–7% του χρόνου γύρου</b> σε σχέση με τον άξονα, και όσο πιο φαρδιά η πίστα τόσο περισσότερο. Μετά βρίσκει την ταχύτητα στροφής σε κάθε σημείο (<i>v = &radic;(μ&middot;(mg + κάθετη δύναμη)&middot;r / m)</i>), μετά δουλεύει ανάποδα από κάθε στροφή για τα σημεία φρεναρίσματος και προς τα εμπρός στην έξοδο με τη διαθέσιμη κίνηση, κρατώντας τη μικρότερη ταχύτητα σε κάθε σημείο. Ο <b>κύκλος τριβής</b> τα δένει: η πρόσφυση που ξοδεύεται στο στρίψιμο δεν είναι διαθέσιμη για επιτάχυνση ή φρενάρισμα. Η χρωματιστή γραμμή στον χάρτη δείχνει τι περιορίζει το αυτοκίνητο σε κάθε σημείο και η λεζάντα αθροίζει τα ποσοστά του γύρου. Ο χρόνος αλλαγής σχέσης χρεώνεται σε κάθε αλλαγή, οπότε ένα αργό κιβώτιο χάνει πραγματικό χρόνο.<br><span style="color:#c86">Ένα όριο: η γραμμή παραμένει μόνο προσέγγιση της γραμμής ελάχιστου <i>χρόνου</i>. Η τάση για καθυστερημένο apex υπολογίζεται από τη γεωμετρία μπροστά, όχι από την ταχύτητα του ίδιου του αυτοκινήτου, οπότε την ίδια γραμμή οδηγεί ένα hatchback 90&nbsp;hp και ένα αγωνιστικό 800&nbsp;hp — ενώ στην πραγματικότητα το γρήγορο θα φρέναρε αργότερα και θα έκανε ακόμα πιο καθυστερημένο apex. Αξίζει περίπου μισό τοις εκατό, και είναι το ίδιο μισό τοις εκατό για όλους, οπότε οι συγκρίσεις μεταξύ κατασκευών παραμένουν έντιμες.</span><br><b>Το διαφορικό</b> μοιράζει την κίνηση στους δύο τροχούς του άξονα — και καθορίζει πόση από την πρόσφυση του άξονα μπορείς πραγματικά να χρησιμοποιήσεις. Οι δύο τροχοί δεν είναι ποτέ φορτωμένοι το ίδιο (κλίση δρόμου, αντίδραση ροπής, στρέψη άξονα, γεωμετρία ανάρτησης), και ένα <b>ανοιχτό</b> διαφορικό δίνει σε κάθε τροχό μόνο όση ροπή αντέχει ο <i>λιγότερο φορτωμένος</i>: στρίβει αυτόν τον τροχό και πετάει τα υπόλοιπα, αφήνοντας περίπου 78% της πρόσφυσης αξιοποιήσιμο <i>στην εκκίνηση</i>. Αυτό το 78% δεν είναι σταθερό — η ασυμμετρία που αντιμετωπίζει προέρχεται κυρίως από την <b>αντίδραση ροπής</b> (στρέψη ημιαξονίων, γεωμετρία ανάρτησης, torque steer), που είναι ανάλογη με τη ροπή που περνά πράγματι από τον άξονα. Στην πρώτη σχέση με πλήρη πολλαπλασιασμό είναι στο χειρότερό της· στην τρίτη στα 100&nbsp;χλμ/ώρα ο άξονας βλέπει ένα κλάσμα αυτής της ροπής και μένει λίγο παραπάνω από την κλίση του δρόμου, οπότε το ανοιχτό διαφορικό ανακτά προς ~94%. Ένα <b>ιξώδες LSD</b> τους δένει μεταξύ τους και ανακτά τα περισσότερα (~92%)· ένα <b>LSD με δίσκους</b> ουσιαστικά όλα· ένα <b>μπλοκέ (spool)</b> τους ενώνει μόνιμα και είναι το καλύτερο σε ευθεία — γι’ αυτό το χρησιμοποιούν τα dragster.<br>Το βασικό: το διαφορικό μετράει μόνο όσο είσαι <b>περιορισμένος από πρόσφυση</b>. Βάλε spool σε αργό αυτοκίνητο και δεν αλλάζει τίποτα. Βάλ’ το σε ένα που πατινάρει στην εκκίνηση και αξίζει περισσότερο από αναβάθμιση ισχύος.<br><b>Γιατί ένα προσθιοκίνητο ξεμένει από πρόσφυση τόσο νωρίς.</b> Τρία πράγματα πολλαπλασιάζονται, και το πρώτο ξαφνιάζει: ένα FWD κινεί μόνο τον εμπρός άξονα, που σηκώνει περίπου το 60% του βάρους σταματημένο — και η επιτάχυνση μεταφέρει βάρος <i>μακριά</i> από αυτόν, στο ~53%. Πολλαπλασίασε με ανοιχτό διαφορικό (0.78) και οικονομικά ελαστικά (μ 0.81) και όλο το αυτοκίνητο περιορίζεται στα <b>0.33&nbsp;g</b>, ό,τι κι αν βγάζει ο κινητήρας. Στα 100&nbsp;χλμ/ώρα αυτό το ταβάνι είναι ~2500&nbsp;N, και ήδη ένας κινητήρας 109&nbsp;hp ζητά 2700&nbsp;N — οπότε μια έκδοση 217&nbsp;hp του ίδιου αυτοκινήτου φτάνει τα 100&nbsp;χλμ/ώρα στον <i>ίδιο ακριβώς χρόνο</i>. Και τα δύο απλώς «κάθονται» στο ταβάνι. Δεν είναι ιδιοτροπία της προσομοίωσης· γι’ αυτό κανείς δεν φτιάχνει προσθιοκίνητο kei 200&nbsp;hp. Η λύση είναι πρόσφυση, όχι ισχύς — στο ίδιο αυτοκίνητο των 217&nbsp;hp: μόνο ένα LSD με δίσκους το πάει από 9.9&nbsp;s σε 8.0&nbsp;s, σπορ ελαστικά 6.6&nbsp;s, slick 5.5&nbsp;s, και μετατροπή σε AWD 4.4&nbsp;s. Με τον ίδιο κινητήρα.<br>Και τώρα το αντιστάθμισμα μετριέται. Στην καρτέλα ΠΙΣΤΑ ένα μπλοκέ διαφορικό πληρώνει το πλεονέκτημά του στην ευθεία: τρίβει σε κάθε στροφή. Σε ένα muscle 842&nbsp;hp το spool είναι ~0.2&nbsp;s ταχύτερο στο 0–100 και ~2.5&nbsp;s <i>πιο αργό</i> ανά γύρο, ενώ το ανοιχτό είναι το χειρότερο και στα δύο.<br><b>Ο αριθμός της τελικής</b> — το ρυθμιστικό 0–100 είναι η <b>σχέση τελικής μετάδοσης</b>, πόσες φορές γυρίζει ο άξονας ανά στροφή των τροχών. Πάει από <b>0 = 4.90:1</b> (η <i>κοντύτερη</i>) έως <b>100 = 2.60:1</b> (η <i>μακρύτερη</i>)· η σχέση φαίνεται δίπλα στον αριθμό. Κοντή τελική πολλαπλασιάζει τη ροπή στους τροχούς: δυνατότερη επιτάχυνση, αλλά κάθε σχέση τελειώνει νωρίς. Μακριά τελική κάνει το αντίθετο: πιο νωθρή επιτάχυνση, περισσότερη ταχύτητα ανά 1000 στροφές και ήρεμο ταξίδι. Ό,τι κι αν διαλέξεις, η τελευταία σχέση στον περιοριστή είναι <b>απόλυτο ταβάνι</b> — εκεί κόβεται το καύσιμο, οπότε καμία ισχύς δεν περνά το αυτοκίνητο πέρα από την ταχύτητα που επιτρέπει η ίδια του η τελική, ούτε σε ευθεία ούτε σε πίστα. Ιδανική είναι η πιο μακριά που ο κινητήρας μπορεί ακόμα να τραβήξει ως την κορυφή της ισχύος του στην τελευταία σχέση. Πιο μακριά από αυτό, η τελική ταχύτητα απλώς <i>σταματά να βελτιώνεται</i> — το αυτοκίνητο πιάνει το μέγιστό του μια σχέση χαμηλότερα αντί να «πνίγεται» στην τελευταία — ενώ η επιτάχυνση συνεχίζει να χειροτερεύει, οπότε πληρώνεις χωρίς όφελος. Πολλή ισχύς και λίγη οπισθέλκουσα σηκώνουν πολύ μακριά τελική και κερδίζουν ταχύτητα ως το τέρμα· βαριά, αδύναμα ή αεροδυναμικά «βρώμικα» αυτοκίνητα φτάνουν γρήγορα σε πλατό και θέλουν κοντύτερη.<br>Ο κινητήρας προστίθεται και το ταμπλό <b>Επιδόσεις</b> υπολογίζει <b>0–100 km/h</b>, <b>400/800/1000 m</b>, <b>τελική</b>, <b>φρενάρισμα 100–0</b> και το τεστ <b>0–200–0</b> ζωντανά — εκκίνηση περιορισμένη από πρόσφυση και φρενάρισμα με όριο ελαστικών/φρένων και εξασθένηση. Κολλώδη ελαστικά, μεγάλα φρένα και AWD βοηθούν πιο πολύ.'},
-  tip:{el:'Συμβουλή: κλείσε τη ΦΘΟΡΑ στις ΕΠΙΛΟΓΕΣ για ελεύθερο πειραματισμό, μετά ξανάνοιξέ την για συνέπειες.'}
+  loop:{el:"<b>1. ΚΙΝΗΤΗΡΑΣ</b> — σχεδίασε έναν κινητήρα (κάτω μέρος, διαδρομή αέρα, καύσιμο & σπινθήρας, ψύξη…), μετά πάτα <b>BUILD & DYNO</b>. <b>2. ΔΥΝΑΜΟ</b> δείχνει όλη την καμπύλη ισχύος/ροπής και μια βαθμολογία. <b>3. ΖΩΝΤΑΝΑ</b> είναι πάγκος δοκιμών σε λειτουργία: ρυθμίζεις <b>ΓΚΑΖΙ</b> και <b>ΦΟΡΤΙΟ</b> και βλέπεις τον κινητήρα να αποκρίνεται σε πραγματικό χρόνο. Δεν ορίζεις ποτέ απευθείας τις στροφές — τον οδηγείς.<br>Μετά βάλ' τον σε αυτοκίνητο στο <b>ΟΧΗΜΑ</b> και πήγαινέ τον σε πίστα στην <b>ΠΙΣΤΑ</b>. Κάθε αριθμός βγαίνει από την ίδια φυσική, οπότε μια αλλαγή στην καρτέλα ΚΙΝΗΤΗΡΑΣ φαίνεται στο 0–100, στην τελική και στον χρόνο γύρου."},
+  driving:{el:"<b>ΓΚΑΖΙ</b> — ανοίγει την εισαγωγή· αυξάνει την πίεση πολλαπλής → ροπή → στροφές.<br><b>ΦΟΡΤΙΟ (φρένο δυναμό)</b> — αντίσταση που ορίζει τις <i>στροφές κρατήματος</i>. 0% = ελεύθερες στροφές ως το όριο· 100% = κρατά κοντά στο ρελαντί. Αντιστέκεται μόνο <i>πάνω</i> από τον στόχο, οπότε κάθε κινητήρας ανεβαίνει πάντα ως εκεί.<br><b>ΗΛΕΚ. ΦΟΡΤΙΟ</b> — κατανάλωση παρελκομένων (φώτα/AC). Μεγάλο φορτίο + μικρό δυναμό στο ρελαντί αδειάζει την μπαταρία → χαμηλή τάση → αδύναμος σπινθήρας.<br><b>AFR</b> — αναλογία αέρα-καυσίμου. Μέγιστη ισχύς κοντά σε λ0.86 (πλούσιο), καλύτερη οικονομία κοντά σε λ1.05 (φτωχό).<br><b>IAT / ΨΥΚΤΙΚΟ / ΛΑΔΙ</b> — θερμοκρασίες χαρμανιού & κινητήρα (αυτόματα σε AUTO THERMAL).<br><b>ΝΙΤΡΟ</b> — αν υπάρχει, ψεκάζει με τέρμα γκάζι από φιάλη που αδειάζει."},
+  live:{el:"<b>Η καρτέλα ΖΩΝΤΑΝΑ είναι τομή</b> του κινητήρα που μόλις σχεδίασες. Όλα κινούνται επειδή τα κίνησε η προσομοίωση. Δεν σχεδιάζεται όμως σε πραγματικό χρόνο: ένας στρόφαλος στις 5000 σ.α.λ. κάνει 83 στροφές το <i>δευτερόλεπτο</i>, που στα 60 fps είναι στροβοσκόπιο και όχι εικόνα — δεν θα μπορούσες να δεις μια βαλβίδα να ανοίγει. Έτσι ο κύκλος τρέχει με ρυθμό που διαβάζεται, περίπου 3.3 έως 1.1 δευτερόλεπτα ανά πλήρη κύκλο, πάντα καταταγμένος με τις στροφές ώστε το ρελαντί να είναι ορατά πιο νωθρό από το όριο. Η πραγματική ταχύτητα φαίνεται στο στροφόμετρο και ακούγεται στον ήχο. Το έμβολο ακολουθεί σωστή γεωμετρία στροφάλου-διωστήρα (<i>όχι</i> ημίτονο — ένας πραγματικός διωστήρας κάνει το έμβολο να αργοπορεί κάτω και να «κόβει» πάνω), η διάμετρος σχεδιάζεται στη δική σου αναλογία διαμέτρου/διαδρομής, και οι βαλβίδες ανοίγουν με αληθινό χρονισμό τεσσάρων χρόνων, με την επικάλυψη σάρωσης ορατή γύρω από το ΑΝΣ. Ο θάλαμος χρωματίζεται με βάση το τι υπάρχει μέσα του αυτή τη στιγμή — φρέσκο μείγμα, συμπιεσμένο, καιγόμενο, καμένο — και ο χρόνος ονομάζεται πάνω από την κεφαλή. Ένας δίχρονος δείχνει θυρίδες αντί για βαλβίδες· ένας ρότορας δείχνει πραγματικό επιτροχοειδές περίβλημα με τον ρότορα στο 1/3 του εκκεντροφόρου άξονα. Η λωρίδα δίπλα σχεδιάζει κάθε κύλινδρο στη δική του φάση, ώστε να βλέπεις τη σειρά ανάφλεξης σε έναν V12."},
+  liveOut:{el:"Οι αριθμοί που τυπώνονταν εδώ σε γράμματα 7 px βρίσκονται πλέον στο πλαίσιο <b>ΖΩΝΤΑΝΗ ΕΞΟΔΟΣ</b> δίπλα στον καμβά, όπου είναι πραγματικό κείμενο."},
+  numbers:{el:"<b>HP / kW</b> — ισχύς = ροπή × στροφές. <b>ΡΟΠΗ (Nm)</b> — δύναμη στρέψης· κορυφώνεται χαμηλότερα από την ισχύ.<br><b>BMEP (bar)</b> — μέση πραγματική πίεση πέδης: ροπή ανά κυβισμό, για σύγκριση κινητήρων κάθε μεγέθους. <b>VE (%)</b> — ογκομετρική απόδοση: πόσο καλά αναπνέει σε σχέση με τον κυβισμό (το boost ξεπερνά το 100%).<br><b>ΘΕΡΜ. ΑΠΟΔ. (%)</b> — ποσοστό ενέργειας καυσίμου που γίνεται έργο. <b>BSFC (g/kWh)</b> — καύσιμο ανά μονάδα ισχύος· <i>όσο χαμηλότερο τόσο καλύτερο</i>.<br><b>ΡΟΗ ΚΑΥΣΙΜΟΥ (L/h)</b> — ζωντανή κατανάλωση. <b>MAP / BOOST (bar)</b> — πίεση πολλαπλής· boost = MAP πάνω από 1.0.<br><b>ΠΕΙΡΑΚΙ (LOW/MED/HIGH)</b> — κίνδυνος πειρακίου. Ο χρονισμός AUTO καθυστερεί για έλεγχο· παρατεταμένο HIGH κάνει ζημιά. <b>ΥΓΕΙΑ (%)</b> — κατάσταση· 0 = καμένος κινητήρας.<br><b>ΕΚΠΟΜΠΕΣ (CLEAN/OK/DIRTY)</b> — από τον αναλυτή: CO & HC ανεβαίνουν στο πλούσιο, NOx στο φτωχό/καυτό· ο καταλύτης καθαρίζει και τα τρία μόνο κοντά στο στοιχειομετρικό.<br><b>λ (λάμδα)</b> — AFR ÷ στοιχειομετρικό: λ&lt;1 πλούσιο, 1 = στοιχειομετρικό, &gt;1 φτωχό.<br><b>ΚΟΣΤΟΣ ($)</b> — συνολικό κόστος εξαρτημάτων. <b>REL (αξιοπιστία)</b> — εκτίμηση αντοχής (boost/πειράκι/θερμότητα/στροφές). <b>hp/$1k</b> — ισχύς ανά χίλια δολάρια."},
+  types:{el:"<b>Βενζίνη 4-χρονη</b> — η ισορροπημένη επιλογή: ανάφλεξη με σπινθήρα, μία εκρηκτική διαδρομή ανά δύο στροφές.<br><b>Πετρέλαιο (CI)</b> — ανάφλεξη με συμπίεση (χωρίς μπουζί, χωρίς πειράκι), πολύ υψηλή συμπίεση, φτωχό χωρίς πεταλούδα. Μεγάλη <b>ροπή</b> στις χαμηλές, χαμηλό όριο στροφών, η καλύτερη <b>απόδοση</b> — αλλά βαρύ, με εκπομπές <b>NOx + αιθάλη (PM)</b> που καθαρίζει σύστημα DPF/SCR.<br><b>2-χρονη</b> — εκρηκτική διαδρομή σε <i>κάθε</i> στροφή (θυρίδες, χωρίς εκκεντροφόρο): υψηλή ειδική ισχύς αλλά λαίμαργη και <b>HC</b>-βρόμικη.<br><b>Wankel (ρότορας)</b> — περιστρεφόμενος ρότορας που ανάβει σε κάθε στροφή: ομαλός σαν τουρμπίνα, τεράστιες στροφές, υψηλή ισχύς ανά λίτρο, αλλά λαίμαργος, <b>HC</b>-βαρύς και σκληρός στα ελάσματα κορυφής.<br>Η αλλαγή τύπου προσαρμόζει τα εύρη συμπίεσης/στροφών/AFR και απενεργοποιεί ό,τι δεν ισχύει."},
+  bottom:{el:"<b>Κάτω μέρος</b> — τύπος κινητήρα, διάμετρος × διαδρομή × κύλινδροι = κυβισμός· υπερτετράγωνος & υψηλότερο όριο ανεβάζουν την περιοχή ισχύος."},
+  induction:{el:"<b>Εισαγωγή</b> — καρμπιρατέρ → EFI → ITB ορίζουν αναπνοή, ακρίβεια & ρελαντί."},
+  fuel:{el:"<b>Καύσιμο & σπινθήρας</b> — τύπος καυσίμου, οκτάνια, μπεκ, ανάφλεξη, χρονισμός FIXED/AUTO και το μείγμα: MANUAL (ένα σταθερό AFR) ή AUTO — ένας 3D χάρτης ECU που τρέχει κοντά στο στοιχειομετρικό στο ελαφρύ φορτίο και εμπλουτίζει υπό φορτίο/boost, όπως ένας πραγματικός χάρτης καυσίμου. Στο AUTO μπορείς να <b>ρυθμίσεις τον χάρτη</b>: πάτησε ένα κελί και μετά − ΦΤΩΧΟ / + ΠΛΟΥΣΙΟ για να αλλάξεις τον στόχο σε εκείνο το φορτίο×στροφές (ΕΠΑΝΑΦΟΡΑ ΧΑΡΤΗ επαναφέρει το εργοστασιακό)."},
+  cooling:{el:"<b>Ψύξη & ηλεκτρικά</b> — ψυγείο/βεντιλατέρ/ψυγείο λαδιού/θερμοστάτης ορίζουν θερμοκρασίες· δυναμό & ανάφλεξη ορίζουν φόρτιση και όριο μισφάιρ."},
+  airpath:{el:"<b>Διαδρομή αέρα</b> — τούρμπο (γεμίζει με τις στροφές) ή υπερσυμπιεστής (boost από ρελαντί)· το intercooler ψύχει το χάρμανι· εξάτμιση & καταλύτης ανταλλάσσουν ροή με αντίθλιψη/εκπομπές· το νιτρό είναι εμφιαλωμένη ισχύς."},
+  boostCost:{el:"<b>Το boost δεν είναι δωρεάν, και το τούρμπο έχει μέγεθος.</b> Ένας συμπιεστής παράγει πίεση περιστρεφόμενος, και αυτές οι στροφές πληρώνονται με ενέργεια από την εξάτμιση — άρα <i>όσο περισσότερο boost ζητάς από ένα δεδομένο τούρμπο, τόσο αργότερα έρχεται και τόσο πιο αργά χτίζεται</i>. Το ίδιο μικρό τούρμπο που έχει γεμίσει στις 1200 σ.α.λ. με 0.5 bar δεν φτάνει το μισό των 2.5 bar πριν τις ~3000. Ο αριθμός γεμίσματος στη σύνοψη σχεδίασης αφορά το boost που ζήτησες, δεν είναι σταθερή ιδιότητα του τούρμπο."},
+  ratedFlow:{el:"Κάθε τούρμπο έχει επίσης <b>ονομαστική παροχή</b> — μικρό 32, μεσαίο 55, μεγάλο 82 lb/min, και οι διατάξεις με πολλά τούρμπο περνούν περισσότερο (twin ×1.85, sequential ×1.55, compound ×2.3). Αυτός είναι ο άξονας πάνω στον οποίο σχεδιάζεται ένας πραγματικός χάρτης συμπιεστή. Αν ζητήσεις από τον κινητήρα να περάσει περισσότερο αέρα από όσο αντέχει το τούρμπο, βγαίνεις εκτός χάρτη: η απόδοση του συμπιεστή καταρρέει, οι ψηλές στροφές πνίγονται και — το χειρότερο — το χάρμανι φτάνει <b>καυτό</b>. Η συμπίεση του αέρα τον θερμαίνει κατά <i>T&middot;(PR<sup>0.283</sup> − 1) / απόδοση</i>, που αυξάνεται πιο γρήγορα από το boost και ακόμη περισσότερο καθώς πέφτει η απόδοση. Ένας 2.0 L που ζητά 2.5 bar από μικρό τούρμπο θέλει 1.7× την ονομαστική του παροχή, και το χάρμανι φτάνει στις βαλβίδες στους <b>74 °C</b> εκεί που το σωστό τούρμπο δίνει 58 °C — οπότε κάνει πειράκια, βγάζει 120 hp <i>λιγότερα</i> από το μεσαίο, και είναι πιο αργός στον γύρο από τον ίδιο κινητήρα στα 0.8 bar. Τίποτα δεν σε εμποδίζει να τον φτιάξεις· απλώς δεν είναι έτσι που βγαίνει ισχύς."},
+  chassis:{el:"Στην καρτέλα <b>ΟΧΗΜΑ</b> βάζεις τον κινητήρα σου σε αυτοκίνητο. Διάλεξε <b>σασί</b> και έρχεται με τον <b>εργοστασιακό του εξοπλισμό</b> — τα ελαστικά, ζάντες, φρένα, ανάρτηση, αεροδυναμική και κιβώτιο που θα φορούσε πραγματικά: ένα kei εμφανίζεται με στενά οικονομικά ελαστικά και μικρούς ατσάλινους δίσκους, ενώ ένα hypercar παίρνει φαρδιά semi-slick, carbon-ceramic φρένα και πακέτο αεροτομής/diffuser. Όλα παραμένουν επεξεργάσιμα· το <b>ΕΡΓΟΣΤΑΣΙΑΚΟΣ ΕΞΟΠΛΙΣΜΟΣ</b> τα επαναφέρει."},
+  garage:{el:"<b>Το ΓΚΑΡΑΖ</b> στο κάτω μέρος της καρτέλας κρατά όσα ολοκληρωμένα αυτοκίνητα θέλεις. Δώσε όνομα και πάτησε <b>ΑΠΟΘΗΚΕΥΣΗ ΣΤΟ ΓΚΑΡΑΖ</b> και αποθηκεύεται το σύνολο — το σασί, κάθε εξάρτημα πάνω του, <i>και</i> ο κινητήρας μέσα, μέχρι και ο χειροκίνητα ρυθμισμένος χάρτης καυσίμου. Κάθε κάρτα δείχνει τα βασικά νούμερα που είχε όταν την αποθήκευσες (ισχύ, βάρος, 0–100, τελική, χρόνο γύρου και συνολικό κόστος), οπότε μπορείς να παρατάξεις τρεις κατασκευές και να τις συγκρίνεις χωρίς να ξαναφτιάξεις καμία. Η <b>ΦΟΡΤΩΣΗ</b> επαναφέρει το αυτοκίνητο ακριβώς όπως ήταν· αν γράψεις όνομα που υπάρχει ήδη, η κάρτα του τονίζεται και η αποθήκευση το αντικαθιστά. Αυτό είναι ξεχωριστό από τα <b>ΑΠΟΘΗΚ.</b>/<b>ΦΟΡΤΩΣΗ</b>, που είναι μία μοναδική θέση γρήγορης αποθήκευσης. Μια εγγραφή του γκαράζ είναι η ίδια που γράφει η <b>ΑΠΟΘ. ΑΡΧΕΙΟΥ</b> και μεταφέρει ένα σύνδεσμος κοινοποίησης. Όλα μένουν μόνο σε αυτόν τον browser — αν καθαρίσεις τα δεδομένα ιστότοπου, χάνεται το γκαράζ, και η <b>ΑΠΟΘ. ΑΡΧΕΙΟΥ</b> είναι αυτή που σώζει μια κατασκευή από αυτό."},
+  tuning:{el:"Από εκεί ρυθμίζεις <b>μετάδοση</b> (FWD/RWD/AWD — το AWD ξεκινά καλύτερα), <b>κιβώτιο</b> (τύπος, σχέσεις + ρυθμιστικό τελικής), <b>ελαστικά</b> (τύπος + πλάτος/προφίλ/διάμετρος), <b>αεροδυναμική</b> (εμπρός/πίσω/πάτωμα = κάθετη δύναμη & οπισθέλκουσα), <b>φρένα</b> (τύπος + διάμετρος δίσκου) και <b>ανάρτηση</b> (πολλαπλασιαστής μηχανικής πρόσφυσης)."},
+  gearbox:{el:"<b>Ο τύπος κιβωτίου</b> αλλάζει τέσσερα πράγματα: πόσο κόβεται η μετάδοση σε κάθε αλλαγή, πόση από την ισχύ του κινητήρα φτάνει στους τροχούς, πώς είναι κλιμακωμένες οι σχέσεις, και πώς ξεκινά το αυτοκίνητο.<br>· <b>Χειροκίνητο (H)</b> — το πιο αποδοτικό, αλλά χάνεις ~350 ms σε κάθε αλλαγή. Φθηνό.<br>· <b>Σειριακό</b> — αγωνιστικό: αλλαγές ~60 ms και κοντές σχέσεις που κρατούν έναν «αιχμηρό» κινητήρα στην περιοχή του. Ακριβό.<br>· <b>Διπλού συμπλέκτη (DCT)</b> — η επόμενη σχέση είναι ήδη επιλεγμένη στον δεύτερο συμπλέκτη, άρα σχεδόν αδιάλειπτες αλλαγές (~30 ms). Το ταχύτερο, και ανάλογα ακριβό.<br>· <b>Αυτόματο με μετατροπέα ροπής</b> — οι πιο αργές αλλαγές (~200 ms) και οι μεγαλύτερες απώλειες, γιατί μεταδίδει μέσω υγρού. Το κερδίζει στην <b>εκκίνηση</b>: ο μετατροπέας «φορτίζει» πάνω στα φρένα και <i>πολλαπλασιάζει</i> τη ροπή (έως ~1.9× σε στάλλ 2400 σ.α.λ.), σβήνοντας στο 1:1 καθώς ο στρόβιλος προλαβαίνει. Γι’ αυτό ένα αυτόματο ξεκινά καλύτερα από ένα χειροκίνητο παρότι χάνει ισχύ παντού αλλού — και γι’ αυτό ταιριάζει σε βαρύ, ροπάτο αυτοκίνητο, όχι σε ελαφρύ και «αιχμηρό». Επίσης απλώνει περισσότερο τις σχέσεις: πιο κοντή 1η, πιο μακριά τελευταία."},
+  diff:{el:"<b>Το διαφορικό</b> μοιράζει την κίνηση στους δύο τροχούς του άξονα — και καθορίζει πόση από την πρόσφυση του άξονα μπορείς πραγματικά να χρησιμοποιήσεις. Οι δύο τροχοί δεν είναι ποτέ φορτωμένοι το ίδιο (κλίση δρόμου, αντίδραση ροπής, στρέψη άξονα, γεωμετρία ανάρτησης), και ένα <b>ανοιχτό</b> διαφορικό δίνει σε κάθε τροχό μόνο όση ροπή αντέχει ο <i>λιγότερο φορτωμένος</i>: στρίβει αυτόν τον τροχό και πετάει τα υπόλοιπα, αφήνοντας περίπου 78% της πρόσφυσης αξιοποιήσιμο <i>στην εκκίνηση</i>. Αυτό το 78% δεν είναι σταθερό — η ασυμμετρία που αντιμετωπίζει προέρχεται κυρίως από την <b>αντίδραση ροπής</b> (στρέψη ημιαξονίων, γεωμετρία ανάρτησης, torque steer), που είναι ανάλογη με τη ροπή που περνά πράγματι από τον άξονα. Στην πρώτη σχέση με πλήρη πολλαπλασιασμό είναι στο χειρότερό της· στην τρίτη στα 100&nbsp;χλμ/ώρα ο άξονας βλέπει ένα κλάσμα αυτής της ροπής και μένει λίγο παραπάνω από την κλίση του δρόμου, οπότε το ανοιχτό διαφορικό ανακτά προς ~94%. Ένα <b>ιξώδες LSD</b> τους δένει μεταξύ τους και ανακτά τα περισσότερα (~92%)· ένα <b>LSD με δίσκους</b> ουσιαστικά όλα· ένα <b>μπλοκέ (spool)</b> τους ενώνει μόνιμα και είναι το καλύτερο σε ευθεία — γι’ αυτό το χρησιμοποιούν τα dragster.<br>Το βασικό: το διαφορικό μετράει μόνο όσο είσαι <b>περιορισμένος από πρόσφυση</b>. Βάλε spool σε αργό αυτοκίνητο και δεν αλλάζει τίποτα. Βάλ’ το σε ένα που πατινάρει στην εκκίνηση και αξίζει περισσότερο από αναβάθμιση ισχύος."},
+  fwd:{el:"<b>Γιατί ένα προσθιοκίνητο ξεμένει από πρόσφυση τόσο νωρίς.</b> Τρία πράγματα πολλαπλασιάζονται, και το πρώτο ξαφνιάζει: ένα FWD κινεί μόνο τον εμπρός άξονα, που σηκώνει περίπου το 60% του βάρους σταματημένο — και η επιτάχυνση μεταφέρει βάρος <i>μακριά</i> από αυτόν, στο ~53%. Πολλαπλασίασε με ανοιχτό διαφορικό (0.78) και οικονομικά ελαστικά (μ 0.81) και όλο το αυτοκίνητο περιορίζεται στα <b>0.33&nbsp;g</b>, ό,τι κι αν βγάζει ο κινητήρας. Στα 100&nbsp;χλμ/ώρα αυτό το ταβάνι είναι ~2500&nbsp;N, και ήδη ένας κινητήρας 109&nbsp;hp ζητά 2700&nbsp;N — οπότε μια έκδοση 217&nbsp;hp του ίδιου αυτοκινήτου φτάνει τα 100&nbsp;χλμ/ώρα στον <i>ίδιο ακριβώς χρόνο</i>. Και τα δύο απλώς «κάθονται» στο ταβάνι. Δεν είναι ιδιοτροπία της προσομοίωσης· γι’ αυτό κανείς δεν φτιάχνει προσθιοκίνητο kei 200&nbsp;hp. Η λύση είναι πρόσφυση, όχι ισχύς — στο ίδιο αυτοκίνητο των 217&nbsp;hp: μόνο ένα LSD με δίσκους το πάει από 9.9&nbsp;s σε 8.0&nbsp;s, σπορ ελαστικά 6.6&nbsp;s, slick 5.5&nbsp;s, και μετατροπή σε AWD 4.4&nbsp;s. Με τον ίδιο κινητήρα."},
+  difftrade:{el:"Και τώρα το αντιστάθμισμα μετριέται. Στην καρτέλα ΠΙΣΤΑ ένα μπλοκέ διαφορικό πληρώνει το πλεονέκτημά του στην ευθεία: τρίβει σε κάθε στροφή. Σε ένα muscle 842&nbsp;hp το spool είναι ~0.2&nbsp;s ταχύτερο στο 0–100 και ~2.5&nbsp;s <i>πιο αργό</i> ανά γύρο, ενώ το ανοιχτό είναι το χειρότερο και στα δύο."},
+  performance:{el:"Ο κινητήρας προστίθεται και το ταμπλό <b>Επιδόσεις</b> υπολογίζει <b>0–100 km/h</b>, <b>400/800/1000 m</b>, <b>τελική</b>, <b>φρενάρισμα 100–0</b> και το τεστ <b>0–200–0</b> ζωντανά — εκκίνηση περιορισμένη από πρόσφυση και φρενάρισμα με όριο ελαστικών/φρένων και εξασθένηση. Κολλώδη ελαστικά, μεγάλα φρένα και AWD βοηθούν πιο πολύ."},
+  trackline:{el:"<b>Η καρτέλα ΠΙΣΤΑ</b> βάζει το αυτοκίνητο σε κυκλική πίστα και λύνει έναν γύρο. Πρώτα υπολογίζει την <b>ιδανική γραμμή</b>: κανείς δεν οδηγεί στον άξονα της πίστας, γιατί χρησιμοποιώντας όλο το πλάτος «ισιώνει» η στροφή και περνάς πιο γρήγορα. Η γραμμή βρίσκεται ελαχιστοποιώντας τη συνολική καμπυλότητα μέσα στα όρια της πίστας — και το έξω-μέσα-έξω προκύπτει μόνο του. Δύο πράγματα την απομακρύνουν από την καθαρή ελάχιστη καμπυλότητα. Πρώτον, <b>η πίστα δεν έχει ένα πλάτος</b>: κάθε πίστα εδώ στενεύει στα τεχνικά της σημεία και ανοίγει στα γρήγορα, και μια στροφή 7 m απλώς δεν «ισιώνει» όσο μία 13 m — ο αριθμός στον χάρτη είναι το εύρος, και το πλάτος της πίστας είναι ο μέσος όρος. Δεύτερον, το <b>καθυστερημένο apex</b>: ένα μέτρο ακτίνας στην <i>έξοδο</i> αξίζει πολύ περισσότερο από ένα μέτρο στην είσοδο, γιατί η ταχύτητα εξόδου μεταφέρεται σε όλο το μήκος αυτού που ακολουθεί, ενώ στην είσοδο ούτως ή άλλως φρενάρεις. Ο λύτης «τιμολογεί» την καμπυλότητα με βάση το πόσο ανοιχτή είναι η πίστα μπροστά, οπότε θυσιάζει ακτίνα εισόδου για να ισιώσει την έξοδο — μετακινώντας το apex περίπου 11 m αργότερα στις στροφές που βγάζουν σε ευθεία, και αφήνοντας ανέπαφες όσες οδηγούν σε άλλες στροφές. Οι πίστες είναι τρισδιάστατες, οπότε ο γύρος λαμβάνει υπόψη και το <b>υψόμετρο</b>: η βαρύτητα σε κρατά πίσω στην ανηφόρα και σε σπρώχνει στην κατηφόρα, και — το πιο σημαντικό — η <b>κατακόρυφη καμπυλότητα</b>. Σε μια κορυφή το αυτοκίνητο «ελαφραίνει» και χάνει πρόσφυση ακριβώς εκεί που πάει γρήγορα· σε μια κοιλάδα πιέζεται στο οδόστρωμα και περνά πολύ πιο γρήγορα. Μετράει και το πού πέφτουν οι λόφοι: μια ανηφόρα σε ζώνη φρεναρίσματος σε αφήνει να φρενάρεις αργότερα και <i>κερδίζει</i> χρόνο."},
+  tracklap:{el:"Αξίζει <b>5–7% του χρόνου γύρου</b> σε σχέση με τον άξονα, και όσο πιο φαρδιά η πίστα τόσο περισσότερο. Μετά βρίσκει την ταχύτητα στροφής σε κάθε σημείο (<i>v = &radic;(μ&middot;(mg + κάθετη δύναμη)&middot;r / m)</i>), μετά δουλεύει ανάποδα από κάθε στροφή για τα σημεία φρεναρίσματος και προς τα εμπρός στην έξοδο με τη διαθέσιμη κίνηση, κρατώντας τη μικρότερη ταχύτητα σε κάθε σημείο. Ο <b>κύκλος τριβής</b> τα δένει: η πρόσφυση που ξοδεύεται στο στρίψιμο δεν είναι διαθέσιμη για επιτάχυνση ή φρενάρισμα. Η χρωματιστή γραμμή στον χάρτη δείχνει τι περιορίζει το αυτοκίνητο σε κάθε σημείο και η λεζάντα αθροίζει τα ποσοστά του γύρου. Ο χρόνος αλλαγής σχέσης χρεώνεται σε κάθε αλλαγή, οπότε ένα αργό κιβώτιο χάνει πραγματικό χρόνο."},
+  tracklimit:{el:"<span style=\"color:#c86\">Ένα όριο: η γραμμή παραμένει μόνο προσέγγιση της γραμμής ελάχιστου <i>χρόνου</i>. Η τάση για καθυστερημένο apex υπολογίζεται από τη γεωμετρία μπροστά, όχι από την ταχύτητα του ίδιου του αυτοκινήτου, οπότε την ίδια γραμμή οδηγεί ένα hatchback 90&nbsp;hp και ένα αγωνιστικό 800&nbsp;hp — ενώ στην πραγματικότητα το γρήγορο θα φρέναρε αργότερα και θα έκανε ακόμα πιο καθυστερημένο apex. Αξίζει περίπου μισό τοις εκατό, και είναι το ίδιο μισό τοις εκατό για όλους, οπότε οι συγκρίσεις μεταξύ κατασκευών παραμένουν έντιμες.</span>"},
+  gpx:{el:"<b>ΕΙΣΑΓΩΓΗ GPX</b> φορτώνει πραγματική πίστα από αρχείο GPX: προβάλλεται σε μέτρα, ξαναδειγματοληπτείται σε σταθερό βήμα και εξομαλύνεται ελαφρά ώστε ο θόρυβος GPS να μη γίνει «στροφές». Το υψόμετρο έρχεται από το αρχείο. Οι εισαγόμενες πίστες μένουν μόνο στον browser σου."},
+  gpxacc:{el:"<span style=\"color:#c86\">Ο χρόνος θα βγει λίγο αργός: ένα αρχείο GPX δεν περιέχει καθόλου πλάτος, οπότε το προφίλ πλάτους <i>μοντελοποιείται</i> από τη χάραξη — οι δρόμοι φτιάχνονται φαρδιοί εκεί που είναι γρήγοροι και στενοί εκεί που είναι τεχνικοί — δεν είναι μετρημένο. Η γραμμή παραμένει προσέγγιση της γραμμής ελάχιστου χρόνου και ο οδηγός δεν κάνει ποτέ λάθος. Χρησιμοποίησέ το για σύγκριση των δικών σου κατασκευών.</span>"},
+  scorecard:{el:"<b>ΑΝΑΦΟΡΑ ΓΥΡΟΥ</b> — στην καρτέλα ΠΙΣΤΑ, τα κουμπιά ΑΝΑΦΟΡΑ ΓΥΡΟΥ PNG/PDF αποθηκεύουν τον γύρο ως φύλλο τηλεμετρίας: χάρτης με τα σημεία <span style=\"color:#1a7f37\">τέρμα γκάζι</span> και <span style=\"color:#c1121f\">φρεναρίσματος</span>, κάθε στροφή αριθμημένη, γράφημα ταχύτητας ανά απόσταση, χρόνοι γύρου και τομέων, πλήρης προδιαγραφή αυτοκινήτου και <b>παγίδα ταχύτητας σε κάθε στροφή</b> (είσοδος, apex, έξοδος, σχέση, ακτίνα). Οι στροφές έχουν αριθμούς T1…Tn και ονόματα ανά πίστα.<br><b>ΑΝΑΦΟΡΑ ΔΥΝΑΜΟ</b> — τα κουμπιά ΑΝΑΦΟΡΑ PNG/PDF αποθηκεύουν την τρέχουσα μέτρηση ως εκτυπώσιμο φύλλο με τη διάταξη πραγματικού δυναμόμετρου: καμπύλες ισχύος και ροπής με τις κορυφές, μπάντα αποτελεσμάτων, πλήρη προδιαγραφή κινητήρα, συνθήκες μέτρησης και πίνακα δεδομένων. Οι καταγεγραμμένες μετρήσεις εμφανίζονται αχνά για σύγκριση. Το γράφημα είναι ο κινητήρας <i>όπως είναι ρυθμισμένος τώρα</i>, γι’ αυτό τυπώνεται και το <b>δυναμικό σχεδίασης</b>. Όλα παράγονται εκτός σύνδεσης· τίποτα δεν ανεβαίνει.<br>Κάθε build βαθμολογείται <b>S → F</b> από επτά στοιχεία: ειδική <b>ισχύ</b> & <b>ροπή</b> (ανά λίτρο), εύρος <b>περιοχής ισχύος</b>, θερμική <b>απόδοση</b>, <b>ασφάλεια</b> από πειράκι, <b>οδηγησιμότητα</b> (ροπή στις χαμηλές) και <b>εκπομπές</b>. Το κυνήγι μέγιστης ισχύος κοστίζει σε οδηγησιμότητα, ασφάλεια και εκπομπές — η βαθμολογία επιβραβεύει το ισορροπημένο build."},
+  career:{el:"<b>Στόχοι πίστας</b> κρίνουν ολόκληρο το αυτοκίνητο: τέσσερις βάζουν στόχο χρόνου γύρου σε συγκεκριμένη πίστα, και το μπάτζετ τους καλύπτει κινητήρα <i>και</i> όχημα. Ο πίνακας βαθμολογίας δείχνει επίσης τον χρόνο γύρου σου — ως ένδειξη, όχι μέσα στον βαθμό: ο βαθμός αφορά τον <i>κινητήρα</i> και δεν πρέπει να αλλάζει επειδή έβαλες άλλα ελαστικά.<br>Διάλεξε έναν <b>ΣΤΟΧΟ</b> στην κορυφή της καρτέλας ΚΙΝΗΤΗΡΑΣ για να κάνεις τη σχεδίαση γρίφο. Κάθε πρόκληση θέτει κριτήρια — ισχύ, οικονομία, εκπομπές, <b>αξιοπιστία</b> ή <b>ισχύ ανά δολάριο</b> — και κάποιες βάζουν όριο <b>προϋπολογισμού</b>. Η κάρτα τσεκάρει κάθε κριτήριο ζωντανά (✓/✗) και δείχνει <b>ΕΠΙΤΥΧΙΑ</b> όταν καλυφθούν όλα· κόστος και αξιοπιστία φαίνονται πάντα. Ο μεγάλος κυβισμός κερδίζει σε αξία· boost και αγωνιστικά μέρη κερδίζουν σε ισχύ αλλά κοστίζουν σε χρήμα και αξιοπιστία."},
+  tip:{el:"Συμβουλή: κλείσε τη ΦΘΟΡΑ στις ΕΠΙΛΟΓΕΣ για ελεύθερο πειραματισμό, μετά ξανάνοιξέ την για συνέπειες."}
 };
 const CHALLENGE_I18N={
   clubsprint:{name:'Σπριντ Λέσχης',desc:'Κάνε τον γύρο στο στενό κλειστό κύκλωμα μέσα στον στόχο με μέτριο μπάτζετ. Εδώ μετράνε πρόσφυση και βάρος, όχι ισχύς.'},
@@ -1862,7 +2105,7 @@ function applyLang(lang){
   currentLang=(lang==='el')?'el':'en';
   try{localStorage.setItem('pes.lang',currentLang);}catch(e){}
   document.documentElement.lang=currentLang;
-  const sel='.viz-tabs button, #btnFullscreen, .design-panel h3, .design-section, .hint, .panel h2, .stat .label, .opt-note, .opt-row>div>b, .ctl-lbl, .field>label, .build-row button, #controlsPanel .btn-row button, .fuelmap-edit button, .garage-row button';
+  const sel='.viz-tabs button, #btnFullscreen, .design-panel h3, .design-section, .guide-title, .hint, .panel h2, .stat .label, .opt-note, .opt-row>div>b, .ctl-lbl, .field>label, .build-row button, #controlsPanel .btn-row button, .fuelmap-edit button, .garage-row button';
   document.querySelectorAll(sel).forEach(el=>{
     if(el.children.length>0)return;                       // skip nodes with child elements
     if(el.dataset.en===undefined)el.dataset.en=el.textContent.trim();
@@ -1896,6 +2139,7 @@ function applyLang(lang){
   if(typeof renderChallenge==='function')renderChallenge();
   if(typeof updateVehicleSummary==='function'&&vehicle&&vehicle.chLabel)updateVehicleSummary();
   if(typeof renderFuelMap==='function')renderFuelMap();
+  if(typeof showGuide==='function'&&document.getElementById('guideIndex'))showGuide(guideCur);
   if(typeof renderLap==='function'&&lapResult)renderLap();
   const gn=document.getElementById('garageName');
   if(gn){if(gn.dataset.enPh===undefined)gn.dataset.enPh=gn.placeholder;gn.placeholder=tr(gn.dataset.enPh);}
@@ -2347,15 +2591,28 @@ function buildEngine(){
   const vcyl_cc=Math.PI/4*Math.pow(engine.bore_mm/10,2)*(engine.stroke_mm/10);
   engine.displacement_L=vcyl_cc*engine.cylinders/1000;
   engine.boreStroke=engine.bore_mm/engine.stroke_mm;
-  // VE shape: oversquare (bore>stroke) & higher redline peak higher up.
+  // The VE ceiling: the plateau the derived terms below shape (or the bell's height, where kept).
   engine.veAmp=0.95+(engine.injector==='direct'?0.02:0);
-  // Still asserted, and still on the list. Deriving it from Taylor's Mach knee was tried and is
-  // WRONG: Z = 0.5 is where the ports start to choke, which is near the POWER peak, not where
-  // volumetric filling peaks. It put vePeakRpm at 0.92-0.97 of redline on every engine and blew the
-  // real-car calibration out to 54% RMS. The base curve's peak is the TORQUE peak; what should
-  // eventually replace this is not a different formula for a bell, but no bell at all — a rising,
-  // port-flow-limited envelope with the Mach term providing the fall and ram/scavenging providing
-  // the structure. That is a bigger change than this conversion, and it is written up in the README.
+  // THE VE BELL — retired for every poppet-valve petrol engine, NA, supercharged and turbo alike, and
+  // carried only where the physics that replaces it does not exist yet.
+  //
+  // Two derivations failed before this one: Taylor's Mach knee put every peak at 0.92-0.97 of
+  // redline, and a flat port-flow envelope took the real-car calibration from 3.3% to 10.9%. The
+  // third (builds 82-84) found that the bell had been covering for two errors, not one engine shape:
+  //   1. trappedFraction closed every intake 16-24 degrees early (see ivcAbdc), so late-IVC backflow
+  //      was understated at low rpm and the bell's left side was faking it; and
+  //   2. the intake ram term put its main tuning peak 22-57% too high in rpm (see ENGELMAN_K), so
+  //      every runner rang at the redline. With the bell gone that put peak power ON the limiter; and
+  //      on turbos the bell's right side had been rolling torque off to hide it, which is why
+  //      removing it failed on test41's all-turbo set every time and looked like missing "boost
+  //      taper" physics.
+  // With both fixed, removing the bell takes test41 from 4.02% to 3.34%, leaves no preset peaking on
+  // the limiter, and cuts the boost-threshold torque cliffs from 5 to 4. What remains fitted here:
+  //   · diesels keep it (their load runs through a throttle they should not have; see pumpingMEP),
+  //   · rotaries and two-strokes keep it (no poppet valves, so no trapping/Mach/float physics),
+  //   · CAM.ampMul still scales veAmp by cam grade (+4% sport, +8% race).
+  engine.veBell=!!(et.ci||et.ports);
+  // For the engines that keep it, vePeakRpm is still asserted:
   engine.vePeakRpm=clamp(engine.redline*0.60+(engine.boreStroke-1)*1500,3000,engine.redline*0.95);
   // Asymmetric generalized-bell breathing curve: a steeper low-rpm side (so torque
   // builds later and peaks up in the midrange) and a gentle high-rpm side (so power
@@ -2786,7 +3043,10 @@ function computeVE(rpm,map){
   // the peak; the low-rpm side is narrower (torque builds later) and the high-rpm side
   // wider (shoulders fall off far more gently than a Gaussian, so power holds up top).
   const w=rpm<peak?engine.veWidthLo:engine.veWidthHi;
-  let ve=engine.veAmp/(1+Math.pow(Math.abs((rpm-peak)/w),2*engine.veShoulder));
+  // Where the engine's own breathing physics is modelled, there is no bell: the shape comes out of
+  // late-IVC backflow (low end), wave action (structure) and port Mach / valve float (top end), with
+  // veAmp as a flat ceiling. Where it is not, the fitted bell remains — see engine.veBell.
+  let ve=engine.veBell?engine.veAmp/(1+Math.pow(Math.abs((rpm-peak)/w),2*engine.veShoulder)):engine.veAmp;
   // ---- derived gas dynamics (see PHYSICS CORE) ----
   // These four lines replace EXHAUST{topGain,lowLoss} and CAM{scav,lowLoss} — four fitted numbers
   // for two physical effects. Both waves swing both ways, so a badly matched pipe COSTS VE here.
@@ -5365,7 +5625,31 @@ let turboAngle=0;
 // the limiter. Slow enough to follow a valve opening, quick enough that the limiter feels urgent.
 const ANIM_SLOW=0.30, ANIM_FAST=0.90;
 // Phase within the cycle. cyl 0 is the one drawn large; the rest are offset by the firing interval.
-function cylPhase(i,n,cycle){return (crankAngle+i*cycle/n)%cycle;}
+// FIRING ORDER. Cylinders do not fire in the order they are numbered, and the live bank used to
+// pretend they did: cylinder i was given phase i*cycle/n, so every engine ran 1-2-3-...-n (and
+// backwards, because of the sign), and the caption read "FIRING ORDER 1-4". A real inline four
+// fires 1-3-4-2 — which is also what puts pistons 1 and 4 at the top together and 2 and 3 at the
+// bottom, so the right firing order is what makes the drawing's crank geometry right as well.
+// V and boxer engines are numbered bank by bank (bank A 1..k on the top row, bank B after it), the
+// BMW / Audi / Ferrari / Porsche convention, which is also how the bank is drawn; the published
+// orders below are in that numbering. Counts with no production layout fall back to firing in
+// sequence, which is still evenly spaced and so still a buildable crank.
+const FIRING_ORDER={
+  inline:{1:[1],2:[1,2],3:[1,2,3],4:[1,3,4,2],5:[1,2,4,5,3],6:[1,5,3,6,2,4],8:[1,6,2,5,8,3,7,4]},
+  v:     {2:[1,2],4:[1,3,2,4],6:[1,4,3,6,2,5],8:[1,5,4,8,6,3,7,2],10:[1,6,5,10,2,7,3,8,4,9],
+          12:[1,7,5,11,3,9,6,12,2,8,4,10]},
+  boxer: {2:[1,2],4:[1,4,3,2],6:[1,6,2,4,3,5]}
+};
+function firingOrder(layout,n){
+  const t=(FIRING_ORDER[layout]||FIRING_ORDER.inline)[n];
+  return t||Array.from({length:n},(_,i)=>i+1);
+}
+// Phase of cylinder i (0-based, by number). Cylinder 1 is the big cutaway and sets the clock; the
+// cylinder that fires k-th in the order reaches the same point k*cycle/n LATER, so it lags.
+function cylPhase(i,n,cycle,order){
+  const k=order?Math.max(0,order.indexOf(i+1)):i;
+  return ((crankAngle-k*cycle/n)%cycle+cycle)%cycle;
+}
 // Crank-slider: piston position from crank angle, as a fraction of stroke below TDC.
 // x = r(1−cos θ) + L − √(L² − r²sin²θ), normalised by the 2r stroke. rodRatio L/r ≈ 3.2 is typical.
 function pistonFrac(theta,rodRatio){
@@ -5636,12 +5920,13 @@ function drawPistonCutaway(px,py,S,F,LW,deg,nCyl,rodRatio,bsr,two,m,detailed){
   ctx.fillText(layoutTxt,px(bx0+8),py(by0+14));
   const vee=engine.layout==='v'||engine.layout==='boxer';
   const perBank=vee?Math.ceil(nCyl/2):nCyl;
-  const slotW=Math.min(26,(bw-24)/perBank), cylTop=by0+26, cylH=vee?42:64;
+  const slotW=Math.min(26,(bw-24)/perBank), cylTop=by0+30, cylH=vee?40:60;
+  const order=firingOrder(engine.layout,nCyl);
   for(let b=0;b<(vee?2:1);b++){
     for(let i=0;i<perBank;i++){
       const idx=b*perBank+i; if(idx>=nCyl)break;
       const sx=bx0+12+i*slotW, sy=cylTop+b*(cylH+14);
-      const ph=cylPhase(idx,nCyl,Math.PI*(two?2:4));
+      const ph=cylPhase(idx,nCyl,Math.PI*(two?2:4),order);
       const f=pistonFrac(ph*(two?2:1),rodRatio);
       ctx.fillStyle='#0c0c14';ctx.fillRect(px(sx),py(sy),(slotW-5)*S,cylH*S);
       // firing cylinder glows
@@ -5652,10 +5937,18 @@ function drawPistonCutaway(px,py,S,F,LW,deg,nCyl,rodRatio,bsr,two,m,detailed){
       ctx.fillStyle=state.blown?'#5a5a3a':C.piston;
       ctx.fillRect(px(sx+1),py(sy+2+f*cylH*0.42),(slotW-7)*S,10*S);
       ctx.strokeStyle=C.metal;ctx.lineWidth=LW(1);ctx.strokeRect(px(sx),py(sy),(slotW-5)*S,cylH*S);
+      // Cylinder number above the bore, lit while that cylinder fires so the order can be read off
+      // the drawing as it runs.
+      ctx.fillStyle=firing?'#ffcc44':'#9ab';ctx.font=F(slotW<18?5:6);ctx.textAlign='center';
+      ctx.fillText(String(idx+1),px(sx+(slotW-5)/2),py(sy-3));ctx.textAlign='left';
     }
   }
   ctx.fillStyle='#778';ctx.font=F(6);
-  ctx.fillText(tr('FIRING ORDER')+' 1-'+nCyl+'  •  '+(engine.ports?tr('PORTS'):e.cam.toUpperCase()+(e.vvt?'+VVT':'')),px(bx0+8),py(by0+bh-8));
+  // A V12's order is 26 characters; shrink the caption to the box rather than run off its edge.
+  const foTxt=tr('FIRING ORDER')+' '+order.join('-');
+  let foSize=6;while(foSize>3.5&&ctx.measureText(foTxt).width>(bw-14)*S){foSize-=0.5;ctx.font=F(foSize);}
+  ctx.fillText(foTxt,px(bx0+8),py(by0+bh-14));ctx.font=F(6);
+  ctx.fillText(engine.ports?tr('PORTS'):e.cam.toUpperCase()+(e.vvt?'+VVT':''),px(bx0+8),py(by0+bh-5));
 
   // ---- oil + coolant, as gauges rather than numbers in a box ----
   gaugeBar(px,py,S,F,LW,bx0,by0+bh+12,bw,tr('COOLANT'),state.coolant,60,125,108,115);
@@ -6022,6 +6315,7 @@ function setTab(mode){
   document.getElementById('designPanel').classList.toggle('active',mode==='design');
   document.getElementById('vehiclePanelTab').classList.toggle('active',mode==='vehicle');
   document.getElementById('guidePanel').classList.toggle('active',mode==='guide');
+  document.querySelector('.main').classList.toggle('wide',mode==='guide');
   document.getElementById('optionsPanel').classList.toggle('active',mode==='options');
   // Right column: runtime Engine Controls while driving/dyno; the Performance panel on VEHICLE.
   document.getElementById('controlsPanel').style.display=(mode==='engine'||mode==='dyno')?'':'none';
@@ -6030,6 +6324,54 @@ function setTab(mode){
   if(mode==='vehicle'){buildVehicle();updateVehicleSummary();}
   if(mode==='track'){buildVehicle();refreshLap();}
   updateUI();
+}
+
+// ---- the guide: an index, and one page at a time ----
+// The page list is the DOM itself (each <section class="guide-page"> carries its category and
+// title), so a page added to the HTML appears in the index and in the prev/next order without
+// touching this code.
+const GUIDE_CATS={start:'Getting started',engine:'Designing the engine',air:'Breathing & boost',
+  car:'The car',track:'The track',score:'Scoring & career',more:'Options & limits'};
+const guidePages=()=>[...document.querySelectorAll('#guidePanel .guide-page')];
+let guideCur=null;
+function renderGuideIndex(){
+  const idx=document.getElementById('guideIndex');if(!idx)return;
+  const groups={};let n=0;
+  for(const pg of guidePages()){n++;(groups[pg.dataset.cat]=groups[pg.dataset.cat]||[]).push([n,pg]);}
+  idx.innerHTML=Object.entries(groups).map(([c,list])=>'<div><div class="gcat">'+tr(GUIDE_CATS[c]||c)+'</div>'+
+    list.map(([k,pg])=>'<button data-gp="'+pg.id.slice(3)+'"><span class="n">'+k+'</span>'+tr(pg.dataset.title)+'</button>').join('')+
+    '</div>').join('');
+  idx.querySelectorAll('button[data-gp]').forEach(b=>b.addEventListener('click',()=>showGuide(b.dataset.gp)));
+}
+function guideNavHtml(i,list){
+  const pg=list[i];
+  return '<button data-go="prev"'+(i>0?'':' disabled')+'>◀ '+tr('PREV')+'</button>'+
+    '<button data-go="index">☰ '+tr('INDEX')+'</button>'+
+    '<button data-go="next"'+(i<list.length-1?'':' disabled')+'>'+tr('NEXT')+' ▶</button>'+
+    '<span class="crumb">'+tr(GUIDE_CATS[pg.dataset.cat]||'')+' › '+tr('page')+' '+(i+1)+' '+tr('of')+' '+list.length+'</span>';
+}
+function showGuide(id){
+  const list=guidePages(), i=list.findIndex(p=>p.id==='gp-'+id);
+  guideCur=i>=0?id:null;
+  list.forEach((p,k)=>p.hidden=(k!==i));
+  document.getElementById('guideIndex').hidden=(i>=0);
+  for(const nid of ['guideNav','guideNavFoot']){
+    const nav=document.getElementById(nid);if(!nav)continue;
+    nav.hidden=(i<0);
+    if(i<0)continue;
+    nav.innerHTML=guideNavHtml(i,list);
+    nav.querySelectorAll('button[data-go]').forEach(b=>b.addEventListener('click',()=>{
+      const g=b.dataset.go;
+      showGuide(g==='index'?null:list[i+(g==='next'?1:-1)].id.slice(3));
+    }));
+  }
+  if(i<0)renderGuideIndex();
+  const panel=document.getElementById('guidePanel');if(panel)panel.scrollTop=0;
+  try{localStorage.setItem('pes.guidePage',guideCur||'');}catch(e){}
+}
+function initGuide(){
+  let saved=null;try{saved=localStorage.getItem('pes.guidePage')||null;}catch(e){}
+  showGuide(saved&&document.getElementById('gp-'+saved)?saved:null);
 }
 
 function bindControls(){
@@ -6061,7 +6403,7 @@ function bindControls(){
     flash(wearEnabled?'WEAR ON • ENGINE CAN BE DAMAGED':'WEAR OFF • ENGINE INVINCIBLE');
   });
   document.getElementById('btnNitrous').addEventListener('click',()=>{
-    if(engine.nitrous==='none'){flash('NO NITROUS FITTED — ADD A SHOT IN THE DESIGN','warn');return;}
+    if(engine.nitrous==='none'){flash('NO NITROUS FITTED — ADD A SHOT ON THE ENGINE TAB','warn');return;}
     if(state.nitrousCharge<=0){flash('NITROUS BOTTLE EMPTY — REBUILD TO REFILL','warn');return;}
     state.nitrousActive=!state.nitrousActive;
     const b=document.getElementById('btnNitrous');b.classList.toggle('on',state.nitrousActive);b.setAttribute('aria-pressed',state.nitrousActive);
@@ -6227,6 +6569,7 @@ bindControls();applyEngineToForm(Object.assign({},DEFAULT_ENGINE));buildEngine()
 applyVehicleToForm(DEFAULT_VEHICLE);buildVehicle();updateVehicleSummary();
 loadFromHash();   // open a shared build if the URL carries one
 applyLang(currentLang);   // localise the UI (persisted choice)
+initGuide();               // index, or the page you were last reading
 sizeCanvas();updatePhysics();updateUI();requestAnimationFrame(loop);
 
 // Register service worker for offline/installable PWA (no-op on file://).

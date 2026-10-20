@@ -180,11 +180,11 @@ if (!(T.spool.lap > T.clsd.lap)) fails.push('spool no longer loses on a lap');
 if (!(T.open.t100 > T.clsd.t100)) fails.push('open diff no longer loses off the line');
 
 // ==================================================================== 6. guide + no dead code
-const guide = await page.evaluate(() => (document.querySelector('[data-gk="vehicle"]') || {}).textContent || '');
+const guide = await page.evaluate(() => document.getElementById('guidePanel').textContent);
 if (!/only drives the front axle|drives the front axle/.test(guide)) fails.push('English guide does not explain the FWD traction ceiling');
 if (!/0\.33/.test(guide)) fails.push('English guide does not quote the measured ceiling');
 await page.evaluate(() => applyLang('el')); await page.waitForTimeout(250);
-const guideEl = await page.evaluate(() => (document.querySelector('[data-gk="vehicle"]') || {}).textContent || '');
+const guideEl = await page.evaluate(() => document.getElementById('guidePanel').textContent);
 if (!/προσθιοκίνητο/.test(guideEl)) fails.push('Greek guide does not explain the FWD traction ceiling');
 await page.evaluate(() => applyLang('en'));
 const dead = await page.evaluate(() => typeof muLong);

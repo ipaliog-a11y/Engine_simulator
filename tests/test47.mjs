@@ -77,8 +77,13 @@ for (const r of eng)
 const naBmepOver = [];
 for (const r of eng) {
   // BMEP — the cleanest single measure of whether an engine is breathing like its type.
-  // NA petrol 9-13 bar, turbo petrol 15-25, turbodiesel 18-26, 2-stroke 5-9, rotary 8-14.
-  const bmepBand = r.ci ? [14, 26] : r.rotary ? [7, 15] : r.ports ? [4, 10] : r.na ? [8, 14] : [13, 26];
+  // Turbo petrol 15-25, turbodiesel 18-26, 2-stroke 5-9, rotary 8-14.
+  // NA petrol tops out at 15, and that ceiling is GROUNDED, not widened. It read 14 until build 83,
+  // and real engines contradict that, one of them inside this suite: test48's BMW S54 makes 365 Nm
+  // from 3.246 L, which is 14.1 bar. A Ferrari 458's F136 makes 540 Nm from 4.497 L (15.1 bar), a
+  // Porsche 991.2 GT3's 4.0 L about 14.5. Those are the best road NA engines built, so 15 is a real
+  // ceiling and the ITB screamer at 16 is still over it.
+  const bmepBand = r.ci ? [14, 26] : r.rotary ? [7, 15] : r.ports ? [4, 10] : r.na ? [8, 15] : [13, 26];
   if (r.bmep < bmepBand[0] || r.bmep > bmepBand[1]) {
     // One NA preset is allowed over the band: the ITB screamer reads 16.03 bar, which is race-engine
     // territory rather than road (a road NA four peaks nearer 12.5-13.5). It is not an independent
@@ -123,7 +128,11 @@ if (naBmepOver.length > NA_BMEP_BUDGET)
 // worst one must not get worse.
 const CLIFF_PCT = 15;          // above this, a 100-rpm step is not a torque curve, it is a step
 const CLIFF_BUDGET = 6;        // presets currently over it — all turbos, all at the boost threshold
-const CLIFF_WORST = 40;        // the worst is 36%; this stops it deteriorating
+// Was 40. Build 83 moved the 6.6 diesel from 38% to 41%, for a stated reason: the IVC geometry fix
+// closes its intake 44 deg ABDC where the old convention said 20, so below the boost threshold, with
+// no ram to repay it, the engine traps less. That is the correct direction for the pre-boost torque,
+// and it widens a step whose cause is the boost loop. The cap still stops anything worse.
+const CLIFF_WORST = 42;
 const cliffs = eng.filter(r => r.jump > CLIFF_PCT);
 console.log(`\n  torque cliffs over ${CLIFF_PCT}% in one 100-rpm step: ${cliffs.length} (budget ${CLIFF_BUDGET})`);
 for (const c of cliffs) console.log(`    ${c.nm.padEnd(26)} ${c.jump}% @ ${c.jumpRpm} rpm`);

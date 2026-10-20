@@ -94,7 +94,7 @@ await page.evaluate(() => applyLang('el')); await page.waitForTimeout(150);
 const el = await page.evaluate(() => ({
   lbl: document.querySelector('label[for="vhDiff"]').textContent,
   sum: /ΑΝΟΙΧΤΟ/.test(document.getElementById('vehicleSummary').textContent),
-  guide: /διαφορικό/i.test(document.querySelector('[data-gk="vehicle"]').textContent)
+  guide: /διαφορικό/i.test(document.getElementById('guidePanel').textContent)
 }));
 console.log('EL label:', el.lbl, '| summary translated:', el.sum, '| guide covers diff:', el.guide);
 if (!el.sum || !el.guide) fails.push('Greek diff strings missing');

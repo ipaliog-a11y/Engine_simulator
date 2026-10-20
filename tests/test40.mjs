@@ -200,10 +200,10 @@ const ui = await page.evaluate(() => (document.getElementById('designSummary') |
 console.log('\ndesign summary:', ui.replace(/\s+/g, ' ').match(/TURBO[^•]*/) ? ui.replace(/\s+/g, ' ').match(/.{0,150}50% boost.{0,60}/)[0] : ui.slice(0, 120));
 if (!/50% boost @/.test(ui)) fails.push('design summary no longer reports the spool point');
 
-const guide = await page.evaluate(() => (document.querySelector('[data-gk="subsystems"]') || {}).textContent || '');
+const guide = await page.evaluate(() => document.getElementById('guidePanel').textContent);
 if (!/compressor map|rated flow|flow/.test(guide)) fails.push('English guide does not explain the flow limit');
 await page.evaluate(() => applyLang('el')); await page.waitForTimeout(250);
-const guideEl = await page.evaluate(() => (document.querySelector('[data-gk="subsystems"]') || {}).textContent || '');
+const guideEl = await page.evaluate(() => document.getElementById('guidePanel').textContent);
 if (!/παροχ/.test(guideEl)) fails.push('Greek guide does not explain the flow limit');
 await page.evaluate(() => applyLang('en'));
 
