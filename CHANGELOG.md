@@ -20,6 +20,38 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 Working toward **v1.0 — every number derived, not fitted.**
 
+### Dyno result sheet, track zoom, operating-point buttons, Wankel cutaway, mixture curve
+
+- **DYNO RESULT** panel under the chart: peak power and torque in hp/kW/Nm/lb-ft with their rpm, and
+  a run-data table, in real text. It names the two pulls the tab has always mixed: the **best-power
+  pull** (what the grade and objectives use) and **your pull as tuned** (the curve drawn, and what the
+  PDF tabulates).
+- **Track map zoom and pan**: scroll or pinch to zoom about the cursor (to 16×), drag to pan,
+  double-click to fit. Resets when the circuit changes; the title and legend stay put.
+- **Operating-point buttons.** OPTIMAL / MAX POWER / ECO were three fixed slider sets shared by every
+  engine; MAX POWER held 50% load (not the power peak), used a petrol AFR on diesels, and cooled the
+  intake to 15 °C. Now MAX POWER and **PEAK TORQUE** (was OPTIMAL) hold wide open throttle at this
+  engine's scorecard peaks, at the scorecard's mixture and conditions, with the brake target offset
+  so each settles on its rpm; ECO searches speed × load × mixture for minimum BSFC. Verified on the
+  live bench (`test52`): MAX POWER lands within 2% of the scorecard on six engines including a diesel,
+  a rotary and E85.
+- **Mixture → torque from the fuel-air cycle.** `afrPowerFactor` was a fitted Gaussian 0.19 wide
+  that put stoich 41% below best power (real: ~3%), made rich the most economical mixture, and ran
+  every light-load AUTO-map point ~37% weak. Now imep ∝ φ·η(φ) with η from Heywood's fuel-air cycle,
+  anchored at the scorecard's best-power mixture so no scorecard figure moves. Best economy is now
+  λ≈1.1 petrol, λ≈1.8 diesel. Calibration: test41 3.34 → 3.41%, aero 6.4 → 6.5%.
+- **VGT holds its target on the live bench.** The vanes were scheduled to the compressor alone, so
+  bearing drag left a VGT diesel at 1.05 bar against 1.20; they now cover the drag too.
+- **Wankel cutaway at parity with the piston view**: ports at the housing's top waist and plugs at the
+  bottom one (they were at the long axis, where the chamber is largest), chambers coloured by phase,
+  phase labels where they happen, the same instruments as the piston view, and a rotor bank. The
+  cutaway's EGT readout now comes from `exhaustGasT` instead of a display formula.
+- **Caps**: Wankels to 4 rotors, two-strokes to 6 cylinders, with higher counts disabled in the list
+  rather than silently clamped.
+
+Found, not fixed: absolute BSFC reads optimistic (diesel 120–160 g/kWh against a real ~200–230;
+petrol at full load ~240 against ~270–300). That is the combustion model, conversion 5.
+
 ### The VE bell comes off every poppet-valve petrol engine
 
 The fitted VE "bell" (`vePeakRpm`, widths, shoulder) had resisted two removal attempts. The third
