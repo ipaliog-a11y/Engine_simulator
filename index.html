@@ -1104,7 +1104,7 @@ This is a physics model, and like every model it leaves things out. These are th
 </div>
 </div>
 <div class="side-panel">
-<div class="panel">
+<div class="panel" id="livePanel">
 <h2>Live Output</h2>
 <div class="gauge-row">
 <div class="stat" id="statHP"><span class="label">POWER</span><div class="value">0</div><span class="unit">HP</span></div>
@@ -8903,6 +8903,8 @@ function setTab(mode){
   document.getElementById('controlsPanel').style.display=(mode==='engine'||mode==='dyno')?'':'none';
   document.getElementById('vehiclePanel').style.display=(mode==='vehicle')?'':'none';
   document.getElementById('trackPanel').style.display=(mode==='track')?'':'none';
+  // the engine's live readout belongs to the engine; on the track the lap has its own instruments
+  document.getElementById('livePanel').style.display=(mode==='track')?'none':'';
   if(mode==='vehicle'){buildVehicle();updateVehicleSummary();}
   if(mode==='track'){buildVehicle();refreshLap();}
   updateUI();
