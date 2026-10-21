@@ -20,6 +20,11 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 Working toward **v1.0 — every number derived, not fitted.**
 
+### A soft limiter on the engine sound (build 125)
+
+- With all the voices together, a race header on open stacks flat out (the ITB screamer) peaked at 1.27
+  and would clip. The worklet's output now runs linear to 0.7 and eases into 1 above it.
+
 ### Whine, blow-off, intake roar and knock in the engine sound (build 124)
 
 - Four voices that do not go through the exhaust, each from hardware the sim already models:

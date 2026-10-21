@@ -282,7 +282,7 @@ table.fuelmap td.live{box-shadow:inset 0 0 0 2px #fff;font-weight:bold}
 <body>
 <div class="container">
 <header>
-<h1>PIXEL ENGINE SIM v0.6 build 124</h1>
+<h1>PIXEL ENGINE SIM v0.6 build 125</h1>
 <div class="subtitle" id="subtitle">ENGINE DESIGNER • BUILD IT, THEN DRIVE IT</div>
 </header>
 <div class="build-strip" id="buildStrip">
@@ -6665,6 +6665,9 @@ class EnginePulse extends AudioWorkletProcessor{
     const w=2*Math.PI*Math.min(f0,0.45*sampleRate)/sampleRate,al=Math.sin(w)/(2*q),a0=1+al;
     return {b0:al/a0,b2:-al/a0,a1:-2*Math.cos(w)/a0,a2:(1-al)/a0,x1:0,x2:0,y1:0,y2:0};
   }
+  // soft knee: linear to 0.7, then eased into 1, so a race header on open stacks flat out is loud
+  // without clipping the output
+  static knee(v){const m=Math.abs(v);return m<=0.7?v:Math.sign(v)*(0.7+0.3*Math.tanh((m-0.7)/0.3));}
   static run(f,x){
     const y=f.b0*x+f.b2*f.x2-f.a1*f.y1-f.a2*f.y2;
     f.x2=f.x1;f.x1=x;f.y2=f.y1;f.y1=y;return y;
@@ -6726,7 +6729,7 @@ class EnginePulse extends AudioWorkletProcessor{
         a+=intake*(8*run(this.inBp,nz)+c.intakeHiss*this.inLp);
       }
       if(this.ringEnv>1e-4){this.ringPh+=this.ringW;a+=this.ringEnv*Math.sin(this.ringPh);this.ringEnv*=this.ringDecay;}
-      L[i]=(l*x.gain+0.7071*a)*level;if(R!==L)R[i]=(r*x.gain+0.7071*a)*level;
+      L[i]=EnginePulse.knee((l*x.gain+0.7071*a)*level);if(R!==L)R[i]=EnginePulse.knee((r*x.gain+0.7071*a)*level);
     }
     return true;
   }
