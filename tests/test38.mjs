@@ -24,16 +24,18 @@ const w = await page.evaluate(() => Object.keys(TRACKS).map(k => {
   const q = Math.floor(by.length / 5);
   const tightW = by.slice(0, q).reduce((a, p) => a + p.w, 0) / q;
   const openW = by.slice(-q).reduce((a, p) => a + p.w, 0) / q;
-  return { k, label: T.label, nominal: T.width, avg: +avg.toFixed(2), min: +T.wMin.toFixed(1), max: +T.wMax.toFixed(1),
+  // A real circuit's width is measured, not authored: the Indianapolis oval really is one width.
+  const constW = !!TRACKS[k].real && TRACKS[k].wprof.every(m => Math.abs(m - 1) < 0.02);
+  return { k, label: T.label, constW, nominal: T.width, avg: +avg.toFixed(2), min: +T.wMin.toFixed(1), max: +T.wMax.toFixed(1),
     label_: T.wLabel, tightW: +tightW.toFixed(1), openW: +openW.toFixed(1),
     offTrack: T.line.filter((p, i) => Math.abs(p.off) > T.pts[i].hw + 1e-6).length };
 }));
 w.forEach(x => console.log(`  ${x.label.padEnd(14)} ${x.label_.padEnd(9)} nominal ${x.nominal} m, measured avg ${x.avg} m | tightest fifth ${x.tightW} m vs most open fifth ${x.openW} m | off track ${x.offTrack} pts`));
 w.forEach(x => {
   if (Math.abs(x.avg - x.nominal) > 0.15) fails.push(`${x.label}: quoted ${x.nominal} m is not the average (${x.avg} m)`);
-  if (x.max - x.min < 1.5) fails.push(`${x.label}: width barely varies (${x.min}–${x.max} m)`);
+  if (!x.constW && x.max - x.min < 1.5) fails.push(`${x.label}: width barely varies (${x.min}–${x.max} m)`);
   if (x.offTrack) fails.push(`${x.label}: racing line leaves the track at ${x.offTrack} points`);
-  if (!/–/.test(x.label_)) fails.push(`${x.label}: readout does not show a width range`);
+  if (!x.constW && !/–/.test(x.label_)) fails.push(`${x.label}: readout does not show a width range`);
   // Narrow where it is tight, wide where it is open — that is the whole claim.
   // Only the DERIVED profiles claim to follow the layout. The three hand-built circuits are
   // authored by station, exactly as a real circuit's width is a fact about the place rather than

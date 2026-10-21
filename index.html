@@ -282,7 +282,7 @@ table.fuelmap td.live{box-shadow:inset 0 0 0 2px #fff;font-weight:bold}
 <body>
 <div class="container">
 <header>
-<h1>PIXEL ENGINE SIM v0.6 build 120</h1>
+<h1>PIXEL ENGINE SIM v0.6 build 121</h1>
 <div class="subtitle" id="subtitle">ENGINE DESIGNER • BUILD IT, THEN DRIVE IT</div>
 </header>
 <div class="build-strip" id="buildStrip">
@@ -1192,6 +1192,7 @@ This is a physics model, and like every model it leaves things out. These are th
 </div>
 <footer>PIXEL ENGINE SIM • Configurable engine designer • Expandable per subsystem<br>Physics simplified for education &amp; fun • Inspired by Automation</footer>
 </div>
+<script src="tracks/real-circuits.js"></script>
 <script>
 // Fuel properties. density kg/L, LHV MJ/kg, stoich AFR (mass), octane (null → use the
 // RON slider), chargeCool = evaporative charge cooling °C (denser charge + less knock),
@@ -5597,6 +5598,11 @@ const TRACKS={
     blurb:'A balanced grand-prix layout: a long back straight into heavy braking, then a technical infield.',
     pts:[{x:90,y:430,z:-2},{x:80,y:280,z:6},{x:160,y:180,z:14},{x:300,y:150,z:20},{x:420,y:190,z:22},{x:520,y:130,z:16},{x:660,y:100,z:8},{x:820,y:130,z:2},{x:880,y:250,z:-4},{x:840,y:370,z:-8},{x:720,y:420,z:-6},{x:640,y:350,z:-2},{x:560,y:380,z:0},{x:540,y:470,z:-6},{x:420,y:500,z:-14},{x:330,y:440,z:-20},{x:240,y:470,z:-18},{x:150,y:510,z:-10}]}
 };
+// Real circuits (build 121) ship in their own file, tracks/real-circuits.js, generated offline by
+// tools/import-real-tracks.mjs: TUM's measured centreline and width, georeferenced and given heights
+// from a terrain model. Separate because its data carries its sources' licences (LGPL-3.0, ODbL), and
+// optional: without the file the app has its four test circuits and nothing breaks.
+if(typeof window!=='undefined'&&window.REAL_TRACKS)Object.assign(TRACKS,window.REAL_TRACKS);
 // Closed Catmull-Rom through the control points, sampled at roughly `step` metres.
 // The centreline through the circuit's control points: a CENTRIPETAL Catmull-Rom spline (knots spaced by
 // the square root of the distance between points), then resampled at a uniform step along its length
@@ -8819,10 +8825,17 @@ const GPX_KEY='pes.tracks';
 function refreshTrackList(){
   const sel=document.getElementById('trkSel');if(!sel)return;
   sel.innerHTML='';
-  for(const k of Object.keys(TRACKS)){
-    const o=document.createElement('option');
-    o.value=k;o.textContent=TRACKS[k].label+(TRACKS[k].imported?' *':'');
-    sel.appendChild(o);
+  // Three groups: the hand-built test circuits, the real ones, and the user's own imports.
+  const groups=[['TEST CIRCUITS',t=>!t.real&&!t.imported],['REAL CIRCUITS',t=>t.real],['IMPORTED',t=>t.imported]];
+  for(const [name,f] of groups){
+    const keys=Object.keys(TRACKS).filter(k=>f(TRACKS[k]));if(!keys.length)continue;
+    const g=document.createElement('optgroup');g.label=name;
+    for(const k of keys){
+      const o=document.createElement('option');
+      o.value=k;o.textContent=TRACKS[k].label+(TRACKS[k].imported?' *':'');
+      g.appendChild(o);
+    }
+    sel.appendChild(g);
   }
   sel.value=trackKey;
 }
