@@ -1,4 +1,4 @@
-# PIXEL ENGINE SIM v0.6 build 122
+# PIXEL ENGINE SIM v0.6 build 123
 
 **A lightweight, 8-bit style internal combustion engine *designer* & simulator** inspired by *Automation*.
 
@@ -769,6 +769,7 @@ measurement finds things. Each item is one PR.
 | — | Faster turbo lap walk | ✅ build 120 | The lap's turbo shaft starts settled at the fastest point and steps at 10 ms (laps unchanged within 0.01 s): a turbo Nordschleife solve 1.36 -> 0.27 s. Lap per Dollar target 70 s. |
 | — | Intake stroke integrated; gear held into braking | ✅ build 121 | The runner's air column, the valve curtain and the cylinder integrated from TDC to IVC: late-IVC loss, the charge's momentum and the tuning in one (NA power RMS ~10% -> ~6%). Real runner types on the compact-manifold presets. The driver holds a gear into the braking zone when shifting would cost time. Open: boosted engines high at the top; NA top-end fade. |
 | — | Charge heating; valve flow from Taylor | ✅ build 122 | The intake stroke obeys the first law: flow work, the hot residual and Woschni's wall heat during induction. The flat 0.95 VE ceiling and the cam bonus retired where it applies; the curtain's discharge coefficient averages Taylor's 0.42. NA power RMS ~7%. Open: boosted engines high at the top; NA top-end fade. |
+| — | Knock from the end gas; ECU boost taper | ✅ build 123 | Knock is the end gas's autoignition (Livengood-Wu with Douaud-Eyzat, unadjusted) on the model's own cycle; spark cost from the Wiebe phasing. BOOST TAPER FROM / BOOST AT LIMITER as ECU tune inputs, with reliability; factory presets calibrated to the maker's rating. Next: low-rpm turbo spool, then the turbine throat convention and real wheel sizes. |
 | — | Suspension type and geometry | ⏸ on hold | Future development. Today a setup is roll gradient + static camber; the roll camber the geometry recovers is a fixed 50% for every car (CAMBER_RECOVERY), and lateral load transfer is split by static weight. Wanted: the geometry per car (MacPherson strut, double wishbone, multi-link, solid axle) giving its camber recovery, and front/rear roll stiffness (springs, anti-roll bars) giving the handling balance. Needs each preset's real suspension type. |
 | — | Spark torque from fuel | ✅ build 95 | `IMEP_K` replaced by Heywood's 0.8 × fuel-air cycle efficiency; each fuel's LHV/AFR_st enters. Spark torque −2.7%, full-load BSFC 280 g/kWh (real 270–300). Rotary/two-stroke type factors still fitted. |
 | — | `turboChoke` (boost taper) | ✅ build 94 | Retired. Turbine efficiency from blade speed ratio U/C, per-point compressor efficiency, a continuous rich-knock slope in place of a step, and sequential turbos staged as two turbines. Calibration improved on every measure. |

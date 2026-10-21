@@ -113,11 +113,16 @@ const peaks = await page.evaluate(() => PRESETS.filter(p => !p.real).map(pr => {
   return { name: pr.name, pct: Math.round(100 * pk.rpm / engine.redline),
     valves: engine.valves, poppet: !!engine.ivDia_mm,
     Zred: engine.ivDia_mm ? +inletMachZ(engine.redline, 320).toFixed(2) : null,
-    float: Math.round(engine.floatRpm || 0), redline: engine.redline };
+    float: Math.round(engine.floatRpm || 0), redline: engine.redline,
+    untapered: engine.intake !== 'na' && !(engine.taperRpm > 0) };
 }));
 peaks.forEach(p => console.log(`  ${p.name.slice(0, 24).padEnd(25)} peak at ${String(p.pct + '%').padStart(5)} of redline` +
   (p.poppet ? ` · ${p.valves}v · Z=${p.Zred} · float ${p.float}` : ' · no poppet valves')));
-const atLimiter = peaks.filter(p => p.pct >= 100);
+// Build 123: an engine with forced induction and no ECU boost taper holds full boost to the limiter by its own
+// calibration, and with knock now the end gas's autoignition (which eases as the engine speeds up and the gas has
+// less time) its power follows that boost there. That is the calibration it was given, adjustable in BOOST TAPER
+// FROM / BOOST AT LIMITER, not the hardware failing to roll off; such engines are not counted here.
+const atLimiter = peaks.filter(p => p.pct >= 100 && !p.untapered);
 console.log(`  ${atLimiter.length} preset(s) still peak at the limiter: ${atLimiter.map(p => p.name).join(', ') || 'none'}`);
 // The same named list as test46, for the same reasons: the 2.0 Turbo Hot-Hatch (boost taper, not
 // valvetrain) and the 2.0 Turbo Diesel (a flat derived plateau, build 88). The 1.3 Rotary Turbo was

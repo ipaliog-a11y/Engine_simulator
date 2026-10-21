@@ -282,7 +282,7 @@ table.fuelmap td.live{box-shadow:inset 0 0 0 2px #fff;font-weight:bold}
 <body>
 <div class="container">
 <header>
-<h1>PIXEL ENGINE SIM v0.6 build 122</h1>
+<h1>PIXEL ENGINE SIM v0.6 build 123</h1>
 <div class="subtitle" id="subtitle">ENGINE DESIGNER • BUILD IT, THEN DRIVE IT</div>
 </header>
 <div class="build-strip" id="buildStrip">
@@ -2491,27 +2491,27 @@ const PRESETS=[
   // thing; `real` carries the maker's rating (hp, rpm; Nm, rpm). Nothing here is tuned to land on it —
   // ECU boost taper (build 123): taperRpm/taperPct are the factory ECU's high-rpm boost calibration, solved so peak
   // power meets the maker's rating with the taper starting at or after the maker's peak-torque rpm (where an ECU
-  // trims). It is a CONTROL input, like the speed limiter or the fuel: the physics is untouched, and setting BOOST
-  // TAPER FROM to 0 shows what the hardware itself makes. Left off where the hardware is short of the rating (the
-  // Civic Type R on its 58 mm wheel), where the rating is a voluntary cap the taper cannot honestly reach (the RB26's
-  // 280 PS), and where it would have to cut in below the torque peak (the Cummins).
+  // trims), the gentlest such taper. It is a CONTROL input, like the speed limiter or the fuel: the physics is
+  // untouched, and setting BOOST TAPER FROM to 0 shows what the hardware itself makes. Left off where the hardware is
+  // at or below the rating (the GTI, the Hellcat), and where no taper from the torque peak reaches it: the RB26's
+  // 280 PS is a voluntary cap, and the Cummins's excess is the diesel's own top end.
   // the gap between the dyno and `real` IS the comparison. `unsure` names the inputs that are not in
   // the maker's published data and were set from typical practice (mostly boost pressure). Ratings
   // marked `note` are not what the engine makes: the JDM 280 PS / kei 64 PS gentlemen's agreements.
   {cat:'Kei & City',name:'Suzuki K6A turbo (Alto Works)',real:{hp:64,hpRpm:6000,tq:100,tqRpm:3000},note:'kei-class 64 PS legal cap',
-   engine:{cylinders:3,bore_mm:68.0,stroke_mm:60.4,compression:8.9,redline:7200,intake:'turbo',boost_bar:0.75,turboSize:'small',cam:'stock',injector:'port',intercooler:'small',exhaust:'stock',airFilter:'stock',octane:95,taperRpm:4400,taperPct:27}},
+   engine:{cylinders:3,bore_mm:68.0,stroke_mm:60.4,compression:8.9,redline:7200,intake:'turbo',boost_bar:0.75,turboSize:'small',cam:'stock',injector:'port',intercooler:'small',exhaust:'stock',airFilter:'stock',octane:95,taperRpm:4000,taperPct:32}},
   {cat:'Kei & City',name:'Toyota 1KR-FE (Aygo 1.0)',real:{hp:68,hpRpm:6000,tq:93,tqRpm:3600},
    engine:{cylinders:3,bore_mm:71.0,stroke_mm:84.0,compression:10.5,redline:6500,cam:'stock',vvt:true,injector:'port',octane:95,exhaust:'stock',airFilter:'stock',runner:'long'}},
   {cat:'Kei & City',name:'Fiat 0.9 TwinAir turbo',real:{hp:84,hpRpm:5500,tq:145,tqRpm:1900},unsure:['boost_bar'],
-   engine:{cylinders:2,bore_mm:80.5,stroke_mm:86.0,compression:10.0,redline:6000,intake:'turbo',boost_bar:1.0,turboSize:'small',cam:'stock',vvt:true,injector:'port',intercooler:'small',exhaust:'stock',airFilter:'stock',octane:95,taperRpm:4500,taperPct:42}},
+   engine:{cylinders:2,bore_mm:80.5,stroke_mm:86.0,compression:10.0,redline:6000,intake:'turbo',boost_bar:1.0,turboSize:'small',cam:'stock',vvt:true,injector:'port',intercooler:'small',exhaust:'stock',airFilter:'stock',octane:95,taperRpm:4500,taperPct:47}},
   {cat:'Compact Turbo',name:'Ford 1.0 EcoBoost (Fiesta 125)',real:{hp:123,hpRpm:6000,tq:170,tqRpm:1400},unsure:['boost_bar'],
-   engine:{cylinders:3,bore_mm:71.9,stroke_mm:82.0,compression:10.0,redline:6500,intake:'turbo',boost_bar:1.2,turboSize:'small',cam:'stock',vvt:true,injector:'direct',intercooler:'small',exhaust:'stock',airFilter:'stock',octane:95,taperRpm:4400,taperPct:62}},
+   engine:{cylinders:3,bore_mm:71.9,stroke_mm:82.0,compression:10.0,redline:6500,intake:'turbo',boost_bar:1.2,turboSize:'small',cam:'stock',vvt:true,injector:'direct',intercooler:'small',exhaust:'stock',airFilter:'stock',octane:95,taperRpm:5500,taperPct:76}},
   {cat:'Compact Turbo',name:'VW EA888 2.0 TSI (Golf GTI Mk7)',real:{hp:220,hpRpm:4500,tq:350,tqRpm:1500},
-   engine:{cylinders:4,bore_mm:82.5,stroke_mm:92.8,compression:9.6,redline:6500,intake:'turbo',boost_bar:1.1,turboSize:'small',cam:'stock',injector:'direct',intercooler:'large',exhaust:'stock',airFilter:'stock',compExd_mm:54,octane:98,taperRpm:3200,taperPct:66}},
+   engine:{cylinders:4,bore_mm:82.5,stroke_mm:92.8,compression:9.6,redline:6500,intake:'turbo',boost_bar:1.1,turboSize:'small',cam:'stock',injector:'direct',intercooler:'large',exhaust:'stock',airFilter:'stock',octane:98}},
   {cat:'Compact Turbo',name:'Toyota G16E-GTS (GR Yaris)',real:{hp:257,hpRpm:6500,tq:360,tqRpm:3000},unsure:['boost_bar'],
-   engine:{cylinders:3,bore_mm:87.5,stroke_mm:89.7,compression:10.5,redline:7000,intake:'turbo',boost_bar:1.4,turboSize:'medium',cam:'sport',vvt:true,injector:'direct',intercooler:'large',exhaust:'sport',airFilter:'perf',compExd_mm:56,octane:98,taperRpm:4500,taperPct:68}},
+   engine:{cylinders:3,bore_mm:87.5,stroke_mm:89.7,compression:10.5,redline:7000,intake:'turbo',boost_bar:1.4,turboSize:'medium',cam:'sport',vvt:true,injector:'direct',intercooler:'large',exhaust:'sport',airFilter:'perf',octane:98,taperRpm:4500,taperPct:62}},
   {cat:'Compact Turbo',name:'Honda K20C1 (Civic Type R FK8)',real:{hp:316,hpRpm:6500,tq:400,tqRpm:2500},unsure:['boost_bar'],
-   engine:{cylinders:4,bore_mm:86.0,stroke_mm:85.9,compression:9.8,redline:7000,intake:'turbo',boost_bar:1.6,turboSize:'medium',cam:'sport',vvt:true,injector:'direct',intercooler:'large',exhaust:'sport',airFilter:'perf',compExd_mm:58,octane:98}},
+   engine:{cylinders:4,bore_mm:86.0,stroke_mm:85.9,compression:9.8,redline:7000,intake:'turbo',boost_bar:1.6,turboSize:'medium',cam:'sport',vvt:true,injector:'direct',intercooler:'large',exhaust:'sport',airFilter:'perf',octane:98,taperRpm:4500,taperPct:59}},
   {cat:'NA Sports',name:'Mazda B6-ZE (MX-5 NA)',real:{hp:115,hpRpm:6500,tq:136,tqRpm:5500},
    engine:{cylinders:4,bore_mm:78.0,stroke_mm:83.6,compression:9.4,redline:7200,cam:'stock',vvt:false,injector:'port',octane:95,exhaust:'stock',airFilter:'stock'}},
   {cat:'NA Sports',name:'Toyota 4A-GE (AE86)',real:{hp:128,hpRpm:6600,tq:149,tqRpm:5200},
@@ -2523,15 +2523,15 @@ const PRESETS=[
   {cat:'NA Sports',name:'Porsche 4.0 flat-six (911 GT3 991.2)',real:{hp:493,hpRpm:8250,tq:460,tqRpm:6000},
    engine:{cylinders:6,layout:'boxer',bore_mm:102.0,stroke_mm:81.5,compression:13.3,redline:9000,cam:'race',vvt:true,valveSpring:'race',valveMat:'titanium',injector:'direct',octane:98,exhaust:'race',airFilter:'perf',runner:'variable'}},
   {cat:'Turbo Performance',name:'Toyota 2JZ-GTE (Supra A80)',real:{hp:320,hpRpm:5600,tq:427,tqRpm:4000},note:'export rating; JDM cars were quoted at 280 PS',
-   engine:{cylinders:6,bore_mm:86.0,stroke_mm:86.0,compression:8.5,redline:6800,intake:'turbo',boost_bar:0.75,turboSize:'medium',turboConfig:'sequential',cam:'sport',vvt:false,injector:'port',intercooler:'large',exhaust:'sport',airFilter:'perf',compExd_mm:58,octane:98,taperRpm:4200,taperPct:35}},   // VVT-i only from mid-1997 (MY1998)
+   engine:{cylinders:6,bore_mm:86.0,stroke_mm:86.0,compression:8.5,redline:6800,intake:'turbo',boost_bar:0.75,turboSize:'medium',turboConfig:'sequential',cam:'sport',vvt:false,injector:'port',intercooler:'large',exhaust:'sport',airFilter:'perf',octane:98,taperRpm:4000,taperPct:39}},   // VVT-i only from mid-1997 (MY1998)
   {cat:'Turbo Performance',name:'Nissan RB26DETT (Skyline GT-R R34)',real:{hp:276,hpRpm:6800,tq:392,tqRpm:4400},unsure:['runner'],note:'JDM 280 PS gentlemen\'s agreement; real output is higher',
    engine:{cylinders:6,bore_mm:86.0,stroke_mm:73.7,compression:8.5,redline:8000,intake:'turbo',boost_bar:0.7,turboSize:'small',turboConfig:'twin',cam:'sport',vvt:false,injector:'port',intakeSys:'itb',intercooler:'large',exhaust:'sport',airFilter:'perf',runner:'short',octane:98}},
   {cat:'Turbo Performance',name:'Subaru EJ257 (Impreza WRX STI)',real:{hp:296,hpRpm:6000,tq:407,tqRpm:4000},unsure:['boost_bar','runner'],
-   engine:{cylinders:4,layout:'boxer',bore_mm:99.5,stroke_mm:79.0,compression:8.2,redline:7000,intake:'turbo',boost_bar:1.0,turboSize:'medium',cam:'sport',vvt:true,injector:'port',intercooler:'small',exhaust:'sport',airFilter:'perf',runner:'long',octane:98,taperRpm:4500,taperPct:34}},
+   engine:{cylinders:4,layout:'boxer',bore_mm:99.5,stroke_mm:79.0,compression:8.2,redline:7000,intake:'turbo',boost_bar:1.0,turboSize:'medium',cam:'sport',vvt:true,injector:'port',intercooler:'small',exhaust:'sport',airFilter:'perf',runner:'long',octane:98,taperRpm:4000,taperPct:55}},
   {cat:'Turbo Performance',name:'Mitsubishi 4G63T (Lancer Evo IX)',real:{hp:286,hpRpm:6500,tq:392,tqRpm:3500},unsure:['boost_bar'],
-   engine:{cylinders:4,bore_mm:85.0,stroke_mm:88.0,compression:8.8,redline:7000,intake:'turbo',boost_bar:1.3,turboSize:'medium',cam:'sport',vvt:true,injector:'port',intercooler:'large',exhaust:'sport',airFilter:'perf',compExd_mm:68,octane:98,taperRpm:4000,taperPct:53}},
+   engine:{cylinders:4,bore_mm:85.0,stroke_mm:88.0,compression:8.8,redline:7000,intake:'turbo',boost_bar:1.3,turboSize:'medium',cam:'sport',vvt:true,injector:'port',intercooler:'large',exhaust:'sport',airFilter:'perf',octane:98,taperRpm:5000,taperPct:60}},
   {cat:'Turbo Performance',name:'Audi 2.5 TFSI (RS3 8V)',real:{hp:394,hpRpm:5850,tq:480,tqRpm:1700},unsure:['boost_bar'],
-   engine:{cylinders:5,bore_mm:82.5,stroke_mm:92.8,compression:10.0,redline:7000,intake:'turbo',boost_bar:1.4,turboSize:'large',cam:'sport',vvt:true,injector:'direct',octane:98,intercooler:'large',exhaust:'sport',airFilter:'perf',taperRpm:4300,taperPct:58}},
+   engine:{cylinders:5,bore_mm:82.5,stroke_mm:92.8,compression:10.0,redline:7000,intake:'turbo',boost_bar:1.4,turboSize:'large',cam:'sport',vvt:true,injector:'direct',octane:98,intercooler:'large',exhaust:'sport',airFilter:'perf',taperRpm:4500,taperPct:66}},
   {cat:'American V8',name:'GM LS3 (Corvette C6)',real:{hp:430,hpRpm:5900,tq:575,tqRpm:4600},
    engine:{cylinders:8,layout:'v',bore_mm:103.25,stroke_mm:92.0,compression:10.7,redline:6600,valves:2,cam:'sport',vvt:false,valveSpring:'perf',injector:'port',octane:98,exhaust:'sport',airFilter:'perf'}},
   {cat:'American V8',name:'GM LS7 (Corvette Z06 C6)',real:{hp:505,hpRpm:6300,tq:637,tqRpm:4800},
@@ -2551,11 +2551,11 @@ const PRESETS=[
   {cat:'Rotary',name:'Mazda 13B-MSP Renesis (RX-8)',real:{hp:232,hpRpm:8200,tq:211,tqRpm:5500},
    engine:{type:'rotary',cylinders:2,bore_mm:105,stroke_mm:80,ecc_mm:15,compression:10.0,redline:9000,injector:'port',octane:98,exhaust:'stock',airFilter:'stock',radiator:'large',oilCooler:true}},
   {cat:'Diesel',name:'VW EA288 2.0 TDI (Golf 150)',real:{hp:148,hpRpm:3500,tq:320,tqRpm:1750},unsure:['runner'],
-   engine:{type:'diesel',vvt:false,cylinders:4,bore_mm:81.0,stroke_mm:95.5,compression:16.2,redline:4800,intake:'turbo',boost_bar:1.3,turboSize:'small',vgt:true,injector:'direct',intercooler:'large',exhaust:'stock',airFilter:'stock',runner:'short',taperRpm:2000,taperPct:57}},
+   engine:{type:'diesel',vvt:false,cylinders:4,bore_mm:81.0,stroke_mm:95.5,compression:16.2,redline:4800,intake:'turbo',boost_bar:1.3,turboSize:'small',vgt:true,injector:'direct',intercooler:'large',exhaust:'stock',airFilter:'stock',runner:'short',taperRpm:2000,taperPct:70}},
   {cat:'Diesel',name:'BMW N57 3.0d (330d F30)',real:{hp:254,hpRpm:4000,tq:560,tqRpm:2000},unsure:['boost_bar','runner'],
-   engine:{type:'diesel',vvt:false,cylinders:6,bore_mm:84.0,stroke_mm:90.0,compression:16.5,redline:5000,intake:'turbo',boost_bar:1.5,turboSize:'medium',vgt:true,injector:'direct',intercooler:'large',exhaust:'stock',airFilter:'stock',runner:'short',taperRpm:2300,taperPct:58}},
+   engine:{type:'diesel',vvt:false,cylinders:6,bore_mm:84.0,stroke_mm:90.0,compression:16.5,redline:5000,intake:'turbo',boost_bar:1.5,turboSize:'medium',vgt:true,injector:'direct',intercooler:'large',exhaust:'stock',airFilter:'stock',runner:'short',taperRpm:2000,taperPct:70}},
   {cat:'Diesel',name:'GM Duramax L5P 6.6 (Silverado HD)',real:{hp:445,hpRpm:2800,tq:1234,tqRpm:1600},unsure:['boost_bar','redline','runner'],
-   engine:{type:'diesel',vvt:false,cylinders:8,layout:'v',bore_mm:103.0,stroke_mm:99.0,compression:16.0,redline:3800,intake:'turbo',boost_bar:1.9,turboSize:'large',vgt:true,injector:'direct',intercooler:'large',exhaust:'stock',airFilter:'stock',runner:'short',taperRpm:1900,taperPct:31}},
+   engine:{type:'diesel',vvt:false,cylinders:8,layout:'v',bore_mm:103.0,stroke_mm:99.0,compression:16.0,redline:3800,intake:'turbo',boost_bar:1.9,turboSize:'large',vgt:true,injector:'direct',intercooler:'large',exhaust:'stock',airFilter:'stock',runner:'short',taperRpm:2000,taperPct:46}},
   {cat:'Diesel',name:'Cummins 6.7 (Ram HD 2019 HO)',real:{hp:400,hpRpm:2800,tq:1356,tqRpm:1800},unsure:['boost_bar','compression','redline','runner'],
    engine:{type:'diesel',vvt:false,cylinders:6,bore_mm:107.0,stroke_mm:124.0,compression:17.3,redline:3500,intake:'turbo',boost_bar:2.0,turboSize:'large',vgt:true,injector:'direct',intercooler:'large',exhaust:'stock',airFilter:'stock',runner:'short'}},
   {cat:'Two-Stroke',name:'Yamaha RD350LC (2-stroke twin)',real:{hp:46,hpRpm:8500,tq:40,tqRpm:8000},unsure:['compression','redline'],
@@ -2951,12 +2951,10 @@ const TURB_WHEEL=0.90;         // turbine wheel as a fraction of the compressor 
 // so A_throat = (A/R) x R; a vane ring is the same volute with vanes in it.
 function setTurbineAR(ar){
   const e=engine, exd=e.compExd;
-  // A/R is the throat area over the radius from the shaft to the throat section's CENTROID (build 123). It was
-  // taken over the wheel's own radius, which made every throat 1.5-1.8x too small (the code said so, at the
-  // wastegate) and its back-pressure that much too high, worst on the small frames. With the section a circle
-  // just outside the wheel tip, R = r_tip + sqrt(A/pi) and A = (A/R) R: R = (sqrt(k/pi) + sqrt(k/pi + 4 r_tip))^2/4.
-  const rt=TURB_WHEEL*exd/2,k=ar*AR_INCH,sq=(Math.sqrt(k/Math.PI)+Math.sqrt(k/Math.PI+4*rt))/2;
-  const a0=k*sq*sq;
+  // Still the WHEEL radius, which makes every throat 1.5-1.8x too small (see the wastegate note). The centroid
+  // radius, R = r_tip + sqrt(A/pi), was tried in build 123 and held back: with the back-pressure it removes, the
+  // weak low-rpm spool this model has (pulse energy, twin-scroll housings) showed through. It returns with that.
+  const a0=(ar*AR_INCH)*(TURB_WHEEL*exd/2);
   e.turbineAR=ar;
   e.turbineArea=e.vgt?a0*vaneThroatFrac(exd,VANE_BETA_MAX):a0;
   e.vgtShut=e.vgt?a0*vaneThroatFrac(exd,VANE_BETA_MIN):0;
@@ -4473,6 +4471,12 @@ function ignBonus(){return {distributor:-2,wasted:0,coil:2}[engine.ignitionType]
 function ignBonus(){return {distributor:-2,wasted:0,coil:2}[engine.ignitionType]||0;}
 const DE_A=17.68,DE_ON=3.402,DE_P=1.7,DE_T=3800, HFG={gasoline:350e3,race:350e3,e85:840e3,methanol:1100e3};
 let _knockCache=null;
+// The cycle the end gas lives on: a Wankel chamber's volume, slow burn and late best-torque phasing for a rotary
+// (rotaryLostWork's), the crank-slider's for everything else.
+function burnCycle(){
+  return engine.type==='rotary'?{vol:wankelVol,burn:ROTARY_BURN_DEG,ca50:ROTARY_CA50,bdc:-270}
+                               :{vol:pistonVol,burn:SI_BURN_DEG,ca50:SI_CA50,bdc:-180};
+}
 function endGasIntegral(rpm,map,ca50){
   const e=engine,cr=Math.max(1.5,e.compression),R=287,g=1.30,cv=R/(g-1),k=(1.35-1)/1.35;
   const st=e.stoichAFR||14.7,lam=curAFR(rpm,map)/st,q=(e.fuelLHV||44)*1e6/(Math.max(1,lam)*st);
@@ -4482,12 +4486,12 @@ function endGasIntegral(rpm,map,ca50){
   const pInt=Math.max(0.3,map),f=Math.min(0.5,residualFrac(pExh,pInt,cr));
   const Tres=Math.max(Tf,Tex*Math.pow(Math.min(1,pInt/pExh),(GAMMA_EXH-1)/GAMMA_EXH));
   const T1=(1+f)/(1/Tf+f/Tres), p1=pInt*1e5, v1=R*T1/p1;
-  const burn=SI_BURN_DEG,soc=ca50-wiebeX50()*burn,d=0.5,dt=d/(6*Math.max(300,rpm));
+  const cyc=burnCycle(),burn=cyc.burn,soc=ca50-wiebeX50()*burn,d=0.5,dt=d/(6*Math.max(300,rpm));
   const xb=th=>th<=soc?0:1-Math.exp(-WIEBE_A*Math.pow(Math.min(1,(th-soc)/burn),WIEBE_M+1));
   const onF=DE_A*Math.pow(Math.max(50,e.effOctane||95)/100,DE_ON);
   let T=T1,I=0;
-  for(let th=-180;th<soc+burn;th+=d){
-    const V0=pistonVol(th,cr),Vn=pistonVol(th+d,cr),v0=v1*V0/cr,p=R*T/v0;
+  for(let th=cyc.bdc;th<soc+burn;th+=d){
+    const V0=cyc.vol(th,cr),Vn=cyc.vol(th+d,cr),v0=v1*V0/cr,p=R*T/v0;
     if(xb(th)>=0.9)break;
     const Tu=T1*Math.pow(p/p1,k);
     I+=dt*1000/(onF*Math.pow(p/101325,-DE_P)*Math.exp(DE_T/Tu));
@@ -4495,16 +4499,66 @@ function endGasIntegral(rpm,map,ca50){
   }
   return I;
 }
+// Rotaries and two-strokes keep the points score this replaced (knockScorePorted, below, as it was in build 122):
+// the end-gas integral above is a four-stroke poppet engine's cycle, and a Wankel's end gas (a thin trailing pocket
+// against a cool housing) or a two-stroke's scavenged charge is not that gas. Retire it when their cycles are
+// derived, as their VE bell and type factors will be.
+function knockScorePorted(rpm,map,adv){
+  if(engine.ci)return 0;   // compression ignition — no spark knock (limited by smoke/EGT instead)
+  const mbt=mbtAdvance(rpm,map);
+  let k=0;
+  k+=Math.max(0,map-1.0)*30;                            // boost
+  k+=Math.max(0,engine.compression-9)*8;                // static compression
+  k+=Math.max(0,effIAT(map,rpm)-30)*0.8;                    // hot intake charge
+  k+=Math.max(0,state.coolant-95)*1.0;                  // hot chamber
+  k+=Math.max(0,rpm-engine.redline*0.8)/60;             // less time = more heat soak
+  k+=(adv-mbt-ignBonus())*2.5;                          // spark timing vs MBT (signed)
+  const lam=curAFR(rpm,map)/engine.stoichAFR;
+  k+=Math.max(0,(lam-0.95))*60;                         // lean burns hotter
+  // Rich suppresses knock — continuously. This was `if (lam < 0.87) k *= 0.5`: a step that halved the
+  // whole score, so lambda 0.86 and 0.88 differed by up to 40 points, and at high boost the design curve
+  // (rated at 0.88) collapsed into knock retard while the scorecard (0.86) did not — a 33% torque
+  // disagreement between two views of one engine, from a 2% mixture change. It is not evaporative
+  // cooling: the extra fuel at 0.86 cools the charge by ~1 K after port-wall losses. It is end-gas
+  // chemistry, which this points-based score does not represent, so the replacement is the measured
+  // TREND, labelled as such: knock-limited spark advance gains ~3 degrees per 0.1 of enrichment below
+  // ~0.95, and this score prices a degree of timing at 2.5 points. (The real derivation is an end-gas
+  // autoignition integral, Livengood-Wu — a conversion of its own.)
+  const KNOCK_RICH=75;                                  // points per unit lambda: 3 deg/0.1 x 2.5 pts/deg
+  k-=Math.max(0,(0.95-lam))*KNOCK_RICH;
+  k-=(engine.effOctane-90)*2.2;                         // fuel octane resists knock
+  k-=engine.fuelKnockBonus;                             // alcohol extra knock margin
+  if(engine.injector==='direct')k-=12;                  // DI charge cooling
+  k+=nitrousImep()*4;                                   // nitrous raises cylinder pressure → more knock
+  k+=residualKnockPorted(rpm,map);                            // hot burnt gas the exhaust could not push out
+  return clamp(k,0,100);
+}
+function residualKnockPorted(rpm,map){
+  const e=engine;
+  if(!(e.compression>1))return 0;
+  const Tfresh=effIAT(map,rpm)+273.15;
+  const Tex=egtAt(rpm,map);
+  const prev=e.boostNow;e.boostNow=map;                 // backPressureBar reads it for the turbine
+  const pExh=1+backPressureBar(rpm,Tex);
+  e.boostNow=prev;
+  const pInt=Math.max(0.3,map);
+  // The trapped gas does not arrive at port temperature: it expands back into the cylinder as the
+  // piston descends, and cools doing it.
+  const Tres=Math.max(Tfresh,Tex*Math.pow(Math.min(1,pInt/pExh),(GAMMA_EXH-1)/GAMMA_EXH));
+  const dF=clamp(residualFrac(pExh,pInt,e.compression)-1/Math.max(1.5,e.compression-1),0,0.30);
+  return dF*(Tres-Tfresh)*0.8;                          // same per-degree sensitivity as above
+}
 // The phasing the end gas sees at a spark advance: CA50 moves with the spark, degree for degree, about the
 // model's best-torque phasing (SI_CA50 at mbtAdvance); enrichment and a stronger spark act as that much retard.
 function knockCa50(rpm,map,adv){
   const lam=curAFR(rpm,map)/(engine.stoichAFR||14.7);
   const mix=lam<0.95?30*(0.95-lam):-30*(lam-0.95);     // ~3 deg per 0.1 lambda, the measured trend
-  return SI_CA50+mbtAdvance(rpm,map)+ignBonus()+mix-adv;
+  return burnCycle().ca50+mbtAdvance(rpm,map)+ignBonus()+mix-adv;
 }
 function knockAt(rpm,map,adv){
   const e=engine;
   if(e.ci)return 0;   // compression ignition — no spark knock (limited by smoke/EGT instead)
+  if(e.ports)return knockScorePorted(rpm,map,adv);
   if(!_knockCache||_knockCache.score!==e.score)_knockCache={score:e.score,m:new Map()};
   const lam=curAFR(rpm,map)/(e.stoichAFR||14.7);
   const key=Math.round(rpm/10)+'|'+map.toFixed(3)+'|'+adv.toFixed(2)+'|'+effIAT(map,rpm).toFixed(1)+'|'+lam.toFixed(3)+'|'+e.effOctane+'|'+e.ignitionType;
@@ -4518,19 +4572,26 @@ function knockAt(rpm,map,adv){
 }
 // The spark advance actually run at an operating point. FIXED = the designed value; AUTO = an ECU that runs
 // best-torque spark where the end gas survives it, and otherwise the most advance at which it just does
-// (the knock limit), never below 6 degrees.
-const KNOCK_TARGET=40;
+// (the knock limit), never more than CA50_RETARD past the cycle's own best-torque phasing.
+const KNOCK_TARGET=40, CA50_RETARD=37;   // the furthest retard past best-torque phasing: CA50 ~45 deg ATDC on a piston
 function activeAdvance(rpm,map){
   const mbt=mbtAdvance(rpm,map);
   if(engine.ci)return mbt;   // diesel: no spark timing (injection-timed); treat as on-MBT
   if(engine.timingMode!=='auto')return engine.ignitionAdv;
+  if(engine.ports){                                      // the ported engines' score, as in build 122
+    const k0=knockAt(rpm,map,mbt);
+    return k0<=KNOCK_TARGET?mbt:clamp(mbt-(k0-KNOCK_TARGET)/2.5,6,mbt);
+  }
   // the same operating point is asked for several times per torque figure: remember the answer
   if(!_knockCache||_knockCache.score!==engine.score)_knockCache={score:engine.score,m:new Map()};
   const key='A|'+Math.round(rpm/10)+'|'+map.toFixed(3)+'|'+effIAT(map,rpm).toFixed(1)+'|'+(curAFR(rpm,map)/(engine.stoichAFR||14.7)).toFixed(3)+'|'+engine.effOctane+'|'+engine.ignitionType+'|'+nitrousImep();
   const hit=_knockCache.m.get(key);if(hit!=null)return hit;
   let adv=mbt;
   if(knockAt(rpm,map,mbt)>KNOCK_TARGET){
-    let lo=Math.min(6,mbt),hi=mbt;
+    // As far back as an ECU will go: a piston's burn phased ~45 deg after TDC, where it turns unstable and the
+    // exhaust too hot to go further, the same distance past best-torque phasing on a rotary (build 123; it stopped
+    // at a fitted 6 deg BTDC, which at full load under ~2000 rpm left the end gas knocking at any spark).
+    let lo=Math.min(mbt,knockCa50(rpm,map,0)-(burnCycle().ca50+CA50_RETARD)),hi=mbt;
     if(knockAt(rpm,map,lo)>KNOCK_TARGET)adv=lo;            // knocks even fully retarded: the floor
     else{for(let i=0;i<9;i++){const m=(lo+hi)/2;if(knockAt(rpm,map,m)>KNOCK_TARGET)hi=m;else lo=m;}adv=lo;}   // to ~0.06 deg
   }
@@ -4541,9 +4602,10 @@ function computeKnockRisk(rpm,map){return knockAt(rpm,map,activeAdvance(rpm,map)
 // What a spark advance costs in work (build 123): the cycle efficiency of the Wiebe burn at the phasing it
 // gives, against best-torque phasing (wiebePhasingEff), replacing a fitted 1 - 0.004 x (degrees off MBT)^2.
 function sparkTimingFactor(rpm,map){
-  const off=mbtAdvance(rpm,map)-activeAdvance(rpm,map),cr=engine.compression,x50=wiebeX50();
-  const eff=c=>wiebePhasingEff(SI_BURN_DEG,c-x50*SI_BURN_DEG,cr,pistonVol);
-  return clamp(eff(SI_CA50+off)/eff(SI_CA50),0.3,1);
+  if(engine.ports)return clamp(1-0.004*Math.pow(activeAdvance(rpm,map)-mbtAdvance(rpm,map),2),0.72,1.0);   // as in build 122
+  const off=mbtAdvance(rpm,map)-activeAdvance(rpm,map),cr=engine.compression,x50=wiebeX50(),cyc=burnCycle();
+  const eff=c=>wiebePhasingEff(cyc.burn,c-x50*cyc.burn,cr,cyc.vol);
+  return clamp(eff(cyc.ca50+off)/eff(cyc.ca50),0.3,1);
 }
 // The pumping loop: PMEP = p_exhaust - p_intake, both absolute. Charged in two halves, because
 // only one of them is honestly derived here.

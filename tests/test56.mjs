@@ -64,10 +64,7 @@ for (const e of r.engines) {
 const SPOOL_REAL = 3000;
 console.log(`\n== 13B: EGT ${r.b13.egt} C, 90% boost at ${r.b13.r90} rpm (real ~${SPOOL_REAL}), power peak ${r.b13.peak} of ${r.b13.redline} ==`);
 if (!(r.b13.egt >= 850)) fails.push(`13B exhaust ${r.b13.egt} C is below a rotary's real 850+`);
-// Build 123: the turbine's throat is taken at its centroid radius (1.5-1.8x the area it had), so a turbine passes more
-// exhaust for less pressure and lights a little later: 3025 rpm. The FD's ~3000 is a rounded figure; held to it
-// within 5%.
-if (!(r.b13.r90 <= SPOOL_REAL * 1.05)) fails.push(`13B reaches 90% boost only at ${r.b13.r90} rpm, later than a real FD's ~${SPOOL_REAL}`);
+if (!(r.b13.r90 <= SPOOL_REAL)) fails.push(`13B reaches 90% boost only at ${r.b13.r90} rpm, later than a real FD's ~${SPOOL_REAL}`);
 if (!(r.b13.peak < r.b13.redline)) fails.push('the 13B peaks at its limiter again');
 
 if (errors.length) fails.push(...errors);
