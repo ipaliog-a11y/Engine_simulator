@@ -670,14 +670,12 @@ available at each rpm, so it feels the spool <i>point</i> move but not the trans
 build is therefore still flattered slightly by its lap time, though no longer by its 0–100.</span>
 </div>
 <div class="guide-body" data-gk="turboLimit">
-<span style="color:#c86">Known limit: the turbine is fed by <i>mean</i> manifold pressure. A real
-one is fed by each cylinder's blowdown pulse, whose peak at low engine speed is far above the
-mean, so a real turbo gets 20–45% more turbine work at the threshold than this model gives it.
-That is measured rather than guessed, and it is worth most on a twin-scroll manifold, which this
-app does not yet reward. A second one: the turbine throat is taken as A/R × the <i>wheel</i>
-radius, where it should be the radius to the volute throat centroid — further out — so every
-turbine here is smaller than the frame it names, and the wastegate has always covered for
-it.</span>
+<span style="color:#c86">Known limit: the turbine is credited with each cylinder's blowdown pulse, timed
+from the cam, but a twin-scroll manifold that keeps the pulses apart is not rewarded yet. The
+turbine throat is taken at the volute's centroid radius, as A/R defines it (build 133; it was the
+wheel's radius, which made every turbine smaller than the frame it names). The compressor's
+efficiency island follows its speed line, so a turbo asked for low boost at low flow compresses
+efficiently, as on a real map.</span>
 </div>
 </section>
 <section class="guide-page" id="gp-vgt" data-cat="air" data-title="Variable geometry" hidden>
@@ -1883,13 +1881,11 @@ function backPressureBar(rpm,T){
     // On a VGT the throat is whatever the vanes have been scheduled to; below target they are shut
     // and the piston pays the full nozzle pressure for it, which is the whole point of the device.
     //
-    // The gate stays in the loop at the OPEN end, and that is an artefact of this model's throat
-    // convention rather than of the hardware: A_throat is taken as (A/R)x R_WHEEL, where R should
-    // be the radius to the volute throat centroid — roughly 1.5-1.8x further out. Every turbine
-    // here is therefore smaller than the frame it names, which the wastegate has always covered
-    // for. A real VGT needs no gate because its ring, properly sized, swallows the lot; here the
-    // open position cannot, so the surplus is dumped exactly as a fixed frame's is. Retire this
-    // when the throat convention is corrected — at which point the whole turbo side recalibrates.
+    // The gate stays in the loop at the OPEN end. It was blamed on the throat convention (the throat
+    // taken at the wheel's radius, 1.5-1.8x too small); build 133 takes it at the volute centroid,
+    // and the presets' open rings still have power to spare from mid-range, so the surplus is still
+    // dumped exactly as a fixed frame's is. A real VGT needs no gate because its ring, sized for the
+    // engine, swallows the lot: these rings are the size class's, not the maker's.
     return pipe+(manifoldPR(mA,mEx,map,T,turbineThroatAt(rpm,map,T),e.compEff,compFlowFrac(rpm,mAir))-1);
   }
   return pipe;
@@ -2512,9 +2508,9 @@ const PRESETS=[
   {cat:'Compact Turbo',name:'VW EA888 2.0 TSI (Golf GTI Mk7)',real:{hp:220,hpRpm:4500,tq:350,tqRpm:1500},
    engine:{cylinders:4,bore_mm:82.5,stroke_mm:92.8,compression:9.6,redline:6500,intake:'turbo',boost_bar:1.1,turboSize:'small',cam:'stock',injector:'direct',intercooler:'large',exhaust:'stock',airFilter:'stock',octane:98,taperRpm:1500,taperPct:78}},
   {cat:'Compact Turbo',name:'Toyota G16E-GTS (GR Yaris)',real:{hp:257,hpRpm:6500,tq:360,tqRpm:3000},unsure:['boost_bar'],
-   engine:{cylinders:3,bore_mm:87.5,stroke_mm:89.7,compression:10.5,redline:7000,intake:'turbo',boost_bar:1.4,turboSize:'medium',cam:'sport',vvt:true,injector:'direct',intercooler:'large',exhaust:'sport',airFilter:'perf',octane:98,taperRpm:3500,taperPct:56}},
+   engine:{cylinders:3,bore_mm:87.5,stroke_mm:89.7,compression:10.5,redline:7000,intake:'turbo',boost_bar:1.4,turboSize:'medium',compExd_mm:56,cam:'sport',vvt:true,injector:'direct',intercooler:'large',exhaust:'sport',airFilter:'perf',octane:98,taperRpm:3500,taperPct:56}},
   {cat:'Compact Turbo',name:'Honda K20C1 (Civic Type R FK8)',real:{hp:316,hpRpm:6500,tq:400,tqRpm:2500},unsure:['boost_bar'],
-   engine:{cylinders:4,bore_mm:86.0,stroke_mm:85.9,compression:9.8,redline:7000,intake:'turbo',boost_bar:1.6,turboSize:'medium',cam:'sport',vvt:true,injector:'direct',intercooler:'large',exhaust:'sport',airFilter:'perf',octane:98,taperRpm:3500,taperPct:55}},
+   engine:{cylinders:4,bore_mm:86.0,stroke_mm:85.9,compression:9.8,redline:7000,intake:'turbo',boost_bar:1.6,turboSize:'medium',compExd_mm:58,cam:'sport',vvt:true,injector:'direct',intercooler:'large',exhaust:'sport',airFilter:'perf',octane:98,taperRpm:3500,taperPct:55}},
   {cat:'NA Sports',name:'Mazda B6-ZE (MX-5 NA)',real:{hp:115,hpRpm:6500,tq:136,tqRpm:5500},
    engine:{cylinders:4,bore_mm:78.0,stroke_mm:83.6,compression:9.4,redline:7200,cam:'stock',vvt:false,injector:'port',octane:95,exhaust:'stock',airFilter:'stock'}},
   {cat:'NA Sports',name:'Toyota 4A-GE (AE86)',real:{hp:128,hpRpm:6600,tq:149,tqRpm:5200},
@@ -2525,16 +2521,16 @@ const PRESETS=[
    engine:{cylinders:6,bore_mm:87.0,stroke_mm:91.0,compression:11.5,redline:8000,cam:'race',injector:'port',octane:98,intakeSys:'itb',airFilter:'perf',runner:'short',exhaust:'race'}},
   {cat:'NA Sports',name:'Porsche 4.0 flat-six (911 GT3 991.2)',real:{hp:493,hpRpm:8250,tq:460,tqRpm:6000},
    engine:{cylinders:6,layout:'boxer',bore_mm:102.0,stroke_mm:81.5,compression:13.3,redline:9000,cam:'race',vvt:true,valveSpring:'race',valveMat:'titanium',injector:'direct',octane:98,exhaust:'race',airFilter:'perf',runner:'variable'}},
-  {cat:'Turbo Performance',name:'Toyota 2JZ-GTE (Supra A80)',real:{hp:320,hpRpm:5600,tq:427,tqRpm:4000},note:'export rating; JDM cars were quoted at 280 PS',
-   engine:{cylinders:6,bore_mm:86.0,stroke_mm:86.0,compression:8.5,redline:6800,intake:'turbo',boost_bar:0.75,turboSize:'medium',turboConfig:'sequential',cam:'sport',vvt:false,injector:'port',intercooler:'large',exhaust:'sport',airFilter:'perf',octane:98,taperRpm:4000,taperPct:39}},   // VVT-i only from mid-1997 (MY1998)
+  {cat:'Turbo Performance',name:'Toyota 2JZ-GTE (Supra A80)',real:{hp:320,hpRpm:5600,tq:427,tqRpm:4000},unsure:['compExd_mm'],note:'export rating; JDM cars were quoted at 280 PS',
+   engine:{cylinders:6,bore_mm:86.0,stroke_mm:86.0,compression:8.5,redline:6800,intake:'turbo',boost_bar:0.75,turboSize:'medium',compExd_mm:58,turboConfig:'sequential',cam:'sport',vvt:false,injector:'port',intercooler:'large',exhaust:'sport',airFilter:'perf',octane:98,taperRpm:4000,taperPct:39}},   // VVT-i only from mid-1997 (MY1998)
   {cat:'Turbo Performance',name:'Nissan RB26DETT (Skyline GT-R R34)',real:{hp:276,hpRpm:6800,tq:392,tqRpm:4400},unsure:['runner'],note:'JDM 280 PS gentlemen\'s agreement; real output is higher',
    engine:{cylinders:6,bore_mm:86.0,stroke_mm:73.7,compression:8.5,redline:8000,intake:'turbo',boost_bar:0.7,turboSize:'small',turboConfig:'twin',cam:'sport',vvt:false,injector:'port',intakeSys:'itb',intercooler:'large',exhaust:'sport',airFilter:'perf',runner:'short',octane:98}},
   {cat:'Turbo Performance',name:'Subaru EJ257 (Impreza WRX STI)',real:{hp:296,hpRpm:6000,tq:407,tqRpm:4000},unsure:['boost_bar','runner'],
    engine:{cylinders:4,layout:'boxer',bore_mm:99.5,stroke_mm:79.0,compression:8.2,redline:7000,intake:'turbo',boost_bar:1.0,turboSize:'medium',cam:'sport',vvt:true,injector:'port',intercooler:'small',exhaust:'sport',airFilter:'perf',runner:'long',octane:98,taperRpm:4000,taperPct:55}},
-  {cat:'Turbo Performance',name:'Mitsubishi 4G63T (Lancer Evo IX)',real:{hp:286,hpRpm:6500,tq:392,tqRpm:3500},unsure:['boost_bar'],
-   engine:{cylinders:4,bore_mm:85.0,stroke_mm:88.0,compression:8.8,redline:7000,intake:'turbo',boost_bar:1.3,turboSize:'medium',cam:'sport',vvt:true,injector:'port',intercooler:'large',exhaust:'sport',airFilter:'perf',octane:98,taperRpm:3500,taperPct:59}},
-  {cat:'Turbo Performance',name:'Audi 2.5 TFSI (RS3 8V)',real:{hp:394,hpRpm:5850,tq:480,tqRpm:1700},unsure:['boost_bar'],
-   engine:{cylinders:5,bore_mm:82.5,stroke_mm:92.8,compression:10.0,redline:7000,intake:'turbo',boost_bar:1.4,turboSize:'large',cam:'sport',vvt:true,injector:'direct',octane:98,intercooler:'large',exhaust:'sport',airFilter:'perf',taperRpm:2000,taperPct:62}},
+  {cat:'Turbo Performance',name:'Mitsubishi 4G63T (Lancer Evo IX)',real:{hp:286,hpRpm:6500,tq:392,tqRpm:3500},unsure:['boost_bar','compExd_mm'],
+   engine:{cylinders:4,bore_mm:85.0,stroke_mm:88.0,compression:8.8,redline:7000,intake:'turbo',boost_bar:1.3,turboSize:'medium',compExd_mm:68,cam:'sport',vvt:true,injector:'port',intercooler:'large',exhaust:'sport',airFilter:'perf',octane:98,taperRpm:3500,taperPct:59}},
+  {cat:'Turbo Performance',name:'Audi 2.5 TFSI (RS3 8V)',real:{hp:394,hpRpm:5850,tq:480,tqRpm:1700},unsure:['boost_bar','turboSize'],
+   engine:{cylinders:5,bore_mm:82.5,stroke_mm:92.8,compression:10.0,redline:7000,intake:'turbo',boost_bar:1.4,turboSize:'medium',cam:'sport',vvt:true,injector:'direct',octane:98,intercooler:'large',exhaust:'sport',airFilter:'perf',taperRpm:2000,taperPct:62}},
   {cat:'American V8',name:'GM LS3 (Corvette C6)',real:{hp:430,hpRpm:5900,tq:575,tqRpm:4600},
    engine:{cylinders:8,layout:'v',bore_mm:103.25,stroke_mm:92.0,compression:10.7,redline:6600,valves:2,cam:'sport',vvt:false,valveSpring:'perf',injector:'port',octane:98,exhaust:'sport',airFilter:'perf'}},
   {cat:'American V8',name:'GM LS7 (Corvette Z06 C6)',real:{hp:505,hpRpm:6300,tq:637,tqRpm:4800},
@@ -2954,10 +2950,12 @@ const TURB_WHEEL=0.90;         // turbine wheel as a fraction of the compressor 
 // so A_throat = (A/R) x R; a vane ring is the same volute with vanes in it.
 function setTurbineAR(ar){
   const e=engine, exd=e.compExd;
-  // Still the WHEEL radius, which makes every throat 1.5-1.8x too small (see the wastegate note). The centroid
-  // radius, R = r_tip + sqrt(A/pi), was tried in build 131 and held back: with the back-pressure it removes, the
-  // weak low-rpm spool this model has (pulse energy, twin-scroll housings) showed through. It returns with that.
-  const a0=(ar*AR_INCH)*(TURB_WHEEL*exd/2);
+  // R is the radius to the centroid of the throat section (build 133; it was the wheel's radius, which made every
+  // throat 1.5-1.8x too small). The section sits just outside the wheel tip, a circle of area A = k R, so
+  // R = r_tip + sqrt(k R / pi): a quadratic in sqrt(R).
+  const rt=TURB_WHEEL*exd/2, k=ar*AR_INCH;
+  const sq=(Math.sqrt(k/Math.PI)+Math.sqrt(k/Math.PI+4*rt))/2;
+  const a0=k*sq*sq;
   e.turbineAR=ar;
   e.turbineArea=e.vgt?a0*vaneThroatFrac(exd,VANE_BETA_MAX):a0;
   e.vgtShut=e.vgt?a0*vaneThroatFrac(exd,VANE_BETA_MIN):0;
@@ -3012,9 +3010,21 @@ const ISLAND_FLOW=0.62;    // best efficiency sits near 62% of choke flow
 const ISLAND_PEAK=0.78;    // island-centre efficiency for an automotive centrifugal wheel
 const ISLAND_WF=0.30;      // how fast efficiency falls either side, in flow fraction
 const ISLAND_WP=2.00;      // and with pressure ratio, past the point where losses start to bite
-const compIslandEff=(flowFrac,pr)=>clamp(
-  ISLAND_PEAK-0.22*Math.pow((clamp(flowFrac,0,2)-ISLAND_FLOW)/ISLAND_WF,2)
-             -0.10*Math.pow(Math.max(0,pr-2.2)/ISLAND_WP,2),0.35,ISLAND_PEAK);
+// The island follows the speed line (build 133). The wheel is most efficient where the gas meets its blades at
+// the design incidence, which is a fixed flow coefficient Q/(U D^2): the velocity triangles are similar, so the
+// best flow scales with the tip speed U, and so does the island's width. That is why a real map's island runs
+// diagonally up from the origin, and why a turbo compresses efficiently at low flow when it is only asked for a
+// low pressure ratio. It was fixed at the flow the island has at PR_ISLAND, where pressure losses begin, so low
+// flow at low pressure (a turbo spooling at low rpm) always read as the edge of the map. U comes from the
+// pressure ratio through Euler's work at a common efficiency.
+const PR_ISLAND=2.2;
+const islandSpeed=pr=>Math.sqrt(Math.max(0.0025,(Math.pow(Math.max(1,pr),0.2857)-1)/(Math.pow(PR_ISLAND,0.2857)-1)));
+const compIslandEff=(flowFrac,pr)=>{
+  const u=islandSpeed(pr);
+  return clamp(
+  ISLAND_PEAK-0.22*Math.pow((clamp(flowFrac,0,2)-ISLAND_FLOW*u)/(ISLAND_WF*u),2)
+             -0.10*Math.pow(Math.max(0,pr-PR_ISLAND)/ISLAND_WP,2),0.35,ISLAND_PEAK);
+};
 const TURBO_PR_REF=2.0;   // frames are characterised at 1.0 bar of boost
 // How strongly the spool point follows shaft speed. Calibrated (not guessed) so a small frame
 // keeps its early-spooling character at low boost and clearly gives it up at high boost.
