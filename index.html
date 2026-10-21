@@ -282,7 +282,7 @@ table.fuelmap td.live{box-shadow:inset 0 0 0 2px #fff;font-weight:bold}
 <body>
 <div class="container">
 <header>
-<h1>PIXEL ENGINE SIM v0.6 build 122</h1>
+<h1>PIXEL ENGINE SIM v0.6 build 123</h1>
 <div class="subtitle" id="subtitle">ENGINE DESIGNER • BUILD IT, THEN DRIVE IT</div>
 </header>
 <div class="build-strip" id="buildStrip">
@@ -993,7 +993,7 @@ race parts win on power but cost money and reliability. Balance the brief.
 <section class="guide-page" id="gp-options" data-cat="more" data-title="Options &amp; tips" hidden>
 <h4 class="guide-title">Options &amp; tips</h4>
 <div class="guide-body" data-gk="options">
-<b>ENGINE SOUND</b> — built from the firing pulses: every cylinder fires at its place in the firing order and its pulse goes down its own bank's exhaust, left and right for a V or a boxer. That is where a cross-plane V8's burble comes from, and why an inline six sounds smooth. Then the pulses run the exhaust you fitted: the header rings at its own length (a race header cut for high revs is shorter and sings higher; a cast manifold barely rings), the system behind it drones, and the silencer, the cat and a turbo, if there is one, quieten it. A wild cam makes the idle lope.<br><b>WEAR &amp; DAMAGE</b> — with wear on, detonation, overheating, running lean under boost and over-revving damage the engine and can blow it; with it off the engine is invincible, which is the way to experiment.<br><b>LANGUAGE</b> — English or Greek. Pages added since the Greek translation was made appear in English.
+<b>ENGINE SOUND</b> — built from the firing pulses: every cylinder fires at its place in the firing order and its pulse goes down its own bank's exhaust, left and right for a V or a boxer. That is where a cross-plane V8's burble comes from, and why an inline six sounds smooth. Then the pulses run the exhaust you fitted: the header rings at its own length (a race header cut for high revs is shorter and sings higher; a cast manifold barely rings), the system behind it drones, and the silencer, the cat and a turbo, if there is one, quieten it. Load is in the pulses themselves: each one is as hard as the charge it burned, so flat out is louder and raspier than a cruise, and a fuel cut leaves only a hollow whoosh. A wild cam makes the idle lope, an idle thing that fades as the throttle opens. Lift off a carburetted engine after a pull and it crackles while the pipe is hot (carburettors cannot cut the fuel, so the thin overrun charge misfires and lights in the exhaust); an injected one stays quiet, and anti-lag pops on purpose.<br><b>WEAR &amp; DAMAGE</b> — with wear on, detonation, overheating, running lean under boost and over-revving damage the engine and can blow it; with it off the engine is invincible, which is the way to experiment.<br><b>LANGUAGE</b> — English or Greek. Pages added since the Greek translation was made appear in English.
 </div>
 <div class="guide-body" data-gk="tip">
 Tip: turn WEAR off in OPTIONS to
@@ -6602,6 +6602,12 @@ function stepThermal(dt){
 // the cat's honeycomb and a turbine, if there is one, take the top off and the level down. The
 // primary is the same one the breathing model tunes, so a race header cut for 8000 rpm is shorter
 // and sounds higher than one cut for 5200.
+// LOAD (build 123). How hard each pulse hits is the blowdown at exhaust-valve opening: the charge
+// trapped (manifold pressure) times how much it was heated (how much fuel the air carried), which is
+// soundDrive()'s strength. A harder pulse is also raspier: a finite-amplitude wave steepens as it
+// runs down the pipe, the stronger the faster, which is why load changes the tone and not only the level. A misfiring cylinder sends its fuel into the hot pipe instead, where it lights
+// a moment later: that is overrun crackle, and the worklet makes it exactly that way — a weak pulse,
+// then a sharp pop downstream of the header, quietened by the cat and the silencer like everything else.
 // The noise in a pulse is a fixed seeded table restarted on every pulse, so with no lope the output
 // is exactly periodic over one engine cycle; tests/test65 depends on that.
 const SOUND_WORKLET_SRC=`
@@ -6610,7 +6616,9 @@ class EnginePulse extends AudioWorkletProcessor{
     {name:'rpm',defaultValue:800,minValue:0,maxValue:40000,automationRate:'k-rate'},
     {name:'level',defaultValue:0,minValue:0,maxValue:2,automationRate:'k-rate'},
     {name:'bright',defaultValue:1200,minValue:50,maxValue:20000,automationRate:'k-rate'},
-    {name:'lope',defaultValue:0,minValue:0,maxValue:1,automationRate:'k-rate'}];}
+    {name:'lope',defaultValue:0,minValue:0,maxValue:1,automationRate:'k-rate'},
+    {name:'strength',defaultValue:1,minValue:0,maxValue:5,automationRate:'k-rate'},
+    {name:'crackle',defaultValue:0,minValue:0,maxValue:1,automationRate:'k-rate'}];}
   constructor(){super();this.cfg=null;this.port.onmessage=e=>this.configure(e.data);}
   rnd(){this.seed=(Math.imul(this.seed,1664525)+1013904223)>>>0;return this.seed/4294967296;}
   configure(c){
@@ -6618,13 +6626,14 @@ class EnginePulse extends AudioWorkletProcessor{
     this.cfg=c;this.seed=12345;this.phase=0;this.cycle=0;this.next=0;this.nextAt=c.events[0].at;
     const x=c.exhaust;
     this.decay=Math.exp(-1/(t.tau*1e-3*sr));this.clickDecay=Math.exp(-1/(0.5e-3*sr));
+    this.popDecay=Math.exp(-1/(0.8e-3*sr));
     this.mufA=1-Math.exp(-2*Math.PI*Math.min(x.muffleHz,0.45*sr)/sr);
     this.banks=[];
     for(let b=0;b<c.banks;b++){
       const noise=new Float32Array(Math.ceil(sr*0.03));
       for(let i=0;i<noise.length;i++)noise[i]=this.rnd()*2-1;
       const pan=c.banks===1?[0.7071,0.7071]:b?[0.45,0.85]:[0.85,0.45];
-      this.banks.push({env:0,clk:0,ni:noise.length,noise,lp:0,m1:0,m2:0,s1:0,h:0,gl:pan[0],gr:pan[1],
+      this.banks.push({env:0,clk:0,ni:noise.length,noise,rasp:1,pop:0,popIn:0,popAmp:0,lp:0,m1:0,m2:0,s1:0,h:0,gl:pan[0],gr:pan[1],
         // bank B's run to its tailpipe is a little longer (the crossover), so its pipes sit a touch lower
         prim:this.bandpass(x.primF*(b?0.97:1),x.primQ),sys:this.bandpass(x.sysF*(b?0.97:1),x.sysQ)});
     }
@@ -6638,21 +6647,27 @@ class EnginePulse extends AudioWorkletProcessor{
     const y=f.b0*x+f.b2*f.x2-f.a1*f.y1-f.a2*f.y2;
     f.x2=f.x1;f.x1=x;f.y2=f.y1;f.y1=y;return y;
   }
-  fire(ev,lope){
+  fire(ev,lope,strength,crackle,interval){
     const k=this.banks[ev.bank];
-    k.env+=1+lope*(this.rnd()-0.5);k.clk=1;k.ni=0;
+    let a=strength*(1+lope*(this.rnd()-0.5));
+    if(lope&&this.rnd()<lope*0.12)a*=0.35;                   // a partial burn: residual gas diluted the charge
+    if(crackle&&this.rnd()<crackle){                         // a misfire: the fuel goes on into the pipe ...
+      a*=0.2;k.popIn=1+Math.floor(this.rnd()*1.5*interval);  // ... and lights there a moment later
+      k.popAmp=this.cfg.exhaust.popGain*(0.6+0.8*this.rnd());
+    }
+    k.env+=a;k.clk=a;k.rasp=Math.min(2,Math.max(0.3,a));k.ni=0;
   }
   process(inputs,outputs,params){
     const out=outputs[0],L=out[0],R=out[1]||out[0],c=this.cfg;
     if(!c){L.fill(0);if(R!==L)R.fill(0);return true;}
     const t=c.tone,x=c.exhaust,ev=c.events,n=ev.length,run=EnginePulse.run,mufA=this.mufA;
-    const rpm=params.rpm[0],level=params.level[0],lope=params.lope[0];
+    const rpm=params.rpm[0],level=params.level[0],lope=params.lope[0],strength=params.strength[0],crackle=params.crackle[0];
     const dPh=rpm/60/c.cycleRevs/sampleRate;                       // engine cycles per sample
     const lpA=1-Math.exp(-2*Math.PI*params.bright[0]/sampleRate);
     for(let i=0;i<L.length;i++){
       this.phase+=dPh;
       while(this.phase>=this.cycle+this.nextAt){
-        this.fire(ev[this.next],lope);
+        this.fire(ev[this.next],lope,strength,crackle,1/(dPh*n));
         if(++this.next===n){this.next=0;this.cycle++;}
         // a lumpy idle fires a little early or late, up to a sixth of the firing interval
         this.nextAt=ev[this.next].at+(lope?lope*(this.rnd()-0.5)/(3*n):0);
@@ -6661,12 +6676,16 @@ class EnginePulse extends AudioWorkletProcessor{
       let l=0,r=0;
       for(const k of this.banks){
         const nz=k.ni<k.noise.length?k.noise[k.ni++]:0;
-        const p=k.env*(1+t.noise*nz)+k.clk*t.click*nz;
+        const p=k.env*(1+t.noise*k.rasp*nz)+k.clk*t.click*nz;
         k.env*=this.decay;k.clk*=this.clickDecay;
         // header: the pulse and the primary's ring, saturating together at the collector
         const s=Math.tanh(t.drive*(0.5*p+t.ring*run(k.prim,p)));
+        // a pop lights in the pipe past the header, so it rings the system but not the primary
+        if(k.popIn>0&&--k.popIn===0)k.pop=k.popAmp;
+        let q=s;
+        if(k.pop>1e-3){q+=2.5*k.pop*(this.rnd()*2-1);k.pop*=this.popDecay;}
         // system: its drone, then two poles of silencer / cat / turbine and the rpm-driven brightness
-        const v=s+x.sysMix*run(k.sys,s);
+        const v=q+x.sysMix*run(k.sys,q);
         k.m1+=mufA*(v-k.m1);k.m2+=mufA*(k.m1-k.m2);k.lp+=lpA*(k.m2-k.lp);
         k.h=k.lp-k.s1+0.995*k.h;k.s1=k.lp;                         // DC block: the pulses are one-sided
         l+=k.h*k.gl;r+=k.h*k.gr;
@@ -6711,6 +6730,8 @@ function exhaustSound(e){
     primQ:clamp(0.5/Math.max(0.04,e.exhSigma??0.35),1.2,10)*(SOUND_TONE[soundCycle(e)].qMul),
     sysF:sonic(0.65*T)/(2*sysL), sysQ:3, sysMix:0.6,
     muffleHz:sil.muffleHz*cut,
+    // unburnt fuel that reaches a working cat is oxidised there instead of popping at the tailpipe
+    popGain:1-0.6*cat.conv,
     gain:sil.gain*(1-2*cat.restrict)*(turbo?0.75:1)
   };
 }
@@ -6719,6 +6740,32 @@ function soundCycle(e){return e.ci?'diesel':e.type==='rotary'?'rotary':e.type===
 // sawtooth-and-square note at the same level; this brings it back to that loudness. A stock system
 // and a turbine are then quieter than that, and a race header without a cat louder, as they should be.
 const SOUND_PULSE_GAIN=4.5;
+// Level before the gain, for a 0.45 L cylinder; the pulse strength carries the load from there.
+const SOUND_LEVEL=0.15;
+// What the running engine is doing to the pulses this frame. dt in seconds; it advances Sound.hot.
+//   strength  blowdown at exhaust-valve opening: trapped charge (MAP, bar) x its heating (the fuel the
+//             air carries, 1/lambda, capped at stoich, where the air runs out). A fuel cut leaves
+//             only compressed air. A diesel's manifold is unthrottled, so its idle pulse is soft
+//             because it is lean (lambda ~4), not because it is starved.
+//   lope      cycle-to-cycle variation from overlap: residual gas flowing back into the charge, which
+//             needs manifold vacuum to happen. It fades with rpm and with load.
+//   crackle   chance a cylinder misfires into a hot pipe. A carburettor cannot cut fuel on overrun,
+//             so a closed throttle above idle feeds a charge too thin to burn; with the pipe still hot
+//             from the pull, it lights there. Injection cuts the fuel (DFCO) and stays quiet. Anti-lag
+//             does it on purpose, and keeps the pipe hot itself.
+function soundDrive(dt){
+  const e=engine,lam=state.afr/(e.stoichAFR||14.7);
+  const strength=state.blown?0:state.map*(state.fuelCut?0.12:0.12+0.88*Math.min(1,1/Math.max(0.5,lam)));
+  // exhaust heat: rises with load over about a second, and is gone a second and a half after it. It
+  // has to be above what an idle or a fuelled overrun keeps up on its own (~0.35) for anything to pop.
+  Sound.hot+=(Math.min(1,strength)-Sound.hot)*(1-Math.exp(-dt/(strength>Sound.hot?0.8:1.5)));
+  const lope=(e.lumpiness||0)*clamp(1-(state.rpm-e.idleRpmEff)/2600,0.12,1)*clamp((1.05-state.map)/0.6,0.15,1);
+  const overrun=state.throttle<0.03&&state.rpm>e.idleRpmEff+150&&state.rpm<e.redline;
+  let crackle=0;
+  if(overrun&&!e.canDFCO)crackle=0.35*clamp((state.rpm-e.idleRpmEff)/3000,0.2,1)*clamp((Sound.hot-0.4)/0.4,0,1);
+  if(overrun&&e.antilag&&state.rpm>2500)crackle=Math.max(crackle,0.3);
+  return {strength,lope:state.blown?0:lope,crackle:state.blown?0:crackle};
+}
 // What the worklet needs from a build: when in the cycle each cylinder fires, and into which bank.
 // Banks split as the LIVE bank draws them: cylinders 1..ceil(n/2) are bank A.
 function soundConfig(e){
@@ -6734,7 +6781,7 @@ function loadSoundWorklet(ctx){
   return ctx.audioWorklet.addModule(blob)
     .catch(()=>ctx.audioWorklet.addModule('data:application/javascript;base64,'+btoa(SOUND_WORKLET_SRC)));
 }
-const Sound={ctx:null,node:null,cfgKey:'',osc:null,sub:null,filter:null,gain:null,lfo:null,lfoGain:null,on:false};
+const Sound={ctx:null,node:null,cfgKey:'',hot:0,lastT:0,osc:null,sub:null,filter:null,gain:null,lfo:null,lfoGain:null,on:false};
 function initSound(){
   if(Sound.ctx)return;
   const AC=window.AudioContext||window.webkitAudioContext;if(!AC)return;
@@ -6765,20 +6812,22 @@ function updateSound(){
   const t=Sound.ctx.currentTime;
   // Rotaries sit bright & smooth, diesels dark & clattery; the note opens up with revs.
   const bright=(440+state.rpm*0.15+engine.cylinders*8)*(engine.type==='rotary'?1.5:engine.ci?0.6:1.0);
-  const loud=state.blown?0:0.05+clamp(state.powerHP/160,0,1)*0.13;
-  // Lope is deepest at idle and fades with rpm.
-  const lope=(engine.lumpiness||0)*clamp(1-(state.rpm-engine.idleRpmEff)/2600,0.12,1);
   if(Sound.node){
+    const d=soundDrive(Math.min(0.1,t-(Sound.lastT||t)));Sound.lastT=t;
+    const size=clamp(Math.sqrt((engine.dispCyl_L||0.45)/0.45),0.6,1.5);   // a pulse's energy scales with its cylinder
     const key=[engine.cylinders,engine.layout,engine.type,engine.ci,engine.strokeDiv,engine.exhaust,engine.cat,
       engine.intake,engine.primL,engine.sysL,engine.exhSigma,engine.redline].join('|');
     if(key!==Sound.cfgKey){Sound.cfgKey=key;Sound.node.port.postMessage(soundConfig(engine));}
     const p=Sound.node.parameters;
     p.get('rpm').setTargetAtTime(state.rpm,t,0.05);
     p.get('bright').setTargetAtTime(bright,t,0.05);
-    p.get('level').setTargetAtTime(loud*SOUND_PULSE_GAIN,t,0.08);
-    p.get('lope').setTargetAtTime(state.blown?0:lope,t,0.08);
+    p.get('level').setTargetAtTime(state.blown?0:SOUND_LEVEL*size*SOUND_PULSE_GAIN,t,0.08);
+    p.get('strength').setTargetAtTime(d.strength,t,0.012);    // quick, so the limiter's cut is heard
+    p.get('lope').setTargetAtTime(d.lope,t,0.08);
+    p.get('crackle').setTargetAtTime(d.crackle,t,0.03);
     return;
   }
+  const loud=state.blown?0:0.05+clamp(state.powerHP/160,0,1)*0.13;
   if(!Sound.osc)return;
   // Firing frequency: 4-stroke fires once per cylinder every 2 revs; a 2-stroke and a rotary
   // make a power event every rev, so they fire twice as often (higher, busier note).

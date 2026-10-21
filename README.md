@@ -1,4 +1,4 @@
-# PIXEL ENGINE SIM v0.6 build 122
+# PIXEL ENGINE SIM v0.6 build 123
 
 **A lightweight, 8-bit style internal combustion engine *designer* & simulator** inspired by *Automation*.
 
@@ -209,8 +209,14 @@ saps power; a large radiator, electric fan and oil cooler keep it cool.
   path-length spread allows (a cast log manifold barely rings, a jig-cut race header rings hard), the
   system behind the collector drones at its half wave, and the silencer, the cat and a turbine take the
   top off and the level down. Diesels add a combustion knock, 2-strokes ring, rotaries are
-  short and bright. A **lope** whose depth tracks the build — a wild cam or anti-lag idles
-  lumpy, VVT smooths it — jitters the pulses at idle. Loudness follows power.
+  short and bright. **Load is in the pulses**: each is as hard as the charge it burned (manifold
+  pressure × how much fuel the air carried), and a harder pulse is also raspier, so flat out sounds
+  different from a cruise and not just louder; a fuel cut leaves only compressed air. The **lope**
+  (a wild cam or anti-lag idles lumpy, VVT smooths it) varies the pulses cycle to cycle with the
+  occasional partial burn, and fades with revs and load, since residual gas needs manifold vacuum to
+  flow back. **Overrun crackle** is a carburetted engine misfiring its unburnable overrun charge into a
+  pipe still hot from the pull, popping for a second or two; injection cuts the fuel and stays
+  quiet, anti-lag pops on purpose, and a working cat takes the edge off the pops.
 - **Scoring** — every build gets a graded scorecard (S–F) rating power, specific output,
   powerband width, efficiency, knock safety, drivability and **emissions**, shown on the
   design summary and the dyno.

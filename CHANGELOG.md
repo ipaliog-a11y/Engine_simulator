@@ -20,6 +20,24 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 Working toward **v1.0 — every number derived, not fitted.**
 
+### Load, lope and overrun crackle in the engine sound (build 123)
+
+- Load only turned the volume up. `soundDrive()` now sets each pulse's strength from the blowdown at
+  exhaust-valve opening: manifold pressure × the charge's heating (1/lambda, capped at stoich). A fuel cut
+  leaves 12% (compressed air only); a diesel's unthrottled manifold makes a soft pulse at idle because it
+  is lean (lambda ~4), not because it is starved. A stronger pulse is also raspier (a finite-amplitude
+  wave steepens faster), so the tone changes with load. Level now scales with cylinder size instead.
+- The lope is cycle-to-cycle variation from overlap, with an occasional partial burn, and it fades with
+  load as well as revs: residual gas needs manifold vacuum to flow back into the charge.
+- Overrun crackle: a carburetted engine (no DFCO) on a closed throttle above idle misfires its thin
+  charge into the pipe, and while the pipe is still hot from the pull (an exhaust-heat envelope, ~1.5 s)
+  the fuel lights there: a weak pulse, then a pop past the header that the system, the cat (a working one
+  oxidises most of the fuel) and the silencer shape like any other sound. Injected engines stay quiet;
+  anti-lag pops on any lift.
+- test67: harder pulses louder and brighter, pops above the pulses and softer through a cat; full throttle
+  vs idle, fuel cut, lean diesel idle, lope fading with load, DFCO quiet, carb crackle dying as the pipe
+  cools, anti-lag from cold.
+
 ### The exhaust in the engine sound (build 122)
 
 - Build 121 rang every petrol engine at one fixed pipe tone. Each bank's pulses now run the build's own
