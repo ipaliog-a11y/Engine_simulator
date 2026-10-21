@@ -20,6 +20,36 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 Working toward **v1.0 — every number derived, not fitted.**
 
+### The intake stroke integrated; the driver holds a gear into the brakes (build 121)
+
+- **The charge's momentum.** A late-closing intake valve was charged as pure crank-slider geometry (everything
+  displaced after BDC pushed back out), repaid only by the tuned wave. The air in the runner has mass: it is
+  still moving at BDC and keeps filling the cylinder until the cylinder's pressure stops it, more so the faster
+  the engine turns, which is why race cams close late. Now the stroke from TDC to IVC is integrated as a lumped
+  column, valve and cylinder (rho L du/dt = p0 - p_cyl - Borda loss at the curtain, Cd 0.6, sin^2 lift - the
+  damping a flow rig measures on an intake tract, Q 4; the cylinder filled adiabatically). The same column and
+  cylinder are the Helmholtz resonator, so tuning comes out of it too. A cam phaser takes, at full load, the
+  phase that fills best. Tabulated once per engine.
+- **NA engines:** power RMS vs the makers ~10% -> ~6%. LS7 (Z06) -17% -> +8%, 4A-GE -16% -> +7% (torque peak
+  4600-5200, real 5200), S54 +17% -> +9%, Coyote +12% -> +2%, B6 exact. Turbo engines +3-5%; the RB26 and the
+  diesels (no cam phaser, so the old geometric loss hit them hardest) +15-20%.
+- **Inputs fixed:** the intake runner type where the hardware is known and the 320 mm default was wrong: the
+  diesels' compact manifolds and the RB26's individual throttles short, the EJ257's boxer manifold long (marked
+  unsure). The compact turbo petrols' runners were left at the default: not known well enough to set. The 1993
+  2JZ-GTE has no VVT-i (Toyota added it for MY1998); it changes nothing at peak power.
+- **Known gaps, named:** turbo engines still read high at the top (item under investigation: compressor sizes
+  looked up, GR Yaris 56 mm, FK8 58 mm, CT12B 2x58 mm, IS20 54 mm, 16G ~68 mm; on their own they do not close
+  it); the 4A-GE, the 1.6 Sport NA archetype and the Duramax now peak at the limiter, power creeping ~1% over the
+  last 10% where real engines fade; the V12 archetype reaches 15.8 bar BMEP against a real-engine ceiling of 15.
+  The heat the charge takes from the ports and valves as it is drawn in is not modelled yet and would take some
+  of the new fill back from every engine: next. Re-baselined, each with its reason: test48 power RMS 14 -> 15.5,
+  Supra cap 30 -> 33, Alto 20 -> 22; test47 NA BMEP budget 1 -> 2, the 2.5 Turbo I5 archetype held at 26.5 bar;
+  test46 limiter budget 2 -> 3; test60's known list (the N57 left it). test62's boost gauge may read under full
+  boost at full throttle where the shaft is spooling back (since build 118).
+- **Upshift look-ahead.** Before changing up the driver runs on both ways, holding the gear or shifting, to the
+  braking envelope, and takes the quicker. Laps up to 0.08 s quicker, never slower (Hellcat on Cape 15 -> 11
+  shifts). The replay shows the held gear.
+
 ### Turbo lag at a fifth of the cost; re-baselined checks (build 120)
 
 - The lap's turbo walk (build 118) added 1.3 s to a Nordschleife solve: it re-ran the shaft from rest and

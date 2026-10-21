@@ -282,7 +282,7 @@ table.fuelmap td.live{box-shadow:inset 0 0 0 2px #fff;font-weight:bold}
 <body>
 <div class="container">
 <header>
-<h1>PIXEL ENGINE SIM v0.6 build 120</h1>
+<h1>PIXEL ENGINE SIM v0.6 build 121</h1>
 <div class="subtitle" id="subtitle">ENGINE DESIGNER • BUILD IT, THEN DRIVE IT</div>
 </header>
 <div class="build-strip" id="buildStrip">
@@ -2487,11 +2487,11 @@ const PRESETS=[
   {cat:'NA Sports',name:'Porsche 4.0 flat-six (911 GT3 991.2)',real:{hp:493,hpRpm:8250,tq:460,tqRpm:6000},
    engine:{cylinders:6,layout:'boxer',bore_mm:102.0,stroke_mm:81.5,compression:13.3,redline:9000,cam:'race',vvt:true,valveSpring:'race',valveMat:'titanium',injector:'direct',octane:98,exhaust:'race',airFilter:'perf',runner:'variable'}},
   {cat:'Turbo Performance',name:'Toyota 2JZ-GTE (Supra A80)',real:{hp:320,hpRpm:5600,tq:427,tqRpm:4000},note:'export rating; JDM cars were quoted at 280 PS',
-   engine:{cylinders:6,bore_mm:86.0,stroke_mm:86.0,compression:8.5,redline:6800,intake:'turbo',boost_bar:0.75,turboSize:'medium',turboConfig:'sequential',cam:'sport',injector:'port',octane:98,intercooler:'large',exhaust:'sport',airFilter:'perf'}},
-  {cat:'Turbo Performance',name:'Nissan RB26DETT (Skyline GT-R R34)',real:{hp:276,hpRpm:6800,tq:392,tqRpm:4400},note:'JDM 280 PS gentlemen\'s agreement; real output is higher',
-   engine:{cylinders:6,bore_mm:86.0,stroke_mm:73.7,compression:8.5,redline:8000,intake:'turbo',boost_bar:0.7,turboSize:'small',turboConfig:'twin',cam:'sport',vvt:false,injector:'port',intakeSys:'itb',octane:98,intercooler:'large',exhaust:'sport',airFilter:'perf'}},
-  {cat:'Turbo Performance',name:'Subaru EJ257 (Impreza WRX STI)',real:{hp:296,hpRpm:6000,tq:407,tqRpm:4000},unsure:['boost_bar'],
-   engine:{cylinders:4,layout:'boxer',bore_mm:99.5,stroke_mm:79.0,compression:8.2,redline:7000,intake:'turbo',boost_bar:1.0,turboSize:'medium',cam:'sport',vvt:true,injector:'port',octane:98,intercooler:'small',exhaust:'sport',airFilter:'perf'}},
+   engine:{cylinders:6,bore_mm:86.0,stroke_mm:86.0,compression:8.5,redline:6800,intake:'turbo',boost_bar:0.75,turboSize:'medium',turboConfig:'sequential',cam:'sport',vvt:false,injector:'port',octane:98,intercooler:'large',exhaust:'sport',airFilter:'perf'}},   // VVT-i only from mid-1997 (MY1998)
+  {cat:'Turbo Performance',name:'Nissan RB26DETT (Skyline GT-R R34)',real:{hp:276,hpRpm:6800,tq:392,tqRpm:4400},unsure:['runner'],note:'JDM 280 PS gentlemen\'s agreement; real output is higher',
+   engine:{cylinders:6,bore_mm:86.0,stroke_mm:73.7,compression:8.5,redline:8000,intake:'turbo',boost_bar:0.7,turboSize:'small',turboConfig:'twin',cam:'sport',vvt:false,injector:'port',intakeSys:'itb',octane:98,intercooler:'large',exhaust:'sport',airFilter:'perf',runner:'short'}},
+  {cat:'Turbo Performance',name:'Subaru EJ257 (Impreza WRX STI)',real:{hp:296,hpRpm:6000,tq:407,tqRpm:4000},unsure:['boost_bar','runner'],
+   engine:{cylinders:4,layout:'boxer',bore_mm:99.5,stroke_mm:79.0,compression:8.2,redline:7000,intake:'turbo',boost_bar:1.0,turboSize:'medium',cam:'sport',vvt:true,injector:'port',octane:98,intercooler:'small',exhaust:'sport',airFilter:'perf',runner:'long'}},
   {cat:'Turbo Performance',name:'Mitsubishi 4G63T (Lancer Evo IX)',real:{hp:286,hpRpm:6500,tq:392,tqRpm:3500},unsure:['boost_bar'],
    engine:{cylinders:4,bore_mm:85.0,stroke_mm:88.0,compression:8.8,redline:7000,intake:'turbo',boost_bar:1.3,turboSize:'medium',cam:'sport',vvt:true,injector:'port',octane:98,intercooler:'large',exhaust:'sport',airFilter:'perf'}},
   {cat:'Turbo Performance',name:'Audi 2.5 TFSI (RS3 8V)',real:{hp:394,hpRpm:5850,tq:480,tqRpm:1700},unsure:['boost_bar'],
@@ -2514,14 +2514,14 @@ const PRESETS=[
    engine:{type:'rotary',cylinders:2,bore_mm:105,stroke_mm:80,ecc_mm:15,compression:9.0,redline:8000,intake:'turbo',boost_bar:0.7,turboSize:'small',turboConfig:'sequential',injector:'port',octane:98,intercooler:'small',exhaust:'stock',airFilter:'stock',radiator:'large',oilCooler:true}},
   {cat:'Rotary',name:'Mazda 13B-MSP Renesis (RX-8)',real:{hp:232,hpRpm:8200,tq:211,tqRpm:5500},
    engine:{type:'rotary',cylinders:2,bore_mm:105,stroke_mm:80,ecc_mm:15,compression:10.0,redline:9000,injector:'port',octane:98,exhaust:'stock',airFilter:'stock',radiator:'large',oilCooler:true}},
-  {cat:'Diesel',name:'VW EA288 2.0 TDI (Golf 150)',real:{hp:148,hpRpm:3500,tq:320,tqRpm:1750},
-   engine:{type:'diesel',vvt:false,cylinders:4,bore_mm:81.0,stroke_mm:95.5,compression:16.2,redline:4800,intake:'turbo',boost_bar:1.3,turboSize:'small',vgt:true,injector:'direct',intercooler:'large',exhaust:'stock',airFilter:'stock'}},
-  {cat:'Diesel',name:'BMW N57 3.0d (330d F30)',real:{hp:254,hpRpm:4000,tq:560,tqRpm:2000},unsure:['boost_bar'],
-   engine:{type:'diesel',vvt:false,cylinders:6,bore_mm:84.0,stroke_mm:90.0,compression:16.5,redline:5000,intake:'turbo',boost_bar:1.5,turboSize:'medium',vgt:true,injector:'direct',intercooler:'large',exhaust:'stock',airFilter:'stock'}},
-  {cat:'Diesel',name:'GM Duramax L5P 6.6 (Silverado HD)',real:{hp:445,hpRpm:2800,tq:1234,tqRpm:1600},unsure:['boost_bar','redline'],
-   engine:{type:'diesel',vvt:false,cylinders:8,layout:'v',bore_mm:103.0,stroke_mm:99.0,compression:16.0,redline:3800,intake:'turbo',boost_bar:1.9,turboSize:'large',vgt:true,injector:'direct',intercooler:'large',exhaust:'stock',airFilter:'stock'}},
-  {cat:'Diesel',name:'Cummins 6.7 (Ram HD 2019 HO)',real:{hp:400,hpRpm:2800,tq:1356,tqRpm:1800},unsure:['boost_bar','compression','redline'],
-   engine:{type:'diesel',vvt:false,cylinders:6,bore_mm:107.0,stroke_mm:124.0,compression:17.3,redline:3500,intake:'turbo',boost_bar:2.0,turboSize:'large',vgt:true,injector:'direct',intercooler:'large',exhaust:'stock',airFilter:'stock'}},
+  {cat:'Diesel',name:'VW EA288 2.0 TDI (Golf 150)',real:{hp:148,hpRpm:3500,tq:320,tqRpm:1750},unsure:['runner'],
+   engine:{type:'diesel',vvt:false,cylinders:4,bore_mm:81.0,stroke_mm:95.5,compression:16.2,redline:4800,intake:'turbo',boost_bar:1.3,turboSize:'small',vgt:true,injector:'direct',intercooler:'large',exhaust:'stock',airFilter:'stock',runner:'short'}},
+  {cat:'Diesel',name:'BMW N57 3.0d (330d F30)',real:{hp:254,hpRpm:4000,tq:560,tqRpm:2000},unsure:['boost_bar','runner'],
+   engine:{type:'diesel',vvt:false,cylinders:6,bore_mm:84.0,stroke_mm:90.0,compression:16.5,redline:5000,intake:'turbo',boost_bar:1.5,turboSize:'medium',vgt:true,injector:'direct',intercooler:'large',exhaust:'stock',airFilter:'stock',runner:'short'}},
+  {cat:'Diesel',name:'GM Duramax L5P 6.6 (Silverado HD)',real:{hp:445,hpRpm:2800,tq:1234,tqRpm:1600},unsure:['boost_bar','redline','runner'],
+   engine:{type:'diesel',vvt:false,cylinders:8,layout:'v',bore_mm:103.0,stroke_mm:99.0,compression:16.0,redline:3800,intake:'turbo',boost_bar:1.9,turboSize:'large',vgt:true,injector:'direct',intercooler:'large',exhaust:'stock',airFilter:'stock',runner:'short'}},
+  {cat:'Diesel',name:'Cummins 6.7 (Ram HD 2019 HO)',real:{hp:400,hpRpm:2800,tq:1356,tqRpm:1800},unsure:['boost_bar','compression','redline','runner'],
+   engine:{type:'diesel',vvt:false,cylinders:6,bore_mm:107.0,stroke_mm:124.0,compression:17.3,redline:3500,intake:'turbo',boost_bar:2.0,turboSize:'large',vgt:true,injector:'direct',intercooler:'large',exhaust:'stock',airFilter:'stock',runner:'short'}},
   {cat:'Two-Stroke',name:'Yamaha RD350LC (2-stroke twin)',real:{hp:46,hpRpm:8500,tq:40,tqRpm:8000},unsure:['compression','redline'],
    engine:{type:'twostroke',cylinders:2,bore_mm:64.0,stroke_mm:54.0,compression:7,redline:9500,intakeSys:'carb2',octane:95,exhaust:'race',airFilter:'stock'}},
 ];
