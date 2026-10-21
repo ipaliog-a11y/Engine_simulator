@@ -92,7 +92,13 @@ const gz = await page.evaluate(() => {
   for (const [k, car] of [['turbo', 'Toyota Supra RZ (A80, 1993)'], ['na', 'Porsche 911 GT3 (991.2, 2017)']]) {
     loadVehiclePreset(VEHICLE_PRESETS.find(v => v.name === car));
     const L = simulateLap('mixed'), R = L.replay; let bad = 0, wot = 0;
-    for (let i = 0; i < R.map.length; i++) if (R.thr[i] === 1) { wot++; if (Math.abs(R.map[i] - (1 + boostAvail(R.rpm[i]))) > 1e-9) bad++; }
+    // Since build 118 the gauge shows the boost the turbo's shaft has built, so just after a lift or a shift it
+    // can read under the engine's boost at full throttle while the shaft spools back; it may never read over it,
+    // and on all but a few points it is the full boost.
+    let under = 0;
+    for (let i = 0; i < R.map.length; i++) if (R.thr[i] === 1) { wot++; const d = R.map[i] - (1 + boostAvail(R.rpm[i]));
+      if (d > 1e-9) bad++; else if (d < -1e-9) under++; }
+    if (under > 0.05 * wot) bad += under;
     out[k] = { maxMap: Math.max(...R.map), minMap: Math.min(...R.map), bad, wot, boost: engine.boost_bar };
   }
   return out;
