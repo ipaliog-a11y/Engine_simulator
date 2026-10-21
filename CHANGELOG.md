@@ -20,6 +20,14 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 Working toward **v1.0 — every number derived, not fitted.**
 
+### First traced profile: Porsche 911 GT3 (build 108)
+
+- **The 911 GT3's outline is traced from a real side view** instead of being estimated by eye.
+  - **Source:** Commons, File:Porsche 991 Turbo S Seitenansicht.JPG (KarleHorn, CC BY 3.0). It shows the same 991 shell, from the door line to the roof.
+  - **Correction:** the photo's close-camera perspective is corrected, and the result is fitted to the published GT3 length, height and wheelbase.
+  - **What changed:** the cowl sits further back, the roof peaks behind the doors, the rump is lower and rounder, the nose is longer and lower, and the glasshouse is shorter.
+- **More traces to come:** this is a sample of the tracing method. The other 28 profiles are still estimates; docs/car-profile-references.md lists them and records each source.
+
 ### Car sprites from real profiles (build 107)
 
 - **Every car is drawn from a real car's side elevation** (CAR_PROFILE), not from hand-tuned shares

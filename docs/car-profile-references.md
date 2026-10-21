@@ -90,3 +90,17 @@ Please note the **source name, URL and licence** for each car. It goes into that
 5. Add a CHANGELOG line and refresh `docs/vehicle.png`.
 
 References can arrive in any order and in any batch size.
+
+## Sources traced so far
+
+| Car | Reference | Author / licence | Fit |
+|---|---|---|---|
+| `gt3` Porsche 911 GT3 991.2 | [File:Porsche 991 Turbo S Seitenansicht.JPG](https://commons.wikimedia.org/wiki/File:Porsche_991_Turbo_S_Seitenansicht.JPG) | KarleHorn, CC BY 3.0 | See the notes below. |
+
+Notes on the 911 trace:
+
+- **Why the Turbo S photo:** Commons has no square-on side view or drawing of the 991.2 GT3 itself. This 991 Turbo S photo shares the GT3's wide 991 shell, glasshouse and doors; only the bumpers, the wing and the ride height differ.
+- **Raw trace:** the close camera makes the photo read 3971 mm long and 1194 mm tall, against the Turbo S's published 4506 mm and 1296 mm.
+- **Correction:** points set back from the side plane were pushed out from the optical centre (depth factor 1.135, fitted to the published length). The height still came out 7 % short, so the glasshouse was stretched to the published GT3 height.
+- **Result:** length and height match the published figures by construction. The photo supplies the shape: the cowl, roof, glass, pillar, doors and deck positions.
+- **Not shipped:** the photo is only a reference. The app carries the traced numbers alone.
