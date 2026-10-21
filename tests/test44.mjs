@@ -118,7 +118,7 @@ const peaks = await page.evaluate(() => PRESETS.filter(p => !p.real).map(pr => {
 }));
 peaks.forEach(p => console.log(`  ${p.name.slice(0, 24).padEnd(25)} peak at ${String(p.pct + '%').padStart(5)} of redline` +
   (p.poppet ? ` · ${p.valves}v · Z=${p.Zred} · float ${p.float}` : ' · no poppet valves')));
-// Build 123: an engine with forced induction and no ECU boost taper holds full boost to the limiter by its own
+// Build 131: an engine with forced induction and no ECU boost taper holds full boost to the limiter by its own
 // calibration, and with knock now the end gas's autoignition (which eases as the engine speeds up and the gas has
 // less time) its power follows that boost there. That is the calibration it was given, adjustable in BOOST TAPER
 // FROM / BOOST AT LIMITER, not the hardware failing to roll off; such engines are not counted here.

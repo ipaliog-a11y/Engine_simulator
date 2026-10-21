@@ -20,7 +20,7 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 Working toward **v1.0 — every number derived, not fitted.**
 
-### Knock from the end gas's chemistry; the ECU's boost taper as a tune point (build 123)
+### Knock from the end gas's chemistry; the ECU's boost taper as a tune point (build 131)
 
 - **Knock.** It was a points score set by hand (30 a bar of boost, 8 a unit of compression, 0.8 a degree of
   charge, -2.2 an octane, -12 for direct injection, more for rpm, coolant and alcohol), which left a 10:1 engine at
@@ -62,6 +62,135 @@ Working toward **v1.0 — every number derived, not fitted.**
   calibration); test40 reads knock at best-torque spark (the ECU holds the controlled score at its target); test58's
   continuity is a rate per unit lambda; test63 asks the lap solver's braking step directly instead of sampling a lap;
   test62's gauge to 0.005 bar; test48's power budget 15.5 -> 10; test41 bands Supra 15 -> 17, STI 11 -> 13, M2 13 -> 14, RMS 9.5 -> 11 (the generic turbo's midrange).
+
+### Live steering and power (build 130)
+
+- **Steering wheel in live timing.** The front wheels' angle is kinematic (Ackermann) steering on the racing
+  line, `atan(wheelbase / r)`, signed by the way the line turns and averaged over ±10 m so the 5 m radius
+  does not jitter it. The wheel in the driver's hands is that times the **steering ratio**, a new VEHICLE
+  input (8-22:1, default 15:1, saved with the car; older saves load as 15). Geometry only: no slip angle,
+  so no understeer correction. A 911 GT3 at La Source: 7.4° at the road wheels, 111° at the wheel.
+- **Engine power in live timing.** Crank power at each point: the drive force the lap spends, times speed,
+  back through the driveline efficiency, capped at full-throttle power at that rpm (with the boost built);
+  zero coasting, braking and mid-shift. Shown in hp and kW with a bar against the peak of the curve the lap
+  drives (best-power mixture, a little above the as-tuned DYNO figure: 494 against 487 hp on the GT3).
+- Both instrument sets, digital and analog, carry the wheel and the power. **test70** pins the steering
+  against a known circle, its sign against lateral g, the ratio and its save, and power within the engine.
+
+### The engine sound without the hiss (build 129)
+
+- Most engines sounded like noise, the V12 and the turbo diesel worst. Measured by muting one voice at a
+  time, it was three things:
+  - **The intake roar was five times the exhaust** at full throttle (V12: 0.202 rms with it, 0.038
+    without), mostly its broadband hiss. Build 127 scaled it against the wrong reference. Now about 13x
+    lower, with less hiss in it; open stacks still roar louder than an airbox.
+  - **Pulses ran together at high rpm.** Each one decayed over a fixed 4 ms, so a V12 at 7000 rpm made a
+    steady pressure that the DC block removed, leaving only the noise riding on it: the V12 was quieter
+    flat out than at cruise. Blowdown lasts a crank angle, not a time, so the decay now shrinks with rpm
+    (its length at 2000 rpm, as before). The V12 flat out is now louder than its cruise and tonal.
+  - **The diesel was all knock and whistle.** The live manifold reads low at a diesel idle, but a diesel
+    has no throttle and traps atmosphere plus boost, so its pulses were far too weak and the 6 kHz knock
+    ring (also now a fifth as loud) was most of what you heard. The turbo whine also passes 10 kHz near
+    full shaft speed, where it is a squeal; ducting and bonnet lining absorb that range, so it now rolls
+    off above 6 kHz. Turbo whine level 0.05 -> 0.03.
+- With the roar no longer making up most of the level, the overall gain doubles to keep the loudness.
+- test69's whine check now compares 20% and 40% shaft speed (the audible range) and also checks the roll-off.
+
+### A soft limiter on the engine sound (build 128)
+
+- With all the voices together, a race header on open stacks flat out (the ITB screamer) peaked at 1.27
+  and would clip. The worklet's output now runs linear to 0.7 and eases into 1 above it.
+
+### Whine, blow-off, intake roar and knock in the engine sound (build 127)
+
+- Four voices that do not go through the exhaust, each from hardware the sim already models:
+  - **Turbo whine** at the compressor's blade-pass frequency (6 full blades) from the live shaft speed
+    (`shaftE`), its level with tip speed squared and lower on a closed throttle. **Supercharger whine**
+    from the crank through a stated drive ratio and lobe/blade count (`SC_SOUND`: a Roots blower buzzes,
+    a centrifugal whistles).
+  - **Blow-off** when the throttle shuts on more than 0.15 bar: a 2.6 kHz hiss that lasts as long as the
+    charge volume (`chargeVol`) takes to vent through a 25 mm valve, so a front-mount core hisses about
+    2.5x longer than a small one. Never on a diesel: with no throttle there is nothing to surge against.
+  - **Intake roar** at the runner's Helmholtz frequency (the one the breathing model tunes), excited by
+    each induction pulse and scaled by flow (MAP x rpm); open stacks and ITBs loudest, an airbox or a
+    compressor in the way much less.
+  - **Knock** rings at the chamber's first circumferential mode, Draper's 1.84 c / pi B in burnt gas
+    (6.1 kHz in an 86 mm bore). It replaces the diesel's generic click: a diesel rings on every pulse,
+    twice as hard from cold and harder at light load (longer ignition delay); a petrol engine rings on a
+    share of cycles that grows past `KNOCK_TARGET`.
+- test69: each voice at the pitch its hardware sets, BOV length vs charge volume, runner and bore
+  direction, shaft- and crank-following pitch, BOV only on a real lift from boost, knock thresholds.
+
+### Load, lope and overrun crackle in the engine sound (build 126)
+
+- Load only turned the volume up. `soundDrive()` now sets each pulse's strength from the blowdown at
+  exhaust-valve opening: manifold pressure × the charge's heating (1/lambda, capped at stoich). A fuel cut
+  leaves 12% (compressed air only); a diesel's unthrottled manifold makes a soft pulse at idle because it
+  is lean (lambda ~4), not because it is starved. A stronger pulse is also raspier (a finite-amplitude
+  wave steepens faster), so the tone changes with load. Level now scales with cylinder size instead.
+- The lope is cycle-to-cycle variation from overlap, with an occasional partial burn, and it fades with
+  load as well as revs: residual gas needs manifold vacuum to flow back into the charge.
+- Overrun crackle: a carburetted engine (no DFCO) on a closed throttle above idle misfires its thin
+  charge into the pipe, and while the pipe is still hot from the pull (an exhaust-heat envelope, ~1.5 s)
+  the fuel lights there: a weak pulse, then a pop past the header that the system, the cat (a working one
+  oxidises most of the fuel) and the silencer shape like any other sound. Injected engines stay quiet;
+  anti-lag pops on any lift.
+- test68: harder pulses louder and brighter, pops above the pulses and softer through a cat; full throttle
+  vs idle, fuel cut, lean diesel idle, lope fading with load, DFCO quiet, carb crackle dying as the pipe
+  cools, anti-lag from cold.
+
+### The exhaust in the engine sound (build 125)
+
+- Build 124 rang every petrol engine at one fixed pipe tone. Each bank's pulses now run the build's own
+  exhaust: the primary rings at its quarter wave, c/4L at the gas's sound speed, from the `primL` the
+  breathing model already tunes (so a race header cut for 8800 rpm, 500 mm, sings at 309 Hz where one cut
+  for 6600, 659 mm, sings at 231 Hz). Its Q comes from the header's path-length spread `exhSigma`: 1.4 for
+  a cast log, 4.2 for a sport header, 10 for a race one. The system behind the collector (`sysL`, open at
+  the tailpipe, gas at about 0.65 of port temperature) adds its half-wave drone.
+- The silencer is not in the breathing model (it only sees back-pressure), so `SILENCER` states it: a
+  chambered can on a stock system, a straight-through one on sport, next to nothing on race. A cat
+  absorbs the top end in proportion to its restriction, and a turbine muffles both top end and level.
+- Stock systems, cats and turbos are now quieter than before and race headers louder; the overall gain
+  is recalibrated so a sport system matches the old loudness.
+- test67: the primary rings at c/4L and its harmonic stands out of the spectrum, a header cut for higher
+  revs is shorter and higher, ring follows path spread, and stock < race, cat < decat, turbo < NA in
+  level and brightness.
+
+### Engine sound from the firing pulses (build 124)
+
+- The note was one sawtooth at the firing frequency, so every engine with the same firing rate sounded
+  the same. It is now an AudioWorklet that keeps its own crank clock and fires each cylinder at its slot in
+  `firingOrder()` (the order the LIVE bank draws), sending the pulse into its bank's exhaust: one channel
+  for an inline engine, two, panned left and right, for a V or a boxer. Each bank rings its own resonator
+  and saturates on its own. Nothing knows what a V8 is: 1-5-4-8-6-3-7-2 fires the banks A-B-A-B-B-A-B-A,
+  and the burble falls out of that. Diesel, 2-stroke and rotary get their own pulse shape; the lope
+  jitters pulse timing and strength at idle instead of wobbling the volume.
+- The worklet is inline (blob: URL, falling back to data: from a file:// page) so the app stays one file;
+  a browser without AudioWorklet keeps the old note.
+- test66 renders it offline: every preset audible and unclipped, the pulse rate is the firing rate, a
+  cross-plane V8's banks are uneven while an I4, I6, even-fire V6, V12 and rotary are even, and a V or a
+  boxer is stereo while an inline engine is not.
+
+### Real circuits (build 123)
+
+- **22 real circuits** under a new REAL CIRCUITS group in the circuit menu: COTA, Brands Hatch GP,
+  Hungaroring, Catalunya, Hockenheim, the Indianapolis oval, Albert Park, Hermanos Rodríguez, Gilles
+  Villeneuve, Monza, Nürburgring GP, Bahrain, Interlagos, Sepang, Shanghai, Silverstone, Sochi, Spa,
+  Red Bull Ring, Suzuka, Yas Marina and Zandvoort.
+- `tools/import-real-tracks.mjs` builds them offline from three open sources: the TUM racetrack
+  database (centreline and **measured** width, LGPL-3.0), georeferenced by a rigid fit onto
+  bacinger/f1-circuits or OpenStreetMap (1.2-7.4 m RMS; Yas Marina 13 m), with heights from EU-DEM /
+  USGS 10 m / SRTM through OpenTopoData, median-filtered and smoothed over ~60 m. The output,
+  `tracks/real-circuits.js` (~200 KB), is loaded as its own file and cached by the service worker
+  (cache v4); the app runs without it.
+- Width comes through the existing `wprof` path, one multiplier per control point, so the physics is
+  unchanged. The circuits are not passed through the GPS denoiser: TUM's centreline is already smooth,
+  and denoising it again cut 1.3 % from every lap. Lengths land within 0.3 % of the official figures;
+  Spa rises 103 m (real 104), Red Bull Ring 68 m (65), Interlagos 41 m (43), Suzuka 42 m (40).
+- **test65** checks every real circuit: official length within 1 %, closed centreline, measured width,
+  published elevation changes, flat circuits flat, and a lap that solves (Monza the fastest road circuit,
+  the oval faster still). test32/38 accept a measured constant width (the oval), and test34 accepts a
+  real circuit that is genuinely flat.
 
 ### The charge heated as it is drawn in; the valve's flow coefficient from Taylor (build 122)
 

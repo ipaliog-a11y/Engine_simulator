@@ -61,7 +61,7 @@ const r = await page.evaluate(() => {
   // same deceleration. (An average over "braking" points is not that: the spool corners slower, so its
   // braking zones are longer and more of them sit at the ceiling.) So compare the top of each car's
   // straight-line braking, its 90th percentile.
-  // Build 123: sampling a lap's braking points was flaky (each car drives its own line since build 115, so a change of
+  // Build 131: sampling a lap's braking points was flaky (each car drives its own line since build 115, so a change of
   // power moved which points were sampled, and some read above the brakes' own limit). The claim is about the lap
   // solver's braking step, so ask it directly: from 200 km/h into 150 on an ideal straight 5 m step, flat, level.
   const step = diff => { set('vhDiff', diff); buildVehicle(); vehicle.brakeTh.onset = Infinity;

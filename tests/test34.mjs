@@ -21,7 +21,7 @@ const geo = await page.evaluate(() => Object.keys(TRACKS).map(k => {
     net += dz; if (dz > 0) climb += dz; d2 += L[i].ds; d3 += L[i].ds3;
   }
   const zs = L.map(q => q.z);
-  return { label: T.label, net: +net.toFixed(4), climb: +climb.toFixed(1),
+  return { label: T.label, real: !!TRACKS[k].real, net: +net.toFixed(4), climb: +climb.toFixed(1),
     range: +(Math.max(...zs) - Math.min(...zs)).toFixed(1),
     maxGrade: +(Math.max(...L.map(q => Math.abs(q.grade))) * 100).toFixed(1),
     d2: Math.round(d2), d3: Math.round(d3) };
@@ -31,7 +31,7 @@ geo.forEach(g => {
   if (Math.abs(g.net) > 0.01) fails.push(`${g.label}: closed loop does not return to its start height (net ${g.net} m)`);
   if (g.d3 < g.d2) fails.push(`${g.label}: 3D length shorter than 2D`);
   if (g.maxGrade > 20) fails.push(`${g.label}: implausible gradient ${g.maxGrade}%`);
-  if (g.range < 5) fails.push(`${g.label}: no elevation`);
+  if (!g.real && g.range < 5) fails.push(`${g.label}: no elevation`);
 });
 
 // 2. Controlled case: constant-radius circle, elevation can only cost time

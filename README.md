@@ -1,4 +1,4 @@
-# PIXEL ENGINE SIM v0.6 build 123
+# PIXEL ENGINE SIM v0.6 build 131
 
 **A lightweight, 8-bit style internal combustion engine *designer* & simulator** inspired by *Automation*.
 
@@ -136,7 +136,9 @@ saps power; a large radiator, electric fan and oil cooler keep it cool.
   **Cape Speedway** (3.1 km, long straights and fast sweepers), **Riverside GP** (2.2 km,
   balanced) and the **Nordschleife** (20.4 km, 44 corners, 290 m of elevation and 505 m of climbing
   per lap — geometry and gradients derived from a recorded GPX trace, corners numbered rather than
-  named because the detector can't be reliably aligned with the circuit's real corner names). You get a **lap time**, three **sector splits**, average / slowest / fastest speeds
+  named because the detector can't be reliably aligned with the circuit's real corner names) — plus
+  **22 real circuits** (Spa, Suzuka, Silverstone, Monza, Brands Hatch and the rest; see *Real
+  circuits* below) with measured width and terrain-model elevation. You get a **lap time**, three **sector splits**, average / slowest / fastest speeds
   and the number of gear changes, plus a top-down pixel map — the track drawn to its real, **varying**
   width,
   with an **optimised racing line** through it **coloured by what is limiting the car** — power, traction, cornering grip or braking — and a legend totalling
@@ -199,10 +201,31 @@ saps power; a large radiator, electric fan and oil cooler keep it cool.
 - **Auto Thermal mode** — coolant & oil drift toward load-dependent targets over time,
   balanced against the cooling subsystem's capacity (radiator airflow scales with RPM;
   the fan provides idle cooling).
-- **Engine sound** — Web Audio note pitched to firing frequency (scales with cylinder
-  count & RPM) and load, now with a **lope/burble** whose depth tracks the build's character —
-  a wild cam, a cross-plane V8 or anti-lag idles lumpy, while VVT and more cylinders smooth
-  it out.
+- **Engine sound** — synthesised from the **firing pulses** in an AudioWorklet: every cylinder
+  fires at its slot in the real firing order and its pulse goes down its own bank's exhaust
+  (one pipe for an inline engine, left and right for a V or a boxer), so engines with the same
+  firing rate no longer sound alike. A cross-plane V8 fires each bank unevenly
+  (1-5-4-8-6-3-7-2 → A-B-A-B-B-A-B-A), which is its burble; an inline six or a V12 fires each
+  bank evenly and sounds smooth. The pulses then run the **exhaust the build has**: the primary rings
+  at its quarter wave (c/4L, the same header length the breathing model tunes), as sharply as its
+  path-length spread allows (a cast log manifold barely rings, a jig-cut race header rings hard), the
+  system behind the collector drones at its half wave, and the silencer, the cat and a turbine take the
+  top off and the level down. Diesels add a combustion knock, 2-strokes ring, rotaries are
+  short and bright. **Load is in the pulses**: each is as hard as the charge it burned (manifold
+  pressure × how much fuel the air carried), and a harder pulse is also raspier, so flat out sounds
+  different from a cruise and not just louder; a fuel cut leaves only compressed air. The **lope**
+  (a wild cam or anti-lag idles lumpy, VVT smooths it) varies the pulses cycle to cycle with the
+  occasional partial burn, and fades with revs and load, since residual gas needs manifold vacuum to
+  flow back. **Overrun crackle** is a carburetted engine misfiring its unburnable overrun charge into a
+  pipe still hot from the pull, popping for a second or two; injection cuts the fuel and stays
+  quiet, anti-lag pops on purpose, and a working cat takes the edge off the pops.
+  Around the exhaust, the **rest of the car**: a turbo whines at its compressor's blade-pass
+  frequency from the live shaft speed and hisses through its **blow-off valve** on a lift from
+  boost, for as long as the charge volume takes to vent (no BOV on a diesel: no throttle to surge
+  against); a supercharger whines with the crank through its drive ratio; the **intake** roars at
+  the runner's Helmholtz frequency with airflow, open stacks loudest; and **knock** rings at the
+  chamber's first acoustic mode (Draper, 1.84 c / πB, ~6 kHz), a diesel's rattle on every pulse and
+  worse cold, a petrol engine's on the cycles past its knock limit.
 - **Scoring** — every build gets a graded scorecard (S–F) rating power, specific output,
   powerband width, efficiency, knock safety, drivability and **emissions**, shown on the
   design summary and the dyno.
@@ -528,11 +551,32 @@ Curve** tab remains a wide-open-throttle steady-state sweep for reading the full
   and invent corners. Elevation is taken from the file, so an imported circuit gets its real
   gradients; a trace that doesn't quite close is bridged. A 534-point, 20.5 km trace with 290 m of
   elevation imports and solves in ~120 ms. Imported tracks persist in `localStorage` and are marked
-  `*` in the list — **nothing is uploaded and no circuit data ships with the app**; importing is
-  something the user does with their own file.
+  `*` in the list — **nothing is uploaded**; importing is something the user does with their own
+  file. (The real circuits below are the only circuit data that ships, in their own file.)
   *Accuracy note: imported lap times read a little slow — the line is still an approximation of the
   minimum-time line, the width profile is modelled from the layout rather than surveyed, and the
   driver never errs. It is a consistent yardstick for comparing builds, not a lap record.*
+- **Real circuits (new, build 123)**: 22 real tracks under **REAL CIRCUITS** in the circuit menu —
+  COTA, Brands Hatch GP, Hungaroring, Catalunya, Hockenheim, the Indianapolis oval, Albert Park,
+  Hermanos Rodríguez, Gilles Villeneuve, Monza, Nürburgring GP, Bahrain, Interlagos, Sepang, Shanghai,
+  Silverstone, Sochi, Spa-Francorchamps, Red Bull Ring, Suzuka, Yas Marina and Zandvoort. No single
+  open source has everything, so `tools/import-real-tracks.mjs` combines three:
+  the [TUM racetrack database](https://github.com/TUMFTM/racetrack-database) gives the centreline every
+  5 m and the **measured** width to each side (from satellite imagery), in a local frame with no
+  geography and no height; [bacinger/f1-circuits](https://github.com/bacinger/f1-circuits) (or
+  OpenStreetMap, for Brands Hatch and the Indianapolis oval) gives the same circuit in latitude and
+  longitude, and a rigid fit lays one on the other (1.2–7.4 m RMS; Yas Marina 13 m, where the sources
+  differ in layout); a terrain model through [OpenTopoData](https://www.opentopodata.org) (EU-DEM 25 m,
+  USGS 10 m, SRTM 30 m) then gives each point its height, median-filtered and smoothed over ~60 m so
+  model noise doesn't invent crests. Lengths land within 0.3 % of the official figures, and the
+  rises where they are well published match: Spa 103 m (104), Red Bull Ring 68 m (65), Interlagos
+  41 m (43), Suzuka 42 m (40). The generated `tracks/real-circuits.js` is kept apart from the app
+  because it carries its sources' licences (TUM data LGPL-3.0, OpenStreetMap ODbL); without it the app
+  simply has its four test circuits.
+  *Caveats:* the layout is the one in the source data, which can predate a rebuild (Catalunya with the
+  chicane, Zandvoort before 2020, Yas Marina before 2021); a terrain model measures ground, so tree
+  cover and buildings leak a few metres into the street-side tracks (Albert Park, Mexico City); corners
+  are numbered, not named.
 - Elevation: circuits carry a height profile, and the lap is solved in three dimensions. Three
   effects, all of them real: gravity along the slope (`m·g·sinθ`, resisting a climb and adding to a
   descent — and *helping* the brakes uphill, which is why an uphill braking zone lets you brake so
@@ -639,7 +683,7 @@ node tools/stamp.mjs --check    # verify it is consistent and ahead of origin/ma
    each with its own firing frequency, fuelling, efficiency, emissions and sound.
 6. ~~**(A) Vehicle / drivetrain layer**~~ ✅ — chassis, drivetrain, gearbox types, differential
    types, tyres, aero, weight, brakes and suspension → acceleration, top speed, braking and the
-   0–200–0 test, with **per-chassis factory fitment**; a **test track** (four circuits, a
+   0–200–0 test, with **per-chassis factory fitment**; a **test track** (four test circuits and 22 real ones, a
    friction-circle lap solver with a late-apex racing line, variable width and 3D elevation,
    sector splits and a limit-coloured map); lap time feeding the **challenge system and
    scorecard**; and a **garage** holding any number of named chassis+engine combos.
@@ -769,7 +813,9 @@ measurement finds things. Each item is one PR.
 | — | Faster turbo lap walk | ✅ build 120 | The lap's turbo shaft starts settled at the fastest point and steps at 10 ms (laps unchanged within 0.01 s): a turbo Nordschleife solve 1.36 -> 0.27 s. Lap per Dollar target 70 s. |
 | — | Intake stroke integrated; gear held into braking | ✅ build 121 | The runner's air column, the valve curtain and the cylinder integrated from TDC to IVC: late-IVC loss, the charge's momentum and the tuning in one (NA power RMS ~10% -> ~6%). Real runner types on the compact-manifold presets. The driver holds a gear into the braking zone when shifting would cost time. Open: boosted engines high at the top; NA top-end fade. |
 | — | Charge heating; valve flow from Taylor | ✅ build 122 | The intake stroke obeys the first law: flow work, the hot residual and Woschni's wall heat during induction. The flat 0.95 VE ceiling and the cam bonus retired where it applies; the curtain's discharge coefficient averages Taylor's 0.42. NA power RMS ~7%. Open: boosted engines high at the top; NA top-end fade. |
-| — | Knock from the end gas; ECU boost taper | ✅ build 123 | Knock is the end gas's autoignition (Livengood-Wu with Douaud-Eyzat, unadjusted) on the model's own cycle; spark cost from the Wiebe phasing. BOOST TAPER FROM / BOOST AT LIMITER as ECU tune inputs, with reliability; factory presets calibrated to the maker's rating. Next: low-rpm turbo spool, then the turbine throat convention and real wheel sizes. |
+| — | Real circuits | ✅ build 123 | 22 real tracks (TUM centreline and measured width, georeferenced to f1-circuits/OSM, elevation from EU-DEM/USGS/SRTM): lengths within 0.3 %, Spa rises 103 m (real 104). test65. |
+| — | Live steering and power | ✅ build 130 | Live timing shows the steering wheel (road-wheel angle atan(wheelbase/r) on the racing line, times a new STEERING RATIO input on VEHICLE, default 15:1) and the engine's power now, as hp/kW and a bar against the peak of the curve the lap drives. test70. |
+| — | Knock from the end gas; ECU boost taper | ✅ build 131 | Knock is the end gas's autoignition (Livengood-Wu with Douaud-Eyzat, unadjusted) on the model's own cycle; spark cost from the Wiebe phasing. BOOST TAPER FROM / BOOST AT LIMITER as ECU tune inputs, with reliability; factory presets calibrated to the maker's rating. Next: low-rpm turbo spool, then the turbine throat convention and real wheel sizes. |
 | — | Suspension type and geometry | ⏸ on hold | Future development. Today a setup is roll gradient + static camber; the roll camber the geometry recovers is a fixed 50% for every car (CAMBER_RECOVERY), and lateral load transfer is split by static weight. Wanted: the geometry per car (MacPherson strut, double wishbone, multi-link, solid axle) giving its camber recovery, and front/rear roll stiffness (springs, anti-roll bars) giving the handling balance. Needs each preset's real suspension type. |
 | — | Spark torque from fuel | ✅ build 95 | `IMEP_K` replaced by Heywood's 0.8 × fuel-air cycle efficiency; each fuel's LHV/AFR_st enters. Spark torque −2.7%, full-load BSFC 280 g/kWh (real 270–300). Rotary/two-stroke type factors still fitted. |
 | — | `turboChoke` (boost taper) | ✅ build 94 | Retired. Turbine efficiency from blade speed ratio U/C, per-point compressor efficiency, a continuous rich-knock slope in place of a step, and sequential turbos staged as two turbines. Calibration improved on every measure. |
@@ -1092,6 +1138,7 @@ untranslated backlog is counted and printed on every test run rather than hidden
 - [x] Track elevation: gradient, slope-adjusted load and crest/compression vertical curvature, with an elevation profile on the lap report
 - [x] GPX circuit import (projection, uniform resampling, smoothing, real elevation) with localStorage persistence
 - [x] Nordschleife in the track pack (20.4 km, 290 m elevation) — a real road course as a benchmark
+- [x] 22 real circuits: TUM measured centreline and width, georeferenced, with terrain-model elevation
 - [x] Track objectives (lap targets on named circuits, budgeting the whole car) + lap time on the scorecard
 - [x] Printable dyno report (PNG + library-free PDF) with chart, peaks, engine spec, run conditions and tabulated data
 - [x] Printable hot lap report: map with throttle/braking highlighted, speed trace, sector times, per-corner speed traps with names

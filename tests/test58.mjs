@@ -74,7 +74,7 @@ console.log('\n== knock at the 2JZ redline against mixture ==');
 console.log('  ' + r.knock.map(k => `λ${k.l}: ${k.k.toFixed(1)}`).join(' · '));
 for (let i = 1; i < r.knock.length; i++) {
   if (!(r.knock[i].k >= r.knock[i - 1].k)) fails.push('knock should not fall as the mixture leans');
-  // As a rate, per unit lambda (build 123): the grid is uneven (steps of 0.01 to 0.05), and the knock score's scale is
+  // As a rate, per unit lambda (build 131): the grid is uneven (steps of 0.01 to 0.05), and the knock score's scale is
   // the end gas's now. The step this guards against was ~40 points in 0.02 (2000 per unit); a trend is far below 400.
   if (Math.abs(r.knock[i].k - r.knock[i - 1].k) / (r.knock[i].l - r.knock[i - 1].l) > 400) fails.push(`knock jumps ${(r.knock[i].k - r.knock[i - 1].k).toFixed(1)} points between λ${r.knock[i - 1].l} and λ${r.knock[i].l} — a step, not a trend`);
 }

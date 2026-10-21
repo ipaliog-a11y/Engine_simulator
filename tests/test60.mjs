@@ -27,11 +27,11 @@ const rows = await page.evaluate(() => PRESETS.filter(p => p.real).map(pr => {
   for (let i = 1; i < c.length; i++) step = Math.max(step, Math.abs(c[i].tq - c[i - 1].tq) / Math.max(1, c[i - 1].tq));
   let boostFalls = null;
   if (e.intake === 'turbo') { let prev = -1;
-    // falling short of what the ECU asks for there (boostTarget, build 123): a factory taper toward the limiter is the
+    // falling short of what the ECU asks for there (boostTarget, build 131): a factory taper toward the limiter is the
     // calibration, not the hardware failing to hold it
     for (let n = 1000; n <= e.redline; n += 250) { const b = steadyBoost(n); if (b < prev - 1e-3 && b < boostTarget(n) - 1e-3) { boostFalls = n; break; } prev = b; } }
   const anomalies = [];
-  // Build 123: a boosted engine with no ECU taper holds full boost to the limiter by its own calibration, and its power
+  // Build 131: a boosted engine with no ECU taper holds full boost to the limiter by its own calibration, and its power
   // follows it there (as in tests 44/46): not counted. Its factory rating is beyond what a taper from its torque peak
   // reaches (the RB26's 280 PS is a voluntary cap), which test48/this report still show.
   if (pk.rpm >= e.redline * 0.985 && !(e.intake !== 'na' && !(e.taperRpm > 0))) anomalies.push('limiter');
@@ -45,7 +45,7 @@ const rows = await page.evaluate(() => PRESETS.filter(p => p.real).map(pr => {
 
 // What real engines show today, and why. Each entry is a model limit, not a preset to fix by tuning.
 const KNOWN = {
-  // large truck diesels on the large frame: the VGT's open stop cannot hold target at the top. (Build 123: the TDI,
+  // large truck diesels on the large frame: the VGT's open stop cannot hold target at the top. (Build 131: the TDI,
   // the Duramax and the 2JZ left this list with their factory ECU taper, which is what really rolls them off; the
   // Cummins has none (no taper from its torque peak reaches its rating) and is not counted at the limiter.)
   'Cummins 6.7 (Ram HD 2019 HO)': ['boost-falls'],

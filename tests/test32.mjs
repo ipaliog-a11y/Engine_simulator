@@ -22,7 +22,9 @@ const geo = await page.evaluate(() => Object.keys(TRACKS).map(k => {
   const off_track = L.filter((q, i) => Math.abs(q.off) > T.pts[i].hw + 1e-6).length;
   // sign changes = the line crossing the track, i.e. genuinely working the width
   let cross = 0; for (let i = 0; i < L.length; i++) { const a = offs[i], b = offs[(i + 1) % L.length]; if (a * b < 0 && Math.abs(a - b) > 0.5) cross++; }
-  return { k, label: T.label, half, wMin: +T.wMin.toFixed(1), wMax: +T.wMax.toFixed(1), wLabel: T.wLabel, off_track,
+  // A real circuit's width is measured, not authored: the Indianapolis oval really is one width.
+  const constW = !!TRACKS[k].real && TRACKS[k].wprof.every(m => Math.abs(m - 1) < 0.02);
+  return { k, label: T.label, constW, half, wMin: +T.wMin.toFixed(1), wMax: +T.wMax.toFixed(1), wLabel: T.wLabel, off_track,
     wAvg: +(T.pts.reduce((a, q) => a + q.w * q.ds, 0) / T.length).toFixed(2),
     worst: +worst.toFixed(2), avg: +(offs.reduce((a, b) => a + Math.abs(b), 0) / offs.length).toFixed(2), cross, len: Math.round(L.length_), cen: Math.round(T.length) };
 }));
@@ -33,7 +35,7 @@ geo.forEach(g => {
   if (g.cross < 4) fails.push(`${g.label}: line does not cross the track (no out-in-out)`);
   // `width` is documented as the AVERAGE width — the profile is normalised so that stays true.
   if (Math.abs(g.wAvg - g.half * 2) > 0.15) fails.push(`${g.label}: quoted width ${g.half * 2}m is not the arc-length average (${g.wAvg}m)`);
-  if (g.wMax - g.wMin < 1) fails.push(`${g.label}: width does not actually vary`);
+  if (!g.constW && g.wMax - g.wMin < 1) fails.push(`${g.label}: width does not actually vary`);
 });
 
 // 2. Optimised line beats the centreline on every circuit
