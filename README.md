@@ -1,4 +1,4 @@
-# PIXEL ENGINE SIM v0.6 build 129
+# PIXEL ENGINE SIM v0.6 build 130
 
 **A lightweight, 8-bit style internal combustion engine *designer* & simulator** inspired by *Automation*.
 
@@ -201,7 +201,9 @@ saps power; a large radiator, electric fan and oil cooler keep it cool.
 - **Auto Thermal mode** — coolant & oil drift toward load-dependent targets over time,
   balanced against the cooling subsystem's capacity (radiator airflow scales with RPM;
   the fan provides idle cooling).
-- **Engine sound** — synthesised from the **firing pulses** in an AudioWorklet: every cylinder
+- **Engine sound** — plays on the **DYNO** tab from the engine controls, and on the **TRACK** tab
+  from the lap replay (its recorded rpm, throttle and boost, so shifts, lifts and blow-offs are heard
+  as the car goes round); other tabs are quiet. Synthesised from the **firing pulses** in an AudioWorklet: every cylinder
   fires at its slot in the real firing order and its pulse goes down its own bank's exhaust
   (one pipe for an inline engine, left and right for a V or a boxer), so engines with the same
   firing rate no longer sound alike. A cross-plane V8 fires each bank unevenly
