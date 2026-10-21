@@ -85,7 +85,8 @@ const CARS = [
     eng: { type: 'petrol4', cylinders: 4, bore_mm: 82.5, stroke_mm: 92.8, compression: 9.6,
            layout: 'inline', redline: 6500, intake: 'turbo', boost_bar: 1.1, turboSize: 'small',
            valves: 4, cam: 'stock', injector: 'direct', octane: 98, intercooler: 'large',
-           intakeSys: 'efi', exhaust: 'stock', airFilter: 'stock'    // no factory taper: the hardware makes its rating (build 131)
+           intakeSys: 'efi', exhaust: 'stock', airFilter: 'stock',
+           taperRpm: 1500, taperPct: 78   // the factory ECU's high-rpm boost taper, as on the preset (build 132)
          },
     car: { chassis: 'hatch', kg: 1351, drive: 'fwd', tire: 'sport', gbx: 'manual', gears: 6, diff: 'open' },
     real: { hp: 220, tq: 350, t100: 6.5, top: 246, limited: true } },
