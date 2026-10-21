@@ -20,6 +20,19 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 Working toward **v1.0 — every number derived, not fitted.**
 
+### Car pictures withdrawn (build 130)
+
+- **The pixel-art car is removed from the game:**
+  - the side view on the VEHICLE tab
+  - the car thumbnails on garage cards
+  - the top-down car on the TRACK map, which is back to the arrow it was before build 106
+- **Why:** the build 106 shapes were hand-tuned approximations that did not read as the real cars.
+- **Kept for later:** the rework toward real vehicle profiles is paused so the focus can stay on the
+  physics. That work is kept on the claude/car-sprites-archive branch: profiles from published
+  dimensions, a traced 911, and a shortlist of 3D models to trace the rest from.
+- **The engine view stays**, on the ENGINE tab and on saved engines' garage cards.
+- tests/test64 now covers the engine view, and checks that no car picture remains.
+
 ### The engine sound without the hiss (build 129)
 
 - Most engines sounded like noise, the V12 and the turbo diesel worst. Measured by muting one voice at a

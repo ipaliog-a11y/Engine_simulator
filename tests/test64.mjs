@@ -1,10 +1,11 @@
-// Pixel-art car and engine: drawn from the build, not decoration.
+// Pixel-art engine: drawn from the build, not decoration.
 //
-// WHY THIS EXISTS. Build 106 adds pictures of the car (VEHICLE tab, garage cards, the track map) and of
-// the engine (ENGINE tab, garage cards). They are drawn from the parts you chose, so the checks are
-// that every combination draws without throwing, that the picture actually changes when a part does
-// (a wing appears, bigger wheels are bigger, a mid-engined car carries its engine behind the cabin),
-// and that a saved build gets its own thumbnail even from an old record missing fields.
+// WHY THIS EXISTS. Build 106 added pictures of the car and the engine. The engine view (ENGINE tab,
+// garage cards) is drawn from the parts you chose, so the checks are that every combination draws
+// without throwing, that the picture actually changes when a part does, and that a saved engine gets
+// its own thumbnail even from an old record missing fields. The car pictures were withdrawn in build
+// 130 (archived on claude/car-sprites-archive): a saved car has no thumbnail, and the track map draws
+// the car as the arrow it was before build 106.
 import { chromium } from './pw.mjs';
 import { fileURLToPath, pathToFileURL } from 'url';
 import path from 'path';
@@ -18,52 +19,7 @@ await page.goto(pathToFileURL(path.join(repo, 'index.html')).href, { waitUntil: 
 await page.waitForTimeout(400);
 const fails = [];
 
-// ---- 1. every chassis x drive x aero draws, and the sprite responds to its parts ----
-const car = await page.evaluate(() => {
-  const out = { drawn: 0, blank: [], thrown: [] };
-  const lit = b => b.c.filter(Boolean).length;
-  const base = Object.assign({}, DEFAULT_VEHICLE);
-  for (const chassis of Object.keys(CHASSIS))
-    for (const drive of ['fwd', 'rwd', 'awd'])
-      for (const aeroFront of ['none', 'splitter', 'wing'])
-        for (const aeroRear of ['none', 'lip', 'wing'])
-          for (const aeroFloor of ['none', 'undertray', 'diffuser']) {
-            const b = new PixBuf(CAR_GW, CAR_GH);
-            try { drawCarSprite(b, Object.assign({}, base, { chassis, drive, aeroFront, aeroRear, aeroFloor }), DEFAULT_ENGINE, 0); }
-            catch (e) { out.thrown.push(chassis + ' ' + e.message); continue; }
-            out.drawn++; if (lit(b) < 400) out.blank.push(chassis);
-          }
-  // a rear wing puts pixels above the deck that were not there before
-  const draw = o => { const b = new PixBuf(CAR_GW, CAR_GH); drawCarSprite(b, Object.assign({}, base, { chassis: 'coupe' }, o), DEFAULT_ENGINE, 0); return b; };
-  const rowsUsed = b => { let top = CAR_GH; for (let y = 0; y < CAR_GH; y++) for (let x = 0; x < CAR_GW * 0.3; x++) if (b.get(x, y)) { top = Math.min(top, y); } return top; };
-  out.wingTop = rowsUsed(draw({ aeroRear: 'wing' })); out.plainTop = rowsUsed(draw({ aeroRear: 'none' }));
-  // bigger wheels: the tyre's dark disc grows
-  const tyre = b => b.c.filter(c => c === '#1c1c26').length + b.c.filter(c => c === '#9a9aaa' || c === '#6a6a7a').length;
-  out.wheel15 = tyre(draw({ wheelDia: 15, tireAspect: 55 })); out.wheel20 = tyre(draw({ wheelDia: 20, tireAspect: 55 }));
-  // the engine marker: in front of the cabin on a coupe, behind it on a mid-engine super
-  const marker = b => { for (let x = 0; x < CAR_GW; x++) for (let y = 0; y < CAR_GH; y++) if (b.get(x, y) === '#00ff88' && b.get(x + 1, y) === '#00ff88' && b.get(x + 2, y) === '#00ff88') return x; return -1; };
-  const geo = c => carGeometry(Object.assign({}, base, { chassis: c }));
-  out.coupeEng = marker(draw({ chassis: 'coupe' })); out.coupeMid = (geo('coupe').xr + geo('coupe').xf) / 2;
-  out.superEng = marker(draw({ chassis: 'super' })); out.superMid = (geo('super').xr + geo('super').xf) / 2;
-  out.kei = geo('kei').lenPx; out.pickup = geo('pickup').lenPx;
-  const p911 = VEHICLE_PRESETS.find(p => p.body && p.body.engPos === 'rear');
-  out.enginePlace911 = p911 ? enginePlace({ chassis: p911.chassis, body: p911.body }) : 'none';
-  return out;
-});
-console.log(`== car: ${car.drawn} combinations drawn · wing reaches row ${car.wingTop} vs ${car.plainTop} without · ` +
-  `wheel pixels 15" ${car.wheel15} / 20" ${car.wheel20} · engine at x ${car.coupeEng} (coupe, mid ${car.coupeMid.toFixed(0)}), ` +
-  `${car.superEng} (super, mid ${car.superMid.toFixed(0)}) · kei ${car.kei.toFixed(0)} px long, pickup ${car.pickup.toFixed(0)} ==`);
-if (car.thrown.length) fails.push('car sprite threw: ' + car.thrown.slice(0, 3).join('; '));
-if (car.blank.length) fails.push('car sprite nearly empty for: ' + [...new Set(car.blank)].join(', '));
-if (car.drawn !== 13 * 3 * 27) fails.push(`expected ${13 * 3 * 27} car combinations, drew ${car.drawn}`);
-if (!(car.wingTop < car.plainTop - 2)) fails.push('a rear wing does not show above the deck');
-if (!(car.wheel20 > car.wheel15)) fails.push('20" wheels are not drawn bigger than 15" ones');
-if (!(car.coupeEng > car.coupeMid)) fails.push('a front-engined coupe does not show its engine in front of the cabin');
-if (!(car.superEng >= 0 && car.superEng < car.superMid)) fails.push('a mid-engined super does not show its engine behind the cabin');
-if (!(car.pickup > car.kei * 1.3)) fails.push('a pickup is not drawn longer than a kei car');
-if (car.enginePlace911 !== 'rear') fails.push(`a rear-engined real car reads as ${car.enginePlace911}-engined, not rear`);
-
-// ---- 2. every engine type x layout x count x induction draws; parts change the picture ----
+// ---- 1. every engine type x layout x count x induction draws; parts change the picture ----
 const eng = await page.evaluate(() => {
   const out = { drawn: 0, thrown: [], blank: [] };
   const sig = b => b.c.join(',');
@@ -94,7 +50,7 @@ if (!eng.turboDiffers) fails.push('adding a turbo does not change the engine pic
 if (!eng.layoutDiffers) fails.push('a V6 is drawn the same as an inline six');
 if (!(eng.i6 > eng.i4)) fails.push('an inline six is not drawn longer than an inline four');
 
-// ---- 3. the previews on their tabs are drawn, and follow the form ----
+// ---- 2. the previews on their tabs are drawn, and follow the form ----
 const lit = sel => page.evaluate(s => {
   const c = document.querySelector(s); if (!c || !c.width) return 0;
   const d = c.getContext('2d').getImageData(0, 0, c.width, c.height).data; let n = 0;
@@ -102,42 +58,38 @@ const lit = sel => page.evaluate(s => {
   return n;
 }, sel);
 await page.click('#tabVehicle'); await page.waitForTimeout(300);
-const carLit = await lit('#carPreview');
-const carA = await page.evaluate(() => document.getElementById('carPreview').toDataURL());
-await page.selectOption('#vhAeroR', 'wing'); await page.waitForTimeout(200);
-const carB = await page.evaluate(() => document.getElementById('carPreview').toDataURL());
+const carCanvas = await page.evaluate(() => !!document.getElementById('carPreview'));
 await page.click('#tabDesign'); await page.waitForTimeout(300);
 const engLit = await lit('#enginePreview');
 await page.selectOption('#edIntake', 'na'); await page.waitForTimeout(150);
 const engA = await page.evaluate(() => { previewT = 0; renderEnginePreview(); return document.getElementById('enginePreview').toDataURL(); });
 await page.selectOption('#edIntake', 'turbo'); await page.waitForTimeout(150);
 const engB = await page.evaluate(() => { previewT = 0; renderEnginePreview(); return document.getElementById('enginePreview').toDataURL(); });
-console.log(`== previews: car ${carLit} bright pixels, engine ${engLit} · wing changes the car: ${carA !== carB} · turbo changes the engine: ${engA !== engB} ==`);
-if (carLit < 500) fails.push('the VEHICLE tab car preview is blank');
+console.log(`== previews: engine ${engLit} bright pixels · turbo changes the engine: ${engA !== engB} · car picture on the VEHICLE tab: ${carCanvas} ==`);
+if (carCanvas) fails.push('the VEHICLE tab still has a car picture');
 if (engLit < 500) fails.push('the ENGINE tab engine preview is blank');
-if (carA === carB) fails.push('fitting a rear wing did not change the car preview');
 if (engA === engB) fails.push('choosing a turbo did not change the engine preview');
 
-// ---- 4. garage thumbnails, including an old record without the newer fields ----
+// ---- 3. garage thumbnails: an old engine record gets one, a car record none ----
 const thumbs = await page.evaluate(() => {
   const old = { id: 'legacy1', name: 'Old car', date: '2025-01-01', kind: 'car',
     build: { engine: { type: 'petrol4', cylinders: 4, bore_mm: 86, stroke_mm: 86, layout: 'inline', intake: 'na' }, vehicle: { chassis: 'hatch' } }, stats: {} };
   const eng = { id: 'legacy2', name: 'Old engine', date: '2025-01-01', kind: 'engine', build: { engine: { cylinders: 8, layout: 'v' } }, stats: {} };
   garage.push(old, eng); renderGarage(); setTab('garage');
-  const imgs = [...document.querySelectorAll('#garagePanel .garage-thumb')];
-  return { n: imgs.length, ok: imgs.every(i => /^data:image\/png/.test(i.src) && i.src.length > 500) };
+  const card = name => [...document.querySelectorAll('#garagePanel .garage-item')].find(c => c.textContent.includes(name));
+  const img = c => c && c.querySelector('.garage-thumb');
+  const e = img(card('Old engine'));
+  return { car: !!img(card('Old car')), eng: !!e && /^data:image\/png/.test(e.src) && e.src.length > 500 };
 });
-console.log(`== garage: ${thumbs.n} thumbnails, all drawn: ${thumbs.ok} ==`);
-if (thumbs.n < 2 || !thumbs.ok) fails.push('saved cars and engines do not all get a thumbnail');
+console.log(`== garage: car card thumbnail ${thumbs.car}, engine card thumbnail drawn ${thumbs.eng} ==`);
+if (thumbs.car) fails.push('a saved car still gets a picture');
+if (!thumbs.eng) fails.push('a saved engine does not get its thumbnail');
 
-// ---- 5. the car on the track map is drawn where the replay puts it ----
+// ---- 4. the track replay still draws the car (as the arrow), without errors ----
 await page.click('#tabTrack'); await page.waitForTimeout(800);
-const onMap = await page.evaluate(() => {
-  const k = typeof topCarSprite === 'function' && Object.keys(topCarCache).length;
-  return { cached: k };
-});
-console.log(`== track: car sprites built ${onMap.cached} ==`);
-if (!onMap.cached) fails.push('the track map never drew the car sprite');
+const track = await page.evaluate(() => ({ sprite: typeof drawTopCar === 'function', mode: vizMode }));
+console.log(`== track: mode ${track.mode}, car sprite code present: ${track.sprite} ==`);
+if (track.sprite) fails.push('the track map still draws the car sprite');
 
 if (errors.length) fails.push(...errors);
 console.log(fails.length ? '\nFAIL:\n  ' + fails.join('\n  ') : '\nPASS');

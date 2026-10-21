@@ -111,9 +111,8 @@ footer{text-align:center;margin-top:16px;padding:8px;font-size:7px;color:#555;bo
 .design-panel.active{display:block}
 .design-panel h3{font-size:10px;color:#ffcc00;margin:2px 0 4px}
 .design-panel .hint{font-size:7px;color:#667;margin-bottom:10px}
-/* The car and engine as pixel art, drawn from the build (see PixBuf). */
+/* The engine as pixel art, drawn from the build (see PixBuf). */
 .pix-preview{display:block;width:100%;max-width:560px;margin:2px auto 10px;border:2px solid #333;background:#0a0a10;image-rendering:pixelated}
-.pix-preview.car{aspect-ratio:168/74}
 .pix-preview.eng{aspect-ratio:150/90}
 .design-section{font-size:8px;color:#00ccff;margin:12px 0 6px;border-bottom:2px solid #26263a;padding-bottom:3px;text-transform:uppercase}
 /* Fields are a size, not a share of the panel. A 1fr/1fr grid stretched every select and number box to
@@ -282,7 +281,7 @@ table.fuelmap td.live{box-shadow:inset 0 0 0 2px #fff;font-weight:bold}
 <body>
 <div class="container">
 <header>
-<h1>PIXEL ENGINE SIM v0.6 build 129</h1>
+<h1>PIXEL ENGINE SIM v0.6 build 130</h1>
 <div class="subtitle" id="subtitle">ENGINE DESIGNER • BUILD IT, THEN DRIVE IT</div>
 </header>
 <div class="build-strip" id="buildStrip">
@@ -1030,7 +1029,6 @@ This is a physics model, and like every model it leaves things out. These are th
 <!-- VEHICLE: drop the engine into a car and read its acceleration & top speed -->
 <div class="design-panel vehicle-panel" id="vehiclePanelTab">
 <h3>VEHICLE DESIGN</h3>
-<canvas id="carPreview" class="pix-preview car" role="img" aria-label="Pixel-art side view of the car as configured"></canvas>
 <div class="hint">Pick a chassis and it arrives on its factory spec — matching tyres, wheels, brakes, suspension and aero. Swap any part from there; your current engine is dropped in and the performance is computed live.</div>
 
 <div class="pick-row">
@@ -7279,21 +7277,19 @@ function garageDetail(g){
   }
   return '<div class="garage-detail">'+h+'</div>';
 }
-// A saved car or engine as a picture, drawn from its own record. Drawn at one cell per pixel and
-// scaled up by CSS (image-rendering: pixelated); kept by content, so re-listing redraws nothing.
+// A saved engine as a picture, drawn from its own record; a saved car has none. Drawn at one cell per
+// pixel and scaled up by CSS (image-rendering: pixelated); kept by content, so re-listing redraws nothing.
 const garageThumbs=new Map();
 function garageThumb(g){
-  const b=g&&g.build;if(!b||!b.engine)return '';
-  const car=gKind(g)==='car'&&b.vehicle;
-  const key=(car?'c':'e')+JSON.stringify(car?[b.vehicle,b.engine.intake]:b.engine);
+  const b=g&&g.build;if(!b||!b.engine||gKind(g)==='car')return '';
+  const key=JSON.stringify(b.engine);
   if(garageThumbs.has(key))return garageThumbs.get(key);
   let url='';
   try{
-    const gw=car?CAR_GW:ENG_GW,gh=car?CAR_GH:ENG_GH,buf=new PixBuf(gw,gh);
-    if(car)drawCarSprite(buf,Object.assign({},DEFAULT_VEHICLE,b.vehicle),b.engine,0.4);
-    else drawEngineSprite(buf,Object.assign({},DEFAULT_ENGINE,b.engine),0);
+    const gw=ENG_GW,gh=ENG_GH,buf=new PixBuf(gw,gh);
+    drawEngineSprite(buf,Object.assign({},DEFAULT_ENGINE,b.engine),0);
     const cv=document.createElement('canvas');cv.width=gw;cv.height=gh;
-    const cg=cv.getContext('2d');pixBackdrop(cg,gw,gh,1,0,car?CAR_GY+1:null);cg.drawImage(buf.canvas(),0,0);
+    const cg=cv.getContext('2d');pixBackdrop(cg,gw,gh,1,0,null);cg.drawImage(buf.canvas(),0,0);
     url=cv.toDataURL('image/png');
   }catch(err){url='';}                                // an odd old record just goes without a picture
   garageThumbs.set(key,url);return url;
@@ -7965,12 +7961,12 @@ addEventListener('resize',()=>{sizeCanvas();});
 const C={bg:'#0d0d18',block:'#2a2a3a',metal:'#6a6a7a',metalDark:'#3a3a4a',metalLight:'#9a9aaa',piston:'#c0c0d0',pistonTop:'#e0e0f0',rod:'#888898',fire:'#ff6600',spark:'#ffff00',intake:'#44aaff',exhaust:'#ff4422',text:'#e0e0e0',green:'#00ff88',yellow:'#ffcc00',red:'#ff4444',cyan:'#00ccff'};
 
 function drawPixelRect(x,y,w,h,color){ctx.fillStyle=color;ctx.fillRect(Math.floor(x),Math.floor(y),Math.floor(w),Math.floor(h))}
-// ====== PIXEL SPRITES: the car and the engine you built, drawn as 8-bit art ======
-// The ENGINE, VEHICLE and GARAGE tabs were forms and nothing else: you could build a mid-engine
-// hypercar on semi-slicks with a rear wing and never once see it. These sprites are drawn FROM the
-// build, not picked from a gallery: wheelbase sets the car's length, tyre width × aspect its
-// sidewall, the suspension its ride height, bore and stroke the shape of the block. Change a
-// field and the picture changes with it.
+// ====== PIXEL SPRITES: the engine you built, drawn as 8-bit art ======
+// The ENGINE and GARAGE tabs were forms and nothing else. The engine sprite is drawn FROM the build,
+// not picked from a gallery: bore and stroke set the shape of the block, the layout how it is seen,
+// and every bolt-on sits where it really lives. Change a field and the picture changes with it.
+// (Build 106 drew the car too; it was withdrawn in build 130 until it can match real cars. That work
+// is kept on the claude/car-sprites-archive branch.)
 //
 // Everything is drawn into a PixBuf, a grid of whole cells, then blown up with smoothing off. A
 // sprite can therefore never land on a fractional pixel and blur — the same lesson the main
@@ -8050,133 +8046,6 @@ function pixCaption(g,k,ox,gw,gh,title,sub){
   g.fillStyle='#ffcc00';g.textAlign='left';g.fillText(title,ox+4*k,y);
   g.fillStyle='#00ccff';g.textAlign='right';g.fillText(sub,ox+(gw-4)*k,y);g.textAlign='left';
 }
-// ---- the car, side on ----
-// u runs from the rear bumper (0) to the nose (1); heights are shares of the body's own height.
-// ws = base of the windscreen, rf/rr = the roof's front and rear, bk = base of the rear glass.
-// ovF/ovR are the overhangs as a share of the wheelbase. Length then comes from the wheelbase
-// itself, so a kei is short and a pickup long without either being drawn to a fixed size.
-const CAR_LOOK={
-  kei:     {h:1.55,ovF:0.20,ovR:0.14,nose:0.40,hood:0.52,ws:0.80,rf:0.70,rr:0.10,bk:0.04,deck:0.55,tail:0.50,col:'#ffcc00'},
-  hatch:   {h:1.44,ovF:0.30,ovR:0.18,nose:0.36,hood:0.50,ws:0.70,rf:0.56,rr:0.14,bk:0.06,deck:0.55,tail:0.50,col:'#ff4444'},
-  roadster:{h:1.24,ovF:0.30,ovR:0.26,nose:0.32,hood:0.52,ws:0.56,rf:0.50,rr:0.36,bk:0.28,deck:0.58,tail:0.52,col:'#44aaff'},
-  coupe:   {h:1.32,ovF:0.34,ovR:0.30,nose:0.30,hood:0.48,ws:0.66,rf:0.54,rr:0.34,bk:0.14,deck:0.58,tail:0.54,col:'#00ccff'},
-  sedan:   {h:1.44,ovF:0.34,ovR:0.36,nose:0.36,hood:0.52,ws:0.68,rf:0.58,rr:0.30,bk:0.18,deck:0.58,tail:0.54,col:'#9a9aaa'},
-  muscle:  {h:1.36,ovF:0.40,ovR:0.36,nose:0.40,hood:0.56,ws:0.62,rf:0.52,rr:0.34,bk:0.14,deck:0.58,tail:0.56,col:'#ff6600',stripe:1},
-  rally:   {h:1.44,ovF:0.30,ovR:0.18,nose:0.36,hood:0.50,ws:0.70,rf:0.56,rr:0.14,bk:0.06,deck:0.55,tail:0.50,col:'#3355ff',stripe:1},
-  gt:      {h:1.30,ovF:0.38,ovR:0.30,nose:0.30,hood:0.48,ws:0.58,rf:0.48,rr:0.30,bk:0.12,deck:0.56,tail:0.52,col:'#2a9a6a'},
-  super:   {h:1.16,ovF:0.36,ovR:0.36,nose:0.24,hood:0.36,ws:0.70,rf:0.60,rr:0.44,bk:0.16,deck:0.62,tail:0.58,col:'#ff2244'},
-  hyper:   {h:1.12,ovF:0.36,ovR:0.40,nose:0.22,hood:0.34,ws:0.70,rf:0.60,rr:0.46,bk:0.18,deck:0.62,tail:0.60,col:'#c0c0d0'},
-  proto:   {h:1.02,ovF:0.30,ovR:0.36,nose:0.24,hood:0.34,ws:0.66,rf:0.56,rr:0.44,bk:0.22,deck:0.66,tail:0.62,col:'#e8e8f0',stripe:1},
-  pickup:  {h:1.86,ovF:0.26,ovR:0.34,nose:0.50,hood:0.60,ws:0.72,rf:0.66,rr:0.47,bk:0.46,deck:0.60,tail:0.60,col:'#a0603a',bed:1},
-  suv:     {h:1.70,ovF:0.30,ovR:0.26,nose:0.46,hood:0.58,ws:0.72,rf:0.62,rr:0.08,bk:0.04,deck:0.60,tail:0.56,col:'#556677'}
-};
-const CAR_GW=168,CAR_GH=62,CAR_GY=56,CAR_PXM=26;      // grid, ground row, cells per metre
-const RIDE_M={comfort:0.16,sport:0.13,coilover:0.11,race:0.085};
-const CALIPER_COL={steel:'#6a6a7a',slotted:'#ff4444',big:'#ff4444',carbon:'#ffcc00'};
-function carLivery(v){return (CAR_LOOK[(v&&v.chassis)||'coupe']||CAR_LOOK.coupe).col;}
-// Where the engine sits: the same answer the weight split uses (engineLayoutOf), so the picture and
-// the physics cannot disagree about a 911.
-function enginePlace(v){return engineLayoutOf(v.chassis,v.body);}
-// The shape of the car from its record alone (never from what is loaded now), so a garage thumbnail
-// shows the car that was saved. Old records may lack fields; each falls back to the archetype.
-function carGeometry(v){
-  const ch=CHASSIS[v.chassis]||CHASSIS.coupe,L=CAR_LOOK[v.chassis]||CAR_LOOK.coupe;
-  const wb=(v.body&&v.body.wb)||ch.wb;
-  const wheel=v.wheelDia||18,tw=v.tireWidth||225,ta=v.tireAspect||40;
-  const rTyre=((wheel*25.4)/2+tw*ta/100)/1000;                       // m, the same sum buildVehicle does
-  let clear=(RIDE_M[v.suspension]||RIDE_M.sport)+(v.chassis==='pickup'||v.chassis==='suv'?0.08:0)-(v.chassis==='proto'?0.03:0);
-  clear=Math.max(0.05,clear);
-  const wbPx=wb*CAR_PXM,lenPx=wbPx*(1+L.ovF+L.ovR);
-  const x0=(CAR_GW-lenPx)/2;
-  return {L,wb,wbPx,lenPx,x0,clear,rTyre,rPx:rTyre*CAR_PXM,rimFrac:(wheel*25.4/2)/(rTyre*1000),
-    xr:x0+L.ovR*wbPx,xf:x0+(L.ovR+1)*wbPx,
-    bodyBot:CAR_GY-clear*CAR_PXM,bodyH:(L.h-clear)*CAR_PXM};
-}
-function drawCarSprite(buf,v,e,t){
-  v=v||DEFAULT_VEHICLE;t=t||0;
-  const G=carGeometry(v),L=G.L,col=L.col;
-  const X=u=>G.x0+u*G.lenPx,Y=f=>G.bodyBot-f*G.bodyH;
-  // the silhouette, rear bumper to nose
-  const top=[[0,L.tail],[0.03,L.deck],[L.bk,L.deck],[L.rr,1],[L.rf,1],[L.ws,L.hood],[0.95,L.nose+0.06],[1,L.nose]];
-  const pts=top.map(p=>[X(p[0]),Y(p[1])]);
-  pts.push([X(1),Y(0.16)],[X(0.985),Y(0)],[X(0.015),Y(0)],[X(0),Y(0.18)]);
-  buf.poly(pts,col);
-  // roof line per column, for the glass, the highlight and the stripes
-  const topAt=x=>{const u=(x-G.x0)/G.lenPx;
-    for(let k=0;k+1<top.length;k++){const a=top[k],b=top[k+1];if(u>=a[0]&&u<=b[0])return Y(a[1]+(b[1]-a[1])*(u-a[0])/Math.max(1e-6,b[0]-a[0]));}
-    return Y(L.nose);};
-  const belt=Y(Math.max(L.hood,L.deck)+0.02),lower=Y(0.30);
-  const hi=shadeHex(col,0.4),lo=shadeHex(col,-0.3),glass='#1a2a3a';
-  for(let x=Math.ceil(X(0));x<=Math.floor(X(1));x++){
-    const ty=Math.ceil(topAt(x+0.5)-0.5);
-    if(buf.get(x,ty)===col)buf.set(x,ty,hi);
-    for(let y=Math.ceil(lower);y<G.bodyBot;y++)if(buf.get(x,y)===col)buf.set(x,y,lo);
-    const u=(x+0.5-G.x0)/G.lenPx;
-    if(u>L.bk+0.02&&u<L.ws-0.015&&ty+2<belt){
-      const pillar=Math.abs(u-(L.rf+L.rr)/2)*G.lenPx<1.2&&v.chassis!=='roadster';
-      for(let y=ty+1;y<belt;y++)buf.set(x,y,pillar?col:glass);
-    }
-  }
-  // the pickup's bed is open
-  if(L.bed)for(let x=Math.ceil(X(0.04));x<X(L.bk-0.02);x++){buf.set(x,Math.ceil(Y(L.deck)),'#2a2a3a');buf.set(x,Math.ceil(Y(L.deck))+1,lo);}
-  // glint on the screen, door shut-line, lamps
-  buf.set(X(L.ws)-4,belt-3,'#00ccff');buf.set(X(L.ws)-5,belt-4,'#00ccff');
-  for(let y=Math.ceil(belt);y<G.bodyBot-2;y++)buf.set(X((L.rf+L.ws)/2),y,shadeHex(col,-0.45));
-  buf.rect(X(1)-2,Y(L.nose)+1,2,1,'#fff2a8');
-  buf.rect(X(0),Y(L.tail)+1,1,2,'#ff4444');
-  if(L.stripe)buf.rect(X(0.06),belt+2,G.lenPx*0.86,1,v.chassis==='proto'?'#00ff88':'#f0f0f0');
-  // a race-stripped car wears a number
-  if(v.weightRed==='race'){const cx=X((L.rf+L.rr)/2),cy=(belt+G.bodyBot)/2;buf.disc(cx,cy,3,'#f0f0f0');buf.rect(cx-0.5,cy-1.5,1,3,'#111118');}
-  // the engine, x-rayed where it sits, so front-, mid- and rear-engined cars read differently
-  const place=enginePlace(v);
-  const eu=(place==='front'?G.xf-G.wbPx*0.14:place==='mid'?G.xr+G.wbPx*0.24:G.xr-G.wbPx*0.10)-G.x0;
-  const ex=X(Math.min(0.93,Math.max(0.07,eu/G.lenPx))),ey=G.bodyBot-G.bodyH*0.24;
-  buf.rect(ex-4,ey-2,8,4,'#0d0d18');buf.rect(ex-3,ey-1,6,2,'#00ff88');
-  if(e&&e.intake==='turbo')buf.rect(ex-6,ey-1,2,2,'#ff6600');
-  if(e&&e.intake==='supercharger')buf.rect(ex-1,ey-4,3,2,'#ffcc00');
-  // aero
-  const dark='#3a3a4a';
-  if(v.aeroFront==='splitter')buf.rect(X(0.94),G.bodyBot,X(1)-X(0.94)+3,1,dark);
-  if(v.aeroFront==='wing'){buf.rect(X(0.96),G.bodyBot-1,X(1)-X(0.96)+5,2,dark);buf.rect(X(1)+4,G.bodyBot-3,1,4,dark);}
-  if(v.aeroRear==='lip')buf.rect(X(0.01),Y(L.deck)-1,4,1,lo);
-  if(v.aeroRear==='wing'){
-    const wy=Y(L.deck)-6;
-    buf.rect(X(0.05),wy,1,6,dark);buf.rect(X(0.10),wy,1,6,dark);
-    buf.rect(X(0)-1,wy-2,X(0.13)-X(0)+2,2,lo);buf.rect(X(0)-1,wy-4,1,6,dark);
-  }
-  if(v.aeroFloor==='undertray')buf.rect(X(0.05),G.bodyBot,G.lenPx*0.9,1,'#26263a');
-  if(v.aeroFloor==='diffuser')for(let k=0;k<3;k++)buf.line(X(0)+k*3,G.bodyBot+1,X(0)+k*3+4,G.bodyBot-2,dark);
-  // wheels: a dark arch first, then tyre, rim, spokes, caliper and the hub
-  const driven=v.drive||'rwd',slick=v.tireType==='slick',calip=CALIPER_COL[v.brakeType]||CALIPER_COL.slotted;
-  for(const [wx,isFront] of [[G.xr,false],[G.xf,true]]){
-    const r=G.rPx,cy=CAR_GY-r,rr=r*G.rimFrac;
-    buf.disc(wx,cy,r+1.6,'#05050a');
-    buf.disc(wx,cy,r,'#1c1c26');
-    if(!slick)for(let k=0;k<12;k++){const a=t+k*Math.PI/6;buf.set(wx+Math.cos(a)*(r-0.7)-0.5,cy+Math.sin(a)*(r-0.7)-0.5,'#33334a');}
-    buf.disc(wx,cy,rr,'#6a6a7a');buf.disc(wx,cy,rr-1,'#9a9aaa');
-    for(let k=0;k<5;k++){const a=t+k*Math.PI*2/5;buf.line(wx-0.5,cy-0.5,wx-0.5+Math.cos(a)*(rr-1),cy-0.5+Math.sin(a)*(rr-1),'#c0c0d0');}
-    for(let k=-1;k<=1;k++){const a=-Math.PI*0.62+k*0.32;buf.set(wx-0.5+Math.cos(a)*(rr-1.2),cy-0.5+Math.sin(a)*(rr-1.2),calip);}
-    const powered=driven==='awd'||(driven==='fwd')===isFront;
-    buf.rect(wx-1,cy-1,2,2,powered?'#00ff88':'#3a3a4a');
-  }
-  buf.outline('#05050a');
-  buf.under(G.x0-2,CAR_GY,G.lenPx+4,1,'#05050a');                      // contact shadow
-  return G;
-}
-// Paint a car into a canvas: backdrop, sprite and (optionally) the caption band under it.
-function paintCar(cv,v,e,opts){
-  opts=opts||{};
-  const gh=opts.caption?CAR_GH+12:CAR_GH;
-  const F=fitPixCanvas(cv,CAR_GW,gh);if(!F)return false;
-  const {g,k,ox,bw,bh}=F;
-  pixBackdrop(g,bw,bh,k,ox,CAR_GY+1);
-  const buf=new PixBuf(CAR_GW,CAR_GH);
-  drawCarSprite(buf,v,e,opts.t||0);
-  g.drawImage(buf.canvas(),ox,0,CAR_GW*k,CAR_GH*k);
-  if(opts.caption)pixCaption(g,k,ox,CAR_GW,CAR_GH,opts.title,opts.sub);
-  return true;
-}
-
 // ---- the engine, from outside ----
 // An inline is drawn side on, so you can count its cylinders; a V and a boxer are drawn from the front,
 // because the angle between the banks IS the layout; a rotary is its stack of housings. Around the
@@ -8381,19 +8250,11 @@ function paintEngine(cv,e,opts){
   return true;
 }
 
-// ---- the live previews on the ENGINE and VEHICLE tabs ----
-// Redrawn every frame while their tab is open (see loop): the car is the BUILT car, which buildVehicle
-// refreshes on every field change; the engine is the FORM, so it changes as you edit, before BUILD.
-// Wheels turn and the turbo spins slowly unless the system asks for reduced motion.
+// ---- the live preview on the ENGINE tab ----
+// Redrawn every frame while the tab is open (see loop). The engine is the FORM, so it changes as you
+// edit, before BUILD. The turbo spins slowly unless the system asks for reduced motion.
 let previewT=0;
 const previewStill=!!(window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches);
-function renderCarPreview(){
-  const cv=document.getElementById('carPreview');if(!cv||!vehicle||!vehicle.chassis)return;
-  const dl={fwd:'FWD',rwd:'RWD',awd:'AWD'}[vehicle.drive]||'RWD';
-  const fw=(vehicle.fWt!=null?vehicle.fWt:(CHASSIS[vehicle.chassis]||CHASSIS.coupe).fWt);
-  paintCar(cv,vehicle,engine,{t:previewT*2.5,caption:true,title:tr(vehicle.chLabel||''),
-    sub:dl+' • '+Math.round(vehicle.mass||0)+' kg • '+Math.round(fw*100)+'% F'});
-}
 function renderEnginePreview(){
   const cv=document.getElementById('enginePreview');if(!cv)return;
   const e=readEngineFromForm();
@@ -8402,31 +8263,6 @@ function renderEnginePreview(){
 function stepPreviews(dt){
   if(!previewStill)previewT+=dt;
   if(vizMode==='design')renderEnginePreview();
-  else if(vizMode==='vehicle')renderCarPreview();
-}
-// ---- top-down car for the track map ----
-// 14 x 8 cells, built once per livery and pedal state and then rotated: a car you can see turning,
-// still green on the throttle and red on the brake like the arrow it replaces.
-const topCarCache={};
-function topCarSprite(col,state){
-  const key=col+state;if(topCarCache[key])return topCarCache[key];
-  const b=new PixBuf(16,10),hi=shadeHex(col,0.35),lo=shadeHex(col,-0.35);
-  b.rect(2,1,3,1,'#1c1c26');b.rect(10,1,3,1,'#1c1c26');b.rect(2,8,3,1,'#1c1c26');b.rect(10,8,3,1,'#1c1c26');   // tyres
-  b.rect(1,2,14,6,col);b.rect(1,2,14,1,hi);b.rect(1,7,14,1,lo);
-  b.rect(9,3,2,4,'#1a2a3a');b.rect(4,3,1,4,'#1a2a3a');               // windscreen, rear glass
-  b.rect(5,3,4,4,shadeHex(col,0.15));                                 // roof
-  b.rect(15,2,1,2,'#fff2a8');b.rect(15,6,1,2,'#fff2a8');              // headlamps
-  b.rect(0,2,1,2,state==='brk'?'#ff2222':'#882222');b.rect(0,6,1,2,state==='brk'?'#ff2222':'#882222');
-  b.outline('#000000');
-  const cv=b.canvas();topCarCache[key]=cv;return cv;
-}
-function drawTopCar(g,x,y,heading,col,state){
-  const spr=topCarSprite(col,state),s=1.5;
-  g.save();g.translate(x,y);g.rotate(heading);g.imageSmoothingEnabled=false;
-  if(state!=='coast'){g.fillStyle=state==='brk'?'rgba(255,85,85,0.35)':'rgba(0,255,136,0.35)';
-    g.fillRect(-spr.width*s/2-2,-spr.height*s/2-2,spr.width*s+4,spr.height*s+4);}
-  g.drawImage(spr,-spr.width*s/2,-spr.height*s/2,spr.width*s,spr.height*s);
-  g.restore();
 }
 // ---- Engine test-bench schematic (replaces the old blur animation) ----
 // Live values annotate each subsystem around a central engine. Laid out in a base
@@ -9226,14 +9062,18 @@ function drawTrack(){
   ctx.fillStyle=C.yellow;ctx.font='7px "Press Start 2P"';
   ctx.fillText(Math.round(L.v[slow]*3.6)+' km/h',px(line[slow])+8,py(line[slow])+3);
   ctx.fillStyle='#ff5555';ctx.fillRect(px(line[slow])-3,py(line[slow])-3,6,6);
-  // The car: a trail over the last two seconds, then the car itself in its livery, pointing along the
-  // line, with a green glow on the throttle and a red one (and lit brake lamps) on the brake.
+  // The car: a trail over the last two seconds, then the car pointing along the line, green on the
+  // throttle, red on the brake, white in between.
   if(live){
     const tt=L.replay.tAt;let k=live.i,steps=0;
     ctx.strokeStyle='rgba(255,255,255,0.35)';ctx.lineWidth=3;ctx.beginPath();ctx.moveTo(px(live),py(live));
     while(steps<n&&lapReplay.t-tt[k]<2&&lapReplay.t>=tt[k]){ctx.lineTo(px(line[k]),py(line[k]));k=(k-1+n)%n;steps++;}
     ctx.stroke();
-    drawTopCar(ctx,px(live),py(live),live.hd,carLivery(vehicle),live.brk>0.05?'brk':live.thr>0.95?'thr':'coast');
+    const cxp=px(live),cyp=py(live),a=live.hd,sz=7;
+    ctx.fillStyle=live.brk>0.05?'#ff5555':live.thr>0.95?'#00ff88':'#ffffff';
+    ctx.beginPath();ctx.moveTo(cxp+Math.cos(a)*sz*1.4,cyp+Math.sin(a)*sz*1.4);
+    ctx.lineTo(cxp+Math.cos(a+2.5)*sz,cyp+Math.sin(a+2.5)*sz);ctx.lineTo(cxp+Math.cos(a-2.5)*sz,cyp+Math.sin(a-2.5)*sz);
+    ctx.closePath();ctx.fill();ctx.strokeStyle='#000';ctx.lineWidth=1.5;ctx.stroke();
   }
   ctx.restore();
   if(live)(lapReplay.gauges==='analog'?drawAnalogHud:drawReplayHud)(L,live,W,topBar);
