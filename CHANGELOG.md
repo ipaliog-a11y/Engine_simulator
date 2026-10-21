@@ -20,6 +20,29 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 Working toward **v1.0 — every number derived, not fitted.**
 
+### The fuel's octane sensitivity; the end gas loses heat to the walls (build 132)
+
+- **Octane index.** Douaud & Eyzat's delay correlation was fitted on the RON test, so it read a fuel's RON as if
+  every engine ran the RON test's conditions. A fuel's resistance in a given engine is its octane index,
+  OI = RON - K S (Kalghatgi, SAE 2005-01-0239): S = RON - MON is the fuel's sensitivity, and K is set by how hot the
+  gas is when compressed, K = 0.0056 T_comp15 - 4.68, with T_comp15 the unburned gas's temperature at 15 bar on its
+  own compression from the start of the stroke. K is 0 at the RON test (~836 K), positive in a hotter engine (the
+  MON test, K = 1), negative in a cooler, boosted or direct-injected one (Kalghatgi measures -0.4 to -0.74 in DI
+  engines), where a sensitive fuel beats its RON. S: pump and race petrol 10, E85 17, methanol 20.
+- **The end gas loses heat to the walls.** The integral compressed the unburned gas adiabatically; it now loses
+  Woschni's wall heat (the same correlation and wall temperature the intake stroke uses) over the chamber's surface
+  (piston crown, pent-roof head, the liner swept so far), and so does the bulk gas that compresses it. Slowest at low
+  rpm, where the gas has the most time, which is where knock was hardest.
+- Result: boosted petrol engines run 10-25 deg less retard at low rpm. Low-rpm torque against the maker's: Civic -4%,
+  RB26 -1%, STI 0%, Evo -1%, GR Yaris -9%, GTI -16%, Alto -21%, Supra +8% (before: -28% to -48%). Still short: the
+  TwinAir (-36%, still knock-limited) and the EcoBoost (-40%), and the RS3 (-50%), whose large frame does not spool
+  below 3300 rpm (next item). NA engines run 1-5 deg retard at 2000 rpm; their peak power is unchanged.
+- **Factory tapers re-solved** by the same rule (gentlest taper from the maker's torque peak that meets the rating):
+  peak power moved with the knock limit. The GTI and the Hellcat now exceed their ratings on the hardware alone and
+  carry a taper (1500 rpm / 78%, 4000 / 85%).
+- Not used: the lambda-dependent form of K (0.00497 T_comp15 - 0.135 lambda - 3.67) (the model's knock already carries the
+  measured trend per unit of enrichment).
+
 ### Knock from the end gas's chemistry; the ECU's boost taper as a tune point (build 131)
 
 - **Knock.** It was a points score set by hand (30 a bar of boost, 8 a unit of compression, 0.8 a degree of
