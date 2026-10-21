@@ -20,6 +20,23 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 Working toward **v1.0 — every number derived, not fitted.**
 
+### The exhaust in the engine sound (build 122)
+
+- Build 121 rang every petrol engine at one fixed pipe tone. Each bank's pulses now run the build's own
+  exhaust: the primary rings at its quarter wave, c/4L at the gas's sound speed, from the `primL` the
+  breathing model already tunes (so a race header cut for 8800 rpm, 500 mm, sings at 309 Hz where one cut
+  for 6600, 659 mm, sings at 231 Hz). Its Q comes from the header's path-length spread `exhSigma`: 1.4 for
+  a cast log, 4.2 for a sport header, 10 for a race one. The system behind the collector (`sysL`, open at
+  the tailpipe, gas at about 0.65 of port temperature) adds its half-wave drone.
+- The silencer is not in the breathing model (it only sees back-pressure), so `SILENCER` states it: a
+  chambered can on a stock system, a straight-through one on sport, next to nothing on race. A cat
+  absorbs the top end in proportion to its restriction, and a turbine muffles both top end and level.
+- Stock systems, cats and turbos are now quieter than before and race headers louder; the overall gain
+  is recalibrated so a sport system matches the old loudness.
+- test66: the primary rings at c/4L and its harmonic stands out of the spectrum, a header cut for higher
+  revs is shorter and higher, ring follows path spread, and stock < race, cat < decat, turbo < NA in
+  level and brightness.
+
 ### Engine sound from the firing pulses (build 121)
 
 - The note was one sawtooth at the firing frequency, so every engine with the same firing rate sounded

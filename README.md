@@ -1,4 +1,4 @@
-# PIXEL ENGINE SIM v0.6 build 121
+# PIXEL ENGINE SIM v0.6 build 122
 
 **A lightweight, 8-bit style internal combustion engine *designer* & simulator** inspired by *Automation*.
 
@@ -204,7 +204,11 @@ saps power; a large radiator, electric fan and oil cooler keep it cool.
   (one pipe for an inline engine, left and right for a V or a boxer), so engines with the same
   firing rate no longer sound alike. A cross-plane V8 fires each bank unevenly
   (1-5-4-8-6-3-7-2 → A-B-A-B-B-A-B-A), which is its burble; an inline six or a V12 fires each
-  bank evenly and sounds smooth. Diesels add a combustion knock, 2-strokes ring, rotaries are
+  bank evenly and sounds smooth. The pulses then run the **exhaust the build has**: the primary rings
+  at its quarter wave (c/4L, the same header length the breathing model tunes), as sharply as its
+  path-length spread allows (a cast log manifold barely rings, a jig-cut race header rings hard), the
+  system behind the collector drones at its half wave, and the silencer, the cat and a turbine take the
+  top off and the level down. Diesels add a combustion knock, 2-strokes ring, rotaries are
   short and bright. A **lope** whose depth tracks the build — a wild cam or anti-lag idles
   lumpy, VVT smooths it — jitters the pulses at idle. Loudness follows power.
 - **Scoring** — every build gets a graded scorecard (S–F) rating power, specific output,

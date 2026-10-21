@@ -87,7 +87,7 @@ console.log(`== period: I4 @3000 ${res.periodI4.toFixed(2)} ms · 2-stroke twin 
 
 for (const [n, r] of Object.entries(res)) if (typeof r === 'object' && r.rmsL !== undefined) {
   if (!r.finite) fails.push(`${n}: non-finite samples`);
-  if (!(r.rmsL > 0.05)) fails.push(`${n}: nearly silent (rms ${r.rmsL.toFixed(3)})`);
+  if (!(r.rmsL > 0.03)) fails.push(`${n}: nearly silent (rms ${r.rmsL.toFixed(3)})`);
   if (!(r.peak < 1.5)) fails.push(`${n}: peak ${r.peak.toFixed(2)} at level 1`);
   if (r.banks === 2 && !(r.lrDiff > 0.3)) fails.push(`${n}: two banks but left and right are nearly the same`);
   if (r.banks === 1 && !(r.lrDiff < 1e-6)) fails.push(`${n}: one exhaust but left and right differ`);

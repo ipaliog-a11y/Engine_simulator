@@ -282,7 +282,7 @@ table.fuelmap td.live{box-shadow:inset 0 0 0 2px #fff;font-weight:bold}
 <body>
 <div class="container">
 <header>
-<h1>PIXEL ENGINE SIM v0.6 build 121</h1>
+<h1>PIXEL ENGINE SIM v0.6 build 122</h1>
 <div class="subtitle" id="subtitle">ENGINE DESIGNER • BUILD IT, THEN DRIVE IT</div>
 </header>
 <div class="build-strip" id="buildStrip">
@@ -993,7 +993,7 @@ race parts win on power but cost money and reliability. Balance the brief.
 <section class="guide-page" id="gp-options" data-cat="more" data-title="Options &amp; tips" hidden>
 <h4 class="guide-title">Options &amp; tips</h4>
 <div class="guide-body" data-gk="options">
-<b>ENGINE SOUND</b> — built from the firing pulses: every cylinder fires at its place in the firing order and its pulse goes down its own bank's exhaust, left and right for a V or a boxer. That is where a cross-plane V8's burble comes from, and why an inline six sounds smooth. A wild cam makes the idle lope.<br><b>WEAR &amp; DAMAGE</b> — with wear on, detonation, overheating, running lean under boost and over-revving damage the engine and can blow it; with it off the engine is invincible, which is the way to experiment.<br><b>LANGUAGE</b> — English or Greek. Pages added since the Greek translation was made appear in English.
+<b>ENGINE SOUND</b> — built from the firing pulses: every cylinder fires at its place in the firing order and its pulse goes down its own bank's exhaust, left and right for a V or a boxer. That is where a cross-plane V8's burble comes from, and why an inline six sounds smooth. Then the pulses run the exhaust you fitted: the header rings at its own length (a race header cut for high revs is shorter and sings higher; a cast manifold barely rings), the system behind it drones, and the silencer, the cat and a turbo, if there is one, quieten it. A wild cam makes the idle lope.<br><b>WEAR &amp; DAMAGE</b> — with wear on, detonation, overheating, running lean under boost and over-revving damage the engine and can blow it; with it off the engine is invincible, which is the way to experiment.<br><b>LANGUAGE</b> — English or Greek. Pages added since the Greek translation was made appear in English.
 </div>
 <div class="guide-body" data-gk="tip">
 Tip: turn WEAR off in OPTIONS to
@@ -6594,6 +6594,14 @@ function stepThermal(dt){
 // rings its own resonator and saturates on its own, so a bank that gets two pulses close together
 // sounds different from one that gets them evenly spaced. Nothing in here knows what a V8 is: the
 // cross-plane burble falls out of 1-5-4-8-6-3-7-2 firing its banks A-B-A-B-B-A-B-A.
+// THE PIPES (build 122). Each pulse then runs the exhaust it was given. The primary rings at its
+// quarter wave, c/4L, closed at the valve and open at the collector, at the sound speed of the gas in
+// it; how sharply it rings is the header's own path-length spread (EXHAUST.sigma): a cast log
+// manifold smears its reflections and barely rings, a jig-cut race header rings hard. The system
+// behind the collector (sysL, open at the tailpipe) adds its half-wave drone, and then the silencer,
+// the cat's honeycomb and a turbine, if there is one, take the top off and the level down. The
+// primary is the same one the breathing model tunes, so a race header cut for 8000 rpm is shorter
+// and sounds higher than one cut for 5200.
 // The noise in a pulse is a fixed seeded table restarted on every pulse, so with no lope the output
 // is exactly periodic over one engine cycle; tests/test65 depends on that.
 const SOUND_WORKLET_SRC=`
@@ -6608,17 +6616,27 @@ class EnginePulse extends AudioWorkletProcessor{
   configure(c){
     const t=c.tone,sr=sampleRate;
     this.cfg=c;this.seed=12345;this.phase=0;this.cycle=0;this.next=0;this.nextAt=c.events[0].at;
+    const x=c.exhaust;
     this.decay=Math.exp(-1/(t.tau*1e-3*sr));this.clickDecay=Math.exp(-1/(0.5e-3*sr));
+    this.mufA=1-Math.exp(-2*Math.PI*Math.min(x.muffleHz,0.45*sr)/sr);
     this.banks=[];
     for(let b=0;b<c.banks;b++){
-      // RBJ band-pass (0 dB peak) at the bank's exhaust tone; bank B a touch lower, as its pipe is longer
-      const f0=t.res*(b?0.94:1),w=2*Math.PI*f0/sr,al=Math.sin(w)/(2*t.q),a0=1+al;
       const noise=new Float32Array(Math.ceil(sr*0.03));
       for(let i=0;i<noise.length;i++)noise[i]=this.rnd()*2-1;
       const pan=c.banks===1?[0.7071,0.7071]:b?[0.45,0.85]:[0.85,0.45];
-      this.banks.push({env:0,clk:0,ni:noise.length,noise,b0:al/a0,b2:-al/a0,a1:-2*Math.cos(w)/a0,a2:(1-al)/a0,
-        x1:0,x2:0,y1:0,y2:0,lp:0,s1:0,h:0,gl:pan[0],gr:pan[1]});
+      this.banks.push({env:0,clk:0,ni:noise.length,noise,lp:0,m1:0,m2:0,s1:0,h:0,gl:pan[0],gr:pan[1],
+        // bank B's run to its tailpipe is a little longer (the crossover), so its pipes sit a touch lower
+        prim:this.bandpass(x.primF*(b?0.97:1),x.primQ),sys:this.bandpass(x.sysF*(b?0.97:1),x.sysQ)});
     }
+  }
+  // RBJ band-pass, 0 dB at the peak
+  bandpass(f0,q){
+    const w=2*Math.PI*Math.min(f0,0.45*sampleRate)/sampleRate,al=Math.sin(w)/(2*q),a0=1+al;
+    return {b0:al/a0,b2:-al/a0,a1:-2*Math.cos(w)/a0,a2:(1-al)/a0,x1:0,x2:0,y1:0,y2:0};
+  }
+  static run(f,x){
+    const y=f.b0*x+f.b2*f.x2-f.a1*f.y1-f.a2*f.y2;
+    f.x2=f.x1;f.x1=x;f.y2=f.y1;f.y1=y;return y;
   }
   fire(ev,lope){
     const k=this.banks[ev.bank];
@@ -6627,7 +6645,7 @@ class EnginePulse extends AudioWorkletProcessor{
   process(inputs,outputs,params){
     const out=outputs[0],L=out[0],R=out[1]||out[0],c=this.cfg;
     if(!c){L.fill(0);if(R!==L)R.fill(0);return true;}
-    const t=c.tone,ev=c.events,n=ev.length;
+    const t=c.tone,x=c.exhaust,ev=c.events,n=ev.length,run=EnginePulse.run,mufA=this.mufA;
     const rpm=params.rpm[0],level=params.level[0],lope=params.lope[0];
     const dPh=rpm/60/c.cycleRevs/sampleRate;                       // engine cycles per sample
     const lpA=1-Math.exp(-2*Math.PI*params.bright[0]/sampleRate);
@@ -6643,40 +6661,71 @@ class EnginePulse extends AudioWorkletProcessor{
       let l=0,r=0;
       for(const k of this.banks){
         const nz=k.ni<k.noise.length?k.noise[k.ni++]:0;
-        const x=k.env*(1+t.noise*nz)+k.clk*t.click*nz;
+        const p=k.env*(1+t.noise*nz)+k.clk*t.click*nz;
         k.env*=this.decay;k.clk*=this.clickDecay;
-        const y=k.b0*x+k.b2*k.x2-k.a1*k.y1-k.a2*k.y2;
-        k.x2=k.x1;k.x1=x;k.y2=k.y1;k.y1=y;
-        k.lp+=lpA*(0.5*x+t.ring*y-k.lp);
-        const s=Math.tanh(t.drive*k.lp);
-        k.h=s-k.s1+0.995*k.h;k.s1=s;                               // DC block: the pulses are one-sided
+        // header: the pulse and the primary's ring, saturating together at the collector
+        const s=Math.tanh(t.drive*(0.5*p+t.ring*run(k.prim,p)));
+        // system: its drone, then two poles of silencer / cat / turbine and the rpm-driven brightness
+        const v=s+x.sysMix*run(k.sys,s);
+        k.m1+=mufA*(v-k.m1);k.m2+=mufA*(k.m1-k.m2);k.lp+=lpA*(k.m2-k.lp);
+        k.h=k.lp-k.s1+0.995*k.h;k.s1=k.lp;                         // DC block: the pulses are one-sided
         l+=k.h*k.gl;r+=k.h*k.gr;
       }
-      L[i]=l*level;if(R!==L)R[i]=r*level;
+      L[i]=l*level*x.gain;if(R!==L)R[i]=r*level*x.gain;
     }
     return true;
   }
 }
 registerProcessor('engine-pulse',EnginePulse);`;
-// Pulse character by cycle: res/q the exhaust ring, tau (ms) the pulse decay, noise the rasp in it,
-// click a sharp knock on top (diesel), drive how hard a bank's pipe saturates.
+// Pulse character by cycle: tau (ms) the pulse decay, noise the rasp in it, click a sharp knock on top
+// (diesel), ring how much of the primary's resonance is heard, drive how hard a bank's pipe saturates,
+// qMul how the cycle changes the primary's ring: a 2-stroke's expansion chamber is a tuned cone that
+// rings far harder than a straight header, a rotary's peripheral port dumps straight into the pipe.
 const SOUND_TONE={
-  petrol:   {res:160,q:2.5,tau:4.0,noise:0.5,click:0,  ring:1.2,drive:1.6},
-  diesel:   {res:110,q:2.0,tau:5.0,noise:0.4,click:0.8,ring:1.0,drive:1.4},
-  twostroke:{res:420,q:6.0,tau:2.5,noise:0.7,click:0,  ring:1.6,drive:1.8},
-  rotary:   {res:300,q:1.5,tau:1.8,noise:0.8,click:0,  ring:0.8,drive:1.6}
+  petrol:   {tau:4.0,noise:0.5,click:0,  ring:1.2,drive:1.6,qMul:1.0},
+  diesel:   {tau:5.0,noise:0.4,click:0.8,ring:1.0,drive:1.4,qMul:1.0},
+  twostroke:{tau:2.5,noise:0.7,click:0,  ring:1.6,drive:1.8,qMul:2.0},
+  rotary:   {tau:1.8,noise:0.8,click:0,  ring:0.8,drive:1.6,qMul:0.6}
 };
-// The pulse train is about a quarter as loud (rms) as the old sawtooth-and-square note at the same
-// level; this brings it back to the same loudness so the volume did not change under anyone.
-const SOUND_PULSE_GAIN=3;
+// What the exhaust does to the sound after the collector. The silencer is not in the breathing
+// model, which only sees its back-pressure (sysV), so it is stated here: a stock system carries a
+// chambered muffler, a sport one a straight-through absorptive can, a race one barely anything.
+// muffleHz is where the silencer starts taking the top off, gain what it lets through.
+const SILENCER={
+  stock:{muffleHz:650, gain:0.60},
+  sport:{muffleHz:1500,gain:0.85},
+  race: {muffleHz:4500,gain:1.00}
+};
+// The exhaust's sound, from the same geometry the breathing model uses (engine.primL, exhSigma, sysL).
+function exhaustSound(e){
+  const T=exhaustGasT(0.7,0.6*e.redline,0);                 // a typical cruise-to-pull EGT
+  const sil=SILENCER[e.exhaust]||SILENCER.stock,cat=CAT[e.cat]||CAT.stock;
+  const turbo=e.intake==='turbo';
+  // A cat's honeycomb is thousands of narrow channels: it absorbs the top end in proportion to how
+  // restrictive it is. A turbine is the best silencer on the car: the pulse spends itself on the wheel.
+  const cut=(1-6*cat.restrict)*(turbo?0.55:1);
+  // Gas cools on its way down the system, to roughly 0.65 of its port temperature at the tailpipe.
+  const primL=e.primL>0?e.primL:0.55, sysL=e.sysL>0?e.sysL:3.0;
+  return {
+    primF:sonic(T)/(4*primL),
+    primQ:clamp(0.5/Math.max(0.04,e.exhSigma??0.35),1.2,10)*(SOUND_TONE[soundCycle(e)].qMul),
+    sysF:sonic(0.65*T)/(2*sysL), sysQ:3, sysMix:0.6,
+    muffleHz:sil.muffleHz*cut,
+    gain:sil.gain*(1-2*cat.restrict)*(turbo?0.75:1)
+  };
+}
+function soundCycle(e){return e.ci?'diesel':e.type==='rotary'?'rotary':e.type==='twostroke'?'twostroke':'petrol';}
+// Through a sport system (the default build) the pulse train is about a sixth as loud (rms) as the old
+// sawtooth-and-square note at the same level; this brings it back to that loudness. A stock system
+// and a turbine are then quieter than that, and a race header without a cat louder, as they should be.
+const SOUND_PULSE_GAIN=4.5;
 // What the worklet needs from a build: when in the cycle each cylinder fires, and into which bank.
 // Banks split as the LIVE bank draws them: cylinders 1..ceil(n/2) are bank A.
 function soundConfig(e){
   const n=e.cylinders,two=e.strokeDiv===2*Math.PI;
   const vee=e.layout==='v'||e.layout==='boxer',perBank=vee?Math.ceil(n/2):n;
   const events=firingOrder(e.layout,n).map((c,k)=>({at:k/n,bank:vee&&c>perBank?1:0}));
-  const tone=SOUND_TONE[e.ci?'diesel':e.type==='rotary'?'rotary':e.type==='twostroke'?'twostroke':'petrol'];
-  return {cycleRevs:two?1:2,banks:vee?2:1,events,tone};
+  return {cycleRevs:two?1:2,banks:vee?2:1,events,tone:SOUND_TONE[soundCycle(e)],exhaust:exhaustSound(e)};
 }
 // The worklet is inline, so the app stays one file. A blob: URL is refused from a file:// page (its
 // origin is opaque), a data: URL is not, so try the one and fall back to the other.
@@ -6720,7 +6769,8 @@ function updateSound(){
   // Lope is deepest at idle and fades with rpm.
   const lope=(engine.lumpiness||0)*clamp(1-(state.rpm-engine.idleRpmEff)/2600,0.12,1);
   if(Sound.node){
-    const key=[engine.cylinders,engine.layout,engine.type,engine.ci,engine.strokeDiv].join('|');
+    const key=[engine.cylinders,engine.layout,engine.type,engine.ci,engine.strokeDiv,engine.exhaust,engine.cat,
+      engine.intake,engine.primL,engine.sysL,engine.exhSigma,engine.redline].join('|');
     if(key!==Sound.cfgKey){Sound.cfgKey=key;Sound.node.port.postMessage(soundConfig(engine));}
     const p=Sound.node.parameters;
     p.get('rpm').setTargetAtTime(state.rpm,t,0.05);
