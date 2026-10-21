@@ -20,6 +20,25 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 Working toward **v1.0 — every number derived, not fitted.**
 
+### The engine sound without the hiss (build 126)
+
+- Most engines sounded like noise, the V12 and the turbo diesel worst. Measured by muting one voice at a
+  time, it was three things:
+  - **The intake roar was five times the exhaust** at full throttle (V12: 0.202 rms with it, 0.038
+    without), mostly its broadband hiss. Build 124 scaled it against the wrong reference. Now about 13x
+    lower, with less hiss in it; open stacks still roar louder than an airbox.
+  - **Pulses ran together at high rpm.** Each one decayed over a fixed 4 ms, so a V12 at 7000 rpm made a
+    steady pressure that the DC block removed, leaving only the noise riding on it: the V12 was quieter
+    flat out than at cruise. Blowdown lasts a crank angle, not a time, so the decay now shrinks with rpm
+    (its length at 2000 rpm, as before). The V12 flat out is now louder than its cruise and tonal.
+  - **The diesel was all knock and whistle.** The live manifold reads low at a diesel idle, but a diesel
+    has no throttle and traps atmosphere plus boost, so its pulses were far too weak and the 6 kHz knock
+    ring (also now a fifth as loud) was most of what you heard. The turbo whine also passes 10 kHz near
+    full shaft speed, where it is a squeal; ducting and bonnet lining absorb that range, so it now rolls
+    off above 6 kHz. Turbo whine level 0.05 -> 0.03.
+- With the roar no longer making up most of the level, the overall gain doubles to keep the loudness.
+- test68's whine check now compares 20% and 40% shaft speed (the audible range) and also checks the roll-off.
+
 ### A soft limiter on the engine sound (build 125)
 
 - With all the voices together, a race header on open stacks flat out (the ITB screamer) peaked at 1.27

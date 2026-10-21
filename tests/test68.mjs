@@ -70,8 +70,8 @@ const res = await page.evaluate(async () => {
   const at = o => { Object.assign(state, { blown: false, fuelCut: false, throttle: 0.8, afr: engine.stoichAFR, map: 1, knockRisk: 0, coolant: 90, boostActual: 0 }, o); return soundDrive(0.016); };
   build('2.0 Turbo Hot-Hatch I4');
   const Emax = 0.5 * engine.shaftJ * (engine.shaftMax * 2 * Math.PI / 60) ** 2;
-  const sA = at({ rpm: 4000, shaftE: Emax * 0.25 }), sB = at({ rpm: 4000, shaftE: Emax });
-  out.turbo = { fA: sA.whineF, fB: sB.whineF, aA: sA.whineA, aB: sB.whineA, maxF: engine.shaftMax / 60 * COMP_BLADES };
+  const sA = at({ rpm: 4000, shaftE: Emax * 0.04 }), sB = at({ rpm: 4000, shaftE: Emax * 0.16 }), sMax = at({ rpm: 4000, shaftE: Emax });
+  out.turbo = { fA: sA.whineF, fB: sB.whineF, aA: sA.whineA, aB: sB.whineA, fMax: sMax.whineF, aMax: sMax.whineA, maxF: engine.shaftMax / 60 * COMP_BLADES };
   at({ rpm: 5000, throttle: 1, boostActual: 1.0 });
   const lift = at({ rpm: 5000, throttle: 0, boostActual: 0.9 }), after = at({ rpm: 5000, throttle: 0, boostActual: 0.5 });
   at({ rpm: 2000, throttle: 1, boostActual: 0.05 });
@@ -97,7 +97,7 @@ console.log(`== whine: ${f(r.whine.at, 0)}x at its pitch, ${f(r.whine.off, 2)}x 
 console.log(`== knock ring ${f(r.knock.f, 0)} Hz: ${f(r.knock.ratio, 1)}x in band, ${f(r.knock.off, 2)}x off band · bore 78 mm ${f(r.bore.small, 0)} Hz, 92 mm ${f(r.bore.big, 0)} Hz ==`);
 console.log(`== intake rms ${f(r.intake.r0, 3)} -> ${f(r.intake.r1, 3)} -> ${f(r.intake.r2, 3)} · runner long ${f(r.runner.long, 0)} Hz, short ${f(r.runner.short, 0)} Hz ==`);
 console.log(`== blow-off: small core tau ${f(r.bov.tauS * 1000, 0)} ms, heard ${f(r.bov.small.ms, 0)} ms · large core tau ${f(r.bov.tauL * 1000, 0)} ms, heard ${f(r.bov.large.ms, 0)} ms ==`);
-console.log(`== turbo whine ${f(r.turbo.fA, 0)} Hz (amp ${f(r.turbo.aA, 3)}) at a quarter of the energy, ${f(r.turbo.fB, 0)} Hz (amp ${f(r.turbo.aB, 3)}) flat out; max ${f(r.turbo.maxF, 0)} ==`);
+console.log(`== turbo whine ${f(r.turbo.fA, 0)} Hz (amp ${f(r.turbo.aA, 4)}) at 20% shaft speed, ${f(r.turbo.fB, 0)} Hz (amp ${f(r.turbo.aB, 4)}) at 40%, ${f(r.turbo.fMax, 0)} Hz (amp ${f(r.turbo.aMax, 4)}) flat out ==`);
 console.log(`== supercharger ${f(r.sc.f1, 0)} Hz at 2000 rpm, ${f(r.sc.f2, 0)} Hz at 4000 ==`);
 console.log(`== blow-off on a lift from 0.9 bar ${r.bovDrive.lift}, next frame ${r.bovDrive.again}, from 0.05 bar ${r.bovDrive.low}, diesel ${r.dieselBov} ==`);
 console.log(`== knock prob below limit ${f(r.knockDrive.below)}, past it ${f(r.knockDrive.above)} · diesel warm ${f(r.dieselKnock.warm, 3)} cold ${f(r.dieselKnock.cold, 3)} · roar stacks ${f(r.stacks.stacks, 3)} airbox ${f(r.stacks.airbox, 3)} ==`);
@@ -109,8 +109,9 @@ if (!(r.bov.large.ms > r.bov.small.ms * 1.3 && r.bov.small.ms > 30)) fails.push(
 if (!(r.runner.short > r.runner.long)) fails.push('a shorter runner does not resonate higher');
 if (!(r.bore.big < r.bore.small)) fails.push('a wider bore does not knock lower');
 if (!(Math.abs(r.turbo.fB / r.turbo.fA - 2) < 0.02)) fails.push('turbo pitch does not follow shaft speed (4x energy should be 2x pitch)');
-if (!(Math.abs(r.turbo.fB - r.turbo.maxF) < 1)) fails.push('a turbo at full shaft energy is not at its blade-pass maximum');
-if (!(r.turbo.aB > 3 * r.turbo.aA)) fails.push('turbo whine does not grow with shaft speed');
+if (!(Math.abs(r.turbo.fMax - r.turbo.maxF) < 1)) fails.push('a turbo at full shaft energy is not at its blade-pass maximum');
+if (!(r.turbo.aB > 2 * r.turbo.aA)) fails.push('turbo whine does not grow with shaft speed in the audible range');
+if (!(r.turbo.aMax < r.turbo.aB * 4)) fails.push('the whine is not rolled off past 10 kHz (it would squeal)');
 if (!(Math.abs(r.sc.f2 / r.sc.f1 - 2) < 0.01)) fails.push('supercharger pitch does not follow the crank');
 if (!r.bovDrive.lift) fails.push('lifting from boost does not blow off');
 if (r.bovDrive.again) fails.push('the blow-off fires again on the next frame');

@@ -282,7 +282,7 @@ table.fuelmap td.live{box-shadow:inset 0 0 0 2px #fff;font-weight:bold}
 <body>
 <div class="container">
 <header>
-<h1>PIXEL ENGINE SIM v0.6 build 125</h1>
+<h1>PIXEL ENGINE SIM v0.6 build 126</h1>
 <div class="subtitle" id="subtitle">ENGINE DESIGNER • BUILD IT, THEN DRIVE IT</div>
 </header>
 <div class="build-strip" id="buildStrip">
@@ -6623,6 +6623,7 @@ function stepThermal(dt){
 // The noise in a pulse is a fixed seeded table restarted on every pulse, so with no lope the output
 // is exactly periodic over one engine cycle; tests/test65 depends on that.
 const SOUND_WORKLET_SRC=`
+const clamp01=(v,a,b)=>v<a?a:v>b?b:v;
 class EnginePulse extends AudioWorkletProcessor{
   static get parameterDescriptors(){return[
     {name:'rpm',defaultValue:800,minValue:0,maxValue:40000,automationRate:'k-rate'},
@@ -6643,7 +6644,6 @@ class EnginePulse extends AudioWorkletProcessor{
     const t=c.tone,sr=sampleRate;
     this.cfg=c;this.seed=12345;this.phase=0;this.cycle=0;this.next=0;this.nextAt=c.events[0].at;
     const x=c.exhaust;
-    this.decay=Math.exp(-1/(t.tau*1e-3*sr));
     this.popDecay=Math.exp(-1/(0.8e-3*sr));
     // the accessory voices: one each, centred
     this.wPh=0;this.bovEnv=0;this.bovDecay=0;this.ringEnv=0;this.ringPh=0;
@@ -6692,6 +6692,10 @@ class EnginePulse extends AudioWorkletProcessor{
     const intake=params.intake[0],kP=params.knockProb[0],kA=params.knockAmp[0],wh=c.whine,inA=1-Math.exp(-2*Math.PI*2000/sampleRate);
     const dPh=rpm/60/c.cycleRevs/sampleRate;                       // engine cycles per sample
     const lpA=1-Math.exp(-2*Math.PI*params.bright[0]/sampleRate);
+    // Blowdown lasts a crank ANGLE, not a time: tau is its length at 2000 rpm and shrinks with revs.
+    // Held fixed, a V12's pulses ran together at high rpm into a steady pressure the DC block took
+    // away, and what was left was the noise riding on it.
+    const decay=Math.exp(-1/(t.tau*1e-3*clamp01(2000/Math.max(1,rpm),0.2,1.5)*sampleRate));
     for(let i=0;i<L.length;i++){
       this.phase+=dPh;
       while(this.phase>=this.cycle+this.nextAt){
@@ -6706,7 +6710,7 @@ class EnginePulse extends AudioWorkletProcessor{
         pulses+=k.env;
         const nz=k.ni<k.noise.length?k.noise[k.ni++]:0;
         const p=k.env*(1+t.noise*k.rasp*nz);
-        k.env*=this.decay;
+        k.env*=decay;
         // header: the pulse and the primary's ring, saturating together at the collector
         const s=Math.tanh(t.drive*(0.5*p+t.ring*run(k.prim,p)));
         // a pop lights in the pipe past the header, so it rings the system but not the primary
@@ -6785,7 +6789,7 @@ const SC_SOUND={
   screw:      {drive:2.4, passes:10,h2:0.3,h3:0.15,level:0.08},
   centrifugal:{drive:12.0,passes:12,h2:0.1,h3:0.05,level:0.07}
 };
-const TURBO_WHINE={h2:0.15,h3:0.05,level:0.05};
+const TURBO_WHINE={h2:0.15,h3:0.05,level:0.03};
 // How much of the induction roar reaches you: open stacks all of it, an airbox much less. A compressor
 // between the filter and the runners hushes it further.
 const INTAKE_LEVEL={none:1.0,perf:0.6,stock:0.35,restrictive:0.25};
@@ -6796,7 +6800,9 @@ function soundCycle(e){return e.ci?'diesel':e.type==='rotary'?'rotary':e.type===
 // Through a sport system (the default build) the pulse train is about a sixth as loud (rms) as the old
 // sawtooth-and-square note at the same level; this brings it back to that loudness. A stock system
 // and a turbine are then quieter than that, and a race header without a cat louder, as they should be.
-const SOUND_PULSE_GAIN=4.5;
+// (Doubled in build 126: until then an over-loud intake roar was making up most of the level, and with
+// the roar back in proportion the engines had lost two thirds of their loudness.)
+const SOUND_PULSE_GAIN=9;
 // Level before the gain, for a 0.45 L cylinder; the pulse strength carries the load from there.
 const SOUND_LEVEL=0.15;
 // What the running engine is doing to the pulses this frame. dt in seconds; it advances Sound.hot.
@@ -6812,7 +6818,9 @@ const SOUND_LEVEL=0.15;
 //             does it on purpose, and keeps the pipe hot itself.
 function soundDrive(dt){
   const e=engine,lam=state.afr/(e.stoichAFR||14.7);
-  const strength=state.blown?0:state.map*(state.fuelCut?0.12:0.12+0.88*Math.min(1,1/Math.max(0.5,lam)));
+  // a diesel has no throttle plate: whatever the live manifold reads, it traps atmosphere plus boost
+  const trapped=e.ci?1+Math.max(0,state.boostActual||0):state.map;
+  const strength=state.blown?0:trapped*(state.fuelCut?0.12:0.12+0.88*Math.min(1,1/Math.max(0.5,lam)));
   // exhaust heat: rises with load over about a second, and is gone a second and a half after it. It
   // has to be above what an idle or a fuelled overrun keeps up on its own (~0.35) for anything to pop.
   Sound.hot+=(Math.min(1,strength)-Sound.hot)*(1-Math.exp(-dt/(strength>Sound.hot?0.8:1.5)));
@@ -6828,6 +6836,9 @@ function soundDrive(dt){
     whineF=n/60*COMP_BLADES;
     // the pressure rise goes with tip speed squared; a closed throttle unloads the wheel
     whineA=TURBO_WHINE.level*Math.pow(clamp(n/(e.shaftMax||1),0,1),2)*(state.throttle>0.1?1:0.4);
+    // the ducting, filter and bonnet lining soak up the top end: near full speed the blade pass is
+    // past 10 kHz, and heard straight it is a squeal rather than a whistle
+    whineA/=1+Math.pow(whineF/6000,2);
   }else if(e.intake==='supercharger'){
     const sc=SC_SOUND[e.scType]||SC_SOUND.roots;
     whineF=state.rpm*sc.drive/60*sc.passes;
@@ -6835,15 +6846,15 @@ function soundDrive(dt){
   }
   // induction roar: volumetric flow goes with manifold pressure x rpm
   const forced=e.intake!=='na';
-  const intake=(INTAKE_LEVEL[e.airFilter]??0.5)*(forced?0.4:1)*clamp(state.map*state.rpm/e.redline,0,1.5)*2;
+  const intake=(INTAKE_LEVEL[e.airFilter]??0.5)*(forced?0.4:1)*clamp(state.map*state.rpm/e.redline,0,1.5)*0.15;
   // knock: a diesel's ignition delay is longest cold and at light load, where the injected fuel
   // waits longest and then all goes at once; a petrol engine past its knock limit detonates on
   // more of its cycles the further past it is
   let knockProb=0,knockAmp=0;
   // How hard it rings is how much fuel goes up at once: for a diesel that is the fuel injected during the
   // delay, which is not the load; for a detonating petrol charge it is the end gas, which is.
-  if(e.ci){knockProb=1;knockAmp=0.12*clamp(1+(80-state.coolant)/50,1,2)*clamp(1.3-strength,0.3,1);}
-  else{knockProb=clamp((state.knockRisk-KNOCK_TARGET)/60,0,1);knockAmp=0.12*Math.min(2,strength);}
+  if(e.ci){knockProb=1;knockAmp=0.025*clamp(1+(80-state.coolant)/50,1,2)*clamp(1.3-strength,0.3,1);}
+  else{knockProb=clamp((state.knockRisk-KNOCK_TARGET)/60,0,1);knockAmp=0.06*Math.min(2,strength);}
   // blow-off: the throttle shut on boost this frame (a diesel has no throttle to shut)
   let bov=null;
   if(e.intake==='turbo'&&!e.ci&&Sound.prevThr>0.3&&state.throttle<0.1&&Sound.prevBoost>0.15)
@@ -6862,7 +6873,7 @@ function soundConfig(e){
   return {cycleRevs:two?1:2,banks:vee?2:1,events,tone:SOUND_TONE[soundCycle(e)],exhaust:exhaustSound(e),
     whine:[sc.h2,sc.h3],
     intakeF:e.runnerL&&e.runnerA&&e.vEffCyl?helmholtzHz(e.runnerA,e.runnerL,e.vEffCyl,313):200,
-    intakeHiss:e.airFilter==='none'||e.intakeSys==='itb'?0.5:0.15,
+    intakeHiss:e.airFilter==='none'||e.intakeSys==='itb'?0.2:0.05,
     knockF:1.84*sonic(2000)/(Math.PI*e.bore_mm/1000),       // Draper's first circumferential mode
     // venting the charge volume through the valve: V / (Cd A c), and it only cracks part open (x3)
     bovTau:3*(e.chargeVol||0.003)/(0.6*Math.PI/4*BOV_D*BOV_D*340)};
