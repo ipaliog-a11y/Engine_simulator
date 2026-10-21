@@ -20,6 +20,26 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 Working toward **v1.0 — every number derived, not fitted.**
 
+### Whine, blow-off, intake roar and knock in the engine sound (build 124)
+
+- Four voices that do not go through the exhaust, each from hardware the sim already models:
+  - **Turbo whine** at the compressor's blade-pass frequency (6 full blades) from the live shaft speed
+    (`shaftE`), its level with tip speed squared and lower on a closed throttle. **Supercharger whine**
+    from the crank through a stated drive ratio and lobe/blade count (`SC_SOUND`: a Roots blower buzzes,
+    a centrifugal whistles).
+  - **Blow-off** when the throttle shuts on more than 0.15 bar: a 2.6 kHz hiss that lasts as long as the
+    charge volume (`chargeVol`) takes to vent through a 25 mm valve, so a front-mount core hisses about
+    2.5x longer than a small one. Never on a diesel: with no throttle there is nothing to surge against.
+  - **Intake roar** at the runner's Helmholtz frequency (the one the breathing model tunes), excited by
+    each induction pulse and scaled by flow (MAP x rpm); open stacks and ITBs loudest, an airbox or a
+    compressor in the way much less.
+  - **Knock** rings at the chamber's first circumferential mode, Draper's 1.84 c / pi B in burnt gas
+    (6.1 kHz in an 86 mm bore). It replaces the diesel's generic click: a diesel rings on every pulse,
+    twice as hard from cold and harder at light load (longer ignition delay); a petrol engine rings on a
+    share of cycles that grows past `KNOCK_TARGET`.
+- test68: each voice at the pitch its hardware sets, BOV length vs charge volume, runner and bore
+  direction, shaft- and crank-following pitch, BOV only on a real lift from boost, knock thresholds.
+
 ### Load, lope and overrun crackle in the engine sound (build 123)
 
 - Load only turned the volume up. `soundDrive()` now sets each pulse's strength from the blowdown at

@@ -1,4 +1,4 @@
-# PIXEL ENGINE SIM v0.6 build 123
+# PIXEL ENGINE SIM v0.6 build 124
 
 **A lightweight, 8-bit style internal combustion engine *designer* & simulator** inspired by *Automation*.
 
@@ -217,6 +217,13 @@ saps power; a large radiator, electric fan and oil cooler keep it cool.
   flow back. **Overrun crackle** is a carburetted engine misfiring its unburnable overrun charge into a
   pipe still hot from the pull, popping for a second or two; injection cuts the fuel and stays
   quiet, anti-lag pops on purpose, and a working cat takes the edge off the pops.
+  Around the exhaust, the **rest of the car**: a turbo whines at its compressor's blade-pass
+  frequency from the live shaft speed and hisses through its **blow-off valve** on a lift from
+  boost, for as long as the charge volume takes to vent (no BOV on a diesel: no throttle to surge
+  against); a supercharger whines with the crank through its drive ratio; the **intake** roars at
+  the runner's Helmholtz frequency with airflow, open stacks loudest; and **knock** rings at the
+  chamber's first acoustic mode (Draper, 1.84 c / πB, ~6 kHz), a diesel's rattle on every pulse and
+  worse cold, a petrol engine's on the cycles past its knock limit.
 - **Scoring** — every build gets a graded scorecard (S–F) rating power, specific output,
   powerband width, efficiency, knock safety, drivability and **emissions**, shown on the
   design summary and the dyno.
