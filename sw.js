@@ -1,10 +1,11 @@
 /* Pixel Engine Sim — offline-first service worker. */
-const CACHE = 'pixel-engine-sim-v3';
+const CACHE = 'pixel-engine-sim-v4';
 const ASSETS = [
   './',
   './index.html',
   './manifest.webmanifest',
   './favicon.svg',
+  './tracks/real-circuits.js',
   './assets/PressStart2P-latin.woff2',
   './assets/PressStart2P-greek.woff2',
   './assets/icon-192.png',

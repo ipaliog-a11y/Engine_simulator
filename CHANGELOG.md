@@ -20,6 +20,27 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 Working toward **v1.0 — every number derived, not fitted.**
 
+### Real circuits (build 123)
+
+- **22 real circuits** under a new REAL CIRCUITS group in the circuit menu: COTA, Brands Hatch GP,
+  Hungaroring, Catalunya, Hockenheim, the Indianapolis oval, Albert Park, Hermanos Rodríguez, Gilles
+  Villeneuve, Monza, Nürburgring GP, Bahrain, Interlagos, Sepang, Shanghai, Silverstone, Sochi, Spa,
+  Red Bull Ring, Suzuka, Yas Marina and Zandvoort.
+- `tools/import-real-tracks.mjs` builds them offline from three open sources: the TUM racetrack
+  database (centreline and **measured** width, LGPL-3.0), georeferenced by a rigid fit onto
+  bacinger/f1-circuits or OpenStreetMap (1.2-7.4 m RMS; Yas Marina 13 m), with heights from EU-DEM /
+  USGS 10 m / SRTM through OpenTopoData, median-filtered and smoothed over ~60 m. The output,
+  `tracks/real-circuits.js` (~200 KB), is loaded as its own file and cached by the service worker
+  (cache v4); the app runs without it.
+- Width comes through the existing `wprof` path, one multiplier per control point, so the physics is
+  unchanged. The circuits are not passed through the GPS denoiser: TUM's centreline is already smooth,
+  and denoising it again cut 1.3 % from every lap. Lengths land within 0.3 % of the official figures;
+  Spa rises 103 m (real 104), Red Bull Ring 68 m (65), Interlagos 41 m (43), Suzuka 42 m (40).
+- **test65** checks every real circuit: official length within 1 %, closed centreline, measured width,
+  published elevation changes, flat circuits flat, and a lap that solves (Monza the fastest road circuit,
+  the oval faster still). test32/38 accept a measured constant width (the oval), and test34 accepts a
+  real circuit that is genuinely flat.
+
 ### The charge heated as it is drawn in; the valve's flow coefficient from Taylor (build 122)
 
 - **The first law in the cylinder.** Build 121 integrated the intake stroke with the cylinder compressed as a
