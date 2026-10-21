@@ -97,7 +97,9 @@ const gz = await page.evaluate(() => {
     // and on all but a few points it is the full boost.
     let under = 0;
     for (let i = 0; i < R.map.length; i++) if (R.thr[i] === 1) { wot++; const d = R.map[i] - (1 + boostAvail(R.rpm[i]));
-      if (d > 1e-9) bad++; else if (d < -1e-9) under++; }
+      // 0.005 bar (build 131): with a factory taper the boost falls with rpm, and the shaft walk evaluates it at its
+      // own rpm, which differs from the replay's by a fraction (gear runs shorter than 40 m are merged in the replay)
+      if (d > 5e-3) bad++; else if (d < -5e-3) under++; }
     if (under > 0.05 * wot) bad += under;
     out[k] = { maxMap: Math.max(...R.map), minMap: Math.min(...R.map), bad, wot, boost: engine.boost_bar };
   }

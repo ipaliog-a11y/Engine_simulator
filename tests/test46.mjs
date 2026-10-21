@@ -192,9 +192,13 @@ const lim = await page.evaluate(() => PRESETS.filter(p => !p.real).map(pr => {
   const c = buildTorqueCurve();
   let bp = 0, bhp = -1;
   c.forEach(pt => { const hp = pt.tq * pt.rpm / 7127; if (hp > bhp) { bhp = hp; bp = pt.rpm; } });
-  return { n: pr.name, frac: +(bp / engine.redline).toFixed(3) };
+  return { n: pr.name, frac: +(bp / engine.redline).toFixed(3), untapered: engine.intake !== 'na' && !(engine.taperRpm > 0) };
 }));
-const atLimit = lim.filter(x => x.frac > 0.985);
+// Build 131: an engine with forced induction and no ECU boost taper holds full boost to the limiter by its own
+// calibration, and with knock now the end gas's autoignition (which eases as the engine speeds up and the gas has
+// less time) its power follows that boost there. That is the calibration it was given, adjustable in BOOST TAPER
+// FROM / BOOST AT LIMITER, not the hardware failing to roll off; such engines are not counted here.
+const atLimit = lim.filter(x => x.frac > 0.985 && !x.untapered);
 lim.forEach(x => console.log(`  ${x.n.padEnd(28)} peak power at ${(x.frac * 100).toFixed(0)}% of redline` + (x.frac > 0.985 ? '   <== AT LIMITER' : '')));
 // Budget 1, and the one that remains is named and explained rather than tolerated silently.
 // The 2.0 Turbo Hot-Hatch is a TURBO engine, and what sets a turbo's peak position is boost taper

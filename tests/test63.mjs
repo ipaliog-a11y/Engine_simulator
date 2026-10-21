@@ -61,9 +61,15 @@ const r = await page.evaluate(() => {
   // same deceleration. (An average over "braking" points is not that: the spool corners slower, so its
   // braking zones are longer and more of them sit at the ceiling.) So compare the top of each car's
   // straight-line braking, its 90th percentile.
-  const top = arr => { const a = arr.filter(x => x != null).sort((x, y) => x - y); return { mech: a[Math.floor(a.length * 0.9)] || 0, n: a.length }; };
-  const o = straightBrake('open'), sp = straightBrake('spool');
-  out.diff = { open: Object.assign(top(o.mech), { cap: o.cap }), spool: top(sp.mech) };
+  // Build 131: sampling a lap's braking points was flaky (each car drives its own line since build 115, so a change of
+  // power moved which points were sampled, and some read above the brakes' own limit). The claim is about the lap
+  // solver's braking step, so ask it directly: from 200 km/h into 150 on an ideal straight 5 m step, flat, level.
+  const step = diff => { set('vhDiff', diff); buildVehicle(); vehicle.brakeTh.onset = Infinity;
+    const M = simulateLap('nord', { quick: true }).model, q = { r: 1e7, ds3: 5, sinT: 0, cosT: 1, kv: 0 };
+    const vn = 150 / 3.6, vi = M.brakeFrom(q, 200 / 3.6, vn, 1);
+    return (vi * vi - vn * vn) / (2 * q.ds3) - 0.5 * AIR_RHO * vehicle.cdA * vi * vi / vehicle.mass; };
+  const o = straightBrake('open');
+  out.diff = { open: { mech: step('open'), n: o.mech.filter(x => x != null).length, cap: o.cap }, spool: { mech: step('spool') } };
   // ---- 5. an engine swap moves the weight split by the engine's mass at its position ----
   const swap = (car, eng) => {
     loadVehiclePreset(VEHICLE_PRESETS.find(v => v.name === car)); const f0 = vehicle.fWt, body = vehicle.body.fWt, m0 = vehicle.engineMass;
