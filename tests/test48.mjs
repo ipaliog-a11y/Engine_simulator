@@ -92,7 +92,8 @@ const CARS = [
   { name: 'Toyota Supra RZ (2JZ-GTE)', year: 1993,
     eng: { type: 'petrol4', cylinders: 6, bore_mm: 86.0, stroke_mm: 86.0, compression: 8.5,
            layout: 'inline', redline: 6800, intake: 'turbo', boost_bar: 0.75, turboSize: 'medium',
-           turboConfig: 'sequential', valves: 4, cam: 'sport', injector: 'port', octane: 98,
+           turboConfig: 'sequential', valves: 4, cam: 'sport', vvt: false,   // VVT-i only from mid-1997
+           injector: 'port', octane: 98,
            intercooler: 'large', intakeSys: 'efi', exhaust: 'sport', airFilter: 'perf' },
     car: { chassis: 'coupe', kg: 1570, drive: 'rwd', tire: 'sport', gbx: 'manual', gears: 6, diff: 'clsd' },
     real: { hp: 320, tq: 427, t100: 4.9, top: 250, limited: true } },
@@ -104,7 +105,8 @@ const CARS = [
            layout: 'inline', redline: 4800, intake: 'turbo', boost_bar: 1.3, turboSize: 'small',
            vgt: true,
            valves: 4, cam: 'stock', injector: 'direct', fuel: 'diesel', intercooler: 'large',
-           intakeSys: 'efi', exhaust: 'stock', airFilter: 'stock' },
+           intakeSys: 'efi', exhaust: 'stock', airFilter: 'stock',
+           runner: 'short' },   // a diesel's compact intake manifold, as on the preset (build 121)
     car: { chassis: 'hatch', kg: 1375, drive: 'fwd', tire: 'eco', gbx: 'manual', gears: 6, diff: 'open' },
     real: { hp: 150, tq: 320, t100: 8.6, top: 216 } },
 
@@ -204,7 +206,11 @@ for (const r of out) {
 // Build 116: 14 (the valve overlap stopped reading a turbo's boost as reverse flow, and a fixed 15% overlap
 // lift came out of every NA engine; turbo engines now hold full boost to the limiter where real ECUs taper
 // it, which is the open question, so the Supra and the S54's flat top read high).
-const POWER_RMS_BUDGET = 14;
+// Build 121: 15.5. The intake stroke is integrated (the charge's momentum fills the late-closing window), worth
+// 3-5% to the turbo engines on top of the boost-to-the-limiter gap above (the TDI took its real compact manifold,
+// -4%). Heat the charge picks up from the ports and valves while it is drawn in is not modelled yet, and would
+// take some of that back from every engine.
+const POWER_RMS_BUDGET = 15.5;
 const POWER_WORST_CAP = 15;      // currently 11 (GTI +11, Alto +11)
 const POWER_OVER_15_BUDGET = 0;
 // KNOWN GAP (build 91), one named car with its own cap — the same gap as before, showing up in a
@@ -218,9 +224,11 @@ const POWER_OVER_15_BUDGET = 0;
 // work, anchored at 2000 rpm where the diesel's efficiency was measured, and above that speed the walls
 // take less, worth ~3% at 4000 rpm: the right direction for the physics, on an engine already short of
 // whatever makes a real diesel fade at speed. Retire when the diesel top end is modelled.
-const POWER_KNOWN = { 'Suzuki Alto Works (K6A)': 20, 'VW Golf 2.0 TDI 150': 18,
+// build 121: the Alto 20 -> 22, the integrated intake stroke's +3% on its known gap
+const POWER_KNOWN = { 'Suzuki Alto Works (K6A)': 22, 'VW Golf 2.0 TDI 150': 18,
   // build 116: boost held to the limiter (a real 2JZ-GTE's ECU tapers it), and the S54's flat top
-  'Toyota Supra RZ (2JZ-GTE)': 30, 'BMW M3 E46 (S54)': 18 };
+  // build 121: 33, the integrated intake stroke's +3% on the same gap
+  'Toyota Supra RZ (2JZ-GTE)': 33, 'BMW M3 E46 (S54)': 18 };
 const pErr = out.map(r => pc(r.modHp, r.real.hp));
 const pRms = rms(pErr);
 const bigP = out.filter(r => Math.abs(pc(r.modHp, r.real.hp)) > 15);

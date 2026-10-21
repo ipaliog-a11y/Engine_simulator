@@ -282,7 +282,7 @@ table.fuelmap td.live{box-shadow:inset 0 0 0 2px #fff;font-weight:bold}
 <body>
 <div class="container">
 <header>
-<h1>PIXEL ENGINE SIM v0.6 build 120</h1>
+<h1>PIXEL ENGINE SIM v0.6 build 121</h1>
 <div class="subtitle" id="subtitle">ENGINE DESIGNER • BUILD IT, THEN DRIVE IT</div>
 </header>
 <div class="build-strip" id="buildStrip">
@@ -1686,6 +1686,62 @@ function intakeRamGain(rpm,chargeK){
   const dn=nH*IVC_WINDOW/Math.max(1,e.camDur);
   return densFromP(amp*aperture(dn)*Math.cos(2*Math.PI*(nT-Math.round(nT))));
 }
+// ---- intake: the charge's own momentum (build 121) ----
+// The air in a runner has mass, so it does not stop when the piston does. It is drawn in through the
+// stroke, is still moving at BDC, and keeps flowing in while the piston rises until the cylinder's
+// pressure has stopped it; only then does the rising piston push charge back out, and only for what
+// is left of the closing valve's window. That is why a race cam closes late, and why its engine makes
+// power high: the faster it turns, the more of the late window the column fills.
+// The model had the late-IVC loss as pure crank-slider geometry (everything displaced after BDC pushed
+// back out: trappedFraction), repaid only by the tuned wave (intakeRamGain). The column's momentum,
+// which grows with piston speed, was missing, so a long-duration cam lost the same charge at every
+// speed: an LS7 trapped 77% at 6000 rpm and peaked 900 rpm early.
+// Now the intake stroke is integrated from TDC (before it the exhaust valve takes the outflow) to IVC
+// as a lumped column, valve and cylinder:
+//     rho L du/dt = p0 - p_cyl - (rho/2) u|u| (A_r / A_v)^2 - R u        dm/dt = rho A_r u
+// the runner's air (length L, area A_r) driven by the plenum against the cylinder; the valve curtain
+// A_v = Cd n pi D lift(theta) (sin^2 lift, Cd 0.6) a Borda loss; the cylinder compressed and filled
+// adiabatically. R damps the column to the Q a flow rig measures on an intake tract (Q_INTAKE): the
+// same lumped column and cylinder are the Helmholtz resonator, so the tuning comes out of it too.
+// The fresh charge at IVC over the displaced volume at plenum density is the fill. A cam phaser is
+// set, at full load, where it fills best: the ECU's wide-open-throttle calibration.
+const INTAKE_CD=0.6;
+function intakeFill(rpm,adv,L){
+  const e=engine,dur=e.camDur,abd=ivcAbdc(dur,e.camLSA,adv);
+  const thO=180+abd-dur,th1=180+abd,th0=Math.max(0,thO);
+  const Vd=Math.PI/4*Math.pow(e.bore_mm/1000,2)*e.stroke_mm/1000,vc=2/Math.max(1.5,e.compression-1);
+  const V=th=>Vd*(pistonX(th,1,ROD_STROKE*2)+vc)/2;
+  const p0=101325,T0=313,rho0=p0/(287*T0),Ar=e.runnerA;
+  const dth=0.25,dt=dth*Math.PI/180/(rpm*2*Math.PI/60);
+  const cR=2*Math.PI*helmholtzHz(Ar,L,e.vEffCyl,T0)*rho0*L/Q_INTAKE, a=rho0*L/dt+cR;
+  let m=rho0*V(th0),u=0;const m0=m;
+  for(let th=th0;th<th1;th+=dth){
+    const Av=INTAKE_CD*e.ivCount*valveFlowArea(e.ivDia_mm,e.ivLift_mm*Math.pow(Math.sin(Math.PI*(th-thO)/dur),2))*1e-6;
+    const rc=m/V(th),pc=p0*Math.pow(rc/rho0,GAMMA_AIR),k=0.5*rho0*Math.pow(Ar/Math.max(1e-9,Av),2);
+    const rhs=p0-pc+rho0*L/dt*u;   // implicit in u: k u|u| + a u = rhs
+    u=rhs>=0?(-a+Math.sqrt(a*a+4*k*rhs))/(2*k):(a-Math.sqrt(a*a-4*k*rhs))/(2*k);
+    m+=(u>0?rho0:rc)*Ar*u*dt;
+  }
+  return (m-m0)/(rho0*Vd);
+}
+// Tabulated per engine: the best of the cam phaser's range and of a variable runner's two lengths.
+function buildFillTable(){
+  const e=engine;e.fillTable=null;
+  if(!e.ivDia_mm||!e.runnerL||!(e.runnerA>0))return;
+  const tb=[],lo=800,hi=e.redline+500,lens=e.runnerVariable?[e.runnerL,e.runnerLShort]:[e.runnerL];
+  for(let r=lo;r<=hi;r+=250){
+    let f=0;
+    for(const L of lens)for(let adv=0;adv<=(e.vvt?VVT_AUTHORITY:0);adv+=5)f=Math.max(f,intakeFill(r,adv,L));
+    tb.push({rpm:r,f});
+  }
+  e.fillTable=tb;
+}
+function fillAt(rpm){
+  const tb=engine.fillTable;if(!tb)return 1;
+  if(rpm<=tb[0].rpm)return tb[0].f;
+  for(let i=1;i<tb.length;i++)if(rpm<=tb[i].rpm){const a=tb[i-1],b=tb[i];return a.f+(b.f-a.f)*(rpm-a.rpm)/(b.rpm-a.rpm);}
+  return tb[tb.length-1].f;
+}
 // Both waves were being sampled at a single INSTANT, and neither valve event is an instant. The
 // pressure the cylinder actually sees is the wave averaged over the window the valve is open for,
 // and averaging a cosine over a window of width dn multiplies it by sinc(pi·dn/2). This damps fast
@@ -2327,6 +2383,14 @@ function deriveGasDynamics(){
     if(g>bestR){bestR=g;e.ramPeakRpm=n;}
   }
   e.ramPeakGain=bestR;
+  // What the engine breathes with since build 121: the integrated intake stroke. The panel reports where
+  // it fills best, and by how much over the slowest speed's fill (the geometric trapping).
+  buildFillTable();
+  if(e.fillTable){
+    let bf=-9,f0=fillAt(Math.max(1200,e.idleRpmEff||1200));
+    for(let n=Math.max(1200,e.idleRpmEff||1200);n<=e.redline;n+=25){const f=fillAt(n);if(f>bf){bf=f;e.ramPeakRpm=n;}}
+    e.ramPeakGain=bf/Math.max(0.1,f0)-1;
+  }
   let bestS=-9;e.scavPeakRpm=0;
   for(let n=Math.max(1200,e.idleRpmEff||1200);n<=e.redline;n+=25){
     const g=scavengeGain(n,T);
@@ -2423,11 +2487,11 @@ const PRESETS=[
   {cat:'NA Sports',name:'Porsche 4.0 flat-six (911 GT3 991.2)',real:{hp:493,hpRpm:8250,tq:460,tqRpm:6000},
    engine:{cylinders:6,layout:'boxer',bore_mm:102.0,stroke_mm:81.5,compression:13.3,redline:9000,cam:'race',vvt:true,valveSpring:'race',valveMat:'titanium',injector:'direct',octane:98,exhaust:'race',airFilter:'perf',runner:'variable'}},
   {cat:'Turbo Performance',name:'Toyota 2JZ-GTE (Supra A80)',real:{hp:320,hpRpm:5600,tq:427,tqRpm:4000},note:'export rating; JDM cars were quoted at 280 PS',
-   engine:{cylinders:6,bore_mm:86.0,stroke_mm:86.0,compression:8.5,redline:6800,intake:'turbo',boost_bar:0.75,turboSize:'medium',turboConfig:'sequential',cam:'sport',injector:'port',octane:98,intercooler:'large',exhaust:'sport',airFilter:'perf'}},
-  {cat:'Turbo Performance',name:'Nissan RB26DETT (Skyline GT-R R34)',real:{hp:276,hpRpm:6800,tq:392,tqRpm:4400},note:'JDM 280 PS gentlemen\'s agreement; real output is higher',
-   engine:{cylinders:6,bore_mm:86.0,stroke_mm:73.7,compression:8.5,redline:8000,intake:'turbo',boost_bar:0.7,turboSize:'small',turboConfig:'twin',cam:'sport',vvt:false,injector:'port',intakeSys:'itb',octane:98,intercooler:'large',exhaust:'sport',airFilter:'perf'}},
-  {cat:'Turbo Performance',name:'Subaru EJ257 (Impreza WRX STI)',real:{hp:296,hpRpm:6000,tq:407,tqRpm:4000},unsure:['boost_bar'],
-   engine:{cylinders:4,layout:'boxer',bore_mm:99.5,stroke_mm:79.0,compression:8.2,redline:7000,intake:'turbo',boost_bar:1.0,turboSize:'medium',cam:'sport',vvt:true,injector:'port',octane:98,intercooler:'small',exhaust:'sport',airFilter:'perf'}},
+   engine:{cylinders:6,bore_mm:86.0,stroke_mm:86.0,compression:8.5,redline:6800,intake:'turbo',boost_bar:0.75,turboSize:'medium',turboConfig:'sequential',cam:'sport',vvt:false,injector:'port',octane:98,intercooler:'large',exhaust:'sport',airFilter:'perf'}},   // VVT-i only from mid-1997 (MY1998)
+  {cat:'Turbo Performance',name:'Nissan RB26DETT (Skyline GT-R R34)',real:{hp:276,hpRpm:6800,tq:392,tqRpm:4400},unsure:['runner'],note:'JDM 280 PS gentlemen\'s agreement; real output is higher',
+   engine:{cylinders:6,bore_mm:86.0,stroke_mm:73.7,compression:8.5,redline:8000,intake:'turbo',boost_bar:0.7,turboSize:'small',turboConfig:'twin',cam:'sport',vvt:false,injector:'port',intakeSys:'itb',octane:98,intercooler:'large',exhaust:'sport',airFilter:'perf',runner:'short'}},
+  {cat:'Turbo Performance',name:'Subaru EJ257 (Impreza WRX STI)',real:{hp:296,hpRpm:6000,tq:407,tqRpm:4000},unsure:['boost_bar','runner'],
+   engine:{cylinders:4,layout:'boxer',bore_mm:99.5,stroke_mm:79.0,compression:8.2,redline:7000,intake:'turbo',boost_bar:1.0,turboSize:'medium',cam:'sport',vvt:true,injector:'port',octane:98,intercooler:'small',exhaust:'sport',airFilter:'perf',runner:'long'}},
   {cat:'Turbo Performance',name:'Mitsubishi 4G63T (Lancer Evo IX)',real:{hp:286,hpRpm:6500,tq:392,tqRpm:3500},unsure:['boost_bar'],
    engine:{cylinders:4,bore_mm:85.0,stroke_mm:88.0,compression:8.8,redline:7000,intake:'turbo',boost_bar:1.3,turboSize:'medium',cam:'sport',vvt:true,injector:'port',octane:98,intercooler:'large',exhaust:'sport',airFilter:'perf'}},
   {cat:'Turbo Performance',name:'Audi 2.5 TFSI (RS3 8V)',real:{hp:394,hpRpm:5850,tq:480,tqRpm:1700},unsure:['boost_bar'],
@@ -2450,14 +2514,14 @@ const PRESETS=[
    engine:{type:'rotary',cylinders:2,bore_mm:105,stroke_mm:80,ecc_mm:15,compression:9.0,redline:8000,intake:'turbo',boost_bar:0.7,turboSize:'small',turboConfig:'sequential',injector:'port',octane:98,intercooler:'small',exhaust:'stock',airFilter:'stock',radiator:'large',oilCooler:true}},
   {cat:'Rotary',name:'Mazda 13B-MSP Renesis (RX-8)',real:{hp:232,hpRpm:8200,tq:211,tqRpm:5500},
    engine:{type:'rotary',cylinders:2,bore_mm:105,stroke_mm:80,ecc_mm:15,compression:10.0,redline:9000,injector:'port',octane:98,exhaust:'stock',airFilter:'stock',radiator:'large',oilCooler:true}},
-  {cat:'Diesel',name:'VW EA288 2.0 TDI (Golf 150)',real:{hp:148,hpRpm:3500,tq:320,tqRpm:1750},
-   engine:{type:'diesel',vvt:false,cylinders:4,bore_mm:81.0,stroke_mm:95.5,compression:16.2,redline:4800,intake:'turbo',boost_bar:1.3,turboSize:'small',vgt:true,injector:'direct',intercooler:'large',exhaust:'stock',airFilter:'stock'}},
-  {cat:'Diesel',name:'BMW N57 3.0d (330d F30)',real:{hp:254,hpRpm:4000,tq:560,tqRpm:2000},unsure:['boost_bar'],
-   engine:{type:'diesel',vvt:false,cylinders:6,bore_mm:84.0,stroke_mm:90.0,compression:16.5,redline:5000,intake:'turbo',boost_bar:1.5,turboSize:'medium',vgt:true,injector:'direct',intercooler:'large',exhaust:'stock',airFilter:'stock'}},
-  {cat:'Diesel',name:'GM Duramax L5P 6.6 (Silverado HD)',real:{hp:445,hpRpm:2800,tq:1234,tqRpm:1600},unsure:['boost_bar','redline'],
-   engine:{type:'diesel',vvt:false,cylinders:8,layout:'v',bore_mm:103.0,stroke_mm:99.0,compression:16.0,redline:3800,intake:'turbo',boost_bar:1.9,turboSize:'large',vgt:true,injector:'direct',intercooler:'large',exhaust:'stock',airFilter:'stock'}},
-  {cat:'Diesel',name:'Cummins 6.7 (Ram HD 2019 HO)',real:{hp:400,hpRpm:2800,tq:1356,tqRpm:1800},unsure:['boost_bar','compression','redline'],
-   engine:{type:'diesel',vvt:false,cylinders:6,bore_mm:107.0,stroke_mm:124.0,compression:17.3,redline:3500,intake:'turbo',boost_bar:2.0,turboSize:'large',vgt:true,injector:'direct',intercooler:'large',exhaust:'stock',airFilter:'stock'}},
+  {cat:'Diesel',name:'VW EA288 2.0 TDI (Golf 150)',real:{hp:148,hpRpm:3500,tq:320,tqRpm:1750},unsure:['runner'],
+   engine:{type:'diesel',vvt:false,cylinders:4,bore_mm:81.0,stroke_mm:95.5,compression:16.2,redline:4800,intake:'turbo',boost_bar:1.3,turboSize:'small',vgt:true,injector:'direct',intercooler:'large',exhaust:'stock',airFilter:'stock',runner:'short'}},
+  {cat:'Diesel',name:'BMW N57 3.0d (330d F30)',real:{hp:254,hpRpm:4000,tq:560,tqRpm:2000},unsure:['boost_bar','runner'],
+   engine:{type:'diesel',vvt:false,cylinders:6,bore_mm:84.0,stroke_mm:90.0,compression:16.5,redline:5000,intake:'turbo',boost_bar:1.5,turboSize:'medium',vgt:true,injector:'direct',intercooler:'large',exhaust:'stock',airFilter:'stock',runner:'short'}},
+  {cat:'Diesel',name:'GM Duramax L5P 6.6 (Silverado HD)',real:{hp:445,hpRpm:2800,tq:1234,tqRpm:1600},unsure:['boost_bar','redline','runner'],
+   engine:{type:'diesel',vvt:false,cylinders:8,layout:'v',bore_mm:103.0,stroke_mm:99.0,compression:16.0,redline:3800,intake:'turbo',boost_bar:1.9,turboSize:'large',vgt:true,injector:'direct',intercooler:'large',exhaust:'stock',airFilter:'stock',runner:'short'}},
+  {cat:'Diesel',name:'Cummins 6.7 (Ram HD 2019 HO)',real:{hp:400,hpRpm:2800,tq:1356,tqRpm:1800},unsure:['boost_bar','compression','redline','runner'],
+   engine:{type:'diesel',vvt:false,cylinders:6,bore_mm:107.0,stroke_mm:124.0,compression:17.3,redline:3500,intake:'turbo',boost_bar:2.0,turboSize:'large',vgt:true,injector:'direct',intercooler:'large',exhaust:'stock',airFilter:'stock',runner:'short'}},
   {cat:'Two-Stroke',name:'Yamaha RD350LC (2-stroke twin)',real:{hp:46,hpRpm:8500,tq:40,tqRpm:8000},unsure:['compression','redline'],
    engine:{type:'twostroke',cylinders:2,bore_mm:64.0,stroke_mm:54.0,compression:7,redline:9500,intakeSys:'carb2',octane:95,exhaust:'race',airFilter:'stock'}},
 ];
@@ -4098,20 +4162,10 @@ function computeVE(rpm,map){
   // for two physical effects. Both waves swing both ways, so a badly matched pipe COSTS VE here.
   if(engine.primL){
     const chargeK=effIAT(map,rpm)+273.15, Tex=egtAt(rpm,map);
-    // A variable-length manifold is a flap: take whichever runner position is better at this speed.
-    let ram=intakeRamGain(rpm,chargeK);
-    if(engine.runnerVariable){
-      const keep=engine.runnerL;engine.runnerL=engine.runnerLShort;
-      ram=Math.max(ram,intakeRamGain(rpm,chargeK));engine.runnerL=keep;
-    }
-    ve*=1+clamp(ram,-0.30,0.30);
-    // Late IVC: pay the geometric trapping loss, and let ram repay it as the gas column gains
-    // inertia. How much repayment: backflow stops when the runner delivers more pressure than the
-    // rising piston is generating, and that threshold is the trapping loss expressed as a pressure
-    // ratio, ((1/trap)^gamma - 1). No invented multiplier — the same geometry sets both the loss
-    // and the pressure needed to cancel it.
-    const need=Math.pow(1/Math.max(0.5,engine.trapFrac),GAMMA_AIR)-1;
-    ve*=engine.trapFrac+(1-engine.trapFrac)*clamp(Math.max(0,ram)/Math.max(1e-4,need),0,1);
+    // The intake stroke, integrated (build 121, intakeFill): the late-IVC loss, the column's momentum and
+    // the runner's tuning in one. Until build 121 the geometric trapping loss and a ram wave that could
+    // only repay it.
+    ve*=fillAt(rpm);
     ve*=1+scavengeGain(rpm,Tex);
     engine.boostNow=map;
     ve*=1-residualLoss(1+backPressureBar(rpm,Tex),Math.max(0.3,map),engine.compression);
@@ -6178,14 +6232,21 @@ function simulateLap(key,opts){
   }
   // Accelerating from q at vi: the fastest the car can be at the next point, what limits it, and the
   // share of the tyre in use sideways.
-  function accFrom(q,vi,boostShare=1){
+  // The drive in one given gear: none past the limiter, which cuts the fuel.
+  function inGear(vi,g){
+    const tot=ratios[g]*fd,rpm=vi*tot/rT*60/TWO_PI;
+    if(rpm>rl)return{gear:g,F:0,tqFrac:0};
+    const tq=tqAt(clamp(rpm,idle,rl));
+    return{gear:g,F:tq*tot*eff/rT,tqFrac:tq*tot/axleTqMax};
+  }
+  function accFrom(q,vi,boostShare=1,gear=-1){
     const N=loadAt(q,vi),dn=down(vi);
     const N0=(N-dn)*vehicle.drivenWt+dn*vehicle.drivenAero;
     const aLat=vi*vi/q.r;
     const aLatMax=muLatAt(N,aLat)*N/m,u=clamp(aLat/Math.max(0.1,aLatMax),0,1);
     // Diff traction is evaluated at the lateral load transfer actually happening here, so an
     // open diff falls apart on a fast corner exit while a locked one doesn't.
-    const g0=gearAt(vi),bg=boostShare<1?{gear:g0.gear,F:g0.F*boostShare,tqFrac:g0.tqFrac*boostShare}:g0;
+    const g0=gear>=0?inGear(vi,gear):gearAt(vi),bg=boostShare<1?{gear:g0.gear,F:g0.F*boostShare,tqFrac:g0.tqFrac*boostShare}:g0;
     const R=(drag(vi)+rollF(vi)*q.cosT+corneringDrag(m,aLat,N))/m+G*q.sinT;
     const kk=tyreMuX(N0/(vehicle.drive==='awd'?4:2))*diffTractionAt(df,aLat,vehicle.cg,bg.tqFrac)*Math.sqrt(Math.max(0,1-u*u));
     // On power the drive force also spins up the engine and wheels (vehicleMassEff, build 106): a = (F -
@@ -6204,6 +6265,7 @@ function simulateLap(key,opts){
   }
   let v,vB,shiftsCut=false,boostShare=null;
   const cutAt=new Uint8Array(n);
+  const holdAt=new Int8Array(n).fill(-1);   // the gear held where the driver chose not to change up (build 121)
   function passes(){
     v=vC.slice();
   // 2. Backward pass: brake into every corner. Lateral grip in use eats the longitudinal budget
@@ -6234,7 +6296,34 @@ function simulateLap(key,opts){
   //    and the car rolls on against drag, rolling resistance and the slope for the distance it covers
   //    meanwhile. A downshift costs nothing: it is made braking or lifting, with no drive to cut. Until
   //    build 117 every gear change, up or down, was charged half a shift time after the lap was solved.
-  let held=-1,cut=0;
+  //    Whether an upshift pays (build 121). A driver who will be braking soon holds the gear rather than
+  //    lose the drive for a shift. So before changing up, run on from j both ways, holding gear g or
+  //    shifting (the drive cut, then the best gear), each until it meets the braking envelope vB; from
+  //    there on both follow it, so the quicker to that later point is the better choice. Before build 121
+  //    every car changed up at the best-force point even a car length before the brakes.
+  function upshiftPays(j,g){
+    let vh=v[j],vs=v[j],th=0,ts=0,cutL=vehicle.shiftTime,doneH=false,doneS=false;
+    for(let k=0;k<n;k++){
+      const i=(j+k)%n,env=vB[(i+1)%n],q=p[i],bs=boostShare?boostShare[i]:1;
+      let nh=env,ns=env;
+      if(!doneH){const c=accFrom(q,vh,bs,g).cap;if(c<env)nh=c;else doneH=true;}
+      if(!doneS){
+        let c;
+        if(cutL>0){
+          const R=(drag(vs)+rollF(vs)*q.cosT+corneringDrag(m,vs*vs/q.r,loadAt(q,vs)))/m+G*q.sinT;
+          const dtS=q.ds3/Math.max(1,vs),f=Math.min(1,cutL/dtS);
+          let sq=vs*vs-2*R*q.ds3;
+          if(f<1){const a=accFrom(q,vs,bs).cap;sq=f*sq+(1-f)*a*a;}
+          c=Math.sqrt(Math.max(1,sq));cutL-=dtS;
+        }else c=accFrom(q,vs,bs).cap;
+        if(c<env)ns=c;else doneS=true;
+      }
+      th+=q.ds3/Math.max(1,(vh+nh)/2);ts+=q.ds3/Math.max(1,(vs+ns)/2);vh=nh;vs=ns;
+      if(doneH&&doneS)return ts<th;
+    }
+    return true;   // flat out for a whole lap: change up
+  }
+  let held=-1,cut=0,hold=-1;
   for(let pass=0;pass<2;pass++)for(let k=0;k<n;k++){
     const i=k%n,j=(i+1)%n;
     let cap;
@@ -6249,8 +6338,8 @@ function simulateLap(key,opts){
       cut-=dtS;
       if(shiftsCut)cutAt[i]=1;
     }else{
-      cutAt[i]=0;
-      const st=accFrom(p[i],v[i],boostShare?boostShare[i]:1);cap=st.cap;
+      cutAt[i]=0;holdAt[i]=hold;
+      const st=accFrom(p[i],v[i],boostShare?boostShare[i]:1,hold);cap=st.cap;
       accKind[i]=st.kind;latUse[i]=st.u;
     }
     // on the power = the car is accelerating as hard as it can here; on the second time round the speeds
@@ -6260,9 +6349,15 @@ function simulateLap(key,opts){
     if(shiftsCut){
       const g=gearAt(v[j]).gear;
       if(held<0)held=g;
-      if(g>held){if(onPower&&cut<=0)cut=vehicle.shiftTime;held=g;}
-      else if(g<held&&!onPower)held=g;   // on the power the driver stays in the gear just selected
-    }
+      if(hold>=0&&!onPower){hold=-1;held=g;}   // off the power: the held gear is let go
+      if(hold<0){
+        if(g>held){
+          if(onPower&&cut<=0){if(upshiftPays(j,held)){cut=vehicle.shiftTime;held=g;}else hold=held;}
+          else held=g;
+        }
+        else if(g<held&&!onPower)held=g;   // on the power the driver stays in the gear just selected
+      }
+    }else hold=-1;
   }
   }
   passes();
@@ -6311,7 +6406,7 @@ function simulateLap(key,opts){
   if(engine.intake==='turbo'&&engine.maxBoost>0&&engine.shaftJ){
     const grid=lapTorqueGrid(),iat0=state.iat;state.iat=20;   // design figures, like simulateAccel
     boostShare=new Float64Array(n).fill(1);boostLap=new Float64Array(n);
-    const rpmOf=i=>{const g=gearAt(v[i]).gear;return clamp(v[i]*ratios[g]*fd/rT*60/TWO_PI,idle,rl);};
+    const rpmOf=i=>{const g=holdAt[i]>=0?holdAt[i]:gearAt(v[i]).gear;return clamp(v[i]*ratios[g]*fd/rT*60/TWO_PI,idle,rl);};
     // Where the car is fastest it has been flat for a while, so the shaft is spun up to what the revs there
     // support: start it settled there and one walk round the lap is the lap-to-lap state (the shaft's
     // memory is well under a second). Re-walking from rest cost 1.3 s on the Nordschleife.
@@ -6321,7 +6416,7 @@ function simulateLap(key,opts){
       const thrS=new Float64Array(n);
       for(let i=0;i<n;i++){
         if(cutAt[i]){thrS[i]=0.35;continue;}   // mid-shift, as the standing-start run lifts for it
-        const j=(i+1)%n,g=gearAt(v[i]),a=(v[j]*v[j]-v[i]*v[i])/(2*p[i].ds3);
+        const j=(i+1)%n,g=holdAt[i]>=0?inGear(v[i],holdAt[i]):gearAt(v[i]),a=(v[j]*v[j]-v[i]*v[i])/(2*p[i].ds3);
         const need=vehicleMassEff(ratios[g.gear]*fd)*a+drag(v[i])+rollF(v[i])*p[i].cosT+m*G*p[i].sinT
                    +corneringDrag(m,v[i]*v[i]/p[i].r,loadAt(p[i],v[i]));
         thrS[i]=need<=0?0:clamp(need/Math.max(1,g.F*boostShare[i]),0,1);
@@ -6368,7 +6463,7 @@ function simulateLap(key,opts){
   for(let i=0;i<n;i++){
     const j=(i+1)%n,vAvg=Math.max(2,(v[i]+v[j])/2),dtSeg=p[i].ds3/vAvg;
     t+=dtSeg;sect[Math.min(2,Math.floor(p[i].s/third))]+=dtSeg;
-    gears[i]=bestGear(v[i]).gear;
+    gears[i]=holdAt[i]>=0?holdAt[i]:bestGear(v[i]).gear;
     if(v[i]<vMin)vMin=v[i];if(v[i]>vMax)vMax=v[i];
   }
   // Count real shifts, not solver chatter: picking the best gear point-by-point flickers between
@@ -6401,7 +6496,7 @@ function simulateLap(key,opts){
       const resist=drag(v[i])+rollF(v[i])*p[i].cosT+m*G*p[i].sinT+corneringDrag(m,v[i]*v[i]/p[i].r,loadAt(p[i],v[i])), need=vehicleMassEff(ratios[gears[i]]*fd)*aL[i]+resist;
       if(cutAt[i]){thr[i]=0;brk[i]=0;}   // mid-shift: clutch in, no drive
       else if(lim[i]==='power'||lim[i]==='traction'){thr[i]=1;brk[i]=0;}
-      else if(need>=0){thr[i]=clamp(need/Math.max(1,bestGear(v[i]).F*(boostShare?boostShare[i]:1)),0,1);brk[i]=0;}
+      else if(need>=0){thr[i]=clamp(need/Math.max(1,(holdAt[i]>=0?inGear(v[i],holdAt[i]):bestGear(v[i])).F*(boostShare?boostShare[i]:1)),0,1);brk[i]=0;}
       else{thr[i]=0;brk[i]=clamp(-need/m/Math.max(0.1,vehicle.brakeDecelCap),0,1);}
       const ax=p[i].x-p[h].x,ay=p[i].y-p[h].y,bx=p[j].x-p[i].x,by=p[j].y-p[i].y;
       gLat[i]=Math.sign(ax*by-ay*bx)*v[i]*v[i]/Math.max(1,p[i].r)/G;
