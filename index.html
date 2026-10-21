@@ -282,7 +282,7 @@ table.fuelmap td.live{box-shadow:inset 0 0 0 2px #fff;font-weight:bold}
 <body>
 <div class="container">
 <header>
-<h1>PIXEL ENGINE SIM v0.6 build 120</h1>
+<h1>PIXEL ENGINE SIM v0.6 build 121</h1>
 <div class="subtitle" id="subtitle">ENGINE DESIGNER • BUILD IT, THEN DRIVE IT</div>
 </header>
 <div class="build-strip" id="buildStrip">
@@ -993,7 +993,7 @@ race parts win on power but cost money and reliability. Balance the brief.
 <section class="guide-page" id="gp-options" data-cat="more" data-title="Options &amp; tips" hidden>
 <h4 class="guide-title">Options &amp; tips</h4>
 <div class="guide-body" data-gk="options">
-<b>ENGINE SOUND</b> — a synthesised engine note pitched to the firing frequency; a wild cam makes the idle lope.<br><b>WEAR &amp; DAMAGE</b> — with wear on, detonation, overheating, running lean under boost and over-revving damage the engine and can blow it; with it off the engine is invincible, which is the way to experiment.<br><b>LANGUAGE</b> — English or Greek. Pages added since the Greek translation was made appear in English.
+<b>ENGINE SOUND</b> — built from the firing pulses: every cylinder fires at its place in the firing order and its pulse goes down its own bank's exhaust, left and right for a V or a boxer. That is where a cross-plane V8's burble comes from, and why an inline six sounds smooth. A wild cam makes the idle lope.<br><b>WEAR &amp; DAMAGE</b> — with wear on, detonation, overheating, running lean under boost and over-revving damage the engine and can blow it; with it off the engine is invincible, which is the way to experiment.<br><b>LANGUAGE</b> — English or Greek. Pages added since the Greek translation was made appear in English.
 </div>
 <div class="guide-body" data-gk="tip">
 Tip: turn WEAR off in OPTIONS to
@@ -1015,7 +1015,7 @@ This is a physics model, and like every model it leaves things out. These are th
 <div class="hint">Simulator preferences. These don't change the engine build.</div>
 
 <div class="design-section">Audio</div>
-<div class="opt-row"><div><b>ENGINE SOUND</b><div class="opt-note">Web Audio engine note (pitched to firing frequency; lumpy idle from wild cams).</div></div>
+<div class="opt-row"><div><b>ENGINE SOUND</b><div class="opt-note">Synthesised from the firing pulses (firing order, one exhaust per bank; lumpy idle from wild cams).</div></div>
 <button id="btnSound" class="toggle" aria-pressed="false">SOUND OFF</button></div>
 
 <div class="design-section">Simulation</div>
@@ -2605,7 +2605,7 @@ const I18N={
   'BUILD & DYNO':{el:'ΚΑΤΑΣΚΕΥΗ & ΔΥΝΑΜΟ'},'DEFAULTS':{el:'ΠΡΟΕΠΙΛΟΓΕΣ'},
   'Simulator preferences. These don\'t change the engine build.':{el:'Προτιμήσεις προσομοιωτή. Δεν αλλάζουν τον κινητήρα.'},
   'Audio':{el:'Ήχος'},'ENGINE SOUND':{el:'ΗΧΟΣ ΚΙΝΗΤΗΡΑ'},
-  'Web Audio engine note (pitched to firing frequency; lumpy idle from wild cams).':{el:'Ήχος κινητήρα (τόνος ανά συχνότητα ανάφλεξης· ανώμαλο ρελαντί με άγρια εκκεντροφόρο).'},
+  'Synthesised from the firing pulses (firing order, one exhaust per bank; lumpy idle from wild cams).':{el:'Συντίθεται από τους παλμούς ανάφλεξης (σειρά ανάφλεξης, μία εξάτμιση ανά σειρά κυλίνδρων· ανώμαλο ρελαντί με άγρια εκκεντροφόρο).'},
   'Simulation':{el:'Προσομοίωση'},'WEAR & DAMAGE':{el:'ΦΘΟΡΑ & ΖΗΜΙΑ'},
   'On: detonation/overheat/lean-boost/over-rev damage the engine. Off: invincible, for free experimentation.':{el:'Ενεργό: πειράκι/υπερθέρμανση/φτωχό-boost/υπερστροφή κάνουν ζημιά. Ανενεργό: άφθαρτος, για ελεύθερο πειραματισμό.'},
   'Language':{el:'Γλώσσα'},'LANGUAGE PACK':{el:'ΠΑΚΕΤΟ ΓΛΩΣΣΑΣ'},
@@ -6585,19 +6585,127 @@ function stepThermal(dt){
 }
 
 // ---- Engine sound (Web Audio, created lazily on first user gesture) ----
-const Sound={ctx:null,osc:null,sub:null,filter:null,gain:null,lfo:null,lfoGain:null,on:false};
+// FIRING PULSES, NOT A TONE. The note used to be a sawtooth at the firing frequency, which makes every
+// engine with the same firing rate sound the same: a V8 and a flat-plane V8, a boxer four and an
+// inline four. What tells them apart is when each cylinder's exhaust pulse arrives and which pipe it
+// goes down. So an AudioWorklet keeps its own crank clock, fires each cylinder at its slot in the
+// real firing order (the same firingOrder() the LIVE bank draws), and sends the pulse into its bank's
+// exhaust: one channel for an inline engine, two (panned left / right) for a V or a boxer. Each bank
+// rings its own resonator and saturates on its own, so a bank that gets two pulses close together
+// sounds different from one that gets them evenly spaced. Nothing in here knows what a V8 is: the
+// cross-plane burble falls out of 1-5-4-8-6-3-7-2 firing its banks A-B-A-B-B-A-B-A.
+// The noise in a pulse is a fixed seeded table restarted on every pulse, so with no lope the output
+// is exactly periodic over one engine cycle; tests/test65 depends on that.
+const SOUND_WORKLET_SRC=`
+class EnginePulse extends AudioWorkletProcessor{
+  static get parameterDescriptors(){return[
+    {name:'rpm',defaultValue:800,minValue:0,maxValue:40000,automationRate:'k-rate'},
+    {name:'level',defaultValue:0,minValue:0,maxValue:2,automationRate:'k-rate'},
+    {name:'bright',defaultValue:1200,minValue:50,maxValue:20000,automationRate:'k-rate'},
+    {name:'lope',defaultValue:0,minValue:0,maxValue:1,automationRate:'k-rate'}];}
+  constructor(){super();this.cfg=null;this.port.onmessage=e=>this.configure(e.data);}
+  rnd(){this.seed=(Math.imul(this.seed,1664525)+1013904223)>>>0;return this.seed/4294967296;}
+  configure(c){
+    const t=c.tone,sr=sampleRate;
+    this.cfg=c;this.seed=12345;this.phase=0;this.cycle=0;this.next=0;this.nextAt=c.events[0].at;
+    this.decay=Math.exp(-1/(t.tau*1e-3*sr));this.clickDecay=Math.exp(-1/(0.5e-3*sr));
+    this.banks=[];
+    for(let b=0;b<c.banks;b++){
+      // RBJ band-pass (0 dB peak) at the bank's exhaust tone; bank B a touch lower, as its pipe is longer
+      const f0=t.res*(b?0.94:1),w=2*Math.PI*f0/sr,al=Math.sin(w)/(2*t.q),a0=1+al;
+      const noise=new Float32Array(Math.ceil(sr*0.03));
+      for(let i=0;i<noise.length;i++)noise[i]=this.rnd()*2-1;
+      const pan=c.banks===1?[0.7071,0.7071]:b?[0.45,0.85]:[0.85,0.45];
+      this.banks.push({env:0,clk:0,ni:noise.length,noise,b0:al/a0,b2:-al/a0,a1:-2*Math.cos(w)/a0,a2:(1-al)/a0,
+        x1:0,x2:0,y1:0,y2:0,lp:0,s1:0,h:0,gl:pan[0],gr:pan[1]});
+    }
+  }
+  fire(ev,lope){
+    const k=this.banks[ev.bank];
+    k.env+=1+lope*(this.rnd()-0.5);k.clk=1;k.ni=0;
+  }
+  process(inputs,outputs,params){
+    const out=outputs[0],L=out[0],R=out[1]||out[0],c=this.cfg;
+    if(!c){L.fill(0);if(R!==L)R.fill(0);return true;}
+    const t=c.tone,ev=c.events,n=ev.length;
+    const rpm=params.rpm[0],level=params.level[0],lope=params.lope[0];
+    const dPh=rpm/60/c.cycleRevs/sampleRate;                       // engine cycles per sample
+    const lpA=1-Math.exp(-2*Math.PI*params.bright[0]/sampleRate);
+    for(let i=0;i<L.length;i++){
+      this.phase+=dPh;
+      while(this.phase>=this.cycle+this.nextAt){
+        this.fire(ev[this.next],lope);
+        if(++this.next===n){this.next=0;this.cycle++;}
+        // a lumpy idle fires a little early or late, up to a sixth of the firing interval
+        this.nextAt=ev[this.next].at+(lope?lope*(this.rnd()-0.5)/(3*n):0);
+      }
+      if(this.cycle>=1000){this.cycle-=1000;this.phase-=1000;}
+      let l=0,r=0;
+      for(const k of this.banks){
+        const nz=k.ni<k.noise.length?k.noise[k.ni++]:0;
+        const x=k.env*(1+t.noise*nz)+k.clk*t.click*nz;
+        k.env*=this.decay;k.clk*=this.clickDecay;
+        const y=k.b0*x+k.b2*k.x2-k.a1*k.y1-k.a2*k.y2;
+        k.x2=k.x1;k.x1=x;k.y2=k.y1;k.y1=y;
+        k.lp+=lpA*(0.5*x+t.ring*y-k.lp);
+        const s=Math.tanh(t.drive*k.lp);
+        k.h=s-k.s1+0.995*k.h;k.s1=s;                               // DC block: the pulses are one-sided
+        l+=k.h*k.gl;r+=k.h*k.gr;
+      }
+      L[i]=l*level;if(R!==L)R[i]=r*level;
+    }
+    return true;
+  }
+}
+registerProcessor('engine-pulse',EnginePulse);`;
+// Pulse character by cycle: res/q the exhaust ring, tau (ms) the pulse decay, noise the rasp in it,
+// click a sharp knock on top (diesel), drive how hard a bank's pipe saturates.
+const SOUND_TONE={
+  petrol:   {res:160,q:2.5,tau:4.0,noise:0.5,click:0,  ring:1.2,drive:1.6},
+  diesel:   {res:110,q:2.0,tau:5.0,noise:0.4,click:0.8,ring:1.0,drive:1.4},
+  twostroke:{res:420,q:6.0,tau:2.5,noise:0.7,click:0,  ring:1.6,drive:1.8},
+  rotary:   {res:300,q:1.5,tau:1.8,noise:0.8,click:0,  ring:0.8,drive:1.6}
+};
+// The pulse train is about a quarter as loud (rms) as the old sawtooth-and-square note at the same
+// level; this brings it back to the same loudness so the volume did not change under anyone.
+const SOUND_PULSE_GAIN=3;
+// What the worklet needs from a build: when in the cycle each cylinder fires, and into which bank.
+// Banks split as the LIVE bank draws them: cylinders 1..ceil(n/2) are bank A.
+function soundConfig(e){
+  const n=e.cylinders,two=e.strokeDiv===2*Math.PI;
+  const vee=e.layout==='v'||e.layout==='boxer',perBank=vee?Math.ceil(n/2):n;
+  const events=firingOrder(e.layout,n).map((c,k)=>({at:k/n,bank:vee&&c>perBank?1:0}));
+  const tone=SOUND_TONE[e.ci?'diesel':e.type==='rotary'?'rotary':e.type==='twostroke'?'twostroke':'petrol'];
+  return {cycleRevs:two?1:2,banks:vee?2:1,events,tone};
+}
+// The worklet is inline, so the app stays one file. A blob: URL is refused from a file:// page (its
+// origin is opaque), a data: URL is not, so try the one and fall back to the other.
+function loadSoundWorklet(ctx){
+  const blob=URL.createObjectURL(new Blob([SOUND_WORKLET_SRC],{type:'application/javascript'}));
+  return ctx.audioWorklet.addModule(blob)
+    .catch(()=>ctx.audioWorklet.addModule('data:application/javascript;base64,'+btoa(SOUND_WORKLET_SRC)));
+}
+const Sound={ctx:null,node:null,cfgKey:'',osc:null,sub:null,filter:null,gain:null,lfo:null,lfoGain:null,on:false};
 function initSound(){
   if(Sound.ctx)return;
   const AC=window.AudioContext||window.webkitAudioContext;if(!AC)return;
   Sound.ctx=new AC();
+  if(!Sound.ctx.audioWorklet){initToneSound();return;}
+  loadSoundWorklet(Sound.ctx).then(()=>{
+    Sound.node=new AudioWorkletNode(Sound.ctx,'engine-pulse',{outputChannelCount:[2]});
+    Sound.node.connect(Sound.ctx.destination);Sound.cfgKey='';
+  }).catch(initToneSound);
+}
+// Fallback for a browser without AudioWorklet: the old single note.
+function initToneSound(){
+  if(Sound.osc)return;
   Sound.gain=Sound.ctx.createGain();Sound.gain.gain.value=0;
   Sound.filter=Sound.ctx.createBiquadFilter();Sound.filter.type='lowpass';Sound.filter.frequency.value=900;
   Sound.osc=Sound.ctx.createOscillator();Sound.osc.type='sawtooth';
   Sound.sub=Sound.ctx.createOscillator();Sound.sub.type='square';
   Sound.osc.connect(Sound.filter);Sound.sub.connect(Sound.filter);
   Sound.filter.connect(Sound.gain);Sound.gain.connect(Sound.ctx.destination);
-  // Lumpiness LFO: amplitude-modulates the note at the firing/rev rate so a wild cam or a
-  // cross-plane V8 idles with an audible lope/burble; VVT & many cylinders smooth it out.
+  // Lumpiness LFO: amplitude-modulates the note at the rev rate so a wild cam idles with a lope.
   Sound.lfo=Sound.ctx.createOscillator();Sound.lfo.type='sine';
   Sound.lfoGain=Sound.ctx.createGain();Sound.lfoGain.gain.value=0;
   Sound.lfo.connect(Sound.lfoGain);Sound.lfoGain.connect(Sound.gain.gain);
@@ -6605,28 +6713,40 @@ function initSound(){
 }
 function updateSound(){
   if(!Sound.on||!Sound.ctx)return;
+  const t=Sound.ctx.currentTime;
+  // Rotaries sit bright & smooth, diesels dark & clattery; the note opens up with revs.
+  const bright=(440+state.rpm*0.15+engine.cylinders*8)*(engine.type==='rotary'?1.5:engine.ci?0.6:1.0);
+  const loud=state.blown?0:0.05+clamp(state.powerHP/160,0,1)*0.13;
+  // Lope is deepest at idle and fades with rpm.
+  const lope=(engine.lumpiness||0)*clamp(1-(state.rpm-engine.idleRpmEff)/2600,0.12,1);
+  if(Sound.node){
+    const key=[engine.cylinders,engine.layout,engine.type,engine.ci,engine.strokeDiv].join('|');
+    if(key!==Sound.cfgKey){Sound.cfgKey=key;Sound.node.port.postMessage(soundConfig(engine));}
+    const p=Sound.node.parameters;
+    p.get('rpm').setTargetAtTime(state.rpm,t,0.05);
+    p.get('bright').setTargetAtTime(bright,t,0.05);
+    p.get('level').setTargetAtTime(loud*SOUND_PULSE_GAIN,t,0.08);
+    p.get('lope').setTargetAtTime(state.blown?0:lope,t,0.08);
+    return;
+  }
+  if(!Sound.osc)return;
   // Firing frequency: 4-stroke fires once per cylinder every 2 revs; a 2-stroke and a rotary
   // make a power event every rev, so they fire twice as often (higher, busier note).
   const perRev=(engine.strokeDiv===2*Math.PI)?1:0.5;
   const fire=engine.cylinders*(state.rpm/60)*perRev;
-  const t=Sound.ctx.currentTime;
   Sound.osc.frequency.setTargetAtTime(fire,t,0.05);
   Sound.sub.frequency.setTargetAtTime(fire/2,t,0.05);
-  // Rotaries sit bright & smooth, diesels dark & clattery; the note opens up with revs.
-  const bright=engine.type==='rotary'?1.5:engine.ci?0.6:1.0;
-  Sound.filter.frequency.setTargetAtTime((440+state.rpm*0.15+engine.cylinders*8)*bright,t,0.05);
-  const loud=state.blown?0:0.05+clamp(state.powerHP/160,0,1)*0.13;
+  Sound.filter.frequency.setTargetAtTime(bright,t,0.05);
   Sound.gain.gain.setTargetAtTime(loud,t,0.08);
-  // Lope pulses at the crank-rev rate, deepest at idle and fading with rpm.
-  const lump=engine.lumpiness||0;
   Sound.lfo.frequency.setTargetAtTime(Math.max(4,state.rpm/60),t,0.05);
-  const depth=lump*loud*clamp(1-(state.rpm-engine.idleRpmEff)/2600,0.12,1);
+  const depth=(engine.lumpiness||0)*loud*clamp(1-(state.rpm-engine.idleRpmEff)/2600,0.12,1);
   Sound.lfoGain.gain.setTargetAtTime(state.blown?0:depth,t,0.08);
 }
 function setSound(on){
   Sound.on=on;
   if(on){initSound();if(Sound.ctx&&Sound.ctx.state==='suspended')Sound.ctx.resume();}
-  else if(Sound.ctx)Sound.gain.gain.setTargetAtTime(0,Sound.ctx.currentTime,0.05);
+  else if(Sound.node)Sound.node.parameters.get('level').setTargetAtTime(0,Sound.ctx.currentTime,0.05);
+  else if(Sound.gain)Sound.gain.gain.setTargetAtTime(0,Sound.ctx.currentTime,0.05);
   const btn=document.getElementById('btnSound');
   btn.classList.toggle('on',on);btn.setAttribute('aria-pressed',on);btn.textContent=tr(on?'SOUND ON':'SOUND OFF');
 }

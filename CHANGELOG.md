@@ -20,6 +20,21 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 Working toward **v1.0 — every number derived, not fitted.**
 
+### Engine sound from the firing pulses (build 121)
+
+- The note was one sawtooth at the firing frequency, so every engine with the same firing rate sounded
+  the same. It is now an AudioWorklet that keeps its own crank clock and fires each cylinder at its slot in
+  `firingOrder()` (the order the LIVE bank draws), sending the pulse into its bank's exhaust: one channel
+  for an inline engine, two, panned left and right, for a V or a boxer. Each bank rings its own resonator
+  and saturates on its own. Nothing knows what a V8 is: 1-5-4-8-6-3-7-2 fires the banks A-B-A-B-B-A-B-A,
+  and the burble falls out of that. Diesel, 2-stroke and rotary get their own pulse shape; the lope
+  jitters pulse timing and strength at idle instead of wobbling the volume.
+- The worklet is inline (blob: URL, falling back to data: from a file:// page) so the app stays one file;
+  a browser without AudioWorklet keeps the old note.
+- test65 renders it offline: every preset audible and unclipped, the pulse rate is the firing rate, a
+  cross-plane V8's banks are uneven while an I4, I6, even-fire V6, V12 and rotary are even, and a V or a
+  boxer is stereo while an inline engine is not.
+
 ### Turbo lag at a fifth of the cost; re-baselined checks (build 120)
 
 - The lap's turbo walk (build 118) added 1.3 s to a Nordschleife solve: it re-ran the shaft from rest and

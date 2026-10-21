@@ -1,4 +1,4 @@
-# PIXEL ENGINE SIM v0.6 build 120
+# PIXEL ENGINE SIM v0.6 build 121
 
 **A lightweight, 8-bit style internal combustion engine *designer* & simulator** inspired by *Automation*.
 
@@ -199,10 +199,14 @@ saps power; a large radiator, electric fan and oil cooler keep it cool.
 - **Auto Thermal mode** — coolant & oil drift toward load-dependent targets over time,
   balanced against the cooling subsystem's capacity (radiator airflow scales with RPM;
   the fan provides idle cooling).
-- **Engine sound** — Web Audio note pitched to firing frequency (scales with cylinder
-  count & RPM) and load, now with a **lope/burble** whose depth tracks the build's character —
-  a wild cam, a cross-plane V8 or anti-lag idles lumpy, while VVT and more cylinders smooth
-  it out.
+- **Engine sound** — synthesised from the **firing pulses** in an AudioWorklet: every cylinder
+  fires at its slot in the real firing order and its pulse goes down its own bank's exhaust
+  (one pipe for an inline engine, left and right for a V or a boxer), so engines with the same
+  firing rate no longer sound alike. A cross-plane V8 fires each bank unevenly
+  (1-5-4-8-6-3-7-2 → A-B-A-B-B-A-B-A), which is its burble; an inline six or a V12 fires each
+  bank evenly and sounds smooth. Diesels add a combustion knock, 2-strokes ring, rotaries are
+  short and bright. A **lope** whose depth tracks the build — a wild cam or anti-lag idles
+  lumpy, VVT smooths it — jitters the pulses at idle. Loudness follows power.
 - **Scoring** — every build gets a graded scorecard (S–F) rating power, specific output,
   powerband width, efficiency, knock safety, drivability and **emissions**, shown on the
   design summary and the dyno.
