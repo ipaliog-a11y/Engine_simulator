@@ -20,6 +20,100 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 Working toward **v1.0 — every number derived, not fitted.**
 
+### The engine sound without the hiss (build 129)
+
+- Most engines sounded like noise, the V12 and the turbo diesel worst. Measured by muting one voice at a
+  time, it was three things:
+  - **The intake roar was five times the exhaust** at full throttle (V12: 0.202 rms with it, 0.038
+    without), mostly its broadband hiss. Build 127 scaled it against the wrong reference. Now about 13x
+    lower, with less hiss in it; open stacks still roar louder than an airbox.
+  - **Pulses ran together at high rpm.** Each one decayed over a fixed 4 ms, so a V12 at 7000 rpm made a
+    steady pressure that the DC block removed, leaving only the noise riding on it: the V12 was quieter
+    flat out than at cruise. Blowdown lasts a crank angle, not a time, so the decay now shrinks with rpm
+    (its length at 2000 rpm, as before). The V12 flat out is now louder than its cruise and tonal.
+  - **The diesel was all knock and whistle.** The live manifold reads low at a diesel idle, but a diesel
+    has no throttle and traps atmosphere plus boost, so its pulses were far too weak and the 6 kHz knock
+    ring (also now a fifth as loud) was most of what you heard. The turbo whine also passes 10 kHz near
+    full shaft speed, where it is a squeal; ducting and bonnet lining absorb that range, so it now rolls
+    off above 6 kHz. Turbo whine level 0.05 -> 0.03.
+- With the roar no longer making up most of the level, the overall gain doubles to keep the loudness.
+- test69's whine check now compares 20% and 40% shaft speed (the audible range) and also checks the roll-off.
+
+### A soft limiter on the engine sound (build 128)
+
+- With all the voices together, a race header on open stacks flat out (the ITB screamer) peaked at 1.27
+  and would clip. The worklet's output now runs linear to 0.7 and eases into 1 above it.
+
+### Whine, blow-off, intake roar and knock in the engine sound (build 127)
+
+- Four voices that do not go through the exhaust, each from hardware the sim already models:
+  - **Turbo whine** at the compressor's blade-pass frequency (6 full blades) from the live shaft speed
+    (`shaftE`), its level with tip speed squared and lower on a closed throttle. **Supercharger whine**
+    from the crank through a stated drive ratio and lobe/blade count (`SC_SOUND`: a Roots blower buzzes,
+    a centrifugal whistles).
+  - **Blow-off** when the throttle shuts on more than 0.15 bar: a 2.6 kHz hiss that lasts as long as the
+    charge volume (`chargeVol`) takes to vent through a 25 mm valve, so a front-mount core hisses about
+    2.5x longer than a small one. Never on a diesel: with no throttle there is nothing to surge against.
+  - **Intake roar** at the runner's Helmholtz frequency (the one the breathing model tunes), excited by
+    each induction pulse and scaled by flow (MAP x rpm); open stacks and ITBs loudest, an airbox or a
+    compressor in the way much less.
+  - **Knock** rings at the chamber's first circumferential mode, Draper's 1.84 c / pi B in burnt gas
+    (6.1 kHz in an 86 mm bore). It replaces the diesel's generic click: a diesel rings on every pulse,
+    twice as hard from cold and harder at light load (longer ignition delay); a petrol engine rings on a
+    share of cycles that grows past `KNOCK_TARGET`.
+- test69: each voice at the pitch its hardware sets, BOV length vs charge volume, runner and bore
+  direction, shaft- and crank-following pitch, BOV only on a real lift from boost, knock thresholds.
+
+### Load, lope and overrun crackle in the engine sound (build 126)
+
+- Load only turned the volume up. `soundDrive()` now sets each pulse's strength from the blowdown at
+  exhaust-valve opening: manifold pressure × the charge's heating (1/lambda, capped at stoich). A fuel cut
+  leaves 12% (compressed air only); a diesel's unthrottled manifold makes a soft pulse at idle because it
+  is lean (lambda ~4), not because it is starved. A stronger pulse is also raspier (a finite-amplitude
+  wave steepens faster), so the tone changes with load. Level now scales with cylinder size instead.
+- The lope is cycle-to-cycle variation from overlap, with an occasional partial burn, and it fades with
+  load as well as revs: residual gas needs manifold vacuum to flow back into the charge.
+- Overrun crackle: a carburetted engine (no DFCO) on a closed throttle above idle misfires its thin
+  charge into the pipe, and while the pipe is still hot from the pull (an exhaust-heat envelope, ~1.5 s)
+  the fuel lights there: a weak pulse, then a pop past the header that the system, the cat (a working one
+  oxidises most of the fuel) and the silencer shape like any other sound. Injected engines stay quiet;
+  anti-lag pops on any lift.
+- test68: harder pulses louder and brighter, pops above the pulses and softer through a cat; full throttle
+  vs idle, fuel cut, lean diesel idle, lope fading with load, DFCO quiet, carb crackle dying as the pipe
+  cools, anti-lag from cold.
+
+### The exhaust in the engine sound (build 125)
+
+- Build 124 rang every petrol engine at one fixed pipe tone. Each bank's pulses now run the build's own
+  exhaust: the primary rings at its quarter wave, c/4L at the gas's sound speed, from the `primL` the
+  breathing model already tunes (so a race header cut for 8800 rpm, 500 mm, sings at 309 Hz where one cut
+  for 6600, 659 mm, sings at 231 Hz). Its Q comes from the header's path-length spread `exhSigma`: 1.4 for
+  a cast log, 4.2 for a sport header, 10 for a race one. The system behind the collector (`sysL`, open at
+  the tailpipe, gas at about 0.65 of port temperature) adds its half-wave drone.
+- The silencer is not in the breathing model (it only sees back-pressure), so `SILENCER` states it: a
+  chambered can on a stock system, a straight-through one on sport, next to nothing on race. A cat
+  absorbs the top end in proportion to its restriction, and a turbine muffles both top end and level.
+- Stock systems, cats and turbos are now quieter than before and race headers louder; the overall gain
+  is recalibrated so a sport system matches the old loudness.
+- test67: the primary rings at c/4L and its harmonic stands out of the spectrum, a header cut for higher
+  revs is shorter and higher, ring follows path spread, and stock < race, cat < decat, turbo < NA in
+  level and brightness.
+
+### Engine sound from the firing pulses (build 124)
+
+- The note was one sawtooth at the firing frequency, so every engine with the same firing rate sounded
+  the same. It is now an AudioWorklet that keeps its own crank clock and fires each cylinder at its slot in
+  `firingOrder()` (the order the LIVE bank draws), sending the pulse into its bank's exhaust: one channel
+  for an inline engine, two, panned left and right, for a V or a boxer. Each bank rings its own resonator
+  and saturates on its own. Nothing knows what a V8 is: 1-5-4-8-6-3-7-2 fires the banks A-B-A-B-B-A-B-A,
+  and the burble falls out of that. Diesel, 2-stroke and rotary get their own pulse shape; the lope
+  jitters pulse timing and strength at idle instead of wobbling the volume.
+- The worklet is inline (blob: URL, falling back to data: from a file:// page) so the app stays one file;
+  a browser without AudioWorklet keeps the old note.
+- test66 renders it offline: every preset audible and unclipped, the pulse rate is the firing rate, a
+  cross-plane V8's banks are uneven while an I4, I6, even-fire V6, V12 and rotary are even, and a V or a
+  boxer is stereo while an inline engine is not.
+
 ### Real circuits (build 123)
 
 - **22 real circuits** under a new REAL CIRCUITS group in the circuit menu: COTA, Brands Hatch GP,

@@ -1,4 +1,4 @@
-# PIXEL ENGINE SIM v0.6 build 123
+# PIXEL ENGINE SIM v0.6 build 129
 
 **A lightweight, 8-bit style internal combustion engine *designer* & simulator** inspired by *Automation*.
 
@@ -201,10 +201,31 @@ saps power; a large radiator, electric fan and oil cooler keep it cool.
 - **Auto Thermal mode** — coolant & oil drift toward load-dependent targets over time,
   balanced against the cooling subsystem's capacity (radiator airflow scales with RPM;
   the fan provides idle cooling).
-- **Engine sound** — Web Audio note pitched to firing frequency (scales with cylinder
-  count & RPM) and load, now with a **lope/burble** whose depth tracks the build's character —
-  a wild cam, a cross-plane V8 or anti-lag idles lumpy, while VVT and more cylinders smooth
-  it out.
+- **Engine sound** — synthesised from the **firing pulses** in an AudioWorklet: every cylinder
+  fires at its slot in the real firing order and its pulse goes down its own bank's exhaust
+  (one pipe for an inline engine, left and right for a V or a boxer), so engines with the same
+  firing rate no longer sound alike. A cross-plane V8 fires each bank unevenly
+  (1-5-4-8-6-3-7-2 → A-B-A-B-B-A-B-A), which is its burble; an inline six or a V12 fires each
+  bank evenly and sounds smooth. The pulses then run the **exhaust the build has**: the primary rings
+  at its quarter wave (c/4L, the same header length the breathing model tunes), as sharply as its
+  path-length spread allows (a cast log manifold barely rings, a jig-cut race header rings hard), the
+  system behind the collector drones at its half wave, and the silencer, the cat and a turbine take the
+  top off and the level down. Diesels add a combustion knock, 2-strokes ring, rotaries are
+  short and bright. **Load is in the pulses**: each is as hard as the charge it burned (manifold
+  pressure × how much fuel the air carried), and a harder pulse is also raspier, so flat out sounds
+  different from a cruise and not just louder; a fuel cut leaves only compressed air. The **lope**
+  (a wild cam or anti-lag idles lumpy, VVT smooths it) varies the pulses cycle to cycle with the
+  occasional partial burn, and fades with revs and load, since residual gas needs manifold vacuum to
+  flow back. **Overrun crackle** is a carburetted engine misfiring its unburnable overrun charge into a
+  pipe still hot from the pull, popping for a second or two; injection cuts the fuel and stays
+  quiet, anti-lag pops on purpose, and a working cat takes the edge off the pops.
+  Around the exhaust, the **rest of the car**: a turbo whines at its compressor's blade-pass
+  frequency from the live shaft speed and hisses through its **blow-off valve** on a lift from
+  boost, for as long as the charge volume takes to vent (no BOV on a diesel: no throttle to surge
+  against); a supercharger whines with the crank through its drive ratio; the **intake** roars at
+  the runner's Helmholtz frequency with airflow, open stacks loudest; and **knock** rings at the
+  chamber's first acoustic mode (Draper, 1.84 c / πB, ~6 kHz), a diesel's rattle on every pulse and
+  worse cold, a petrol engine's on the cycles past its knock limit.
 - **Scoring** — every build gets a graded scorecard (S–F) rating power, specific output,
   powerband width, efficiency, knock safety, drivability and **emissions**, shown on the
   design summary and the dyno.
