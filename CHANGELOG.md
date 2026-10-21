@@ -20,6 +20,28 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 Working toward **v1.0 — every number derived, not fitted.**
 
+### The charge heated as it is drawn in; the valve's flow coefficient from Taylor (build 122)
+
+- **The first law in the cylinder.** Build 121 integrated the intake stroke with the cylinder compressed as a
+  fixed mass (p ~ rho^gamma) while gas poured in. Filling a volume from a plenum heats what is in it by the flow
+  work (a vessel charged from a reservoir ends at gamma x its temperature), so the fill was overstated 5-10%.
+  Now d(m cv T) = cp T_in dm - p dV + Q, starting from the residual the exhaust stroke left in the clearance
+  volume at the temperature the cycle trace gives it after blowdown (~1150 K), and the walls' heat in at
+  Woschni's gas-exchange flux (C1 6.18) to his 450 K wall. The heating itself is small (0-2%); the flow work
+  is the large term.
+- **Two stand-ins removed** where the stroke is integrated: veAmp's flat 0.95 ceiling and CAM.ampMul's fitted
+  +4%/+8% cam bonus (the late-IVC charge it stood for is in the integration since build 121). Rotaries and
+  two-strokes keep both.
+- **The curtain's discharge coefficient** was a flat 0.6 at every lift, which averages ~0.3 over the event
+  against the 0.42 mean flow coefficient the model takes from Taylor for the same valve (inletMachZ). Now it is
+  the coefficient whose average over each cam's lift event, on the curtain-or-throat area, is Taylor's
+  min(0.42, 1.5 L/D): one published figure for the valve, used the same way twice.
+- **Result:** NA power RMS ~7% (F20C -8%, S54 +7%, GT3 -1%, Coyote +1%, F140 -3%, Huracan -8%, LS7 +8%); the
+  runner's tuning orders again (long 5300, medium 5800, short 6050 rpm on the 1.6 archetype). Turbo engines are
+  back near their build-121 overshoot (Supra +34%, RB26 +36%, GR Yaris +25%): the open boosted top end.
+- **Known gaps, named:** the Aygo's 1KR-FE joins the limiter list in test60 (75 hp at its 6500 limiter, real 68
+  at 6000), and the 1.6 Sport NA archetype test44's (as test46's); test48's Supra cap 33 -> 35.
+
 ### The intake stroke integrated; the driver holds a gear into the brakes (build 121)
 
 - **The charge's momentum.** A late-closing intake valve was charged as pure crank-slider geometry (everything

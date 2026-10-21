@@ -282,7 +282,7 @@ table.fuelmap td.live{box-shadow:inset 0 0 0 2px #fff;font-weight:bold}
 <body>
 <div class="container">
 <header>
-<h1>PIXEL ENGINE SIM v0.6 build 121</h1>
+<h1>PIXEL ENGINE SIM v0.6 build 122</h1>
 <div class="subtitle" id="subtitle">ENGINE DESIGNER • BUILD IT, THEN DRIVE IT</div>
 </header>
 <div class="build-strip" id="buildStrip">
@@ -1705,7 +1705,17 @@ function intakeRamGain(rpm,chargeK){
 // same lumped column and cylinder are the Helmholtz resonator, so the tuning comes out of it too.
 // The fresh charge at IVC over the displaced volume at plenum density is the fill. A cam phaser is
 // set, at full load, where it fills best: the ECU's wide-open-throttle calibration.
-const INTAKE_CD=0.6;
+// The curtain's discharge coefficient (build 122). It was a flat 0.6 at every lift, which cannot be squared
+// with the mean inlet flow coefficient this model already takes from Taylor for the same valve (inletMachZ:
+// Ci = min(0.42, 1.5 L/D), on the valve head's area): with the throat limiting at full lift, 0.6 averages
+// barely 0.3 over the event. Now the coefficient is the one whose average over this cam's lift event, on the
+// curtain-or-throat area, IS Taylor's Ci: one published figure for the valve, used the same way twice.
+function intakeCd(){
+  const e=engine,D=e.ivDia_mm,ref=Math.PI/4*D*D,N=90;
+  let acc=0;
+  for(let k=0;k<N;k++)acc+=valveFlowArea(D,e.ivLift_mm*Math.pow(Math.sin(Math.PI*(k+0.5)/N),2))/ref;
+  return Math.min(0.42,1.5*(e.ivLift_mm/D))/Math.max(1e-6,acc/N);
+}
 // Build 122: the charge is HEATED as it is drawn in, by the first law in the cylinder:
 //     d(m cv T) = cp T_in dm_in + cp T dm_out - p dV + h A (T_wall - T) dt
 // It starts as the residual the exhaust stroke left in the clearance volume, at the temperature the cycle
@@ -1714,8 +1724,9 @@ const INTAKE_CD=0.6;
 // (C1 6.18). A warmer charge holds less mass at the same pressure, and the hot residual's volume is space the
 // fresh air does not get. Until build 122 the cylinder filled adiabatically with plenum-temperature air, and a
 // flat 0.95 ceiling (veAmp) with a fitted cam bonus (CAM.ampMul, +4% sport, +8% race) stood in for all of it.
-function intakeFill(rpm,adv,L,Tres){
+function intakeFill(rpm,adv,L,Tres,Cd){
   const e=engine,dur=e.camDur,abd=ivcAbdc(dur,e.camLSA,adv);
+  Cd=Cd||intakeCd();
   const thO=180+abd-dur,th1=180+abd,th0=Math.max(0,thO);
   const B=e.bore_mm/1000,Vd=Math.PI/4*B*B*e.stroke_mm/1000,vc=2/Math.max(1.5,e.compression-1);
   const V=th=>Vd*(pistonX(th,1,ROD_STROKE*2)+vc)/2;
@@ -1726,7 +1737,7 @@ function intakeFill(rpm,adv,L,Tres){
   const Tr=Tres>0?Tres:T0;
   let T=Tr,m=p0*V(th0)/(R*Tr),u=0;const m0=m;
   for(let th=th0;th<th1;th+=dth){
-    const Av=INTAKE_CD*e.ivCount*valveFlowArea(e.ivDia_mm,e.ivLift_mm*Math.pow(Math.sin(Math.PI*(th-thO)/dur),2))*1e-6;
+    const Av=Cd*e.ivCount*valveFlowArea(e.ivDia_mm,e.ivLift_mm*Math.pow(Math.sin(Math.PI*(th-thO)/dur),2))*1e-6;
     const Vc=V(th),pc=m*R*T/Vc,k=0.5*rho0*Math.pow(Ar/Math.max(1e-9,Av),2);
     const rhs=p0-pc+rho0*L/dt*u;   // implicit in u: k u|u| + a u = rhs
     u=rhs>=0?(-a+Math.sqrt(a*a+4*k*rhs))/(2*k):(a-Math.sqrt(a*a-4*k*rhs))/(2*k);
@@ -1742,11 +1753,12 @@ function intakeFill(rpm,adv,L,Tres){
 function buildFillTable(){
   const e=engine;e.fillTable=null;
   if(!e.ivDia_mm||!e.runnerL||!(e.runnerA>0))return;
+  const Cd=intakeCd();e.intakeCd=Cd;
   const tb=[],lo=800,hi=e.redline+500,lens=e.runnerVariable?[e.runnerL,e.runnerLShort]:[e.runnerL];
   for(let r=lo;r<=hi;r+=250){
     let f=0;
     const Tres=wallTrace(e,r,1).Tres;
-    for(const L of lens)for(let adv=0;adv<=(e.vvt?VVT_AUTHORITY:0);adv+=5)f=Math.max(f,intakeFill(r,adv,L,Tres));
+    for(const L of lens)for(let adv=0;adv<=(e.vvt?VVT_AUTHORITY:0);adv+=5)f=Math.max(f,intakeFill(r,adv,L,Tres,Cd));
     tb.push({rpm:r,f});
   }
   e.fillTable=tb;

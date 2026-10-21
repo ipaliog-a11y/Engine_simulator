@@ -52,6 +52,8 @@ const KNOWN = {
   // at 5200); power then creeps up ~1 hp per 200 rpm to the 7600 limiter (139 hp) where the real engine falls
   // from 128 at 6600. The same missing top-end fade as the F140 below.
   'Toyota 4A-GE (AE86)': ['limiter'],
+  // build 122: the Aygo's 1KR-FE likewise, 75 hp at its 6500 limiter (real 68 at 6000): the same missing top-end fade
+  'Toyota 1KR-FE (Aygo 1.0)': ['limiter'],
   // a flat plateau; the scorecard's conditions put the peak at the limiter, the design curve's not
   'Toyota 2JZ-GTE (Supra A80)': ['limiter'],
   // build 116: with the overlap's reverse flow derived from the cam (it was a fixed 15% lift on every cam,

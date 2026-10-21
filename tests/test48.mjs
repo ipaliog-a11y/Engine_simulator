@@ -227,8 +227,9 @@ const POWER_OVER_15_BUDGET = 0;
 // build 121: the Alto 20 -> 22, the integrated intake stroke's +3% on its known gap
 const POWER_KNOWN = { 'Suzuki Alto Works (K6A)': 22, 'VW Golf 2.0 TDI 150': 18,
   // build 116: boost held to the limiter (a real 2JZ-GTE's ECU tapers it), and the S54's flat top
-  // build 121: 33, the integrated intake stroke's +3% on the same gap
-  'Toyota Supra RZ (2JZ-GTE)': 33, 'BMW M3 E46 (S54)': 18 };
+  // build 121: 33, the integrated intake stroke's +3% on the same gap; build 122: 35, the valve curtain's coefficient
+  // now averaging Taylor's 0.42 (it averaged ~0.3), which gives every engine back its high-rpm breathing
+  'Toyota Supra RZ (2JZ-GTE)': 35, 'BMW M3 E46 (S54)': 18 };
 const pErr = out.map(r => pc(r.modHp, r.real.hp));
 const pRms = rms(pErr);
 const bigP = out.filter(r => Math.abs(pc(r.modHp, r.real.hp)) > 15);
