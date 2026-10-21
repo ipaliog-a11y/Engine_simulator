@@ -4427,90 +4427,96 @@ function tempFactors(coolant,oil){
   return{coolF,oilFrictionMult};
 }
 function ignBonus(){return {distributor:-2,wasted:0,coil:2}[engine.ignitionType]||0;}
-// Knock risk (0-100) for a given spark advance. The advance term is signed: advancing
-// past MBT feeds knock, retarding below it pulls knock back down.
+// ---- Knock: the end gas's own chemistry (build 123) ----
+// Knock is the unburned gas ahead of the flame igniting on its own before the flame reaches it. The gas is
+// compressed by the piston and then by the burning charge behind it, and it ignites when the integral of
+// dt / tau over its life reaches 1 (Livengood & Wu), tau being its ignition delay at the pressure and
+// temperature it is at. The delay is Douaud & Eyzat's correlation for a fuel of octane number ON:
+//     tau [ms] = 17.68 (ON/100)^3.402 p[atm]^-1.7 exp(3800 / T)
+// The gas is traced on this model's own cycle (the trace wallTrace runs): from BDC, compressed and then
+// heated by the Wiebe burn phased at CA50, the unburned part following the pressure isentropically
+// (gamma 1.35, an unburned mixture), until 90% of the charge has burned and there is no end gas left.
+// Where it starts: the fresh charge at the intake temperature (effIAT), mixed by enthalpy at the intake
+// pressure with the residual the exhaust left in the clearance volume (residualFrac, the residual at the
+// exhaust temperature expanded back to intake pressure): T = (1 + f) / (1/T_fresh + f/T_res). With direct
+// injection the fuel evaporates in the cylinder and takes its latent heat from the charge,
+// dT = h_fg (F/A) / cp (gasoline 350 kJ/kg). A port-injected engine's fuel evaporates mostly off the port
+// walls and cools the charge little.
+// Until build 123 this was a points score: 30 a bar of boost, 8 a unit of compression, 0.8 a degree of charge
+// temperature, -2.2 an octane, -12 for direct injection, more for rpm, coolant and alcohol, each set by hand.
+// It left a 10:1 engine at 2.4 bar on 98 RON at its best spark, which no real one is.
+// Kept from the score: the measured trend that knock-limited spark gains ~3 degrees per 0.1 of enrichment
+// below lambda 0.95 and loses about as much leaner (end-gas chemistry Douaud & Eyzat do not carry), applied to
+// the phasing the gas sees; the ignition system's margin (ignBonus); nitrous's extra cylinder pressure, as
+// before. The score the rest of the model reads is KNOCK_TARGET x the integral: 40 is knock onset.
+function ignBonus(){return {distributor:-2,wasted:0,coil:2}[engine.ignitionType]||0;}
+const DE_A=17.68,DE_ON=3.402,DE_P=1.7,DE_T=3800, HFG={gasoline:350e3,race:350e3,e85:840e3,methanol:1100e3};
+let _knockCache=null;
+function endGasIntegral(rpm,map,ca50){
+  const e=engine,cr=Math.max(1.5,e.compression),R=287,g=1.30,cv=R/(g-1),k=(1.35-1)/1.35;
+  const st=e.stoichAFR||14.7,lam=curAFR(rpm,map)/st,q=(e.fuelLHV||44)*1e6/(Math.max(1,lam)*st);
+  const Tf=effIAT(map,rpm)+273.15-(e.injector==='direct'?(HFG[e.fuel]||350e3)/(lam*st)/1005:0);
+  const Tex=egtAt(rpm,map),prev=e.boostNow;e.boostNow=map;
+  const pExh=1+backPressureBar(rpm,Tex);e.boostNow=prev;
+  const pInt=Math.max(0.3,map),f=Math.min(0.5,residualFrac(pExh,pInt,cr));
+  const Tres=Math.max(Tf,Tex*Math.pow(Math.min(1,pInt/pExh),(GAMMA_EXH-1)/GAMMA_EXH));
+  const T1=(1+f)/(1/Tf+f/Tres), p1=pInt*1e5, v1=R*T1/p1;
+  const burn=SI_BURN_DEG,soc=ca50-wiebeX50()*burn,d=0.5,dt=d/(6*Math.max(300,rpm));
+  const xb=th=>th<=soc?0:1-Math.exp(-WIEBE_A*Math.pow(Math.min(1,(th-soc)/burn),WIEBE_M+1));
+  const onF=DE_A*Math.pow(Math.max(50,e.effOctane||95)/100,DE_ON);
+  let T=T1,I=0;
+  for(let th=-180;th<soc+burn;th+=d){
+    const V0=pistonVol(th,cr),Vn=pistonVol(th+d,cr),v0=v1*V0/cr,p=R*T/v0;
+    if(xb(th)>=0.9)break;
+    const Tu=T1*Math.pow(p/p1,k);
+    I+=dt*1000/(onF*Math.pow(p/101325,-DE_P)*Math.exp(DE_T/Tu));
+    T+=(q*(xb(th+d)-xb(th))-p*v1*(Vn-V0)/cr)/cv;
+  }
+  return I;
+}
+// The phasing the end gas sees at a spark advance: CA50 moves with the spark, degree for degree, about the
+// model's best-torque phasing (SI_CA50 at mbtAdvance); enrichment and a stronger spark act as that much retard.
+function knockCa50(rpm,map,adv){
+  const lam=curAFR(rpm,map)/(engine.stoichAFR||14.7);
+  const mix=lam<0.95?30*(0.95-lam):-30*(lam-0.95);     // ~3 deg per 0.1 lambda, the measured trend
+  return SI_CA50+mbtAdvance(rpm,map)+ignBonus()+mix-adv;
+}
 function knockAt(rpm,map,adv){
-  if(engine.ci)return 0;   // compression ignition — no spark knock (limited by smoke/EGT instead)
-  const mbt=mbtAdvance(rpm,map);
-  let k=0;
-  k+=Math.max(0,map-1.0)*30;                            // boost
-  k+=Math.max(0,engine.compression-9)*8;                // static compression
-  k+=Math.max(0,effIAT(map,rpm)-30)*0.8;                    // hot intake charge
-  k+=Math.max(0,state.coolant-95)*1.0;                  // hot chamber
-  k+=Math.max(0,rpm-engine.redline*0.8)/60;             // less time = more heat soak
-  k+=(adv-mbt-ignBonus())*2.5;                          // spark timing vs MBT (signed)
-  const lam=curAFR(rpm,map)/engine.stoichAFR;
-  k+=Math.max(0,(lam-0.95))*60;                         // lean burns hotter
-  // Rich suppresses knock — continuously. This was `if (lam < 0.87) k *= 0.5`: a step that halved the
-  // whole score, so lambda 0.86 and 0.88 differed by up to 40 points, and at high boost the design curve
-  // (rated at 0.88) collapsed into knock retard while the scorecard (0.86) did not — a 33% torque
-  // disagreement between two views of one engine, from a 2% mixture change. It is not evaporative
-  // cooling: the extra fuel at 0.86 cools the charge by ~1 K after port-wall losses. It is end-gas
-  // chemistry, which this points-based score does not represent, so the replacement is the measured
-  // TREND, labelled as such: knock-limited spark advance gains ~3 degrees per 0.1 of enrichment below
-  // ~0.95, and this score prices a degree of timing at 2.5 points. (The real derivation is an end-gas
-  // autoignition integral, Livengood-Wu — a conversion of its own.)
-  const KNOCK_RICH=75;                                  // points per unit lambda: 3 deg/0.1 x 2.5 pts/deg
-  k-=Math.max(0,(0.95-lam))*KNOCK_RICH;
-  k-=(engine.effOctane-90)*2.2;                         // fuel octane resists knock
-  k-=engine.fuelKnockBonus;                             // alcohol extra knock margin
-  if(engine.injector==='direct')k-=12;                  // DI charge cooling
-  k+=nitrousImep()*4;                                   // nitrous raises cylinder pressure → more knock
-  k+=residualKnock(rpm,map);                            // hot burnt gas the exhaust could not push out
-  return clamp(k,0,100);
-}
-// Back-pressure brings on knock, and until now nothing in this model said so. knockAt carried
-// boost, compression, intake temperature, coolant, rpm, timing, lambda, octane, DI and nitrous —
-// and no residual term at all, even though conversion 3 has computed the trapped fraction from
-// (p_exh/p_int)^(1/gamma) since it was written. It simply never reached the spark.
-//
-// That absence is why turbine housing sizing could not be derived. What stops a petrol engine
-// taking a tighter housing is knock: a tighter turbine raises manifold pressure, more burnt gas
-// stays in the clearance volume, and hot residual drags the end gas toward detonation. A diesel
-// has no spark to knock, so it tolerates a far tighter housing and makes boost at 1600 rpm. With
-// this in place that split comes out of the physics instead of being asserted per engine type —
-// knockAt already returns 0 for compression ignition, so the diesel exemption is automatic.
-//
-// NO NEW CONSTANT. The charge the spark has to light is fresh air mixed with trapped residual,
-//     T_mix = (1-f)*T_fresh + f*T_res
-// so a change in f is just a change in charge temperature, and the term immediately above already
-// prices charge temperature at 0.8 points per degree. What is charged here is only the EXCESS
-// residual that back-pressure causes, over the balanced case p_exh = p_int that every engine has
-// and that the existing calibration already absorbs:
-//     dT = (f_actual - f_balanced) * (T_res - T_fresh)
-// So a naturally-aspirated engine with a free-flowing exhaust is left exactly as it was, and only
-// an engine fighting its own exhaust pays.
-function residualKnock(rpm,map){
   const e=engine;
-  if(!(e.compression>1))return 0;
-  const Tfresh=effIAT(map,rpm)+273.15;
-  const Tex=egtAt(rpm,map);
-  const prev=e.boostNow;e.boostNow=map;                 // backPressureBar reads it for the turbine
-  const pExh=1+backPressureBar(rpm,Tex);
-  e.boostNow=prev;
-  const pInt=Math.max(0.3,map);
-  // The trapped gas does not arrive at port temperature: it expands back into the cylinder as the
-  // piston descends, and cools doing it.
-  const Tres=Math.max(Tfresh,Tex*Math.pow(Math.min(1,pInt/pExh),(GAMMA_EXH-1)/GAMMA_EXH));
-  const dF=clamp(residualFrac(pExh,pInt,e.compression)-1/Math.max(1.5,e.compression-1),0,0.30);
-  return dF*(Tres-Tfresh)*0.8;                          // same per-degree sensitivity as above
+  if(e.ci)return 0;   // compression ignition — no spark knock (limited by smoke/EGT instead)
+  if(!_knockCache||_knockCache.score!==e.score)_knockCache={score:e.score,m:new Map()};
+  const lam=curAFR(rpm,map)/(e.stoichAFR||14.7);
+  const key=Math.round(rpm/10)+'|'+map.toFixed(3)+'|'+adv.toFixed(2)+'|'+effIAT(map,rpm).toFixed(1)+'|'+lam.toFixed(3)+'|'+e.effOctane+'|'+e.ignitionType;
+  let I=_knockCache.m.get(key);
+  if(I==null){
+    I=endGasIntegral(rpm,map,knockCa50(rpm,map,adv));
+    if(_knockCache.m.size>20000)_knockCache.m.clear();
+    _knockCache.m.set(key,I);
+  }
+  return clamp(KNOCK_TARGET*I+nitrousImep()*4,0,100);   // nitrous raises cylinder pressure → more knock
 }
-// The spark advance actually run at an operating point. FIXED = the designed value; AUTO =
-// an ECU that targets MBT and retards just enough to hold knock near KNOCK_TARGET.
+// The spark advance actually run at an operating point. FIXED = the designed value; AUTO = an ECU that runs
+// best-torque spark where the end gas survives it, and otherwise the most advance at which it just does
+// (the knock limit), never below 6 degrees.
 const KNOCK_TARGET=40;
 function activeAdvance(rpm,map){
   const mbt=mbtAdvance(rpm,map);
   if(engine.ci)return mbt;   // diesel: no spark timing (injection-timed); treat as on-MBT
   if(engine.timingMode!=='auto')return engine.ignitionAdv;
-  const knockAtMbt=knockAt(rpm,map,mbt);
-  if(knockAtMbt<=KNOCK_TARGET)return mbt;               // clean at MBT → run full timing
-  // knockAt prices a degree of advance at 2.5 points at every mixture (the rich step that halved it,
-  // and this divisor's matching 0.5, went in build 94), so the retard that brings knock to target is
-  // exactly the excess over 2.5.
-  const retard=(knockAtMbt-KNOCK_TARGET)/2.5;
-  return clamp(mbt-retard,6,mbt);                       // pull timing to protect
+  if(knockAt(rpm,map,mbt)<=KNOCK_TARGET)return mbt;     // clean at MBT → run full timing
+  let lo=Math.min(6,mbt),hi=mbt;
+  if(knockAt(rpm,map,lo)>KNOCK_TARGET)return lo;          // knocks even fully retarded: the floor
+  for(let i=0;i<14;i++){const m=(lo+hi)/2;if(knockAt(rpm,map,m)>KNOCK_TARGET)hi=m;else lo=m;}
+  return lo;
 }
 function computeKnockRisk(rpm,map){return knockAt(rpm,map,activeAdvance(rpm,map));}
+// What a spark advance costs in work (build 123): the cycle efficiency of the Wiebe burn at the phasing it
+// gives, against best-torque phasing (wiebePhasingEff), replacing a fitted 1 - 0.004 x (degrees off MBT)^2.
+function sparkTimingFactor(rpm,map){
+  const off=mbtAdvance(rpm,map)-activeAdvance(rpm,map),cr=engine.compression,x50=wiebeX50();
+  const eff=c=>wiebePhasingEff(SI_BURN_DEG,c-x50*SI_BURN_DEG,cr,pistonVol);
+  return clamp(eff(SI_CA50+off)/eff(SI_CA50),0.3,1);
+}
 // The pumping loop: PMEP = p_exhaust - p_intake, both absolute. Charged in two halves, because
 // only one of them is honestly derived here.
 //
@@ -4733,7 +4739,7 @@ function calcAtRpm(rpm,mapOverride){
   if(engine.ci){
     imep=(dieselGrossImep(rpm,map,ve)*coolF+nitrousImep())*healthFactor();
   }else{
-    const ignF=clamp(1-0.004*Math.pow(activeAdvance(rpm,map)-mbtAdvance(rpm,map),2),0.72,1.0);
+    const ignF=sparkTimingFactor(rpm,map);
     imep=(sparkGrossImep(rpm,map,ve)*coolF*ignF*ignitionHealth(rpm)+nitrousImep())*healthFactor();
   }
   imep=dieselImepLimit(imep);          // diesel peak-cylinder-pressure / smoke ceiling
@@ -4758,7 +4764,7 @@ function brakeTorqueRaw(rpm,map,fuelCut){
     const ve=computeVE(rpm,map);
     if(engine.ci)imep=(dieselGrossImep(rpm,map,ve)*coolF+nitrousImep())*healthFactor();
     else{
-      const ignF=clamp(1-0.004*Math.pow(activeAdvance(rpm,map)-mbtAdvance(rpm,map),2),0.72,1.0);
+      const ignF=sparkTimingFactor(rpm,map);
       imep=(sparkGrossImep(rpm,map,ve)*coolF*ignF*ignitionHealth(rpm)+nitrousImep())*healthFactor();
     }
     imep=dieselImepLimit(imep);
