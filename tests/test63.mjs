@@ -61,7 +61,10 @@ const r = await page.evaluate(() => {
   // same deceleration. (An average over "braking" points is not that: the spool corners slower, so its
   // braking zones are longer and more of them sit at the ceiling.) So compare the top of each car's
   // straight-line braking, its 90th percentile.
-  const top = arr => { const a = arr.filter(x => x != null).sort((x, y) => x - y); return { mech: a[Math.floor(a.length * 0.9)] || 0, n: a.length }; };
+  // Build 123: the ceiling itself, the hardest straight-line deceleration each car reaches. The 90th percentile of
+  // ~20 points sat between two of them, and since each car drives its own line (build 115) a change of power moved
+  // which points those were.
+  const top = arr => { const a = arr.filter(x => x != null); return { mech: a.length ? Math.max(...a) : 0, n: a.length }; };
   const o = straightBrake('open'), sp = straightBrake('spool');
   out.diff = { open: Object.assign(top(o.mech), { cap: o.cap }), spool: top(sp.mech) };
   // ---- 5. an engine swap moves the weight split by the engine's mass at its position ----

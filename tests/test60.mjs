@@ -27,7 +27,9 @@ const rows = await page.evaluate(() => PRESETS.filter(p => p.real).map(pr => {
   for (let i = 1; i < c.length; i++) step = Math.max(step, Math.abs(c[i].tq - c[i - 1].tq) / Math.max(1, c[i - 1].tq));
   let boostFalls = null;
   if (e.intake === 'turbo') { let prev = -1;
-    for (let n = 1000; n <= e.redline; n += 250) { const b = steadyBoost(n); if (b < prev - 1e-3 && prev < e.maxBoost - 1e-3) { boostFalls = n; break; } prev = b; } }
+    // falling short of what the ECU asks for there (boostTarget, build 123): a factory taper toward the limiter is the
+    // calibration, not the hardware failing to hold it
+    for (let n = 1000; n <= e.redline; n += 250) { const b = steadyBoost(n); if (b < prev - 1e-3 && b < boostTarget(n) - 1e-3) { boostFalls = n; break; } prev = b; } }
   const anomalies = [];
   if (pk.rpm >= e.redline * 0.985) anomalies.push('limiter');
   if (step > 0.15) anomalies.push(e.intake === 'na' ? 'na-step' : 'cliff');
