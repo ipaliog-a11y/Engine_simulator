@@ -20,12 +20,12 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 Working toward **v1.0 — every number derived, not fitted.**
 
-### The engine sound without the hiss (build 126)
+### The engine sound without the hiss (build 129)
 
 - Most engines sounded like noise, the V12 and the turbo diesel worst. Measured by muting one voice at a
   time, it was three things:
   - **The intake roar was five times the exhaust** at full throttle (V12: 0.202 rms with it, 0.038
-    without), mostly its broadband hiss. Build 124 scaled it against the wrong reference. Now about 13x
+    without), mostly its broadband hiss. Build 127 scaled it against the wrong reference. Now about 13x
     lower, with less hiss in it; open stacks still roar louder than an airbox.
   - **Pulses ran together at high rpm.** Each one decayed over a fixed 4 ms, so a V12 at 7000 rpm made a
     steady pressure that the DC block removed, leaving only the noise riding on it: the V12 was quieter
@@ -37,14 +37,14 @@ Working toward **v1.0 — every number derived, not fitted.**
     full shaft speed, where it is a squeal; ducting and bonnet lining absorb that range, so it now rolls
     off above 6 kHz. Turbo whine level 0.05 -> 0.03.
 - With the roar no longer making up most of the level, the overall gain doubles to keep the loudness.
-- test68's whine check now compares 20% and 40% shaft speed (the audible range) and also checks the roll-off.
+- test69's whine check now compares 20% and 40% shaft speed (the audible range) and also checks the roll-off.
 
-### A soft limiter on the engine sound (build 125)
+### A soft limiter on the engine sound (build 128)
 
 - With all the voices together, a race header on open stacks flat out (the ITB screamer) peaked at 1.27
   and would clip. The worklet's output now runs linear to 0.7 and eases into 1 above it.
 
-### Whine, blow-off, intake roar and knock in the engine sound (build 124)
+### Whine, blow-off, intake roar and knock in the engine sound (build 127)
 
 - Four voices that do not go through the exhaust, each from hardware the sim already models:
   - **Turbo whine** at the compressor's blade-pass frequency (6 full blades) from the live shaft speed
@@ -61,10 +61,10 @@ Working toward **v1.0 — every number derived, not fitted.**
     (6.1 kHz in an 86 mm bore). It replaces the diesel's generic click: a diesel rings on every pulse,
     twice as hard from cold and harder at light load (longer ignition delay); a petrol engine rings on a
     share of cycles that grows past `KNOCK_TARGET`.
-- test68: each voice at the pitch its hardware sets, BOV length vs charge volume, runner and bore
+- test69: each voice at the pitch its hardware sets, BOV length vs charge volume, runner and bore
   direction, shaft- and crank-following pitch, BOV only on a real lift from boost, knock thresholds.
 
-### Load, lope and overrun crackle in the engine sound (build 123)
+### Load, lope and overrun crackle in the engine sound (build 126)
 
 - Load only turned the volume up. `soundDrive()` now sets each pulse's strength from the blowdown at
   exhaust-valve opening: manifold pressure × the charge's heating (1/lambda, capped at stoich). A fuel cut
@@ -78,13 +78,13 @@ Working toward **v1.0 — every number derived, not fitted.**
   the fuel lights there: a weak pulse, then a pop past the header that the system, the cat (a working one
   oxidises most of the fuel) and the silencer shape like any other sound. Injected engines stay quiet;
   anti-lag pops on any lift.
-- test67: harder pulses louder and brighter, pops above the pulses and softer through a cat; full throttle
+- test68: harder pulses louder and brighter, pops above the pulses and softer through a cat; full throttle
   vs idle, fuel cut, lean diesel idle, lope fading with load, DFCO quiet, carb crackle dying as the pipe
   cools, anti-lag from cold.
 
-### The exhaust in the engine sound (build 122)
+### The exhaust in the engine sound (build 125)
 
-- Build 121 rang every petrol engine at one fixed pipe tone. Each bank's pulses now run the build's own
+- Build 124 rang every petrol engine at one fixed pipe tone. Each bank's pulses now run the build's own
   exhaust: the primary rings at its quarter wave, c/4L at the gas's sound speed, from the `primL` the
   breathing model already tunes (so a race header cut for 8800 rpm, 500 mm, sings at 309 Hz where one cut
   for 6600, 659 mm, sings at 231 Hz). Its Q comes from the header's path-length spread `exhSigma`: 1.4 for
@@ -95,11 +95,11 @@ Working toward **v1.0 — every number derived, not fitted.**
   absorbs the top end in proportion to its restriction, and a turbine muffles both top end and level.
 - Stock systems, cats and turbos are now quieter than before and race headers louder; the overall gain
   is recalibrated so a sport system matches the old loudness.
-- test66: the primary rings at c/4L and its harmonic stands out of the spectrum, a header cut for higher
+- test67: the primary rings at c/4L and its harmonic stands out of the spectrum, a header cut for higher
   revs is shorter and higher, ring follows path spread, and stock < race, cat < decat, turbo < NA in
   level and brightness.
 
-### Engine sound from the firing pulses (build 121)
+### Engine sound from the firing pulses (build 124)
 
 - The note was one sawtooth at the firing frequency, so every engine with the same firing rate sounded
   the same. It is now an AudioWorklet that keeps its own crank clock and fires each cylinder at its slot in
@@ -110,9 +110,82 @@ Working toward **v1.0 — every number derived, not fitted.**
   jitters pulse timing and strength at idle instead of wobbling the volume.
 - The worklet is inline (blob: URL, falling back to data: from a file:// page) so the app stays one file;
   a browser without AudioWorklet keeps the old note.
-- test65 renders it offline: every preset audible and unclipped, the pulse rate is the firing rate, a
+- test66 renders it offline: every preset audible and unclipped, the pulse rate is the firing rate, a
   cross-plane V8's banks are uneven while an I4, I6, even-fire V6, V12 and rotary are even, and a V or a
   boxer is stereo while an inline engine is not.
+
+### Real circuits (build 123)
+
+- **22 real circuits** under a new REAL CIRCUITS group in the circuit menu: COTA, Brands Hatch GP,
+  Hungaroring, Catalunya, Hockenheim, the Indianapolis oval, Albert Park, Hermanos Rodríguez, Gilles
+  Villeneuve, Monza, Nürburgring GP, Bahrain, Interlagos, Sepang, Shanghai, Silverstone, Sochi, Spa,
+  Red Bull Ring, Suzuka, Yas Marina and Zandvoort.
+- `tools/import-real-tracks.mjs` builds them offline from three open sources: the TUM racetrack
+  database (centreline and **measured** width, LGPL-3.0), georeferenced by a rigid fit onto
+  bacinger/f1-circuits or OpenStreetMap (1.2-7.4 m RMS; Yas Marina 13 m), with heights from EU-DEM /
+  USGS 10 m / SRTM through OpenTopoData, median-filtered and smoothed over ~60 m. The output,
+  `tracks/real-circuits.js` (~200 KB), is loaded as its own file and cached by the service worker
+  (cache v4); the app runs without it.
+- Width comes through the existing `wprof` path, one multiplier per control point, so the physics is
+  unchanged. The circuits are not passed through the GPS denoiser: TUM's centreline is already smooth,
+  and denoising it again cut 1.3 % from every lap. Lengths land within 0.3 % of the official figures;
+  Spa rises 103 m (real 104), Red Bull Ring 68 m (65), Interlagos 41 m (43), Suzuka 42 m (40).
+- **test65** checks every real circuit: official length within 1 %, closed centreline, measured width,
+  published elevation changes, flat circuits flat, and a lap that solves (Monza the fastest road circuit,
+  the oval faster still). test32/38 accept a measured constant width (the oval), and test34 accepts a
+  real circuit that is genuinely flat.
+
+### The charge heated as it is drawn in; the valve's flow coefficient from Taylor (build 122)
+
+- **The first law in the cylinder.** Build 121 integrated the intake stroke with the cylinder compressed as a
+  fixed mass (p ~ rho^gamma) while gas poured in. Filling a volume from a plenum heats what is in it by the flow
+  work (a vessel charged from a reservoir ends at gamma x its temperature), so the fill was overstated 5-10%.
+  Now d(m cv T) = cp T_in dm - p dV + Q, starting from the residual the exhaust stroke left in the clearance
+  volume at the temperature the cycle trace gives it after blowdown (~1150 K), and the walls' heat in at
+  Woschni's gas-exchange flux (C1 6.18) to his 450 K wall. The heating itself is small (0-2%); the flow work
+  is the large term.
+- **Two stand-ins removed** where the stroke is integrated: veAmp's flat 0.95 ceiling and CAM.ampMul's fitted
+  +4%/+8% cam bonus (the late-IVC charge it stood for is in the integration since build 121). Rotaries and
+  two-strokes keep both.
+- **The curtain's discharge coefficient** was a flat 0.6 at every lift, which averages ~0.3 over the event
+  against the 0.42 mean flow coefficient the model takes from Taylor for the same valve (inletMachZ). Now it is
+  the coefficient whose average over each cam's lift event, on the curtain-or-throat area, is Taylor's
+  min(0.42, 1.5 L/D): one published figure for the valve, used the same way twice.
+- **Result:** NA power RMS ~7% (F20C -8%, S54 +7%, GT3 -1%, Coyote +1%, F140 -3%, Huracan -8%, LS7 +8%); the
+  runner's tuning orders again (long 5300, medium 5800, short 6050 rpm on the 1.6 archetype). Turbo engines are
+  back near their build-121 overshoot (Supra +34%, RB26 +36%, GR Yaris +25%): the open boosted top end.
+- **Known gaps, named:** the Aygo's 1KR-FE joins the limiter list in test60 (75 hp at its 6500 limiter, real 68
+  at 6000), and the 1.6 Sport NA archetype test44's (as test46's); test48's Supra cap 33 -> 35.
+
+### The intake stroke integrated; the driver holds a gear into the brakes (build 121)
+
+- **The charge's momentum.** A late-closing intake valve was charged as pure crank-slider geometry (everything
+  displaced after BDC pushed back out), repaid only by the tuned wave. The air in the runner has mass: it is
+  still moving at BDC and keeps filling the cylinder until the cylinder's pressure stops it, more so the faster
+  the engine turns, which is why race cams close late. Now the stroke from TDC to IVC is integrated as a lumped
+  column, valve and cylinder (rho L du/dt = p0 - p_cyl - Borda loss at the curtain, Cd 0.6, sin^2 lift - the
+  damping a flow rig measures on an intake tract, Q 4; the cylinder filled adiabatically). The same column and
+  cylinder are the Helmholtz resonator, so tuning comes out of it too. A cam phaser takes, at full load, the
+  phase that fills best. Tabulated once per engine.
+- **NA engines:** power RMS vs the makers ~10% -> ~6%. LS7 (Z06) -17% -> +8%, 4A-GE -16% -> +7% (torque peak
+  4600-5200, real 5200), S54 +17% -> +9%, Coyote +12% -> +2%, B6 exact. Turbo engines +3-5%; the RB26 and the
+  diesels (no cam phaser, so the old geometric loss hit them hardest) +15-20%.
+- **Inputs fixed:** the intake runner type where the hardware is known and the 320 mm default was wrong: the
+  diesels' compact manifolds and the RB26's individual throttles short, the EJ257's boxer manifold long (marked
+  unsure). The compact turbo petrols' runners were left at the default: not known well enough to set. The 1993
+  2JZ-GTE has no VVT-i (Toyota added it for MY1998); it changes nothing at peak power.
+- **Known gaps, named:** turbo engines still read high at the top (item under investigation: compressor sizes
+  looked up, GR Yaris 56 mm, FK8 58 mm, CT12B 2x58 mm, IS20 54 mm, 16G ~68 mm; on their own they do not close
+  it); the 4A-GE, the 1.6 Sport NA archetype and the Duramax now peak at the limiter, power creeping ~1% over the
+  last 10% where real engines fade; the V12 archetype reaches 15.8 bar BMEP against a real-engine ceiling of 15.
+  The heat the charge takes from the ports and valves as it is drawn in is not modelled yet and would take some
+  of the new fill back from every engine: next. Re-baselined, each with its reason: test48 power RMS 14 -> 15.5,
+  Supra cap 30 -> 33, Alto 20 -> 22; test47 NA BMEP budget 1 -> 2, the 2.5 Turbo I5 archetype held at 26.5 bar;
+  test46 limiter budget 2 -> 3; test60's known list (the N57 left it). test62's boost gauge may read under full
+  boost at full throttle where the shaft is spooling back (since build 118).
+- **Upshift look-ahead.** Before changing up the driver runs on both ways, holding the gear or shifting, to the
+  braking envelope, and takes the quicker. Laps up to 0.08 s quicker, never slower (Hellcat on Cape 15 -> 11
+  shifts). The replay shows the held gear.
 
 ### Turbo lag at a fifth of the cost; re-baselined checks (build 120)
 

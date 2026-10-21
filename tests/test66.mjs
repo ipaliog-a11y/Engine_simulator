@@ -1,20 +1,20 @@
-// The exhaust in the engine sound (build 122).
+// Engine sound from firing pulses (build 124).
 //
-// WHY THIS EXISTS. Build 121 made the sound from firing pulses but rang every petrol engine at the same
-// fixed pipe tone. The pulses now run the exhaust the build actually has: the primary rings at its
-// quarter wave (c/4L, the same primL the breathing model tunes), as sharply as the header's path-length
-// spread allows, the system behind it adds its half-wave drone, and the silencer, cat and turbine take
-// the top off. These checks pin the direction of each:
-//   1. the primary's ring is where c/4L puts it, and the harmonic nearest it stands out of the spectrum;
-//   2. a header cut for higher revs is shorter and rings higher;
-//   3. a jig-cut race header rings harder than a cast log manifold;
-//   4. a stock system is quieter and darker than a race one, a decat louder than a stock cat, and a
-//      turbine darker and quieter than no turbine on the same engine.
+// WHY THIS EXISTS. The engine note used to be one sawtooth at the firing frequency, so any two engines
+// with the same firing rate sounded identical. It is now a train of pulses, one per cylinder at its
+// slot in the firing order, each sent down its own bank's exhaust. These checks render the worklet
+// offline (no speakers, no user gesture) and pin what that buys:
+//   1. every preset renders finite, audible, unclipped sound;
+//   2. the pulse rate is the firing rate (a 2-stroke fires twice as often as a 4-stroke);
+//   3. a cross-plane V8 fires each bank unevenly, so its exhaust repeats only once per engine cycle,
+//      while an inline six, an even-fire V6 and a V12 repeat every firing interval of their bank;
+//   4. a V or a boxer comes out of two pipes (left / right), an inline engine out of one;
+//   5. SOUND ON in the live page starts the worklet without an error.
 import { chromium } from './pw.mjs';
 import { fileURLToPath, pathToFileURL } from 'url';
 import path from 'path';
 const repo = fileURLToPath(new URL('..', import.meta.url));
-const browser = await chromium.launch();
+const browser = await chromium.launch({ args: ['--autoplay-policy=no-user-gesture-required'] });
 const page = await browser.newPage({ viewport: { width: 1200, height: 900 } });
 const errors = [];
 page.on('console', m => { if (m.type() === 'error') errors.push('console: ' + m.text()); });
@@ -24,60 +24,89 @@ await page.waitForTimeout(400);
 const fails = [];
 
 const res = await page.evaluate(async () => {
-  const SR = 48000, RPM = 1800;                          // 1800 rpm: a 4-stroke cycle is 15 Hz, 3200 samples
-  const base = PRESETS.find(x => x.name === '1.6 Sport NA I4').engine;
-  const build = o => { applyEngineToForm(Object.assign({}, DEFAULT_ENGINE, base, o)); buildEngine(); return { cfg: soundConfig(engine), primL: engine.primL }; };
-  const render = async cfg => {
-    const ctx = new OfflineAudioContext(2, SR * 1.5, SR);
+  const SR = 48000;
+  const build = name => {
+    const p = PRESETS.find(x => x.name === name);
+    applyEngineToForm(Object.assign({}, DEFAULT_ENGINE, p.engine)); buildEngine();
+    return soundConfig(engine);
+  };
+  // Render `secs` of the worklet at a fixed rpm with no lope, return both channels after `skip` s.
+  const render = async (cfg, rpm, secs = 1.5, skip = 0.5) => {
+    const ctx = new OfflineAudioContext(2, SR * secs, SR);
     await loadSoundWorklet(ctx);
     const node = new AudioWorkletNode(ctx, 'engine-pulse', { outputChannelCount: [2] });
     node.port.postMessage(cfg);
-    node.parameters.get('rpm').value = RPM; node.parameters.get('level').value = 1;
-    node.parameters.get('bright').value = 20000; node.parameters.get('lope').value = 0;   // only the pipes shape it
+    node.parameters.get('rpm').value = rpm; node.parameters.get('level').value = 1;
+    node.parameters.get('bright').value = 440 + rpm * 0.15; node.parameters.get('lope').value = 0;
     node.connect(ctx.destination);
-    await new Promise(r => setTimeout(r, 30));
-    return (await ctx.startRendering()).getChannelData(0).slice(SR * 0.5);
+    await new Promise(r => setTimeout(r, 30));          // let the config message land before rendering
+    const buf = await ctx.startRendering();
+    const s = SR * skip;
+    return [buf.getChannelData(0).slice(s), buf.getChannelData(1).slice(s)];
   };
-  const power = (x, f) => { let re = 0, im = 0; const w = 2 * Math.PI * f / SR; for (let i = 0; i < x.length; i++) { re += x[i] * Math.cos(w * i); im -= x[i] * Math.sin(w * i); } return re * re + im * im; };
-  // Spectrum at the firing harmonics (the signal is periodic in the firing interval with no lope).
-  const spectrum = (x, cfg) => { const ff = RPM / 60 / cfg.cycleRevs * cfg.events.length, out = []; for (let h = 1; h * ff < 4000; h++) out.push([h * ff, power(x, h * ff)]); return out; };
-  const centroid = sp => sp.reduce((a, [f, p]) => a + f * p, 0) / sp.reduce((a, [, p]) => a + p, 0);
   const rms = x => Math.sqrt(x.reduce((a, v) => a + v * v, 0) / x.length);
-  const measure = async o => { const b = build(o), x = await render(b.cfg), sp = spectrum(x, b.cfg); return { ...b, rms: rms(x), centroid: centroid(sp), sp }; };
+  const power = (x, f) => { let re = 0, im = 0; const w = 2 * Math.PI * f / SR; for (let i = 0; i < x.length; i++) { re += x[i] * Math.cos(w * i); im -= x[i] * Math.sin(w * i); } return re * re + im * im; };
+  // Share of a channel's energy (harmonics of the engine-cycle rate up to 2 kHz) that is NOT at a
+  // harmonic of the bank's average pulse rate: zero for a bank fired evenly, large for an uneven one.
+  const uneven = (x, cfg, rpm) => {
+    const fc = rpm / 60 / cfg.cycleRevs, m = cfg.events.length / cfg.banks;
+    let off = 0, all = 0;
+    for (let h = 1; h * fc < 2000; h++) { const p = power(x, h * fc); all += p; if (h % m) off += p; }
+    return off / all;
+  };
+  // Strongest autocorrelation lag between 2 and 25 ms, in ms.
+  const period = x => {
+    let best = 0, lag = 0;
+    for (let k = SR * 0.002; k < SR * 0.025; k++) { let a = 0; for (let i = 0; i + k < x.length; i += 2) a += x[i] * x[i + k]; if (a > best) { best = a; lag = k; } }
+    return lag / SR * 1000;
+  };
   const out = {};
-  // 1. a race header, a high-Q primary: the spectrum should bulge at the harmonic nearest c/4L
-  const race = await measure({ exhaust: 'race', cat: 'none' });
-  const pf = race.cfg.exhaust.primF, near = race.sp.reduce((a, b) => Math.abs(b[0] - pf) < Math.abs(a[0] - pf) ? b : a);
-  const i = race.sp.indexOf(near), neigh = (race.sp[i - 2][1] + race.sp[i + 2][1]) / 2;
-  out.prim = { primL: race.primL, primF: pf, expect: sonic(exhaustGasT(0.7, 0.6 * engine.redline, 0)) / (4 * race.primL), bulge: near[1] / neigh, at: near[0] };
-  // 2. the same race header cut for 6000 vs 8800 rpm
-  const lo = build({ exhaust: 'race', redline: 6600 }), hi = build({ exhaust: 'race', redline: 8800 });
-  out.tune = { lowL: lo.primL, lowF: lo.cfg.exhaust.primF, highL: hi.primL, highF: hi.cfg.exhaust.primF };
-  // 3. how hard each header rings
-  out.q = { stock: build({ exhaust: 'stock' }).cfg.exhaust.primQ, sport: build({ exhaust: 'sport' }).cfg.exhaust.primQ, race: race.cfg.exhaust.primQ };
-  // 4. silencer, cat, turbine
-  const strip = r => ({ rms: r.rms, centroid: r.centroid });
-  out.stock = strip(await measure({ exhaust: 'stock', cat: 'stock' }));
-  out.race = strip(race);
-  out.raceCat = strip(await measure({ exhaust: 'race', cat: 'stock' }));
-  out.na = strip(await measure({ exhaust: 'sport', cat: 'sport' }));
-  out.turbo = strip(await measure({ exhaust: 'sport', cat: 'sport', intake: 'turbo', boost_bar: 0.8, turboSize: 'small' }));
+  const names = ['1.6 Sport NA I4', '3.0 Turbo I6 (2JZ)', '5.0 V8 NA Muscle', '6.5 V12 NA Supercar',
+    '2.0 Turbo Diesel I4', '1.3 Rotary NA (Renesis)', '500cc 2-Stroke Twin'];
+  for (const n of names) {
+    const cfg = build(n), [L, R] = await render(cfg, 1800, 1.5, 0.5);   // 1800 rpm: 15 cycles in 1 s exactly
+    let peak = 0, finite = true; for (const v of L) { if (!Number.isFinite(v)) finite = false; peak = Math.max(peak, Math.abs(v)); }
+    const diff = rms(L.map((v, i) => v - R[i]));
+    out[n] = { banks: cfg.banks, rmsL: rms(L), peak, finite, lrDiff: diff / (rms(L) || 1), uneven: uneven(L, cfg, 1800) };
+  }
+  // An even-fire V6 has no preset; build one from the muscle V8.
+  { const cfg = build('5.0 V8 NA Muscle'); applyEngineToForm(Object.assign({}, DEFAULT_ENGINE, PRESETS.find(x => x.name === '5.0 V8 NA Muscle').engine, { cylinders: 6 })); buildEngine();
+    const c6 = soundConfig(engine), [L] = await render(c6, 1800); out['V6'] = { banks: c6.banks, uneven: uneven(L, c6, 1800) }; }
+  // Pulse rate: an inline four at 3000 rpm fires every 10 ms, a 2-stroke twin at 3000 rpm every 10 ms
+  // too (two cylinders, every rev), and the same twin as a 4-stroke would fire every 20 ms.
+  { const [L] = await render(build('1.6 Sport NA I4'), 3000, 1.0, 0.3); out.periodI4 = period(L); }
+  { const cfg = build('500cc 2-Stroke Twin'), [L] = await render(cfg, 3000, 1.0, 0.3); out.period2T = period(L);
+    const [L4] = await render(Object.assign({}, cfg, { cycleRevs: 2 }), 3000, 1.0, 0.3); out.period2T4 = period(L4); }
   return out;
 });
 
-const r = res;
-console.log(`== primary ${(r.prim.primL * 1000).toFixed(0)} mm rings at ${r.prim.primF.toFixed(0)} Hz (c/4L ${r.prim.expect.toFixed(0)}); harmonic at ${r.prim.at.toFixed(0)} Hz stands ${r.prim.bulge.toFixed(1)}x over its neighbours ==`);
-console.log(`== race header for 6600 rpm: ${(r.tune.lowL * 1000).toFixed(0)} mm, ${r.tune.lowF.toFixed(0)} Hz · for 8800: ${(r.tune.highL * 1000).toFixed(0)} mm, ${r.tune.highF.toFixed(0)} Hz ==`);
-console.log(`== primary Q: stock ${r.q.stock.toFixed(1)} · sport ${r.q.sport.toFixed(1)} · race ${r.q.race.toFixed(1)} ==`);
-for (const k of ['stock', 'raceCat', 'race', 'na', 'turbo']) console.log(`== ${k.padEnd(8)} rms ${r[k].rms.toFixed(3)} · centroid ${r[k].centroid.toFixed(0)} Hz ==`);
+for (const [n, r] of Object.entries(res)) if (typeof r === 'object')
+  console.log(`== ${n.padEnd(24)} banks ${r.banks} · uneven ${r.uneven.toFixed(3)}` +
+    (r.rmsL !== undefined ? ` · rms ${r.rmsL.toFixed(3)} peak ${r.peak.toFixed(2)} · L/R diff ${r.lrDiff.toFixed(2)}` : '') + ' ==');
+console.log(`== period: I4 @3000 ${res.periodI4.toFixed(2)} ms · 2-stroke twin ${res.period2T.toFixed(2)} ms · as a 4-stroke ${res.period2T4.toFixed(2)} ms ==`);
 
-if (Math.abs(r.prim.primF / r.prim.expect - 1) > 0.01) fails.push(`primary rings at ${r.prim.primF.toFixed(0)} Hz, c/4L says ${r.prim.expect.toFixed(0)}`);
-if (!(r.prim.bulge > 1.5)) fails.push(`the harmonic nearest the primary's ring does not stand out (${r.prim.bulge.toFixed(2)}x)`);
-if (!(r.tune.highL < r.tune.lowL && r.tune.highF > r.tune.lowF)) fails.push('a header cut for higher revs is not shorter and higher-pitched');
-if (!(r.q.race > r.q.sport && r.q.sport > r.q.stock)) fails.push('header ring does not follow path-length spread (race > sport > stock)');
-if (!(r.stock.rms < r.race.rms && r.stock.centroid < r.race.centroid)) fails.push('a stock system is not quieter and darker than a race one');
-if (!(r.raceCat.rms < r.race.rms)) fails.push('a stock cat is not quieter than a decat');
-if (!(r.turbo.rms < r.na.rms && r.turbo.centroid < r.na.centroid)) fails.push('a turbine does not muffle the exhaust');
+for (const [n, r] of Object.entries(res)) if (typeof r === 'object' && r.rmsL !== undefined) {
+  if (!r.finite) fails.push(`${n}: non-finite samples`);
+  if (!(r.rmsL > 0.03)) fails.push(`${n}: nearly silent (rms ${r.rmsL.toFixed(3)})`);
+  if (!(r.peak < 1.5)) fails.push(`${n}: peak ${r.peak.toFixed(2)} at level 1`);
+  if (r.banks === 2 && !(r.lrDiff > 0.3)) fails.push(`${n}: two banks but left and right are nearly the same`);
+  if (r.banks === 1 && !(r.lrDiff < 1e-6)) fails.push(`${n}: one exhaust but left and right differ`);
+}
+if (!(res['5.0 V8 NA Muscle'].uneven > 0.1)) fails.push(`cross-plane V8 banks fire evenly (uneven ${res['5.0 V8 NA Muscle'].uneven.toFixed(3)})`);
+for (const n of ['1.6 Sport NA I4', '3.0 Turbo I6 (2JZ)', '6.5 V12 NA Supercar', 'V6', '1.3 Rotary NA (Renesis)'])
+  if (!(res[n].uneven < 0.02)) fails.push(`${n} should fire its bank evenly (uneven ${res[n].uneven.toFixed(3)})`);
+if (Math.abs(res.periodI4 - 10) > 0.2) fails.push(`I4 at 3000 rpm repeats every ${res.periodI4.toFixed(2)} ms, not 10`);
+if (Math.abs(res.period2T - 10) > 0.2) fails.push(`2-stroke twin at 3000 rpm repeats every ${res.period2T.toFixed(2)} ms, not 10`);
+if (Math.abs(res.period2T4 - 20) > 0.4) fails.push(`4-stroke twin at 3000 rpm repeats every ${res.period2T4.toFixed(2)} ms, not 20`);
+
+// ---- 5. the live toggle ----
+await page.evaluate(() => { applyEngineToForm(Object.assign({}, DEFAULT_ENGINE)); buildEngine(); });
+await page.click('#btnSound', { force: true }).catch(() => page.evaluate(() => setSound(true)));
+await page.waitForTimeout(600);
+const live = await page.evaluate(() => ({ on: Sound.on, node: !!Sound.node, key: Sound.cfgKey, fallback: !!Sound.osc }));
+console.log(`== live: on ${live.on} · worklet ${live.node} · config ${live.key} · fallback ${live.fallback} ==`);
+if (!live.on || !live.node) fails.push('SOUND ON did not start the pulse worklet');
+if (live.node && !live.key) fails.push('the worklet never received the engine config');
 
 await browser.close();
 for (const f of fails) console.log('FAIL ' + f);

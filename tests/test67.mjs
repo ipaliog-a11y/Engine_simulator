@@ -1,15 +1,15 @@
-// Load, lope and overrun crackle in the engine sound (build 123).
+// The exhaust in the engine sound (build 125).
 //
-// WHY THIS EXISTS. Through build 122 load only turned the volume up: the pulses themselves were the
-// same at idle and flat out, the lope was a fixed jitter, and lifting off made no sound of its own.
-// soundDrive() now reads the running engine (manifold pressure, mixture, fuel cut, throttle) and the
-// worklet turns that into what the exhaust hears. These checks pin both halves:
-//   1. the worklet: a harder pulse is louder AND brighter (it saturates its pipe), a misfire into the
-//      pipe pops above the ordinary pulses, and a working cat takes the edge off the pops;
-//   2. soundDrive: full throttle hits harder than idle; a diesel at idle is soft because it is lean;
-//      a fuel cut leaves only compressed air; the lope is an idle thing and fades under load; an
-//      injected engine lifting off is quiet while a carburetted one crackles for a second or two after a
-//      pull and then stops; anti-lag crackles even from cold.
+// WHY THIS EXISTS. Build 124 made the sound from firing pulses but rang every petrol engine at the same
+// fixed pipe tone. The pulses now run the exhaust the build actually has: the primary rings at its
+// quarter wave (c/4L, the same primL the breathing model tunes), as sharply as the header's path-length
+// spread allows, the system behind it adds its half-wave drone, and the silencer, cat and turbine take
+// the top off. These checks pin the direction of each:
+//   1. the primary's ring is where c/4L puts it, and the harmonic nearest it stands out of the spectrum;
+//   2. a header cut for higher revs is shorter and rings higher;
+//   3. a jig-cut race header rings harder than a cast log manifold;
+//   4. a stock system is quieter and darker than a race one, a decat louder than a stock cat, and a
+//      turbine darker and quieter than no turbine on the same engine.
 import { chromium } from './pw.mjs';
 import { fileURLToPath, pathToFileURL } from 'url';
 import path from 'path';
@@ -24,77 +24,60 @@ await page.waitForTimeout(400);
 const fails = [];
 
 const res = await page.evaluate(async () => {
-  const SR = 48000, RPM = 3000;
-  const build = (name, o) => { applyEngineToForm(Object.assign({}, DEFAULT_ENGINE, PRESETS.find(x => x.name === name).engine, o || {})); buildEngine(); return soundConfig(engine); };
-  const render = async (cfg, p) => {
+  const SR = 48000, RPM = 1800;                          // 1800 rpm: a 4-stroke cycle is 15 Hz, 3200 samples
+  const base = PRESETS.find(x => x.name === '1.6 Sport NA I4').engine;
+  const build = o => { applyEngineToForm(Object.assign({}, DEFAULT_ENGINE, base, o)); buildEngine(); return { cfg: soundConfig(engine), primL: engine.primL }; };
+  const render = async cfg => {
     const ctx = new OfflineAudioContext(2, SR * 1.5, SR);
     await loadSoundWorklet(ctx);
     const node = new AudioWorkletNode(ctx, 'engine-pulse', { outputChannelCount: [2] });
     node.port.postMessage(cfg);
-    const v = Object.assign({ rpm: RPM, level: 1, bright: 20000, lope: 0, strength: 1, crackle: 0 }, p);
-    for (const k in v) node.parameters.get(k).value = v[k];
+    node.parameters.get('rpm').value = RPM; node.parameters.get('level').value = 1;
+    node.parameters.get('bright').value = 20000; node.parameters.get('lope').value = 0;   // only the pipes shape it
     node.connect(ctx.destination);
     await new Promise(r => setTimeout(r, 30));
     return (await ctx.startRendering()).getChannelData(0).slice(SR * 0.5);
   };
+  const power = (x, f) => { let re = 0, im = 0; const w = 2 * Math.PI * f / SR; for (let i = 0; i < x.length; i++) { re += x[i] * Math.cos(w * i); im -= x[i] * Math.sin(w * i); } return re * re + im * im; };
+  // Spectrum at the firing harmonics (the signal is periodic in the firing interval with no lope).
+  const spectrum = (x, cfg) => { const ff = RPM / 60 / cfg.cycleRevs * cfg.events.length, out = []; for (let h = 1; h * ff < 4000; h++) out.push([h * ff, power(x, h * ff)]); return out; };
+  const centroid = sp => sp.reduce((a, [f, p]) => a + f * p, 0) / sp.reduce((a, [, p]) => a + p, 0);
   const rms = x => Math.sqrt(x.reduce((a, v) => a + v * v, 0) / x.length);
-  const peak = x => x.reduce((a, v) => Math.max(a, Math.abs(v)), 0);
-  // brightness: share of energy above 1 kHz, by first difference (a crude high-pass) over the signal
-  const bright = x => { let d = 0; for (let i = 1; i < x.length; i++) d += (x[i] - x[i - 1]) ** 2; return d / x.reduce((a, v) => a + v * v, 0); };
+  const measure = async o => { const b = build(o), x = await render(b.cfg), sp = spectrum(x, b.cfg); return { ...b, rms: rms(x), centroid: centroid(sp), sp }; };
   const out = {};
-  // ---- 1. the worklet ----
-  const cfg = build('2.0 ITB NA Screamer I4');                     // race header, no cat
-  const soft = await render(cfg, { strength: 0.3 }), hard = await render(cfg, { strength: 1.2 });
-  out.soft = { rms: rms(soft), bright: bright(soft) }; out.hard = { rms: rms(hard), bright: bright(hard) };
-  const quiet = await render(cfg, { strength: 0.15 }), pops = await render(cfg, { strength: 0.15, crackle: 0.3 });
-  out.pops = { base: peak(quiet), with: peak(pops) };
-  const cfgCat = build('2.0 ITB NA Screamer I4', { cat: 'stock' });
-  const popsCat = await render(cfgCat, { strength: 0.15, crackle: 0.3 }), quietCat = await render(cfgCat, { strength: 0.15 });
-  out.popsCat = { base: peak(quietCat), with: peak(popsCat) };
-
-  // ---- 2. soundDrive on the live state (synchronous, so the sim loop cannot step in between) ----
-  const at = o => { Object.assign(state, { blown: false, fuelCut: false, throttle: 0.5, afr: engine.stoichAFR }, o); return soundDrive(0.016); };
-  build('1.6 Sport NA I4', { intakeSys: 'efi', cam: 'race' });
-  Sound.hot = 0;
-  out.idle = at({ rpm: engine.idleRpmEff, map: 0.35, throttle: 0.02 });
-  out.wot = at({ rpm: 5000, map: 0.98, throttle: 1, afr: engine.stoichAFR * 0.88 });
-  out.cut = at({ rpm: 5000, map: 0.25, throttle: 0, fuelCut: true });
-  out.loadedIdle = at({ rpm: engine.idleRpmEff, map: 0.95, throttle: 0.9 });
-  // an injected engine lifting off after a pull: hot pipe, but DFCO
-  Sound.hot = 1; out.efiLift = at({ rpm: 5000, map: 0.25, throttle: 0, fuelCut: true });
-  // a carburetted one: crackles while the pipe is hot, then stops
-  build('1.6 Sport NA I4', { intakeSys: 'carb2' });
-  Sound.hot = 1; out.carbLift = at({ rpm: 5000, map: 0.25, throttle: 0 });
-  for (let i = 0; i < 300; i++) at({ rpm: 5000, map: 0.25, throttle: 0 });   // ~5 s of overrun
-  out.carbLater = at({ rpm: 5000, map: 0.25, throttle: 0 });
-  // anti-lag from a cold pipe
-  build('2.0 Turbo Hot-Hatch I4', { antilag: true });
-  Sound.hot = 0; out.als = at({ rpm: 4500, map: 0.6, throttle: 0, fuelCut: true });
-  // a diesel: same unthrottled manifold, lean at idle, rich at the smoke limit
-  build('2.0 Turbo Diesel I4');
-  out.dIdle = at({ rpm: engine.idleRpmEff, map: 1.0, afr: engine.stoichAFR * 4 });
-  out.dFull = at({ rpm: 2500, map: 1.0, afr: engine.stoichAFR * 1.3 });
+  // 1. a race header, a high-Q primary: the spectrum should bulge at the harmonic nearest c/4L
+  const race = await measure({ exhaust: 'race', cat: 'none' });
+  const pf = race.cfg.exhaust.primF, near = race.sp.reduce((a, b) => Math.abs(b[0] - pf) < Math.abs(a[0] - pf) ? b : a);
+  const i = race.sp.indexOf(near), neigh = (race.sp[i - 2][1] + race.sp[i + 2][1]) / 2;
+  out.prim = { primL: race.primL, primF: pf, expect: sonic(exhaustGasT(0.7, 0.6 * engine.redline, 0)) / (4 * race.primL), bulge: near[1] / neigh, at: near[0] };
+  // 2. the same race header cut for 6000 vs 8800 rpm
+  const lo = build({ exhaust: 'race', redline: 6600 }), hi = build({ exhaust: 'race', redline: 8800 });
+  out.tune = { lowL: lo.primL, lowF: lo.cfg.exhaust.primF, highL: hi.primL, highF: hi.cfg.exhaust.primF };
+  // 3. how hard each header rings
+  out.q = { stock: build({ exhaust: 'stock' }).cfg.exhaust.primQ, sport: build({ exhaust: 'sport' }).cfg.exhaust.primQ, race: race.cfg.exhaust.primQ };
+  // 4. silencer, cat, turbine
+  const strip = r => ({ rms: r.rms, centroid: r.centroid });
+  out.stock = strip(await measure({ exhaust: 'stock', cat: 'stock' }));
+  out.race = strip(race);
+  out.raceCat = strip(await measure({ exhaust: 'race', cat: 'stock' }));
+  out.na = strip(await measure({ exhaust: 'sport', cat: 'sport' }));
+  out.turbo = strip(await measure({ exhaust: 'sport', cat: 'sport', intake: 'turbo', boost_bar: 0.8, turboSize: 'small' }));
   return out;
 });
 
-const r = res, f3 = v => v.toFixed(3);
-console.log(`== pulse 0.3 rms ${f3(r.soft.rms)} brightness ${f3(r.soft.bright)} · pulse 1.2 rms ${f3(r.hard.rms)} brightness ${f3(r.hard.bright)} ==`);
-console.log(`== pops: peak ${f3(r.pops.base)} -> ${f3(r.pops.with)} decat · ${f3(r.popsCat.base)} -> ${f3(r.popsCat.with)} stock cat ==`);
-const d = k => `${k} str ${f3(r[k].strength)} lope ${f3(r[k].lope)} crk ${f3(r[k].crackle)}`;
-for (const k of ['idle', 'wot', 'cut', 'loadedIdle', 'efiLift', 'carbLift', 'carbLater', 'als', 'dIdle', 'dFull']) console.log('== ' + d(k) + ' ==');
+const r = res;
+console.log(`== primary ${(r.prim.primL * 1000).toFixed(0)} mm rings at ${r.prim.primF.toFixed(0)} Hz (c/4L ${r.prim.expect.toFixed(0)}); harmonic at ${r.prim.at.toFixed(0)} Hz stands ${r.prim.bulge.toFixed(1)}x over its neighbours ==`);
+console.log(`== race header for 6600 rpm: ${(r.tune.lowL * 1000).toFixed(0)} mm, ${r.tune.lowF.toFixed(0)} Hz · for 8800: ${(r.tune.highL * 1000).toFixed(0)} mm, ${r.tune.highF.toFixed(0)} Hz ==`);
+console.log(`== primary Q: stock ${r.q.stock.toFixed(1)} · sport ${r.q.sport.toFixed(1)} · race ${r.q.race.toFixed(1)} ==`);
+for (const k of ['stock', 'raceCat', 'race', 'na', 'turbo']) console.log(`== ${k.padEnd(8)} rms ${r[k].rms.toFixed(3)} · centroid ${r[k].centroid.toFixed(0)} Hz ==`);
 
-if (!(r.hard.rms > r.soft.rms * 1.5)) fails.push('a harder pulse is not louder');
-if (!(r.hard.bright > r.soft.bright * 1.05)) fails.push('a harder pulse is not brighter (it should saturate its pipe)');
-if (!(r.pops.with > r.pops.base * 2)) fails.push(`misfires into the pipe do not pop (${f3(r.pops.base)} -> ${f3(r.pops.with)})`);
-if (!(r.popsCat.with / r.popsCat.base < r.pops.with / r.pops.base)) fails.push('a working cat does not take the edge off the pops');
-if (!(r.wot.strength > 2 * r.idle.strength)) fails.push('full throttle does not hit much harder than idle');
-if (!(r.cut.strength < 0.15 * r.wot.strength)) fails.push('a fuel cut still makes a combustion pulse');
-if (!(r.idle.lope > 0.1 && r.loadedIdle.lope < 0.5 * r.idle.lope)) fails.push('the lope does not fade under load');
-if (r.efiLift.crackle !== 0) fails.push('an injected engine on DFCO crackles');
-if (!(r.carbLift.crackle > 0.1)) fails.push('a carburetted engine lifting off a pull does not crackle');
-if (!(r.carbLater.crackle === 0)) fails.push('the crackle does not die away as the pipe cools');
-if (!(r.als.crackle > 0.1)) fails.push('anti-lag does not crackle on a lift');
-if (!(r.dIdle.strength < 0.5 * r.dFull.strength)) fails.push('a lean diesel idle hits as hard as full fuelling');
+if (Math.abs(r.prim.primF / r.prim.expect - 1) > 0.01) fails.push(`primary rings at ${r.prim.primF.toFixed(0)} Hz, c/4L says ${r.prim.expect.toFixed(0)}`);
+if (!(r.prim.bulge > 1.5)) fails.push(`the harmonic nearest the primary's ring does not stand out (${r.prim.bulge.toFixed(2)}x)`);
+if (!(r.tune.highL < r.tune.lowL && r.tune.highF > r.tune.lowF)) fails.push('a header cut for higher revs is not shorter and higher-pitched');
+if (!(r.q.race > r.q.sport && r.q.sport > r.q.stock)) fails.push('header ring does not follow path-length spread (race > sport > stock)');
+if (!(r.stock.rms < r.race.rms && r.stock.centroid < r.race.centroid)) fails.push('a stock system is not quieter and darker than a race one');
+if (!(r.raceCat.rms < r.race.rms)) fails.push('a stock cat is not quieter than a decat');
+if (!(r.turbo.rms < r.na.rms && r.turbo.centroid < r.na.centroid)) fails.push('a turbine does not muffle the exhaust');
 
 await browser.close();
 for (const f of fails) console.log('FAIL ' + f);
