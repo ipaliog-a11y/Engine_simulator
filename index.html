@@ -282,7 +282,7 @@ table.fuelmap td.live{box-shadow:inset 0 0 0 2px #fff;font-weight:bold}
 <body>
 <div class="container">
 <header>
-<h1>PIXEL ENGINE SIM v0.6 build 121</h1>
+<h1>PIXEL ENGINE SIM v0.6 build 122</h1>
 <div class="subtitle" id="subtitle">ENGINE DESIGNER • BUILD IT, THEN DRIVE IT</div>
 </header>
 <div class="build-strip" id="buildStrip">
@@ -1587,7 +1587,7 @@ function wallTrace(e,rpm,map){
     const p=pE+(pX-pE)*s, T=TE+(TX-TE)*s;
     den+=hW(p,T,6.18*Sp)*area(Vt(th))*(T-T_WALL)*dt;
   }
-  return {k:den>0?num/den:0, share:den/(m*q)};
+  return {k:den>0?num/den:0, share:den/(m*q), Tres:TX};
 }
 const WOSCHNI_C=3.26, T_WALL=450, SI_ROOF_DEG=22.5;
 // Fuel that leaves unburned (HC, CO, H2), as a share of what is supplied up to stoichiometric: Heywood
@@ -1705,22 +1705,47 @@ function intakeRamGain(rpm,chargeK){
 // same lumped column and cylinder are the Helmholtz resonator, so the tuning comes out of it too.
 // The fresh charge at IVC over the displaced volume at plenum density is the fill. A cam phaser is
 // set, at full load, where it fills best: the ECU's wide-open-throttle calibration.
-const INTAKE_CD=0.6;
-function intakeFill(rpm,adv,L){
+// The curtain's discharge coefficient (build 122). It was a flat 0.6 at every lift, which cannot be squared
+// with the mean inlet flow coefficient this model already takes from Taylor for the same valve (inletMachZ:
+// Ci = min(0.42, 1.5 L/D), on the valve head's area): with the throat limiting at full lift, 0.6 averages
+// barely 0.3 over the event. Now the coefficient is the one whose average over this cam's lift event, on the
+// curtain-or-throat area, IS Taylor's Ci: one published figure for the valve, used the same way twice.
+function intakeCd(){
+  const e=engine,D=e.ivDia_mm,ref=Math.PI/4*D*D,N=90;
+  let acc=0;
+  for(let k=0;k<N;k++)acc+=valveFlowArea(D,e.ivLift_mm*Math.pow(Math.sin(Math.PI*(k+0.5)/N),2))/ref;
+  return Math.min(0.42,1.5*(e.ivLift_mm/D))/Math.max(1e-6,acc/N);
+}
+// Build 122: the charge is HEATED as it is drawn in, by the first law in the cylinder:
+//     d(m cv T) = cp T_in dm_in + cp T dm_out - p dV + h A (T_wall - T) dt
+// It starts as the residual the exhaust stroke left in the clearance volume, at the temperature the cycle
+// trace gives it after blowdown (wallTrace, Tres: ~1000 K at full load), and mixes with the fresh air; the
+// walls it touches (head, crown, the liner above the piston) at Woschni's 450 K, his gas-exchange flux
+// (C1 6.18). A warmer charge holds less mass at the same pressure, and the hot residual's volume is space the
+// fresh air does not get. Until build 122 the cylinder filled adiabatically with plenum-temperature air, and a
+// flat 0.95 ceiling (veAmp) with a fitted cam bonus (CAM.ampMul, +4% sport, +8% race) stood in for all of it.
+function intakeFill(rpm,adv,L,Tres,Cd){
   const e=engine,dur=e.camDur,abd=ivcAbdc(dur,e.camLSA,adv);
+  Cd=Cd||intakeCd();
   const thO=180+abd-dur,th1=180+abd,th0=Math.max(0,thO);
-  const Vd=Math.PI/4*Math.pow(e.bore_mm/1000,2)*e.stroke_mm/1000,vc=2/Math.max(1.5,e.compression-1);
+  const B=e.bore_mm/1000,Vd=Math.PI/4*B*B*e.stroke_mm/1000,vc=2/Math.max(1.5,e.compression-1);
   const V=th=>Vd*(pistonX(th,1,ROD_STROKE*2)+vc)/2;
-  const p0=101325,T0=313,rho0=p0/(287*T0),Ar=e.runnerA;
-  const dth=0.25,dt=dth*Math.PI/180/(rpm*2*Math.PI/60);
+  const R=287,cv=R/(GAMMA_AIR-1),cp=cv+R,p0=101325,T0=313,rho0=p0/(R*T0),Ar=e.runnerA;
+  const dth=0.25,dt=dth*Math.PI/180/(rpm*2*Math.PI/60),Sp=2*e.stroke_mm/1000*rpm/60;
+  const disc=Math.PI/4*B*B,ends=disc*(e.ci?2+4*0.55*0.17:1+1/Math.cos(SI_ROOF_DEG*Math.PI/180));
   const cR=2*Math.PI*helmholtzHz(Ar,L,e.vEffCyl,T0)*rho0*L/Q_INTAKE, a=rho0*L/dt+cR;
-  let m=rho0*V(th0),u=0;const m0=m;
+  const Tr=Tres>0?Tres:T0;
+  let T=Tr,m=p0*V(th0)/(R*Tr),u=0;const m0=m;
   for(let th=th0;th<th1;th+=dth){
-    const Av=INTAKE_CD*e.ivCount*valveFlowArea(e.ivDia_mm,e.ivLift_mm*Math.pow(Math.sin(Math.PI*(th-thO)/dur),2))*1e-6;
-    const rc=m/V(th),pc=p0*Math.pow(rc/rho0,GAMMA_AIR),k=0.5*rho0*Math.pow(Ar/Math.max(1e-9,Av),2);
+    const Av=Cd*e.ivCount*valveFlowArea(e.ivDia_mm,e.ivLift_mm*Math.pow(Math.sin(Math.PI*(th-thO)/dur),2))*1e-6;
+    const Vc=V(th),pc=m*R*T/Vc,k=0.5*rho0*Math.pow(Ar/Math.max(1e-9,Av),2);
     const rhs=p0-pc+rho0*L/dt*u;   // implicit in u: k u|u| + a u = rhs
     u=rhs>=0?(-a+Math.sqrt(a*a+4*k*rhs))/(2*k):(a-Math.sqrt(a*a-4*k*rhs))/(2*k);
-    m+=(u>0?rho0:rc)*Ar*u*dt;
+    const dm=(u>0?rho0:m/Vc)*Ar*u*dt, dV=V(th+dth)-Vc;
+    const h=WOSCHNI_C*Math.pow(B,-0.2)*Math.pow(pc/1000,0.8)*Math.pow(T,-0.55)*Math.pow(6.18*Sp,0.8);
+    const Q=h*(ends+4*Vc/B)*(T_WALL-T)*dt;
+    const U=cv*m*T+cp*(u>0?T0:T)*dm-pc*dV+Q;
+    m+=dm;T=U/(cv*m);
   }
   return (m-m0)/(rho0*Vd);
 }
@@ -1728,10 +1753,12 @@ function intakeFill(rpm,adv,L){
 function buildFillTable(){
   const e=engine;e.fillTable=null;
   if(!e.ivDia_mm||!e.runnerL||!(e.runnerA>0))return;
+  const Cd=intakeCd();e.intakeCd=Cd;
   const tb=[],lo=800,hi=e.redline+500,lens=e.runnerVariable?[e.runnerL,e.runnerLShort]:[e.runnerL];
   for(let r=lo;r<=hi;r+=250){
     let f=0;
-    for(const L of lens)for(let adv=0;adv<=(e.vvt?VVT_AUTHORITY:0);adv+=5)f=Math.max(f,intakeFill(r,adv,L));
+    const Tres=wallTrace(e,r,1).Tres;
+    for(const L of lens)for(let adv=0;adv<=(e.vvt?VVT_AUTHORITY:0);adv+=5)f=Math.max(f,intakeFill(r,adv,L,Tres,Cd));
     tb.push({rpm:r,f});
   }
   e.fillTable=tb;
@@ -4156,7 +4183,9 @@ function computeVE(rpm,map){
   // Where the engine's own breathing physics is modelled, there is no bell: the shape comes out of
   // late-IVC backflow (low end), wave action (structure) and port Mach / valve float (top end), with
   // veAmp as a flat ceiling. Where it is not, the fitted bell remains — see engine.veBell.
-  let ve=engine.veBell?engine.veAmp/(1+Math.pow(Math.abs((rpm-peak)/w),2*engine.veShoulder)):engine.veAmp;
+  // Build 122: where the intake stroke is integrated (fillTable) it carries the whole of the filling, heated and
+  // cam-shaped, so the flat ceiling and the cam bonus are not applied on top of it.
+  let ve=engine.veBell?engine.veAmp/(1+Math.pow(Math.abs((rpm-peak)/w),2*engine.veShoulder)):engine.fillTable?1:engine.veAmp;
   // ---- derived gas dynamics (see PHYSICS CORE) ----
   // These four lines replace EXHAUST{topGain,lowLoss} and CAM{scav,lowLoss} — four fitted numbers
   // for two physical effects. Both waves swing both ways, so a badly matched pipe COSTS VE here.
