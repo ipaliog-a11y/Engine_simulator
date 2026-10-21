@@ -27,7 +27,9 @@ const spool = await page.evaluate(({ base }) => [0.5, 1.0, 1.5, 2.0, 2.5].map(ba
   while (t < 30 && state.boostActual < 0.9 * bar) { stepBoost(1 / 240); t += 1 / 240; }
   return { bar, spool50: Math.round(engine.spool50), 
     t90: +t.toFixed(2), iat: Math.round(effIAT(1 + bar)),
-    knock: Math.round(computeKnockRisk(engine.score.peakHPrpm, 1 + bar)),
+    // knock at best-torque spark, before the ECU retards (build 131: the ECU now holds the score at its target, 40,
+    // wherever it can, so the controlled score cannot show how much harder the end gas is being pushed)
+    knock: Math.round(knockAt(engine.score.peakHPrpm, 1 + bar, mbtAdvance(engine.score.peakHPrpm, 1 + bar))),
     eff: +engine.compEff.toFixed(2), load: +engine.turboLoad.toFixed(2), hp: engine.score.peakHP };
 }), { base: KEI });
 console.log('boost   spool50   time to 90%   charge temp   knock   comp.eff   flow load');
@@ -159,7 +161,7 @@ const ic = await page.evaluate(() => ['none', 'small', 'large'].map(v => {
     compression: 9.0, redline: 7000, intake: 'turbo', turboSize: 'medium', boost_bar: 1.8, octane: 98, intercooler: v }));
   buildEngine();
   return { v, iat: Math.round(effIAT(2.8)), hp: engine.score.peakHP,
-    knock: Math.round(computeKnockRisk(engine.score.peakHPrpm, 2.8)), eff: engine.icEff };
+    knock: Math.round(knockAt(engine.score.peakHPrpm, 2.8, mbtAdvance(engine.score.peakHPrpm, 2.8))), eff: engine.icEff };   // at MBT (build 131)
 }));
 console.log('\nintercooler at 1.8 bar:');
 ic.forEach(x => console.log(`  ${x.v.padEnd(6)} effectiveness ${x.eff} -> charge ${x.iat} C · ${x.hp} hp · knock ${x.knock}`));

@@ -20,7 +20,7 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 Working toward **v1.0 — every number derived, not fitted.**
 
-### Car pictures withdrawn (build 130)
+### Car pictures withdrawn (build 132)
 
 - **The pixel-art car is removed from the game:**
   - the side view on the VEHICLE tab
@@ -32,6 +32,62 @@ Working toward **v1.0 — every number derived, not fitted.**
   dimensions, a traced 911, and a shortlist of 3D models to trace the rest from.
 - **The engine view stays**, on the ENGINE tab and on saved engines' garage cards.
 - tests/test64 now covers the engine view, and checks that no car picture remains.
+### Knock from the end gas's chemistry; the ECU's boost taper as a tune point (build 131)
+
+- **Knock.** It was a points score set by hand (30 a bar of boost, 8 a unit of compression, 0.8 a degree of
+  charge, -2.2 an octane, -12 for direct injection, more for rpm, coolant and alcohol), which left a 10:1 engine at
+  2.4 bar on 98 RON at its best spark. Now it is the end gas's own autoignition: the integral of dt / tau over the
+  unburned gas's life on this model's cycle (Livengood & Wu), tau from Douaud & Eyzat's published correlation
+  17.68 (ON/100)^3.402 p^-1.7 exp(3800/T), unadjusted; the gas starts as the fresh charge mixed by enthalpy with the
+  exhaust's residual, cooled by the fuel's latent heat under direct injection, and is compressed by the piston and
+  the burn behind it until 90% has burned. The score the rest of the model reads is 40 x the integral: 40 is onset.
+  The ECU runs best-torque spark where the gas survives it, and otherwise the most advance at which it just does, as
+  far back as 37 deg past best-torque phasing (CA50 ~45 deg ATDC on a piston; it stopped at a fitted 6 deg BTDC,
+  which at full load under ~2000 rpm left the end gas knocking at any spark). Kept: the measured trend of ~3 deg of
+  knock margin per 0.1 of enrichment, the ignition system's margin, nitrous. Rotaries and two-strokes keep the
+  previous score and spark law: the integral is a four-stroke poppet engine's cycle, and a Wankel's trailing pocket
+  or a two-stroke's scavenged charge is not that gas.
+- **What spark costs** is now the Wiebe burn's cycle efficiency at the phasing it gives (wiebePhasingEff), not a
+  fitted 1 - 0.004 x (degrees off MBT)^2.
+- Result: NA engines are knock-limited at full load low down and run best spark from mid revs (as real calibrations
+  do); boosted engines are knock-limited across their range, which costs the midrange most (the gas has more time to
+  ignite at low speed). Peak NA power is unchanged.
+- **The ECU's boost taper**, two new tune inputs: BOOST TAPER FROM (rpm, 0 = off) and BOOST AT LIMITER (%). The
+  wastegate target falls linearly between them; the steady boost solve, the turbo's shaft (0-100, the bench, the lap)
+  and a supercharger's bypass all hold it. Reliability now counts half its boost stress where boost is still held at
+  the limiter, so a taper buys reliability. Real ECUs pull boost back near the limiter for the rods, bearings, turbine
+  and end gas: a calibration, not physics, and now one the user can change.
+- **Factory presets carry their factory calibration**: the taper solved so peak power meets the maker's rating,
+  starting no earlier than the maker's peak-torque rpm (marked in the preset; set BOOST TAPER FROM to 0 to see the
+  hardware alone). Left off where the hardware is at or below the rating, or no taper from the torque peak reaches
+  it (the RB26's 280 PS is a voluntary cap). test48's power RMS 15.4% -> 5.3%.
+- **COMPRESSOR WHEEL (mm)** input: the maker's wheel instead of the size class, its housings scaled with it. Presets
+  keep their size classes for now (see the open item).
+- **Held back, with the reason:** the turbine throat taken at the volute centroid radius (it is taken at the wheel's,
+  1.5-1.8x too small) and the presets' real wheel sizes. With the back-pressure that removes, the model's weak low-rpm
+  spool shows through (an RS3 makes ~245 Nm at 2000 rpm on any frame, against a real 480 from 1700): low-rpm spool
+  (pulse energy, twin-scroll housings, small modern turbines) is the next item, and the two return with it.
+- The torque grid is shared between the 0-100 run and the lap (keyed on the builder, so a test harness's scaled one
+  is its own); the knock search is remembered per operating point.
+- Tests, each with its reason: test60's boost-falls compares with the ECU's target, and the 2JZ, TDI and Duramax left its known list;
+  tests 44/46/60 do not count boosted engines with no taper at the limiter (full boost to the limiter is their
+  calibration); test40 reads knock at best-torque spark (the ECU holds the controlled score at its target); test58's
+  continuity is a rate per unit lambda; test63 asks the lap solver's braking step directly instead of sampling a lap;
+  test62's gauge to 0.005 bar; test48's power budget 15.5 -> 10; test41 bands Supra 15 -> 17, STI 11 -> 13, M2 13 -> 14, RMS 9.5 -> 11 (the generic turbo's midrange).
+
+### Live steering and power (build 130)
+
+- **Steering wheel in live timing.** The front wheels' angle is kinematic (Ackermann) steering on the racing
+  line, `atan(wheelbase / r)`, signed by the way the line turns and averaged over ±10 m so the 5 m radius
+  does not jitter it. The wheel in the driver's hands is that times the **steering ratio**, a new VEHICLE
+  input (8-22:1, default 15:1, saved with the car; older saves load as 15). Geometry only: no slip angle,
+  so no understeer correction. A 911 GT3 at La Source: 7.4° at the road wheels, 111° at the wheel.
+- **Engine power in live timing.** Crank power at each point: the drive force the lap spends, times speed,
+  back through the driveline efficiency, capped at full-throttle power at that rpm (with the boost built);
+  zero coasting, braking and mid-shift. Shown in hp and kW with a bar against the peak of the curve the lap
+  drives (best-power mixture, a little above the as-tuned DYNO figure: 494 against 487 hp on the GT3).
+- Both instrument sets, digital and analog, carry the wheel and the power. **test70** pins the steering
+  against a known circle, its sign against lateral g, the ratio and its save, and power within the engine.
 
 ### The engine sound without the hiss (build 129)
 

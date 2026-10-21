@@ -4,7 +4,7 @@
 // garage cards) is drawn from the parts you chose, so the checks are that every combination draws
 // without throwing, that the picture actually changes when a part does, and that a saved engine gets
 // its own thumbnail even from an old record missing fields. The car pictures were withdrawn in build
-// 130 (archived on claude/car-sprites-archive): a saved car has no thumbnail, and the track map draws
+// 132 (archived on claude/car-sprites-archive): a saved car has no thumbnail, and the track map draws
 // the car as the arrow it was before build 106.
 import { chromium } from './pw.mjs';
 import { fileURLToPath, pathToFileURL } from 'url';
