@@ -282,7 +282,7 @@ table.fuelmap td.live{box-shadow:inset 0 0 0 2px #fff;font-weight:bold}
 <body>
 <div class="container">
 <header>
-<h1>PIXEL ENGINE SIM v0.6 build 129</h1>
+<h1>PIXEL ENGINE SIM v0.6 build 130</h1>
 <div class="subtitle" id="subtitle">ENGINE DESIGNER • BUILD IT, THEN DRIVE IT</div>
 </header>
 <div class="build-strip" id="buildStrip">
@@ -1076,6 +1076,7 @@ This is a physics model, and like every model it leaves things out. These are th
 <div class="design-grid">
 <div class="field"><label for="vhBrake">BRAKES</label><select id="vhBrake"><option value="steel">STEEL DISC</option><option value="slotted">SLOTTED/VENTED</option><option value="big">BIG BRAKE KIT</option><option value="carbon">CARBON-CERAMIC</option><option value="hd">HEAVY-DUTY</option></select></div>
 <div class="field"><label for="vhRotor">ROTOR SIZE (mm)</label><input type="number" id="vhRotor" min="250" max="420" step="10" value="330"></div>
+<div class="field"><label for="vhSteer">STEERING RATIO (:1)</label><input type="number" id="vhSteer" min="8" max="22" step="0.5" value="15"></div>
 <div class="field"><label for="vhSusp">SUSPENSION</label><select id="vhSusp"><option value="comfort">COMFORT</option><option value="sport">SPORT</option><option value="coilover">COILOVERS</option><option value="race">RACE/ADJUST</option></select></div>
 </div>
 <div class="build-row">
@@ -2775,7 +2776,7 @@ const I18N={
   '(factory spec)':{el:'(εργοστασιακό)'},'(modified)':{el:'(τροποποιημένο)'},
   'Wheels & Tyres':{el:'Τροχοί & Ελαστικά'},'TYRE COMPOUND':{el:'ΤΥΠΟΣ ΕΛΑΣΤΙΚΟΥ'},'WHEEL DIA (in)':{el:'ΔΙΑΜ. ΖΑΝΤΑΣ (in)'},'TYRE WIDTH (mm)':{el:'ΠΛΑΤΟΣ ΕΛΑΣΤ. (mm)'},'TYRE ASPECT (%)':{el:'ΠΡΟΦΙΛ ΕΛΑΣΤ. (%)'},
   'Aerodynamics':{el:'Αεροδυναμική'},'FRONT AERO':{el:'ΕΜΠΡΟΣ ΑΕΡΟΔ.'},'REAR AERO':{el:'ΠΙΣΩ ΑΕΡΟΔ.'},'FLOOR / DIFFUSER':{el:'ΠΑΤΩΜΑ / DIFFUSER'},'WEIGHT REDUCTION':{el:'ΜΕΙΩΣΗ ΒΑΡΟΥΣ'},
-  'Brakes & Suspension':{el:'Φρένα & Ανάρτηση'},'BRAKES':{el:'ΦΡΕΝΑ'},'ROTOR SIZE (mm)':{el:'ΔΙΑΜ. ΔΙΣΚΟΥ (mm)'},'SUSPENSION':{el:'ΑΝΑΡΤΗΣΗ'},
+  'Brakes & Suspension':{el:'Φρένα & Ανάρτηση'},'BRAKES':{el:'ΦΡΕΝΑ'},'ROTOR SIZE (mm)':{el:'ΔΙΑΜ. ΔΙΣΚΟΥ (mm)'},'SUSPENSION':{el:'ΑΝΑΡΤΗΣΗ'},'STEERING RATIO (:1)':{el:'ΣΧΕΣΗ ΤΙΜΟΝΙΟΥ (:1)'},'STEER':{el:'ΤΙΜΟΝΙ'},'PWR':{el:'ΙΣΧΥΣ'},
   'Performance':{el:'Επιδόσεις'},'0–100 km/h':{el:'0–100 km/h'},'TOP SPEED':{el:'ΤΕΛΙΚΗ'},'POWER/WT':{el:'ΙΣΧΥΣ/ΒΑΡΟΣ'},'100–0 BRAKING':{el:'ΦΡΕΝΑΡΙΣΜΑ 100–0'},'0–200–0':{el:'0–200–0'},
   'Best-power run through the gearbox with a traction-limited launch, then braking (tyre- and brake-limited, with fade).':{el:'Εκκίνηση με μέγιστη ισχύ μέσα από το κιβώτιο, περιορισμένη από πρόσφυση, και μετά φρενάρισμα (όριο ελαστικών & φρένων, με εξασθένηση).'},
   // guide h3 + section headers
@@ -5059,6 +5060,8 @@ function readVehicleFromForm(){
     aeroFront:g('vhAeroF').value,aeroRear:g('vhAeroR').value,aeroFloor:g('vhAeroFl').value,weightRed:g('vhWeight').value,
     brakeType:g('vhBrake').value,rotor:clamp(Math.round(+g('vhRotor').value||330),250,420),suspension:g('vhSusp').value,
     speedRating:g('vhRating').value,body:vehBody,
+    // Steering-wheel turns per road-wheel turn. Only the live-timing wheel reads it; the lap does not.
+    steerRatio:clamp(numOr(g('vhSteer').value,15),8,22),
     // Road-speed governor in km/h, 0 when removed. limitKmh keeps the set figure while it is off.
     governor:g('vhLimiter').value==='on'?clamp(Math.round(+g('vhLimitKmh').value||250),80,400):0,
     limitKmh:clamp(Math.round(+g('vhLimitKmh').value||250),80,400)
@@ -5077,6 +5080,7 @@ function applyVehicleToForm(v){
   g('vhTire').value=v.tireType||'sport';g('vhTireW').value=v.tireWidth||235;g('vhTireA').value=v.tireAspect||40;g('vhWheel').value=v.wheelDia||18;
   g('vhAeroF').value=v.aeroFront||'none';g('vhAeroR').value=v.aeroRear||'none';g('vhAeroFl').value=v.aeroFloor||'none';g('vhWeight').value=v.weightRed||'none';
   g('vhBrake').value=v.brakeType||'slotted';g('vhRotor').value=v.rotor||330;g('vhSusp').value=v.suspension||'sport';
+  g('vhSteer').value=v.steerRatio||15;   // saves from before build 130 carry none
   updateGearingLabel();
 }
 // Fit a chassis with its factory-spec parts, so picking a chassis gives a coherent car instead of
@@ -6522,7 +6526,14 @@ function simulateLap(key,opts){
   //           brake, as a share of what the brakes can command.
   //   g       lateral v^2/r, signed by which way the line turns; longitudinal from the speed change
   //   rpm     from the gear the car is in
+  //   steer   the front wheels' angle (rad, + = right, i.e. clockwise on the map) from kinematic (Ackermann) steering, atan(wheelbase / r)
+  //           on the line's own radius (build 130). Geometry only: no slip angle, so no understeer or
+  //           oversteer correction. The HUD multiplies it by the steering ratio for the wheel in the hands.
+  //   pwr     crank power (W): the drive force the speed profile spends, times speed, back through the
+  //           driveline's efficiency, and never more than the engine makes at full throttle at this rpm
+  //           (with the boost the shaft has built). Zero coasting, braking and mid-shift.
   const tAt=new Array(n),thr=new Array(n),brk=new Array(n),gLat=new Array(n),gLong=new Array(n),rpmAt=new Array(n),mapAt=new Array(n);
+  const steerRaw=new Array(n),pwr=new Array(n),wb=vehicle.wb||2.6;
   {
     let tc=0;
     for(let i=0;i<n;i++){
@@ -6535,12 +6546,18 @@ function simulateLap(key,opts){
       else{thr[i]=0;brk[i]=clamp(-need/m/Math.max(0.1,vehicle.brakeDecelCap),0,1);}
       const ax=p[i].x-p[h].x,ay=p[i].y-p[h].y,bx=p[j].x-p[i].x,by=p[j].y-p[i].y;
       gLat[i]=Math.sign(ax*by-ay*bx)*v[i]*v[i]/Math.max(1,p[i].r)/G;
+      steerRaw[i]=Math.sign(ax*by-ay*bx)*Math.atan(wb/Math.max(1,p[i].r));
       gLong[i]=aL[i]/G;
       rpmAt[i]=clamp(v[i]*ratios[gears[i]]*fd/rT*60/TWO_PI,idle,rl);
       mapAt[i]=steadyMapAt(rpmAt[i],thr[i]);
       if(boostLap)mapAt[i]=Math.min(mapAt[i],1+boostLap[i]);   // what the shaft has built by here
+      const omega=rpmAt[i]*TWO_PI/60;
+      pwr[i]=cutAt[i]||need<=0?0:Math.min(need*v[i]/eff,tqAt(rpmAt[i])*omega*(boostShare?boostShare[i]:1));
     }
   }
+  // The line's radius comes from three samples 15 m apart and flickers a little point to point; a wheel
+  // in a driver's hands does not, so the angle is averaged over ±2 points (±10 m).
+  const steer=steerRaw.map((_,i)=>{let a=0;for(let k=-2;k<=2;k++)a+=steerRaw[(i+k+n)%n];return a/5;});
   // Elevation summary for the readouts: metres climbed per lap and the height range.
   let climb=0,zMin=1e9,zMax=-1e9;
   for(let i=0;i<n;i++){const dz=p[(i+1)%n].z-p[i].z;if(dz>0)climb+=dz;zMin=Math.min(zMin,p[i].z);zMax=Math.max(zMax,p[i].z);}
@@ -6548,7 +6565,10 @@ function simulateLap(key,opts){
   for(let i=0;i<n;i++)counts[lim[i]]+=p[i].ds3;
   return {track:T,lap:t,sectors:sect,v,lim,vMin:vMin*3.6,vMax:vMax*3.6,
     avg:p.length_/t*3.6,shifts,shiftLoss,counts,gears,climb,zMin,zMax,length:T.length,lineLength:p.length_,
-    replay:{tAt,thr,brk,cut:Array.from(cutAt),gLat,gLong,rpm:rpmAt,map:mapAt,tF:BT.TF,tR:BT.TR,fade:fadeF.slice()},
+    // The peak the power readout is measured against: the curve this lap drives (best-power mixture), which
+    // can sit a little above the as-tuned figure quoted on DYNO.
+    pwrPeak:curve.reduce((a,q)=>Math.max(a,q.tq*q.rpm*TWO_PI/60),0),
+    replay:{tAt,thr,brk,cut:Array.from(cutAt),gLat,gLong,rpm:rpmAt,map:mapAt,steer,pwr,tF:BT.TF,tR:BT.TR,fade:fadeF.slice()},
     brakeMaxF:Math.max(...BT.TF),brakeMaxR:Math.max(...BT.TR),brakeOnset:th.onset,
     corners:T.corners,width:T.width,wLabel:T.wLabel};
 }
@@ -9040,6 +9060,7 @@ function replayAt(L,t){
     v:mix(L.v[i],L.v[j])*3.6,gear:L.gears[i]+1,rpm:mix(R.rpm[i],R.rpm[j]),map:R.map?mix(R.map[i],R.map[j]):1,
     thr:R.thr[i],brk:R.brk[i],gLat:mix(R.gLat[i],R.gLat[j]),gLong:mix(R.gLong[i],R.gLong[j]),
     tF:R.tF?mix(R.tF[i],R.tF[j]):null,tR:R.tR?mix(R.tR[i],R.tR[j]):null,fade:R.fade?R.fade[i]:1,
+    steer:R.steer?mix(R.steer[i],R.steer[j])*180/Math.PI:0,pwr:R.pwr?mix(R.pwr[i],R.pwr[j]):0,
     sector:Math.min(2,Math.floor(sAt/third))};
 }
 // The clock at which each sector ends, from the same recording (equal thirds of the line, as L.sectors).
@@ -9059,8 +9080,26 @@ function brakeTempColour(T,onset){
   if(T>=150)return '#00ff88';
   return '#00ccff';
 }
+// Steering and power (build 130). The wheel in the driver's hands is the road wheels' angle times the
+// steering ratio set on VEHICLE; power is the crank's, against the engine's peak.
+function drawSteerWheel(cx,cy,R,deg){
+  ctx.save();ctx.translate(cx,cy);ctx.rotate(deg*Math.PI/180);
+  ctx.strokeStyle='#bbc';ctx.lineWidth=3;ctx.beginPath();ctx.arc(0,0,R,0,Math.PI*2);ctx.stroke();
+  ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(-R,0);ctx.lineTo(R,0);ctx.moveTo(0,0);ctx.lineTo(0,R);ctx.stroke();
+  ctx.fillStyle='#ff5555';ctx.fillRect(-2,-R-2,4,4);   // the top-dead-centre stripe
+  ctx.fillStyle='#ccccd8';ctx.fillRect(-3,-3,6,6);
+  ctx.restore();ctx.lineWidth=1;
+}
+function steerText(st){
+  const wd=st.steer*(vehicle.steerRatio||15),side=Math.abs(wd)<0.5?'':(wd>0?' R':' L');
+  return {wheel:wd,txt:Math.round(Math.abs(wd))+'°'+side,road:'δ '+Math.abs(st.steer).toFixed(1)+'°'};
+}
+function powerReadout(st,L){
+  const hp=st.pwr/1000/0.7457,peak=Math.max(1,L&&L.pwrPeak?L.pwrPeak/745.7:(engine.score?engine.score.peakHP:1));
+  return {hp,kW:st.pwr/1000,frac:clamp(hp/peak,0,1)};
+}
 function drawReplayHud(L,st,W,y0){
-  const w=REPLAY_HUD_W,h=182,x0=W-w-10,PS='"Press Start 2P"';
+  const w=REPLAY_HUD_W,h=232,x0=W-w-10,PS='"Press Start 2P"';
   ctx.fillStyle='rgba(10,10,18,0.86)';ctx.fillRect(x0,y0,w,h);
   ctx.strokeStyle='#33334a';ctx.lineWidth=2;ctx.strokeRect(x0,y0,w,h);
   ctx.fillStyle=C.green;ctx.font='16px '+PS;ctx.fillText(String(Math.round(st.v)),x0+10,y0+26);
@@ -9080,6 +9119,16 @@ function drawReplayHud(L,st,W,y0){
   if(engine.intake!=='na'){const b=st.map-1;ctx.fillStyle=b>0.02?'#ff8800':'#99a';
     ctx.fillText(tr('BOOST')+' '+(b>=0?'+':'')+b.toFixed(2)+' bar',x0+10,y0+124);}
   drawGMeter(st,x0+146,y0+86,30,y0+128);
+  // engine power now, as a bar against the peak
+  const pw=powerReadout(st,L);
+  bar(tr('PWR'),pw.frac,'#ffaa00',y0+136);
+  ctx.fillStyle='#99a';ctx.font='6px '+PS;ctx.fillText(Math.round(pw.hp)+' hp • '+Math.round(pw.kW)+' kW',x0+10,y0+156);
+  // steering wheel
+  const sw=steerText(st);
+  drawSteerWheel(x0+150,y0+168,16,sw.wheel);
+  ctx.fillStyle='#778';ctx.font='6px '+PS;ctx.fillText(tr('STEER'),x0+10,y0+174);
+  ctx.fillStyle=C.yellow;ctx.font='8px '+PS;ctx.fillText(sw.txt,x0+50,y0+175);
+  ctx.fillStyle='#667';ctx.font='6px '+PS;ctx.fillText(sw.road,x0+10,y0+188);
   drawBrakeCells(L,st,x0,y0+h-30);
 }
 // g-meter: lateral across, longitudinal up for braking (the way a driver is thrown), rings at 1 g
@@ -9135,7 +9184,7 @@ function drawDial(cx,cy,R,lo,hi,v,step,lbl,red,fmt){
   ctx.textAlign='left';ctx.textBaseline='alphabetic';ctx.lineWidth=1;
 }
 function drawAnalogHud(L,st,W,y0){
-  const w=REPLAY_HUD_W,h=206,x0=W-w-10,PS='"Press Start 2P"';
+  const w=REPLAY_HUD_W,h=250,x0=W-w-10,PS='"Press Start 2P"';
   ctx.fillStyle='rgba(10,10,18,0.86)';ctx.fillRect(x0,y0,w,h);
   ctx.strokeStyle='#33334a';ctx.lineWidth=2;ctx.strokeRect(x0,y0,w,h);
   // rev counter in thousands, red from the redline; the gear in its face
@@ -9160,6 +9209,14 @@ function drawAnalogHud(L,st,W,y0){
   const px0=engine.intake!=='na'?x0+70:x0+40;
   pedal(px0,st.thr,'#00ff88','T');pedal(px0+16,st.brk,st.fade<0.999?'#ff8800':'#ff5555','B');
   drawGMeter(st,x0+148,yb,26,yb+36);
+  // power bar and steering wheel, in a strip above the brakes
+  const pw=powerReadout(st,L),sw=steerText(st),ys=y0+182;
+  ctx.fillStyle='#778';ctx.font='5px '+PS;ctx.fillText(tr('PWR'),x0+10,ys+6);
+  ctx.fillStyle='#1d1d2b';ctx.fillRect(x0+34,ys,74,7);ctx.fillStyle='#ffaa00';ctx.fillRect(x0+34,ys,74*pw.frac,7);
+  ctx.fillStyle='#99a';ctx.font='6px '+PS;ctx.fillText(Math.round(pw.hp)+' hp',x0+10,ys+22);
+  ctx.fillStyle=C.yellow;ctx.fillText(sw.txt,x0+70,ys+22);
+  ctx.fillStyle='#667';ctx.font='5px '+PS;ctx.fillText(sw.road,x0+70,ys+34);
+  drawSteerWheel(x0+150,ys+16,15,sw.wheel);
   drawBrakeCells(L,st,x0,y0+h-22);
 }
 function drawTrack(){
@@ -9671,7 +9728,7 @@ function bindControls(){
     try{localStorage.setItem('pes.gauges',lapReplay.gauges);}catch(err){}});
   // Vehicle design: recompute performance live on any change. Picking a chassis fits its whole
   // factory spec (drivetrain, gearbox, tyres/wheels, brakes, suspension, aero, weight).
-  ['vhChassis','vhDrive','vhGearbox','vhDiff','vhGears','vhGearing','vhLimiter','vhLimitKmh','vhRating','vhTire','vhTireW','vhTireA','vhWheel','vhAeroF','vhAeroR','vhAeroFl','vhWeight','vhBrake','vhRotor','vhSusp'].forEach(id=>{
+  ['vhChassis','vhDrive','vhGearbox','vhDiff','vhGears','vhGearing','vhLimiter','vhLimitKmh','vhRating','vhTire','vhTireW','vhTireA','vhWheel','vhAeroF','vhAeroR','vhAeroFl','vhWeight','vhBrake','vhRotor','vhSusp','vhSteer'].forEach(id=>{
     const el=document.getElementById(id);if(!el)return;
     el.addEventListener('input',()=>{
       if(id==='vhChassis'){

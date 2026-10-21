@@ -20,6 +20,20 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 Working toward **v1.0 — every number derived, not fitted.**
 
+### Live steering and power (build 130)
+
+- **Steering wheel in live timing.** The front wheels' angle is kinematic (Ackermann) steering on the racing
+  line, `atan(wheelbase / r)`, signed by the way the line turns and averaged over ±10 m so the 5 m radius
+  does not jitter it. The wheel in the driver's hands is that times the **steering ratio**, a new VEHICLE
+  input (8-22:1, default 15:1, saved with the car; older saves load as 15). Geometry only: no slip angle,
+  so no understeer correction. A 911 GT3 at La Source: 7.4° at the road wheels, 111° at the wheel.
+- **Engine power in live timing.** Crank power at each point: the drive force the lap spends, times speed,
+  back through the driveline efficiency, capped at full-throttle power at that rpm (with the boost built);
+  zero coasting, braking and mid-shift. Shown in hp and kW with a bar against the peak of the curve the lap
+  drives (best-power mixture, a little above the as-tuned DYNO figure: 494 against 487 hp on the GT3).
+- Both instrument sets, digital and analog, carry the wheel and the power. **test70** pins the steering
+  against a known circle, its sign against lateral g, the ratio and its save, and power within the engine.
+
 ### The engine sound without the hiss (build 129)
 
 - Most engines sounded like noise, the V12 and the turbo diesel worst. Measured by muting one voice at a
