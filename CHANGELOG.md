@@ -20,6 +20,32 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 Working toward **v1.0 — every number derived, not fitted.**
 
+### Knock compresses the charge the engine trapped, from where the valve closes (build 134)
+
+- **The end gas's compression starts at IVC.** The knock trace compressed a cylinder full at intake pressure from
+  BDC through the whole geometric ratio, whatever the engine had breathed. At low speed a late-closing intake valve
+  has let part of the charge back out before compression starts (the integrated intake stroke, build 121, already
+  charged the torque for it), and at the tuned peak the column has packed in more. Now the trace starts at the
+  intake valve's closing, at the phase the cam phaser's full-load table chose, on the charge the torque is made
+  from (computeVE's fresh air plus the residual mixed into it). One charge for the torque and the knock; nothing
+  new fitted. Ported engines and the rotary keep BDC and a full cylinder.
+- Result: retard at the makers' torque peaks GTI 16 -> 12 deg, Civic 15 -> 11, GR Yaris 11 -> 7, EcoBoost 6 -> 2,
+  TwinAir 31 -> 29; low-rpm torque GTI -17% -> -12%, GR Yaris -6% -> -3%; the Civic reaches its rating on the hardware alone (305 -> 315 hp, rated
+  316). NA engines run 0-3 deg retard at 2000 rpm (was 1-5) and their peak power is unchanged. Every factory taper
+  still meets its rating within 1%.
+- test40, with its reason: 2.5 bar on an over-flowed small frame now buys a little on a lap (61.04 -> 60.82 s; the
+  choked compressor delivers less than its target, and the knock now reads the charge it delivers). Asserted
+  instead: it gains under a third of what a frame that can feed the engine does (the medium frame, 0.74 s).
+- **What is left on the small turbos, found and not yet fixed:**
+  - the EcoBoost is now short on spool, not knock: 90% boost at 2200 rpm against Ford's 170 Nm from 1400;
+  - the TwinAir still runs 29 deg retard at 1900 rpm, on a charge that arrives at 95 C;
+  - two causes, both measured. The 'small' class is a 54 mm wheel, a 2.0 L's (the GTI's IS20); a 0.66-1.0 L engine
+    runs at ~14% of its choke flow at the torque peak, at the island's 0.35 floor. IHI's RHF3 frame, the size
+    kei and sub-1.4 L engines use, is ~40 mm (replacement-wheel listings), but which turbo each of these presets
+    carries is not confirmed.
+  - And the intercooler is a fixed effectiveness per core (0.62 / 0.82) at every flow; a heat exchanger's rises as
+    the flow through it falls (more transfer units per kilogram).
+
 ### The turbine throat where A/R puts it; the compressor's island follows its speed line (build 133)
 
 - **Turbine throat.** A/R is the volute throat's area over the radius to its centroid, and the throat was taken at
