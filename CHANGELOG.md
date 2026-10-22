@@ -40,8 +40,9 @@ Working toward **v1.0 — every number derived, not fitted.**
   (`<a data-gp>`), 261 of them.
 - Two kept blocks had gone stale and were re-measured: the front-driver launch figures (a 246 hp kei: 7.47 s, then
   6.32 / 5.87 / 4.96 / 4.04 s with an LSD, sport tyres, slicks, AWD) and the diff trade (spool 0.1 s quicker to 100
-  and 1.5 s slower a lap than a clutch LSD). Their Greek was dropped with them, as the block-per-paragraph rule
-  requires; so were the old lap-lag limit (the lap has integrated the turbo shaft since build 118) and the old
+  and 1.5 s slower a lap than a clutch LSD). They moved to new blocks with fresh Greek, as the block-per-paragraph
+  rule requires, and `test41` now checks that the guide quotes the launch ceiling it measures (it pinned the stale
+  0.33 g; the model gives 0.38). Retired with them: the old lap-lag limit (the lap has integrated the turbo shaft since build 118) and the old
   Known-limits list. New text is English for now and falls back cleanly in Greek; the level labels are translated.
 - `tests/test71.mjs`: every page has its three levels and a picture, every picture draws and every animated one
   moves, every link lands, search narrows and says when nothing matches, the animation stops off the tab, Greek
