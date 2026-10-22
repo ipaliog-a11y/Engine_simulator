@@ -282,7 +282,7 @@ table.fuelmap td.live{box-shadow:inset 0 0 0 2px #fff;font-weight:bold}
 <body>
 <div class="container">
 <header>
-<h1>PIXEL ENGINE SIM v0.6 build 133</h1>
+<h1>PIXEL ENGINE SIM v0.6 build 135</h1>
 <div class="subtitle" id="subtitle">ENGINE DESIGNER • BUILD IT, THEN DRIVE IT</div>
 </header>
 <div class="build-strip" id="buildStrip">
@@ -1759,12 +1759,22 @@ function buildFillTable(){
   const Cd=intakeCd();e.intakeCd=Cd;
   const tb=[],lo=800,hi=e.redline+500,lens=e.runnerVariable?[e.runnerL,e.runnerLShort]:[e.runnerL];
   for(let r=lo;r<=hi;r+=250){
-    let f=0;
+    let f=0,best=0;
     const Tres=wallTrace(e,r,1).Tres;
-    for(const L of lens)for(let adv=0;adv<=(e.vvt?VVT_AUTHORITY:0);adv+=5)f=Math.max(f,intakeFill(r,adv,L,Tres,Cd));
-    tb.push({rpm:r,f});
+    for(const L of lens)for(let adv=0;adv<=(e.vvt?VVT_AUTHORITY:0);adv+=5){
+      const x=intakeFill(r,adv,L,Tres,Cd);if(x>f){f=x;best=adv;}
+    }
+    tb.push({rpm:r,f,adv:best});
   }
   e.fillTable=tb;
+}
+// Where the intake valve closes at full load, crank degrees after BDC: the phase the table chose (build 134).
+function ivcAt(rpm){
+  const e=engine,tb=e.fillTable;if(!tb)return null;
+  let adv=tb[tb.length-1].adv;
+  if(rpm<=tb[0].rpm)adv=tb[0].adv;
+  else for(let i=1;i<tb.length;i++)if(rpm<=tb[i].rpm){const a=tb[i-1],b=tb[i];adv=a.adv+(b.adv-a.adv)*(rpm-a.rpm)/(b.rpm-a.rpm);break;}
+  return ivcAbdc(e.camDur,e.camLSA,adv);
 }
 function fillAt(rpm){
   const tb=engine.fillTable;if(!tb)return 1;
@@ -3338,6 +3348,7 @@ function brakeForceCap(v){
 // Fade: pad friction falls from the onset, to the 35% loss the stops have always allowed, over 150 C.
 const ROTOR_MAT={iron:{rho:7200,cp:500,eps:0.55},ccm:{rho:2450,cp:800,eps:0.80}};
 const BRAKE_AMBIENT=25, FADE_SPAN=150, FADE_MAX=0.35;
+const BRAKE_PREP_LAPS=1;   // laps the rotors run before the hot lap (build 135)
 // air at a typical film temperature (~150 C): conductivity, kinematic viscosity, Prandtl, density, cp
 const BRAKE_AIR={k:0.034,nu:2.9e-5,pr:0.70,rho:0.83,cp:1015};
 const BRAKE_DUCT={d:0.076,K:2.5};
@@ -4511,27 +4522,40 @@ function endGasIntegral(rpm,map,ca50){
   const pExh=1+backPressureBar(rpm,Tex);e.boostNow=prev;
   const pInt=Math.max(0.3,map),f=Math.min(0.5,residualFrac(pExh,pInt,cr));
   const Tres=Math.max(Tf,Tex*Math.pow(Math.min(1,pInt/pExh),(GAMMA_EXH-1)/GAMMA_EXH));
-  const T1=(1+f)/(1/Tf+f/Tres), p1=pInt*1e5, v1=R*T1/p1;
+  const T1=(1+f)/(1/Tf+f/Tres);
   const cyc=burnCycle(),burn=cyc.burn,soc=ca50-wiebeX50()*burn,d=0.5,dt=d/(6*Math.max(300,rpm));
+  const B=e.bore_mm/1000,Sp=2*e.stroke_mm/1000*rpm/60,disc=Math.PI/4*B*B,Vd=disc*e.stroke_mm/1000,Vc=Vd/(cr-1);
+  // Compression starts where the intake valve closes, on the charge the intake stroke trapped (build 134). It
+  // started at BDC with the cylinder full at intake pressure, whatever the engine had breathed: at low speed a
+  // late-closing valve has let part of it back out, and at the tuned peak the column has packed in more. Now the
+  // gas is computeVE's (the fresh charge the torque is made from) plus the residual mixed into it, and it is
+  // compressed from the volume at IVC. Ported engines and the rotary keep BDC and a full cylinder.
+  const ivc=cyc.bdc===-180&&!e.ports?ivcAt(rpm):null;
+  let th0=cyc.bdc,mTot=pInt*1e5*Vc*cr/(R*T1);
+  if(ivc!=null){
+    const prevB=e.boostNow,ve=computeVE(rpm,map);e.boostNow=prevB;
+    const mF=ve*Vd*pInt*1e5/(R*(effIAT(map,rpm)+273.15));
+    th0=cyc.bdc+ivc;mTot=mF*(1+f*Tf/Tres);
+  }
+  const V00=cyc.vol(th0,cr),v1=Vc*cr/mTot,p1=mTot*R*T1/(Vc*V00);
   const xb=th=>th<=soc?0:1-Math.exp(-WIEBE_A*Math.pow(Math.min(1,(th-soc)/burn),WIEBE_M+1));
   // the octane index: the reference fuel this fuel autoignites like, at this engine's T_comp15
   const T15=T1*Math.pow(15e5/p1,k),Kk=0.0056*T15-4.68;
   const OI=(e.effOctane||95)-Kk*(OCT_SENS[e.fuel]??10);
   const onF=DE_A*Math.pow(Math.max(50,OI)/100,DE_ON);
   // Below ~5 bar the delay is seconds (exp(3800/T) at the gas's few hundred kelvin), so the integral only counts
-  // once compression has the pressure there; the trace still runs from BDC so the gas's state is right.
+  // once compression has the pressure there; the trace still runs from IVC so the gas's state is right.
   // Heat to the walls (build 132), at Woschni's flux and his 450 K wall, as wallTrace takes it: the bulk loses it, which
   // lowers the pressure, and so does the end gas, which is the gas against the walls. It matters most at low speed,
   // where the gas has longest.
-  const B=e.bore_mm/1000,Sp=2*e.stroke_mm/1000*rpm/60,disc=Math.PI/4*B*B,Vd=disc*e.stroke_mm/1000,Vc=Vd/(cr-1);
-  const mTot=p1*Vc*cr/(R*T1),ends=disc*(e.type==='rotary'?2:1+1/Math.cos(SI_ROOF_DEG*Math.PI/180));
+  const ends=disc*(e.type==='rotary'?2:1+1/Math.cos(SI_ROOF_DEG*Math.PI/180));
   const hW=(p,TT,w)=>WOSCHNI_C*Math.pow(B,-0.2)*Math.pow(p/1000,0.8)*Math.pow(TT,-0.55)*Math.pow(w,0.8);
-  let T=T1,Tu=T1,I=0,V0=cyc.vol(cyc.bdc,cr),x0=0,pPrev=p1;
+  let T=T1,Tu=T1,I=0,V0=V00,x0=0,pPrev=p1;
   const c1=dt*1000/onF,pRef=5e5;
-  for(let th=cyc.bdc;th<soc+burn;th+=d){
+  for(let th=th0;th<soc+burn;th+=d){
     if(x0>=0.9)break;
     const Vn=cyc.vol(th+d,cr),p=R*T*cr/(v1*V0),xn=xb(th+d),A=ends+4*Vc*V0/B;
-    const w=Math.max(0.1,2.28*Sp+(th>=soc?3.24e-3*Vd*T1/(p1*Vc*cr)*(p-p1*Math.pow(cr/V0,g)):0));
+    const w=Math.max(0.1,2.28*Sp+(th>=soc?3.24e-3*Vd*T1/(p1*Vc*V00)*(p-p1*Math.pow(V00/V0,g)):0));
     Tu=Tu*Math.pow(p/pPrev,k)-hW(p,Tu,w)*A*(Tu-T_WALL)*dt/(mTot*cv);pPrev=p;
     if(p>pRef)I+=c1*Math.pow(p/101325,DE_P)*Math.exp(-DE_T/Tu);
     T+=(q*(xn-x0)-p*v1*(Vn-V0)/cr-hW(p,T,w)*A*(T-T_WALL)*dt/mTot)/cv;
@@ -6555,14 +6579,16 @@ function simulateLap(key,opts){
   // no gear shifts: the stretches it re-solves do not carry the gearbox's state)
   if(quick){let tq=0;for(let i=0;i<n;i++){const j=(i+1)%n;tq+=p[i].ds3/Math.max(2,(v[i]+v[j])/2);}return {lap:tq,v,vC,vB,kind:accKind,model:{ceilAt,brakeFrom,accFrom}};}
   // 2b. Brake temperature on the lap (build 107; build 105 counted heat per stop against a fitted
-  //     budget). Run the solved profile through the rotors in time order, lap after lap until the
-  //     temperature at the line repeats, set each point's brake capacity from the front rotor's
-  //     temperature there, and solve again if it bites. The last pass is kept for the replay.
+  //     budget). Run the solved profile through the rotors in time order, set each point's brake
+  //     capacity from the front rotor's temperature there, and solve again if it bites. The last pass
+  //     is kept for the replay. The lap is a HOT LAP (build 135): the rotors start from ambient, take one
+  //     preparation lap at the same pace, and the hot lap is the second. It used to repeat laps until the
+  //     temperature at the line did, which is a race stint's rotors, not a hot lap's (the tyres, too, are
+  //     taken at their working temperature, which an out-lap gives them, not a stint's).
   const th=vehicle.brakeTh;
   function brakeTemps(){
     const st={F:BRAKE_AMBIENT,R:BRAKE_AMBIENT},TF=new Array(n),TR=new Array(n);
-    for(let lap=0;lap<6;lap++){
-      const F0=st.F;
+    for(let lap=0;lap<1+BRAKE_PREP_LAPS;lap++){   // the preparation lap, then the hot lap kept in TF/TR
       for(let i=0;i<n;i++){
         const j=(i+1)%n,va=Math.max(2,(v[i]+v[j])/2),dt=p[i].ds3/va;
         const aLong=(v[j]*v[j]-v[i]*v[i])/(2*p[i].ds3);
@@ -6570,7 +6596,6 @@ function simulateLap(key,opts){
         brakeHeatStep(st,th,Math.max(0,mech),va,dt);
         TF[i]=st.F;TR[i]=st.R;
       }
-      if(lap>=2&&Math.abs(st.F-F0)<1)break;                 // a lap that ends where it began
     }
     return {TF,TR};
   }
