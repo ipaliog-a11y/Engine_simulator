@@ -1,88 +1,133 @@
-// Where the engine sound plays, and the sound of the lap replay (build 139).
-//
-// WHY THIS EXISTS. Through build 129 the sound played on every tab, always from the live engine on its
-// brake, so the TRACK tab's car went round the lap to the sound of whatever the dyno controls were set to.
-// Now soundSource() picks what is heard: the live engine on the DYNO tab, the lap replay on the TRACK tab
-// (silent while the replay is paused), nothing anywhere else. These checks pin that:
-//   1. the source per tab, and the live level actually falling to zero off those tabs;
-//   2. trackSoundState follows the replay: its rpm, full throttle harder than braking, a lift on an
-//      injected engine cutting the fuel;
-//   3. driving soundDrive round a turbo car's lap blows off at its shifts and lifts, and an NA car's never.
+// The guide as a wiki (build 139): every page climbs three levels (real life, the game, the physics), its
+// pictures are drawn in code and actually draw, its links all land somewhere, the index can be searched, the
+// animation runs only while the guide is open, Greek keeps the blocks it still has and falls back to English
+// for the new ones, and a phone never scrolls sideways.
 import { chromium } from './pw.mjs';
 import { fileURLToPath, pathToFileURL } from 'url';
 import path from 'path';
 const repo = fileURLToPath(new URL('..', import.meta.url));
-const browser = await chromium.launch({ args: ['--autoplay-policy=no-user-gesture-required'] });
-const page = await browser.newPage({ viewport: { width: 1200, height: 900 } });
+const browser = await chromium.launch();
+const page = await browser.newPage({ viewport: { width: 1280, height: 950 } });
 const errors = [];
 page.on('console', m => { if (m.type() === 'error') errors.push('console: ' + m.text()); });
 page.on('pageerror', e => errors.push('pageerror: ' + e.message));
 await page.goto(pathToFileURL(path.join(repo, 'index.html')).href, { waitUntil: 'networkidle' });
-await page.waitForTimeout(400);
+await page.waitForTimeout(300);
 const fails = [];
 
-// ---- 1. source per tab ----
-const src = await page.evaluate(() => {
-  const out = {};
-  for (const t of ['design', 'vehicle', 'garage', 'engine', 'dyno', 'guide', 'options']) { setTab(t); const s = soundSource(); out[t] = s === state ? 'live' : s ? 'replay' : 'none'; }
-  setTab('track'); lapReplay.playing = true; out.track = soundSource() ? (soundSource() === state ? 'live' : 'replay') : 'none';
-  lapReplay.playing = false; out.trackPaused = soundSource() ? 'on' : 'none'; lapReplay.playing = true;
+// ---------------------------------------------------------------- 1. structure, pictures, links
+const s = await page.evaluate(async () => {
+  setTab('guide');
+  const pages = guidePages(), out = { pages: pages.length, ref: 0, tierBad: [], artBad: [], artMissing: [], arts: 0, linkBad: [], links: 0, noArt: [] };
+  // a picture "draws" if a good share of its cells are not the backdrop
+  const inked = cv => { const g = cv.getContext('2d'), d = g.getImageData(0, 0, cv.width, cv.height).data; let n = 0;
+    for (let i = 0; i < d.length; i += 4) if (d[i] + d[i + 1] + d[i + 2] > 120) n++; return n / (d.length / 4); };
+  for (const pg of pages) {
+    const id = pg.id.slice(3);
+    showGuide(id);
+    await new Promise(r => requestAnimationFrame(r));
+    const tiers = ['gt-real', 'gt-game', 'gt-phys'].map(c => pg.querySelector('.gtier.' + c));
+    const isRef = !tiers.some(Boolean);
+    if (isRef) { out.ref++; if (!pg.querySelector('.guide-body')) out.tierBad.push(id + ' (no body)'); }
+    else if (!tiers.every(t => t && t.querySelector('.gtier-h') && t.querySelector('.guide-body'))) out.tierBad.push(id);
+    const cvs = [...pg.querySelectorAll('canvas.gart')];
+    if (!cvs.length) out.noArt.push(id);
+    for (const cv of cvs) {
+      out.arts++;
+      if (!GUIDE_ART[cv.dataset.art]) { out.artMissing.push(id + ':' + cv.dataset.art); continue; }
+      drawGuideArt(cv, 1.7);
+      const f = inked(cv);
+      if (!(f > 0.01)) out.artBad.push(`${id}:${cv.dataset.art} ${(f * 100).toFixed(2)}%`);
+    }
+    for (const a of pg.querySelectorAll('a[data-gp]')) { out.links++; if (!document.getElementById('gp-' + a.dataset.gp)) out.linkBad.push(id + '->' + a.dataset.gp); }
+  }
+  // following a link moves the guide
+  showGuide('glossary');
+  document.querySelector('#gp-glossary a[data-gp="knock"]').click();
+  out.linkFollowed = guideCur;
+  // every picture moves or stands still as declared: an animated one differs between two times
+  out.still = Object.entries(GUIDE_ART).filter(([n, a]) => a.anim).filter(([n]) => {
+    const cv = document.createElement('canvas'); cv.className = 'gthumb'; cv.dataset.art = n;
+    drawGuideArt(cv, 0.4); const a = cv.toDataURL(); drawGuideArt(cv, 1.9); return a === cv.toDataURL();
+  }).map(([n]) => n);
+  showGuide(null);
+  out.thumbs = document.querySelectorAll('#guideIndex canvas.gthumb').length;
+  out.buttons = document.querySelectorAll('#guideIndex button[data-gp]').length;
+  out.cats = new Set(pages.map(p => p.dataset.cat)).size;
   return out;
 });
-console.log('== source by tab: ' + Object.entries(src).map(([k, v]) => k + ' ' + v).join(' · ') + ' ==');
-for (const t of ['design', 'vehicle', 'garage', 'engine', 'guide', 'options']) if (src[t] !== 'none') fails.push(`the ${t} tab plays sound (${src[t]})`);
-if (src.dyno !== 'live') fails.push('the dyno tab does not play the live engine');
-if (src.track !== 'replay') fails.push('the track tab does not play the lap replay');
-if (src.trackPaused !== 'none') fails.push('a paused replay still plays');
+console.log(`wiki: ${s.pages} pages (${s.ref} reference) in ${s.cats} sections, ${s.arts} pictures, ${s.links} links, ${s.thumbs} index icons`);
+if (s.pages < 50) fails.push(`only ${s.pages} pages`);
+if (s.tierBad.length) fails.push('pages without all three levels: ' + s.tierBad.join(', '));
+if (s.ref > 4) fails.push(`${s.ref} reference pages: only the limits, calibration and glossary pages should skip the levels`);
+if (s.noArt.length) fails.push('pages without a picture: ' + s.noArt.join(', '));
+if (s.artMissing.length) fails.push('pictures with no drawing: ' + s.artMissing.join(', '));
+if (s.artBad.length) fails.push('pictures that drew (almost) nothing: ' + s.artBad.join(', '));
+if (s.still.length) fails.push('animated pictures that do not move: ' + s.still.join(', '));
+if (s.linkBad.length) fails.push('links to missing pages: ' + s.linkBad.join(', '));
+if (s.links < 100) fails.push(`only ${s.links} cross-links`);
+if (s.linkFollowed !== 'knock') fails.push(`clicking a glossary link landed on ${s.linkFollowed}, not knock`);
+if (s.thumbs !== s.pages || s.buttons !== s.pages) fails.push(`index has ${s.buttons} entries and ${s.thumbs} icons for ${s.pages} pages`);
 
-// the live level: on, then on the dyno tab, then on a silent tab
-await page.evaluate(() => { setTab('dyno'); });
-await page.click('#btnSound', { force: true }).catch(() => page.evaluate(() => setSound(true)));
-await page.waitForTimeout(700);
-const lvDyno = await page.evaluate(() => Sound.node ? Sound.node.parameters.get('level').value : -1);
-await page.evaluate(() => setTab('design'));
-await page.waitForTimeout(700);
-const lvDesign = await page.evaluate(() => Sound.node ? Sound.node.parameters.get('level').value : -1);
-console.log(`== level on DYNO ${lvDyno.toFixed(3)} · on DESIGN ${lvDesign.toFixed(4)} ==`);
-if (!(lvDyno > 0.1)) fails.push(`the dyno tab is silent (level ${lvDyno})`);
-if (!(lvDesign >= 0 && lvDesign < 0.01)) fails.push(`the design tab is not silent (level ${lvDesign})`);
-await page.evaluate(() => setSound(false));
-
-// ---- 2 and 3. the replay ----
-const lap = await page.evaluate(() => {
-  const run = name => {
-    applyEngineToForm(Object.assign({}, DEFAULT_ENGINE, PRESETS.find(x => x.name === name).engine)); buildEngine();
-    setTab('track'); refreshLap();
-    const L = lapResult, R = L.replay, n = R.tAt.length;
-    let full = null, brake = null, liftIdx = -1;
-    for (let i = 0; i < n; i++) {
-      if (full === null && R.thr[i] > 0.99 && R.rpm[i] > 0.6 * engine.redline) full = i;
-      if (brake === null && R.brk[i] > 0.5) brake = i;
-    }
-    for (let i = 1; i < n; i++) if (R.thr[i] < 0.03 && R.thr[i - 1] > 0.3) { liftIdx = i; break; }
-    const at = i => trackSoundState(replayAt(L, R.tAt[i] + 1e-6));
-    const sF = at(full), sB = at(brake), sL = liftIdx >= 0 ? at(liftIdx) : null;
-    const dF = soundDrive(0.016, sF), dB = soundDrive(0.016, sB);
-    // drive the whole lap at 60 fps, count blow-offs
-    Sound.chargeP = 0; Sound.hot = 0;
-    let bovs = 0;
-    for (let t = 0; t < L.lap; t += 1 / 60) if (soundDrive(1 / 60, trackSoundState(replayAt(L, t))).bov) bovs++;
-    return { lap: L.lap, rpmF: sF.rpm, rpmRec: R.rpm[full], strF: dF.strength, strB: dB.strength, cutLift: sL ? sL.fuelCut : null, dfco: engine.canDFCO, bovs };
-  };
-  return { turbo: run('2.0 Turbo Hot-Hatch I4'), na: run('1.6 Sport NA I4') };
+// ---------------------------------------------------------------- 2. search
+const q = await page.evaluate(() => {
+  showGuide(null);
+  const inp = document.getElementById('guideSearch'), shown = () => [...document.querySelectorAll('#guideIndex button[data-gp]')].filter(b => b.style.display !== 'none').map(b => b.dataset.gp);
+  const set = v => { inp.value = v; inp.dispatchEvent(new Event('input')); return shown(); };
+  const r = { all: set('').length, waste: set('wastegate'), two: set('camber roll'), none: set('zzqqxx').length, noHit: !document.getElementById('guideNoHit').hidden };
+  set(''); r.noHitAfter = !document.getElementById('guideNoHit').hidden;
+  showGuide('turbo'); r.boxHidden = document.getElementById('guideSearchBox').hidden; showGuide(null);
+  return r;
 });
-for (const [k, r] of Object.entries(lap))
-  console.log(`== ${k}: lap ${r.lap.toFixed(1)} s · full throttle at ${r.rpmF.toFixed(0)} rpm (recorded ${r.rpmRec.toFixed(0)}) strength ${r.strF.toFixed(2)} vs braking ${r.strB.toFixed(2)} · lift cuts fuel ${r.cutLift} · ${r.bovs} blow-offs ==`);
-for (const [k, r] of Object.entries(lap)) {
-  if (Math.abs(r.rpmF - r.rpmRec) > 0.02 * r.rpmRec) fails.push(`${k}: the sound's rpm is not the replay's`);
-  if (!(r.strF > 2 * r.strB)) fails.push(`${k}: full throttle does not hit harder than braking on the lap`);
-  if (r.dfco && r.cutLift !== true) fails.push(`${k}: a lift on an injected engine does not cut the fuel`);
-}
-if (!(lap.turbo.bovs > 0)) fails.push('a turbo car never blows off round the lap');
-if (lap.na.bovs !== 0) fails.push('an NA car blows off');
+if (!q.waste.includes('wastegate') || q.waste.length >= q.all) fails.push(`search "wastegate" shows ${q.waste.length} of ${q.all}, wastegate page ${q.waste.includes('wastegate') ? 'in' : 'missing'}`);
+if (!q.two.includes('suspension') || q.two.length >= q.waste.length + 20) fails.push('a two-word search does not narrow to the suspension page: ' + q.two.join(','));
+if (q.none !== 0 || !q.noHit || q.noHitAfter) fails.push('a search with no hits does not say so, or the notice sticks');
+if (!q.boxHidden) fails.push('the search box stays up over an open page');
 
+// ---------------------------------------------------------------- 3. the animation loop lives only in the guide
+const anim = await page.evaluate(async () => {
+  const frame = () => new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)));
+  setTab('guide'); showGuide('turbo'); await frame();
+  const on = guideArtRaf !== 0;
+  const cv = document.querySelector('#gp-turbo canvas.gart'), a = cv.toDataURL();
+  await new Promise(r => setTimeout(r, 300)); const moved = a !== cv.toDataURL();
+  setTab('engine'); await frame(); await frame();
+  const offTab = guideArtRaf === 0;
+  setTab('guide'); showGuide('glossary'); await frame(); await frame();
+  const offStatic = guideArtRaf === 0;      // the glossary's picture does not move
+  showGuide(null); setTab('engine');
+  return { on, moved, offTab, offStatic };
+});
+if (!anim.on || !anim.moved) fails.push('the turbo picture does not animate on its page');
+if (!anim.offTab) fails.push('the animation keeps running after leaving the GUIDE tab');
+if (!anim.offStatic) fails.push('the animation loop runs on a page with no moving picture');
+
+// ---------------------------------------------------------------- 4. Greek: kept blocks Greek, new ones English
+const el = await page.evaluate(() => {
+  applyLang('el'); setTab('guide'); showGuide('welcome');
+  const r = { loop: document.querySelector('[data-gk="loop"]').textContent, fresh: document.querySelector('[data-gk="welcomeReal"]').textContent,
+    tier: document.querySelector('#gp-welcome .gt-phys .gtier-h').textContent, cat: document.querySelector('#guideNav .crumb').textContent };
+  applyLang('en'); r.tierEn = document.querySelector('#gp-welcome .gt-phys .gtier-h').textContent; showGuide(null); setTab('engine');
+  return r;
+});
+if (!/ΚΙΝΗΤΗΡΑΣ/.test(el.loop)) fails.push('the kept Greek block (loop) is not Greek in Greek');
+if (!/dynamometer/.test(el.fresh)) fails.push('a new block without Greek does not fall back to English');
+if (el.tier !== 'LV3 · Η ΦΥΣΙΚΗ' || el.tierEn !== 'LV3 · THE PHYSICS') fails.push(`level label in Greek "${el.tier}", back in English "${el.tierEn}"`);
+
+// ---------------------------------------------------------------- 5. a phone never scrolls sideways
+await page.setViewportSize({ width: 375, height: 800 });
+const ph = await page.evaluate(async () => {
+  setTab('guide'); const bad = [];
+  for (const id of ['index', 'fourstroke', 'turbo', 'fuels', 'scorecard', 'tyres', 'glossary']) {
+    showGuide(id === 'index' ? null : id); await new Promise(r => setTimeout(r, 50));
+    if (document.documentElement.scrollWidth > document.documentElement.clientWidth + 1) bad.push(id + ' ' + document.documentElement.scrollWidth);
+  }
+  const fs = parseFloat(getComputedStyle(document.querySelector('#gp-glossary .guide-body')).fontSize);
+  showGuide(null); setTab('engine'); return { bad, fs };
+});
+if (ph.bad.length) fails.push('horizontal scroll at phone width: ' + ph.bad.join(', '));
+
+if (errors.length) fails.push(...errors);
+console.log(fails.length ? '\nFAIL\n  ' + fails.join('\n  ') : '\nPASS — three levels on every page, pictures draw and move, links land, search narrows, Greek falls back, phones fit');
 await browser.close();
-for (const f of fails) console.log('FAIL ' + f);
-for (const e of errors) console.log('ERROR ' + e);
-console.log(fails.length || errors.length ? `test73: ${fails.length} failure(s), ${errors.length} error(s)` : 'test73: all passed');
-process.exit(fails.length || errors.length ? 1 : 0);
+process.exit(fails.length ? 1 : 0);

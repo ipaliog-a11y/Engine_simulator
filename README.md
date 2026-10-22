@@ -1,4 +1,4 @@
-# PIXEL ENGINE SIM v0.6 build 139
+# PIXEL ENGINE SIM v0.6 build 140
 
 **A lightweight, 8-bit style internal combustion engine *designer* & simulator** inspired by *Automation*.
 
@@ -89,7 +89,7 @@ saps power; a large radiator, electric fan and oil cooler keep it cool.
   performance), **GARAGE** (the saved builds), **TRACK** (lap it round a circuit), **RACE** (race
   it against other builds), **LIVE** (the engine running: cutaway, the
   whole bank firing in its real order, and the controls), **DYNO** (power/torque curve,
-  scorecard and a static result sheet with run data), **GUIDE** (a paged manual with an index, 30 pages in 7 sections) and **OPTIONS** (sound,
+  scorecard and a static result sheet with run data), **GUIDE** (a wiki: 60 pages in 9 sections, each climbing from real life to the game to the physics, with 8-bit pictures drawn in code, search and cross-links) and **OPTIONS** (sound,
   wear and **language**). The right column is context-aware: runtime Engine Controls while
   driving/on the dyno, the live **Performance** panel on VEHICLE, the **Lap Time** panel on
   TRACK and the race's setup, timing tower and telemetry on RACE.
@@ -205,9 +205,15 @@ saps power; a large radiator, electric fan and oil cooler keep it cool.
   pixels and smeared. The backing store is now sized to real device pixels and the context scaled,
   so the drawing code keeps its 640×420 coordinates and the output is pixel-exact — which fixes
   **DYNO** and **TRACK** at the same time.
-- **In-app GUIDE** — a built-in manual (kept in-app so the offline PWA stays self-contained)
-  that explains the loop, the driving controls, every metric on screen and each design
-  subsystem, so the numbers are never a mystery.
+- **In-app GUIDE, a wiki** — kept in-app so the offline PWA stays self-contained. 60 pages in 9
+  sections, from *How an engine works* to *The track*, and every one climbs three levels: **LV1 ·
+  REAL LIFE** (how the part works on a real car, with an 8-bit picture and no maths), **LV2 · IN THE
+  GAME** (the controls and what to watch) and **LV3 · THE PHYSICS** (the equations the sim actually
+  solves, their sources, and an orange note where something is still fitted). The 62 pictures are
+  drawn in code on the app's pixel grid, so they are crisp at any size, cost nothing offline and
+  move where moving teaches something (a piston, a pulse in a header, a turbo spooling, a wastegate
+  opening); they hold still for reduced motion. A search box filters the index, pages link to each
+  other, and a glossary, a known-limits page and a calibration page sit at the end.
 - **Emissions** — engine-out CO / HC / NOx computed from the mixture (λ) and combustion
   temperature, then cleaned by the catalytic converter *only* in a narrow window around
   stoich: run rich and CO/HC spike (no O₂ to burn them); run lean and NOx slips past (a cat
@@ -300,7 +306,7 @@ saps power; a large radiator, electric fan and oil cooler keep it cool.
 
 ![Dyno](docs/dyno.png)
 
-The built-in **GUIDE** tab explains every control and metric without leaving the app:
+The built-in **GUIDE** is a wiki of the sim, from how a four-stroke works to the equations behind every number:
 
 ![Guide](docs/guide.png)
 

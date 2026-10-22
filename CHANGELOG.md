@@ -20,7 +20,7 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 Working toward **v1.0 — every number derived, not fitted.**
 
-### The engine sound on the dyno and round the lap (build 139)
+### The engine sound on the dyno and round the lap (build 140)
 
 - The sound played on every tab, always from the live engine, so the TRACK tab's car went round to the
   sound of the dyno controls. `soundSource()` now picks what is heard: the live engine on **DYNO**, the
@@ -33,8 +33,40 @@ Working toward **v1.0 — every number derived, not fitted.**
   once when the throttle shuts, however gently, instead of needing a 0.3 -> 0.1 snap in one frame. On the
   lap the boost is taken at the throttle's own recorded point (the manifold is interpolated toward the
   next one and had already fallen by the lift). A turbo hot-hatch blows off 18 times round the default lap.
-- test73: the source per tab and the live level falling to zero off them; the replay's rpm, throttle vs
+- test74: the source per tab and the live level falling to zero off them; the replay's rpm, throttle vs
   braking and fuel cut in the sound; blow-offs round a turbo lap and none on an NA one.
+
+### The GUIDE becomes a wiki (build 139)
+
+- The 29-page manual is rebuilt as a **60-page wiki in 9 sections**: Getting started, How an engine works (new),
+  Designing the engine, Breathing & boost, Knock, heat & wear (new), The car, The track, Scoring & career,
+  Options & reference. Thirty-one pages are new, among them the four strokes, torque vs power, why engines have a
+  redline, VVT, ignition, combustion, heat and EGT, friction, wastegates, superchargers, intercoolers, nitrous,
+  fuels and octane, wear, emissions, the race (wrapping build 137's race page in the three levels), tyres, aero, brakes, suspension, elevation, a glossary and a calibration page.
+- **Three levels on every page**: LV1 · REAL LIFE (how the part works on a real car, no maths), LV2 · IN THE GAME
+  (the controls), LV3 · THE PHYSICS (the equations the code solves, with sources, and an orange limit note where a
+  quantity is still fitted). The LV3 text was written from the simulation code and its figures re-measured, not
+  carried over.
+- **8-bit pictures drawn in code** (`GUIDE_ART`): 62 drawings on a 160 x 72 cell grid through `fitPixCanvas`, 53
+  of them animated at 12 frames a second (the four strokes, cam and follower, header pulse and its reflection,
+  turbo, wastegate, VGT vanes, Roots rotors, knock, friction circle, roll, racing line, crest). The loop runs only
+  for the page in view while the GUIDE tab is open, and draws a still under `prefers-reduced-motion`. Each index
+  entry carries its page's first picture as an icon.
+- **Search** (every word must appear in a page's title, tags or text) and **cross-links** between pages
+  (`<a data-gp>`), 261 of them.
+- Two kept blocks had gone stale and were re-measured: the front-driver launch figures (a 215 hp kei: 7.48 s, then
+  6.32 / 5.86 / 4.99 / 4.12 s with an LSD, sport tyres, slicks, AWD) and the diff trade (spool 0.1 s quicker to 100
+  and 1.5 s slower a lap than a clutch LSD). They moved to new blocks with fresh Greek, as the block-per-paragraph
+  rule requires, and `test41` now checks that the guide quotes the launch ceiling it measures (it pinned the stale
+  0.33 g; the model gives 0.38). Retired with them: the old lap-lag limit (the lap has integrated the turbo shaft since build 118) and the old
+  Known-limits list. New text is English for now and falls back cleanly in Greek; the level labels are translated.
+- Pages that builds 136–138 changed were written against them: intercooler effectiveness from NTU, the ECU
+  torque limit on the wastegate page, the race tyre windows and wear on the tyres page, the RACE tab.
+- `tests/test73.mjs`: every page has its three levels and a picture, every picture draws and every animated one
+  moves, every link lands, search narrows and says when nothing matches, the animation stops off the tab, Greek
+  keeps its blocks and falls back to English, and nothing scrolls sideways at phone width (it caught wide tables
+  doing exactly that: the wide column is now `minmax(0, 1fr)`).
+
 
 ### The ECU's torque limit as a tune point (build 138)
 
