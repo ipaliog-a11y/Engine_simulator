@@ -20,6 +20,22 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 Working toward **v1.0 — every number derived, not fitted.**
 
+### The engine sound on the dyno and round the lap (build 140)
+
+- The sound played on every tab, always from the live engine, so the TRACK tab's car went round to the
+  sound of the dyno controls. `soundSource()` now picks what is heard: the live engine on **DYNO**, the
+  lap replay on **TRACK** (quiet while it is paused), nothing elsewhere (the LIVE cutaway included).
+- `trackSoundState()` turns the replay into an engine state: its recorded rpm, manifold pressure and
+  throttle, with what a driven lap implies (DFCO on a lift, the limiter at the redline, a calibrated
+  mixture, a warm engine, a turbo shaft spun to the recorded boost). `soundDrive()` takes that state
+  instead of reading the live one.
+- Blow-off is now the charge pipe venting: it holds the boost made while the throttle was open and vents
+  once when the throttle shuts, however gently, instead of needing a 0.3 -> 0.1 snap in one frame. On the
+  lap the boost is taken at the throttle's own recorded point (the manifold is interpolated toward the
+  next one and had already fallen by the lift). A turbo hot-hatch blows off 18 times round the default lap.
+- test74: the source per tab and the live level falling to zero off them; the replay's rpm, throttle vs
+  braking and fuel cut in the sound; blow-offs round a turbo lap and none on an NA one.
+
 ### The GUIDE becomes a wiki (build 139)
 
 - The 29-page manual is rebuilt as a **60-page wiki in 9 sections**: Getting started, How an engine works (new),
