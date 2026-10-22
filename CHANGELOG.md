@@ -20,7 +20,7 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 Working toward **v1.0 — every number derived, not fitted.**
 
-### RACE: two to eight builds on one circuit, nobody driving (build 136)
+### RACE: two to eight builds on one circuit, nobody driving (build 137)
 
 - **A RACE tab.** Pick the cars (the build on the VEHICLE tab, garage cars, factory cars), the circuit, the laps,
   the grid (qualifying or reversed), the pit strategy (automatic or none), tyre warmers and a seed, then watch:
@@ -47,6 +47,29 @@ Working toward **v1.0 — every number derived, not fitted.**
 - **The map drawing is shared** (`trackMapView`, `drawTrackSurface`), so TRACK and RACE zoom and pan the same way.
 - Tests: `test71` (the engine: solo laps match the solver to 0.4%, fuel = power x BSFC, tyres from cold, seeds,
   traffic, pits, the user's build restored) and `test72` (the tab, end to end).
+### The intercooler's effectiveness follows the charge flow; the small turbos' wheels (build 136)
+
+- **Intercooler.** It took off the core's quoted share of the compressor's heat (small 0.62, large 0.82) at every
+  flow. A heat exchanger's effectiveness rises as the flow through it falls, since each kilogram meets the same
+  surface for longer: eps = 1 - exp(-NTU), NTU = UA/(m cp), with the cooling air's capacity large against the
+  charge's. The quoted figure is read at the engine's peak revs at 1 bar of boost (the reference the turbo frames
+  are characterised at), which fixes NTU there: not at the build's own boost, since the core is hardware and more
+  boost runs it past its rating; UA is the two sides in series, the charge side's film coefficient following the flow as m^0.8
+  (Dittus-Boelter) and the cooling side's not, balanced at the reference (the design rule for a gas-to-gas core,
+  Shah & Sekulic). At a fifth of peak flow a small core takes off 0.88 of the heat, a large one 0.97.
+- At the makers' torque peaks the charge arrives at ~30 C on the large-core cars (was ~50) and ~55 C on the
+  small-core ones (TwinAir 95 -> 57, Alto 80 -> 56). With the wheels below, low-rpm torque against the makers':
+  GTI -12% -> -2%, TwinAir -32% -> -11%, Alto -19% -> -5%. The Civic, at 1.6 bar on its core, runs it past its
+  rating over the top: 308 hp (rated 316; it carries no taper).
+- **The small turbos' wheels.** The 'small' class is a 54 mm wheel, a 2.0 L's (the GTI's IS20). The TwinAir's
+  turbo is Mitsubishi's TD02H2 (49373-03000), whose compressor wheel the replacement catalogues list at 40 mm
+  exducer and 29 mm inducer (the 0.72 ratio this model assumes). The Alto takes the same 40 mm, the size of IHI's
+  RHF3, the frame of kei engines (marked unsure: which turbo this engine carries is not confirmed). The EcoBoost keeps its class: no
+  published wheel was found, and it is the one most sensitive to it (96-158 Nm at 1400 rpm across 54-36 mm).
+- **What the cooler charge shows on the bigger engines:** mid-range torque now reads over the makers' on the
+  Civic (+14%), Supra (+14%), STI (+10%) and Evo (+8%). The hotter charge was hiding it; much of it is the ECU's
+  torque limit (the FK8's 400 Nm is flat from 2500 to 4500 rpm, a calibration), which the model does not have.
+- Factory tapers re-solved; test48's GTI, Supra, TDI and Alto (and its 40 mm wheel) follow.
 
 ### The lap is a hot lap: the brakes get one preparation lap (build 135)
 
