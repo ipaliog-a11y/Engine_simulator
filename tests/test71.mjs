@@ -1,4 +1,4 @@
-// RACE (build 137; weather, brakes and strategy, build 140): the race engine, headless. Several builds on one circuit, run to a lap count.
+// RACE (build 137; weather, brakes and strategy, build 141): the race engine, headless. Several builds on one circuit, run to a lap count.
 //
 // What is pinned here is that the race layer is honest about the physics underneath it: a car alone
 // on the circuit, on tyres held at their best, laps in the time the lap solver gives it; the fuel it
@@ -171,7 +171,7 @@ if (r.pits.state !== 'fin') fails.push(`with stops the short-tank car did not fi
 if (r.pits.minFuel < 0) fails.push('the tank ran below empty');
 if (r.dry !== 'dnf') fails.push('with stops off the short-tank car did not run out');
 
-// ==================================================================== build 140: weather, brakes, strategy
+// ==================================================================== build 141: weather, brakes, strategy
 const w = await page.evaluate(() => {
   const car = n => {
     const v = VEHICLE_PRESETS.find(x => x.name.includes(n)), ep = PRESETS.find(x => x.name === v.engine);
