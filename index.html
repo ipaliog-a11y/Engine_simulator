@@ -3016,9 +3016,11 @@ const ISLAND_WP=2.00;      // and with pressure ratio, past the point where loss
 // diagonally up from the origin, and why a turbo compresses efficiently at low flow when it is only asked for a
 // low pressure ratio. It was fixed at the flow the island has at PR_ISLAND, where pressure losses begin, so low
 // flow at low pressure (a turbo spooling at low rpm) always read as the edge of the map. U comes from the
-// pressure ratio through Euler's work at a common efficiency.
+// pressure ratio through Euler's work at a common efficiency. Only BELOW that speed: above it the inducer's
+// relative Mach number nears 1, the speed lines steepen into the choke flow instead of moving right, and the
+// island stays where it is (with the pressure losses below).
 const PR_ISLAND=2.2;
-const islandSpeed=pr=>Math.sqrt(Math.max(0.0025,(Math.pow(Math.max(1,pr),0.2857)-1)/(Math.pow(PR_ISLAND,0.2857)-1)));
+const islandSpeed=pr=>Math.sqrt(clamp((Math.pow(Math.max(1,pr),0.2857)-1)/(Math.pow(PR_ISLAND,0.2857)-1),0.0025,1));
 const compIslandEff=(flowFrac,pr)=>{
   const u=islandSpeed(pr);
   return clamp(
