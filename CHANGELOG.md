@@ -20,6 +20,28 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 Working toward **v1.0 — every number derived, not fitted.**
 
+### RACE: weather, brakes that carry their heat, a plan per car, the race report, a page of its own (build 141)
+
+- **Weather** (`raceWetAt`): dry, damp, wet, rain later (the start drawn from the seed) or drying, and the air
+  temperature; the track runs ~14 C above the air in the sun, at it when wet. Each `TIRE_TYPE` compound gains
+  `wetKeep`, the share of its grip it keeps on a wet track (a road tyre ~0.7, a slick 0.36), and the race has two
+  rain tyres of its own (`RACE_RAIN_TYRES`: intermediates, full wets) that overheat and wear on a drying line.
+  Water and a cool surface take heat out of the tyres (`TYRE_RACE.hWet`, `hTrack`). A wet race also solves the
+  pace grid down to grip 0.42 (`RACE_GRIP_WET`). Wet laps run 9-22% slower, the grippiest dry compounds losing most.
+- **Tyre calls from the car's own laps** (`raceBestCompound`, `raceTyreCallPays`): a car changes to the compound
+  that leaves it most grip when the time that wins back on its solved laps (`raceLapAtGrip`), over the laps
+  left, beats the stop. A late shower can leave a car out on the wrong tyres on purpose.
+- **Brakes carry their heat.** `brakeHeatStep` takes the car as an argument and `rotorCooling` the day's air,
+  so the race runs the lap solver's rotor model all race long, and in the pit box. Fade feeds pace: a braking
+  zone stretches toward its apex by fade now against fade on the solved lap. A Civic's fronts climb from 169 to
+  475 C over ten laps of Ashdown Park, past the hot lap's 392; on pads that fade from 300 C it loses 0.8 s a lap.
+- **A plan per car**: stops (auto, 0-3, none), push / normal / fuel save, the starting tyres, and the wet call.
+- **The race report** (`raceReportCanvas`): classification with stints, a lap chart, lap times with the
+  wetness shaded in, stints by compound, key moments. PNG and PDF, on the hot lap report's paper.
+- **RACE has a page of its own**: the map and the panel move into a window-filling page (`openRacePage`,
+  `closeRacePage`), sized to it (`sizeRaceStage`); ◀ SIM or Esc goes back, ⛶ goes full screen as the race
+  page rather than the engine view. On a phone it stacks, map over panel.
+- Tests: `test71` adds weather, carried brake heat and per-car strategy; `test72` the page, the report and a phone.
 ### The engine sound on the dyno and round the lap (build 140)
 
 - The sound played on every tab, always from the live engine, so the TRACK tab's car went round to the
