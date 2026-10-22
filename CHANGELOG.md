@@ -20,34 +20,108 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 Working toward **v1.0 — every number derived, not fitted.**
 
-### The GUIDE becomes a wiki (build 136)
+### The GUIDE becomes a wiki (build 139)
 
-- The 29-page manual is rebuilt as a **59-page wiki in 9 sections**: Getting started, How an engine works (new),
+- The 29-page manual is rebuilt as a **60-page wiki in 9 sections**: Getting started, How an engine works (new),
   Designing the engine, Breathing & boost, Knock, heat & wear (new), The car, The track, Scoring & career,
-  Options & reference. Thirty pages are new, among them the four strokes, torque vs power, why engines have a
+  Options & reference. Thirty-one pages are new, among them the four strokes, torque vs power, why engines have a
   redline, VVT, ignition, combustion, heat and EGT, friction, wastegates, superchargers, intercoolers, nitrous,
-  fuels and octane, wear, emissions, tyres, aero, brakes, suspension, elevation, a glossary and a calibration page.
+  fuels and octane, wear, emissions, the race (wrapping build 137's race page in the three levels), tyres, aero, brakes, suspension, elevation, a glossary and a calibration page.
 - **Three levels on every page**: LV1 · REAL LIFE (how the part works on a real car, no maths), LV2 · IN THE GAME
   (the controls), LV3 · THE PHYSICS (the equations the code solves, with sources, and an orange limit note where a
   quantity is still fitted). The LV3 text was written from the simulation code and its figures re-measured, not
   carried over.
-- **8-bit pictures drawn in code** (`GUIDE_ART`): 61 drawings on a 160 x 72 cell grid through `fitPixCanvas`, 52
+- **8-bit pictures drawn in code** (`GUIDE_ART`): 62 drawings on a 160 x 72 cell grid through `fitPixCanvas`, 53
   of them animated at 12 frames a second (the four strokes, cam and follower, header pulse and its reflection,
   turbo, wastegate, VGT vanes, Roots rotors, knock, friction circle, roll, racing line, crest). The loop runs only
   for the page in view while the GUIDE tab is open, and draws a still under `prefers-reduced-motion`. Each index
   entry carries its page's first picture as an icon.
 - **Search** (every word must appear in a page's title, tags or text) and **cross-links** between pages
   (`<a data-gp>`), 261 of them.
-- Two kept blocks had gone stale and were re-measured: the front-driver launch figures (a 246 hp kei: 7.47 s, then
-  6.32 / 5.87 / 4.96 / 4.04 s with an LSD, sport tyres, slicks, AWD) and the diff trade (spool 0.1 s quicker to 100
+- Two kept blocks had gone stale and were re-measured: the front-driver launch figures (a 215 hp kei: 7.48 s, then
+  6.32 / 5.86 / 4.99 / 4.12 s with an LSD, sport tyres, slicks, AWD) and the diff trade (spool 0.1 s quicker to 100
   and 1.5 s slower a lap than a clutch LSD). They moved to new blocks with fresh Greek, as the block-per-paragraph
   rule requires, and `test41` now checks that the guide quotes the launch ceiling it measures (it pinned the stale
   0.33 g; the model gives 0.38). Retired with them: the old lap-lag limit (the lap has integrated the turbo shaft since build 118) and the old
   Known-limits list. New text is English for now and falls back cleanly in Greek; the level labels are translated.
-- `tests/test71.mjs`: every page has its three levels and a picture, every picture draws and every animated one
+- Pages that builds 136–138 changed were written against them: intercooler effectiveness from NTU, the ECU
+  torque limit on the wastegate page, the race tyre windows and wear on the tyres page, the RACE tab.
+- `tests/test73.mjs`: every page has its three levels and a picture, every picture draws and every animated one
   moves, every link lands, search narrows and says when nothing matches, the animation stops off the tab, Greek
   keeps its blocks and falls back to English, and nothing scrolls sideways at phone width (it caught wide tables
   doing exactly that: the wide column is now `minmax(0, 1fr)`).
+
+
+### The ECU's torque limit as a tune point (build 138)
+
+- **ECU TORQUE LIMIT (Nm, 0 = off)**, a new input on boosted engines. A torque-based ECU holds the engine to a
+  calibrated torque (for the gearbox, the driveline, the clutch) by asking for less boost where the engine would
+  make more: the flat plateaus makers quote across thousands of rpm are this, not the engine's own curve. Solved
+  once per engine: at each rpm the boost at which the engine makes the limit, bisected on its own torque there; the
+  wastegate, the vanes, a supercharger's bypass, the bench and the lap are all asked for no more than that. Like
+  the boost taper it is a calibration, not physics: the engine below it is unchanged and only meets a lower target.
+- **Factory presets carry it where the maker quotes torque as a plateau** over a speed range: GTI 350 Nm
+  (1500-4400), FK8 400 (2500-4500), GR Yaris 360 (3000-4600), EcoBoost 170 (1400-4500), RS3 480 (1700-5850),
+  TDI 320 (1750-3000), N57 560 (1500-3000). Engines quoted at a single peak (2JZ, EJ257, 4G63, RB26, the kei and
+  city turbos, the truck diesels) carry none, and their mid-range over the makers' (Supra +14%, STI +10%, Evo +8%)
+  is left showing.
+- Result: the FK8 holds 400 Nm from 3000 to 5000 rpm (was 454 at 2500, +14%), the GR Yaris 360 at 3000 (was +3%),
+  the RS3 480 from 3000 to 5000, the TDI 320 from 1500 to 3000. Factory tapers re-solved with the limits in place;
+  every preset within 1% of its rating. The GTI's plateau still falls off from ~3500 rpm (330 Nm at 4000, the maker
+  holds 350 to 4400): its taper starts at the maker's 1500 rpm torque peak by the calibration rule, which now has a
+  limit doing the plateau's work; starting tapers at the plateau's end would need the plateau's end in the data.
+- test48's GTI and TDI carry their limits, and its Supra and TDI tapers follow the presets.
+
+### RACE: two to eight builds on one circuit, nobody driving (build 137)
+
+- **A RACE tab.** Pick the cars (the build on the VEHICLE tab, garage cars, factory cars), the circuit, the laps,
+  the grid (qualifying or reversed), the pit strategy (automatic or none), tyre warmers and a seed, then watch:
+  the cars on the map, a timing tower, and each car's four tyre temperatures and wear, fuel and brakes. 1-100x,
+  scrubbing, follow-a-car. A guide page, *The race*, says what is physics and what is a rule.
+- **The race is computed, then watched.** Each car is loaded (`withBuild`, which puts the user's own build back
+  exactly), its line optimised once, and its lap solved on that line at grip 0.72-1.00 x fuel empty/half/full
+  (`raceCarModel`). The race loop (`raceInit`/`raceStepOnce`) runs every car on a 50 ms clock reading its speed
+  off that grid, needs no globals, and records a timeline the page plays back. Solving on a fixed line takes
+  11-60 ms; the line optimisation (0.6-3.5 s a car) is the cost, so 8 cars on the Nordschleife take ~1 min.
+- **A standing start in the lap solver** (`simulateLap(key,{fromRest:true})`): the forward pass leaves point 0
+  from rest and does not wrap. +3.3 s on a GT3 at Ashdown Park. Opt-in; no existing lap moves.
+- **Tyre temperature and wear** (`raceTyreStep`): one lump per tyre, the loads from weight, downforce and
+  lateral and longitudinal transfer, heat from slip work and rolling hysteresis, convective cooling. Each
+  compound in `TIRE_TYPE` now carries a working window (`tOpt`, `tWin`) and a wear rate. Grip falls with the
+  square of the distance from the window, twice as fast hot as cold, and with wear past a 70% knee. All fitted.
+- **Fuel from the engine's own BSFC map.** Flow at each point = the power the lap spends there x BSFC at that
+  rpm and MAP; idle flow off the throttle, more for a carburettor. The tank is per body class (`RACE_TANK_L`);
+  the car sheds the fuel's mass as it burns.
+- **Strategy, traffic, the driver.** Stops are planned from a solo practice run (the fewest the tank and tyres
+  allow, or more if fresher tyres pay for the pit lane). A car is held up until it has a few km/h on a straight
+  or into a braking zone; tow, dirty air, blue flags, pit loss, up to 0.6% lap-to-lap variation and mistakes are
+  seeded rules.
+- **The map drawing is shared** (`trackMapView`, `drawTrackSurface`), so TRACK and RACE zoom and pan the same way.
+- Tests: `test71` (the engine: solo laps match the solver to 0.4%, fuel = power x BSFC, tyres from cold, seeds,
+  traffic, pits, the user's build restored) and `test72` (the tab, end to end).
+### The intercooler's effectiveness follows the charge flow; the small turbos' wheels (build 136)
+
+- **Intercooler.** It took off the core's quoted share of the compressor's heat (small 0.62, large 0.82) at every
+  flow. A heat exchanger's effectiveness rises as the flow through it falls, since each kilogram meets the same
+  surface for longer: eps = 1 - exp(-NTU), NTU = UA/(m cp), with the cooling air's capacity large against the
+  charge's. The quoted figure is read at the engine's peak revs at 1 bar of boost (the reference the turbo frames
+  are characterised at), which fixes NTU there: not at the build's own boost, since the core is hardware and more
+  boost runs it past its rating; UA is the two sides in series, the charge side's film coefficient following the flow as m^0.8
+  (Dittus-Boelter) and the cooling side's not, balanced at the reference (the design rule for a gas-to-gas core,
+  Shah & Sekulic). At a fifth of peak flow a small core takes off 0.88 of the heat, a large one 0.97.
+- At the makers' torque peaks the charge arrives at ~30 C on the large-core cars (was ~50) and ~55 C on the
+  small-core ones (TwinAir 95 -> 57, Alto 80 -> 56). With the wheels below, low-rpm torque against the makers':
+  GTI -12% -> -2%, TwinAir -32% -> -11%, Alto -19% -> -5%. The Civic, at 1.6 bar on its core, runs it past its
+  rating over the top: 308 hp (rated 316; it carries no taper).
+- **The small turbos' wheels.** The 'small' class is a 54 mm wheel, a 2.0 L's (the GTI's IS20). The TwinAir's
+  turbo is Mitsubishi's TD02H2 (49373-03000), whose compressor wheel the replacement catalogues list at 40 mm
+  exducer and 29 mm inducer (the 0.72 ratio this model assumes). The Alto takes the same 40 mm, the size of IHI's
+  RHF3, the frame of kei engines (marked unsure: which turbo this engine carries is not confirmed). The EcoBoost keeps its class: no
+  published wheel was found, and it is the one most sensitive to it (96-158 Nm at 1400 rpm across 54-36 mm).
+- **What the cooler charge shows on the bigger engines:** mid-range torque now reads over the makers' on the
+  Civic (+14%), Supra (+14%), STI (+10%) and Evo (+8%). The hotter charge was hiding it; much of it is the ECU's
+  torque limit (the FK8's 400 Nm is flat from 2500 to 4500 rpm, a calibration), which the model does not have.
+- Factory tapers re-solved; test48's GTI, Supra, TDI and Alto (and its 40 mm wheel) follow.
 
 ### The lap is a hot lap: the brakes get one preparation lap (build 135)
 
