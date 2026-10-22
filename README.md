@@ -1,4 +1,4 @@
-# PIXEL ENGINE SIM v0.6 build 138
+# PIXEL ENGINE SIM v0.6 build 139
 
 **A lightweight, 8-bit style internal combustion engine *designer* & simulator** inspired by *Automation*.
 
@@ -867,6 +867,7 @@ measurement finds things. Each item is one PR.
 | — | Knock from the trapped charge | ✅ build 134 | The end gas is compressed from the intake valve's closing, on the charge the intake stroke trapped (the torque's own), not a full cylinder from BDC: less low-rpm retard, NA peaks unchanged. Next: the small turbos' wheels and an intercooler whose effectiveness follows its flow. |
 | — | Brakes on a hot lap | ✅ build 135 | The rotors take one preparation lap before the hot lap, not a race stint's settled temperature; matches the tyres, which are taken at their working temperature. |
 | — | Intercooler vs flow; small turbos' wheels | ✅ build 136 | The intercooler's effectiveness rises as the charge flow falls (NTU, the charge side's film coefficient by Dittus-Boelter); the TwinAir on its TD02's 40 mm wheel, the Alto on an RHF3-size one. Small-engine low-rpm torque within ~5-11% of the makers'. Open: the EcoBoost's wheel; an ECU torque limit for the mid-range. |
+| — | ECU torque limit | ✅ build 138 | ECU TORQUE LIMIT (Nm) as a tune input: the boost target is held to the calibrated torque. Presets whose makers quote a torque plateau carry it (GTI, FK8, GR Yaris, EcoBoost, RS3, TDI, N57). |
 | — | Suspension type and geometry | ⏸ on hold | Future development. Today a setup is roll gradient + static camber; the roll camber the geometry recovers is a fixed 50% for every car (CAMBER_RECOVERY), and lateral load transfer is split by static weight. Wanted: the geometry per car (MacPherson strut, double wishbone, multi-link, solid axle) giving its camber recovery, and front/rear roll stiffness (springs, anti-roll bars) giving the handling balance. Needs each preset's real suspension type. |
 | — | Spark torque from fuel | ✅ build 95 | `IMEP_K` replaced by Heywood's 0.8 × fuel-air cycle efficiency; each fuel's LHV/AFR_st enters. Spark torque −2.7%, full-load BSFC 280 g/kWh (real 270–300). Rotary/two-stroke type factors still fitted. |
 | — | `turboChoke` (boost taper) | ✅ build 94 | Retired. Turbine efficiency from blade speed ratio U/C, per-point compressor efficiency, a continuous rich-knock slope in place of a step, and sequential turbos staged as two turbines. Calibration improved on every measure. |

@@ -20,7 +20,7 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 Working toward **v1.0 — every number derived, not fitted.**
 
-### RACE: weather, brakes that carry their heat, a plan per car, the race report, a page of its own (build 138)
+### RACE: weather, brakes that carry their heat, a plan per car, the race report, a page of its own (build 139)
 
 - **Weather** (`raceWetAt`): dry, damp, wet, rain later (the start drawn from the seed) or drying, and the air
   temperature; the track runs ~14 C above the air in the sun, at it when wet. Each `TIRE_TYPE` compound gains
@@ -42,6 +42,25 @@ Working toward **v1.0 — every number derived, not fitted.**
   `closeRacePage`), sized to it (`sizeRaceStage`); ◀ SIM or Esc goes back, ⛶ goes full screen as the race
   page rather than the engine view. On a phone it stacks, map over panel.
 - Tests: `test71` adds weather, carried brake heat and per-car strategy; `test72` the page, the report and a phone.
+### The ECU's torque limit as a tune point (build 138)
+
+- **ECU TORQUE LIMIT (Nm, 0 = off)**, a new input on boosted engines. A torque-based ECU holds the engine to a
+  calibrated torque (for the gearbox, the driveline, the clutch) by asking for less boost where the engine would
+  make more: the flat plateaus makers quote across thousands of rpm are this, not the engine's own curve. Solved
+  once per engine: at each rpm the boost at which the engine makes the limit, bisected on its own torque there; the
+  wastegate, the vanes, a supercharger's bypass, the bench and the lap are all asked for no more than that. Like
+  the boost taper it is a calibration, not physics: the engine below it is unchanged and only meets a lower target.
+- **Factory presets carry it where the maker quotes torque as a plateau** over a speed range: GTI 350 Nm
+  (1500-4400), FK8 400 (2500-4500), GR Yaris 360 (3000-4600), EcoBoost 170 (1400-4500), RS3 480 (1700-5850),
+  TDI 320 (1750-3000), N57 560 (1500-3000). Engines quoted at a single peak (2JZ, EJ257, 4G63, RB26, the kei and
+  city turbos, the truck diesels) carry none, and their mid-range over the makers' (Supra +14%, STI +10%, Evo +8%)
+  is left showing.
+- Result: the FK8 holds 400 Nm from 3000 to 5000 rpm (was 454 at 2500, +14%), the GR Yaris 360 at 3000 (was +3%),
+  the RS3 480 from 3000 to 5000, the TDI 320 from 1500 to 3000. Factory tapers re-solved with the limits in place;
+  every preset within 1% of its rating. The GTI's plateau still falls off from ~3500 rpm (330 Nm at 4000, the maker
+  holds 350 to 4400): its taper starts at the maker's 1500 rpm torque peak by the calibration rule, which now has a
+  limit doing the plateau's work; starting tapers at the plateau's end would need the plateau's end in the data.
+- test48's GTI and TDI carry their limits, and its Supra and TDI tapers follow the presets.
 
 ### RACE: two to eight builds on one circuit, nobody driving (build 137)
 
