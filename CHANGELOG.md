@@ -20,6 +20,33 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 Working toward **v1.0 — every number derived, not fitted.**
 
+### RACE: two to eight builds on one circuit, nobody driving (build 137)
+
+- **A RACE tab.** Pick the cars (the build on the VEHICLE tab, garage cars, factory cars), the circuit, the laps,
+  the grid (qualifying or reversed), the pit strategy (automatic or none), tyre warmers and a seed, then watch:
+  the cars on the map, a timing tower, and each car's four tyre temperatures and wear, fuel and brakes. 1-100x,
+  scrubbing, follow-a-car. A guide page, *The race*, says what is physics and what is a rule.
+- **The race is computed, then watched.** Each car is loaded (`withBuild`, which puts the user's own build back
+  exactly), its line optimised once, and its lap solved on that line at grip 0.72-1.00 x fuel empty/half/full
+  (`raceCarModel`). The race loop (`raceInit`/`raceStepOnce`) runs every car on a 50 ms clock reading its speed
+  off that grid, needs no globals, and records a timeline the page plays back. Solving on a fixed line takes
+  11-60 ms; the line optimisation (0.6-3.5 s a car) is the cost, so 8 cars on the Nordschleife take ~1 min.
+- **A standing start in the lap solver** (`simulateLap(key,{fromRest:true})`): the forward pass leaves point 0
+  from rest and does not wrap. +3.3 s on a GT3 at Ashdown Park. Opt-in; no existing lap moves.
+- **Tyre temperature and wear** (`raceTyreStep`): one lump per tyre, the loads from weight, downforce and
+  lateral and longitudinal transfer, heat from slip work and rolling hysteresis, convective cooling. Each
+  compound in `TIRE_TYPE` now carries a working window (`tOpt`, `tWin`) and a wear rate. Grip falls with the
+  square of the distance from the window, twice as fast hot as cold, and with wear past a 70% knee. All fitted.
+- **Fuel from the engine's own BSFC map.** Flow at each point = the power the lap spends there x BSFC at that
+  rpm and MAP; idle flow off the throttle, more for a carburettor. The tank is per body class (`RACE_TANK_L`);
+  the car sheds the fuel's mass as it burns.
+- **Strategy, traffic, the driver.** Stops are planned from a solo practice run (the fewest the tank and tyres
+  allow, or more if fresher tyres pay for the pit lane). A car is held up until it has a few km/h on a straight
+  or into a braking zone; tow, dirty air, blue flags, pit loss, up to 0.6% lap-to-lap variation and mistakes are
+  seeded rules.
+- **The map drawing is shared** (`trackMapView`, `drawTrackSurface`), so TRACK and RACE zoom and pan the same way.
+- Tests: `test71` (the engine: solo laps match the solver to 0.4%, fuel = power x BSFC, tyres from cold, seeds,
+  traffic, pits, the user's build restored) and `test72` (the tab, end to end).
 ### The intercooler's effectiveness follows the charge flow; the small turbos' wheels (build 136)
 
 - **Intercooler.** It took off the core's quoted share of the compressor's heat (small 0.62, large 0.82) at every

@@ -1,4 +1,4 @@
-# PIXEL ENGINE SIM v0.6 build 136
+# PIXEL ENGINE SIM v0.6 build 137
 
 **A lightweight, 8-bit style internal combustion engine *designer* & simulator** inspired by *Automation*.
 
@@ -85,13 +85,14 @@ saps power; a large radiator, electric fan and oil cooler keep it cool.
 ### Simulation & live tuning
 - **Live outputs**: Power (HP), Torque (Nm), BMEP, Volumetric Efficiency, Thermal
   Efficiency, BSFC, Fuel Flow, Knock Risk, Engine Health.
-- **Seven tabs** — **ENGINE** (build the engine), **VEHICLE** (drop it in a car & read its
-  performance), **TRACK** (lap it round a circuit), **LIVE** (the engine running: cutaway, the
+- **Nine tabs** — **ENGINE** (build the engine), **VEHICLE** (drop it in a car & read its
+  performance), **GARAGE** (the saved builds), **TRACK** (lap it round a circuit), **RACE** (race
+  it against other builds), **LIVE** (the engine running: cutaway, the
   whole bank firing in its real order, and the controls), **DYNO** (power/torque curve,
-  scorecard and a static result sheet with run data), **GUIDE** (a paged manual with an index, 28 pages in 7 sections) and **OPTIONS** (sound,
+  scorecard and a static result sheet with run data), **GUIDE** (a paged manual with an index, 30 pages in 7 sections) and **OPTIONS** (sound,
   wear and **language**). The right column is context-aware: runtime Engine Controls while
-  driving/on the dyno, the live **Performance** panel on VEHICLE and the **Lap Time** panel on
-  TRACK.
+  driving/on the dyno, the live **Performance** panel on VEHICLE, the **Lap Time** panel on
+  TRACK and the race's setup, timing tower and telemetry on RACE.
 - **Vehicle & performance (new)** — pick a **chassis** (13 archetypes, each with its own weight,
   size, drivetrain and grip) and it arrives on its **factory spec**: the tyres, wheels, brakes,
   suspension, aero and gearbox that car would really wear, so a kei car turns up on skinny eco
@@ -145,6 +146,31 @@ saps power; a large radiator, electric fan and oil cooler keep it cool.
   how much of the lap each accounts for.
 
   ![test track](docs/track.png)
+
+- **Race (new)** — a **RACE** tab that puts two to eight builds on the same circuit and runs them to
+  a lap count, with **nobody driving**. Choose the cars (the one on the VEHICLE tab, garage builds,
+  factory cars, the same car twice if you like), the circuit, the laps, qualifying or reversed grid,
+  automatic pit strategy or none, tyre warmers and a seed; then watch on a page of its own: every car
+  on the map, a **timing tower** (gap to the leader, last and best lap with the race's fastest in
+  purple, stops), and per-car telemetry with **four tyre temperatures and wear**, **fuel in the
+  tank** and laps it is good for, and brake temperature. Play it at 1–100×, scrub, click a car to
+  follow it.
+  - **Pace is the lap solver's.** Each car's lap is solved on its own racing line at five grip levels
+    and three fuel loads, plus a standing start; the race reads its speed off those solves for the
+    grip its tyres have and the fuel it carries at that moment. Alone on perfect tyres a car laps in
+    the TRACK tab's time to within 0.1%.
+  - **Tyres heat, wear and go off.** One temperature per tyre: slip work and rolling hysteresis in,
+    convection out, from the loads the car puts through each corner of it. Each compound grips best in
+    its own window (a slick runs hotter and narrower than a road tyre, and is useless cold); wear comes
+    from the same slip work and falls off a cliff past ~70%. Lap 1 is a standing start on cold tyres.
+  - **Fuel is power × BSFC.** The flow at every point is the power the lap spends there times the
+    engine's own BSFC at that rpm and boost, so a thirsty engine pits sooner and a car gets lighter
+    and quicker as the tank empties. Tanks are per body class.
+  - **Racecraft is a rule layer.** A faster car is held up until it has a few km/h on a straight or
+    into a braking zone; slipstream, dirty air, blue flags, pit-lane loss, lap-to-lap driver
+    variation and the odd mistake are rules, seeded, so the same seed replays the same race.
+
+  ![race](docs/race.png)
 
 - **Animated engine cutaway** — the LIVE tab is a section through the engine you
   just designed, and everything on it moves because the simulation moved it:
@@ -693,6 +719,11 @@ node tools/stamp.mjs --check    # verify it is consistent and ahead of origin/ma
 These are modelled approximations that are *stated* rather than hidden, each one measured and
 documented in the GUIDE at the point where it matters:
 
+- **The race's racecraft is rules, not physics.** Overtaking, the tow, dirty air, pit-lane loss and
+  driver error are rules with fitted numbers. The cars share one racing line rather than fighting for
+  space on it, and the tyre model's heat, grip-window and wear constants are fitted to the usual
+  published ranges, not derived. The brake temperatures shown are the hot-lap solve's, not carried
+  from lap to lap.
 - **Turbine throats are undersized.** Throat = A/R × *wheel* radius rather than the volute centroid
   radius, so every turbine is smaller than the frame it names and the wastegate covers for it — which
   is also why a VGT here still needs one at its open stop.
