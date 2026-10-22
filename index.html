@@ -181,6 +181,30 @@ footer{text-align:center;margin-top:16px;padding:8px;font-size:7px;color:#555;bo
 .race-tower th{color:#88aacc;text-align:left;font-weight:normal;padding:3px 2px;border-bottom:2px solid #26263a}
 .race-tower td{padding:4px 2px;border-bottom:1px solid #1e1e2e;white-space:nowrap}
 .race-tower td.nm{max-width:110px;overflow:hidden;text-overflow:ellipsis}
+.race-strat{display:grid;grid-template-columns:1fr 1fr;gap:3px;padding:3px 0 6px 14px;border-bottom:1px solid #222}
+.race-strat select{font-size:6.5px;padding:4px;min-width:0}
+.race-ty{display:inline-block;min-width:11px;padding:1px 2px;margin-right:2px;border:1px solid;font-weight:normal;text-align:center;font-size:6.5px}
+.race-rpt{margin-top:-4px}
+/* the race page (build 138): RACE fills the window */
+.race-page{position:fixed;inset:0;z-index:50;background:#0a0a12;display:flex;flex-direction:column}
+.race-page[hidden]{display:none}
+body.race-open{overflow:hidden}
+.race-top{display:flex;align-items:center;gap:12px;padding:8px 12px;background:#12121c;border-bottom:3px solid #333;flex:0 0 auto}
+.race-top button{padding:6px 10px;box-shadow:2px 2px 0 #000}
+.race-title{color:#ffcc00;font-size:11px;font-weight:normal}
+#raceTopInfo{flex:1;min-width:0;font-size:8px;color:#88aacc;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.race-body{flex:1;min-height:0;display:grid;grid-template-columns:minmax(0,1fr) 420px}
+.race-stage{min-width:0;min-height:0;overflow:hidden;background:#0d0d18;display:flex;align-items:center}
+.race-stage canvas{width:100%;height:auto;display:block}
+.race-side{min-height:0;overflow-y:auto;border-left:4px solid #3a3a4a;background:#161622}
+.race-side .panel{border:none}
+.race-side .race-tower td.nm{max-width:170px}
+@media(max-width:800px){
+  .race-body{display:block;overflow-y:auto}
+  .race-stage{height:56vh}
+  .race-side{border-left:none;border-top:4px solid #3a3a4a;overflow:visible}
+  .race-top{gap:8px}
+}
 .race-tower tr[data-car]{cursor:pointer}.race-tower tr.sel td{background:#1d1d33}
 .race-fl{color:#cc66ff}.race-pb{color:#00ff88}
 .rt-card{border:2px solid #26263a;padding:6px;margin-bottom:6px;background:#0d0d18}.rt-card.sel{border-color:#00ccff}
@@ -1270,16 +1294,19 @@ This is a physics model, and like every model it leaves things out. These are th
 <div class="field"><label for="raceGrid">GRID</label><select id="raceGrid"><option value="quali">QUALIFYING</option><option value="reverse">REVERSED</option></select></div>
 </div>
 <div class="race-row">
-<div class="field"><label for="racePits">PIT STOPS</label><select id="racePits"><option value="auto">AUTO STRATEGY</option><option value="none">NO STOPS</option></select></div>
-<div class="field"><label for="raceSeed">SEED</label><div class="race-seed"><input type="number" id="raceSeed" min="1" max="99999" step="1" value="1"><button id="raceReroll" title="New seed" aria-label="New seed">🎲</button></div></div>
+<div class="field"><label for="raceWeather">WEATHER</label><select id="raceWeather"><option value="dry">DRY</option><option value="damp">DAMP</option><option value="wet">WET</option><option value="rain">RAIN LATER</option><option value="drying">DRYING</option></select></div>
+<div class="field"><label for="raceAir">AIR °C</label><select id="raceAir"><option value="5">5</option><option value="12">12</option><option value="18">18</option><option value="22" selected>22</option><option value="28">28</option><option value="35">35</option></select></div>
 </div>
+<div class="race-row">
+<div class="field"><label for="raceSeed">SEED</label><div class="race-seed"><input type="number" id="raceSeed" min="1" max="99999" step="1" value="1"><button id="raceReroll" title="New seed" aria-label="New seed">🎲</button></div></div>
 <label class="race-check"><input type="checkbox" id="raceWarmers"> <span>TYRE WARMERS</span></label>
+</div>
 <div class="design-section">Entrants</div>
 <div id="raceEntrants"></div>
 <div class="race-add"><select id="raceAddSel" class="opt-select" aria-label="Car to add"></select><button id="raceAddBtn">ADD</button></div>
 <div class="build-row"><button id="raceStart">START RACE</button></div>
 <div class="race-prog" id="raceProg" hidden><div class="race-prog-track"><div class="race-prog-bar"></div></div><span></span></div>
-<div class="perf-note">Nobody drives. Each car runs its own lap solve, with its tyres heating and wearing, its fuel burning off and the cars around it in the way. Pace, fuel and tyres come from the physics; traffic, overtaking and pit loss are rules.</div>
+<div class="perf-note">Nobody drives. Each car runs its own lap solve, with its tyres heating and wearing, its brakes heating lap on lap, its fuel burning off, the weather and the cars around it in the way. Pace, fuel, tyres and brakes come from the physics; traffic, overtaking, pit loss and the weather's timing are rules. Each car has its own plan: stops, how hard it is driven, the tyres it starts on and whether it changes them for rain.</div>
 </div>
 <div id="raceLive" hidden>
 <div class="perf-head" id="raceHead">—</div>
@@ -1288,6 +1315,10 @@ This is a physics model, and like every model it leaves things out. These are th
 <select id="raceSpeed" class="opt-select" aria-label="Replay speed"><option value="1">1×</option><option value="2">2×</option><option value="5" selected>5×</option><option value="10">10×</option><option value="30">30×</option><option value="100">100×</option></select>
 <button id="raceSkip">FINISH</button>
 <button id="raceNew">NEW RACE</button>
+</div>
+<div class="replay-row race-rpt">
+<button id="raceRptPng" title="Save the race report as an image">REPORT PNG</button>
+<button id="raceRptPdf" title="Save the race report as a PDF">PDF</button>
 </div>
 <input type="range" id="raceScrub" min="0" max="1000" value="0" aria-label="Race time">
 <div id="raceTower"></div>
@@ -1298,6 +1329,10 @@ This is a physics model, and like every model it leaves things out. These are th
 </div>
 </div>
 <div class="dyno-result" id="dynoResult" hidden aria-live="polite"></div>
+</div>
+<div id="racePage" class="race-page" hidden>
+<div class="race-top"><button id="raceBack" title="Back to the sim">◀ SIM</button><b class="race-title">RACE</b><span id="raceTopInfo"></span><button id="raceFs" title="Full screen" aria-label="Full screen">⛶</button></div>
+<div class="race-body"><div class="race-stage" id="raceStage"></div><aside class="race-side" id="raceSide"></aside></div>
 </div>
 <footer>PIXEL ENGINE SIM • Configurable engine designer • Expandable per subsystem<br>Physics simplified for education &amp; fun • Inspired by Automation</footer>
 </div>
@@ -2742,7 +2777,40 @@ let activeChallenge='free';
 // technical readouts (canvas schematic, status ticker, design-summary spec) stay in English —
 // their content is numbers and universal units.
 const I18N={
-  // RACE (build 137)
+  // RACE (build 137; 138)
+  'WEATHER':{el:'ΚΑΙΡΟΣ'},
+  'AIR °C':{el:'ΑΕΡΑΣ °C'},
+  'DRY':{el:'ΣΤΕΓΝΟ'},
+  'DAMP':{el:'ΥΓΡΟ'},
+  'WET':{el:'ΒΡΕΓΜΕΝΟ'},
+  'RAIN LATER':{el:'ΒΡΟΧΗ ΑΡΓΟΤΕΡΑ'},
+  'DRYING':{el:'ΣΤΕΓΝΩΝΕΙ'},
+  'AUTO STOPS':{el:'ΑΥΤΟΜΑΤΕΣ ΣΤΑΣΕΙΣ'},
+  'NO STOP':{el:'ΧΩΡΙΣ ΣΤΑΣΗ'},
+  '1 STOP':{el:'1 ΣΤΑΣΗ'},
+  '2 STOPS':{el:'2 ΣΤΑΣΕΙΣ'},
+  '3 STOPS':{el:'3 ΣΤΑΣΕΙΣ'},
+  'NO PITS':{el:'ΧΩΡΙΣ PIT'},
+  'PUSH':{el:'ΕΠΙΘΕΤΙΚΑ'},
+  'NORMAL':{el:'ΚΑΝΟΝΙΚΑ'},
+  'SAVE FUEL':{el:'ΟΙΚΟΝΟΜΙΑ ΚΑΥΣΙΜΟΥ'},
+  'TYRES: AUTO':{el:'ΕΛΑΣΤΙΚΑ: ΑΥΤΟΜΑΤΑ'},
+  'OWN TYRES':{el:'ΔΙΚΑ ΤΟΥ ΕΛΑΣΤΙΚΑ'},
+  'INTERS':{el:'ΕΝΔΙΑΜΕΣΑ'},
+  'WETS':{el:'ΒΡΟΧΗΣ'},
+  'WET CALL: AUTO':{el:'ΑΛΛΑΓΗ ΓΙΑ ΒΡΟΧΗ: ΑΥΤΟΜΑΤΑ'},
+  'STAY OUT':{el:'ΜΕΝΕΙ ΕΞΩ'},
+  'INTERMEDIATE':{el:'ΕΝΔΙΑΜΕΣΑ'},
+  'FULL WET':{el:'ΒΡΟΧΗΣ'},
+  'AIR':{el:'ΑΕΡΑΣ'},
+  'TYRE':{el:'ΕΛΑΣΤ.'},
+  'FADE':{el:'ΕΞΑΣΘΕΝΗΣΗ'},
+  'Rain is falling':{el:'Αρχίζει να βρέχει'},
+  'The track is dry':{el:'Η πίστα στέγνωσε'},
+  'RUN A RACE FIRST':{el:'ΤΡΕΞΕ ΠΡΩΤΑ ΕΝΑΝ ΑΓΩΝΑ'},
+  '◀ SIM':{el:'◀ ΠΡΟΣΟΜΟΙΩΣΗ'},
+  'Set up the race':{el:'Ρύθμισε τον αγώνα'},
+  'Nobody drives. Each car runs its own lap solve, with its tyres heating and wearing, its brakes heating lap on lap, its fuel burning off, the weather and the cars around it in the way. Pace, fuel, tyres and brakes come from the physics; traffic, overtaking, pit loss and the weather\'s timing are rules. Each car has its own plan: stops, how hard it is driven, the tyres it starts on and whether it changes them for rain.':{el:'Δεν οδηγεί κανείς. Κάθε αυτοκίνητο τρέχει τη δική του λύση γύρου, με τα ελαστικά να ζεσταίνονται και να φθείρονται, τα φρένα να ζεσταίνονται γύρο με γύρο, το καύσιμο να καίγεται, τον καιρό και τα άλλα αυτοκίνητα στον δρόμο του. Ρυθμός, καύσιμο, ελαστικά και φρένα βγαίνουν από τη φυσική· η κίνηση, οι προσπεράσεις, ο χρόνος στα pit και το πότε θα βρέξει είναι κανόνες. Κάθε αυτοκίνητο έχει το δικό του πλάνο: στάσεις, πόσο πιέζει, με ποια ελαστικά ξεκινά και αν τα αλλάζει για τη βροχή.'},
   'RACE':{el:'ΑΓΩΝΑΣ'},
   'Race':{el:'Αγώνας'},
   'LAPS':{el:'ΓΥΡΟΙ'},
@@ -3080,7 +3148,7 @@ function applyLang(lang){
     if(gn){if(gn.dataset.enPh===undefined)gn.dataset.enPh=gn.placeholder;gn.placeholder=tr(gn.dataset.enPh);}}
   if(typeof renderGarage==='function')renderGarage();
   // the RACE panel's choices and buttons (selects are not covered by the pass above)
-  document.querySelectorAll('#racePanel option, #racePanel .replay-row button, #racePanel .race-check span, #racePanel .race-add button, #raceSetup>.perf-note').forEach(el=>{
+  document.querySelectorAll('#racePanel option, #racePanel .replay-row button, #racePanel .race-check span, #racePanel .race-add button, #raceSetup>.perf-note, #raceBack, #racePage .race-title').forEach(el=>{
     if(el.dataset.en===undefined)el.dataset.en=el.textContent.trim();el.textContent=tr(el.dataset.en);});
   const rp=document.getElementById('racePlay');if(rp&&typeof raceUI!=='undefined')rp.textContent=tr(raceUI.playing?'PAUSE':'PLAY');
   if(typeof raceFillAdd==='function'&&typeof raceUI!=='undefined'){raceFillAdd();renderRaceSetup();renderRacePanel(true);}
@@ -8601,6 +8669,143 @@ function canvasToPDF(cv,fn){
   downloadBlob(new Blob([out],{type:'application/pdf'}),fn);
   flash('SAVED REPORT: '+fn);
 }
+// ====== RACE REPORT (build 138): the race on one printable sheet ======
+// The same paper stock as the dyno and hot lap reports (RPT, canvasToPDF): the classification, a lap chart
+// (position by lap), every car's lap times with the track's wetness behind them, and each car's stints by
+// compound. Drawn from the race record, so it is the race as it was run, not as the replay stands.
+const RACE_RPT_COLS=['#d62246','#1d6fb8','#c98a00','#1a7f37','#e06c00','#7b3fbf','#444455','#d64a9b'];
+const RACE_RPT_TYRE={eco:'#7fb89a',street:'#9a9aa8',sport:'#d9a400',semi:'#e06c00',slick:'#c1121f',drag:'#7b3fbf',inter:'#1a9f47',wet:'#1d6fb8'};
+function raceReportCanvas(R,scale){
+  scale=scale||2;
+  const W=RPT.W,H=RPT.H,cfg=R.cfg;
+  const cv=document.createElement('canvas');cv.width=Math.round(W*scale);cv.height=Math.round(H*scale);
+  const g=cv.getContext('2d');g.scale(scale,scale);g.textBaseline='alphabetic';
+  const px_=n=>n+'px "Press Start 2P"';
+  const sans=(n,b)=>(b?'bold ':'')+n+'px ui-sans-serif,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif';
+  const res=raceResults(R),fl=raceFastest(R,R.t),N=cfg.laps;
+  const colOf=id=>RACE_RPT_COLS[id%RACE_RPT_COLS.length];
+  g.fillStyle='#fff';g.fillRect(0,0,W,H);
+  // ---- header ----
+  g.fillStyle=RPT.accent;g.fillRect(0,0,W,96);
+  g.fillStyle='#ffcc00';g.font=px_(20);g.fillText('PIXEL ENGINE SIM',40,44);
+  g.fillStyle='#fff';g.font=px_(11);g.fillText('RACE REPORT',40,72);
+  const now=new Date();
+  g.fillStyle='#9aa';g.font=sans(13);g.textAlign='right';
+  g.fillText(now.toISOString().slice(0,10)+'  '+now.toTimeString().slice(0,5),W-40,44);
+  g.fillText('SIMULATED RACE — NOBODY DROVE',W-40,68);
+  g.textAlign='left';
+  // ---- title ----
+  const T=TRACKS[cfg.track]||{label:cfg.track},wx={dry:'Dry',damp:'Damp',wet:'Wet',rain:'Rain during the race',drying:'Wet, drying'}[cfg.weather]||'Dry';
+  g.fillStyle=RPT.ink;g.font=sans(30,true);g.fillText(T.label+' — '+N+' laps',40,142);
+  g.fillStyle='#667';g.font=sans(15);
+  g.fillText(wx+'  ·  air '+cfg.air+' °C  ·  '+(cfg.grid==='reverse'?'reversed grid':'grid by qualifying')+'  ·  '+
+    (cfg.warmers?'tyre warmers  ·  ':'')+'seed '+cfg.seed+'  ·  race time '+fmtLap(R.t),40,168);
+  // ---- classification ----
+  let y=200;
+  const cols=[40,80,420,470,520,650,760,1010,1110];
+  g.fillStyle='#f4f5f8';g.fillRect(40,y,W-80,28);
+  g.fillStyle='#667';g.font=sans(12,true);
+  ['POS','CAR','GRID','LAPS','TIME / GAP','BEST LAP','STOPS & TYRES','FUEL','DRIVING'].forEach((h,k)=>g.fillText(h,cols[k]+6,y+19));
+  y+=28;
+  for(const x of res){
+    g.strokeStyle=RPT.rule;g.lineWidth=1;g.beginPath();g.moveTo(40,y+30);g.lineTo(W-40,y+30);g.stroke();
+    g.fillStyle=colOf(x.id);g.fillRect(cols[1]+6,y+10,10,10);
+    g.fillStyle=RPT.ink;g.font=sans(14,true);g.fillText(x.state==='dnf'?'—':String(x.pos),cols[0]+6,y+21);
+    g.font=sans(14);let nm=x.name;while(g.measureText(nm).width>310&&nm.length>4)nm=nm.slice(0,-2);if(nm!==x.name)nm+='…';
+    g.fillText(nm,cols[1]+22,y+21);
+    g.fillText(String(x.grid),cols[2]+6,y+21);g.fillText(String(x.laps),cols[3]+6,y+21);
+    g.fillText(x.state==='dnf'?'DNF ('+(x.why||'').toLowerCase()+')':x.pos===1?fmtLap(x.time):x.lapsDown>0?'+'+x.lapsDown+(x.lapsDown>1?' laps':' lap'):'+'+(x.gap||0).toFixed(2)+' s',cols[4]+6,y+21);
+    g.fillStyle=fl&&fl.car===x.id?'#7b3fbf':RPT.ink;g.font=sans(14,fl&&fl.car===x.id);g.fillText(x.best!=null?fmtLap(x.best):'—',cols[5]+6,y+21);
+    g.fillStyle=RPT.ink;g.font=sans(14);g.fillText(String(x.stops),cols[6]+6,y+21);
+    x.stints.forEach((st,k)=>{const bx=cols[6]+26+k*44;g.fillStyle=RACE_RPT_TYRE[st.tyre]||'#888';g.fillRect(bx,y+8,40,16);
+      g.fillStyle='#fff';g.font=sans(10,true);g.fillText((RACE_TYRE_LOOK[st.tyre]||['?'])[0]+' L'+st.from,bx+4,y+20);});
+    g.fillStyle=RPT.ink;g.font=sans(14);g.fillText(x.fuelL.toFixed(1)+' L',cols[7]+6,y+21);
+    g.fillText({push:'push',normal:'normal',save:'fuel save'}[x.mode]||x.mode,cols[8]+6,y+21);
+    y+=30;
+  }
+  if(fl){g.fillStyle='#7b3fbf';g.font=sans(13);g.fillText('Fastest lap: '+fmtLap(fl.t)+' — '+(R.cars.find(c=>c.id===fl.car)||{M:{name:'?'}}).M.name,40,y+22);}
+  // ---- a chart frame ----
+  const frame=(x0,y0,w,h,title,yLab)=>{
+    g.fillStyle=RPT.ink;g.font=sans(16,true);g.fillText(title,x0,y0-12);
+    g.strokeStyle=RPT.rule;g.lineWidth=1;g.strokeRect(x0,y0,w,h);
+    g.fillStyle='#667';g.font=sans(11);g.save();g.translate(x0-30,y0+h/2);g.rotate(-Math.PI/2);g.textAlign='center';g.fillText(yLab,0,0);g.restore();
+  };
+  const lapX=(x0,w,n)=>x0+(N>1?(n-1)/(N-1):0.5)*w;
+  const lapTicks=(x0,y0,w,h)=>{g.fillStyle='#889';g.font=sans(11);g.textAlign='center';
+    const step=Math.max(1,Math.ceil(N/20));for(let n=1;n<=N;n+=step)g.fillText(String(n),lapX(x0,w,n),y0+h+16);
+    g.fillText('lap',x0+w/2,y0+h+32);g.textAlign='left';};
+  // ---- lap chart: position after each lap ----
+  const C1={x:90,y:y+80,w:W-170,h:300},P=R.cars.length;
+  frame(C1.x,C1.y,C1.w,C1.h,'Lap chart — position at the end of each lap','position');
+  g.fillStyle='#889';g.font=sans(11);g.textAlign='right';
+  for(let p=1;p<=P;p++){const py=C1.y+(p-0.5)/P*C1.h;g.fillText(String(p),C1.x-8,py+4);
+    g.strokeStyle=RPT.faint;g.beginPath();g.moveTo(C1.x,py);g.lineTo(C1.x+C1.w,py);g.stroke();}
+  g.textAlign='left';
+  for(const c of R.cars){
+    g.strokeStyle=colOf(c.id);g.lineWidth=3;g.beginPath();
+    c.laps.forEach((l,k)=>{const x=lapX(C1.x,C1.w,l.n),py=C1.y+(Math.min(P,l.pos)-0.5)/P*C1.h;k?g.lineTo(x,py):g.moveTo(x,py);});
+    g.stroke();
+    for(const l of c.laps)if(l.pit){const x=lapX(C1.x,C1.w,l.n),py=C1.y+(Math.min(P,l.pos)-0.5)/P*C1.h;
+      g.fillStyle='#fff';g.fillRect(x-5,py-5,10,10);g.strokeStyle=colOf(c.id);g.lineWidth=2;g.strokeRect(x-5,py-5,10,10);}
+  }
+  lapTicks(C1.x,C1.y,C1.w,C1.h);
+  // ---- lap times, with the track's wetness behind them ----
+  const C2={x:90,y:C1.y+C1.h+90,w:W-170,h:330};
+  frame(C2.x,C2.y,C2.w,C2.h,'Lap times'+(cfg.weather!=='dry'?' — blue shading: how wet the track was':''),'lap time (s)');
+  const all=[].concat(...R.cars.map(c=>c.laps.filter(l=>!l.pit&&l.n>1).map(l=>l.t)));
+  const lo=all.length?Math.min(...all):60,hi=all.length?Math.max(...all):90;
+  const tLo=Math.floor(lo-1),tHi=Math.ceil(Math.max(lo+2,Math.min(hi,lo*1.6))+1);
+  const ty=t=>C2.y+C2.h-(clamp(t,tLo,tHi)-tLo)/(tHi-tLo)*C2.h;
+  {const lead=R.cars.reduce((a,c)=>c.laps.length>a.laps.length?c:a,R.cars[0]);   // the wetness, from the car that saw every lap
+   for(const l of lead.laps){const wv=clamp((l.wet||0)/RACE.wetFull,0,1);if(wv<0.02)continue;
+     const x0=lapX(C2.x,C2.w,l.n-0.5),x1=lapX(C2.x,C2.w,l.n+0.5);g.fillStyle='rgba(29,111,184,'+(0.08+0.22*wv)+')';
+     g.fillRect(Math.max(C2.x,x0),C2.y,Math.min(C2.x+C2.w,x1)-Math.max(C2.x,x0),C2.h);}}
+  g.fillStyle='#889';g.font=sans(11);g.textAlign='right';
+  const tStep=Math.max(1,Math.round((tHi-tLo)/6));
+  for(let t=Math.ceil(tLo);t<=tHi;t+=tStep){const yy=ty(t);g.fillText(fmtLap(t),C2.x-8,yy+4);g.strokeStyle=RPT.faint;g.beginPath();g.moveTo(C2.x,yy);g.lineTo(C2.x+C2.w,yy);g.stroke();}
+  g.textAlign='left';
+  for(const c of R.cars){
+    g.strokeStyle=colOf(c.id);g.lineWidth=2;g.beginPath();let on=false;
+    for(const l of c.laps){if(l.pit||l.n===1){on=false;continue;}const x=lapX(C2.x,C2.w,l.n),yy=ty(l.t);on?g.lineTo(x,yy):g.moveTo(x,yy);on=true;}
+    g.stroke();
+  }
+  lapTicks(C2.x,C2.y,C2.w,C2.h);
+  g.fillStyle='#889';g.font=sans(11);g.fillText('Lap 1 (the standing start) and the laps into the pits are left out.',C2.x,C2.y+C2.h+50);
+  // ---- stints ----
+  const C3={x:90,y:C2.y+C2.h+100,w:W-170};
+  g.fillStyle=RPT.ink;g.font=sans(16,true);g.fillText('Stints — tyres and stops',C3.x,C3.y-12);
+  res.forEach((x,k)=>{
+    const c=R.cars.find(o=>o.id===x.id),yy=C3.y+k*26,last=Math.max(1,c.lapsDone);
+    g.fillStyle=colOf(c.id);g.fillRect(C3.x-30,yy+4,10,10);
+    c.stints.forEach((st,s)=>{
+      const to=s+1<c.stints.length?c.stints[s+1].from-1:last;if(to<st.from)return;
+      const x0=C3.x+(st.from-1)/N*C3.w,x1=C3.x+to/N*C3.w;
+      g.fillStyle=RACE_RPT_TYRE[st.tyre]||'#888';g.fillRect(x0,yy,x1-x0-2,18);
+      g.fillStyle='#fff';g.font=sans(10,true);if(x1-x0>60)g.fillText(raceCompound(st.tyre).label,x0+5,yy+13);
+    });
+  });
+  // ---- footer ----
+  const fy=H-100;
+  g.strokeStyle=RPT.rule;g.lineWidth=1;g.beginPath();g.moveTo(40,fy);g.lineTo(W-40,fy);g.stroke();
+  g.fillStyle='#889';g.font=sans(12);
+  g.fillText('Pace, braking, fuel flow and tyre and brake heat come from the lap solver and the engine model; tyre grip windows, wear, wet grip and tank sizes are fitted.',40,fy+22);
+  g.fillText('Overtaking, the tow, dirty air, pit-lane loss, driver variation and mistakes, and when the rain comes, are rules drawn from the seed: seed '+cfg.seed+' replays this race exactly.',40,fy+42);
+  g.fillText('Figures are SIMULATED, not measured.',40,fy+62);
+  return cv;
+}
+function raceReportFileName(ext){
+  const R=raceUI.run,t=((R&&TRACKS[R.cfg.track]||{}).label||'race').replace(/[^a-z0-9]+/gi,'_');
+  return (t+'_race_'+new Date().toISOString().slice(0,10)+'.'+ext).replace(/_+/g,'_');
+}
+function exportRacePNG(){
+  if(!raceUI.run){flash(tr('RUN A RACE FIRST'),'warn');return;}
+  const cv=raceReportCanvas(raceUI.run,2),fn=raceReportFileName('png');
+  cv.toBlob(b=>{if(!b){flash('REPORT FAILED','err');return;}downloadBlob(b,fn);flash('SAVED REPORT: '+fn);},'image/png');
+}
+function exportRacePDF(){
+  if(!raceUI.run){flash(tr('RUN A RACE FIRST'),'warn');return;}
+  canvasToPDF(raceReportCanvas(raceUI.run,2),raceReportFileName('pdf'));
+}
 // ====== HOT LAP REPORT: a printable telemetry sheet for the lap ======
 // Same paper stock as the dyno report: A4, white, dark ink, drawn offscreen and exported as PNG
 // or wrapped in the same library-free PDF.
@@ -10320,7 +10525,7 @@ function renderLap(){
       L.brakeMaxF>=L.brakeOnset?tr('BRAKE FADE')+' −'+Math.round((1-Math.min(...L.replay.fade))*100)+'%':tr('fade from')+' '+L.brakeOnset+'°C'):'');
   if(note)note.textContent=tr(L.track.blurb);
 }
-// ---- RACE tab (build 137): pick the cars, compute the race, then watch it ----
+// ---- RACE tab (build 137; weather, per-car strategy and the report, build 138): pick the cars, compute the race, then watch it ----
 // Nothing here drives a car. The viewer can pause, change the speed, scrub, follow a car and zoom the
 // map; everything the cars do was settled by raceRun before the first frame was drawn.
 const RACE_COLS=['#ff4466','#33ccff','#ffcc00','#55dd66','#ff8833','#cc66ff','#eeeeee','#ff77cc'];
@@ -10371,25 +10576,41 @@ function raceAdd(v){
   const e=raceEntrantFrom(v||document.getElementById('raceAddSel').value);if(!e)return;
   const same=raceUI.entrants.filter(x=>x.base===e.name).length;
   e.base=e.name;if(same)e.name=e.name+' #'+(same+1);
+  e.strat={stops:'auto',mode:'normal',start:'auto',wetCall:'auto'};
   raceUI.entrants.push(e);renderRaceSetup();
 }
+// Each car's own plan (build 138): how many stops, how hard it is driven, what it starts on, and whether it
+// changes tyres for the weather.
+const RACE_STRAT={
+  stops:[['auto','AUTO STOPS'],['0','NO STOP'],['1','1 STOP'],['2','2 STOPS'],['3','3 STOPS'],['none','NO PITS']],
+  mode:[['push','PUSH'],['normal','NORMAL'],['save','SAVE FUEL']],
+  start:[['auto','TYRES: AUTO'],['own','OWN TYRES'],['inter','INTERS'],['wet','WETS']],
+  wetCall:[['auto','WET CALL: AUTO'],['stay','STAY OUT']]
+};
 function renderRaceSetup(){
   const box=document.getElementById('raceEntrants');if(!box)return;
+  const sel=(k,f,v)=>'<select class="opt-select" data-k="'+k+'" data-f="'+f+'" aria-label="'+f+'">'+RACE_STRAT[f].map(([val,lb])=>
+    '<option value="'+val+'"'+(String(v)===val?' selected':'')+'>'+esc(tr(lb))+'</option>').join('')+'</select>';
   box.innerHTML=raceUI.entrants.length?raceUI.entrants.map((e,k)=>
     '<div class="race-ent"><i style="background:'+RACE_COLS[k]+'"></i><span title="'+esc(e.name)+'">'+esc(e.name)+'</span>'+
-    '<button data-rm="'+k+'" aria-label="'+esc(tr('Remove'))+'">✕</button></div>').join('')
+    '<button data-rm="'+k+'" aria-label="'+esc(tr('Remove'))+'">✕</button></div>'+
+    '<div class="race-strat">'+sel(k,'stops',e.strat.stops)+sel(k,'mode',e.strat.mode)+sel(k,'start',e.strat.start)+sel(k,'wetCall',e.strat.wetCall)+'</div>').join('')
     :'<div class="perf-note">'+tr('Add two or more cars: the car you have built, a garage build or a factory car.')+'</div>';
   box.querySelectorAll('button[data-rm]').forEach(b=>b.addEventListener('click',()=>{raceUI.entrants.splice(+b.dataset.rm,1);renderRaceSetup();}));
+  box.querySelectorAll('select[data-k]').forEach(sl=>sl.addEventListener('change',()=>{const e=raceUI.entrants[+sl.dataset.k];if(e)e.strat[sl.dataset.f]=sl.value;}));
   const st=document.getElementById('raceStart');if(st)st.disabled=raceUI.entrants.length<2||raceUI.phase==='computing';
   document.getElementById('raceSetup').hidden=raceUI.phase==='live';
   document.getElementById('raceLive').hidden=raceUI.phase!=='live';
   const pg=document.getElementById('raceProg');
   if(pg){pg.hidden=raceUI.phase!=='computing';pg.querySelector('.race-prog-bar').style.width=Math.round(raceUI.prog*100)+'%';pg.querySelector('span').textContent=raceUI.progTxt;}
+  raceTopInfo();
 }
 function raceConfig(){
   const g=id=>document.getElementById(id);
   return {track:g('raceTrk').value,laps:clamp(Math.round(+g('raceLaps').value||5),1,100),
-    strategy:g('racePits').value,grid:g('raceGrid').value,warmers:g('raceWarmers').checked,
+    strategy:'auto',grid:g('raceGrid').value,warmers:g('raceWarmers').checked,
+    weather:g('raceWeather').value,air:+g('raceAir').value||RACE.air,
+    cars:raceUI.entrants.map(e=>{const x=Object.assign({},e.strat);if(/^\d$/.test(x.stops))x.stops=+x.stops;return x;}),
     seed:(Math.round(+g('raceSeed').value)>>>0)||1};
 }
 const raceYield=()=>new Promise(r=>setTimeout(r,0));
@@ -10403,7 +10624,7 @@ async function raceStart(){
       const e=raceUI.entrants[k];
       raceUI.progTxt=tr('SOLVING')+' '+e.name;raceUI.prog=k/raceUI.entrants.length*0.75;renderRaceSetup();
       await raceYield();await raceYield();
-      models.push(raceCarModel(e,cfg.track));
+      models.push(raceCarModel(e,cfg.track,{wet:cfg.weather!=='dry'}));
     }
     raceUI.progTxt=tr('RACING');renderRaceSetup();await raceYield();
     const R=raceInit(models,cfg);
@@ -10424,7 +10645,8 @@ function raceSample(R,k,t){
   const lerp=o=>d[A+o]+(d[B+o]-d[A+o])*f;
   let pa=d[A],pb=d[B];if(pb<pa-M.n/2)pb+=M.n;   // over the line
   return {pos:(pa+(pb-pa)*f)%M.n,v:lerp(1),T:[lerp(2),lerp(3),lerp(4),lerp(5)],W:[lerp(6),lerp(7),lerp(8),lerp(9)],
-    fuelL:lerp(10),brk:lerp(11),flag:d[(f<0.5?A:B)+12],sTot:lerp(13),pass:d[A+14],laps:d[(f<0.5?A:B)+15]};
+    fuelL:lerp(10),brk:lerp(11),flag:d[(f<0.5?A:B)+12],sTot:lerp(13),pass:d[A+14],laps:d[(f<0.5?A:B)+15],
+    brkR:lerp(16),tyre:d[(f<0.5?A:B)+17],wet:lerp(18)};
 }
 // The time (s) the car reached race distance s, from its own recording.
 function raceTimeAt(R,k,s){
@@ -10477,7 +10699,9 @@ const raceEventText=(R,e)=>{
   const nm=id=>{const c=R.cars.find(x=>x.id===id);return c?c.M.name:'?';};
   switch(e.type){
     case 'pass':return nm(e.car)+' '+tr('passes')+' '+nm(e.on);
-    case 'pit':return nm(e.car)+' '+tr('pits')+' — '+e.fuelL.toFixed(1)+' L, '+tr('new tyres')+', '+(RACE.pitLoss+e.service).toFixed(1)+' s';
+    case 'pit':return nm(e.car)+' '+tr('pits')+' — '+e.fuelL.toFixed(1)+' L, '+tr(raceCompound(e.tyre).label)+', '+(RACE.pitLoss+e.service).toFixed(1)+' s';
+    case 'rain':return tr('Rain is falling');
+    case 'dry':return tr('The track is dry');
     case 'pitout':return nm(e.car)+' '+tr('rejoins');
     case 'mistake':return nm(e.car)+' — '+tr('a mistake, off line');
     case 'blue':return tr('Blue flag')+': '+nm(e.car);
@@ -10486,24 +10710,36 @@ const raceEventText=(R,e)=>{
     default:return '';
   }
 };
+// The compound a car is on at a recorded moment, and how a compound is shown: a letter in its colour.
+const RACE_TYRE_LOOK={eco:['E','#99ccaa'],street:['T','#cccccc'],sport:['S','#ffcc00'],semi:['M','#ff8833'],slick:['R','#ff4444'],drag:['D','#cc66ff'],inter:['I','#33dd66'],wet:['W','#3399ff']};
+function raceSampleTyre(c,s){return s.tyre===1?raceCompound('inter'):s.tyre===2?raceCompound('wet'):c.M.tyre;}
+function raceTyreBadge(ty){const L=RACE_TYRE_LOOK[ty.key]||['?','#888'];return '<b class="race-ty" style="color:'+L[1]+';border-color:'+L[1]+'" title="'+esc(tr(ty.label))+'">'+L[0]+'</b>';}
+function raceWeatherText(w){
+  const x=w/RACE.wetFull;
+  return x<0.02?'☀ '+tr('DRY'):x<0.5?'🌦 '+tr('DAMP')+' '+Math.round(x*100)+'%':'🌧 '+tr('WET')+' '+Math.round(x*100)+'%';
+}
 // ---- the panel: controls, the timing tower, the cars' telemetry, the result ----
 function renderRacePanel(force){
   const R=raceUI.run;if(!R||raceUI.phase!=='live')return;
   const now=performance.now();if(!force&&now-raceUI.panelAt<100)return;raceUI.panelAt=now;
+  raceTopInfo();
   const t=raceUI.t,S=raceStandings(R,t),fl=raceFastest(R,t),done=t>=R.t-1e-6;
   const sc=document.getElementById('raceScrub');if(sc&&!raceUI.scrubbing)sc.value=Math.round(t/R.t*1000);
   const lapNow=Math.min(R.cfg.laps,Math.max(1,S[0].laps.length+(S[0].fin?0:1)));
+  const wNow=S[0].s.wet;
   document.getElementById('raceHead').innerHTML='<b>'+esc(TRACKS[R.cfg.track].label)+'</b> • '+tr('LAP')+' '+lapNow+'/'+R.cfg.laps+' • '+fmtLap(t)+
-    (fl?' • '+tr('FASTEST')+' <span class="race-fl">'+fmtLap(fl.t)+'</span>':'');
+    (fl?' • '+tr('FASTEST')+' <span class="race-fl">'+fmtLap(fl.t)+'</span>':'')+
+    '<br>'+raceWeatherText(wNow)+' • '+tr('AIR')+' '+R.cfg.air+'°C • '+tr('TRACK')+' '+Math.round(raceTrackTemp(R.cfg.air,wNow))+'°C';
   const row=x=>{
     const c=x.c,col=RACE_COLS[c.id];
     const lastCls=x.last!=null&&fl&&x.last===fl.t&&fl.car===c.id?'race-fl':(x.last!=null&&x.last===x.best?'race-pb':'');
     return '<tr data-car="'+c.id+'" class="'+(raceUI.follow===c.id?'sel':'')+'"><td>'+x.pos+'</td><td class="nm"><i style="background:'+col+'"></i>'+esc(c.M.name)+'</td>'+
       '<td>'+(x.pos===1?(x.fin?tr('FLAG'):tr('LEADER')):x.gap)+'</td>'+
       '<td class="'+lastCls+'">'+(x.inPit?tr('PIT'):x.last!=null?fmtLap(x.last):'—')+'</td>'+
-      '<td class="'+(fl&&x.best===fl.t&&fl.car===c.id?'race-fl':'')+'">'+(x.best!=null?fmtLap(x.best):'—')+'</td><td>'+x.pits+'</td></tr>';
+      '<td class="'+(fl&&x.best===fl.t&&fl.car===c.id?'race-fl':'')+'">'+(x.best!=null?fmtLap(x.best):'—')+'</td>'+
+      '<td>'+raceTyreBadge(raceSampleTyre(c,x.s))+'</td><td>'+x.pits+'</td></tr>';
   };
-  document.getElementById('raceTower').innerHTML='<table class="race-tower"><thead><tr><th>P</th><th>'+tr('CAR')+'</th><th>'+tr('GAP')+'</th><th>'+tr('LAST')+'</th><th>'+tr('BEST')+'</th><th>'+tr('PIT')+'</th></tr></thead><tbody>'+S.map(row).join('')+'</tbody></table>';
+  document.getElementById('raceTower').innerHTML='<table class="race-tower"><thead><tr><th>P</th><th>'+tr('CAR')+'</th><th>'+tr('GAP')+'</th><th>'+tr('LAST')+'</th><th>'+tr('BEST')+'</th><th>'+tr('TYRE')+'</th><th>'+tr('PIT')+'</th></tr></thead><tbody>'+S.map(row).join('')+'</tbody></table>';
   document.querySelectorAll('#raceTower tr[data-car]').forEach(tr_=>tr_.addEventListener('click',()=>{
     const id=+tr_.dataset.car;raceUI.follow=raceUI.follow===id?-1:id;
     if(raceUI.follow<0)trackViewReset();else trackView.z=Math.max(trackView.z,3);   // the camera goes in close on the car
@@ -10511,7 +10747,8 @@ function renderRacePanel(force){
   // telemetry: every car, in race order
   const tyre=(T,W,th,lbl)=>'<div class="rt-t" style="border-color:'+raceTyreColour(T,th)+'"><b style="color:'+raceTyreColour(T,th)+'">'+Math.round(T)+'°</b><span>'+lbl+' '+Math.round(W*100)+'%</span></div>';
   document.getElementById('raceTele').innerHTML=S.map(x=>{
-    const c=x.c,M=c.M,s=x.s,th=M.tyre,fpl=M.fuelPerLapKg/M.fuelRho;
+    const c=x.c,M=c.M,s=x.s,th=raceSampleTyre(c,s),fpl=c.plan.fpl/M.fuelRho||M.fuelPerLapKg/M.fuelRho;
+    const fade=Math.round((1-brakeFadeAt(s.brk,M.brakeTh))*100);
     const fuelPct=clamp(s.fuelL/M.tankL,0,1),lapsLeft=fpl>0?s.fuelL/fpl:0;
     const state=x.dnf?tr('OUT'):x.fin?tr('FINISHED'):x.inPit?tr('IN THE PITS'):Math.round(s.v*3.6)+' km/h';
     return '<div class="rt-card'+(raceUI.follow===c.id?' sel':'')+'"><div class="rt-head"><i style="background:'+RACE_COLS[c.id]+'"></i><span>P'+x.pos+' '+esc(M.name)+'</span><em>'+state+'</em></div>'+
@@ -10519,7 +10756,9 @@ function renderRacePanel(force){
       '<div class="rt-side"><div class="rt-k">'+esc(tr(th.label))+' • '+tr('age')+' '+x.tyreAge+'</div>'+
       '<div class="rt-k">'+tr('FUEL')+' '+s.fuelL.toFixed(1)+' / '+M.tankL+' L • '+lapsLeft.toFixed(1)+' '+tr('laps')+'</div>'+
       '<div class="rt-bar"><div style="width:'+Math.round(fuelPct*100)+'%;background:'+(lapsLeft<1.5?'#ff4444':lapsLeft<3?'#ffcc00':'#00ccff')+'"></div></div>'+
-      '<div class="rt-k">'+tr('BRAKES')+' <b style="color:'+brakeTempColour(s.brk,M.brakeOnset)+'">'+Math.round(s.brk)+'°C</b></div></div></div></div>';
+      '<div class="rt-k">'+tr('BRAKES')+' <b style="color:'+brakeTempColour(s.brk,M.brakeOnset)+'">'+Math.round(s.brk)+'°</b> / <b style="color:'+brakeTempColour(s.brkR,M.brakeOnset)+'">'+Math.round(s.brkR)+'°C</b>'+
+        (fade>0?' <b style="color:#ff4444">'+tr('FADE')+' −'+fade+'%</b>':'')+'</div>'+
+      '<div class="rt-k">'+tr(RACE_STRAT.mode.find(m=>m[0]===c.cc.mode)[1])+'</div></div></div></div>';
   }).join('');
   // the result, at the flag
   const res=document.getElementById('raceResults');
@@ -10528,7 +10767,7 @@ function renderRacePanel(force){
     res.innerHTML='<div class="design-section">'+tr('Result')+'</div><table class="race-tower"><thead><tr><th>P</th><th>'+tr('CAR')+'</th><th>'+tr('TIME')+'</th><th>'+tr('BEST')+'</th><th>'+tr('PIT')+'</th><th>'+tr('FUEL')+'</th></tr></thead><tbody>'+
       rs.map(x=>'<tr><td>'+(x.state==='dnf'?'—':x.pos)+'</td><td class="nm"><i style="background:'+RACE_COLS[x.id]+'"></i>'+esc(x.name)+'</td><td>'+
         (x.state==='dnf'?'DNF':x.pos===1?fmtLap(x.time):x.lapsDown>0?'+'+x.lapsDown+' '+tr(x.lapsDown>1?'LAPS':'LAP'):'+'+(x.gap||0).toFixed(1))+'</td><td class="'+(flAll&&flAll.car===x.id?'race-fl':'')+'">'+(x.best!=null?fmtLap(x.best):'—')+
-        '</td><td>'+x.stops+'</td><td>'+x.fuelL.toFixed(1)+' L</td></tr>').join('')+'</tbody></table>'+
+        '</td><td>'+x.stops+' '+x.stints.map(st=>raceTyreBadge(raceCompound(st.tyre))).join('')+'</td><td>'+x.fuelL.toFixed(1)+' L</td></tr>').join('')+'</tbody></table>'+
       '<div class="perf-note">'+tr('Grid')+': '+rs.slice().sort((a,b)=>a.grid-b.grid).map(x=>x.grid+'. '+esc(x.name)).join(' · ')+' • '+tr('seed')+' '+R.cfg.seed+'</div>';
   }else res.innerHTML='';
 }
@@ -10568,6 +10807,8 @@ function drawRace(){
   const sw=ctx.measureText(spd).width+14;
   ctx.fillStyle=C.green;ctx.font='10px "Press Start 2P"';ctx.fillText(tr('LAP')+' '+lapNow+'/'+R.cfg.laps+'  '+fmtLap(t),W-44-sw,19);
   ctx.textAlign='left';
+  ctx.font='6px "Press Start 2P"';ctx.fillStyle='#88aacc';ctx.textAlign='right';
+  ctx.fillText(raceWeatherText(S[0].s.wet)+'  '+R.cfg.air+'°C',W-44,topBar-2);ctx.textAlign='left';
   const T=buildTrack(R.cfg.track);
   const {px,py,scV}=trackMapView(T,W,H,topBar,botBar,W);
   // follow a car: pan the view so it stays in the middle
@@ -10578,6 +10819,10 @@ function drawRace(){
   }
   ctx.save();ctx.beginPath();ctx.rect(0,topBar-8,W,H-topBar-botBar+8);ctx.clip();
   drawTrackSurface(T,px,py,scV);
+  const wNow=S[0].s.wet,wx=wNow/RACE.wetFull;
+  if(wx>0.02){   // a wet surface: the ribbon darkened and sheened blue
+    ctx.globalAlpha=0.45*wx;ctx.fillStyle='#1d3a66';trackRibbon(ctx,T,px,py,scV,3);ctx.globalAlpha=1;
+  }
   const p0=T.pts[0];
   ctx.fillStyle='#fff';ctx.fillRect(px(p0)-4,py(p0)-4,8,8);ctx.fillStyle='#000';ctx.fillRect(px(p0)-2,py(p0)-2,4,4);
   // the cars, back of the field first so the leader is drawn on top
@@ -10594,14 +10839,24 @@ function drawRace(){
     ctx.font='6px "Press Start 2P"';ctx.fillStyle=RACE_COLS[c.id];ctx.fillText(String(x.pos),cx+7,cy-6);
     if(raceUI.follow===c.id){ctx.strokeStyle='#fff';ctx.lineWidth=1;ctx.strokeRect(cx-9,cy-9,18,18);}
   }
+  // rain, falling at the race clock's pace
+  if(wx>0.02){
+    ctx.strokeStyle='rgba(150,180,255,'+(0.25+0.3*wx)+')';ctx.lineWidth=1;ctx.beginPath();
+    const nDrops=Math.round(40+160*wx),ph=t*9;
+    for(let k=0;k<nDrops;k++){
+      const x0=((k*97.13)%W+ph*37*(1+k%3))%W,y0=topBar+((k*53.7+ph*120*(1+k%2))%(H-topBar-botBar));
+      ctx.moveTo(x0,y0);ctx.lineTo(x0-3,y0+9);
+    }
+    ctx.stroke();
+  }
   ctx.restore();
   // pit lane / finished cars, parked by the line
   ctx.font='6px "Press Start 2P"';
   pitN.forEach((x,n)=>{const bx=W-110,by=topBar+8+n*11;ctx.fillStyle=RACE_COLS[x.c.id];ctx.fillRect(bx,by-5,6,6);
     ctx.fillStyle='#99a';ctx.fillText((x.fin?tr('FINISHED'):tr('PIT'))+' P'+x.pos,bx+10,by+1);});
-  // the order, top-left
+  // the order, top-left: only when the timing tower is not beside the map (a phone, where it sits below)
   ctx.font='6px "Press Start 2P"';
-  S.forEach((x,n)=>{const y=topBar+8+n*11;ctx.fillStyle='rgba(10,10,18,0.75)';ctx.fillRect(8,y-7,150,10);
+  if(!racePage.open||innerWidth<=800)S.forEach((x,n)=>{const y=topBar+8+n*11;ctx.fillStyle='rgba(10,10,18,0.75)';ctx.fillRect(8,y-7,150,10);
     ctx.fillStyle=RACE_COLS[x.c.id];ctx.fillRect(10,y-5,6,6);ctx.fillStyle='#ddd';
     const nm=x.c.M.name.length>13?x.c.M.name.slice(0,12)+'…':x.c.M.name;
     ctx.fillText(x.pos+' '+nm,20,y+1);ctx.fillStyle='#889';ctx.textAlign='right';ctx.fillText(x.pos===1?'':String(x.gap),156,y+1);ctx.textAlign='left';});
@@ -10631,10 +10886,64 @@ function bindRace(){
   g('raceSpeed').addEventListener('change',e=>{raceUI.speed=+e.target.value||1;});
   g('raceSkip').addEventListener('click',()=>{if(raceUI.run){raceUI.t=raceUI.run.t;renderRacePanel(true);}});
   g('raceNew').addEventListener('click',()=>{raceUI.phase='setup';raceUI.run=null;raceUI.follow=-1;renderRaceSetup();});
+  g('raceRptPng').addEventListener('click',exportRacePNG);
+  g('raceRptPdf').addEventListener('click',exportRacePDF);
   const sc=g('raceScrub');
   sc.addEventListener('input',()=>{if(!raceUI.run)return;raceUI.scrubbing=true;raceUI.t=raceUI.run.t*(+sc.value)/1000;renderRacePanel(true);});
   sc.addEventListener('change',()=>{raceUI.scrubbing=false;});
   raceFillAdd();renderRaceSetup();
+}
+// ---- the race page (build 138): RACE as a page of its own, filling the window ----
+// Opening it moves the map canvas and the RACE panel into the page (the same elements, so every draw,
+// zoom, pan and handler keeps working untouched) and sizes the canvas to the page's stage; closing puts
+// both back where they came from. The page holds everything the race needs, which is also the seam along
+// which it could one day be lifted out as a game of its own.
+const racePage={open:false,from:'track',homes:null};
+function sizeRaceStage(){
+  if(!racePage.open)return;
+  const r=document.getElementById('raceStage').getBoundingClientRect();
+  if(!(r.width>0&&r.height>0))return;
+  // the drawing grid follows the stage: about one unit per CSS pixel on a desktop, no narrower than 560
+  // on a phone (below that the pixel font stops being readable)
+  vizW=Math.round(clamp(r.width,560,1100));
+  vizH=Math.round(clamp(vizW*r.height/r.width,380,1400));
+  sizeCanvas();
+}
+function openRacePage(from){
+  if(racePage.open)return;
+  const pg=document.getElementById('racePage'),panel=document.getElementById('racePanel');
+  racePage.homes=[[canvas,canvas.parentNode,canvas.nextSibling],[panel,panel.parentNode,panel.nextSibling]];
+  racePage.from=from&&from!=='race'?from:'track';
+  document.getElementById('raceStage').appendChild(canvas);
+  document.getElementById('raceSide').appendChild(panel);
+  pg.hidden=false;document.body.classList.add('race-open');racePage.open=true;
+  canvas.style.display='block';panel.style.display='';
+  sizeRaceStage();
+}
+function closeRacePage(){
+  if(!racePage.open)return;
+  if(document.fullscreenElement)(document.exitFullscreen||document.webkitExitFullscreen||(()=>{})).call(document);
+  for(const [el,home,next] of racePage.homes)home.insertBefore(el,next&&next.parentNode===home?next:null);
+  document.getElementById('racePage').hidden=true;document.body.classList.remove('race-open');racePage.open=false;
+  vizW=640;vizH=420;sizeCanvas();
+}
+function raceTopInfo(){
+  const el=document.getElementById('raceTopInfo');if(!el)return;
+  const R=raceUI.run;
+  if(!R||raceUI.phase!=='live'){el.textContent=raceUI.phase==='computing'?raceUI.progTxt:tr('Set up the race');return;}
+  const S=raceStandings(R,raceUI.t),lapNow=Math.min(R.cfg.laps,Math.max(1,S[0].laps.length+(S[0].fin?0:1)));
+  el.textContent=TRACKS[R.cfg.track].label+' • '+tr('LAP')+' '+lapNow+'/'+R.cfg.laps+' • '+fmtLap(raceUI.t)+' • '+raceWeatherText(S[0].s.wet);
+}
+function bindRacePage(){
+  document.getElementById('raceBack').addEventListener('click',()=>setTab(racePage.from));
+  const fs=document.getElementById('raceFs'),pg=document.getElementById('racePage');
+  if(!(pg.requestFullscreen||pg.webkitRequestFullscreen))fs.hidden=true;
+  fs.addEventListener('click',()=>{
+    if(!document.fullscreenElement)(pg.requestFullscreen||pg.webkitRequestFullscreen).call(pg);
+    else (document.exitFullscreen||document.webkitExitFullscreen).call(document);
+  });
+  addEventListener('resize',sizeRaceStage);
+  addEventListener('keydown',e=>{if(e.key==='Escape'&&racePage.open&&!document.fullscreenElement)setTab(racePage.from);});
 }
 // Imported circuits live alongside the built-in ones and persist in localStorage, so a track you
 // loaded is still there next session. Only geometry is stored — it is the user's own file.
@@ -10854,6 +11163,8 @@ function updateUI(){
 }
 
 function setTab(mode){
+  const prevMode=vizMode;
+  if(mode!=='race'&&racePage.open)closeRacePage();
   vizMode=mode;
   ['Design','Vehicle','Garage','Track','Race','Engine','Dyno','Guide','Options'].forEach(m=>
     document.getElementById('tab'+m).classList.toggle('active',mode===m.toLowerCase()));
@@ -10882,7 +11193,7 @@ function setTab(mode){
   document.getElementById('livePanel').style.display=(mode==='track'||mode==='race')?'none':'';
   if(mode==='vehicle'){buildVehicle();updateVehicleSummary();}
   if(mode==='track'){buildVehicle();refreshLap();}
-  if(mode==='race'){const ts=document.getElementById('raceTrk');fillTrackSelect(ts,ts.value||trackKey);raceFillAdd();renderRaceSetup();renderRacePanel(true);}
+  if(mode==='race'){const ts=document.getElementById('raceTrk');fillTrackSelect(ts,ts.value||trackKey);raceFillAdd();openRacePage(prevMode);renderRaceSetup();renderRacePanel(true);}
   updateUI();
 }
 
@@ -11098,6 +11409,7 @@ function bindControls(){
     else (document.exitFullscreen||document.webkitExitFullscreen||(()=>{})).call(document);
   });
   document.addEventListener('fullscreenchange',()=>{
+    if(racePage.open){sizeRaceStage();return;}   // the race page goes full screen as itself, not as the engine view
     fullscreen=!!document.fullscreenElement;
     // Fullscreen widens the LOGICAL grid so the drawings get more room; sizeCanvas() then
     // matches the backing store to the real device pixels either way.
@@ -11186,6 +11498,7 @@ applyLang(currentLang);   // localise the UI (persisted choice)
 initGuide();               // index, or the page you were last reading
 bindTrackZoom();
 bindRace();
+bindRacePage();
 sizeCanvas();updatePhysics();updateUI();requestAnimationFrame(loop);
 
 // Register service worker for offline/installable PWA (no-op on file://).
