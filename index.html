@@ -2493,7 +2493,9 @@ const PRESETS=[
   // untouched, and setting BOOST TAPER FROM to 0 shows what the hardware itself makes. Left off where the hardware is
   // at or below the rating, and where no taper from the torque peak reaches it: the RB26's 280 PS is a voluntary
   // cap, and the Cummins's excess is the diesel's own top end. Re-solved in build 132 (the octane index moved the
-  // knock limit): the GTI and the Hellcat now exceed their ratings on the hardware alone and carry a taper.
+  // knock limit): the GTI and the Hellcat now exceed their ratings on the hardware alone and carry a taper. And in
+  // build 133 (the turbine throat, the compressor island, real wheels): the Civic on its 58 mm wheel is now at its
+  // rating on the hardware alone and carries none.
   // the gap between the dyno and `real` IS the comparison. `unsure` names the inputs that are not in
   // the maker's published data and were set from typical practice (mostly boost pressure). Ratings
   // marked `note` are not what the engine makes: the JDM 280 PS / kei 64 PS gentlemen's agreements.
@@ -2510,7 +2512,7 @@ const PRESETS=[
   {cat:'Compact Turbo',name:'Toyota G16E-GTS (GR Yaris)',real:{hp:257,hpRpm:6500,tq:360,tqRpm:3000},unsure:['boost_bar'],
    engine:{cylinders:3,bore_mm:87.5,stroke_mm:89.7,compression:10.5,redline:7000,intake:'turbo',boost_bar:1.4,turboSize:'medium',compExd_mm:56,cam:'sport',vvt:true,injector:'direct',intercooler:'large',exhaust:'sport',airFilter:'perf',octane:98,taperRpm:3500,taperPct:59}},
   {cat:'Compact Turbo',name:'Honda K20C1 (Civic Type R FK8)',real:{hp:316,hpRpm:6500,tq:400,tqRpm:2500},unsure:['boost_bar'],
-   engine:{cylinders:4,bore_mm:86.0,stroke_mm:85.9,compression:9.8,redline:7000,intake:'turbo',boost_bar:1.6,turboSize:'medium',compExd_mm:58,cam:'sport',vvt:true,injector:'direct',intercooler:'large',exhaust:'sport',airFilter:'perf',octane:98,taperRpm:3500,taperPct:66}},
+   engine:{cylinders:4,bore_mm:86.0,stroke_mm:85.9,compression:9.8,redline:7000,intake:'turbo',boost_bar:1.6,turboSize:'medium',compExd_mm:58,cam:'sport',vvt:true,injector:'direct',intercooler:'large',exhaust:'sport',airFilter:'perf',octane:98}},
   {cat:'NA Sports',name:'Mazda B6-ZE (MX-5 NA)',real:{hp:115,hpRpm:6500,tq:136,tqRpm:5500},
    engine:{cylinders:4,bore_mm:78.0,stroke_mm:83.6,compression:9.4,redline:7200,cam:'stock',vvt:false,injector:'port',octane:95,exhaust:'stock',airFilter:'stock'}},
   {cat:'NA Sports',name:'Toyota 4A-GE (AE86)',real:{hp:128,hpRpm:6600,tq:149,tqRpm:5200},

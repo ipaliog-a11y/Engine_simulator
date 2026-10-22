@@ -49,6 +49,10 @@ const KNOWN = {
   // the Duramax and the 2JZ left this list with their factory ECU taper, which is what really rolls them off; the
   // Cummins has none (no taper from its torque peak reaches its rating) and is not counted at the limiter.)
   'Cummins 6.7 (Ram HD 2019 HO)': ['boost-falls'],
+  // build 133: on the maker's 58 mm wheel the FK8's compressor reaches its inducer's choke flow over the top and
+  // holds 1.31 of its 1.6 bar at the limiter (305 hp, real 316). The wheel size is from tuners' listings and the
+  // boost pressure is unsure, so either input may be what is off; the choke flow is derived, not fitted.
+  'Honda K20C1 (Civic Type R FK8)': ['boost-falls'],
   // build 121: the integrated intake stroke put its torque peak on the real one (149 Nm at 4600-5200, real 149
   // at 5200); power then creeps up ~1 hp per 200 rpm to the 7600 limiter (139 hp) where the real engine falls
   // from 128 at 6600. The same missing top-end fade as the F140 below.
