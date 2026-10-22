@@ -20,6 +20,31 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 Working toward **v1.0 — every number derived, not fitted.**
 
+### The turbine throat where A/R puts it; the compressor's island follows its speed line (build 133)
+
+- **Turbine throat.** A/R is the volute throat's area over the radius to its centroid, and the throat was taken at
+  the wheel's radius, so every turbine was 1.5-1.8x smaller than the frame it names. Now R = r_tip + sqrt(A/pi),
+  the centroid of the section just outside the wheel tip. On its own this spools every turbo 200-600 rpm later:
+  the bigger throat holds less back-pressure at low flow.
+- **Compressor island.** It was an ellipse fixed at 62% of choke flow whatever the pressure ratio, so a turbo
+  asked for low boost at low flow (spooling at low rpm) always read as the edge of its map, at the 0.35 floor,
+  and drew about twice the power from its turbine. A wheel is most efficient at its design incidence, a fixed
+  flow coefficient Q/(U D^2): the velocity triangles are similar, so the best flow and the island's width scale
+  with the tip speed, and the island runs diagonally up the map as on a real one. The old island is the one at
+  PR 2.2, where the model already starts its pressure losses. This gives back the throat's spool delay: GTI
+  low-rpm torque as before, Duramax -6% -> -1%, Cummins -11% -> -7%.
+- **The makers' compressor wheels** where a size is published: GR Yaris 56 mm, Civic Type R FK8 58 mm, and from
+  forum figures (marked unsure) the Supra's CT12B pair 2 x 58 mm and the Evo IX's 16G 68 mm. The GTI's IS20
+  (54 mm) is already its class. The FK8's untapered power 413 -> 340 hp (rated 316).
+- **RS3: no published stock wheel.** The 86 mm class was too big: the Stage 1 upgrade built on the stock
+  turbo's footprint uses a 71 mm wheel, so the stock wheel is smaller. The preset takes the 71 mm class as that
+  bound (marked unsure). It still makes ~255 Nm at 1700 rpm against the real 480: at that speed the exhaust
+  manifold sits below boost pressure, so the frame is too big for 2.5 L there. That is the unknown wheel, not
+  missing physics, and no size is fitted to close it.
+- Factory tapers re-solved by the same rule; test48's GTI, Supra (and its 58 mm wheel), TDI and Alto follow.
+- The VGT note: with the throat corrected, the presets' open vane rings still have power to spare from mid-range,
+  so the wastegate stays in the loop (the rings are the size class's, not the makers').
+
 ### The fuel's octane sensitivity; the end gas loses heat to the walls (build 132)
 
 - **Octane index.** Douaud & Eyzat's delay correlation was fitted on the RON test, so it read a fuel's RON as if
