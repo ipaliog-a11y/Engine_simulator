@@ -217,7 +217,9 @@ if (!(T.open.t100 > T.clsd.t100)) fails.push('open diff no longer loses off the 
 // ==================================================================== 6. guide + no dead code
 const guide = await page.evaluate(() => document.getElementById('guidePanel').textContent);
 if (!/only drives the front axle|drives the front axle/.test(guide)) fails.push('English guide does not explain the FWD traction ceiling');
-if (!/0\.33/.test(guide)) fails.push('English guide does not quote the measured ceiling');
+// the figure the guide quotes has to be the one measured above, not one written down once (it said 0.33 for
+// builds after the model moved to 0.38)
+if (!guide.includes(kei.g.toFixed(2) + ' g')) fails.push(`English guide does not quote the measured ceiling (${kei.g.toFixed(2)} g)`);
 await page.evaluate(() => applyLang('el')); await page.waitForTimeout(250);
 const guideEl = await page.evaluate(() => document.getElementById('guidePanel').textContent);
 if (!/προσθιοκίνητο/.test(guideEl)) fails.push('Greek guide does not explain the FWD traction ceiling');
