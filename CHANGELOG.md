@@ -20,7 +20,7 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 Working toward **v1.0 — every number derived, not fitted.**
 
-### The engine sound on the dyno and round the lap (build 130)
+### The engine sound on the dyno and round the lap (build 139)
 
 - The sound played on every tab, always from the live engine, so the TRACK tab's car went round to the
   sound of the dyno controls. `soundSource()` now picks what is heard: the live engine on **DYNO**, the
@@ -33,8 +33,230 @@ Working toward **v1.0 — every number derived, not fitted.**
   once when the throttle shuts, however gently, instead of needing a 0.3 -> 0.1 snap in one frame. On the
   lap the boost is taken at the throttle's own recorded point (the manifold is interpolated toward the
   next one and had already fallen by the lift). A turbo hot-hatch blows off 18 times round the default lap.
-- test70: the source per tab and the live level falling to zero off them; the replay's rpm, throttle vs
+- test73: the source per tab and the live level falling to zero off them; the replay's rpm, throttle vs
   braking and fuel cut in the sound; blow-offs round a turbo lap and none on an NA one.
+
+### The ECU's torque limit as a tune point (build 138)
+
+- **ECU TORQUE LIMIT (Nm, 0 = off)**, a new input on boosted engines. A torque-based ECU holds the engine to a
+  calibrated torque (for the gearbox, the driveline, the clutch) by asking for less boost where the engine would
+  make more: the flat plateaus makers quote across thousands of rpm are this, not the engine's own curve. Solved
+  once per engine: at each rpm the boost at which the engine makes the limit, bisected on its own torque there; the
+  wastegate, the vanes, a supercharger's bypass, the bench and the lap are all asked for no more than that. Like
+  the boost taper it is a calibration, not physics: the engine below it is unchanged and only meets a lower target.
+- **Factory presets carry it where the maker quotes torque as a plateau** over a speed range: GTI 350 Nm
+  (1500-4400), FK8 400 (2500-4500), GR Yaris 360 (3000-4600), EcoBoost 170 (1400-4500), RS3 480 (1700-5850),
+  TDI 320 (1750-3000), N57 560 (1500-3000). Engines quoted at a single peak (2JZ, EJ257, 4G63, RB26, the kei and
+  city turbos, the truck diesels) carry none, and their mid-range over the makers' (Supra +14%, STI +10%, Evo +8%)
+  is left showing.
+- Result: the FK8 holds 400 Nm from 3000 to 5000 rpm (was 454 at 2500, +14%), the GR Yaris 360 at 3000 (was +3%),
+  the RS3 480 from 3000 to 5000, the TDI 320 from 1500 to 3000. Factory tapers re-solved with the limits in place;
+  every preset within 1% of its rating. The GTI's plateau still falls off from ~3500 rpm (330 Nm at 4000, the maker
+  holds 350 to 4400): its taper starts at the maker's 1500 rpm torque peak by the calibration rule, which now has a
+  limit doing the plateau's work; starting tapers at the plateau's end would need the plateau's end in the data.
+- test48's GTI and TDI carry their limits, and its Supra and TDI tapers follow the presets.
+
+### RACE: two to eight builds on one circuit, nobody driving (build 137)
+
+- **A RACE tab.** Pick the cars (the build on the VEHICLE tab, garage cars, factory cars), the circuit, the laps,
+  the grid (qualifying or reversed), the pit strategy (automatic or none), tyre warmers and a seed, then watch:
+  the cars on the map, a timing tower, and each car's four tyre temperatures and wear, fuel and brakes. 1-100x,
+  scrubbing, follow-a-car. A guide page, *The race*, says what is physics and what is a rule.
+- **The race is computed, then watched.** Each car is loaded (`withBuild`, which puts the user's own build back
+  exactly), its line optimised once, and its lap solved on that line at grip 0.72-1.00 x fuel empty/half/full
+  (`raceCarModel`). The race loop (`raceInit`/`raceStepOnce`) runs every car on a 50 ms clock reading its speed
+  off that grid, needs no globals, and records a timeline the page plays back. Solving on a fixed line takes
+  11-60 ms; the line optimisation (0.6-3.5 s a car) is the cost, so 8 cars on the Nordschleife take ~1 min.
+- **A standing start in the lap solver** (`simulateLap(key,{fromRest:true})`): the forward pass leaves point 0
+  from rest and does not wrap. +3.3 s on a GT3 at Ashdown Park. Opt-in; no existing lap moves.
+- **Tyre temperature and wear** (`raceTyreStep`): one lump per tyre, the loads from weight, downforce and
+  lateral and longitudinal transfer, heat from slip work and rolling hysteresis, convective cooling. Each
+  compound in `TIRE_TYPE` now carries a working window (`tOpt`, `tWin`) and a wear rate. Grip falls with the
+  square of the distance from the window, twice as fast hot as cold, and with wear past a 70% knee. All fitted.
+- **Fuel from the engine's own BSFC map.** Flow at each point = the power the lap spends there x BSFC at that
+  rpm and MAP; idle flow off the throttle, more for a carburettor. The tank is per body class (`RACE_TANK_L`);
+  the car sheds the fuel's mass as it burns.
+- **Strategy, traffic, the driver.** Stops are planned from a solo practice run (the fewest the tank and tyres
+  allow, or more if fresher tyres pay for the pit lane). A car is held up until it has a few km/h on a straight
+  or into a braking zone; tow, dirty air, blue flags, pit loss, up to 0.6% lap-to-lap variation and mistakes are
+  seeded rules.
+- **The map drawing is shared** (`trackMapView`, `drawTrackSurface`), so TRACK and RACE zoom and pan the same way.
+- Tests: `test71` (the engine: solo laps match the solver to 0.4%, fuel = power x BSFC, tyres from cold, seeds,
+  traffic, pits, the user's build restored) and `test72` (the tab, end to end).
+### The intercooler's effectiveness follows the charge flow; the small turbos' wheels (build 136)
+
+- **Intercooler.** It took off the core's quoted share of the compressor's heat (small 0.62, large 0.82) at every
+  flow. A heat exchanger's effectiveness rises as the flow through it falls, since each kilogram meets the same
+  surface for longer: eps = 1 - exp(-NTU), NTU = UA/(m cp), with the cooling air's capacity large against the
+  charge's. The quoted figure is read at the engine's peak revs at 1 bar of boost (the reference the turbo frames
+  are characterised at), which fixes NTU there: not at the build's own boost, since the core is hardware and more
+  boost runs it past its rating; UA is the two sides in series, the charge side's film coefficient following the flow as m^0.8
+  (Dittus-Boelter) and the cooling side's not, balanced at the reference (the design rule for a gas-to-gas core,
+  Shah & Sekulic). At a fifth of peak flow a small core takes off 0.88 of the heat, a large one 0.97.
+- At the makers' torque peaks the charge arrives at ~30 C on the large-core cars (was ~50) and ~55 C on the
+  small-core ones (TwinAir 95 -> 57, Alto 80 -> 56). With the wheels below, low-rpm torque against the makers':
+  GTI -12% -> -2%, TwinAir -32% -> -11%, Alto -19% -> -5%. The Civic, at 1.6 bar on its core, runs it past its
+  rating over the top: 308 hp (rated 316; it carries no taper).
+- **The small turbos' wheels.** The 'small' class is a 54 mm wheel, a 2.0 L's (the GTI's IS20). The TwinAir's
+  turbo is Mitsubishi's TD02H2 (49373-03000), whose compressor wheel the replacement catalogues list at 40 mm
+  exducer and 29 mm inducer (the 0.72 ratio this model assumes). The Alto takes the same 40 mm, the size of IHI's
+  RHF3, the frame of kei engines (marked unsure: which turbo this engine carries is not confirmed). The EcoBoost keeps its class: no
+  published wheel was found, and it is the one most sensitive to it (96-158 Nm at 1400 rpm across 54-36 mm).
+- **What the cooler charge shows on the bigger engines:** mid-range torque now reads over the makers' on the
+  Civic (+14%), Supra (+14%), STI (+10%) and Evo (+8%). The hotter charge was hiding it; much of it is the ECU's
+  torque limit (the FK8's 400 Nm is flat from 2500 to 4500 rpm, a calibration), which the model does not have.
+- Factory tapers re-solved; test48's GTI, Supra, TDI and Alto (and its 40 mm wheel) follow.
+
+### The lap is a hot lap: the brakes get one preparation lap (build 135)
+
+- The lap solver's brake temperatures ran the lap over and over (up to six times) until the rotors' temperature at
+  the line repeated: a race stint's rotors. The lap is a single hot lap, and the tyres are taken at the working
+  temperature an out-lap gives them, so the rotors now get the same: they start from ambient, run one preparation
+  lap at the hot lap's pace, and the hot lap is the second (BRAKE_PREP_LAPS).
+- Short circuits: the front rotors start the hot lap ~270 C where they started at ~600 (a GT3 on the technical
+  circuit 265 C and 451 C at most, against 639 and 702). Lap times move by at most 0.03 s (an E46 M3, 74.83 ->
+  74.80 s on the technical circuit): settled, these rotors only just crossed their fade onset. The Nordschleife
+  is unchanged (a V12 GT on steel still fades, 448.7 s against 445.3 unfaded): one lap there is long enough for
+  the rotors to reach their working temperature within it.
+
+### Knock compresses the charge the engine trapped, from where the valve closes (build 134)
+
+- **The end gas's compression starts at IVC.** The knock trace compressed a cylinder full at intake pressure from
+  BDC through the whole geometric ratio, whatever the engine had breathed. At low speed a late-closing intake valve
+  has let part of the charge back out before compression starts (the integrated intake stroke, build 121, already
+  charged the torque for it), and at the tuned peak the column has packed in more. Now the trace starts at the
+  intake valve's closing, at the phase the cam phaser's full-load table chose, on the charge the torque is made
+  from (computeVE's fresh air plus the residual mixed into it). One charge for the torque and the knock; nothing
+  new fitted. Ported engines and the rotary keep BDC and a full cylinder.
+- Result: retard at the makers' torque peaks GTI 16 -> 12 deg, Civic 15 -> 11, GR Yaris 11 -> 7, EcoBoost 6 -> 2,
+  TwinAir 31 -> 29; low-rpm torque GTI -17% -> -12%, GR Yaris -6% -> -3%; the Civic reaches its rating on the hardware alone (305 -> 315 hp, rated
+  316). NA engines run 0-3 deg retard at 2000 rpm (was 1-5) and their peak power is unchanged. Every factory taper
+  still meets its rating within 1%.
+- test40, with its reason: 2.5 bar on an over-flowed small frame now buys a little on a lap (61.04 -> 60.82 s; the
+  choked compressor delivers less than its target, and the knock now reads the charge it delivers). Asserted
+  instead: it gains under a third of what a frame that can feed the engine does (the medium frame, 0.74 s).
+- **What is left on the small turbos, found and not yet fixed:**
+  - the EcoBoost is now short on spool, not knock: 90% boost at 2200 rpm against Ford's 170 Nm from 1400;
+  - the TwinAir still runs 29 deg retard at 1900 rpm, on a charge that arrives at 95 C;
+  - two causes, both measured. The 'small' class is a 54 mm wheel, a 2.0 L's (the GTI's IS20); a 0.66-1.0 L engine
+    runs at ~14% of its choke flow at the torque peak, at the island's 0.35 floor. IHI's RHF3 frame, the size
+    kei and sub-1.4 L engines use, is ~40 mm (replacement-wheel listings), but which turbo each of these presets
+    carries is not confirmed.
+  - And the intercooler is a fixed effectiveness per core (0.62 / 0.82) at every flow; a heat exchanger's rises as
+    the flow through it falls (more transfer units per kilogram).
+
+### The turbine throat where A/R puts it; the compressor's island follows its speed line (build 133)
+
+- **Turbine throat.** A/R is the volute throat's area over the radius to its centroid, and the throat was taken at
+  the wheel's radius, so every turbine was 1.5-1.8x smaller than the frame it names. Now R = r_tip + sqrt(A/pi),
+  the centroid of the section just outside the wheel tip. On its own this spools every turbo 200-600 rpm later:
+  the bigger throat holds less back-pressure at low flow.
+- **Compressor island.** It was an ellipse fixed at 62% of choke flow whatever the pressure ratio, so a turbo
+  asked for low boost at low flow (spooling at low rpm) always read as the edge of its map, at the 0.35 floor,
+  and drew about twice the power from its turbine. A wheel is most efficient at its design incidence, a fixed
+  flow coefficient Q/(U D^2): the velocity triangles are similar, so the best flow and the island's width scale
+  with the tip speed, and the island runs diagonally up the map as on a real one, up to the design speed (PR 2.2,
+  where the model already starts its pressure losses); above it the inducer nears sonic, the speed lines steepen
+  into choke instead of moving right, and the island stays as it was. This gives back the throat's spool delay
+  (GTI low-rpm torque as before) and leaves the top of the map, and an over-flowed frame's penalty, unchanged.
+- **The makers' compressor wheels** where a size is published: GR Yaris 56 mm, Civic Type R FK8 58 mm, and from
+  forum figures (marked unsure) the Supra's CT12B pair 2 x 58 mm and the Evo IX's 16G 68 mm. The GTI's IS20
+  (54 mm) is already its class. The FK8 on its 58 mm wheel makes 305 hp (rated 316) and holds 1.31 of its 1.6 bar
+  at the limiter: it is now at its rating on the hardware alone and carries no taper (it was 413 hp).
+- **RS3: no published stock wheel.** The 86 mm class was too big: the Stage 1 upgrade built on the stock
+  turbo's footprint uses a 71 mm wheel, so the stock wheel is smaller. The preset takes the 71 mm class as that
+  bound (marked unsure). It still makes ~255 Nm at 1700 rpm against the real 480: at that speed the exhaust
+  manifold sits below boost pressure, so the frame is too big for 2.5 L there. That is the unknown wheel, not
+  missing physics, and no size is fitted to close it.
+- Factory tapers re-solved by the same rule; test48's GTI, Supra (and its 58 mm wheel), TDI and Alto follow.
+- Tests, each with its reason: test49's petrol VGT left its known list (its vanes move again, the gap was the
+  throat convention); its diesel step check is bounded at 22% instead of "no sharper than fixed" (12.4% ->
+  20.3%): the ring is defined from the volute, so it is now 1.5-1.8x larger at both stops, the size class's
+  shut ring is bigger than a TDI's, and the boost loop crosses unity gain later and steeper (test47's known
+  threshold cliff, waiting on rings sized for the engine); test60 knows the FK8's 'boost-falls' (its 58 mm wheel at
+  choke over the top; the wheel is from tuners' listings and the boost is unsure).
+- The VGT note: with the throat corrected, the presets' open vane rings still have power to spare from mid-range,
+  so the wastegate stays in the loop (the rings are the size class's, not the makers').
+
+### The fuel's octane sensitivity; the end gas loses heat to the walls (build 132)
+
+- **Octane index.** Douaud & Eyzat's delay correlation was fitted on the RON test, so it read a fuel's RON as if
+  every engine ran the RON test's conditions. A fuel's resistance in a given engine is its octane index,
+  OI = RON - K S (Kalghatgi, SAE 2005-01-0239): S = RON - MON is the fuel's sensitivity, and K is set by how hot the
+  gas is when compressed, K = 0.0056 T_comp15 - 4.68, with T_comp15 the unburned gas's temperature at 15 bar on its
+  own compression from the start of the stroke. K is 0 at the RON test (~836 K), positive in a hotter engine (the
+  MON test, K = 1), negative in a cooler, boosted or direct-injected one (Kalghatgi measures -0.4 to -0.74 in DI
+  engines), where a sensitive fuel beats its RON. S: pump and race petrol 10, E85 17, methanol 20.
+- **The end gas loses heat to the walls.** The integral compressed the unburned gas adiabatically; it now loses
+  Woschni's wall heat (the same correlation and wall temperature the intake stroke uses) over the chamber's surface
+  (piston crown, pent-roof head, the liner swept so far), and so does the bulk gas that compresses it. Slowest at low
+  rpm, where the gas has the most time, which is where knock was hardest.
+- Result: boosted petrol engines run 10-25 deg less retard at low rpm. Low-rpm torque against the maker's: Civic -4%,
+  RB26 -1%, STI 0%, Evo -1%, GR Yaris -9%, GTI -16%, Alto -21%, Supra +8% (before: -28% to -48%). Still short: the
+  TwinAir (-36%, still knock-limited) and the EcoBoost (-40%), and the RS3 (-50%), whose large frame does not spool
+  below 3300 rpm (next item). NA engines run 1-5 deg retard at 2000 rpm; their peak power is unchanged.
+- **Factory tapers re-solved** by the same rule (gentlest taper from the maker's torque peak that meets the rating):
+  peak power moved with the knock limit. The GTI and the Hellcat now exceed their ratings on the hardware alone and
+  carry a taper (1500 rpm / 78%, 4000 / 85%).
+- Not used: the lambda-dependent form of K (0.00497 T_comp15 - 0.135 lambda - 3.67) (the model's knock already carries the
+  measured trend per unit of enrichment).
+
+### Knock from the end gas's chemistry; the ECU's boost taper as a tune point (build 131)
+
+- **Knock.** It was a points score set by hand (30 a bar of boost, 8 a unit of compression, 0.8 a degree of
+  charge, -2.2 an octane, -12 for direct injection, more for rpm, coolant and alcohol), which left a 10:1 engine at
+  2.4 bar on 98 RON at its best spark. Now it is the end gas's own autoignition: the integral of dt / tau over the
+  unburned gas's life on this model's cycle (Livengood & Wu), tau from Douaud & Eyzat's published correlation
+  17.68 (ON/100)^3.402 p^-1.7 exp(3800/T), unadjusted; the gas starts as the fresh charge mixed by enthalpy with the
+  exhaust's residual, cooled by the fuel's latent heat under direct injection, and is compressed by the piston and
+  the burn behind it until 90% has burned. The score the rest of the model reads is 40 x the integral: 40 is onset.
+  The ECU runs best-torque spark where the gas survives it, and otherwise the most advance at which it just does, as
+  far back as 37 deg past best-torque phasing (CA50 ~45 deg ATDC on a piston; it stopped at a fitted 6 deg BTDC,
+  which at full load under ~2000 rpm left the end gas knocking at any spark). Kept: the measured trend of ~3 deg of
+  knock margin per 0.1 of enrichment, the ignition system's margin, nitrous. Rotaries and two-strokes keep the
+  previous score and spark law: the integral is a four-stroke poppet engine's cycle, and a Wankel's trailing pocket
+  or a two-stroke's scavenged charge is not that gas.
+- **What spark costs** is now the Wiebe burn's cycle efficiency at the phasing it gives (wiebePhasingEff), not a
+  fitted 1 - 0.004 x (degrees off MBT)^2.
+- Result: NA engines are knock-limited at full load low down and run best spark from mid revs (as real calibrations
+  do); boosted engines are knock-limited across their range, which costs the midrange most (the gas has more time to
+  ignite at low speed). Peak NA power is unchanged.
+- **The ECU's boost taper**, two new tune inputs: BOOST TAPER FROM (rpm, 0 = off) and BOOST AT LIMITER (%). The
+  wastegate target falls linearly between them; the steady boost solve, the turbo's shaft (0-100, the bench, the lap)
+  and a supercharger's bypass all hold it. Reliability now counts half its boost stress where boost is still held at
+  the limiter, so a taper buys reliability. Real ECUs pull boost back near the limiter for the rods, bearings, turbine
+  and end gas: a calibration, not physics, and now one the user can change.
+- **Factory presets carry their factory calibration**: the taper solved so peak power meets the maker's rating,
+  starting no earlier than the maker's peak-torque rpm (marked in the preset; set BOOST TAPER FROM to 0 to see the
+  hardware alone). Left off where the hardware is at or below the rating, or no taper from the torque peak reaches
+  it (the RB26's 280 PS is a voluntary cap). test48's power RMS 15.4% -> 5.3%.
+- **COMPRESSOR WHEEL (mm)** input: the maker's wheel instead of the size class, its housings scaled with it. Presets
+  keep their size classes for now (see the open item).
+- **Held back, with the reason:** the turbine throat taken at the volute centroid radius (it is taken at the wheel's,
+  1.5-1.8x too small) and the presets' real wheel sizes. With the back-pressure that removes, the model's weak low-rpm
+  spool shows through (an RS3 makes ~245 Nm at 2000 rpm on any frame, against a real 480 from 1700): low-rpm spool
+  (pulse energy, twin-scroll housings, small modern turbines) is the next item, and the two return with it.
+- The torque grid is shared between the 0-100 run and the lap (keyed on the builder, so a test harness's scaled one
+  is its own); the knock search is remembered per operating point.
+- Tests, each with its reason: test60's boost-falls compares with the ECU's target, and the 2JZ, TDI and Duramax left its known list;
+  tests 44/46/60 do not count boosted engines with no taper at the limiter (full boost to the limiter is their
+  calibration); test40 reads knock at best-torque spark (the ECU holds the controlled score at its target); test58's
+  continuity is a rate per unit lambda; test63 asks the lap solver's braking step directly instead of sampling a lap;
+  test62's gauge to 0.005 bar; test48's power budget 15.5 -> 10; test41 bands Supra 15 -> 17, STI 11 -> 13, M2 13 -> 14, RMS 9.5 -> 11 (the generic turbo's midrange).
+
+### Live steering and power (build 130)
+
+- **Steering wheel in live timing.** The front wheels' angle is kinematic (Ackermann) steering on the racing
+  line, `atan(wheelbase / r)`, signed by the way the line turns and averaged over ±10 m so the 5 m radius
+  does not jitter it. The wheel in the driver's hands is that times the **steering ratio**, a new VEHICLE
+  input (8-22:1, default 15:1, saved with the car; older saves load as 15). Geometry only: no slip angle,
+  so no understeer correction. A 911 GT3 at La Source: 7.4° at the road wheels, 111° at the wheel.
+- **Engine power in live timing.** Crank power at each point: the drive force the lap spends, times speed,
+  back through the driveline efficiency, capped at full-throttle power at that rpm (with the boost built);
+  zero coasting, braking and mid-shift. Shown in hp and kW with a bar against the peak of the curve the lap
+  drives (best-power mixture, a little above the as-tuned DYNO figure: 494 against 487 hp on the GT3).
+- Both instrument sets, digital and analog, carry the wheel and the power. **test70** pins the steering
+  against a known circle, its sign against lateral g, the ratio and its save, and power within the engine.
 
 ### The engine sound without the hiss (build 129)
 

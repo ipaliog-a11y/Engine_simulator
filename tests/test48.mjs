@@ -85,16 +85,21 @@ const CARS = [
     eng: { type: 'petrol4', cylinders: 4, bore_mm: 82.5, stroke_mm: 92.8, compression: 9.6,
            layout: 'inline', redline: 6500, intake: 'turbo', boost_bar: 1.1, turboSize: 'small',
            valves: 4, cam: 'stock', injector: 'direct', octane: 98, intercooler: 'large',
-           intakeSys: 'efi', exhaust: 'stock', airFilter: 'stock' },
+           intakeSys: 'efi', exhaust: 'stock', airFilter: 'stock',
+           taperRpm: 1500, taperPct: 60,   // the factory ECU's high-rpm boost taper, as on the preset (build 136)
+           tqLimit: 350   // the ECU's torque limit, as on the preset (build 138)
+         },
     car: { chassis: 'hatch', kg: 1351, drive: 'fwd', tire: 'sport', gbx: 'manual', gears: 6, diff: 'open' },
     real: { hp: 220, tq: 350, t100: 6.5, top: 246, limited: true } },
 
   { name: 'Toyota Supra RZ (2JZ-GTE)', year: 1993,
     eng: { type: 'petrol4', cylinders: 6, bore_mm: 86.0, stroke_mm: 86.0, compression: 8.5,
-           layout: 'inline', redline: 6800, intake: 'turbo', boost_bar: 0.75, turboSize: 'medium',
+           layout: 'inline', redline: 6800, intake: 'turbo', boost_bar: 0.75, turboSize: 'medium', compExd_mm: 58,   // CT12B, as on the preset (build 133)
            turboConfig: 'sequential', valves: 4, cam: 'sport', vvt: false,   // VVT-i only from mid-1997
            injector: 'port', octane: 98,
-           intercooler: 'large', intakeSys: 'efi', exhaust: 'sport', airFilter: 'perf' },
+           intercooler: 'large', intakeSys: 'efi', exhaust: 'sport', airFilter: 'perf' ,
+           taperRpm: 4000, taperPct: 35   // the factory ECU's high-rpm boost taper, as on the preset (build 138)
+         },
     car: { chassis: 'coupe', kg: 1570, drive: 'rwd', tire: 'sport', gbx: 'manual', gears: 6, diff: 'clsd' },
     real: { hp: 320, tq: 427, t100: 4.9, top: 250, limited: true } },
 
@@ -106,15 +111,19 @@ const CARS = [
            vgt: true,
            valves: 4, cam: 'stock', injector: 'direct', fuel: 'diesel', intercooler: 'large',
            intakeSys: 'efi', exhaust: 'stock', airFilter: 'stock',
-           runner: 'short' },   // a diesel's compact intake manifold, as on the preset (build 121)
+           runner: 'short',     // a diesel's compact intake manifold, as on the preset (build 121)
+           taperRpm: 2000, taperPct: 54,   // the factory ECU's high-rpm boost taper, as on the preset (build 138)
+           tqLimit: 320 },   // the ECU's torque limit, as on the preset (build 138)
     car: { chassis: 'hatch', kg: 1375, drive: 'fwd', tire: 'eco', gbx: 'manual', gears: 6, diff: 'open' },
     real: { hp: 150, tq: 320, t100: 8.6, top: 216 } },
 
   { name: 'Suzuki Alto Works (K6A)', year: 2015,
     eng: { type: 'petrol4', cylinders: 3, bore_mm: 68.0, stroke_mm: 60.4, compression: 8.9,
-           layout: 'inline', redline: 7200, intake: 'turbo', boost_bar: 0.75, turboSize: 'small',
+           layout: 'inline', redline: 7200, intake: 'turbo', boost_bar: 0.75, turboSize: 'small', compExd_mm: 40,   // RHF3 size, as on the preset (build 136)
            valves: 4, cam: 'stock', injector: 'port', octane: 95, intercooler: 'small',
-           intakeSys: 'efi', exhaust: 'stock', airFilter: 'stock' },
+           intakeSys: 'efi', exhaust: 'stock', airFilter: 'stock' ,
+           taperRpm: 3500, taperPct: 25   // the factory ECU's high-rpm boost taper, as on the preset (build 133)
+         },
     car: { chassis: 'kei', kg: 720, drive: 'fwd', tire: 'eco', gbx: 'manual', gears: 5, diff: 'open' },
     real: { hp: 64, tq: 100, t100: 11.0, top: 140, limited: true } },
 ];
@@ -210,7 +219,9 @@ for (const r of out) {
 // 3-5% to the turbo engines on top of the boost-to-the-limiter gap above (the TDI took its real compact manifold,
 // -4%). Heat the charge picks up from the ports and valves while it is drawn in is not modelled yet, and would
 // take some of that back from every engine.
-const POWER_RMS_BUDGET = 15.5;
+// Build 131: 10. The factory presets now carry their ECU's high-rpm boost taper (a calibration input), so the boosted
+// cars meet their ratings where the hardware can; what is left is the engines' own physics.
+const POWER_RMS_BUDGET = 10;
 const POWER_WORST_CAP = 15;      // currently 11 (GTI +11, Alto +11)
 const POWER_OVER_15_BUDGET = 0;
 // KNOWN GAP (build 91), one named car with its own cap — the same gap as before, showing up in a

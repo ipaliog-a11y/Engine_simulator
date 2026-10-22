@@ -165,6 +165,32 @@ footer{text-align:center;margin-top:16px;padding:8px;font-size:7px;color:#555;bo
 .replay-row button{flex:1;padding:6px 4px}
 .replay-row select{flex:0 0 64px;min-width:0}
 .replay-row #replayGauges{flex:0 0 86px}
+/* RACE (build 137) */
+.race-row{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px}
+.race-seed{display:flex;gap:4px}.race-seed input{flex:1;min-width:0}.race-seed button{padding:4px 6px;box-shadow:none}
+.race-check{display:flex;align-items:center;gap:6px;font-size:7px;color:#88aacc;margin:10px 0 2px;cursor:pointer}
+.race-ent{display:flex;align-items:center;gap:6px;font-size:7px;color:#ddd;padding:4px 0;border-bottom:1px solid #222}
+.race-ent i,.race-tower i,.rt-head i{display:inline-block;width:8px;height:8px;flex:0 0 8px;margin-right:4px;vertical-align:middle}
+.race-ent span{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.race-ent button{padding:2px 6px;font-size:7px;box-shadow:none}
+.race-add{display:flex;gap:6px;margin-top:8px}.race-add select{flex:1;min-width:0}
+.race-prog{margin-top:8px;font-size:7px;color:#88aacc}
+.race-prog-track{height:8px;background:#26263a;margin-bottom:4px}.race-prog-bar{height:100%;width:0;background:#00ff88}
+#raceScrub{margin:2px 0 10px}
+.race-tower{width:100%;border-collapse:collapse;font-size:7px;color:#ccd}
+.race-tower th{color:#88aacc;text-align:left;font-weight:normal;padding:3px 2px;border-bottom:2px solid #26263a}
+.race-tower td{padding:4px 2px;border-bottom:1px solid #1e1e2e;white-space:nowrap}
+.race-tower td.nm{max-width:110px;overflow:hidden;text-overflow:ellipsis}
+.race-tower tr[data-car]{cursor:pointer}.race-tower tr.sel td{background:#1d1d33}
+.race-fl{color:#cc66ff}.race-pb{color:#00ff88}
+.rt-card{border:2px solid #26263a;padding:6px;margin-bottom:6px;background:#0d0d18}.rt-card.sel{border-color:#00ccff}
+.rt-head{display:flex;align-items:center;gap:4px;font-size:7px;color:#ffcc00;margin-bottom:5px}
+.rt-head span{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.rt-head em{font-style:normal;color:#00ff88}
+.rt-body{display:flex;gap:8px}
+.rt-tyres{display:grid;grid-template-columns:repeat(2,44px);gap:3px;flex:0 0 auto}
+.rt-t{border:2px solid #555;padding:2px;text-align:center;font-size:6px;color:#889;line-height:1.5}.rt-t b{display:block;font-size:8px;font-weight:normal}
+.rt-side{flex:1;min-width:0;font-size:6.5px;color:#99a;line-height:1.7}
+.rt-bar{height:5px;background:#222;margin:2px 0 3px}.rt-bar div{height:100%}
 .garage-empty{font-size:7px;color:#667;line-height:1.7;padding:8px;background:#0a0a10;border:2px dashed #2a2a3a}
 /* In its own tab the garage is a wall of cards, not a scrolling strip. */
 .garage-panel .garage-list{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));max-height:none;overflow:visible;align-items:start}
@@ -282,7 +308,7 @@ table.fuelmap td.live{box-shadow:inset 0 0 0 2px #fff;font-weight:bold}
 <body>
 <div class="container">
 <header>
-<h1>PIXEL ENGINE SIM v0.6 build 130</h1>
+<h1>PIXEL ENGINE SIM v0.6 build 139</h1>
 <div class="subtitle" id="subtitle">ENGINE DESIGNER • BUILD IT, THEN DRIVE IT</div>
 </header>
 <div class="build-strip" id="buildStrip">
@@ -296,6 +322,7 @@ table.fuelmap td.live{box-shadow:inset 0 0 0 2px #fff;font-weight:bold}
 <button id="tabVehicle">VEHICLE</button>
 <button id="tabGarage">GARAGE</button>
 <button id="tabTrack">TRACK</button>
+<button id="tabRace">RACE</button>
 <button id="tabEngine" class="active">LIVE</button>
 <button id="tabDyno">DYNO</button>
 <button id="tabGuide">GUIDE</button>
@@ -333,8 +360,12 @@ table.fuelmap td.live{box-shadow:inset 0 0 0 2px #fff;font-weight:bold}
 <div class="design-grid">
 <div class="field"><label for="edIntake">INTAKE TYPE</label><select id="edIntake"><option value="na">NATURALLY ASP.</option><option value="turbo">TURBO</option><option value="supercharger">SUPERCHARGER</option></select></div>
 <div class="field"><label for="edBoost">BOOST TARGET (bar)</label><input type="number" id="edBoost" min="0" max="2.5" step="0.05" value="0"></div>
+<div class="field"><label for="edTaperRpm">BOOST TAPER FROM (rpm, 0 = off)</label><input type="number" id="edTaperRpm" min="0" max="12000" step="100" value="0"></div>
+<div class="field"><label for="edTaperPct">BOOST AT LIMITER (%)</label><input type="number" id="edTaperPct" min="20" max="100" step="1" value="100"></div>
+<div class="field"><label for="edTqLimit">ECU TORQUE LIMIT (Nm, 0 = off)</label><input type="number" id="edTqLimit" min="0" max="5000" step="10" value="0"></div>
 <div class="field"><label for="edIntercooler">INTERCOOLER</label><select id="edIntercooler"><option value="none">NONE</option><option value="small">SMALL CORE</option><option value="large">LARGE CORE</option></select></div>
 <div class="field"><label for="edTurboSize">TURBO SIZE</label><select id="edTurboSize"><option value="small">SMALL</option><option value="medium">MEDIUM</option><option value="large">LARGE</option></select></div>
+<div class="field"><label for="edCompWheel">COMPRESSOR WHEEL (mm, 0 = size)</label><input type="number" id="edCompWheel" min="0" max="110" step="1" value="0"></div>
 <div class="field"><label for="edTurboConfig">TURBO CONFIG</label><select id="edTurboConfig"><option value="single">SINGLE</option><option value="twin">TWIN</option><option value="sequential">SEQUENTIAL</option><option value="compound">COMPOUND</option></select></div>
 <div class="field"><label for="edHousing">TURBINE A/R</label><select id="edHousing"><option value="tight">TIGHT (RESPONSE)</option><option value="stock">STOCK</option><option value="loose">LOOSE (TOP END)</option></select></div>
 <div class="field"><label for="edVGT">TURBINE</label><select id="edVGT"><option value="no">FIXED HOUSING</option><option value="yes">VARIABLE GEOMETRY</option></select></div>
@@ -667,14 +698,12 @@ available at each rpm, so it feels the spool <i>point</i> move but not the trans
 build is therefore still flattered slightly by its lap time, though no longer by its 0–100.</span>
 </div>
 <div class="guide-body" data-gk="turboLimit">
-<span style="color:#c86">Known limit: the turbine is fed by <i>mean</i> manifold pressure. A real
-one is fed by each cylinder's blowdown pulse, whose peak at low engine speed is far above the
-mean, so a real turbo gets 20–45% more turbine work at the threshold than this model gives it.
-That is measured rather than guessed, and it is worth most on a twin-scroll manifold, which this
-app does not yet reward. A second one: the turbine throat is taken as A/R × the <i>wheel</i>
-radius, where it should be the radius to the volute throat centroid — further out — so every
-turbine here is smaller than the frame it names, and the wastegate has always covered for
-it.</span>
+<span style="color:#c86">Known limit: the turbine is credited with each cylinder's blowdown pulse, timed
+from the cam, but a twin-scroll manifold that keeps the pulses apart is not rewarded yet. The
+turbine throat is taken at the volute's centroid radius, as A/R defines it (build 133; it was the
+wheel's radius, which made every turbine smaller than the frame it names). The compressor's
+efficiency island follows its speed line, so a turbo asked for low boost at low flow compresses
+efficiently, as on a real map.</span>
 </div>
 </section>
 <section class="guide-page" id="gp-vgt" data-cat="air" data-title="Variable geometry" hidden>
@@ -930,6 +959,51 @@ the car's own minimum-time line, and the driver never makes a mistake or takes a
 record.</span>
 </div>
 </section>
+<section class="guide-page" id="gp-race" data-cat="track" data-title="The race" hidden>
+<h4 class="guide-title">The race</h4>
+<div class="guide-body" data-gk="race">
+<b>RACE</b> puts two to eight cars on one circuit and runs them to a lap count. Nobody drives: you
+choose the cars, the circuit, the laps and the rules, press <b>START RACE</b>, and watch. The cars
+can be the one on the VEHICLE tab, any car in the garage, or any factory car, and the same car can be
+entered twice.<br>
+<b>How it is worked out.</b> Each car's lap is solved first, by the same solver the TRACK tab uses, on
+its own racing line: at five levels of tyre grip and three fuel loads, and once from a standing start.
+The race then runs every car along its line on a 50 ms clock, reading its speed off those solves for
+the grip and the fuel it has at that moment. A car alone on the circuit, on perfect tyres, laps in the
+TRACK tab's time to within a few hundredths.<br>
+<b>Tyres.</b> Each of the four tyres has a temperature. It rises with the work the tyre does sliding
+(more as it nears its grip) and rolling, and falls with the air over it, faster at speed. Each compound
+grips best in its own window (a road tyre ~45-110 °C, a slick ~76-120 °C). Below it the tyre has
+less grip, and above it the grip falls away twice as fast. Wear comes from the same sliding work, faster
+on a softer compound and faster again overheated; past ~70% it goes off a cliff. The tyre squares show
+blue when cold, green in the window, yellow and then red when hot. <b>TYRE WARMERS</b> start road
+compounds above eco at 70 °C rather than 25 °C.<br>
+<b>Fuel.</b> The fuel a car burns is the power it spends at each point times its own engine's BSFC at
+that rpm and boost. An injected engine cuts the fuel off the throttle and a carburettor cannot. The tank
+is the body's (a kei car 30 L, a GT 80 L), and a car gets lighter as the fuel goes.<br>
+<b>Pit stops.</b> With <b>AUTO STRATEGY</b> each car plans its stops before the start, from a practice
+run on its own: the fewest the tank and the tyres allow, or one or two more when fresh tyres win back
+more than the pit lane costs. A car starts with the fuel for its first stint and refuels for each
+next one. With <b>NO STOPS</b> every car starts full and runs on one set of tyres, and a car that
+cannot make the distance runs dry and retires.<br>
+<b>Traffic.</b> A car that catches another is held up behind it until it has a few km/h more speed on a
+straight or into a braking zone (more on a narrow circuit), and then goes by. A car running within 40 m
+behind on a straight gets a tow; within a second behind through a corner it loses a little grip in
+the dirty air. Lapped cars are shown the blue flag and let the leaders through.<br>
+<b>The driver.</b> No lap is perfect: each one is drawn up to 0.6% off the car's limit, and now and
+then there is a mistake in a corner, more often on tyres that are worn or too hot. The draws come from
+the <b>SEED</b>, so the same seed gives the same race, to the hundredth. <b>GRID</b> is the qualifying
+order (one hot lap each, on an empty tank) or that order reversed.<br>
+<b>Watching.</b> The map shows every car. The timing tower gives the gap to the leader, the last lap and
+the best (purple for the fastest of the race), and the stops. Click a car in it to follow that car. The
+cards under it show each car's tyres, fuel and brakes. The speed runs from 1× to 100×, and the bar
+under the controls scrubs through the race.<br>
+<span style="color:#c86">What is a rule and not physics: overtaking, the tow, dirty air, the pit
+lane's time loss and driver error. The cars also share one racing line and do not fight for space
+on it; a pass is drawn alongside. The brake temperatures shown are the lap solve's, not carried from
+lap to lap.</span>
+</div>
+</section>
 <section class="guide-page" id="gp-reports" data-cat="track" data-title="Reports" hidden>
 <h4 class="guide-title">Reports</h4>
 <div class="guide-body" data-gk="reports">
@@ -1076,6 +1150,7 @@ This is a physics model, and like every model it leaves things out. These are th
 <div class="design-grid">
 <div class="field"><label for="vhBrake">BRAKES</label><select id="vhBrake"><option value="steel">STEEL DISC</option><option value="slotted">SLOTTED/VENTED</option><option value="big">BIG BRAKE KIT</option><option value="carbon">CARBON-CERAMIC</option><option value="hd">HEAVY-DUTY</option></select></div>
 <div class="field"><label for="vhRotor">ROTOR SIZE (mm)</label><input type="number" id="vhRotor" min="250" max="420" step="10" value="330"></div>
+<div class="field"><label for="vhSteer">STEERING RATIO (:1)</label><input type="number" id="vhSteer" min="8" max="22" step="0.5" value="15"></div>
 <div class="field"><label for="vhSusp">SUSPENSION</label><select id="vhSusp"><option value="comfort">COMFORT</option><option value="sport">SPORT</option><option value="coilover">COILOVERS</option><option value="race">RACE/ADJUST</option></select></div>
 </div>
 <div class="build-row">
@@ -1186,6 +1261,41 @@ This is a physics model, and like every model it leaves things out. These are th
 <button id="btnImportGpx" title="Load a circuit from a GPX trace">IMPORT GPX TRACK</button>
 </div>
 <input type="file" id="gpxInput" accept=".gpx,application/gpx+xml,text/xml" style="display:none">
+</div>
+<div class="panel" id="racePanel" style="display:none">
+<h2>Race</h2>
+<div id="raceSetup">
+<div class="field"><label for="raceTrk">CIRCUIT</label><select id="raceTrk"></select></div>
+<div class="race-row">
+<div class="field"><label for="raceLaps">LAPS</label><input type="number" id="raceLaps" min="1" max="100" step="1" value="5"></div>
+<div class="field"><label for="raceGrid">GRID</label><select id="raceGrid"><option value="quali">QUALIFYING</option><option value="reverse">REVERSED</option></select></div>
+</div>
+<div class="race-row">
+<div class="field"><label for="racePits">PIT STOPS</label><select id="racePits"><option value="auto">AUTO STRATEGY</option><option value="none">NO STOPS</option></select></div>
+<div class="field"><label for="raceSeed">SEED</label><div class="race-seed"><input type="number" id="raceSeed" min="1" max="99999" step="1" value="1"><button id="raceReroll" title="New seed" aria-label="New seed">🎲</button></div></div>
+</div>
+<label class="race-check"><input type="checkbox" id="raceWarmers"> <span>TYRE WARMERS</span></label>
+<div class="design-section">Entrants</div>
+<div id="raceEntrants"></div>
+<div class="race-add"><select id="raceAddSel" class="opt-select" aria-label="Car to add"></select><button id="raceAddBtn">ADD</button></div>
+<div class="build-row"><button id="raceStart">START RACE</button></div>
+<div class="race-prog" id="raceProg" hidden><div class="race-prog-track"><div class="race-prog-bar"></div></div><span></span></div>
+<div class="perf-note">Nobody drives. Each car runs its own lap solve, with its tyres heating and wearing, its fuel burning off and the cars around it in the way. Pace, fuel and tyres come from the physics; traffic, overtaking and pit loss are rules.</div>
+</div>
+<div id="raceLive" hidden>
+<div class="perf-head" id="raceHead">—</div>
+<div class="replay-row">
+<button id="racePlay" class="toggle on" aria-pressed="true">PAUSE</button>
+<select id="raceSpeed" class="opt-select" aria-label="Replay speed"><option value="1">1×</option><option value="2">2×</option><option value="5" selected>5×</option><option value="10">10×</option><option value="30">30×</option><option value="100">100×</option></select>
+<button id="raceSkip">FINISH</button>
+<button id="raceNew">NEW RACE</button>
+</div>
+<input type="range" id="raceScrub" min="0" max="1000" value="0" aria-label="Race time">
+<div id="raceTower"></div>
+<div class="design-section">Cars</div>
+<div id="raceTele"></div>
+<div id="raceResults"></div>
+</div>
 </div>
 </div>
 <div class="dyno-result" id="dynoResult" hidden aria-live="polite"></div>
@@ -1757,12 +1867,22 @@ function buildFillTable(){
   const Cd=intakeCd();e.intakeCd=Cd;
   const tb=[],lo=800,hi=e.redline+500,lens=e.runnerVariable?[e.runnerL,e.runnerLShort]:[e.runnerL];
   for(let r=lo;r<=hi;r+=250){
-    let f=0;
+    let f=0,best=0;
     const Tres=wallTrace(e,r,1).Tres;
-    for(const L of lens)for(let adv=0;adv<=(e.vvt?VVT_AUTHORITY:0);adv+=5)f=Math.max(f,intakeFill(r,adv,L,Tres,Cd));
-    tb.push({rpm:r,f});
+    for(const L of lens)for(let adv=0;adv<=(e.vvt?VVT_AUTHORITY:0);adv+=5){
+      const x=intakeFill(r,adv,L,Tres,Cd);if(x>f){f=x;best=adv;}
+    }
+    tb.push({rpm:r,f,adv:best});
   }
   e.fillTable=tb;
+}
+// Where the intake valve closes at full load, crank degrees after BDC: the phase the table chose (build 134).
+function ivcAt(rpm){
+  const e=engine,tb=e.fillTable;if(!tb)return null;
+  let adv=tb[tb.length-1].adv;
+  if(rpm<=tb[0].rpm)adv=tb[0].adv;
+  else for(let i=1;i<tb.length;i++)if(rpm<=tb[i].rpm){const a=tb[i-1],b=tb[i];adv=a.adv+(b.adv-a.adv)*(rpm-a.rpm)/(b.rpm-a.rpm);break;}
+  return ivcAbdc(e.camDur,e.camLSA,adv);
 }
 function fillAt(rpm){
   const tb=engine.fillTable;if(!tb)return 1;
@@ -1879,13 +1999,11 @@ function backPressureBar(rpm,T){
     // On a VGT the throat is whatever the vanes have been scheduled to; below target they are shut
     // and the piston pays the full nozzle pressure for it, which is the whole point of the device.
     //
-    // The gate stays in the loop at the OPEN end, and that is an artefact of this model's throat
-    // convention rather than of the hardware: A_throat is taken as (A/R)x R_WHEEL, where R should
-    // be the radius to the volute throat centroid — roughly 1.5-1.8x further out. Every turbine
-    // here is therefore smaller than the frame it names, which the wastegate has always covered
-    // for. A real VGT needs no gate because its ring, properly sized, swallows the lot; here the
-    // open position cannot, so the surplus is dumped exactly as a fixed frame's is. Retire this
-    // when the throat convention is corrected — at which point the whole turbo side recalibrates.
+    // The gate stays in the loop at the OPEN end. It was blamed on the throat convention (the throat
+    // taken at the wheel's radius, 1.5-1.8x too small); build 133 takes it at the volute centroid,
+    // and the presets' open rings still have power to spare from mid-range, so the surplus is still
+    // dumped exactly as a fixed frame's is. A real VGT needs no gate because its ring, sized for the
+    // engine, swallows the lot: these rings are the size class's, not the maker's.
     return pipe+(manifoldPR(mA,mEx,map,T,turbineThroatAt(rpm,map,T),e.compEff,compFlowFrac(rpm,mAir))-1);
   }
   return pipe;
@@ -1914,8 +2032,8 @@ function turbineThroatAt(rpm,map,T){
   if(!(e.vgtShut>0))return e.turbineArea;
   const mAir=(e.dispCyl_L/1000)*e.cylinders*(rpm/60*(e.chargesPerRev||0.5))*(101325*Math.max(1,map)/(287*313));
   const u=unitsAt(rpm), mEx=mAir*1.06/u, mA=mAir/u;
-  const Ut=turbineTipFor(1+e.maxBoost,compFlowFrac(rpm,mAir),298);
-  return vgtThroat(mEx,compPowerAt(mA,1+e.maxBoost,313,e.compEff),T,e.turbineArea,e.vgtShut,map,Ut).area;
+  const Ut=turbineTipFor(1+boostTarget(rpm),compFlowFrac(rpm,mAir),298);
+  return vgtThroat(mEx,compPowerAt(mA,1+boostTarget(rpm),313,e.compEff),T,e.turbineArea,e.vgtShut,map,Ut).area;
 }
 // ---- late intake valve closing: why a big cam guts the bottom end ----
 // This is what CAM.lowLoss was standing in for, and it is pure geometry. A cam does not close the
@@ -2233,7 +2351,7 @@ function shaftNetPower(shaftRpm,mAir,T3,T01,rpm){
   // in steadyBoost asks "can the shaft reach this PR", and if it only ever sees the capped value it
   // can never answer yes at the cap itself — which silently reported a frame as unable to make a
   // boost it had 40 kW of turbine power spare to make.
-  const prCap=Math.min(pr,1+e.maxBoost);
+  const prCap=Math.min(pr,1+boostTarget(rpm||0));
   const mEx=mAir*1.06/units, mA=mAir/units;
   const Ut=Math.PI*TURB_WHEEL*e.compExd*Math.max(0,shaftRpm)/60;   // turbine tip speed
   // VGT vanes schedule against the BOOST TARGET, not against what the compressor happens to be
@@ -2247,7 +2365,7 @@ function shaftNetPower(shaftRpm,mAir,T3,T01,rpm){
   // while the steady solver (which does not) said it held 1.20. A wastegated frame never showed it,
   // because it always has surplus to dump.
   const t=e.vgtShut>0
-    ? vgtThroat(mEx,compPowerAt(mA,1+e.maxBoost,T01,eta)+shaftLossPower(shaftRpm)/units,T3,e.turbineArea,e.vgtShut,prCap,Ut)
+    ? vgtThroat(mEx,compPowerAt(mA,1+boostTarget(rpm||0),T01,eta)+shaftLossPower(shaftRpm)/units,T3,e.turbineArea,e.vgtShut,prCap,Ut)
     : turbinePower(mEx,e.turbineArea,T3,prCap,0,Ut);
   const area=t.area||e.turbineArea;
   const Pt=t.P;
@@ -2294,8 +2412,8 @@ function steadyBoost(rpm){
     if(found<0)return false;                      // cannot reach this PR at any shaft speed
     return shaftNetPower(found,mAir,T3,313,rpm).net>=0;
   };
-  const target=1+e.maxBoost;
-  if(canHold(target))return e.maxBoost;           // wastegating
+  const target=1+boostTarget(rpm);
+  if(canHold(target))return target-1;           // wastegating
   if(!canHold(1.005))return 0;                    // not spooled
   let lo=1.005,hi=target;
   for(let i=0;i<24;i++){const m=(lo+hi)/2;if(canHold(m))lo=m;else hi=m;}
@@ -2362,7 +2480,7 @@ function deriveGasDynamics(){
   // Turbine throat, from the housing A/R and the turbine wheel it is wrapped around. Twin frames
   // split the exhaust between two turbines, so each sees half the flow.
   if(e.intake==='turbo'){
-    const tb=TURBO[e.turboSize]||TURBO.medium;
+    const tb=turboFrame(e);
     // A vane ring replaces the fixed throat with a range. `turbineArea` stays the WIDEST the
     // turbine can be, so every existing call site reads the open position by default; `vgtShut`
     // is non-zero only on a VGT and is what tells the rest of the model there is anything to
@@ -2458,7 +2576,7 @@ const AIR_FILTER={
 const DEFAULT_ENGINE={
   type:'petrol4',
   cylinders:4,bore_mm:81,stroke_mm:78,compression:12.5,layout:'inline',redline:7200,
-  intake:'na',boost_bar:0,intercooler:'large',turboSize:'medium',turboConfig:'single',housing:'stock',vgt:false,scType:'roots',antilag:false,nitrous:'none',exhaust:'sport',cat:'stock',
+  intake:'na',boost_bar:0,intercooler:'large',turboSize:'medium',compExd_mm:0,taperRpm:0,taperPct:100,tqLimit:0,turboConfig:'single',housing:'stock',vgt:false,scType:'roots',antilag:false,nitrous:'none',exhaust:'sport',cat:'stock',
   intakeSys:'efi',airFilter:'perf',
   cam:'stock',vvt:true,valves:4,valveMat:'steel',valveSpring:'stock',runner:'medium',
   fuel:'gasoline',octane:95,injector:'direct',ignitionAdv:22,ignitionType:'coil',timingMode:'auto',afrMode:'auto',
@@ -2487,23 +2605,37 @@ const PRESETS=[
   // ---- Real engines (build 96) ----------------------------------------------------------------
   // Geometry and hardware from published specifications, so the model can be compared with the real
   // thing; `real` carries the maker's rating (hp, rpm; Nm, rpm). Nothing here is tuned to land on it —
+  // ECU boost taper (build 131): taperRpm/taperPct are the factory ECU's high-rpm boost calibration, solved so peak
+  // power meets the maker's rating with the taper starting at or after the maker's peak-torque rpm (where an ECU
+  // trims), the gentlest such taper. It is a CONTROL input, like the speed limiter or the fuel: the physics is
+  // untouched, and setting BOOST TAPER FROM to 0 shows what the hardware itself makes. Left off where the hardware is
+  // at or below the rating, and where no taper from the torque peak reaches it: the RB26's 280 PS is a voluntary
+  // cap, and the Cummins's excess is the diesel's own top end. Re-solved in build 132 (the octane index moved the
+  // knock limit): the GTI and the Hellcat now exceed their ratings on the hardware alone and carry a taper. And in
+  // build 133 (the turbine throat, the compressor island, real wheels): the Civic on its 58 mm wheel is now at its
+  // rating on the hardware alone and carries none.
+  // ECU torque limit (build 138): tqLimit is the maker's torque where the maker quotes it as a PLATEAU over a speed
+  // range (GTI 350 Nm 1500-4400, FK8 400 Nm 2500-4500, GR Yaris 360 Nm 3000-4600, EcoBoost 170 Nm 1400-4500, RS3
+  // 480 Nm 1700-5850, TDI 320 Nm 1750-3000, N57 560 Nm 1500-3000): a flat line across thousands of rpm is a
+  // torque-based ECU's calibration, not an engine's curve. Engines quoted at a single peak (the 2JZ, EJ257, 4G63,
+  // RB26, the kei and city turbos, the truck diesels) carry none. The tapers above were solved with it in place.
   // the gap between the dyno and `real` IS the comparison. `unsure` names the inputs that are not in
   // the maker's published data and were set from typical practice (mostly boost pressure). Ratings
   // marked `note` are not what the engine makes: the JDM 280 PS / kei 64 PS gentlemen's agreements.
-  {cat:'Kei & City',name:'Suzuki K6A turbo (Alto Works)',real:{hp:64,hpRpm:6000,tq:100,tqRpm:3000},note:'kei-class 64 PS legal cap',
-   engine:{cylinders:3,bore_mm:68.0,stroke_mm:60.4,compression:8.9,redline:7200,intake:'turbo',boost_bar:0.75,turboSize:'small',cam:'stock',injector:'port',octane:95,intercooler:'small',exhaust:'stock',airFilter:'stock'}},
+  {cat:'Kei & City',name:'Suzuki K6A turbo (Alto Works)',real:{hp:64,hpRpm:6000,tq:100,tqRpm:3000},unsure:['compExd_mm'],note:'kei-class 64 PS legal cap',
+   engine:{cylinders:3,bore_mm:68.0,stroke_mm:60.4,compression:8.9,redline:7200,intake:'turbo',boost_bar:0.75,turboSize:'small',compExd_mm:40,cam:'stock',injector:'port',intercooler:'small',exhaust:'stock',airFilter:'stock',octane:95,taperRpm:3500,taperPct:25}},
   {cat:'Kei & City',name:'Toyota 1KR-FE (Aygo 1.0)',real:{hp:68,hpRpm:6000,tq:93,tqRpm:3600},
    engine:{cylinders:3,bore_mm:71.0,stroke_mm:84.0,compression:10.5,redline:6500,cam:'stock',vvt:true,injector:'port',octane:95,exhaust:'stock',airFilter:'stock',runner:'long'}},
   {cat:'Kei & City',name:'Fiat 0.9 TwinAir turbo',real:{hp:84,hpRpm:5500,tq:145,tqRpm:1900},unsure:['boost_bar'],
-   engine:{cylinders:2,bore_mm:80.5,stroke_mm:86.0,compression:10.0,redline:6000,intake:'turbo',boost_bar:1.0,turboSize:'small',cam:'stock',vvt:true,injector:'port',octane:95,intercooler:'small',exhaust:'stock',airFilter:'stock'}},
+   engine:{cylinders:2,bore_mm:80.5,stroke_mm:86.0,compression:10.0,redline:6000,intake:'turbo',boost_bar:1.0,turboSize:'small',compExd_mm:40,cam:'stock',vvt:true,injector:'port',intercooler:'small',exhaust:'stock',airFilter:'stock',octane:95,taperRpm:2000,taperPct:35}},
   {cat:'Compact Turbo',name:'Ford 1.0 EcoBoost (Fiesta 125)',real:{hp:123,hpRpm:6000,tq:170,tqRpm:1400},unsure:['boost_bar'],
-   engine:{cylinders:3,bore_mm:71.9,stroke_mm:82.0,compression:10.0,redline:6500,intake:'turbo',boost_bar:1.2,turboSize:'small',cam:'stock',vvt:true,injector:'direct',octane:95,intercooler:'small',exhaust:'stock',airFilter:'stock'}},
+   engine:{cylinders:3,bore_mm:71.9,stroke_mm:82.0,compression:10.0,redline:6500,intake:'turbo',boost_bar:1.2,turboSize:'small',cam:'stock',vvt:true,injector:'direct',intercooler:'small',exhaust:'stock',airFilter:'stock',octane:95,taperRpm:3000,taperPct:53,tqLimit:170}},
   {cat:'Compact Turbo',name:'VW EA888 2.0 TSI (Golf GTI Mk7)',real:{hp:220,hpRpm:4500,tq:350,tqRpm:1500},
-   engine:{cylinders:4,bore_mm:82.5,stroke_mm:92.8,compression:9.6,redline:6500,intake:'turbo',boost_bar:1.1,turboSize:'small',cam:'stock',injector:'direct',octane:98,intercooler:'large',exhaust:'stock',airFilter:'stock'}},
+   engine:{cylinders:4,bore_mm:82.5,stroke_mm:92.8,compression:9.6,redline:6500,intake:'turbo',boost_bar:1.1,turboSize:'small',cam:'stock',injector:'direct',intercooler:'large',exhaust:'stock',airFilter:'stock',octane:98,taperRpm:1500,taperPct:60,tqLimit:350}},
   {cat:'Compact Turbo',name:'Toyota G16E-GTS (GR Yaris)',real:{hp:257,hpRpm:6500,tq:360,tqRpm:3000},unsure:['boost_bar'],
-   engine:{cylinders:3,bore_mm:87.5,stroke_mm:89.7,compression:10.5,redline:7000,intake:'turbo',boost_bar:1.4,turboSize:'medium',cam:'sport',vvt:true,injector:'direct',octane:98,intercooler:'large',exhaust:'sport',airFilter:'perf'}},
+   engine:{cylinders:3,bore_mm:87.5,stroke_mm:89.7,compression:10.5,redline:7000,intake:'turbo',boost_bar:1.4,turboSize:'medium',compExd_mm:56,cam:'sport',vvt:true,injector:'direct',intercooler:'large',exhaust:'sport',airFilter:'perf',octane:98,taperRpm:3000,taperPct:60,tqLimit:360}},
   {cat:'Compact Turbo',name:'Honda K20C1 (Civic Type R FK8)',real:{hp:316,hpRpm:6500,tq:400,tqRpm:2500},unsure:['boost_bar'],
-   engine:{cylinders:4,bore_mm:86.0,stroke_mm:85.9,compression:9.8,redline:7000,intake:'turbo',boost_bar:1.6,turboSize:'medium',cam:'sport',vvt:true,injector:'direct',octane:98,intercooler:'large',exhaust:'sport',airFilter:'perf'}},
+   engine:{cylinders:4,bore_mm:86.0,stroke_mm:85.9,compression:9.8,redline:7000,intake:'turbo',boost_bar:1.6,turboSize:'medium',compExd_mm:58,cam:'sport',vvt:true,injector:'direct',intercooler:'large',exhaust:'sport',airFilter:'perf',octane:98,tqLimit:400}},
   {cat:'NA Sports',name:'Mazda B6-ZE (MX-5 NA)',real:{hp:115,hpRpm:6500,tq:136,tqRpm:5500},
    engine:{cylinders:4,bore_mm:78.0,stroke_mm:83.6,compression:9.4,redline:7200,cam:'stock',vvt:false,injector:'port',octane:95,exhaust:'stock',airFilter:'stock'}},
   {cat:'NA Sports',name:'Toyota 4A-GE (AE86)',real:{hp:128,hpRpm:6600,tq:149,tqRpm:5200},
@@ -2514,16 +2646,16 @@ const PRESETS=[
    engine:{cylinders:6,bore_mm:87.0,stroke_mm:91.0,compression:11.5,redline:8000,cam:'race',injector:'port',octane:98,intakeSys:'itb',airFilter:'perf',runner:'short',exhaust:'race'}},
   {cat:'NA Sports',name:'Porsche 4.0 flat-six (911 GT3 991.2)',real:{hp:493,hpRpm:8250,tq:460,tqRpm:6000},
    engine:{cylinders:6,layout:'boxer',bore_mm:102.0,stroke_mm:81.5,compression:13.3,redline:9000,cam:'race',vvt:true,valveSpring:'race',valveMat:'titanium',injector:'direct',octane:98,exhaust:'race',airFilter:'perf',runner:'variable'}},
-  {cat:'Turbo Performance',name:'Toyota 2JZ-GTE (Supra A80)',real:{hp:320,hpRpm:5600,tq:427,tqRpm:4000},note:'export rating; JDM cars were quoted at 280 PS',
-   engine:{cylinders:6,bore_mm:86.0,stroke_mm:86.0,compression:8.5,redline:6800,intake:'turbo',boost_bar:0.75,turboSize:'medium',turboConfig:'sequential',cam:'sport',vvt:false,injector:'port',octane:98,intercooler:'large',exhaust:'sport',airFilter:'perf'}},   // VVT-i only from mid-1997 (MY1998)
+  {cat:'Turbo Performance',name:'Toyota 2JZ-GTE (Supra A80)',real:{hp:320,hpRpm:5600,tq:427,tqRpm:4000},unsure:['compExd_mm'],note:'export rating; JDM cars were quoted at 280 PS',
+   engine:{cylinders:6,bore_mm:86.0,stroke_mm:86.0,compression:8.5,redline:6800,intake:'turbo',boost_bar:0.75,turboSize:'medium',compExd_mm:58,turboConfig:'sequential',cam:'sport',vvt:false,injector:'port',intercooler:'large',exhaust:'sport',airFilter:'perf',octane:98,taperRpm:4000,taperPct:35}},   // VVT-i only from mid-1997 (MY1998)
   {cat:'Turbo Performance',name:'Nissan RB26DETT (Skyline GT-R R34)',real:{hp:276,hpRpm:6800,tq:392,tqRpm:4400},unsure:['runner'],note:'JDM 280 PS gentlemen\'s agreement; real output is higher',
-   engine:{cylinders:6,bore_mm:86.0,stroke_mm:73.7,compression:8.5,redline:8000,intake:'turbo',boost_bar:0.7,turboSize:'small',turboConfig:'twin',cam:'sport',vvt:false,injector:'port',intakeSys:'itb',octane:98,intercooler:'large',exhaust:'sport',airFilter:'perf',runner:'short'}},
+   engine:{cylinders:6,bore_mm:86.0,stroke_mm:73.7,compression:8.5,redline:8000,intake:'turbo',boost_bar:0.7,turboSize:'small',turboConfig:'twin',cam:'sport',vvt:false,injector:'port',intakeSys:'itb',intercooler:'large',exhaust:'sport',airFilter:'perf',runner:'short',octane:98}},
   {cat:'Turbo Performance',name:'Subaru EJ257 (Impreza WRX STI)',real:{hp:296,hpRpm:6000,tq:407,tqRpm:4000},unsure:['boost_bar','runner'],
-   engine:{cylinders:4,layout:'boxer',bore_mm:99.5,stroke_mm:79.0,compression:8.2,redline:7000,intake:'turbo',boost_bar:1.0,turboSize:'medium',cam:'sport',vvt:true,injector:'port',octane:98,intercooler:'small',exhaust:'sport',airFilter:'perf',runner:'long'}},
-  {cat:'Turbo Performance',name:'Mitsubishi 4G63T (Lancer Evo IX)',real:{hp:286,hpRpm:6500,tq:392,tqRpm:3500},unsure:['boost_bar'],
-   engine:{cylinders:4,bore_mm:85.0,stroke_mm:88.0,compression:8.8,redline:7000,intake:'turbo',boost_bar:1.3,turboSize:'medium',cam:'sport',vvt:true,injector:'port',octane:98,intercooler:'large',exhaust:'sport',airFilter:'perf'}},
-  {cat:'Turbo Performance',name:'Audi 2.5 TFSI (RS3 8V)',real:{hp:394,hpRpm:5850,tq:480,tqRpm:1700},unsure:['boost_bar'],
-   engine:{cylinders:5,bore_mm:82.5,stroke_mm:92.8,compression:10.0,redline:7000,intake:'turbo',boost_bar:1.4,turboSize:'large',cam:'sport',vvt:true,injector:'direct',octane:98,intercooler:'large',exhaust:'sport',airFilter:'perf'}},
+   engine:{cylinders:4,layout:'boxer',bore_mm:99.5,stroke_mm:79.0,compression:8.2,redline:7000,intake:'turbo',boost_bar:1.0,turboSize:'medium',cam:'sport',vvt:true,injector:'port',intercooler:'small',exhaust:'sport',airFilter:'perf',runner:'long',octane:98,taperRpm:4000,taperPct:36}},
+  {cat:'Turbo Performance',name:'Mitsubishi 4G63T (Lancer Evo IX)',real:{hp:286,hpRpm:6500,tq:392,tqRpm:3500},unsure:['boost_bar','compExd_mm'],
+   engine:{cylinders:4,bore_mm:85.0,stroke_mm:88.0,compression:8.8,redline:7000,intake:'turbo',boost_bar:1.3,turboSize:'medium',compExd_mm:68,cam:'sport',vvt:true,injector:'port',intercooler:'large',exhaust:'sport',airFilter:'perf',octane:98,taperRpm:3500,taperPct:49}},
+  {cat:'Turbo Performance',name:'Audi 2.5 TFSI (RS3 8V)',real:{hp:394,hpRpm:5850,tq:480,tqRpm:1700},unsure:['boost_bar','turboSize'],
+   engine:{cylinders:5,bore_mm:82.5,stroke_mm:92.8,compression:10.0,redline:7000,intake:'turbo',boost_bar:1.4,turboSize:'medium',cam:'sport',vvt:true,injector:'direct',octane:98,intercooler:'large',exhaust:'sport',airFilter:'perf',taperRpm:2000,taperPct:64,tqLimit:480}},
   {cat:'American V8',name:'GM LS3 (Corvette C6)',real:{hp:430,hpRpm:5900,tq:575,tqRpm:4600},
    engine:{cylinders:8,layout:'v',bore_mm:103.25,stroke_mm:92.0,compression:10.7,redline:6600,valves:2,cam:'sport',vvt:false,valveSpring:'perf',injector:'port',octane:98,exhaust:'sport',airFilter:'perf'}},
   {cat:'American V8',name:'GM LS7 (Corvette Z06 C6)',real:{hp:505,hpRpm:6300,tq:637,tqRpm:4800},
@@ -2531,7 +2663,7 @@ const PRESETS=[
   {cat:'American V8',name:'Ford Coyote 5.0 (Mustang GT 2018)',real:{hp:460,hpRpm:7000,tq:569,tqRpm:4600},
    engine:{cylinders:8,layout:'v',bore_mm:93.0,stroke_mm:92.7,compression:12.0,redline:7500,cam:'sport',vvt:true,injector:'direct',octane:98,exhaust:'sport',airFilter:'perf',runner:'variable'}},
   {cat:'American V8',name:'Dodge 6.2 Hellcat (Challenger SRT)',real:{hp:707,hpRpm:6000,tq:881,tqRpm:4000},
-   engine:{cylinders:8,layout:'v',bore_mm:103.9,stroke_mm:90.9,compression:9.5,redline:6200,intake:'supercharger',boost_bar:0.8,scType:'screw',valves:2,cam:'sport',vvt:true,injector:'port',octane:98,intercooler:'large',exhaust:'sport',airFilter:'perf'}},
+   engine:{cylinders:8,layout:'v',bore_mm:103.9,stroke_mm:90.9,compression:9.5,redline:6200,intake:'supercharger',boost_bar:0.8,scType:'screw',valves:2,cam:'sport',vvt:true,injector:'port',octane:98,intercooler:'large',exhaust:'sport',airFilter:'perf',taperRpm:4000,taperPct:72}},
   {cat:'Exotic',name:'Lamborghini 5.2 V10 (Huracán LP610-4)',real:{hp:602,hpRpm:8250,tq:560,tqRpm:6500},
    engine:{cylinders:10,layout:'v',bore_mm:84.5,stroke_mm:92.8,compression:12.7,redline:8500,cam:'race',vvt:true,valveSpring:'race',injector:'direct',octane:98,exhaust:'race',airFilter:'perf',runner:'variable'}},
   {cat:'Exotic',name:'Ferrari F140 V12 (812 Superfast)',real:{hp:789,hpRpm:8500,tq:718,tqRpm:7000},
@@ -2543,11 +2675,11 @@ const PRESETS=[
   {cat:'Rotary',name:'Mazda 13B-MSP Renesis (RX-8)',real:{hp:232,hpRpm:8200,tq:211,tqRpm:5500},
    engine:{type:'rotary',cylinders:2,bore_mm:105,stroke_mm:80,ecc_mm:15,compression:10.0,redline:9000,injector:'port',octane:98,exhaust:'stock',airFilter:'stock',radiator:'large',oilCooler:true}},
   {cat:'Diesel',name:'VW EA288 2.0 TDI (Golf 150)',real:{hp:148,hpRpm:3500,tq:320,tqRpm:1750},unsure:['runner'],
-   engine:{type:'diesel',vvt:false,cylinders:4,bore_mm:81.0,stroke_mm:95.5,compression:16.2,redline:4800,intake:'turbo',boost_bar:1.3,turboSize:'small',vgt:true,injector:'direct',intercooler:'large',exhaust:'stock',airFilter:'stock',runner:'short'}},
+   engine:{type:'diesel',vvt:false,cylinders:4,bore_mm:81.0,stroke_mm:95.5,compression:16.2,redline:4800,intake:'turbo',boost_bar:1.3,turboSize:'small',vgt:true,injector:'direct',intercooler:'large',exhaust:'stock',airFilter:'stock',runner:'short',taperRpm:2000,taperPct:54,tqLimit:320}},
   {cat:'Diesel',name:'BMW N57 3.0d (330d F30)',real:{hp:254,hpRpm:4000,tq:560,tqRpm:2000},unsure:['boost_bar','runner'],
-   engine:{type:'diesel',vvt:false,cylinders:6,bore_mm:84.0,stroke_mm:90.0,compression:16.5,redline:5000,intake:'turbo',boost_bar:1.5,turboSize:'medium',vgt:true,injector:'direct',intercooler:'large',exhaust:'stock',airFilter:'stock',runner:'short'}},
+   engine:{type:'diesel',vvt:false,cylinders:6,bore_mm:84.0,stroke_mm:90.0,compression:16.5,redline:5000,intake:'turbo',boost_bar:1.5,turboSize:'medium',vgt:true,injector:'direct',intercooler:'large',exhaust:'stock',airFilter:'stock',runner:'short',taperRpm:2000,taperPct:58,tqLimit:560}},
   {cat:'Diesel',name:'GM Duramax L5P 6.6 (Silverado HD)',real:{hp:445,hpRpm:2800,tq:1234,tqRpm:1600},unsure:['boost_bar','redline','runner'],
-   engine:{type:'diesel',vvt:false,cylinders:8,layout:'v',bore_mm:103.0,stroke_mm:99.0,compression:16.0,redline:3800,intake:'turbo',boost_bar:1.9,turboSize:'large',vgt:true,injector:'direct',intercooler:'large',exhaust:'stock',airFilter:'stock',runner:'short'}},
+   engine:{type:'diesel',vvt:false,cylinders:8,layout:'v',bore_mm:103.0,stroke_mm:99.0,compression:16.0,redline:3800,intake:'turbo',boost_bar:1.9,turboSize:'large',vgt:true,injector:'direct',intercooler:'large',exhaust:'stock',airFilter:'stock',runner:'short',taperRpm:2000,taperPct:26}},
   {cat:'Diesel',name:'Cummins 6.7 (Ram HD 2019 HO)',real:{hp:400,hpRpm:2800,tq:1356,tqRpm:1800},unsure:['boost_bar','compression','redline','runner'],
    engine:{type:'diesel',vvt:false,cylinders:6,bore_mm:107.0,stroke_mm:124.0,compression:17.3,redline:3500,intake:'turbo',boost_bar:2.0,turboSize:'large',vgt:true,injector:'direct',intercooler:'large',exhaust:'stock',airFilter:'stock',runner:'short'}},
   {cat:'Two-Stroke',name:'Yamaha RD350LC (2-stroke twin)',real:{hp:46,hpRpm:8500,tq:40,tqRpm:8000},unsure:['compression','redline'],
@@ -2616,6 +2748,65 @@ let activeChallenge='free';
 // technical readouts (canvas schematic, status ticker, design-summary spec) stay in English —
 // their content is numbers and universal units.
 const I18N={
+  // RACE (build 137)
+  'RACE':{el:'ΑΓΩΝΑΣ'},
+  'Race':{el:'Αγώνας'},
+  'LAPS':{el:'ΓΥΡΟΙ'},
+  'GRID':{el:'ΕΚΚΙΝΗΣΗ'},
+  'PIT STOPS':{el:'ΣΤΑΣΕΙΣ ΣΤΑ PIT'},
+  'SEED':{el:'ΣΠΟΡΟΣ'},
+  'QUALIFYING':{el:'ΚΑΤΑΤΑΚΤΗΡΙΑ'},
+  'REVERSED':{el:'ΑΝΤΕΣΤΡΑΜΜΕΝΗ'},
+  'AUTO STRATEGY':{el:'ΑΥΤΟΜΑΤΗ ΣΤΡΑΤΗΓΙΚΗ'},
+  'NO STOPS':{el:'ΧΩΡΙΣ ΣΤΑΣΕΙΣ'},
+  'TYRE WARMERS':{el:'ΘΕΡΜΑΝΤΕΣ ΕΛΑΣΤΙΚΩΝ'},
+  'Entrants':{el:'Συμμετοχές'},
+  'ADD':{el:'ΠΡΟΣΘΗΚΗ'},
+  'START RACE':{el:'ΕΚΚΙΝΗΣΗ ΑΓΩΝΑ'},
+  'FINISH':{el:'ΤΕΡΜΑ'},
+  'NEW RACE':{el:'ΝΕΟΣ ΑΓΩΝΑΣ'},
+  'THIS BUILD':{el:'ΑΥΤΗ Η ΚΑΤΑΣΚΕΥΗ'},
+  'The car on the VEHICLE tab':{el:'Το αυτοκίνητο της καρτέλας ΟΧΗΜΑ'},
+  'This build':{el:'Αυτή η κατασκευή'},
+  'EIGHT CARS AT MOST':{el:'ΤΟ ΠΟΛΥ ΟΚΤΩ ΑΥΤΟΚΙΝΗΤΑ'},
+  'Remove':{el:'Αφαίρεση'},
+  'Add two or more cars: the car you have built, a garage build or a factory car.':{el:'Πρόσθεσε δύο ή περισσότερα αυτοκίνητα: αυτό που έφτιαξες, μια κατασκευή του γκαράζ ή ένα εργοστασιακό.'},
+  'SOLVING':{el:'ΕΠΙΛΥΣΗ'},
+  'RACING':{el:'ΑΓΩΝΑΣ ΣΕ ΕΞΕΛΙΞΗ'},
+  'RACE FAILED':{el:'Ο ΑΓΩΝΑΣ ΑΠΕΤΥΧΕ'},
+  'passes':{el:'προσπερνά'},
+  'pits':{el:'μπαίνει στα pit'},
+  'new tyres':{el:'καινούργια ελαστικά'},
+  'rejoins':{el:'επιστρέφει στην πίστα'},
+  'a mistake, off line':{el:'λάθος, εκτός γραμμής'},
+  'Blue flag':{el:'Μπλε σημαία'},
+  'OUT':{el:'ΕΚΤΟΣ'},
+  'OUT OF FUEL':{el:'ΧΩΡΙΣ ΚΑΥΣΙΜΟ'},
+  'TIME LIMIT':{el:'ΟΡΙΟ ΧΡΟΝΟΥ'},
+  'FLAG':{el:'ΣΗΜΑΙΑ'},
+  'LEADER':{el:'ΠΡΩΤΟΣ'},
+  'PIT':{el:'PIT'},
+  'GAP':{el:'ΔΙΑΦΟΡΑ'},
+  'LAST':{el:'ΤΕΛΕΥΤ.'},
+  'BEST':{el:'ΚΑΛΥΤ.'},
+  'age':{el:'γύροι'},
+  'FUEL':{el:'ΚΑΥΣΙΜΟ'},
+  'laps':{el:'γύροι'},
+  'FINISHED':{el:'ΤΕΡΜΑΤΙΣΕ'},
+  'IN THE PITS':{el:'ΣΤΑ PIT'},
+  'Result':{el:'Αποτέλεσμα'},
+  'TIME':{el:'ΧΡΟΝΟΣ'},
+  'Grid':{el:'Εκκίνηση'},
+  'seed':{el:'σπόρος'},
+  'WINNER':{el:'ΝΙΚΗΤΗΣ'},
+  'Pick two or more cars on the right,':{el:'Διάλεξε δύο ή περισσότερα αυτοκίνητα δεξιά,'},
+  'then START RACE. Nobody drives:':{el:'μετά ΕΚΚΙΝΗΣΗ ΑΓΩΝΑ. Δεν οδηγεί κανείς:'},
+  'the cars race on their own physics.':{el:'τα αυτοκίνητα τρέχουν με τη δική τους φυσική.'},
+  'TEST CIRCUITS':{el:'ΠΙΣΤΕΣ ΔΟΚΙΜΩΝ'},
+  'REAL CIRCUITS':{el:'ΠΡΑΓΜΑΤΙΚΕΣ ΠΙΣΤΕΣ'},
+  'IMPORTED':{el:'ΕΙΣΑΓΩΓΕΣ'},
+  'New seed':{el:'Νέος σπόρος'},
+  'Nobody drives. Each car runs its own lap solve, with its tyres heating and wearing, its fuel burning off and the cars around it in the way. Pace, fuel and tyres come from the physics; traffic, overtaking and pit loss are rules.':{el:'Δεν οδηγεί κανείς. Κάθε αυτοκίνητο τρέχει τη δική του λύση γύρου, με τα ελαστικά να ζεσταίνονται και να φθείρονται, το καύσιμο να καίγεται και τα άλλα αυτοκίνητα στον δρόμο του. Ρυθμός, καύσιμο και ελαστικά βγαίνουν από τη φυσική· η κίνηση, οι προσπεράσεις και ο χρόνος στα pit είναι κανόνες.'},
   'Rows = load (share of the air available at that rpm, top = full pedal) · Columns = RPM · cell = target':{el:'Γραμμές = φορτίο (ποσοστό του διαθέσιμου αέρα σε αυτές τις στροφές, πάνω = τέρμα πεντάλ) · Στήλες = στροφές · κελί = στόχος'},
   'LOAD':{el:'ΦΟΡΤΙΟ'},'load':{el:'φορτίο'},
   'ZOOM':{el:'ΖΟΥΜ'},'scroll or pinch to zoom • drag to pan • double-click to reset':{el:'κύλιση ή τσίμπημα για ζουμ • σύρε για μετακίνηση • διπλό κλικ για επαναφορά'},
@@ -2685,7 +2876,7 @@ const I18N={
   'EXHAUST':{el:'ΕΞΑΤΜΙΣΗ'},'CATALYTIC CONV.':{el:'ΚΑΤΑΛΥΤΗΣ'},'NITROUS (N2O)':{el:'ΝΙΤΡΟ (N2O)'},
   'Induction (Metering)':{el:'Εισαγωγή (Τροφοδοσία)'},'INTAKE SYSTEM':{el:'ΣΥΣΤΗΜΑ ΕΙΣΑΓΩΓΗΣ'},'AIR FILTER':{el:'ΦΙΛΤΡΟ ΑΕΡΑ'},
   'Valvetrain':{el:'Χρονισμός Βαλβίδων'},'CAM PROFILE':{el:'ΠΡΟΦΙΛ ΕΚΚΕΝΤΡ.'},'VARIABLE VALVE TIMING':{el:'ΜΕΤΑΒΛΗΤΟΣ ΧΡΟΝΙΣΜΟΣ'},
-  'Fuel & Spark':{el:'Καύσιμο & Σπινθήρας'},'FUEL TYPE':{el:'ΤΥΠΟΣ ΚΑΥΣΙΜΟΥ'},'FUEL OCTANE (RON)':{el:'ΟΚΤΑΝΙΑ (RON)'},
+  'Fuel & Spark':{el:'Καύσιμο & Σπινθήρας'},'FUEL TYPE':{el:'ΤΥΠΟΣ ΚΑΥΣΙΜΟΥ'},'FUEL OCTANE (RON)':{el:'ΟΚΤΑΝΙΑ (RON)'},'COMPRESSOR WHEEL (mm, 0 = size)':{el:'ΤΡΟΧΟΣ ΣΥΜΠΙΕΣΤΗ (mm, 0 = μέγεθος)'},'BOOST TAPER FROM (rpm, 0 = off)':{el:'ΜΕΙΩΣΗ ΠΙΕΣΗΣ ΑΠΟ (rpm, 0 = όχι)'},'BOOST AT LIMITER (%)':{el:'ΠΙΕΣΗ ΣΤΟ ΚΟΦΤΗ (%)'},'ECU TORQUE LIMIT (Nm, 0 = off)':{el:'ΟΡΙΟ ΡΟΠΗΣ ECU (Nm, 0 = όχι)'},
   'INJECTOR':{el:'ΜΠΕΚ ΨΕΚΑΣΜΟΥ'},'IGNITION TYPE':{el:'ΤΥΠΟΣ ΑΝΑΦΛΕΞΗΣ'},'IGNITION CONTROL':{el:'ΕΛΕΓΧΟΣ ΑΝΑΦΛΕΞΗΣ'},'IGNITION ADV (° BTDC)':{el:'ΠΡΟΠΟΡΕΙΑ (° BTDC)'},'FUEL MIXTURE':{el:'ΜΕΙΓΜΑ ΚΑΥΣΙΜΟΥ'},
   'ECU Fuel Map (target AFR)':{el:'Χάρτης Καυσίμου ECU (στόχος AFR)'},
   'Rows = load (MAP bar, top = full) · Columns = RPM · cell = target':{el:'Γραμμές = φορτίο (MAP bar, πάνω = πλήρες) · Στήλες = στροφές · κελί = στόχος'},
@@ -2775,7 +2966,7 @@ const I18N={
   '(factory spec)':{el:'(εργοστασιακό)'},'(modified)':{el:'(τροποποιημένο)'},
   'Wheels & Tyres':{el:'Τροχοί & Ελαστικά'},'TYRE COMPOUND':{el:'ΤΥΠΟΣ ΕΛΑΣΤΙΚΟΥ'},'WHEEL DIA (in)':{el:'ΔΙΑΜ. ΖΑΝΤΑΣ (in)'},'TYRE WIDTH (mm)':{el:'ΠΛΑΤΟΣ ΕΛΑΣΤ. (mm)'},'TYRE ASPECT (%)':{el:'ΠΡΟΦΙΛ ΕΛΑΣΤ. (%)'},
   'Aerodynamics':{el:'Αεροδυναμική'},'FRONT AERO':{el:'ΕΜΠΡΟΣ ΑΕΡΟΔ.'},'REAR AERO':{el:'ΠΙΣΩ ΑΕΡΟΔ.'},'FLOOR / DIFFUSER':{el:'ΠΑΤΩΜΑ / DIFFUSER'},'WEIGHT REDUCTION':{el:'ΜΕΙΩΣΗ ΒΑΡΟΥΣ'},
-  'Brakes & Suspension':{el:'Φρένα & Ανάρτηση'},'BRAKES':{el:'ΦΡΕΝΑ'},'ROTOR SIZE (mm)':{el:'ΔΙΑΜ. ΔΙΣΚΟΥ (mm)'},'SUSPENSION':{el:'ΑΝΑΡΤΗΣΗ'},
+  'Brakes & Suspension':{el:'Φρένα & Ανάρτηση'},'BRAKES':{el:'ΦΡΕΝΑ'},'ROTOR SIZE (mm)':{el:'ΔΙΑΜ. ΔΙΣΚΟΥ (mm)'},'SUSPENSION':{el:'ΑΝΑΡΤΗΣΗ'},'STEERING RATIO (:1)':{el:'ΣΧΕΣΗ ΤΙΜΟΝΙΟΥ (:1)'},'STEER':{el:'ΤΙΜΟΝΙ'},'PWR':{el:'ΙΣΧΥΣ'},
   'Performance':{el:'Επιδόσεις'},'0–100 km/h':{el:'0–100 km/h'},'TOP SPEED':{el:'ΤΕΛΙΚΗ'},'POWER/WT':{el:'ΙΣΧΥΣ/ΒΑΡΟΣ'},'100–0 BRAKING':{el:'ΦΡΕΝΑΡΙΣΜΑ 100–0'},'0–200–0':{el:'0–200–0'},
   'Best-power run through the gearbox with a traction-limited launch, then braking (tyre- and brake-limited, with fade).':{el:'Εκκίνηση με μέγιστη ισχύ μέσα από το κιβώτιο, περιορισμένη από πρόσφυση, και μετά φρενάρισμα (όριο ελαστικών & φρένων, με εξασθένηση).'},
   // guide h3 + section headers
@@ -2894,6 +3085,11 @@ function applyLang(lang){
   for(const id of ['garageName','engSaveName']){const gn=document.getElementById(id);
     if(gn){if(gn.dataset.enPh===undefined)gn.dataset.enPh=gn.placeholder;gn.placeholder=tr(gn.dataset.enPh);}}
   if(typeof renderGarage==='function')renderGarage();
+  // the RACE panel's choices and buttons (selects are not covered by the pass above)
+  document.querySelectorAll('#racePanel option, #racePanel .replay-row button, #racePanel .race-check span, #racePanel .race-add button, #raceSetup>.perf-note').forEach(el=>{
+    if(el.dataset.en===undefined)el.dataset.en=el.textContent.trim();el.textContent=tr(el.dataset.en);});
+  const rp=document.getElementById('racePlay');if(rp&&typeof raceUI!=='undefined')rp.textContent=tr(raceUI.playing?'PAUSE':'PLAY');
+  if(typeof raceFillAdd==='function'&&typeof raceUI!=='undefined'){raceFillAdd();renderRaceSetup();renderRacePanel(true);}
 }
 
 const RAD_CAP={small:0.75,stock:1.0,large:1.35};   // relative heat-rejection capacity
@@ -2943,10 +3139,72 @@ const TURB_WHEEL=0.90;         // turbine wheel as a fraction of the compressor 
 // so A_throat = (A/R) x R; a vane ring is the same volute with vanes in it.
 function setTurbineAR(ar){
   const e=engine, exd=e.compExd;
-  const a0=(ar*AR_INCH)*(TURB_WHEEL*exd/2);
+  // R is the radius to the centroid of the throat section (build 133; it was the wheel's radius, which made every
+  // throat 1.5-1.8x too small). The section sits just outside the wheel tip, a circle of area A = k R, so
+  // R = r_tip + sqrt(k R / pi): a quadratic in sqrt(R).
+  const rt=TURB_WHEEL*exd/2, k=ar*AR_INCH;
+  const sq=(Math.sqrt(k/Math.PI)+Math.sqrt(k/Math.PI+4*rt))/2;
+  const a0=k*sq*sq;
   e.turbineAR=ar;
   e.turbineArea=e.vgt?a0*vaneThroatFrac(exd,VANE_BETA_MAX):a0;
   e.vgtShut=e.vgt?a0*vaneThroatFrac(exd,VANE_BETA_MIN):0;
+}
+// The boost the ECU asks for at an rpm (build 131). Real ECUs pull boost back toward the limiter, where the
+// rods and bearings carry the highest inertia and gas loads together, the turbine runs hottest and fastest and
+// the end gas is least able to wait: a calibration choice for life, not physics. BOOST TAPER FROM (rpm, 0 = off)
+// and BOOST AT LIMITER (%) set it: the wastegate target falls linearly from the full setting at the first to
+// that share of it at the redline. The physics below does not know about it; it only meets a lower target.
+function boostTaperFrac(rpm){
+  const e=engine,r0=e.taperRpm||0;
+  if(!(r0>0)||r0>=e.redline)return 1;
+  const f=clamp((e.taperPct!=null?e.taperPct:100)/100,0.2,1);
+  return 1-(1-f)*clamp((rpm-r0)/(e.redline-r0),0,1);
+}
+const boostTarget=rpm=>Math.min(engine.maxBoost*boostTaperFrac(rpm),tqLimitBoost(rpm));
+// The ECU's torque limit (build 138). A torque-based ECU holds the engine to a calibrated torque (for the gearbox,
+// the driveline, the clutch) by asking for less boost where the engine would make more: the flat torque plateaus
+// makers quote ("350 Nm from 1500 to 4400 rpm") are this, not the engine's own curve. ECU TORQUE LIMIT (Nm, 0 =
+// off) sets it. Solved once per engine: at each rpm, the boost at which the engine makes the limit (bisected on the
+// engine's own torque at that boost), and the wastegate, vanes and bypass are asked for no more than that. Like the
+// taper it is a calibration, not physics: the engine below it is unchanged and only meets a lower target. Boosted
+// engines only (an NA engine's throttle would do it, and no NA preset is torque-limited).
+function tqLimitBoost(rpm){
+  const tb=engine.tqLimTable;
+  if(!tb)return Infinity;
+  if(rpm<=tb[0].rpm)return tb[0].bar;
+  for(let i=1;i<tb.length;i++)if(rpm<=tb[i].rpm){const a=tb[i-1],b=tb[i];return a.bar+(b.bar-a.bar)*(rpm-a.rpm)/(b.rpm-a.rpm);}
+  return tb[tb.length-1].bar;
+}
+function buildTorqueLimit(){
+  const e=engine;e.tqLimTable=null;
+  if(!(e.tqLimit>0)||e.intake==='na'||!(e.maxBoost>0))return;
+  const sv={afr:state.afr,coolant:state.coolant,oil:state.oil,engineHealth:state.engineHealth,blown:state.blown,iat:state.iat,systemVoltage:state.systemVoltage,nitrousActive:state.nitrousActive};
+  const savedAfrMode=e.afrMode;e.afrMode='fixed';
+  state.coolant=90;state.oil=100;state.engineHealth=1;state.blown=false;state.iat=20;state.systemVoltage=14.0;state.nitrousActive=false;
+  state.afr=e.ci?e.stoichAFR*SMOKE_LAMBDA_CI:e.stoichAFR*0.88;
+  const tb=[];
+  for(let r=1000;r<=e.redline+199;r+=200){
+    const rr=Math.min(r,e.redline),b0=boostAvail(rr),tq=b=>calcAtRpm(rr,1+b).torque;
+    let bar=e.maxBoost;
+    if(tq(b0)>e.tqLimit){
+      let lo=0,hi=b0;
+      if(tq(0)>=e.tqLimit)hi=0;
+      else for(let i=0;i<14;i++){const m=(lo+hi)/2;if(tq(m)>e.tqLimit)hi=m;else lo=m;}
+      bar=hi===0?0:lo;
+    }
+    tb.push({rpm:rr,bar});
+  }
+  e.afrMode=savedAfrMode;Object.assign(state,sv);
+  e.tqLimTable=tb;
+}
+// The frame an engine runs (build 131): the size class, or the maker's own compressor wheel where it is known
+// (COMPRESSOR WHEEL, mm at the exducer), with its housings scaled with it (a geometrically similar volute: A/R is
+// a length).
+function turboFrame(e){
+  const tb=TURBO[e.turboSize]||TURBO.medium;
+  if(!(e.compExd_mm>0))return tb;
+  const exd=e.compExd_mm/1000,k=exd/tb.exd;
+  return Object.assign({},tb,{exd,ars:tb.ars.map(a=>a*k)});
 }
 // Steady wide-open-throttle boost against rpm, sampled once per engine: solving the shaft balance
 // costs a few thousand iterations, and boostAvail is called for every rpm of every curve build.
@@ -2977,9 +3235,23 @@ const ISLAND_FLOW=0.62;    // best efficiency sits near 62% of choke flow
 const ISLAND_PEAK=0.78;    // island-centre efficiency for an automotive centrifugal wheel
 const ISLAND_WF=0.30;      // how fast efficiency falls either side, in flow fraction
 const ISLAND_WP=2.00;      // and with pressure ratio, past the point where losses start to bite
-const compIslandEff=(flowFrac,pr)=>clamp(
-  ISLAND_PEAK-0.22*Math.pow((clamp(flowFrac,0,2)-ISLAND_FLOW)/ISLAND_WF,2)
-             -0.10*Math.pow(Math.max(0,pr-2.2)/ISLAND_WP,2),0.35,ISLAND_PEAK);
+// The island follows the speed line (build 133). The wheel is most efficient where the gas meets its blades at
+// the design incidence, which is a fixed flow coefficient Q/(U D^2): the velocity triangles are similar, so the
+// best flow scales with the tip speed U, and so does the island's width. That is why a real map's island runs
+// diagonally up from the origin, and why a turbo compresses efficiently at low flow when it is only asked for a
+// low pressure ratio. It was fixed at the flow the island has at PR_ISLAND, where pressure losses begin, so low
+// flow at low pressure (a turbo spooling at low rpm) always read as the edge of the map. U comes from the
+// pressure ratio through Euler's work at a common efficiency. Only BELOW that speed: above it the inducer's
+// relative Mach number nears 1, the speed lines steepen into the choke flow instead of moving right, and the
+// island stays where it is (with the pressure losses below).
+const PR_ISLAND=2.2;
+const islandSpeed=pr=>Math.sqrt(clamp((Math.pow(Math.max(1,pr),0.2857)-1)/(Math.pow(PR_ISLAND,0.2857)-1),0.0025,1));
+const compIslandEff=(flowFrac,pr)=>{
+  const u=islandSpeed(pr);
+  return clamp(
+  ISLAND_PEAK-0.22*Math.pow((clamp(flowFrac,0,2)-ISLAND_FLOW*u)/(ISLAND_WF*u),2)
+             -0.10*Math.pow(Math.max(0,pr-PR_ISLAND)/ISLAND_WP,2),0.35,ISLAND_PEAK);
+};
 const TURBO_PR_REF=2.0;   // frames are characterised at 1.0 bar of boost
 // How strongly the spool point follows shaft speed. Calibrated (not guessed) so a small frame
 // keeps its early-spooling character at low boost and clearly gives it up at high boost.
@@ -3214,13 +3486,18 @@ const SPEED_RATING={
 // already matched. Re-set to asphalt, the skidpads land in the published range and the 100-0 stops
 // lengthen with them, by the same amount (an E46 M3: 37.8 m against ~38.6 from its 161 ft from 70 mph).
 // The drag radial keeps 1.70, a prepared drag strip's figure: that is the surface it is made for.
+// For a race (build 137) each compound also has a working temperature window and a wear rate: tOpt the
+// tread temperature (C) it grips best at, tWin how far either side it keeps most of that, wear the relative
+// rate the tread goes for the same slip work. A softer, grippier compound works hotter in a narrower window
+// and wears faster. These are fitted to the usual published ranges (a road tyre ~40-80 C, a semi 80-100,
+// a slick 90-110), not derived.
 const TIRE_TYPE={
-  eco:     {label:'ECO/TOURING', mu:0.90,crr:0.010,cost:400, rating:'H'},
-  street:  {label:'STREET',      mu:0.95,crr:0.012,cost:600, rating:'V'},
-  sport:   {label:'SPORT',       mu:1.00,crr:0.013,cost:1000,rating:'Y'},
-  semi:    {label:'SEMI-SLICK',  mu:1.13,crr:0.014,cost:1600,rating:'YY'},
-  slick:   {label:'RACE SLICK',  mu:1.30,crr:0.016,cost:2400,rating:'YY'},
-  drag:    {label:'DRAG RADIAL', mu:1.70,crr:0.018,cost:2000,rating:'T'}
+  eco:     {label:'ECO/TOURING', mu:0.90,crr:0.010,cost:400, rating:'H', tOpt:55, tWin:40,wear:0.55},
+  street:  {label:'STREET',      mu:0.95,crr:0.012,cost:600, rating:'V', tOpt:65, tWin:36,wear:0.75},
+  sport:   {label:'SPORT',       mu:1.00,crr:0.013,cost:1000,rating:'Y', tOpt:78, tWin:32,wear:1.00},
+  semi:    {label:'SEMI-SLICK',  mu:1.13,crr:0.014,cost:1600,rating:'YY',tOpt:88, tWin:26,wear:1.45},
+  slick:   {label:'RACE SLICK',  mu:1.30,crr:0.016,cost:2400,rating:'YY',tOpt:98, tWin:22,wear:2.00},
+  drag:    {label:'DRAG RADIAL', mu:1.70,crr:0.018,cost:2000,rating:'T', tOpt:70, tWin:22,wear:4.00}
 };
 // Aero elements — each adds a downforce coefficient (Cl·A, m²) and a drag penalty (ΔCd). The
 // floor/diffuser is the efficient one (lots of downforce, little drag). Scaled by chassis.aero.
@@ -3289,6 +3566,7 @@ function brakeForceCap(v){
 // Fade: pad friction falls from the onset, to the 35% loss the stops have always allowed, over 150 C.
 const ROTOR_MAT={iron:{rho:7200,cp:500,eps:0.55},ccm:{rho:2450,cp:800,eps:0.80}};
 const BRAKE_AMBIENT=25, FADE_SPAN=150, FADE_MAX=0.35;
+const BRAKE_PREP_LAPS=1;   // laps the rotors run before the hot lap (build 135)
 // air at a typical film temperature (~150 C): conductivity, kinematic viscosity, Prandtl, density, cp
 const BRAKE_AIR={k:0.034,nu:2.9e-5,pr:0.70,rho:0.83,cp:1015};
 const BRAKE_DUCT={d:0.076,K:2.5};
@@ -3573,8 +3851,10 @@ function readEngineFromForm(){
     redline:clamp(Math.round(+g('edRedline').value||tp.redlineDef),tp.redMin,tp.redMax),
     intake,
     boost_bar:intake==='na'?0:clamp(+g('edBoost').value||0,0,2.5),
+    taperRpm:clamp(Math.round(+g('edTaperRpm').value||0),0,12000),taperPct:clamp(+g('edTaperPct').value||100,20,100),
+    tqLimit:clamp(Math.round(+g('edTqLimit').value||0),0,5000),
     intercooler:g('edIntercooler').value,
-    turboSize:g('edTurboSize').value,
+    turboSize:g('edTurboSize').value,compExd_mm:clamp(+g('edCompWheel').value||0,0,110),
     turboConfig:g('edTurboConfig').value,
     vgt:g('edVGT').value==='yes',housing:g('edHousing').value,
     antilag:g('edAntilag').value==='yes',
@@ -3612,9 +3892,9 @@ function applyEngineToForm(e){
   // Builds saved before the eccentricity existed: every production Mazda rotor has R/e = 7.
   g('edEcc').value=e.ecc_mm||+(e.bore_mm/7).toFixed(1);
   // Migrate legacy boolean intercooler (true→large, false→none) from older saved builds.
-  g('edIntake').value=e.intake;g('edBoost').value=e.boost_bar;
+  g('edIntake').value=e.intake;g('edBoost').value=e.boost_bar;g('edTaperRpm').value=e.taperRpm||0;g('edTaperPct').value=e.taperPct!=null?e.taperPct:100;g('edTqLimit').value=e.tqLimit||0;
   g('edIntercooler').value=(e.intercooler===true?'large':e.intercooler===false?'none':(e.intercooler||'large'));
-  g('edTurboSize').value=e.turboSize||'medium';
+  g('edTurboSize').value=e.turboSize||'medium';g('edCompWheel').value=e.compExd_mm||0;
   g('edTurboConfig').value=e.turboConfig||'single';g('edVGT').value=e.vgt?'yes':'no';g('edHousing').value=e.housing||'stock';
   g('edAntilag').value=e.antilag?'yes':'no';
   g('edScType').value=e.scType||'roots';g('edNitrous').value=e.nitrous||'none';
@@ -3650,10 +3930,10 @@ function syncDesignEnable(){
   g('edFuel').disabled=tp.ci;                              // diesel fuel is fixed
   // Boost / intercooler only matter for forced induction; turbo size only for turbos.
   const intake=g('edIntake').value,na=intake==='na';
-  g('edBoost').disabled=na;
+  g('edBoost').disabled=na;g('edTaperRpm').disabled=na;g('edTaperPct').disabled=na;g('edTqLimit').disabled=na;
   g('edIntercooler').disabled=na;
   const turbo=intake==='turbo';
-  g('edTurboSize').disabled=!turbo;
+  g('edTurboSize').disabled=!turbo;g('edCompWheel').disabled=!turbo;
   g('edTurboConfig').disabled=!turbo;
   g('edVGT').disabled=!turbo;g('edHousing').disabled=!turbo;
   g('edAntilag').disabled=!turbo;
@@ -3780,13 +4060,16 @@ function buildEngine(){
   // Intercooler core: charge-heat residual (feeds effIAT) and its spool-lag penalty.
   const ic=INTERCOOLER[engine.intercooler]||INTERCOOLER.large;
   engine.icEff=ic.eff;
+  // the flow the core's effectiveness is quoted at: the engine's peak revs at the 1 bar the frames are characterised at
+  // (TURBO_PR_REF). Not at this build's boost: the core is hardware, and more boost runs it past its rating.
+  engine.icRefFlow=airFlowAt(engine.redline,TURBO_PR_REF);
   // charge volume between compressor and throttle, m3 — ducting bore follows the compressor OUTLET,
   // ~0.72 of the exducer (a GT28: 2-inch outlet on a 71 mm wheel)
-  const duct=0.72*(TURBO[engine.turboSize]||TURBO.medium).exd;
+  const duct=0.72*turboFrame(engine).exd;
   engine.chargeVol=ic.pipe*Math.PI/4*duct*duct+ic.core/1000;
   // Turbo spool characteristics scaled to redline, then modified by the turbo config
   // (twin/sequential/compound), anti-lag (keeps it spooled) and intercooler volume (lag).
-  const tb=TURBO[engine.turboSize]||TURBO.medium, cfg=TURBO_CONFIG[engine.turboConfig]||TURBO_CONFIG.single;
+  const tb=turboFrame(engine), cfg=TURBO_CONFIG[engine.turboConfig]||TURBO_CONFIG.single;
   const als=engine.antilag?0.62:1.0;
   // ---- How hard is this engine leaning on that frame? ----
   // Air demanded at peak power, in lb/min — the axis a real compressor map is drawn against.
@@ -3834,7 +4117,7 @@ function buildEngine(){
   if(engine.turboConfig==='sequential'&&engine.intake==='turbo'&&engine.turbineArea>0){
     engine.seqStageRpm=0;                                    // both turbines everywhere, to find where the pair holds
     let st=engine.redline+1;
-    for(let r=1000;r<=engine.redline;r+=100)if(steadyBoost(r)>=0.98*engine.maxBoost){st=r;break;}
+    for(let r=1000;r<=engine.redline;r+=100)if(steadyBoost(r)>=0.98*boostTarget(r)){st=r;break;}
     engine.seqStageRpm=st;
   }
   buildBoostTable(26);
@@ -3889,6 +4172,8 @@ function buildEngine(){
   }
   syncSliders();
   buildBoostTable(26);
+  engine.tqLimTable=null;
+  if(engine.tqLimit>0){buildTorqueLimit();buildBoostTable(26);}   // the ECU's torque limit lowers the target: re-solve the shaft
   {const p=peakEgts();engine.peakEgt=p.probe;engine.peakEgtGas=p.gas;}   // needs the boost table (wotMapAt) and the burn table
 
   buildRev++;dynoCache=null;
@@ -4128,7 +4413,7 @@ function boostAvail(rpm){
   }
   if(engine.intake==='supercharger'){
     const sc=SC_TYPE[engine.scType]||SC_TYPE.roots;
-    return engine.boost_bar*clamp(sc.lo+(sc.hi-sc.lo)*Math.pow(rpm/engine.redline,sc.exp),0,1);
+    return Math.min(engine.boost_bar*boostTaperFrac(rpm)*clamp(sc.lo+(sc.hi-sc.lo)*Math.pow(rpm/engine.redline,sc.exp),0,1),tqLimitBoost(rpm));   // the bypass valve holds the taper and the torque limit
   }
   return 0;
 }
@@ -4140,6 +4425,19 @@ function wotMapAt(rpm){return 1.0+boostAvail(rpm);}
 function liveMap(){return state.map;}
 
 // ---- Physics (all derived from the engine spec + live state) ----
+// The intercooler's effectiveness at a charge flow (build 136). It was the core's quoted figure at every flow;
+// a heat exchanger's rises as the flow through it falls, since each kilogram meets the same surface for longer.
+// eps = 1 - exp(-NTU), NTU = UA / (m cp), the cooling air's capacity taken as large against the charge's. The
+// quoted figure (INTERCOOLER eff) is read at the engine's peak flow at 1 bar of boost, where such figures are quoted,
+// which fixes NTU there. UA is the two sides in series: the charge side's film coefficient follows the flow as m^0.8 (turbulent
+// flow in the tubes, Dittus-Boelter), the cooling side's does not depend on it, and a gas-to-gas core is designed
+// with the two sides' conductance balanced (Shah & Sekulic), so at the reference each carries half the resistance.
+function icEffAt(m){
+  const e0=engine.icEff;
+  if(!(e0>0&&e0<1)||!(m>0)||!(engine.icRefFlow>0))return e0||0;
+  const r=engine.icRefFlow/m, ntu=-Math.log(1-e0)*r*2/(1+Math.pow(r,0.8));
+  return 1-Math.exp(-ntu);
+}
 function effIAT(map,rpm){
   // Forced induction heats the charge; an intercooler removes most of it. High-enthalpy
   // fuels (ethanol/methanol) evaporatively cool the charge — denser air and less knock.
@@ -4160,7 +4458,7 @@ function effIAT(map,rpm){
     const eta=(rpm>0&&engine.intake==='turbo'&&engine.chokeFlow_kgs>0)
       ?compIslandEff(compFlowFrac(rpm,airFlowAt(rpm,PR)),PR):engine.compEff;
     const rise=(t+273.15)*(Math.pow(PR,0.283)-1)/clamp(eta||0.72,0.30,0.85);
-    t+=rise*(1-(engine.icEff!=null?engine.icEff:0.82));
+    t+=rise*(1-(rpm>0?icEffAt(airFlowAt(rpm,PR)):(engine.icEff!=null?engine.icEff:0.82)));
   }
   t-=engine.chargeCool*(engine.injector==='direct'?1.15:1.0);   // DI cools the charge slightly more
   return t;
@@ -4413,9 +4711,100 @@ function tempFactors(coolant,oil){
   return{coolF,oilFrictionMult};
 }
 function ignBonus(){return {distributor:-2,wasted:0,coil:2}[engine.ignitionType]||0;}
-// Knock risk (0-100) for a given spark advance. The advance term is signed: advancing
-// past MBT feeds knock, retarding below it pulls knock back down.
-function knockAt(rpm,map,adv){
+// ---- Knock: the end gas's own chemistry (build 131) ----
+// Knock is the unburned gas ahead of the flame igniting on its own before the flame reaches it. The gas is
+// compressed by the piston and then by the burning charge behind it, and it ignites when the integral of
+// dt / tau over its life reaches 1 (Livengood & Wu), tau being its ignition delay at the pressure and
+// temperature it is at. The delay is Douaud & Eyzat's correlation for a fuel of octane number ON:
+//     tau [ms] = 17.68 (ON/100)^3.402 p[atm]^-1.7 exp(3800 / T)
+// The gas is traced on this model's own cycle (the trace wallTrace runs): from BDC, compressed and then
+// heated by the Wiebe burn phased at CA50, the unburned part following the pressure isentropically
+// (gamma 1.35, an unburned mixture), until 90% of the charge has burned and there is no end gas left.
+// Where it starts: the fresh charge at the intake temperature (effIAT), mixed by enthalpy at the intake
+// pressure with the residual the exhaust left in the clearance volume (residualFrac, the residual at the
+// exhaust temperature expanded back to intake pressure): T = (1 + f) / (1/T_fresh + f/T_res). With direct
+// injection the fuel evaporates in the cylinder and takes its latent heat from the charge,
+// dT = h_fg (F/A) / cp (gasoline 350 kJ/kg). A port-injected engine's fuel evaporates mostly off the port
+// walls and cools the charge little.
+// Until build 131 this was a points score: 30 a bar of boost, 8 a unit of compression, 0.8 a degree of charge
+// temperature, -2.2 an octane, -12 for direct injection, more for rpm, coolant and alcohol, each set by hand.
+// It left a 10:1 engine at 2.4 bar on 98 RON at its best spark, which no real one is.
+// Kept from the score: the measured trend that knock-limited spark gains ~3 degrees per 0.1 of enrichment
+// below lambda 0.95 and loses about as much leaner (end-gas chemistry Douaud & Eyzat do not carry), applied to
+// the phasing the gas sees; the ignition system's margin (ignBonus); nitrous's extra cylinder pressure, as
+// before. The score the rest of the model reads is KNOCK_TARGET x the integral: 40 is knock onset.
+function ignBonus(){return {distributor:-2,wasted:0,coil:2}[engine.ignitionType]||0;}
+const DE_A=17.68,DE_ON=3.402,DE_P=1.7,DE_T=3800, HFG={gasoline:350e3,race:350e3,e85:840e3,methanol:1100e3};
+// Octane sensitivity S = RON - MON (build 132). Douaud & Eyzat fitted their delay on primary reference fuels (iso-octane
+// and n-heptane), which have none; a real fuel autoignites like the reference fuel of its OCTANE INDEX,
+// OI = RON - K S (Kalghatgi, SAE 2005-01-0239), K set by how hot the unburned gas is at a given pressure:
+// K = 0.0056 T_comp15 - 4.68, T_comp15 the unburned temperature when compression reaches 15 bar (0 at the RON test's
+// ~836 K, 1 at the MON test's hotter ~1014 K). A boosted engine compresses colder gas to high pressure, so its K is
+// negative (Kalghatgi measures -0.4 to -0.74 on DI engines at 2000 rpm) and a sensitive fuel resists better than its
+// RON says. S: pump gasoline 10 (EN 228's RON 95 / MON 85 minimums), E85 17, methanol 20 (RON 108.7 / MON 88.6);
+// race fuel taken at gasoline's 10, its MON not being specified.
+const OCT_SENS={gasoline:10,race:10,e85:17,methanol:20};
+let _knockCache=null;
+// The cycle the end gas lives on: a Wankel chamber's volume, slow burn and late best-torque phasing for a rotary
+// (rotaryLostWork's), the crank-slider's for everything else.
+function burnCycle(){
+  return engine.type==='rotary'?{vol:wankelVol,burn:ROTARY_BURN_DEG,ca50:ROTARY_CA50,bdc:-270}
+                               :{vol:pistonVol,burn:SI_BURN_DEG,ca50:SI_CA50,bdc:-180};
+}
+function endGasIntegral(rpm,map,ca50){
+  const e=engine,cr=Math.max(1.5,e.compression),R=287,g=1.30,cv=R/(g-1),k=(1.35-1)/1.35;
+  const st=e.stoichAFR||14.7,lam=curAFR(rpm,map)/st,q=(e.fuelLHV||44)*1e6/(Math.max(1,lam)*st);
+  const Tf=effIAT(map,rpm)+273.15-(e.injector==='direct'?(HFG[e.fuel]||350e3)/(lam*st)/1005:0);
+  const Tex=egtAt(rpm,map),prev=e.boostNow;e.boostNow=map;
+  const pExh=1+backPressureBar(rpm,Tex);e.boostNow=prev;
+  const pInt=Math.max(0.3,map),f=Math.min(0.5,residualFrac(pExh,pInt,cr));
+  const Tres=Math.max(Tf,Tex*Math.pow(Math.min(1,pInt/pExh),(GAMMA_EXH-1)/GAMMA_EXH));
+  const T1=(1+f)/(1/Tf+f/Tres);
+  const cyc=burnCycle(),burn=cyc.burn,soc=ca50-wiebeX50()*burn,d=0.5,dt=d/(6*Math.max(300,rpm));
+  const B=e.bore_mm/1000,Sp=2*e.stroke_mm/1000*rpm/60,disc=Math.PI/4*B*B,Vd=disc*e.stroke_mm/1000,Vc=Vd/(cr-1);
+  // Compression starts where the intake valve closes, on the charge the intake stroke trapped (build 134). It
+  // started at BDC with the cylinder full at intake pressure, whatever the engine had breathed: at low speed a
+  // late-closing valve has let part of it back out, and at the tuned peak the column has packed in more. Now the
+  // gas is computeVE's (the fresh charge the torque is made from) plus the residual mixed into it, and it is
+  // compressed from the volume at IVC. Ported engines and the rotary keep BDC and a full cylinder.
+  const ivc=cyc.bdc===-180&&!e.ports?ivcAt(rpm):null;
+  let th0=cyc.bdc,mTot=pInt*1e5*Vc*cr/(R*T1);
+  if(ivc!=null){
+    const prevB=e.boostNow,ve=computeVE(rpm,map);e.boostNow=prevB;
+    const mF=ve*Vd*pInt*1e5/(R*(effIAT(map,rpm)+273.15));
+    th0=cyc.bdc+ivc;mTot=mF*(1+f*Tf/Tres);
+  }
+  const V00=cyc.vol(th0,cr),v1=Vc*cr/mTot,p1=mTot*R*T1/(Vc*V00);
+  const xb=th=>th<=soc?0:1-Math.exp(-WIEBE_A*Math.pow(Math.min(1,(th-soc)/burn),WIEBE_M+1));
+  // the octane index: the reference fuel this fuel autoignites like, at this engine's T_comp15
+  const T15=T1*Math.pow(15e5/p1,k),Kk=0.0056*T15-4.68;
+  const OI=(e.effOctane||95)-Kk*(OCT_SENS[e.fuel]??10);
+  const onF=DE_A*Math.pow(Math.max(50,OI)/100,DE_ON);
+  // Below ~5 bar the delay is seconds (exp(3800/T) at the gas's few hundred kelvin), so the integral only counts
+  // once compression has the pressure there; the trace still runs from IVC so the gas's state is right.
+  // Heat to the walls (build 132), at Woschni's flux and his 450 K wall, as wallTrace takes it: the bulk loses it, which
+  // lowers the pressure, and so does the end gas, which is the gas against the walls. It matters most at low speed,
+  // where the gas has longest.
+  const ends=disc*(e.type==='rotary'?2:1+1/Math.cos(SI_ROOF_DEG*Math.PI/180));
+  const hW=(p,TT,w)=>WOSCHNI_C*Math.pow(B,-0.2)*Math.pow(p/1000,0.8)*Math.pow(TT,-0.55)*Math.pow(w,0.8);
+  let T=T1,Tu=T1,I=0,V0=V00,x0=0,pPrev=p1;
+  const c1=dt*1000/onF,pRef=5e5;
+  for(let th=th0;th<soc+burn;th+=d){
+    if(x0>=0.9)break;
+    const Vn=cyc.vol(th+d,cr),p=R*T*cr/(v1*V0),xn=xb(th+d),A=ends+4*Vc*V0/B;
+    const w=Math.max(0.1,2.28*Sp+(th>=soc?3.24e-3*Vd*T1/(p1*Vc*V00)*(p-p1*Math.pow(V00/V0,g)):0));
+    Tu=Tu*Math.pow(p/pPrev,k)-hW(p,Tu,w)*A*(Tu-T_WALL)*dt/(mTot*cv);pPrev=p;
+    if(p>pRef)I+=c1*Math.pow(p/101325,DE_P)*Math.exp(-DE_T/Tu);
+    T+=(q*(xn-x0)-p*v1*(Vn-V0)/cr-hW(p,T,w)*A*(T-T_WALL)*dt/mTot)/cv;
+    V0=Vn;x0=xn;
+  }
+  return I;
+}
+// Rotaries and two-strokes keep the points score this replaced (knockScorePorted, below, as it was in build 122):
+// the end-gas integral above is a four-stroke poppet engine's cycle, and a Wankel's end gas (a thin trailing pocket
+// against a cool housing) or a two-stroke's scavenged charge is not that gas. Retire it when their cycles are
+// derived, as their VE bell and type factors will be.
+function knockScorePorted(rpm,map,adv){
   if(engine.ci)return 0;   // compression ignition — no spark knock (limited by smoke/EGT instead)
   const mbt=mbtAdvance(rpm,map);
   let k=0;
@@ -4442,31 +4831,10 @@ function knockAt(rpm,map,adv){
   k-=engine.fuelKnockBonus;                             // alcohol extra knock margin
   if(engine.injector==='direct')k-=12;                  // DI charge cooling
   k+=nitrousImep()*4;                                   // nitrous raises cylinder pressure → more knock
-  k+=residualKnock(rpm,map);                            // hot burnt gas the exhaust could not push out
+  k+=residualKnockPorted(rpm,map);                            // hot burnt gas the exhaust could not push out
   return clamp(k,0,100);
 }
-// Back-pressure brings on knock, and until now nothing in this model said so. knockAt carried
-// boost, compression, intake temperature, coolant, rpm, timing, lambda, octane, DI and nitrous —
-// and no residual term at all, even though conversion 3 has computed the trapped fraction from
-// (p_exh/p_int)^(1/gamma) since it was written. It simply never reached the spark.
-//
-// That absence is why turbine housing sizing could not be derived. What stops a petrol engine
-// taking a tighter housing is knock: a tighter turbine raises manifold pressure, more burnt gas
-// stays in the clearance volume, and hot residual drags the end gas toward detonation. A diesel
-// has no spark to knock, so it tolerates a far tighter housing and makes boost at 1600 rpm. With
-// this in place that split comes out of the physics instead of being asserted per engine type —
-// knockAt already returns 0 for compression ignition, so the diesel exemption is automatic.
-//
-// NO NEW CONSTANT. The charge the spark has to light is fresh air mixed with trapped residual,
-//     T_mix = (1-f)*T_fresh + f*T_res
-// so a change in f is just a change in charge temperature, and the term immediately above already
-// prices charge temperature at 0.8 points per degree. What is charged here is only the EXCESS
-// residual that back-pressure causes, over the balanced case p_exh = p_int that every engine has
-// and that the existing calibration already absorbs:
-//     dT = (f_actual - f_balanced) * (T_res - T_fresh)
-// So a naturally-aspirated engine with a free-flowing exhaust is left exactly as it was, and only
-// an engine fighting its own exhaust pays.
-function residualKnock(rpm,map){
+function residualKnockPorted(rpm,map){
   const e=engine;
   if(!(e.compression>1))return 0;
   const Tfresh=effIAT(map,rpm)+273.15;
@@ -4481,22 +4849,65 @@ function residualKnock(rpm,map){
   const dF=clamp(residualFrac(pExh,pInt,e.compression)-1/Math.max(1.5,e.compression-1),0,0.30);
   return dF*(Tres-Tfresh)*0.8;                          // same per-degree sensitivity as above
 }
-// The spark advance actually run at an operating point. FIXED = the designed value; AUTO =
-// an ECU that targets MBT and retards just enough to hold knock near KNOCK_TARGET.
-const KNOCK_TARGET=40;
+// The phasing the end gas sees at a spark advance: CA50 moves with the spark, degree for degree, about the
+// model's best-torque phasing (SI_CA50 at mbtAdvance); enrichment and a stronger spark act as that much retard.
+function knockCa50(rpm,map,adv){
+  const lam=curAFR(rpm,map)/(engine.stoichAFR||14.7);
+  const mix=lam<0.95?30*(0.95-lam):-30*(lam-0.95);     // ~3 deg per 0.1 lambda, the measured trend
+  return burnCycle().ca50+mbtAdvance(rpm,map)+ignBonus()+mix-adv;
+}
+function knockAt(rpm,map,adv){
+  const e=engine;
+  if(e.ci)return 0;   // compression ignition — no spark knock (limited by smoke/EGT instead)
+  if(e.ports)return knockScorePorted(rpm,map,adv);
+  if(!_knockCache||_knockCache.score!==e.score)_knockCache={score:e.score,m:new Map()};
+  const lam=curAFR(rpm,map)/(e.stoichAFR||14.7);
+  const key=Math.round(rpm/10)+'|'+map.toFixed(3)+'|'+adv.toFixed(2)+'|'+effIAT(map,rpm).toFixed(1)+'|'+lam.toFixed(3)+'|'+e.effOctane+'|'+e.ignitionType;
+  let I=_knockCache.m.get(key);
+  if(I==null){
+    I=endGasIntegral(rpm,map,knockCa50(rpm,map,adv));
+    if(_knockCache.m.size>20000)_knockCache.m.clear();
+    _knockCache.m.set(key,I);
+  }
+  return clamp(KNOCK_TARGET*I+nitrousImep()*4,0,100);   // nitrous raises cylinder pressure → more knock
+}
+// The spark advance actually run at an operating point. FIXED = the designed value; AUTO = an ECU that runs
+// best-torque spark where the end gas survives it, and otherwise the most advance at which it just does
+// (the knock limit), never more than CA50_RETARD past the cycle's own best-torque phasing.
+const KNOCK_TARGET=40, CA50_RETARD=37;   // the furthest retard past best-torque phasing: CA50 ~45 deg ATDC on a piston
 function activeAdvance(rpm,map){
   const mbt=mbtAdvance(rpm,map);
   if(engine.ci)return mbt;   // diesel: no spark timing (injection-timed); treat as on-MBT
   if(engine.timingMode!=='auto')return engine.ignitionAdv;
-  const knockAtMbt=knockAt(rpm,map,mbt);
-  if(knockAtMbt<=KNOCK_TARGET)return mbt;               // clean at MBT → run full timing
-  // knockAt prices a degree of advance at 2.5 points at every mixture (the rich step that halved it,
-  // and this divisor's matching 0.5, went in build 94), so the retard that brings knock to target is
-  // exactly the excess over 2.5.
-  const retard=(knockAtMbt-KNOCK_TARGET)/2.5;
-  return clamp(mbt-retard,6,mbt);                       // pull timing to protect
+  if(engine.ports){                                      // the ported engines' score, as in build 122
+    const k0=knockAt(rpm,map,mbt);
+    return k0<=KNOCK_TARGET?mbt:clamp(mbt-(k0-KNOCK_TARGET)/2.5,6,mbt);
+  }
+  // the same operating point is asked for several times per torque figure: remember the answer
+  if(!_knockCache||_knockCache.score!==engine.score)_knockCache={score:engine.score,m:new Map()};
+  const key='A|'+Math.round(rpm/10)+'|'+map.toFixed(3)+'|'+effIAT(map,rpm).toFixed(1)+'|'+(curAFR(rpm,map)/(engine.stoichAFR||14.7)).toFixed(3)+'|'+engine.effOctane+'|'+engine.ignitionType+'|'+nitrousImep();
+  const hit=_knockCache.m.get(key);if(hit!=null)return hit;
+  let adv=mbt;
+  if(knockAt(rpm,map,mbt)>KNOCK_TARGET){
+    // As far back as an ECU will go: a piston's burn phased ~45 deg after TDC, where it turns unstable and the
+    // exhaust too hot to go further, the same distance past best-torque phasing on a rotary (build 131; it stopped
+    // at a fitted 6 deg BTDC, which at full load under ~2000 rpm left the end gas knocking at any spark).
+    let lo=Math.min(mbt,knockCa50(rpm,map,0)-(burnCycle().ca50+CA50_RETARD)),hi=mbt;
+    if(knockAt(rpm,map,lo)>KNOCK_TARGET)adv=lo;            // knocks even fully retarded: the floor
+    else{for(let i=0;i<9;i++){const m=(lo+hi)/2;if(knockAt(rpm,map,m)>KNOCK_TARGET)hi=m;else lo=m;}adv=lo;}   // to ~0.06 deg
+  }
+  _knockCache.m.set(key,adv);
+  return adv;
 }
 function computeKnockRisk(rpm,map){return knockAt(rpm,map,activeAdvance(rpm,map));}
+// What a spark advance costs in work (build 131): the cycle efficiency of the Wiebe burn at the phasing it
+// gives, against best-torque phasing (wiebePhasingEff), replacing a fitted 1 - 0.004 x (degrees off MBT)^2.
+function sparkTimingFactor(rpm,map){
+  if(engine.ports)return clamp(1-0.004*Math.pow(activeAdvance(rpm,map)-mbtAdvance(rpm,map),2),0.72,1.0);   // as in build 122
+  const off=mbtAdvance(rpm,map)-activeAdvance(rpm,map),cr=engine.compression,x50=wiebeX50(),cyc=burnCycle();
+  const eff=c=>wiebePhasingEff(cyc.burn,c-x50*cyc.burn,cr,cyc.vol);
+  return clamp(eff(cyc.ca50+off)/eff(cyc.ca50),0.3,1);
+}
 // The pumping loop: PMEP = p_exhaust - p_intake, both absolute. Charged in two halves, because
 // only one of them is honestly derived here.
 //
@@ -4719,7 +5130,7 @@ function calcAtRpm(rpm,mapOverride){
   if(engine.ci){
     imep=(dieselGrossImep(rpm,map,ve)*coolF+nitrousImep())*healthFactor();
   }else{
-    const ignF=clamp(1-0.004*Math.pow(activeAdvance(rpm,map)-mbtAdvance(rpm,map),2),0.72,1.0);
+    const ignF=sparkTimingFactor(rpm,map);
     imep=(sparkGrossImep(rpm,map,ve)*coolF*ignF*ignitionHealth(rpm)+nitrousImep())*healthFactor();
   }
   imep=dieselImepLimit(imep);          // diesel peak-cylinder-pressure / smoke ceiling
@@ -4744,7 +5155,7 @@ function brakeTorqueRaw(rpm,map,fuelCut){
     const ve=computeVE(rpm,map);
     if(engine.ci)imep=(dieselGrossImep(rpm,map,ve)*coolF+nitrousImep())*healthFactor();
     else{
-      const ignF=clamp(1-0.004*Math.pow(activeAdvance(rpm,map)-mbtAdvance(rpm,map),2),0.72,1.0);
+      const ignF=sparkTimingFactor(rpm,map);
       imep=(sparkGrossImep(rpm,map,ve)*coolF*ignF*ignitionHealth(rpm)+nitrousImep())*healthFactor();
     }
     imep=dieselImepLimit(imep);
@@ -4776,7 +5187,7 @@ function advanceShaft(shaftE,rpm,boostNow,throttle,dt,hMax=0.002){
   const T3=exhaustGasT(clamp(th,0.3,1.1),rpm);
   const sub=Math.max(1,Math.ceil(dt/hMax));   // the shaft is faster than the vehicle; sub-step it
   const h=dt/sub;
-  let E=clamp(shaftE,0,Emax), b=clamp(boostNow,0,engine.maxBoost);
+  let E=clamp(shaftE,0,Emax), b=clamp(boostNow,0,boostTarget(rpm));
   // Charge-system fill (see bearingCoeff's neighbour): only while boost is climbing, so a lit launch
   // pays nothing; the air to raise the charge volume from b to b2 costs the compressor's work per kg.
   const V=engine.chargeVol||0, T01=(state.iat!=null?state.iat:20)+273.15;
@@ -4794,7 +5205,7 @@ function advanceShaft(shaftE,rpm,boostNow,throttle,dt,hMax=0.002){
     // FALLS only as fast as the engine empties the volume: tau = (air held) / (air swallowed). Letting
     // it fall instantly with every dip in shaft speed, and charging the refill each time, burned
     // energy in a loop — with a real-sized charge volume that stalled spool above 1 bar.
-    const bShaft=clamp(r.pr-1,0,engine.maxBoost);
+    const bShaft=clamp(r.pr-1,0,boostTarget(rpm));
     let b2=bShaft;
     if(bShaft<b){
       const Tch=effIAT(1+b,rpm)+273.15, held=V*(1+b)*1e5/(287*Tch), swallow=Math.max(1e-4,airFlowAt(rpm,1+b)*Math.max(0.08,th));
@@ -5059,6 +5470,8 @@ function readVehicleFromForm(){
     aeroFront:g('vhAeroF').value,aeroRear:g('vhAeroR').value,aeroFloor:g('vhAeroFl').value,weightRed:g('vhWeight').value,
     brakeType:g('vhBrake').value,rotor:clamp(Math.round(+g('vhRotor').value||330),250,420),suspension:g('vhSusp').value,
     speedRating:g('vhRating').value,body:vehBody,
+    // Steering-wheel turns per road-wheel turn. Only the live-timing wheel reads it; the lap does not.
+    steerRatio:clamp(numOr(g('vhSteer').value,15),8,22),
     // Road-speed governor in km/h, 0 when removed. limitKmh keeps the set figure while it is off.
     governor:g('vhLimiter').value==='on'?clamp(Math.round(+g('vhLimitKmh').value||250),80,400):0,
     limitKmh:clamp(Math.round(+g('vhLimitKmh').value||250),80,400)
@@ -5077,6 +5490,7 @@ function applyVehicleToForm(v){
   g('vhTire').value=v.tireType||'sport';g('vhTireW').value=v.tireWidth||235;g('vhTireA').value=v.tireAspect||40;g('vhWheel').value=v.wheelDia||18;
   g('vhAeroF').value=v.aeroFront||'none';g('vhAeroR').value=v.aeroRear||'none';g('vhAeroFl').value=v.aeroFloor||'none';g('vhWeight').value=v.weightRed||'none';
   g('vhBrake').value=v.brakeType||'slotted';g('vhRotor').value=v.rotor||330;g('vhSusp').value=v.suspension||'sport';
+  g('vhSteer').value=v.steerRatio||15;   // saves from before build 130 carry none
   updateGearingLabel();
 }
 // Fit a chassis with its factory-spec parts, so picking a chassis gives a coherent car instead of
@@ -5330,10 +5744,12 @@ function buildTorqueGrid(){
   return{rpms,boosts,tq,laggy};
 }
 // The grid depends only on the engine, and buildEngine makes a new engine.score every time it changes,
-// so the lap keeps the one it built until then (build 118: a lap needs it, and it costs ~0.15 s).
+// so the 0-100 run and the lap share the one built until then.
 let _lapGrid=null,TURBO_ITERS=2;
 function lapTorqueGrid(){
-  if(!_lapGrid||_lapGrid.score!==engine.score)_lapGrid={score:engine.score,g:buildTorqueGrid()};
+  // keyed on the builder too (build 131), so a harness that swaps buildTorqueGrid for a scaled one gets its own
+  const fn=window.buildTorqueGrid;
+  if(!_lapGrid||_lapGrid.score!==engine.score||_lapGrid.fn!==fn)_lapGrid={score:engine.score,fn,g:fn()};
   return _lapGrid.g;
 }
 function gridTorque(g,rpm,boost){
@@ -5364,7 +5780,7 @@ function simulateAccel(){
   // Torque during the RUN comes off the 2-D grid, because boost is a state with history. The 1-D
   // curve above is still right for the top-speed scan: a car sitting at terminal velocity has been
   // at full throttle a long time and is fully spooled by definition.
-  const grid=buildTorqueGrid();
+  const grid=lapTorqueGrid();   // one per engine, shared with the lap (build 131: each costs a knock search per point)
   let boostNow=grid.laggy?0:engine.maxBoost, shaftE=0;
   const m=vehicle.mass,r=vehicle.rTire,fd=vehicle.finalDrive,eff=vehicle.driveEff,ratios=vehicle.ratios;
   const vGov=(vehicle.governor||0)/3.6;   // m/s, 0 when the limiter is removed
@@ -5480,7 +5896,7 @@ function simulateAccel(){
     const res=drag+roll, aHold=(driveF-res)/vehicleMassEff(coupled?totalRatio:0);
     const spin=m*aHold+res>trac+1e-6;
     a=spin?(F-res)/m:aHold;
-    if(!M.t100){if(spin)M.gripT+=dt;if(shiftT<=0&&grid.laggy&&boostNow<0.9*engine.maxBoost)M.lagT+=dt;}
+    if(!M.t100){if(spin)M.gripT+=dt;if(shiftT<=0&&grid.laggy&&boostNow<0.9*boostTarget(engineRpm))M.lagT+=dt;}
     v=Math.max(0,v+a*dt);x+=v*dt;t+=dt;
     if(!M.t100&&v>=V100)M.t100=t;
     if(!M.q400&&x>=400)M.q400={t,v};
@@ -6158,6 +6574,9 @@ function lineFor(T,key){
 function simulateLap(key,opts){
   if(!engine.score||!vehicle.mass)return null;
   const quick=!!(opts&&opts.quick);
+  // fromRest (build 137): the lap of a standing start. The car leaves point 0 from rest and the forward pass
+  // does not wrap round to it, so the profile is the launch, joining the flying lap at the first braking zone.
+  const fromRest=!!(opts&&opts.fromRest);
   const T0=buildTrack(key),T=Object.assign({},T0,{line:opts&&opts.line||lineFor(T0,key)}),p=T.line,n=p.length;   // this car's racing line
   if(!quick){if(p._corners==null)p._corners=detectCorners(p).length;T.corners=p._corners;}   // counted on the line it drives
   const curve=buildTorqueCurve();
@@ -6359,8 +6778,10 @@ function simulateLap(key,opts){
     return true;   // flat out for a whole lap: change up
   }
   let held=-1,cut=0,hold=-1;
+  if(fromRest)v[0]=Math.min(v[0],0.5);
   for(let pass=0;pass<2;pass++)for(let k=0;k<n;k++){
     const i=k%n,j=(i+1)%n;
+    if(fromRest&&j===0)continue;   // the launch does not arrive back at its own start
     let cap;
     if(cut>0){
       const R=(drag(v[i])+rollF(v[i])*p[i].cosT+corneringDrag(m,v[i]*v[i]/p[i].r,loadAt(p[i],v[i])))/m+G*p[i].sinT;
@@ -6400,14 +6821,16 @@ function simulateLap(key,opts){
   // no gear shifts: the stretches it re-solves do not carry the gearbox's state)
   if(quick){let tq=0;for(let i=0;i<n;i++){const j=(i+1)%n;tq+=p[i].ds3/Math.max(2,(v[i]+v[j])/2);}return {lap:tq,v,vC,vB,kind:accKind,model:{ceilAt,brakeFrom,accFrom}};}
   // 2b. Brake temperature on the lap (build 107; build 105 counted heat per stop against a fitted
-  //     budget). Run the solved profile through the rotors in time order, lap after lap until the
-  //     temperature at the line repeats, set each point's brake capacity from the front rotor's
-  //     temperature there, and solve again if it bites. The last pass is kept for the replay.
+  //     budget). Run the solved profile through the rotors in time order, set each point's brake
+  //     capacity from the front rotor's temperature there, and solve again if it bites. The last pass
+  //     is kept for the replay. The lap is a HOT LAP (build 135): the rotors start from ambient, take one
+  //     preparation lap at the same pace, and the hot lap is the second. It used to repeat laps until the
+  //     temperature at the line did, which is a race stint's rotors, not a hot lap's (the tyres, too, are
+  //     taken at their working temperature, which an out-lap gives them, not a stint's).
   const th=vehicle.brakeTh;
   function brakeTemps(){
     const st={F:BRAKE_AMBIENT,R:BRAKE_AMBIENT},TF=new Array(n),TR=new Array(n);
-    for(let lap=0;lap<6;lap++){
-      const F0=st.F;
+    for(let lap=0;lap<1+BRAKE_PREP_LAPS;lap++){   // the preparation lap, then the hot lap kept in TF/TR
       for(let i=0;i<n;i++){
         const j=(i+1)%n,va=Math.max(2,(v[i]+v[j])/2),dt=p[i].ds3/va;
         const aLong=(v[j]*v[j]-v[i]*v[i])/(2*p[i].ds3);
@@ -6415,7 +6838,6 @@ function simulateLap(key,opts){
         brakeHeatStep(st,th,Math.max(0,mech),va,dt);
         TF[i]=st.F;TR[i]=st.R;
       }
-      if(lap>=2&&Math.abs(st.F-F0)<1)break;                 // a lap that ends where it began
     }
     return {TF,TR};
   }
@@ -6522,7 +6944,14 @@ function simulateLap(key,opts){
   //           brake, as a share of what the brakes can command.
   //   g       lateral v^2/r, signed by which way the line turns; longitudinal from the speed change
   //   rpm     from the gear the car is in
+  //   steer   the front wheels' angle (rad, + = right, i.e. clockwise on the map) from kinematic (Ackermann) steering, atan(wheelbase / r)
+  //           on the line's own radius (build 130). Geometry only: no slip angle, so no understeer or
+  //           oversteer correction. The HUD multiplies it by the steering ratio for the wheel in the hands.
+  //   pwr     crank power (W): the drive force the speed profile spends, times speed, back through the
+  //           driveline's efficiency, and never more than the engine makes at full throttle at this rpm
+  //           (with the boost the shaft has built). Zero coasting, braking and mid-shift.
   const tAt=new Array(n),thr=new Array(n),brk=new Array(n),gLat=new Array(n),gLong=new Array(n),rpmAt=new Array(n),mapAt=new Array(n);
+  const steerRaw=new Array(n),pwr=new Array(n),wb=vehicle.wb||2.6;
   {
     let tc=0;
     for(let i=0;i<n;i++){
@@ -6535,12 +6964,18 @@ function simulateLap(key,opts){
       else{thr[i]=0;brk[i]=clamp(-need/m/Math.max(0.1,vehicle.brakeDecelCap),0,1);}
       const ax=p[i].x-p[h].x,ay=p[i].y-p[h].y,bx=p[j].x-p[i].x,by=p[j].y-p[i].y;
       gLat[i]=Math.sign(ax*by-ay*bx)*v[i]*v[i]/Math.max(1,p[i].r)/G;
+      steerRaw[i]=Math.sign(ax*by-ay*bx)*Math.atan(wb/Math.max(1,p[i].r));
       gLong[i]=aL[i]/G;
       rpmAt[i]=clamp(v[i]*ratios[gears[i]]*fd/rT*60/TWO_PI,idle,rl);
       mapAt[i]=steadyMapAt(rpmAt[i],thr[i]);
       if(boostLap)mapAt[i]=Math.min(mapAt[i],1+boostLap[i]);   // what the shaft has built by here
+      const omega=rpmAt[i]*TWO_PI/60;
+      pwr[i]=cutAt[i]||need<=0?0:Math.min(need*v[i]/eff,tqAt(rpmAt[i])*omega*(boostShare?boostShare[i]:1));
     }
   }
+  // The line's radius comes from three samples 15 m apart and flickers a little point to point; a wheel
+  // in a driver's hands does not, so the angle is averaged over ±2 points (±10 m).
+  const steer=steerRaw.map((_,i)=>{let a=0;for(let k=-2;k<=2;k++)a+=steerRaw[(i+k+n)%n];return a/5;});
   // Elevation summary for the readouts: metres climbed per lap and the height range.
   let climb=0,zMin=1e9,zMax=-1e9;
   for(let i=0;i<n;i++){const dz=p[(i+1)%n].z-p[i].z;if(dz>0)climb+=dz;zMin=Math.min(zMin,p[i].z);zMax=Math.max(zMax,p[i].z);}
@@ -6548,9 +6983,475 @@ function simulateLap(key,opts){
   for(let i=0;i<n;i++)counts[lim[i]]+=p[i].ds3;
   return {track:T,lap:t,sectors:sect,v,lim,vMin:vMin*3.6,vMax:vMax*3.6,
     avg:p.length_/t*3.6,shifts,shiftLoss,counts,gears,climb,zMin,zMax,length:T.length,lineLength:p.length_,
-    replay:{tAt,thr,brk,cut:Array.from(cutAt),gLat,gLong,rpm:rpmAt,map:mapAt,tF:BT.TF,tR:BT.TR,fade:fadeF.slice()},
+    // The peak the power readout is measured against: the curve this lap drives (best-power mixture), which
+    // can sit a little above the as-tuned figure quoted on DYNO.
+    pwrPeak:curve.reduce((a,q)=>Math.max(a,q.tq*q.rpm*TWO_PI/60),0),
+    replay:{tAt,thr,brk,cut:Array.from(cutAt),gLat,gLong,rpm:rpmAt,map:mapAt,steer,pwr,tF:BT.TF,tR:BT.TR,fade:fadeF.slice()},
     brakeMaxF:Math.max(...BT.TF),brakeMaxR:Math.max(...BT.TR),brakeOnset:th.onset,
     corners:T.corners,width:T.width,wLabel:T.wLabel};
+}
+// ================================================================================================
+// ---- RACE (build 137): two to eight builds on one circuit, run to a lap count, nobody driving ----
+// The race is computed first and watched afterwards. Each car's physics is solved once, up front,
+// through the same lap solver the TRACK tab uses: on the car's own racing line, at a grid of grip
+// levels (what the tyres have left) and fuel loads (the mass that burns off), plus a standing start.
+// The race loop then runs every car along its line on a 50 ms clock, reading its speed off that
+// grid for the grip and fuel it has at that moment, and adds what the single-car solver cannot know
+// about: the other cars, the tyres' temperature and wear, the fuel tank, the pit lane and the
+// driver. It needs no globals, so the same seed gives the same race, and it can be scrubbed.
+//
+// What is derived and what is a rule:
+//   - pace, braking, gears, launch, fuel flow: the lap solver and the engine's own BSFC map
+//   - tyre heat: slip work and rolling hysteresis in, convection out, per tyre, from the car's loads
+//   - tyre grip from temperature and wear, wear rates, tank sizes: fitted (commented where they sit)
+//   - traffic, overtaking, slipstream, dirty air, mistakes, pit loss: rules, not physics
+const RACE={
+  dt:0.05,            // s, the race clock's step
+  ambient:25,         // C, air and the tyres' start temperature
+  warmers:70,         // C, the tyres' start temperature from blankets
+  gridGap:8,          // m between grid slots
+  poleOffset:2,       // m behind the line the pole car starts
+  pitLoss:20,         // s, the time the pit lane costs against driving past it, at its speed limit
+  refuelLps:2.5,      // L/s through a pit-lane rig
+  tyreChange:6,       // s to change four tyres (alongside refuelling)
+  pitExitKmh:60,      // km/h, the pit lane's speed limit, where the car rejoins
+  follow:12,          // m: closer than this, the car behind is in the way of the car ahead
+  close:6,            // m: how close a car that cannot pass sits
+  slipGap:40,         // m: within this behind on a straight, the tow
+  slip:1.015,         // speed gain in the tow (the drag behind a car falls ~30%; at the power limit v ~ drag^-1/3)
+  dirty:0.985,        // speed through a corner within a second behind: a few % less downforce/grip, v ~ sqrt(mu)
+  passKmh:4,          // km/h of pace advantage needed to pass on a 12 m wide circuit (narrower = more)
+  pace:0.006,         // up to 0.6% off the car's limit, drawn per lap: no driver is on it every lap
+  mistake:0.012,      // chance per lap of a mistake on a healthy car
+  wearLimit:0.8,      // the wear the strategy plans its stints to
+  recDt:0.25          // s between recorded samples
+};
+// Fuel tank by body (litres). Typical of the class, not of any one car: a kei car carries ~30 L,
+// a GT ~80. The quoted curb masses are taken with the tank full, so a race car is lighter by what it burns.
+const RACE_TANK_L={kei:30,hatch:50,roadster:45,coupe:60,sedan:62,muscle:70,rally:55,gt:80,super:80,hyper:85,proto:60,pickup:90,suv:80};
+const RACE_GRIP=[0.72,0.80,0.88,0.94,1.00], RACE_FUEL=[0,0.5,1];   // the pace grid: grip scale × tank share
+// Tyres (fitted, build 137). One lump per tyre, the tread and the rubber under it that warms with it:
+//   heat in  = slip work (force × speed × the share that is sliding, which rises with how much of the grip
+//              is in use) + rolling hysteresis (the rolling resistance's work, nearly all of it into the tyre)
+//   heat out = convection, h = H0 + H1 v^0.8 over the tyre's surface
+// Grip: 1 at the compound's tOpt, falling with the square of the distance from it in units of its window,
+// twice as fast hot as cold; wear takes a little off at first and then a lot (the cliff).
+// Set so a road car on sport tyres settles near its compound's tOpt on a short circuit and a set lasts it
+// about an hour of hard laps to the wear limit, a semi-slick on a GT3 about half that.
+const TYRE_RACE={slip:0.03,roll:0.8,H0:12,H1:7,cp:4500,cold:0.03,hot:0.12,gMin:0.72,wearK:8e-8,wearHot:3,
+  wLin:0.06,wCliff:1.2,wKnee:0.7};
+function mulberry32(a){return function(){a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296;};}
+function tyreTempGrip(T,th){
+  const x=(T-th.tOpt)/th.tWin;
+  return clamp(1-(x<0?TYRE_RACE.cold:TYRE_RACE.hot)*x*x,TYRE_RACE.gMin,1);
+}
+function tyreWearGrip(w){const k=Math.max(0,w-TYRE_RACE.wKnee);return clamp(1-TYRE_RACE.wLin*w-TYRE_RACE.wCliff*k*k,0.6,1);}
+// The grip the car has, as a share of its tyres at their best: the four tyres weighted by the load they carry.
+function raceGrip(M,T,W){
+  const f=M.fWt/2,r=(1-M.fWt)/2;let g=0;
+  for(let k=0;k<4;k++)g+=(k<2?f:r)*tyreTempGrip(T[k],M.tyre)*tyreWearGrip(W[k]);
+  return g;
+}
+// The four tyres over one step: speed v (m/s), lateral acceleration ay (m/s2, + = turning right, so the
+// left tyres are outside), longitudinal ax (m/s2). T and W are [FL,FR,RL,RR], changed in place.
+// Returns the slip power (W) the tyres took, for the wear.
+function raceTyreStep(M,T,W,v,ay,ax,dt){
+  const m=M.massNow, down=0.5*AIR_RHO*M.clA*v*v, drag=0.5*AIR_RHO*M.cdA*v*v;
+  const Ntot=m*G+down, dLong=m*ax*M.cg/M.wb;
+  const Nf=Math.max(0.1*Ntot,Ntot*M.fWt+down*(M.aeroBal-M.fWt)-dLong), Nr=Math.max(0.1*Ntot,Ntot-Nf);
+  const dLat=m*Math.abs(ay)*M.cg/M.track, outL=ay>0;
+  const N=[Nf/2+(outL?1:-1)*dLat*M.fWt,Nf/2+(outL?-1:1)*dLat*M.fWt,Nr/2+(outL?1:-1)*dLat*(1-M.fWt),Nr/2+(outL?-1:1)*dLat*(1-M.fWt)];
+  for(let k=0;k<4;k++)N[k]=Math.max(50,N[k]);
+  const Nsum=N[0]+N[1]+N[2]+N[3], Fy=m*Math.abs(ay), Fx=m*ax+drag;
+  const th=M.tyre, A=M.tyreArea, Gc=A*(TYRE_RACE.H0+TYRE_RACE.H1*Math.pow(Math.max(0,v),0.8));
+  let Pslip=0;
+  for(let k=0;k<4;k++){
+    const front=k<2;
+    let fx;
+    if(Fx>=0){   // driving: the driven wheels, by load
+      const share=M.drive==='awd'?N[k]/Nsum:((M.drive==='fwd')===front?N[k]/(front?N[0]+N[1]:N[2]+N[3]):0);
+      fx=Fx*share;
+    }else{       // braking: the hydraulics' split, then by load across the axle
+      fx=Fx*(front?M.brakeF:1-M.brakeF)*N[k]/(front?N[0]+N[1]:N[2]+N[3]);
+    }
+    const fy=Fy*N[k]/Nsum, F=Math.hypot(fx,fy), u=Math.min(1.3,F/Math.max(1,M.muRef*N[k]));
+    const ps=F*v*TYRE_RACE.slip*u, pr=TYRE_RACE.roll*M.crr*N[k]*v;
+    T[k]+=(ps+pr-Gc*(T[k]-RACE.ambient))*dt/M.tyreC;
+    const over=Math.max(0,(T[k]-th.tOpt-th.tWin)/th.tWin);
+    W[k]=Math.min(1,W[k]+TYRE_RACE.wearK*th.wear*ps*(1+TYRE_RACE.wearHot*over)*dt);
+    Pslip+=ps;
+  }
+  return Pslip;
+}
+// Put a build on the bench for a moment: load it, run fn, and put the user's own build back exactly as it
+// was (serializeBuild before = after; the test checks it).
+function withBuild(rec,fn){
+  const saved=serializeBuild((engine&&engine.name)||'engine',''), name=engine.name;
+  const ld={engine:loaded.engine,car:loaded.car}, tk=trackKey;
+  try{fuelMapCustom=false;applyBuild(rec);if(rec.name)engine.name=rec.name;return fn();}
+  finally{fuelMapCustom=false;applyBuild(saved);engine.name=name;loaded.engine=ld.engine;loaded.car=ld.car;trackKey=tk;updateBuildStrip();}
+}
+// The loaded car at another mass and grip, for one solve: what depends on the mass (the brakes' deceleration,
+// the headline mu) moves with it; the tyres' mu is scaled about the compound's.
+function withRaceTrim(grip,dm,fn){
+  const sv={mass:vehicle.mass,muRef:vehicle.muRef,brakeDecelCap:vehicle.brakeDecelCap,mu:vehicle.mu};
+  try{
+    vehicle.mass=sv.mass+dm;vehicle.muRef=sv.muRef*grip;
+    vehicle.brakeDecelCap=brakeForceCap(vehicle)/vehicle.mass;vehicle.mu=tyreMu(vehicle.mass*G/4);
+    return fn();
+  }finally{Object.assign(vehicle,sv);}
+}
+// Everything the race needs to know about one car, solved with the car loaded. A record from the garage,
+// a factory car or the current build: {name, build}.
+function raceCarModel(entry,key){
+  return withBuild(entry.build,()=>{
+    if(!engine.score||!vehicle||!vehicle.mass)throw new Error('incomplete build: '+entry.name);
+    const T=buildTrack(key), line=lineFor(T,key), n=line.length;
+    const fuel=FUELS[engine.fuel]||FUELS.gasoline, tankL=RACE_TANK_L[vehicle.chassis]||60, tankKg=tankL*fuel.density;
+    const solve=(grip,ff,o)=>withRaceTrim(grip,(ff-1)*tankKg,()=>simulateLap(key,Object.assign({line},o)));
+    const nom=solve(1,0.5);
+    // BSFC (g/kWh) over rpm × MAP, from the engine's own map at design conditions, so the race loop never
+    // calls engine code. Fuel flow at a point is then the power the lap spends there times the BSFC.
+    const iat0=state.iat;state.iat=20;
+    let mapLo=1e9,mapHi=0;for(const q of nom.replay.map){mapLo=Math.min(mapLo,q);mapHi=Math.max(mapHi,q);}
+    mapLo=Math.max(0.2,mapLo*0.95);mapHi=Math.max(mapLo+0.1,mapHi*1.02);
+    const NR=16,NM=10,r0=engine.idleRpmEff,r1=engine.redline,bs=new Float64Array(NR*NM);
+    for(let a=0;a<NR;a++)for(let b=0;b<NM;b++){
+      const x=steadyBSFC(r0+(r1-r0)*a/(NR-1),mapLo+(mapHi-mapLo)*b/(NM-1)).bsfc;
+      bs[a*NM+b]=clamp(isFinite(x)?x:900,150,900);
+    }
+    state.iat=iat0;
+    const bsfcAt=(rpm,map)=>{
+      const x=clamp((rpm-r0)/(r1-r0),0,1)*(NR-1),y=clamp((map-mapLo)/(mapHi-mapLo),0,1)*(NM-1);
+      const a=Math.min(NR-2,Math.floor(x)),b=Math.min(NM-2,Math.floor(y)),fx=x-a,fy=y-b;
+      return (bs[a*NM+b]*(1-fx)+bs[(a+1)*NM+b]*fx)*(1-fy)+(bs[a*NM+b+1]*(1-fx)+bs[(a+1)*NM+b+1]*fx)*fy;
+    };
+    // Off the power the injectors cut and only idle flows; a carburettor cannot cut, and keeps feeding.
+    const carb=!(INTAKE_SYS[engine.intakeSys]||INTAKE_SYS.efi).di&&/^carb|sidedraft/.test(engine.intakeSys);
+    const idleGs=0.12*engine.displacement_L*(carb?2.5:1);
+    const fuelRate=L=>{const R=L.replay,out=new Float32Array(n);
+      for(let i=0;i<n;i++)out[i]=R.pwr[i]>0?R.pwr[i]*bsfcAt(R.rpm[i],R.map[i])/3.6e6+idleGs*0.3:idleGs;
+      return out;};
+    const prof=[];
+    for(const gr of RACE_GRIP)for(const ff of RACE_FUEL){
+      const L=(gr===1&&ff===0.5)?nom:solve(gr,ff);
+      prof.push({v:Float32Array.from(L.v),fr:fuelRate(L),lap:L.lap});
+    }
+    const rest=solve(1,0.5,{fromRest:true});
+    const cum=new Float64Array(n+1);for(let i=0;i<n;i++)cum[i+1]=cum[i]+line[i].ds3;
+    const kap=new Float32Array(n),lim=new Array(n);
+    for(let i=0;i<n;i++){
+      const h=(i-1+n)%n,j=(i+1)%n,ax=line[i].x-line[h].x,ay=line[i].y-line[h].y,bx=line[j].x-line[i].x,by=line[j].y-line[i].y;
+      kap[i]=Math.sign(ax*by-ay*bx)/Math.max(1,line[i].r);lim[i]=nom.lim[i];
+    }
+    const tt=TIRE_TYPE[vehicle.tireType]||TIRE_TYPE.sport;
+    const qual=prof[RACE_GRIP.length*RACE_FUEL.length-RACE_FUEL.length].lap;   // full grip, empty tank
+    // fuel per lap: the flow along the nominal lap (full grip, half a tank), over the time at each point
+    const frNom=prof[(RACE_GRIP.length-1)*RACE_FUEL.length+1].fr;
+    let fpl=0;for(let i=0;i<n;i++){const j=(i+1)%n;fpl+=frNom[i]*line[i].ds3/Math.max(2,(nom.v[i]+nom.v[j])/2);}
+    return {name:entry.name,key,n,line:line.map(q=>({x:q.x,y:q.y})),cum,L3:cum[n],kap,lim,prof,
+      vRest:Float32Array.from(rest.v),tF:Float32Array.from(nom.replay.tF),brakeOnset:nom.brakeOnset,
+      lapNom:nom.lap,qual,fuelPerLapKg:fpl/1000,
+      tankL,tankKg,fuelRho:fuel.density,fuelLabel:fuel.label,
+      mass:vehicle.mass,fWt:vehicle.fWt,cg:vehicle.cg,wb:vehicle.wb,track:vehicle.track,drive:vehicle.drive,
+      clA:vehicle.clA,cdA:vehicle.cdA,aeroBal:vehicle.aeroBal,crr:vehicle.crr,muRef:vehicle.muRef,
+      brakeF:vehicle.brakeFrontShare||0.7,
+      tyre:{key:vehicle.tireType,label:tt.label,tOpt:tt.tOpt,tWin:tt.tWin,wear:tt.wear},
+      tyreArea:0.25+vehicle.tireWidth/1000,tyreC:TYRE_RACE.cp*vehicle.tireWidth/225,
+      chassis:vehicle.chassis,chLabel:vehicle.chLabel,hp:engine.score.peakHP};
+  });
+}
+// Speed (m/s) and fuel flow (g/s) the car's limit gives at line point i, for grip g and tank share ff.
+function racePace(M,i,g,ff){
+  const NG=RACE_GRIP.length,NF=RACE_FUEL.length;
+  g=clamp(g,RACE_GRIP[0],1);ff=clamp(ff,0,1);
+  let a=0;while(a<NG-2&&g>RACE_GRIP[a+1])a++;
+  const fa=(g-RACE_GRIP[a])/(RACE_GRIP[a+1]-RACE_GRIP[a]);
+  const b=ff>=0.5?1:0,fb=(ff-RACE_FUEL[b])/(RACE_FUEL[b+1]-RACE_FUEL[b]);
+  const P=M.prof,p00=P[a*NF+b],p01=P[a*NF+b+1],p10=P[(a+1)*NF+b],p11=P[(a+1)*NF+b+1];
+  const v=(p00.v[i]*(1-fb)+p01.v[i]*fb)*(1-fa)+(p10.v[i]*(1-fb)+p11.v[i]*fb)*fa;
+  const fr=(p00.fr[i]*(1-fb)+p01.fr[i]*fb)*(1-fa)+(p10.fr[i]*(1-fb)+p11.fr[i]*fb)*fa;
+  return {v,fr};
+}
+// The car's speed at a fractional point (i, f along segment i): the two ends of the segment, interpolated.
+function racePaceAt(M,i,f,g,ff){
+  const j=(i+1)%M.n,a=racePace(M,i,g,ff),b=racePace(M,j,g,ff);
+  return {v:a.v+(b.v-a.v)*f,fr:a.fr+(b.fr-a.fr)*f};
+}
+// The launch profile by distance from the start (own line), interpolated.
+function raceLaunchV(M,d){
+  if(d<=0)return M.vRest[0];
+  let lo=0,hi=M.n;while(hi-lo>1){const mid=(lo+hi)>>1;if(M.cum[mid]<=d)lo=mid;else hi=mid;}
+  if(lo>=M.n-1)return 1e9;
+  const f=(d-M.cum[lo])/Math.max(1e-6,M.cum[lo+1]-M.cum[lo]);
+  return M.vRest[lo]+(M.vRest[lo+1]-M.vRest[lo])*f;
+}
+// A solo run of the car on its own pace, no traffic and no driver error, for the strategy: fuel per lap
+// and how many laps a set of tyres lasts to the wear limit, with the lap time at each age.
+function racePractice(M,cfg,maxLaps){
+  const T=[0,0,0,0].fill(cfg.warmers&&M.tyre.key!=='eco'?RACE.warmers:RACE.ambient),W=[0,0,0,0],laps=[];
+  const ff=0.5;let life=null;
+  M.massNow=M.mass-M.tankKg*0.5;
+  for(let lap=0;lap<maxLaps;lap++){
+    let t=0;
+    for(let i=0;i<M.n;i++){
+      const g=raceGrip(M,T,W),P=racePace(M,i,g,ff),j=(i+1)%M.n,Pn=racePace(M,j,g,ff);
+      const va=Math.max(2,(P.v+Pn.v)/2),dt=M.cum[i+1]-M.cum[i];const dti=dt/va;
+      const ax=(Pn.v*Pn.v-P.v*P.v)/(2*Math.max(0.05,dt));
+      raceTyreStep(M,T,W,va,va*va*M.kap[i],ax,dti);
+      t+=dti;
+    }
+    laps.push({t,wear:Math.max(...W),grip:raceGrip(M,T,W)});
+    if(life==null&&Math.max(...W)>=RACE.wearLimit)life=lap+1;
+    if(life!=null&&lap>=life+1)break;
+  }
+  return {laps,life:life||Infinity};
+}
+// The stops, chosen once at the start: the fewest the fuel and the tyres allow, or one or two more if the
+// time fresher tyres win back pays for the pit lane.
+function racePlan(M,cfg){
+  const N=cfg.laps, fpl=M.fuelPerLapKg*1.03;
+  if(cfg.strategy==='none')return {stops:[],startKg:M.tankKg,est:null};
+  const pr=racePractice(M,cfg,Math.min(N,200));
+  const lapAt=age=>{const L=pr.laps;return L.length?L[Math.min(L.length-1,age)].t:M.lapNom;};
+  const lifeLaps=pr.life===Infinity?Infinity:Math.max(1,Math.floor(pr.life));
+  const sFuel=Math.max(0,Math.ceil(N*fpl/(M.tankKg*0.97)-1e-9)-1);
+  const sTyre=lifeLaps===Infinity?0:Math.max(0,Math.ceil(N/lifeLaps)-1);
+  const sMin=Math.max(sFuel,sTyre);
+  let best=null;
+  for(let s=sMin;s<=sMin+2&&s<N;s++){
+    const stints=[];for(let k=0;k<=s;k++)stints.push(Math.round((k+1)*N/(s+1))-Math.round(k*N/(s+1)));
+    if(stints.some(x=>x*fpl>M.tankKg*0.97))continue;
+    let est=s*(RACE.pitLoss+RACE.tyreChange);
+    for(const L of stints)for(let a=0;a<L;a++)est+=lapAt(a);
+    if(!best||est<best.est)best={s,stints,est};
+  }
+  if(!best){const s=sMin;best={s,stints:[N],est:null};}
+  const stops=[];let acc=0;for(let k=0;k<best.stints.length-1;k++){acc+=best.stints[k];stops.push(acc);}
+  return {stops,stints:best.stints,startKg:Math.min(M.tankKg,(best.stints[0]+1)*fpl),est:best.est,life:lifeLaps,fpl};
+}
+// ---- the race itself ----
+function raceInit(models,cfg){
+  const rnd=mulberry32((cfg.seed>>>0)||1);
+  const T0=buildTrack(cfg.track),pts=T0.pts,nC=pts.length;
+  const Lc=pts[nC-1].s+pts[nC-1].ds;
+  const width=T0.width||12;
+  const R={cfg,models,rnd,t:0,done:false,Lc,cS:pts.map(q=>q.s),
+    passMs:clamp(RACE.passKmh*(12/Math.max(6,width)),2.5,9)/3.6,
+    cars:[],events:[],rec:null};
+  // grid: by qualifying, a hot lap each on an empty tank (the solver's lap, at full grip); or reversed
+  const order=models.map((M,k)=>k).sort((a,b)=>models[a].qual-models[b].qual||a-b);
+  if(cfg.grid==='reverse')order.reverse();
+  order.forEach((k,pos)=>{
+    const M=models[k],plan=racePlan(M,cfg);
+    const off=RACE.poleOffset+RACE.gridGap*pos;
+    // the slot: back from the line along the car's own line
+    let i=M.n-1;while(i>0&&M.L3-M.cum[i]<off)i--;
+    const f=clamp((M.L3-off-M.cum[i])/Math.max(1e-6,M.cum[i+1]-M.cum[i]),0,1);
+    const tw=cfg.warmers&&M.tyre.key!=='eco'?RACE.warmers:RACE.ambient;
+    R.cars.push({id:k,M,grid:pos+1,i,f,lapsDone:-1,v:0,ax:0,T:[tw,tw,tw,tw],W:[0,0,0,0],
+      fuelKg:plan.startKg,plan,stopsDone:0,pit:null,launch:{d:0},mistake:null,pace:1,blue:0,passing:-1,
+      state:'run',finishT:null,lapStart:0,laps:[],best:null,fuelUsed:0,sTot:0,lastLapKg:plan.startKg});
+  });
+  for(const c of R.cars)c.sTot=raceDist(R,c);
+  // recording, sized for the race and grown if it runs long
+  const est=Math.max(...R.cars.map(c=>c.M.lapNom))*(cfg.laps+1)*1.3+60;
+  const recDt=Math.max(RACE.recDt,est/40000);
+  R.rec={dt:recDt,n:0,cap:Math.ceil(est/recDt)+10,K:16,data:R.cars.map(()=>null),next:0};
+  R.rec.data=R.cars.map(()=>new Float32Array(R.rec.cap*R.rec.K));
+  return R;
+}
+// Centreline distance (m) of a car's point, for comparing cars whose lines differ: lines are sampled
+// point for point against the centreline, so the index carries across.
+function raceCentre(R,c){
+  const n=R.cS.length,i=c.i,j=(i+1)%n,a=R.cS[i],b=j?R.cS[j]:R.Lc;
+  return a+(b-a)*c.f;
+}
+function raceDist(R,c){return c.lapsDone*R.Lc+raceCentre(R,c);}
+function raceRecord(R){
+  const rc=R.rec;
+  if(rc.n>=rc.cap){
+    const cap=rc.cap*2;
+    rc.data=rc.data.map(a=>{const b=new Float32Array(cap*rc.K);b.set(a);return b;});rc.cap=cap;
+  }
+  const flag={run:0,pit:1,fin:2,dnf:3};
+  R.cars.forEach((c,k)=>{
+    const d=rc.data[k],o=rc.n*rc.K;
+    d[o]=c.i+c.f;d[o+1]=c.v;d[o+2]=c.T[0];d[o+3]=c.T[1];d[o+4]=c.T[2];d[o+5]=c.T[3];
+    d[o+6]=c.W[0];d[o+7]=c.W[1];d[o+8]=c.W[2];d[o+9]=c.W[3];
+    d[o+10]=c.fuelKg/c.M.fuelRho;d[o+11]=c.M.tF[c.i];d[o+12]=flag[c.state];d[o+13]=c.sTot;
+    d[o+14]=c.passing>=0?1:0;d[o+15]=c.lapsDone;
+  });
+  rc.n++;
+}
+function raceEvent(R,c,type,extra){R.events.push(Object.assign({t:R.t,type,car:c?c.id:-1,lap:c?c.lapsDone+1:0},extra||{}));}
+// One step of the race clock.
+function raceStepOnce(R){
+  const cfg=R.cfg,dt=RACE.dt,rnd=R.rnd,Lc=R.Lc,cars=R.cars;
+  const onTrack=cars.filter(c=>c.state==='run');
+  // what is physically ahead of each car on the circuit, and how far (centreline m)
+  const pos=new Map(onTrack.map(c=>[c,raceCentre(R,c)]));
+  for(const c of onTrack){
+    let ah=null,gap=1e9;
+    for(const o of onTrack){if(o===c)continue;let g=pos.get(o)-pos.get(c);if(g<0)g+=Lc;if(g<gap){gap=g;ah=o;}}
+    c._ahead=ah;c._gap=gap;
+  }
+  // targets
+  for(const c of onTrack){
+    const M=c.M;
+    const g=raceGrip(M,c.T,c.W),ff=c.fuelKg/M.tankKg;
+    // look half a step ahead so the speed is the segment's middle, not its start
+    let i=c.i,f=c.f,ahead=c.v*dt/2;
+    while(ahead>0){const L=M.cum[i+1]-M.cum[i],rem=(1-f)*L;if(ahead<rem){f+=ahead/L;ahead=0;}else{ahead-=rem;i=(i+1)%M.n;f=0;}}
+    const P=racePaceAt(M,i,f,g,ff);
+    let vt=P.v*c.pace;
+    c._fr=P.fr;
+    if(c.launch){
+      const vl=raceLaunchV(M,c.launch.d);
+      if(vl<vt)vt=vl;else if(c.launch.d>30)c.launch=null;
+    }
+    if(c.mistake&&c.mistake.d!=null){vt*=0.55+0.45*Math.min(1,c.mistake.d/120);}
+    if(c.blue>0)vt*=0.97;
+    const lim=M.lim[i],ah=c._ahead;
+    if(ah){
+      if(c._gap<RACE.slipGap&&lim==='power'&&c.v>28)vt*=RACE.slip;
+      else if(c._gap<Math.max(10,c.v)&&lim==='corner')vt*=RACE.dirty;
+    }
+    c._vt=vt;c._lim=lim;
+  }
+  // traffic: in order from the front of the race, so a car reacts to what the car ahead does this step
+  const byRace=onTrack.slice().sort((a,b)=>b.sTot-a.sTot);
+  for(const c of byRace){
+    let v=c._vt;const ah=c._ahead;
+    if(ah&&c._gap<RACE.follow&&v>ah.v){
+      const lapping=c.sTot-ah.sTot>Lc/2;
+      if(lapping){ if(ah.blue<=0)raceEvent(R,ah,'blue',{by:c.id}); ah.blue=2; c.passing=ah.id; }
+      else if(c.passing===ah.id||ah.passing===c.id){/* alongside: neither gives way */}
+      else if(v-ah.v>R.passMs&&(c._lim==='power'||c._lim==='brake')&&rnd()<dt*3)c.passing=ah.id;
+      // held up: sit a few metres back at the speed of the car ahead (a lift, not an emergency stop)
+      if(c.passing!==ah.id&&ah.passing!==c.id)v=Math.min(v,Math.max(ah.v*0.92,ah.v+(c._gap-RACE.close)*1.0));
+    }
+    if(c.passing>=0){
+      const o=cars[cars.findIndex(x=>x.id===c.passing)];
+      if(!o||o.state!=='run'){c.passing=-1;}
+      else{
+        let g=pos.get(c)-pos.get(o);if(g<-Lc/2)g+=Lc;if(g>Lc/2)g-=Lc;
+        if(g>4){ if(c.sTot-o.sTot<Lc/2)raceEvent(R,c,'pass',{on:o.id}); c.passing=-1; }
+        else if(g<-RACE.follow*2)c.passing=-1;   // dropped back: the move is off
+      }
+    }
+    c.v=Math.max(0,v);
+  }
+  // move, heat, burn
+  for(const c of onTrack){
+    const M=c.M,vOld=c._vOld==null?c.v:c._vOld;
+    c.ax=0.8*c.ax+0.2*clamp((c.v-vOld)/dt,-15,12);c._vOld=c.v;
+    M.massNow=M.mass-M.tankKg+c.fuelKg;
+    raceTyreStep(M,c.T,c.W,c.v,c.v*c.v*M.kap[c.i],c.ax,dt);
+    const burn=c._fr*Math.min(1,c.v/Math.max(1,c._vt))*dt/1000;
+    c.fuelKg-=burn;c.fuelUsed+=burn;
+    if(c.blue>0)c.blue-=dt;
+    let adv=c.v*dt;
+    if(c.launch)c.launch.d+=adv;
+    if(c.mistake&&c.mistake.d!=null){c.mistake.d+=adv;if(c.mistake.d>120)c.mistake=null;}
+    while(adv>0){
+      const L=M.cum[c.i+1]-M.cum[c.i],rem=(1-c.f)*L;
+      if(adv<rem){c.f+=adv/L;adv=0;break;}
+      adv-=rem;c.i=(c.i+1)%M.n;c.f=0;
+      if(c.mistake&&c.mistake.d==null&&c.i===c.mistake.at){c.mistake.d=0;raceEvent(R,c,'mistake');}
+      if(c.i===0){raceCross(R,c);if(c.state!=='run')break;}
+    }
+    if(c.fuelKg<=0&&c.state==='run'){c.fuelKg=0;c.state='dnf';c.v=0;raceEvent(R,c,'dnf',{why:'OUT OF FUEL'});}
+    c.sTot=raceDist(R,c);
+  }
+  // the pit lane
+  for(const c of cars){
+    if(c.state!=='pit')continue;
+    c.pit.t-=dt;
+    if(c.pit.t<=0){
+      const M=c.M;
+      c.fuelKg+=c.pit.fuelKg;
+      const tw=R.cfg.warmers&&M.tyre.key!=='eco'?RACE.warmers:RACE.ambient+10;
+      c.T=[tw,tw,tw,tw];c.W=[0,0,0,0];
+      c.state='run';c.pit=null;c.v=RACE.pitExitKmh/3.6;
+      let d=0;for(let i=0;i<M.n-1;i++){if(M.vRest[i]>=c.v){d=M.cum[i];break;}}
+      c.launch={d};
+      raceEvent(R,c,'pitout');
+    }
+  }
+  R.t+=dt;
+  if(R.t>=R.rec.next){raceRecord(R);R.rec.next+=R.rec.dt;}
+  if(cars.every(c=>c.state==='fin'||c.state==='dnf')){R.done=true;raceRecord(R);}
+  else if(R.t>R.cfg.laps*Math.max(...cars.map(c=>c.M.lapNom))*4+600){   // nobody is getting there
+    for(const c of cars)if(c.state!=='fin'&&c.state!=='dnf'){c.state='dnf';raceEvent(R,c,'dnf',{why:'TIME LIMIT'});}
+    R.done=true;raceRecord(R);
+  }
+}
+// A car crossing the line: a lap done, the flag, or the pit lane.
+function raceCross(R,c){
+  const cfg=R.cfg;
+  c.lapsDone++;
+  if(c.lapsDone>=1){
+    const t=R.t,lt=t-c.lapStart;c.lapStart=t;
+    const lap={n:c.lapsDone,t:lt,end:t,fuelKg:c.lastLapKg-c.fuelKg,wear:Math.max(...c.W),pit:false};
+    c.lastLapKg=c.fuelKg;c.laps.push(lap);
+    if(c.best==null||lt<c.best)c.best=lt;
+    raceEvent(R,c,'lap',{time:lt,n:c.lapsDone});
+  }
+  // the flag: the leader at the full distance, then every car the next time it reaches the line
+  if(c.lapsDone>=cfg.laps||(R.chequered&&c.lapsDone>=1)){R.chequered=true;c.state='fin';c.finishT=R.t;c.v=0;raceEvent(R,c,'finish',{pos:R.cars.filter(x=>x.state==='fin').length});return;}
+  c.pace=1-R.rnd()*RACE.pace;
+  // a mistake somewhere on this lap: more likely on tyres that are past it
+  const M=c.M,hot=Math.max(0,...c.T.map(T=>(T-M.tyre.tOpt-M.tyre.tWin)/M.tyre.tWin)),worn=Math.max(0,Math.max(...c.W)-0.6);
+  if(c.lapsDone>=1&&R.rnd()<RACE.mistake*(1+4*hot+4*worn)){
+    const corners=[];for(let i=0;i<M.n;i++)if(M.lim[i]==='corner')corners.push(i);
+    if(corners.length)c.mistake={at:corners[Math.floor(R.rnd()*corners.length)],d:null};
+  }
+  // the pit lane: on the planned lap, or now if the fuel or the tyres will not see another
+  if(c.lapsDone<0)return;
+  const left=cfg.laps-c.lapsDone, fpl=M.fuelPerLapKg*1.03;
+  const planned=c.plan.stops[c.stopsDone]===c.lapsDone;
+  const need=cfg.strategy!=='none'&&(planned||(c.fuelKg<fpl*1.05&&left>0)||(Math.max(...c.W)>0.95&&left>2));
+  if(need){
+    let stint=c.plan.stints&&c.plan.stints[c.stopsDone+1]!=null?c.plan.stints[c.stopsDone+1]:left;
+    stint=Math.min(stint,left);
+    const want=Math.min(M.tankKg,(stint+1)*fpl),add=Math.max(0,want-c.fuelKg);
+    const service=Math.max(RACE.tyreChange,add/M.fuelRho/RACE.refuelLps);
+    c.state='pit';c.pit={t:RACE.pitLoss+service,fuelKg:add,service};c.v=0;c.stopsDone++;c.passing=-1;
+    c.laps[c.laps.length-1].pit=true;
+    raceEvent(R,c,'pit',{fuelL:add/M.fuelRho,service});
+  }
+}
+// Run the race to the flag (or for a slice of wall time when budgetMs is given, so a page can keep
+// drawing a progress bar).
+function raceRun(R,budgetMs){
+  const t0=performance.now();
+  while(!R.done){
+    for(let k=0;k<200&&!R.done;k++)raceStepOnce(R);
+    if(budgetMs!=null&&performance.now()-t0>budgetMs)break;
+  }
+  return R.done;
+}
+// The classification at the flag (or as it stands): finishers by time, then the rest by distance.
+function raceResults(R){
+  const cars=R.cars.slice().sort((a,b)=>{
+    const fa=a.state==='fin',fb=b.state==='fin';
+    if(fa&&fb)return b.lapsDone-a.lapsDone||a.finishT-b.finishT;
+    if(fa!==fb)return fa?-1:1;
+    return b.sTot-a.sTot;
+  });
+  const lead=cars[0];
+  return cars.map((c,k)=>({pos:k+1,id:c.id,name:c.M.name,laps:Math.max(0,c.lapsDone),time:c.finishT,
+    gap:k===0?null:(c.state==='fin'&&lead.state==='fin'&&c.lapsDone===lead.lapsDone?c.finishT-lead.finishT:null),
+    lapsDown:lead.lapsDone-Math.max(0,c.lapsDone),best:c.best,stops:c.stopsDone,fuelL:c.fuelUsed/c.M.fuelRho,
+    state:c.state,grid:c.grid,why:(R.events.find(e=>e.type==='dnf'&&e.car===c.id)||{}).why||''}));
+}
+// Simulate the whole race in one go (headless use and the tests).
+function simulateRace(entries,cfg){
+  cfg=Object.assign({laps:5,strategy:'auto',warmers:false,seed:1},cfg);
+  const models=entries.map(e=>raceCarModel(e,cfg.track));
+  const R=raceInit(models,cfg);raceRun(R);
+  return R;
 }
 // ---- Corners: find them on the racing line, number and name them, and take a speed trap ----
 // A corner is a local MINIMUM of the racing-line radius that is prominent enough to be a corner
@@ -7938,7 +8839,10 @@ function scoreEngine(){
   // from knock margin, boost/specific-output stress, high-strung choices and cooling adequacy.
   let rel=100;
   rel-=(1-safety)*45;                                   // knock-prone = grenade
-  rel-=Math.max(0,engine.maxBoost-0.5)*22;             // boost stress on internals
+  // Boost stress on internals: half of it in the midrange (peak boost), half where it is still held at the
+  // limiter (build 131), where the rods and bearings carry the highest inertia and gas loads together. With no
+  // taper the two halves are the old single term.
+  rel-=Math.max(0,engine.maxBoost-0.5)*11+Math.max(0,boostTarget(engine.redline)-0.5)*11;
   rel-=Math.max(0,hpPerL-110)*0.30;                    // highly-strung specific output
   rel-=engine.antilag?15:0;                            // ALS cooks turbo/exhaust
   // The vane ring is the hottest MOVING part in the exhaust, and this is the real reason VGT is a
@@ -9017,7 +9921,7 @@ function trackViewReset(){trackView.z=1;trackView.x=0;trackView.y=0;}
 function bindTrackZoom(){
   // canvas CSS pixels -> the 640x420 drawing space
   const toViz=e=>{const r=canvas.getBoundingClientRect();return {x:(e.clientX-r.left)*vizW/r.width,y:(e.clientY-r.top)*vizH/r.height};};
-  const active=()=>vizMode==='track'&&!!lapResult;
+  const active=()=>(vizMode==='track'&&!!lapResult)||(vizMode==='race'&&!!raceUI.run&&raceUI.phase==='live');
   canvas.addEventListener('wheel',e=>{
     if(!active())return;
     e.preventDefault();
@@ -9040,6 +9944,7 @@ function bindTrackZoom(){
       if(pinch.d>1)trackZoomAt((a.x+b.x)/2,(a.y+b.y)/2,d/pinch.d);
       pinch.d=d;
     }else if(last&&trackView.z>1.0001){
+      if(vizMode==='race')raceUI.follow=-1;   // a drag takes the camera back from the car it was following
       trackView.x+=p.x-last.x;trackView.y+=p.y-last.y;last=p;
     }
   });
@@ -9071,6 +9976,7 @@ function replayAt(L,t){
     v:mix(L.v[i],L.v[j])*3.6,gear:L.gears[i]+1,rpm:mix(R.rpm[i],R.rpm[j]),map:R.map?mix(R.map[i],R.map[j]):1,
     thr:R.thr[i],brk:R.brk[i],gLat:mix(R.gLat[i],R.gLat[j]),gLong:mix(R.gLong[i],R.gLong[j]),
     tF:R.tF?mix(R.tF[i],R.tF[j]):null,tR:R.tR?mix(R.tR[i],R.tR[j]):null,fade:R.fade?R.fade[i]:1,
+    steer:R.steer?mix(R.steer[i],R.steer[j])*180/Math.PI:0,pwr:R.pwr?mix(R.pwr[i],R.pwr[j]):0,
     sector:Math.min(2,Math.floor(sAt/third))};
 }
 // The clock at which each sector ends, from the same recording (equal thirds of the line, as L.sectors).
@@ -9090,8 +9996,26 @@ function brakeTempColour(T,onset){
   if(T>=150)return '#00ff88';
   return '#00ccff';
 }
+// Steering and power (build 130). The wheel in the driver's hands is the road wheels' angle times the
+// steering ratio set on VEHICLE; power is the crank's, against the engine's peak.
+function drawSteerWheel(cx,cy,R,deg){
+  ctx.save();ctx.translate(cx,cy);ctx.rotate(deg*Math.PI/180);
+  ctx.strokeStyle='#bbc';ctx.lineWidth=3;ctx.beginPath();ctx.arc(0,0,R,0,Math.PI*2);ctx.stroke();
+  ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(-R,0);ctx.lineTo(R,0);ctx.moveTo(0,0);ctx.lineTo(0,R);ctx.stroke();
+  ctx.fillStyle='#ff5555';ctx.fillRect(-2,-R-2,4,4);   // the top-dead-centre stripe
+  ctx.fillStyle='#ccccd8';ctx.fillRect(-3,-3,6,6);
+  ctx.restore();ctx.lineWidth=1;
+}
+function steerText(st){
+  const wd=st.steer*(vehicle.steerRatio||15),side=Math.abs(wd)<0.5?'':(wd>0?' R':' L');
+  return {wheel:wd,txt:Math.round(Math.abs(wd))+'°'+side,road:'δ '+Math.abs(st.steer).toFixed(1)+'°'};
+}
+function powerReadout(st,L){
+  const hp=st.pwr/1000/0.7457,peak=Math.max(1,L&&L.pwrPeak?L.pwrPeak/745.7:(engine.score?engine.score.peakHP:1));
+  return {hp,kW:st.pwr/1000,frac:clamp(hp/peak,0,1)};
+}
 function drawReplayHud(L,st,W,y0){
-  const w=REPLAY_HUD_W,h=182,x0=W-w-10,PS='"Press Start 2P"';
+  const w=REPLAY_HUD_W,h=232,x0=W-w-10,PS='"Press Start 2P"';
   ctx.fillStyle='rgba(10,10,18,0.86)';ctx.fillRect(x0,y0,w,h);
   ctx.strokeStyle='#33334a';ctx.lineWidth=2;ctx.strokeRect(x0,y0,w,h);
   ctx.fillStyle=C.green;ctx.font='16px '+PS;ctx.fillText(String(Math.round(st.v)),x0+10,y0+26);
@@ -9111,6 +10035,16 @@ function drawReplayHud(L,st,W,y0){
   if(engine.intake!=='na'){const b=st.map-1;ctx.fillStyle=b>0.02?'#ff8800':'#99a';
     ctx.fillText(tr('BOOST')+' '+(b>=0?'+':'')+b.toFixed(2)+' bar',x0+10,y0+124);}
   drawGMeter(st,x0+146,y0+86,30,y0+128);
+  // engine power now, as a bar against the peak
+  const pw=powerReadout(st,L);
+  bar(tr('PWR'),pw.frac,'#ffaa00',y0+136);
+  ctx.fillStyle='#99a';ctx.font='6px '+PS;ctx.fillText(Math.round(pw.hp)+' hp • '+Math.round(pw.kW)+' kW',x0+10,y0+156);
+  // steering wheel
+  const sw=steerText(st);
+  drawSteerWheel(x0+150,y0+168,16,sw.wheel);
+  ctx.fillStyle='#778';ctx.font='6px '+PS;ctx.fillText(tr('STEER'),x0+10,y0+174);
+  ctx.fillStyle=C.yellow;ctx.font='8px '+PS;ctx.fillText(sw.txt,x0+50,y0+175);
+  ctx.fillStyle='#667';ctx.font='6px '+PS;ctx.fillText(sw.road,x0+10,y0+188);
   drawBrakeCells(L,st,x0,y0+h-30);
 }
 // g-meter: lateral across, longitudinal up for braking (the way a driver is thrown), rings at 1 g
@@ -9166,7 +10100,7 @@ function drawDial(cx,cy,R,lo,hi,v,step,lbl,red,fmt){
   ctx.textAlign='left';ctx.textBaseline='alphabetic';ctx.lineWidth=1;
 }
 function drawAnalogHud(L,st,W,y0){
-  const w=REPLAY_HUD_W,h=206,x0=W-w-10,PS='"Press Start 2P"';
+  const w=REPLAY_HUD_W,h=250,x0=W-w-10,PS='"Press Start 2P"';
   ctx.fillStyle='rgba(10,10,18,0.86)';ctx.fillRect(x0,y0,w,h);
   ctx.strokeStyle='#33334a';ctx.lineWidth=2;ctx.strokeRect(x0,y0,w,h);
   // rev counter in thousands, red from the redline; the gear in its face
@@ -9191,7 +10125,42 @@ function drawAnalogHud(L,st,W,y0){
   const px0=engine.intake!=='na'?x0+70:x0+40;
   pedal(px0,st.thr,'#00ff88','T');pedal(px0+16,st.brk,st.fade<0.999?'#ff8800':'#ff5555','B');
   drawGMeter(st,x0+148,yb,26,yb+36);
+  // power bar and steering wheel, in a strip above the brakes
+  const pw=powerReadout(st,L),sw=steerText(st),ys=y0+182;
+  ctx.fillStyle='#778';ctx.font='5px '+PS;ctx.fillText(tr('PWR'),x0+10,ys+6);
+  ctx.fillStyle='#1d1d2b';ctx.fillRect(x0+34,ys,74,7);ctx.fillStyle='#ffaa00';ctx.fillRect(x0+34,ys,74*pw.frac,7);
+  ctx.fillStyle='#99a';ctx.font='6px '+PS;ctx.fillText(Math.round(pw.hp)+' hp',x0+10,ys+22);
+  ctx.fillStyle=C.yellow;ctx.fillText(sw.txt,x0+70,ys+22);
+  ctx.fillStyle='#667';ctx.font='5px '+PS;ctx.fillText(sw.road,x0+70,ys+34);
+  drawSteerWheel(x0+150,ys+16,15,sw.wheel);
   drawBrakeCells(L,st,x0,y0+h-22);
+}
+// The circuit fitted to the canvas, then the view's zoom and pan (shared by TRACK and RACE).
+// ZOOM AND PAN. The fitted map is the base view; the view transform scales it about the map centre and
+// shifts it, so zoom = 1 and pan = 0 is exactly the fitted drawing. Line widths that are drawn to scale
+// (the track ribbon) grow with the zoom, which is the point: zoomed in you can see the racing line using
+// the width of a hairpin.
+function trackMapView(T,W,H,topBar,botBar,Wm){
+  const pad=40;
+  const sx=(Wm-pad*2)/(T.maxX-T.minX),sy=(H-topBar-botBar-pad)/(T.maxY-T.minY);
+  const sc=Math.min(sx,sy);
+  const ox=pad+((Wm-pad*2)-(T.maxX-T.minX)*sc)/2, oy=topBar+((H-topBar-botBar-pad)-(T.maxY-T.minY)*sc)/2;
+  if(trackView.key!==T.label){trackView.key=T.label;trackView.z=1;trackView.x=0;trackView.y=0;}
+  const z=trackView.z, mcx=W/2, mcy=(topBar+H-botBar)/2;
+  trackView.mcx=mcx;trackView.mcy=mcy;
+  const px=q=>mcx+(ox+(q.x-T.minX)*sc-mcx)*z+trackView.x, py=q=>mcy+(oy+(q.y-T.minY)*sc-mcy)*z+trackView.y;
+  return {px,py,scV:sc*z,z};
+}
+// Track surface: the full width of the circuit, drawn from the centreline. Width is to scale, so you can
+// see the racing line using it. The centreline, faint, so the racing line's use of the width reads clearly.
+function drawTrackSurface(T,px,py,scV){
+  const pts=T.pts,n=pts.length;
+  ctx.lineCap='round';ctx.lineJoin='round';
+  ctx.fillStyle='#23232f';trackRibbon(ctx,T,px,py,scV,3);
+  ctx.strokeStyle='#34344a';ctx.lineWidth=1;ctx.setLineDash([4,6]);
+  ctx.beginPath();ctx.moveTo(px(pts[0]),py(pts[0]));
+  for(let i=1;i<n;i++)ctx.lineTo(px(pts[i]),py(pts[i]));
+  ctx.closePath();ctx.stroke();ctx.setLineDash([]);
 }
 function drawTrack(){
   const W=vizW,H=vizH;
@@ -9217,32 +10186,13 @@ function drawTrack(){
       ctx.fillText(txt,lx0,50);lx0+=ctx.measureText(txt).width+12;
     }
   }
-  const T=L.track,pad=40,topBar=62,botBar=52;
+  const T=L.track,topBar=62,botBar=52;
   // with the instruments up, the map fits the width beside them rather than under them
   const Wm=live?W-REPLAY_HUD_W-14:W;
-  const sx=(Wm-pad*2)/(T.maxX-T.minX),sy=(H-topBar-botBar-pad)/(T.maxY-T.minY);
-  const sc=Math.min(sx,sy);
-  const ox=pad+((Wm-pad*2)-(T.maxX-T.minX)*sc)/2, oy=topBar+((H-topBar-botBar-pad)-(T.maxY-T.minY)*sc)/2;
-  // ZOOM AND PAN. The fitted map above is the base view; the view transform scales it about the map
-  // centre and shifts it, so zoom = 1 and pan = 0 is exactly the old drawing. Line widths that are
-  // drawn to scale (the track ribbon) grow with the zoom, which is the point: zoomed in you can see
-  // the racing line using the width of a hairpin.
-  if(trackView.key!==T.label){trackView.key=T.label;trackView.z=1;trackView.x=0;trackView.y=0;}
-  const z=trackView.z, mcx=W/2, mcy=(topBar+H-botBar)/2;
-  trackView.mcx=mcx;trackView.mcy=mcy;
-  const px=q=>mcx+(ox+(q.x-T.minX)*sc-mcx)*z+trackView.x, py=q=>mcy+(oy+(q.y-T.minY)*sc-mcy)*z+trackView.y;
-  const scV=sc*z;
+  const {px,py,scV,z}=trackMapView(T,W,H,topBar,botBar,Wm);
   ctx.save();ctx.beginPath();ctx.rect(0,topBar-8,W,H-topBar-botBar+8);ctx.clip();
-  const pts=T.pts,line=T.line,n=pts.length;
-  // Track surface: the full width of the circuit, drawn from the centreline. Width is to scale,
-  // so you can see the racing line using it.
-  ctx.lineCap='round';ctx.lineJoin='round';
-  ctx.fillStyle='#23232f';trackRibbon(ctx,T,px,py,scV,3);
-  // Centreline, faint, so the racing line's use of the width reads clearly.
-  ctx.strokeStyle='#34344a';ctx.lineWidth=1;ctx.setLineDash([4,6]);
-  ctx.beginPath();ctx.moveTo(px(pts[0]),py(pts[0]));
-  for(let i=1;i<n;i++)ctx.lineTo(px(pts[i]),py(pts[i]));
-  ctx.closePath();ctx.stroke();ctx.setLineDash([]);
+  const line=T.line,n=T.pts.length;
+  drawTrackSurface(T,px,py,scV);
   // The optimised racing line, coloured per segment by the limiting factor.
   ctx.lineWidth=Math.min(9,Math.max(2.5,4*scV/1.2));
   for(let i=0;i<n;i++){
@@ -9303,6 +10253,322 @@ function renderLap(){
     (L.brakeMaxF!=null?cell(tr('BRAKE TEMP'),'<span style="color:'+brakeTempColour(L.brakeMaxF,L.brakeOnset)+'">'+Math.round(L.brakeMaxF)+'°C</span>',
       L.brakeMaxF>=L.brakeOnset?tr('BRAKE FADE')+' −'+Math.round((1-Math.min(...L.replay.fade))*100)+'%':tr('fade from')+' '+L.brakeOnset+'°C'):'');
   if(note)note.textContent=tr(L.track.blurb);
+}
+// ---- RACE tab (build 137): pick the cars, compute the race, then watch it ----
+// Nothing here drives a car. The viewer can pause, change the speed, scrub, follow a car and zoom the
+// map; everything the cars do was settled by raceRun before the first frame was drawn.
+const RACE_COLS=['#ff4466','#33ccff','#ffcc00','#55dd66','#ff8833','#cc66ff','#eeeeee','#ff77cc'];
+const RACE_MAX=8;
+const raceUI={entrants:[],run:null,phase:'setup',t:0,playing:true,speed:5,follow:-1,panelAt:0,prog:0,progTxt:'',scrubbing:false};
+function raceTyreColour(T,th){
+  if(T<th.tOpt-th.tWin)return '#4aa3ff';
+  if(T<=th.tOpt+th.tWin*0.5)return '#00ff88';
+  if(T<=th.tOpt+th.tWin)return '#ffcc00';
+  return '#ff4444';
+}
+function fillTrackSelect(sel,value){
+  sel.innerHTML='';
+  const groups=[['TEST CIRCUITS',t=>!t.real&&!t.imported],['REAL CIRCUITS',t=>t.real],['IMPORTED',t=>t.imported]];
+  for(const [name,f] of groups){
+    const keys=Object.keys(TRACKS).filter(k=>f(TRACKS[k]));if(!keys.length)continue;
+    const g=document.createElement('optgroup');g.label=tr(name);
+    for(const k of keys){const o=document.createElement('option');o.value=k;o.textContent=TRACKS[k].label;g.appendChild(o);}
+    sel.appendChild(g);
+  }
+  sel.value=TRACKS[value]?value:Object.keys(TRACKS)[0];
+}
+// Where an entrant can come from: what is built now, the garage's cars, and the factory cars.
+function raceFillAdd(){
+  const sel=document.getElementById('raceAddSel');if(!sel)return;
+  const cars=garage.filter(g=>gKind(g)==='car');
+  let h='<optgroup label="'+esc(tr('THIS BUILD'))+'"><option value="cur">'+esc(tr('The car on the VEHICLE tab'))+'</option></optgroup>';
+  if(cars.length)h+='<optgroup label="'+esc(tr('GARAGE'))+'">'+cars.map(g=>'<option value="g:'+esc(g.id)+'">'+esc(g.name)+'</option>').join('')+'</optgroup>';
+  const cats=[...new Set(VEHICLE_PRESETS.map(p=>p.cat))];
+  for(const c of cats)h+='<optgroup label="'+esc(tr(c))+'">'+VEHICLE_PRESETS.map((p,i)=>p.cat===c?'<option value="p:'+i+'">'+esc(p.name)+'</option>':'').join('')+'</optgroup>';
+  const keep=sel.value;sel.innerHTML=h;if(keep&&[...sel.options].some(o=>o.value===keep))sel.value=keep;
+}
+function raceEntrantFrom(v){
+  if(v==='cur'){
+    if(!engine.score||!vehicle||!vehicle.mass){flash(tr('BUILD A CAR FIRST'),'warn');return null;}
+    const name=(loaded.car&&loaded.car.name)||((engine.name?engine.name+' · ':'')+(vehicle.chLabel||'')).trim()||tr('This build');
+    return {name,build:serializeBuild(name,'')};
+  }
+  if(v.startsWith('g:')){const g=garage.find(x=>x.id===v.slice(2));return g?{name:g.name,build:JSON.parse(JSON.stringify(g.build))}:null;}
+  if(v.startsWith('p:')){
+    const p=VEHICLE_PRESETS[+v.slice(2)],ep=p&&PRESETS.find(x=>x.name===p.engine);if(!ep)return null;
+    return {name:p.name,build:{engine:Object.assign({},ep.engine),tune:Object.assign({},STD_TUNE),vehicle:vehicleFromPreset(p),name:p.name}};
+  }
+  return null;
+}
+function raceAdd(v){
+  if(raceUI.entrants.length>=RACE_MAX){flash(tr('EIGHT CARS AT MOST'),'warn');return;}
+  const e=raceEntrantFrom(v||document.getElementById('raceAddSel').value);if(!e)return;
+  const same=raceUI.entrants.filter(x=>x.base===e.name).length;
+  e.base=e.name;if(same)e.name=e.name+' #'+(same+1);
+  raceUI.entrants.push(e);renderRaceSetup();
+}
+function renderRaceSetup(){
+  const box=document.getElementById('raceEntrants');if(!box)return;
+  box.innerHTML=raceUI.entrants.length?raceUI.entrants.map((e,k)=>
+    '<div class="race-ent"><i style="background:'+RACE_COLS[k]+'"></i><span title="'+esc(e.name)+'">'+esc(e.name)+'</span>'+
+    '<button data-rm="'+k+'" aria-label="'+esc(tr('Remove'))+'">✕</button></div>').join('')
+    :'<div class="perf-note">'+tr('Add two or more cars: the car you have built, a garage build or a factory car.')+'</div>';
+  box.querySelectorAll('button[data-rm]').forEach(b=>b.addEventListener('click',()=>{raceUI.entrants.splice(+b.dataset.rm,1);renderRaceSetup();}));
+  const st=document.getElementById('raceStart');if(st)st.disabled=raceUI.entrants.length<2||raceUI.phase==='computing';
+  document.getElementById('raceSetup').hidden=raceUI.phase==='live';
+  document.getElementById('raceLive').hidden=raceUI.phase!=='live';
+  const pg=document.getElementById('raceProg');
+  if(pg){pg.hidden=raceUI.phase!=='computing';pg.querySelector('.race-prog-bar').style.width=Math.round(raceUI.prog*100)+'%';pg.querySelector('span').textContent=raceUI.progTxt;}
+}
+function raceConfig(){
+  const g=id=>document.getElementById(id);
+  return {track:g('raceTrk').value,laps:clamp(Math.round(+g('raceLaps').value||5),1,100),
+    strategy:g('racePits').value,grid:g('raceGrid').value,warmers:g('raceWarmers').checked,
+    seed:(Math.round(+g('raceSeed').value)>>>0)||1};
+}
+const raceYield=()=>new Promise(r=>setTimeout(r,0));
+async function raceStart(){
+  if(raceUI.phase==='computing'||raceUI.entrants.length<2)return;
+  const cfg=raceConfig();
+  raceUI.phase='computing';raceUI.prog=0;raceUI.progTxt='';raceUI.run=null;renderRaceSetup();
+  const models=[];
+  try{
+    for(let k=0;k<raceUI.entrants.length;k++){
+      const e=raceUI.entrants[k];
+      raceUI.progTxt=tr('SOLVING')+' '+e.name;raceUI.prog=k/raceUI.entrants.length*0.75;renderRaceSetup();
+      await raceYield();await raceYield();
+      models.push(raceCarModel(e,cfg.track));
+    }
+    raceUI.progTxt=tr('RACING');renderRaceSetup();await raceYield();
+    const R=raceInit(models,cfg);
+    const est=Math.max(...models.map(M=>M.lapNom))*cfg.laps*1.15;
+    while(!raceRun(R,40)){raceUI.prog=0.75+0.25*Math.min(1,R.t/est);renderRaceSetup();await raceYield();}
+    raceUI.run=R;raceUI.t=0;raceUI.playing=true;raceUI.follow=-1;raceUI.phase='live';
+    trackViewReset();
+    const pb=document.getElementById('racePlay');if(pb){pb.textContent=tr('PAUSE');pb.classList.add('on');}
+  }catch(err){
+    raceUI.phase='setup';flash(tr('RACE FAILED')+': '+(err&&err.message||err),'err');
+  }
+  renderRaceSetup();renderRacePanel(true);
+}
+// ---- reading the recording back ----
+function raceSample(R,k,t){
+  const rc=R.rec,K=rc.K,d=rc.data[k],x=clamp(t/rc.dt,0,rc.n-1),a=Math.floor(x),b=Math.min(rc.n-1,a+1),f=x-a;
+  const A=a*K,B=b*K,M=R.cars[k].M;
+  const lerp=o=>d[A+o]+(d[B+o]-d[A+o])*f;
+  let pa=d[A],pb=d[B];if(pb<pa-M.n/2)pb+=M.n;   // over the line
+  return {pos:(pa+(pb-pa)*f)%M.n,v:lerp(1),T:[lerp(2),lerp(3),lerp(4),lerp(5)],W:[lerp(6),lerp(7),lerp(8),lerp(9)],
+    fuelL:lerp(10),brk:lerp(11),flag:d[(f<0.5?A:B)+12],sTot:lerp(13),pass:d[A+14],laps:d[(f<0.5?A:B)+15]};
+}
+// The time (s) the car reached race distance s, from its own recording.
+function raceTimeAt(R,k,s){
+  const rc=R.rec,K=rc.K,d=rc.data[k];
+  let lo=0,hi=rc.n-1;
+  if(d[hi*K+13]<s)return null;
+  while(hi-lo>1){const mid=(lo+hi)>>1;if(d[mid*K+13]<s)lo=mid;else hi=mid;}
+  const a=d[lo*K+13],b=d[hi*K+13],f=b>a?(s-a)/(b-a):0;
+  return (lo+clamp(f,0,1))*rc.dt;
+}
+// The order and the gaps at time t.
+function raceStandings(R,t){
+  const S=R.cars.map((c,k)=>{
+    const s=raceSample(R,k,t);
+    const fin=R.events.find(e=>e.type==='finish'&&e.car===c.id&&e.t<=t);
+    const dnf=R.events.find(e=>e.type==='dnf'&&e.car===c.id&&e.t<=t);
+    const laps=c.laps.filter(l=>l.end<=t);
+    const pits=R.events.filter(e=>e.car===c.id&&e.type==='pit'&&e.t<=t);
+    const lastOut=R.events.filter(e=>e.car===c.id&&e.type==='pitout'&&e.t<=t).pop();
+    return {k,c,s,fin,dnf,laps,last:laps.length?laps[laps.length-1].t:null,best:laps.length?Math.min(...laps.map(l=>l.t)):null,
+      pits:pits.length,inPit:s.flag===1&&!fin,tyreAge:lastOut?laps.filter(l=>l.end>lastOut.t).length:laps.length};
+  });
+  S.sort((a,b)=>{
+    if(a.dnf&&!b.dnf)return 1;if(b.dnf&&!a.dnf)return -1;
+    if(a.fin&&b.fin)return b.laps.length-a.laps.length||a.fin.t-b.fin.t;
+    if(a.fin&&!b.fin)return b.s.sTot>a.s.sTot+1?1:-1;
+    if(b.fin&&!a.fin)return a.s.sTot>b.s.sTot+1?-1:1;
+    return b.s.sTot-a.s.sTot;
+  });
+  const lead=S[0],Lc=R.Lc;
+  S.forEach((x,p)=>{
+    x.pos=p+1;
+    if(p===0){x.gap=null;return;}
+    const ld=lead.laps.length-x.laps.length;
+    if(x.dnf){x.gap='DNF';return;}
+    if(x.fin&&lead.fin&&ld===0){x.gap='+'+(x.fin.t-lead.fin.t).toFixed(1);return;}
+    const down=Math.floor((lead.s.sTot-x.s.sTot)/Lc);
+    if(down>=1&&!x.fin){x.gap='+'+down+' '+tr(down>1?'LAPS':'LAP');return;}
+    if(x.fin&&ld>0){x.gap='+'+ld+' '+tr(ld>1?'LAPS':'LAP');return;}
+    const tl=raceTimeAt(R,lead.k,x.s.sTot);
+    x.gap=tl==null?'—':'+'+Math.max(0,t-tl).toFixed(1);
+  });
+  return S;
+}
+function raceFastest(R,t){
+  let best=null;for(const c of R.cars)for(const l of c.laps)if(l.end<=t&&(!best||l.t<best.t))best={t:l.t,car:c.id};
+  return best;
+}
+const raceEventText=(R,e)=>{
+  const nm=id=>{const c=R.cars.find(x=>x.id===id);return c?c.M.name:'?';};
+  switch(e.type){
+    case 'pass':return nm(e.car)+' '+tr('passes')+' '+nm(e.on);
+    case 'pit':return nm(e.car)+' '+tr('pits')+' — '+e.fuelL.toFixed(1)+' L, '+tr('new tyres')+', '+(RACE.pitLoss+e.service).toFixed(1)+' s';
+    case 'pitout':return nm(e.car)+' '+tr('rejoins');
+    case 'mistake':return nm(e.car)+' — '+tr('a mistake, off line');
+    case 'blue':return tr('Blue flag')+': '+nm(e.car);
+    case 'dnf':return nm(e.car)+' — '+tr('OUT')+' ('+tr(e.why)+')';
+    case 'finish':return 'P'+e.pos+' '+nm(e.car)+' — '+tr('FINISH');
+    default:return '';
+  }
+};
+// ---- the panel: controls, the timing tower, the cars' telemetry, the result ----
+function renderRacePanel(force){
+  const R=raceUI.run;if(!R||raceUI.phase!=='live')return;
+  const now=performance.now();if(!force&&now-raceUI.panelAt<100)return;raceUI.panelAt=now;
+  const t=raceUI.t,S=raceStandings(R,t),fl=raceFastest(R,t),done=t>=R.t-1e-6;
+  const sc=document.getElementById('raceScrub');if(sc&&!raceUI.scrubbing)sc.value=Math.round(t/R.t*1000);
+  const lapNow=Math.min(R.cfg.laps,Math.max(1,S[0].laps.length+(S[0].fin?0:1)));
+  document.getElementById('raceHead').innerHTML='<b>'+esc(TRACKS[R.cfg.track].label)+'</b> • '+tr('LAP')+' '+lapNow+'/'+R.cfg.laps+' • '+fmtLap(t)+
+    (fl?' • '+tr('FASTEST')+' <span class="race-fl">'+fmtLap(fl.t)+'</span>':'');
+  const row=x=>{
+    const c=x.c,col=RACE_COLS[c.id];
+    const lastCls=x.last!=null&&fl&&x.last===fl.t&&fl.car===c.id?'race-fl':(x.last!=null&&x.last===x.best?'race-pb':'');
+    return '<tr data-car="'+c.id+'" class="'+(raceUI.follow===c.id?'sel':'')+'"><td>'+x.pos+'</td><td class="nm"><i style="background:'+col+'"></i>'+esc(c.M.name)+'</td>'+
+      '<td>'+(x.pos===1?(x.fin?tr('FLAG'):tr('LEADER')):x.gap)+'</td>'+
+      '<td class="'+lastCls+'">'+(x.inPit?tr('PIT'):x.last!=null?fmtLap(x.last):'—')+'</td>'+
+      '<td class="'+(fl&&x.best===fl.t&&fl.car===c.id?'race-fl':'')+'">'+(x.best!=null?fmtLap(x.best):'—')+'</td><td>'+x.pits+'</td></tr>';
+  };
+  document.getElementById('raceTower').innerHTML='<table class="race-tower"><thead><tr><th>P</th><th>'+tr('CAR')+'</th><th>'+tr('GAP')+'</th><th>'+tr('LAST')+'</th><th>'+tr('BEST')+'</th><th>'+tr('PIT')+'</th></tr></thead><tbody>'+S.map(row).join('')+'</tbody></table>';
+  document.querySelectorAll('#raceTower tr[data-car]').forEach(tr_=>tr_.addEventListener('click',()=>{
+    const id=+tr_.dataset.car;raceUI.follow=raceUI.follow===id?-1:id;
+    if(raceUI.follow<0)trackViewReset();else trackView.z=Math.max(trackView.z,3);   // the camera goes in close on the car
+    renderRacePanel(true);}));
+  // telemetry: every car, in race order
+  const tyre=(T,W,th,lbl)=>'<div class="rt-t" style="border-color:'+raceTyreColour(T,th)+'"><b style="color:'+raceTyreColour(T,th)+'">'+Math.round(T)+'°</b><span>'+lbl+' '+Math.round(W*100)+'%</span></div>';
+  document.getElementById('raceTele').innerHTML=S.map(x=>{
+    const c=x.c,M=c.M,s=x.s,th=M.tyre,fpl=M.fuelPerLapKg/M.fuelRho;
+    const fuelPct=clamp(s.fuelL/M.tankL,0,1),lapsLeft=fpl>0?s.fuelL/fpl:0;
+    const state=x.dnf?tr('OUT'):x.fin?tr('FINISHED'):x.inPit?tr('IN THE PITS'):Math.round(s.v*3.6)+' km/h';
+    return '<div class="rt-card'+(raceUI.follow===c.id?' sel':'')+'"><div class="rt-head"><i style="background:'+RACE_COLS[c.id]+'"></i><span>P'+x.pos+' '+esc(M.name)+'</span><em>'+state+'</em></div>'+
+      '<div class="rt-body"><div class="rt-tyres">'+tyre(s.T[0],s.W[0],th,'FL')+tyre(s.T[1],s.W[1],th,'FR')+tyre(s.T[2],s.W[2],th,'RL')+tyre(s.T[3],s.W[3],th,'RR')+'</div>'+
+      '<div class="rt-side"><div class="rt-k">'+esc(tr(th.label))+' • '+tr('age')+' '+x.tyreAge+'</div>'+
+      '<div class="rt-k">'+tr('FUEL')+' '+s.fuelL.toFixed(1)+' / '+M.tankL+' L • '+lapsLeft.toFixed(1)+' '+tr('laps')+'</div>'+
+      '<div class="rt-bar"><div style="width:'+Math.round(fuelPct*100)+'%;background:'+(lapsLeft<1.5?'#ff4444':lapsLeft<3?'#ffcc00':'#00ccff')+'"></div></div>'+
+      '<div class="rt-k">'+tr('BRAKES')+' <b style="color:'+brakeTempColour(s.brk,M.brakeOnset)+'">'+Math.round(s.brk)+'°C</b></div></div></div></div>';
+  }).join('');
+  // the result, at the flag
+  const res=document.getElementById('raceResults');
+  if(done){
+    const rs=raceResults(R),flAll=raceFastest(R,R.t);
+    res.innerHTML='<div class="design-section">'+tr('Result')+'</div><table class="race-tower"><thead><tr><th>P</th><th>'+tr('CAR')+'</th><th>'+tr('TIME')+'</th><th>'+tr('BEST')+'</th><th>'+tr('PIT')+'</th><th>'+tr('FUEL')+'</th></tr></thead><tbody>'+
+      rs.map(x=>'<tr><td>'+(x.state==='dnf'?'—':x.pos)+'</td><td class="nm"><i style="background:'+RACE_COLS[x.id]+'"></i>'+esc(x.name)+'</td><td>'+
+        (x.state==='dnf'?'DNF':x.pos===1?fmtLap(x.time):x.lapsDown>0?'+'+x.lapsDown+' '+tr(x.lapsDown>1?'LAPS':'LAP'):'+'+(x.gap||0).toFixed(1))+'</td><td class="'+(flAll&&flAll.car===x.id?'race-fl':'')+'">'+(x.best!=null?fmtLap(x.best):'—')+
+        '</td><td>'+x.stops+'</td><td>'+x.fuelL.toFixed(1)+' L</td></tr>').join('')+'</tbody></table>'+
+      '<div class="perf-note">'+tr('Grid')+': '+rs.slice().sort((a,b)=>a.grid-b.grid).map(x=>x.grid+'. '+esc(x.name)).join(' · ')+' • '+tr('seed')+' '+R.cfg.seed+'</div>';
+  }else res.innerHTML='';
+}
+function stepRaceView(dt){
+  const R=raceUI.run;if(!R||raceUI.phase!=='live')return;
+  if(raceUI.playing&&!raceUI.scrubbing){
+    raceUI.t=Math.min(R.t,raceUI.t+dt*raceUI.speed);
+    if(raceUI.t>=R.t){raceUI.playing=false;const pb=document.getElementById('racePlay');if(pb){pb.textContent=tr('PLAY');pb.classList.remove('on');}renderRacePanel(true);}
+  }
+  renderRacePanel(false);
+}
+// ---- the map ----
+function drawRace(){
+  const W=vizW,H=vizH;
+  ctx.fillStyle=C.bg;ctx.fillRect(0,0,W,H);
+  drawPixelRect(0,0,W,28,'#12121c');
+  ctx.fillStyle=C.yellow;ctx.font='10px "Press Start 2P"';
+  const R=raceUI.run;
+  ctx.fillText(tr('RACE')+(R?' • '+TRACKS[R.cfg.track].label:''),12,19);
+  if(!R||raceUI.phase!=='live'){
+    ctx.font='8px "Press Start 2P"';ctx.fillStyle='#778';
+    if(raceUI.phase==='computing'){
+      ctx.fillText(raceUI.progTxt,12,60);
+      ctx.fillStyle='#26263a';ctx.fillRect(12,72,W-24,10);ctx.fillStyle=C.green;ctx.fillRect(12,72,(W-24)*raceUI.prog,10);
+    }else{
+      ctx.fillText(tr('Pick two or more cars on the right,'),12,60);
+      ctx.fillText(tr('then START RACE. Nobody drives:'),12,76);
+      ctx.fillText(tr('the cars race on their own physics.'),12,92);
+    }
+    return;
+  }
+  const t=raceUI.t,S=raceStandings(R,t),topBar=40,botBar=34;
+  // the clock and the lap, in the title bar, clear of the FULL button
+  const lapNow=Math.min(R.cfg.laps,Math.max(1,S[0].laps.length+(S[0].fin?0:1)));
+  ctx.textAlign='right';ctx.font='7px "Press Start 2P"';ctx.fillStyle='#99a';
+  const spd=raceUI.speed+'×'+(raceUI.playing?'':' ❚❚');ctx.fillText(spd,W-44,19);
+  const sw=ctx.measureText(spd).width+14;
+  ctx.fillStyle=C.green;ctx.font='10px "Press Start 2P"';ctx.fillText(tr('LAP')+' '+lapNow+'/'+R.cfg.laps+'  '+fmtLap(t),W-44-sw,19);
+  ctx.textAlign='left';
+  const T=buildTrack(R.cfg.track);
+  const {px,py,scV}=trackMapView(T,W,H,topBar,botBar,W);
+  // follow a car: pan the view so it stays in the middle
+  if(raceUI.follow>=0){
+    const k=R.cars.findIndex(c=>c.id===raceUI.follow),M=R.cars[k].M,s=raceSample(R,k,t),i=Math.floor(s.pos)%M.n,j=(i+1)%M.n,f=s.pos-Math.floor(s.pos);
+    const q={x:M.line[i].x+(M.line[j].x-M.line[i].x)*f,y:M.line[i].y+(M.line[j].y-M.line[i].y)*f};
+    trackView.x+=trackView.mcx-px(q);trackView.y+=trackView.mcy-py(q);
+  }
+  ctx.save();ctx.beginPath();ctx.rect(0,topBar-8,W,H-topBar-botBar+8);ctx.clip();
+  drawTrackSurface(T,px,py,scV);
+  const p0=T.pts[0];
+  ctx.fillStyle='#fff';ctx.fillRect(px(p0)-4,py(p0)-4,8,8);ctx.fillStyle='#000';ctx.fillRect(px(p0)-2,py(p0)-2,4,4);
+  // the cars, back of the field first so the leader is drawn on top
+  const pitN=[];
+  for(const x of S.slice().reverse()){
+    const k=x.k,c=x.c,M=c.M,s=x.s;
+    if(x.dnf&&s.v<0.1&&s.flag===3){continue;}
+    if(s.flag===1||(x.fin&&s.v<0.1&&t>x.fin.t+0.5)){pitN.push(x);continue;}
+    const i=Math.floor(s.pos)%M.n,j=(i+1)%M.n,f=s.pos-Math.floor(s.pos);
+    const q={x:M.line[i].x+(M.line[j].x-M.line[i].x)*f,y:M.line[i].y+(M.line[j].y-M.line[i].y)*f};
+    let cx=px(q),cy=py(q);const hd=Math.atan2(py(M.line[j])-py(M.line[i]),px(M.line[j])-px(M.line[i]));
+    if(s.pass>0.5){const o=Math.max(5,2.5*scV);cx+=Math.sin(hd)*o;cy-=Math.cos(hd)*o;}   // alongside
+    drawTopCar(ctx,cx,cy,hd,RACE_COLS[c.id],'thr');
+    ctx.font='6px "Press Start 2P"';ctx.fillStyle=RACE_COLS[c.id];ctx.fillText(String(x.pos),cx+7,cy-6);
+    if(raceUI.follow===c.id){ctx.strokeStyle='#fff';ctx.lineWidth=1;ctx.strokeRect(cx-9,cy-9,18,18);}
+  }
+  ctx.restore();
+  // pit lane / finished cars, parked by the line
+  ctx.font='6px "Press Start 2P"';
+  pitN.forEach((x,n)=>{const bx=W-110,by=topBar+8+n*11;ctx.fillStyle=RACE_COLS[x.c.id];ctx.fillRect(bx,by-5,6,6);
+    ctx.fillStyle='#99a';ctx.fillText((x.fin?tr('FINISHED'):tr('PIT'))+' P'+x.pos,bx+10,by+1);});
+  // the order, top-left
+  ctx.font='6px "Press Start 2P"';
+  S.forEach((x,n)=>{const y=topBar+8+n*11;ctx.fillStyle='rgba(10,10,18,0.75)';ctx.fillRect(8,y-7,150,10);
+    ctx.fillStyle=RACE_COLS[x.c.id];ctx.fillRect(10,y-5,6,6);ctx.fillStyle='#ddd';
+    const nm=x.c.M.name.length>13?x.c.M.name.slice(0,12)+'…':x.c.M.name;
+    ctx.fillText(x.pos+' '+nm,20,y+1);ctx.fillStyle='#889';ctx.textAlign='right';ctx.fillText(x.pos===1?'':String(x.gap),156,y+1);ctx.textAlign='left';});
+  // what just happened
+  const ev=R.events.filter(e=>e.t<=t&&e.type!=='lap'&&e.type!=='blue').slice(-2);
+  ctx.font='7px "Press Start 2P"';
+  ev.forEach((e,n)=>{ctx.fillStyle=n===ev.length-1?'#ffcc00':'#778';ctx.fillText(fmtLap(e.t)+'  '+raceEventText(R,e),12,H-botBar+10+n*12);});
+  if(t>=R.t-1e-6){
+    const txt='🏁 '+tr('WINNER')+': '+S[0].c.M.name;ctx.font='9px "Press Start 2P"';
+    const w=ctx.measureText(txt).width+20,y=H-botBar-14;
+    ctx.fillStyle='rgba(10,10,18,0.85)';ctx.fillRect(W/2-w/2,y-12,w,18);
+    ctx.fillStyle='#fff';ctx.textAlign='center';ctx.fillText(txt,W/2,y+1);ctx.textAlign='left';
+  }
+}
+function bindRace(){
+  const g=id=>document.getElementById(id);
+  fillTrackSelect(g('raceTrk'),trackKey);
+  g('raceSeed').value=1+Math.floor(Math.random()*99999);
+  g('raceReroll').addEventListener('click',()=>{g('raceSeed').value=1+Math.floor(Math.random()*99999);});
+  g('raceAddBtn').addEventListener('click',()=>raceAdd());
+  g('raceStart').addEventListener('click',raceStart);
+  g('racePlay').addEventListener('click',()=>{
+    const R=raceUI.run;if(!R)return;
+    if(!raceUI.playing&&raceUI.t>=R.t)raceUI.t=0;
+    raceUI.playing=!raceUI.playing;g('racePlay').textContent=tr(raceUI.playing?'PAUSE':'PLAY');g('racePlay').classList.toggle('on',raceUI.playing);
+  });
+  g('raceSpeed').addEventListener('change',e=>{raceUI.speed=+e.target.value||1;});
+  g('raceSkip').addEventListener('click',()=>{if(raceUI.run){raceUI.t=raceUI.run.t;renderRacePanel(true);}});
+  g('raceNew').addEventListener('click',()=>{raceUI.phase='setup';raceUI.run=null;raceUI.follow=-1;renderRaceSetup();});
+  const sc=g('raceScrub');
+  sc.addEventListener('input',()=>{if(!raceUI.run)return;raceUI.scrubbing=true;raceUI.t=raceUI.run.t*(+sc.value)/1000;renderRacePanel(true);});
+  sc.addEventListener('change',()=>{raceUI.scrubbing=false;});
+  raceFillAdd();renderRaceSetup();
 }
 // Imported circuits live alongside the built-in ones and persist in localStorage, so a track you
 // loaded is still there next session. Only geometry is stored — it is the user's own file.
@@ -9523,7 +10789,7 @@ function updateUI(){
 
 function setTab(mode){
   vizMode=mode;
-  ['Design','Vehicle','Garage','Track','Engine','Dyno','Guide','Options'].forEach(m=>
+  ['Design','Vehicle','Garage','Track','Race','Engine','Dyno','Guide','Options'].forEach(m=>
     document.getElementById('tab'+m).classList.toggle('active',mode===m.toLowerCase()));
   // DESIGN / VEHICLE / GUIDE / OPTIONS are full-panel overlays that replace the canvas.
   const overlay=mode==='design'||mode==='vehicle'||mode==='garage'||mode==='guide'||mode==='options';
@@ -9538,17 +10804,19 @@ function setTab(mode){
   document.getElementById('guidePanel').classList.toggle('active',mode==='guide');
   document.querySelector('.main').classList.toggle('wide',mode==='guide');
   // On the track map a touch drag pans the map; everywhere else it must still scroll the page.
-  canvas.style.touchAction=mode==='track'?'none':'';
+  canvas.style.touchAction=mode==='track'||mode==='race'?'none':'';
   document.getElementById('optionsPanel').classList.toggle('active',mode==='options');
   const dr=document.getElementById('dynoResult');if(dr){dr.hidden=(mode!=='dyno');if(mode==='dyno')renderDynoResult(true);}
   // Right column: runtime Engine Controls while driving/dyno; the Performance panel on VEHICLE.
   document.getElementById('controlsPanel').style.display=(mode==='engine'||mode==='dyno')?'':'none';
   document.getElementById('vehiclePanel').style.display=(mode==='vehicle')?'':'none';
   document.getElementById('trackPanel').style.display=(mode==='track')?'':'none';
+  document.getElementById('racePanel').style.display=(mode==='race')?'':'none';
   // the engine's live readout belongs to the engine; on the track the lap has its own instruments
-  document.getElementById('livePanel').style.display=(mode==='track')?'none':'';
+  document.getElementById('livePanel').style.display=(mode==='track'||mode==='race')?'none':'';
   if(mode==='vehicle'){buildVehicle();updateVehicleSummary();}
   if(mode==='track'){buildVehicle();refreshLap();}
+  if(mode==='race'){const ts=document.getElementById('raceTrk');fillTrackSelect(ts,ts.value||trackKey);raceFillAdd();renderRaceSetup();renderRacePanel(true);}
   updateUI();
 }
 
@@ -9672,6 +10940,7 @@ function bindControls(){
   document.getElementById('tabDesign').addEventListener('click',()=>setTab('design'));
   document.getElementById('tabVehicle').addEventListener('click',()=>setTab('vehicle'));
   document.getElementById('tabTrack').addEventListener('click',()=>setTab('track'));
+  document.getElementById('tabRace').addEventListener('click',()=>setTab('race'));
   loadImportedTracks();
   const trkSel=document.getElementById('trkSel');
   if(trkSel){refreshTrackList();trkSel.addEventListener('change',e=>{trackKey=e.target.value;refreshLap();});}
@@ -9702,7 +10971,7 @@ function bindControls(){
     try{localStorage.setItem('pes.gauges',lapReplay.gauges);}catch(err){}});
   // Vehicle design: recompute performance live on any change. Picking a chassis fits its whole
   // factory spec (drivetrain, gearbox, tyres/wheels, brakes, suspension, aero, weight).
-  ['vhChassis','vhDrive','vhGearbox','vhDiff','vhGears','vhGearing','vhLimiter','vhLimitKmh','vhRating','vhTire','vhTireW','vhTireA','vhWheel','vhAeroF','vhAeroR','vhAeroFl','vhWeight','vhBrake','vhRotor','vhSusp'].forEach(id=>{
+  ['vhChassis','vhDrive','vhGearbox','vhDiff','vhGears','vhGearing','vhLimiter','vhLimitKmh','vhRating','vhTire','vhTireW','vhTireA','vhWheel','vhAeroF','vhAeroR','vhAeroFl','vhWeight','vhBrake','vhRotor','vhSusp','vhSteer'].forEach(id=>{
     const el=document.getElementById(id);if(!el)return;
     el.addEventListener('input',()=>{
       if(id==='vhChassis'){
@@ -9839,6 +11108,7 @@ function loop(now){
   if(fullscreen||vizMode==='engine')drawEngine(dt);
   else if(vizMode==='dyno'){drawDyno();renderDynoResult(false);}
   else if(vizMode==='track'){stepReplay(dt);drawTrack();}
+  else if(vizMode==='race'){stepRaceView(dt);drawRace();}
   else stepPreviews(dt);
   updateUI();
   requestAnimationFrame(loop);
@@ -9849,6 +11119,7 @@ loadFromHash();   // open a shared build if the URL carries one
 applyLang(currentLang);   // localise the UI (persisted choice)
 initGuide();               // index, or the page you were last reading
 bindTrackZoom();
+bindRace();
 sizeCanvas();updatePhysics();updateUI();requestAnimationFrame(loop);
 
 // Register service worker for offline/installable PWA (no-op on file://).

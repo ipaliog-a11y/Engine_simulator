@@ -27,9 +27,14 @@ const rows = await page.evaluate(() => PRESETS.filter(p => p.real).map(pr => {
   for (let i = 1; i < c.length; i++) step = Math.max(step, Math.abs(c[i].tq - c[i - 1].tq) / Math.max(1, c[i - 1].tq));
   let boostFalls = null;
   if (e.intake === 'turbo') { let prev = -1;
-    for (let n = 1000; n <= e.redline; n += 250) { const b = steadyBoost(n); if (b < prev - 1e-3 && prev < e.maxBoost - 1e-3) { boostFalls = n; break; } prev = b; } }
+    // falling short of what the ECU asks for there (boostTarget, build 131): a factory taper toward the limiter is the
+    // calibration, not the hardware failing to hold it
+    for (let n = 1000; n <= e.redline; n += 250) { const b = steadyBoost(n); if (b < prev - 1e-3 && b < boostTarget(n) - 1e-3) { boostFalls = n; break; } prev = b; } }
   const anomalies = [];
-  if (pk.rpm >= e.redline * 0.985) anomalies.push('limiter');
+  // Build 131: a boosted engine with no ECU taper holds full boost to the limiter by its own calibration, and its power
+  // follows it there (as in tests 44/46): not counted. Its factory rating is beyond what a taper from its torque peak
+  // reaches (the RB26's 280 PS is a voluntary cap), which test48/this report still show.
+  if (pk.rpm >= e.redline * 0.985 && !(e.intake !== 'na' && !(e.taperRpm > 0))) anomalies.push('limiter');
   if (step > 0.15) anomalies.push(e.intake === 'na' ? 'na-step' : 'cliff');
   if (boostFalls) anomalies.push('boost-falls');
   // read off the scorecard: the peak-torque rpm the player sees
@@ -40,22 +45,20 @@ const rows = await page.evaluate(() => PRESETS.filter(p => p.real).map(pr => {
 
 // What real engines show today, and why. Each entry is a model limit, not a preset to fix by tuning.
 const KNOWN = {
-  // the derived diesel's power is a plateau to the governed speed (build 88); a maker's torque limit
-  // is what really rolls it off (the N57 left this list in build 121: it now peaks at 4900 of 5000)
-  'VW EA288 2.0 TDI (Golf 150)': ['limiter'],
-  'Cummins 6.7 (Ram HD 2019 HO)': ['limiter', 'boost-falls'],
-  // large truck diesels on the large frame: the VGT's open stop cannot hold target at the top
-  // build 121: with the intake stroke integrated the Duramax's power climbs to the 3800 limiter too (532 hp at
-  // 3600, 542 at 3800), the same missing diesel fade as the two above
-  'GM Duramax L5P 6.6 (Silverado HD)': ['boost-falls', 'limiter'],
+  // large truck diesels on the large frame: the VGT's open stop cannot hold target at the top. (Build 131: the TDI,
+  // the Duramax and the 2JZ left this list with their factory ECU taper, which is what really rolls them off; the
+  // Cummins has none (no taper from its torque peak reaches its rating) and is not counted at the limiter.)
+  'Cummins 6.7 (Ram HD 2019 HO)': ['boost-falls'],
+  // build 133: on the maker's 58 mm wheel the FK8's compressor reaches its inducer's choke flow over the top and
+  // holds 1.31 of its 1.6 bar at the limiter (305 hp, real 316). The wheel size is from tuners' listings and the
+  // boost pressure is unsure, so either input may be what is off; the choke flow is derived, not fitted.
+  'Honda K20C1 (Civic Type R FK8)': ['boost-falls'],
   // build 121: the integrated intake stroke put its torque peak on the real one (149 Nm at 4600-5200, real 149
   // at 5200); power then creeps up ~1 hp per 200 rpm to the 7600 limiter (139 hp) where the real engine falls
   // from 128 at 6600. The same missing top-end fade as the F140 below.
   'Toyota 4A-GE (AE86)': ['limiter'],
   // build 122: the Aygo's 1KR-FE likewise, 75 hp at its 6500 limiter (real 68 at 6000): the same missing top-end fade
   'Toyota 1KR-FE (Aygo 1.0)': ['limiter'],
-  // a flat plateau; the scorecard's conditions put the peak at the limiter, the design curve's not
-  'Toyota 2JZ-GTE (Supra A80)': ['limiter'],
   // build 116: with the overlap's reverse flow derived from the cam (it was a fixed 15% lift on every cam,
   // and grew with back-pressure), the F140's power is flat over the top: 825 hp at 8500, 831 at the 8900
   // limiter (real 789 at 8500). Within 1%; the top-end breathing (port Mach index) bites only at 8900.
