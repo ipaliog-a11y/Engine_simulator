@@ -20,6 +20,13 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 Working toward **v1.0 — every number derived, not fitted.**
 
+### The ⛶ FULL button is gone (build 142)
+
+- It sat on the LIVE, DYNO and TRACK canvas and, once pressed, drew the engine cutaway whatever tab was open, and the
+  "detailed" view it promised drew nothing extra (`drawPistonCutaway` took the flag and never read it). The button,
+  its `fullscreen` state, its CSS and translation are removed. The RACE page keeps its own ⛶, which goes full
+  screen as the race page.
+
 ### RACE: weather, brakes that carry their heat, a plan per car, the race report, a page of its own (build 141)
 
 - **Weather** (`raceWetAt`): dry, damp, wet, rain later (the start drawn from the seed) or drying, and the air

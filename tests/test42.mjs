@@ -42,16 +42,10 @@ console.log(`  backing follows the element: ${resize.before} -> ${resize.after} 
 if (!(resize.after < resize.before)) fails.push('backing store does not shrink with the element');
 if (resize.restored !== resize.before) fails.push('backing store did not return to its original size');
 
-// fullscreen widens the LOGICAL grid so the drawing gets more room
-const fs = await page.evaluate(() => {
-  const a = [vizW, vizH];
-  vizW = 1280; vizH = 800; fullscreen = true; sizeCanvas();
-  const b = { viz: [vizW, vizH], backing: [canvas.width, canvas.height] };
-  vizW = 640; vizH = 420; fullscreen = false; sizeCanvas();
-  return { windowed: a, full: b };
-});
-console.log(`  fullscreen logical grid ${fs.full.viz.join('x')} backing ${fs.full.backing.join('x')}`);
-if (fs.full.viz[0] !== 1280) fails.push('fullscreen does not widen the logical grid');
+// the ⛶ FULL button is gone (build 142): it forced the engine cutaway onto every tab
+const fsGone = await page.evaluate(() => !document.getElementById('btnFullscreen') && !document.querySelector('.fs-btn'));
+console.log(`  no ⛶ FULL button: ${fsGone}`);
+if (!fsGone) fails.push('the ⛶ FULL button is still on the page');
 
 // ---------------------------------------------------------------- 2. it is an animation, driven by rpm
 console.log('\n== the cutaway is animated, and animated by the ENGINE ==');

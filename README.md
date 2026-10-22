@@ -1,4 +1,4 @@
-# PIXEL ENGINE SIM v0.6 build 141
+# PIXEL ENGINE SIM v0.6 build 142
 
 **A lightweight, 8-bit style internal combustion engine *designer* & simulator** inspired by *Automation*.
 
@@ -213,7 +213,7 @@ saps power; a large radiator, electric fan and oil cooler keep it cool.
     and compressor flow at the turbo, EGT at the exhaust, and a knock bar.
 
   The subsystem numbers that used to be printed here in 7 px type live in the **LIVE OUTPUT**
-  panel beside the canvas, where they are real text. A **⛶ FULL** button widens the drawing.
+  panel beside the canvas, where they are real text.
 - **Canvas rendered at device resolution (new)** — the three visualisations share one canvas that
   drew on a fixed 640×420 backing store while CSS stretched it to whatever the panel was (744 px
   on a desktop, twice that again on a high-DPI screen). Every 7 px glyph landed on fractional
