@@ -62,11 +62,11 @@ const r = await page.evaluate(() => {
     const c = R.cars[0];
     out.tyres = { laps: c.laps.map(l => l.t), wear: c.laps.map(l => l.wear), T: c.T.slice(), tOpt: mCivic.tyre.tOpt, tWin: mCivic.tyre.tWin };
     // seconds of steady cornering (30 m/s, 0.9 g) until the tyre is within half a window of its best
-    const heat = M => { const T = [RACE.ambient, RACE.ambient, RACE.ambient, RACE.ambient], W = [0, 0, 0, 0]; M.massNow = M.mass;
-      let k = 0; for (; k < 3000 && Math.max(...T) < M.tyre.tOpt - M.tyre.tWin / 2; k++) raceTyreStep(M, T, W, 30, 9, 0, 0.1);
+    const heat = M => { const T = [RACE.air, RACE.air, RACE.air, RACE.air], W = [0, 0, 0, 0]; M.massNow = M.mass;
+      let k = 0; for (; k < 3000 && Math.max(...T) < M.tyre.tOpt - M.tyre.tWin / 2; k++) raceTyreStep(M, M.tyre, T, W, 30, 9, 0, 0.1);
       return { s: k / 10 }; };
-    const slickM = Object.assign({}, mCivic, { tyre: Object.assign({}, mCivic.tyre, TIRE_TYPE.slick, { key: 'slick' }) });
-    out.slick = { road: heat(mCivic), slick: heat(slickM), coldSlick: tyreTempGrip(RACE.ambient, TIRE_TYPE.slick), coldRoad: tyreTempGrip(RACE.ambient, TIRE_TYPE.sport),
+    const slickM = Object.assign({}, mCivic, { tyre: raceCompound('slick'), mu0: TIRE_TYPE.slick.mu });
+    out.slick = { road: heat(mCivic), slick: heat(slickM), coldSlick: tyreTempGrip(RACE.air, TIRE_TYPE.slick), coldRoad: tyreTempGrip(RACE.air, TIRE_TYPE.sport),
       at60: { slick: tyreTempGrip(60, TIRE_TYPE.slick), road: tyreTempGrip(60, TIRE_TYPE.sport) } };
   }
   // 5. seeds
