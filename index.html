@@ -199,6 +199,7 @@ body.race-open{overflow:hidden}
 .race-side{min-height:0;overflow-y:auto;border-left:4px solid #3a3a4a;background:#161622}
 .race-side .panel{border:none}
 .race-side .race-tower td.nm{max-width:170px}
+@media(max-width:440px){#raceTower th:nth-child(4),#raceTower td:nth-child(4){display:none}}
 @media(max-width:800px){
   .race-body{display:block;overflow-y:auto}
   .race-stage{height:56vh}
@@ -7277,11 +7278,18 @@ function raceBestCompound(M,w){
   for(const k of ['inter','wet']){const g=raceTyreScore(M,raceCompound(k),w);if(g>bg){bg=g;best=k;}}
   return best;
 }
-// Whether changing to that compound pays: the time it wins back over the laps left (lap time goes roughly as
-// 1/sqrt(grip) where the grip is the limit) against what the stop costs.
+// The car's own lap at a grip level (half a tank), read off its solved pace grid.
+function raceLapAtGrip(M,g){
+  const GR=M.grips||RACE_GRIP,NF=RACE_FUEL.length;g=clamp(g,GR[0],1);
+  let a=0;while(a<GR.length-2&&g>GR[a+1])a++;
+  const f=(g-GR[a])/(GR[a+1]-GR[a]);
+  return M.prof[a*NF+1].lap*(1-f)+M.prof[(a+1)*NF+1].lap*f;
+}
+// Whether changing to that compound pays: the time its grip wins back on the car's own solved laps, over the
+// laps left, against what the stop costs.
 function raceTyreCallPays(M,cur,next,w,left){
   const gc=raceTyreScore(M,cur,w),gn=raceTyreScore(M,raceCompound(next),w);
-  return gn>gc&&M.lapNom*(Math.sqrt(gn/gc)-1)*left>RACE.pitLoss+RACE.tyreChange;
+  return gn>gc&&(raceLapAtGrip(M,gc)-raceLapAtGrip(M,gn))*left>RACE.pitLoss+RACE.tyreChange;
 }
 // A solo run of the car on its own pace, no traffic and no driver error, for the strategy: how many laps a
 // set of tyres lasts to the wear limit, with the lap time at each age, in the conditions at the start.
@@ -7535,7 +7543,7 @@ function raceCross(R,c){
   c.lapsDone++;
   if(c.lapsDone>=1){
     const t=R.t,lt=t-c.lapStart;c.lapStart=t;
-    const pos=1+R.cars.filter(o=>o!==c&&(o.state==='fin'||o.sTot>c.lapsDone*R.Lc)).length;
+    const pos=1+R.cars.filter(o=>o!==c&&o.state!=='dnf'&&o.sTot>=c.lapsDone*R.Lc).length;   // further round the race (a car finished a lap down is not)
     const lap={n:c.lapsDone,t:lt,end:t,fuelKg:c.lastLapKg-c.fuelKg,wear:Math.max(...c.W),pit:false,tyre:c.ty.key,wet:w,pos,
       brake:c.BT.F};
     c.lastLapKg=c.fuelKg;c.laps.push(lap);
@@ -8728,14 +8736,14 @@ function raceReportCanvas(R,scale){
   const frame=(x0,y0,w,h,title,yLab)=>{
     g.fillStyle=RPT.ink;g.font=sans(16,true);g.fillText(title,x0,y0-12);
     g.strokeStyle=RPT.rule;g.lineWidth=1;g.strokeRect(x0,y0,w,h);
-    g.fillStyle='#667';g.font=sans(11);g.save();g.translate(x0-30,y0+h/2);g.rotate(-Math.PI/2);g.textAlign='center';g.fillText(yLab,0,0);g.restore();
+    g.fillStyle='#667';g.font=sans(11);g.save();g.translate(x0-(yLab==='position'?30:62),y0+h/2);g.rotate(-Math.PI/2);g.textAlign='center';g.fillText(yLab,0,0);g.restore();
   };
   const lapX=(x0,w,n)=>x0+(N>1?(n-1)/(N-1):0.5)*w;
   const lapTicks=(x0,y0,w,h)=>{g.fillStyle='#889';g.font=sans(11);g.textAlign='center';
     const step=Math.max(1,Math.ceil(N/20));for(let n=1;n<=N;n+=step)g.fillText(String(n),lapX(x0,w,n),y0+h+16);
     g.fillText('lap',x0+w/2,y0+h+32);g.textAlign='left';};
   // ---- lap chart: position after each lap ----
-  const C1={x:90,y:y+80,w:W-170,h:300},P=R.cars.length;
+  const C1={x:110,y:y+80,w:W-190,h:300},P=R.cars.length;
   frame(C1.x,C1.y,C1.w,C1.h,'Lap chart — position at the end of each lap','position');
   g.fillStyle='#889';g.font=sans(11);g.textAlign='right';
   for(let p=1;p<=P;p++){const py=C1.y+(p-0.5)/P*C1.h;g.fillText(String(p),C1.x-8,py+4);
@@ -8750,7 +8758,7 @@ function raceReportCanvas(R,scale){
   }
   lapTicks(C1.x,C1.y,C1.w,C1.h);
   // ---- lap times, with the track's wetness behind them ----
-  const C2={x:90,y:C1.y+C1.h+90,w:W-170,h:330};
+  const C2={x:110,y:C1.y+C1.h+90,w:W-190,h:330};
   frame(C2.x,C2.y,C2.w,C2.h,'Lap times'+(cfg.weather!=='dry'?' — blue shading: how wet the track was':''),'lap time (s)');
   const all=[].concat(...R.cars.map(c=>c.laps.filter(l=>!l.pit&&l.n>1).map(l=>l.t)));
   const lo=all.length?Math.min(...all):60,hi=all.length?Math.max(...all):90;
@@ -8772,7 +8780,7 @@ function raceReportCanvas(R,scale){
   lapTicks(C2.x,C2.y,C2.w,C2.h);
   g.fillStyle='#889';g.font=sans(11);g.fillText('Lap 1 (the standing start) and the laps into the pits are left out.',C2.x,C2.y+C2.h+50);
   // ---- stints ----
-  const C3={x:90,y:C2.y+C2.h+100,w:W-170};
+  const C3={x:110,y:C2.y+C2.h+100,w:W-190};
   g.fillStyle=RPT.ink;g.font=sans(16,true);g.fillText('Stints — tyres and stops',C3.x,C3.y-12);
   res.forEach((x,k)=>{
     const c=R.cars.find(o=>o.id===x.id),yy=C3.y+k*26,last=Math.max(1,c.lapsDone);
@@ -8784,6 +8792,24 @@ function raceReportCanvas(R,scale){
       g.fillStyle='#fff';g.font=sans(10,true);if(x1-x0>60)g.fillText(raceCompound(st.tyre).label,x0+5,yy+13);
     });
   });
+  // ---- what happened: the moves, the stops, the weather and the mistakes, in order ----
+  {
+    const ky=C3.y+res.length*26+50,fy0=H-120,rowH=19,colW=(W-80)/2;
+    const evs=R.events.filter(e=>['pass','pit','mistake','rain','dry','dnf'].includes(e.type));
+    const rows=Math.max(0,Math.floor((fy0-ky-10)/rowH))*2;
+    if(evs.length&&rows>0){
+      g.fillStyle=RPT.ink;g.font=sans(16,true);g.fillText('Key moments',40,ky);
+      const nm=id=>{const c=R.cars.find(o=>o.id===id);return c?c.M.name:'';};
+      const txt=e=>e.type==='pass'?nm(e.car)+' passes '+nm(e.on):e.type==='pit'?nm(e.car)+' pits: '+raceCompound(e.tyre).label.toLowerCase()+', '+e.fuelL.toFixed(1)+' L'+(e.why==='weather'?' (for the weather)':'')
+        :e.type==='mistake'?nm(e.car)+' makes a mistake':e.type==='rain'?'Rain starts to fall':e.type==='dry'?'The track is dry':nm(e.car)+' retires ('+(e.why||'').toLowerCase()+')';
+      const show=evs.length>rows?evs.slice(0,rows-1):evs;
+      show.forEach((e,k)=>{const col=k<Math.ceil(show.length/2)?0:1,r=col?k-Math.ceil(show.length/2):k,x=40+col*colW,yy=ky+22+r*rowH;
+        g.fillStyle='#889';g.font=sans(12);g.fillText(fmtLap(e.t)+'  L'+Math.max(1,e.lap),x,yy);
+        g.fillStyle=e.car>=0?colOf(e.car):'#1d6fb8';g.fillRect(x+110,yy-9,8,8);
+        g.fillStyle=RPT.ink;let s_=txt(e);while(g.measureText(s_).width>colW-140&&s_.length>4)s_=s_.slice(0,-2);g.fillText(s_,x+124,yy);});
+      if(evs.length>rows){g.fillStyle='#889';g.font=sans(12);g.fillText('… and '+(evs.length-show.length)+' more',40+colW,ky+22+(Math.ceil(show.length/2))*rowH);}
+    }
+  }
   // ---- footer ----
   const fy=H-100;
   g.strokeStyle=RPT.rule;g.lineWidth=1;g.beginPath();g.moveTo(40,fy);g.lineTo(W-40,fy);g.stroke();
@@ -10631,6 +10657,8 @@ async function raceStart(){
     const est=Math.max(...models.map(M=>M.lapNom))*cfg.laps*1.15;
     while(!raceRun(R,40)){raceUI.prog=0.75+0.25*Math.min(1,R.t/est);renderRaceSetup();await raceYield();}
     raceUI.run=R;raceUI.t=0;raceUI.playing=true;raceUI.follow=-1;raceUI.phase='live';
+    const rb=document.querySelector('.race-body');if(rb)rb.scrollTop=0;
+    const rs=document.getElementById('raceSide');if(rs)rs.scrollTop=0;
     trackViewReset();
     const pb=document.getElementById('racePlay');if(pb){pb.textContent=tr('PAUSE');pb.classList.add('on');}
   }catch(err){
