@@ -282,7 +282,7 @@ table.fuelmap td.live{box-shadow:inset 0 0 0 2px #fff;font-weight:bold}
 <body>
 <div class="container">
 <header>
-<h1>PIXEL ENGINE SIM v0.6 build 135</h1>
+<h1>PIXEL ENGINE SIM v0.6 build 136</h1>
 <div class="subtitle" id="subtitle">ENGINE DESIGNER • BUILD IT, THEN DRIVE IT</div>
 </header>
 <div class="build-strip" id="buildStrip">
@@ -2509,12 +2509,12 @@ const PRESETS=[
   // the gap between the dyno and `real` IS the comparison. `unsure` names the inputs that are not in
   // the maker's published data and were set from typical practice (mostly boost pressure). Ratings
   // marked `note` are not what the engine makes: the JDM 280 PS / kei 64 PS gentlemen's agreements.
-  {cat:'Kei & City',name:'Suzuki K6A turbo (Alto Works)',real:{hp:64,hpRpm:6000,tq:100,tqRpm:3000},note:'kei-class 64 PS legal cap',
-   engine:{cylinders:3,bore_mm:68.0,stroke_mm:60.4,compression:8.9,redline:7200,intake:'turbo',boost_bar:0.75,turboSize:'small',cam:'stock',injector:'port',intercooler:'small',exhaust:'stock',airFilter:'stock',octane:95,taperRpm:3500,taperPct:25}},
+  {cat:'Kei & City',name:'Suzuki K6A turbo (Alto Works)',real:{hp:64,hpRpm:6000,tq:100,tqRpm:3000},unsure:['compExd_mm'],note:'kei-class 64 PS legal cap',
+   engine:{cylinders:3,bore_mm:68.0,stroke_mm:60.4,compression:8.9,redline:7200,intake:'turbo',boost_bar:0.75,turboSize:'small',compExd_mm:40,cam:'stock',injector:'port',intercooler:'small',exhaust:'stock',airFilter:'stock',octane:95,taperRpm:3500,taperPct:25}},
   {cat:'Kei & City',name:'Toyota 1KR-FE (Aygo 1.0)',real:{hp:68,hpRpm:6000,tq:93,tqRpm:3600},
    engine:{cylinders:3,bore_mm:71.0,stroke_mm:84.0,compression:10.5,redline:6500,cam:'stock',vvt:true,injector:'port',octane:95,exhaust:'stock',airFilter:'stock',runner:'long'}},
   {cat:'Kei & City',name:'Fiat 0.9 TwinAir turbo',real:{hp:84,hpRpm:5500,tq:145,tqRpm:1900},unsure:['boost_bar'],
-   engine:{cylinders:2,bore_mm:80.5,stroke_mm:86.0,compression:10.0,redline:6000,intake:'turbo',boost_bar:1.0,turboSize:'small',cam:'stock',vvt:true,injector:'port',intercooler:'small',exhaust:'stock',airFilter:'stock',octane:95,taperRpm:2000,taperPct:35}},
+   engine:{cylinders:2,bore_mm:80.5,stroke_mm:86.0,compression:10.0,redline:6000,intake:'turbo',boost_bar:1.0,turboSize:'small',compExd_mm:40,cam:'stock',vvt:true,injector:'port',intercooler:'small',exhaust:'stock',airFilter:'stock',octane:95,taperRpm:2000,taperPct:35}},
   {cat:'Compact Turbo',name:'Ford 1.0 EcoBoost (Fiesta 125)',real:{hp:123,hpRpm:6000,tq:170,tqRpm:1400},unsure:['boost_bar'],
    engine:{cylinders:3,bore_mm:71.9,stroke_mm:82.0,compression:10.0,redline:6500,intake:'turbo',boost_bar:1.2,turboSize:'small',cam:'stock',vvt:true,injector:'direct',intercooler:'small',exhaust:'stock',airFilter:'stock',octane:95,taperRpm:3000,taperPct:55}},
   {cat:'Compact Turbo',name:'VW EA888 2.0 TSI (Golf GTI Mk7)',real:{hp:220,hpRpm:4500,tq:350,tqRpm:1500},
@@ -3841,6 +3841,7 @@ function buildEngine(){
   // Intercooler core: charge-heat residual (feeds effIAT) and its spool-lag penalty.
   const ic=INTERCOOLER[engine.intercooler]||INTERCOOLER.large;
   engine.icEff=ic.eff;
+  engine.icRefFlow=airFlowAt(engine.redline,1+engine.maxBoost);   // the flow the core's effectiveness is quoted at
   // charge volume between compressor and throttle, m3 — ducting bore follows the compressor OUTLET,
   // ~0.72 of the exducer (a GT28: 2-inch outlet on a 71 mm wheel)
   const duct=0.72*turboFrame(engine).exd;
@@ -4201,6 +4202,19 @@ function wotMapAt(rpm){return 1.0+boostAvail(rpm);}
 function liveMap(){return state.map;}
 
 // ---- Physics (all derived from the engine spec + live state) ----
+// The intercooler's effectiveness at a charge flow (build 136). It was the core's quoted figure at every flow;
+// a heat exchanger's rises as the flow through it falls, since each kilogram meets the same surface for longer.
+// eps = 1 - exp(-NTU), NTU = UA / (m cp), the cooling air's capacity taken as large against the charge's. The
+// quoted figure (INTERCOOLER eff) is read at the engine's peak flow, where such figures are quoted, which fixes NTU
+// there. UA is the two sides in series: the charge side's film coefficient follows the flow as m^0.8 (turbulent
+// flow in the tubes, Dittus-Boelter), the cooling side's does not depend on it, and a gas-to-gas core is designed
+// with the two sides' conductance balanced (Shah & Sekulic), so at the reference each carries half the resistance.
+function icEffAt(m){
+  const e0=engine.icEff;
+  if(!(e0>0&&e0<1)||!(m>0)||!(engine.icRefFlow>0))return e0||0;
+  const r=engine.icRefFlow/m, ntu=-Math.log(1-e0)*r*2/(1+Math.pow(r,0.8));
+  return 1-Math.exp(-ntu);
+}
 function effIAT(map,rpm){
   // Forced induction heats the charge; an intercooler removes most of it. High-enthalpy
   // fuels (ethanol/methanol) evaporatively cool the charge — denser air and less knock.
@@ -4221,7 +4235,7 @@ function effIAT(map,rpm){
     const eta=(rpm>0&&engine.intake==='turbo'&&engine.chokeFlow_kgs>0)
       ?compIslandEff(compFlowFrac(rpm,airFlowAt(rpm,PR)),PR):engine.compEff;
     const rise=(t+273.15)*(Math.pow(PR,0.283)-1)/clamp(eta||0.72,0.30,0.85);
-    t+=rise*(1-(engine.icEff!=null?engine.icEff:0.82));
+    t+=rise*(1-(rpm>0?icEffAt(airFlowAt(rpm,PR)):(engine.icEff!=null?engine.icEff:0.82)));
   }
   t-=engine.chargeCool*(engine.injector==='direct'?1.15:1.0);   // DI cools the charge slightly more
   return t;
