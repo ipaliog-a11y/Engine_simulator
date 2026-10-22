@@ -20,6 +20,18 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 Working toward **v1.0 — every number derived, not fitted.**
 
+### The lap is a hot lap: the brakes get one preparation lap (build 135)
+
+- The lap solver's brake temperatures ran the lap over and over (up to six times) until the rotors' temperature at
+  the line repeated: a race stint's rotors. The lap is a single hot lap, and the tyres are taken at the working
+  temperature an out-lap gives them, so the rotors now get the same: they start from ambient, run one preparation
+  lap at the hot lap's pace, and the hot lap is the second (BRAKE_PREP_LAPS).
+- Short circuits: the front rotors start the hot lap ~270 C where they started at ~600 (a GT3 on the technical
+  circuit 265 C and 451 C at most, against 639 and 702). Lap times move by at most 0.03 s (an E46 M3, 74.83 ->
+  74.80 s on the technical circuit): settled, these rotors only just crossed their fade onset. The Nordschleife
+  is unchanged (a V12 GT on steel still fades, 448.7 s against 445.3 unfaded): one lap there is long enough for
+  the rotors to reach their working temperature within it.
+
 ### Knock compresses the charge the engine trapped, from where the valve closes (build 134)
 
 - **The end gas's compression starts at IVC.** The knock trace compressed a cylinder full at intake pressure from

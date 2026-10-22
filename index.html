@@ -282,7 +282,7 @@ table.fuelmap td.live{box-shadow:inset 0 0 0 2px #fff;font-weight:bold}
 <body>
 <div class="container">
 <header>
-<h1>PIXEL ENGINE SIM v0.6 build 134</h1>
+<h1>PIXEL ENGINE SIM v0.6 build 135</h1>
 <div class="subtitle" id="subtitle">ENGINE DESIGNER • BUILD IT, THEN DRIVE IT</div>
 </header>
 <div class="build-strip" id="buildStrip">
@@ -3348,6 +3348,7 @@ function brakeForceCap(v){
 // Fade: pad friction falls from the onset, to the 35% loss the stops have always allowed, over 150 C.
 const ROTOR_MAT={iron:{rho:7200,cp:500,eps:0.55},ccm:{rho:2450,cp:800,eps:0.80}};
 const BRAKE_AMBIENT=25, FADE_SPAN=150, FADE_MAX=0.35;
+const BRAKE_PREP_LAPS=1;   // laps the rotors run before the hot lap (build 135)
 // air at a typical film temperature (~150 C): conductivity, kinematic viscosity, Prandtl, density, cp
 const BRAKE_AIR={k:0.034,nu:2.9e-5,pr:0.70,rho:0.83,cp:1015};
 const BRAKE_DUCT={d:0.076,K:2.5};
@@ -6578,14 +6579,16 @@ function simulateLap(key,opts){
   // no gear shifts: the stretches it re-solves do not carry the gearbox's state)
   if(quick){let tq=0;for(let i=0;i<n;i++){const j=(i+1)%n;tq+=p[i].ds3/Math.max(2,(v[i]+v[j])/2);}return {lap:tq,v,vC,vB,kind:accKind,model:{ceilAt,brakeFrom,accFrom}};}
   // 2b. Brake temperature on the lap (build 107; build 105 counted heat per stop against a fitted
-  //     budget). Run the solved profile through the rotors in time order, lap after lap until the
-  //     temperature at the line repeats, set each point's brake capacity from the front rotor's
-  //     temperature there, and solve again if it bites. The last pass is kept for the replay.
+  //     budget). Run the solved profile through the rotors in time order, set each point's brake
+  //     capacity from the front rotor's temperature there, and solve again if it bites. The last pass
+  //     is kept for the replay. The lap is a HOT LAP (build 135): the rotors start from ambient, take one
+  //     preparation lap at the same pace, and the hot lap is the second. It used to repeat laps until the
+  //     temperature at the line did, which is a race stint's rotors, not a hot lap's (the tyres, too, are
+  //     taken at their working temperature, which an out-lap gives them, not a stint's).
   const th=vehicle.brakeTh;
   function brakeTemps(){
     const st={F:BRAKE_AMBIENT,R:BRAKE_AMBIENT},TF=new Array(n),TR=new Array(n);
-    for(let lap=0;lap<6;lap++){
-      const F0=st.F;
+    for(let lap=0;lap<1+BRAKE_PREP_LAPS;lap++){   // the preparation lap, then the hot lap kept in TF/TR
       for(let i=0;i<n;i++){
         const j=(i+1)%n,va=Math.max(2,(v[i]+v[j])/2),dt=p[i].ds3/va;
         const aLong=(v[j]*v[j]-v[i]*v[i])/(2*p[i].ds3);
@@ -6593,7 +6596,6 @@ function simulateLap(key,opts){
         brakeHeatStep(st,th,Math.max(0,mech),va,dt);
         TF[i]=st.F;TR[i]=st.R;
       }
-      if(lap>=2&&Math.abs(st.F-F0)<1)break;                 // a lap that ends where it began
     }
     return {TF,TR};
   }
