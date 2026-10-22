@@ -160,6 +160,21 @@ footer{text-align:center;margin-top:16px;padding:8px;font-size:7px;color:#555;bo
 .replay-row button{flex:1;padding:6px 4px}
 .replay-row select{flex:0 0 64px;min-width:0}
 .replay-row #replayGauges{flex:0 0 86px}
+.replay-row .tp-full{flex:0 0 40px;color:#00ccff;border-color:#00ccff}
+/* the full-screen track view (build 143): the lap, its instruments and the replay controls, in landscape */
+.track-page{position:fixed;inset:0;z-index:50;background:#0a0a12;overflow:hidden}
+.track-page[hidden]{display:none}
+/* the page itself goes full screen, and the browser will not turn a full-screen element, so an inner box turns */
+.tp-turn{position:absolute;top:0;left:0;width:100%;height:100%;display:flex;flex-direction:column}
+.track-page.rot .tp-turn{width:100vh;height:100vw;transform-origin:top left;transform:rotate(90deg) translateY(-100%)}
+body.track-open{overflow:hidden}
+.tp-stage{flex:1;min-height:0;overflow:hidden;display:flex;align-items:center;background:#0d0d18}
+.tp-stage canvas{width:100%;height:auto;display:block}
+.tp-bar{flex:0 0 auto;display:flex;justify-content:center;padding:6px 10px;background:#12121c;border-top:3px solid #333}
+.tp-bar .replay-row{margin:0;flex:0 1 640px;min-width:0}
+.tp-bar .replay-row button{padding:8px 6px}
+.tp-bar .replay-row .tp-full{font-size:12px;padding:4px 6px}
+.tp-bar .replay-row select,.tp-bar .replay-row #replayGauges{flex:0 0 auto}
 /* RACE (build 137) */
 .race-row{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px}
 .race-seed{display:flex;gap:4px}.race-seed input{flex:1;min-width:0}.race-seed button{padding:4px 6px;box-shadow:none}
@@ -357,7 +372,7 @@ table.fuelmap td.live{box-shadow:inset 0 0 0 2px #fff;font-weight:bold}
 <body>
 <div class="container">
 <header>
-<h1>PIXEL ENGINE SIM v0.6 build 142</h1>
+<h1>PIXEL ENGINE SIM v0.6 build 143</h1>
 <div class="subtitle" id="subtitle">ENGINE DESIGNER • BUILD IT, THEN DRIVE IT</div>
 </header>
 <div class="build-strip" id="buildStrip">
@@ -2003,6 +2018,9 @@ going fastest; through a compression it is pressed into the road and can carry f
 the test circuits a dip is worth about a third more corner speed than the same corner on a brow.
 Where the hills fall matters as much as how big they are: a climb in a braking zone lets you brake
 later and <i>gains</i> time, while the same climb on a straight simply costs you.
+<br><b>Full screen.</b> ⛶ at the start of the live-timing controls puts the lap, its live instruments and the
+replay controls on the whole screen, in landscape: on a phone held upright the view turns itself. ✕ (or Esc)
+brings it back.
 </div>
 <div class="guide-body" data-gk="trackZoom">
 <b>Zoom and pan the map.</b> Scroll (or pinch on a phone) to zoom in on any corner, drag to move
@@ -2592,7 +2610,8 @@ Most other tests check behaviour that is true of real cars: a bigger turbo spool
 <div class="field"><label for="trkSel">CIRCUIT</label><select id="trkSel"><option value="tech">ASHDOWN PARK</option><option value="fast">CAPE SPEEDWAY</option><option value="mixed" selected>RIVERSIDE GP</option><option value="nord">NORDSCHLEIFE</option></select></div>
 <div class="perf-head" id="lapHead">—</div>
 <div class="design-section">Live timing</div>
-<div class="replay-row">
+<div class="replay-row" id="trackReplayRow">
+<button id="btnTrackFull" class="tp-full" title="Full screen: the lap, the live instruments and these controls, in landscape" aria-label="Full screen">⛶</button>
 <button id="btnReplay" class="toggle on" aria-pressed="true">PAUSE</button>
 <button id="btnReplayRestart">RESTART</button>
 <select id="replaySpeed" class="opt-select" aria-label="Replay speed"><option value="1">1×</option><option value="2">2×</option><option value="4">4×</option></select>
@@ -2653,6 +2672,12 @@ Most other tests check behaviour that is true of real cars: a bigger turbo spool
 </div>
 </div>
 <div class="dyno-result" id="dynoResult" hidden aria-live="polite"></div>
+</div>
+<div id="trackPage" class="track-page" hidden>
+<div class="tp-turn" id="trackTurn">
+<div class="tp-stage" id="trackStage"></div>
+<div class="tp-bar" id="trackBar"></div>
+</div>
 </div>
 <div id="racePage" class="race-page" hidden>
 <div class="race-top"><button id="raceBack" title="Back to the sim">◀ SIM</button><b class="race-title">RACE</b><span id="raceTopInfo"></span><button id="raceFs" title="Full screen" aria-label="Full screen">⛶</button></div>
@@ -4107,6 +4132,7 @@ let activeChallenge='free';
 // their content is numbers and universal units.
 const I18N={
   // RACE (build 137; 138)
+  'Leave full screen':{el:'Έξοδος από πλήρη οθόνη'},'Full screen':{el:'Πλήρης οθόνη'},
   'WEATHER':{el:'ΚΑΙΡΟΣ'},
   'AIR °C':{el:'ΑΕΡΑΣ °C'},
   'DRY':{el:'ΣΤΕΓΝΟ'},
@@ -11617,7 +11643,11 @@ function trackZoomAt(vx,vy,f){
 function trackViewReset(){trackView.z=1;trackView.x=0;trackView.y=0;}
 function bindTrackZoom(){
   // canvas CSS pixels -> the 640x420 drawing space
-  const toViz=e=>{const r=canvas.getBoundingClientRect();return {x:(e.clientX-r.left)*vizW/r.width,y:(e.clientY-r.top)*vizH/r.height};};
+  const toViz=e=>{const r=canvas.getBoundingClientRect();
+    // the full-screen track view may be turned a quarter clockwise (a phone held upright): its x runs down
+    // the screen and its y from right to left
+    if(trackPage.open&&trackPage.rot)return {x:(e.clientY-r.top)*vizW/r.height,y:(r.right-e.clientX)*vizH/r.width};
+    return {x:(e.clientX-r.left)*vizW/r.width,y:(e.clientY-r.top)*vizH/r.height};};
   const active=()=>(vizMode==='track'&&!!lapResult)||(vizMode==='race'&&!!raceUI.run&&raceUI.phase==='live');
   canvas.addEventListener('wheel',e=>{
     if(!active())return;
@@ -12373,6 +12403,56 @@ function bindRacePage(){
   addEventListener('resize',sizeRaceStage);
   addEventListener('keydown',e=>{if(e.key==='Escape'&&racePage.open&&!document.fullscreenElement)setTab(racePage.from);});
 }
+// ---- the full-screen track view (build 143): the lap, its live instruments and the replay controls ----
+// For a phone. ⛶ in the live-timing row moves the map canvas and the replay controls into a page that fills
+// the screen (the same elements, so the replay, zoom and pan keep working), asks for real full screen and a
+// landscape lock, and where the lock is not to be had (iOS) and the phone is held upright, turns the page a
+// quarter itself. The drawing keeps at least 380 units of height, which the instruments need, and takes the
+// screen's shape for its width.
+const trackPage={open:false,rot:false,homes:null};
+function sizeTrackStage(){
+  if(!trackPage.open)return;
+  const pg=document.getElementById('trackPage');
+  trackPage.rot=innerHeight>innerWidth;
+  pg.classList.toggle('rot',trackPage.rot);
+  const st=document.getElementById('trackStage'),w=st.clientWidth,h=st.clientHeight;   // layout size, before the turn
+  if(!(w>0&&h>0))return;
+  vizH=Math.round(clamp(h,380,900));
+  vizW=Math.round(clamp(vizH*w/h,560,1600));
+  sizeCanvas();
+}
+function openTrackPage(){
+  if(trackPage.open||!lapResult)return;
+  const pg=document.getElementById('trackPage'),row=document.getElementById('trackReplayRow');
+  trackPage.homes=[[canvas,canvas.parentNode,canvas.nextSibling],[row,row.parentNode,row.nextSibling]];
+  document.getElementById('trackStage').appendChild(canvas);
+  document.getElementById('trackBar').appendChild(row);
+  pg.hidden=false;document.body.classList.add('track-open');trackPage.open=true;
+  const b=document.getElementById('btnTrackFull');b.textContent='✕';b.title=tr('Leave full screen');
+  if(!lapReplay.playing)document.getElementById('btnReplay').click();
+  sizeTrackStage();
+  // real full screen, then landscape where the browser allows it; either may be refused, and the page works without
+  const req=pg.requestFullscreen||pg.webkitRequestFullscreen;
+  if(req){try{const pr=req.call(pg);if(pr&&pr.then)pr.then(()=>{if(screen.orientation&&screen.orientation.lock)screen.orientation.lock('landscape').catch(()=>{}).finally(sizeTrackStage);else sizeTrackStage();},()=>{});}catch(e){}}
+}
+function closeTrackPage(){
+  if(!trackPage.open)return;
+  try{if(screen.orientation&&screen.orientation.unlock)screen.orientation.unlock();}catch(e){}
+  if(document.fullscreenElement)(document.exitFullscreen||document.webkitExitFullscreen||(()=>{})).call(document);
+  for(const [el,home,next] of trackPage.homes)home.insertBefore(el,next&&next.parentNode===home?next:null);
+  const pg=document.getElementById('trackPage');pg.hidden=true;pg.classList.remove('rot');
+  document.body.classList.remove('track-open');trackPage.open=false;trackPage.rot=false;
+  const b=document.getElementById('btnTrackFull');b.textContent='⛶';b.title=tr('Full screen');
+  vizW=640;vizH=420;sizeCanvas();
+}
+function bindTrackPage(){
+  document.getElementById('btnTrackFull').addEventListener('click',()=>{trackPage.open?closeTrackPage():openTrackPage();});
+  addEventListener('resize',sizeTrackStage);
+  addEventListener('orientationchange',()=>setTimeout(sizeTrackStage,200));
+  addEventListener('keydown',e=>{if(e.key==='Escape'&&trackPage.open&&!document.fullscreenElement)closeTrackPage();});
+  // leaving the browser's full screen (a swipe, the back gesture, Esc) leaves the view too
+  document.addEventListener('fullscreenchange',()=>{if(trackPage.open&&!document.fullscreenElement&&trackPage.fsWas)closeTrackPage();trackPage.fsWas=!!document.fullscreenElement;});
+}
 // Imported circuits live alongside the built-in ones and persist in localStorage, so a track you
 // loaded is still there next session. Only geometry is stored — it is the user's own file.
 const GPX_KEY='pes.tracks';
@@ -12593,6 +12673,7 @@ function updateUI(){
 function setTab(mode){
   const prevMode=vizMode;
   if(mode!=='race'&&racePage.open)closeRacePage();
+  if(mode!=='track'&&trackPage.open)closeTrackPage();
   vizMode=mode;
   ['Design','Vehicle','Garage','Track','Race','Engine','Dyno','Guide','Options'].forEach(m=>
     document.getElementById('tab'+m).classList.toggle('active',mode===m.toLowerCase()));
@@ -13385,7 +13466,7 @@ function bindControls(){
   loadGarage();renderGarage();
 
   // the race page's own ⛶: its stage resizes going in and out of full screen
-  document.addEventListener('fullscreenchange',()=>{if(racePage.open)sizeRaceStage();});
+  document.addEventListener('fullscreenchange',()=>{if(racePage.open)sizeRaceStage();if(trackPage.open)sizeTrackStage();});
 
   document.getElementById('edIntake').addEventListener('change',syncDesignEnable);
   document.getElementById('edFuel').addEventListener('change',syncDesignEnable);
@@ -13468,6 +13549,7 @@ initGuide();               // index, or the page you were last reading
 bindTrackZoom();
 bindRace();
 bindRacePage();
+bindTrackPage();
 sizeCanvas();updatePhysics();updateUI();requestAnimationFrame(loop);
 
 // Register service worker for offline/installable PWA (no-op on file://).
