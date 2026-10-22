@@ -20,6 +20,34 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 Working toward **v1.0 — every number derived, not fitted.**
 
+### The GUIDE becomes a wiki (build 136)
+
+- The 29-page manual is rebuilt as a **59-page wiki in 9 sections**: Getting started, How an engine works (new),
+  Designing the engine, Breathing & boost, Knock, heat & wear (new), The car, The track, Scoring & career,
+  Options & reference. Thirty pages are new, among them the four strokes, torque vs power, why engines have a
+  redline, VVT, ignition, combustion, heat and EGT, friction, wastegates, superchargers, intercoolers, nitrous,
+  fuels and octane, wear, emissions, tyres, aero, brakes, suspension, elevation, a glossary and a calibration page.
+- **Three levels on every page**: LV1 · REAL LIFE (how the part works on a real car, no maths), LV2 · IN THE GAME
+  (the controls), LV3 · THE PHYSICS (the equations the code solves, with sources, and an orange limit note where a
+  quantity is still fitted). The LV3 text was written from the simulation code and its figures re-measured, not
+  carried over.
+- **8-bit pictures drawn in code** (`GUIDE_ART`): 61 drawings on a 160 x 72 cell grid through `fitPixCanvas`, 52
+  of them animated at 12 frames a second (the four strokes, cam and follower, header pulse and its reflection,
+  turbo, wastegate, VGT vanes, Roots rotors, knock, friction circle, roll, racing line, crest). The loop runs only
+  for the page in view while the GUIDE tab is open, and draws a still under `prefers-reduced-motion`. Each index
+  entry carries its page's first picture as an icon.
+- **Search** (every word must appear in a page's title, tags or text) and **cross-links** between pages
+  (`<a data-gp>`), 261 of them.
+- Two kept blocks had gone stale and were re-measured: the front-driver launch figures (a 246 hp kei: 7.47 s, then
+  6.32 / 5.87 / 4.96 / 4.04 s with an LSD, sport tyres, slicks, AWD) and the diff trade (spool 0.1 s quicker to 100
+  and 1.5 s slower a lap than a clutch LSD). Their Greek was dropped with them, as the block-per-paragraph rule
+  requires; so were the old lap-lag limit (the lap has integrated the turbo shaft since build 118) and the old
+  Known-limits list. New text is English for now and falls back cleanly in Greek; the level labels are translated.
+- `tests/test71.mjs`: every page has its three levels and a picture, every picture draws and every animated one
+  moves, every link lands, search narrows and says when nothing matches, the animation stops off the tab, Greek
+  keeps its blocks and falls back to English, and nothing scrolls sideways at phone width (it caught wide tables
+  doing exactly that: the wide column is now `minmax(0, 1fr)`).
+
 ### The lap is a hot lap: the brakes get one preparation lap (build 135)
 
 - The lap solver's brake temperatures ran the lap over and over (up to six times) until the rotors' temperature at
