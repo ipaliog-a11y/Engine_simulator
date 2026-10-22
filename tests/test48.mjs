@@ -98,7 +98,7 @@ const CARS = [
            turboConfig: 'sequential', valves: 4, cam: 'sport', vvt: false,   // VVT-i only from mid-1997
            injector: 'port', octane: 98,
            intercooler: 'large', intakeSys: 'efi', exhaust: 'sport', airFilter: 'perf' ,
-           taperRpm: 4000, taperPct: 36   // the factory ECU's high-rpm boost taper, as on the preset (build 136)
+           taperRpm: 4000, taperPct: 35   // the factory ECU's high-rpm boost taper, as on the preset (build 137)
          },
     car: { chassis: 'coupe', kg: 1570, drive: 'rwd', tire: 'sport', gbx: 'manual', gears: 6, diff: 'clsd' },
     real: { hp: 320, tq: 427, t100: 4.9, top: 250, limited: true } },
@@ -112,7 +112,7 @@ const CARS = [
            valves: 4, cam: 'stock', injector: 'direct', fuel: 'diesel', intercooler: 'large',
            intakeSys: 'efi', exhaust: 'stock', airFilter: 'stock',
            runner: 'short',     // a diesel's compact intake manifold, as on the preset (build 121)
-           taperRpm: 2000, taperPct: 52,   // the factory ECU's high-rpm boost taper, as on the preset (build 136)
+           taperRpm: 2000, taperPct: 54,   // the factory ECU's high-rpm boost taper, as on the preset (build 137)
            tqLimit: 320 },   // the ECU's torque limit, as on the preset (build 137)
     car: { chassis: 'hatch', kg: 1375, drive: 'fwd', tire: 'eco', gbx: 'manual', gears: 6, diff: 'open' },
     real: { hp: 150, tq: 320, t100: 8.6, top: 216 } },
