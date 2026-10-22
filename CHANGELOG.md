@@ -20,6 +20,24 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 Working toward **v1.0 — every number derived, not fitted.**
 
+### A full-screen track view for phones (build 143)
+
+- **⛶ in TRACK's live timing** moves the map canvas and the replay controls (pause, restart, speed, gauges) into
+  a page that fills the screen, asks for real full screen and a landscape lock, and sizes the drawing to the
+  screen's shape with at least 380 units of height for the live instruments. Where the lock is refused (iOS) and
+  the phone is upright, an inner box turns a quarter (the browser will not transform a full-screen element), and
+  pointer positions are mapped through the turn, so drag and pinch still pan and zoom the right way.
+  ✕, Esc, leaving the browser's full screen, or another tab puts everything back.
+- `test75`: an upright phone, a sideways phone and a desktop: landscape drawing, controls in the bar and none cut
+  off, the replay running, panning through the turn, and ✕ restoring the page.
+
+### The ⛶ FULL button is gone (build 142)
+
+- It sat on the LIVE, DYNO and TRACK canvas and, once pressed, drew the engine cutaway whatever tab was open, and the
+  "detailed" view it promised drew nothing extra (`drawPistonCutaway` took the flag and never read it). The button,
+  its `fullscreen` state, its CSS and translation are removed. The RACE page keeps its own ⛶, which goes full
+  screen as the race page.
+
 ### RACE: weather, brakes that carry their heat, a plan per car, the race report, a page of its own (build 141)
 
 - **Weather** (`raceWetAt`): dry, damp, wet, rain later (the start drawn from the seed) or drying, and the air

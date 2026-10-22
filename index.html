@@ -47,7 +47,6 @@ header .subtitle{font-size:8px;color:#888;margin-top:6px}
   input[type=range]::-moz-range-thumb{width:22px;height:28px}
   button{font-size:10px;padding:11px 12px}
   .field input,.field select{font-size:10px;padding:9px}
-  .fs-btn{font-size:9px;padding:7px 9px}
 }
 /* Tall, roomy portrait (tablets): scale the type up a touch more for legibility. */
 @media(orientation:portrait) and (min-width:700px){
@@ -65,10 +64,6 @@ header .subtitle{font-size:8px;color:#888;margin-top:6px}
 #engineCanvas{width:100%;height:auto;display:block;background:#0d0d18}
 /* Bottom-right, not top-right: the canvas draws its live RPM readout in the top-right corner and
    the two collided on DYNO and TRACK ("3841 RPM" sat half behind the button). */
-.fs-btn{position:absolute;bottom:10px;right:8px;z-index:6;font-size:7px;padding:5px 7px;background:#1a1a28;color:#00ccff;border:2px solid #00ccff;box-shadow:2px 2px 0 #000}
-.fs-btn:hover{background:#004422;color:#00ff88}
-.viz-panel:fullscreen{display:flex;flex-direction:column;background:#0d0d18}
-.viz-panel:fullscreen #engineCanvas{flex:1;min-height:0;height:auto;max-height:100%;object-fit:contain;margin:auto}
 .side-panel{display:flex;flex-direction:column;gap:10px}
 .panel{background:#161622;border:4px solid #3a3a4a;padding:10px}
 .panel h2{font-size:9px;color:#00ccff;margin-bottom:8px;border-bottom:2px solid #333;padding-bottom:4px;text-transform:uppercase}
@@ -165,6 +160,21 @@ footer{text-align:center;margin-top:16px;padding:8px;font-size:7px;color:#555;bo
 .replay-row button{flex:1;padding:6px 4px}
 .replay-row select{flex:0 0 64px;min-width:0}
 .replay-row #replayGauges{flex:0 0 86px}
+.replay-row .tp-full{flex:0 0 40px;color:#00ccff;border-color:#00ccff}
+/* the full-screen track view (build 143): the lap, its instruments and the replay controls, in landscape */
+.track-page{position:fixed;inset:0;z-index:50;background:#0a0a12;overflow:hidden}
+.track-page[hidden]{display:none}
+/* the page itself goes full screen, and the browser will not turn a full-screen element, so an inner box turns */
+.tp-turn{position:absolute;top:0;left:0;width:100%;height:100%;display:flex;flex-direction:column}
+.track-page.rot .tp-turn{width:100vh;height:100vw;transform-origin:top left;transform:rotate(90deg) translateY(-100%)}
+body.track-open{overflow:hidden}
+.tp-stage{flex:1;min-height:0;overflow:hidden;display:flex;align-items:center;background:#0d0d18}
+.tp-stage canvas{width:100%;height:auto;display:block}
+.tp-bar{flex:0 0 auto;display:flex;justify-content:center;padding:6px 10px;background:#12121c;border-top:3px solid #333}
+.tp-bar .replay-row{margin:0;flex:0 1 640px;min-width:0}
+.tp-bar .replay-row button{padding:8px 6px}
+.tp-bar .replay-row .tp-full{font-size:12px;padding:4px 6px}
+.tp-bar .replay-row select,.tp-bar .replay-row #replayGauges{flex:0 0 auto}
 /* RACE (build 137) */
 .race-row{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px}
 .race-seed{display:flex;gap:4px}.race-seed input{flex:1;min-width:0}.race-seed button{padding:4px 6px;box-shadow:none}
@@ -362,7 +372,7 @@ table.fuelmap td.live{box-shadow:inset 0 0 0 2px #fff;font-weight:bold}
 <body>
 <div class="container">
 <header>
-<h1>PIXEL ENGINE SIM v0.6 build 141</h1>
+<h1>PIXEL ENGINE SIM v0.6 build 143</h1>
 <div class="subtitle" id="subtitle">ENGINE DESIGNER • BUILD IT, THEN DRIVE IT</div>
 </header>
 <div class="build-strip" id="buildStrip">
@@ -382,7 +392,6 @@ table.fuelmap td.live{box-shadow:inset 0 0 0 2px #fff;font-weight:bold}
 <button id="tabGuide">GUIDE</button>
 <button id="tabOptions">OPTIONS</button>
 </div>
-<button id="btnFullscreen" class="fs-btn" title="Full-screen detailed view" aria-label="Full-screen detailed view">⛶ FULL</button>
 <canvas id="engineCanvas" width="640" height="420" role="img" aria-label="Engine test-bench schematic with live values"></canvas>
 <div class="design-panel" id="designPanel">
 <h3>ENGINE DESIGN</h3>
@@ -2009,6 +2018,9 @@ going fastest; through a compression it is pressed into the road and can carry f
 the test circuits a dip is worth about a third more corner speed than the same corner on a brow.
 Where the hills fall matters as much as how big they are: a climb in a braking zone lets you brake
 later and <i>gains</i> time, while the same climb on a straight simply costs you.
+<br><b>Full screen.</b> ⛶ at the start of the live-timing controls puts the lap, its live instruments and the
+replay controls on the whole screen, in landscape: on a phone held upright the view turns itself. ✕ (or Esc)
+brings it back.
 </div>
 <div class="guide-body" data-gk="trackZoom">
 <b>Zoom and pan the map.</b> Scroll (or pinch on a phone) to zoom in on any corner, drag to move
@@ -2598,7 +2610,8 @@ Most other tests check behaviour that is true of real cars: a bigger turbo spool
 <div class="field"><label for="trkSel">CIRCUIT</label><select id="trkSel"><option value="tech">ASHDOWN PARK</option><option value="fast">CAPE SPEEDWAY</option><option value="mixed" selected>RIVERSIDE GP</option><option value="nord">NORDSCHLEIFE</option></select></div>
 <div class="perf-head" id="lapHead">—</div>
 <div class="design-section">Live timing</div>
-<div class="replay-row">
+<div class="replay-row" id="trackReplayRow">
+<button id="btnTrackFull" class="tp-full" title="Full screen: the lap, the live instruments and these controls, in landscape" aria-label="Full screen">⛶</button>
 <button id="btnReplay" class="toggle on" aria-pressed="true">PAUSE</button>
 <button id="btnReplayRestart">RESTART</button>
 <select id="replaySpeed" class="opt-select" aria-label="Replay speed"><option value="1">1×</option><option value="2">2×</option><option value="4">4×</option></select>
@@ -2659,6 +2672,12 @@ Most other tests check behaviour that is true of real cars: a bigger turbo spool
 </div>
 </div>
 <div class="dyno-result" id="dynoResult" hidden aria-live="polite"></div>
+</div>
+<div id="trackPage" class="track-page" hidden>
+<div class="tp-turn" id="trackTurn">
+<div class="tp-stage" id="trackStage"></div>
+<div class="tp-bar" id="trackBar"></div>
+</div>
 </div>
 <div id="racePage" class="race-page" hidden>
 <div class="race-top"><button id="raceBack" title="Back to the sim">◀ SIM</button><b class="race-title">RACE</b><span id="raceTopInfo"></span><button id="raceFs" title="Full screen" aria-label="Full screen">⛶</button></div>
@@ -4113,6 +4132,7 @@ let activeChallenge='free';
 // their content is numbers and universal units.
 const I18N={
   // RACE (build 137; 138)
+  'Leave full screen':{el:'Έξοδος από πλήρη οθόνη'},'Full screen':{el:'Πλήρης οθόνη'},
   'WEATHER':{el:'ΚΑΙΡΟΣ'},
   'AIR °C':{el:'ΑΕΡΑΣ °C'},
   'DRY':{el:'ΣΤΕΓΝΟ'},
@@ -4255,7 +4275,6 @@ const I18N={
   "page":{el:"σελίδα"},
   "of":{el:"από"},
   'DESIGN':{el:'ΣΧΕΔΙΑΣΗ'},'ENGINE':{el:'ΚΙΝΗΤΗΡΑΣ'},'LIVE':{el:'ΖΩΝΤΑΝΑ'},'DYNO':{el:'ΔΥΝΑΜΟ'},'GUIDE':{el:'ΟΔΗΓΟΣ'},'OPTIONS':{el:'ΕΠΙΛΟΓΕΣ'},
-  '⛶ FULL':{el:'⛶ ΠΛΗΡΗΣ'},
   'ENGINE DESIGN':{el:'ΣΧΕΔΙΑΣΗ ΚΙΝΗΤΗΡΑ'},
   'Load a preset, or configure a build and press BUILD & DYNO. Physics update live.':{el:'Φόρτωσε προεπιλογή ή στήσε ένα build και πάτα BUILD & DYNO. Η φυσική ενημερώνεται ζωντανά.'},
   'LOAD A PRESET':{el:'ΦΟΡΤΩΣΗ ΠΡΟΕΠΙΛΟΓΗΣ'},
@@ -4447,7 +4466,7 @@ function applyLang(lang){
   currentLang=(lang==='el')?'el':'en';
   try{localStorage.setItem('pes.lang',currentLang);}catch(e){}
   document.documentElement.lang=currentLang;
-  const sel='.viz-tabs button, #btnFullscreen, .design-panel h3, .design-section, .guide-title, .gtier-h, .hint, .panel h2, .stat .label, .opt-note, .opt-row>div>b, .ctl-lbl, .field>label, .build-row button, #controlsPanel .btn-row button, .fuelmap-edit button, .garage-row button, #btnReplayRestart';
+  const sel='.viz-tabs button, .design-panel h3, .design-section, .guide-title, .gtier-h, .hint, .panel h2, .stat .label, .opt-note, .opt-row>div>b, .ctl-lbl, .field>label, .build-row button, #controlsPanel .btn-row button, .fuelmap-edit button, .garage-row button, #btnReplayRestart';
   document.querySelectorAll(sel).forEach(el=>{
     if(el.children.length>0)return;                       // skip nodes with child elements
     if(el.dataset.en===undefined)el.dataset.en=el.textContent.trim();
@@ -5227,7 +5246,6 @@ let lastTime=performance.now();
 let vizMode='engine';
 let autoThermal=false;
 let wearEnabled=true;   // WEAR toggle: off = invincible engine
-let fullscreen=false;   // detailed full-screen schematic
 let statusFlashUntil=0;
 const SAVE_KEY='pixelEngineSim.setup.v2';
 const APP_TAG='PixelEngineSim',APP_VER='0.5';
@@ -11071,8 +11089,7 @@ function drawTopCar(g,x,y,heading,col,state){
 }
 // ---- Engine test-bench schematic (replaces the old blur animation) ----
 // Live values annotate each subsystem around a central engine. Laid out in a base
-// 640×420 space and uniformly scaled, so the same code serves the lite view and the
-// full-screen detailed view (which just adds extra lines).
+// 640×420 space and uniformly scaled to the canvas.
 // ====== ENGINE VIEW: an animated cutaway ======
 // This used to be six boxes of 7 px text painted onto a canvas that was then stretched by CSS —
 // unreadable, and a canvas is the wrong place for a table anyway. The numbers already live in the
@@ -11130,7 +11147,7 @@ function valveLift(deg,open,close){
   return Math.sin(Math.PI*d/span);
 }
 function drawEngine(dt){
-  const W=vizW,H=vizH,detailed=fullscreen;
+  const W=vizW,H=vizH;
   const S=Math.min(W/640,H/420),offX=(W-640*S)/2,offY=(H-420*S)/2;
   const px=x=>offX+x*S,py=y=>offY+y*S,F=n=>Math.round(n*S)+'px "Press Start 2P"';
   const LW=n=>Math.max(1,n*S);
@@ -11176,7 +11193,7 @@ function drawEngine(dt){
   ctx.fillStyle=rf>0.92?C.red:C.green;ctx.fillRect(px(tbX),py(tbY),tbW*rf*S,tbH*S);
 
   if(rotary)drawRotaryCutaway(px,py,S,F,LW,dt,m);
-  else drawPistonCutaway(px,py,S,F,LW,deg,nCyl,rodRatio,bsr,two,m,detailed);
+  else drawPistonCutaway(px,py,S,F,LW,deg,nCyl,rodRatio,bsr,two,m);
 
   // ---------- status strip ----------
   ctx.fillStyle='#12121c';ctx.fillRect(px(0),py(398),640*S,24*S);
@@ -11187,7 +11204,7 @@ function drawEngine(dt){
   else if(state.wearCause)msg=tr('DAMAGE')+': '+state.wearCause+' — '+tr('HEALTH')+' '+Math.round(state.engineHealth*100)+'%';
   else if(state.nitrousActive&&nitrousImep()>0)msg='NITROUS! • '+state.powerHP.toFixed(0)+' HP • '+tr('BOTTLE')+' '+Math.round(state.nitrousCharge*100)+'%';
   else msg=(state.powerHP>5?tr('RUNNING'):tr('IDLE'))+' • '+state.powerHP.toFixed(0)+' HP • '+state.torque.toFixed(0)+' Nm • '
-    +tr('COOL')+' '+Math.round(state.coolant)+'C • '+tr('HEALTH')+' '+Math.round(state.engineHealth*100)+'%'+(fullscreen?'':'  •  ⛶ FULL');
+    +tr('COOL')+' '+Math.round(state.coolant)+'C • '+tr('HEALTH')+' '+Math.round(state.engineHealth*100)+'%';
   if(state.nitrousActive&&nitrousImep()>0)ctx.fillStyle='#ff66cc';
   ctx.fillText(msg,px(10),py(414));
 }
@@ -11282,7 +11299,7 @@ function drawTempGauges(px,py,S,F,LW,x,y,w){
   gaugeBar(px,py,S,F,LW,x,y+12,w,tr('COOLANT'),state.coolant,60,125,108,115);
   gaugeBar(px,py,S,F,LW,x,y+34,w,tr('OIL'),state.oil,60,140,115,125);
 }
-function drawPistonCutaway(px,py,S,F,LW,deg,nCyl,rodRatio,bsr,two,m,detailed){
+function drawPistonCutaway(px,py,S,F,LW,deg,nCyl,rodRatio,bsr,two,m){
   const e=engine;
   // Geometry of the big cylinder. Bore/stroke ratio decides how wide and how tall it is, so an
   // oversquare engine really is drawn short and wide and a long-stroke one tall and narrow. The
@@ -11626,7 +11643,11 @@ function trackZoomAt(vx,vy,f){
 function trackViewReset(){trackView.z=1;trackView.x=0;trackView.y=0;}
 function bindTrackZoom(){
   // canvas CSS pixels -> the 640x420 drawing space
-  const toViz=e=>{const r=canvas.getBoundingClientRect();return {x:(e.clientX-r.left)*vizW/r.width,y:(e.clientY-r.top)*vizH/r.height};};
+  const toViz=e=>{const r=canvas.getBoundingClientRect();
+    // the full-screen track view may be turned a quarter clockwise (a phone held upright): its x runs down
+    // the screen and its y from right to left
+    if(trackPage.open&&trackPage.rot)return {x:(e.clientY-r.top)*vizW/r.height,y:(r.right-e.clientX)*vizH/r.width};
+    return {x:(e.clientX-r.left)*vizW/r.width,y:(e.clientY-r.top)*vizH/r.height};};
   const active=()=>(vizMode==='track'&&!!lapResult)||(vizMode==='race'&&!!raceUI.run&&raceUI.phase==='live');
   canvas.addEventListener('wheel',e=>{
     if(!active())return;
@@ -11876,7 +11897,7 @@ function drawTrack(){
   const L=lapResult;
   ctx.fillText(tr('TEST TRACK')+' • '+(L?L.track.label:''),12,19);
   if(!L){ctx.fillStyle='#778';ctx.font='8px "Press Start 2P"';ctx.fillText(tr('BUILD AN ENGINE FIRST'),12,60);return;}
-  // Lap time sits below the title bar, clear of the ⛶ FULL button in the top-right corner.
+  // Lap time sits below the title bar.
   // Live clock, with the solved lap beside it and the sector splits as they are crossed.
   const live=L.replay?replayAt(L,lapReplay.t):null;
   ctx.fillStyle=C.green;ctx.font='14px "Press Start 2P"';ctx.fillText(fmtLap(live?lapReplay.t:L.lap),12,50);
@@ -12237,7 +12258,7 @@ function drawRace(){
     return;
   }
   const t=raceUI.t,S=raceStandings(R,t),topBar=40,botBar=34;
-  // the clock and the lap, in the title bar, clear of the FULL button
+  // the clock and the lap, in the title bar
   const lapNow=Math.min(R.cfg.laps,Math.max(1,S[0].laps.length+(S[0].fin?0:1)));
   ctx.textAlign='right';ctx.font='7px "Press Start 2P"';ctx.fillStyle='#99a';
   const spd=raceUI.speed+'×'+(raceUI.playing?'':' ❚❚');ctx.fillText(spd,W-44,19);
@@ -12381,6 +12402,56 @@ function bindRacePage(){
   });
   addEventListener('resize',sizeRaceStage);
   addEventListener('keydown',e=>{if(e.key==='Escape'&&racePage.open&&!document.fullscreenElement)setTab(racePage.from);});
+}
+// ---- the full-screen track view (build 143): the lap, its live instruments and the replay controls ----
+// For a phone. ⛶ in the live-timing row moves the map canvas and the replay controls into a page that fills
+// the screen (the same elements, so the replay, zoom and pan keep working), asks for real full screen and a
+// landscape lock, and where the lock is not to be had (iOS) and the phone is held upright, turns the page a
+// quarter itself. The drawing keeps at least 380 units of height, which the instruments need, and takes the
+// screen's shape for its width.
+const trackPage={open:false,rot:false,homes:null};
+function sizeTrackStage(){
+  if(!trackPage.open)return;
+  const pg=document.getElementById('trackPage');
+  trackPage.rot=innerHeight>innerWidth;
+  pg.classList.toggle('rot',trackPage.rot);
+  const st=document.getElementById('trackStage'),w=st.clientWidth,h=st.clientHeight;   // layout size, before the turn
+  if(!(w>0&&h>0))return;
+  vizH=Math.round(clamp(h,380,900));
+  vizW=Math.round(clamp(vizH*w/h,560,1600));
+  sizeCanvas();
+}
+function openTrackPage(){
+  if(trackPage.open||!lapResult)return;
+  const pg=document.getElementById('trackPage'),row=document.getElementById('trackReplayRow');
+  trackPage.homes=[[canvas,canvas.parentNode,canvas.nextSibling],[row,row.parentNode,row.nextSibling]];
+  document.getElementById('trackStage').appendChild(canvas);
+  document.getElementById('trackBar').appendChild(row);
+  pg.hidden=false;document.body.classList.add('track-open');trackPage.open=true;
+  const b=document.getElementById('btnTrackFull');b.textContent='✕';b.title=tr('Leave full screen');
+  if(!lapReplay.playing)document.getElementById('btnReplay').click();
+  sizeTrackStage();
+  // real full screen, then landscape where the browser allows it; either may be refused, and the page works without
+  const req=pg.requestFullscreen||pg.webkitRequestFullscreen;
+  if(req){try{const pr=req.call(pg);if(pr&&pr.then)pr.then(()=>{if(screen.orientation&&screen.orientation.lock)screen.orientation.lock('landscape').catch(()=>{}).finally(sizeTrackStage);else sizeTrackStage();},()=>{});}catch(e){}}
+}
+function closeTrackPage(){
+  if(!trackPage.open)return;
+  try{if(screen.orientation&&screen.orientation.unlock)screen.orientation.unlock();}catch(e){}
+  if(document.fullscreenElement)(document.exitFullscreen||document.webkitExitFullscreen||(()=>{})).call(document);
+  for(const [el,home,next] of trackPage.homes)home.insertBefore(el,next&&next.parentNode===home?next:null);
+  const pg=document.getElementById('trackPage');pg.hidden=true;pg.classList.remove('rot');
+  document.body.classList.remove('track-open');trackPage.open=false;trackPage.rot=false;
+  const b=document.getElementById('btnTrackFull');b.textContent='⛶';b.title=tr('Full screen');
+  vizW=640;vizH=420;sizeCanvas();
+}
+function bindTrackPage(){
+  document.getElementById('btnTrackFull').addEventListener('click',()=>{trackPage.open?closeTrackPage():openTrackPage();});
+  addEventListener('resize',sizeTrackStage);
+  addEventListener('orientationchange',()=>setTimeout(sizeTrackStage,200));
+  addEventListener('keydown',e=>{if(e.key==='Escape'&&trackPage.open&&!document.fullscreenElement)closeTrackPage();});
+  // leaving the browser's full screen (a swipe, the back gesture, Esc) leaves the view too
+  document.addEventListener('fullscreenchange',()=>{if(trackPage.open&&!document.fullscreenElement&&trackPage.fsWas)closeTrackPage();trackPage.fsWas=!!document.fullscreenElement;});
 }
 // Imported circuits live alongside the built-in ones and persist in localStorage, so a track you
 // loaded is still there next session. Only geometry is stored — it is the user's own file.
@@ -12602,6 +12673,7 @@ function updateUI(){
 function setTab(mode){
   const prevMode=vizMode;
   if(mode!=='race'&&racePage.open)closeRacePage();
+  if(mode!=='track'&&trackPage.open)closeTrackPage();
   vizMode=mode;
   ['Design','Vehicle','Garage','Track','Race','Engine','Dyno','Guide','Options'].forEach(m=>
     document.getElementById('tab'+m).classList.toggle('active',mode===m.toLowerCase()));
@@ -12610,7 +12682,6 @@ function setTab(mode){
   canvas.style.display=overlay?'none':'block';
   // The canvas has no layout size while hidden, so re-measure whenever it comes back.
   if(!overlay)sizeCanvas();
-  document.getElementById('btnFullscreen').style.display=overlay?'none':'block';
   document.getElementById('designPanel').classList.toggle('active',mode==='design');
   document.getElementById('vehiclePanelTab').classList.toggle('active',mode==='vehicle');
   document.getElementById('garagePanel').classList.toggle('active',mode==='garage');
@@ -13394,20 +13465,8 @@ function bindControls(){
   }
   loadGarage();renderGarage();
 
-  const vizPanel=document.querySelector('.viz-panel');
-  document.getElementById('btnFullscreen').addEventListener('click',()=>{
-    if(!document.fullscreenElement)(vizPanel.requestFullscreen||vizPanel.webkitRequestFullscreen||(()=>{})).call(vizPanel);
-    else (document.exitFullscreen||document.webkitExitFullscreen||(()=>{})).call(document);
-  });
-  document.addEventListener('fullscreenchange',()=>{
-    if(racePage.open){sizeRaceStage();return;}   // the race page goes full screen as itself, not as the engine view
-    fullscreen=!!document.fullscreenElement;
-    // Fullscreen widens the LOGICAL grid so the drawings get more room; sizeCanvas() then
-    // matches the backing store to the real device pixels either way.
-    if(fullscreen){vizW=1280;vizH=800;sizeCanvas();canvas.style.display='block';
-      ['designPanel','guidePanel','optionsPanel'].forEach(id=>document.getElementById(id).classList.remove('active'));}
-    else{vizW=640;vizH=420;sizeCanvas();setTab(vizMode);}
-  });
+  // the race page's own ⛶: its stage resizes going in and out of full screen
+  document.addEventListener('fullscreenchange',()=>{if(racePage.open)sizeRaceStage();if(trackPage.open)sizeTrackStage();});
 
   document.getElementById('edIntake').addEventListener('change',syncDesignEnable);
   document.getElementById('edFuel').addEventListener('change',syncDesignEnable);
@@ -13474,7 +13533,7 @@ function loop(now){
   updatePhysics();
   stepWear(dt);
   updateSound();
-  if(fullscreen||vizMode==='engine')drawEngine(dt);
+  if(vizMode==='engine')drawEngine(dt);
   else if(vizMode==='dyno'){drawDyno();renderDynoResult(false);}
   else if(vizMode==='track'){stepReplay(dt);drawTrack();}
   else if(vizMode==='race'){stepRaceView(dt);drawRace();}
@@ -13490,6 +13549,7 @@ initGuide();               // index, or the page you were last reading
 bindTrackZoom();
 bindRace();
 bindRacePage();
+bindTrackPage();
 sizeCanvas();updatePhysics();updateUI();requestAnimationFrame(loop);
 
 // Register service worker for offline/installable PWA (no-op on file://).
