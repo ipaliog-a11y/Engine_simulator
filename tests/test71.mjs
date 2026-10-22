@@ -58,7 +58,10 @@ const r = await page.evaluate(() => {
   }
   // 4. tyres: from cold, and a slick against a road tyre
   {
+    // no driver variation or mistakes here: the laps differ by the tyres alone
+    const svP = RACE.pace, svM = RACE.mistake; RACE.pace = 0; RACE.mistake = 0;
     const R = raceInit([mCivic], { track: 'tech', laps: 12, strategy: 'none', seed: 2 }); raceRun(R);
+    RACE.pace = svP; RACE.mistake = svM;
     const c = R.cars[0];
     out.tyres = { laps: c.laps.map(l => l.t), wear: c.laps.map(l => l.wear), T: c.T.slice(), tOpt: mCivic.tyre.tOpt, tWin: mCivic.tyre.tWin };
     // seconds of steady cornering (30 m/s, 0.9 g) until the tyre is within half a window of its best
@@ -137,7 +140,7 @@ console.log(`  wear ${r.tyres.wear.map(w => w.toFixed(3)).join(' ')} · temps ${
 const run = r.tyres.laps.slice(1);
 if (!(r.tyres.laps[0] > Math.max(...run) + 3)) fails.push('a standing start on cold tyres is not the slowest lap');
 if (Math.max(...run) / Math.min(...run) > 1.02) fails.push('the laps after the first spread by more than 2%');
-if (!(r.tyres.laps[11] >= r.tyres.laps[2])) fails.push('the car is quicker on worn tyres than on fresh warm ones');
+if (!(r.tyres.laps[11] > Math.min(...r.tyres.laps.slice(1, 4)))) fails.push('the car is no slower on worn tyres than on fresh warm ones');
 for (let k = 1; k < r.tyres.wear.length; k++) if (r.tyres.wear[k] < r.tyres.wear[k - 1]) fails.push('tyre wear went down');
 const hot = Math.max(...r.tyres.T), cool = Math.min(...r.tyres.T);
 if (!(hot > r.tyres.tOpt - r.tyres.tWin && hot < r.tyres.tOpt + 2 * r.tyres.tWin)) fails.push(`the hottest tyre settles at ${Math.round(hot)} C, outside any working range for its compound`);
