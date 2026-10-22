@@ -333,7 +333,7 @@ table.fuelmap td.live{box-shadow:inset 0 0 0 2px #fff;font-weight:bold}
 <body>
 <div class="container">
 <header>
-<h1>PIXEL ENGINE SIM v0.6 build 137</h1>
+<h1>PIXEL ENGINE SIM v0.6 build 138</h1>
 <div class="subtitle" id="subtitle">ENGINE DESIGNER • BUILD IT, THEN DRIVE IT</div>
 </header>
 <div class="build-strip" id="buildStrip">
@@ -1018,14 +1018,34 @@ the dirty air. Lapped cars are shown the blue flag and let the leaders through.<
 then there is a mistake in a corner, more often on tyres that are worn or too hot. The draws come from
 the <b>SEED</b>, so the same seed gives the same race, to the hundredth. <b>GRID</b> is the qualifying
 order (one hot lap each, on an empty tank) or that order reversed.<br>
-<b>Watching.</b> The map shows every car. The timing tower gives the gap to the leader, the last lap and
-the best (purple for the fastest of the race), and the stops. Click a car in it to follow that car. The
-cards under it show each car's tyres, fuel and brakes. The speed runs from 1× to 100×, and the bar
-under the controls scrubs through the race.<br>
+<b>Weather.</b> <b>WEATHER</b> is dry, damp, wet, rain later (it starts part-way through, when the seed
+says) or drying, and <b>AIR</b> sets the day's temperature; a sunny track runs ~14 °C above the air, a wet
+one at it. Water takes grip by compound: a treaded road tyre keeps ~70% of its dry grip, a semi-slick
+about half, a slick about a third. <b>Intermediates</b> and <b>full wets</b> are rain tyres for the race
+only: they keep more of their grip in the wet, and overheat and wear on a drying line. A car changes to
+the compound that leaves it most grip when the time that wins back on its own solved laps, over the laps
+still to go, is more than a stop costs. So with three laps left a car may sensibly stay out on the wrong
+tyres. The tyres also cool in the spray, and run cooler on a wet surface.<br>
+<b>Brakes.</b> The rotors run the lap solver's own heat model all race long: they heat with every stop,
+cool on the straights and in the pit box, and carry their temperature from lap to lap. Past their pads'
+onset they fade, and a fading car brakes earlier: its braking zones stretch by how much less it can stop
+with. The cards show front and rear rotors and the fade.<br>
+<b>Each car's plan.</b> Under each car: <b>STOPS</b> (automatic, or none, one, two or three, or no pits
+at all), how hard it is driven (<b>PUSH</b>: closer to the limit every lap, more mistakes; <b>SAVE
+FUEL</b>: lifting before the braking zones, ~10% less fuel, a little slower, fewer mistakes), the
+<b>TYRES</b> it starts on, and the <b>WET CALL</b> (change for the weather, or stay out).<br>
+<b>The page.</b> RACE opens as a page of its own: the map, and beside it (below it on a phone) the setup,
+then the race. <b>◀ SIM</b> (or Esc) goes back to where you were, and ⛶ makes it properly full screen.<br>
+<b>Watching.</b> The map shows every car, and the rain when it falls. The timing tower gives the gap to
+the leader, the last lap and the best (purple for the fastest of the race), each car's tyres and its
+stops. Click a car in it to follow that car. The cards under it show each car's tyres, fuel and brakes.
+The speed runs from 1× to 100×, and the bar under the controls scrubs through the race.<br>
+<b>The report.</b> <b>REPORT PNG</b> / <b>PDF</b> saves the race on one sheet: the classification with each
+car's stints, a lap chart, every car's lap times with the wet shaded in behind, the stints by compound,
+and the key moments: passes, stops, mistakes, the rain.<br>
 <span style="color:#c86">What is a rule and not physics: overtaking, the tow, dirty air, the pit
-lane's time loss and driver error. The cars also share one racing line and do not fight for space
-on it; a pass is drawn alongside. The brake temperatures shown are the lap solve's, not carried from
-lap to lap.</span>
+lane's time loss, driver error, and when the rain comes. The cars also share one racing line and do not
+fight for space on it; a pass is drawn alongside. The wet-grip, tyre-window and wear figures are fitted.</span>
 </div>
 </section>
 <section class="guide-page" id="gp-reports" data-cat="track" data-title="Reports" hidden>

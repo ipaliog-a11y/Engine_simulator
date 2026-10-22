@@ -1,4 +1,4 @@
-# PIXEL ENGINE SIM v0.6 build 137
+# PIXEL ENGINE SIM v0.6 build 138
 
 **A lightweight, 8-bit style internal combustion engine *designer* & simulator** inspired by *Automation*.
 
@@ -150,11 +150,15 @@ saps power; a large radiator, electric fan and oil cooler keep it cool.
 - **Race (new)** — a **RACE** tab that puts two to eight builds on the same circuit and runs them to
   a lap count, with **nobody driving**. Choose the cars (the one on the VEHICLE tab, garage builds,
   factory cars, the same car twice if you like), the circuit, the laps, qualifying or reversed grid,
-  automatic pit strategy or none, tyre warmers and a seed; then watch on a page of its own: every car
-  on the map, a **timing tower** (gap to the leader, last and best lap with the race's fastest in
-  purple, stops), and per-car telemetry with **four tyre temperatures and wear**, **fuel in the
-  tank** and laps it is good for, and brake temperature. Play it at 1–100×, scrub, click a car to
-  follow it.
+  the **weather** (dry, damp, wet, rain later, drying) and air temperature, tyre warmers and a seed,
+  and give **each car its own plan**: automatic stops or a set number, push / normal / fuel save, the
+  tyres it starts on, and whether it changes them for rain. RACE opens as **a page of its own**
+  filling the window (◀ SIM goes back, ⛶ goes properly full screen): every car on the map, a
+  **timing tower** (gap to the leader, last and best lap with the race's fastest in purple, tyres,
+  stops), and per-car telemetry with **four tyre temperatures and wear**, **fuel in the tank** and
+  laps it is good for, and **front and rear brake temperature with fade**. Play it at 1–100×,
+  scrub, click a car to follow it, and save the **race report** as PNG or PDF: classification, a lap
+  chart, lap times with the wet shaded in, every car's stints by compound, and the key moments.
   - **Pace is the lap solver's.** Each car's lap is solved on its own racing line at five grip levels
     and three fuel loads, plus a standing start; the race reads its speed off those solves for the
     grip its tyres have and the fuel it carries at that moment. Alone on perfect tyres a car laps in
@@ -166,11 +170,22 @@ saps power; a large radiator, electric fan and oil cooler keep it cool.
   - **Fuel is power × BSFC.** The flow at every point is the power the lap spends there times the
     engine's own BSFC at that rpm and boost, so a thirsty engine pits sooner and a car gets lighter
     and quicker as the tank empties. Tanks are per body class.
+  - **Weather.** A wet track takes grip by compound: a treaded road tyre keeps ~70% of it, a
+    slick ~36%. Two race-only rain tyres, **intermediates** and **full wets**, keep more. A car
+    changes compound when the time its own solved laps say it would win back, over the laps left,
+    beats a pit stop, so a late shower can leave a car out on the wrong tyres on purpose. Water and a
+    cool wet surface take heat out of the tyres; a sunny track adds it. Wet laps run 9–22% slower,
+    the grippiest dry compounds losing most.
+  - **Brakes carry their heat.** The lap solver's rotor model runs through the whole race, so
+    temperatures build lap on lap past a single hot lap's and cool in the pit box. A car whose pads
+    fade brakes earlier as they do: its braking zones stretch by how much less it can stop with.
   - **Racecraft is a rule layer.** A faster car is held up until it has a few km/h on a straight or
     into a braking zone; slipstream, dirty air, blue flags, pit-lane loss, lap-to-lap driver
     variation and the odd mistake are rules, seeded, so the same seed replays the same race.
 
   ![race](docs/race.png)
+
+  ![race report](docs/race-report.png)
 
 - **Animated engine cutaway** — the LIVE tab is a section through the engine you
   just designed, and everything on it moves because the simulation moved it:
@@ -721,9 +736,9 @@ documented in the GUIDE at the point where it matters:
 
 - **The race's racecraft is rules, not physics.** Overtaking, the tow, dirty air, pit-lane loss and
   driver error are rules with fitted numbers. The cars share one racing line rather than fighting for
-  space on it, and the tyre model's heat, grip-window and wear constants are fitted to the usual
-  published ranges, not derived. The brake temperatures shown are the hot-lap solve's, not carried
-  from lap to lap.
+  space on it, and the tyre model's heat, grip-window, wear and wet-grip constants are fitted to the
+  usual published ranges, not derived. When the rain comes and how fast a line dries are rules drawn
+  from the seed, not a forecast.
 - **Turbine throats are undersized.** Throat = A/R × *wheel* radius rather than the volute centroid
   radius, so every turbine is smaller than the frame it names and the wastegate covers for it — which
   is also why a VGT here still needs one at its open stop.
