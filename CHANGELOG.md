@@ -20,6 +20,22 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 Working toward **v1.0 — every number derived, not fitted.**
 
+### Fuel against the real world (build 146)
+
+After the brakes and the tyres, the same check on fuel. Real figures are owners' and a magazine's, not controlled
+tests: an FK8 Civic Type R emptied its tank in 84 track miles (Autocar, ~35 L/100 km); an E46 M3 ~35 L/100 km; a
+stock 1.6 Miata ~9 mpg (~26 L/100 km), about 16 L/h; a Mustang GT 5.0 ~6 mpg (~39 L/100 km), ~38 L/h; a C7 Z06
+2-4.2 mpg (56-118 L/100 km); and "road consumption x 3" or 8-10 L per 20-minute session as rules of thumb.
+
+- Spa at the limit, alone (L/100 km): MX-5 19, Golf GTI 32, GR Yaris 36, Civic Type R 43, E46 M3 40, Mustang GT 50,
+  911 GT3 51, Corvette Z06 54, Huracan 59, Hellcat 71; a Nordschleife lap 3.8 L (MX-5) to 13.3 L (Hellcat).
+- The engines behind it: lap-average BSFC 265-323 g/kWh, 25-31% efficient, full throttle 45-62% of the lap, mean
+  power 48-62% of peak - a real petrol engine worked hard on a fast circuit.
+- Verdict: no change. Mid-size cars match; big-power cars burn 20-40% more than owners report and the small NA
+  MX-5 ~20% less, which is the pace (the lap is at the limit, owners mostly are not). The race page's limit note
+  and the README say so; `test78` pins the BSFC, the efficiency, the full-throttle share, the real figures within
+  +-35%, the 20-minute rate and fuel following power.
+
 ### Tyres against the real world (build 145)
 
 After the brakes, the same check on the race's tyre temperatures. Real figures: pit-lane pyrometer guidance puts
