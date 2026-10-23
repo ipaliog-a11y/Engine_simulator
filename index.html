@@ -4930,7 +4930,7 @@ const VEHICLE_PRESETS=[
    real:{t100:3.0,top:310},unsure:['kg','cd','area','fWt']},
   // GM quotes 0-60 mph in 2.6 s
   // t100 2.8 is unsure: it reads as GM's 0-60 mph claim, timed with a 1 ft rollout as US magazines do. The one
-  // rollout-free 0-100 km/h found is AutoTopNL's 3.54 s on the road (build 152 tyre review); the model reads ~3.5.
+  // rollout-free 0-100 km/h found is AutoTopNL's 3.54 s on the road (build 153 tyre review); the model reads ~3.5.
   {cat:'Supercar',era:'2020s',name:'Chevrolet Corvette Z06 (C8, 2023)',engine:'GM LT6 flat-plane V8 (Corvette Z06 C8)',chassis:'super',
    body:{kg:1561,cd:0.37,area:2.05,wb:2.72,fWt:0.40},fit:{drive:'rwd',tire:'sport',tw:345,ta:25,wheel:21,brake:'big',rotor:370,susp:'sport',gears:8,gearbox:'dct',diff:'clsd'},
    real:{t100:2.8,top:312},unsure:['cd','area','t100','top']},
@@ -5201,7 +5201,7 @@ function tyreMu(Fz){return vehicle.muRef*Math.pow(Math.max(200,Fz)/vehicle.FzRef
 // figure (skidpads); braking and traction take 1.15 of it, and combined use follows the ellipse.
 const TYRE_MU_X=1.15;
 function tyreMuX(Fz){return TYRE_MU_X*tyreMu(Fz);}
-// The tyre's force against its longitudinal slip (build 153), as a share of its peak: sin(C atan(B s)), the
+// The tyre's force against its longitudinal slip (build 154), as a share of its peak: sin(C atan(B s)), the
 // shape of Pacejka's Magic Formula with B set so the peak sits at TYRE_SLIP_OPT. C 1.4 leaves sin(0.7 pi) =
 // 0.82 of the peak in a full slide (measured tyres 0.75-0.85). The peak at ~10% slip is dry asphalt's (6-15%
 // measured); one figure for every compound.
@@ -7022,7 +7022,7 @@ function readVehicleFromForm(){
     // Road-speed governor in km/h, 0 when removed. limitKmh keeps the set figure while it is off.
     governor:g('vhLimiter').value==='on'?clamp(Math.round(+g('vhLimitKmh').value||250),80,400):0,
     limitKmh:clamp(Math.round(+g('vhLimitKmh').value||250),80,400),
-    // Traction control (build 153): the ECU holds the driven tyres at their best slip. Off, the launch is the driver's.
+    // Traction control (build 154): the ECU holds the driven tyres at their best slip. Off, the launch is the driver's.
     tc:g('vhTC').value!=='off'
   };
 }
@@ -7034,7 +7034,7 @@ function applyVehicleToForm(v){
   vehBody=v.body||null;
   if(v.speedRating&&SPEED_RATING[v.speedRating])g('vhRating').value=v.speedRating;
   g('vhLimiter').value=v.governor>0?'on':'off';g('vhLimitKmh').value=v.governor>0?v.governor:(v.limitKmh||250);
-  g('vhTC').value=v.tc===false?'off':'on';   // saves from before build 153 carry none: on
+  g('vhTC').value=v.tc===false?'off':'on';   // saves from before build 154 carry none: on
   g('vhChassis').value=v.chassis||'coupe';g('vhDrive').value=v.drive||'rwd';g('vhGearbox').value=v.gearbox||'manual';g('vhDiff').value=v.diff||'open';
   g('vhGears').value=v.gears||6;g('vhGearing').value=v.gearing!=null?v.gearing:52;
   g('vhTire').value=v.tireType||'sport';g('vhTireW').value=v.tireWidth||235;g('vhTireA').value=v.tireAspect||40;g('vhWheel').value=v.wheelDia||18;
@@ -7058,7 +7058,7 @@ function applyChassisFit(key,body){
     if(top)g('vhRating').value=vehicleFromPreset(top).speedRating;}
   // A governor is factory equipment of a real car; an archetype ships without one.
   g('vhLimiter').value=f.gov>0?'on':'off';if(f.gov>0)g('vhLimitKmh').value=f.gov;
-  g('vhTC').value=f.tc===false?'off':'on';   // a real car's traction control is factory equipment (build 153)
+  g('vhTC').value=f.tc===false?'off':'on';   // a real car's traction control is factory equipment (build 154)
   g('vhAeroF').value=f.aF;g('vhAeroR').value=f.aR;g('vhAeroFl').value=f.aFl;g('vhWeight').value=f.weight;
   g('vhBrake').value=f.brake;g('vhRotor').value=f.rotor;g('vhSusp').value=f.susp;
   updateGearingLabel();
@@ -7342,13 +7342,13 @@ function simulateAccel(){
   // share is referenced against this, so a launch behaves exactly as before while a tall gear
   // stops being charged the launch penalty.
   const axleTqMax=Math.max(1,curve.reduce((a,p)=>Math.max(a,p.tq),0)*ratios[0]*fd*(gb.mult||1));
-  // Build 153: the driven wheels turn at their own speed, and the tyre pushes the car through SLIP. Below the
+  // Build 154: the driven wheels turn at their own speed, and the tyre pushes the car through SLIP. Below the
   // optimum the force rises with slip; past it, it falls to a sliding plateau (sin(C atan(B s)), C 1.4: 0.82 of
   // the peak in a full slide, measured tyres 0.75-0.85), so a wheel that breaks away keeps breaking away. The
   // peak is the traction the hard clip used to be (the tyre, the load, the diff), at a slip of 0.10: dry-asphalt
   // tyres peak at about 10% slip (6-15% measured), and one figure is used for every compound, the per-compound
   // spread not being established. With TRACTION CONTROL the ECU trims the torque to hold that slip, which is what
-  // the clip did; without it the driver holds that slip through the launch (build 154, below), and from the first
+  // the clip did; without it the driver holds that slip through the launch (build 155, below), and from the first
   // upshift the run is flat out: the engine's torque spins the tyres past the peak and the slip dynamics decide.
   // The launch rpm is the best of several (below).
   const tcOn=vehicle.tc!==false, Iw=vehicle.wheelI||0, Iwd=Iw*(vehicle.drive==='awd'?1:0.5), mv=m+(Iw-Iwd)/(r*r);
@@ -7448,14 +7448,14 @@ function simulateAccel(){
     const drag=0.5*AIR_RHO*vehicle.cdA*v*v,roll=v>0.2?crrAt(vehicle.crr,v)*m*G:0,res=drag+roll;
     // A road-speed governor cuts fuel at its set speed: past it the engine gives only what holds it.
     if(vGov>0&&v>=vGov)driveF=Math.min(driveF,res);
-    // Spinning parts (build 106), now on their own equation (build 153). The driven wheels, and the engine
+    // Spinning parts (build 106), now on their own equation (build 154). The driven wheels, and the engine
     // through the gearing when the clutch is locked and the converter past stall, are turned by the drive
     // torque and held back by the tyre: Id dw/dt = T - F r. The car, with the undriven wheels' inertia,
     // is pushed by the tyre: mv dv/dt = F - R. Below the slip optimum the two run together and this is
     // the old a = (F - R)/mE; past it the surplus torque spins the wheels and the engine with them.
     const coupled=shiftT<=0&&!slipping&&!(tcStall&&rpm<tcStall);
     const Id=Iwd+(coupled?Ie*totalRatio*totalRatio*eff:0),Tw=driveF*r,NS=10,h=dt/NS;
-    // Build 154: without traction control the DRIVER holds the slip through the launch, in first gear, with the
+    // Build 155: without traction control the DRIVER holds the slip through the launch, in first gear, with the
     // clutch and the throttle: the optimum is flat (8-12% slip within 0.5% of the time), so a driver feeling for
     // it finds it. From the first upshift the run is flat out and a car with the power for it spins in second.
     const holdSlip=tcOn||gear===0;
@@ -7486,7 +7486,7 @@ function simulateAccel(){
   }
   // The launch rpm, the best of several tries, as a magazine's figure is (and as a launch control is set):
   // launched at five speeds from just off idle to three quarters of the limiter, the quickest to 100 km/h is
-  // the car's time. (Build 154: this was the driver's only, without traction control; a car with it was run at
+  // the car's time. (Build 155: this was the driver's only, without traction control; a car with it was run at
   // 55% of the limiter, which left an R34 0.13 s.) A converter launches at its stall speed.
   const lDef=clamp(rl*0.55,idle+400,rl*0.72);
   let M=run(lDef);

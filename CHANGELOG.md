@@ -20,7 +20,7 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 Working toward **v1.0 — every number derived, not fitted.**
 
-### The driver holds the launch slip; every car gets its best launch rpm (build 154)
+### The driver holds the launch slip; every car gets its best launch rpm (build 155)
 
 - **The fastest launch is a small slip, and the driver finds it.** A sweep of the launch at fixed slip targets
   (best launch rpm each) puts the quickest 0-100 at ~10% slip on every car: 2% leaves most of the grip unused (a
@@ -34,10 +34,10 @@ Working toward **v1.0 — every number derived, not fitted.**
   rpm, not 4950). A torque converter still launches at its stall speed.
 - **Result.** F355 5.48 -> 4.72 s (real 4.7), McLaren F1 3.78 -> 3.62 (3.2), MX-5 NA 8.48 -> 8.14, R34 4.56;
   0-100 RMS over the 42 real cars 16.1% -> 14.7%.
-- Tests: test82 checks the driver's launch (an Aygo is as quick without traction control as with it, no
+- Tests: test83 checks the driver's launch (an Aygo is as quick without traction control as with it, no
   wheelspin), the Hellcat's wheelspin after the launch, and a GT3 with traction control launched at its best rpm.
 
-### The launch through tyre slip; traction control as a car's equipment (build 153)
+### The launch through tyre slip; traction control as a car's equipment (build 154)
 
 - **The tyre slips.** The 0-100 run clipped the drive at the tyre's grip: a tyre held or it did not, it never spun,
   and at the clip the car got the tyre's whole force while its wheels and engine spun up for free. Now the driven
@@ -61,12 +61,12 @@ Working toward **v1.0 — every number derived, not fitted.**
   powerful rear-drivers spin: a Hellcat 5.14 s on, 6.40 s off (3.4 s of wheelspin); an Aygo 10.94 / 11.50 s. The old
   rear-drivers without traction control read slower than magazine testers, who feather the throttle (F355 4.79 ->
   5.5 s against 4.7, McLaren F1 3.8 s against 3.2): stated, not tuned. 0-100 RMS over the 42 real cars 14.1% -> 16%.
-- Tests: new test82 (the curve, traction control on and off, the launch rpm, the setting as equipment and through a
+- Tests: new test83 (the curve, traction control on and off, the launch rpm, the setting as equipment and through a
   save). test41's caps and budget follow the ~2% (GTI Mk8 8 -> 10%, Supra A80 17 -> 20%, M2 14 -> 17%, RMS 11 ->
-  12.5%), each by name with the reason; test61 retires the 750S from its slow cars (build 152's tyre review) and
+  12.5%), each by name with the reason; test61 retires the 750S from its slow cars (build 153's tyre review) and
   names the C8 Z06, whose 2.8 s reference reads as a rollout-timed claim (the one rollout-free figure is 3.54 s).
 
-### Tyre review: each car's factory tyre, against its own skidpad and braking (build 152)
+### Tyre review: each car's factory tyre, against its own skidpad and braking (build 153)
 
 - **Why.** The fleet's 0-100 errors were worst on modern high-power rear-drivers (720S, 812, 750S, both Z06s,
   Hellcat: 18-30% slow, traction-limited for 3-4.6 s), and a car on the wrong compound class is the first thing

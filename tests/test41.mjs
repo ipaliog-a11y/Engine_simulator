@@ -94,7 +94,7 @@ console.log(`RMS error across the set: ${rms.toFixed(2)}%`);
 // generic turbo's midrange most (the gas has longest to ignite at low speed), so at the same matched peak power the
 // harness engine's curve is more top-heavy than these cars' factory curves. The vehicle model did not change; the
 // weak low-rpm boost is the next item (low-rpm spool).
-// Build 153 (the launch through tyre slip): +2-3% on every car, and the caps and budget follow, each car by name.
+// Build 154 (the launch through tyre slip): +2-3% on every car, and the caps and budget follow, each car by name.
 // The driven wheels and the engine are now on their own equation, so at the traction limit the engine's and the
 // wheels' inertia is charged (the hard clip let the car have the tyre's whole force while the wheels spun up for
 // free), and a tyre at work slips, so the engine reaches each shift at a slightly lower road speed. The parked
@@ -102,7 +102,7 @@ console.log(`RMS error across the set: ${rms.toFixed(2)}%`);
 // traction control on, so it is that cost and not wheelspin.
 const ACC_KNOWN = { 'Toyota Supra RZ (A80)': 20, 'Subaru WRX STI (GD)': 13, 'BMW M2 (G87)': 17, 'VW Golf GTI (Mk8)': 10 };
 ref.forEach(r => { const cap = ACC_KNOWN[r.label] || 8; if (Math.abs(r.err) > cap) fails.push(`${r.label}: ${r.err}% off the real car (cap ${cap}%)`); });
-if (rms > 12.5) fails.push(`acceleration model RMS error ${rms.toFixed(2)}% across the reference set (budget 12.5: 5 before build 106, 7.5 before build 109, 9 before build 111, 9.5 before build 131, 11 before build 153)`);
+if (rms > 12.5) fails.push(`acceleration model RMS error ${rms.toFixed(2)}% across the reference set (budget 12.5: 5 before build 106, 7.5 before build 109, 9 before build 111, 9.5 before build 131, 11 before build 154)`);
 // the set must span drivetrains and diffs, or it proves little
 if (new Set(ref.map(r => r.drive)).size < 3) fails.push('reference set does not cover fwd/rwd/awd');
 

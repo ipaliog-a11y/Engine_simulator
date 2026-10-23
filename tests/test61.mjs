@@ -121,9 +121,9 @@ const KNOWN = {
   // width bonus that used to add 7.5% to a 275 tyre is gone; real road tests on street tyres report the
   // same struggle. Its 3.9 s is the maker's figure.
   'Dodge Challenger SRT Hellcat (2015)': ['slow-car'],
-  // (750S: from build 148 to 151, on road tyres in the model; build 152's tyre review put it on its factory P Zero
+  // (750S: from build 148 to 151, on road tyres in the model; build 153's tyre review put it on its factory P Zero
   // Corsas, the Cup 2 class its measured skidpad and stops agree with, and it reads 3.15 s against 2.8.)
-  // Build 153: the C8 Z06's reference is the problem, not the car. Its 2.8 s (marked unsure) reads as GM's 0-60
+  // Build 154: the C8 Z06's reference is the problem, not the car. Its 2.8 s (marked unsure) reads as GM's 0-60
   // claim, timed with the 1 ft rollout US magazines subtract; the one rollout-free 0-100 km/h found is 3.54 s
   // (AutoTopNL, on the road), against the model's 3.59. The slip launch took it from +24% to +28%.
   'Chevrolet Corvette Z06 (C8, 2023)': ['slow-car'],

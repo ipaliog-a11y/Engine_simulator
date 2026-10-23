@@ -1,10 +1,10 @@
-// The launch through tyre slip, and traction control (build 153).
+// The launch through tyre slip, and traction control (build 154).
 //
 // WHY THIS EXISTS. The 0-100 run clipped the drive at the tyre's grip, mu x N: a tyre either held or it did not,
 // it never spun, and at the clip the car got the tyre's whole force while the wheels and the engine spun up for free.
 // Now the driven wheels turn at their own speed and the tyre pushes through slip, rising to a peak at ~10% and
 // falling past it to a sliding plateau, so a wheel that breaks away keeps breaking away. Traction control holds the
-// peak; without it the driver holds it through the launch, in first gear (build 154: the optimum is the same small
+// peak; without it the driver holds it through the launch, in first gear (build 155: the optimum is the same small
 // slip, and flat), and from the first upshift the run is flat out and the slip dynamics decide. What must hold:
 //   · the curve: its peak at the optimum slip, 0.82 of it in a full slide (measured tyres 0.75-0.85);
 //   · a powerful rear-driver is slower without traction control and spins its tyres after the launch; a light car,
