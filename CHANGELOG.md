@@ -20,7 +20,7 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 Working toward **v1.0 — every number derived, not fitted.**
 
-### Downshifting through the braking zones; the engine brakes the car (build 139)
+### Downshifting through the braking zones; the engine brakes the car (build 149)
 
 - **What was wrong.** Under braking the lap's gear was read off the speed point by point (the most wheel force
   there), so it dropped a gear the instant the next one stopped over-revving, took no time to do it and gave no
@@ -49,6 +49,198 @@ Working toward **v1.0 — every number derived, not fitted.**
   rear-driver (the reason for slipper clutches and ECU blip control). That is its own build.
 - New test73: on one car of each gearbox type, no downshift skips a gear, none comes sooner than the shift time,
   none lands over the limiter, and the pedal asks the brakes for less than the car slows by.
+### Supercar category (build 148)
+
+- **Exotic becomes Supercar**, with four popular cars from each decade since the 90s, each a real car on its factory
+  engine. The Huracán LP610-4 and 812 Superfast are two of the 2010s four. In the car and engine pickers the family
+  is grouped by decade.
+  - 1990s: Ferrari F355 Berlinetta, Lamborghini Diablo VT, McLaren F1, Porsche 911 Turbo (993)
+  - 2000s: Ferrari Enzo, Porsche Carrera GT, Ford GT, Lamborghini Murciélago LP640
+  - 2010s: Ferrari 458 Italia, Lamborghini Huracán LP610-4, McLaren 720S, Ferrari 812 Superfast
+  - 2020s: Porsche 911 Turbo S (992), Lamborghini Huracán STO, Chevrolet Corvette Z06 (C8), McLaren 750S
+- The 2020s are the combustion-only cars: the decade's flagships are mostly hybrids (SF90, 296, Artura, Revuelto)
+  and the model has no electric motor. The 992's turbines are variable-geometry; the model's VGT is the diesel's,
+  so it runs a plain twin.
+- Bodies are curb masses (the makers' dry figures are noted beside them). Inputs from secondary sources are marked
+  unsure. The boosts of the 720S, 750S and 992 Turbo S are not published; they are set, with a factory taper over
+  the top, to the rated torque and power. The Ford GT's blower makes 0.83 bar, from which the model makes 30% more
+  than the rating, so its boost is set lower and it is noted and kept out of the error summary.
+- Against the makers (test60, test61): power within 13% on every engine; top speed within 7% on every car; 0-100
+  within 10% on 12 of the 16. The 720S, Z06 C8, 750S and 812 are 22-29% slow to 100: the same grip-limited launch on
+  two rear road tyres the 812 already showed. Eight engines join the known 'limiter' list: their power is still
+  climbing at the limiter, where the real ones peak 100-500 rpm short of it (the missing top-end fade).
+- The model has no active aero and one generation of tyre per type, so lap times do not fall decade on decade as
+  the real cars' do: at Spa the light McLaren F1 out-laps the 720S.
+- `test80`: Supercar has replaced Exotic, four cars a decade inside their years, each on a supercar engine of its
+  decade, loading as factory spec at its curb mass, power within 15%; power-to-weight and 0-100 improve from the
+  90s to the 2020s; the pickers group by decade and other families do not; one car from each decade races Spa.
+
+### Racecraft and drivers (build 147)
+
+- **A tow that grows as the gap closes.** The flat +1.5% within 40 m is now the drag lost behind a car,
+  0.45 e^(-gap/25 m), turned into speed on a straight: 2.6% at 5 m, 2.1% at 10 m, 0.6% at 40 m. Cars nose to tail
+  pull each other along; a lone leader is caught.
+- **Defending.** With a quicker car within ~20 m behind on a straight, the car ahead may move to the inside line
+  for ~6 s (then not again for 8): the car behind needs 1.5-4 km/h more to pass, and the defender is 1% slower
+  through the next corner.
+- **Late-braking moves.** Held up within 10 m into a braking zone, a car may dive, once a zone. It sticks with
+  0.4 + 2 (grip difference) + 1.5 (brake fade difference) + 0.3 (aggression difference) - 0.15 against a defending
+  car, 8-85%: the attacker brakes 6% later for 60 m and exits 2% slower, and the car passed concedes the line and
+  has 6 s of easier repassing (the switchback). If it does not stick, the attacker runs wide and loses 15% for 80 m.
+- **Drivers.** Each car has one: BALANCED (the old average), AGGRESSIVE, SMOOTH, RAIN MASTER, ROOKIE, from four traits
+  (aggression, consistency, tyre care, wet skill) that set the lap-to-lap spread, mistakes, the pass threshold and
+  rate, how often they defend and dive, tyre slip and wear, and pace in the rain. A car with no driver set is
+  BALANCED and races exactly as before the traits.
+- Passes are now counted when the car being passed changes before the move is confirmed (in a crowd), which they
+  were not.
+- `test79`: the tow by distance; aggressive fields dive more than smooth ones, dives that stick take the place,
+  some go wide, cars defend; a rookie is less consistent and makes more mistakes than a smooth driver; a smooth
+  driver saves the tyres; wet skill orders the drivers in the rain; no driver = balanced.
+
+### Fuel against the real world (build 146)
+
+After the brakes and the tyres, the same check on fuel. Real figures are owners' and a magazine's, not controlled
+tests: an FK8 Civic Type R emptied its tank in 84 track miles (Autocar, ~35 L/100 km); an E46 M3 ~35 L/100 km; a
+stock 1.6 Miata ~9 mpg (~26 L/100 km), about 16 L/h; a Mustang GT 5.0 ~6 mpg (~39 L/100 km), ~38 L/h; a C7 Z06
+2-4.2 mpg (56-118 L/100 km); and "road consumption x 3" or 8-10 L per 20-minute session as rules of thumb.
+
+- Spa at the limit, alone (L/100 km): MX-5 19, Golf GTI 32, GR Yaris 36, Civic Type R 43, E46 M3 40, Mustang GT 50,
+  911 GT3 51, Corvette Z06 54, Huracan 59, Hellcat 71; a Nordschleife lap 3.8 L (MX-5) to 13.3 L (Hellcat).
+- The engines behind it: lap-average BSFC 265-323 g/kWh, 25-31% efficient, full throttle 45-62% of the lap, mean
+  power 48-62% of peak - a real petrol engine worked hard on a fast circuit.
+- Verdict: no change. Mid-size cars match; big-power cars burn 20-40% more than owners report and the small NA
+  MX-5 ~20% less, which is the pace (the lap is at the limit, owners mostly are not). The race page's limit note
+  and the README say so; `test78` pins the BSFC, the efficiency, the full-throttle share, the real figures within
+  +-35%, the 20-minute rate and fuel following power.
+
+### Tyres against the real world (build 145)
+
+After the brakes, the same check on the race's tyre temperatures. Real figures: pit-lane pyrometer guidance puts
+street tyres at 60-77 C, UHP summer tyres 66-88 C and race tyres 77-104 C; Michelin rates the Cup 2 R at 70-100 C
+(90 ideal), Toyo the R888R at 71-104 C; a Trofeo R owner saw 70-80 C by lap 10; PS4S-type road tyres go greasy
+after 3-5 hard laps; front-heavy cars run hotter fronts and the outside tyre hottest; and a pit reading is 10-20 C
+under the tyre on track.
+
+- Six laps of Ashdown Park, alone, hottest tyre: GR Yaris 91, Golf GTI 94, Civic Type R 98, E46 M3 88, Corvette
+  Z06 83, Mustang GT 96, Hellcat 110 (sport); 911 GT3 107 at the rear (semi-slick). A front-driver's rears 46-63;
+  the left tyres hottest on a circuit of right-handers; within a few degrees of working temperature by lap 3;
+  wear 0.08-0.18. Consistent with all of the above, so no change to the model.
+- Unverified, and stated: an eco tyre on a light car runs cool (MX-5 45-62 C), and Spa reads a little cooler
+  than a short circuit.
+- `test77` pins the ranges, the axle and side differences, the warm-up, the heavy car's overheating and the wear.
+
+### Brakes against the real world (build 144)
+
+Asked whether street cars' rotors really reach 800+ C in two laps. The rise is right (a rotor's time constant is
+two to three minutes, so it reaches working temperature in two or three laps, as drivers see), but the level was
+200-350 C too hot on long fast circuits. Real figures: DBA puts track-day rotor cores at 450-600 C with surface
+peaks to ~800 C; temperature paint at VIR read 460-550 C; a Cayman on R-compounds ~540 C; an M2 on a small track
+~300 C; a road-type disc under a 5.5 t race truck 735 C.
+
+- **Vented fronts on every brake type.** The basic disc was solid all round; nearly every road car's fronts are
+  vented (an NA MX-5's are). `BRAKE_TYPE` gains `ventR` for the rears, solid on the plainer kits.
+- **The hat in the rotor's mass.** The one-piece iron rotor's bell (0.3 to 0.6 D, 6 mm, plus its cylinder) is
+  about a fifth of the part. The E46 M3's front rotor is now 10.3 kg, the MX-5's 4.7.
+- **Vane heat transfer from a measurement.** The developed-turbulent duct correlation gave ~25 W/m2K in the vanes
+  at 800 rpm, where they run at Re ~1e3. A radial-vane rotor measures 27.0, 52.7 and 78.3 W/m2K at 342, 684 and
+  1025 rpm (J. Applied Sciences 8 (2008) 3583): the coefficient is now at least 0.076 per rpm.
+- Front rotor, hot-lap peak, Spa / Nordschleife (C), before -> after: MX-5 841/942 -> 570/626, Civic Type R
+  671/731 -> 636/700, Golf GTI 768/823 -> 658/711, GR Yaris 570/618 -> 536/591, 911 GT3 727/772 -> 685/748,
+  Mustang GT 752/820 -> 712/795, E46 M3 877/953 -> 767/839, Corvette Z06 815/867 -> 777/839, Hellcat 876/945 ->
+  840/919. Ashdown Park: every iron brake 315-411 C. Lap times unchanged.
+- **What is left is the driver.** An energy count of the Spa lap puts ~8 MJ into each of a Hellcat's front rotors
+  (45 kW on average), 4.7 MJ into an M3's, 1.7 MJ into an MX-5's, and the cooling balances it: the lap brakes at
+  the limit into every corner, as a professional's would. Heavy fast cars driven that hard do cook their brakes;
+  the guide and the README now say so. `test76` pins the ranges, the fade, the rotor masses and the two-to-three
+  lap rise.
+
+### A full-screen track view for phones (build 143)
+
+- **⛶ in TRACK's live timing** moves the map canvas and the replay controls (pause, restart, speed, gauges) into
+  a page that fills the screen, asks for real full screen and a landscape lock, and sizes the drawing to the
+  screen's shape with at least 380 units of height for the live instruments. Where the lock is refused (iOS) and
+  the phone is upright, an inner box turns a quarter (the browser will not transform a full-screen element), and
+  pointer positions are mapped through the turn, so drag and pinch still pan and zoom the right way.
+  ✕, Esc, leaving the browser's full screen, or another tab puts everything back.
+- `test75`: an upright phone, a sideways phone and a desktop: landscape drawing, controls in the bar and none cut
+  off, the replay running, panning through the turn, and ✕ restoring the page.
+
+### The ⛶ FULL button is gone (build 142)
+
+- It sat on the LIVE, DYNO and TRACK canvas and, once pressed, drew the engine cutaway whatever tab was open, and the
+  "detailed" view it promised drew nothing extra (`drawPistonCutaway` took the flag and never read it). The button,
+  its `fullscreen` state, its CSS and translation are removed. The RACE page keeps its own ⛶, which goes full
+  screen as the race page.
+
+### RACE: weather, brakes that carry their heat, a plan per car, the race report, a page of its own (build 141)
+
+- **Weather** (`raceWetAt`): dry, damp, wet, rain later (the start drawn from the seed) or drying, and the air
+  temperature; the track runs ~14 C above the air in the sun, at it when wet. Each `TIRE_TYPE` compound gains
+  `wetKeep`, the share of its grip it keeps on a wet track (a road tyre ~0.7, a slick 0.36), and the race has two
+  rain tyres of its own (`RACE_RAIN_TYRES`: intermediates, full wets) that overheat and wear on a drying line.
+  Water and a cool surface take heat out of the tyres (`TYRE_RACE.hWet`, `hTrack`). A wet race also solves the
+  pace grid down to grip 0.42 (`RACE_GRIP_WET`). Wet laps run 9-22% slower, the grippiest dry compounds losing most.
+- **Tyre calls from the car's own laps** (`raceBestCompound`, `raceTyreCallPays`): a car changes to the compound
+  that leaves it most grip when the time that wins back on its solved laps (`raceLapAtGrip`), over the laps
+  left, beats the stop. A late shower can leave a car out on the wrong tyres on purpose.
+- **Brakes carry their heat.** `brakeHeatStep` takes the car as an argument and `rotorCooling` the day's air,
+  so the race runs the lap solver's rotor model all race long, and in the pit box. Fade feeds pace: a braking
+  zone stretches toward its apex by fade now against fade on the solved lap. A Civic's fronts climb from 169 to
+  475 C over ten laps of Ashdown Park, past the hot lap's 392; on pads that fade from 300 C it loses 0.8 s a lap.
+- **A plan per car**: stops (auto, 0-3, none), push / normal / fuel save, the starting tyres, and the wet call.
+- **The race report** (`raceReportCanvas`): classification with stints, a lap chart, lap times with the
+  wetness shaded in, stints by compound, key moments. PNG and PDF, on the hot lap report's paper.
+- **RACE has a page of its own**: the map and the panel move into a window-filling page (`openRacePage`,
+  `closeRacePage`), sized to it (`sizeRaceStage`); ◀ SIM or Esc goes back, ⛶ goes full screen as the race
+  page rather than the engine view. On a phone it stacks, map over panel.
+- Tests: `test71` adds weather, carried brake heat and per-car strategy; `test72` the page, the report and a phone.
+### The engine sound on the dyno and round the lap (build 140)
+
+- The sound played on every tab, always from the live engine, so the TRACK tab's car went round to the
+  sound of the dyno controls. `soundSource()` now picks what is heard: the live engine on **DYNO**, the
+  lap replay on **TRACK** (quiet while it is paused), nothing elsewhere (the LIVE cutaway included).
+- `trackSoundState()` turns the replay into an engine state: its recorded rpm, manifold pressure and
+  throttle, with what a driven lap implies (DFCO on a lift, the limiter at the redline, a calibrated
+  mixture, a warm engine, a turbo shaft spun to the recorded boost). `soundDrive()` takes that state
+  instead of reading the live one.
+- Blow-off is now the charge pipe venting: it holds the boost made while the throttle was open and vents
+  once when the throttle shuts, however gently, instead of needing a 0.3 -> 0.1 snap in one frame. On the
+  lap the boost is taken at the throttle's own recorded point (the manifold is interpolated toward the
+  next one and had already fallen by the lift). A turbo hot-hatch blows off 18 times round the default lap.
+- test74: the source per tab and the live level falling to zero off them; the replay's rpm, throttle vs
+  braking and fuel cut in the sound; blow-offs round a turbo lap and none on an NA one.
+
+### The GUIDE becomes a wiki (build 139)
+
+- The 29-page manual is rebuilt as a **60-page wiki in 9 sections**: Getting started, How an engine works (new),
+  Designing the engine, Breathing & boost, Knock, heat & wear (new), The car, The track, Scoring & career,
+  Options & reference. Thirty-one pages are new, among them the four strokes, torque vs power, why engines have a
+  redline, VVT, ignition, combustion, heat and EGT, friction, wastegates, superchargers, intercoolers, nitrous,
+  fuels and octane, wear, emissions, the race (wrapping build 137's race page in the three levels), tyres, aero, brakes, suspension, elevation, a glossary and a calibration page.
+- **Three levels on every page**: LV1 · REAL LIFE (how the part works on a real car, no maths), LV2 · IN THE GAME
+  (the controls), LV3 · THE PHYSICS (the equations the code solves, with sources, and an orange limit note where a
+  quantity is still fitted). The LV3 text was written from the simulation code and its figures re-measured, not
+  carried over.
+- **8-bit pictures drawn in code** (`GUIDE_ART`): 62 drawings on a 160 x 72 cell grid through `fitPixCanvas`, 53
+  of them animated at 12 frames a second (the four strokes, cam and follower, header pulse and its reflection,
+  turbo, wastegate, VGT vanes, Roots rotors, knock, friction circle, roll, racing line, crest). The loop runs only
+  for the page in view while the GUIDE tab is open, and draws a still under `prefers-reduced-motion`. Each index
+  entry carries its page's first picture as an icon.
+- **Search** (every word must appear in a page's title, tags or text) and **cross-links** between pages
+  (`<a data-gp>`), 261 of them.
+- Two kept blocks had gone stale and were re-measured: the front-driver launch figures (a 215 hp kei: 7.48 s, then
+  6.32 / 5.86 / 4.99 / 4.12 s with an LSD, sport tyres, slicks, AWD) and the diff trade (spool 0.1 s quicker to 100
+  and 1.5 s slower a lap than a clutch LSD). They moved to new blocks with fresh Greek, as the block-per-paragraph
+  rule requires, and `test41` now checks that the guide quotes the launch ceiling it measures (it pinned the stale
+  0.33 g; the model gives 0.38). Retired with them: the old lap-lag limit (the lap has integrated the turbo shaft since build 118) and the old
+  Known-limits list. New text is English for now and falls back cleanly in Greek; the level labels are translated.
+- Pages that builds 136–138 changed were written against them: intercooler effectiveness from NTU, the ECU
+  torque limit on the wastegate page, the race tyre windows and wear on the tyres page, the RACE tab.
+- `tests/test73.mjs`: every page has its three levels and a picture, every picture draws and every animated one
+  moves, every link lands, search narrows and says when nothing matches, the animation stops off the tab, Greek
+  keeps its blocks and falls back to English, and nothing scrolls sideways at phone width (it caught wide tables
+  doing exactly that: the wide column is now `minmax(0, 1fr)`).
+
 
 ### The ECU's torque limit as a tune point (build 138)
 

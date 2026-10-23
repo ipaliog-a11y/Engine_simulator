@@ -1,4 +1,4 @@
-# PIXEL ENGINE SIM v0.6 build 139
+# PIXEL ENGINE SIM v0.6 build 149
 
 **A lightweight, 8-bit style internal combustion engine *designer* & simulator** inspired by *Automation*.
 
@@ -89,7 +89,7 @@ saps power; a large radiator, electric fan and oil cooler keep it cool.
   performance), **GARAGE** (the saved builds), **TRACK** (lap it round a circuit), **RACE** (race
   it against other builds), **LIVE** (the engine running: cutaway, the
   whole bank firing in its real order, and the controls), **DYNO** (power/torque curve,
-  scorecard and a static result sheet with run data), **GUIDE** (a paged manual with an index, 30 pages in 7 sections) and **OPTIONS** (sound,
+  scorecard and a static result sheet with run data), **GUIDE** (a wiki: 60 pages in 9 sections, each climbing from real life to the game to the physics, with 8-bit pictures drawn in code, search and cross-links) and **OPTIONS** (sound,
   wear and **language**). The right column is context-aware: runtime Engine Controls while
   driving/on the dyno, the live **Performance** panel on VEHICLE, the **Lap Time** panel on
   TRACK and the race's setup, timing tower and telemetry on RACE.
@@ -150,11 +150,15 @@ saps power; a large radiator, electric fan and oil cooler keep it cool.
 - **Race (new)** — a **RACE** tab that puts two to eight builds on the same circuit and runs them to
   a lap count, with **nobody driving**. Choose the cars (the one on the VEHICLE tab, garage builds,
   factory cars, the same car twice if you like), the circuit, the laps, qualifying or reversed grid,
-  automatic pit strategy or none, tyre warmers and a seed; then watch on a page of its own: every car
-  on the map, a **timing tower** (gap to the leader, last and best lap with the race's fastest in
-  purple, stops), and per-car telemetry with **four tyre temperatures and wear**, **fuel in the
-  tank** and laps it is good for, and brake temperature. Play it at 1–100×, scrub, click a car to
-  follow it.
+  the **weather** (dry, damp, wet, rain later, drying) and air temperature, tyre warmers and a seed,
+  and give **each car its own plan**: automatic stops or a set number, push / normal / fuel save, the
+  tyres it starts on, and whether it changes them for rain. RACE opens as **a page of its own**
+  filling the window (◀ SIM goes back, ⛶ goes properly full screen): every car on the map, a
+  **timing tower** (gap to the leader, last and best lap with the race's fastest in purple, tyres,
+  stops), and per-car telemetry with **four tyre temperatures and wear**, **fuel in the tank** and
+  laps it is good for, and **front and rear brake temperature with fade**. Play it at 1–100×,
+  scrub, click a car to follow it, and save the **race report** as PNG or PDF: classification, a lap
+  chart, lap times with the wet shaded in, every car's stints by compound, and the key moments.
   - **Pace is the lap solver's.** Each car's lap is solved on its own racing line at five grip levels
     and three fuel loads, plus a standing start; the race reads its speed off those solves for the
     grip its tyres have and the fuel it carries at that moment. Alone on perfect tyres a car laps in
@@ -166,11 +170,27 @@ saps power; a large radiator, electric fan and oil cooler keep it cool.
   - **Fuel is power × BSFC.** The flow at every point is the power the lap spends there times the
     engine's own BSFC at that rpm and boost, so a thirsty engine pits sooner and a car gets lighter
     and quicker as the tank empties. Tanks are per body class.
+  - **Weather.** A wet track takes grip by compound: a treaded road tyre keeps ~70% of it, a
+    slick ~36%. Two race-only rain tyres, **intermediates** and **full wets**, keep more. A car
+    changes compound when the time its own solved laps say it would win back, over the laps left,
+    beats a pit stop, so a late shower can leave a car out on the wrong tyres on purpose. Water and a
+    cool wet surface take heat out of the tyres; a sunny track adds it. Wet laps run 9–22% slower,
+    the grippiest dry compounds losing most.
+  - **Brakes carry their heat.** The lap solver's rotor model runs through the whole race, so
+    temperatures build lap on lap past a single hot lap's and cool in the pit box. A car whose pads
+    fade brakes earlier as they do: its braking zones stretch by how much less it can stop with.
+  - **Racecraft and drivers.** The tow grows as the gap closes, so cars nose to tail pull each other along. A
+    car with a quicker car behind may defend on the inside line (harder to pass, a slower exit), a held-up car may
+    try a late-braking move that sticks or runs it wide (its odds are the two cars' grip and brakes and the two
+    drivers), and the car just passed can take the place straight back. Each car has a driver: balanced,
+    aggressive, smooth, rain master or rookie, each with its own aggression, consistency, tyre care and wet skill.
   - **Racecraft is a rule layer.** A faster car is held up until it has a few km/h on a straight or
     into a braking zone; slipstream, dirty air, blue flags, pit-lane loss, lap-to-lap driver
     variation and the odd mistake are rules, seeded, so the same seed replays the same race.
 
   ![race](docs/race.png)
+
+  ![race report](docs/race-report.png)
 
 - **Animated engine cutaway** — the LIVE tab is a section through the engine you
   just designed, and everything on it moves because the simulation moved it:
@@ -198,16 +218,22 @@ saps power; a large radiator, electric fan and oil cooler keep it cool.
     and compressor flow at the turbo, EGT at the exhaust, and a knock bar.
 
   The subsystem numbers that used to be printed here in 7 px type live in the **LIVE OUTPUT**
-  panel beside the canvas, where they are real text. A **⛶ FULL** button widens the drawing.
+  panel beside the canvas, where they are real text.
 - **Canvas rendered at device resolution (new)** — the three visualisations share one canvas that
   drew on a fixed 640×420 backing store while CSS stretched it to whatever the panel was (744 px
   on a desktop, twice that again on a high-DPI screen). Every 7 px glyph landed on fractional
   pixels and smeared. The backing store is now sized to real device pixels and the context scaled,
   so the drawing code keeps its 640×420 coordinates and the output is pixel-exact — which fixes
   **DYNO** and **TRACK** at the same time.
-- **In-app GUIDE** — a built-in manual (kept in-app so the offline PWA stays self-contained)
-  that explains the loop, the driving controls, every metric on screen and each design
-  subsystem, so the numbers are never a mystery.
+- **In-app GUIDE, a wiki** — kept in-app so the offline PWA stays self-contained. 60 pages in 9
+  sections, from *How an engine works* to *The track*, and every one climbs three levels: **LV1 ·
+  REAL LIFE** (how the part works on a real car, with an 8-bit picture and no maths), **LV2 · IN THE
+  GAME** (the controls and what to watch) and **LV3 · THE PHYSICS** (the equations the sim actually
+  solves, their sources, and an orange note where something is still fitted). The 62 pictures are
+  drawn in code on the app's pixel grid, so they are crisp at any size, cost nothing offline and
+  move where moving teaches something (a piston, a pulse in a header, a turbo spooling, a wastegate
+  opening); they hold still for reduced motion. A search box filters the index, pages link to each
+  other, and a glossary, a known-limits page and a calibration page sit at the end.
 - **Emissions** — engine-out CO / HC / NOx computed from the mixture (λ) and combustion
   temperature, then cleaned by the catalytic converter *only* in a narrow window around
   stoich: run rich and CO/HC spike (no O₂ to burn them); run lean and NOx slips past (a cat
@@ -227,7 +253,9 @@ saps power; a large radiator, electric fan and oil cooler keep it cool.
 - **Auto Thermal mode** — coolant & oil drift toward load-dependent targets over time,
   balanced against the cooling subsystem's capacity (radiator airflow scales with RPM;
   the fan provides idle cooling).
-- **Engine sound** — synthesised from the **firing pulses** in an AudioWorklet: every cylinder
+- **Engine sound** — plays on the **DYNO** tab from the engine controls, and on the **TRACK** tab
+  from the lap replay (its recorded rpm, throttle and boost, so shifts, lifts and blow-offs are heard
+  as the car goes round); other tabs are quiet. Synthesised from the **firing pulses** in an AudioWorklet: every cylinder
   fires at its slot in the real firing order and its pulse goes down its own bank's exhaust
   (one pipe for an inline engine, left and right for a V or a boxer), so engines with the same
   firing rate no longer sound alike. A cross-plane V8 fires each bank unevenly
@@ -298,7 +326,7 @@ saps power; a large radiator, electric fan and oil cooler keep it cool.
 
 ![Dyno](docs/dyno.png)
 
-The built-in **GUIDE** tab explains every control and metric without leaving the app:
+The built-in **GUIDE** is a wiki of the sim, from how a four-stroke works to the equations behind every number:
 
 ![Guide](docs/guide.png)
 
@@ -719,11 +747,21 @@ node tools/stamp.mjs --check    # verify it is consistent and ahead of origin/ma
 These are modelled approximations that are *stated* rather than hidden, each one measured and
 documented in the GUIDE at the point where it matters:
 
+- **Fuel on track is a flat-out driver's.** The engines' lap-average BSFC is a real engine's under hard use, and
+  mid-size cars match owners' track figures (~35–40 L/100 km); big-power cars burn 20–40% more than owners report,
+  and a small NA car ~20% less, because the lap is at the limit and owners mostly are not.
+- **Tyre temperatures are checked, with two gaps.** Race tyres land in the measured ranges, but an eco tyre on a
+  light car runs cool (45–60 °C) and a fast circuit reads a little cooler than a short one; no track data was
+  found to settle either.
+- **Brake temperatures are a flat-out driver's.** The lap brakes at the limit into every corner, so a heavy,
+  fast car on a long fast circuit (a Hellcat or an E46 M3 at Spa) runs its rotors to 750–900 °C and fades.
+  Measured track-day figures are lower (450–600 °C rotor core, DBA) because most drivers brake earlier and
+  softer; light cars and small brakes land inside the measured range.
 - **The race's racecraft is rules, not physics.** Overtaking, the tow, dirty air, pit-lane loss and
   driver error are rules with fitted numbers. The cars share one racing line rather than fighting for
-  space on it, and the tyre model's heat, grip-window and wear constants are fitted to the usual
-  published ranges, not derived. The brake temperatures shown are the hot-lap solve's, not carried
-  from lap to lap.
+  space on it, and the tyre model's heat, grip-window, wear and wet-grip constants are fitted to the
+  usual published ranges, not derived. When the rain comes and how fast a line dries are rules drawn
+  from the seed, not a forecast.
 - **Turbine throats are undersized.** Throat = A/R × *wheel* radius rather than the volute centroid
   radius, so every turbine is smaller than the frame it names and the wastegate covers for it — which
   is also why a VGT here still needs one at its open stop.
@@ -853,7 +891,13 @@ measurement finds things. Each item is one PR.
 | — | Brakes on a hot lap | ✅ build 135 | The rotors take one preparation lap before the hot lap, not a race stint's settled temperature; matches the tyres, which are taken at their working temperature. |
 | — | Intercooler vs flow; small turbos' wheels | ✅ build 136 | The intercooler's effectiveness rises as the charge flow falls (NTU, the charge side's film coefficient by Dittus-Boelter); the TwinAir on its TD02's 40 mm wheel, the Alto on an RHF3-size one. Small-engine low-rpm torque within ~5-11% of the makers'. Open: the EcoBoost's wheel; an ECU torque limit for the mid-range. |
 | — | ECU torque limit | ✅ build 138 | ECU TORQUE LIMIT (Nm) as a tune input: the boost target is held to the calibrated torque. Presets whose makers quote a torque plateau carry it (GTI, FK8, GR Yaris, EcoBoost, RS3, TDI, N57). |
-| — | Downshifts and engine braking | ✅ build 139 | Through the braking zones the driver goes down one gear at a time, each taking the gearbox's shift time and only inside the limiter, never below the corner's gear; in gear the engine's own overrun torque brakes the car (cooler rotors; quicker only where the brakes are the limit). The live engine's lift-off braking is the engine's own. Next: braking split between the axles. |
+| — | Full-screen track view | ✅ build 143 | ⛶ in TRACK's live timing: the lap, its live instruments and the replay controls fill the screen in landscape, the view turning itself on a phone held upright where the browser cannot lock the orientation. test75. |
+| — | Brakes against the real world | ✅ build 144 | Vented fronts on every brake type, the rotor's hat in its mass, and vane heat transfer of at least the measured 0.076 W/m²K per rpm: street brakes on fast circuits ran 200–350 °C hot. Light cars now land in the measured 300–650 °C; heavy fast cars driven flat out still reach 750–900 °C and fade. test76. |
+| — | Tyres against the real world | ✅ build 145 | Race tyre temperatures checked against makers' windows and pit-lane pyrometer guidance (road sport 66–88 °C in the pits, semi-slicks 70–100 °C, pits read 10–20 °C under the track): consistent, no change; test77 pins it. |
+| — | Fuel against the real world | ✅ build 146 | Track fuel checked against owners' and magazine figures and against the engines themselves: at the limit the lap-average BSFC is 265–325 g/kWh and an E46 M3 or Civic Type R burns ~40 L/100 km (owners ~35); big-power cars 20–40% over owners' figures, from pace. No change; test78. |
+| — | Racecraft and drivers | ✅ build 147 | A tow that grows as the gap closes (~2% at 10 m, under 1% at 40 m), defending (the inside line: harder to pass, a slower exit), late-braking moves that stick or run wide by the two cars' grip and brakes and the drivers, switchbacks, and a driver per car: balanced, aggressive, smooth, rain master, rookie. test79. |
+| — | Supercar category | ✅ build 148 | Exotic becomes Supercar: four popular supercars from each decade since the 90s (F355, Diablo VT, McLaren F1, 993 Turbo; Enzo, Carrera GT, Ford GT, Murciélago LP640; 458 Italia, Huracán, 720S, 812 Superfast; 992 Turbo S, Huracán STO, Corvette Z06 C8, 750S), each on its factory engine and grouped by decade in the pickers. The 2020s are the combustion-only cars, as the model has no electric motor. Against the makers: power within 13%, top speed within 7%; the 720S, Z06 C8, 750S and 812 are slow off the line (grip-limited launches on road tyres). test80. |
+| — | Downshifts and engine braking | ✅ build 149 | Through the braking zones the driver goes down one gear at a time, each taking the gearbox's shift time and only inside the limiter, never below the corner's gear; in gear the engine's own overrun torque brakes the car (cooler rotors; quicker only where the brakes are the limit). The live engine's lift-off braking is the engine's own. Next: braking split between the axles. |
 | — | Suspension type and geometry | ⏸ on hold | Future development. Today a setup is roll gradient + static camber; the roll camber the geometry recovers is a fixed 50% for every car (CAMBER_RECOVERY), and lateral load transfer is split by static weight. Wanted: the geometry per car (MacPherson strut, double wishbone, multi-link, solid axle) giving its camber recovery, and front/rear roll stiffness (springs, anti-roll bars) giving the handling balance. Needs each preset's real suspension type. |
 | — | Spark torque from fuel | ✅ build 95 | `IMEP_K` replaced by Heywood's 0.8 × fuel-air cycle efficiency; each fuel's LHV/AFR_st enters. Spark torque −2.7%, full-load BSFC 280 g/kWh (real 270–300). Rotary/two-stroke type factors still fitted. |
 | — | `turboChoke` (boost taper) | ✅ build 94 | Retired. Turbine efficiency from blade speed ratio U/C, per-point compressor efficiency, a continuous rich-knock slope in place of a step, and sequential turbos staged as two turbines. Calibration improved on every measure. |

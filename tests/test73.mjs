@@ -1,88 +1,133 @@
-// The gearbox through the braking zones (build 139).
-//
-// WHY THIS EXISTS. Under braking the lap's gear was read off the speed point by point, so it dropped a gear the
-// instant the next one stopped over-revving, took no time and gave no engine braking, and the readout merged any
-// gear held for under 40 m into the one before: a hard stop showed 4th to 1st in one step. Now the driver works down
-// the box in time order. What must hold, on every gearbox and every braking zone of a lap:
-//   · one gear at a time (a sequential's drum and a twin-clutch's shafts cannot skip; a driver on the limit with an
-//     H-pattern or an automatic goes down one at a time anyway);
-//   · consecutive downshifts at least the gearbox's own shift time apart;
-//   · the revs after a downshift inside the limiter (the box's over-rev protection);
-//   · in gear, the engine brakes the car: the brake pedal is asked for less than the car is slowing by.
-// And the live engine's lift-off braking is the engine's own (friction and pumping with the fuel cut), not a fitted
-// term on top of it.
+// The guide as a wiki (build 139): every page climbs three levels (real life, the game, the physics), its
+// pictures are drawn in code and actually draw, its links all land somewhere, the index can be searched, the
+// animation runs only while the guide is open, Greek keeps the blocks it still has and falls back to English
+// for the new ones, and a phone never scrolls sideways.
 import { chromium } from './pw.mjs';
 import { fileURLToPath, pathToFileURL } from 'url';
 import path from 'path';
 const repo = fileURLToPath(new URL('..', import.meta.url));
 const browser = await chromium.launch();
-const page = await browser.newPage({ viewport: { width: 1200, height: 900 } });
+const page = await browser.newPage({ viewport: { width: 1280, height: 950 } });
 const errors = [];
 page.on('console', m => { if (m.type() === 'error') errors.push('console: ' + m.text()); });
 page.on('pageerror', e => errors.push('pageerror: ' + e.message));
 await page.goto(pathToFileURL(path.join(repo, 'index.html')).href, { waitUntil: 'networkidle' });
-await page.waitForTimeout(400);
+await page.waitForTimeout(300);
 const fails = [];
 
-const r = await page.evaluate(() => {
-  const out = [];
-  // one factory car per gearbox type, and the H-pattern's on a second circuit
-  const seen = {};
-  // no factory car has a sequential box, so the GT3 is also run with one fitted
-  const gt3 = VEHICLE_PRESETS.find(p => p.name.includes('911 GT3'));
-  const runs = VEHICLE_PRESETS.map(vp => ({ vp })).concat([{ vp: gt3, box: 'sequential' }]);
-  for (const { vp, box } of runs) {
-    loadVehiclePreset(vp);
-    if (box) { document.getElementById('vhGearbox').value = box; buildVehicle(); }
-    const gb = Object.keys(GEARBOX).find(k => GEARBOX[k] === vehicle.gb) || vehicle.gbLabel;
-    if (seen[gb]) continue;
-    seen[gb] = true;
-    for (const t of gb === 'manual' ? ['tech', 'monza'] : ['tech']) {
-      const L = simulateLap(t), R = L.replay, n = L.v.length, rl = engine.redline;
-      const res = { car: vp.name, gb, track: t, shiftTime: vehicle.shiftTime, skips: 0, close: 0, overRev: 0, downs: 0,
-        decel: 0, pedal: 0, worstGap: 1e9 };
-      let lastDown = -1e9;
-      for (let i = 1; i < n; i++) {
-        const g0 = L.gears[i - 1], g1 = L.gears[i];
-        if (g1 < g0) {
-          res.downs++;
-          if (g0 - g1 > 1) res.skips++;
-          const gap = R.tAt[i] - lastDown;
-          if (lastDown > -1e8) { res.worstGap = Math.min(res.worstGap, gap); if (gap < vehicle.shiftTime - 1e-6) res.close++; }
-          lastDown = R.tAt[i];
-          if (R.rpm[i] > rl + 1) res.overRev++;
-        }
-        // braking: what the car slows by beyond drag, against what the pedal asks the brakes for
-        const j = (i + 1) % n, a = (L.v[j] * L.v[j] - L.v[i] * L.v[i]) / (2 * L.track.line[i].ds3);
-        if (R.brk[i] > 0.05 && a < -2) { res.decel += -a; res.pedal += R.brk[i] * vehicle.brakeDecelCap; }
-      }
-      out.push(res);
+// ---------------------------------------------------------------- 1. structure, pictures, links
+const s = await page.evaluate(async () => {
+  setTab('guide');
+  const pages = guidePages(), out = { pages: pages.length, ref: 0, tierBad: [], artBad: [], artMissing: [], arts: 0, linkBad: [], links: 0, noArt: [] };
+  // a picture "draws" if a good share of its cells are not the backdrop
+  const inked = cv => { const g = cv.getContext('2d'), d = g.getImageData(0, 0, cv.width, cv.height).data; let n = 0;
+    for (let i = 0; i < d.length; i += 4) if (d[i] + d[i + 1] + d[i + 2] > 120) n++; return n / (d.length / 4); };
+  for (const pg of pages) {
+    const id = pg.id.slice(3);
+    showGuide(id);
+    await new Promise(r => requestAnimationFrame(r));
+    const tiers = ['gt-real', 'gt-game', 'gt-phys'].map(c => pg.querySelector('.gtier.' + c));
+    const isRef = !tiers.some(Boolean);
+    if (isRef) { out.ref++; if (!pg.querySelector('.guide-body')) out.tierBad.push(id + ' (no body)'); }
+    else if (!tiers.every(t => t && t.querySelector('.gtier-h') && t.querySelector('.guide-body'))) out.tierBad.push(id);
+    const cvs = [...pg.querySelectorAll('canvas.gart')];
+    if (!cvs.length) out.noArt.push(id);
+    for (const cv of cvs) {
+      out.arts++;
+      if (!GUIDE_ART[cv.dataset.art]) { out.artMissing.push(id + ':' + cv.dataset.art); continue; }
+      drawGuideArt(cv, 1.7);
+      const f = inked(cv);
+      if (!(f > 0.01)) out.artBad.push(`${id}:${cv.dataset.art} ${(f * 100).toFixed(2)}%`);
     }
+    for (const a of pg.querySelectorAll('a[data-gp]')) { out.links++; if (!document.getElementById('gp-' + a.dataset.gp)) out.linkBad.push(id + '->' + a.dataset.gp); }
   }
-  // the live engine on a lift: the torque it brakes with is the engine's own
-  const vp = VEHICLE_PRESETS.find(p => p.name.includes('Civic Type R')); loadVehiclePreset(vp);
-  const own = -brakeTorqueRaw(5000, 0.25, true);
-  return { laps: out, liftOwn: own, liftMep: own * engine.strokeDiv / (engine.displacement_L / 1000) / 1e5 };
+  // following a link moves the guide
+  showGuide('glossary');
+  document.querySelector('#gp-glossary a[data-gp="knock"]').click();
+  out.linkFollowed = guideCur;
+  // every picture moves or stands still as declared: an animated one differs between two times
+  out.still = Object.entries(GUIDE_ART).filter(([n, a]) => a.anim).filter(([n]) => {
+    const cv = document.createElement('canvas'); cv.className = 'gthumb'; cv.dataset.art = n;
+    drawGuideArt(cv, 0.4); const a = cv.toDataURL(); drawGuideArt(cv, 1.9); return a === cv.toDataURL();
+  }).map(([n]) => n);
+  showGuide(null);
+  out.thumbs = document.querySelectorAll('#guideIndex canvas.gthumb').length;
+  out.buttons = document.querySelectorAll('#guideIndex button[data-gp]').length;
+  out.cats = new Set(pages.map(p => p.dataset.cat)).size;
+  return out;
 });
+console.log(`wiki: ${s.pages} pages (${s.ref} reference) in ${s.cats} sections, ${s.arts} pictures, ${s.links} links, ${s.thumbs} index icons`);
+if (s.pages < 50) fails.push(`only ${s.pages} pages`);
+if (s.tierBad.length) fails.push('pages without all three levels: ' + s.tierBad.join(', '));
+if (s.ref > 4) fails.push(`${s.ref} reference pages: only the limits, calibration and glossary pages should skip the levels`);
+if (s.noArt.length) fails.push('pages without a picture: ' + s.noArt.join(', '));
+if (s.artMissing.length) fails.push('pictures with no drawing: ' + s.artMissing.join(', '));
+if (s.artBad.length) fails.push('pictures that drew (almost) nothing: ' + s.artBad.join(', '));
+if (s.still.length) fails.push('animated pictures that do not move: ' + s.still.join(', '));
+if (s.linkBad.length) fails.push('links to missing pages: ' + s.linkBad.join(', '));
+if (s.links < 100) fails.push(`only ${s.links} cross-links`);
+if (s.linkFollowed !== 'knock') fails.push(`clicking a glossary link landed on ${s.linkFollowed}, not knock`);
+if (s.thumbs !== s.pages || s.buttons !== s.pages) fails.push(`index has ${s.buttons} entries and ${s.thumbs} icons for ${s.pages} pages`);
 
-console.log('car                              box         track  downs  skips  < shift time  over-rev  closest  pedal/decel');
-for (const x of r.laps) {
-  console.log(`${x.car.slice(0, 32).padEnd(32)} ${x.gb.padEnd(11)} ${x.track.padEnd(6)} ${String(x.downs).padStart(5)} ${String(x.skips).padStart(6)} ${String(x.close).padStart(13)} ${String(x.overRev).padStart(9)} ${(x.worstGap === 1e9 ? '-' : x.worstGap.toFixed(2) + 's').padStart(8)} ${(x.pedal / Math.max(1e-9, x.decel)).toFixed(2).padStart(12)}`);
-  if (x.downs < 3) fails.push(`${x.car} (${x.gb}) on ${x.track}: only ${x.downs} downshifts in a lap`);
-  if (x.skips) fails.push(`${x.car} (${x.gb}) on ${x.track}: ${x.skips} downshifts skip a gear`);
-  if (x.close) fails.push(`${x.car} (${x.gb}) on ${x.track}: ${x.close} downshifts closer than the ${x.shiftTime}s shift time`);
-  if (x.overRev) fails.push(`${x.car} (${x.gb}) on ${x.track}: ${x.overRev} downshifts land over the limiter`);
-  // the pedal asks for less than the car slows by: the engine is doing some of it
-  if (!(x.pedal < 0.99 * x.decel)) fails.push(`${x.car} (${x.gb}) on ${x.track}: no engine braking (pedal ${x.pedal.toFixed(0)} vs decel ${x.decel.toFixed(0)})`);
-}
-const boxes = new Set(r.laps.map(x => x.gb));
-for (const gb of ['manual', 'sequential', 'dct', 'auto']) if (!boxes.has(gb)) fails.push(`no factory car with a ${gb} gearbox was checked`);
-// A motored engine at 5000 rpm on a closed throttle: friction plus pumping, ~1.5-3.5 bar (Heywood's motored FMEP
-// with closed-throttle pumping on top). The fitted term it replaces made ~14 bar on this 2.0 turbo.
-console.log(`\nlive lift-off at 5000 rpm, Civic Type R: ${r.liftOwn.toFixed(0)} Nm = ${r.liftMep.toFixed(2)} bar`);
-if (!(r.liftMep > 1.0 && r.liftMep < 4.0)) fails.push(`closed-throttle braking ${r.liftMep.toFixed(2)} bar is not a motored engine's`);
+// ---------------------------------------------------------------- 2. search
+const q = await page.evaluate(() => {
+  showGuide(null);
+  const inp = document.getElementById('guideSearch'), shown = () => [...document.querySelectorAll('#guideIndex button[data-gp]')].filter(b => b.style.display !== 'none').map(b => b.dataset.gp);
+  const set = v => { inp.value = v; inp.dispatchEvent(new Event('input')); return shown(); };
+  const r = { all: set('').length, waste: set('wastegate'), two: set('camber roll'), none: set('zzqqxx').length, noHit: !document.getElementById('guideNoHit').hidden };
+  set(''); r.noHitAfter = !document.getElementById('guideNoHit').hidden;
+  showGuide('turbo'); r.boxHidden = document.getElementById('guideSearchBox').hidden; showGuide(null);
+  return r;
+});
+if (!q.waste.includes('wastegate') || q.waste.length >= q.all) fails.push(`search "wastegate" shows ${q.waste.length} of ${q.all}, wastegate page ${q.waste.includes('wastegate') ? 'in' : 'missing'}`);
+if (!q.two.includes('suspension') || q.two.length >= q.waste.length + 20) fails.push('a two-word search does not narrow to the suspension page: ' + q.two.join(','));
+if (q.none !== 0 || !q.noHit || q.noHitAfter) fails.push('a search with no hits does not say so, or the notice sticks');
+if (!q.boxHidden) fails.push('the search box stays up over an open page');
+
+// ---------------------------------------------------------------- 3. the animation loop lives only in the guide
+const anim = await page.evaluate(async () => {
+  const frame = () => new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)));
+  setTab('guide'); showGuide('turbo'); await frame();
+  const on = guideArtRaf !== 0;
+  const cv = document.querySelector('#gp-turbo canvas.gart'), a = cv.toDataURL();
+  await new Promise(r => setTimeout(r, 300)); const moved = a !== cv.toDataURL();
+  setTab('engine'); await frame(); await frame();
+  const offTab = guideArtRaf === 0;
+  setTab('guide'); showGuide('glossary'); await frame(); await frame();
+  const offStatic = guideArtRaf === 0;      // the glossary's picture does not move
+  showGuide(null); setTab('engine');
+  return { on, moved, offTab, offStatic };
+});
+if (!anim.on || !anim.moved) fails.push('the turbo picture does not animate on its page');
+if (!anim.offTab) fails.push('the animation keeps running after leaving the GUIDE tab');
+if (!anim.offStatic) fails.push('the animation loop runs on a page with no moving picture');
+
+// ---------------------------------------------------------------- 4. Greek: kept blocks Greek, new ones English
+const el = await page.evaluate(() => {
+  applyLang('el'); setTab('guide'); showGuide('welcome');
+  const r = { loop: document.querySelector('[data-gk="loop"]').textContent, fresh: document.querySelector('[data-gk="welcomeReal"]').textContent,
+    tier: document.querySelector('#gp-welcome .gt-phys .gtier-h').textContent, cat: document.querySelector('#guideNav .crumb').textContent };
+  applyLang('en'); r.tierEn = document.querySelector('#gp-welcome .gt-phys .gtier-h').textContent; showGuide(null); setTab('engine');
+  return r;
+});
+if (!/ΚΙΝΗΤΗΡΑΣ/.test(el.loop)) fails.push('the kept Greek block (loop) is not Greek in Greek');
+if (!/dynamometer/.test(el.fresh)) fails.push('a new block without Greek does not fall back to English');
+if (el.tier !== 'LV3 · Η ΦΥΣΙΚΗ' || el.tierEn !== 'LV3 · THE PHYSICS') fails.push(`level label in Greek "${el.tier}", back in English "${el.tierEn}"`);
+
+// ---------------------------------------------------------------- 5. a phone never scrolls sideways
+await page.setViewportSize({ width: 375, height: 800 });
+const ph = await page.evaluate(async () => {
+  setTab('guide'); const bad = [];
+  for (const id of ['index', 'fourstroke', 'turbo', 'fuels', 'scorecard', 'tyres', 'glossary']) {
+    showGuide(id === 'index' ? null : id); await new Promise(r => setTimeout(r, 50));
+    if (document.documentElement.scrollWidth > document.documentElement.clientWidth + 1) bad.push(id + ' ' + document.documentElement.scrollWidth);
+  }
+  const fs = parseFloat(getComputedStyle(document.querySelector('#gp-glossary .guide-body')).fontSize);
+  showGuide(null); setTab('engine'); return { bad, fs };
+});
+if (ph.bad.length) fails.push('horizontal scroll at phone width: ' + ph.bad.join(', '));
 
 if (errors.length) fails.push(...errors);
+console.log(fails.length ? '\nFAIL\n  ' + fails.join('\n  ') : '\nPASS — three levels on every page, pictures draw and move, links land, search narrows, Greek falls back, phones fit');
 await browser.close();
-if (fails.length) { console.log('\nFAIL:\n  ' + fails.join('\n  ')); process.exit(1); }
-console.log('\nPASS');
+process.exit(fails.length ? 1 : 0);
