@@ -40,7 +40,7 @@ const r = await page.evaluate(() => {
     for (const t of gb === 'manual' ? ['tech', 'monza'] : ['tech']) {
       const L = simulateLap(t), R = L.replay, n = L.v.length, rl = engine.redline;
       const res = { car: vp.name, gb, track: t, shiftTime: vehicle.shiftTime, skips: 0, close: 0, overRev: 0, downs: 0,
-        decel: 0, pedal: 0, worstGap: 1e9 };
+        decel: 0, pedal: 0, worstGap: 1e9, useMax: Math.max(...R.useF, ...R.useR), engUse: L.engBrakeUseMax, trimM: L.engTrimM };
       let lastDown = -1e9;
       for (let i = 1; i < n; i++) {
         const g0 = L.gears[i - 1], g1 = L.gears[i];
@@ -65,14 +65,17 @@ const r = await page.evaluate(() => {
   return { laps: out, liftOwn: own, liftMep: own * engine.strokeDiv / (engine.displacement_L / 1000) / 1e5 };
 });
 
-console.log('car                              box         track  downs  skips  < shift time  over-rev  closest  pedal/decel');
+console.log('car                              box         track  downs  skips  < shift time  over-rev  closest  pedal/decel  axle use  engine use  trimmed');
 for (const x of r.laps) {
-  console.log(`${x.car.slice(0, 32).padEnd(32)} ${x.gb.padEnd(11)} ${x.track.padEnd(6)} ${String(x.downs).padStart(5)} ${String(x.skips).padStart(6)} ${String(x.close).padStart(13)} ${String(x.overRev).padStart(9)} ${(x.worstGap === 1e9 ? '-' : x.worstGap.toFixed(2) + 's').padStart(8)} ${(x.pedal / Math.max(1e-9, x.decel)).toFixed(2).padStart(12)}`);
+  console.log(`${x.car.slice(0, 32).padEnd(32)} ${x.gb.padEnd(11)} ${x.track.padEnd(6)} ${String(x.downs).padStart(5)} ${String(x.skips).padStart(6)} ${String(x.close).padStart(13)} ${String(x.overRev).padStart(9)} ${(x.worstGap === 1e9 ? '-' : x.worstGap.toFixed(2) + 's').padStart(8)} ${(x.pedal / Math.max(1e-9, x.decel)).toFixed(2).padStart(12)} ${x.useMax.toFixed(2).padStart(9)} ${x.engUse.toFixed(2).padStart(11)} ${(x.trimM.toFixed(0) + ' m').padStart(8)}`);
   if (x.downs < 3) fails.push(`${x.car} (${x.gb}) on ${x.track}: only ${x.downs} downshifts in a lap`);
   if (x.skips) fails.push(`${x.car} (${x.gb}) on ${x.track}: ${x.skips} downshifts skip a gear`);
   if (x.close) fails.push(`${x.car} (${x.gb}) on ${x.track}: ${x.close} downshifts closer than the ${x.shiftTime}s shift time`);
   if (x.overRev) fails.push(`${x.car} (${x.gb}) on ${x.track}: ${x.overRev} downshifts land over the limiter`);
   // the pedal asks for less than the car slows by: the engine is doing some of it
+  // build 150: each axle within its grip, and the engine's braking alone within the driven axle's (ABS cannot ease it)
+  if (!(x.useMax <= 1.02)) fails.push(`${x.car} (${x.gb}) on ${x.track}: an axle asked for ${x.useMax.toFixed(2)} of its grip under braking`);
+  if (!(x.engUse <= 1.0 + 1e-6)) fails.push(`${x.car} (${x.gb}) on ${x.track}: engine braking alone ${x.engUse.toFixed(2)} of the driven axle's grip`);
   if (!(x.pedal < 0.99 * x.decel)) fails.push(`${x.car} (${x.gb}) on ${x.track}: no engine braking (pedal ${x.pedal.toFixed(0)} vs decel ${x.decel.toFixed(0)})`);
 }
 const boxes = new Set(r.laps.map(x => x.gb));

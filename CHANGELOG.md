@@ -20,6 +20,40 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 Working toward **v1.0 — every number derived, not fitted.**
 
+### The braking split between the axles (build 150)
+
+- **Each axle stops with its own grip.** The lap pooled all four tyres' grip under braking, whatever the brakes'
+  split. Now braking moves load forward (m a h/L) and the downforce splits by the aero balance, so each axle has its
+  own grip, reduced by the cornering it is also doing (trail braking); the hydraulics give each axle its share of the
+  brakes at full line pressure (the calipers and rotors, brakeFrontShare), ABS/EBD easing an axle's pressure once it
+  reaches its grip; the engine brakes the driven axle (shared by weight on four-wheel drive). The car slows with the
+  sum of each axle's lesser of grip and what its brakes and the engine give it. Every factory car's hydraulics reach
+  both axles' grip (the 911 GT3's rear just: 0.99), so lap times move by under 0.1 s; a build with brakes too small
+  for an axle's grip now pays for it.
+- **The rotors' heat follows the split.** Front-drivers' engine braking is on the fronts, so ABS eases the front
+  brakes by as much and the rears take more; on the brakes into a corner the loaded fronts reach their grip first
+  and EBD moves work to the rears. Rears now run 60-90% of the fronts (50-60% before); fronts 10-45 C cooler on the
+  short circuit.
+- **Engine braking and stability.** ABS can ease the brakes but not the engine. A downshift whose engine braking
+  alone is more than the driven tyres can hold is not made yet, and once in gear, where the driven tyres have less
+  grip left along the road than the engine's braking (deep into a corner on the brakes, a rear-driver's rear steps
+  out on a closed throttle), the engine is held to what they can carry: the drag-torque control cars carry for it
+  (a slipper clutch or a blip does the same). Where it bites is reported (engTrimM): on the technical circuit a front-
+  driven Alto never, a Hellcat 4 m, a 911 GT3 20 m, an Enzo 64 m. The replay carries each axle's share of its grip in
+  use (useF, useR).
+- **Each axle fades with its own rotors.** The lap faded the whole brake capacity by the fronts' temperature; with
+  the work split by axle the rears heat on their own, so the rear capacity now fades by the rears'. (A small solid
+  steel rear behind a hot front no longer fades with it, and one that runs hot itself now does.)
+- **The race heats its rotors as the lap does**: the engine's share of the slowing (carried per point from the
+  lap, replay.eb) is not the rotors', and the brakes split by axle as the lap found (replay.frB).
+- Tests: test81 adds each axle within its grip and the engine's braking within the driven axle's. test30 measures
+  undersized brakes on the technical circuit (74.29 against 74.06 s), where the brakes decide the lap: on 'mixed'
+  they land within 0.07 s of stock either way, the steel car's earlier braking points changing the driver's
+  hold-or-upshift choice (build 121), which is worth as much. test76's floors
+  lowered with the reason (300 -> 250 C on the short circuit, 700 -> 650 C at Spa): builds 149-150 take the engine's
+  braking out of the rotors and move work to the rears, which real readings include and build 144's pooled model did
+  not; the model sits 1-11% under the old floors.
+
 ### Downshifting through the braking zones; the engine brakes the car (build 149)
 
 - **What was wrong.** Under braking the lap's gear was read off the speed point by point (the most wheel force
@@ -47,7 +81,7 @@ Working toward **v1.0 — every number derived, not fitted.**
   engine's figure (Heywood: friction ~1.5-3 bar at speed, plus closed-throttle pumping).
 - Not modelled yet: braking split between the axles, so the model cannot show engine braking unsettling a
   rear-driver (the reason for slipper clutches and ECU blip control). That is its own build.
-- New test73: on one car of each gearbox type, no downshift skips a gear, none comes sooner than the shift time,
+- New test81: on one car of each gearbox type, no downshift skips a gear, none comes sooner than the shift time,
   none lands over the limiter, and the pedal asks the brakes for less than the car slows by.
 ### Supercar category (build 148)
 
