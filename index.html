@@ -2522,6 +2522,7 @@ Most other tests check behaviour that is true of real cars: a bigger turbo spool
 <div class="field"><label for="vhTire">TYRE COMPOUND</label><select id="vhTire"><option value="eco">ECO/TOURING</option><option value="street">STREET</option><option value="sport">SPORT</option><option value="semi">SEMI-SLICK</option><option value="slick">RACE SLICK</option><option value="drag">DRAG RADIAL</option></select></div>
 <div class="field"><label for="vhWheel">WHEEL DIA (in)</label><input type="number" id="vhWheel" min="13" max="22" step="1" value="18"></div>
 <div class="field"><label for="vhTireW">TYRE WIDTH (mm)</label><input type="number" id="vhTireW" min="135" max="355" step="5" value="235"></div>
+<div class="field"><label for="vhTireWF">FRONT WIDTH (mm, 0 = same)</label><input type="number" id="vhTireWF" min="0" max="355" step="5" value="0"></div>
 <div class="field"><label for="vhTireA">TYRE ASPECT (%)</label><input type="number" id="vhTireA" min="25" max="70" step="5" value="40"></div>
 </div>
 
@@ -2539,6 +2540,7 @@ Most other tests check behaviour that is true of real cars: a bigger turbo spool
 <div class="field"><label for="vhRotor">ROTOR SIZE (mm)</label><input type="number" id="vhRotor" min="250" max="420" step="10" value="330"></div>
 <div class="field"><label for="vhSteer">STEERING RATIO (:1)</label><input type="number" id="vhSteer" min="8" max="22" step="0.5" value="15"></div>
 <div class="field"><label for="vhSusp">SUSPENSION</label><select id="vhSusp"><option value="comfort">COMFORT</option><option value="sport">SPORT</option><option value="coilover">COILOVERS</option><option value="race">RACE/ADJUST</option></select></div>
+<div class="field"><label for="vhArb">ROLL BALANCE</label><select id="vhArb"><option value="-2">SOFT FRONT −2</option><option value="-1">SOFT FRONT −1</option><option value="0" selected>NEUTRAL</option><option value="1">STIFF FRONT +1</option><option value="2">STIFF FRONT +2</option></select></div>
 </div>
 <div class="build-row">
 <button id="btnRefit">REFIT FACTORY SPEC</button>
@@ -4184,6 +4186,9 @@ let activeChallenge='free';
 // technical readouts (canvas schematic, status ticker, design-summary spec) stay in English —
 // their content is numbers and universal units.
 const I18N={
+  'BALANCE':{el:'ΙΣΟΡΡΟΠΙΑ'},'NEUTRAL':{el:'ΟΥΔΕΤΕΡΗ'},'UNDERSTEER':{el:'ΥΠΟΣΤΡΟΦΗ'},'OVERSTEER':{el:'ΥΠΕΡΣΤΡΟΦΗ'},
+  'front':{el:'εμπρός'},'rear':{el:'πίσω'},'limits':{el:'όριο'},
+  'ROLL BALANCE':{el:'ΙΣΟΡΡΟΠΙΑ ΚΛΙΣΗΣ'},'FRONT WIDTH (mm, 0 = same)':{el:'ΠΛΑΤΟΣ ΕΜΠΡΟΣ (mm, 0 = ίδιο)'},
   // RACE (build 137; 138)
   'DRIVER: BALANCED':{el:'ΟΔΗΓΟΣ: ΙΣΟΡΡΟΠΗΜΕΝΟΣ'},'DRIVER: AGGRESSIVE':{el:'ΟΔΗΓΟΣ: ΕΠΙΘΕΤΙΚΟΣ'},'DRIVER: SMOOTH':{el:'ΟΔΗΓΟΣ: ΣΤΡΩΤΟΣ'},'DRIVER: RAIN MASTER':{el:'ΟΔΗΓΟΣ: ΤΗΣ ΒΡΟΧΗΣ'},'DRIVER: ROOKIE':{el:'ΟΔΗΓΟΣ: ΑΡΧΑΡΙΟΣ'},'BALANCED':{el:'ΙΣΟΡΡΟΠΗΜΕΝΟΣ'},'AGGRESSIVE':{el:'ΕΠΙΘΕΤΙΚΟΣ'},'SMOOTH':{el:'ΣΤΡΩΤΟΣ'},'RAIN MASTER':{el:'ΤΗΣ ΒΡΟΧΗΣ'},'ROOKIE':{el:'ΑΡΧΑΡΙΟΣ'},'dives down the inside of':{el:'βουτάει από μέσα στον'},'runs wide trying to pass':{el:'ανοίγει προσπαθώντας να περάσει τον'},'defends from':{el:'αμύνεται απέναντι στον'},'DEFENDING':{el:'ΑΜΥΝΕΤΑΙ'},
   'Leave full screen':{el:'Έξοδος από πλήρη οθόνη'},'Full screen':{el:'Πλήρης οθόνη'},
@@ -4848,16 +4853,16 @@ const VEHICLE_PRESETS=[
    body:{kg:940,cd:0.38,area:1.75,wb:2.40,fWt:0.53},fit:{drive:'rwd',tire:'eco',tw:185,ta:60,wheel:14,brake:'steel',rotor:250,susp:'sport',gears:5,gearbox:'manual',diff:'open'},
    real:{t100:8.5,top:200},unsure:['cd','area','t100','top']},
   {cat:'NA Sports',name:'Honda S2000 (AP1, 2000)',engine:'Honda F20C (S2000 AP1)',chassis:'roadster',
-   body:{kg:1250,cd:0.33,area:1.80,wb:2.40,fWt:0.50},fit:{drive:'rwd',tire:'sport',tw:225,ta:50,wheel:16,brake:'slotted',rotor:300,susp:'sport',gears:6,gearbox:'manual',diff:'clsd'},
+   body:{kg:1250,cd:0.33,area:1.80,wb:2.40,fWt:0.50},fit:{drive:'rwd',tire:'sport',tw:225,twF:205,ta:50,wheel:16,brake:'slotted',rotor:300,susp:'sport',gears:6,gearbox:'manual',diff:'clsd'},
    real:{t100:6.2,top:240},unsure:['area']},
   {cat:'NA Sports',name:'BMW M3 (E46, 2000)',engine:'BMW S54 (M3 E46)',chassis:'coupe',
-   body:{kg:1495,cd:0.32,area:2.07,wb:2.73,fWt:0.51},fit:{drive:'rwd',tire:'sport',tw:255,ta:40,wheel:18,brake:'slotted',rotor:330,susp:'sport',gears:6,gearbox:'manual',diff:'visc'},
+   body:{kg:1495,cd:0.32,area:2.07,wb:2.73,fWt:0.51},fit:{drive:'rwd',tire:'sport',tw:255,twF:225,ta:40,wheel:18,brake:'slotted',rotor:330,susp:'sport',gears:6,gearbox:'manual',diff:'visc'},
    real:{t100:5.2,top:250,limited:true}},
   {cat:'NA Sports',name:'Porsche 911 GT3 (991.2, 2017)',engine:'Porsche 4.0 flat-six (911 GT3 991.2)',chassis:'super',
-   body:{kg:1430,cd:0.34,area:2.05,wb:2.457,fWt:0.39,engPos:'rear'},fit:{drive:'rwd',tire:'semi',tw:305,ta:30,wheel:20,brake:'big',rotor:380,susp:'coilover',gears:7,gearbox:'dct',diff:'clsd',aF:'splitter',aR:'lip'},
+   body:{kg:1430,cd:0.34,area:2.05,wb:2.457,fWt:0.39,engPos:'rear'},fit:{drive:'rwd',tire:'semi',tw:305,twF:245,ta:30,wheel:20,brake:'big',rotor:380,susp:'coilover',gears:7,gearbox:'dct',diff:'clsd',aF:'splitter',aR:'lip'},
    real:{t100:3.4,top:318},unsure:['cd','area','aero'],note:'the real car has a fixed rear wing and a front lip; a splitter and lip are the closest parts'},
   {cat:'Turbo Performance',name:'Toyota Supra RZ (A80, 1993)',engine:'Toyota 2JZ-GTE (Supra A80)',chassis:'coupe',
-   body:{kg:1570,cd:0.31,area:1.94,wb:2.55,fWt:0.53},fit:{drive:'rwd',tire:'sport',tw:255,ta:40,wheel:17,brake:'slotted',rotor:320,susp:'sport',gears:6,gearbox:'manual',diff:'clsd'},
+   body:{kg:1570,cd:0.31,area:1.94,wb:2.55,fWt:0.53},fit:{drive:'rwd',tire:'sport',tw:255,twF:235,ta:40,wheel:17,brake:'slotted',rotor:320,susp:'sport',gears:6,gearbox:'manual',diff:'clsd'},
    real:{t100:4.9,top:250,limited:true},unsure:['area']},
   {cat:'Turbo Performance',name:'Nissan Skyline GT-R V-spec (R34, 1999)',engine:'Nissan RB26DETT (Skyline GT-R R34)',chassis:'coupe',
    body:{kg:1560,cd:0.36,area:2.00,wb:2.665,fWt:0.56},fit:{drive:'awd',tire:'sport',tw:245,ta:40,wheel:18,brake:'big',rotor:320,susp:'sport',gears:6,gearbox:'manual',diff:'clsd'},
@@ -4872,71 +4877,71 @@ const VEHICLE_PRESETS=[
    body:{kg:1510,cd:0.34,area:2.15,wb:2.63,fWt:0.60},fit:{drive:'awd',tire:'sport',tw:235,ta:35,wheel:19,brake:'big',rotor:370,susp:'sport',gears:7,gearbox:'dct',diff:'visc'},
    real:{t100:4.1,top:250,limited:true},unsure:['cd','area']},
   {cat:'American V8',name:'Chevrolet Corvette (C6, LS3, 2008)',engine:'GM LS3 (Corvette C6)',chassis:'coupe',
-   body:{kg:1450,cd:0.28,area:2.00,wb:2.685,fWt:0.51},fit:{drive:'rwd',tire:'sport',tw:285,ta:35,wheel:19,brake:'slotted',rotor:330,susp:'sport',gears:6,gearbox:'manual',diff:'clsd'},
+   body:{kg:1450,cd:0.28,area:2.00,wb:2.685,fWt:0.51},fit:{drive:'rwd',tire:'sport',tw:285,twF:245,ta:35,wheel:19,brake:'slotted',rotor:330,susp:'sport',gears:6,gearbox:'manual',diff:'clsd'},
    real:{t100:4.2,top:306},unsure:['area']},
   {cat:'American V8',name:'Chevrolet Corvette Z06 (C6, 2006)',engine:'GM LS7 (Corvette Z06 C6)',chassis:'coupe',
-   body:{kg:1420,cd:0.34,area:2.05,wb:2.686,fWt:0.52},fit:{drive:'rwd',tire:'sport',tw:325,ta:30,wheel:19,brake:'big',rotor:360,susp:'sport',gears:6,gearbox:'manual',diff:'clsd'},
+   body:{kg:1420,cd:0.34,area:2.05,wb:2.686,fWt:0.52},fit:{drive:'rwd',tire:'sport',tw:325,twF:275,ta:30,wheel:19,brake:'big',rotor:360,susp:'sport',gears:6,gearbox:'manual',diff:'clsd'},
    real:{t100:3.7,top:318},unsure:['area']},
   {cat:'American V8',name:'Ford Mustang GT (2018)',engine:'Ford Coyote 5.0 (Mustang GT 2018)',chassis:'muscle',
-   body:{kg:1705,cd:0.35,area:2.20,wb:2.72,fWt:0.53},fit:{drive:'rwd',tire:'sport',tw:275,ta:40,wheel:19,brake:'big',rotor:380,susp:'sport',gears:6,gearbox:'manual',diff:'clsd'},
+   body:{kg:1705,cd:0.35,area:2.20,wb:2.72,fWt:0.53},fit:{drive:'rwd',tire:'sport',tw:275,twF:255,ta:40,wheel:19,brake:'big',rotor:380,susp:'sport',gears:6,gearbox:'manual',diff:'clsd'},
    real:{t100:4.6,top:250,limited:true},unsure:['cd','area','t100']},
   {cat:'American V8',name:'Dodge Challenger SRT Hellcat (2015)',engine:'Dodge 6.2 Hellcat (Challenger SRT)',chassis:'muscle',
    body:{kg:2020,cd:0.38,area:2.40,wb:2.95,fWt:0.57},fit:{drive:'rwd',tire:'sport',tw:275,ta:40,wheel:20,brake:'big',rotor:390,susp:'sport',gears:8,gearbox:'auto',diff:'clsd'},
    real:{t100:3.9,top:320},unsure:['cd','area']},
   // Ferrari quoted 1350 kg dry; the body carries a curb mass with fluids
   {cat:'Supercar',era:'1990s',name:'Ferrari F355 Berlinetta (1994)',engine:'Ferrari F129B V8 (F355)',chassis:'super',
-   body:{kg:1440,cd:0.33,area:1.85,wb:2.45,fWt:0.42},fit:{drive:'rwd',tire:'sport',tw:265,ta:40,wheel:18,brake:'slotted',rotor:284,susp:'sport',gears:6,gearbox:'manual',diff:'clsd'},
+   body:{kg:1440,cd:0.33,area:1.85,wb:2.45,fWt:0.42},fit:{drive:'rwd',tire:'sport',tw:265,twF:225,ta:40,wheel:18,brake:'slotted',rotor:284,susp:'sport',gears:6,gearbox:'manual',diff:'clsd'},
    real:{t100:4.7,top:295},unsure:['kg','area','fWt']},
   {cat:'Supercar',era:'1990s',name:'Lamborghini Diablo VT (1993)',engine:'Lamborghini 5.7 V12 (Diablo VT)',chassis:'super',
-   body:{kg:1700,cd:0.31,area:1.90,wb:2.65,fWt:0.41},fit:{drive:'awd',tire:'sport',tw:335,ta:30,wheel:18,brake:'big',rotor:330,susp:'sport',gears:5,gearbox:'manual',diff:'visc'},
+   body:{kg:1700,cd:0.31,area:1.90,wb:2.65,fWt:0.41},fit:{drive:'awd',tire:'sport',tw:335,twF:235,ta:30,wheel:18,brake:'big',rotor:330,susp:'sport',gears:5,gearbox:'manual',diff:'visc'},
    real:{t100:4.1,top:325},unsure:['kg','area','fWt','t100']},
   // 1138 kg dry; 386 km/h is the production car, 391 with the limiter raised
   {cat:'Supercar',era:'1990s',name:'McLaren F1 (1994)',engine:'BMW S70/2 V12 (McLaren F1)',chassis:'hyper',
-   body:{kg:1200,cd:0.32,area:1.79,wb:2.718,fWt:0.42},fit:{drive:'rwd',tire:'sport',tw:315,ta:45,wheel:17,brake:'big',rotor:332,susp:'sport',gears:6,gearbox:'manual',diff:'clsd'},
+   body:{kg:1200,cd:0.32,area:1.79,wb:2.718,fWt:0.42},fit:{drive:'rwd',tire:'sport',tw:315,twF:235,ta:45,wheel:17,brake:'big',rotor:332,susp:'sport',gears:6,gearbox:'manual',diff:'clsd'},
    real:{t100:3.2,top:386},unsure:['kg','fWt']},
   {cat:'Supercar',era:'1990s',name:'Porsche 911 Turbo (993, 1995)',engine:'Porsche M64/60 twin-turbo flat-six (911 Turbo 993)',chassis:'super',
-   body:{kg:1500,cd:0.34,area:1.95,wb:2.272,fWt:0.38,engPos:'rear'},fit:{drive:'awd',tire:'sport',tw:285,ta:30,wheel:18,brake:'big',rotor:322,susp:'sport',gears:6,gearbox:'manual',diff:'visc'},
+   body:{kg:1500,cd:0.34,area:1.95,wb:2.272,fWt:0.38,engPos:'rear'},fit:{drive:'awd',tire:'sport',tw:285,twF:225,ta:30,wheel:18,brake:'big',rotor:322,susp:'sport',gears:6,gearbox:'manual',diff:'visc'},
    real:{t100:4.5,top:290},unsure:['area']},
   // 1365 kg dry
   {cat:'Supercar',era:'2000s',name:'Ferrari Enzo (2002)',engine:'Ferrari F140B V12 (Enzo)',chassis:'hyper',
-   body:{kg:1480,cd:0.36,area:1.95,wb:2.65,fWt:0.44},fit:{drive:'rwd',tire:'sport',tw:345,ta:35,wheel:19,brake:'carbon',rotor:380,susp:'coilover',gears:6,gearbox:'sequential',diff:'clsd'},
+   body:{kg:1480,cd:0.36,area:1.95,wb:2.65,fWt:0.44},fit:{drive:'rwd',tire:'sport',tw:345,twF:245,ta:35,wheel:19,brake:'carbon',rotor:380,susp:'coilover',gears:6,gearbox:'sequential',diff:'clsd'},
    real:{t100:3.65,top:350},unsure:['kg','cd','area','fWt']},
   // 1380 kg dry
   {cat:'Supercar',era:'2000s',name:'Porsche Carrera GT (2004)',engine:'Porsche 5.7 V10 (Carrera GT)',chassis:'hyper',
-   body:{kg:1472,cd:0.40,area:1.86,wb:2.73,fWt:0.42},fit:{drive:'rwd',tire:'sport',tw:335,ta:30,wheel:20,brake:'carbon',rotor:380,susp:'coilover',gears:6,gearbox:'manual',diff:'clsd'},
+   body:{kg:1472,cd:0.40,area:1.86,wb:2.73,fWt:0.42},fit:{drive:'rwd',tire:'sport',tw:335,twF:265,ta:30,wheel:20,brake:'carbon',rotor:380,susp:'coilover',gears:6,gearbox:'manual',diff:'clsd'},
    real:{t100:3.9,top:330},unsure:['area','fWt']},
   {cat:'Supercar',era:'2000s',name:'Ford GT (2005)',engine:'Ford 5.4 supercharged V8 (Ford GT)',chassis:'super',
-   body:{kg:1520,cd:0.355,area:1.90,wb:2.71,fWt:0.43},fit:{drive:'rwd',tire:'sport',tw:315,ta:40,wheel:19,brake:'big',rotor:355,susp:'sport',gears:6,gearbox:'manual',diff:'clsd'},
+   body:{kg:1520,cd:0.355,area:1.90,wb:2.71,fWt:0.43},fit:{drive:'rwd',tire:'sport',tw:315,twF:235,ta:40,wheel:19,brake:'big',rotor:355,susp:'sport',gears:6,gearbox:'manual',diff:'clsd'},
    real:{t100:3.9,top:330},unsure:['area','fWt']},
   // 1665 kg dry
   {cat:'Supercar',era:'2000s',name:'Lamborghini Murciélago LP640 (2006)',engine:'Lamborghini 6.5 V12 (Murciélago LP640)',chassis:'super',
-   body:{kg:1750,cd:0.33,area:2.00,wb:2.665,fWt:0.42},fit:{drive:'awd',tire:'sport',tw:335,ta:30,wheel:18,brake:'big',rotor:380,susp:'sport',gears:6,gearbox:'sequential',diff:'visc'},
+   body:{kg:1750,cd:0.33,area:2.00,wb:2.665,fWt:0.42},fit:{drive:'awd',tire:'sport',tw:335,twF:245,ta:30,wheel:18,brake:'big',rotor:380,susp:'sport',gears:6,gearbox:'sequential',diff:'visc'},
    real:{t100:3.4,top:340},unsure:['kg','cd','area','fWt']},
   {cat:'Supercar',era:'2010s',name:'Ferrari 458 Italia (2010)',engine:'Ferrari F136 FB V8 (458 Italia)',chassis:'super',
-   body:{kg:1485,cd:0.33,area:1.95,wb:2.65,fWt:0.42},fit:{drive:'rwd',tire:'sport',tw:295,ta:35,wheel:20,brake:'carbon',rotor:398,susp:'sport',gears:7,gearbox:'dct',diff:'clsd'},
+   body:{kg:1485,cd:0.33,area:1.95,wb:2.65,fWt:0.42},fit:{drive:'rwd',tire:'sport',tw:295,twF:235,ta:35,wheel:20,brake:'carbon',rotor:398,susp:'sport',gears:7,gearbox:'dct',diff:'clsd'},
    real:{t100:3.4,top:325},unsure:['area','fWt']},
   {cat:'Supercar',era:'2010s',name:'Lamborghini Huracán LP610-4 (2014)',engine:'Lamborghini 5.2 V10 (Huracán LP610-4)',chassis:'super',
-   body:{kg:1550,cd:0.39,area:1.95,wb:2.62,fWt:0.43},fit:{drive:'awd',tire:'sport',tw:305,ta:30,wheel:20,brake:'carbon',rotor:380,susp:'sport',gears:7,gearbox:'dct',diff:'clsd'},
+   body:{kg:1550,cd:0.39,area:1.95,wb:2.62,fWt:0.43},fit:{drive:'awd',tire:'sport',tw:305,twF:245,ta:30,wheel:20,brake:'carbon',rotor:380,susp:'sport',gears:7,gearbox:'dct',diff:'clsd'},
    real:{t100:3.2,top:325},unsure:['cd','area','kg']},
   {cat:'Supercar',era:'2010s',name:'McLaren 720S (2017)',engine:'McLaren M840T twin-turbo V8 (720S)',chassis:'super',
-   body:{kg:1419,cd:0.38,area:1.95,wb:2.67,fWt:0.42},fit:{drive:'rwd',tire:'sport',tw:305,ta:30,wheel:20,brake:'carbon',rotor:390,susp:'sport',gears:7,gearbox:'dct',diff:'clsd'},
+   body:{kg:1419,cd:0.38,area:1.95,wb:2.67,fWt:0.42},fit:{drive:'rwd',tire:'sport',tw:305,twF:245,ta:30,wheel:20,brake:'carbon',rotor:390,susp:'sport',gears:7,gearbox:'dct',diff:'clsd'},
    real:{t100:2.9,top:341},unsure:['cd','area','fWt']},
   {cat:'Supercar',era:'2010s',name:'Ferrari 812 Superfast (2017)',engine:'Ferrari F140 V12 (812 Superfast)',chassis:'gt',
-   body:{kg:1745,cd:0.37,area:2.05,wb:2.72,fWt:0.47},fit:{drive:'rwd',tire:'sport',tw:315,ta:35,wheel:20,brake:'carbon',rotor:400,susp:'sport',gears:7,gearbox:'dct',diff:'clsd'},
+   body:{kg:1745,cd:0.37,area:2.05,wb:2.72,fWt:0.47},fit:{drive:'rwd',tire:'sport',tw:315,twF:275,ta:35,wheel:20,brake:'carbon',rotor:400,susp:'sport',gears:7,gearbox:'dct',diff:'clsd'},
    real:{t100:2.9,top:340},unsure:['cd','area','kg']},
   {cat:'Supercar',era:'2020s',name:'Porsche 911 Turbo S (992, 2020)',engine:'Porsche 3.7 twin-turbo flat-six (911 Turbo S 992)',chassis:'super',
-   body:{kg:1640,cd:0.33,area:2.10,wb:2.45,fWt:0.39,engPos:'rear'},fit:{drive:'awd',tire:'sport',tw:315,ta:30,wheel:21,brake:'carbon',rotor:420,susp:'sport',gears:8,gearbox:'dct',diff:'clsd'},
+   body:{kg:1640,cd:0.33,area:2.10,wb:2.45,fWt:0.39,engPos:'rear'},fit:{drive:'awd',tire:'sport',tw:315,twF:255,ta:30,wheel:21,brake:'carbon',rotor:420,susp:'sport',gears:8,gearbox:'dct',diff:'clsd'},
    real:{t100:2.7,top:330},unsure:['area','fWt']},
   // 1339 kg dry; its fixed wing and splitter are part of the measured drag
   {cat:'Supercar',era:'2020s',name:'Lamborghini Huracán STO (2021)',engine:'Lamborghini 5.2 V10 (Huracán STO)',chassis:'super',
-   body:{kg:1450,cd:0.40,area:1.95,wb:2.62,fWt:0.41},fit:{drive:'rwd',tire:'semi',tw:305,ta:30,wheel:20,brake:'carbon',rotor:390,susp:'coilover',gears:7,gearbox:'dct',diff:'clsd'},
+   body:{kg:1450,cd:0.40,area:1.95,wb:2.62,fWt:0.41},fit:{drive:'rwd',tire:'semi',tw:305,twF:245,ta:30,wheel:20,brake:'carbon',rotor:390,susp:'coilover',gears:7,gearbox:'dct',diff:'clsd'},
    real:{t100:3.0,top:310},unsure:['kg','cd','area','fWt']},
   // GM quotes 0-60 mph in 2.6 s
   {cat:'Supercar',era:'2020s',name:'Chevrolet Corvette Z06 (C8, 2023)',engine:'GM LT6 flat-plane V8 (Corvette Z06 C8)',chassis:'super',
-   body:{kg:1561,cd:0.37,area:2.05,wb:2.72,fWt:0.40},fit:{drive:'rwd',tire:'sport',tw:345,ta:25,wheel:21,brake:'big',rotor:370,susp:'sport',gears:8,gearbox:'dct',diff:'clsd'},
+   body:{kg:1561,cd:0.37,area:2.05,wb:2.72,fWt:0.40},fit:{drive:'rwd',tire:'sport',tw:345,twF:275,ta:25,wheel:21,brake:'big',rotor:370,susp:'sport',gears:8,gearbox:'dct',diff:'clsd'},
    real:{t100:2.8,top:312},unsure:['cd','area','t100','top']},
   {cat:'Supercar',era:'2020s',name:'McLaren 750S (2023)',engine:'McLaren M840T twin-turbo V8 (750S)',chassis:'super',
-   body:{kg:1389,cd:0.38,area:1.95,wb:2.67,fWt:0.42},fit:{drive:'rwd',tire:'sport',tw:305,ta:30,wheel:20,brake:'carbon',rotor:390,susp:'sport',gears:7,gearbox:'dct',diff:'clsd'},
+   body:{kg:1389,cd:0.38,area:1.95,wb:2.67,fWt:0.42},fit:{drive:'rwd',tire:'sport',tw:305,twF:245,ta:30,wheel:20,brake:'carbon',rotor:390,susp:'sport',gears:7,gearbox:'dct',diff:'clsd'},
    real:{t100:2.8,top:332},unsure:['cd','area','fWt']},
   {cat:'Rotary',name:'Mazda RX-7 (FD, 1993)',engine:'Mazda 13B-REW (RX-7 FD)',chassis:'coupe',
    body:{kg:1280,cd:0.29,area:1.80,wb:2.425,fWt:0.50},fit:{drive:'rwd',tire:'sport',tw:225,ta:50,wheel:16,brake:'slotted',rotor:290,susp:'sport',gears:5,gearbox:'manual',diff:'clsd'},
@@ -4966,7 +4971,7 @@ function vehicleFromPreset(p){
   const keys=Object.keys(SPEED_RATING), i=keys.findIndex(k=>SPEED_RATING[k].kmh>=p.real.top);
   const rating=keys[Math.min(keys.length-1,(i<0?keys.length-1:i)+(p.real.limited?1:0))];
   return {chassis:p.chassis,drive:fit.drive,gearbox:fit.gearbox,diff:fit.diff,gears:fit.gears,gearing:fit.gearing,
-    tireType:fit.tire,tireWidth:fit.tw,tireAspect:fit.ta,wheelDia:fit.wheel,
+    tireType:fit.tire,tireWidth:fit.tw,tireWidthF:fit.twF||0,arbBal:0,tireAspect:fit.ta,wheelDia:fit.wheel,
     aeroFront:fit.aF,aeroRear:fit.aR,aeroFloor:fit.aFl,weightRed:fit.weight,
     brakeType:fit.brake,rotor:fit.rotor,suspension:fit.susp,speedRating:rating,governor:fit.gov,limitKmh:fit.gov||250,
     body:Object.assign({name:p.name,fit},p.body)};
@@ -5188,19 +5193,19 @@ const SUSPENSION={
 // 165/65R14 (437 kg), 205/55R16 (615) and 305/30R20 (875) within 3%. So a bigger tyre grips harder at
 // the same load, a light car on big tyres harder still, and a heavy one less: the work three fitted
 // multipliers did (chassis grip, suspension grip, a width bonus), done by one mechanism.
-const LOAD_SENS=0.15, TYRE_RATED_KG_M3=16300, TYRE_REF_SHARE=0.6;
+const LOAD_SENS=0.15, TYRE_RATED_KG_M3=16300, TYRE_REF_SHARE=0.6, ARB_STEP=0.04;
 // Camber: a tyre makes its most lateral force leaning slightly into the turn, ~-1.5 deg, and loses ~1.5%
 // of it per degree either side. The loaded outside tyre's angle is the static camber plus the body roll
 // the suspension geometry does not claw back (about half).
 const CAMBER_RECOVERY=0.5, CAMBER_LOSS=0.015, CAMBER_BEST=-1.5;
-function tyreMu(Fz){return vehicle.muRef*Math.pow(Math.max(200,Fz)/vehicle.FzRef,-LOAD_SENS);}
+function tyreMu(Fz,FzRef){return vehicle.muRef*Math.pow(Math.max(200,Fz)/(FzRef||vehicle.FzRef),-LOAD_SENS);}
 // The friction ellipse (build 111): a tyre pulls harder along its length than across it. Peak
 // longitudinal force runs 10-20% over peak lateral in tyre test data (Milliken & Milliken, RCVD ch. 2):
 // driving or braking, the whole contact patch shears the same way at once, while a cornering tyre builds
 // its force along the patch and only its rear part slides at the peak. The compound mu is the lateral
 // figure (skidpads); braking and traction take 1.15 of it, and combined use follows the ellipse.
 const TYRE_MU_X=1.15;
-function tyreMuX(Fz){return TYRE_MU_X*tyreMu(Fz);}
+function tyreMuX(Fz,FzRef){return TYRE_MU_X*tyreMu(Fz,FzRef);}
 // Cornering drag (build 119). A tyre makes its side force by running at a slip angle: its wheel points
 // alpha off the way the car is going, and the force it makes, square to the wheel, leans back against
 // the travel by that angle. Below the limit the side force is the cornering stiffness times the angle,
@@ -5211,19 +5216,30 @@ function tyreMuX(Fz){return TYRE_MU_X*tyreMu(Fz);}
 // least it can cost.
 const TYRE_CC=0.2*180/Math.PI;   // per radian
 function corneringDrag(m,ay,N){return m*m*ay*ay/(Math.max(1,N)*TYRE_CC);}
-// The car's lateral grip as a share of its normal load N while cornering at ay (m/s2): each axle's two
-// tyres, with the lateral load transfer m ay h / t moved from the inside one to the outside one (shared
-// by the axles as their static loads are), and the outside tyre's roll camber.
-function latMuEff(N,ay){
-  const m=vehicle.mass, dW=m*Math.abs(ay)*vehicle.cg/Math.max(0.8,vehicle.track);
-  let cap=0;
-  for(const share of [vehicle.fWt,1-vehicle.fWt]){
-    const F=N*share/2, d=dW*share, o=F+d, inr=Math.max(0,F-d);
-    cap+=tyreMu(o)*o+(inr>0?tyreMu(inr)*inr:0);
-  }
-  const camber=vehicle.camber+vehicle.rollGrad*Math.abs(ay)/G*(1-CAMBER_RECOVERY);
-  return cap/Math.max(1,N)*(1-CAMBER_LOSS*Math.abs(camber-CAMBER_BEST));
+// The car's lateral grip as a share of its normal load N while cornering at ay (m/s2), dn of N being downforce.
+// Build 153: per axle. Each axle has its own normal load (its weight share, and its share of the downforce by the
+// aero balance), its own share of the lateral load transfer m ay h / t (the roll-stiffness distribution, set by the
+// anti-roll bars: vehicle.lltdF), its own tyres (a staggered car's fronts are narrower), and the outside tyre's
+// roll camber. In a steady corner each axle must make the side force for the mass it carries (front: m ay fWt),
+// so the car corners only as hard as the axle that runs out first allows: the front (understeer) or the rear
+// (oversteer). Until build 153 the four tyres' grip was pooled, so no car could be out of balance.
+function latCamberF(ay){return 1-CAMBER_LOSS*Math.abs(vehicle.camber+vehicle.rollGrad*Math.abs(ay)/G*(1-CAMBER_RECOVERY)-CAMBER_BEST);}
+// one axle's two tyres at normal load Nax with lateral transfer d across them (N)
+function axleLatCap(Nax,d,FzRef){
+  const F=Nax/2,o=F+d,inr=Math.max(0,F-d);
+  return tyreMu(o,FzRef)*o+(inr>0?tyreMu(inr,FzRef)*inr:0);
 }
+function latBalance(N,ay,dn,ax){
+  const m=vehicle.mass,fWt=vehicle.fWt||0.55,aF=vehicle.aeroBal!=null?vehicle.aeroBal:0.5,lt=vehicle.lltdF!=null?vehicle.lltdF:fWt;
+  const tr=ax||0;   // longitudinal load transfer onto the front (N): braking +, accelerating -
+  const Nf=clamp((N-(dn||0))*fWt+(dn||0)*aF+tr,0.05*N,0.95*N),Nr=N-Nf;
+  const dW=m*Math.abs(ay)*vehicle.cg/Math.max(0.8,vehicle.track),cam=latCamberF(ay);
+  const capF=axleLatCap(Nf,dW*lt,vehicle.FzRefF)*cam,capR=axleLatCap(Nr,dW*(1-lt),vehicle.FzRef)*cam;
+  // the lateral acceleration each axle alone would allow, as a share of N
+  const muF=capF/Math.max(1,fWt*N),muR=capR/Math.max(1,(1-fWt)*N);
+  return {mu:Math.min(muF,muR),muF,muR,capF,capR,Nf,Nr};
+}
+function latMuEff(N,ay,dn){return latBalance(N,ay,dn).mu;}
 // Gearbox type. Four things separate them:
 //   shift  — time the drive is cut on an upshift (s). A manual has to unload the clutch, move a
 //            lever and re-engage; a sequential just bangs the next dog in; a DCT has the next
@@ -7005,6 +7021,8 @@ function readVehicleFromForm(){
     // gearing may legitimately be 0 (shortest final drive), so fall back only on a non-number.
     gears:clamp(Math.round(+g('vhGears').value||6),4,8),gearing:clamp(numOr(g('vhGearing').value,52),0,100),
     tireType:g('vhTire').value,tireWidth:clamp(Math.round(+g('vhTireW').value||225),135,355),
+    // the front tyres' width when narrower or wider than the rears (0 = the same), and the roll balance (build 153)
+    tireWidthF:+g('vhTireWF').value>0?clamp(Math.round(+g('vhTireWF').value),135,355):0,arbBal:clamp(Math.round(+g('vhArb').value||0),-2,2),
     tireAspect:clamp(Math.round(+g('vhTireA').value||40),25,70),wheelDia:clamp(Math.round(+g('vhWheel').value||18),13,22),
     aeroFront:g('vhAeroF').value,aeroRear:g('vhAeroR').value,aeroFloor:g('vhAeroFl').value,weightRed:g('vhWeight').value,
     brakeType:g('vhBrake').value,rotor:clamp(Math.round(+g('vhRotor').value||330),250,420),suspension:g('vhSusp').value,
@@ -7026,7 +7044,7 @@ function applyVehicleToForm(v){
   g('vhLimiter').value=v.governor>0?'on':'off';g('vhLimitKmh').value=v.governor>0?v.governor:(v.limitKmh||250);
   g('vhChassis').value=v.chassis||'coupe';g('vhDrive').value=v.drive||'rwd';g('vhGearbox').value=v.gearbox||'manual';g('vhDiff').value=v.diff||'open';
   g('vhGears').value=v.gears||6;g('vhGearing').value=v.gearing!=null?v.gearing:52;
-  g('vhTire').value=v.tireType||'sport';g('vhTireW').value=v.tireWidth||235;g('vhTireA').value=v.tireAspect||40;g('vhWheel').value=v.wheelDia||18;
+  g('vhTire').value=v.tireType||'sport';g('vhTireW').value=v.tireWidth||235;g('vhTireWF').value=v.tireWidthF||0;g('vhArb').value=String(v.arbBal||0);g('vhTireA').value=v.tireAspect||40;g('vhWheel').value=v.wheelDia||18;
   g('vhAeroF').value=v.aeroFront||'none';g('vhAeroR').value=v.aeroRear||'none';g('vhAeroFl').value=v.aeroFloor||'none';g('vhWeight').value=v.weightRed||'none';
   g('vhBrake').value=v.brakeType||'slotted';g('vhRotor').value=v.rotor||330;g('vhSusp').value=v.suspension||'sport';
   g('vhSteer').value=v.steerRatio||15;   // saves from before build 130 carry none
@@ -7041,7 +7059,7 @@ function applyChassisFit(key,body){
   g('vhChassis').value=key;   // self-contained: callers may fit a chassis without touching the select
   g('vhDrive').value=body?f.drive:ch.drive;g('vhGearbox').value=f.gearbox;g('vhDiff').value=f.diff;
   g('vhGears').value=f.gears;g('vhGearing').value=f.gearing;
-  g('vhTire').value=f.tire;g('vhTireW').value=f.tw;g('vhTireA').value=f.ta;g('vhWheel').value=f.wheel;
+  g('vhTire').value=f.tire;g('vhTireW').value=f.tw;g('vhTireWF').value=f.twF||0;g('vhArb').value='0';g('vhTireA').value=f.ta;g('vhWheel').value=f.wheel;
   g('vhRating').value=(TIRE_TYPE[f.tire]||TIRE_TYPE.sport).rating;
   if(body){const top=VEHICLE_PRESETS.find(p=>p.name===body.name);
     if(top)g('vhRating').value=vehicleFromPreset(top).speedRating;}
@@ -7068,7 +7086,7 @@ function fitmentLabel(v){
 function isFactoryFit(v){
   const ch=CHASSIS[v.chassis];if(!ch||!ch.fit)return false;const f=v.body?v.body.fit:ch.fit;
   return v.drive===(v.body?f.drive:ch.drive)&&(v.governor||0)===(f.gov||0)&&v.gears===f.gears&&v.gearing===f.gearing&&v.gearbox===f.gearbox&&v.diff===f.diff&&
-    v.tireType===f.tire&&v.tireWidth===f.tw&&v.tireAspect===f.ta&&v.wheelDia===f.wheel&&
+    v.tireType===f.tire&&v.tireWidth===f.tw&&(v.tireWidthF||0)===(f.twF||0)&&(v.arbBal||0)===0&&v.tireAspect===f.ta&&v.wheelDia===f.wheel&&
     v.aeroFront===f.aF&&v.aeroRear===f.aR&&v.aeroFloor===f.aFl&&v.weightRed===f.weight&&
     v.brakeType===f.brake&&v.rotor===f.rotor&&v.suspension===f.susp;
 }
@@ -7097,6 +7115,8 @@ function buildVehicle(){
   {const D=2*vehicle.rTire,d=vehicle.wheelDia*0.0254;
    vehicle.tyreRatedKg=TYRE_RATED_KG_M3*Math.PI/4*(D*D-d*d)*(vehicle.tireWidth/1000);}
   vehicle.muRef=tt.mu;vehicle.FzRef=TYRE_REF_SHARE*vehicle.tyreRatedKg*G;
+  // a staggered car's front tyres (build 153): their rated load scales with their width on the same wheel
+  vehicle.FzRefF=vehicle.FzRef*((vehicle.tireWidthF>0?vehicle.tireWidthF:vehicle.tireWidth)/vehicle.tireWidth);
   vehicle.rollGrad=susp.roll;vehicle.camber=susp.camber;
   vehicle.crr=tt.crr;
   vehicle.speedRating=document.getElementById('vhRating').value||tt.rating;
@@ -7133,6 +7153,11 @@ function buildVehicle(){
   vehicle.aeroBal=vehicle.clA>0?clF/vehicle.clA:0.5;   // share of the downforce on the front axle
   // the driven axle's share of the weight (static) and of the downforce
   vehicle.drivenWt=vehicle.drive==='awd'?1:vehicle.drive==='rwd'?1-vehicle.fWt:vehicle.fWt;
+  // Roll balance (build 153): the front's share of the lateral load transfer. Neutral is the car's weight split
+  // (each axle's tyres then carry the same share of the transfer as of the weight); stiffer front anti-roll bars move
+  // transfer forward, which costs the front grip (understeer), stiffer rear bars move it back (oversteer). Each step
+  // of ROLL BALANCE is 4% of the transfer.
+  vehicle.lltdF=clamp(vehicle.fWt+ARB_STEP*(vehicle.arbBal||0),0.25,0.8);
   vehicle.drivenAero=vehicle.drive==='awd'?1:vehicle.drive==='rwd'?1-vehicle.aeroBal:vehicle.aeroBal;
   vehicle.cdA=((body?body.cd:ch.cd)+af.cd+ar.cd+al.cd)*vehicle.area;  // drag coefficient·area
   const gb=GEARBOX[vehicle.gearbox]||GEARBOX.manual,df=DIFF[vehicle.diff]||DIFF.open;
@@ -8126,7 +8151,7 @@ function simulateLap(key,opts){
   const dCorner=df.corner!=null?df.corner:1;   // locking the diff scrubs lateral grip
   // Lateral grip at a normal load and lateral acceleration: the tyres under load transfer and roll
   // camber (latMuEff, build 109), less the diff's scrub.
-  const muLatAt=(N,ay)=>latMuEff(N,ay)*dCorner;
+  const muLatAt=(N,ay,vv)=>latMuEff(N,ay,down(vv))*dCorner;   // vv: the speed, for the downforce's share of N
   const axleTqMax=Math.max(1,curve.reduce((a,q)=>Math.max(a,q.tq),0)*ratios[0]*fd*(vehicle.gb&&vehicle.gb.mult||1));
   const down=v=>0.5*AIR_RHO*vehicle.clA*v*v;
   // Normal load at a point: weight resolved onto the slope + downforce − vertical-curvature term.
@@ -8199,7 +8224,7 @@ function simulateLap(key,opts){
       const num=muLat*m*G*q.cosT+extra;
       vv=denom>1e-6?Math.min(VMAX,Math.sqrt(Math.max(0,num/denom))):VMAX;
     }
-    muLat=muLatAt(loadAt(q,vv),vv*vv/q.r);
+    muLat=muLatAt(loadAt(q,vv),vv*vv/q.r,vv);
     }
     return vv;
   }
@@ -8220,21 +8245,26 @@ function simulateLap(key,opts){
   // under braking cost nothing.
   const fWt=vehicle.fWt||0.55,aeroF=vehicle.aeroBal!=null?vehicle.aeroBal:0.5,fH=vehicle.brakeFrontShare||0.7;
   const engFront=vehicle.drive==='fwd'?1:vehicle.drive==='awd'?fWt:0;   // the engine's braking: the driven axle's share
-  // The axles at point q, speed vv, slowing at a (m/s2, the tyres' share) with lateral use u: their loads and grips.
-  function axles(q,vv,a,u){
+  // The axles at point q, speed vv, slowing at a (m/s2, the tyres' share) while cornering at ay: their loads and the
+  // grip each has left along the road. Build 153: each axle's own side force (the mass it carries times ay) against
+  // its own lateral grip at the load the braking leaves it, so braking into a corner unloads the rear and it runs out
+  // first (the car turns in on the brakes, and a driver who brakes too hard there spins it). Until build 153 both axles
+  // used the whole car's pooled lateral use.
+  function axles(q,vv,a,ay){
     const N=loadAt(q,vv),dn=down(vv),tr=m*a*hL;
-    const NfS=(N-dn)*fWt+dn*aeroF,Nf=clamp(NfS+tr,0.05*N,0.95*N),Nr=N-Nf,s=Math.sqrt(Math.max(0,1-u*u));
-    return {Nf,Nr,gF:tyreMuX(Nf/2)*Nf*s,gR:tyreMuX(Nr/2)*Nr*s};
+    const B=latBalance(N,ay,dn,tr),Nf=B.Nf,Nr=B.Nr;
+    const uF=clamp(m*ay*fWt/Math.max(1,B.capF*dCorner),0,1),uR=clamp(m*ay*(1-fWt)/Math.max(1,B.capR*dCorner),0,1);
+    return {Nf,Nr,uF,uR,gF:tyreMuX(Nf/2,vehicle.FzRefF)*Nf*Math.sqrt(Math.max(0,1-uF*uF)),gR:tyreMuX(Nr/2)*Nr*Math.sqrt(Math.max(0,1-uR*uR))};
   }
   let bfBound=false;   // the brakes, not the tyres, set the last answer
   function brakeFrom(q,vi0,vNext,fade,ea=0,fadeRr=fade){
     let vi=Math.min(vi0,vNext),cap=vi0,aT=0.8*G;
     for(let it=0;it<4;it++){
     const N=loadAt(q,vi);
-    const ayi=vi*vi/q.r,aLatMax=muLatAt(N,ayi)*N/m,u=clamp(ayi/Math.max(0.1,aLatMax),0,1);
+    const ayi=vi*vi/q.r;
     const cBF=vehicle.brakeDecelCap*fade*m*fH,cBR=vehicle.brakeDecelCap*fadeRr*m*(1-fH),eF=ea*m*engFront,eR=ea*m*(1-engFront);
     for(let k=0;k<3;k++){   // the load transfer follows the deceleration it makes
-      const ax=axles(q,vi,aT,u);
+      const ax=axles(q,vi,aT,ayi);
       aT=(Math.min(ax.gF,cBF+eF)+Math.min(ax.gR,cBR+eR))/m;
       bfBound=cBF+eF<ax.gF||cBR+eR<ax.gR;
     }
@@ -8259,12 +8289,16 @@ function simulateLap(key,opts){
     const N=loadAt(q,vi),dn=down(vi);
     const N0=(N-dn)*vehicle.drivenWt+dn*vehicle.drivenAero;
     const aLat=vi*vi/q.r;
-    const aLatMax=muLatAt(N,aLat)*N/m,u=clamp(aLat/Math.max(0.1,aLatMax),0,1);
+    // the share of the grip in use sideways: the car's (for the 'corner' call) and the driven axle's own, which is
+    // what is left for the drive (build 153: a rear-driver's rears may be nearer their limit than the car is)
+    const B=latBalance(N,aLat,dn),aLatMax=B.mu*dCorner*N/m,u=clamp(aLat/Math.max(0.1,aLatMax),0,1);
+    const uFa=clamp(m*aLat*vehicle.fWt/Math.max(1,B.capF*dCorner),0,1),uRa=clamp(m*aLat*(1-vehicle.fWt)/Math.max(1,B.capR*dCorner),0,1);
+    const uD=vehicle.drive==='fwd'?uFa:vehicle.drive==='rwd'?uRa:Math.max(uFa,uRa);
     // Diff traction is evaluated at the lateral load transfer actually happening here, so an
     // open diff falls apart on a fast corner exit while a locked one doesn't.
     const g0=gear>=0?inGear(vi,gear):gearAt(vi),bg=boostShare<1?{gear:g0.gear,F:g0.F*boostShare,tqFrac:g0.tqFrac*boostShare}:g0;
     const R=(drag(vi)+rollF(vi)*q.cosT+corneringDrag(m,aLat,N))/m+G*q.sinT;
-    const kk=tyreMuX(N0/(vehicle.drive==='awd'?4:2))*diffTractionAt(df,aLat,vehicle.cg,bg.tqFrac)*Math.sqrt(Math.max(0,1-u*u));
+    const kk=tyreMuX(N0/(vehicle.drive==='awd'?4:2),vehicle.drive==='fwd'?vehicle.FzRefF:vehicle.FzRef)*diffTractionAt(df,aLat,vehicle.cg,bg.tqFrac)*Math.sqrt(Math.max(0,1-uD*uD));
     // On power the drive force also spins up the engine and wheels (vehicleMassEff, build 106): a = (F -
     // m R) / mE. On grip the tyres are slipping, the surplus only spins the wheels, and the car gets the
     // tyre's force over its own mass, with the load transfer following that acceleration:
@@ -8424,8 +8458,8 @@ function simulateLap(key,opts){
   // the driven axle, the brakes' in the hydraulic split, ABS moving the excess off an axle at its grip onto the
   // other. Returns each axle's share of its grip in use and the brakes' front share (for the rotors' heat).
   function axleUse(i,at,ea){
-    const N=loadAt(p[i],v[i]),ay=v[i]*v[i]/p[i].r,u=clamp(ay/Math.max(0.1,muLatAt(N,ay)*N/m),0,1);
-    const ax=axles(p[i],v[i],Math.max(0,at),u),eF=ea*m*engFront,eR=ea*m*(1-engFront);
+    const ay=v[i]*v[i]/p[i].r;
+    const ax=axles(p[i],v[i],Math.max(0,at),ay),eF=ea*m*engFront,eR=ea*m*(1-engFront);
     const Fb=Math.max(0,m*at-eF-eR);
     let bf=Fb*fH,br=Fb-bf;
     if(bf+eF>ax.gF){bf=Math.max(0,ax.gF-eF);br=Fb-bf;}
@@ -8682,7 +8716,15 @@ function simulateLap(key,opts){
   for(let i=0;i<n;i++){const dz=p[(i+1)%n].z-p[i].z;if(dz>0)climb+=dz;zMin=Math.min(zMin,p[i].z);zMax=Math.max(zMax,p[i].z);}
   const counts={corner:0,brake:0,power:0,traction:0};
   for(let i=0;i<n;i++)counts[lim[i]]+=p[i].ds3;
-  return {track:T,lap:t,sectors:sect,v,lim,vMin:vMin*3.6,vMax:vMax*3.6,
+  // Balance (build 153): through the corner-limited stretches, which axle runs out first. Front = understeer.
+  const balance={under:0,over:0,margin:0};
+  for(let i=0;i<n;i++)if(lim[i]==='corner'){
+    const B=latBalance(loadAt(p[i],v[i]),v[i]*v[i]/p[i].r,down(v[i]));
+    if(B.muF<B.muR)balance.under+=p[i].ds3;else balance.over+=p[i].ds3;
+    balance.margin+=(B.muR-B.muF)/Math.max(1e-6,B.mu)*p[i].ds3;   // + = the rear has grip to spare
+  }
+  balance.margin/=Math.max(1,balance.under+balance.over);
+  return {track:T,lap:t,sectors:sect,v,lim,balance,vMin:vMin*3.6,vMax:vMax*3.6,
     avg:p.length_/t*3.6,shifts,shiftLoss,counts,gears,climb,zMin,zMax,length:T.length,lineLength:p.length_,
     // The peak the power readout is measured against: the curve this lap drives (best-power mixture), which
     // can sit a little above the as-tuned figure quoted on DYNO.
@@ -12337,6 +12379,9 @@ function renderLap(){
     cell(tr('SLOWEST'),Math.round(L.vMin),'km/h')+
     cell(tr('FASTEST'),Math.round(L.vMax),'km/h')+
     cell(tr('SHIFTS'),L.shifts,'−'+L.shiftLoss.toFixed(2)+'s')+
+    (L.balance&&L.balance.under+L.balance.over>0?(()=>{const b=L.balance,us=b.under/(b.under+b.over),mg=Math.abs(b.margin)*100;
+      const w=mg<1.5?tr('NEUTRAL'):us>=0.5?tr('UNDERSTEER'):tr('OVERSTEER');
+      return cell(tr('BALANCE'),w,mg<1.5?'':(us>=0.5?tr('front'):tr('rear'))+' '+tr('limits')+' · '+mg.toFixed(0)+'%');})():'')+
     (L.brakeMaxF!=null?cell(tr('BRAKE TEMP'),'<span style="color:'+brakeTempColour(L.brakeMaxF,L.brakeOnset)+'">'+Math.round(L.brakeMaxF)+'°C</span>',
       L.brakeMaxF>=L.brakeOnset?tr('BRAKE FADE')+' −'+Math.round((1-Math.min(...L.replay.fade))*100)+'%':tr('fade from')+' '+L.brakeOnset+'°C'):'');
   if(note)note.textContent=tr(L.track.blurb);
@@ -13773,7 +13818,7 @@ function bindControls(){
     try{localStorage.setItem('pes.gauges',lapReplay.gauges);}catch(err){}});
   // Vehicle design: recompute performance live on any change. Picking a chassis fits its whole
   // factory spec (drivetrain, gearbox, tyres/wheels, brakes, suspension, aero, weight).
-  ['vhChassis','vhDrive','vhGearbox','vhDiff','vhGears','vhGearing','vhLimiter','vhLimitKmh','vhRating','vhTire','vhTireW','vhTireA','vhWheel','vhAeroF','vhAeroR','vhAeroFl','vhWeight','vhBrake','vhRotor','vhSusp','vhSteer'].forEach(id=>{
+  ['vhChassis','vhDrive','vhGearbox','vhDiff','vhGears','vhGearing','vhLimiter','vhLimitKmh','vhRating','vhTire','vhTireW','vhTireWF','vhArb','vhTireA','vhWheel','vhAeroF','vhAeroR','vhAeroFl','vhWeight','vhBrake','vhRotor','vhSusp','vhSteer'].forEach(id=>{
     const el=document.getElementById(id);if(!el)return;
     el.addEventListener('input',()=>{
       if(id==='vhChassis'){
