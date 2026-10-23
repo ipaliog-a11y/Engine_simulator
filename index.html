@@ -372,7 +372,7 @@ table.fuelmap td.live{box-shadow:inset 0 0 0 2px #fff;font-weight:bold}
 <body>
 <div class="container">
 <header>
-<h1>PIXEL ENGINE SIM v0.6 build 143</h1>
+<h1>PIXEL ENGINE SIM v0.6 build 144</h1>
 <div class="subtitle" id="subtitle">ENGINE DESIGNER • BUILD IT, THEN DRIVE IT</div>
 </header>
 <div class="build-strip" id="buildStrip">
@@ -1927,8 +1927,11 @@ Choose the <b>brake</b> type on the VEHICLE tab. It sets the pads, calipers, rot
 <div class="gtier gt-phys"><div class="gtier-h">LV3 · THE PHYSICS</div>
 <div class="guide-body" data-gk="brakesPhys">
 <b>Force</b> comes from the hydraulics: per wheel, two pads × pad μ × line pressure (about 100 bar in an emergency stop) × piston area × the effective radius (0.4 of the rotor diameter), over the tyre radius. Deceleration builds over about 0.2 s (Limpert). The stop is the lesser of tyre grip and brake force.<br>
-<b>Heat in</b> is the power the brakes take out of the car, <i>m · a · v</i>, split by the axle loads while braking, 90% into the rotors. <b>Heat out</b> (Limpert): convection from the faces, <i>h = 0.04 (k/D) Re<sup>0.8</sup></i> at the car's speed; through the vanes of a vented disc, a centrifugal pump moving air at <i>0.0158 · n · √(D<sub>o</sub>² − D<sub>i</sub>²)</i>; and radiation. Pad friction falls from its onset temperature (street 400 °C, performance 550, track 650, carbon-ceramic 1000) by up to 35% over 150 °C. A lap starts the rotors from ambient and runs one preparation lap before the timed hot lap.
+<b>Heat in</b> is the power the brakes take out of the car, <i>m · a · v</i>, split by the axle loads while braking, 90% into the rotors, whose mass is the friction ring (vented on every front disc, solid at the back on the plainer kits) and the iron hat that bolts it to the hub, about a fifth more. <b>Heat out</b> (Limpert): convection from the faces, <i>h = 0.04 (k/D) Re<sup>0.8</sup></i> at the car's speed; through the vanes of a vented disc, a centrifugal pump moving air at <i>0.0158 · n · √(D<sub>o</sub>² − D<sub>i</sub>²)</i>, at a coefficient of at least the measured <i>0.076 · n</i> W/m²K (27, 53 and 78 W/m²K at 342, 684 and 1025 rpm on a radial-vane rotor); and radiation. Pad friction falls from its onset temperature (street 400 °C, performance 550, track 650, carbon-ceramic 1000) by up to 35% over 150 °C. A lap starts the rotors from ambient and runs one preparation lap before the timed hot lap.
 </div>
+</div>
+<div class="guide-limit" data-gk="brakesLimit">
+The lap is driven flat out, braking at the limit into every corner, as a professional would on a qualifying lap. Light cars and small brakes come out where real ones are measured on track (300–550 °C on a short circuit, up to ~650 °C on a fast one); heavy, fast cars on long fast circuits (a Hellcat or an E46 M3 at Spa) run their rotors to 750–900 °C and fade, as real ones do when driven that hard. Track-day measurements usually read lower, 450–600 °C in the core, because most drivers brake earlier and softer than the limit.
 </div>
 <div class="guide-see">See also: <a data-gp="performance">Performance tests</a> · <a data-gp="lapsolve">Solving a lap</a> · <a data-gp="tyres">Tyres &amp; grip</a></div>
 </section>

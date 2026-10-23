@@ -20,6 +20,31 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 Working toward **v1.0 — every number derived, not fitted.**
 
+### Brakes against the real world (build 144)
+
+Asked whether street cars' rotors really reach 800+ C in two laps. The rise is right (a rotor's time constant is
+two to three minutes, so it reaches working temperature in two or three laps, as drivers see), but the level was
+200-350 C too hot on long fast circuits. Real figures: DBA puts track-day rotor cores at 450-600 C with surface
+peaks to ~800 C; temperature paint at VIR read 460-550 C; a Cayman on R-compounds ~540 C; an M2 on a small track
+~300 C; a road-type disc under a 5.5 t race truck 735 C.
+
+- **Vented fronts on every brake type.** The basic disc was solid all round; nearly every road car's fronts are
+  vented (an NA MX-5's are). `BRAKE_TYPE` gains `ventR` for the rears, solid on the plainer kits.
+- **The hat in the rotor's mass.** The one-piece iron rotor's bell (0.3 to 0.6 D, 6 mm, plus its cylinder) is
+  about a fifth of the part. The E46 M3's front rotor is now 10.3 kg, the MX-5's 4.7.
+- **Vane heat transfer from a measurement.** The developed-turbulent duct correlation gave ~25 W/m2K in the vanes
+  at 800 rpm, where they run at Re ~1e3. A radial-vane rotor measures 27.0, 52.7 and 78.3 W/m2K at 342, 684 and
+  1025 rpm (J. Applied Sciences 8 (2008) 3583): the coefficient is now at least 0.076 per rpm.
+- Front rotor, hot-lap peak, Spa / Nordschleife (C), before -> after: MX-5 841/942 -> 570/626, Civic Type R
+  671/731 -> 636/700, Golf GTI 768/823 -> 658/711, GR Yaris 570/618 -> 536/591, 911 GT3 727/772 -> 685/748,
+  Mustang GT 752/820 -> 712/795, E46 M3 877/953 -> 767/839, Corvette Z06 815/867 -> 777/839, Hellcat 876/945 ->
+  840/919. Ashdown Park: every iron brake 315-411 C. Lap times unchanged.
+- **What is left is the driver.** An energy count of the Spa lap puts ~8 MJ into each of a Hellcat's front rotors
+  (45 kW on average), 4.7 MJ into an M3's, 1.7 MJ into an MX-5's, and the cooling balances it: the lap brakes at
+  the limit into every corner, as a professional's would. Heavy fast cars driven that hard do cook their brakes;
+  the guide and the README now say so. `test76` pins the ranges, the fade, the rotor masses and the two-to-three
+  lap rise.
+
 ### A full-screen track view for phones (build 143)
 
 - **⛶ in TRACK's live timing** moves the map canvas and the replay controls (pause, restart, speed, gauges) into
