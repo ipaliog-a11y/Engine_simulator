@@ -373,7 +373,7 @@ table.fuelmap td.live{box-shadow:inset 0 0 0 2px #fff;font-weight:bold}
 <body>
 <div class="container">
 <header>
-<h1>PIXEL ENGINE SIM v0.6 build 153</h1>
+<h1>PIXEL ENGINE SIM v0.6 build 154</h1>
 <div class="subtitle" id="subtitle">ENGINE DESIGNER • BUILD IT, THEN DRIVE IT</div>
 </header>
 <div class="build-strip" id="buildStrip">
@@ -5203,7 +5203,7 @@ const TYRE_MU_X=1.15;
 function tyreMuX(Fz){return TYRE_MU_X*tyreMu(Fz);}
 // The tyre's force against its longitudinal slip (build 153), as a share of its peak: sin(C atan(B s)), the
 // shape of Pacejka's Magic Formula with B set so the peak sits at TYRE_SLIP_OPT. C 1.4 leaves sin(0.7 pi) =
-// 0.81 of the peak in a full slide (measured tyres 0.75-0.85). The peak at ~10% slip is dry asphalt's (6-15%
+// 0.82 of the peak in a full slide (measured tyres 0.75-0.85). The peak at ~10% slip is dry asphalt's (6-15%
 // measured); one figure for every compound.
 const TYRE_SLIP_OPT=0.10, TYRE_SLIP_C=1.4, TYRE_SLIP_B=Math.tan(Math.PI/(2*TYRE_SLIP_C))/TYRE_SLIP_OPT;
 function tyreSlipMu(s){const x=clamp(s,-3,3);return Math.sin(TYRE_SLIP_C*Math.atan(TYRE_SLIP_B*x));}
@@ -7343,15 +7343,14 @@ function simulateAccel(){
   // stops being charged the launch penalty.
   const axleTqMax=Math.max(1,curve.reduce((a,p)=>Math.max(a,p.tq),0)*ratios[0]*fd*(gb.mult||1));
   // Build 153: the driven wheels turn at their own speed, and the tyre pushes the car through SLIP. Below the
-  // optimum the force rises with slip; past it, it falls to a sliding plateau (sin(C atan(B s)), C 1.4: 0.81 of
+  // optimum the force rises with slip; past it, it falls to a sliding plateau (sin(C atan(B s)), C 1.4: 0.82 of
   // the peak in a full slide, measured tyres 0.75-0.85), so a wheel that breaks away keeps breaking away. The
   // peak is the traction the hard clip used to be (the tyre, the load, the diff), at a slip of 0.10: dry-asphalt
   // tyres peak at about 10% slip (6-15% measured), and one figure is used for every compound, the per-compound
   // spread not being established. With TRACTION CONTROL the ECU trims the torque to hold that slip, which is what
-  // the clip did; without it the run is flat out after the clutch: the engine's torque spins the tyres past the
-  // peak and the slip dynamics decide. That is the car on its own. A tester feathering the throttle by feel lands
-  // between the two, and how well is the driver, not the car: modelling it means tuning a controller to the
-  // magazines, which this does not do. The tester's one skill credited is the launch rpm (below).
+  // the clip did; without it the driver holds that slip through the launch (build 154, below), and from the first
+  // upshift the run is flat out: the engine's torque spins the tyres past the peak and the slip dynamics decide.
+  // The launch rpm is the best of several (below).
   const tcOn=vehicle.tc!==false, Iw=vehicle.wheelI||0, Iwd=Iw*(vehicle.drive==='awd'?1:0.5), mv=m+(Iw-Iwd)/(r*r);
   function run(launchRpm){
   let boostNow=grid.laggy?0:engine.maxBoost, shaftE=0;
@@ -7456,13 +7455,17 @@ function simulateAccel(){
     // the old a = (F - R)/mE; past it the surplus torque spins the wheels and the engine with them.
     const coupled=shiftT<=0&&!slipping&&!(tcStall&&rpm<tcStall);
     const Id=Iwd+(coupled?Ie*totalRatio*totalRatio*eff:0),Tw=driveF*r,NS=10,h=dt/NS;
+    // Build 154: without traction control the DRIVER holds the slip through the launch, in first gear, with the
+    // clutch and the throttle: the optimum is flat (8-12% slip within 0.5% of the time), so a driver feeling for
+    // it finds it. From the first upshift the run is flat out and a car with the power for it spins in second.
+    const holdSlip=tcOn||gear===0;
     let Fs=0,tcCut=false,sMax=0;
     for(let k=0;k<NS;k++){
       // The tyre is stiff against the wheel's inertia at low speed (a time constant under a millisecond at
       // walking pace), so the wheel is stepped implicitly on the force linearised in slip: stable at any step.
       const vf=Math.max(v,1),s0=(w*r-v)/vf,F0=trac*tyreSlipMu(s0),dF=trac*tyreSlipMuD(s0)*r/vf;
       let w1=(w+h/Id*(Tw-r*F0+r*dF*w))/(1+h/Id*r*dF);
-      if(tcOn){const wMax=(v+TYRE_SLIP_OPT*vf)/r;if(w1>wMax){w1=wMax;tcCut=true;}}   // the ECU trims the torque
+      if(holdSlip){const wMax=(v+TYRE_SLIP_OPT*vf)/r;if(w1>wMax){w1=wMax;tcCut=true;}}   // the ECU, or the driver's foot, trims the torque
       w=Math.max(0,w1);
       const s1=(w*r-v)/vf,F=trac*tyreSlipMu(s1);sMax=Math.max(sMax,s1);
       v=Math.max(0,v+(F-res)/mv*h);Fs+=F;
@@ -7481,13 +7484,13 @@ function simulateAccel(){
   }
   return M;
   }
-  // The launch rpm. With traction control (and launch control) the ECU picks it and holds the slip, so the
-  // run is made at the old 55% of the limiter. Without it the launch is the driver's, and a magazine's figure
-  // is the best of several tries: launched at five speeds from just off idle to three quarters of the
-  // limiter, the quickest to 100 km/h is the car's time.
+  // The launch rpm, the best of several tries, as a magazine's figure is (and as a launch control is set):
+  // launched at five speeds from just off idle to three quarters of the limiter, the quickest to 100 km/h is
+  // the car's time. (Build 154: this was the driver's only, without traction control; a car with it was run at
+  // 55% of the limiter, which left an R34 0.13 s.) A converter launches at its stall speed.
   const lDef=clamp(rl*0.55,idle+400,rl*0.72);
   let M=run(lDef);
-  if(!tcOn&&!tcStall){
+  if(!tcStall){
     const key=R=>R.t100||(R.q400?R.q400.t+100:1e9);
     for(const f of [0.30,0.42,0.65,0.75]){const R=run(clamp(rl*f,idle+300,rl*0.8));if(key(R)<key(M))M=R;}
   }

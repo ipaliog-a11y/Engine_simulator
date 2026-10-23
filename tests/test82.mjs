@@ -4,11 +4,13 @@
 // it never spun, and at the clip the car got the tyre's whole force while the wheels and the engine spun up for free.
 // Now the driven wheels turn at their own speed and the tyre pushes through slip, rising to a peak at ~10% and
 // falling past it to a sliding plateau, so a wheel that breaks away keeps breaking away. Traction control holds the
-// peak; without it the run is flat out after the clutch and the slip dynamics decide. What must hold:
+// peak; without it the driver holds it through the launch, in first gear (build 154: the optimum is the same small
+// slip, and flat), and from the first upshift the run is flat out and the slip dynamics decide. What must hold:
 //   · the curve: its peak at the optimum slip, 0.82 of it in a full slide (measured tyres 0.75-0.85);
-//   · a powerful rear-driver is slower without traction control and spins its tyres; a light car loses far less;
+//   · a powerful rear-driver is slower without traction control and spins its tyres after the launch; a light car,
+//     whose second gear cannot spin them, is as quick as with it: the driver's launch is the ECU's;
 //   · with traction control the tyre works at its optimum (traction-limited time, but no wheelspin past it);
-//   · without it the launch rpm is the tester's best of several, and it is recorded;
+//   · the launch rpm is the best of several, with traction control or without, and it is recorded;
 //   · the setting is a car's equipment: presets carry it, and it survives a garage save and load.
 import { chromium } from './pw.mjs';
 import { fileURLToPath, pathToFileURL } from 'url';
@@ -32,10 +34,12 @@ const r = await page.evaluate(() => {
   // 2-3. traction control on and off
   const runTC = (nm, tc) => { loadVehiclePreset(VEHICLE_PRESETS.find(p => p.name.includes(nm)));
     document.getElementById('vhTC').value = tc ? 'on' : 'off'; buildVehicle(); const P = simulateAccel();
-    return { t100: P.t100, spinT: P.spinT, gripT: P.gripT, launchRpm: P.launchRpm, tc: vehicle.tc }; };
+    const lDef = clamp(engine.redline * 0.55, engine.idleRpmEff + 400, engine.redline * 0.72);
+    return { t100: P.t100, spinT: P.spinT, gripT: P.gripT, launchRpm: P.launchRpm, tc: vehicle.tc, lDef }; };
   out.power = { on: runTC('Hellcat', true), off: runTC('Hellcat', false) };
   out.light = { on: runTC('Aygo', true), off: runTC('Aygo', false) };
   out.rpmOff = runTC('911 GT3 (991', false);
+  out.rpmOn = runTC('911 GT3 (991', true);
   // 4. equipment: presets carry it; it survives a save and load
   loadVehiclePreset(VEHICLE_PRESETS.find(p => p.name.includes('F355')));
   out.f355 = { tc: vehicle.tc, form: document.getElementById('vhTC').value };
@@ -66,8 +70,11 @@ if (!(r.power.on.gripT > 1)) fails.push('with traction control the Hellcat is no
 const lossP = r.power.off.t100 / r.power.on.t100 - 1, lossL = r.light.off.t100 / r.light.on.t100 - 1;
 console.log(`  without traction control: the Hellcat loses ${(lossP * 100).toFixed(1)}%, the Aygo ${(lossL * 100).toFixed(1)}%`);
 if (!(lossL < lossP / 2)) fails.push(`a 69 hp car loses ${(lossL * 100).toFixed(1)}% without traction control, not well under the 707 hp car's ${(lossP * 100).toFixed(1)}%`);
-console.log(`  911 GT3 without traction control: launched at ${r.rpmOff.launchRpm | 0} rpm, ${r.rpmOff.t100.toFixed(2)} s`);
-if (!(r.rpmOff.launchRpm > 0)) fails.push('the launch rpm is not recorded');
+// the driver holds the launch: a car that cannot spin its tyres in second loses nothing to the ECU
+if (!(Math.abs(lossL) < 0.005 && r.light.off.spinT < 0.05)) fails.push(`the driver's launch in the Aygo is ${(lossL * 100).toFixed(1)}% off the ECU's, with ${r.light.off.spinT.toFixed(2)} s of wheelspin`);
+console.log(`  911 GT3: launched at ${r.rpmOff.launchRpm | 0} rpm without traction control (${r.rpmOff.t100.toFixed(2)} s), ${r.rpmOn.launchRpm | 0} with it (${r.rpmOn.t100.toFixed(2)} s; 55% of the limiter is ${r.rpmOn.lDef | 0})`);
+if (!(r.rpmOff.launchRpm > 0 && r.rpmOn.launchRpm > 0)) fails.push('the launch rpm is not recorded');
+if (Math.abs(r.rpmOn.launchRpm - r.rpmOn.lDef) < 1) fails.push('with traction control the GT3 still launches at the fixed 55% of the limiter, not its best launch rpm');
 
 console.log('\n== equipment ==');
 console.log(`  F355 (1994): traction control ${r.f355.tc ? 'on' : 'off'} (form ${r.f355.form}) · 720S: ${r.mcl.tc ? 'on' : 'off'} · saved off, loaded back: ${r.roundtrip.tc ? 'on' : 'off'} (form ${r.roundtrip.form})`);

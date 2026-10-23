@@ -1,4 +1,4 @@
-# PIXEL ENGINE SIM v0.6 build 153
+# PIXEL ENGINE SIM v0.6 build 154
 
 **A lightweight, 8-bit style internal combustion engine *designer* & simulator** inspired by *Automation*.
 
@@ -797,10 +797,11 @@ documented in the GUIDE at the point where it matters:
   engines the integrated intake stroke, builds 121-122, carries the filling and the cam).
   The S2000 and S54 in test48 now carry their factory high-rpm intake and header; on the app's
   mid-range defaults they read 23–35% short, so check those two hardware calls if you know the cars.
-- **A launch without traction control is flat out.** Since build 153 the tyre pushes through slip and spins past
-  its peak when the engine has more than it can take. With traction control the ECU holds the peak; without it
-  the run is the car on its own, so the old powerful rear-drivers read slower than magazine testers, who feather
-  the throttle (F355 ~5.5 s against 4.7). The driver's feel is not modelled.
+- **Without traction control, flat out after the launch.** Since build 153 the tyre pushes through slip and spins
+  past its peak when the engine has more than it can take. With traction control the ECU holds the peak; without
+  it the driver holds it through the launch in first gear (build 154), and from the first upshift the run is flat
+  out, so a car with the power spins in second where a tester would ease off. The driver's feel past the launch
+  is not modelled.
 
 ### Next: v1.0 — every number derived, not fitted
 
@@ -882,6 +883,7 @@ measurement finds things. Each item is one PR.
 | — | README cleanup | ✅ build 151 | Known limits, racing line and working queue brought up to date with the code; the lap report's footer too. Turbine housing matching re-measured and not built: the mismatch it was parked for has mostly closed (spread 4× → 1.9×, spool RMS ~1940 → 775 rpm). |
 | — | Tyre review | ✅ build 152 | Each car's factory tyre class checked against its own skidpad and braking: the 720S and 750S (bespoke P Zero Corsas) move to SEMI; the rest are on the right class, and their launch gap is the launch. Next: the launch model. |
 | — | Launch through tyre slip; traction control | ✅ build 153 | The driven wheels turn at their own speed and the tyre pushes through slip (peak at ~10%, 0.82 in a full slide); TRACTION CONTROL holds the peak, without it the run is flat out and the tyres spin; the launch rpm is the tester's best of five. Presets carry their real equipment. |
+| — | Driver's launch; best launch rpm | ✅ build 154 | The fastest launch is ~10% slip on every car (a sweep of slip targets); without traction control the driver holds it in first gear, then flat out from the first upshift. Every car launches at its best of five rpm. 0-100 RMS 16.1% → 14.7%. |
 | — | Suspension type and geometry | ⏸ on hold | Future development. Today a setup is roll gradient + static camber; the roll camber the geometry recovers is a fixed 50% for every car (CAMBER_RECOVERY), and lateral load transfer is split by static weight. Wanted: the geometry per car (MacPherson strut, double wishbone, multi-link, solid axle) giving its camber recovery, and front/rear roll stiffness (springs, anti-roll bars) giving the handling balance. Needs each preset's real suspension type. |
 | — | Spark torque from fuel | ✅ build 95 | `IMEP_K` replaced by Heywood's 0.8 × fuel-air cycle efficiency; each fuel's LHV/AFR_st enters. Spark torque −2.7%, full-load BSFC 280 g/kWh (real 270–300). Rotary/two-stroke type factors still fitted. |
 | — | `turboChoke` (boost taper) | ✅ build 94 | Retired. Turbine efficiency from blade speed ratio U/C, per-point compressor efficiency, a continuous rich-knock slope in place of a step, and sequential turbos staged as two turbines. Calibration improved on every measure. |

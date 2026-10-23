@@ -20,6 +20,23 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 Working toward **v1.0 — every number derived, not fitted.**
 
+### The driver holds the launch slip; every car gets its best launch rpm (build 154)
+
+- **The fastest launch is a small slip, and the driver finds it.** A sweep of the launch at fixed slip targets
+  (best launch rpm each) puts the quickest 0-100 at ~10% slip on every car: 2% leaves most of the grip unused (a
+  Hellcat 10.7 s), 25-50% slides the tyre (5.7-5.8 s), 10% gives 5.14 s, and 8-12% are within 0.5% of each other.
+  The optimum is flat, so a driver feeling for it with the clutch and the throttle gets it. Without traction
+  control the driver now holds that slip through the launch, in first gear; from the first upshift the run is flat
+  out, and a car with the power for it spins in second (a Hellcat 0.6 s of wheelspin, 5.40 s against 5.14 with
+  traction control). No new number: the driver holds the tyre's own optimum, the one traction control holds.
+- **The launch rpm is the best of five for every car.** It was the driver's only, without traction control; a car
+  with it launched at a fixed 55% of the limiter, which is no launch control's setting (a GT3 now launches at 6750
+  rpm, not 4950). A torque converter still launches at its stall speed.
+- **Result.** F355 5.48 -> 4.72 s (real 4.7), McLaren F1 3.78 -> 3.62 (3.2), MX-5 NA 8.48 -> 8.14, R34 4.56;
+  0-100 RMS over the 42 real cars 16.1% -> 14.7%.
+- Tests: test82 checks the driver's launch (an Aygo is as quick without traction control as with it, no
+  wheelspin), the Hellcat's wheelspin after the launch, and a GT3 with traction control launched at its best rpm.
+
 ### The launch through tyre slip; traction control as a car's equipment (build 153)
 
 - **The tyre slips.** The 0-100 run clipped the drive at the tyre's grip: a tyre held or it did not, it never spun,
