@@ -20,6 +20,36 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 Working toward **v1.0 — every number derived, not fitted.**
 
+### Downshifting through the braking zones; the engine brakes the car (build 139)
+
+- **What was wrong.** Under braking the lap's gear was read off the speed point by point (the most wheel force
+  there), so it dropped a gear the instant the next one stopped over-revving, took no time to do it and gave no
+  engine braking. And the readout merged any gear held for under 40 m into the one before (meant for on-power
+  flicker): a hard stop passes through 3rd and 2nd in ~24 m and ~14 m, so an M3 into Monza's first chicane showed
+  4th from 166 to 77 km/h at 3,600 rpm, then 1st.
+- **The gearbox, in time order.** After the lap is solved the driver works down the box: one gear at a time (a
+  sequential's drum cannot skip, a twin-clutch's alternating shafts make a skip slower than going through; with an
+  H-pattern or an automatic a driver on the limit goes down one at a time anyway, blipping each to match the revs),
+  each taking the gearbox's own shift time (H-pattern 0.35 s, sequential 0.06, twin-clutch 0.03, automatic 0.20),
+  each only when the revs after it are inside the limiter (the box's over-rev protection), and never below the gear
+  the corner's slowest point wants. The M3 into the chicane now goes 6-5-4-3-2-1, each change just under 8,000 rpm.
+- **Engine braking.** In gear the engine brakes the car with its own overrun torque: friction and pumping against a
+  closed throttle with the fuel cut (brakeTorqueRaw, the engine the dyno runs; no throttle plate on a diesel), back
+  through the gearing and the driveline. Mid-shift the clutch is open and there is none. It adds to the brakes and
+  cannot take the tyres past their grip, so on a hot lap, where the tyres are the limit, it mostly takes work off
+  the rotors; it shortens a stop only where the brakes are the limit (the lap is re-solved with it when they are).
+- Result: lap times unchanged on tyre-limited laps, a little quicker where the brakes bite (Nordschleife: Hellcat
+  -0.19 s, M3 -0.10 s); front rotors 15-70 C cooler at their peak; the engine does 6-12% of the braking in the
+  braking zones. Shift counts now count every downshift. The replay's brake pedal is the brakes' share only.
+- **The live engine's lift-off braking** is the engine's own: a fitted 0.14-0.44 x the reference torque was taken
+  off on top of it, 2-6 times the engine's figure, and on a turbo engine it scaled with the boosted torque (a 2.0
+  turbo braked with ~14 bar). A Civic Type R on a closed throttle at 5000 rpm now brakes with 1.84 bar, a motored
+  engine's figure (Heywood: friction ~1.5-3 bar at speed, plus closed-throttle pumping).
+- Not modelled yet: braking split between the axles, so the model cannot show engine braking unsettling a
+  rear-driver (the reason for slipper clutches and ECU blip control). That is its own build.
+- New test73: on one car of each gearbox type, no downshift skips a gear, none comes sooner than the shift time,
+  none lands over the limiter, and the pedal asks the brakes for less than the car slows by.
+
 ### The ECU's torque limit as a tune point (build 138)
 
 - **ECU TORQUE LIMIT (Nm, 0 = off)**, a new input on boosted engines. A torque-based ECU holds the engine to a
