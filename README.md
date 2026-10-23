@@ -1,4 +1,4 @@
-# PIXEL ENGINE SIM v0.6 build 144
+# PIXEL ENGINE SIM v0.6 build 145
 
 **A lightweight, 8-bit style internal combustion engine *designer* & simulator** inspired by *Automation*.
 
@@ -742,6 +742,9 @@ node tools/stamp.mjs --check    # verify it is consistent and ahead of origin/ma
 These are modelled approximations that are *stated* rather than hidden, each one measured and
 documented in the GUIDE at the point where it matters:
 
+- **Tyre temperatures are checked, with two gaps.** Race tyres land in the measured ranges, but an eco tyre on a
+  light car runs cool (45–60 °C) and a fast circuit reads a little cooler than a short one; no track data was
+  found to settle either.
 - **Brake temperatures are a flat-out driver's.** The lap brakes at the limit into every corner, so a heavy,
   fast car on a long fast circuit (a Hellcat or an E46 M3 at Spa) runs its rotors to 750–900 °C and fades.
   Measured track-day figures are lower (450–600 °C rotor core, DBA) because most drivers brake earlier and
@@ -882,6 +885,7 @@ measurement finds things. Each item is one PR.
 | — | ECU torque limit | ✅ build 138 | ECU TORQUE LIMIT (Nm) as a tune input: the boost target is held to the calibrated torque. Presets whose makers quote a torque plateau carry it (GTI, FK8, GR Yaris, EcoBoost, RS3, TDI, N57). |
 | — | Full-screen track view | ✅ build 143 | ⛶ in TRACK's live timing: the lap, its live instruments and the replay controls fill the screen in landscape, the view turning itself on a phone held upright where the browser cannot lock the orientation. test75. |
 | — | Brakes against the real world | ✅ build 144 | Vented fronts on every brake type, the rotor's hat in its mass, and vane heat transfer of at least the measured 0.076 W/m²K per rpm: street brakes on fast circuits ran 200–350 °C hot. Light cars now land in the measured 300–650 °C; heavy fast cars driven flat out still reach 750–900 °C and fade. test76. |
+| — | Tyres against the real world | ✅ build 145 | Race tyre temperatures checked against makers' windows and pit-lane pyrometer guidance (road sport 66–88 °C in the pits, semi-slicks 70–100 °C, pits read 10–20 °C under the track): consistent, no change; test77 pins it. |
 | — | Suspension type and geometry | ⏸ on hold | Future development. Today a setup is roll gradient + static camber; the roll camber the geometry recovers is a fixed 50% for every car (CAMBER_RECOVERY), and lateral load transfer is split by static weight. Wanted: the geometry per car (MacPherson strut, double wishbone, multi-link, solid axle) giving its camber recovery, and front/rear roll stiffness (springs, anti-roll bars) giving the handling balance. Needs each preset's real suspension type. |
 | — | Spark torque from fuel | ✅ build 95 | `IMEP_K` replaced by Heywood's 0.8 × fuel-air cycle efficiency; each fuel's LHV/AFR_st enters. Spark torque −2.7%, full-load BSFC 280 g/kWh (real 270–300). Rotary/two-stroke type factors still fitted. |
 | — | `turboChoke` (boost taper) | ✅ build 94 | Retired. Turbine efficiency from blade speed ratio U/C, per-point compressor efficiency, a continuous rich-knock slope in place of a step, and sequential turbos staged as two turbines. Calibration improved on every measure. |

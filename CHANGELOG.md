@@ -20,6 +20,22 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 Working toward **v1.0 — every number derived, not fitted.**
 
+### Tyres against the real world (build 145)
+
+After the brakes, the same check on the race's tyre temperatures. Real figures: pit-lane pyrometer guidance puts
+street tyres at 60-77 C, UHP summer tyres 66-88 C and race tyres 77-104 C; Michelin rates the Cup 2 R at 70-100 C
+(90 ideal), Toyo the R888R at 71-104 C; a Trofeo R owner saw 70-80 C by lap 10; PS4S-type road tyres go greasy
+after 3-5 hard laps; front-heavy cars run hotter fronts and the outside tyre hottest; and a pit reading is 10-20 C
+under the tyre on track.
+
+- Six laps of Ashdown Park, alone, hottest tyre: GR Yaris 91, Golf GTI 94, Civic Type R 98, E46 M3 88, Corvette
+  Z06 83, Mustang GT 96, Hellcat 110 (sport); 911 GT3 107 at the rear (semi-slick). A front-driver's rears 46-63;
+  the left tyres hottest on a circuit of right-handers; within a few degrees of working temperature by lap 3;
+  wear 0.08-0.18. Consistent with all of the above, so no change to the model.
+- Unverified, and stated: an eco tyre on a light car runs cool (MX-5 45-62 C), and Spa reads a little cooler
+  than a short circuit.
+- `test77` pins the ranges, the axle and side differences, the warm-up, the heavy car's overheating and the wear.
+
 ### Brakes against the real world (build 144)
 
 Asked whether street cars' rotors really reach 800+ C in two laps. The rise is right (a rotor's time constant is
