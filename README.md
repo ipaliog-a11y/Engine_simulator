@@ -752,11 +752,17 @@ documented in the GUIDE at the point where it matters:
   space on it, and the tyre model's heat, grip-window, wear and wet-grip constants are fitted to the
   usual published ranges, not derived. When the rain comes and how fast a line dries are rules drawn
   from the seed, not a forecast.
-- **The turbine housing is not matched to the engine.** A/R comes from the frame size class alone —
-  small 0.42, medium 0.64, large 0.86 — with nothing about the engine entering, so a 2.0 four and a
-  6.6 V8 on the same size class get the same throat. Measured: a 4× spread in exhaust flow per mm²
-  of throat across the presets, and boost thresholds up to 4275 rpm late. Findings and the proposed
-  replacement are parked at `tests/proto/housing.mjs`.
+- **The turbine housing is a choice, not matched to the engine.** A/R comes from the frame (TIGHT / STOCK /
+  LOOSE per size class, scaled with the maker's wheel where it is set), with nothing about the engine
+  entering. Re-measured in build 151, the mismatch this was parked for has mostly closed on its own: exhaust
+  flow per mm² of throat at rated power spans 1.9× across the real turbo presets (it was 4×), boost
+  thresholds against the prototype's anchors are 775 rpm RMS (was ~1940; the proposed matching reached
+  ~700), and on the presets whose makers quote a torque plateau the 90%-boost point is ~620 rpm RMS from
+  the plateau's start. The throat convention, the compressor island, pulse energy, packaging-short turbo
+  manifolds and the makers' wheels did it. Left: the turbines run generous at rated power (exhaust over
+  intake pressure ~1.1, where real petrol turbos run ~1.5-2), so matching to back-pressure would spool them
+  earlier still; and VGT rings are the size class's, not the engine's (test49's diesel step). See
+  `tests/proto/README.md`.
 - **A turbo cannot fail from overspeed.** The shaft has a tip-speed limit and the model respects it
   as a *cap*, but nothing breaks. A grossly over-flowed frame therefore ends up running steadily at
   an expansion ratio that would have destroyed it — a 2.0 four at 2.5 bar on a small frame reaches
@@ -873,7 +879,7 @@ measurement finds things. Each item is one PR.
 | — | Supercar category | ✅ build 148 | Exotic becomes Supercar: four popular supercars from each decade since the 90s (F355, Diablo VT, McLaren F1, 993 Turbo; Enzo, Carrera GT, Ford GT, Murciélago LP640; 458 Italia, Huracán, 720S, 812 Superfast; 992 Turbo S, Huracán STO, Corvette Z06 C8, 750S), each on its factory engine and grouped by decade in the pickers. The 2020s are the combustion-only cars, as the model has no electric motor. Against the makers: power within 13%, top speed within 7%; the 720S, Z06 C8, 750S and 812 are slow off the line (grip-limited launches on road tyres). test80. |
 | — | Downshifts and engine braking | ✅ build 149 | Through the braking zones the driver goes down one gear at a time, each taking the gearbox's shift time and only inside the limiter, never below the corner's gear; in gear the engine's own overrun torque brakes the car (cooler rotors; quicker only where the brakes are the limit). The live engine's lift-off braking is the engine's own. Next: braking split between the axles. |
 | — | Braking split between the axles | ✅ build 150 | Each axle stops with its own grip (load transfer, aero balance, cornering), its hydraulic share of the brakes (ABS/EBD at an axle's grip) and, on the driven axle, the engine's braking, held to what those tyres can carry (drag-torque control); the rotors' heat follows the split. Where the engine's braking is trimmed, a car without that control would step out. |
-| — | README cleanup | ✅ build 151 | Known limits, racing line and working queue brought up to date with the code; the lap report's footer too. |
+| — | README cleanup | ✅ build 151 | Known limits, racing line and working queue brought up to date with the code; the lap report's footer too. Turbine housing matching re-measured and not built: the mismatch it was parked for has mostly closed (spread 4× → 1.9×, spool RMS ~1940 → 775 rpm). |
 | — | Suspension type and geometry | ⏸ on hold | Future development. Today a setup is roll gradient + static camber; the roll camber the geometry recovers is a fixed 50% for every car (CAMBER_RECOVERY), and lateral load transfer is split by static weight. Wanted: the geometry per car (MacPherson strut, double wishbone, multi-link, solid axle) giving its camber recovery, and front/rear roll stiffness (springs, anti-roll bars) giving the handling balance. Needs each preset's real suspension type. |
 | — | Spark torque from fuel | ✅ build 95 | `IMEP_K` replaced by Heywood's 0.8 × fuel-air cycle efficiency; each fuel's LHV/AFR_st enters. Spark torque −2.7%, full-load BSFC 280 g/kWh (real 270–300). Rotary/two-stroke type factors still fitted. |
 | — | `turboChoke` (boost taper) | ✅ build 94 | Retired. Turbine efficiency from blade speed ratio U/C, per-point compressor efficiency, a continuous rich-knock slope in place of a step, and sequential turbos staged as two turbines. Calibration improved on every measure. |

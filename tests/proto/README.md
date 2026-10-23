@@ -85,6 +85,19 @@ lightly: the 2JZ 3600 (a big single behaves nothing like the factory sequential)
 (primary rotor only). Tuning to a number someone invented is the trap `test46`'s bands already fell
 into once.
 
+**Re-measured in build 151 — not built.** Since this was parked, the throat moved to the volute centroid
+(build 133), the compressor's island follows its speed line (133), pulse energy is in (90), turbo
+manifolds are packaging-short (91), and real presets carry the makers' wheels (133, 136). On the archetypes
+above, against the same anchors, boost thresholds are now **775 rpm RMS** (it was ~1940; the back-pressure
+sizing proposed here reached ~700), with errors either side: kei 1925 (2800), 1.5 eco 1750 (1600), hot-hatch
+2650 (1900), I5 2375 (2000), 2JZ 2125 (3600, the anchor flagged above), 2.0 TDI 1300 (1800), 6.6 V8 800 (1600),
+13B 2500 (3000). Across the real turbo presets exhaust flow per mm² of throat at rated power spans 1.9×
+(340-653 g/s per 1000 mm²), and where the maker quotes a torque plateau ("350 Nm from 1500 rpm", the
+start of full boost) the 90%-boost point is ~620 rpm RMS from it; the late two are the RS3 and the
+EcoBoost, whose compressor wheels are not published. Exhaust over intake pressure at rated power is ~1.1
+on most presets (real petrol turbos ~1.5-2): the turbines are generous, so sizing to a back-pressure
+target would make them spool earlier still. Matching the housing would now be fitting to anchors.
+
 ## `pulse.mjs` — exhaust pulse energy at the turbine
 
 Standalone: `node tests/proto/pulse.mjs`. The nozzle functions are copied verbatim from the app so
