@@ -20,6 +20,35 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 Working toward **v1.0 — every number derived, not fitted.**
 
+### The launch through tyre slip; traction control as a car's equipment (build 153)
+
+- **The tyre slips.** The 0-100 run clipped the drive at the tyre's grip: a tyre held or it did not, it never spun,
+  and at the clip the car got the tyre's whole force while its wheels and engine spun up for free. Now the driven
+  wheels turn at their own speed and the tyre pushes through slip: sin(C atan(B s)), the shape of Pacejka's Magic
+  Formula, peaking at ~10% slip (dry asphalt; 6-15% measured, one figure for every compound) and falling past it
+  to 0.82 of the peak in a full slide (measured tyres 0.75-0.85). The wheels, and the engine through the gearing
+  when the clutch is locked, are turned by the drive and held back by the tyre; the car is pushed by the tyre. The
+  tyre is stiff against the wheel's inertia at walking pace, so the wheel is stepped implicitly. The engine revs
+  with the wheels, so wheelspin shows on the rev counter and in the shift points.
+- **TRACTION CONTROL (on/off), a new vehicle input.** On, the ECU trims the torque to hold the optimum slip. Off, the
+  run is flat out after the clutch and the slip dynamics decide: the car on its own. A tester feathering the
+  throttle by feel lands between the two, and how well is the driver; modelling that means tuning a controller to
+  the magazines (a delayed lift-and-reapply driver was tried: it oscillated, McLaren F1 +40%), so it is not done.
+  The tester's one skill credited is the launch rpm: without traction control the run is made from five launch
+  speeds and the quickest kept.
+- **Presets carry what the car had.** Without traction control: MX-5 NA, AE86, S2000 AP1, Supra A80 (unsure),
+  R34 GT-R, Impreza STI GD, Evo IX, F355, Diablo VT, McLaren F1, 993 Turbo, RX-7 FD, Murcielago LP640 (unsure).
+  The rest have it. The summary shows it, and the wheelspin time to 100 where there is any.
+- **Result.** With traction control every car is ~2% slower (the engine's and wheels' inertia charged at the traction
+  limit, and the shifts a little earlier by road speed), the cost the parked slip model measured. Without it the
+  powerful rear-drivers spin: a Hellcat 5.14 s on, 6.40 s off (3.4 s of wheelspin); an Aygo 10.94 / 11.50 s. The old
+  rear-drivers without traction control read slower than magazine testers, who feather the throttle (F355 4.79 ->
+  5.5 s against 4.7, McLaren F1 3.8 s against 3.2): stated, not tuned. 0-100 RMS over the 42 real cars 14.1% -> 16%.
+- Tests: new test82 (the curve, traction control on and off, the launch rpm, the setting as equipment and through a
+  save). test41's caps and budget follow the ~2% (GTI Mk8 8 -> 10%, Supra A80 17 -> 20%, M2 14 -> 17%, RMS 11 ->
+  12.5%), each by name with the reason; test61 retires the 750S from its slow cars (build 152's tyre review) and
+  names the C8 Z06, whose 2.8 s reference reads as a rollout-timed claim (the one rollout-free figure is 3.54 s).
+
 ### Tyre review: each car's factory tyre, against its own skidpad and braking (build 152)
 
 - **Why.** The fleet's 0-100 errors were worst on modern high-power rear-drivers (720S, 812, 750S, both Z06s,

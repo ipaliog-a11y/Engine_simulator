@@ -555,9 +555,9 @@ Curve** tab remains a wide-open-throttle steady-state sweep for reading the full
   VEHICLE panel and flagged when the build out-runs it — but deliberately not used as a hidden
   top-speed cap, because several real cars stop short of their drag-limited speed for a reason
   (a manufacturer governor) that a tyre rating would only imitate.
-- **Grip is still a hard clip.** Tractive force is capped at `μ·N` with no slip curve. Rotational inertia is
-  charged (build 107: the engine with a clutch-sized flywheel and the wheels, reflected through the gearing);
-  the slip-ratio tyre model stays parked until the launch model — see the inertia investigation in the roadmap.
+- **Grip through slip in the 0-100, a clip on the lap.** The acceleration run pushes the car through the tyre's
+  slip (build 153), with rotational inertia charged (build 107); the lap solver still caps the drive at the tyre's
+  peak, which is the traction-control case.
 - Racing line: nobody drives the centreline — using the full width straightens a corner and raises
   the speed you can carry. The line is solved by **minimising total curvature** within the track
   edges (projected gradient on Σ|second difference|², run on a coarse node set because the
@@ -797,10 +797,10 @@ documented in the GUIDE at the point where it matters:
   engines the integrated intake stroke, builds 121-122, carries the filling and the cam).
   The S2000 and S54 in test48 now carry their factory high-rpm intake and header; on the app's
   mid-range defaults they read 23–35% short, so check those two hardware calls if you know the cars.
-- **The launch has no tyre slip curve.** Rotational inertia is charged since build 107 (the engine, a
-  clutch-sized flywheel and the wheels through the gearing; 0-100 got honestly slower), but the tyre still
-  grips up to `μ·N` with no slip ratio, so a launch has no wheelspin phase — see *The inertia investigation*
-  under the v1.0 plan, and the launch model in the working queue.
+- **A launch without traction control is flat out.** Since build 153 the tyre pushes through slip and spins past
+  its peak when the engine has more than it can take. With traction control the ECU holds the peak; without it
+  the run is the car on its own, so the old powerful rear-drivers read slower than magazine testers, who feather
+  the throttle (F355 ~5.5 s against 4.7). The driver's feel is not modelled.
 
 ### Next: v1.0 — every number derived, not fitted
 
@@ -881,13 +881,14 @@ measurement finds things. Each item is one PR.
 | — | Braking split between the axles | ✅ build 150 | Each axle stops with its own grip (load transfer, aero balance, cornering), its hydraulic share of the brakes (ABS/EBD at an axle's grip) and, on the driven axle, the engine's braking, held to what those tyres can carry (drag-torque control); the rotors' heat follows the split. Where the engine's braking is trimmed, a car without that control would step out. |
 | — | README cleanup | ✅ build 151 | Known limits, racing line and working queue brought up to date with the code; the lap report's footer too. Turbine housing matching re-measured and not built: the mismatch it was parked for has mostly closed (spread 4× → 1.9×, spool RMS ~1940 → 775 rpm). |
 | — | Tyre review | ✅ build 152 | Each car's factory tyre class checked against its own skidpad and braking: the 720S and 750S (bespoke P Zero Corsas) move to SEMI; the rest are on the right class, and their launch gap is the launch. Next: the launch model. |
+| — | Launch through tyre slip; traction control | ✅ build 153 | The driven wheels turn at their own speed and the tyre pushes through slip (peak at ~10%, 0.82 in a full slide); TRACTION CONTROL holds the peak, without it the run is flat out and the tyres spin; the launch rpm is the tester's best of five. Presets carry their real equipment. |
 | — | Suspension type and geometry | ⏸ on hold | Future development. Today a setup is roll gradient + static camber; the roll camber the geometry recovers is a fixed 50% for every car (CAMBER_RECOVERY), and lateral load transfer is split by static weight. Wanted: the geometry per car (MacPherson strut, double wishbone, multi-link, solid axle) giving its camber recovery, and front/rear roll stiffness (springs, anti-roll bars) giving the handling balance. Needs each preset's real suspension type. |
 | — | Spark torque from fuel | ✅ build 95 | `IMEP_K` replaced by Heywood's 0.8 × fuel-air cycle efficiency; each fuel's LHV/AFR_st enters. Spark torque −2.7%, full-load BSFC 280 g/kWh (real 270–300). Rotary/two-stroke type factors still fitted. |
 | — | `turboChoke` (boost taper) | ✅ build 94 | Retired. Turbine efficiency from blade speed ratio U/C, per-point compressor efficiency, a continuous rich-knock slope in place of a step, and sequential turbos staged as two turbines. Calibration improved on every measure. |
 | — | Rotary exhaust heat | ✅ build 92 | The slow, late Wankel burn (130° ES, CA50 37.5° ATDC) leaves ~10% of the expansion work undone, and that heat now reaches the exhaust: 13B 775 → 942 °C, off the limiter. |
 | — | Rotary spool | ✅ build 100 | The 13B reached boost near 8500 rpm (real ~3000). Not pulse energy after all: air flow counted one charge per two turns, a four-stroke's, and a rotor fills a chamber every turn. With the rate right it spools at ~2400 rpm. |
 | 4 | VE bell (`vePeakRpm`) | ✅ build 84 / 88 | Retired for poppet-valve petrol engines after two hidden errors were fixed (IVC geometry, Engelman tuning ratio), and for diesels in build 88. Still fitted for ported engines. |
-| 5 | Launch model | ⬜ | Unblocks the parked slip-ratio tyre model. Rotational inertia went in on its own in build 107 (spinning parts); the slip curve still needs a launch to drive it, and the two recalibrate together. |
+| 5 | Launch model | ✅ build 153 | The slip-ratio tyre model is in: driven wheels on their own equation, the tyre through slip, traction control as equipment, the launch rpm chosen as a tester does. Rotational inertia went in with build 107. Costs ~2% on 0-100, as the parked model measured. |
 | 6 | Combustion (conversion 5) | ✅ diesel build 88, spark build 95 | Diesel: torque from fuel, fixed-time Wiebe burn, wall heat, turbine-temperature fuel cap, signed gas exchange. Spark: torque from fuel (Heywood's 0.8 x fuel-air cycle efficiency, build 95); `IMEP_K` only scales the dyno brake's reference. Still fitted: the rotary's and two-stroke's type factors (`typeImep`). |
 | 7 | Ground `test46`'s invented bands | ⬜ | Back-pressure caps, ram/scavenge magnitude and buildable header length are bands **I wrote**, not measurements. None currently fails, which is exactly the concern — a band you invented can only confirm your own reasoning. |
 

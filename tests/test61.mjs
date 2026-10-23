@@ -121,9 +121,12 @@ const KNOWN = {
   // width bonus that used to add 7.5% to a 275 tyre is gone; real road tests on street tyres report the
   // same struggle. Its 3.9 s is the maker's figure.
   'Dodge Challenger SRT Hellcat (2015)': ['slow-car'],
-  // Build 148: the same as the 812. 740 hp through two rear road tyres is grip-limited off the line in the model
-  // (3.5 s against a real 2.8); the real car's launch control and tyre warm-up are not modelled.
-  'McLaren 750S (2023)': ['slow-car'],
+  // (750S: from build 148 to 151, on road tyres in the model; build 152's tyre review put it on its factory P Zero
+  // Corsas, the Cup 2 class its measured skidpad and stops agree with, and it reads 3.15 s against 2.8.)
+  // Build 153: the C8 Z06's reference is the problem, not the car. Its 2.8 s (marked unsure) reads as GM's 0-60
+  // claim, timed with the 1 ft rollout US magazines subtract; the one rollout-free 0-100 km/h found is 3.54 s
+  // (AutoTopNL, on the road), against the model's 3.59. The slip launch took it from +24% to +28%.
+  'Chevrolet Corvette Z06 (C8, 2023)': ['slow-car'],
   // Short of the 250 km/h governor because their engines are short of their rating (test60): the R34's
   // is the JDM 280 PS figure real cars beat, the STI's boost is unsure. (The Evo IX reaches it since
   // build 101.)
