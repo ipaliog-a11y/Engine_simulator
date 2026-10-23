@@ -20,6 +20,31 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 Working toward **v1.0 — every number derived, not fitted.**
 
+### Tyre review: each car's factory tyre, against its own skidpad and braking (build 152)
+
+- **Why.** The fleet's 0-100 errors were worst on modern high-power rear-drivers (720S, 812, 750S, both Z06s,
+  Hellcat: 18-30% slow, traction-limited for 3-4.6 s), and a car on the wrong compound class is the first thing
+  to rule out. The classes are build 111's road-asphalt figures: SPORT is a summer UHP tyre (skidpads 0.90-0.98
+  g), SEMI the Cup 2 class (a 911 GT3 on Cup 2s ~1.10 g).
+- **Checked against each car's own measurements, not tyre names alone:**
+
+  | car | factory tyre | measured | model, before | model, now |
+  |---|---|---|---|---|
+  | McLaren 720S | bespoke Pirelli P Zero Corsa | skidpad ~1.10 g | sport: 1.00 g, 143 ft | **semi: 1.12 g, 128 ft** |
+  | McLaren 750S | P Zero Corsa (Trofeo R optional) | ~1.13 g; 70-0 129-136 ft | sport: 1.00 g, 142 ft | **semi: 1.12 g, 127 ft** |
+  | Corvette Z06 C8 | Michelin Pilot Sport 4S (Cup 2 R with Z07) | 1.12 g, 144 ft (Z07: 1.16 g, 139 ft) | sport: 1.00 g, 143 ft | unchanged |
+
+  The McLarens move to SEMI: their factory tyres are the Cup 2 class and their measurements agree. 0-100: 720S
+  3.55 -> 3.07 s (real 2.9), 750S 3.54 -> 3.05 s (2.8). The Z06 C8 stays on SPORT: its braking matches it exactly.
+- **What the review found besides.** The rest of the slow rear-drivers are on the right class, and the trace shows
+  why they are slow: on the traction limit from 0 to ~90 km/h (the C8 at a steady 0.83 g), with the clutch phase
+  and the shift costing little. That is the launch, the next build. And one reference is optimistic: the C8 Z06's
+  2.8 s (already marked unsure) reads as GM's 0-60 claim with the 1 ft rollout US magazines subtract; the one
+  rollout-free 0-100 km/h found is 3.54 s (AutoTopNL, on the road), against the model's 3.48. Noted in the preset.
+- The C8's skidpad (1.00 against 1.12 g) with its braking matching says the lateral side is short on a modern car
+  while the longitudinal is right; the suspension geometry (camber recovery, roll stiffness) is the on-hold item.
+- 0-100 RMS over the 42 real cars 15.0% -> 14.1%.
+
 ### The README says what the model does now (build 151)
 
 - The known-limits list, the racing-line section and the working queue had fallen behind the builds: they still

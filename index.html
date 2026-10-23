@@ -373,7 +373,7 @@ table.fuelmap td.live{box-shadow:inset 0 0 0 2px #fff;font-weight:bold}
 <body>
 <div class="container">
 <header>
-<h1>PIXEL ENGINE SIM v0.6 build 151</h1>
+<h1>PIXEL ENGINE SIM v0.6 build 152</h1>
 <div class="subtitle" id="subtitle">ENGINE DESIGNER • BUILD IT, THEN DRIVE IT</div>
 </header>
 <div class="build-strip" id="buildStrip">
@@ -4915,7 +4915,7 @@ const VEHICLE_PRESETS=[
    body:{kg:1550,cd:0.39,area:1.95,wb:2.62,fWt:0.43},fit:{drive:'awd',tire:'sport',tw:305,ta:30,wheel:20,brake:'carbon',rotor:380,susp:'sport',gears:7,gearbox:'dct',diff:'clsd'},
    real:{t100:3.2,top:325},unsure:['cd','area','kg']},
   {cat:'Supercar',era:'2010s',name:'McLaren 720S (2017)',engine:'McLaren M840T twin-turbo V8 (720S)',chassis:'super',
-   body:{kg:1419,cd:0.38,area:1.95,wb:2.67,fWt:0.42},fit:{drive:'rwd',tire:'sport',tw:305,ta:30,wheel:20,brake:'carbon',rotor:390,susp:'sport',gears:7,gearbox:'dct',diff:'clsd'},
+   body:{kg:1419,cd:0.38,area:1.95,wb:2.67,fWt:0.42},fit:{drive:'rwd',tire:'semi',tw:305,ta:30,wheel:20,brake:'carbon',rotor:390,susp:'sport',gears:7,gearbox:'dct',diff:'clsd'},
    real:{t100:2.9,top:341},unsure:['cd','area','fWt']},
   {cat:'Supercar',era:'2010s',name:'Ferrari 812 Superfast (2017)',engine:'Ferrari F140 V12 (812 Superfast)',chassis:'gt',
    body:{kg:1745,cd:0.37,area:2.05,wb:2.72,fWt:0.47},fit:{drive:'rwd',tire:'sport',tw:315,ta:35,wheel:20,brake:'carbon',rotor:400,susp:'sport',gears:7,gearbox:'dct',diff:'clsd'},
@@ -4928,11 +4928,13 @@ const VEHICLE_PRESETS=[
    body:{kg:1450,cd:0.40,area:1.95,wb:2.62,fWt:0.41},fit:{drive:'rwd',tire:'semi',tw:305,ta:30,wheel:20,brake:'carbon',rotor:390,susp:'coilover',gears:7,gearbox:'dct',diff:'clsd'},
    real:{t100:3.0,top:310},unsure:['kg','cd','area','fWt']},
   // GM quotes 0-60 mph in 2.6 s
+  // t100 2.8 is unsure: it reads as GM's 0-60 mph claim, timed with a 1 ft rollout as US magazines do. The one
+  // rollout-free 0-100 km/h found is AutoTopNL's 3.54 s on the road (build 152 tyre review); the model reads ~3.5.
   {cat:'Supercar',era:'2020s',name:'Chevrolet Corvette Z06 (C8, 2023)',engine:'GM LT6 flat-plane V8 (Corvette Z06 C8)',chassis:'super',
    body:{kg:1561,cd:0.37,area:2.05,wb:2.72,fWt:0.40},fit:{drive:'rwd',tire:'sport',tw:345,ta:25,wheel:21,brake:'big',rotor:370,susp:'sport',gears:8,gearbox:'dct',diff:'clsd'},
    real:{t100:2.8,top:312},unsure:['cd','area','t100','top']},
   {cat:'Supercar',era:'2020s',name:'McLaren 750S (2023)',engine:'McLaren M840T twin-turbo V8 (750S)',chassis:'super',
-   body:{kg:1389,cd:0.38,area:1.95,wb:2.67,fWt:0.42},fit:{drive:'rwd',tire:'sport',tw:305,ta:30,wheel:20,brake:'carbon',rotor:390,susp:'sport',gears:7,gearbox:'dct',diff:'clsd'},
+   body:{kg:1389,cd:0.38,area:1.95,wb:2.67,fWt:0.42},fit:{drive:'rwd',tire:'semi',tw:305,ta:30,wheel:20,brake:'carbon',rotor:390,susp:'sport',gears:7,gearbox:'dct',diff:'clsd'},
    real:{t100:2.8,top:332},unsure:['cd','area','fWt']},
   {cat:'Rotary',name:'Mazda RX-7 (FD, 1993)',engine:'Mazda 13B-REW (RX-7 FD)',chassis:'coupe',
    body:{kg:1280,cd:0.29,area:1.80,wb:2.425,fWt:0.50},fit:{drive:'rwd',tire:'sport',tw:225,ta:50,wheel:16,brake:'slotted',rotor:290,susp:'sport',gears:5,gearbox:'manual',diff:'clsd'},
