@@ -90,6 +90,47 @@ Working toward **v1.0 — every number derived, not fitted.**
 - The C8's skidpad (1.00 against 1.12 g) with its braking matching says the lateral side is short on a modern car
   while the longitudinal is right; the suspension geometry (camber recovery, roll stiffness) is the on-hold item.
 - 0-100 RMS over the 42 real cars 15.0% -> 14.1%.
+### The driver's foot (build 152)
+
+- **The problem.** The lap's throttle was read straight off the speed solve, point by point: full wherever the engine
+  or the driven tyres were the limit, the drive the profile needed elsewhere, nothing mid-shift. Every 1-0-1 step
+  happened within one 5 m point (~0.07 s). Three things made it pump:
+  - the line's radius flickers point to point, so the corner throttle did too (1.00 → 0.39 → 1.00)
+  - a hairpin exit's grip and traction limits trade places point to point
+  - every upshift lifted, on every gearbox
+- **Why it matters for the turbo.** The turbo shaft ran on that throttle, so the pumping cost boost.
+- **What a driver does instead:**
+  - holds a steady throttle through a corner (the ±10 m the steering is averaged over)
+  - once driving out of a corner, does not back off again
+  - stays flat through an upshift on a gearbox that cuts the spark for it (dual-clutch, sequential, automatic), which
+    keeps the exhaust hot and the turbo spun up (flat-shift and no-lift-shift systems work the same way)
+  - lifts for an H-pattern shift
+  - moves the pedal no faster than a foot: fully off in 0.10 s, fully on in 0.25 s
+- **Where the pedal goes.** The trace on TRACK and the race HUD, the manifold pressure, and the turbo shaft all use
+  the pedal. The speed solve is unchanged.
+
+| Spa, hot lap | Full-off-full stabs inside 0.4 s, no braking | Boost through corners (MAP, bar abs) | Lap |
+|---|---|---|---|
+| McLaren 720S (DCT) | 94 → 2 | 0.91 → 1.04 | ±0.00% |
+| Porsche 911 Turbo S 992 (DCT) | 104 → 1 | 1.43 → 1.53 | +0.01% |
+| Toyota GR Yaris (manual) | 14 → 1 | 1.46 → 1.43 | +0.01% |
+| BMW M3 E46 (manual, NA) | 11 → 2 | — | ±0.00% |
+
+- **Lap times barely move.** The speed solve already had full drive at the limit, so the speeds are its as before.
+  The extra boost a flat shift keeps arrives where the car is grip- or traction-limited, so it is not used.
+- `test82`:
+  - no pedal step faster than a foot
+  - at most one stab a lap
+  - every H-pattern upshift lifts; no spark-cut shift does
+  - a turbo keeps 90%+ of its boost through a flat shift
+- `test62` now allows the pedal to be rising off a lift on an engine-limited point, and flat through a cut shift
+  while the car slows.
+- `test79` now counts dives over twelve seeds instead of three, and asks that a third of them (not half) end in the
+  place being taken.
+  - **Why the sample was too small.** Over three seeds it rested on one to four dives, so it was a coin flip. Main
+    itself sat exactly on the line (2 of 4).
+  - **What the rate really is.** Across 48 seeds it is 42-63%, depending on the build. This build moves the race pace
+    grid by under 0.03 s a lap, which is enough to re-roll which dives happen.
 
 ### The README says what the model does now (build 151)
 
