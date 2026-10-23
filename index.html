@@ -373,7 +373,7 @@ table.fuelmap td.live{box-shadow:inset 0 0 0 2px #fff;font-weight:bold}
 <body>
 <div class="container">
 <header>
-<h1>PIXEL ENGINE SIM v0.6 build 148</h1>
+<h1>PIXEL ENGINE SIM v0.6 build 150</h1>
 <div class="subtitle" id="subtitle">ENGINE DESIGNER • BUILD IT, THEN DRIVE IT</div>
 </header>
 <div class="build-strip" id="buildStrip">
@@ -5144,7 +5144,7 @@ function rotorStep(T,disc,th,P,vCar,dt){
 const brakeFadeAt=(T,th)=>1-FADE_MAX*clamp((T-th.onset)/FADE_SPAN,0,1);
 // Front/rear rotors through one braking step: decel a (m/s2) that the brakes do, at speed v. cv is the car
 // (the loaded vehicle unless a race hands in one of its own: mass, brakeFrontShare, fWt, cg, wb, mu).
-function brakeHeatStep(st,th,a,vCar,dt,cv){
+function brakeHeatStep(st,th,a,vCar,dt,cv,frIn){
   cv=cv||vehicle;
   const m=cv.mass, P=Math.max(0,m*a*vCar);
   // How the braking is shared (build 117). The hydraulics split it in a fixed ratio (the calipers and
@@ -5156,7 +5156,8 @@ function brakeHeatStep(st,th,a,vCar,dt,cv){
   const fH=cv.brakeFrontShare||0.7, fL=clamp(cv.fWt+(a/G)*cv.cg/Math.max(0.5,cv.wb),0.05,0.95);
   const lim=(cv.mu||1)*TYRE_MU_X*G;   // the tyres' longitudinal grip, as a deceleration
   let fr=fH;
-  if(a>1e-6){
+  if(frIn!=null)fr=frIn;                          // the lap solver's axle split (build 150), engine braking and all
+  else if(a>1e-6){
     if(fH>fL)fr=Math.min(fH,lim*fL/a);            // the fronts saturate first: held at their grip
     else fr=Math.max(fH,1-lim*(1-fL)/a);          // the rears do
   }
@@ -6803,11 +6804,11 @@ function stepEngine(dt){
     if(state.nitrousCharge<=0)state.nitrousActive=false;
   }
   const cut=state.rpm>=engine.redline||overrunFuelCut();
+  // On a closed throttle with the fuel cut this is the engine braking itself: friction and pumping against the
+  // vacuum the plate holds (build 149). A fitted 0.14-0.44 x the reference torque was subtracted on top of it, 2-6
+  // times the engine's own figure, and on a turbo engine it scaled with the boosted torque: a 2.0 turbo was
+  // braking with ~14 bar, which a closed throttle cannot hold.
   let tq=brakeTorqueRaw(state.rpm,state.map,cut);
-  // Engine braking on a closed throttle (pumping/friction/windage), scaled to engine size
-  // and RPM, so lift-off deceleration is brisk for every engine.
-  if(state.throttle<0.05&&state.rpm>engine.idleRpmEff)
-    tq-=engine.loadRefTq*(0.14+0.30*clamp(state.rpm/engine.redline,0,1));
   tq-=brakeTorque();
   const omega=state.rpm*2*Math.PI/60+tq/engine.inertia*dt;
   state.rpm=clamp(omega*60/(2*Math.PI),engine.idleRpmEff,engine.redline);
@@ -8201,16 +8202,39 @@ function simulateLap(key,opts){
   for(let i=0;i<n;i++){vC[i]=ceilAt(p[i]);lim[i]='corner';}
   const accKind=new Array(n).fill('power'),latUse=new Array(n).fill(0);
   const fadeF=new Array(n).fill(1);   // brake capacity left at each point (see 2b below)
+  const fadeR=new Array(n).fill(1);   // the rears' (build 150: each axle fades with its own rotors)
   const hL=vehicle.cg/Math.max(0.5,vehicle.wb), sgn=vehicle.drive==='rwd'?1:vehicle.drive==='fwd'?-1:0;
   // Braking into point q's successor at vNext: the fastest the car can be at q (vi0 = the most it may
-  // be there anyway). fade = the brakes' capacity left.
-  function brakeFrom(q,vi0,vNext,fade){
-    let vi=Math.min(vi0,vNext),cap=vi0;
+  // be there anyway). fade = the brakes' capacity left; ea = the engine's own braking there (build 149), which
+  // adds to the brakes' capacity and, like it, cannot take the tyres past their grip.
+  // Build 150: per axle. Braking moves load forward (m a h/L) and the downforce splits by the aero balance, so each
+  // axle's tyres have their own grip; the hydraulics give each axle its share of the brakes at full line pressure
+  // (brakeFrontShare), ABS/EBD easing an axle's pressure once it reaches its grip; the engine brakes the driven
+  // axle (shared by weight on four-wheel drive) and ABS cannot ease that. Each axle stops with the lesser of its
+  // grip and what its brakes and the engine give it, and the car with the sum. Until build 150 the car stopped with
+  // all four tyres' grip pooled, whatever the brakes' split, so an axle whose brakes are too small for its grip
+  // under braking cost nothing.
+  const fWt=vehicle.fWt||0.55,aeroF=vehicle.aeroBal!=null?vehicle.aeroBal:0.5,fH=vehicle.brakeFrontShare||0.7;
+  const engFront=vehicle.drive==='fwd'?1:vehicle.drive==='awd'?fWt:0;   // the engine's braking: the driven axle's share
+  // The axles at point q, speed vv, slowing at a (m/s2, the tyres' share) with lateral use u: their loads and grips.
+  function axles(q,vv,a,u){
+    const N=loadAt(q,vv),dn=down(vv),tr=m*a*hL;
+    const NfS=(N-dn)*fWt+dn*aeroF,Nf=clamp(NfS+tr,0.05*N,0.95*N),Nr=N-Nf,s=Math.sqrt(Math.max(0,1-u*u));
+    return {Nf,Nr,gF:tyreMuX(Nf/2)*Nf*s,gR:tyreMuX(Nr/2)*Nr*s};
+  }
+  let bfBound=false;   // the brakes, not the tyres, set the last answer
+  function brakeFrom(q,vi0,vNext,fade,ea=0,fadeRr=fade){
+    let vi=Math.min(vi0,vNext),cap=vi0,aT=0.8*G;
     for(let it=0;it<4;it++){
     const N=loadAt(q,vi);
     const ayi=vi*vi/q.r,aLatMax=muLatAt(N,ayi)*N/m,u=clamp(ayi/Math.max(0.1,aLatMax),0,1);
-    const aBrake=Math.min(vehicle.brakeDecelCap*fade,tyreMuX(N/4)*N/m*Math.sqrt(Math.max(0,1-u*u)))
-                 +(drag(vi)+corneringDrag(m,ayi,N))/m+G*q.sinT;
+    const cBF=vehicle.brakeDecelCap*fade*m*fH,cBR=vehicle.brakeDecelCap*fadeRr*m*(1-fH),eF=ea*m*engFront,eR=ea*m*(1-engFront);
+    for(let k=0;k<3;k++){   // the load transfer follows the deceleration it makes
+      const ax=axles(q,vi,aT,u);
+      aT=(Math.min(ax.gF,cBF+eF)+Math.min(ax.gR,cBR+eR))/m;
+      bfBound=cBF+eF<ax.gF||cBR+eR<ax.gR;
+    }
+    const aBrake=aT+(drag(vi)+corneringDrag(m,ayi,N))/m+G*q.sinT;
     cap=Math.sqrt(Math.max(0,vNext*vNext+2*Math.max(0.1,aBrake)*q.ds3));
     const nv=Math.min(vi0,cap);
     if(Math.abs(nv-vi)<1e-4)break;   // converged
@@ -8253,9 +8277,10 @@ function simulateLap(key,opts){
   }
   let v,vB,shiftsCut=false,boostShare=null;
   const cutAt=new Uint8Array(n);
+  const ebA=new Float64Array(n),brakeBound=new Uint8Array(n);   // the engine's braking at each point, m/s2 (build 149)
   const holdAt=new Int8Array(n).fill(-1);   // the gear held where the driver chose not to change up (build 121)
   function passes(){
-    v=vC.slice();
+    v=vC.slice();brakeBound.fill(0);
   // 2. Backward pass: brake into every corner. Lateral grip in use eats the longitudinal budget
   //    (friction circle), and the brakes' own capacity caps it too. The cornering grip carries the
   //    diff's scrub (muLat); braking in a straight line does not — a locked diff binds only when the
@@ -8268,8 +8293,8 @@ function simulateLap(key,opts){
     // braking left, so the car crept into corners. On the Nordschleife a 911 GT3 rolled 250 m at 82 km/h
     // down a 13% hill into a 42 m corner, and laps came out 6-20% slow.
     // Gravity along the slope: climbing helps you stop, descending fights the brakes.
-    const cap=brakeFrom(p[i],v[i],v[j],fadeF[i]);
-    if(cap<v[i])v[i]=cap;
+    const cap=brakeFrom(p[i],v[i],v[j],fadeF[i],ebA[i],fadeR[i]);
+    if(cap<v[i]){v[i]=cap;brakeBound[i]=bfBound?1:0;}
   }
   vB=v.slice();   // the braking pass's speeds, before the forward pass: the line optimiser re-solves from them
   // 3. Forward pass: accelerate out. Drive force is capped by the driven axle's grip (via the
@@ -8352,7 +8377,7 @@ function simulateLap(key,opts){
   }
   passes();
   // the line optimiser only needs the speeds on a candidate line (no brake temperatures, no recording, and
-  // no gear shifts: the stretches it re-solves do not carry the gearbox's state)
+  // no gear shifts: the stretches it re-solves do not carry the gearbox's state, nor the engine braking it gives)
   if(quick){let tq=0;for(let i=0;i<n;i++){const j=(i+1)%n;tq+=p[i].ds3/Math.max(2,(v[i]+v[j])/2);}return {lap:tq,v,vC,vB,kind:accKind,model:{ceilAt,brakeFrom,accFrom}};}
   // 2b. Brake temperature on the lap (build 107; build 105 counted heat per stop against a fitted
   //     budget). Run the solved profile through the rotors in time order, set each point's brake
@@ -8361,6 +8386,92 @@ function simulateLap(key,opts){
   //     preparation lap at the same pace, and the hot lap is the second. It used to repeat laps until the
   //     temperature at the line did, which is a race stint's rotors, not a hot lap's (the tyres, too, are
   //     taken at their working temperature, which an out-lap gives them, not a stint's).
+  // 2a. The gearbox through the braking zones (build 149). The gear used to be read off the speed point by point
+  //     (the most wheel force there), so under braking it dropped a gear the instant the next one stopped
+  //     over-revving, took no time to do it and gave no engine braking; and the readout merged any gear held for
+  //     under 40 m into the one before, so a hard stop showed 4th to 1st in one step. Now the driver works down the
+  //     box in time order: one gear at a time (a sequential's drum and a twin-clutch's alternating shafts cannot
+  //     skip; on an H-pattern or an automatic a driver on the limit goes down one at a time anyway, blipping each
+  //     to match the revs), each taking the gearbox's own shift time, each only when the revs after it are inside
+  //     the limiter (the box's over-rev protection), and never below the gear the corner's slowest point wants.
+  //     In gear, the engine brakes the car: its own overrun torque, friction and pumping against a closed throttle
+  //     with the fuel cut (brakeTorqueRaw, the same engine the dyno runs), back through the gearing and the
+  //     driveline. Mid-shift the clutch is open and there is none. It adds to the brakes and cannot take the
+  //     tyres past their grip, so on a hot lap, where the tyres are the limit, it mostly takes work off the brakes
+  //     (cooler rotors, less fade); it only shortens a stop where the brakes themselves are the limit.
+  const ovTab=[];
+  {
+    const sv={coolant:state.coolant,oil:state.oil,engineHealth:state.engineHealth,systemVoltage:state.systemVoltage,nitrousActive:state.nitrousActive};
+    state.coolant=90;state.oil=100;state.engineHealth=1;state.systemVoltage=14.0;state.nitrousActive=false;
+    for(let r=500;r<=rl+250;r+=250){
+      const mc=engine.ci?1:clamp(IDLE_AIR/(IDLE_AIR+THR_K*(r/1000)*(1-IDLE_AIR)),0.12,1);   // a closed throttle (mapTarget's law); no plate on a diesel
+      ovTab.push(Math.max(0,-brakeTorqueRaw(r,mc,true)));
+    }
+    Object.assign(state,sv);
+  }
+  const overrunTq=r=>{const x=(clamp(r,500,rl)-500)/250,k=Math.min(ovTab.length-2,Math.floor(x));return ovTab[k]+(ovTab[k+1]-ovTab[k])*(x-k);};
+  const rpmIn=(g,vv)=>vv*ratios[g]*fd/rT*60/TWO_PI;
+  const engineBrakeA=(g,vv)=>overrunTq(clamp(rpmIn(g,vv),idle,rl))*ratios[g]*fd/(rT*eff*m);
+  // what the tyres slow the car by at i (brakes and engine; not the air, rolling, cornering drag or the hill)
+  const mechAt=i=>{const j=(i+1)%n,a=(v[j]*v[j]-v[i]*v[i])/(2*p[i].ds3);
+    return -a-(drag(v[i])+rollF(v[i])*p[i].cosT+corneringDrag(m,v[i]*v[i]/p[i].r,loadAt(p[i],v[i])))/m-G*p[i].sinT;};
+  const brakingAt=i=>mechAt(i)>0.3;
+  // The axles at i under a deceleration at (m/s2) of which ea is the engine's (build 150): the engine's share on
+  // the driven axle, the brakes' in the hydraulic split, ABS moving the excess off an axle at its grip onto the
+  // other. Returns each axle's share of its grip in use and the brakes' front share (for the rotors' heat).
+  function axleUse(i,at,ea){
+    const N=loadAt(p[i],v[i]),ay=v[i]*v[i]/p[i].r,u=clamp(ay/Math.max(0.1,muLatAt(N,ay)*N/m),0,1);
+    const ax=axles(p[i],v[i],Math.max(0,at),u),eF=ea*m*engFront,eR=ea*m*(1-engFront);
+    const Fb=Math.max(0,m*at-eF-eR);
+    let bf=Fb*fH,br=Fb-bf;
+    if(bf+eF>ax.gF){bf=Math.max(0,ax.gF-eF);br=Fb-bf;}
+    else if(br+eR>ax.gR){br=Math.max(0,ax.gR-eR);bf=Fb-br;}
+    return {useF:(bf+eF)/Math.max(1,ax.gF),useR:(br+eR)/Math.max(1,ax.gR),fr:Fb>0?bf/Fb:fH,gF:ax.gF,gR:ax.gR};
+  }
+  // Engine braking that the driven axle can carry at i: ABS can ease the brakes but not the engine, so a downshift
+  // whose engine braking alone is more than the driven tyres can hold slides them (the rear of a rear-driver steps
+  // out). A driver, or the car's drag-torque control, does not make that downshift yet.
+  const engineHolds=(i,ea)=>{const x=axleUse(i,Math.max(0,mechAt(i)),0);
+    return ea*m*engFront<=x.gF*(1+1e-9)&&ea*m*(1-engFront)<=x.gR*(1+1e-9);};
+  // Once in gear the driven tyres' grip can still fall below the engine's braking: deep into a corner on the brakes,
+  // the tyres are nearly all used sideways and have almost nothing left along the road, and the rear of a rear-driver
+  // steps out on a closed throttle. Cars carry a drag-torque control for it (the ECU opens the throttle enough to
+  // hold the driven wheels' slip; a slipper clutch does the same mechanically, a driver with the throttle), so the
+  // engine brakes with no more than the driven axle can hold, and where it is trimmed is recorded (build 150).
+  const engineCap=i=>{const x=axleUse(i,Math.max(0,mechAt(i)),0);
+    return engFront>=1?x.gF/m:engFront<=0?x.gR/m:Math.min(x.gF/(m*engFront),x.gR/(m*(1-engFront)));};
+  function gearWalk(){
+    const g=new Int8Array(n),eb=new Float64Array(n),brk=new Uint8Array(n),endV=new Float64Array(n),trim=new Uint8Array(n);
+    for(let i=0;i<n;i++)brk[i]=brakingAt(i)?1:0;
+    // the speed each braking stretch ends at: the corner's slowest point, whose gear is the lowest the driver wants
+    for(let pass=0;pass<2;pass++)for(let k=n-1;k>=0;k--)endV[k]=brk[k]?endV[(k+1)%n]:v[k];
+    let i0=0;for(let i=1;i<n;i++)if(v[i]>v[i0])i0=i;
+    let gear=holdAt[i0]>=0?holdAt[i0]:gearAt(v[i0]).gear,tS=0;
+    for(let k=0;k<n;k++){
+      const i=(i0+k)%n,j=(i+1)%n,dt=p[i].ds3/Math.max(2,(v[i]+v[j])/2);
+      if(tS<=0){
+        if(brk[i]){
+          if(gear>gearAt(endV[i]).gear&&rpmIn(gear-1,v[i])<=rl&&engineHolds(i,engineBrakeA(gear-1,v[i]))){gear--;tS=vehicle.shiftTime;}
+        }else{
+          const tgt=holdAt[i]>=0?holdAt[i]:gearAt(v[i]).gear;
+          if(tgt>gear)gear=tgt;                                    // the forward pass made this change, and charged its cut
+          else if(tgt<gear&&rpmIn(gear-1,v[i])<=rl){gear--;tS=vehicle.shiftTime;}   // still going down after the brakes
+        }
+      }
+      g[i]=gear;
+      if(brk[i]&&tS<=0){
+        const e0=engineBrakeA(gear,v[i]),c=engineCap(i);
+        eb[i]=Math.min(e0,c);trim[i]=e0>c*(1+1e-6)?1:0;
+      }
+      tS-=dt;
+    }
+    return {g,eb,trim};
+  }
+  {
+    const gw=gearWalk();ebA.set(gw.eb);
+    let bites=false;for(let i=0;i<n;i++)if(brakeBound[i]&&ebA[i]>0){bites=true;break;}
+    if(bites)passes();   // the engine adds to brakes that were the limit somewhere: solve again with it
+  }
   const th=vehicle.brakeTh;
   function brakeTemps(){
     const st={F:BRAKE_AMBIENT,R:BRAKE_AMBIENT},TF=new Array(n),TR=new Array(n);
@@ -8369,7 +8480,8 @@ function simulateLap(key,opts){
         const j=(i+1)%n,va=Math.max(2,(v[i]+v[j])/2),dt=p[i].ds3/va;
         const aLong=(v[j]*v[j]-v[i]*v[i])/(2*p[i].ds3);
         const mech=-aLong-(drag(v[i])+rollF(v[i])*p[i].cosT)/m-G*p[i].sinT;   // what the brakes did
-        brakeHeatStep(st,th,Math.max(0,mech),va,dt);
+        // the engine's share is not the rotors' (build 149); the brakes' own split by axle (build 150)
+        brakeHeatStep(st,th,Math.max(0,mech-ebA[i]),va,dt,undefined,mech>1e-6?axleUse(i,mech,ebA[i]).fr:undefined);
         TF[i]=st.F;TR[i]=st.R;
       }
     }
@@ -8378,7 +8490,7 @@ function simulateLap(key,opts){
   let BT=brakeTemps();
   {
     let faded=false;
-    for(let i=0;i<n;i++){fadeF[i]=brakeFadeAt(BT.TF[i],th);if(fadeF[i]<0.999)faded=true;}
+    for(let i=0;i<n;i++){fadeF[i]=brakeFadeAt(BT.TF[i],th);fadeR[i]=brakeFadeAt(BT.TR[i],th);if(fadeF[i]<0.999||fadeR[i]<0.999)faded=true;}
     if(faded){passes();BT=brakeTemps();}
   }
   // what the shifts cost: the same lap with and without the drive cut
@@ -8429,6 +8541,7 @@ function simulateLap(key,opts){
     }
     state.iat=iat0;
   }
+  const GW=gearWalk();ebA.set(GW.eb);   // the gearbox through the lap as it is now driven
   BT=brakeTemps();   // the rotors through the lap as it is now driven
   // Classify from the FINISHED profile, not during the passes — the backward pass touches almost
   // every point on a twisty circuit, so labelling as it goes would call the whole lap "braking".
@@ -8454,17 +8567,18 @@ function simulateLap(key,opts){
   for(let i=0;i<n;i++){
     const j=(i+1)%n,vAvg=Math.max(2,(v[i]+v[j])/2),dtSeg=p[i].ds3/vAvg;
     t+=dtSeg;sect[Math.min(2,Math.floor(p[i].s/third))]+=dtSeg;
-    gears[i]=holdAt[i]>=0?holdAt[i]:bestGear(v[i]).gear;
+    gears[i]=GW.g[i];
     if(v[i]<vMin)vMin=v[i];if(v[i]>vMax)vMax=v[i];
   }
   // Count real shifts, not solver chatter: picking the best gear point-by-point flickers between
-  // two near-equal ratios, so collapse any run shorter than 40 m into its neighbour first.
+  // two near-equal ratios, so collapse any run shorter than 40 m into its neighbour first. On the power only:
+  // under braking each gear is a real downshift, spaced by the shift time, however short its run (build 149).
   let shifts=0;
   {
     const MINRUN=40;let runStart=0;
     for(let i=1;i<=n;i++){
       if(i<n&&gears[i]===gears[runStart])continue;
-      if(p[(i-1+n)%n].s-p[runStart].s<MINRUN&&runStart>0)
+      if(p[(i-1+n)%n].s-p[runStart].s<MINRUN&&runStart>0&&ebA[runStart]===0&&!brakingAt(runStart))
         for(let k=runStart;k<i;k++)gears[k]=gears[runStart-1];
       runStart=i;
     }
@@ -8486,6 +8600,8 @@ function simulateLap(key,opts){
   //           (with the boost the shaft has built). Zero coasting, braking and mid-shift.
   const tAt=new Array(n),thr=new Array(n),brk=new Array(n),gLat=new Array(n),gLong=new Array(n),rpmAt=new Array(n),mapAt=new Array(n);
   const steerRaw=new Array(n),pwr=new Array(n),wb=vehicle.wb||2.6;
+  // each axle's share of its grip in use under braking (build 150), and the engine's alone on the driven axle
+  const useF=new Float64Array(n),useR=new Float64Array(n),frB=new Float64Array(n).fill(fH);let engUseMax=0;
   {
     let tc=0;
     for(let i=0;i<n;i++){
@@ -8495,12 +8611,14 @@ function simulateLap(key,opts){
       if(cutAt[i]){thr[i]=0;brk[i]=0;}   // mid-shift: clutch in, no drive
       else if(lim[i]==='power'||lim[i]==='traction'){thr[i]=1;brk[i]=0;}
       else if(need>=0){thr[i]=clamp(need/Math.max(1,(holdAt[i]>=0?inGear(v[i],holdAt[i]):bestGear(v[i])).F*(boostShare?boostShare[i]:1)),0,1);brk[i]=0;}
-      else{thr[i]=0;brk[i]=clamp(-need/m/Math.max(0.1,vehicle.brakeDecelCap),0,1);}
+      else{thr[i]=0;brk[i]=clamp((-need/m-ebA[i])/Math.max(0.1,vehicle.brakeDecelCap),0,1);}   // the engine's braking is not the pedal's
       const ax=p[i].x-p[h].x,ay=p[i].y-p[h].y,bx=p[j].x-p[i].x,by=p[j].y-p[i].y;
       gLat[i]=Math.sign(ax*by-ay*bx)*v[i]*v[i]/Math.max(1,p[i].r)/G;
       steerRaw[i]=Math.sign(ax*by-ay*bx)*Math.atan(wb/Math.max(1,p[i].r));
       gLong[i]=aL[i]/G;
       rpmAt[i]=clamp(v[i]*ratios[gears[i]]*fd/rT*60/TWO_PI,idle,rl);
+      {const mc=mechAt(i);if(mc>0.3){const x=axleUse(i,mc,ebA[i]);useF[i]=x.useF;useR[i]=x.useR;frB[i]=x.fr;
+        engUseMax=Math.max(engUseMax,ebA[i]*m*engFront/Math.max(1,x.gF),ebA[i]*m*(1-engFront)/Math.max(1,x.gR));}}
       mapAt[i]=steadyMapAt(rpmAt[i],thr[i]);
       if(boostLap)mapAt[i]=Math.min(mapAt[i],1+boostLap[i]);   // what the shaft has built by here
       const omega=rpmAt[i]*TWO_PI/60;
@@ -8520,7 +8638,12 @@ function simulateLap(key,opts){
     // The peak the power readout is measured against: the curve this lap drives (best-power mixture), which
     // can sit a little above the as-tuned figure quoted on DYNO.
     pwrPeak:curve.reduce((a,q)=>Math.max(a,q.tq*q.rpm*TWO_PI/60),0),
-    replay:{tAt,thr,brk,cut:Array.from(cutAt),gLat,gLong,rpm:rpmAt,map:mapAt,steer,pwr,tF:BT.TF,tR:BT.TR,fade:fadeF.slice()},
+    replay:{tAt,thr,brk,cut:Array.from(cutAt),gLat,gLong,rpm:rpmAt,map:mapAt,steer,pwr,tF:BT.TF,tR:BT.TR,fade:fadeF.slice(),fadeR:fadeR.slice(),
+      useF:Array.from(useF),useR:Array.from(useR),eb:Array.from(ebA),frB:Array.from(frB)},
+    engBrakeUseMax:engUseMax,
+    // metres of braking where the engine's braking had to be trimmed to the driven tyres' grip (build 150): where a
+    // car without drag-torque control, a slipper clutch or a blip would have stepped out
+    engTrimM:GW.trim.reduce((a,t,i)=>a+(t?p[i].ds3:0),0),
     brakeMaxF:Math.max(...BT.TF),brakeMaxR:Math.max(...BT.TR),brakeOnset:th.onset,
     corners:T.corners,width:T.width,wLabel:T.wLabel};
 }
@@ -8732,6 +8855,7 @@ function raceCarModel(entry,key,opts){
     let fpl=0;for(let i=0;i<n;i++){const j=(i+1)%n;fpl+=frNom[i]*line[i].ds3/Math.max(2,(nom.v[i]+nom.v[j])/2);}
     return {name:entry.name,key,n,line:line.map(q=>({x:q.x,y:q.y})),cum,L3:cum[n],kap,sinT,lim,prof,grips,
       vRest:Float32Array.from(rest.v),vNom,vApex,tF:Float32Array.from(nom.replay.tF),fadeProf:Float32Array.from(nom.replay.fade),
+      ebProf:Float32Array.from(nom.replay.eb||[]),frProf:Float32Array.from(nom.replay.frB||[]),
       brakeOnset:nom.brakeOnset,brakeTh:vehicle.brakeTh,
       brakeCar:{mass:vehicle.mass,brakeFrontShare:vehicle.brakeFrontShare||0.7,fWt:vehicle.fWt,cg:vehicle.cg,wb:vehicle.wb,mu:vehicle.mu},
       lapNom:nom.lap,qual,fuelPerLapKg:fpl/1000,
@@ -9067,7 +9191,9 @@ function raceStepOnce(R){
       const drag=0.5*AIR_RHO*M.cdA*c.v*c.v,roll=M.crr*M.massNow*G;
       const mech=Math.max(0,-c.ax-(drag+roll)/M.massNow-G*M.sinT[c.i]);
       M.brakeCar.mass=M.massNow;
-      brakeHeatStep(c.BT,M.brakeTh,mech,c.v,dt,M.brakeCar);
+      // the engine's share of the slowing is not the rotors', and the brakes split by axle as on the lap (build 150)
+      const eb=M.ebProf&&M.ebProf.length?Math.min(mech,M.ebProf[c.i]):0;
+      brakeHeatStep(c.BT,M.brakeTh,mech-eb,c.v,dt,M.brakeCar,mech>0.3&&M.frProf&&M.frProf.length?M.frProf[c.i]:undefined);
     }
     const r=clamp(c.v/Math.max(1,c._pv),0,1.05);
     const burn=c._fr*r*r*(c.cc.mode==='save'?0.9:1)*dt/1000;
