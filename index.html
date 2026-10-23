@@ -373,7 +373,7 @@ table.fuelmap td.live{box-shadow:inset 0 0 0 2px #fff;font-weight:bold}
 <body>
 <div class="container">
 <header>
-<h1>PIXEL ENGINE SIM v0.6 build 151</h1>
+<h1>PIXEL ENGINE SIM v0.6 build 152</h1>
 <div class="subtitle" id="subtitle">ENGINE DESIGNER • BUILD IT, THEN DRIVE IT</div>
 </header>
 <div class="build-strip" id="buildStrip">
@@ -2025,6 +2025,10 @@ going fastest; through a compression it is pressed into the road and can carry f
 the test circuits a dip is worth about a third more corner speed than the same corner on a brow.
 Where the hills fall matters as much as how big they are: a climb in a braking zone lets you brake
 later and <i>gains</i> time, while the same climb on a straight simply costs you.
+<br><b>The driver's foot.</b> The THR bar is a pedal, not the solver's on/off. The driver moves it no faster than a
+foot does: fully off in 0.10 s, fully on in 0.25 s. It holds a corner steady and does not back off again once a car
+is driving out of a corner. On a dual-clutch, sequential or automatic gearbox it stays flat through an upshift (the
+gearbox cuts the spark, and the turbo stays spun up); on a manual it lifts for each shift.
 <br><b>Full screen.</b> ⛶ at the start of the live-timing controls puts the lap, its live instruments and the
 replay controls on the whole screen, in landscape: on a phone held upright the view turns itself. ✕ (or Esc)
 brings it back.
@@ -8505,6 +8509,45 @@ function simulateLap(key,opts){
   // point's revs and throttle, until it repeats lap to lap; the torque the boost actually there gives,
   // against what full boost gives, scales the drive, and the forward pass is solved again. The throttle
   // depends on the drive available, so this goes round twice.
+  // The driver's foot (build 152). The solve gives a throttle point by point: full wherever the engine is the
+  // limit, the drive the profile needs elsewhere, nothing mid-shift. Read straight, that pumps 1-0-1 in a single
+  // 5 m step (~0.07 s), 75-115 times a Spa lap: the line's radius flickers, so the corner throttle does too, and
+  // every upshift lifts. A driver holds a steady throttle through a corner, keeps it flat through a shift on a
+  // gearbox that cuts the spark for it (dual-clutch, sequential, automatic: the turbo stays spun up), lifts for
+  // an H-pattern shift, and moves the pedal no faster than a foot does: fully off in 0.10 s, fully on in 0.25 s.
+  // target(i) is what the driver aims for at a point, cut(i) what a shift leaves it at; the pedal follows it in
+  // time round the lap (twice, so the lap closes on itself).
+  const flatShift=['dct','sequential','auto'].includes(vehicle.gearbox);
+  const PEDAL_OFF=0.10,PEDAL_ON=0.25;
+  const cornerish=i=>latUse[i]>0.65||(v[i]>=vC[i]*0.97&&vC[i]<VMAX*0.99);
+  function driverPedal(target,liftTo){
+    const raw=new Float64Array(n);
+    for(let i=0;i<n;i++)raw[i]=cutAt[i]?NaN:clamp(target(i),0,1);
+    // steady through a corner: the ±2 points (±10 m) the steering is averaged over
+    const aim=new Float64Array(n);
+    for(let i=0;i<n;i++){
+      if(Number.isNaN(raw[i])){aim[i]=NaN;continue;}
+      if(!cornerish(i)||raw[i]<=0){aim[i]=raw[i];continue;}
+      let a=0,c=0;for(let k=-2;k<=2;k++){const q=(i+k+n)%n;if(!Number.isNaN(raw[q])&&raw[q]>0&&cornerish(q)){a+=raw[q];c++;}}
+      aim[i]=a/c;
+    }
+    // out of a corner: once the car is accelerating the driver does not back off again until it stops (the solve's
+    // grip and traction limits trade places point to point on an exit; the foot only goes on)
+    for(let pass=0;pass<2;pass++)for(let i=0;i<n;i++){
+      const h=(i-1+n)%n,j=(i+1)%n,a=(v[j]*v[j]-v[i]*v[i])/(2*p[i].ds3);
+      if(!Number.isNaN(aim[i])&&!Number.isNaN(aim[h])&&a>0.5&&aim[h]>aim[i])aim[i]=aim[h];
+    }
+    // through a shift: flat on a spark-cut gearbox (held at what it was), lifted on a manual
+    let held=0;for(let i=n-1;i>=0;i--)if(!Number.isNaN(aim[i])){held=aim[i];break;}
+    for(let i=0;i<n;i++){if(Number.isNaN(aim[i]))aim[i]=flatShift?held:liftTo;else held=aim[i];}
+    const out=new Float64Array(n);let pd=aim[n-1];
+    for(let pass=0;pass<2;pass++)for(let i=0;i<n;i++){
+      const h=(i-1+n)%n,dt=p[h].ds3/Math.max(2,(v[h]+v[i])/2);   // the time since the last point
+      pd=aim[i]>pd?Math.min(aim[i],pd+dt/PEDAL_ON):Math.max(aim[i],pd-dt/PEDAL_OFF);
+      out[i]=pd;
+    }
+    return out;
+  }
   let boostLap=null;
   if(engine.intake==='turbo'&&engine.maxBoost>0&&engine.shaftJ){
     const grid=lapTorqueGrid(),iat0=state.iat;state.iat=20;   // design figures, like simulateAccel
@@ -8516,14 +8559,13 @@ function simulateLap(key,opts){
     let i0=0;for(let i=1;i<n;i++)if(v[i]>v[i0])i0=i;
     for(let it=0;it<TURBO_ITERS;it++){
       // throttle = the drive force the speed profile asks for, against what the engine has here
-      const thrS=new Float64Array(n);
-      for(let i=0;i<n;i++){
-        if(cutAt[i]){thrS[i]=0.35;continue;}   // mid-shift, as the standing-start run lifts for it
+      // (mid-shift on a manual it is 0.35, as the standing-start run lifts for it; flat on a spark-cut box)
+      const thrS=driverPedal(i=>{
         const j=(i+1)%n,g=holdAt[i]>=0?inGear(v[i],holdAt[i]):gearAt(v[i]),a=(v[j]*v[j]-v[i]*v[i])/(2*p[i].ds3);
         const need=vehicleMassEff(ratios[g.gear]*fd)*a+drag(v[i])+rollF(v[i])*p[i].cosT+m*G*p[i].sinT
                    +corneringDrag(m,v[i]*v[i]/p[i].r,loadAt(p[i],v[i]));
-        thrS[i]=need<=0?0:clamp(need/Math.max(1,g.F*boostShare[i]),0,1);
-      }
+        return need<=0?0:need/Math.max(1,g.F*boostShare[i]);
+      },0.35);
       let E=0,b=0;
       for(let k=0;k<200;k++){const r=advanceShaft(E,rpmOf(i0),b,1,0.01);E=r.shaftE;b=r.boost;}   // 2 s flat
       for(let k=0;k<n;k++){
@@ -8599,7 +8641,7 @@ function simulateLap(key,opts){
   //           driveline's efficiency, and never more than the engine makes at full throttle at this rpm
   //           (with the boost the shaft has built). Zero coasting, braking and mid-shift.
   const tAt=new Array(n),thr=new Array(n),brk=new Array(n),gLat=new Array(n),gLong=new Array(n),rpmAt=new Array(n),mapAt=new Array(n);
-  const steerRaw=new Array(n),pwr=new Array(n),wb=vehicle.wb||2.6;
+  const steerRaw=new Array(n),pwr=new Array(n),tgt=new Float64Array(n),wb=vehicle.wb||2.6;
   // each axle's share of its grip in use under braking (build 150), and the engine's alone on the driven axle
   const useF=new Float64Array(n),useR=new Float64Array(n),frB=new Float64Array(n).fill(fH);let engUseMax=0;
   {
@@ -8608,10 +8650,13 @@ function simulateLap(key,opts){
       const j=(i+1)%n,h=(i-1+n)%n;tAt[i]=tc;
       tc+=p[i].ds3/Math.max(2,(v[i]+v[j])/2);
       const resist=drag(v[i])+rollF(v[i])*p[i].cosT+m*G*p[i].sinT+corneringDrag(m,v[i]*v[i]/p[i].r,loadAt(p[i],v[i])), need=vehicleMassEff(ratios[gears[i]]*fd)*aL[i]+resist;
-      if(cutAt[i]){thr[i]=0;brk[i]=0;}   // mid-shift: clutch in, no drive
-      else if(lim[i]==='power'||lim[i]==='traction'){thr[i]=1;brk[i]=0;}
-      else if(need>=0){thr[i]=clamp(need/Math.max(1,(holdAt[i]>=0?inGear(v[i],holdAt[i]):bestGear(v[i])).F*(boostShare?boostShare[i]:1)),0,1);brk[i]=0;}
-      else{thr[i]=0;brk[i]=clamp((-need/m-ebA[i])/Math.max(0.1,vehicle.brakeDecelCap),0,1);}   // the engine's braking is not the pedal's
+      // what the driver aims the pedal at (driverPedal, below, turns it into a foot's movement): full where the engine
+      // or the driven tyres are the limit (on the tyres' limit the pedal is down and the traction control trims the
+      // torque to the grip, as on a road car at a track day)
+      if(cutAt[i]){tgt[i]=0;brk[i]=0;}   // mid-shift: clutch in, no drive
+      else if(lim[i]==='power'||lim[i]==='traction'){tgt[i]=1;brk[i]=0;}
+      else if(need>=0){tgt[i]=clamp(need/Math.max(1,(holdAt[i]>=0?inGear(v[i],holdAt[i]):bestGear(v[i])).F*(boostShare?boostShare[i]:1)),0,1);brk[i]=0;}
+      else{tgt[i]=0;brk[i]=clamp((-need/m-ebA[i])/Math.max(0.1,vehicle.brakeDecelCap),0,1);}   // the engine's braking is not the pedal's
       const ax=p[i].x-p[h].x,ay=p[i].y-p[h].y,bx=p[j].x-p[i].x,by=p[j].y-p[i].y;
       gLat[i]=Math.sign(ax*by-ay*bx)*v[i]*v[i]/Math.max(1,p[i].r)/G;
       steerRaw[i]=Math.sign(ax*by-ay*bx)*Math.atan(wb/Math.max(1,p[i].r));
@@ -8619,10 +8664,14 @@ function simulateLap(key,opts){
       rpmAt[i]=clamp(v[i]*ratios[gears[i]]*fd/rT*60/TWO_PI,idle,rl);
       {const mc=mechAt(i);if(mc>0.3){const x=axleUse(i,mc,ebA[i]);useF[i]=x.useF;useR[i]=x.useR;frB[i]=x.fr;
         engUseMax=Math.max(engUseMax,ebA[i]*m*engFront/Math.max(1,x.gF),ebA[i]*m*(1-engFront)/Math.max(1,x.gR));}}
-      mapAt[i]=steadyMapAt(rpmAt[i],thr[i]);
-      if(boostLap)mapAt[i]=Math.min(mapAt[i],1+boostLap[i]);   // what the shaft has built by here
       const omega=rpmAt[i]*TWO_PI/60;
       pwr[i]=cutAt[i]||need<=0?0:Math.min(need*v[i]/eff,tqAt(rpmAt[i])*omega*(boostShare?boostShare[i]:1));
+    }
+    const ped=driverPedal(i=>tgt[i],0);
+    for(let i=0;i<n;i++){
+      thr[i]=ped[i];
+      mapAt[i]=steadyMapAt(rpmAt[i],thr[i]);
+      if(boostLap)mapAt[i]=Math.min(mapAt[i],1+boostLap[i]);   // what the shaft has built by here
     }
   }
   // The line's radius comes from three samples 15 m apart and flickers a little point to point; a wheel

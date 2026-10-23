@@ -31,11 +31,15 @@ const rec = await page.evaluate(() => {
       const atStart = replayAt(L, 0), atEnd = replayAt(L, L.lap - 1e-6);
       let thrBad = 0, brkBad = 0, gBad = 0, mono = 0, braked = 0;
       for (let i = 0; i < n; i++) {
-        if (L.lim[i] === 'power' && !R.cut[i] && R.thr[i] !== 1) thrBad++;   // mid-shift the drive is cut
+        // mid-shift the drive is cut; since build 152 the pedal is a foot (fully on in 0.25 s), so coming off a lift
+        // or a manual shift it is still rising
+        const h = (i - 1 + n) % n;
+        if (L.lim[i] === 'power' && !R.cut[i] && R.thr[i] !== 1 && !(R.thr[i] > R.thr[h])) thrBad++;
         // 'brake' in the solver means slowing faster than 1 m/s2. Drag and a climb can do that alone at
         // speed, and then the driver lifts rather than brakes, so the check is that nobody is flat on
         // the throttle there, and that the brake is used somewhere on the lap.
-        if (L.lim[i] === 'brake' && R.thr[i] >= 1) brkBad++;
+        // (a flat shift on a spark-cut gearbox keeps the pedal down while the cut drive lets the car slow)
+        if (L.lim[i] === 'brake' && R.thr[i] >= 1 && !R.cut[i]) brkBad++;
         if (R.brk[i] > 0) braked++;
         // lateral grip: the tyre's mu on whatever load there is, which downforce and compressions
         // raise; allow both, plus a margin for the solver's discretisation
