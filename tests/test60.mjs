@@ -63,6 +63,17 @@ const KNOWN = {
   // and grew with back-pressure), the F140's power is flat over the top: 825 hp at 8500, 831 at the 8900
   // limiter (real 789 at 8500). Within 1%; the top-end breathing (port Mach index) bites only at 8900.
   'Ferrari F140 V12 (812 Superfast)': ['limiter'],
+  // build 148, the supercars: the same missing top-end fade. Their power is still climbing at the limiter, where the
+  // real engines peak 100-500 rpm short of it (the Diablo, F1, Enzo, Carrera GT and Z06 on their NA breathing; the
+  // 720S, 750S and 992 Turbo S past their factory taper). Each is within 13% of its rating.
+  'Lamborghini 5.7 V12 (Diablo VT)': ['limiter'],
+  'BMW S70/2 V12 (McLaren F1)': ['limiter'],
+  'Ferrari F140B V12 (Enzo)': ['limiter'],
+  'Porsche 5.7 V10 (Carrera GT)': ['limiter'],
+  'McLaren M840T twin-turbo V8 (720S)': ['limiter'],
+  'Porsche 3.7 twin-turbo flat-six (911 Turbo S 992)': ['limiter'],
+  'GM LT6 flat-plane V8 (Corvette Z06 C8)': ['limiter'],
+  'McLaren M840T twin-turbo V8 (750S)': ['limiter'],
   // (Coyote, F140 and 4A-GE showed 'flat-low-end', torque peaks at 1000-1400 rpm, until build 98 put
   // the walls' extra heat at low speed into the work: peaks now 4700, 4900 and 5600 rpm.)
   // the two-stroke's fitted type factor and no expansion-chamber tuning

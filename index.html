@@ -373,7 +373,7 @@ table.fuelmap td.live{box-shadow:inset 0 0 0 2px #fff;font-weight:bold}
 <body>
 <div class="container">
 <header>
-<h1>PIXEL ENGINE SIM v0.6 build 147</h1>
+<h1>PIXEL ENGINE SIM v0.6 build 148</h1>
 <div class="subtitle" id="subtitle">ENGINE DESIGNER • BUILD IT, THEN DRIVE IT</div>
 </header>
 <div class="build-strip" id="buildStrip">
@@ -4065,10 +4065,41 @@ const PRESETS=[
    engine:{cylinders:8,layout:'v',bore_mm:93.0,stroke_mm:92.7,compression:12.0,redline:7500,cam:'sport',vvt:true,injector:'direct',octane:98,exhaust:'sport',airFilter:'perf',runner:'variable'}},
   {cat:'American V8',name:'Dodge 6.2 Hellcat (Challenger SRT)',real:{hp:707,hpRpm:6000,tq:881,tqRpm:4000},
    engine:{cylinders:8,layout:'v',bore_mm:103.9,stroke_mm:90.9,compression:9.5,redline:6200,intake:'supercharger',boost_bar:0.8,scType:'screw',valves:2,cam:'sport',vvt:true,injector:'port',octane:98,intercooler:'large',exhaust:'sport',airFilter:'perf',taperRpm:4000,taperPct:72}},
-  {cat:'Exotic',name:'Lamborghini 5.2 V10 (Huracán LP610-4)',real:{hp:602,hpRpm:8250,tq:560,tqRpm:6500},
+  // Supercar (build 148): four popular cars from each decade since the 90s, by their makers' figures. The 2020s are
+  // the combustion-only ones: the model has no electric motor, so the hybrids of the decade are left out.
+  {cat:'Supercar',era:'1990s',name:'Ferrari F129B V8 (F355)',real:{hp:375,hpRpm:8250,tq:363,tqRpm:6000},
+   engine:{cylinders:8,layout:'v',bore_mm:85.0,stroke_mm:77.0,compression:11.0,redline:8500,valves:5,valveMat:'titanium',cam:'race',vvt:false,valveSpring:'race',injector:'port',octane:98,exhaust:'race',airFilter:'perf',runner:'medium'}},
+  {cat:'Supercar',era:'1990s',name:'Lamborghini 5.7 V12 (Diablo VT)',real:{hp:492,hpRpm:7000,tq:580,tqRpm:5200},unsure:['compression','redline'],
+   engine:{cylinders:12,layout:'v',bore_mm:87.0,stroke_mm:80.0,compression:10.0,redline:7300,cam:'sport',vvt:false,valveSpring:'perf',injector:'port',octane:98,exhaust:'sport',airFilter:'perf',runner:'medium'}},
+  {cat:'Supercar',era:'1990s',name:'BMW S70/2 V12 (McLaren F1)',real:{hp:627,hpRpm:7400,tq:651,tqRpm:5600},
+   engine:{cylinders:12,layout:'v',bore_mm:86.0,stroke_mm:87.0,compression:11.0,redline:7500,cam:'race',vvt:true,valveSpring:'race',injector:'port',intakeSys:'itb',octane:98,exhaust:'race',airFilter:'perf',runner:'medium',oilCooler:true,radiator:'large'}},
+  {cat:'Supercar',era:'1990s',name:'Porsche M64/60 twin-turbo flat-six (911 Turbo 993)',real:{hp:408,hpRpm:5750,tq:540,tqRpm:4500},unsure:['boost_bar','turboSize'],
+   engine:{cylinders:6,layout:'boxer',bore_mm:100.0,stroke_mm:76.4,compression:8.0,redline:6700,valves:2,intake:'turbo',boost_bar:0.8,turboSize:'small',turboConfig:'twin',intercooler:'large',cam:'sport',vvt:false,injector:'port',octane:98,exhaust:'sport',airFilter:'perf',runner:'medium',oilCooler:true,radiator:'large'}},
+  {cat:'Supercar',era:'2000s',name:'Ferrari F140B V12 (Enzo)',real:{hp:651,hpRpm:7800,tq:657,tqRpm:5500},
+   engine:{cylinders:12,layout:'v',bore_mm:92.0,stroke_mm:75.2,compression:11.2,redline:8200,valveMat:'titanium',injector:'port',cam:'race',vvt:true,valveSpring:'race',octane:98,exhaust:'race',airFilter:'perf',runner:'variable'}},
+  {cat:'Supercar',era:'2000s',name:'Porsche 5.7 V10 (Carrera GT)',real:{hp:604,hpRpm:8000,tq:590,tqRpm:5750},
+   engine:{cylinders:10,layout:'v',bore_mm:98.0,stroke_mm:76.0,compression:12.0,redline:8400,valveMat:'titanium',injector:'port',cam:'race',vvt:true,valveSpring:'race',octane:98,exhaust:'race',airFilter:'perf',runner:'variable'}},
+  {cat:'Supercar',era:'2000s',name:'Ford 5.4 supercharged V8 (Ford GT)',real:{hp:550,hpRpm:6500,tq:678,tqRpm:3750},unsure:['boost_bar','intercooler'],note:'the real blower makes 0.83 bar; from that the model makes 30% more than the rating, so the boost is set lower',
+   engine:{cylinders:8,layout:'v',bore_mm:90.2,stroke_mm:105.8,compression:8.4,redline:6500,intake:'supercharger',scType:'screw',boost_bar:0.55,intercooler:'small',cam:'sport',vvt:false,valveSpring:'perf',injector:'port',octane:98,exhaust:'sport',airFilter:'perf',runner:'medium',oilCooler:true,radiator:'large'}},
+  {cat:'Supercar',era:'2000s',name:'Lamborghini 6.5 V12 (Murciélago LP640)',real:{hp:631,hpRpm:8000,tq:660,tqRpm:6000},
+   engine:{cylinders:12,layout:'v',bore_mm:88.0,stroke_mm:89.0,compression:11.0,redline:8500,injector:'port',cam:'race',vvt:true,valveSpring:'race',octane:98,exhaust:'race',airFilter:'perf',runner:'variable'}},
+  {cat:'Supercar',era:'2010s',name:'Ferrari F136 FB V8 (458 Italia)',real:{hp:562,hpRpm:9000,tq:540,tqRpm:6000},
+   engine:{cylinders:8,layout:'v',bore_mm:94.0,stroke_mm:81.0,compression:12.5,redline:9000,valveMat:'titanium',cam:'race',vvt:true,valveSpring:'race',injector:'direct',octane:98,exhaust:'race',airFilter:'perf',runner:'variable'}},
+  {cat:'Supercar',era:'2010s',name:'Lamborghini 5.2 V10 (Huracán LP610-4)',real:{hp:602,hpRpm:8250,tq:560,tqRpm:6500},
    engine:{cylinders:10,layout:'v',bore_mm:84.5,stroke_mm:92.8,compression:12.7,redline:8500,cam:'race',vvt:true,valveSpring:'race',injector:'direct',octane:98,exhaust:'race',airFilter:'perf',runner:'variable'}},
-  {cat:'Exotic',name:'Ferrari F140 V12 (812 Superfast)',real:{hp:789,hpRpm:8500,tq:718,tqRpm:7000},
+  {cat:'Supercar',era:'2010s',name:'McLaren M840T twin-turbo V8 (720S)',real:{hp:710,hpRpm:7500,tq:770,tqRpm:5500},unsure:['boost_bar','turboSize'],
+   engine:{cylinders:8,layout:'v',bore_mm:93.0,stroke_mm:73.5,compression:8.7,redline:8100,intake:'turbo',boost_bar:1.1,turboSize:'medium',turboConfig:'twin',intercooler:'large',cam:'sport',vvt:true,valveSpring:'race',injector:'port',octane:98,exhaust:'sport',airFilter:'perf',runner:'short',oilCooler:true,radiator:'large',taperRpm:5500,taperPct:80}},
+  {cat:'Supercar',era:'2010s',name:'Ferrari F140 V12 (812 Superfast)',real:{hp:789,hpRpm:8500,tq:718,tqRpm:7000},
    engine:{cylinders:12,layout:'v',bore_mm:94.0,stroke_mm:78.0,compression:13.6,redline:8900,cam:'race',vvt:true,valveSpring:'race',valveMat:'titanium',injector:'direct',octane:98,exhaust:'race',airFilter:'perf',runner:'variable'}},
+  // the 992's turbines are variable-geometry; the model's VGT is the diesel's, so it runs a plain twin here
+  {cat:'Supercar',era:'2020s',name:'Porsche 3.7 twin-turbo flat-six (911 Turbo S 992)',real:{hp:641,hpRpm:6750,tq:800,tqRpm:2500},unsure:['boost_bar','turboSize'],
+   engine:{cylinders:6,layout:'boxer',bore_mm:102.0,stroke_mm:76.4,compression:8.7,redline:7200,intake:'turbo',boost_bar:1.3,turboSize:'medium',turboConfig:'twin',intercooler:'large',cam:'sport',vvt:true,valveSpring:'perf',injector:'direct',octane:98,exhaust:'sport',airFilter:'perf',runner:'short',oilCooler:true,radiator:'large',taperRpm:4000,taperPct:72}},
+  {cat:'Supercar',era:'2020s',name:'Lamborghini 5.2 V10 (Huracán STO)',real:{hp:631,hpRpm:8000,tq:565,tqRpm:6500},
+   engine:{cylinders:10,layout:'v',bore_mm:84.5,stroke_mm:92.8,compression:12.7,redline:8500,valveMat:'titanium',cam:'race',vvt:true,valveSpring:'race',injector:'direct',octane:98,exhaust:'race',airFilter:'perf',runner:'variable'}},
+  {cat:'Supercar',era:'2020s',name:'GM LT6 flat-plane V8 (Corvette Z06 C8)',real:{hp:670,hpRpm:8400,tq:623,tqRpm:6300},
+   engine:{cylinders:8,layout:'v',bore_mm:104.25,stroke_mm:80.0,compression:12.5,redline:8600,valveMat:'titanium',cam:'race',vvt:true,valveSpring:'race',injector:'direct',octane:98,exhaust:'race',airFilter:'perf',runner:'variable',oilCooler:true,radiator:'large'}},
+  {cat:'Supercar',era:'2020s',name:'McLaren M840T twin-turbo V8 (750S)',real:{hp:740,hpRpm:7500,tq:800,tqRpm:5500},unsure:['boost_bar','turboSize','compression'],
+   engine:{cylinders:8,layout:'v',bore_mm:93.0,stroke_mm:73.5,compression:8.7,redline:8100,intake:'turbo',boost_bar:1.2,turboSize:'medium',turboConfig:'twin',intercooler:'large',cam:'sport',vvt:true,valveSpring:'race',injector:'port',octane:98,exhaust:'sport',airFilter:'perf',runner:'short',oilCooler:true,radiator:'large',taperRpm:5500,taperPct:80}},
   // Rotary: both on the 13B rotor (e 15, R 105, W 80: 654 cc a rotor). The FD is quoted at its 1993 US
   // rating, not the later JDM 280 PS, which is the gentlemen's-agreement figure.
   {cat:'Rotary',name:'Mazda 13B-REW (RX-7 FD)',real:{hp:255,hpRpm:6500,tq:294,tqRpm:5000},unsure:['boost_bar'],
@@ -4087,7 +4118,7 @@ const PRESETS=[
    engine:{type:'twostroke',cylinders:2,bore_mm:64.0,stroke_mm:54.0,compression:7,redline:9500,intakeSys:'carb2',octane:95,exhaust:'race',airFilter:'stock'}},
 ];
 // Category order for the preset list (the dropdown groups by it; the UI pass will build on this).
-const PRESET_CATS=['Archetypes','Kei & City','Compact Turbo','NA Sports','Turbo Performance','American V8','Exotic','Rotary','Diesel','Two-Stroke'];
+const PRESET_CATS=['Archetypes','Kei & City','Compact Turbo','NA Sports','Turbo Performance','American V8','Supercar','Rotary','Diesel','Two-Stroke'];
 const STD_TUNE={throttle:0.85,load:0.40,elecLoad:0.30,afr:13.2,iat:25,coolant:90,oil:100,autoThermal:false};
 
 // ---- Strategy layer: objective challenges ----
@@ -4848,12 +4879,61 @@ const VEHICLE_PRESETS=[
   {cat:'American V8',name:'Dodge Challenger SRT Hellcat (2015)',engine:'Dodge 6.2 Hellcat (Challenger SRT)',chassis:'muscle',
    body:{kg:2020,cd:0.38,area:2.40,wb:2.95,fWt:0.57},fit:{drive:'rwd',tire:'sport',tw:275,ta:40,wheel:20,brake:'big',rotor:390,susp:'sport',gears:8,gearbox:'auto',diff:'clsd'},
    real:{t100:3.9,top:320},unsure:['cd','area']},
-  {cat:'Exotic',name:'Lamborghini Huracán LP610-4 (2014)',engine:'Lamborghini 5.2 V10 (Huracán LP610-4)',chassis:'super',
+  // Ferrari quoted 1350 kg dry; the body carries a curb mass with fluids
+  {cat:'Supercar',era:'1990s',name:'Ferrari F355 Berlinetta (1994)',engine:'Ferrari F129B V8 (F355)',chassis:'super',
+   body:{kg:1440,cd:0.33,area:1.85,wb:2.45,fWt:0.42},fit:{drive:'rwd',tire:'sport',tw:265,ta:40,wheel:18,brake:'slotted',rotor:284,susp:'sport',gears:6,gearbox:'manual',diff:'clsd'},
+   real:{t100:4.7,top:295},unsure:['kg','area','fWt']},
+  {cat:'Supercar',era:'1990s',name:'Lamborghini Diablo VT (1993)',engine:'Lamborghini 5.7 V12 (Diablo VT)',chassis:'super',
+   body:{kg:1700,cd:0.31,area:1.90,wb:2.65,fWt:0.41},fit:{drive:'awd',tire:'sport',tw:335,ta:30,wheel:18,brake:'big',rotor:330,susp:'sport',gears:5,gearbox:'manual',diff:'visc'},
+   real:{t100:4.1,top:325},unsure:['kg','area','fWt','t100']},
+  // 1138 kg dry; 386 km/h is the production car, 391 with the limiter raised
+  {cat:'Supercar',era:'1990s',name:'McLaren F1 (1994)',engine:'BMW S70/2 V12 (McLaren F1)',chassis:'hyper',
+   body:{kg:1200,cd:0.32,area:1.79,wb:2.718,fWt:0.42},fit:{drive:'rwd',tire:'sport',tw:315,ta:45,wheel:17,brake:'big',rotor:332,susp:'sport',gears:6,gearbox:'manual',diff:'clsd'},
+   real:{t100:3.2,top:386},unsure:['kg','fWt']},
+  {cat:'Supercar',era:'1990s',name:'Porsche 911 Turbo (993, 1995)',engine:'Porsche M64/60 twin-turbo flat-six (911 Turbo 993)',chassis:'super',
+   body:{kg:1500,cd:0.34,area:1.95,wb:2.272,fWt:0.38,engPos:'rear'},fit:{drive:'awd',tire:'sport',tw:285,ta:30,wheel:18,brake:'big',rotor:322,susp:'sport',gears:6,gearbox:'manual',diff:'visc'},
+   real:{t100:4.5,top:290},unsure:['area']},
+  // 1365 kg dry
+  {cat:'Supercar',era:'2000s',name:'Ferrari Enzo (2002)',engine:'Ferrari F140B V12 (Enzo)',chassis:'hyper',
+   body:{kg:1480,cd:0.36,area:1.95,wb:2.65,fWt:0.44},fit:{drive:'rwd',tire:'sport',tw:345,ta:35,wheel:19,brake:'carbon',rotor:380,susp:'coilover',gears:6,gearbox:'sequential',diff:'clsd'},
+   real:{t100:3.65,top:350},unsure:['kg','cd','area','fWt']},
+  // 1380 kg dry
+  {cat:'Supercar',era:'2000s',name:'Porsche Carrera GT (2004)',engine:'Porsche 5.7 V10 (Carrera GT)',chassis:'hyper',
+   body:{kg:1472,cd:0.40,area:1.86,wb:2.73,fWt:0.42},fit:{drive:'rwd',tire:'sport',tw:335,ta:30,wheel:20,brake:'carbon',rotor:380,susp:'coilover',gears:6,gearbox:'manual',diff:'clsd'},
+   real:{t100:3.9,top:330},unsure:['area','fWt']},
+  {cat:'Supercar',era:'2000s',name:'Ford GT (2005)',engine:'Ford 5.4 supercharged V8 (Ford GT)',chassis:'super',
+   body:{kg:1520,cd:0.355,area:1.90,wb:2.71,fWt:0.43},fit:{drive:'rwd',tire:'sport',tw:315,ta:40,wheel:19,brake:'big',rotor:355,susp:'sport',gears:6,gearbox:'manual',diff:'clsd'},
+   real:{t100:3.9,top:330},unsure:['area','fWt']},
+  // 1665 kg dry
+  {cat:'Supercar',era:'2000s',name:'Lamborghini Murciélago LP640 (2006)',engine:'Lamborghini 6.5 V12 (Murciélago LP640)',chassis:'super',
+   body:{kg:1750,cd:0.33,area:2.00,wb:2.665,fWt:0.42},fit:{drive:'awd',tire:'sport',tw:335,ta:30,wheel:18,brake:'big',rotor:380,susp:'sport',gears:6,gearbox:'sequential',diff:'visc'},
+   real:{t100:3.4,top:340},unsure:['kg','cd','area','fWt']},
+  {cat:'Supercar',era:'2010s',name:'Ferrari 458 Italia (2010)',engine:'Ferrari F136 FB V8 (458 Italia)',chassis:'super',
+   body:{kg:1485,cd:0.33,area:1.95,wb:2.65,fWt:0.42},fit:{drive:'rwd',tire:'sport',tw:295,ta:35,wheel:20,brake:'carbon',rotor:398,susp:'sport',gears:7,gearbox:'dct',diff:'clsd'},
+   real:{t100:3.4,top:325},unsure:['area','fWt']},
+  {cat:'Supercar',era:'2010s',name:'Lamborghini Huracán LP610-4 (2014)',engine:'Lamborghini 5.2 V10 (Huracán LP610-4)',chassis:'super',
    body:{kg:1550,cd:0.39,area:1.95,wb:2.62,fWt:0.43},fit:{drive:'awd',tire:'sport',tw:305,ta:30,wheel:20,brake:'carbon',rotor:380,susp:'sport',gears:7,gearbox:'dct',diff:'clsd'},
    real:{t100:3.2,top:325},unsure:['cd','area','kg']},
-  {cat:'Exotic',name:'Ferrari 812 Superfast (2017)',engine:'Ferrari F140 V12 (812 Superfast)',chassis:'gt',
+  {cat:'Supercar',era:'2010s',name:'McLaren 720S (2017)',engine:'McLaren M840T twin-turbo V8 (720S)',chassis:'super',
+   body:{kg:1419,cd:0.38,area:1.95,wb:2.67,fWt:0.42},fit:{drive:'rwd',tire:'sport',tw:305,ta:30,wheel:20,brake:'carbon',rotor:390,susp:'sport',gears:7,gearbox:'dct',diff:'clsd'},
+   real:{t100:2.9,top:341},unsure:['cd','area','fWt']},
+  {cat:'Supercar',era:'2010s',name:'Ferrari 812 Superfast (2017)',engine:'Ferrari F140 V12 (812 Superfast)',chassis:'gt',
    body:{kg:1745,cd:0.37,area:2.05,wb:2.72,fWt:0.47},fit:{drive:'rwd',tire:'sport',tw:315,ta:35,wheel:20,brake:'carbon',rotor:400,susp:'sport',gears:7,gearbox:'dct',diff:'clsd'},
    real:{t100:2.9,top:340},unsure:['cd','area','kg']},
+  {cat:'Supercar',era:'2020s',name:'Porsche 911 Turbo S (992, 2020)',engine:'Porsche 3.7 twin-turbo flat-six (911 Turbo S 992)',chassis:'super',
+   body:{kg:1640,cd:0.33,area:2.10,wb:2.45,fWt:0.39,engPos:'rear'},fit:{drive:'awd',tire:'sport',tw:315,ta:30,wheel:21,brake:'carbon',rotor:420,susp:'sport',gears:8,gearbox:'dct',diff:'clsd'},
+   real:{t100:2.7,top:330},unsure:['area','fWt']},
+  // 1339 kg dry; its fixed wing and splitter are part of the measured drag
+  {cat:'Supercar',era:'2020s',name:'Lamborghini Huracán STO (2021)',engine:'Lamborghini 5.2 V10 (Huracán STO)',chassis:'super',
+   body:{kg:1450,cd:0.40,area:1.95,wb:2.62,fWt:0.41},fit:{drive:'rwd',tire:'semi',tw:305,ta:30,wheel:20,brake:'carbon',rotor:390,susp:'coilover',gears:7,gearbox:'dct',diff:'clsd'},
+   real:{t100:3.0,top:310},unsure:['kg','cd','area','fWt']},
+  // GM quotes 0-60 mph in 2.6 s
+  {cat:'Supercar',era:'2020s',name:'Chevrolet Corvette Z06 (C8, 2023)',engine:'GM LT6 flat-plane V8 (Corvette Z06 C8)',chassis:'super',
+   body:{kg:1561,cd:0.37,area:2.05,wb:2.72,fWt:0.40},fit:{drive:'rwd',tire:'sport',tw:345,ta:25,wheel:21,brake:'big',rotor:370,susp:'sport',gears:8,gearbox:'dct',diff:'clsd'},
+   real:{t100:2.8,top:312},unsure:['cd','area','t100','top']},
+  {cat:'Supercar',era:'2020s',name:'McLaren 750S (2023)',engine:'McLaren M840T twin-turbo V8 (750S)',chassis:'super',
+   body:{kg:1389,cd:0.38,area:1.95,wb:2.67,fWt:0.42},fit:{drive:'rwd',tire:'sport',tw:305,ta:30,wheel:20,brake:'carbon',rotor:390,susp:'sport',gears:7,gearbox:'dct',diff:'clsd'},
+   real:{t100:2.8,top:332},unsure:['cd','area','fWt']},
   {cat:'Rotary',name:'Mazda RX-7 (FD, 1993)',engine:'Mazda 13B-REW (RX-7 FD)',chassis:'coupe',
    body:{kg:1280,cd:0.29,area:1.80,wb:2.425,fWt:0.50},fit:{drive:'rwd',tire:'sport',tw:225,ta:50,wheel:16,brake:'slotted',rotor:290,susp:'sport',gears:5,gearbox:'manual',diff:'clsd'},
    real:{t100:5.3,top:250,limited:true},unsure:['area','t100','top']},
@@ -9730,8 +9810,12 @@ function wireFamilyPicker(famId,itemId,cats,items,catOf,placeholder,onPick){
   const used=cats.filter(c=>items.some(p=>catOf(p)===c));
   fam.innerHTML=used.map(c=>'<option value="'+esc(c)+'">'+esc(tr(c))+'</option>').join('');
   const fill=(keep)=>{
-    sel.innerHTML='<option value="">'+esc(tr(placeholder))+'</option>'+
-      items.map((p,i)=>catOf(p)===fam.value?'<option value="'+i+'">'+esc(p.name)+'</option>':'').join('');
+    // a family whose items carry an era (the supercars) is grouped by it
+    let era=null,html='';
+    items.forEach((p,i)=>{if(catOf(p)!==fam.value)return;
+      if(p.era&&p.era!==era){html+=(era?'</optgroup>':'')+'<optgroup label="'+esc(tr(p.era))+'">';era=p.era;}
+      html+='<option value="'+i+'">'+esc(p.name)+'</option>';});
+    sel.innerHTML='<option value="">'+esc(tr(placeholder))+'</option>'+html+(era?'</optgroup>':'');
     sel.value=keep!=null?String(keep):'';
   };
   fam.addEventListener('change',()=>fill());

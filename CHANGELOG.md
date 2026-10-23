@@ -20,6 +20,32 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 Working toward **v1.0 — every number derived, not fitted.**
 
+### Supercar category (build 148)
+
+- **Exotic becomes Supercar**, with four popular cars from each decade since the 90s, each a real car on its factory
+  engine. The Huracán LP610-4 and 812 Superfast are two of the 2010s four. In the car and engine pickers the family
+  is grouped by decade.
+  - 1990s: Ferrari F355 Berlinetta, Lamborghini Diablo VT, McLaren F1, Porsche 911 Turbo (993)
+  - 2000s: Ferrari Enzo, Porsche Carrera GT, Ford GT, Lamborghini Murciélago LP640
+  - 2010s: Ferrari 458 Italia, Lamborghini Huracán LP610-4, McLaren 720S, Ferrari 812 Superfast
+  - 2020s: Porsche 911 Turbo S (992), Lamborghini Huracán STO, Chevrolet Corvette Z06 (C8), McLaren 750S
+- The 2020s are the combustion-only cars: the decade's flagships are mostly hybrids (SF90, 296, Artura, Revuelto)
+  and the model has no electric motor. The 992's turbines are variable-geometry; the model's VGT is the diesel's,
+  so it runs a plain twin.
+- Bodies are curb masses (the makers' dry figures are noted beside them). Inputs from secondary sources are marked
+  unsure. The boosts of the 720S, 750S and 992 Turbo S are not published; they are set, with a factory taper over
+  the top, to the rated torque and power. The Ford GT's blower makes 0.83 bar, from which the model makes 30% more
+  than the rating, so its boost is set lower and it is noted and kept out of the error summary.
+- Against the makers (test60, test61): power within 13% on every engine; top speed within 7% on every car; 0-100
+  within 10% on 12 of the 16. The 720S, Z06 C8, 750S and 812 are 22-29% slow to 100: the same grip-limited launch on
+  two rear road tyres the 812 already showed. Eight engines join the known 'limiter' list: their power is still
+  climbing at the limiter, where the real ones peak 100-500 rpm short of it (the missing top-end fade).
+- The model has no active aero and one generation of tyre per type, so lap times do not fall decade on decade as
+  the real cars' do: at Spa the light McLaren F1 out-laps the 720S.
+- `test80`: Supercar has replaced Exotic, four cars a decade inside their years, each on a supercar engine of its
+  decade, loading as factory spec at its curb mass, power within 15%; power-to-weight and 0-100 improve from the
+  90s to the 2020s; the pickers group by decade and other families do not; one car from each decade races Spa.
+
 ### Racecraft and drivers (build 147)
 
 - **A tow that grows as the gap closes.** The flat +1.5% within 40 m is now the drag lost behind a car,

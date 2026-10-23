@@ -121,6 +121,9 @@ const KNOWN = {
   // width bonus that used to add 7.5% to a 275 tyre is gone; real road tests on street tyres report the
   // same struggle. Its 3.9 s is the maker's figure.
   'Dodge Challenger SRT Hellcat (2015)': ['slow-car'],
+  // Build 148: the same as the 812. 740 hp through two rear road tyres is grip-limited off the line in the model
+  // (3.5 s against a real 2.8); the real car's launch control and tyre warm-up are not modelled.
+  'McLaren 750S (2023)': ['slow-car'],
   // Short of the 250 km/h governor because their engines are short of their rating (test60): the R34's
   // is the JDM 280 PS figure real cars beat, the STI's boost is unsure. (The Evo IX reaches it since
   // build 101.)
