@@ -20,6 +20,28 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 Working toward **v1.0 — every number derived, not fitted.**
 
+### Racecraft and drivers (build 147)
+
+- **A tow that grows as the gap closes.** The flat +1.5% within 40 m is now the drag lost behind a car,
+  0.45 e^(-gap/25 m), turned into speed on a straight: 2.6% at 5 m, 2.1% at 10 m, 0.6% at 40 m. Cars nose to tail
+  pull each other along; a lone leader is caught.
+- **Defending.** With a quicker car within ~20 m behind on a straight, the car ahead may move to the inside line
+  for ~6 s (then not again for 8): the car behind needs 1.5-4 km/h more to pass, and the defender is 1% slower
+  through the next corner.
+- **Late-braking moves.** Held up within 10 m into a braking zone, a car may dive, once a zone. It sticks with
+  0.4 + 2 (grip difference) + 1.5 (brake fade difference) + 0.3 (aggression difference) - 0.15 against a defending
+  car, 8-85%: the attacker brakes 6% later for 60 m and exits 2% slower, and the car passed concedes the line and
+  has 6 s of easier repassing (the switchback). If it does not stick, the attacker runs wide and loses 15% for 80 m.
+- **Drivers.** Each car has one: BALANCED (the old average), AGGRESSIVE, SMOOTH, RAIN MASTER, ROOKIE, from four traits
+  (aggression, consistency, tyre care, wet skill) that set the lap-to-lap spread, mistakes, the pass threshold and
+  rate, how often they defend and dive, tyre slip and wear, and pace in the rain. A car with no driver set is
+  BALANCED and races exactly as before the traits.
+- Passes are now counted when the car being passed changes before the move is confirmed (in a crowd), which they
+  were not.
+- `test79`: the tow by distance; aggressive fields dive more than smooth ones, dives that stick take the place,
+  some go wide, cars defend; a rookie is less consistent and makes more mistakes than a smooth driver; a smooth
+  driver saves the tyres; wet skill orders the drivers in the rain; no driver = balanced.
+
 ### Fuel against the real world (build 146)
 
 After the brakes and the tyres, the same check on fuel. Real figures are owners' and a magazine's, not controlled
