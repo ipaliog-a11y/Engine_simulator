@@ -55,6 +55,12 @@ Working toward **v1.0 — every number derived, not fitted.**
   - a turbo keeps 90%+ of its boost through a flat shift
 - `test62` now allows the pedal to be rising off a lift on an engine-limited point, and flat through a cut shift
   while the car slows.
+- `test79` now counts dives over twelve seeds instead of three, and asks that a third of them (not half) end in the
+  place being taken.
+  - **Why the sample was too small.** Over three seeds it rested on one to four dives, so it was a coin flip. Main
+    itself sat exactly on the line (2 of 4).
+  - **What the rate really is.** Across 48 seeds it is 42-63%, depending on the build. This build moves the race pace
+    grid by under 0.03 s a lap, which is enough to re-roll which dives happen.
 
 ### The README says what the model does now (build 151)
 
