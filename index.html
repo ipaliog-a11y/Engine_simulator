@@ -373,7 +373,7 @@ table.fuelmap td.live{box-shadow:inset 0 0 0 2px #fff;font-weight:bold}
 <body>
 <div class="container">
 <header>
-<h1>PIXEL ENGINE SIM v0.6 build 150</h1>
+<h1>PIXEL ENGINE SIM v0.6 build 151</h1>
 <div class="subtitle" id="subtitle">ENGINE DESIGNER • BUILD IT, THEN DRIVE IT</div>
 </header>
 <div class="build-strip" id="buildStrip">
@@ -10765,7 +10765,7 @@ function hotLapReportCanvas(scale){
   const fy=Math.max(tabY+44+rowH*(corners.length+1),tabY+44+20*(vr.length+1))+22;
   g.strokeStyle=RPT.rule;g.lineWidth=1;g.beginPath();g.moveTo(40,fy);g.lineTo(W-40,fy);g.stroke();
   g.fillStyle='#889';g.font=sans(12);
-  g.fillText('Best-case lap on the optimised racing line — minimum curvature with a late-apex bias, inside the track width: no traffic, no tyre wear, no fuel burn, no driver error.',40,fy+22);
+  g.fillText('Best-case hot lap on this car\'s own minimum-time racing line, inside the track width: no traffic, no tyre wear, no fuel burn, no driver error.',40,fy+22);
   g.fillText('"Full throttle" = accelerating at the limit (engine or driven tyres); '+th.engPct.toFixed(0)+'% of the lap is engine-limited.',40,fy+42);
   g.fillText('Figures are SIMULATED, not measured. Slowest point '+Math.round(L.vMin)+' km/h · fastest '+Math.round(L.vMax)+' km/h · '+L.shifts+' gear changes.',40,fy+62);
   return cv;

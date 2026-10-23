@@ -1,4 +1,4 @@
-# PIXEL ENGINE SIM v0.6 build 150
+# PIXEL ENGINE SIM v0.6 build 151
 
 **A lightweight, 8-bit style internal combustion engine *designer* & simulator** inspired by *Automation*.
 
@@ -555,9 +555,9 @@ Curve** tab remains a wide-open-throttle steady-state sweep for reading the full
   VEHICLE panel and flagged when the build out-runs it — but deliberately not used as a hidden
   top-speed cap, because several real cars stop short of their drag-limited speed for a reason
   (a manufacturer governor) that a tyre rating would only imitate.
-- **Grip is still a hard clip, and rotational inertia is still free.** Tractive force is capped at
-  `μ·N` with no slip, and only the car's translating mass is accelerated. Both are known defects
-  with a measured cost — see the inertia investigation in the roadmap.
+- **Grip is still a hard clip.** Tractive force is capped at `μ·N` with no slip curve. Rotational inertia is
+  charged (build 107: the engine with a clutch-sized flywheel and the wheels, reflected through the gearing);
+  the slip-ratio tyre model stays parked until the launch model — see the inertia investigation in the roadmap.
 - Racing line: nobody drives the centreline — using the full width straightens a corner and raises
   the speed you can carry. The line is solved by **minimising total curvature** within the track
   edges (projected gradient on Σ|second difference|², run on a coarse node set because the
@@ -566,23 +566,13 @@ Curve** tab remains a wide-open-throttle steady-state sweep for reading the full
   never leaves it). Out-in-out through corners, straightened esses and linked complexes emerge from
   the objective rather than being scripted. It is worth **5–7 % of lap time** over the centreline,
   and the gain scales cleanly with track width (Riverside: 79.7 s at 6 m wide → 75.8 s at 18 m).
-- **Late apex (new)**: minimum curvature is symmetric — it prices a metre of radius at corner entry
-  exactly like a metre at the exit. On track it isn't: exit speed is carried the whole length of
-  whatever follows, while at entry the car is braking anyway. So the curvature cost is **weighted by
-  how open the track is ahead** (`Σ w·|Q″|²`, `w = 1 + 3·openness`, 90 m exponential lookahead),
-  which makes the solver trade entry radius for exit radius. Both constants are swept against
-  measured laps rather than guessed: 3 / 90 m is the setting at which *every* circuit gains — a
-  shorter lookahead buys 1.2 s at Ashdown but costs time at Cape and the Ring, which is the model
-  over-applying a late apex to a fast sweeper that only wants minimum curvature.
-
-  Measured with a node-quantisation-free metric (arc-length centroid of the line's depth toward the
-  inside, minus the centreline's own curvature centroid), the apex moves **+11.7 m later on corners
-  that lead onto a straight and only +4.7 m on corners that lead into more corners** — the bias is
-  selective, which is the whole claim. Worth 0.15–0.51 % of lap time, and negative on no circuit.
-
-  *Remaining caveat: the bias is priced from the geometry ahead, not from the car's own speed, so a
-  90 hp hatchback and an 800 hp aero car drive the same line. It is the same half-percent for
-  everyone, so build-to-build comparisons stay honest.*
+- **Minimum time, for the car being driven (build 115)**: minimum curvature is symmetric — it prices a
+  metre of radius at corner entry exactly like a metre at the exit — and it pays no attention to distance. On
+  track exit speed is carried down whatever follows while at entry the car is braking anyway. So the
+  minimum-curvature line is only the start: it is then refined for the car, a local search that moves the line
+  around one point at a time and keeps each move the car's own lap solver says is quicker. Late apexes emerge
+  where they pay, and each car drives its own line (cached per car): a 90 hp hatchback and an 800 hp aero car no
+  longer share one. The fitted late-apex bias it replaced (3 x how open the next 90 m were) is gone.
 - **Variable track width (new)**: a circuit is not a constant ribbon — it narrows through the tight
   sections and opens on the fast ones, and a 7 m corner cannot be straightened as much as a 13 m
   one no matter who is driving. Each circuit carries a width profile normalised to **mean 1**, so
@@ -762,67 +752,55 @@ documented in the GUIDE at the point where it matters:
   space on it, and the tyre model's heat, grip-window, wear and wet-grip constants are fitted to the
   usual published ranges, not derived. When the rain comes and how fast a line dries are rules drawn
   from the seed, not a forecast.
-- **Turbine throats are undersized.** Throat = A/R × *wheel* radius rather than the volute centroid
-  radius, so every turbine is smaller than the frame it names and the wastegate covers for it — which
-  is also why a VGT here still needs one at its open stop.
-- **Turbo lag reaches 0–100 but not the lap.** `simulateAccel` now integrates the shaft alongside
-  the car and reads torque off a 2-D rpm × boost grid, because boost is a state with history and a
-  1-D curve cannot describe a turbo mid-spool. `simulateLap` still works from the steady boost
-  available at each rpm, so a very laggy build is still flattered a little by its lap time.
-- **The turbine housing is not matched to the engine.** A/R comes from the frame size class alone —
-  small 0.42, medium 0.64, large 0.86 — with nothing about the engine entering, so a 2.0 four and a
-  6.6 V8 on the same size class get the same throat. Measured: a 4× spread in exhaust flow per mm²
-  of throat across the presets, and boost thresholds up to 4275 rpm late. Findings and the proposed
-  replacement are parked at `tests/proto/housing.mjs`.
+- **The turbine housing is a choice, not matched to the engine.** A/R comes from the frame (TIGHT / STOCK /
+  LOOSE per size class, scaled with the maker's wheel where it is set), with nothing about the engine
+  entering. Re-measured in build 151, the mismatch this was parked for has mostly closed on its own: exhaust
+  flow per mm² of throat at rated power spans 1.9× across the real turbo presets (it was 4×), boost
+  thresholds against the prototype's anchors are 775 rpm RMS (was ~1940; the proposed matching reached
+  ~700), and on the presets whose makers quote a torque plateau the 90%-boost point is ~620 rpm RMS from
+  the plateau's start. The throat convention, the compressor island, pulse energy, packaging-short turbo
+  manifolds and the makers' wheels did it. Left: the turbines run generous at rated power (exhaust over
+  intake pressure ~1.1, where real petrol turbos run ~1.5-2), so matching to back-pressure would spool them
+  earlier still; and VGT rings are the size class's, not the engine's (test49's diesel step). See
+  `tests/proto/README.md`.
 - **A turbo cannot fail from overspeed.** The shaft has a tip-speed limit and the model respects it
   as a *cap*, but nothing breaks. A grossly over-flowed frame therefore ends up running steadily at
   an expansion ratio that would have destroyed it — a 2.0 four at 2.5 bar on a small frame reaches
   7.4 bar of exhaust manifold pressure and simply becomes gutless, where the real outcome is a
   scrapped cartridge.
-- **The racing line doesn't know what car is driving it.** The late-apex bias is priced from the
-  geometry ahead, not the car's own speed, so a 90 hp hatchback and an 800 hp aero car take the
-  same line. It is the same half-percent for everyone, so build-to-build comparisons stay honest.
-- **A lap is a single best-case lap** — no tyre wear, no fuel burn, no traffic, no driver error.
+- **A TRACK lap is a single best-case hot lap** — no tyre wear, no fuel burn, no traffic, no driver error, the
+  brakes after one preparation lap. The RACE tab adds those, as rules where they are rules (above).
 - **Imported circuits have modelled width, not surveyed width**, derived from the layout.
-- **There is no engine braking above the limiter.** Past the rev limiter drive force is zero, but
-  nothing pushes back, so a steep descent can carry a car a km/h or so beyond the speed its top
-  gear allows. Real overrun would drag it back.
-- **Known gaps the tests now name:** the 13B turbo reaches boost near 8500 rpm against a real ~3000
-  (no pulse energy for ported engines yet), the Renesis reads 897 °C against test46's 900 floor, and
-  the Alto Works reads +17% power because the smallest turbo frame is far too big for 660 cc. Each is budgeted by name in test46/47/48 at a floor it may not fall below.
-- **Power peaks at the rev limiter on two presets.** The 2.0 Turbo Diesel I4 is a *plateau* (within
-  ~4% from 3500 rpm) left by derived diesel physics. A real TDI's sharper fall over its last 600 rpm is
-  the maker's torque-limit calibration, not combustion. A droop governor was tried and fitted real
-  data worse (see test46). The other is the 2.0 Turbo Hot-Hatch, down from four before the
-  valvetrain conversion and two before gas dynamics. Every naturally-aspirated preset now rolls off
-  inside its own rev range for a stated reason. The Hot-Hatch's power is a plateau to its limiter
-  (within 1% over the last 5% of revs). The fitted taper that used to roll turbos off, `turboChoke`,
-  is gone (build 94): turbine efficiency from blade speed ratio, per-point compressor efficiency and
-  sequential staging do the job. `tests/test46.mjs` holds the list by name and fails outright if any
-  NA preset ever joins it.
-- **The whole suite passes** as of build 93. `test40` failed for many builds; its two claims stood on
-  fitted spool losses, and with bearings from Petroff's law, a real charge volume and boost as a state,
-  one holds on the physics and the other is checked where its premise holds (see the changelog). It asserts that spool time lengthens with the boost target, and that at low boost a
-  small frame is quicker off the line than a large one. Both are true of real turbos. The second is
-  currently held up only by a bearing-drag constant about 5× published magnitude — correct it and the
-  ordering flips by 0.05 s, against a 0.12 s margin, so the effect sits **inside the model's own
-  ~3% noise floor** and cannot yet be claimed honestly. (`test38` used to be the second failure; it
-  asserted the late-apex line *never* costs time, which is a claim of optimality a geometric
-  heuristic cannot make. It now asserts what one can — pays on balance, never loses more than 0.5%.)
+- **Engine braking stops at the limiter.** Since build 149 the engine brakes the car through the braking
+  zones (its own overrun torque, in the gear the driver has worked down to). On the power at the rev limiter
+  the drive is cut to zero but nothing drags back, so a steep descent can carry a car a km/h or so past the
+  speed its top gear allows.
+- **Known gaps the tests name:** the ported engines still use a hand-set exhaust share, so the Renesis (~842 °C)
+  and the 500cc two-stroke (~764 °C) read cool; each is budgeted by name in test46/47 at a floor it may not fall
+  below. Boosted low-rpm torque against the makers: the RS3 is ~46% short at 1700 rpm (its real compressor wheel is
+  not published; the preset uses the 71 mm upper bound) and the EcoBoost ~44% at 1400 (no published wheel either).
+  Older turbo engines with no ECU torque limit (Supra, STI, Evo) read 8–14% over the makers in the mid-range.
+- **Power at the rev limiter.** test46 names the archetypes allowed to peak there: the 1.6 Sport NA I4 (a plateau,
+  ~1 hp over its last 400 rpm: the missing top-end fade test60 also names for the 4A-GE and the F140), the 2.0
+  Turbo Diesel I4 (a plateau; a real TDI's late fall is its torque-limit calibration, which ECU TORQUE LIMIT can
+  now set) and the 2.0 Turbo Hot-Hatch. A boosted engine with no ECU boost taper holds full boost to the limiter
+  by its calibration (build 131) and is not counted. Any naturally-aspirated preset joining the list fails.
+- **The whole suite passes** (56 tests, build 150), each re-baselined check carrying its reason in the test and
+  the changelog.
 - **The VE bell is gone from every poppet-valve petrol engine, and kept for the rest.** It took three
   attempts. The third (builds 82–84) found the bell had been covering for two errors: the trapping
   calculation closed every intake valve 16–24° early, and the intake ram put its tuning peak 22–57%
   too high in rpm against Engelman's published ratio, so every runner rang at the redline. With both
   fixed, test41 improves (4.02% → 3.34%) and test48's power error halves (15.8% → 8.6%). Diesels
   followed in build 88, once their torque came from fuel and their burn from time. Rotaries and
-  two-strokes still use the fitted bell, and `CAM.ampMul` still scales VE by cam grade.
+  two-strokes still use the fitted bell, and `CAM.ampMul` still scales their VE by cam grade (on poppet-valve
+  engines the integrated intake stroke, builds 121-122, carries the filling and the cam).
   The S2000 and S54 in test48 now carry their factory high-rpm intake and header; on the app's
   mid-range defaults they read 23–35% short, so check those two hardware calls if you know the cars.
-- **Rotational inertia is not charged during acceleration.** The engine, flywheel, gearbox and
-  wheels all have to be spun up as well as the car pushed along, and reflected through first gear
-  that is worth roughly +13 % of effective mass. `simulateAccel` accelerates the translating mass
-  only. Every car is therefore flattered by about 6 % on 0–100, and the 2.66 % calibration below was
-  reached with that gift in place — see *The inertia investigation* under the v1.0 plan.
+- **The launch has no tyre slip curve.** Rotational inertia is charged since build 107 (the engine, a
+  clutch-sized flywheel and the wheels through the gearing; 0-100 got honestly slower), but the tyre still
+  grips up to `μ·N` with no slip ratio, so a launch has no wheelspin phase — see *The inertia investigation*
+  under the v1.0 plan, and the launch model in the working queue.
 
 ### Next: v1.0 — every number derived, not fitted
 
@@ -830,7 +808,9 @@ This is the current direction, and it is a change of principle rather than a fea
 
 Parts of the model reach their accuracy through **lumped coefficients that were tuned until the
 outputs matched reality** — `CAM{peakShift, ampMul, scav}`, `EXHAUST{topGain, lowLoss}`,
-`TURBO{spool, flow}`, `IMEP_K` (retired from torque in build 95), `DIFF_ASYM0`, `KVCAP`. They work, and they are honest
+`TURBO{spool, flow}`, `IMEP_K` (retired from torque in build 95), `DIFF_ASYM0`, `KVCAP`. (Since retired:
+`peakShift`, `scav`, `topGain`, `lowLoss` in the gas-dynamics conversion; `ampMul` survives only on the ported
+engines.) They work, and they are honest
 approximations, but they are fitted rather than derived: they encode *the answer* instead of the
 mechanism that produces it.
 
@@ -855,7 +835,7 @@ measurement finds things. Each item is one PR.
 | — | Variable-geometry turbine | ✅ build 80 | The diesel spool gap was a VGT gap, not pulse energy. |
 | — | Shift at the torque crossover | ✅ build 81 | Every car used to upshift at the redline; 0–100 RMS 24.4% → 10.2%. |
 | — | Exhaust pulse energy | ✅ build 90 | The turbine fed by blowdown pulses, from cam timing and cylinder state; the prerequisite housing sizing kept running into. Small on presets with long tuned primaries. |
-| 3 | Turbine housing sizing | ✅ build 91, as a choice | Not derivable: which side of the spool/top-end compromise to take is design intent, and every objective tried decided it silently (sweep time gave the GTI 287 hp vs 220). Shipped as TURBINE A/R (tight/stock/loose per frame), plus the real physics found on the way: turbo manifolds are packaging-short, not tuned headers. The Alto's frame-size gap remains (no frame small enough for 660 cc). |
+| 3 | Turbine housing sizing | ✅ build 91, as a choice | Not derivable: which side of the spool/top-end compromise to take is design intent, and every objective tried decided it silently (sweep time gave the GTI 287 hp vs 220). Shipped as TURBINE A/R (tight/stock/loose per frame), plus the real physics found on the way: turbo manifolds are packaging-short, not tuned headers. (The Alto's frame-size gap closed in build 136: the maker's wheel can be set, and it takes an RHF3-size 40 mm.) |
 | — | Real-engine presets | ✅ build 96 | 28 real engines in 8 categories with the maker's figures; test60 reports the model against them (RMS 15.8% power). Exposed: NA engines breathe as well at 1000 rpm as at 4000; rotary displacement uses the piston formula. Vehicles next. |
 | — | Real-car presets | ✅ build 97 | 26 real cars, each with its own body (curb mass, Cd, area, wheelbase, weight split) over its chassis class, paired with its factory engine; test61 reports them against the maker (0-100 RMS 13.9%, top speed 5.1%). Rotaries wait for the displacement fix; no vehicle speed governor yet. |
 | — | Wall heat in the work | ✅ build 98 | The extra wall heat at low speed now comes out of the work as well as the exhaust, in the share set by when the walls take it (a Woschni flux over a traced cycle, κ ≈ 0.25 spark, 0.36 diesel). NA torque peaks move off 1000 rpm (Coyote 4700, real 4600). Next: derive the base exhaust share. |
@@ -899,17 +879,20 @@ measurement finds things. Each item is one PR.
 | — | Supercar category | ✅ build 148 | Exotic becomes Supercar: four popular supercars from each decade since the 90s (F355, Diablo VT, McLaren F1, 993 Turbo; Enzo, Carrera GT, Ford GT, Murciélago LP640; 458 Italia, Huracán, 720S, 812 Superfast; 992 Turbo S, Huracán STO, Corvette Z06 C8, 750S), each on its factory engine and grouped by decade in the pickers. The 2020s are the combustion-only cars, as the model has no electric motor. Against the makers: power within 13%, top speed within 7%; the 720S, Z06 C8, 750S and 812 are slow off the line (grip-limited launches on road tyres). test80. |
 | — | Downshifts and engine braking | ✅ build 149 | Through the braking zones the driver goes down one gear at a time, each taking the gearbox's shift time and only inside the limiter, never below the corner's gear; in gear the engine's own overrun torque brakes the car (cooler rotors; quicker only where the brakes are the limit). The live engine's lift-off braking is the engine's own. Next: braking split between the axles. |
 | — | Braking split between the axles | ✅ build 150 | Each axle stops with its own grip (load transfer, aero balance, cornering), its hydraulic share of the brakes (ABS/EBD at an axle's grip) and, on the driven axle, the engine's braking, held to what those tyres can carry (drag-torque control); the rotors' heat follows the split. Where the engine's braking is trimmed, a car without that control would step out. |
+| — | README cleanup | ✅ build 151 | Known limits, racing line and working queue brought up to date with the code; the lap report's footer too. Turbine housing matching re-measured and not built: the mismatch it was parked for has mostly closed (spread 4× → 1.9×, spool RMS ~1940 → 775 rpm). |
 | — | Suspension type and geometry | ⏸ on hold | Future development. Today a setup is roll gradient + static camber; the roll camber the geometry recovers is a fixed 50% for every car (CAMBER_RECOVERY), and lateral load transfer is split by static weight. Wanted: the geometry per car (MacPherson strut, double wishbone, multi-link, solid axle) giving its camber recovery, and front/rear roll stiffness (springs, anti-roll bars) giving the handling balance. Needs each preset's real suspension type. |
 | — | Spark torque from fuel | ✅ build 95 | `IMEP_K` replaced by Heywood's 0.8 × fuel-air cycle efficiency; each fuel's LHV/AFR_st enters. Spark torque −2.7%, full-load BSFC 280 g/kWh (real 270–300). Rotary/two-stroke type factors still fitted. |
 | — | `turboChoke` (boost taper) | ✅ build 94 | Retired. Turbine efficiency from blade speed ratio U/C, per-point compressor efficiency, a continuous rich-knock slope in place of a step, and sequential turbos staged as two turbines. Calibration improved on every measure. |
 | — | Rotary exhaust heat | ✅ build 92 | The slow, late Wankel burn (130° ES, CA50 37.5° ATDC) leaves ~10% of the expansion work undone, and that heat now reaches the exhaust: 13B 775 → 942 °C, off the limiter. |
 | — | Rotary spool | ✅ build 100 | The 13B reached boost near 8500 rpm (real ~3000). Not pulse energy after all: air flow counted one charge per two turns, a four-stroke's, and a rotor fills a chamber every turn. With the rate right it spools at ~2400 rpm. |
 | 4 | VE bell (`vePeakRpm`) | ✅ build 84 / 88 | Retired for poppet-valve petrol engines after two hidden errors were fixed (IVC geometry, Engelman tuning ratio), and for diesels in build 88. Still fitted for ported engines. |
-| 5 | Launch model | ⬜ | Unblocks the parked slip-ratio tyre model *and* rotational inertia — every car currently gets a free ~6% on 0–100. The three go in together and recalibrate once. |
-| 6 | Combustion (conversion 5) | 🟨 diesel ✅ build 88 | Diesel: torque from fuel, fixed-time Wiebe burn, wall heat, turbine-temperature fuel cap, signed gas exchange. Spark engines still take IMEP from air (`IMEP_K`, `typeImep`); petrol full-load BSFC still reads ~240 against a real 270–300. |
+| 5 | Launch model | ⬜ | Unblocks the parked slip-ratio tyre model. Rotational inertia went in on its own in build 107 (spinning parts); the slip curve still needs a launch to drive it, and the two recalibrate together. |
+| 6 | Combustion (conversion 5) | ✅ diesel build 88, spark build 95 | Diesel: torque from fuel, fixed-time Wiebe burn, wall heat, turbine-temperature fuel cap, signed gas exchange. Spark: torque from fuel (Heywood's 0.8 x fuel-air cycle efficiency, build 95); `IMEP_K` only scales the dyno brake's reference. Still fitted: the rotary's and two-stroke's type factors (`typeImep`). |
 | 7 | Ground `test46`'s invented bands | ⬜ | Back-pressure caps, ram/scavenge magnitude and buildable header length are bands **I wrote**, not measurements. None currently fails, which is exactly the concern — a band you invented can only confirm your own reasoning. |
 
-Also carried, and labelled in place rather than quietly: the knock score's points (KNOCK_RICH is a measured trend, not a derivation — the real one is an end-gas autoignition integral), and the `ci` factor on the intake half of the
+Also carried, and labelled in place rather than quietly: the ported engines' knock score (rotaries and two-strokes
+keep the points score with KNOCK_RICH; four-strokes have run the end-gas autoignition integral since build 131), and
+the `ci` factor on the intake half of the
 pumping loop (which compensates for `mapTarget()` giving diesels a throttle plate they should not
 have — the real fix is re-plumbing diesel load through fuelling).
 
@@ -933,8 +916,8 @@ have — the real fix is re-plumbing diesel load through fuelling).
    `CAM{peakShift, scav, lowLoss}` and `EXHAUST{topGain, lowLoss}`. New input: intake runner length,
    including VARIABLE — a variable-length manifold is two lengths and a flap, which is all a DISA or
    a VarioRam is. **Presets peaking at the exact rev limiter: 2 → 0**, which is what this conversion
-   existed to fix. ⬜ Two behavioural tests still disagree with the derived curve shape and are left
-   failing rather than weakened; `vePeakRpm` is still asserted. Details below.
+   existed to fix. (Two behavioural tests that then disagreed with the derived curve shape were left failing
+   rather than weakened; both have since been settled, and the suite has passed in full since build 93.) Details below.
    Exhaust was folded in here rather than being its own step, and that turned out to be the whole
    game: `EXHAUST.topGain` and `CAM.scav` really are two knobs for one event, and deriving either
    alone would have left the other double-counting it.
