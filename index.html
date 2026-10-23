@@ -373,7 +373,7 @@ table.fuelmap td.live{box-shadow:inset 0 0 0 2px #fff;font-weight:bold}
 <body>
 <div class="container">
 <header>
-<h1>PIXEL ENGINE SIM v0.6 build 152</h1>
+<h1>PIXEL ENGINE SIM v0.6 build 155</h1>
 <div class="subtitle" id="subtitle">ENGINE DESIGNER • BUILD IT, THEN DRIVE IT</div>
 </header>
 <div class="build-strip" id="buildStrip">
@@ -2513,6 +2513,7 @@ Most other tests check behaviour that is true of real cars: a bigger turbo spool
 <div class="field"><label for="vhGears">GEARBOX (SPEEDS)</label><select id="vhGears"><option value="4">4</option><option value="5">5</option><option value="6">6</option><option value="7">7</option><option value="8">8</option></select></div>
 <div class="field"><label for="vhGearing"><span id="lblGearing" class="ctl-lbl">GEARING (FINAL DRIVE)</span> <span class="val" id="valGearing">52</span></label><input type="range" id="vhGearing" min="0" max="100" step="1" value="52" aria-label="Gearing short to tall"></div>
 <div class="field"><label for="vhLimiter">SPEED LIMITER</label><select id="vhLimiter"><option value="off">OFF (REMOVED)</option><option value="on">ON</option></select></div>
+<div class="field"><label for="vhTC">TRACTION CONTROL</label><select id="vhTC"><option value="on">ON</option><option value="off">OFF</option></select></div>
 <div class="field"><label for="vhLimitKmh">LIMIT (km/h)</label><input type="number" id="vhLimitKmh" min="80" max="400" step="5" value="250"></div>
 </div>
 
@@ -4406,7 +4407,7 @@ const I18N={
   'No saved engines yet. On the ENGINE tab, name the engine and press SAVE ENGINE.':{el:'Κανένας αποθηκευμένος κινητήρας ακόμα. Στην καρτέλα ΚΙΝΗΤΗΡΑΣ δώσε όνομα και πάτησε ΑΠΟΘΗΚΕΥΣΗ ΚΙΝΗΤΗΡΑ.'},
   'Engine':{el:'Κινητήρας'},'Bore × stroke':{el:'Διάμετρος × διαδρομή'},'Compression':{el:'Συμπίεση'},'redline':{el:'κόκκινη ζώνη'},
   'Induction':{el:'Υπερτροφοδότηση'},'Fuel':{el:'Καύσιμο'},'Output':{el:'Απόδοση'},'Car':{el:'Αυτοκίνητο'},'Tyres':{el:'Ελαστικά'},
-  'Speed limiter':{el:'Κόφτης ταχύτητας'},'removed':{el:'αφαιρέθηκε'},
+  'Speed limiter':{el:'Κόφτης ταχύτητας'},'removed':{el:'αφαιρέθηκε'},'Traction control':{el:'Έλεγχος πρόσφυσης'},'TRACTION CONTROL':{el:'ΕΛΕΓΧΟΣ ΠΡΟΣΦΥΣΗΣ'},
   'ENGINE FAMILY':{el:'ΟΙΚΟΓΕΝΕΙΑ ΚΙΝΗΤΗΡΑ'},'LOAD A BUILD':{el:'ΦΟΡΤΩΣΗ ΚΑΤΑΣΚΕΥΗΣ'},'CAR FAMILY':{el:'ΟΙΚΟΓΕΝΕΙΑ ΑΥΤΟΚΙΝΗΤΟΥ'},
   'FACTORY CAR':{el:'ΕΡΓΟΣΤΑΣΙΑΚΟ ΑΥΤΟΚΙΝΗΤΟ'},'— choose a build —':{el:'— διάλεξε κατασκευή —'},'— load a real car —':{el:'— φόρτωσε πραγματικό αυτοκίνητο —'},
   'CAR':{el:'ΑΥΤΟΚΙΝΗΤΟ'},'custom':{el:'δικός σου'},'modified':{el:'τροποποιημένο'},'SAVE TO GARAGE':{el:'ΑΠΟΘΗΚΕΥΣΗ ΣΤΟ ΓΚΑΡΑΖ'},
@@ -4842,13 +4843,13 @@ const VEHICLE_PRESETS=[
    body:{kg:1380,cd:0.33,area:2.20,wb:2.70,fWt:0.62},fit:{drive:'fwd',tire:'sport',tw:245,ta:30,wheel:20,brake:'big',rotor:350,susp:'sport',gears:6,gearbox:'manual',diff:'clsd'},
    real:{t100:5.8,top:272},unsure:['cd','area']},
   {cat:'NA Sports',name:'Mazda MX-5 1.6 (NA, 1989)',engine:'Mazda B6-ZE (MX-5 NA)',chassis:'roadster',
-   body:{kg:955,cd:0.38,area:1.72,wb:2.265,fWt:0.52},fit:{drive:'rwd',tire:'eco',tw:185,ta:60,wheel:14,brake:'steel',rotor:250,susp:'sport',gears:5,gearbox:'manual',diff:'open'},
+   body:{kg:955,cd:0.38,area:1.72,wb:2.265,fWt:0.52},fit:{tc:false,drive:'rwd',tire:'eco',tw:185,ta:60,wheel:14,brake:'steel',rotor:250,susp:'sport',gears:5,gearbox:'manual',diff:'open'},
    real:{t100:8.8,top:195}},
   {cat:'NA Sports',name:'Toyota Corolla Levin GT-APEX (AE86)',engine:'Toyota 4A-GE (AE86)',chassis:'coupe',
-   body:{kg:940,cd:0.38,area:1.75,wb:2.40,fWt:0.53},fit:{drive:'rwd',tire:'eco',tw:185,ta:60,wheel:14,brake:'steel',rotor:250,susp:'sport',gears:5,gearbox:'manual',diff:'open'},
+   body:{kg:940,cd:0.38,area:1.75,wb:2.40,fWt:0.53},fit:{tc:false,drive:'rwd',tire:'eco',tw:185,ta:60,wheel:14,brake:'steel',rotor:250,susp:'sport',gears:5,gearbox:'manual',diff:'open'},
    real:{t100:8.5,top:200},unsure:['cd','area','t100','top']},
   {cat:'NA Sports',name:'Honda S2000 (AP1, 2000)',engine:'Honda F20C (S2000 AP1)',chassis:'roadster',
-   body:{kg:1250,cd:0.33,area:1.80,wb:2.40,fWt:0.50},fit:{drive:'rwd',tire:'sport',tw:225,ta:50,wheel:16,brake:'slotted',rotor:300,susp:'sport',gears:6,gearbox:'manual',diff:'clsd'},
+   body:{kg:1250,cd:0.33,area:1.80,wb:2.40,fWt:0.50},fit:{tc:false,drive:'rwd',tire:'sport',tw:225,ta:50,wheel:16,brake:'slotted',rotor:300,susp:'sport',gears:6,gearbox:'manual',diff:'clsd'},
    real:{t100:6.2,top:240},unsure:['area']},
   {cat:'NA Sports',name:'BMW M3 (E46, 2000)',engine:'BMW S54 (M3 E46)',chassis:'coupe',
    body:{kg:1495,cd:0.32,area:2.07,wb:2.73,fWt:0.51},fit:{drive:'rwd',tire:'sport',tw:255,ta:40,wheel:18,brake:'slotted',rotor:330,susp:'sport',gears:6,gearbox:'manual',diff:'visc'},
@@ -4857,16 +4858,16 @@ const VEHICLE_PRESETS=[
    body:{kg:1430,cd:0.34,area:2.05,wb:2.457,fWt:0.39,engPos:'rear'},fit:{drive:'rwd',tire:'semi',tw:305,ta:30,wheel:20,brake:'big',rotor:380,susp:'coilover',gears:7,gearbox:'dct',diff:'clsd',aF:'splitter',aR:'lip'},
    real:{t100:3.4,top:318},unsure:['cd','area','aero'],note:'the real car has a fixed rear wing and a front lip; a splitter and lip are the closest parts'},
   {cat:'Turbo Performance',name:'Toyota Supra RZ (A80, 1993)',engine:'Toyota 2JZ-GTE (Supra A80)',chassis:'coupe',
-   body:{kg:1570,cd:0.31,area:1.94,wb:2.55,fWt:0.53},fit:{drive:'rwd',tire:'sport',tw:255,ta:40,wheel:17,brake:'slotted',rotor:320,susp:'sport',gears:6,gearbox:'manual',diff:'clsd'},
-   real:{t100:4.9,top:250,limited:true},unsure:['area']},
+   body:{kg:1570,cd:0.31,area:1.94,wb:2.55,fWt:0.53},fit:{tc:false,drive:'rwd',tire:'sport',tw:255,ta:40,wheel:17,brake:'slotted',rotor:320,susp:'sport',gears:6,gearbox:'manual',diff:'clsd'},
+   real:{t100:4.9,top:250,limited:true},unsure:['tc','area']},
   {cat:'Turbo Performance',name:'Nissan Skyline GT-R V-spec (R34, 1999)',engine:'Nissan RB26DETT (Skyline GT-R R34)',chassis:'coupe',
-   body:{kg:1560,cd:0.36,area:2.00,wb:2.665,fWt:0.56},fit:{drive:'awd',tire:'sport',tw:245,ta:40,wheel:18,brake:'big',rotor:320,susp:'sport',gears:6,gearbox:'manual',diff:'clsd'},
+   body:{kg:1560,cd:0.36,area:2.00,wb:2.665,fWt:0.56},fit:{tc:false,drive:'awd',tire:'sport',tw:245,ta:40,wheel:18,brake:'big',rotor:320,susp:'sport',gears:6,gearbox:'manual',diff:'clsd'},
    real:{t100:5.0,top:250,limited:true},note:'rated at the JDM 280 PS; road-test cars made more',unsure:['cd','area','fWt','t100']},
   {cat:'Turbo Performance',name:'Subaru Impreza WRX STI (GD, 2004)',engine:'Subaru EJ257 (Impreza WRX STI)',chassis:'rally',
-   body:{kg:1495,cd:0.33,area:2.10,wb:2.525,fWt:0.59},fit:{drive:'awd',tire:'sport',tw:225,ta:45,wheel:17,brake:'big',rotor:330,susp:'sport',gears:6,gearbox:'manual',diff:'clsd'},
+   body:{kg:1495,cd:0.33,area:2.10,wb:2.525,fWt:0.59},fit:{tc:false,drive:'awd',tire:'sport',tw:225,ta:45,wheel:17,brake:'big',rotor:330,susp:'sport',gears:6,gearbox:'manual',diff:'clsd'},
    real:{t100:5.0,top:250,limited:true},unsure:['cd','area','t100','top']},
   {cat:'Turbo Performance',name:'Mitsubishi Lancer Evolution IX (2006)',engine:'Mitsubishi 4G63T (Lancer Evo IX)',chassis:'rally',
-   body:{kg:1490,cd:0.34,area:2.10,wb:2.625,fWt:0.61},fit:{drive:'awd',tire:'sport',tw:235,ta:45,wheel:17,brake:'big',rotor:320,susp:'sport',gears:5,gearbox:'manual',diff:'clsd'},
+   body:{kg:1490,cd:0.34,area:2.10,wb:2.625,fWt:0.61},fit:{tc:false,drive:'awd',tire:'sport',tw:235,ta:45,wheel:17,brake:'big',rotor:320,susp:'sport',gears:5,gearbox:'manual',diff:'clsd'},
    real:{t100:5.0,top:250,limited:true},unsure:['cd','area','t100','top']},
   {cat:'Turbo Performance',name:'Audi RS3 Sportback (8V, 2017)',engine:'Audi 2.5 TFSI (RS3 8V)',chassis:'rally',
    body:{kg:1510,cd:0.34,area:2.15,wb:2.63,fWt:0.60},fit:{drive:'awd',tire:'sport',tw:235,ta:35,wheel:19,brake:'big',rotor:370,susp:'sport',gears:7,gearbox:'dct',diff:'visc'},
@@ -4885,17 +4886,17 @@ const VEHICLE_PRESETS=[
    real:{t100:3.9,top:320},unsure:['cd','area']},
   // Ferrari quoted 1350 kg dry; the body carries a curb mass with fluids
   {cat:'Supercar',era:'1990s',name:'Ferrari F355 Berlinetta (1994)',engine:'Ferrari F129B V8 (F355)',chassis:'super',
-   body:{kg:1440,cd:0.33,area:1.85,wb:2.45,fWt:0.42},fit:{drive:'rwd',tire:'sport',tw:265,ta:40,wheel:18,brake:'slotted',rotor:284,susp:'sport',gears:6,gearbox:'manual',diff:'clsd'},
+   body:{kg:1440,cd:0.33,area:1.85,wb:2.45,fWt:0.42},fit:{tc:false,drive:'rwd',tire:'sport',tw:265,ta:40,wheel:18,brake:'slotted',rotor:284,susp:'sport',gears:6,gearbox:'manual',diff:'clsd'},
    real:{t100:4.7,top:295},unsure:['kg','area','fWt']},
   {cat:'Supercar',era:'1990s',name:'Lamborghini Diablo VT (1993)',engine:'Lamborghini 5.7 V12 (Diablo VT)',chassis:'super',
-   body:{kg:1700,cd:0.31,area:1.90,wb:2.65,fWt:0.41},fit:{drive:'awd',tire:'sport',tw:335,ta:30,wheel:18,brake:'big',rotor:330,susp:'sport',gears:5,gearbox:'manual',diff:'visc'},
+   body:{kg:1700,cd:0.31,area:1.90,wb:2.65,fWt:0.41},fit:{tc:false,drive:'awd',tire:'sport',tw:335,ta:30,wheel:18,brake:'big',rotor:330,susp:'sport',gears:5,gearbox:'manual',diff:'visc'},
    real:{t100:4.1,top:325},unsure:['kg','area','fWt','t100']},
   // 1138 kg dry; 386 km/h is the production car, 391 with the limiter raised
   {cat:'Supercar',era:'1990s',name:'McLaren F1 (1994)',engine:'BMW S70/2 V12 (McLaren F1)',chassis:'hyper',
-   body:{kg:1200,cd:0.32,area:1.79,wb:2.718,fWt:0.42},fit:{drive:'rwd',tire:'sport',tw:315,ta:45,wheel:17,brake:'big',rotor:332,susp:'sport',gears:6,gearbox:'manual',diff:'clsd'},
+   body:{kg:1200,cd:0.32,area:1.79,wb:2.718,fWt:0.42},fit:{tc:false,drive:'rwd',tire:'sport',tw:315,ta:45,wheel:17,brake:'big',rotor:332,susp:'sport',gears:6,gearbox:'manual',diff:'clsd'},
    real:{t100:3.2,top:386},unsure:['kg','fWt']},
   {cat:'Supercar',era:'1990s',name:'Porsche 911 Turbo (993, 1995)',engine:'Porsche M64/60 twin-turbo flat-six (911 Turbo 993)',chassis:'super',
-   body:{kg:1500,cd:0.34,area:1.95,wb:2.272,fWt:0.38,engPos:'rear'},fit:{drive:'awd',tire:'sport',tw:285,ta:30,wheel:18,brake:'big',rotor:322,susp:'sport',gears:6,gearbox:'manual',diff:'visc'},
+   body:{kg:1500,cd:0.34,area:1.95,wb:2.272,fWt:0.38,engPos:'rear'},fit:{tc:false,drive:'awd',tire:'sport',tw:285,ta:30,wheel:18,brake:'big',rotor:322,susp:'sport',gears:6,gearbox:'manual',diff:'visc'},
    real:{t100:4.5,top:290},unsure:['area']},
   // 1365 kg dry
   {cat:'Supercar',era:'2000s',name:'Ferrari Enzo (2002)',engine:'Ferrari F140B V12 (Enzo)',chassis:'hyper',
@@ -4910,8 +4911,8 @@ const VEHICLE_PRESETS=[
    real:{t100:3.9,top:330},unsure:['area','fWt']},
   // 1665 kg dry
   {cat:'Supercar',era:'2000s',name:'Lamborghini Murciélago LP640 (2006)',engine:'Lamborghini 6.5 V12 (Murciélago LP640)',chassis:'super',
-   body:{kg:1750,cd:0.33,area:2.00,wb:2.665,fWt:0.42},fit:{drive:'awd',tire:'sport',tw:335,ta:30,wheel:18,brake:'big',rotor:380,susp:'sport',gears:6,gearbox:'sequential',diff:'visc'},
-   real:{t100:3.4,top:340},unsure:['kg','cd','area','fWt']},
+   body:{kg:1750,cd:0.33,area:2.00,wb:2.665,fWt:0.42},fit:{tc:false,drive:'awd',tire:'sport',tw:335,ta:30,wheel:18,brake:'big',rotor:380,susp:'sport',gears:6,gearbox:'sequential',diff:'visc'},
+   real:{t100:3.4,top:340},unsure:['tc','kg','cd','area','fWt']},
   {cat:'Supercar',era:'2010s',name:'Ferrari 458 Italia (2010)',engine:'Ferrari F136 FB V8 (458 Italia)',chassis:'super',
    body:{kg:1485,cd:0.33,area:1.95,wb:2.65,fWt:0.42},fit:{drive:'rwd',tire:'sport',tw:295,ta:35,wheel:20,brake:'carbon',rotor:398,susp:'sport',gears:7,gearbox:'dct',diff:'clsd'},
    real:{t100:3.4,top:325},unsure:['area','fWt']},
@@ -4919,7 +4920,7 @@ const VEHICLE_PRESETS=[
    body:{kg:1550,cd:0.39,area:1.95,wb:2.62,fWt:0.43},fit:{drive:'awd',tire:'sport',tw:305,ta:30,wheel:20,brake:'carbon',rotor:380,susp:'sport',gears:7,gearbox:'dct',diff:'clsd'},
    real:{t100:3.2,top:325},unsure:['cd','area','kg']},
   {cat:'Supercar',era:'2010s',name:'McLaren 720S (2017)',engine:'McLaren M840T twin-turbo V8 (720S)',chassis:'super',
-   body:{kg:1419,cd:0.38,area:1.95,wb:2.67,fWt:0.42},fit:{drive:'rwd',tire:'sport',tw:305,ta:30,wheel:20,brake:'carbon',rotor:390,susp:'sport',gears:7,gearbox:'dct',diff:'clsd'},
+   body:{kg:1419,cd:0.38,area:1.95,wb:2.67,fWt:0.42},fit:{drive:'rwd',tire:'semi',tw:305,ta:30,wheel:20,brake:'carbon',rotor:390,susp:'sport',gears:7,gearbox:'dct',diff:'clsd'},
    real:{t100:2.9,top:341},unsure:['cd','area','fWt']},
   {cat:'Supercar',era:'2010s',name:'Ferrari 812 Superfast (2017)',engine:'Ferrari F140 V12 (812 Superfast)',chassis:'gt',
    body:{kg:1745,cd:0.37,area:2.05,wb:2.72,fWt:0.47},fit:{drive:'rwd',tire:'sport',tw:315,ta:35,wheel:20,brake:'carbon',rotor:400,susp:'sport',gears:7,gearbox:'dct',diff:'clsd'},
@@ -4932,14 +4933,16 @@ const VEHICLE_PRESETS=[
    body:{kg:1450,cd:0.40,area:1.95,wb:2.62,fWt:0.41},fit:{drive:'rwd',tire:'semi',tw:305,ta:30,wheel:20,brake:'carbon',rotor:390,susp:'coilover',gears:7,gearbox:'dct',diff:'clsd'},
    real:{t100:3.0,top:310},unsure:['kg','cd','area','fWt']},
   // GM quotes 0-60 mph in 2.6 s
+  // t100 2.8 is unsure: it reads as GM's 0-60 mph claim, timed with a 1 ft rollout as US magazines do. The one
+  // rollout-free 0-100 km/h found is AutoTopNL's 3.54 s on the road (build 153 tyre review); the model reads ~3.5.
   {cat:'Supercar',era:'2020s',name:'Chevrolet Corvette Z06 (C8, 2023)',engine:'GM LT6 flat-plane V8 (Corvette Z06 C8)',chassis:'super',
    body:{kg:1561,cd:0.37,area:2.05,wb:2.72,fWt:0.40},fit:{drive:'rwd',tire:'sport',tw:345,ta:25,wheel:21,brake:'big',rotor:370,susp:'sport',gears:8,gearbox:'dct',diff:'clsd'},
    real:{t100:2.8,top:312},unsure:['cd','area','t100','top']},
   {cat:'Supercar',era:'2020s',name:'McLaren 750S (2023)',engine:'McLaren M840T twin-turbo V8 (750S)',chassis:'super',
-   body:{kg:1389,cd:0.38,area:1.95,wb:2.67,fWt:0.42},fit:{drive:'rwd',tire:'sport',tw:305,ta:30,wheel:20,brake:'carbon',rotor:390,susp:'sport',gears:7,gearbox:'dct',diff:'clsd'},
+   body:{kg:1389,cd:0.38,area:1.95,wb:2.67,fWt:0.42},fit:{drive:'rwd',tire:'semi',tw:305,ta:30,wheel:20,brake:'carbon',rotor:390,susp:'sport',gears:7,gearbox:'dct',diff:'clsd'},
    real:{t100:2.8,top:332},unsure:['cd','area','fWt']},
   {cat:'Rotary',name:'Mazda RX-7 (FD, 1993)',engine:'Mazda 13B-REW (RX-7 FD)',chassis:'coupe',
-   body:{kg:1280,cd:0.29,area:1.80,wb:2.425,fWt:0.50},fit:{drive:'rwd',tire:'sport',tw:225,ta:50,wheel:16,brake:'slotted',rotor:290,susp:'sport',gears:5,gearbox:'manual',diff:'clsd'},
+   body:{kg:1280,cd:0.29,area:1.80,wb:2.425,fWt:0.50},fit:{tc:false,drive:'rwd',tire:'sport',tw:225,ta:50,wheel:16,brake:'slotted',rotor:290,susp:'sport',gears:5,gearbox:'manual',diff:'clsd'},
    real:{t100:5.3,top:250,limited:true},unsure:['area','t100','top']},
   {cat:'Rotary',name:'Mazda RX-8 (2004)',engine:'Mazda 13B-MSP Renesis (RX-8)',chassis:'coupe',
    body:{kg:1310,cd:0.30,area:2.05,wb:2.70,fWt:0.50},fit:{drive:'rwd',tire:'sport',tw:225,ta:45,wheel:18,brake:'slotted',rotor:320,susp:'sport',gears:6,gearbox:'manual',diff:'clsd'},
@@ -4969,6 +4972,7 @@ function vehicleFromPreset(p){
     tireType:fit.tire,tireWidth:fit.tw,tireAspect:fit.ta,wheelDia:fit.wheel,
     aeroFront:fit.aF,aeroRear:fit.aR,aeroFloor:fit.aFl,weightRed:fit.weight,
     brakeType:fit.brake,rotor:fit.rotor,suspension:fit.susp,speedRating:rating,governor:fit.gov,limitKmh:fit.gov||250,
+    tc:fit.tc!==false,
     body:Object.assign({name:p.name,fit},p.body)};
 }
 // ================================================================================================
@@ -5201,6 +5205,14 @@ function tyreMu(Fz){return vehicle.muRef*Math.pow(Math.max(200,Fz)/vehicle.FzRef
 // figure (skidpads); braking and traction take 1.15 of it, and combined use follows the ellipse.
 const TYRE_MU_X=1.15;
 function tyreMuX(Fz){return TYRE_MU_X*tyreMu(Fz);}
+// The tyre's force against its longitudinal slip (build 154), as a share of its peak: sin(C atan(B s)), the
+// shape of Pacejka's Magic Formula with B set so the peak sits at TYRE_SLIP_OPT. C 1.4 leaves sin(0.7 pi) =
+// 0.82 of the peak in a full slide (measured tyres 0.75-0.85). The peak at ~10% slip is dry asphalt's (6-15%
+// measured); one figure for every compound.
+const TYRE_SLIP_OPT=0.10, TYRE_SLIP_C=1.4, TYRE_SLIP_B=Math.tan(Math.PI/(2*TYRE_SLIP_C))/TYRE_SLIP_OPT;
+function tyreSlipMu(s){const x=clamp(s,-3,3);return Math.sin(TYRE_SLIP_C*Math.atan(TYRE_SLIP_B*x));}
+function tyreSlipMuD(s){const x=clamp(s,-3,3),u=TYRE_SLIP_B*x;
+  return Math.abs(s)>3?0:Math.cos(TYRE_SLIP_C*Math.atan(u))*TYRE_SLIP_C*TYRE_SLIP_B/(1+u*u);}
 // Cornering drag (build 119). A tyre makes its side force by running at a slip angle: its wheel points
 // alpha off the way the car is going, and the force it makes, square to the wheel, leans back against
 // the travel by that angle. Below the limit the side force is the cornering stiffness times the angle,
@@ -5341,7 +5353,7 @@ const DEFAULT_VEHICLE={
   chassis:'coupe',drive:'rwd',gearbox:'manual',diff:'clsd',gears:6,gearing:52,
   tireType:'sport',tireWidth:245,tireAspect:40,wheelDia:18,
   aeroFront:'none',aeroRear:'lip',aeroFloor:'none',weightRed:'none',
-  brakeType:'slotted',rotor:330,suspension:'sport',governor:0,limitKmh:250
+  brakeType:'slotted',rotor:330,suspension:'sport',governor:0,limitKmh:250,tc:true
 };
 let vehicle=Object.assign({},DEFAULT_VEHICLE);
 let perf=null;   // last computed performance result
@@ -7013,7 +7025,9 @@ function readVehicleFromForm(){
     steerRatio:clamp(numOr(g('vhSteer').value,15),8,22),
     // Road-speed governor in km/h, 0 when removed. limitKmh keeps the set figure while it is off.
     governor:g('vhLimiter').value==='on'?clamp(Math.round(+g('vhLimitKmh').value||250),80,400):0,
-    limitKmh:clamp(Math.round(+g('vhLimitKmh').value||250),80,400)
+    limitKmh:clamp(Math.round(+g('vhLimitKmh').value||250),80,400),
+    // Traction control (build 154): the ECU holds the driven tyres at their best slip. Off, the launch is the driver's.
+    tc:g('vhTC').value!=='off'
   };
 }
 // The real car's body when one is loaded (see VEHICLE_PRESETS), else null and the archetype stands.
@@ -7024,6 +7038,7 @@ function applyVehicleToForm(v){
   vehBody=v.body||null;
   if(v.speedRating&&SPEED_RATING[v.speedRating])g('vhRating').value=v.speedRating;
   g('vhLimiter').value=v.governor>0?'on':'off';g('vhLimitKmh').value=v.governor>0?v.governor:(v.limitKmh||250);
+  g('vhTC').value=v.tc===false?'off':'on';   // saves from before build 154 carry none: on
   g('vhChassis').value=v.chassis||'coupe';g('vhDrive').value=v.drive||'rwd';g('vhGearbox').value=v.gearbox||'manual';g('vhDiff').value=v.diff||'open';
   g('vhGears').value=v.gears||6;g('vhGearing').value=v.gearing!=null?v.gearing:52;
   g('vhTire').value=v.tireType||'sport';g('vhTireW').value=v.tireWidth||235;g('vhTireA').value=v.tireAspect||40;g('vhWheel').value=v.wheelDia||18;
@@ -7047,6 +7062,7 @@ function applyChassisFit(key,body){
     if(top)g('vhRating').value=vehicleFromPreset(top).speedRating;}
   // A governor is factory equipment of a real car; an archetype ships without one.
   g('vhLimiter').value=f.gov>0?'on':'off';if(f.gov>0)g('vhLimitKmh').value=f.gov;
+  g('vhTC').value=f.tc===false?'off':'on';   // a real car's traction control is factory equipment (build 154)
   g('vhAeroF').value=f.aF;g('vhAeroR').value=f.aR;g('vhAeroFl').value=f.aFl;g('vhWeight').value=f.weight;
   g('vhBrake').value=f.brake;g('vhRotor').value=f.rotor;g('vhSusp').value=f.susp;
   updateGearingLabel();
@@ -7067,7 +7083,7 @@ function fitmentLabel(v){
 // True when every fitted part still matches the chassis' factory spec.
 function isFactoryFit(v){
   const ch=CHASSIS[v.chassis];if(!ch||!ch.fit)return false;const f=v.body?v.body.fit:ch.fit;
-  return v.drive===(v.body?f.drive:ch.drive)&&(v.governor||0)===(f.gov||0)&&v.gears===f.gears&&v.gearing===f.gearing&&v.gearbox===f.gearbox&&v.diff===f.diff&&
+  return v.drive===(v.body?f.drive:ch.drive)&&(v.governor||0)===(f.gov||0)&&(v.tc!==false)===(f.tc!==false)&&v.gears===f.gears&&v.gearing===f.gearing&&v.gearbox===f.gearbox&&v.diff===f.diff&&
     v.tireType===f.tire&&v.tireWidth===f.tw&&v.tireAspect===f.ta&&v.wheelDia===f.wheel&&
     v.aeroFront===f.aF&&v.aeroRear===f.aR&&v.aeroFloor===f.aFl&&v.weightRed===f.weight&&
     v.brakeType===f.brake&&v.rotor===f.rotor&&v.suspension===f.susp;
@@ -7320,7 +7336,6 @@ function simulateAccel(){
   // curve above is still right for the top-speed scan: a car sitting at terminal velocity has been
   // at full throttle a long time and is fully spooled by definition.
   const grid=lapTorqueGrid();   // one per engine, shared with the lap (build 131: each costs a knock search per point)
-  let boostNow=grid.laggy?0:engine.maxBoost, shaftE=0;
   const m=vehicle.mass,r=vehicle.rTire,fd=vehicle.finalDrive,eff=vehicle.driveEff,ratios=vehicle.ratios;
   const vGov=(vehicle.governor||0)/3.6;   // m/s, 0 when the limiter is removed
   const idle=engine.idleRpmEff,rl=engine.redline,TWO_PI=Math.PI*2,dt=0.005;
@@ -7331,7 +7346,18 @@ function simulateAccel(){
   // share is referenced against this, so a launch behaves exactly as before while a tall gear
   // stops being charged the launch penalty.
   const axleTqMax=Math.max(1,curve.reduce((a,p)=>Math.max(a,p.tq),0)*ratios[0]*fd*(gb.mult||1));
-  const launchRpm=clamp(rl*0.55,idle+400,rl*0.72);
+  // Build 154: the driven wheels turn at their own speed, and the tyre pushes the car through SLIP. Below the
+  // optimum the force rises with slip; past it, it falls to a sliding plateau (sin(C atan(B s)), C 1.4: 0.82 of
+  // the peak in a full slide, measured tyres 0.75-0.85), so a wheel that breaks away keeps breaking away. The
+  // peak is the traction the hard clip used to be (the tyre, the load, the diff), at a slip of 0.10: dry-asphalt
+  // tyres peak at about 10% slip (6-15% measured), and one figure is used for every compound, the per-compound
+  // spread not being established. With TRACTION CONTROL the ECU trims the torque to hold that slip, which is what
+  // the clip did; without it the driver holds that slip through the launch (build 155, below), and from the first
+  // upshift the run is flat out: the engine's torque spins the tyres past the peak and the slip dynamics decide.
+  // The launch rpm is the best of several (below).
+  const tcOn=vehicle.tc!==false, Iw=vehicle.wheelI||0, Iwd=Iw*(vehicle.drive==='awd'?1:0.5), mv=m+(Iw-Iwd)/(r*r);
+  function run(launchRpm){
+  let boostNow=grid.laggy?0:engine.maxBoost, shaftE=0;
   // The shaft does not start from rest. A standing start is made with the engine already held at
   // its launch speed on a slipping clutch or a stalled converter, at full throttle — which is what
   // brake-boosting is, and why a turbo car does not leave the line completely flat.
@@ -7350,10 +7376,11 @@ function simulateAccel(){
   // coupled, so the car carries only its own and the wheels' inertia.
   const Ie=engine.inertia||0.1, tqCap=CLUTCH_MARGIN*curve.reduce((q,p)=>Math.max(q,p.tq),0);
   let slipping=!tcStall, slipW=launchRpm*TWO_PI/60;
-  let v=0,x=0,t=0,gear=0,a=0,shiftT=0;
-  const M={t100:null,q400:null,q800:null,q1000:null,v200:null,gripT:0,lagT:0},V100=100/3.6,V200=200/3.6;
+  let v=0,x=0,t=0,gear=0,a=0,shiftT=0,w=0;   // w: the driven wheels' angular speed (rad/s)
+  const M={t100:null,q400:null,q800:null,q1000:null,v200:null,gripT:0,lagT:0,spinT:0,launchRpm},V100=100/3.6,V200=200/3.6;
   for(let step=0;step<48000&&t<150;step++){
-    let totalRatio=ratios[gear]*fd,rpm=v*totalRatio/r*60/TWO_PI;
+    // the gearbox input turns with the driven WHEELS, not with the road: in wheelspin the engine revs with them
+    let totalRatio=ratios[gear]*fd,rpm=w*totalRatio*60/TWO_PI;
     // Upshift where the NEXT gear pulls harder at this road speed — the wheel-torque crossover,
     //     tq(rpm)·ratio[g]  <=  tq(rpm·ratio[g+1]/ratio[g])·ratio[g+1]
     // or at the limiter, whichever comes first. This used to be the limiter alone, in every gear of
@@ -7366,7 +7393,7 @@ function simulateAccel(){
     // waiting for torque the next gear would also get.
     if(shiftT<=0&&gear<ratios.length-1&&(rpm>=rl||
        tqAt(clamp(rpm*ratios[gear+1]/ratios[gear],idle,rl))*ratios[gear+1]>=tqAt(clamp(rpm,idle,rl))*ratios[gear])){
-      gear++;shiftT=shiftTime;totalRatio=ratios[gear]*fd;rpm=v*totalRatio/r*60/TWO_PI;}
+      gear++;shiftT=shiftTime;totalRatio=ratios[gear]*fd;rpm=w*totalRatio*60/TWO_PI;}
     // `rpm` is what the gearbox input wants to turn at this road speed. How the engine couples to
     // it depends on the gearbox:
     //   Torque-converter auto — the impeller stalls up against a slow turbine and MULTIPLIES
@@ -7422,27 +7449,54 @@ function simulateAccel(){
     // most of it, a spool all of it. This only bites while the car is traction-limited.
     const tqFrac=(driveF*r)/axleTqMax;                       // how hard the axle is being driven
     const trac=tyreMuX(drivenN/(vehicle.drive==='awd'?4:2))*diffTractionAt(df,0,vehicle.cg,tqFrac)*Math.max(0,drivenN);
-    let F=Math.min(driveF,trac);
-    const drag=0.5*AIR_RHO*vehicle.cdA*v*v,roll=v>0.2?crrAt(vehicle.crr,v)*m*G:0;
+    const drag=0.5*AIR_RHO*vehicle.cdA*v*v,roll=v>0.2?crrAt(vehicle.crr,v)*m*G:0,res=drag+roll;
     // A road-speed governor cuts fuel at its set speed: past it the engine gives only what holds it.
-    if(vGov>0&&v>=vGov)F=Math.min(F,drag+roll);
-    // Spinning parts (build 106). With the tyres holding, the drive force accelerates the car AND its
-    // spinning engine and wheels: a = (F - R) / mE. The tyre then carries only what moves the car,
-    // m a + R; if that is more than it can hold the tyres slip, the surplus torque only spins the
-    // wheels, and the car gets the tyre's force over its own mass. The engine is coupled to the wheels
-    // only in gear with the clutch locked and the converter past stall.
+    if(vGov>0&&v>=vGov)driveF=Math.min(driveF,res);
+    // Spinning parts (build 106), now on their own equation (build 154). The driven wheels, and the engine
+    // through the gearing when the clutch is locked and the converter past stall, are turned by the drive
+    // torque and held back by the tyre: Id dw/dt = T - F r. The car, with the undriven wheels' inertia,
+    // is pushed by the tyre: mv dv/dt = F - R. Below the slip optimum the two run together and this is
+    // the old a = (F - R)/mE; past it the surplus torque spins the wheels and the engine with them.
     const coupled=shiftT<=0&&!slipping&&!(tcStall&&rpm<tcStall);
-    const res=drag+roll, aHold=(driveF-res)/vehicleMassEff(coupled?totalRatio:0);
-    const spin=m*aHold+res>trac+1e-6;
-    a=spin?(F-res)/m:aHold;
-    if(!M.t100){if(spin)M.gripT+=dt;if(shiftT<=0&&grid.laggy&&boostNow<0.9*boostTarget(engineRpm))M.lagT+=dt;}
-    v=Math.max(0,v+a*dt);x+=v*dt;t+=dt;
+    const Id=Iwd+(coupled?Ie*totalRatio*totalRatio*eff:0),Tw=driveF*r,NS=10,h=dt/NS;
+    // Build 155: without traction control the DRIVER holds the slip through the launch, in first gear, with the
+    // clutch and the throttle: the optimum is flat (8-12% slip within 0.5% of the time), so a driver feeling for
+    // it finds it. From the first upshift the run is flat out and a car with the power for it spins in second.
+    const holdSlip=tcOn||gear===0;
+    let Fs=0,tcCut=false,sMax=0;
+    for(let k=0;k<NS;k++){
+      // The tyre is stiff against the wheel's inertia at low speed (a time constant under a millisecond at
+      // walking pace), so the wheel is stepped implicitly on the force linearised in slip: stable at any step.
+      const vf=Math.max(v,1),s0=(w*r-v)/vf,F0=trac*tyreSlipMu(s0),dF=trac*tyreSlipMuD(s0)*r/vf;
+      let w1=(w+h/Id*(Tw-r*F0+r*dF*w))/(1+h/Id*r*dF);
+      if(holdSlip){const wMax=(v+TYRE_SLIP_OPT*vf)/r;if(w1>wMax){w1=wMax;tcCut=true;}}   // the ECU, or the driver's foot, trims the torque
+      w=Math.max(0,w1);
+      const s1=(w*r-v)/vf,F=trac*tyreSlipMu(s1);sMax=Math.max(sMax,s1);
+      v=Math.max(0,v+(F-res)/mv*h);Fs+=F;
+    }
+    a=(Fs/NS-res)/mv;
+    const limited=tcCut||sMax>=TYRE_SLIP_OPT*0.98;
+    if(!M.t100){if(limited)M.gripT+=dt;if(sMax>1.5*TYRE_SLIP_OPT)M.spinT+=dt;
+      if(shiftT<=0&&grid.laggy&&boostNow<0.9*boostTarget(engineRpm))M.lagT+=dt;}
+    x+=v*dt;t+=dt;
     if(!M.t100&&v>=V100)M.t100=t;
     if(!M.q400&&x>=400)M.q400={t,v};
     if(!M.q800&&x>=800)M.q800={t,v};
     if(!M.q1000&&x>=1000)M.q1000={t,v};
     if(!M.v200&&v>=V200)M.v200={t,x};
     if(x>=1000&&(M.v200||a<0.03))break;   // have the marks and either hit 200 or can't
+  }
+  return M;
+  }
+  // The launch rpm, the best of several tries, as a magazine's figure is (and as a launch control is set):
+  // launched at five speeds from just off idle to three quarters of the limiter, the quickest to 100 km/h is
+  // the car's time. (Build 155: this was the driver's only, without traction control; a car with it was run at
+  // 55% of the limiter, which left an R34 0.13 s.) A converter launches at its stall speed.
+  const lDef=clamp(rl*0.55,idle+400,rl*0.72);
+  let M=run(lDef);
+  if(!tcStall){
+    const key=R=>R.t100||(R.q400?R.q400.t+100:1e9);
+    for(const f of [0.30,0.42,0.65,0.75]){const R=run(clamp(rl*f,idle+300,rl*0.8));if(key(R)<key(M))M=R;}
   }
   // Top speed: the fastest the car can actually hold — the best any gear manages, not just top
   // gear. For each gear, scan DOWN from its limiter speed and take the highest speed where drive
@@ -7468,7 +7522,7 @@ function simulateAccel(){
   // gripT / lagT: seconds of the 0-100 spent traction-limited, and on throttle below 90% of target
   // boost — WHY a car takes the time it takes, so a claim about what limits it can be checked.
   return {t100:M.t100,q400:M.q400,q800:M.q800,q1000:M.q1000,topSpeed,governed,freeSpeed:vFree*3.6,mass:m,ptw:vehicle.powerToWeight,
-    gripT:M.gripT,lagT:M.lagT,
+    gripT:M.gripT,lagT:M.lagT,spinT:M.spinT,launchRpm:M.launchRpm,
     t200:M.v200?M.v200.t:null,x200:M.v200?M.v200.x:null};
 }
 // ====== TEST TRACK: circuits, lap solver ======
@@ -8095,7 +8149,7 @@ const carHalfWidth=()=>((vehicle.track||1.6)+(vehicle.tireWidth||225)/1000)/2;
 function carLineKey(){
   const v=vehicle,s=engine.score||{};
   return [v.mass,v.muRef,v.FzRef,v.clA,v.cdA,v.aeroBal,v.drivenAero,v.drivenWt,v.track,v.tireWidth,v.cg,v.wb,v.fWt,
-    v.finalDrive,(v.ratios||[]).join('/'),v.driveEff,v.drive,v.diff,v.brakeDecelCap,v.governor,v.camber,v.rollGrad,
+    v.finalDrive,(v.ratios||[]).join('/'),v.driveEff,v.drive,v.diff,v.brakeDecelCap,v.governor,v.tc,v.camber,v.rollGrad,
     s.peakHP,s.peakTQ,engine.redline].map(x=>typeof x==='number'?+x.toFixed(4):x).join('|');
 }
 function lineFor(T,key){
@@ -9477,6 +9531,7 @@ function updateVehicleSummary(){
     '<br>Gearbox <b>'+tr(vehicle.gbLabel)+'</b> • shift '+(vehicle.shiftTime*1000).toFixed(0)+' ms • driveline '+(vehicle.driveEff*100).toFixed(0)+'%'+(vehicle.gb.stall?' • converter stall '+vehicle.gb.stall+' rpm ×'+vehicle.gb.mult.toFixed(1):'')+
     '<br>Diff <b>'+tr(vehicle.diffLabel)+'</b> • puts down '+(vehicle.diffTraction*100).toFixed(0)+'% of axle grip'+
     '<br>Speed limiter <b>'+(vehicle.governor>0?vehicle.governor+' km/h':tr('removed'))+'</b>'+(perf&&perf.governed?' • free top speed '+Math.round(perf.freeSpeed)+' km/h':'')+
+    ' • traction control <b>'+(vehicle.tc===false?tr('off'):tr('on'))+'</b>'+(perf&&perf.spinT>0.05?' • wheelspin '+perf.spinT.toFixed(1)+' s to 100':'')+
     '<br>Drag CdA <b>'+vehicle.cdA.toFixed(2)+'</b> • downforce ClA <b>'+vehicle.clA.toFixed(2)+'</b> • final drive <b>'+vehicle.finalDrive.toFixed(2)+'</b>'+
     '<br>Vehicle cost <b>'+fmtCost(vehicle.cost)+'</b> • with engine <b>'+fmtCost(vehicle.cost+(engine.cost||0))+'</b>';
   renderPerformance();
@@ -10135,7 +10190,8 @@ function garageDetail(g){
     const b=v.body;
     h+=row(tr('Car'),(b?b.name:tr((CHASSIS[v.chassis]||{}).label||v.chassis))+' • '+String(v.drive||'').toUpperCase()+' • '+v.gears+'-speed '+(v.gearbox||''))+
       row(tr('Tyres'),(TIRE_TYPE[v.tireType]||{}).label+' '+v.tireWidth+'/'+v.tireAspect+'R'+v.wheelDia+' • '+(SPEED_RATING[v.speedRating]||{label:'—'}).label)+
-      row(tr('Speed limiter'),v.governor>0?v.governor+' km/h':tr('removed'));
+      row(tr('Speed limiter'),v.governor>0?v.governor+' km/h':tr('removed'))+
+      row(tr('Traction control'),v.tc===false?tr('off'):tr('on'));
   }
   return '<div class="garage-detail">'+h+'</div>';
 }
@@ -13773,7 +13829,7 @@ function bindControls(){
     try{localStorage.setItem('pes.gauges',lapReplay.gauges);}catch(err){}});
   // Vehicle design: recompute performance live on any change. Picking a chassis fits its whole
   // factory spec (drivetrain, gearbox, tyres/wheels, brakes, suspension, aero, weight).
-  ['vhChassis','vhDrive','vhGearbox','vhDiff','vhGears','vhGearing','vhLimiter','vhLimitKmh','vhRating','vhTire','vhTireW','vhTireA','vhWheel','vhAeroF','vhAeroR','vhAeroFl','vhWeight','vhBrake','vhRotor','vhSusp','vhSteer'].forEach(id=>{
+  ['vhChassis','vhDrive','vhGearbox','vhDiff','vhGears','vhGearing','vhLimiter','vhLimitKmh','vhTC','vhRating','vhTire','vhTireW','vhTireA','vhWheel','vhAeroF','vhAeroR','vhAeroFl','vhWeight','vhBrake','vhRotor','vhSusp','vhSteer'].forEach(id=>{
     const el=document.getElementById(id);if(!el)return;
     el.addEventListener('input',()=>{
       if(id==='vhChassis'){
