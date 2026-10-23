@@ -20,6 +20,17 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 Working toward **v1.0 — every number derived, not fitted.**
 
+### The README says what the model does now (build 151)
+
+- The known-limits list, the racing-line section and the working queue had fallen behind the builds: they still
+  said the turbine throats were taken at the wheel's radius (fixed in 133), that turbo lag did not reach the lap
+  (118), that the racing line was minimum curvature with a fitted late-apex bias (115: each car's own minimum-time
+  line), that rotational inertia was free (107), that spark engines took their IMEP from air (95), that the knock was a
+  points score (131; the ported engines keep it) and that the Alto's turbo frame was far too big (136). Each now
+  says what the code does, and the open gaps are the current ones: the RS3's and EcoBoost's unpublished wheels,
+  the older turbos' mid-range, engine braking at the limiter, the ported engines' exhaust share.
+- The lap report's footer described the old line too; it now says each car's own minimum-time line.
+
 ### The braking split between the axles (build 150)
 
 - **Each axle stops with its own grip.** The lap pooled all four tyres' grip under braking, whatever the brakes'
