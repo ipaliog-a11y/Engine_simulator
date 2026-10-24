@@ -1,4 +1,8 @@
-# gas-sound: an engine-sim style gas model for the engine sound (prototype, not shipped)
+# gas-sound: an engine-sim style gas model for the engine sound (prototype)
+
+Shipped in build 156 as the GAS engine sound model (OPTIONS); the app's copy is `SOUND_GAS_SRC` in
+`index.html`, which adds a leveller and per-build calibration. This directory is the record of how it was
+measured.
 
 Explores option 5 of the sound methods: simulate the gas and listen to it, as Ange Yaghi's
 [engine-sim](https://github.com/ange-yaghi/engine-sim) does (MIT licence; notice in `gas.mjs`).
