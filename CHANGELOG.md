@@ -20,6 +20,27 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 Working toward **v1.0 — every number derived, not fitted.**
 
+### Turbo sounds by size, anti-lag bangs, the supercharger whine reworked (build 160)
+
+- **Turbo by size.** The whine's power goes with the air through the compressor, so its amplitude scales
+  with the exducer against the medium frame's 71 mm; a blow-off valve is sized to its compressor, its bore
+  (and jet noise's amplitude) with the exducer, and its hiss lasts the charge volume over that bore. Two
+  turbos add their power. The Fiat 0.9 TwinAir's 40 mm wheel now blows off 18 dB under its exhaust, a
+  71 mm one 8 dB under.
+- **Anti-lag bangs.** On a lift above 2500 rpm anti-lag keeps the fuel and fires late, so the charge burns on
+  in the manifold: a `bang` voice in the pulse worklet, bigger and longer than a crackle (3 ms) and deeper
+  (low-passed, so the exhaust system rings), a third of the firings, with crackle between. A cat takes less
+  of the edge off it than a crackle (it goes off before the cat). The turbo keeps whining on the lift.
+  About 18 dB over a plain overrun; heard in GAS mode too.
+- **Supercharger reworked.** It sang three pure sines at 0.10 from idle (0.35 of it with no boost) and covered
+  everything. The whine is now mostly noise in a narrow band at the lobe/blade pass with a little tone
+  (blowers whirr), rolled off where the intake ducting soaks it up (2.5 kHz for a Roots or screw, 6 kHz for
+  a centrifugal). A Roots or screw's bypass is open off boost, so its whine comes in with the boost squared
+  (20 dB down off boost); a centrifugal's goes with its impeller speed squared. A twin-screw is a 4-lobe male
+  rotor on 2.4:1; a centrifugal counts its 7 full blades. Flat out a Roots sits 17 dB under the exhaust, a
+  screw 19, a centrifugal 24.
+- test86 pins all three; test69's whine check now asks for a whine concentrated at its pitch, not pure.
+
 ### The sound no longer cuts out on a lift (build 159)
 
 - On an injected engine a lift cuts the fuel (DFCO), and the exhaust's pulse strength fell to a tenth of a

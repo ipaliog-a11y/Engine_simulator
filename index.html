@@ -373,7 +373,7 @@ table.fuelmap td.live{box-shadow:inset 0 0 0 2px #fff;font-weight:bold}
 <body>
 <div class="container">
 <header>
-<h1>PIXEL ENGINE SIM v0.6 build 159</h1>
+<h1>PIXEL ENGINE SIM v0.6 build 160</h1>
 <div class="subtitle" id="subtitle">ENGINE DESIGNER • BUILD IT, THEN DRIVE IT</div>
 </header>
 <div class="build-strip" id="buildStrip">
@@ -2379,7 +2379,7 @@ An engine's sound is mostly its <b>exhaust pulses</b>: every time a cylinder's e
 </div>
 <div class="gtier gt-game"><div class="gtier-h">LV2 · IN THE GAME</div>
 <div class="guide-body" data-gk="options">
-<b>ENGINE SOUND</b> — two models, picked under ENGINE SOUND MODEL. <b>SYNTH</b>, the default, is described here. <b>GAS</b> simulates the gas instead, the way Ange Yaghi's engine-sim does: every cylinder, its intake and exhaust runners and each bank's collector are volumes of gas with pressure, temperature and flow between them, and the sound is the pressure in the exhaust runners, run through a recording of a real exhaust. It is heavier on the processor. A two-stroke gets its own model, with piston ports and a crankcase that pumps the charge; a rotary gets three chambers to a rotor breathing through ports the rotor uncovers. Either is heard on the DYNO tab, following the engine controls, and on the TRACK tab, following the car round the lap replay (silent while the replay is paused). It is built from the firing pulses: every cylinder fires at its place in the firing order and its pulse goes down its own bank's exhaust, left and right for a V or a boxer. That is where a cross-plane V8's burble comes from, and why an inline six sounds smooth. Then the pulses run the exhaust you fitted: the header rings at its own length (a race header cut for high revs is shorter and sings higher; a cast manifold barely rings), the system behind it drones, and the silencer, the cat and a turbo, if there is one, quieten it. Load is in the pulses themselves: each one is as hard as the charge it burned, so flat out is louder and raspier than a cruise, and a fuel cut leaves only a hollow whoosh. A wild cam makes the idle lope, an idle thing that fades as the throttle opens. Lift off a carburetted engine after a pull and it crackles while the pipe is hot (carburettors cannot cut the fuel, so the thin overrun charge misfires and lights in the exhaust); an injected one stays quiet, and anti-lag pops on purpose. Around the exhaust you also hear the rest of the car: a turbo whines at its compressor's blade-pass pitch as the shaft spools, and hisses through its blow-off valve when you lift (longer from a big intercooler); a supercharger whines with the crank, a Roots blower with a buzz; the intake roars at its runner's tuned pitch, loudest through open stacks; and a chamber that knocks rings at about 6 kHz, which is a diesel's rattle on every stroke (worst cold) and a petrol engine's warning when it is past its knock limit.<br><b>WEAR &amp; DAMAGE</b> — with wear on, detonation, overheating, running lean under boost and over-revving damage the engine and can blow it; with it off the engine is invincible, which is the way to experiment.<br><b>LANGUAGE</b> — English or Greek. Pages added since the Greek translation was made appear in English.
+<b>ENGINE SOUND</b> — two models, picked under ENGINE SOUND MODEL. <b>SYNTH</b>, the default, is described here. <b>GAS</b> simulates the gas instead, the way Ange Yaghi's engine-sim does: every cylinder, its intake and exhaust runners and each bank's collector are volumes of gas with pressure, temperature and flow between them, and the sound is the pressure in the exhaust runners, run through a recording of a real exhaust. It is heavier on the processor. A two-stroke gets its own model, with piston ports and a crankcase that pumps the charge; a rotary gets three chambers to a rotor breathing through ports the rotor uncovers. Either is heard on the DYNO tab, following the engine controls, and on the TRACK tab, following the car round the lap replay (silent while the replay is paused). It is built from the firing pulses: every cylinder fires at its place in the firing order and its pulse goes down its own bank's exhaust, left and right for a V or a boxer. That is where a cross-plane V8's burble comes from, and why an inline six sounds smooth. Then the pulses run the exhaust you fitted: the header rings at its own length (a race header cut for high revs is shorter and sings higher; a cast manifold barely rings), the system behind it drones, and the silencer, the cat and a turbo, if there is one, quieten it. Load is in the pulses themselves: each one is as hard as the charge it burned, so flat out is louder and raspier than a cruise, and a fuel cut leaves only a hollow whoosh. A wild cam makes the idle lope, an idle thing that fades as the throttle opens. Lift off a carburetted engine after a pull and it crackles while the pipe is hot (carburettors cannot cut the fuel, so the thin overrun charge misfires and lights in the exhaust); an injected one stays quiet, and anti-lag pops on purpose. Around the exhaust you also hear the rest of the car: a turbo whines at its compressor's blade-pass pitch as the shaft spools, and hisses through its blow-off valve when you lift (longer from a big intercooler); a supercharger whirrs with the crank, mostly once its boost comes in (off boost a Roots or a screw blower's bypass is open), and a centrifugal whistles with its impeller speed; a turbo's whine and blow-off are as big as its compressor, so a small one only hisses; anti-lag bangs and crackles on every lift; the intake roars at its runner's tuned pitch, loudest through open stacks; and a chamber that knocks rings at about 6 kHz, which is a diesel's rattle on every stroke (worst cold) and a petrol engine's warning when it is past its knock limit.<br><b>WEAR &amp; DAMAGE</b> — with wear on, detonation, overheating, running lean under boost and over-revving damage the engine and can blow it; with it off the engine is invincible, which is the way to experiment.<br><b>LANGUAGE</b> — English or Greek. Pages added since the Greek translation was made appear in English.
 </div>
 <div class="guide-body" data-gk="tip">
 Tip: turn WEAR off in OPTIONS to
@@ -10127,6 +10127,7 @@ class EnginePulse extends AudioWorkletProcessor{
     {name:'crackle',defaultValue:0,minValue:0,maxValue:1,automationRate:'k-rate'},
     {name:'whineF',defaultValue:0,minValue:0,maxValue:40000,automationRate:'k-rate'},
     {name:'whineA',defaultValue:0,minValue:0,maxValue:1,automationRate:'k-rate'},
+    {name:'bang',defaultValue:0,minValue:0,maxValue:1,automationRate:'k-rate'},
     {name:'intake',defaultValue:0,minValue:0,maxValue:4,automationRate:'k-rate'},
     {name:'knockProb',defaultValue:0,minValue:0,maxValue:1,automationRate:'k-rate'},
     {name:'knockAmp',defaultValue:0,minValue:0,maxValue:2,automationRate:'k-rate'}];}
@@ -10137,7 +10138,8 @@ class EnginePulse extends AudioWorkletProcessor{
     const t=c.tone,sr=sampleRate;
     this.cfg=c;this.seed=12345;this.phase=0;this.cycle=0;this.next=0;this.nextAt=c.events[0].at;
     const x=c.exhaust;
-    this.popDecay=Math.exp(-1/(0.8e-3*sr));
+    this.popDecay=Math.exp(-1/(0.8e-3*sr));this.bangDecay=Math.exp(-1/(3e-3*sr));
+    this.whBp={b0:0,b2:0,a1:0,a2:0,x1:0,x2:0,y1:0,y2:0};this.whF=0;this.whG=0;
     // the accessory voices: one each, centred
     this.wPh=0;this.bovEnv=0;this.bovDecay=0;this.ringEnv=0;this.ringPh=0;
     this.ringDecay=Math.exp(-1/(1.2e-3*sr));this.ringW=2*Math.PI*Math.min(c.knockF,0.45*sr)/sr;
@@ -10148,7 +10150,7 @@ class EnginePulse extends AudioWorkletProcessor{
       const noise=new Float32Array(Math.ceil(sr*0.03));
       for(let i=0;i<noise.length;i++)noise[i]=this.rnd()*2-1;
       const pan=c.banks===1?[0.7071,0.7071]:b?[0.45,0.85]:[0.85,0.45];
-      this.banks.push({env:0,ni:noise.length,noise,rasp:1,pop:0,popIn:0,popAmp:0,lp:0,m1:0,m2:0,s1:0,h:0,gl:pan[0],gr:pan[1],
+      this.banks.push({env:0,ni:noise.length,noise,rasp:1,pop:0,popIn:0,popAmp:0,bang:0,bangIn:0,bangAmp:0,bangLp:0,lp:0,m1:0,m2:0,s1:0,h:0,gl:pan[0],gr:pan[1],
         // bank B's run to its tailpipe is a little longer (the crossover), so its pipes sit a touch lower
         prim:this.bandpass(x.primF*(b?0.97:1),x.primQ),sys:this.bandpass(x.sysF*(b?0.97:1),x.sysQ)});
     }
@@ -10165,9 +10167,13 @@ class EnginePulse extends AudioWorkletProcessor{
     const y=f.b0*x+f.b2*f.x2-f.a1*f.y1-f.a2*f.y2;
     f.x2=f.x1;f.x1=x;f.y2=f.y1;f.y1=y;return y;
   }
-  fire(ev,lope,strength,crackle,interval,knockProb,knockAmp){
+  fire(ev,lope,strength,crackle,interval,knockProb,knockAmp,bang){
     const k=this.banks[ev.bank];
     let a=strength*(1+lope*(this.rnd()-0.5));
+    if(bang&&this.rnd()<bang){                               // anti-lag: the charge burns on in the manifold ...
+      a*=0.5;k.bangIn=1+Math.floor(this.rnd()*0.5*interval); // ... a moment after the valve opens: a bang
+      k.bangAmp=this.cfg.exhaust.bangGain*(1+1.2*this.rnd());
+    }
     if(lope&&this.rnd()<lope*0.12)a*=0.35;                   // a partial burn: residual gas diluted the charge
     if(crackle&&this.rnd()<crackle){                         // a misfire: the fuel goes on into the pipe ...
       a*=0.2;k.popIn=1+Math.floor(this.rnd()*1.5*interval);  // ... and lights there a moment later
@@ -10180,8 +10186,17 @@ class EnginePulse extends AudioWorkletProcessor{
     const out=outputs[0],L=out[0],R=out[1]||out[0],c=this.cfg;
     if(!c){L.fill(0);if(R!==L)R.fill(0);return true;}
     const t=c.tone,x=c.exhaust,ev=c.events,n=ev.length,run=EnginePulse.run,mufA=this.mufA;
-    const rpm=params.rpm[0],level=params.level[0],lope=params.lope[0],strength=params.strength[0],crackle=params.crackle[0];
-    const whineF=params.whineF[0],whineA=whineF<0.45*sampleRate?params.whineA[0]:0,wd=whineF/sampleRate;
+    const rpm=params.rpm[0],level=params.level[0],lope=params.lope[0],strength=params.strength[0],crackle=params.crackle[0],bang=params.bang[0];
+    const whineF=params.whineF[0],whineA=whineF<0.45*sampleRate&&whineF>40?params.whineA[0]:0,wd=whineF/sampleRate;
+    // the whine is a little tone and mostly noise in a narrow band at the pass frequency: real blowers whirr,
+    // and a stack of pure sines at one level is the "dentist's drill" this replaced. The band-pass is retuned
+    // per block and scaled so its rms matches a unit tone's.
+    const wnz=c.whine[2]||0,wtone=(1-wnz)/(1+c.whine[0]+c.whine[1]);
+    if(whineA&&Math.abs(whineF-this.whF)>0.5){
+      const q=c.whine[3]||10,w=2*Math.PI*whineF/sampleRate,al=Math.sin(w)/(2*q),a0=1+al,f=this.whBp;
+      f.b0=al/a0;f.b2=-al/a0;f.a1=-2*Math.cos(w)/a0;f.a2=(1-al)/a0;this.whF=whineF;
+      this.whG=0.7071/(0.577*Math.sqrt(Math.PI*whineF/(q*sampleRate)));
+    }
     const intake=params.intake[0],kP=params.knockProb[0],kA=params.knockAmp[0],wh=c.whine,inA=1-Math.exp(-2*Math.PI*2000/sampleRate);
     const dPh=rpm/60/c.cycleRevs/sampleRate;                       // engine cycles per sample
     const lpA=1-Math.exp(-2*Math.PI*params.bright[0]/sampleRate);
@@ -10192,7 +10207,7 @@ class EnginePulse extends AudioWorkletProcessor{
     for(let i=0;i<L.length;i++){
       this.phase+=dPh;
       while(this.phase>=this.cycle+this.nextAt){
-        this.fire(ev[this.next],lope,strength,crackle,1/(dPh*n),kP,kA);
+        this.fire(ev[this.next],lope,strength,crackle,1/(dPh*n),kP,kA,bang);
         if(++this.next===n){this.next=0;this.cycle++;}
         // a lumpy idle fires a little early or late, up to a sixth of the firing interval
         this.nextAt=ev[this.next].at+(lope?lope*(this.rnd()-0.5)/(3*n):0);
@@ -10210,6 +10225,9 @@ class EnginePulse extends AudioWorkletProcessor{
         if(k.popIn>0&&--k.popIn===0)k.pop=k.popAmp;
         let q=s;
         if(k.pop>1e-3){q+=2.5*k.pop*(this.rnd()*2-1);k.pop*=this.popDecay;}
+        // an anti-lag bang: bigger and longer than a crackle, and deeper (low-passed), so the system rings
+        if(k.bangIn>0&&--k.bangIn===0)k.bang=k.bangAmp;
+        if(k.bang>1e-3){const nz=this.rnd()*2-1;k.bangLp+=0.15*(nz-k.bangLp);q+=k.bang*(1.5*nz+8*k.bangLp);k.bang*=this.bangDecay;}
         // system: its drone, then two poles of silencer / cat / turbine and the rpm-driven brightness
         const v=q+x.sysMix*run(k.sys,q);
         k.m1+=mufA*(v-k.m1);k.m2+=mufA*(k.m1-k.m2);k.lp+=lpA*(k.m2-k.lp);
@@ -10218,7 +10236,8 @@ class EnginePulse extends AudioWorkletProcessor{
       }
       // accessories, centred, past the silencer
       let a=0;
-      if(whineA){this.wPh=(this.wPh+wd)%1;const ph=2*Math.PI*this.wPh;a+=whineA*(Math.sin(ph)+wh[0]*Math.sin(2*ph)+wh[1]*Math.sin(3*ph));}
+      if(whineA){this.wPh=(this.wPh+wd)%1;const ph=2*Math.PI*this.wPh;
+        a+=whineA*(wtone*(Math.sin(ph)+wh[0]*Math.sin(2*ph)+wh[1]*Math.sin(3*ph))+wnz*this.whG*run(this.whBp,this.rnd()*2-1));}
       if(this.bovEnv>1e-4){a+=run(this.bovBp,this.bovEnv*(this.rnd()*2-1));this.bovEnv*=this.bovDecay;}
       if(intake){
         const nz=(this.rnd()*2-1)*(0.25+Math.min(1,pulses));   // each induction stroke slaps the runner
@@ -10268,27 +10287,44 @@ function exhaustSound(e){
     muffleHz:sil.muffleHz*cut,
     // unburnt fuel that reaches a working cat is oxidised there instead of popping at the tailpipe
     popGain:1-0.6*cat.conv,
+    // an anti-lag bang goes off in the manifold, before the cat, with far more fuel than a crackle: the cat
+    // takes less of the edge off it
+    bangGain:1-0.3*cat.conv,
     gain:sil.gain*(1-2*cat.restrict)*(turbo?0.75:1)
   };
 }
 // Compressor whine. A turbo wheel's tone is its full blades passing (splitters are shorter and
 // quieter); a supercharger is driven off the crank, so it needs a drive ratio the breathing model never
-// had to know. Stated here, as typical hardware: a Roots or a twin-screw on a ~2:1 pulley with 2 rotors
-// of 3 (Roots) or 4+6 (screw) lobes, a centrifugal on a ~12:1 step-up gearbox and a 12-blade wheel.
-// h2/h3 are the overtones: a Roots blower's lobe-pass is a buzz, a centrifugal's a near-pure whistle.
+// had to know. Stated here, as typical hardware: a Roots on a 2:1 pulley with two 3-lobe rotors, a
+// twin-screw on 2.4:1 with a 4-lobe male rotor, a centrifugal on a 12:1 step-up gearbox and a wheel of 7
+// full blades (its splitters, like a turbo's, shorter and quieter). h2/h3 the overtones of the tone, noise the share of the whine that is noise in a band of width
+// f/q around the pass frequency (a blower whirrs; pure sines at one level were a drill), roll where the
+// intake ducting and airbox start soaking it up. level is the amplitude flat out.
+// Through build 159 a Roots blower sang three pure sines at 0.10 from idle (0.35 of it with no boost at
+// all) and covered everything; a positive-displacement blower's bypass valve is open off boost, so it
+// barely whines until the boost comes in. Flat out the levels put a Roots or screw whine 18-20 dB under the
+// exhaust and a centrifugal's subtler whistle about 25 dB under:
+// there, not on top of it.
 const COMP_BLADES=6;
 const SC_SOUND={
-  roots:      {drive:2.0, passes:6, h2:0.5,h3:0.35,level:0.10},
-  screw:      {drive:2.4, passes:10,h2:0.3,h3:0.15,level:0.08},
-  centrifugal:{drive:12.0,passes:12,h2:0.1,h3:0.05,level:0.07}
+  roots:      {drive:2.0, passes:6, h2:0.3, h3:0.12,noise:0.6, q:9, roll:2500,level:0.075},
+  screw:      {drive:2.4, passes:4, h2:0.25,h3:0.1, noise:0.5, q:10,roll:2500,level:0.060},
+  centrifugal:{drive:12.0,passes:7, h2:0.1, h3:0.03,noise:0.35,q:14,roll:6000,level:0.120}
 };
-const TURBO_WHINE={h2:0.15,h3:0.05,level:0.03};
+const TURBO_WHINE={h2:0.15,h3:0.05,noise:0.2,q:20,roll:6000,level:0.03};
+// A turbo's whine and blow-off by its size, against the medium frame's 71 mm compressor. The whine's power
+// goes with the air through the wheel, the exducer squared, so its amplitude with the exducer; a blow-off
+// valve is sized to its compressor, its bore with the exducer, and jet noise's amplitude with the bore. Two
+// turbos (or two valves) add their power: the square root of two.
+const TURBO_REF_EXD=0.071;
+function turboSoundScale(e){return clamp((e.compExd||TURBO_REF_EXD)/TURBO_REF_EXD,0.3,2)*Math.sqrt(e.turbUnits||1);}
 // How much of the induction roar reaches you: open stacks all of it, an airbox much less. A compressor
 // between the filter and the runners hushes it further.
 const INTAKE_LEVEL={none:1.0,perf:0.6,stock:0.35,restrictive:0.25};
 // A blow-off valve's bore: it sets how fast the charge pipe empties, with the volume the boost model
 // already fills (engine.chargeVol).
-const BOV_D=0.025;
+const BOV_D=0.025;   // on the 71 mm reference compressor; scaled with the exducer (bovBore)
+const bovBore=e=>BOV_D*clamp((e.compExd||TURBO_REF_EXD)/TURBO_REF_EXD,0.3,2);
 function soundCycle(e){return e.ci?'diesel':e.type==='rotary'?'rotary':e.type==='twostroke'?'twostroke':'petrol';}
 // Through a sport system (the default build) the pulse train is about a sixth as loud (rms) as the old
 // sawtooth-and-square note at the same level; this brings it back to that loudness. A stock system
@@ -10338,21 +10374,29 @@ function soundDrive(dt,s=state){
   const overrun=s.throttle<0.03&&s.rpm>e.idleRpmEff+150&&s.rpm<e.redline;
   let crackle=0;
   if(overrun&&!e.canDFCO)crackle=0.35*clamp((s.rpm-e.idleRpmEff)/3000,0.2,1)*clamp((Sound.hot-0.4)/0.4,0,1);
-  if(overrun&&e.antilag&&s.rpm>2500)crackle=Math.max(crackle,0.3);
+  // anti-lag: on a lift it keeps the fuel and fires late, so the charge burns on in the manifold and the
+  // turbine: bangs, with crackle between them
+  let bang=0;
+  if(overrun&&e.antilag&&s.rpm>2500){crackle=Math.max(crackle,0.15);bang=0.3;}
   // compressor whine
   let whineF=0,whineA=0;
   if(e.intake==='turbo'&&e.shaftJ){
     const n=Math.sqrt(2*Math.max(0,s.shaftE||0)/e.shaftJ)*60/(2*Math.PI);
     whineF=n/60*COMP_BLADES;
     // the pressure rise goes with tip speed squared; a closed throttle unloads the wheel
-    whineA=TURBO_WHINE.level*Math.pow(clamp(n/(e.shaftMax||1),0,1),2)*(s.throttle>0.1?1:0.4);
+    // anti-lag keeps the wheel working on a lift
+    whineA=TURBO_WHINE.level*turboSoundScale(e)*Math.pow(clamp(n/(e.shaftMax||1),0,1),2)*(s.throttle>0.1||e.antilag?1:0.4);
     // the ducting, filter and bonnet lining soak up the top end: near full speed the blade pass is
     // past 10 kHz, and heard straight it is a squeal rather than a whistle
-    whineA/=1+Math.pow(whineF/6000,2);
+    whineA/=1+Math.pow(whineF/TURBO_WHINE.roll,2);
   }else if(e.intake==='supercharger'){
     const sc=SC_SOUND[e.scType]||SC_SOUND.roots;
     whineF=s.rpm*sc.drive/60*sc.passes;
-    whineA=sc.level*(0.35+0.65*clamp(s.boostActual/Math.max(0.05,e.boost_bar),0,1));
+    const bf=clamp(s.boostActual/Math.max(0.05,e.boost_bar),0,1);
+    // a Roots or a screw moves air from idle but only compresses (and so only whines hard) on boost, its
+    // bypass open the rest of the time; a centrifugal's whistle goes with its impeller speed squared
+    whineA=e.scType==='centrifugal'?sc.level*Math.pow(clamp(s.rpm/e.redline,0,1),2)*(0.3+0.7*bf):sc.level*(0.08+0.92*bf*bf);
+    whineA/=1+Math.pow(whineF/sc.roll,2);
   }
   // induction roar: volumetric flow goes with manifold pressure x rpm
   const forced=e.intake!=='na';
@@ -10370,10 +10414,10 @@ function soundDrive(dt,s=state){
   let bov=null;
   if(e.intake==='turbo'&&!e.ci){
     if(s.throttle>=0.1)Sound.chargeP=Math.max(0,s.boostActual||0);
-    else if(Sound.chargeP>0.15){bov={amp:0.25*Math.min(1.5,Sound.chargeP)};Sound.chargeP=0;}
+    else if(Sound.chargeP>0.15){bov={amp:0.25*Math.min(1.5,Sound.chargeP)*turboSoundScale(e)};Sound.chargeP=0;}
   }
-  if(s.blown)return {strength:0,lope:0,crackle:0,whineF,whineA:0,intake:0,knockProb:0,knockAmp:0,bov:null};
-  return {strength,lope,crackle,whineF,whineA,intake,knockProb,knockAmp,bov};
+  if(s.blown)return {strength:0,lope:0,crackle:0,bang:0,whineF,whineA:0,intake:0,knockProb:0,knockAmp:0,bov:null};
+  return {strength,lope,crackle,bang,whineF,whineA,intake,knockProb,knockAmp,bov};
 }
 // The engine as the lap replay has it at this moment. The solver recorded rpm, manifold pressure (closed
 // throttle vacuum, and only the boost the shaft had built) and the pedals, which is what the pulses need.
@@ -10411,12 +10455,12 @@ function soundConfig(e){
   const events=firingOrder(e.layout,n).map((c,k)=>({at:k/n,bank:vee&&c>perBank?1:0}));
   const sc=e.intake==='supercharger'?SC_SOUND[e.scType]||SC_SOUND.roots:TURBO_WHINE;
   return {cycleRevs:two?1:2,banks:vee?2:1,events,tone:SOUND_TONE[soundCycle(e)],exhaust:exhaustSound(e),
-    whine:[sc.h2,sc.h3],
+    whine:[sc.h2,sc.h3,sc.noise,sc.q],
     intakeF:e.runnerL&&e.runnerA&&e.vEffCyl?helmholtzHz(e.runnerA,e.runnerL,e.vEffCyl,313):200,
     intakeHiss:e.airFilter==='none'||e.intakeSys==='itb'?0.2:0.05,
     knockF:1.84*sonic(2000)/(Math.PI*e.bore_mm/1000),       // Draper's first circumferential mode
     // venting the charge volume through the valve: V / (Cd A c), and it only cracks part open (x3)
-    bovTau:3*(e.chargeVol||0.003)/(0.6*Math.PI/4*BOV_D*BOV_D*340)};
+    bovTau:3*(e.chargeVol||0.003)/(0.6*Math.PI/4*bovBore(e)**2*(e.turbUnits||1)*340)};
 }
 // The worklet is inline, so the app stays one file. A blob: URL is refused from a file:// page (its
 // origin is opaque), a data: URL is not, so try the one and fall back to the other.
@@ -10585,6 +10629,7 @@ function updateSound(){
     p.get('crackle').setTargetAtTime(d.crackle,t,0.03);
     p.get('whineF').setTargetAtTime(d.whineF,t,0.03);
     p.get('whineA').setTargetAtTime(d.whineA,t,0.06);
+    p.get('bang').setTargetAtTime(d.bang,t,0.03);
     p.get('intake').setTargetAtTime(d.intake,t,0.05);
     p.get('knockProb').setTargetAtTime(d.knockProb,t,0.05);
     p.get('knockAmp').setTargetAtTime(d.knockAmp,t,0.05);
