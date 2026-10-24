@@ -102,7 +102,9 @@ console.log(`== supercharger ${f(r.sc.f1, 0)} Hz at 2000 rpm, ${f(r.sc.f2, 0)} H
 console.log(`== blow-off on a lift from 0.9 bar ${r.bovDrive.lift}, next frame ${r.bovDrive.again}, from 0.05 bar ${r.bovDrive.low}, diesel ${r.dieselBov} ==`);
 console.log(`== knock prob below limit ${f(r.knockDrive.below)}, past it ${f(r.knockDrive.above)} · diesel warm ${f(r.dieselKnock.warm, 3)} cold ${f(r.dieselKnock.cold, 3)} · roar stacks ${f(r.stacks.stacks, 3)} airbox ${f(r.stacks.airbox, 3)} ==`);
 
-if (!(r.whine.at > 100 && r.whine.off < 3)) fails.push('the whine is not a tone at whineF');
+// since build 160 the whine is part tone, part noise in a narrow band around its pitch (a blower whirrs):
+// concentrated at whineF, not pure
+if (!(r.whine.at > 100 && r.whine.at > 1000 * r.whine.off)) fails.push('the whine is not concentrated at whineF');
 if (!(r.knock.ratio > 5 && r.knock.off < r.knock.ratio / 3)) fails.push('knock does not ring at the chamber mode');
 if (!(r.intake.r2 > r.intake.r1 && r.intake.r1 > r.intake.r0)) fails.push('intake roar does not grow with its level');
 if (!(r.bov.large.ms > r.bov.small.ms * 1.3 && r.bov.small.ms > 30)) fails.push('a bigger charge volume does not blow off for longer');
