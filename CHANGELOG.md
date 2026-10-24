@@ -20,6 +20,31 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 Working toward **v1.0 — every number derived, not fitted.**
 
+### The Greek interface, finished (build 156)
+
+- **Everything outside the guide now has Greek.** A sweep of the app in Greek found the interface had grown in
+  English since the translation was made: 9 `tr()` calls with no Greek (the tyre speed-rating warning and the
+  variable-geometry turbine readouts among them), every dropdown on ENGINE and VEHICLE, the newer ENGINE fields
+  (eccentricity, intake runner, valves, valve float, cam overlap), the speed limiter and tyre rating, the design and
+  vehicle summaries, the status bar and the help lines, the knock and health readings, ~30 tooltips and
+  screen-reader labels, and 39 of the guide's 60 page titles. All have Greek now. Terms Greek enthusiasts use in
+  English (BOOST, ECU, LSD, VVT, ROOTS), units, and the names of real cars, engines and circuits stay as they are,
+  as the existing translation already did.
+- **Switching language mid-session refreshes everything.** The top bar, the engine and car pickers, the subtitle,
+  the design summary and the runner and scavenge readouts kept the old language until something else redrew them.
+  Dropdowns translate in place; the pickers filled from data re-label themselves rather than have their Greek
+  cached as the English.
+- **Words that read differently by context.** "RACE" is the RACE tab (ΑΓΩΝΑΣ) and a cam or spring grade
+  (ΑΓΩΝΙΣΤΙΚΟ), so a dropdown choice looks up `opt:` + its text first. The table carried `'LOAD'` twice, so the
+  diesel fuel map's load axis read ΦΟΡΤΩΣΗ (loading, the button's word); it now uses the load key. "Induction" was
+  ΥΠΕΡΤΡΟΦΟΔΟΤΗΣΗ (forced induction), which beside "naturally aspirated" said the opposite; it is ΤΡΟΦΟΔΟΣΙΑ ΑΕΡΑ.
+  The sound option's note sent Greek players to the DYNO and TRACK tabs, which in Greek are ΔΥΝΑΜΟ and ΠΙΣΤΑ.
+- **The guide is next.** 184 of its 215 blocks are still English (37 pages entirely); its intro and index are done.
+- Tests: test84 sweeps every tab in Greek, on a load in Greek and after switching mid-session, and fails on any
+  English word outside the kept terms, units and names; checks every `tr()` literal, guide title and category has
+  Greek and that no key is in the table twice; checks switching back to English leaves no Greek; and holds the
+  guide's untranslated blocks to a budget (184) that may only go down.
+
 ### The driver holds the launch slip; every car gets its best launch rpm (build 155)
 
 - **The fastest launch is a small slip, and the driver finds it.** A sweep of the launch at fixed slip targets

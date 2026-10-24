@@ -373,7 +373,7 @@ table.fuelmap td.live{box-shadow:inset 0 0 0 2px #fff;font-weight:bold}
 <body>
 <div class="container">
 <header>
-<h1>PIXEL ENGINE SIM v0.6 build 155</h1>
+<h1>PIXEL ENGINE SIM v0.6 build 156</h1>
 <div class="subtitle" id="subtitle">ENGINE DESIGNER • BUILD IT, THEN DRIVE IT</div>
 </header>
 <div class="build-strip" id="buildStrip">
@@ -512,7 +512,7 @@ table.fuelmap td.live{box-shadow:inset 0 0 0 2px #fff;font-weight:bold}
 <!-- GUIDE: in-app documentation (kept in-app so the offline PWA stays self-contained) -->
 <div class="design-panel guide-panel" id="guidePanel">
 <h3>GUIDE • HOW IT WORKS</h3>
-<div class="guide-intro">A wiki of the sim. Every page climbs three levels: <b>LV1</b> how the thing works on a real car, <b>LV2</b> what it does in the game, <b>LV3</b> the physics the sim actually solves. Read as far as you like.</div>
+<div class="guide-intro" data-gk="guideIntro">A wiki of the sim. Every page climbs three levels: <b>LV1</b> how the thing works on a real car, <b>LV2</b> what it does in the game, <b>LV3</b> the physics the sim actually solves. Read as far as you like.</div>
 <div class="guide-nav" id="guideNav"></div>
 <div class="guide-search" id="guideSearchBox"><input id="guideSearch" type="search" placeholder="SEARCH THE WIKI — e.g. turbo, knock, camber" aria-label="Search the guide" autocomplete="off"></div>
 <div class="guide-nohit" id="guideNoHit" hidden>No page matches that. Try a shorter word.</div>
@@ -2891,14 +2891,14 @@ function updateGasLabels(){
   const ov=document.getElementById('valOverlap');
   if(ov){
     if(e.ports||!e.overlap&&e.overlap!==0){set('valOverlap','n/a','#778');}
-    else if(e.overlap<=0)set('valOverlap',Math.round(e.overlap)+'\u00b0 — NONE','#778');
+    else if(e.overlap<=0)set('valOverlap',Math.round(e.overlap)+'\u00b0 — '+tr('NONE'),'#778');
     else set('valOverlap',Math.round(e.overlap)+'\u00b0',e.overlap>55?'#e8974a':'#cfe');
   }
   if(!e.primL){set('valRam','n/a','#778');set('valScav','n/a','#778');return;}
-  set('valRam',Math.round(e.runnerL*1000)+'mm \u00b7 '+(e.runnerVariable?'VAR ':'')+
+  set('valRam',Math.round(e.runnerL*1000)+'mm \u00b7 '+(e.runnerVariable?tr('VAR')+' ':'')+
     Math.round(e.ramPeakRpm)+' rpm +'+(e.ramPeakGain*100).toFixed(1)+'%');
   set('valScav',Math.round(e.primL*1000)+'mm k='+e.primK+' \u00b7 '+
-    (e.scavPeakGain>0.002?Math.round(e.scavPeakRpm)+' rpm +'+(e.scavPeakGain*100).toFixed(1)+'%':'no scavenging'),
+    (e.scavPeakGain>0.002?Math.round(e.scavPeakRpm)+' rpm +'+(e.scavPeakGain*100).toFixed(1)+'%':tr('no scavenging')),
     e.scavPeakGain>0.002?'#7ee08a':'#778');
 }
 function deriveValvetrain(){
@@ -4280,7 +4280,7 @@ const I18N={
   'New seed':{el:'Νέος σπόρος'},
   'Nobody drives. Each car runs its own lap solve, with its tyres heating and wearing, its fuel burning off and the cars around it in the way. Pace, fuel and tyres come from the physics; traffic, overtaking and pit loss are rules.':{el:'Δεν οδηγεί κανείς. Κάθε αυτοκίνητο τρέχει τη δική του λύση γύρου, με τα ελαστικά να ζεσταίνονται και να φθείρονται, το καύσιμο να καίγεται και τα άλλα αυτοκίνητα στον δρόμο του. Ρυθμός, καύσιμο και ελαστικά βγαίνουν από τη φυσική· η κίνηση, οι προσπεράσεις και ο χρόνος στα pit είναι κανόνες.'},
   'Rows = load (share of the air available at that rpm, top = full pedal) · Columns = RPM · cell = target':{el:'Γραμμές = φορτίο (ποσοστό του διαθέσιμου αέρα σε αυτές τις στροφές, πάνω = τέρμα πεντάλ) · Στήλες = στροφές · κελί = στόχος'},
-  'LOAD':{el:'ΦΟΡΤΙΟ'},'load':{el:'φορτίο'},
+  'load':{el:'φορτίο'},
   'ZOOM':{el:'ΖΟΥΜ'},'scroll or pinch to zoom • drag to pan • double-click to reset':{el:'κύλιση ή τσίμπημα για ζουμ • σύρε για μετακίνηση • διπλό κλικ για επαναφορά'},
   'DYNO RESULT':{el:'ΑΠΟΤΕΛΕΣΜΑ ΔΥΝΑΜΟΜΕΤΡΟΥ'},'PEAK POWER':{el:'ΜΕΓΙΣΤΗ ΙΣΧΥΣ'},'BEST-POWER PULL':{el:'ΔΟΚΙΜΗ ΜΕΓΙΣΤΗΣ ΙΣΧΥΟΣ'},
   'YOUR PULL (AS TUNED)':{el:'Η ΔΟΚΙΜΗ ΣΟΥ (ΩΣ ΕΧΕΙ ΡΥΘΜΙΣΤΕΙ)'},'ECU fuel map':{el:'χάρτης καυσίμου ECU'},'BOOST':{el:'BOOST'},
@@ -4359,7 +4359,7 @@ const I18N={
   'BUILD & DYNO':{el:'ΚΑΤΑΣΚΕΥΗ & ΔΥΝΑΜΟ'},'DEFAULTS':{el:'ΠΡΟΕΠΙΛΟΓΕΣ'},
   'Simulator preferences. These don\'t change the engine build.':{el:'Προτιμήσεις προσομοιωτή. Δεν αλλάζουν τον κινητήρα.'},
   'Audio':{el:'Ήχος'},'ENGINE SOUND':{el:'ΗΧΟΣ ΚΙΝΗΤΗΡΑ'},
-  'Synthesised from the firing pulses (firing order, one exhaust per bank; lumpy idle from wild cams). Plays on the DYNO tab, and on the TRACK tab with the lap replay.':{el:'Συντίθεται από τους παλμούς ανάφλεξης (σειρά ανάφλεξης, μία εξάτμιση ανά σειρά κυλίνδρων· ανώμαλο ρελαντί με άγρια εκκεντροφόρο). Ακούγεται στην καρτέλα DYNO και στην καρτέλα TRACK με την αναπαραγωγή του γύρου.'},
+  'Synthesised from the firing pulses (firing order, one exhaust per bank; lumpy idle from wild cams). Plays on the DYNO tab, and on the TRACK tab with the lap replay.':{el:'Συντίθεται από τους παλμούς ανάφλεξης (σειρά ανάφλεξης, μία εξάτμιση ανά σειρά κυλίνδρων· ανώμαλο ρελαντί με άγρια εκκεντροφόρο). Ακούγεται στην καρτέλα ΔΥΝΑΜΟ και στην καρτέλα ΠΙΣΤΑ με την αναπαραγωγή του γύρου.'},
   'Simulation':{el:'Προσομοίωση'},'WEAR & DAMAGE':{el:'ΦΘΟΡΑ & ΖΗΜΙΑ'},
   'On: detonation/overheat/lean-boost/over-rev damage the engine. Off: invincible, for free experimentation.':{el:'Ενεργό: πειράκι/υπερθέρμανση/φτωχό-boost/υπερστροφή κάνουν ζημιά. Ανενεργό: άφθαρτος, για ελεύθερο πειραματισμό.'},
   'Language':{el:'Γλώσσα'},'LANGUAGE PACK':{el:'ΠΑΚΕΤΟ ΓΛΩΣΣΑΣ'},
@@ -4406,7 +4406,7 @@ const I18N={
   'No saved cars yet. On the VEHICLE tab, name the car and press SAVE CAR — the body, every part on it and the engine inside are all kept together.':{el:'Κανένα αποθηκευμένο αυτοκίνητο ακόμα. Στην καρτέλα ΟΧΗΜΑ δώσε όνομα και πάτησε ΑΠΟΘΗΚΕΥΣΗ ΣΤΟ ΓΚΑΡΑΖ — αμάξωμα, μέρη και κινητήρας κρατιούνται μαζί.'},
   'No saved engines yet. On the ENGINE tab, name the engine and press SAVE ENGINE.':{el:'Κανένας αποθηκευμένος κινητήρας ακόμα. Στην καρτέλα ΚΙΝΗΤΗΡΑΣ δώσε όνομα και πάτησε ΑΠΟΘΗΚΕΥΣΗ ΚΙΝΗΤΗΡΑ.'},
   'Engine':{el:'Κινητήρας'},'Bore × stroke':{el:'Διάμετρος × διαδρομή'},'Compression':{el:'Συμπίεση'},'redline':{el:'κόκκινη ζώνη'},
-  'Induction':{el:'Υπερτροφοδότηση'},'Fuel':{el:'Καύσιμο'},'Output':{el:'Απόδοση'},'Car':{el:'Αυτοκίνητο'},'Tyres':{el:'Ελαστικά'},
+  'Induction':{el:'Τροφοδοσία αέρα'},'Fuel':{el:'Καύσιμο'},'Output':{el:'Απόδοση'},'Car':{el:'Αυτοκίνητο'},'Tyres':{el:'Ελαστικά'},
   'Speed limiter':{el:'Κόφτης ταχύτητας'},'removed':{el:'αφαιρέθηκε'},'Traction control':{el:'Έλεγχος πρόσφυσης'},'TRACTION CONTROL':{el:'ΕΛΕΓΧΟΣ ΠΡΟΣΦΥΣΗΣ'},
   'ENGINE FAMILY':{el:'ΟΙΚΟΓΕΝΕΙΑ ΚΙΝΗΤΗΡΑ'},'LOAD A BUILD':{el:'ΦΟΡΤΩΣΗ ΚΑΤΑΣΚΕΥΗΣ'},'CAR FAMILY':{el:'ΟΙΚΟΓΕΝΕΙΑ ΑΥΤΟΚΙΝΗΤΟΥ'},
   'FACTORY CAR':{el:'ΕΡΓΟΣΤΑΣΙΑΚΟ ΑΥΤΟΚΙΝΗΤΟ'},'— choose a build —':{el:'— διάλεξε κατασκευή —'},'— load a real car —':{el:'— φόρτωσε πραγματικό αυτοκίνητο —'},
@@ -4452,7 +4452,133 @@ const I18N={
   'CHALLENGE PASSED':{el:'ΠΡΟΚΛΗΣΗ ΕΠΙΤΥΧΗΣ'},'NOT MET YET':{el:'ΔΕΝ ΕΠΙΤΕΥΧΘΗΚΕ'},
   'Pick an objective above to set targets, or keep building freely.':{el:'Διάλεξε στόχο πιο πάνω για να ορίσεις κριτήρια, ή χτίσε ελεύθερα.'},
   'Power':{el:'Ισχύς'},'Reliability':{el:'Αξιοπιστία'},'HP per $1k':{el:'HP ανά $1k'},'Thermal eff':{el:'Θερμ. απόδ.'},
-  'Emissions':{el:'Εκπομπές'},'Grade':{el:'Βαθμός'},'Safety':{el:'Ασφάλεια'},'HP per litre':{el:'HP ανά λίτρο'}
+  'Emissions':{el:'Εκπομπές'},'Grade':{el:'Βαθμός'},'Safety':{el:'Ασφάλεια'},'HP per litre':{el:'HP ανά λίτρο'},
+  // ---- build 156: the rest of the interface ----
+  // ENGINE and VEHICLE fields added since the first translation
+  'ECCENTRICITY e (mm)':{el:'ΕΚΚΕΝΤΡΟΤΗΤΑ e (mm)'},'TURBINE':{el:'ΤΟΥΡΜΠΙΝΑ'},'INTAKE RUNNER':{el:'ΑΓΩΓΟΣ ΕΙΣΑΓΩΓΗΣ'},
+  'RUNNER / RAM PEAK':{el:'ΑΓΩΓΟΣ / ΚΟΡΥΦΗ ΣΥΝΤΟΝΙΣΜΟΥ'},'PRIMARY / SCAVENGE':{el:'ΣΩΛΗΝΑΣ ΧΤΑΠΟΔΙΟΥ / ΣΑΡΩΣΗ'},
+  'VALVES / CYLINDER':{el:'ΒΑΛΒΙΔΕΣ / ΚΥΛΙΝΔΡΟ'},'VALVE MATERIAL':{el:'ΥΛΙΚΟ ΒΑΛΒΙΔΩΝ'},'VALVE SPRINGS':{el:'ΕΛΑΤΗΡΙΑ ΒΑΛΒΙΔΩΝ'},
+  'VALVE FLOAT':{el:'ΠΛΕΥΣΗ ΒΑΛΒΙΔΩΝ'},'CAM OVERLAP':{el:'ΕΠΙΚΑΛΥΨΗ ΒΑΛΒΙΔΩΝ'},'no scavenging':{el:'χωρίς σάρωση'},'VAR':{el:'ΜΕΤΑΒ.'},
+  'SPEED LIMITER':{el:'ΚΟΦΤΗΣ ΤΑΧΥΤΗΤΑΣ'},'LIMIT (km/h)':{el:'ΟΡΙΟ (km/h)'},'TYRE SPEED RATING':{el:'ΔΕΙΚΤΗΣ ΤΑΧΥΤΗΤΑΣ ΕΛΑΣΤΙΚΟΥ'},
+  // engine and car families, and the supercar eras
+  'Archetypes':{el:'Αρχέτυπα'},'Kei & City':{el:'Kei & πόλης'},'Compact Turbo':{el:'Μικρά τούρμπο'},'NA Sports':{el:'Ατμοσφαιρικά σπορ'},
+  'Turbo Performance':{el:'Τούρμπο επιδόσεων'},'American V8':{el:'Αμερικάνικα V8'},'Supercar':{el:'Supercar'},'Rotary':{el:'Περιστροφικά (Wankel)'},
+  'Diesel':{el:'Πετρελαιοκίνητα'},'Two-Stroke':{el:'Δίχρονα'},
+  '1990s':{el:'Δεκαετία του 1990'},'2000s':{el:'Δεκαετία του 2000'},'2010s':{el:'Δεκαετία του 2010'},'2020s':{el:'Δεκαετία του 2020'},
+  // dropdown choices (and the labels the summaries reuse). An option looks up 'opt:'+text first, for
+  // the few words that read differently as a part grade than elsewhere ('RACE' is the RACE tab).
+  'PETROL 4-STROKE':{el:'ΒΕΝΖΙΝΗ ΤΕΤΡΑΧΡΟΝΟΣ'},'DIESEL (CI)':{el:'ΠΕΤΡΕΛΑΙΟ (CI)'},'2-STROKE':{el:'ΔΙΧΡΟΝΟΣ'},'ROTARY (WANKEL)':{el:'ΠΕΡΙΣΤΡΟΦΙΚΟΣ (WANKEL)'},
+  'INLINE':{el:'ΣΕ ΣΕΙΡΑ'},'BOXER':{el:'ΜΠΟΞΕΡ'},'NATURALLY ASP.':{el:'ΑΤΜΟΣΦΑΙΡΙΚΟΣ'},
+  'NONE':{el:'ΧΩΡΙΣ'},'SMALL CORE':{el:'ΜΙΚΡΟΣ ΠΥΡΗΝΑΣ'},'LARGE CORE':{el:'ΜΕΓΑΛΟΣ ΠΥΡΗΝΑΣ'},
+  'SMALL':{el:'ΜΙΚΡΟ'},'MEDIUM':{el:'ΜΕΣΑΙΟ'},'LARGE':{el:'ΜΕΓΑΛΟ'},'SINGLE':{el:'ΜΟΝΟ'},'TWIN':{el:'ΔΙΠΛΟ'},'COMPOUND':{el:'ΣΥΝΘΕΤΟ (COMPOUND)'},
+  'TIGHT (RESPONSE)':{el:'ΣΦΙΧΤΟ (ΑΠΟΚΡΙΣΗ)'},'STOCK':{el:'ΕΡΓΟΣΤΑΣΙΑΚΟ'},'LOOSE (TOP END)':{el:'ΦΑΡΔΥ (ΨΗΛΑ)'},
+  'FIXED HOUSING':{el:'ΣΤΑΘΕΡΟ ΚΕΛΥΦΟΣ'},'VARIABLE GEOMETRY':{el:'ΜΕΤΑΒΛΗΤΗ ΓΕΩΜΕΤΡΙΑ'},'YES':{el:'ΝΑΙ'},'NO':{el:'ΟΧΙ'},
+  'ROOTS':{el:'ROOTS'},'TWIN-SCREW':{el:'ΔΙΠΛΟΥ ΚΟΧΛΙΑ'},'CENTRIFUGAL':{el:'ΦΥΓΟΚΕΝΤΡΙΚΟΣ'},
+  'STOCK CAST':{el:'ΕΡΓΟΣΤΑΣΙΑΚΗ ΠΟΛΛΑΠΛΗ'},'SPORT HEADER':{el:'ΣΠΟΡ ΧΤΑΠΟΔΙ'},'RACE HEADER':{el:'ΑΓΩΝΙΣΤΙΚΟ ΧΤΑΠΟΔΙ'},
+  'LONG (TORQUE)':{el:'ΜΑΚΡΥΣ (ΡΟΠΗ)'},'SHORT (POWER)':{el:'ΚΟΝΤΟΣ (ΙΣΧΥΣ)'},'VARIABLE':{el:'ΜΕΤΑΒΛΗΤΟΣ'},
+  'NONE (DECAT)':{el:'ΧΩΡΙΣ (DECAT)'},'SPORT CAT':{el:'ΣΠΟΡ ΚΑΤΑΛΥΤΗΣ'},'STOCK CAT':{el:'ΕΡΓΟΣΤΑΣΙΑΚΟΣ ΚΑΤΑΛΥΤΗΣ'},
+  'SMALL SHOT':{el:'ΜΙΚΡΗ ΔΟΣΗ'},'BIG SHOT':{el:'ΜΕΓΑΛΗ ΔΟΣΗ'},
+  '1-BBL CARB':{el:'ΚΑΡΜΠΙΡΑΤΕΡ 1 ΛΑΙΜΟΥ'},'2-BBL CARB':{el:'ΚΑΡΜΠΙΡΑΤΕΡ 2 ΛΑΙΜΩΝ'},'4-BBL CARB':{el:'ΚΑΡΜΠΙΡΑΤΕΡ 4 ΛΑΙΜΩΝ'},
+  'SIDEDRAFT CARBS':{el:'ΠΛΑΓΙΑ ΚΑΡΜΠΙΡΑΤΕΡ'},'MECH INJECTION':{el:'ΜΗΧΑΝΙΚΟΣ ΨΕΚΑΣΜΟΣ'},'EFI (SINGLE TB)':{el:'ΨΕΚΑΣΜΟΣ (ΜΙΑ ΠΕΤΑΛΟΥΔΑ)'},'EFI (ITB)':{el:'ΨΕΚΑΣΜΟΣ (ITB)'},
+  'NONE (STACKS)':{el:'ΧΩΡΙΣ (ΧΩΝΙΑ)'},'PERFORMANCE':{el:'ΥΨΗΛΩΝ ΕΠΙΔΟΣΕΩΝ'},'STOCK PAPER':{el:'ΕΡΓΟΣΤΑΣΙΑΚΟ ΧΑΡΤΙΝΟ'},'RESTRICTIVE':{el:'ΠΕΡΙΟΡΙΣΤΙΚΟ'},
+  'SPORT':{el:'ΣΠΟΡ'},'opt:RACE':{el:'ΑΓΩΝΙΣΤΙΚΟ'},'2 (WEDGE)':{el:'2 (ΣΦΗΝΑ)'},'4 (PENT-ROOF)':{el:'4 (ΣΤΕΓΗ)'},'STEEL':{el:'ΧΑΛΥΒΑΣ'},'TITANIUM':{el:'ΤΙΤΑΝΙΟ'},
+  'PUMP GAS':{el:'ΑΜΟΛΥΒΔΗ'},'RACE GAS':{el:'ΑΓΩΝΙΣΤΙΚΗ ΒΕΝΖΙΝΗ'},'METHANOL':{el:'ΜΕΘΑΝΟΛΗ'},'DIESEL':{el:'ΠΕΤΡΕΛΑΙΟ'},
+  'PORT (PFI)':{el:'ΣΤΗΝ ΠΟΛΛΑΠΛΗ (PFI)'},'DIRECT (DI)':{el:'ΑΜΕΣΟΣ (DI)'},
+  'DISTRIBUTOR':{el:'ΔΙΑΝΟΜΕΑΣ'},'WASTED SPARK':{el:'ΧΑΜΕΝΟΣ ΣΠΙΝΘΗΡΑΣ'},'COIL-ON-PLUG':{el:'ΠΟΛΛΑΠΛΑΣΙΑΣΤΗΣ ΑΝΑ ΜΠΟΥΖΙ'},
+  'WASTED':{el:'ΧΑΜΕΝΟΣ ΣΠΙΝΘΗΡΑΣ'},'COIL':{el:'ΠΟΛΛΑΠΛ. ΑΝΑ ΜΠΟΥΖΙ'},
+  'FIXED (LOCKED)':{el:'ΣΤΑΘΕΡΗ (ΚΛΕΙΔΩΜΕΝΗ)'},'AUTO (ECU / KNOCK-LIMITED)':{el:'ΑΥΤΟΜΑΤΗ (ECU / ΟΡΙΟ ΠΕΙΡΑΚΙΩΝ)'},
+  'MANUAL (FIXED AFR)':{el:'ΧΕΙΡΟΚΙΝΗΤΟ (ΣΤΑΘΕΡΟ AFR)'},'AUTO (ECU MAP)':{el:'ΑΥΤΟΜΑΤΟ (ΧΑΡΤΗΣ ECU)'},
+  'MECHANICAL':{el:'ΜΗΧΑΝΙΚΟ'},'ELECTRIC':{el:'ΗΛΕΚΤΡΙΚΟ'},
+  'KEI CAR':{el:'ΑΥΤΟΚΙΝΗΤΟ KEI'},'HOT HATCH':{el:'HOT HATCH'},'LIGHT ROADSTER':{el:'ΕΛΑΦΡΥ ROADSTER'},'SPORTS COUPE':{el:'ΣΠΟΡ ΚΟΥΠΕ'},
+  'SPORTS SEDAN':{el:'ΣΠΟΡ ΣΕΝΤΑΝ'},'MUSCLE CAR':{el:'MUSCLE CAR'},'RALLY AWD HATCH':{el:'ΤΕΤΡΑΚΙΝΗΤΟ HATCH ΡΑΛΙ'},'GRAND TOURER':{el:'GRAND TOURER'},
+  'MID-ENGINE SUPER':{el:'SUPERCAR ΜΕΣΑΙΟΥ ΚΙΝΗΤΗΡΑ'},'CARBON HYPERCAR':{el:'HYPERCAR ΑΝΘΡΑΚΟΝΗΜΑΤΩΝ'},'TRACK PROTOTYPE':{el:'ΠΡΩΤΟΤΥΠΟ ΠΙΣΤΑΣ'},
+  'PICKUP TRUCK':{el:'ΗΜΙΦΟΡΤΗΓΟ PICKUP'},'PERFORMANCE SUV':{el:'SUV ΕΠΙΔΟΣΕΩΝ'},
+  'OFF (REMOVED)':{el:'ΟΧΙ (ΑΦΑΙΡΕΘΗΚΕ)'},'ON':{el:'ΕΝΕΡΓΟΣ'},'OFF':{el:'ΑΝΕΝΕΡΓΟΣ'},'(Y) — over 300':{el:'(Y) — πάνω από 300'},
+  'ECO/TOURING':{el:'ΟΙΚΟΝΟΜΙΚΑ/TOURING'},'STREET':{el:'ΔΡΟΜΟΥ'},'SEMI-SLICK':{el:'ΗΜΙ-SLICK'},'RACE SLICK':{el:'ΑΓΩΝΙΣΤΙΚΑ SLICK'},'DRAG RADIAL':{el:'DRAG RADIAL'},
+  'SPLITTER':{el:'SPLITTER'},'FRONT WING':{el:'ΕΜΠΡΟΣ ΑΕΡΟΤΟΜΗ'},'LIP SPOILER':{el:'ΧΕΙΛΟΣ SPOILER'},'REAR WING':{el:'ΠΙΣΩ ΑΕΡΟΤΟΜΗ'},
+  'UNDERTRAY':{el:'ΕΠΙΠΕΔΟ ΠΑΤΩΜΑ'},'DIFFUSER':{el:'DIFFUSER'},
+  'STEEL DISC':{el:'ΧΑΛΥΒΔΙΝΟΙ ΔΙΣΚΟΙ'},'SLOTTED/VENTED':{el:'ΑΥΛΑΚΩΤΟΙ/ΑΕΡΙΖΟΜΕΝΟΙ'},'BIG BRAKE KIT':{el:'ΜΕΓΑΛΟ ΚΙΤ ΦΡΕΝΩΝ'},
+  'CARBON-CERAMIC':{el:'ΚΕΡΑΜΙΚΟΙ ΑΝΘΡΑΚΑ'},'HEAVY-DUTY':{el:'ΒΑΡΕΩΣ ΤΥΠΟΥ'},'COMFORT':{el:'ΑΝΕΣΗΣ'},'COILOVERS':{el:'COILOVERS'},'RACE/ADJUST':{el:'ΑΓΩΝΙΣΤΙΚΗ/ΡΥΘΜΙΖΟΜΕΝΗ'},
+  'DIGITAL':{el:'ΨΗΦΙΑΚΑ'},'ANALOG':{el:'ΑΝΑΛΟΓΙΚΑ'},
+  '2-STR':{el:'ΔΙΧΡ.'},'ROTARY':{el:'ΠΕΡΙΣΤΡΟΦΙΚΟΣ'},
+  // what wore the engine (state.wearCause)
+  'DETONATION':{el:'ΠΕΙΡΑΚΙΑ'},'OVERHEAT':{el:'ΥΠΕΡΘΕΡΜΑΝΣΗ'},'OVER-REV':{el:'ΥΠΕΡΣΤΡΟΦΕΣ'},'COLD-OIL':{el:'ΚΡΥΟ ΛΑΔΙ'},'ANTI-LAG':{el:'ANTI-LAG'},'FAILURE':{el:'ΒΛΑΒΗ'},
+  // the design summary and the scorecard
+  'Note:':{el:'Σημείωση:'},'bank visuals are simplified for now.':{el:'η απεικόνιση των σειρών είναι προς το παρόν απλοποιημένη.'},
+  '-CYL':{el:'-ΚΥΛ.'},'-ROTOR':{el:'-ΡΟΤΟΡΩΝ'},'no IC':{el:'χωρίς IC'},'Naturally aspirated':{el:'Ατμοσφαιρικός'},
+  '50% boost @':{el:'50% πίεσης @'},'Compressor':{el:'Συμπιεστής'},'lb/min rated':{el:'lb/min ονομαστικά'},'efficient':{el:'απόδοση'},
+  'BIG NITROUS':{el:'ΜΕΓΑΛΗ ΔΟΣΗ ΝΙΤΡΟ'},'SMALL NITROUS':{el:'ΜΙΚΡΗ ΔΟΣΗ ΝΙΤΡΟ'},
+  'Turbine throat':{el:'Λαιμός τουρμπίνας'},'vane sweep':{el:'εύρος πτερυγίων'},'gas at the vanes':{el:'αέρια στα πτερύγια'},
+  'above the vane material limit — it will not last':{el:'πάνω από το όριο του υλικού των πτερυγίων — δεν θα αντέξει'},
+  'Induction ports':{el:'Θυρίδες εισαγωγής'},'(no poppet valvetrain)':{el:'(χωρίς βαλβίδες)'},'Cam':{el:'Εκκεντροφόρος'},
+  'Mixture':{el:'Μείγμα'},'AUTO (ECU map)':{el:'ΑΥΤΟΜΑΤΟ (χάρτης ECU)'},'MANUAL':{el:'ΧΕΙΡΟΚΙΝΗΤΟ'},
+  'Compression ignition':{el:'Ανάφλεξη με συμπίεση'},'Direct inj':{el:'Άμεσος ψεκασμός'},'Diesel (cetane)':{el:'Πετρέλαιο (κετάνια)'},
+  'Ignition':{el:'Ανάφλεξη'},'AUTO (ECU)':{el:'ΑΥΤΟΜΑΤΗ (ECU)'},'fixed':{el:'σταθερή'},
+  'alt':{el:'δυναμό'},'glow-plug start (no spark)':{el:'εκκίνηση με προθερμαντήρες (χωρίς σπινθήρα)'},'Ignition misfire above':{el:'Αστοχία ανάφλεξης πάνω από'},
+  'Redline':{el:'Όριο στροφών'},'Intake':{el:'Σύστημα εισαγωγής'},'Filter':{el:'Φίλτρο'},'Exhaust':{el:'Εξάτμιση'},'Cat':{el:'Καταλύτης'},
+  'oct':{el:'οκτ.'},'stoich':{el:'στοιχειομ.'},'charge':{el:'ψύξη φορτίου'},'RAD':{el:'ΨΥΓΕΙΟ'},'FAN':{el:'ΒΕΝΤΙΛΑΤΕΡ'},'Thermostat':{el:'Θερμοστάτης'},
+  'SCORE':{el:'ΒΑΘΜΟΣ'},'band':{el:'εύρος'},'eff':{el:'απόδ.'},'safety':{el:'ασφάλεια'},'drive':{el:'οδηγ.'},'emit':{el:'εκπομπ.'},'Cost':{el:'Κόστος'},
+  'Test-bench schematic of a {d} litre {t} engine':{el:'Σχηματικό πάγκου δοκιμών: κινητήρας {d} λίτρων, {t}'},
+  // the vehicle summary and the performance grid
+  '-speed':{el:'-τάχυτο'},'Curb weight':{el:'Βάρος'},'engine':{el:'κινητήρας'},'Body':{el:'Αμάξωμα'},'class':{el:'κατηγορίας'},
+  'wheelbase':{el:'μεταξόνιο'},'front':{el:'εμπρός'},'grip':{el:'πρόσφυση'},'Brakes':{el:'Φρένα'},'Susp':{el:'Ανάρτηση'},
+  'Gearbox':{el:'Κιβώτιο'},'shift':{el:'αλλαγή'},'driveline':{el:'μετάδοση'},'converter stall':{el:'stall μετατροπέα'},
+  'Diff':{el:'Διαφορικό'},'puts down':{el:'αξιοποιεί το'},'of axle grip':{el:'της πρόσφυσης του άξονα'},
+  'free top speed':{el:'ελεύθερη τελική'},'traction control':{el:'έλεγχος πρόσφυσης'},'wheelspin':{el:'σπινάρισμα'},'s to 100':{el:'s ως τα 100'},
+  'on':{el:'ενεργός'},'off':{el:'ανενεργός'},'Drag':{el:'Οπισθέλκουσα'},'downforce':{el:'κάθετη δύναμη'},'final drive':{el:'τελική σχέση'},
+  'Vehicle cost':{el:'Κόστος οχήματος'},'with engine':{el:'με κινητήρα'},
+  'limited':{el:'περιορισμένη'},'hp/tonne':{el:'hp/τόνο'},'m total':{el:'μ. συνολικά'},'not reached':{el:'δεν επιτεύχθηκε'},
+  'TYRE SPEED RATING EXCEEDED':{el:'ΞΕΠΕΡΑΣΤΗΚΕ Ο ΔΕΙΚΤΗΣ ΤΑΧΥΤΗΤΑΣ ΕΛΑΣΤΙΚΟΥ'},
+  'the carcass overheats and the tread can delaminate — fit a higher rating':{el:'ο σκελετός υπερθερμαίνεται και το πέλμα μπορεί να αποκολληθεί — βάλε ελαστικό με υψηλότερο δείκτη'},
+  // LIVE / DYNO: knock and health readings, the status bar and the help lines
+  'LOW':{el:'ΧΑΜΗΛΟΣ'},'MED':{el:'ΜΕΤΡΙΟΣ'},'HIGH':{el:'ΥΨΗΛΟΣ'},'DEAD':{el:'ΚΑΤΕΣΤΡΑΜΜΕΝΟΣ'},
+  'DESIGN MODE • CONFIGURE & BUILD':{el:'ΣΧΕΔΙΑΣΗ • ΡΥΘΜΙΣΕ & ΧΤΙΣΕ'},'FALLING':{el:'ΠΕΦΤΕΙ'},
+  'DETONATION RISK — RETARDING SPARK / POWER CUT':{el:'ΚΙΝΔΥΝΟΣ ΠΕΙΡΑΚΙΩΝ — ΚΑΘΥΣΤΕΡΗΣΗ ΣΠΙΝΘΗΡΑ / ΜΕΙΩΣΗ ΙΣΧΥΟΣ'},
+  'OVERHEAT — REDUCE LOAD OR INCREASE COOLING':{el:'ΥΠΕΡΘΕΡΜΑΝΣΗ — ΜΕΙΩΣΕ ΤΟ ΦΟΡΤΙΟ Ή ΑΥΞΗΣΕ ΤΗΝ ΨΥΞΗ'},
+  'COLD OIL — HIGH FRICTION, WARM UP RECOMMENDED':{el:'ΚΡΥΟ ΛΑΔΙ — ΥΨΗΛΗ ΤΡΙΒΗ, ΖΕΣΤΑΝΕ ΠΡΩΤΑ ΤΟΝ ΚΙΝΗΤΗΡΑ'},
+  'LOW VOLTAGE':{el:'ΧΑΜΗΛΗ ΤΑΣΗ'},'WEAK SPARK / MISFIRE':{el:'ΑΔΥΝΑΜΟΣ ΣΠΙΝΘΗΡΑΣ / ΑΣΤΟΧΙΑ'},'REV LIMITER':{el:'ΚΟΦΤΗΣ ΣΤΡΟΦΩΝ'},
+  'OVERRUN':{el:'ΕΠΙΒΡΑΔΥΝΣΗ'},'FUEL CUT-OFF (DFCO)':{el:'ΔΙΑΚΟΠΗ ΚΑΥΣΙΜΟΥ (DFCO)'},'IDLE / LOW LOAD':{el:'ΡΕΛΑΝΤΙ / ΧΑΜΗΛΟ ΦΟΡΤΙΟ'},
+  'Bore/stroke set displacement. Octane+compression+boost+ignition feed the knock model.':{el:'Διάμετρος/διαδρομή ορίζουν τον κυβισμό. Οκτάνια+συμπίεση+boost+ανάφλεξη τροφοδοτούν το μοντέλο πειρακιών.'},
+  'Cooling (radiator/fan/oil cooler/thermostat) sets running temps in AUTO THERMAL mode.':{el:'Η ψύξη (ψυγείο/βεντιλατέρ/ψυγείο λαδιού/θερμοστάτης) ορίζει τις θερμοκρασίες λειτουργίας στο ΑΥΤ. ΘΕΡΜΙΚΟ.'},
+  'THROTTLE makes power; LOAD (dyno brake) sets the hold RPM — more load = lower RPM, zero = free-rev to limiter.':{el:'Το ΓΚΑΖΙ βγάζει ισχύ· το ΦΟΡΤΙΟ (φρένο δυναμόμετρου) κρατά τις στροφές — περισσότερο φορτίο = λιγότερες στροφές, μηδέν = ελεύθερο ανέβασμα ως τον κόφτη.'},
+  'Lift off at speed → engine braking + fuel cut. Detonation/overheat/lean-boost/over-rev wear the engine.':{el:'Κόψε γκάζι με ταχύτητα → φρένο κινητήρα + διακοπή καυσίμου. Πειράκια/υπερθέρμανση/φτωχό-boost/υπερστροφές φθείρουν τον κινητήρα.'},
+  'Dyno shows full power & torque curves to redline.':{el:'Το δυναμόμετρο δείχνει τις πλήρεις καμπύλες ισχύος & ροπής ως το όριο στροφών.'},
+  'Green line = current RPM. Peaks marked with dots.':{el:'Πράσινη γραμμή = τρέχουσες στροφές. Οι κορυφές σημειώνονται με τελείες.'},
+  // tooltips and screen-reader labels
+  'Go to the engine':{el:'Πήγαινε στον κινητήρα'},'Go to the car':{el:'Πήγαινε στο αυτοκίνητο'},
+  'Pixel-art view of the engine as configured':{el:'Εικόνα pixel-art του κινητήρα όπως είναι στημένος'},
+  'Pixel-art side view of the car as configured':{el:'Πλαϊνή εικόνα pixel-art του αυτοκινήτου όπως είναι στημένο'},
+  'Engine test-bench schematic with live values':{el:'Σχηματικό πάγκου δοκιμών με ζωντανές τιμές'},
+  'Gearing short to tall':{el:'Σχέσεις από κοντές σε μακριές'},'Replay speed':{el:'Ταχύτητα αναπαραγωγής'},'Gauges':{el:'Όργανα'},'Race time':{el:'Χρόνος αγώνα'},
+  'Full screen: the lap, the live instruments and these controls, in landscape':{el:'Πλήρης οθόνη: ο γύρος, τα ζωντανά όργανα και αυτά τα χειριστήρια, σε οριζόντια θέση'},
+  'Save the hot lap report as an image':{el:'Αποθήκευση της αναφοράς γύρου ως εικόνα'},'Save the hot lap report as a PDF':{el:'Αποθήκευση της αναφοράς γύρου ως PDF'},
+  'Save the dyno report as an image':{el:'Αποθήκευση της αναφοράς δυναμόμετρου ως εικόνα'},'Save the dyno report as a PDF':{el:'Αποθήκευση της αναφοράς δυναμόμετρου ως PDF'},
+  'Save the race report as an image':{el:'Αποθήκευση της αναφοράς αγώνα ως εικόνα'},'Save the race report as a PDF':{el:'Αποθήκευση της αναφοράς αγώνα ως PDF'},
+  'Load a circuit from a GPX trace':{el:'Φόρτωση πίστας από ίχνος GPX'},'Back to the sim':{el:'Πίσω στον προσομοιωτή'},'Car to add':{el:'Αυτοκίνητο για προσθήκη'},
+  'Throttle pedal position percent':{el:'Θέση πεντάλ γκαζιού, ποσοστό'},'Applied dyno brake load percent':{el:'Φορτίο φρένου δυναμόμετρου, ποσοστό'},
+  'Electrical accessory load percent':{el:'Ηλεκτρικό φορτίο παρελκόμενων, ποσοστό'},'Air-fuel ratio':{el:'Αναλογία αέρα-καυσίμου'},
+  'Intake air temperature in Celsius':{el:'Θερμοκρασία αέρα εισαγωγής σε βαθμούς Κελσίου'},'Coolant temperature in Celsius':{el:'Θερμοκρασία ψυκτικού σε βαθμούς Κελσίου'},
+  'Oil temperature in Celsius':{el:'Θερμοκρασία λαδιού σε βαθμούς Κελσίου'},
+  "Wide open throttle, held at this engine's peak-torque rpm":{el:'Τέρμα γκάζι, στις στροφές μέγιστης ροπής αυτού του κινητήρα'},
+  "Wide open throttle, held at this engine's peak-power rpm":{el:'Τέρμα γκάζι, στις στροφές μέγιστης ισχύος αυτού του κινητήρα'},
+  'The operating point where this engine burns the least fuel per kWh':{el:'Το σημείο λειτουργίας όπου αυτός ο κινητήρας καίει το λιγότερο καύσιμο ανά kWh'},
+  // the guide's index
+  'Search the guide':{el:'Αναζήτηση στον οδηγό'},'SEARCH THE WIKI — e.g. turbo, knock, camber':{el:'ΑΝΑΖΗΤΗΣΗ ΣΤΟ WIKI — π.χ. τούρμπο, πειράκια, κάμπερ'},
+  'No page matches that. Try a shorter word.':{el:'Καμία σελίδα δεν ταιριάζει. Δοκίμασε μια πιο σύντομη λέξη.'},
+  'How to read this wiki':{el:'Πώς διαβάζεται αυτό το wiki'},'The four strokes':{el:'Οι τέσσερις χρόνοι'},'Air, fuel and spark':{el:'Αέρας, καύσιμο και σπινθήρας'},
+  'Torque vs power':{el:'Ροπή και ισχύς'},'Why engines have a redline':{el:'Γιατί οι κινητήρες έχουν όριο στροφών'},
+  'Bore, stroke & displacement':{el:'Διάμετρος, διαδρομή & κυβισμός'},'Crank & firing order':{el:'Στρόφαλος & σειρά ανάφλεξης'},
+  'Valvetrain & cams':{el:'Βαλβίδες & εκκεντροφόροι'},'Variable valve timing':{el:'Μεταβλητός χρονισμός βαλβίδων'},'Induction & throttle':{el:'Εισαγωγή & πεταλούδα'},
+  'Fuel, injection & the fuel map':{el:'Καύσιμο, ψεκασμός & ο χάρτης καυσίμου'},'Ignition & spark timing':{el:'Ανάφλεξη & προπορεία'},
+  'Combustion & the burn':{el:'Η καύση'},'Heat, cooling & EGT':{el:'Θερμότητα, ψύξη & θερμοκρασία καυσαερίων'},'Friction, oil & pumping':{el:'Τριβές, λάδι & απώλειες άντλησης'},
+  'Electrical & charging':{el:'Ηλεκτρικά & φόρτιση'},'Intake runner waves':{el:'Κύματα στους αγωγούς εισαγωγής'},
+  'Exhaust headers & scavenging':{el:'Χταπόδια εξάτμισης & σάρωση'},'Back-pressure & residuals':{el:'Αντίθλιψη & υπολειμματικά αέρια'},
+  'Compressor maps & rated flow':{el:'Χάρτες συμπιεστή & ονομαστική παροχή'},'Wastegate & boost control':{el:'Wastegate & έλεγχος πίεσης'},'Turbo lag':{el:'Καθυστέρηση τούρμπο'},
+  'Variable geometry turbos':{el:'Τούρμπο μεταβλητής γεωμετρίας'},'Superchargers':{el:'Υπερσυμπιεστές'},'Intercoolers':{el:'Intercooler'},'Nitrous oxide':{el:'Υποξείδιο του αζώτου'},
+  'Fuels & octane':{el:'Καύσιμα & οκτάνια'},'Wear & reliability':{el:'Φθορά & αξιοπιστία'},'Emissions & the catalyst':{el:'Εκπομπές & ο καταλύτης'},
+  'Tyres & grip':{el:'Ελαστικά & πρόσφυση'},'Aero: drag & downforce':{el:'Αεροδυναμική: οπισθέλκουσα & κάθετη δύναμη'},'Brakes & fade':{el:'Φρένα & εξασθένηση'},
+  'Suspension, roll & camber':{el:'Ανάρτηση, κλίση & κάμπερ'},'Solving a lap':{el:'Η επίλυση ενός γύρου'},'Elevation, crests & compressions':{el:'Υψόμετρο, κορυφές & βυθίσματα'},
+  'The race':{el:'Ο αγώνας'},'Options, sound & tips':{el:'Επιλογές, ήχος & συμβουλές'},'How we check against reality':{el:'Πώς ελέγχουμε με την πραγματικότητα'},'Glossary':{el:'Γλωσσάρι'}
 };
 // Guide body blocks (rich HTML), swapped by data-gk on language change.
 // A block with no entry here falls back to English, which is safe. A block WITH an entry does
@@ -4467,6 +4593,7 @@ const I18N={
 // figures (fwd, difftrade) had gone stale, so they were re-measured into new blocks (tractionMore1 and 2)
 // and translated again there; the old keys and their Greek are gone.
 const GUIDE_I18N={
+  guideIntro:{el:"Ένα wiki του προσομοιωτή. Κάθε σελίδα ανεβαίνει τρία επίπεδα: <b>LV1</b> πώς δουλεύει το πράγμα σε ένα πραγματικό αυτοκίνητο, <b>LV2</b> τι κάνει στο παιχνίδι, <b>LV3</b> τη φυσική που λύνει πραγματικά ο προσομοιωτής. Διάβασε όσο θέλεις."},
   loop:{el:"<b>1. ΚΙΝΗΤΗΡΑΣ</b> — σχεδίασε έναν κινητήρα (κάτω μέρος, διαδρομή αέρα, καύσιμο & σπινθήρας, ψύξη…), μετά πάτα <b>BUILD & DYNO</b>. <b>2. ΔΥΝΑΜΟ</b> δείχνει όλη την καμπύλη ισχύος/ροπής και μια βαθμολογία. <b>3. ΖΩΝΤΑΝΑ</b> είναι πάγκος δοκιμών σε λειτουργία: ρυθμίζεις <b>ΓΚΑΖΙ</b> και <b>ΦΟΡΤΙΟ</b> και βλέπεις τον κινητήρα να αποκρίνεται σε πραγματικό χρόνο. Δεν ορίζεις ποτέ απευθείας τις στροφές — τον οδηγείς.<br>Μετά βάλ' τον σε αυτοκίνητο στο <b>ΟΧΗΜΑ</b> και πήγαινέ τον σε πίστα στην <b>ΠΙΣΤΑ</b>. Κάθε αριθμός βγαίνει από την ίδια φυσική, οπότε μια αλλαγή στην καρτέλα ΚΙΝΗΤΗΡΑΣ φαίνεται στο 0–100, στην τελική και στον χρόνο γύρου."},
   driving:{el:"<b>ΓΚΑΖΙ</b> — ανοίγει την εισαγωγή· αυξάνει την πίεση πολλαπλής → ροπή → στροφές.<br><b>ΦΟΡΤΙΟ (φρένο δυναμό)</b> — αντίσταση που ορίζει τις <i>στροφές κρατήματος</i>. 0% = ελεύθερες στροφές ως το όριο· 100% = κρατά κοντά στο ρελαντί. Αντιστέκεται μόνο <i>πάνω</i> από τον στόχο, οπότε κάθε κινητήρας ανεβαίνει πάντα ως εκεί.<br><b>ΗΛΕΚ. ΦΟΡΤΙΟ</b> — κατανάλωση παρελκομένων (φώτα/AC). Μεγάλο φορτίο + μικρό δυναμό στο ρελαντί αδειάζει την μπαταρία → χαμηλή τάση → αδύναμος σπινθήρας.<br><b>AFR</b> — αναλογία αέρα-καυσίμου. Βενζίνη: μέγιστη ισχύς κοντά σε λ0.86 (πλούσιο), καλύτερη οικονομία κοντά σε λ1.1 (φτωχό). Ντίζελ: πλήρες καύσιμο στο όριο καπνού, λ1.2· φτωχότερο δίνει λιγότερη ροπή αλλά λιγότερο καύσιμο ανά kWh.<br><b>IAT / ΨΥΚΤΙΚΟ / ΛΑΔΙ</b> — θερμοκρασίες χαρμανιού & κινητήρα (αυτόματα σε AUTO THERMAL).<br><b>ΝΙΤΡΟ</b> — αν υπάρχει, ψεκάζει με τέρμα γκάζι από φιάλη που αδειάζει."},
   live:{el:"<b>Η καρτέλα ΖΩΝΤΑΝΑ είναι τομή</b> του κινητήρα που μόλις σχεδίασες. Όλα κινούνται επειδή τα κίνησε η προσομοίωση. Δεν σχεδιάζεται όμως σε πραγματικό χρόνο: ένας στρόφαλος στις 5000 σ.α.λ. κάνει 83 στροφές το <i>δευτερόλεπτο</i>, που στα 60 fps είναι στροβοσκόπιο και όχι εικόνα — δεν θα μπορούσες να δεις μια βαλβίδα να ανοίγει. Έτσι ο κύκλος τρέχει με ρυθμό που διαβάζεται, περίπου 3.3 έως 1.1 δευτερόλεπτα ανά πλήρη κύκλο, πάντα καταταγμένος με τις στροφές ώστε το ρελαντί να είναι ορατά πιο νωθρό από το όριο. Η πραγματική ταχύτητα φαίνεται στο στροφόμετρο και ακούγεται στον ήχο. Το έμβολο ακολουθεί σωστή γεωμετρία στροφάλου-διωστήρα (<i>όχι</i> ημίτονο — ένας πραγματικός διωστήρας κάνει το έμβολο να αργοπορεί κάτω και να «κόβει» πάνω), η διάμετρος σχεδιάζεται στη δική σου αναλογία διαμέτρου/διαδρομής, και οι βαλβίδες ανοίγουν με αληθινό χρονισμό τεσσάρων χρόνων, με την επικάλυψη σάρωσης ορατή γύρω από το ΑΝΣ. Ο θάλαμος χρωματίζεται με βάση το τι υπάρχει μέσα του αυτή τη στιγμή — φρέσκο μείγμα, συμπιεσμένο, καιγόμενο, καμένο — και ο χρόνος ονομάζεται πάνω από την κεφαλή. Ένας δίχρονος δείχνει θυρίδες αντί για βαλβίδες· ένας ρότορας δείχνει πραγματικό επιτροχοειδές περίβλημα με τον ρότορα στο 1/3 του εκκεντροφόρου άξονα. Η λωρίδα δίπλα σχεδιάζει κάθε κύλινδρο στη δική του φάση, ώστε να βλέπεις τη σειρά ανάφλεξης σε έναν V12."},
@@ -4515,6 +4642,20 @@ const CHALLENGE_I18N={
 let currentLang='en';
 try{currentLang=localStorage.getItem('pes.lang')||'en';}catch(e){}
 function tr(en){const m=I18N[en];return (m&&m[currentLang])||en;}
+// A dropdown choice: a part grade can need other words than the same English elsewhere ('RACE').
+function trOpt(en){const m=I18N['opt:'+en];return (m&&m[currentLang])||tr(en);}
+// Tooltips, screen-reader labels and placeholders. The English is kept on the element; when code has
+// rewritten the attribute since (the build strip's titles), what it wrote is the new English.
+const TR_ATTRS={title:'trTitle','aria-label':'trAria',placeholder:'trPh'};
+function trAttrs(){
+  document.querySelectorAll('[title],[aria-label],[placeholder]').forEach(el=>{
+    for(const [a,k] of Object.entries(TR_ATTRS)){
+      const v=el.getAttribute(a);if(v==null)continue;
+      if(el.dataset[k]===undefined||v!==el.dataset[k+'W'])el.dataset[k]=v;
+      const t=tr(el.dataset[k]);el.dataset[k+'W']=t;if(t!==v)el.setAttribute(a,t);
+    }
+  });
+}
 function chName(ch){const g=CHALLENGE_I18N[ch.id];return (currentLang==='el'&&g)?g.name:ch.name;}
 function chDesc(ch){const g=CHALLENGE_I18N[ch.id];return (currentLang==='el'&&g)?g.desc:ch.desc;}
 function applyLang(lang){
@@ -4561,6 +4702,16 @@ function applyLang(lang){
   for(const id of ['garageName','engSaveName']){const gn=document.getElementById(id);
     if(gn){if(gn.dataset.enPh===undefined)gn.dataset.enPh=gn.placeholder;gn.placeholder=tr(gn.dataset.enPh);}}
   if(typeof renderGarage==='function')renderGarage();
+  // The fixed dropdowns. The pickers filled from data are re-labelled by their own code instead: caching
+  // their text here would keep a Greek label as the 'English' one.
+  document.querySelectorAll('#designPanel select:not(#edFamily):not(#edPreset):not(#edChallenge) option, #vehiclePanelTab select:not(#vhFamily):not(#vhPreset) option, #replayGauges option, #guideNoHit').forEach(o=>{
+    if(o.dataset.en===undefined)o.dataset.en=o.textContent.trim();o.textContent=o.tagName==='OPTION'?trOpt(o.dataset.en):tr(o.dataset.en);});
+  for(const p of [enginePicker,carPicker])if(p)p.relabel();
+  if(typeof updateBuildStrip==='function'&&engine)updateBuildStrip();
+  if(typeof updateEngineLabels==='function'&&engine)updateEngineLabels();
+  if(typeof updateDesignSummary==='function'&&engine)updateDesignSummary();
+  if(typeof updateGasLabels==='function'&&engine)updateGasLabels();
+  trAttrs();
   // the RACE panel's choices and buttons (selects are not covered by the pass above)
   document.querySelectorAll('#racePanel option, #racePanel .replay-row button, #racePanel .race-check span, #racePanel .race-add button, #raceSetup>.perf-note, #raceBack, #racePage .race-title').forEach(el=>{
     if(el.dataset.en===undefined)el.dataset.en=el.textContent.trim();el.textContent=tr(el.dataset.en);});
@@ -5857,31 +6008,31 @@ function renderChallenge(){
 }
 function updateEngineLabels(){
   const disp=engine.displacement_L.toFixed(engine.displacement_L<1?2:1);
-  const boostTxt=engine.intake==='na'?'NA':engine.intake.toUpperCase()+' '+engine.boost_bar.toFixed(1)+'bar';
-  const unit=engine.type==='rotary'?engine.cylinders+'-ROTOR':engine.cylinders+'-CYL '+LAYOUT_LABEL[engine.layout];
-  const fuelTag=engine.ci?'DIESEL':engine.octane+'RON';
-  const typeTag={petrol4:'',diesel:'DIESEL ',twostroke:'2-STR ',rotary:'ROTARY '}[engine.type]||'';
+  const boostTxt=engine.intake==='na'?'NA':tr(engine.intake.toUpperCase())+' '+engine.boost_bar.toFixed(1)+'bar';
+  const unit=engine.type==='rotary'?engine.cylinders+tr('-ROTOR'):engine.cylinders+tr('-CYL')+' '+tr(LAYOUT_LABEL[engine.layout]);
+  const fuelTag=engine.ci?tr('DIESEL'):engine.octane+'RON';
+  const typeTag={petrol4:'',diesel:'DIESEL',twostroke:'2-STR',rotary:'ROTARY'}[engine.type];
   document.getElementById('subtitle').textContent=
-    typeTag+unit+' • '+disp+'L • '+boostTxt+' • '+fuelTag;
+    (typeTag?tr(typeTag)+' ':'')+unit+' • '+disp+'L • '+boostTxt+' • '+fuelTag;
   document.getElementById('engineCanvas').setAttribute('aria-label',
-    'Test-bench schematic of a '+disp+' litre '+ENGINE_TYPE[engine.type].label+' engine');
+    tr('Test-bench schematic of a {d} litre {t} engine').replace('{d}',disp).replace('{t}',tr(ENGINE_TYPE[engine.type].label)));
   const nb=document.getElementById('btnNitrous');
   nb.disabled=engine.nitrous==='none';nb.classList.remove('on');nb.setAttribute('aria-pressed','false');
 }
 function updateDesignSummary(){
   const disp=engine.displacement_L.toFixed(engine.displacement_L<1?3:2);
   const specific=(engine.displacement_L>0? (state.powerHP/engine.displacement_L):0).toFixed(0);
-  const note=(engine.layout==='v'||engine.layout==='boxer')?'<br><span style="color:#886">Note: '+LAYOUT_LABEL[engine.layout]+' bank visuals are simplified for now.</span>':'';
-  const unitWord=engine.type==='rotary'?(engine.cylinders+'-ROTOR'):(engine.cylinders+'-CYL '+LAYOUT_LABEL[engine.layout]);
+  const note=(engine.layout==='v'||engine.layout==='boxer')?'<br><span style="color:#886">'+tr('Note:')+' '+tr(LAYOUT_LABEL[engine.layout])+' '+tr('bank visuals are simplified for now.')+'</span>':'';
+  const unitWord=engine.type==='rotary'?(engine.cylinders+tr('-ROTOR')):(engine.cylinders+tr('-CYL')+' '+tr(LAYOUT_LABEL[engine.layout]));
   let induction;
-  const icTxt=engine.intercooler==='none'?' (no IC)':' ('+(engine.intercooler==='large'?'LG':'SM')+' IC)';
-  if(engine.intake==='na')induction='Naturally aspirated';
+  const icTxt=engine.intercooler==='none'?' ('+tr('no IC')+')':' ('+(engine.intercooler==='large'?'LG':'SM')+' IC)';
+  if(engine.intake==='na')induction=tr('Naturally aspirated');
   else if(engine.intake==='turbo'){
-    induction=TURBO_CONFIG[engine.turboConfig].label+' TURBO ('+engine.turboSize.toUpperCase()+', A/R '+(engine.turbineAR||0).toFixed(2)+')'+(engine.vgt?' VGT':'')+(engine.antilag?' +ALS':'')+' @ '+engine.boost_bar.toFixed(2)+' bar'+icTxt+', 50% boost @ '+Math.round(engine.spool50)+' rpm';
+    induction=tr(TURBO_CONFIG[engine.turboConfig].label)+' '+tr('TURBO')+' ('+tr(engine.turboSize.toUpperCase())+', A/R '+(engine.turbineAR||0).toFixed(2)+')'+(engine.vgt?' VGT':'')+(engine.antilag?' +ALS':'')+' @ '+engine.boost_bar.toFixed(2)+' bar'+icTxt+', '+tr('50% boost @')+' '+Math.round(engine.spool50)+' rpm';
     // Say plainly when the engine is asking the frame for more air than it is rated to move —
     // otherwise the power just quietly stops arriving and there is nothing to learn from.
-    induction+='<br>Compressor '+Math.round(engine.turboFlow)+' of '+Math.round(engine.turboCap)+' lb/min rated ('+
-      Math.round(engine.turboLoad*100)+'%) • '+Math.round(engine.compEff*100)+'% efficient';
+    induction+='<br>'+tr('Compressor')+' '+Math.round(engine.turboFlow)+' '+tr('of')+' '+Math.round(engine.turboCap)+' '+tr('lb/min rated')+' ('+
+      Math.round(engine.turboLoad*100)+'%) • '+Math.round(engine.compEff*100)+'% '+tr('efficient');
     if(engine.turboLoad>1)induction+=' • <span style="color:#ff5555">'+tr('OFF THE COMPRESSOR MAP — fit a bigger frame')+'</span>';
     else if(engine.turboLoad>0.9)induction+=' • <span style="color:#ffcc00">'+tr('at the limit of this frame')+'</span>';
     // The vane sweep in the units a turbine is actually specified in, plus the warning that is the
@@ -5894,28 +6045,29 @@ function updateDesignSummary(){
         induction+=' • <span style="color:#ffcc00">'+tr('above the vane material limit — it will not last')+'</span>';
     }
   }
-  else induction=SC_TYPE[engine.scType].label+' S/C @ '+engine.boost_bar.toFixed(2)+' bar'+icTxt;
-  if(engine.nitrous!=='none')induction+=' • <span style="color:#ff66cc">'+(engine.nitrous==='large'?'BIG':'SMALL')+' NITROUS</span>';
+  else induction=tr(SC_TYPE[engine.scType].label)+' S/C @ '+engine.boost_bar.toFixed(2)+' bar'+icTxt;
+  if(engine.nitrous!=='none')induction+=' • <span style="color:#ff66cc">'+tr(engine.nitrous==='large'?'BIG NITROUS':'SMALL NITROUS')+'</span>';
   const dimLabel=engine.type==='rotary'?'rotor':'mm';
-  const valveLine=engine.ports?'<br>Induction ports <b>(no poppet valvetrain)</b>':
-    '<br>Cam <b>'+engine.cam.toUpperCase()+(engine.vvt?' + VVT':'')+'</b>';
-  const mixTxt=' • Mixture <b>'+(engine.afrMode==='auto'?'AUTO (ECU map)':'MANUAL')+'</b>';
+  const valveLine=engine.ports?'<br>'+tr('Induction ports')+' <b>'+tr('(no poppet valvetrain)')+'</b>':
+    '<br>'+tr('Cam')+' <b>'+trOpt(engine.cam.toUpperCase())+(engine.vvt?' + VVT':'')+'</b>';
+  const mixTxt=' • '+tr('Mixture')+' <b>'+tr(engine.afrMode==='auto'?'AUTO (ECU map)':'MANUAL')+'</b>';
+  const ignTxt=tr(engine.ignitionType.toUpperCase());
   const sparkLine=engine.ci?
-    '<br><b>Compression ignition</b> • <b>Direct inj</b> • Diesel (cetane)'+mixTxt:
-    '<br>'+(engine.injector==='direct'?'<b>Direct inj</b> • ':'')+'Ignition <b>'+(engine.timingMode==='auto'?'AUTO (ECU)':engine.ignitionAdv+'° fixed')+' '+engine.ignitionType.toUpperCase()+'</b>'+mixTxt;
+    '<br><b>'+tr('Compression ignition')+'</b> • <b>'+tr('Direct inj')+'</b> • '+tr('Diesel (cetane)')+mixTxt:
+    '<br>'+(engine.injector==='direct'?'<b>'+tr('Direct inj')+'</b> • ':'')+tr('Ignition')+' <b>'+(engine.timingMode==='auto'?tr('AUTO (ECU)'):engine.ignitionAdv+'° '+tr('fixed'))+' '+ignTxt+'</b>'+mixTxt;
   const elecLine=engine.ci?
-    '<br>Electrical <b>'+engine.altMaxA+'A alt</b> • glow-plug start (no spark)':
-    '<br>Electrical <b>'+engine.altMaxA+'A alt</b> • Ignition misfire above <b>~'+engine.dwellLimit+'</b> rpm ('+engine.ignitionType.toUpperCase()+')';
+    '<br>'+tr('Electrical')+' <b>'+engine.altMaxA+'A '+tr('alt')+'</b> • '+tr('glow-plug start (no spark)'):
+    '<br>'+tr('Electrical')+' <b>'+engine.altMaxA+'A '+tr('alt')+'</b> • '+tr('Ignition misfire above')+' <b>~'+engine.dwellLimit+'</b> rpm ('+ignTxt+')';
   document.getElementById('designSummary').innerHTML=
-    '<b>'+ENGINE_TYPE[engine.type].label+'</b> • <b>'+unitWord+'</b>'+
+    '<b>'+tr(ENGINE_TYPE[engine.type].label)+'</b> • <b>'+unitWord+'</b>'+
     '<br><b>'+engine.cylinders+' × '+engine.bore_mm+'×'+engine.stroke_mm+dimLabel+'</b> → <b>'+disp+' L</b>'+
-    '<br>Compression <b>'+engine.compression.toFixed(1)+':1</b> • Redline <b>'+engine.redline+'</b> rpm'+
-    '<br>Induction <b>'+induction+'</b>'+
-    '<br>Intake <b>'+INTAKE_SYS[engine.intakeSys].label+'</b> • Filter <b>'+AIR_FILTER[engine.airFilter].label+'</b>'+
-    '<br>Exhaust <b>'+engine.exhaust.toUpperCase()+'</b> • Cat <b>'+CAT[engine.cat].label.split(' ')[0]+'</b>'+valveLine+
-    '<br>Fuel <b>'+FUELS[engine.fuel].label+'</b> ('+(engine.ci?'CI':engine.effOctane+' oct')+', '+engine.stoichAFR.toFixed(1)+':1 stoich'+(engine.chargeCool?', −'+engine.chargeCool+'°C charge':'')+')'+
+    '<br>'+tr('Compression')+' <b>'+engine.compression.toFixed(1)+':1</b> • '+tr('Redline')+' <b>'+engine.redline+'</b> rpm'+
+    '<br>'+tr('Induction')+' <b>'+induction+'</b>'+
+    '<br>'+tr('Intake')+' <b>'+tr(INTAKE_SYS[engine.intakeSys].label)+'</b> • '+tr('Filter')+' <b>'+tr(AIR_FILTER[engine.airFilter].label)+'</b>'+
+    '<br>'+tr('Exhaust')+' <b>'+trOpt(engine.exhaust.toUpperCase())+'</b> • '+tr('Cat')+' <b>'+trOpt(CAT[engine.cat].label.split(' ')[0])+'</b>'+valveLine+
+    '<br>'+tr('Fuel')+' <b>'+tr(FUELS[engine.fuel].label)+'</b> ('+(engine.ci?'CI':engine.effOctane+' '+tr('oct'))+', '+engine.stoichAFR.toFixed(1)+':1 '+tr('stoich')+(engine.chargeCool?', −'+engine.chargeCool+'°C '+tr('charge'):'')+')'+
     sparkLine+
-    '<br>Cooling <b>'+engine.radiator.toUpperCase()+' RAD</b> • <b>'+engine.fan.toUpperCase()+' FAN</b>'+(engine.oilCooler?' • <b>OIL COOLER</b>':'')+' • Thermostat <b>'+engine.thermostat+'°C</b>'+
+    '<br>'+tr('Cooling')+' <b>'+trOpt(engine.radiator.toUpperCase())+' '+tr('RAD')+'</b> • <b>'+trOpt(engine.fan.toUpperCase())+' '+tr('FAN')+'</b>'+(engine.oilCooler?' • <b>'+tr('OIL COOLER')+'</b>':'')+' • '+tr('Thermostat')+' <b>'+engine.thermostat+'°C</b>'+
     elecLine+note+
     scoreLine(engine.score);
 }
@@ -5923,9 +6075,9 @@ function scoreLine(s){
   if(!s)return'';
   const gc=s.overall>=76?'#00ff88':s.overall>=46?'#ffcc00':'#ff6666';
   const relCol=s.reliability>=75?'#00ff88':s.reliability>=50?'#ffcc00':'#ff6666';
-  return '<br><span style="color:'+gc+'">SCORE <b>'+s.grade+' ('+s.overall+')</b></span> • '+s.peakHP+'hp @'+s.peakHPrpm+' • '+s.peakTQ+'Nm @'+s.peakTQrpm+
-    '<br><span style="color:#889">'+s.hpPerL+'hp/L • band '+s.band+'rpm • eff '+s.thEff+'% • safety '+s.safety+' • drive '+s.drive+'% • emit '+s.emissions+'</span>'+
-    '<br>Cost <b>'+fmtCost(engine.cost||0)+'</b> • Reliability <b style="color:'+relCol+'">'+(s.reliability||0)+'</b> • <b>'+(engine.cost>0?(s.peakHP/(engine.cost/1000)).toFixed(1):0)+'</b> hp/$1k'+
+  return '<br><span style="color:'+gc+'">'+tr('SCORE')+' <b>'+s.grade+' ('+s.overall+')</b></span> • '+s.peakHP+'hp @'+s.peakHPrpm+' • '+s.peakTQ+'Nm @'+s.peakTQrpm+
+    '<br><span style="color:#889">'+s.hpPerL+'hp/L • '+tr('band')+' '+s.band+'rpm • '+tr('eff')+' '+s.thEff+'% • '+tr('safety')+' '+s.safety+' • '+tr('drive')+' '+s.drive+'% • '+tr('emit')+' '+s.emissions+'</span>'+
+    '<br>'+tr('Cost')+' <b>'+fmtCost(engine.cost||0)+'</b> • '+tr('Reliability')+' <b style="color:'+relCol+'">'+(s.reliability||0)+'</b> • <b>'+(engine.cost>0?(s.peakHP/(engine.cost/1000)).toFixed(1):0)+'</b> hp/$1k'+
     scoreLapLine();
 }
 // Lap time is REPORTED on the scorecard, not folded into the letter grade. The grade rates the
@@ -6162,7 +6314,7 @@ function renderFuelMap(){
   const edHide=document.getElementById('fuelMapEdit');if(edHide&&!show)edHide.style.display='none';
   if(!show){box.innerHTML='';return;}
   const st=engine.stoichAFR;
-  let h='<table class="fuelmap"><tr><th>'+(engine.ci?tr('LOAD'):'MAP')+'\\RPM</th>';
+  let h='<table class="fuelmap"><tr><th>'+(engine.ci?tr('load').toUpperCase():'MAP')+'\\RPM</th>';
   for(let c=0;c<FM_COLS;c++){const rp=fmRpmAt(c);h+='<th>'+(rp>=1000?(rp/1000).toFixed(1)+'k':rp)+'</th>';}
   h+='</tr>';
   for(let r=FM_ROWS-1;r>=0;r--){
@@ -9522,18 +9674,18 @@ function updateVehicleSummary(){
   const dl={fwd:'FWD',rwd:'RWD',awd:'AWD'}[vehicle.drive]||'RWD';
   el.className='design-summary vehicleSummaryWrap';
   const stock=isFactoryFit(vehicle);
-  el.innerHTML='<b>'+vehicle.chLabel+'</b> • '+dl+' • '+vehicle.gears+'-speed'+
+  el.innerHTML='<b>'+tr(vehicle.chLabel)+'</b> • '+dl+' • '+vehicle.gears+tr('-speed')+
     ' <span style="color:'+(stock?'#7a8':'#ffcc00')+'">'+tr(stock?'(factory spec)':'(modified)')+'</span>'+
-    '<br>Curb weight <b>'+Math.round(vehicle.mass)+' kg</b> (engine ~'+vehicle.engineMass+' kg) • '+vehicle.powerToWeight.toFixed(0)+' hp/t'+
-    (vehicle.body?'<br>Body <b>'+tr(CHASSIS[vehicle.chassis].label)+'</b> class • Cd '+vehicle.body.cd.toFixed(2)+' × '+vehicle.area.toFixed(2)+' m² • wheelbase '+vehicle.wb.toFixed(2)+' m • '+Math.round(vehicle.fWt*100)+'% front':'')+
-    '<br>Tyres <b>'+(TIRE_TYPE[vehicle.tireType]||TIRE_TYPE.sport).label+'</b> '+vehicle.tireWidth+'/'+vehicle.tireAspect+' R'+vehicle.wheelDia+' • grip μ<b>'+vehicle.mu.toFixed(2)+'</b>'+
-    '<br>Brakes <b>'+(BRAKE_TYPE[vehicle.brakeType]||BRAKE_TYPE.slotted).label+'</b> '+vehicle.rotor+'mm ('+(vehicle.brakeDecelCap/G).toFixed(2)+'g) • Susp <b>'+(SUSPENSION[vehicle.suspension]||SUSPENSION.sport).label+'</b>'+
-    '<br>Gearbox <b>'+tr(vehicle.gbLabel)+'</b> • shift '+(vehicle.shiftTime*1000).toFixed(0)+' ms • driveline '+(vehicle.driveEff*100).toFixed(0)+'%'+(vehicle.gb.stall?' • converter stall '+vehicle.gb.stall+' rpm ×'+vehicle.gb.mult.toFixed(1):'')+
-    '<br>Diff <b>'+tr(vehicle.diffLabel)+'</b> • puts down '+(vehicle.diffTraction*100).toFixed(0)+'% of axle grip'+
-    '<br>Speed limiter <b>'+(vehicle.governor>0?vehicle.governor+' km/h':tr('removed'))+'</b>'+(perf&&perf.governed?' • free top speed '+Math.round(perf.freeSpeed)+' km/h':'')+
-    ' • traction control <b>'+(vehicle.tc===false?tr('off'):tr('on'))+'</b>'+(perf&&perf.spinT>0.05?' • wheelspin '+perf.spinT.toFixed(1)+' s to 100':'')+
-    '<br>Drag CdA <b>'+vehicle.cdA.toFixed(2)+'</b> • downforce ClA <b>'+vehicle.clA.toFixed(2)+'</b> • final drive <b>'+vehicle.finalDrive.toFixed(2)+'</b>'+
-    '<br>Vehicle cost <b>'+fmtCost(vehicle.cost)+'</b> • with engine <b>'+fmtCost(vehicle.cost+(engine.cost||0))+'</b>';
+    '<br>'+tr('Curb weight')+' <b>'+Math.round(vehicle.mass)+' kg</b> ('+tr('engine')+' ~'+vehicle.engineMass+' kg) • '+vehicle.powerToWeight.toFixed(0)+' hp/t'+
+    (vehicle.body?'<br>'+tr('Body')+' <b>'+tr(CHASSIS[vehicle.chassis].label)+'</b> '+tr('class')+' • Cd '+vehicle.body.cd.toFixed(2)+' × '+vehicle.area.toFixed(2)+' m² • '+tr('wheelbase')+' '+vehicle.wb.toFixed(2)+' m • '+Math.round(vehicle.fWt*100)+'% '+tr('front'):'')+
+    '<br>'+tr('Tyres')+' <b>'+tr((TIRE_TYPE[vehicle.tireType]||TIRE_TYPE.sport).label)+'</b> '+vehicle.tireWidth+'/'+vehicle.tireAspect+' R'+vehicle.wheelDia+' • '+tr('grip')+' μ<b>'+vehicle.mu.toFixed(2)+'</b>'+
+    '<br>'+tr('Brakes')+' <b>'+tr((BRAKE_TYPE[vehicle.brakeType]||BRAKE_TYPE.slotted).label)+'</b> '+vehicle.rotor+'mm ('+(vehicle.brakeDecelCap/G).toFixed(2)+'g) • '+tr('Susp')+' <b>'+trOpt((SUSPENSION[vehicle.suspension]||SUSPENSION.sport).label)+'</b>'+
+    '<br>'+tr('Gearbox')+' <b>'+tr(vehicle.gbLabel)+'</b> • '+tr('shift')+' '+(vehicle.shiftTime*1000).toFixed(0)+' ms • '+tr('driveline')+' '+(vehicle.driveEff*100).toFixed(0)+'%'+(vehicle.gb.stall?' • '+tr('converter stall')+' '+vehicle.gb.stall+' rpm ×'+vehicle.gb.mult.toFixed(1):'')+
+    '<br>'+tr('Diff')+' <b>'+tr(vehicle.diffLabel)+'</b> • '+tr('puts down')+' '+(vehicle.diffTraction*100).toFixed(0)+'% '+tr('of axle grip')+
+    '<br>'+tr('Speed limiter')+' <b>'+(vehicle.governor>0?vehicle.governor+' km/h':tr('removed'))+'</b>'+(perf&&perf.governed?' • '+tr('free top speed')+' '+Math.round(perf.freeSpeed)+' km/h':'')+
+    ' • '+tr('traction control')+' <b>'+(vehicle.tc===false?tr('off'):tr('on'))+'</b>'+(perf&&perf.spinT>0.05?' • '+tr('wheelspin')+' '+perf.spinT.toFixed(1)+' '+tr('s to 100'):'')+
+    '<br>'+tr('Drag')+' CdA <b>'+vehicle.cdA.toFixed(2)+'</b> • '+tr('downforce')+' ClA <b>'+vehicle.clA.toFixed(2)+'</b> • '+tr('final drive')+' <b>'+vehicle.finalDrive.toFixed(2)+'</b>'+
+    '<br>'+tr('Vehicle cost')+' <b>'+fmtCost(vehicle.cost)+'</b> • '+tr('with engine')+' <b>'+fmtCost(vehicle.cost+(engine.cost||0))+'</b>';
   renderPerformance();
 }
 function renderPerformance(){
@@ -9541,18 +9693,18 @@ function renderPerformance(){
   if(!head||!grid)return;
   const p=perf;
   if(!p){head.textContent='—';grid.innerHTML='';if(note)note.textContent='';return;}
-  head.innerHTML='<b>'+vehicle.chLabel+'</b> • '+(engine.score?engine.score.peakHP:0)+' hp • '+Math.round(vehicle.mass)+' kg • <b>'+p.ptw.toFixed(0)+'</b> hp/t';
+  head.innerHTML='<b>'+tr(vehicle.chLabel)+'</b> • '+(engine.score?engine.score.peakHP:0)+' hp • '+Math.round(vehicle.mass)+' kg • <b>'+p.ptw.toFixed(0)+'</b> hp/t';
   const cell=(k,v,u,cls)=>'<div class="perf-cell '+(cls||'')+'"><span class="k">'+k+'</span><div class="v">'+v+'</div><span class="u">'+(u||'')+'</span></div>';
   const b100=p.brake100?Math.round(p.brake100.dist)+' m':'—';
   const zz=(p.zt!=null)?p.zt.toFixed(1)+'s':'—';
-  const zzU=(p.zd!=null)?Math.round(p.zd)+' m total':'not reached';
+  const zzU=(p.zd!=null)?Math.round(p.zd)+' '+tr('m total'):tr('not reached');
   grid.innerHTML=
     cell(tr('0–100 km/h'),fmtT(p.t100),'',' hero')+
     cell(tr('TOP SPEED'),Math.round(p.topSpeed),p.governed?'km/h · '+tr('limited'):'km/h','hero')+
     cell('400 m',fmtT(p.q400&&p.q400.t),fmtTrap(p.q400))+
     cell('800 m',fmtT(p.q800&&p.q800.t),fmtTrap(p.q800))+
     cell('1000 m',fmtT(p.q1000&&p.q1000.t),fmtTrap(p.q1000))+
-    cell(tr('POWER/WT'),p.ptw.toFixed(0),'hp/tonne')+
+    cell(tr('POWER/WT'),p.ptw.toFixed(0),tr('hp/tonne'))+
     cell(tr('100–0 BRAKING'),b100,'')+
     cell(tr('0–200–0'),zz,zzU);
   // A car that can out-run its own tyres is not a fast car, it is a tyre failure waiting to happen.
@@ -10052,7 +10204,11 @@ function wireFamilyPicker(famId,itemId,cats,items,catOf,placeholder,onPick){
   sel.addEventListener('change',()=>{if(sel.value!=='')onPick(+sel.value);});
   fill();
   // show a build as the current choice without loading it (garage loads, saved sessions)
-  return {show(i){if(i==null||!items[i]){sel.value='';return;}fam.value=catOf(items[i]);fill(i);}};
+  return {show(i){if(i==null||!items[i]){sel.value='';return;}fam.value=catOf(items[i]);fill(i);},
+    // a language change: the same family and build, in the new words
+    relabel(){const f=fam.value,s=sel.value;
+      fam.innerHTML=used.map(c=>'<option value="'+esc(c)+'">'+esc(tr(c))+'</option>').join('');
+      fam.value=f;fill(s===''?null:+s);}};
 }
 // What was last loaded, and the form it produced, so the strip can say when you have changed it since.
 const loaded={engine:null,car:null};
@@ -10071,7 +10227,7 @@ function updateBuildStrip(){
   else et=disp+' '+tr('custom');
   if(engine.score)et+=' • '+engine.score.peakHP+' hp';
   be.textContent=et;be.title=et;
-  let ct=(vehicle&&vehicle.chLabel)||'—';
+  let ct=(vehicle&&vehicle.chLabel)?tr(vehicle.chLabel):'—';
   if(vehicle&&vehicle.chLabel&&!isFactoryFit(readVehicleFromForm()))ct+=' ('+tr('modified')+')';
   if(perf&&perf.t100)ct+=' • 0–100 '+perf.t100.toFixed(1)+'s';
   bc.textContent=ct;bc.title=ct;
@@ -13065,28 +13221,28 @@ function updateUI(){
   document.querySelector('#statEff .value').textContent=state.thermalEff.toFixed(1);
   document.querySelector('#statFuel .value').textContent=state.fuelFlowLph.toFixed(1);
   const knockEl=document.querySelector('#statKnock .value');
-  if(state.knockRisk<25){knockEl.textContent='LOW';document.getElementById('statKnock').className='stat'}
-  else if(state.knockRisk<55){knockEl.textContent='MED';document.getElementById('statKnock').className='stat warning'}
-  else{knockEl.textContent='HIGH';document.getElementById('statKnock').className='stat danger'}
+  if(state.knockRisk<25){knockEl.textContent=tr('LOW');document.getElementById('statKnock').className='stat'}
+  else if(state.knockRisk<55){knockEl.textContent=tr('MED');document.getElementById('statKnock').className='stat warning'}
+  else{knockEl.textContent=tr('HIGH');document.getElementById('statKnock').className='stat danger'}
   const hp=Math.round(state.engineHealth*100),healthEl=document.getElementById('statHealth');
-  healthEl.querySelector('.value').textContent=state.blown?'DEAD':hp;
+  healthEl.querySelector('.value').textContent=state.blown?tr('DEAD'):hp;
   healthEl.className='stat'+(state.blown||hp<30?' danger':(hp<70?' warning':''));
   const status=document.getElementById('status'),legend=document.getElementById('legend');
   if(performance.now()<statusFlashUntil){/* keep transient flash message */}
-  else if(vizMode==='design'){status.textContent='DESIGN MODE • CONFIGURE & BUILD';status.className='status-bar'}
-  else if(state.blown){status.textContent='ENGINE FAILURE ('+state.wearCause+') — REBUILD WITH BUILD & DYNO';status.className='status-bar err'}
-  else if(state.wearCause){status.textContent='DAMAGE: '+state.wearCause+' — HEALTH '+hp+'% FALLING';status.className='status-bar err'}
-  else if(state.knockRisk>70){status.textContent='DETONATION RISK — RETARDING SPARK / POWER CUT';status.className='status-bar err'}
-  else if(state.coolant>115){status.textContent='OVERHEAT — REDUCE LOAD OR INCREASE COOLING';status.className='status-bar err'}
-  else if(state.oil<55){status.textContent='COLD OIL — HIGH FRICTION, WARM UP RECOMMENDED';status.className='status-bar warn'}
-  else if(state.systemVoltage<11.6){status.textContent='LOW VOLTAGE '+state.systemVoltage.toFixed(1)+'V — WEAK SPARK / MISFIRE';status.className='status-bar err'}
-  else if(state.rpm>=engine.redline-30){status.textContent='REV LIMITER • '+Math.round(state.rpm)+' RPM';status.className='status-bar warn'}
-  else if(state.fuelCut){status.textContent='OVERRUN • FUEL CUT-OFF (DFCO) • '+Math.round(state.rpm)+' RPM';status.className='status-bar'}
-  else if(state.powerHP>5){status.textContent='RUNNING • '+state.powerHP.toFixed(0)+' HP @ '+Math.round(state.rpm)+' RPM • BMEP '+state.bmep.toFixed(1)+' bar';status.className='status-bar'}
-  else{status.textContent='IDLE / LOW LOAD • '+Math.round(state.rpm)+' RPM';status.className='status-bar'}
-  if(vizMode==='design')legend.innerHTML='Bore/stroke set displacement. Octane+compression+boost+ignition feed the knock model.<br>Cooling (radiator/fan/oil cooler/thermostat) sets running temps in AUTO THERMAL mode.';
-  else if(vizMode==='engine')legend.innerHTML='THROTTLE makes power; LOAD (dyno brake) sets the hold RPM — more load = lower RPM, zero = free-rev to limiter.<br>Lift off at speed → engine braking + fuel cut. Detonation/overheat/lean-boost/over-rev wear the engine.';
-  else legend.innerHTML='Dyno shows full power & torque curves to redline.<br>Green line = current RPM. Peaks marked with dots.';
+  else if(vizMode==='design'){status.textContent=tr('DESIGN MODE • CONFIGURE & BUILD');status.className='status-bar'}
+  else if(state.blown){status.textContent=tr('ENGINE FAILURE')+' ('+tr(state.wearCause)+') — '+tr('REBUILD WITH BUILD & DYNO');status.className='status-bar err'}
+  else if(state.wearCause){status.textContent=tr('DAMAGE')+': '+tr(state.wearCause)+' — '+tr('HEALTH')+' '+hp+'% '+tr('FALLING');status.className='status-bar err'}
+  else if(state.knockRisk>70){status.textContent=tr('DETONATION RISK — RETARDING SPARK / POWER CUT');status.className='status-bar err'}
+  else if(state.coolant>115){status.textContent=tr('OVERHEAT — REDUCE LOAD OR INCREASE COOLING');status.className='status-bar err'}
+  else if(state.oil<55){status.textContent=tr('COLD OIL — HIGH FRICTION, WARM UP RECOMMENDED');status.className='status-bar warn'}
+  else if(state.systemVoltage<11.6){status.textContent=tr('LOW VOLTAGE')+' '+state.systemVoltage.toFixed(1)+'V — '+tr('WEAK SPARK / MISFIRE');status.className='status-bar err'}
+  else if(state.rpm>=engine.redline-30){status.textContent=tr('REV LIMITER')+' • '+Math.round(state.rpm)+' RPM';status.className='status-bar warn'}
+  else if(state.fuelCut){status.textContent=tr('OVERRUN')+' • '+tr('FUEL CUT-OFF (DFCO)')+' • '+Math.round(state.rpm)+' RPM';status.className='status-bar'}
+  else if(state.powerHP>5){status.textContent=tr('RUNNING')+' • '+state.powerHP.toFixed(0)+' HP @ '+Math.round(state.rpm)+' RPM • BMEP '+state.bmep.toFixed(1)+' bar';status.className='status-bar'}
+  else{status.textContent=tr('IDLE / LOW LOAD')+' • '+Math.round(state.rpm)+' RPM';status.className='status-bar'}
+  if(vizMode==='design')legend.innerHTML=tr('Bore/stroke set displacement. Octane+compression+boost+ignition feed the knock model.')+'<br>'+tr('Cooling (radiator/fan/oil cooler/thermostat) sets running temps in AUTO THERMAL mode.');
+  else if(vizMode==='engine')legend.innerHTML=tr('THROTTLE makes power; LOAD (dyno brake) sets the hold RPM — more load = lower RPM, zero = free-rev to limiter.')+'<br>'+tr('Lift off at speed → engine braking + fuel cut. Detonation/overheat/lean-boost/over-rev wear the engine.');
+  else legend.innerHTML=tr('Dyno shows full power & torque curves to redline.')+'<br>'+tr('Green line = current RPM. Peaks marked with dots.');
 }
 
 function setTab(mode){
