@@ -20,6 +20,29 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 Working toward **v1.0 — every number derived, not fitted.**
 
+### The live cutaway's head, timed by the model (build 164)
+
+- **The valves opened at fixed angles** on the LIVE cutaway, intake 20 BTDC to 50 ABDC on every cam, and the spark
+  fired at 340 degrees on every engine. Now the events are the breathing model's: duration and lobe separation from
+  the cam profile, the intake lobe advanced as far as the fill table puts the phaser at this rpm (camAdvAt, which
+  ivcAt now reads too), lift from the cam's L/D on the model's valve, drawn to the bore's scale. The left column
+  lists them: a stock cam's slightly negative overlap, a race cam's 72 degrees, the phaser's advance, the lift.
+- **The valvetrain is drawn.** Four- and five-valve heads get two overhead cams over bucket followers; two-valve
+  engines get pushrods (the two-valve presets are the American V8s): one cam in the block, pushrods up the wall to
+  rockers under a cover. The lobes are ground to the same half-sine the valves follow and point at their followers
+  at full lift; springs, ports curving down to the seats, and a pent-roof chamber with the plug at its peak.
+- **The spark fires at the model's advance**, and the flame spreads from the plug over the same Wiebe burn
+  (SI_BURN_DEG, WIEBE_A/M) the model's work uses. On the share of cycles the knock model detonates, the end gas
+  at the bore wall goes off ahead of the flame, with its pressure waves. A diesel's sprays go in just before TDC
+  (SOC_CI) and burn over BURN_T_CI. Injection is drawn at a typical calibration's timing (port: on the shut
+  intake valve; direct: early in the intake stroke), its length growing with the fuel per cycle.
+- **Valve float**: past the model's float speed the valves bounce off their seats instead of following the cam.
+- The stroke name and the knock flag moved to the title bar (the cam cover sits where the stroke name was; the
+  knock flag ran over the crank's output); the turbo's AIR IN label moved clear of the block.
+- Tests: new test89 (the events against the breathing model with and without VVT, full lift at the centreline,
+  the spark at the model's advance on two engines, the Wiebe burn, OHV against DOHC, float exactly past the float
+  speed, every preset drawn round its cycle with knock on).
+
 ### The live cutaway's turbo and supercharger, drawn as they are built (build 163)
 
 - **The turbo was a fan.** On the LIVE cutaway it was a circle with six spokes hung off the intake pipe: no turbine,
