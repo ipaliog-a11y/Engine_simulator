@@ -20,6 +20,47 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 Working toward **v1.0 — every number derived, not fitted.**
 
+### The guide in Greek (build 162)
+
+- **All 60 guide pages have Greek.** The 184 blocks that were English (37 pages entirely, and the real-car and
+  physics levels of the other 23) are translated, each saying what its English says: the same links, tables,
+  formulas and limit notes, with the words inside formulas in Greek too. The interface's own words are used where
+  the guide names a control (ΚΑΤΑΣΚΕΥΗ & ΔΥΝΑΜΟ, ΣΤΟΧΟΣ BOOST, ΤΕΛΙΚΗ ΣΧΕΣΗ), so the guide matches the screen.
+  The glossary keeps each English term beside its Greek one.
+- **The rest of the guide's text:** its 62 picture captions and every "See also" line (each link named by the page
+  it opens). The OPTIONS page no longer says that new pages appear in English.
+- **Still English:** the labels drawn inside the guide's pictures (TURBINE, COMPRESSOR...), which are painted on a
+  canvas.
+- Tests: test87's guide budget is 0, and it checks every picture caption has Greek. test73's fallback check (a block
+  with no Greek shows its English) took its untranslated block from the guide; with none left, it removes one
+  block's Greek for the check.
+
+### The Greek interface, finished (build 161)
+
+- **Everything outside the guide now has Greek.** A sweep of the app in Greek found the interface had grown in
+  English since the translation was made: 9 `tr()` calls with no Greek (the tyre speed-rating warning and the
+  variable-geometry turbine readouts among them), every dropdown on ENGINE and VEHICLE, the newer ENGINE fields
+  (eccentricity, intake runner, valves, valve float, cam overlap), the speed limiter and tyre rating, the design and
+  vehicle summaries, the status bar and the help lines, the knock and health readings, ~30 tooltips and
+  screen-reader labels, and 39 of the guide's 60 page titles. All have Greek now. Terms Greek enthusiasts use in
+  English (BOOST, ECU, LSD, VVT, ROOTS), units, and the names of real cars, engines and circuits stay as they are,
+  as the existing translation already did.
+- **Switching language mid-session refreshes everything.** The top bar, the engine and car pickers, the subtitle,
+  the design summary and the runner and scavenge readouts kept the old language until something else redrew them.
+  Dropdowns translate in place; the pickers filled from data re-label themselves rather than have their Greek
+  cached as the English.
+- **Words that read differently by context.** "RACE" is the RACE tab (ΑΓΩΝΑΣ) and a cam or spring grade
+  (ΑΓΩΝΙΣΤΙΚΟ), so a dropdown choice looks up `opt:` + its text first. The table carried `'LOAD'` twice, so the
+  diesel fuel map's load axis read ΦΟΡΤΩΣΗ (loading, the button's word); it now uses the load key. "Induction" was
+  ΥΠΕΡΤΡΟΦΟΔΟΤΗΣΗ (forced induction), which beside "naturally aspirated" said the opposite; it is ΤΡΟΦΟΔΟΣΙΑ ΑΕΡΑ.
+  The sound option's note sent Greek players to the DYNO and TRACK tabs, which in Greek are ΔΥΝΑΜΟ and ΠΙΣΤΑ.
+- **What builds 156-159 added** is in too: the ROLL BALANCE choices (ΜΑΛΑΚΗ / ΣΚΛΗΡΗ ΕΜΠΡΟΣ). SYNTH and GAS stay as the
+  sound models' names.
+- **The guide followed in build 162.**
+- Tests: test87 sweeps every tab in Greek, on a load in Greek and after switching mid-session, and fails on any
+  English word outside the kept terms, units and names; checks every `tr()` literal, guide title and category has
+  Greek and that no key is in the table twice; checks switching back to English leaves no Greek; and holds the
+  guide's untranslated blocks to a budget (184) that may only go down.
 ### Turbo sounds by size, anti-lag bangs, the supercharger whine reworked (build 160)
 
 - **Turbo by size.** The whine's power goes with the air through the compressor, so its amplitude scales

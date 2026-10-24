@@ -1,4 +1,4 @@
-# PIXEL ENGINE SIM v0.6 build 160
+# PIXEL ENGINE SIM v0.6 build 162
 
 **A lightweight, 8-bit style internal combustion engine *designer* & simulator** inspired by *Automation*.
 
@@ -327,8 +327,11 @@ saps power; a large radiator, electric fan and oil cooler keep it cool.
   build is portable between them and the formats cannot drift apart.
 - **Presets**: Optimal / Max Power / Eco / Reset (adapt to the current engine).
 - **Languages** — English and **Ελληνικά (Greek)**, switchable in OPTIONS and remembered
-  between visits. The whole interface — tabs, labels, buttons, the challenge card and the full
-  in-app GUIDE — localises (live technical readouts and units stay universal).
+  between visits. The whole interface localises: tabs, labels, every dropdown, the design and
+  vehicle summaries, the status bar, tooltips and screen-reader labels, and the challenge card
+  (units, the names of real cars and circuits, and the terms Greek enthusiasts use in English, such as
+  BOOST, ECU and LSD, stay as they are). The in-app GUIDE is translated in full, all 60 pages; only the
+  labels drawn inside its pictures are still English.
 - **Responsive** — a fluid layout that fills the screen in **portrait** (phones & tablets held
   upright) as well as landscape, scaling type and controls up so nothing sits in a narrow strip.
 - **Installable PWA**, self-hosted font, works fully offline.
@@ -1170,8 +1173,9 @@ Also queued: a **UI redesign** for the DESIGN and VEHICLE tabs, which are alread
 get more so as derived physics adds inputs. Progressive disclosure — headline inputs by default, a
 detail expander per subsystem — after the first conversion lands, when the final input set is known.
 
-Greek translation is **paused** for the duration. New strings are still wrapped in `tr()`, and the
-untranslated backlog is counted and printed on every test run rather than hidden.
+Greek translation **resumed in build 161**: the interface is complete and `tests/test87.mjs` sweeps every
+tab in Greek, so new English text fails a test instead of shipping. The GUIDE followed in build 162; a guide
+block, title or picture caption with no Greek now fails the same test.
 - **Charge the acceleration and lap solvers for spool lag**, closing the first limit above. It
   needs a transient pass rather than the current per-rpm steady solve.
 - **A hand-editable ignition map**, to match the fuel map editor — the last piece of item 2.

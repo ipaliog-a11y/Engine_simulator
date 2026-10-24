@@ -103,11 +103,15 @@ if (!anim.offTab) fails.push('the animation keeps running after leaving the GUID
 if (!anim.offStatic) fails.push('the animation loop runs on a page with no moving picture');
 
 // ---------------------------------------------------------------- 4. Greek: kept blocks Greek, new ones English
+// Since build 162 every block has Greek, so a new, untranslated block is stood in for by taking one block's
+// Greek away for the check (and putting it back).
 const el = await page.evaluate(() => {
+  const kept = GUIDE_I18N.welcomeReal; delete GUIDE_I18N.welcomeReal;
   applyLang('el'); setTab('guide'); showGuide('welcome');
   const r = { loop: document.querySelector('[data-gk="loop"]').textContent, fresh: document.querySelector('[data-gk="welcomeReal"]').textContent,
     tier: document.querySelector('#gp-welcome .gt-phys .gtier-h').textContent, cat: document.querySelector('#guideNav .crumb').textContent };
   applyLang('en'); r.tierEn = document.querySelector('#gp-welcome .gt-phys .gtier-h').textContent; showGuide(null); setTab('engine');
+  GUIDE_I18N.welcomeReal = kept;
   return r;
 });
 if (!/ΚΙΝΗΤΗΡΑΣ/.test(el.loop)) fails.push('the kept Greek block (loop) is not Greek in Greek');
