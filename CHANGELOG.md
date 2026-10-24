@@ -20,6 +20,61 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 Working toward **v1.0 — every number derived, not fitted.**
 
+### Axle balance (build 153)
+
+- **The gap.** The lap pooled all four tyres' lateral grip into one number for the car, so no car could understeer
+  or oversteer: the front and rear always ran out together. This was the biggest piece missing for handling (see
+  the handling-dynamics review: full transient dynamics would cost the size of everything since build 97 and buy
+  1-3% in chicanes; balance buys most of what matters inside the quasi-steady lap).
+- **Each axle now has:**
+  - its own normal load (its weight share, and its downforce share by the aero balance)
+  - its own share of the lateral load transfer, the roll-stiffness split: **ROLL BALANCE** on VEHICLE, −2 to +2, 4%
+    of the transfer a step, neutral at the weight split
+  - its own tyres: **FRONT WIDTH**, entered for 23 staggered real cars (M3 E46, S2000, Supra, Corvettes, Mustang,
+    911s and the supercars)
+  - its own job: in a steady corner each axle must make the side force for the mass it carries
+- **The car corners as hard as the axle that runs out first.**
+  - A front-heavy car's front tyres carry more load each and grip less per kilo (load sensitivity), so hatches
+    understeer.
+  - Rear-engined 911s oversteer.
+  - Staggered mid-engined cars land near neutral, as their narrow fronts intend.
+- **Braking and power, per axle.**
+  - Braking moves load forward, so into a corner the rear runs out first. The lap brakes no harder there than the
+    rear can hold the corner, iterated until the deceleration and the load transfer it makes agree.
+  - On power, the drive takes what the driven axle's own lateral use leaves.
+- **TRACK** shows the balance (UNDERSTEER / OVERSTEER / NEUTRAL, which axle limits and by how much).
+
+| Car | Balance | Riverside GP | Spa |
+|---|---|---|---|
+| VW Golf GTI | understeer 7% | +0.71% | +0.45% |
+| Honda Civic Type R | understeer 8% | +0.94% | +0.73% |
+| Mazda MX-5 NA | understeer 1% | +0.19% | +0.01% |
+| BMW M3 E46 | understeer 3% | +0.41% | +0.17% |
+| Porsche 911 GT3 991.2 | oversteer 6% | +1.03% | +0.76% |
+| Dodge Challenger Hellcat | understeer 4% | −0.01% | −0.13% |
+| McLaren F1 | neutral | +1.02% | +0.70% |
+| McLaren 720S | oversteer 2% | +1.03% | +0.65% |
+| Porsche 911 Turbo S 992 | oversteer 4% | +1.08% | +0.81% |
+
+- **Laps run 0-1.2% slower.** Pooled grip was always the best case, and the axle that runs out first now sets the
+  corner. Braking into corners is held back where the rear would let go.
+- **What is still missing.** No yaw inertia, slip-angle build-up or transient load transfer: a car never slides or
+  spins, and its balance is a limit, not a motion. Every car starts at NEUTRAL roll balance (a real road car's
+  factory setup understeers a little more).
+- `test83`:
+  - a hatch understeers and a 911 oversteers
+  - stiffer front bars move the balance toward understeer
+  - narrow fronts move a mid-engined car toward understeer
+  - braking moves grip from the rear axle to the front
+  - a symmetric car is balanced
+  - roll balance is part of the factory fit
+  - TRACK shows the balance
+- **Other tests updated:**
+  - `test81` asks no axle for more than its grip, and its gear readout keeps every downshift run.
+  - `test63` judges braking at the limit by the lap's own per-axle grip use, and counts the tyres' cornering drag
+    with drag and the hill.
+  - `test30`/`32`/`38` count the new BALANCE cell.
+
 ### The driver's foot (build 152)
 
 - **The problem.** The lap's throttle was read straight off the speed solve, point by point: full wherever the engine

@@ -1,4 +1,4 @@
-# PIXEL ENGINE SIM v0.6 build 152
+# PIXEL ENGINE SIM v0.6 build 153
 
 **A lightweight, 8-bit style internal combustion engine *designer* & simulator** inspired by *Automation*.
 
@@ -747,6 +747,14 @@ documented in the GUIDE at the point where it matters:
   fast car on a long fast circuit (a Hellcat or an E46 M3 at Spa) runs its rotors to 750–900 °C and fades.
   Measured track-day figures are lower (450–600 °C rotor core, DBA) because most drivers brake earlier and
   softer; light cars and small brakes land inside the measured range.
+- **Balance is a limit, not a motion.**
+  - **What is modelled (build 153):** each axle's grip is its own, so cars understeer or oversteer.
+  - **What is not:** yaw inertia, slip-angle build-up and transient load transfer. A car is never caught out by
+    lift-off oversteer, and it never slides or spins. Chicanes are a little optimistic, about 1–3% by the usual
+    comparison of quasi-steady and transient lap sims.
+  - **Unpublished inputs:** the cars' factory roll balance and their real tyre load sensitivity per axle are not
+    published. Every car starts at NEUTRAL roll balance, though a real road car's factory setup understeers a
+    little more.
 - **The race's racecraft is rules, not physics.** Overtaking, the tow, dirty air, pit-lane loss and
   driver error are rules with fitted numbers. The cars share one racing line rather than fighting for
   space on it, and the tyre model's heat, grip-window, wear and wet-grip constants are fitted to the
@@ -881,6 +889,7 @@ measurement finds things. Each item is one PR.
 | — | Braking split between the axles | ✅ build 150 | Each axle stops with its own grip (load transfer, aero balance, cornering), its hydraulic share of the brakes (ABS/EBD at an axle's grip) and, on the driven axle, the engine's braking, held to what those tyres can carry (drag-torque control); the rotors' heat follows the split. Where the engine's braking is trimmed, a car without that control would step out. |
 | — | README cleanup | ✅ build 151 | Known limits, racing line and working queue brought up to date with the code; the lap report's footer too. Turbine housing matching re-measured and not built: the mismatch it was parked for has mostly closed (spread 4× → 1.9×, spool RMS ~1940 → 775 rpm). |
 | — | The driver's foot | ✅ build 152 | The lap's throttle is a pedal a driver could work: fully off in 0.10 s, fully on in 0.25 s, steady through a corner, never backed off once driving out of one, flat through a spark-cut shift (DCT, sequential, auto) and lifted for an H-pattern one. The turbo shaft runs on that pedal, so a flat shift keeps the boost. Full-off-full stabs inside 0.4 s on a Spa lap: 94 → 2 (720S), 104 → 1 (992 Turbo S), 14 → 1 (GR Yaris); lap times within 0.02%. test82. |
+| — | Axle balance | ✅ build 153 | Each axle has its own lateral grip: its weight and downforce share, its share of the load transfer (ROLL BALANCE, the anti-roll bars), its own tyres (FRONT WIDTH; the factory front widths of 23 staggered cars), and the side force for the mass it carries. The car corners as hard as the axle that runs out first: front-heavy cars understeer, rear-engined 911s oversteer, braking into a corner unloads the rear. TRACK shows the balance. Laps 0-1.2% slower. test83. |
 | — | Suspension type and geometry | ⏸ on hold | Future development. Today a setup is roll gradient + static camber; the roll camber the geometry recovers is a fixed 50% for every car (CAMBER_RECOVERY), and lateral load transfer is split by static weight. Wanted: the geometry per car (MacPherson strut, double wishbone, multi-link, solid axle) giving its camber recovery, and front/rear roll stiffness (springs, anti-roll bars) giving the handling balance. Needs each preset's real suspension type. |
 | — | Spark torque from fuel | ✅ build 95 | `IMEP_K` replaced by Heywood's 0.8 × fuel-air cycle efficiency; each fuel's LHV/AFR_st enters. Spark torque −2.7%, full-load BSFC 280 g/kWh (real 270–300). Rotary/two-stroke type factors still fitted. |
 | — | `turboChoke` (boost taper) | ✅ build 94 | Retired. Turbine efficiency from blade speed ratio U/C, per-point compressor efficiency, a continuous rich-knock slope in place of a step, and sequential turbos staged as two turbines. Calibration improved on every measure. |
