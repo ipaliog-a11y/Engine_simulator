@@ -1,4 +1,4 @@
-# PIXEL ENGINE SIM v0.6 build 164
+# PIXEL ENGINE SIM v0.6 build 165
 
 **A lightweight, 8-bit style internal combustion engine *designer* & simulator** inspired by *Automation*.
 
@@ -339,8 +339,8 @@ saps power; a large radiator, electric fan and oil cooler keep it cool.
   between visits. The whole interface localises: tabs, labels, every dropdown, the design and
   vehicle summaries, the status bar, tooltips and screen-reader labels, and the challenge card
   (units, the names of real cars and circuits, and the terms Greek enthusiasts use in English, such as
-  BOOST, ECU and LSD, stay as they are). The in-app GUIDE is translated in full, all 60 pages; only the
-  labels drawn inside its pictures are still English.
+  BOOST, ECU and LSD, stay as they are). The in-app GUIDE is translated in full, all 60 pages; the
+  labels drawn inside its pictures and the PNG/PDF reports are still English.
 - **Responsive** — a fluid layout that fills the screen in **portrait** (phones & tablets held
   upright) as well as landscape, scaling type and controls up so nothing sits in a narrow strip.
 - **Installable PWA**, self-hosted font, works fully offline.

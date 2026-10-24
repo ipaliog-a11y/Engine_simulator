@@ -373,7 +373,7 @@ table.fuelmap td.live{box-shadow:inset 0 0 0 2px #fff;font-weight:bold}
 <body>
 <div class="container">
 <header>
-<h1>PIXEL ENGINE SIM v0.6 build 164</h1>
+<h1>PIXEL ENGINE SIM v0.6 build 165</h1>
 <div class="subtitle" id="subtitle">ENGINE DESIGNER • BUILD IT, THEN DRIVE IT</div>
 </header>
 <div class="build-strip" id="buildStrip">
@@ -4681,7 +4681,70 @@ const I18N={
   "An engine's sound is its firing pulses, shaped by the pipes they run down.":{el:"Ο ήχος ενός κινητήρα είναι οι παλμοί ανάφλεξης, διαμορφωμένοι από τους σωλήνες στους οποίους τρέχουν."},
   "What the model leaves out, said out loud.":{el:"Τι αφήνει απέξω το μοντέλο, ειπωμένο φωναχτά."},
   "A model derived from first principles cannot be tuned to fit, so it is checked against real cars afterwards.":{el:"Ένα μοντέλο παραγόμενο από πρώτες αρχές δεν μπορεί να ρυθμιστεί ώστε να ταιριάξει, οπότε ελέγχεται μετά απέναντι σε πραγματικά αυτοκίνητα."},
-  "The words of the trade, A to Z.":{el:"Οι λέξεις της δουλειάς, από το Α ως το Ω."}
+  "The words of the trade, A to Z.":{el:"Οι λέξεις της δουλειάς, από το Α ως το Ω."},
+  // build 163: the real circuits' descriptions, the status messages and the DYNO chart
+  "Austin, Texas. Centreline and measured track width from the TUM racetrack database, laid onto the f1-circuits geometry (fit 1.3 m RMS); elevation from the USGS 10 m terrain model, smoothed. Corners are numbered, not named. The layout is the one in the source data and may predate recent changes.":{el:"Όστιν, Τέξας. Κεντρική γραμμή και μετρημένο πλάτος πίστας από τη βάση δεδομένων πιστών του TUM, προσαρμοσμένα στη γεωμετρία του f1-circuits (ταίριασμα 1.3 m RMS)· υψόμετρο από το μοντέλο εδάφους USGS 10 m, εξομαλυμένο. Οι στροφές αριθμούνται, δεν ονομάζονται. Η διάταξη είναι αυτή των δεδομένων της πηγής και μπορεί να είναι παλιότερη από πρόσφατες αλλαγές."},
+  "Kent, England. Centreline and measured track width from the TUM racetrack database, laid onto OpenStreetMap geometry (fit 1.4 m RMS); elevation from the EU-DEM 25 m terrain model, smoothed. Corners are numbered, not named. The layout is the one in the source data and may predate recent changes.":{el:"Κεντ, Αγγλία. Κεντρική γραμμή και μετρημένο πλάτος πίστας από τη βάση δεδομένων πιστών του TUM, προσαρμοσμένα στη γεωμετρία του OpenStreetMap (ταίριασμα 1.4 m RMS)· υψόμετρο από το μοντέλο εδάφους EU-DEM 25 m, εξομαλυμένο. Οι στροφές αριθμούνται, δεν ονομάζονται. Η διάταξη είναι αυτή των δεδομένων της πηγής και μπορεί να είναι παλιότερη από πρόσφατες αλλαγές."},
+  "Mogyoród, Hungary. Centreline and measured track width from the TUM racetrack database, laid onto the f1-circuits geometry (fit 1.6 m RMS); elevation from the EU-DEM 25 m terrain model, smoothed. Corners are numbered, not named. The layout is the one in the source data and may predate recent changes.":{el:"Μόγκιοροντ, Ουγγαρία. Κεντρική γραμμή και μετρημένο πλάτος πίστας από τη βάση δεδομένων πιστών του TUM, προσαρμοσμένα στη γεωμετρία του f1-circuits (ταίριασμα 1.6 m RMS)· υψόμετρο από το μοντέλο εδάφους EU-DEM 25 m, εξομαλυμένο. Οι στροφές αριθμούνται, δεν ονομάζονται. Η διάταξη είναι αυτή των δεδομένων της πηγής και μπορεί να είναι παλιότερη από πρόσφατες αλλαγές."},
+  "Montmeló, Spain. Centreline and measured track width from the TUM racetrack database, laid onto the f1-circuits geometry (fit 7.4 m RMS); elevation from the EU-DEM 25 m terrain model, smoothed. Corners are numbered, not named. The layout is the one in the source data and may predate recent changes.":{el:"Μοντμελό, Ισπανία. Κεντρική γραμμή και μετρημένο πλάτος πίστας από τη βάση δεδομένων πιστών του TUM, προσαρμοσμένα στη γεωμετρία του f1-circuits (ταίριασμα 7.4 m RMS)· υψόμετρο από το μοντέλο εδάφους EU-DEM 25 m, εξομαλυμένο. Οι στροφές αριθμούνται, δεν ονομάζονται. Η διάταξη είναι αυτή των δεδομένων της πηγής και μπορεί να είναι παλιότερη από πρόσφατες αλλαγές."},
+  "Hockenheim, Germany. Centreline and measured track width from the TUM racetrack database, laid onto the f1-circuits geometry (fit 1.9 m RMS); elevation from the EU-DEM 25 m terrain model, smoothed. Corners are numbered, not named. The layout is the one in the source data and may predate recent changes.":{el:"Χόκενχαϊμ, Γερμανία. Κεντρική γραμμή και μετρημένο πλάτος πίστας από τη βάση δεδομένων πιστών του TUM, προσαρμοσμένα στη γεωμετρία του f1-circuits (ταίριασμα 1.9 m RMS)· υψόμετρο από το μοντέλο εδάφους EU-DEM 25 m, εξομαλυμένο. Οι στροφές αριθμούνται, δεν ονομάζονται. Η διάταξη είναι αυτή των δεδομένων της πηγής και μπορεί να είναι παλιότερη από πρόσφατες αλλαγές."},
+  "Speedway, Indiana (the 2.5-mile oval). Centreline and measured track width from the TUM racetrack database, laid onto OpenStreetMap geometry (fit 3.7 m RMS); elevation from the USGS 10 m terrain model, smoothed. Corners are numbered, not named. The layout is the one in the source data and may predate recent changes.":{el:"Σπίντγουεϊ, Ιντιάνα (το οβάλ των 2.5 μιλίων). Κεντρική γραμμή και μετρημένο πλάτος πίστας από τη βάση δεδομένων πιστών του TUM, προσαρμοσμένα στη γεωμετρία του OpenStreetMap (ταίριασμα 3.7 m RMS)· υψόμετρο από το μοντέλο εδάφους USGS 10 m, εξομαλυμένο. Οι στροφές αριθμούνται, δεν ονομάζονται. Η διάταξη είναι αυτή των δεδομένων της πηγής και μπορεί να είναι παλιότερη από πρόσφατες αλλαγές."},
+  "Melbourne, Australia. Centreline and measured track width from the TUM racetrack database, laid onto the f1-circuits geometry (fit 4.3 m RMS); elevation from the SRTM 30 m terrain model, smoothed. Corners are numbered, not named. The layout is the one in the source data and may predate recent changes.":{el:"Μελβούρνη, Αυστραλία. Κεντρική γραμμή και μετρημένο πλάτος πίστας από τη βάση δεδομένων πιστών του TUM, προσαρμοσμένα στη γεωμετρία του f1-circuits (ταίριασμα 4.3 m RMS)· υψόμετρο από το μοντέλο εδάφους SRTM 30 m, εξομαλυμένο. Οι στροφές αριθμούνται, δεν ονομάζονται. Η διάταξη είναι αυτή των δεδομένων της πηγής και μπορεί να είναι παλιότερη από πρόσφατες αλλαγές."},
+  "Mexico City, Mexico. Centreline and measured track width from the TUM racetrack database, laid onto the f1-circuits geometry (fit 3.0 m RMS); elevation from the SRTM 30 m terrain model, smoothed. Corners are numbered, not named. The layout is the one in the source data and may predate recent changes.":{el:"Πόλη του Μεξικού, Μεξικό. Κεντρική γραμμή και μετρημένο πλάτος πίστας από τη βάση δεδομένων πιστών του TUM, προσαρμοσμένα στη γεωμετρία του f1-circuits (ταίριασμα 3.0 m RMS)· υψόμετρο από το μοντέλο εδάφους SRTM 30 m, εξομαλυμένο. Οι στροφές αριθμούνται, δεν ονομάζονται. Η διάταξη είναι αυτή των δεδομένων της πηγής και μπορεί να είναι παλιότερη από πρόσφατες αλλαγές."},
+  "Montreal, Canada. Centreline and measured track width from the TUM racetrack database, laid onto the f1-circuits geometry (fit 1.2 m RMS); elevation from the SRTM 30 m terrain model, smoothed. Corners are numbered, not named. The layout is the one in the source data and may predate recent changes.":{el:"Μόντρεαλ, Καναδάς. Κεντρική γραμμή και μετρημένο πλάτος πίστας από τη βάση δεδομένων πιστών του TUM, προσαρμοσμένα στη γεωμετρία του f1-circuits (ταίριασμα 1.2 m RMS)· υψόμετρο από το μοντέλο εδάφους SRTM 30 m, εξομαλυμένο. Οι στροφές αριθμούνται, δεν ονομάζονται. Η διάταξη είναι αυτή των δεδομένων της πηγής και μπορεί να είναι παλιότερη από πρόσφατες αλλαγές."},
+  "Monza, Italy. Centreline and measured track width from the TUM racetrack database, laid onto the f1-circuits geometry (fit 1.2 m RMS); elevation from the EU-DEM 25 m terrain model, smoothed. Corners are numbered, not named. The layout is the one in the source data and may predate recent changes.":{el:"Μόντσα, Ιταλία. Κεντρική γραμμή και μετρημένο πλάτος πίστας από τη βάση δεδομένων πιστών του TUM, προσαρμοσμένα στη γεωμετρία του f1-circuits (ταίριασμα 1.2 m RMS)· υψόμετρο από το μοντέλο εδάφους EU-DEM 25 m, εξομαλυμένο. Οι στροφές αριθμούνται, δεν ονομάζονται. Η διάταξη είναι αυτή των δεδομένων της πηγής και μπορεί να είναι παλιότερη από πρόσφατες αλλαγές."},
+  "Nürburg, Germany. Centreline and measured track width from the TUM racetrack database, laid onto the f1-circuits geometry (fit 3.3 m RMS); elevation from the EU-DEM 25 m terrain model, smoothed. Corners are numbered, not named. The layout is the one in the source data and may predate recent changes.":{el:"Νίρμπουργκ, Γερμανία. Κεντρική γραμμή και μετρημένο πλάτος πίστας από τη βάση δεδομένων πιστών του TUM, προσαρμοσμένα στη γεωμετρία του f1-circuits (ταίριασμα 3.3 m RMS)· υψόμετρο από το μοντέλο εδάφους EU-DEM 25 m, εξομαλυμένο. Οι στροφές αριθμούνται, δεν ονομάζονται. Η διάταξη είναι αυτή των δεδομένων της πηγής και μπορεί να είναι παλιότερη από πρόσφατες αλλαγές."},
+  "Sakhir, Bahrain. Centreline and measured track width from the TUM racetrack database, laid onto the f1-circuits geometry (fit 2.8 m RMS); elevation from the SRTM 30 m terrain model, smoothed. Corners are numbered, not named. The layout is the one in the source data and may predate recent changes.":{el:"Σαχίρ, Μπαχρέιν. Κεντρική γραμμή και μετρημένο πλάτος πίστας από τη βάση δεδομένων πιστών του TUM, προσαρμοσμένα στη γεωμετρία του f1-circuits (ταίριασμα 2.8 m RMS)· υψόμετρο από το μοντέλο εδάφους SRTM 30 m, εξομαλυμένο. Οι στροφές αριθμούνται, δεν ονομάζονται. Η διάταξη είναι αυτή των δεδομένων της πηγής και μπορεί να είναι παλιότερη από πρόσφατες αλλαγές."},
+  "São Paulo, Brazil. Centreline and measured track width from the TUM racetrack database, laid onto the f1-circuits geometry (fit 2.5 m RMS); elevation from the SRTM 30 m terrain model, smoothed. Corners are numbered, not named. The layout is the one in the source data and may predate recent changes.":{el:"Σάο Πάολο, Βραζιλία. Κεντρική γραμμή και μετρημένο πλάτος πίστας από τη βάση δεδομένων πιστών του TUM, προσαρμοσμένα στη γεωμετρία του f1-circuits (ταίριασμα 2.5 m RMS)· υψόμετρο από το μοντέλο εδάφους SRTM 30 m, εξομαλυμένο. Οι στροφές αριθμούνται, δεν ονομάζονται. Η διάταξη είναι αυτή των δεδομένων της πηγής και μπορεί να είναι παλιότερη από πρόσφατες αλλαγές."},
+  "Sepang, Malaysia. Centreline and measured track width from the TUM racetrack database, laid onto the f1-circuits geometry (fit 2.6 m RMS); elevation from the SRTM 30 m terrain model, smoothed. Corners are numbered, not named. The layout is the one in the source data and may predate recent changes.":{el:"Σεπάνγκ, Μαλαισία. Κεντρική γραμμή και μετρημένο πλάτος πίστας από τη βάση δεδομένων πιστών του TUM, προσαρμοσμένα στη γεωμετρία του f1-circuits (ταίριασμα 2.6 m RMS)· υψόμετρο από το μοντέλο εδάφους SRTM 30 m, εξομαλυμένο. Οι στροφές αριθμούνται, δεν ονομάζονται. Η διάταξη είναι αυτή των δεδομένων της πηγής και μπορεί να είναι παλιότερη από πρόσφατες αλλαγές."},
+  "Shanghai, China. Centreline and measured track width from the TUM racetrack database, laid onto the f1-circuits geometry (fit 2.0 m RMS); elevation from the SRTM 30 m terrain model, smoothed. Corners are numbered, not named. The layout is the one in the source data and may predate recent changes.":{el:"Σαγκάη, Κίνα. Κεντρική γραμμή και μετρημένο πλάτος πίστας από τη βάση δεδομένων πιστών του TUM, προσαρμοσμένα στη γεωμετρία του f1-circuits (ταίριασμα 2.0 m RMS)· υψόμετρο από το μοντέλο εδάφους SRTM 30 m, εξομαλυμένο. Οι στροφές αριθμούνται, δεν ονομάζονται. Η διάταξη είναι αυτή των δεδομένων της πηγής και μπορεί να είναι παλιότερη από πρόσφατες αλλαγές."},
+  "Northamptonshire, England. Centreline and measured track width from the TUM racetrack database, laid onto the f1-circuits geometry (fit 1.8 m RMS); elevation from the EU-DEM 25 m terrain model, smoothed. Corners are numbered, not named. The layout is the one in the source data and may predate recent changes.":{el:"Νορθαμπτονσάιρ, Αγγλία. Κεντρική γραμμή και μετρημένο πλάτος πίστας από τη βάση δεδομένων πιστών του TUM, προσαρμοσμένα στη γεωμετρία του f1-circuits (ταίριασμα 1.8 m RMS)· υψόμετρο από το μοντέλο εδάφους EU-DEM 25 m, εξομαλυμένο. Οι στροφές αριθμούνται, δεν ονομάζονται. Η διάταξη είναι αυτή των δεδομένων της πηγής και μπορεί να είναι παλιότερη από πρόσφατες αλλαγές."},
+  "Sochi, Russia. Centreline and measured track width from the TUM racetrack database, laid onto the f1-circuits geometry (fit 2.3 m RMS); elevation from the SRTM 30 m terrain model, smoothed. Corners are numbered, not named. The layout is the one in the source data and may predate recent changes.":{el:"Σότσι, Ρωσία. Κεντρική γραμμή και μετρημένο πλάτος πίστας από τη βάση δεδομένων πιστών του TUM, προσαρμοσμένα στη γεωμετρία του f1-circuits (ταίριασμα 2.3 m RMS)· υψόμετρο από το μοντέλο εδάφους SRTM 30 m, εξομαλυμένο. Οι στροφές αριθμούνται, δεν ονομάζονται. Η διάταξη είναι αυτή των δεδομένων της πηγής και μπορεί να είναι παλιότερη από πρόσφατες αλλαγές."},
+  "Stavelot, Belgium. Centreline and measured track width from the TUM racetrack database, laid onto the f1-circuits geometry (fit 1.6 m RMS); elevation from the EU-DEM 25 m terrain model, smoothed. Corners are numbered, not named. The layout is the one in the source data and may predate recent changes.":{el:"Σταβελό, Βέλγιο. Κεντρική γραμμή και μετρημένο πλάτος πίστας από τη βάση δεδομένων πιστών του TUM, προσαρμοσμένα στη γεωμετρία του f1-circuits (ταίριασμα 1.6 m RMS)· υψόμετρο από το μοντέλο εδάφους EU-DEM 25 m, εξομαλυμένο. Οι στροφές αριθμούνται, δεν ονομάζονται. Η διάταξη είναι αυτή των δεδομένων της πηγής και μπορεί να είναι παλιότερη από πρόσφατες αλλαγές."},
+  "Spielberg, Austria. Centreline and measured track width from the TUM racetrack database, laid onto the f1-circuits geometry (fit 1.8 m RMS); elevation from the EU-DEM 25 m terrain model, smoothed. Corners are numbered, not named. The layout is the one in the source data and may predate recent changes.":{el:"Σπίλμπεργκ, Αυστρία. Κεντρική γραμμή και μετρημένο πλάτος πίστας από τη βάση δεδομένων πιστών του TUM, προσαρμοσμένα στη γεωμετρία του f1-circuits (ταίριασμα 1.8 m RMS)· υψόμετρο από το μοντέλο εδάφους EU-DEM 25 m, εξομαλυμένο. Οι στροφές αριθμούνται, δεν ονομάζονται. Η διάταξη είναι αυτή των δεδομένων της πηγής και μπορεί να είναι παλιότερη από πρόσφατες αλλαγές."},
+  "Suzuka, Japan. Centreline and measured track width from the TUM racetrack database, laid onto the f1-circuits geometry (fit 1.6 m RMS); elevation from the SRTM 30 m terrain model, smoothed. Corners are numbered, not named. The layout is the one in the source data and may predate recent changes.":{el:"Σουζούκα, Ιαπωνία. Κεντρική γραμμή και μετρημένο πλάτος πίστας από τη βάση δεδομένων πιστών του TUM, προσαρμοσμένα στη γεωμετρία του f1-circuits (ταίριασμα 1.6 m RMS)· υψόμετρο από το μοντέλο εδάφους SRTM 30 m, εξομαλυμένο. Οι στροφές αριθμούνται, δεν ονομάζονται. Η διάταξη είναι αυτή των δεδομένων της πηγής και μπορεί να είναι παλιότερη από πρόσφατες αλλαγές."},
+  "Abu Dhabi, UAE. Centreline and measured track width from the TUM racetrack database, laid onto the f1-circuits geometry (fit 13.0 m RMS); elevation from the SRTM 30 m terrain model, smoothed. Corners are numbered, not named. The layout is the one in the source data and may predate recent changes.":{el:"Άμπου Ντάμπι, ΗΑΕ. Κεντρική γραμμή και μετρημένο πλάτος πίστας από τη βάση δεδομένων πιστών του TUM, προσαρμοσμένα στη γεωμετρία του f1-circuits (ταίριασμα 13.0 m RMS)· υψόμετρο από το μοντέλο εδάφους SRTM 30 m, εξομαλυμένο. Οι στροφές αριθμούνται, δεν ονομάζονται. Η διάταξη είναι αυτή των δεδομένων της πηγής και μπορεί να είναι παλιότερη από πρόσφατες αλλαγές."},
+  "Zandvoort, Netherlands. Centreline and measured track width from the TUM racetrack database, laid onto the f1-circuits geometry (fit 3.3 m RMS); elevation from the EU-DEM 25 m terrain model, smoothed. Corners are numbered, not named. The layout is the one in the source data and may predate recent changes.":{el:"Ζάντφορτ, Ολλανδία. Κεντρική γραμμή και μετρημένο πλάτος πίστας από τη βάση δεδομένων πιστών του TUM, προσαρμοσμένα στη γεωμετρία του f1-circuits (ταίριασμα 3.3 m RMS)· υψόμετρο από το μοντέλο εδάφους EU-DEM 25 m, εξομαλυμένο. Οι στροφές αριθμούνται, δεν ονομάζονται. Η διάταξη είναι αυτή των δεδομένων της πηγής και μπορεί να είναι παλιότερη από πρόσφατες αλλαγές."},
+  "Imported from a GPX trace. Lap length, gradients and corner sequence come from the recorded data; track width is modelled from the layout, not measured.":{el:"Εισαγωγή από ίχνος GPX. Το μήκος του γύρου, οι κλίσεις και η σειρά των στροφών βγαίνουν από τα καταγεγραμμένα δεδομένα· το πλάτος της πίστας μοντελοποιείται από τη διάταξη, δεν μετριέται."},
+  "BUILD SAVED":{el:"Η ΚΑΤΑΣΚΕΥΗ ΑΠΟΘΗΚΕΥΤΗΚΕ"},
+  "SAVE FAILED (storage blocked)":{el:"Η ΑΠΟΘΗΚΕΥΣΗ ΑΠΕΤΥΧΕ (ο χώρος αποθήκευσης είναι μπλοκαρισμένος)"},
+  "NO SAVED BUILD":{el:"ΔΕΝ ΥΠΑΡΧΕΙ ΑΠΟΘΗΚΕΥΜΕΝΗ ΚΑΤΑΣΚΕΥΗ"},
+  "BUILD LOADED":{el:"Η ΚΑΤΑΣΚΕΥΗ ΦΟΡΤΩΘΗΚΕ"},
+  "GARAGE FULL OR STORAGE BLOCKED":{el:"ΤΟ ΓΚΑΡΑΖ ΕΙΝΑΙ ΓΕΜΑΤΟ Ή Ο ΧΩΡΟΣ ΑΠΟΘΗΚΕΥΣΗΣ ΜΠΛΟΚΑΡΙΣΜΕΝΟΣ"},
+  "SAVED FILE:":{el:"ΑΠΟΘΗΚΕΥΤΗΚΕ ΤΟ ΑΡΧΕΙΟ:"},
+  "REPORT FAILED":{el:"Η ΑΝΑΦΟΡΑ ΑΠΕΤΥΧΕ"},
+  "SAVED REPORT:":{el:"ΑΠΟΘΗΚΕΥΤΗΚΕ Η ΑΝΑΦΟΡΑ:"},
+  "OPENED:":{el:"ΑΝΟΙΧΤΗΚΕ:"},
+  "OPEN FAILED — not a valid engine file":{el:"ΤΟ ΑΝΟΙΓΜΑ ΑΠΕΤΥΧΕ — δεν είναι έγκυρο αρχείο κινητήρα"},
+  "OPEN FAILED — could not read file":{el:"ΤΟ ΑΝΟΙΓΜΑ ΑΠΕΤΥΧΕ — το αρχείο δεν διαβάστηκε"},
+  "SHARE LINK COPIED TO CLIPBOARD":{el:"Ο ΣΥΝΔΕΣΜΟΣ ΚΟΙΝΟΠΟΙΗΣΗΣ ΑΝΤΙΓΡΑΦΗΚΕ"},
+  "SHARE LINK IN ADDRESS BAR":{el:"Ο ΣΥΝΔΕΣΜΟΣ ΚΟΙΝΟΠΟΙΗΣΗΣ ΕΙΝΑΙ ΣΤΗ ΓΡΑΜΜΗ ΔΙΕΥΘΥΝΣΕΩΝ"},
+  "LOADED SHARED:":{el:"ΦΟΡΤΩΘΗΚΕ ΚΟΙΝΟΠΟΙΗΜΕΝΗ:"},
+  "PULL LOGGED":{el:"Η ΔΟΚΙΜΗ ΚΑΤΑΓΡΑΦΗΚΕ"},
+  "overlaid":{el:"σε επικάλυψη"},
+  "SEE DYNO":{el:"ΔΕΣ ΤΟ ΔΥΝΑΜΟ"},
+  "DYNO PULLS CLEARED":{el:"ΟΙ ΔΟΚΙΜΕΣ ΔΥΝΑΜΟΜΕΤΡΟΥ ΚΑΘΑΡΙΣΤΗΚΑΝ"},
+  "GPX IMPORT FAILED — no usable track points":{el:"Η ΕΙΣΑΓΩΓΗ GPX ΑΠΕΤΥΧΕ — κανένα χρήσιμο σημείο πίστας"},
+  "msg:IMPORTED":{el:"ΕΙΣΑΧΘΗΚΕ"},
+  "CORNERS":{el:"ΣΤΡΟΦΕΣ"},
+  "WEAR ON • ENGINE CAN BE DAMAGED":{el:"ΦΘΟΡΑ ΟΝ • Ο ΚΙΝΗΤΗΡΑΣ ΜΠΟΡΕΙ ΝΑ ΠΑΘΕΙ ΖΗΜΙΑ"},
+  "WEAR OFF • ENGINE INVINCIBLE":{el:"ΦΘΟΡΑ OFF • Ο ΚΙΝΗΤΗΡΑΣ ΕΙΝΑΙ ΑΦΘΑΡΤΟΣ"},
+  "NO NITROUS FITTED — ADD A SHOT ON THE ENGINE TAB":{el:"ΔΕΝ ΥΠΑΡΧΕΙ ΝΙΤΡΟ — ΠΡΟΣΘΕΣΕ ΣΤΗΝ ΚΑΡΤΕΛΑ ΚΙΝΗΤΗΡΑΣ"},
+  "NITROUS BOTTLE EMPTY — REBUILD TO REFILL":{el:"Η ΦΙΑΛΗ ΝΙΤΡΟΥ ΑΔΕΙΑΣΕ — ΞΑΝΑΦΤΙΑΞΕ ΓΙΑ ΓΕΜΙΣΜΑ"},
+  "NITROUS ARMED — SPRAYS AT WOT":{el:"ΝΙΤΡΟ ΟΠΛΙΣΜΕΝΟ — ΨΕΚΑΖΕΙ ΜΕ ΤΕΡΜΑ ΓΚΑΖΙ"},
+  "NITROUS OFF":{el:"ΝΙΤΡΟ ΚΛΕΙΣΤΟ"},
+  "COULD NOT READ FILE":{el:"ΤΟ ΑΡΧΕΙΟ ΔΕΝ ΔΙΑΒΑΣΤΗΚΕ"},
+  "LOADED:":{el:"ΦΟΡΤΩΘΗΚΕ:"},
+  "ENGINE BUILT":{el:"Ο ΚΙΝΗΤΗΡΑΣ ΚΑΤΑΣΚΕΥΑΣΤΗΚΕ"},
+  "DESIGN RESET TO DEFAULTS":{el:"Η ΣΧΕΔΙΑΣΗ ΕΠΑΝΗΛΘΕ ΣΤΙΣ ΠΡΟΕΠΙΛΟΓΕΣ"},
+  "DYNO CURVE • POWER & TORQUE":{el:"ΚΑΜΠΥΛΗ ΔΥΝΑΜΟ • ΙΣΧΥΣ & ΡΟΠΗ"},
+  "TQ":{el:"ΡΟΠΗ"},
+  "GRADE":{el:"ΒΑΘΜΟΣ"},
+  "rel":{el:"αξιοπ."},
+  "PASSED":{el:"ΕΠΙΤΥΧΙΑ"},
+  "NOT MET":{el:"ΔΕΝ ΕΠΙΤΕΥΧΘΗΚΕ"},
+  "dyno:NOT MET":{el:"ΟΧΙ ΑΚΟΜΑ"},
+  "LOG PULL to snapshot & overlay a curve for comparison":{el:"ΚΑΤΑΓΡΑΦΗ: κράτα την καμπύλη για σύγκριση"}
 };
 // Guide body blocks (rich HTML), swapped by data-gk on language change.
 // A block with no entry here falls back to English, which is safe. A block WITH an entry does
@@ -4934,8 +4997,10 @@ const CHALLENGE_I18N={
 let currentLang='en';
 try{currentLang=localStorage.getItem('pes.lang')||'en';}catch(e){}
 function tr(en){const m=I18N[en];return (m&&m[currentLang])||en;}
-// A dropdown choice: a part grade can need other words than the same English elsewhere ('RACE').
-function trOpt(en){const m=I18N['opt:'+en];return (m&&m[currentLang])||tr(en);}
+// The same English can need other words in another place: a part grade ('RACE' is also the RACE tab), a message
+// ('IMPORTED' is also the circuit list's IMPORTED group). The table keys those as context + ':' + the English.
+function trIn(ctx,en){const m=I18N[ctx+':'+en];return (m&&m[currentLang])||tr(en);}
+function trOpt(en){return trIn('opt',en);}
 // Tooltips, screen-reader labels and placeholders. The English is kept on the element; when code has
 // rewritten the attribute since (the build strip's titles), what it wrote is the new English.
 const TR_ATTRS={title:'trTitle','aria-label':'trAria',placeholder:'trPh'};
@@ -11201,14 +11266,14 @@ function loadVehiclePreset(p){
   return p.name;
 }
 function saveSetup(){
-  try{localStorage.setItem(SAVE_KEY,JSON.stringify(serializeBuild('quicksave','')));flash('BUILD SAVED');}
-  catch(e){flash('SAVE FAILED (storage blocked)','err');}
+  try{localStorage.setItem(SAVE_KEY,JSON.stringify(serializeBuild('quicksave','')));flash(tr('BUILD SAVED'));}
+  catch(e){flash(tr('SAVE FAILED (storage blocked)'),'err');}
 }
 function loadSetup(){
   let raw;try{raw=localStorage.getItem(SAVE_KEY);}catch(e){raw=null;}
-  if(!raw){flash('NO SAVED BUILD','warn');return;}
-  try{applyBuild(JSON.parse(raw));flash('BUILD LOADED');}
-  catch(e){flash('LOAD FAILED (corrupt data)','err');}
+  if(!raw){flash(tr('NO SAVED BUILD'),'warn');return;}
+  try{applyBuild(JSON.parse(raw));flash(tr('BUILD LOADED'));}
+  catch(e){flash(tr('LOAD FAILED (corrupt data)'),'err');}
 }
 // ---- Garage: any number of named chassis+engine combos, kept side by side ----
 // SAVE/LOAD above is a single quicksave slot — saving again overwrites it. The garage is the
@@ -11227,7 +11292,7 @@ function loadGarage(){
 }
 function persistGarage(){
   try{localStorage.setItem(GARAGE_KEY,JSON.stringify(garage));return true;}
-  catch(e){flash('GARAGE FULL OR STORAGE BLOCKED','err');return false;}
+  catch(e){flash(tr('GARAGE FULL OR STORAGE BLOCKED'),'err');return false;}
 }
 // The headline numbers, snapshotted when the build is saved. They are a label on the card, not a
 // source of truth — loading the build recomputes everything from the spec.
@@ -11375,7 +11440,7 @@ function exportBuild(){
   a.href=URL.createObjectURL(new Blob([JSON.stringify(build,null,2)],{type:'application/json'}));
   a.download=fn;document.body.appendChild(a);a.click();
   setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove();},1000);
-  flash('SAVED FILE: '+fn);
+  flash(tr('SAVED FILE:')+' '+fn);
 }
 // ====== DYNO REPORT: a printable sheet laid out like a real dynamometer print-out ======
 // Rendered onto an offscreen A4 canvas at print resolution (white paper, dark ink — not the
@@ -11593,7 +11658,7 @@ function downloadBlob(blob,fn){
 function exportDynoPNG(){
   if(!engine.score){flash(tr('BUILD AN ENGINE FIRST'),'warn');return;}
   const cv=dynoReportCanvas(2),fn=reportFileName('png');
-  cv.toBlob(b=>{if(!b){flash('REPORT FAILED','err');return;}downloadBlob(b,fn);flash('SAVED REPORT: '+fn);},'image/png');
+  cv.toBlob(b=>{if(!b){flash(tr('REPORT FAILED'),'err');return;}downloadBlob(b,fn);flash(tr('SAVED REPORT:')+' '+fn);},'image/png');
 }
 // A minimal single-page PDF holding the report as a JPEG. PDF supports JPEG natively via the
 // DCTDecode filter, so the canvas bytes can be dropped straight in — no encoder, no library.
@@ -11632,7 +11697,7 @@ function canvasToPDF(cv,fn){
   const out=new Uint8Array(len);let o=0;
   for(const p of parts){out.set(p,o);o+=p.length;}
   downloadBlob(new Blob([out],{type:'application/pdf'}),fn);
-  flash('SAVED REPORT: '+fn);
+  flash(tr('SAVED REPORT:')+' '+fn);
 }
 // ====== RACE REPORT (build 141): the race on one printable sheet ======
 // The same paper stock as the dyno and hot lap reports (RPT, canvasToPDF): the classification, a lap chart
@@ -11784,7 +11849,7 @@ function raceReportFileName(ext){
 function exportRacePNG(){
   if(!raceUI.run){flash(tr('RUN A RACE FIRST'),'warn');return;}
   const cv=raceReportCanvas(raceUI.run,2),fn=raceReportFileName('png');
-  cv.toBlob(b=>{if(!b){flash('REPORT FAILED','err');return;}downloadBlob(b,fn);flash('SAVED REPORT: '+fn);},'image/png');
+  cv.toBlob(b=>{if(!b){flash(tr('REPORT FAILED'),'err');return;}downloadBlob(b,fn);flash(tr('SAVED REPORT:')+' '+fn);},'image/png');
 }
 function exportRacePDF(){
   if(!raceUI.run){flash(tr('RUN A RACE FIRST'),'warn');return;}
@@ -11998,7 +12063,7 @@ function lapFileName(ext){
 function exportLapPNG(){
   if(!lapResult){flash(tr('BUILD AN ENGINE FIRST'),'warn');return;}
   const cv=hotLapReportCanvas(2),fn=lapFileName('png');
-  cv.toBlob(b=>{if(!b){flash('REPORT FAILED','err');return;}downloadBlob(b,fn);flash('SAVED REPORT: '+fn);},'image/png');
+  cv.toBlob(b=>{if(!b){flash(tr('REPORT FAILED'),'err');return;}downloadBlob(b,fn);flash(tr('SAVED REPORT:')+' '+fn);},'image/png');
 }
 function exportLapPDF(){
   if(!lapResult){flash(tr('BUILD AN ENGINE FIRST'),'warn');return;}
@@ -12007,8 +12072,8 @@ function exportLapPDF(){
 function openFileDialog(){document.getElementById('fileInput').click();}
 function readBuildFile(file){
   const r=new FileReader();
-  r.onload=()=>{try{const nm=applyBuild(JSON.parse(r.result));flash('OPENED: '+nm);setTab('dyno');}catch(e){flash('OPEN FAILED — not a valid engine file','err');}};
-  r.onerror=()=>flash('OPEN FAILED — could not read file','err');
+  r.onload=()=>{try{const nm=applyBuild(JSON.parse(r.result));flash(tr('OPENED:')+' '+nm);setTab('dyno');}catch(e){flash(tr('OPEN FAILED — not a valid engine file'),'err');}};
+  r.onerror=()=>flash(tr('OPEN FAILED — could not read file'),'err');
   r.readAsText(file);
 }
 // ---- Share via encoded link (URL hash) ----
@@ -12022,13 +12087,13 @@ function shareBuild(){
   try{location.hash='b='+code;}catch(e){}
   if(navigator.share){navigator.share({title:'Pixel Engine Sim — '+name,url:url}).catch(()=>{});}
   if(navigator.clipboard&&navigator.clipboard.writeText){
-    navigator.clipboard.writeText(url).then(()=>flash('SHARE LINK COPIED TO CLIPBOARD'),()=>flash('SHARE LINK IN ADDRESS BAR'));
-  }else flash('SHARE LINK IN ADDRESS BAR');
+    navigator.clipboard.writeText(url).then(()=>flash(tr('SHARE LINK COPIED TO CLIPBOARD')),()=>flash(tr('SHARE LINK IN ADDRESS BAR')));
+  }else flash(tr('SHARE LINK IN ADDRESS BAR'));
 }
 function loadFromHash(){
   const h=location.hash||'';
   if(h.indexOf('#b=')!==0)return false;
-  try{const nm=applyBuild(decodeBuild(h.slice(3)));flash('LOADED SHARED: '+nm);return true;}
+  try{const nm=applyBuild(decodeBuild(h.slice(3)));flash(tr('LOADED SHARED:')+' '+nm);return true;}
   catch(e){return false;}
 }
 // ---- Dyno pull logging (overlay saved curves for comparison) ----
@@ -12037,9 +12102,9 @@ function logPull(){
   let peak=0;data.forEach(p=>peak=Math.max(peak,p.powerHP));
   dynoPulls.push({label:(engine.name||engine.displacement_L.toFixed(1)+'L')+' '+Math.round(peak)+'hp',pts:data,color:PULL_COLORS[dynoPulls.length%PULL_COLORS.length]});
   if(dynoPulls.length>4)dynoPulls.shift();
-  flash('PULL LOGGED ('+dynoPulls.length+' overlaid) — SEE DYNO');
+  flash(tr('PULL LOGGED')+' ('+dynoPulls.length+' '+tr('overlaid')+') — '+tr('SEE DYNO'));
 }
-function clearPulls(){dynoPulls=[];flash('DYNO PULLS CLEARED');}
+function clearPulls(){dynoPulls=[];flash(tr('DYNO PULLS CLEARED'));}
 // ---- Scoring: rate the design at a standard WOT best-power condition ----
 function scoreEngine(){
   const sv={afr:state.afr,iat:state.iat,coolant:state.coolant,oil:state.oil,eh:state.engineHealth,bl:state.blown,el:state.elecLoad,map:state.map,rpm:state.rpm};
@@ -13917,7 +13982,7 @@ function raceFillAdd(){
 function raceEntrantFrom(v){
   if(v==='cur'){
     if(!engine.score||!vehicle||!vehicle.mass){flash(tr('BUILD A CAR FIRST'),'warn');return null;}
-    const name=(loaded.car&&loaded.car.name)||((engine.name?engine.name+' · ':'')+(vehicle.chLabel||'')).trim()||tr('This build');
+    const name=(loaded.car&&loaded.car.name)||((engine.name?engine.name+' · ':'')+tr(vehicle.chLabel||'')).trim()||tr('This build');
     return {name,build:serializeBuild(name,'')};
   }
   if(v.startsWith('g:')){const g=garage.find(x=>x.id===v.slice(2));return g?{name:g.name,build:JSON.parse(JSON.stringify(g.build))}:null;}
@@ -14393,13 +14458,13 @@ function loadImportedTracks(){
 function loadGpxTrack(text,fallbackName){
   let def;
   try{def=gpxToTrack(text,{name:gpxTrackName(text)||fallbackName});}
-  catch(e){flash('GPX IMPORT FAILED — no usable track points','err');return;}
+  catch(e){flash(tr('GPX IMPORT FAILED — no usable track points'),'err');return;}
   const key='gpx_'+Date.now().toString(36);
   TRACKS[key]=def;delete trackCache[key];
   trackKey=key;refreshTrackList();saveImportedTracks();
   buildVehicle();refreshLap();
   const T=buildTrack(key);
-  flash('IMPORTED '+def.label+' • '+(T.length/1000).toFixed(2)+' km • '+T.corners+' CORNERS');
+  flash(trIn('msg','IMPORTED')+' '+def.label+' • '+(T.length/1000).toFixed(2)+' km • '+T.corners+' '+tr('CORNERS'));
   setTab('track');
 }
 function refreshLap(){
@@ -14453,7 +14518,7 @@ function drawDyno(){
   const W=vizW,H=vizH,rMax=engine.redline;
   ctx.fillStyle=C.bg;ctx.fillRect(0,0,W,H);
   drawPixelRect(0,0,W,28,'#12121c');
-  ctx.fillStyle=C.yellow;ctx.font='10px "Press Start 2P"';ctx.fillText('DYNO CURVE • POWER & TORQUE',12,19);
+  ctx.fillStyle=C.yellow;ctx.font='10px "Press Start 2P"';ctx.fillText(tr('DYNO CURVE • POWER & TORQUE'),12,19);
   ctx.fillStyle=C.green;ctx.fillText(Math.round(state.rpm)+' RPM',W-110,19);
 
   const data=getDynoData();
@@ -14502,32 +14567,37 @@ function drawDyno(){
   const iy=gY+gH+30;
   drawPixelRect(0,iy-14,W,H-(iy-14),'#12121c');
   ctx.font='7px "Press Start 2P"';
-  ctx.fillStyle=C.cyan;ctx.fillText('TQ '+peakT.v.toFixed(0)+'Nm@'+peakT.rpm,gX+4,iy);
-  ctx.fillStyle=C.yellow;ctx.fillText('PWR '+peakP.v.toFixed(0)+'HP@'+peakP.rpm,gX+160,iy);
+  ctx.fillStyle=C.cyan;ctx.fillText(tr('TQ')+' '+peakT.v.toFixed(0)+'Nm@'+peakT.rpm,gX+4,iy);
+  ctx.fillStyle=C.yellow;ctx.fillText(tr('PWR')+' '+peakP.v.toFixed(0)+'HP@'+peakP.rpm,gX+160,iy);
   const s=engine.score;
   if(s){
     const gc=s.overall>=76?C.green:s.overall>=46?C.yellow:C.red;
-    ctx.fillStyle=gc;ctx.font='11px "Press Start 2P"';ctx.fillText('GRADE '+s.grade+' '+s.overall,gX+320,iy+1);
+    ctx.fillStyle=gc;ctx.font='11px "Press Start 2P"';ctx.fillText(tr('GRADE')+' '+s.grade+' '+s.overall,gX+320,iy+1);
     ctx.font='6px "Press Start 2P"';ctx.fillStyle='#99aabb';
-    ctx.fillText(s.hpPerL+'hp/L • '+s.nmPerL+'Nm/L • band '+s.band+'rpm • eff '+s.thEff+'% • safety '+s.safety+' • drive '+s.drive+'% • emit '+s.emissions+' • rel '+s.reliability,gX+4,iy+15);
+    ctx.fillText(s.hpPerL+'hp/L • '+s.nmPerL+'Nm/L • '+tr('band')+' '+s.band+'rpm • '+tr('eff')+' '+s.thEff+'% • '+tr('safety')+' '+s.safety+' • '+tr('drive')+' '+s.drive+'% • '+tr('emit')+' '+s.emissions+' • '+tr('rel')+' '+s.reliability,gX+4,iy+15);
   }
   // Strategy: cost / power-per-dollar, and the active challenge verdict
   const chNow=CHALLENGES.find(c=>c.id===activeChallenge)||CHALLENGES[0];
   const m=buildMetrics(chNow);
   ctx.font='6px "Press Start 2P"';ctx.fillStyle='#cbb26a';
   const lapNow=(vehicle&&vehicle.mass)?lapFor(trackKey):null;
-  ctx.fillText('COST '+fmtCost(m.cost)+' • '+m.hpPerK+' hp/$1k'+
-    (lapNow!=null?'  •  LAP '+fmtLap(lapNow)+' '+((TRACKS[trackKey]||{}).label||''):''),gX+4,iy+28);
+  const costTxt=tr('COST')+' '+fmtCost(m.cost)+' • '+m.hpPerK+' hp/$1k'+
+    (lapNow!=null?'  •  '+tr('LAP')+' '+fmtLap(lapNow)+' '+((TRACKS[trackKey]||{}).label||''):'');
+  ctx.fillText(costTxt,gX+4,iy+28);
   const ch=CHALLENGES.find(c=>c.id===activeChallenge);
   if(ch&&ch.id!=='free'){
     const ev=evalChallenge(ch,m);
     ctx.fillStyle=ev.pass?C.green:C.red;
-    ctx.fillText((ev.pass?'✓ ':'✗ ')+ch.name.toUpperCase()+' — '+(ev.pass?'PASSED':'NOT MET'),gX+200,iy+28);
+    // Right-aligned to the chart's edge, beside the cost line when there is room and on the line below when not: at a
+    // fixed x it ran into the cost line once that line carried the lap and the circuit's name.
+    const verdict=(ev.pass?'✓ ':'✗ ')+chName(ch).toLocaleUpperCase(currentLang)+' — '+trIn('dyno',ev.pass?'PASSED':'NOT MET');
+    const fits=ctx.measureText(costTxt).width+ctx.measureText(verdict).width+24<=gW;
+    ctx.textAlign='right';ctx.fillText(verdict,gX+gW,fits?iy+28:iy+41);ctx.textAlign='left';
   }
   ctx.font='6px "Press Start 2P"';
   if(dynoPulls.length){
     dynoPulls.forEach((pl,i)=>{ctx.fillStyle=pl.color;ctx.fillText('— '+pl.label,gX+4+i*132,iy+41);});
-  }else{ctx.fillStyle='#667';ctx.fillText('LOG PULL to snapshot & overlay a curve for comparison',gX+4,iy+41);}
+  }else{ctx.fillStyle='#667';ctx.fillText(tr('LOG PULL to snapshot & overlay a curve for comparison'),gX+4,iy+41);}
 }
 function updateUI(){
   if(vizMode==='design')updateFuelMapMarker();
@@ -15256,14 +15326,14 @@ function bindControls(){
     wearEnabled=!wearEnabled;
     const b=document.getElementById('btnWear');
     b.classList.toggle('on',wearEnabled);b.setAttribute('aria-pressed',wearEnabled);b.textContent=tr(wearEnabled?'WEAR ON':'WEAR OFF');
-    flash(wearEnabled?'WEAR ON • ENGINE CAN BE DAMAGED':'WEAR OFF • ENGINE INVINCIBLE');
+    flash(tr(wearEnabled?'WEAR ON • ENGINE CAN BE DAMAGED':'WEAR OFF • ENGINE INVINCIBLE'));
   });
   document.getElementById('btnNitrous').addEventListener('click',()=>{
-    if(engine.nitrous==='none'){flash('NO NITROUS FITTED — ADD A SHOT ON THE ENGINE TAB','warn');return;}
-    if(state.nitrousCharge<=0){flash('NITROUS BOTTLE EMPTY — REBUILD TO REFILL','warn');return;}
+    if(engine.nitrous==='none'){flash(tr('NO NITROUS FITTED — ADD A SHOT ON THE ENGINE TAB'),'warn');return;}
+    if(state.nitrousCharge<=0){flash(tr('NITROUS BOTTLE EMPTY — REBUILD TO REFILL'),'warn');return;}
     state.nitrousActive=!state.nitrousActive;
     const b=document.getElementById('btnNitrous');b.classList.toggle('on',state.nitrousActive);b.setAttribute('aria-pressed',state.nitrousActive);
-    flash(state.nitrousActive?'NITROUS ARMED — SPRAYS AT WOT':'NITROUS OFF');
+    flash(tr(state.nitrousActive?'NITROUS ARMED — SPRAYS AT WOT':'NITROUS OFF'));
   });
   document.getElementById('btnSound').addEventListener('click',()=>setSound(!Sound.on));
   const sm=document.getElementById('edSoundModel');sm.value=Sound.model;sm.addEventListener('change',e=>setSoundModel(e.target.value));
@@ -15294,7 +15364,7 @@ function bindControls(){
       const f=e.target.files&&e.target.files[0];
       if(f){const r=new FileReader();
         r.onload=()=>loadGpxTrack(r.result,f.name.replace(/\.gpx$/i,''));
-        r.onerror=()=>flash('COULD NOT READ FILE','err');
+        r.onerror=()=>flash(tr('COULD NOT READ FILE'),'err');
         r.readAsText(f);}
       e.target.value='';
     });
@@ -15346,7 +15416,7 @@ function bindControls(){
     const ei=PRESETS.findIndex(p=>p.name===VEHICLE_PRESETS[i].engine);
     if(enginePicker)enginePicker.show(ei);
     markLoaded('engine',VEHICLE_PRESETS[i].engine);markLoaded('car',name);
-    flash('LOADED: '+name+(perf&&perf.t100?' • 0–100 '+perf.t100.toFixed(1)+'s':''));
+    flash(tr('LOADED:')+' '+name+(perf&&perf.t100?' • 0–100 '+perf.t100.toFixed(1)+'s':''));
   });
   // Garage. The list is rebuilt on every change, so LOAD/DELETE are delegated off the container
   // rather than rebound per card.
@@ -15402,7 +15472,7 @@ function bindControls(){
     applyBuild({engine:Object.assign({},p.engine),tune:Object.assign({},STD_TUNE),vehicle:readVehicleFromForm(),name:p.name});
     engine.name=p.name;
     markLoaded('engine',p.name);
-    flash('LOADED: '+p.name+' • '+engine.displacement_L.toFixed(engine.displacement_L<1?2:1)+'L'+(engine.score?' • '+engine.score.grade:''));
+    flash(tr('LOADED:')+' '+p.name+' • '+engine.displacement_L.toFixed(engine.displacement_L<1?2:1)+'L'+(engine.score?' • '+engine.score.grade:''));
     setTab('dyno');
   });
   document.getElementById('bsEngine').addEventListener('click',()=>setTab('design'));
@@ -15417,8 +15487,8 @@ function bindControls(){
   // Language selector
   const langSel=document.getElementById('edLang');
   if(langSel){langSel.value=currentLang;langSel.addEventListener('change',e=>{applyLang(e.target.value);flash(e.target.value==='el'?'Γλώσσα: Ελληνικά':'Language: English');});}
-  document.getElementById('btnBuild').addEventListener('click',()=>{buildEngine();flash('ENGINE BUILT • '+engine.displacement_L.toFixed(engine.displacement_L<1?2:1)+'L');setTab('dyno')});
-  document.getElementById('btnDesignReset').addEventListener('click',()=>{applyEngineToForm(Object.assign({},DEFAULT_ENGINE));buildEngine();flash('DESIGN RESET TO DEFAULTS')});
+  document.getElementById('btnBuild').addEventListener('click',()=>{buildEngine();flash(tr('ENGINE BUILT')+' • '+engine.displacement_L.toFixed(engine.displacement_L<1?2:1)+'L');setTab('dyno')});
+  document.getElementById('btnDesignReset').addEventListener('click',()=>{applyEngineToForm(Object.assign({},DEFAULT_ENGINE));buildEngine();flash(tr('DESIGN RESET TO DEFAULTS'))});
 }
 function syncSliders(){
   document.getElementById('throttle').value=Math.round(state.throttle*100);

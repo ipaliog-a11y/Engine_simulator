@@ -4,7 +4,8 @@
 // sweep of the app in Greek found 9 tr() calls with no Greek, every dropdown in English, the design and vehicle
 // summaries, the status bar, the help lines, ~30 tooltips and screen-reader labels, and 39 guide titles. Nothing
 // failed, because tr() falls back to the English and every Greek test checked one feature. This test is the sweep:
-//   · every tr('literal') in the source, every guide title, category and picture caption, has Greek; the table has no key twice
+//   · every tr('literal') in the source, every guide title, category and picture caption, every circuit's
+//     description and every trIn() lookup has Greek, and no status message is an untranslated literal; the table has no key twice
 //     (a second entry silently wins: 'LOAD' was the load button's ΦΟΡΤΩΣΗ on the fuel map's load axis);
 //   · with Greek chosen, no tab shows an English word outside the terms the translation keeps in Latin letters
 //     (BOOST, ECU, LSD...), units, and the names of real cars, engines and circuits; both on a fresh load in Greek
@@ -45,6 +46,11 @@ console.log('I18N keys:', keys.length, '| twice:', twice.join(', ') || 'none');
 if (twiceNew.length) fails.push('I18N has keys twice (the second wins): ' + twiceNew.join(', '));
 const lits = new Set();
 for (const m of SRC.matchAll(/\btr\(\s*(['"])((?:\\.|(?!\1).)*)\1\s*\)/g)) lits.add(m[2].replace(/\\'/g, "'").replace(/\\"/g, '"'));
+// trIn('ctx','English') looks up ctx:English first; either must have Greek (build 163)
+const ctxLits = [...SRC.matchAll(/\btrIn\(\s*'([a-z]+)'\s*,\s*'([^']+)'\s*\)/g)].map(m => [m[1], m[2]]);
+// A status message is read in Greek too: flash() must never be handed an English literal (build 163)
+const rawFlash = [...SRC.matchAll(/\bflash\(\s*(['"])([^'"]*[A-Za-z]{3,}[^'"]*)\1/g)].map(m => m[2]).filter(x => !/Language: English/.test(x));
+if (rawFlash.length) fails.push('status messages not passed through tr(): ' + rawFlash.join(' | '));
 
 const browser = await chromium.launch();
 const open = async (lang) => {
@@ -56,15 +62,18 @@ const open = async (lang) => {
   return page;
 };
 const page = await open('el');
-const tables = await page.evaluate((lits) => ({
+const tables = await page.evaluate(([lits, ctxLits]) => ({
   noGreek: lits.filter(k => !(I18N[k] && I18N[k].el)),
   empty: Object.keys(I18N).filter(k => !I18N[k].el),
   titles: guidePages().map(p => p.dataset.title).filter(t => !(I18N[t] && I18N[t].el)),
   cats: Object.values(GUIDE_CATS).filter(t => !(I18N[t] && I18N[t].el)),
   captions: [...document.querySelectorAll('.gart-cap')].map(c => c.dataset.en || c.textContent.trim()).filter(t => !(I18N[t] && I18N[t].el)),
+  // every circuit's description, not only the one on screen (build 163: 22 were English and the sweep never saw them)
+  blurbs: Object.values(TRACKS).filter(t => t.blurb && !(I18N[t.blurb] && I18N[t.blurb].el)).map(t => t.label),
+  ctx: ctxLits.filter(([c, k]) => !((I18N[c + ':' + k] || I18N[k] || {}).el)).map(([c, k]) => c + ':' + k),
   blocks: [...document.querySelectorAll('[data-gk]')].filter(b => !(GUIDE_I18N[b.dataset.gk] && GUIDE_I18N[b.dataset.gk].el)).length,
   orphans: Object.keys(GUIDE_I18N).filter(k => !document.querySelector('[data-gk="' + k + '"]')),
-}), [...lits]);
+}), [[...lits], ctxLits]);
 console.log('tr() literals:', lits.size, '| without Greek:', tables.noGreek.length, '| guide titles without Greek:', tables.titles.length,
   '| guide blocks without Greek:', tables.blocks, '(budget', GUIDE_BLOCKS_WITHOUT_GREEK + ')');
 if (tables.noGreek.length) fails.push('tr() calls with no Greek: ' + tables.noGreek.join(' | '));
@@ -72,6 +81,8 @@ if (tables.empty.length) fails.push('I18N entries with an empty Greek: ' + table
 if (tables.titles.length) fails.push('guide titles with no Greek: ' + tables.titles.join(' | '));
 if (tables.cats.length) fails.push('guide categories with no Greek: ' + tables.cats.join(' | '));
 if (tables.captions.length) fails.push('guide picture captions with no Greek: ' + tables.captions.join(' | '));
+if (tables.blurbs.length) fails.push('circuit descriptions with no Greek: ' + tables.blurbs.join(' | '));
+if (tables.ctx.length) fails.push('trIn() lookups with no Greek: ' + tables.ctx.join(' | '));
 if (tables.orphans.length) fails.push('GUIDE_I18N blocks with no page: ' + tables.orphans.join(' | '));
 if (tables.blocks > GUIDE_BLOCKS_WITHOUT_GREEK) fails.push(`guide blocks without Greek ${tables.blocks} > budget ${GUIDE_BLOCKS_WITHOUT_GREEK}: translate the new text`);
 if (tables.blocks < GUIDE_BLOCKS_WITHOUT_GREEK) console.log(`  (the budget can come down to ${tables.blocks})`);

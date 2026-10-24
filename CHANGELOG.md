@@ -64,6 +64,23 @@ Working toward **v1.0 — every number derived, not fitted.**
   the turbo; the turbo's pipe no longer runs over the MAP/IAT labels, and a motored engine no longer reads "-0 HP".
 - Tests: new test88 (scroll directions, spin with the shaft and not the manifold pressure, the wastegate and the
   vanes against the model, the Roots ratio, the charge temperatures, every preset drawn open and closed).
+### Circuits, messages and the DYNO chart in Greek (build 163)
+
+- **The 22 real circuits' descriptions** were English under the map on TRACK: only the four test circuits had Greek, and
+  the Greek sweep only ever looked at the default circuit. Each now names its place in Greek and its sources (TUM,
+  f1-circuits or OpenStreetMap, the terrain model, the fit) as the English does. The GPX import's description too.
+- **The status messages** (about 30: saving, loading, opening and sharing builds, reports, GPX import, nitrous, wear,
+  logged pulls) go through `tr()`, with file and car names kept as they are.
+- **The DYNO chart**: its title, the peak labels, the grade, the scorecard line, the cost and lap, the LOG PULL hint and
+  the objective verdict, which also used the objective's English name. Its verdict sat at a fixed spot that the cost
+  line ran into once it carried the lap and the circuit (in English too); it is now right-aligned to the chart's edge
+  and drops to the next line when the two do not fit.
+- A race names your car by its chassis in the interface's language (ΣΠΟΡ ΚΟΥΠΕ, not SPORTS COUPE).
+- `trIn(context, text)` generalises the dropdown lookup: the same English can need other Greek in another place
+  (`opt:RACE`, `msg:IMPORTED` beside the circuit list's IMPORTED group, `dyno:NOT MET` where the chart has less room).
+- Still English: the labels painted inside the guide's pictures, and the PNG/PDF reports.
+- Tests: test87 also checks every circuit's description and every `trIn()` lookup has Greek, and that no status message
+  is an untranslated literal; run against build 162 it fails on both, as it should.
 
 ### The guide in Greek (build 162)
 
