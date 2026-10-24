@@ -4455,7 +4455,13 @@ const I18N={
   'KNOCK':{el:'ΠΕΙΡΑΚΙΑ'},'KNOCK RISK':{el:'ΚΙΝΔ. ΠΕΙΡΑΚΙΩΝ'},'FIRING ORDER':{el:'ΣΕΙΡΑ ΑΝΑΦΛ.'},
   'PORTS':{el:'ΘΥΡΙΔΕΣ'},'COOLANT':{el:'ΨΥΚΤΙΚΟ'},'OIL':{el:'ΛΑΔΙ'},'FUEL & SPARK':{el:'ΚΑΥΣΙΜΟ/ΣΠΙΝΘΗΡΑΣ'},
   'OVERRUN CUT — 0 L/h':{el:'ΔΙΑΚΟΠΗ ΣΤΗΝ ΕΠΙΒΡΑΔΥΝΣΗ — 0 L/h'},'ADV':{el:'ΠΡΟΠ.'},'AUTO':{el:'ΑΥΤΟΜ.'},
-  'COMPRESSION IGNITION':{el:'ΑΝΑΦΛΕΞΗ ΜΕ ΣΥΜΠΙΕΣΗ'},'ROTOR TURNS AT 1/3 SHAFT SPEED':{el:'ΡΟΤΟΡΑΣ = 1/3 ΤΟΥ ΑΞΟΝΑ'},
+  'COMPRESSION IGNITION':{el:'ΑΝΑΦΛΕΞΗ ΜΕ ΣΥΜΠΙΕΣΗ'},
+  // the live cutaway's turbo and supercharger (build 163)
+  'AIR IN':{el:'ΑΕΡΑΣ'},'OFF THE CRANK':{el:'ΑΠΟ ΤΟΝ ΣΤΡΟΦΑΛΟ'},'OUTLET':{el:'ΕΞΟΔΟΣ'},'AT THE TURBINE':{el:'ΣΤΗΝ ΤΟΥΡΜΠΙΝΑ'},
+  'TO THE CAT':{el:'ΠΡΟΣ ΚΑΤΑΛΥΤΗ'},'SMALL + LARGE':{el:'ΜΙΚΡΟ + ΜΕΓΑΛΟ'},'HP + LP':{el:'ΥΨΗΛΗΣ + ΧΑΜΗΛΗΣ'},'2 UNITS':{el:'2 ΜΟΝΑΔΕΣ'},
+  'BLOW-OFF':{el:'ΕΚΤΟΝΩΣΗ'},'TARGET':{el:'ΣΤΟΧΟΣ'},'of choke flow':{el:'της μέγιστης παροχής'},'VANES':{el:'ΠΤΕΡΥΓΙΑ'},
+  '% OPEN':{el:'% ΑΝΟΙΧΤΑ'},'WASTEGATE OPEN':{el:'WASTEGATE ΑΝΟΙΧΤΗ'},'WASTEGATE SHUT':{el:'WASTEGATE ΚΛΕΙΣΤΗ'},
+  'OVERRUN CUT':{el:'ΔΙΑΚΟΠΗ ΚΑΥΣΙΜΟΥ'},'DIESEL: NO SPARK':{el:'ΝΤΙΖΕΛ: ΧΩΡΙΣ ΣΠΙΝΘΗΡΑ'},'ROTOR TURNS AT 1/3 SHAFT SPEED':{el:'ΡΟΤΟΡΑΣ = 1/3 ΤΟΥ ΑΞΟΝΑ'},
   'ENGINE FAILURE':{el:'ΒΛΑΒΗ ΚΙΝΗΤΗΡΑ'},'REBUILD WITH BUILD & DYNO':{el:'ΞΑΝΑΦΤΙΑΞΕ ΤΟΝ ΚΙΝΗΤΗΡΑ'},
   'DAMAGE':{el:'ΖΗΜΙΑ'},'HEALTH':{el:'ΥΓΕΙΑ'},'BOTTLE':{el:'ΦΙΑΛΗ'},'RUNNING':{el:'ΛΕΙΤΟΥΡΓΕΙ'},'IDLE':{el:'ΡΕΛΑΝΤΙ'},
   'COOL':{el:'ΨΥΞΗ'},
@@ -12892,7 +12898,7 @@ function drawSupercharger(px,py,S,F,LW,m,portYc,crank){
   ctx.font=F(6.5);ctx.fillStyle=boost>0.02?C.yellow:'#667';
   ctx.fillText((t==='roots'?'ROOTS':t==='screw'?'TWIN-SCREW':'CENTRIFUGAL')+' '+tr('SUPERCHARGER')+' +'+boost.toFixed(2)+' bar',px(40),py(356));
   ctx.fillStyle='#89b';ctx.font=F(6);
-  ctx.fillText(snd.drive.toFixed(snd.drive<10?1:0)+':1 '+tr('OFF THE CRANK')+' • '+Math.round(nSc/100)*100+' rpm • '+tr('OUT')+' '+Math.round(hotT)+'C',px(40),py(368));
+  ctx.fillText(snd.drive.toFixed(snd.drive<10?1:0)+':1 '+tr('OFF THE CRANK')+' • '+Math.round(nSc/100)*100+' rpm • '+tr('OUTLET')+' '+Math.round(hotT)+'C',px(40),py(368));
 }
 function drawExhaustSide(px,py,S,F,LW,m,portYc,exX){
   const e=engine;
@@ -13004,7 +13010,7 @@ function drawTurbo(px,py,S,F,LW,m,portYc,exX,gasCol){
   // where the compressor is working now: its flow over its inducer's choke flow (compFlowFrac)
   const fl=compFlowFrac(state.rpm,airFlowAt(state.rpm,Math.max(0.1,m)));
   ctx.fillText((Math.round(n/1000)*1000).toLocaleString('en-US').replace(/,/g,' ')+' rpm • '+Math.round(fl*100)+'% '+tr('of choke flow')+' • '
-    +(vgt?tr('VANES')+' '+Math.round((drawTurbo.vane||0)*100)+'% '+tr('OPEN'):tr('WASTEGATE')+' '+(gate?tr('OPEN'):tr('SHUT'))),px(40),py(368));
+    +(vgt?tr('VANES')+' '+Math.round((drawTurbo.vane||0)*100)+tr('% OPEN'):tr(gate?'WASTEGATE OPEN':'WASTEGATE SHUT')),px(40),py(368));
 }
 function drawFuelSpark(px,py,S,F,m){
   // bottom right, under the bank (build 163: the left column carries the intake and the boosters now)
