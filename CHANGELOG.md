@@ -20,6 +20,28 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 Working toward **v1.0 — every number derived, not fitted.**
 
+### The live cutaway's turbo and supercharger, drawn as they are built (build 163)
+
+- **The turbo was a fan.** On the LIVE cutaway it was a circle with six spokes hung off the intake pipe: no turbine,
+  no exhaust reaching it, spun by the manifold pressure. Now it is two snail housings on one shaft, end-on. The
+  exhaust manifold feeds the turbine through its inlet duct and the scroll narrows as the gas spirals onto the
+  wheel; the compressor's scroll widens round its wheel (backward-swept blades and splitters) to an outlet along
+  the tangent, and on one shaft both turn the same way. The charge pipe runs under the engine, up through the
+  intercooler to the throttle, coloured by its temperature (the compressor's outlet temperature, now one function
+  that the intake temperature also takes its rise from).
+- **Turned by the model.** The wheels spin with the shaft speed the spool model integrates (they followed the
+  manifold pressure), at a readable pace, with the speed in the readout. The wastegate opens when the model holds
+  its target and shuts while spooling or lifted; a variable-geometry turbo has no gate and its vane ring opens as
+  the model schedules the throat; the blow-off valve vents once on a lift; anti-lag pops at the turbine inlet. The
+  readout's compressor flow is live (share of choke flow), not the design point's.
+- **Superchargers** are belted to the crank, the pulleys sized by the drive ratio: Roots rotors (3 lobes, a
+  figure-eight casing) and twin-screw rotors (4 lobes driving 6 flutes) turn with the crank at their ratio, a
+  centrifugal is a compressor scroll on a 12:1 step-up.
+- **Layout.** VE and cam moved to the left column, fuel & spark to the bottom right, the rotary's labels clear of
+  the turbo; the turbo's pipe no longer runs over the MAP/IAT labels, and a motored engine no longer reads "-0 HP".
+- Tests: new test88 (scroll directions, spin with the shaft and not the manifold pressure, the wastegate and the
+  vanes against the model, the Roots ratio, the charge temperatures, every preset drawn open and closed).
+
 ### The guide in Greek (build 162)
 
 - **All 60 guide pages have Greek.** The 184 blocks that were English (37 pages entirely, and the real-car and
