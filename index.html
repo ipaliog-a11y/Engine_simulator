@@ -5220,7 +5220,15 @@ const LOAD_SENS=0.15, TYRE_RATED_KG_M3=16300, TYRE_REF_SHARE=0.6, ARB_STEP=0.04;
 // of it per degree either side. The loaded outside tyre's angle is the static camber plus the body roll
 // the suspension geometry does not claw back (about half).
 const CAMBER_RECOVERY=0.5, CAMBER_LOSS=0.015, CAMBER_BEST=-1.5;
-function tyreMu(Fz,FzRef){return vehicle.muRef*Math.pow(Math.max(200,Fz)/(FzRef||vehicle.FzRef),-LOAD_SENS);}
+// The load-sensitivity curve (Fz/FzRef)^-LOAD_SENS, tabulated and interpolated: this is the lap solver's most-called
+// function (a third of the time on a long circuit, build 156) and Math.pow its cost. 16384 steps over 0.05-8 times the
+// reference load keep it within 2 parts in a million of the power law; outside that range it is computed.
+const TMU_R0=0.05,TMU_N=16384,TMU_DR=(8-TMU_R0)/TMU_N,TMU_T=new Float64Array(TMU_N+1);
+for(let k=0;k<=TMU_N;k++)TMU_T[k]=Math.pow(TMU_R0+k*TMU_DR,-LOAD_SENS);
+function tyreMu(Fz,FzRef){
+  const r=Math.max(200,Fz)/(FzRef||vehicle.FzRef),x=(r-TMU_R0)/TMU_DR,k=x|0;
+  return vehicle.muRef*(k>=0&&k<TMU_N?TMU_T[k]+(TMU_T[k+1]-TMU_T[k])*(x-k):Math.pow(r,-LOAD_SENS));
+}
 // The friction ellipse (build 111): a tyre pulls harder along its length than across it. Peak
 // longitudinal force runs 10-20% over peak lateral in tyre test data (Milliken & Milliken, RCVD ch. 2):
 // driving or braking, the whole contact patch shears the same way at once, while a cornering tyre builds
@@ -8337,16 +8345,17 @@ function simulateLap(key,opts){
     const cBF=vehicle.brakeDecelCap*fade*m*fH,cBR=vehicle.brakeDecelCap*fadeRr*m*(1-fH),eF=ea*m*engFront,eR=ea*m*(1-engFront);
     // the load transfer follows the deceleration it makes: three rounds from the first guess, then one a round, carrying
     // the deceleration found (the speed moves little between rounds)
+    let sat=false;   // an axle had no grip to spare along the road: its lateral load took it all
     for(let k=0;k<(it===0?3:1);k++){
       const ax=axles(q,vi,aT,ayi);
       aT=(Math.min(ax.gF,cBF+eF)+Math.min(ax.gR,cBR+eR))/m;
-      bfBound=cBF+eF<ax.gF||cBR+eR<ax.gR;
+      bfBound=cBF+eF<ax.gF||cBR+eR<ax.gR;sat=ax.uF>0.98||ax.uR>0.98;
     }
     // Build 156: with each axle's own lateral grip the rear can run out as braking moves load off it, so the rounds can
     // end on a deceleration its own load transfer does not support. Step down to what that transfer gives until it
     // does: with the rear out of grip, less braking also takes load off the front, so this takes a few steps, each
     // smaller (the front's grip grows more slowly than the braking it carries).
-    for(let k=0;k<8;k++){const ax=axles(q,vi,aT,ayi),aC=(Math.min(ax.gF,cBF+eF)+Math.min(ax.gR,cBR+eR))/m;
+    if(sat)for(let k=0;k<8;k++){const ax=axles(q,vi,aT,ayi),aC=(Math.min(ax.gF,cBF+eF)+Math.min(ax.gR,cBR+eR))/m;
       if(!(aC<aT-1e-4))break;aT=aC;bfBound=cBF+eF<ax.gF||cBR+eR<ax.gR;}
     const aBrake=aT+(drag(vi)+corneringDrag(m,ayi,N))/m+G*q.sinT;
     cap=Math.sqrt(Math.max(0,vNext*vNext+2*Math.max(0.1,aBrake)*q.ds3));

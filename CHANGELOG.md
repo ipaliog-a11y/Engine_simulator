@@ -74,6 +74,10 @@ Working toward **v1.0 — every number derived, not fitted.**
   - `test63` judges braking at the limit by the lap's own per-axle grip use, and counts the tyres' cornering drag
     with drag and the hill.
   - `test30`/`32`/`38` count the new BALANCE cell.
+- **Speed.** The tyre's load-sensitivity curve is tabulated (16384 steps, within 2 parts in a million of the power
+  law). It was a third of the lap solver's time on a long circuit, and the per-axle grip calls it more often.
+  - **The 20 km import and solve:** 4.9-6.3 s on this machine, against main's 4.4-6.0 s.
+  - **`test35`'s limit is now 6.5 s.** The 5 s it had was failing three times in four on main itself here.
 
 ### The driver holds the launch slip; every car gets its best launch rpm (build 155)
 
