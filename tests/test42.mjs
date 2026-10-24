@@ -175,7 +175,7 @@ if (wankel.rotorReach > wankel.max) fails.push('the rotor apexes poke through th
 // failed on every new string and the temptation would have been to delete the check. Instead it
 // counts: new strings must still be wrapped in tr() (so nothing has to be re-found later), and the
 // untranslated backlog is printed every run and held to a high-water mark. The debt stays visible
-// and cannot silently grow. (Build 156 resumed Greek; test84 now sweeps the whole interface.)
+// and cannot silently grow. (Build 160 resumed Greek; test86 now sweeps the whole interface.)
 const I18N_DEBT_MAX = 0;   // raise deliberately when pausing costs coverage; lower when catching up
 console.log('\n== labels ==');
 const i18nOk = await page.evaluate(() => {

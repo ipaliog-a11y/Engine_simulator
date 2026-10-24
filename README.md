@@ -1,4 +1,4 @@
-# PIXEL ENGINE SIM v0.6 build 156
+# PIXEL ENGINE SIM v0.6 build 160
 
 **A lightweight, 8-bit style internal combustion engine *designer* & simulator** inspired by *Automation*.
 
@@ -253,6 +253,14 @@ saps power; a large radiator, electric fan and oil cooler keep it cool.
 - **Auto Thermal mode** — coolant & oil drift toward load-dependent targets over time,
   balanced against the cooling subsystem's capacity (radiator airflow scales with RPM;
   the fan provides idle cooling).
+- **Engine sound model** (OPTIONS) — **SYNTH** (the default, below) or **GAS**: the cylinders, intake and
+  exhaust runners and collectors simulated as lumped gas volumes with compressible flow between them,
+  ported from Ange Yaghi's [engine-sim](https://github.com/ange-yaghi/engine-sim) (MIT), driven at our
+  model's rpm, manifold pressure and fuelling, and heard as the exhaust-runner pressure through one of
+  engine-sim's recorded exhaust impulse responses. The turbo whine, blow-off, intake roar, knock and
+  crackle still come from the synth. Heavier (a V12 is about half a CPU core). Four-strokes run on
+  valves; **two-strokes** on piston ports with the crankcase pumping the charge through a reed valve and the
+  transfers; **rotaries** on three chambers per rotor breathing through the ports the rotor uncovers.
 - **Engine sound** — plays on the **DYNO** tab from the engine controls, and on the **TRACK** tab
   from the lap replay (its recorded rpm, throttle and boost, so shifts, lifts and blow-offs are heard
   as the car goes round); other tabs are quiet. Synthesised from the **firing pulses** in an AudioWorklet: every cylinder
@@ -750,6 +758,14 @@ documented in the GUIDE at the point where it matters:
   fast car on a long fast circuit (a Hellcat or an E46 M3 at Spa) runs its rotors to 750–900 °C and fades.
   Measured track-day figures are lower (450–600 °C rotor core, DBA) because most drivers brake earlier and
   softer; light cars and small brakes land inside the measured range.
+- **Balance is a limit, not a motion.**
+  - **What is modelled (build 157):** each axle's grip is its own, so cars understeer or oversteer.
+  - **What is not:** yaw inertia, slip-angle build-up and transient load transfer. A car is never caught out by
+    lift-off oversteer, and it never slides or spins. Chicanes are a little optimistic, about 1–3% by the usual
+    comparison of quasi-steady and transient lap sims.
+  - **Unpublished inputs:** the cars' factory roll balance and their real tyre load sensitivity per axle are not
+    published. Every car starts at NEUTRAL roll balance, though a real road car's factory setup understeers a
+    little more.
 - **The race's racecraft is rules, not physics.** Overtaking, the tow, dirty air, pit-lane loss and
   driver error are rules with fitted numbers. The cars share one racing line rather than fighting for
   space on it, and the tyre model's heat, grip-window, wear and wet-grip constants are fitted to the
@@ -888,6 +904,7 @@ measurement finds things. Each item is one PR.
 | — | Tyre review | ✅ build 153 | Each car's factory tyre class checked against its own skidpad and braking: the 720S and 750S (bespoke P Zero Corsas) move to SEMI; the rest are on the right class, and their launch gap is the launch. Next: the launch model. |
 | — | Launch through tyre slip; traction control | ✅ build 154 | The driven wheels turn at their own speed and the tyre pushes through slip (peak at ~10%, 0.82 in a full slide); TRACTION CONTROL holds the peak, without it the run is flat out and the tyres spin; the launch rpm is the tester's best of five. Presets carry their real equipment. |
 | — | Driver's launch; best launch rpm | ✅ build 155 | The fastest launch is ~10% slip on every car (a sweep of slip targets); without traction control the driver holds it in first gear, then flat out from the first upshift. Every car launches at its best of five rpm. 0-100 RMS 16.1% → 14.7%. |
+| — | Axle balance | ✅ build 157 | Each axle has its own lateral grip: its weight and downforce share, its share of the load transfer (ROLL BALANCE, the anti-roll bars), its own tyres (FRONT WIDTH; the factory front widths of 23 staggered cars), and the side force for the mass it carries. The car corners as hard as the axle that runs out first: front-heavy cars understeer, rear-engined 911s oversteer, braking into a corner unloads the rear. TRACK shows the balance. Laps 0-1.2% slower. test85. |
 | — | Suspension type and geometry | ⏸ on hold | Future development. Today a setup is roll gradient + static camber; the roll camber the geometry recovers is a fixed 50% for every car (CAMBER_RECOVERY), and lateral load transfer is split by static weight. Wanted: the geometry per car (MacPherson strut, double wishbone, multi-link, solid axle) giving its camber recovery, and front/rear roll stiffness (springs, anti-roll bars) giving the handling balance. Needs each preset's real suspension type. |
 | — | Spark torque from fuel | ✅ build 95 | `IMEP_K` replaced by Heywood's 0.8 × fuel-air cycle efficiency; each fuel's LHV/AFR_st enters. Spark torque −2.7%, full-load BSFC 280 g/kWh (real 270–300). Rotary/two-stroke type factors still fitted. |
 | — | `turboChoke` (boost taper) | ✅ build 94 | Retired. Turbine efficiency from blade speed ratio U/C, per-point compressor efficiency, a continuous rich-knock slope in place of a step, and sequential turbos staged as two turbines. Calibration improved on every measure. |
@@ -1155,7 +1172,7 @@ Also queued: a **UI redesign** for the DESIGN and VEHICLE tabs, which are alread
 get more so as derived physics adds inputs. Progressive disclosure — headline inputs by default, a
 detail expander per subsystem — after the first conversion lands, when the final input set is known.
 
-Greek translation **resumed in build 156**: the interface is complete and `tests/test84.mjs` sweeps every
+Greek translation **resumed in build 160**: the interface is complete and `tests/test86.mjs` sweeps every
 tab in Greek, so new English text fails a test instead of shipping. The GUIDE follows page by page; its
 untranslated blocks are a budget in the same test that may only go down.
 - **Charge the acceleration and lap solvers for spool lag**, closing the first limit above. It

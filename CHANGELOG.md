@@ -20,7 +20,7 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 Working toward **v1.0 — every number derived, not fitted.**
 
-### The Greek interface, finished (build 156)
+### The Greek interface, finished (build 160)
 
 - **Everything outside the guide now has Greek.** A sweep of the app in Greek found the interface had grown in
   English since the translation was made: 9 `tr()` calls with no Greek (the tyre speed-rating warning and the
@@ -39,11 +39,133 @@ Working toward **v1.0 — every number derived, not fitted.**
   diesel fuel map's load axis read ΦΟΡΤΩΣΗ (loading, the button's word); it now uses the load key. "Induction" was
   ΥΠΕΡΤΡΟΦΟΔΟΤΗΣΗ (forced induction), which beside "naturally aspirated" said the opposite; it is ΤΡΟΦΟΔΟΣΙΑ ΑΕΡΑ.
   The sound option's note sent Greek players to the DYNO and TRACK tabs, which in Greek are ΔΥΝΑΜΟ and ΠΙΣΤΑ.
+- **What builds 156-159 added** is in too: the ROLL BALANCE choices (ΜΑΛΑΚΗ / ΣΚΛΗΡΗ ΕΜΠΡΟΣ). SYNTH and GAS stay as the
+  sound models' names.
 - **The guide is next.** 184 of its 215 blocks are still English (37 pages entirely); its intro and index are done.
-- Tests: test84 sweeps every tab in Greek, on a load in Greek and after switching mid-session, and fails on any
+- Tests: test86 sweeps every tab in Greek, on a load in Greek and after switching mid-session, and fails on any
   English word outside the kept terms, units and names; checks every `tr()` literal, guide title and category has
   Greek and that no key is in the table twice; checks switching back to English leaves no Greek; and holds the
   guide's untranslated blocks to a budget (184) that may only go down.
+
+### The sound no longer cuts out on a lift (build 159)
+
+- On an injected engine a lift cuts the fuel (DFCO), and the exhaust's pulse strength fell to a tenth of a
+  near-empty charge (0.014 on a closed throttle): both sound models dropped 31-35 dB within a few tenths of
+  a second. The cylinders still pump the air they draw down the pipe, fired or not; the gas model with the
+  fuel off puts 7-17% of its flat-out signal there at 60% of the redline. `exhaustStrength` now floors the
+  exhaust at 0.2 x rpm/redline under both models, so an overrun sits about 10-15 dB under the pull and
+  fades with the revs. soundDrive's own strength is unchanged: the crackle's pipe heat and the knock read it.
+- The GAS leveller came back up over 0.3 s, leaving a hole after every lift as its gain lagged the falling
+  signal; it now recovers in 60 ms.
+- test84: a pull and a lift through the real sim and both chains; the overrun within 25 dB of the pull, fading.
+
+### GAS for two-strokes and rotaries (build 158)
+
+- The GAS sound model now covers every type the designer builds. Two new kinematics share the gas
+  volumes, collectors and audio pick-off with the four-stroke:
+  - **Two-stroke**: a piston-ported cylinder on a 360 deg cycle, scavenged by its own crankcase (the
+    piston's underside pumps it, crankcase compression 1.35). A reed valve admits charge from the runner
+    only while the runner is above the crankcase, the transfers carry it to the cylinder, the exhaust port
+    lets it out into the expansion chamber. Port area is width x the height the piston has uncovered:
+    exhaust 0.70 bore, transfers 1.1 bore in all, reed 0.45 of the piston area. The breathing model has no
+    port timing, so `TWO_STROKE_PORTS` states it by cam choice (exhaust 180/190/198 deg, transfers
+    120/126/132). The 500cc twin makes 4.0 bar IMEP flat out: an untuned pipe, since a lumped volume cannot
+    carry an expansion chamber's returning wave (bigger ports moved it only to 4.5).
+  - **Rotary**: three chambers per rotor, each through its four strokes over 1080 deg of the eccentric shaft,
+    a chamber 360 deg behind the next, volume Vmin + Vd (1 - cos(2 pi phi / 540)) / 2 with
+    Vd = 3 sqrt(3) R e B (654 cc on a 13B). The chambers share the rotor's side intake ports and peripheral
+    exhaust port at the 13B's published timing (exhaust 75 deg BBDC to 48 ATDC, intake 32 ATDC to 50 ABDC),
+    with a 40 deg ramp as an apex crosses an edge; ports 0.07 and 0.09 R B. The Renesis makes 10.3 bar
+    IMEP at 4000 rpm (real: ~11-12 from its 211 Nm).
+- Port flow constants come from area: engine-sim's k is Cd A / sqrt(molar mass), which puts its 2JZ bench at
+  13 cm2 of effective area against ~20 cm2 of valve curtain. Spark and burn by kind (`gasTiming`): a rotary
+  burns over 100-130 shaft deg, its chamber long and thin.
+- The per-build calibration averages six speeds instead of two: what the recorded exhaust passes swings
+  about 2.5x with the firing frequency, and two points at 35%/70% of a 9000 rpm redline both sat in holes,
+  leaving the rotary 3x too loud. Every type now lands within about 2.5x of the synth's level flat out.
+- test84: every type can use GAS; a rotary plays through it live; the two-stroke and rotary IMEP, the 13B
+  chamber volume, part throttle and finiteness.
+
+### Axle balance (build 157)
+
+- **The gap.** The lap pooled all four tyres' lateral grip into one number for the car, so no car could understeer
+  or oversteer: the front and rear always ran out together. This was the biggest piece missing for handling (see
+  the handling-dynamics review: full transient dynamics would cost the size of everything since build 97 and buy
+  1-3% in chicanes; balance buys most of what matters inside the quasi-steady lap).
+- **Each axle now has:**
+  - its own normal load (its weight share, and its downforce share by the aero balance)
+  - its own share of the lateral load transfer, the roll-stiffness split: **ROLL BALANCE** on VEHICLE, −2 to +2, 4%
+    of the transfer a step, neutral at the weight split
+  - its own tyres: **FRONT WIDTH**, entered for 23 staggered real cars (M3 E46, S2000, Supra, Corvettes, Mustang,
+    911s and the supercars)
+  - its own job: in a steady corner each axle must make the side force for the mass it carries
+- **The car corners as hard as the axle that runs out first.**
+  - A front-heavy car's front tyres carry more load each and grip less per kilo (load sensitivity), so hatches
+    understeer.
+  - Rear-engined 911s oversteer.
+  - Staggered mid-engined cars land near neutral, as their narrow fronts intend.
+- **Braking and power, per axle.**
+  - Braking moves load forward, so into a corner the rear runs out first. The lap brakes no harder there than the
+    rear can hold the corner, iterated until the deceleration and the load transfer it makes agree.
+  - On power, the drive takes what the driven axle's own lateral use leaves.
+- **TRACK** shows the balance (UNDERSTEER / OVERSTEER / NEUTRAL, which axle limits and by how much).
+
+| Car | Balance | Riverside GP | Spa |
+|---|---|---|---|
+| VW Golf GTI | understeer 7% | +0.71% | +0.45% |
+| Honda Civic Type R | understeer 8% | +0.94% | +0.73% |
+| Mazda MX-5 NA | understeer 1% | +0.19% | +0.01% |
+| BMW M3 E46 | understeer 3% | +0.41% | +0.17% |
+| Porsche 911 GT3 991.2 | oversteer 6% | +1.03% | +0.76% |
+| Dodge Challenger Hellcat | understeer 4% | −0.01% | −0.13% |
+| McLaren F1 | neutral | +1.02% | +0.70% |
+| McLaren 720S | oversteer 2% | +1.03% | +0.65% |
+| Porsche 911 Turbo S 992 | oversteer 4% | +1.08% | +0.81% |
+
+- **Laps run 0-1.2% slower.** Pooled grip was always the best case, and the axle that runs out first now sets the
+  corner. Braking into corners is held back where the rear would let go.
+- **What is still missing.** No yaw inertia, slip-angle build-up or transient load transfer: a car never slides or
+  spins, and its balance is a limit, not a motion. Every car starts at NEUTRAL roll balance (a real road car's
+  factory setup understeers a little more).
+- `test85`:
+  - a hatch understeers and a 911 oversteers
+  - stiffer front bars move the balance toward understeer
+  - narrow fronts move a mid-engined car toward understeer
+  - braking moves grip from the rear axle to the front
+  - a symmetric car is balanced
+  - roll balance is part of the factory fit
+  - TRACK shows the balance
+- **Other tests updated:**
+  - `test81` asks no axle for more than its grip, and its gear readout keeps every downshift run.
+  - `test63` judges braking at the limit by the lap's own per-axle grip use, and counts the tyres' cornering drag
+    with drag and the hill.
+  - `test30`/`32`/`38` count the new BALANCE cell.
+- **Speed.** The tyre's load-sensitivity curve is tabulated (16384 steps, within 2 parts in a million of the power
+  law). It was a third of the lap solver's time on a long circuit, and the per-axle grip calls it more often.
+  - **The 20 km import and solve:** 4.9-6.3 s on this machine, against main's 4.4-6.0 s.
+  - **`test35`'s limit is now 6.5 s.** The 5 s it had was failing three times in four on main itself here.
+### GAS: an engine sound simulated as gas, after engine-sim (build 156)
+
+- **ENGINE SOUND MODEL** in OPTIONS: SYNTH (the default, unchanged) or GAS, remembered per browser.
+- GAS ports the gas dynamics of Ange Yaghi's engine-sim (MIT; notice in `index.html` as `SOUND_GAS_LICENCE`):
+  per cylinder an intake runner, the cylinder and an exhaust runner + primary, per bank a collector,
+  each a lumped gas volume; compressible orifice flow between them (choked or subsonic) with bulk
+  momentum and dynamic pressure; 10 kHz with 4 fluid substeps (engine-sim runs 8; 4 is within 5% rms).
+  Built from the presets' own geometry: bore, stroke, compression, cam duration, overlap and lift, valve
+  size (engine-sim's 2JZ flow bench scaled by area and lift), runner and header length, system pipe.
+  The crank turns at our model's rpm and the plenum sits at its manifold pressure; the burn is a Wiebe
+  curve whose heat share (0.50) is fitted to 13 bar IMEP flat out on the 1.6 sport four.
+- The sound is engine-sim's: exhaust-runner gauge pressure delayed down the pipe, its audio chain
+  (1.9 kHz band limit, jitter, DC removal, derivative, flow-modulated noise) and two of its recorded
+  impulse responses (mild exhaust; minimal muffling for a race system) in a ConvolverNode, then the
+  silencer, cat and turbine as a low-pass and a level, and a limiter.
+- Loudness: the worklet levels the gas model's own swings (it is ~300x quieter at idle than flat out,
+  on no single power law) and the loudness follows the synth's pulse strength instead; each build's
+  impulse-response coupling is measured offline once (two short renders) so engines land within about
+  2x of the synth's level. The turbo whine, blow-off, intake roar, knock and crackle keep playing from
+  the synth, whose exhaust is muted. Rotaries and two-strokes stay on SYNTH.
+- The prototype it grew from stays in `tests/proto/gas-sound/`. test84 pins the physics, the option and
+  the live switch.
 
 ### The driver holds the launch slip; every car gets its best launch rpm (build 155)
 

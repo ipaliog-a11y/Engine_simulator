@@ -182,7 +182,7 @@ const ui = await page.evaluate(() => {
 });
 console.log(`\nUI: footer width "${ui.footer}" · ${ui.cells} lap cells · report ${ui.reportW}px wide · map painted ${ui.painted}`);
 if (!/–/.test(ui.footer)) fails.push('map footer does not show the width range');
-if (ui.cells !== 9) fails.push('lap grid broken');
+if (ui.cells !== 10) fails.push('lap grid broken');   // 8 + balance (build 157) + brake temperature
 if (!ui.reportW) fails.push('hot lap report failed to render');
 
 await page.evaluate(() => applyLang('el')); await page.waitForTimeout(250);

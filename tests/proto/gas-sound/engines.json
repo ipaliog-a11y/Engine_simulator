@@ -1,0 +1,278 @@
+{
+ "1.6 Sport NA I4": {
+  "cylinders": 4,
+  "layout": "inline",
+  "type": "petrol4",
+  "bore": 0.081,
+  "stroke": 0.078,
+  "cr": 12.5,
+  "ivDia": 0.03159,
+  "ivCount": 2,
+  "ivLift": 0.0069498,
+  "camDur": 220,
+  "overlap": -8,
+  "primL": 0.7479151887563964,
+  "primD": 0.03726,
+  "sysL": 2.6,
+  "sysD": 0.07347688393013013,
+  "sysPipes": 1,
+  "runnerL": 0.39695,
+  "runnerD": 0.03797375547006116,
+  "idle": 850,
+  "redline": 7200,
+  "events": [
+   {
+    "at": 0,
+    "bank": 0
+   },
+   {
+    "at": 0.25,
+    "bank": 0
+   },
+   {
+    "at": 0.5,
+    "bank": 0
+   },
+   {
+    "at": 0.75,
+    "bank": 0
+   }
+  ],
+  "banks": 1,
+  "exhaust": "sport",
+  "cat": "stock",
+  "intake": "na"
+ },
+ "3.0 Turbo I6 (2JZ)": {
+  "cylinders": 6,
+  "layout": "inline",
+  "type": "petrol4",
+  "bore": 0.084,
+  "stroke": 0.09,
+  "cr": 10.2,
+  "ivDia": 0.03276,
+  "ivCount": 2,
+  "ivLift": 0.00819,
+  "camDur": 252,
+  "overlap": 32,
+  "primL": 0.3415,
+  "primD": 0.03864,
+  "sysL": 2.6,
+  "sysD": 0.10335963835440636,
+  "sysPipes": 1,
+  "runnerL": 0.3998,
+  "runnerD": 0.03938019085784121,
+  "idle": 895,
+  "redline": 7000,
+  "events": [
+   {
+    "at": 0,
+    "bank": 0
+   },
+   {
+    "at": 0.16666666666666666,
+    "bank": 0
+   },
+   {
+    "at": 0.3333333333333333,
+    "bank": 0
+   },
+   {
+    "at": 0.5,
+    "bank": 0
+   },
+   {
+    "at": 0.6666666666666666,
+    "bank": 0
+   },
+   {
+    "at": 0.8333333333333334,
+    "bank": 0
+   }
+  ],
+  "banks": 1,
+  "exhaust": "sport",
+  "cat": "stock",
+  "intake": "turbo"
+ },
+ "5.0 V8 NA Muscle": {
+  "cylinders": 8,
+  "layout": "v",
+  "type": "petrol4",
+  "bore": 0.093,
+  "stroke": 0.0927,
+  "cr": 12,
+  "ivDia": 0.0465,
+  "ivCount": 1,
+  "ivLift": 0.011625,
+  "camDur": 252,
+  "overlap": 32,
+  "primL": 0.825341844455132,
+  "primD": 0.04278,
+  "sysL": 2.6,
+  "sysD": 0.09590988376706573,
+  "sysPipes": 2,
+  "runnerL": 0.40835,
+  "runnerD": 0.039525,
+  "idle": 895,
+  "redline": 7500,
+  "events": [
+   {
+    "at": 0,
+    "bank": 0
+   },
+   {
+    "at": 0.125,
+    "bank": 1
+   },
+   {
+    "at": 0.25,
+    "bank": 0
+   },
+   {
+    "at": 0.375,
+    "bank": 1
+   },
+   {
+    "at": 0.5,
+    "bank": 1
+   },
+   {
+    "at": 0.625,
+    "bank": 0
+   },
+   {
+    "at": 0.75,
+    "bank": 1
+   },
+   {
+    "at": 0.875,
+    "bank": 0
+   }
+  ],
+  "banks": 2,
+  "exhaust": "sport",
+  "cat": "stock",
+  "intake": "na"
+ },
+ "6.5 V12 NA Supercar": {
+  "cylinders": 12,
+  "layout": "v",
+  "type": "petrol4",
+  "bore": 0.095,
+  "stroke": 0.07640000000000001,
+  "cr": 11.8,
+  "ivDia": 0.03705000000000001,
+  "ivCount": 2,
+  "ivLift": 0.010374000000000003,
+  "camDur": 284,
+  "overlap": 72,
+  "primL": 0.6054773922003205,
+  "primD": 0.051300000000000005,
+  "sysL": 2.2,
+  "sysD": 0.11,
+  "sysPipes": 2,
+  "runnerL": 0.41025,
+  "runnerD": 0.0445371206130347,
+  "idle": 1150,
+  "redline": 8500,
+  "events": [
+   {
+    "at": 0,
+    "bank": 0
+   },
+   {
+    "at": 0.08333333333333333,
+    "bank": 1
+   },
+   {
+    "at": 0.16666666666666666,
+    "bank": 0
+   },
+   {
+    "at": 0.25,
+    "bank": 1
+   },
+   {
+    "at": 0.3333333333333333,
+    "bank": 0
+   },
+   {
+    "at": 0.4166666666666667,
+    "bank": 1
+   },
+   {
+    "at": 0.5,
+    "bank": 0
+   },
+   {
+    "at": 0.5833333333333334,
+    "bank": 1
+   },
+   {
+    "at": 0.6666666666666666,
+    "bank": 0
+   },
+   {
+    "at": 0.75,
+    "bank": 1
+   },
+   {
+    "at": 0.8333333333333334,
+    "bank": 0
+   },
+   {
+    "at": 0.9166666666666666,
+    "bank": 1
+   }
+  ],
+  "banks": 2,
+  "exhaust": "race",
+  "cat": "sport",
+  "intake": "na"
+ },
+ "2.0 ITB NA Screamer I4": {
+  "cylinders": 4,
+  "layout": "inline",
+  "type": "petrol4",
+  "bore": 0.087,
+  "stroke": 0.084,
+  "cr": 11.7,
+  "ivDia": 0.03393,
+  "ivCount": 2,
+  "ivLift": 0.0095004,
+  "camDur": 284,
+  "overlap": 72,
+  "primL": 0.5842097975742411,
+  "primD": 0.04698,
+  "sysL": 2.2,
+  "sysD": 0.10768768223986187,
+  "sysPipes": 1,
+  "runnerL": 0.40265,
+  "runnerD": 0.04078662624562125,
+  "idle": 1150,
+  "redline": 8800,
+  "events": [
+   {
+    "at": 0,
+    "bank": 0
+   },
+   {
+    "at": 0.25,
+    "bank": 0
+   },
+   {
+    "at": 0.5,
+    "bank": 0
+   },
+   {
+    "at": 0.75,
+    "bank": 0
+   }
+  ],
+  "banks": 1,
+  "exhaust": "race",
+  "cat": "none",
+  "intake": "na"
+ }
+}
