@@ -373,7 +373,7 @@ table.fuelmap td.live{box-shadow:inset 0 0 0 2px #fff;font-weight:bold}
 <body>
 <div class="container">
 <header>
-<h1>PIXEL ENGINE SIM v0.6 build 163</h1>
+<h1>PIXEL ENGINE SIM v0.6 build 165</h1>
 <div class="subtitle" id="subtitle">ENGINE DESIGNER • BUILD IT, THEN DRIVE IT</div>
 </header>
 <div class="build-strip" id="buildStrip">
@@ -3304,13 +3304,17 @@ function buildFillTable(){
   }
   e.fillTable=tb;
 }
+// The intake phaser's advance at this rpm, as the fill table chose it (0 without VVT: the table never advances)
+function camAdvAt(rpm){
+  const tb=engine.fillTable;if(!tb||!engine.vvt)return 0;
+  if(rpm<=tb[0].rpm)return tb[0].adv;
+  for(let i=1;i<tb.length;i++)if(rpm<=tb[i].rpm){const a=tb[i-1],b=tb[i];return a.adv+(b.adv-a.adv)*(rpm-a.rpm)/(b.rpm-a.rpm);}
+  return tb[tb.length-1].adv;
+}
 // Where the intake valve closes at full load, crank degrees after BDC: the phase the table chose (build 134).
 function ivcAt(rpm){
-  const e=engine,tb=e.fillTable;if(!tb)return null;
-  let adv=tb[tb.length-1].adv;
-  if(rpm<=tb[0].rpm)adv=tb[0].adv;
-  else for(let i=1;i<tb.length;i++)if(rpm<=tb[i].rpm){const a=tb[i-1],b=tb[i];adv=a.adv+(b.adv-a.adv)*(rpm-a.rpm)/(b.rpm-a.rpm);break;}
-  return ivcAbdc(e.camDur,e.camLSA,adv);
+  const e=engine;if(!e.fillTable)return null;
+  return ivcAbdc(e.camDur,e.camLSA,camAdvAt(rpm));
 }
 function fillAt(rpm){
   const tb=engine.fillTable;if(!tb)return 1;
@@ -4455,7 +4459,15 @@ const I18N={
   'KNOCK':{el:'ΠΕΙΡΑΚΙΑ'},'KNOCK RISK':{el:'ΚΙΝΔ. ΠΕΙΡΑΚΙΩΝ'},'FIRING ORDER':{el:'ΣΕΙΡΑ ΑΝΑΦΛ.'},
   'PORTS':{el:'ΘΥΡΙΔΕΣ'},'COOLANT':{el:'ΨΥΚΤΙΚΟ'},'OIL':{el:'ΛΑΔΙ'},'FUEL & SPARK':{el:'ΚΑΥΣΙΜΟ/ΣΠΙΝΘΗΡΑΣ'},
   'OVERRUN CUT — 0 L/h':{el:'ΔΙΑΚΟΠΗ ΣΤΗΝ ΕΠΙΒΡΑΔΥΝΣΗ — 0 L/h'},'ADV':{el:'ΠΡΟΠ.'},'AUTO':{el:'ΑΥΤΟΜ.'},
-  'COMPRESSION IGNITION':{el:'ΑΝΑΦΛΕΞΗ ΜΕ ΣΥΜΠΙΕΣΗ'},'ROTOR TURNS AT 1/3 SHAFT SPEED':{el:'ΡΟΤΟΡΑΣ = 1/3 ΤΟΥ ΑΞΟΝΑ'},
+  'COMPRESSION IGNITION':{el:'ΑΝΑΦΛΕΞΗ ΜΕ ΣΥΜΠΙΕΣΗ'},
+  // the live cutaway's turbo and supercharger (build 164)
+  'AIR IN':{el:'ΑΕΡΑΣ'},'OFF THE CRANK':{el:'ΑΠΟ ΤΟΝ ΣΤΡΟΦΑΛΟ'},'OUTLET':{el:'ΕΞΟΔΟΣ'},'AT THE TURBINE':{el:'ΣΤΗΝ ΤΟΥΡΜΠΙΝΑ'},
+  'TO THE CAT':{el:'ΠΡΟΣ ΚΑΤΑΛΥΤΗ'},'SMALL + LARGE':{el:'ΜΙΚΡΟ + ΜΕΓΑΛΟ'},'HP + LP':{el:'ΥΨΗΛΗΣ + ΧΑΜΗΛΗΣ'},'2 UNITS':{el:'2 ΜΟΝΑΔΕΣ'},
+  'BLOW-OFF':{el:'ΕΚΤΟΝΩΣΗ'},'TARGET':{el:'ΣΤΟΧΟΣ'},'of choke flow':{el:'της μέγιστης παροχής'},'VANES':{el:'ΠΤΕΡΥΓΙΑ'},
+  '% OPEN':{el:'% ΑΝΟΙΧΤΑ'},'WASTEGATE OPEN':{el:'WASTEGATE ΑΝΟΙΧΤΗ'},'WASTEGATE SHUT':{el:'WASTEGATE ΚΛΕΙΣΤΗ'},
+  'OVERRUN CUT':{el:'ΔΙΑΚΟΠΗ ΚΑΥΣΙΜΟΥ'},'DIESEL: NO SPARK':{el:'ΝΤΙΖΕΛ: ΧΩΡΙΣ ΣΠΙΝΘΗΡΑ'},
+  // the head (build 165)
+  'OVERLAP':{el:'ΕΠΙΚΑΛΥΨΗ'},'LIFT':{el:'ΑΝΥΨΩΣΗ'},'ROTOR TURNS AT 1/3 SHAFT SPEED':{el:'ΡΟΤΟΡΑΣ = 1/3 ΤΟΥ ΑΞΟΝΑ'},
   'ENGINE FAILURE':{el:'ΒΛΑΒΗ ΚΙΝΗΤΗΡΑ'},'REBUILD WITH BUILD & DYNO':{el:'ΞΑΝΑΦΤΙΑΞΕ ΤΟΝ ΚΙΝΗΤΗΡΑ'},
   'DAMAGE':{el:'ΖΗΜΙΑ'},'HEALTH':{el:'ΥΓΕΙΑ'},'BOTTLE':{el:'ΦΙΑΛΗ'},'RUNNING':{el:'ΛΕΙΤΟΥΡΓΕΙ'},'IDLE':{el:'ΡΕΛΑΝΤΙ'},
   'COOL':{el:'ΨΥΞΗ'},
@@ -6527,9 +6539,7 @@ function effIAT(map,rpm){
     // choke at the top end a frame runs well off its island and the charge arrives hotter — a real
     // part of why a turbo engine rolls off before its limiter. (Turbos only; a supercharger's
     // efficiency is another law, and it keeps its design value.)
-    const eta=(rpm>0&&engine.intake==='turbo'&&engine.chokeFlow_kgs>0)
-      ?compIslandEff(compFlowFrac(rpm,airFlowAt(rpm,PR)),PR):engine.compEff;
-    const rise=(t+273.15)*(Math.pow(PR,0.283)-1)/clamp(eta||0.72,0.30,0.85);
+    const rise=compOutletT(map,rpm)-t;
     t+=rise*(1-(rpm>0?icEffAt(airFlowAt(rpm,PR)):(engine.icEff!=null?engine.icEff:0.82)));
   }
   t-=engine.chargeCool*(engine.injector==='direct'?1.15:1.0);   // DI cools the charge slightly more
@@ -12758,7 +12768,15 @@ function drawEngine(dt){
   rotorAngle=(rotorAngle+rate*dt/3)%(Math.PI*2);           // rotor turns at 1/3 shaft speed
   // The turbo is geared to the same clock, so it visibly picks up with boost without spinning
   // into a blur of its own.
-  turboAngle=(turboAngle+(state.blown?0:(0.6+clamp(Math.max(0,m-1)/1.5,0,1)*2.2)*Math.PI*2)*dt)%(Math.PI*2);
+  // The turbo turns with the shaft speed the spool model integrates (build 164; it followed the manifold
+  // pressure), at a readable pace: a quarter turn a second stopped to under three at the shaft's limit.
+  const nShaft=e.shaftJ?Math.sqrt(2*Math.max(0,state.shaftE||0)/e.shaftJ)*60/(2*Math.PI):0;
+  turboAngle=(turboAngle+(state.blown?0:(0.25+2.6*clamp(nShaft/Math.max(1,e.shaftMax),0,1))*Math.PI*2)*dt)%(Math.PI*2);
+  // A Roots or screw blower is geared to the crank on screen as on the engine; a centrifugal's 12:1 would blur.
+  const scD=(SC_SOUND[e.scType]||SC_SOUND.roots).drive;
+  scAngle=(scAngle+(state.blown?0:(e.scType==='centrifugal'?(0.25+2.6*clamp(rpm/e.redline,0,1))*Math.PI*2:rate*scD))*dt)%(Math.PI*2*12);
+  vizFlow+=dt*(state.blown?0:0.4+2.2*clamp(rpm/e.redline,0,1)*clamp(m,0.2,3)/Math.max(1,1+(e.boost_bar||0)));
+  if(vizBovT>0)vizBovT-=dt;
   if(flashT>0)flashT-=dt;
 
   const deg=crankAngle*180/Math.PI;                        // 0..720 for a four-stroke
@@ -12789,7 +12807,7 @@ function drawEngine(dt){
   if(state.blown)msg=tr('ENGINE FAILURE')+' — '+state.wearCause+' • '+tr('REBUILD WITH BUILD & DYNO');
   else if(state.wearCause)msg=tr('DAMAGE')+': '+state.wearCause+' — '+tr('HEALTH')+' '+Math.round(state.engineHealth*100)+'%';
   else if(state.nitrousActive&&nitrousImep()>0)msg='NITROUS! • '+state.powerHP.toFixed(0)+' HP • '+tr('BOTTLE')+' '+Math.round(state.nitrousCharge*100)+'%';
-  else msg=(state.powerHP>5?tr('RUNNING'):tr('IDLE'))+' • '+state.powerHP.toFixed(0)+' HP • '+state.torque.toFixed(0)+' Nm • '
+  else msg=(state.powerHP>5?tr('RUNNING'):tr('IDLE'))+' • '+(Math.round(state.powerHP)||0)+' HP • '+(Math.round(state.torque)||0)+' Nm • '
     +tr('COOL')+' '+Math.round(state.coolant)+'C • '+tr('HEALTH')+' '+Math.round(state.engineHealth*100)+'%';
   if(state.nitrousActive&&nitrousImep()>0)ctx.fillStyle='#ff66cc';
   ctx.fillText(msg,px(10),py(414));
@@ -12800,10 +12818,99 @@ function drawEngine(dt){
 // These were written inside drawPistonCutaway, so the Wankel view had none of them: no turbo, no
 // exhaust, no EGT, no ignition advance, no output. Shared now, so both engine types show the same
 // information in the same place.
-function drawIntakeSide(px,py,S,F,LW,m,portYc,itX,turboY){
-  const e=engine;
-  ctx.strokeStyle=C.intake;ctx.lineWidth=LW(8);
-  ctx.beginPath();ctx.moveTo(px(52),py(portYc));ctx.lineTo(px(itX),py(portYc));ctx.stroke();
+// ---- the air and gas paths, and the turbo or supercharger in them (build 164) ----
+// The boosters were a circle with six spokes hung off the intake pipe: a turbo had no turbine and no
+// exhaust reaching it, and a supercharger looked the same in yellow. They are drawn now as they are
+// built and turned by the model: a turbo is two snail housings on one shaft, the turbine fed by the
+// exhaust manifold and the compressor pushing the charge round through the intercooler to the throttle,
+// spinning with the shaft speed the spool model integrates; a supercharger is belted to the crank.
+let scAngle=0,vizFlow=0,vizChargeP=0,vizBovT=0;
+const VIZ_TX=352,VIZ_TTY=160,VIZ_CTY=234,VIZ_CHG_Y=340,VIZ_IC_X=31,VIZ_SC_X=44;
+function vizPipe(px,py,LW,pts,w,col){
+  ctx.strokeStyle=col;ctx.lineWidth=LW(w);ctx.lineJoin='round';
+  ctx.beginPath();ctx.moveTo(px(pts[0][0]),py(pts[0][1]));
+  for(let i=1;i<pts.length;i++)ctx.lineTo(px(pts[i][0]),py(pts[i][1]));
+  ctx.stroke();
+}
+// the gas moving: dashes travelling down the pipe at a pace that ranks with the mass flow
+function vizFlowDash(px,py,S,LW,pts,col){
+  ctx.save();ctx.setLineDash([3*S,7*S]);ctx.lineDashOffset=-((vizFlow*10)%10)*S;
+  vizPipe(px,py,LW,pts,1.5,col);ctx.restore();
+}
+// A volute seen end-on. The passage round the wheel grows from nothing at the tongue to its full width g
+// after one turn, then runs out along the tangent. A compressor's wheel flings the air round and the
+// passage widens as it collects it (dir +1: it grows clockwise on screen, the way the wheels turn); a
+// turbine's gas comes in through the duct and is fed onto the wheel all the way round as the passage
+// narrows, so its passage grows the other way (dir -1). Returns the end of the duct, where the pipe joins.
+function vizScroll(px,py,S,LW,cx,cy,rw,g,dir,tongue,duct,gas,wall){
+  const P=(r,a)=>[cx+r*Math.cos(a),cy+r*Math.sin(a)];
+  const tx=-Math.sin(tongue)*dir,ty=Math.cos(tongue)*dir;
+  const i0=P(rw,tongue),o0=P(rw+g,tongue);
+  ctx.beginPath();
+  for(let i=0;i<=60;i++){const u=i/60,q=P(rw+g*u,tongue+dir*u*2*Math.PI);
+    if(i)ctx.lineTo(px(q[0]),py(q[1]));else ctx.moveTo(px(q[0]),py(q[1]));}
+  ctx.lineTo(px(o0[0]+tx*duct),py(o0[1]+ty*duct));
+  ctx.lineTo(px(i0[0]+tx*duct),py(i0[1]+ty*duct));
+  ctx.closePath();
+  ctx.fillStyle=gas;ctx.fill();
+  ctx.strokeStyle=wall;ctx.lineWidth=LW(2.2);ctx.lineJoin='round';ctx.stroke();
+  ctx.fillStyle='#0a0a12';ctx.beginPath();ctx.arc(px(cx),py(cy),(rw-0.8)*S,0,6.284);ctx.fill();
+  return [(i0[0]+o0[0])/2+tx*duct,(i0[1]+o0[1])/2+ty*duct];
+}
+// compressor wheel: COMP_BLADES full blades and as many splitters, swept back against the rotation
+function vizCompWheel(px,py,S,LW,cx,cy,r,ang,col){
+  ctx.strokeStyle=col;ctx.lineCap='round';
+  const n=COMP_BLADES*2;
+  for(let i=0;i<n;i++){const a=ang+i*2*Math.PI/n,full=i%2===0,r0=r*(full?0.3:0.56);
+    ctx.lineWidth=LW(full?1.6:1.1);ctx.beginPath();
+    ctx.moveTo(px(cx+r0*Math.cos(a)),py(cy+r0*Math.sin(a)));
+    ctx.quadraticCurveTo(px(cx+r*0.72*Math.cos(a-0.2)),py(cy+r*0.72*Math.sin(a-0.2)),px(cx+r*Math.cos(a-0.6)),py(cy+r*Math.sin(a-0.6)));
+    ctx.stroke();}
+  ctx.lineCap='butt';
+  ctx.fillStyle=C.metalLight;ctx.beginPath();ctx.arc(px(cx),py(cy),r*0.27*S,0,6.284);ctx.fill();
+  ctx.fillStyle='#0a0a12';ctx.beginPath();ctx.arc(px(cx),py(cy),r*0.1*S,0,6.284);ctx.fill();
+}
+// turbine wheel: straight radial blades (they carry the hot gas's load in bending, not in camber), and
+// the exducer the gas leaves through, towards you
+function vizTurbWheel(px,py,S,LW,cx,cy,r,ang,col){
+  ctx.strokeStyle=col;ctx.lineWidth=LW(1.4);
+  for(let i=0;i<11;i++){const a=ang+i*2*Math.PI/11;ctx.beginPath();
+    ctx.moveTo(px(cx+r*0.3*Math.cos(a)),py(cy+r*0.3*Math.sin(a)));ctx.lineTo(px(cx+r*Math.cos(a)),py(cy+r*Math.sin(a)));ctx.stroke();}
+  ctx.strokeStyle='#7a4030';ctx.lineWidth=LW(1);ctx.beginPath();ctx.arc(px(cx),py(cy),r*0.64*S,0,6.284);ctx.stroke();
+  ctx.fillStyle=C.metalLight;ctx.beginPath();ctx.arc(px(cx),py(cy),r*0.24*S,0,6.284);ctx.fill();
+}
+// lobed rotor seen end-on: n lobes, depth d of the radius
+function vizRotor(px,py,S,cx,cy,r,n,d,ang,col){
+  ctx.fillStyle=col;ctx.beginPath();
+  for(let i=0;i<=72;i++){const a=i/72*2*Math.PI,rr=r*(1-d+d*Math.pow(Math.abs(Math.cos(n*(a-ang)/2)),0.6));
+    const x=px(cx+rr*Math.cos(a)),y=py(cy+rr*Math.sin(a));if(i)ctx.lineTo(x,y);else ctx.moveTo(x,y);}
+  ctx.fill();
+  ctx.fillStyle='#0a0a12';ctx.beginPath();ctx.arc(px(cx),py(cy),r*0.16*S,0,6.284);ctx.fill();
+}
+function vizCore(px,py,S,LW,x,y,w,h,hot){
+  ctx.fillStyle='#152030';ctx.fillRect(px(x),py(y),w*S,h*S);
+  ctx.strokeStyle=hot;ctx.lineWidth=LW(0.8);
+  for(let k=y+3;k<y+h-1;k+=3){ctx.beginPath();ctx.moveTo(px(x+1),py(k));ctx.lineTo(px(x+w-1),py(k));ctx.stroke();}
+  ctx.strokeStyle=C.metal;ctx.lineWidth=LW(1.2);ctx.strokeRect(px(x),py(y),w*S,h*S);
+}
+// The compressor's outlet temperature, before the intercooler gives most of the rise back (effIAT), and what
+// the charge pipe is coloured by: the isentropic rise over the compressor's efficiency at this flow.
+function compOutletT(map,rpm){
+  const PR=Math.max(1,map),t=state.iat;
+  const eta=(rpm>0&&engine.intake==='turbo'&&engine.chokeFlow_kgs>0)
+    ?compIslandEff(compFlowFrac(rpm,airFlowAt(rpm,PR)),PR):engine.compEff;
+  return t+(t+273.15)*(Math.pow(PR,0.283)-1)/clamp(eta||0.72,0.30,0.85);
+}
+function vizTempCol(T){const f=clamp((T-20)/160,0,1);return `rgb(${Math.round(68+170*f)},${Math.round(170-70*f)},${Math.round(255-200*f)})`;}
+
+function drawIntakeSide(px,py,S,F,LW,m,portYc,itX,crank){
+  const e=engine,turbo=e.intake==='turbo',sc=e.intake==='supercharger';
+  // the throttle body is fed by open air, the supercharger's outlet, or the turbo's charge pipe
+  // (which is drawn with the turbo, on the exhaust side)
+  const x0=turbo?VIZ_IC_X:sc?VIZ_SC_X:52;
+  const chargeCol=e.intake==='na'?C.intake:vizTempCol(effIAT(m,state.rpm));
+  vizPipe(px,py,LW,[[x0,portYc],[itX,portYc]],8,chargeCol);
+  vizFlowDash(px,py,S,LW,[[x0,portYc],[itX,portYc]],'#dff');
   const thr=state.throttle,bx=112;
   ctx.strokeStyle='#cfe';ctx.lineWidth=LW(3);
   ctx.beginPath();
@@ -12814,77 +12921,231 @@ function drawIntakeSide(px,py,S,F,LW,m,portYc,itX,turboY){
   ctx.fillStyle='#89b';ctx.font=F(6);
   ctx.fillText('MAP '+m.toFixed(2)+' bar',px(52),py(portYc+20));
   ctx.fillText('IAT '+Math.round(effIAT(m,state.rpm))+'C',px(52),py(portYc+30));
-
-  // ---- forced induction ----
-  if(e.intake!=='na'){
-    const tx=84,ty=turboY;
-    ctx.fillStyle='#10101a';ctx.beginPath();ctx.arc(px(tx),py(ty),22*S,0,6.284);ctx.fill();
-    ctx.strokeStyle=e.intake==='turbo'?C.exhaust:C.yellow;ctx.lineWidth=LW(2);
-    ctx.beginPath();ctx.arc(px(tx),py(ty),22*S,0,6.284);ctx.stroke();
-    ctx.strokeStyle=C.metalLight;ctx.lineWidth=LW(2.5);
-    for(let i=0;i<6;i++){const a=turboAngle+i*Math.PI/3;
-      ctx.beginPath();ctx.moveTo(px(tx),py(ty));
-      ctx.lineTo(px(tx+Math.cos(a)*17),py(ty+Math.sin(a)*17));ctx.stroke();}
-    ctx.fillStyle=C.metalLight;ctx.beginPath();ctx.arc(px(tx),py(ty),4*S,0,6.284);ctx.fill();
-    ctx.strokeStyle=C.intake;ctx.lineWidth=LW(5);
-    ctx.beginPath();ctx.moveTo(px(tx),py(ty-22));ctx.lineTo(px(tx),py(portYc));ctx.stroke();
-    const boost=Math.max(0,m-1);
-    ctx.fillStyle=boost>0.02?C.yellow:'#667';ctx.font=F(6);ctx.textAlign='center';
-    ctx.fillText((e.intake==='turbo'?tr('TURBO'):tr('BLOWER'))+' +'+boost.toFixed(2),px(tx),py(ty+34));
-    if(e.intake==='turbo'){ctx.fillStyle='#89b';
-      ctx.fillText(Math.round(engine.turboLoad*100)+'% '+tr('of rated flow'),px(tx),py(ty+44));}
-    ctx.textAlign='left';
+  if(sc)drawSupercharger(px,py,S,F,LW,m,portYc,crank);
+}
+// A supercharger is driven off the crank by a belt: a Roots or a twin-screw on a ~2:1 pulley turns with
+// the crank on screen as it does on the engine (the same drive ratios the engine sound uses, SC_SOUND); a
+// centrifugal's ~12:1 step-up would be a blur, so it turns at a readable pace and says its speed.
+function drawSupercharger(px,py,S,F,LW,m,portYc,crank){
+  const e=engine,t=e.scType||'roots',snd=SC_SOUND[t]||SC_SOUND.roots;
+  const bx=VIZ_SC_X,by=222,boost=Math.max(0,m-1);
+  const hotT=compOutletT(Math.max(1,m),state.rpm),hot=vizTempCol(hotT);
+  vizPipe(px,py,LW,[[bx,276],[bx,by]],8,C.intake);                  // air in, from below
+  vizFlowDash(px,py,S,LW,[[bx,276],[bx,by]],'#dff');
+  let outX=bx;
+  if(t==='centrifugal'){
+    const end=vizScroll(px,py,S,LW,bx,by,13,7,1,Math.PI,10,'#14243a','#7ab');
+    outX=end[0];vizPipe(px,py,LW,[[end[0],end[1]],[end[0],portYc]],8,hot);
+    vizCompWheel(px,py,S,LW,bx,by,11.5,scAngle,C.metalLight);
+  }else{
+    vizPipe(px,py,LW,[[bx,by],[bx,portYc]],8,hot);
+    // the casing: a figure of eight round the two rotors, the air in at the bottom and out at the top
+    ctx.fillStyle='#1a1a26';ctx.strokeStyle=C.metal;ctx.lineWidth=LW(1.4);
+    ctx.beginPath();ctx.arc(px(bx-14),py(by),16*S,0,6.284);ctx.moveTo(px(bx+30),py(by));ctx.arc(px(bx+14),py(by),16*S,0,6.284);ctx.fill();ctx.stroke();
+    ctx.fillStyle='#1a1a26';ctx.fillRect(px(bx-5),py(by-15),10*S,30*S);
+    if(t==='screw'){       // a 4-lobe male rotor driving a 6-flute female one, which turns at 4/6 of its speed
+      vizRotor(px,py,S,bx-14,by,14,4,0.4,scAngle,C.metalLight);
+      vizRotor(px,py,S,bx+15,by,14,6,0.28,-scAngle*4/6+Math.PI/6,'#8a8a9a');
+    }else{                 // two 3-lobe rotors turning against each other, the air carried round the outside
+      vizRotor(px,py,S,bx-14,by,14,3,0.5,scAngle,C.metalLight);
+      vizRotor(px,py,S,bx+14,by,14,3,0.5,-scAngle+Math.PI/3,C.metalLight);
+    }
   }
+  vizFlowDash(px,py,S,LW,[[outX,by-14],[outX,portYc]],'#fff');
+  if(e.intercooler&&e.intercooler!=='none')vizCore(px,py,S,LW,outX-9,112,18,44,hot);
+  // the belt, from the crank pulley to the blower's: the blower's is smaller by the drive ratio
+  const rc=9,rp=t==='centrifugal'?4:rc/snd.drive;
+  const dx=bx-crank.x,dy=by-crank.y,L=Math.hypot(dx,dy),nx=-dy/L,ny=dx/L;
+  ctx.save();ctx.strokeStyle='#3a3a44';ctx.lineWidth=LW(2.2);
+  ctx.setLineDash([5*S,2*S]);ctx.lineDashOffset=-((crankAngle*rc)%7)*S;
+  ctx.beginPath();ctx.moveTo(px(crank.x+nx*rc),py(crank.y+ny*rc));ctx.lineTo(px(bx+nx*rp),py(by+ny*rp));
+  ctx.moveTo(px(crank.x-nx*rc),py(crank.y-ny*rc));ctx.lineTo(px(bx-nx*rp),py(by-ny*rp));ctx.stroke();ctx.restore();
+  ctx.strokeStyle='#55556a';ctx.lineWidth=LW(2);
+  ctx.beginPath();ctx.arc(px(crank.x),py(crank.y),rc*S,0,6.284);ctx.stroke();
+  ctx.beginPath();ctx.arc(px(bx),py(by),rp*S,0,6.284);ctx.stroke();
+  ctx.fillStyle='#89b';ctx.font=F(5.5);ctx.fillText(tr('AIR IN'),px(bx-14),py(286));
+  // readout along the bottom
+  const nSc=state.rpm*snd.drive;
+  ctx.font=F(6.5);ctx.fillStyle=boost>0.02?C.yellow:'#667';
+  ctx.fillText((t==='roots'?'ROOTS':t==='screw'?'TWIN-SCREW':'CENTRIFUGAL')+' '+tr('SUPERCHARGER')+' +'+boost.toFixed(2)+' bar',px(40),py(356));
+  ctx.fillStyle='#89b';ctx.font=F(6);
+  ctx.fillText(snd.drive.toFixed(snd.drive<10?1:0)+':1 '+tr('OFF THE CRANK')+' • '+Math.round(nSc/100)*100+' rpm • '+tr('OUTLET')+' '+Math.round(hotT)+'C',px(40),py(368));
 }
 function drawExhaustSide(px,py,S,F,LW,m,portYc,exX){
   const e=engine;
   const exHot=clamp(state.powerHP/Math.max(60,engine.score?engine.score.peakHP:200),0,1);
-  ctx.strokeStyle=state.blown?'#444':`rgb(${Math.round(120+120*exHot)},${Math.round(60+30*exHot)},40)`;
-  ctx.lineWidth=LW(7);
-  ctx.beginPath();ctx.moveTo(px(exX),py(portYc));ctx.lineTo(px(392),py(portYc));ctx.stroke();
+  const gasCol=state.blown?'#444':`rgb(${Math.round(120+120*exHot)},${Math.round(60+30*exHot)},40)`;
+  const egtK=egtAt(state.rpm,m),egt=Math.round(state.powerHP>1?egtK-273:state.coolant);
   ctx.fillStyle=C.exhaust;ctx.font=F(6.5);
+  if(e.intake==='turbo'){
+    drawTurbo(px,py,S,F,LW,m,portYc,exX,gasCol);
+    ctx.fillText(tr('EXHAUST'),px(400),py(portYc-14));
+    ctx.fillStyle='#89b';ctx.font=F(6);
+    ctx.fillText(e.exhaust.toUpperCase()+' • '+tr('CAT')+' '+CAT[e.cat].label.split(' ')[0],px(400),py(portYc+2));
+    ctx.fillText(tr('EGT')+' '+egt+'C '+tr('AT THE TURBINE'),px(400),py(portYc+12));
+    return;
+  }
+  vizPipe(px,py,LW,[[exX,portYc],[392,portYc]],7,gasCol);
+  vizFlowDash(px,py,S,LW,[[exX,portYc],[392,portYc]],'#fc8');
   ctx.fillText(tr('EXHAUST'),px(330),py(portYc-14));
   ctx.fillStyle='#89b';ctx.font=F(6);
   ctx.fillText(e.exhaust.toUpperCase()+' • '+tr('CAT')+' '+CAT[e.cat].label.split(' ')[0],px(330),py(portYc+20));
   // The model's own exhaust temperature at this load — the same call back-pressure uses. This read
   // 320 + 520 x (power / peak power) until build 85: a display formula with no physics in it, which
   // showed a diesel at full power as hot as a petrol engine.
-  const egtK=egtAt(state.rpm,m);
-  ctx.fillText(tr('EGT')+' '+Math.round(state.powerHP>1?egtK-273:state.coolant)+'C',px(330),py(portYc+30));
+  ctx.fillText(tr('EGT')+' '+egt+'C',px(330),py(portYc+30));
+}
+function drawTurbo(px,py,S,F,LW,m,portYc,exX,gasCol){
+  const e=engine,TX=VIZ_TX,TY=VIZ_TTY,CY=VIZ_CTY;
+  const vgt=e.vgtShut>0,rwT=vgt?19:15,gT=8,rwC=17,gC=9;
+  const n=e.shaftJ?Math.sqrt(2*Math.max(0,state.shaftE||0)/e.shaftJ)*60/(2*Math.PI):0;
+  const boost=Math.max(0,state.boostActual||0),target=boostTarget(state.rpm);
+  // the wastegate holds the target: shut while the shaft cannot make it, open once it has it
+  const gate=!vgt&&state.throttle>0.3&&target>0.02&&boost>=target-0.01;
+  const dX=TX+rwT+gT/2;                                   // the turbine's inlet duct
+  // downpipe first, so the housing sits in front of it: from the exducer, round and away to the cat
+  const down=[[TX,TY],[388,TY],[388,112],[596,112]];
+  vizPipe(px,py,LW,down,7,'#7a4a30');vizFlowDash(px,py,S,LW,down,'#c96');
+  ctx.fillStyle='#a87';ctx.font=F(5.5);ctx.textAlign='right';ctx.fillText(tr('TO THE CAT')+' ->',px(596),py(104));ctx.textAlign='left';
+  // exhaust port -> manifold -> down into the turbine's duct
+  const man=[[exX,portYc],[dX,portYc],[dX,TY-18]];
+  vizPipe(px,py,LW,man,7,gasCol);vizFlowDash(px,py,S,LW,man,'#fc8');
+  if(!vgt){                                                // the wastegate: a valve bypassing the turbine
+    const wy=128,vx=(dX+388)/2;
+    vizPipe(px,py,LW,[[dX,wy],[388,wy]],4,'#7a4a30');
+    if(gate)vizFlowDash(px,py,S,LW,[[dX,wy],[388,wy]],'#fc8');
+    ctx.fillStyle='#22222e';ctx.strokeStyle=gate?C.yellow:'#aab';ctx.lineWidth=LW(1.2);
+    ctx.beginPath();ctx.arc(px(vx),py(wy),4.5*S,0,6.284);ctx.fill();ctx.stroke();
+    const a=gate?1.2:0;                                   // the poppet, lifted off its seat when open
+    ctx.beginPath();ctx.moveTo(px(vx-3*Math.cos(a)),py(wy-3*Math.sin(a)));ctx.lineTo(px(vx+3*Math.cos(a)),py(wy+3*Math.sin(a)));ctx.stroke();
+    ctx.fillStyle=gate?C.yellow:'#89b';ctx.font=F(5);ctx.textAlign='center';ctx.fillText('WG',px(vx),py(wy-7));ctx.textAlign='left';
+  }
+  if(e.turboConfig&&e.turboConfig!=='single'){            // a second unit, behind
+    ctx.fillStyle='#89b';ctx.font=F(5);ctx.textAlign='right';
+    ctx.fillText(e.turboConfig==='sequential'?tr('SMALL + LARGE'):e.turboConfig==='compound'?tr('HP + LP'):tr('2 UNITS'),px(364),py(CY+rwC+gC+14));ctx.textAlign='left';
+    ctx.save();ctx.globalAlpha=0.5;
+    vizScroll(px,py,S,LW,TX-12,TY-12,rwT*0.8,gT*0.8,-1,0,8,'#3a1a14',gasCol);
+    vizScroll(px,py,S,LW,TX-12,CY-12,rwC*0.8,gC*0.8,1,0,8,'#14243a','#7ab');
+    ctx.restore();
+  }
+  // centre housing: the shaft and its bearings, oil-cooled, between the hot side and the cold
+  ctx.fillStyle='#2a2a38';ctx.fillRect(px(TX-6),py(TY+rwT+gT-2),12*S,(CY-rwC-gC-TY-rwT-gT+4)*S);
+  ctx.strokeStyle=C.metal;ctx.lineWidth=LW(1);ctx.strokeRect(px(TX-6),py(TY+rwT+gT-2),12*S,(CY-rwC-gC-TY-rwT-gT+4)*S);
+  ctx.strokeStyle=C.metalLight;ctx.lineWidth=LW(2);ctx.beginPath();ctx.moveTo(px(TX),py(TY));ctx.lineTo(px(TX),py(CY));ctx.stroke();
+  // turbine: the gas comes down the duct and spirals in, clockwise, onto the wheel
+  vizScroll(px,py,S,LW,TX,TY,rwT,gT,-1,0,16,'#3a1a14',gasCol);
+  vizTurbWheel(px,py,S,LW,TX,TY,rwT-(vgt?7:2),turboAngle,'#c8a090');
+  if(vgt){
+    // the vane ring: shut, the vanes lie nearly along the passage and speed the gas onto the wheel; open,
+    // they stand radial and let it through. Opened as far as the model schedules them for this point.
+    const area=turbineThroatAt(state.rpm,Math.max(1,m),egtAt(state.rpm,m));
+    const f=clamp((area-e.vgtShut)/Math.max(1e-12,e.turbineArea-e.vgtShut),0,1);
+    ctx.strokeStyle=C.yellow;ctx.lineWidth=LW(1.2);
+    for(let i=0;i<11;i++){const a=i*2*Math.PI/11,r=rwT-3.2,x=TX+r*Math.cos(a),y=TY+r*Math.sin(a),va=a+Math.PI/2-(0.25+1.0*f);
+      ctx.beginPath();ctx.moveTo(px(x-2.4*Math.cos(va)),py(y-2.4*Math.sin(va)));ctx.lineTo(px(x+2.4*Math.cos(va)),py(y+2.4*Math.sin(va)));ctx.stroke();}
+    drawTurbo.vane=f;
+  }
+  drawTurbo.gate=gate;   // read by test88
+  // compressor: air drawn in at the eye, towards you, flung round and out of the widening scroll
+  const hotT=compOutletT(Math.max(1,1+boost),state.rpm),hot=vizTempCol(hotT);
+  const end=vizScroll(px,py,S,LW,TX,CY,rwC,gC,1,0,12,'#14243a','#7ab');
+  vizCompWheel(px,py,S,LW,TX,CY,rwC-1.5,turboAngle,C.metalLight);
+  ctx.fillStyle='#89b';ctx.font=F(5.5);ctx.textAlign='right';ctx.fillText(tr('AIR IN'),px(TX-9),py(CY-rwC-gC-3));ctx.textAlign='left';
+  // the charge pipe: down, along under the engine, up through the intercooler to the throttle body
+  const ic=e.intercooler&&e.intercooler!=='none';
+  const chg=[[end[0],end[1]],[end[0],VIZ_CHG_Y],[VIZ_IC_X,VIZ_CHG_Y],[VIZ_IC_X,portYc]];
+  vizPipe(px,py,LW,chg.slice(0,3).concat([[VIZ_IC_X,ic?250:portYc]]),7,hot);
+  if(ic){vizPipe(px,py,LW,[[VIZ_IC_X,150],[VIZ_IC_X,portYc]],7,vizTempCol(effIAT(1+boost,state.rpm)));
+    vizCore(px,py,S,LW,VIZ_IC_X-10,150,20,100,hot);
+    ctx.fillStyle='#89b';ctx.font=F(5.5);
+    ctx.fillText(tr('INTERCOOLER'),px(VIZ_IC_X+14),py(272));
+    ctx.fillText(Math.round(hotT)+'C -> '+Math.round(effIAT(1+boost,state.rpm))+'C',px(VIZ_IC_X+14),py(282));}
+  vizFlowDash(px,py,S,LW,chg,'#fff');
+  // the blow-off valve: when the throttle shuts on a pipe full of boost it vents it, once
+  if(!e.ci){
+    if(state.throttle>=0.1)vizChargeP=boost;else if(vizChargeP>0.15){vizBovT=0.7;vizChargeP=0;}
+    ctx.fillStyle='#aab';ctx.fillRect(px(VIZ_IC_X+4),py(306),6*S,6*S);
+    if(vizBovT>0){ctx.fillStyle='#dde';for(let k=0;k<6;k++){const f=1-vizBovT/0.7,x=VIZ_IC_X+12+f*28+(k%3)*4,y=304+(k*7%11)-f*6;
+      ctx.fillRect(px(x),py(y),2*S,2*S);}
+      ctx.font=F(5.5);ctx.fillText(tr('BLOW-OFF'),px(VIZ_IC_X+14),py(300));}
+  }
+  // anti-lag: off throttle it keeps burning fuel in the manifold to hold the shaft up
+  if(e.antilag&&state.throttle<0.2&&state.rpm>2500&&Math.random()<0.5){
+    ctx.fillStyle=Math.random()<0.5?C.yellow:C.fire;
+    for(let k=0;k<4;k++)ctx.fillRect(px(dX-4+Math.random()*8),py(TY-34+Math.random()*16),3*S,3*S);}
+  // readout along the bottom
+  ctx.font=F(6.5);ctx.fillStyle=boost>0.02?C.yellow:'#667';
+  const cfg=e.turboConfig&&e.turboConfig!=='single'?TURBO_CONFIG[e.turboConfig].label+' ':'';
+  ctx.fillText(cfg+tr('TURBO')+' +'+boost.toFixed(2)+' bar ('+tr('TARGET')+' '+target.toFixed(2)+')',px(40),py(356));
+  ctx.fillStyle='#89b';ctx.font=F(6);
+  // where the compressor is working now: its flow over its inducer's choke flow (compFlowFrac)
+  const fl=compFlowFrac(state.rpm,airFlowAt(state.rpm,Math.max(0.1,m)));
+  ctx.fillText((Math.round(n/1000)*1000).toLocaleString('en-US').replace(/,/g,' ')+' rpm • '+Math.round(fl*100)+'% '+tr('of choke flow')+' • '
+    +(vgt?tr('VANES')+' '+Math.round((drawTurbo.vane||0)*100)+tr('% OPEN'):tr(gate?'WASTEGATE OPEN':'WASTEGATE SHUT')),px(40),py(368));
 }
 function drawFuelSpark(px,py,S,F,m){
+  // bottom right, under the bank (build 164: the left column carries the intake and the boosters now)
   const e=engine;
-  const fx=22,fy=286;
-  ctx.fillStyle='#778';ctx.font=F(6);ctx.fillText(tr('FUEL & SPARK'),px(fx),py(fy-4));
+  const fx=400,fy=336,kx=508;
+  ctx.fillStyle='#778';ctx.font=F(6);ctx.fillText(tr('FUEL & SPARK'),px(fx),py(fy+4));
   const lam=state.afr/engine.stoichAFR;
   const lamCol=lam<0.85?C.yellow:lam>1.08?C.red:C.green;
-  ctx.font=F(6.5);
-  ctx.fillStyle='#cde';ctx.fillText(FUELS[e.fuel].label+(e.fuel==='gasoline'?' '+e.octane+' RON':''),px(fx),py(fy+10));
+  ctx.font=F(6);
+  ctx.fillStyle='#cde';ctx.fillText(FUELS[e.fuel].label+(e.fuel==='gasoline'?' '+e.octane+' RON':''),px(fx),py(fy+16));
   ctx.fillStyle=state.fuelCut&&state.rpm<e.redline?C.cyan:'#cde';
-  ctx.fillText(state.fuelCut&&state.rpm<e.redline?tr('OVERRUN CUT — 0 L/h'):state.fuelFlowLph.toFixed(1)+' L/h',px(fx),py(fy+22));
-  ctx.fillStyle=lamCol;ctx.fillText('AFR '+state.afr.toFixed(1)+'  λ'+lam.toFixed(2),px(fx),py(fy+34));
+  ctx.fillText(state.fuelCut&&state.rpm<e.redline?tr('OVERRUN CUT'):state.fuelFlowLph.toFixed(1)+' L/h',px(fx),py(fy+27));
+  ctx.fillStyle=lamCol;ctx.fillText('AFR '+state.afr.toFixed(1)+' λ'+lam.toFixed(2),px(fx),py(fy+38));
   ctx.fillStyle='#cde';
-  ctx.fillText(e.ci?tr('COMPRESSION IGNITION'):tr('ADV')+' '+Math.round(activeAdvance(state.rpm,m))+'°'+(e.timingMode==='auto'?' '+tr('AUTO'):''),px(fx),py(fy+46));
+  ctx.fillText(e.ci?tr('DIESEL: NO SPARK'):tr('ADV')+' '+Math.round(activeAdvance(state.rpm,m))+'°'+(e.timingMode==='auto'?' '+tr('AUTO'):''),px(fx),py(fy+49));
   // knock bar — the readout that decides whether the build survives
-  ctx.fillStyle='#778';ctx.font=F(6);ctx.fillText(tr('KNOCK RISK'),px(fx),py(fy+62));
-  ctx.fillStyle='#1a1a28';ctx.fillRect(px(fx),py(fy+66),150*S,9*S);
+  ctx.fillStyle='#778';ctx.font=F(6);ctx.fillText(tr('KNOCK RISK'),px(kx),py(fy+16));
+  ctx.fillStyle='#1a1a28';ctx.fillRect(px(kx),py(fy+20),88*S,9*S);
   const kf=clamp(state.knockRisk/100,0,1);
   ctx.fillStyle=state.knockRisk>60?C.red:state.knockRisk>30?C.yellow:C.green;
-  ctx.fillRect(px(fx),py(fy+66),150*kf*S,9*S);
-  ctx.fillStyle='#cde';ctx.textAlign='right';ctx.fillText(Math.round(state.knockRisk),px(fx+147),py(fy+73));ctx.textAlign='left';
+  ctx.fillRect(px(kx),py(fy+20),88*kf*S,9*S);
+  ctx.fillStyle='#cde';ctx.textAlign='right';ctx.fillText(Math.round(state.knockRisk),px(kx+85),py(fy+27));ctx.textAlign='left';
 }
 function drawShaftOutput(px,py,F,x,y,label){
   ctx.font=F(7);ctx.textAlign='center';
   ctx.fillStyle='#778';ctx.font=F(6);ctx.fillText(label,px(x),py(y));
   ctx.font=F(8);
-  ctx.fillStyle=C.green;ctx.fillText(state.powerHP.toFixed(0)+' HP',px(x),py(y+16));
-  ctx.fillStyle=C.cyan;ctx.fillText(state.torque.toFixed(0)+' Nm',px(x),py(y+30));
+  const z=v=>Math.round(v)||0;   // never "-0": a motored engine's fraction of a negative unit reads 0
+  ctx.fillStyle=C.green;ctx.fillText(z(state.powerHP)+' HP',px(x),py(y+16));
+  ctx.fillStyle=C.cyan;ctx.fillText(z(state.torque)+' Nm',px(x),py(y+30));
   ctx.textAlign='left';
 }
 function drawTempGauges(px,py,S,F,LW,x,y,w){
   gaugeBar(px,py,S,F,LW,x,y+12,w,tr('COOLANT'),state.coolant,60,125,108,115);
   gaugeBar(px,py,S,F,LW,x,y+34,w,tr('OIL'),state.oil,60,140,115,125);
 }
+// ---- the head, timed by the model (build 165) ----
+// The valves opened at fixed angles (intake 20 BTDC to 50 ABDC on every cam) and the spark fired at 340 deg on
+// every engine, whatever its advance. Now the events are the cam's: duration and lobe separation from the cam
+// profile, the intake lobe advanced by the phaser as far as the model's fill table schedules it at this rpm, the
+// lift the cam's L/D on the model's valve. The spark fires at the model's advance and the charge burns over the
+// Wiebe burn the model's work uses (SI_BURN_DEG); a diesel's fuel goes in near TDC and burns over BURN_T_CI.
+// Crank degrees here are the drawing's: 0 = TDC at the start of the intake stroke, 360 = firing TDC.
+function valveEvents(rpm){
+  const e=engine,dur=e.camDur||220,lsa=e.camLSA||112,adv=camAdvAt(rpm);
+  // the same conventions as the breathing model: IVC = LSA + dur/2 - 180 - advance ABDC (ivcAbdc), the exhaust
+  // lobe centred LSA before overlap TDC (EVO at 360 - LSA - dur/2 after firing TDC, as in the blowdown model)
+  const ivo=-(dur/2-lsa+adv), ivc=lsa+dur/2-adv, evo=720-lsa-dur/2, evc=720-lsa+dur/2;
+  return {ivo,ivc,evo,evc,adv,dur,lsa,overlap:dur-2*lsa};
+}
+const wrap720=x=>((x%720)+720)%720;
+// lift 0..1 through a window, the same half-sine the cam lobe below is ground to
+function liftIn(d,open,close){let a=wrap720(d-open),span=close-open;return a<span?Math.sin(Math.PI*a/span):0;}
+// A cam seen end-on: base circle rb, the lobe rising by L over a half-width hw (cam degrees) either side of its
+// nose, the half-sine the valve follows. noseAng: where the nose points on screen.
+function drawCamLobe(px,py,S,LW,x,y,rb,L,hw,noseAng,col){
+  ctx.fillStyle=col;ctx.beginPath();
+  for(let i=0;i<=90;i++){const a=i/90*2*Math.PI;let dpsi=((a-noseAng)*180/Math.PI+540)%360-180;
+    const r=rb+(Math.abs(dpsi)<hw?L*Math.cos(Math.PI*dpsi/(2*hw)):0);
+    const X=px(x+r*Math.cos(a)),Y=py(y+r*Math.sin(a));if(i)ctx.lineTo(X,Y);else ctx.moveTo(X,Y);}
+  ctx.fill();
+  ctx.fillStyle='#0c0c14';ctx.beginPath();ctx.arc(px(x),py(y),rb*0.35*S,0,6.284);ctx.fill();
+}
+let knockCycle=false,lastCycleD=0;
 function drawPistonCutaway(px,py,S,F,LW,deg,nCyl,rodRatio,bsr,two,m){
   const e=engine;
   // Geometry of the big cylinder. Bore/stroke ratio decides how wide and how tall it is, so an
@@ -12899,11 +13160,20 @@ function drawPistonCutaway(px,py,S,F,LW,deg,nCyl,rodRatio,bsr,two,m){
   const pistonH=20;
   const topY=boreTop+frac*strokeLen;                      // crown position
 
-  // ---- combustion: fire near TDC of the power stroke ----
-  const powerStart=two?170:340;
+  // ---- combustion: the spark at the model's advance, the charge burning over the model's burn ----
   const d=(deg%cycleDeg);
-  if(!state.blown&&state.powerHP>1&&d>powerStart&&d<powerStart+18&&flashT<=0)flashT=0.09;
-  const burning=flashT>0;
+  const fired=!state.blown&&state.powerHP>1&&!state.fuelCut;
+  const adv=activeAdvance(state.rpm,Math.max(0.2,m));
+  // a two-stroke fires once a turn: its firing TDC is the drawing's 180
+  const tdcF=two?180:360;
+  const burnDeg=e.ci?Math.max(20,BURN_T_CI*state.rpm*6):SI_BURN_DEG;
+  const burnStart=tdcF+(e.ci?SOC_CI:-adv);
+  const into=wrap720(d-burnStart);
+  const xb=fired&&into<burnDeg+120&&wrap720(d-burnStart)<360?1-Math.exp(-WIEBE_A*Math.pow(Math.min(1,into/burnDeg),WIEBE_M+1)):0;
+  const burning=fired&&into<burnDeg;
+  // knock: on the share of cycles the knock model says detonate, the end gas goes off ahead of the flame
+  if(d<lastCycleD)knockCycle=Math.random()<clamp((state.knockRisk-KNOCK_TARGET)/60,0,1);
+  lastCycleD=d;
 
   // ---- block casting: head deck on top, crankcase below ----
   const blkX=cx-bore/2-20,blkW=bore+40,blkY=headY,blkH=crankY-headY+46;
@@ -12917,18 +13187,42 @@ function drawPistonCutaway(px,py,S,F,LW,deg,nCyl,rodRatio,bsr,two,m){
   ctx.fillStyle='#0c0c14';ctx.fillRect(px(cx-bore/2),py(boreTop-4),bore*S,boreH*S);
   // charge in the chamber: colour by what is in it right now
   const chamberH=Math.max(3,(topY-boreTop+4));
+  // the combustion chamber is in the head: a pent roof over the bore, the valves seated in its slopes, the plug
+  // at its peak (a two-stroke's head is a flat dome)
+  const roofH=(!two&&!e.ports)?clamp(bore*0.16,5,11):0;
+  const seatAt=x=>boreTop-4-roofH*(1-Math.min(1,Math.abs(x-cx)/(bore/2)));
+  const chamber=()=>{ctx.beginPath();ctx.moveTo(px(cx-bore/2+2),py(boreTop-3+chamberH));ctx.lineTo(px(cx-bore/2+2),py(boreTop-3));
+    ctx.lineTo(px(cx),py(boreTop-3-roofH));ctx.lineTo(px(cx+bore/2-2),py(boreTop-3));ctx.lineTo(px(cx+bore/2-2),py(boreTop-3+chamberH));ctx.closePath();};
   let chargeCol='#12203a';                                 // fresh air
+  const inBurn=fired&&wrap720(d-burnStart)<(two?180:400);   // from the spark to the exhaust opening
   if(!two){
     if(d<180)chargeCol='#12304a';                          // intake
-    else if(d<340)chargeCol='#1b3a55';                     // compression
-    else if(d<520)chargeCol=burning?'#ffcc44':'#5a2a18';   // power / burnt
+    else if(!inBurn&&d<540)chargeCol='#1b3a55';            // compression
+    else if(d<540)chargeCol='#5a2a18';                     // power / burnt
     else chargeCol='#3a2420';                              // exhaust
-  }else chargeCol=burning?'#ffcc44':(d<170?'#1b3a55':'#3a2420');
-  ctx.fillStyle=chargeCol;ctx.fillRect(px(cx-bore/2+2),py(boreTop-3),(bore-4)*S,chamberH*S);
-  if(burning){                                             // flame front
-    ctx.fillStyle='#fff2a8';
-    const g=(flashT/0.09);
-    ctx.fillRect(px(cx-bore/2+2),py(boreTop-3),(bore-4)*S,Math.max(2,chamberH*g)*S);
+  }else chargeCol=d<170?'#1b3a55':'#3a2420';
+  ctx.fillStyle=chargeCol;chamber();ctx.fill();
+  if(burning||(fired&&into<burnDeg+30)){
+    // the flame: a front spreading from the plug (or the diesel's sprays), its swept area the burned share
+    ctx.save();chamber();ctx.clip();
+    const fy=boreTop-1-roofH,Rmax=Math.hypot(bore/2,chamberH+roofH),R=Math.sqrt(Math.max(0.02,xb))*Rmax;
+    const glow=burning?1:Math.max(0,1-(into-burnDeg)/30);
+    ctx.globalAlpha=0.35+0.65*glow;
+    ctx.fillStyle='#ffcc44';
+    if(e.ci){for(const a of [0.55,1.2,1.95,2.6]){ctx.beginPath();ctx.ellipse(px(cx+Math.cos(a)*R*0.45),py(fy+Math.sin(a)*R*0.45),R*0.42*S,R*0.2*S,a,0,6.284);ctx.fill();}}
+    else{ctx.beginPath();ctx.arc(px(cx),py(fy),R*S,0,6.284);ctx.fill();
+      ctx.fillStyle='#fff2a8';ctx.beginPath();ctx.arc(px(cx),py(fy),R*0.55*S,0,6.284);ctx.fill();}
+    // detonation: the end gas, out at the bore wall, goes off before the flame reaches it
+    if(knockCycle&&!e.ci&&xb>0.35&&burning){ctx.globalAlpha=1;
+      for(const sx of [-1,1]){const kx=cx+sx*(bore/2-4),ky=boreTop-2;
+        ctx.fillStyle='#ff3311';ctx.beginPath();ctx.arc(px(kx),py(ky),(4+Math.random()*3)*S,0,6.284);ctx.fill();
+        ctx.fillStyle='#ffffff';ctx.beginPath();ctx.arc(px(kx),py(ky),2*S,0,6.284);ctx.fill();}}
+    ctx.restore();
+    // the pressure waves a detonation sends ringing round the chamber: what a knock sensor hears
+    if(knockCycle&&!e.ci&&xb>0.35&&into<burnDeg+40){ctx.strokeStyle='#ff6644';ctx.lineWidth=LW(1);
+      for(let k=0;k<3;k++){const r=6+k*7+(into%7);ctx.beginPath();ctx.arc(px(cx+bore/2-4),py(boreTop-2),r*S,Math.PI*0.5,Math.PI*1.5);ctx.stroke();}}
+    ctx.save();
+    ctx.restore();
   }
   ctx.strokeStyle=C.metal;ctx.lineWidth=LW(1.2);
   ctx.strokeRect(px(cx-bore/2),py(boreTop-4),bore*S,boreH*S);
@@ -12956,22 +13250,78 @@ function drawPistonCutaway(px,py,S,F,LW,deg,nCyl,rodRatio,bsr,two,m){
   ctx.fillStyle='#0c0c14';ctx.beginPath();ctx.arc(px(cx),py(crankY),3*S,0,6.284);ctx.fill();
   drawShaftOutput(px,py,F,cx,crankY+62,tr('AT THE CRANK'));
 
-  // ---- head: valves (or ports on a two-stroke) ----
+  // ---- head: the valvetrain and the ports, or the liner's ports on a two-stroke ----
   const headTop=headY+6;
+  let camTxt=null,lifts=null;
   if(!two&&!e.ports){
-    // Crank degrees with 0° = TDC on intake. Intake opens 20° BTDC and closes 50° ABDC; exhaust
-    // opens 50° BBDC on the power stroke and closes 10° ATDC. The two overlap around TDC, which
-    // is exactly the scavenging overlap a big cam widens.
-    const inL=valveLift(d,700,230),exL=valveLift(d,490,10);
-    const vw=Math.max(7,bore*0.26);
-    [[cx-bore*0.24,inL,C.intake,tr('IN')],[cx+bore*0.24,exL,C.exhaust,tr('EX')]].forEach(([vx,lift,col])=>{
-      const stemTop=headTop, headYY=boreTop-4+lift*10;
-      ctx.strokeStyle=col;ctx.lineWidth=LW(3);
-      ctx.beginPath();ctx.moveTo(px(vx),py(stemTop));ctx.lineTo(px(vx),py(headYY));ctx.stroke();
+    const ev=valveEvents(state.rpm);
+    // lift to scale on the drawn bore: the cam's L/D on the model's valve diameter
+    const mmPx=bore/e.bore_mm, L=Math.max(1.5,(e.ivLift_mm||8)*mmPx), vw=Math.max(7,(e.ivDia_mm||e.bore_mm*0.4)*mmPx);
+    const float=e.floatRpm>0&&state.rpm>e.floatRpm;
+    const vIn=cx-bore*0.25,vEx=cx+bore*0.25;
+    // the valve's lift: the cam's, plus, past the float speed, the valve not following it shut: it bounces
+    const lv=(open,close)=>{let l=liftIn(d,open,close);
+      if(float){const a=wrap720(d-close);if(a<50)l=Math.max(l,0.4*Math.exp(-a/18)*Math.abs(Math.sin(a/7)));}return l;};
+    const lIn=lv(ev.ivo,ev.ivc),lEx=lv(ev.evo,ev.evc);lifts={lIn,lEx,ev};
+    // ports: the runner's passage through the head to the back of each valve
+    ctx.lineCap='round';
+    ctx.strokeStyle='#1a3550';ctx.lineWidth=LW(7);
+    ctx.beginPath();ctx.moveTo(px(cx-bore/2-20),py(headY+20));ctx.quadraticCurveTo(px(vIn-4),py(headY+20),px(vIn),py(seatAt(vIn)-2));ctx.stroke();
+    ctx.strokeStyle='#4a2418';
+    ctx.beginPath();ctx.moveTo(px(cx+bore/2+20),py(headY+20));ctx.quadraticCurveTo(px(vEx+4),py(headY+20),px(vEx),py(seatAt(vEx)-2));ctx.stroke();
+    ctx.lineCap='butt';
+    const camY=headY-8,rb=6;
+    const valve=(vx,lift,col)=>{                     // stem, head on its seat, spring
+      const yHead=seatAt(vx)+lift*L,yTop=camY+rb+3+lift*L;
+      ctx.strokeStyle='#556';ctx.lineWidth=LW(1);   // the spring, coiled round the stem under the retainer
+      for(let k=0;k<4;k++){const y0=yTop+3+k*((headTop+6-yTop)/4);ctx.beginPath();ctx.moveTo(px(vx-4),py(y0));ctx.lineTo(px(vx+4),py(y0+2));ctx.stroke();}
+      ctx.strokeStyle=col;ctx.lineWidth=LW(2.2);
+      ctx.beginPath();ctx.moveTo(px(vx),py(yTop));ctx.lineTo(px(vx),py(yHead));ctx.stroke();
       ctx.fillStyle=lift>0.02?col:'#4a4a5e';
-      ctx.beginPath();ctx.moveTo(px(vx-vw/2),py(headYY));ctx.lineTo(px(vx+vw/2),py(headYY));
-      ctx.lineTo(px(vx+vw/2-2),py(headYY+4));ctx.lineTo(px(vx-vw/2+2),py(headYY+4));ctx.closePath();ctx.fill();
-    });
+      ctx.beginPath();ctx.moveTo(px(vx-vw/2),py(yHead));ctx.lineTo(px(vx+vw/2),py(yHead));
+      ctx.lineTo(px(vx+vw/2-2),py(yHead+3));ctx.lineTo(px(vx-vw/2+2),py(yHead+3));ctx.closePath();ctx.fill();
+      return yTop;
+    };
+    // the cam turns at half the crank: a lobe's nose points at its follower at the valve's centreline
+    const camAt=c=>c/2;                               // cam degrees from crank degrees
+    const nose=(cl,down)=>(down+(d/2-camAt(cl)))*Math.PI/180;
+    const hw=ev.dur/4;                                // half the lobe, in cam degrees
+    const clIn=(ev.ivo+ev.ivc)/2,clEx=(ev.evo+ev.evc)/2;
+    if(e.valves===2){
+      // Two valves: pushrods, as on the presets that have two (the American V8s): one cam in the block,
+      // lifters and pushrods up the wall to rockers over the valves.
+      const camX=cx-bore/2-10,camBY=boreTop+strokeLen*0.55;
+      ctx.fillStyle='#15151f';ctx.fillRect(px(cx-bore/2-20),py(camY-8),(bore+40)*S,(headY-camY+8)*S);     // the rocker cover
+      ctx.strokeStyle=C.metal;ctx.lineWidth=LW(1.2);ctx.strokeRect(px(cx-bore/2-20),py(camY-8),(bore+40)*S,(headY-camY+8)*S);
+      const tIn=valve(vIn,lIn,C.intake),tEx=valve(vEx,lEx,C.exhaust);
+      drawCamLobe(px,py,S,LW,camX,camBY,rb,L,hw,nose(clIn,-90),'#9a9aaa');
+      ctx.save();ctx.globalAlpha=0.7;drawCamLobe(px,py,S,LW,camX,camBY,rb,L,hw,nose(clEx,-90),'#c08a7a');ctx.restore();
+      ctx.strokeStyle='#8a8a9a';ctx.lineWidth=LW(1.6);
+      for(const [ox,l,tv,vx] of [[-2,lIn,tIn,vIn],[2,lEx,tEx,vEx]]){
+        const top=camY-2-l*L;                          // the pushrod rises with the lift
+        ctx.beginPath();ctx.moveTo(px(camX+ox),py(camBY-rb-l*L));ctx.lineTo(px(camX+ox),py(top));ctx.stroke();
+        ctx.beginPath();ctx.moveTo(px(camX+ox),py(top));ctx.lineTo(px(vx),py(tv));ctx.stroke();   // the rocker
+      }
+      ctx.fillStyle='#aab';ctx.beginPath();ctx.arc(px((camX+vIn)/2),py(camY-3),1.8*S,0,6.284);ctx.fill();ctx.beginPath();ctx.arc(px(cx+6),py(camY-3),1.8*S,0,6.284);ctx.fill();
+      camTxt='OHV';
+    }else{
+      // overhead cams over bucket followers: one shaft for the intake valves, one for the exhaust
+      ctx.fillStyle='#15151f';ctx.fillRect(px(cx-bore/2-20),py(camY-9),(bore+40)*S,(headY-camY+9)*S);
+      ctx.strokeStyle=C.metal;ctx.lineWidth=LW(1.2);ctx.strokeRect(px(cx-bore/2-20),py(camY-9),(bore+40)*S,(headY-camY+9)*S);
+      for(const [vx,l,col,cl,lobe] of [[vIn,lIn,C.intake,clIn,'#9ab0c8'],[vEx,lEx,C.exhaust,clEx,'#c8a090']]){
+        const tv=valve(vx,l,col);
+        ctx.fillStyle='#6a6a7a';ctx.fillRect(px(vx-4),py(tv-3),8*S,3*S);          // bucket
+        drawCamLobe(px,py,S,LW,vx,camY,rb,L,hw,nose(cl,90),lobe);
+      }
+      if(e.vvt){ctx.strokeStyle=C.cyan;ctx.lineWidth=LW(1);ctx.beginPath();ctx.arc(px(vIn),py(camY),(rb+L+2)*S,0,6.284);ctx.stroke();}
+      camTxt='DOHC '+e.valves+'V';
+    }
+    // the cam's events, where the model has them
+    const fmt=(v,a,b)=>Math.round(Math.abs(v))+'°'+(v>=0?a:b);
+    camTxt={t:camTxt,
+      inTxt:tr('IN')+' '+fmt(-ev.ivo,'BTDC','ATDC')+' '+fmt(ev.ivc-180,'ABDC','BBDC'),
+      exTxt:tr('EX')+' '+fmt(540-ev.evo,'BBDC','ABDC')+' '+fmt(ev.evc-720,'ATDC','BTDC'),
+      ov:tr('OVERLAP')+' '+Math.round(ev.overlap+ev.adv)+'°',adv:ev.adv,float,L:e.ivLift_mm};
   }else{
     // Ports in the liner: uncovered when the piston crown drops past them.
     const portY=boreTop+strokeLen*0.62;
@@ -12979,37 +13329,63 @@ function drawPistonCutaway(px,py,S,F,LW,deg,nCyl,rodRatio,bsr,two,m){
     ctx.fillStyle=open?C.intake:'#2a2a3a';ctx.fillRect(px(cx-bore/2-6),py(portY),6*S,12*S);
     ctx.fillStyle=open?C.exhaust:'#2a2a3a';ctx.fillRect(px(cx+bore/2),py(portY-6),6*S,12*S);
   }
-  // spark plug / injector
+  // spark plug, or the diesel's injector, in the middle of the roof
+  const sparkNow=fired&&!e.ci&&wrap720(d-burnStart)<6;
+  drawPistonCutaway.dbg={d,burnStart,xb,sparkNow,knockCycle,lifts,valvetrain:camTxt&&camTxt.t,float:!!(camTxt&&camTxt.float)};   // read by test89
   if(!e.ci){
-    ctx.strokeStyle=burning?'#fff2a8':'#8898aa';ctx.lineWidth=LW(2.5);
-    ctx.beginPath();ctx.moveTo(px(cx),py(headTop));ctx.lineTo(px(cx),py(boreTop-5));ctx.stroke();
-    if(burning){ctx.fillStyle='#fff2a8';ctx.beginPath();ctx.arc(px(cx),py(boreTop-3),4*S,0,6.284);ctx.fill();}
+    ctx.strokeStyle=sparkNow?'#fff2a8':'#8898aa';ctx.lineWidth=LW(2.5);
+    ctx.beginPath();ctx.moveTo(px(cx),py(headTop-6));ctx.lineTo(px(cx),py(boreTop-4-roofH));ctx.stroke();
+    if(sparkNow){ctx.fillStyle='#ffffff';ctx.beginPath();ctx.arc(px(cx),py(boreTop-1-roofH),3*S,0,6.284);ctx.fill();}
   }else{
     ctx.strokeStyle=C.yellow;ctx.lineWidth=LW(2.5);
-    ctx.beginPath();ctx.moveTo(px(cx),py(headTop));ctx.lineTo(px(cx),py(boreTop-5));ctx.stroke();
-    if(d>330&&d<400){ctx.fillStyle=C.yellow;for(let i=0;i<3;i++){
-      ctx.beginPath();ctx.arc(px(cx-4+i*4),py(boreTop+i*3),1.6*S,0,6.284);ctx.fill();}}
+    ctx.beginPath();ctx.moveTo(px(cx),py(headTop-6));ctx.lineTo(px(cx),py(boreTop-4-roofH));ctx.stroke();
   }
-  // stroke label, so the animation teaches the cycle rather than just moving
+  // the fuel going in, at a typical calibration's timing: a port injector sprays on the back of the shut intake
+  // valve before it opens, a petrol direct injector into the cylinder early in the intake stroke, a diesel's
+  // just before TDC. How long it sprays goes with the fuel per cycle (the torque).
+  if(fired&&!two){
+    const load=clamp(state.torque/Math.max(1,(e.score&&e.score.peakTQ)||1),0.05,1);
+    let a0,len,ox,oy,dir;
+    if(e.ci){a0=tdcF+SOC_CI-6;len=Math.max(6,burnDeg*0.6)*load+4;}
+    else if(e.injector==='direct'){a0=70;len=20+110*load;}
+    else{a0=wrap720((e.ports?0:valveEvents(state.rpm).ivo)-20-160*load);len=20+150*load;}
+    const t=wrap720(d-a0);
+    if(t<len){
+      ctx.fillStyle='rgba(220,240,255,0.85)';
+      if(e.ci){for(const a of [0.5,1.2,1.95,2.65])for(let k=1;k<6;k++){const r=k*3.2;ctx.fillRect(px(cx+Math.cos(a)*r),py(boreTop-3-roofH+Math.sin(a)*r),1.6*S,1.6*S);}}
+      else if(e.injector==='direct'){const ix=cx-bore/2+3,iy=boreTop-2;
+        ctx.strokeStyle='#aab';ctx.lineWidth=LW(2);ctx.beginPath();ctx.moveTo(px(ix-8),py(iy-6));ctx.lineTo(px(ix),py(iy));ctx.stroke();
+        for(let k=1;k<9;k++)for(const sp of [-0.25,0,0.25]){const r=k*3,a=0.55+sp;ctx.fillRect(px(ix+Math.cos(a)*r),py(iy+Math.sin(a)*r),1.4*S,1.4*S);}}
+      else{const ix=cx-bore/2-12,iy=headY+12;
+        ctx.strokeStyle='#aab';ctx.lineWidth=LW(2);ctx.beginPath();ctx.moveTo(px(ix-5),py(iy-6));ctx.lineTo(px(ix),py(iy));ctx.stroke();
+        for(let k=1;k<8;k++)for(const sp of [-0.2,0.2]){const r=k*2.6,a=0.75+sp;ctx.fillRect(px(ix+Math.cos(a)*r),py(iy+Math.sin(a)*r),1.4*S,1.4*S);}}
+    }
+  }
+  // stroke label, so the animation teaches the cycle rather than just moving: up in the title bar, where the
+  // cam cover now sits over the head
   const strokeName=two?(d<170?tr('COMPRESSION'):tr('POWER/SCAVENGE'))
     :(d<180?tr('INTAKE'):d<360?tr('COMPRESSION'):d<540?tr('POWER'):tr('EXHAUST'));
-  ctx.fillStyle=C.cyan;ctx.font=F(7);ctx.textAlign='center';
-  ctx.fillText(strokeName,px(cx),py(headY-6));
+  ctx.fillStyle=C.cyan;ctx.font=F(8);ctx.textAlign='center';
+  ctx.fillText(strokeName,px(cx+30),py(16));
   // volumetric efficiency belongs on the cylinder — it IS how well this bore is breathing
   ctx.textAlign='left';
   // VE and the cam sit in the clear column beside the casting — next to the parts they describe,
   // but outside the drawing so neither is obscured.
-  const labX=cx+bore/2+26;
-  ctx.font=F(6);ctx.fillStyle='#778';ctx.fillText(tr('BREATHING'),px(labX),py(boreTop+38));
-  ctx.font=F(7);ctx.fillStyle='#cde';ctx.fillText('VE '+(state.ve*100).toFixed(0)+'%',px(labX),py(boreTop+50));
-  ctx.font=F(6);ctx.fillStyle='#778';ctx.fillText(tr('CAM'),px(labX),py(boreTop+70));
+  const labX=84;   // the left column (build 164: the turbo sits on the right)
+  ctx.font=F(6);ctx.fillStyle='#778';ctx.fillText(tr('BREATHING'),px(labX),py(122));
+  ctx.font=F(7);ctx.fillStyle='#cde';ctx.fillText('VE '+(state.ve*100).toFixed(0)+'%',px(labX),py(134));
+  ctx.font=F(6);ctx.fillStyle='#778';ctx.fillText(tr('CAM'),px(labX),py(152));
   ctx.font=F(7);ctx.fillStyle='#cde';
-  ctx.fillText(e.ports?tr('PORTS'):e.cam.toUpperCase(),px(labX),py(boreTop+82));
-  if(e.vvt&&!e.ports){ctx.font=F(6);ctx.fillStyle=C.cyan;ctx.fillText('+ VVT',px(labX),py(boreTop+92));}
+  ctx.fillText(e.ports?tr('PORTS'):e.cam.toUpperCase()+(camTxt?' • '+camTxt.t:''),px(labX),py(164));
+  if(camTxt){ctx.font=F(5.5);ctx.fillStyle='#9ab';
+    ctx.fillText(camTxt.inTxt,px(labX),py(176));ctx.fillText(camTxt.exTxt,px(labX),py(186));ctx.fillText(camTxt.ov,px(labX),py(196));
+    ctx.fillText(tr('LIFT')+' '+(camTxt.L||0).toFixed(1)+' mm',px(labX),py(206));
+    if(e.vvt){ctx.fillStyle=C.cyan;ctx.fillText('VVT +'+Math.round(camTxt.adv)+'°',px(labX),py(216));}
+    if(camTxt.float){ctx.fillStyle=C.red;ctx.font=F(6.5);ctx.fillText(tr('VALVE FLOAT'),px(labX),py(228));}}
 
   // ---- intake tract with a throttle butterfly, and the blower or turbo feeding it ----
   const portYc=headY+20;
-  drawIntakeSide(px,py,S,F,LW,m,portYc,cx-bore/2-20,headY+118);
+  drawIntakeSide(px,py,S,F,LW,m,portYc,cx-bore/2-20,{x:cx,y:crankY});
 
   // ---- exhaust tract, hot when it is flowing ----
   drawExhaustSide(px,py,S,F,LW,m,portYc,cx+bore/2+20);
@@ -13018,7 +13394,7 @@ function drawPistonCutaway(px,py,S,F,LW,deg,nCyl,rodRatio,bsr,two,m){
   if(state.knockRisk>55&&!state.blown){
     const j=(state.knockRisk-55)/45;
     ctx.fillStyle=C.red;ctx.font=F(7);ctx.textAlign='center';
-    ctx.fillText(tr('KNOCK')+' '+Math.round(state.knockRisk),px(cx+(Math.random()-0.5)*j*4),py(crankY+60));
+    ctx.fillText(tr('KNOCK')+' '+Math.round(state.knockRisk),px(420+(Math.random()-0.5)*j*4),py(16));   // in the title bar, clear of the output
     ctx.textAlign='left';
   }
 
@@ -13160,7 +13536,7 @@ function drawRotaryCutaway(px,py,S,F,LW,dt,m){
   if(burning){ctx.fillStyle='#fff2a8';ctx.beginPath();ctx.arc(px(cx),py(botW-6),7*S,0,6.284);ctx.fill();}
   // ports at the top waist, fed by the same intake and exhaust tracts as the piston view
   const portYc=74, inX=cx-26, exX=cx+26;
-  drawIntakeSide(px,py,S,F,LW,m,portYc,inX,172);
+  drawIntakeSide(px,py,S,F,LW,m,portYc,inX,{x:cx,y:cy});
   ctx.strokeStyle=C.intake;ctx.lineWidth=LW(8);
   ctx.beginPath();ctx.moveTo(px(inX),py(portYc));ctx.lineTo(px(inX),py(topW+4));ctx.stroke();
   drawExhaustSide(px,py,S,F,LW,m,portYc,exX);
@@ -13174,13 +13550,13 @@ function drawRotaryCutaway(px,py,S,F,LW,dt,m){
   lab('INTAKE',cx-R-ecc-4,cy-14,'#5aa0d0','right');
   lab('COMPRESSION',cx-56,botW+22,'#7fa8c8','right');
   lab('POWER',cx+56,botW+22,'#e0905a','left');
-  lab('EXHAUST',cx+R+ecc+4,cy-14,'#c07050','left');
+  lab('EXHAUST',cx+34,topW-8,'#c07050','left');   // by its port: the turbo sits beyond the housing (build 164)
   ctx.textAlign='left';
   // breathing column, as on the piston view
-  const labX=cx+R+ecc+6;
-  ctx.font=F(6);ctx.fillStyle='#778';ctx.fillText(tr('BREATHING'),px(labX),py(cy+14));
-  ctx.font=F(7);ctx.fillStyle='#cde';ctx.fillText('VE '+(state.ve*100).toFixed(0)+'%',px(labX),py(cy+26));
-  ctx.font=F(6);ctx.fillStyle='#778';ctx.fillText(tr('PORTS'),px(labX),py(cy+40));
+  const labX=60;
+  ctx.font=F(6);ctx.fillStyle='#778';ctx.fillText(tr('BREATHING'),px(labX),py(122));
+  ctx.font=F(7);ctx.fillStyle='#cde';ctx.fillText('VE '+(state.ve*100).toFixed(0)+'%',px(labX),py(134));
+  ctx.font=F(6);ctx.fillStyle='#778';ctx.fillText(tr('PORTS'),px(labX),py(146));
   // output on the eccentric shaft
   drawShaftOutput(px,py,F,cx,botW+44,tr('AT THE SHAFT'));
   // ---- the rotor bank: every rotor at its own phase, numbered, lit as it fires ----

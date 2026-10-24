@@ -20,6 +20,50 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 Working toward **v1.0 — every number derived, not fitted.**
 
+### The live cutaway's head, timed by the model (build 165)
+
+- **The valves opened at fixed angles** on the LIVE cutaway, intake 20 BTDC to 50 ABDC on every cam, and the spark
+  fired at 340 degrees on every engine. Now the events are the breathing model's: duration and lobe separation from
+  the cam profile, the intake lobe advanced as far as the fill table puts the phaser at this rpm (camAdvAt, which
+  ivcAt now reads too), lift from the cam's L/D on the model's valve, drawn to the bore's scale. The left column
+  lists them: a stock cam's slightly negative overlap, a race cam's 72 degrees, the phaser's advance, the lift.
+- **The valvetrain is drawn.** Four- and five-valve heads get two overhead cams over bucket followers; two-valve
+  engines get pushrods (the two-valve presets are the American V8s): one cam in the block, pushrods up the wall to
+  rockers under a cover. The lobes are ground to the same half-sine the valves follow and point at their followers
+  at full lift; springs, ports curving down to the seats, and a pent-roof chamber with the plug at its peak.
+- **The spark fires at the model's advance**, and the flame spreads from the plug over the same Wiebe burn
+  (SI_BURN_DEG, WIEBE_A/M) the model's work uses. On the share of cycles the knock model detonates, the end gas
+  at the bore wall goes off ahead of the flame, with its pressure waves. A diesel's sprays go in just before TDC
+  (SOC_CI) and burn over BURN_T_CI. Injection is drawn at a typical calibration's timing (port: on the shut
+  intake valve; direct: early in the intake stroke), its length growing with the fuel per cycle.
+- **Valve float**: past the model's float speed the valves bounce off their seats instead of following the cam.
+- The stroke name and the knock flag moved to the title bar (the cam cover sits where the stroke name was; the
+  knock flag ran over the crank's output); the turbo's AIR IN label moved clear of the block.
+- Tests: new test89 (the events against the breathing model with and without VVT, full lift at the centreline,
+  the spark at the model's advance on two engines, the Wiebe burn, OHV against DOHC, float exactly past the float
+  speed, every preset drawn round its cycle with knock on).
+
+### The live cutaway's turbo and supercharger, drawn as they are built (build 164)
+
+- **The turbo was a fan.** On the LIVE cutaway it was a circle with six spokes hung off the intake pipe: no turbine,
+  no exhaust reaching it, spun by the manifold pressure. Now it is two snail housings on one shaft, end-on. The
+  exhaust manifold feeds the turbine through its inlet duct and the scroll narrows as the gas spirals onto the
+  wheel; the compressor's scroll widens round its wheel (backward-swept blades and splitters) to an outlet along
+  the tangent, and on one shaft both turn the same way. The charge pipe runs under the engine, up through the
+  intercooler to the throttle, coloured by its temperature (the compressor's outlet temperature, now one function
+  that the intake temperature also takes its rise from).
+- **Turned by the model.** The wheels spin with the shaft speed the spool model integrates (they followed the
+  manifold pressure), at a readable pace, with the speed in the readout. The wastegate opens when the model holds
+  its target and shuts while spooling or lifted; a variable-geometry turbo has no gate and its vane ring opens as
+  the model schedules the throat; the blow-off valve vents once on a lift; anti-lag pops at the turbine inlet. The
+  readout's compressor flow is live (share of choke flow), not the design point's.
+- **Superchargers** are belted to the crank, the pulleys sized by the drive ratio: Roots rotors (3 lobes, a
+  figure-eight casing) and twin-screw rotors (4 lobes driving 6 flutes) turn with the crank at their ratio, a
+  centrifugal is a compressor scroll on a 12:1 step-up.
+- **Layout.** VE and cam moved to the left column, fuel & spark to the bottom right, the rotary's labels clear of
+  the turbo; the turbo's pipe no longer runs over the MAP/IAT labels, and a motored engine no longer reads "-0 HP".
+- Tests: new test88 (scroll directions, spin with the shaft and not the manifold pressure, the wastegate and the
+  vanes against the model, the Roots ratio, the charge temperatures, every preset drawn open and closed).
 ### Circuits, messages and the DYNO chart in Greek (build 163)
 
 - **The 22 real circuits' descriptions** were English under the map on TRACK: only the four test circuits had Greek, and
