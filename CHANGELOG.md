@@ -20,7 +20,7 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 Working toward **v1.0 — every number derived, not fitted.**
 
-### The guide in Greek (build 161)
+### The guide in Greek (build 162)
 
 - **All 60 guide pages have Greek.** The 184 blocks that were English (37 pages entirely, and the real-car and
   physics levels of the other 23) are translated, each saying what its English says: the same links, tables,
@@ -31,11 +31,11 @@ Working toward **v1.0 — every number derived, not fitted.**
   it opens). The OPTIONS page no longer says that new pages appear in English.
 - **Still English:** the labels drawn inside the guide's pictures (TURBINE, COMPRESSOR...), which are painted on a
   canvas.
-- Tests: test86's guide budget is 0, and it checks every picture caption has Greek. test73's fallback check (a block
+- Tests: test87's guide budget is 0, and it checks every picture caption has Greek. test73's fallback check (a block
   with no Greek shows its English) took its untranslated block from the guide; with none left, it removes one
   block's Greek for the check.
 
-### The Greek interface, finished (build 160)
+### The Greek interface, finished (build 161)
 
 - **Everything outside the guide now has Greek.** A sweep of the app in Greek found the interface had grown in
   English since the translation was made: 9 `tr()` calls with no Greek (the tyre speed-rating warning and the
@@ -56,11 +56,31 @@ Working toward **v1.0 — every number derived, not fitted.**
   The sound option's note sent Greek players to the DYNO and TRACK tabs, which in Greek are ΔΥΝΑΜΟ and ΠΙΣΤΑ.
 - **What builds 156-159 added** is in too: the ROLL BALANCE choices (ΜΑΛΑΚΗ / ΣΚΛΗΡΗ ΕΜΠΡΟΣ). SYNTH and GAS stay as the
   sound models' names.
-- **The guide followed in build 161.**
-- Tests: test86 sweeps every tab in Greek, on a load in Greek and after switching mid-session, and fails on any
+- **The guide followed in build 162.**
+- Tests: test87 sweeps every tab in Greek, on a load in Greek and after switching mid-session, and fails on any
   English word outside the kept terms, units and names; checks every `tr()` literal, guide title and category has
   Greek and that no key is in the table twice; checks switching back to English leaves no Greek; and holds the
   guide's untranslated blocks to a budget (184) that may only go down.
+### Turbo sounds by size, anti-lag bangs, the supercharger whine reworked (build 160)
+
+- **Turbo by size.** The whine's power goes with the air through the compressor, so its amplitude scales
+  with the exducer against the medium frame's 71 mm; a blow-off valve is sized to its compressor, its bore
+  (and jet noise's amplitude) with the exducer, and its hiss lasts the charge volume over that bore. Two
+  turbos add their power. The Fiat 0.9 TwinAir's 40 mm wheel now blows off 18 dB under its exhaust, a
+  71 mm one 8 dB under.
+- **Anti-lag bangs.** On a lift above 2500 rpm anti-lag keeps the fuel and fires late, so the charge burns on
+  in the manifold: a `bang` voice in the pulse worklet, bigger and longer than a crackle (3 ms) and deeper
+  (low-passed, so the exhaust system rings), a third of the firings, with crackle between. A cat takes less
+  of the edge off it than a crackle (it goes off before the cat). The turbo keeps whining on the lift.
+  About 18 dB over a plain overrun; heard in GAS mode too.
+- **Supercharger reworked.** It sang three pure sines at 0.10 from idle (0.35 of it with no boost) and covered
+  everything. The whine is now mostly noise in a narrow band at the lobe/blade pass with a little tone
+  (blowers whirr), rolled off where the intake ducting soaks it up (2.5 kHz for a Roots or screw, 6 kHz for
+  a centrifugal). A Roots or screw's bypass is open off boost, so its whine comes in with the boost squared
+  (20 dB down off boost); a centrifugal's goes with its impeller speed squared. A twin-screw is a 4-lobe male
+  rotor on 2.4:1; a centrifugal counts its 7 full blades. Flat out a Roots sits 17 dB under the exhaust, a
+  screw 19, a centrifugal 24.
+- test86 pins all three; test69's whine check now asks for a whine concentrated at its pitch, not pure.
 
 ### The sound no longer cuts out on a lift (build 159)
 

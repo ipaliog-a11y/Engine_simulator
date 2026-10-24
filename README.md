@@ -1,4 +1,4 @@
-# PIXEL ENGINE SIM v0.6 build 161
+# PIXEL ENGINE SIM v0.6 build 162
 
 **A lightweight, 8-bit style internal combustion engine *designer* & simulator** inspired by *Automation*.
 
@@ -284,7 +284,8 @@ saps power; a large radiator, electric fan and oil cooler keep it cool.
   Around the exhaust, the **rest of the car**: a turbo whines at its compressor's blade-pass
   frequency from the live shaft speed and hisses through its **blow-off valve** on a lift from
   boost, for as long as the charge volume takes to vent (no BOV on a diesel: no throttle to surge
-  against); a supercharger whines with the crank through its drive ratio; the **intake** roars at
+  against), both as loud as the compressor is big; a supercharger whirrs with the crank through its
+  drive ratio, mostly on boost, under the exhaust; **anti-lag** bangs and crackles on every lift; the **intake** roars at
   the runner's Helmholtz frequency with airflow, open stacks loudest; and **knock** rings at the
   chamber's first acoustic mode (Draper, 1.84 c / πB, ~6 kHz), a diesel's rattle on every pulse and
   worse cold, a petrol engine's on the cycles past its knock limit.
@@ -1172,8 +1173,8 @@ Also queued: a **UI redesign** for the DESIGN and VEHICLE tabs, which are alread
 get more so as derived physics adds inputs. Progressive disclosure — headline inputs by default, a
 detail expander per subsystem — after the first conversion lands, when the final input set is known.
 
-Greek translation **resumed in build 160**: the interface is complete and `tests/test86.mjs` sweeps every
-tab in Greek, so new English text fails a test instead of shipping. The GUIDE followed in build 161; a guide
+Greek translation **resumed in build 161**: the interface is complete and `tests/test87.mjs` sweeps every
+tab in Greek, so new English text fails a test instead of shipping. The GUIDE followed in build 162; a guide
 block, title or picture caption with no Greek now fails the same test.
 - **Charge the acceleration and lap solvers for spool lag**, closing the first limit above. It
   needs a transient pass rather than the current per-rpm steady solve.
