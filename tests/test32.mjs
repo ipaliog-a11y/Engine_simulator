@@ -139,7 +139,7 @@ if (!(sp[1].lap > sp[0].lap)) fails.push('spool no longer loses on a lap');
 await page.click('#tabTrack'); await page.waitForTimeout(400);
 const ui = await page.evaluate(() => ({ head: document.getElementById('lapHead').textContent, cells: document.querySelectorAll('#lapGrid .perf-cell').length }));
 console.log('\nUI:', ui.head.trim(), '|', ui.cells, 'cells');
-if (ui.cells !== 10) fails.push('lap grid broken');   // 8 + balance (build 153) + brake temperature
+if (ui.cells !== 10) fails.push('lap grid broken');   // 8 + balance (build 156) + brake temperature
 
 console.log('\nERRORS:', errors.length ? errors : 'none');
 console.log(fails.length ? 'FAIL:\n  ' + fails.join('\n  ') : '\nPASS');

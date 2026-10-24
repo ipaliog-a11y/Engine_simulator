@@ -20,7 +20,7 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 Working toward **v1.0 — every number derived, not fitted.**
 
-### Axle balance (build 153)
+### Axle balance (build 156)
 
 - **The gap.** The lap pooled all four tyres' lateral grip into one number for the car, so no car could understeer
   or oversteer: the front and rear always ran out together. This was the biggest piece missing for handling (see
@@ -61,7 +61,7 @@ Working toward **v1.0 — every number derived, not fitted.**
 - **What is still missing.** No yaw inertia, slip-angle build-up or transient load transfer: a car never slides or
   spins, and its balance is a limit, not a motion. Every car starts at NEUTRAL roll balance (a real road car's
   factory setup understeers a little more).
-- `test83`:
+- `test84`:
   - a hatch understeers and a 911 oversteers
   - stiffer front bars move the balance toward understeer
   - narrow fronts move a mid-engined car toward understeer
@@ -75,6 +75,76 @@ Working toward **v1.0 — every number derived, not fitted.**
     with drag and the hill.
   - `test30`/`32`/`38` count the new BALANCE cell.
 
+### The driver holds the launch slip; every car gets its best launch rpm (build 155)
+
+- **The fastest launch is a small slip, and the driver finds it.** A sweep of the launch at fixed slip targets
+  (best launch rpm each) puts the quickest 0-100 at ~10% slip on every car: 2% leaves most of the grip unused (a
+  Hellcat 10.7 s), 25-50% slides the tyre (5.7-5.8 s), 10% gives 5.14 s, and 8-12% are within 0.5% of each other.
+  The optimum is flat, so a driver feeling for it with the clutch and the throttle gets it. Without traction
+  control the driver now holds that slip through the launch, in first gear; from the first upshift the run is flat
+  out, and a car with the power for it spins in second (a Hellcat 0.6 s of wheelspin, 5.40 s against 5.14 with
+  traction control). No new number: the driver holds the tyre's own optimum, the one traction control holds.
+- **The launch rpm is the best of five for every car.** It was the driver's only, without traction control; a car
+  with it launched at a fixed 55% of the limiter, which is no launch control's setting (a GT3 now launches at 6750
+  rpm, not 4950). A torque converter still launches at its stall speed.
+- **Result.** F355 5.48 -> 4.72 s (real 4.7), McLaren F1 3.78 -> 3.62 (3.2), MX-5 NA 8.48 -> 8.14, R34 4.56;
+  0-100 RMS over the 42 real cars 16.1% -> 14.7%.
+- Tests: test83 checks the driver's launch (an Aygo is as quick without traction control as with it, no
+  wheelspin), the Hellcat's wheelspin after the launch, and a GT3 with traction control launched at its best rpm.
+
+### The launch through tyre slip; traction control as a car's equipment (build 154)
+
+- **The tyre slips.** The 0-100 run clipped the drive at the tyre's grip: a tyre held or it did not, it never spun,
+  and at the clip the car got the tyre's whole force while its wheels and engine spun up for free. Now the driven
+  wheels turn at their own speed and the tyre pushes through slip: sin(C atan(B s)), the shape of Pacejka's Magic
+  Formula, peaking at ~10% slip (dry asphalt; 6-15% measured, one figure for every compound) and falling past it
+  to 0.82 of the peak in a full slide (measured tyres 0.75-0.85). The wheels, and the engine through the gearing
+  when the clutch is locked, are turned by the drive and held back by the tyre; the car is pushed by the tyre. The
+  tyre is stiff against the wheel's inertia at walking pace, so the wheel is stepped implicitly. The engine revs
+  with the wheels, so wheelspin shows on the rev counter and in the shift points.
+- **TRACTION CONTROL (on/off), a new vehicle input.** On, the ECU trims the torque to hold the optimum slip. Off, the
+  run is flat out after the clutch and the slip dynamics decide: the car on its own. A tester feathering the
+  throttle by feel lands between the two, and how well is the driver; modelling that means tuning a controller to
+  the magazines (a delayed lift-and-reapply driver was tried: it oscillated, McLaren F1 +40%), so it is not done.
+  The tester's one skill credited is the launch rpm: without traction control the run is made from five launch
+  speeds and the quickest kept.
+- **Presets carry what the car had.** Without traction control: MX-5 NA, AE86, S2000 AP1, Supra A80 (unsure),
+  R34 GT-R, Impreza STI GD, Evo IX, F355, Diablo VT, McLaren F1, 993 Turbo, RX-7 FD, Murcielago LP640 (unsure).
+  The rest have it. The summary shows it, and the wheelspin time to 100 where there is any.
+- **Result.** With traction control every car is ~2% slower (the engine's and wheels' inertia charged at the traction
+  limit, and the shifts a little earlier by road speed), the cost the parked slip model measured. Without it the
+  powerful rear-drivers spin: a Hellcat 5.14 s on, 6.40 s off (3.4 s of wheelspin); an Aygo 10.94 / 11.50 s. The old
+  rear-drivers without traction control read slower than magazine testers, who feather the throttle (F355 4.79 ->
+  5.5 s against 4.7, McLaren F1 3.8 s against 3.2): stated, not tuned. 0-100 RMS over the 42 real cars 14.1% -> 16%.
+- Tests: new test83 (the curve, traction control on and off, the launch rpm, the setting as equipment and through a
+  save). test41's caps and budget follow the ~2% (GTI Mk8 8 -> 10%, Supra A80 17 -> 20%, M2 14 -> 17%, RMS 11 ->
+  12.5%), each by name with the reason; test61 retires the 750S from its slow cars (build 153's tyre review) and
+  names the C8 Z06, whose 2.8 s reference reads as a rollout-timed claim (the one rollout-free figure is 3.54 s).
+
+### Tyre review: each car's factory tyre, against its own skidpad and braking (build 153)
+
+- **Why.** The fleet's 0-100 errors were worst on modern high-power rear-drivers (720S, 812, 750S, both Z06s,
+  Hellcat: 18-30% slow, traction-limited for 3-4.6 s), and a car on the wrong compound class is the first thing
+  to rule out. The classes are build 111's road-asphalt figures: SPORT is a summer UHP tyre (skidpads 0.90-0.98
+  g), SEMI the Cup 2 class (a 911 GT3 on Cup 2s ~1.10 g).
+- **Checked against each car's own measurements, not tyre names alone:**
+
+  | car | factory tyre | measured | model, before | model, now |
+  |---|---|---|---|---|
+  | McLaren 720S | bespoke Pirelli P Zero Corsa | skidpad ~1.10 g | sport: 1.00 g, 143 ft | **semi: 1.12 g, 128 ft** |
+  | McLaren 750S | P Zero Corsa (Trofeo R optional) | ~1.13 g; 70-0 129-136 ft | sport: 1.00 g, 142 ft | **semi: 1.12 g, 127 ft** |
+  | Corvette Z06 C8 | Michelin Pilot Sport 4S (Cup 2 R with Z07) | 1.12 g, 144 ft (Z07: 1.16 g, 139 ft) | sport: 1.00 g, 143 ft | unchanged |
+
+  The McLarens move to SEMI: their factory tyres are the Cup 2 class and their measurements agree. 0-100: 720S
+  3.55 -> 3.07 s (real 2.9), 750S 3.54 -> 3.05 s (2.8). The Z06 C8 stays on SPORT: its braking matches it exactly.
+- **What the review found besides.** The rest of the slow rear-drivers are on the right class, and the trace shows
+  why they are slow: on the traction limit from 0 to ~90 km/h (the C8 at a steady 0.83 g), with the clutch phase
+  and the shift costing little. That is the launch, the next build. And one reference is optimistic: the C8 Z06's
+  2.8 s (already marked unsure) reads as GM's 0-60 claim with the 1 ft rollout US magazines subtract; the one
+  rollout-free 0-100 km/h found is 3.54 s (AutoTopNL, on the road), against the model's 3.48. Noted in the preset.
+- The C8's skidpad (1.00 against 1.12 g) with its braking matching says the lateral side is short on a modern car
+  while the longitudinal is right; the suspension geometry (camber recovery, roll stiffness) is the on-hold item.
+- 0-100 RMS over the 42 real cars 15.0% -> 14.1%.
 ### The driver's foot (build 152)
 
 - **The problem.** The lap's throttle was read straight off the speed solve, point by point: full wherever the engine
