@@ -20,6 +20,32 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 Working toward **v1.0 — every number derived, not fitted.**
 
+### The live cutaway's tracts to scale, the header's wave, the compressor map (build 166)
+
+- **The intake was a straight pipe with a throttle, the exhaust a straight pipe ending in mid-air.** Now the runner
+  and the exhaust primary are drawn at one scale, 4.5 mm to a drawing unit (TRACT_MM), so a torque manifold's 460 mm
+  runner and a race header's 750 mm primaries look as long as they are against short ones. The intake carries the
+  air filter (by its grade, or an open bellmouth), the throttle body and a plenum; individual throttles are a
+  trumpet, a sock and a butterfly on each runner; a carburettor sits on the plenum with its air cleaner, and no
+  injector is drawn (the carb meters the fuel). A variable manifold shows its second plenum and the flap, open or
+  shut as the fill table chose (it now remembers which runner length won, runnerLAt). The exhaust: the primary (a
+  stock cast manifold short and fat), the collector, the cat and the silencer; a turbo's cat and silencer sit on
+  the downpipe.
+- **The header's wave.** The blowdown pulse leaves the port at EVO, runs the primary at the speed of sound in the
+  gas and comes back, flipping to a suction at the open collector, for the primK round trips the header model cut
+  it for (headerReturnAt: at the header's target speed and design temperature it lands exactly theta = dur/2 + 90
+  after EVO). The readout says where it comes back, and turns green, SCAVENGING, when both valves are open then: an
+  F355 at 8250 rpm, never a stock cam's negative overlap.
+- **Compressor map** for turbo engines: the model's efficiency islands (compIslandEff), its choke line, the
+  engine's full-throttle operating line (the steady boost at each rpm) and the compressor's live point with its
+  trail. The model has no surge line, so none is drawn. A **boost bar** with the target marked, turbo or blower.
+- **Flow** dashes pack with the mass flow (vizFlowFrac), sparse at idle and dense flat out at the limiter.
+- Finding, not changed: the fill table keeps a variable manifold on its long runner almost everywhere (a Huracan
+  to 8800 rpm), later than a real switching manifold changes over.
+- Tests: new test90 (runner and primary to the model's lengths, the header's return at its design angle on four
+  headers, scavenging only with both valves open, the flap against the fill table, the map's operating line, the
+  flow density, every intake system and filter drawn).
+
 ### The live cutaway's head, timed by the model (build 165)
 
 - **The valves opened at fixed angles** on the LIVE cutaway, intake 20 BTDC to 50 ABDC on every cam, and the spark
