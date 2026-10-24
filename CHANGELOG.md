@@ -20,6 +20,45 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 Working toward **v1.0 — every number derived, not fitted.**
 
+### The sound no longer cuts out on a lift (build 159)
+
+- On an injected engine a lift cuts the fuel (DFCO), and the exhaust's pulse strength fell to a tenth of a
+  near-empty charge (0.014 on a closed throttle): both sound models dropped 31-35 dB within a few tenths of
+  a second. The cylinders still pump the air they draw down the pipe, fired or not; the gas model with the
+  fuel off puts 7-17% of its flat-out signal there at 60% of the redline. `exhaustStrength` now floors the
+  exhaust at 0.2 x rpm/redline under both models, so an overrun sits about 10-15 dB under the pull and
+  fades with the revs. soundDrive's own strength is unchanged: the crackle's pipe heat and the knock read it.
+- The GAS leveller came back up over 0.3 s, leaving a hole after every lift as its gain lagged the falling
+  signal; it now recovers in 60 ms.
+- test84: a pull and a lift through the real sim and both chains; the overrun within 25 dB of the pull, fading.
+
+### GAS for two-strokes and rotaries (build 158)
+
+- The GAS sound model now covers every type the designer builds. Two new kinematics share the gas
+  volumes, collectors and audio pick-off with the four-stroke:
+  - **Two-stroke**: a piston-ported cylinder on a 360 deg cycle, scavenged by its own crankcase (the
+    piston's underside pumps it, crankcase compression 1.35). A reed valve admits charge from the runner
+    only while the runner is above the crankcase, the transfers carry it to the cylinder, the exhaust port
+    lets it out into the expansion chamber. Port area is width x the height the piston has uncovered:
+    exhaust 0.70 bore, transfers 1.1 bore in all, reed 0.45 of the piston area. The breathing model has no
+    port timing, so `TWO_STROKE_PORTS` states it by cam choice (exhaust 180/190/198 deg, transfers
+    120/126/132). The 500cc twin makes 4.0 bar IMEP flat out: an untuned pipe, since a lumped volume cannot
+    carry an expansion chamber's returning wave (bigger ports moved it only to 4.5).
+  - **Rotary**: three chambers per rotor, each through its four strokes over 1080 deg of the eccentric shaft,
+    a chamber 360 deg behind the next, volume Vmin + Vd (1 - cos(2 pi phi / 540)) / 2 with
+    Vd = 3 sqrt(3) R e B (654 cc on a 13B). The chambers share the rotor's side intake ports and peripheral
+    exhaust port at the 13B's published timing (exhaust 75 deg BBDC to 48 ATDC, intake 32 ATDC to 50 ABDC),
+    with a 40 deg ramp as an apex crosses an edge; ports 0.07 and 0.09 R B. The Renesis makes 10.3 bar
+    IMEP at 4000 rpm (real: ~11-12 from its 211 Nm).
+- Port flow constants come from area: engine-sim's k is Cd A / sqrt(molar mass), which puts its 2JZ bench at
+  13 cm2 of effective area against ~20 cm2 of valve curtain. Spark and burn by kind (`gasTiming`): a rotary
+  burns over 100-130 shaft deg, its chamber long and thin.
+- The per-build calibration averages six speeds instead of two: what the recorded exhaust passes swings
+  about 2.5x with the firing frequency, and two points at 35%/70% of a 9000 rpm redline both sat in holes,
+  leaving the rotary 3x too loud. Every type now lands within about 2.5x of the synth's level flat out.
+- test84: every type can use GAS; a rotary plays through it live; the two-stroke and rotary IMEP, the 13B
+  chamber volume, part throttle and finiteness.
+
 ### Axle balance (build 157)
 
 - **The gap.** The lap pooled all four tyres' lateral grip into one number for the car, so no car could understeer
