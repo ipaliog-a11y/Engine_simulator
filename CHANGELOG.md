@@ -20,7 +20,7 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 Working toward **v1.0 — every number derived, not fitted.**
 
-### The live cutaway's head, timed by the model (build 164)
+### The live cutaway's head, timed by the model (build 165)
 
 - **The valves opened at fixed angles** on the LIVE cutaway, intake 20 BTDC to 50 ABDC on every cam, and the spark
   fired at 340 degrees on every engine. Now the events are the breathing model's: duration and lobe separation from
@@ -43,7 +43,7 @@ Working toward **v1.0 — every number derived, not fitted.**
   the spark at the model's advance on two engines, the Wiebe burn, OHV against DOHC, float exactly past the float
   speed, every preset drawn round its cycle with knock on).
 
-### The live cutaway's turbo and supercharger, drawn as they are built (build 163)
+### The live cutaway's turbo and supercharger, drawn as they are built (build 164)
 
 - **The turbo was a fan.** On the LIVE cutaway it was a circle with six spokes hung off the intake pipe: no turbine,
   no exhaust reaching it, spun by the manifold pressure. Now it is two snail housings on one shaft, end-on. The

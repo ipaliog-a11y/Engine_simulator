@@ -206,7 +206,7 @@ saps power; a large radiator, electric fan and oil cooler keep it cool.
     connecting rod of finite length makes the piston linger at the bottom and snap through the
     top; at quarter-crank it is at 0.58 of stroke where a sine would say 0.50.
   - **Drawn to your bore/stroke ratio**, so an oversquare engine really is short and wide.
-  - **The cam's own valve timing** (build 164): the events from the cam's duration and lobe separation, the
+  - **The cam's own valve timing** (build 165): the events from the cam's duration and lobe separation, the
     intake phased by VVT as the model schedules it, the lift to scale, the valvetrain drawn (overhead cams on
     four-valve heads, pushrods on two), and the spark at the model's advance with the flame over its Wiebe burn. A two-stroke shows ports uncovering in the
     liner instead; a rotary shows a real two-lobe epitrochoid housing,
@@ -217,7 +217,7 @@ saps power; a large radiator, electric fan and oil cooler keep it cool.
     through a V12, and the firing cylinder glows.
   - Live parts stay next to the thing they describe: throttle-plate angle at the butterfly, boost
     and compressor flow at the turbo, EGT at the exhaust, and a knock bar.
-  - **Turbos and superchargers drawn as they are built (build 163).** A turbo is two snail housings
+  - **Turbos and superchargers drawn as they are built (build 164).** A turbo is two snail housings
     on one shaft: the exhaust manifold feeds the turbine, whose scroll narrows as the gas spirals
     in; the compressor's widens to its outlet, and the charge goes round under the engine through
     the intercooler to the throttle, coloured by its temperature. The wheels turn with the shaft
@@ -915,8 +915,8 @@ measurement finds things. Each item is one PR.
 | — | Launch through tyre slip; traction control | ✅ build 154 | The driven wheels turn at their own speed and the tyre pushes through slip (peak at ~10%, 0.82 in a full slide); TRACTION CONTROL holds the peak, without it the run is flat out and the tyres spin; the launch rpm is the tester's best of five. Presets carry their real equipment. |
 | — | Driver's launch; best launch rpm | ✅ build 155 | The fastest launch is ~10% slip on every car (a sweep of slip targets); without traction control the driver holds it in first gear, then flat out from the first upshift. Every car launches at its best of five rpm. 0-100 RMS 16.1% → 14.7%. |
 | — | Axle balance | ✅ build 157 | Each axle has its own lateral grip: its weight and downforce share, its share of the load transfer (ROLL BALANCE, the anti-roll bars), its own tyres (FRONT WIDTH; the factory front widths of 23 staggered cars), and the side force for the mass it carries. The car corners as hard as the axle that runs out first: front-heavy cars understeer, rear-engined 911s oversteer, braking into a corner unloads the rear. TRACK shows the balance. Laps 0-1.2% slower. test85. |
-| — | Live cutaway: forced induction | ✅ build 163 | Stage 1 of 3 of the cutaway's detail: the turbo as two scrolls on one shaft in the exhaust-to-intake loop, turned by the model's shaft speed, with the wastegate, VGT vanes, intercooler and blow-off valve the model has; the superchargers belted to the crank. Next: the head, then the tracts and live gauges. |
-| — | Live cutaway: the head | ✅ build 164 | Stage 2 of 3: valve events from the cam's duration, LSA and the phaser's scheduled advance; overhead cams (4V) or pushrods (2V) drawn to the lift; the spark at the model's advance, the flame over the model's Wiebe burn, knock in the end gas; injection; valve float past the float speed. Next: the tracts and live gauges. |
+| — | Live cutaway: forced induction | ✅ build 164 | Stage 1 of 3 of the cutaway's detail: the turbo as two scrolls on one shaft in the exhaust-to-intake loop, turned by the model's shaft speed, with the wastegate, VGT vanes, intercooler and blow-off valve the model has; the superchargers belted to the crank. Next: the head, then the tracts and live gauges. |
+| — | Live cutaway: the head | ✅ build 165 | Stage 2 of 3: valve events from the cam's duration, LSA and the phaser's scheduled advance; overhead cams (4V) or pushrods (2V) drawn to the lift; the spark at the model's advance, the flame over the model's Wiebe burn, knock in the end gas; injection; valve float past the float speed. Next: the tracts and live gauges. |
 | — | Suspension type and geometry | ⏸ on hold | Future development. Today a setup is roll gradient + static camber; the roll camber the geometry recovers is a fixed 50% for every car (CAMBER_RECOVERY), and lateral load transfer is split by static weight. Wanted: the geometry per car (MacPherson strut, double wishbone, multi-link, solid axle) giving its camber recovery, and front/rear roll stiffness (springs, anti-roll bars) giving the handling balance. Needs each preset's real suspension type. |
 | — | Spark torque from fuel | ✅ build 95 | `IMEP_K` replaced by Heywood's 0.8 × fuel-air cycle efficiency; each fuel's LHV/AFR_st enters. Spark torque −2.7%, full-load BSFC 280 g/kWh (real 270–300). Rotary/two-stroke type factors still fitted. |
 | — | `turboChoke` (boost taper) | ✅ build 94 | Retired. Turbine efficiency from blade speed ratio U/C, per-point compressor efficiency, a continuous rich-knock slope in place of a step, and sequential turbos staged as two turbines. Calibration improved on every measure. |

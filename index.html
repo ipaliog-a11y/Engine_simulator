@@ -4460,13 +4460,13 @@ const I18N={
   'PORTS':{el:'ΘΥΡΙΔΕΣ'},'COOLANT':{el:'ΨΥΚΤΙΚΟ'},'OIL':{el:'ΛΑΔΙ'},'FUEL & SPARK':{el:'ΚΑΥΣΙΜΟ/ΣΠΙΝΘΗΡΑΣ'},
   'OVERRUN CUT — 0 L/h':{el:'ΔΙΑΚΟΠΗ ΣΤΗΝ ΕΠΙΒΡΑΔΥΝΣΗ — 0 L/h'},'ADV':{el:'ΠΡΟΠ.'},'AUTO':{el:'ΑΥΤΟΜ.'},
   'COMPRESSION IGNITION':{el:'ΑΝΑΦΛΕΞΗ ΜΕ ΣΥΜΠΙΕΣΗ'},
-  // the live cutaway's turbo and supercharger (build 163)
+  // the live cutaway's turbo and supercharger (build 164)
   'AIR IN':{el:'ΑΕΡΑΣ'},'OFF THE CRANK':{el:'ΑΠΟ ΤΟΝ ΣΤΡΟΦΑΛΟ'},'OUTLET':{el:'ΕΞΟΔΟΣ'},'AT THE TURBINE':{el:'ΣΤΗΝ ΤΟΥΡΜΠΙΝΑ'},
   'TO THE CAT':{el:'ΠΡΟΣ ΚΑΤΑΛΥΤΗ'},'SMALL + LARGE':{el:'ΜΙΚΡΟ + ΜΕΓΑΛΟ'},'HP + LP':{el:'ΥΨΗΛΗΣ + ΧΑΜΗΛΗΣ'},'2 UNITS':{el:'2 ΜΟΝΑΔΕΣ'},
   'BLOW-OFF':{el:'ΕΚΤΟΝΩΣΗ'},'TARGET':{el:'ΣΤΟΧΟΣ'},'of choke flow':{el:'της μέγιστης παροχής'},'VANES':{el:'ΠΤΕΡΥΓΙΑ'},
   '% OPEN':{el:'% ΑΝΟΙΧΤΑ'},'WASTEGATE OPEN':{el:'WASTEGATE ΑΝΟΙΧΤΗ'},'WASTEGATE SHUT':{el:'WASTEGATE ΚΛΕΙΣΤΗ'},
   'OVERRUN CUT':{el:'ΔΙΑΚΟΠΗ ΚΑΥΣΙΜΟΥ'},'DIESEL: NO SPARK':{el:'ΝΤΙΖΕΛ: ΧΩΡΙΣ ΣΠΙΝΘΗΡΑ'},
-  // the head (build 164)
+  // the head (build 165)
   'OVERLAP':{el:'ΕΠΙΚΑΛΥΨΗ'},'LIFT':{el:'ΑΝΥΨΩΣΗ'},'ROTOR TURNS AT 1/3 SHAFT SPEED':{el:'ΡΟΤΟΡΑΣ = 1/3 ΤΟΥ ΑΞΟΝΑ'},
   'ENGINE FAILURE':{el:'ΒΛΑΒΗ ΚΙΝΗΤΗΡΑ'},'REBUILD WITH BUILD & DYNO':{el:'ΞΑΝΑΦΤΙΑΞΕ ΤΟΝ ΚΙΝΗΤΗΡΑ'},
   'DAMAGE':{el:'ΖΗΜΙΑ'},'HEALTH':{el:'ΥΓΕΙΑ'},'BOTTLE':{el:'ΦΙΑΛΗ'},'RUNNING':{el:'ΛΕΙΤΟΥΡΓΕΙ'},'IDLE':{el:'ΡΕΛΑΝΤΙ'},
@@ -12703,7 +12703,7 @@ function drawEngine(dt){
   rotorAngle=(rotorAngle+rate*dt/3)%(Math.PI*2);           // rotor turns at 1/3 shaft speed
   // The turbo is geared to the same clock, so it visibly picks up with boost without spinning
   // into a blur of its own.
-  // The turbo turns with the shaft speed the spool model integrates (build 163; it followed the manifold
+  // The turbo turns with the shaft speed the spool model integrates (build 164; it followed the manifold
   // pressure), at a readable pace: a quarter turn a second stopped to under three at the shaft's limit.
   const nShaft=e.shaftJ?Math.sqrt(2*Math.max(0,state.shaftE||0)/e.shaftJ)*60/(2*Math.PI):0;
   turboAngle=(turboAngle+(state.blown?0:(0.25+2.6*clamp(nShaft/Math.max(1,e.shaftMax),0,1))*Math.PI*2)*dt)%(Math.PI*2);
@@ -12753,7 +12753,7 @@ function drawEngine(dt){
 // These were written inside drawPistonCutaway, so the Wankel view had none of them: no turbo, no
 // exhaust, no EGT, no ignition advance, no output. Shared now, so both engine types show the same
 // information in the same place.
-// ---- the air and gas paths, and the turbo or supercharger in them (build 163) ----
+// ---- the air and gas paths, and the turbo or supercharger in them (build 164) ----
 // The boosters were a circle with six spokes hung off the intake pipe: a turbo had no turbine and no
 // exhaust reaching it, and a supercharger looked the same in yellow. They are drawn now as they are
 // built and turned by the model: a turbo is two snail housings on one shaft, the turbine fed by the
@@ -13019,7 +13019,7 @@ function drawTurbo(px,py,S,F,LW,m,portYc,exX,gasCol){
     +(vgt?tr('VANES')+' '+Math.round((drawTurbo.vane||0)*100)+tr('% OPEN'):tr(gate?'WASTEGATE OPEN':'WASTEGATE SHUT')),px(40),py(368));
 }
 function drawFuelSpark(px,py,S,F,m){
-  // bottom right, under the bank (build 163: the left column carries the intake and the boosters now)
+  // bottom right, under the bank (build 164: the left column carries the intake and the boosters now)
   const e=engine;
   const fx=400,fy=336,kx=508;
   ctx.fillStyle='#778';ctx.font=F(6);ctx.fillText(tr('FUEL & SPARK'),px(fx),py(fy+4));
@@ -13053,7 +13053,7 @@ function drawTempGauges(px,py,S,F,LW,x,y,w){
   gaugeBar(px,py,S,F,LW,x,y+12,w,tr('COOLANT'),state.coolant,60,125,108,115);
   gaugeBar(px,py,S,F,LW,x,y+34,w,tr('OIL'),state.oil,60,140,115,125);
 }
-// ---- the head, timed by the model (build 164) ----
+// ---- the head, timed by the model (build 165) ----
 // The valves opened at fixed angles (intake 20 BTDC to 50 ABDC on every cam) and the spark fired at 340 deg on
 // every engine, whatever its advance. Now the events are the cam's: duration and lobe separation from the cam
 // profile, the intake lobe advanced by the phaser as far as the model's fill table schedules it at this rpm, the
@@ -13306,7 +13306,7 @@ function drawPistonCutaway(px,py,S,F,LW,deg,nCyl,rodRatio,bsr,two,m){
   ctx.textAlign='left';
   // VE and the cam sit in the clear column beside the casting — next to the parts they describe,
   // but outside the drawing so neither is obscured.
-  const labX=84;   // the left column (build 163: the turbo sits on the right)
+  const labX=84;   // the left column (build 164: the turbo sits on the right)
   ctx.font=F(6);ctx.fillStyle='#778';ctx.fillText(tr('BREATHING'),px(labX),py(122));
   ctx.font=F(7);ctx.fillStyle='#cde';ctx.fillText('VE '+(state.ve*100).toFixed(0)+'%',px(labX),py(134));
   ctx.font=F(6);ctx.fillStyle='#778';ctx.fillText(tr('CAM'),px(labX),py(152));
@@ -13485,7 +13485,7 @@ function drawRotaryCutaway(px,py,S,F,LW,dt,m){
   lab('INTAKE',cx-R-ecc-4,cy-14,'#5aa0d0','right');
   lab('COMPRESSION',cx-56,botW+22,'#7fa8c8','right');
   lab('POWER',cx+56,botW+22,'#e0905a','left');
-  lab('EXHAUST',cx+34,topW-8,'#c07050','left');   // by its port: the turbo sits beyond the housing (build 163)
+  lab('EXHAUST',cx+34,topW-8,'#c07050','left');   // by its port: the turbo sits beyond the housing (build 164)
   ctx.textAlign='left';
   // breathing column, as on the piston view
   const labX=60;

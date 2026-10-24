@@ -1,4 +1,4 @@
-// The live cutaway's head, timed by the model (build 164).
+// The live cutaway's head, timed by the model (build 165).
 //
 // WHY THIS EXISTS. The cutaway's valves opened at fixed angles (intake 20 BTDC to 50 ABDC on every cam) and its
 // spark fired at 340 degrees on every engine. Now the head is drawn from the model: valve events from the cam's
