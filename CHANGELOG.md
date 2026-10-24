@@ -20,6 +20,29 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 Working toward **v1.0 — every number derived, not fitted.**
 
+### GAS: an engine sound simulated as gas, after engine-sim (build 156)
+
+- **ENGINE SOUND MODEL** in OPTIONS: SYNTH (the default, unchanged) or GAS, remembered per browser.
+- GAS ports the gas dynamics of Ange Yaghi's engine-sim (MIT; notice in `index.html` as `SOUND_GAS_LICENCE`):
+  per cylinder an intake runner, the cylinder and an exhaust runner + primary, per bank a collector,
+  each a lumped gas volume; compressible orifice flow between them (choked or subsonic) with bulk
+  momentum and dynamic pressure; 10 kHz with 4 fluid substeps (engine-sim runs 8; 4 is within 5% rms).
+  Built from the presets' own geometry: bore, stroke, compression, cam duration, overlap and lift, valve
+  size (engine-sim's 2JZ flow bench scaled by area and lift), runner and header length, system pipe.
+  The crank turns at our model's rpm and the plenum sits at its manifold pressure; the burn is a Wiebe
+  curve whose heat share (0.50) is fitted to 13 bar IMEP flat out on the 1.6 sport four.
+- The sound is engine-sim's: exhaust-runner gauge pressure delayed down the pipe, its audio chain
+  (1.9 kHz band limit, jitter, DC removal, derivative, flow-modulated noise) and two of its recorded
+  impulse responses (mild exhaust; minimal muffling for a race system) in a ConvolverNode, then the
+  silencer, cat and turbine as a low-pass and a level, and a limiter.
+- Loudness: the worklet levels the gas model's own swings (it is ~300x quieter at idle than flat out,
+  on no single power law) and the loudness follows the synth's pulse strength instead; each build's
+  impulse-response coupling is measured offline once (two short renders) so engines land within about
+  2x of the synth's level. The turbo whine, blow-off, intake roar, knock and crackle keep playing from
+  the synth, whose exhaust is muted. Rotaries and two-strokes stay on SYNTH.
+- The prototype it grew from stays in `tests/proto/gas-sound/`. test84 pins the physics, the option and
+  the live switch.
+
 ### The driver holds the launch slip; every car gets its best launch rpm (build 155)
 
 - **The fastest launch is a small slip, and the driver finds it.** A sweep of the launch at fixed slip targets
