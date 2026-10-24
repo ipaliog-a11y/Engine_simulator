@@ -1,4 +1,4 @@
-# PIXEL ENGINE SIM v0.6 build 160
+# PIXEL ENGINE SIM v0.6 build 161
 
 **A lightweight, 8-bit style internal combustion engine *designer* & simulator** inspired by *Automation*.
 
@@ -329,8 +329,8 @@ saps power; a large radiator, electric fan and oil cooler keep it cool.
   between visits. The whole interface localises: tabs, labels, every dropdown, the design and
   vehicle summaries, the status bar, tooltips and screen-reader labels, and the challenge card
   (units, the names of real cars and circuits, and the terms Greek enthusiasts use in English, such as
-  BOOST, ECU and LSD, stay as they are). The in-app GUIDE is being translated page by page; pages
-  not yet done appear in English.
+  BOOST, ECU and LSD, stay as they are). The in-app GUIDE is translated in full, all 60 pages; only the
+  labels drawn inside its pictures are still English.
 - **Responsive** — a fluid layout that fills the screen in **portrait** (phones & tablets held
   upright) as well as landscape, scaling type and controls up so nothing sits in a narrow strip.
 - **Installable PWA**, self-hosted font, works fully offline.
@@ -1173,8 +1173,8 @@ get more so as derived physics adds inputs. Progressive disclosure — headline 
 detail expander per subsystem — after the first conversion lands, when the final input set is known.
 
 Greek translation **resumed in build 160**: the interface is complete and `tests/test86.mjs` sweeps every
-tab in Greek, so new English text fails a test instead of shipping. The GUIDE follows page by page; its
-untranslated blocks are a budget in the same test that may only go down.
+tab in Greek, so new English text fails a test instead of shipping. The GUIDE followed in build 161; a guide
+block, title or picture caption with no Greek now fails the same test.
 - **Charge the acceleration and lap solvers for spool lag**, closing the first limit above. It
   needs a transient pass rather than the current per-rpm steady solve.
 - **A hand-editable ignition map**, to match the fuel map editor — the last piece of item 2.

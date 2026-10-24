@@ -4,7 +4,7 @@
 // sweep of the app in Greek found 9 tr() calls with no Greek, every dropdown in English, the design and vehicle
 // summaries, the status bar, the help lines, ~30 tooltips and screen-reader labels, and 39 guide titles. Nothing
 // failed, because tr() falls back to the English and every Greek test checked one feature. This test is the sweep:
-//   · every tr('literal') in the source, every guide title and category, has Greek; the table has no key twice
+//   · every tr('literal') in the source, every guide title, category and picture caption, has Greek; the table has no key twice
 //     (a second entry silently wins: 'LOAD' was the load button's ΦΟΡΤΩΣΗ on the fuel map's load axis);
 //   · with Greek chosen, no tab shows an English word outside the terms the translation keeps in Latin letters
 //     (BOOST, ECU, LSD...), units, and the names of real cars, engines and circuits; both on a fresh load in Greek
@@ -22,7 +22,7 @@ const URL_ = pathToFileURL(path.join(repo, 'index.html')).href;
 const fails = [], errors = [];
 
 // The guide's blocks with no Greek. Lower it as pages are translated; never raise it to make new text pass.
-const GUIDE_BLOCKS_WITHOUT_GREEK = 184;
+const GUIDE_BLOCKS_WITHOUT_GREEK = 0;   // build 161 translated the guide
 
 // Kept in Latin letters by the translation (as the existing Greek does: ΣΤΟΧΟΣ BOOST, LSD ΜΕ ΔΙΣΚΟΥΣ), units, and
 // names (SYNTH and GAS are the two sound models'). Matched as whole words, case-sensitive.
@@ -61,6 +61,7 @@ const tables = await page.evaluate((lits) => ({
   empty: Object.keys(I18N).filter(k => !I18N[k].el),
   titles: guidePages().map(p => p.dataset.title).filter(t => !(I18N[t] && I18N[t].el)),
   cats: Object.values(GUIDE_CATS).filter(t => !(I18N[t] && I18N[t].el)),
+  captions: [...document.querySelectorAll('.gart-cap')].map(c => c.dataset.en || c.textContent.trim()).filter(t => !(I18N[t] && I18N[t].el)),
   blocks: [...document.querySelectorAll('[data-gk]')].filter(b => !(GUIDE_I18N[b.dataset.gk] && GUIDE_I18N[b.dataset.gk].el)).length,
   orphans: Object.keys(GUIDE_I18N).filter(k => !document.querySelector('[data-gk="' + k + '"]')),
 }), [...lits]);
@@ -70,6 +71,7 @@ if (tables.noGreek.length) fails.push('tr() calls with no Greek: ' + tables.noGr
 if (tables.empty.length) fails.push('I18N entries with an empty Greek: ' + tables.empty.join(' | '));
 if (tables.titles.length) fails.push('guide titles with no Greek: ' + tables.titles.join(' | '));
 if (tables.cats.length) fails.push('guide categories with no Greek: ' + tables.cats.join(' | '));
+if (tables.captions.length) fails.push('guide picture captions with no Greek: ' + tables.captions.join(' | '));
 if (tables.orphans.length) fails.push('GUIDE_I18N blocks with no page: ' + tables.orphans.join(' | '));
 if (tables.blocks > GUIDE_BLOCKS_WITHOUT_GREEK) fails.push(`guide blocks without Greek ${tables.blocks} > budget ${GUIDE_BLOCKS_WITHOUT_GREEK}: translate the new text`);
 if (tables.blocks < GUIDE_BLOCKS_WITHOUT_GREEK) console.log(`  (the budget can come down to ${tables.blocks})`);

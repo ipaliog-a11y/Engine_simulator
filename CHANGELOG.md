@@ -20,6 +20,21 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 Working toward **v1.0 — every number derived, not fitted.**
 
+### The guide in Greek (build 161)
+
+- **All 60 guide pages have Greek.** The 184 blocks that were English (37 pages entirely, and the real-car and
+  physics levels of the other 23) are translated, each saying what its English says: the same links, tables,
+  formulas and limit notes, with the words inside formulas in Greek too. The interface's own words are used where
+  the guide names a control (ΚΑΤΑΣΚΕΥΗ & ΔΥΝΑΜΟ, ΣΤΟΧΟΣ BOOST, ΤΕΛΙΚΗ ΣΧΕΣΗ), so the guide matches the screen.
+  The glossary keeps each English term beside its Greek one.
+- **The rest of the guide's text:** its 62 picture captions and every "See also" line (each link named by the page
+  it opens). The OPTIONS page no longer says that new pages appear in English.
+- **Still English:** the labels drawn inside the guide's pictures (TURBINE, COMPRESSOR...), which are painted on a
+  canvas.
+- Tests: test86's guide budget is 0, and it checks every picture caption has Greek. test73's fallback check (a block
+  with no Greek shows its English) took its untranslated block from the guide; with none left, it removes one
+  block's Greek for the check.
+
 ### The Greek interface, finished (build 160)
 
 - **Everything outside the guide now has Greek.** A sweep of the app in Greek found the interface had grown in
@@ -41,7 +56,7 @@ Working toward **v1.0 — every number derived, not fitted.**
   The sound option's note sent Greek players to the DYNO and TRACK tabs, which in Greek are ΔΥΝΑΜΟ and ΠΙΣΤΑ.
 - **What builds 156-159 added** is in too: the ROLL BALANCE choices (ΜΑΛΑΚΗ / ΣΚΛΗΡΗ ΕΜΠΡΟΣ). SYNTH and GAS stay as the
   sound models' names.
-- **The guide is next.** 184 of its 215 blocks are still English (37 pages entirely); its intro and index are done.
+- **The guide followed in build 161.**
 - Tests: test86 sweeps every tab in Greek, on a load in Greek and after switching mid-session, and fails on any
   English word outside the kept terms, units and names; checks every `tr()` literal, guide title and category has
   Greek and that no key is in the table twice; checks switching back to English leaves no Greek; and holds the
