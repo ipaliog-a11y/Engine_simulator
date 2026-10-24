@@ -373,7 +373,7 @@ table.fuelmap td.live{box-shadow:inset 0 0 0 2px #fff;font-weight:bold}
 <body>
 <div class="container">
 <header>
-<h1>PIXEL ENGINE SIM v0.6 build 157</h1>
+<h1>PIXEL ENGINE SIM v0.6 build 158</h1>
 <div class="subtitle" id="subtitle">ENGINE DESIGNER • BUILD IT, THEN DRIVE IT</div>
 </header>
 <div class="build-strip" id="buildStrip">
@@ -2379,7 +2379,7 @@ An engine's sound is mostly its <b>exhaust pulses</b>: every time a cylinder's e
 </div>
 <div class="gtier gt-game"><div class="gtier-h">LV2 · IN THE GAME</div>
 <div class="guide-body" data-gk="options">
-<b>ENGINE SOUND</b> — two models, picked under ENGINE SOUND MODEL. <b>SYNTH</b>, the default, is described here. <b>GAS</b> simulates the gas instead, the way Ange Yaghi's engine-sim does: every cylinder, its intake and exhaust runners and each bank's collector are volumes of gas with pressure, temperature and flow between them, and the sound is the pressure in the exhaust runners, run through a recording of a real exhaust. It is heavier on the processor, and rotaries and two-strokes stay on SYNTH. Either is heard on the DYNO tab, following the engine controls, and on the TRACK tab, following the car round the lap replay (silent while the replay is paused). It is built from the firing pulses: every cylinder fires at its place in the firing order and its pulse goes down its own bank's exhaust, left and right for a V or a boxer. That is where a cross-plane V8's burble comes from, and why an inline six sounds smooth. Then the pulses run the exhaust you fitted: the header rings at its own length (a race header cut for high revs is shorter and sings higher; a cast manifold barely rings), the system behind it drones, and the silencer, the cat and a turbo, if there is one, quieten it. Load is in the pulses themselves: each one is as hard as the charge it burned, so flat out is louder and raspier than a cruise, and a fuel cut leaves only a hollow whoosh. A wild cam makes the idle lope, an idle thing that fades as the throttle opens. Lift off a carburetted engine after a pull and it crackles while the pipe is hot (carburettors cannot cut the fuel, so the thin overrun charge misfires and lights in the exhaust); an injected one stays quiet, and anti-lag pops on purpose. Around the exhaust you also hear the rest of the car: a turbo whines at its compressor's blade-pass pitch as the shaft spools, and hisses through its blow-off valve when you lift (longer from a big intercooler); a supercharger whines with the crank, a Roots blower with a buzz; the intake roars at its runner's tuned pitch, loudest through open stacks; and a chamber that knocks rings at about 6 kHz, which is a diesel's rattle on every stroke (worst cold) and a petrol engine's warning when it is past its knock limit.<br><b>WEAR &amp; DAMAGE</b> — with wear on, detonation, overheating, running lean under boost and over-revving damage the engine and can blow it; with it off the engine is invincible, which is the way to experiment.<br><b>LANGUAGE</b> — English or Greek. Pages added since the Greek translation was made appear in English.
+<b>ENGINE SOUND</b> — two models, picked under ENGINE SOUND MODEL. <b>SYNTH</b>, the default, is described here. <b>GAS</b> simulates the gas instead, the way Ange Yaghi's engine-sim does: every cylinder, its intake and exhaust runners and each bank's collector are volumes of gas with pressure, temperature and flow between them, and the sound is the pressure in the exhaust runners, run through a recording of a real exhaust. It is heavier on the processor. A two-stroke gets its own model, with piston ports and a crankcase that pumps the charge; a rotary gets three chambers to a rotor breathing through ports the rotor uncovers. Either is heard on the DYNO tab, following the engine controls, and on the TRACK tab, following the car round the lap replay (silent while the replay is paused). It is built from the firing pulses: every cylinder fires at its place in the firing order and its pulse goes down its own bank's exhaust, left and right for a V or a boxer. That is where a cross-plane V8's burble comes from, and why an inline six sounds smooth. Then the pulses run the exhaust you fitted: the header rings at its own length (a race header cut for high revs is shorter and sings higher; a cast manifold barely rings), the system behind it drones, and the silencer, the cat and a turbo, if there is one, quieten it. Load is in the pulses themselves: each one is as hard as the charge it burned, so flat out is louder and raspier than a cruise, and a fuel cut leaves only a hollow whoosh. A wild cam makes the idle lope, an idle thing that fades as the throttle opens. Lift off a carburetted engine after a pull and it crackles while the pipe is hot (carburettors cannot cut the fuel, so the thin overrun charge misfires and lights in the exhaust); an injected one stays quiet, and anti-lag pops on purpose. Around the exhaust you also hear the rest of the car: a turbo whines at its compressor's blade-pass pitch as the shaft spools, and hisses through its blow-off valve when you lift (longer from a big intercooler); a supercharger whines with the crank, a Roots blower with a buzz; the intake roars at its runner's tuned pitch, loudest through open stacks; and a chamber that knocks rings at about 6 kHz, which is a diesel's rattle on every stroke (worst cold) and a petrol engine's warning when it is past its knock limit.<br><b>WEAR &amp; DAMAGE</b> — with wear on, detonation, overheating, running lean under boost and over-revving damage the engine and can blow it; with it off the engine is invincible, which is the way to experiment.<br><b>LANGUAGE</b> — English or Greek. Pages added since the Greek translation was made appear in English.
 </div>
 <div class="guide-body" data-gk="tip">
 Tip: turn WEAR off in OPTIONS to
@@ -2496,7 +2496,7 @@ Most other tests check behaviour that is true of real cars: a bigger turbo spool
 <div class="design-section">Audio</div>
 <div class="opt-row"><div><b>ENGINE SOUND</b><div class="opt-note">Synthesised from the firing pulses (firing order, one exhaust per bank; lumpy idle from wild cams). Plays on the DYNO tab, and on the TRACK tab with the lap replay.</div></div>
 <button id="btnSound" class="toggle" aria-pressed="false">SOUND OFF</button></div>
-<div class="opt-row"><div><b>ENGINE SOUND MODEL</b><div class="opt-note">SYNTH: firing pulses through modelled pipes (light). GAS: the cylinders, runners and exhaust simulated as gas, after engine-sim by Ange Yaghi, with a recorded exhaust (heavier; a V12 uses about half a CPU core; rotaries and 2-strokes stay on SYNTH).</div></div>
+<div class="opt-row"><div><b>ENGINE SOUND MODEL</b><div class="opt-note">SYNTH: firing pulses through modelled pipes (light). GAS: the cylinders, runners and exhaust simulated as gas, after engine-sim by Ange Yaghi, with a recorded exhaust (heavier; a V12 uses about half a CPU core). Four-strokes, two-strokes and rotaries all have their own gas model.</div></div>
 <select id="edSoundModel" class="opt-select"><option value="synth">SYNTH</option><option value="gas">GAS</option></select></div>
 
 <div class="design-section">Simulation</div>
@@ -4384,7 +4384,7 @@ const I18N={
   'BUILD & DYNO':{el:'ΚΑΤΑΣΚΕΥΗ & ΔΥΝΑΜΟ'},'DEFAULTS':{el:'ΠΡΟΕΠΙΛΟΓΕΣ'},
   'Simulator preferences. These don\'t change the engine build.':{el:'Προτιμήσεις προσομοιωτή. Δεν αλλάζουν τον κινητήρα.'},
   'Audio':{el:'Ήχος'},'ENGINE SOUND':{el:'ΗΧΟΣ ΚΙΝΗΤΗΡΑ'},'ENGINE SOUND MODEL':{el:'ΜΟΝΤΕΛΟ ΗΧΟΥ'},
-  'SYNTH: firing pulses through modelled pipes (light). GAS: the cylinders, runners and exhaust simulated as gas, after engine-sim by Ange Yaghi, with a recorded exhaust (heavier; a V12 uses about half a CPU core; rotaries and 2-strokes stay on SYNTH).':{el:'SYNTH: παλμοί ανάφλεξης μέσα από μοντελοποιημένους σωλήνες (ελαφρύ). GAS: οι κύλινδροι, οι αγωγοί και η εξάτμιση προσομοιώνονται ως αέριο, κατά το engine-sim του Ange Yaghi, με ηχογραφημένη εξάτμιση (βαρύτερο· ένας V12 θέλει περίπου μισό πυρήνα CPU· τα περιστροφικά και τα δίχρονα μένουν στο SYNTH).'},
+  'SYNTH: firing pulses through modelled pipes (light). GAS: the cylinders, runners and exhaust simulated as gas, after engine-sim by Ange Yaghi, with a recorded exhaust (heavier; a V12 uses about half a CPU core). Four-strokes, two-strokes and rotaries all have their own gas model.':{el:'SYNTH: παλμοί ανάφλεξης μέσα από μοντελοποιημένους σωλήνες (ελαφρύ). GAS: οι κύλινδροι, οι αγωγοί και η εξάτμιση προσομοιώνονται ως αέριο, κατά το engine-sim του Ange Yaghi, με ηχογραφημένη εξάτμιση (βαρύτερο· ένας V12 θέλει περίπου μισό πυρήνα CPU). Οι τετράχρονοι, οι δίχρονοι και οι περιστροφικοί έχουν ο καθένας το δικό του μοντέλο αερίου.'},
   'Synthesised from the firing pulses (firing order, one exhaust per bank; lumpy idle from wild cams). Plays on the DYNO tab, and on the TRACK tab with the lap replay.':{el:'Συντίθεται από τους παλμούς ανάφλεξης (σειρά ανάφλεξης, μία εξάτμιση ανά σειρά κυλίνδρων· ανώμαλο ρελαντί με άγρια εκκεντροφόρο). Ακούγεται στην καρτέλα DYNO και στην καρτέλα TRACK με την αναπαραγωγή του γύρου.'},
   'Simulation':{el:'Προσομοίωση'},'WEAR & DAMAGE':{el:'ΦΘΟΡΑ & ΖΗΜΙΑ'},
   'On: detonation/overheat/lean-boost/over-rev damage the engine. Off: invincible, for free experimentation.':{el:'Ενεργό: πειράκι/υπερθέρμανση/φτωχό-boost/υπερστροφή κάνουν ζημιά. Ανενεργό: άφθαρτος, για ελεύθερο πειραματισμό.'},
@@ -9873,6 +9873,164 @@ class GasEngine{
     return this.out;
   }
 }
+// What the four-stroke, the two-stroke and the rotary share: each bank's collector venting to atmosphere,
+// the plenum held at the manifold pressure, and the audio pick-off (runner gauge pressure plus a tenth of
+// its dynamic pressure each way, delayed down the pipe, falling off with the square of the run).
+function gasCollectors(self,e){
+  const PI=Math.PI,colA=PI/4*e.sysD*e.sysD*Math.max(1,(e.sysPipes||1)/e.banks);
+  self.banks=[];
+  for(let b=0;b<e.banks;b++){const c=new Gas(ATM,colA*e.sysL,298.15);c.geo(e.sysL,Math.sqrt(colA));
+    self.banks.push({col:c,colA,kOut:KCARB*1000*colA/(PI/4*0.0508*0.0508)*0.5});}
+  self.atm=new Gas(ATM,1000,298.15);self.atm.geo(10,10);
+  self.plenum=new Gas(ATM,1000,298.15);self.plenum.geo(10,10);
+  self.out=new Float64Array(e.banks);
+}
+function gasVentCollectors(self,df){
+  for(const b of self.banks){self.atm.reset(ATM,298.15);Gas.flow(b.kOut,df,b.colA,10,self.atm,b.col);b.col.dissipate();b.col.vel(df,1);}
+}
+function gasRunner(e,exA,Vd,simHz,n){
+  const exV=exA*e.primL+50e-6*Vd/0.5e-3,xr=new Gas(ATM,exV,298.15);xr.geo(exV/exA,Math.sqrt(exA));
+  const len=e.primL+e.sysL;
+  return {xr,delay:new Float64Array(Math.ceil(len/343*simHz)+2),di:0,att:0.2*1600/n/(len*len)};
+}
+function gasPickOff(self,runners){
+  self.out.fill(0);
+  for(const r of runners){
+    const s=(r.xr.P()-ATM)+0.1*r.xr.dyn(1,0)+0.1*r.xr.dyn(-1,0);
+    const d=r.delay,v=d[r.di];d[r.di]=s;r.di=(r.di+1)%d.length;
+    self.out[r.bank]+=r.att*v;
+  }
+  return self.out;
+}
+// The Wiebe burn, shared: from the spark, release the charge's fuel heat along 1 - exp(-5 x^3).
+function gasBurn(c,since,burn,fuel,lambda){
+  if(!c.lit&&since<3&&fuel>0){c.q=c.cy.n*0.92*AIR_M/(14.7*lambda)*43e6*GAS_HEAT_SHARE*fuel;c.lit=true;c.xb=0;}
+  if(c.lit){const x=1-Math.exp(-5*Math.pow(Math.min(1,since/burn),3));c.cy.E+=(x-c.xb)*c.q;c.xb=x;if(since>=burn)c.lit=false;}
+}
+// An orifice's flow constant from its area: engine-sim's k is Cd A / sqrt(molar mass) (its molar flow law
+// leaves the molar mass out), which puts the 2JZ bench's 281 cfm at 13 cm2 of effective area.
+const kArea=(cd,a)=>cd*a/Math.sqrt(AIR_M);
+// THE TWO-STROKE. A piston-ported cylinder on a 360 deg cycle, scavenged by its own crankcase: the piston's
+// underside pumps it (crankcase compression 1.35, typical), a reed valve lets charge in from the runner
+// only while the runner is above the crankcase, the transfer ports carry it up into the cylinder, and the
+// exhaust port lets the burnt gas out into the expansion chamber (the primary). A port's open area is its
+// width times the height the piston has uncovered; widths are typical of the type (exhaust 0.70 bore,
+// transfers 1.1 bore in all, reed 0.45 of the piston area), timings from the cam choice (TWO_STROKE_PORTS).
+class TwoStrokeGas{
+  constructor(e,simHz,fluid){
+    this.e=e;this.simHz=simHz;this.fluid=fluid;
+    const PI=Math.PI,A=PI/4*e.bore*e.bore,Vd=A*e.stroke;
+    this.A=A;this.Vd=Vd;this.Vc=Vd/(e.cr-1);this.r=e.stroke/2;this.L=3.2*this.r;
+    this.xEx=this.pos(180-e.exhDur/2);this.xTr=this.pos(180-e.trDur/2);
+    this.wEx=0.70*e.bore;this.wTr=1.1*e.bore;this.kReed=kArea(0.6,0.45*A);
+    this.ccMin=Vd/0.35;
+    this.exA=PI/4*e.primD*e.primD;this.inA=PI/4*e.runnerD*e.runnerD;
+    gasCollectors(this,e);
+    this.cyl=[];
+    for(let i=0;i<e.cylinders;i++){
+      const ev=e.events[i],cy=new Gas(ATM,this.Vc,298.15);cy.geo(Math.sqrt(A),this.Vc/A);
+      const cc=new Gas(ATM,this.ccMin+Vd,298.15);cc.geo(Math.sqrt(A),(this.ccMin+Vd)/A);
+      const ir=new Gas(ATM,this.inA*e.runnerL,298.15);ir.geo(e.runnerL,Math.sqrt(this.inA));
+      const run=gasRunner(e,this.exA,Vd,simHz,e.cylinders);run.bank=ev.bank;
+      this.cyl.push(Object.assign(run,{cy,cc,ir,phase:ev.at*360,lit:false,q:0,xb:0,
+        kRun:KCARB*200*Vd/0.5e-3,kPrim:KCARB*400*this.exA/(PI/4*0.0381*0.0381)}));
+    }
+    this.theta=0;
+  }
+  pos(th){const a=th*Math.PI/180,s=Math.sin(a);return this.r*(1-Math.cos(a))+this.L-Math.sqrt(this.L*this.L-this.r*this.r*s*s);}
+  step(rpm,map,fuel,lambda,spark,burn){
+    const e=this.e,dt=1/this.simHz,df=dt/this.fluid,PI=Math.PI;
+    this.theta=(this.theta+rpm*6*dt)%360;
+    this.plenum.reset(map,300);
+    for(const c of this.cyl){
+      const th=(this.theta-c.phase+360)%360,x=this.pos(th);
+      c.cy.setV(this.Vc+this.A*x);c.cc.setV(this.ccMin+this.A*(2*this.r-x));
+      c.kEx=kArea(0.65,this.wEx*Math.max(0,x-this.xEx));c.kTr=kArea(0.65,this.wTr*Math.max(0,x-this.xTr));
+      gasBurn(c,((th-(360-spark))%360+360)%360,burn,fuel,lambda);
+    }
+    for(let k=0;k<this.fluid;k++){
+      gasVentCollectors(this,df);
+      for(const c of this.cyl){
+        const h=c.cy.V/this.A,sa=h*PI*e.bore+this.A*2;
+        c.cy.E+=(363.15-c.cy.T())*sa*100*df;if(c.cy.E<0)c.cy.E=0;
+        Gas.flow(c.kRun,df,10,this.inA,this.plenum,c.ir);c.ir.dissipate();
+        if(c.ir.P()>c.cc.P()){Gas.flow(this.kReed,df,this.inA,this.A,c.ir,c.cc);c.ir.dissipate();c.cc.dissipate();}
+        if(c.kTr){Gas.flow(c.kTr,df,this.A,this.A,c.cc,c.cy);c.cc.dissipate();c.cy.dissipate();}
+        if(c.kEx){Gas.flow(c.kEx,df,this.A,this.exA,c.cy,c.xr);c.cy.dissipate();c.xr.dissipate();}
+        const b=this.banks[c.bank];Gas.flow(c.kPrim,df,this.exA,b.colA,c.xr,b.col);
+        c.ir.vel(df,0.25);c.cc.vel(df,0.5);c.cy.vel(df,0.5);c.xr.vel(df,1);
+      }
+    }
+    return gasPickOff(this,this.cyl);
+  }
+}
+// THE ROTARY. Each rotor carries three chambers, each going through intake, compression, power and exhaust
+// over three turns of the eccentric shaft (1080 deg), one chamber a turn behind the next, so a rotor fires
+// once a turn. A chamber's volume swings between Vmin and Vmin + Vd almost sinusoidally, twice a cycle;
+// Vd = 3 sqrt(3) R e B (generating radius, eccentricity, rotor width), Vmin from the compression ratio.
+// All three chambers of a rotor breathe through the same side intake ports and the same peripheral exhaust
+// port, which the rotor's flanks uncover and cover: at the 13B's published timing (exhaust opens 75 deg
+// before BDC, closes 48 after TDC; intake opens 32 after TDC, closes 50 after BDC, in shaft degrees), with a
+// 40 deg ramp as an apex crosses a port edge. Port areas are typical of the type (exhaust 0.07 R B,
+// intake 0.09 R B, i.e. 5.9 and 7.6 cm2 on a 13B).
+class RotaryGas{
+  constructor(e,simHz,fluid){
+    this.e=e;this.simHz=simHz;this.fluid=fluid;
+    const PI=Math.PI,R=e.rotR,B=e.rotB,Vd=3*Math.sqrt(3)*R*e.ecc*B;
+    this.Vd=Vd;this.Vmin=Vd/(e.cr-1);this.sa=2.2*R*B;this.chA=B*2*e.ecc;
+    this.aEx=0.07*R*B;this.aIn=0.09*R*B;
+    this.exA=PI/4*e.primD*e.primD;this.inA=PI/4*e.runnerD*e.runnerD;
+    gasCollectors(this,e);
+    this.rotors=[];this.cyl=[];
+    for(let i=0;i<e.cylinders;i++){
+      const ev=e.events[i],ir=new Gas(ATM,this.inA*e.runnerL,298.15);ir.geo(e.runnerL,Math.sqrt(this.inA));
+      const run=gasRunner(e,this.exA,Vd,simHz,e.cylinders);run.bank=ev.bank;
+      const rot=Object.assign(run,{ir,ch:[],kRun:KCARB*200*Vd/0.5e-3,kPrim:KCARB*400*this.exA/(PI/4*0.0381*0.0381)});
+      for(let j=0;j<3;j++){
+        const cy=new Gas(ATM,this.Vmin,298.15);cy.geo(B,Math.sqrt(3)*R);
+        const c={cy,phase:ev.at*360+j*360,lit:false,q:0,xb:0,kIn:0,kEx:0};
+        rot.ch.push(c);this.cyl.push(c);
+      }
+      this.rotors.push(rot);
+    }
+    this.theta=0;
+  }
+  vol(ph){return this.Vmin+this.Vd*(1-Math.cos(2*Math.PI*ph/540))/2;}
+  // open share of a port that opens at 'open' and closes at 'close' (shaft deg in the chamber's 1080)
+  port(ph,open,close){
+    const d=((ph-open)%1080+1080)%1080,len=((close-open)%1080+1080)%1080;
+    if(d>=len)return 0;return Math.min(1,d/40,(len-d)/40);
+  }
+  step(rpm,map,fuel,lambda,spark,burn){
+    const dt=1/this.simHz,df=dt/this.fluid;
+    this.theta=(this.theta+rpm*6*dt)%1080;
+    this.plenum.reset(map,300);
+    for(const c of this.cyl){
+      const ph=(this.theta-c.phase+2160)%1080;
+      c.cy.setV(this.vol(ph));
+      c.kEx=kArea(0.7,this.aEx*this.port(ph,735,48));c.kIn=kArea(0.7,this.aIn*this.port(ph,32,320));
+      gasBurn(c,((ph-(540-spark))%1080+1080)%1080,burn,fuel,lambda);
+    }
+    for(let k=0;k<this.fluid;k++){
+      gasVentCollectors(this,df);
+      for(const r of this.rotors){
+        Gas.flow(r.kRun,df,10,this.inA,this.plenum,r.ir);r.ir.dissipate();
+        for(const c of r.ch){
+          c.cy.E+=(363.15-c.cy.T())*this.sa*100*df;if(c.cy.E<0)c.cy.E=0;
+          if(c.kIn){Gas.flow(c.kIn,df,this.inA,this.chA,r.ir,c.cy);r.ir.dissipate();c.cy.dissipate();}
+          if(c.kEx){Gas.flow(c.kEx,df,this.chA,this.exA,c.cy,r.xr);c.cy.dissipate();r.xr.dissipate();}
+          c.cy.vel(df,0.5);
+        }
+        const b=this.banks[r.bank];Gas.flow(r.kPrim,df,this.exA,b.colA,r.xr,b.col);
+        r.ir.vel(df,0.25);r.xr.vel(df,1);
+      }
+    }
+    return gasPickOff(this,this.rotors);
+  }
+}
+function makeGasEngine(e,simHz,fluid){
+  return e.kind==='rotary'?new RotaryGas(e,simHz,fluid):e.kind==='two'?new TwoStrokeGas(e,simHz,fluid):new GasEngine(e,simHz,fluid);
+}
 // engine-sim's Synthesizer input stage, per channel: 1.9 kHz 4th-order Butterworth, a jitter of up to 10
 // samples, a 10 Hz DC removal, 1% of the derivative, and the signal times 2 kHz low-passed noise
 function lp2(f,q){const w=2*Math.PI*f/sampleRate,al=Math.sin(w)/(2*q),c=Math.cos(w),a0=1+al;
@@ -9905,7 +10063,7 @@ class EngineGas extends AudioWorkletProcessor{
     {name:'floor',defaultValue:1,minValue:1e-9,maxValue:1e12,automationRate:'k-rate'}];}
   constructor(){super();this.eng=null;this.port.onmessage=e=>this.configure(e.data);}
   configure(e){
-    this.simHz=10000;this.eng=new GasEngine(e,this.simHz,4);this.acc=0;
+    this.simHz=10000;this.eng=makeGasEngine(e,this.simHz,4);this.acc=0;
     this.prev=new Float64Array(e.banks);this.cur=new Float64Array(e.banks);
     this.ch=Array.from({length:e.banks},()=>new GasChannel());
     this.pan=e.banks===1?[[0.7071,0.7071]]:[[0.85,0.45],[0.45,0.85]];
@@ -10296,8 +10454,23 @@ function setGasIR(key){
   if(Sound.gasConv){Sound.gas.disconnect();Sound.gasConv.disconnect();}
   Sound.gas.connect(conv);conv.connect(Sound.gasLp);Sound.gasConv=conv;Sound.gasIR=key;
 }
-// The gas model is a four-stroke piston engine: rotaries and two-strokes stay on the pulse synth.
-function gasSupported(e){return e.strokeDiv===4*Math.PI&&e.type!=='rotary'&&!e.ports;}
+// The gas model covers four-strokes (valves), two-strokes (piston ports, crankcase scavenged) and rotaries
+// (three chambers a rotor), petrol and diesel: every type the designer builds.
+function gasKind(e){return e.type==='rotary'?'rotary':e.strokeDiv===2*Math.PI?'two':'four';}
+function gasSupported(e){return !!e&&e.cylinders>0;}
+// A two-stroke's port timing (crank degrees open, centred on BDC), which the breathing model has no field
+// for: typical of the type, and taken from the cam choice, which is what a port job is on a two-stroke.
+// A road engine runs its exhaust about 180 deg and its transfers 120; a race one about 198 and 132.
+const TWO_STROKE_PORTS={stock:{exh:180,tr:120},sport:{exh:190,tr:126},race:{exh:198,tr:132}};
+// Spark and burn for the gas model, by kind: crank degrees for the piston engines, eccentric-shaft degrees
+// (of the chamber's 1080) for a rotary, whose long thin chamber burns slowly; a diesel's injection near TDC.
+function gasTiming(e,rf){
+  const k=gasKind(e);
+  if(e.ci)return {spark:5,burn:50};
+  if(k==='rotary')return {spark:10+10*rf,burn:100+30*rf};
+  if(k==='two')return {spark:18+8*rf,burn:45+15*rf};
+  return {spark:20+10*rf,burn:55+15*rf};
+}
 function soundModelIsGas(){return Sound.model==='gas'&&gasSupported(engine);}
 // The geometry the gas model needs, from the same build the breathing model uses.
 function gasConfig(e){
@@ -10306,20 +10479,23 @@ function gasConfig(e){
     ivDia:(e.ivDia_mm||0.45*e.bore_mm)/1000,ivCount:e.ivCount||2,ivLift:(e.ivLift_mm||0.25*0.45*e.bore_mm)/1000,
     camDur:e.camDur||240,overlap:e.overlap||0,primL:e.primL>0?e.primL:0.55,primD:e.primD||0.4*e.bore_mm/1000,
     sysL:e.sysL>0?e.sysL:3,sysD:e.sysD||0.06,sysPipes:e.sysPipes||1,runnerL:e.runnerL||0.4,runnerD:(e.runnerD_mm||0.42*e.bore_mm)/1000,
-    events:cfg.events,banks:cfg.banks};
+    events:cfg.events,banks:cfg.banks,kind:gasKind(e),
+    // a rotary's geometry: bore_mm holds the generating radius, stroke_mm the rotor width
+    rotR:e.bore_mm/1000,rotB:e.stroke_mm/1000,ecc:(e.ecc_mm||15)/1000,
+    exhDur:(TWO_STROKE_PORTS[e.cam]||TWO_STROKE_PORTS.stock).exh,trDur:(TWO_STROKE_PORTS[e.cam]||TWO_STROKE_PORTS.stock).tr};
 }
 // How loud this engine's exhaust signal is, flat out at 60% of the redline: 0.3 s of the same gas model on
 // the main thread, once per build. It sets the leveller's floor (engine-sim sets a volume per engine file by
 // hand, and levels its output).
 let gasLib=null;
 function gasReference(cfg){
-  if(!gasLib)gasLib=new Function('AudioWorkletProcessor','registerProcessor','sampleRate',SOUND_GAS_SRC+';return {GasEngine,GasChannel};')(class{},()=>{},48000);
+  if(!gasLib)gasLib=new Function('AudioWorkletProcessor','registerProcessor','sampleRate',SOUND_GAS_SRC+';return {GasEngine,GasChannel,makeGasEngine};')(class{},()=>{},48000);
   // measured after the audio chain's input stage (band limit, noise modulation), which treats a V8's slow
   // pulses and an I4's quick ones differently: normalising the raw pressure left them 5x apart
-  const sim=new gasLib.GasEngine(cfg,10000,4),rpm=0.6*engine.redline,ch=Array.from({length:cfg.banks},()=>new gasLib.GasChannel());
+  const sim=gasLib.makeGasEngine(cfg,10000,4),rpm=0.6*engine.redline,tm=gasTiming(engine,0.6),ch=Array.from({length:cfg.banks},()=>new gasLib.GasChannel());
   const prev=new Float64Array(cfg.banks);let q=0,k=0,acc=0;
   for(let i=0;i<3000;i++){
-    const o=sim.step(rpm,101325,1,0.9,26,64);
+    const o=sim.step(rpm,101325,1,0.9,tm.spark,tm.burn);
     for(;acc<1;acc+=10000/48000){let v=0;for(let b=0;b<cfg.banks;b++)v+=ch[b].run(prev[b]+(o[b]-prev[b])*acc,0.23);if(i>=1500){q+=v*v;k++;}}
     acc-=1;prev.set(o);
   }
@@ -10332,23 +10508,25 @@ function gasChainFor(e){
   return {ir:e.exhaust==='race'?'minimal':'mild',lpHz:(GAS_SILENCER_HZ[e.exhaust]||GAS_SILENCER_HZ.stock)*cut,gain:x.gain};
 }
 // How much of the worklet's levelled signal the impulse response lets through for this engine: rendered
-// offline at full load through the convolver alone, at 35% and 70% of the redline (what it passes depends on
-// how quick the pulses are), once per build. The loudness divides by it, so the luck of how an engine's
+// offline at full load through the convolver alone, at six speeds from 20% to 80% of the redline, once per
+// build. What it passes swings about 2.5x with the firing frequency (the recorded pipe's own resonances
+// meeting the firing harmonics: a drone at one rpm, a hole at another), the same for every engine that fires
+// at that rate, so two speeds could both land in a hole; six average it out. The loudness divides by it, so the luck of how an engine's
 // pulse spectrum meets the recording does not move its level; the silencer, cat and turbine (the low-pass and
 // gain after it) are left out of it on purpose, because their quietening is real. Resolves to the output rms
 // per unit of level.
 async function calibrateGas(rate,cfg,chain){
   let q=0,k=0;
-  for(const share of [0.35,0.7]){
-    const c=new OfflineAudioContext(2,Math.round(rate*0.5),rate);await loadSoundWorklet(c);
+  for(const share of [0.2,0.32,0.44,0.56,0.68,0.8]){
+    const c=new OfflineAudioContext(2,Math.round(rate*0.35),rate);await loadSoundWorklet(c);
     const n=new AudioWorkletNode(c,'engine-gas',{outputChannelCount:[2]});n.port.postMessage(cfg);
     const conv=c.createConvolver();conv.buffer=soundIRBuffer(c,chain.ir);
     n.connect(conv);conv.connect(c.destination);
     const P=n.parameters,rf=share;P.get('rpm').value=share*engine.redline;P.get('map').value=101325;P.get('fuel').value=1;
-    P.get('lambda').value=0.9;P.get('spark').value=20+10*rf;P.get('burn').value=55+15*rf;P.get('level').value=1;P.get('floor').value=1e-9;
+    const tm=gasTiming(engine,rf);P.get('lambda').value=0.9;P.get('spark').value=tm.spark;P.get('burn').value=tm.burn;P.get('level').value=1;P.get('floor').value=1e-9;
     await new Promise(r=>setTimeout(r,20));              // let the configuration land before rendering
     const b=await c.startRendering(),L=b.getChannelData(0),R=b.getChannelData(1);
-    for(let i=Math.round(rate*0.25);i<L.length;i++){q+=(L[i]*L[i]+R[i]*R[i])/2;k++;}
+    for(let i=Math.round(rate*0.15);i<L.length;i++){q+=(L[i]*L[i]+R[i]*R[i])/2;k++;}
   }
   return Math.sqrt(q/k)||1;
 }
@@ -10437,8 +10615,9 @@ function updateGasSound(live,s,t,size,strength){
     g.get('map').setTargetAtTime(101325*(e.ci?1+Math.max(0,s.boostActual||0):Math.max(0.1,s.map)),t,0.03);
     g.get('fuel').setTargetAtTime(s.fuelCut?0:1,t,0.01);
     g.get('lambda').setTargetAtTime(clamp(s.afr/(e.stoichAFR||14.7),0.6,6),t,0.05);
-    g.get('spark').setTargetAtTime(e.ci?5:20+10*rf,t,0.1);
-    g.get('burn').setTargetAtTime(e.ci?50:55+15*rf,t,0.1);
+    const tm=gasTiming(e,rf);
+    g.get('spark').setTargetAtTime(tm.spark,t,0.1);
+    g.get('burn').setTargetAtTime(tm.burn,t,0.1);
   }
   // The worklet levels the gas model's own swings away (it is ~300x quieter at idle than flat out, and not
   // on any one power law), and the loudness is set here instead, on the pulse synth's law: soundDrive's

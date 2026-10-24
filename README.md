@@ -1,4 +1,4 @@
-# PIXEL ENGINE SIM v0.6 build 157
+# PIXEL ENGINE SIM v0.6 build 158
 
 **A lightweight, 8-bit style internal combustion engine *designer* & simulator** inspired by *Automation*.
 
@@ -258,8 +258,9 @@ saps power; a large radiator, electric fan and oil cooler keep it cool.
   ported from Ange Yaghi's [engine-sim](https://github.com/ange-yaghi/engine-sim) (MIT), driven at our
   model's rpm, manifold pressure and fuelling, and heard as the exhaust-runner pressure through one of
   engine-sim's recorded exhaust impulse responses. The turbo whine, blow-off, intake roar, knock and
-  crackle still come from the synth. Heavier (a V12 is about half a CPU core); rotaries and two-strokes
-  stay on SYNTH.
+  crackle still come from the synth. Heavier (a V12 is about half a CPU core). Four-strokes run on
+  valves; **two-strokes** on piston ports with the crankcase pumping the charge through a reed valve and the
+  transfers; **rotaries** on three chambers per rotor breathing through the ports the rotor uncovers.
 - **Engine sound** — plays on the **DYNO** tab from the engine controls, and on the **TRACK** tab
   from the lap replay (its recorded rpm, throttle and boost, so shifts, lifts and blow-offs are heard
   as the car goes round); other tabs are quiet. Synthesised from the **firing pulses** in an AudioWorklet: every cylinder
