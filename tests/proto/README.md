@@ -292,3 +292,13 @@ put it near 2. With `ENGELMAN_K = 2.0` no preset peaks on the limiter, and the b
 turbos too: test41 4.02% → 3.34%, test48 power 15.8% → 8.6%. Note (b) above, sizing runners to a
 target rpm, is not needed and was not done; runner lengths stay absolute geometry. `vebell-attempt3.diff`
 is removed because it is applied.
+
+## `gas-sound/` — an engine-sim style gas model for the engine sound
+
+`node tests/proto/gas-sound/render.mjs <outDir>` (and `dump-engines.mjs` first, which needs Playwright).
+
+Ports the gas dynamics and audio chain of Ange Yaghi's engine-sim (MIT) and drives them from our
+presets' geometry: the cylinder, runners and collector as lumped gas volumes with compressible flow
+between them, the exhaust-runner pressure delayed down the pipe and convolved with a recorded exhaust
+impulse response. Measured: 13.2 bar IMEP flat out on the 1.6 sport four after one stated heat-share
+factor, and a V12 at about half of real time on one core. What shipping it would take is in its README.

@@ -20,7 +20,7 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 Working toward **v1.0 — every number derived, not fitted.**
 
-### Axle balance (build 156)
+### Axle balance (build 157)
 
 - **The gap.** The lap pooled all four tyres' lateral grip into one number for the car, so no car could understeer
   or oversteer: the front and rear always ran out together. This was the biggest piece missing for handling (see
@@ -61,7 +61,7 @@ Working toward **v1.0 — every number derived, not fitted.**
 - **What is still missing.** No yaw inertia, slip-angle build-up or transient load transfer: a car never slides or
   spins, and its balance is a limit, not a motion. Every car starts at NEUTRAL roll balance (a real road car's
   factory setup understeers a little more).
-- `test84`:
+- `test85`:
   - a hatch understeers and a 911 oversteers
   - stiffer front bars move the balance toward understeer
   - narrow fronts move a mid-engined car toward understeer
@@ -78,6 +78,28 @@ Working toward **v1.0 — every number derived, not fitted.**
   law). It was a third of the lap solver's time on a long circuit, and the per-axle grip calls it more often.
   - **The 20 km import and solve:** 4.9-6.3 s on this machine, against main's 4.4-6.0 s.
   - **`test35`'s limit is now 6.5 s.** The 5 s it had was failing three times in four on main itself here.
+### GAS: an engine sound simulated as gas, after engine-sim (build 156)
+
+- **ENGINE SOUND MODEL** in OPTIONS: SYNTH (the default, unchanged) or GAS, remembered per browser.
+- GAS ports the gas dynamics of Ange Yaghi's engine-sim (MIT; notice in `index.html` as `SOUND_GAS_LICENCE`):
+  per cylinder an intake runner, the cylinder and an exhaust runner + primary, per bank a collector,
+  each a lumped gas volume; compressible orifice flow between them (choked or subsonic) with bulk
+  momentum and dynamic pressure; 10 kHz with 4 fluid substeps (engine-sim runs 8; 4 is within 5% rms).
+  Built from the presets' own geometry: bore, stroke, compression, cam duration, overlap and lift, valve
+  size (engine-sim's 2JZ flow bench scaled by area and lift), runner and header length, system pipe.
+  The crank turns at our model's rpm and the plenum sits at its manifold pressure; the burn is a Wiebe
+  curve whose heat share (0.50) is fitted to 13 bar IMEP flat out on the 1.6 sport four.
+- The sound is engine-sim's: exhaust-runner gauge pressure delayed down the pipe, its audio chain
+  (1.9 kHz band limit, jitter, DC removal, derivative, flow-modulated noise) and two of its recorded
+  impulse responses (mild exhaust; minimal muffling for a race system) in a ConvolverNode, then the
+  silencer, cat and turbine as a low-pass and a level, and a limiter.
+- Loudness: the worklet levels the gas model's own swings (it is ~300x quieter at idle than flat out,
+  on no single power law) and the loudness follows the synth's pulse strength instead; each build's
+  impulse-response coupling is measured offline once (two short renders) so engines land within about
+  2x of the synth's level. The turbo whine, blow-off, intake roar, knock and crackle keep playing from
+  the synth, whose exhaust is muted. Rotaries and two-strokes stay on SYNTH.
+- The prototype it grew from stays in `tests/proto/gas-sound/`. test84 pins the physics, the option and
+  the live switch.
 
 ### The driver holds the launch slip; every car gets its best launch rpm (build 155)
 

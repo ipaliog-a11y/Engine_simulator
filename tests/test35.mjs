@@ -67,8 +67,8 @@ if (Math.abs(geo.zRange - 300) > 60) fails.push(`elevation range ${geo.zRange} m
 if (Math.abs(geo.net) > 0.01) fails.push('imported loop does not close in elevation');
 // Build 131: 5 s. Build 130's main itself took 4.1-4.4 s here (the racing line's optimiser is ~2.6 s of it on this
 // 20 km circuit), so 4 s was failing on the machine, not on a change; build 131 runs it in 3.5-4.0.
-// Build 156: 6.5 s. Main at build 155 took 4.4-6.0 s here (failing 5 s three times in four, the machine slower than
-// when 5 s was set); build 156 adds the per-axle grip and tabulates the tyre's load curve, and runs in 4.9-6.3 s.
+// Build 157: 6.5 s. Main at build 155 took 4.4-6.0 s here (failing 5 s three times in four, the machine slower than
+// when 5 s was set); build 157 adds the per-axle grip and tabulates the tyre's load curve, and runs in 4.9-6.3 s.
 if (geo.ms > 6500) fails.push(`import+solve too slow (${geo.ms} ms)`);
 if (geo.corners < 15) fails.push('too few corners detected on a 20 km circuit');
 if (geo.lap < 300 || geo.lap > 900) fails.push(`lap time ${geo.lap}s implausible`);
