@@ -84,7 +84,9 @@ const r = await page.evaluate(() => {
   // hill into a 42 m corner on the Nordschleife.
   out.limit = ['tech', 'nord'].map(k => { loadVehiclePreset(VEHICLE_PRESETS.find(v => v.name === 'Porsche 911 GT3 (991.2, 2017)'));
     const L = simulateLap(k), p = L.track.line, n = p.length, m = vehicle.mass; let used = 0, soft = 0, worst = 1;
-    const res = i => (0.5 * AIR_RHO * vehicle.cdA * L.v[i] ** 2) / m + G * p[i].sinT;
+    // drag, the hill and (build 157) the tyres' own cornering drag, which near an apex does much of the slowing
+    const res = i => { const v = L.v[i], N = Math.max(m * G * 0.15, m * G * p[i].cosT + 0.5 * AIR_RHO * vehicle.clA * v * v + clamp(m * v * v * p[i].kv, -0.6 * m * G, 0.6 * m * G));
+      return (0.5 * AIR_RHO * vehicle.cdA * v * v + corneringDrag(m, v * v / p[i].r, N)) / m + G * p[i].sinT; };
     const dec = i => { const j = (i + 1) % n; return (L.v[i] ** 2 - L.v[j] ** 2) / (2 * p[i].ds3); };
     const braking = i => dec(i) - res(i) >= 1.5;          // on the brakes, not just lifting, drag or the hill
     for (let i = 0; i < n; i++) {
@@ -93,10 +95,10 @@ const r = await page.evaluate(() => {
       if (!(braking(i) && braking((i - 1 + n) % n) && braking((i + 1) % n))) continue;
       const v = L.v[i], a = dec(i), dn = 0.5 * AIR_RHO * vehicle.clA * v * v;
       const N = Math.max(m * G * 0.15, m * G * p[i].cosT + dn + clamp(m * v * v * p[i].kv, -0.6 * m * G, 0.6 * m * G));
-      const rs = res(i);
-      const ay = v * v / p[i].r, u = clamp(ay / Math.max(0.1, latMuEff(N, ay) * (vehicle.df.corner || 1) * N / m), 0, 1);
-      const avail = Math.min(vehicle.brakeDecelCap * L.replay.fade[i], tyreMuX(N / 4) * N / m * Math.sqrt(Math.max(0, 1 - u * u)));
-      used++; const f = (a - rs) / avail; worst = Math.min(worst, f); if (f < 0.9) soft++;
+      // Build 157: each axle has its own grip, and the rear runs out first on the brakes into a corner, so the limit is
+      // an axle at its grip (the lap's own per-axle use) or the brakes at what they can command, whichever comes first
+      const R = L.replay, f = Math.max(R.useF[i], R.useR[i], R.brk[i] / Math.max(0.05, R.fade[i]));
+      used++; worst = Math.min(worst, f); if (f < 0.9) soft++;
     }
     return { k, used, soft, worst }; });
   // ---- 6. brakes from the hydraulics (build 113): a road car's brakes out-pull its tyres ----
