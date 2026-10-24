@@ -10,6 +10,10 @@
 //      for a four-stroke and for a rotary;
 //   5. the two-stroke (piston ports, crankcase scavenged) and the rotary (three chambers a rotor) are
 //      working engines too: plausible IMEP, less at part throttle, nothing non-finite;
+//   6. a lift does not cut the sound out (build 158): on an injected engine the fuel cut left the pulse
+//      strength at 0.014 and both models fell 31-35 dB within a few tenths of a second, though the
+//      cylinders still pump air down the pipe. Rendered through the real chains, the overrun stays within
+//      25 dB of the pull and fades as the revs fall.
 //   4. through the real chain, flat out is louder than idle, and neither is silent or clipping.
 import { chromium } from './pw.mjs';
 import { fileURLToPath, pathToFileURL } from 'url';
@@ -135,6 +139,56 @@ if (!(tw.wot.imep > 3 && tw.wot.imep < 10)) fails.push(`two-stroke IMEP ${tw.wot
 if (!(rn.wot.imep > 8 && rn.wot.imep < 14)) fails.push(`rotary IMEP ${rn.wot.imep.toFixed(1)} bar is not a rotary's`);
 if (Math.abs(rn.wot.vd * 1e6 - 654) > 5) fails.push(`a 13B chamber is ${(rn.wot.vd * 1e6).toFixed(0)} cc, not 654`);
 for (const k of [tw, rn, rt]) { if (k.wot.bad || k.part.bad) fails.push('a two-stroke or rotary went non-finite'); if (!(k.part.imep < 0.5 * k.wot.imep)) fails.push('part throttle does not make much less work on a two-stroke or rotary'); }
+
+// ---- 6. the lift ----
+const lift = await page.evaluate(async () => {
+  applyEngineToForm(Object.assign({}, DEFAULT_ENGINE)); buildEngine();
+  Object.assign(state, { rpm: engine.idleRpmEff, load: 0, throttle: 0, blown: false, engineHealth: 1 });
+  // step the real sim: a pull to the limiter, then a lift; record what each model is driven with
+  const tr = [];
+  for (let f = 0; f < 650; f++) {
+    const t = f / 100; state.throttle = t < 0.5 ? 0 : t < 3.5 ? 1 : 0;
+    stepThermal(0.01); stepEngine(0.01); stepElectrical(0.01); updatePhysics(); state.blown = false;
+    const d = soundDrive(0.01, state); tr.push({ t, rpm: state.rpm, map: state.map, cut: state.fuelCut, strength: d.strength, pulse: exhaustStrength(engine, state, d.strength) });
+  }
+  const at = t => tr[Math.round(t * 100)];
+  const SR = 48000, size = clamp(Math.sqrt((engine.dispCyl_L || 0.45) / 0.45), 0.6, 1.5);
+  const cfg = gasConfig(engine), ch = gasChainFor(engine), F = await calibrateGas(SR, cfg, ch), ref = gasReference(cfg);
+  // render 0.6 s of each model at a recorded instant
+  const synth = async s => {
+    const c = new OfflineAudioContext(2, SR * 0.6, SR); await loadSoundWorklet(c);
+    const n = new AudioWorkletNode(c, 'engine-pulse', { outputChannelCount: [2] }); n.port.postMessage(soundConfig(engine)); n.connect(c.destination);
+    const P = { rpm: s.rpm, level: SOUND_LEVEL * size * SOUND_PULSE_GAIN, bright: 440 + s.rpm * 0.15 + engine.cylinders * 8, strength: s.pulse, lope: 0 };
+    for (const k in P) n.parameters.get(k).value = P[k];
+    await new Promise(r => setTimeout(r, 30)); const x = (await c.startRendering()).getChannelData(0).slice(SR * 0.3);
+    return Math.sqrt(x.reduce((a, v) => a + v * v, 0) / x.length);
+  };
+  const gas = async s => {
+    const c = new OfflineAudioContext(2, SR * 0.6, SR); await loadSoundWorklet(c);
+    const n = new AudioWorkletNode(c, 'engine-gas', { outputChannelCount: [2] }); n.port.postMessage(cfg);
+    const conv = c.createConvolver(); conv.buffer = soundIRBuffer(c, ch.ir);
+    const lp = c.createBiquadFilter(); lp.type = 'lowpass'; lp.Q.value = 0.6; lp.frequency.value = ch.lpHz;
+    const g = c.createGain(); g.gain.value = ch.gain; n.connect(conv); conv.connect(lp); lp.connect(g); g.connect(c.destination);
+    const tm = gasTiming(engine, s.rpm / engine.redline);
+    const P = { rpm: s.rpm, map: s.map * 101325, fuel: s.cut ? 0 : 1, lambda: 0.9, spark: tm.spark, burn: tm.burn, level: gasLevel(size, exhaustStrength(engine, s, s.strength)) / F, floor: GAS_FLOOR * ref };
+    for (const k in P) n.parameters.get(k).value = P[k];
+    await new Promise(r => setTimeout(r, 30)); const x = (await c.startRendering()).getChannelData(0).slice(SR * 0.3);
+    return Math.sqrt(x.reduce((a, v) => a + v * v, 0) / x.length);
+  };
+  // the pull: the fastest instant still firing (on the limiter the fuel is cut too); late: still on the overrun
+  const pull = tr.filter(s => s.t > 0.6 && s.t < 3.5 && !s.cut).reduce((a, s) => s.rpm > a.rpm ? s : a);
+  const early = at(3.8), late = tr.filter(s => s.t > 3.8 && s.cut).pop();
+  const db = (a, b) => 20 * Math.log10(a / b);
+  const sP = await synth(pull), sE = await synth(early), sL = await synth(late), gP = await gas(pull), gE = await gas(early), gL = await gas(late);
+  return { dfco: engine.canDFCO, pull: { rpm: pull.rpm }, early: { rpm: early.rpm, cut: early.cut, strength: early.strength }, late: { rpm: late.rpm },
+    synth: { early: db(sE, sP), late: db(sL, sP) }, gas: { early: db(gE, gP), late: db(gL, gP) } };
+});
+console.log(`== lift (DFCO ${lift.dfco}) from a pull at ${lift.pull.rpm.toFixed(0)} rpm: 0.3 s after, ${lift.early.rpm.toFixed(0)} rpm, fuel cut ${lift.early.cut}, strength ${lift.early.strength.toFixed(3)} · synth ${lift.synth.early.toFixed(0)} dB then ${lift.synth.late.toFixed(0)} dB at ${lift.late.rpm.toFixed(0)} rpm · gas ${lift.gas.early.toFixed(0)} dB then ${lift.gas.late.toFixed(0)} dB ==`);
+if (!lift.early.cut) fails.push('the lift did not cut the fuel, so it tests nothing');
+for (const [m, r] of [['synth', lift.synth], ['gas', lift.gas]]) {
+  if (!(r.early > -25)) fails.push(`${m}: the sound cuts out on a lift (${r.early.toFixed(0)} dB against the pull)`);
+  if (!(r.late < r.early + 3)) fails.push(`${m}: the overrun does not fade as the revs fall`);
+}
 
 await page.evaluate(() => { try { localStorage.removeItem('pes.soundModel'); } catch (e) {} });
 await browser.close();

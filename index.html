@@ -373,7 +373,7 @@ table.fuelmap td.live{box-shadow:inset 0 0 0 2px #fff;font-weight:bold}
 <body>
 <div class="container">
 <header>
-<h1>PIXEL ENGINE SIM v0.6 build 158</h1>
+<h1>PIXEL ENGINE SIM v0.6 build 159</h1>
 <div class="subtitle" id="subtitle">ENGINE DESIGNER • BUILD IT, THEN DRIVE IT</div>
 </header>
 <div class="build-strip" id="buildStrip">
@@ -10067,7 +10067,7 @@ class EngineGas extends AudioWorkletProcessor{
     this.prev=new Float64Array(e.banks);this.cur=new Float64Array(e.banks);
     this.ch=Array.from({length:e.banks},()=>new GasChannel());
     this.pan=e.banks===1?[[0.7071,0.7071]]:[[0.85,0.45],[0.45,0.85]];
-    this.ms=0;this.att=1-Math.exp(-1/(0.02*sampleRate));this.rel=1-Math.exp(-1/(0.3*sampleRate));
+    this.ms=0;this.att=1-Math.exp(-1/(0.02*sampleRate));this.rel=1-Math.exp(-1/(0.06*sampleRate));
   }
   process(inputs,outputs,params){
     const out=outputs[0],L=out[0],R=out[1]||out[0];
@@ -10083,8 +10083,9 @@ class EngineGas extends AudioWorkletProcessor{
         l+=y*this.pan[b][0];r+=y*this.pan[b][1];
       }
       // levelled, as engine-sim levels its output: the gas model gives the timbre, the main thread the
-      // loudness. Quick to come down on a rising signal (20 ms), slow to go back up (0.3 s), and never
-      // lifting a signal that has fallen under the floor (a fuel cut is near-silence, not hiss to pump up).
+      // loudness. Quick to come down on a rising signal (20 ms), and back up in 60 ms (0.3 s left a hole after
+      // every lift: the signal falls at once and the gain took a third of a second to follow), and never
+      // lifting a signal that has fallen under the floor.
       const pw=(l*l+r*r)/2;this.ms+=(pw>this.ms?this.att:this.rel)*(pw-this.ms);
       const g=level/Math.max(Math.sqrt(this.ms),floor);
       L[i]=l*g;if(R!==L)R[i]=r*g;
@@ -10300,6 +10301,16 @@ const SOUND_PULSE_GAIN=9;
 // the build's flat-out signal (an idle is about 0.25% of it, a fuel cut 7-17%: the cylinders still pump).
 const SOUND_GAS_LEVEL=0.18,GAS_LOUD_LAW=0.9,GAS_FLOOR=0.001;
 const gasLevel=(size,strength)=>SOUND_GAS_LEVEL*size*Math.pow(clamp(strength,0.02,2.5),GAS_LOUD_LAW);
+// What the exhaust is heard at: soundDrive's pulse strength, but never below the cylinders pumping air.
+// A fuel cut leaves the strength at a tenth of a near-empty charge (0.014 on a closed throttle), so a lift
+// on an injected engine fell 31-35 dB within a few tenths of a second: the sound cut out. Yet the gas
+// model, with the fuel off, still puts 7-17% of its flat-out signal down the pipe at 60% of the redline:
+// the pistons push the air they draw through the exhaust whether it burned or not. That is the floor, falling
+// with the revs, under both models (the synth's pulses and the gas model's loudness, whose leveller throws
+// the model's own level away). soundDrive's strength itself is left as it is: the crackle's pipe heat and
+// the knock read it, and a fuel cut really does stop heating the pipe.
+const PUMP_FLOOR=0.2;
+function exhaustStrength(e,s,strength){return Math.max(strength,PUMP_FLOOR*clamp(s.rpm/Math.max(1,e.redline),0,1));}
 const GAS_SILENCER_HZ={stock:1400,sport:4000,race:12000};
 // Level before the gain, for a 0.45 L cylinder; the pulse strength carries the load from there.
 const SOUND_LEVEL=0.15;
@@ -10568,7 +10579,7 @@ function updateSound(){
     p.get('level').setTargetAtTime(!src||s.blown?0:SOUND_LEVEL*size*SOUND_PULSE_GAIN,t,0.08);
     // GAS model: the gas simulation makes the exhaust; the pulse node keeps only its other voices
     const gas=soundModelIsGas()&&Sound.gas;
-    p.get('strength').setTargetAtTime(gas?0:d.strength,t,0.012);    // quick, so the limiter's cut is heard
+    p.get('strength').setTargetAtTime(gas?0:exhaustStrength(engine,s,d.strength),t,0.012);    // quick, so the limiter's cut is heard
     if(Sound.gas)updateGasSound(gas&&src&&!s.blown,s,t,size,d.strength);
     p.get('lope').setTargetAtTime(d.lope,t,0.08);
     p.get('crackle').setTargetAtTime(d.crackle,t,0.03);
@@ -10623,7 +10634,7 @@ function updateGasSound(live,s,t,size,strength){
   // on any one power law), and the loudness is set here instead, on the pulse synth's law: soundDrive's
   // pulse strength (trapped charge x fuelling, so a lean diesel idle is light load) to GAS_LOUD_LAW. The
   // floor is a few percent of the build's flat-out signal, so a fuel cut stays near-silent.
-  g.get('level').setTargetAtTime(live&&Sound.gasF?gasLevel(size,strength)/Sound.gasF:0,t,0.04);
+  g.get('level').setTargetAtTime(live&&Sound.gasF?gasLevel(size,exhaustStrength(e,s,strength))/Sound.gasF:0,t,0.04);
   g.get('floor').setTargetAtTime(GAS_FLOOR*(Sound.gasRef||1),t,0.1);
 }
 function setSound(on){

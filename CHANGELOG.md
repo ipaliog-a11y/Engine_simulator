@@ -20,6 +20,18 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 Working toward **v1.0 — every number derived, not fitted.**
 
+### The sound no longer cuts out on a lift (build 159)
+
+- On an injected engine a lift cuts the fuel (DFCO), and the exhaust's pulse strength fell to a tenth of a
+  near-empty charge (0.014 on a closed throttle): both sound models dropped 31-35 dB within a few tenths of
+  a second. The cylinders still pump the air they draw down the pipe, fired or not; the gas model with the
+  fuel off puts 7-17% of its flat-out signal there at 60% of the redline. `exhaustStrength` now floors the
+  exhaust at 0.2 x rpm/redline under both models, so an overrun sits about 10-15 dB under the pull and
+  fades with the revs. soundDrive's own strength is unchanged: the crackle's pipe heat and the knock read it.
+- The GAS leveller came back up over 0.3 s, leaving a hole after every lift as its gain lagged the falling
+  signal; it now recovers in 60 ms.
+- test84: a pull and a lift through the real sim and both chains; the overrun within 25 dB of the pull, fading.
+
 ### GAS for two-strokes and rotaries (build 158)
 
 - The GAS sound model now covers every type the designer builds. Two new kinematics share the gas
