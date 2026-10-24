@@ -1,4 +1,4 @@
-# PIXEL ENGINE SIM v0.6 build 165
+# PIXEL ENGINE SIM v0.6 build 166
 
 **A lightweight, 8-bit style internal combustion engine *designer* & simulator** inspired by *Automation*.
 
@@ -225,6 +225,10 @@ saps power; a large radiator, electric fan and oil cooler keep it cool.
     variable-geometry turbo's vanes follow the model's schedule, and the blow-off valve vents on a
     lift. A supercharger is belted to the crank: Roots and twin-screw rotors turn with it at their
     drive ratio, a centrifugal is a compressor scroll on a 12:1 step-up.
+  - **The tracts to scale (build 166).** The intake runner and the exhaust primaries at one scale, with the
+    filter, throttle, plenum (or trumpets, or a carburettor) and the collector, cat and silencer. The blowdown
+    pulse runs the primary and comes back as the header model times it; the readout says SCAVENGING when it lands
+    in the overlap. Turbo engines get their compressor map with the live operating point.
 
   The subsystem numbers that used to be printed here in 7 px type live in the **LIVE OUTPUT**
   panel beside the canvas, where they are real text.
@@ -917,6 +921,7 @@ measurement finds things. Each item is one PR.
 | — | Axle balance | ✅ build 157 | Each axle has its own lateral grip: its weight and downforce share, its share of the load transfer (ROLL BALANCE, the anti-roll bars), its own tyres (FRONT WIDTH; the factory front widths of 23 staggered cars), and the side force for the mass it carries. The car corners as hard as the axle that runs out first: front-heavy cars understeer, rear-engined 911s oversteer, braking into a corner unloads the rear. TRACK shows the balance. Laps 0-1.2% slower. test85. |
 | — | Live cutaway: forced induction | ✅ build 164 | Stage 1 of 3 of the cutaway's detail: the turbo as two scrolls on one shaft in the exhaust-to-intake loop, turned by the model's shaft speed, with the wastegate, VGT vanes, intercooler and blow-off valve the model has; the superchargers belted to the crank. Next: the head, then the tracts and live gauges. |
 | — | Live cutaway: the head | ✅ build 165 | Stage 2 of 3: valve events from the cam's duration, LSA and the phaser's scheduled advance; overhead cams (4V) or pushrods (2V) drawn to the lift; the spark at the model's advance, the flame over the model's Wiebe burn, knock in the end gas; injection; valve float past the float speed. Next: the tracts and live gauges. |
+| — | Live cutaway: tracts and gauges | ✅ build 166 | Stage 3 of 3: runner and primaries to scale; filter, throttle, plenum, trumpets, carburettors, the variable flap; collector, cat, silencer; the blowdown pulse and its tuned return (SCAVENGING when it lands in the overlap); the compressor map with the live operating point; a boost bar; flow that packs with the mass flow. |
 | — | Suspension type and geometry | ⏸ on hold | Future development. Today a setup is roll gradient + static camber; the roll camber the geometry recovers is a fixed 50% for every car (CAMBER_RECOVERY), and lateral load transfer is split by static weight. Wanted: the geometry per car (MacPherson strut, double wishbone, multi-link, solid axle) giving its camber recovery, and front/rear roll stiffness (springs, anti-roll bars) giving the handling balance. Needs each preset's real suspension type. |
 | — | Spark torque from fuel | ✅ build 95 | `IMEP_K` replaced by Heywood's 0.8 × fuel-air cycle efficiency; each fuel's LHV/AFR_st enters. Spark torque −2.7%, full-load BSFC 280 g/kWh (real 270–300). Rotary/two-stroke type factors still fitted. |
 | — | `turboChoke` (boost taper) | ✅ build 94 | Retired. Turbine efficiency from blade speed ratio U/C, per-point compressor efficiency, a continuous rich-knock slope in place of a step, and sequential turbos staged as two turbines. Calibration improved on every measure. |
