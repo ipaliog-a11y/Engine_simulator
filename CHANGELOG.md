@@ -20,6 +20,27 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 Working toward **v1.0 — every number derived, not fitted.**
 
+### The GEAR RATIOS window (build 170)
+
+- **A window over the vehicle tab**, opened by GEAR RATIOS… beside GEAR SPACING: the spacing as buttons, a slider per
+  gear (its ratio and its road speed at the limiter, on a log scale), the final drive with AUTO (published or
+  matched) or set by hand, RESET to the stock box, and where the ratios come from. Every change is the car's own: it
+  goes into the form as CUSTOM ratios or a hand-set final drive and the car is rebuilt, so the read-out (0-100, 0-200,
+  top speed, an Ashdown Park lap) is the model's. A moved gear stays at least 1% from its neighbours; the GEARING
+  slider is off while a final drive is set by hand.
+- **Engine rpm against road speed:** each gear a ray to its limiter, and over them the path the 0-100 run takes: its
+  launch revs, its own shift points (simulateAccel now records them) and the drop at each; the band from peak torque
+  to peak power, the limiter, the top speed.
+- **Drive at the wheels against road speed:** T(N)·i·i_f·η/r in each gear, the best of them, the ideal of a gearbox
+  with infinitely many gears (P·η/v, from the same torque curve), the space between the two (what the gaps cost),
+  drag plus rolling, and the driven tyres' grip at rest.
+- Gears are told apart by their number on each line, not by colour (ten are more than colour carries); one accent
+  marks what the car does. The gear under the pointer or the keyboard is lit in both graphs; both have a hover
+  read-out. On a phone the panels stack and the graphs are 4:3. Greek throughout.
+- **Tests:** test92 (new): opening and closing, the controls are the car's, the path is the run's own shifts (each drop
+  the next ratio over this one), the force graph is T·i·i_f·η/r and never above the ideal, every real car opens it,
+  a phone, Greek.
+
 ### Gear spacing from real gearboxes, and the real cars' own ratios (build 169)
 
 - **One box for every car.** Every car with the same number of gears ran the same ratios: an even progression from
