@@ -20,6 +20,33 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 Working toward **v1.0 — every number derived, not fitted.**
 
+### The VGT's vane ring sized by its own geometry, and paying its efficiency (build 168)
+
+- **The ring was the fixed housing's size.** The vane ring's throat was A(beta) = h(2 pi r2 sin beta - Z t) in the
+  comment, but in the code it was the frame's fixed-housing volute throat (from its A/R) scaled by sin beta: a VGT
+  could never pass more than a fixed housing of the same A/R. On a VGT the volute only feeds the ring; the throat
+  is the vane passages. Sized off the A/R, the 2.0 TDI's ring opened to 327 mm2, and wide open it still made 2.2x
+  the power its compressor needed at the limiter: an expansion ratio of 5, the exhaust manifold near 5 bar where
+  TDI owners measure about 3, and the vanes pinned open from 2000 rpm.
+- **Now the formula, with the ring's own proportions** scaled to the turbine wheel: the vanes' trailing edges at
+  1.22 x the wheel's tip radius (1.2-1.25 in a variable-geometry turbine patent, US 12055050) and a nozzle height
+  of 0.07 x its diameter (GT2011-46148; 0.057 in the ETN D1.8 radial-turbine design; 0.07-0.1 for rotor inlet
+  widths), the middle of the published range. The 21-60 degree sweep and 12 vanes of 1.5 mm are as they were. The
+  small frame's ring opens to 487 mm2 (165 shut, 2.9:1); the large one's is nearly unchanged (1294 against 1183).
+- **The ring pays in efficiency.** Its vanes need running clearance at their ends, and the leakage and the vanes'
+  own losses cost a VGT about 2 points against a fixed nozzle (Jiang et al. 2024), ~1 as the vanes open and ~5 as
+  they close (Gao et al. 2018): 5 points shut to 1 open, linear in the vane position (vgtEtaFactor). That and the
+  petrol vanes' creep limit are its price; it was "it flows less at the top", which was the A/R sizing.
+- **The A/R choice is a fixed housing's**: with the vane ring setting its own throat the TURBINE A/R selector
+  is disabled on a VGT.
+- Result (expansion ratio at the limiter, before -> after): EA288 2.0 TDI 3.59 -> 2.41 (vanes 62% open at 2000
+  rpm, were 100%), N57 3.0d 2.93 -> 2.36, the 2.0 TDI archetype 5.03 -> 3.37; power EA288 149 -> 154 hp (real 148),
+  N57 255 -> 258 (254), Duramax 445 -> 446 (445). The 6.6 V8 archetype (4.73) and the Cummins (4.24) still run
+  their manifolds hard at the top: their frames look small for their flow, a hardware question left open.
+- Tests: test49's price is restated (the vane ring's efficiency loss at one throat, 1.4% of the power open and
+  7.1% shut, instead of a top-end comparison against a volute the ring was sized off; the ring's radius in the
+  published range); test55 has the A/R choice leave a VGT alone and greyed out.
+
 ### A lap result no longer turns into the next one (build 167)
 
 - **The bug.** About one run in forty, a car's lap of one circuit came back as its lap of another: a Golf's
