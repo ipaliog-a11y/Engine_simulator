@@ -1,6 +1,6 @@
 // Axle balance (build 157). Until now the lap pooled all four tyres' lateral grip, so no car could understeer or
 // oversteer: the front and rear always ran out together. Now each axle has its own load (weight split and aero
-// balance), its own share of the lateral load transfer (the roll-stiffness split, ROLL BALANCE on VEHICLE), its own
+// balance), its own share of the lateral load transfer (the roll-stiffness split: since build 172 the anti-roll bars on VEHICLE), its own
 // tyres (a staggered car's narrower fronts) and must make the side force for the mass it carries; the car corners as
 // hard as the axle that runs out first. Braking moves load forward, so the rear runs out first on the brakes.
 import { chromium } from './pw.mjs';
@@ -24,8 +24,8 @@ const r = await page.evaluate(() => {
   load('Golf GTI'); out.golf = lap();
   load('911 GT3'); out.gt3 = lap();
   load('M3 (E46'); out.m3 = lap(); out.m3Stock = isFactoryFit(readVehicleFromForm());
-  set('vhArb', 2); out.m3Stiff = lap(); out.m3StiffStock = isFactoryFit(readVehicleFromForm());
-  set('vhArb', -2); out.m3Soft = lap();
+  set('vhBarF', 2); out.m3Stiff = lap(); out.m3StiffStock = isFactoryFit(readVehicleFromForm());
+  set('vhBarF', -2); out.m3Soft = lap();
   load('Huracán LP610'); out.hur = lap();
   set('vhTireWF', 305); out.hurSquare = lap();
   // the axles at a corner, steady and on the brakes

@@ -20,6 +20,34 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 Working toward **v1.0 — every number derived, not fitted.**
 
+### Springs and anti-roll bars per axle (build 172)
+
+- **FRONT SPRINGS, REAR SPRINGS, FRONT ANTI-ROLL BAR, REAR ANTI-ROLL BAR** on VEHICLE, each SOFT −2 … STIFF +2 about
+  the kit, in place of ROLL BALANCE. Off STANDARD they are new parts ($400 an axle for springs, $250 for a bar) and
+  the car reads *(modified)*; REFIT puts them back.
+- **The roll is the car's own.** Until now each kit rolled a fixed 6 / 4 / 2.5 / 1.5 deg/g on every car. The kit is
+  now a ride frequency (COMFORT 1.0 Hz, SPORT 1.25, COILOVERS 1.6, RACE 2.0; passenger cars 0.5-1.5 Hz, OptimumG),
+  which gives each wheel's rate k = (m_axle/2)(2πf)² and each axle's springs a roll stiffness m_axle (2πf)² t²/4. A
+  bar adds 55% of that at STANDARD, a third of the total, the one figure that brings a typical car (roll arm 0.40 m,
+  track 1.55 m) to the old skidpad numbers: 6.1 / 3.9 / 2.4 / 1.5 deg/g. The body rolls by its roll moment over the
+  roll axis, m g (h − z_axis), over both axles' stiffness: the tall, narrow Alto Works rolls 9.2 deg/g on COMFORT,
+  a 911 GT3 2.1 on COILOVERS, and stage 1's high roll centres now roll a car less.
+- **The balance from the stiffness.** The elastic part of the load transfer splits by each axle's share of the roll
+  stiffness: at STANDARD m t², the weight split on equal tracks (build 157's NEUTRAL), and a wider axle is stiffer.
+  A spring step is 1.3× the rate, a bar step 1.5× the bar: about 4% of the transfer, the old ROLL BALANCE step.
+- In a steady corner springs and bars both just add roll stiffness, so here they do the same job; the springs also
+  set the ride frequency the dampers (stage 3) will work against.
+- **Effect:** laps −0.3% to +1.0% against build 171. Kei and city cars on COMFORT roll more and lose most; low,
+  wide supercars roll less and gain a little. The summary shows the car's roll in deg/g; the guide's *Suspension,
+  roll & camber* page explains it, in Greek too.
+- Saves from before carry ROLL BALANCE: it becomes the front bar.
+- Fixed from build 171: the Greek label for a MacPherson strut was half in Latin letters (ΓΟΝΑΤΟ ΜΑΚΦΕΡΣΟΝ now).
+- **Tests:** test94 (new): the kits on a typical car within 10% of the old figures; STANDARD splits by the weight on
+  equal tracks; the M3's roll and split are the formula; a bar step moves 2-6% of the transfer, front forward and
+  rear back; stiffening reduces roll; the steps are the factory fit, cost and reach the line cache; the lap balance
+  follows the front bar; a kei car rolls more than a 911; an old ROLL BALANCE becomes the front bar; REFIT; Greek.
+  test85 uses the front bar.
+
 ### Suspension geometry per axle (build 171)
 
 - **FRONT GEOMETRY and REAR GEOMETRY** on VEHICLE: MacPherson strut, double wishbone, multi-link, twist beam (rear
