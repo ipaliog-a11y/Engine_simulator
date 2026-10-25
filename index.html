@@ -3629,13 +3629,23 @@ function pulseShape(mEx,area,T3,mapBar,prMean){
 }
 // Turbine power (W) passing mEx through a throat, pulses included, and the mean manifold PR.
 // prMean, when the caller already has it (the nozzle PR that passes exactly mEx), saves a solve.
+// A vane ring pays for itself in efficiency (build 168): its vanes need running clearance at their ends, and the gas
+// leaking through it and the vanes' own profile losses cost a VGT about 2 points against a fixed nozzle (Jiang et
+// al. 2024, review), ~1 point as the vanes open and ~5 as they close (Gao et al. 2018, end-clearance leakage). So
+// 5 points shut, 1 open, linear in the vane position between.
+const VGT_LOSS_SHUT=0.05, VGT_LOSS_OPEN=0.01;
+function vgtEtaFactor(area){
+  const e=engine;if(!(e.vgtShut>0)||!(area>0))return 1;
+  const f=clamp((area-e.vgtShut)/Math.max(1e-12,e.turbineArea-e.vgtShut),0,1);
+  return (TURB_ETA-(VGT_LOSS_SHUT+(VGT_LOSS_OPEN-VGT_LOSS_SHUT)*f))/TURB_ETA;
+}
 function turbinePower(mEx,area,T3,mapBar,prMean,Ut){
-  const pr=prMean>0?prMean:turbineManifoldPR(mEx,area,T3);
+  const pr=prMean>0?prMean:turbineManifoldPR(mEx,area,T3),kv=vgtEtaFactor(area);
   const s=mEx>0&&area>0?pulseShape(mEx,area,T3,mapBar,pr):null;
-  if(!s)return{P:mEx*turbineWorkMean(pr,T3,Ut),pr};
+  if(!s)return{P:kv*mEx*turbineWorkMean(pr,T3,Ut),pr};
   const mHi=mEx*(1+s.keep*(s.fb/s.phi-1)), mLo=mEx*(1+s.keep*((1-s.fb)/(1-s.phi)-1));   // phi mHi + (1-phi) mLo = mEx
-  const P=s.phi*mHi*turbineWorkMean(turbineManifoldPR(mHi,area,T3),T3,Ut)
-        +(1-s.phi)*Math.max(0,mLo)*turbineWorkMean(turbineManifoldPR(Math.max(0,mLo),area,T3),T3,Ut);
+  const P=kv*(s.phi*mHi*turbineWorkMean(turbineManifoldPR(mHi,area,T3),T3,Ut)
+        +(1-s.phi)*Math.max(0,mLo)*turbineWorkMean(turbineManifoldPR(Math.max(0,mLo),area,T3),T3,Ut));
   return{P,pr};
 }
 function manifoldPR(mAir,mEx,mapBar,T3,area,compEta,flowFrac){
@@ -6030,7 +6040,8 @@ function syncDesignEnable(){
   const turbo=intake==='turbo';
   g('edTurboSize').disabled=!turbo;g('edCompWheel').disabled=!turbo;
   g('edTurboConfig').disabled=!turbo;
-  g('edVGT').disabled=!turbo;g('edHousing').disabled=!turbo;
+  // a vane ring sets its own throat, so the housing A/R is a fixed-housing choice only (build 168)
+  g('edVGT').disabled=!turbo;g('edHousing').disabled=!turbo||g('edVGT').value==='yes';
   g('edAntilag').disabled=!turbo;
   g('edScType').disabled=intake!=='supercharger';
   // No poppet valvetrain on 2-stroke / rotary.

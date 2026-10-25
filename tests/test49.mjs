@@ -10,7 +10,9 @@
 // WHAT WOULD MAKE THIS A BAD FEATURE. A VGT that is simply better than a fixed housing everywhere
 // is not physics, it is a free upgrade, and the model would have learned nothing. So every block
 // below that measures a gain is paired with one that measures its price:
-//   · it spools earlier                      ->  and it flows less at the top (vane blockage)
+//   · it spools earlier                      ->  and its vanes cost it efficiency (end-clearance leakage),
+//                                                 at every throat it holds (build 168: it was blockage, read
+//                                                 against a volute the ring was sized off; see section 3)
 //   · it is geometry, not a multiplier        ->  so the sweep ratio has to land where hardware does
 //   · a petrol engine may fit one            ->  and its exhaust will cook the vanes
 // The petrol/diesel split in particular must NOT be asserted anywhere. It has to fall out of
@@ -49,9 +51,12 @@ const geom = await page.evaluate(() => ['small', 'medium', 'large'].map(sz => {
   const fixed = engine.turbineArea;
   applyEngineToForm(Object.assign({}, DEFAULT_ENGINE, { type: 'petrol4', intake: 'turbo',
     boost_bar: 1.0, turboSize: sz, vgt: true })); buildEngine();
+  // build 168: the ring is sized by its own radius and height, not off the volute's A/R, so the blockage is the
+  // vanes' share of the ring's own open circumference, and the ring is compared with the volute for the record
+  const r2 = vanePitchR(engine.compExd), clear = VANE_H * TURB_WHEEL * engine.compExd * 2 * Math.PI * r2 * Math.sin(VANE_BETA_MAX * Math.PI / 180);
   return { sz, fixed: +(fixed * 1e6).toFixed(1), open: +(engine.turbineArea * 1e6).toFixed(1),
     shut: +(engine.vgtShut * 1e6).toFixed(1), sweep: +(engine.turbineArea / engine.vgtShut).toFixed(2),
-    blockage: +(1 - engine.turbineArea / fixed).toFixed(3) };
+    blockage: +(1 - engine.turbineArea / clear).toFixed(3), r2ratio: r2 / (TURB_WHEEL * engine.compExd / 2) };
 }));
 console.log('frame    fixed throat   vanes open   vanes shut   sweep   blockage at full open');
 for (const g of geom)
@@ -61,10 +66,11 @@ for (const g of geom)
 // not hardware end stops; narrower and there is no point fitting one.
 for (const g of geom) {
   if (!(g.sweep > 2.4 && g.sweep < 3.4)) fails.push(`${g.sz}: vane sweep ${g.sweep}:1 is not a production range (2.4-3.4)`);
-  // The vanes occupy circumference, so the ring at FULL OPEN must pass less than the plain volute.
+  // The vanes occupy circumference, so the ring at FULL OPEN passes less than the same ring without vanes.
   // This is the entire top-end price of the device and it must never read as zero or negative.
-  if (!(g.open < g.fixed)) fails.push(`${g.sz}: vanes at full open flow >= the plain volute — blockage has gone missing`);
   if (!(g.blockage > 0.03 && g.blockage < 0.25)) fails.push(`${g.sz}: ${(g.blockage * 100).toFixed(1)}% blockage is not vane-shaped`);
+  // the ring sits outboard of the wheel, where VGT rings are built (trailing edges at 1.2-1.25 of the tip radius)
+  if (!(g.r2ratio >= 1.2 && g.r2ratio <= 1.25)) fails.push(`${g.sz}: vane ring at ${g.r2ratio.toFixed(2)} x the wheel radius`);
 }
 // Z*t is a fixed LENGTH of circumference, so it costs a small frame proportionally more than a
 // large one. Nothing asserts that — it falls out of r2 scaling with the wheel.
@@ -153,8 +159,15 @@ const price = await page.evaluate(({ TDI, GTI }) => {
     return { hp: engine.score.peakHP, lo: at(0.35), hi: at(0.92), throat };
   };
   const out = {};
-  for (const [nm, base] of [['diesel', TDI], ['petrol', GTI]])
+  for (const [nm, base] of [['diesel', TDI], ['petrol', GTI]]) {
     out[nm] = { fixed: probe(base, false), vgt: probe(base, true) };
+    // the efficiency price, at one throat: the ring's power against a plain nozzle of the same area
+    applyEngineToForm(Object.assign({}, DEFAULT_ENGINE, base, { vgt: true })); buildEngine();
+    const n = Math.round(engine.redline * 0.6), map = 1 + steadyBoost(n), T = egtAt(n, map), mEx = airFlowAt(n, map) * 1.06;
+    const eff = a => { const ring = turbinePower(mEx, a, T, map, 0, 0).P, sv = engine.vgtShut; engine.vgtShut = 0;
+      const plain = turbinePower(mEx, a, T, map, 0, 0).P; engine.vgtShut = sv; return 1 - ring / plain; };
+    out[nm].loss = { open: eff(engine.turbineArea), shut: eff(engine.vgtShut) };
+  }
   return out;
 }, { TDI, GTI });
 for (const [nm, p] of Object.entries(price))
@@ -168,9 +181,12 @@ for (const [nm, p] of Object.entries(price))
 const VANES_KNOWN = new Set();
 for (const nm of ['diesel', 'petrol']) {
   const f = price[nm].fixed, v = price[nm].vgt;
-  // Blockage has to show up as a real top-end cost, not as a rounding error that goes the wrong way.
-  if (!(v.hp <= f.hp)) fails.push(`${nm}: VGT made MORE peak power than the fixed housing (${f.hp} -> ${v.hp}) — the vane blockage is not being paid`);
-  if (!(v.hi.bp >= f.hi.bp)) fails.push(`${nm}: VGT back-pressure at the top is not above the fixed housing's (${f.hi.bp} -> ${v.hi.bp})`);
+  // Build 168: the ring is sized by its own radius and height, not off the volute's A/R, so whether it out-breathes
+  // a given fixed housing at the top depends on which housing (it is recorded above, not asserted). What it always
+  // pays is efficiency: the vanes' end clearances leak, ~1 point open and ~5 shut against a plain nozzle.
+  const L = price[nm].loss;
+  console.log(`  ${nm}: the vane ring's efficiency loss at one throat: ${(L.open * 100).toFixed(1)}% of the power open, ${(L.shut * 100).toFixed(1)}% shut`);
+  if (!(L.open > 0.005 && L.shut > L.open && L.shut < 0.1)) fails.push(`${nm}: the vane ring does not pay its efficiency (${(L.open * 100).toFixed(1)}% open, ${(L.shut * 100).toFixed(1)}% shut)`);
   // The vanes must actually MOVE. A ring stuck at one end is a fixed housing with a price tag.
   const t = v.throat.map(x => x.a);
   const still = !(t[t.length - 1] > t[0]);
