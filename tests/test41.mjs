@@ -114,9 +114,12 @@ console.log(`RMS error across the set: ${rms.toFixed(2)}%`);
 // seven shifts to 100 where the six-speed made five, and the model cuts the drive for a fitted 0.20 s on every
 // automatic shift, where a ZF 8HP hands the torque from one clutch to the next under load. That shift is the item
 // this exposes; the cap follows it, by name, until it is derived.
-const ACC_KNOWN = { 'Toyota Supra RZ (A80)': 20, 'Subaru WRX STI (GD)': 13, 'BMW M2 (G87)': 22, 'VW Golf GTI (Mk8)': 10 };
+// Build 171: an automatic and a dual-clutch box shift clutch to clutch and keep the drive (GEARBOX.powershift); the
+// fitted 0.20 s cut is gone. The M2 is 21.6 -> 3.9%, the GTI 9.8 -> 7.8%, the RMS 12.3 -> 8.3%: both back under the
+// default 8% cap, and the budget follows down to 9.
+const ACC_KNOWN = { 'Toyota Supra RZ (A80)': 20, 'Subaru WRX STI (GD)': 13 };
 ref.forEach(r => { const cap = ACC_KNOWN[r.label] || 8; if (Math.abs(r.err) > cap) fails.push(`${r.label}: ${r.err}% off the real car (cap ${cap}%)`); });
-if (rms > 12.5) fails.push(`acceleration model RMS error ${rms.toFixed(2)}% across the reference set (budget 12.5: 5 before build 106, 7.5 before build 109, 9 before build 111, 9.5 before build 131, 11 before build 154)`);
+if (rms > 9) fails.push(`acceleration model RMS error ${rms.toFixed(2)}% across the reference set (budget 9: 5 before build 106, 7.5 before build 109, 9 before build 111, 9.5 before build 131, 11 before build 154, 12.5 builds 154-170)`);
 // the set must span drivetrains and diffs, or it proves little
 if (new Set(ref.map(r => r.drive)).size < 3) fails.push('reference set does not cover fwd/rwd/awd');
 

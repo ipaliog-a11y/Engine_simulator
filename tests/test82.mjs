@@ -31,9 +31,16 @@ const rows = await page.evaluate(() => {
       if (thr[i] > 0.9) { let t = 0, k = i + 1, mn = 1, br = false;
         while (t < 0.4) { const q = k % N; t += dtAt(q); mn = Math.min(mn, thr[q]); if (brk[q] > 0 || R.cut[q]) br = true; if (thr[q] > 0.9 && mn < 0.4) break; k++; }
         if (!br && mn < 0.4 && thr[k % N] > 0.9) pumps++; }
-      // each shift: the pedal through it, and the boost (manifold pressure) against just before it
-      if (R.cut[i] && !R.cut[h] && brk[i] < 0.02 && thr[h] > 0.9) { shifts++;
-        let k = i, mn = 1, mapMin = 9; while (R.cut[k % N]) { mn = Math.min(mn, thr[k % N]); mapMin = Math.min(mapMin, R.map[k % N]); k++; }
+      // each upshift: the pedal through it, and the boost (manifold pressure) against just before it. Found from the
+      // drive cut where the box cuts it, else from the gear changing (build 171: a dual-clutch or automatic box keeps
+      // the drive); its span is the cut, or the shift time
+      // (where the box keeps the drive, a change that falls on a corner's apex, the car holding its speed there, is the
+      // corner's throttle, not the shift's: only those made accelerating, over 1 m/s2, are judged)
+      const j1 = (i + 1) % N, acc = (v[j1] * v[j1] - v[h] * v[h]) / (2 * (line[h].ds3 + line[i].ds3));
+      const upshift = vehicle.shiftCut > 0 ? R.cut[i] && !R.cut[h] : L.gears[i] > L.gears[h] && acc > 1;
+      if (upshift && brk[i] < 0.02 && thr[h] > 0.9) { shifts++;
+        let k = i, mn = 1, mapMin = 9, t = 0;
+        while (R.cut[k % N] || (!R.cut[i] && t < vehicle.shiftTime)) { const q = k % N; mn = Math.min(mn, thr[q]); mapMin = Math.min(mapMin, R.map[q]); t += dtAt(q); k++; }
         if (mn < 0.5) shiftLifts++; if (mn < thr[h] - 1e-9) shiftDips++;
         boostKept = Math.min(boostKept, mapMin / Math.max(1e-9, R.map[h])); }
     }

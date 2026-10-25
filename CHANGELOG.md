@@ -20,6 +20,31 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 Working toward **v1.0 — every number derived, not fitted.**
 
+### Automatic and dual-clutch shifts keep the drive; the 6.6 V8 diesel's turbo (build 171)
+
+- **The drive was cut on every upshift, whatever the gearbox**, for its shift time: right for a manual (clutch out)
+  and a sequential (ignition cut), wrong for a dual-clutch box and a planetary automatic. Those shift clutch to clutch:
+  the oncoming clutch takes the torque as the off-going one lets go (the torque phase), then slips while it pulls the
+  engine down to the new gear's speed, the ECU trimming the engine's torque to keep it smooth (the inertia phase). The
+  output never drops below the next gear's (GM's power-on upshift patents US 5046383, US 7762925, US 9327733; Goetz,
+  Levesley & Crolla, Proc IMechE D 219, 2005). GEARBOX.powershift marks them; their shift time stays as how long the
+  change takes, and they cut no drive, in the 0-100 and on the lap. The turbo no longer lifts through their shifts.
+- **The 13 automatic and dual-clutch real cars:** 330d 6.63 -> 5.94 s (real 5.6), Duramax 8.96 -> 7.81 (8.0), Hellcat
+  5.14 -> 4.69 (3.9; the rest of its gap is not the gearbox), the dual-clutch cars 0.04-0.12 s quicker. Across all 42
+  cars the 0-100 error is 10.6% -> 9.4%.
+- **test41 (calibration):** the M2's eight-speed is 21.6% -> 3.9% off, the GTI's DCT 9.8 -> 7.8%, the RMS 12.3% ->
+  8.3%. Both cars return to the default 8% cap and the budget comes down from 12.5 to 9.
+- **The driver at an apex.** Where the solve asks for a hair of slowdown on the grip limit (122-123-123 km/h), the
+  pedal target is zero for a point; the foot's corner averaging left those out and snapped the pedal shut. A drive cut
+  hid it on the 720S at Spa. Corner points asking for no drive are averaged in unless the brakes are working there.
+- **The 6.6 V8 Turbodiesel archetype** carried the medium frame (71 mm), the same as the 3.0 BMW six: at the limiter it
+  asked 111% of that compressor's choke flow. It now carries the large frame, as the Duramax of the same size does:
+  548 hp (468), the compressor at 76% of choke, the expansion ratio at the limiter 3.2 (4.7), half boost at 2167 rpm
+  (1605).
+- **Tests restated:** test82 finds a shift from the gear changing where the box keeps the drive (it looked for the
+  cut), judging those made while accelerating; test76's heavy-car line 900 -> 950 C (the Hellcat reaches Spa's braking
+  zones faster now: 886 -> 911 C).
+
 ### The GEAR RATIOS window (build 170)
 
 - **A window over the vehicle tab**, opened by GEAR RATIOS… beside GEAR SPACING: the spacing as buttons, a slider per
