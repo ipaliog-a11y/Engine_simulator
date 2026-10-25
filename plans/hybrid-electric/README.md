@@ -99,6 +99,9 @@ Each step is one PR, validated the way the rest of the model is: against `tests/
 
 ### 2. Battery electric
 
+The design fields, their trade-offs and the physics behind them are in
+[motor-design.md](motor-design.md).
+
 - **Motor:** peak torque to base speed, peak power above it, a maximum speed; efficiency from
   copper loss (∝ torque²) and iron loss (∝ speed), so the efficiency map is derived, not drawn.
 - **Battery:** capacity (kWh), open-circuit voltage against state of charge, internal resistance —
@@ -138,9 +141,8 @@ gear mesh from the reduction. Built standalone in `tests/proto/` first, the way 
 ## Open questions
 
 - **Single source file or concatenated build?** See *The real risk* above.
-- **How deep is the motor designer?** A few fields (power, torque, battery kWh, chemistry) or a
-  geometric design like the engine (stator, magnets, cooling)? Shallow first is the suggestion;
-  the v1.0 rule still applies to whatever is exposed.
+- **How deep is the motor designer?** Proposed in [motor-design.md](motor-design.md): a first set
+  of about 12 geometric fields, more later. The v1.0 rule applies to whatever is exposed.
 - **Presets:** how many electric and hybrid cars, and do they enter the Supercar category
   (build 148) alongside combustion cars?
 - **Name and identity:** stays "Pixel Engine Sim", or becomes "powertrain" in the UI?
