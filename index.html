@@ -373,7 +373,7 @@ table.fuelmap td.live{box-shadow:inset 0 0 0 2px #fff;font-weight:bold}
 <body>
 <div class="container">
 <header>
-<h1>PIXEL ENGINE SIM v0.6 build 166</h1>
+<h1>PIXEL ENGINE SIM v0.6 build 167</h1>
 <div class="subtitle" id="subtitle">ENGINE DESIGNER • BUILD IT, THEN DRIVE IT</div>
 </header>
 <div class="build-strip" id="buildStrip">
@@ -7861,7 +7861,7 @@ function gridTorque(g,rpm,boost){
 }
 // Integrate the standing-start acceleration run through the gearbox with a traction-limited
 // launch (weight transfer + downforce), aero drag and rolling resistance.
-function simulateAccel(){
+function simulateAccelRun(){
   if(!engine.score)return null;
   // Performance figures are a design-potential number, not "whatever the live bench happens to be
   // doing". buildTorqueGrid already freezes health/AFR/IAT for the torque surface; the shaft
@@ -8243,6 +8243,8 @@ if(typeof window!=='undefined'&&window.REAL_TRACKS)Object.assign(TRACKS,window.R
 // spaced (a 40 m gap beside a 10 m one) that one overshoots and nearly cusps, and its samples bunch
 // and spread, so a 25 m corner carried 4 m kinks the racing line then had to drive. The centripetal
 // form cannot cusp or loop (Yuksel, Schaefer & Keyser 2011).
+// The V8 bug described at simulateLap: copy the result out of the loop-heavy function before it is held.
+function simulateAccel(){const r=simulateAccelRun();return r&&detachResult(r);}
 function catmullClosed(cp,step){
   const n=cp.length,dense=[];
   const lerp=(a,b,ta,tb,t)=>{const w=(tb-ta)>1e-9?(t-ta)/(tb-ta):0;return {x:a.x+(b.x-a.x)*w,y:a.y+(b.y-a.y)*w,z:(a.z||0)+((b.z||0)-(a.z||0))*w};};
@@ -8705,7 +8707,7 @@ function lineFor(T,key){
 // Quasi-steady-state lap: a cornering-speed ceiling at every point, then a backward braking pass
 // and a forward traction/power pass, taking the lower speed at each point. Gearbox shift time is
 // charged per gear change around the lap, so a slow-shifting box loses real time on a circuit.
-function simulateLap(key,opts){
+function simulateLapRun(key,opts){
   if(!engine.score||!vehicle.mass)return null;
   const quick=!!(opts&&opts.quick);
   // fromRest (build 137): the lap of a standing start. The car leaves point 0 from rest and the forward pass
@@ -9373,6 +9375,20 @@ const RACE_DRIVERS={
   rain:      {label:'RAIN MASTER',aggr:0.5,cons:0.6,care:0.5,wet:0.95},
   rookie:    {label:'ROOKIE',     aggr:0.6,cons:0.2,care:0.3,wet:0.3}
 };
+// A V8 bug (fixed in V8 15.2, Chrome 152; nodejs/node#66457, V8 issue 547819997): in code compiled by Maglev's
+// on-stack replacement, an object literal returned by a function with hot loops can share the boxes that hold
+// its number fields with the next one the same site builds, so an earlier result's lap time, lengths and
+// speeds turn into a later call's (a Golf's lap of the technical circuit read as its Spa lap, about one run
+// in forty, in the suite's Chromium 141). Copied here, outside the loops, into an object of its own before
+// anyone holds it, with the plain objects inside it (the balance, the 0-100 run's marks) that are built in the
+// same loops; arrays, typed arrays and the track are left shared. Build 167.
+function detachResult(o,depth=2){
+  const c={};
+  for(const k in o){const v=o[k];
+    c[k]=depth>0&&k!=='track'&&v&&typeof v==='object'&&Object.getPrototypeOf(v)===Object.prototype?detachResult(v,depth-1):v;}
+  return c;
+}
+function simulateLap(key,opts){const r=simulateLapRun(key,opts);return r&&detachResult(r);}
 function raceDriver(d){return Object.assign({},RACE_DRIVERS.balanced,typeof d==='string'?RACE_DRIVERS[d]:d||{});}
 // Fuel tank by body (litres). Typical of the class, not of any one car: a kei car carries ~30 L,
 // a GT ~80. The quoted curb masses are taken with the tank full, so a race car is lighter by what it burns.

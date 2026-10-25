@@ -20,6 +20,26 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 Working toward **v1.0 — every number derived, not fitted.**
 
+### A lap result no longer turns into the next one (build 167)
+
+- **The bug.** About one run in forty, a car's lap of one circuit came back as its lap of another: a Golf's
+  technical-circuit lap read 196.38 s, its Spa time to fifteen digits, with Spa's brake temperature (test76
+  failed on it at random). The lap was right when simulateLap returned it; it changed while the next lap was
+  being solved, and only its numbers changed (lap, lengths, average and top speed), never its arrays or its
+  track. That is a V8 bug, not the model: in code compiled by Maglev's on-stack replacement, object literals
+  returned by a function with hot loops can share the boxes behind their number fields, so a later result's
+  stores write through to an earlier one (nodejs/node#66457, V8 issue 547819997; fixed in V8 15.2, Chrome 152;
+  the suite's Chromium is 141, and browsers before 152 have it).
+- **The repair.** simulateLap and simulateAccel are thin wrappers now: the solve runs in simulateLapRun /
+  simulateAccelRun, and its result is copied (detachResult: the result and the plain objects inside it, such as
+  the balance and the 0-100 run's marks; arrays and the track stay shared) outside the loops, into objects of
+  its own, before anyone holds it. A race, a comparison, the garage: anything that keeps one result while
+  solving another now keeps the right one. Nothing the model computes changed.
+- Checked on the sequence that failed (MX-5, GR Yaris and Golf GTI, each the technical circuit then Spa, a fresh
+  browser each run, the first lap's numbers read again after the second is solved): before, 5 wrong in about 180
+  runs; after, 0 in 100. No test can catch it on demand (it needs Maglev to compile, deoptimise and land on the
+  same site at the right moment), so the wrapper is the guard, and this note is why it is there.
+
 ### The live cutaway's tracts to scale, the header's wave, the compressor map (build 166)
 
 - **The intake was a straight pipe with a throttle, the exhaust a straight pipe ending in mid-air.** Now the runner
