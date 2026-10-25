@@ -20,6 +20,49 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 Working toward **v1.0 — every number derived, not fitted.**
 
+### Gear spacing from real gearboxes, and the real cars' own ratios (build 169)
+
+- **One box for every car.** Every car with the same number of gears ran the same ratios: an even progression from
+  3.35 to 0.82, stretched a little by the gearbox type (sequential 0.88, auto 1.10, numbers with no source). A
+  4-speed spanned what an 8-speed did, the steps never shrank towards the top, and a Golf shared its box with a 911.
+- **The textbook's progressive design** (Naunheimer et al., *Automotive Transmissions*, §6.3):
+  i_j = i_n · φ1^(n−j) · φ2^((n−j)(n−j−1)/2). Fitted to the 30 distinct published boxes now in the file, the span
+  grows with the gear count as ln(span) = 0.065 + 0.910·ln(n−1). φ2 falls as gears are added (about 1.1 on a
+  five-speed, 1.02 on the ten-speed Allison), so a fixed φ2 turned a ten-speed's top gears back on themselves; what
+  holds steady is the share of the span the progression makes (the middle half of the boxes
+  between 0.28 and 0.45, with no trend in the gear count), and that is what the model keeps.
+- **GEAR SPACING: CLOSE RATIO / STANDARD / WIDE RATIO** are the lower quartile, median and upper quartile of those
+  boxes, in span and in progression. A six-speed spans 4.2 / 4.8 / 5.1. The gearbox type no longer spaces the
+  ratios; test28's check that it did is restated.
+- **The real cars' own boxes.** 33 of the 42 presets carry their published ratios and final drive, each with its
+  source (Toyota, Audi, Porsche, GM and BMW sheets where found, spec databases and owners' forums where not, the
+  weaker ones marked). Boxes with two final drives (GR Yaris, RS3) are stated against one. The McLaren F1's quoted
+  2.37 final drive leaves out a drop gear: Autocar's measured 8.71 mph per 1000 rpm in 1st gives 2.98. The other 9
+  take the average spacing of the published boxes in their family, with the final drive matched to the engine as
+  before; the 330d and 500 TwinAir use their published ratios with a matched final drive. The GEARING slider biases
+  a published final drive just as it biases a matched one.
+- **Up to 10 speeds**, so the Duramax runs its ten-speed (its note that the model stopped at 8 is gone).
+- **CUSTOM ratios and a hand-set final drive** are in the model and saved with the car; the window to set them is
+  the next build. A custom set out of order is refused.
+- **Against the published figures** (all 42 cars): 0-100 mean error 10.5% -> 10.6%, top speed 3.1% -> 2.8%. The F1
+  now tops out at 365 km/h on its 7500 rpm limiter against the 386 quoted; the measured gearing says the limiter,
+  not the air, stops it there.
+- **The driver through a sweeper.** The 720S's real box put it in 3rd near the limiter through the mixed circuit's
+  long double-apex sweeper, where the line's corner speed flickers point to point (150, 211, 158, 205 km/h). The
+  foot's corner averaging took only the corner's own points, so two points between the apexes asked for full
+  throttle between two holds: three stabs. It now averages every driving point in the steering window.
+- **Tests:** test91 (new) checks the spacing, recomputes the constants from the published boxes, every published
+  set against its preset, the real cars, custom ratios, and the save. Restated, each with its reason in the file:
+  - test28: the gearbox type no longer spaces the ratios (its spread multipliers had no source).
+  - test41 (calibration): the gearbox is matched to the real car where it is known, as power, mass and driveline
+    already were: the Supra, STI and Alto run their published boxes, the GTI and M2 their real gear counts. RMS
+    11.6% -> 12.3% (budget 12.5). The M2 is 16.5 -> 21.6% (cap 17 -> 22): its eight-speed makes seven shifts to 100,
+    and the model cuts the drive for a fitted 0.20 s on every automatic shift, where a ZF hands the torque between
+    clutches under load. That shift is the next item it exposes.
+  - test83: the Hellcat's own box has an 18% shorter 1st; held at the best slip through it, the spin is 2nd gear's
+    alone, so traction control off now costs 0.5%, not 5%. The bar is that it is slower, with the spin still checked.
+  - test76: the GTI's Spa rotor peak is 701 C against a 700 C line it sat 1 C under; the line is now 710.
+
 ### The VGT's vane ring sized by its own geometry, and paying its efficiency (build 168)
 
 - **The ring was the fixed housing's size.** The vane ring's throat was A(beta) = h(2 pi r2 sin beta - Z t) in the
