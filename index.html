@@ -401,7 +401,7 @@ table.fuelmap td.live{box-shadow:inset 0 0 0 2px #fff;font-weight:bold}
 <body>
 <div class="container">
 <header>
-<h1>PIXEL ENGINE SIM v0.6 build 172</h1>
+<h1>PIXEL ENGINE SIM v0.6 build 174</h1>
 <div class="subtitle" id="subtitle">ENGINE DESIGNER • BUILD IT, THEN DRIVE IT</div>
 </header>
 <div class="build-strip" id="buildStrip">
@@ -445,7 +445,7 @@ table.fuelmap td.live{box-shadow:inset 0 0 0 2px #fff;font-weight:bold}
 <div class="field"><label for="edStroke"><span id="lblStroke">STROKE (mm)</span></label><input type="number" id="edStroke" min="50" max="130" step="0.5" value="86"></div>
 <div class="field"><label for="edEcc">ECCENTRICITY e (mm)</label><input type="number" id="edEcc" min="8" max="25" step="0.5" value="15"></div>
 <div class="field"><label for="edCR">COMPRESSION</label><input type="number" id="edCR" min="7" max="24" step="0.1" value="10.5"></div>
-<div class="field"><label for="edRedline">REDLINE (rpm)</label><input type="number" id="edRedline" min="3500" max="11000" step="100" value="7000"></div>
+<div class="field"><label for="edRedline">REDLINE (rpm)</label><input type="number" id="edRedline" min="2000" max="11000" step="50" value="7000"></div>
 </div>
 
 <div class="design-section">Air Path</div>
@@ -455,6 +455,7 @@ table.fuelmap td.live{box-shadow:inset 0 0 0 2px #fff;font-weight:bold}
 <div class="field"><label for="edTaperRpm">BOOST TAPER FROM (rpm, 0 = off)</label><input type="number" id="edTaperRpm" min="0" max="12000" step="100" value="0"></div>
 <div class="field"><label for="edTaperPct">BOOST AT LIMITER (%)</label><input type="number" id="edTaperPct" min="20" max="100" step="1" value="100"></div>
 <div class="field"><label for="edTqLimit">ECU TORQUE LIMIT (Nm, 0 = off)</label><input type="number" id="edTqLimit" min="0" max="5000" step="10" value="0"></div>
+<div class="field"><label for="edGovRpm">DIESEL RATED SPEED (rpm, 0 = off)</label><input type="number" id="edGovRpm" min="0" max="8000" step="50" value="0"></div>
 <div class="field"><label for="edIntercooler">INTERCOOLER</label><select id="edIntercooler"><option value="none">NONE</option><option value="small">SMALL CORE</option><option value="large">LARGE CORE</option></select></div>
 <div class="field"><label for="edTurboSize">TURBO SIZE</label><select id="edTurboSize"><option value="small">SMALL</option><option value="medium">MEDIUM</option><option value="large">LARGE</option></select></div>
 <div class="field"><label for="edCompWheel">COMPRESSOR WHEEL (mm, 0 = size)</label><input type="number" id="edCompWheel" min="0" max="110" step="1" value="0"></div>
@@ -1806,7 +1807,7 @@ engine's output survives the driveline, and how the car leaves the line. How the
 choice of its own, GEAR SPACING (see <i>Gearing &amp; shifting</i>).<br>· <b>Manual (H-pattern)</b> — the most efficient box, but you lose ~350 ms per shift lifting off,
 moving the lever and re-engaging. Cheap. Best where there are few shifts to make.<br>· <b>Sequential</b> — a race box that bangs the next dog in: ~60 ms shifts; it is usually built
 with close ratios that keep a peaky engine in its band. Expensive.<br>· <b>Dual-clutch (DCT)</b> — the next gear is already engaged on the second clutch, so shifts are
-near-seamless (~30 ms). The quickest thing here, and priced like it.<br>· <b>Torque-converter auto</b> — slowest shifts of the modern boxes (~200 ms) and the worst
+seamless: the drive is never cut (the change takes ~30 ms). The quickest thing here, and priced like it.<br>· <b>Torque-converter auto</b> — slowest shifts of the modern boxes (~200 ms, though it drives through them) and the worst
 driveline losses, because it drives through fluid. What it buys you is the <b>launch</b>: the
 converter stalls up against the brakes and <i>multiplies</i> engine torque (up to ~1.9× at a
 2400 rpm stall), fading to 1:1 as the turbine catches up. That's why an automatic can out-launch a
@@ -1819,7 +1820,8 @@ wider it spans: a lower 1st to get the load moving and a taller top for cruising
 <div class="guide-body" data-gk="gearboxPhys">
 <div class="gtab-wrap"><table class="gtab"><tr><th>gearbox</th><th>shift (drive cut)</th><th>efficiency</th></tr>
 <tr><td>manual</td><td>350 ms</td><td>1.00</td></tr><tr><td>sequential</td><td>60 ms</td><td>0.99</td></tr>
-<tr><td>dual-clutch</td><td>30 ms</td><td>0.98</td></tr><tr><td>torque-converter auto</td><td>200 ms</td><td>0.93</td></tr></table></div>
+<tr><td>dual-clutch</td><td>none (30 ms shift)</td><td>0.98</td></tr><tr><td>torque-converter auto</td><td>none (200 ms shift)</td><td>0.93</td></tr></table></div>
+A dual-clutch box and an automatic shift clutch to clutch: the next gear's clutch takes the torque as the old one lets go, then slips while it pulls the engine down to the new gear's speed, so the drive never stops (GM's power-on upshift patents; Goetz, Levesley &amp; Crolla 2005). A manual and a sequential do cut it.
 These multiply the drivetrain's own efficiency (FWD 0.92, RWD 0.90, AWD 0.86). The converter stalls to 2400 rpm and multiplies torque up to 1.9× while it slips, fading to 1:1 as it couples. Every spinning part counts as extra mass seen through the gearing (Gillespie):
 <span class="geq">m<sub>eff</sub> = m + (I<sub>wheels</sub> + I<sub>engine</sub> · i²) / r²</span>
 which is large in first gear, where <i>i</i> is big. The engine's inertia only counts while the clutch is engaged, not while it slips or during a shift.
@@ -1989,7 +1991,7 @@ Corner hard and the body <b>rolls</b> toward the outside. Soft suspension rolls 
 <div class="gtab-wrap"><table class="gtab"><tr><th>setup</th><th>ride frequency</th><th>roll, typical car (deg per g)</th><th>static camber</th></tr>
 <tr><td>comfort</td><td>1.0 Hz</td><td>6.1</td><td>−0.5°</td></tr><tr><td>sport</td><td>1.25 Hz</td><td>3.9</td><td>−1.0°</td></tr>
 <tr><td>coilovers</td><td>1.6 Hz</td><td>2.4</td><td>−1.8°</td></tr><tr><td>race</td><td>2.0 Hz</td><td>1.5</td><td>−2.5°</td></tr></table></div>
-<b>Roll (build 172).</b> The ride frequency is how fast each corner bounces on its spring; it gives the spring's rate, k = (m<sub>axle</sub>/2)(2πf)², and an axle's springs resist roll with
+<b>Roll (build 174).</b> The ride frequency is how fast each corner bounces on its spring; it gives the spring's rate, k = (m<sub>axle</sub>/2)(2πf)², and an axle's springs resist roll with
 <span class="geq">K<sub>springs</sub> = m<sub>axle</sub> (2πf)² t² / 4</span>
 The anti-roll bar adds 55% of that at STANDARD, about a third of the total. The body rolls by its roll moment over the two axles together:
 <span class="geq">roll<sub>per g</sub> = m g (h − z<sub>roll axis</sub>) / (K<sub>front</sub> + K<sub>rear</sub>)</span>
@@ -1997,7 +1999,7 @@ So a tall car on a narrow track rolls more on the same kit, and high roll centre
 A tyre makes its most side force leaning about −1.5° into the turn and loses about 1.5% per degree either side. The loaded outside tyre's angle is the static camber plus the share of the body roll its axle's geometry does not claw back (the recovery r):
 <span class="geq">camber<sub>loaded</sub> = camber<sub>static</sub> + (1 − r) · roll<sub>per g</sub> · a<sub>y</sub>/g</span>
 That replaced a fitted suspension grip multiplier: the grip difference between setups now comes from camber and load transfer.<br>
-<b>Geometry (build 171).</b> An independent wheel swings about its instant centre, seen from the front, so when the body rolls the outside wheel rises into bump and turns back by its travel over the swing-arm length: r = (t/2) / swing arm, from the axle's own track t.
+<b>Geometry (build 173).</b> An independent wheel swings about its instant centre, seen from the front, so when the body rolls the outside wheel rises into bump and turns back by its travel over the swing-arm length: r = (t/2) / swing arm, from the axle's own track t.
 <div class="gtab-wrap"><table class="gtab"><tr><th>geometry</th><th>swing arm</th><th>recovery r</th><th>roll centre</th></tr>
 <tr><td>MacPherson strut</td><td>~3.0 m</td><td>~0.25</td><td>80 mm</td></tr>
 <tr><td>double wishbone</td><td>~1.6 m</td><td>~0.5</td><td>60 mm</td></tr>
@@ -2829,7 +2831,7 @@ const ENGINE_TYPE={
   petrol4:  {label:'PETROL 4-STROKE',strokeDiv:4*Math.PI,ci:false,ports:false,imep:1.00,eff:1.00,bsfc:1.00,
              crDef:11,crMin:8,crMax:14,redlineDef:7000,redMin:5000,redMax:9500,fuel:null,maxCyl:12},
   diesel:   {label:'DIESEL (CI)',    strokeDiv:4*Math.PI,ci:true, ports:false,imep:1.02,eff:1.30,bsfc:1.00,
-             crDef:18,crMin:15,crMax:24,redlineDef:4800,redMin:3500,redMax:5800,fuel:'diesel',maxCyl:12},
+             crDef:18,crMin:15,crMax:24,redlineDef:4800,redMin:2000,redMax:5800,fuel:'diesel',maxCyl:12},
   twostroke:{label:'2-STROKE',       strokeDiv:2*Math.PI,ci:false,ports:true, imep:0.60,eff:0.80,bsfc:1.45,
              crDef:9, crMin:7,crMax:12,redlineDef:8000,redMin:5500,redMax:11000,fuel:null,maxCyl:6},
   // bsfc is fuel delivered per unit of fuel trapped, the charge that leaves unburned: a two-stroke
@@ -4104,7 +4106,7 @@ const AIR_FILTER={
 const DEFAULT_ENGINE={
   type:'petrol4',
   cylinders:4,bore_mm:81,stroke_mm:78,compression:12.5,layout:'inline',redline:7200,
-  intake:'na',boost_bar:0,intercooler:'large',turboSize:'medium',compExd_mm:0,taperRpm:0,taperPct:100,tqLimit:0,turboConfig:'single',housing:'stock',vgt:false,scType:'roots',antilag:false,nitrous:'none',exhaust:'sport',cat:'stock',
+  intake:'na',boost_bar:0,intercooler:'large',turboSize:'medium',compExd_mm:0,taperRpm:0,taperPct:100,tqLimit:0,govRpm:0,turboConfig:'single',housing:'stock',vgt:false,scType:'roots',antilag:false,nitrous:'none',exhaust:'sport',cat:'stock',
   intakeSys:'efi',airFilter:'perf',
   cam:'stock',vvt:true,valves:4,valveMat:'steel',valveSpring:'stock',runner:'medium',
   fuel:'gasoline',octane:95,injector:'direct',ignitionAdv:22,ignitionType:'coil',timingMode:'auto',afrMode:'auto',
@@ -4125,8 +4127,8 @@ const PRESETS=[
   {cat:'Archetypes',name:'6.5 V12 NA Supercar',    engine:{valves:4,valveMat:'titanium',valveSpring:'race',cylinders:12,bore_mm:95,stroke_mm:76.4,compression:11.8,layout:'v',redline:8500,intakeSys:'itb',cam:'race',exhaust:'race',cat:'sport',octane:98,injector:'port',radiator:'large',oilCooler:true}},
   // A 2.0 turbodiesel runs a SMALL variable-geometry frame (a ~49 mm compressor, BV43/GTB1749V class).
   // It carried the medium frame until build 87, which on a 2.0 L does not make full boost until 2800 rpm.
-  {cat:'Archetypes',name:'2.0 Turbo Diesel I4',    engine:{type:'diesel',vvt:false,cylinders:4,bore_mm:84,stroke_mm:90,compression:17,redline:4800,intake:'turbo',boost_bar:1.2,turboSize:'small',vgt:true,intakeSys:'efi',injector:'direct',exhaust:'stock',cat:'stock',radiator:'large',oilCooler:true}},
-  {cat:'Archetypes',name:'6.6 V8 Turbodiesel',     engine:{type:'diesel',vvt:false,cylinders:8,bore_mm:103,stroke_mm:99,compression:16.5,layout:'v',redline:3800,intake:'turbo',boost_bar:1.1,turboSize:'medium',turboConfig:'single',vgt:true,intakeSys:'efi',injector:'direct',exhaust:'stock',cat:'stock',radiator:'large',oilCooler:true}},
+  {cat:'Archetypes',name:'2.0 Turbo Diesel I4',    engine:{type:'diesel',vvt:false,cylinders:4,bore_mm:84,stroke_mm:90,compression:17,redline:4800,govRpm:3900,intake:'turbo',boost_bar:1.2,turboSize:'small',vgt:true,intakeSys:'efi',injector:'direct',exhaust:'stock',cat:'stock',radiator:'large',oilCooler:true}},
+  {cat:'Archetypes',name:'6.6 V8 Turbodiesel',     engine:{type:'diesel',vvt:false,cylinders:8,bore_mm:103,stroke_mm:99,compression:16.5,layout:'v',redline:3800,govRpm:3100,intake:'turbo',boost_bar:1.1,turboSize:'large',turboConfig:'single',vgt:true,intakeSys:'efi',injector:'direct',exhaust:'stock',cat:'stock',radiator:'large',oilCooler:true}},
   {cat:'Archetypes',name:'1.3 Rotary Turbo (13B)', engine:{type:'rotary',cylinders:2,bore_mm:105,stroke_mm:80,ecc_mm:15,compression:9.4,redline:9000,intake:'turbo',boost_bar:0.7,turboSize:'medium',turboConfig:'sequential',intakeSys:'efi',injector:'port',exhaust:'sport',cat:'sport',octane:98,radiator:'large',oilCooler:true}},
   {cat:'Archetypes',name:'1.3 Rotary NA (Renesis)',engine:{type:'rotary',cylinders:2,bore_mm:105,stroke_mm:80,ecc_mm:15,compression:10,redline:9000,intakeSys:'itb',injector:'port',exhaust:'sport',cat:'sport',octane:98,radiator:'large',oilCooler:true}},
   {cat:'Archetypes',name:'500cc 2-Stroke Twin',    engine:{type:'twostroke',cylinders:2,bore_mm:70,stroke_mm:64,compression:9,redline:9500,intakeSys:'carb2',airFilter:'perf',exhaust:'race',cat:'none',octane:98,injector:'port',ignitionType:'coil',radiator:'stock'}},
@@ -4138,7 +4140,11 @@ const PRESETS=[
   // trims), the gentlest such taper. It is a CONTROL input, like the speed limiter or the fuel: the physics is
   // untouched, and setting BOOST TAPER FROM to 0 shows what the hardware itself makes. Left off where the hardware is
   // at or below the rating, and where no taper from the torque peak reaches it: the RB26's 280 PS is a voluntary
-  // cap, and the Cummins's excess is the diesel's own top end. Re-solved in build 132 (the octane index moved the
+  // cap. (The Cummins's excess was the diesel's own top end; since build 172 a diesel has a governor (govRpm, the
+  // maker's rated speed) and the diesels' tapers are re-solved with it: TDI 54 -> 44%, N57 58 -> 54%, Duramax 26 ->
+  // 51%. The Cummins stays without one: no taper reaches its rating, because its 1356 Nm is 25.4 bar BMEP, above the
+  // soft ceiling dieselImepLimit puts on a diesel, so its midrange is short and its top end makes up for it. The
+  // archetype diesels take their rated speed at 0.81 of their limit, the L5P's published 2800 / 3450.) Re-solved in build 132 (the octane index moved the
   // knock limit): the GTI and the Hellcat now exceed their ratings on the hardware alone and carry a taper. And in
   // build 133 (the turbine throat, the compressor island, real wheels): the Civic on its 58 mm wheel is now at its
   // rating on the hardware alone and carries none.
@@ -4234,13 +4240,14 @@ const PRESETS=[
   {cat:'Rotary',name:'Mazda 13B-MSP Renesis (RX-8)',real:{hp:232,hpRpm:8200,tq:211,tqRpm:5500},
    engine:{type:'rotary',cylinders:2,bore_mm:105,stroke_mm:80,ecc_mm:15,compression:10.0,redline:9000,injector:'port',octane:98,exhaust:'stock',airFilter:'stock',radiator:'large',oilCooler:true}},
   {cat:'Diesel',name:'VW EA288 2.0 TDI (Golf 150)',real:{hp:148,hpRpm:3500,tq:320,tqRpm:1750},unsure:['runner'],
-   engine:{type:'diesel',vvt:false,cylinders:4,bore_mm:81.0,stroke_mm:95.5,compression:16.2,redline:4800,intake:'turbo',boost_bar:1.3,turboSize:'small',vgt:true,injector:'direct',intercooler:'large',exhaust:'stock',airFilter:'stock',runner:'short',taperRpm:2000,taperPct:54,tqLimit:320}},
+   engine:{type:'diesel',vvt:false,cylinders:4,bore_mm:81.0,stroke_mm:95.5,compression:16.2,redline:4800,intake:'turbo',boost_bar:1.3,turboSize:'small',vgt:true,injector:'direct',intercooler:'large',exhaust:'stock',airFilter:'stock',runner:'short',taperRpm:2000,taperPct:44,tqLimit:320,govRpm:4000}},
   {cat:'Diesel',name:'BMW N57 3.0d (330d F30)',real:{hp:254,hpRpm:4000,tq:560,tqRpm:2000},unsure:['boost_bar','runner'],
-   engine:{type:'diesel',vvt:false,cylinders:6,bore_mm:84.0,stroke_mm:90.0,compression:16.5,redline:5000,intake:'turbo',boost_bar:1.5,turboSize:'medium',vgt:true,injector:'direct',intercooler:'large',exhaust:'stock',airFilter:'stock',runner:'short',taperRpm:2000,taperPct:58,tqLimit:560}},
-  {cat:'Diesel',name:'GM Duramax L5P 6.6 (Silverado HD)',real:{hp:445,hpRpm:2800,tq:1234,tqRpm:1600},unsure:['boost_bar','redline','runner'],
-   engine:{type:'diesel',vvt:false,cylinders:8,layout:'v',bore_mm:103.0,stroke_mm:99.0,compression:16.0,redline:3800,intake:'turbo',boost_bar:1.9,turboSize:'large',vgt:true,injector:'direct',intercooler:'large',exhaust:'stock',airFilter:'stock',runner:'short',taperRpm:2000,taperPct:26}},
+   engine:{type:'diesel',vvt:false,cylinders:6,bore_mm:84.0,stroke_mm:90.0,compression:16.5,redline:5000,intake:'turbo',boost_bar:1.5,turboSize:'medium',vgt:true,injector:'direct',intercooler:'large',exhaust:'stock',airFilter:'stock',runner:'short',taperRpm:2000,taperPct:54,tqLimit:560,govRpm:4000}},
+  // GM: rated 2800 rpm, maximum powered speed 3450 (the governed maximum; it was 3800 here, unsure)
+  {cat:'Diesel',name:'GM Duramax L5P 6.6 (Silverado HD)',real:{hp:445,hpRpm:2800,tq:1234,tqRpm:1600},unsure:['boost_bar','runner'],
+   engine:{type:'diesel',vvt:false,cylinders:8,layout:'v',bore_mm:103.0,stroke_mm:99.0,compression:16.0,redline:3450,intake:'turbo',boost_bar:1.9,turboSize:'large',vgt:true,injector:'direct',intercooler:'large',exhaust:'stock',airFilter:'stock',runner:'short',taperRpm:2000,taperPct:51,govRpm:2800}},
   {cat:'Diesel',name:'Cummins 6.7 (Ram HD 2019 HO)',real:{hp:400,hpRpm:2800,tq:1356,tqRpm:1800},unsure:['boost_bar','compression','redline','runner'],
-   engine:{type:'diesel',vvt:false,cylinders:6,bore_mm:107.0,stroke_mm:124.0,compression:17.3,redline:3500,intake:'turbo',boost_bar:2.0,turboSize:'large',vgt:true,injector:'direct',intercooler:'large',exhaust:'stock',airFilter:'stock',runner:'short'}},
+   engine:{type:'diesel',vvt:false,cylinders:6,bore_mm:107.0,stroke_mm:124.0,compression:17.3,redline:3500,intake:'turbo',boost_bar:2.0,turboSize:'large',vgt:true,injector:'direct',intercooler:'large',exhaust:'stock',airFilter:'stock',runner:'short',govRpm:2800}},
   {cat:'Two-Stroke',name:'Yamaha RD350LC (2-stroke twin)',real:{hp:46,hpRpm:8500,tq:40,tqRpm:8000},unsure:['compression','redline'],
    engine:{type:'twostroke',cylinders:2,bore_mm:64.0,stroke_mm:54.0,compression:7,redline:9500,intakeSys:'carb2',octane:95,exhaust:'race',airFilter:'stock'}},
 ];
@@ -4503,7 +4510,7 @@ const I18N={
   // vehicle tab
   'VEHICLE':{el:'ΟΧΗΜΑ'},'VEHICLE DESIGN':{el:'ΣΧΕΔΙΑΣΗ ΟΧΗΜΑΤΟΣ'},
   'Pick a chassis and it arrives on its factory spec — matching tyres, wheels, brakes, suspension and aero. Swap any part from there; your current engine is dropped in and the performance is computed live.':{el:'Διάλεξε σασί και έρχεται με τον εργοστασιακό του εξοπλισμό — ταιριαστά ελαστικά, ζάντες, φρένα, ανάρτηση και αεροδυναμική. Άλλαξε ό,τι θέλεις από εκεί· ο τρέχων κινητήρας μπαίνει μέσα και οι επιδόσεις υπολογίζονται ζωντανά.'},
-  'Chassis & Drivetrain':{el:'Σασί & Μετάδοση'},'CHASSIS':{el:'ΣΑΣΙ'},'DRIVETRAIN':{el:'ΜΕΤΑΔΟΣΗ'},'GEARBOX (SPEEDS)':{el:'ΚΙΒΩΤΙΟ (ΣΧΕΣΕΙΣ)'},'GEAR SPACING':{el:'ΚΛΙΜΑΚΩΣΗ ΣΧΕΣΕΩΝ'},'RATIOS & GRAPHS':{el:'ΣΧΕΣΕΙΣ & ΓΡΑΦΗΜΑΤΑ'},'GEAR RATIOS…':{el:'ΣΧΕΣΕΙΣ ΚΙΒΩΤΙΟΥ…'},'GEAR RATIOS':{el:'ΣΧΕΣΕΙΣ ΚΙΒΩΤΙΟΥ'},
+  'Chassis & Drivetrain':{el:'Σασί & Μετάδοση'},'CHASSIS':{el:'ΣΑΣΙ'},'DRIVETRAIN':{el:'ΜΕΤΑΔΟΣΗ'},'GEARBOX (SPEEDS)':{el:'ΚΙΒΩΤΙΟ (ΣΧΕΣΕΙΣ)'},'GEAR SPACING':{el:'ΚΛΙΜΑΚΩΣΗ ΣΧΕΣΕΩΝ'},'DIESEL RATED SPEED (rpm, 0 = off)':{el:'ΟΝΟΜΑΣΤΙΚΕΣ ΣΤΡΟΦΕΣ ΠΕΤΡΕΛΑΙΟΥ (rpm, 0 = εκτός)'},'no drive cut':{el:'χωρίς διακοπή μετάδοσης'},'RATIOS & GRAPHS':{el:'ΣΧΕΣΕΙΣ & ΓΡΑΦΗΜΑΤΑ'},'GEAR RATIOS…':{el:'ΣΧΕΣΕΙΣ ΚΙΒΩΤΙΟΥ…'},'GEAR RATIOS':{el:'ΣΧΕΣΕΙΣ ΚΙΒΩΤΙΟΥ'},
   'SPACING':{el:'ΚΛΙΜΑΚΩΣΗ'},'RATIO · ROAD SPEED AT THE LIMITER':{el:'ΣΧΕΣΗ · ΤΑΧΥΤΗΤΑ ΣΤΟΝ ΚΟΦΤΗ'},'ENGINE RPM AGAINST ROAD SPEED':{el:'ΣΤΡΟΦΕΣ ΚΙΝΗΤΗΡΑ ΠΡΟΣ ΤΑΧΥΤΗΤΑ'},
   'DRIVE AT THE WHEELS AGAINST ROAD SPEED':{el:'ΩΘΗΣΗ ΣΤΟΥΣ ΤΡΟΧΟΥΣ ΠΡΟΣ ΤΑΧΥΤΗΤΑ'},'FINAL':{el:'ΤΕΛΙΚΗ'},'gear ratio':{el:'σχέση'},'published':{el:'δημοσιευμένη'},'matched':{el:'ταιριασμένη'},'by hand':{el:'με το χέρι'},
   'the car\'s published final drive, and the GEARING slider':{el:'η δημοσιευμένη τελική του αυτοκινήτου, και ο ρυθμιστής ΤΕΛΙΚΗ ΣΧΕΣΗ'},'matched to the engine, and the GEARING slider':{el:'ταιριασμένη στον κινητήρα, και ο ρυθμιστής ΤΕΛΙΚΗ ΣΧΕΣΗ'},
@@ -4886,7 +4893,7 @@ const GUIDE_I18N={
   chassis:{el:"Στην καρτέλα <b>ΟΧΗΜΑ</b> βάζεις τον κινητήρα σου σε αυτοκίνητο. Διάλεξε <b>σασί</b> και έρχεται με τον <b>εργοστασιακό του εξοπλισμό</b> — τα ελαστικά, ζάντες, φρένα, ανάρτηση, αεροδυναμική και κιβώτιο που θα φορούσε πραγματικά: ένα kei εμφανίζεται με στενά οικονομικά ελαστικά και μικρούς ατσάλινους δίσκους, ενώ ένα hypercar παίρνει φαρδιά semi-slick, carbon-ceramic φρένα και πακέτο αεροτομής/diffuser. Όλα παραμένουν επεξεργάσιμα· το <b>ΕΡΓΟΣΤΑΣΙΑΚΟΣ ΕΞΟΠΛΙΣΜΟΣ</b> τα επαναφέρει."},
   garage:{el:"Η καρτέλα <b>ΓΚΑΡΑΖ</b> κρατά τα αυτοκίνητα και τους κινητήρες σου. Δώσε όνομα σε ένα αυτοκίνητο στο κάτω μέρος αυτής της καρτέλας και πάτησε <b>ΑΠΟΘΗΚΕΥΣΗ ΣΤΟ ΓΚΑΡΑΖ</b> και αποθηκεύεται το σύνολο — το αμάξωμα, κάθε εξάρτημα πάνω του, <i>και</i> ο κινητήρας μέσα, μέχρι και ο χειροκίνητα ρυθμισμένος χάρτης καυσίμου. Στην καρτέλα ΚΙΝΗΤΗΡΑΣ, η <b>ΑΠΟΘΗΚΕΥΣΗ ΚΙΝΗΤΗΡΑ</b> κρατά μόνο τον κινητήρα, που μπαίνει σε όποιο αυτοκίνητο έχεις όταν τον φορτώσεις. Η <b>ΠΡΟΒΟΛΗ</b> σε μια κάρτα δείχνει τι θα φορτώσει. Κάθε κάρτα δείχνει τα βασικά νούμερα που είχε όταν την αποθήκευσες (ισχύ, βάρος, 0–100, τελική, χρόνο γύρου και συνολικό κόστος), οπότε μπορείς να παρατάξεις τρεις κατασκευές και να τις συγκρίνεις χωρίς να ξαναφτιάξεις καμία. Η <b>ΦΟΡΤΩΣΗ</b> επαναφέρει το αυτοκίνητο ακριβώς όπως ήταν· αν γράψεις όνομα που υπάρχει ήδη, η κάρτα του τονίζεται και η αποθήκευση το αντικαθιστά. Αυτό είναι ξεχωριστό από τα <b>ΑΠΟΘΗΚ.</b>/<b>ΦΟΡΤΩΣΗ</b>, που είναι μία μοναδική θέση γρήγορης αποθήκευσης. Μια εγγραφή του γκαράζ είναι η ίδια που γράφει η <b>ΑΠΟΘ. ΑΡΧΕΙΟΥ</b> και μεταφέρει ένα σύνδεσμος κοινοποίησης. Όλα μένουν μόνο σε αυτόν τον browser — αν καθαρίσεις τα δεδομένα ιστότοπου, χάνεται το γκαράζ, και η <b>ΑΠΟΘ. ΑΡΧΕΙΟΥ</b> είναι αυτή που σώζει μια κατασκευή από αυτό."},
   tuning:{el:"Από εκεί ρυθμίζεις <b>μετάδοση</b> (FWD/RWD/AWD — το AWD ξεκινά καλύτερα), <b>κιβώτιο</b> (τύπος, σχέσεις + ρυθμιστικό τελικής), <b>ελαστικά</b> (τύπος + πλάτος/προφίλ/διάμετρος), <b>αεροδυναμική</b> (εμπρός/πίσω/πάτωμα = κάθετη δύναμη & οπισθέλκουσα), <b>φρένα</b> (τύπος + διάμετρος δίσκου) και <b>ανάρτηση</b> (πόσο γέρνει το αμάξωμα και η κλίση των τροχών). Η πρόσφυση δεν είναι πολλαπλασιαστής: ένα ελαστικό πιάνει περισσότερο όσο λιγότερο φορτίο σηκώνει για το μέγεθός του, οπότε μεγαλύτερο ελαστικό, ελαφρύτερο αυτοκίνητο και λιγότερη μεταφορά βάρους στους εξωτερικούς τροχούς (χαμηλό, φαρδύ αυτοκίνητο) στρίβουν γρηγορότερα· το γέρσιμο που βγάζει το φορτωμένο ελαστικό από την καλύτερη γωνία του κοστίζει πρόσφυση."},
-  gearbox:{el:"<b>Ο τύπος κιβωτίου</b> αλλάζει τρία πράγματα: πόσο κόβεται η μετάδοση σε κάθε αλλαγή, πόση από την ισχύ του κινητήρα φτάνει στους τροχούς, και πώς ξεκινά το αυτοκίνητο. Η κλιμάκωση των σχέσεων είναι χωριστή επιλογή, η ΚΛΙΜΑΚΩΣΗ ΣΧΕΣΕΩΝ (δες <i>Σχέσεις &amp; αλλαγές</i>).<br>· <b>Χειροκίνητο (H)</b> — το πιο αποδοτικό, αλλά χάνεις ~350 ms σε κάθε αλλαγή. Φθηνό.<br>· <b>Σειριακό</b> — αγωνιστικό: αλλαγές ~60 ms, και συνήθως κοντινές σχέσεις που κρατούν έναν «αιχμηρό» κινητήρα στην περιοχή του. Ακριβό.<br>· <b>Διπλού συμπλέκτη (DCT)</b> — η επόμενη σχέση είναι ήδη επιλεγμένη στον δεύτερο συμπλέκτη, άρα σχεδόν αδιάλειπτες αλλαγές (~30 ms). Το ταχύτερο, και ανάλογα ακριβό.<br>· <b>Αυτόματο με μετατροπέα ροπής</b> — οι πιο αργές αλλαγές (~200 ms) και οι μεγαλύτερες απώλειες, γιατί μεταδίδει μέσω υγρού. Το κερδίζει στην <b>εκκίνηση</b>: ο μετατροπέας «φορτίζει» πάνω στα φρένα και <i>πολλαπλασιάζει</i> τη ροπή (έως ~1.9× σε στάλλ 2400 σ.α.λ.), σβήνοντας στο 1:1 καθώς ο στρόβιλος προλαβαίνει. Γι’ αυτό ένα αυτόματο ξεκινά καλύτερα από ένα χειροκίνητο παρότι χάνει ισχύ παντού αλλού — και γι’ αυτό ταιριάζει σε βαρύ, ροπάτο αυτοκίνητο, όχι σε ελαφρύ και «αιχμηρό». Τα σύγχρονα έχουν οκτώ ή δέκα σχέσεις, και όσο περισσότερες σχέσεις έχει ένα κιβώτιο τόσο πιο ανοιχτό είναι: πιο κοντή 1η για να κινηθεί το φορτίο, πιο μακριά τελευταία για ταξίδι."},
+  gearbox:{el:"<b>Ο τύπος κιβωτίου</b> αλλάζει τρία πράγματα: πόσο κόβεται η μετάδοση σε κάθε αλλαγή, πόση από την ισχύ του κινητήρα φτάνει στους τροχούς, και πώς ξεκινά το αυτοκίνητο. Η κλιμάκωση των σχέσεων είναι χωριστή επιλογή, η ΚΛΙΜΑΚΩΣΗ ΣΧΕΣΕΩΝ (δες <i>Σχέσεις &amp; αλλαγές</i>).<br>· <b>Χειροκίνητο (H)</b> — το πιο αποδοτικό, αλλά χάνεις ~350 ms σε κάθε αλλαγή. Φθηνό.<br>· <b>Σειριακό</b> — αγωνιστικό: αλλαγές ~60 ms, και συνήθως κοντινές σχέσεις που κρατούν έναν «αιχμηρό» κινητήρα στην περιοχή του. Ακριβό.<br>· <b>Διπλού συμπλέκτη (DCT)</b> — η επόμενη σχέση είναι ήδη επιλεγμένη στον δεύτερο συμπλέκτη, άρα αλλαγές χωρίς διακοπή της μετάδοσης (~30 ms). Το ταχύτερο, και ανάλογα ακριβό.<br>· <b>Αυτόματο με μετατροπέα ροπής</b> — οι πιο αργές αλλαγές (~200 ms, αν και η μετάδοση συνεχίζει μέσα τους) και οι μεγαλύτερες απώλειες, γιατί μεταδίδει μέσω υγρού. Το κερδίζει στην <b>εκκίνηση</b>: ο μετατροπέας «φορτίζει» πάνω στα φρένα και <i>πολλαπλασιάζει</i> τη ροπή (έως ~1.9× σε στάλλ 2400 σ.α.λ.), σβήνοντας στο 1:1 καθώς ο στρόβιλος προλαβαίνει. Γι’ αυτό ένα αυτόματο ξεκινά καλύτερα από ένα χειροκίνητο παρότι χάνει ισχύ παντού αλλού — και γι’ αυτό ταιριάζει σε βαρύ, ροπάτο αυτοκίνητο, όχι σε ελαφρύ και «αιχμηρό». Τα σύγχρονα έχουν οκτώ ή δέκα σχέσεις, και όσο περισσότερες σχέσεις έχει ένα κιβώτιο τόσο πιο ανοιχτό είναι: πιο κοντή 1η για να κινηθεί το φορτίο, πιο μακριά τελευταία για ταξίδι."},
   diff:{el:"<b>Το διαφορικό</b> μοιράζει την κίνηση στους δύο τροχούς του άξονα — και καθορίζει πόση από την πρόσφυση του άξονα μπορείς πραγματικά να χρησιμοποιήσεις. Οι δύο τροχοί δεν είναι ποτέ φορτωμένοι το ίδιο (κλίση δρόμου, αντίδραση ροπής, στρέψη άξονα, γεωμετρία ανάρτησης), και ένα <b>ανοιχτό</b> διαφορικό δίνει σε κάθε τροχό μόνο όση ροπή αντέχει ο <i>λιγότερο φορτωμένος</i>: στρίβει αυτόν τον τροχό και πετάει τα υπόλοιπα, αφήνοντας περίπου 78% της πρόσφυσης αξιοποιήσιμο <i>στην εκκίνηση</i>. Αυτό το 78% δεν είναι σταθερό — η ασυμμετρία που αντιμετωπίζει προέρχεται κυρίως από την <b>αντίδραση ροπής</b> (στρέψη ημιαξονίων, γεωμετρία ανάρτησης, torque steer), που είναι ανάλογη με τη ροπή που περνά πράγματι από τον άξονα. Στην πρώτη σχέση με πλήρη πολλαπλασιασμό είναι στο χειρότερό της· στην τρίτη στα 100&nbsp;χλμ/ώρα ο άξονας βλέπει ένα κλάσμα αυτής της ροπής και μένει λίγο παραπάνω από την κλίση του δρόμου, οπότε το ανοιχτό διαφορικό ανακτά προς ~94%. Ένα <b>ιξώδες LSD</b> τους δένει μεταξύ τους και ανακτά τα περισσότερα (~92%)· ένα <b>LSD με δίσκους</b> ουσιαστικά όλα· ένα <b>μπλοκέ (spool)</b> τους ενώνει μόνιμα και είναι το καλύτερο σε ευθεία — γι’ αυτό το χρησιμοποιούν τα dragster.<br>Το βασικό: το διαφορικό μετράει μόνο όσο είσαι <b>περιορισμένος από πρόσφυση</b>. Βάλε spool σε αργό αυτοκίνητο και δεν αλλάζει τίποτα. Βάλ’ το σε ένα που πατινάρει στην εκκίνηση και αξίζει περισσότερο από αναβάθμιση ισχύος."},
   tractionMore1:{el:"<b>Γιατί ένα προσθιοκίνητο ξεμένει από πρόσφυση τόσο νωρίς.</b> Ένα FWD κινεί μόνο τον εμπρός άξονα, που σηκώνει περίπου το 60% του βάρους σταματημένο, και η επιτάχυνση μεταφέρει βάρος <i>από</i> αυτόν. Πολλαπλασίασέ το με ένα ανοιχτό διαφορικό (0.78) και μέτρια ελαστικά, και ένα kei περιορίζεται κοντά στα <b>0.38 g</b> στην εκκίνηση, ό,τι κι αν βγάζει ο κινητήρας του. Έτσι ένα kei 215 hp φτάνει τα 100 km/h σε 7.48 s και ένα 146 hp σε 7.45 s: και τα δύο κινούνται πάνω στο ταβάνι. Στο ίδιο αυτοκίνητο των 215 hp, ένα LSD με δίσκους το πάει στα 6.32 s, τα σπορ ελαστικά στα 5.86 s, τα slick στα 4.99 s και η τετρακίνηση στα 4.12 s, με τον ίδιο κινητήρα παντού. Η λύση είναι η πρόσφυση, όχι η ισχύς."},
   tractionMore2:{el:"<b>Το αντιστάθμισμα στον γύρο.</b> Ένα μπλοκέ διαφορικό δεν σπαταλά ποτέ κίνηση, αλλά τρίβει σε κάθε στροφή. Με τον 6.2 V8 με υπερσυμπιεστή στο σασί muscle, το spool είναι περίπου 0.1 s ταχύτερο στο 0–100 km/h από ένα LSD με δίσκους (4.85 έναντι 4.97 s) και περίπου 1.5 s πιο αργό ανά γύρο (75.74 έναντι 74.24 s), ενώ το ανοιχτό διαφορικό είναι το χειρότερο και στα δύο (5.96 s, 77.35 s): σπινάρει τον εσωτερικό τροχό ακριβώς όταν η στροφή τον έχει ξεφορτώσει."},
@@ -5040,7 +5047,7 @@ const GUIDE_I18N={
   tyresPhys:{el:"<b>Ευαισθησία στο φορτίο.</b> Η τριβή πέφτει όσο πιο δυνατά φορτώνεται το ελαστικό: <span class=\"geq\">μ = μ<sub>ref</sub> · (F<sub>z</sub> / F<sub>z,ref</sub>)<sup>−0.15</sup></span> περίπου 10% λιγότερη κάθε φορά που το φορτίο διπλασιάζεται, με την αναφορά στο 60% του ονομαστικού φορτίου του ελαστικού. Το ονομαστικό φορτίο ακολουθεί τον όγκο αέρα του ελαστικού, <i>(π/4)(D² − d²)·w</i> με περίπου 16.300 kg ανά m³, που ταιριάζει με τους πραγματικούς δείκτες φορτίου με απόκλιση ως 3%. Έτσι ένα μεγαλύτερο ελαστικό, ένα ελαφρύτερο αυτοκίνητο και λιγότερη μεταφορά φορτίου πιάνουν όλα περισσότερο, με έναν μηχανισμό.<br> Η <b>μεταφορά φορτίου</b> σε μια στροφή μετακινεί <i>m · a<sub>y</sub> · h / t</i> από τα εσωτερικά ελαστικά στα εξωτερικά (h ύψος κέντρου βάρους, t μετατρόχιο), και τα εξωτερικά ελαστικά, πιο φορτωμένα, χρησιμοποιούν το φορτίο τους λιγότερο καλά.<br> <b>Η έλλειψη τριβής.</b> Ένα ελαστικό τραβά περίπου 15% πιο δυνατά κατά μήκος απ' ό,τι εγκάρσια (Milliken), οπότε το φρενάρισμα και η πρόσφυση παίρνουν 1.15 μ και η συνδυασμένη χρήση ακολουθεί μια έλλειψη.<br> <b>Οπισθέλκουσα στροφής.</b> Η πλευρική δύναμη έρχεται από το τρέξιμο με γωνία ολίσθησης, που γέρνει τη δύναμη πίσω ενάντια στην κίνηση: αθροισμένη στα τέσσερα ελαστικά κοστίζει <i>(m a<sub>y</sub>)² / (C · N)</i>, C ≈ 0.2 ανά μοίρα (Gillespie).<br> Η <b>αντίσταση κύλισης</b> ανεβαίνει με την ταχύτητα: <i>c<sub>rr</sub>(v) = c<sub>rr,80</sub> · (1 + β (v² − v<sub>80</sub>²))</i>, από την τιμή της γόμας στα 80 km/h ως περίπου 1.6 φορές αυτήν στα 200."},
   tyresLimit:{el:"Σε έναν αγώνα οι θερμοκρασίες των ελαστικών βγαίνουν εκεί όπου μετριούνται οι πραγματικές: η πιο ζεστή γωνία ενός σπορ ελαστικού δρόμου 80–110 °C στην πίστα (η καθοδήγηση για πυρόμετρο στα pit για καλοκαιρινά ελαστικά UHP είναι 66–88 °C, και μια μέτρηση στα pit βγαίνει 10–20 °C κάτω από το ελαστικό στην πίστα), ενός ημι-slick 85–110 °C (η Michelin δίνει για το Cup 2 R 70–100 °C, ιδανικά 90), τα πίσω ενός προσθιοκίνητου κρύα, τα εξωτερικά ελαστικά τα πιο ζεστά, θερμοκρασία λειτουργίας σε δύο ή τρεις γύρους, και ένα βαρύ αυτοκίνητο να υπερθερμαίνει τα ελαστικά δρόμου του. Δύο πράγματα δεν έχουν επαληθευτεί: ένα οικονομικό ελαστικό σε ελαφρύ αυτοκίνητο μένει κρύο (45–60 °C), και οι μεγάλες ευθείες μιας γρήγορης πίστας δροσίζουν τα ελαστικά λίγο πιο κάτω από μιας μικρής."},
   gearboxReal:{el:"Ένας κινητήρας βγάζει χρήσιμη ισχύ μόνο σε ένα στενό εύρος στροφών, αλλά ένα αυτοκίνητο πρέπει να πάει από ταχύτητα βαδίσματος ως τα 250 km/h. Οι <b>σχέσεις</b> το λύνουν: ένα μικρό γρανάζι που κινεί ένα μεγάλο το γυρίζει πιο αργά και πιο δυνατά, κατά τον λόγο των δοντιών τους. Ένα κιβώτιο είναι ένα σύνολο από τέτοιους λόγους και ένας τρόπος να αλλάζεις ανάμεσά τους. Το πόσο γρήγορα και ομαλά αλλάζει, και πόση ισχύ χάνει κάνοντάς το, είναι αυτό που χωρίζει τους τύπους."},
-  gearboxPhys:{el:"<div class=\"gtab-wrap\"><table class=\"gtab\"><tbody><tr><th>κιβώτιο</th><th>αλλαγή (διακοπή κίνησης)</th><th>απόδοση</th></tr> <tr><td>χειροκίνητο</td><td>350 ms</td><td>1.00</td></tr><tr><td>σειριακό</td><td>60 ms</td><td>0.99</td></tr> <tr><td>διπλού συμπλέκτη</td><td>30 ms</td><td>0.98</td></tr><tr><td>αυτόματο με μετατροπέα</td><td>200 ms</td><td>0.93</td></tr></tbody></table></div> Αυτά πολλαπλασιάζουν την απόδοση της ίδιας της μετάδοσης (FWD 0.92, RWD 0.90, AWD 0.86). Ο μετατροπέας κάνει stall στις 2400 rpm και πολλαπλασιάζει τη ροπή ως 1.9× όσο γλιστρά, πέφτοντας στο 1:1 καθώς κουμπώνει. Κάθε μέρος που γυρίζει μετρά ως επιπλέον μάζα μέσα από τις σχέσεις (Gillespie): <span class=\"geq\">m<sub>eff</sub> = m + (I<sub>wheels</sub> + I<sub>engine</sub> · i²) / r²</span> που είναι μεγάλη στην πρώτη, όπου το <i>i</i> είναι μεγάλο. Η αδράνεια του κινητήρα μετρά μόνο όσο ο συμπλέκτης είναι κουμπωμένος, όχι όσο γλιστρά ή κατά την αλλαγή."},
+  gearboxPhys:{el:"<div class=\"gtab-wrap\"><table class=\"gtab\"><tbody><tr><th>κιβώτιο</th><th>αλλαγή (διακοπή κίνησης)</th><th>απόδοση</th></tr> <tr><td>χειροκίνητο</td><td>350 ms</td><td>1.00</td></tr><tr><td>σειριακό</td><td>60 ms</td><td>0.99</td></tr> <tr><td>διπλού συμπλέκτη</td><td>καμία (αλλαγή 30 ms)</td><td>0.98</td></tr><tr><td>αυτόματο με μετατροπέα</td><td>καμία (αλλαγή 200 ms)</td><td>0.93</td></tr></tbody></table></div> Ένα κιβώτιο διπλού συμπλέκτη και ένα αυτόματο αλλάζουν από συμπλέκτη σε συμπλέκτη: ο συμπλέκτης της επόμενης σχέσης παίρνει τη ροπή καθώς ο παλιός αφήνει, και μετά γλιστρά καθώς φέρνει τον κινητήρα στις στροφές της νέας σχέσης, οπότε η μετάδοση δεν διακόπτεται ποτέ (πατέντες της GM για αλλαγές υπό φορτίο· Goetz, Levesley &amp; Crolla 2005). Το χειροκίνητο και το σειριακό τη διακόπτουν. Αυτά πολλαπλασιάζουν την απόδοση της ίδιας της μετάδοσης (FWD 0.92, RWD 0.90, AWD 0.86). Ο μετατροπέας κάνει stall στις 2400 rpm και πολλαπλασιάζει τη ροπή ως 1.9× όσο γλιστρά, πέφτοντας στο 1:1 καθώς κουμπώνει. Κάθε μέρος που γυρίζει μετρά ως επιπλέον μάζα μέσα από τις σχέσεις (Gillespie): <span class=\"geq\">m<sub>eff</sub> = m + (I<sub>wheels</sub> + I<sub>engine</sub> · i²) / r²</span> που είναι μεγάλη στην πρώτη, όπου το <i>i</i> είναι μεγάλο. Η αδράνεια του κινητήρα μετρά μόνο όσο ο συμπλέκτης είναι κουμπωμένος, όχι όσο γλιστρά ή κατά την αλλαγή."},
   gearingReal:{el:"Οι σχέσεις ενός ποδηλάτου κάνουν την ίδια ανταλλαγή με ενός αυτοκινήτου: μια μικρή σχέση για να ξεκινήσεις στην ανηφόρα, μια μεγάλη για να πας γρήγορα στο ίσιωμα. Η <b>τελική σχέση</b> πολλαπλασιάζει κάθε σχέση με το ίδιο ποσό, οπότε μετακινεί όλο το σύνολο πάνω ή κάτω. Πιο κοντές σχέσεις επιταχύνουν πιο δυνατά και τελειώνουν νωρίτερα· πιο μακριές είναι χαλαρές και, ως ένα σημείο, πιο γρήγορες.<br> Οι καλοί οδηγοί ανεβάζουν σχέση εκεί όπου η <i>επόμενη</i> θα τραβήξει πιο δυνατά, που για έναν μυτερό κινητήρα είναι κοντά στο όριο και για έναν πετρελαιοκινητήρα αρκετά πριν από αυτό."},
   gearing:{el:"<b>Η τελική σχέση διαλέγεται για τον κινητήρα σου, όχι από τον ρυθμιστή.</b> Ένα αυτοκίνητο έχει σχέσεις για τη μέγιστη ταχύτητα όταν ο κινητήρας κάθεται στην <i>κορυφή της ισχύος του</i> ακριβώς τη στιγμή που η οπισθέλκουσα καταναλώνει αυτή την ισχύ — όχι στον κόφτη, όπου έχει ήδη περάσει την κορυφή και δεν μπορεί να κρατήσει την ταχύτητα. Έτσι η εφαρμογή λύνει το ισοζύγιο οπισθέλκουσας για την ταχύτητα που θα μπορούσε θεωρητικά να κρατήσει το αυτοκίνητό σου, <i>P<sub>peak</sub>·η = ½ρ·C<sub>d</sub>A·v³ + C<sub>rr</sub>·m·g·v</i>, και διαλέγει τη σχέση που βάζει εκεί τη μέγιστη ισχύ. Ένας πετρελαιοκινητήρας των 3800 rpm και ένας που ουρλιάζει στις 9000 rpm παίρνουν λοιπόν εντελώς διαφορετικές σχέσεις, όπως πρέπει — πριν από αυτό, έπαιρναν και οι δύο τις ίδιες, και ο πετρελαιοκινητήρας τελείωνε <i>σχέση</i> στα 167 km/h ενώ ο αέρας δεν θα τον σταματούσε πριν από τα 219.<br><b>Ο ρυθμιστής ΤΕΛΙΚΗ ΣΧΕΣΗ είναι πλέον μια μετατόπιση γύρω από αυτήν</b> — περίπου 1.28× πιο κοντά στη μία άκρη για επιτάχυνση, 0.74× πιο μακριά στην άλλη για ταξίδι, και ουδέτερος στη μέση. Δύο συνέπειες αξίζει να ξέρεις. <b>Η τελική ταχύτητα έχει βέλτιστο στη μέση του ρυθμιστή, όχι στη μακριά άκρη</b>: με σχέσεις πιο μακριές από το ιδανικό ο κινητήρας δεν μπορεί πια να φτάσει την ισχύ που χρειάζεται σε αυτή την ταχύτητα δρόμου, οπότε το αυτοκίνητο γίνεται <i>πιο αργό</i>. Και σε μια στριφτή πίστα οι κοντές σχέσεις δεν σου κοστίζουν σχεδόν τίποτα, γιατί ανταλλάσσεις μια τελική ταχύτητα που δεν βλέπεις ποτέ με επιτάχυνση που χρησιμοποιείς σε κάθε στροφή.<br><b>Πού αλλάζει σχέση το αυτοκίνητο.</b> Οι δοκιμές 0–100 και τετάρτου μιλίου ανεβάζουν σχέση εκεί όπου η <i>επόμενη</i> τραβά πιο δυνατά στους τροχούς από την τρέχουσα — η διασταύρωση ροπής, που είναι αυτό που κάνουν ένας καλός οδηγός και ένα καλό αυτόματο — ή στον κόφτη αν έρθει πρώτος. Για έναν μυτερό κινητήρα αυτό είναι έτσι κι αλλιώς πάνω στο όριο. Για έναν πετρελαιοκινητήρα δεν είναι: η ροπή του έχει σβήσει πολύ πριν από τον κόφτη, και το κράτημα ως εκεί κόστιζε σε ένα 2.0 TDI τέσσερα δευτερόλεπτα ως τα 100 km/h. Ο γύρος χρησιμοποιεί τον ίδιο κανόνα. Ένα σκαλοπάτι μένει και είναι πραγματικό: αν μια πιο μακριά τελική σχέση σπρώξει τα 100 km/h στην επόμενη σχέση, η δοκιμή κάνει μία αλλαγή παραπάνω και ο χρόνος πηδά περίπου όσο μία αλλαγή."},
   gearnum:{el:"<b>Ο ρυθμιστής ΤΕΛΙΚΗ ΣΧΕΣΗ</b> — όταν τον κινείς κονταίνει ή μακραίνει την τελική σχέση γύρω από αυτήν που ταίριαξε η εφαρμογή στον κινητήρα σου: περίπου 1.28× πιο κοντή στο 0 και 0.74× πιο μακριά στο 100, ουδέτερος κοντά στη μέση. Η σχέση που προκύπτει δείχνεται δίπλα του. Οι κοντές σχέσεις πολλαπλασιάζουν τη ροπή στους τροχούς, οπότε το αυτοκίνητο επιταχύνει πιο δυνατά και φτάνει νωρίτερα τον κόφτη σε κάθε σχέση· οι μακριές κάνουν το αντίθετο. Η τελευταία σχέση στον κόφτη είναι ένα <b>σκληρό ταβάνι</b> — ο κόφτης κόβει εκεί το καύσιμο, οπότε καμία ισχύς δεν σπρώχνει το αυτοκίνητο πέρα από την ταχύτητα που επιτρέπουν οι ίδιες του οι σχέσεις. Η τελική σχέση κρατιέται στο 2.2–6.0:1, το μηχανικό εύρος μιας πραγματικής."},
@@ -5056,7 +5063,7 @@ const GUIDE_I18N={
   brakesLimit:{el:"Ο γύρος οδηγείται στο όριο, με φρενάρισμα στο όριο σε κάθε στροφή, όπως θα έκανε ένας επαγγελματίας σε έναν γύρο κατατακτήριων. Τα ελαφριά αυτοκίνητα και τα μικρά φρένα βγαίνουν εκεί όπου μετριούνται τα πραγματικά στην πίστα (300–550 °C σε μικρή πίστα, ως ~650 °C σε γρήγορη)· τα βαριά, γρήγορα αυτοκίνητα σε μεγάλες γρήγορες πίστες (ένα Hellcat ή μια E46 M3 στο Spa) πάνε τους δίσκους τους στους 750–900 °C και εξασθενούν, όπως τα πραγματικά όταν οδηγούνται τόσο σκληρά. Οι μετρήσεις σε track days συνήθως βγαίνουν χαμηλότερες, 450–600 °C στον πυρήνα, γιατί οι περισσότεροι οδηγοί φρενάρουν νωρίτερα και πιο μαλακά από το όριο."},
   suspensionReal:{el:"Στρίψε δυνατά και το αμάξωμα <b>γέρνει</b> προς τα έξω. Η μαλακή ανάρτηση γέρνει πολύ, που είναι άνετο στις λακκούβες αλλά γέρνει το εξωτερικό ελαστικό (αυτό που κάνει τη μεγαλύτερη δουλειά) πάνω στην άκρη του. Το <b>κάμπερ</b> είναι η κλίση του ελαστικού όπως φαίνεται από μπροστά: τα αγωνιστικά βάζουν τους τροχούς να γέρνουν προς τα μέσα στο πάνω μέρος (αρνητικό κάμπερ), ώστε όταν γέρνει το αμάξωμα το φορτωμένο ελαστικό να καταλήγει να πατά επίπεδο στον δρόμο."},
   suspensionGame:{el:"<b>ΑΝΑΡΤΗΣΗ</b> στην καρτέλα ΟΧΗΜΑ: ανέσεως, σπορ, coilovers ή αγωνιστική. Οι πιο σκληρές ρυθμίσεις γέρνουν λιγότερο και έχουν περισσότερο στατικό αρνητικό κάμπερ.<br> Η <b>ΓΕΩΜΕΤΡΙΑ ΕΜΠΡΟΣ</b> και η <b>ΓΕΩΜΕΤΡΙΑ ΠΙΣΩ</b> είναι οι σύνδεσμοι σε κάθε άκρο: γόνατο ΜακΦέρσον, διπλά ψαλίδια, πολλαπλών βραχιόνων, στρεπτική δοκός (μόνο πίσω, δεν στρίβει) ή άκαμπτος άξονας. Ένα πραγματικό αυτοκίνητο έρχεται με τη δική του, και με το δικό του μετατρόχιο εμπρός και πίσω· η τοποθέτηση άλλης είναι μετατροπή και κοστίζει.<br> Τα <b>ΕΛΑΤΗΡΙΑ ΕΜΠΡΟΣ</b>, <b>ΕΛΑΤΗΡΙΑ ΠΙΣΩ</b>, η <b>ΑΝΤΙΣΤΡΕΠΤΙΚΗ ΕΜΠΡΟΣ</b> και η <b>ΑΝΤΙΣΤΡΕΠΤΙΚΗ ΠΙΣΩ</b> πάνε από ΠΙΟ ΜΑΛΑΚΑ −2 ως ΠΙΟ ΣΚΛΗΡΑ +2 γύρω από το κιτ. Πιο σκληρά παντού γέρνει λιγότερο· πιο σκληρά στο ένα άκρο μετακινεί την ισορροπία: πιο σκληρό μπροστά υποστρέφει περισσότερο, πιο σκληρό πίσω υπερστρέφει περισσότερο."},
-  suspensionPhys:{el:"<div class=\"gtab-wrap\"><table class=\"gtab\"><tbody><tr><th>ρύθμιση</th><th>συχνότητα ανάρτησης</th><th>κλίση, τυπικό αυτοκίνητο (μοίρες ανά g)</th><th>στατικό κάμπερ</th></tr> <tr><td>ανέσεως</td><td>1.0 Hz</td><td>6.1</td><td>−0.5°</td></tr><tr><td>σπορ</td><td>1.25 Hz</td><td>3.9</td><td>−1.0°</td></tr> <tr><td>coilovers</td><td>1.6 Hz</td><td>2.4</td><td>−1.8°</td></tr><tr><td>αγωνιστική</td><td>2.0 Hz</td><td>1.5</td><td>−2.5°</td></tr></tbody></table></div> <b>Κλίση (build 172).</b> Η συχνότητα ανάρτησης είναι πόσο γρήγορα αναπηδά κάθε γωνία στο ελατήριό της· δίνει τη σκληρότητα του ελατηρίου, k = (m<sub>axle</sub>/2)(2πf)², και τα ελατήρια ενός άξονα αντιστέκονται στην κλίση με <span class=\"geq\">K<sub>springs</sub> = m<sub>axle</sub> (2πf)² t² / 4</span> Η αντιστρεπτική δοκός προσθέτει το 55% αυτού στο ΣΤΑΝΔΑΡ, περίπου το ένα τρίτο του συνόλου. Το αμάξωμα γέρνει κατά τη ροπή κλίσης του διά τους δύο άξονες μαζί: <span class=\"geq\">κλίση<sub>per g</sub> = m g (h − z<sub>roll axis</sub>) / (K<sub>front</sub> + K<sub>rear</sub>)</span> Έτσι ένα ψηλό αυτοκίνητο με στενό μετατρόχιο γέρνει περισσότερο με το ίδιο κιτ, και ψηλά κέντρα κλίσης το κάνουν να γέρνει λιγότερο. Η στήλη «τυπικό αυτοκίνητο» είναι βραχίονας κλίσης 0.40 m σε μετατρόχιο 1.55 m. Ένα βήμα ελατηρίου είναι 1.3× η σκληρότητα, ένα βήμα δοκού 1.5× η δοκός. Σε μια σταθερή στροφή ελατήρια και δοκοί κάνουν την ίδια δουλειά, προσθέτουν ακαμψία στην κλίση· τα ελατήρια ορίζουν επίσης τη συχνότητα ανάρτησης με την οποία θα δουλέψουν τα αμορτισέρ.<br> Ένα ελαστικό βγάζει τη μεγαλύτερη πλευρική δύναμη γέρνοντας περίπου −1.5° μέσα στη στροφή και χάνει περίπου 1.5% ανά μοίρα από κάθε πλευρά. Η γωνία του φορτωμένου εξωτερικού ελαστικού είναι το στατικό κάμπερ συν το μέρος της κλίσης του αμαξώματος που δεν ανακτά η γεωμετρία του άξονά του (η ανάκτηση r): <span class=\"geq\">κάμπερ<sub>loaded</sub> = κάμπερ<sub>static</sub> + (1 − r) · κλίση<sub>per g</sub> · a<sub>y</sub>/g</span> Αυτό αντικατέστησε έναν προσαρμοσμένο πολλαπλασιαστή πρόσφυσης της ανάρτησης: η διαφορά πρόσφυσης ανάμεσα στις ρυθμίσεις βγαίνει πλέον από το κάμπερ και τη μεταφορά φορτίου.<br> <b>Γεωμετρία (build 171).</b> Ένας ανεξάρτητος τροχός περιστρέφεται γύρω από το στιγμιαίο κέντρο του, όπως φαίνεται από μπροστά, οπότε όταν γέρνει το αμάξωμα ο εξωτερικός τροχός ανεβαίνει και γυρίζει πίσω κατά τη διαδρομή του διά το μήκος του βραχίονα: r = (t/2) / βραχίονας, από το μετατρόχιο t του άξονα. <div class=\"gtab-wrap\"><table class=\"gtab\"><tbody><tr><th>γεωμετρία</th><th>βραχίονας</th><th>ανάκτηση r</th><th>κέντρο κλίσης</th></tr> <tr><td>γόνατο ΜακΦέρσον</td><td>~3.0 m</td><td>~0.25</td><td>80 mm</td></tr> <tr><td>διπλά ψαλίδια</td><td>~1.6 m</td><td>~0.5</td><td>60 mm</td></tr> <tr><td>πολλαπλών βραχιόνων</td><td>~2.0 m</td><td>~0.4</td><td>100 mm</td></tr> <tr><td>στρεπτική δοκός</td><td>—</td><td>0.4</td><td>125 mm</td></tr> <tr><td>άκαμπτος άξονας</td><td>—</td><td>1</td><td>κέντρο τροχού</td></tr></tbody></table></div> Ένας άκαμπτος άξονας κρατά και τους δύο τροχούς κάθετους στον δρόμο, οπότε δεν χρειάζεται στατικό κάμπερ και δεν έχει. Η στρεπτική δοκός είναι δύο συρόμενοι βραχίονες (που δεν ανακτούν τίποτα) δεμένοι με μια δοκό (που ανακτά τα πάντα) περίπου στο 40% της απόστασης προς τα πίσω.<br> Το <b>κέντρο κλίσης</b> είναι εκεί όπου οι σύνδεσμοι παίρνουν την πλευρική δύναμη του άξονα. Η μεταφορά φορτίου χωρίζεται στα δύο: <ul> <li>Η μάζα κάθε άξονα, στο δικό του κέντρο κλίσης, πιέζει τα ελαστικά του μέσα από τους συνδέσμους. Ψηλό κέντρο κλίσης βάζει μεταφορά στον δικό του άξονα: ένας άκαμπτος πίσω άξονας φορτώνει τα πίσω ελαστικά.</li> <li>Το υπόλοιπο είναι το αμάξωμα που γέρνει γύρω από τη γραμμή ανάμεσα στα κέντρα κλίσης. Αυτό περνά από τα ελατήρια και τις δοκούς, με την ισορροπία κλίσης.</li> </ul> Η μεταφορά κάθε άξονα μοιράζεται στο δικό του μετατρόχιο, οπότε ένας φαρδύτερος άξονας μεταφέρει λιγότερο.<br> <b>Ισορροπία (build 157).</b> Κάθε άξονας έχει τη δική του πρόσφυση: <ul> <li>το μερίδιό του στο βάρος και στην κάθετη δύναμη</li> <li>το μερίδιό του στη μεταφορά φορτίου (που ορίζουν οι αντιστρεπτικές δοκοί και τα κέντρα κλίσης), στο δικό του μετατρόχιο</li> <li>τα δικά του ελαστικά, στο κάμπερ που τους αφήνει η γεωμετρία του</li> </ul> Σε μια σταθερή στροφή κάθε άξονας πρέπει να κρατήσει τη μάζα που σηκώνει, οπότε το αυτοκίνητο στρίβει μόνο τόσο δυνατά όσο επιτρέπει ο άξονας που τελειώνει πρώτος. <ul> <li><b>Τελειώνει πρώτα ο μπροστινός: υποστροφή.</b> Αυτό είναι ένα αυτοκίνητο βαρύ μπροστά, γιατί τα πολύ φορτωμένα μπροστινά ελαστικά του πιάνουν λιγότερο ανά κιλό.</li> <li><b>Τελειώνει πρώτα ο πίσω: υπερστροφή.</b> Αυτό είναι μια 911 με πίσω κινητήρα.</li> </ul> Τρόποι να μετακινήσεις την ισορροπία: <ul> <li>Τα <b>ελατήρια και οι δοκοί</b> μοιράζουν το ελαστικό μέρος της μεταφοράς φορτίου με το μερίδιο κάθε άξονα στην ακαμψία κλίσης: στο ΣΤΑΝΔΑΡ, με την κατανομή βάρους. Ένα βήμα της μπροστινής δοκού μετακινεί περίπου 4% της μεταφοράς. Πιο σκληρά μπροστά παίρνει πρόσφυση από μπροστά (περισσότερη υποστροφή)· πιο μαλακά μπροστά τη δίνει πίσω.</li> <li>Το <b>ΠΛΑΤΟΣ ΕΜΠΡΟΣ</b> βάζει στενότερα ή φαρδύτερα μπροστινά. Τα στενά μπροστινά και τα φαρδιά πίσω ενός αυτοκινήτου με κεντρικό κινητήρα είναι αυτά που το κρατούν από την υπερστροφή.</li> <li>Το <b>φρενάρισμα</b> μετακινεί φορτίο προς τα μπροστά, οπότε φρενάροντας μέσα σε μια στροφή τελειώνει πρώτος ο πίσω. Ο γύρος δεν φρενάρει εκεί πιο δυνατά απ' όσο μπορεί ο πίσω να κρατήσει τη στροφή.</li> </ul> Η ΠΙΣΤΑ δείχνει ποιος άξονας ορίζει το όριο στις στροφές."},
+  suspensionPhys:{el:"<div class=\"gtab-wrap\"><table class=\"gtab\"><tbody><tr><th>ρύθμιση</th><th>συχνότητα ανάρτησης</th><th>κλίση, τυπικό αυτοκίνητο (μοίρες ανά g)</th><th>στατικό κάμπερ</th></tr> <tr><td>ανέσεως</td><td>1.0 Hz</td><td>6.1</td><td>−0.5°</td></tr><tr><td>σπορ</td><td>1.25 Hz</td><td>3.9</td><td>−1.0°</td></tr> <tr><td>coilovers</td><td>1.6 Hz</td><td>2.4</td><td>−1.8°</td></tr><tr><td>αγωνιστική</td><td>2.0 Hz</td><td>1.5</td><td>−2.5°</td></tr></tbody></table></div> <b>Κλίση (build 174).</b> Η συχνότητα ανάρτησης είναι πόσο γρήγορα αναπηδά κάθε γωνία στο ελατήριό της· δίνει τη σκληρότητα του ελατηρίου, k = (m<sub>axle</sub>/2)(2πf)², και τα ελατήρια ενός άξονα αντιστέκονται στην κλίση με <span class=\"geq\">K<sub>springs</sub> = m<sub>axle</sub> (2πf)² t² / 4</span> Η αντιστρεπτική δοκός προσθέτει το 55% αυτού στο ΣΤΑΝΔΑΡ, περίπου το ένα τρίτο του συνόλου. Το αμάξωμα γέρνει κατά τη ροπή κλίσης του διά τους δύο άξονες μαζί: <span class=\"geq\">κλίση<sub>per g</sub> = m g (h − z<sub>roll axis</sub>) / (K<sub>front</sub> + K<sub>rear</sub>)</span> Έτσι ένα ψηλό αυτοκίνητο με στενό μετατρόχιο γέρνει περισσότερο με το ίδιο κιτ, και ψηλά κέντρα κλίσης το κάνουν να γέρνει λιγότερο. Η στήλη «τυπικό αυτοκίνητο» είναι βραχίονας κλίσης 0.40 m σε μετατρόχιο 1.55 m. Ένα βήμα ελατηρίου είναι 1.3× η σκληρότητα, ένα βήμα δοκού 1.5× η δοκός. Σε μια σταθερή στροφή ελατήρια και δοκοί κάνουν την ίδια δουλειά, προσθέτουν ακαμψία στην κλίση· τα ελατήρια ορίζουν επίσης τη συχνότητα ανάρτησης με την οποία θα δουλέψουν τα αμορτισέρ.<br> Ένα ελαστικό βγάζει τη μεγαλύτερη πλευρική δύναμη γέρνοντας περίπου −1.5° μέσα στη στροφή και χάνει περίπου 1.5% ανά μοίρα από κάθε πλευρά. Η γωνία του φορτωμένου εξωτερικού ελαστικού είναι το στατικό κάμπερ συν το μέρος της κλίσης του αμαξώματος που δεν ανακτά η γεωμετρία του άξονά του (η ανάκτηση r): <span class=\"geq\">κάμπερ<sub>loaded</sub> = κάμπερ<sub>static</sub> + (1 − r) · κλίση<sub>per g</sub> · a<sub>y</sub>/g</span> Αυτό αντικατέστησε έναν προσαρμοσμένο πολλαπλασιαστή πρόσφυσης της ανάρτησης: η διαφορά πρόσφυσης ανάμεσα στις ρυθμίσεις βγαίνει πλέον από το κάμπερ και τη μεταφορά φορτίου.<br> <b>Γεωμετρία (build 173).</b> Ένας ανεξάρτητος τροχός περιστρέφεται γύρω από το στιγμιαίο κέντρο του, όπως φαίνεται από μπροστά, οπότε όταν γέρνει το αμάξωμα ο εξωτερικός τροχός ανεβαίνει και γυρίζει πίσω κατά τη διαδρομή του διά το μήκος του βραχίονα: r = (t/2) / βραχίονας, από το μετατρόχιο t του άξονα. <div class=\"gtab-wrap\"><table class=\"gtab\"><tbody><tr><th>γεωμετρία</th><th>βραχίονας</th><th>ανάκτηση r</th><th>κέντρο κλίσης</th></tr> <tr><td>γόνατο ΜακΦέρσον</td><td>~3.0 m</td><td>~0.25</td><td>80 mm</td></tr> <tr><td>διπλά ψαλίδια</td><td>~1.6 m</td><td>~0.5</td><td>60 mm</td></tr> <tr><td>πολλαπλών βραχιόνων</td><td>~2.0 m</td><td>~0.4</td><td>100 mm</td></tr> <tr><td>στρεπτική δοκός</td><td>—</td><td>0.4</td><td>125 mm</td></tr> <tr><td>άκαμπτος άξονας</td><td>—</td><td>1</td><td>κέντρο τροχού</td></tr></tbody></table></div> Ένας άκαμπτος άξονας κρατά και τους δύο τροχούς κάθετους στον δρόμο, οπότε δεν χρειάζεται στατικό κάμπερ και δεν έχει. Η στρεπτική δοκός είναι δύο συρόμενοι βραχίονες (που δεν ανακτούν τίποτα) δεμένοι με μια δοκό (που ανακτά τα πάντα) περίπου στο 40% της απόστασης προς τα πίσω.<br> Το <b>κέντρο κλίσης</b> είναι εκεί όπου οι σύνδεσμοι παίρνουν την πλευρική δύναμη του άξονα. Η μεταφορά φορτίου χωρίζεται στα δύο: <ul> <li>Η μάζα κάθε άξονα, στο δικό του κέντρο κλίσης, πιέζει τα ελαστικά του μέσα από τους συνδέσμους. Ψηλό κέντρο κλίσης βάζει μεταφορά στον δικό του άξονα: ένας άκαμπτος πίσω άξονας φορτώνει τα πίσω ελαστικά.</li> <li>Το υπόλοιπο είναι το αμάξωμα που γέρνει γύρω από τη γραμμή ανάμεσα στα κέντρα κλίσης. Αυτό περνά από τα ελατήρια και τις δοκούς, με την ισορροπία κλίσης.</li> </ul> Η μεταφορά κάθε άξονα μοιράζεται στο δικό του μετατρόχιο, οπότε ένας φαρδύτερος άξονας μεταφέρει λιγότερο.<br> <b>Ισορροπία (build 157).</b> Κάθε άξονας έχει τη δική του πρόσφυση: <ul> <li>το μερίδιό του στο βάρος και στην κάθετη δύναμη</li> <li>το μερίδιό του στη μεταφορά φορτίου (που ορίζουν οι αντιστρεπτικές δοκοί και τα κέντρα κλίσης), στο δικό του μετατρόχιο</li> <li>τα δικά του ελαστικά, στο κάμπερ που τους αφήνει η γεωμετρία του</li> </ul> Σε μια σταθερή στροφή κάθε άξονας πρέπει να κρατήσει τη μάζα που σηκώνει, οπότε το αυτοκίνητο στρίβει μόνο τόσο δυνατά όσο επιτρέπει ο άξονας που τελειώνει πρώτος. <ul> <li><b>Τελειώνει πρώτα ο μπροστινός: υποστροφή.</b> Αυτό είναι ένα αυτοκίνητο βαρύ μπροστά, γιατί τα πολύ φορτωμένα μπροστινά ελαστικά του πιάνουν λιγότερο ανά κιλό.</li> <li><b>Τελειώνει πρώτα ο πίσω: υπερστροφή.</b> Αυτό είναι μια 911 με πίσω κινητήρα.</li> </ul> Τρόποι να μετακινήσεις την ισορροπία: <ul> <li>Τα <b>ελατήρια και οι δοκοί</b> μοιράζουν το ελαστικό μέρος της μεταφοράς φορτίου με το μερίδιο κάθε άξονα στην ακαμψία κλίσης: στο ΣΤΑΝΔΑΡ, με την κατανομή βάρους. Ένα βήμα της μπροστινής δοκού μετακινεί περίπου 4% της μεταφοράς. Πιο σκληρά μπροστά παίρνει πρόσφυση από μπροστά (περισσότερη υποστροφή)· πιο μαλακά μπροστά τη δίνει πίσω.</li> <li>Το <b>ΠΛΑΤΟΣ ΕΜΠΡΟΣ</b> βάζει στενότερα ή φαρδύτερα μπροστινά. Τα στενά μπροστινά και τα φαρδιά πίσω ενός αυτοκινήτου με κεντρικό κινητήρα είναι αυτά που το κρατούν από την υπερστροφή.</li> <li>Το <b>φρενάρισμα</b> μετακινεί φορτίο προς τα μπροστά, οπότε φρενάροντας μέσα σε μια στροφή τελειώνει πρώτος ο πίσω. Ο γύρος δεν φρενάρει εκεί πιο δυνατά απ' όσο μπορεί ο πίσω να κρατήσει τη στροφή.</li> </ul> Η ΠΙΣΤΑ δείχνει ποιος άξονας ορίζει το όριο στις στροφές."},
   performanceReal:{el:"Τα περιοδικά αυτοκινήτου συγκρίνουν αυτοκίνητα με μερικές πρότυπες δοκιμές: <b>0–100 km/h</b> (0–62 mph), τον χρόνο και την ταχύτητα εξόδου στο <b>τέταρτο του μιλίου</b> (400 m), την <b>τελική ταχύτητα</b>, και την απόσταση φρεναρίσματος <b>100–0</b>. Γίνονται σε επίπεδη, στεγνή πίστα από έναν καλό οδηγό, που είναι αυτό που προσομοιώνει η εφαρμογή."},
   performancePhys:{el:"Η δοκιμή ολοκληρώνεται σε μικρά χρονικά βήματα μέσα από το κιβώτιο: <span class=\"geq\">m<sub>eff</sub> · dv/dt = min(F<sub>engine</sub>, F<sub>traction</sub>) − ½ρC<sub>d</sub>A v² − c<sub>rr</sub>(v) m g</span> Η δύναμη του κινητήρα βγαίνει από τον χάρτη ροπής στροφών × boost με τον άξονα του τούρμπο να ολοκληρώνεται μαζί με το αυτοκίνητο (η εκκίνηση ξεκινά με λίγο προφόρτωμα, όπως κάνει το brake-boosting). Η εκκίνηση γλιστρά έναν συμπλέκτη διαστασιολογημένο για τον κινητήρα, ή κάνει stall τον μετατροπέα. Οι αλλαγές προς τα πάνω κόβουν την κίνηση για τον χρόνο αλλαγής του κιβωτίου. Η πρόσφυση περιλαμβάνει μεταφορά βάρους, κάθετη δύναμη και το διαφορικό. Το φρενάρισμα τρέχει το μοντέλο θερμότητας φρένων από κρύα.<br> Ελεγμένο απέναντι σε πραγματικά αυτοκίνητα με ταιριαστή ισχύ, μάζα, μετάδοση και κιβώτιο, το 0–100 είναι μέσα σε 9.68% RMS σε έξι αυτοκίνητα και η τελική ταχύτητα μέσα σε 6.5% RMS σε επτά (δες <a data-gp=\"calibration\">Πώς ελέγχουμε με την πραγματικότητα</a>)."},
   // build 162: The track + Scoring + Options & reference
@@ -5260,7 +5267,10 @@ function boostTaperFrac(rpm){
   const f=clamp((e.taperPct!=null?e.taperPct:100)/100,0.2,1);
   return 1-(1-f)*clamp((rpm-r0)/(e.redline-r0),0,1);
 }
-const boostTarget=rpm=>Math.min(engine.maxBoost*boostTaperFrac(rpm),tqLimitBoost(rpm));
+// A diesel ECU sets its boost from the fuel it injects (Bosch, Diesel-Engine Management): as the governor takes the fuel
+// (build 172) the boost target goes with it, to none at the governed maximum, where the engine runs unloaded.
+const govBoostFrac=rpm=>{const e=engine,g0=e.govRpm||0;return e.ci&&g0>0&&g0<e.redline&&rpm>g0?1-clamp((rpm-g0)/(e.redline-g0),0,1):1;};
+const boostTarget=rpm=>Math.min(engine.maxBoost*boostTaperFrac(rpm)*govBoostFrac(rpm),tqLimitBoost(rpm));
 // The ECU's torque limit (build 138). A torque-based ECU holds the engine to a calibrated torque (for the gearbox,
 // the driveline, the clutch) by asking for less boost where the engine would make more: the flat torque plateaus
 // makers quote ("350 Nm from 1500 to 4400 rpm") are this, not the engine's own curve. ECU TORQUE LIMIT (Nm, 0 =
@@ -5852,7 +5862,7 @@ function brakeHeatStep(st,th,a,vCar,dt,cv,frIn){
 // skidpad — a soft road car ~6, a sports setup ~4, coilovers ~2.5, a race car ~1.5. Roll tips the loaded
 // outside tyre over onto positive camber, which costs it grip (latMuEff). Build 109: this replaces a
 // fitted grip multiplier (0.95-1.10).
-// Build 172: the roll is the car's own, from its springs and bars (rollStiffness). hz = the kit's ride frequency,
+// Build 174: the roll is the car's own, from its springs and bars (rollStiffness). hz = the kit's ride frequency,
 // the bounce of each corner's mass on its spring: a soft road car ~1.0 Hz, a sports setup ~1.25, track coilovers
 // ~1.6, a race car without big aero ~2.0 (passenger cars 0.5-1.5 Hz, OptimumG, Springs & Dampers).
 // camber = the static negative camber each is set up with (deg): a road alignment ~-0.5, a sports one ~-1,
@@ -5863,7 +5873,7 @@ const SUSPENSION={
   coilover:{label:'COILOVERS',  hz:1.6, camber:-1.8,cost:3200},
   race:    {label:'RACE/ADJUST',hz:2.0, camber:-2.5,cost:6500}
 };
-// Springs and anti-roll bars, each axle its own (build 172), in steps from SOFT -2 to STIFF +2 about the kit.
+// Springs and anti-roll bars, each axle its own (build 174), in steps from SOFT -2 to STIFF +2 about the kit.
 // An axle's springs resist roll with k t^2/2, k each wheel's rate: from the ride frequency, k = (m_axle/2)(2 pi f)^2,
 // so K_springs = m_axle (2 pi f)^2 t^2 / 4. Its bar adds BAR_SHARE of that at STANDARD: a third of the total roll
 // stiffness, which brings a typical car (roll arm 0.40 m, track 1.55 m) to the skidpad figures above, 6.1 / 3.9 /
@@ -5878,7 +5888,7 @@ function rollStiffness(v){
   const ax=(m,t,sp,bar)=>{const k=m*w2*t*t/4;return k*Math.pow(SPRING_STEP,sp||0)+BAR_SHARE*k*Math.pow(BAR_STEP,bar||0);};
   return {F:ax(v.mass*v.fWt,v.trackF,v.springF,v.barF),R:ax(v.mass*(1-v.fWt),v.trackR,v.springR,v.barR)};
 }
-// Suspension geometry, each axle its own (build 171). Two things separate the types in a corner:
+// Suspension geometry, each axle its own (build 173). Two things separate the types in a corner:
 //   camber recovery — the share of the body roll the linkage claws back at the loaded outside wheel. An independent
 //     wheel swings about its front-view instant centre, so rolling the body by phi moves the wheel phi*t/2 into bump
 //     and turns it back by (phi*t/2)/fvsa: recovery = (t/2)/fvsa, from the axle's own track t and the front-view
@@ -5946,7 +5956,7 @@ const SUSP_REAL={
   'BMW 330d (F30, 2012)':{f:'strut',r:'multilink',tf:1.543,tr:1.582},
   'Chevrolet Silverado 2500HD Duramax (2020)':{f:'wishbone',r:'solid',tf:1.745,tr:1.716}
 };
-// The factory geometry of a car record: a real car's own, else its archetype's. Saves from before build 171 carry
+// The factory geometry of a car record: a real car's own, else its archetype's. Saves from before build 173 carry
 // none and take it from here, as their body's name still finds the car.
 function factoryGeo(v){
   const r=v&&v.body&&SUSP_REAL[v.body.name];if(r)return {f:r.f,r:r.r};
@@ -5965,7 +5975,7 @@ function geoRecovery(g,track){return g.recov!=null?g.recov:clamp(track/2/g.fvsa,
 const LOAD_SENS=0.15, TYRE_RATED_KG_M3=16300, TYRE_REF_SHARE=0.6;
 // Camber: a tyre makes its most lateral force leaning slightly into the turn, ~-1.5 deg, and loses ~1.5%
 // of it per degree either side. The loaded outside tyre's angle is the static camber plus the body roll
-// the suspension geometry does not claw back. Until build 171 that was half for every car; now each axle's own
+// the suspension geometry does not claw back. Until build 173 that was half for every car; now each axle's own
 // geometry sets it (SUSP_GEO), and CAMBER_RECOVERY stays only for a car object built without one.
 const CAMBER_RECOVERY=0.5, CAMBER_LOSS=0.015, CAMBER_BEST=-1.5;
 // The load-sensitivity curve (Fz/FzRef)^-LOAD_SENS, tabulated and interpolated: this is the lap solver's most-called
@@ -6009,7 +6019,7 @@ function corneringDrag(m,ay,N){return m*m*ay*ay/(Math.max(1,N)*TYRE_CC);}
 // roll camber. In a steady corner each axle must make the side force for the mass it carries (front: m ay fWt),
 // so the car corners only as hard as the axle that runs out first allows: the front (understeer) or the rear
 // (oversteer). Until build 157 the four tyres' grip was pooled, so no car could be out of balance.
-// Build 171: per axle, its own static camber and the share of the roll its geometry recovers (SUSP_GEO).
+// Build 173: per axle, its own static camber and the share of the roll its geometry recovers (SUSP_GEO).
 function latCamberF(ay,camber,recov){return 1-CAMBER_LOSS*Math.abs(camber+vehicle.rollGrad*Math.abs(ay)/G*(1-recov)-CAMBER_BEST);}
 // one axle's two tyres at normal load Nax with lateral transfer d across them (N)
 function axleLatCap(Nax,d,FzRef){
@@ -6020,7 +6030,7 @@ function latBalance(N,ay,dn,ax){
   const m=vehicle.mass,fWt=vehicle.fWt||0.55,aF=vehicle.aeroBal!=null?vehicle.aeroBal:0.5,lt=vehicle.lltdF!=null?vehicle.lltdF:fWt;
   const tr=ax||0;   // longitudinal load transfer onto the front (N): braking +, accelerating -
   const Nf=clamp((N-(dn||0))*fWt+(dn||0)*aF+tr,0.05*N,0.95*N),Nr=N-Nf;
-  // the transfer's roll moment m ay h, shared by the roll balance and taken across each axle's own track (build 171)
+  // the transfer's roll moment m ay h, shared by the roll balance and taken across each axle's own track (build 173)
   const M=m*Math.abs(ay)*vehicle.cg,tF=vehicle.trackF||vehicle.track,tR=vehicle.trackR||vehicle.track;
   const rF=vehicle.camRecF!=null?vehicle.camRecF:CAMBER_RECOVERY,rR=vehicle.camRecR!=null?vehicle.camRecR:CAMBER_RECOVERY;
   const cF=vehicle.camberF!=null?vehicle.camberF:vehicle.camber,cR=vehicle.camberR!=null?vehicle.camberR:vehicle.camber;
@@ -6032,9 +6042,15 @@ function latBalance(N,ay,dn,ax){
 }
 function latMuEff(N,ay,dn){return latBalance(N,ay,dn).mu;}
 // Gearbox type. Four things separate them:
-//   shift  — time the drive is cut on an upshift (s). A manual has to unload the clutch, move a
-//            lever and re-engage; a sequential just bangs the next dog in; a DCT has the next
-//            gear already engaged on the second clutch, so it's near-seamless.
+//   shift  — how long an upshift takes (s). A manual has to unload the clutch, move a lever and
+//            re-engage; a sequential just bangs the next dog in under an ignition cut.
+//   powershift — (build 171) the drive is NOT cut for it. A dual-clutch box and a planetary automatic
+//            shift clutch to clutch: in the torque phase the oncoming clutch takes the torque as the
+//            off-going one lets go, and in the inertia phase it slips while it pulls the engine down to the
+//            new gear's speed, the ECU trimming the engine's torque to hold the output smooth (GM's
+//            power-on upshift patents US 5046383, US 7762925, US 9327733; Goetz, Levesley & Crolla,
+//            Proc IMechE D 219, 2005). The output never drops below the next gear's: the shift time is how
+//            long the change takes, not a gap in the drive. A manual and a sequential do cut it.
 //   eff    — driveline efficiency multiplier on top of the drive layout. Gear-to-gear losses are
 //            small and similar; the outlier is the torque-converter auto, which slips fluid until
 //            the lockup clutch engages.
@@ -6044,8 +6060,8 @@ function latMuEff(N,ay,dn){return latBalance(N,ay,dn).mu;}
 const GEARBOX={
   manual:    {label:'MANUAL (H-PATTERN)',shift:0.35,eff:1.00,stall:0,   mult:1.0, cost:1500},
   sequential:{label:'SEQUENTIAL',        shift:0.06,eff:0.99,stall:0,   mult:1.0, cost:7000},
-  dct:       {label:'DUAL-CLUTCH (DCT)', shift:0.03,eff:0.98,stall:0,   mult:1.0, cost:9000},
-  auto:      {label:'TORQUE-CONV AUTO',  shift:0.20,eff:0.93,stall:2400,mult:1.9, cost:3000}
+  dct:       {label:'DUAL-CLUTCH (DCT)', shift:0.03,powershift:true,eff:0.98,stall:0,   mult:1.0, cost:9000},
+  auto:      {label:'TORQUE-CONV AUTO',  shift:0.20,powershift:true,eff:0.93,stall:2400,mult:1.9, cost:3000}
 };
 // Differential. An axle's two driven wheels are never loaded exactly alike — road camber, engine
 // torque reaction, axle wind-up and suspension geometry all unload one side. An OPEN diff can
@@ -6196,6 +6212,8 @@ function readEngineFromForm(){
     intake,
     boost_bar:intake==='na'?0:clamp(+g('edBoost').value||0,0,2.5),
     taperRpm:clamp(Math.round(+g('edTaperRpm').value||0),0,12000),taperPct:clamp(+g('edTaperPct').value||100,20,100),
+    // a diesel's rated speed, where its governor starts to take the fuel away (build 172); 0 = no governor
+    govRpm:clamp(Math.round(+g('edGovRpm').value||0),0,8000),
     tqLimit:clamp(Math.round(+g('edTqLimit').value||0),0,5000),
     intercooler:g('edIntercooler').value,
     turboSize:g('edTurboSize').value,compExd_mm:clamp(+g('edCompWheel').value||0,0,110),
@@ -6236,7 +6254,7 @@ function applyEngineToForm(e){
   // Builds saved before the eccentricity existed: every production Mazda rotor has R/e = 7.
   g('edEcc').value=e.ecc_mm||+(e.bore_mm/7).toFixed(1);
   // Migrate legacy boolean intercooler (true→large, false→none) from older saved builds.
-  g('edIntake').value=e.intake;g('edBoost').value=e.boost_bar;g('edTaperRpm').value=e.taperRpm||0;g('edTaperPct').value=e.taperPct!=null?e.taperPct:100;g('edTqLimit').value=e.tqLimit||0;
+  g('edIntake').value=e.intake;g('edBoost').value=e.boost_bar;g('edTaperRpm').value=e.taperRpm||0;g('edTaperPct').value=e.taperPct!=null?e.taperPct:100;g('edTqLimit').value=e.tqLimit||0;g('edGovRpm').value=e.govRpm||0;
   g('edIntercooler').value=(e.intercooler===true?'large':e.intercooler===false?'none':(e.intercooler||'large'));
   g('edTurboSize').value=e.turboSize||'medium';g('edCompWheel').value=e.compExd_mm||0;
   g('edTurboConfig').value=e.turboConfig||'single';g('edVGT').value=e.vgt?'yes':'no';g('edHousing').value=e.housing||'stock';
@@ -6272,6 +6290,7 @@ function syncDesignEnable(){
   [...cylSel.options].forEach(o=>{o.disabled=+o.value>maxCyl;});
   if(+cylSel.value>maxCyl)cylSel.value=String(Math.min(maxCyl,4));
   g('edFuel').disabled=tp.ci;                              // diesel fuel is fixed
+  g('edGovRpm').disabled=!tp.ci;                           // a governor is a diesel's (build 172)
   // Boost / intercooler only matter for forced induction; turbo size only for turbos.
   const intake=g('edIntake').value,na=intake==='na';
   g('edBoost').disabled=na;g('edTaperRpm').disabled=na;g('edTaperPct').disabled=na;g('edTqLimit').disabled=na;
@@ -6310,6 +6329,7 @@ function buildEngine(){
   // the peak-pressure / thirst multipliers that give each type its character.
   const et=ENGINE_TYPE[engine.type]||ENGINE_TYPE.petrol4;
   engine.strokeDiv=et.strokeDiv;engine.ci=et.ci;engine.ports=et.ports;
+  engine.govPhi0=null;   // the governor's fuel at the governed maximum, found on first use (govPhi0)
   engine.typeImep=et.imep;engine.typeBsfc=et.bsfc;engine.typeLabel=et.label;
   // Charges drawn per shaft revolution, per cylinder or rotor: a four-stroke breathes every other turn;
   // a two-stroke every turn; a rotor fills one of its three chambers every shaft turn (it turns once
@@ -6519,6 +6539,7 @@ function buildEngine(){
   buildBoostTable(26);
   engine.tqLimTable=null;
   if(engine.tqLimit>0){buildTorqueLimit();buildBoostTable(26);}   // the ECU's torque limit lowers the target: re-solve the shaft
+  engine.govPhi0=null;   // the governor's share, against the finished engine (it was taken mid-build, on a half-set one)
   {const p=peakEgts();engine.peakEgt=p.probe;engine.peakEgtGas=p.gas;}   // needs the boost table (wotMapAt) and the burn table
 
   buildRev++;dynoCache=null;
@@ -7421,9 +7442,53 @@ function burnPhasing(rpm){
 // engine's torque, and its exhaust-temperature model (which assumed a realistic lambda) never agreed
 // with the mixture actually burned.
 const SMOKE_LAMBDA_CI=1.20;
+// The governor (build 172). A diesel has no throttle on its air and nothing in its combustion that stops it short of
+// the speed at which friction eats its fuel, so every diesel carries a governor: from its RATED speed (the breakpoint,
+// where it makes its rated power) to its governed maximum (high idle, the most it will turn with no load) the fuel at
+// full pedal is taken away in proportion to the speed, until at the maximum it is only what holds the engine there
+// unloaded (Bosch, Governors for Inline Injection Pumps; Cummins: the breakpoint is where the governor 'begins to
+// reduce torque below the rated power value', the span to high idle its droop). An electronic diesel does the same in
+// its fuel map. The rated speed is the maker's (GM's L5P: 2800 rpm rated, 3450 maximum powered speed) and the governed
+// maximum is the engine's own limit, its redline here. Without it this model fuelled a diesel at its smoke limit to
+// the redline and made peak power there, which a diesel never does: the Cummins's 400 hp at 2800 came out as 550 at
+// 3500, and every other diesel carried a boost taper, solved to its rating, in its place.
+//     q(N) = q_full x (1 - x (1 - phi0)),   x = (N - N_rated) / (N_max - N_rated)
+// phi0 is the share of the full fuel whose work only meets friction, pumping and the alternator at N_max: the engine's
+// own brake torque there is zero. Solved on the torque itself (the leaner mixture burns a little more efficiently, so
+// work is not quite in proportion to fuel), by bisection, once per build.
+function govPhi0(){
+  const e=engine;
+  if(e.govPhi0>0)return e.govPhi0;
+  if(e.govSolving)return 1;
+  const rl=e.redline;let lo=0.002,hi=1,ok=true;
+  e.govSolving=true;
+  try{
+    for(let i=0;i<32;i++){
+      e.govPhi0=(lo+hi)/2;
+      const T=brakeTorqueRaw(rl,wotMapAt(rl),false);
+      if(!Number.isFinite(T)){ok=false;break;}
+      if(T>0)hi=e.govPhi0;else lo=e.govPhi0;
+    }
+  }catch(err){ok=false;}finally{e.govSolving=false;}
+  // early in buildEngine the engine is half set: no governor until it is whole, and nothing cached
+  if(!ok){e.govPhi0=null;return 1;}
+  e.govPhi0=(lo+hi)/2;return e.govPhi0;
+}
+function govFuelFrac(rpm){
+  const e=engine,g0=e.govRpm||0;
+  if(!e.ci||!(g0>0)||g0>=e.redline||rpm<=g0||e.govBusy)return 1;
+  if(!(e.govPhi0>0)&&e.govSolving)return 1;
+  const x=clamp((rpm-g0)/(e.redline-g0),0,1);
+  return 1-x*(1-govPhi0());
+}
 function dieselLambdaFloor(rpm){
   const e=engine;
   if(!e.ci)return 0;
+  return dieselLambdaFull(rpm)/govFuelFrac(rpm);   // less fuel in the same air: a leaner mixture
+}
+// the leanest a diesel is fuelled at full pedal before the governor: its smoke limit, or its turbine's
+function dieselLambdaFull(rpm){
+  const e=engine;
   if(e.intake!=='turbo')return SMOKE_LAMBDA_CI;
   // T = 300 + LHV f / ((AFR_st lam + 1) cp), and f itself moves with lam (a leaner diesel works its
   // fuel harder), so solve by fixed point from the smoke limit: three steps settle it to <0.1%.
@@ -7865,9 +7930,9 @@ function readVehicleFromForm(){
     tireAspect:clamp(Math.round(+g('vhTireA').value||40),25,70),wheelDia:clamp(Math.round(+g('vhWheel').value||18),13,22),
     aeroFront:g('vhAeroF').value,aeroRear:g('vhAeroR').value,aeroFloor:g('vhAeroFl').value,weightRed:g('vhWeight').value,
     brakeType:g('vhBrake').value,rotor:clamp(Math.round(+g('vhRotor').value||330),250,420),suspension:g('vhSusp').value,
-    // each axle's geometry (build 171)
+    // each axle's geometry (build 173)
     suspFront:g('vhGeoF').value,suspRear:g('vhGeoR').value,
-    // each axle's springs and anti-roll bar, steps about the kit (build 172)
+    // each axle's springs and anti-roll bar, steps about the kit (build 174)
     springF:stepOf(g('vhSpringF').value),springR:stepOf(g('vhSpringR').value),barF:stepOf(g('vhBarF').value),barR:stepOf(g('vhBarR').value),
     speedRating:g('vhRating').value,body:vehBody,
     // Steering-wheel turns per road-wheel turn. Only the live-timing wheel reads it; the lap does not.
@@ -7908,8 +7973,8 @@ function applyVehicleToForm(v){
   g('vhTire').value=v.tireType||'sport';g('vhTireW').value=v.tireWidth||235;g('vhTireWF').value=v.tireWidthF||0;g('vhTireA').value=v.tireAspect||40;g('vhWheel').value=v.wheelDia||18;
   g('vhAeroF').value=v.aeroFront||'none';g('vhAeroR').value=v.aeroRear||'none';g('vhAeroFl').value=v.aeroFloor||'none';g('vhWeight').value=v.weightRed||'none';
   g('vhBrake').value=v.brakeType||'slotted';g('vhRotor').value=v.rotor||330;g('vhSusp').value=v.suspension||'sport';
-  {const fg=factoryGeo(v);g('vhGeoF').value=SUSP_GEO[v.suspFront]?v.suspFront:fg.f;g('vhGeoR').value=SUSP_GEO[v.suspRear]?v.suspRear:fg.r;}   // saves from before build 171 carry none
-  // saves from before build 172 carry ROLL BALANCE (arbBal), the front bar against the rear: it becomes the front bar
+  {const fg=factoryGeo(v);g('vhGeoF').value=SUSP_GEO[v.suspFront]?v.suspFront:fg.f;g('vhGeoR').value=SUSP_GEO[v.suspRear]?v.suspRear:fg.r;}   // saves from before build 173 carry none
+  // saves from before build 174 carry ROLL BALANCE (arbBal), the front bar against the rear: it becomes the front bar
   g('vhSpringF').value=String(stepOf(v.springF));g('vhSpringR').value=String(stepOf(v.springR));
   g('vhBarF').value=String(stepOf(v.barF!=null?v.barF:v.arbBal));g('vhBarR').value=String(stepOf(v.barR));
   g('vhSteer').value=v.steerRatio||15;   // saves from before build 130 carry none
@@ -8209,7 +8274,7 @@ function isFactoryFit(v){
     v.aeroFront===f.aF&&v.aeroRear===f.aR&&v.aeroFloor===f.aFl&&v.weightRed===f.weight&&
     v.brakeType===f.brake&&v.rotor===f.rotor&&v.suspension===f.susp&&geoStock(v);
 }
-// Both axles on the factory's geometry (build 171); a save from before carries none, which is the factory's.
+// Both axles on the factory's geometry (build 173); a save from before carries none, which is the factory's.
 function geoStock(v){const fg=factoryGeo(v);return (v.suspFront||fg.f)===fg.f&&(v.suspRear||fg.r)===fg.r;}
 function computeVehicleCost(ch,tt,wr){
   let c=ch.cost+tt.cost+wr.cost;
@@ -8219,7 +8284,7 @@ function computeVehicleCost(ch,tt,wr){
   {const fg=factoryGeo(vehicle);
    if(vehicle.suspFront&&vehicle.suspFront!==fg.f)c+=(SUSP_GEO[vehicle.suspFront]||{cost:0}).cost;
    if(vehicle.suspRear&&vehicle.suspRear!==fg.r)c+=(SUSP_GEO[vehicle.suspRear]||{cost:0}).cost;}
-  // springs and bars off STANDARD are new parts (build 172)
+  // springs and bars off STANDARD are new parts (build 174)
   c+=(stepOf(vehicle.springF)?1:0)*STIFF_STEP_COST.spring+(stepOf(vehicle.springR)?1:0)*STIFF_STEP_COST.spring+
      (stepOf(vehicle.barF)?1:0)*STIFF_STEP_COST.bar+(stepOf(vehicle.barR)?1:0)*STIFF_STEP_COST.bar;
   c+=Math.max(0,vehicle.rotor-320)*6;
@@ -8261,7 +8326,7 @@ function buildVehicle(){
   vehicle.brakeDecelCap=brakeForceCap(vehicle)/vehicle.mass;
   vehicle.wb=body?body.wb:ch.wb;vehicle.cg=ch.cg;vehicle.area=body?body.area:ch.area;
   vehicle.track=(body&&body.track)||ch.track;
-  // Each axle's own track and geometry (build 171): a real car's published front and rear tracks, else the archetype's
+  // Each axle's own track and geometry (build 173): a real car's published front and rear tracks, else the archetype's
   // for both. The camber the outside wheel wins back from the roll follows the axle's track (geoRecovery); a solid axle
   // carries no static camber, the axle sets it; a solid axle's roll centre is its own wheel centre.
   {const sr=body&&SUSP_REAL[body.name],fg=factoryGeo(vehicle);
@@ -8293,16 +8358,16 @@ function buildVehicle(){
   vehicle.aeroBal=vehicle.clA>0?clF/vehicle.clA:0.5;   // share of the downforce on the front axle
   // the driven axle's share of the weight (static) and of the downforce
   vehicle.drivenWt=vehicle.drive==='awd'?1:vehicle.drive==='rwd'?1-vehicle.fWt:vehicle.fWt;
-  // Roll balance (build 157): the front's share of the lateral load transfer. Build 171 splits the transfer m ay h in two
+  // Roll balance (build 157): the front's share of the lateral load transfer. Build 173 splits the transfer m ay h in two
   // (Milliken & Milliken, RCVD ch. 18). Each axle's own mass, at its own roll centre, pushes on its tyres through the
   // links: fWt zF at the front, (1 - fWt) zR at the rear, so a high roll centre puts transfer on its own axle. What is
   // left is the body rolling about the roll axis (the line through the two roll centres, at fWt zF + (1 - fWt) zR under
-  // the centre of mass), and that goes through the springs and anti-roll bars by their stiffness split (build 172:
+  // the centre of mass), and that goes through the springs and anti-roll bars by their stiffness split (build 174:
   // rollStiffness; at STANDARD the weight split, each axle's tyres then carrying the same share of it as of the weight).
   // Stiffer front springs or bars move transfer forward, which costs the front grip (understeer); stiffer rear ones
   // move it back (oversteer). With both roll centres on the ground this is build 157's split.
   // The body rolls about the roll axis by its roll moment m ay (h - z_axis) over the two axles' stiffness together
-  // (build 172; until then each kit rolled a fixed deg/g whatever the car): a tall car on a narrow track rolls more.
+  // (build 174; until then each kit rolled a fixed deg/g whatever the car): a tall car on a narrow track rolls more.
   {const fw=vehicle.fWt,zAx=fw*vehicle.rcF+(1-fw)*vehicle.rcR,arm=Math.max(0,vehicle.cg-zAx),K=rollStiffness(vehicle);
    vehicle.rollKF=K.F/(K.F+K.R);vehicle.rollK=K.F+K.R;
    vehicle.rollGrad=vehicle.mass*G*arm/vehicle.rollK*180/Math.PI;   // deg per g
@@ -8313,6 +8378,7 @@ function buildVehicle(){
   vehicle.gb=gb;vehicle.gbLabel=gb.label;
   vehicle.df=df;vehicle.diffLabel=df.label;vehicle.diffTraction=df.traction;
   vehicle.shiftTime=gb.shift;
+  vehicle.shiftCut=gb.powershift?0:gb.shift;   // the drive lost on an upshift (build 171): none on a powershift box
   vehicle.driveEff=(DRIVE_EFF[vehicle.drive]||0.90)*gb.eff;          // layout loss × gearbox loss
   const gs=gearRatiosFor(vehicle);
   vehicle.ratios=gs.r;vehicle.gearsetApprox=!!gs.approx;vehicle.fdPublished=gs.fd>0?gs.fd:0;
@@ -8582,6 +8648,8 @@ function simulateAccelRun(){
     // ever, and the car keeps pulling past the fastest speed its gearing can actually reach.
     const overRev=rpm>rl;
     let driveF=0;
+    // mid-shift with the drive cut (a manual or a sequential); a powershift box drives on through it (build 171)
+    const cutNow=shiftT>0&&!gb.powershift;
     // Spin the turbo up alongside the car. Off throttle during a shift the exhaust cools and the
     // shaft coasts down, which is why an upshift costs boost and why it costs a big frame more.
     // Throttle floor during the shift is deliberately not zero: a lift to 0.15 dumped so much shaft
@@ -8589,7 +8657,7 @@ function simulateAccelRun(){
     // than grip-limited ones — AWD on slicks lost to FWD on slicks, which is the wrong ordering.
     // 0.35 still costs boost on a laggy frame without inverting the traction ladder.
     if(grid.laggy){
-      const adv=advanceShaft(shaftE,engineRpm,boostNow,shiftT>0?0.35:1,dt);
+      const adv=advanceShaft(shaftE,engineRpm,boostNow,cutNow?0.35:1,dt);
       shaftE=adv.shaftE;boostNow=adv.boost;
     }
     const down=0.5*AIR_RHO*vehicle.clA*v*v,Wtot=m*G+down,transfer=m*a*vehicle.cg/vehicle.wb;
@@ -8598,7 +8666,7 @@ function simulateAccelRun(){
     else if(vehicle.drive==='rwd')drivenN=m*G*(1-vehicle.fWt)+down*vehicle.drivenAero+Math.max(0,transfer);
     else drivenN=m*G*vehicle.fWt+down*vehicle.drivenAero-Math.max(0,transfer);
     if(shiftT>0)shiftT-=dt;
-    else if(!overRev){
+    if(!cutNow&&!overRev){
       const Teng=gridTorque(grid,engineRpm,boostNow)*tqMult;
       if(slipping){
         const want=tyreMuX(drivenN/(vehicle.drive==='awd'?4:2))*diffTractionAt(df,0,vehicle.cg,1)*Math.max(0,drivenN)*r/(totalRatio*eff);
@@ -8620,6 +8688,8 @@ function simulateAccelRun(){
     // torque and held back by the tyre: Id dw/dt = T - F r. The car, with the undriven wheels' inertia,
     // is pushed by the tyre: mv dv/dt = F - R. Below the slip optimum the two run together and this is
     // the old a = (F - R)/mE; past it the surplus torque spins the wheels and the engine with them.
+    // (mid-shift on a powershift box the oncoming clutch is slipping: it passes the engine's torque but not its
+    // flywheel, whose speed it is pulling down to the new gear's)
     const coupled=shiftT<=0&&!slipping&&!(tcStall&&rpm<tcStall);
     const Id=Iwd+(coupled?Ie*totalRatio*totalRatio*eff:0),Tw=driveF*r,NS=10,h=dt/NS;
     // Build 155: without traction control the DRIVER holds the slip through the launch, in first gear, with the
@@ -9556,7 +9626,7 @@ function simulateLapRun(key,opts){
   //    there on both follow it, so the quicker to that later point is the better choice. Before build 121
   //    every car changed up at the best-force point even a car length before the brakes.
   function upshiftPays(j,g){
-    let vh=v[j],vs=v[j],th=0,ts=0,cutL=vehicle.shiftTime,doneH=false,doneS=false;
+    let vh=v[j],vs=v[j],th=0,ts=0,cutL=vehicle.shiftCut,doneH=false,doneS=false;
     for(let k=0;k<n;k++){
       const i=(j+k)%n,env=vB[(i+1)%n],q=p[i],bs=boostShare?boostShare[i]:1;
       let nh=env,ns=env;
@@ -9608,7 +9678,7 @@ function simulateLapRun(key,opts){
       if(hold>=0&&!onPower){hold=-1;held=g;}   // off the power: the held gear is let go
       if(hold<0){
         if(g>held){
-          if(onPower&&cut<=0){if(upshiftPays(j,held)){cut=vehicle.shiftTime;held=g;}else hold=held;}
+          if(onPower&&cut<=0){if(upshiftPays(j,held)){cut=vehicle.shiftCut;held=g;}else hold=held;}
           else held=g;
         }
         else if(g<held&&!onPower)held=g;   // on the power the driver stays in the gear just selected
@@ -9767,8 +9837,12 @@ function simulateLapRun(key,opts){
     const aim=new Float64Array(n);
     for(let i=0;i<n;i++){
       if(Number.isNaN(raw[i])){aim[i]=NaN;continue;}
-      if(!cornerish(i)||raw[i]<=0){aim[i]=raw[i];continue;}
-      let a=0,c=0;for(let k=-2;k<=2;k++){const q=(i+k+n)%n;if(!Number.isNaN(raw[q])&&raw[q]>0){a+=raw[q];c++;}}
+      // (a corner point asking for no drive counts too unless the brakes are working there (build 171): on the grip
+      // limit the solve can ask for a hair of slowdown, 122-123-123 km/h, that a driver holds with the throttle part
+      // open; read alone it snapped the pedal shut for one point. Mid-shift the drive cut used to hide it.)
+      const brakes=q=>raw[q]<=0&&brakingAt(q);
+      if(!cornerish(i)||brakes(i)){aim[i]=raw[i];continue;}
+      let a=0,c=0;for(let k=-2;k<=2;k++){const q=(i+k+n)%n;if(!Number.isNaN(raw[q])&&!brakes(q)){a+=raw[q];c++;}}
       aim[i]=a/c;
     }
     // out of a corner: once the car is accelerating the driver does not back off again until it stops (the solve's
@@ -10740,7 +10814,7 @@ function updateVehicleSummary(){
     '<br>'+tr('Brakes')+' <b>'+tr((BRAKE_TYPE[vehicle.brakeType]||BRAKE_TYPE.slotted).label)+'</b> '+vehicle.rotor+'mm ('+(vehicle.brakeDecelCap/G).toFixed(2)+'g) • '+tr('Susp')+' <b>'+trOpt((SUSPENSION[vehicle.suspension]||SUSPENSION.sport).label)+'</b> • '+tr('roll')+' <b>'+vehicle.rollGrad.toFixed(1)+'°/g</b>'+
     '<br>'+tr('Geometry')+' <b>'+trOpt(SUSP_GEO[vehicle.suspFront].label)+'</b> / <b>'+trOpt(SUSP_GEO[vehicle.suspRear].label)+'</b> • '+
     tr('track width')+' '+vehicle.trackF.toFixed(2)+' / '+vehicle.trackR.toFixed(2)+' m • '+tr('load transfer')+' '+Math.round(vehicle.lltdF*100)+'% '+tr('front')+
-    '<br>'+tr('Gearbox')+' <b>'+tr(vehicle.gbLabel)+'</b> • '+tr('shift')+' '+(vehicle.shiftTime*1000).toFixed(0)+' ms • '+tr('driveline')+' '+(vehicle.driveEff*100).toFixed(0)+'%'+(vehicle.gb.stall?' • '+tr('converter stall')+' '+vehicle.gb.stall+' rpm ×'+vehicle.gb.mult.toFixed(1):'')+
+    '<br>'+tr('Gearbox')+' <b>'+tr(vehicle.gbLabel)+'</b> • '+tr('shift')+' '+(vehicle.shiftTime*1000).toFixed(0)+' ms'+(vehicle.gb.powershift?' ('+tr('no drive cut')+')':'')+' • '+tr('driveline')+' '+(vehicle.driveEff*100).toFixed(0)+'%'+(vehicle.gb.stall?' • '+tr('converter stall')+' '+vehicle.gb.stall+' rpm ×'+vehicle.gb.mult.toFixed(1):'')+
     '<br>'+tr('Diff')+' <b>'+tr(vehicle.diffLabel)+'</b> • '+tr('puts down')+' '+(vehicle.diffTraction*100).toFixed(0)+'% '+tr('of axle grip')+
     '<br>'+tr('Speed limiter')+' <b>'+(vehicle.governor>0?vehicle.governor+' km/h':tr('removed'))+'</b>'+(perf&&perf.governed?' • '+tr('free top speed')+' '+Math.round(perf.freeSpeed)+' km/h':'')+
     ' • '+tr('traction control')+' <b>'+(vehicle.tc===false?tr('off'):tr('on'))+'</b>'+(perf&&perf.spinT>0.05?' • '+tr('wheelspin')+' '+perf.spinT.toFixed(1)+' '+tr('s to 100'):'')+

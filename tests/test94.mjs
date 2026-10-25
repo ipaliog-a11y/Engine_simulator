@@ -1,8 +1,8 @@
-// Springs and anti-roll bars per axle (build 172). The body's roll is the car's own: its roll moment about the roll axis,
-// m g (h - z_axis) per g, over the roll stiffness of its two axles, each the springs (from the kit's ride frequency,
-// m_axle (2 pi f)^2 t^2 / 4) plus a bar of BAR_SHARE of that, both stepped SOFT -2 .. STIFF +2. The front's share of
-// that stiffness is the elastic part of the load transfer split. ROLL BALANCE is gone; an old save's becomes the
-// front bar.
+// Suspension geometry per axle (build 173). Each axle has its own linkage (strut, wishbone, multi-link, twist beam,
+// solid axle) and its own track. The geometry sets the share of the body roll the loaded wheel's camber wins back,
+// (t/2)/fvsa for an independent wheel, and the axle's roll centre, which puts the transfer of the axle's own mass on
+// its own tyres. The real cars carry their published geometry and tracks; saves from before carry none and take the
+// factory's.
 import { chromium } from './pw.mjs';
 import { fileURLToPath, pathToFileURL } from 'url';
 import path from 'path';
@@ -20,79 +20,90 @@ const r = await page.evaluate(() => {
   const g = id => document.getElementById(id);
   const set = (id, v) => { const el = g(id); el.value = String(v); el.dispatchEvent(new Event('input')); };
   const load = n => loadVehiclePreset(VEHICLE_PRESETS.find(x => x.name.includes(n)));
-  const snap = () => ({ roll: vehicle.rollGrad, lltd: vehicle.lltdF, kF: vehicle.rollKF, K: vehicle.rollK, cost: vehicle.cost,
-    stock: isFactoryFit(readVehicleFromForm()), key: carLineKey() });
   const out = {};
-  // the kits on a typical car: roll arm 0.40 m, track 1.55 m both ends, 55% front
-  out.kits = Object.fromEntries(Object.keys(SUSPENSION).map(k => {
-    const v = { suspension: k, mass: 1400, fWt: 0.55, trackF: 1.55, trackR: 1.55 }, K = rollStiffness(v);
-    return [k, { roll: 1400 * 9.81 * 0.40 / (K.F + K.R) * 180 / Math.PI, kF: K.F / (K.F + K.R) }];
-  }));
-  // the M3's own numbers against the formula
+  // every real car: its own entry, its own tracks and geometry, still the factory fit
+  out.cars = VEHICLE_PRESETS.map(p => {
+    loadVehiclePreset(p);
+    const e = SUSP_REAL[p.name] || null;
+    return { name: p.name, e, tf: vehicle.trackF, tr: vehicle.trackR, f: vehicle.suspFront, r: vehicle.suspRear,
+      recF: vehicle.camRecF, recR: vehicle.camRecR, camF: vehicle.camberF, camR: vehicle.camberR,
+      rcR: vehicle.rcR, rTire: vehicle.rTire, stock: isFactoryFit(readVehicleFromForm()) };
+  });
+  out.geo = JSON.parse(JSON.stringify(SUSP_GEO));
+  // build 157's split comes back with both roll centres on the ground
   load('M3 (E46');
-  const v = vehicle, w = 2 * Math.PI * SUSPENSION[v.suspension].hz;
-  const KF = v.mass * v.fWt * w * w * v.trackF ** 2 / 4 * (1 + BAR_SHARE), KR = v.mass * (1 - v.fWt) * w * w * v.trackR ** 2 / 4 * (1 + BAR_SHARE);
-  const arm = v.cg - (v.fWt * v.rcF + (1 - v.fWt) * v.rcR);
-  out.m3 = { roll: v.rollGrad, want: v.mass * 9.81 * arm / (KF + KR) * 180 / Math.PI, kF: v.rollKF, wantKF: KF / (KF + KR) };
-  out.base = snap();
-  set('vhBarF', 1); out.barF1 = snap();
-  set('vhBarF', 2); out.barF2 = snap();
-  set('vhBarF', 0); set('vhBarR', 2); out.barR2 = snap();
-  set('vhBarR', 0); set('vhSpringF', 2); out.springF2 = snap();
-  set('vhSpringF', 2); set('vhSpringR', 2); set('vhBarF', 2); set('vhBarR', 2); out.allStiff = snap();
-  ['vhSpringF', 'vhSpringR', 'vhBarF', 'vhBarR'].forEach(id => set(id, -2)); out.allSoft = snap();
-  // lap balance moves with the bars
-  ['vhSpringF', 'vhSpringR', 'vhBarF', 'vhBarR'].forEach(id => set(id, 0));
-  const lap = () => simulateLap('mixed').balance.margin;
-  out.margin = { base: lap() }; set('vhBarF', 2); out.margin.stiffFront = lap(); set('vhBarF', -2); out.margin.softFront = lap();
-  // a tall, narrow car rolls more than a low, wide one on the same kit
-  load('Alto Works'); set('vhSusp', 'sport'); out.alto = vehicle.rollGrad;
-  load('911 GT3'); set('vhSusp', 'sport'); out.gt3 = vehicle.rollGrad;
-  // a save from before build 172: ROLL BALANCE +1 becomes the front bar
-  load('Golf GTI'); const rec = readVehicleFromForm();
-  delete rec.springF; delete rec.springR; delete rec.barF; delete rec.barR; rec.arbBal = 1;
+  const fw = vehicle.fWt, kF = vehicle.rollKF, zF = vehicle.rcF, zR = vehicle.rcR, h = vehicle.cg;
+  const zAx = fw * zF + (1 - fw) * zR;
+  out.split = { lltd: vehicle.lltdF, kF, fw, want: ((h - zAx) * kF + fw * zF) / h,
+    ground: ((h - 0) * kF + fw * 0) / h };
+  // a solid rear axle on a Golf: its roll centre at the wheel centre loads the rear, its wheels stay square, no static
+  // camber, and it is a conversion
+  load('Golf GTI');
+  const golf = { lltd: vehicle.lltdF, cost: vehicle.cost, key: carLineKey(), camR: vehicle.camberR };
+  set('vhGeoR', 'solid');
+  out.golfSolid = { lltd: vehicle.lltdF, cost: vehicle.cost, key: carLineKey(), camR: vehicle.camberR, recR: vehicle.camRecR,
+    stock: isFactoryFit(readVehicleFromForm()), summary: g('vehicleSummary').textContent };
+  out.golf = golf;
+  // at 1 g on COMFORT, a strut's camber costs more grip than a wishbone's
+  set('vhGeoR', 'multilink'); set('vhSusp', 'comfort');
+  out.camStrut = latCamberF(9.81, vehicle.camberF, geoRecovery(SUSP_GEO.strut, vehicle.trackF));
+  out.camWish = latCamberF(9.81, vehicle.camberF, geoRecovery(SUSP_GEO.wishbone, vehicle.trackF));
+  out.camSolid = latCamberF(9.81, 0, 1);
+  // a wider front track transfers less across the front: the front holds more
+  load('M3 (E46');
+  const N = vehicle.mass * 9.81, b0 = latBalance(N, 9, 0, 0);
+  const tf = vehicle.trackF; vehicle.trackF = tf + 0.1; const b1 = latBalance(N, 9, 0, 0); vehicle.trackF = tf;
+  out.track = { narrow: b0.muF, wide: b1.muF, rearSame: Math.abs(b0.muR - b1.muR) < 1e-12 };
+  // a save from before build 173 carries no geometry: the factory's, and still the factory fit
+  load('AE86'); const rec = readVehicleFromForm(); delete rec.suspFront; delete rec.suspRear;
+  set('vhGeoF', 'wishbone'); set('vhGeoR', 'multilink');
   applyVehicleToForm(rec); buildVehicle();
-  out.oldSave = { barF: g('vhBarF').value, barR: g('vhBarR').value, springF: g('vhSpringF').value, stock: isFactoryFit(readVehicleFromForm()) };
-  // REFIT puts everything back to STANDARD
-  g('btnRefit').click(); out.refit = ['vhSpringF', 'vhSpringR', 'vhBarF', 'vhBarR'].map(id => g(id).value).join(',');
-  out.summary = g('vehicleSummary').textContent;
+  out.oldSave = { f: g('vhGeoF').value, r: g('vhGeoR').value, stock: isFactoryFit(readVehicleFromForm()) };
+  // an archetype takes its class's geometry; a twist beam is offered at the rear only
+  set('vhChassis', 'hatch');
+  out.arch = { f: g('vhGeoF').value, r: g('vhGeoR').value, tf: vehicle.trackF, tr: vehicle.trackR, track: CHASSIS.hatch.track,
+    frontTwist: [...g('vhGeoF').options].some(o => o.value === 'twist'), rearTwist: [...g('vhGeoR').options].some(o => o.value === 'twist') };
   // Greek
-  applyLang('el');
-  out.el = { label: document.querySelector('label[for="vhBarF"]').textContent, opt: g('vhSpringR').selectedOptions[0].textContent,
-    soft: g('vhSpringR').options[0].textContent };
+  load('Golf GTI'); applyLang('el');
+  out.el = { label: document.querySelector('label[for="vhGeoF"]').textContent, opt: g('vhGeoR').selectedOptions[0].textContent,
+    summary: g('vehicleSummary').textContent };
   applyLang('en');
   return out;
 });
 
-console.log('== the kits on a typical car (roll arm 0.40 m, track 1.55 m) ==');
-const want = { comfort: 6, sport: 4, coilover: 2.5, race: 1.5 };
-for (const [k, x] of Object.entries(r.kits)) {
-  console.log(`  ${k.padEnd(9)} ${x.roll.toFixed(2)} deg/g (skidpad figure ${want[k]}) · front share ${x.kF.toFixed(3)}`);
-  if (Math.abs(x.roll - want[k]) / want[k] > 0.1) fails.push(`${k} does not roll within 10% of ${want[k]} deg/g on a typical car`);
-  if (Math.abs(x.kF - 0.55) > 1e-12) fails.push(`${k}: equal tracks at STANDARD do not split the roll stiffness by the weight`);
+console.log('== the real cars ==');
+for (const c of r.cars) console.log(`  ${c.name.padEnd(42)} ${(c.f + '/' + c.r).padEnd(20)} track ${c.tf.toFixed(3)}/${c.tr.toFixed(3)}  recovery ${c.recF.toFixed(2)}/${c.recR.toFixed(2)}`);
+const bad = r.cars.filter(c => !c.e || !r.geo[c.e.f] || !r.geo[c.e.r] || !(c.e.tf > 1.2 && c.e.tf < 1.8 && c.e.tr > 1.2 && c.e.tr < 1.8));
+if (bad.length) fails.push('real cars without a complete geometry entry: ' + bad.map(c => c.name).join(', '));
+for (const c of r.cars.filter(c => c.e)) {
+  if (c.f !== c.e.f || c.r !== c.e.r || Math.abs(c.tf - c.e.tf) > 1e-9 || Math.abs(c.tr - c.e.tr) > 1e-9) fails.push(c.name + ' does not load its own geometry and tracks');
+  if (!c.stock) fails.push(c.name + ' is not its own factory fit');
+  if (r.geo[c.f].front === false) fails.push(c.name + ' steers on a twist beam');
+  for (const [k, t, rec] of [[c.f, c.tf, c.recF], [c.r, c.tr, c.recR]]) {
+    const G = r.geo[k], want = G.recov != null ? G.recov : t / 2 / G.fvsa;
+    if (Math.abs(rec - want) > 1e-9) fails.push(`${c.name}: ${k} recovery ${rec} is not (t/2)/fvsa ${want}`);
+  }
+  if (c.r === 'solid' && (c.camR !== 0 || Math.abs(c.rcR - c.rTire) > 1e-9)) fails.push(c.name + ': a solid axle has static camber, or its roll centre is not at its wheel centre');
 }
-console.log(`  M3: roll ${r.m3.roll.toFixed(3)} (formula ${r.m3.want.toFixed(3)}) · front share ${r.m3.kF.toFixed(4)} (${r.m3.wantKF.toFixed(4)})`);
-if (Math.abs(r.m3.roll - r.m3.want) > 1e-9 || Math.abs(r.m3.kF - r.m3.wantKF) > 1e-12) fails.push('the M3 roll or split is not the formula');
-const row = (n, x) => console.log(`  ${n.padEnd(22)} roll ${x.roll.toFixed(2)} deg/g · transfer ${(x.lltd * 100).toFixed(1)}% front · $${x.cost}${x.stock ? ' (factory)' : ''}`);
-row('M3 standard', r.base); row('front bar +1', r.barF1); row('front bar +2', r.barF2); row('rear bar +2', r.barR2);
-row('front springs +2', r.springF2); row('all STIFF +2', r.allStiff); row('all SOFT -2', r.allSoft);
-const step = r.barF1.lltd - r.base.lltd;
-if (!(step > 0.02 && step < 0.06)) fails.push(`a front bar step moves ${(step * 100).toFixed(1)}% of the transfer, not about 4%`);
-if (!(r.barF2.lltd > r.barF1.lltd && r.barR2.lltd < r.base.lltd && r.springF2.lltd > r.base.lltd)) fails.push('stiffer front springs or bars do not move the transfer forward, or a stiffer rear bar back');
-if (!(r.barF1.roll < r.base.roll && r.springF2.roll < r.base.roll)) fails.push('stiffening an axle does not reduce the roll');
-if (!(r.allStiff.roll < r.base.roll * 0.6 && r.allSoft.roll > r.base.roll * 1.5)) fails.push('the range of the steps is too narrow');
-if (!r.base.stock || r.barF1.stock || r.springF2.stock) fails.push('the springs and bars are not part of the factory fit');
-if (!(r.barF1.cost > r.base.cost && r.allStiff.cost > r.barF1.cost)) fails.push('springs and bars off STANDARD cost nothing');
-if (r.barF1.key === r.base.key) fails.push('the racing line cache does not see the bars');
-console.log(`  lap margin: standard ${(r.margin.base * 100).toFixed(2)}% · stiff front bar ${(r.margin.stiffFront * 100).toFixed(2)}% · soft ${(r.margin.softFront * 100).toFixed(2)}%`);
-if (!(r.margin.softFront < r.margin.base && r.margin.base < r.margin.stiffFront)) fails.push('the front bar does not move the lap balance');
-console.log(`  on SPORT: Alto Works ${r.alto.toFixed(2)} deg/g · 911 GT3 ${r.gt3.toFixed(2)} deg/g`);
-if (!(r.alto > r.gt3 * 1.5)) fails.push('a tall narrow kei car does not roll more than a low wide 911');
-if (!(r.oldSave.barF === '1' && r.oldSave.barR === '0' && r.oldSave.springF === '0' && !r.oldSave.stock)) fails.push('an old ROLL BALANCE does not become the front bar: ' + JSON.stringify(r.oldSave));
-if (r.refit !== '0,0,0,0') fails.push('REFIT does not put the springs and bars back: ' + r.refit);
-if (!/roll \d+\.\d°\/g/.test(r.summary)) fails.push('the summary does not show the roll');
-console.log(`  Greek: "${r.el.label}" · "${r.el.opt}" · "${r.el.soft}"`);
-if (r.el.label !== 'ΑΝΤΙΣΤΡΕΠΤΙΚΗ ΕΜΠΡΟΣ' || r.el.opt !== 'ΣΤΑΝΔΑΡ' || r.el.soft !== 'ΠΙΟ ΜΑΛΑΚΑ −2') fails.push('the springs and bars are not in Greek');
+console.log(`\n  M3 split ${r.split.lltd.toFixed(4)} (want ${r.split.want.toFixed(4)}; both roll centres on the ground ${r.split.ground.toFixed(4)} = roll stiffness ${r.split.kF.toFixed(4)})`);
+if (Math.abs(r.split.lltd - r.split.want) > 1e-9) fails.push('the load transfer split is not the roll centres plus the roll stiffness');
+if (Math.abs(r.split.ground - r.split.kF) > 1e-12) fails.push('roll centres on the ground do not give build 157\'s split');
+console.log(`  Golf GTI rear: multi-link ${(r.golf.lltd * 100).toFixed(1)}% front, $${r.golf.cost} · solid axle ${(r.golfSolid.lltd * 100).toFixed(1)}% front, $${r.golfSolid.cost}`);
+if (!(r.golfSolid.lltd < r.golf.lltd - 0.05)) fails.push('a solid rear axle does not move the transfer to the rear');
+if (!(r.golfSolid.camR === 0 && r.golf.camR < 0 && r.golfSolid.recR === 1)) fails.push('a solid axle keeps static camber or does not keep its wheels square');
+if (r.golfSolid.stock) fails.push('a converted axle still reads as the factory fit');
+if (!(r.golfSolid.cost > r.golf.cost)) fails.push('a conversion costs nothing');
+if (r.golfSolid.key === r.golf.key) fails.push('the racing line cache does not see the geometry');
+if (!/SOLID AXLE/.test(r.golfSolid.summary) || !/load transfer \d+% front/.test(r.golfSolid.summary)) fails.push('the summary does not show the geometry: ' + r.golfSolid.summary.slice(0, 200));
+console.log(`  camber factor at 1 g on COMFORT: strut ${r.camStrut.toFixed(4)} · wishbone ${r.camWish.toFixed(4)} · solid ${r.camSolid.toFixed(4)}`);
+if (!(r.camStrut < r.camWish && r.camWish < r.camSolid)) fails.push('a strut does not lose more camber in roll than a wishbone, and a wishbone than a solid axle');
+console.log(`  M3 front axle at 0.92 g: track +0 ${r.track.narrow.toFixed(4)} · +100 mm ${r.track.wide.toFixed(4)}`);
+if (!(r.track.wide > r.track.narrow && r.track.rearSame)) fails.push('a wider front track does not help the front alone');
+if (!(r.oldSave.f === 'strut' && r.oldSave.r === 'solid' && r.oldSave.stock)) fails.push('a save without geometry does not take the factory\'s: ' + JSON.stringify(r.oldSave));
+if (!(r.arch.f === 'strut' && r.arch.r === 'twist' && r.arch.tf === r.arch.track && r.arch.tr === r.arch.track)) fails.push('an archetype does not take its class geometry and track: ' + JSON.stringify(r.arch));
+if (r.arch.frontTwist || !r.arch.rearTwist) fails.push('the twist beam is offered at the front, or not at the rear');
+console.log(`  Greek: "${r.el.label}" · "${r.el.opt}"`);
+if (r.el.label !== 'ΓΕΩΜΕΤΡΙΑ ΕΜΠΡΟΣ' || r.el.opt !== 'ΠΟΛΛΑΠΛΩΝ ΒΡΑΧΙΟΝΩΝ' || !/Γεωμετρία/.test(r.el.summary)) fails.push('the geometry is not in Greek');
 
 console.log('\nERRORS:', errors.length ? errors : 'none');
 console.log(fails.length ? 'FAIL:\n  ' + fails.join('\n  ') : '\nPASS');

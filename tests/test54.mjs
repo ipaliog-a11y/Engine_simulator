@@ -71,7 +71,9 @@ const r = await page.evaluate(() => {
   // sanity checks with their own named anomaly list, in test60.
   out.mono = PRESETS.filter(p => !p.real && p.engine.intake === 'turbo').map(p => {   // archetypes; real engines: test60
     load(p.name); let prev = -1, bad = null;
-    for (let rpm = 1000; rpm <= engine.redline; rpm += 250) { const b = steadyBoost(rpm);
+    // (to a diesel's rated speed: past it the ECU takes the boost down with the governor's fuel, build 172)
+    const top = engine.ci && engine.govRpm > 0 ? engine.govRpm : engine.redline;
+    for (let rpm = 1000; rpm <= top; rpm += 250) { const b = steadyBoost(rpm);
       if (b < prev - 1e-3 && prev < engine.maxBoost - 1e-3) { bad = rpm; break; } prev = b; }
     return { n: p.name, bad };
   });
