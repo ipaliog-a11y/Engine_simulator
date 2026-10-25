@@ -56,7 +56,10 @@ const eng = await page.evaluate(() => {
     }
     // biggest torque step between adjacent 100-rpm samples
     let jump = 0, jumpRpm = 0;
+    // (not through a diesel's governed span, build 172: there the torque is taken down to nothing on purpose, a steady
+    // ramp that test93 checks, and a step measured against a torque near zero means nothing)
     for (let i = 1; i < curve.length; i++) {
+      if (engine.ci && engine.govRpm > 0 && curve[i].rpm > engine.govRpm) break;
       const j = Math.abs(curve[i].tq - curve[i - 1].tq) / Math.max(1, curve[i - 1].tq);
       if (j > jump) { jump = j; jumpRpm = curve[i].rpm; }
     }

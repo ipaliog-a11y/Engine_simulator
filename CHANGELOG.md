@@ -20,6 +20,60 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 Working toward **v1.0 — every number derived, not fitted.**
 
+### The diesel governor (build 172)
+
+- **A diesel made its peak power at its redline.** It was fuelled at its smoke limit (or its turbine's temperature
+  limit) all the way up, which no diesel does: the Cummins's 400 hp at 2800 rpm came out as 546 hp at 3500, and the
+  other diesels carried boost tapers, solved to their ratings, in place of what was missing.
+- **Every diesel has a governor.** From its rated speed (the breakpoint, where it makes its rated power) to its
+  governed maximum (high idle) the full-pedal fuel is taken away in proportion to the speed, until what is left only
+  holds the engine there unloaded (Bosch, Governors for Inline Injection Pumps; Cummins: the breakpoint is where the
+  governor begins to reduce torque below rated power, the span to high idle its droop). The share left at the
+  maximum is solved on the engine's own torque, which is zero there. The ECU's boost target follows the fuel it
+  injects (Bosch, Diesel-Engine Management), so it falls with the governor to none at the maximum; held at full-load
+  boost the lean, cold exhaust needed a closed turbine and the pumping loss ate the work.
+- **New design field DIESEL RATED SPEED (rpm, 0 = off)**; the governed maximum is the redline. The real diesels take
+  their makers' rated speeds: TDI 4000 (110 kW at 3500-4000), N57 4000, Duramax 2800 with GM's maximum powered speed
+  3450 as its redline (it was 3800, unsure), Cummins 2800. The archetypes take 0.81 of their limit, the L5P's ratio.
+  The diesel redline range now starts at 2000 rpm (truck diesels govern near 2100), in 50 rpm steps.
+- **Tapers re-solved** under the same rule as before (the gentlest from the torque peak that meets the rating): TDI
+  54 -> 44%, N57 58 -> 54%, Duramax 26 -> 51% (half the boost it threw away before). Each peaks at its rated speed
+  now: Duramax 445 hp at 2800 (real 445 at 2800), N57 254 at 3900 (254 at 4000), TDI 149 at 3600 (148 at 3500).
+- **The Cummins** peaks at its rated 2800 rpm (it was 3500) and makes 471 hp (546). No taper reaches its 400: its
+  1356 Nm is 25.4 bar BMEP, above the soft ceiling dieselImepLimit puts on a diesel (about 22-24 bar, from passenger
+  and built diesels), so its midrange is short (1219 Nm) and its top end high. A peak-cylinder-pressure limit derived
+  for heavy-duty engines is the next item.
+- **Tests:** test93 (new): the law (proportional to speed, the leaner mixture, the cooler exhaust, zero torque at the
+  maximum), every real diesel's peak at its rated speed, nothing changed below it, the field and the save.
+  test47 (torque steps), test52 (map against best-power torque) and test54 (boost never falls) stop at a diesel's rated
+  speed: past it the torque and the boost go to nothing on purpose, and a step or a ratio against a torque near zero
+  means nothing.
+
+### Automatic and dual-clutch shifts keep the drive; the 6.6 V8 diesel's turbo (build 171)
+
+- **The drive was cut on every upshift, whatever the gearbox**, for its shift time: right for a manual (clutch out)
+  and a sequential (ignition cut), wrong for a dual-clutch box and a planetary automatic. Those shift clutch to clutch:
+  the oncoming clutch takes the torque as the off-going one lets go (the torque phase), then slips while it pulls the
+  engine down to the new gear's speed, the ECU trimming the engine's torque to keep it smooth (the inertia phase). The
+  output never drops below the next gear's (GM's power-on upshift patents US 5046383, US 7762925, US 9327733; Goetz,
+  Levesley & Crolla, Proc IMechE D 219, 2005). GEARBOX.powershift marks them; their shift time stays as how long the
+  change takes, and they cut no drive, in the 0-100 and on the lap. The turbo no longer lifts through their shifts.
+- **The 13 automatic and dual-clutch real cars:** 330d 6.63 -> 5.94 s (real 5.6), Duramax 8.96 -> 7.81 (8.0), Hellcat
+  5.14 -> 4.69 (3.9; the rest of its gap is not the gearbox), the dual-clutch cars 0.04-0.12 s quicker. Across all 42
+  cars the 0-100 error is 10.6% -> 9.4%.
+- **test41 (calibration):** the M2's eight-speed is 21.6% -> 3.9% off, the GTI's DCT 9.8 -> 7.8%, the RMS 12.3% ->
+  8.3%. Both cars return to the default 8% cap and the budget comes down from 12.5 to 9.
+- **The driver at an apex.** Where the solve asks for a hair of slowdown on the grip limit (122-123-123 km/h), the
+  pedal target is zero for a point; the foot's corner averaging left those out and snapped the pedal shut. A drive cut
+  hid it on the 720S at Spa. Corner points asking for no drive are averaged in unless the brakes are working there.
+- **The 6.6 V8 Turbodiesel archetype** carried the medium frame (71 mm), the same as the 3.0 BMW six: at the limiter it
+  asked 111% of that compressor's choke flow. It now carries the large frame, as the Duramax of the same size does:
+  548 hp (468), the compressor at 76% of choke, the expansion ratio at the limiter 3.2 (4.7), half boost at 2167 rpm
+  (1605).
+- **Tests restated:** test82 finds a shift from the gear changing where the box keeps the drive (it looked for the
+  cut), judging those made while accelerating; test76's heavy-car line 900 -> 950 C (the Hellcat reaches Spa's braking
+  zones faster now: 886 -> 911 C).
+
 ### The GEAR RATIOS window (build 170)
 
 - **A window over the vehicle tab**, opened by GEAR RATIOS… beside GEAR SPACING: the spacing as buttons, a slider per
