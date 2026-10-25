@@ -401,7 +401,7 @@ table.fuelmap td.live{box-shadow:inset 0 0 0 2px #fff;font-weight:bold}
 <body>
 <div class="container">
 <header>
-<h1>PIXEL ENGINE SIM v0.6 build 170</h1>
+<h1>PIXEL ENGINE SIM v0.6 build 171</h1>
 <div class="subtitle" id="subtitle">ENGINE DESIGNER • BUILD IT, THEN DRIVE IT</div>
 </header>
 <div class="build-strip" id="buildStrip">
@@ -1969,7 +1969,7 @@ The lap is driven flat out, braking at the limit into every corner, as a profess
 </div>
 <div class="guide-see">See also: <a data-gp="performance">Performance tests</a> · <a data-gp="lapsolve">Solving a lap</a> · <a data-gp="tyres">Tyres &amp; grip</a></div>
 </section>
-<section class="guide-page" id="gp-suspension" data-cat="car" data-title="Suspension, roll &amp; camber" data-tags="suspension roll camber coilovers springs anti-roll" hidden>
+<section class="guide-page" id="gp-suspension" data-cat="car" data-title="Suspension, roll &amp; camber" data-tags="suspension roll camber coilovers springs anti-roll geometry strut wishbone multi-link twist beam solid axle roll centre track" hidden>
 <h4 class="guide-title">Suspension, roll &amp; camber</h4>
 <div class="gtier gt-real"><div class="gtier-h">LV1 · REAL LIFE</div>
 <canvas class="gart" data-art="roll"></canvas><div class="gart-cap">In a corner the body leans out, and the loaded outside tyre leans with it.</div>
@@ -1979,7 +1979,8 @@ Corner hard and the body <b>rolls</b> toward the outside. Soft suspension rolls 
 </div>
 <div class="gtier gt-game"><div class="gtier-h">LV2 · IN THE GAME</div>
 <div class="guide-body" data-gk="suspensionGame">
-<b>SUSPENSION</b> on the VEHICLE tab: comfort, sport, coilovers or race. Stiffer setups roll less and run more static negative camber.
+<b>SUSPENSION</b> on the VEHICLE tab: comfort, sport, coilovers or race. Stiffer setups roll less and run more static negative camber.<br>
+<b>FRONT GEOMETRY</b> and <b>REAR GEOMETRY</b> are the linkage at each end: MacPherson strut, double wishbone, multi-link, twist beam (rear only, it cannot steer) or solid axle. A real car comes with its own, and its own front and rear track; fitting another is a conversion and costs money.
 </div>
 </div>
 <div class="gtier gt-phys"><div class="gtier-h">LV3 · THE PHYSICS</div>
@@ -1987,14 +1988,28 @@ Corner hard and the body <b>rolls</b> toward the outside. Soft suspension rolls 
 <div class="gtab-wrap"><table class="gtab"><tr><th>setup</th><th>roll (deg per g)</th><th>static camber</th></tr>
 <tr><td>comfort</td><td>6.0</td><td>−0.5°</td></tr><tr><td>sport</td><td>4.0</td><td>−1.0°</td></tr>
 <tr><td>coilovers</td><td>2.5</td><td>−1.8°</td></tr><tr><td>race</td><td>1.5</td><td>−2.5°</td></tr></table></div>
-A tyre makes its most side force leaning about −1.5° into the turn and loses about 1.5% per degree either side. The loaded outside tyre's angle is the static camber plus the half of the body roll the geometry does not claw back:
-<span class="geq">camber<sub>loaded</sub> = camber<sub>static</sub> + ½ · roll<sub>per g</sub> · a<sub>y</sub>/g</span>
+A tyre makes its most side force leaning about −1.5° into the turn and loses about 1.5% per degree either side. The loaded outside tyre's angle is the static camber plus the share of the body roll its axle's geometry does not claw back (the recovery r):
+<span class="geq">camber<sub>loaded</sub> = camber<sub>static</sub> + (1 − r) · roll<sub>per g</sub> · a<sub>y</sub>/g</span>
 That replaced a fitted suspension grip multiplier: the grip difference between setups now comes from camber and load transfer.<br>
+<b>Geometry (build 171).</b> An independent wheel swings about its instant centre, seen from the front, so when the body rolls the outside wheel rises into bump and turns back by its travel over the swing-arm length: r = (t/2) / swing arm, from the axle's own track t.
+<div class="gtab-wrap"><table class="gtab"><tr><th>geometry</th><th>swing arm</th><th>recovery r</th><th>roll centre</th></tr>
+<tr><td>MacPherson strut</td><td>~3.0 m</td><td>~0.25</td><td>80 mm</td></tr>
+<tr><td>double wishbone</td><td>~1.6 m</td><td>~0.5</td><td>60 mm</td></tr>
+<tr><td>multi-link</td><td>~2.0 m</td><td>~0.4</td><td>100 mm</td></tr>
+<tr><td>twist beam</td><td>—</td><td>0.4</td><td>125 mm</td></tr>
+<tr><td>solid axle</td><td>—</td><td>1</td><td>wheel centre</td></tr></table></div>
+A solid axle keeps both wheels square to the road, so it needs no static camber and has none. A twist beam is two trailing arms (which recover nothing) tied by a beam (which recovers everything) about 40% of the way back.<br>
+The <b>roll centre</b> is where the linkage takes the axle's side force. The load transfer splits in two:
+<ul>
+<li>Each axle's own mass at its own roll centre pushes on its tyres through the links. A high roll centre puts transfer on its own axle: a solid rear axle loads the rear tyres.</li>
+<li>The rest is the body rolling about the line between the roll centres. That goes through the springs and bars, by the roll balance.</li>
+</ul>
+Each axle's transfer is taken across its own track, so a wider axle transfers less.<br>
 <b>Balance (build 157).</b> Each axle has its own grip:
 <ul>
 <li>its share of the weight and of the downforce</li>
-<li>its share of the load transfer (set by the anti-roll bars)</li>
-<li>its own tyres</li>
+<li>its share of the load transfer (set by the anti-roll bars and the roll centres), across its own track</li>
+<li>its own tyres, at the camber its geometry leaves them</li>
 </ul>
 In a steady corner each axle has to hold the mass it carries, so the car corners only as hard as the axle that runs out first allows.
 <ul>
@@ -2593,6 +2608,8 @@ Most other tests check behaviour that is true of real cars: a bigger turbo spool
 <div class="field"><label for="vhRotor">ROTOR SIZE (mm)</label><input type="number" id="vhRotor" min="250" max="420" step="10" value="330"></div>
 <div class="field"><label for="vhSteer">STEERING RATIO (:1)</label><input type="number" id="vhSteer" min="8" max="22" step="0.5" value="15"></div>
 <div class="field"><label for="vhSusp">SUSPENSION</label><select id="vhSusp"><option value="comfort">COMFORT</option><option value="sport">SPORT</option><option value="coilover">COILOVERS</option><option value="race">RACE/ADJUST</option></select></div>
+<div class="field"><label for="vhGeoF">FRONT GEOMETRY</label><select id="vhGeoF"><option value="strut">MACPHERSON STRUT</option><option value="wishbone">DOUBLE WISHBONE</option><option value="multilink">MULTI-LINK</option><option value="solid">SOLID AXLE</option></select></div>
+<div class="field"><label for="vhGeoR">REAR GEOMETRY</label><select id="vhGeoR"><option value="strut">MACPHERSON STRUT</option><option value="wishbone">DOUBLE WISHBONE</option><option value="multilink">MULTI-LINK</option><option value="twist">TWIST BEAM</option><option value="solid">SOLID AXLE</option></select></div>
 <div class="field"><label for="vhArb">ROLL BALANCE</label><select id="vhArb"><option value="-2">SOFT FRONT −2</option><option value="-1">SOFT FRONT −1</option><option value="0" selected>NEUTRAL</option><option value="1">STIFF FRONT +1</option><option value="2">STIFF FRONT +2</option></select></div>
 </div>
 <div class="build-row">
@@ -4283,7 +4300,7 @@ let activeChallenge='free';
 const I18N={
   'BALANCE':{el:'ΙΣΟΡΡΟΠΙΑ'},'NEUTRAL':{el:'ΟΥΔΕΤΕΡΗ'},'UNDERSTEER':{el:'ΥΠΟΣΤΡΟΦΗ'},'OVERSTEER':{el:'ΥΠΕΡΣΤΡΟΦΗ'},
   'front':{el:'εμπρός'},'rear':{el:'πίσω'},'limits':{el:'όριο'},
-  'ROLL BALANCE':{el:'ΙΣΟΡΡΟΠΙΑ ΚΛΙΣΗΣ'},'FRONT WIDTH (mm, 0 = same)':{el:'ΠΛΑΤΟΣ ΕΜΠΡΟΣ (mm, 0 = ίδιο)'},
+  'ROLL BALANCE':{el:'ΙΣΟΡΡΟΠΙΑ ΚΛΙΣΗΣ'},'FRONT GEOMETRY':{el:'ΓΕΩΜΕΤΡΙΑ ΕΜΠΡΟΣ'},'REAR GEOMETRY':{el:'ΓΕΩΜΕΤΡΙΑ ΠΙΣΩ'},'FRONT WIDTH (mm, 0 = same)':{el:'ΠΛΑΤΟΣ ΕΜΠΡΟΣ (mm, 0 = ίδιο)'},
   // RACE (build 137; 138)
   'DRIVER: BALANCED':{el:'ΟΔΗΓΟΣ: ΙΣΟΡΡΟΠΗΜΕΝΟΣ'},'DRIVER: AGGRESSIVE':{el:'ΟΔΗΓΟΣ: ΕΠΙΘΕΤΙΚΟΣ'},'DRIVER: SMOOTH':{el:'ΟΔΗΓΟΣ: ΣΤΡΩΤΟΣ'},'DRIVER: RAIN MASTER':{el:'ΟΔΗΓΟΣ: ΤΗΣ ΒΡΟΧΗΣ'},'DRIVER: ROOKIE':{el:'ΟΔΗΓΟΣ: ΑΡΧΑΡΙΟΣ'},'BALANCED':{el:'ΙΣΟΡΡΟΠΗΜΕΝΟΣ'},'AGGRESSIVE':{el:'ΕΠΙΘΕΤΙΚΟΣ'},'SMOOTH':{el:'ΣΤΡΩΤΟΣ'},'RAIN MASTER':{el:'ΤΗΣ ΒΡΟΧΗΣ'},'ROOKIE':{el:'ΑΡΧΑΡΙΟΣ'},'dives down the inside of':{el:'βουτάει από μέσα στον'},'runs wide trying to pass':{el:'ανοίγει προσπαθώντας να περάσει τον'},'defends from':{el:'αμύνεται απέναντι στον'},'DEFENDING':{el:'ΑΜΥΝΕΤΑΙ'},
   'Leave full screen':{el:'Έξοδος από πλήρη οθόνη'},'Full screen':{el:'Πλήρης οθόνη'},
@@ -4618,7 +4635,8 @@ const I18N={
   'SPLITTER':{el:'SPLITTER'},'FRONT WING':{el:'ΕΜΠΡΟΣ ΑΕΡΟΤΟΜΗ'},'LIP SPOILER':{el:'ΧΕΙΛΟΣ SPOILER'},'REAR WING':{el:'ΠΙΣΩ ΑΕΡΟΤΟΜΗ'},
   'UNDERTRAY':{el:'ΕΠΙΠΕΔΟ ΠΑΤΩΜΑ'},'DIFFUSER':{el:'DIFFUSER'},
   'STEEL DISC':{el:'ΧΑΛΥΒΔΙΝΟΙ ΔΙΣΚΟΙ'},'SLOTTED/VENTED':{el:'ΑΥΛΑΚΩΤΟΙ/ΑΕΡΙΖΟΜΕΝΟΙ'},'BIG BRAKE KIT':{el:'ΜΕΓΑΛΟ ΚΙΤ ΦΡΕΝΩΝ'},
-  'CARBON-CERAMIC':{el:'ΚΕΡΑΜΙΚΟΙ ΑΝΘΡΑΚΑ'},'HEAVY-DUTY':{el:'ΒΑΡΕΩΣ ΤΥΠΟΥ'},'COMFORT':{el:'ΑΝΕΣΗΣ'},'COILOVERS':{el:'COILOVERS'},'RACE/ADJUST':{el:'ΑΓΩΝΙΣΤΙΚΗ/ΡΥΘΜΙΖΟΜΕΝΗ'},
+  'CARBON-CERAMIC':{el:'ΚΕΡΑΜΙΚΟΙ ΑΝΘΡΑΚΑ'},'HEAVY-DUTY':{el:'ΒΑΡΕΩΣ ΤΥΠΟΥ'},'COMFORT':{el:'ΑΝΕΣΗΣ'},'MACPHERSON STRUT':{el:'ΓΟΝΑΤΟ MACPHERSON'},'DOUBLE WISHBONE':{el:'ΔΙΠΛΑ ΨΑΛΙΔΙΑ'},'MULTI-LINK':{el:'ΠΟΛΛΑΠΛΩΝ ΒΡΑΧΙΟΝΩΝ'},
+  'TWIST BEAM':{el:'ΣΤΡΕΠΤΙΚΗ ΔΟΚΟΣ'},'SOLID AXLE':{el:'ΑΚΑΜΠΤΟΣ ΑΞΟΝΑΣ'},'COILOVERS':{el:'COILOVERS'},'RACE/ADJUST':{el:'ΑΓΩΝΙΣΤΙΚΗ/ΡΥΘΜΙΖΟΜΕΝΗ'},
   'DIGITAL':{el:'ΨΗΦΙΑΚΑ'},'ANALOG':{el:'ΑΝΑΛΟΓΙΚΑ'},
   'SOFT FRONT −2':{el:'ΜΑΛΑΚΗ ΕΜΠΡΟΣ −2'},'SOFT FRONT −1':{el:'ΜΑΛΑΚΗ ΕΜΠΡΟΣ −1'},'STIFF FRONT +1':{el:'ΣΚΛΗΡΗ ΕΜΠΡΟΣ +1'},'STIFF FRONT +2':{el:'ΣΚΛΗΡΗ ΕΜΠΡΟΣ +2'},
   '2-STR':{el:'ΔΙΧΡ.'},'ROTARY':{el:'ΠΕΡΙΣΤΡΟΦΙΚΟΣ'},
@@ -4642,7 +4660,7 @@ const I18N={
   'Test-bench schematic of a {d} litre {t} engine':{el:'Σχηματικό πάγκου δοκιμών: κινητήρας {d} λίτρων, {t}'},
   // the vehicle summary and the performance grid
   '-speed':{el:'-τάχυτο'},'Curb weight':{el:'Βάρος'},'engine':{el:'κινητήρας'},'Body':{el:'Αμάξωμα'},'class':{el:'κατηγορίας'},
-  'wheelbase':{el:'μεταξόνιο'},'grip':{el:'πρόσφυση'},'Brakes':{el:'Φρένα'},'Susp':{el:'Ανάρτηση'},
+  'wheelbase':{el:'μεταξόνιο'},'grip':{el:'πρόσφυση'},'Brakes':{el:'Φρένα'},'Susp':{el:'Ανάρτηση'},'Geometry':{el:'Γεωμετρία'},'track width':{el:'μετατρόχιο'},'load transfer':{el:'μεταφορά φορτίου'},
   'Gearbox':{el:'Κιβώτιο'},'shift':{el:'αλλαγή'},'driveline':{el:'μετάδοση'},'converter stall':{el:'stall μετατροπέα'},
   'Diff':{el:'Διαφορικό'},'puts down':{el:'αξιοποιεί το'},'of axle grip':{el:'της πρόσφυσης του άξονα'},
   'free top speed':{el:'ελεύθερη τελική'},'traction control':{el:'έλεγχος πρόσφυσης'},'wheelspin':{el:'σπινάρισμα'},'s to 100':{el:'s ως τα 100'},
@@ -5028,8 +5046,8 @@ const GUIDE_I18N={
   brakesPhys:{el:"Η <b>δύναμη</b> έρχεται από τα υδραυλικά: ανά τροχό, δύο τακάκια × μ τακακιού × πίεση γραμμής (περίπου 100 bar σε φρενάρισμα έκτακτης ανάγκης) × επιφάνεια εμβόλου × την ενεργό ακτίνα (0.4 της διαμέτρου του δίσκου), διά την ακτίνα του ελαστικού. Η επιβράδυνση χτίζεται σε περίπου 0.2 s (Limpert). Το σταμάτημα είναι το μικρότερο ανάμεσα στην πρόσφυση του ελαστικού και τη δύναμη του φρένου.<br> Η <b>θερμότητα που μπαίνει</b> είναι η ισχύς που βγάζουν τα φρένα από το αυτοκίνητο, <i>m · a · v</i>, μοιρασμένη με τα φορτία των αξόνων στο φρενάρισμα, 90% στους δίσκους, των οποίων η μάζα είναι ο δακτύλιος τριβής (αεριζόμενος σε κάθε μπροστινό δίσκο, συμπαγής πίσω στα πιο απλά κιτ) και το σιδερένιο καπέλο που τον βιδώνει στην πλήμνη, περίπου ένα πέμπτο παραπάνω. Η <b>θερμότητα που βγαίνει</b> (Limpert): μεταφορά από τις επιφάνειες, <i>h = 0.04 (k/D) Re<sup>0.8</sup></i> στην ταχύτητα του αυτοκινήτου· μέσα από τα πτερύγια ενός αεριζόμενου δίσκου, μια φυγοκεντρική αντλία που μετακινεί αέρα με <i>0.0158 · n · √(D<sub>o</sub>² − D<sub>i</sub>²)</i>, με συντελεστή τουλάχιστον τον μετρημένο <i>0.076 · n</i> W/m²K (27, 53 και 78 W/m²K στις 342, 684 και 1025 rpm σε δίσκο με ακτινικά πτερύγια)· και ακτινοβολία. Η τριβή των τακακιών πέφτει από τη θερμοκρασία έναρξής τους (δρόμου 400 °C, επιδόσεων 550, πίστας 650, κεραμικά άνθρακα 1000) ως 35% μέσα σε 150 °C. Ένας γύρος ξεκινά τους δίσκους από τη θερμοκρασία περιβάλλοντος και τρέχει έναν γύρο προετοιμασίας πριν από τον χρονομετρημένο γρήγορο γύρο."},
   brakesLimit:{el:"Ο γύρος οδηγείται στο όριο, με φρενάρισμα στο όριο σε κάθε στροφή, όπως θα έκανε ένας επαγγελματίας σε έναν γύρο κατατακτήριων. Τα ελαφριά αυτοκίνητα και τα μικρά φρένα βγαίνουν εκεί όπου μετριούνται τα πραγματικά στην πίστα (300–550 °C σε μικρή πίστα, ως ~650 °C σε γρήγορη)· τα βαριά, γρήγορα αυτοκίνητα σε μεγάλες γρήγορες πίστες (ένα Hellcat ή μια E46 M3 στο Spa) πάνε τους δίσκους τους στους 750–900 °C και εξασθενούν, όπως τα πραγματικά όταν οδηγούνται τόσο σκληρά. Οι μετρήσεις σε track days συνήθως βγαίνουν χαμηλότερες, 450–600 °C στον πυρήνα, γιατί οι περισσότεροι οδηγοί φρενάρουν νωρίτερα και πιο μαλακά από το όριο."},
   suspensionReal:{el:"Στρίψε δυνατά και το αμάξωμα <b>γέρνει</b> προς τα έξω. Η μαλακή ανάρτηση γέρνει πολύ, που είναι άνετο στις λακκούβες αλλά γέρνει το εξωτερικό ελαστικό (αυτό που κάνει τη μεγαλύτερη δουλειά) πάνω στην άκρη του. Το <b>κάμπερ</b> είναι η κλίση του ελαστικού όπως φαίνεται από μπροστά: τα αγωνιστικά βάζουν τους τροχούς να γέρνουν προς τα μέσα στο πάνω μέρος (αρνητικό κάμπερ), ώστε όταν γέρνει το αμάξωμα το φορτωμένο ελαστικό να καταλήγει να πατά επίπεδο στον δρόμο."},
-  suspensionGame:{el:"<b>ΑΝΑΡΤΗΣΗ</b> στην καρτέλα ΟΧΗΜΑ: ανέσεως, σπορ, coilovers ή αγωνιστική. Οι πιο σκληρές ρυθμίσεις γέρνουν λιγότερο και έχουν περισσότερο στατικό αρνητικό κάμπερ."},
-  suspensionPhys:{el:"<div class=\"gtab-wrap\"><table class=\"gtab\"><tbody><tr><th>ρύθμιση</th><th>κλίση (μοίρες ανά g)</th><th>στατικό κάμπερ</th></tr> <tr><td>ανέσεως</td><td>6.0</td><td>−0.5°</td></tr><tr><td>σπορ</td><td>4.0</td><td>−1.0°</td></tr> <tr><td>coilovers</td><td>2.5</td><td>−1.8°</td></tr><tr><td>αγωνιστική</td><td>1.5</td><td>−2.5°</td></tr></tbody></table></div> Ένα ελαστικό βγάζει τη μεγαλύτερη πλευρική δύναμη γέρνοντας περίπου −1.5° μέσα στη στροφή και χάνει περίπου 1.5% ανά μοίρα από κάθε πλευρά. Η γωνία του φορτωμένου εξωτερικού ελαστικού είναι το στατικό κάμπερ συν το μισό της κλίσης του αμαξώματος που δεν ανακτά η γεωμετρία: <span class=\"geq\">κάμπερ<sub>loaded</sub> = κάμπερ<sub>static</sub> + ½ · κλίση<sub>per g</sub> · a<sub>y</sub>/g</span> Αυτό αντικατέστησε έναν προσαρμοσμένο πολλαπλασιαστή πρόσφυσης της ανάρτησης: η διαφορά πρόσφυσης ανάμεσα στις ρυθμίσεις βγαίνει πλέον από το κάμπερ και τη μεταφορά φορτίου.<br> <b>Ισορροπία (build 157).</b> Κάθε άξονας έχει τη δική του πρόσφυση: <ul> <li>το μερίδιό του στο βάρος και στην κάθετη δύναμη</li> <li>το μερίδιό του στη μεταφορά φορτίου (που ορίζουν οι αντιστρεπτικές δοκοί)</li> <li>τα δικά του ελαστικά</li> </ul> Σε μια σταθερή στροφή κάθε άξονας πρέπει να κρατήσει τη μάζα που σηκώνει, οπότε το αυτοκίνητο στρίβει μόνο τόσο δυνατά όσο επιτρέπει ο άξονας που τελειώνει πρώτος. <ul> <li><b>Τελειώνει πρώτα ο μπροστινός: υποστροφή.</b> Αυτό είναι ένα αυτοκίνητο βαρύ μπροστά, γιατί τα πολύ φορτωμένα μπροστινά ελαστικά του πιάνουν λιγότερο ανά κιλό.</li> <li><b>Τελειώνει πρώτα ο πίσω: υπερστροφή.</b> Αυτό είναι μια 911 με πίσω κινητήρα.</li> </ul> Τρόποι να μετακινήσεις την ισορροπία: <ul> <li>Η <b>ΙΣΟΡΡΟΠΙΑ ΚΛΙΣΗΣ</b> μετακινεί 4% της μεταφοράς φορτίου ανά βήμα. Σκληρότερες μπροστινές δοκοί παίρνουν πρόσφυση από μπροστά (περισσότερη υποστροφή)· πιο μαλακές μπροστά τη δίνουν πίσω.</li> <li>Το <b>ΠΛΑΤΟΣ ΕΜΠΡΟΣ</b> βάζει στενότερα ή φαρδύτερα μπροστινά. Τα στενά μπροστινά και τα φαρδιά πίσω ενός αυτοκινήτου με κεντρικό κινητήρα είναι αυτά που το κρατούν από την υπερστροφή.</li> <li>Το <b>φρενάρισμα</b> μετακινεί φορτίο προς τα μπροστά, οπότε φρενάροντας μέσα σε μια στροφή τελειώνει πρώτος ο πίσω. Ο γύρος δεν φρενάρει εκεί πιο δυνατά απ' όσο μπορεί ο πίσω να κρατήσει τη στροφή.</li> </ul> Η ΠΙΣΤΑ δείχνει ποιος άξονας ορίζει το όριο στις στροφές."},
+  suspensionGame:{el:"<b>ΑΝΑΡΤΗΣΗ</b> στην καρτέλα ΟΧΗΜΑ: ανέσεως, σπορ, coilovers ή αγωνιστική. Οι πιο σκληρές ρυθμίσεις γέρνουν λιγότερο και έχουν περισσότερο στατικό αρνητικό κάμπερ.<br> Η <b>ΓΕΩΜΕΤΡΙΑ ΕΜΠΡΟΣ</b> και η <b>ΓΕΩΜΕΤΡΙΑ ΠΙΣΩ</b> είναι οι σύνδεσμοι σε κάθε άκρο: γόνατο MacPherson, διπλά ψαλίδια, πολλαπλών βραχιόνων, στρεπτική δοκός (μόνο πίσω, δεν στρίβει) ή άκαμπτος άξονας. Ένα πραγματικό αυτοκίνητο έρχεται με τη δική του, και με το δικό του μετατρόχιο εμπρός και πίσω· η τοποθέτηση άλλης είναι μετατροπή και κοστίζει."},
+  suspensionPhys:{el:"<div class=\"gtab-wrap\"><table class=\"gtab\"><tbody><tr><th>ρύθμιση</th><th>κλίση (μοίρες ανά g)</th><th>στατικό κάμπερ</th></tr> <tr><td>ανέσεως</td><td>6.0</td><td>−0.5°</td></tr><tr><td>σπορ</td><td>4.0</td><td>−1.0°</td></tr> <tr><td>coilovers</td><td>2.5</td><td>−1.8°</td></tr><tr><td>αγωνιστική</td><td>1.5</td><td>−2.5°</td></tr></tbody></table></div> Ένα ελαστικό βγάζει τη μεγαλύτερη πλευρική δύναμη γέρνοντας περίπου −1.5° μέσα στη στροφή και χάνει περίπου 1.5% ανά μοίρα από κάθε πλευρά. Η γωνία του φορτωμένου εξωτερικού ελαστικού είναι το στατικό κάμπερ συν το μέρος της κλίσης του αμαξώματος που δεν ανακτά η γεωμετρία του άξονά του (η ανάκτηση r): <span class=\"geq\">κάμπερ<sub>loaded</sub> = κάμπερ<sub>static</sub> + (1 − r) · κλίση<sub>per g</sub> · a<sub>y</sub>/g</span> Αυτό αντικατέστησε έναν προσαρμοσμένο πολλαπλασιαστή πρόσφυσης της ανάρτησης: η διαφορά πρόσφυσης ανάμεσα στις ρυθμίσεις βγαίνει πλέον από το κάμπερ και τη μεταφορά φορτίου.<br> <b>Γεωμετρία (build 171).</b> Ένας ανεξάρτητος τροχός περιστρέφεται γύρω από το στιγμιαίο κέντρο του, όπως φαίνεται από μπροστά, οπότε όταν γέρνει το αμάξωμα ο εξωτερικός τροχός ανεβαίνει και γυρίζει πίσω κατά τη διαδρομή του διά το μήκος του βραχίονα: r = (t/2) / βραχίονας, από το μετατρόχιο t του άξονα. <div class=\"gtab-wrap\"><table class=\"gtab\"><tbody><tr><th>γεωμετρία</th><th>βραχίονας</th><th>ανάκτηση r</th><th>κέντρο κλίσης</th></tr> <tr><td>γόνατο MacPherson</td><td>~3.0 m</td><td>~0.25</td><td>80 mm</td></tr> <tr><td>διπλά ψαλίδια</td><td>~1.6 m</td><td>~0.5</td><td>60 mm</td></tr> <tr><td>πολλαπλών βραχιόνων</td><td>~2.0 m</td><td>~0.4</td><td>100 mm</td></tr> <tr><td>στρεπτική δοκός</td><td>—</td><td>0.4</td><td>125 mm</td></tr> <tr><td>άκαμπτος άξονας</td><td>—</td><td>1</td><td>κέντρο τροχού</td></tr></tbody></table></div> Ένας άκαμπτος άξονας κρατά και τους δύο τροχούς κάθετους στον δρόμο, οπότε δεν χρειάζεται στατικό κάμπερ και δεν έχει. Η στρεπτική δοκός είναι δύο συρόμενοι βραχίονες (που δεν ανακτούν τίποτα) δεμένοι με μια δοκό (που ανακτά τα πάντα) περίπου στο 40% της απόστασης προς τα πίσω.<br> Το <b>κέντρο κλίσης</b> είναι εκεί όπου οι σύνδεσμοι παίρνουν την πλευρική δύναμη του άξονα. Η μεταφορά φορτίου χωρίζεται στα δύο: <ul> <li>Η μάζα κάθε άξονα, στο δικό του κέντρο κλίσης, πιέζει τα ελαστικά του μέσα από τους συνδέσμους. Ψηλό κέντρο κλίσης βάζει μεταφορά στον δικό του άξονα: ένας άκαμπτος πίσω άξονας φορτώνει τα πίσω ελαστικά.</li> <li>Το υπόλοιπο είναι το αμάξωμα που γέρνει γύρω από τη γραμμή ανάμεσα στα κέντρα κλίσης. Αυτό περνά από τα ελατήρια και τις δοκούς, με την ισορροπία κλίσης.</li> </ul> Η μεταφορά κάθε άξονα μοιράζεται στο δικό του μετατρόχιο, οπότε ένας φαρδύτερος άξονας μεταφέρει λιγότερο.<br> <b>Ισορροπία (build 157).</b> Κάθε άξονας έχει τη δική του πρόσφυση: <ul> <li>το μερίδιό του στο βάρος και στην κάθετη δύναμη</li> <li>το μερίδιό του στη μεταφορά φορτίου (που ορίζουν οι αντιστρεπτικές δοκοί και τα κέντρα κλίσης), στο δικό του μετατρόχιο</li> <li>τα δικά του ελαστικά, στο κάμπερ που τους αφήνει η γεωμετρία του</li> </ul> Σε μια σταθερή στροφή κάθε άξονας πρέπει να κρατήσει τη μάζα που σηκώνει, οπότε το αυτοκίνητο στρίβει μόνο τόσο δυνατά όσο επιτρέπει ο άξονας που τελειώνει πρώτος. <ul> <li><b>Τελειώνει πρώτα ο μπροστινός: υποστροφή.</b> Αυτό είναι ένα αυτοκίνητο βαρύ μπροστά, γιατί τα πολύ φορτωμένα μπροστινά ελαστικά του πιάνουν λιγότερο ανά κιλό.</li> <li><b>Τελειώνει πρώτα ο πίσω: υπερστροφή.</b> Αυτό είναι μια 911 με πίσω κινητήρα.</li> </ul> Τρόποι να μετακινήσεις την ισορροπία: <ul> <li>Η <b>ΙΣΟΡΡΟΠΙΑ ΚΛΙΣΗΣ</b> μετακινεί 4% της μεταφοράς φορτίου ανά βήμα. Σκληρότερες μπροστινές δοκοί παίρνουν πρόσφυση από μπροστά (περισσότερη υποστροφή)· πιο μαλακές μπροστά τη δίνουν πίσω.</li> <li>Το <b>ΠΛΑΤΟΣ ΕΜΠΡΟΣ</b> βάζει στενότερα ή φαρδύτερα μπροστινά. Τα στενά μπροστινά και τα φαρδιά πίσω ενός αυτοκινήτου με κεντρικό κινητήρα είναι αυτά που το κρατούν από την υπερστροφή.</li> <li>Το <b>φρενάρισμα</b> μετακινεί φορτίο προς τα μπροστά, οπότε φρενάροντας μέσα σε μια στροφή τελειώνει πρώτος ο πίσω. Ο γύρος δεν φρενάρει εκεί πιο δυνατά απ' όσο μπορεί ο πίσω να κρατήσει τη στροφή.</li> </ul> Η ΠΙΣΤΑ δείχνει ποιος άξονας ορίζει το όριο στις στροφές."},
   performanceReal:{el:"Τα περιοδικά αυτοκινήτου συγκρίνουν αυτοκίνητα με μερικές πρότυπες δοκιμές: <b>0–100 km/h</b> (0–62 mph), τον χρόνο και την ταχύτητα εξόδου στο <b>τέταρτο του μιλίου</b> (400 m), την <b>τελική ταχύτητα</b>, και την απόσταση φρεναρίσματος <b>100–0</b>. Γίνονται σε επίπεδη, στεγνή πίστα από έναν καλό οδηγό, που είναι αυτό που προσομοιώνει η εφαρμογή."},
   performancePhys:{el:"Η δοκιμή ολοκληρώνεται σε μικρά χρονικά βήματα μέσα από το κιβώτιο: <span class=\"geq\">m<sub>eff</sub> · dv/dt = min(F<sub>engine</sub>, F<sub>traction</sub>) − ½ρC<sub>d</sub>A v² − c<sub>rr</sub>(v) m g</span> Η δύναμη του κινητήρα βγαίνει από τον χάρτη ροπής στροφών × boost με τον άξονα του τούρμπο να ολοκληρώνεται μαζί με το αυτοκίνητο (η εκκίνηση ξεκινά με λίγο προφόρτωμα, όπως κάνει το brake-boosting). Η εκκίνηση γλιστρά έναν συμπλέκτη διαστασιολογημένο για τον κινητήρα, ή κάνει stall τον μετατροπέα. Οι αλλαγές προς τα πάνω κόβουν την κίνηση για τον χρόνο αλλαγής του κιβωτίου. Η πρόσφυση περιλαμβάνει μεταφορά βάρους, κάθετη δύναμη και το διαφορικό. Το φρενάρισμα τρέχει το μοντέλο θερμότητας φρένων από κρύα.<br> Ελεγμένο απέναντι σε πραγματικά αυτοκίνητα με ταιριαστή ισχύ, μάζα, μετάδοση και κιβώτιο, το 0–100 είναι μέσα σε 9.68% RMS σε έξι αυτοκίνητα και η τελική ταχύτητα μέσα σε 6.5% RMS σε επτά (δες <a data-gp=\"calibration\">Πώς ελέγχουμε με την πραγματικότητα</a>)."},
   // build 162: The track + Scoring + Options & reference
@@ -5383,31 +5401,31 @@ const CAT={
 // carbon-ceramics and a full wing/diffuser package — which the user can then tune from.
 const CHASSIS={
   kei:      {label:'KEI CAR',           mass:640, area:1.85,cd:0.34,wb:2.40,cg:0.52,fWt:0.60,track:1.30,drive:'fwd',aero:0.4,cost:5000,
-             fit:{tire:'eco',  tw:165,ta:60,wheel:15,brake:'steel',  rotor:260,susp:'comfort', aF:'none',    aR:'none',aFl:'none',     weight:'none',  gears:5,gearing:44,gearbox:'manual',diff:'open'}},
+             fit:{tire:'eco',  tw:165,ta:60,wheel:15,brake:'steel',  rotor:260,susp:'comfort', aF:'none',    aR:'none',aFl:'none',     weight:'none',  gears:5,gearing:44,gearbox:'manual',diff:'open',geoF:'strut',geoR:'twist'}},
   hatch:    {label:'HOT HATCH',         mass:1080,area:2.10,cd:0.32,wb:2.60,cg:0.52,fWt:0.62,track:1.53,drive:'fwd',aero:0.6,cost:8000,
-             fit:{tire:'sport',tw:205,ta:45,wheel:17,brake:'slotted',rotor:300,susp:'sport',   aF:'none',    aR:'none',aFl:'none',     weight:'none',  gears:6,gearing:50,gearbox:'manual',diff:'open'}},
+             fit:{tire:'sport',tw:205,ta:45,wheel:17,brake:'slotted',rotor:300,susp:'sport',   aF:'none',    aR:'none',aFl:'none',     weight:'none',  gears:6,gearing:50,gearbox:'manual',diff:'open',geoF:'strut',geoR:'twist'}},
   roadster: {label:'LIGHT ROADSTER',    mass:980, area:1.90,cd:0.35,wb:2.30,cg:0.46,fWt:0.52,track:1.42,drive:'rwd',aero:0.6,cost:9000,
-             fit:{tire:'sport',tw:195,ta:50,wheel:16,brake:'slotted',rotor:290,susp:'sport',   aF:'none',    aR:'none',aFl:'none',     weight:'street',gears:6,gearing:52,gearbox:'manual',diff:'visc'}},
+             fit:{tire:'sport',tw:195,ta:50,wheel:16,brake:'slotted',rotor:290,susp:'sport',   aF:'none',    aR:'none',aFl:'none',     weight:'street',gears:6,gearing:52,gearbox:'manual',diff:'visc',geoF:'wishbone',geoR:'wishbone'}},
   coupe:    {label:'SPORTS COUPE',      mass:1200,area:2.05,cd:0.31,wb:2.65,cg:0.48,fWt:0.54,track:1.55,drive:'rwd',aero:0.8,cost:11000,
-             fit:{tire:'sport',tw:245,ta:40,wheel:18,brake:'slotted',rotor:330,susp:'sport',   aF:'none',    aR:'lip', aFl:'none',     weight:'none',  gears:6,gearing:52,gearbox:'manual',diff:'clsd'}},
+             fit:{tire:'sport',tw:245,ta:40,wheel:18,brake:'slotted',rotor:330,susp:'sport',   aF:'none',    aR:'lip', aFl:'none',     weight:'none',  gears:6,gearing:52,gearbox:'manual',diff:'clsd',geoF:'strut',geoR:'multilink'}},
   sedan:    {label:'SPORTS SEDAN',      mass:1420,area:2.20,cd:0.29,wb:2.85,cg:0.52,fWt:0.55,track:1.56,drive:'rwd',aero:0.7,cost:12000,
-             fit:{tire:'sport',tw:245,ta:40,wheel:18,brake:'slotted',rotor:330,susp:'sport',   aF:'none',    aR:'none',aFl:'none',     weight:'none',  gears:7,gearing:56,gearbox:'auto',diff:'visc'}},
+             fit:{tire:'sport',tw:245,ta:40,wheel:18,brake:'slotted',rotor:330,susp:'sport',   aF:'none',    aR:'none',aFl:'none',     weight:'none',  gears:7,gearing:56,gearbox:'auto',diff:'visc',geoF:'strut',geoR:'multilink'}},
   muscle:   {label:'MUSCLE CAR',        mass:1620,area:2.25,cd:0.36,wb:2.95,cg:0.50,fWt:0.56,track:1.60,drive:'rwd',aero:0.5,cost:13000,
-             fit:{tire:'sport',tw:275,ta:40,wheel:18,brake:'big',    rotor:340,susp:'sport',   aF:'none',    aR:'none',aFl:'none',     weight:'none',  gears:6,gearing:48,gearbox:'auto',diff:'clsd'}},
+             fit:{tire:'sport',tw:275,ta:40,wheel:18,brake:'big',    rotor:340,susp:'sport',   aF:'none',    aR:'none',aFl:'none',     weight:'none',  gears:6,gearing:48,gearbox:'auto',diff:'clsd',geoF:'wishbone',geoR:'solid'}},
   rally:    {label:'RALLY AWD HATCH',   mass:1300,area:2.15,cd:0.34,wb:2.60,cg:0.52,fWt:0.58,track:1.52,drive:'awd',aero:0.7,cost:14000,
-             fit:{tire:'sport',tw:225,ta:45,wheel:17,brake:'slotted',rotor:320,susp:'coilover',aF:'splitter',aR:'lip', aFl:'none',     weight:'street',gears:6,gearing:50,gearbox:'manual',diff:'clsd'}},
+             fit:{tire:'sport',tw:225,ta:45,wheel:17,brake:'slotted',rotor:320,susp:'coilover',aF:'splitter',aR:'lip', aFl:'none',     weight:'street',gears:6,gearing:50,gearbox:'manual',diff:'clsd',geoF:'strut',geoR:'strut'}},
   gt:       {label:'GRAND TOURER',      mass:1580,area:2.15,cd:0.30,wb:2.90,cg:0.48,fWt:0.52,track:1.63,drive:'rwd',aero:0.9,cost:20000,
-             fit:{tire:'sport',tw:265,ta:35,wheel:19,brake:'big',    rotor:350,susp:'coilover',aF:'splitter',aR:'lip', aFl:'none',     weight:'none',  gears:7,gearing:58,gearbox:'dct',diff:'clsd'}},
+             fit:{tire:'sport',tw:265,ta:35,wheel:19,brake:'big',    rotor:350,susp:'coilover',aF:'splitter',aR:'lip', aFl:'none',     weight:'none',  gears:7,gearing:58,gearbox:'dct',diff:'clsd',geoF:'wishbone',geoR:'multilink'}},
   super:    {label:'MID-ENGINE SUPER',  mass:1340,area:1.95,cd:0.33,wb:2.65,cg:0.44,fWt:0.42,track:1.67,drive:'rwd',aero:1.2,cost:30000,
-             fit:{tire:'semi', tw:285,ta:35,wheel:19,brake:'big',    rotor:360,susp:'coilover',aF:'splitter',aR:'wing',aFl:'undertray',weight:'sport', gears:7,gearing:54,gearbox:'dct',diff:'clsd'}},
+             fit:{tire:'semi', tw:285,ta:35,wheel:19,brake:'big',    rotor:360,susp:'coilover',aF:'splitter',aR:'wing',aFl:'undertray',weight:'sport', gears:7,gearing:54,gearbox:'dct',diff:'clsd',geoF:'wishbone',geoR:'wishbone'}},
   hyper:    {label:'CARBON HYPERCAR',   mass:1240,area:1.92,cd:0.35,wb:2.70,cg:0.44,fWt:0.44,track:1.70,drive:'awd',aero:1.6,cost:60000,
-             fit:{tire:'semi', tw:305,ta:30,wheel:20,brake:'carbon', rotor:390,susp:'race',    aF:'wing',    aR:'wing',aFl:'diffuser', weight:'sport', gears:7,gearing:56,gearbox:'dct',diff:'clsd'}},
+             fit:{tire:'semi', tw:305,ta:30,wheel:20,brake:'carbon', rotor:390,susp:'race',    aF:'wing',    aR:'wing',aFl:'diffuser', weight:'sport', gears:7,gearing:56,gearbox:'dct',diff:'clsd',geoF:'wishbone',geoR:'wishbone'}},
   proto:    {label:'TRACK PROTOTYPE',   mass:620, area:1.55,cd:0.60,wb:2.80,cg:0.32,fWt:0.46,track:1.75,drive:'rwd',aero:3.0,cost:45000,
-             fit:{tire:'slick',tw:305,ta:30,wheel:18,brake:'carbon', rotor:380,susp:'race',    aF:'wing',    aR:'wing',aFl:'diffuser', weight:'race',  gears:6,gearing:50,gearbox:'sequential',diff:'spool'}},
+             fit:{tire:'slick',tw:305,ta:30,wheel:18,brake:'carbon', rotor:380,susp:'race',    aF:'wing',    aR:'wing',aFl:'diffuser', weight:'race',  gears:6,gearing:50,gearbox:'sequential',diff:'spool',geoF:'wishbone',geoR:'wishbone'}},
   pickup:   {label:'PICKUP TRUCK',      mass:2050,area:3.20,cd:0.45,wb:3.60,cg:0.68,fWt:0.58,track:1.75,drive:'rwd',aero:0.2,cost:11000,
-             fit:{tire:'eco',  tw:265,ta:65,wheel:17,brake:'hd',     rotor:330,susp:'comfort', aF:'none',    aR:'none',aFl:'none',     weight:'none',  gears:6,gearing:42,gearbox:'auto',diff:'open'}},
+             fit:{tire:'eco',  tw:265,ta:65,wheel:17,brake:'hd',     rotor:330,susp:'comfort', aF:'none',    aR:'none',aFl:'none',     weight:'none',  gears:6,gearing:42,gearbox:'auto',diff:'open',geoF:'wishbone',geoR:'solid'}},
   suv:      {label:'PERFORMANCE SUV',   mass:1950,area:2.95,cd:0.36,wb:2.95,cg:0.66,fWt:0.54,track:1.65,drive:'awd',aero:0.4,cost:16000,
-             fit:{tire:'sport',tw:275,ta:45,wheel:20,brake:'big',    rotor:350,susp:'sport',   aF:'none',    aR:'none',aFl:'none',     weight:'none',  gears:8,gearing:48,gearbox:'auto',diff:'visc'}}
+             fit:{tire:'sport',tw:275,ta:45,wheel:20,brake:'big',    rotor:350,susp:'sport',   aF:'none',    aR:'none',aFl:'none',     weight:'none',  gears:8,gearing:48,gearbox:'auto',diff:'visc',geoF:'wishbone',geoR:'multilink'}}
 };
 // Real cars, paired with their factory engine from PRESETS. A chassis archetype is a class; a real car
 // is one member of it with its own BODY: curb mass (kg, with the engine and fluids), the measured
@@ -5621,7 +5639,7 @@ function vehicleFromPreset(p){
     tireType:fit.tire,tireWidth:fit.tw,tireWidthF:fit.twF||0,arbBal:0,tireAspect:fit.ta,wheelDia:fit.wheel,
     aeroFront:fit.aF,aeroRear:fit.aR,aeroFloor:fit.aFl,weightRed:fit.weight,
     brakeType:fit.brake,rotor:fit.rotor,suspension:fit.susp,speedRating:rating,governor:fit.gov,limitKmh:fit.gov||250,
-    tc:fit.tc!==false,spacing:'stock',
+    tc:fit.tc!==false,spacing:'stock',suspFront:(SUSP_REAL[p.name]||{}).f||fit.geoF,suspRear:(SUSP_REAL[p.name]||{}).r||fit.geoR,
     body:Object.assign({name:p.name,fit},p.body)};
 }
 // ================================================================================================
@@ -5833,6 +5851,82 @@ const SUSPENSION={
   coilover:{label:'COILOVERS',  roll:2.5,camber:-1.8,cost:3200},
   race:    {label:'RACE/ADJUST',roll:1.5,camber:-2.5,cost:6500}
 };
+// Suspension geometry, each axle its own (build 171). Two things separate the types in a corner:
+//   camber recovery — the share of the body roll the linkage claws back at the loaded outside wheel. An independent
+//     wheel swings about its front-view instant centre, so rolling the body by phi moves the wheel phi*t/2 into bump
+//     and turns it back by (phi*t/2)/fvsa: recovery = (t/2)/fvsa, from the axle's own track t and the front-view
+//     swing-arm length fvsa (Milliken & Milliken, RCVD ch. 17). A strut's near-horizontal arm and tall strut put the
+//     instant centre far out (~3 m: a quarter back); unequal wishbones bring it in (~1.6 m: about half); a road
+//     multi-link sits between (~2 m). A solid axle keeps both wheels square to the road: all of it. A twist beam is
+//     two trailing arms (none of it) tied by a beam (all of it) about 40% of the way back from the pivots.
+//   roll centre (m) — the height at which the linkage takes the axle's side force. The load transfer of the mass
+//     over the axle at that height goes through the links, not the springs, so a high roll centre puts more of the
+//     car's transfer on its own axle. Independents 0.06-0.10 at ride height (rear independents 80-150 mm, twist
+//     beams 100-150: Wang et al., K&C of a torsion beam suspension, VEHITS 2019); a solid axle's Panhard rod, Watt's
+//     link or leaf springs locate it at its own wheel centre (rc null: the rolling radius).
+//   front:false — a twist beam cannot steer. cost — fitting it where the car did not have it.
+const SUSP_GEO={
+  strut:    {label:'MACPHERSON STRUT',fvsa:3.0,rc:0.08, front:true, cost:2500},
+  wishbone: {label:'DOUBLE WISHBONE', fvsa:1.6,rc:0.06, front:true, cost:5500},
+  multilink:{label:'MULTI-LINK',      fvsa:2.0,rc:0.10, front:true, cost:4500},
+  twist:    {label:'TWIST BEAM',      recov:0.4,rc:0.125,front:false,cost:1500},
+  solid:    {label:'SOLID AXLE',      recov:1,  rc:null, front:true, cost:2000}
+};
+// The real cars' suspension (front, rear) and front and rear track (m). Sources: maker sheets where found
+// (BMW media 2012, Porsche US 2021, GM, Nissan heritage), spec databases (carsales/Redbook, carexpert, conceptcarz,
+// lambocars, encycarpedia, auto-data) where not; unsure marks a single weak source or sources that disagree.
+const SUSP_REAL={
+  'Suzuki Alto Works (HA36S, 2015)':{f:'strut',r:'twist',tf:1.295,tr:1.300,unsure:true},
+  'Toyota Aygo 1.0 (2014)':{f:'strut',r:'twist',tf:1.430,tr:1.420},
+  'Fiat 500 TwinAir 85 (2011)':{f:'strut',r:'twist',tf:1.413,tr:1.407},
+  'Ford Fiesta 1.0 EcoBoost 125 (2013)':{f:'strut',r:'twist',tf:1.473,tr:1.461},
+  'VW Golf GTI (Mk7, 2013)':{f:'strut',r:'multilink',tf:1.533,tr:1.514},
+  'Toyota GR Yaris (2020)':{f:'strut',r:'wishbone',tf:1.535,tr:1.565},
+  'Honda Civic Type R (FK8, 2017)':{f:'strut',r:'multilink',tf:1.600,tr:1.593,unsure:true},
+  'Mazda MX-5 1.6 (NA, 1989)':{f:'wishbone',r:'wishbone',tf:1.405,tr:1.420},
+  'Toyota Corolla Levin GT-APEX (AE86)':{f:'strut',r:'solid',tf:1.355,tr:1.345},
+  'Honda S2000 (AP1, 2000)':{f:'wishbone',r:'wishbone',tf:1.470,tr:1.510},
+  'BMW M3 (E46, 2000)':{f:'strut',r:'multilink',tf:1.508,tr:1.525},
+  'Porsche 911 GT3 (991.2, 2017)':{f:'strut',r:'multilink',tf:1.551,tr:1.555},
+  'Toyota Supra RZ (A80, 1993)':{f:'wishbone',r:'wishbone',tf:1.520,tr:1.525},
+  'Nissan Skyline GT-R V-spec (R34, 1999)':{f:'multilink',r:'multilink',tf:1.480,tr:1.490},
+  'Subaru Impreza WRX STI (GD, 2004)':{f:'strut',r:'strut',tf:1.490,tr:1.500,unsure:true},
+  'Mitsubishi Lancer Evolution IX (2006)':{f:'strut',r:'multilink',tf:1.515,tr:1.515},
+  'Audi RS3 Sportback (8V, 2017)':{f:'strut',r:'multilink',tf:1.559,tr:1.528},
+  'Chevrolet Corvette (C6, LS3, 2008)':{f:'wishbone',r:'wishbone',tf:1.577,tr:1.542},
+  'Chevrolet Corvette Z06 (C6, 2006)':{f:'wishbone',r:'wishbone',tf:1.607,tr:1.580,unsure:true},
+  'Ford Mustang GT (2018)':{f:'strut',r:'multilink',tf:1.582,tr:1.648},
+  'Dodge Challenger SRT Hellcat (2015)':{f:'wishbone',r:'multilink',tf:1.625,tr:1.618},
+  'Ferrari F355 Berlinetta (1994)':{f:'wishbone',r:'wishbone',tf:1.514,tr:1.615},
+  'Lamborghini Diablo VT (1993)':{f:'wishbone',r:'wishbone',tf:1.540,tr:1.640},
+  'McLaren F1 (1994)':{f:'wishbone',r:'wishbone',tf:1.567,tr:1.473},
+  'Porsche 911 Turbo (993, 1995)':{f:'strut',r:'multilink',tf:1.411,tr:1.504,unsure:true},
+  'Ferrari Enzo (2002)':{f:'wishbone',r:'wishbone',tf:1.660,tr:1.650},
+  'Porsche Carrera GT (2004)':{f:'wishbone',r:'wishbone',tf:1.612,tr:1.587},
+  'Ford GT (2005)':{f:'wishbone',r:'wishbone',tf:1.600,tr:1.618},
+  'Lamborghini Murciélago LP640 (2006)':{f:'wishbone',r:'wishbone',tf:1.635,tr:1.695},
+  'Ferrari 458 Italia (2010)':{f:'wishbone',r:'multilink',tf:1.672,tr:1.606},
+  'Lamborghini Huracán LP610-4 (2014)':{f:'wishbone',r:'wishbone',tf:1.668,tr:1.620},
+  'McLaren 720S (2017)':{f:'wishbone',r:'wishbone',tf:1.674,tr:1.629},
+  'Ferrari 812 Superfast (2017)':{f:'wishbone',r:'multilink',tf:1.672,tr:1.645,unsure:true},
+  'Porsche 911 Turbo S (992, 2020)':{f:'strut',r:'multilink',tf:1.583,tr:1.600},
+  'Lamborghini Huracán STO (2021)':{f:'wishbone',r:'wishbone',tf:1.688,tr:1.647,unsure:true},
+  'Chevrolet Corvette Z06 (C8, 2023)':{f:'wishbone',r:'wishbone',tf:1.685,tr:1.678},
+  'McLaren 750S (2023)':{f:'wishbone',r:'wishbone',tf:1.680,tr:1.629},
+  'Mazda RX-7 (FD, 1993)':{f:'wishbone',r:'wishbone',tf:1.460,tr:1.460},
+  'Mazda RX-8 (2004)':{f:'wishbone',r:'multilink',tf:1.496,tr:1.506},
+  'VW Golf 2.0 TDI 150 (Mk7, 2013)':{f:'strut',r:'multilink',tf:1.549,tr:1.520,unsure:true},
+  'BMW 330d (F30, 2012)':{f:'strut',r:'multilink',tf:1.543,tr:1.582},
+  'Chevrolet Silverado 2500HD Duramax (2020)':{f:'wishbone',r:'solid',tf:1.745,tr:1.716}
+};
+// The factory geometry of a car record: a real car's own, else its archetype's. Saves from before build 171 carry
+// none and take it from here, as their body's name still finds the car.
+function factoryGeo(v){
+  const r=v&&v.body&&SUSP_REAL[v.body.name];if(r)return {f:r.f,r:r.r};
+  const f=(CHASSIS[v&&v.chassis]||CHASSIS.coupe).fit;return {f:f.geoF||'strut',r:f.geoR||'multilink'};
+}
+// One axle's camber recovery: (t/2)/fvsa for an independent wheel, the type's own figure otherwise.
+function geoRecovery(g,track){return g.recov!=null?g.recov:clamp(track/2/g.fvsa,0,1);}
 // ---- tyre grip from load (build 109) ----
 // A tyre's friction coefficient falls as it is loaded harder — load sensitivity: about 10% less mu each
 // time the load doubles, mu = mu_ref (Fz/Fz_ref)^-0.15. The compound's mu (TIRE_TYPE) is taken at 60%
@@ -5844,7 +5938,8 @@ const SUSPENSION={
 const LOAD_SENS=0.15, TYRE_RATED_KG_M3=16300, TYRE_REF_SHARE=0.6, ARB_STEP=0.04;
 // Camber: a tyre makes its most lateral force leaning slightly into the turn, ~-1.5 deg, and loses ~1.5%
 // of it per degree either side. The loaded outside tyre's angle is the static camber plus the body roll
-// the suspension geometry does not claw back (about half).
+// the suspension geometry does not claw back. Until build 171 that was half for every car; now each axle's own
+// geometry sets it (SUSP_GEO), and CAMBER_RECOVERY stays only for a car object built without one.
 const CAMBER_RECOVERY=0.5, CAMBER_LOSS=0.015, CAMBER_BEST=-1.5;
 // The load-sensitivity curve (Fz/FzRef)^-LOAD_SENS, tabulated and interpolated: this is the lap solver's most-called
 // function (a third of the time on a long circuit, build 157) and Math.pow its cost. 16384 steps over 0.05-8 times the
@@ -5887,7 +5982,8 @@ function corneringDrag(m,ay,N){return m*m*ay*ay/(Math.max(1,N)*TYRE_CC);}
 // roll camber. In a steady corner each axle must make the side force for the mass it carries (front: m ay fWt),
 // so the car corners only as hard as the axle that runs out first allows: the front (understeer) or the rear
 // (oversteer). Until build 157 the four tyres' grip was pooled, so no car could be out of balance.
-function latCamberF(ay){return 1-CAMBER_LOSS*Math.abs(vehicle.camber+vehicle.rollGrad*Math.abs(ay)/G*(1-CAMBER_RECOVERY)-CAMBER_BEST);}
+// Build 171: per axle, its own static camber and the share of the roll its geometry recovers (SUSP_GEO).
+function latCamberF(ay,camber,recov){return 1-CAMBER_LOSS*Math.abs(camber+vehicle.rollGrad*Math.abs(ay)/G*(1-recov)-CAMBER_BEST);}
 // one axle's two tyres at normal load Nax with lateral transfer d across them (N)
 function axleLatCap(Nax,d,FzRef){
   const F=Nax/2,o=F+d,inr=Math.max(0,F-d);
@@ -5897,8 +5993,12 @@ function latBalance(N,ay,dn,ax){
   const m=vehicle.mass,fWt=vehicle.fWt||0.55,aF=vehicle.aeroBal!=null?vehicle.aeroBal:0.5,lt=vehicle.lltdF!=null?vehicle.lltdF:fWt;
   const tr=ax||0;   // longitudinal load transfer onto the front (N): braking +, accelerating -
   const Nf=clamp((N-(dn||0))*fWt+(dn||0)*aF+tr,0.05*N,0.95*N),Nr=N-Nf;
-  const dW=m*Math.abs(ay)*vehicle.cg/Math.max(0.8,vehicle.track),cam=latCamberF(ay);
-  const capF=axleLatCap(Nf,dW*lt,vehicle.FzRefF)*cam,capR=axleLatCap(Nr,dW*(1-lt),vehicle.FzRef)*cam;
+  // the transfer's roll moment m ay h, shared by the roll balance and taken across each axle's own track (build 171)
+  const M=m*Math.abs(ay)*vehicle.cg,tF=vehicle.trackF||vehicle.track,tR=vehicle.trackR||vehicle.track;
+  const rF=vehicle.camRecF!=null?vehicle.camRecF:CAMBER_RECOVERY,rR=vehicle.camRecR!=null?vehicle.camRecR:CAMBER_RECOVERY;
+  const cF=vehicle.camberF!=null?vehicle.camberF:vehicle.camber,cR=vehicle.camberR!=null?vehicle.camberR:vehicle.camber;
+  const capF=axleLatCap(Nf,M*lt/Math.max(0.8,tF),vehicle.FzRefF)*latCamberF(ay,cF,rF),
+        capR=axleLatCap(Nr,M*(1-lt)/Math.max(0.8,tR),vehicle.FzRef)*latCamberF(ay,cR,rR);
   // the lateral acceleration each axle alone would allow, as a share of N
   const muF=capF/Math.max(1,fWt*N),muR=capR/Math.max(1,(1-fWt)*N);
   return {mu:Math.min(muF,muR),muF,muR,capF,capR,Nf,Nr};
@@ -7738,6 +7838,8 @@ function readVehicleFromForm(){
     tireAspect:clamp(Math.round(+g('vhTireA').value||40),25,70),wheelDia:clamp(Math.round(+g('vhWheel').value||18),13,22),
     aeroFront:g('vhAeroF').value,aeroRear:g('vhAeroR').value,aeroFloor:g('vhAeroFl').value,weightRed:g('vhWeight').value,
     brakeType:g('vhBrake').value,rotor:clamp(Math.round(+g('vhRotor').value||330),250,420),suspension:g('vhSusp').value,
+    // each axle's geometry (build 171)
+    suspFront:g('vhGeoF').value,suspRear:g('vhGeoR').value,
     speedRating:g('vhRating').value,body:vehBody,
     // Steering-wheel turns per road-wheel turn. Only the live-timing wheel reads it; the lap does not.
     steerRatio:clamp(numOr(g('vhSteer').value,15),8,22),
@@ -7775,6 +7877,7 @@ function applyVehicleToForm(v){
   g('vhTire').value=v.tireType||'sport';g('vhTireW').value=v.tireWidth||235;g('vhTireWF').value=v.tireWidthF||0;g('vhArb').value=String(v.arbBal||0);g('vhTireA').value=v.tireAspect||40;g('vhWheel').value=v.wheelDia||18;
   g('vhAeroF').value=v.aeroFront||'none';g('vhAeroR').value=v.aeroRear||'none';g('vhAeroFl').value=v.aeroFloor||'none';g('vhWeight').value=v.weightRed||'none';
   g('vhBrake').value=v.brakeType||'slotted';g('vhRotor').value=v.rotor||330;g('vhSusp').value=v.suspension||'sport';
+  {const fg=factoryGeo(v);g('vhGeoF').value=SUSP_GEO[v.suspFront]?v.suspFront:fg.f;g('vhGeoR').value=SUSP_GEO[v.suspRear]?v.suspRear:fg.r;}   // saves from before build 171 carry none
   g('vhSteer').value=v.steerRatio||15;   // saves from before build 130 carry none
   updateGearingLabel();
 }
@@ -7797,6 +7900,7 @@ function applyChassisFit(key,body){
   g('vhTC').value=f.tc===false?'off':'on';   // a real car's traction control is factory equipment (build 154)
   g('vhAeroF').value=f.aF;g('vhAeroR').value=f.aR;g('vhAeroFl').value=f.aFl;g('vhWeight').value=f.weight;
   g('vhBrake').value=f.brake;g('vhRotor').value=f.rotor;g('vhSusp').value=f.susp;
+  {const fg=factoryGeo({chassis:key,body});g('vhGeoF').value=fg.f;g('vhGeoR').value=fg.r;}
   updateGearingLabel();
   return ch;
 }
@@ -8068,12 +8172,18 @@ function isFactoryFit(v){
   return v.drive===(v.body?f.drive:ch.drive)&&(v.governor||0)===(f.gov||0)&&(v.tc!==false)===(f.tc!==false)&&v.gears===f.gears&&v.gearing===f.gearing&&v.spacing===(v.body?'stock':'std')&&!(v.finalDriveSet>0)&&v.gearbox===f.gearbox&&v.diff===f.diff&&
     v.tireType===f.tire&&v.tireWidth===f.tw&&(v.tireWidthF||0)===(f.twF||0)&&(v.arbBal||0)===0&&v.tireAspect===f.ta&&v.wheelDia===f.wheel&&
     v.aeroFront===f.aF&&v.aeroRear===f.aR&&v.aeroFloor===f.aFl&&v.weightRed===f.weight&&
-    v.brakeType===f.brake&&v.rotor===f.rotor&&v.suspension===f.susp;
+    v.brakeType===f.brake&&v.rotor===f.rotor&&v.suspension===f.susp&&geoStock(v);
 }
+// Both axles on the factory's geometry (build 171); a save from before carries none, which is the factory's.
+function geoStock(v){const fg=factoryGeo(v);return (v.suspFront||fg.f)===fg.f&&(v.suspRear||fg.r)===fg.r;}
 function computeVehicleCost(ch,tt,wr){
   let c=ch.cost+tt.cost+wr.cost;
   c+=(AERO_COST[vehicle.aeroFront]||0)+(AERO_COST[vehicle.aeroRear]||0)+(AERO_COST[vehicle.aeroFloor]||0);
   c+=(BRAKE_TYPE[vehicle.brakeType]||BRAKE_TYPE.slotted).cost+(SUSPENSION[vehicle.suspension]||SUSPENSION.sport).cost;
+  // a geometry the car was not built with is a conversion: new subframe mounts, arms and uprights
+  {const fg=factoryGeo(vehicle);
+   if(vehicle.suspFront&&vehicle.suspFront!==fg.f)c+=(SUSP_GEO[vehicle.suspFront]||{cost:0}).cost;
+   if(vehicle.suspRear&&vehicle.suspRear!==fg.r)c+=(SUSP_GEO[vehicle.suspRear]||{cost:0}).cost;}
   c+=Math.max(0,vehicle.rotor-320)*6;
   c+={fwd:0,rwd:800,awd:2500}[vehicle.drive]||0;
   c+=(GEARBOX[vehicle.gearbox]||GEARBOX.manual).cost+(DIFF[vehicle.diff]||DIFF.open).cost;
@@ -8113,6 +8223,18 @@ function buildVehicle(){
   vehicle.brakeDecelCap=brakeForceCap(vehicle)/vehicle.mass;
   vehicle.wb=body?body.wb:ch.wb;vehicle.cg=ch.cg;vehicle.area=body?body.area:ch.area;
   vehicle.track=(body&&body.track)||ch.track;
+  // Each axle's own track and geometry (build 171): a real car's published front and rear tracks, else the archetype's
+  // for both. The camber the outside wheel wins back from the roll follows the axle's track (geoRecovery); a solid axle
+  // carries no static camber, the axle sets it; a solid axle's roll centre is its own wheel centre.
+  {const sr=body&&SUSP_REAL[body.name],fg=factoryGeo(vehicle);
+   vehicle.trackF=sr?sr.tf:vehicle.track;vehicle.trackR=sr?sr.tr:vehicle.track;
+   vehicle.track=(vehicle.trackF+vehicle.trackR)/2;
+   if(!SUSP_GEO[vehicle.suspFront])vehicle.suspFront=fg.f;
+   if(!SUSP_GEO[vehicle.suspRear])vehicle.suspRear=fg.r;
+   const gF=SUSP_GEO[vehicle.suspFront],gR=SUSP_GEO[vehicle.suspRear];
+   vehicle.camRecF=geoRecovery(gF,vehicle.trackF);vehicle.camRecR=geoRecovery(gR,vehicle.trackR);
+   vehicle.camberF=vehicle.suspFront==='solid'?0:susp.camber;vehicle.camberR=vehicle.suspRear==='solid'?0:susp.camber;
+   vehicle.rcF=gF.rc!=null?gF.rc:vehicle.rTire;vehicle.rcR=gR.rc!=null?gR.rc:vehicle.rTire;}
   // The headline mu (summary, g-meter): the tyre's, at the car's own weight shared over four tyres.
   vehicle.mu=tyreMu(vehicle.mass*G/4);
   // The weight split moves with an engine swap, by the difference in engine mass at the engine's
@@ -8133,11 +8255,17 @@ function buildVehicle(){
   vehicle.aeroBal=vehicle.clA>0?clF/vehicle.clA:0.5;   // share of the downforce on the front axle
   // the driven axle's share of the weight (static) and of the downforce
   vehicle.drivenWt=vehicle.drive==='awd'?1:vehicle.drive==='rwd'?1-vehicle.fWt:vehicle.fWt;
-  // Roll balance (build 157): the front's share of the lateral load transfer. Neutral is the car's weight split
-  // (each axle's tyres then carry the same share of the transfer as of the weight); stiffer front anti-roll bars move
-  // transfer forward, which costs the front grip (understeer), stiffer rear bars move it back (oversteer). Each step
-  // of ROLL BALANCE is 4% of the transfer.
-  vehicle.lltdF=clamp(vehicle.fWt+ARB_STEP*(vehicle.arbBal||0),0.25,0.8);
+  // Roll balance (build 157): the front's share of the lateral load transfer. Build 171 splits the transfer m ay h in two
+  // (Milliken & Milliken, RCVD ch. 18). Each axle's own mass, at its own roll centre, pushes on its tyres through the
+  // links: fWt zF at the front, (1 - fWt) zR at the rear, so a high roll centre puts transfer on its own axle. What is
+  // left is the body rolling about the roll axis (the line through the two roll centres, at fWt zF + (1 - fWt) zR under
+  // the centre of mass), and that goes through the springs and anti-roll bars by their stiffness split: the car's
+  // weight split at NEUTRAL (each axle's tyres then carry the same share of it as of the weight), 4% a step of ROLL
+  // BALANCE. Stiffer front bars move transfer forward, which costs the front grip (understeer); stiffer rear bars move
+  // it back (oversteer). With both roll centres on the ground this is build 157's split.
+  {const fw=vehicle.fWt,zAx=fw*vehicle.rcF+(1-fw)*vehicle.rcR,arm=Math.max(0,vehicle.cg-zAx);
+   vehicle.rollKF=clamp(fw+ARB_STEP*(vehicle.arbBal||0),0.25,0.8);
+   vehicle.lltdF=clamp((arm*vehicle.rollKF+fw*vehicle.rcF)/Math.max(0.05,arm+zAx),0.15,0.85);}
   vehicle.drivenAero=vehicle.drive==='awd'?1:vehicle.drive==='rwd'?1-vehicle.aeroBal:vehicle.aeroBal;
   vehicle.cdA=((body?body.cd:ch.cd)+af.cd+ar.cd+al.cd)*vehicle.area;  // drag coefficient·area
   const gb=GEARBOX[vehicle.gearbox]||GEARBOX.manual,df=DIFF[vehicle.diff]||DIFF.open;
@@ -9146,6 +9274,7 @@ function carLineKey(){
   const v=vehicle,s=engine.score||{};
   return [v.mass,v.muRef,v.FzRef,v.clA,v.cdA,v.aeroBal,v.drivenAero,v.drivenWt,v.track,v.tireWidth,v.cg,v.wb,v.fWt,
     v.finalDrive,(v.ratios||[]).join('/'),v.driveEff,v.drive,v.diff,v.brakeDecelCap,v.governor,v.tc,v.camber,v.rollGrad,
+    v.trackF,v.trackR,v.lltdF,v.FzRefF,v.camRecF,v.camRecR,v.camberF,v.camberR,
     s.peakHP,s.peakTQ,engine.redline].map(x=>typeof x==='number'?+x.toFixed(4):x).join('|');
 }
 function lineFor(T,key){
@@ -10568,6 +10697,8 @@ function updateVehicleSummary(){
     (vehicle.body?'<br>'+tr('Body')+' <b>'+tr(CHASSIS[vehicle.chassis].label)+'</b> '+tr('class')+' • Cd '+vehicle.body.cd.toFixed(2)+' × '+vehicle.area.toFixed(2)+' m² • '+tr('wheelbase')+' '+vehicle.wb.toFixed(2)+' m • '+Math.round(vehicle.fWt*100)+'% '+tr('front'):'')+
     '<br>'+tr('Tyres')+' <b>'+tr((TIRE_TYPE[vehicle.tireType]||TIRE_TYPE.sport).label)+'</b> '+vehicle.tireWidth+'/'+vehicle.tireAspect+' R'+vehicle.wheelDia+' • '+tr('grip')+' μ<b>'+vehicle.mu.toFixed(2)+'</b>'+
     '<br>'+tr('Brakes')+' <b>'+tr((BRAKE_TYPE[vehicle.brakeType]||BRAKE_TYPE.slotted).label)+'</b> '+vehicle.rotor+'mm ('+(vehicle.brakeDecelCap/G).toFixed(2)+'g) • '+tr('Susp')+' <b>'+trOpt((SUSPENSION[vehicle.suspension]||SUSPENSION.sport).label)+'</b>'+
+    '<br>'+tr('Geometry')+' <b>'+trOpt(SUSP_GEO[vehicle.suspFront].label)+'</b> / <b>'+trOpt(SUSP_GEO[vehicle.suspRear].label)+'</b> • '+
+    tr('track width')+' '+vehicle.trackF.toFixed(2)+' / '+vehicle.trackR.toFixed(2)+' m • '+tr('load transfer')+' '+Math.round(vehicle.lltdF*100)+'% '+tr('front')+
     '<br>'+tr('Gearbox')+' <b>'+tr(vehicle.gbLabel)+'</b> • '+tr('shift')+' '+(vehicle.shiftTime*1000).toFixed(0)+' ms • '+tr('driveline')+' '+(vehicle.driveEff*100).toFixed(0)+'%'+(vehicle.gb.stall?' • '+tr('converter stall')+' '+vehicle.gb.stall+' rpm ×'+vehicle.gb.mult.toFixed(1):'')+
     '<br>'+tr('Diff')+' <b>'+tr(vehicle.diffLabel)+'</b> • '+tr('puts down')+' '+(vehicle.diffTraction*100).toFixed(0)+'% '+tr('of axle grip')+
     '<br>'+tr('Speed limiter')+' <b>'+(vehicle.governor>0?vehicle.governor+' km/h':tr('removed'))+'</b>'+(perf&&perf.governed?' • '+tr('free top speed')+' '+Math.round(perf.freeSpeed)+' km/h':'')+
@@ -12349,6 +12480,7 @@ function lapVehicleRows(){
     ['Grip coefficient','μ '+v.mu.toFixed(2)],
     ['Brakes',(BRAKE_TYPE[v.brakeType]||{}).label+' '+v.rotor+' mm  ('+(v.brakeDecelCap/G).toFixed(2)+' g)'],
     ['Suspension',(SUSPENSION[v.suspension]||{}).label],
+    ['Geometry',(SUSP_GEO[v.suspFront]||{}).label+' / '+(SUSP_GEO[v.suspRear]||{}).label],
     ['Aero',(v.clA>0.01?'ClA '+v.clA.toFixed(2)+' m²':'no downforce')+'  ·  CdA '+v.cdA.toFixed(2)+' m²'],
     ['Build cost',fmtCost(v.cost+(e.cost||0))]
   ];
@@ -16009,7 +16141,7 @@ function bindControls(){
     try{localStorage.setItem('pes.gauges',lapReplay.gauges);}catch(err){}});
   // Vehicle design: recompute performance live on any change. Picking a chassis fits its whole
   // factory spec (drivetrain, gearbox, tyres/wheels, brakes, suspension, aero, weight).
-  ['vhChassis','vhDrive','vhGearbox','vhDiff','vhGears','vhSpacing','vhGearing','vhLimiter','vhLimitKmh','vhTC','vhRating','vhTire','vhTireW','vhTireWF','vhArb','vhTireA','vhWheel','vhAeroF','vhAeroR','vhAeroFl','vhWeight','vhBrake','vhRotor','vhSusp','vhSteer'].forEach(id=>{
+  ['vhChassis','vhDrive','vhGearbox','vhDiff','vhGears','vhSpacing','vhGearing','vhLimiter','vhLimitKmh','vhTC','vhRating','vhTire','vhTireW','vhTireWF','vhArb','vhTireA','vhWheel','vhAeroF','vhAeroR','vhAeroFl','vhWeight','vhBrake','vhRotor','vhSusp','vhGeoF','vhGeoR','vhSteer'].forEach(id=>{
     const el=document.getElementById(id);if(!el)return;
     el.addEventListener('input',()=>{
       if(id==='vhChassis'){

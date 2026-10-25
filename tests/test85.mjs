@@ -33,9 +33,12 @@ const r = await page.evaluate(() => {
   const N = vehicle.mass * 9.81, ay = 9;
   const st = latBalance(N, ay, 0, 0), br = latBalance(N, ay, 0, vehicle.mass * 8 * vehicle.cg / vehicle.wb);
   out.axles = { stF: st.muF, stR: st.muR, brF: br.muF, brR: br.muR };
-  // a symmetric car: same tyres, 50/50, no downforce, neutral bars: the axles run out together
-  const sv = { fWt: vehicle.fWt, lltdF: vehicle.lltdF, FzRefF: vehicle.FzRefF };
+  // a symmetric car: same tyres, 50/50, no downforce, neutral bars, the same track and geometry at both ends
+  // (build 171): the axles run out together
+  const sv = { fWt: vehicle.fWt, lltdF: vehicle.lltdF, FzRefF: vehicle.FzRefF, trackF: vehicle.trackF, trackR: vehicle.trackR,
+    camRecF: vehicle.camRecF, camRecR: vehicle.camRecR, camberF: vehicle.camberF, camberR: vehicle.camberR };
   vehicle.fWt = 0.5; vehicle.lltdF = 0.5; vehicle.FzRefF = vehicle.FzRef;
+  vehicle.trackF = vehicle.trackR; vehicle.camRecF = vehicle.camRecR; vehicle.camberF = vehicle.camberR;
   const sym = latBalance(N, ay, 0, 0); out.sym = { F: sym.muF, R: sym.muR };
   Object.assign(vehicle, sv);
   // the readout

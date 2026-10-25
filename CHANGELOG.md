@@ -20,6 +20,44 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 Working toward **v1.0 — every number derived, not fitted.**
 
+### Suspension geometry per axle (build 171)
+
+- **FRONT GEOMETRY and REAR GEOMETRY** on VEHICLE: MacPherson strut, double wishbone, multi-link, twist beam (rear
+  only, it cannot steer) or solid axle. Until now the setup (COMFORT … RACE) was the whole suspension, the camber
+  the geometry won back from the roll was half for every car (`CAMBER_RECOVERY`), and front and rear shared one
+  track. Fitting a geometry the car was not built with is a conversion: it costs, and the car reads *(modified)*.
+- **Camber recovery from the geometry.** An independent wheel swings about its front-view instant centre, so
+  rolling the body by φ lifts the outside wheel φ·t/2 into bump and turns it back by that over the swing-arm length:
+  recovery = (t/2)/fvsa, from the axle's own track (Milliken & Milliken, *RCVD* ch. 17). A strut's instant centre
+  is far out (~3 m: about a quarter back), unequal wishbones bring it in (~1.6 m: about half), a road multi-link
+  sits between (~2 m). A solid axle keeps both wheels square to the road (all of it, and no static camber, the axle
+  sets it); a twist beam is two trailing arms tied by a beam about 40% of the way back (0.4).
+- **Roll centres split the load transfer** (*RCVD* ch. 18). Each axle's own mass at its own roll centre pushes on
+  its tyres through the links; the rest, the body rolling about the line between the roll centres, goes through the
+  springs and bars by the roll balance as before. Strut, wishbone and multi-link sit at 60-100 mm and a twist beam
+  at 125 (rear independents 80-150 mm, twist beams 100-150 mm: Wang et al., VEHITS 2019); a solid axle's Panhard rod, Watt's link or leaf springs put
+  its roll centre at its wheel centre. With both roll centres on the ground this is build 157's split exactly. A
+  solid rear axle moves the transfer rearward: the AE86 53% → 42% front, the Silverado 62% → 50%.
+- **Each axle's transfer over its own track.** The 42 real cars carry their published front and rear tracks and
+  their suspension (maker sheets where found: BMW, Porsche, GM, Nissan; spec databases otherwise; eight marked
+  unsure). The archetypes keep one track for both ends and take their class's geometry (a hot hatch strut and twist
+  beam, a muscle car wishbones and a live axle, a supercar wishbones all round).
+- **Effect:** laps −0.3% to +0.6%. Strut-front cars lose a little front grip in roll and are slowest to change;
+  wishbone cars barely move. The AWD Diablo VT's narrow front track (1.54 m against 1.64) turns it from oversteer to
+  understeer; the 812's multi-link rear tips it the other way.
+- The VEHICLE summary shows the geometry, both tracks and the front's share of the load transfer; the spec sheet
+  lists the geometry; the guide's *Suspension, roll & camber* page explains it. Greek throughout.
+- The racing-line cache key now includes the roll balance, the front tyres' rating and the geometry; changing
+  ROLL BALANCE alone used to reuse the old line.
+- Saves from before carry no geometry and take the factory's (a real car's from its name).
+- **Next:** springs and anti-roll bars front and rear as soft-to-stiff steps, giving the roll gradient and the
+  roll-stiffness split; dampers wait for a transient or roughness model.
+- **Tests:** test93 (new): every real car loads its own geometry and tracks and is its own factory fit; recovery is
+  (t/2)/fvsa; the split is the roll centres plus the roll stiffness and reduces to build 157's on the ground; a
+  solid rear axle moves the transfer rearward, has no static camber, costs and is a modification; strut < wishbone
+  < solid axle in camber kept at 1 g; a wider front track helps the front alone; old saves; archetypes; the twist
+  beam only at the rear; Greek. test85's symmetric car is now symmetric in track and geometry too.
+
 ### The GEAR RATIOS window (build 170)
 
 - **A window over the vehicle tab**, opened by GEAR RATIOS… beside GEAR SPACING: the spacing as buttons, a slider per

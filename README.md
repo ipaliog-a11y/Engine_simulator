@@ -1,4 +1,4 @@
-# PIXEL ENGINE SIM v0.6 build 170
+# PIXEL ENGINE SIM v0.6 build 171
 
 **A lightweight, 8-bit style internal combustion engine *designer* & simulator** inspired by *Automation*.
 
@@ -106,7 +106,8 @@ saps power; a large radiator, electric fan and oil cooler keep it cool.
   **final-drive slider**, 4.90:1 short → 2.60:1 tall, with the ratio shown next to the number —
   **tyres** (compound + width/profile/wheel diameter → grip &
   rolling radius), **aero** (front/rear/floor downforce vs drag), **brakes** (type + rotor size →
-  stopping power & fade resistance), **suspension** (a grip multiplier) and **weight reduction**.
+  stopping power & fade resistance), **suspension** (the setup's roll and camber, and each axle's own
+  geometry: strut, double wishbone, multi-link, twist beam or solid axle) and **weight reduction**.
   Your current engine is dropped in and the sim computes **0–100 km/h**, **400 / 800 / 1000 m**
   (time + trap speed), **top speed**, **100–0 braking** and the **0–200–0** test live — a
   traction-limited launch and a tyre/brake-limited stop (with fade), weight transfer, downforce,
@@ -926,7 +927,9 @@ measurement finds things. Each item is one PR.
 | — | VGT vane ring geometry | ✅ build 168 | The ring's throat from its own radius (1.22 x the wheel tip) and nozzle height (0.07 x the wheel), not the fixed housing's A/R; the vanes' end-clearance loss charged (5 points shut, 1 open). EA288 expansion ratio at the limiter 3.6 -> 2.4. |
 | — | Gear spacing and real gearboxes | ✅ build 169 | Ratios from the textbook's progressive design fitted to 30 published gearboxes (span grows with the gear count; CLOSE RATIO / STANDARD / WIDE RATIO are their quartiles); 33 real cars run their published ratios and final drive, the rest their family's average; custom ratios and final drive in the model; up to 10 speeds. |
 | — | GEAR RATIOS window | ✅ build 170 | Spacing buttons, a slider per gear and the final drive, the model's 0-100 / top speed / lap live, and two graphs: rpm against speed with the 0-100 run's own shift points, and wheel force per gear against the ideal, drag and grip. |
-| — | Suspension type and geometry | ⏸ on hold | Future development. Today a setup is roll gradient + static camber; the roll camber the geometry recovers is a fixed 50% for every car (CAMBER_RECOVERY), and lateral load transfer is split by static weight. Wanted: the geometry per car (MacPherson strut, double wishbone, multi-link, solid axle) giving its camber recovery, and front/rear roll stiffness (springs, anti-roll bars) giving the handling balance. Needs each preset's real suspension type. |
+| — | Suspension geometry per axle | ✅ build 171 | Stage 1 of 3. FRONT and REAR GEOMETRY: strut, double wishbone, multi-link, twist beam, solid axle. Camber recovery (t/2)/fvsa from each axle's own track (was 50% for every car); roll centres split the load transfer (each axle's mass at its own roll centre, the rest by the roll stiffness); each axle's transfer over its own track. The 42 real cars carry their published geometry and front/rear tracks. Laps −0.3% to +0.6%. test93. |
+| — | Springs and anti-roll bars | ⏳ next | Stage 2 of 3: front and rear stiffness as soft-to-stiff steps (no spring rates), giving the roll gradient (with the roll centres' roll arm) and the roll-stiffness split, in place of the setup's fixed roll and ROLL BALANCE. |
+| — | Dampers | ⏸ on hold | Stage 3 of 3. The lap solver treats each point as a steady corner, where dampers do nothing; they need a transient term (turn-in, exit) or a roughness figure per circuit first. |
 | — | Spark torque from fuel | ✅ build 95 | `IMEP_K` replaced by Heywood's 0.8 × fuel-air cycle efficiency; each fuel's LHV/AFR_st enters. Spark torque −2.7%, full-load BSFC 280 g/kWh (real 270–300). Rotary/two-stroke type factors still fitted. |
 | — | `turboChoke` (boost taper) | ✅ build 94 | Retired. Turbine efficiency from blade speed ratio U/C, per-point compressor efficiency, a continuous rich-knock slope in place of a step, and sequential turbos staged as two turbines. Calibration improved on every measure. |
 | — | Rotary exhaust heat | ✅ build 92 | The slow, late Wankel burn (130° ES, CA50 37.5° ATDC) leaves ~10% of the expansion work undone, and that heat now reaches the exhaust: 13B 775 → 942 °C, off the limiter. |
