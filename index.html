@@ -401,7 +401,7 @@ table.fuelmap td.live{box-shadow:inset 0 0 0 2px #fff;font-weight:bold}
 <body>
 <div class="container">
 <header>
-<h1>PIXEL ENGINE SIM v0.6 build 171</h1>
+<h1>PIXEL ENGINE SIM v0.6 build 172</h1>
 <div class="subtitle" id="subtitle">ENGINE DESIGNER • BUILD IT, THEN DRIVE IT</div>
 </header>
 <div class="build-strip" id="buildStrip">
@@ -445,7 +445,7 @@ table.fuelmap td.live{box-shadow:inset 0 0 0 2px #fff;font-weight:bold}
 <div class="field"><label for="edStroke"><span id="lblStroke">STROKE (mm)</span></label><input type="number" id="edStroke" min="50" max="130" step="0.5" value="86"></div>
 <div class="field"><label for="edEcc">ECCENTRICITY e (mm)</label><input type="number" id="edEcc" min="8" max="25" step="0.5" value="15"></div>
 <div class="field"><label for="edCR">COMPRESSION</label><input type="number" id="edCR" min="7" max="24" step="0.1" value="10.5"></div>
-<div class="field"><label for="edRedline">REDLINE (rpm)</label><input type="number" id="edRedline" min="3500" max="11000" step="100" value="7000"></div>
+<div class="field"><label for="edRedline">REDLINE (rpm)</label><input type="number" id="edRedline" min="2000" max="11000" step="50" value="7000"></div>
 </div>
 
 <div class="design-section">Air Path</div>
@@ -455,6 +455,7 @@ table.fuelmap td.live{box-shadow:inset 0 0 0 2px #fff;font-weight:bold}
 <div class="field"><label for="edTaperRpm">BOOST TAPER FROM (rpm, 0 = off)</label><input type="number" id="edTaperRpm" min="0" max="12000" step="100" value="0"></div>
 <div class="field"><label for="edTaperPct">BOOST AT LIMITER (%)</label><input type="number" id="edTaperPct" min="20" max="100" step="1" value="100"></div>
 <div class="field"><label for="edTqLimit">ECU TORQUE LIMIT (Nm, 0 = off)</label><input type="number" id="edTqLimit" min="0" max="5000" step="10" value="0"></div>
+<div class="field"><label for="edGovRpm">DIESEL RATED SPEED (rpm, 0 = off)</label><input type="number" id="edGovRpm" min="0" max="8000" step="50" value="0"></div>
 <div class="field"><label for="edIntercooler">INTERCOOLER</label><select id="edIntercooler"><option value="none">NONE</option><option value="small">SMALL CORE</option><option value="large">LARGE CORE</option></select></div>
 <div class="field"><label for="edTurboSize">TURBO SIZE</label><select id="edTurboSize"><option value="small">SMALL</option><option value="medium">MEDIUM</option><option value="large">LARGE</option></select></div>
 <div class="field"><label for="edCompWheel">COMPRESSOR WHEEL (mm, 0 = size)</label><input type="number" id="edCompWheel" min="0" max="110" step="1" value="0"></div>
@@ -2804,7 +2805,7 @@ const ENGINE_TYPE={
   petrol4:  {label:'PETROL 4-STROKE',strokeDiv:4*Math.PI,ci:false,ports:false,imep:1.00,eff:1.00,bsfc:1.00,
              crDef:11,crMin:8,crMax:14,redlineDef:7000,redMin:5000,redMax:9500,fuel:null,maxCyl:12},
   diesel:   {label:'DIESEL (CI)',    strokeDiv:4*Math.PI,ci:true, ports:false,imep:1.02,eff:1.30,bsfc:1.00,
-             crDef:18,crMin:15,crMax:24,redlineDef:4800,redMin:3500,redMax:5800,fuel:'diesel',maxCyl:12},
+             crDef:18,crMin:15,crMax:24,redlineDef:4800,redMin:2000,redMax:5800,fuel:'diesel',maxCyl:12},
   twostroke:{label:'2-STROKE',       strokeDiv:2*Math.PI,ci:false,ports:true, imep:0.60,eff:0.80,bsfc:1.45,
              crDef:9, crMin:7,crMax:12,redlineDef:8000,redMin:5500,redMax:11000,fuel:null,maxCyl:6},
   // bsfc is fuel delivered per unit of fuel trapped, the charge that leaves unburned: a two-stroke
@@ -4079,7 +4080,7 @@ const AIR_FILTER={
 const DEFAULT_ENGINE={
   type:'petrol4',
   cylinders:4,bore_mm:81,stroke_mm:78,compression:12.5,layout:'inline',redline:7200,
-  intake:'na',boost_bar:0,intercooler:'large',turboSize:'medium',compExd_mm:0,taperRpm:0,taperPct:100,tqLimit:0,turboConfig:'single',housing:'stock',vgt:false,scType:'roots',antilag:false,nitrous:'none',exhaust:'sport',cat:'stock',
+  intake:'na',boost_bar:0,intercooler:'large',turboSize:'medium',compExd_mm:0,taperRpm:0,taperPct:100,tqLimit:0,govRpm:0,turboConfig:'single',housing:'stock',vgt:false,scType:'roots',antilag:false,nitrous:'none',exhaust:'sport',cat:'stock',
   intakeSys:'efi',airFilter:'perf',
   cam:'stock',vvt:true,valves:4,valveMat:'steel',valveSpring:'stock',runner:'medium',
   fuel:'gasoline',octane:95,injector:'direct',ignitionAdv:22,ignitionType:'coil',timingMode:'auto',afrMode:'auto',
@@ -4100,8 +4101,8 @@ const PRESETS=[
   {cat:'Archetypes',name:'6.5 V12 NA Supercar',    engine:{valves:4,valveMat:'titanium',valveSpring:'race',cylinders:12,bore_mm:95,stroke_mm:76.4,compression:11.8,layout:'v',redline:8500,intakeSys:'itb',cam:'race',exhaust:'race',cat:'sport',octane:98,injector:'port',radiator:'large',oilCooler:true}},
   // A 2.0 turbodiesel runs a SMALL variable-geometry frame (a ~49 mm compressor, BV43/GTB1749V class).
   // It carried the medium frame until build 87, which on a 2.0 L does not make full boost until 2800 rpm.
-  {cat:'Archetypes',name:'2.0 Turbo Diesel I4',    engine:{type:'diesel',vvt:false,cylinders:4,bore_mm:84,stroke_mm:90,compression:17,redline:4800,intake:'turbo',boost_bar:1.2,turboSize:'small',vgt:true,intakeSys:'efi',injector:'direct',exhaust:'stock',cat:'stock',radiator:'large',oilCooler:true}},
-  {cat:'Archetypes',name:'6.6 V8 Turbodiesel',     engine:{type:'diesel',vvt:false,cylinders:8,bore_mm:103,stroke_mm:99,compression:16.5,layout:'v',redline:3800,intake:'turbo',boost_bar:1.1,turboSize:'large',turboConfig:'single',vgt:true,intakeSys:'efi',injector:'direct',exhaust:'stock',cat:'stock',radiator:'large',oilCooler:true}},
+  {cat:'Archetypes',name:'2.0 Turbo Diesel I4',    engine:{type:'diesel',vvt:false,cylinders:4,bore_mm:84,stroke_mm:90,compression:17,redline:4800,govRpm:3900,intake:'turbo',boost_bar:1.2,turboSize:'small',vgt:true,intakeSys:'efi',injector:'direct',exhaust:'stock',cat:'stock',radiator:'large',oilCooler:true}},
+  {cat:'Archetypes',name:'6.6 V8 Turbodiesel',     engine:{type:'diesel',vvt:false,cylinders:8,bore_mm:103,stroke_mm:99,compression:16.5,layout:'v',redline:3800,govRpm:3100,intake:'turbo',boost_bar:1.1,turboSize:'large',turboConfig:'single',vgt:true,intakeSys:'efi',injector:'direct',exhaust:'stock',cat:'stock',radiator:'large',oilCooler:true}},
   {cat:'Archetypes',name:'1.3 Rotary Turbo (13B)', engine:{type:'rotary',cylinders:2,bore_mm:105,stroke_mm:80,ecc_mm:15,compression:9.4,redline:9000,intake:'turbo',boost_bar:0.7,turboSize:'medium',turboConfig:'sequential',intakeSys:'efi',injector:'port',exhaust:'sport',cat:'sport',octane:98,radiator:'large',oilCooler:true}},
   {cat:'Archetypes',name:'1.3 Rotary NA (Renesis)',engine:{type:'rotary',cylinders:2,bore_mm:105,stroke_mm:80,ecc_mm:15,compression:10,redline:9000,intakeSys:'itb',injector:'port',exhaust:'sport',cat:'sport',octane:98,radiator:'large',oilCooler:true}},
   {cat:'Archetypes',name:'500cc 2-Stroke Twin',    engine:{type:'twostroke',cylinders:2,bore_mm:70,stroke_mm:64,compression:9,redline:9500,intakeSys:'carb2',airFilter:'perf',exhaust:'race',cat:'none',octane:98,injector:'port',ignitionType:'coil',radiator:'stock'}},
@@ -4113,7 +4114,11 @@ const PRESETS=[
   // trims), the gentlest such taper. It is a CONTROL input, like the speed limiter or the fuel: the physics is
   // untouched, and setting BOOST TAPER FROM to 0 shows what the hardware itself makes. Left off where the hardware is
   // at or below the rating, and where no taper from the torque peak reaches it: the RB26's 280 PS is a voluntary
-  // cap, and the Cummins's excess is the diesel's own top end. Re-solved in build 132 (the octane index moved the
+  // cap. (The Cummins's excess was the diesel's own top end; since build 172 a diesel has a governor (govRpm, the
+  // maker's rated speed) and the diesels' tapers are re-solved with it: TDI 54 -> 44%, N57 58 -> 54%, Duramax 26 ->
+  // 51%. The Cummins stays without one: no taper reaches its rating, because its 1356 Nm is 25.4 bar BMEP, above the
+  // soft ceiling dieselImepLimit puts on a diesel, so its midrange is short and its top end makes up for it. The
+  // archetype diesels take their rated speed at 0.81 of their limit, the L5P's published 2800 / 3450.) Re-solved in build 132 (the octane index moved the
   // knock limit): the GTI and the Hellcat now exceed their ratings on the hardware alone and carry a taper. And in
   // build 133 (the turbine throat, the compressor island, real wheels): the Civic on its 58 mm wheel is now at its
   // rating on the hardware alone and carries none.
@@ -4209,13 +4214,14 @@ const PRESETS=[
   {cat:'Rotary',name:'Mazda 13B-MSP Renesis (RX-8)',real:{hp:232,hpRpm:8200,tq:211,tqRpm:5500},
    engine:{type:'rotary',cylinders:2,bore_mm:105,stroke_mm:80,ecc_mm:15,compression:10.0,redline:9000,injector:'port',octane:98,exhaust:'stock',airFilter:'stock',radiator:'large',oilCooler:true}},
   {cat:'Diesel',name:'VW EA288 2.0 TDI (Golf 150)',real:{hp:148,hpRpm:3500,tq:320,tqRpm:1750},unsure:['runner'],
-   engine:{type:'diesel',vvt:false,cylinders:4,bore_mm:81.0,stroke_mm:95.5,compression:16.2,redline:4800,intake:'turbo',boost_bar:1.3,turboSize:'small',vgt:true,injector:'direct',intercooler:'large',exhaust:'stock',airFilter:'stock',runner:'short',taperRpm:2000,taperPct:54,tqLimit:320}},
+   engine:{type:'diesel',vvt:false,cylinders:4,bore_mm:81.0,stroke_mm:95.5,compression:16.2,redline:4800,intake:'turbo',boost_bar:1.3,turboSize:'small',vgt:true,injector:'direct',intercooler:'large',exhaust:'stock',airFilter:'stock',runner:'short',taperRpm:2000,taperPct:44,tqLimit:320,govRpm:4000}},
   {cat:'Diesel',name:'BMW N57 3.0d (330d F30)',real:{hp:254,hpRpm:4000,tq:560,tqRpm:2000},unsure:['boost_bar','runner'],
-   engine:{type:'diesel',vvt:false,cylinders:6,bore_mm:84.0,stroke_mm:90.0,compression:16.5,redline:5000,intake:'turbo',boost_bar:1.5,turboSize:'medium',vgt:true,injector:'direct',intercooler:'large',exhaust:'stock',airFilter:'stock',runner:'short',taperRpm:2000,taperPct:58,tqLimit:560}},
-  {cat:'Diesel',name:'GM Duramax L5P 6.6 (Silverado HD)',real:{hp:445,hpRpm:2800,tq:1234,tqRpm:1600},unsure:['boost_bar','redline','runner'],
-   engine:{type:'diesel',vvt:false,cylinders:8,layout:'v',bore_mm:103.0,stroke_mm:99.0,compression:16.0,redline:3800,intake:'turbo',boost_bar:1.9,turboSize:'large',vgt:true,injector:'direct',intercooler:'large',exhaust:'stock',airFilter:'stock',runner:'short',taperRpm:2000,taperPct:26}},
+   engine:{type:'diesel',vvt:false,cylinders:6,bore_mm:84.0,stroke_mm:90.0,compression:16.5,redline:5000,intake:'turbo',boost_bar:1.5,turboSize:'medium',vgt:true,injector:'direct',intercooler:'large',exhaust:'stock',airFilter:'stock',runner:'short',taperRpm:2000,taperPct:54,tqLimit:560,govRpm:4000}},
+  // GM: rated 2800 rpm, maximum powered speed 3450 (the governed maximum; it was 3800 here, unsure)
+  {cat:'Diesel',name:'GM Duramax L5P 6.6 (Silverado HD)',real:{hp:445,hpRpm:2800,tq:1234,tqRpm:1600},unsure:['boost_bar','runner'],
+   engine:{type:'diesel',vvt:false,cylinders:8,layout:'v',bore_mm:103.0,stroke_mm:99.0,compression:16.0,redline:3450,intake:'turbo',boost_bar:1.9,turboSize:'large',vgt:true,injector:'direct',intercooler:'large',exhaust:'stock',airFilter:'stock',runner:'short',taperRpm:2000,taperPct:51,govRpm:2800}},
   {cat:'Diesel',name:'Cummins 6.7 (Ram HD 2019 HO)',real:{hp:400,hpRpm:2800,tq:1356,tqRpm:1800},unsure:['boost_bar','compression','redline','runner'],
-   engine:{type:'diesel',vvt:false,cylinders:6,bore_mm:107.0,stroke_mm:124.0,compression:17.3,redline:3500,intake:'turbo',boost_bar:2.0,turboSize:'large',vgt:true,injector:'direct',intercooler:'large',exhaust:'stock',airFilter:'stock',runner:'short'}},
+   engine:{type:'diesel',vvt:false,cylinders:6,bore_mm:107.0,stroke_mm:124.0,compression:17.3,redline:3500,intake:'turbo',boost_bar:2.0,turboSize:'large',vgt:true,injector:'direct',intercooler:'large',exhaust:'stock',airFilter:'stock',runner:'short',govRpm:2800}},
   {cat:'Two-Stroke',name:'Yamaha RD350LC (2-stroke twin)',real:{hp:46,hpRpm:8500,tq:40,tqRpm:8000},unsure:['compression','redline'],
    engine:{type:'twostroke',cylinders:2,bore_mm:64.0,stroke_mm:54.0,compression:7,redline:9500,intakeSys:'carb2',octane:95,exhaust:'race',airFilter:'stock'}},
 ];
@@ -4478,7 +4484,7 @@ const I18N={
   // vehicle tab
   'VEHICLE':{el:'ΟΧΗΜΑ'},'VEHICLE DESIGN':{el:'ΣΧΕΔΙΑΣΗ ΟΧΗΜΑΤΟΣ'},
   'Pick a chassis and it arrives on its factory spec — matching tyres, wheels, brakes, suspension and aero. Swap any part from there; your current engine is dropped in and the performance is computed live.':{el:'Διάλεξε σασί και έρχεται με τον εργοστασιακό του εξοπλισμό — ταιριαστά ελαστικά, ζάντες, φρένα, ανάρτηση και αεροδυναμική. Άλλαξε ό,τι θέλεις από εκεί· ο τρέχων κινητήρας μπαίνει μέσα και οι επιδόσεις υπολογίζονται ζωντανά.'},
-  'Chassis & Drivetrain':{el:'Σασί & Μετάδοση'},'CHASSIS':{el:'ΣΑΣΙ'},'DRIVETRAIN':{el:'ΜΕΤΑΔΟΣΗ'},'GEARBOX (SPEEDS)':{el:'ΚΙΒΩΤΙΟ (ΣΧΕΣΕΙΣ)'},'GEAR SPACING':{el:'ΚΛΙΜΑΚΩΣΗ ΣΧΕΣΕΩΝ'},'no drive cut':{el:'χωρίς διακοπή μετάδοσης'},'RATIOS & GRAPHS':{el:'ΣΧΕΣΕΙΣ & ΓΡΑΦΗΜΑΤΑ'},'GEAR RATIOS…':{el:'ΣΧΕΣΕΙΣ ΚΙΒΩΤΙΟΥ…'},'GEAR RATIOS':{el:'ΣΧΕΣΕΙΣ ΚΙΒΩΤΙΟΥ'},
+  'Chassis & Drivetrain':{el:'Σασί & Μετάδοση'},'CHASSIS':{el:'ΣΑΣΙ'},'DRIVETRAIN':{el:'ΜΕΤΑΔΟΣΗ'},'GEARBOX (SPEEDS)':{el:'ΚΙΒΩΤΙΟ (ΣΧΕΣΕΙΣ)'},'GEAR SPACING':{el:'ΚΛΙΜΑΚΩΣΗ ΣΧΕΣΕΩΝ'},'DIESEL RATED SPEED (rpm, 0 = off)':{el:'ΟΝΟΜΑΣΤΙΚΕΣ ΣΤΡΟΦΕΣ ΠΕΤΡΕΛΑΙΟΥ (rpm, 0 = εκτός)'},'no drive cut':{el:'χωρίς διακοπή μετάδοσης'},'RATIOS & GRAPHS':{el:'ΣΧΕΣΕΙΣ & ΓΡΑΦΗΜΑΤΑ'},'GEAR RATIOS…':{el:'ΣΧΕΣΕΙΣ ΚΙΒΩΤΙΟΥ…'},'GEAR RATIOS':{el:'ΣΧΕΣΕΙΣ ΚΙΒΩΤΙΟΥ'},
   'SPACING':{el:'ΚΛΙΜΑΚΩΣΗ'},'RATIO · ROAD SPEED AT THE LIMITER':{el:'ΣΧΕΣΗ · ΤΑΧΥΤΗΤΑ ΣΤΟΝ ΚΟΦΤΗ'},'ENGINE RPM AGAINST ROAD SPEED':{el:'ΣΤΡΟΦΕΣ ΚΙΝΗΤΗΡΑ ΠΡΟΣ ΤΑΧΥΤΗΤΑ'},
   'DRIVE AT THE WHEELS AGAINST ROAD SPEED':{el:'ΩΘΗΣΗ ΣΤΟΥΣ ΤΡΟΧΟΥΣ ΠΡΟΣ ΤΑΧΥΤΗΤΑ'},'FINAL':{el:'ΤΕΛΙΚΗ'},'gear ratio':{el:'σχέση'},'published':{el:'δημοσιευμένη'},'matched':{el:'ταιριασμένη'},'by hand':{el:'με το χέρι'},
   'the car\'s published final drive, and the GEARING slider':{el:'η δημοσιευμένη τελική του αυτοκινήτου, και ο ρυθμιστής ΤΕΛΙΚΗ ΣΧΕΣΗ'},'matched to the engine, and the GEARING slider':{el:'ταιριασμένη στον κινητήρα, και ο ρυθμιστής ΤΕΛΙΚΗ ΣΧΕΣΗ'},
@@ -5234,7 +5240,10 @@ function boostTaperFrac(rpm){
   const f=clamp((e.taperPct!=null?e.taperPct:100)/100,0.2,1);
   return 1-(1-f)*clamp((rpm-r0)/(e.redline-r0),0,1);
 }
-const boostTarget=rpm=>Math.min(engine.maxBoost*boostTaperFrac(rpm),tqLimitBoost(rpm));
+// A diesel ECU sets its boost from the fuel it injects (Bosch, Diesel-Engine Management): as the governor takes the fuel
+// (build 172) the boost target goes with it, to none at the governed maximum, where the engine runs unloaded.
+const govBoostFrac=rpm=>{const e=engine,g0=e.govRpm||0;return e.ci&&g0>0&&g0<e.redline&&rpm>g0?1-clamp((rpm-g0)/(e.redline-g0),0,1):1;};
+const boostTarget=rpm=>Math.min(engine.maxBoost*boostTaperFrac(rpm)*govBoostFrac(rpm),tqLimitBoost(rpm));
 // The ECU's torque limit (build 138). A torque-based ECU holds the engine to a calibrated torque (for the gearbox,
 // the driveline, the clutch) by asking for less boost where the engine would make more: the flat torque plateaus
 // makers quote ("350 Nm from 1500 to 4400 rpm") are this, not the engine's own curve. ECU TORQUE LIMIT (Nm, 0 =
@@ -6076,6 +6085,8 @@ function readEngineFromForm(){
     intake,
     boost_bar:intake==='na'?0:clamp(+g('edBoost').value||0,0,2.5),
     taperRpm:clamp(Math.round(+g('edTaperRpm').value||0),0,12000),taperPct:clamp(+g('edTaperPct').value||100,20,100),
+    // a diesel's rated speed, where its governor starts to take the fuel away (build 172); 0 = no governor
+    govRpm:clamp(Math.round(+g('edGovRpm').value||0),0,8000),
     tqLimit:clamp(Math.round(+g('edTqLimit').value||0),0,5000),
     intercooler:g('edIntercooler').value,
     turboSize:g('edTurboSize').value,compExd_mm:clamp(+g('edCompWheel').value||0,0,110),
@@ -6116,7 +6127,7 @@ function applyEngineToForm(e){
   // Builds saved before the eccentricity existed: every production Mazda rotor has R/e = 7.
   g('edEcc').value=e.ecc_mm||+(e.bore_mm/7).toFixed(1);
   // Migrate legacy boolean intercooler (true→large, false→none) from older saved builds.
-  g('edIntake').value=e.intake;g('edBoost').value=e.boost_bar;g('edTaperRpm').value=e.taperRpm||0;g('edTaperPct').value=e.taperPct!=null?e.taperPct:100;g('edTqLimit').value=e.tqLimit||0;
+  g('edIntake').value=e.intake;g('edBoost').value=e.boost_bar;g('edTaperRpm').value=e.taperRpm||0;g('edTaperPct').value=e.taperPct!=null?e.taperPct:100;g('edTqLimit').value=e.tqLimit||0;g('edGovRpm').value=e.govRpm||0;
   g('edIntercooler').value=(e.intercooler===true?'large':e.intercooler===false?'none':(e.intercooler||'large'));
   g('edTurboSize').value=e.turboSize||'medium';g('edCompWheel').value=e.compExd_mm||0;
   g('edTurboConfig').value=e.turboConfig||'single';g('edVGT').value=e.vgt?'yes':'no';g('edHousing').value=e.housing||'stock';
@@ -6152,6 +6163,7 @@ function syncDesignEnable(){
   [...cylSel.options].forEach(o=>{o.disabled=+o.value>maxCyl;});
   if(+cylSel.value>maxCyl)cylSel.value=String(Math.min(maxCyl,4));
   g('edFuel').disabled=tp.ci;                              // diesel fuel is fixed
+  g('edGovRpm').disabled=!tp.ci;                           // a governor is a diesel's (build 172)
   // Boost / intercooler only matter for forced induction; turbo size only for turbos.
   const intake=g('edIntake').value,na=intake==='na';
   g('edBoost').disabled=na;g('edTaperRpm').disabled=na;g('edTaperPct').disabled=na;g('edTqLimit').disabled=na;
@@ -6190,6 +6202,7 @@ function buildEngine(){
   // the peak-pressure / thirst multipliers that give each type its character.
   const et=ENGINE_TYPE[engine.type]||ENGINE_TYPE.petrol4;
   engine.strokeDiv=et.strokeDiv;engine.ci=et.ci;engine.ports=et.ports;
+  engine.govPhi0=null;   // the governor's fuel at the governed maximum, found on first use (govPhi0)
   engine.typeImep=et.imep;engine.typeBsfc=et.bsfc;engine.typeLabel=et.label;
   // Charges drawn per shaft revolution, per cylinder or rotor: a four-stroke breathes every other turn;
   // a two-stroke every turn; a rotor fills one of its three chambers every shaft turn (it turns once
@@ -6399,6 +6412,7 @@ function buildEngine(){
   buildBoostTable(26);
   engine.tqLimTable=null;
   if(engine.tqLimit>0){buildTorqueLimit();buildBoostTable(26);}   // the ECU's torque limit lowers the target: re-solve the shaft
+  engine.govPhi0=null;   // the governor's share, against the finished engine (it was taken mid-build, on a half-set one)
   {const p=peakEgts();engine.peakEgt=p.probe;engine.peakEgtGas=p.gas;}   // needs the boost table (wotMapAt) and the burn table
 
   buildRev++;dynoCache=null;
@@ -7301,9 +7315,53 @@ function burnPhasing(rpm){
 // engine's torque, and its exhaust-temperature model (which assumed a realistic lambda) never agreed
 // with the mixture actually burned.
 const SMOKE_LAMBDA_CI=1.20;
+// The governor (build 172). A diesel has no throttle on its air and nothing in its combustion that stops it short of
+// the speed at which friction eats its fuel, so every diesel carries a governor: from its RATED speed (the breakpoint,
+// where it makes its rated power) to its governed maximum (high idle, the most it will turn with no load) the fuel at
+// full pedal is taken away in proportion to the speed, until at the maximum it is only what holds the engine there
+// unloaded (Bosch, Governors for Inline Injection Pumps; Cummins: the breakpoint is where the governor 'begins to
+// reduce torque below the rated power value', the span to high idle its droop). An electronic diesel does the same in
+// its fuel map. The rated speed is the maker's (GM's L5P: 2800 rpm rated, 3450 maximum powered speed) and the governed
+// maximum is the engine's own limit, its redline here. Without it this model fuelled a diesel at its smoke limit to
+// the redline and made peak power there, which a diesel never does: the Cummins's 400 hp at 2800 came out as 550 at
+// 3500, and every other diesel carried a boost taper, solved to its rating, in its place.
+//     q(N) = q_full x (1 - x (1 - phi0)),   x = (N - N_rated) / (N_max - N_rated)
+// phi0 is the share of the full fuel whose work only meets friction, pumping and the alternator at N_max: the engine's
+// own brake torque there is zero. Solved on the torque itself (the leaner mixture burns a little more efficiently, so
+// work is not quite in proportion to fuel), by bisection, once per build.
+function govPhi0(){
+  const e=engine;
+  if(e.govPhi0>0)return e.govPhi0;
+  if(e.govSolving)return 1;
+  const rl=e.redline;let lo=0.002,hi=1,ok=true;
+  e.govSolving=true;
+  try{
+    for(let i=0;i<32;i++){
+      e.govPhi0=(lo+hi)/2;
+      const T=brakeTorqueRaw(rl,wotMapAt(rl),false);
+      if(!Number.isFinite(T)){ok=false;break;}
+      if(T>0)hi=e.govPhi0;else lo=e.govPhi0;
+    }
+  }catch(err){ok=false;}finally{e.govSolving=false;}
+  // early in buildEngine the engine is half set: no governor until it is whole, and nothing cached
+  if(!ok){e.govPhi0=null;return 1;}
+  e.govPhi0=(lo+hi)/2;return e.govPhi0;
+}
+function govFuelFrac(rpm){
+  const e=engine,g0=e.govRpm||0;
+  if(!e.ci||!(g0>0)||g0>=e.redline||rpm<=g0||e.govBusy)return 1;
+  if(!(e.govPhi0>0)&&e.govSolving)return 1;
+  const x=clamp((rpm-g0)/(e.redline-g0),0,1);
+  return 1-x*(1-govPhi0());
+}
 function dieselLambdaFloor(rpm){
   const e=engine;
   if(!e.ci)return 0;
+  return dieselLambdaFull(rpm)/govFuelFrac(rpm);   // less fuel in the same air: a leaner mixture
+}
+// the leanest a diesel is fuelled at full pedal before the governor: its smoke limit, or its turbine's
+function dieselLambdaFull(rpm){
+  const e=engine;
   if(e.intake!=='turbo')return SMOKE_LAMBDA_CI;
   // T = 300 + LHV f / ((AFR_st lam + 1) cp), and f itself moves with lam (a leaner diesel works its
   // fuel harder), so solve by fixed point from the smoke limit: three steps settle it to <0.1%.

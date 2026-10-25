@@ -104,6 +104,9 @@ const autoWot = await page.evaluate(() => PRESETS.map(pr => {
   let worst = 1, worstRpm = 0;
   for (const p of best) {
     if (p.rpm < 1200) continue;
+    // (to a diesel's rated speed: past it the governor takes both to nothing, and a ratio of two near-zero torques
+    // says nothing; test93 checks the governed span, build 172)
+    if (engine.ci && engine.govRpm > 0 && p.rpm > engine.govRpm) break;
     const t = calcAtRpm(p.rpm).torque, f = t / Math.max(1, p.tq);
     if (f < worst) { worst = f; worstRpm = p.rpm; }
   }

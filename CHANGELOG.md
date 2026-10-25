@@ -20,6 +20,35 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 Working toward **v1.0 — every number derived, not fitted.**
 
+### The diesel governor (build 172)
+
+- **A diesel made its peak power at its redline.** It was fuelled at its smoke limit (or its turbine's temperature
+  limit) all the way up, which no diesel does: the Cummins's 400 hp at 2800 rpm came out as 546 hp at 3500, and the
+  other diesels carried boost tapers, solved to their ratings, in place of what was missing.
+- **Every diesel has a governor.** From its rated speed (the breakpoint, where it makes its rated power) to its
+  governed maximum (high idle) the full-pedal fuel is taken away in proportion to the speed, until what is left only
+  holds the engine there unloaded (Bosch, Governors for Inline Injection Pumps; Cummins: the breakpoint is where the
+  governor begins to reduce torque below rated power, the span to high idle its droop). The share left at the
+  maximum is solved on the engine's own torque, which is zero there. The ECU's boost target follows the fuel it
+  injects (Bosch, Diesel-Engine Management), so it falls with the governor to none at the maximum; held at full-load
+  boost the lean, cold exhaust needed a closed turbine and the pumping loss ate the work.
+- **New design field DIESEL RATED SPEED (rpm, 0 = off)**; the governed maximum is the redline. The real diesels take
+  their makers' rated speeds: TDI 4000 (110 kW at 3500-4000), N57 4000, Duramax 2800 with GM's maximum powered speed
+  3450 as its redline (it was 3800, unsure), Cummins 2800. The archetypes take 0.81 of their limit, the L5P's ratio.
+  The diesel redline range now starts at 2000 rpm (truck diesels govern near 2100), in 50 rpm steps.
+- **Tapers re-solved** under the same rule as before (the gentlest from the torque peak that meets the rating): TDI
+  54 -> 44%, N57 58 -> 54%, Duramax 26 -> 51% (half the boost it threw away before). Each peaks at its rated speed
+  now: Duramax 445 hp at 2800 (real 445 at 2800), N57 254 at 3900 (254 at 4000), TDI 149 at 3600 (148 at 3500).
+- **The Cummins** peaks at its rated 2800 rpm (it was 3500) and makes 471 hp (546). No taper reaches its 400: its
+  1356 Nm is 25.4 bar BMEP, above the soft ceiling dieselImepLimit puts on a diesel (about 22-24 bar, from passenger
+  and built diesels), so its midrange is short (1219 Nm) and its top end high. A peak-cylinder-pressure limit derived
+  for heavy-duty engines is the next item.
+- **Tests:** test93 (new): the law (proportional to speed, the leaner mixture, the cooler exhaust, zero torque at the
+  maximum), every real diesel's peak at its rated speed, nothing changed below it, the field and the save.
+  test47 (torque steps), test52 (map against best-power torque) and test54 (boost never falls) stop at a diesel's rated
+  speed: past it the torque and the boost go to nothing on purpose, and a step or a ratio against a torque near zero
+  means nothing.
+
 ### Automatic and dual-clutch shifts keep the drive; the 6.6 V8 diesel's turbo (build 171)
 
 - **The drive was cut on every upshift, whatever the gearbox**, for its shift time: right for a manual (clutch out)
