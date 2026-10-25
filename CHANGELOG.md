@@ -35,8 +35,10 @@ Working toward **v1.0 — every number derived, not fitted.**
   the balance and the 0-100 run's marks; arrays and the track stay shared) outside the loops, into objects of
   its own, before anyone holds it. A race, a comparison, the garage: anything that keeps one result while
   solving another now keeps the right one. Nothing the model computes changed.
-- Checked over 100 fresh-browser runs of the sequence that failed (MX-5, GR Yaris and Golf GTI, each the
-  technical circuit then Spa): before, 2 wrong in 104; after, see below.
+- Checked on the sequence that failed (MX-5, GR Yaris and Golf GTI, each the technical circuit then Spa, a fresh
+  browser each run, the first lap's numbers read again after the second is solved): before, 5 wrong in about 180
+  runs; after, 0 in 100. No test can catch it on demand (it needs Maglev to compile, deoptimise and land on the
+  same site at the right moment), so the wrapper is the guard, and this note is why it is there.
 
 ### The live cutaway's tracts to scale, the header's wave, the compressor map (build 166)
 
