@@ -20,6 +20,72 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 Working toward **v1.0 — every number derived, not fitted.**
 
+### Springs and anti-roll bars per axle (build 174)
+
+- **FRONT SPRINGS, REAR SPRINGS, FRONT ANTI-ROLL BAR, REAR ANTI-ROLL BAR** on VEHICLE, each SOFT −2 … STIFF +2 about
+  the kit, in place of ROLL BALANCE. Off STANDARD they are new parts ($400 an axle for springs, $250 for a bar) and
+  the car reads *(modified)*; REFIT puts them back.
+- **The roll is the car's own.** Until now each kit rolled a fixed 6 / 4 / 2.5 / 1.5 deg/g on every car. The kit is
+  now a ride frequency (COMFORT 1.0 Hz, SPORT 1.25, COILOVERS 1.6, RACE 2.0; passenger cars 0.5-1.5 Hz, OptimumG),
+  which gives each wheel's rate k = (m_axle/2)(2πf)² and each axle's springs a roll stiffness m_axle (2πf)² t²/4. A
+  bar adds 55% of that at STANDARD, a third of the total, the one figure that brings a typical car (roll arm 0.40 m,
+  track 1.55 m) to the old skidpad numbers: 6.1 / 3.9 / 2.4 / 1.5 deg/g. The body rolls by its roll moment over the
+  roll axis, m g (h − z_axis), over both axles' stiffness: the tall, narrow Alto Works rolls 9.2 deg/g on COMFORT,
+  a 911 GT3 2.1 on COILOVERS, and stage 1's high roll centres now roll a car less.
+- **The balance from the stiffness.** The elastic part of the load transfer splits by each axle's share of the roll
+  stiffness: at STANDARD m t², the weight split on equal tracks (build 157's NEUTRAL), and a wider axle is stiffer.
+  A spring step is 1.3× the rate, a bar step 1.5× the bar: about 4% of the transfer, the old ROLL BALANCE step.
+- In a steady corner springs and bars both just add roll stiffness, so here they do the same job; the springs also
+  set the ride frequency the dampers (stage 3) will work against.
+- **Effect:** laps −0.3% to +1.0% against build 173. Kei and city cars on COMFORT roll more and lose most; low,
+  wide supercars roll less and gain a little. The summary shows the car's roll in deg/g; the guide's *Suspension,
+  roll & camber* page explains it, in Greek too.
+- Saves from before carry ROLL BALANCE: it becomes the front bar.
+- Fixed from build 173: the Greek label for a MacPherson strut was half in Latin letters (ΓΟΝΑΤΟ ΜΑΚΦΕΡΣΟΝ now).
+- **Tests:** test95 (new): the kits on a typical car within 10% of the old figures; STANDARD splits by the weight on
+  equal tracks; the M3's roll and split are the formula; a bar step moves 2-6% of the transfer, front forward and
+  rear back; stiffening reduces roll; the steps are the factory fit, cost and reach the line cache; the lap balance
+  follows the front bar; a kei car rolls more than a 911; an old ROLL BALANCE becomes the front bar; REFIT; Greek.
+  test85 uses the front bar.
+
+### Suspension geometry per axle (build 173)
+
+- **FRONT GEOMETRY and REAR GEOMETRY** on VEHICLE: MacPherson strut, double wishbone, multi-link, twist beam (rear
+  only, it cannot steer) or solid axle. Until now the setup (COMFORT … RACE) was the whole suspension, the camber
+  the geometry won back from the roll was half for every car (`CAMBER_RECOVERY`), and front and rear shared one
+  track. Fitting a geometry the car was not built with is a conversion: it costs, and the car reads *(modified)*.
+- **Camber recovery from the geometry.** An independent wheel swings about its front-view instant centre, so
+  rolling the body by φ lifts the outside wheel φ·t/2 into bump and turns it back by that over the swing-arm length:
+  recovery = (t/2)/fvsa, from the axle's own track (Milliken & Milliken, *RCVD* ch. 17). A strut's instant centre
+  is far out (~3 m: about a quarter back), unequal wishbones bring it in (~1.6 m: about half), a road multi-link
+  sits between (~2 m). A solid axle keeps both wheels square to the road (all of it, and no static camber, the axle
+  sets it); a twist beam is two trailing arms tied by a beam about 40% of the way back (0.4).
+- **Roll centres split the load transfer** (*RCVD* ch. 18). Each axle's own mass at its own roll centre pushes on
+  its tyres through the links; the rest, the body rolling about the line between the roll centres, goes through the
+  springs and bars by the roll balance as before. Strut, wishbone and multi-link sit at 60-100 mm and a twist beam
+  at 125 (rear independents 80-150 mm, twist beams 100-150 mm: Wang et al., VEHITS 2019); a solid axle's Panhard rod, Watt's link or leaf springs put
+  its roll centre at its wheel centre. With both roll centres on the ground this is build 157's split exactly. A
+  solid rear axle moves the transfer rearward: the AE86 53% → 42% front, the Silverado 62% → 50%.
+- **Each axle's transfer over its own track.** The 42 real cars carry their published front and rear tracks and
+  their suspension (maker sheets where found: BMW, Porsche, GM, Nissan; spec databases otherwise; eight marked
+  unsure). The archetypes keep one track for both ends and take their class's geometry (a hot hatch strut and twist
+  beam, a muscle car wishbones and a live axle, a supercar wishbones all round).
+- **Effect:** laps −0.3% to +0.6%. Strut-front cars lose a little front grip in roll and are slowest to change;
+  wishbone cars barely move. The AWD Diablo VT's narrow front track (1.54 m against 1.64) turns it from oversteer to
+  understeer; the 812's multi-link rear tips it the other way.
+- The VEHICLE summary shows the geometry, both tracks and the front's share of the load transfer; the spec sheet
+  lists the geometry; the guide's *Suspension, roll & camber* page explains it. Greek throughout.
+- The racing-line cache key now includes the roll balance, the front tyres' rating and the geometry; changing
+  ROLL BALANCE alone used to reuse the old line.
+- Saves from before carry no geometry and take the factory's (a real car's from its name).
+- **Next:** springs and anti-roll bars front and rear as soft-to-stiff steps, giving the roll gradient and the
+  roll-stiffness split; dampers wait for a transient or roughness model.
+- **Tests:** test94 (new): every real car loads its own geometry and tracks and is its own factory fit; recovery is
+  (t/2)/fvsa; the split is the roll centres plus the roll stiffness and reduces to build 157's on the ground; a
+  solid rear axle moves the transfer rearward, has no static camber, costs and is a modification; strut < wishbone
+  < solid axle in camber kept at 1 g; a wider front track helps the front alone; old saves; archetypes; the twist
+  beam only at the rear; Greek. test85's symmetric car is now symmetric in track and geometry too.
+
 ### The diesel governor (build 172)
 
 - **A diesel made its peak power at its redline.** It was fuelled at its smoke limit (or its turbine's temperature

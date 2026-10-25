@@ -1,4 +1,4 @@
-# PIXEL ENGINE SIM v0.6 build 172
+# PIXEL ENGINE SIM v0.6 build 174
 
 **A lightweight, 8-bit style internal combustion engine *designer* & simulator** inspired by *Automation*.
 
@@ -106,7 +106,9 @@ saps power; a large radiator, electric fan and oil cooler keep it cool.
   **final-drive slider**, 4.90:1 short → 2.60:1 tall, with the ratio shown next to the number —
   **tyres** (compound + width/profile/wheel diameter → grip &
   rolling radius), **aero** (front/rear/floor downforce vs drag), **brakes** (type + rotor size →
-  stopping power & fade resistance), **suspension** (a grip multiplier) and **weight reduction**.
+  stopping power & fade resistance), **suspension** (the setup's ride frequency and camber, each axle's
+  springs and anti-roll bar from soft to stiff, and each axle's own geometry: strut, double wishbone, multi-link,
+  twist beam or solid axle) and **weight reduction**.
   Your current engine is dropped in and the sim computes **0–100 km/h**, **400 / 800 / 1000 m**
   (time + trap speed), **top speed**, **100–0 braking** and the **0–200–0** test live — a
   traction-limited launch and a tyre/brake-limited stop (with fade), weight transfer, downforce,
@@ -928,7 +930,9 @@ measurement finds things. Each item is one PR.
 | — | GEAR RATIOS window | ✅ build 170 | Spacing buttons, a slider per gear and the final drive, the model's 0-100 / top speed / lap live, and two graphs: rpm against speed with the 0-100 run's own shift points, and wheel force per gear against the ideal, drag and grip. |
 | — | Powershift gearboxes | ✅ build 171 | Dual-clutch and automatic boxes keep the drive through an upshift (clutch to clutch); only a manual and a sequential cut it. 0-100 error across the real cars 10.6% -> 9.4%; the M2 21.6% -> 3.9%. The 6.6 V8 diesel archetype gets the large turbo frame. |
 | — | Diesel governor | ✅ build 172 | Full-pedal fuel falls from the maker's rated speed to zero torque at the governed maximum, the boost target with it. Diesels peak at their rated speeds (Duramax 445 hp at 2800, as rated); tapers re-solved gentler; the Cummins 546 -> 471 hp (rated 400), its remaining gap the diesel BMEP ceiling. |
-| — | Suspension type and geometry | ⏸ on hold | Future development. Today a setup is roll gradient + static camber; the roll camber the geometry recovers is a fixed 50% for every car (CAMBER_RECOVERY), and lateral load transfer is split by static weight. Wanted: the geometry per car (MacPherson strut, double wishbone, multi-link, solid axle) giving its camber recovery, and front/rear roll stiffness (springs, anti-roll bars) giving the handling balance. Needs each preset's real suspension type. |
+| — | Suspension geometry per axle | ✅ build 173 | Stage 1 of 3. FRONT and REAR GEOMETRY: strut, double wishbone, multi-link, twist beam, solid axle. Camber recovery (t/2)/fvsa from each axle's own track (was 50% for every car); roll centres split the load transfer (each axle's mass at its own roll centre, the rest by the roll stiffness); each axle's transfer over its own track. The 42 real cars carry their published geometry and front/rear tracks. Laps −0.3% to +0.6%. test94. |
+| — | Springs and anti-roll bars | ✅ build 174 | Stage 2 of 3. FRONT/REAR SPRINGS and FRONT/REAR ANTI-ROLL BAR, SOFT −2 to STIFF +2 about the kit (no spring rates). Springs from the kit's ride frequency (1.0 / 1.25 / 1.6 / 2.0 Hz), K = m_axle (2πf)² t²/4, bars 55% of that at STANDARD; roll = m g (h − z_axis) / (K_F + K_R), so each car rolls by its own CG, track and roll centres (a typical car gets the old 6 / 4 / 2.5 / 1.5 deg/g back); the stiffness split replaces ROLL BALANCE. Laps −0.3% to +1.0%. test95. |
+| — | Dampers | ⏸ on hold | Stage 3 of 3. The lap solver treats each point as a steady corner, where dampers do nothing; they need a transient term (turn-in, exit) or a roughness figure per circuit first. |
 | — | Spark torque from fuel | ✅ build 95 | `IMEP_K` replaced by Heywood's 0.8 × fuel-air cycle efficiency; each fuel's LHV/AFR_st enters. Spark torque −2.7%, full-load BSFC 280 g/kWh (real 270–300). Rotary/two-stroke type factors still fitted. |
 | — | `turboChoke` (boost taper) | ✅ build 94 | Retired. Turbine efficiency from blade speed ratio U/C, per-point compressor efficiency, a continuous rich-knock slope in place of a step, and sequential turbos staged as two turbines. Calibration improved on every measure. |
 | — | Rotary exhaust heat | ✅ build 92 | The slow, late Wankel burn (130° ES, CA50 37.5° ATDC) leaves ~10% of the expansion work undone, and that heat now reaches the exhaust: 13B 775 → 942 °C, off the limiter. |
