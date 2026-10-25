@@ -373,7 +373,7 @@ table.fuelmap td.live{box-shadow:inset 0 0 0 2px #fff;font-weight:bold}
 <body>
 <div class="container">
 <header>
-<h1>PIXEL ENGINE SIM v0.6 build 167</h1>
+<h1>PIXEL ENGINE SIM v0.6 build 168</h1>
 <div class="subtitle" id="subtitle">ENGINE DESIGNER • BUILD IT, THEN DRIVE IT</div>
 </header>
 <div class="build-strip" id="buildStrip">
@@ -3671,20 +3671,30 @@ function manifoldPR(mAir,mEx,mapBar,T3,area,compEta,flowFrac){
 // neither is fitted:
 //   · the RANGE. Production vane rings sweep roughly 21 to 60 degrees from tangential, which with
 //     the blockage term gives about 2.9:1 — the flow range a VGT is actually sold on.
-//   · the TOP END. At full open the ring still passes LESS than the plain volute of the same
-//     frame, because Z*t of circumference is vane. That is ~11% on a medium frame and it is why
-//     nobody puts a VGT on a drag car: the thing that buys you 1700 rpm costs you at the top.
-// Blockage is a fixed length of circumference, so it hurts a small frame more than a large one —
-// r2 sits just outside the turbine wheel, so it scales with the frame and the ratio does not have
-// to be asserted per size.
+//   · the TOP END: Z*t of circumference is vane, which a plain volute does not lose.
+// Blockage is a fixed length of circumference, so it hurts a small frame more than a large one.
+//
+// THE RING'S OWN SIZE (build 168). The ring was sized off the frame's fixed-housing A/R: its throat at 60 degrees
+// was taken to be that housing's volute throat, so h*2*pi*r2*sin(60) was set to whatever A/R implied. On a VGT the
+// volute only feeds the ring; the throat is the vane passages, and their area is the formula above with the
+// ring's own radius and height. Sized off the A/R, the 2.0 TDI's ring opened to 327 mm2, and wide open it still
+// made 2.2x the power its compressor needed at the limiter: an expansion ratio of 5 and an exhaust manifold near
+// 5 bar where TDI owners measure about 3. The ring now has its own proportions, scaled to the turbine wheel as the
+// hardware is:
+//   r2 = 1.22 x the wheel's tip radius: the vanes' trailing edges sit at 1.2-1.25 times it (a variable-geometry
+//        turbine patent, US 12055050; the A/R volute was put at 1.05);
+//   h  = 0.07 x the wheel's diameter: the nozzle height of radial turbines of this kind (0.07, GT2011-46148;
+//        0.057, the ETN D1.8 radial-turbine design; rotor inlet widths of 0.07-0.1 of the diameter in the
+//        design literature), the middle of the published range.
 const VANE_Z=12, VANE_T=0.0015;                      // vanes, and their thickness (m)
 const VANE_T_LIMIT=1100;                             // K — where nickel-alloy vanes start to creep
 const VANE_BETA_MIN=21, VANE_BETA_MAX=60;            // degrees from tangential — the vane sweep
-const vanePitchR=exd=>1.05*(TURB_WHEEL*exd/2);       // pitch circle, just outboard of the wheel
-// Throat at vane angle `beta`, as a fraction of the plain volute throat the frame's A/R quotes.
-function vaneThroatFrac(exd,betaDeg){
-  const blk=VANE_Z*VANE_T/(2*Math.PI*vanePitchR(exd));
-  return Math.max(0.05,(Math.sin(betaDeg*Math.PI/180)-blk)/Math.sin(VANE_BETA_MAX*Math.PI/180));
+const VANE_R2=1.22, VANE_H=0.07;                     // ring radius over wheel tip radius, nozzle height over wheel diameter
+const vanePitchR=exd=>VANE_R2*(TURB_WHEEL*exd/2);    // the vanes' trailing edges, outboard of the wheel
+// The ring's throat at vane angle `beta`, m2: h * (2 pi r2 sin(beta) - Z t).
+function vaneThroatArea(exd,betaDeg){
+  const h=VANE_H*TURB_WHEEL*exd;
+  return h*Math.max(0.05*2*Math.PI*vanePitchR(exd),2*Math.PI*vanePitchR(exd)*Math.sin(betaDeg*Math.PI/180)-VANE_Z*VANE_T);
 }
 // The vanes ARE the boost control: a VGT diesel has no wastegate, because opening the vanes IS
 // the gate. So the schedule is "the WIDEST throat that still supplies the compressor at TARGET
@@ -5126,7 +5136,7 @@ const TURBO={
 const AR_INCH=0.0254;          // A/R is quoted in inches
 const TURB_WHEEL=0.90;         // turbine wheel as a fraction of the compressor exducer
 // Turbine throat for a housing A/R. A/R is the volute throat area over the radius to its centroid,
-// so A_throat = (A/R) x R; a vane ring is the same volute with vanes in it.
+// so A_throat = (A/R) x R. A vane ring sets its own throat (vaneThroatArea, build 168).
 function setTurbineAR(ar){
   const e=engine, exd=e.compExd;
   // R is the radius to the centroid of the throat section (build 133; it was the wheel's radius, which made every
@@ -5136,8 +5146,9 @@ function setTurbineAR(ar){
   const sq=(Math.sqrt(k/Math.PI)+Math.sqrt(k/Math.PI+4*rt))/2;
   const a0=k*sq*sq;
   e.turbineAR=ar;
-  e.turbineArea=e.vgt?a0*vaneThroatFrac(exd,VANE_BETA_MAX):a0;
-  e.vgtShut=e.vgt?a0*vaneThroatFrac(exd,VANE_BETA_MIN):0;
+  // a VGT's throat is its vane ring's, not the volute's (build 168): the housing A/R does not size it
+  e.turbineArea=e.vgt?vaneThroatArea(exd,VANE_BETA_MAX):a0;
+  e.vgtShut=e.vgt?vaneThroatArea(exd,VANE_BETA_MIN):0;
 }
 // The boost the ECU asks for at an rpm (build 131). Real ECUs pull boost back toward the limiter, where the
 // rods and bearings carry the highest inertia and gas loads together, the turbine runs hottest and fastest and
