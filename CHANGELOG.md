@@ -20,6 +20,97 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 Working toward **v1.0 — every number derived, not fitted.**
 
+### The GEAR RATIOS window (build 170)
+
+- **A window over the vehicle tab**, opened by GEAR RATIOS… beside GEAR SPACING: the spacing as buttons, a slider per
+  gear (its ratio and its road speed at the limiter, on a log scale), the final drive with AUTO (published or
+  matched) or set by hand, RESET to the stock box, and where the ratios come from. Every change is the car's own: it
+  goes into the form as CUSTOM ratios or a hand-set final drive and the car is rebuilt, so the read-out (0-100, 0-200,
+  top speed, an Ashdown Park lap) is the model's. A moved gear stays at least 1% from its neighbours; the GEARING
+  slider is off while a final drive is set by hand.
+- **Engine rpm against road speed:** each gear a ray to its limiter, and over them the path the 0-100 run takes: its
+  launch revs, its own shift points (simulateAccel now records them) and the drop at each; the band from peak torque
+  to peak power, the limiter, the top speed.
+- **Drive at the wheels against road speed:** T(N)·i·i_f·η/r in each gear, the best of them, the ideal of a gearbox
+  with infinitely many gears (P·η/v, from the same torque curve), the space between the two (what the gaps cost),
+  drag plus rolling, and the driven tyres' grip at rest.
+- Gears are told apart by their number on each line, not by colour (ten are more than colour carries); one accent
+  marks what the car does. The gear under the pointer or the keyboard is lit in both graphs; both have a hover
+  read-out. On a phone the panels stack and the graphs are 4:3. Greek throughout.
+- **Tests:** test92 (new): opening and closing, the controls are the car's, the path is the run's own shifts (each drop
+  the next ratio over this one), the force graph is T·i·i_f·η/r and never above the ideal, every real car opens it,
+  a phone, Greek.
+
+### Gear spacing from real gearboxes, and the real cars' own ratios (build 169)
+
+- **One box for every car.** Every car with the same number of gears ran the same ratios: an even progression from
+  3.35 to 0.82, stretched a little by the gearbox type (sequential 0.88, auto 1.10, numbers with no source). A
+  4-speed spanned what an 8-speed did, the steps never shrank towards the top, and a Golf shared its box with a 911.
+- **The textbook's progressive design** (Naunheimer et al., *Automotive Transmissions*, §6.3):
+  i_j = i_n · φ1^(n−j) · φ2^((n−j)(n−j−1)/2). Fitted to the 30 distinct published boxes now in the file, the span
+  grows with the gear count as ln(span) = 0.065 + 0.910·ln(n−1). φ2 falls as gears are added (about 1.1 on a
+  five-speed, 1.02 on the ten-speed Allison), so a fixed φ2 turned a ten-speed's top gears back on themselves; what
+  holds steady is the share of the span the progression makes (the middle half of the boxes
+  between 0.28 and 0.45, with no trend in the gear count), and that is what the model keeps.
+- **GEAR SPACING: CLOSE RATIO / STANDARD / WIDE RATIO** are the lower quartile, median and upper quartile of those
+  boxes, in span and in progression. A six-speed spans 4.2 / 4.8 / 5.1. The gearbox type no longer spaces the
+  ratios; test28's check that it did is restated.
+- **The real cars' own boxes.** 33 of the 42 presets carry their published ratios and final drive, each with its
+  source (Toyota, Audi, Porsche, GM and BMW sheets where found, spec databases and owners' forums where not, the
+  weaker ones marked). Boxes with two final drives (GR Yaris, RS3) are stated against one. The McLaren F1's quoted
+  2.37 final drive leaves out a drop gear: Autocar's measured 8.71 mph per 1000 rpm in 1st gives 2.98. The other 9
+  take the average spacing of the published boxes in their family, with the final drive matched to the engine as
+  before; the 330d and 500 TwinAir use their published ratios with a matched final drive. The GEARING slider biases
+  a published final drive just as it biases a matched one.
+- **Up to 10 speeds**, so the Duramax runs its ten-speed (its note that the model stopped at 8 is gone).
+- **CUSTOM ratios and a hand-set final drive** are in the model and saved with the car; the window to set them is
+  the next build. A custom set out of order is refused.
+- **Against the published figures** (all 42 cars): 0-100 mean error 10.5% -> 10.6%, top speed 3.1% -> 2.8%. The F1
+  now tops out at 365 km/h on its 7500 rpm limiter against the 386 quoted; the measured gearing says the limiter,
+  not the air, stops it there.
+- **The driver through a sweeper.** The 720S's real box put it in 3rd near the limiter through the mixed circuit's
+  long double-apex sweeper, where the line's corner speed flickers point to point (150, 211, 158, 205 km/h). The
+  foot's corner averaging took only the corner's own points, so two points between the apexes asked for full
+  throttle between two holds: three stabs. It now averages every driving point in the steering window.
+- **Tests:** test91 (new) checks the spacing, recomputes the constants from the published boxes, every published
+  set against its preset, the real cars, custom ratios, and the save. Restated, each with its reason in the file:
+  - test28: the gearbox type no longer spaces the ratios (its spread multipliers had no source).
+  - test41 (calibration): the gearbox is matched to the real car where it is known, as power, mass and driveline
+    already were: the Supra, STI and Alto run their published boxes, the GTI and M2 their real gear counts. RMS
+    11.6% -> 12.3% (budget 12.5). The M2 is 16.5 -> 21.6% (cap 17 -> 22): its eight-speed makes seven shifts to 100,
+    and the model cuts the drive for a fitted 0.20 s on every automatic shift, where a ZF hands the torque between
+    clutches under load. That shift is the next item it exposes.
+  - test83: the Hellcat's own box has an 18% shorter 1st; held at the best slip through it, the spin is 2nd gear's
+    alone, so traction control off now costs 0.5%, not 5%. The bar is that it is slower, with the spin still checked.
+  - test76: the GTI's Spa rotor peak is 701 C against a 700 C line it sat 1 C under; the line is now 710.
+
+### The VGT's vane ring sized by its own geometry, and paying its efficiency (build 168)
+
+- **The ring was the fixed housing's size.** The vane ring's throat was A(beta) = h(2 pi r2 sin beta - Z t) in the
+  comment, but in the code it was the frame's fixed-housing volute throat (from its A/R) scaled by sin beta: a VGT
+  could never pass more than a fixed housing of the same A/R. On a VGT the volute only feeds the ring; the throat
+  is the vane passages. Sized off the A/R, the 2.0 TDI's ring opened to 327 mm2, and wide open it still made 2.2x
+  the power its compressor needed at the limiter: an expansion ratio of 5, the exhaust manifold near 5 bar where
+  TDI owners measure about 3, and the vanes pinned open from 2000 rpm.
+- **Now the formula, with the ring's own proportions** scaled to the turbine wheel: the vanes' trailing edges at
+  1.22 x the wheel's tip radius (1.2-1.25 in a variable-geometry turbine patent, US 12055050) and a nozzle height
+  of 0.07 x its diameter (GT2011-46148; 0.057 in the ETN D1.8 radial-turbine design; 0.07-0.1 for rotor inlet
+  widths), the middle of the published range. The 21-60 degree sweep and 12 vanes of 1.5 mm are as they were. The
+  small frame's ring opens to 487 mm2 (165 shut, 2.9:1); the large one's is nearly unchanged (1294 against 1183).
+- **The ring pays in efficiency.** Its vanes need running clearance at their ends, and the leakage and the vanes'
+  own losses cost a VGT about 2 points against a fixed nozzle (Jiang et al. 2024), ~1 as the vanes open and ~5 as
+  they close (Gao et al. 2018): 5 points shut to 1 open, linear in the vane position (vgtEtaFactor). That and the
+  petrol vanes' creep limit are its price; it was "it flows less at the top", which was the A/R sizing.
+- **The A/R choice is a fixed housing's**: with the vane ring setting its own throat the TURBINE A/R selector
+  is disabled on a VGT.
+- Result (expansion ratio at the limiter, before -> after): EA288 2.0 TDI 3.59 -> 2.41 (vanes 62% open at 2000
+  rpm, were 100%), N57 3.0d 2.93 -> 2.36, the 2.0 TDI archetype 5.03 -> 3.37; power EA288 149 -> 154 hp (real 148),
+  N57 255 -> 258 (254), Duramax 445 -> 446 (445). The 6.6 V8 archetype (4.73) and the Cummins (4.24) still run
+  their manifolds hard at the top: their frames look small for their flow, a hardware question left open.
+- Tests: test49's price is restated (the vane ring's efficiency loss at one throat, 1.4% of the power open and
+  7.1% shut, instead of a top-end comparison against a volute the ring was sized off; the ring's radius in the
+  published range); test55 has the A/R choice leave a VGT alone and greyed out.
+
 ### A lap result no longer turns into the next one (build 167)
 
 - **The bug.** About one run in forty, a car's lap of one circuit came back as its lap of another: a Golf's

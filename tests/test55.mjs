@@ -41,6 +41,9 @@ const r = await page.evaluate(() => {
   // 4. the option is greyed out where there is no turbine
   build('1.6 Sport NA I4');
   out.disabledNA = document.getElementById('edHousing').disabled;
+  // and on a vane ring, which sets its own throat (build 168)
+  build('2.0 Turbo Diesel I4');
+  out.disabledVGT = document.getElementById('edHousing').disabled;
   return out;
 });
 
@@ -49,6 +52,12 @@ for (const l of r.ladder) {
   console.log(`  ${l.nm}${l.vgt ? ' (VGT)' : ''}`);
   for (const s of l.steps) console.log(`    ${s.h.padEnd(5)} A/R ${s.ar.toFixed(2)}  90% boost @ ${s.r90} rpm  ${s.hp} hp  (form: ${s.form})`);
   const [t, s, o] = l.steps;
+  // build 168: a vane ring sets its own throat, so the A/R choice is a fixed housing's and leaves a VGT as it is
+  if (l.vgt) {
+    if (!(t.r90 === o.r90 && t.hp === o.hp)) fails.push(`${l.nm}: the housing A/R still changes a vane ring (${t.r90}/${o.r90} rpm, ${t.hp}/${o.hp} hp)`);
+    for (const x of l.steps) if (x.form !== x.h) fails.push(`${l.nm}: the form shows ${x.form} for a ${x.h} housing`);
+    continue;
+  }
   if (!(t.ar < s.ar && s.ar < o.ar)) fails.push(`${l.nm}: housing A/R does not step tight < stock < loose`);
   if (!(t.r90 <= s.r90 && s.r90 <= o.r90)) fails.push(`${l.nm}: a tighter housing must not spool later (${t.r90} / ${s.r90} / ${o.r90})`);
   if (!(t.r90 < o.r90)) fails.push(`${l.nm}: tight and loose spool at the same speed — the choice does nothing`);
@@ -64,6 +73,8 @@ if (!(r.manifold.kept > 0.2)) fails.push(`only ${(r.manifold.kept * 100).toFixed
 
 console.log(`== the option is disabled on an NA build: ${r.disabledNA} ==`);
 if (!r.disabledNA) fails.push('TURBINE A/R should be disabled without a turbo');
+console.log(`== and on a vane ring: ${r.disabledVGT} ==`);
+if (!r.disabledVGT) fails.push('TURBINE A/R should be disabled on a VGT, whose vane ring sets its own throat');
 
 if (errors.length) fails.push(...errors);
 console.log(fails.length ? '\nFAIL:\n  ' + fails.join('\n  ') : '\nPASS');

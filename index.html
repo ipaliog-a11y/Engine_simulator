@@ -117,6 +117,34 @@ footer{text-align:center;margin-top:16px;padding:8px;font-size:7px;color:#555;bo
 .design-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,220px));gap:9px 12px;justify-content:start}
 .field{display:flex;flex-direction:column;gap:4px;min-width:0}
 .pick-row{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,280px));gap:9px 12px;justify-content:start;margin-bottom:6px}
+/* GEAR RATIOS window (build 170): the ratios, the final drive and two graphs of what they do, over the vehicle tab. */
+.gw-back{position:fixed;inset:0;z-index:80;background:rgba(5,5,10,.84);display:flex;align-items:flex-start;justify-content:center;overflow-y:auto;padding:16px}
+.gw-back[hidden]{display:none}
+.gw{background:#0d0d18;border:3px solid #444;box-shadow:6px 6px 0 #000;width:min(1180px,100%)}
+.gw-head{display:flex;gap:10px;align-items:center;padding:8px 10px;border-bottom:2px solid #26263a}
+.gw-head h3{font-size:10px;color:#ffcc00;margin:0;font-weight:normal}
+.gw-head .sub{font-size:7px;color:#889;flex:1;min-width:0}
+.gw-head button{padding:4px 8px;box-shadow:none}
+.gw-body{display:grid;grid-template-columns:minmax(270px,350px) minmax(0,1fr);gap:14px;padding:12px}
+.gw-k{font-size:7px;color:#88aacc;margin:2px 0 6px}
+.gw-sp{display:flex;flex-wrap:wrap;gap:4px;margin-bottom:12px}
+.gw-sp button,.gw-fdrow button{font-size:7px;padding:6px 7px;box-shadow:none;border:2px solid #33334a;background:#151522;color:#889}
+.gw-sp button.on,.gw-fdrow button.on{border-color:#00ff88;color:#00ff88;background:#004422}
+.gw-row{display:grid;grid-template-columns:30px minmax(0,1fr) 40px 62px;gap:6px;align-items:center;font-size:7px;margin:7px 0}
+.gw-row .n{color:#889}.gw-row .r{color:#00ff88;text-align:right}.gw-row .v{color:#667;text-align:right}
+.gw-row.fd{margin-top:12px;padding-top:10px;border-top:2px solid #26263a}
+.gw-fdrow{display:flex;gap:6px;align-items:center;margin:4px 0 0 36px;font-size:7px;color:#667}
+.gw-note{font-size:7px;color:#667;line-height:1.5;margin-top:10px}
+.gw-read{display:flex;flex-wrap:wrap;gap:6px 16px;font-size:8px;color:#889;margin-bottom:8px}
+.gw-read b{color:#e0e0e0;font-weight:normal}
+.gw-ch{position:relative;margin-bottom:10px}
+.gw-ch .t{font-size:7px;color:#88aacc;margin-bottom:4px}
+.gw-ch canvas{display:block;width:100%;aspect-ratio:2/1;background:#0a0a12;border:2px solid #333;cursor:crosshair}
+.gw-leg{display:flex;flex-wrap:wrap;gap:3px 12px;font-size:7px;color:#aab;margin-bottom:5px}
+.gw-leg i{display:inline-block;width:14px;height:0;border-top:2px solid;vertical-align:middle;margin-right:5px}
+.gw-leg i.d{border-top-style:dashed}.gw-leg i.b{height:7px;border:0}
+.gw-tip{position:absolute;pointer-events:none;font-size:7px;line-height:1.6;color:#e0e0e0;background:#151522;border:2px solid #444;padding:4px 6px;white-space:nowrap;display:none}
+@media(max-width:760px){.gw-body{grid-template-columns:1fr}.gw-back{padding:6px}.gw-ch canvas{aspect-ratio:4/3}}
 /* What is loaded right now, on every tab. */
 .build-strip{display:flex;flex-wrap:wrap;gap:6px 14px;align-items:center;font-size:8px;color:#889;padding:6px 10px;margin:-6px 0 10px;background:#0d0d18;border:2px solid #26263a}
 .build-strip button{font-size:8px;padding:4px 8px;box-shadow:none;border:2px solid #33334a;background:#151522;color:#00ff88;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
@@ -373,7 +401,7 @@ table.fuelmap td.live{box-shadow:inset 0 0 0 2px #fff;font-weight:bold}
 <body>
 <div class="container">
 <header>
-<h1>PIXEL ENGINE SIM v0.6 build 167</h1>
+<h1>PIXEL ENGINE SIM v0.6 build 170</h1>
 <div class="subtitle" id="subtitle">ENGINE DESIGNER • BUILD IT, THEN DRIVE IT</div>
 </header>
 <div class="build-strip" id="buildStrip">
@@ -1773,25 +1801,25 @@ An engine only makes useful power over a narrow band of revs, but a car has to g
 </div>
 <div class="gtier gt-game"><div class="gtier-h">LV2 · IN THE GAME</div>
 <div class="guide-body" data-gk="gearbox">
-<b>Gearbox type</b> changes four things: how long the drive is cut on an upshift, how much of the
-engine's output survives the driveline, how the ratios are spaced, and how the car leaves the
-line.<br>· <b>Manual (H-pattern)</b> — the most efficient box, but you lose ~350 ms per shift lifting off,
-moving the lever and re-engaging. Cheap. Best where there are few shifts to make.<br>· <b>Sequential</b> — a race box that bangs the next dog in: ~60 ms shifts and close ratios that
-keep a peaky engine in its band. Expensive.<br>· <b>Dual-clutch (DCT)</b> — the next gear is already engaged on the second clutch, so shifts are
+<b>Gearbox type</b> changes three things: how long the drive is cut on an upshift, how much of the
+engine's output survives the driveline, and how the car leaves the line. How the ratios are spaced is a
+choice of its own, GEAR SPACING (see <i>Gearing &amp; shifting</i>).<br>· <b>Manual (H-pattern)</b> — the most efficient box, but you lose ~350 ms per shift lifting off,
+moving the lever and re-engaging. Cheap. Best where there are few shifts to make.<br>· <b>Sequential</b> — a race box that bangs the next dog in: ~60 ms shifts; it is usually built
+with close ratios that keep a peaky engine in its band. Expensive.<br>· <b>Dual-clutch (DCT)</b> — the next gear is already engaged on the second clutch, so shifts are
 near-seamless (~30 ms). The quickest thing here, and priced like it.<br>· <b>Torque-converter auto</b> — slowest shifts of the modern boxes (~200 ms) and the worst
 driveline losses, because it drives through fluid. What it buys you is the <b>launch</b>: the
 converter stalls up against the brakes and <i>multiplies</i> engine torque (up to ~1.9× at a
 2400 rpm stall), fading to 1:1 as the turbine catches up. That's why an automatic can out-launch a
 manual despite giving away power everywhere else — and why it suits a heavy, torquey car far
-better than a light, peaky one. It also spreads its ratios wider: a lower 1st to get the load
-moving, a taller top for cruising.
+better than a light, peaky one. Modern ones carry eight or ten gears, and the more gears a box has the
+wider it spans: a lower 1st to get the load moving and a taller top for cruising.
 </div>
 </div>
 <div class="gtier gt-phys"><div class="gtier-h">LV3 · THE PHYSICS</div>
 <div class="guide-body" data-gk="gearboxPhys">
-<div class="gtab-wrap"><table class="gtab"><tr><th>gearbox</th><th>shift (drive cut)</th><th>efficiency</th><th>ratio spread</th></tr>
-<tr><td>manual</td><td>350 ms</td><td>1.00</td><td>1.00</td></tr><tr><td>sequential</td><td>60 ms</td><td>0.99</td><td>0.88</td></tr>
-<tr><td>dual-clutch</td><td>30 ms</td><td>0.98</td><td>0.95</td></tr><tr><td>torque-converter auto</td><td>200 ms</td><td>0.93</td><td>1.10</td></tr></table></div>
+<div class="gtab-wrap"><table class="gtab"><tr><th>gearbox</th><th>shift (drive cut)</th><th>efficiency</th></tr>
+<tr><td>manual</td><td>350 ms</td><td>1.00</td></tr><tr><td>sequential</td><td>60 ms</td><td>0.99</td></tr>
+<tr><td>dual-clutch</td><td>30 ms</td><td>0.98</td></tr><tr><td>torque-converter auto</td><td>200 ms</td><td>0.93</td></tr></table></div>
 These multiply the drivetrain's own efficiency (FWD 0.92, RWD 0.90, AWD 0.86). The converter stalls to 2400 rpm and multiplies torque up to 1.9× while it slips, fading to 1:1 as it couples. Every spinning part counts as extra mass seen through the gearing (Gillespie):
 <span class="geq">m<sub>eff</sub> = m + (I<sub>wheels</sub> + I<sub>engine</sub> · i²) / r²</span>
 which is large in first gear, where <i>i</i> is big. The engine's inertia only counts while the clutch is engaged, not while it slips or during a shift.
@@ -1838,7 +1866,9 @@ gear, the run makes one more shift and the time jumps by about one shift.
 <div class="guide-body" data-gk="gearingPhys">
 Road speed in a gear, with tyre rolling radius <i>r</i>:
 <span class="geq">v = (2πN/60) · r / (i<sub>gear</sub> · i<sub>final</sub>)</span>
-The ratios are a geometric progression from a short first to a tall top gear, stretched or squeezed by the gearbox's spread. The final drive is matched so that peak power arrives at the drag-limited speed, solving
+A real car runs its own published ratios and final drive. Otherwise the ratios follow the textbook's progressive design (Naunheimer, <i>Automotive Transmissions</i>), the steps shrinking towards the top:
+<span class="geq">i<sub>j</sub> = i<sub>n</sub> · φ<sub>1</sub><sup>n−j</sup> · φ<sub>2</sub><sup>(n−j)(n−j−1)/2</sup></span>
+with the span (1st over top) growing with the number of gears, <i>ln(span) = 0.065 + 0.910·ln(n−1)</i>. Both are fitted to 30 published gearboxes; φ<sub>2</sub> falls as gears are added (near 1.1 on a five-speed, 1.02 on a ten-speed), but the share of the span it makes holds steady, so that share is what is kept: CLOSE RATIO, STANDARD and WIDE RATIO are the lower quartile, median and upper quartile of the span and of that share (0.28, 0.39, 0.45). The final drive is matched so that peak power arrives at the drag-limited speed, solving
 <span class="geq">P<sub>peak</sub> · η = ½ ρ C<sub>d</sub>A v³ + c<sub>rr</sub> m g v</span>
 then biased by the GEARING slider and held to 2.2–6.0:1. The upshift rule is the wheel-torque crossover, <i>T(N) · i<sub>g</sub> ≤ T(N · i<sub>g+1</sub>/i<sub>g</sub>) · i<sub>g+1</sub></i>, or the limiter, whichever comes first, the same in the 0–100 and on the lap.
 </div>
@@ -2530,7 +2560,9 @@ Most other tests check behaviour that is true of real cars: a bigger turbo spool
 <div class="field"><label for="vhDrive">DRIVETRAIN</label><select id="vhDrive"><option value="fwd">FWD</option><option value="rwd">RWD</option><option value="awd">AWD</option></select></div>
 <div class="field"><label for="vhDiff">DIFFERENTIAL</label><select id="vhDiff"><option value="open">OPEN</option><option value="visc">VISCOUS LSD</option><option value="clsd">CLUTCH-PLATE LSD</option><option value="spool">SPOOL / LOCKED</option></select></div>
 <div class="field"><label for="vhGearbox">GEARBOX TYPE</label><select id="vhGearbox"><option value="manual">MANUAL (H-PATTERN)</option><option value="sequential">SEQUENTIAL</option><option value="dct">DUAL-CLUTCH (DCT)</option><option value="auto">TORQUE-CONV AUTO</option></select></div>
-<div class="field"><label for="vhGears">GEARBOX (SPEEDS)</label><select id="vhGears"><option value="4">4</option><option value="5">5</option><option value="6">6</option><option value="7">7</option><option value="8">8</option></select></div>
+<div class="field"><label for="vhGears">GEARBOX (SPEEDS)</label><select id="vhGears"><option value="4">4</option><option value="5">5</option><option value="6">6</option><option value="7">7</option><option value="8">8</option><option value="9">9</option><option value="10">10</option></select></div>
+<div class="field"><label for="vhSpacing">GEAR SPACING</label><select id="vhSpacing"><option value="std">STANDARD</option></select></div>
+<div class="field"><label for="btnGearRatios">RATIOS &amp; GRAPHS</label><button id="btnGearRatios" type="button">GEAR RATIOS…</button></div>
 <div class="field"><label for="vhGearing"><span id="lblGearing" class="ctl-lbl">GEARING (FINAL DRIVE)</span> <span class="val" id="valGearing">52</span></label><input type="range" id="vhGearing" min="0" max="100" step="1" value="52" aria-label="Gearing short to tall"></div>
 <div class="field"><label for="vhLimiter">SPEED LIMITER</label><select id="vhLimiter"><option value="off">OFF (REMOVED)</option><option value="on">ON</option></select></div>
 <div class="field"><label for="vhTC">TRACTION CONTROL</label><select id="vhTC"><option value="on">ON</option><option value="off">OFF</option></select></div>
@@ -2729,6 +2761,24 @@ Most other tests check behaviour that is true of real cars: a bigger turbo spool
 <div class="race-body"><div class="race-stage" id="raceStage"></div><aside class="race-side" id="raceSide"></aside></div>
 </div>
 <footer>PIXEL ENGINE SIM • Configurable engine designer • Expandable per subsystem<br>Physics simplified for education &amp; fun • Inspired by Automation</footer>
+</div>
+<div class="gw-back" id="gearWin" hidden>
+<div class="gw" role="dialog" aria-modal="true" aria-labelledby="gwTitle">
+<div class="gw-head"><h3 id="gwTitle">GEAR RATIOS</h3><span class="sub" id="gwSub"></span><button id="gwClose" type="button" aria-label="Close">✕</button></div>
+<div class="gw-body">
+<div>
+<div class="gw-k" id="gwKSp">SPACING</div><div class="gw-sp" id="gwSpacing"></div>
+<div class="gw-k" id="gwKR">RATIO · ROAD SPEED AT THE LIMITER</div><div id="gwSliders"></div>
+<div class="btn-row"><button id="gwReset" type="button">RESET</button></div>
+<div class="gw-note" id="gwNote"></div>
+</div>
+<div>
+<div class="gw-read" id="gwRead"></div>
+<div class="gw-ch"><div class="t" id="gwTSaw">ENGINE RPM AGAINST ROAD SPEED</div><div class="gw-leg" id="gwLegSaw"></div><canvas id="gwSaw" role="img"></canvas><div class="gw-tip" id="gwTipSaw"></div></div>
+<div class="gw-ch"><div class="t" id="gwTForce">DRIVE AT THE WHEELS AGAINST ROAD SPEED</div><div class="gw-leg" id="gwLegForce"></div><canvas id="gwForce" role="img"></canvas><div class="gw-tip" id="gwTipForce"></div></div>
+</div>
+</div>
+</div>
 </div>
 <script src="tracks/real-circuits.js"></script>
 <script>
@@ -3629,13 +3679,23 @@ function pulseShape(mEx,area,T3,mapBar,prMean){
 }
 // Turbine power (W) passing mEx through a throat, pulses included, and the mean manifold PR.
 // prMean, when the caller already has it (the nozzle PR that passes exactly mEx), saves a solve.
+// A vane ring pays for itself in efficiency (build 168): its vanes need running clearance at their ends, and the gas
+// leaking through it and the vanes' own profile losses cost a VGT about 2 points against a fixed nozzle (Jiang et
+// al. 2024, review), ~1 point as the vanes open and ~5 as they close (Gao et al. 2018, end-clearance leakage). So
+// 5 points shut, 1 open, linear in the vane position between.
+const VGT_LOSS_SHUT=0.05, VGT_LOSS_OPEN=0.01;
+function vgtEtaFactor(area){
+  const e=engine;if(!(e.vgtShut>0)||!(area>0))return 1;
+  const f=clamp((area-e.vgtShut)/Math.max(1e-12,e.turbineArea-e.vgtShut),0,1);
+  return (TURB_ETA-(VGT_LOSS_SHUT+(VGT_LOSS_OPEN-VGT_LOSS_SHUT)*f))/TURB_ETA;
+}
 function turbinePower(mEx,area,T3,mapBar,prMean,Ut){
-  const pr=prMean>0?prMean:turbineManifoldPR(mEx,area,T3);
+  const pr=prMean>0?prMean:turbineManifoldPR(mEx,area,T3),kv=vgtEtaFactor(area);
   const s=mEx>0&&area>0?pulseShape(mEx,area,T3,mapBar,pr):null;
-  if(!s)return{P:mEx*turbineWorkMean(pr,T3,Ut),pr};
+  if(!s)return{P:kv*mEx*turbineWorkMean(pr,T3,Ut),pr};
   const mHi=mEx*(1+s.keep*(s.fb/s.phi-1)), mLo=mEx*(1+s.keep*((1-s.fb)/(1-s.phi)-1));   // phi mHi + (1-phi) mLo = mEx
-  const P=s.phi*mHi*turbineWorkMean(turbineManifoldPR(mHi,area,T3),T3,Ut)
-        +(1-s.phi)*Math.max(0,mLo)*turbineWorkMean(turbineManifoldPR(Math.max(0,mLo),area,T3),T3,Ut);
+  const P=kv*(s.phi*mHi*turbineWorkMean(turbineManifoldPR(mHi,area,T3),T3,Ut)
+        +(1-s.phi)*Math.max(0,mLo)*turbineWorkMean(turbineManifoldPR(Math.max(0,mLo),area,T3),T3,Ut));
   return{P,pr};
 }
 function manifoldPR(mAir,mEx,mapBar,T3,area,compEta,flowFrac){
@@ -3671,20 +3731,30 @@ function manifoldPR(mAir,mEx,mapBar,T3,area,compEta,flowFrac){
 // neither is fitted:
 //   · the RANGE. Production vane rings sweep roughly 21 to 60 degrees from tangential, which with
 //     the blockage term gives about 2.9:1 — the flow range a VGT is actually sold on.
-//   · the TOP END. At full open the ring still passes LESS than the plain volute of the same
-//     frame, because Z*t of circumference is vane. That is ~11% on a medium frame and it is why
-//     nobody puts a VGT on a drag car: the thing that buys you 1700 rpm costs you at the top.
-// Blockage is a fixed length of circumference, so it hurts a small frame more than a large one —
-// r2 sits just outside the turbine wheel, so it scales with the frame and the ratio does not have
-// to be asserted per size.
+//   · the TOP END: Z*t of circumference is vane, which a plain volute does not lose.
+// Blockage is a fixed length of circumference, so it hurts a small frame more than a large one.
+//
+// THE RING'S OWN SIZE (build 168). The ring was sized off the frame's fixed-housing A/R: its throat at 60 degrees
+// was taken to be that housing's volute throat, so h*2*pi*r2*sin(60) was set to whatever A/R implied. On a VGT the
+// volute only feeds the ring; the throat is the vane passages, and their area is the formula above with the
+// ring's own radius and height. Sized off the A/R, the 2.0 TDI's ring opened to 327 mm2, and wide open it still
+// made 2.2x the power its compressor needed at the limiter: an expansion ratio of 5 and an exhaust manifold near
+// 5 bar where TDI owners measure about 3. The ring now has its own proportions, scaled to the turbine wheel as the
+// hardware is:
+//   r2 = 1.22 x the wheel's tip radius: the vanes' trailing edges sit at 1.2-1.25 times it (a variable-geometry
+//        turbine patent, US 12055050; the A/R volute was put at 1.05);
+//   h  = 0.07 x the wheel's diameter: the nozzle height of radial turbines of this kind (0.07, GT2011-46148;
+//        0.057, the ETN D1.8 radial-turbine design; rotor inlet widths of 0.07-0.1 of the diameter in the
+//        design literature), the middle of the published range.
 const VANE_Z=12, VANE_T=0.0015;                      // vanes, and their thickness (m)
 const VANE_T_LIMIT=1100;                             // K — where nickel-alloy vanes start to creep
 const VANE_BETA_MIN=21, VANE_BETA_MAX=60;            // degrees from tangential — the vane sweep
-const vanePitchR=exd=>1.05*(TURB_WHEEL*exd/2);       // pitch circle, just outboard of the wheel
-// Throat at vane angle `beta`, as a fraction of the plain volute throat the frame's A/R quotes.
-function vaneThroatFrac(exd,betaDeg){
-  const blk=VANE_Z*VANE_T/(2*Math.PI*vanePitchR(exd));
-  return Math.max(0.05,(Math.sin(betaDeg*Math.PI/180)-blk)/Math.sin(VANE_BETA_MAX*Math.PI/180));
+const VANE_R2=1.22, VANE_H=0.07;                     // ring radius over wheel tip radius, nozzle height over wheel diameter
+const vanePitchR=exd=>VANE_R2*(TURB_WHEEL*exd/2);    // the vanes' trailing edges, outboard of the wheel
+// The ring's throat at vane angle `beta`, m2: h * (2 pi r2 sin(beta) - Z t).
+function vaneThroatArea(exd,betaDeg){
+  const h=VANE_H*TURB_WHEEL*exd;
+  return h*Math.max(0.05*2*Math.PI*vanePitchR(exd),2*Math.PI*vanePitchR(exd)*Math.sin(betaDeg*Math.PI/180)-VANE_Z*VANE_T);
 }
 // The vanes ARE the boost control: a VGT diesel has no wastegate, because opening the vanes IS
 // the gate. So the schedule is "the WIDEST throat that still supplies the compressor at TARGET
@@ -4407,7 +4477,18 @@ const I18N={
   // vehicle tab
   'VEHICLE':{el:'ΟΧΗΜΑ'},'VEHICLE DESIGN':{el:'ΣΧΕΔΙΑΣΗ ΟΧΗΜΑΤΟΣ'},
   'Pick a chassis and it arrives on its factory spec — matching tyres, wheels, brakes, suspension and aero. Swap any part from there; your current engine is dropped in and the performance is computed live.':{el:'Διάλεξε σασί και έρχεται με τον εργοστασιακό του εξοπλισμό — ταιριαστά ελαστικά, ζάντες, φρένα, ανάρτηση και αεροδυναμική. Άλλαξε ό,τι θέλεις από εκεί· ο τρέχων κινητήρας μπαίνει μέσα και οι επιδόσεις υπολογίζονται ζωντανά.'},
-  'Chassis & Drivetrain':{el:'Σασί & Μετάδοση'},'CHASSIS':{el:'ΣΑΣΙ'},'DRIVETRAIN':{el:'ΜΕΤΑΔΟΣΗ'},'GEARBOX (SPEEDS)':{el:'ΚΙΒΩΤΙΟ (ΣΧΕΣΕΙΣ)'},'GEARING (FINAL DRIVE)':{el:'ΤΕΛΙΚΗ ΣΧΕΣΗ'},
+  'Chassis & Drivetrain':{el:'Σασί & Μετάδοση'},'CHASSIS':{el:'ΣΑΣΙ'},'DRIVETRAIN':{el:'ΜΕΤΑΔΟΣΗ'},'GEARBOX (SPEEDS)':{el:'ΚΙΒΩΤΙΟ (ΣΧΕΣΕΙΣ)'},'GEAR SPACING':{el:'ΚΛΙΜΑΚΩΣΗ ΣΧΕΣΕΩΝ'},'RATIOS & GRAPHS':{el:'ΣΧΕΣΕΙΣ & ΓΡΑΦΗΜΑΤΑ'},'GEAR RATIOS…':{el:'ΣΧΕΣΕΙΣ ΚΙΒΩΤΙΟΥ…'},'GEAR RATIOS':{el:'ΣΧΕΣΕΙΣ ΚΙΒΩΤΙΟΥ'},
+  'SPACING':{el:'ΚΛΙΜΑΚΩΣΗ'},'RATIO · ROAD SPEED AT THE LIMITER':{el:'ΣΧΕΣΗ · ΤΑΧΥΤΗΤΑ ΣΤΟΝ ΚΟΦΤΗ'},'ENGINE RPM AGAINST ROAD SPEED':{el:'ΣΤΡΟΦΕΣ ΚΙΝΗΤΗΡΑ ΠΡΟΣ ΤΑΧΥΤΗΤΑ'},
+  'DRIVE AT THE WHEELS AGAINST ROAD SPEED':{el:'ΩΘΗΣΗ ΣΤΟΥΣ ΤΡΟΧΟΥΣ ΠΡΟΣ ΤΑΧΥΤΗΤΑ'},'FINAL':{el:'ΤΕΛΙΚΗ'},'gear ratio':{el:'σχέση'},'published':{el:'δημοσιευμένη'},'matched':{el:'ταιριασμένη'},'by hand':{el:'με το χέρι'},
+  'the car\'s published final drive, and the GEARING slider':{el:'η δημοσιευμένη τελική του αυτοκινήτου, και ο ρυθμιστής ΤΕΛΙΚΗ ΣΧΕΣΗ'},'matched to the engine, and the GEARING slider':{el:'ταιριασμένη στον κινητήρα, και ο ρυθμιστής ΤΕΛΙΚΗ ΣΧΕΣΗ'},
+  'the GEARING slider is off while this is set':{el:'ο ρυθμιστής ΤΕΛΙΚΗ ΣΧΕΣΗ είναι ανενεργός όσο ισχύει αυτή'},'SET BY HAND':{el:'ΜΕ ΤΟ ΧΕΡΙ'},
+  'Published ratios':{el:'Δημοσιευμένες σχέσεις'},'No published ratios for this car: the average spacing of the published boxes in its family.':{el:'Δεν υπάρχουν δημοσιευμένες σχέσεις για αυτό το αυτοκίνητο: η μέση κλιμάκωση των δημοσιευμένων κιβωτίων της οικογένειάς του.'},
+  'Your own ratios. Each gear stays at least 1% taller than the one below it.':{el:'Δικές σου σχέσεις. Κάθε σχέση μένει τουλάχιστον 1% πιο μακριά από την προηγούμενη.'},
+  'The textbook\'s progressive spacing, fitted to 30 published gearboxes':{el:'Η προοδευτική κλιμάκωση του εγχειριδίου, προσαρμοσμένη σε 30 δημοσιευμένα κιβώτια'},
+  'Ashdown Park lap':{el:'γύρος Ashdown Park'},'governed':{el:'κόφτης'},'PEAK TORQUE TO PEAK POWER':{el:'ΑΠΟ ΜΕΓ. ΡΟΠΗ ΣΕ ΜΕΓ. ΙΣΧΥ'},'THE 0–100 RUN':{el:'Η ΕΠΙΤΑΧΥΝΣΗ 0–100'},'EACH GEAR (ITS NUMBER AT ITS END)':{el:'ΚΑΘΕ ΣΧΕΣΗ (Ο ΑΡΙΘΜΟΣ ΤΗΣ ΣΤΟ ΤΕΛΟΣ)'},'EACH GEAR':{el:'ΚΑΘΕ ΣΧΕΣΗ'},'CLOSE':{el:'ΚΛΕΙΣΙΜΟ'},'LOST TO THE GAPS':{el:'ΧΑΜΕΝΟ ΣΤΑ ΚΕΝΑ'},'LIMITER':{el:'ΚΟΦΤΗΣ'},
+  'GRIP (AT REST)':{el:'ΠΡΟΣΦΥΣΗ (ΣΤΑΣΗ)'},'GRIP':{el:'ΠΡΟΣΦΥΣΗ'},'BEST GEAR':{el:'ΚΑΛΥΤΕΡΗ ΣΧΕΣΗ'},'IDEAL (PEAK POWER EVERYWHERE)':{el:'ΙΔΑΝΙΚΟ (ΜΕΓ. ΙΣΧΥΣ ΠΑΝΤΟΥ)'},'DRAG + ROLLING':{el:'ΑΝΤΙΣΤΑΣΗ + ΚΥΛΙΣΗ'},
+  'best':{el:'καλύτερη'},'ideal':{el:'ιδανικό'},'drag + rolling':{el:'αντίσταση + κύλιση'},'1st':{el:'1η'},'2nd':{el:'2η'},'3rd':{el:'3η'},
+  '4th':{el:'4η'},'5th':{el:'5η'},'6th':{el:'6η'},'7th':{el:'7η'},'8th':{el:'8η'},'9th':{el:'9η'},'10th':{el:'10η'},'Ratios':{el:'Σχέσεις'},'(published)':{el:'(δημοσιευμένες)'},'(family average)':{el:'(μέσος όρος οικογένειας)'},'(custom)':{el:'(προσαρμοσμένες)'},'(close ratio)':{el:'(κοντινές)'},'(standard)':{el:'(κανονικές)'},'(wide ratio)':{el:'(αραιές)'},'CLOSE RATIO':{el:'ΚΟΝΤΙΝΕΣ'},'STANDARD':{el:'ΚΑΝΟΝΙΚΕΣ'},'WIDE RATIO':{el:'ΑΡΑΙΕΣ'},'CUSTOM':{el:'ΠΡΟΣΑΡΜΟΣΜΕΝΕΣ'},'GEARING (FINAL DRIVE)':{el:'ΤΕΛΙΚΗ ΣΧΕΣΗ'},
   'REPORT PNG':{el:'ΑΝΑΦΟΡΑ PNG'},'REPORT PDF':{el:'ΑΝΑΦΟΡΑ PDF'},'LAP REPORT PNG':{el:'ΑΝΑΦΟΡΑ ΓΥΡΟΥ PNG'},
   'TRACK':{el:'ΠΙΣΤΑ'},'Lap Time':{el:'Χρόνος Γύρου'},'CIRCUIT':{el:'ΠΙΣΤΑ'},'LAP TIME':{el:'ΧΡΟΝΟΣ ΓΥΡΟΥ'},
   'AVG SPEED':{el:'ΜΕΣΗ ΤΑΧΥΤΗΤΑ'},'SECTOR 1':{el:'ΤΟΜΕΑΣ 1'},'SECTOR 2':{el:'ΤΟΜΕΑΣ 2'},'SECTOR 3':{el:'ΤΟΜΕΑΣ 3'},
@@ -4778,7 +4859,7 @@ const GUIDE_I18N={
   chassis:{el:"Στην καρτέλα <b>ΟΧΗΜΑ</b> βάζεις τον κινητήρα σου σε αυτοκίνητο. Διάλεξε <b>σασί</b> και έρχεται με τον <b>εργοστασιακό του εξοπλισμό</b> — τα ελαστικά, ζάντες, φρένα, ανάρτηση, αεροδυναμική και κιβώτιο που θα φορούσε πραγματικά: ένα kei εμφανίζεται με στενά οικονομικά ελαστικά και μικρούς ατσάλινους δίσκους, ενώ ένα hypercar παίρνει φαρδιά semi-slick, carbon-ceramic φρένα και πακέτο αεροτομής/diffuser. Όλα παραμένουν επεξεργάσιμα· το <b>ΕΡΓΟΣΤΑΣΙΑΚΟΣ ΕΞΟΠΛΙΣΜΟΣ</b> τα επαναφέρει."},
   garage:{el:"Η καρτέλα <b>ΓΚΑΡΑΖ</b> κρατά τα αυτοκίνητα και τους κινητήρες σου. Δώσε όνομα σε ένα αυτοκίνητο στο κάτω μέρος αυτής της καρτέλας και πάτησε <b>ΑΠΟΘΗΚΕΥΣΗ ΣΤΟ ΓΚΑΡΑΖ</b> και αποθηκεύεται το σύνολο — το αμάξωμα, κάθε εξάρτημα πάνω του, <i>και</i> ο κινητήρας μέσα, μέχρι και ο χειροκίνητα ρυθμισμένος χάρτης καυσίμου. Στην καρτέλα ΚΙΝΗΤΗΡΑΣ, η <b>ΑΠΟΘΗΚΕΥΣΗ ΚΙΝΗΤΗΡΑ</b> κρατά μόνο τον κινητήρα, που μπαίνει σε όποιο αυτοκίνητο έχεις όταν τον φορτώσεις. Η <b>ΠΡΟΒΟΛΗ</b> σε μια κάρτα δείχνει τι θα φορτώσει. Κάθε κάρτα δείχνει τα βασικά νούμερα που είχε όταν την αποθήκευσες (ισχύ, βάρος, 0–100, τελική, χρόνο γύρου και συνολικό κόστος), οπότε μπορείς να παρατάξεις τρεις κατασκευές και να τις συγκρίνεις χωρίς να ξαναφτιάξεις καμία. Η <b>ΦΟΡΤΩΣΗ</b> επαναφέρει το αυτοκίνητο ακριβώς όπως ήταν· αν γράψεις όνομα που υπάρχει ήδη, η κάρτα του τονίζεται και η αποθήκευση το αντικαθιστά. Αυτό είναι ξεχωριστό από τα <b>ΑΠΟΘΗΚ.</b>/<b>ΦΟΡΤΩΣΗ</b>, που είναι μία μοναδική θέση γρήγορης αποθήκευσης. Μια εγγραφή του γκαράζ είναι η ίδια που γράφει η <b>ΑΠΟΘ. ΑΡΧΕΙΟΥ</b> και μεταφέρει ένα σύνδεσμος κοινοποίησης. Όλα μένουν μόνο σε αυτόν τον browser — αν καθαρίσεις τα δεδομένα ιστότοπου, χάνεται το γκαράζ, και η <b>ΑΠΟΘ. ΑΡΧΕΙΟΥ</b> είναι αυτή που σώζει μια κατασκευή από αυτό."},
   tuning:{el:"Από εκεί ρυθμίζεις <b>μετάδοση</b> (FWD/RWD/AWD — το AWD ξεκινά καλύτερα), <b>κιβώτιο</b> (τύπος, σχέσεις + ρυθμιστικό τελικής), <b>ελαστικά</b> (τύπος + πλάτος/προφίλ/διάμετρος), <b>αεροδυναμική</b> (εμπρός/πίσω/πάτωμα = κάθετη δύναμη & οπισθέλκουσα), <b>φρένα</b> (τύπος + διάμετρος δίσκου) και <b>ανάρτηση</b> (πόσο γέρνει το αμάξωμα και η κλίση των τροχών). Η πρόσφυση δεν είναι πολλαπλασιαστής: ένα ελαστικό πιάνει περισσότερο όσο λιγότερο φορτίο σηκώνει για το μέγεθός του, οπότε μεγαλύτερο ελαστικό, ελαφρύτερο αυτοκίνητο και λιγότερη μεταφορά βάρους στους εξωτερικούς τροχούς (χαμηλό, φαρδύ αυτοκίνητο) στρίβουν γρηγορότερα· το γέρσιμο που βγάζει το φορτωμένο ελαστικό από την καλύτερη γωνία του κοστίζει πρόσφυση."},
-  gearbox:{el:"<b>Ο τύπος κιβωτίου</b> αλλάζει τέσσερα πράγματα: πόσο κόβεται η μετάδοση σε κάθε αλλαγή, πόση από την ισχύ του κινητήρα φτάνει στους τροχούς, πώς είναι κλιμακωμένες οι σχέσεις, και πώς ξεκινά το αυτοκίνητο.<br>· <b>Χειροκίνητο (H)</b> — το πιο αποδοτικό, αλλά χάνεις ~350 ms σε κάθε αλλαγή. Φθηνό.<br>· <b>Σειριακό</b> — αγωνιστικό: αλλαγές ~60 ms και κοντές σχέσεις που κρατούν έναν «αιχμηρό» κινητήρα στην περιοχή του. Ακριβό.<br>· <b>Διπλού συμπλέκτη (DCT)</b> — η επόμενη σχέση είναι ήδη επιλεγμένη στον δεύτερο συμπλέκτη, άρα σχεδόν αδιάλειπτες αλλαγές (~30 ms). Το ταχύτερο, και ανάλογα ακριβό.<br>· <b>Αυτόματο με μετατροπέα ροπής</b> — οι πιο αργές αλλαγές (~200 ms) και οι μεγαλύτερες απώλειες, γιατί μεταδίδει μέσω υγρού. Το κερδίζει στην <b>εκκίνηση</b>: ο μετατροπέας «φορτίζει» πάνω στα φρένα και <i>πολλαπλασιάζει</i> τη ροπή (έως ~1.9× σε στάλλ 2400 σ.α.λ.), σβήνοντας στο 1:1 καθώς ο στρόβιλος προλαβαίνει. Γι’ αυτό ένα αυτόματο ξεκινά καλύτερα από ένα χειροκίνητο παρότι χάνει ισχύ παντού αλλού — και γι’ αυτό ταιριάζει σε βαρύ, ροπάτο αυτοκίνητο, όχι σε ελαφρύ και «αιχμηρό». Επίσης απλώνει περισσότερο τις σχέσεις: πιο κοντή 1η, πιο μακριά τελευταία."},
+  gearbox:{el:"<b>Ο τύπος κιβωτίου</b> αλλάζει τρία πράγματα: πόσο κόβεται η μετάδοση σε κάθε αλλαγή, πόση από την ισχύ του κινητήρα φτάνει στους τροχούς, και πώς ξεκινά το αυτοκίνητο. Η κλιμάκωση των σχέσεων είναι χωριστή επιλογή, η ΚΛΙΜΑΚΩΣΗ ΣΧΕΣΕΩΝ (δες <i>Σχέσεις &amp; αλλαγές</i>).<br>· <b>Χειροκίνητο (H)</b> — το πιο αποδοτικό, αλλά χάνεις ~350 ms σε κάθε αλλαγή. Φθηνό.<br>· <b>Σειριακό</b> — αγωνιστικό: αλλαγές ~60 ms, και συνήθως κοντινές σχέσεις που κρατούν έναν «αιχμηρό» κινητήρα στην περιοχή του. Ακριβό.<br>· <b>Διπλού συμπλέκτη (DCT)</b> — η επόμενη σχέση είναι ήδη επιλεγμένη στον δεύτερο συμπλέκτη, άρα σχεδόν αδιάλειπτες αλλαγές (~30 ms). Το ταχύτερο, και ανάλογα ακριβό.<br>· <b>Αυτόματο με μετατροπέα ροπής</b> — οι πιο αργές αλλαγές (~200 ms) και οι μεγαλύτερες απώλειες, γιατί μεταδίδει μέσω υγρού. Το κερδίζει στην <b>εκκίνηση</b>: ο μετατροπέας «φορτίζει» πάνω στα φρένα και <i>πολλαπλασιάζει</i> τη ροπή (έως ~1.9× σε στάλλ 2400 σ.α.λ.), σβήνοντας στο 1:1 καθώς ο στρόβιλος προλαβαίνει. Γι’ αυτό ένα αυτόματο ξεκινά καλύτερα από ένα χειροκίνητο παρότι χάνει ισχύ παντού αλλού — και γι’ αυτό ταιριάζει σε βαρύ, ροπάτο αυτοκίνητο, όχι σε ελαφρύ και «αιχμηρό». Τα σύγχρονα έχουν οκτώ ή δέκα σχέσεις, και όσο περισσότερες σχέσεις έχει ένα κιβώτιο τόσο πιο ανοιχτό είναι: πιο κοντή 1η για να κινηθεί το φορτίο, πιο μακριά τελευταία για ταξίδι."},
   diff:{el:"<b>Το διαφορικό</b> μοιράζει την κίνηση στους δύο τροχούς του άξονα — και καθορίζει πόση από την πρόσφυση του άξονα μπορείς πραγματικά να χρησιμοποιήσεις. Οι δύο τροχοί δεν είναι ποτέ φορτωμένοι το ίδιο (κλίση δρόμου, αντίδραση ροπής, στρέψη άξονα, γεωμετρία ανάρτησης), και ένα <b>ανοιχτό</b> διαφορικό δίνει σε κάθε τροχό μόνο όση ροπή αντέχει ο <i>λιγότερο φορτωμένος</i>: στρίβει αυτόν τον τροχό και πετάει τα υπόλοιπα, αφήνοντας περίπου 78% της πρόσφυσης αξιοποιήσιμο <i>στην εκκίνηση</i>. Αυτό το 78% δεν είναι σταθερό — η ασυμμετρία που αντιμετωπίζει προέρχεται κυρίως από την <b>αντίδραση ροπής</b> (στρέψη ημιαξονίων, γεωμετρία ανάρτησης, torque steer), που είναι ανάλογη με τη ροπή που περνά πράγματι από τον άξονα. Στην πρώτη σχέση με πλήρη πολλαπλασιασμό είναι στο χειρότερό της· στην τρίτη στα 100&nbsp;χλμ/ώρα ο άξονας βλέπει ένα κλάσμα αυτής της ροπής και μένει λίγο παραπάνω από την κλίση του δρόμου, οπότε το ανοιχτό διαφορικό ανακτά προς ~94%. Ένα <b>ιξώδες LSD</b> τους δένει μεταξύ τους και ανακτά τα περισσότερα (~92%)· ένα <b>LSD με δίσκους</b> ουσιαστικά όλα· ένα <b>μπλοκέ (spool)</b> τους ενώνει μόνιμα και είναι το καλύτερο σε ευθεία — γι’ αυτό το χρησιμοποιούν τα dragster.<br>Το βασικό: το διαφορικό μετράει μόνο όσο είσαι <b>περιορισμένος από πρόσφυση</b>. Βάλε spool σε αργό αυτοκίνητο και δεν αλλάζει τίποτα. Βάλ’ το σε ένα που πατινάρει στην εκκίνηση και αξίζει περισσότερο από αναβάθμιση ισχύος."},
   tractionMore1:{el:"<b>Γιατί ένα προσθιοκίνητο ξεμένει από πρόσφυση τόσο νωρίς.</b> Ένα FWD κινεί μόνο τον εμπρός άξονα, που σηκώνει περίπου το 60% του βάρους σταματημένο, και η επιτάχυνση μεταφέρει βάρος <i>από</i> αυτόν. Πολλαπλασίασέ το με ένα ανοιχτό διαφορικό (0.78) και μέτρια ελαστικά, και ένα kei περιορίζεται κοντά στα <b>0.38 g</b> στην εκκίνηση, ό,τι κι αν βγάζει ο κινητήρας του. Έτσι ένα kei 215 hp φτάνει τα 100 km/h σε 7.48 s και ένα 146 hp σε 7.45 s: και τα δύο κινούνται πάνω στο ταβάνι. Στο ίδιο αυτοκίνητο των 215 hp, ένα LSD με δίσκους το πάει στα 6.32 s, τα σπορ ελαστικά στα 5.86 s, τα slick στα 4.99 s και η τετρακίνηση στα 4.12 s, με τον ίδιο κινητήρα παντού. Η λύση είναι η πρόσφυση, όχι η ισχύς."},
   tractionMore2:{el:"<b>Το αντιστάθμισμα στον γύρο.</b> Ένα μπλοκέ διαφορικό δεν σπαταλά ποτέ κίνηση, αλλά τρίβει σε κάθε στροφή. Με τον 6.2 V8 με υπερσυμπιεστή στο σασί muscle, το spool είναι περίπου 0.1 s ταχύτερο στο 0–100 km/h από ένα LSD με δίσκους (4.85 έναντι 4.97 s) και περίπου 1.5 s πιο αργό ανά γύρο (75.74 έναντι 74.24 s), ενώ το ανοιχτό διαφορικό είναι το χειρότερο και στα δύο (5.96 s, 77.35 s): σπινάρει τον εσωτερικό τροχό ακριβώς όταν η στροφή τον έχει ξεφορτώσει."},
@@ -4932,11 +5013,11 @@ const GUIDE_I18N={
   tyresPhys:{el:"<b>Ευαισθησία στο φορτίο.</b> Η τριβή πέφτει όσο πιο δυνατά φορτώνεται το ελαστικό: <span class=\"geq\">μ = μ<sub>ref</sub> · (F<sub>z</sub> / F<sub>z,ref</sub>)<sup>−0.15</sup></span> περίπου 10% λιγότερη κάθε φορά που το φορτίο διπλασιάζεται, με την αναφορά στο 60% του ονομαστικού φορτίου του ελαστικού. Το ονομαστικό φορτίο ακολουθεί τον όγκο αέρα του ελαστικού, <i>(π/4)(D² − d²)·w</i> με περίπου 16.300 kg ανά m³, που ταιριάζει με τους πραγματικούς δείκτες φορτίου με απόκλιση ως 3%. Έτσι ένα μεγαλύτερο ελαστικό, ένα ελαφρύτερο αυτοκίνητο και λιγότερη μεταφορά φορτίου πιάνουν όλα περισσότερο, με έναν μηχανισμό.<br> Η <b>μεταφορά φορτίου</b> σε μια στροφή μετακινεί <i>m · a<sub>y</sub> · h / t</i> από τα εσωτερικά ελαστικά στα εξωτερικά (h ύψος κέντρου βάρους, t μετατρόχιο), και τα εξωτερικά ελαστικά, πιο φορτωμένα, χρησιμοποιούν το φορτίο τους λιγότερο καλά.<br> <b>Η έλλειψη τριβής.</b> Ένα ελαστικό τραβά περίπου 15% πιο δυνατά κατά μήκος απ' ό,τι εγκάρσια (Milliken), οπότε το φρενάρισμα και η πρόσφυση παίρνουν 1.15 μ και η συνδυασμένη χρήση ακολουθεί μια έλλειψη.<br> <b>Οπισθέλκουσα στροφής.</b> Η πλευρική δύναμη έρχεται από το τρέξιμο με γωνία ολίσθησης, που γέρνει τη δύναμη πίσω ενάντια στην κίνηση: αθροισμένη στα τέσσερα ελαστικά κοστίζει <i>(m a<sub>y</sub>)² / (C · N)</i>, C ≈ 0.2 ανά μοίρα (Gillespie).<br> Η <b>αντίσταση κύλισης</b> ανεβαίνει με την ταχύτητα: <i>c<sub>rr</sub>(v) = c<sub>rr,80</sub> · (1 + β (v² − v<sub>80</sub>²))</i>, από την τιμή της γόμας στα 80 km/h ως περίπου 1.6 φορές αυτήν στα 200."},
   tyresLimit:{el:"Σε έναν αγώνα οι θερμοκρασίες των ελαστικών βγαίνουν εκεί όπου μετριούνται οι πραγματικές: η πιο ζεστή γωνία ενός σπορ ελαστικού δρόμου 80–110 °C στην πίστα (η καθοδήγηση για πυρόμετρο στα pit για καλοκαιρινά ελαστικά UHP είναι 66–88 °C, και μια μέτρηση στα pit βγαίνει 10–20 °C κάτω από το ελαστικό στην πίστα), ενός ημι-slick 85–110 °C (η Michelin δίνει για το Cup 2 R 70–100 °C, ιδανικά 90), τα πίσω ενός προσθιοκίνητου κρύα, τα εξωτερικά ελαστικά τα πιο ζεστά, θερμοκρασία λειτουργίας σε δύο ή τρεις γύρους, και ένα βαρύ αυτοκίνητο να υπερθερμαίνει τα ελαστικά δρόμου του. Δύο πράγματα δεν έχουν επαληθευτεί: ένα οικονομικό ελαστικό σε ελαφρύ αυτοκίνητο μένει κρύο (45–60 °C), και οι μεγάλες ευθείες μιας γρήγορης πίστας δροσίζουν τα ελαστικά λίγο πιο κάτω από μιας μικρής."},
   gearboxReal:{el:"Ένας κινητήρας βγάζει χρήσιμη ισχύ μόνο σε ένα στενό εύρος στροφών, αλλά ένα αυτοκίνητο πρέπει να πάει από ταχύτητα βαδίσματος ως τα 250 km/h. Οι <b>σχέσεις</b> το λύνουν: ένα μικρό γρανάζι που κινεί ένα μεγάλο το γυρίζει πιο αργά και πιο δυνατά, κατά τον λόγο των δοντιών τους. Ένα κιβώτιο είναι ένα σύνολο από τέτοιους λόγους και ένας τρόπος να αλλάζεις ανάμεσά τους. Το πόσο γρήγορα και ομαλά αλλάζει, και πόση ισχύ χάνει κάνοντάς το, είναι αυτό που χωρίζει τους τύπους."},
-  gearboxPhys:{el:"<div class=\"gtab-wrap\"><table class=\"gtab\"><tbody><tr><th>κιβώτιο</th><th>αλλαγή (διακοπή κίνησης)</th><th>απόδοση</th><th>άνοιγμα σχέσεων</th></tr> <tr><td>χειροκίνητο</td><td>350 ms</td><td>1.00</td><td>1.00</td></tr><tr><td>σειριακό</td><td>60 ms</td><td>0.99</td><td>0.88</td></tr> <tr><td>διπλού συμπλέκτη</td><td>30 ms</td><td>0.98</td><td>0.95</td></tr><tr><td>αυτόματο με μετατροπέα</td><td>200 ms</td><td>0.93</td><td>1.10</td></tr></tbody></table></div> Αυτά πολλαπλασιάζουν την απόδοση της ίδιας της μετάδοσης (FWD 0.92, RWD 0.90, AWD 0.86). Ο μετατροπέας κάνει stall στις 2400 rpm και πολλαπλασιάζει τη ροπή ως 1.9× όσο γλιστρά, πέφτοντας στο 1:1 καθώς κουμπώνει. Κάθε μέρος που γυρίζει μετρά ως επιπλέον μάζα μέσα από τις σχέσεις (Gillespie): <span class=\"geq\">m<sub>eff</sub> = m + (I<sub>wheels</sub> + I<sub>engine</sub> · i²) / r²</span> που είναι μεγάλη στην πρώτη, όπου το <i>i</i> είναι μεγάλο. Η αδράνεια του κινητήρα μετρά μόνο όσο ο συμπλέκτης είναι κουμπωμένος, όχι όσο γλιστρά ή κατά την αλλαγή."},
+  gearboxPhys:{el:"<div class=\"gtab-wrap\"><table class=\"gtab\"><tbody><tr><th>κιβώτιο</th><th>αλλαγή (διακοπή κίνησης)</th><th>απόδοση</th></tr> <tr><td>χειροκίνητο</td><td>350 ms</td><td>1.00</td></tr><tr><td>σειριακό</td><td>60 ms</td><td>0.99</td></tr> <tr><td>διπλού συμπλέκτη</td><td>30 ms</td><td>0.98</td></tr><tr><td>αυτόματο με μετατροπέα</td><td>200 ms</td><td>0.93</td></tr></tbody></table></div> Αυτά πολλαπλασιάζουν την απόδοση της ίδιας της μετάδοσης (FWD 0.92, RWD 0.90, AWD 0.86). Ο μετατροπέας κάνει stall στις 2400 rpm και πολλαπλασιάζει τη ροπή ως 1.9× όσο γλιστρά, πέφτοντας στο 1:1 καθώς κουμπώνει. Κάθε μέρος που γυρίζει μετρά ως επιπλέον μάζα μέσα από τις σχέσεις (Gillespie): <span class=\"geq\">m<sub>eff</sub> = m + (I<sub>wheels</sub> + I<sub>engine</sub> · i²) / r²</span> που είναι μεγάλη στην πρώτη, όπου το <i>i</i> είναι μεγάλο. Η αδράνεια του κινητήρα μετρά μόνο όσο ο συμπλέκτης είναι κουμπωμένος, όχι όσο γλιστρά ή κατά την αλλαγή."},
   gearingReal:{el:"Οι σχέσεις ενός ποδηλάτου κάνουν την ίδια ανταλλαγή με ενός αυτοκινήτου: μια μικρή σχέση για να ξεκινήσεις στην ανηφόρα, μια μεγάλη για να πας γρήγορα στο ίσιωμα. Η <b>τελική σχέση</b> πολλαπλασιάζει κάθε σχέση με το ίδιο ποσό, οπότε μετακινεί όλο το σύνολο πάνω ή κάτω. Πιο κοντές σχέσεις επιταχύνουν πιο δυνατά και τελειώνουν νωρίτερα· πιο μακριές είναι χαλαρές και, ως ένα σημείο, πιο γρήγορες.<br> Οι καλοί οδηγοί ανεβάζουν σχέση εκεί όπου η <i>επόμενη</i> θα τραβήξει πιο δυνατά, που για έναν μυτερό κινητήρα είναι κοντά στο όριο και για έναν πετρελαιοκινητήρα αρκετά πριν από αυτό."},
   gearing:{el:"<b>Η τελική σχέση διαλέγεται για τον κινητήρα σου, όχι από τον ρυθμιστή.</b> Ένα αυτοκίνητο έχει σχέσεις για τη μέγιστη ταχύτητα όταν ο κινητήρας κάθεται στην <i>κορυφή της ισχύος του</i> ακριβώς τη στιγμή που η οπισθέλκουσα καταναλώνει αυτή την ισχύ — όχι στον κόφτη, όπου έχει ήδη περάσει την κορυφή και δεν μπορεί να κρατήσει την ταχύτητα. Έτσι η εφαρμογή λύνει το ισοζύγιο οπισθέλκουσας για την ταχύτητα που θα μπορούσε θεωρητικά να κρατήσει το αυτοκίνητό σου, <i>P<sub>peak</sub>·η = ½ρ·C<sub>d</sub>A·v³ + C<sub>rr</sub>·m·g·v</i>, και διαλέγει τη σχέση που βάζει εκεί τη μέγιστη ισχύ. Ένας πετρελαιοκινητήρας των 3800 rpm και ένας που ουρλιάζει στις 9000 rpm παίρνουν λοιπόν εντελώς διαφορετικές σχέσεις, όπως πρέπει — πριν από αυτό, έπαιρναν και οι δύο τις ίδιες, και ο πετρελαιοκινητήρας τελείωνε <i>σχέση</i> στα 167 km/h ενώ ο αέρας δεν θα τον σταματούσε πριν από τα 219.<br><b>Ο ρυθμιστής ΤΕΛΙΚΗ ΣΧΕΣΗ είναι πλέον μια μετατόπιση γύρω από αυτήν</b> — περίπου 1.28× πιο κοντά στη μία άκρη για επιτάχυνση, 0.74× πιο μακριά στην άλλη για ταξίδι, και ουδέτερος στη μέση. Δύο συνέπειες αξίζει να ξέρεις. <b>Η τελική ταχύτητα έχει βέλτιστο στη μέση του ρυθμιστή, όχι στη μακριά άκρη</b>: με σχέσεις πιο μακριές από το ιδανικό ο κινητήρας δεν μπορεί πια να φτάσει την ισχύ που χρειάζεται σε αυτή την ταχύτητα δρόμου, οπότε το αυτοκίνητο γίνεται <i>πιο αργό</i>. Και σε μια στριφτή πίστα οι κοντές σχέσεις δεν σου κοστίζουν σχεδόν τίποτα, γιατί ανταλλάσσεις μια τελική ταχύτητα που δεν βλέπεις ποτέ με επιτάχυνση που χρησιμοποιείς σε κάθε στροφή.<br><b>Πού αλλάζει σχέση το αυτοκίνητο.</b> Οι δοκιμές 0–100 και τετάρτου μιλίου ανεβάζουν σχέση εκεί όπου η <i>επόμενη</i> τραβά πιο δυνατά στους τροχούς από την τρέχουσα — η διασταύρωση ροπής, που είναι αυτό που κάνουν ένας καλός οδηγός και ένα καλό αυτόματο — ή στον κόφτη αν έρθει πρώτος. Για έναν μυτερό κινητήρα αυτό είναι έτσι κι αλλιώς πάνω στο όριο. Για έναν πετρελαιοκινητήρα δεν είναι: η ροπή του έχει σβήσει πολύ πριν από τον κόφτη, και το κράτημα ως εκεί κόστιζε σε ένα 2.0 TDI τέσσερα δευτερόλεπτα ως τα 100 km/h. Ο γύρος χρησιμοποιεί τον ίδιο κανόνα. Ένα σκαλοπάτι μένει και είναι πραγματικό: αν μια πιο μακριά τελική σχέση σπρώξει τα 100 km/h στην επόμενη σχέση, η δοκιμή κάνει μία αλλαγή παραπάνω και ο χρόνος πηδά περίπου όσο μία αλλαγή."},
   gearnum:{el:"<b>Ο ρυθμιστής ΤΕΛΙΚΗ ΣΧΕΣΗ</b> — όταν τον κινείς κονταίνει ή μακραίνει την τελική σχέση γύρω από αυτήν που ταίριαξε η εφαρμογή στον κινητήρα σου: περίπου 1.28× πιο κοντή στο 0 και 0.74× πιο μακριά στο 100, ουδέτερος κοντά στη μέση. Η σχέση που προκύπτει δείχνεται δίπλα του. Οι κοντές σχέσεις πολλαπλασιάζουν τη ροπή στους τροχούς, οπότε το αυτοκίνητο επιταχύνει πιο δυνατά και φτάνει νωρίτερα τον κόφτη σε κάθε σχέση· οι μακριές κάνουν το αντίθετο. Η τελευταία σχέση στον κόφτη είναι ένα <b>σκληρό ταβάνι</b> — ο κόφτης κόβει εκεί το καύσιμο, οπότε καμία ισχύς δεν σπρώχνει το αυτοκίνητο πέρα από την ταχύτητα που επιτρέπουν οι ίδιες του οι σχέσεις. Η τελική σχέση κρατιέται στο 2.2–6.0:1, το μηχανικό εύρος μιας πραγματικής."},
-  gearingPhys:{el:"Ταχύτητα δρόμου σε μια σχέση, με ακτίνα κύλισης ελαστικού <i>r</i>: <span class=\"geq\">v = (2πN/60) · r / (i<sub>gear</sub> · i<sub>final</sub>)</span> Οι σχέσεις είναι μια γεωμετρική πρόοδος από μια κοντή πρώτη ως μια μακριά τελευταία, τεντωμένη ή μαζεμένη από το άνοιγμα του κιβωτίου. Η τελική σχέση ταιριάζεται ώστε η μέγιστη ισχύς να φτάνει στην ταχύτητα που περιορίζει η οπισθέλκουσα, λύνοντας <span class=\"geq\">P<sub>peak</sub> · η = ½ ρ C<sub>d</sub>A v³ + c<sub>rr</sub> m g v</span> και μετά μετατοπίζεται από τον ρυθμιστή ΤΕΛΙΚΗ ΣΧΕΣΗ και κρατιέται στο 2.2–6.0:1. Ο κανόνας ανεβάσματος είναι η διασταύρωση ροπής στους τροχούς, <i>T(N) · i<sub>g</sub> ≤ T(N · i<sub>g+1</sub>/i<sub>g</sub>) · i<sub>g+1</sub></i>, ή ο κόφτης, όποιο έρθει πρώτο, το ίδιο στο 0–100 και στον γύρο."},
+  gearingPhys:{el:"Ταχύτητα δρόμου σε μια σχέση, με ακτίνα κύλισης ελαστικού <i>r</i>: <span class=\"geq\">v = (2πN/60) · r / (i<sub>gear</sub> · i<sub>final</sub>)</span> Ένα πραγματικό αυτοκίνητο τρέχει τις δικές του δημοσιευμένες σχέσεις και τελική. Αλλιώς οι σχέσεις ακολουθούν την προοδευτική σχεδίαση του εγχειριδίου (Naunheimer, <i>Automotive Transmissions</i>), με τα βήματα να μικραίνουν προς τα πάνω: <span class=\"geq\">i<sub>j</sub> = i<sub>n</sub> · φ<sub>1</sub><sup>n−j</sup> · φ<sub>2</sub><sup>(n−j)(n−j−1)/2</sup></span> με το άνοιγμα (1η προς τελευταία) να μεγαλώνει με τον αριθμό των σχέσεων, <i>ln(άνοιγμα) = 0.065 + 0.910·ln(n−1)</i>. Και τα δύο προσαρμόζονται σε 30 δημοσιευμένα κιβώτια· το φ<sub>2</sub> πέφτει όσο προστίθενται σχέσεις (κοντά στο 1.1 σε πεντάρι, 1.02 σε δεκάρι), αλλά το μερίδιο του ανοίγματος που φτιάχνει μένει σταθερό, οπότε αυτό κρατιέται: οι ΚΟΝΤΙΝΕΣ, ΚΑΝΟΝΙΚΕΣ και ΑΡΑΙΕΣ είναι το κάτω τεταρτημόριο, η διάμεσος και το άνω τεταρτημόριο του ανοίγματος και αυτού του μεριδίου (0.28, 0.39, 0.45). Η τελική σχέση ταιριάζεται ώστε η μέγιστη ισχύς να φτάνει στην ταχύτητα που περιορίζει η οπισθέλκουσα, λύνοντας <span class=\"geq\">P<sub>peak</sub> · η = ½ ρ C<sub>d</sub>A v³ + c<sub>rr</sub> m g v</span> και μετά μετατοπίζεται από τον ρυθμιστή ΤΕΛΙΚΗ ΣΧΕΣΗ και κρατιέται στο 2.2–6.0:1. Ο κανόνας ανεβάσματος είναι η διασταύρωση ροπής στους τροχούς, <i>T(N) · i<sub>g</sub> ≤ T(N · i<sub>g+1</sub>/i<sub>g</sub>) · i<sub>g+1</sub></i>, ή ο κόφτης, όποιο έρθει πρώτο, το ίδιο στο 0–100 και στον γύρο."},
   tractionReal:{el:"Όταν ένα αυτοκίνητο στρίβει, ο εξωτερικός τροχός διανύει μεγαλύτερη απόσταση από τον εσωτερικό, οπότε οι δύο κινητήριοι τροχοί πρέπει να μπορούν να γυρίζουν με διαφορετικές ταχύτητες. Αυτό κάνει το <b>διαφορικό</b>. Η παγίδα: ένα απλό <b>ανοιχτό</b> διαφορικό δίνει πάντα και στους δύο τροχούς την ίδια ροπή, οπότε αν ένας τροχός είναι στον πάγο, ή σηκωμένος σε μια στροφή, σπινάρει και ο άλλος δεν παίρνει τίποτα κι αυτός. Ένα <b>διαφορικό περιορισμένης ολίσθησης</b> (LSD) δένει τους δύο μαζί για να το σταματήσει. Ένα <b>spool</b> τους κλειδώνει συμπαγείς: τέλειο σε ευθεία, βάσανο στις στροφές.<br> Το βάρος επίσης μετακινείται: στην επιτάχυνση πηγαίνει στους πίσω τροχούς, γι' αυτό τα πισωκίνητα και τα τετρακίνητα ξεκινούν πιο δυνατά από τα προσθιοκίνητα."},
   tractionPhys:{el:"Οι δύο τροχοί ενός άξονα δεν φορτώνονται ποτέ ίδια (κάμπερ, αντίδραση ροπής, στρέψη), και ένα ανοιχτό διαφορικό μπορεί να δώσει στον καθένα μόνο τη ροπή που κρατά ο ελαφρύτερος, οπότε το χρήσιμο μερίδιο της πρόσφυσης του άξονα είναι <i>1 − 2·asym</i>: 0.78 στην εκκίνηση. Το μεγαλύτερο μέρος αυτής της ασυμμετρίας είναι αντίδραση ροπής, που κλιμακώνεται με τη ροπή μέσα από τον άξονα, οπότε ένα ανοιχτό διαφορικό ανακάμπτει προς περίπου 0.91 σε μια μακριά σχέση. Σε μια στροφή η πλευρική μεταφορά φορτίου ξεφορτώνει τον εσωτερικό τροχό πολύ περισσότερο, και αυτό πολεμά το <i>κλείδωμα</i> (0 ανοιχτό, 0.55 ιξώδες, 0.80 με δίσκους, 1 spool)· το τίμημα είναι ο πολλαπλασιαστής στροφής (1.00, 0.99, 0.97, 0.90). Το όριο εκκίνησης είναι <span class=\"geq\">F<sub>drive</sub> ≤ μ<sub>x</sub> · N<sub>driven</sub> · k<sub>diff</sub>, &nbsp; ΔN<sub>rear</sub> = m · a · h / L</span> με τη διάταξη μετάδοσης να ορίζει το φορτίο ποιου άξονα μετρά."},
   aeroReal:{el:"Βγάλε το χέρι σου από το παράθυρο σε ταχύτητα αυτοκινητόδρομου και νιώθεις δύο πράγματα: τον αέρα να το σπρώχνει πίσω, και, αν το γείρεις, να το σπρώχνει πάνω ή κάτω. Το αμάξωμα ενός αυτοκινήτου κάνει το ίδιο. Η <b>οπισθέλκουσα</b> μεγαλώνει με το τετράγωνο της ταχύτητας, οπότε η ισχύς για να τη νικήσεις μεγαλώνει με τον <i>κύβο</i>: για να πας δύο φορές πιο γρήγορα χρειάζεσαι οκταπλάσια ισχύ. Γι' αυτό η τελική ταχύτητα κοστίζει τόσο ακριβά.<br> Η <b>κάθετη δύναμη</b> από αεροτομές, splitter και ένα διαμορφωμένο πάτωμα πιέζει τα ελαστικά πάνω στον δρόμο. Κοστίζει λίγη οπισθέλκουσα, αλλά προσθέτει πρόσφυση χωρίς να προσθέτει βάρος, και μεγαλώνει με την ταχύτητα, οπότε οι γρήγορες στροφές γίνονται πιο γρήγορες."},
@@ -5020,7 +5101,7 @@ function applyLang(lang){
   currentLang=(lang==='el')?'el':'en';
   try{localStorage.setItem('pes.lang',currentLang);}catch(e){}
   document.documentElement.lang=currentLang;
-  const sel='.viz-tabs button, .design-panel h3, .design-section, .guide-title, .gtier-h, .hint, .panel h2, .stat .label, .opt-note, .opt-row>div>b, .ctl-lbl, .field>label, .build-row button, #controlsPanel .btn-row button, .fuelmap-edit button, .garage-row button, #btnReplayRestart, .gart-cap';
+  const sel='.viz-tabs button, .design-panel h3, .design-section, .guide-title, .gtier-h, .hint, .panel h2, .stat .label, .opt-note, .opt-row>div>b, .ctl-lbl, .field>label, .build-row button, #btnGearRatios, #controlsPanel .btn-row button, .fuelmap-edit button, .garage-row button, #btnReplayRestart, .gart-cap';
   document.querySelectorAll(sel).forEach(el=>{
     if(el.children.length>0)return;                       // skip nodes with child elements
     if(el.dataset.en===undefined)el.dataset.en=el.textContent.trim();
@@ -5067,9 +5148,10 @@ function applyLang(lang){
   if(typeof renderGarage==='function')renderGarage();
   // The fixed dropdowns. The pickers filled from data are re-labelled by their own code instead: caching
   // their text here would keep a Greek label as the 'English' one.
-  document.querySelectorAll('#designPanel select:not(#edFamily):not(#edPreset):not(#edChallenge) option, #vehiclePanelTab select:not(#vhFamily):not(#vhPreset) option, #replayGauges option, #guideNoHit').forEach(o=>{
+  document.querySelectorAll('#designPanel select:not(#edFamily):not(#edPreset):not(#edChallenge) option, #vehiclePanelTab select:not(#vhFamily):not(#vhPreset):not(#vhSpacing) option, #replayGauges option, #guideNoHit').forEach(o=>{
     if(o.dataset.en===undefined)o.dataset.en=o.textContent.trim();o.textContent=o.tagName==='OPTION'?trOpt(o.dataset.en):tr(o.dataset.en);});
   for(const p of [enginePicker,carPicker])if(p)p.relabel();
+  {const sp=document.getElementById('vhSpacing');if(sp&&typeof fillSpacingSelect==='function')fillSpacingSelect(!!vehBody,sp.value);}
   if(typeof updateBuildStrip==='function'&&engine)updateBuildStrip();
   if(typeof updateEngineLabels==='function'&&engine)updateEngineLabels();
   if(typeof updateDesignSummary==='function'&&engine)updateDesignSummary();
@@ -5126,7 +5208,7 @@ const TURBO={
 const AR_INCH=0.0254;          // A/R is quoted in inches
 const TURB_WHEEL=0.90;         // turbine wheel as a fraction of the compressor exducer
 // Turbine throat for a housing A/R. A/R is the volute throat area over the radius to its centroid,
-// so A_throat = (A/R) x R; a vane ring is the same volute with vanes in it.
+// so A_throat = (A/R) x R. A vane ring sets its own throat (vaneThroatArea, build 168).
 function setTurbineAR(ar){
   const e=engine, exd=e.compExd;
   // R is the radius to the centroid of the throat section (build 133; it was the wheel's radius, which made every
@@ -5136,8 +5218,9 @@ function setTurbineAR(ar){
   const sq=(Math.sqrt(k/Math.PI)+Math.sqrt(k/Math.PI+4*rt))/2;
   const a0=k*sq*sq;
   e.turbineAR=ar;
-  e.turbineArea=e.vgt?a0*vaneThroatFrac(exd,VANE_BETA_MAX):a0;
-  e.vgtShut=e.vgt?a0*vaneThroatFrac(exd,VANE_BETA_MIN):0;
+  // a VGT's throat is its vane ring's, not the volute's (build 168): the housing A/R does not size it
+  e.turbineArea=e.vgt?vaneThroatArea(exd,VANE_BETA_MAX):a0;
+  e.vgtShut=e.vgt?vaneThroatArea(exd,VANE_BETA_MIN):0;
 }
 // The boost the ECU asks for at an rpm (build 131). Real ECUs pull boost back toward the limiter, where the
 // rods and bearings carry the highest inertia and gas loads together, the turbine runs hottest and fastest and
@@ -5468,9 +5551,61 @@ const VEHICLE_PRESETS=[
    body:{kg:1570,cd:0.26,area:2.20,wb:2.81,fWt:0.52},fit:{drive:'rwd',tire:'sport',tw:225,ta:50,wheel:17,brake:'slotted',rotor:330,susp:'sport',gears:8,gearbox:'auto',diff:'open'},
    real:{t100:5.6,top:250,limited:true},unsure:['area']},
   {cat:'Diesel',name:'Chevrolet Silverado 2500HD Duramax (2020)',engine:'GM Duramax L5P 6.6 (Silverado HD)',chassis:'pickup',
-   body:{kg:3400,cd:0.50,area:3.80,wb:4.08,fWt:0.62},fit:{drive:'rwd',tire:'eco',tw:265,ta:70,wheel:18,brake:'hd',rotor:360,susp:'comfort',gears:8,gearbox:'auto',diff:'open'},
-   real:{t100:8.0,top:160,limited:true},note:'the real truck has a 10-speed; the model offers up to 8',unsure:['kg','cd','area','fWt','t100','top']}
+   body:{kg:3400,cd:0.50,area:3.80,wb:4.08,fWt:0.62},fit:{drive:'rwd',tire:'eco',tw:265,ta:70,wheel:18,brake:'hd',rotor:360,susp:'comfort',gears:10,gearbox:'auto',diff:'open'},
+   real:{t100:8.0,top:160,limited:true},unsure:['kg','cd','area','fWt','t100','top']}
 ];
+// The real cars' gearboxes (build 169): the published gear ratios and final drive, so a Golf and a 911 no longer
+// share one generic set. Ratios are gear by gear, 1st first; fd is the final drive, null where it was not found (the
+// final drive is then matched to the engine, as for an archetype). Where a box drives through two final drives (one
+// for some gears, one for the others, as on a dual-clutch or a transaxle with two output shafts) each gear is stated
+// against the first, so gear x fd is still the overall ratio. A car with no published set is not here: it takes the
+// average spacing of the published boxes in its own family (stockGearset). src says where each number came from.
+const GEARSETS={
+  'Suzuki Alto Works (HA36S, 2015)':{r:[3.545,2.105,1.521,1.148,0.900],fd:4.705,
+    src:'1st-4th and final: carfromjapan DBA-HA36S 5MT; 5th from Suzuki Works Kurume (100 km/h at 4000 rpm in 5th on the stock gear)'},
+  'Toyota Aygo 1.0 (2014)':{r:[3.545,1.913,1.310,1.027,0.850],fd:3.550,src:'Toyota technical specification sheet (manual column)'},
+  'Fiat 500 TwinAir 85 (2011)':{r:[3.909,2.158,1.345,0.974,0.766],fd:null,
+    src:'the C514 five-speed\'s ratios as Fiat USA lists them for the 1.4 (the TwinAir 85 has the C514); final drive not found'},
+  'Toyota GR Yaris (2020)':{r:[3.538,2.238,1.535,1.162,1.081*3.350/3.941,0.902*3.350/3.941],fd:3.941,
+    src:'Toyota UK / AU spec sheets: 3.941 final for 1st-4th, 3.350 for 5th-6th'},
+  'Honda Civic Type R (FK8, 2017)':{r:[3.625,2.115,1.529,1.125,0.911,0.734],fd:4.111,
+    src:'1st-4th: carfromjapan (FK2, same box); 4th 1.125 confirmed for the FK8; 5th-6th unconfirmed; final 4.11 (owners\' forum)'},
+  'Mazda MX-5 1.6 (NA, 1989)':{r:[3.136,1.888,1.330,1.000,0.814],fd:4.300,src:'miata.net (NA6A); Bofi Racing'},
+  'Toyota Corolla Levin GT-APEX (AE86)':{r:[3.587,2.022,1.384,1.000,0.861],fd:4.300,src:'T50 gearbox, aeu86.org; T282 diff 4.300'},
+  'Honda S2000 (AP1, 2000)':{r:[3.133,2.045,1.481,1.161,0.971,0.811],fd:4.100,src:'Honda press site (MY03 US) via s2ki'},
+  'BMW M3 (E46, 2000)':{r:[4.227,2.528,1.669,1.226,1.000,0.828],fd:3.620,src:'Getrag Type D; BMW ST041 training manual; australiancar.reviews'},
+  'Toyota Supra RZ (A80, 1993)':{r:[3.827,2.360,1.685,1.312,1.000,0.793],fd:3.266,src:'V160 (5/93-8/97), mkivsupra.net; 3.266 is the JDM final'},
+  'Nissan Skyline GT-R V-spec (R34, 1999)':{r:[3.827,2.360,1.685,1.312,1.000,0.793],fd:3.545,
+    src:'Getrag six-speed shared with the V160; final 3.545 (SAU forum)'},
+  'Subaru Impreza WRX STI (GD, 2004)':{r:[3.636,2.375,1.761,1.346,1.062,0.842],fd:3.900,
+    src:'1st-4th and final: carfromjapan GDB; 5th-6th: TY856 gearbox listing'},
+  'Mitsubishi Lancer Evolution IX (2006)':{r:[2.785,1.950,1.444,1.096,0.761],fd:4.529,
+    src:'1st-4th: carfromjapan Evo IX 5MT; final: GoAuto road test; 5th unconfirmed (Mitsubishi made it taller for 2006)'},
+  'Audi RS3 Sportback (8V, 2017)':{r:[3.563,2.526*3.450/4.059,1.679*3.450/4.059,1.022,0.788,0.761*3.450/4.059,0.635*3.450/4.059],fd:4.059,
+    src:'Audi technical data: 4.059 final for 1st, 4th, 5th; 3.450 for 2nd, 3rd, 6th, 7th'},
+  'Chevrolet Corvette (C6, LS3, 2008)':{r:[2.66,1.78,1.30,1.00,0.74,0.50],fd:3.42,src:'Tremec TR-6060 (2008-13 Corvette); 3.42 axle'},
+  'Chevrolet Corvette Z06 (C6, 2006)':{r:[2.66,1.78,1.30,1.00,0.74,0.50],fd:3.42,src:'the same TR-6060 set and 3.42 axle'},
+  'Dodge Challenger SRT Hellcat (2015)':{r:[4.71,3.14,2.11,1.67,1.28,1.00,0.84,0.67],fd:2.62,src:'ZF 8HP90; auto123 spec'},
+  'Ferrari F355 Berlinetta (1994)':{r:[3.07,2.16,1.61,1.27,1.03,0.84],fd:4.35,src:'supercars.net (the final is disputed on FerrariChat)'},
+  'Lamborghini Diablo VT (1993)':{r:[2.31,1.52,1.12,0.88,0.68],fd:2.41*1.59,src:'lambocars.com: 2.41 rear axle behind a 1.59 transfer gear'},
+  // 2.37 is quoted for the final drive, but Autocar's measured 8.71 mph per 1000 rpm in 1st on the F1's
+  // 315/45 R17 needs 2.98 overall per unit of gear: the quoted figure leaves out a drop gear
+  'McLaren F1 (1994)':{r:[3.23,2.19,1.71,1.39,1.16,0.93],fd:2.98,src:'ratios: McLaren via Wikipedia; final from Autocar\'s 8.71 mph/1000 rpm in 1st'},
+  'Ferrari Enzo (2002)':{r:[3.15,2.18,1.57,1.19,0.94,0.76],fd:4.10,src:'Wikipedia; supercars.net'},
+  'Porsche Carrera GT (2004)':{r:[3.20,1.87,1.36,1.07,0.90,0.75],fd:4.44,src:'conceptcarz; autobytel'},
+  'Ford GT (2005)':{r:[2.61,1.71,1.23,0.94,0.77,0.63],fd:3.36,src:'Ricardo M7003GT, autobytel; Ford spec 3.36'},
+  'Lamborghini Murciélago LP640 (2006)':{r:[3.091,2.105,1.565,1.241,1.065,0.939],fd:2.95,src:'lambocars.com; final: uniquecarsandparts'},
+  'Ferrari 458 Italia (2010)':{r:[3.08,2.19,1.63,1.29,1.03,0.84,0.69],fd:5.14,src:'Wikipedia'},
+  'McLaren 720S (2017)':{r:[3.98,2.61,1.91,1.48,1.16,0.91,0.69],fd:3.31,src:'autobytel'},
+  'Porsche 911 Turbo S (992, 2020)':{r:[4.89,3.17,2.15,1.56,1.18,0.94,0.76,0.61],fd:3.02,src:'Porsche US technical specifications 2021 (rear axle; the front is 3.33)'},
+  'Chevrolet Corvette Z06 (C8, 2023)':{r:[2.91,1.76,1.22,0.97,0.81,0.67,0.53,0.45],fd:5.56,src:'Tremec TR-9080 (GM); 5.56 final, Motor Authority'},
+  'McLaren 750S (2023)':{r:[3.98,2.61,1.91,1.48,1.16,0.91,0.69],fd:3.31*1.15,src:'the 720S box with a final drive 15% shorter (McLaren, via designboom)'},
+  'Mazda RX-7 (FD, 1993)':{r:[3.483,2.015,1.391,1.000,0.806],fd:4.100,src:'OS Giken (stock ratios); carfromjapan FD3S'},
+  'Mazda RX-8 (2004)':{r:[3.760,2.269,1.645,1.187,1.000,0.843],fd:4.444,src:'final 4.444 (40:9); gears unconfirmed'},
+  'BMW 330d (F30, 2012)':{r:[4.714,3.143,2.106,1.667,1.285,1.000,0.839,0.667],fd:null,src:'ZF 8HP, BMW media sheet; final drive not found'},
+  'Chevrolet Silverado 2500HD Duramax (2020)':{r:[4.541,2.866,2.064,1.719,1.484,1.260,1.000,0.850,0.687,0.631],fd:3.42,
+    src:'Allison 10L1000, dieselhub; 3.42 axle with the L5P (GM)'}
+};
 const VEHICLE_CATS=PRESET_CATS.filter(c=>VEHICLE_PRESETS.some(p=>p.cat===c));
 // The form-shaped vehicle a preset stands for. The body is a fresh copy, so a later edit cannot reach
 // back into the table; its platform mass is filled in by buildVehicle, from the engine actually fitted.
@@ -5486,7 +5621,7 @@ function vehicleFromPreset(p){
     tireType:fit.tire,tireWidth:fit.tw,tireWidthF:fit.twF||0,arbBal:0,tireAspect:fit.ta,wheelDia:fit.wheel,
     aeroFront:fit.aF,aeroRear:fit.aR,aeroFloor:fit.aFl,weightRed:fit.weight,
     brakeType:fit.brake,rotor:fit.rotor,suspension:fit.susp,speedRating:rating,governor:fit.gov,limitKmh:fit.gov||250,
-    tc:fit.tc!==false,
+    tc:fit.tc!==false,spacing:'stock',
     body:Object.assign({name:p.name,fit},p.body)};
 }
 // ================================================================================================
@@ -5776,16 +5911,14 @@ function latMuEff(N,ay,dn){return latBalance(N,ay,dn).mu;}
 //   eff    — driveline efficiency multiplier on top of the drive layout. Gear-to-gear losses are
 //            small and similar; the outlier is the torque-converter auto, which slips fluid until
 //            the lockup clutch engages.
-//   spread — ratio spread multiplier. <1 = closer ratios (a race sequential keeps the engine in a
-//            narrow band); >1 = a wider spread (an auto stretches 1st down and top gear up).
 //   stall/mult — torque converter only: the rpm it stalls up to against the brakes, and the
 //            torque multiplication it gives while slipping. This is why an auto launches harder
 //            than a manual despite being less efficient.
 const GEARBOX={
-  manual:    {label:'MANUAL (H-PATTERN)',shift:0.35,eff:1.00,spread:1.00,stall:0,   mult:1.0, cost:1500},
-  sequential:{label:'SEQUENTIAL',        shift:0.06,eff:0.99,spread:0.88,stall:0,   mult:1.0, cost:7000},
-  dct:       {label:'DUAL-CLUTCH (DCT)', shift:0.03,eff:0.98,spread:0.95,stall:0,   mult:1.0, cost:9000},
-  auto:      {label:'TORQUE-CONV AUTO',  shift:0.20,eff:0.93,spread:1.10,stall:2400,mult:1.9, cost:3000}
+  manual:    {label:'MANUAL (H-PATTERN)',shift:0.35,eff:1.00,stall:0,   mult:1.0, cost:1500},
+  sequential:{label:'SEQUENTIAL',        shift:0.06,eff:0.99,stall:0,   mult:1.0, cost:7000},
+  dct:       {label:'DUAL-CLUTCH (DCT)', shift:0.03,eff:0.98,stall:0,   mult:1.0, cost:9000},
+  auto:      {label:'TORQUE-CONV AUTO',  shift:0.20,eff:0.93,stall:2400,mult:1.9, cost:3000}
 };
 // Differential. An axle's two driven wheels are never loaded exactly alike — road camber, engine
 // torque reaction, axle wind-up and suspension geometry all unload one side. An OPEN diff can
@@ -5883,7 +6016,7 @@ const AIR_RHO=1.20;   // air density kg/m³
 const G=9.81;
 // The default car is simply the SPORTS COUPE on its own factory fitment (CHASSIS.coupe.fit).
 const DEFAULT_VEHICLE={
-  chassis:'coupe',drive:'rwd',gearbox:'manual',diff:'clsd',gears:6,gearing:52,
+  chassis:'coupe',drive:'rwd',gearbox:'manual',diff:'clsd',gears:6,gearing:52,spacing:'std',
   tireType:'sport',tireWidth:245,tireAspect:40,wheelDia:18,
   aeroFront:'none',aeroRear:'lip',aeroFloor:'none',weightRed:'none',
   brakeType:'slotted',rotor:330,suspension:'sport',governor:0,limitKmh:250,tc:true
@@ -6019,7 +6152,8 @@ function syncDesignEnable(){
   const turbo=intake==='turbo';
   g('edTurboSize').disabled=!turbo;g('edCompWheel').disabled=!turbo;
   g('edTurboConfig').disabled=!turbo;
-  g('edVGT').disabled=!turbo;g('edHousing').disabled=!turbo;
+  // a vane ring sets its own throat, so the housing A/R is a fixed-housing choice only (build 168)
+  g('edVGT').disabled=!turbo;g('edHousing').disabled=!turbo||g('edVGT').value==='yes';
   g('edAntilag').disabled=!turbo;
   g('edScType').disabled=intake!=='supercharger';
   // No poppet valvetrain on 2-stroke / rotary.
@@ -7508,10 +7642,6 @@ function engineMass(){
 }
 // Parse a numeric field, keeping a legitimate 0 (unlike `+v||fallback`).
 const numOr=(v,fallback)=>{const n=parseFloat(v);return Number.isFinite(n)?n:fallback;};
-// Auto-spaced gear ratios: a geometric progression from a short 1st to a tall top gear. The
-// gearbox type stretches or squeezes that spread about its geometric mean — a race sequential
-// keeps the ratios close (the engine stays in a narrow band), a torque-converter auto spreads
-// them wider (a lower 1st to get the load moving, a taller top for cruising).
 // Speed at which drag and rolling resistance consume exactly the power available at the wheels.
 // Bracketed bisection rather than a fixed point: the residual is monotonic in v, so this either
 // brackets the crossing or returns the bracket edge, and cannot quietly return a non-solution.
@@ -7525,8 +7655,10 @@ function dragLimitedV(kW,cdA,crr,mass){
 }
 // The final drive a builder would choose for this engine in this car, biased by the gearing slider.
 // Falls back to the old slider-only ramp before an engine exists to gear for.
+const gearingBias=g=>lerp(1.28,0.74,g/100);   // 1.00 at the slider's default of 52
+const FD_MIN=2.2, FD_MAX=6.0;   // the mechanical range of a real final drive
 function matchedFinalDrive(){
-  const bias=lerp(1.28,0.74,vehicle.gearing/100);   // 1.00 at the slider's default of 52
+  const bias=gearingBias(vehicle.gearing);
   const s=engine&&engine.score;
   const topGear=vehicle.ratios[vehicle.ratios.length-1];
   if(!s||!(s.peakHP>0)||!(s.peakHPrpm>0)||!(topGear>0)||!(vehicle.rTire>0))
@@ -7534,20 +7666,72 @@ function matchedFinalDrive(){
   const vMax=dragLimitedV(s.peakHP*0.7457*vehicle.driveEff,vehicle.cdA,vehicle.crr,vehicle.mass);
   if(!(vMax>1))return lerp(4.9,2.6,vehicle.gearing/100);
   const fd=s.peakHPrpm*2*Math.PI*vehicle.rTire/60/(vMax*topGear);
-  return clamp(fd*bias,2.2,6.0);   // mechanical range of a real final drive
+  return clamp(fd*bias,FD_MIN,FD_MAX);
 }
-function genRatios(n,spread){
-  n=clamp(Math.round(n),4,8);const sp=spread||1;
-  const r1=3.35,rn=0.82,mid=Math.sqrt(r1*rn),out=[];
-  for(let i=0;i<n;i++){const base=r1*Math.pow(rn/r1,i/(n-1));out.push(mid*Math.pow(base/mid,sp));}
+// Gear spacing (build 169). The ratios were one geometric progression from 3.35 to 0.82 for every car: a 4-speed and
+// an 8-speed spanned the same range, and the steps were even. Real gearboxes are built otherwise. Adding gears widens
+// the span (1st over top), and the steps shrink towards the top, because the speed lost on an upshift grows with the
+// speed the shift is made at (Naunheimer et al., Automotive Transmissions, 2nd ed., §6.3). The standard design is the
+// progressive one:
+//     i_j = i_n · φ1^(n−j) · φ2^((n−j)(n−j−1)/2)
+// φ2 = 1 is the even geometric box; the textbook gives 1.0-1.2 for cars. Fitted by least squares to the 30 distinct
+// published boxes in GEARSETS, φ2 runs 1.00 (Corvette TR-6060) to 1.15 (Aygo), and it falls as gears are added (a
+// five-speed's is near 1.1, the ten-speed Allison's 1.02): a fixed φ2 would turn a ten-speed's top gears back on
+// themselves. What holds steady is the share of the span the progression makes, p = ln(φ2)·(n−1)(n−2)/2 / ln(span);
+// the rest, (1−p)·ln(span), is the even part, φ1^(n−1). The span grows with the gear count as
+//     ln(span) = 0.065 + 0.910·ln(n−1)
+// CLOSE, STANDARD and WIDE are the lower quartile, the median and the upper quartile of those boxes, in the span's
+// residual about that line and in p. The top gear sits at 0.82, as before; the final drive is matched to it.
+const PROG_Q=[0.280,0.390,0.448];   // p: lower quartile, median, upper quartile of the published boxes
+const GEAR_SPACING={
+  close:{label:'CLOSE RATIO',res:-0.099,prog:PROG_Q[0]},
+  std:  {label:'STANDARD',res:0.028,prog:PROG_Q[1]},
+  wide: {label:'WIDE RATIO',res:0.102,prog:PROG_Q[2]}
+};
+const GEAR_SPAN_D=0.065, GEAR_SPAN_C=0.910, GEAR_TOP=0.82, GEARS_MIN=4, GEARS_MAX=10;
+const gearSpan=(n,res)=>Math.exp(GEAR_SPAN_D+GEAR_SPAN_C*Math.log(n-1)+res);
+function progressiveRatios(n,span,prog){
+  const k1=n-1,L=Math.log(span),phi1=Math.exp((1-prog)*L/k1),phi2=k1>1?Math.exp(prog*L/(k1*(k1-1)/2)):1,out=[];
+  for(let j=1;j<=n;j++){const k=n-j;out.push(GEAR_TOP*Math.pow(phi1,k)*Math.pow(phi2,k*(k-1)/2));}
   return out;
+}
+function genRatios(n,spacing){
+  n=clamp(Math.round(n),GEARS_MIN,GEARS_MAX);const sp=GEAR_SPACING[spacing]||GEAR_SPACING.std;
+  return progressiveRatios(n,gearSpan(n,sp.res),sp.prog);
+}
+// The same fit for one box: its span residual and its progression φ2 (least squares on ln(i_j/i_n)).
+function fitGearbox(r){
+  const n=r.length;let Saa=0,Sab=0,Sbb=0,Sya=0,Syb=0;
+  for(let j=0;j<n;j++){const k=n-1-j,y=Math.log(r[j]/r[n-1]),fb=k*(k-1)/2;Saa+=k*k;Sab+=k*fb;Sbb+=fb*fb;Sya+=y*k;Syb+=y*fb;}
+  const det=Saa*Sbb-Sab*Sab,a=(Sya*Sbb-Syb*Sab)/det,b=(Saa*Syb-Sab*Sya)/det;
+  const L=Math.log(r[0]/r[n-1]);
+  return {res:L-(GEAR_SPAN_D+GEAR_SPAN_C*Math.log(n-1)),phi2:Math.exp(b),phi1:Math.exp(a),prog:b*(n-1)*(n-2)/2/L};
+}
+// A real car's own box: its published set when there is one for its gear count; otherwise the average of the published
+// boxes in its family (span residual and φ2), with the final drive matched to the engine. approx marks the second.
+function stockGearset(name,n){
+  const g=GEARSETS[name];
+  if(g&&g.r.length===n)return {r:g.r.slice(),fd:g.fd,approx:false,src:g.src};
+  const p=VEHICLE_PRESETS.find(q=>q.name===name);
+  const fam=VEHICLE_PRESETS.filter(q=>q!==p&&(!p||q.cat===p.cat)&&GEARSETS[q.name]).map(q=>fitGearbox(GEARSETS[q.name].r));
+  const pool=fam.length?fam:Object.values(GEARSETS).map(x=>fitGearbox(x.r));
+  const res=pool.reduce((a,f)=>a+f.res,0)/pool.length, prog=pool.reduce((a,f)=>a+f.prog,0)/pool.length;
+  return {r:progressiveRatios(n,gearSpan(n,res),prog),fd:null,approx:true,src:'the average of the published boxes in its family'};
+}
+// The ratios the car runs. CUSTOM keeps the hand-set ratios when there is one per gear, each taller than the one before.
+function gearRatiosFor(v){
+  const n=clamp(Math.round(v.gears||6),GEARS_MIN,GEARS_MAX);
+  if(v.spacing==='custom'&&Array.isArray(v.ratioSet)&&v.ratioSet.length===n&&v.ratioSet.every((x,i)=>x>0&&(i===0||x<v.ratioSet[i-1])))
+    return {r:v.ratioSet.slice(),fd:null};
+  if(v.spacing==='stock'&&v.body){const s=stockGearset(v.body.name,n);return {r:s.r,fd:s.fd,approx:s.approx};}
+  return {r:genRatios(n,v.spacing==='custom'||v.spacing==='stock'?'std':v.spacing),fd:null};
 }
 function readVehicleFromForm(){
   const g=id=>document.getElementById(id);
   return {
     chassis:g('vhChassis').value,drive:g('vhDrive').value,gearbox:g('vhGearbox').value,diff:g('vhDiff').value,
     // gearing may legitimately be 0 (shortest final drive), so fall back only on a non-number.
-    gears:clamp(Math.round(+g('vhGears').value||6),4,8),gearing:clamp(numOr(g('vhGearing').value,52),0,100),
+    gears:clamp(Math.round(+g('vhGears').value||6),GEARS_MIN,GEARS_MAX),gearing:clamp(numOr(g('vhGearing').value,52),0,100),
     tireType:g('vhTire').value,tireWidth:clamp(Math.round(+g('vhTireW').value||225),135,355),
     // the front tyres' width when narrower or wider than the rears (0 = the same), and the roll balance (build 157)
     tireWidthF:+g('vhTireWF').value>0?clamp(Math.round(+g('vhTireWF').value),135,355):0,arbBal:clamp(Math.round(+g('vhArb').value||0),-2,2),
@@ -7561,15 +7745,28 @@ function readVehicleFromForm(){
     governor:g('vhLimiter').value==='on'?clamp(Math.round(+g('vhLimitKmh').value||250),80,400):0,
     limitKmh:clamp(Math.round(+g('vhLimitKmh').value||250),80,400),
     // Traction control (build 154): the ECU holds the driven tyres at their best slip. Off, the launch is the driver's.
-    tc:g('vhTC').value!=='off'
+    tc:g('vhTC').value!=='off',
+    // Gear spacing (build 169): CLOSE / STANDARD / WIDE, STOCK (a real car's own box) or CUSTOM. The hand-set ratios
+    // and a hand-set final drive (0 = matched to the engine) live beside the form, like the body.
+    spacing:g('vhSpacing').value,ratioSet:vehRatioSet?vehRatioSet.slice():null,finalDriveSet:vehFinalDriveSet
   };
 }
 // The real car's body when one is loaded (see VEHICLE_PRESETS), else null and the archetype stands.
 // It has no form fields of its own yet, so it lives here and travels with every saved build.
-let vehBody=null;
+let vehBody=null, vehRatioSet=null, vehFinalDriveSet=0;
+// The spacing choices on offer: STOCK only on a real car. A save from before build 169 carries none: a real car's
+// own box, an archetype's STANDARD.
+function fillSpacingSelect(hasBody,val){
+  const sel=document.getElementById('vhSpacing');if(!sel)return;
+  const opts=(hasBody?['stock']:[]).concat(Object.keys(GEAR_SPACING),'custom');
+  sel.innerHTML=opts.map(k=>'<option value="'+k+'">'+esc(tr(k==='stock'?'STOCK':k==='custom'?'CUSTOM':GEAR_SPACING[k].label))+'</option>').join('');
+  sel.value=opts.includes(val)?val:(hasBody?'stock':'std');
+}
 function applyVehicleToForm(v){
   const g=id=>document.getElementById(id);
   vehBody=v.body||null;
+  vehRatioSet=Array.isArray(v.ratioSet)?v.ratioSet.map(Number):null;vehFinalDriveSet=+v.finalDriveSet>0?+v.finalDriveSet:0;
+  fillSpacingSelect(!!vehBody,v.spacing);
   if(v.speedRating&&SPEED_RATING[v.speedRating])g('vhRating').value=v.speedRating;
   g('vhLimiter').value=v.governor>0?'on':'off';g('vhLimitKmh').value=v.governor>0?v.governor:(v.limitKmh||250);
   g('vhTC').value=v.tc===false?'off':'on';   // saves from before build 154 carry none: on
@@ -7590,6 +7787,7 @@ function applyChassisFit(key,body){
   g('vhChassis').value=key;   // self-contained: callers may fit a chassis without touching the select
   g('vhDrive').value=body?f.drive:ch.drive;g('vhGearbox').value=f.gearbox;g('vhDiff').value=f.diff;
   g('vhGears').value=f.gears;g('vhGearing').value=f.gearing;
+  fillSpacingSelect(!!body,body?'stock':'std');vehRatioSet=null;vehFinalDriveSet=0;
   g('vhTire').value=f.tire;g('vhTireW').value=f.tw;g('vhTireWF').value=f.twF||0;g('vhArb').value='0';g('vhTireA').value=f.ta;g('vhWheel').value=f.wheel;
   g('vhRating').value=(TIRE_TYPE[f.tire]||TIRE_TYPE.sport).rating;
   if(body){const top=VEHICLE_PRESETS.find(p=>p.name===body.name);
@@ -7608,6 +7806,256 @@ function updateGearingLabel(){
   const el=document.getElementById('vhGearing'),out=document.getElementById('valGearing');
   if(!el||!out)return;
   out.textContent=el.value+' · '+lerp(4.9,2.6,(+el.value)/100).toFixed(2)+':1';
+  // a final drive set in the GEAR RATIOS window (build 170) overrides the slider
+  el.disabled=vehFinalDriveSet>0;if(vehFinalDriveSet>0)out.textContent=tr('SET BY HAND')+' · '+vehFinalDriveSet.toFixed(2)+':1';
+}
+// ====== GEAR RATIOS window (build 170) ======
+// Over the vehicle tab: the spacing, a slider per gear and one for the final drive, and two graphs of what they do.
+// Every change is the car's own: it goes into the form (CUSTOM ratios, a hand-set final drive) and the car is rebuilt,
+// so the 0-100, the top speed and the lap are the model's, not a preview's. The graphs:
+//   · engine rpm against road speed, each gear a ray from the origin to its limiter; over them the path the 0-100 run
+//     actually takes (its launch, the shift points its wheel-torque crossover picked, the drop at each), the band from
+//     peak torque to peak power, and the top speed;
+//   · drive at the wheels against road speed, T(N)·i·i_f·η/r in each gear, the best of them, the ideal a gearbox with
+//     infinitely many gears would give (peak power at every speed, P·η/v), drag plus rolling resistance, and the
+//     driven tyres' grip. The space between the best gear and the ideal is what the gaps between the gears cost.
+// Gears are told apart by their number, drawn on each line, not by colour: ten gears are more than colour can carry.
+// One accent marks what the car does (the path, the best gear); the rest is recessive.
+const gw={open:false,lap:null,lapKey:'',hover:{saw:null,force:null},busy:false};
+const gwOrd=i=>tr(['1st','2nd','3rd'][i]||((i+1)+'th'));
+function openGearWin(){
+  const w=document.getElementById('gearWin');if(!w)return;
+  w.hidden=false;gw.open=true;gw.lap=null;renderGearWin();
+  document.getElementById('gwClose').focus();
+}
+function closeGearWin(){
+  const w=document.getElementById('gearWin');if(!w||w.hidden)return;
+  w.hidden=true;gw.open=false;
+  const b=document.getElementById('btnGearRatios');if(b)b.focus();
+}
+// Rebuild the car from the form and redraw, at most once a frame while a slider is dragged.
+function gwRebuild(){
+  if(gw.busy)return;gw.busy=true;
+  requestAnimationFrame(()=>{gw.busy=false;updateGearingLabel();buildVehicle();updateVehicleSummary();gw.lap=null;renderGearWin();});
+}
+function gwSetSpacing(k){
+  const sel=document.getElementById('vhSpacing');
+  if(k==='custom'&&!(vehRatioSet&&vehRatioSet.length===vehicle.ratios.length))vehRatioSet=vehicle.ratios.slice();
+  sel.value=k;gwRebuild();
+}
+// One gear moved: the set becomes CUSTOM, and the gear stays between its neighbours (each at least 1% apart, so the
+// order a gearbox has cannot be crossed by dragging).
+function gwSetGear(i,r){
+  const set=(vehicle.spacing==='custom'&&vehRatioSet&&vehRatioSet.length===vehicle.ratios.length?vehRatioSet:vehicle.ratios).slice();
+  const hi=i>0?set[i-1]/1.01:Infinity,lo=i<set.length-1?set[i+1]*1.01:0;
+  set[i]=clamp(r,lo,hi);vehRatioSet=set;document.getElementById('vhSpacing').value='custom';gwRebuild();
+}
+function gwSetFinal(fd){vehFinalDriveSet=fd>0?clamp(fd,FD_MIN,FD_MAX):0;gwRebuild();}
+function gwReset(){
+  vehRatioSet=null;vehFinalDriveSet=0;
+  fillSpacingSelect(!!vehBody,vehBody?'stock':'std');gwRebuild();
+}
+// Road speed (m/s) in a gear at an engine speed, and back.
+const gwV=(rpm,i)=>rpm*(2*Math.PI)/60*vehicle.rTire/(vehicle.ratios[i]*vehicle.finalDrive);
+function renderGearWin(){
+  if(!gw.open||!vehicle||!engine||!engine.score)return;
+  const V=vehicle,n=V.ratios.length,rl=engine.redline,el=id=>document.getElementById(id);
+  el('gwTitle').textContent=tr('GEAR RATIOS');
+  el('gwSub').textContent=tr(V.chLabel)+' · '+n+tr('-speed')+' '+tr(V.gbLabel);
+  el('gwKSp').textContent=tr('SPACING');el('gwKR').textContent=tr('RATIO · ROAD SPEED AT THE LIMITER');
+  el('gwReset').textContent=tr('RESET');el('gwClose').setAttribute('aria-label',tr('CLOSE'));
+  el('gwTSaw').textContent=tr('ENGINE RPM AGAINST ROAD SPEED');el('gwTForce').textContent=tr('DRIVE AT THE WHEELS AGAINST ROAD SPEED');
+  // spacing
+  const opts=(vehBody?['stock']:[]).concat(Object.keys(GEAR_SPACING),'custom');
+  el('gwSpacing').innerHTML=opts.map(k=>'<button type="button" data-sp="'+k+'" class="'+(V.spacing===k?'on':'')+'" aria-pressed="'+(V.spacing===k)+'">'+
+    esc(tr(k==='stock'?'STOCK':k==='custom'?'CUSTOM':GEAR_SPACING[k].label))+'</button>').join('');
+  // sliders: a ratio on a log scale (a step is the same share of the ratio anywhere), its speed at the limiter
+  const lg=x=>Math.round(Math.log(x)*1000);
+  let h='';
+  for(let i=0;i<n;i++){
+    const r=V.ratios[i];
+    h+='<div class="gw-row"><span class="n">'+esc(gwOrd(i))+'</span><input type="range" data-g="'+i+'" min="'+lg(0.3)+'" max="'+lg(6.5)+'" step="1" value="'+lg(r)+'" aria-label="'+esc(gwOrd(i))+' '+esc(tr('gear ratio'))+'">'+
+      '<span class="r">'+r.toFixed(2)+'</span><span class="v">'+Math.round(gwV(rl,i)*3.6)+' km/h</span></div>';
+  }
+  const fdAuto=!(vehFinalDriveSet>0);
+  h+='<div class="gw-row fd"><span class="n">'+esc(tr('FINAL'))+'</span><input type="range" id="gwFd" min="'+Math.round(FD_MIN*100)+'" max="'+Math.round(FD_MAX*100)+'" step="1" value="'+Math.round(V.finalDrive*100)+'" aria-label="'+esc(tr('final drive'))+'">'+
+     '<span class="r">'+V.finalDrive.toFixed(2)+'</span><span class="v">'+esc(tr(fdAuto?(V.fdPublished?'published':'matched'):'by hand'))+'</span></div>'+
+     '<div class="gw-fdrow"><button type="button" id="gwFdAuto" class="'+(fdAuto?'on':'')+'" aria-pressed="'+fdAuto+'">'+esc(tr('AUTO'))+'</button>'+
+     esc(tr(fdAuto?(V.fdPublished?'the car\'s published final drive, and the GEARING slider':'matched to the engine, and the GEARING slider'):'the GEARING slider is off while this is set'))+'</div>';
+  el('gwSliders').innerHTML=h;
+  // the note: where the ratios come from
+  const src=V.spacing==='stock'&&V.body?(GEARSETS[V.body.name]&&GEARSETS[V.body.name].r.length===n?tr('Published ratios')+': '+GEARSETS[V.body.name].src:tr('No published ratios for this car: the average spacing of the published boxes in its family.'))
+    :V.spacing==='custom'?tr('Your own ratios. Each gear stays at least 1% taller than the one below it.')
+    :tr('The textbook\'s progressive spacing, fitted to 30 published gearboxes')+' ('+tr(GEAR_SPACING[V.spacing].label)+').';
+  el('gwNote').textContent=src;
+  // the read-out: the model's own runs on the car as it now is
+  const P=perf||{},key=JSON.stringify([V.ratios,V.finalDrive,vehRev]);
+  if(gw.lapKey!==key){gw.lapKey=key;gw.lap=null;
+    setTimeout(()=>{if(!gw.open||gw.lapKey!==key)return;try{const L=simulateLap('tech');gw.lap=L&&L.lap;}catch(e){gw.lap=null;}gwReadout();},60);}
+  gwReadout();
+  const lg2=(col,lab,cls)=>'<span><i class="'+(cls||'')+'" style="'+(cls==='b'?'background:':'border-color:')+col+'"></i>'+esc(tr(lab))+'</span>';
+  el('gwLegSaw').innerHTML=lg2('#00ff88','THE 0–100 RUN')+lg2('#3a3a58','EACH GEAR (ITS NUMBER AT ITS END)')+lg2('rgba(0,204,255,0.35)','PEAK TORQUE TO PEAK POWER','b')+lg2('#aa3333','LIMITER','d')+lg2('#ffcc00','TOP SPEED','d');
+  el('gwLegForce').innerHTML=lg2('#00ff88','BEST GEAR')+lg2('#3a3a58','EACH GEAR')+lg2('#666688','IDEAL (PEAK POWER EVERYWHERE)','d')+lg2('rgba(255,204,0,0.3)','LOST TO THE GAPS','b')+lg2('#cc7744','DRAG + ROLLING','d')+lg2('#4a7a8a','GRIP (AT REST)','d');
+  drawGearSaw();drawGearForce();
+}
+function gwReadout(){
+  const P=perf||{},el=document.getElementById('gwRead');if(!el)return;
+  const f=(k,v)=>'<span>'+esc(tr(k))+' <b>'+v+'</b></span>';
+  el.innerHTML=f('0–100',P.t100?P.t100.toFixed(2)+' s':'—')+f('0–200',P.t200?P.t200.toFixed(2)+' s':'—')+
+    f('top speed',P.topSpeed?Math.round(P.topSpeed)+' km/h'+(P.governed?' ('+tr('governed')+')':''):'—')+
+    f('Ashdown Park lap',gw.lap?fmtLap(gw.lap):'…');
+}
+// A canvas sized to its box at the screen's pixel density, with the pixel font at a readable size.
+function gwCanvas(id){
+  const c=document.getElementById(id);if(!c)return null;
+  const dpr=Math.min(2,window.devicePixelRatio||1),W=Math.max(200,c.clientWidth),H=Math.max(100,c.clientHeight-4);
+  if(c.width!==Math.round(W*dpr)||c.height!==Math.round(H*dpr)){c.width=Math.round(W*dpr);c.height=Math.round(H*dpr);}
+  const g=c.getContext('2d');g.setTransform(dpr,0,0,dpr,0,0);g.clearRect(0,0,W,H);
+  g.font="7px 'Press Start 2P', monospace";g.textBaseline='middle';
+  return {c,g,W,H};
+}
+// Axes and gridlines: recessive, the ticks in muted ink.
+function gwAxes(g,L,xMax,yMax,xStep,yStep,yFmt,xLab,yLab){
+  g.strokeStyle='#1e1e2c';g.lineWidth=1;g.fillStyle='#667';
+  g.textAlign='right';
+  for(let y=0;y<=yMax+1e-9;y+=yStep){const py=L.y(y);g.beginPath();g.moveTo(L.x0,py);g.lineTo(L.x1,py);g.stroke();g.fillText(yFmt(y),L.x0-4,py);}
+  g.textAlign='center';
+  for(let x=0;x<=xMax+1e-9;x+=xStep){const px=L.x(x);g.beginPath();g.moveTo(px,L.y0);g.lineTo(px,L.y1);g.stroke();g.fillText(String(x),px,L.y0+9);}
+  g.strokeStyle='#444';g.beginPath();g.moveTo(L.x0,L.y1);g.lineTo(L.x0,L.y0);g.lineTo(L.x1,L.y0);g.stroke();
+  g.fillStyle='#667';g.textAlign='right';g.fillText(xLab,L.x1,L.y0+19);g.textAlign='left';g.fillText(yLab,L.x0-30,L.y1-9);
+}
+const gwNice=(x,steps)=>{const raw=x/steps,p=Math.pow(10,Math.floor(Math.log10(raw))),m=raw/p;return (m<=1?1:m<=2?2:m<=2.5?2.5:m<=5?5:10)*p;};
+// The speed range both graphs share: to a little past the top speed, or the top gear's limiter if that is lower.
+function gwXMax(){
+  const P=perf||{},vTop=(P.freeSpeed||P.topSpeed||200),n=vehicle.ratios.length;
+  const vLimTop=gwV(engine.redline,n-1)*3.6,x=Math.min(vLimTop,vTop*1.12);
+  const st=gwNice(x,7);return {xMax:Math.ceil(x/st)*st,xStep:st};
+}
+function gwLayout(W,H,xMax,yMax){
+  const x0=40,x1=W-10,y0=H-26,y1=16;
+  return {x0,x1,y0,y1,x:v=>x0+(x1-x0)*v/xMax,y:u=>y0-(y0-y1)*u/yMax,vx:px=>(px-x0)/(x1-x0)*xMax};
+}
+function drawGearSaw(){
+  const C=gwCanvas('gwSaw');if(!C)return;const {g,W,H}=C,V=vehicle,n=V.ratios.length,rl=engine.redline,P=perf||{},s=engine.score;
+  const {xMax,xStep}=gwXMax(),yMax=Math.ceil(rl*1.08/1000)*1000;
+  const L=gwLayout(W,H,xMax,yMax);gw.layoutSaw={L,xMax,yMax};
+  // the band from peak torque to peak power, where the engine pulls hardest
+  if(s.peakTQrpm>0&&s.peakHPrpm>s.peakTQrpm){g.fillStyle='rgba(0,204,255,0.08)';g.fillRect(L.x0,L.y(s.peakHPrpm),L.x1-L.x0,L.y(s.peakTQrpm)-L.y(s.peakHPrpm));
+  }
+  gwAxes(g,L,xMax,yMax,xStep,gwNice(yMax,5),y=>y>=1000?(y/1000)+'k':String(y),'km/h','rpm');
+  // the limiter
+  g.strokeStyle='#aa3333';g.setLineDash([4,3]);g.beginPath();g.moveTo(L.x0,L.y(rl));g.lineTo(L.x1,L.y(rl));g.stroke();g.setLineDash([]);
+  g.fillStyle='#cc5555';g.textAlign='right';g.fillText(String(rl),L.x1-2,L.y(rl)+8);
+  // each gear: a ray from the origin to its limiter, its number at the end
+  g.lineWidth=1.5;
+  for(let i=0;i<n;i++){
+    const vEnd=Math.min(gwV(rl,i)*3.6,xMax),rEnd=vEnd/(gwV(rl,i)*3.6)*rl;
+    g.strokeStyle=gw.hl===i?'#ffcc00':'#3a3a58';g.beginPath();g.moveTo(L.x(0),L.y(0));g.lineTo(L.x(vEnd),L.y(rEnd));g.stroke();
+    g.fillStyle=gw.hl===i?'#ffcc00':'#889';g.textAlign='center';g.fillText(String(i+1),L.x(vEnd)-(vEnd>=xMax?6:0),L.y(rEnd)-8);
+  }
+  // the path the 0-100 run takes: the clutch slipping at its launch revs, then each gear to its shift, the drop, on
+  const sh=P.shifts||[],pts=[];
+  const lr=P.launchRpm||rl*0.55,vLock=gwV(lr,0)*3.6;
+  pts.push([0,lr],[vLock,lr]);
+  let vPrev=vLock;
+  for(const x of sh){const vk=x.v*3.6;if(vk>xMax)break;pts.push([vk,x.rpm],[vk,x.rpmTo]);vPrev=vk;}
+  const gLast=sh.length?Math.min(n-1,sh[sh.length-1].g+1):0,vEndRun=Math.min(P.topSpeed||xMax,xMax);
+  if(vEndRun>vPrev)pts.push([vEndRun,vEndRun/(gwV(rl,gLast)*3.6)*rl]);
+  gw.path=pts;   // kept for the test: the path drawn is the run's
+  g.strokeStyle='#00ff88';g.lineWidth=2.5;g.lineJoin='round';g.beginPath();
+  pts.forEach(([v,r],k)=>{const px=L.x(v),py=L.y(Math.min(r,yMax));k?g.lineTo(px,py):g.moveTo(px,py);});g.stroke();g.lineWidth=1;
+  // the drop at each shift, where there is room for it
+  g.fillStyle='#8a9';g.textAlign='left';
+  let lastPx=-99;
+  for(const x of sh){const vk=x.v*3.6;if(vk>xMax)break;const px=L.x(vk);if(px-lastPx<34)continue;lastPx=px;
+    g.fillText('−'+Math.round(x.rpm-x.rpmTo),px+3,L.y((x.rpm+x.rpmTo)/2));}
+  // top speed
+  if(P.topSpeed){const px=L.x(Math.min(P.topSpeed,xMax));g.strokeStyle='#ffcc00';g.setLineDash([2,3]);g.beginPath();g.moveTo(px,L.y0);g.lineTo(px,L.y1);g.stroke();g.setLineDash([]);
+    g.fillStyle='#ffcc00';g.textAlign='right';g.fillText(String(Math.round(P.topSpeed)),px-3,L.y0-8);}
+  gwCross(g,L,'saw',H);
+}
+function drawGearForce(){
+  const C=gwCanvas('gwForce');if(!C)return;const {g,W,H}=C,V=vehicle,n=V.ratios.length,rl=engine.redline,s=engine.score;
+  const curve=buildTorqueCurve(),idle=engine.idleRpmEff||800;
+  const tq=rpm=>{if(rpm<=curve[0].rpm)return curve[0].tq;for(let k=1;k<curve.length;k++)if(rpm<=curve[k].rpm){const a=curve[k-1],b=curve[k];return a.tq+(b.tq-a.tq)*(rpm-a.rpm)/(b.rpm-a.rpm);}return curve[curve.length-1].tq;};
+  // the ideal from the same curve the gears are drawn from, so no gear can touch more than it
+  const eff=V.driveEff,r=V.rTire,fd=V.finalDrive,Pmax=curve.reduce((m,q)=>Math.max(m,q.tq*q.rpm*(2*Math.PI)/60),0);
+  const Fgear=(i,vms)=>{const rpm=vms*(V.ratios[i]*fd)/r*60/(2*Math.PI);return rpm<idle||rpm>rl?null:tq(rpm)*V.ratios[i]*fd*eff/r;};
+  const Fres=vms=>0.5*AIR_RHO*V.cdA*vms*vms+crrAt(V.crr,vms)*V.mass*G;
+  const grip=V.mu*V.mass*G*V.drivenWt;   // the driven tyres' grip at rest (weight transfer and downforce move it)
+  const {xMax,xStep}=gwXMax();
+  let fMax=0;for(let i=0;i<n;i++)for(let vk=2;vk<=xMax;vk+=2){const f=Fgear(i,vk/3.6);if(f)fMax=Math.max(fMax,f);}
+  const yStep=gwNice(fMax/1000*1.1,5),yMax=Math.ceil(fMax/1000*1.1/yStep)*yStep;
+  const L=gwLayout(W,H,xMax,yMax);gw.layoutForce={L,xMax,yMax,Fgear,Fres,Pmax,eff,grip};
+  gwAxes(g,L,xMax,yMax,xStep,yStep,y=>String(+y.toFixed(1)),'km/h','kN');
+  const line=(fn,from,col,w,dash)=>{g.strokeStyle=col;g.lineWidth=w;g.setLineDash(dash||[]);g.beginPath();let on=false;
+    for(let vk=from;vk<=xMax;vk+=1){const f=fn(vk/3.6);if(f==null||f/1000>yMax*1.02){on=false;continue;}const px=L.x(vk),py=L.y(f/1000);on?g.lineTo(px,py):g.moveTo(px,py);on=true;}
+    g.stroke();g.setLineDash([]);g.lineWidth=1;};
+  // the ideal: every speed at peak power
+  line(vms=>Pmax*eff/vms,8,'#666688',1.5,[5,4]);
+  // what the gaps cost: the space between the ideal and the best gear
+  g.fillStyle='rgba(255,204,0,0.07)';
+  for(let vk=8;vk<=xMax;vk+=1){let b=0;for(let i=0;i<n;i++){const f=Fgear(i,vk/3.6);if(f)b=Math.max(b,f);}
+    const id=Math.min(Pmax*eff/(vk/3.6),yMax*1000);if(b>0&&id>b)g.fillRect(L.x(vk),L.y(id/1000),Math.max(1,L.x(vk+1)-L.x(vk)),L.y(b/1000)-L.y(id/1000));}
+  // each gear, its number at its peak
+  for(let i=0;i<n;i++){
+    line(vms=>Fgear(i,vms),1,gw.hl===i?'#ffcc00':'#3a3a58',1.5);
+    let bv=0,bf=0;for(let vk=1;vk<=xMax;vk+=1){const f=Fgear(i,vk/3.6);if(f&&f>bf){bf=f;bv=vk;}}
+    if(bf>0&&bf/1000<=yMax){g.fillStyle=gw.hl===i?'#ffcc00':'#889';g.textAlign='center';g.fillText(String(i+1),L.x(bv),L.y(bf/1000)-8);}
+  }
+  // the best gear at each speed: what the car can put down
+  line(vms=>{let b=null;for(let i=0;i<n;i++){const f=Fgear(i,vms);if(f!=null&&(b==null||f>b))b=f;}return b;},1,'#00ff88',2.5);
+  // drag and rolling, and the driven tyres' grip
+  line(Fres,1,'#cc7744',1.5,[3,3]);
+  if(grip/1000<=yMax){g.strokeStyle='#4a7a8a';g.setLineDash([6,3]);g.beginPath();g.moveTo(L.x0,L.y(grip/1000));g.lineTo(L.x1,L.y(grip/1000));g.stroke();g.setLineDash([]);
+    g.fillStyle='#6a9aaa';g.textAlign='right';g.fillText(tr('GRIP'),L.x1-2,L.y(grip/1000)-7);}
+  gwCross(g,L,'force',H);
+}
+// The hover: a crosshair at the pointer's road speed, and what each graph has there.
+function gwCross(g,L,which,H){
+  const vk=gw.hover[which];if(vk==null||vk<0)return;
+  const px=L.x(vk);g.strokeStyle='#888';g.setLineDash([2,2]);g.beginPath();g.moveTo(px,L.y0);g.lineTo(px,L.y1);g.stroke();g.setLineDash([]);
+}
+function gwTip(which,ev){
+  const c=document.getElementById(which==='saw'?'gwSaw':'gwForce'),tip=document.getElementById(which==='saw'?'gwTipSaw':'gwTipForce');
+  const lay=which==='saw'?gw.layoutSaw:gw.layoutForce;if(!c||!tip||!lay)return;
+  if(!ev){gw.hover[which]=null;tip.style.display='none';which==='saw'?drawGearSaw():drawGearForce();return;}
+  const rc=c.getBoundingClientRect(),mx=ev.clientX-rc.left,vk=lay.L.vx(mx);
+  if(vk<0||vk>lay.xMax){gwTip(which,null);return;}
+  gw.hover[which]=vk;which==='saw'?drawGearSaw():drawGearForce();
+  const V=vehicle,n=V.ratios.length,vms=vk/3.6;let h='<b>'+Math.round(vk)+' km/h</b>';
+  if(which==='saw'){
+    for(let i=0;i<n;i++){const rpm=vk/(gwV(engine.redline,i)*3.6)*engine.redline;if(rpm>=(engine.idleRpmEff||800)&&rpm<=engine.redline)h+='<br>'+esc(gwOrd(i))+' '+Math.round(rpm)+' rpm';}
+  }else{
+    let b=null,bi=-1;for(let i=0;i<n;i++){const f=lay.Fgear(i,vms);if(f!=null&&(b==null||f>b)){b=f;bi=i;}}
+    if(b!=null)h+='<br>'+esc(tr('best'))+': '+esc(gwOrd(bi))+' '+(b/1000).toFixed(2)+' kN';
+    if(vms>2)h+='<br>'+esc(tr('ideal'))+' '+(lay.Pmax*lay.eff/vms/1000).toFixed(2)+' kN';
+    h+='<br>'+esc(tr('drag + rolling'))+' '+(lay.Fres(vms)/1000).toFixed(2)+' kN';
+  }
+  tip.innerHTML=h;tip.style.display='block';
+  const tw=tip.offsetWidth,left=mx+14+tw>rc.width?mx-14-tw:mx+14;
+  tip.style.left=Math.max(0,left)+'px';tip.style.top=(c.offsetTop+10)+'px';
+}
+function wireGearWin(){
+  const b=document.getElementById('btnGearRatios'),w=document.getElementById('gearWin');if(!b||!w)return;
+  b.addEventListener('click',openGearWin);
+  document.getElementById('gwClose').addEventListener('click',closeGearWin);
+  w.addEventListener('click',e=>{if(e.target===w)closeGearWin();});
+  document.addEventListener('keydown',e=>{if(e.key==='Escape'&&gw.open)closeGearWin();});
+  document.getElementById('gwSpacing').addEventListener('click',e=>{const k=e.target.closest('button');if(k&&k.dataset.sp)gwSetSpacing(k.dataset.sp);});
+  const sl=document.getElementById('gwSliders');
+  sl.addEventListener('input',e=>{const t=e.target;
+    if(t.dataset.g!=null)gwSetGear(+t.dataset.g,Math.exp(+t.value/1000));
+    else if(t.id==='gwFd')gwSetFinal(+t.value/100);});
+  sl.addEventListener('click',e=>{if(e.target.id==='gwFdAuto')gwSetFinal(vehFinalDriveSet>0?0:vehicle.finalDrive);});
+  // the gear under the pointer or the keyboard is drawn in the graphs
+  const hl=e=>{const t=e.target;gw.hl=t&&t.dataset&&t.dataset.g!=null?+t.dataset.g:null;drawGearSaw();drawGearForce();};
+  sl.addEventListener('pointerover',hl);sl.addEventListener('focusin',hl);
+  sl.addEventListener('pointerleave',()=>{gw.hl=null;drawGearSaw();drawGearForce();});
+  document.getElementById('gwReset').addEventListener('click',gwReset);
+  for(const [id,k] of [['gwSaw','saw'],['gwForce','force']]){const c=document.getElementById(id);
+    c.addEventListener('pointermove',e=>gwTip(k,e));c.addEventListener('pointerleave',()=>gwTip(k,null));}
+  window.addEventListener('resize',()=>{if(gw.open){drawGearSaw();drawGearForce();}});
 }
 // The rolling diameter the fitted tyre actually gives (in), for the fitment read-out.
 function fitmentLabel(v){
@@ -7617,7 +8065,7 @@ function fitmentLabel(v){
 // True when every fitted part still matches the chassis' factory spec.
 function isFactoryFit(v){
   const ch=CHASSIS[v.chassis];if(!ch||!ch.fit)return false;const f=v.body?v.body.fit:ch.fit;
-  return v.drive===(v.body?f.drive:ch.drive)&&(v.governor||0)===(f.gov||0)&&(v.tc!==false)===(f.tc!==false)&&v.gears===f.gears&&v.gearing===f.gearing&&v.gearbox===f.gearbox&&v.diff===f.diff&&
+  return v.drive===(v.body?f.drive:ch.drive)&&(v.governor||0)===(f.gov||0)&&(v.tc!==false)===(f.tc!==false)&&v.gears===f.gears&&v.gearing===f.gearing&&v.spacing===(v.body?'stock':'std')&&!(v.finalDriveSet>0)&&v.gearbox===f.gearbox&&v.diff===f.diff&&
     v.tireType===f.tire&&v.tireWidth===f.tw&&(v.tireWidthF||0)===(f.twF||0)&&(v.arbBal||0)===0&&v.tireAspect===f.ta&&v.wheelDia===f.wheel&&
     v.aeroFront===f.aF&&v.aeroRear===f.aR&&v.aeroFloor===f.aFl&&v.weightRed===f.weight&&
     v.brakeType===f.brake&&v.rotor===f.rotor&&v.suspension===f.susp;
@@ -7697,7 +8145,8 @@ function buildVehicle(){
   vehicle.df=df;vehicle.diffLabel=df.label;vehicle.diffTraction=df.traction;
   vehicle.shiftTime=gb.shift;
   vehicle.driveEff=(DRIVE_EFF[vehicle.drive]||0.90)*gb.eff;          // layout loss × gearbox loss
-  vehicle.ratios=genRatios(vehicle.gears,gb.spread);
+  const gs=gearRatiosFor(vehicle);
+  vehicle.ratios=gs.r;vehicle.gearsetApprox=!!gs.approx;vehicle.fdPublished=gs.fd>0?gs.fd:0;
   // Final drive derived from the engine, not read off a slider.
   //
   // It used to be lerp(4.9, 2.6, gearing/100) and nothing else — so a 3800 rpm diesel was handed
@@ -7719,7 +8168,10 @@ function buildVehicle(){
   // 1.73x span is close to the old slider's 1.88x, so the design choice stays as meaningful as it
   // was; what changed is that it is now a choice ABOUT a sensible baseline instead of an absolute
   // ratio handed to every engine alike.
-  vehicle.finalDrive=matchedFinalDrive();
+  // A real car's published final drive (build 169) stands in for the matched one, biased by the slider about it
+  // just the same; a hand-set final drive overrides both.
+  vehicle.finalDrive=vehicle.finalDriveSet>0?clamp(vehicle.finalDriveSet,FD_MIN,FD_MAX)
+    :gs.fd>0?clamp(gs.fd*gearingBias(vehicle.gearing)/gearingBias(52),FD_MIN,FD_MAX):matchedFinalDrive();
   vehicle.cost=computeVehicleCost(ch,tt,wr);
   vehicle.powerToWeight=engine.score?engine.score.peakHP/(vehicle.mass/1000):0;   // hp per tonne
   perf=simulateAccel();
@@ -7918,7 +8370,7 @@ function simulateAccelRun(){
   const Ie=engine.inertia||0.1, tqCap=CLUTCH_MARGIN*curve.reduce((q,p)=>Math.max(q,p.tq),0);
   let slipping=!tcStall, slipW=launchRpm*TWO_PI/60;
   let v=0,x=0,t=0,gear=0,a=0,shiftT=0,w=0;   // w: the driven wheels' angular speed (rad/s)
-  const M={t100:null,q400:null,q800:null,q1000:null,v200:null,gripT:0,lagT:0,spinT:0,launchRpm},V100=100/3.6,V200=200/3.6;
+  const M={t100:null,q400:null,q800:null,q1000:null,v200:null,gripT:0,lagT:0,spinT:0,launchRpm,shifts:[]},V100=100/3.6,V200=200/3.6;
   for(let step=0;step<48000&&t<150;step++){
     // the gearbox input turns with the driven WHEELS, not with the road: in wheelspin the engine revs with them
     let totalRatio=ratios[gear]*fd,rpm=w*totalRatio*60/TWO_PI;
@@ -7934,7 +8386,8 @@ function simulateAccelRun(){
     // waiting for torque the next gear would also get.
     if(shiftT<=0&&gear<ratios.length-1&&(rpm>=rl||
        tqAt(clamp(rpm*ratios[gear+1]/ratios[gear],idle,rl))*ratios[gear+1]>=tqAt(clamp(rpm,idle,rl))*ratios[gear])){
-      gear++;shiftT=shiftTime;totalRatio=ratios[gear]*fd;rpm=w*totalRatio*60/TWO_PI;}
+      const rpm0=rpm;gear++;shiftT=shiftTime;totalRatio=ratios[gear]*fd;rpm=w*totalRatio*60/TWO_PI;
+      M.shifts.push({g:gear-1,v,rpm:rpm0,rpmTo:rpm});}   // where the run changed up (the GEAR RATIOS graph draws them)
     // `rpm` is what the gearbox input wants to turn at this road speed. How the engine couples to
     // it depends on the gearbox:
     //   Torque-converter auto — the impeller stalls up against a slow turbine and MULTIPLIES
@@ -8063,7 +8516,7 @@ function simulateAccelRun(){
   // gripT / lagT: seconds of the 0-100 spent traction-limited, and on throttle below 90% of target
   // boost — WHY a car takes the time it takes, so a claim about what limits it can be checked.
   return {t100:M.t100,q400:M.q400,q800:M.q800,q1000:M.q1000,topSpeed,governed,freeSpeed:vFree*3.6,mass:m,ptw:vehicle.powerToWeight,
-    gripT:M.gripT,lagT:M.lagT,spinT:M.spinT,launchRpm:M.launchRpm,
+    gripT:M.gripT,lagT:M.lagT,spinT:M.spinT,launchRpm:M.launchRpm,shifts:M.shifts.map(x=>({g:x.g,v:x.v,rpm:x.rpm,rpmTo:x.rpmTo})),
     t200:M.v200?M.v200.t:null,x200:M.v200?M.v200.x:null};
 }
 // ====== TEST TRACK: circuits, lap solver ======
@@ -9137,12 +9590,15 @@ function simulateLapRun(key,opts){
   function driverPedal(target,liftTo){
     const raw=new Float64Array(n);
     for(let i=0;i<n;i++)raw[i]=cutAt[i]?NaN:clamp(target(i),0,1);
-    // steady through a corner: the ±2 points (±10 m) the steering is averaged over
+    // steady through a corner: the ±2 points (±10 m) the steering is averaged over. Every driving point in that window
+    // counts, not only the corner's own (build 169): through a long sweeper the line's corner speed flickers point to
+    // point (150, 211, 158, 205 km/h on the mixed circuit's), so a point or two between two apexes reads as a straight
+    // and asked for full throttle between two holds, a stab a foot does not make.
     const aim=new Float64Array(n);
     for(let i=0;i<n;i++){
       if(Number.isNaN(raw[i])){aim[i]=NaN;continue;}
       if(!cornerish(i)||raw[i]<=0){aim[i]=raw[i];continue;}
-      let a=0,c=0;for(let k=-2;k<=2;k++){const q=(i+k+n)%n;if(!Number.isNaN(raw[q])&&raw[q]>0&&cornerish(q)){a+=raw[q];c++;}}
+      let a=0,c=0;for(let k=-2;k<=2;k++){const q=(i+k+n)%n;if(!Number.isNaN(raw[q])&&raw[q]>0){a+=raw[q];c++;}}
       aim[i]=a/c;
     }
     // out of a corner: once the car is accelerating the driver does not back off again until it stops (the solve's
@@ -10117,6 +10573,8 @@ function updateVehicleSummary(){
     '<br>'+tr('Speed limiter')+' <b>'+(vehicle.governor>0?vehicle.governor+' km/h':tr('removed'))+'</b>'+(perf&&perf.governed?' • '+tr('free top speed')+' '+Math.round(perf.freeSpeed)+' km/h':'')+
     ' • '+tr('traction control')+' <b>'+(vehicle.tc===false?tr('off'):tr('on'))+'</b>'+(perf&&perf.spinT>0.05?' • '+tr('wheelspin')+' '+perf.spinT.toFixed(1)+' '+tr('s to 100'):'')+
     '<br>'+tr('Drag')+' CdA <b>'+vehicle.cdA.toFixed(2)+'</b> • '+tr('downforce')+' ClA <b>'+vehicle.clA.toFixed(2)+'</b> • '+tr('final drive')+' <b>'+vehicle.finalDrive.toFixed(2)+'</b>'+
+    '<br>'+tr('Ratios')+' <b>'+vehicle.ratios.map(x=>x.toFixed(2)).join(' · ')+'</b> '+
+    tr(vehicle.spacing==='stock'?(vehicle.gearsetApprox?'(family average)':'(published)'):vehicle.spacing==='custom'?'(custom)':'('+(GEAR_SPACING[vehicle.spacing]||GEAR_SPACING.std).label.toLowerCase()+')')+
     '<br>'+tr('Vehicle cost')+' <b>'+fmtCost(vehicle.cost)+'</b> • '+tr('with engine')+' <b>'+fmtCost(vehicle.cost+(engine.cost||0))+'</b>';
   renderPerformance();
 }
@@ -15551,7 +16009,7 @@ function bindControls(){
     try{localStorage.setItem('pes.gauges',lapReplay.gauges);}catch(err){}});
   // Vehicle design: recompute performance live on any change. Picking a chassis fits its whole
   // factory spec (drivetrain, gearbox, tyres/wheels, brakes, suspension, aero, weight).
-  ['vhChassis','vhDrive','vhGearbox','vhDiff','vhGears','vhGearing','vhLimiter','vhLimitKmh','vhTC','vhRating','vhTire','vhTireW','vhTireWF','vhArb','vhTireA','vhWheel','vhAeroF','vhAeroR','vhAeroFl','vhWeight','vhBrake','vhRotor','vhSusp','vhSteer'].forEach(id=>{
+  ['vhChassis','vhDrive','vhGearbox','vhDiff','vhGears','vhSpacing','vhGearing','vhLimiter','vhLimitKmh','vhTC','vhRating','vhTire','vhTireW','vhTireWF','vhArb','vhTireA','vhWheel','vhAeroF','vhAeroR','vhAeroFl','vhWeight','vhBrake','vhRotor','vhSusp','vhSteer'].forEach(id=>{
     const el=document.getElementById(id);if(!el)return;
     el.addEventListener('input',()=>{
       if(id==='vhChassis'){
@@ -15569,6 +16027,7 @@ function bindControls(){
       buildVehicle();updateVehicleSummary();
     });
   });
+  wireGearWin();
   // Refit the current chassis to its factory spec (undo your part swaps).
   const btnFit=document.getElementById('btnRefit');
   if(btnFit)btnFit.addEventListener('click',()=>{

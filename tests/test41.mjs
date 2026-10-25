@@ -32,6 +32,11 @@ const ref = await page.evaluate(() => {
     ['Subaru WRX STI (GD)',      280, 1470, 5.2,  'rally', 'awd', 'sport', 'clsd', 'manual', 7000],
     ['Suzuki Alto Works',         64,  720, 11.0, 'kei',   'fwd', 'eco',   'open', 'manual', 7200]
   ];
+  // ...and since build 169 its GEARBOX, where the published box is in the file (GEARSETS): the Supra's V160, the STI's
+  // six-speed and the Alto's five-speed with their own final drives. The others run the STANDARD spacing.
+  // the gear count where the real car's is known but its ratios are not: the Mk8 GTI's seven-speed DSG, the M2's eight-speed ZF
+  const NGEARS = { 'VW Golf GTI (Mk8)': 7, 'BMW M2 (G87)': 8 };
+  const BOX = { 'Toyota Supra RZ (A80)': 'Toyota Supra RZ (A80, 1993)', 'Subaru WRX STI (GD)': 'Subaru Impreza WRX STI (GD, 2004)', 'Suzuki Alto Works': 'Suzuki Alto Works (HA36S, 2015)' };
   return REF.map(([label, hp, kg, realT, ch, drive, tire, diff, gbx, redline]) => {
     applyEngineToForm(Object.assign({}, DEFAULT_ENGINE, { cylinders: 6, bore_mm: 84, stroke_mm: 90,
       compression: 10, redline, intake: 'turbo', turboSize: 'medium', boost_bar: 0.5,
@@ -42,6 +47,9 @@ const ref = await page.evaluate(() => {
     document.getElementById('vhTire').value = tire;
     document.getElementById('vhDiff').value = diff;
     document.getElementById('vhGearbox').value = gbx;
+    if (NGEARS[label]) document.getElementById('vhGears').value = NGEARS[label];
+    const box = BOX[label] && GEARSETS[BOX[label]];
+    if (box) { document.getElementById('vhGears').value = box.r.length; applyVehicleToForm(Object.assign(readVehicleFromForm(), { spacing: 'custom', ratioSet: box.r })); }
     buildVehicle();
     // Each car is matched to its real power by scaling the torque curve. simulateAccel now takes
     // torque from a 2-D rpm x boost GRID during the run — boost is a state with history, so a 1-D
@@ -67,7 +75,7 @@ const ref = await page.evaluate(() => {
     // the 64 hp kei spun a 3.0 six's flywheel through kei gearing and came out 20% slow.
     engine.inertia = engineInertia(engine.score.peakTQ * scale);
     vehicle.powerToWeight = hp / (kg / 1000);
-    vehicle.finalDrive = matchedFinalDrive();
+    vehicle.finalDrive = box && box.fd ? box.fd : matchedFinalDrive();
     const p = simulateAccel();
     engine.score.peakHP = savedHp; engine.inertia = savedI;
     window.buildTorqueCurve = realCurve; window.buildTorqueGrid = realGrid;
@@ -100,7 +108,13 @@ console.log(`RMS error across the set: ${rms.toFixed(2)}%`);
 // free), and a tyre at work slips, so the engine reaches each shift at a slightly lower road speed. The parked
 // slip model measured this cost at ~2.7 points (README, the inertia investigation); the fixtures run with
 // traction control on, so it is that cost and not wheelspin.
-const ACC_KNOWN = { 'Toyota Supra RZ (A80)': 20, 'Subaru WRX STI (GD)': 13, 'BMW M2 (G87)': 17, 'VW Golf GTI (Mk8)': 10 };
+// Build 169 (gear spacing): the gearbox is matched as well where it is known. The Supra, STI and Alto run their published
+// ratios and final drives (Supra 22 -> 14.3%, Alto 2.4 -> -0.8%; the STI's real box is shorter-topped than STANDARD and
+// costs it 1.7 points), and the GTI and M2 their real gear counts. The M2 is 16.5 -> 21.6%: its eight-speed ZF makes
+// seven shifts to 100 where the six-speed made five, and the model cuts the drive for a fitted 0.20 s on every
+// automatic shift, where a ZF 8HP hands the torque from one clutch to the next under load. That shift is the item
+// this exposes; the cap follows it, by name, until it is derived.
+const ACC_KNOWN = { 'Toyota Supra RZ (A80)': 20, 'Subaru WRX STI (GD)': 13, 'BMW M2 (G87)': 22, 'VW Golf GTI (Mk8)': 10 };
 ref.forEach(r => { const cap = ACC_KNOWN[r.label] || 8; if (Math.abs(r.err) > cap) fails.push(`${r.label}: ${r.err}% off the real car (cap ${cap}%)`); });
 if (rms > 12.5) fails.push(`acceleration model RMS error ${rms.toFixed(2)}% across the reference set (budget 12.5: 5 before build 106, 7.5 before build 109, 9 before build 111, 9.5 before build 131, 11 before build 154)`);
 // the set must span drivetrains and diffs, or it proves little

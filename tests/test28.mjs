@@ -43,8 +43,11 @@ const by = Object.fromEntries(gbs.map(r => [r.g, r]));
 if (!(by.dct.t100 < by.sequential.t100)) fails.push('DCT should beat sequential (faster shifts)');
 if (!(by.sequential.t100 < by.manual.t100)) fails.push('sequential should beat manual (faster shifts)');
 if (!(by.manual.eff > by.auto.eff)) fails.push('manual driveline efficiency should exceed the auto');
-if (!(by.auto.r1 > by.manual.r1)) fails.push('auto should have a lower (numerically higher) 1st gear');
-if (!(by.sequential.r1 < by.manual.r1)) fails.push('sequential should have closer ratios than manual');
+// The gearbox type no longer spaces the ratios (build 169). Its spread multipliers (sequential 0.88, auto 1.10) had no
+// source, and the published boxes do not bear them out at a given gear count (the Hellcat's eight-speed auto spans
+// 7.0, the Corvette C8's eight-speed DCT 6.5, the 911 Turbo S's 8.0); an auto is wide because it has more gears.
+// The spacing is its own choice now (CLOSE / STANDARD / WIDE, test91), so at one spacing all four types share it.
+if (!(by.auto.r1 === by.manual.r1 && by.sequential.r1 === by.manual.r1 && by.dct.rn === by.manual.rn)) fails.push('the gearbox type still changes the ratios at one spacing');
 
 // 2. Torque converter: the auto must out-launch the manual off the line on a heavy torquey car,
 //    while still losing on efficiency at the top end.
