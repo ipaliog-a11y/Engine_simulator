@@ -1,6 +1,6 @@
 // Axle balance (build 157). Until now the lap pooled all four tyres' lateral grip, so no car could understeer or
 // oversteer: the front and rear always ran out together. Now each axle has its own load (weight split and aero
-// balance), its own share of the lateral load transfer (the roll-stiffness split, ROLL BALANCE on VEHICLE), its own
+// balance), its own share of the lateral load transfer (the roll-stiffness split: since build 174 the anti-roll bars on VEHICLE), its own
 // tyres (a staggered car's narrower fronts) and must make the side force for the mass it carries; the car corners as
 // hard as the axle that runs out first. Braking moves load forward, so the rear runs out first on the brakes.
 import { chromium } from './pw.mjs';
@@ -24,8 +24,8 @@ const r = await page.evaluate(() => {
   load('Golf GTI'); out.golf = lap();
   load('911 GT3'); out.gt3 = lap();
   load('M3 (E46'); out.m3 = lap(); out.m3Stock = isFactoryFit(readVehicleFromForm());
-  set('vhArb', 2); out.m3Stiff = lap(); out.m3StiffStock = isFactoryFit(readVehicleFromForm());
-  set('vhArb', -2); out.m3Soft = lap();
+  set('vhBarF', 2); out.m3Stiff = lap(); out.m3StiffStock = isFactoryFit(readVehicleFromForm());
+  set('vhBarF', -2); out.m3Soft = lap();
   load('Huracán LP610'); out.hur = lap();
   set('vhTireWF', 305); out.hurSquare = lap();
   // the axles at a corner, steady and on the brakes
@@ -33,9 +33,12 @@ const r = await page.evaluate(() => {
   const N = vehicle.mass * 9.81, ay = 9;
   const st = latBalance(N, ay, 0, 0), br = latBalance(N, ay, 0, vehicle.mass * 8 * vehicle.cg / vehicle.wb);
   out.axles = { stF: st.muF, stR: st.muR, brF: br.muF, brR: br.muR };
-  // a symmetric car: same tyres, 50/50, no downforce, neutral bars: the axles run out together
-  const sv = { fWt: vehicle.fWt, lltdF: vehicle.lltdF, FzRefF: vehicle.FzRefF };
+  // a symmetric car: same tyres, 50/50, no downforce, neutral bars, the same track and geometry at both ends
+  // (build 173): the axles run out together
+  const sv = { fWt: vehicle.fWt, lltdF: vehicle.lltdF, FzRefF: vehicle.FzRefF, trackF: vehicle.trackF, trackR: vehicle.trackR,
+    camRecF: vehicle.camRecF, camRecR: vehicle.camRecR, camberF: vehicle.camberF, camberR: vehicle.camberR };
   vehicle.fWt = 0.5; vehicle.lltdF = 0.5; vehicle.FzRefF = vehicle.FzRef;
+  vehicle.trackF = vehicle.trackR; vehicle.camRecF = vehicle.camRecR; vehicle.camberF = vehicle.camberR;
   const sym = latBalance(N, ay, 0, 0); out.sym = { F: sym.muF, R: sym.muR };
   Object.assign(vehicle, sv);
   // the readout
