@@ -20,6 +20,21 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 Working toward **v1.0 — every number derived, not fitted.**
 
+### The plan for electric, then hybrids (build 175)
+
+- **No app change.** A plan in `plans/hybrid-electric/`: electric and hybrid cars go into this simulator as
+  powertrain types beside petrol, diesel, 2-stroke and rotary, not into a fork. Most of the simulator (vehicle,
+  tyres, brakes, aero, the lap and the race) does not care what drives the wheels, and a hybrid needs the
+  combustion model anyway.
+- **Build order:** split the source (step 0), a powertrain interface with bit-identical results (step 1), battery
+  electric (step 2, as v0.7), hybrids after electric is validated (step 3), electric sound (step 4).
+- **The motor designer** (`motor-design.md`): the fields an electric drive needs so that choices change the
+  result (rotor size, poles, turns, magnets, cooling, inverter, battery, reduction), each with a cost, and the
+  physics each is derived from.
+- **Decided:** the split with the joined `index.html` committed; a freeze on changes that move a number from step 0
+  until step 1 merges; electric as v0.7; a powertrain type in saves (old saves read as combustion); electric in the
+  engine-type dropdown; a motor dyno without a cutaway; mixed race fields with no charging mid-race.
+
 ### Springs and anti-roll bars per axle (build 174)
 
 - **FRONT SPRINGS, REAR SPRINGS, FRONT ANTI-ROLL BAR, REAR ANTI-ROLL BAR** on VEHICLE, each SOFT −2 … STIFF +2 about
