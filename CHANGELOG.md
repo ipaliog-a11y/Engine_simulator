@@ -20,6 +20,35 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 Working toward **v1.0 — every number derived, not fitted.**
 
+### The electric drive's physics (build 178)
+
+- **Step 2.1 of the electric plan** (`plans/hybrid-electric/`). `src/js/electric.js` (new): the motor, its inverter
+  and the battery, derived from what they are built of. Nothing calls it yet; the ENGINE tab, the dyno and
+  `powertrain()` take it up in 2.2, so nothing a player sees changes.
+- **The motor** (permanent magnet): torque T = 3/2 p psi I from the rotor's diameter and stack, the poles, the turns
+  and the magnets, losing torque per amp to saturation as the electric loading rises; the knee where the back-EMF meets
+  the inverter's voltage, then constant power over a field-weakening range of 4x; the top speed the lowest of the
+  design speed, the rotor's surface speed (iron bridges ~150 m/s, a carbon sleeve ~220) and the inverter's frequency.
+  Losses: copper I²R from the slot copper (rising 0.393%/K), iron by Steinmetz on the lamination thickness, friction
+  and windage, and the inverter's conduction and switching (silicon IGBT or SiC). Heat: winding, core and rotor
+  nodes and the coolant (air, water jacket, oil spray, direct slot cooling); a point the cooling cannot hold runs away
+  and is reported so.
+- **Three constants are measured, all on one motor**: the Tesla Model 3 rear motor as taken apart by MotorXP (2020):
+  the air gap's flux over the magnets' remanence (0.85, from its 42 V/krpm back-EMF), the torque lost to saturation
+  (8.5% at its 430 Nm, 953 A) and the voltage drop at full current (1.29). Everything else is geometry, a datasheet
+  figure or a textbook rule, named where it is used.
+- **The battery**: cells in series and parallel, four chemistries (lead-acid, NiMH, LFP, NCA/NMC), open-circuit
+  voltage by charge, internal resistance, the discharge rate and cut-off, mass and cost. Technology follows the year
+  (decision 9): specific energy and pack price between anchor years (lithium ~$1100/kWh in 2010, ~$160 in 2019), each
+  chemistry available from when it reached cars.
+- **Checked against what set nothing** (`tests/test96.mjs`, new): the Model 3's phase resistance from the slot copper
+  (3.08 mOhm against a measured 4.75: the leads and real slot shape are not modelled, a known gap); the 2012 Leaf
+  from ORNL's geometry alone, turned to Nissan's 2730 rpm knee on 375 V: 307 Nm (280), 87 kW (80), 80 kW held at
+  7000 rpm with the winding settling at 110 C (ORNL ~135), 97.0% peak at 6750 rpm (ORNL >97% at 5000-9000); the
+  Model 3 Long Range pack 353 V / 228 Ah (350 / 230), the LFP RWD pack 347 V (340). Every field acts through its
+  mechanism and costs something.
+- Combustion unchanged: `tools/fingerprint.mjs` identical to build 177 in all 2494 values.
+
 ### The powertrain interface; every number unchanged (build 177)
 
 - **Step 1 of the electric plan** (`plans/hybrid-electric/`). The 0-100 run, the lap, the race and the GEAR RATIOS
