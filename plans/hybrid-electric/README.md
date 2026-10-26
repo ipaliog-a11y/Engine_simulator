@@ -167,16 +167,21 @@ gear mesh from the reduction. Built standalone in `tests/proto/` first, the way 
 | 6 | Where electric appears | A new type in the **engine-type dropdown**; choosing it swaps the ENGINE tab for MOTOR / BATTERY. |
 | 7 | The live dyno for a motor | **Torque, power and efficiency curves**, with winding and magnet temperatures. No cutaway in the first version. |
 | 8 | Electric against combustion in a race | **Mixed fields allowed, no charging mid-race**: an electric car manages its energy. Categories unchanged. |
+| 9 | Is battery and motor technology tied to the decade? | **Yes, by decade**, like the Supercar category: at least battery energy per kg and cost per kWh, so a 1990s challenge cannot be won with a 2020s battery. |
+| 10 | Which real electric cars to validate against (and ship as presets) | **Tesla Model 3, Model Y and the new Model S** (the 2021 refresh). Variants to be fixed in step 2; see the note below. |
+| 11 | Greek translation | **Falls back to English for now.** New electric strings need no Greek in the same PR; `tr()` shows the English where a translation is missing, and the Greek is filled in later. |
 | — | Electric or hybrid first | **Electric first** (see *Build order*). |
+
+**On the three Teslas (decision 10).** Tesla publishes 0–100 / 0–60, top speed, mass and WLTP/EPA
+consumption, which the 0–100, top-speed and Wh/km checks need. It does **not** publish continuous
+(30-minute) power, so the heat model's peak-hold check needs another source: sustained-lap tests
+where the cars' power derating has been measured. The variants proposed for step 2 span one, two
+and three motors: Model 3 RWD (single motor), Model Y Long Range AWD (dual motor), Model S Plaid
+(three motors, the 2021 refresh).
 
 ## Open questions
 
-- **9. Is battery and motor technology tied to the decade?** Proposed: yes, at least battery
-  energy per kg and cost per kWh.
-- **10. Which real electric cars to validate against** (and ship as presets)? Proposed: 4–6, e.g.
-  Tesla Model 3, Porsche Taycan, Hyundai Ioniq 5, a small city EV, one performance car; ideally
-  ones with published peak and continuous power.
-- **11. Greek translation.** Proposed: each feature ships its Greek in the same PR.
+- **The three Teslas' variants:** proposed above (Model 3 RWD, Model Y Long Range, Model S Plaid).
 - **Motor designer depth:** proposed in [motor-design.md](motor-design.md), a first set of about
   12 geometric fields, more later.
 - **Name and identity:** stays "Pixel Engine Sim", or becomes "powertrain" in the UI?
