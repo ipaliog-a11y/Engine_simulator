@@ -3,6 +3,10 @@
 Headless Playwright against the real `index.html` — no mocks, no test build. Each file loads the
 shipped page, drives the actual functions, and exits non-zero on failure.
 
+`index.html` is built from `src/` (`node tools/build.mjs`). `run.mjs` checks the two are in step
+before running anything, so an edit to `src/` that was not built fails at once instead of testing
+the old code.
+
 ```sh
 node tests/run.mjs            # everything
 node tests/run.mjs 41 43      # only matching files

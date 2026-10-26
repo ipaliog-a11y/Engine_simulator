@@ -1,0 +1,460 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PIXEL ENGINE SIM - ENGINE DESIGNER</title>
+<meta name="description" content="An 8-bit style, physics-based engine designer & simulator. Configure cylinders, bore/stroke, compression, forced induction, exhaust, fuel octane, injection and ignition, then run the dyno.">
+<meta name="theme-color" content="#0a0a12">
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="assets/icon-192.png">
+<link rel="manifest" href="manifest.webmanifest">
+<style>
+<!-- @include css/app.css -->
+</style>
+</head>
+<body>
+<div class="container">
+<header>
+<h1>PIXEL ENGINE SIM v0.6 build 176</h1>
+<div class="subtitle" id="subtitle">ENGINE DESIGNER • BUILD IT, THEN DRIVE IT</div>
+</header>
+<div class="build-strip" id="buildStrip">
+<span class="k" id="bsEngineK">ENGINE</span><button id="bsEngine" title="Go to the engine">—</button>
+<span class="k" id="bsCarK">CAR</span><button id="bsCar" title="Go to the car">—</button>
+</div>
+<div class="main">
+<div class="viz-panel">
+<div class="viz-tabs">
+<button id="tabDesign">ENGINE</button>
+<button id="tabVehicle">VEHICLE</button>
+<button id="tabGarage">GARAGE</button>
+<button id="tabTrack">TRACK</button>
+<button id="tabRace">RACE</button>
+<button id="tabEngine" class="active">LIVE</button>
+<button id="tabDyno">DYNO</button>
+<button id="tabGuide">GUIDE</button>
+<button id="tabOptions">OPTIONS</button>
+</div>
+<canvas id="engineCanvas" width="640" height="420" role="img" aria-label="Engine test-bench schematic with live values"></canvas>
+<div class="design-panel" id="designPanel">
+<h3>ENGINE DESIGN</h3>
+<canvas id="enginePreview" class="pix-preview eng" role="img" aria-label="Pixel-art view of the engine as configured"></canvas>
+<div class="hint">Load a preset, or configure a build and press BUILD &amp; DYNO. Physics update live.</div>
+
+<div class="pick-row">
+<div class="field"><label for="edFamily">ENGINE FAMILY</label><select id="edFamily"></select></div>
+<div class="field"><label for="edPreset">LOAD A BUILD</label><select id="edPreset"><option value="">— choose a build —</option></select></div>
+</div>
+
+<div class="design-section">Career / Challenge</div>
+<div class="pick-row"><div class="field"><label for="edChallenge">OBJECTIVE</label><select id="edChallenge"></select></div></div>
+<div class="challenge-card" id="challengeCard"></div>
+
+<div class="design-section">Bottom End</div>
+<div class="design-grid">
+<div class="field"><label for="edType">ENGINE TYPE</label><select id="edType"><option value="petrol4">PETROL 4-STROKE</option><option value="diesel">DIESEL (CI)</option><option value="twostroke">2-STROKE</option><option value="rotary">ROTARY (WANKEL)</option></select></div>
+<div class="field"><label for="edCyl"><span id="lblCyl">CYLINDERS</span></label><select id="edCyl"><option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option><option value="6">6</option><option value="8">8</option><option value="10">10</option><option value="12">12</option></select></div>
+<div class="field"><label for="edLayout">LAYOUT</label><select id="edLayout"><option value="inline">INLINE</option><option value="v">V</option><option value="boxer">BOXER</option></select></div>
+<div class="field"><label for="edBore"><span id="lblBore">BORE (mm)</span></label><input type="number" id="edBore" min="60" max="110" step="0.5" value="86"></div>
+<div class="field"><label for="edStroke"><span id="lblStroke">STROKE (mm)</span></label><input type="number" id="edStroke" min="50" max="130" step="0.5" value="86"></div>
+<div class="field"><label for="edEcc">ECCENTRICITY e (mm)</label><input type="number" id="edEcc" min="8" max="25" step="0.5" value="15"></div>
+<div class="field"><label for="edCR">COMPRESSION</label><input type="number" id="edCR" min="7" max="24" step="0.1" value="10.5"></div>
+<div class="field"><label for="edRedline">REDLINE (rpm)</label><input type="number" id="edRedline" min="2000" max="11000" step="50" value="7000"></div>
+</div>
+
+<div class="design-section">Air Path</div>
+<div class="design-grid">
+<div class="field"><label for="edIntake">INTAKE TYPE</label><select id="edIntake"><option value="na">NATURALLY ASP.</option><option value="turbo">TURBO</option><option value="supercharger">SUPERCHARGER</option></select></div>
+<div class="field"><label for="edBoost">BOOST TARGET (bar)</label><input type="number" id="edBoost" min="0" max="2.5" step="0.05" value="0"></div>
+<div class="field"><label for="edTaperRpm">BOOST TAPER FROM (rpm, 0 = off)</label><input type="number" id="edTaperRpm" min="0" max="12000" step="100" value="0"></div>
+<div class="field"><label for="edTaperPct">BOOST AT LIMITER (%)</label><input type="number" id="edTaperPct" min="20" max="100" step="1" value="100"></div>
+<div class="field"><label for="edTqLimit">ECU TORQUE LIMIT (Nm, 0 = off)</label><input type="number" id="edTqLimit" min="0" max="5000" step="10" value="0"></div>
+<div class="field"><label for="edGovRpm">DIESEL RATED SPEED (rpm, 0 = off)</label><input type="number" id="edGovRpm" min="0" max="8000" step="50" value="0"></div>
+<div class="field"><label for="edIntercooler">INTERCOOLER</label><select id="edIntercooler"><option value="none">NONE</option><option value="small">SMALL CORE</option><option value="large">LARGE CORE</option></select></div>
+<div class="field"><label for="edTurboSize">TURBO SIZE</label><select id="edTurboSize"><option value="small">SMALL</option><option value="medium">MEDIUM</option><option value="large">LARGE</option></select></div>
+<div class="field"><label for="edCompWheel">COMPRESSOR WHEEL (mm, 0 = size)</label><input type="number" id="edCompWheel" min="0" max="110" step="1" value="0"></div>
+<div class="field"><label for="edTurboConfig">TURBO CONFIG</label><select id="edTurboConfig"><option value="single">SINGLE</option><option value="twin">TWIN</option><option value="sequential">SEQUENTIAL</option><option value="compound">COMPOUND</option></select></div>
+<div class="field"><label for="edHousing">TURBINE A/R</label><select id="edHousing"><option value="tight">TIGHT (RESPONSE)</option><option value="stock">STOCK</option><option value="loose">LOOSE (TOP END)</option></select></div>
+<div class="field"><label for="edVGT">TURBINE</label><select id="edVGT"><option value="no">FIXED HOUSING</option><option value="yes">VARIABLE GEOMETRY</option></select></div>
+<div class="field"><label for="edAntilag">ANTI-LAG (ALS)</label><select id="edAntilag"><option value="no">NO</option><option value="yes">YES</option></select></div>
+<div class="field"><label for="edScType">SUPERCHARGER</label><select id="edScType"><option value="roots">ROOTS</option><option value="screw">TWIN-SCREW</option><option value="centrifugal">CENTRIFUGAL</option></select></div>
+<div class="field"><label for="edExhaust">EXHAUST</label><select id="edExhaust"><option value="stock">STOCK CAST</option><option value="sport">SPORT HEADER</option><option value="race">RACE HEADER</option></select></div>
+<div class="field"><label for="edRunner">INTAKE RUNNER</label><select id="edRunner"><option value="long">LONG (TORQUE)</option><option value="medium">MEDIUM</option><option value="short">SHORT (POWER)</option><option value="variable">VARIABLE</option></select></div>
+<div class="field"><label>RUNNER / RAM PEAK</label><span class="val" id="valRam">—</span></div>
+<div class="field"><label>PRIMARY / SCAVENGE</label><span class="val" id="valScav">—</span></div>
+<div class="field"><label for="edCat">CATALYTIC CONV.</label><select id="edCat"><option value="none">NONE (DECAT)</option><option value="sport">SPORT CAT</option><option value="stock">STOCK CAT</option></select></div>
+<div class="field"><label for="edNitrous">NITROUS (N2O)</label><select id="edNitrous"><option value="none">NONE</option><option value="small">SMALL SHOT</option><option value="large">BIG SHOT</option></select></div>
+</div>
+
+<div class="design-section">Induction (Metering)</div>
+<div class="design-grid">
+<div class="field"><label for="edIntakeSys">INTAKE SYSTEM</label><select id="edIntakeSys">
+<option value="carb1">1-BBL CARB</option>
+<option value="carb2">2-BBL CARB</option>
+<option value="carb4">4-BBL CARB</option>
+<option value="sidedraft">SIDEDRAFT CARBS</option>
+<option value="mech">MECH INJECTION</option>
+<option value="efi">EFI (SINGLE TB)</option>
+<option value="itb">EFI (ITB)</option>
+</select></div>
+<div class="field"><label for="edAirFilter">AIR FILTER</label><select id="edAirFilter"><option value="none">NONE (STACKS)</option><option value="perf">PERFORMANCE</option><option value="stock">STOCK PAPER</option><option value="restrictive">RESTRICTIVE</option></select></div>
+</div>
+
+<div class="design-section">Valvetrain</div>
+<div class="design-grid">
+<div class="field"><label for="edCam">CAM PROFILE</label><select id="edCam"><option value="stock">STOCK</option><option value="sport">SPORT</option><option value="race">RACE</option></select></div>
+<div class="field"><label for="edVVT">VARIABLE VALVE TIMING</label><select id="edVVT"><option value="no">NONE</option><option value="yes">VVT</option></select></div>
+<div class="field"><label for="edValves">VALVES / CYLINDER</label><select id="edValves"><option value="2">2 (WEDGE)</option><option value="4">4 (PENT-ROOF)</option><option value="5">5</option></select></div>
+<div class="field"><label for="edValveMat">VALVE MATERIAL</label><select id="edValveMat"><option value="steel">STEEL</option><option value="titanium">TITANIUM</option></select></div>
+<div class="field"><label for="edSpring">VALVE SPRINGS</label><select id="edSpring"><option value="stock">STOCK</option><option value="perf">PERFORMANCE</option><option value="race">RACE</option></select></div>
+<div class="field"><label>VALVE FLOAT</label><span class="val" id="valFloat">—</span></div>
+<div class="field"><label>CAM OVERLAP</label><span class="val" id="valOverlap">—</span></div>
+</div>
+
+<div class="design-section">Fuel &amp; Spark</div>
+<div class="design-grid">
+<div class="field"><label for="edFuel">FUEL TYPE</label><select id="edFuel"><option value="gasoline">PUMP GAS</option><option value="race">RACE GAS</option><option value="e85">E85</option><option value="methanol">METHANOL</option><option value="diesel">DIESEL</option></select></div>
+<div class="field"><label for="edOctane">FUEL OCTANE (RON)</label><input type="number" id="edOctane" min="87" max="110" step="1" value="95"></div>
+<div class="field"><label for="edInjector">INJECTOR</label><select id="edInjector"><option value="port">PORT (PFI)</option><option value="direct">DIRECT (DI)</option></select></div>
+<div class="field"><label for="edIgnType">IGNITION TYPE</label><select id="edIgnType"><option value="distributor">DISTRIBUTOR</option><option value="wasted">WASTED SPARK</option><option value="coil">COIL-ON-PLUG</option></select></div>
+<div class="field"><label for="edTiming">IGNITION CONTROL</label><select id="edTiming"><option value="fixed">FIXED (LOCKED)</option><option value="auto">AUTO (ECU / KNOCK-LIMITED)</option></select></div>
+<div class="field"><label for="edIgnAdv">IGNITION ADV (° BTDC)</label><input type="number" id="edIgnAdv" min="5" max="40" step="1" value="22"></div>
+<div class="field"><label for="edAfrMode">FUEL MIXTURE</label><select id="edAfrMode"><option value="fixed">MANUAL (FIXED AFR)</option><option value="auto">AUTO (ECU MAP)</option></select></div>
+</div>
+<div class="design-section" id="fuelMapHdr">ECU Fuel Map (target AFR)</div>
+<div class="fuelmap-wrap" id="fuelMapBox"></div>
+<div class="fuelmap-edit" id="fuelMapEdit" style="display:none"><span id="fmSelInfo"></span><span class="fm-btns"><button type="button" id="fmLean">− LEAN</button><button type="button" id="fmRich">+ RICH</button><button type="button" id="fmReset">RESET MAP</button></span></div>
+
+<div class="design-section">Cooling</div>
+<div class="design-grid">
+<div class="field"><label for="edRadiator">RADIATOR</label><select id="edRadiator"><option value="small">SMALL</option><option value="stock">STOCK</option><option value="large">LARGE</option></select></div>
+<div class="field"><label for="edFan">COOLING FAN</label><select id="edFan"><option value="none">NONE</option><option value="mechanical">MECHANICAL</option><option value="electric">ELECTRIC</option></select></div>
+<div class="field"><label for="edOilCooler">OIL COOLER</label><select id="edOilCooler"><option value="no">NO</option><option value="yes">YES</option></select></div>
+<div class="field"><label for="edThermostat">THERMOSTAT (°C)</label><input type="number" id="edThermostat" min="71" max="95" step="1" value="88"></div>
+</div>
+
+<div class="design-section">Electrical</div>
+<div class="design-grid">
+<div class="field"><label for="edAlternator">ALTERNATOR</label><select id="edAlternator"><option value="60">60 A</option><option value="120">120 A</option><option value="180">180 A (HD)</option></select></div>
+</div>
+
+<div class="design-summary" id="designSummary"></div>
+<div class="build-row">
+<button id="btnBuild">BUILD &amp; DYNO</button>
+<button id="btnDesignReset" class="danger">DEFAULTS</button>
+</div>
+
+<div class="design-section">Save this engine</div>
+<div class="hint">Keep this engine under a name. It goes to the GARAGE tab, and loading it later drops it into whatever car you have then.</div>
+<div class="garage-row">
+<div class="field"><label for="engSaveName">ENGINE NAME</label><input type="text" id="engSaveName" maxlength="28" placeholder="My street V8"></div>
+<button id="btnEngineSave">SAVE ENGINE</button>
+</div>
+</div>
+
+<!-- @include html/guide.html -->
+<!-- OPTIONS: sim preferences (sound, wear, language) -->
+<div class="design-panel options-panel" id="optionsPanel">
+<h3>OPTIONS</h3>
+<div class="hint">Simulator preferences. These don't change the engine build.</div>
+
+<div class="design-section">Audio</div>
+<div class="opt-row"><div><b>ENGINE SOUND</b><div class="opt-note">Synthesised from the firing pulses (firing order, one exhaust per bank; lumpy idle from wild cams). Plays on the DYNO tab, and on the TRACK tab with the lap replay.</div></div>
+<button id="btnSound" class="toggle" aria-pressed="false">SOUND OFF</button></div>
+<div class="opt-row"><div><b>ENGINE SOUND MODEL</b><div class="opt-note">SYNTH: firing pulses through modelled pipes (light). GAS: the cylinders, runners and exhaust simulated as gas, after engine-sim by Ange Yaghi, with a recorded exhaust (heavier; a V12 uses about half a CPU core). Four-strokes, two-strokes and rotaries all have their own gas model.</div></div>
+<select id="edSoundModel" class="opt-select"><option value="synth">SYNTH</option><option value="gas">GAS</option></select></div>
+
+<div class="design-section">Simulation</div>
+<div class="opt-row"><div><b>WEAR &amp; DAMAGE</b><div class="opt-note">On: detonation/overheat/lean-boost/over-rev damage the engine. Off: invincible, for free experimentation.</div></div>
+<button id="btnWear" class="toggle on" aria-pressed="true">WEAR ON</button></div>
+
+<div class="design-section">Language</div>
+<div class="opt-row"><div><b>LANGUAGE PACK</b><div class="opt-note">Switch the interface language (chrome, guide &amp; readouts).</div></div>
+<select id="edLang" class="opt-select"><option value="en">ENGLISH</option><option value="el">ΕΛΛΗΝΙΚΑ</option></select></div>
+</div>
+
+<!-- VEHICLE: drop the engine into a car and read its acceleration & top speed -->
+<div class="design-panel vehicle-panel" id="vehiclePanelTab">
+<h3>VEHICLE DESIGN</h3>
+<canvas id="carPreview" class="pix-preview car" role="img" aria-label="Pixel-art side view of the car as configured"></canvas>
+<div class="hint">Pick a chassis and it arrives on its factory spec — matching tyres, wheels, brakes, suspension and aero. Swap any part from there; your current engine is dropped in and the performance is computed live.</div>
+
+<div class="pick-row">
+<div class="field"><label for="vhFamily">CAR FAMILY</label><select id="vhFamily"></select></div>
+<div class="field"><label for="vhPreset">FACTORY CAR</label><select id="vhPreset"><option value="">— load a real car —</option></select></div>
+</div>
+
+<div class="design-section">Chassis &amp; Drivetrain</div>
+<div class="design-grid">
+<div class="field"><label for="vhChassis">CHASSIS</label><select id="vhChassis">
+<option value="kei">KEI CAR</option><option value="hatch">HOT HATCH</option><option value="roadster">LIGHT ROADSTER</option>
+<option value="coupe">SPORTS COUPE</option><option value="sedan">SPORTS SEDAN</option><option value="muscle">MUSCLE CAR</option>
+<option value="rally">RALLY AWD HATCH</option><option value="gt">GRAND TOURER</option><option value="super">MID-ENGINE SUPER</option>
+<option value="hyper">CARBON HYPERCAR</option><option value="proto">TRACK PROTOTYPE</option><option value="pickup">PICKUP TRUCK</option><option value="suv">PERFORMANCE SUV</option>
+</select></div>
+<div class="field"><label for="vhDrive">DRIVETRAIN</label><select id="vhDrive"><option value="fwd">FWD</option><option value="rwd">RWD</option><option value="awd">AWD</option></select></div>
+<div class="field"><label for="vhDiff">DIFFERENTIAL</label><select id="vhDiff"><option value="open">OPEN</option><option value="visc">VISCOUS LSD</option><option value="clsd">CLUTCH-PLATE LSD</option><option value="spool">SPOOL / LOCKED</option></select></div>
+<div class="field"><label for="vhGearbox">GEARBOX TYPE</label><select id="vhGearbox"><option value="manual">MANUAL (H-PATTERN)</option><option value="sequential">SEQUENTIAL</option><option value="dct">DUAL-CLUTCH (DCT)</option><option value="auto">TORQUE-CONV AUTO</option></select></div>
+<div class="field"><label for="vhGears">GEARBOX (SPEEDS)</label><select id="vhGears"><option value="4">4</option><option value="5">5</option><option value="6">6</option><option value="7">7</option><option value="8">8</option><option value="9">9</option><option value="10">10</option></select></div>
+<div class="field"><label for="vhSpacing">GEAR SPACING</label><select id="vhSpacing"><option value="std">STANDARD</option></select></div>
+<div class="field"><label for="btnGearRatios">RATIOS &amp; GRAPHS</label><button id="btnGearRatios" type="button">GEAR RATIOS…</button></div>
+<div class="field"><label for="vhGearing"><span id="lblGearing" class="ctl-lbl">GEARING (FINAL DRIVE)</span> <span class="val" id="valGearing">52</span></label><input type="range" id="vhGearing" min="0" max="100" step="1" value="52" aria-label="Gearing short to tall"></div>
+<div class="field"><label for="vhLimiter">SPEED LIMITER</label><select id="vhLimiter"><option value="off">OFF (REMOVED)</option><option value="on">ON</option></select></div>
+<div class="field"><label for="vhTC">TRACTION CONTROL</label><select id="vhTC"><option value="on">ON</option><option value="off">OFF</option></select></div>
+<div class="field"><label for="vhLimitKmh">LIMIT (km/h)</label><input type="number" id="vhLimitKmh" min="80" max="400" step="5" value="250"></div>
+</div>
+
+<div class="design-section">Wheels &amp; Tyres</div>
+<div class="design-grid">
+<div class="field"><label for="vhRating">TYRE SPEED RATING</label><select id="vhRating"><option value="T">T — 190 km/h</option><option value="H">H — 210</option><option value="V">V — 240</option><option value="W">W — 270</option><option value="Y">Y — 300</option><option value="YY">(Y) — over 300</option></select></div>
+<div class="field"><label for="vhTire">TYRE COMPOUND</label><select id="vhTire"><option value="eco">ECO/TOURING</option><option value="street">STREET</option><option value="sport">SPORT</option><option value="semi">SEMI-SLICK</option><option value="slick">RACE SLICK</option><option value="drag">DRAG RADIAL</option></select></div>
+<div class="field"><label for="vhWheel">WHEEL DIA (in)</label><input type="number" id="vhWheel" min="13" max="22" step="1" value="18"></div>
+<div class="field"><label for="vhTireW">TYRE WIDTH (mm)</label><input type="number" id="vhTireW" min="135" max="355" step="5" value="235"></div>
+<div class="field"><label for="vhTireWF">FRONT WIDTH (mm, 0 = same)</label><input type="number" id="vhTireWF" min="0" max="355" step="5" value="0"></div>
+<div class="field"><label for="vhTireA">TYRE ASPECT (%)</label><input type="number" id="vhTireA" min="25" max="70" step="5" value="40"></div>
+</div>
+
+<div class="design-section">Aerodynamics</div>
+<div class="design-grid">
+<div class="field"><label for="vhAeroF">FRONT AERO</label><select id="vhAeroF"><option value="none">NONE</option><option value="splitter">SPLITTER</option><option value="wing">FRONT WING</option></select></div>
+<div class="field"><label for="vhAeroR">REAR AERO</label><select id="vhAeroR"><option value="none">NONE</option><option value="lip">LIP SPOILER</option><option value="wing">REAR WING</option></select></div>
+<div class="field"><label for="vhAeroFl">FLOOR / DIFFUSER</label><select id="vhAeroFl"><option value="none">NONE</option><option value="undertray">UNDERTRAY</option><option value="diffuser">DIFFUSER</option></select></div>
+<div class="field"><label for="vhWeight">WEIGHT REDUCTION</label><select id="vhWeight"><option value="none">NONE</option><option value="street">STREET</option><option value="sport">SPORT</option><option value="race">RACE</option></select></div>
+</div>
+
+<div class="design-section">Brakes &amp; Suspension</div>
+<div class="design-grid">
+<div class="field"><label for="vhBrake">BRAKES</label><select id="vhBrake"><option value="steel">STEEL DISC</option><option value="slotted">SLOTTED/VENTED</option><option value="big">BIG BRAKE KIT</option><option value="carbon">CARBON-CERAMIC</option><option value="hd">HEAVY-DUTY</option></select></div>
+<div class="field"><label for="vhRotor">ROTOR SIZE (mm)</label><input type="number" id="vhRotor" min="250" max="420" step="10" value="330"></div>
+<div class="field"><label for="vhSteer">STEERING RATIO (:1)</label><input type="number" id="vhSteer" min="8" max="22" step="0.5" value="15"></div>
+<div class="field"><label for="vhSusp">SUSPENSION</label><select id="vhSusp"><option value="comfort">COMFORT</option><option value="sport">SPORT</option><option value="coilover">COILOVERS</option><option value="race">RACE/ADJUST</option></select></div>
+<div class="field"><label for="vhGeoF">FRONT GEOMETRY</label><select id="vhGeoF"><option value="strut">MACPHERSON STRUT</option><option value="wishbone">DOUBLE WISHBONE</option><option value="multilink">MULTI-LINK</option><option value="solid">SOLID AXLE</option></select></div>
+<div class="field"><label for="vhGeoR">REAR GEOMETRY</label><select id="vhGeoR"><option value="strut">MACPHERSON STRUT</option><option value="wishbone">DOUBLE WISHBONE</option><option value="multilink">MULTI-LINK</option><option value="twist">TWIST BEAM</option><option value="solid">SOLID AXLE</option></select></div>
+<div class="field"><label for="vhSpringF">FRONT SPRINGS</label><select id="vhSpringF"><option value="-2">SOFT −2</option><option value="-1">SOFT −1</option><option value="0" selected>STANDARD</option><option value="1">STIFF +1</option><option value="2">STIFF +2</option></select></div>
+<div class="field"><label for="vhSpringR">REAR SPRINGS</label><select id="vhSpringR"><option value="-2">SOFT −2</option><option value="-1">SOFT −1</option><option value="0" selected>STANDARD</option><option value="1">STIFF +1</option><option value="2">STIFF +2</option></select></div>
+<div class="field"><label for="vhBarF">FRONT ANTI-ROLL BAR</label><select id="vhBarF"><option value="-2">SOFT −2</option><option value="-1">SOFT −1</option><option value="0" selected>STANDARD</option><option value="1">STIFF +1</option><option value="2">STIFF +2</option></select></div>
+<div class="field"><label for="vhBarR">REAR ANTI-ROLL BAR</label><select id="vhBarR"><option value="-2">SOFT −2</option><option value="-1">SOFT −1</option><option value="0" selected>STANDARD</option><option value="1">STIFF +1</option><option value="2">STIFF +2</option></select></div>
+</div>
+<div class="build-row">
+<button id="btnRefit">REFIT FACTORY SPEC</button>
+</div>
+<div class="design-summary" id="vehicleSummary"></div>
+
+<div class="design-section">Save this car</div>
+<div class="hint" id="garageHint">Keep the whole car — this body, its parts and the engine in it — under a name. It goes to the GARAGE tab.</div>
+<div class="garage-row">
+<div class="field"><label for="garageName">CAR NAME</label><input type="text" id="garageName" maxlength="28" placeholder="My track coupe"></div>
+<button id="btnGarageSave">SAVE CAR</button>
+</div>
+</div>
+
+<!-- GARAGE: every saved car and engine, to look over and load -->
+<div class="design-panel garage-panel" id="garagePanel">
+<h3>GARAGE</h3>
+<div class="hint">Your saved cars and engines, kept in this browser. Loading a car brings back its body, parts and engine; loading an engine drops it into the car you have now. Save from the ENGINE and VEHICLE tabs.</div>
+<div class="design-section">Cars</div>
+<div class="gcount" id="garageCarCount"></div>
+<div class="garage-list" id="garageList"></div>
+<div class="design-section">Engines</div>
+<div class="gcount" id="garageEngCount"></div>
+<div class="garage-list" id="garageEngList"></div>
+</div>
+</div>
+<div class="side-panel">
+<div class="panel" id="livePanel">
+<h2>Live Output</h2>
+<div class="gauge-row">
+<div class="stat" id="statHP"><span class="label">POWER</span><div class="value">0</div><span class="unit">HP</span></div>
+<div class="stat" id="statTQ"><span class="label">TORQUE</span><div class="value">0</div><span class="unit">Nm</span></div>
+<div class="stat" id="statBSFC"><span class="label">BSFC</span><div class="value">0</div><span class="unit">g/kWh</span></div>
+</div>
+<div class="gauge-row">
+<div class="stat" id="statEff"><span class="label">THERMAL EFF</span><div class="value">0</div><span class="unit">%</span></div>
+<div class="stat" id="statFuel"><span class="label">FUEL FLOW</span><div class="value">0</div><span class="unit">L/h</span></div>
+<div class="stat" id="statKnock"><span class="label">KNOCK RISK</span><div class="value">LOW</div><span class="unit"></span></div>
+</div>
+<div class="gauge-row">
+<div class="stat" id="statHealth"><span class="label">ENGINE HEALTH</span><div class="value">100</div><span class="unit">%</span></div>
+</div>
+</div>
+<div class="panel" id="controlsPanel">
+<h2>Engine Controls</h2>
+<div class="control-group"><label for="throttle"><span class="ctl-lbl">THROTTLE</span> <span class="val" id="valThrottle">20</span> %</label><input type="range" id="throttle" min="0" max="100" step="1" value="20" aria-label="Throttle pedal position percent"></div>
+<div class="control-group"><label for="load"><span class="ctl-lbl">LOAD (DYNO BRAKE)</span> <span class="val" id="valLoad">20</span> %</label><input type="range" id="load" min="0" max="100" step="1" value="20" aria-label="Applied dyno brake load percent"></div>
+<div class="control-group"><label for="elec"><span class="ctl-lbl">ELEC LOAD (LIGHTS/AC)</span> <span class="val" id="valElec">30</span> %</label><input type="range" id="elec" min="0" max="100" step="1" value="30" aria-label="Electrical accessory load percent"></div>
+<div class="readout" id="readout">RPM 0 • MAP 0.00 bar</div>
+<div class="control-group"><label for="afr"><span class="ctl-lbl">AIR-FUEL RATIO</span> <span class="val" id="valAFR">14.7</span></label><input type="range" id="afr" min="10.0" max="18.0" step="0.1" value="14.7" aria-label="Air-fuel ratio"></div>
+<div class="control-group"><label for="iat"><span class="ctl-lbl">INTAKE AIR TEMP</span> <span class="val" id="valIAT">25</span> °C</label><input type="range" id="iat" min="-10" max="60" step="1" value="25" aria-label="Intake air temperature in Celsius"></div>
+<div class="control-group"><label for="coolant"><span class="ctl-lbl">COOLANT TEMP</span> <span class="val" id="valCool">90</span> °C</label><input type="range" id="coolant" min="40" max="130" step="1" value="90" aria-label="Coolant temperature in Celsius"></div>
+<div class="control-group"><label for="oil"><span class="ctl-lbl">OIL TEMP</span> <span class="val" id="valOil">100</span> °C</label><input type="range" id="oil" min="40" max="150" step="1" value="100" aria-label="Oil temperature in Celsius"></div>
+<div class="btn-row">
+<button id="btnOptimal" title="Wide open throttle, held at this engine's peak-torque rpm">PEAK TORQUE</button>
+<button id="btnMaxPower" title="Wide open throttle, held at this engine's peak-power rpm">MAX POWER</button>
+<button id="btnEco" title="The operating point where this engine burns the least fuel per kWh">ECO</button>
+<button id="btnReset" class="danger">RESET</button>
+</div>
+<div class="btn-row">
+<button id="btnAutoThermal" class="toggle" aria-pressed="false">AUTO THERMAL</button>
+<button id="btnNitrous" class="toggle" aria-pressed="false" disabled>NITROUS</button>
+</div>
+<div class="btn-row">
+<button id="btnLogPull">LOG PULL</button>
+<button id="btnClearPulls">CLR PULLS</button>
+</div>
+<div class="btn-row">
+<button id="btnReportPng" title="Save the dyno report as an image">REPORT PNG</button>
+<button id="btnReportPdf" title="Save the dyno report as a PDF">REPORT PDF</button>
+</div>
+<div class="btn-row" style="border-top:2px solid #26263a;padding-top:8px">
+<button id="btnSave">SAVE</button>
+<button id="btnLoad">LOAD</button>
+<button id="btnExport">SAVE FILE</button>
+<button id="btnImport">OPEN FILE</button>
+<button id="btnShare">SHARE</button>
+</div>
+<input type="file" id="fileInput" accept="application/json,.json" style="display:none">
+<div class="status-bar" id="status">READY • DESIGN AN ENGINE • THEN DYNO IT</div>
+<div class="legend" id="legend">Use the ENGINE tab to build your engine, then tune it here.</div>
+</div>
+<div class="panel" id="vehiclePanel" style="display:none">
+<h2>Performance</h2>
+<div class="perf-head" id="perfHead">—</div>
+<div class="perf-grid" id="perfGrid"></div>
+<div class="perf-note" id="perfNote"></div>
+</div>
+<div class="panel" id="trackPanel" style="display:none">
+<h2>Lap Time</h2>
+<div class="field"><label for="trkSel">CIRCUIT</label><select id="trkSel"><option value="tech">ASHDOWN PARK</option><option value="fast">CAPE SPEEDWAY</option><option value="mixed" selected>RIVERSIDE GP</option><option value="nord">NORDSCHLEIFE</option></select></div>
+<div class="perf-head" id="lapHead">—</div>
+<div class="design-section">Live timing</div>
+<div class="replay-row" id="trackReplayRow">
+<button id="btnTrackFull" class="tp-full" title="Full screen: the lap, the live instruments and these controls, in landscape" aria-label="Full screen">⛶</button>
+<button id="btnReplay" class="toggle on" aria-pressed="true">PAUSE</button>
+<button id="btnReplayRestart">RESTART</button>
+<select id="replaySpeed" class="opt-select" aria-label="Replay speed"><option value="1">1×</option><option value="2">2×</option><option value="4">4×</option></select>
+<select id="replayGauges" class="opt-select" aria-label="Gauges"><option value="digital">DIGITAL</option><option value="analog">ANALOG</option></select>
+</div>
+<div class="perf-grid" id="lapGrid"></div>
+<div class="perf-note" id="lapNote"></div>
+<div class="build-row">
+<button id="btnLapPng" title="Save the hot lap report as an image">LAP REPORT PNG</button>
+<button id="btnLapPdf" title="Save the hot lap report as a PDF">PDF</button>
+</div>
+<div class="build-row">
+<button id="btnImportGpx" title="Load a circuit from a GPX trace">IMPORT GPX TRACK</button>
+</div>
+<input type="file" id="gpxInput" accept=".gpx,application/gpx+xml,text/xml" style="display:none">
+</div>
+<div class="panel" id="racePanel" style="display:none">
+<h2>Race</h2>
+<div id="raceSetup">
+<div class="field"><label for="raceTrk">CIRCUIT</label><select id="raceTrk"></select></div>
+<div class="race-row">
+<div class="field"><label for="raceLaps">LAPS</label><input type="number" id="raceLaps" min="1" max="100" step="1" value="5"></div>
+<div class="field"><label for="raceGrid">GRID</label><select id="raceGrid"><option value="quali">QUALIFYING</option><option value="reverse">REVERSED</option></select></div>
+</div>
+<div class="race-row">
+<div class="field"><label for="raceWeather">WEATHER</label><select id="raceWeather"><option value="dry">DRY</option><option value="damp">DAMP</option><option value="wet">WET</option><option value="rain">RAIN LATER</option><option value="drying">DRYING</option></select></div>
+<div class="field"><label for="raceAir">AIR °C</label><select id="raceAir"><option value="5">5</option><option value="12">12</option><option value="18">18</option><option value="22" selected>22</option><option value="28">28</option><option value="35">35</option></select></div>
+</div>
+<div class="race-row">
+<div class="field"><label for="raceSeed">SEED</label><div class="race-seed"><input type="number" id="raceSeed" min="1" max="99999" step="1" value="1"><button id="raceReroll" title="New seed" aria-label="New seed">🎲</button></div></div>
+<label class="race-check"><input type="checkbox" id="raceWarmers"> <span>TYRE WARMERS</span></label>
+</div>
+<div class="design-section">Entrants</div>
+<div id="raceEntrants"></div>
+<div class="race-add"><select id="raceAddSel" class="opt-select" aria-label="Car to add"></select><button id="raceAddBtn">ADD</button></div>
+<div class="build-row"><button id="raceStart">START RACE</button></div>
+<div class="race-prog" id="raceProg" hidden><div class="race-prog-track"><div class="race-prog-bar"></div></div><span></span></div>
+<div class="perf-note">Nobody drives. Each car runs its own lap solve, with its tyres heating and wearing, its brakes heating lap on lap, its fuel burning off, the weather and the cars around it in the way. Pace, fuel, tyres and brakes come from the physics; traffic, overtaking, pit loss and the weather's timing are rules. Each car has its own plan: stops, how hard it is driven, the tyres it starts on and whether it changes them for rain.</div>
+</div>
+<div id="raceLive" hidden>
+<div class="perf-head" id="raceHead">—</div>
+<div class="replay-row">
+<button id="racePlay" class="toggle on" aria-pressed="true">PAUSE</button>
+<select id="raceSpeed" class="opt-select" aria-label="Replay speed"><option value="1">1×</option><option value="2">2×</option><option value="5" selected>5×</option><option value="10">10×</option><option value="30">30×</option><option value="100">100×</option></select>
+<button id="raceSkip">FINISH</button>
+<button id="raceNew">NEW RACE</button>
+</div>
+<div class="replay-row race-rpt">
+<button id="raceRptPng" title="Save the race report as an image">REPORT PNG</button>
+<button id="raceRptPdf" title="Save the race report as a PDF">PDF</button>
+</div>
+<input type="range" id="raceScrub" min="0" max="1000" value="0" aria-label="Race time">
+<div id="raceTower"></div>
+<div class="design-section">Cars</div>
+<div id="raceTele"></div>
+<div id="raceResults"></div>
+</div>
+</div>
+</div>
+<div class="dyno-result" id="dynoResult" hidden aria-live="polite"></div>
+</div>
+<div id="trackPage" class="track-page" hidden>
+<div class="tp-turn" id="trackTurn">
+<div class="tp-stage" id="trackStage"></div>
+<div class="tp-bar" id="trackBar"></div>
+</div>
+</div>
+<div id="racePage" class="race-page" hidden>
+<div class="race-top"><button id="raceBack" title="Back to the sim">◀ SIM</button><b class="race-title">RACE</b><span id="raceTopInfo"></span><button id="raceFs" title="Full screen" aria-label="Full screen">⛶</button></div>
+<div class="race-body"><div class="race-stage" id="raceStage"></div><aside class="race-side" id="raceSide"></aside></div>
+</div>
+<footer>PIXEL ENGINE SIM • Configurable engine designer • Expandable per subsystem<br>Physics simplified for education &amp; fun • Inspired by Automation</footer>
+</div>
+<div class="gw-back" id="gearWin" hidden>
+<div class="gw" role="dialog" aria-modal="true" aria-labelledby="gwTitle">
+<div class="gw-head"><h3 id="gwTitle">GEAR RATIOS</h3><span class="sub" id="gwSub"></span><button id="gwClose" type="button" aria-label="Close">✕</button></div>
+<div class="gw-body">
+<div>
+<div class="gw-k" id="gwKSp">SPACING</div><div class="gw-sp" id="gwSpacing"></div>
+<div class="gw-k" id="gwKR">RATIO · ROAD SPEED AT THE LIMITER</div><div id="gwSliders"></div>
+<div class="btn-row"><button id="gwReset" type="button">RESET</button></div>
+<div class="gw-note" id="gwNote"></div>
+</div>
+<div>
+<div class="gw-read" id="gwRead"></div>
+<div class="gw-ch"><div class="t" id="gwTSaw">ENGINE RPM AGAINST ROAD SPEED</div><div class="gw-leg" id="gwLegSaw"></div><canvas id="gwSaw" role="img"></canvas><div class="gw-tip" id="gwTipSaw"></div></div>
+<div class="gw-ch"><div class="t" id="gwTForce">DRIVE AT THE WHEELS AGAINST ROAD SPEED</div><div class="gw-leg" id="gwLegForce"></div><canvas id="gwForce" role="img"></canvas><div class="gw-tip" id="gwTipForce"></div></div>
+</div>
+</div>
+</div>
+</div>
+<script src="tracks/real-circuits.js"></script>
+<script>
+<!-- @include js/fuels-engine-types.js -->
+<!-- @include js/valvetrain.js -->
+<!-- @include js/gas-dynamics.js -->
+<!-- @include js/engine-options-presets.js -->
+<!-- @include js/challenges.js -->
+<!-- @include js/i18n.js -->
+<!-- @include js/engine-constants-boost.js -->
+<!-- @include js/vehicle-presets.js -->
+<!-- @include js/tyres-brakes-driveline.js -->
+<!-- @include js/app-state.js -->
+<!-- @include js/engine-build.js -->
+<!-- @include js/cost-challenge-ui.js -->
+<!-- @include js/engine-physics.js -->
+<!-- @include js/vehicle-spec.js -->
+<!-- @include js/gear-window.js -->
+<!-- @include js/vehicle-accel.js -->
+<!-- @include js/tracks-gpx.js -->
+<!-- @include js/racing-line-lap.js -->
+<!-- @include js/race.js -->
+<!-- @include js/corners-thermal.js -->
+<!-- @include js/sound.js -->
+<!-- @include js/saves-garage.js -->
+<!-- @include js/reports.js -->
+<!-- @include js/share-scoring.js -->
+<!-- @include js/sprites.js -->
+<!-- @include js/engine-view.js -->
+<!-- @include js/track-view.js -->
+<!-- @include js/race-tab.js -->
+<!-- @include js/fullscreen-track.js -->
+<!-- @include js/dyno-ui.js -->
+<!-- @include js/guide.js -->
+<!-- @include js/controls-boot.js -->
+</script>
+</body>
+</html>

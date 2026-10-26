@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 // Stamp a unique build number into the app, and verify it later.
 //
-//   node tools/stamp.mjs           bump the build number in index.html and README.md
+//   node tools/stamp.mjs           bump the build number in src/shell.html, index.html and README.md
 //   node tools/stamp.mjs --check   verify the stamp is consistent and was actually bumped
 //
 // WHY NOT THE COMMIT COUNT. The first version of this derived the build number from
@@ -25,7 +25,10 @@ const ROOT = fileURLToPath(new URL('..', import.meta.url));
 const check = process.argv.includes('--check');
 const STAMP_RE = /PIXEL ENGINE SIM v[\d.]+ build (\d+)/;
 
+// The stamp lives in the page's header, which is in src/shell.html; index.html is that joined
+// (tools/build.mjs), so both are stamped alike and stay byte-identical to a fresh build.
 const files = [
+  { name: 'src/shell.html', re: /PIXEL ENGINE SIM v[\d.]+ build \d+/g },
   { name: 'index.html', re: /PIXEL ENGINE SIM v[\d.]+ build \d+/g },
   { name: 'README.md',  re: /^# PIXEL ENGINE SIM v[\d.]+ build \d+/m },
 ];
@@ -54,7 +57,7 @@ try {
 } catch { /* no origin/main yet — first commit in a fresh clone */ }
 
 if (check) {
-  current.forEach(f => console.log(`  ${f.name.padEnd(12)} v${VERSION} build ${f.build}`));
+  current.forEach(f => console.log(`  ${f.name.padEnd(14)} v${VERSION} build ${f.build}`));
   if (mainBuild !== null) {
     const ahead = execSync('git rev-list --count origin/main..HEAD', { cwd: ROOT }).toString().trim();
     if (+ahead > 0 && current[0].build <= mainBuild) {
@@ -71,7 +74,7 @@ if (check) {
   const stamp = `PIXEL ENGINE SIM v${VERSION} build ${next}`;
   current.forEach(f => {
     writeFileSync(path.join(ROOT, f.name), f.src.replace(f.re, f.name === 'README.md' ? '# ' + stamp : stamp));
-    console.log(`  ${f.name.padEnd(12)} -> v${VERSION} build ${next}`);
+    console.log(`  ${f.name.padEnd(14)} -> v${VERSION} build ${next}`);
   });
   console.log(`\nStamped build ${next}. It only ever goes up, so it survives a squash-merge.`);
 }

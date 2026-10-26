@@ -1,4 +1,4 @@
-# PIXEL ENGINE SIM v0.6 build 175
+# PIXEL ENGINE SIM v0.6 build 176
 
 **A lightweight, 8-bit style internal combustion engine *designer* & simulator** inspired by *Automation*.
 
@@ -706,7 +706,12 @@ philosophy).
 
 ```
 .
-├── index.html                     # Complete single-file app (HTML + CSS + JS)
+├── index.html                     # Complete single-file app (HTML + CSS + JS) — BUILT from src/, committed
+├── src/                           # The source of index.html — edit here
+│   ├── shell.html                 #   the page, with an @include line where each part goes, in order
+│   ├── css/app.css                #   the styles
+│   ├── html/guide.html            #   the in-app guide
+│   └── js/*.js                    #   the script, cut along its sections (physics, vehicle, lap, race, sound, UI…)
 ├── CHANGELOG.md                   # Release history; every commit carries a build number
 ├── favicon.svg / manifest.webmanifest / sw.js   # PWA (icon, manifest, offline SW)
 ├── assets/                        # Self-hosted font + PWA icons
@@ -714,21 +719,35 @@ philosophy).
 ├── tests/                         # Headless Playwright suite — see tests/README.md
 │   ├── run.mjs                    #   node tests/run.mjs   (reports by exit code)
 │   └── proto/                     #   parked models, not run by the suite — see tests/proto/README.md
+├── tools/build.mjs                # Joins src/ into index.html; --check verifies the committed file
 ├── tools/stamp.mjs                # Stamps + verifies the build number
-└── .github/workflows/pages.yml    # Auto-deploy to GitHub Pages
+├── plans/                         # Proposals not yet built — plans/hybrid-electric/
+└── .github/workflows/             # pages.yml: auto-deploy to GitHub Pages · check.yml: index.html is src/ joined
 ```
 
-**One file, on purpose.** `index.html` opens straight from `file://` with no server, no build step
-and no dependencies, works offline, and is a single artefact to share or archive. Splitting it into
-modules would cost all of that — ES modules are blocked from `file://` — so the seam is marked
-inside the file rather than cut. Worth revisiting past ~600 KB.
+**One file shipped, many edited.** `index.html` opens straight from `file://` with no server, no
+build step and no dependencies, works offline, and is a single artefact to share or archive. ES
+modules would cost all of that (they are blocked from `file://`), so the page stays one classic
+script. At 1.6 MB one *source* file had outgrown its editor, so since build 176 the source lives in
+`src/`, cut along the seams that were marked inside the file, and `tools/build.mjs` joins it back
+byte for byte: no transforms, no minifying, the page served is the page reviewed.
+
+```sh
+node tools/build.mjs            # write index.html from src/
+node tools/build.mjs --check    # fail if the committed index.html is not exactly src/ joined
+```
+
+Edit `src/`, never `index.html`; run the build; commit both. `index.html` stays committed because
+GitHub Pages, the tests and `tools/stamp.mjs` all read it directly. `tests/run.mjs` and the Check
+workflow refuse an `index.html` that is out of step with `src/`. A new part is a new file in `src/`
+plus an `@include` line in `src/shell.html` where it belongs; a file nothing includes fails the build.
 
 **Versioning.** `MAJOR.MINOR` plus a unique build number per commit — a counter in the file that
 only ever increases, so it survives squash-merging (a commit *count* does not: squashing three
 commits into one makes it go backwards):
 
 ```sh
-node tools/stamp.mjs            # bump the build number in index.html and README
+node tools/stamp.mjs            # bump the build number in src/shell.html, index.html and README
 node tools/stamp.mjs --check    # verify it is consistent and ahead of origin/main
 ```
 

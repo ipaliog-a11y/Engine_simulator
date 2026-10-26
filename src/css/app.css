@@ -1,0 +1,386 @@
+/* Self-hosted retro font so the sim works fully offline (no CDN dependency). */
+@font-face{font-family:'Press Start 2P';font-style:normal;font-weight:400;font-display:swap;src:url(assets/PressStart2P-latin.woff2) format('woff2')}
+/* Greek glyphs. The latin file has none, so Greek text was falling back to the system monospace,
+   which at the same pixel size renders far smaller than this font and was unreadable. */
+@font-face{font-family:'Press Start 2P';font-style:normal;font-weight:400;font-display:swap;src:url(assets/PressStart2P-greek.woff2) format('woff2');unicode-range:U+0370-0377,U+037A-037F,U+0384-038A,U+038C,U+038E-03A1,U+03A3-03FF}
+*{box-sizing:border-box;margin:0;padding:0;image-rendering:pixelated;-webkit-font-smoothing:none}
+body{background:#0a0a12;color:#e0e0e0;font-family:'Press Start 2P',monospace;font-size:10px;line-height:1.6;overflow-x:hidden;min-height:100vh}
+/* 1100px was letterboxing a dense instrument panel: on a 1440 screen it wasted 340px and on a
+   2560 one, 1460. Nothing here wants to be narrow — the tabs are tables, charts and maps. */
+.container{max-width:min(1600px,96vw);margin:0 auto;padding:8px}
+header{text-align:center;padding:12px 8px;border-bottom:4px solid #333;background:linear-gradient(180deg,#1a1a2e 0%,#0a0a12 100%);margin-bottom:12px}
+header h1{font-size:14px;color:#ffcc00;text-shadow:2px 2px 0 #000,-1px -1px 0 #aa6600;letter-spacing:1px}
+header .subtitle{font-size:8px;color:#888;margin-top:6px}
+/* align-items:start matters more than it looks. Grid rows stretch every column to the height of
+   the tallest, and the right column (ENGINE CONTROLS) is far taller than the canvas — so the left
+   panel was padding itself out with 400px of empty background under the dyno chart and the track
+   map. It read as a layout bug because it was one. */
+.main{display:grid;grid-template-columns:1fr 340px;gap:12px;align-items:start}
+@media(max-width:800px){.main{grid-template-columns:1fr}}
+/* Portrait (phones & tablets held upright): stack to one column and use the full width so the
+   sim fills the screen instead of sitting in a narrow strip. Font & controls scale up too. */
+@media(orientation:portrait){
+  .container{max-width:100%;padding:10px}
+  .main{grid-template-columns:1fr;gap:14px}
+  body{font-size:12px}
+  header h1{font-size:18px}
+  header .subtitle{font-size:10px}
+  .viz-tabs button{font-size:10px;padding:12px 4px}
+  .design-panel{max-height:none}          /* let the form flow with the page, no inner scrollbar */
+  .panel h2{font-size:11px}
+  .stat{min-width:28%;flex:1}
+  .stat .value{font-size:16px}
+  input[type=range]{height:18px}
+  input[type=range]::-webkit-slider-thumb{width:22px;height:28px}
+  input[type=range]::-moz-range-thumb{width:22px;height:28px}
+  button{font-size:10px;padding:11px 12px}
+  .field input,.field select{font-size:10px;padding:9px}
+}
+/* Tall, roomy portrait (tablets): scale the type up a touch more for legibility. */
+@media(orientation:portrait) and (min-width:700px){
+  body{font-size:14px}
+  .viz-tabs button{font-size:12px}
+  .design-section{font-size:11px}
+  .field label{font-size:9px}
+}
+.viz-panel{background:#12121c;border:4px solid #444;position:relative;box-shadow:inset 0 0 20px #000}
+.viz-tabs{display:flex;gap:0;background:#0a0a12;border-bottom:3px solid #333}
+.viz-tabs button{flex:1;font-family:'Press Start 2P',monospace;font-size:8px;padding:10px 6px;background:#1a1a28;color:#888;border:none;border-right:2px solid #333;cursor:pointer;box-shadow:none}
+.viz-tabs button:last-child{border-right:none}
+.viz-tabs button:hover{background:#2a2a3a;color:#ccc}
+.viz-tabs button.active{background:#004422;color:#00ff88;border-bottom:3px solid #00ff88;margin-bottom:-3px}
+#engineCanvas{width:100%;height:auto;display:block;background:#0d0d18}
+/* Bottom-right, not top-right: the canvas draws its live RPM readout in the top-right corner and
+   the two collided on DYNO and TRACK ("3841 RPM" sat half behind the button). */
+.side-panel{display:flex;flex-direction:column;gap:10px}
+.panel{background:#161622;border:4px solid #3a3a4a;padding:10px}
+.panel h2{font-size:9px;color:#00ccff;margin-bottom:8px;border-bottom:2px solid #333;padding-bottom:4px;text-transform:uppercase}
+/* A centred wrapping flex row laid these out 3 + 2 + 1 + 1 and centred each line, which read as
+   accidental rather than designed — the phone layout looked tidier than the desktop one for
+   exactly this reason. A fixed 3-column grid aligns them and lets each tile fill its cell. */
+.gauge-row{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:8px}
+.gauge-row .stat:only-child{grid-column:1/-1}
+.stat{background:#0a0a10;border:2px solid #333;padding:6px 8px;min-width:0;text-align:center}
+.stat .label{font-size:7px;color:#888;display:block}
+.stat .value{font-size:12px;color:#00ff88;margin-top:2px}
+.stat .unit{font-size:7px;color:#666}
+.stat.warning .value{color:#ffaa00}
+.stat.danger .value{color:#ff3333}
+.control-group{margin-bottom:10px}
+.control-group label{display:flex;justify-content:space-between;font-size:8px;color:#aaa;margin-bottom:3px}
+.control-group label span.val{color:#ffcc00}
+input[type=range]{-webkit-appearance:none;width:100%;height:12px;background:#222;border:2px solid #555;outline:none;cursor:pointer}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:16px;height:20px;background:#00ff88;border:2px solid #000;cursor:pointer;box-shadow:2px 2px 0 #000}
+input[type=range]::-moz-range-thumb{width:16px;height:20px;background:#00ff88;border:2px solid #000;cursor:pointer;box-shadow:2px 2px 0 #000}
+.btn-row{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
+button{font-family:'Press Start 2P',monospace;font-size:8px;padding:8px 12px;background:#2a2a3a;color:#eee;border:3px solid #666;cursor:pointer;box-shadow:3px 3px 0 #000}
+button:hover{background:#3a3a5a;color:#fff}
+button:active{box-shadow:1px 1px 0 #000;transform:translate(2px,2px)}
+button.danger{border-color:#aa3333;color:#ff6666}
+button.toggle.on{border-color:#00ff88;color:#00ff88;background:#004422}
+input[type=range]:disabled{opacity:0.55;cursor:not-allowed}
+input[type=range]:disabled::-webkit-slider-thumb{background:#666}
+input[type=range]:disabled::-moz-range-thumb{background:#666}
+.status-bar{margin-top:10px;padding:6px;background:#0a0a10;border:2px solid #333;font-size:8px;color:#00ff88;min-height:28px}
+.status-bar.warn{color:#ffaa00}
+.status-bar.err{color:#ff4444}
+footer{text-align:center;margin-top:16px;padding:8px;font-size:7px;color:#555;border-top:2px solid #222}
+.legend{font-size:7px;color:#666;margin-top:6px;line-height:1.4}
+.readout{font-size:9px;color:#00ff88;background:#0a0a10;border:2px solid #333;padding:6px;margin:2px 0 10px;text-align:center;letter-spacing:1px}
+/* ---- Engine Design tab ---- */
+/* Was a flat 600px, so the design form scrolled inside a box inside a viewport that had room to
+   spare, and the last row was always cut in half. Tie it to the window instead. */
+.design-panel{display:none;padding:12px;background:#0d0d18;max-height:calc(100vh - 230px);overflow-y:auto}
+.design-panel.active{display:block}
+.design-panel h3{font-size:10px;color:#ffcc00;margin:2px 0 4px}
+.design-panel .hint{font-size:7px;color:#667;margin-bottom:10px}
+/* The car and engine as pixel art, drawn from the build (see PixBuf). */
+.pix-preview{display:block;width:100%;max-width:560px;margin:2px auto 10px;border:2px solid #333;background:#0a0a10;image-rendering:pixelated}
+.pix-preview.car{aspect-ratio:168/74}
+.pix-preview.eng{aspect-ratio:150/90}
+.design-section{font-size:8px;color:#00ccff;margin:12px 0 6px;border-bottom:2px solid #26263a;padding-bottom:3px;text-transform:uppercase}
+/* Fields are a size, not a share of the panel. A 1fr/1fr grid stretched every select and number box to
+   half of a ~1200px panel, which read as two long horizontal lines per row. Cells of 170-220px pack as
+   many to a row as fit and stay put on the left; the phone layout below keeps two to a row. */
+.design-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,220px));gap:9px 12px;justify-content:start}
+.field{display:flex;flex-direction:column;gap:4px;min-width:0}
+.pick-row{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,280px));gap:9px 12px;justify-content:start;margin-bottom:6px}
+/* GEAR RATIOS window (build 170): the ratios, the final drive and two graphs of what they do, over the vehicle tab. */
+.gw-back{position:fixed;inset:0;z-index:80;background:rgba(5,5,10,.84);display:flex;align-items:flex-start;justify-content:center;overflow-y:auto;padding:16px}
+.gw-back[hidden]{display:none}
+.gw{background:#0d0d18;border:3px solid #444;box-shadow:6px 6px 0 #000;width:min(1180px,100%)}
+.gw-head{display:flex;gap:10px;align-items:center;padding:8px 10px;border-bottom:2px solid #26263a}
+.gw-head h3{font-size:10px;color:#ffcc00;margin:0;font-weight:normal}
+.gw-head .sub{font-size:7px;color:#889;flex:1;min-width:0}
+.gw-head button{padding:4px 8px;box-shadow:none}
+.gw-body{display:grid;grid-template-columns:minmax(270px,350px) minmax(0,1fr);gap:14px;padding:12px}
+.gw-k{font-size:7px;color:#88aacc;margin:2px 0 6px}
+.gw-sp{display:flex;flex-wrap:wrap;gap:4px;margin-bottom:12px}
+.gw-sp button,.gw-fdrow button{font-size:7px;padding:6px 7px;box-shadow:none;border:2px solid #33334a;background:#151522;color:#889}
+.gw-sp button.on,.gw-fdrow button.on{border-color:#00ff88;color:#00ff88;background:#004422}
+.gw-row{display:grid;grid-template-columns:30px minmax(0,1fr) 40px 62px;gap:6px;align-items:center;font-size:7px;margin:7px 0}
+.gw-row .n{color:#889}.gw-row .r{color:#00ff88;text-align:right}.gw-row .v{color:#667;text-align:right}
+.gw-row.fd{margin-top:12px;padding-top:10px;border-top:2px solid #26263a}
+.gw-fdrow{display:flex;gap:6px;align-items:center;margin:4px 0 0 36px;font-size:7px;color:#667}
+.gw-note{font-size:7px;color:#667;line-height:1.5;margin-top:10px}
+.gw-read{display:flex;flex-wrap:wrap;gap:6px 16px;font-size:8px;color:#889;margin-bottom:8px}
+.gw-read b{color:#e0e0e0;font-weight:normal}
+.gw-ch{position:relative;margin-bottom:10px}
+.gw-ch .t{font-size:7px;color:#88aacc;margin-bottom:4px}
+.gw-ch canvas{display:block;width:100%;aspect-ratio:2/1;background:#0a0a12;border:2px solid #333;cursor:crosshair}
+.gw-leg{display:flex;flex-wrap:wrap;gap:3px 12px;font-size:7px;color:#aab;margin-bottom:5px}
+.gw-leg i{display:inline-block;width:14px;height:0;border-top:2px solid;vertical-align:middle;margin-right:5px}
+.gw-leg i.d{border-top-style:dashed}.gw-leg i.b{height:7px;border:0}
+.gw-tip{position:absolute;pointer-events:none;font-size:7px;line-height:1.6;color:#e0e0e0;background:#151522;border:2px solid #444;padding:4px 6px;white-space:nowrap;display:none}
+@media(max-width:760px){.gw-body{grid-template-columns:1fr}.gw-back{padding:6px}.gw-ch canvas{aspect-ratio:4/3}}
+/* What is loaded right now, on every tab. */
+.build-strip{display:flex;flex-wrap:wrap;gap:6px 14px;align-items:center;font-size:8px;color:#889;padding:6px 10px;margin:-6px 0 10px;background:#0d0d18;border:2px solid #26263a}
+.build-strip button{font-size:8px;padding:4px 8px;box-shadow:none;border:2px solid #33334a;background:#151522;color:#00ff88;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.build-strip button:hover{border-color:#ffcc00;color:#ffcc00}
+.build-strip .k{color:#667}
+/* Phones: two to a row (this has to follow the rules above to win over them). Eight tabs do not fit
+   one row on a phone and pushed the whole panel wider than the screen; they wrap to two rows of four. */
+@media(orientation:portrait){
+  .viz-tabs{flex-wrap:wrap}
+  .viz-tabs button{flex:1 0 25%;border-bottom:2px solid #333}
+  .design-grid,.pick-row{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .build-strip{font-size:10px}
+}
+.field label{font-size:7px;color:#88aacc;line-height:1.3}
+.field input,.field select{font-family:'Press Start 2P',monospace;font-size:8px;padding:6px;background:#12121c;color:#00ff88;border:2px solid #555;outline:none}
+.field input:focus,.field select:focus{border-color:#00ccff}
+.field input:disabled,.field select:disabled{opacity:0.35;cursor:not-allowed}
+.design-summary{margin-top:12px;padding:9px;background:#0a0a10;border:2px solid #333;font-size:8px;color:#00ccff;line-height:1.8}
+.design-summary b{color:#ffcc00}
+.build-row{margin-top:12px;display:flex;gap:8px;flex-wrap:wrap}
+.build-row button{flex:1}
+#btnBuild{border-color:#00ff88;color:#00ff88}
+/* ---- Garage: saved chassis+engine combos ---- */
+.garage-row{display:flex;gap:8px;align-items:flex-end;margin-bottom:10px}
+.garage-row .field{flex:1 1 auto;min-width:0}
+.garage-row button{flex:0 0 auto}
+.garage-list{display:flex;flex-direction:column;gap:7px;max-height:280px;overflow-y:auto}
+.garage-item{background:#0a0a10;border:2px solid #333;padding:8px}
+.garage-item.current{border-color:#00ff88}
+.garage-head{display:flex;justify-content:space-between;align-items:baseline;gap:8px}
+.garage-name{font-size:8px;color:#ffcc00;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.garage-date{font-size:6px;color:#667;flex:0 0 auto}
+.garage-spec{font-size:7px;color:#88aacc;line-height:1.7;margin-top:5px}
+.garage-stats{font-size:7px;color:#00ccff;line-height:1.7;margin-top:3px}
+.garage-stats b{color:#00ff88}
+.garage-note{font-size:7px;color:#778;line-height:1.5;margin-top:3px;font-style:italic}
+.garage-btns{display:flex;gap:6px;margin-top:7px}
+.garage-btns button{flex:1;padding:6px 4px;font-size:7px}
+.garage-btns .del{border-color:#663333;color:#cc7777}
+.replay-row{display:flex;gap:6px;align-items:stretch;margin:4px 0 10px}
+.replay-row button{flex:1;padding:6px 4px}
+.replay-row select{flex:0 0 64px;min-width:0}
+.replay-row #replayGauges{flex:0 0 86px}
+.replay-row .tp-full{flex:0 0 40px;color:#00ccff;border-color:#00ccff}
+/* the full-screen track view (build 143): the lap, its instruments and the replay controls, in landscape */
+.track-page{position:fixed;inset:0;z-index:50;background:#0a0a12;overflow:hidden}
+.track-page[hidden]{display:none}
+/* the page itself goes full screen, and the browser will not turn a full-screen element, so an inner box turns */
+.tp-turn{position:absolute;top:0;left:0;width:100%;height:100%;display:flex;flex-direction:column}
+.track-page.rot .tp-turn{width:100vh;height:100vw;transform-origin:top left;transform:rotate(90deg) translateY(-100%)}
+body.track-open{overflow:hidden}
+.tp-stage{flex:1;min-height:0;overflow:hidden;display:flex;align-items:center;background:#0d0d18}
+.tp-stage canvas{width:100%;height:auto;display:block}
+.tp-bar{flex:0 0 auto;display:flex;justify-content:center;padding:6px 10px;background:#12121c;border-top:3px solid #333}
+.tp-bar .replay-row{margin:0;flex:0 1 640px;min-width:0}
+.tp-bar .replay-row button{padding:8px 6px}
+.tp-bar .replay-row .tp-full{font-size:12px;padding:4px 6px}
+.tp-bar .replay-row select,.tp-bar .replay-row #replayGauges{flex:0 0 auto}
+/* RACE (build 137) */
+.race-row{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px}
+.race-seed{display:flex;gap:4px}.race-seed input{flex:1;min-width:0}.race-seed button{padding:4px 6px;box-shadow:none}
+.race-check{display:flex;align-items:center;gap:6px;font-size:7px;color:#88aacc;margin:10px 0 2px;cursor:pointer}
+.race-ent{display:flex;align-items:center;gap:6px;font-size:7px;color:#ddd;padding:4px 0;border-bottom:1px solid #222}
+.race-ent i,.race-tower i,.rt-head i{display:inline-block;width:8px;height:8px;flex:0 0 8px;margin-right:4px;vertical-align:middle}
+.race-ent span{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.race-ent button{padding:2px 6px;font-size:7px;box-shadow:none}
+.race-add{display:flex;gap:6px;margin-top:8px}.race-add select{flex:1;min-width:0}
+.race-prog{margin-top:8px;font-size:7px;color:#88aacc}
+.race-prog-track{height:8px;background:#26263a;margin-bottom:4px}.race-prog-bar{height:100%;width:0;background:#00ff88}
+#raceScrub{margin:2px 0 10px}
+.race-tower{width:100%;border-collapse:collapse;font-size:7px;color:#ccd}
+.race-tower th{color:#88aacc;text-align:left;font-weight:normal;padding:3px 2px;border-bottom:2px solid #26263a}
+.race-tower td{padding:4px 2px;border-bottom:1px solid #1e1e2e;white-space:nowrap}
+.race-tower td.nm{max-width:110px;overflow:hidden;text-overflow:ellipsis}
+.race-strat{display:grid;grid-template-columns:1fr 1fr;gap:3px;padding:3px 0 6px 14px;border-bottom:1px solid #222}
+.race-strat select{font-size:6.5px;padding:4px;min-width:0}
+.race-strat select[data-f="driver"]{grid-column:1 / span 2}
+.race-ty{display:inline-block;min-width:11px;padding:1px 2px;margin-right:2px;border:1px solid;font-weight:normal;text-align:center;font-size:6.5px}
+.race-rpt{margin-top:-4px}
+/* the race page (build 141): RACE fills the window */
+.race-page{position:fixed;inset:0;z-index:50;background:#0a0a12;display:flex;flex-direction:column}
+.race-page[hidden]{display:none}
+body.race-open{overflow:hidden}
+.race-top{display:flex;align-items:center;gap:12px;padding:8px 12px;background:#12121c;border-bottom:3px solid #333;flex:0 0 auto}
+.race-top button{padding:6px 10px;box-shadow:2px 2px 0 #000}
+.race-title{color:#ffcc00;font-size:11px;font-weight:normal}
+#raceTopInfo{flex:1;min-width:0;font-size:8px;color:#88aacc;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.race-body{flex:1;min-height:0;display:grid;grid-template-columns:minmax(0,1fr) 420px}
+.race-stage{min-width:0;min-height:0;overflow:hidden;background:#0d0d18;display:flex;align-items:center}
+.race-stage canvas{width:100%;height:auto;display:block}
+.race-side{min-height:0;overflow-y:auto;border-left:4px solid #3a3a4a;background:#161622}
+.race-side .panel{border:none}
+.race-side .race-tower td.nm{max-width:170px}
+@media(max-width:440px){#raceTower th:nth-child(4),#raceTower td:nth-child(4){display:none}}
+@media(max-width:800px){
+  .race-body{display:block;overflow-y:auto}
+  .race-stage{height:56vh}
+  .race-side{border-left:none;border-top:4px solid #3a3a4a;overflow:visible}
+  .race-top{gap:8px}
+}
+.race-tower tr[data-car]{cursor:pointer}.race-tower tr.sel td{background:#1d1d33}
+.race-fl{color:#cc66ff}.race-pb{color:#00ff88}
+.rt-card{border:2px solid #26263a;padding:6px;margin-bottom:6px;background:#0d0d18}.rt-card.sel{border-color:#00ccff}
+.rt-head{display:flex;align-items:center;gap:4px;font-size:7px;color:#ffcc00;margin-bottom:5px}
+.rt-head span{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.rt-head em{font-style:normal;color:#00ff88}
+.rt-body{display:flex;gap:8px}
+.rt-tyres{display:grid;grid-template-columns:repeat(2,44px);gap:3px;flex:0 0 auto}
+.rt-t{border:2px solid #555;padding:2px;text-align:center;font-size:6px;color:#889;line-height:1.5}.rt-t b{display:block;font-size:8px;font-weight:normal}
+.rt-side{flex:1;min-width:0;font-size:6.5px;color:#99a;line-height:1.7}
+.rt-bar{height:5px;background:#222;margin:2px 0 3px}.rt-bar div{height:100%}
+.garage-empty{font-size:7px;color:#667;line-height:1.7;padding:8px;background:#0a0a10;border:2px dashed #2a2a3a}
+/* In its own tab the garage is a wall of cards, not a scrolling strip. */
+.garage-panel .garage-list{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));max-height:none;overflow:visible;align-items:start}
+.garage-panel .garage-name{font-size:9px}
+.garage-panel .garage-spec,.garage-panel .garage-stats{font-size:8px}
+.garage-detail{font-size:7px;color:#aab;line-height:1.8;margin-top:6px;padding-top:6px;border-top:2px solid #1e1e2e}
+.garage-detail b{color:#ffcc00;font-weight:normal}
+.gcount{font-size:7px;color:#667;margin:-2px 0 6px}
+.garage-thumb{display:block;width:100%;height:auto;margin:-2px 0 6px;image-rendering:pixelated;border:2px solid #1e1e2e;background:#0a0a10}
+/* 5 tabs — tighten padding so labels fit */
+.viz-tabs button{padding:10px 4px;font-size:7.5px;letter-spacing:0}
+/* ---- Guide & Options tabs (reuse the scrollable design-panel shell) ---- */
+/* DYNO RESULT — the pull as a static sheet, in real text, under the curve. */
+.dyno-result{padding:14px 18px 18px;background:#0d0d18;border:4px solid #444;grid-column:1}
+/* The side column spans both rows, so the result panel sits directly under the chart instead of
+   below the (taller) control column. One-column layouts are unaffected. */
+@media(min-width:801px) and (orientation:landscape){.side-panel{grid-column:2;grid-row:1 / span 2}}
+.dyno-result h4{font-size:12px;color:#ffcc00;margin:0 0 12px}
+.dr-cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:10px;margin-bottom:12px}
+.dr-card{background:#12121c;border:2px solid #2a2a3e;padding:10px 12px}
+.dr-card .k{font-size:9px;color:#889;margin-bottom:6px}
+.dr-card .v{font-size:20px;line-height:1.3}
+.dr-card .s{font-size:10px;color:#9ab;margin-top:4px;line-height:1.5}
+.dr-card.hp .v{color:#ffcc00}.dr-card.tq .v{color:#00ccff}
+.dr-note{font-size:9px;color:#889;line-height:1.8;margin:0 0 12px}
+.dr-note b{color:#cde}
+.dr-table{width:100%;border-collapse:collapse;font-size:10px}
+.dr-table th{color:#889;font-weight:normal;text-align:right;padding:6px 8px;border-bottom:2px solid #2a2a3e}
+.dr-table td{text-align:right;padding:5px 8px;color:#cde}
+.dr-table tr:nth-child(even) td{background:#12121c}
+.dr-table td.hp{color:#ffcc00}.dr-table td.tq{color:#00ccff}
+.dr-table tr.pk td{background:#262640;font-weight:bold}
+.dr-table th:first-child,.dr-table td:first-child{text-align:left}
+@media(max-width:600px){.dr-table{font-size:8px}.dr-table th,.dr-table td{padding:4px 3px}}
+/* GUIDE — paged, with an index. Type is 2x the old 8px: the guide is prose, and prose at 8px in a
+   pixel font was a wall nobody read. It gets the whole width while open (.main.wide). */
+.main.wide{grid-template-columns:minmax(0,1fr)}   /* minmax: a wide wiki table scrolls in its box, not the page */
+.main.wide .side-panel{display:none}
+.guide-body{font-size:16px;color:#b8c4d0;line-height:1.85;margin-bottom:16px}
+.guide-title{font-size:18px;color:#ffcc00;margin:4px 0 18px;line-height:1.5}
+.guide-nav{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin:4px 0 16px}
+.guide-nav button{font-size:12px;padding:10px 14px}
+.guide-nav button:disabled{opacity:.35;cursor:default}
+.guide-nav .crumb{flex:1;min-width:220px;font-size:12px;color:#00ccff;line-height:1.6}
+.guide-nav-foot{margin-top:24px;padding-top:14px;border-top:2px solid #26263a}
+#guidePanel [hidden]{display:none!important}   /* the index and nav are display:grid/flex, which beats [hidden] */
+.guide-index{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:8px 28px}
+.guide-index .gcat{font-size:14px;color:#00ccff;margin:14px 0 8px;padding-bottom:6px;border-bottom:2px solid #26263a}
+.guide-index button{display:block;width:100%;text-align:left;font-size:13px;line-height:1.5;padding:10px 12px;
+  margin:0 0 8px;background:#151522;border:2px solid #2a2a3e;box-shadow:none;color:#dde}
+.guide-index button:hover{border-color:#ffcc00;color:#ffcc00}
+.guide-index button .n{color:#667;margin-right:10px}
+@media(max-width:600px){
+  .guide-body{font-size:12px}
+  .guide-title{font-size:14px}
+  .guide-index button{font-size:11px}
+}
+.guide-body b{color:#ffcc00}
+.guide-body i{color:#00ccff;font-style:normal}
+/* WIKI (build 139): three levels per page, 8-bit pictures drawn in code, search and links. */
+.guide-intro{font-size:12px;color:#99a;line-height:1.8;margin:0 0 14px}
+.gtier{border:2px solid #26263a;background:#0d0d16;padding:14px 16px 2px;margin:0 0 20px}
+.gt-real{border-color:#2f6a38}.gt-game{border-color:#1a5a74}.gt-phys{border-color:#7a6200}
+.gtier-h{display:inline-block;font-size:12px;padding:6px 10px;margin:-14px 0 14px -16px;color:#0a0a10}
+.gt-real .gtier-h{background:#55dd66}.gt-game .gtier-h{background:#00ccff}.gt-phys .gtier-h{background:#ffcc00}
+canvas.gart{display:block;width:100%;max-width:640px;height:auto;image-rendering:pixelated;border:2px solid #26263a;margin:0 auto 8px;background:#0a0a10}
+.gart-cap{font-size:11px;color:#889;text-align:center;margin:0 0 16px;line-height:1.6}
+.guide-body .geq{display:block;background:#0a0a14;border-left:4px solid #ffcc00;padding:10px 14px;margin:12px 0;color:#ffe9a0;font-size:14px;line-height:1.9;overflow-x:auto}
+.guide-body .gtab-wrap{overflow-x:auto;max-width:100%;margin:10px 0}
+.gtier,.guide-page{min-width:0}
+.guide-body table.gtab{border-collapse:collapse;font-size:12px;line-height:1.6}
+.guide-body table.gtab th{color:#889;font-weight:normal;text-align:left;padding:5px 10px;border-bottom:2px solid #2a2a3e}
+.guide-body table.gtab td{padding:5px 10px;color:#cde;border-bottom:1px solid #1c1c2a}
+.guide-limit{font-size:13px;color:#d9a066;line-height:1.8;border-top:2px dashed #3a2a1a;padding-top:10px;margin:0 0 14px}
+.guide-see{font-size:12px;color:#889;line-height:2.1;margin:0 0 6px}
+#guidePanel a[data-gp]{color:#00ccff;text-decoration:underline;text-underline-offset:3px;cursor:pointer}
+#guidePanel a[data-gp]:hover{color:#ffcc00}
+.guide-search{margin:0 0 6px}
+.guide-search input{width:100%;box-sizing:border-box;font-family:inherit;font-size:12px;padding:12px;background:#151522;border:2px solid #2a2a3e;color:#eee}
+.guide-search input:focus{outline:none;border-color:#ffcc00}
+.guide-nohit{font-size:12px;color:#c86;margin:10px 0}
+.guide-index button{display:flex;align-items:center}
+.guide-index canvas.gthumb{flex:none;width:64px;height:auto;image-rendering:pixelated;margin-right:12px;border:1px solid #26263a}
+@media(max-width:600px){
+  .gtier{padding:12px 10px 2px}.gtier-h{margin-left:-10px;font-size:10px}
+  .guide-body .geq{font-size:11px;padding:8px 10px}.guide-body table.gtab{font-size:10px}
+  .guide-index canvas.gthumb{width:44px;margin-right:8px}.guide-limit{font-size:11px}
+}
+.opt-row{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:8px 0;border-bottom:2px solid #17172a}
+.opt-row>div{flex:1}
+.opt-row b{font-size:8px;color:#e0e0e0}
+.opt-note{font-size:7px;color:#778;line-height:1.5;margin-top:4px}
+.opt-row button,.opt-select{flex:0 0 auto;min-width:96px}
+.opt-select{font-family:'Press Start 2P',monospace;font-size:8px;padding:8px;background:#12121c;color:#00ff88;border:2px solid #555}
+.vehicle-soon{font-size:8px;color:#aab;line-height:1.8;padding:6px 2px}
+.vehicle-soon b{color:#ffcc00}
+/* ---- Vehicle performance panel ---- */
+.perf-head{font-size:8px;color:#00ccff;line-height:1.6;margin-bottom:8px}
+.perf-head b{color:#ffcc00}
+.perf-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.perf-cell{background:#0a0a10;border:2px solid #2a2a3a;padding:7px 8px}
+.perf-cell .k{font-size:7px;color:#889;display:block}
+.perf-cell .v{font-size:13px;color:#00ff88;margin-top:3px}
+.perf-cell .u{font-size:7px;color:#667}
+.perf-cell.wide{grid-column:1/3}
+.perf-cell.hero .v{color:#ffcc00}
+.perf-note{font-size:7px;color:#778;line-height:1.6;margin-top:8px}
+.vehicleSummaryWrap b{color:#ffcc00}
+/* ---- Career / challenge card ---- */
+.challenge-card{background:#0a0a10;border:2px solid #33334a;padding:9px;margin-bottom:6px;font-size:8px;line-height:1.6}
+.ch-desc{color:#99aecc;line-height:1.7;margin-bottom:8px}
+.ch-stats{display:flex;flex-wrap:wrap;gap:12px;margin-bottom:8px;color:#889}
+.ch-stats b{color:#ffcc00}
+.ch-budget{margin:6px 0 8px}
+.ch-bud-lbl{font-size:7px;color:#aab;margin-bottom:4px}
+.ch-bar{height:10px;background:#1a1a28;border:2px solid #444}
+.ch-bar-fill{height:100%}
+.ch-tgt{font-size:7.5px;line-height:1.9;color:#cdd}
+.ch-tgt span{color:#667}
+.ch-tgt.ok{color:#00ff88}
+.ch-tgt.no{color:#ff8888}
+.ch-tgt.ok b,.ch-tgt.no b{color:#fff}
+.ch-verdict{margin-top:8px;padding:6px;text-align:center;font-size:8px;border:2px solid}
+.ch-verdict.pass{color:#00ff88;border-color:#00ff88;background:#04220f}
+.ch-verdict.fail{color:#ffaa66;border-color:#664433;background:#1a1108}
+.ch-hint{font-size:7px;color:#667;margin-top:4px}
+/* ---- ECU fuel map grid ---- */
+.fuelmap-wrap{overflow-x:auto;margin-bottom:6px}
+table.fuelmap{border-collapse:collapse;font-size:7px;width:100%}
+table.fuelmap th{color:#88aacc;font-weight:normal;padding:2px 3px;font-size:6.5px}
+table.fuelmap td{color:#fff;text-align:center;padding:4px 2px;border:1px solid #0a0a10;cursor:default;min-width:26px;text-shadow:1px 1px 0 #0006}
+table.fuelmap td.fm-cell{cursor:pointer}
+table.fuelmap td.fm-cell.sel{outline:2px solid #ffcc00;outline-offset:-2px;font-weight:bold}
+table.fuelmap td.live{box-shadow:inset 0 0 0 2px #fff;font-weight:bold}
+.fuelmap-note{font-size:6.5px;color:#778;margin-top:4px;line-height:1.5}
+.fuelmap-edit{display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:8px}
+.fuelmap-edit #fmSelInfo{font-size:7px;color:#9bd;flex:1 1 auto;min-width:90px}
+.fuelmap-edit .fm-btns{display:flex;gap:4px}
+.fuelmap-edit button{font-family:inherit;font-size:6.5px;color:#fff;background:#1a2030;border:1px solid #33405a;padding:4px 6px;cursor:pointer}
+.fuelmap-edit button:hover{background:#26304a}
+.fuelmap-edit button#fmReset{color:#ffb0b0;border-color:#5a3340}
