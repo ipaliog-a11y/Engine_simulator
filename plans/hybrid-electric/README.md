@@ -160,6 +160,7 @@ gear mesh from the reduction. Built standalone in `tests/proto/` first, the way 
 | # | question | decision |
 |---|---|---|
 | 1 | One source file or split? | **Split**, joined output committed (step 0). |
+| 2 | Does electric work pause the v1.0 queue? | **A freeze, not a pause**: from the start of step 0 until step 1 merges, no change that moves a number lands; work that touches only tests, docs or the UI continues. After step 1, v1.0 and electric run side by side. Reason: step 0 moves every line of `index.html`, step 1 rewrites the lap, race and acceleration code, and step 1's bit-identical check is only meaningful against a baseline that is not moving underneath it. |
 | 3 | How exact must step 1 be? | **Bit-identical** 0–100, top speeds and lap times on every preset. A number that moves is fixed before merging, not explained. |
 | 4 | Version | Electric ships as **v0.7**. v1.0 keeps its meaning: every combustion number derived. |
 | 5 | Saved builds and share links | Saves gain a **powertrain type**; a save without one is read as `combustion`, so every existing save, garage entry and share link still loads. |
@@ -170,11 +171,6 @@ gear mesh from the reduction. Built standalone in `tests/proto/` first, the way 
 
 ## Open questions
 
-- **2. Does electric work pause the v1.0 queue?** Proposed: no physics change that moves a number
-  lands while steps 0 and 1 are in progress; after step 1 merges, v1.0 and electric run side by
-  side. Reason: step 0 moves every line of `index.html`, step 1 rewrites the lap, race and
-  acceleration code, and step 1's bit-identical check is only meaningful against a baseline that
-  is not moving underneath it.
 - **9. Is battery and motor technology tied to the decade?** Proposed: yes, at least battery
   energy per kg and cost per kWh.
 - **10. Which real electric cars to validate against** (and ship as presets)? Proposed: 4–6, e.g.
