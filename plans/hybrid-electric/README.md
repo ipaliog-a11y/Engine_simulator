@@ -129,9 +129,18 @@ The design fields, their trade-offs and the physics behind them are in
 - **Thermal:** a lumped battery and motor temperature; derating when hot. This is what makes a
   long track different from a 0–100.
 - **Validation:** a new real-world test, in the style of the brakes / tyres / fuel builds
-  (144–146): 0–100 and top speed of real electric cars with power, mass and gearing matched
-  (e.g. Tesla Model 3, Porsche Taycan, Hyundai Ioniq 5, a small city EV), plus consumption in
-  Wh/km against published figures.
+  (144–146): 0–100 and top speed of the three Teslas (decision 10) with power, mass and gearing
+  matched, plus consumption in Wh/km against published figures.
+
+Step 2 lands in parts, one PR each:
+
+| part | what | state |
+|---|---|---|
+| 2.1 | **The physics**: motor (permanent magnet), inverter (IGBT / SiC) and battery (four chemistries by year) as pure functions in `src/js/electric.js`; checked against the measured Model 3 rear motor and ORNL's 2012 Leaf (`tests/test96.mjs`). Nothing calls it yet. | ✅ build 178 |
+| 2.2 | **The design and the bench**: ELECTRIC in the engine-type dropdown, the MOTOR / BATTERY fields, the dyno's torque, power and efficiency curves with the temperatures, the powertrain type in saves, and the electric `powertrain()`. | next |
+| 2.3 | **The car**: single fixed reduction, regenerative braking through the axle split, motor and battery heat over a lap. | |
+| 2.4 | **The race**: energy instead of fuel, no charging mid-race. | |
+| 2.5 | **The three Teslas**: presets and the real-world test; the induction motor the Model Y's front axle needs. | |
 
 ### 3. Hybrids — after electric is shipped and validated
 
