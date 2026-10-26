@@ -106,7 +106,7 @@ check the electric half against.
 - **Acceptance:** the joined `index.html` is byte-identical to the one it replaced (apart from the
   build stamp), and the full test suite passes.
 
-### 1. The powertrain interface — no change in results
+### 1. The powertrain interface — no change in results (✅ build 177)
 
 - Define the interface: `force(v, demand, st)`, `step(dt, st)`, `energyUsed`, limits.
 - Wrap the existing engine, torque grid and gearbox behind it as the combustion powertrain.

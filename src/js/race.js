@@ -169,33 +169,14 @@ function withRaceTrim(grip,dm,fn){
 // a factory car or the current build: {name, build}. opts.wet solves the low grip levels a wet race needs.
 function raceCarModel(entry,key,opts){
   return withBuild(entry.build,()=>{
-    if(!engine.score||!vehicle||!vehicle.mass)throw new Error('incomplete build: '+entry.name);
+    const pt=powertrain();
+    if(!pt.ready()||!vehicle||!vehicle.mass)throw new Error('incomplete build: '+entry.name);
     const T=buildTrack(key), line=lineFor(T,key), n=line.length;
-    const fuel=FUELS[engine.fuel]||FUELS.gasoline, tankL=RACE_TANK_L[vehicle.chassis]||60, tankKg=tankL*fuel.density;
+    const fuel=pt.fuel(), tankL=RACE_TANK_L[vehicle.chassis]||60, tankKg=tankL*fuel.density;
     const solve=(grip,ff,o)=>withRaceTrim(grip,(ff-1)*tankKg,()=>simulateLap(key,Object.assign({line},o)));
     const nom=solve(1,0.5);
-    // BSFC (g/kWh) over rpm × MAP, from the engine's own map at design conditions, so the race loop never
-    // calls engine code. Fuel flow at a point is then the power the lap spends there times the BSFC.
-    const iat0=state.iat;state.iat=20;
-    let mapLo=1e9,mapHi=0;for(const q of nom.replay.map){mapLo=Math.min(mapLo,q);mapHi=Math.max(mapHi,q);}
-    mapLo=Math.max(0.2,mapLo*0.95);mapHi=Math.max(mapLo+0.1,mapHi*1.02);
-    const NR=16,NM=10,r0=engine.idleRpmEff,r1=engine.redline,bs=new Float64Array(NR*NM);
-    for(let a=0;a<NR;a++)for(let b=0;b<NM;b++){
-      const x=steadyBSFC(r0+(r1-r0)*a/(NR-1),mapLo+(mapHi-mapLo)*b/(NM-1)).bsfc;
-      bs[a*NM+b]=clamp(isFinite(x)?x:900,150,900);
-    }
-    state.iat=iat0;
-    const bsfcAt=(rpm,map)=>{
-      const x=clamp((rpm-r0)/(r1-r0),0,1)*(NR-1),y=clamp((map-mapLo)/(mapHi-mapLo),0,1)*(NM-1);
-      const a=Math.min(NR-2,Math.floor(x)),b=Math.min(NM-2,Math.floor(y)),fx=x-a,fy=y-b;
-      return (bs[a*NM+b]*(1-fx)+bs[(a+1)*NM+b]*fx)*(1-fy)+(bs[a*NM+b+1]*(1-fx)+bs[(a+1)*NM+b+1]*fx)*fy;
-    };
-    // Off the power the injectors cut and only idle flows; a carburettor cannot cut, and keeps feeding.
-    const carb=!(INTAKE_SYS[engine.intakeSys]||INTAKE_SYS.efi).di&&/^carb|sidedraft/.test(engine.intakeSys);
-    const idleGs=0.12*engine.displacement_L*(carb?2.5:1);
-    const fuelRate=L=>{const R=L.replay,out=new Float32Array(n);
-      for(let i=0;i<n;i++)out[i]=R.pwr[i]>0?R.pwr[i]*bsfcAt(R.rpm[i],R.map[i])/3.6e6+idleGs*0.3:idleGs;
-      return out;};
+    // fuel flow (g/s) at each point of a solved lap, from the powertrain's own map, so the race loop never calls it
+    const fuelRate=pt.fuelRate(nom,n);
     const grips=opts&&opts.wet?RACE_GRIP_WET:RACE_GRIP;
     const prof=[];
     for(const gr of grips)for(const ff of RACE_FUEL){
@@ -230,7 +211,7 @@ function raceCarModel(entry,key,opts){
       brakeF:vehicle.brakeFrontShare||0.7,
       tyre:raceCompound(vehicle.tireType),
       tyreArea:0.25+vehicle.tireWidth/1000,tyreC:TYRE_RACE.cp*vehicle.tireWidth/225,
-      chassis:vehicle.chassis,chLabel:vehicle.chLabel,hp:engine.score.peakHP};
+      chassis:vehicle.chassis,chLabel:vehicle.chLabel,hp:pt.rating().peakHP};
   });
 }
 // Speed (m/s) and fuel flow (g/s) the car's limit gives at line point i, for grip g and tank share ff.

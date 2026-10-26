@@ -1,4 +1,4 @@
-# PIXEL ENGINE SIM v0.6 build 176
+# PIXEL ENGINE SIM v0.6 build 177
 
 **A lightweight, 8-bit style internal combustion engine *designer* & simulator** inspired by *Automation*.
 
@@ -711,7 +711,8 @@ philosophy).
 │   ├── shell.html                 #   the page, with an @include line where each part goes, in order
 │   ├── css/app.css                #   the styles
 │   ├── html/guide.html            #   the in-app guide
-│   └── js/*.js                    #   the script, cut along its sections (physics, vehicle, lap, race, sound, UI…)
+│   └── js/*.js                    #   the script, cut along its sections (physics, vehicle, lap, race, sound, UI…);
+│                                  #   js/powertrain.js is what the vehicle, lap and race see of the engine
 ├── CHANGELOG.md                   # Release history; every commit carries a build number
 ├── favicon.svg / manifest.webmanifest / sw.js   # PWA (icon, manifest, offline SW)
 ├── assets/                        # Self-hosted font + PWA icons
@@ -721,6 +722,7 @@ philosophy).
 │   └── proto/                     #   parked models, not run by the suite — see tests/proto/README.md
 ├── tools/build.mjs                # Joins src/ into index.html; --check verifies the committed file
 ├── tools/stamp.mjs                # Stamps + verifies the build number
+├── tools/fingerprint.mjs          # Every car's 0-100, laps and a race, exactly; --compare proves a refactor moved nothing
 ├── plans/                         # Proposals not yet built — plans/hybrid-electric/
 └── .github/workflows/             # pages.yml: auto-deploy to GitHub Pages · check.yml: index.html is src/ joined
 ```

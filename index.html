@@ -401,7 +401,7 @@ table.fuelmap td.live{box-shadow:inset 0 0 0 2px #fff;font-weight:bold}
 <body>
 <div class="container">
 <header>
-<h1>PIXEL ENGINE SIM v0.6 build 176</h1>
+<h1>PIXEL ENGINE SIM v0.6 build 177</h1>
 <div class="subtitle" id="subtitle">ENGINE DESIGNER • BUILD IT, THEN DRIVE IT</div>
 </header>
 <div class="build-strip" id="buildStrip">
@@ -6151,7 +6151,7 @@ function roadWheelInertia(v){
 // not while the clutch slips or a shift is under way. (Ratio 0 = not coupled.)
 function vehicleMassEff(totalRatio){
   const r=vehicle.rTire;
-  return vehicle.mass+((vehicle.wheelI||0)+(totalRatio>0?(engine.inertia||0)*totalRatio*totalRatio*vehicle.driveEff:0))/(r*r);
+  return vehicle.mass+((vehicle.wheelI||0)+(totalRatio>0?(powertrain().inertia()||0)*totalRatio*totalRatio*vehicle.driveEff:0))/(r*r);
 }
 // Drivetrain: driveline efficiency (crank→wheels) and the driven-axle description.
 const DRIVE_EFF={fwd:0.92,rwd:0.90,awd:0.86};
@@ -7821,6 +7821,83 @@ function getDynoData(){
   dynoCache=pts;dynoCacheKey=key;return pts;
 }
 
+// ====== POWERTRAIN: what drives the wheels, as the vehicle, the lap and the race see it (build 177) ======
+// The 0-100 run, the lap, the race and the GEAR RATIOS window used to reach into the engine wherever they needed
+// something: engine.redline here, engine.score there, a turbo's shaft, the fuel map, a block of overrun torque
+// built inline in the lap. That is fine while there is only one kind of engine; an electric drive (step 2 of
+// plans/hybrid-electric/) has no boost, no fuel and no overrun map, and would have had to be threaded through
+// every one of those places. So every reach from the vehicle side now goes through powertrain(), and the
+// combustion engine is its one implementation.
+//
+// Nothing here computes anything new. Each member is the expression its callers used to write inline, moved
+// here unchanged, so every 0-100, lap and race is bit-for-bit what it was (checked with tools/fingerprint.mjs
+// against build 176). Members read the engine when called, never when defined, so a rebuilt engine, or a test
+// that swaps buildTorqueGrid or buildTorqueCurve, is seen exactly as before.
+const COMBUSTION={
+  kind:'combustion',
+  // Built and rated. buildEngine makes a new score every time the engine changes, so the score is also the
+  // identity a cache is keyed on: {peakHP, peakHPrpm, peakTQ, peakTQrpm, …}.
+  ready:()=>!!engine.score,
+  rating:()=>engine.score,
+  // The speeds the vehicle may run it between (rpm), its own inertia (kg m², before the clutch), installed mass (kg).
+  idleRpm:()=>engine.idleRpmEff,
+  maxRpm:()=>engine.redline,
+  inertia:()=>engine.inertia,
+  mass:()=>engineMass(),
+  // Torque at the design conditions: the steady full-load curve [{rpm,tq}], and the rpm × boost surface the
+  // runs integrate on (gridTorque reads it; grid.laggy marks a boost axis).
+  torqueCurve:()=>buildTorqueCurve(),
+  torqueGrid:()=>lapTorqueGrid(),
+  // Boost with history: a turbo's shaft, spun up by the exhaust and bled off on a lift (advanceShaft).
+  maxBoost:()=>engine.maxBoost,
+  hasShaft:()=>engine.intake==='turbo'&&engine.maxBoost>0&&engine.shaftJ,
+  advanceShaft:(shaftE,rpm,boost,throttle,dt,hMax)=>advanceShaft(shaftE,rpm,boost,throttle,dt,hMax),
+  boostTarget:rpm=>boostTarget(rpm),
+  boostAvail:rpm=>boostAvail(rpm),
+  // Overrun: the engine's own braking torque (Nm, positive) against a closed throttle with the fuel cut, from 500
+  // rpm to past maxRpm in 250 rpm steps (brakeTorqueRaw, the same engine the dyno runs). The lap's engine braking.
+  overrunTable(rl){
+    const ovTab=[];
+    const sv={coolant:state.coolant,oil:state.oil,engineHealth:state.engineHealth,systemVoltage:state.systemVoltage,nitrousActive:state.nitrousActive};
+    state.coolant=90;state.oil=100;state.engineHealth=1;state.systemVoltage=14.0;state.nitrousActive=false;
+    for(let r=500;r<=rl+250;r+=250){
+      const mc=engine.ci?1:clamp(IDLE_AIR/(IDLE_AIR+THR_K*(r/1000)*(1-IDLE_AIR)),0.12,1);   // a closed throttle (mapTarget's law); no plate on a diesel
+      ovTab.push(Math.max(0,-brakeTorqueRaw(r,mc,true)));
+    }
+    Object.assign(state,sv);
+    return ovTab;
+  },
+  // What it carries and burns. fuel(): the FUELS entry (density, label). fuelRate(nom,n): from a solved lap
+  // (nom, its replay of rpm, manifold pressure and power), a function that gives a lap's fuel flow (g/s) at each
+  // of its n points.
+  fuel:()=>FUELS[engine.fuel]||FUELS.gasoline,
+  fuelRate(nom,n){
+    // BSFC (g/kWh) over rpm × MAP, from the engine's own map at design conditions, so the race loop never
+    // calls engine code. Fuel flow at a point is then the power the lap spends there times the BSFC.
+    const iat0=state.iat;state.iat=20;
+    let mapLo=1e9,mapHi=0;for(const q of nom.replay.map){mapLo=Math.min(mapLo,q);mapHi=Math.max(mapHi,q);}
+    mapLo=Math.max(0.2,mapLo*0.95);mapHi=Math.max(mapLo+0.1,mapHi*1.02);
+    const NR=16,NM=10,r0=engine.idleRpmEff,r1=engine.redline,bs=new Float64Array(NR*NM);
+    for(let a=0;a<NR;a++)for(let b=0;b<NM;b++){
+      const x=steadyBSFC(r0+(r1-r0)*a/(NR-1),mapLo+(mapHi-mapLo)*b/(NM-1)).bsfc;
+      bs[a*NM+b]=clamp(isFinite(x)?x:900,150,900);
+    }
+    state.iat=iat0;
+    const bsfcAt=(rpm,map)=>{
+      const x=clamp((rpm-r0)/(r1-r0),0,1)*(NR-1),y=clamp((map-mapLo)/(mapHi-mapLo),0,1)*(NM-1);
+      const a=Math.min(NR-2,Math.floor(x)),b=Math.min(NM-2,Math.floor(y)),fx=x-a,fy=y-b;
+      return (bs[a*NM+b]*(1-fx)+bs[(a+1)*NM+b]*fx)*(1-fy)+(bs[a*NM+b+1]*(1-fx)+bs[(a+1)*NM+b+1]*fx)*fy;
+    };
+    // Off the power the injectors cut and only idle flows; a carburettor cannot cut, and keeps feeding.
+    const carb=!(INTAKE_SYS[engine.intakeSys]||INTAKE_SYS.efi).di&&/^carb|sidedraft/.test(engine.intakeSys);
+    const idleGs=0.12*engine.displacement_L*(carb?2.5:1);
+    return L=>{const R=L.replay,out=new Float32Array(n);
+      for(let i=0;i<n;i++)out[i]=R.pwr[i]>0?R.pwr[i]*bsfcAt(R.rpm[i],R.map[i])/3.6e6+idleGs*0.3:idleGs;
+      return out;};
+  }
+};
+// The powertrain of the car being built. One kind for now; step 2 chooses by the build's powertrain type.
+function powertrain(){return COMBUSTION;}
 // ====== VEHICLE: build spec, mass, gearing, aero and the acceleration simulation ======
 const lerp=(a,b,t)=>a+(b-a)*t;
 // Estimate the engine's installed mass (kg) from its spec — fed into the car's curb weight.
@@ -7851,7 +7928,7 @@ const gearingBias=g=>lerp(1.28,0.74,g/100);   // 1.00 at the slider's default of
 const FD_MIN=2.2, FD_MAX=6.0;   // the mechanical range of a real final drive
 function matchedFinalDrive(){
   const bias=gearingBias(vehicle.gearing);
-  const s=engine&&engine.score;
+  const s=powertrain().rating();
   const topGear=vehicle.ratios[vehicle.ratios.length-1];
   if(!s||!(s.peakHP>0)||!(s.peakHPrpm>0)||!(topGear>0)||!(vehicle.rTire>0))
     return lerp(4.9,2.6,vehicle.gearing/100);
@@ -8062,8 +8139,8 @@ function gwReset(){
 // Road speed (m/s) in a gear at an engine speed, and back.
 const gwV=(rpm,i)=>rpm*(2*Math.PI)/60*vehicle.rTire/(vehicle.ratios[i]*vehicle.finalDrive);
 function renderGearWin(){
-  if(!gw.open||!vehicle||!engine||!engine.score)return;
-  const V=vehicle,n=V.ratios.length,rl=engine.redline,el=id=>document.getElementById(id);
+  if(!gw.open||!vehicle||!powertrain().ready())return;
+  const V=vehicle,n=V.ratios.length,rl=powertrain().maxRpm(),el=id=>document.getElementById(id);
   el('gwTitle').textContent=tr('GEAR RATIOS');
   el('gwSub').textContent=tr(V.chLabel)+' · '+n+tr('-speed')+' '+tr(V.gbLabel);
   el('gwKSp').textContent=tr('SPACING');el('gwKR').textContent=tr('RATIO · ROAD SPEED AT THE LIMITER');
@@ -8132,7 +8209,7 @@ const gwNice=(x,steps)=>{const raw=x/steps,p=Math.pow(10,Math.floor(Math.log10(r
 // The speed range both graphs share: to a little past the top speed, or the top gear's limiter if that is lower.
 function gwXMax(){
   const P=perf||{},vTop=(P.freeSpeed||P.topSpeed||200),n=vehicle.ratios.length;
-  const vLimTop=gwV(engine.redline,n-1)*3.6,x=Math.min(vLimTop,vTop*1.12);
+  const vLimTop=gwV(powertrain().maxRpm(),n-1)*3.6,x=Math.min(vLimTop,vTop*1.12);
   const st=gwNice(x,7);return {xMax:Math.ceil(x/st)*st,xStep:st};
 }
 function gwLayout(W,H,xMax,yMax){
@@ -8140,7 +8217,7 @@ function gwLayout(W,H,xMax,yMax){
   return {x0,x1,y0,y1,x:v=>x0+(x1-x0)*v/xMax,y:u=>y0-(y0-y1)*u/yMax,vx:px=>(px-x0)/(x1-x0)*xMax};
 }
 function drawGearSaw(){
-  const C=gwCanvas('gwSaw');if(!C)return;const {g,W,H}=C,V=vehicle,n=V.ratios.length,rl=engine.redline,P=perf||{},s=engine.score;
+  const C=gwCanvas('gwSaw');if(!C)return;const {g,W,H}=C,V=vehicle,n=V.ratios.length,rl=powertrain().maxRpm(),P=perf||{},s=powertrain().rating();
   const {xMax,xStep}=gwXMax(),yMax=Math.ceil(rl*1.08/1000)*1000;
   const L=gwLayout(W,H,xMax,yMax);gw.layoutSaw={L,xMax,yMax};
   // the band from peak torque to peak power, where the engine pulls hardest
@@ -8179,8 +8256,8 @@ function drawGearSaw(){
   gwCross(g,L,'saw',H);
 }
 function drawGearForce(){
-  const C=gwCanvas('gwForce');if(!C)return;const {g,W,H}=C,V=vehicle,n=V.ratios.length,rl=engine.redline,s=engine.score;
-  const curve=buildTorqueCurve(),idle=engine.idleRpmEff||800;
+  const C=gwCanvas('gwForce');if(!C)return;const {g,W,H}=C,V=vehicle,n=V.ratios.length,pt=powertrain(),rl=pt.maxRpm(),s=pt.rating();
+  const curve=pt.torqueCurve(),idle=pt.idleRpm()||800;
   const tq=rpm=>{if(rpm<=curve[0].rpm)return curve[0].tq;for(let k=1;k<curve.length;k++)if(rpm<=curve[k].rpm){const a=curve[k-1],b=curve[k];return a.tq+(b.tq-a.tq)*(rpm-a.rpm)/(b.rpm-a.rpm);}return curve[curve.length-1].tq;};
   // the ideal from the same curve the gears are drawn from, so no gear can touch more than it
   const eff=V.driveEff,r=V.rTire,fd=V.finalDrive,Pmax=curve.reduce((m,q)=>Math.max(m,q.tq*q.rpm*(2*Math.PI)/60),0);
@@ -8229,7 +8306,8 @@ function gwTip(which,ev){
   gw.hover[which]=vk;which==='saw'?drawGearSaw():drawGearForce();
   const V=vehicle,n=V.ratios.length,vms=vk/3.6;let h='<b>'+Math.round(vk)+' km/h</b>';
   if(which==='saw'){
-    for(let i=0;i<n;i++){const rpm=vk/(gwV(engine.redline,i)*3.6)*engine.redline;if(rpm>=(engine.idleRpmEff||800)&&rpm<=engine.redline)h+='<br>'+esc(gwOrd(i))+' '+Math.round(rpm)+' rpm';}
+    const pt=powertrain(),rl=pt.maxRpm();
+    for(let i=0;i<n;i++){const rpm=vk/(gwV(rl,i)*3.6)*rl;if(rpm>=(pt.idleRpm()||800)&&rpm<=rl)h+='<br>'+esc(gwOrd(i))+' '+Math.round(rpm)+' rpm';}
   }else{
     let b=null,bi=-1;for(let i=0;i<n;i++){const f=lay.Fgear(i,vms);if(f!=null&&(b==null||f>b)){b=f;bi=i;}}
     if(b!=null)h+='<br>'+esc(tr('best'))+': '+esc(gwOrd(bi))+' '+(b/1000).toFixed(2)+' kN';
@@ -8315,7 +8393,7 @@ function buildVehicle(){
   vehicle.speedRating=document.getElementById('vhRating').value||tt.rating;
   vehicle.ratedKmh=(SPEED_RATING[vehicle.speedRating]||SPEED_RATING.Y).kmh;
   vehicle.brakeTh=brakeThermal(vehicle);   // rotors, material and pads: brake temperature and fade (build 107)
-  vehicle.engineMass=engineMass();
+  vehicle.engineMass=powertrain().mass();
   // A real car is quoted at curb mass with its own engine in it. The platform is what is left when
   // that engine comes out, taken once from the engine first fitted, so a swap then moves the mass by
   // the difference between the two engines, as it would on the real car.
@@ -8408,7 +8486,7 @@ function buildVehicle(){
   vehicle.finalDrive=vehicle.finalDriveSet>0?clamp(vehicle.finalDriveSet,FD_MIN,FD_MAX)
     :gs.fd>0?clamp(gs.fd*gearingBias(vehicle.gearing)/gearingBias(52),FD_MIN,FD_MAX):matchedFinalDrive();
   vehicle.cost=computeVehicleCost(ch,tt,wr);
-  vehicle.powerToWeight=engine.score?engine.score.peakHP/(vehicle.mass/1000):0;   // hp per tonne
+  vehicle.powerToWeight=powertrain().ready()?powertrain().rating().peakHP/(vehicle.mass/1000):0;   // hp per tonne
   perf=simulateAccel();
   if(perf){
     perf.brake100=simulateBraking(100/3.6);        // 100→0 stopping distance
@@ -8549,7 +8627,8 @@ function gridTorque(g,rpm,boost){
 // Integrate the standing-start acceleration run through the gearbox with a traction-limited
 // launch (weight transfer + downforce), aero drag and rolling resistance.
 function simulateAccelRun(){
-  if(!engine.score)return null;
+  const pt=powertrain();
+  if(!pt.ready())return null;
   // Performance figures are a design-potential number, not "whatever the live bench happens to be
   // doing". buildTorqueGrid already freezes health/AFR/IAT for the torque surface; the shaft
   // integrator also reads state.iat (via effIAT → T01), so pin ambient for the whole run and
@@ -8558,15 +8637,15 @@ function simulateAccelRun(){
   const svLive={iat:state.iat,engineHealth:state.engineHealth,blown:state.blown,
                 systemVoltage:state.systemVoltage,nitrousActive:state.nitrousActive};
   state.iat=20;state.engineHealth=1;state.blown=false;state.systemVoltage=14.0;state.nitrousActive=false;
-  const curve=buildTorqueCurve();
+  const curve=pt.torqueCurve();
   const tqAt=rpm=>{if(rpm<=curve[0].rpm)return curve[0].tq;for(let i=1;i<curve.length;i++){if(rpm<=curve[i].rpm){const p=curve[i-1],q=curve[i];return p.tq+(q.tq-p.tq)*(rpm-p.rpm)/(q.rpm-p.rpm);}}return curve[curve.length-1].tq;};
   // Torque during the RUN comes off the 2-D grid, because boost is a state with history. The 1-D
   // curve above is still right for the top-speed scan: a car sitting at terminal velocity has been
   // at full throttle a long time and is fully spooled by definition.
-  const grid=lapTorqueGrid();   // one per engine, shared with the lap (build 131: each costs a knock search per point)
+  const grid=pt.torqueGrid();   // one per engine, shared with the lap (build 131: each costs a knock search per point)
   const m=vehicle.mass,r=vehicle.rTire,fd=vehicle.finalDrive,eff=vehicle.driveEff,ratios=vehicle.ratios;
   const vGov=(vehicle.governor||0)/3.6;   // m/s, 0 when the limiter is removed
-  const idle=engine.idleRpmEff,rl=engine.redline,TWO_PI=Math.PI*2,dt=0.005;
+  const idle=pt.idleRpm(),rl=pt.maxRpm(),TWO_PI=Math.PI*2,dt=0.005;
   const gb=vehicle.gb||GEARBOX.manual;
   const shiftTime=gb.shift,tcStall=gb.stall>0?clamp(gb.stall,idle,rl*0.85):0;
   const df=vehicle.df||DIFF.open;
@@ -8585,16 +8664,16 @@ function simulateAccelRun(){
   // The launch rpm is the best of several (below).
   const tcOn=vehicle.tc!==false, Iw=vehicle.wheelI||0, Iwd=Iw*(vehicle.drive==='awd'?1:0.5), mv=m+(Iw-Iwd)/(r*r);
   function run(launchRpm){
-  let boostNow=grid.laggy?0:engine.maxBoost, shaftE=0;
+  let boostNow=grid.laggy?0:pt.maxBoost(), shaftE=0;
   // The shaft does not start from rest. A standing start is made with the engine already held at
   // its launch speed on a slipping clutch or a stalled converter, at full throttle — which is what
   // brake-boosting is, and why a turbo car does not leave the line completely flat.
   // Cap the pre-spool at ~1.2 s: long enough for a small frame to light, short enough that a large
   // frame still leaves partially flat. Two full seconds of brake-boost made every frame fully lit
   // and erased the spool ordering from the standing start.
-  if(grid.laggy&&engine.shaftJ){
+  if(grid.laggy&&pt.hasShaft()){
     let E=0,b0=0;
-    for(let i=0;i<240;i++){const a=advanceShaft(E,launchRpm,b0,1,0.005);E=a.shaftE;b0=a.boost;}
+    for(let i=0;i<240;i++){const a=pt.advanceShaft(E,launchRpm,b0,1,0.005);E=a.shaftE;b0=a.boost;}
     shaftE=E;boostNow=b0;
   }
   // The clutch launch (build 106). The engine waits at launchRpm and the clutch passes what the tyres
@@ -8602,7 +8681,7 @@ function simulateAccelRun(){
   // makes, the difference comes out of the flywheel, which slows until it meets the gearbox and the
   // clutch locks: the energy a dumped clutch puts into a launch. Until it locks the engine is not
   // coupled, so the car carries only its own and the wheels' inertia.
-  const Ie=engine.inertia||0.1, tqCap=CLUTCH_MARGIN*curve.reduce((q,p)=>Math.max(q,p.tq),0);
+  const Ie=pt.inertia()||0.1, tqCap=CLUTCH_MARGIN*curve.reduce((q,p)=>Math.max(q,p.tq),0);
   let slipping=!tcStall, slipW=launchRpm*TWO_PI/60;
   let v=0,x=0,t=0,gear=0,a=0,shiftT=0,w=0;   // w: the driven wheels' angular speed (rad/s)
   const M={t100:null,q400:null,q800:null,q1000:null,v200:null,gripT:0,lagT:0,spinT:0,launchRpm,shifts:[]},V100=100/3.6,V200=200/3.6;
@@ -8657,7 +8736,7 @@ function simulateAccelRun(){
     // than grip-limited ones — AWD on slicks lost to FWD on slicks, which is the wrong ordering.
     // 0.35 still costs boost on a laggy frame without inverting the traction ladder.
     if(grid.laggy){
-      const adv=advanceShaft(shaftE,engineRpm,boostNow,cutNow?0.35:1,dt);
+      const adv=pt.advanceShaft(shaftE,engineRpm,boostNow,cutNow?0.35:1,dt);
       shaftE=adv.shaftE;boostNow=adv.boost;
     }
     const down=0.5*AIR_RHO*vehicle.clA*v*v,Wtot=m*G+down,transfer=m*a*vehicle.cg/vehicle.wb;
@@ -8710,7 +8789,7 @@ function simulateAccelRun(){
     a=(Fs/NS-res)/mv;
     const limited=tcCut||sMax>=TYRE_SLIP_OPT*0.98;
     if(!M.t100){if(limited)M.gripT+=dt;if(sMax>1.5*TYRE_SLIP_OPT)M.spinT+=dt;
-      if(shiftT<=0&&grid.laggy&&boostNow<0.9*boostTarget(engineRpm))M.lagT+=dt;}
+      if(shiftT<=0&&grid.laggy&&boostNow<0.9*pt.boostTarget(engineRpm))M.lagT+=dt;}
     x+=v*dt;t+=dt;
     if(!M.t100&&v>=V100)M.t100=t;
     if(!M.q400&&x>=400)M.q400={t,v};
@@ -9382,11 +9461,11 @@ function optimiseLine(T,margin,lapOf){
 // minimum-time refinement solves this car's own speeds on each candidate line.
 const carHalfWidth=()=>((vehicle.track||1.6)+(vehicle.tireWidth||225)/1000)/2;
 function carLineKey(){
-  const v=vehicle,s=engine.score||{};
+  const v=vehicle,pt=powertrain(),s=pt.rating()||{};
   return [v.mass,v.muRef,v.FzRef,v.clA,v.cdA,v.aeroBal,v.drivenAero,v.drivenWt,v.track,v.tireWidth,v.cg,v.wb,v.fWt,
     v.finalDrive,(v.ratios||[]).join('/'),v.driveEff,v.drive,v.diff,v.brakeDecelCap,v.governor,v.tc,v.camber,v.rollGrad,
     v.trackF,v.trackR,v.lltdF,v.FzRefF,v.camRecF,v.camRecR,v.camberF,v.camberR,
-    s.peakHP,s.peakTQ,engine.redline].map(x=>typeof x==='number'?+x.toFixed(4):x).join('|');
+    s.peakHP,s.peakTQ,pt.maxRpm()].map(x=>typeof x==='number'?+x.toFixed(4):x).join('|');
 }
 function lineFor(T,key){
   const k=carLineKey();
@@ -9401,17 +9480,18 @@ function lineFor(T,key){
 // and a forward traction/power pass, taking the lower speed at each point. Gearbox shift time is
 // charged per gear change around the lap, so a slow-shifting box loses real time on a circuit.
 function simulateLapRun(key,opts){
-  if(!engine.score||!vehicle.mass)return null;
+  const pt=powertrain();
+  if(!pt.ready()||!vehicle.mass)return null;
   const quick=!!(opts&&opts.quick);
   // fromRest (build 137): the lap of a standing start. The car leaves point 0 from rest and the forward pass
   // does not wrap round to it, so the profile is the launch, joining the flying lap at the first braking zone.
   const fromRest=!!(opts&&opts.fromRest);
   const T0=buildTrack(key),T=Object.assign({},T0,{line:opts&&opts.line||lineFor(T0,key)}),p=T.line,n=p.length;   // this car's racing line
   if(!quick){if(p._corners==null)p._corners=detectCorners(p).length;T.corners=p._corners;}   // counted on the line it drives
-  const curve=buildTorqueCurve();
+  const curve=pt.torqueCurve();
   const tqAt=rpm=>{if(rpm<=curve[0].rpm)return curve[0].tq;for(let i=1;i<curve.length;i++){if(rpm<=curve[i].rpm){const a=curve[i-1],b=curve[i];return a.tq+(b.tq-a.tq)*(rpm-a.rpm)/(b.rpm-a.rpm);}}return curve[curve.length-1].tq;};
   const m=vehicle.mass,rT=vehicle.rTire,fd=vehicle.finalDrive,eff=vehicle.driveEff,ratios=vehicle.ratios;
-  const idle=engine.idleRpmEff,rl=engine.redline,TWO_PI=Math.PI*2;
+  const idle=pt.idleRpm(),rl=pt.maxRpm(),TWO_PI=Math.PI*2;
   const df=vehicle.df||DIFF.open;
   const dCorner=df.corner!=null?df.corner:1;   // locking the diff scrubs lateral grip
   // Lateral grip at a normal load and lateral acceleration: the tyres under load transfer and roll
@@ -9710,16 +9790,7 @@ function simulateLapRun(key,opts){
   //     driveline. Mid-shift the clutch is open and there is none. It adds to the brakes and cannot take the
   //     tyres past their grip, so on a hot lap, where the tyres are the limit, it mostly takes work off the brakes
   //     (cooler rotors, less fade); it only shortens a stop where the brakes themselves are the limit.
-  const ovTab=[];
-  {
-    const sv={coolant:state.coolant,oil:state.oil,engineHealth:state.engineHealth,systemVoltage:state.systemVoltage,nitrousActive:state.nitrousActive};
-    state.coolant=90;state.oil=100;state.engineHealth=1;state.systemVoltage=14.0;state.nitrousActive=false;
-    for(let r=500;r<=rl+250;r+=250){
-      const mc=engine.ci?1:clamp(IDLE_AIR/(IDLE_AIR+THR_K*(r/1000)*(1-IDLE_AIR)),0.12,1);   // a closed throttle (mapTarget's law); no plate on a diesel
-      ovTab.push(Math.max(0,-brakeTorqueRaw(r,mc,true)));
-    }
-    Object.assign(state,sv);
-  }
+  const ovTab=pt.overrunTable(rl);
   const overrunTq=r=>{const x=(clamp(r,500,rl)-500)/250,k=Math.min(ovTab.length-2,Math.floor(x));return ovTab[k]+(ovTab[k+1]-ovTab[k])*(x-k);};
   const rpmIn=(g,vv)=>vv*ratios[g]*fd/rT*60/TWO_PI;
   const engineBrakeA=(g,vv)=>overrunTq(clamp(rpmIn(g,vv),idle,rl))*ratios[g]*fd/(rT*eff*m);
@@ -9863,8 +9934,8 @@ function simulateLapRun(key,opts){
     return out;
   }
   let boostLap=null;
-  if(engine.intake==='turbo'&&engine.maxBoost>0&&engine.shaftJ){
-    const grid=lapTorqueGrid(),iat0=state.iat;state.iat=20;   // design figures, like simulateAccel
+  if(pt.hasShaft()){
+    const grid=pt.torqueGrid(),iat0=state.iat;state.iat=20;   // design figures, like simulateAccel
     boostShare=new Float64Array(n).fill(1);boostLap=new Float64Array(n);
     const rpmOf=i=>{const g=holdAt[i]>=0?holdAt[i]:gearAt(v[i]).gear;return clamp(v[i]*ratios[g]*fd/rT*60/TWO_PI,idle,rl);};
     // Where the car is fastest it has been flat for a while, so the shaft is spun up to what the revs there
@@ -9881,17 +9952,17 @@ function simulateLapRun(key,opts){
         return need<=0?0:need/Math.max(1,g.F*boostShare[i]);
       },0.35);
       let E=0,b=0;
-      for(let k=0;k<200;k++){const r=advanceShaft(E,rpmOf(i0),b,1,0.01);E=r.shaftE;b=r.boost;}   // 2 s flat
+      for(let k=0;k<200;k++){const r=pt.advanceShaft(E,rpmOf(i0),b,1,0.01);E=r.shaftE;b=r.boost;}   // 2 s flat
       for(let k=0;k<n;k++){
         const i=(i0+k)%n,j=(i+1)%n;
         const dt=p[i].ds3/Math.max(2,(v[i]+v[j])/2);
         // 10 ms steps: against 2 ms no lap moves by more than 0.01 s, at a fifth of the cost
-        const r=advanceShaft(E,rpmOf(i),b,thrS[i],dt,0.01);E=r.shaftE;b=r.boost;
+        const r=pt.advanceShaft(E,rpmOf(i),b,thrS[i],dt,0.01);E=r.shaftE;b=r.boost;
         boostLap[i]=b;
       }
       for(let i=0;i<n;i++){
-        const rpm=rpmOf(i),full=gridTorque(grid,rpm,boostAvail(rpm));
-        boostShare[i]=full>1?clamp(gridTorque(grid,rpm,Math.min(boostLap[i],boostAvail(rpm)))/full,0,1):1;
+        const rpm=rpmOf(i),full=gridTorque(grid,rpm,pt.boostAvail(rpm));
+        boostShare[i]=full>1?clamp(gridTorque(grid,rpm,Math.min(boostLap[i],pt.boostAvail(rpm)))/full,0,1):1;
       }
       passes();
     }
@@ -10191,33 +10262,14 @@ function withRaceTrim(grip,dm,fn){
 // a factory car or the current build: {name, build}. opts.wet solves the low grip levels a wet race needs.
 function raceCarModel(entry,key,opts){
   return withBuild(entry.build,()=>{
-    if(!engine.score||!vehicle||!vehicle.mass)throw new Error('incomplete build: '+entry.name);
+    const pt=powertrain();
+    if(!pt.ready()||!vehicle||!vehicle.mass)throw new Error('incomplete build: '+entry.name);
     const T=buildTrack(key), line=lineFor(T,key), n=line.length;
-    const fuel=FUELS[engine.fuel]||FUELS.gasoline, tankL=RACE_TANK_L[vehicle.chassis]||60, tankKg=tankL*fuel.density;
+    const fuel=pt.fuel(), tankL=RACE_TANK_L[vehicle.chassis]||60, tankKg=tankL*fuel.density;
     const solve=(grip,ff,o)=>withRaceTrim(grip,(ff-1)*tankKg,()=>simulateLap(key,Object.assign({line},o)));
     const nom=solve(1,0.5);
-    // BSFC (g/kWh) over rpm × MAP, from the engine's own map at design conditions, so the race loop never
-    // calls engine code. Fuel flow at a point is then the power the lap spends there times the BSFC.
-    const iat0=state.iat;state.iat=20;
-    let mapLo=1e9,mapHi=0;for(const q of nom.replay.map){mapLo=Math.min(mapLo,q);mapHi=Math.max(mapHi,q);}
-    mapLo=Math.max(0.2,mapLo*0.95);mapHi=Math.max(mapLo+0.1,mapHi*1.02);
-    const NR=16,NM=10,r0=engine.idleRpmEff,r1=engine.redline,bs=new Float64Array(NR*NM);
-    for(let a=0;a<NR;a++)for(let b=0;b<NM;b++){
-      const x=steadyBSFC(r0+(r1-r0)*a/(NR-1),mapLo+(mapHi-mapLo)*b/(NM-1)).bsfc;
-      bs[a*NM+b]=clamp(isFinite(x)?x:900,150,900);
-    }
-    state.iat=iat0;
-    const bsfcAt=(rpm,map)=>{
-      const x=clamp((rpm-r0)/(r1-r0),0,1)*(NR-1),y=clamp((map-mapLo)/(mapHi-mapLo),0,1)*(NM-1);
-      const a=Math.min(NR-2,Math.floor(x)),b=Math.min(NM-2,Math.floor(y)),fx=x-a,fy=y-b;
-      return (bs[a*NM+b]*(1-fx)+bs[(a+1)*NM+b]*fx)*(1-fy)+(bs[a*NM+b+1]*(1-fx)+bs[(a+1)*NM+b+1]*fx)*fy;
-    };
-    // Off the power the injectors cut and only idle flows; a carburettor cannot cut, and keeps feeding.
-    const carb=!(INTAKE_SYS[engine.intakeSys]||INTAKE_SYS.efi).di&&/^carb|sidedraft/.test(engine.intakeSys);
-    const idleGs=0.12*engine.displacement_L*(carb?2.5:1);
-    const fuelRate=L=>{const R=L.replay,out=new Float32Array(n);
-      for(let i=0;i<n;i++)out[i]=R.pwr[i]>0?R.pwr[i]*bsfcAt(R.rpm[i],R.map[i])/3.6e6+idleGs*0.3:idleGs;
-      return out;};
+    // fuel flow (g/s) at each point of a solved lap, from the powertrain's own map, so the race loop never calls it
+    const fuelRate=pt.fuelRate(nom,n);
     const grips=opts&&opts.wet?RACE_GRIP_WET:RACE_GRIP;
     const prof=[];
     for(const gr of grips)for(const ff of RACE_FUEL){
@@ -10252,7 +10304,7 @@ function raceCarModel(entry,key,opts){
       brakeF:vehicle.brakeFrontShare||0.7,
       tyre:raceCompound(vehicle.tireType),
       tyreArea:0.25+vehicle.tireWidth/1000,tyreC:TYRE_RACE.cp*vehicle.tireWidth/225,
-      chassis:vehicle.chassis,chLabel:vehicle.chLabel,hp:engine.score.peakHP};
+      chassis:vehicle.chassis,chLabel:vehicle.chLabel,hp:pt.rating().peakHP};
   });
 }
 // Speed (m/s) and fuel flow (g/s) the car's limit gives at line point i, for grip g and tank share ff.
@@ -14853,7 +14905,7 @@ function raceFillAdd(){
 }
 function raceEntrantFrom(v){
   if(v==='cur'){
-    if(!engine.score||!vehicle||!vehicle.mass){flash(tr('BUILD A CAR FIRST'),'warn');return null;}
+    if(!powertrain().ready()||!vehicle||!vehicle.mass){flash(tr('BUILD A CAR FIRST'),'warn');return null;}
     const name=(loaded.car&&loaded.car.name)||((engine.name?engine.name+' · ':'')+tr(vehicle.chLabel||'')).trim()||tr('This build');
     return {name,build:serializeBuild(name,'')};
   }
@@ -15340,7 +15392,7 @@ function loadGpxTrack(text,fallbackName){
   setTab('track');
 }
 function refreshLap(){
-  if(!engine.score||!vehicle.mass){lapResult=null;}
+  if(!powertrain().ready()||!vehicle.mass){lapResult=null;}
   else lapResult=simulateLap(trackKey);
   renderLap();
 }
