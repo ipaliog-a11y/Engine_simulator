@@ -1,4 +1,4 @@
-# Plan: hybrids and electric
+# Plan: electric, then hybrids
 
 **Status:** proposal, nothing built. Written at build 172.
 
@@ -89,6 +89,12 @@ This is a decision for the maintainer, not part of the plan by default.
 Each step is one PR, validated the way the rest of the model is: against `tests/test41.mjs`
 (0–100 vs real cars), `aero.mjs` (top speed) and `tests/test43.mjs` (the two simulators agree).
 
+**Decided: electric first, hybrids after.** A hybrid is the combustion engine plus the electric
+drive, so it is built from parts that already exist and are already validated: the motor, battery,
+regen and thermal model of step 2, and the engine of today. Building hybrids first would mean
+designing the electric half and the energy manager at the same time, with no pure electric car to
+check the electric half against.
+
 ### 1. The powertrain interface — no change in results
 
 - Define the interface: `force(v, demand, st)`, `step(dt, st)`, `energyUsed`, limits.
@@ -116,7 +122,7 @@ The design fields, their trade-offs and the physics behind them are in
   (e.g. Tesla Model 3, Porsche Taycan, Hyundai Ioniq 5, a small city EV), plus consumption in
   Wh/km against published figures.
 
-### 3. Hybrids
+### 3. Hybrids — after electric is shipped and validated
 
 In order of complexity, each built on the last:
 

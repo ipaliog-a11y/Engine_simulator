@@ -1,6 +1,6 @@
 # Plan: the motor designer
 
-**Status:** proposal, nothing built. Companion to [README.md](README.md) (the hybrid and electric plan),
+**Status:** proposal, nothing built. Companion to [README.md](README.md) (the electric-then-hybrid plan),
 covering step 2: which design fields an electric drive should have, and how each one changes the
 output.
 
