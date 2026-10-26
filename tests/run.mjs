@@ -10,7 +10,7 @@
 //   node tests/run.mjs 41 43 aero   run only those
 //   node tests/run.mjs --list       show what exists
 import { readdirSync } from 'fs';
-import { spawn } from 'child_process';
+import { spawn, spawnSync } from 'child_process';
 import { fileURLToPath } from 'url';
 import path from 'path';
 
@@ -24,6 +24,11 @@ if (args.includes('--list')) { all.forEach(f => console.log('  ' + f)); process.
 const pick = args.filter(a => !a.startsWith('--'));
 const run = pick.length ? all.filter(f => pick.some(p => f.includes(p))) : all;
 if (!run.length) { console.error('no tests matched ' + pick.join(' ')); process.exit(2); }
+
+// The tests load index.html, which is src/ joined by tools/build.mjs. Run against a stale join and
+// they would pass or fail on code that is no longer the source.
+const built = spawnSync(process.execPath, [path.join(DIR, '..', 'tools', 'build.mjs'), '--check'], { encoding: 'utf8' });
+if (built.status !== 0) { console.error((built.stderr || built.stdout).trim()); process.exit(1); }
 
 const one = f => new Promise(res => {
   const t0 = Date.now();

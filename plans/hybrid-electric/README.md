@@ -98,7 +98,7 @@ regen and thermal model of step 2, and the engine of today. Building hybrids fir
 designing the electric half and the energy manager at the same time, with no pure electric car to
 check the electric half against.
 
-### 0. Split the source — no change in the shipped file
+### 0. Split the source — no change in the shipped file (✅ build 176)
 
 - Move the contents of `index.html` into separate source files along the seams already marked in it
   (styles, markup, physics, vehicle and lap, race, sound, UI, translations).

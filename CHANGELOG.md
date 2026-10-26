@@ -20,6 +20,23 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 Working toward **v1.0 — every number derived, not fitted.**
 
+### The source split into files; the page shipped unchanged (build 176)
+
+- **Step 0 of the electric plan** (`plans/hybrid-electric/`). `index.html` had reached 1.6 MB and 16,400 lines in
+  one file. Its source now lives in `src/`: `shell.html` (the page, with an `@include` line for each part), the
+  styles, the in-app guide, and the script in 32 files cut along the sections already marked in it (fuels and
+  engine types, valvetrain, gas dynamics, i18n, vehicle presets, tyres and brakes, engine physics, the lap
+  solver, the race, sound, saves, reports, the views, the guide, controls).
+- **`tools/build.mjs`** joins them back into `index.html` byte for byte: no transforms, no minifying, no
+  modules (blocked from `file://`), still one classic script. The joined file is identical to build 175's apart
+  from the build stamp. `--check` fails when the committed `index.html` is not exactly `src/` joined, and a file
+  in `src/` that nothing includes fails the build.
+- **`index.html` stays committed**, so GitHub Pages, the tests and `tools/stamp.mjs` work as before. The stamp is
+  now written to `src/shell.html` too. `tests/run.mjs` refuses to run on an `index.html` out of step with `src/`,
+  and a new **Check** workflow does the same on every pull request.
+- No physics, no numbers, no behaviour changed: the freeze on changes that move a number holds until the
+  powertrain interface (step 1) merges.
+
 ### The plan for electric, then hybrids (build 175)
 
 - **No app change.** A plan in `plans/hybrid-electric/`: electric and hybrid cars go into this simulator as

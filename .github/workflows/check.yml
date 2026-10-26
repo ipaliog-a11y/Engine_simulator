@@ -1,0 +1,23 @@
+name: Check
+
+# index.html is committed, built from src/ by tools/build.mjs. This fails a pull request whose
+# index.html is not exactly what its src/ builds: an edit made to index.html directly (which the
+# next build would silently overwrite), or a src/ edit committed without rebuilding.
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: index.html is src/ joined
+        run: node tools/build.mjs --check
