@@ -885,5 +885,6 @@ function applyLang(lang){
     if(el.dataset.en===undefined)el.dataset.en=el.textContent.trim();el.textContent=tr(el.dataset.en);});
   const rp=document.getElementById('racePlay');if(rp&&typeof raceUI!=='undefined')rp.textContent=tr(raceUI.playing?'PAUSE':'PLAY');
   if(typeof raceFillAdd==='function'&&typeof raceUI!=='undefined'){raceFillAdd();renderRaceSetup();renderRacePanel(true);}
+  if(typeof setLiveLabels==='function'&&isElectric())setLiveLabels(true);   // the pass above gave the tiles back their engine titles (build 179)
 }
 

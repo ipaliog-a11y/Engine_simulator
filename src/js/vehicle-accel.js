@@ -205,6 +205,7 @@ function steadyBSFC(rpm,map){
   return {bsfc:fuel*3600*1000/r.powerKW,r};
 }
 function operatingPoint(kind){
+  if(isElectric())return motorOperatingPoint(kind);
   const s=engine.score;
   if(kind==='power')return {rpm:s.peakHPrpm,throttle:1,lambda:bestPowerLambda(),expect:s.peakHP+' hp',
                            tq:s.peakHP*745.7/(s.peakHPrpm*2*Math.PI/60)};

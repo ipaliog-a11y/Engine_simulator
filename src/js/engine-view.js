@@ -58,6 +58,7 @@ function valveLift(deg,open,close){
   return Math.sin(Math.PI*d/span);
 }
 function drawEngine(dt){
+  if(isElectric())return drawMotorView(dt);
   const W=vizW,H=vizH;
   const S=Math.min(W/640,H/420),offX=(W-640*S)/2,offY=(H-420*S)/2;
   const px=x=>offX+x*S,py=y=>offY+y*S,F=n=>Math.round(n*S)+'px "Press Start 2P"';

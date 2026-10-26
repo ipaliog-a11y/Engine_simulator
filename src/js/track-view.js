@@ -341,7 +341,7 @@ function renderLap(){
   const head=document.getElementById('lapHead'),grid=document.getElementById('lapGrid'),note=document.getElementById('lapNote');
   if(!head||!grid)return;
   const L=lapResult;
-  if(!L){head.textContent='—';grid.innerHTML='';if(note)note.textContent='';return;}
+  if(!L){head.textContent=isElectric()?tr(EV_ROAD_NOTE):'—';grid.innerHTML='';if(note)note.textContent='';return;}
   head.innerHTML='<b>'+L.track.label+'</b> • '+(L.length/1000).toFixed(2)+' km • '+L.corners+' '+tr('corners')+' • '+Math.round(L.zMax-L.zMin)+' m '+tr('elevation');
   const cell=(k,v,u,cls)=>'<div class="perf-cell '+(cls||'')+'"><span class="k">'+k+'</span><div class="v">'+v+'</div><span class="u">'+(u||'')+'</span></div>';
   grid.innerHTML=

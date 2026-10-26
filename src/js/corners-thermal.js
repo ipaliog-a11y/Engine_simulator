@@ -111,7 +111,7 @@ function renderPerformance(){
   const head=document.getElementById('perfHead'),grid=document.getElementById('perfGrid'),note=document.getElementById('perfNote');
   if(!head||!grid)return;
   const p=perf;
-  if(!p){head.textContent='—';grid.innerHTML='';if(note)note.textContent='';return;}
+  if(!p){head.textContent=isElectric()?tr(EV_ROAD_NOTE):'—';grid.innerHTML='';if(note)note.textContent='';return;}
   head.innerHTML='<b>'+tr(vehicle.chLabel)+'</b> • '+(engine.score?engine.score.peakHP:0)+' hp • '+Math.round(vehicle.mass)+' kg • <b>'+p.ptw.toFixed(0)+'</b> hp/t';
   const cell=(k,v,u,cls)=>'<div class="perf-cell '+(cls||'')+'"><span class="k">'+k+'</span><div class="v">'+v+'</div><span class="u">'+(u||'')+'</span></div>';
   const b100=p.brake100?Math.round(p.brake100.dist)+' m':'—';
@@ -149,6 +149,7 @@ function coolingEffectiveness(){
   return clamp(engine.radCap*(0.40+0.50*af+fanTerm),0.30,2.20);
 }
 function stepThermal(dt){
+  if(isElectric())return;   // the motor's heat is stepped with its losses (stepMotorBench)
   if(!autoThermal)return;
   const loadFrac=clamp((state.rpm-800)/(engine.redline-800),0,1)*0.6
                 +clamp((state.map-0.4)/(engine.mapMax-0.4),0,1)*0.4;

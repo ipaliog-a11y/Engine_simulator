@@ -930,6 +930,7 @@ function initToneSound(){
 }
 function updateSound(){
   if(!Sound.on||!Sound.ctx)return;
+  if(isElectric())return muteEngineSound();   // a motor's sound is step 4 of the electric plan
   const t=Sound.ctx.currentTime,src=soundSource(),s=src||state;
   // Rotaries sit bright & smooth, diesels dark & clattery; the note opens up with revs.
   const bright=(440+s.rpm*0.15+engine.cylinders*8)*(engine.type==='rotary'?1.5:engine.ci?0.6:1.0);

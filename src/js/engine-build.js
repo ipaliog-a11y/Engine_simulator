@@ -6,7 +6,7 @@ function readEngineFromForm(){
   const maxCyl=(ENGINE_TYPE[type]||ENGINE_TYPE.petrol4).maxCyl||12;   // rotary 4 rotors, 2-stroke 6 cylinders
   let fuel=g('edFuel').value;
   if(tp.ci)fuel='diesel'; else if(fuel==='diesel')fuel='gasoline';   // fuel follows the cycle
-  return {
+  const e={
     type,
     cylinders:clamp(Math.round(+g('edCyl').value||4),1,maxCyl),
     bore_mm:clamp(+g('edBore').value||86,60,110),
@@ -51,6 +51,8 @@ function readEngineFromForm(){
     thermostat:clamp(Math.round(+g('edThermostat').value||88),71,95),
     alternator:g('edAlternator').value
   };
+  if(type==='electric')Object.assign(e,readElectricFromForm());   // the motor and battery (build 179)
+  return e;
 }
 function applyEngineToForm(e){
   const g=id=>document.getElementById(id);
@@ -76,9 +78,11 @@ function applyEngineToForm(e){
   g('edRadiator').value=e.radiator||'stock';g('edFan').value=e.fan||'electric';
   g('edOilCooler').value=e.oilCooler?'yes':'no';g('edThermostat').value=e.thermostat||88;
   g('edAlternator').value=e.alternator||'120';
+  applyElectricToForm(e);
   syncDesignEnable();
 }
 function syncDesignEnable(){
+  if(syncElectricSections())return;   // an electric build has its own sections (build 179)
   const g=id=>document.getElementById(id);
   const type=g('edType').value, tp=ENGINE_TYPE[type]||ENGINE_TYPE.petrol4;
   // Diesel is compression-ignition (no spark, runs on diesel); 2-stroke & rotary use ports
@@ -129,6 +133,8 @@ function syncDesignEnable(){
   g('edAfrMode').disabled=!efi;
 }
 function buildEngine(){
+  if(document.getElementById('edType').value==='electric')return buildElectric();   // build 179
+  setLiveLabels(false);
   const prevStoich=(engine&&engine.stoichAFR)||14.7;   // to preserve lambda across fuel swaps
   engine=readEngineFromForm();
   // Engine cycle/type: power-stroke divisor, compression-ignition & port-induction flags, and

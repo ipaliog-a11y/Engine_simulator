@@ -6,6 +6,7 @@
 // as currently tuned (the curve drawn above, which is also what the PDF tabulates).
 let dynoResultKey='';
 function renderDynoResult(force){
+  if(isElectric())return renderMotorResult(force);
   const box=document.getElementById('dynoResult');
   if(!box||box.hidden||!engine.score)return;
   const data=getDynoData();
@@ -41,6 +42,7 @@ function renderDynoResult(force){
     '</tbody></table>';
 }
 function drawDyno(){
+  if(isElectric())return drawMotorDyno();
   const W=vizW,H=vizH,rMax=engine.redline;
   ctx.fillStyle=C.bg;ctx.fillRect(0,0,W,H);
   drawPixelRect(0,0,W,28,'#12121c');
@@ -126,6 +128,7 @@ function drawDyno(){
   }else{ctx.fillStyle='#667';ctx.fillText(tr('LOG PULL to snapshot & overlay a curve for comparison'),gX+4,iy+41);}
 }
 function updateUI(){
+  if(isElectric())return updateMotorUI();
   if(vizMode==='design')updateFuelMapMarker();
   document.getElementById('valThrottle').textContent=Math.round(state.throttle*100);
   document.getElementById('valLoad').textContent=Math.round(state.load*100);

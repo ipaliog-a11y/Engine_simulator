@@ -3,6 +3,8 @@
 function serializeBuild(name,note){
   const b={app:APP_TAG,v:APP_VER,name:name||'engine',note:note||'',date:new Date().toISOString().slice(0,10),
     engine:readEngineFromForm(),   // clean design spec only (no derived fields)
+    // decision 5: the powertrain type; a build saved without one is combustion (engine.type decides on load)
+    powertrain:document.getElementById('edType').value==='electric'?'electric':'combustion',
     vehicle:readVehicleFromForm(),
     tune:{throttle:state.throttle,load:state.load,elecLoad:state.elecLoad,afr:state.afr,iat:state.iat,coolant:state.coolant,oil:state.oil,autoThermal}};
   // Only persist the fuel map when it's a hand-tuned custom grid (factory maps regenerate).

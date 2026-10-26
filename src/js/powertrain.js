@@ -73,5 +73,18 @@ const COMBUSTION={
       return out;};
   }
 };
-// The powertrain of the car being built. One kind for now; step 2 chooses by the build's powertrain type.
-function powertrain(){return COMBUSTION;}
+// The electric drive (build 179): built, rated and on the bench (src/js/electric-ui.js), but not yet driven. A single-speed
+// reduction, regenerative braking and the motor's heat over a lap are step 2.3, so ready() is false until then: the
+// 0-100, the lap and the race return nothing for it, and the VEHICLE, TRACK and RACE tabs say why (EV_ROAD_NOTE) rather
+// than run a motor through a combustion gearbox. What the car already takes from it is its mass, motor and battery.
+const ELECTRIC={
+  kind:'electric',
+  ready:()=>false,
+  rating:()=>engine.score,
+  idleRpm:()=>0,
+  maxRpm:()=>engine.redline,
+  inertia:()=>engine.inertia,
+  mass:()=>Math.round(engine.motor.mass+engine.pack.mass)
+};
+// The powertrain of the car being built: the engine's type chooses it (a saved build without one is combustion).
+function powertrain(){return isElectric()?ELECTRIC:COMBUSTION;}

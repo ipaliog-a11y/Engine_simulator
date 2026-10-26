@@ -22,7 +22,7 @@ function loadFromHash(){
 function logPull(){
   const data=getDynoData().map(p=>({rpm:p.rpm,torque:p.torque,powerHP:p.powerHP}));
   let peak=0;data.forEach(p=>peak=Math.max(peak,p.powerHP));
-  dynoPulls.push({label:(engine.name||engine.displacement_L.toFixed(1)+'L')+' '+Math.round(peak)+'hp',pts:data,color:PULL_COLORS[dynoPulls.length%PULL_COLORS.length]});
+  dynoPulls.push({label:(engine.name||(isElectric()?'EV':engine.displacement_L.toFixed(1)+'L'))+' '+Math.round(peak)+'hp',pts:data,color:PULL_COLORS[dynoPulls.length%PULL_COLORS.length]});
   if(dynoPulls.length>4)dynoPulls.shift();
   flash(tr('PULL LOGGED')+' ('+dynoPulls.length+' '+tr('overlaid')+') — '+tr('SEE DYNO'));
 }

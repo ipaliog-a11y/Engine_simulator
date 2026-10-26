@@ -115,6 +115,7 @@ function renderChallenge(){
   el.innerHTML=html;
 }
 function updateEngineLabels(){
+  if(isElectric())return updateMotorLabels();
   const disp=engine.displacement_L.toFixed(engine.displacement_L<1?2:1);
   const boostTxt=engine.intake==='na'?'NA':tr(engine.intake.toUpperCase())+' '+engine.boost_bar.toFixed(1)+'bar';
   const unit=engine.type==='rotary'?engine.cylinders+tr('-ROTOR'):engine.cylinders+tr('-CYL')+' '+tr(LAYOUT_LABEL[engine.layout]);
@@ -128,6 +129,7 @@ function updateEngineLabels(){
   nb.disabled=engine.nitrous==='none';nb.classList.remove('on');nb.setAttribute('aria-pressed','false');
 }
 function updateDesignSummary(){
+  if(isElectric())return updateMotorSummary();
   const disp=engine.displacement_L.toFixed(engine.displacement_L<1?3:2);
   const specific=(engine.displacement_L>0? (state.powerHP/engine.displacement_L):0).toFixed(0);
   const note=(engine.layout==='v'||engine.layout==='boxer')?'<br><span style="color:#886">'+tr('Note:')+' '+tr(LAYOUT_LABEL[engine.layout])+' '+tr('bank visuals are simplified for now.')+'</span>':'';

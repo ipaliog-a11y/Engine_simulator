@@ -20,6 +20,36 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 Working toward **v1.0 — every number derived, not fitted.**
 
+### ELECTRIC on the ENGINE tab, the bench and the dyno (build 179)
+
+- **Step 2.2 of the electric plan** (`plans/hybrid-electric/`). ELECTRIC (BATTERY) is a fifth engine type (decision 6):
+  choosing it swaps the combustion sections for MOTOR, INVERTER and BATTERY, 14 fields that each act through the
+  physics of build 178. `src/js/electric-ui.js` (new) builds the drive, rates it, runs it on the bench and the dyno.
+- **The scorecard, in a motor's terms**: peak and continuous power (the most the cooling holds for good at 1.5x the
+  knee), how long the peak lasts before the winding reaches 150 C, the knee, the best efficiency, kW per kg of motor.
+  The grade weighs power density, the constant-power range, efficiency, continuous over peak and the peak's hold;
+  tailpipe emissions are nil and not scored. The cost is the motor and inverter's plus the pack's.
+- **The bench**: the throttle asks for a share of the torque the drive can give at that speed, cut to what the pack
+  supplies; the pack sags and drains; the motor heats through its winding, core and rotor; the controller derates the
+  current from 150 C in the winding (none at 180) and over the magnets' last 20 C; magnets past their grade's limit
+  and a winding past 200 C are damaged for good. The dyno brake is the engine's law, stepped finely enough for a
+  rotor's small inertia. PEAK TORQUE, MAX POWER and ECO find the drive's own points.
+- **The dyno**: torque, power and the drive's efficiency at the pack's charge and the magnets' heat right now, the knee
+  marked, the winding and magnet temperatures; the result table in kW, hp, Nm and efficiency. No cutaway (decision 7):
+  the LIVE view is the bench's instruments and the motor end-on. The engine's sound is muted (a motor's is step 4) and
+  the printable report says it comes later.
+- **The car waits for 2.3**: `powertrain()` is electric for an electric build and carries the motor and pack's mass
+  into the car, but is not ready to drive; VEHICLE, TRACK, RACE and the GEAR RATIOS window say so rather than run a
+  motor through a combustion gearbox.
+- **Saves** carry the powertrain type (decision 5); a save without one is combustion. Chemistries are offered by the
+  technology year (NiMH from 1996, LFP 2005, NCA 2008). New words are English for now (decision 11).
+- **Tests**: `tests/test97.mjs` (new): the sections swap both ways; the scorecard, cost and mass are the motor's and
+  pack's; the bench settles (no swing), drains and heats, and held at peak torque reaches the controller's 150 C and is
+  cut back; the dyno's torque is flat to the knee and falls with a drained pack and hot magnets; the operating points;
+  the car refuses with its reason; saves, share links and old saves; chemistry by year; petrol after a round trip is
+  the same engine with its tiles and controls back; Greek keeps the motor's tiles; no tab throws.
+- Combustion unchanged: `tools/fingerprint.mjs` identical to build 177 in all 2494 values.
+
 ### The electric drive's physics (build 178)
 
 - **Step 2.1 of the electric plan** (`plans/hybrid-electric/`). `src/js/electric.js` (new): the motor, its inverter
