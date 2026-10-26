@@ -95,7 +95,7 @@ function loadGpxTrack(text,fallbackName){
   setTab('track');
 }
 function refreshLap(){
-  if(!engine.score||!vehicle.mass){lapResult=null;}
+  if(!powertrain().ready()||!vehicle.mass){lapResult=null;}
   else lapResult=simulateLap(trackKey);
   renderLap();
 }

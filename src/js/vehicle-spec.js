@@ -28,7 +28,7 @@ const gearingBias=g=>lerp(1.28,0.74,g/100);   // 1.00 at the slider's default of
 const FD_MIN=2.2, FD_MAX=6.0;   // the mechanical range of a real final drive
 function matchedFinalDrive(){
   const bias=gearingBias(vehicle.gearing);
-  const s=engine&&engine.score;
+  const s=powertrain().rating();
   const topGear=vehicle.ratios[vehicle.ratios.length-1];
   if(!s||!(s.peakHP>0)||!(s.peakHPrpm>0)||!(topGear>0)||!(vehicle.rTire>0))
     return lerp(4.9,2.6,vehicle.gearing/100);

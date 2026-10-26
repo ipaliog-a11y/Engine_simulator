@@ -20,6 +20,24 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 Working toward **v1.0 — every number derived, not fitted.**
 
+### The powertrain interface; every number unchanged (build 177)
+
+- **Step 1 of the electric plan** (`plans/hybrid-electric/`). The 0-100 run, the lap, the race and the GEAR RATIOS
+  window reached into the engine wherever they needed something: its redline and idle, its rating, its inertia and
+  mass, the torque curve and the rpm × boost grid, a turbo's shaft, a block of overrun torque built inline in the
+  lap, and the race's BSFC map and idle flow. Each of those now goes through `powertrain()` (`src/js/powertrain.js`),
+  and the combustion engine is its one implementation. An electric drive (step 2) is a second object with the same
+  members, not a thread through every simulator.
+- **Moved, not rewritten.** Each member is the expression its callers used to write, moved unchanged; the overrun
+  table and the race's fuel-rate model moved whole. Members read the engine when called, so a rebuilt engine, or a
+  test that swaps `buildTorqueCurve` or `buildTorqueGrid`, is seen exactly as before.
+- **Bit-identical, and shown to be:** `tools/fingerprint.mjs` (new) records the full 0-100 / top-speed result of all
+  42 real cars and 15 archetypes, a SHA-256 of every real car's whole solved lap of the technical circuit (flying and
+  from rest), six cars round Spa, four race models and a seeded three-lap race. Build 176 and this build compare
+  identical in every value. `--compare` lists anything that moved, for any later change that claims the same.
+- Still read directly, on purpose: the live-timing gauges (boost needle, rev counter), which step 2 changes where an
+  electric display differs, and saving and loading builds.
+
 ### The source split into files; the page shipped unchanged (build 176)
 
 - **Step 0 of the electric plan** (`plans/hybrid-electric/`). `index.html` had reached 1.6 MB and 16,400 lines in

@@ -47,8 +47,8 @@ function gwReset(){
 // Road speed (m/s) in a gear at an engine speed, and back.
 const gwV=(rpm,i)=>rpm*(2*Math.PI)/60*vehicle.rTire/(vehicle.ratios[i]*vehicle.finalDrive);
 function renderGearWin(){
-  if(!gw.open||!vehicle||!engine||!engine.score)return;
-  const V=vehicle,n=V.ratios.length,rl=engine.redline,el=id=>document.getElementById(id);
+  if(!gw.open||!vehicle||!powertrain().ready())return;
+  const V=vehicle,n=V.ratios.length,rl=powertrain().maxRpm(),el=id=>document.getElementById(id);
   el('gwTitle').textContent=tr('GEAR RATIOS');
   el('gwSub').textContent=tr(V.chLabel)+' · '+n+tr('-speed')+' '+tr(V.gbLabel);
   el('gwKSp').textContent=tr('SPACING');el('gwKR').textContent=tr('RATIO · ROAD SPEED AT THE LIMITER');
@@ -117,7 +117,7 @@ const gwNice=(x,steps)=>{const raw=x/steps,p=Math.pow(10,Math.floor(Math.log10(r
 // The speed range both graphs share: to a little past the top speed, or the top gear's limiter if that is lower.
 function gwXMax(){
   const P=perf||{},vTop=(P.freeSpeed||P.topSpeed||200),n=vehicle.ratios.length;
-  const vLimTop=gwV(engine.redline,n-1)*3.6,x=Math.min(vLimTop,vTop*1.12);
+  const vLimTop=gwV(powertrain().maxRpm(),n-1)*3.6,x=Math.min(vLimTop,vTop*1.12);
   const st=gwNice(x,7);return {xMax:Math.ceil(x/st)*st,xStep:st};
 }
 function gwLayout(W,H,xMax,yMax){
@@ -125,7 +125,7 @@ function gwLayout(W,H,xMax,yMax){
   return {x0,x1,y0,y1,x:v=>x0+(x1-x0)*v/xMax,y:u=>y0-(y0-y1)*u/yMax,vx:px=>(px-x0)/(x1-x0)*xMax};
 }
 function drawGearSaw(){
-  const C=gwCanvas('gwSaw');if(!C)return;const {g,W,H}=C,V=vehicle,n=V.ratios.length,rl=engine.redline,P=perf||{},s=engine.score;
+  const C=gwCanvas('gwSaw');if(!C)return;const {g,W,H}=C,V=vehicle,n=V.ratios.length,rl=powertrain().maxRpm(),P=perf||{},s=powertrain().rating();
   const {xMax,xStep}=gwXMax(),yMax=Math.ceil(rl*1.08/1000)*1000;
   const L=gwLayout(W,H,xMax,yMax);gw.layoutSaw={L,xMax,yMax};
   // the band from peak torque to peak power, where the engine pulls hardest
@@ -164,8 +164,8 @@ function drawGearSaw(){
   gwCross(g,L,'saw',H);
 }
 function drawGearForce(){
-  const C=gwCanvas('gwForce');if(!C)return;const {g,W,H}=C,V=vehicle,n=V.ratios.length,rl=engine.redline,s=engine.score;
-  const curve=buildTorqueCurve(),idle=engine.idleRpmEff||800;
+  const C=gwCanvas('gwForce');if(!C)return;const {g,W,H}=C,V=vehicle,n=V.ratios.length,pt=powertrain(),rl=pt.maxRpm(),s=pt.rating();
+  const curve=pt.torqueCurve(),idle=pt.idleRpm()||800;
   const tq=rpm=>{if(rpm<=curve[0].rpm)return curve[0].tq;for(let k=1;k<curve.length;k++)if(rpm<=curve[k].rpm){const a=curve[k-1],b=curve[k];return a.tq+(b.tq-a.tq)*(rpm-a.rpm)/(b.rpm-a.rpm);}return curve[curve.length-1].tq;};
   // the ideal from the same curve the gears are drawn from, so no gear can touch more than it
   const eff=V.driveEff,r=V.rTire,fd=V.finalDrive,Pmax=curve.reduce((m,q)=>Math.max(m,q.tq*q.rpm*(2*Math.PI)/60),0);
@@ -214,7 +214,8 @@ function gwTip(which,ev){
   gw.hover[which]=vk;which==='saw'?drawGearSaw():drawGearForce();
   const V=vehicle,n=V.ratios.length,vms=vk/3.6;let h='<b>'+Math.round(vk)+' km/h</b>';
   if(which==='saw'){
-    for(let i=0;i<n;i++){const rpm=vk/(gwV(engine.redline,i)*3.6)*engine.redline;if(rpm>=(engine.idleRpmEff||800)&&rpm<=engine.redline)h+='<br>'+esc(gwOrd(i))+' '+Math.round(rpm)+' rpm';}
+    const pt=powertrain(),rl=pt.maxRpm();
+    for(let i=0;i<n;i++){const rpm=vk/(gwV(rl,i)*3.6)*rl;if(rpm>=(pt.idleRpm()||800)&&rpm<=rl)h+='<br>'+esc(gwOrd(i))+' '+Math.round(rpm)+' rpm';}
   }else{
     let b=null,bi=-1;for(let i=0;i<n;i++){const f=lay.Fgear(i,vms);if(f!=null&&(b==null||f>b)){b=f;bi=i;}}
     if(b!=null)h+='<br>'+esc(tr('best'))+': '+esc(gwOrd(bi))+' '+(b/1000).toFixed(2)+' kN';

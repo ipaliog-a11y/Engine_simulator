@@ -488,7 +488,7 @@ function roadWheelInertia(v){
 // not while the clutch slips or a shift is under way. (Ratio 0 = not coupled.)
 function vehicleMassEff(totalRatio){
   const r=vehicle.rTire;
-  return vehicle.mass+((vehicle.wheelI||0)+(totalRatio>0?(engine.inertia||0)*totalRatio*totalRatio*vehicle.driveEff:0))/(r*r);
+  return vehicle.mass+((vehicle.wheelI||0)+(totalRatio>0?(powertrain().inertia()||0)*totalRatio*totalRatio*vehicle.driveEff:0))/(r*r);
 }
 // Drivetrain: driveline efficiency (crank→wheels) and the driven-axle description.
 const DRIVE_EFF={fwd:0.92,rwd:0.90,awd:0.86};

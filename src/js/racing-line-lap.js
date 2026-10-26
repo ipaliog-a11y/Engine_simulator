@@ -223,11 +223,11 @@ function optimiseLine(T,margin,lapOf){
 // minimum-time refinement solves this car's own speeds on each candidate line.
 const carHalfWidth=()=>((vehicle.track||1.6)+(vehicle.tireWidth||225)/1000)/2;
 function carLineKey(){
-  const v=vehicle,s=engine.score||{};
+  const v=vehicle,pt=powertrain(),s=pt.rating()||{};
   return [v.mass,v.muRef,v.FzRef,v.clA,v.cdA,v.aeroBal,v.drivenAero,v.drivenWt,v.track,v.tireWidth,v.cg,v.wb,v.fWt,
     v.finalDrive,(v.ratios||[]).join('/'),v.driveEff,v.drive,v.diff,v.brakeDecelCap,v.governor,v.tc,v.camber,v.rollGrad,
     v.trackF,v.trackR,v.lltdF,v.FzRefF,v.camRecF,v.camRecR,v.camberF,v.camberR,
-    s.peakHP,s.peakTQ,engine.redline].map(x=>typeof x==='number'?+x.toFixed(4):x).join('|');
+    s.peakHP,s.peakTQ,pt.maxRpm()].map(x=>typeof x==='number'?+x.toFixed(4):x).join('|');
 }
 function lineFor(T,key){
   const k=carLineKey();
@@ -242,17 +242,18 @@ function lineFor(T,key){
 // and a forward traction/power pass, taking the lower speed at each point. Gearbox shift time is
 // charged per gear change around the lap, so a slow-shifting box loses real time on a circuit.
 function simulateLapRun(key,opts){
-  if(!engine.score||!vehicle.mass)return null;
+  const pt=powertrain();
+  if(!pt.ready()||!vehicle.mass)return null;
   const quick=!!(opts&&opts.quick);
   // fromRest (build 137): the lap of a standing start. The car leaves point 0 from rest and the forward pass
   // does not wrap round to it, so the profile is the launch, joining the flying lap at the first braking zone.
   const fromRest=!!(opts&&opts.fromRest);
   const T0=buildTrack(key),T=Object.assign({},T0,{line:opts&&opts.line||lineFor(T0,key)}),p=T.line,n=p.length;   // this car's racing line
   if(!quick){if(p._corners==null)p._corners=detectCorners(p).length;T.corners=p._corners;}   // counted on the line it drives
-  const curve=buildTorqueCurve();
+  const curve=pt.torqueCurve();
   const tqAt=rpm=>{if(rpm<=curve[0].rpm)return curve[0].tq;for(let i=1;i<curve.length;i++){if(rpm<=curve[i].rpm){const a=curve[i-1],b=curve[i];return a.tq+(b.tq-a.tq)*(rpm-a.rpm)/(b.rpm-a.rpm);}}return curve[curve.length-1].tq;};
   const m=vehicle.mass,rT=vehicle.rTire,fd=vehicle.finalDrive,eff=vehicle.driveEff,ratios=vehicle.ratios;
-  const idle=engine.idleRpmEff,rl=engine.redline,TWO_PI=Math.PI*2;
+  const idle=pt.idleRpm(),rl=pt.maxRpm(),TWO_PI=Math.PI*2;
   const df=vehicle.df||DIFF.open;
   const dCorner=df.corner!=null?df.corner:1;   // locking the diff scrubs lateral grip
   // Lateral grip at a normal load and lateral acceleration: the tyres under load transfer and roll
@@ -551,16 +552,7 @@ function simulateLapRun(key,opts){
   //     driveline. Mid-shift the clutch is open and there is none. It adds to the brakes and cannot take the
   //     tyres past their grip, so on a hot lap, where the tyres are the limit, it mostly takes work off the brakes
   //     (cooler rotors, less fade); it only shortens a stop where the brakes themselves are the limit.
-  const ovTab=[];
-  {
-    const sv={coolant:state.coolant,oil:state.oil,engineHealth:state.engineHealth,systemVoltage:state.systemVoltage,nitrousActive:state.nitrousActive};
-    state.coolant=90;state.oil=100;state.engineHealth=1;state.systemVoltage=14.0;state.nitrousActive=false;
-    for(let r=500;r<=rl+250;r+=250){
-      const mc=engine.ci?1:clamp(IDLE_AIR/(IDLE_AIR+THR_K*(r/1000)*(1-IDLE_AIR)),0.12,1);   // a closed throttle (mapTarget's law); no plate on a diesel
-      ovTab.push(Math.max(0,-brakeTorqueRaw(r,mc,true)));
-    }
-    Object.assign(state,sv);
-  }
+  const ovTab=pt.overrunTable(rl);
   const overrunTq=r=>{const x=(clamp(r,500,rl)-500)/250,k=Math.min(ovTab.length-2,Math.floor(x));return ovTab[k]+(ovTab[k+1]-ovTab[k])*(x-k);};
   const rpmIn=(g,vv)=>vv*ratios[g]*fd/rT*60/TWO_PI;
   const engineBrakeA=(g,vv)=>overrunTq(clamp(rpmIn(g,vv),idle,rl))*ratios[g]*fd/(rT*eff*m);
@@ -704,8 +696,8 @@ function simulateLapRun(key,opts){
     return out;
   }
   let boostLap=null;
-  if(engine.intake==='turbo'&&engine.maxBoost>0&&engine.shaftJ){
-    const grid=lapTorqueGrid(),iat0=state.iat;state.iat=20;   // design figures, like simulateAccel
+  if(pt.hasShaft()){
+    const grid=pt.torqueGrid(),iat0=state.iat;state.iat=20;   // design figures, like simulateAccel
     boostShare=new Float64Array(n).fill(1);boostLap=new Float64Array(n);
     const rpmOf=i=>{const g=holdAt[i]>=0?holdAt[i]:gearAt(v[i]).gear;return clamp(v[i]*ratios[g]*fd/rT*60/TWO_PI,idle,rl);};
     // Where the car is fastest it has been flat for a while, so the shaft is spun up to what the revs there
@@ -722,17 +714,17 @@ function simulateLapRun(key,opts){
         return need<=0?0:need/Math.max(1,g.F*boostShare[i]);
       },0.35);
       let E=0,b=0;
-      for(let k=0;k<200;k++){const r=advanceShaft(E,rpmOf(i0),b,1,0.01);E=r.shaftE;b=r.boost;}   // 2 s flat
+      for(let k=0;k<200;k++){const r=pt.advanceShaft(E,rpmOf(i0),b,1,0.01);E=r.shaftE;b=r.boost;}   // 2 s flat
       for(let k=0;k<n;k++){
         const i=(i0+k)%n,j=(i+1)%n;
         const dt=p[i].ds3/Math.max(2,(v[i]+v[j])/2);
         // 10 ms steps: against 2 ms no lap moves by more than 0.01 s, at a fifth of the cost
-        const r=advanceShaft(E,rpmOf(i),b,thrS[i],dt,0.01);E=r.shaftE;b=r.boost;
+        const r=pt.advanceShaft(E,rpmOf(i),b,thrS[i],dt,0.01);E=r.shaftE;b=r.boost;
         boostLap[i]=b;
       }
       for(let i=0;i<n;i++){
-        const rpm=rpmOf(i),full=gridTorque(grid,rpm,boostAvail(rpm));
-        boostShare[i]=full>1?clamp(gridTorque(grid,rpm,Math.min(boostLap[i],boostAvail(rpm)))/full,0,1):1;
+        const rpm=rpmOf(i),full=gridTorque(grid,rpm,pt.boostAvail(rpm));
+        boostShare[i]=full>1?clamp(gridTorque(grid,rpm,Math.min(boostLap[i],pt.boostAvail(rpm)))/full,0,1):1;
       }
       passes();
     }

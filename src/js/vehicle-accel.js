@@ -52,7 +52,7 @@ function buildVehicle(){
   vehicle.speedRating=document.getElementById('vhRating').value||tt.rating;
   vehicle.ratedKmh=(SPEED_RATING[vehicle.speedRating]||SPEED_RATING.Y).kmh;
   vehicle.brakeTh=brakeThermal(vehicle);   // rotors, material and pads: brake temperature and fade (build 107)
-  vehicle.engineMass=engineMass();
+  vehicle.engineMass=powertrain().mass();
   // A real car is quoted at curb mass with its own engine in it. The platform is what is left when
   // that engine comes out, taken once from the engine first fitted, so a swap then moves the mass by
   // the difference between the two engines, as it would on the real car.
@@ -145,7 +145,7 @@ function buildVehicle(){
   vehicle.finalDrive=vehicle.finalDriveSet>0?clamp(vehicle.finalDriveSet,FD_MIN,FD_MAX)
     :gs.fd>0?clamp(gs.fd*gearingBias(vehicle.gearing)/gearingBias(52),FD_MIN,FD_MAX):matchedFinalDrive();
   vehicle.cost=computeVehicleCost(ch,tt,wr);
-  vehicle.powerToWeight=engine.score?engine.score.peakHP/(vehicle.mass/1000):0;   // hp per tonne
+  vehicle.powerToWeight=powertrain().ready()?powertrain().rating().peakHP/(vehicle.mass/1000):0;   // hp per tonne
   perf=simulateAccel();
   if(perf){
     perf.brake100=simulateBraking(100/3.6);        // 100→0 stopping distance
@@ -286,7 +286,8 @@ function gridTorque(g,rpm,boost){
 // Integrate the standing-start acceleration run through the gearbox with a traction-limited
 // launch (weight transfer + downforce), aero drag and rolling resistance.
 function simulateAccelRun(){
-  if(!engine.score)return null;
+  const pt=powertrain();
+  if(!pt.ready())return null;
   // Performance figures are a design-potential number, not "whatever the live bench happens to be
   // doing". buildTorqueGrid already freezes health/AFR/IAT for the torque surface; the shaft
   // integrator also reads state.iat (via effIAT → T01), so pin ambient for the whole run and
@@ -295,15 +296,15 @@ function simulateAccelRun(){
   const svLive={iat:state.iat,engineHealth:state.engineHealth,blown:state.blown,
                 systemVoltage:state.systemVoltage,nitrousActive:state.nitrousActive};
   state.iat=20;state.engineHealth=1;state.blown=false;state.systemVoltage=14.0;state.nitrousActive=false;
-  const curve=buildTorqueCurve();
+  const curve=pt.torqueCurve();
   const tqAt=rpm=>{if(rpm<=curve[0].rpm)return curve[0].tq;for(let i=1;i<curve.length;i++){if(rpm<=curve[i].rpm){const p=curve[i-1],q=curve[i];return p.tq+(q.tq-p.tq)*(rpm-p.rpm)/(q.rpm-p.rpm);}}return curve[curve.length-1].tq;};
   // Torque during the RUN comes off the 2-D grid, because boost is a state with history. The 1-D
   // curve above is still right for the top-speed scan: a car sitting at terminal velocity has been
   // at full throttle a long time and is fully spooled by definition.
-  const grid=lapTorqueGrid();   // one per engine, shared with the lap (build 131: each costs a knock search per point)
+  const grid=pt.torqueGrid();   // one per engine, shared with the lap (build 131: each costs a knock search per point)
   const m=vehicle.mass,r=vehicle.rTire,fd=vehicle.finalDrive,eff=vehicle.driveEff,ratios=vehicle.ratios;
   const vGov=(vehicle.governor||0)/3.6;   // m/s, 0 when the limiter is removed
-  const idle=engine.idleRpmEff,rl=engine.redline,TWO_PI=Math.PI*2,dt=0.005;
+  const idle=pt.idleRpm(),rl=pt.maxRpm(),TWO_PI=Math.PI*2,dt=0.005;
   const gb=vehicle.gb||GEARBOX.manual;
   const shiftTime=gb.shift,tcStall=gb.stall>0?clamp(gb.stall,idle,rl*0.85):0;
   const df=vehicle.df||DIFF.open;
@@ -322,16 +323,16 @@ function simulateAccelRun(){
   // The launch rpm is the best of several (below).
   const tcOn=vehicle.tc!==false, Iw=vehicle.wheelI||0, Iwd=Iw*(vehicle.drive==='awd'?1:0.5), mv=m+(Iw-Iwd)/(r*r);
   function run(launchRpm){
-  let boostNow=grid.laggy?0:engine.maxBoost, shaftE=0;
+  let boostNow=grid.laggy?0:pt.maxBoost(), shaftE=0;
   // The shaft does not start from rest. A standing start is made with the engine already held at
   // its launch speed on a slipping clutch or a stalled converter, at full throttle — which is what
   // brake-boosting is, and why a turbo car does not leave the line completely flat.
   // Cap the pre-spool at ~1.2 s: long enough for a small frame to light, short enough that a large
   // frame still leaves partially flat. Two full seconds of brake-boost made every frame fully lit
   // and erased the spool ordering from the standing start.
-  if(grid.laggy&&engine.shaftJ){
+  if(grid.laggy&&pt.hasShaft()){
     let E=0,b0=0;
-    for(let i=0;i<240;i++){const a=advanceShaft(E,launchRpm,b0,1,0.005);E=a.shaftE;b0=a.boost;}
+    for(let i=0;i<240;i++){const a=pt.advanceShaft(E,launchRpm,b0,1,0.005);E=a.shaftE;b0=a.boost;}
     shaftE=E;boostNow=b0;
   }
   // The clutch launch (build 106). The engine waits at launchRpm and the clutch passes what the tyres
@@ -339,7 +340,7 @@ function simulateAccelRun(){
   // makes, the difference comes out of the flywheel, which slows until it meets the gearbox and the
   // clutch locks: the energy a dumped clutch puts into a launch. Until it locks the engine is not
   // coupled, so the car carries only its own and the wheels' inertia.
-  const Ie=engine.inertia||0.1, tqCap=CLUTCH_MARGIN*curve.reduce((q,p)=>Math.max(q,p.tq),0);
+  const Ie=pt.inertia()||0.1, tqCap=CLUTCH_MARGIN*curve.reduce((q,p)=>Math.max(q,p.tq),0);
   let slipping=!tcStall, slipW=launchRpm*TWO_PI/60;
   let v=0,x=0,t=0,gear=0,a=0,shiftT=0,w=0;   // w: the driven wheels' angular speed (rad/s)
   const M={t100:null,q400:null,q800:null,q1000:null,v200:null,gripT:0,lagT:0,spinT:0,launchRpm,shifts:[]},V100=100/3.6,V200=200/3.6;
@@ -394,7 +395,7 @@ function simulateAccelRun(){
     // than grip-limited ones — AWD on slicks lost to FWD on slicks, which is the wrong ordering.
     // 0.35 still costs boost on a laggy frame without inverting the traction ladder.
     if(grid.laggy){
-      const adv=advanceShaft(shaftE,engineRpm,boostNow,cutNow?0.35:1,dt);
+      const adv=pt.advanceShaft(shaftE,engineRpm,boostNow,cutNow?0.35:1,dt);
       shaftE=adv.shaftE;boostNow=adv.boost;
     }
     const down=0.5*AIR_RHO*vehicle.clA*v*v,Wtot=m*G+down,transfer=m*a*vehicle.cg/vehicle.wb;
@@ -447,7 +448,7 @@ function simulateAccelRun(){
     a=(Fs/NS-res)/mv;
     const limited=tcCut||sMax>=TYRE_SLIP_OPT*0.98;
     if(!M.t100){if(limited)M.gripT+=dt;if(sMax>1.5*TYRE_SLIP_OPT)M.spinT+=dt;
-      if(shiftT<=0&&grid.laggy&&boostNow<0.9*boostTarget(engineRpm))M.lagT+=dt;}
+      if(shiftT<=0&&grid.laggy&&boostNow<0.9*pt.boostTarget(engineRpm))M.lagT+=dt;}
     x+=v*dt;t+=dt;
     if(!M.t100&&v>=V100)M.t100=t;
     if(!M.q400&&x>=400)M.q400={t,v};
