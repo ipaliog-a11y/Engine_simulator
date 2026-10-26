@@ -80,7 +80,10 @@ to share. They can be kept without one *source* file: a small build script that 
 editing changes. Deciding this **before** step 1 is cheaper than after, because step 1 is the point
 where a `powertrain/` folder starts to pay.
 
-This is a decision for the maintainer, not part of the plan by default.
+**Decided: split.** The sources move into separate files; a build script joins them into one
+`index.html`, and the joined file is **committed**, so GitHub Pages, the tests (which load
+`index.html` from `file://`) and `tools/stamp.mjs` keep working unchanged. A `--check` mode fails when
+the committed `index.html` does not match the sources. This is step 0 below.
 
 ---
 
@@ -94,6 +97,14 @@ drive, so it is built from parts that already exist and are already validated: t
 regen and thermal model of step 2, and the engine of today. Building hybrids first would mean
 designing the electric half and the energy manager at the same time, with no pure electric car to
 check the electric half against.
+
+### 0. Split the source — no change in the shipped file
+
+- Move the contents of `index.html` into separate source files along the seams already marked in it
+  (styles, markup, physics, vehicle and lap, race, sound, UI, translations).
+- A build script joins them back into `index.html`; `--check` verifies the committed file matches.
+- **Acceptance:** the joined `index.html` is byte-identical to the one it replaced (apart from the
+  build stamp), and the full test suite passes.
 
 ### 1. The powertrain interface — no change in results
 
@@ -144,11 +155,32 @@ gear mesh from the reduction. Built standalone in `tests/proto/` first, the way 
 
 ---
 
+## Decisions
+
+| # | question | decision |
+|---|---|---|
+| 1 | One source file or split? | **Split**, joined output committed (step 0). |
+| 3 | How exact must step 1 be? | **Bit-identical** 0–100, top speeds and lap times on every preset. A number that moves is fixed before merging, not explained. |
+| 4 | Version | Electric ships as **v0.7**. v1.0 keeps its meaning: every combustion number derived. |
+| 5 | Saved builds and share links | Saves gain a **powertrain type**; a save without one is read as `combustion`, so every existing save, garage entry and share link still loads. |
+| 6 | Where electric appears | A new type in the **engine-type dropdown**; choosing it swaps the ENGINE tab for MOTOR / BATTERY. |
+| 7 | The live dyno for a motor | **Torque, power and efficiency curves**, with winding and magnet temperatures. No cutaway in the first version. |
+| 8 | Electric against combustion in a race | **Mixed fields allowed, no charging mid-race**: an electric car manages its energy. Categories unchanged. |
+| — | Electric or hybrid first | **Electric first** (see *Build order*). |
+
 ## Open questions
 
-- **Single source file or concatenated build?** See *The real risk* above.
-- **How deep is the motor designer?** Proposed in [motor-design.md](motor-design.md): a first set
-  of about 12 geometric fields, more later. The v1.0 rule applies to whatever is exposed.
-- **Presets:** how many electric and hybrid cars, and do they enter the Supercar category
-  (build 148) alongside combustion cars?
+- **2. Does electric work pause the v1.0 queue?** Proposed: no physics change that moves a number
+  lands while steps 0 and 1 are in progress; after step 1 merges, v1.0 and electric run side by
+  side. Reason: step 0 moves every line of `index.html`, step 1 rewrites the lap, race and
+  acceleration code, and step 1's bit-identical check is only meaningful against a baseline that
+  is not moving underneath it.
+- **9. Is battery and motor technology tied to the decade?** Proposed: yes, at least battery
+  energy per kg and cost per kWh.
+- **10. Which real electric cars to validate against** (and ship as presets)? Proposed: 4–6, e.g.
+  Tesla Model 3, Porsche Taycan, Hyundai Ioniq 5, a small city EV, one performance car; ideally
+  ones with published peak and continuous power.
+- **11. Greek translation.** Proposed: each feature ships its Greek in the same PR.
+- **Motor designer depth:** proposed in [motor-design.md](motor-design.md), a first set of about
+  12 geometric fields, more later.
 - **Name and identity:** stays "Pixel Engine Sim", or becomes "powertrain" in the UI?
