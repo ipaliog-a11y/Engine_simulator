@@ -42,7 +42,9 @@ Working toward **v1.0 — every number derived, not fitted.**
   into the car, but is not ready to drive; VEHICLE, TRACK, RACE and the GEAR RATIOS window say so rather than run a
   motor through a combustion gearbox.
 - **Saves** carry the powertrain type (decision 5); a save without one is combustion. Chemistries are offered by the
-  technology year (NiMH from 1996, LFP 2005, NCA 2008). New words are English for now (decision 11).
+  technology year (NiMH from 1996, LFP 2005, NCA 2008). New words are English for now (decision 11), except what every
+  player sees (the ELECTRIC choice, the build message); test87 holds the 64 electric-only words as a budget that may
+  only come down, as it holds the guide's, and every other word to the full rule.
 - **Tests**: `tests/test97.mjs` (new): the sections swap both ways; the scorecard, cost and mass are the motor's and
   pack's; the bench settles (no swing), drains and heats, and held at peak torque reaches the controller's 150 C and is
   cut back; the dyno's torque is flat to the knee and falls with a drained pack and hot magnets; the operating points;
