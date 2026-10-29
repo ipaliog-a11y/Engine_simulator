@@ -1,6 +1,6 @@
 # Plan: electric, then hybrids
 
-**Status:** proposal, nothing built. Written at build 175.
+**Status:** steps 0-2 done: battery electric shipped as **v0.7** (builds 176-184). Next: step 3, hybrids. Written at build 175.
 
 Should hybrid and electric cars become a new game built from this one, or live in this one? This
 document answers that, lists what would have to change, and gives an order to build it in.
@@ -114,7 +114,7 @@ check the electric half against.
 - **Acceptance:** every existing test passes with bit-identical lap times, 0–100 and top speeds.
   A refactor that moves a number is not a refactor.
 
-### 2. Battery electric
+### 2. Battery electric (✅ v0.7, builds 178-184)
 
 The design fields, their trade-offs and the physics behind them are in
 [motor-design.md](motor-design.md).

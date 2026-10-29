@@ -20,7 +20,7 @@ import { fileURLToPath } from 'url';
 import path from 'path';
 import { execSync } from 'child_process';
 
-const VERSION = '0.6';
+const VERSION = '0.7';
 const ROOT = fileURLToPath(new URL('..', import.meta.url));
 const check = process.argv.includes('--check');
 const STAMP_RE = /PIXEL ENGINE SIM v[\d.]+ build (\d+)/;

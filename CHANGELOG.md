@@ -20,6 +20,34 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 Working toward **v1.0 — every number derived, not fitted.**
 
+The model currently reaches its accuracy partly through lumped coefficients that were tuned until
+the outputs matched reality (`CAM{peakShift, ampMul, scav}`, `EXHAUST{topGain, lowLoss}`,
+`TURBO{spool, choke, k, flow}`, `IMEP_K`, `DIFF_ASYM0`, `KVCAP`). v1.0 replaces them with quantities
+derived from geometry and physical law, component by component, and accepts whatever accuracy that
+produces rather than tuning toward a target.
+
+Planned order: valvetrain and port flow → tyre → turbo maps → combustion cycle.
+
+---
+
+## [0.7] — 2026-10
+
+The electric release (`plans/hybrid-electric/`, decision 4): battery-electric cars in the same game as the engines,
+through the same vehicle, lap and race code, with every combustion number unchanged (`tools/fingerprint.mjs`).
+
+- **The source split and the powertrain interface** (builds 176-177): `src/` joined into the one `index.html`, and the
+  0-100, the lap, the race and the gear window reading whatever drives the wheels through `powertrain()`.
+- **The electric drive** (178-179): a permanent-magnet motor, IGBT or SiC inverter and a battery of four chemistries
+  by year, derived from what they are built of and checked against the measured Model 3 motor and the 2012 Leaf;
+  ELECTRIC in the engine-type list, with MOTOR / INVERTER / BATTERY, a bench, a dyno and saves.
+- **On the road** (180): one reduction, regenerative braking, motor and pack heat over a lap.
+- **In a race** (181): the pack's energy instead of fuel, no charging mid-race, an energy manager, OUT OF CHARGE.
+- **The induction motor** (182), checked against the Tesla Model S 60's published geometry.
+- **The three Teslas** (183): more than one motor per car, power cells, the Model 3 RWD, Model Y Long Range and
+  Model S Plaid against their published 0-100 and top speeds.
+- **Consumption over the WLTP cycle** (184): the three Teslas within 5% of their homologated Wh/km.
+- It also carries the v1.0 conversions made since 0.6 (below the electric builds).
+
 ### Consumption over the WLTP cycle (build 184)
 
 - **Step 2.5c of the electric plan.** `src/js/electric-cycle.js` (new) drives the WLTC class 3b cycle (1800 s, 23.27 km,
@@ -2891,13 +2919,6 @@ trapping — the next conversion. `test44` records this as a budget of 2 that ca
 the base VE bell curve. When wave tuning and trapping are derived, the powerband position will
 emerge from cam duration instead of being asserted by `peakShift`.
 
-The model currently reaches its accuracy partly through lumped coefficients that were tuned until
-the outputs matched reality (`CAM{peakShift, ampMul, scav}`, `EXHAUST{topGain, lowLoss}`,
-`TURBO{spool, choke, k, flow}`, `IMEP_K`, `DIFF_ASYM0`, `KVCAP`). v1.0 replaces them with quantities
-derived from geometry and physical law, component by component, and accepts whatever accuracy that
-produces rather than tuning toward a target.
-
-Planned order: valvetrain and port flow → tyre → turbo maps → combustion cycle.
 
 ---
 
@@ -2997,5 +3018,6 @@ Everything below shipped under the v0.5 label, which was set at PR #9 and never 
 - Portrait-friendly responsive layout and Greek localisation (#21).
 - Printable dyno report: PNG and library-free PDF export (#34).
 
-[Unreleased]: https://github.com/ipaliog-a11y/Engine_simulator/compare/main...HEAD
+[Unreleased]: https://github.com/ipaliog-a11y/Engine_simulator/compare/v0.7...HEAD
+[0.7]: https://github.com/ipaliog-a11y/Engine_simulator/releases/tag/v0.7
 [0.6]: https://github.com/ipaliog-a11y/Engine_simulator/releases/tag/v0.6
