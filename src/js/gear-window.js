@@ -13,6 +13,7 @@
 const gw={open:false,lap:null,lapKey:'',hover:{saw:null,force:null},busy:false};
 const gwOrd=i=>tr(['1st','2nd','3rd'][i]||((i+1)+'th'));
 function openGearWin(){
+  if(isElectric()){flash(tr(EV_ROAD_NOTE),'warn');return;}   // the reduction gear arrives with the electric car (2.3)
   const w=document.getElementById('gearWin');if(!w)return;
   w.hidden=false;gw.open=true;gw.lap=null;renderGearWin();
   document.getElementById('gwClose').focus();

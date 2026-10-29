@@ -12,7 +12,10 @@
 //     and after switching from English mid-session (the refresh path, which once left the top bar in English);
 //   · switching back to English leaves no Greek behind (a label cached in Greek would stay Greek for good);
 //   · the guide: its blocks without Greek are a budget that may only go down, so new guide text must be
-//     translated or the budget raised on purpose, in the open. The guide's own text is excluded from the sweep.
+//     translated or the budget raised on purpose, in the open. The guide's own text is excluded from the sweep;
+//   · the electric drive's words (src/js/electric-ui.js, build 179) are a second such budget: decision 11 of
+//     plans/hybrid-electric/ lets them fall back to English for now. Only what an electric build shows is in it; what
+//     every player sees (the ELECTRIC choice, the build message) is translated, and the sweep below runs on an engine.
 import { chromium } from './pw.mjs';
 import { fileURLToPath, pathToFileURL } from 'url';
 import { readFileSync } from 'fs';
@@ -24,6 +27,10 @@ const fails = [], errors = [];
 
 // The guide's blocks with no Greek. Lower it as pages are translated; never raise it to make new text pass.
 const GUIDE_BLOCKS_WITHOUT_GREEK = 0;   // build 162 translated the guide
+// The electric drive's tr() words with no Greek yet (decision 11: English for now). Lower it as they are translated;
+// never raise it to let new text pass. A word not in electric-ui.js is held to the full rule above.
+const ELECTRIC_WORDS_WITHOUT_GREEK = 64;
+const EV_SRC = readFileSync(path.join(repo, 'src', 'js', 'electric-ui.js'), 'utf8');
 
 // Kept in Latin letters by the translation (as the existing Greek does: ΣΤΟΧΟΣ BOOST, LSD ΜΕ ΔΙΣΚΟΥΣ), units, and
 // names (SYNTH and GAS are the two sound models'). Matched as whole words, case-sensitive.
@@ -76,7 +83,13 @@ const tables = await page.evaluate(([lits, ctxLits]) => ({
 }), [[...lits], ctxLits]);
 console.log('tr() literals:', lits.size, '| without Greek:', tables.noGreek.length, '| guide titles without Greek:', tables.titles.length,
   '| guide blocks without Greek:', tables.blocks, '(budget', GUIDE_BLOCKS_WITHOUT_GREEK + ')');
-if (tables.noGreek.length) fails.push('tr() calls with no Greek: ' + tables.noGreek.join(' | '));
+// the electric drive's own words count against their budget (decision 11); any other word must have Greek
+const isEvWord = k => EV_SRC.includes("tr('" + k.replace(/'/g, "\\'") + "')") || EV_SRC.includes('tr("' + k + '")');
+const evNoGreek = tables.noGreek.filter(isEvWord), noGreek = tables.noGreek.filter(k => !isEvWord(k));
+console.log('electric words without Greek:', evNoGreek.length, '(budget', ELECTRIC_WORDS_WITHOUT_GREEK + ')');
+if (evNoGreek.length > ELECTRIC_WORDS_WITHOUT_GREEK) fails.push(`electric words without Greek ${evNoGreek.length} > budget ${ELECTRIC_WORDS_WITHOUT_GREEK}: translate the new text`);
+if (evNoGreek.length < ELECTRIC_WORDS_WITHOUT_GREEK) console.log(`  (the electric budget can come down to ${evNoGreek.length})`);
+if (noGreek.length) fails.push('tr() calls with no Greek: ' + noGreek.join(' | '));
 if (tables.empty.length) fails.push('I18N entries with an empty Greek: ' + tables.empty.join(' | '));
 if (tables.titles.length) fails.push('guide titles with no Greek: ' + tables.titles.join(' | '));
 if (tables.cats.length) fails.push('guide categories with no Greek: ' + tables.cats.join(' | '));

@@ -914,6 +914,7 @@ function brakeTorque(){
 }
 // Integrate the dynamic engine: spool → manifold fill → net torque → RPM via inertia.
 function stepEngine(dt){
+  if(isElectric())return stepMotorBench(dt);
   stepBoost(dt);
   state.map+=(mapTarget()-state.map)*(1-Math.exp(-MAP_K*engine.intakeRespK*dt));
   if(state.nitrousActive){   // deplete the bottle while spraying at WOT (~14 s per fill)
@@ -933,6 +934,7 @@ function stepEngine(dt){
 // Integrate the battery: charge when the alternator out-supplies demand, drain otherwise.
 // System voltage tracks state of charge; a flat battery weakens the spark (see ignVFactor).
 function stepElectrical(dt){
+  if(isElectric())return;   // no alternator: the traction pack is the bench's (stepMotorBench)
   const netA=altOutputA(state.rpm)-elecDemandA();
   state.batterySOC=clamp(state.batterySOC+netA*dt*0.0004,0,1);
   const charging=netA>0&&state.batterySOC<0.999;
@@ -944,6 +946,7 @@ function stepElectrical(dt){
 // engines. A clean tune barely wears. At zero health the engine lets go (rebuild = BUILD).
 function healthFactor(){return state.blown?0:(0.5+0.5*state.engineHealth);}
 function stepWear(dt){
+  if(isElectric())return stepMotorWear(dt);
   if(!wearEnabled){state.engineHealth=1;state.blown=false;state.wearCause='';return;}  // invincible
   if(state.blown)return;   // stays dead until rebuilt; keep the cause that killed it
   const lam=state.afr/engine.stoichAFR;
@@ -1030,6 +1033,7 @@ function computeEmissions(){
   return state.emRating;
 }
 function updatePhysics(){
+  if(isElectric())return;   // the bench step does it (stepMotorBench)
   const map=liveMap();
   // AUTO (ECU MAP) mode: the ECU sets the live mixture from its load×rpm map, so the AFR
   // readout, fuel flow, emissions and wear all reflect the mapped value.
@@ -1057,6 +1061,7 @@ function updatePhysics(){
   state.bsfc=state.powerKW>0.5?(meteredFuel*3600*1000)/state.powerKW:999;
 }
 function getDynoData(){
+  if(isElectric())return motorDynoData();
   const key=[buildRev,state.afr.toFixed(1),state.iat,Math.round(state.coolant),Math.round(state.oil)].join('|');
   if(dynoCache&&dynoCacheKey===key)return dynoCache;
   const pts=[],rMax=engine.redline,step=Math.max(50,Math.round((rMax-1000)/70/50)*50);

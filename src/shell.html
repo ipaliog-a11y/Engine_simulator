@@ -16,7 +16,7 @@
 <body>
 <div class="container">
 <header>
-<h1>PIXEL ENGINE SIM v0.6 build 178</h1>
+<h1>PIXEL ENGINE SIM v0.6 build 179</h1>
 <div class="subtitle" id="subtitle">ENGINE DESIGNER • BUILD IT, THEN DRIVE IT</div>
 </header>
 <div class="build-strip" id="buildStrip">
@@ -53,7 +53,7 @@
 
 <div class="design-section">Bottom End</div>
 <div class="design-grid">
-<div class="field"><label for="edType">ENGINE TYPE</label><select id="edType"><option value="petrol4">PETROL 4-STROKE</option><option value="diesel">DIESEL (CI)</option><option value="twostroke">2-STROKE</option><option value="rotary">ROTARY (WANKEL)</option></select></div>
+<div class="field"><label for="edType">ENGINE TYPE</label><select id="edType"><option value="petrol4">PETROL 4-STROKE</option><option value="diesel">DIESEL (CI)</option><option value="twostroke">2-STROKE</option><option value="rotary">ROTARY (WANKEL)</option><option value="electric">ELECTRIC (BATTERY)</option></select></div>
 <div class="field"><label for="edCyl"><span id="lblCyl">CYLINDERS</span></label><select id="edCyl"><option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option><option value="6">6</option><option value="8">8</option><option value="10">10</option><option value="12">12</option></select></div>
 <div class="field"><label for="edLayout">LAYOUT</label><select id="edLayout"><option value="inline">INLINE</option><option value="v">V</option><option value="boxer">BOXER</option></select></div>
 <div class="field"><label for="edBore"><span id="lblBore">BORE (mm)</span></label><input type="number" id="edBore" min="60" max="110" step="0.5" value="86"></div>
@@ -61,6 +61,32 @@
 <div class="field"><label for="edEcc">ECCENTRICITY e (mm)</label><input type="number" id="edEcc" min="8" max="25" step="0.5" value="15"></div>
 <div class="field"><label for="edCR">COMPRESSION</label><input type="number" id="edCR" min="7" max="24" step="0.1" value="10.5"></div>
 <div class="field"><label for="edRedline">REDLINE (rpm)</label><input type="number" id="edRedline" min="2000" max="11000" step="50" value="7000"></div>
+</div>
+
+<div class="design-section" data-ev>Motor</div>
+<div class="design-grid" data-ev>
+<div class="field"><label for="evRotorD">ROTOR DIAMETER (mm)</label><input type="number" id="evRotorD" min="80" max="260" step="1" value="150"></div>
+<div class="field"><label for="evStack">STACK LENGTH (mm)</label><input type="number" id="evStack" min="40" max="250" step="1" value="134"></div>
+<div class="field"><label for="evPoles">POLES</label><select id="evPoles"><option value="4">4</option><option value="6">6</option><option value="8">8</option><option value="10">10</option><option value="12">12</option></select></div>
+<div class="field"><label for="evTurns">TURNS PER PHASE</label><input type="number" id="evTurns" min="4" max="60" step="1" value="12"></div>
+<div class="field"><label for="evMagnet">MAGNETS</label><select id="evMagnet"><option value="ferrite">FERRITE</option><option value="ndfeb">NdFeB (SH)</option><option value="ndfebDy">NdFeB + Dy (UH)</option></select></div>
+<div class="field"><label for="evRetention">MAGNET RETENTION</label><select id="evRetention"><option value="bridges">IRON BRIDGES</option><option value="sleeve">CARBON SLEEVE</option></select></div>
+<div class="field"><label for="evCooling">MOTOR COOLING</label><select id="evCooling"><option value="air">AIR (FINNED)</option><option value="jacket">WATER JACKET</option><option value="spray">OIL SPRAY</option><option value="slot">DIRECT SLOT</option></select></div>
+<div class="field"><label for="evMaxRpm">MAX SPEED (rpm)</label><input type="number" id="evMaxRpm" min="4000" max="25000" step="100" value="18000"></div>
+</div>
+
+<div class="design-section" data-ev>Inverter</div>
+<div class="design-grid" data-ev>
+<div class="field"><label for="evInverter">SWITCHES</label><select id="evInverter"><option value="igbt">SILICON IGBT</option><option value="sic">SiC MOSFET</option></select></div>
+<div class="field"><label for="evAmps">CURRENT RATING (A rms)</label><input type="number" id="evAmps" min="100" max="1600" step="10" value="950"></div>
+</div>
+
+<div class="design-section" data-ev>Battery</div>
+<div class="design-grid" data-ev>
+<div class="field"><label for="evChem">CHEMISTRY</label><select id="evChem"><option value="lead">LEAD-ACID</option><option value="nimh">NiMH</option><option value="lfp">LFP</option><option value="nca">NCA / NMC</option></select></div>
+<div class="field"><label for="evSeries">CELLS IN SERIES</label><input type="number" id="evSeries" min="20" max="400" step="1" value="96"></div>
+<div class="field"><label for="evKWh">CAPACITY (kWh)</label><input type="number" id="evKWh" min="5" max="200" step="0.5" value="75"></div>
+<div class="field"><label for="evYear">TECHNOLOGY YEAR</label><input type="number" id="evYear" min="1990" max="2026" step="1" value="2020"></div>
 </div>
 
 <div class="design-section">Air Path</div>
@@ -456,6 +482,7 @@
 <!-- @include js/fullscreen-track.js -->
 <!-- @include js/dyno-ui.js -->
 <!-- @include js/guide.js -->
+<!-- @include js/electric-ui.js -->
 <!-- @include js/controls-boot.js -->
 </script>
 </body>

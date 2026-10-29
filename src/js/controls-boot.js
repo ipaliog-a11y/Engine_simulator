@@ -206,7 +206,7 @@ function bindControls(){
   // Language selector
   const langSel=document.getElementById('edLang');
   if(langSel){langSel.value=currentLang;langSel.addEventListener('change',e=>{applyLang(e.target.value);flash(e.target.value==='el'?'Γλώσσα: Ελληνικά':'Language: English');});}
-  document.getElementById('btnBuild').addEventListener('click',()=>{buildEngine();flash(tr('ENGINE BUILT')+' • '+engine.displacement_L.toFixed(engine.displacement_L<1?2:1)+'L');setTab('dyno')});
+  document.getElementById('btnBuild').addEventListener('click',()=>{buildEngine();flash(isElectric()?tr('DRIVE BUILT')+' • '+engine.score.peakKW+' kW':tr('ENGINE BUILT')+' • '+engine.displacement_L.toFixed(engine.displacement_L<1?2:1)+'L');setTab('dyno')});
   document.getElementById('btnDesignReset').addEventListener('click',()=>{applyEngineToForm(Object.assign({},DEFAULT_ENGINE));buildEngine();flash(tr('DESIGN RESET TO DEFAULTS'))});
 }
 function syncSliders(){

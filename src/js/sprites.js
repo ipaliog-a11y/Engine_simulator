@@ -221,6 +221,7 @@ const FUEL_COL={gasoline:'#00cc66',race:'#9a44ff',e85:'#44aaff',methanol:'#00ccf
 const HDR_COL={stock:'#6a4a3a',sport:'#c08040',race:'#e0a060'};
 function drawEngineSprite(buf,e,t){
   e=e||DEFAULT_ENGINE;t=t||0;
+  if(e.type==='electric')return drawMotorSprite(buf,e,t);
   const n=Math.max(1,e.cylinders||4),bore=e.bore_mm||86,stroke=e.stroke_mm||86;
   const type=e.type||'petrol4',two=type==='twostroke';
   const layout=type==='rotary'?'rotary':(e.layout||'inline');
@@ -394,6 +395,7 @@ function drawEngineSprite(buf,e,t){
   buf.under(0,75,ENG_GW,1,'#26263a');
 }
 function engineCaption(e){
+  if(e.type==='electric')return motorCaption(e);
   // the same geometry buildEngine uses (a Wankel chamber is 3√3·e·R·W), so an unbuilt form reads right
   const B=(e.bore_mm||86)/10,S=(e.stroke_mm||86)/10,n=e.cylinders||4;
   const d=e.type==='rotary'?3*Math.sqrt(3)*(Math.min(e.ecc_mm||B*10/7,B*2)/10)*B*S*n/1000:Math.PI/4*B*B*S*n/1000;
@@ -430,7 +432,7 @@ function renderCarPreview(){
 function renderEnginePreview(){
   const cv=document.getElementById('enginePreview');if(!cv)return;
   const e=readEngineFromForm();
-  paintEngine(cv,e,{t:previewT,caption:true,title:engineCaption(e),sub:tr((ENGINE_TYPE[e.type]||ENGINE_TYPE.petrol4).label)});
+  paintEngine(cv,e,{t:previewT,caption:true,title:engineCaption(e),sub:tr(e.type==='electric'?'ELECTRIC':(ENGINE_TYPE[e.type]||ENGINE_TYPE.petrol4).label)});
 }
 function stepPreviews(dt){
   if(!previewStill)previewT+=dt;

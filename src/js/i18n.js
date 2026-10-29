@@ -309,6 +309,7 @@ const I18N={
   '1990s':{el:'Δεκαετία του 1990'},'2000s':{el:'Δεκαετία του 2000'},'2010s':{el:'Δεκαετία του 2010'},'2020s':{el:'Δεκαετία του 2020'},
   // dropdown choices (and the labels the summaries reuse). An option looks up 'opt:'+text first, for
   // the few words that read differently as a part grade than elsewhere ('RACE' is the RACE tab).
+  'ELECTRIC (BATTERY)':{el:'ΗΛΕΚΤΡΙΚΟΣ (ΜΠΑΤΑΡΙΑ)'},'DRIVE BUILT':{el:'ΤΟ ΗΛΕΚΤΡΙΚΟ ΣΥΣΤΗΜΑ ΚΑΤΑΣΚΕΥΑΣΤΗΚΕ'},
   'PETROL 4-STROKE':{el:'ΒΕΝΖΙΝΗ ΤΕΤΡΑΧΡΟΝΟΣ'},'DIESEL (CI)':{el:'ΠΕΤΡΕΛΑΙΟ (CI)'},'2-STROKE':{el:'ΔΙΧΡΟΝΟΣ'},'ROTARY (WANKEL)':{el:'ΠΕΡΙΣΤΡΟΦΙΚΟΣ (WANKEL)'},
   'INLINE':{el:'ΣΕ ΣΕΙΡΑ'},'BOXER':{el:'ΜΠΟΞΕΡ'},'NATURALLY ASP.':{el:'ΑΤΜΟΣΦΑΙΡΙΚΟΣ'},
   'NONE':{el:'ΧΩΡΙΣ'},'SMALL CORE':{el:'ΜΙΚΡΟΣ ΠΥΡΗΝΑΣ'},'LARGE CORE':{el:'ΜΕΓΑΛΟΣ ΠΥΡΗΝΑΣ'},
@@ -885,5 +886,6 @@ function applyLang(lang){
     if(el.dataset.en===undefined)el.dataset.en=el.textContent.trim();el.textContent=tr(el.dataset.en);});
   const rp=document.getElementById('racePlay');if(rp&&typeof raceUI!=='undefined')rp.textContent=tr(raceUI.playing?'PAUSE':'PLAY');
   if(typeof raceFillAdd==='function'&&typeof raceUI!=='undefined'){raceFillAdd();renderRaceSetup();renderRacePanel(true);}
+  if(typeof setLiveLabels==='function'&&isElectric())setLiveLabels(true);   // the pass above gave the tiles back their engine titles (build 179)
 }
 

@@ -212,6 +212,7 @@ function downloadBlob(blob,fn){
   setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove();},1000);
 }
 function exportDynoPNG(){
+  if(isElectric()){flash(tr(EV_REPORT_NOTE),'warn');return;}
   if(!engine.score){flash(tr('BUILD AN ENGINE FIRST'),'warn');return;}
   const cv=dynoReportCanvas(2),fn=reportFileName('png');
   cv.toBlob(b=>{if(!b){flash(tr('REPORT FAILED'),'err');return;}downloadBlob(b,fn);flash(tr('SAVED REPORT:')+' '+fn);},'image/png');
@@ -219,6 +220,7 @@ function exportDynoPNG(){
 // A minimal single-page PDF holding the report as a JPEG. PDF supports JPEG natively via the
 // DCTDecode filter, so the canvas bytes can be dropped straight in — no encoder, no library.
 function exportDynoPDF(){
+  if(isElectric()){flash(tr(EV_REPORT_NOTE),'warn');return;}
   if(!engine.score){flash(tr('BUILD AN ENGINE FIRST'),'warn');return;}
   canvasToPDF(dynoReportCanvas(2),reportFileName('pdf'));
 }

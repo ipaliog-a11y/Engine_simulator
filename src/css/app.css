@@ -92,6 +92,9 @@ footer{text-align:center;margin-top:16px;padding:8px;font-size:7px;color:#555;bo
    spare, and the last row was always cut in half. Tie it to the window instead. */
 .design-panel{display:none;padding:12px;background:#0d0d18;max-height:calc(100vh - 230px);overflow-y:auto}
 .design-panel.active{display:block}
+/* ELECTRIC (build 179): the motor, inverter and battery sections show only for an electric build, the combustion ones only for an engine */
+#designPanel:not(.ev) [data-ev]{display:none!important}
+#designPanel.ev .ice-only{display:none!important}
 .design-panel h3{font-size:10px;color:#ffcc00;margin:2px 0 4px}
 .design-panel .hint{font-size:7px;color:#667;margin-bottom:10px}
 /* The car and engine as pixel art, drawn from the build (see PixBuf). */
