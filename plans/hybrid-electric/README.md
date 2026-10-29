@@ -140,7 +140,8 @@ Step 2 lands in parts, one PR each:
 | 2.2 | **The design and the bench**: ELECTRIC in the engine-type dropdown, the MOTOR / BATTERY fields, the dyno's torque, power and efficiency curves with the temperatures, the powertrain type in saves, and the electric `powertrain()`. | ✅ build 179 |
 | 2.3 | **The car**: single fixed reduction, regenerative braking through the axle split, motor and battery heat over a lap. | ✅ build 180 |
 | 2.4 | **The race**: the pack's usable energy in the tank's place, the pace grid over battery power, every point of a lap priced in kWh (shaft, motor and inverter, cells), an energy manager that plans the power to last and learns lap by lap, the pack and motor heat carried through the race, OUT OF CHARGE; no charging in the pit lane (`src/js/electric-race.js`, `tests/test99.mjs`). | ✅ build 181 |
-| 2.5 | **The three Teslas**: presets and the real-world test; the induction motor the Model Y's front axle needs. | |
+| 2.5a | **The induction motor**: MOTOR TYPE, a copper-cage rotor magnetised by the stator's own current, derived from the build like the magnet motor; checked against the Tesla Model S 60's published geometry and figures (`tests/test100.mjs`). | ✅ build 182 |
+| 2.5b | **The three Teslas**: presets and the real-world test (0-100, top speed, Wh/km), with more than one motor per car (front and rear axles). | |
 
 ### 3. Hybrids — after electric is shipped and validated
 

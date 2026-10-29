@@ -67,17 +67,46 @@ const INVERTER={
   sic: {label:'SiC MOSFET',  v0:0,  r:0.0016,tSw:0.05e-6,fSw:16e3,costA:11}
 };
 const ACTIVE_TO_MOTOR=1.6;   // housing, shaft, bearings and end caps over the active copper, iron and magnets
+// ---- the induction motor (build 182, step 2.5a) ----
+// No magnets: the stator's own current magnetises the rotor (the d-axis, Im), and the torque current (Iq) induces the
+// rotor's currents in a copper cage, which slip behind the field. What that changes, each from the build:
+//   flux        set by the designer's air-gap flux density at full field (IM_BG: 0.7-0.9 T is the usual design point,
+//               below a magnet machine's ~1.1 T), and bought with current: Im = Bg g' p / (mu0 1.35 kw N);
+//   torque      T = 3/2 p psi sqrt2 Iq with Iq = sqrt(I^2 - Im^2): the magnetising current takes a share of the inverter's
+//               amps, and the flux is lower, so less torque per amp than a magnet machine of the same size;
+//   the knee    the same voltage law, with the lower flux: a higher base speed. Above it the field is weakened and the
+//               power holds only to the breakdown torque, ~3x base speed (IM_CPSR), against ~4x for a magnet machine;
+//   part load   the controller lowers the flux until the magnetising and torque currents are equal (the loss-minimising
+//               rule for an induction machine): at no torque there is no field, so no iron loss and no drag. That is
+//               why a secondary axle carries one;
+//   the rotor   the cage's I^2 R (the slip loss) heats the rotor, which sheds it only across the air gap: the rotor, not
+//               the winding, sets how long it holds its peak. Its limit is the cage's and the bearings' (IM_ROTOR.Tmax).
+// The cage: copper bars filling a band IM_HR deep under the rotor surface (fabricated copper, the Model S's; a cast
+// aluminium cage would be ~1.7x the resistance), Qr bars (~1.23x the stator slots, 74 against 60 in the Model S), end
+// rings of the same depth IM_RING wide; the bar resistance referred to the stator by the textbook transformation
+// (Pyrhonen, Design of Rotating Electrical Machines, 7.2): R2' = 4 m (kw N)^2 / Qr (R_bar + R_ring / (2 sin^2(pi p/Qr))).
+const IM_BG=0.8, IM_GAP=0.0005, IM_KCS=2.0, IM_CPSR=3, IM_HR=0.12, IM_RING=0.08, MU0=4e-7*Math.PI;
+// The voltage at full current: the leakage flux of the stator and the rotor rides on the torque current, sigma Lm Iq,
+// with the total leakage factor sigma ~0.08 for a traction design (0.05-0.1); against the magnetising flux Lm Im it
+// adds in quadrature, so the drop over the back-EMF is sqrt(1 + (sigma Iq / Im)^2), times ~5% resistive. A magnet
+// machine's V_DROP (1.29, measured) holds its inductive drop the same way.
+const IM_SIGMA=0.08, IM_R_DROP=1.05;
+const IM_ROTOR={label:'COPPER CAGE',Br:0,alpha:0,Tmax:200,cost:0};
+const MOTOR_TYPE={pm:{label:'PERMANENT MAGNET'},im:{label:'INDUCTION (COPPER CAGE)'}};
 
 // The motor a design describes, derived once. s: {rotorD mm, stackL mm, poles, turns (series per phase), magnet,
 // retention, cooling, inverter, invAmps (A rms), maxRpm}.
 function motorBuild(s){
-  const mag=MAGNET[s.magnet]||MAGNET.ndfeb, ret=RETENTION[s.retention]||RETENTION.bridges;
+  const im=s.type==='im';
+  const mag=im?IM_ROTOR:MAGNET[s.magnet]||MAGNET.ndfeb, ret=im?RETENTION.bridges:RETENTION[s.retention]||RETENTION.bridges;
   const cool=MOTOR_COOLING[s.cooling]||MOTOR_COOLING.jacket, inv=INVERTER[s.inverter]||INVERTER.igbt;
   const D=s.rotorD/1000, L=s.stackL/1000, poles=s.poles, p=poles/2, N=s.turns, Lfe=0.95*L;
-  const Ds=D+2*GAP, OD=Ds/SPLIT, h=(OD-Ds)/2, hSlot=TOOTH_BAND*h;
-  const slots=3*poles*(poles<=6?3:2);                              // q = 3 slots per pole per phase up to 6 poles, then 2
-  // flux: the air gap's fundamental from the magnets, per pole, linked by the winding
-  const Bg=FLUX_KM*mag.Br, tau=Math.PI*D/poles, phiPole=2/Math.PI*Bg*tau*Lfe;
+  const Ds=D+2*(im?IM_GAP:GAP), OD=Ds/SPLIT, h=(OD-Ds)/2, hSlot=TOOTH_BAND*h;
+  const slots=3*poles*(poles<=6?3:2)*(im&&poles===4?5/3:1);       // q = 3 slots per pole per phase up to 6 poles, then 2;
+                                                                    // a 4-pole induction motor runs q = 5 (the Model S's 60)
+  // flux: the air gap's fundamental from the magnets (an induction motor: its design flux density), per pole, linked by
+  // the winding
+  const Bg=im?IM_BG:FLUX_KM*mag.Br, tau=Math.PI*D/poles, phiPole=2/Math.PI*Bg*tau*Lfe;
   const psi20=KW_WIND*N*phiPole;                                    // peak flux linkage per phase at 20 C (V s)
   // copper: the slots' share of the tooth band, at the fill; a turn runs the stack twice and round two end turns
   const band=Math.PI/4*((Ds+2*hSlot)**2-Ds*Ds), Acu=SLOT_SHARE*band*FILL;
@@ -88,17 +117,28 @@ function motorBuild(s){
   const mCu=RHO_CU_M*Acu*mlt/2;
   const mFeS=RHO_FE*(Math.PI/4*(OD*OD-Ds*Ds)-SLOT_SHARE*band)*Lfe;
   const Dsh=0.47*D, rotorVol=Math.PI/4*D*D*L;
-  const mMag=RHO_MAG*0.06*rotorVol*(mag.Br<1?2.2:1);               // ferrite needs ~2x the volume for less flux
-  const mFeR=RHO_FE*Math.PI/4*(D*D-Dsh*Dsh)*Lfe-mMag*0.5;
-  const mRotor=mFeR+mMag, J=0.5*mRotor*((D/2)**2+(Dsh/2)**2)*(s.retention==='sleeve'?1.03:1);
+  const mMag=im?0:RHO_MAG*0.06*rotorVol*(mag.Br<1?2.2:1);         // ferrite needs ~2x the volume for less flux
+  // the induction motor's cage, its resistance referred to the stator, and the magnetising current at full field
+  let Qr=0,Rr20=0,mCage=0,ImR=0;
+  if(im){
+    const hR=IM_HR*D,Abars=0.5*Math.PI*(D-hR)*hR,ringA=hR*IM_RING*D,ringD=D-hR;
+    Qr=2*Math.round(slots*1.23/2);
+    const Rbar=RHO_CU*L/(Abars/Qr),Rring=RHO_CU*(Math.PI*ringD/Qr)/ringA;
+    Rr20=4*3*(KW_WIND*N)**2/Qr*(Rbar+Rring/(2*Math.sin(Math.PI*p/Qr)**2));
+    mCage=RHO_CU_M*(Abars*L+2*Math.PI*ringD*ringA);
+    ImR=IM_BG*IM_GAP*IM_KCS*p/(MU0*(3*Math.SQRT2/Math.PI)*KW_WIND*N);
+  }
+  const vDrop=im?IM_R_DROP*Math.sqrt(1+(IM_SIGMA*Math.sqrt(Math.max(0,s.invAmps**2-ImR*ImR))/Math.max(1,ImR))**2):V_DROP;
+  const mFeR=RHO_FE*Math.PI/4*(D*D-Dsh*Dsh)*Lfe-mMag*0.5-(im?RHO_FE*mCage/RHO_CU_M*0.9:0);
+  const mRotor=mFeR+mMag+mCage, J=0.5*mRotor*((D/2)**2+(Dsh/2)**2)*(s.retention==='sleeve'&&!im?1.03:1);
   const mass=(mCu+mFeS+mRotor)*ACTIVE_TO_MOTOR;
   // speed ceilings: the rotor surface, the inverter's output frequency (1.2 kHz IGBT, 2 kHz SiC)
   const nTip=ret.vTip/(Math.PI*D)*60, nFreq=(s.inverter==='sic'?2000:1200)*60/p;
   const nMax=Math.min(s.maxRpm||20000,nTip,nFreq);
   const Imax=s.invAmps;
-  const cost=Math.round(mCu*11+(mFeS+mFeR)*3+mMag*mag.cost+ret.cost+cool.cost+Imax*inv.costA+400);
-  return {s,mag,ret,cool,inv,D,L,Lfe,Ds,OD,poles,p,N,slots,Bg,psi20,R20,mlt,Acu,mCu,mFeS,mFeR,mMag,mRotor,J,mass,
-          nTip,nFreq,nMax,Imax,cost,
+  const cost=Math.round(mCu*11+(mFeS+mFeR)*3+mMag*mag.cost+ret.cost+cool.cost+Imax*inv.costA+400+(im?mCage*11+150:0));
+  return {s,im,mag,ret,cool,inv,D,L,Lfe,Ds,OD,poles,p,N,slots,Bg,psi20,R20,mlt,Acu,mCu,mFeS,mFeR,mMag,mRotor,J,mass,
+          nTip,nFreq,nMax,Imax,cost,Qr,Rr20,mCage,ImR,vDrop,cpsr:im?IM_CPSR:CPSR,
           // thermal network (W/K, J/K): winding -> core through the slot liner (0.2 W/mK, 0.4 mm over the slot walls),
           // core -> coolant through the housing, rotor -> core across the gap (h ~ 100), and the direct paths
           Gwc:0.2*(2*hSlot*L*slots)/0.0004,
@@ -109,24 +149,41 @@ function motorBuild(s){
           Cw:385*mCu, Cc:460*mFeS+900*0.5*mFeS, Cr:460*mRotor};
 }
 // Flux linkage and resistance at temperature: the magnets lose remanence as they warm, the copper gains resistance.
-const motorPsi=(m,tMag)=>m.psi20*(1+m.mag.alpha*(tMag-20));
+const motorPsi=(m,tMag)=>m.psi20*(1+m.mag.alpha*(tMag-20));   // an induction motor's alpha is 0: its flux is the field's
 const motorR=(m,tW)=>m.R20*(1+ALPHA_CU*(tW-20));
 // Torque per amp falls with saturation as the electric loading (A/m of bore) rises.
 const motorLoading=(m,I)=>6*m.N*I/(Math.PI*m.D);
 const motorTorqueAtI=(m,I,psi)=>1.5*m.p*psi*Math.SQRT2*I*(1-SAT_K*(motorLoading(m,I)/SAT_A_REF)**2);
 // The knee (mechanical rad/s): where the back-EMF, with the drop at full current, meets the inverter's most phase voltage
 // (space-vector modulation: Vdc/sqrt(6) rms).
-const motorBaseW=(m,Vdc,psi)=>Vdc/Math.sqrt(6)*Math.SQRT2/(V_DROP*m.p*psi);
+const motorBaseW=(m,Vdc,psi)=>Vdc/Math.sqrt(6)*Math.SQRT2/((m.vDrop||V_DROP)*m.p*psi);
 // Constant power from the knee to CPSR times it (an interior-magnet machine's field-weakening range; the Leaf holds its
 // 80 kW from 2730 to 9800 rpm, 3.6x), then falling as 1/w.
 const CPSR=4;
 // The most torque at a shaft speed (Nm), for the bus voltage and the magnets' temperature.
 function motorMaxTorque(m,rpm,Vdc,tMag=60){
   if(rpm>m.nMax)return 0;
-  const psi=motorPsi(m,tMag),Tpk=motorTorqueAtI(m,m.Imax,psi),wb=motorBaseW(m,Vdc,psi),w=Math.max(1e-6,rpm*Math.PI/30);
+  const psi=motorPsi(m,tMag),wb=motorBaseW(m,Vdc,psi),w=Math.max(1e-6,rpm*Math.PI/30);
+  const Tpk=m.im?imTorque(m,m.Imax):motorTorqueAtI(m,m.Imax,psi);
   if(w<=wb)return Tpk;
-  if(w<=CPSR*wb)return Tpk*wb/w;
-  return Tpk*CPSR*wb*wb/(w*w);
+  const C=m.cpsr||CPSR;
+  if(w<=C*wb)return Tpk*wb/w;
+  return Tpk*C*wb*wb/(w*w);
+}
+// An induction motor's torque at full field from a total current: what the magnetising current leaves for the torque.
+function imTorque(m,I){
+  const Iq=Math.sqrt(Math.max(0,I*I-m.ImR*m.ImR));
+  return 1.5*m.p*m.psi20*Math.SQRT2*Iq*(1-SAT_K*(motorLoading(m,I)/SAT_A_REF)**2);
+}
+// Its currents at an operating point: the field's share (1 at full field) and the magnetising and torque currents. Above
+// the knee the field is weakened as wb/w; below the rated torque current the controller lowers the field until Im = Iq.
+function imCurrents(m,T,rpm,Vdc){
+  const wb=motorBaseW(m,Vdc,m.psi20),w=rpm*Math.PI/30,k=1.5*m.p*Math.SQRT2;
+  if(!(Math.abs(T)>0))return {fl:0,Im:0,Iq:0,I:0};   // no torque asked: no field
+  let fl=w>wb?wb/w:1,Im=m.ImR*fl,Iq=Math.abs(T)/(k*m.psi20*fl);
+  if(Iq<Im){Im=Iq=Math.sqrt(Math.abs(T)*m.ImR/(k*m.psi20));fl=Im/m.ImR;}
+  for(let j=0;j<3;j++){const sat=1-SAT_K*(motorLoading(m,Math.hypot(Im,Iq))/SAT_A_REF)**2;Iq=Math.abs(T)/(k*m.psi20*fl*sat);}
+  return {fl,Im,Iq,I:Math.min(m.Imax,Math.hypot(Im,Iq))};
 }
 // The current a torque needs (A rms): solved on the saturating torque law, plus the field-weakening current above the knee.
 function motorCurrent(m,T,rpm,Vdc,psi){
@@ -139,6 +196,7 @@ function motorCurrent(m,T,rpm,Vdc,psi){
 // Losses at an operating point (W): torque T (Nm, negative when regenerating), speed (rpm), bus voltage, and the node
 // temperatures {w,r}. Copper and inverter follow the current; iron follows frequency and the flux left after weakening.
 function motorLosses(m,T,rpm,Vdc,temp){
+  if(m.im)return imLosses(m,T,rpm,Vdc,temp);
   const psi=motorPsi(m,temp.r),I=motorCurrent(m,T,rpm,Vdc,psi),w=rpm*Math.PI/30;
   const cu=3*I*I*motorR(m,temp.w);
   const f=m.p*rpm/60,wb=motorBaseW(m,Vdc,psi),flux=w>wb?Math.max(0.4,wb/w):1,B=B_CORE*flux;
@@ -149,20 +207,33 @@ function motorLosses(m,T,rpm,Vdc,temp){
   const invL=3*(0.9*inv.v0*I+rS*I*I)+3*(Math.SQRT2/Math.PI)*inv.tSw*inv.fSw*Vdc*I;
   return {cu,fe,mech,inv:invL,I,total:cu+fe+mech+invL};
 }
+// An induction motor's: the stator's copper on the whole current, the cage's on the torque current (rcu, into the rotor),
+// iron on the field it runs at, the rest as a magnet machine's.
+function imLosses(m,T,rpm,Vdc,temp){
+  const c=imCurrents(m,T,rpm,Vdc),I=c.I,w=rpm*Math.PI/30;
+  const cu=3*I*I*motorR(m,temp.w),rcu=3*c.Iq*c.Iq*m.Rr20*(1+ALPHA_CU*(temp.r-20));
+  const f=m.p*rpm/60,B=B_CORE*c.fl,t=(m.s.lamination||0.35)/FE_T_REF;
+  const fe=(FE_KH*f*B*B+FE_KE*t*t*f*f*B*B)*(m.mFeS+m.mFeR);
+  const mech=0.15*w+5e-8*w*w*w*(m.D/0.15)**4*(m.L/0.134);
+  const inv=m.inv,rS=inv.r*1000/m.Imax;
+  const invL=I>0?3*(0.9*inv.v0*I+rS*I*I)+3*(Math.SQRT2/Math.PI)*inv.tSw*inv.fSw*Vdc*I:0;
+  return {cu,rcu,fe,mech,inv:invL,I,total:cu+rcu+fe+mech+invL};
+}
 // Efficiency of the drive (motor and inverter) at a point, motoring: shaft power over battery power.
 function motorEfficiency(m,T,rpm,Vdc,temp={w:90,r:70}){
   const P=T*rpm*Math.PI/30;if(!(P>0))return 0;
   return P/(P+motorLosses(m,T,rpm,Vdc,temp).total);
 }
 // Heat: advance the winding, core and rotor temperatures over dt (s) with these losses. 80% of the iron loss is the
-// stator's, 20% the rotor's (with the magnets' own eddy currents); friction and windage go to the core.
+// stator's, 20% the rotor's (with the magnets' own eddy currents); friction and windage go to the core; an induction
+// motor's cage loss (rcu) is the rotor's.
 function motorHeatStep(m,temp,L,dt){
   const tc=m.cool.tCool,ns=Math.max(1,Math.ceil(dt/0.5)),h=dt/ns;   // explicit steps well inside the fastest node's time constant
   for(let k=0;k<ns;k++){
     const qWC=m.Gwc*(temp.w-temp.c),qWK=m.Gwk*(temp.w-tc),qCK=m.Gcc*(temp.c-tc),qRC=m.Grc*(temp.r-temp.c);
     temp.w+=(L.cu-qWC-qWK)/m.Cw*h;
     temp.c+=(0.8*L.fe+L.mech+qWC+qRC-qCK)/m.Cc*h;
-    temp.r+=(0.2*L.fe-qRC)/m.Cr*h;
+    temp.r+=(0.2*L.fe+(L.rcu||0)-qRC)/m.Cr*h;
   }
   return temp;
 }
@@ -178,9 +249,9 @@ function motorSteadyTemps(m,T,rpm,Vdc){
   let temp={w:tc,c:tc,r:tc};
   for(let k=0;k<60;k++){
     const L=motorLosses(m,T,rpm,Vdc,temp);
-    const Tc=tc+(L.fe+L.mech+a*L.cu)/(m.Gcc+a*m.Gwk);
-    const next={w:(L.cu+m.Gwc*Tc+m.Gwk*tc)/(m.Gwc+m.Gwk),c:Tc,r:Tc+0.2*L.fe/m.Grc};
-    if(!(next.w<1000))return {w:Infinity,c:Infinity,r:Infinity};
+    const rc=L.rcu||0,Tc=tc+(L.fe+L.mech+a*L.cu+rc)/(m.Gcc+a*m.Gwk);
+    const next={w:(L.cu+m.Gwc*Tc+m.Gwk*tc)/(m.Gwc+m.Gwk),c:Tc,r:Tc+(0.2*L.fe+rc)/m.Grc};
+    if(!(next.w<1000)||!(next.r<2000))return {w:Infinity,c:Infinity,r:Infinity};
     if(Math.abs(next.w-temp.w)<1e-3){temp=next;break;}
     temp=next;
   }
