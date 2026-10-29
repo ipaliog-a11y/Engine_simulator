@@ -20,6 +20,26 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 Working toward **v1.0 — every number derived, not fitted.**
 
+### A hybrid's energy manager, and the Atkinson cam (build 188)
+
+- **Step 3.2b of the plan.** A charge-sustaining hybrid on the WLTP cycle (`hybridCycle` in `src/js/fuel-cycle.js`):
+  each second the equivalent-consumption minimisation (ECMS) every production controller is a version of, choosing
+  electric only (engine off, clutch open), the engine in a gear with the motor helping or charging (load-point
+  shifting over five splits), or regeneration within the motor's and the pack's limits. The pack's energy is priced
+  at the one equivalence factor that leaves it where it started (a bracketed secant over whole cycles), so the
+  controller's only parameter comes from the cycle. Rules: the engine runs until its coolant reaches 50 C, then stops
+  at a standstill; the pack stays between 35% and 85%; the 12 V load comes from the pack.
+- **The Hyundai Ioniq Hybrid**: 5.23 L/100 km, 124 g/km, against Hyundai's WLTP 4.4-5.2; the same car without its
+  hybrid 6.66 (27% more); the engine off 53% of the cycle; the factor comes out at 268 g/kWh. ~1.2 s, so the VEHICLE
+  tab draws first and fills the line in.
+- **ATKINSON (LATE IVC)** cam: the intake held ~75 degrees past BDC, its phaser limited to 15 degrees of advance so it
+  still closes 60 degrees late flat out. The breathing and cycle models take it from the closing angle: part-load
+  BSFC 314 -> 310 g/kWh on the Kappa. It does **not** reproduce the Kappa's 105 PS (the model gives 126 hp: its intake
+  ram rewards a late closing at high rpm) or its ~40% peak efficiency (the model's best is 249 g/kWh, ~34%: no cooled
+  EGR). That gap, not the energy manager, is why the Ioniq lands at the top of Hyundai's range; the Ioniq preset keeps
+  the stock cam with its power matched.
+- `tests/test105.mjs` (new).
+
 ### An engine's fuel over the WLTP cycle (build 187)
 
 - **Step 3.2a of the plan.** `src/js/fuel-cycle.js` (new): the WLTC class 3b trace driven second by second with an
