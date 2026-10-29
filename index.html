@@ -105,7 +105,8 @@ footer{text-align:center;margin-top:16px;padding:8px;font-size:7px;color:#555;bo
 .design-panel{display:none;padding:12px;background:#0d0d18;max-height:calc(100vh - 230px);overflow-y:auto}
 .design-panel.active{display:block}
 /* ELECTRIC (build 179): the motor, inverter and battery sections show only for an electric build, the combustion ones only for an engine */
-#designPanel:not(.ev) [data-ev]{display:none!important}
+#designPanel:not(.ev):not(.hy) [data-ev]{display:none!important}
+#designPanel.hy [data-ev-only]{display:none!important}
 #designPanel.ev .ice-only{display:none!important}
 .design-panel h3{font-size:10px;color:#ffcc00;margin:2px 0 4px}
 .design-panel .hint{font-size:7px;color:#667;margin-bottom:10px}
@@ -404,7 +405,7 @@ table.fuelmap td.live{box-shadow:inset 0 0 0 2px #fff;font-weight:bold}
 <body>
 <div class="container">
 <header>
-<h1>PIXEL ENGINE SIM v0.7 build 185</h1>
+<h1>PIXEL ENGINE SIM v0.7 build 186</h1>
 <div class="subtitle" id="subtitle">ENGINE DESIGNER • BUILD IT, THEN DRIVE IT</div>
 </header>
 <div class="build-strip" id="buildStrip">
@@ -451,6 +452,12 @@ table.fuelmap td.live{box-shadow:inset 0 0 0 2px #fff;font-weight:bold}
 <div class="field"><label for="edRedline">REDLINE (rpm)</label><input type="number" id="edRedline" min="2000" max="11000" step="50" value="7000"></div>
 </div>
 
+<div class="design-section">Hybrid</div>
+<div class="design-grid">
+<div class="field"><label for="edHybrid">HYBRID</label><select id="edHybrid"><option value="none">NONE</option><option value="p2">PARALLEL (P2)</option></select></div>
+<div class="field"><label for="edHyDeploy">DEPLOY</label><select id="edHyDeploy"><option value="full">FULL</option><option value="eco">ECO (TORQUE FILL)</option></select></div>
+</div>
+
 <div class="design-section" data-ev>Motor</div>
 <div class="design-grid" data-ev>
 <div class="field"><label for="evMotorType">MOTOR TYPE</label><select id="evMotorType"><option value="pm">PERMANENT MAGNET</option><option value="im">INDUCTION (COPPER CAGE)</option></select></div>
@@ -464,8 +471,8 @@ table.fuelmap td.live{box-shadow:inset 0 0 0 2px #fff;font-weight:bold}
 <div class="field"><label for="evMaxRpm">MAX SPEED (rpm)</label><input type="number" id="evMaxRpm" min="4000" max="25000" step="100" value="18000"></div>
 </div>
 
-<div class="design-section" data-ev>More motors</div>
-<div class="design-grid" data-ev>
+<div class="design-section" data-ev data-ev-only>More motors</div>
+<div class="design-grid" data-ev data-ev-only>
 <div class="field"><label for="evRearCount">REAR MOTORS</label><select id="evRearCount"><option value="1">1</option><option value="2">2 (ONE PER WHEEL)</option></select></div>
 <div class="field"><label for="evFront">FRONT MOTOR</label><select id="evFront"><option value="none">NONE</option><option value="pm">PERMANENT MAGNET</option><option value="im">INDUCTION (COPPER CAGE)</option></select></div>
 <div class="field"><label for="evFrontD">FRONT ROTOR DIAMETER (mm)</label><input type="number" id="evFrontD" min="80" max="260" step="1" value="130"></div>
@@ -483,9 +490,9 @@ table.fuelmap td.live{box-shadow:inset 0 0 0 2px #fff;font-weight:bold}
 
 <div class="design-section" data-ev>Battery</div>
 <div class="design-grid" data-ev>
-<div class="field"><label for="evChem">CHEMISTRY</label><select id="evChem"><option value="lead">LEAD-ACID</option><option value="nimh">NiMH</option><option value="lfp">LFP</option><option value="nca">NCA / NMC</option><option value="ncaP">NCA (POWER CELLS)</option></select></div>
+<div class="field"><label for="evChem">CHEMISTRY</label><select id="evChem"><option value="lead">LEAD-ACID</option><option value="nimh">NiMH</option><option value="lfp">LFP</option><option value="nca">NCA / NMC</option><option value="ncaP">NCA (POWER CELLS)</option><option value="liHEV">Li-ION (HYBRID CELLS)</option></select></div>
 <div class="field"><label for="evSeries">CELLS IN SERIES</label><input type="number" id="evSeries" min="20" max="400" step="1" value="96"></div>
-<div class="field"><label for="evKWh">CAPACITY (kWh)</label><input type="number" id="evKWh" min="5" max="200" step="0.5" value="75"></div>
+<div class="field"><label for="evKWh">CAPACITY (kWh)</label><input type="number" id="evKWh" min="0.5" max="200" step="0.01" value="75"></div>
 <div class="field"><label for="evYear">TECHNOLOGY YEAR</label><input type="number" id="evYear" min="1990" max="2026" step="1" value="2020"></div>
 </div>
 
@@ -4657,7 +4664,8 @@ const I18N={
   // engine and car families, and the supercar eras
   'Archetypes':{el:'Αρχέτυπα'},'Kei & City':{el:'Kei & πόλης'},'Compact Turbo':{el:'Μικρά τούρμπο'},'NA Sports':{el:'Ατμοσφαιρικά σπορ'},
   'Turbo Performance':{el:'Τούρμπο επιδόσεων'},'American V8':{el:'Αμερικάνικα V8'},'Supercar':{el:'Supercar'},'Rotary':{el:'Περιστροφικά (Wankel)'},
-  'Diesel':{el:'Πετρελαιοκίνητα'},'Electric':{el:'Ηλεκτρικά'},'NCA (POWER CELLS)':{el:'NCA (ΚΥΤΤΑΡΑ ΙΣΧΥΟΣ)'},'WLTP cycle':{el:'Κύκλος WLTP'},'from the pack':{el:'από την μπαταρία'},
+  'Diesel':{el:'Πετρελαιοκίνητα'},'Electric':{el:'Ηλεκτρικά'},'NCA (POWER CELLS)':{el:'NCA (ΚΥΤΤΑΡΑ ΙΣΧΥΟΣ)'},'Li-ION (HYBRID CELLS)':{el:'Li-ION (ΚΥΤΤΑΡΑ ΥΒΡΙΔΙΚΩΝ)'},
+  'Hybrid':{el:'Υβριδικό'},'HYBRID':{el:'ΥΒΡΙΔΙΚΟ'},'PARALLEL (P2)':{el:'ΠΑΡΑΛΛΗΛΟ (P2)'},'DEPLOY':{el:'ΑΠΟΔΟΣΗ ΚΙΝΗΤΗΡΑ'},'FULL':{el:'ΠΛΗΡΗΣ'},'ECO (TORQUE FILL)':{el:'ΟΙΚΟΝΟΜΙΚΟ (ΣΥΜΠΛΗΡΩΣΗ ΡΟΠΗΣ)'},'motor':{el:'κινητήρας'},'pack':{el:'μπαταρία'},'system':{el:'σύστημα'},'WLTP cycle':{el:'Κύκλος WLTP'},'from the pack':{el:'από την μπαταρία'},
   'at the socket':{el:'από την πρίζα'},'regeneration takes back':{el:'η ανάκτηση επιστρέφει'},'range':{el:'αυτονομία'},'Two-Stroke':{el:'Δίχρονα'},
   '1990s':{el:'Δεκαετία του 1990'},'2000s':{el:'Δεκαετία του 2000'},'2010s':{el:'Δεκαετία του 2010'},'2020s':{el:'Δεκαετία του 2020'},
   // dropdown choices (and the labels the summaries reuse). An option looks up 'opt:'+text first, for
@@ -6299,6 +6307,7 @@ function readEngineFromForm(){
     alternator:g('edAlternator').value
   };
   if(type==='electric')Object.assign(e,readElectricFromForm());   // the motor and battery (build 179)
+  else{const hm=g('edHybrid')&&g('edHybrid').value;if(hm&&hm!=='none'){e.hyMode=hm;e.hyDeploy=g('edHyDeploy').value==='eco'?'eco':'full';Object.assign(e,readElectricFromForm());}}   // a hybrid system (build 186)
   return e;
 }
 function applyEngineToForm(e){
@@ -6326,6 +6335,8 @@ function applyEngineToForm(e){
   g('edOilCooler').value=e.oilCooler?'yes':'no';g('edThermostat').value=e.thermostat||88;
   g('edAlternator').value=e.alternator||'120';
   applyElectricToForm(e);
+  if(g('edHybrid'))g('edHybrid').value=e.type!=='electric'&&HYBRID_MODES[e.hyMode]?e.hyMode:'none';
+  if(g('edHyDeploy'))g('edHyDeploy').value=e.hyDeploy==='eco'?'eco':'full';
   syncDesignEnable();
 }
 function syncDesignEnable(){
@@ -6604,6 +6615,7 @@ function buildEngine(){
   buildRev++;dynoCache=null;
   engine.cost=computeCost();
   engine.score=scoreEngine();
+  if(buildHybrid(engine))engine.cost+=engine.hy.cost;   // a hybrid system: the motor and pack on top (build 186)
   engine.inertia=engineInertia(engine.score.peakTQ);   // the clutch is sized for the torque it carries
   updateEngineLabels();
   updateDesignSummary();
@@ -6793,7 +6805,7 @@ function updateDesignSummary(){
     '<br>'+tr('Fuel')+' <b>'+tr(FUELS[engine.fuel].label)+'</b> ('+(engine.ci?'CI':engine.effOctane+' '+tr('oct'))+', '+engine.stoichAFR.toFixed(1)+':1 '+tr('stoich')+(engine.chargeCool?', −'+engine.chargeCool+'°C '+tr('charge'):'')+')'+
     sparkLine+
     '<br>'+tr('Cooling')+' <b>'+trOpt(engine.radiator.toUpperCase())+' '+tr('RAD')+'</b> • <b>'+trOpt(engine.fan.toUpperCase())+' '+tr('FAN')+'</b>'+(engine.oilCooler?' • <b>'+tr('OIL COOLER')+'</b>':'')+' • '+tr('Thermostat')+' <b>'+engine.thermostat+'°C</b>'+
-    elecLine+note+
+    elecLine+note+(engine.hy?hybSummaryLine(engine):'')+   // the hybrid system (build 186)
     scoreLine(engine.score);
 }
 function scoreLine(s){
@@ -8209,7 +8221,11 @@ const CHEM={
   // collector per amp-hour. The Model S Plaid's 18650s: its 110s72p pack sustains ~2300 A, ~9C. Less energy per kg and
   // dearer per kWh for it.
   ncaP:{label:'NCA (POWER CELLS)',ocv:[2.95,3.40,3.50,3.57,3.63,3.69,3.77,3.85,3.93,4.02,4.13],vMin:2.80,rAh:0.06,cMax:10,cCharge:1.5,from:2012,
-        whkg:{2012:200,2020:235},cost:{2012:900,2016:360,2019:200,2024:140}}
+        whkg:{2012:200,2020:235},cost:{2012:900,2016:360,2019:200,2024:140}},
+  // hybrid cells (build 186): lithium-ion built for a pack that is mostly power and little energy, cycled shallow
+  // thousands of times a day; a 1.5 kWh pack gives and takes 30-40 kW (the Ioniq Hybrid's 1.56 kWh LiPo, ~25C).
+  liHEV:{label:'Li-ION (HYBRID CELLS)',ocv:[3.30,3.50,3.58,3.63,3.68,3.73,3.79,3.86,3.94,4.03,4.13],vMin:2.80,rAh:0.025,cMax:25,cCharge:20,from:2009,
+        whkg:{2009:70,2016:85,2024:100},cost:{2009:2200,2016:1100,2024:700}}
 };
 // Cell mass over pack mass: modules, structure, cooling and wiring take the rest. Large prismatic cells packed without
 // modules (cell-to-pack LFP, from 2020) waste least.
@@ -8355,8 +8371,26 @@ const ELECTRIC={
   boostAvail:()=>0,
   overrunTable:rl=>evRegenTable(engine,rl)
 };
+// A combustion engine with a hybrid system (build 186, src/js/hybrid.js): the engine's own powertrain with a P2 motor's
+// torque added at every engine speed (cut by the charge-sustaining controller's share, hybDeployShare), its regeneration
+// added to the overrun, its motor and pack added to the mass, and the fuel burnt only for the engine's share of the power.
+const HYBRID=Object.assign({},COMBUSTION,{
+  kind:'hybrid',
+  mass:()=>engineMass()+engine.hy.mass,
+  torqueCurve:()=>{const c=hybCurves(),k=hybDeployShare;return c.eng.map((p,i)=>({rpm:p.rpm,tq:p.tq+k*c.mot[i]}));},
+  torqueGrid:()=>{const g=lapTorqueGrid(),k=hybDeployShare,mt=g.rpms.map(r=>k*hybMotorAt(r));
+    return Object.assign({},g,{tq:g.tq.map(row=>row.map((t,i)=>t+mt[i]))});},
+  overrunTable(rl){const a=COMBUSTION.overrunTable(rl),b=hybRegenTable(rl);return a.map((t,i)=>t+(b[i]||0));},
+  fuelRate(nom,n){
+    const base=COMBUSTION.fuelRate(nom,n);
+    // the replay's power is the engine's and the motor's: the fuel map is read with the engine's alone
+    return L=>{if(!L.hy)return base(L);const R=L.replay,orig=R.pwr;
+      R.pwr=orig.map((p,i)=>p>0?Math.max(0,p-Math.max(0,L.hy.pm[i])):p);
+      try{return base(L);}finally{R.pwr=orig;}};
+  }
+});
 // The powertrain of the car being built: the engine's type chooses it (a saved build without one is combustion).
-function powertrain(){return isElectric()?ELECTRIC:COMBUSTION;}
+function powertrain(){return isElectric()?ELECTRIC:isHybrid()?HYBRID:COMBUSTION;}
 // ====== VEHICLE: build spec, mass, gearing, aero and the acceleration simulation ======
 const lerp=(a,b,t)=>a+(b-a)*t;
 // Estimate the engine's installed mass (kg) from its spec — fed into the car's curb weight.
@@ -10665,7 +10699,7 @@ function detachResult(o,depth=2){
     c[k]=depth>0&&k!=='track'&&v&&typeof v==='object'&&Object.getPrototypeOf(v)===Object.prototype?detachResult(v,depth-1):v;}
   return c;
 }
-function simulateLap(key,opts){const r=simulateLapRun(key,opts);return r&&detachResult(r);}
+function simulateLap(key,opts){const r=powertrain().kind==='hybrid'?hybridLap(key,opts):simulateLapRun(key,opts);return r&&detachResult(r);}   // a hybrid balances its pack over the lap (build 186)
 function raceDriver(d){return Object.assign({},RACE_DRIVERS.balanced,typeof d==='string'?RACE_DRIVERS[d]:d||{});}
 // Fuel tank by body (litres). Typical of the class, not of any one car: a kei car carries ~30 L,
 // a GT ~80. The quoted curb masses are taken with the tank full, so a race car is lighter by what it burns.
@@ -16785,7 +16819,7 @@ function readElectricFromForm(){
     evAmps:Math.round(num('evAmps',100,1600)),evRearCount:g('evRearCount').value==='2'?2:1,
     evFront:['pm','im'].includes(g('evFront').value)?g('evFront').value:'none',evFrontD:num('evFrontD',80,260),evFrontStack:num('evFrontStack',40,250),
     evFrontPoles:+g('evFrontPoles').value||4,evFrontTurns:Math.round(num('evFrontTurns',4,60)),evFrontAmps:Math.round(num('evFrontAmps',100,1600)),evChem:g('evChem').value,evSeries:Math.round(num('evSeries',20,400)),
-    evKWh:num('evKWh',5,200),evYear:Math.round(num('evYear',1990,2026))};
+    evKWh:num('evKWh',0.5,200),evYear:Math.round(num('evYear',1990,2026))};
 }
 function applyElectricToForm(e){
   for(const k in EV_DEFAULT){const el=document.getElementById(k);if(el)el.value=String(e&&e[k]!=null?e[k]:EV_DEFAULT[k]);}
@@ -16803,16 +16837,20 @@ function syncElectricSections(){
       if(!el.hasAttribute('data-ev'))el.classList.add('ice-only');
     evTagged=true;
   }
-  const ev=typeSel.value==='electric';
+  const ev=typeSel.value==='electric',hs=document.getElementById('edHybrid'),hy=!ev&&!!hs&&hs.value!=='none';
   panel.classList.toggle('ev',ev);
-  if(ev){
+  panel.classList.toggle('hy',hy);   // a hybrid's motor and battery, under its engine (build 186)
+  if(hs){const d=document.getElementById('edHyDeploy');if(d)d.disabled=!hy;}
+  if(ev||hy){
     // a chemistry that had not reached cars by the technology year is offered disabled (decision 9)
     const year=clamp(+document.getElementById('evYear').value||2020,1990,2026),chem=document.getElementById('evChem');
     [...chem.options].forEach(o=>{o.disabled=!chemAvailable(o.value,year);});
-    if(!chemAvailable(chem.value,year))chem.value=['nca','ncaP','lfp','nimh','lead'].find(c=>chemAvailable(c,year));
+    if(!chemAvailable(chem.value,year))chem.value=['nca','ncaP','liHEV','lfp','nimh','lead'].find(c=>chemAvailable(c,year));
     // an induction motor has no magnets to grade or to hold in (build 182): its rotor is a copper cage
     const im=document.getElementById('evMotorType').value==='im';
     document.getElementById('evMagnet').disabled=im;document.getElementById('evRetention').disabled=im;
+  }
+  if(ev){
     // a front motor (build 183): its fields, and the car is all-wheel drive
     const front=document.getElementById('evFront').value!=='none';
     ['evFrontD','evFrontStack','evFrontPoles','evFrontTurns','evFrontAmps'].forEach(id=>{document.getElementById(id).disabled=!front;});
@@ -17596,6 +17634,115 @@ function evCycleLine(v){
   return '<br>'+tr('WLTP cycle')+' <b>'+Math.round(c.whkm)+' Wh/km</b> '+tr('from the pack')+' ('+Math.round(c.wall)+' '+tr('at the socket')+') • '+
     tr('regeneration takes back')+' '+Math.round(c.regen)+' Wh/km • '+tr('range')+' <b>'+Math.round(c.range)+' km</b>';
 }
+// ====== HYBRID: an engine with a motor and a battery (build 186, step 3.1 of plans/hybrid-electric/) ======
+// Decision 12: HYBRID is a field on every combustion engine, not an engine type. NONE is exactly the engine it was;
+// PARALLEL (P2) puts an electric motor on the gearbox's input shaft, between the engine's clutch and the gearbox
+// (the Hyundai Ioniq's, the BMW 330e's, the Porsche Cayenne E-Hybrid's arrangement), with a small pack of hybrid
+// cells. The motor and the pack are the electric drive's own (src/js/electric.js), designed in the same MOTOR,
+// INVERTER and BATTERY fields an electric car uses.
+//
+// What a P2 motor does, from where it sits:
+//   it turns at engine speed, so its torque adds to the engine's at every rpm and goes through every gear: the
+//   0-100, the lap and the race read the sum (HYBRID in src/js/powertrain.js), cut to what the pack can give;
+//   lifting off and braking, it brakes the car as a generator, added to the engine's own overrun, as an electric
+//   car's regeneration is (build 180);
+//   charge-sustaining (decision 13): over a lap the pack must take back at least what it gave. The controller lets
+//   the engine do everything it can and the motor give only what the engine cannot (the most efficient use of a
+//   small pack), and where a lap would still spend more than braking returns, the deploy is cut to the share that
+//   balances (hybridLap). The race burns fuel for the engine's share of the power only.
+const HYBRID_MODES={none:{label:'NONE'},p2:{label:'PARALLEL (P2)'}};
+// DEPLOY: how the controller uses the motor at full throttle. FULL gives everything the motor and pack can. ECO is an
+// efficiency-first calibration (the Ioniq's): the motor only fills the engine's curve up to its peak torque, so it helps
+// off the line and low in the revs and adds nothing at speed, where the pack's energy is spent least well. Hyundai's
+// own figures say 104 kW together; MotorWeek's instrumented run (0-60 mph 9.6 s, a 17.4 s quarter mile at 81 mph) is
+// the engine's alone at the top end, which is what ECO gives.
+const HYBRID_DEPLOY={full:{label:'FULL'},eco:{label:'ECO (TORQUE FILL)'}};
+// A hybrid's motor and pack when HYBRID is first chosen: a pancake motor in the bellhousing (200 mm across, 40 mm long,
+// 12 poles) and a 1.56 kWh pack of hybrid cells, the size of the Ioniq Hybrid's 32 kW / 170 Nm system.
+const HYB_DEFAULT={evMotorType:'pm',evRotorD:200,evStack:40,evPoles:12,evTurns:28,evMagnet:'ndfeb',evRetention:'bridges',evCooling:'jacket',
+  evMaxRpm:8000,evInverter:'igbt',evAmps:400,evRearCount:1,evFront:'none',evChem:'liHEV',evSeries:64,evKWh:1.56,evYear:2016};
+const HYB_SOC=0.6;   // a charge-sustaining hybrid holds its pack about here, with room above it to take back braking
+const isHybrid=()=>!!engine&&engine.type!=='electric'&&!!engine.hy;
+// Build the hybrid system of a combustion engine from its form fields (the electric drive's), or none.
+function buildHybrid(e){
+  if(!e.hyMode||e.hyMode==='none'){delete e.hy;return null;}
+  const motor=motorBuild({type:e.evMotorType,rotorD:e.evRotorD,stackL:e.evStack,poles:e.evPoles,turns:e.evTurns,magnet:e.evMagnet,
+    retention:e.evRetention,cooling:e.evCooling,inverter:e.evInverter,invAmps:e.evAmps,maxRpm:e.evMaxRpm});
+  const pack=packBuild({chem:e.evChem,series:e.evSeries,kWh:e.evKWh,year:e.evYear});
+  e.hy={mode:e.hyMode,motor,pack,mass:Math.round(motor.mass+pack.mass),cost:motor.cost+pack.cost};
+  return e.hy;
+}
+// The motor's torque at an engine speed (Nm): its envelope at the pack's charge-sustaining voltage, magnets at 60 C,
+// cut to what the pack gives there (the electric car's own law), and to nothing past the motor's top speed.
+function hybMotorTq(hy,rpm){
+  if(rpm>hy.motor.nMax)return 0;
+  const V=packOcv(hy.pack,HYB_SOC),tc=hy.motor.cool.tCool,cool={w:tc,c:tc,r:60};
+  const Pb=packMaxPower(hy.pack,HYB_SOC);
+  return driveTorqueRated(hy,Math.max(rpm,1),V,cool,Pb);
+}
+// The deploy share the charge-sustaining controller allows (1 = all the motor gives); hybridLap sets it for a lap.
+let hybDeployShare=1;
+// The engine's full-load curve and the motor's, on the engine curve's rpm points, cached per engine build.
+function hybCurves(){
+  const e=engine,hy=e.hy;
+  if(hy._c&&hy._c.score===e.score)return hy._c;
+  const eng=buildTorqueCurve(),full=eng.map(p=>hybMotorTq(hy,p.rpm));
+  const pk=Math.max(...eng.map(p=>p.tq));
+  const mot=e.hyDeploy==='eco'?full.map((t,i)=>Math.min(t,Math.max(0,pk-eng[i].tq))):full;
+  hy._c={score:e.score,eng,mot,full};
+  return hy._c;
+}
+const hybMotorAt=rpm=>{const c=hybCurves(),R=c.eng;
+  if(rpm<=R[0].rpm)return c.mot[0];
+  for(let i=1;i<R.length;i++)if(rpm<=R[i].rpm)return c.mot[i-1]+(c.mot[i]-c.mot[i-1])*(rpm-R[i-1].rpm)/(R[i].rpm-R[i-1].rpm);
+  return c.mot[c.mot.length-1];};
+// The motor's regeneration on the engine's overrun table (Nm, 500 rpm up in 250s): the electric car's law.
+const hybRegenTable=rl=>evRegenTable(engine.hy,rl);
+// A solved lap in the hybrid's terms: per point the motor's power (W: + deploying, the part of the lap's power the
+// engine's full load could not give; - regenerating, its share of the overrun), and the pack's energy over the lap.
+function hybLapEnergy(L){
+  const hy=engine.hy,R=L.replay,n=R.rpm.length,c=hybCurves(),V=packOcv(hy.pack,HYB_SOC),tc=hy.motor.cool.tCool,temp={w:tc+20,c:tc+15,r:60};
+  const v=L.v,p=L.track.line,m=vehicle.mass,rl=engine.redline,regen=hybRegenTable(rl),ov=COMBUSTION.overrunTable(rl);
+  const engAt=rpm=>{const R0=c.eng;if(rpm<=R0[0].rpm)return R0[0].tq;for(let i=1;i<R0.length;i++)if(rpm<=R0[i].rpm)return R0[i-1].tq+(R0[i].tq-R0[i-1].tq)*(rpm-R0[i-1].rpm)/(R0[i].rpm-R0[i-1].rpm);return R0[R0.length-1].tq;};
+  const pm=new Float32Array(n);let deployJ=0,regenJ=0;
+  for(let i=0;i<n;i++){
+    const j=(i+1)%n,dt=p[i].ds3/Math.max(2,(v[i]+v[j])/2),rpm=R.rpm[i],w=rpm*Math.PI/30;
+    if(R.pwr[i]>0){
+      const Pm=Math.max(0,R.pwr[i]-engAt(rpm)*w);
+      if(Pm>0){const T=Pm/Math.max(1,w);pm[i]=Pm;deployJ+=(Pm+motorLosses(hy.motor,T,Math.max(rpm,1),V,temp).total)*dt;}
+    }else if(R.eb&&R.eb[i]>0&&rpm>=500){
+      const k=Math.min(regen.length-1,Math.floor((rpm-500)/250)),Tr=regen[k],To=ov[Math.min(ov.length-1,k)]||0;
+      const share=Tr/Math.max(1e-6,Tr+To),P=R.eb[i]*m*v[i]*share*(vehicle.driveEff||0.9);   // at the shaft, through the driveline
+      const T=P/Math.max(1,w),Pb=Math.max(0,P-motorLosses(hy.motor,T,Math.max(rpm,1),V,temp).total);
+      pm[i]=-P;regenJ+=Pb*dt;
+    }
+  }
+  return {pm,deployKJ:deployJ/1000,regenKJ:regenJ/1000};
+}
+// A lap on a charge-sustaining hybrid: solved with the motor at full deploy; if it spends more of the pack than
+// braking returns, solved again with the deploy cut in proportion, until it balances (two rounds settle it).
+function hybridLap(key,opts){
+  if(opts&&opts.quick)return simulateLapRun(key,opts);   // the racing line's quick laps: full deploy, no replay to balance
+  // each round scales the share by what came back over what went out, a hair under, so it settles from the safe side
+  let k=1,used=1,L=null,E=null;
+  try{
+    for(let it=0;it<6;it++){
+      used=k;hybDeployShare=k;L=simulateLapRun(key,opts);if(!L)return null;E=hybLapEnergy(L);
+      if(E.deployKJ<=E.regenKJ||E.deployKJ<1e-6)break;
+      k=clamp(k*E.regenKJ/E.deployKJ*0.995,0,1);
+    }
+  }finally{hybDeployShare=1;}
+  L.hy={share:used,pm:E.pm,deployKJ:E.deployKJ,regenKJ:E.regenKJ};
+  return L;
+}
+// The design summary's line for a hybrid.
+function hybSummaryLine(e){
+  const hy=e.hy;if(!hy)return '';
+  const c=hybCurves();let sys=0,sysR=0,tq=0;
+  c.eng.forEach((p,i)=>{const t=p.tq+c.mot[i],P=t*p.rpm*Math.PI/30;if(P>sys){sys=P;sysR=p.rpm;}tq=Math.max(tq,t);});
+  return '<br><b>'+tr('HYBRID')+'</b> '+tr(HYBRID_MODES[hy.mode].label)+', '+tr((HYBRID_DEPLOY[e.hyDeploy]||HYBRID_DEPLOY.full).label)+' • '+tr('motor')+' <b>'+Math.round(Math.max(...c.full))+' Nm</b> • '+
+    tr('pack')+' '+hy.pack.kWh+' kWh '+tr(hy.pack.chem.label)+' • +'+hy.mass+' kg • '+tr('system')+' <b>'+Math.round(sys/1000)+' kW</b> '+tr('at')+' '+sysR+' rpm, <b>'+Math.round(tq)+' Nm</b>';
+}
 // ====== ELECTRIC PRESETS: the three Teslas (build 183, step 2.5b of plans/hybrid-electric/) ======
 // Decision 10: the Model 3 RWD (one motor), the Model Y Long Range (two: a magnet motor at the rear, an induction motor
 // at the front) and the Model S Plaid (three: two at the rear, one per wheel, and one at the front), as factory engines
@@ -17638,9 +17785,26 @@ const EV_VEHICLE_PRESETS=[
    body:{kg:2162,cd:0.208,area:2.34,wb:2.96,fWt:0.48},fit:{drive:'awd',tire:'sport',tw:295,twF:265,ta:30,wheel:21,brake:'big',rotor:380,susp:'sport',diff:'clsd',fd:7.56},
    real:{t100:2.1,top:322,limited:true},note:'0-100 is Tesla\'s figure, which takes a one-foot rollout off the start',unsure:['area','fWt']}
 ];
-// What a player picks from: the combustion tables, then the electric ones.
-const FACTORY_ENGINES=PRESETS.concat(EV_ENGINE_PRESETS), FACTORY_CARS=VEHICLE_PRESETS.concat(EV_VEHICLE_PRESETS);
-const FACTORY_ENGINE_CATS=PRESET_CATS.concat(['Electric']), FACTORY_CAR_CATS=VEHICLE_CATS.concat(['Electric']);
+// Hybrids (build 186, step 3 of the plan; decision 14). The Hyundai Ioniq Hybrid (2016): a 1.6 GDi Atkinson-cycle four
+// (Kappa, 72 x 97 mm, 13:1, 105 PS at 5700 rpm, 147 Nm) with a 32 kW / 170 Nm P2 motor between its clutch and its
+// six-speed DCT, and a 1.56 kWh, 240 V lithium-polymer pack: 104 kW and 265 Nm together. The motor is sized to those
+// figures (src/js/hybrid.js, HYB_DEFAULT); the engine is its geometry, which on the model's cams (none is an Atkinson
+// cam yet) makes ~116 hp, not 104 (tests/test103.mjs checks the car both as built and matched to the published power).
+const HYB_ENGINE_PRESETS=[
+  {cat:'Hybrid',name:'Hyundai Kappa 1.6 GDi + P2 (Ioniq Hybrid)',real:{hp:103.6,hpRpm:5700,tq:147,tqRpm:4000,motorKW:32,motorNm:170,sysKW:104,sysNm:265},
+   unsure:['redline','cam'],engine:{type:'petrol4',cylinders:4,bore_mm:72,stroke_mm:97,compression:13,redline:6250,intake:'na',injector:'direct',vvt:true,
+    cam:'stock',valves:4,octane:95,airFilter:'stock',exhaust:'stock',cat:'stock',intakeSys:'efi',hyMode:'p2',hyDeploy:'eco',
+    evMotorType:'pm',evRotorD:200,evStack:40,evPoles:12,evTurns:28,evMagnet:'ndfeb',evRetention:'bridges',evCooling:'jacket',evMaxRpm:8000,
+    evInverter:'igbt',evAmps:400,evRearCount:1,evFront:'none',evChem:'liHEV',evSeries:64,evKWh:1.56,evYear:2016}}
+];
+const HYB_VEHICLE_PRESETS=[
+  {cat:'Hybrid',name:'Hyundai Ioniq Hybrid (2016)',engine:'Hyundai Kappa 1.6 GDi + P2 (Ioniq Hybrid)',chassis:'hatch',
+   body:{kg:1370,cd:0.24,area:2.22,wb:2.70,fWt:0.60},fit:{drive:'fwd',tire:'eco',tw:195,ta:65,wheel:15,brake:'steel',rotor:280,susp:'comfort',gears:6,gearbox:'dct',diff:'open'},
+   real:{t100:10.8,top:185,limited:true},unsure:['kg','fWt']}
+];
+// What a player picks from: the combustion tables, then the electric and hybrid ones.
+const FACTORY_ENGINES=PRESETS.concat(EV_ENGINE_PRESETS,HYB_ENGINE_PRESETS), FACTORY_CARS=VEHICLE_PRESETS.concat(EV_VEHICLE_PRESETS,HYB_VEHICLE_PRESETS);
+const FACTORY_ENGINE_CATS=PRESET_CATS.concat(['Electric','Hybrid']), FACTORY_CAR_CATS=VEHICLE_CATS.concat(['Electric','Hybrid']);
 function bindControls(){
   // Throttle & load are fractions (0..1); AFR/temps are direct values.
   document.getElementById('throttle').addEventListener('input',e=>state.throttle=(+e.target.value)/100);
@@ -17808,6 +17972,11 @@ function bindControls(){
   document.getElementById('edFuel').addEventListener('change',syncDesignEnable);
   document.getElementById('edTiming').addEventListener('change',syncDesignEnable);
   document.getElementById('edIntakeSys').addEventListener('change',syncDesignEnable);
+  // Fitting a hybrid system starts from a hybrid's motor and pack, not an electric car's (build 186).
+  document.getElementById('edHybrid').addEventListener('change',e=>{
+    if(e.target.value!=='none'&&+document.getElementById('evKWh').value>10)applyElectricToForm(Object.assign({},EV_DEFAULT,HYB_DEFAULT));
+    syncDesignEnable();
+  });
   // Switching engine type resets CR / redline / cylinders to that cycle's sensible defaults.
   document.getElementById('edType').addEventListener('change',e=>{
     const tp=ENGINE_TYPE[e.target.value]||ENGINE_TYPE.petrol4,g=id=>document.getElementById(id);

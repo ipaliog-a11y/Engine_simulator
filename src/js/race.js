@@ -66,7 +66,7 @@ function detachResult(o,depth=2){
     c[k]=depth>0&&k!=='track'&&v&&typeof v==='object'&&Object.getPrototypeOf(v)===Object.prototype?detachResult(v,depth-1):v;}
   return c;
 }
-function simulateLap(key,opts){const r=simulateLapRun(key,opts);return r&&detachResult(r);}
+function simulateLap(key,opts){const r=powertrain().kind==='hybrid'?hybridLap(key,opts):simulateLapRun(key,opts);return r&&detachResult(r);}   // a hybrid balances its pack over the lap (build 186)
 function raceDriver(d){return Object.assign({},RACE_DRIVERS.balanced,typeof d==='string'?RACE_DRIVERS[d]:d||{});}
 // Fuel tank by body (litres). Typical of the class, not of any one car: a kei car carries ~30 L,
 // a GT ~80. The quoted curb masses are taken with the tank full, so a race car is lighter by what it burns.

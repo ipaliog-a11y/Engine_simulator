@@ -320,7 +320,11 @@ const CHEM={
   // collector per amp-hour. The Model S Plaid's 18650s: its 110s72p pack sustains ~2300 A, ~9C. Less energy per kg and
   // dearer per kWh for it.
   ncaP:{label:'NCA (POWER CELLS)',ocv:[2.95,3.40,3.50,3.57,3.63,3.69,3.77,3.85,3.93,4.02,4.13],vMin:2.80,rAh:0.06,cMax:10,cCharge:1.5,from:2012,
-        whkg:{2012:200,2020:235},cost:{2012:900,2016:360,2019:200,2024:140}}
+        whkg:{2012:200,2020:235},cost:{2012:900,2016:360,2019:200,2024:140}},
+  // hybrid cells (build 186): lithium-ion built for a pack that is mostly power and little energy, cycled shallow
+  // thousands of times a day; a 1.5 kWh pack gives and takes 30-40 kW (the Ioniq Hybrid's 1.56 kWh LiPo, ~25C).
+  liHEV:{label:'Li-ION (HYBRID CELLS)',ocv:[3.30,3.50,3.58,3.63,3.68,3.73,3.79,3.86,3.94,4.03,4.13],vMin:2.80,rAh:0.025,cMax:25,cCharge:20,from:2009,
+        whkg:{2009:70,2016:85,2024:100},cost:{2009:2200,2016:1100,2024:700}}
 };
 // Cell mass over pack mass: modules, structure, cooling and wiring take the rest. Large prismatic cells packed without
 // modules (cell-to-pack LFP, from 2020) waste least.

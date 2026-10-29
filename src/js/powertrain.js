@@ -92,5 +92,23 @@ const ELECTRIC={
   boostAvail:()=>0,
   overrunTable:rl=>evRegenTable(engine,rl)
 };
+// A combustion engine with a hybrid system (build 186, src/js/hybrid.js): the engine's own powertrain with a P2 motor's
+// torque added at every engine speed (cut by the charge-sustaining controller's share, hybDeployShare), its regeneration
+// added to the overrun, its motor and pack added to the mass, and the fuel burnt only for the engine's share of the power.
+const HYBRID=Object.assign({},COMBUSTION,{
+  kind:'hybrid',
+  mass:()=>engineMass()+engine.hy.mass,
+  torqueCurve:()=>{const c=hybCurves(),k=hybDeployShare;return c.eng.map((p,i)=>({rpm:p.rpm,tq:p.tq+k*c.mot[i]}));},
+  torqueGrid:()=>{const g=lapTorqueGrid(),k=hybDeployShare,mt=g.rpms.map(r=>k*hybMotorAt(r));
+    return Object.assign({},g,{tq:g.tq.map(row=>row.map((t,i)=>t+mt[i]))});},
+  overrunTable(rl){const a=COMBUSTION.overrunTable(rl),b=hybRegenTable(rl);return a.map((t,i)=>t+(b[i]||0));},
+  fuelRate(nom,n){
+    const base=COMBUSTION.fuelRate(nom,n);
+    // the replay's power is the engine's and the motor's: the fuel map is read with the engine's alone
+    return L=>{if(!L.hy)return base(L);const R=L.replay,orig=R.pwr;
+      R.pwr=orig.map((p,i)=>p>0?Math.max(0,p-Math.max(0,L.hy.pm[i])):p);
+      try{return base(L);}finally{R.pwr=orig;}};
+  }
+});
 // The powertrain of the car being built: the engine's type chooses it (a saved build without one is combustion).
-function powertrain(){return isElectric()?ELECTRIC:COMBUSTION;}
+function powertrain(){return isElectric()?ELECTRIC:isHybrid()?HYBRID:COMBUSTION;}

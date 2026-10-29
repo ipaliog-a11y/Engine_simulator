@@ -1,4 +1,4 @@
-# PIXEL ENGINE SIM v0.7 build 185
+# PIXEL ENGINE SIM v0.7 build 186
 
 **A lightweight, 8-bit style internal combustion engine *designer* & simulator** inspired by *Automation*.
 
@@ -104,6 +104,12 @@ Three Teslas are factory cars, matched on their hardware: the Model 3 RWD (0-100
 Range (dual motor, an induction front) and the Model S Plaid (three motors, 2.52 s against the 2.52-2.56 s measured).
 The VEHICLE tab gives an electric car's consumption over the WLTP cycle (build 184), driven second by second through the
 same drive: 120, 141 and 166 Wh/km from the pack for the three Teslas against their homologated 117, 138 and 158.
+
+**Hybrids** (from build 186): any engine can carry a HYBRID system. PARALLEL (P2) puts a motor on the gearbox's input
+shaft with a small pack of hybrid cells, designed in the same MOTOR / INVERTER / BATTERY fields; its torque adds to the
+engine's in the 0-100, the lap and the race, it regenerates braking, and over a lap it sustains its charge. DEPLOY
+FULL gives all the hardware can, ECO only fills the engine's curve (the Hyundai Ioniq Hybrid's calibration, checked
+against MotorWeek's instrumented run).
 
 ### Simulation & live tuning
 - **Live outputs**: Power (HP), Torque (Nm), BMEP, Volumetric Efficiency, Thermal

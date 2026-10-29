@@ -20,6 +20,26 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 Working toward **v1.0 — every number derived, not fitted.**
 
+### The parallel (P2) hybrid (build 186)
+
+- **Step 3.1 of the hybrid plan; decisions 12-15** (recorded in `plans/hybrid-electric/`: a HYBRID field on every
+  engine, charge-sustaining first, the Ioniq, Prius, 330e/Cayenne E-Hybrid and 918 to check against, hybrids racing
+  on fuel). `src/js/hybrid.js` (new).
+- **HYBRID** on the ENGINE tab: NONE is the engine exactly as it was; PARALLEL (P2) adds a motor on the gearbox's input
+  shaft and a pack, designed in the electric drive's MOTOR / INVERTER / BATTERY fields (starting from an Ioniq-sized
+  200 x 40 mm, 12-pole motor and a 1.56 kWh pack). New **Li-ION (HYBRID CELLS)** chemistry: ~25C, little energy.
+- **The HYBRID powertrain**: the motor's torque added to the engine's at every engine speed (cut to the pack's power),
+  its regeneration added to the engine's overrun, its motor and pack added to the mass. Over a lap it is
+  charge-sustaining: the engine does everything it can, the motor fills only what the engine cannot, and the deploy is
+  cut until the pack gives no more than braking returns. The race burns fuel for the engine's share of the power.
+- **DEPLOY**: FULL, or ECO, an efficiency-first calibration where the motor only fills the engine's curve up to its
+  peak torque.
+- **The Hyundai Ioniq Hybrid (2016)** as a factory engine and car: 1.6 GDi + 32 kW / 170 Nm P2 + 1.56 kWh, ECO. Its
+  engine matched to its published 105 PS (the model has no Atkinson cam yet and makes 115 hp), it runs 0-60 mph in
+  9.72 s, the quarter mile in 17.41 s at 81.1 mph against MotorWeek's measured 9.6 / 17.4 / 81, and 0-100 in 10.27 s
+  against Hyundai's 10.8. On FULL the same hardware would do 7.70 s: the real car's controller does not use it.
+- `tests/test103.mjs` (new).
+
 The model currently reaches its accuracy partly through lumped coefficients that were tuned until
 the outputs matched reality (`CAM{peakShift, ampMul, scav}`, `EXHAUST{topGain, lowLoss}`,
 `TURBO{spool, choke, k, flow}`, `IMEP_K`, `DIFF_ASYM0`, `KVCAP`). v1.0 replaces them with quantities

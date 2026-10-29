@@ -165,6 +165,11 @@ function bindControls(){
   document.getElementById('edFuel').addEventListener('change',syncDesignEnable);
   document.getElementById('edTiming').addEventListener('change',syncDesignEnable);
   document.getElementById('edIntakeSys').addEventListener('change',syncDesignEnable);
+  // Fitting a hybrid system starts from a hybrid's motor and pack, not an electric car's (build 186).
+  document.getElementById('edHybrid').addEventListener('change',e=>{
+    if(e.target.value!=='none'&&+document.getElementById('evKWh').value>10)applyElectricToForm(Object.assign({},EV_DEFAULT,HYB_DEFAULT));
+    syncDesignEnable();
+  });
   // Switching engine type resets CR / redline / cylinders to that cycle's sensible defaults.
   document.getElementById('edType').addEventListener('change',e=>{
     const tp=ENGINE_TYPE[e.target.value]||ENGINE_TYPE.petrol4,g=id=>document.getElementById(id);
