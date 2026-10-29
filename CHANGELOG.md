@@ -20,6 +20,19 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 Working toward **v1.0 — every number derived, not fitted.**
 
+### An engine's fuel over the WLTP cycle (build 187)
+
+- **Step 3.2a of the plan.** `src/js/fuel-cycle.js` (new): the WLTC class 3b trace driven second by second with an
+  engine, as the electric cars' is. Each second in the gear that burns least (economy shifting: the engine 15% over
+  idle and the torque with 10% in hand), the fuel read off the engine's own steady-state map (`steadyBSFC`) between 18
+  speeds and 12 loads, the Willans line below its lightest load; idling at a stop, injectors cut on the overrun.
+- **The cold start is derived**: the model's friction knows the oil's temperature, so the engine and its fluids warm
+  from 23 C on 30% of the fuel's energy until the thermostat opens (~850 s on the cycle), and each second reads maps
+  taken at its temperature. It costs the GR Yaris 10.9% against a hot start.
+- **Against WLTP** (`tests/test104.mjs`), nothing fitted: GR Yaris 7.85 L/100 km (8.2), Civic Type R FK8 8.24
+  (8.2-8.8), RS3 8V 9.30 (8.3-8.5), McLaren 720S 10.63 (12.2): 8.8% RMS.
+- The VEHICLE tab gives an engine its WLTP L/100 km and CO2 (an electric car keeps its Wh/km).
+
 ### The parallel (P2) hybrid (build 186)
 
 - **Step 3.1 of the hybrid plan; decisions 12-15** (recorded in `plans/hybrid-electric/`: a HYBRID field on every

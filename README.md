@@ -109,7 +109,9 @@ same drive: 120, 141 and 166 Wh/km from the pack for the three Teslas against th
 shaft with a small pack of hybrid cells, designed in the same MOTOR / INVERTER / BATTERY fields; its torque adds to the
 engine's in the 0-100, the lap and the race, it regenerates braking, and over a lap it sustains its charge. DEPLOY
 FULL gives all the hardware can, ECO only fills the engine's curve (the Hyundai Ioniq Hybrid's calibration, checked
-against MotorWeek's instrumented run).
+against MotorWeek's instrumented run). Every combustion car also gets its WLTP fuel (build 187): the same cycle,
+each second in the gear that burns least, the fuel off the engine's own map, a cold start the engine warms out of: the
+GR Yaris 7.85 L/100 km against 8.2, the Civic Type R 8.24 against 8.2-8.8.
 
 ### Simulation & live tuning
 - **Live outputs**: Power (HP), Torque (Nm), BMEP, Volumetric Efficiency, Thermal

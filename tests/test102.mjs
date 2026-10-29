@@ -44,7 +44,7 @@ const r = await page.evaluate(() => {
   }
   // an engine: no cycle line
   applyBuild({ engine: Object.assign({}, DEFAULT_ENGINE), tune: Object.assign({}, STD_TUNE) });
-  o.ice = /WLTP cycle/.test(document.getElementById('vehicleSummary').textContent);
+  o.ice = /Wh\/km/.test(document.getElementById('vehicleSummary').textContent);   // an engine's cycle is in L/100 km (build 187)
   return o;
 });
 const f = (x, d = 1) => (+x).toFixed(d);
@@ -68,7 +68,7 @@ console.log(`== Model Y: ${f(M.base)} Wh/km; without regeneration ${f(M.noRegen)
 if (!(M.noRegen > M.base * 1.15)) fails.push('regeneration does not save energy on the cycle');
 if (!(M.drag > M.base * 1.04 && M.heavy > M.base * 1.04)) fails.push('drag or mass do not cost energy');
 if (!(Math.abs(M.base - M.rearOnly) < M.base * 0.03)) fails.push('the idle induction front motor costs more than a few percent on the cycle');
-if (r.ice) fails.push('an engine\'s VEHICLE summary shows an electric cycle');
+if (r.ice) fails.push('an engine\'s VEHICLE summary shows an electric car\'s Wh/km');
 
 await browser.close();
 if (errors.length) console.log('ERRORS:\n  ' + errors.join('\n  '));
