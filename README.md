@@ -93,7 +93,9 @@ draws torque, power and efficiency at the pack's charge and the magnets' heat. O
 runs one reduction (matched to its top speed, GEARING biases it), takes energy back braking through the same path as an
 engine's overrun, and pays for its heat over a lap: round the Nordschleife the battery management holds the pack near
 55 °C and cuts the drive, and an air-cooled motor is cut far more. The TRACK tab shows the motor, the pack and the
-energy. Electric cars race from the next part.
+energy. In a race (build 181) an electric car runs on its pack's usable energy, beside engines in the same field, with
+no charging in the pit lane: its energy manager plans the power that lasts the distance and corrects it lap by lap, the
+pack and the motor heat from lap to lap, and a car whose pack cannot last retires OUT OF CHARGE.
 
 ### Simulation & live tuning
 - **Live outputs**: Power (HP), Torque (Nm), BMEP, Volumetric Efficiency, Thermal

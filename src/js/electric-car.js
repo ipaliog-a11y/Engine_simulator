@@ -31,18 +31,35 @@ function electricDriveline(v){
 }
 // The drive's torque at the wheels' motor speed, at its rated conditions (the pack at half charge, magnets at 60 C, the
 // winding at coolant temperature): the design figure, as an engine's curve is taken at best power and 25 C. Cached per
-// build (buildElectric makes a new score each time).
+// build (buildElectric makes a new score each time) and per power cap.
+// evPowerCap (build 181): the race solves the car's pace with the battery power held to a share of what the rated curve
+// draws at its peak (evRefPower); the race's energy manager, the battery management and the controller then choose
+// between those paces as the race goes (src/js/electric-race.js). 1 everywhere else.
+let evPowerCap=1;
 function evCurve(e){
-  if(e._curve&&e._curve.score===e.score)return e._curve.pts;
+  const cap=evPowerCap,c=e._curve;
+  if(c&&c.score===e.score&&c.cap===cap)return c.pts;
+  const pts=evCurveAt(e,cap<1?cap*evRefPower(e):Infinity);
+  e._curve={score:e.score,cap,pts};return pts;
+}
+function evCurveAt(e,Pcap){
   const V=motorRatedV(e),tc=e.motor.cool.tCool,cool={w:tc,c:tc,r:60},pts=[];
   const step=Math.max(50,Math.round(e.redline/120/50)*50);
-  for(let r=0;r<=e.redline;r+=step)pts.push({rpm:r,tq:driveTorqueRated(e,Math.max(r,1),V,cool)});
-  if(pts[pts.length-1].rpm<e.redline)pts.push({rpm:e.redline,tq:driveTorqueRated(e,e.redline,V,cool)});
-  e._curve={score:e.score,pts};return pts;
+  for(let r=0;r<=e.redline;r+=step)pts.push({rpm:r,tq:driveTorqueRated(e,Math.max(r,1),V,cool,Pcap)});
+  if(pts[pts.length-1].rpm<e.redline)pts.push({rpm:e.redline,tq:driveTorqueRated(e,e.redline,V,cool,Pcap)});
+  return pts;
 }
-// driveMaxTorque without the bench's live health and charge: the motor's envelope cut to the pack's power at half charge.
-function driveTorqueRated(e,rpm,V,temp){
-  const m=e.motor,w=rpm*Math.PI/30,Pb=packMaxPower(e.pack,0.5);
+// The most battery power the rated curve draws (W): the shaft power and the drive's losses at its peak.
+function evRefPower(e){
+  if(e._pRef&&e._pRef.score===e.score)return e._pRef.P;
+  const V=motorRatedV(e),tc=e.motor.cool.tCool,cool={w:tc,c:tc,r:60};let P=0;
+  for(const q of evCurveAt(e,Infinity)){const r=Math.max(q.rpm,1);P=Math.max(P,q.tq*r*Math.PI/30+motorLosses(e.motor,q.tq,r,V,cool).total);}
+  e._pRef={score:e.score,P};return P;
+}
+// driveMaxTorque without the bench's live health and charge: the motor's envelope cut to the pack's power at half charge
+// (or to Pcap, if lower).
+function driveTorqueRated(e,rpm,V,temp,Pcap){
+  const m=e.motor,w=rpm*Math.PI/30,Pb=Math.min(packMaxPower(e.pack,0.5),Pcap==null?Infinity:Pcap);
   let T=motorMaxTorque(m,rpm,V,temp.r);
   const need=t=>t*w+motorLosses(m,t,rpm,V,temp).total;
   if(T>0&&need(T)>Pb){let lo=0,hi=T;for(let k=0;k<30;k++){const mid=(lo+hi)/2;if(need(mid)>Pb)hi=mid;else lo=mid;}T=lo;}

@@ -739,7 +739,9 @@ function simulateLapRun(key,opts){
   // the lap is solved again. Asking full torque where the car is on power is what keeps this from oscillating: read off
   // a lap already slowed by the heat, the demand would look small, the next walk cool, and the lap fast again. Three
   // rounds, each taking half the new share, settle it.
-  let evHeat=null;
+  // opts.evRace (build 181): the race's solves leave the heat out (the race carries it from lap to lap itself) and take
+  // the motor's speed and torque at every point instead, to price the lap in battery energy.
+  let evHeat=null,evOp=null;
   if(pt.kind==='electric'){
     const tot=ratios[0]*fd;
     const prof=()=>{const dt=new Float64Array(n),rpm=new Float64Array(n),tq=new Float64Array(n);
@@ -750,13 +752,16 @@ function simulateLapRun(key,opts){
         tq[i]=need>0?(accKind[i]==='power'?tqAt(rpm[i]):Math.min(need*rT/(tot*eff),tqAt(rpm[i]))):-ebA[i]*m*rT*eff/tot;
       }
       return {dt,rpm,tq};};
-    for(let it=0;it<3;it++){
+    if(opts&&opts.evRace)evOp=prof();
+    else{
+      for(let it=0;it<3;it++){
+        evHeat=evLapHeat(engine,prof());
+        const prev=boostShare;
+        boostShare=Float64Array.from(evHeat.share,(s,i)=>prev?0.5*(prev[i]+s):s);passes();
+        GW=gearWalk();ebA.set(GW.eb);
+      }
       evHeat=evLapHeat(engine,prof());
-      const prev=boostShare;
-      boostShare=Float64Array.from(evHeat.share,(s,i)=>prev?0.5*(prev[i]+s):s);passes();
-      GW=gearWalk();ebA.set(GW.eb);
     }
-    evHeat=evLapHeat(engine,prof());
   }
   BT=brakeTemps();   // the rotors through the lap as it is now driven
   // Classify from the FINISHED profile, not during the passes — the backward pass touches almost
@@ -878,7 +883,7 @@ function simulateLapRun(key,opts){
     // (only on an electric car's lap, so an engine's result is the object it always was)
     ...(evHeat?{ev:{wMax:Math.max(...evHeat.tW),rMax:Math.max(...evHeat.tR),bMax:Math.max(...evHeat.tB),
       derated:evHeat.share.reduce((a,s,i)=>a+(s<0.995?p[i].ds3:0),0)/p.length_,driveKWh:evHeat.driveKWh,regenKWh:evHeat.regenKWh,
-      shareMin:Math.min(...evHeat.share)}}:{}),
+      shareMin:Math.min(...evHeat.share)}}:evOp?{evOp}:{}),
     // metres of braking where the engine's braking had to be trimmed to the driven tyres' grip (build 150): where a
     // car without drag-torque control, a slipper clutch or a blip would have stepped out
     engTrimM:GW.trim.reduce((a,t,i)=>a+(t?p[i].ds3:0),0),

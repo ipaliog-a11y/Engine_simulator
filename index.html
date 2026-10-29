@@ -4414,7 +4414,7 @@ const I18N={
   'a mistake, off line':{el:'λάθος, εκτός γραμμής'},
   'Blue flag':{el:'Μπλε σημαία'},
   'OUT':{el:'ΕΚΤΟΣ'},
-  'OUT OF FUEL':{el:'ΧΩΡΙΣ ΚΑΥΣΙΜΟ'},
+  'OUT OF FUEL':{el:'ΧΩΡΙΣ ΚΑΥΣΙΜΟ'},'OUT OF CHARGE':{el:'ΑΔΕΙΑ ΜΠΑΤΑΡΙΑ'},
   'TIME LIMIT':{el:'ΟΡΙΟ ΧΡΟΝΟΥ'},
   'FLAG':{el:'ΣΗΜΑΙΑ'},
   'LEADER':{el:'ΠΡΩΤΟΣ'},
@@ -10310,7 +10310,9 @@ function simulateLapRun(key,opts){
   // the lap is solved again. Asking full torque where the car is on power is what keeps this from oscillating: read off
   // a lap already slowed by the heat, the demand would look small, the next walk cool, and the lap fast again. Three
   // rounds, each taking half the new share, settle it.
-  let evHeat=null;
+  // opts.evRace (build 181): the race's solves leave the heat out (the race carries it from lap to lap itself) and take
+  // the motor's speed and torque at every point instead, to price the lap in battery energy.
+  let evHeat=null,evOp=null;
   if(pt.kind==='electric'){
     const tot=ratios[0]*fd;
     const prof=()=>{const dt=new Float64Array(n),rpm=new Float64Array(n),tq=new Float64Array(n);
@@ -10321,13 +10323,16 @@ function simulateLapRun(key,opts){
         tq[i]=need>0?(accKind[i]==='power'?tqAt(rpm[i]):Math.min(need*rT/(tot*eff),tqAt(rpm[i]))):-ebA[i]*m*rT*eff/tot;
       }
       return {dt,rpm,tq};};
-    for(let it=0;it<3;it++){
+    if(opts&&opts.evRace)evOp=prof();
+    else{
+      for(let it=0;it<3;it++){
+        evHeat=evLapHeat(engine,prof());
+        const prev=boostShare;
+        boostShare=Float64Array.from(evHeat.share,(s,i)=>prev?0.5*(prev[i]+s):s);passes();
+        GW=gearWalk();ebA.set(GW.eb);
+      }
       evHeat=evLapHeat(engine,prof());
-      const prev=boostShare;
-      boostShare=Float64Array.from(evHeat.share,(s,i)=>prev?0.5*(prev[i]+s):s);passes();
-      GW=gearWalk();ebA.set(GW.eb);
     }
-    evHeat=evLapHeat(engine,prof());
   }
   BT=brakeTemps();   // the rotors through the lap as it is now driven
   // Classify from the FINISHED profile, not during the passes — the backward pass touches almost
@@ -10449,7 +10454,7 @@ function simulateLapRun(key,opts){
     // (only on an electric car's lap, so an engine's result is the object it always was)
     ...(evHeat?{ev:{wMax:Math.max(...evHeat.tW),rMax:Math.max(...evHeat.tR),bMax:Math.max(...evHeat.tB),
       derated:evHeat.share.reduce((a,s,i)=>a+(s<0.995?p[i].ds3:0),0)/p.length_,driveKWh:evHeat.driveKWh,regenKWh:evHeat.regenKWh,
-      shareMin:Math.min(...evHeat.share)}}:{}),
+      shareMin:Math.min(...evHeat.share)}}:evOp?{evOp}:{}),
     // metres of braking where the engine's braking had to be trimmed to the driven tyres' grip (build 150): where a
     // car without drag-torque control, a slipper clutch or a blip would have stepped out
     engTrimM:GW.trim.reduce((a,t,i)=>a+(t?p[i].ds3:0),0),
@@ -10628,21 +10633,27 @@ function withRaceTrim(grip,dm,fn){
 function raceCarModel(entry,key,opts){
   return withBuild(entry.build,()=>{
     const pt=powertrain();
-    if(pt.kind==='electric')throw new Error(entry.name+': '+tr(EV_RACE_NOTE));   // the race spends fuel; energy is step 2.4
     if(!pt.ready()||!vehicle||!vehicle.mass)throw new Error('incomplete build: '+entry.name);
     const T=buildTrack(key), line=lineFor(T,key), n=line.length;
-    const fuel=pt.fuel(), tankL=RACE_TANK_L[vehicle.chassis]||60, tankKg=tankL*fuel.density;
-    const solve=(grip,ff,o)=>withRaceTrim(grip,(ff-1)*tankKg,()=>simulateLap(key,Object.assign({line},o)));
-    const nom=solve(1,0.5);
-    // fuel flow (g/s) at each point of a solved lap, from the powertrain's own map, so the race loop never calls it
-    const fuelRate=pt.fuelRate(nom,n);
     const grips=opts&&opts.wet?RACE_GRIP_WET:RACE_GRIP;
-    const prof=[];
-    for(const gr of grips)for(const ff of RACE_FUEL){
-      const L=(gr===1&&ff===0.5)?nom:solve(gr,ff);
-      prof.push({v:Float32Array.from(L.v),fr:fuelRate(L),lap:L.lap});
+    // an electric car (build 181): its pack's usable energy in the tank's place, the pace grid over battery power
+    // instead of the tank's mass, every point priced in kWh (src/js/electric-race.js)
+    const EV=pt.kind==='electric'?evRaceModel(key,line,grips):null;
+    let fuel,tankL,tankKg,nom,prof,rest;
+    if(EV){fuel={density:1,label:'kWh'};tankKg=EV.usable;tankL=Math.round(tankKg*10)/10;nom=EV.nom;prof=EV.prof;rest=EV.rest;}
+    else{
+      fuel=pt.fuel();tankL=RACE_TANK_L[vehicle.chassis]||60;tankKg=tankL*fuel.density;
+      const solve=(grip,ff,o)=>withRaceTrim(grip,(ff-1)*tankKg,()=>simulateLap(key,Object.assign({line},o)));
+      nom=solve(1,0.5);
+      // fuel flow (g/s) at each point of a solved lap, from the powertrain's own map, so the race loop never calls it
+      const fuelRate=pt.fuelRate(nom,n);
+      prof=[];
+      for(const gr of grips)for(const ff of RACE_FUEL){
+        const L=(gr===1&&ff===0.5)?nom:solve(gr,ff);
+        prof.push({v:Float32Array.from(L.v),fr:fuelRate(L),lap:L.lap});
+      }
+      rest=solve(1,0.5,{fromRest:true});
     }
-    const rest=solve(1,0.5,{fromRest:true});
     const cum=new Float64Array(n+1);for(let i=0;i<n;i++)cum[i+1]=cum[i]+line[i].ds3;
     const kap=new Float32Array(n),sinT=new Float32Array(n),lim=new Array(n);
     for(let i=0;i<n;i++){
@@ -10658,6 +10669,7 @@ function raceCarModel(entry,key,opts){
     // fuel per lap: the flow along the nominal lap (full grip, half a tank), over the time at each point
     const frNom=prof[top+1].fr;
     let fpl=0;for(let i=0;i<n;i++){const j=(i+1)%n;fpl+=frNom[i]*line[i].ds3/Math.max(2,(nom.v[i]+nom.v[j])/2);}
+    if(EV)fpl=EV.ev.epl[0]*1000;   // an electric car's: at full power
     return {name:entry.name,key,n,line:line.map(q=>({x:q.x,y:q.y})),cum,L3:cum[n],kap,sinT,lim,prof,grips,
       vRest:Float32Array.from(rest.v),vNom,vApex,tF:Float32Array.from(nom.replay.tF),fadeProf:Float32Array.from(nom.replay.fade),
       ebProf:Float32Array.from(nom.replay.eb||[]),frProf:Float32Array.from(nom.replay.frB||[]),
@@ -10670,7 +10682,8 @@ function raceCarModel(entry,key,opts){
       brakeF:vehicle.brakeFrontShare||0.7,
       tyre:raceCompound(vehicle.tireType),
       tyreArea:0.25+vehicle.tireWidth/1000,tyreC:TYRE_RACE.cp*vehicle.tireWidth/225,
-      chassis:vehicle.chassis,chLabel:vehicle.chLabel,hp:pt.rating().peakHP};
+      chassis:vehicle.chassis,chLabel:vehicle.chLabel,hp:pt.rating().peakHP,
+      ...(EV?{ev:EV.ev,unit:'kWh'}:{})};
   });
 }
 // Speed (m/s) and fuel flow (g/s) the car's limit gives at line point i, for grip g and tank share ff.
@@ -10743,12 +10756,12 @@ function raceTyreCallPays(M,cur,next,w,left){
 }
 // A solo run of the car on its own pace, no traffic and no driver error, for the strategy: how many laps a
 // set of tyres lasts to the wear limit, with the lap time at each age, in the conditions at the start.
-function racePractice(M,cfg,maxLaps,mode){
+function racePractice(M,cfg,maxLaps,mode,ff0){
   const air=cfg.air!=null?cfg.air:RACE.air,w=0;
   const env={air,track:raceTrackTemp(air,w),w};
   const ty=M.tyre,T=[0,0,0,0].fill(cfg.warmers&&ty.key!=='eco'?RACE.warmers:air),W=[0,0,0,0],laps=[];
-  const ff=0.5,sv=mode==='save'?0.99:1;let life=null;
-  M.massNow=M.mass-M.tankKg*0.5;
+  const ff=ff0!=null?ff0:0.5,sv=mode==='save'?0.99:1;let life=null;
+  M.massNow=M.ev?M.mass:M.mass-M.tankKg*0.5;
   for(let lap=0;lap<maxLaps;lap++){
     let t=0;
     for(let i=0;i<M.n;i++){
@@ -10767,14 +10780,17 @@ function racePractice(M,cfg,maxLaps,mode){
 // The stops, chosen once at the start (build 137; per car, build 141). cc.stops is 'auto' (the fewest the
 // fuel and the tyres allow, or one or two more if the time fresher tyres win back pays for the pit lane),
 // a number of stops, or 'none'. Fuel saving burns ~10% less a lap.
+// An electric car (build 181) cannot charge in the pit lane: it starts full, stops only for tyres, and its energy manager
+// chooses the power that lasts the distance (evRacePlanFF).
 function racePlan(M,cfg,cc){
-  const N=cfg.laps, fpl=M.fuelPerLapKg*1.03*(cc.mode==='save'?0.9:1);
+  const ev=M.ev?evRacePlanFF(M,cfg.laps,cc.mode):null;
+  const N=cfg.laps, fpl=ev?ev.fpl:M.fuelPerLapKg*1.03*(cc.mode==='save'?0.9:1);
   const want=cc.stops==null?(cfg.strategy==='none'?'none':'auto'):cc.stops;
-  if(want==='none')return {stops:[],startKg:M.tankKg,est:null,fpl,want};
-  const pr=racePractice(M,cfg,Math.min(N,200),cc.mode);
+  if(want==='none')return Object.assign({stops:[],startKg:M.tankKg,est:null,fpl,want},ev?{evFF:ev.ff}:{});
+  const pr=racePractice(M,cfg,Math.min(N,200),cc.mode,ev?ev.ff:undefined);
   const lapAt=age=>{const L=pr.laps;return L.length?L[Math.min(L.length-1,age)].t:M.lapNom;};
   const lifeLaps=pr.life===Infinity?Infinity:Math.max(1,Math.floor(pr.life));
-  const sFuel=Math.max(0,Math.ceil(N*fpl/(M.tankKg*0.97)-1e-9)-1);
+  const sFuel=ev?0:Math.max(0,Math.ceil(N*fpl/(M.tankKg*0.97)-1e-9)-1);
   const sTyre=lifeLaps===Infinity?0:Math.max(0,Math.ceil(N/lifeLaps)-1);
   const stintsOf=s=>{const a=[];for(let k=0;k<=s;k++)a.push(Math.round((k+1)*N/(s+1))-Math.round(k*N/(s+1)));return a;};
   let best=null;
@@ -10782,7 +10798,7 @@ function racePlan(M,cfg,cc){
     const sMin=Math.max(sFuel,sTyre);
     for(let s=sMin;s<=sMin+2&&s<N;s++){
       const stints=stintsOf(s);
-      if(stints.some(x=>x*fpl>M.tankKg*0.97))continue;
+      if(!ev&&stints.some(x=>x*fpl>M.tankKg*0.97))continue;
       let est=s*(RACE.pitLoss+RACE.tyreChange);
       for(const L of stints)for(let a=0;a<L;a++)est+=lapAt(a);
       if(!best||est<best.est)best={s,stints,est};
@@ -10792,7 +10808,8 @@ function racePlan(M,cfg,cc){
   }
   if(!best){const s=Math.max(sFuel,sTyre);best={s,stints:stintsOf(s),est:null};}
   const stops=[];let acc=0;for(let k=0;k<best.stints.length-1;k++){acc+=best.stints[k];stops.push(acc);}
-  return {stops,stints:best.stints,startKg:Math.min(M.tankKg,(best.stints[0]+1)*fpl),est:best.est,life:lifeLaps,fpl,want};
+  return Object.assign({stops,stints:best.stints,startKg:ev?M.tankKg:Math.min(M.tankKg,(best.stints[0]+1)*fpl),est:best.est,life:lifeLaps,fpl,want},
+    ev?{evFF:ev.ff}:{});
 }
 // ---- the race itself ----
 // cfg: track, laps, seed, grid ('quali'|'reverse'), strategy ('auto'|'none': the default for every car),
@@ -10830,6 +10847,7 @@ function raceInit(models,cfg){
       stints:[{tyre:tyKey,from:1}],react:rnd()<0.5?1:0,wantFor:0,
       // the driver's tyre work: 1 for the average driver; a careful one slides them less, an aggressive one more
       defendT:-8,wide:null,dive:null,yieldT:0,diveZone:-1,switchT:0,slipK:(1.15-0.3*cc.drv.care)*(0.85+0.3*cc.drv.aggr)});
+    if(M.ev)evRaceCarInit(R.cars[R.cars.length-1],plan);
   });
   for(const c of R.cars)c.sTot=raceDist(R,c);
   // recording, sized for the race and grown if it runs long
@@ -10892,11 +10910,12 @@ function raceStepOnce(R){
   // targets
   for(const c of onTrack){
     const M=c.M;
-    const g=raceGrip(M,c.ty,c.T,c.W,w),ff=c.fuelKg/M.tankKg;
+    const g=raceGrip(M,c.ty,c.T,c.W,w),ff=M.ev?evRaceFFNow(M,c):c.fuelKg/M.tankKg;
     // look half a step ahead so the speed is the segment's middle, not its start
     let i=c.i,f=c.f,ahead=c.v*dt/2;
     while(ahead>0){const L=M.cum[i+1]-M.cum[i],rem=(1-f)*L;if(ahead<rem){f+=ahead/L;ahead=0;}else{ahead-=rem;i=(i+1)%M.n;f=0;}}
     const P=racePaceAt(M,i,f,g,ff),lim=M.lim[i];
+    if(M.ev)c._tq=evRaceTqAt(M,i,f,clamp(g,M.grips[0],1),ff);
     let vLim=P.v;
     // the brakes as they are now against the brakes the lap was solved with: a braking zone to the speed
     // it brakes down to, v^2 = apex^2 + (fade now / fade solved) (v^2 - apex^2)
@@ -10984,7 +11003,7 @@ function raceStepOnce(R){
   for(const c of onTrack){
     const M=c.M,vOld=c._vOld==null?c.v:c._vOld;
     c.ax=0.8*c.ax+0.2*clamp((c.v-vOld)/dt,-15,12);c._vOld=c.v;
-    M.massNow=M.mass-M.tankKg+c.fuelKg;
+    M.massNow=M.ev?M.mass:M.mass-M.tankKg+c.fuelKg;
     raceTyreStep(M,c.ty,c.T,c.W,c.v,c.v*c.v*M.kap[c.i],c.ax,dt,c.slipK===1?env:Object.assign({},env,{slipK:c.slipK}));
     if(c.defendT>-8)c.defendT-=dt;if(c.switchT>0)c.switchT-=dt;   // below 0, the defend's cool-down
     if(c.wide){c.wide.d+=c.v*dt;if(c.wide.d>80)c.wide=null;}
@@ -11003,6 +11022,7 @@ function raceStepOnce(R){
     const r=clamp(c.v/Math.max(1,c._pv),0,1.05);
     const burn=c._fr*r*r*(c.cc.mode==='save'?0.9:1)*dt/1000;
     c.fuelKg-=burn;c.fuelUsed+=burn;
+    if(M.ev)evRaceHeatStep(M,c,r,dt,c.cc.mode==='save'?0.9:1);
     if(c.blue>0)c.blue-=dt;
     let adv=c.v*dt;
     if(c.launch)c.launch.d+=adv;
@@ -11014,13 +11034,14 @@ function raceStepOnce(R){
       if(c.mistake&&c.mistake.d==null&&c.i===c.mistake.at){c.mistake.d=0;raceEvent(R,c,'mistake');}
       if(c.i===0){raceCross(R,c);if(c.state!=='run')break;}
     }
-    if(c.fuelKg<=0&&c.state==='run'){c.fuelKg=0;c.state='dnf';c.v=0;raceEvent(R,c,'dnf',{why:'OUT OF FUEL'});}
+    if(c.fuelKg<=0&&c.state==='run'){c.fuelKg=0;c.state='dnf';c.v=0;raceEvent(R,c,'dnf',{why:M.ev?'OUT OF CHARGE':'OUT OF FUEL'});}
     c.sTot=raceDist(R,c);
   }
   // the pit lane: the car sits in its box while the rotors cool
   for(const c of cars){
     if(c.state!=='pit')continue;
     brakeHeatStep(c.BT,c.M.brakeTh,0,0,dt,c.M.brakeCar);
+    if(c.M.ev)evRaceCool(c,dt);
     c.pit.t-=dt;
     if(c.pit.t<=0){
       const M=c.M;
@@ -11051,6 +11072,7 @@ function raceCross(R,c){
     const pos=1+R.cars.filter(o=>o!==c&&o.state!=='dnf'&&o.sTot>=c.lapsDone*R.Lc).length;   // further round the race (a car finished a lap down is not)
     const lap={n:c.lapsDone,t:lt,end:t,fuelKg:c.lastLapKg-c.fuelKg,wear:Math.max(...c.W),pit:false,tyre:c.ty.key,wet:w,pos,
       brake:c.BT.F};
+    if(M.ev){lap.pack=c.evT.b;lap.winding=c.evT.w;}
     c.lastLapKg=c.fuelKg;c.laps.push(lap);
     if(c.best==null||lt<c.best)c.best=lt;
     raceEvent(R,c,'lap',{time:lt,n:c.lapsDone});
@@ -11071,6 +11093,8 @@ function raceCross(R,c){
     if(corners.length)c.mistake={at:corners[Math.floor(R.rnd()*corners.length)],d:null};
   }
   if(c.lapsDone<0)return;
+  // an electric car's energy manager looks again at what is left for the laps that are left
+  if(M.ev&&cfg.laps-c.lapsDone>0)evRaceManage(M,c,cfg.laps-c.lapsDone,mode);
   // the pit lane: on the planned lap; now if the fuel or the tyres will not see another; or for the weather
   const left=cfg.laps-c.lapsDone, fpl=c.plan.fpl||M.fuelPerLapKg*1.03;
   const noStops=c.plan.want==='none';
@@ -11081,7 +11105,7 @@ function raceCross(R,c){
   }
   const weather=tyre!==c.ty.key;
   const planned=c.plan.stops.includes(c.lapsDone);
-  const need=planned&&!noStops||(!noStops&&c.fuelKg<fpl*1.05&&left>0)||(!noStops&&Math.max(...c.W)>0.95&&left>2)||weather;
+  const need=planned&&!noStops||(!noStops&&!M.ev&&c.fuelKg<fpl*1.05&&left>0)||(!noStops&&Math.max(...c.W)>0.95&&left>2)||weather;
   if(need){
     if(!weather&&left>0&&raceBestCompound(M,w)!==tyre&&c.cc.wetCall!=='stay')tyre=raceBestCompound(M,w);
     // an unplanned stop takes the place of a planned one coming up soon
@@ -11091,7 +11115,7 @@ function raceCross(R,c){
       if(next-prev<(after-prev)*0.4)c.plan.stops.splice(nextIdx,1);
     }
     const nx=c.plan.stops.find(l=>l>c.lapsDone),stint=Math.min(left,(nx!=null?nx:cfg.laps)-c.lapsDone);
-    const want=Math.min(M.tankKg,(stint+1)*fpl),add=Math.max(0,want-c.fuelKg);
+    const want=Math.min(M.tankKg,(stint+1)*fpl),add=M.ev?0:Math.max(0,want-c.fuelKg);   // no charging in the pit lane
     const service=Math.max(RACE.tyreChange,add/M.fuelRho/RACE.refuelLps);
     c.state='pit';c.pit={t:RACE.pitLoss+service,fuelKg:add,service,tyre};c.v=0;c.stopsDone++;c.passing=-1;c.wantFor=0;
     if(c.laps.length)c.laps[c.laps.length-1].pit=true;
@@ -11123,7 +11147,8 @@ function raceResults(R){
     lapsDown:lead.lapsDone-Math.max(0,c.lapsDone),best:c.best,stops:c.stopsDone,fuelL:c.fuelUsed/c.M.fuelRho,
     state:c.state,grid:c.grid,stints:c.stints,mode:c.cc.mode,driver:c.cc.drv.label||'',
     brakeMax:Math.max(0,...c.laps.map(l=>l.brake||0)),
-    why:(R.events.find(e=>e.type==='dnf'&&e.car===c.id)||{}).why||''}));
+    why:(R.events.find(e=>e.type==='dnf'&&e.car===c.id)||{}).why||'',
+    ...(c.M.ev?{unit:'kWh',packMax:c.evPeak.b,windingMax:c.evPeak.w}:{})}));
 }
 // Simulate the whole race in one go (headless use and the tests).
 function simulateRace(entries,cfg){
@@ -12790,8 +12815,10 @@ function dynoReportCanvas(scale){
   if(dynoPulls.length)g.fillText(dynoPulls.length+' previously logged pull(s) overlaid faintly for comparison.',40,fy+62);
   return cv;
 }
+// What the reports call the build: its name, else its size (an electric drive's peak power, build 181).
+const engineLabel=()=>engine.name||(isElectric()?engine.score.peakKW+' kW electric':engine.displacement_L.toFixed(1)+'L');
 function reportFileName(ext){
-  const n=(engine.name||engine.displacement_L.toFixed(1)+'L').replace(/[^a-z0-9]+/gi,'_').replace(/^_|_$/g,'');
+  const n=engineLabel().replace(/[^a-z0-9]+/gi,'_').replace(/^_|_$/g,'');
   return (n||'engine')+'_dyno_'+new Date().toISOString().slice(0,10)+'.'+ext;
 }
 function downloadBlob(blob,fn){
@@ -12895,7 +12922,7 @@ function raceReportCanvas(R,scale){
     g.fillStyle=RPT.ink;g.font=sans(14);g.fillText(String(x.stops),cols[6]+6,y+21);
     x.stints.forEach((st,k)=>{const bx=cols[6]+26+k*44;g.fillStyle=RACE_RPT_TYRE[st.tyre]||'#888';g.fillRect(bx,y+8,40,16);
       g.fillStyle='#fff';g.font=sans(10,true);g.fillText((RACE_TYRE_LOOK[st.tyre]||['?'])[0]+' L'+st.from,bx+4,y+20);});
-    g.fillStyle=RPT.ink;g.font=sans(14);g.fillText(x.fuelL.toFixed(1)+' L',cols[7]+6,y+21);
+    g.fillStyle=RPT.ink;g.font=sans(14);g.fillText(x.fuelL.toFixed(1)+' '+(x.unit||'L'),cols[7]+6,y+21);
     g.fillText(({push:'push',normal:'normal',save:'fuel save'}[x.mode]||x.mode)+(x.driver&&x.driver!=='BALANCED'?', '+x.driver.toLowerCase():''),cols[8]+6,y+21);
     y+=30;
   }
@@ -12968,7 +12995,7 @@ function raceReportCanvas(R,scale){
     if(evs.length&&rows>0){
       g.fillStyle=RPT.ink;g.font=sans(16,true);g.fillText('Key moments',40,ky);
       const nm=id=>{const c=R.cars.find(o=>o.id===id);return c?c.M.name:'';};
-      const txt=e=>e.type==='pass'?nm(e.car)+' passes '+nm(e.on):e.type==='pit'?nm(e.car)+' pits: '+raceCompound(e.tyre).label.toLowerCase()+', '+e.fuelL.toFixed(1)+' L'+(e.why==='weather'?' (for the weather)':'')
+      const txt=e=>e.type==='pass'?nm(e.car)+' passes '+nm(e.on):e.type==='pit'?nm(e.car)+' pits: '+raceCompound(e.tyre).label.toLowerCase()+(e.fuelL>0?', '+e.fuelL.toFixed(1)+' L':'')+(e.why==='weather'?' (for the weather)':'')
         :e.type==='dive'?(e.ok?nm(e.car)+' dives down the inside of '+nm(e.on):nm(e.car)+' tries a late move on '+nm(e.on)+' and runs wide')
         :e.type==='mistake'?nm(e.car)+' makes a mistake':e.type==='rain'?'Rain starts to fall':e.type==='dry'?'The track is dry':nm(e.car)+' retires ('+(e.why||'').toLowerCase()+')';
       const show=evs.length>rows?evs.slice(0,rows-1):evs;
@@ -13049,7 +13076,7 @@ function hotLapReportCanvas(scale){
   g.fillStyle=RPT.ink;g.font=sans(30,true);g.fillText(T.label,40,142);
   g.fillStyle='#667';g.font=sans(15);
   g.fillText((T.length/1000).toFixed(2)+' km  ·  '+T.wLabel+' wide  ·  '+T.corners+' corners      '+
-    (engine.name||engine.displacement_L.toFixed(1)+'L')+'  in  '+vehicle.chLabel,40,168);
+    engineLabel()+'  in  '+vehicle.chLabel,40,168);
   // ---- Lap + sector band ----
   const by=186;
   g.fillStyle='#f4f5f8';g.fillRect(40,by,W-80,86);
@@ -13204,7 +13231,7 @@ function hotLapReportCanvas(scale){
 }
 function lapFileName(ext){
   const t=(lapResult?lapResult.track.label:'lap').replace(/[^a-z0-9]+/gi,'_');
-  const c=(engine.name||engine.displacement_L.toFixed(1)+'L').replace(/[^a-z0-9]+/gi,'_');
+  const c=engineLabel().replace(/[^a-z0-9]+/gi,'_');
   return (t+'_'+c+'_hotlap_'+new Date().toISOString().slice(0,10)+'.'+ext).replace(/_+/g,'_');
 }
 function exportLapPNG(){
@@ -15282,7 +15309,6 @@ function raceFillAdd(){
 }
 function raceEntrantFrom(v){
   if(v==='cur'){
-    if(isElectric()){flash(tr(EV_RACE_NOTE),'warn');return null;}   // the race spends fuel; energy is step 2.4
     if(!powertrain().ready()||!vehicle||!vehicle.mass){flash(tr('BUILD A CAR FIRST'),'warn');return null;}
     const name=(loaded.car&&loaded.car.name)||((engine.name?engine.name+' · ':'')+tr(vehicle.chLabel||'')).trim()||tr('This build');
     return {name,build:serializeBuild(name,'')};
@@ -15425,7 +15451,7 @@ const raceEventText=(R,e)=>{
   const nm=id=>{const c=R.cars.find(x=>x.id===id);return c?c.M.name:'?';};
   switch(e.type){
     case 'pass':return nm(e.car)+' '+tr('passes')+' '+nm(e.on);
-    case 'pit':return nm(e.car)+' '+tr('pits')+' — '+e.fuelL.toFixed(1)+' L, '+tr(raceCompound(e.tyre).label)+', '+(RACE.pitLoss+e.service).toFixed(1)+' s';
+    case 'pit':return nm(e.car)+' '+tr('pits')+' — '+(e.fuelL>0?e.fuelL.toFixed(1)+' L, ':'')+tr(raceCompound(e.tyre).label)+', '+(RACE.pitLoss+e.service).toFixed(1)+' s';
     case 'rain':return tr('Rain is falling');
     case 'dry':return tr('The track is dry');
     case 'pitout':return nm(e.car)+' '+tr('rejoins');
@@ -15482,7 +15508,8 @@ function renderRacePanel(force){
     return '<div class="rt-card'+(raceUI.follow===c.id?' sel':'')+'"><div class="rt-head"><i style="background:'+RACE_COLS[c.id]+'"></i><span>P'+x.pos+' '+esc(M.name)+'</span><em>'+state+'</em></div>'+
       '<div class="rt-body"><div class="rt-tyres">'+tyre(s.T[0],s.W[0],th,'FL')+tyre(s.T[1],s.W[1],th,'FR')+tyre(s.T[2],s.W[2],th,'RL')+tyre(s.T[3],s.W[3],th,'RR')+'</div>'+
       '<div class="rt-side"><div class="rt-k">'+esc(tr(th.label))+' • '+tr('age')+' '+x.tyreAge+'</div>'+
-      '<div class="rt-k">'+tr('FUEL')+' '+s.fuelL.toFixed(1)+' / '+M.tankL+' L • '+lapsLeft.toFixed(1)+' '+tr('laps')+'</div>'+
+      '<div class="rt-k">'+tr(M.ev?'ENERGY':'FUEL')+' '+s.fuelL.toFixed(1)+' / '+M.tankL+' '+(M.unit||'L')+' • '+lapsLeft.toFixed(1)+' '+tr('laps')+'</div>'+
+      (M.ev?raceEvLine(c,t):'')+
       '<div class="rt-bar"><div style="width:'+Math.round(fuelPct*100)+'%;background:'+(lapsLeft<1.5?'#ff4444':lapsLeft<3?'#ffcc00':'#00ccff')+'"></div></div>'+
       '<div class="rt-k">'+tr('BRAKES')+' <b style="color:'+brakeTempColour(s.brk,M.brakeOnset)+'">'+Math.round(s.brk)+'°</b> / <b style="color:'+brakeTempColour(s.brkR,M.brakeOnset)+'">'+Math.round(s.brkR)+'°C</b>'+
         (fade>0?' <b style="color:#ff4444">'+tr('FADE')+' −'+fade+'%</b>':'')+'</div>'+
@@ -15495,7 +15522,7 @@ function renderRacePanel(force){
     res.innerHTML='<div class="design-section">'+tr('Result')+'</div><table class="race-tower"><thead><tr><th>P</th><th>'+tr('CAR')+'</th><th>'+tr('TIME')+'</th><th>'+tr('BEST')+'</th><th>'+tr('PIT')+'</th><th>'+tr('FUEL')+'</th></tr></thead><tbody>'+
       rs.map(x=>'<tr><td>'+(x.state==='dnf'?'—':x.pos)+'</td><td class="nm"><i style="background:'+RACE_COLS[x.id]+'"></i>'+esc(x.name)+'</td><td>'+
         (x.state==='dnf'?'DNF':x.pos===1?fmtLap(x.time):x.lapsDown>0?'+'+x.lapsDown+' '+tr(x.lapsDown>1?'LAPS':'LAP'):'+'+(x.gap||0).toFixed(1))+'</td><td class="'+(flAll&&flAll.car===x.id?'race-fl':'')+'">'+(x.best!=null?fmtLap(x.best):'—')+
-        '</td><td>'+x.stops+' '+x.stints.map(st=>raceTyreBadge(raceCompound(st.tyre))).join('')+'</td><td>'+x.fuelL.toFixed(1)+' L</td></tr>').join('')+'</tbody></table>'+
+        '</td><td>'+x.stops+' '+x.stints.map(st=>raceTyreBadge(raceCompound(st.tyre))).join('')+'</td><td>'+x.fuelL.toFixed(1)+' '+(x.unit||'L')+'</td></tr>').join('')+'</tbody></table>'+
       '<div class="perf-note">'+tr('Grid')+': '+rs.slice().sort((a,b)=>a.grid-b.grid).map(x=>x.grid+'. '+esc(x.name)).join(' · ')+' • '+tr('seed')+' '+R.cfg.seed+'</div>';
   }else res.innerHTML='';
 }
@@ -16598,7 +16625,6 @@ function initGuide(){
 const EV_DEFAULT={evRotorD:150,evStack:134,evPoles:6,evTurns:12,evMagnet:'ndfeb',evRetention:'bridges',evCooling:'jacket',
   evMaxRpm:18000,evInverter:'igbt',evAmps:950,evChem:'nca',evSeries:96,evKWh:75,evYear:2020};
 // The race spends energy, not fuel (step 2.4): until then an electric car drives the 0-100 and the lap but does not race.
-const EV_RACE_NOTE='Electric cars race from the next build: they drive the 0-100 and the lap now.';
 // One reduction is all an electric car has: GEARING on the VEHICLE tab sets it (build 180).
 const EV_GEAR_NOTE='An electric car has one fixed reduction: set it with GEARING on the VEHICLE tab.';
 const isElectric=()=>!!engine&&engine.type==='electric';
@@ -17049,18 +17075,35 @@ function electricDriveline(v){
 }
 // The drive's torque at the wheels' motor speed, at its rated conditions (the pack at half charge, magnets at 60 C, the
 // winding at coolant temperature): the design figure, as an engine's curve is taken at best power and 25 C. Cached per
-// build (buildElectric makes a new score each time).
+// build (buildElectric makes a new score each time) and per power cap.
+// evPowerCap (build 181): the race solves the car's pace with the battery power held to a share of what the rated curve
+// draws at its peak (evRefPower); the race's energy manager, the battery management and the controller then choose
+// between those paces as the race goes (src/js/electric-race.js). 1 everywhere else.
+let evPowerCap=1;
 function evCurve(e){
-  if(e._curve&&e._curve.score===e.score)return e._curve.pts;
+  const cap=evPowerCap,c=e._curve;
+  if(c&&c.score===e.score&&c.cap===cap)return c.pts;
+  const pts=evCurveAt(e,cap<1?cap*evRefPower(e):Infinity);
+  e._curve={score:e.score,cap,pts};return pts;
+}
+function evCurveAt(e,Pcap){
   const V=motorRatedV(e),tc=e.motor.cool.tCool,cool={w:tc,c:tc,r:60},pts=[];
   const step=Math.max(50,Math.round(e.redline/120/50)*50);
-  for(let r=0;r<=e.redline;r+=step)pts.push({rpm:r,tq:driveTorqueRated(e,Math.max(r,1),V,cool)});
-  if(pts[pts.length-1].rpm<e.redline)pts.push({rpm:e.redline,tq:driveTorqueRated(e,e.redline,V,cool)});
-  e._curve={score:e.score,pts};return pts;
+  for(let r=0;r<=e.redline;r+=step)pts.push({rpm:r,tq:driveTorqueRated(e,Math.max(r,1),V,cool,Pcap)});
+  if(pts[pts.length-1].rpm<e.redline)pts.push({rpm:e.redline,tq:driveTorqueRated(e,e.redline,V,cool,Pcap)});
+  return pts;
 }
-// driveMaxTorque without the bench's live health and charge: the motor's envelope cut to the pack's power at half charge.
-function driveTorqueRated(e,rpm,V,temp){
-  const m=e.motor,w=rpm*Math.PI/30,Pb=packMaxPower(e.pack,0.5);
+// The most battery power the rated curve draws (W): the shaft power and the drive's losses at its peak.
+function evRefPower(e){
+  if(e._pRef&&e._pRef.score===e.score)return e._pRef.P;
+  const V=motorRatedV(e),tc=e.motor.cool.tCool,cool={w:tc,c:tc,r:60};let P=0;
+  for(const q of evCurveAt(e,Infinity)){const r=Math.max(q.rpm,1);P=Math.max(P,q.tq*r*Math.PI/30+motorLosses(e.motor,q.tq,r,V,cool).total);}
+  e._pRef={score:e.score,P};return P;
+}
+// driveMaxTorque without the bench's live health and charge: the motor's envelope cut to the pack's power at half charge
+// (or to Pcap, if lower).
+function driveTorqueRated(e,rpm,V,temp,Pcap){
+  const m=e.motor,w=rpm*Math.PI/30,Pb=Math.min(packMaxPower(e.pack,0.5),Pcap==null?Infinity:Pcap);
   let T=motorMaxTorque(m,rpm,V,temp.r);
   const need=t=>t*w+motorLosses(m,t,rpm,V,temp).total;
   if(T>0&&need(T)>Pb){let lo=0,hi=T;for(let k=0;k<30;k++){const mid=(lo+hi)/2;if(need(mid)>Pb)hi=mid;else lo=mid;}T=lo;}
@@ -17128,6 +17171,150 @@ function evLapCells(ev,cell){
   return cell(tr('MOTOR'),hot(ev.wMax,150),ev.derated>0.005?tr('cut back')+' '+Math.round(ev.derated*100)+'% '+tr('of the lap'):tr('winding peak'))+
     cell(tr('BATTERY'),hot(ev.bMax,50),tr('pack peak'))+
     cell(tr('ENERGY'),ev.driveKWh.toFixed(2),'kWh · '+tr('regen')+' '+ev.regenKWh.toFixed(2));
+}
+// ====== ELECTRIC RACE: energy instead of fuel, no charging mid-race (build 181) ======
+// Step 2.4 of plans/hybrid-electric/. The race (src/js/race.js) solves each car's pace once, up front, over a grid of grip
+// levels and tank loads, and burns fuel along it. An electric car carries the same race with three differences:
+//   the store      the pack's usable energy (kWh) stands where the tank's fuel stood. It weighs the same full or empty,
+//                  so the second axis of the pace grid is not the tank's mass: it is the battery power the car runs
+//                  at, as a share of what its rated curve draws at its peak (EV_RACE.caps): full, about two thirds,
+//                  and under a third. Each is a lap solved through the same solver, the torque curve cut to that power;
+//   the price      every point of a solved lap is priced in battery energy: the shaft power, the motor's and the
+//                  inverter's losses (motorLosses) and the cells' own (packDraw), less what the regeneration takes back
+//                  braking. The race spends it as it spends fuel, scaled by how the car is actually being driven there;
+//   the manager    there is no charging in the pit lane (decision 8), so the energy has to last. The plan chooses the
+//                  most power that brings the car home with a margin (evRacePlanFF), and at every crossing of the line
+//                  the manager chooses again for the laps that are left, as a Formula E car's does. Within the lap the
+//                  battery management and the controller have the last word: the pack's power falls as its charge
+//                  falls (packMaxPower) and as it heats past 50 C (packDerate), and the controller cuts the current as
+//                  the winding and the magnets heat (motorDerate). The pack and the motor are carried from lap to lap
+//                  (one lump each, as on the TRACK tab), so a long race is where an electric car runs out of temperature
+//                  before it runs out of charge, or out of charge if the plan was too greedy.
+// The pace grid holds the power between the caps; below the lowest the car runs at the lowest (the floor of the grid).
+// A car that empties the pack retires: OUT OF CHARGE.
+const EV_RACE={
+  socStart:0.95,    // a race starts on a full pack: charged to 95%, the top left free so regeneration has somewhere to go
+  socFloor:0.05,    // and the cut-off the battery management holds back
+  caps:[1,0.65,0.3],// the battery power at the grid's three tank-axis points (RACE_FUEL 0, 0.5, 1), a share of evRefPower
+  margin:0.97       // the plan keeps 3% in hand
+};
+// The tank axis of the pace grid (0..1) for a power cap, and back.
+function evRaceFF(cap){
+  const C=EV_RACE.caps;
+  if(cap>=C[0])return 0;
+  if(cap>=C[1])return 0.5*(C[0]-cap)/(C[0]-C[1]);
+  if(cap>=C[2])return 0.5+0.5*(C[1]-cap)/(C[1]-C[2]);
+  return 1;
+}
+const evRaceCap=ff=>{const C=EV_RACE.caps;return ff<=0.5?C[0]+(C[1]-C[0])*ff/0.5:C[1]+(C[2]-C[1])*(ff-0.5)/0.5;};
+// The pack's state of charge with E kWh of usable energy left.
+const evRaceSoc=(M,E)=>EV_RACE.socFloor+E/M.ev.kWh;
+// The race's view of an electric car, solved with the build loaded (raceCarModel). Returns the pace grid in the race's
+// layout (prof[grip × cap] of {v, fr, tq, lap}: fr is battery power / 3600, so the race's burn, fr dt / 1000, counts kWh),
+// the nominal lap (full grip, full power), the standing start, and what the race needs to carry the drive's state.
+function evRaceModel(key,line,grips){
+  const e=engine,v=vehicle,n=line.length,V=motorRatedV(e),tc=e.motor.cool.tCool,cool={w:tc,c:tc,r:60};
+  const solve=(grip,ff,o)=>{
+    evPowerCap=evRaceCap(ff);
+    try{return withRaceTrim(grip,0,()=>simulateLap(key,Object.assign({line,evRace:true},o)));}finally{evPowerCap=1;}
+  };
+  // a solved lap in battery energy: the drive's own losses and the cells', against the shaft
+  const price=L=>{
+    const O=L.evOp,fr=new Float32Array(n);
+    for(let i=0;i<n;i++){
+      const rpm=Math.max(1,O.rpm[i]),T=O.tq[i],P=T*rpm*Math.PI/30+motorLosses(e.motor,Math.abs(T),rpm,V,cool).total;
+      const d=packDraw(e.pack,0.5,P);
+      fr[i]=(P+(d?d.heat:0))/3600;
+    }
+    return {v:Float32Array.from(L.v),fr,tq:Float32Array.from(O.tq),lap:L.lap};
+  };
+  const kWhLap=q=>{let E=0;for(let i=0;i<n;i++){const j=(i+1)%n;E+=q.fr[i]*line[i].ds3/Math.max(2,(q.v[i]+q.v[j])/2);}return E/1000;};
+  const nom=solve(1,0),prof=[];
+  for(const gr of grips)for(const ff of RACE_FUEL)prof.push(price(gr===1&&ff===0?nom:solve(gr,ff)));
+  const rest=solve(1,0,{fromRest:true});
+  const top=(grips.length-1)*RACE_FUEL.length,usable=e.pack.kWh*(EV_RACE.socStart-EV_RACE.socFloor);
+  return {nom,prof,rest,usable,
+    ev:{motor:e.motor,pack:e.pack,V,pRef:evRefPower(e),kWh:e.pack.kWh,rl:e.redline,tCool:tc,
+      k:v.ratios[0]*v.finalDrive*60/(2*Math.PI*v.rTire),                     // motor rpm per m/s
+      epl:RACE_FUEL.map((_,b)=>kWhLap(prof[top+b]))}};                       // kWh a lap at each cap, full grip
+}
+// The energy a lap at a point on the cap axis (kWh), straight between the solved caps.
+function evRaceEpl(M,ff){const E=M.ev.epl;return ff<=0.5?E[0]+(E[1]-E[0])*ff/0.5:E[1]+(E[2]-E[1])*(ff-0.5)/0.5;}
+// The energy manager: the most power (the lowest ff) at which E kWh lasts the laps left with the margin in hand. Saving
+// (the race's SAVE mode: lifting and coasting) spends 10% less a lap at any power; k is what the car has been spending
+// against the solved laps' prediction (evRaceManage). Returns {ff, fpl: kWh a lap}.
+function evRacePlanFF(M,laps,mode,E,k){
+  const save=(mode==='save'?0.9:1)*(k||1),need=(E!=null?E:M.tankKg)*EV_RACE.margin/Math.max(1,laps);
+  const at=ff=>evRaceEpl(M,ff)*save;
+  let ff;
+  if(at(0)<=need)ff=0;
+  else if(at(1)>need)ff=1;
+  else{let lo=0,hi=1;for(let k=0;k<30;k++){const mid=(lo+hi)/2;if(at(mid)>need)lo=mid;else hi=mid;}ff=hi;}
+  return {ff,fpl:at(ff)};
+}
+// A car's drive at the start: the manager's choice from the plan, the motor at its coolant, the pack pre-conditioned.
+function evRaceCarInit(c,plan){
+  const tc=c.M.ev.tCool;
+  c.evFF=plan.evFF;c.evT={w:tc,c:tc,r:tc,b:PACK_COOLANT};c.evPeak={w:tc,b:PACK_COOLANT};c.evK=1;c.evPred=0;c.evCut=false;
+}
+// At each crossing of the line the manager chooses again for the laps that are left, with what is left. The solved laps
+// are a car on its limit with fresh tyres and nothing in the way; a car in a race runs a little under that and spends a
+// little less, and a pack held back by its temperature spends less still. So the manager learns: the energy the last
+// lap took against what it predicted for it, half of each new lap's ratio into a running one (from the second lap: the
+// first is a standing start). A lap on which the battery management or the controller held the power below the
+// manager's is no lesson: the energy it did not spend was not the prediction's error.
+function evRaceManage(M,c,left,mode){
+  const last=c.laps[c.laps.length-1];
+  if(last&&c.lapsDone>=2&&c.evPred>0&&!c.evCut)c.evK=clamp(0.5*c.evK+0.5*last.fuelKg/c.evPred,0.6,1.4);
+  c.evCut=false;
+  const p=evRacePlanFF(M,left,mode,c.fuelKg,c.evK);
+  c.evFF=p.ff;c.plan.fpl=p.fpl;c.evPred=p.fpl;
+}
+// Where on the cap axis the car runs now: the manager's choice, unless the pack (its charge and its temperature) or the
+// controller (the winding's and the magnets') allow less. The controller cuts the current, so the torque; taken here as
+// the same share of the power.
+function evRaceFFNow(M,c){
+  const X=M.ev,want=evRaceCap(c.evFF),bms=packMaxPower(X.pack,evRaceSoc(M,c.fuelKg))*packDerate(c.evT.b)/X.pRef;
+  const cap=Math.min(want,bms,motorDerate(X,c.evT));
+  if(cap<want-0.01)c.evCut=true;
+  return evRaceFF(cap);
+}
+// The motor's torque (Nm, negative regenerating) the pace grid gives at a fractional point, as racePaceAt gives speed.
+function evRaceTqAt(M,i,f,g,ff){
+  const tq=k=>{
+    const GR=M.grips,NG=GR.length,NF=RACE_FUEL.length;
+    let a=0;while(a<NG-2&&g>GR[a+1])a++;
+    const fa=clamp((g-GR[a])/(GR[a+1]-GR[a]),0,1),b=ff>=0.5?1:0,fb=(ff-RACE_FUEL[b])/(RACE_FUEL[b+1]-RACE_FUEL[b]),P=M.prof;
+    return (P[a*NF+b].tq[k]*(1-fb)+P[a*NF+b+1].tq[k]*fb)*(1-fa)+(P[(a+1)*NF+b].tq[k]*(1-fb)+P[(a+1)*NF+b+1].tq[k]*fb)*fa;
+  };
+  const x=tq(i);return x+(tq((i+1)%M.n)-x)*f;
+}
+// One step of the drive's heat on track: the cells take the current the power draws at this charge, the motor its
+// losses at the speed and the torque it is running at (both scaled, as the race's burn is, by how close to the solved
+// pace the car is going: r).
+function evRaceHeatStep(M,c,r,dt,save){
+  const X=M.ev,t=c.evT,P=c._fr*3600*r*r*save;
+  const d=packDraw(X.pack,evRaceSoc(M,c.fuelKg),P);
+  packHeatStep(X.pack,t,d?d.heat:0,dt);
+  const rpm=clamp(c.v*X.k,1,X.rl),T=c._tq*r;
+  motorHeatStep(X.motor,t,motorLosses(X.motor,Math.abs(T),rpm,X.V,t),dt);
+  c.evPeak.w=Math.max(c.evPeak.w,t.w);c.evPeak.b=Math.max(c.evPeak.b,t.b);
+  // a pack at 95% takes back nothing more than would fill it: the excess goes to the friction brakes
+  if(c.fuelKg>M.tankKg){c.fuelUsed+=c.fuelKg-M.tankKg;c.fuelKg=M.tankKg;}
+}
+// Parked in the pit box: the pack's cooling plate and the motor's coolant keep working with nothing drawn.
+const EV_IDLE_LOSS={cu:0,fe:0,mech:0,inv:0,total:0};
+function evRaceCool(c,dt){
+  const X=c.M.ev;packHeatStep(X.pack,c.evT,0,dt);motorHeatStep(X.motor,c.evT,EV_IDLE_LOSS,dt);
+}
+// The RACE tab's line for an electric car: the pack and the winding as the car last crossed the line before time t
+// (the recording is the tyres', the tank's and the brakes'; the drive's heat is kept per lap).
+function raceEvLine(c,t){
+  let l=null;for(const x of c.laps)if(x.end<=t)l=x;
+  const tc=c.M.ev.tCool,b=l?l.pack:PACK_COOLANT,w=l?l.winding:tc;
+  const col=(v,lim)=>v>=lim?'#ff4444':v>=lim-10?'#ffcc00':'#00ff88';
+  return '<div class="rt-k">'+tr('BATTERY')+' <b style="color:'+col(b,50)+'">'+Math.round(b)+'°C</b> • '+tr('MOTOR')+' <b style="color:'+col(w,150)+'">'+
+    Math.round(w)+'°C</b></div>';
 }
 function bindControls(){
   // Throttle & load are fractions (0..1); AFR/temps are direct values.

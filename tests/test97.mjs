@@ -1,7 +1,7 @@
 // ELECTRIC as an engine type: the design, the bench, the dyno and saving (build 179, step 2.2 of plans/hybrid-electric/).
 //
 // WHY THIS EXISTS. An electric drive now sits beside the four engine types. It must be a whole thing on the ENGINE,
-// LIVE and DYNO tabs, it must not yet race (2.4 gives the race energy), and it must not disturb a combustion
+// LIVE and DYNO tabs, it races on its pack's energy (build 181: tests/test99.mjs), and it must not disturb a combustion
 // build in any way. What must hold:
 //   · choosing ELECTRIC swaps the combustion sections for MOTOR / INVERTER / BATTERY, and choosing an engine swaps back;
 //   · the build is the physics of electric.js: its score, cost and mass are the motor's and the pack's;
@@ -9,8 +9,8 @@
 //     held at peak torque the winding reaches the controller's 150 C and the torque is cut back;
 //   · the dyno: flat torque to the knee; a drained pack or hot magnets take power off the curve;
 //   · the operating-point buttons put the bench where they say;
-//   · the car (build 180 drives it: tests/test98.mjs): no race and no gear window yet, each saying why; the car carries
-//     the motor and battery;
+//   · the car (build 180 drives it: tests/test98.mjs): no gear window, saying why; it enters a race carrying its pack's
+//     energy (build 181); the car carries the motor and battery;
 //   · a save, a garage entry and a share link carry the powertrain type and rebuild the same drive; an old save loads
 //     as combustion; chemistries are offered by the technology year;
 //   · back on petrol, the engine is exactly the one it was: same score, its tiles and its controls back;
@@ -71,8 +71,8 @@ const r = await page.evaluate(() => {
   setTab('vehicle'); o.car = { perfHead: document.getElementById('perfHead').textContent };
   setTab('track'); o.car.lapHead = (document.getElementById('lapHead') || {}).textContent; o.car.lap = lapResult;
   openGearWin(); o.car.gearOpen = gw.open;
-  let raceErr = ''; try { raceCarModel({ name: 'EV', build: serializeBuild('EV', '') }, 'tech'); } catch (err) { raceErr = err.message; }
-  o.car.raceErr = raceErr;
+  let raceErr = '', raceUnit = ''; try { raceUnit = raceCarModel({ name: 'EV', build: serializeBuild('EV', '') }, 'tech').unit; } catch (err) { raceErr = err.message; }
+  o.car.raceErr = raceErr; o.car.raceUnit = raceUnit;
   // 7. saving
   const sb = serializeBuild('ev', ''), link = decodeBuild(encodeBuild(sb));
   o.save = { pt: sb.powertrain, fields: sb.engine.evRotorD === 150 && sb.engine.evChem === 'nca' };
@@ -136,9 +136,9 @@ if (!(Math.abs(r.op.power.rpm / r.op.power.want - 1) < 0.15)) fails.push('MAX PO
 if (!(r.op.torque.tq > 0.9 * r.op.torque.want)) fails.push('PEAK TORQUE does not give the peak torque');
 
 const Cr = r.car;
-console.log(`== car: VEHICLE "${Cr.perfHead.slice(0, 40)}…", TRACK "${(Cr.lapHead || '').slice(0, 40)}…", gear window ${Cr.gearOpen ? 'opened' : 'refused'}, race "${Cr.raceErr.slice(0, 60)}…" ==`);
+console.log(`== car: VEHICLE "${Cr.perfHead.slice(0, 40)}…", TRACK "${(Cr.lapHead || '').slice(0, 40)}…", gear window ${Cr.gearOpen ? 'opened' : 'refused'}, race entry in ${Cr.raceUnit || Cr.raceErr} ==`);
 if (Cr.gearOpen) fails.push('the GEAR RATIOS window opened on an electric car (it has one reduction, set by GEARING)');
-if (!/next build/.test(Cr.raceErr)) fails.push('a race entry does not say why an electric car cannot race yet');
+if (Cr.raceErr || Cr.raceUnit !== 'kWh') fails.push('an electric car does not enter a race on its energy: ' + Cr.raceErr);
 
 const Sv = r.save;
 console.log(`== save: powertrain "${Sv.pt}", reloaded ${Sv.reloaded.type} ${Sv.reloaded.tq} Nm (saved ${Sv.reloaded.want}, edited ${Sv.reloaded.other}); an old save is ${Sv.old.kind} ==`);

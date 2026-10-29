@@ -74,7 +74,7 @@ const I18N={
   'a mistake, off line':{el:'λάθος, εκτός γραμμής'},
   'Blue flag':{el:'Μπλε σημαία'},
   'OUT':{el:'ΕΚΤΟΣ'},
-  'OUT OF FUEL':{el:'ΧΩΡΙΣ ΚΑΥΣΙΜΟ'},
+  'OUT OF FUEL':{el:'ΧΩΡΙΣ ΚΑΥΣΙΜΟ'},'OUT OF CHARGE':{el:'ΑΔΕΙΑ ΜΠΑΤΑΡΙΑ'},
   'TIME LIMIT':{el:'ΟΡΙΟ ΧΡΟΝΟΥ'},
   'FLAG':{el:'ΣΗΜΑΙΑ'},
   'LEADER':{el:'ΠΡΩΤΟΣ'},

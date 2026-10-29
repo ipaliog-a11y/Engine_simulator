@@ -33,7 +33,6 @@ function raceFillAdd(){
 }
 function raceEntrantFrom(v){
   if(v==='cur'){
-    if(isElectric()){flash(tr(EV_RACE_NOTE),'warn');return null;}   // the race spends fuel; energy is step 2.4
     if(!powertrain().ready()||!vehicle||!vehicle.mass){flash(tr('BUILD A CAR FIRST'),'warn');return null;}
     const name=(loaded.car&&loaded.car.name)||((engine.name?engine.name+' · ':'')+tr(vehicle.chLabel||'')).trim()||tr('This build');
     return {name,build:serializeBuild(name,'')};
@@ -176,7 +175,7 @@ const raceEventText=(R,e)=>{
   const nm=id=>{const c=R.cars.find(x=>x.id===id);return c?c.M.name:'?';};
   switch(e.type){
     case 'pass':return nm(e.car)+' '+tr('passes')+' '+nm(e.on);
-    case 'pit':return nm(e.car)+' '+tr('pits')+' — '+e.fuelL.toFixed(1)+' L, '+tr(raceCompound(e.tyre).label)+', '+(RACE.pitLoss+e.service).toFixed(1)+' s';
+    case 'pit':return nm(e.car)+' '+tr('pits')+' — '+(e.fuelL>0?e.fuelL.toFixed(1)+' L, ':'')+tr(raceCompound(e.tyre).label)+', '+(RACE.pitLoss+e.service).toFixed(1)+' s';
     case 'rain':return tr('Rain is falling');
     case 'dry':return tr('The track is dry');
     case 'pitout':return nm(e.car)+' '+tr('rejoins');
@@ -233,7 +232,8 @@ function renderRacePanel(force){
     return '<div class="rt-card'+(raceUI.follow===c.id?' sel':'')+'"><div class="rt-head"><i style="background:'+RACE_COLS[c.id]+'"></i><span>P'+x.pos+' '+esc(M.name)+'</span><em>'+state+'</em></div>'+
       '<div class="rt-body"><div class="rt-tyres">'+tyre(s.T[0],s.W[0],th,'FL')+tyre(s.T[1],s.W[1],th,'FR')+tyre(s.T[2],s.W[2],th,'RL')+tyre(s.T[3],s.W[3],th,'RR')+'</div>'+
       '<div class="rt-side"><div class="rt-k">'+esc(tr(th.label))+' • '+tr('age')+' '+x.tyreAge+'</div>'+
-      '<div class="rt-k">'+tr('FUEL')+' '+s.fuelL.toFixed(1)+' / '+M.tankL+' L • '+lapsLeft.toFixed(1)+' '+tr('laps')+'</div>'+
+      '<div class="rt-k">'+tr(M.ev?'ENERGY':'FUEL')+' '+s.fuelL.toFixed(1)+' / '+M.tankL+' '+(M.unit||'L')+' • '+lapsLeft.toFixed(1)+' '+tr('laps')+'</div>'+
+      (M.ev?raceEvLine(c,t):'')+
       '<div class="rt-bar"><div style="width:'+Math.round(fuelPct*100)+'%;background:'+(lapsLeft<1.5?'#ff4444':lapsLeft<3?'#ffcc00':'#00ccff')+'"></div></div>'+
       '<div class="rt-k">'+tr('BRAKES')+' <b style="color:'+brakeTempColour(s.brk,M.brakeOnset)+'">'+Math.round(s.brk)+'°</b> / <b style="color:'+brakeTempColour(s.brkR,M.brakeOnset)+'">'+Math.round(s.brkR)+'°C</b>'+
         (fade>0?' <b style="color:#ff4444">'+tr('FADE')+' −'+fade+'%</b>':'')+'</div>'+
@@ -246,7 +246,7 @@ function renderRacePanel(force){
     res.innerHTML='<div class="design-section">'+tr('Result')+'</div><table class="race-tower"><thead><tr><th>P</th><th>'+tr('CAR')+'</th><th>'+tr('TIME')+'</th><th>'+tr('BEST')+'</th><th>'+tr('PIT')+'</th><th>'+tr('FUEL')+'</th></tr></thead><tbody>'+
       rs.map(x=>'<tr><td>'+(x.state==='dnf'?'—':x.pos)+'</td><td class="nm"><i style="background:'+RACE_COLS[x.id]+'"></i>'+esc(x.name)+'</td><td>'+
         (x.state==='dnf'?'DNF':x.pos===1?fmtLap(x.time):x.lapsDown>0?'+'+x.lapsDown+' '+tr(x.lapsDown>1?'LAPS':'LAP'):'+'+(x.gap||0).toFixed(1))+'</td><td class="'+(flAll&&flAll.car===x.id?'race-fl':'')+'">'+(x.best!=null?fmtLap(x.best):'—')+
-        '</td><td>'+x.stops+' '+x.stints.map(st=>raceTyreBadge(raceCompound(st.tyre))).join('')+'</td><td>'+x.fuelL.toFixed(1)+' L</td></tr>').join('')+'</tbody></table>'+
+        '</td><td>'+x.stops+' '+x.stints.map(st=>raceTyreBadge(raceCompound(st.tyre))).join('')+'</td><td>'+x.fuelL.toFixed(1)+' '+(x.unit||'L')+'</td></tr>').join('')+'</tbody></table>'+
       '<div class="perf-note">'+tr('Grid')+': '+rs.slice().sort((a,b)=>a.grid-b.grid).map(x=>x.grid+'. '+esc(x.name)).join(' · ')+' • '+tr('seed')+' '+R.cfg.seed+'</div>';
   }else res.innerHTML='';
 }
