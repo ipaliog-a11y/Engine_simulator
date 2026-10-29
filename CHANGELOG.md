@@ -20,6 +20,18 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 Working toward **v1.0 — every number derived, not fitted.**
 
+### Consumption over the WLTP cycle (build 184)
+
+- **Step 2.5c of the electric plan.** `src/js/electric-cycle.js` (new) drives the WLTC class 3b cycle (1800 s, 23.27 km,
+  to 131.3 km/h; the UNECE GTR 15 table as the JRC extracted it, checked against its checksum) second by second
+  through the electric drive: the force the trace asks for, the motor's torque and losses through the reduction,
+  regeneration where the motor and pack can take it back, the cells' own loss. Rules, not fits: the test mass (+100
+  kg), a 250 W 12 V load with the climate off, 85% from the socket to the cells.
+- **Against the WLTP figures** (`tests/test102.mjs`): from the pack 119.5 / 141.3 / 166.3 Wh/km for the Model 3 RWD,
+  Model Y Long Range and Model S Plaid against the vehicle-side 117 / 138 / 158; at the socket 141 / 166 / 196
+  against the rated 142 / 169 / 187. Nothing was set from a consumption figure.
+- The VEHICLE tab shows the cycle's Wh/km, at the socket, what regeneration takes back, and the range.
+
 ### The three Teslas (build 183)
 
 - **Step 2.5b of the electric plan; decision 10.** The Model 3 RWD (2021, LFP), the Model Y Long Range (2022, a magnet
