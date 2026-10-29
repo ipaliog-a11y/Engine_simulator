@@ -33,12 +33,12 @@ const ELECTRIC_WORDS_WITHOUT_GREEK = 64;
 const EV_SRC = readFileSync(path.join(repo, 'src', 'js', 'electric-ui.js'), 'utf8');
 
 // Kept in Latin letters by the translation (as the existing Greek does: ΣΤΟΧΟΣ BOOST, LSD ΜΕ ΔΙΣΚΟΥΣ), units, and
-// names (SYNTH and GAS are the two sound models'; WLTP the regulation's own name). Matched as whole words, case-sensitive.
+// names (SYNTH and GAS are the two sound models'; WLTP the regulation's own name, ATKINSON the cycle's inventor's). Matched as whole words, case-sensitive.
 const ALLOW = new Set(`BOOST BUILD DYNO ECU LSD VVT ITB PFI DCT AFR RON BTDC MAP RPM rpm BSFC PNG PDF GPX ALT ALS ANTI LAG
   INTERCOOLER ROOTS COMPOUND DECAT WANKEL Wankel HOT HATCH ROADSTER MUSCLE CAR GRAND TOURER SUPERCAR Supercar HYPERCAR
   PICKUP SUV FWD RWD AWD SPOOL TOURING SLICK DRAG RADIAL SPLITTER SPOILER DIFFUSER COILOVERS Kei KEI wiki WIKI pixel art
   browser coupe build grand prix Sleeper Grand Prix Ring Automation PIXEL ENGINE SIM BMEP BATT kWh Nm bar VGT CdA ClA
-  OFF stall PIT PITS GT boost pit Wastegate Intercooler SYNTH GAS Ange Yaghi CPU WLTP`.split(/\s+/).filter(Boolean));
+  OFF stall PIT PITS GT boost pit Wastegate Intercooler SYNTH GAS Ange Yaghi CPU WLTP ATKINSON`.split(/\s+/).filter(Boolean));
 // Selects of names, the app's title, the circuit's name, and the guide's pages (budgeted above).
 const SKIP = '#edPreset, #vhPreset, #raceAddSel, #trkSel, #raceTrk, #edLang, h1, #lapHead, [id^="gp-"]';
 
