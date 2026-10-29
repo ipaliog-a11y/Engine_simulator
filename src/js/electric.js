@@ -190,18 +190,20 @@ function motorSteadyTemps(m,T,rpm,Vdc){
 // ---- the battery ----
 // Cells by chemistry: open-circuit voltage at 0, 10 … 100% charge (V), the loaded cut-off, resistance times capacity
 // (Ohm Ah: a 5 Ah 2170 cell is ~22 mOhm, a 173 Ah LFP prism ~0.6 mOhm, both ~0.1), the sustained discharge rate (C),
+// the charge rate a cell takes back under braking (C: lithium plating limits NCA to ~1C, LFP takes ~1.5C, hybrid NiMH
+// cells are built for 5C+, lead-acid accepts little; build 180),
 // and the year it reached cars. Technology follows the year (decision 9): the cell's specific energy (Wh/kg) and the
 // pack's price ($/kWh) at anchor years, straight between them and held beyond. A decade is too coarse to step on:
 // lithium packs fell from ~$1100/kWh in 2010 to ~$160 in 2019 (BloombergNEF pack surveys; ~$115 in 2024, LFP ~$95).
 // Lead-acid and NiMH from the GM EV1's era. Specific energies are typical cells (a 2170 ~260 Wh/kg, a 2020s LFP ~175).
 const CHEM={
-  lead:{label:'LEAD-ACID',ocv:[1.95,1.98,2.00,2.02,2.04,2.06,2.08,2.10,2.12,2.14,2.15],vMin:1.75,rAh:1.2,cMax:3,from:1900,
+  lead:{label:'LEAD-ACID',ocv:[1.95,1.98,2.00,2.02,2.04,2.06,2.08,2.10,2.12,2.14,2.15],vMin:1.75,rAh:1.2,cMax:3,cCharge:0.3,from:1900,
         whkg:{1990:35,2020:42},cost:{1990:150,2020:150}},
-  nimh:{label:'NiMH',ocv:[1.10,1.22,1.25,1.26,1.27,1.28,1.29,1.30,1.31,1.33,1.40],vMin:1.00,rAh:0.30,cMax:10,from:1996,
+  nimh:{label:'NiMH',ocv:[1.10,1.22,1.25,1.26,1.27,1.28,1.29,1.30,1.31,1.33,1.40],vMin:1.00,rAh:0.30,cMax:10,cCharge:5,from:1996,
         whkg:{1996:60,2005:70,2020:80},cost:{1996:1000,2005:700,2020:400}},
-  lfp: {label:'LFP',ocv:[2.80,3.15,3.20,3.22,3.24,3.25,3.26,3.27,3.28,3.30,3.40],vMin:2.50,rAh:0.10,cMax:4,from:2005,
+  lfp: {label:'LFP',ocv:[2.80,3.15,3.20,3.22,3.24,3.25,3.26,3.27,3.28,3.30,3.40],vMin:2.50,rAh:0.10,cMax:4,cCharge:1.5,from:2005,
         whkg:{2005:90,2015:140,2023:175},cost:{2005:1400,2010:1000,2016:280,2019:140,2024:95}},
-  nca: {label:'NCA / NMC',ocv:[2.95,3.40,3.50,3.57,3.63,3.69,3.77,3.85,3.93,4.02,4.13],vMin:2.80,rAh:0.11,cMax:6,from:2008,
+  nca: {label:'NCA / NMC',ocv:[2.95,3.40,3.50,3.57,3.63,3.69,3.77,3.85,3.93,4.02,4.13],vMin:2.80,rAh:0.11,cMax:6,cCharge:1.0,from:2008,
         whkg:{2008:180,2012:240,2020:270},cost:{2008:1300,2010:1100,2013:650,2016:300,2019:160,2024:115}}
 };
 // Cell mass over pack mass: modules, structure, cooling and wiring take the rest. Large prismatic cells packed without
@@ -223,7 +225,7 @@ function packBuild(s){
   const ctp=s.chem==='lfp'&&year>=2020;
   const mass=s.kWh*1000/atYear(c.whkg,year)/(ctp?PACK_FACTOR_CTP:atYear(PACK_FACTOR,year));
   const cost=Math.round(s.kWh*atYear(c.cost,year));
-  return {s,chem:c,year,Vnom,Ah,R,kWh:s.kWh,mass,cost,series:s.series,vMin:s.series*c.vMin,iMax:c.cMax*Ah};
+  return {s,chem:c,year,Vnom,pChargeMax:c.cCharge*s.kWh*1000,Ah,R,kWh:s.kWh,mass,cost,series:s.series,vMin:s.series*c.vMin,iMax:c.cMax*Ah};
 }
 // Open-circuit voltage at a state of charge (0..1).
 function packOcv(b,soc){
@@ -239,6 +241,16 @@ function packDraw(b,soc,P){
   if(P>0&&(V<b.vMin||I>b.iMax))return null;
   return {V,I,heat:I*I*b.R};
 }
+// The pack's temperature (build 180): one lumped node, the cells' heat capacity (~1000 J/kgK) over the pack's mass, a
+// liquid cooling plate taking ~2 W/K per kWh to coolant at 30 C. The battery management system cuts the power it allows
+// from 50 C, to nothing at 60 C, the range the cells' makers rate them to.
+const PACK_C=900, PACK_G_KWH=2.0, PACK_COOLANT=30;
+function packHeatStep(b,temp,heatW,dt){
+  const C=PACK_C*b.mass,G=PACK_G_KWH*b.kWh;
+  temp.b+=(heatW-G*(temp.b-PACK_COOLANT))/C*dt;
+  return temp;
+}
+const packDerate=tB=>clamp((60-tB)/10,0,1);
 // The most a pack can give at a state of charge (W): the lower of its rate limit and the power at its cut-off voltage.
 function packMaxPower(b,soc){
   const V0=packOcv(b,soc),Icut=(V0-b.vMin)/b.R,I=Math.min(b.iMax,Icut);

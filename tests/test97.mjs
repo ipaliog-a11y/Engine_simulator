@@ -1,7 +1,7 @@
 // ELECTRIC as an engine type: the design, the bench, the dyno and saving (build 179, step 2.2 of plans/hybrid-electric/).
 //
 // WHY THIS EXISTS. An electric drive now sits beside the four engine types. It must be a whole thing on the ENGINE,
-// LIVE and DYNO tabs, it must not yet pretend to be a car (2.3 builds the car), and it must not disturb a combustion
+// LIVE and DYNO tabs, it must not yet race (2.4 gives the race energy), and it must not disturb a combustion
 // build in any way. What must hold:
 //   · choosing ELECTRIC swaps the combustion sections for MOTOR / INVERTER / BATTERY, and choosing an engine swaps back;
 //   · the build is the physics of electric.js: its score, cost and mass are the motor's and the pack's;
@@ -9,7 +9,8 @@
 //     held at peak torque the winding reaches the controller's 150 C and the torque is cut back;
 //   · the dyno: flat torque to the knee; a drained pack or hot magnets take power off the curve;
 //   · the operating-point buttons put the bench where they say;
-//   · the car: no 0-100, no lap, no race, no gear window, each saying why; but the car carries the motor and battery;
+//   · the car (build 180 drives it: tests/test98.mjs): no race and no gear window yet, each saying why; the car carries
+//     the motor and battery;
 //   · a save, a garage entry and a share link carry the powertrain type and rebuild the same drive; an old save loads
 //     as combustion; chemistries are offered by the technology year;
 //   · back on petrol, the engine is exactly the one it was: same score, its tiles and its controls back;
@@ -105,11 +106,9 @@ const B = r.build;
 console.log(`== build: ${B.kind}, ${B.peakKW} kW ${B.peakTQ} Nm, continuous ${B.cont} kW, peak holds ${B.hold} s, knee ${B.knee} rpm, grade ${B.grade}; ` +
   `cost $${B.cost} (parts $${B.parts}); motor+pack ${B.ptMass} kg, car ${f(B.vMass)} kg; "${B.sub}" ==`);
 if (B.type !== 'electric' || B.kind !== 'electric') fails.push('an electric build is not an electric powertrain');
-if (B.ready) fails.push('the electric powertrain claims to drive a car before 2.3');
 if (!(B.peakKW > 50 && B.peakTQ > 100 && B.cont > 0 && B.cont < B.peakKW && B.hold > 0)) fails.push('the electric scorecard is not filled');
 if (B.cost !== B.parts) fails.push(`the drive costs $${B.cost}, not its motor and pack's $${B.parts}`);
 if (B.ptMass !== B.parts2) fails.push('the powertrain mass is not the motor and the pack');
-if (B.perf !== null) fails.push('an electric car ran a 0-100 through a combustion gearbox');
 if (B.redline !== Math.floor(B.nMax / 50) * 50) fails.push('the speed limit is not the motor\'s');
 if (B.tile !== 'WINDING') fails.push(`the live tiles are not the motor's (${B.tile})`);
 
@@ -138,9 +137,7 @@ if (!(r.op.torque.tq > 0.9 * r.op.torque.want)) fails.push('PEAK TORQUE does not
 
 const Cr = r.car;
 console.log(`== car: VEHICLE "${Cr.perfHead.slice(0, 40)}…", TRACK "${(Cr.lapHead || '').slice(0, 40)}…", gear window ${Cr.gearOpen ? 'opened' : 'refused'}, race "${Cr.raceErr.slice(0, 60)}…" ==`);
-if (!/next build/.test(Cr.perfHead)) fails.push('the VEHICLE tab does not say why there is no 0-100');
-if (!/next build/.test(Cr.lapHead || '') || Cr.lap !== null) fails.push('the TRACK tab does not say why there is no lap');
-if (Cr.gearOpen) fails.push('the GEAR RATIOS window opened on an electric car');
+if (Cr.gearOpen) fails.push('the GEAR RATIOS window opened on an electric car (it has one reduction, set by GEARING)');
 if (!/next build/.test(Cr.raceErr)) fails.push('a race entry does not say why an electric car cannot race yet');
 
 const Sv = r.save;

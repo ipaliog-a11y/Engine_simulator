@@ -730,7 +730,34 @@ function simulateLapRun(key,opts){
     }
     state.iat=iat0;
   }
-  const GW=gearWalk();ebA.set(GW.eb);   // the gearbox through the lap as it is now driven
+  let GW=gearWalk();ebA.set(GW.eb);   // the gearbox through the lap as it is now driven
+  // The electric drive's heat over the lap (build 180). The torque asked of the motor at each point: flat out wherever the
+  // car is accelerating on power (the driver's foot is down whatever the controller then gives), what the speed profile
+  // needs through the one reduction elsewhere (the turbo block's force balance), and, braking, the regeneration the lap's
+  // engine braking applied. evLapHeat walks the winding, rotor and pack round a preparation lap and the timed one, the
+  // controller and battery management cutting the current as they heat; that cut is the drive's share (boostShare) and
+  // the lap is solved again. Asking full torque where the car is on power is what keeps this from oscillating: read off
+  // a lap already slowed by the heat, the demand would look small, the next walk cool, and the lap fast again. Three
+  // rounds, each taking half the new share, settle it.
+  let evHeat=null;
+  if(pt.kind==='electric'){
+    const tot=ratios[0]*fd;
+    const prof=()=>{const dt=new Float64Array(n),rpm=new Float64Array(n),tq=new Float64Array(n);
+      for(let i=0;i<n;i++){
+        const j=(i+1)%n,a=(v[j]*v[j]-v[i]*v[i])/(2*p[i].ds3);
+        dt[i]=p[i].ds3/Math.max(2,(v[i]+v[j])/2);rpm[i]=clamp(v[i]*tot/rT*60/TWO_PI,0,rl);
+        const need=vehicleMassEff(tot)*a+drag(v[i])+rollF(v[i])*p[i].cosT+m*G*p[i].sinT+corneringDrag(m,v[i]*v[i]/p[i].r,loadAt(p[i],v[i]));
+        tq[i]=need>0?(accKind[i]==='power'?tqAt(rpm[i]):Math.min(need*rT/(tot*eff),tqAt(rpm[i]))):-ebA[i]*m*rT*eff/tot;
+      }
+      return {dt,rpm,tq};};
+    for(let it=0;it<3;it++){
+      evHeat=evLapHeat(engine,prof());
+      const prev=boostShare;
+      boostShare=Float64Array.from(evHeat.share,(s,i)=>prev?0.5*(prev[i]+s):s);passes();
+      GW=gearWalk();ebA.set(GW.eb);
+    }
+    evHeat=evLapHeat(engine,prof());
+  }
   BT=brakeTemps();   // the rotors through the lap as it is now driven
   // Classify from the FINISHED profile, not during the passes — the backward pass touches almost
   // every point on a twisty circuit, so labelling as it goes would call the whole lap "braking".
@@ -819,7 +846,7 @@ function simulateLapRun(key,opts){
     const ped=driverPedal(i=>tgt[i],0);
     for(let i=0;i<n;i++){
       thr[i]=ped[i];
-      mapAt[i]=steadyMapAt(rpmAt[i],thr[i]);
+      mapAt[i]=pt.kind==='electric'?1:steadyMapAt(rpmAt[i],thr[i]);   // a motor has no manifold (build 180)
       if(boostLap)mapAt[i]=Math.min(mapAt[i],1+boostLap[i]);   // what the shaft has built by here
     }
   }
@@ -847,6 +874,11 @@ function simulateLapRun(key,opts){
     replay:{tAt,thr,brk,cut:Array.from(cutAt),gLat,gLong,rpm:rpmAt,map:mapAt,steer,pwr,tF:BT.TF,tR:BT.TR,fade:fadeF.slice(),fadeR:fadeR.slice(),
       useF:Array.from(useF),useR:Array.from(useR),eb:Array.from(ebA),frB:Array.from(frB)},
     engBrakeUseMax:engUseMax,
+    // the electric drive over the timed lap (build 180): its hottest, how much of the lap it was cut back, the energy
+    // (only on an electric car's lap, so an engine's result is the object it always was)
+    ...(evHeat?{ev:{wMax:Math.max(...evHeat.tW),rMax:Math.max(...evHeat.tR),bMax:Math.max(...evHeat.tB),
+      derated:evHeat.share.reduce((a,s,i)=>a+(s<0.995?p[i].ds3:0),0)/p.length_,driveKWh:evHeat.driveKWh,regenKWh:evHeat.regenKWh,
+      shareMin:Math.min(...evHeat.share)}}:{}),
     // metres of braking where the engine's braking had to be trimmed to the driven tyres' grip (build 150): where a
     // car without drag-torque control, a slipper clutch or a blip would have stepped out
     engTrimM:GW.trim.reduce((a,t,i)=>a+(t?p[i].ds3:0),0),

@@ -170,7 +170,8 @@ function withRaceTrim(grip,dm,fn){
 function raceCarModel(entry,key,opts){
   return withBuild(entry.build,()=>{
     const pt=powertrain();
-    if(!pt.ready()||!vehicle||!vehicle.mass)throw new Error(pt.kind==='electric'?entry.name+': '+tr(EV_ROAD_NOTE):'incomplete build: '+entry.name);
+    if(pt.kind==='electric')throw new Error(entry.name+': '+tr(EV_RACE_NOTE));   // the race spends fuel; energy is step 2.4
+    if(!pt.ready()||!vehicle||!vehicle.mass)throw new Error('incomplete build: '+entry.name);
     const T=buildTrack(key), line=lineFor(T,key), n=line.length;
     const fuel=pt.fuel(), tankL=RACE_TANK_L[vehicle.chassis]||60, tankKg=tankL*fuel.density;
     const solve=(grip,ff,o)=>withRaceTrim(grip,(ff-1)*tankKg,()=>simulateLap(key,Object.assign({line},o)));

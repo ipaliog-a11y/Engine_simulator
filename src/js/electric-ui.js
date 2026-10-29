@@ -10,7 +10,10 @@
 // combustion gearbox. New words are English for now (decision 11): tr() shows the English where Greek is missing.
 const EV_DEFAULT={evRotorD:150,evStack:134,evPoles:6,evTurns:12,evMagnet:'ndfeb',evRetention:'bridges',evCooling:'jacket',
   evMaxRpm:18000,evInverter:'igbt',evAmps:950,evChem:'nca',evSeries:96,evKWh:75,evYear:2020};
-const EV_ROAD_NOTE='Electric cars take to the road in the next build: the motor and battery are on the bench and the dyno for now.';
+// The race spends energy, not fuel (step 2.4): until then an electric car drives the 0-100 and the lap but does not race.
+const EV_RACE_NOTE='Electric cars race from the next build: they drive the 0-100 and the lap now.';
+// One reduction is all an electric car has: GEARING on the VEHICLE tab sets it (build 180).
+const EV_GEAR_NOTE='An electric car has one fixed reduction: set it with GEARING on the VEHICLE tab.';
 const isElectric=()=>!!engine&&engine.type==='electric';
 const EV_REPORT_NOTE='The printable report for a motor comes in a later build: the DYNO tab has its curves and table.';
 // The engine's sound would be an engine's; a motor's (inverter whine, gear mesh) is step 4, so it is quiet until then.

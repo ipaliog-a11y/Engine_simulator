@@ -26,8 +26,8 @@ function computeVehicleCost(ch,tt,wr){
      (stepOf(vehicle.barF)?1:0)*STIFF_STEP_COST.bar+(stepOf(vehicle.barR)?1:0)*STIFF_STEP_COST.bar;
   c+=Math.max(0,vehicle.rotor-320)*6;
   c+={fwd:0,rwd:800,awd:2500}[vehicle.drive]||0;
-  c+=(GEARBOX[vehicle.gearbox]||GEARBOX.manual).cost+(DIFF[vehicle.diff]||DIFF.open).cost;
-  c+=Math.max(0,vehicle.gears-5)*400;
+  c+=(vehicle.ev?EV_REDUCTION:(GEARBOX[vehicle.gearbox]||GEARBOX.manual)).cost+(DIFF[vehicle.diff]||DIFF.open).cost;
+  c+=vehicle.ev?0:Math.max(0,vehicle.gears-5)*400;
   c+=Math.max(0,vehicle.wheelDia-16)*120+Math.max(0,vehicle.tireWidth-205)*4;
   return Math.max(3000,Math.round(c/50)*50);
 }
@@ -144,6 +144,9 @@ function buildVehicle(){
   // just the same; a hand-set final drive overrides both.
   vehicle.finalDrive=vehicle.finalDriveSet>0?clamp(vehicle.finalDriveSet,FD_MIN,FD_MAX)
     :gs.fd>0?clamp(gs.fd*gearingBias(vehicle.gearing)/gearingBias(52),FD_MIN,FD_MAX):matchedFinalDrive();
+  vehicle.ev=powertrain().kind==='electric';
+  if(vehicle.ev)electricDriveline(vehicle);   // one fixed reduction, no gearbox (build 180)
+  syncEvVehicleForm(vehicle.ev);
   vehicle.cost=computeVehicleCost(ch,tt,wr);
   vehicle.powerToWeight=powertrain().ready()?powertrain().rating().peakHP/(vehicle.mass/1000):0;   // hp per tonne
   perf=simulateAccel();
@@ -308,6 +311,8 @@ function simulateAccelRun(){
   const idle=pt.idleRpm(),rl=pt.maxRpm(),TWO_PI=Math.PI*2,dt=0.005;
   const gb=vehicle.gb||GEARBOX.manual;
   const shiftTime=gb.shift,tcStall=gb.stall>0?clamp(gb.stall,idle,rl*0.85):0;
+  // an electric car has no clutch to slip and no launch speed to choose: the motor turns with the wheels from rest (build 180)
+  const ev=pt.kind==='electric';
   const df=vehicle.df||DIFF.open;
   // Most axle torque the car will ever put down — first gear at peak torque. The diff's usable
   // share is referenced against this, so a launch behaves exactly as before while a tall gear
@@ -342,7 +347,7 @@ function simulateAccelRun(){
   // clutch locks: the energy a dumped clutch puts into a launch. Until it locks the engine is not
   // coupled, so the car carries only its own and the wheels' inertia.
   const Ie=pt.inertia()||0.1, tqCap=CLUTCH_MARGIN*curve.reduce((q,p)=>Math.max(q,p.tq),0);
-  let slipping=!tcStall, slipW=launchRpm*TWO_PI/60;
+  let slipping=!tcStall&&!ev, slipW=launchRpm*TWO_PI/60;
   let v=0,x=0,t=0,gear=0,a=0,shiftT=0,w=0;   // w: the driven wheels' angular speed (rad/s)
   const M={t100:null,q400:null,q800:null,q1000:null,v200:null,gripT:0,lagT:0,spinT:0,launchRpm,shifts:[]},V100=100/3.6,V200=200/3.6;
   for(let step=0;step<48000&&t<150;step++){
@@ -465,8 +470,8 @@ function simulateAccelRun(){
   // the car's time. (Build 155: this was the driver's only, without traction control; a car with it was run at
   // 55% of the limiter, which left an R34 0.13 s.) A converter launches at its stall speed.
   const lDef=clamp(rl*0.55,idle+400,rl*0.72);
-  let M=run(lDef);
-  if(!tcStall){
+  let M=run(ev?0:lDef);
+  if(!tcStall&&!ev){
     const key=R=>R.t100||(R.q400?R.q400.t+100:1e9);
     for(const f of [0.30,0.42,0.65,0.75]){const R=run(clamp(rl*f,idle+300,rl*0.8));if(key(R)<key(M))M=R;}
   }

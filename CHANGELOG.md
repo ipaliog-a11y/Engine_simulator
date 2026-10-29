@@ -20,6 +20,31 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 Working toward **v1.0 — every number derived, not fitted.**
 
+### The electric car on the road (build 180)
+
+- **Step 2.3 of the electric plan** (`plans/hybrid-electric/`). The electric drive runs the 0-100, the top speed and the
+  lap through the same solvers as an engine; `src/js/electric-car.js` (new) holds what an electric car does differently.
+- **One reduction.** No gearbox, no shifts, no clutch, no launch speed. The reduction is matched so the motor's top speed
+  falls where drag meets the drive's peak power (as an engine's final drive is matched to its power peak), GEARING
+  biases it, a hand-set one is kept (4-14:1); a reduction and differential lose 3% (5% AWD). The VEHICLE tab hides the
+  gearbox type, speeds and spacing and shows the reduction and the regeneration in their place.
+- **Regeneration.** Lifting off, the motor brakes the car as a generator through the lap's engine-braking path (builds
+  149-150): on the driven axle, never past the tyres, the lower of the motor's torque and what the pack takes back
+  (new per chemistry: NCA ~1C, LFP 1.5C, hybrid NiMH 5C, lead-acid 0.3C). On the technical circuit it takes the hottest
+  rotor from 620 to 588 C and 0.23 kWh back; the lap is no slower.
+- **Heat over a lap.** The winding, rotor and a lumped pack (cells' heat capacity, a cooling plate to 30 C coolant, the
+  battery management cutting from 50 C to nothing at 60 C) are walked round a preparation lap and the timed one, the
+  controller cutting the current as they heat; the cut is the drive's share, and the lap is solved again (the turbo's
+  boostShare). Where the car is on power the driver asks for full torque, so a lap slowed by the heat cannot read as a
+  cool one and the solve settles. A timed lap starts on a pre-conditioned pack. Round the Nordschleife the default drive
+  holds its pack at 56 C and is cut back over 47% of the lap: 8:03 against 7:47 with the heat ignored; air-cooled, the
+  winding limits it to 9:23. The TRACK tab shows MOTOR, BATTERY and ENERGY.
+- An electric car still does not race (the race spends fuel; energy is 2.4): the RACE tab and a garage entry say so.
+- **Tests:** `tests/test98.mjs` (new) for the driveline, the 0-100 against its bounds, GEARING, regeneration, heat by
+  cooling and the panels; `test97` now expects the car to drive. Greek for the 13 new words on the VEHICLE and TRACK tabs.
+- Combustion unchanged: `tools/fingerprint.mjs` identical to build 177 in all 2494 values (an engine's lap result
+  carries no new field).
+
 ### ELECTRIC on the ENGINE tab, the bench and the dyno (build 179)
 
 - **Step 2.2 of the electric plan** (`plans/hybrid-electric/`). ELECTRIC (BATTERY) is a fifth engine type (decision 6):

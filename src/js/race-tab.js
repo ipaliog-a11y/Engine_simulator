@@ -33,7 +33,8 @@ function raceFillAdd(){
 }
 function raceEntrantFrom(v){
   if(v==='cur'){
-    if(!powertrain().ready()||!vehicle||!vehicle.mass){flash(tr(isElectric()?EV_ROAD_NOTE:'BUILD A CAR FIRST'),'warn');return null;}
+    if(isElectric()){flash(tr(EV_RACE_NOTE),'warn');return null;}   // the race spends fuel; energy is step 2.4
+    if(!powertrain().ready()||!vehicle||!vehicle.mass){flash(tr('BUILD A CAR FIRST'),'warn');return null;}
     const name=(loaded.car&&loaded.car.name)||((engine.name?engine.name+' · ':'')+tr(vehicle.chLabel||'')).trim()||tr('This build');
     return {name,build:serializeBuild(name,'')};
   }

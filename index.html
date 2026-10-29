@@ -404,7 +404,7 @@ table.fuelmap td.live{box-shadow:inset 0 0 0 2px #fff;font-weight:bold}
 <body>
 <div class="container">
 <header>
-<h1>PIXEL ENGINE SIM v0.6 build 179</h1>
+<h1>PIXEL ENGINE SIM v0.6 build 180</h1>
 <div class="subtitle" id="subtitle">ENGINE DESIGNER • BUILD IT, THEN DRIVE IT</div>
 </header>
 <div class="build-strip" id="buildStrip">
@@ -4649,7 +4649,12 @@ const I18N={
   '1990s':{el:'Δεκαετία του 1990'},'2000s':{el:'Δεκαετία του 2000'},'2010s':{el:'Δεκαετία του 2010'},'2020s':{el:'Δεκαετία του 2020'},
   // dropdown choices (and the labels the summaries reuse). An option looks up 'opt:'+text first, for
   // the few words that read differently as a part grade than elsewhere ('RACE' is the RACE tab).
-  'ELECTRIC (BATTERY)':{el:'ΗΛΕΚΤΡΙΚΟΣ (ΜΠΑΤΑΡΙΑ)'},'DRIVE BUILT':{el:'ΤΟ ΗΛΕΚΤΡΙΚΟ ΣΥΣΤΗΜΑ ΚΑΤΑΣΚΕΥΑΣΤΗΚΕ'},
+  'ELECTRIC (BATTERY)':{el:'ΗΛΕΚΤΡΙΚΟΣ (ΜΠΑΤΑΡΙΑ)'},
+  // the electric car (build 180)
+  'SINGLE-SPEED':{el:'μονοτάχυτο'},'GEARING (REDUCTION)':{el:'ΣΧΕΣΗ ΜΕΙΩΣΗΣ'},'Reduction':{el:'Σχέση μείωσης'},
+  'regeneration up to':{el:'ανάκτηση ενέργειας έως'},'motor and pack':{el:'κινητήρας και μπαταρία'},'MOTOR':{el:'ΚΙΝΗΤΗΡΑΣ'},
+  'cut back':{el:'περιορισμός'},'of the lap':{el:'του γύρου'},'winding peak':{el:'μέγιστη περιέλιξης'},'BATTERY':{el:'ΜΠΑΤΑΡΙΑ'},
+  'pack peak':{el:'μέγιστη μπαταρίας'},'ENERGY':{el:'ΕΝΕΡΓΕΙΑ'},'regen':{el:'ανάκτηση'},'DRIVE BUILT':{el:'ΤΟ ΗΛΕΚΤΡΙΚΟ ΣΥΣΤΗΜΑ ΚΑΤΑΣΚΕΥΑΣΤΗΚΕ'},
   'PETROL 4-STROKE':{el:'ΒΕΝΖΙΝΗ ΤΕΤΡΑΧΡΟΝΟΣ'},'DIESEL (CI)':{el:'ΠΕΤΡΕΛΑΙΟ (CI)'},'2-STROKE':{el:'ΔΙΧΡΟΝΟΣ'},'ROTARY (WANKEL)':{el:'ΠΕΡΙΣΤΡΟΦΙΚΟΣ (WANKEL)'},
   'INLINE':{el:'ΣΕ ΣΕΙΡΑ'},'BOXER':{el:'ΜΠΟΞΕΡ'},'NATURALLY ASP.':{el:'ΑΤΜΟΣΦΑΙΡΙΚΟΣ'},
   'NONE':{el:'ΧΩΡΙΣ'},'SMALL CORE':{el:'ΜΙΚΡΟΣ ΠΥΡΗΝΑΣ'},'LARGE CORE':{el:'ΜΕΓΑΛΟΣ ΠΥΡΗΝΑΣ'},
@@ -8057,18 +8062,20 @@ function motorSteadyTemps(m,T,rpm,Vdc){
 // ---- the battery ----
 // Cells by chemistry: open-circuit voltage at 0, 10 … 100% charge (V), the loaded cut-off, resistance times capacity
 // (Ohm Ah: a 5 Ah 2170 cell is ~22 mOhm, a 173 Ah LFP prism ~0.6 mOhm, both ~0.1), the sustained discharge rate (C),
+// the charge rate a cell takes back under braking (C: lithium plating limits NCA to ~1C, LFP takes ~1.5C, hybrid NiMH
+// cells are built for 5C+, lead-acid accepts little; build 180),
 // and the year it reached cars. Technology follows the year (decision 9): the cell's specific energy (Wh/kg) and the
 // pack's price ($/kWh) at anchor years, straight between them and held beyond. A decade is too coarse to step on:
 // lithium packs fell from ~$1100/kWh in 2010 to ~$160 in 2019 (BloombergNEF pack surveys; ~$115 in 2024, LFP ~$95).
 // Lead-acid and NiMH from the GM EV1's era. Specific energies are typical cells (a 2170 ~260 Wh/kg, a 2020s LFP ~175).
 const CHEM={
-  lead:{label:'LEAD-ACID',ocv:[1.95,1.98,2.00,2.02,2.04,2.06,2.08,2.10,2.12,2.14,2.15],vMin:1.75,rAh:1.2,cMax:3,from:1900,
+  lead:{label:'LEAD-ACID',ocv:[1.95,1.98,2.00,2.02,2.04,2.06,2.08,2.10,2.12,2.14,2.15],vMin:1.75,rAh:1.2,cMax:3,cCharge:0.3,from:1900,
         whkg:{1990:35,2020:42},cost:{1990:150,2020:150}},
-  nimh:{label:'NiMH',ocv:[1.10,1.22,1.25,1.26,1.27,1.28,1.29,1.30,1.31,1.33,1.40],vMin:1.00,rAh:0.30,cMax:10,from:1996,
+  nimh:{label:'NiMH',ocv:[1.10,1.22,1.25,1.26,1.27,1.28,1.29,1.30,1.31,1.33,1.40],vMin:1.00,rAh:0.30,cMax:10,cCharge:5,from:1996,
         whkg:{1996:60,2005:70,2020:80},cost:{1996:1000,2005:700,2020:400}},
-  lfp: {label:'LFP',ocv:[2.80,3.15,3.20,3.22,3.24,3.25,3.26,3.27,3.28,3.30,3.40],vMin:2.50,rAh:0.10,cMax:4,from:2005,
+  lfp: {label:'LFP',ocv:[2.80,3.15,3.20,3.22,3.24,3.25,3.26,3.27,3.28,3.30,3.40],vMin:2.50,rAh:0.10,cMax:4,cCharge:1.5,from:2005,
         whkg:{2005:90,2015:140,2023:175},cost:{2005:1400,2010:1000,2016:280,2019:140,2024:95}},
-  nca: {label:'NCA / NMC',ocv:[2.95,3.40,3.50,3.57,3.63,3.69,3.77,3.85,3.93,4.02,4.13],vMin:2.80,rAh:0.11,cMax:6,from:2008,
+  nca: {label:'NCA / NMC',ocv:[2.95,3.40,3.50,3.57,3.63,3.69,3.77,3.85,3.93,4.02,4.13],vMin:2.80,rAh:0.11,cMax:6,cCharge:1.0,from:2008,
         whkg:{2008:180,2012:240,2020:270},cost:{2008:1300,2010:1100,2013:650,2016:300,2019:160,2024:115}}
 };
 // Cell mass over pack mass: modules, structure, cooling and wiring take the rest. Large prismatic cells packed without
@@ -8090,7 +8097,7 @@ function packBuild(s){
   const ctp=s.chem==='lfp'&&year>=2020;
   const mass=s.kWh*1000/atYear(c.whkg,year)/(ctp?PACK_FACTOR_CTP:atYear(PACK_FACTOR,year));
   const cost=Math.round(s.kWh*atYear(c.cost,year));
-  return {s,chem:c,year,Vnom,Ah,R,kWh:s.kWh,mass,cost,series:s.series,vMin:s.series*c.vMin,iMax:c.cMax*Ah};
+  return {s,chem:c,year,Vnom,pChargeMax:c.cCharge*s.kWh*1000,Ah,R,kWh:s.kWh,mass,cost,series:s.series,vMin:s.series*c.vMin,iMax:c.cMax*Ah};
 }
 // Open-circuit voltage at a state of charge (0..1).
 function packOcv(b,soc){
@@ -8106,6 +8113,16 @@ function packDraw(b,soc,P){
   if(P>0&&(V<b.vMin||I>b.iMax))return null;
   return {V,I,heat:I*I*b.R};
 }
+// The pack's temperature (build 180): one lumped node, the cells' heat capacity (~1000 J/kgK) over the pack's mass, a
+// liquid cooling plate taking ~2 W/K per kWh to coolant at 30 C. The battery management system cuts the power it allows
+// from 50 C, to nothing at 60 C, the range the cells' makers rate them to.
+const PACK_C=900, PACK_G_KWH=2.0, PACK_COOLANT=30;
+function packHeatStep(b,temp,heatW,dt){
+  const C=PACK_C*b.mass,G=PACK_G_KWH*b.kWh;
+  temp.b+=(heatW-G*(temp.b-PACK_COOLANT))/C*dt;
+  return temp;
+}
+const packDerate=tB=>clamp((60-tB)/10,0,1);
 // The most a pack can give at a state of charge (W): the lower of its rate limit and the power at its cut-off voltage.
 function packMaxPower(b,soc){
   const V0=packOcv(b,soc),Icut=(V0-b.vMin)/b.R,I=Math.min(b.iMax,Icut);
@@ -8186,18 +8203,24 @@ const COMBUSTION={
       return out;};
   }
 };
-// The electric drive (build 179): built, rated and on the bench (src/js/electric-ui.js), but not yet driven. A single-speed
-// reduction, regenerative braking and the motor's heat over a lap are step 2.3, so ready() is false until then: the
-// 0-100, the lap and the race return nothing for it, and the VEHICLE, TRACK and RACE tabs say why (EV_ROAD_NOTE) rather
-// than run a motor through a combustion gearbox. What the car already takes from it is its mass, motor and battery.
+// The electric drive (builds 179-180): built and rated on the bench (src/js/electric-ui.js), driven on the road through
+// one reduction (src/js/electric-car.js). Its torque is the rated curve (the pack at half charge, magnets at 60 C), with
+// no boost axis and no shaft; its overrun is regeneration; it has no fuel, and the race (2.4) is not yet its.
 const ELECTRIC={
   kind:'electric',
-  ready:()=>false,
+  ready:()=>!!engine.score,
   rating:()=>engine.score,
   idleRpm:()=>0,
   maxRpm:()=>engine.redline,
   inertia:()=>engine.inertia,
-  mass:()=>Math.round(engine.motor.mass+engine.pack.mass)
+  mass:()=>Math.round(engine.motor.mass+engine.pack.mass),
+  torqueCurve:()=>evCurve(engine),
+  torqueGrid:()=>evGrid(engine),
+  maxBoost:()=>0,
+  hasShaft:()=>false,
+  boostTarget:()=>0,
+  boostAvail:()=>0,
+  overrunTable:rl=>evRegenTable(engine,rl)
 };
 // The powertrain of the car being built: the engine's type chooses it (a saved build without one is combustion).
 function powertrain(){return isElectric()?ELECTRIC:COMBUSTION;}
@@ -8408,7 +8431,7 @@ function updateGearingLabel(){
 const gw={open:false,lap:null,lapKey:'',hover:{saw:null,force:null},busy:false};
 const gwOrd=i=>tr(['1st','2nd','3rd'][i]||((i+1)+'th'));
 function openGearWin(){
-  if(isElectric()){flash(tr(EV_ROAD_NOTE),'warn');return;}   // the reduction gear arrives with the electric car (2.3)
+  if(isElectric()){flash(tr(EV_GEAR_NOTE),'warn');return;}   // one fixed reduction, no gears to space (build 180)
   const w=document.getElementById('gearWin');if(!w)return;
   w.hidden=false;gw.open=true;gw.lap=null;renderGearWin();
   document.getElementById('gwClose').focus();
@@ -8671,8 +8694,8 @@ function computeVehicleCost(ch,tt,wr){
      (stepOf(vehicle.barF)?1:0)*STIFF_STEP_COST.bar+(stepOf(vehicle.barR)?1:0)*STIFF_STEP_COST.bar;
   c+=Math.max(0,vehicle.rotor-320)*6;
   c+={fwd:0,rwd:800,awd:2500}[vehicle.drive]||0;
-  c+=(GEARBOX[vehicle.gearbox]||GEARBOX.manual).cost+(DIFF[vehicle.diff]||DIFF.open).cost;
-  c+=Math.max(0,vehicle.gears-5)*400;
+  c+=(vehicle.ev?EV_REDUCTION:(GEARBOX[vehicle.gearbox]||GEARBOX.manual)).cost+(DIFF[vehicle.diff]||DIFF.open).cost;
+  c+=vehicle.ev?0:Math.max(0,vehicle.gears-5)*400;
   c+=Math.max(0,vehicle.wheelDia-16)*120+Math.max(0,vehicle.tireWidth-205)*4;
   return Math.max(3000,Math.round(c/50)*50);
 }
@@ -8789,6 +8812,9 @@ function buildVehicle(){
   // just the same; a hand-set final drive overrides both.
   vehicle.finalDrive=vehicle.finalDriveSet>0?clamp(vehicle.finalDriveSet,FD_MIN,FD_MAX)
     :gs.fd>0?clamp(gs.fd*gearingBias(vehicle.gearing)/gearingBias(52),FD_MIN,FD_MAX):matchedFinalDrive();
+  vehicle.ev=powertrain().kind==='electric';
+  if(vehicle.ev)electricDriveline(vehicle);   // one fixed reduction, no gearbox (build 180)
+  syncEvVehicleForm(vehicle.ev);
   vehicle.cost=computeVehicleCost(ch,tt,wr);
   vehicle.powerToWeight=powertrain().ready()?powertrain().rating().peakHP/(vehicle.mass/1000):0;   // hp per tonne
   perf=simulateAccel();
@@ -8953,6 +8979,8 @@ function simulateAccelRun(){
   const idle=pt.idleRpm(),rl=pt.maxRpm(),TWO_PI=Math.PI*2,dt=0.005;
   const gb=vehicle.gb||GEARBOX.manual;
   const shiftTime=gb.shift,tcStall=gb.stall>0?clamp(gb.stall,idle,rl*0.85):0;
+  // an electric car has no clutch to slip and no launch speed to choose: the motor turns with the wheels from rest (build 180)
+  const ev=pt.kind==='electric';
   const df=vehicle.df||DIFF.open;
   // Most axle torque the car will ever put down — first gear at peak torque. The diff's usable
   // share is referenced against this, so a launch behaves exactly as before while a tall gear
@@ -8987,7 +9015,7 @@ function simulateAccelRun(){
   // clutch locks: the energy a dumped clutch puts into a launch. Until it locks the engine is not
   // coupled, so the car carries only its own and the wheels' inertia.
   const Ie=pt.inertia()||0.1, tqCap=CLUTCH_MARGIN*curve.reduce((q,p)=>Math.max(q,p.tq),0);
-  let slipping=!tcStall, slipW=launchRpm*TWO_PI/60;
+  let slipping=!tcStall&&!ev, slipW=launchRpm*TWO_PI/60;
   let v=0,x=0,t=0,gear=0,a=0,shiftT=0,w=0;   // w: the driven wheels' angular speed (rad/s)
   const M={t100:null,q400:null,q800:null,q1000:null,v200:null,gripT:0,lagT:0,spinT:0,launchRpm,shifts:[]},V100=100/3.6,V200=200/3.6;
   for(let step=0;step<48000&&t<150;step++){
@@ -9110,8 +9138,8 @@ function simulateAccelRun(){
   // the car's time. (Build 155: this was the driver's only, without traction control; a car with it was run at
   // 55% of the limiter, which left an R34 0.13 s.) A converter launches at its stall speed.
   const lDef=clamp(rl*0.55,idle+400,rl*0.72);
-  let M=run(lDef);
-  if(!tcStall){
+  let M=run(ev?0:lDef);
+  if(!tcStall&&!ev){
     const key=R=>R.t100||(R.q400?R.q400.t+100:1e9);
     for(const f of [0.30,0.42,0.65,0.75]){const R=run(clamp(rl*f,idle+300,rl*0.8));if(key(R)<key(M))M=R;}
   }
@@ -10273,7 +10301,34 @@ function simulateLapRun(key,opts){
     }
     state.iat=iat0;
   }
-  const GW=gearWalk();ebA.set(GW.eb);   // the gearbox through the lap as it is now driven
+  let GW=gearWalk();ebA.set(GW.eb);   // the gearbox through the lap as it is now driven
+  // The electric drive's heat over the lap (build 180). The torque asked of the motor at each point: flat out wherever the
+  // car is accelerating on power (the driver's foot is down whatever the controller then gives), what the speed profile
+  // needs through the one reduction elsewhere (the turbo block's force balance), and, braking, the regeneration the lap's
+  // engine braking applied. evLapHeat walks the winding, rotor and pack round a preparation lap and the timed one, the
+  // controller and battery management cutting the current as they heat; that cut is the drive's share (boostShare) and
+  // the lap is solved again. Asking full torque where the car is on power is what keeps this from oscillating: read off
+  // a lap already slowed by the heat, the demand would look small, the next walk cool, and the lap fast again. Three
+  // rounds, each taking half the new share, settle it.
+  let evHeat=null;
+  if(pt.kind==='electric'){
+    const tot=ratios[0]*fd;
+    const prof=()=>{const dt=new Float64Array(n),rpm=new Float64Array(n),tq=new Float64Array(n);
+      for(let i=0;i<n;i++){
+        const j=(i+1)%n,a=(v[j]*v[j]-v[i]*v[i])/(2*p[i].ds3);
+        dt[i]=p[i].ds3/Math.max(2,(v[i]+v[j])/2);rpm[i]=clamp(v[i]*tot/rT*60/TWO_PI,0,rl);
+        const need=vehicleMassEff(tot)*a+drag(v[i])+rollF(v[i])*p[i].cosT+m*G*p[i].sinT+corneringDrag(m,v[i]*v[i]/p[i].r,loadAt(p[i],v[i]));
+        tq[i]=need>0?(accKind[i]==='power'?tqAt(rpm[i]):Math.min(need*rT/(tot*eff),tqAt(rpm[i]))):-ebA[i]*m*rT*eff/tot;
+      }
+      return {dt,rpm,tq};};
+    for(let it=0;it<3;it++){
+      evHeat=evLapHeat(engine,prof());
+      const prev=boostShare;
+      boostShare=Float64Array.from(evHeat.share,(s,i)=>prev?0.5*(prev[i]+s):s);passes();
+      GW=gearWalk();ebA.set(GW.eb);
+    }
+    evHeat=evLapHeat(engine,prof());
+  }
   BT=brakeTemps();   // the rotors through the lap as it is now driven
   // Classify from the FINISHED profile, not during the passes — the backward pass touches almost
   // every point on a twisty circuit, so labelling as it goes would call the whole lap "braking".
@@ -10362,7 +10417,7 @@ function simulateLapRun(key,opts){
     const ped=driverPedal(i=>tgt[i],0);
     for(let i=0;i<n;i++){
       thr[i]=ped[i];
-      mapAt[i]=steadyMapAt(rpmAt[i],thr[i]);
+      mapAt[i]=pt.kind==='electric'?1:steadyMapAt(rpmAt[i],thr[i]);   // a motor has no manifold (build 180)
       if(boostLap)mapAt[i]=Math.min(mapAt[i],1+boostLap[i]);   // what the shaft has built by here
     }
   }
@@ -10390,6 +10445,11 @@ function simulateLapRun(key,opts){
     replay:{tAt,thr,brk,cut:Array.from(cutAt),gLat,gLong,rpm:rpmAt,map:mapAt,steer,pwr,tF:BT.TF,tR:BT.TR,fade:fadeF.slice(),fadeR:fadeR.slice(),
       useF:Array.from(useF),useR:Array.from(useR),eb:Array.from(ebA),frB:Array.from(frB)},
     engBrakeUseMax:engUseMax,
+    // the electric drive over the timed lap (build 180): its hottest, how much of the lap it was cut back, the energy
+    // (only on an electric car's lap, so an engine's result is the object it always was)
+    ...(evHeat?{ev:{wMax:Math.max(...evHeat.tW),rMax:Math.max(...evHeat.tR),bMax:Math.max(...evHeat.tB),
+      derated:evHeat.share.reduce((a,s,i)=>a+(s<0.995?p[i].ds3:0),0)/p.length_,driveKWh:evHeat.driveKWh,regenKWh:evHeat.regenKWh,
+      shareMin:Math.min(...evHeat.share)}}:{}),
     // metres of braking where the engine's braking had to be trimmed to the driven tyres' grip (build 150): where a
     // car without drag-torque control, a slipper clutch or a blip would have stepped out
     engTrimM:GW.trim.reduce((a,t,i)=>a+(t?p[i].ds3:0),0),
@@ -10568,7 +10628,8 @@ function withRaceTrim(grip,dm,fn){
 function raceCarModel(entry,key,opts){
   return withBuild(entry.build,()=>{
     const pt=powertrain();
-    if(!pt.ready()||!vehicle||!vehicle.mass)throw new Error(pt.kind==='electric'?entry.name+': '+tr(EV_ROAD_NOTE):'incomplete build: '+entry.name);
+    if(pt.kind==='electric')throw new Error(entry.name+': '+tr(EV_RACE_NOTE));   // the race spends fuel; energy is step 2.4
+    if(!pt.ready()||!vehicle||!vehicle.mass)throw new Error('incomplete build: '+entry.name);
     const T=buildTrack(key), line=lineFor(T,key), n=line.length;
     const fuel=pt.fuel(), tankL=RACE_TANK_L[vehicle.chassis]||60, tankKg=tankL*fuel.density;
     const solve=(grip,ff,o)=>withRaceTrim(grip,(ff-1)*tankKg,()=>simulateLap(key,Object.assign({line},o)));
@@ -11163,7 +11224,7 @@ function updateVehicleSummary(){
   const dl={fwd:'FWD',rwd:'RWD',awd:'AWD'}[vehicle.drive]||'RWD';
   el.className='design-summary vehicleSummaryWrap';
   const stock=isFactoryFit(vehicle);
-  el.innerHTML='<b>'+tr(vehicle.chLabel)+'</b> • '+dl+' • '+vehicle.gears+tr('-speed')+
+  el.innerHTML='<b>'+tr(vehicle.chLabel)+'</b> • '+dl+' • '+(vehicle.ev?tr('SINGLE-SPEED'):vehicle.gears+tr('-speed'))+
     ' <span style="color:'+(stock?'#7a8':'#ffcc00')+'">'+tr(stock?'(factory spec)':'(modified)')+'</span>'+
     '<br>'+tr('Curb weight')+' <b>'+Math.round(vehicle.mass)+' kg</b> ('+tr('engine')+' ~'+vehicle.engineMass+' kg) • '+vehicle.powerToWeight.toFixed(0)+' hp/t'+
     (vehicle.body?'<br>'+tr('Body')+' <b>'+tr(CHASSIS[vehicle.chassis].label)+'</b> '+tr('class')+' • Cd '+vehicle.body.cd.toFixed(2)+' × '+vehicle.area.toFixed(2)+' m² • '+tr('wheelbase')+' '+vehicle.wb.toFixed(2)+' m • '+Math.round(vehicle.fWt*100)+'% '+tr('front'):'')+
@@ -11176,8 +11237,9 @@ function updateVehicleSummary(){
     '<br>'+tr('Speed limiter')+' <b>'+(vehicle.governor>0?vehicle.governor+' km/h':tr('removed'))+'</b>'+(perf&&perf.governed?' • '+tr('free top speed')+' '+Math.round(perf.freeSpeed)+' km/h':'')+
     ' • '+tr('traction control')+' <b>'+(vehicle.tc===false?tr('off'):tr('on'))+'</b>'+(perf&&perf.spinT>0.05?' • '+tr('wheelspin')+' '+perf.spinT.toFixed(1)+' '+tr('s to 100'):'')+
     '<br>'+tr('Drag')+' CdA <b>'+vehicle.cdA.toFixed(2)+'</b> • '+tr('downforce')+' ClA <b>'+vehicle.clA.toFixed(2)+'</b> • '+tr('final drive')+' <b>'+vehicle.finalDrive.toFixed(2)+'</b>'+
+    (vehicle.ev?evDrivelineLine(vehicle):   // one reduction and its regeneration (build 180)
     '<br>'+tr('Ratios')+' <b>'+vehicle.ratios.map(x=>x.toFixed(2)).join(' · ')+'</b> '+
-    tr(vehicle.spacing==='stock'?(vehicle.gearsetApprox?'(family average)':'(published)'):vehicle.spacing==='custom'?'(custom)':'('+(GEAR_SPACING[vehicle.spacing]||GEAR_SPACING.std).label.toLowerCase()+')')+
+    tr(vehicle.spacing==='stock'?(vehicle.gearsetApprox?'(family average)':'(published)'):vehicle.spacing==='custom'?'(custom)':'('+(GEAR_SPACING[vehicle.spacing]||GEAR_SPACING.std).label.toLowerCase()+')'))+
     '<br>'+tr('Vehicle cost')+' <b>'+fmtCost(vehicle.cost)+'</b> • '+tr('with engine')+' <b>'+fmtCost(vehicle.cost+(engine.cost||0))+'</b>';
   renderPerformance();
 }
@@ -11185,7 +11247,7 @@ function renderPerformance(){
   const head=document.getElementById('perfHead'),grid=document.getElementById('perfGrid'),note=document.getElementById('perfNote');
   if(!head||!grid)return;
   const p=perf;
-  if(!p){head.textContent=isElectric()?tr(EV_ROAD_NOTE):'—';grid.innerHTML='';if(note)note.textContent='';return;}
+  if(!p){head.textContent='—';grid.innerHTML='';if(note)note.textContent='';return;}
   head.innerHTML='<b>'+tr(vehicle.chLabel)+'</b> • '+(engine.score?engine.score.peakHP:0)+' hp • '+Math.round(vehicle.mass)+' kg • <b>'+p.ptw.toFixed(0)+'</b> hp/t';
   const cell=(k,v,u,cls)=>'<div class="perf-cell '+(cls||'')+'"><span class="k">'+k+'</span><div class="v">'+v+'</div><span class="u">'+(u||'')+'</span></div>';
   const b100=p.brake100?Math.round(p.brake100.dist)+' m':'—';
@@ -15165,7 +15227,7 @@ function renderLap(){
   const head=document.getElementById('lapHead'),grid=document.getElementById('lapGrid'),note=document.getElementById('lapNote');
   if(!head||!grid)return;
   const L=lapResult;
-  if(!L){head.textContent=isElectric()?tr(EV_ROAD_NOTE):'—';grid.innerHTML='';if(note)note.textContent='';return;}
+  if(!L){head.textContent='—';grid.innerHTML='';if(note)note.textContent='';return;}
   head.innerHTML='<b>'+L.track.label+'</b> • '+(L.length/1000).toFixed(2)+' km • '+L.corners+' '+tr('corners')+' • '+Math.round(L.zMax-L.zMin)+' m '+tr('elevation');
   const cell=(k,v,u,cls)=>'<div class="perf-cell '+(cls||'')+'"><span class="k">'+k+'</span><div class="v">'+v+'</div><span class="u">'+(u||'')+'</span></div>';
   grid.innerHTML=
@@ -15181,7 +15243,8 @@ function renderLap(){
       const w=mg<1.5?tr('NEUTRAL'):us>=0.5?tr('UNDERSTEER'):tr('OVERSTEER');
       return cell(tr('BALANCE'),w,mg<1.5?'':(us>=0.5?tr('front'):tr('rear'))+' '+tr('limits')+' · '+mg.toFixed(0)+'%');})():'')+
     (L.brakeMaxF!=null?cell(tr('BRAKE TEMP'),'<span style="color:'+brakeTempColour(L.brakeMaxF,L.brakeOnset)+'">'+Math.round(L.brakeMaxF)+'°C</span>',
-      L.brakeMaxF>=L.brakeOnset?tr('BRAKE FADE')+' −'+Math.round((1-Math.min(...L.replay.fade))*100)+'%':tr('fade from')+' '+L.brakeOnset+'°C'):'');
+      L.brakeMaxF>=L.brakeOnset?tr('BRAKE FADE')+' −'+Math.round((1-Math.min(...L.replay.fade))*100)+'%':tr('fade from')+' '+L.brakeOnset+'°C'):'')+
+    (L.ev?evLapCells(L.ev,cell):'');   // the electric drive's heat and energy (build 180)
   if(note)note.textContent=tr(L.track.blurb);
 }
 // ---- RACE tab (build 137; weather, per-car strategy and the report, build 141): pick the cars, compute the race, then watch it ----
@@ -15219,7 +15282,8 @@ function raceFillAdd(){
 }
 function raceEntrantFrom(v){
   if(v==='cur'){
-    if(!powertrain().ready()||!vehicle||!vehicle.mass){flash(tr(isElectric()?EV_ROAD_NOTE:'BUILD A CAR FIRST'),'warn');return null;}
+    if(isElectric()){flash(tr(EV_RACE_NOTE),'warn');return null;}   // the race spends fuel; energy is step 2.4
+    if(!powertrain().ready()||!vehicle||!vehicle.mass){flash(tr('BUILD A CAR FIRST'),'warn');return null;}
     const name=(loaded.car&&loaded.car.name)||((engine.name?engine.name+' · ':'')+tr(vehicle.chLabel||'')).trim()||tr('This build');
     return {name,build:serializeBuild(name,'')};
   }
@@ -16533,7 +16597,10 @@ function initGuide(){
 // combustion gearbox. New words are English for now (decision 11): tr() shows the English where Greek is missing.
 const EV_DEFAULT={evRotorD:150,evStack:134,evPoles:6,evTurns:12,evMagnet:'ndfeb',evRetention:'bridges',evCooling:'jacket',
   evMaxRpm:18000,evInverter:'igbt',evAmps:950,evChem:'nca',evSeries:96,evKWh:75,evYear:2020};
-const EV_ROAD_NOTE='Electric cars take to the road in the next build: the motor and battery are on the bench and the dyno for now.';
+// The race spends energy, not fuel (step 2.4): until then an electric car drives the 0-100 and the lap but does not race.
+const EV_RACE_NOTE='Electric cars race from the next build: they drive the 0-100 and the lap now.';
+// One reduction is all an electric car has: GEARING on the VEHICLE tab sets it (build 180).
+const EV_GEAR_NOTE='An electric car has one fixed reduction: set it with GEARING on the VEHICLE tab.';
 const isElectric=()=>!!engine&&engine.type==='electric';
 const EV_REPORT_NOTE='The printable report for a motor comes in a later build: the DYNO tab has its curves and table.';
 // The engine's sound would be an engine's; a motor's (inverter whine, gear mesh) is step 4, so it is quiet until then.
@@ -16949,6 +17016,119 @@ function drawMotorSprite(buf,e,t){
   buf.outline('#000000');
 }
 const motorCaption=e=>'PM '+(e.evRotorD||150)+'×'+(e.evStack||134)+' '+(e.evKWh||75)+'kWh';
+// ====== ELECTRIC CAR: the drive on the road — one reduction, regenerative braking, heat over a lap (build 180) ======
+// Step 2.3 of plans/hybrid-electric/. The 0-100, the top speed and the lap run the electric drive through the same
+// solvers as an engine (powertrain(), build 177); what an electric car does differently is here:
+//   the driveline  a single fixed reduction, no gearbox: no shifts, no clutch, no launch rpm. The ratio is matched so
+//                  the motor's top speed falls where drag meets the drive's peak power (an engine's top gear is matched
+//                  to its power peak the same way, matchedFinalDrive), and the GEARING slider biases it as it does an
+//                  engine's final drive. A reduction and a differential lose ~3% (a manual gearbox and its shafts ~10%);
+//   regeneration   lifting off, the motor brakes the car as a generator, through the same path as an engine's
+//                  overrun (the lap's engine braking, build 149-150): it adds to the brakes on the driven axle, never
+//                  past the tyres' grip, and takes heat off the rotors. How hard is the lower of the motor's own
+//                  torque at that speed and what the pack can take back (CHEM.cCharge);
+//   heat           the motor (winding, core, rotor) and the pack are walked round the lap in time, a preparation lap
+//                  then the timed one, as the brakes are (build 135); where the controller or the battery management
+//                  cuts the current, the drive there is cut with it and the lap is solved again, as a turbo's boost
+//                  is (build 118).
+const EV_REDUCTION={label:'SINGLE-SPEED REDUCTION',shift:0,powershift:true,eff:1,stall:0,mult:1,cost:900};
+const EV_DRIVE_EFF={fwd:0.97,rwd:0.97,awd:0.95};   // reduction gears and differential; AWD adds a transfer path
+const EV_FD_MIN=4,EV_FD_MAX=14;                    // single-speed EVs run ~7.5 (Model S Plaid) to ~11 (small city cars)
+
+// Set the driveline of an electric car: called by buildVehicle once the vehicle is otherwise built.
+function electricDriveline(v){
+  const e=engine,gb=EV_REDUCTION;
+  v.gb=gb;v.gbLabel=gb.label;v.shiftTime=0;v.shiftCut=0;
+  v.driveEff=EV_DRIVE_EFF[v.drive]||0.97;
+  v.ratios=[1];v.gearsetApprox=false;v.fdPublished=0;
+  // matched: the motor's top speed at the speed where drag and rolling resistance take the drive's peak power
+  const s=e.score,vMax=dragLimitedV(s.peakKW*v.driveEff,v.cdA,v.crr,v.mass);
+  const matched=vMax>1?e.redline*2*Math.PI*v.rTire/60/vMax:9;
+  v.reductionMatched=matched;
+  v.finalDrive=v.finalDriveSet>0?clamp(v.finalDriveSet,EV_FD_MIN,EV_FD_MAX):clamp(matched*gearingBias(v.gearing),EV_FD_MIN,EV_FD_MAX);
+}
+// The drive's torque at the wheels' motor speed, at its rated conditions (the pack at half charge, magnets at 60 C, the
+// winding at coolant temperature): the design figure, as an engine's curve is taken at best power and 25 C. Cached per
+// build (buildElectric makes a new score each time).
+function evCurve(e){
+  if(e._curve&&e._curve.score===e.score)return e._curve.pts;
+  const V=motorRatedV(e),tc=e.motor.cool.tCool,cool={w:tc,c:tc,r:60},pts=[];
+  const step=Math.max(50,Math.round(e.redline/120/50)*50);
+  for(let r=0;r<=e.redline;r+=step)pts.push({rpm:r,tq:driveTorqueRated(e,Math.max(r,1),V,cool)});
+  if(pts[pts.length-1].rpm<e.redline)pts.push({rpm:e.redline,tq:driveTorqueRated(e,e.redline,V,cool)});
+  e._curve={score:e.score,pts};return pts;
+}
+// driveMaxTorque without the bench's live health and charge: the motor's envelope cut to the pack's power at half charge.
+function driveTorqueRated(e,rpm,V,temp){
+  const m=e.motor,w=rpm*Math.PI/30,Pb=packMaxPower(e.pack,0.5);
+  let T=motorMaxTorque(m,rpm,V,temp.r);
+  const need=t=>t*w+motorLosses(m,t,rpm,V,temp).total;
+  if(T>0&&need(T)>Pb){let lo=0,hi=T;for(let k=0;k<30;k++){const mid=(lo+hi)/2;if(need(mid)>Pb)hi=mid;else lo=mid;}T=lo;}
+  return T;
+}
+// The torque grid the runs read (gridTorque): one row, no boost axis.
+function evGrid(e){const c=evCurve(e);return {rpms:c.map(p=>p.rpm),boosts:[0],tq:[c.map(p=>p.tq)],laggy:false};}
+// Regeneration as overrun torque (Nm, positive), on the engine's 500-rpm-up table: the motor's torque at that speed,
+// capped by the power the pack takes back. Below ~500 rpm a real car fades it out to stop smoothly; the table's floor
+// does the same.
+function evRegenTable(e,rl){
+  const out=[],V=motorRatedV(e),Pc=e.pack.pChargeMax;
+  for(let r=500;r<=rl+250;r+=250){
+    const w=Math.min(r,rl)*Math.PI/30,T=motorMaxTorque(e.motor,Math.min(r,rl),V,60);
+    out.push(Math.max(0,Math.min(T,Pc/Math.max(1,w))));
+  }
+  return out;
+}
+// The heat over a lap. prof: per point the time step (s), the motor speed (rpm) and torque (Nm, negative regenerating).
+// Walks the lap twice from coolant temperature (a preparation lap, then the timed one) and gives, per point of the timed
+// lap, the share of the drive the controller and the pack allow, and the temperatures it ran at.
+function evLapHeat(e,prof){
+  const m=e.motor,b=e.pack,V=motorRatedV(e),n=prof.dt.length,tc=m.cool.tCool;
+  const t={w:tc,c:tc,r:tc},tb={b:PACK_COOLANT};
+  const share=new Float64Array(n),tW=new Float64Array(n),tR=new Float64Array(n),tB=new Float64Array(n);
+  let regenJ=0,driveJ=0;
+  for(let lap=0;lap<2;lap++)for(let i=0;i<n;i++){
+    // A timed lap starts on a pack cooled to its coolant beforehand (a track mode pre-conditions it): ~400 kg of cells
+    // take a whole flat-out lap to heat, so the preparation lap that brings the motor and the rotors to their working
+    // temperature would hand the timed lap a pack already hot. The race (step 2.4) carries the pack's heat lap to lap.
+    if(lap===1&&i===0)tb.b=PACK_COOLANT;
+    // the controller and the battery management act as the heat builds, not after it: the torque asked for is cut by the
+    // share the temperatures allow at that moment, which is what holds a hot pack near its limit instead of past it
+    const now=motorDerate(e,t)*packDerate(tb.b);
+    const rpm=prof.rpm[i],T=prof.tq[i]*now,dt=prof.dt[i],w=rpm*Math.PI/30;
+    const L=motorLosses(m,Math.abs(T),rpm,V,t);
+    const P=T*w+L.total;                         // battery power: drawing (+), or taking back (-) less the losses
+    const d=packDraw(b,0.5,P)||{heat:0,I:0};
+    motorHeatStep(m,t,L,dt);packHeatStep(b,tb,d.heat,dt);
+    if(lap===1){share[i]=motorDerate(e,t)*packDerate(tb.b);tW[i]=t.w;tR[i]=t.r;tB[i]=tb.b;
+      if(P>0)driveJ+=P*dt;else regenJ-=P*dt;}
+  }
+  return {share,tW,tR,tB,driveKWh:driveJ/3.6e6,regenKWh:regenJ/3.6e6};
+}
+// The VEHICLE tab for an electric car: no gearbox type, speeds or spacing to choose, and GEARING sets the reduction.
+// Called on every build, so an engine gets its own fields back.
+function syncEvVehicleForm(ev){
+  ['vhGearbox','vhGears','vhSpacing'].forEach(id=>{const el=document.getElementById(id);
+    if(el){const f=el.closest('.field');if(f)f.style.display=ev?'none':'';}});
+  const lb=document.getElementById('lblGearing');
+  if(lb){if(lb.dataset.ice==null)lb.dataset.ice=lb.textContent;lb.textContent=ev?tr('GEARING (REDUCTION)'):tr(lb.dataset.ice);}
+  // the readout is the reduction the car runs, not the engine slider's nominal final drive
+  const out=document.getElementById('valGearing'),sl=document.getElementById('vhGearing');
+  if(ev&&out&&sl&&vehicle&&vehicle.finalDrive)out.textContent=(vehFinalDriveSet>0?tr('SET BY HAND'):sl.value)+' · '+vehicle.finalDrive.toFixed(2)+':1';
+}
+// The vehicle summary's driveline line for an electric car, in place of the ratios.
+function evDrivelineLine(v){
+  return '<br>'+tr('Reduction')+' <b>'+v.finalDrive.toFixed(2)+':1</b> ('+tr('matched')+' '+v.reductionMatched.toFixed(2)+':1) • '+
+    tr('regeneration up to')+' <b>'+Math.round(engine.pack.pChargeMax/1000)+' kW</b> • '+tr('motor and pack')+' '+powertrain().mass()+' kg';
+}
+// The TRACK panel's cells for an electric car: the motor's hottest and how much of the lap it was cut back, the pack's
+// hottest, and the energy the lap drew and took back.
+function evLapCells(ev,cell){
+  const hot=(t,lim)=>'<span style="color:'+(t>=lim?'#ff5555':t>=lim-15?'#ffcc00':'#00ff88')+'">'+Math.round(t)+'°C</span>';
+  return cell(tr('MOTOR'),hot(ev.wMax,150),ev.derated>0.005?tr('cut back')+' '+Math.round(ev.derated*100)+'% '+tr('of the lap'):tr('winding peak'))+
+    cell(tr('BATTERY'),hot(ev.bMax,50),tr('pack peak'))+
+    cell(tr('ENERGY'),ev.driveKWh.toFixed(2),'kWh · '+tr('regen')+' '+ev.regenKWh.toFixed(2));
+}
 function bindControls(){
   // Throttle & load are fractions (0..1); AFR/temps are direct values.
   document.getElementById('throttle').addEventListener('input',e=>state.throttle=(+e.target.value)/100);
