@@ -20,6 +20,26 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 Working toward **v1.0 — every number derived, not fitted.**
 
+### The power-split hybrid (build 189)
+
+- **Step 3.3 of the plan.** HYBRID gets a second layout, **POWER-SPLIT (eCVT)** (`src/js/power-split.js`): Toyota's
+  planetary, the engine on the carrier, MG1 on the sun, the ring to the wheels where MG2 drives through one reduction.
+  The planetary's laws (Willis's speeds, the ring's 1/(1+rho) of the engine's torque, MG1 holding the rest) and each
+  machine's losses on the electrical path are derived; the rules are named: the P610's gears (30/78, MG2 65:17), a
+  600 V boost converter, MG1 built from MG2's design for 110% of the engine's peak reaction torque and 31% of its
+  peak power. No clutch and no gearbox: the vehicle sees one reduction from MG2, as an electric car does; at full
+  throttle the engine runs at the speed that gives the most at the wheels within MG1's torque, speed and power.
+- On the cycle the energy manager drives MG2 alone or puts the engine on its best line (the speed that burns least
+  for each power) with MG1 and MG2 carrying the difference, and can charge standing still. The lap and the race burn
+  fuel on that line for the engine's share. **NiMH (HYBRID CELLS)** join the chemistries.
+- A hybrid's warm-up: both validation cars recover exhaust heat into the coolant until it is warm (Toyota's EHR,
+  Hyundai's EHRS): 15% of the fuel's energy more to the coolant while it is under 50 C. The Ioniq Hybrid's WLTP moves
+  from 5.23 to 5.05 L/100 km (Hyundai 4.4-5.2).
+- **The Toyota Prius (2016)**: 2ZR-FXE, 53 kW / 163 Nm MG2, 1.31 kWh NiMH, 10.84:1, 1375 kg, Cd 0.24. Its engine
+  matched to the published 72 kW: 83 kW together (Toyota 90), 0-100 km/h 11.18 s (10.6), 180 km/h. WLTP 5.12 L/100 km
+  as built; 4.44 at the real engine's 40% peak efficiency against Toyota's 4.14 (68.3 mpg); the engine off 57% of
+  the cycle; the same engine through a gearbox 6.42. TURNS PER PHASE now goes to 120 (a 600 V machine's winding).
+
 ### A hybrid's energy manager, and the Atkinson cam (build 188)
 
 - **Step 3.2b of the plan.** A charge-sustaining hybrid on the WLTP cycle (`hybridCycle` in `src/js/fuel-cycle.js`):

@@ -165,9 +165,12 @@ function bindControls(){
   document.getElementById('edFuel').addEventListener('change',syncDesignEnable);
   document.getElementById('edTiming').addEventListener('change',syncDesignEnable);
   document.getElementById('edIntakeSys').addEventListener('change',syncDesignEnable);
-  // Fitting a hybrid system starts from a hybrid's motor and pack, not an electric car's (build 186).
+  // Fitting a hybrid system starts from a hybrid's motor and pack, not an electric car's (build 186); changing the layout,
+  // from that layout's (build 189: a power-split's MG2 and pack are the Prius's).
   document.getElementById('edHybrid').addEventListener('change',e=>{
-    if(e.target.value!=='none'&&+document.getElementById('evKWh').value>10)applyElectricToForm(Object.assign({},EV_DEFAULT,HYB_DEFAULT));
+    const v=e.target.value,hybPrev=engine&&engine.type!=='electric'&&engine.hyMode||'none';
+    if(v!=='none'&&(+document.getElementById('evKWh').value>10||hybPrev!=='none'&&hybPrev!==v||v==='ps'))
+      applyElectricToForm(Object.assign({},EV_DEFAULT,v==='ps'?HYB_DEFAULT_PS:HYB_DEFAULT));
     syncDesignEnable();
   });
   // Switching engine type resets CR / redline / cylinders to that cycle's sensible defaults.

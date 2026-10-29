@@ -324,7 +324,11 @@ const CHEM={
   // hybrid cells (build 186): lithium-ion built for a pack that is mostly power and little energy, cycled shallow
   // thousands of times a day; a 1.5 kWh pack gives and takes 30-40 kW (the Ioniq Hybrid's 1.56 kWh LiPo, ~25C).
   liHEV:{label:'Li-ION (HYBRID CELLS)',ocv:[3.30,3.50,3.58,3.63,3.68,3.73,3.79,3.86,3.94,4.03,4.13],vMin:2.80,rAh:0.025,cMax:25,cCharge:20,from:2009,
-        whkg:{2009:70,2016:85,2024:100},cost:{2009:2200,2016:1100,2024:700}}
+        whkg:{2009:70,2016:85,2024:100},cost:{2009:2200,2016:1100,2024:700}},
+  // nickel-metal hydride hybrid cells (build 189): the Prius's since 1997, prismatic 6.5 Ah cells in 7.2 V modules built for
+  // current (the 4th generation's 168 cells: 1.31 kWh, ~0.35 ohm, ~20 kW out and in, 40 kg).
+  nimhHEV:{label:'NiMH (HYBRID CELLS)',ocv:[1.10,1.22,1.25,1.26,1.27,1.28,1.29,1.30,1.31,1.33,1.40],vMin:1.00,rAh:0.012,cMax:20,cCharge:15,from:1997,
+        whkg:{1997:42,2016:52},cost:{1997:1500,2016:700}}
 };
 // Cell mass over pack mass: modules, structure, cooling and wiring take the rest. Large prismatic cells packed without
 // modules (cell-to-pack LFP, from 2020) waste least.

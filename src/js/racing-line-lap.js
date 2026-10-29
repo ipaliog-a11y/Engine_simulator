@@ -851,7 +851,7 @@ function simulateLapRun(key,opts){
     const ped=driverPedal(i=>tgt[i],0);
     for(let i=0;i<n;i++){
       thr[i]=ped[i];
-      mapAt[i]=pt.kind==='electric'?1:steadyMapAt(rpmAt[i],thr[i]);   // a motor has no manifold (build 180)
+      mapAt[i]=pt.kind==='electric'||pt.direct?1:steadyMapAt(rpmAt[i],thr[i]);   // a motor has no manifold (build 180)
       if(boostLap)mapAt[i]=Math.min(mapAt[i],1+boostLap[i]);   // what the shaft has built by here
     }
   }

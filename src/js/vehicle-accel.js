@@ -26,8 +26,8 @@ function computeVehicleCost(ch,tt,wr){
      (stepOf(vehicle.barF)?1:0)*STIFF_STEP_COST.bar+(stepOf(vehicle.barR)?1:0)*STIFF_STEP_COST.bar;
   c+=Math.max(0,vehicle.rotor-320)*6;
   c+={fwd:0,rwd:800,awd:2500}[vehicle.drive]||0;
-  c+=(vehicle.ev?EV_REDUCTION:(GEARBOX[vehicle.gearbox]||GEARBOX.manual)).cost+(DIFF[vehicle.diff]||DIFF.open).cost;
-  c+=vehicle.ev?0:Math.max(0,vehicle.gears-5)*400;
+  c+=(vehicle.ev?EV_REDUCTION:vehicle.ecvt?PS_REDUCTION:(GEARBOX[vehicle.gearbox]||GEARBOX.manual)).cost+(DIFF[vehicle.diff]||DIFF.open).cost;
+  c+=vehicle.ev||vehicle.ecvt?0:Math.max(0,vehicle.gears-5)*400;
   c+=Math.max(0,vehicle.wheelDia-16)*120+Math.max(0,vehicle.tireWidth-205)*4;
   return Math.max(3000,Math.round(c/50)*50);
 }
@@ -145,8 +145,10 @@ function buildVehicle(){
   vehicle.finalDrive=vehicle.finalDriveSet>0?clamp(vehicle.finalDriveSet,FD_MIN,FD_MAX)
     :gs.fd>0?clamp(gs.fd*gearingBias(vehicle.gearing)/gearingBias(52),FD_MIN,FD_MAX):matchedFinalDrive();
   vehicle.ev=powertrain().kind==='electric';
+  vehicle.ecvt=!!powertrain().direct;
   if(vehicle.ev)electricDriveline(vehicle);   // one fixed reduction, no gearbox (build 180)
-  syncEvVehicleForm(vehicle.ev);
+  if(vehicle.ecvt)psDriveline(vehicle);       // a power-split's: one reduction from MG2 (build 189)
+  syncEvVehicleForm(vehicle.ev||vehicle.ecvt);
   vehicle.cost=computeVehicleCost(ch,tt,wr);
   vehicle.powerToWeight=powertrain().ready()?powertrain().rating().peakHP/(vehicle.mass/1000):0;   // hp per tonne
   perf=simulateAccel();
@@ -312,7 +314,7 @@ function simulateAccelRun(){
   const gb=vehicle.gb||GEARBOX.manual;
   const shiftTime=gb.shift,tcStall=gb.stall>0?clamp(gb.stall,idle,rl*0.85):0;
   // an electric car has no clutch to slip and no launch speed to choose: the motor turns with the wheels from rest (build 180)
-  const ev=pt.kind==='electric';
+  const ev=pt.kind==='electric'||!!pt.direct;   // a power-split's eCVT neither (build 189)
   const df=vehicle.df||DIFF.open;
   // Most axle torque the car will ever put down — first gear at peak torque. The diff's usable
   // share is referenced against this, so a launch behaves exactly as before while a tall gear

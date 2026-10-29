@@ -13,7 +13,7 @@
 const gw={open:false,lap:null,lapKey:'',hover:{saw:null,force:null},busy:false};
 const gwOrd=i=>tr(['1st','2nd','3rd'][i]||((i+1)+'th'));
 function openGearWin(){
-  if(isElectric()){flash(tr(EV_GEAR_NOTE),'warn');return;}   // one fixed reduction, no gears to space (build 180)
+  if(isElectric()||isPowerSplit()){flash(tr(isElectric()?EV_GEAR_NOTE:PS_GEAR_NOTE),'warn');return;}   // one fixed reduction, no gears to space (build 180)
   const w=document.getElementById('gearWin');if(!w)return;
   w.hidden=false;gw.open=true;gw.lap=null;renderGearWin();
   document.getElementById('gwClose').focus();
