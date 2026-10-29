@@ -349,7 +349,7 @@ function simulateAccelRun(){
   const Ie=pt.inertia()||0.1, tqCap=CLUTCH_MARGIN*curve.reduce((q,p)=>Math.max(q,p.tq),0);
   let slipping=!tcStall&&!ev, slipW=launchRpm*TWO_PI/60;
   let v=0,x=0,t=0,gear=0,a=0,shiftT=0,w=0;   // w: the driven wheels' angular speed (rad/s)
-  const M={t100:null,q400:null,q800:null,q1000:null,v200:null,gripT:0,lagT:0,spinT:0,launchRpm,shifts:[]},V100=100/3.6,V200=200/3.6;
+  const M={t100:null,q400:null,q800:null,q1000:null,v200:null,t60:null,roll:null,gripT:0,lagT:0,spinT:0,launchRpm,shifts:[]},V100=100/3.6,V200=200/3.6;
   for(let step=0;step<48000&&t<150;step++){
     // the gearbox input turns with the driven WHEELS, not with the road: in wheelspin the engine revs with them
     let totalRatio=ratios[gear]*fd,rpm=w*totalRatio*60/TWO_PI;
@@ -457,6 +457,9 @@ function simulateAccelRun(){
       if(shiftT<=0&&grid.laggy&&boostNow<0.9*pt.boostTarget(engineRpm))M.lagT+=dt;}
     x+=v*dt;t+=dt;
     if(!M.t100&&v>=V100)M.t100=t;
+    // 0-60 mph and the one-foot rollout a drag strip's timing starts after (makers quoting 0-60 take it off; build 183)
+    if(!M.t60&&v>=96.5606/3.6)M.t60=t;
+    if(!M.roll&&x>=0.3048)M.roll=t;
     if(!M.q400&&x>=400)M.q400={t,v};
     if(!M.q800&&x>=800)M.q800={t,v};
     if(!M.q1000&&x>=1000)M.q1000={t,v};
@@ -500,5 +503,5 @@ function simulateAccelRun(){
   // boost — WHY a car takes the time it takes, so a claim about what limits it can be checked.
   return {t100:M.t100,q400:M.q400,q800:M.q800,q1000:M.q1000,topSpeed,governed,freeSpeed:vFree*3.6,mass:m,ptw:vehicle.powerToWeight,
     gripT:M.gripT,lagT:M.lagT,spinT:M.spinT,launchRpm:M.launchRpm,shifts:M.shifts.map(x=>({g:x.g,v:x.v,rpm:x.rpm,rpmTo:x.rpmTo})),
-    t200:M.v200?M.v200.t:null,x200:M.v200?M.v200.x:null};
+    t200:M.v200?M.v200.t:null,x200:M.v200?M.v200.x:null,t60:M.t60,rollout:M.roll};
 }

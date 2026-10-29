@@ -130,11 +130,11 @@ function bindControls(){
     if(ch)flash(tr('REFITTED TO FACTORY SPEC')+': '+(vehBody?vehBody.name:tr(ch.label)));
   });
   // Real cars: the factory engine and the car's own body and fitment, together.
-  carPicker=wireFamilyPicker('vhFamily','vhPreset',VEHICLE_CATS,VEHICLE_PRESETS,p=>p.cat,'— load a real car —',i=>{
-    const name=loadVehiclePreset(VEHICLE_PRESETS[i]);
-    const ei=PRESETS.findIndex(p=>p.name===VEHICLE_PRESETS[i].engine);
+  carPicker=wireFamilyPicker('vhFamily','vhPreset',FACTORY_CAR_CATS,FACTORY_CARS,p=>p.cat,'— load a real car —',i=>{
+    const name=loadVehiclePreset(FACTORY_CARS[i]);
+    const ei=FACTORY_ENGINES.findIndex(p=>p.name===FACTORY_CARS[i].engine);
     if(enginePicker)enginePicker.show(ei);
-    markLoaded('engine',VEHICLE_PRESETS[i].engine);markLoaded('car',name);
+    markLoaded('engine',FACTORY_CARS[i].engine);markLoaded('car',name);
     flash(tr('LOADED:')+' '+name+(perf&&perf.t100?' • 0–100 '+perf.t100.toFixed(1)+'s':''));
   });
   // Garage. The list is rebuilt on every change, so LOAD/DELETE are delegated off the container
@@ -185,13 +185,13 @@ function bindControls(){
   if(fmRich)fmRich.addEventListener('click',()=>adjustFmCell(-fmStep()));   // richer = lower λ
   if(fmReset)fmReset.addEventListener('click',resetFuelMap);
   // Populate & wire the preset dropdown
-  enginePicker=wireFamilyPicker('edFamily','edPreset',PRESET_CATS,PRESETS,p=>p.cat||'Archetypes','— choose a build —',i=>{
-    const p=PRESETS[i];
+  enginePicker=wireFamilyPicker('edFamily','edPreset',FACTORY_ENGINE_CATS,FACTORY_ENGINES,p=>p.cat||'Archetypes','— choose a build —',i=>{
+    const p=FACTORY_ENGINES[i];
     // The car you have stays: an engine preset is an engine, dropped into whatever car is built.
     applyBuild({engine:Object.assign({},p.engine),tune:Object.assign({},STD_TUNE),vehicle:readVehicleFromForm(),name:p.name});
     engine.name=p.name;
     markLoaded('engine',p.name);
-    flash(tr('LOADED:')+' '+p.name+' • '+engine.displacement_L.toFixed(engine.displacement_L<1?2:1)+'L'+(engine.score?' • '+engine.score.grade:''));
+    flash(tr('LOADED:')+' '+p.name+' • '+(isElectric()?engine.score.peakKW+' kW':engine.displacement_L.toFixed(engine.displacement_L<1?2:1)+'L')+(engine.score?' • '+engine.score.grade:''));
     setTab('dyno');
   });
   document.getElementById('bsEngine').addEventListener('click',()=>setTab('design'));

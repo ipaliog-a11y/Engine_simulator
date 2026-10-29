@@ -16,7 +16,7 @@
 <body>
 <div class="container">
 <header>
-<h1>PIXEL ENGINE SIM v0.6 build 182</h1>
+<h1>PIXEL ENGINE SIM v0.6 build 183</h1>
 <div class="subtitle" id="subtitle">ENGINE DESIGNER • BUILD IT, THEN DRIVE IT</div>
 </header>
 <div class="build-strip" id="buildStrip">
@@ -76,6 +76,17 @@
 <div class="field"><label for="evMaxRpm">MAX SPEED (rpm)</label><input type="number" id="evMaxRpm" min="4000" max="25000" step="100" value="18000"></div>
 </div>
 
+<div class="design-section" data-ev>More motors</div>
+<div class="design-grid" data-ev>
+<div class="field"><label for="evRearCount">REAR MOTORS</label><select id="evRearCount"><option value="1">1</option><option value="2">2 (ONE PER WHEEL)</option></select></div>
+<div class="field"><label for="evFront">FRONT MOTOR</label><select id="evFront"><option value="none">NONE</option><option value="pm">PERMANENT MAGNET</option><option value="im">INDUCTION (COPPER CAGE)</option></select></div>
+<div class="field"><label for="evFrontD">FRONT ROTOR DIAMETER (mm)</label><input type="number" id="evFrontD" min="80" max="260" step="1" value="130"></div>
+<div class="field"><label for="evFrontStack">FRONT STACK LENGTH (mm)</label><input type="number" id="evFrontStack" min="40" max="250" step="1" value="110"></div>
+<div class="field"><label for="evFrontPoles">FRONT POLES</label><select id="evFrontPoles"><option value="4">4</option><option value="6">6</option><option value="8">8</option></select></div>
+<div class="field"><label for="evFrontTurns">FRONT TURNS PER PHASE</label><input type="number" id="evFrontTurns" min="4" max="60" step="1" value="12"></div>
+<div class="field"><label for="evFrontAmps">FRONT CURRENT (A rms)</label><input type="number" id="evFrontAmps" min="100" max="1600" step="10" value="700"></div>
+</div>
+
 <div class="design-section" data-ev>Inverter</div>
 <div class="design-grid" data-ev>
 <div class="field"><label for="evInverter">SWITCHES</label><select id="evInverter"><option value="igbt">SILICON IGBT</option><option value="sic">SiC MOSFET</option></select></div>
@@ -84,7 +95,7 @@
 
 <div class="design-section" data-ev>Battery</div>
 <div class="design-grid" data-ev>
-<div class="field"><label for="evChem">CHEMISTRY</label><select id="evChem"><option value="lead">LEAD-ACID</option><option value="nimh">NiMH</option><option value="lfp">LFP</option><option value="nca">NCA / NMC</option></select></div>
+<div class="field"><label for="evChem">CHEMISTRY</label><select id="evChem"><option value="lead">LEAD-ACID</option><option value="nimh">NiMH</option><option value="lfp">LFP</option><option value="nca">NCA / NMC</option><option value="ncaP">NCA (POWER CELLS)</option></select></div>
 <div class="field"><label for="evSeries">CELLS IN SERIES</label><input type="number" id="evSeries" min="20" max="400" step="1" value="96"></div>
 <div class="field"><label for="evKWh">CAPACITY (kWh)</label><input type="number" id="evKWh" min="5" max="200" step="0.5" value="75"></div>
 <div class="field"><label for="evYear">TECHNOLOGY YEAR</label><input type="number" id="evYear" min="1990" max="2026" step="1" value="2020"></div>
@@ -486,6 +497,7 @@
 <!-- @include js/electric-ui.js -->
 <!-- @include js/electric-car.js -->
 <!-- @include js/electric-race.js -->
+<!-- @include js/electric-presets.js -->
 <!-- @include js/controls-boot.js -->
 </script>
 </body>

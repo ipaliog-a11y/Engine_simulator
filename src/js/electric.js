@@ -162,6 +162,7 @@ const motorBaseW=(m,Vdc,psi)=>Vdc/Math.sqrt(6)*Math.SQRT2/((m.vDrop||V_DROP)*m.p
 const CPSR=4;
 // The most torque at a shaft speed (Nm), for the bus voltage and the magnets' temperature.
 function motorMaxTorque(m,rpm,Vdc,tMag=60){
+  if(m.parts)return m.parts.reduce((a,q)=>a+q.n*motorMaxTorque(q.m,rpm,Vdc,tMag),0);
   if(rpm>m.nMax)return 0;
   const psi=motorPsi(m,tMag),wb=motorBaseW(m,Vdc,psi),w=Math.max(1e-6,rpm*Math.PI/30);
   const Tpk=m.im?imTorque(m,m.Imax):motorTorqueAtI(m,m.Imax,psi);
@@ -196,6 +197,7 @@ function motorCurrent(m,T,rpm,Vdc,psi){
 // Losses at an operating point (W): torque T (Nm, negative when regenerating), speed (rpm), bus voltage, and the node
 // temperatures {w,r}. Copper and inverter follow the current; iron follows frequency and the flux left after weakening.
 function motorLosses(m,T,rpm,Vdc,temp){
+  if(m.parts)return motorSetLosses(m,T,rpm,Vdc,temp);
   if(m.im)return imLosses(m,T,rpm,Vdc,temp);
   const psi=motorPsi(m,temp.r),I=motorCurrent(m,T,rpm,Vdc,psi),w=rpm*Math.PI/30;
   const cu=3*I*I*motorR(m,temp.w);
@@ -206,6 +208,44 @@ function motorLosses(m,T,rpm,Vdc,temp){
   const inv=m.inv,rS=inv.r*1000/m.Imax;
   const invL=3*(0.9*inv.v0*I+rS*I*I)+3*(Math.SQRT2/Math.PI)*inv.tSw*inv.fSw*Vdc*I;
   return {cu,fe,mech,inv:invL,I,total:cu+fe+mech+invL};
+}
+// ---- more than one motor (build 183, step 2.5b) ----
+// A car with a motor on each axle (a Model Y: a magnet motor at the rear, an induction motor at the front), or two on
+// one (a Model S Plaid's rear, one per wheel). All drive through reductions of the same ratio, so they turn at the
+// same speed and the rest of the app sees one motor: their torques add, their masses, costs and inertias add, and
+// the speed limit is the lowest. What a second motor changes:
+//   the split   the controller shares the torque asked between the rear group and the front to lose the least, as a
+//               Tesla's does: at a cruise the induction front motor carries nothing (no field, no drag) and the
+//               rear does it all; flat out both give everything;
+//   the heat    one lumped network, the motors' conductances and capacities added (they share the coolant loop).
+//               A motor working harder than the others runs hotter in the car than here; the controller's limits
+//               are taken at the lowest of their rotors' (the magnets', or a cage's).
+// parts: [{m, n}] - the motor and how many of it (the rear group first). The figures a single motor reports
+// (poles, turns, flux, knee, cooling, inverter) are the first group's.
+function motorSet(parts){
+  const a=parts[0].m,sum=k=>parts.reduce((x,q)=>x+q.n*(q.m[k]||0),0);
+  const Tmax=Math.min(...parts.map(q=>q.m.mag.Tmax));
+  return Object.assign({},a,{parts,count:parts.reduce((x,q)=>x+q.n,0),
+    mag:Object.assign({},a.mag,{Tmax}),nMax:Math.min(...parts.map(q=>q.m.nMax)),
+    J:sum('J'),mass:sum('mass'),cost:sum('cost'),mCu:sum('mCu'),mMag:sum('mMag'),mCage:sum('mCage'),mFeS:sum('mFeS'),mFeR:sum('mFeR'),
+    Gwc:sum('Gwc'),Gcc:sum('Gcc'),Gwk:sum('Gwk'),Grc:sum('Grc'),Cw:sum('Cw'),Cc:sum('Cc'),Cr:sum('Cr')});
+}
+// The split: the front group's share of the torque from nothing to all it can give, in tenths and at its share of
+// the capacity, whichever loses least; the rest is the rear's. Each group's motors share theirs equally.
+function motorSetLosses(set,T,rpm,Vdc,temp){
+  const P=set.parts,at=(q,t)=>{const L=motorLosses(q.m,t/q.n,rpm,Vdc,temp);return L;};
+  const add=(x,L,n)=>{for(const k of ['cu','rcu','fe','mech','inv','I','total'])x[k]=(x[k]||0)+n*(L[k]||0);return x;};
+  if(P.length===1){const L=at(P[0],T);return add({},L,P[0].n);}
+  const r=P[0],f=P[1],mR=r.n*motorMaxTorque(r.m,rpm,Vdc,temp.r),mF=f.n*motorMaxTorque(f.m,rpm,Vdc,temp.r),aT=Math.abs(T),sg=Math.sign(T)||1;
+  const shares=[0,0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9,1,mF/Math.max(1e-9,mR+mF)];
+  let best=null;
+  for(const sh of shares){
+    const tF=Math.min(aT*sh,mF),tR=aT-tF;
+    if(tR>mR*1.0001&&sh<1)continue;
+    const x=add(add({},at(r,sg*tR),r.n),at(f,sg*tF),f.n);
+    if(!best||x.total<best.total)best=x;
+  }
+  return best;
 }
 // An induction motor's: the stator's copper on the whole current, the cage's on the torque current (rcu, into the rotor),
 // iron on the field it runs at, the rest as a magnet machine's.
@@ -275,7 +315,12 @@ const CHEM={
   lfp: {label:'LFP',ocv:[2.80,3.15,3.20,3.22,3.24,3.25,3.26,3.27,3.28,3.30,3.40],vMin:2.50,rAh:0.10,cMax:4,cCharge:1.5,from:2005,
         whkg:{2005:90,2015:140,2023:175},cost:{2005:1400,2010:1000,2016:280,2019:140,2024:95}},
   nca: {label:'NCA / NMC',ocv:[2.95,3.40,3.50,3.57,3.63,3.69,3.77,3.85,3.93,4.02,4.13],vMin:2.80,rAh:0.11,cMax:6,cCharge:1.0,from:2008,
-        whkg:{2008:180,2012:240,2020:270},cost:{2008:1300,2010:1100,2013:650,2016:300,2019:160,2024:115}}
+        whkg:{2008:180,2012:240,2020:270},cost:{2008:1300,2010:1100,2013:650,2016:300,2019:160,2024:115}},
+  // power cells (build 183): the same chemistry built for current, not energy - thinner electrodes, more tab and current
+  // collector per amp-hour. The Model S Plaid's 18650s: its 110s72p pack sustains ~2300 A, ~9C. Less energy per kg and
+  // dearer per kWh for it.
+  ncaP:{label:'NCA (POWER CELLS)',ocv:[2.95,3.40,3.50,3.57,3.63,3.69,3.77,3.85,3.93,4.02,4.13],vMin:2.80,rAh:0.06,cMax:10,cCharge:1.5,from:2012,
+        whkg:{2012:200,2020:235},cost:{2012:900,2016:360,2019:200,2024:140}}
 };
 // Cell mass over pack mass: modules, structure, cooling and wiring take the rest. Large prismatic cells packed without
 // modules (cell-to-pack LFP, from 2020) waste least.
