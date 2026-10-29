@@ -163,8 +163,8 @@ Step 3 lands in parts, one PR each (decisions 12-15):
 
 | part | what | state |
 |---|---|---|
-| 3.1 | **Parallel (P2)**: a HYBRID field on any combustion engine; a motor on the gearbox's input shaft at engine speed, a small pack of hybrid cells; its torque added to the engine's in the 0-100, the lap and the race, regeneration added to the engine's overrun; charge-sustaining over a lap (the deploy is cut to what braking takes back); the race burns fuel for the engine's share only. Checked: the Hyundai Ioniq Hybrid's 0-100. | |
-| 3.2 | **Consumption**: the WLTP cycle for engines and hybrids (gear choice, the BSFC map, start-stop), and the energy manager of a full hybrid: the engine off at low load, load-point shifting. Checked: the Ioniq's WLTP fuel. | |
+| 3.1 | **Parallel (P2)**: a HYBRID field on any combustion engine; a motor on the gearbox's input shaft at engine speed, a small pack of hybrid cells; its torque added to the engine's in the 0-100, the lap and the race, regeneration added to the engine's overrun; charge-sustaining over a lap (the deploy is cut to what braking takes back); the race burns fuel for the engine's share only. DEPLOY: FULL, or ECO (torque fill up to the engine's peak torque, the Ioniq's calibration). Checked: the Hyundai Ioniq Hybrid against MotorWeek's measured run and Hyundai's 0-100 (`src/js/hybrid.js`, `tests/test103.mjs`). | ✅ build 186 |
+| 3.2 | **Consumption**: the WLTP cycle for engines and hybrids (gear choice, the BSFC map, start-stop), and the energy manager of a full hybrid: the engine off at low load, load-point shifting; an ATKINSON cam (late inlet closing: the Ioniq's engine is ~12% over its rating without one). Checked: the Ioniq's WLTP fuel. | |
 | 3.3 | **Power-split**: the planetary eCVT (two motors, the engine held at its efficient speed). Checked: the 4th-generation Prius, 0-100 and WLTP. | |
 | 3.4 | **Series**: the engine only charges. | |
 | 3.5 | **Plug-in and racing energy**: a pack that starts full and depletes before it sustains; regulation deploy and harvest limits per lap. Checked: the BMW 330e or Cayenne E-Hybrid, and the Porsche 918 Spyder (with its front axle motor). | |

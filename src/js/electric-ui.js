@@ -35,7 +35,7 @@ function readElectricFromForm(){
     evAmps:Math.round(num('evAmps',100,1600)),evRearCount:g('evRearCount').value==='2'?2:1,
     evFront:['pm','im'].includes(g('evFront').value)?g('evFront').value:'none',evFrontD:num('evFrontD',80,260),evFrontStack:num('evFrontStack',40,250),
     evFrontPoles:+g('evFrontPoles').value||4,evFrontTurns:Math.round(num('evFrontTurns',4,60)),evFrontAmps:Math.round(num('evFrontAmps',100,1600)),evChem:g('evChem').value,evSeries:Math.round(num('evSeries',20,400)),
-    evKWh:num('evKWh',5,200),evYear:Math.round(num('evYear',1990,2026))};
+    evKWh:num('evKWh',0.5,200),evYear:Math.round(num('evYear',1990,2026))};
 }
 function applyElectricToForm(e){
   for(const k in EV_DEFAULT){const el=document.getElementById(k);if(el)el.value=String(e&&e[k]!=null?e[k]:EV_DEFAULT[k]);}
@@ -53,16 +53,20 @@ function syncElectricSections(){
       if(!el.hasAttribute('data-ev'))el.classList.add('ice-only');
     evTagged=true;
   }
-  const ev=typeSel.value==='electric';
+  const ev=typeSel.value==='electric',hs=document.getElementById('edHybrid'),hy=!ev&&!!hs&&hs.value!=='none';
   panel.classList.toggle('ev',ev);
-  if(ev){
+  panel.classList.toggle('hy',hy);   // a hybrid's motor and battery, under its engine (build 186)
+  if(hs){const d=document.getElementById('edHyDeploy');if(d)d.disabled=!hy;}
+  if(ev||hy){
     // a chemistry that had not reached cars by the technology year is offered disabled (decision 9)
     const year=clamp(+document.getElementById('evYear').value||2020,1990,2026),chem=document.getElementById('evChem');
     [...chem.options].forEach(o=>{o.disabled=!chemAvailable(o.value,year);});
-    if(!chemAvailable(chem.value,year))chem.value=['nca','ncaP','lfp','nimh','lead'].find(c=>chemAvailable(c,year));
+    if(!chemAvailable(chem.value,year))chem.value=['nca','ncaP','liHEV','lfp','nimh','lead'].find(c=>chemAvailable(c,year));
     // an induction motor has no magnets to grade or to hold in (build 182): its rotor is a copper cage
     const im=document.getElementById('evMotorType').value==='im';
     document.getElementById('evMagnet').disabled=im;document.getElementById('evRetention').disabled=im;
+  }
+  if(ev){
     // a front motor (build 183): its fields, and the car is all-wheel drive
     const front=document.getElementById('evFront').value!=='none';
     ['evFrontD','evFrontStack','evFrontPoles','evFrontTurns','evFrontAmps'].forEach(id=>{document.getElementById(id).disabled=!front;});

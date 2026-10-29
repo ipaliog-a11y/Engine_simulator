@@ -52,6 +52,7 @@ function readEngineFromForm(){
     alternator:g('edAlternator').value
   };
   if(type==='electric')Object.assign(e,readElectricFromForm());   // the motor and battery (build 179)
+  else{const hm=g('edHybrid')&&g('edHybrid').value;if(hm&&hm!=='none'){e.hyMode=hm;e.hyDeploy=g('edHyDeploy').value==='eco'?'eco':'full';Object.assign(e,readElectricFromForm());}}   // a hybrid system (build 186)
   return e;
 }
 function applyEngineToForm(e){
@@ -79,6 +80,8 @@ function applyEngineToForm(e){
   g('edOilCooler').value=e.oilCooler?'yes':'no';g('edThermostat').value=e.thermostat||88;
   g('edAlternator').value=e.alternator||'120';
   applyElectricToForm(e);
+  if(g('edHybrid'))g('edHybrid').value=e.type!=='electric'&&HYBRID_MODES[e.hyMode]?e.hyMode:'none';
+  if(g('edHyDeploy'))g('edHyDeploy').value=e.hyDeploy==='eco'?'eco':'full';
   syncDesignEnable();
 }
 function syncDesignEnable(){
@@ -357,6 +360,7 @@ function buildEngine(){
   buildRev++;dynoCache=null;
   engine.cost=computeCost();
   engine.score=scoreEngine();
+  if(buildHybrid(engine))engine.cost+=engine.hy.cost;   // a hybrid system: the motor and pack on top (build 186)
   engine.inertia=engineInertia(engine.score.peakTQ);   // the clutch is sized for the torque it carries
   updateEngineLabels();
   updateDesignSummary();

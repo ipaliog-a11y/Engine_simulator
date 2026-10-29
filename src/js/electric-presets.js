@@ -40,6 +40,23 @@ const EV_VEHICLE_PRESETS=[
    body:{kg:2162,cd:0.208,area:2.34,wb:2.96,fWt:0.48},fit:{drive:'awd',tire:'sport',tw:295,twF:265,ta:30,wheel:21,brake:'big',rotor:380,susp:'sport',diff:'clsd',fd:7.56},
    real:{t100:2.1,top:322,limited:true},note:'0-100 is Tesla\'s figure, which takes a one-foot rollout off the start',unsure:['area','fWt']}
 ];
-// What a player picks from: the combustion tables, then the electric ones.
-const FACTORY_ENGINES=PRESETS.concat(EV_ENGINE_PRESETS), FACTORY_CARS=VEHICLE_PRESETS.concat(EV_VEHICLE_PRESETS);
-const FACTORY_ENGINE_CATS=PRESET_CATS.concat(['Electric']), FACTORY_CAR_CATS=VEHICLE_CATS.concat(['Electric']);
+// Hybrids (build 186, step 3 of the plan; decision 14). The Hyundai Ioniq Hybrid (2016): a 1.6 GDi Atkinson-cycle four
+// (Kappa, 72 x 97 mm, 13:1, 105 PS at 5700 rpm, 147 Nm) with a 32 kW / 170 Nm P2 motor between its clutch and its
+// six-speed DCT, and a 1.56 kWh, 240 V lithium-polymer pack: 104 kW and 265 Nm together. The motor is sized to those
+// figures (src/js/hybrid.js, HYB_DEFAULT); the engine is its geometry, which on the model's cams (none is an Atkinson
+// cam yet) makes ~116 hp, not 104 (tests/test103.mjs checks the car both as built and matched to the published power).
+const HYB_ENGINE_PRESETS=[
+  {cat:'Hybrid',name:'Hyundai Kappa 1.6 GDi + P2 (Ioniq Hybrid)',real:{hp:103.6,hpRpm:5700,tq:147,tqRpm:4000,motorKW:32,motorNm:170,sysKW:104,sysNm:265},
+   unsure:['redline','cam'],engine:{type:'petrol4',cylinders:4,bore_mm:72,stroke_mm:97,compression:13,redline:6250,intake:'na',injector:'direct',vvt:true,
+    cam:'stock',valves:4,octane:95,airFilter:'stock',exhaust:'stock',cat:'stock',intakeSys:'efi',hyMode:'p2',hyDeploy:'eco',
+    evMotorType:'pm',evRotorD:200,evStack:40,evPoles:12,evTurns:28,evMagnet:'ndfeb',evRetention:'bridges',evCooling:'jacket',evMaxRpm:8000,
+    evInverter:'igbt',evAmps:400,evRearCount:1,evFront:'none',evChem:'liHEV',evSeries:64,evKWh:1.56,evYear:2016}}
+];
+const HYB_VEHICLE_PRESETS=[
+  {cat:'Hybrid',name:'Hyundai Ioniq Hybrid (2016)',engine:'Hyundai Kappa 1.6 GDi + P2 (Ioniq Hybrid)',chassis:'hatch',
+   body:{kg:1370,cd:0.24,area:2.22,wb:2.70,fWt:0.60},fit:{drive:'fwd',tire:'eco',tw:195,ta:65,wheel:15,brake:'steel',rotor:280,susp:'comfort',gears:6,gearbox:'dct',diff:'open'},
+   real:{t100:10.8,top:185,limited:true},unsure:['kg','fWt']}
+];
+// What a player picks from: the combustion tables, then the electric and hybrid ones.
+const FACTORY_ENGINES=PRESETS.concat(EV_ENGINE_PRESETS,HYB_ENGINE_PRESETS), FACTORY_CARS=VEHICLE_PRESETS.concat(EV_VEHICLE_PRESETS,HYB_VEHICLE_PRESETS);
+const FACTORY_ENGINE_CATS=PRESET_CATS.concat(['Electric','Hybrid']), FACTORY_CAR_CATS=VEHICLE_CATS.concat(['Electric','Hybrid']);

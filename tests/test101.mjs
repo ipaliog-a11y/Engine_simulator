@@ -56,7 +56,7 @@ const r = await page.evaluate(() => {
   const opts = id => [...document.querySelectorAll('#' + id + ' option')].map(x => x.textContent);
   set('vhFamily', 'Electric'); document.getElementById('vhFamily').dispatchEvent(new Event('change'));
   o.pick = { cars: opts('vhPreset').filter(x => /Tesla/.test(x)).length, families: opts('vhFamily'), combustion: VEHICLE_PRESETS.length,
-    factory: FACTORY_CARS.length, anyEvInCombustion: VEHICLE_PRESETS.some(p => /Tesla/.test(p.name)) || PRESETS.some(p => p.engine.type === 'electric') };
+    factory: FACTORY_CARS.length, others: FACTORY_CARS.length - VEHICLE_PRESETS.length - EV_VEHICLE_PRESETS.length, anyEvInCombustion: VEHICLE_PRESETS.some(p => /Tesla/.test(p.name)) || PRESETS.some(p => p.engine.type === 'electric') };
   const sel = document.getElementById('vhPreset'), plaid = [...sel.options].find(x => /Plaid/.test(x.textContent));
   sel.value = plaid.value; sel.dispatchEvent(new Event('change'));
   o.pick.loaded = { kW: engine.score.peakKW, name: (loaded.car || {}).name || '' };
@@ -103,7 +103,7 @@ if (r.lock.on !== 'awd' || !r.lock.disabled || r.lock.off !== 'rwd' || !r.lock.f
 
 const P = r.pick;
 console.log(`== pickers: families ${P.families.join(', ')}; ${P.cars} Teslas; ${P.combustion} combustion cars of ${P.factory}; Plaid loaded ${P.loaded.kW} kW; a Tesla races in ${r.race} ==`);
-if (P.cars !== 3 || !P.families.includes('Electric') || P.factory !== P.combustion + 3 || P.anyEvInCombustion) fails.push('the electric cars are not offered beside the combustion ones');
+if (P.cars !== 3 || !P.families.includes('Electric') || P.factory !== P.combustion + 3 + P.others || P.anyEvInCombustion) fails.push('the electric cars are not offered beside the combustion ones');
 if (!(P.loaded.kW > 700)) fails.push('picking the Plaid did not load it');
 if (r.race !== 'kWh') fails.push('a factory Tesla does not race');
 
