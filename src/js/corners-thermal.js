@@ -89,7 +89,7 @@ function updateVehicleSummary(){
   const dl={fwd:'FWD',rwd:'RWD',awd:'AWD'}[vehicle.drive]||'RWD';
   el.className='design-summary vehicleSummaryWrap';
   const stock=isFactoryFit(vehicle);
-  el.innerHTML='<b>'+tr(vehicle.chLabel)+'</b> • '+dl+' • '+vehicle.gears+tr('-speed')+
+  el.innerHTML='<b>'+tr(vehicle.chLabel)+'</b> • '+dl+' • '+(vehicle.ev?tr('SINGLE-SPEED'):vehicle.gears+tr('-speed'))+
     ' <span style="color:'+(stock?'#7a8':'#ffcc00')+'">'+tr(stock?'(factory spec)':'(modified)')+'</span>'+
     '<br>'+tr('Curb weight')+' <b>'+Math.round(vehicle.mass)+' kg</b> ('+tr('engine')+' ~'+vehicle.engineMass+' kg) • '+vehicle.powerToWeight.toFixed(0)+' hp/t'+
     (vehicle.body?'<br>'+tr('Body')+' <b>'+tr(CHASSIS[vehicle.chassis].label)+'</b> '+tr('class')+' • Cd '+vehicle.body.cd.toFixed(2)+' × '+vehicle.area.toFixed(2)+' m² • '+tr('wheelbase')+' '+vehicle.wb.toFixed(2)+' m • '+Math.round(vehicle.fWt*100)+'% '+tr('front'):'')+
@@ -102,8 +102,9 @@ function updateVehicleSummary(){
     '<br>'+tr('Speed limiter')+' <b>'+(vehicle.governor>0?vehicle.governor+' km/h':tr('removed'))+'</b>'+(perf&&perf.governed?' • '+tr('free top speed')+' '+Math.round(perf.freeSpeed)+' km/h':'')+
     ' • '+tr('traction control')+' <b>'+(vehicle.tc===false?tr('off'):tr('on'))+'</b>'+(perf&&perf.spinT>0.05?' • '+tr('wheelspin')+' '+perf.spinT.toFixed(1)+' '+tr('s to 100'):'')+
     '<br>'+tr('Drag')+' CdA <b>'+vehicle.cdA.toFixed(2)+'</b> • '+tr('downforce')+' ClA <b>'+vehicle.clA.toFixed(2)+'</b> • '+tr('final drive')+' <b>'+vehicle.finalDrive.toFixed(2)+'</b>'+
+    (vehicle.ev?evDrivelineLine(vehicle):   // one reduction and its regeneration (build 180)
     '<br>'+tr('Ratios')+' <b>'+vehicle.ratios.map(x=>x.toFixed(2)).join(' · ')+'</b> '+
-    tr(vehicle.spacing==='stock'?(vehicle.gearsetApprox?'(family average)':'(published)'):vehicle.spacing==='custom'?'(custom)':'('+(GEAR_SPACING[vehicle.spacing]||GEAR_SPACING.std).label.toLowerCase()+')')+
+    tr(vehicle.spacing==='stock'?(vehicle.gearsetApprox?'(family average)':'(published)'):vehicle.spacing==='custom'?'(custom)':'('+(GEAR_SPACING[vehicle.spacing]||GEAR_SPACING.std).label.toLowerCase()+')'))+
     '<br>'+tr('Vehicle cost')+' <b>'+fmtCost(vehicle.cost)+'</b> • '+tr('with engine')+' <b>'+fmtCost(vehicle.cost+(engine.cost||0))+'</b>';
   renderPerformance();
 }
@@ -111,7 +112,7 @@ function renderPerformance(){
   const head=document.getElementById('perfHead'),grid=document.getElementById('perfGrid'),note=document.getElementById('perfNote');
   if(!head||!grid)return;
   const p=perf;
-  if(!p){head.textContent=isElectric()?tr(EV_ROAD_NOTE):'—';grid.innerHTML='';if(note)note.textContent='';return;}
+  if(!p){head.textContent='—';grid.innerHTML='';if(note)note.textContent='';return;}
   head.innerHTML='<b>'+tr(vehicle.chLabel)+'</b> • '+(engine.score?engine.score.peakHP:0)+' hp • '+Math.round(vehicle.mass)+' kg • <b>'+p.ptw.toFixed(0)+'</b> hp/t';
   const cell=(k,v,u,cls)=>'<div class="perf-cell '+(cls||'')+'"><span class="k">'+k+'</span><div class="v">'+v+'</div><span class="u">'+(u||'')+'</span></div>';
   const b100=p.brake100?Math.round(p.brake100.dist)+' m':'—';

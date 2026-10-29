@@ -138,7 +138,7 @@ Step 2 lands in parts, one PR each:
 |---|---|---|
 | 2.1 | **The physics**: motor (permanent magnet), inverter (IGBT / SiC) and battery (four chemistries by year) as pure functions in `src/js/electric.js`; checked against the measured Model 3 rear motor and ORNL's 2012 Leaf (`tests/test96.mjs`). Nothing calls it yet. | ✅ build 178 |
 | 2.2 | **The design and the bench**: ELECTRIC in the engine-type dropdown, the MOTOR / BATTERY fields, the dyno's torque, power and efficiency curves with the temperatures, the powertrain type in saves, and the electric `powertrain()`. | ✅ build 179 |
-| 2.3 | **The car**: single fixed reduction, regenerative braking through the axle split, motor and battery heat over a lap. | |
+| 2.3 | **The car**: single fixed reduction, regenerative braking through the axle split, motor and battery heat over a lap. | ✅ build 180 |
 | 2.4 | **The race**: energy instead of fuel, no charging mid-race. | |
 | 2.5 | **The three Teslas**: presets and the real-world test; the induction motor the Model Y's front axle needs. | |
 

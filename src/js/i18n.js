@@ -309,7 +309,12 @@ const I18N={
   '1990s':{el:'Δεκαετία του 1990'},'2000s':{el:'Δεκαετία του 2000'},'2010s':{el:'Δεκαετία του 2010'},'2020s':{el:'Δεκαετία του 2020'},
   // dropdown choices (and the labels the summaries reuse). An option looks up 'opt:'+text first, for
   // the few words that read differently as a part grade than elsewhere ('RACE' is the RACE tab).
-  'ELECTRIC (BATTERY)':{el:'ΗΛΕΚΤΡΙΚΟΣ (ΜΠΑΤΑΡΙΑ)'},'DRIVE BUILT':{el:'ΤΟ ΗΛΕΚΤΡΙΚΟ ΣΥΣΤΗΜΑ ΚΑΤΑΣΚΕΥΑΣΤΗΚΕ'},
+  'ELECTRIC (BATTERY)':{el:'ΗΛΕΚΤΡΙΚΟΣ (ΜΠΑΤΑΡΙΑ)'},
+  // the electric car (build 180)
+  'SINGLE-SPEED':{el:'μονοτάχυτο'},'GEARING (REDUCTION)':{el:'ΣΧΕΣΗ ΜΕΙΩΣΗΣ'},'Reduction':{el:'Σχέση μείωσης'},
+  'regeneration up to':{el:'ανάκτηση ενέργειας έως'},'motor and pack':{el:'κινητήρας και μπαταρία'},'MOTOR':{el:'ΚΙΝΗΤΗΡΑΣ'},
+  'cut back':{el:'περιορισμός'},'of the lap':{el:'του γύρου'},'winding peak':{el:'μέγιστη περιέλιξης'},'BATTERY':{el:'ΜΠΑΤΑΡΙΑ'},
+  'pack peak':{el:'μέγιστη μπαταρίας'},'ENERGY':{el:'ΕΝΕΡΓΕΙΑ'},'regen':{el:'ανάκτηση'},'DRIVE BUILT':{el:'ΤΟ ΗΛΕΚΤΡΙΚΟ ΣΥΣΤΗΜΑ ΚΑΤΑΣΚΕΥΑΣΤΗΚΕ'},
   'PETROL 4-STROKE':{el:'ΒΕΝΖΙΝΗ ΤΕΤΡΑΧΡΟΝΟΣ'},'DIESEL (CI)':{el:'ΠΕΤΡΕΛΑΙΟ (CI)'},'2-STROKE':{el:'ΔΙΧΡΟΝΟΣ'},'ROTARY (WANKEL)':{el:'ΠΕΡΙΣΤΡΟΦΙΚΟΣ (WANKEL)'},
   'INLINE':{el:'ΣΕ ΣΕΙΡΑ'},'BOXER':{el:'ΜΠΟΞΕΡ'},'NATURALLY ASP.':{el:'ΑΤΜΟΣΦΑΙΡΙΚΟΣ'},
   'NONE':{el:'ΧΩΡΙΣ'},'SMALL CORE':{el:'ΜΙΚΡΟΣ ΠΥΡΗΝΑΣ'},'LARGE CORE':{el:'ΜΕΓΑΛΟΣ ΠΥΡΗΝΑΣ'},

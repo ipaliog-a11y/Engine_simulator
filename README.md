@@ -1,4 +1,4 @@
-# PIXEL ENGINE SIM v0.6 build 179
+# PIXEL ENGINE SIM v0.6 build 180
 
 **A lightweight, 8-bit style internal combustion engine *designer* & simulator** inspired by *Automation*.
 
@@ -89,8 +89,11 @@ Pick **ELECTRIC (BATTERY)** as the engine type and the ENGINE tab trades the com
 the knee where the voltage runs out, the top speed, every loss and the heat are derived from those
 (`src/js/electric.js`, checked against the measured Tesla Model 3 motor and ORNL's 2012 Leaf). The LIVE bench runs the
 drive against the dyno brake with the pack sagging and the winding heating until the controller derates it; the DYNO
-draws torque, power and efficiency at the pack's charge and the magnets' heat. Electric cars take to the road in the
-next part (single-speed reduction, regenerative braking, heat over a lap).
+draws torque, power and efficiency at the pack's charge and the magnets' heat. On the road (build 180) an electric car
+runs one reduction (matched to its top speed, GEARING biases it), takes energy back braking through the same path as an
+engine's overrun, and pays for its heat over a lap: round the Nordschleife the battery management holds the pack near
+55 °C and cuts the drive, and an air-cooled motor is cut far more. The TRACK tab shows the motor, the pack and the
+energy. Electric cars race from the next part.
 
 ### Simulation & live tuning
 - **Live outputs**: Power (HP), Torque (Nm), BMEP, Volumetric Efficiency, Thermal

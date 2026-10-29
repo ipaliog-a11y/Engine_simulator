@@ -341,7 +341,7 @@ function renderLap(){
   const head=document.getElementById('lapHead'),grid=document.getElementById('lapGrid'),note=document.getElementById('lapNote');
   if(!head||!grid)return;
   const L=lapResult;
-  if(!L){head.textContent=isElectric()?tr(EV_ROAD_NOTE):'—';grid.innerHTML='';if(note)note.textContent='';return;}
+  if(!L){head.textContent='—';grid.innerHTML='';if(note)note.textContent='';return;}
   head.innerHTML='<b>'+L.track.label+'</b> • '+(L.length/1000).toFixed(2)+' km • '+L.corners+' '+tr('corners')+' • '+Math.round(L.zMax-L.zMin)+' m '+tr('elevation');
   const cell=(k,v,u,cls)=>'<div class="perf-cell '+(cls||'')+'"><span class="k">'+k+'</span><div class="v">'+v+'</div><span class="u">'+(u||'')+'</span></div>';
   grid.innerHTML=
@@ -357,6 +357,7 @@ function renderLap(){
       const w=mg<1.5?tr('NEUTRAL'):us>=0.5?tr('UNDERSTEER'):tr('OVERSTEER');
       return cell(tr('BALANCE'),w,mg<1.5?'':(us>=0.5?tr('front'):tr('rear'))+' '+tr('limits')+' · '+mg.toFixed(0)+'%');})():'')+
     (L.brakeMaxF!=null?cell(tr('BRAKE TEMP'),'<span style="color:'+brakeTempColour(L.brakeMaxF,L.brakeOnset)+'">'+Math.round(L.brakeMaxF)+'°C</span>',
-      L.brakeMaxF>=L.brakeOnset?tr('BRAKE FADE')+' −'+Math.round((1-Math.min(...L.replay.fade))*100)+'%':tr('fade from')+' '+L.brakeOnset+'°C'):'');
+      L.brakeMaxF>=L.brakeOnset?tr('BRAKE FADE')+' −'+Math.round((1-Math.min(...L.replay.fade))*100)+'%':tr('fade from')+' '+L.brakeOnset+'°C'):'')+
+    (L.ev?evLapCells(L.ev,cell):'');   // the electric drive's heat and energy (build 180)
   if(note)note.textContent=tr(L.track.blurb);
 }
