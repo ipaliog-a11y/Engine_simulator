@@ -202,8 +202,10 @@ function dynoReportCanvas(scale){
   if(dynoPulls.length)g.fillText(dynoPulls.length+' previously logged pull(s) overlaid faintly for comparison.',40,fy+62);
   return cv;
 }
+// What the reports call the build: its name, else its size (an electric drive's peak power, build 181).
+const engineLabel=()=>engine.name||(isElectric()?engine.score.peakKW+' kW electric':engine.displacement_L.toFixed(1)+'L');
 function reportFileName(ext){
-  const n=(engine.name||engine.displacement_L.toFixed(1)+'L').replace(/[^a-z0-9]+/gi,'_').replace(/^_|_$/g,'');
+  const n=engineLabel().replace(/[^a-z0-9]+/gi,'_').replace(/^_|_$/g,'');
   return (n||'engine')+'_dyno_'+new Date().toISOString().slice(0,10)+'.'+ext;
 }
 function downloadBlob(blob,fn){
@@ -307,7 +309,7 @@ function raceReportCanvas(R,scale){
     g.fillStyle=RPT.ink;g.font=sans(14);g.fillText(String(x.stops),cols[6]+6,y+21);
     x.stints.forEach((st,k)=>{const bx=cols[6]+26+k*44;g.fillStyle=RACE_RPT_TYRE[st.tyre]||'#888';g.fillRect(bx,y+8,40,16);
       g.fillStyle='#fff';g.font=sans(10,true);g.fillText((RACE_TYRE_LOOK[st.tyre]||['?'])[0]+' L'+st.from,bx+4,y+20);});
-    g.fillStyle=RPT.ink;g.font=sans(14);g.fillText(x.fuelL.toFixed(1)+' L',cols[7]+6,y+21);
+    g.fillStyle=RPT.ink;g.font=sans(14);g.fillText(x.fuelL.toFixed(1)+' '+(x.unit||'L'),cols[7]+6,y+21);
     g.fillText(({push:'push',normal:'normal',save:'fuel save'}[x.mode]||x.mode)+(x.driver&&x.driver!=='BALANCED'?', '+x.driver.toLowerCase():''),cols[8]+6,y+21);
     y+=30;
   }
@@ -380,7 +382,7 @@ function raceReportCanvas(R,scale){
     if(evs.length&&rows>0){
       g.fillStyle=RPT.ink;g.font=sans(16,true);g.fillText('Key moments',40,ky);
       const nm=id=>{const c=R.cars.find(o=>o.id===id);return c?c.M.name:'';};
-      const txt=e=>e.type==='pass'?nm(e.car)+' passes '+nm(e.on):e.type==='pit'?nm(e.car)+' pits: '+raceCompound(e.tyre).label.toLowerCase()+', '+e.fuelL.toFixed(1)+' L'+(e.why==='weather'?' (for the weather)':'')
+      const txt=e=>e.type==='pass'?nm(e.car)+' passes '+nm(e.on):e.type==='pit'?nm(e.car)+' pits: '+raceCompound(e.tyre).label.toLowerCase()+(e.fuelL>0?', '+e.fuelL.toFixed(1)+' L':'')+(e.why==='weather'?' (for the weather)':'')
         :e.type==='dive'?(e.ok?nm(e.car)+' dives down the inside of '+nm(e.on):nm(e.car)+' tries a late move on '+nm(e.on)+' and runs wide')
         :e.type==='mistake'?nm(e.car)+' makes a mistake':e.type==='rain'?'Rain starts to fall':e.type==='dry'?'The track is dry':nm(e.car)+' retires ('+(e.why||'').toLowerCase()+')';
       const show=evs.length>rows?evs.slice(0,rows-1):evs;
@@ -461,7 +463,7 @@ function hotLapReportCanvas(scale){
   g.fillStyle=RPT.ink;g.font=sans(30,true);g.fillText(T.label,40,142);
   g.fillStyle='#667';g.font=sans(15);
   g.fillText((T.length/1000).toFixed(2)+' km  ·  '+T.wLabel+' wide  ·  '+T.corners+' corners      '+
-    (engine.name||engine.displacement_L.toFixed(1)+'L')+'  in  '+vehicle.chLabel,40,168);
+    engineLabel()+'  in  '+vehicle.chLabel,40,168);
   // ---- Lap + sector band ----
   const by=186;
   g.fillStyle='#f4f5f8';g.fillRect(40,by,W-80,86);
@@ -616,7 +618,7 @@ function hotLapReportCanvas(scale){
 }
 function lapFileName(ext){
   const t=(lapResult?lapResult.track.label:'lap').replace(/[^a-z0-9]+/gi,'_');
-  const c=(engine.name||engine.displacement_L.toFixed(1)+'L').replace(/[^a-z0-9]+/gi,'_');
+  const c=engineLabel().replace(/[^a-z0-9]+/gi,'_');
   return (t+'_'+c+'_hotlap_'+new Date().toISOString().slice(0,10)+'.'+ext).replace(/_+/g,'_');
 }
 function exportLapPNG(){

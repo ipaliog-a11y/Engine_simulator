@@ -20,6 +20,29 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 Working toward **v1.0 — every number derived, not fitted.**
 
+### The electric car in a race (build 181)
+
+- **Step 2.4 of the electric plan** (`plans/hybrid-electric/`). An electric car enters a race beside engines (decision
+  8); `src/js/electric-race.js` (new) holds what its race does differently.
+- **Energy in the tank's place.** The store is the pack's usable energy: charged to 95%, the battery management holding
+  back the last 5%, counted in kWh. It weighs the same full or empty, so the pace grid's second axis is not the tank's
+  mass but the battery power the car runs at: full, 65% and 30% of what the rated curve draws at its peak, each a lap
+  solved through the same solver with the torque curve cut to that power.
+- **Every point priced in kWh.** The shaft power, the motor's and the inverter's losses and the cells' own (I²R, about
+  12% flat out), less what regeneration takes back braking. At full power the race's lap is the TRACK tab's to 0.05 s.
+- **No charging mid-race.** An electric car stops only for tyres. Its energy manager plans the most power that lasts the
+  distance with 3% in hand, chooses again at every crossing of the line for the laps that are left, and learns what the
+  car actually spends against the prediction (laps the battery management cut are no lesson). A car that empties its
+  pack retires: **OUT OF CHARGE**.
+- **Heat lap to lap.** The pack and the motor are carried through the race; the battery management cuts the power as
+  the pack's charge falls and as it heats past 50 °C, the controller as the winding and the magnets heat. A road car's
+  pack runs into its temperature before its energy: 30 laps of the technical circuit on the default 75 kWh car, the
+  pack reaches 50 °C by lap 10 and is held at 57 °C, the laps slip from 75 s to 80 s, and 12 of 67.5 kWh are left.
+- **The RACE tab and the race report** show ENERGY in kWh, the pack and motor temperatures, and kWh in the results, with
+  litres for the engines beside it; the pit-lane line leaves out the fuel for a car that takes none.
+- `tests/test99.mjs` (new): the model, a short race, a race only the manager finishes (flat out the car runs out after
+  18 of 24 laps), one no power lasts, and the heat over 30 laps. Combustion fingerprint identical to build 177.
+
 ### The electric car on the road (build 180)
 
 - **Step 2.3 of the electric plan** (`plans/hybrid-electric/`). The electric drive runs the 0-100, the top speed and the
