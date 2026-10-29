@@ -136,6 +136,9 @@ function scoreMotor(e){
     if(hp>peakHP){peakHP=hp;peakHPrpm=r;}
     if(T>peakTQ+0.5){peakTQ=T;peakTQrpm=r;}
   }
+  // a drive held to the pack's power is flat on top: its peak is where the plateau starts (within 0.1%), not whichever
+  // point of it rounding happens to favour
+  peakHPrpm=(pts.find(p=>p.hp>=0.999*peakHP)||{rpm:peakHPrpm}).rpm;
   let lo=rMax,hi=0;pts.forEach(p=>{if(p.hp>=0.8*peakHP){lo=Math.min(lo,p.rpm);hi=Math.max(hi,p.rpm);}});
   let best={e:0,rpm:0,T:0};
   for(let r=500;r<=rMax;r+=250)for(const f of [0.15,0.25,0.4,0.6,0.8,1]){

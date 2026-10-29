@@ -31,6 +31,8 @@ Working toward **v1.0 — every number derived, not fitted.**
   Model Y Long Range and Model S Plaid against the vehicle-side 117 / 138 / 158; at the socket 141 / 166 / 196
   against the rated 142 / 169 / 187. Nothing was set from a consumption figure.
 - The VEHICLE tab shows the cycle's Wh/km, at the socket, what regeneration takes back, and the range.
+- **Fix:** a drive held to its pack's power is flat on top; its scorecard's peak-power speed is now where that plateau
+  starts, not whichever point of it rounding favoured (test97's MAX POWER check failed one run in two on it).
 
 ### The three Teslas (build 183)
 
