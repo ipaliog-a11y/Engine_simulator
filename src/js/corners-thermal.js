@@ -101,6 +101,7 @@ function updateVehicleSummary(){
     '<br>'+tr('Diff')+' <b>'+tr(vehicle.diffLabel)+'</b> • '+tr('puts down')+' '+(vehicle.diffTraction*100).toFixed(0)+'% '+tr('of axle grip')+
     '<br>'+tr('Speed limiter')+' <b>'+(vehicle.governor>0?vehicle.governor+' km/h':tr('removed'))+'</b>'+(perf&&perf.governed?' • '+tr('free top speed')+' '+Math.round(perf.freeSpeed)+' km/h':'')+
     ' • '+tr('traction control')+' <b>'+(vehicle.tc===false?tr('off'):tr('on'))+'</b>'+(perf&&perf.spinT>0.05?' • '+tr('wheelspin')+' '+perf.spinT.toFixed(1)+' '+tr('s to 100'):'')+
+    (!vehicle.ev&&!isHybrid()?engineCycleLine(vehicle):'')+   // an engine's WLTP fuel (build 187; a hybrid's is 3.2b's)
     '<br>'+tr('Drag')+' CdA <b>'+vehicle.cdA.toFixed(2)+'</b> • '+tr('downforce')+' ClA <b>'+vehicle.clA.toFixed(2)+'</b> • '+tr('final drive')+' <b>'+vehicle.finalDrive.toFixed(2)+'</b>'+
     (vehicle.ev?evDrivelineLine(vehicle)+evCycleLine(vehicle):   // one reduction and its regeneration (build 180), the WLTP cycle (184)
     '<br>'+tr('Ratios')+' <b>'+vehicle.ratios.map(x=>x.toFixed(2)).join(' · ')+'</b> '+
