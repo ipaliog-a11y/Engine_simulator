@@ -20,6 +20,23 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 Working toward **v1.0 — every number derived, not fitted.**
 
+### The induction motor (build 182)
+
+- **Step 2.5a of the electric plan.** MOTOR TYPE on the ENGINE tab: PERMANENT MAGNET or INDUCTION (COPPER CAGE). The
+  induction motor has no magnets (their grade and retention are disabled): the stator's own current magnetises the
+  rotor and the torque current induces the cage's. From the build, as the magnet motor is: the flux from a design
+  air-gap flux density (0.8 T) bought with magnetising current, the cage's resistance from its bars and end rings,
+  the leakage drop that raises the voltage at full current, field weakening to ~3x the knee (breakdown torque).
+- **What it trades.** Less torque per amp and a lower best efficiency (95.8% against 96.9% for a magnet motor of the
+  same size and current); the cage's slip loss heats the rotor, which sheds it only across the air gap; and at no
+  torque there is no field, so no iron loss and no drag (164 W coasting at 8000 rpm against 2 kW): why a secondary
+  axle carries one. Its cost is about a magnet motor's: the copper cage costs what the NdFeB it replaces does.
+- **Checked against the Tesla Model S 60's rear motor**, built from its published geometry (4 poles, 60 slots, 74 bars,
+  156.8 mm bore, 152 mm stack, 0.5 mm gap) with its turns taken from its measured 4.35 mOhm phase resistance: 430 Nm
+  at 1060 A, 259 kW against the published 225, a knee at 5700 rpm (~5000 implied), and 90.9% copper-only efficiency at
+  225 kW against the finite-element 93.4%. `tests/test100.mjs` (new). Saves carry the motor type; an old save is a
+  magnet motor.
+
 ### The electric car in a race (build 181)
 
 - **Step 2.4 of the electric plan** (`plans/hybrid-electric/`). An electric car enters a race beside engines (decision

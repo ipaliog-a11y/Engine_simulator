@@ -314,7 +314,11 @@ const I18N={
   'SINGLE-SPEED':{el:'μονοτάχυτο'},'GEARING (REDUCTION)':{el:'ΣΧΕΣΗ ΜΕΙΩΣΗΣ'},'Reduction':{el:'Σχέση μείωσης'},
   'regeneration up to':{el:'ανάκτηση ενέργειας έως'},'motor and pack':{el:'κινητήρας και μπαταρία'},'MOTOR':{el:'ΚΙΝΗΤΗΡΑΣ'},
   'cut back':{el:'περιορισμός'},'of the lap':{el:'του γύρου'},'winding peak':{el:'μέγιστη περιέλιξης'},'BATTERY':{el:'ΜΠΑΤΑΡΙΑ'},
-  'pack peak':{el:'μέγιστη μπαταρίας'},'ENERGY':{el:'ΕΝΕΡΓΕΙΑ'},'regen':{el:'ανάκτηση'},'DRIVE BUILT':{el:'ΤΟ ΗΛΕΚΤΡΙΚΟ ΣΥΣΤΗΜΑ ΚΑΤΑΣΚΕΥΑΣΤΗΚΕ'},
+  'pack peak':{el:'μέγιστη μπαταρίας'},
+  // the induction motor (build 182)
+  'MOTOR TYPE':{el:'ΤΥΠΟΣ ΚΙΝΗΤΗΡΑ'},'PERMANENT MAGNET':{el:'ΜΟΝΙΜΟΥ ΜΑΓΝΗΤΗ'},'INDUCTION (COPPER CAGE)':{el:'ΕΠΑΓΩΓΙΚΟΣ (ΧΑΛΚΙΝΟ ΚΛΩΒΟ)'},
+  'INDUCTION MOTOR':{el:'ΕΠΑΓΩΓΙΚΟΣ ΚΙΝΗΤΗΡΑΣ'},'ROTOR':{el:'ΔΡΟΜΕΑΣ'},'COPPER CAGE':{el:'ΧΑΛΚΙΝΟΣ ΚΛΩΒΟΣ'},'bars':{el:'ράβδοι'},
+  'magnetising':{el:'μαγνήτιση'},'cage':{el:'κλωβός'},'ROTOR CAGE OVERHEATING':{el:'ΥΠΕΡΘΕΡΜΑΝΣΗ ΚΛΩΒΟΥ ΔΡΟΜΕΑ'},'ENERGY':{el:'ΕΝΕΡΓΕΙΑ'},'regen':{el:'ανάκτηση'},'DRIVE BUILT':{el:'ΤΟ ΗΛΕΚΤΡΙΚΟ ΣΥΣΤΗΜΑ ΚΑΤΑΣΚΕΥΑΣΤΗΚΕ'},
   'PETROL 4-STROKE':{el:'ΒΕΝΖΙΝΗ ΤΕΤΡΑΧΡΟΝΟΣ'},'DIESEL (CI)':{el:'ΠΕΤΡΕΛΑΙΟ (CI)'},'2-STROKE':{el:'ΔΙΧΡΟΝΟΣ'},'ROTARY (WANKEL)':{el:'ΠΕΡΙΣΤΡΟΦΙΚΟΣ (WANKEL)'},
   'INLINE':{el:'ΣΕ ΣΕΙΡΑ'},'BOXER':{el:'ΜΠΟΞΕΡ'},'NATURALLY ASP.':{el:'ΑΤΜΟΣΦΑΙΡΙΚΟΣ'},
   'NONE':{el:'ΧΩΡΙΣ'},'SMALL CORE':{el:'ΜΙΚΡΟΣ ΠΥΡΗΝΑΣ'},'LARGE CORE':{el:'ΜΕΓΑΛΟΣ ΠΥΡΗΝΑΣ'},

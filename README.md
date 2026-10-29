@@ -1,4 +1,4 @@
-# PIXEL ENGINE SIM v0.6 build 181
+# PIXEL ENGINE SIM v0.6 build 182
 
 **A lightweight, 8-bit style internal combustion engine *designer* & simulator** inspired by *Automation*.
 
@@ -95,7 +95,10 @@ engine's overrun, and pays for its heat over a lap: round the Nordschleife the b
 55 °C and cuts the drive, and an air-cooled motor is cut far more. The TRACK tab shows the motor, the pack and the
 energy. In a race (build 181) an electric car runs on its pack's usable energy, beside engines in the same field, with
 no charging in the pit lane: its energy manager plans the power that lasts the distance and corrects it lap by lap, the
-pack and the motor heat from lap to lap, and a car whose pack cannot last retires OUT OF CHARGE.
+pack and the motor heat from lap to lap, and a car whose pack cannot last retires OUT OF CHARGE. MOTOR TYPE (build 182)
+offers an induction motor beside the magnet one: no magnets, a copper-cage rotor magnetised by the stator's own current,
+less efficient at its best and hotter in the rotor, but with no drag at all when it is not driving; built from the
+Tesla Model S 60's published geometry it gives 430 Nm, 259 kW (225 published) and a knee at 5700 rpm.
 
 ### Simulation & live tuning
 - **Live outputs**: Power (HP), Torque (Nm), BMEP, Volumetric Efficiency, Thermal

@@ -8,7 +8,7 @@
 // The car does not drive on it yet. A single-speed reduction, regenerative braking and the motor's heat over a lap
 // are step 2.3; until then the VEHICLE, TRACK and RACE tabs say so instead of running an electric car through a
 // combustion gearbox. New words are English for now (decision 11): tr() shows the English where Greek is missing.
-const EV_DEFAULT={evRotorD:150,evStack:134,evPoles:6,evTurns:12,evMagnet:'ndfeb',evRetention:'bridges',evCooling:'jacket',
+const EV_DEFAULT={evMotorType:'pm',evRotorD:150,evStack:134,evPoles:6,evTurns:12,evMagnet:'ndfeb',evRetention:'bridges',evCooling:'jacket',
   evMaxRpm:18000,evInverter:'igbt',evAmps:950,evChem:'nca',evSeries:96,evKWh:75,evYear:2020};
 // The race spends energy, not fuel (step 2.4): until then an electric car drives the 0-100 and the lap but does not race.
 // One reduction is all an electric car has: GEARING on the VEHICLE tab sets it (build 180).
@@ -23,10 +23,13 @@ function muteEngineSound(){
   if(Sound.gasGain)Sound.gasGain.gain.setTargetAtTime(0,t,0.08);
 }
 
+// What the rotor's temperature is the temperature of: the magnets, or an induction motor's cage.
+const rotorWord=m=>m.im?'ROTOR':'MAGNETS';
+
 // ---- the design form ----
 function readElectricFromForm(){
   const g=id=>document.getElementById(id),num=(id,lo,hi)=>clamp(+g(id).value||EV_DEFAULT[id],lo,hi);
-  return {evRotorD:num('evRotorD',80,260),evStack:num('evStack',40,250),evPoles:+g('evPoles').value||6,
+  return {evMotorType:g('evMotorType').value==='im'?'im':'pm',evRotorD:num('evRotorD',80,260),evStack:num('evStack',40,250),evPoles:+g('evPoles').value||6,
     evTurns:Math.round(num('evTurns',4,60)),evMagnet:g('evMagnet').value,evRetention:g('evRetention').value,
     evCooling:g('evCooling').value,evMaxRpm:Math.round(num('evMaxRpm',4000,25000)),evInverter:g('evInverter').value,
     evAmps:Math.round(num('evAmps',100,1600)),evChem:g('evChem').value,evSeries:Math.round(num('evSeries',20,400)),
@@ -55,7 +58,9 @@ function syncElectricSections(){
     const year=clamp(+document.getElementById('evYear').value||2020,1990,2026),chem=document.getElementById('evChem');
     [...chem.options].forEach(o=>{o.disabled=!chemAvailable(o.value,year);});
     if(!chemAvailable(chem.value,year))chem.value=['nca','lfp','nimh','lead'].find(c=>chemAvailable(c,year));
-    document.getElementById('evRetention').disabled=false;
+    // an induction motor has no magnets to grade or to hold in (build 182): its rotor is a copper cage
+    const im=document.getElementById('evMotorType').value==='im';
+    document.getElementById('evMagnet').disabled=im;document.getElementById('evRetention').disabled=im;
   }
   return ev;
 }
@@ -64,7 +69,7 @@ function syncElectricSections(){
 function buildElectric(){
   engine=readEngineFromForm();   // type 'electric'; the combustion fields stay with it, for switching back
   const e=engine;
-  e.motor=motorBuild({rotorD:e.evRotorD,stackL:e.evStack,poles:e.evPoles,turns:e.evTurns,magnet:e.evMagnet,
+  e.motor=motorBuild({type:e.evMotorType,rotorD:e.evRotorD,stackL:e.evStack,poles:e.evPoles,turns:e.evTurns,magnet:e.evMagnet,
     retention:e.evRetention,cooling:e.evCooling,inverter:e.evInverter,invAmps:e.evAmps,maxRpm:e.evMaxRpm});
   e.pack=packBuild({chem:e.evChem,series:e.evSeries,kWh:e.evKWh,year:e.evYear});
   // What the rest of the app reads off any engine: its speed range, its inertia, and the bench brake's scale.
@@ -183,7 +188,7 @@ function stepMotorBench(dt){
 function stepMotorWear(dt){
   const st=state,m=engine.motor;
   let cause='';
-  if(st.mT.r>m.mag.Tmax){st.engineHealth=Math.max(0.3,st.engineHealth-0.004*(st.mT.r-m.mag.Tmax)*dt);cause='MAGNETS DEMAGNETISING';}
+  if(st.mT.r>m.mag.Tmax){st.engineHealth=Math.max(0.3,st.engineHealth-0.004*(st.mT.r-m.mag.Tmax)*dt);cause=m.im?'ROTOR CAGE OVERHEATING':'MAGNETS DEMAGNETISING';}
   if(st.mT.w>200){st.engineHealth=Math.max(0,st.engineHealth-0.01*(st.mT.w-200)*dt);cause='WINDING INSULATION BURNING';}
   st.wearCause=cause;
   if(st.engineHealth<=0.001){st.blown=true;}
@@ -257,7 +262,7 @@ function drawMotorDyno(){
   ctx.fillText(s.kWkg+' kW/kg • '+tr('cont')+' '+s.contKW+' kW • '+tr('peak holds')+' '+s.holdS+' s • '+tr('best eff')+' '+s.thEff+'% • '+tr('knee')+' '+s.knee+' rpm',gX+4,iy+14);
   const t=state.mT,lim=engine.motor.mag.Tmax;
   ctx.fillStyle=t.w>150?C.red:'#cbb26a';
-  ctx.fillText(tr('WINDING')+' '+Math.round(t.w)+'°C • '+tr('MAGNETS')+' '+Math.round(t.r)+'°C ('+tr('limit')+' '+lim+') • '+tr('PACK')+' '+state.systemVoltage.toFixed(0)+' V, '+Math.round(state.soc*100)+'%',gX+4,iy+28);
+  ctx.fillText(tr('WINDING')+' '+Math.round(t.w)+'°C • '+tr(rotorWord(engine.motor))+' '+Math.round(t.r)+'°C ('+tr('limit')+' '+lim+') • '+tr('PACK')+' '+state.systemVoltage.toFixed(0)+' V, '+Math.round(state.soc*100)+'%',gX+4,iy+28);
   ctx.fillStyle='#667';ctx.fillText(dynoPulls.length?dynoPulls.map(p=>'— '+p.label).join('   '):tr('LOG PULL to snapshot & overlay a curve for comparison'),gX+4,iy+41);
 }
 function renderMotorResult(force){
@@ -346,12 +351,13 @@ function updateMotorSummary(){
   const lim=m.nMax>=(e.evMaxRpm||0)-1?tr('the design speed'):m.nMax>=m.nTip-1?tr('the rotor surface')+' ('+m.ret.vTip+' m/s)':tr('the inverter frequency');
   const whkg=b.kWh*1000/b.mass;
   document.getElementById('designSummary').innerHTML=
-    '<b>'+tr('ELECTRIC (BATTERY)')+'</b> • <b>'+tr('PERMANENT-MAGNET MOTOR')+'</b>'+
+    '<b>'+tr('ELECTRIC (BATTERY)')+'</b> • <b>'+tr(m.im?'INDUCTION MOTOR':'PERMANENT-MAGNET MOTOR')+'</b>'+
     '<br>'+tr('Rotor')+' <b>'+e.evRotorD+' × '+e.evStack+' mm</b> • <b>'+m.poles+'</b> '+tr('poles')+', '+m.slots+' '+tr('slots')+' • <b>'+m.N+'</b> '+tr('turns per phase')+
-    '<br>'+tr('Magnets')+' <b>'+tr(m.mag.label)+'</b> ('+tr('air gap')+' '+m.Bg.toFixed(2)+' T, '+tr('limit')+' '+m.mag.Tmax+' °C) • '+tr(m.ret.label)+
+    (m.im?'<br>'+tr('Rotor')+' <b>'+tr(m.mag.label)+'</b>, '+m.Qr+' '+tr('bars')+' ('+tr('air gap')+' '+m.Bg.toFixed(2)+' T, '+tr('magnetising')+' '+Math.round(m.ImR)+' A, '+tr('limit')+' '+m.mag.Tmax+' °C)'
+      :'<br>'+tr('Magnets')+' <b>'+tr(m.mag.label)+'</b> ('+tr('air gap')+' '+m.Bg.toFixed(2)+' T, '+tr('limit')+' '+m.mag.Tmax+' °C) • '+tr(m.ret.label))+
     '<br>'+tr('Knee')+' <b>'+s.knee+'</b> rpm '+tr('at')+' '+Math.round(V)+' V • '+tr('Top speed')+' <b>'+e.redline+'</b> rpm, '+tr('set by')+' '+lim+
     '<br>'+tr('Inverter')+' <b>'+tr(m.inv.label)+'</b> '+m.Imax+' A • '+tr('Cooling')+' <b>'+tr(m.cool.label)+'</b>'+
-    '<br>'+tr('Motor')+' <b>'+Math.round(m.mass)+' kg</b> ('+m.mCu.toFixed(1)+' kg '+tr('copper')+', '+m.mMag.toFixed(1)+' kg '+tr('magnet')+') • <b>'+s.kWkg+'</b> kW/kg'+
+    '<br>'+tr('Motor')+' <b>'+Math.round(m.mass)+' kg</b> ('+m.mCu.toFixed(1)+' kg '+tr('copper')+', '+(m.im?m.mCage.toFixed(1)+' kg '+tr('cage'):m.mMag.toFixed(1)+' kg '+tr('magnet'))+') • <b>'+s.kWkg+'</b> kW/kg'+
     '<br>'+tr('Battery')+' <b>'+tr(b.chem.label)+'</b> '+b.series+'s • <b>'+b.kWh+' kWh</b>, '+Math.round(b.Vnom)+' V, '+Math.round(b.Ah)+' Ah • <b>'+Math.round(b.mass)+' kg</b> ('+Math.round(whkg)+' Wh/kg) • '+e.evYear+
     '<br>'+tr('Pack gives')+' <b>'+Math.round(packMaxPower(b,0.9)/1000)+'</b> kW '+tr('full')+', '+Math.round(packMaxPower(b,0.2)/1000)+' kW '+tr('at 20%')+
     '<br><span style="color:#7fd">'+tr('Peak')+' <b>'+s.peakKW+' kW</b> ('+s.peakHP+' hp) • <b>'+s.peakTQ+' Nm</b> • '+tr('continuous')+' <b>'+s.contKW+' kW</b> • '+tr('peak holds')+' <b>'+s.holdS+' s</b></span>'+
@@ -397,7 +403,7 @@ function drawMotorView(dt){
   bar(x0,60,tr('TORQUE'),st.torque,Math.max(1,s.peakTQ),null,' Nm',C.cyan);
   bar(x0,95,tr('POWER'),st.powerKW,Math.max(1,s.peakKW),null,' kW',C.yellow);
   bar(x0,130,tr('WINDING'),st.mT.w,200,180,' °C',st.mT.w>150?'#ff5555':'#ffaa44');
-  bar(x0,165,tr('MAGNETS'),st.mT.r,200,m.mag.Tmax,' °C',st.mT.r>m.mag.Tmax-20?'#ff5555':'#cc88ff');
+  bar(x0,165,tr(rotorWord(m)),st.mT.r,200,m.mag.Tmax,' °C',st.mT.r>m.mag.Tmax-20?'#ff5555':'#cc88ff');
   bar(x0,200,tr('STATOR CORE'),st.mT.c,200,null,' °C','#88aacc');
   bar(x0,235,tr('CHARGE'),st.soc*100,100,null,' %','#66dd99');
   ctx.fillStyle='#99aabb';ctx.font='7px "Press Start 2P"';
