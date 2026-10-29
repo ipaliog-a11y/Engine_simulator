@@ -1,4 +1,4 @@
-# PIXEL ENGINE SIM v0.7 build 187
+# PIXEL ENGINE SIM v0.7 build 188
 
 **A lightweight, 8-bit style internal combustion engine *designer* & simulator** inspired by *Automation*.
 
@@ -111,7 +111,10 @@ engine's in the 0-100, the lap and the race, it regenerates braking, and over a 
 FULL gives all the hardware can, ECO only fills the engine's curve (the Hyundai Ioniq Hybrid's calibration, checked
 against MotorWeek's instrumented run). Every combustion car also gets its WLTP fuel (build 187): the same cycle,
 each second in the gear that burns least, the fuel off the engine's own map, a cold start the engine warms out of: the
-GR Yaris 7.85 L/100 km against 8.2, the Civic Type R 8.24 against 8.2-8.8.
+GR Yaris 7.85 L/100 km against 8.2, the Civic Type R 8.24 against 8.2-8.8. A hybrid's cycle is run by its energy
+manager (build 188): each second electric only, the engine with the motor helping or charging, or regeneration,
+whichever costs least with the pack's energy priced so it ends the cycle where it started. The Ioniq Hybrid: 5.23
+L/100 km against Hyundai's 4.4-5.2, the engine off 53% of the cycle. An ATKINSON cam closes the intake late.
 
 ### Simulation & live tuning
 - **Live outputs**: Power (HP), Torque (Nm), BMEP, Volumetric Efficiency, Thermal

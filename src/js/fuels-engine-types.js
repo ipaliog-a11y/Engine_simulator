@@ -78,5 +78,12 @@ const RUNNER={
 const CAM={
   stock:{ampMul:1.00,loWiden:1.00,idleRpm:0,  lOverD:0.22,dur:220,accel:0.80,lsa:114},
   sport:{ampMul:1.04,loWiden:0.82,idleRpm:150,lOverD:0.25,dur:252,accel:0.88,lsa:110},
-  race: {ampMul:1.08,loWiden:0.66,idleRpm:400,lOverD:0.28,dur:284,accel:0.98,lsa:106}
+  race: {ampMul:1.08,loWiden:0.66,idleRpm:400,lOverD:0.28,dur:284,accel:0.98,lsa:106},
+  // Atkinson (build 188): the intake held open ~75 degrees past BDC (IVC = LSA + dur/2 - 180), so the piston pushes
+  // part of the charge back out before it compresses: a shorter compression stroke than expansion stroke. The
+  // breathing and cycle models take it from the closing angle (intakeFill, the compression from IVC): less charge,
+  // so less power, and more expansion for what is burnt, so less fuel per kWh. A hybrid's motor fills in the torque.
+  // Its phaser is built for it: 15 degrees of advance (vvtMax, against 45), so even fully advanced the intake closes
+  // ~60 degrees after BDC and the engine stays an Atkinson flat out (the Ioniq's 105 PS from 1.6 L).
+  atkinson:{ampMul:1.00,loWiden:1.00,idleRpm:0,lOverD:0.24,dur:260,accel:0.80,lsa:125,vvtMax:15}
 };

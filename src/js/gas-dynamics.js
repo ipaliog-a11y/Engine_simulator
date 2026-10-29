@@ -359,7 +359,8 @@ function buildFillTable(){
   for(let r=lo;r<=hi;r+=250){
     let f=0,best=0,bestL=lens[0];
     const Tres=wallTrace(e,r,1).Tres;
-    for(const L of lens)for(let adv=0;adv<=(e.vvt?VVT_AUTHORITY:0);adv+=5){
+    const auth=e.vvt?((CAM[e.cam]||CAM.stock).vvtMax??VVT_AUTHORITY):0;   // an Atkinson cam's phaser is shorter (build 188)
+    for(const L of lens)for(let adv=0;adv<=auth;adv+=5){
       const x=intakeFill(r,adv,L,Tres,Cd);if(x>f){f=x;best=adv;bestL=L;}
     }
     tb.push({rpm:r,f,adv:best,L:bestL});
@@ -975,7 +976,7 @@ function deriveGasDynamics(){
   // VVT advances the intake cam down low, which IS closing the valve earlier — so it is a
   // change of IVC timing, not a recovery percentage. Real intake phasers have 40-60 crank
   // degrees of authority.
-  e.trapFrac=e.ports?1:trappedFraction(cam.dur,cam.lsa,e.compression,e.vvt?VVT_AUTHORITY:0);
+  e.trapFrac=e.ports?1:trappedFraction(cam.dur,cam.lsa,e.compression,e.vvt?(cam.vvtMax??VVT_AUTHORITY):0);
   e.dispCyl_L=e.displacement_L/Math.max(1,e.cylinders);
   const Vd=e.dispCyl_L/1000;
   e.vEffCyl=Vd/Math.max(1.5,e.compression-1)+Vd/2;       // mean cylinder volume over induction

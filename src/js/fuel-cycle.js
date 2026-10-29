@@ -107,3 +107,91 @@ function engineCycleLine(v){
   const c=engineCycle(v);
   return '<br>'+tr('WLTP cycle')+' <b>'+c.l100.toFixed(1)+' L/100 km</b> • CO₂ '+Math.round(c.co2)+' g/km';
 }
+// ---- a hybrid over the cycle (build 188, step 3.2b) ----
+// A charge-sustaining hybrid's energy manager, second by second: the equivalent-consumption minimisation every
+// production hybrid controller is a version of (ECMS: Paganelli et al., 2002). Each second it takes, among
+//   electric only (the engine off and its clutch open, the motor driving through the gearbox),
+//   the engine on in a gear, the motor adding to it or charging from it (load-point shifting), and
+//   braking, the motor regenerating within its own and the pack's limits,
+// the one that costs least in fuel plus the pack's energy priced at an equivalence factor s (grams of fuel a joule of
+// pack energy is worth). There is one s that leaves the pack where it started after the cycle, and that is the
+// charge-sustaining controller: it is found by bisection, so the controller's only parameter comes from the cycle,
+// not from a fit. Rules, named: the engine runs until its coolant reaches 50 C (the catalyst lights and the cabin
+// heats on a real one), and stops at a standstill after; the pack is kept between 35% and 85%; its 12 V load (the
+// alternator's 300 W) comes from the pack.
+const HYB_CYCLE={warmC:50,socLo:0.35,socHi:0.85,splits:[0,0.25,0.5,0.75,1]};
+function hybridCycle(v){
+  const e=engine,hy=e.hy,C=FUEL_CYCLE,H=HYB_CYCLE;
+  const key=[v.mass,v.finalDrive,v.cdA,v.crr,v.rTire,v.driveEff,v.ratios.join(','),C.soak,e.hyDeploy].join('|');
+  if(e._hcyc&&e._hcyc.score===e.score&&e._hcyc.key===key)return e._hcyc.res;
+  const m=v.mass+C.massAdd,r=v.rTire,fd=v.finalDrive,eff=v.driveEff,M=engineFuelMap(),pack=hy.pack,mot=hy.motor;
+  const curve=buildTorqueCurve(),Tmax=rpm=>{if(rpm<=curve[0].rpm)return curve[0].tq;for(let i=1;i<curve.length;i++)if(rpm<=curve[i].rpm)return curve[i-1].tq+(curve[i].tq-curve[i-1].tq)*(rpm-curve[i-1].rpm)/(curve[i].rpm-curve[i-1].rpm);return 0;};
+  const rpmMin=Math.max(e.idleRpmEff*C.idleMargin,e.ci?C.minRpmCI:C.minRpm);
+  const fp0=FUELS[e.fuel]||FUELS.gasoline,heatC=engineMass()*460+6*3600+5*1900,stat=e.thermostat||88;
+  const capJ=pack.kWh*3.6e6,tc=mot.cool.tCool,temp={w:tc+20,c:tc+15,r:60};
+  // the motor at a shaft speed: what it can give, what it can take back (its own torque, and the pack's acceptance)
+  const memo=f=>{const c=new Map();return rpm=>{const k=Math.round(rpm/10);let y=c.get(k);if(y===undefined){y=f(k*10);c.set(k,y);}return y;};};
+  const motUp=memo(rpm=>hybMotorTq(hy,rpm)),motDn=memo(rpm=>Math.min(motorMaxTorque(mot,Math.max(rpm,1),packOcv(pack,HYB_SOC),60),pack.pChargeMax/Math.max(1,rpm*Math.PI/30)));
+  // the pack's chemical energy for a motor torque at a speed for one second (+ drawn), with the 12 V load
+  const packJ=(T,rpm,soc)=>{const w=rpm*Math.PI/30,P=T*w+(T||rpm>0?motorLosses(mot,Math.abs(T),Math.max(rpm,1),packOcv(pack,soc),temp).total:0)+C.auxW;
+    const d=packDraw(pack,soc,P);return P+(d?d.heat:0);};
+  const run=s=>{
+    let fuel=0,E=0,x=0,Tc=C.soak,evS=0,onS=0,stopS=0;
+    for(let i=0;i<WLTC_3B.length-1;i++){
+      const v0=WLTC_3B[i]/36,v1=WLTC_3B[i+1]/36,vm=(v0+v1)/2,a=v1-v0;x+=vm;
+      const soc=HYB_SOC+E/capJ,oilT=Math.max(C.soak,Tc-C.oilLag),cold=Tc<H.warmC;
+      let best=null;
+      const consider=(gs,J,on)=>{if(J>0&&soc<H.socLo)return;if(J<0&&soc>H.socHi)J=0;const cost=gs+s*J;if(!best||cost<best.cost)best={cost,gs,J,on};};
+      if(vm<0.1&&a<=0){   // standing: the engine stops when it is warm, or idles
+        if(!cold)consider(0,packJ(0,0,soc),false);
+        consider(M.idleGs,C.auxW,true);
+      }else for(let g=0;g<v.ratios.length;g++){
+        const tot=v.ratios[g]*fd,rpm=vm/r*tot*60/(2*Math.PI);if(rpm>e.redline)continue;
+        const meff=m+(v.wheelI||0)/(r*r)+(e.inertia||0.15)*(tot/r)**2;
+        const F=meff*a+0.5*AIR_RHO*v.cdA*vm*vm+crrAt(v.crr,vm)*m*G;
+        const T=F>0?F*r/(tot*eff):F*r*eff/tot;   // at the gearbox input: what the wheels need, or what braking gives back
+        if(T<=0){   // slowing: regenerate what the motor and pack can; the engine cut (or idling, cold)
+          const Tm=Math.max(T,-motDn(rpm));
+          consider(cold?(rpm>C.cutRpm?0:M.idleGs):0,packJ(Tm,rpm,soc),cold);continue;
+        }
+        if(!cold&&T<=motUp(rpm))consider(0,packJ(T,rpm,soc),false);   // electric only
+        if(rpm<rpmMin)continue;
+        const Te0=Math.min(Tmax(rpm)*C.reserve,T+motDn(rpm));
+        for(const k of H.splits){   // the engine from the least it can give with the motor's help to its most, charging
+          const Te=Math.max(0,T-motUp(rpm))+(Te0-Math.max(0,T-motUp(rpm)))*k,Tm=T-Te;
+          if(Te<=0||Te>Tmax(rpm)*C.reserve)continue;
+          const gs=engineFuelAt(rpm,Te,oilT);if(!isFinite(gs))continue;
+          consider(gs,packJ(Tm,rpm,soc),true);
+        }
+      }
+      if(!best)best={gs:engineFuelAt(rpmMin,Tmax(rpmMin)*C.reserve,oilT)||M.idleGs*3,J:C.auxW,on:true};   // flat out in first
+      fuel+=best.gs;E-=best.J;
+      if(best.on){onS++;if(Tc<stat)Tc=Math.min(stat,Tc+best.gs/1000*(fp0.LHV||44)*1e6*C.toCoolant/heatC);}
+      else if(vm<0.1)stopS++;else evS++;
+    }
+    return {fuel,E,x,evS,onS,stopS};
+  };
+  // the equivalence factor that sustains the charge: more s, the pack worth more, the controller charges more. A
+  // bracketed secant on the pack's end energy, to within 0.5% of the pack's capacity.
+  let lo=2e-5,hi=3e-4,Rlo=run(lo),Rhi=run(hi),R=Rlo,sBest=lo;
+  for(let k=0;k<10;k++){
+    const sm=clamp(lo-Rlo.E*(hi-lo)/(Rhi.E-Rlo.E||1e-9),lo+(hi-lo)*0.05,hi-(hi-lo)*0.05);
+    R=run(sm);sBest=sm;
+    if(Math.abs(R.E)<capJ*0.005)break;
+    if(R.E<0){lo=sm;Rlo=R;}else{hi=sm;Rhi=R;}
+  }
+  const km=R.x/1000,kg=R.fuel/1000,L=kg/fp0.density;
+  const res={km,l100:L/km*100,co2:kg*0.865*44/12*1000/km,kg,evShare:R.evS/(WLTC_3B.length-1),onShare:R.onS/(WLTC_3B.length-1),dSocKJ:R.E/1000,s:sBest};
+  e._hcyc={score:e.score,key,res};return res;
+}
+// The VEHICLE tab's line for a hybrid. The energy manager takes ~1 s, so the panel draws first and the line fills in
+// after (once per car: it is cached until the car or its engine changes).
+let hybCycleTimer=0;
+function hybridCycleLine(v){
+  const txt=c=>tr('WLTP cycle')+' <b>'+c.l100.toFixed(1)+' L/100 km</b> • CO₂ '+Math.round(c.co2)+' g/km • '+tr('engine off')+' '+Math.round((1-c.onShare)*100)+'%';
+  const e=engine;
+  if(e._hcyc&&e._hcyc.score===e.score)return '<br><span id="hybCycle">'+txt(hybridCycle(v))+'</span>';
+  clearTimeout(hybCycleTimer);
+  hybCycleTimer=setTimeout(()=>{if(!isHybrid())return;const el=document.getElementById('hybCycle');const c=hybridCycle(vehicle);if(el)el.innerHTML=txt(c);},50);
+  return '<br><span id="hybCycle">'+tr('WLTP cycle')+' …</span>';
+}
