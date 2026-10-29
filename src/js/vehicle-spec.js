@@ -170,7 +170,7 @@ function applyChassisFit(key,body){
   g('vhTire').value=f.tire;g('vhTireW').value=f.tw;g('vhTireWF').value=f.twF||0;
   ['vhSpringF','vhSpringR','vhBarF','vhBarR'].forEach(id=>g(id).value='0');g('vhTireA').value=f.ta;g('vhWheel').value=f.wheel;
   g('vhRating').value=(TIRE_TYPE[f.tire]||TIRE_TYPE.sport).rating;
-  if(body){const top=VEHICLE_PRESETS.find(p=>p.name===body.name);
+  if(body){const top=FACTORY_CARS.find(p=>p.name===body.name);
     if(top)g('vhRating').value=vehicleFromPreset(top).speedRating;}
   // A governor is factory equipment of a real car; an archetype ships without one.
   g('vhLimiter').value=f.gov>0?'on':'off';if(f.gov>0)g('vhLimitKmh').value=f.gov;

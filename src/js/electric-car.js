@@ -21,13 +21,18 @@ const EV_FD_MIN=4,EV_FD_MAX=14;                    // single-speed EVs run ~7.5 
 function electricDriveline(v){
   const e=engine,gb=EV_REDUCTION;
   v.gb=gb;v.gbLabel=gb.label;v.shiftTime=0;v.shiftCut=0;
+  // a front motor drives the front wheels (build 183): all-wheel drive, whatever the form held when it was read
+  if(e.motor.parts&&e.motor.parts.length>1)v.drive='awd';
   v.driveEff=EV_DRIVE_EFF[v.drive]||0.97;
-  v.ratios=[1];v.gearsetApprox=false;v.fdPublished=0;
+  v.ratios=[1];v.gearsetApprox=false;
+  // a real car's published reduction (build 183: the Teslas) stands in for the matched one, as an engine's final drive does
+  const pub=v.body&&v.body.fit&&v.body.fit.fd>0?v.body.fit.fd:0;v.fdPublished=pub;
   // matched: the motor's top speed at the speed where drag and rolling resistance take the drive's peak power
   const s=e.score,vMax=dragLimitedV(s.peakKW*v.driveEff,v.cdA,v.crr,v.mass);
   const matched=vMax>1?e.redline*2*Math.PI*v.rTire/60/vMax:9;
   v.reductionMatched=matched;
-  v.finalDrive=v.finalDriveSet>0?clamp(v.finalDriveSet,EV_FD_MIN,EV_FD_MAX):clamp(matched*gearingBias(v.gearing),EV_FD_MIN,EV_FD_MAX);
+  v.finalDrive=v.finalDriveSet>0?clamp(v.finalDriveSet,EV_FD_MIN,EV_FD_MAX)
+    :clamp((pub?pub/gearingBias(52):matched)*gearingBias(v.gearing),EV_FD_MIN,EV_FD_MAX);
 }
 // The drive's torque at the wheels' motor speed, at its rated conditions (the pack at half charge, magnets at 60 C, the
 // winding at coolant temperature): the design figure, as an engine's curve is taken at best power and 25 C. Cached per
@@ -107,6 +112,7 @@ function evLapHeat(e,prof){
 // The VEHICLE tab for an electric car: no gearbox type, speeds or spacing to choose, and GEARING sets the reduction.
 // Called on every build, so an engine gets its own fields back.
 function syncEvVehicleForm(ev){
+  evDriveLock(ev&&!!(engine.motor&&engine.motor.parts&&engine.motor.parts.length>1));
   ['vhGearbox','vhGears','vhSpacing'].forEach(id=>{const el=document.getElementById(id);
     if(el){const f=el.closest('.field');if(f)f.style.display=ev?'none':'';}});
   const lb=document.getElementById('lblGearing');

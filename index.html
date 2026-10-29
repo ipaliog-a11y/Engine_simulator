@@ -464,6 +464,17 @@ table.fuelmap td.live{box-shadow:inset 0 0 0 2px #fff;font-weight:bold}
 <div class="field"><label for="evMaxRpm">MAX SPEED (rpm)</label><input type="number" id="evMaxRpm" min="4000" max="25000" step="100" value="18000"></div>
 </div>
 
+<div class="design-section" data-ev>More motors</div>
+<div class="design-grid" data-ev>
+<div class="field"><label for="evRearCount">REAR MOTORS</label><select id="evRearCount"><option value="1">1</option><option value="2">2 (ONE PER WHEEL)</option></select></div>
+<div class="field"><label for="evFront">FRONT MOTOR</label><select id="evFront"><option value="none">NONE</option><option value="pm">PERMANENT MAGNET</option><option value="im">INDUCTION (COPPER CAGE)</option></select></div>
+<div class="field"><label for="evFrontD">FRONT ROTOR DIAMETER (mm)</label><input type="number" id="evFrontD" min="80" max="260" step="1" value="130"></div>
+<div class="field"><label for="evFrontStack">FRONT STACK LENGTH (mm)</label><input type="number" id="evFrontStack" min="40" max="250" step="1" value="110"></div>
+<div class="field"><label for="evFrontPoles">FRONT POLES</label><select id="evFrontPoles"><option value="4">4</option><option value="6">6</option><option value="8">8</option></select></div>
+<div class="field"><label for="evFrontTurns">FRONT TURNS PER PHASE</label><input type="number" id="evFrontTurns" min="4" max="60" step="1" value="12"></div>
+<div class="field"><label for="evFrontAmps">FRONT CURRENT (A rms)</label><input type="number" id="evFrontAmps" min="100" max="1600" step="10" value="700"></div>
+</div>
+
 <div class="design-section" data-ev>Inverter</div>
 <div class="design-grid" data-ev>
 <div class="field"><label for="evInverter">SWITCHES</label><select id="evInverter"><option value="igbt">SILICON IGBT</option><option value="sic">SiC MOSFET</option></select></div>
@@ -472,7 +483,7 @@ table.fuelmap td.live{box-shadow:inset 0 0 0 2px #fff;font-weight:bold}
 
 <div class="design-section" data-ev>Battery</div>
 <div class="design-grid" data-ev>
-<div class="field"><label for="evChem">CHEMISTRY</label><select id="evChem"><option value="lead">LEAD-ACID</option><option value="nimh">NiMH</option><option value="lfp">LFP</option><option value="nca">NCA / NMC</option></select></div>
+<div class="field"><label for="evChem">CHEMISTRY</label><select id="evChem"><option value="lead">LEAD-ACID</option><option value="nimh">NiMH</option><option value="lfp">LFP</option><option value="nca">NCA / NMC</option><option value="ncaP">NCA (POWER CELLS)</option></select></div>
 <div class="field"><label for="evSeries">CELLS IN SERIES</label><input type="number" id="evSeries" min="20" max="400" step="1" value="96"></div>
 <div class="field"><label for="evKWh">CAPACITY (kWh)</label><input type="number" id="evKWh" min="5" max="200" step="0.5" value="75"></div>
 <div class="field"><label for="evYear">TECHNOLOGY YEAR</label><input type="number" id="evYear" min="1990" max="2026" step="1" value="2020"></div>
@@ -4646,7 +4657,7 @@ const I18N={
   // engine and car families, and the supercar eras
   'Archetypes':{el:'Αρχέτυπα'},'Kei & City':{el:'Kei & πόλης'},'Compact Turbo':{el:'Μικρά τούρμπο'},'NA Sports':{el:'Ατμοσφαιρικά σπορ'},
   'Turbo Performance':{el:'Τούρμπο επιδόσεων'},'American V8':{el:'Αμερικάνικα V8'},'Supercar':{el:'Supercar'},'Rotary':{el:'Περιστροφικά (Wankel)'},
-  'Diesel':{el:'Πετρελαιοκίνητα'},'Two-Stroke':{el:'Δίχρονα'},
+  'Diesel':{el:'Πετρελαιοκίνητα'},'Electric':{el:'Ηλεκτρικά'},'NCA (POWER CELLS)':{el:'NCA (ΚΥΤΤΑΡΑ ΙΣΧΥΟΣ)'},'Two-Stroke':{el:'Δίχρονα'},
   '1990s':{el:'Δεκαετία του 1990'},'2000s':{el:'Δεκαετία του 2000'},'2010s':{el:'Δεκαετία του 2010'},'2020s':{el:'Δεκαετία του 2020'},
   // dropdown choices (and the labels the summaries reuse). An option looks up 'opt:'+text first, for
   // the few words that read differently as a part grade than elsewhere ('RACE' is the RACE tab).
@@ -8039,6 +8050,7 @@ const motorBaseW=(m,Vdc,psi)=>Vdc/Math.sqrt(6)*Math.SQRT2/((m.vDrop||V_DROP)*m.p
 const CPSR=4;
 // The most torque at a shaft speed (Nm), for the bus voltage and the magnets' temperature.
 function motorMaxTorque(m,rpm,Vdc,tMag=60){
+  if(m.parts)return m.parts.reduce((a,q)=>a+q.n*motorMaxTorque(q.m,rpm,Vdc,tMag),0);
   if(rpm>m.nMax)return 0;
   const psi=motorPsi(m,tMag),wb=motorBaseW(m,Vdc,psi),w=Math.max(1e-6,rpm*Math.PI/30);
   const Tpk=m.im?imTorque(m,m.Imax):motorTorqueAtI(m,m.Imax,psi);
@@ -8073,6 +8085,7 @@ function motorCurrent(m,T,rpm,Vdc,psi){
 // Losses at an operating point (W): torque T (Nm, negative when regenerating), speed (rpm), bus voltage, and the node
 // temperatures {w,r}. Copper and inverter follow the current; iron follows frequency and the flux left after weakening.
 function motorLosses(m,T,rpm,Vdc,temp){
+  if(m.parts)return motorSetLosses(m,T,rpm,Vdc,temp);
   if(m.im)return imLosses(m,T,rpm,Vdc,temp);
   const psi=motorPsi(m,temp.r),I=motorCurrent(m,T,rpm,Vdc,psi),w=rpm*Math.PI/30;
   const cu=3*I*I*motorR(m,temp.w);
@@ -8083,6 +8096,44 @@ function motorLosses(m,T,rpm,Vdc,temp){
   const inv=m.inv,rS=inv.r*1000/m.Imax;
   const invL=3*(0.9*inv.v0*I+rS*I*I)+3*(Math.SQRT2/Math.PI)*inv.tSw*inv.fSw*Vdc*I;
   return {cu,fe,mech,inv:invL,I,total:cu+fe+mech+invL};
+}
+// ---- more than one motor (build 183, step 2.5b) ----
+// A car with a motor on each axle (a Model Y: a magnet motor at the rear, an induction motor at the front), or two on
+// one (a Model S Plaid's rear, one per wheel). All drive through reductions of the same ratio, so they turn at the
+// same speed and the rest of the app sees one motor: their torques add, their masses, costs and inertias add, and
+// the speed limit is the lowest. What a second motor changes:
+//   the split   the controller shares the torque asked between the rear group and the front to lose the least, as a
+//               Tesla's does: at a cruise the induction front motor carries nothing (no field, no drag) and the
+//               rear does it all; flat out both give everything;
+//   the heat    one lumped network, the motors' conductances and capacities added (they share the coolant loop).
+//               A motor working harder than the others runs hotter in the car than here; the controller's limits
+//               are taken at the lowest of their rotors' (the magnets', or a cage's).
+// parts: [{m, n}] - the motor and how many of it (the rear group first). The figures a single motor reports
+// (poles, turns, flux, knee, cooling, inverter) are the first group's.
+function motorSet(parts){
+  const a=parts[0].m,sum=k=>parts.reduce((x,q)=>x+q.n*(q.m[k]||0),0);
+  const Tmax=Math.min(...parts.map(q=>q.m.mag.Tmax));
+  return Object.assign({},a,{parts,count:parts.reduce((x,q)=>x+q.n,0),
+    mag:Object.assign({},a.mag,{Tmax}),nMax:Math.min(...parts.map(q=>q.m.nMax)),
+    J:sum('J'),mass:sum('mass'),cost:sum('cost'),mCu:sum('mCu'),mMag:sum('mMag'),mCage:sum('mCage'),mFeS:sum('mFeS'),mFeR:sum('mFeR'),
+    Gwc:sum('Gwc'),Gcc:sum('Gcc'),Gwk:sum('Gwk'),Grc:sum('Grc'),Cw:sum('Cw'),Cc:sum('Cc'),Cr:sum('Cr')});
+}
+// The split: the front group's share of the torque from nothing to all it can give, in tenths and at its share of
+// the capacity, whichever loses least; the rest is the rear's. Each group's motors share theirs equally.
+function motorSetLosses(set,T,rpm,Vdc,temp){
+  const P=set.parts,at=(q,t)=>{const L=motorLosses(q.m,t/q.n,rpm,Vdc,temp);return L;};
+  const add=(x,L,n)=>{for(const k of ['cu','rcu','fe','mech','inv','I','total'])x[k]=(x[k]||0)+n*(L[k]||0);return x;};
+  if(P.length===1){const L=at(P[0],T);return add({},L,P[0].n);}
+  const r=P[0],f=P[1],mR=r.n*motorMaxTorque(r.m,rpm,Vdc,temp.r),mF=f.n*motorMaxTorque(f.m,rpm,Vdc,temp.r),aT=Math.abs(T),sg=Math.sign(T)||1;
+  const shares=[0,0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9,1,mF/Math.max(1e-9,mR+mF)];
+  let best=null;
+  for(const sh of shares){
+    const tF=Math.min(aT*sh,mF),tR=aT-tF;
+    if(tR>mR*1.0001&&sh<1)continue;
+    const x=add(add({},at(r,sg*tR),r.n),at(f,sg*tF),f.n);
+    if(!best||x.total<best.total)best=x;
+  }
+  return best;
 }
 // An induction motor's: the stator's copper on the whole current, the cage's on the torque current (rcu, into the rotor),
 // iron on the field it runs at, the rest as a magnet machine's.
@@ -8152,7 +8203,12 @@ const CHEM={
   lfp: {label:'LFP',ocv:[2.80,3.15,3.20,3.22,3.24,3.25,3.26,3.27,3.28,3.30,3.40],vMin:2.50,rAh:0.10,cMax:4,cCharge:1.5,from:2005,
         whkg:{2005:90,2015:140,2023:175},cost:{2005:1400,2010:1000,2016:280,2019:140,2024:95}},
   nca: {label:'NCA / NMC',ocv:[2.95,3.40,3.50,3.57,3.63,3.69,3.77,3.85,3.93,4.02,4.13],vMin:2.80,rAh:0.11,cMax:6,cCharge:1.0,from:2008,
-        whkg:{2008:180,2012:240,2020:270},cost:{2008:1300,2010:1100,2013:650,2016:300,2019:160,2024:115}}
+        whkg:{2008:180,2012:240,2020:270},cost:{2008:1300,2010:1100,2013:650,2016:300,2019:160,2024:115}},
+  // power cells (build 183): the same chemistry built for current, not energy - thinner electrodes, more tab and current
+  // collector per amp-hour. The Model S Plaid's 18650s: its 110s72p pack sustains ~2300 A, ~9C. Less energy per kg and
+  // dearer per kWh for it.
+  ncaP:{label:'NCA (POWER CELLS)',ocv:[2.95,3.40,3.50,3.57,3.63,3.69,3.77,3.85,3.93,4.02,4.13],vMin:2.80,rAh:0.06,cMax:10,cCharge:1.5,from:2012,
+        whkg:{2012:200,2020:235},cost:{2012:900,2016:360,2019:200,2024:140}}
 };
 // Cell mass over pack mass: modules, structure, cooling and wiring take the rest. Large prismatic cells packed without
 // modules (cell-to-pack LFP, from 2020) waste least.
@@ -8472,7 +8528,7 @@ function applyChassisFit(key,body){
   g('vhTire').value=f.tire;g('vhTireW').value=f.tw;g('vhTireWF').value=f.twF||0;
   ['vhSpringF','vhSpringR','vhBarF','vhBarR'].forEach(id=>g(id).value='0');g('vhTireA').value=f.ta;g('vhWheel').value=f.wheel;
   g('vhRating').value=(TIRE_TYPE[f.tire]||TIRE_TYPE.sport).rating;
-  if(body){const top=VEHICLE_PRESETS.find(p=>p.name===body.name);
+  if(body){const top=FACTORY_CARS.find(p=>p.name===body.name);
     if(top)g('vhRating').value=vehicleFromPreset(top).speedRating;}
   // A governor is factory equipment of a real car; an archetype ships without one.
   g('vhLimiter').value=f.gov>0?'on':'off';if(f.gov>0)g('vhLimitKmh').value=f.gov;
@@ -9093,7 +9149,7 @@ function simulateAccelRun(){
   const Ie=pt.inertia()||0.1, tqCap=CLUTCH_MARGIN*curve.reduce((q,p)=>Math.max(q,p.tq),0);
   let slipping=!tcStall&&!ev, slipW=launchRpm*TWO_PI/60;
   let v=0,x=0,t=0,gear=0,a=0,shiftT=0,w=0;   // w: the driven wheels' angular speed (rad/s)
-  const M={t100:null,q400:null,q800:null,q1000:null,v200:null,gripT:0,lagT:0,spinT:0,launchRpm,shifts:[]},V100=100/3.6,V200=200/3.6;
+  const M={t100:null,q400:null,q800:null,q1000:null,v200:null,t60:null,roll:null,gripT:0,lagT:0,spinT:0,launchRpm,shifts:[]},V100=100/3.6,V200=200/3.6;
   for(let step=0;step<48000&&t<150;step++){
     // the gearbox input turns with the driven WHEELS, not with the road: in wheelspin the engine revs with them
     let totalRatio=ratios[gear]*fd,rpm=w*totalRatio*60/TWO_PI;
@@ -9201,6 +9257,9 @@ function simulateAccelRun(){
       if(shiftT<=0&&grid.laggy&&boostNow<0.9*pt.boostTarget(engineRpm))M.lagT+=dt;}
     x+=v*dt;t+=dt;
     if(!M.t100&&v>=V100)M.t100=t;
+    // 0-60 mph and the one-foot rollout a drag strip's timing starts after (makers quoting 0-60 take it off; build 183)
+    if(!M.t60&&v>=96.5606/3.6)M.t60=t;
+    if(!M.roll&&x>=0.3048)M.roll=t;
     if(!M.q400&&x>=400)M.q400={t,v};
     if(!M.q800&&x>=800)M.q800={t,v};
     if(!M.q1000&&x>=1000)M.q1000={t,v};
@@ -9244,7 +9303,7 @@ function simulateAccelRun(){
   // boost — WHY a car takes the time it takes, so a claim about what limits it can be checked.
   return {t100:M.t100,q400:M.q400,q800:M.q800,q1000:M.q1000,topSpeed,governed,freeSpeed:vFree*3.6,mass:m,ptw:vehicle.powerToWeight,
     gripT:M.gripT,lagT:M.lagT,spinT:M.spinT,launchRpm:M.launchRpm,shifts:M.shifts.map(x=>({g:x.g,v:x.v,rpm:x.rpm,rpmTo:x.rpmTo})),
-    t200:M.v200?M.v200.t:null,x200:M.v200?M.v200.x:null};
+    t200:M.v200?M.v200.t:null,x200:M.v200?M.v200.x:null,t60:M.t60,rollout:M.roll};
 }
 // ====== TEST TRACK: circuits, lap solver ======
 // A circuit is a ring of control points (metres). A closed Catmull-Rom spline through them gives
@@ -12504,7 +12563,7 @@ function updateBuildStrip(){
 }
 // A real car from VEHICLE_PRESETS: its factory engine, then its body and fitment.
 function loadVehiclePreset(p){
-  const ep=PRESETS.find(x=>x.name===p.engine);
+  const ep=FACTORY_ENGINES.find(x=>x.name===p.engine);
   if(!ep)throw new Error('no engine preset '+p.engine);
   applyBuild({engine:Object.assign({},ep.engine),tune:Object.assign({},STD_TUNE),vehicle:vehicleFromPreset(p),name:p.name});
   engine.name=ep.name;
@@ -15379,8 +15438,8 @@ function raceFillAdd(){
   const cars=garage.filter(g=>gKind(g)==='car');
   let h='<optgroup label="'+esc(tr('THIS BUILD'))+'"><option value="cur">'+esc(tr('The car on the VEHICLE tab'))+'</option></optgroup>';
   if(cars.length)h+='<optgroup label="'+esc(tr('GARAGE'))+'">'+cars.map(g=>'<option value="g:'+esc(g.id)+'">'+esc(g.name)+'</option>').join('')+'</optgroup>';
-  const cats=[...new Set(VEHICLE_PRESETS.map(p=>p.cat))];
-  for(const c of cats)h+='<optgroup label="'+esc(tr(c))+'">'+VEHICLE_PRESETS.map((p,i)=>p.cat===c?'<option value="p:'+i+'">'+esc(p.name)+'</option>':'').join('')+'</optgroup>';
+  const cats=[...new Set(FACTORY_CARS.map(p=>p.cat))];
+  for(const c of cats)h+='<optgroup label="'+esc(tr(c))+'">'+FACTORY_CARS.map((p,i)=>p.cat===c?'<option value="p:'+i+'">'+esc(p.name)+'</option>':'').join('')+'</optgroup>';
   const keep=sel.value;sel.innerHTML=h;if(keep&&[...sel.options].some(o=>o.value===keep))sel.value=keep;
 }
 function raceEntrantFrom(v){
@@ -15391,7 +15450,7 @@ function raceEntrantFrom(v){
   }
   if(v.startsWith('g:')){const g=garage.find(x=>x.id===v.slice(2));return g?{name:g.name,build:JSON.parse(JSON.stringify(g.build))}:null;}
   if(v.startsWith('p:')){
-    const p=VEHICLE_PRESETS[+v.slice(2)],ep=p&&PRESETS.find(x=>x.name===p.engine);if(!ep)return null;
+    const p=FACTORY_CARS[+v.slice(2)],ep=p&&FACTORY_ENGINES.find(x=>x.name===p.engine);if(!ep)return null;
     return {name:p.name,build:{engine:Object.assign({},ep.engine),tune:Object.assign({},STD_TUNE),vehicle:vehicleFromPreset(p),name:p.name}};
   }
   return null;
@@ -16699,7 +16758,7 @@ function initGuide(){
 // are step 2.3; until then the VEHICLE, TRACK and RACE tabs say so instead of running an electric car through a
 // combustion gearbox. New words are English for now (decision 11): tr() shows the English where Greek is missing.
 const EV_DEFAULT={evMotorType:'pm',evRotorD:150,evStack:134,evPoles:6,evTurns:12,evMagnet:'ndfeb',evRetention:'bridges',evCooling:'jacket',
-  evMaxRpm:18000,evInverter:'igbt',evAmps:950,evChem:'nca',evSeries:96,evKWh:75,evYear:2020};
+  evMaxRpm:18000,evInverter:'igbt',evAmps:950,evRearCount:1,evFront:'none',evFrontD:130,evFrontStack:110,evFrontPoles:4,evFrontTurns:12,evFrontAmps:700,evChem:'nca',evSeries:96,evKWh:75,evYear:2020};
 // The race spends energy, not fuel (step 2.4): until then an electric car drives the 0-100 and the lap but does not race.
 // One reduction is all an electric car has: GEARING on the VEHICLE tab sets it (build 180).
 const EV_GEAR_NOTE='An electric car has one fixed reduction: set it with GEARING on the VEHICLE tab.';
@@ -16722,7 +16781,9 @@ function readElectricFromForm(){
   return {evMotorType:g('evMotorType').value==='im'?'im':'pm',evRotorD:num('evRotorD',80,260),evStack:num('evStack',40,250),evPoles:+g('evPoles').value||6,
     evTurns:Math.round(num('evTurns',4,60)),evMagnet:g('evMagnet').value,evRetention:g('evRetention').value,
     evCooling:g('evCooling').value,evMaxRpm:Math.round(num('evMaxRpm',4000,25000)),evInverter:g('evInverter').value,
-    evAmps:Math.round(num('evAmps',100,1600)),evChem:g('evChem').value,evSeries:Math.round(num('evSeries',20,400)),
+    evAmps:Math.round(num('evAmps',100,1600)),evRearCount:g('evRearCount').value==='2'?2:1,
+    evFront:['pm','im'].includes(g('evFront').value)?g('evFront').value:'none',evFrontD:num('evFrontD',80,260),evFrontStack:num('evFrontStack',40,250),
+    evFrontPoles:+g('evFrontPoles').value||4,evFrontTurns:Math.round(num('evFrontTurns',4,60)),evFrontAmps:Math.round(num('evFrontAmps',100,1600)),evChem:g('evChem').value,evSeries:Math.round(num('evSeries',20,400)),
     evKWh:num('evKWh',5,200),evYear:Math.round(num('evYear',1990,2026))};
 }
 function applyElectricToForm(e){
@@ -16747,20 +16808,37 @@ function syncElectricSections(){
     // a chemistry that had not reached cars by the technology year is offered disabled (decision 9)
     const year=clamp(+document.getElementById('evYear').value||2020,1990,2026),chem=document.getElementById('evChem');
     [...chem.options].forEach(o=>{o.disabled=!chemAvailable(o.value,year);});
-    if(!chemAvailable(chem.value,year))chem.value=['nca','lfp','nimh','lead'].find(c=>chemAvailable(c,year));
+    if(!chemAvailable(chem.value,year))chem.value=['nca','ncaP','lfp','nimh','lead'].find(c=>chemAvailable(c,year));
     // an induction motor has no magnets to grade or to hold in (build 182): its rotor is a copper cage
     const im=document.getElementById('evMotorType').value==='im';
     document.getElementById('evMagnet').disabled=im;document.getElementById('evRetention').disabled=im;
-  }
+    // a front motor (build 183): its fields, and the car is all-wheel drive
+    const front=document.getElementById('evFront').value!=='none';
+    ['evFrontD','evFrontStack','evFrontPoles','evFrontTurns','evFrontAmps'].forEach(id=>{document.getElementById(id).disabled=!front;});
+    evDriveLock(front);
+  }else evDriveLock(false);
   return ev;
+}
+
+// A front motor drives the front wheels: the drivetrain is all-wheel drive while it is fitted, and goes back to what
+// it was when it is taken off.
+function evDriveLock(on){
+  const dr=document.getElementById('vhDrive');if(!dr)return;
+  if(on){if(!dr.disabled)dr.dataset.prev=dr.value;dr.value='awd';dr.disabled=true;}
+  else if(dr.disabled){dr.value=dr.dataset.prev||dr.value;dr.disabled=false;}
 }
 
 // ---- the build ----
 function buildElectric(){
   engine=readEngineFromForm();   // type 'electric'; the combustion fields stay with it, for switching back
   const e=engine;
-  e.motor=motorBuild({type:e.evMotorType,rotorD:e.evRotorD,stackL:e.evStack,poles:e.evPoles,turns:e.evTurns,magnet:e.evMagnet,
+  const rear=motorBuild({type:e.evMotorType,rotorD:e.evRotorD,stackL:e.evStack,poles:e.evPoles,turns:e.evTurns,magnet:e.evMagnet,
     retention:e.evRetention,cooling:e.evCooling,inverter:e.evInverter,invAmps:e.evAmps,maxRpm:e.evMaxRpm});
+  // more than one motor (build 183): the rear group, and a front motor sharing the magnet grade, cooling and inverter
+  const parts=[{m:rear,n:e.evRearCount===2?2:1}];
+  if(e.evFront==='pm'||e.evFront==='im')parts.push({m:motorBuild({type:e.evFront,rotorD:e.evFrontD,stackL:e.evFrontStack,poles:e.evFrontPoles,
+    turns:e.evFrontTurns,magnet:e.evMagnet,retention:e.evRetention,cooling:e.evCooling,inverter:e.evInverter,invAmps:e.evFrontAmps,maxRpm:e.evMaxRpm}),n:1});
+  e.motor=parts.length===1&&parts[0].n===1?rear:motorSet(parts);
   e.pack=packBuild({chem:e.evChem,series:e.evSeries,kWh:e.evKWh,year:e.evYear});
   // What the rest of the app reads off any engine: its speed range, its inertia, and the bench brake's scale.
   e.redline=Math.floor(e.motor.nMax/50)*50;e.idleRpmEff=0;e.inertia=e.motor.J;
@@ -17046,6 +17124,8 @@ function updateMotorSummary(){
     (m.im?'<br>'+tr('Rotor')+' <b>'+tr(m.mag.label)+'</b>, '+m.Qr+' '+tr('bars')+' ('+tr('air gap')+' '+m.Bg.toFixed(2)+' T, '+tr('magnetising')+' '+Math.round(m.ImR)+' A, '+tr('limit')+' '+m.mag.Tmax+' °C)'
       :'<br>'+tr('Magnets')+' <b>'+tr(m.mag.label)+'</b> ('+tr('air gap')+' '+m.Bg.toFixed(2)+' T, '+tr('limit')+' '+m.mag.Tmax+' °C) • '+tr(m.ret.label))+
     '<br>'+tr('Knee')+' <b>'+s.knee+'</b> rpm '+tr('at')+' '+Math.round(V)+' V • '+tr('Top speed')+' <b>'+e.redline+'</b> rpm, '+tr('set by')+' '+lim+
+    (m.parts?'<br>'+tr('Motors')+' <b>'+m.parts.map(q=>(q.n>1?q.n+' × ':'')+tr(q===m.parts[0]?'rear':'front')+' '+tr(q.m.im?'induction':'magnet')+' '+
+      q.m.s.rotorD+'×'+q.m.s.stackL+' mm, '+q.m.Imax+' A').join(' + ')+'</b>':'')+
     '<br>'+tr('Inverter')+' <b>'+tr(m.inv.label)+'</b> '+m.Imax+' A • '+tr('Cooling')+' <b>'+tr(m.cool.label)+'</b>'+
     '<br>'+tr('Motor')+' <b>'+Math.round(m.mass)+' kg</b> ('+m.mCu.toFixed(1)+' kg '+tr('copper')+', '+(m.im?m.mCage.toFixed(1)+' kg '+tr('cage'):m.mMag.toFixed(1)+' kg '+tr('magnet'))+') • <b>'+s.kWkg+'</b> kW/kg'+
     '<br>'+tr('Battery')+' <b>'+tr(b.chem.label)+'</b> '+b.series+'s • <b>'+b.kWh+' kWh</b>, '+Math.round(b.Vnom)+' V, '+Math.round(b.Ah)+' Ah • <b>'+Math.round(b.mass)+' kg</b> ('+Math.round(whkg)+' Wh/kg) • '+e.evYear+
@@ -17147,13 +17227,18 @@ const EV_FD_MIN=4,EV_FD_MAX=14;                    // single-speed EVs run ~7.5 
 function electricDriveline(v){
   const e=engine,gb=EV_REDUCTION;
   v.gb=gb;v.gbLabel=gb.label;v.shiftTime=0;v.shiftCut=0;
+  // a front motor drives the front wheels (build 183): all-wheel drive, whatever the form held when it was read
+  if(e.motor.parts&&e.motor.parts.length>1)v.drive='awd';
   v.driveEff=EV_DRIVE_EFF[v.drive]||0.97;
-  v.ratios=[1];v.gearsetApprox=false;v.fdPublished=0;
+  v.ratios=[1];v.gearsetApprox=false;
+  // a real car's published reduction (build 183: the Teslas) stands in for the matched one, as an engine's final drive does
+  const pub=v.body&&v.body.fit&&v.body.fit.fd>0?v.body.fit.fd:0;v.fdPublished=pub;
   // matched: the motor's top speed at the speed where drag and rolling resistance take the drive's peak power
   const s=e.score,vMax=dragLimitedV(s.peakKW*v.driveEff,v.cdA,v.crr,v.mass);
   const matched=vMax>1?e.redline*2*Math.PI*v.rTire/60/vMax:9;
   v.reductionMatched=matched;
-  v.finalDrive=v.finalDriveSet>0?clamp(v.finalDriveSet,EV_FD_MIN,EV_FD_MAX):clamp(matched*gearingBias(v.gearing),EV_FD_MIN,EV_FD_MAX);
+  v.finalDrive=v.finalDriveSet>0?clamp(v.finalDriveSet,EV_FD_MIN,EV_FD_MAX)
+    :clamp((pub?pub/gearingBias(52):matched)*gearingBias(v.gearing),EV_FD_MIN,EV_FD_MAX);
 }
 // The drive's torque at the wheels' motor speed, at its rated conditions (the pack at half charge, magnets at 60 C, the
 // winding at coolant temperature): the design figure, as an engine's curve is taken at best power and 25 C. Cached per
@@ -17233,6 +17318,7 @@ function evLapHeat(e,prof){
 // The VEHICLE tab for an electric car: no gearbox type, speeds or spacing to choose, and GEARING sets the reduction.
 // Called on every build, so an engine gets its own fields back.
 function syncEvVehicleForm(ev){
+  evDriveLock(ev&&!!(engine.motor&&engine.motor.parts&&engine.motor.parts.length>1));
   ['vhGearbox','vhGears','vhSpacing'].forEach(id=>{const el=document.getElementById(id);
     if(el){const f=el.closest('.field');if(f)f.style.display=ev?'none':'';}});
   const lb=document.getElementById('lblGearing');
@@ -17398,6 +17484,51 @@ function raceEvLine(c,t){
   return '<div class="rt-k">'+tr('BATTERY')+' <b style="color:'+col(b,50)+'">'+Math.round(b)+'°C</b> • '+tr('MOTOR')+' <b style="color:'+col(w,150)+'">'+
     Math.round(w)+'°C</b></div>';
 }
+// ====== ELECTRIC PRESETS: the three Teslas (build 183, step 2.5b of plans/hybrid-electric/) ======
+// Decision 10: the Model 3 RWD (one motor), the Model Y Long Range (two: a magnet motor at the rear, an induction motor
+// at the front) and the Model S Plaid (three: two at the rear, one per wheel, and one at the front), as factory engines
+// and real cars. They live in their own tables, joined to the combustion ones only where a player picks a car or an
+// engine (FACTORY_ENGINES, FACTORY_CARS): the suite's sweeps over VEHICLE_PRESETS and PRESETS are combustion checks.
+//
+// What is matched, as the combustion cars are matched (tests/test41.mjs): mass, drag, frontal area, tyres, the
+// reduction and the governed top speed, the pack (chemistry, cells in series, capacity, year) and each motor's
+// torque or power, set from the published figures: the Model 3 RWD's 420 Nm, the Model Y's 326 Nm rear and 219 Nm front,
+// the Plaid's 295 kW a motor. What is derived and checked against the published figures
+// (tests/test101.mjs): the 0-100 and the top speed. The rear magnet motor is the Model 3's as MotorXP measured it
+// (src/js/electric.js); the front induction unit of the Model 3 and Model Y is sized to its published 219 Nm and
+// 137 kW at 6380 rpm on 320 V; the Plaid's three are carbon-sleeved magnet motors (the sleeve is what lets a rotor this
+// size reach 20,000 rpm), each sized to its rated 295 kW with the turns for the ~1,420 Nm the three are credited with
+// together. The Plaid's rear has no differential: a motor per wheel gives each its own torque, which the model's
+// nearest diff is the clutch-plate LSD (full traction off the line).
+const EV_ENGINE_PRESETS=[
+  {cat:'Electric',name:'Tesla Model 3 RWD drive (2021, LFP)',engine:{type:'electric',evMotorType:'pm',evRotorD:150,evStack:134,evPoles:6,evTurns:12,
+    evMagnet:'ndfeb',evRetention:'bridges',evCooling:'spray',evMaxRpm:18000,evInverter:'sic',evAmps:1000,evRearCount:1,evFront:'none',
+    evChem:'lfp',evSeries:106,evKWh:60,evYear:2021}},
+  {cat:'Electric',name:'Tesla Model Y Long Range drive (2022, dual motor)',engine:{type:'electric',evMotorType:'pm',evRotorD:150,evStack:134,evPoles:6,evTurns:12,
+    evMagnet:'ndfeb',evRetention:'bridges',evCooling:'spray',evMaxRpm:18000,evInverter:'sic',evAmps:720,evRearCount:1,
+    evFront:'im',evFrontD:140,evFrontStack:110,evFrontPoles:4,evFrontTurns:20,evFrontAmps:520,
+    evChem:'nca',evSeries:96,evKWh:78,evYear:2022}},
+  {cat:'Electric',name:'Tesla Model S Plaid drive (2021, three motors)',engine:{type:'electric',evMotorType:'pm',evRotorD:150,evStack:134,evPoles:6,evTurns:16,
+    evMagnet:'ndfebDy',evRetention:'sleeve',evCooling:'spray',evMaxRpm:20000,evInverter:'sic',evAmps:900,evRearCount:2,
+    evFront:'pm',evFrontD:150,evFrontStack:134,evFrontPoles:6,evFrontTurns:16,evFrontAmps:900,
+    evChem:'ncaP',evSeries:110,evKWh:100,evYear:2021}}
+];
+// real: the maker's 0-100 (s) and top speed (km/h, governed on all three). fit.fd is the published reduction (the owner's
+// manuals: 9.03 the Model 3 and Y, 7.56 on all three of the Plaid's units, each of its motors rated 295 kW).
+const EV_VEHICLE_PRESETS=[
+  {cat:'Electric',name:'Tesla Model 3 RWD (2021)',engine:'Tesla Model 3 RWD drive (2021, LFP)',chassis:'sedan',
+   body:{kg:1701,cd:0.23,area:2.22,wb:2.875,fWt:0.47},fit:{drive:'rwd',tire:'eco',tw:235,ta:45,wheel:18,brake:'steel',rotor:320,susp:'comfort',diff:'open',fd:9.03},
+   real:{t100:6.1,top:225,limited:true},unsure:['fWt']},
+  {cat:'Electric',name:'Tesla Model Y Long Range (2022)',engine:'Tesla Model Y Long Range drive (2022, dual motor)',chassis:'suv',
+   body:{kg:1979,cd:0.23,area:2.56,wb:2.89,fWt:0.49},fit:{drive:'awd',tire:'eco',tw:255,ta:45,wheel:19,brake:'steel',rotor:335,susp:'comfort',diff:'open',fd:9.03},
+   real:{t100:5.0,top:217,limited:true},unsure:['area','fWt']},
+  {cat:'Electric',name:'Tesla Model S Plaid (2021)',engine:'Tesla Model S Plaid drive (2021, three motors)',chassis:'sedan',
+   body:{kg:2162,cd:0.208,area:2.34,wb:2.96,fWt:0.48},fit:{drive:'awd',tire:'sport',tw:295,twF:265,ta:30,wheel:21,brake:'big',rotor:380,susp:'sport',diff:'clsd',fd:7.56},
+   real:{t100:2.1,top:322,limited:true},note:'0-100 is Tesla\'s figure, which takes a one-foot rollout off the start',unsure:['area','fWt']}
+];
+// What a player picks from: the combustion tables, then the electric ones.
+const FACTORY_ENGINES=PRESETS.concat(EV_ENGINE_PRESETS), FACTORY_CARS=VEHICLE_PRESETS.concat(EV_VEHICLE_PRESETS);
+const FACTORY_ENGINE_CATS=PRESET_CATS.concat(['Electric']), FACTORY_CAR_CATS=VEHICLE_CATS.concat(['Electric']);
 function bindControls(){
   // Throttle & load are fractions (0..1); AFR/temps are direct values.
   document.getElementById('throttle').addEventListener('input',e=>state.throttle=(+e.target.value)/100);
@@ -17530,11 +17661,11 @@ function bindControls(){
     if(ch)flash(tr('REFITTED TO FACTORY SPEC')+': '+(vehBody?vehBody.name:tr(ch.label)));
   });
   // Real cars: the factory engine and the car's own body and fitment, together.
-  carPicker=wireFamilyPicker('vhFamily','vhPreset',VEHICLE_CATS,VEHICLE_PRESETS,p=>p.cat,'— load a real car —',i=>{
-    const name=loadVehiclePreset(VEHICLE_PRESETS[i]);
-    const ei=PRESETS.findIndex(p=>p.name===VEHICLE_PRESETS[i].engine);
+  carPicker=wireFamilyPicker('vhFamily','vhPreset',FACTORY_CAR_CATS,FACTORY_CARS,p=>p.cat,'— load a real car —',i=>{
+    const name=loadVehiclePreset(FACTORY_CARS[i]);
+    const ei=FACTORY_ENGINES.findIndex(p=>p.name===FACTORY_CARS[i].engine);
     if(enginePicker)enginePicker.show(ei);
-    markLoaded('engine',VEHICLE_PRESETS[i].engine);markLoaded('car',name);
+    markLoaded('engine',FACTORY_CARS[i].engine);markLoaded('car',name);
     flash(tr('LOADED:')+' '+name+(perf&&perf.t100?' • 0–100 '+perf.t100.toFixed(1)+'s':''));
   });
   // Garage. The list is rebuilt on every change, so LOAD/DELETE are delegated off the container
@@ -17585,13 +17716,13 @@ function bindControls(){
   if(fmRich)fmRich.addEventListener('click',()=>adjustFmCell(-fmStep()));   // richer = lower λ
   if(fmReset)fmReset.addEventListener('click',resetFuelMap);
   // Populate & wire the preset dropdown
-  enginePicker=wireFamilyPicker('edFamily','edPreset',PRESET_CATS,PRESETS,p=>p.cat||'Archetypes','— choose a build —',i=>{
-    const p=PRESETS[i];
+  enginePicker=wireFamilyPicker('edFamily','edPreset',FACTORY_ENGINE_CATS,FACTORY_ENGINES,p=>p.cat||'Archetypes','— choose a build —',i=>{
+    const p=FACTORY_ENGINES[i];
     // The car you have stays: an engine preset is an engine, dropped into whatever car is built.
     applyBuild({engine:Object.assign({},p.engine),tune:Object.assign({},STD_TUNE),vehicle:readVehicleFromForm(),name:p.name});
     engine.name=p.name;
     markLoaded('engine',p.name);
-    flash(tr('LOADED:')+' '+p.name+' • '+engine.displacement_L.toFixed(engine.displacement_L<1?2:1)+'L'+(engine.score?' • '+engine.score.grade:''));
+    flash(tr('LOADED:')+' '+p.name+' • '+(isElectric()?engine.score.peakKW+' kW':engine.displacement_L.toFixed(engine.displacement_L<1?2:1)+'L')+(engine.score?' • '+engine.score.grade:''));
     setTab('dyno');
   });
   document.getElementById('bsEngine').addEventListener('click',()=>setTab('design'));

@@ -9,7 +9,7 @@
 // are step 2.3; until then the VEHICLE, TRACK and RACE tabs say so instead of running an electric car through a
 // combustion gearbox. New words are English for now (decision 11): tr() shows the English where Greek is missing.
 const EV_DEFAULT={evMotorType:'pm',evRotorD:150,evStack:134,evPoles:6,evTurns:12,evMagnet:'ndfeb',evRetention:'bridges',evCooling:'jacket',
-  evMaxRpm:18000,evInverter:'igbt',evAmps:950,evChem:'nca',evSeries:96,evKWh:75,evYear:2020};
+  evMaxRpm:18000,evInverter:'igbt',evAmps:950,evRearCount:1,evFront:'none',evFrontD:130,evFrontStack:110,evFrontPoles:4,evFrontTurns:12,evFrontAmps:700,evChem:'nca',evSeries:96,evKWh:75,evYear:2020};
 // The race spends energy, not fuel (step 2.4): until then an electric car drives the 0-100 and the lap but does not race.
 // One reduction is all an electric car has: GEARING on the VEHICLE tab sets it (build 180).
 const EV_GEAR_NOTE='An electric car has one fixed reduction: set it with GEARING on the VEHICLE tab.';
@@ -32,7 +32,9 @@ function readElectricFromForm(){
   return {evMotorType:g('evMotorType').value==='im'?'im':'pm',evRotorD:num('evRotorD',80,260),evStack:num('evStack',40,250),evPoles:+g('evPoles').value||6,
     evTurns:Math.round(num('evTurns',4,60)),evMagnet:g('evMagnet').value,evRetention:g('evRetention').value,
     evCooling:g('evCooling').value,evMaxRpm:Math.round(num('evMaxRpm',4000,25000)),evInverter:g('evInverter').value,
-    evAmps:Math.round(num('evAmps',100,1600)),evChem:g('evChem').value,evSeries:Math.round(num('evSeries',20,400)),
+    evAmps:Math.round(num('evAmps',100,1600)),evRearCount:g('evRearCount').value==='2'?2:1,
+    evFront:['pm','im'].includes(g('evFront').value)?g('evFront').value:'none',evFrontD:num('evFrontD',80,260),evFrontStack:num('evFrontStack',40,250),
+    evFrontPoles:+g('evFrontPoles').value||4,evFrontTurns:Math.round(num('evFrontTurns',4,60)),evFrontAmps:Math.round(num('evFrontAmps',100,1600)),evChem:g('evChem').value,evSeries:Math.round(num('evSeries',20,400)),
     evKWh:num('evKWh',5,200),evYear:Math.round(num('evYear',1990,2026))};
 }
 function applyElectricToForm(e){
@@ -57,20 +59,37 @@ function syncElectricSections(){
     // a chemistry that had not reached cars by the technology year is offered disabled (decision 9)
     const year=clamp(+document.getElementById('evYear').value||2020,1990,2026),chem=document.getElementById('evChem');
     [...chem.options].forEach(o=>{o.disabled=!chemAvailable(o.value,year);});
-    if(!chemAvailable(chem.value,year))chem.value=['nca','lfp','nimh','lead'].find(c=>chemAvailable(c,year));
+    if(!chemAvailable(chem.value,year))chem.value=['nca','ncaP','lfp','nimh','lead'].find(c=>chemAvailable(c,year));
     // an induction motor has no magnets to grade or to hold in (build 182): its rotor is a copper cage
     const im=document.getElementById('evMotorType').value==='im';
     document.getElementById('evMagnet').disabled=im;document.getElementById('evRetention').disabled=im;
-  }
+    // a front motor (build 183): its fields, and the car is all-wheel drive
+    const front=document.getElementById('evFront').value!=='none';
+    ['evFrontD','evFrontStack','evFrontPoles','evFrontTurns','evFrontAmps'].forEach(id=>{document.getElementById(id).disabled=!front;});
+    evDriveLock(front);
+  }else evDriveLock(false);
   return ev;
+}
+
+// A front motor drives the front wheels: the drivetrain is all-wheel drive while it is fitted, and goes back to what
+// it was when it is taken off.
+function evDriveLock(on){
+  const dr=document.getElementById('vhDrive');if(!dr)return;
+  if(on){if(!dr.disabled)dr.dataset.prev=dr.value;dr.value='awd';dr.disabled=true;}
+  else if(dr.disabled){dr.value=dr.dataset.prev||dr.value;dr.disabled=false;}
 }
 
 // ---- the build ----
 function buildElectric(){
   engine=readEngineFromForm();   // type 'electric'; the combustion fields stay with it, for switching back
   const e=engine;
-  e.motor=motorBuild({type:e.evMotorType,rotorD:e.evRotorD,stackL:e.evStack,poles:e.evPoles,turns:e.evTurns,magnet:e.evMagnet,
+  const rear=motorBuild({type:e.evMotorType,rotorD:e.evRotorD,stackL:e.evStack,poles:e.evPoles,turns:e.evTurns,magnet:e.evMagnet,
     retention:e.evRetention,cooling:e.evCooling,inverter:e.evInverter,invAmps:e.evAmps,maxRpm:e.evMaxRpm});
+  // more than one motor (build 183): the rear group, and a front motor sharing the magnet grade, cooling and inverter
+  const parts=[{m:rear,n:e.evRearCount===2?2:1}];
+  if(e.evFront==='pm'||e.evFront==='im')parts.push({m:motorBuild({type:e.evFront,rotorD:e.evFrontD,stackL:e.evFrontStack,poles:e.evFrontPoles,
+    turns:e.evFrontTurns,magnet:e.evMagnet,retention:e.evRetention,cooling:e.evCooling,inverter:e.evInverter,invAmps:e.evFrontAmps,maxRpm:e.evMaxRpm}),n:1});
+  e.motor=parts.length===1&&parts[0].n===1?rear:motorSet(parts);
   e.pack=packBuild({chem:e.evChem,series:e.evSeries,kWh:e.evKWh,year:e.evYear});
   // What the rest of the app reads off any engine: its speed range, its inertia, and the bench brake's scale.
   e.redline=Math.floor(e.motor.nMax/50)*50;e.idleRpmEff=0;e.inertia=e.motor.J;
@@ -356,6 +375,8 @@ function updateMotorSummary(){
     (m.im?'<br>'+tr('Rotor')+' <b>'+tr(m.mag.label)+'</b>, '+m.Qr+' '+tr('bars')+' ('+tr('air gap')+' '+m.Bg.toFixed(2)+' T, '+tr('magnetising')+' '+Math.round(m.ImR)+' A, '+tr('limit')+' '+m.mag.Tmax+' °C)'
       :'<br>'+tr('Magnets')+' <b>'+tr(m.mag.label)+'</b> ('+tr('air gap')+' '+m.Bg.toFixed(2)+' T, '+tr('limit')+' '+m.mag.Tmax+' °C) • '+tr(m.ret.label))+
     '<br>'+tr('Knee')+' <b>'+s.knee+'</b> rpm '+tr('at')+' '+Math.round(V)+' V • '+tr('Top speed')+' <b>'+e.redline+'</b> rpm, '+tr('set by')+' '+lim+
+    (m.parts?'<br>'+tr('Motors')+' <b>'+m.parts.map(q=>(q.n>1?q.n+' × ':'')+tr(q===m.parts[0]?'rear':'front')+' '+tr(q.m.im?'induction':'magnet')+' '+
+      q.m.s.rotorD+'×'+q.m.s.stackL+' mm, '+q.m.Imax+' A').join(' + ')+'</b>':'')+
     '<br>'+tr('Inverter')+' <b>'+tr(m.inv.label)+'</b> '+m.Imax+' A • '+tr('Cooling')+' <b>'+tr(m.cool.label)+'</b>'+
     '<br>'+tr('Motor')+' <b>'+Math.round(m.mass)+' kg</b> ('+m.mCu.toFixed(1)+' kg '+tr('copper')+', '+(m.im?m.mCage.toFixed(1)+' kg '+tr('cage'):m.mMag.toFixed(1)+' kg '+tr('magnet'))+') • <b>'+s.kWkg+'</b> kW/kg'+
     '<br>'+tr('Battery')+' <b>'+tr(b.chem.label)+'</b> '+b.series+'s • <b>'+b.kWh+' kWh</b>, '+Math.round(b.Vnom)+' V, '+Math.round(b.Ah)+' Ah • <b>'+Math.round(b.mass)+' kg</b> ('+Math.round(whkg)+' Wh/kg) • '+e.evYear+

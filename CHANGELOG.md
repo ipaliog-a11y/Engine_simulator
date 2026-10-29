@@ -20,6 +20,26 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 Working toward **v1.0 — every number derived, not fitted.**
 
+### The three Teslas (build 183)
+
+- **Step 2.5b of the electric plan; decision 10.** The Model 3 RWD (2021, LFP), the Model Y Long Range (2022, a magnet
+  motor at the rear and an induction motor at the front) and the Model S Plaid (2021, three carbon-sleeved magnet
+  motors) as factory engines and cars, in their own tables (`src/js/electric-presets.js`) joined to the combustion
+  ones only in the pickers and the race, so the suite's combustion sweeps are untouched.
+- **More than one motor.** MORE MOTORS on the ENGINE tab: REAR MOTORS 1 or 2 (one per wheel) and a FRONT MOTOR (magnet
+  or induction, its own size, turns and current). The drive's torques add; the controller splits the torque asked to
+  lose the least (at a cruise the induction front motor carries nothing: no field, no drag); one lumped thermal network.
+  A front motor makes the car all-wheel drive, and taking it off gives the drivetrain back.
+- **NCA (POWER CELLS)**, a chemistry built for current: 10C against 6C, less energy per kg. The Plaid's 110s72p pack of
+  18650s sustains ~2300 A.
+- **Matched on the hardware**: mass, drag, area, tyres, the owner's manuals' reductions (9.03, and 7.56 on all three of
+  the Plaid's units), the pack, and each motor's published torque or power (the Model 3's 420 Nm; the Model Y's 326 Nm
+  rear and the front unit's 219 Nm, which with 137 kW at 6380 rpm on 320 V sizes it; the Plaid's 295 kW a motor).
+- **Derived and checked** (`tests/test101.mjs`): 0-100 6.18 s for the Model 3 RWD against 6.1; the Model Y's 0-60 mph
+  less the one-foot rollout 4.06 s against the 4.3 s its hardware does unlocked (the stock 4.8 s is a software limit
+  on launch torque); the Plaid 2.52 s without rollout against 2.52-2.56 s measured, 2.29 s with it against Tesla's
+  2.1; all three reach their governed top speeds. The acceleration run reports 0-60 mph and the rollout time.
+
 ### The induction motor (build 182)
 
 - **Step 2.5a of the electric plan.** MOTOR TYPE on the ENGINE tab: PERMANENT MAGNET or INDUCTION (COPPER CAGE). The

@@ -81,7 +81,7 @@ function updateBuildStrip(){
 }
 // A real car from VEHICLE_PRESETS: its factory engine, then its body and fitment.
 function loadVehiclePreset(p){
-  const ep=PRESETS.find(x=>x.name===p.engine);
+  const ep=FACTORY_ENGINES.find(x=>x.name===p.engine);
   if(!ep)throw new Error('no engine preset '+p.engine);
   applyBuild({engine:Object.assign({},ep.engine),tune:Object.assign({},STD_TUNE),vehicle:vehicleFromPreset(p),name:p.name});
   engine.name=ep.name;

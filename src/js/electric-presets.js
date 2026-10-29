@@ -1,0 +1,45 @@
+// ====== ELECTRIC PRESETS: the three Teslas (build 183, step 2.5b of plans/hybrid-electric/) ======
+// Decision 10: the Model 3 RWD (one motor), the Model Y Long Range (two: a magnet motor at the rear, an induction motor
+// at the front) and the Model S Plaid (three: two at the rear, one per wheel, and one at the front), as factory engines
+// and real cars. They live in their own tables, joined to the combustion ones only where a player picks a car or an
+// engine (FACTORY_ENGINES, FACTORY_CARS): the suite's sweeps over VEHICLE_PRESETS and PRESETS are combustion checks.
+//
+// What is matched, as the combustion cars are matched (tests/test41.mjs): mass, drag, frontal area, tyres, the
+// reduction and the governed top speed, the pack (chemistry, cells in series, capacity, year) and each motor's
+// torque or power, set from the published figures: the Model 3 RWD's 420 Nm, the Model Y's 326 Nm rear and 219 Nm front,
+// the Plaid's 295 kW a motor. What is derived and checked against the published figures
+// (tests/test101.mjs): the 0-100 and the top speed. The rear magnet motor is the Model 3's as MotorXP measured it
+// (src/js/electric.js); the front induction unit of the Model 3 and Model Y is sized to its published 219 Nm and
+// 137 kW at 6380 rpm on 320 V; the Plaid's three are carbon-sleeved magnet motors (the sleeve is what lets a rotor this
+// size reach 20,000 rpm), each sized to its rated 295 kW with the turns for the ~1,420 Nm the three are credited with
+// together. The Plaid's rear has no differential: a motor per wheel gives each its own torque, which the model's
+// nearest diff is the clutch-plate LSD (full traction off the line).
+const EV_ENGINE_PRESETS=[
+  {cat:'Electric',name:'Tesla Model 3 RWD drive (2021, LFP)',engine:{type:'electric',evMotorType:'pm',evRotorD:150,evStack:134,evPoles:6,evTurns:12,
+    evMagnet:'ndfeb',evRetention:'bridges',evCooling:'spray',evMaxRpm:18000,evInverter:'sic',evAmps:1000,evRearCount:1,evFront:'none',
+    evChem:'lfp',evSeries:106,evKWh:60,evYear:2021}},
+  {cat:'Electric',name:'Tesla Model Y Long Range drive (2022, dual motor)',engine:{type:'electric',evMotorType:'pm',evRotorD:150,evStack:134,evPoles:6,evTurns:12,
+    evMagnet:'ndfeb',evRetention:'bridges',evCooling:'spray',evMaxRpm:18000,evInverter:'sic',evAmps:720,evRearCount:1,
+    evFront:'im',evFrontD:140,evFrontStack:110,evFrontPoles:4,evFrontTurns:20,evFrontAmps:520,
+    evChem:'nca',evSeries:96,evKWh:78,evYear:2022}},
+  {cat:'Electric',name:'Tesla Model S Plaid drive (2021, three motors)',engine:{type:'electric',evMotorType:'pm',evRotorD:150,evStack:134,evPoles:6,evTurns:16,
+    evMagnet:'ndfebDy',evRetention:'sleeve',evCooling:'spray',evMaxRpm:20000,evInverter:'sic',evAmps:900,evRearCount:2,
+    evFront:'pm',evFrontD:150,evFrontStack:134,evFrontPoles:6,evFrontTurns:16,evFrontAmps:900,
+    evChem:'ncaP',evSeries:110,evKWh:100,evYear:2021}}
+];
+// real: the maker's 0-100 (s) and top speed (km/h, governed on all three). fit.fd is the published reduction (the owner's
+// manuals: 9.03 the Model 3 and Y, 7.56 on all three of the Plaid's units, each of its motors rated 295 kW).
+const EV_VEHICLE_PRESETS=[
+  {cat:'Electric',name:'Tesla Model 3 RWD (2021)',engine:'Tesla Model 3 RWD drive (2021, LFP)',chassis:'sedan',
+   body:{kg:1701,cd:0.23,area:2.22,wb:2.875,fWt:0.47},fit:{drive:'rwd',tire:'eco',tw:235,ta:45,wheel:18,brake:'steel',rotor:320,susp:'comfort',diff:'open',fd:9.03},
+   real:{t100:6.1,top:225,limited:true},unsure:['fWt']},
+  {cat:'Electric',name:'Tesla Model Y Long Range (2022)',engine:'Tesla Model Y Long Range drive (2022, dual motor)',chassis:'suv',
+   body:{kg:1979,cd:0.23,area:2.56,wb:2.89,fWt:0.49},fit:{drive:'awd',tire:'eco',tw:255,ta:45,wheel:19,brake:'steel',rotor:335,susp:'comfort',diff:'open',fd:9.03},
+   real:{t100:5.0,top:217,limited:true},unsure:['area','fWt']},
+  {cat:'Electric',name:'Tesla Model S Plaid (2021)',engine:'Tesla Model S Plaid drive (2021, three motors)',chassis:'sedan',
+   body:{kg:2162,cd:0.208,area:2.34,wb:2.96,fWt:0.48},fit:{drive:'awd',tire:'sport',tw:295,twF:265,ta:30,wheel:21,brake:'big',rotor:380,susp:'sport',diff:'clsd',fd:7.56},
+   real:{t100:2.1,top:322,limited:true},note:'0-100 is Tesla\'s figure, which takes a one-foot rollout off the start',unsure:['area','fWt']}
+];
+// What a player picks from: the combustion tables, then the electric ones.
+const FACTORY_ENGINES=PRESETS.concat(EV_ENGINE_PRESETS), FACTORY_CARS=VEHICLE_PRESETS.concat(EV_VEHICLE_PRESETS);
+const FACTORY_ENGINE_CATS=PRESET_CATS.concat(['Electric']), FACTORY_CAR_CATS=VEHICLE_CATS.concat(['Electric']);

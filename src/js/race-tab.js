@@ -27,8 +27,8 @@ function raceFillAdd(){
   const cars=garage.filter(g=>gKind(g)==='car');
   let h='<optgroup label="'+esc(tr('THIS BUILD'))+'"><option value="cur">'+esc(tr('The car on the VEHICLE tab'))+'</option></optgroup>';
   if(cars.length)h+='<optgroup label="'+esc(tr('GARAGE'))+'">'+cars.map(g=>'<option value="g:'+esc(g.id)+'">'+esc(g.name)+'</option>').join('')+'</optgroup>';
-  const cats=[...new Set(VEHICLE_PRESETS.map(p=>p.cat))];
-  for(const c of cats)h+='<optgroup label="'+esc(tr(c))+'">'+VEHICLE_PRESETS.map((p,i)=>p.cat===c?'<option value="p:'+i+'">'+esc(p.name)+'</option>':'').join('')+'</optgroup>';
+  const cats=[...new Set(FACTORY_CARS.map(p=>p.cat))];
+  for(const c of cats)h+='<optgroup label="'+esc(tr(c))+'">'+FACTORY_CARS.map((p,i)=>p.cat===c?'<option value="p:'+i+'">'+esc(p.name)+'</option>':'').join('')+'</optgroup>';
   const keep=sel.value;sel.innerHTML=h;if(keep&&[...sel.options].some(o=>o.value===keep))sel.value=keep;
 }
 function raceEntrantFrom(v){
@@ -39,7 +39,7 @@ function raceEntrantFrom(v){
   }
   if(v.startsWith('g:')){const g=garage.find(x=>x.id===v.slice(2));return g?{name:g.name,build:JSON.parse(JSON.stringify(g.build))}:null;}
   if(v.startsWith('p:')){
-    const p=VEHICLE_PRESETS[+v.slice(2)],ep=p&&PRESETS.find(x=>x.name===p.engine);if(!ep)return null;
+    const p=FACTORY_CARS[+v.slice(2)],ep=p&&FACTORY_ENGINES.find(x=>x.name===p.engine);if(!ep)return null;
     return {name:p.name,build:{engine:Object.assign({},ep.engine),tune:Object.assign({},STD_TUNE),vehicle:vehicleFromPreset(p),name:p.name}};
   }
   return null;

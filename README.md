@@ -98,7 +98,10 @@ no charging in the pit lane: its energy manager plans the power that lasts the d
 pack and the motor heat from lap to lap, and a car whose pack cannot last retires OUT OF CHARGE. MOTOR TYPE (build 182)
 offers an induction motor beside the magnet one: no magnets, a copper-cage rotor magnetised by the stator's own current,
 less efficient at its best and hotter in the rotor, but with no drag at all when it is not driving; built from the
-Tesla Model S 60's published geometry it gives 430 Nm, 259 kW (225 published) and a knee at 5700 rpm.
+Tesla Model S 60's published geometry it gives 430 Nm, 259 kW (225 published) and a knee at 5700 rpm. A car can carry
+more than one motor (build 183): two at the rear, one per wheel, and one at the front, which makes it all-wheel drive.
+Three Teslas are factory cars, matched on their hardware: the Model 3 RWD (0-100 6.18 s against 6.1), the Model Y Long
+Range (dual motor, an induction front) and the Model S Plaid (three motors, 2.52 s against the 2.52-2.56 s measured).
 
 ### Simulation & live tuning
 - **Live outputs**: Power (HP), Torque (Nm), BMEP, Volumetric Efficiency, Thermal
