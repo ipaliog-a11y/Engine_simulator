@@ -1,6 +1,6 @@
 # Plan: electric, then hybrids
 
-**Status:** steps 0-2 done: battery electric shipped as **v0.7** (builds 176-184). Next: step 3, hybrids. Written at build 175.
+**Status:** steps 0-2 done: battery electric shipped as **v0.7** (builds 176-184). Step 3, hybrids, under way. Written at build 175.
 
 Should hybrid and electric cars become a new game built from this one, or live in this one? This
 document answers that, lists what would have to change, and gives an order to build it in.
@@ -159,6 +159,16 @@ In order of complexity, each built on the last:
 - **Validation:** real hybrids where the figures are published (e.g. a Prius for consumption, a
   Porsche 918 or similar for performance).
 
+Step 3 lands in parts, one PR each (decisions 12-15):
+
+| part | what | state |
+|---|---|---|
+| 3.1 | **Parallel (P2)**: a HYBRID field on any combustion engine; a motor on the gearbox's input shaft at engine speed, a small pack of hybrid cells; its torque added to the engine's in the 0-100, the lap and the race, regeneration added to the engine's overrun; charge-sustaining over a lap (the deploy is cut to what braking takes back); the race burns fuel for the engine's share only. Checked: the Hyundai Ioniq Hybrid's 0-100. | |
+| 3.2 | **Consumption**: the WLTP cycle for engines and hybrids (gear choice, the BSFC map, start-stop), and the energy manager of a full hybrid: the engine off at low load, load-point shifting. Checked: the Ioniq's WLTP fuel. | |
+| 3.3 | **Power-split**: the planetary eCVT (two motors, the engine held at its efficient speed). Checked: the 4th-generation Prius, 0-100 and WLTP. | |
+| 3.4 | **Series**: the engine only charges. | |
+| 3.5 | **Plug-in and racing energy**: a pack that starts full and depletes before it sustains; regulation deploy and harvest limits per lap. Checked: the BMW 330e or Cayenne E-Hybrid, and the Porsche 918 Spyder (with its front axle motor). | |
+
 ### 4. Electric sound
 
 A motor and inverter synth beside GAS: an inverter switching tone, motor whine rising with speed,
@@ -182,6 +192,10 @@ gear mesh from the reduction. Built standalone in `tests/proto/` first, the way 
 | 10 | Which real electric cars to validate against (and ship as presets) | **Tesla Model 3, Model Y and the new Model S** (the 2021 refresh). Variants to be fixed in step 2; see the note below. |
 | 11 | Greek translation | **Falls back to English for now.** New electric strings need no Greek in the same PR; `tr()` shows the English where a translation is missing, and the Greek is filled in later. |
 | — | Electric or hybrid first | **Electric first** (see *Build order*). |
+| 12 | Where a hybrid lives in the designer | A **HYBRID field on every combustion engine** (none / parallel P2 / later full, series); choosing one adds the MOTOR, INVERTER and BATTERY sections under the engine. *None* is exactly today's engine, so a petrol, diesel or rotary can each be hybridised. |
+| 13 | Plug-in | **Charge-sustaining first** (the pack is charged by the engine and braking only); plug-in comes in 3.5. |
+| 14 | Validation | The **Hyundai Ioniq Hybrid** (P2, 3.1-3.2), the **Toyota Prius**, 4th generation (power-split, 3.3), the **BMW 330e or Cayenne E-Hybrid** and the **Porsche 918 Spyder** (plug-in, 3.5). |
+| 15 | Hybrids in a race | **On fuel, charge-sustaining** from 3.1: the battery deploys and harvests within each lap; regulation energy limits come in 3.5. |
 
 **On the three Teslas (decision 10).** Tesla publishes 0–100 / 0–60, top speed, mass and WLTP/EPA
 consumption, which the 0–100, top-speed and Wh/km checks need. It does **not** publish continuous
