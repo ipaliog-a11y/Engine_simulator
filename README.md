@@ -1,4 +1,4 @@
-# PIXEL ENGINE SIM v0.6 build 183
+# PIXEL ENGINE SIM v0.6 build 184
 
 **A lightweight, 8-bit style internal combustion engine *designer* & simulator** inspired by *Automation*.
 
@@ -102,6 +102,8 @@ Tesla Model S 60's published geometry it gives 430 Nm, 259 kW (225 published) an
 more than one motor (build 183): two at the rear, one per wheel, and one at the front, which makes it all-wheel drive.
 Three Teslas are factory cars, matched on their hardware: the Model 3 RWD (0-100 6.18 s against 6.1), the Model Y Long
 Range (dual motor, an induction front) and the Model S Plaid (three motors, 2.52 s against the 2.52-2.56 s measured).
+The VEHICLE tab gives an electric car's consumption over the WLTP cycle (build 184), driven second by second through the
+same drive: 120, 141 and 166 Wh/km from the pack for the three Teslas against their homologated 117, 138 and 158.
 
 ### Simulation & live tuning
 - **Live outputs**: Power (HP), Torque (Nm), BMEP, Volumetric Efficiency, Thermal
