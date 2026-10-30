@@ -30,7 +30,7 @@ function hybBenchState(){
   if(hybBench&&hybBench.hy===hy)return hybBench;
   const prev=hybBench,tc=hy.motor.cool.tCool;
   hybBench={hy,view:prev?prev.view:'flow',trail:[],mode:prev?prev.mode:'auto',soc:prev?prev.soc:HYB_SOC,hold:prev?prev.hold:HYB_SOC,cmd:prev?prev.cmd:0,neSet:prev?prev.neSet:0,
-    n:hy.mode==='ps'?0:engine.idleRpmEff,engOn:true,thrE:state.throttle,Te:0,Tm:0,T1:0,ns:0,ne:engine.idleRpmEff,
+    n:hy.mode!=='p2'?0:engine.idleRpmEff,engOn:true,thrE:state.throttle,Te:0,Tm:0,T1:0,ns:0,ne:engine.idleRpmEff,
     Pe:0,Pm:0,P1:0,Pb:0,Psys:0,mT:{w:tc,c:tc,r:tc},tB:{b:PACK_COOLANT},lowFlash:0};
   state.rpm=engine.idleRpmEff;
   return hybBench;
@@ -65,13 +65,13 @@ function hybBrakeAt(n,nMax,nMin,ref){
 // The controller: from the pedal, the mode and the charge, whether the engine runs, what it is asked for, and the motor's
 // torque (P2) or MG2's (power-split) before the pack's limits.
 function hybControl(H,dt){
-  const e=engine,hy=e.hy,B=HYB_BENCH,ps=hy.mode==='ps',p=state.throttle,mode=H.mode,n=H.n,w=Math.max(n,1)*Math.PI/30;
+  const e=engine,hy=e.hy,B=HYB_BENCH,ps=hy.mode!=='p2',p=state.throttle,mode=H.mode,n=H.n,w=Math.max(n,1)*Math.PI/30;   // ps: the traction motor's shaft (a power-split, or a series hybrid, build 193)
   const pack=hy.pack,Pmax=packMaxPower(pack,clamp(H.soc,0.05,1)),Pchg=pack.pChargeMax;
   // the HYBRID TUNE (build 192): its charge window, electric-driving power, regeneration and load-point shifting
   const tu=hybTune(e),lo=tu.socLo/100,hi=tu.socHi/100,kRegen=(HYB_REGEN[tu.regen]||HYB_REGEN.high).k;
   // what the shaft can have flat out, and what the pedal asks of it
   let full,TmMax;
-  if(ps){const c=hybCurves(),R=c.eng,i=Math.min(R.length-1,Math.max(0,Math.round(n/Math.max(1,R[1].rpm-R[0].rpm))));full=R[i].tq+c.mot[i];TmMax=motorMaxTorque(hy.motor,Math.max(n,1),PS.busV,60);}
+  if(ps){const c=hybCurves(),R=c.eng,i=Math.min(R.length-1,Math.max(0,Math.round(n/Math.max(1,R[1].rpm-R[0].rpm))));full=R[i].tq+c.mot[i];TmMax=motorMaxTorque(hy.motor,Math.max(n,1),hybBusV(hy),60);}
   else{TmMax=hybMotorTq(hy,n);full=hybEngTq(Math.max(n,e.idleRpmEff))+TmMax;}
   const D=(mode==='ev'?TmMax:full)*p,Pd=D*w;
   // the charge the mode wants, and the engine
@@ -109,7 +109,7 @@ function hybControl(H,dt){
   else if(pedalThr)H.thrE=p;
   else{const ref=Math.max(20,e.score.peakTQ);H.thrE=clamp(H.thrE+dt*4*(H.TeWant-H.Te)/ref,0,1);}
   // the motor's torque before the pack's limits
-  const Tring=ps&&on?H.Te/(1+PS.rho)/PS.k2:0,TeShaft=ps?Tring:(on?H.Te:0);
+  const Tring=ps&&on?H.Te*hybGear(hy,state.rpm,n).kr:0,TeShaft=ps?Tring:(on?H.Te:0);
   // a P2's help to the engine within ASSIST's window and the assist map at this speed and pedal (the tune)
   const help=ps?TmMax:TmMax*hybAssistWindow(e,n)*hybAssistShare(n/e.redline,p,tu);
   if(mode==='manual')H.TmWant=H.cmd>=0?H.cmd*TmMax:H.cmd*Math.min(TmMax,Pchg/w)*kRegen;
@@ -120,7 +120,7 @@ function hybControl(H,dt){
 }
 // One bench step for a hybrid, in place of stepEngine.
 function stepHybridBench(dt){
-  const e=engine,hy=e.hy,H=hybBenchState(),B=HYB_BENCH,ps=hy.mode==='ps',m=hy.motor,pack=hy.pack;
+  const e=engine,hy=e.hy,H=hybBenchState(),B=HYB_BENCH,ps=hy.mode!=='p2',m=hy.motor,pack=hy.pack;
   const lim=hybControl(H,dt);
   // the engine's air path and torque at its own throttle; off, it coasts to a stop with its manifold at the air
   if(H.engOn){
@@ -132,11 +132,10 @@ function stepHybridBench(dt){
   // MG1 (power-split): the engine's speed and its reaction
   let P1=0;
   if(ps){
-    const nr=H.n/PS.k2;
     if(H.engOn){state.rpm+=(H.neT-state.rpm)*(1-Math.exp(-dt/B.neTau));state.rpm=clamp(state.rpm,e.idleRpmEff,e.redline);}
     else state.rpm=Math.max(0,state.rpm-4000*dt);
-    H.ne=state.rpm;H.ns=((1+PS.rho)*H.ne-nr)/PS.rho;
-    const Ts=H.engOn?H.Te*PS.rho/(1+PS.rho):0;H.T1=Ts;
+    H.ne=state.rpm;const G=hybGear(hy,H.ne,H.n);H.ns=G.ns;
+    const Ts=H.engOn?H.Te*G.ks:0;H.T1=Ts;
     P1=H.engOn&&Ts!==0?psMg1Elec(hy,Ts,H.ns,{w:tc+20,c:tc+15,r:60}):0;
   }
   // the motor within what the pack can give and take: discharging no more than its limit, charging no more than it
@@ -154,7 +153,7 @@ function stepHybridBench(dt){
   // the shaft
   const drag=H.n>1?L.mech/w0:0;
   if(ps){
-    const Tring=H.engOn?H.Te/(1+PS.rho)/PS.k2:0,ref=Math.max(50,Math.max(...hybCurves().eng.map(q=>q.tq))),J=m.J+0.02;
+    const Tring=H.engOn?H.Te*hybGear(hy,H.ne,H.n).kr:0,ref=Math.max(50,Math.max(...hybCurves().eng.map(q=>q.tq))),J=m.J+0.02;
     const hMax=0.5*J*Math.PI/(30*ref/(220*m.nMax/e.redline)),ns=Math.max(1,Math.ceil(dt/hMax)),h=dt/ns;
     for(let k=0;k<ns;k++){const om=H.n*Math.PI/30+(Tring+Tm-drag-hybBrakeAt(H.n,m.nMax,0,ref))/J*h;H.n=clamp(om*30/Math.PI,0,m.nMax);}
     H.Tshaft=Tring+Tm;
@@ -192,7 +191,7 @@ function updateHybridPanel(){
   const panel=document.getElementById('hybridPanel');if(!panel)return;
   const show=isHybrid()&&(vizMode==='engine'||vizMode==='dyno');
   panel.hidden=!show;if(!show)return;
-  const H=hybBenchState(),hy=engine.hy,ps=hy.mode==='ps',g=id=>document.getElementById(id);
+  const H=hybBenchState(),hy=engine.hy,ps=hy.mode==='ps',ser=hy.mode==='series',g=id=>document.getElementById(id);
   // the gauge: the charge in its window, the pack's power and heat
   const soc=H.soc*100,fill=g('hySocFill');
   if(fill){fill.style.width=soc.toFixed(1)+'%';fill.style.background=H.soc<HYB_BENCH.socLo?'#ff5555':H.soc>HYB_BENCH.socHi?'#ffcc00':'#00ff88';}
@@ -202,10 +201,10 @@ function updateHybridPanel(){
   const pb=H.Pb;
   if(g('hyPack'))g('hyPack').textContent=tr('PACK')+' '+(Math.abs(pb)<0.05?'0.0 kW':(pb>0?tr('DISCHARGING')+' ':tr('CHARGING')+' ')+Math.abs(pb).toFixed(1)+' kW')+' • '+Math.round(H.tB.b)+'°C';
   if(g('hyReadout'))g('hyReadout').textContent=tr('ENGINE')+' '+(H.engOn?Math.round(H.ne)+' rpm '+H.Pe.toFixed(1)+' kW':tr('OFF'))+
-    ' • '+(ps?'MG2':tr('MOTOR'))+' '+(H.Pm>=0?'+':'')+H.Pm.toFixed(1)+' kW'+(ps?' • MG1 '+(H.P1>=0?'+':'')+H.P1.toFixed(1)+' kW':'')+
+    ' • '+(ps?'MG2':tr('MOTOR'))+' '+(H.Pm>=0?'+':'')+H.Pm.toFixed(1)+' kW'+(ps||ser?' • '+(ps?'MG1':tr('GEN'))+' '+(H.P1>=0?'+':'')+H.P1.toFixed(1)+' kW':'')+
     ' • '+tr('SHAFT')+' '+Math.round(H.n)+' rpm '+H.Psys.toFixed(1)+' kW';
   const ds=g('hyDrive');if(ds&&document.activeElement!==ds&&ds.value!==H.mode)ds.value=H.mode;
-  panel.classList.toggle('manual',H.mode==='manual');panel.classList.toggle('ps',ps);
+  panel.classList.toggle('manual',H.mode==='manual');panel.classList.toggle('ps',ps||ser);   // an engine-speed target for both (build 193)
   if(g('valHyCmd'))g('valHyCmd').textContent=Math.round(H.cmd*100);
   const ne=g('hyNe');if(ne){ne.max=engine.redline;if(!H.neSet)H.neSet=Math.round(engine.score.peakTQrpm||3000);if(document.activeElement!==ne)ne.value=H.neSet;}
   if(g('valHyNe'))g('valHyNe').textContent=Math.round(H.neSet);
@@ -243,7 +242,21 @@ function drawHybridFlow(H){
   };
   const motCol=H.Pm>=0?(H.Pb>0.2?C.bat:C.eng):(H.engOn&&H.Pe>0.5?C.charge:C.regen);
   const batCol=H.Pb>=0?C.bat:(H.engOn&&H.Pe>0.5?C.charge:C.regen);
-  if(!ps){
+  if(hy.mode==='series'){
+    // ENGINE - GENERATOR, then the bus to the MOTOR - BRAKE; the PACK on the bus between them (build 193)
+    const Pmot=H.P1+H.Pb-HYB_BENCH.auxW/1000;
+    flow([[62,37],[82,37]],H.engOn?H.Pe:0,C.eng);
+    flow([[107,54],[107,82],[150,82]],H.P1,H.P1>=0?C.charge:C.bat);
+    flow([[150,82],[189,82],[189,54]],Pmot,Pmot>=0?(H.Pb>0.2?C.bat:C.charge):C.regen);
+    flow([[150,104],[150,84]],H.Pb,batCol);
+    flow([[218,37],[238,37]],H.Psys,H.Psys>=0?motCol:C.regen);
+    c.fillStyle='#ffcc00';c.fillRect(147*S,79*S,6*S,6*S);c.font=F(4.5);c.textAlign='left';c.textBaseline='bottom';c.fillStyle='#888';c.fillText(Math.round(hybBusV(hy))+' V',155*S,78*S);
+    box(4,20,58,34,tr('ENGINE'),H.engOn?Math.round(H.ne)+' rpm':tr('OFF'),H.engOn);
+    box(82,20,50,34,tr('GEN'),Math.round(H.T1)+' Nm',Math.abs(H.P1)>0.2);
+    box(160,20,58,34,tr('MOTOR'),(H.Tm>=0?'+':'')+Math.round(H.Tm)+' Nm',Math.abs(H.Pm)>0.2);
+    box(238,20,58,34,tr('BRAKE'),Math.round(H.n)+' rpm',H.n>1);
+    box(124,104,52,30,tr('PACK'),Math.round(H.soc*100)+'%',Math.abs(H.Pb)>0.2);
+  }else if(!ps){
     // ENGINE -clutch- MOTOR - BRAKE in a row, the PACK under the motor
     c.fillStyle=H.engOn?'#8a8aa0':'#3a3a4a';c.fillRect(104*S,28*S,3*S,18*S);c.fillRect((H.engOn?108:110)*S,28*S,3*S,18*S);
     c.font=F(4.5);c.textAlign='center';c.textBaseline='top';c.fillStyle='#888';c.fillText(tr(H.engOn?'CLOSED':'OPEN'),108*S,58*S);

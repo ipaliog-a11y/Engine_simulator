@@ -135,13 +135,13 @@ function hybridCycle(v){
   const capJ=pack.kWh*3.6e6,tc=mot.cool.tCool,temp={w:tc+20,c:tc+15,r:60};
   // the motor at a shaft speed: what it can give, what it can take back (its own torque, and the pack's acceptance)
   const memo=f=>{const c=new Map();return rpm=>{const k=Math.round(rpm/10);let y=c.get(k);if(y===undefined){y=f(k*10);c.set(k,y);}return y;};};
-  const ps=hy.mode==='ps',busV=soc=>ps?PS.busV:packOcv(pack,soc);   // a power-split's machines run on its 600 V bus (build 189)
+  const ps=hy.mode==='ps',direct=ps||hy.mode==='series',busV=soc=>ps?PS.busV:packOcv(pack,soc);   // a power-split's machines run on its 600 V bus (build 189); a series hybrid is driven as one (193)
   const motUp=memo(rpm=>hybMotorTq(hy,rpm)),motDn=memo(rpm=>Math.min(motorMaxTorque(mot,Math.max(rpm,1),busV(HYB_SOC),60),pack.pChargeMax/Math.max(1,rpm*Math.PI/30)));
   // the pack's chemical energy for a motor torque at a speed for one second (+ drawn), with the 12 V load; Pin: what
   // else is on the bus (a power-split's MG1, generating)
   const packJ=(T,rpm,soc,Pin=0)=>{const w=rpm*Math.PI/30,P=T*w+(T||rpm>0?motorLosses(mot,Math.abs(T),Math.max(rpm,1),busV(soc),temp).total:0)+C.auxW-Pin;
     const d=packDraw(pack,soc,P);return P+(d?d.heat:0);};
-  const rho=PS.rho,Pbat=packMaxPower(pack,HYB_SOC),Pchg=pack.pChargeMax;
+  const Pbat=packMaxPower(pack,HYB_SOC),Pchg=pack.pChargeMax;
   // the HYBRID TUNE (build 192): the charge window, the regeneration, the motor's help, electric driving, load-point
   // shifting. Its defaults are the rules above, so an untuned build runs exactly as before.
   const tu=hybTune(e),socLo=tu.socLo/100,socHi=tu.socHi/100,soc0=tu.socT/100,kRegen=(HYB_REGEN[tu.regen]||HYB_REGEN.high).k;
@@ -164,10 +164,10 @@ function hybridCycle(v){
         for(const k of H.splits){
           const Pe=Plo+(Phi-Plo)*k,ne=clamp(psOolAt(Pe).ne,Math.max(R.lo,rpmMin),R.hi),Te=Pe/(ne*Math.PI/30);
           if(Te>Tmax(ne)*C.reserve)continue;
-          const ns=((1+rho)*ne-nr)/rho,Ts=Te*rho/(1+rho);
-          if(Ts>motorMaxTorque(hy.mg1,Math.max(Math.abs(ns),1),PS.busV,60))continue;
-          const T2=stand?0:T-Te/(1+rho)/PS.k2;
-          if(Math.abs(T2)>(T2>0?motUp(n2):motorMaxTorque(mot,Math.max(n2,1),PS.busV,60)))continue;
+          const G=hybGear(hy,ne,n2),ns=G.ns,Ts=Te*G.ks;   // the planetary, or a series hybrid's generator on the crank
+          if(Ts>motorMaxTorque(hy.mg1,Math.max(Math.abs(ns),1),hybBusV(hy),60))continue;
+          const T2=stand?0:T-Te*G.kr;
+          if(Math.abs(T2)>(T2>0?motUp(n2):motorMaxTorque(mot,Math.max(n2,1),hybBusV(hy),60)))continue;
           const gs=engineFuelAt(ne,Te,oilT);if(!isFinite(gs))continue;
           const J=packJ(T2,n2,soc,psMg1Elec(hy,Ts,ns,temp));
           if(!tu.lps&&J<0&&soc>=socLo)continue;   // no load-point shifting: the engine charges only a low pack
@@ -177,8 +177,8 @@ function hybridCycle(v){
       if(vm<0.1&&a<=0){   // standing: the engine stops when it is warm, or idles
         if(!cold)consider(0,packJ(0,0,soc),false);
         consider(M.idleGs,C.auxW,true);
-        if(ps)psOn(0,0,true);
-      }else if(ps){   // the eCVT (build 189): MG2 alone, or the engine on its best line, MG1 and MG2 carrying the difference
+        if(direct)psOn(0,0,true);
+      }else if(direct){   // the eCVT (build 189), or a series hybrid (193): MG2 alone, or the engine on its best line, MG1 and MG2 carrying the difference
         const tot=fd,n2=vm/r*tot*60/(2*Math.PI);
         const meff=m+(v.wheelI||0)/(r*r)+(mot.J||0.01)*(tot/r)**2;
         const F=meff*a+0.5*AIR_RHO*v.cdA*vm*vm+crrAt(v.crr,vm)*m*G;

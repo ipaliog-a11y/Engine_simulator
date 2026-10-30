@@ -761,7 +761,7 @@ function trackSoundState(st){
   }
   const lam=e.ci?SMOKE_LAMBDA_CI+(2.25-SMOKE_LAMBDA_CI)*(1-thr):thr>0.9?0.88:1;
   // a power-split's replay runs at MG2's speed: the engine is where the eCVT holds it on power, idling off it (build 189)
-  if(isPowerSplit())st=Object.assign({},st,{rpm:thr>0.02?psEngineRpmAt(st.rpm):e.idleRpmEff});
+  if(isDirectHybrid())st=Object.assign({},st,{rpm:thr>0.02?psEngineRpmAt(st.rpm):e.idleRpmEff});
   return {rpm:st.rpm,map:st.map||1,throttle:thr,afr:lam*(e.stoichAFR||14.7),boostActual:boost,shaftE,
     fuelCut:(e.canDFCO&&thr<0.03&&st.rpm>e.idleRpmEff+150)||st.rpm>=e.redline,coolant:90,knockRisk:0,blown:false};
 }

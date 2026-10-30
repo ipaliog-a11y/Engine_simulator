@@ -20,6 +20,23 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 Working toward **v1.0 — every number derived, not fitted.**
 
+### The series hybrid (build 193)
+
+- **Step 3.4 of the plan.** HYBRID gets its third layout, **SERIES** (`src/js/series.js`): the engine turns a generator
+  on its crank and nothing else; the traction motor alone drives the wheels through one reduction, as an electric
+  car's. The engine's speed is free of the road's: the energy manager, the lap's fuel and the bench hold it on its best
+  line, and every kilowatt reaches the wheels through both machines' losses. The generator is built from the traction
+  motor's design for 110% of the engine's peak torque and 105% of its peak power. It shares the power-split's code:
+  `hybGear` says how the engine reaches the shaft (a planetary's split, or a generator taking it all).
+- The LIVE bench runs it (MANUAL holds the engine at ENGINE SPEED whatever the shaft does); the power-flow diagram has
+  its own layout (engine, generator, bus, motor, brake, pack); the lever is a power-split's only; the gear window and
+  the VEHICLE tab say SINGLE-SPEED (SERIES).
+- **The Nissan Qashqai e-POWER (2022)**: KR15DDT 1.5 turbo three (153 hp as built, 158 PS published), a 140 kW / 330 Nm
+  motor, 2.1 kWh, 1612 kg, Cd 0.32, its reduction matched (8.3:1; Nissan does not publish it). 0-100 km/h 7.38 s
+  against 7.9 (the motor sets a series car's flat-out pace: the engine and pack out-give it), 170 km/h governed. WLTP
+  6.16 L/100 km against Nissan's 5.3: the model's KR15 burns 254 g/kWh at its best (the engine model's efficiency gap,
+  the Prius's too); the engine off 56% of the cycle; the same engine through a six-speed gearbox 7.54.
+
 ### The hybrid tune (build 192)
 
 - **Step 3.6c of the plan.** A **HYBRID TUNE** section on the ENGINE tab for any hybrid, saved with the build and read

@@ -59,7 +59,15 @@ const HYB_ENGINE_PRESETS=[
    unsure:['redline'],engine:{type:'petrol4',cylinders:4,bore_mm:80.5,stroke_mm:88.3,compression:13,redline:5500,intake:'na',injector:'port',vvt:true,
     cam:'atkinson',valves:4,octane:95,airFilter:'stock',exhaust:'stock',cat:'stock',intakeSys:'efi',hyMode:'ps',hyDeploy:'full',
     evMotorType:'pm',evRotorD:150,evStack:60,evPoles:8,evTurns:100,evMagnet:'ndfeb',evRetention:'bridges',evCooling:'jacket',evMaxRpm:17000,
-    evInverter:'igbt',evAmps:100,evRearCount:1,evFront:'none',evChem:'nimhHEV',evSeries:168,evKWh:1.31,evYear:2016}}
+    evInverter:'igbt',evAmps:100,evRearCount:1,evFront:'none',evChem:'nimhHEV',evSeries:168,evKWh:1.31,evYear:2016}},
+  // The Nissan Qashqai e-POWER (2022; build 193, step 3.4): a series hybrid. The KR15DDT, a 1.5 turbo three (84 x 90.1 mm,
+  // variable compression 8-14:1, the model's fixed 12:1 between them), 116 kW (158 PS), drives a generator only; a 140 kW /
+  // 330 Nm motor drives the front wheels through one reduction, with a 2.1 kWh pack (Nissan; UK press release).
+  {cat:'Hybrid',name:'Nissan KR15DDT 1.5 VC-T + series (Qashqai e-POWER)',real:{hp:155.6,hpRpm:5000,tq:250,tqRpm:2400,motorKW:140,motorNm:330},
+   unsure:['redline','compression','boost'],engine:{type:'petrol4',cylinders:3,bore_mm:84,stroke_mm:90.1,compression:12,redline:5600,intake:'turbo',boost_bar:0.4,turboSize:'small',
+    injector:'direct',vvt:true,cam:'stock',valves:4,octane:95,airFilter:'stock',exhaust:'stock',cat:'stock',intakeSys:'efi',hyMode:'series',hyDeploy:'full',
+    evMotorType:'pm',evRotorD:160,evStack:100,evPoles:8,evTurns:26,evMagnet:'ndfeb',evRetention:'bridges',evCooling:'jacket',evMaxRpm:14000,
+    evInverter:'igbt',evAmps:450,evRearCount:1,evFront:'none',evChem:'liHEV',evSeries:96,evKWh:2.1,evYear:2021}}
 ];
 const HYB_VEHICLE_PRESETS=[
   {cat:'Hybrid',name:'Hyundai Ioniq Hybrid (2016)',engine:'Hyundai Kappa 1.6 GDi + P2 (Ioniq Hybrid)',chassis:'hatch',
@@ -69,7 +77,11 @@ const HYB_VEHICLE_PRESETS=[
   // 0-100 km/h 10.6 s and 180 km/h (Toyota GB).
   {cat:'Hybrid',name:'Toyota Prius (2016)',engine:'Toyota 2ZR-FXE 1.8 + power-split (Prius)',chassis:'hatch',
    body:{kg:1375,cd:0.24,area:2.18,wb:2.70,fWt:0.60},fit:{drive:'fwd',tire:'eco',tw:195,ta:65,wheel:15,brake:'steel',rotor:255,susp:'comfort',diff:'open',fd:10.84},
-   real:{t100:10.6,top:180,limited:true},unsure:['area','fWt']}
+   real:{t100:10.6,top:180,limited:true},unsure:['area','fWt']},
+  // 1612 kg, Cd 0.32; 0-100 km/h 7.9 s and 170 km/h governed (Nissan UK); its reduction is not published, so it is matched.
+  {cat:'Hybrid',name:'Nissan Qashqai e-POWER (2022)',engine:'Nissan KR15DDT 1.5 VC-T + series (Qashqai e-POWER)',chassis:'hatch',
+   body:{kg:1612,cd:0.32,area:2.50,wb:2.67,fWt:0.60},fit:{drive:'fwd',tire:'eco',tw:235,ta:55,wheel:18,brake:'steel',rotor:320,susp:'comfort',diff:'open'},
+   real:{t100:7.9,top:170,limited:true},unsure:['area','fWt','tyres']}
 ];
 // What a player picks from: the combustion tables, then the electric and hybrid ones.
 const FACTORY_ENGINES=PRESETS.concat(EV_ENGINE_PRESETS,HYB_ENGINE_PRESETS), FACTORY_CARS=VEHICLE_PRESETS.concat(EV_VEHICLE_PRESETS,HYB_VEHICLE_PRESETS);
