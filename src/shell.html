@@ -16,7 +16,7 @@
 <body>
 <div class="container">
 <header>
-<h1>PIXEL ENGINE SIM v0.7 build 188</h1>
+<h1>PIXEL ENGINE SIM v0.7 build 189</h1>
 <div class="subtitle" id="subtitle">ENGINE DESIGNER • BUILD IT, THEN DRIVE IT</div>
 </header>
 <div class="build-strip" id="buildStrip">
@@ -65,7 +65,7 @@
 
 <div class="design-section">Hybrid</div>
 <div class="design-grid">
-<div class="field"><label for="edHybrid">HYBRID</label><select id="edHybrid"><option value="none">NONE</option><option value="p2">PARALLEL (P2)</option></select></div>
+<div class="field"><label for="edHybrid">HYBRID</label><select id="edHybrid"><option value="none">NONE</option><option value="p2">PARALLEL (P2)</option><option value="ps">POWER-SPLIT (eCVT)</option></select></div>
 <div class="field"><label for="edHyDeploy">DEPLOY</label><select id="edHyDeploy"><option value="full">FULL</option><option value="eco">ECO (TORQUE FILL)</option></select></div>
 </div>
 
@@ -75,7 +75,7 @@
 <div class="field"><label for="evRotorD">ROTOR DIAMETER (mm)</label><input type="number" id="evRotorD" min="80" max="260" step="1" value="150"></div>
 <div class="field"><label for="evStack">STACK LENGTH (mm)</label><input type="number" id="evStack" min="40" max="250" step="1" value="134"></div>
 <div class="field"><label for="evPoles">POLES</label><select id="evPoles"><option value="4">4</option><option value="6">6</option><option value="8">8</option><option value="10">10</option><option value="12">12</option></select></div>
-<div class="field"><label for="evTurns">TURNS PER PHASE</label><input type="number" id="evTurns" min="4" max="60" step="1" value="12"></div>
+<div class="field"><label for="evTurns">TURNS PER PHASE</label><input type="number" id="evTurns" min="4" max="120" step="1" value="12"></div>
 <div class="field"><label for="evMagnet">MAGNETS</label><select id="evMagnet"><option value="ferrite">FERRITE</option><option value="ndfeb">NdFeB (SH)</option><option value="ndfebDy">NdFeB + Dy (UH)</option></select></div>
 <div class="field"><label for="evRetention">MAGNET RETENTION</label><select id="evRetention"><option value="bridges">IRON BRIDGES</option><option value="sleeve">CARBON SLEEVE</option></select></div>
 <div class="field"><label for="evCooling">MOTOR COOLING</label><select id="evCooling"><option value="air">AIR (FINNED)</option><option value="jacket">WATER JACKET</option><option value="spray">OIL SPRAY</option><option value="slot">DIRECT SLOT</option></select></div>
@@ -101,7 +101,7 @@
 
 <div class="design-section" data-ev>Battery</div>
 <div class="design-grid" data-ev>
-<div class="field"><label for="evChem">CHEMISTRY</label><select id="evChem"><option value="lead">LEAD-ACID</option><option value="nimh">NiMH</option><option value="lfp">LFP</option><option value="nca">NCA / NMC</option><option value="ncaP">NCA (POWER CELLS)</option><option value="liHEV">Li-ION (HYBRID CELLS)</option></select></div>
+<div class="field"><label for="evChem">CHEMISTRY</label><select id="evChem"><option value="lead">LEAD-ACID</option><option value="nimh">NiMH</option><option value="lfp">LFP</option><option value="nca">NCA / NMC</option><option value="ncaP">NCA (POWER CELLS)</option><option value="liHEV">Li-ION (HYBRID CELLS)</option><option value="nimhHEV">NiMH (HYBRID CELLS)</option></select></div>
 <div class="field"><label for="evSeries">CELLS IN SERIES</label><input type="number" id="evSeries" min="20" max="400" step="1" value="96"></div>
 <div class="field"><label for="evKWh">CAPACITY (kWh)</label><input type="number" id="evKWh" min="0.5" max="200" step="0.01" value="75"></div>
 <div class="field"><label for="evYear">TECHNOLOGY YEAR</label><input type="number" id="evYear" min="1990" max="2026" step="1" value="2020"></div>
@@ -505,6 +505,7 @@
 <!-- @include js/electric-race.js -->
 <!-- @include js/electric-cycle.js -->
 <!-- @include js/hybrid.js -->
+<!-- @include js/power-split.js -->
 <!-- @include js/fuel-cycle.js -->
 <!-- @include js/electric-presets.js -->
 <!-- @include js/controls-boot.js -->

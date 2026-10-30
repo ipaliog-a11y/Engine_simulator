@@ -1,4 +1,4 @@
-# PIXEL ENGINE SIM v0.7 build 188
+# PIXEL ENGINE SIM v0.7 build 189
 
 **A lightweight, 8-bit style internal combustion engine *designer* & simulator** inspired by *Automation*.
 
@@ -113,8 +113,11 @@ against MotorWeek's instrumented run). Every combustion car also gets its WLTP f
 each second in the gear that burns least, the fuel off the engine's own map, a cold start the engine warms out of: the
 GR Yaris 7.85 L/100 km against 8.2, the Civic Type R 8.24 against 8.2-8.8. A hybrid's cycle is run by its energy
 manager (build 188): each second electric only, the engine with the motor helping or charging, or regeneration,
-whichever costs least with the pack's energy priced so it ends the cycle where it started. The Ioniq Hybrid: 5.23
-L/100 km against Hyundai's 4.4-5.2, the engine off 53% of the cycle. An ATKINSON cam closes the intake late.
+whichever costs least with the pack's energy priced so it ends the cycle where it started. The Ioniq Hybrid: 5.05
+L/100 km against Hyundai's 4.4-5.2. An ATKINSON cam closes the intake late.
+POWER-SPLIT (eCVT, build 189) is Toyota's planetary: MG1 holds the engine at the speed it wants, MG2 drives the
+wheels through one reduction, no gearbox. The 2016 Prius, its engine matched to its 72 kW: 0-100 in 11.2 s against
+10.6, and 4.44 L/100 km on the WLTP cycle at the real engine's efficiency against Toyota's 4.14.
 
 ### Simulation & live tuning
 - **Live outputs**: Power (HP), Torque (Nm), BMEP, Volumetric Efficiency, Thermal

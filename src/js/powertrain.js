@@ -110,5 +110,22 @@ const HYBRID=Object.assign({},COMBUSTION,{
       try{return base(L);}finally{R.pwr=orig;}};
   }
 });
+// A power-split hybrid (build 189, src/js/power-split.js): the vehicle's shaft is MG2's, geared to the wheels through one
+// reduction as an electric car's motor is, and the engine reaches it through the planetary at whatever speed MG1 holds
+// it: no clutch, no gears, no boost axis (the eCVT's curve is a steady one). Its overrun is MG2's regeneration (the
+// engine stops), and the fuel is burnt on the engine's best line for its share of the power.
+const POWERSPLIT=Object.assign({},HYBRID,{
+  direct:true,
+  idleRpm:()=>0,
+  maxRpm:()=>engine.hy.motor.nMax,
+  inertia:()=>engine.hy.motor.J,
+  torqueGrid:()=>{const c=POWERSPLIT.torqueCurve();return {rpms:c.map(p=>p.rpm),boosts:[0],tq:[c.map(p=>p.tq)],laggy:false};},
+  maxBoost:()=>0,
+  hasShaft:()=>false,
+  boostTarget:()=>0,
+  boostAvail:()=>0,
+  overrunTable:rl=>hybRegenTable(rl),
+  fuelRate:()=>psFuelRate()
+});
 // The powertrain of the car being built: the engine's type chooses it (a saved build without one is combustion).
-function powertrain(){return isElectric()?ELECTRIC:isHybrid()?HYBRID:COMBUSTION;}
+function powertrain(){return isElectric()?ELECTRIC:isHybrid()?(engine.hy.mode==='ps'?POWERSPLIT:HYBRID):COMBUSTION;}

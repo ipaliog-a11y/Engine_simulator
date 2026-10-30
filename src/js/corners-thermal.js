@@ -89,7 +89,7 @@ function updateVehicleSummary(){
   const dl={fwd:'FWD',rwd:'RWD',awd:'AWD'}[vehicle.drive]||'RWD';
   el.className='design-summary vehicleSummaryWrap';
   const stock=isFactoryFit(vehicle);
-  el.innerHTML='<b>'+tr(vehicle.chLabel)+'</b> • '+dl+' • '+(vehicle.ev?tr('SINGLE-SPEED'):vehicle.gears+tr('-speed'))+
+  el.innerHTML='<b>'+tr(vehicle.chLabel)+'</b> • '+dl+' • '+(vehicle.ev?tr('SINGLE-SPEED'):vehicle.ecvt?'eCVT':vehicle.gears+tr('-speed'))+
     ' <span style="color:'+(stock?'#7a8':'#ffcc00')+'">'+tr(stock?'(factory spec)':'(modified)')+'</span>'+
     '<br>'+tr('Curb weight')+' <b>'+Math.round(vehicle.mass)+' kg</b> ('+tr('engine')+' ~'+vehicle.engineMass+' kg) • '+vehicle.powerToWeight.toFixed(0)+' hp/t'+
     (vehicle.body?'<br>'+tr('Body')+' <b>'+tr(CHASSIS[vehicle.chassis].label)+'</b> '+tr('class')+' • Cd '+vehicle.body.cd.toFixed(2)+' × '+vehicle.area.toFixed(2)+' m² • '+tr('wheelbase')+' '+vehicle.wb.toFixed(2)+' m • '+Math.round(vehicle.fWt*100)+'% '+tr('front'):'')+
@@ -104,6 +104,7 @@ function updateVehicleSummary(){
     (vehicle.ev?'':isHybrid()?hybridCycleLine(vehicle):engineCycleLine(vehicle))+   // an engine's WLTP fuel (build 187), a hybrid's (188)
     '<br>'+tr('Drag')+' CdA <b>'+vehicle.cdA.toFixed(2)+'</b> • '+tr('downforce')+' ClA <b>'+vehicle.clA.toFixed(2)+'</b> • '+tr('final drive')+' <b>'+vehicle.finalDrive.toFixed(2)+'</b>'+
     (vehicle.ev?evDrivelineLine(vehicle)+evCycleLine(vehicle):   // one reduction and its regeneration (build 180), the WLTP cycle (184)
+    vehicle.ecvt?psDrivelineLine(vehicle):   // a power-split's planetary and its two machines (build 189)
     '<br>'+tr('Ratios')+' <b>'+vehicle.ratios.map(x=>x.toFixed(2)).join(' · ')+'</b> '+
     tr(vehicle.spacing==='stock'?(vehicle.gearsetApprox?'(family average)':'(published)'):vehicle.spacing==='custom'?'(custom)':'('+(GEAR_SPACING[vehicle.spacing]||GEAR_SPACING.std).label.toLowerCase()+')'))+
     '<br>'+tr('Vehicle cost')+' <b>'+fmtCost(vehicle.cost)+'</b> • '+tr('with engine')+' <b>'+fmtCost(vehicle.cost+(engine.cost||0))+'</b>';

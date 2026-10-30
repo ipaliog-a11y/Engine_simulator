@@ -405,7 +405,7 @@ table.fuelmap td.live{box-shadow:inset 0 0 0 2px #fff;font-weight:bold}
 <body>
 <div class="container">
 <header>
-<h1>PIXEL ENGINE SIM v0.7 build 188</h1>
+<h1>PIXEL ENGINE SIM v0.7 build 189</h1>
 <div class="subtitle" id="subtitle">ENGINE DESIGNER • BUILD IT, THEN DRIVE IT</div>
 </header>
 <div class="build-strip" id="buildStrip">
@@ -454,7 +454,7 @@ table.fuelmap td.live{box-shadow:inset 0 0 0 2px #fff;font-weight:bold}
 
 <div class="design-section">Hybrid</div>
 <div class="design-grid">
-<div class="field"><label for="edHybrid">HYBRID</label><select id="edHybrid"><option value="none">NONE</option><option value="p2">PARALLEL (P2)</option></select></div>
+<div class="field"><label for="edHybrid">HYBRID</label><select id="edHybrid"><option value="none">NONE</option><option value="p2">PARALLEL (P2)</option><option value="ps">POWER-SPLIT (eCVT)</option></select></div>
 <div class="field"><label for="edHyDeploy">DEPLOY</label><select id="edHyDeploy"><option value="full">FULL</option><option value="eco">ECO (TORQUE FILL)</option></select></div>
 </div>
 
@@ -464,7 +464,7 @@ table.fuelmap td.live{box-shadow:inset 0 0 0 2px #fff;font-weight:bold}
 <div class="field"><label for="evRotorD">ROTOR DIAMETER (mm)</label><input type="number" id="evRotorD" min="80" max="260" step="1" value="150"></div>
 <div class="field"><label for="evStack">STACK LENGTH (mm)</label><input type="number" id="evStack" min="40" max="250" step="1" value="134"></div>
 <div class="field"><label for="evPoles">POLES</label><select id="evPoles"><option value="4">4</option><option value="6">6</option><option value="8">8</option><option value="10">10</option><option value="12">12</option></select></div>
-<div class="field"><label for="evTurns">TURNS PER PHASE</label><input type="number" id="evTurns" min="4" max="60" step="1" value="12"></div>
+<div class="field"><label for="evTurns">TURNS PER PHASE</label><input type="number" id="evTurns" min="4" max="120" step="1" value="12"></div>
 <div class="field"><label for="evMagnet">MAGNETS</label><select id="evMagnet"><option value="ferrite">FERRITE</option><option value="ndfeb">NdFeB (SH)</option><option value="ndfebDy">NdFeB + Dy (UH)</option></select></div>
 <div class="field"><label for="evRetention">MAGNET RETENTION</label><select id="evRetention"><option value="bridges">IRON BRIDGES</option><option value="sleeve">CARBON SLEEVE</option></select></div>
 <div class="field"><label for="evCooling">MOTOR COOLING</label><select id="evCooling"><option value="air">AIR (FINNED)</option><option value="jacket">WATER JACKET</option><option value="spray">OIL SPRAY</option><option value="slot">DIRECT SLOT</option></select></div>
@@ -490,7 +490,7 @@ table.fuelmap td.live{box-shadow:inset 0 0 0 2px #fff;font-weight:bold}
 
 <div class="design-section" data-ev>Battery</div>
 <div class="design-grid" data-ev>
-<div class="field"><label for="evChem">CHEMISTRY</label><select id="evChem"><option value="lead">LEAD-ACID</option><option value="nimh">NiMH</option><option value="lfp">LFP</option><option value="nca">NCA / NMC</option><option value="ncaP">NCA (POWER CELLS)</option><option value="liHEV">Li-ION (HYBRID CELLS)</option></select></div>
+<div class="field"><label for="evChem">CHEMISTRY</label><select id="evChem"><option value="lead">LEAD-ACID</option><option value="nimh">NiMH</option><option value="lfp">LFP</option><option value="nca">NCA / NMC</option><option value="ncaP">NCA (POWER CELLS)</option><option value="liHEV">Li-ION (HYBRID CELLS)</option><option value="nimhHEV">NiMH (HYBRID CELLS)</option></select></div>
 <div class="field"><label for="evSeries">CELLS IN SERIES</label><input type="number" id="evSeries" min="20" max="400" step="1" value="96"></div>
 <div class="field"><label for="evKWh">CAPACITY (kWh)</label><input type="number" id="evKWh" min="0.5" max="200" step="0.01" value="75"></div>
 <div class="field"><label for="evYear">TECHNOLOGY YEAR</label><input type="number" id="evYear" min="1990" max="2026" step="1" value="2020"></div>
@@ -4673,7 +4673,7 @@ const I18N={
   'Archetypes':{el:'Αρχέτυπα'},'Kei & City':{el:'Kei & πόλης'},'Compact Turbo':{el:'Μικρά τούρμπο'},'NA Sports':{el:'Ατμοσφαιρικά σπορ'},
   'Turbo Performance':{el:'Τούρμπο επιδόσεων'},'American V8':{el:'Αμερικάνικα V8'},'Supercar':{el:'Supercar'},'Rotary':{el:'Περιστροφικά (Wankel)'},
   'Diesel':{el:'Πετρελαιοκίνητα'},'Electric':{el:'Ηλεκτρικά'},'NCA (POWER CELLS)':{el:'NCA (ΚΥΤΤΑΡΑ ΙΣΧΥΟΣ)'},'ATKINSON (LATE IVC)':{el:'ATKINSON (ΑΡΓΟ ΚΛΕΙΣΙΜΟ ΕΙΣΑΓΩΓΗΣ)'},'engine off':{el:'κινητήρας σβηστός'},'Li-ION (HYBRID CELLS)':{el:'Li-ION (ΚΥΤΤΑΡΑ ΥΒΡΙΔΙΚΩΝ)'},
-  'Hybrid':{el:'Υβριδικό'},'HYBRID':{el:'ΥΒΡΙΔΙΚΟ'},'PARALLEL (P2)':{el:'ΠΑΡΑΛΛΗΛΟ (P2)'},'DEPLOY':{el:'ΑΠΟΔΟΣΗ ΚΙΝΗΤΗΡΑ'},'FULL':{el:'ΠΛΗΡΗΣ'},'ECO (TORQUE FILL)':{el:'ΟΙΚΟΝΟΜΙΚΟ (ΣΥΜΠΛΗΡΩΣΗ ΡΟΠΗΣ)'},'motor':{el:'κινητήρας'},'pack':{el:'μπαταρία'},'system':{el:'σύστημα'},'WLTP cycle':{el:'Κύκλος WLTP'},'from the pack':{el:'από την μπαταρία'},
+  'Hybrid':{el:'Υβριδικό'},'HYBRID':{el:'ΥΒΡΙΔΙΚΟ'},'PARALLEL (P2)':{el:'ΠΑΡΑΛΛΗΛΟ (P2)'},'POWER-SPLIT (eCVT)':{el:'ΔΙΑΙΡΟΥΜΕΝΗΣ ΙΣΧΥΟΣ (eCVT)'},'eCVT (POWER-SPLIT)':{el:'eCVT (ΔΙΑΙΡΟΥΜΕΝΗΣ ΙΣΧΥΟΣ)'},'NiMH (HYBRID CELLS)':{el:'NiMH (ΚΥΤΤΑΡΑ ΥΒΡΙΔΙΚΩΝ)'},'A power-split hybrid has no gears: one reduction from its traction motor, set with GEARING on the VEHICLE tab.':{el:'Ένα υβριδικό διαιρούμενης ισχύος δεν έχει ταχύτητες: μία σχέση μείωσης από τον κινητήρα έλξης, ρυθμίζεται με τη ΣΧΕΣΗ ΜΕΙΩΣΗΣ στην καρτέλα ΟΧΗΜΑ.'},'DEPLOY':{el:'ΑΠΟΔΟΣΗ ΚΙΝΗΤΗΡΑ'},'FULL':{el:'ΠΛΗΡΗΣ'},'ECO (TORQUE FILL)':{el:'ΟΙΚΟΝΟΜΙΚΟ (ΣΥΜΠΛΗΡΩΣΗ ΡΟΠΗΣ)'},'motor':{el:'κινητήρας'},'pack':{el:'μπαταρία'},'system':{el:'σύστημα'},'WLTP cycle':{el:'Κύκλος WLTP'},'from the pack':{el:'από την μπαταρία'},
   'at the socket':{el:'από την πρίζα'},'regeneration takes back':{el:'η ανάκτηση επιστρέφει'},'range':{el:'αυτονομία'},'Two-Stroke':{el:'Δίχρονα'},
   '1990s':{el:'Δεκαετία του 1990'},'2000s':{el:'Δεκαετία του 2000'},'2010s':{el:'Δεκαετία του 2010'},'2020s':{el:'Δεκαετία του 2020'},
   // dropdown choices (and the labels the summaries reuse). An option looks up 'opt:'+text first, for
@@ -8233,7 +8233,11 @@ const CHEM={
   // hybrid cells (build 186): lithium-ion built for a pack that is mostly power and little energy, cycled shallow
   // thousands of times a day; a 1.5 kWh pack gives and takes 30-40 kW (the Ioniq Hybrid's 1.56 kWh LiPo, ~25C).
   liHEV:{label:'Li-ION (HYBRID CELLS)',ocv:[3.30,3.50,3.58,3.63,3.68,3.73,3.79,3.86,3.94,4.03,4.13],vMin:2.80,rAh:0.025,cMax:25,cCharge:20,from:2009,
-        whkg:{2009:70,2016:85,2024:100},cost:{2009:2200,2016:1100,2024:700}}
+        whkg:{2009:70,2016:85,2024:100},cost:{2009:2200,2016:1100,2024:700}},
+  // nickel-metal hydride hybrid cells (build 189): the Prius's since 1997, prismatic 6.5 Ah cells in 7.2 V modules built for
+  // current (the 4th generation's 168 cells: 1.31 kWh, ~0.35 ohm, ~20 kW out and in, 40 kg).
+  nimhHEV:{label:'NiMH (HYBRID CELLS)',ocv:[1.10,1.22,1.25,1.26,1.27,1.28,1.29,1.30,1.31,1.33,1.40],vMin:1.00,rAh:0.012,cMax:20,cCharge:15,from:1997,
+        whkg:{1997:42,2016:52},cost:{1997:1500,2016:700}}
 };
 // Cell mass over pack mass: modules, structure, cooling and wiring take the rest. Large prismatic cells packed without
 // modules (cell-to-pack LFP, from 2020) waste least.
@@ -8397,8 +8401,25 @@ const HYBRID=Object.assign({},COMBUSTION,{
       try{return base(L);}finally{R.pwr=orig;}};
   }
 });
+// A power-split hybrid (build 189, src/js/power-split.js): the vehicle's shaft is MG2's, geared to the wheels through one
+// reduction as an electric car's motor is, and the engine reaches it through the planetary at whatever speed MG1 holds
+// it: no clutch, no gears, no boost axis (the eCVT's curve is a steady one). Its overrun is MG2's regeneration (the
+// engine stops), and the fuel is burnt on the engine's best line for its share of the power.
+const POWERSPLIT=Object.assign({},HYBRID,{
+  direct:true,
+  idleRpm:()=>0,
+  maxRpm:()=>engine.hy.motor.nMax,
+  inertia:()=>engine.hy.motor.J,
+  torqueGrid:()=>{const c=POWERSPLIT.torqueCurve();return {rpms:c.map(p=>p.rpm),boosts:[0],tq:[c.map(p=>p.tq)],laggy:false};},
+  maxBoost:()=>0,
+  hasShaft:()=>false,
+  boostTarget:()=>0,
+  boostAvail:()=>0,
+  overrunTable:rl=>hybRegenTable(rl),
+  fuelRate:()=>psFuelRate()
+});
 // The powertrain of the car being built: the engine's type chooses it (a saved build without one is combustion).
-function powertrain(){return isElectric()?ELECTRIC:isHybrid()?HYBRID:COMBUSTION;}
+function powertrain(){return isElectric()?ELECTRIC:isHybrid()?(engine.hy.mode==='ps'?POWERSPLIT:HYBRID):COMBUSTION;}
 // ====== VEHICLE: build spec, mass, gearing, aero and the acceleration simulation ======
 const lerp=(a,b,t)=>a+(b-a)*t;
 // Estimate the engine's installed mass (kg) from its spec — fed into the car's curb weight.
@@ -8606,7 +8627,7 @@ function updateGearingLabel(){
 const gw={open:false,lap:null,lapKey:'',hover:{saw:null,force:null},busy:false};
 const gwOrd=i=>tr(['1st','2nd','3rd'][i]||((i+1)+'th'));
 function openGearWin(){
-  if(isElectric()){flash(tr(EV_GEAR_NOTE),'warn');return;}   // one fixed reduction, no gears to space (build 180)
+  if(isElectric()||isPowerSplit()){flash(tr(isElectric()?EV_GEAR_NOTE:PS_GEAR_NOTE),'warn');return;}   // one fixed reduction, no gears to space (build 180)
   const w=document.getElementById('gearWin');if(!w)return;
   w.hidden=false;gw.open=true;gw.lap=null;renderGearWin();
   document.getElementById('gwClose').focus();
@@ -8869,8 +8890,8 @@ function computeVehicleCost(ch,tt,wr){
      (stepOf(vehicle.barF)?1:0)*STIFF_STEP_COST.bar+(stepOf(vehicle.barR)?1:0)*STIFF_STEP_COST.bar;
   c+=Math.max(0,vehicle.rotor-320)*6;
   c+={fwd:0,rwd:800,awd:2500}[vehicle.drive]||0;
-  c+=(vehicle.ev?EV_REDUCTION:(GEARBOX[vehicle.gearbox]||GEARBOX.manual)).cost+(DIFF[vehicle.diff]||DIFF.open).cost;
-  c+=vehicle.ev?0:Math.max(0,vehicle.gears-5)*400;
+  c+=(vehicle.ev?EV_REDUCTION:vehicle.ecvt?PS_REDUCTION:(GEARBOX[vehicle.gearbox]||GEARBOX.manual)).cost+(DIFF[vehicle.diff]||DIFF.open).cost;
+  c+=vehicle.ev||vehicle.ecvt?0:Math.max(0,vehicle.gears-5)*400;
   c+=Math.max(0,vehicle.wheelDia-16)*120+Math.max(0,vehicle.tireWidth-205)*4;
   return Math.max(3000,Math.round(c/50)*50);
 }
@@ -8988,8 +9009,10 @@ function buildVehicle(){
   vehicle.finalDrive=vehicle.finalDriveSet>0?clamp(vehicle.finalDriveSet,FD_MIN,FD_MAX)
     :gs.fd>0?clamp(gs.fd*gearingBias(vehicle.gearing)/gearingBias(52),FD_MIN,FD_MAX):matchedFinalDrive();
   vehicle.ev=powertrain().kind==='electric';
+  vehicle.ecvt=!!powertrain().direct;
   if(vehicle.ev)electricDriveline(vehicle);   // one fixed reduction, no gearbox (build 180)
-  syncEvVehicleForm(vehicle.ev);
+  if(vehicle.ecvt)psDriveline(vehicle);       // a power-split's: one reduction from MG2 (build 189)
+  syncEvVehicleForm(vehicle.ev||vehicle.ecvt);
   vehicle.cost=computeVehicleCost(ch,tt,wr);
   vehicle.powerToWeight=powertrain().ready()?powertrain().rating().peakHP/(vehicle.mass/1000):0;   // hp per tonne
   perf=simulateAccel();
@@ -9155,7 +9178,7 @@ function simulateAccelRun(){
   const gb=vehicle.gb||GEARBOX.manual;
   const shiftTime=gb.shift,tcStall=gb.stall>0?clamp(gb.stall,idle,rl*0.85):0;
   // an electric car has no clutch to slip and no launch speed to choose: the motor turns with the wheels from rest (build 180)
-  const ev=pt.kind==='electric';
+  const ev=pt.kind==='electric'||!!pt.direct;   // a power-split's eCVT neither (build 189)
   const df=vehicle.df||DIFF.open;
   // Most axle torque the car will ever put down — first gear at peak torque. The diff's usable
   // share is referenced against this, so a launch behaves exactly as before while a tall gear
@@ -10600,7 +10623,7 @@ function simulateLapRun(key,opts){
     const ped=driverPedal(i=>tgt[i],0);
     for(let i=0;i<n;i++){
       thr[i]=ped[i];
-      mapAt[i]=pt.kind==='electric'?1:steadyMapAt(rpmAt[i],thr[i]);   // a motor has no manifold (build 180)
+      mapAt[i]=pt.kind==='electric'||pt.direct?1:steadyMapAt(rpmAt[i],thr[i]);   // a motor has no manifold (build 180)
       if(boostLap)mapAt[i]=Math.min(mapAt[i],1+boostLap[i]);   // what the shaft has built by here
     }
   }
@@ -11427,7 +11450,7 @@ function updateVehicleSummary(){
   const dl={fwd:'FWD',rwd:'RWD',awd:'AWD'}[vehicle.drive]||'RWD';
   el.className='design-summary vehicleSummaryWrap';
   const stock=isFactoryFit(vehicle);
-  el.innerHTML='<b>'+tr(vehicle.chLabel)+'</b> • '+dl+' • '+(vehicle.ev?tr('SINGLE-SPEED'):vehicle.gears+tr('-speed'))+
+  el.innerHTML='<b>'+tr(vehicle.chLabel)+'</b> • '+dl+' • '+(vehicle.ev?tr('SINGLE-SPEED'):vehicle.ecvt?'eCVT':vehicle.gears+tr('-speed'))+
     ' <span style="color:'+(stock?'#7a8':'#ffcc00')+'">'+tr(stock?'(factory spec)':'(modified)')+'</span>'+
     '<br>'+tr('Curb weight')+' <b>'+Math.round(vehicle.mass)+' kg</b> ('+tr('engine')+' ~'+vehicle.engineMass+' kg) • '+vehicle.powerToWeight.toFixed(0)+' hp/t'+
     (vehicle.body?'<br>'+tr('Body')+' <b>'+tr(CHASSIS[vehicle.chassis].label)+'</b> '+tr('class')+' • Cd '+vehicle.body.cd.toFixed(2)+' × '+vehicle.area.toFixed(2)+' m² • '+tr('wheelbase')+' '+vehicle.wb.toFixed(2)+' m • '+Math.round(vehicle.fWt*100)+'% '+tr('front'):'')+
@@ -11442,6 +11465,7 @@ function updateVehicleSummary(){
     (vehicle.ev?'':isHybrid()?hybridCycleLine(vehicle):engineCycleLine(vehicle))+   // an engine's WLTP fuel (build 187), a hybrid's (188)
     '<br>'+tr('Drag')+' CdA <b>'+vehicle.cdA.toFixed(2)+'</b> • '+tr('downforce')+' ClA <b>'+vehicle.clA.toFixed(2)+'</b> • '+tr('final drive')+' <b>'+vehicle.finalDrive.toFixed(2)+'</b>'+
     (vehicle.ev?evDrivelineLine(vehicle)+evCycleLine(vehicle):   // one reduction and its regeneration (build 180), the WLTP cycle (184)
+    vehicle.ecvt?psDrivelineLine(vehicle):   // a power-split's planetary and its two machines (build 189)
     '<br>'+tr('Ratios')+' <b>'+vehicle.ratios.map(x=>x.toFixed(2)).join(' · ')+'</b> '+
     tr(vehicle.spacing==='stock'?(vehicle.gearsetApprox?'(family average)':'(published)'):vehicle.spacing==='custom'?'(custom)':'('+(GEAR_SPACING[vehicle.spacing]||GEAR_SPACING.std).label.toLowerCase()+')'))+
     '<br>'+tr('Vehicle cost')+' <b>'+fmtCost(vehicle.cost)+'</b> • '+tr('with engine')+' <b>'+fmtCost(vehicle.cost+(engine.cost||0))+'</b>';
@@ -12268,6 +12292,8 @@ function trackSoundState(st){
     shaftE=0.5*e.shaftJ*w*w;
   }
   const lam=e.ci?SMOKE_LAMBDA_CI+(2.25-SMOKE_LAMBDA_CI)*(1-thr):thr>0.9?0.88:1;
+  // a power-split's replay runs at MG2's speed: the engine is where the eCVT holds it on power, idling off it (build 189)
+  if(isPowerSplit())st=Object.assign({},st,{rpm:thr>0.02?psEngineRpmAt(st.rpm):e.idleRpmEff});
   return {rpm:st.rpm,map:st.map||1,throttle:thr,afr:lam*(e.stoichAFR||14.7),boostActual:boost,shaftE,
     fuelCut:(e.canDFCO&&thr<0.03&&st.rpm>e.idleRpmEff+150)||st.rpm>=e.redline,coolant:90,knockRisk:0,blown:false};
 }
@@ -16823,7 +16849,7 @@ const rotorWord=m=>m.im?'ROTOR':'MAGNETS';
 function readElectricFromForm(){
   const g=id=>document.getElementById(id),num=(id,lo,hi)=>clamp(+g(id).value||EV_DEFAULT[id],lo,hi);
   return {evMotorType:g('evMotorType').value==='im'?'im':'pm',evRotorD:num('evRotorD',80,260),evStack:num('evStack',40,250),evPoles:+g('evPoles').value||6,
-    evTurns:Math.round(num('evTurns',4,60)),evMagnet:g('evMagnet').value,evRetention:g('evRetention').value,
+    evTurns:Math.round(num('evTurns',4,120)),evMagnet:g('evMagnet').value,evRetention:g('evRetention').value,
     evCooling:g('evCooling').value,evMaxRpm:Math.round(num('evMaxRpm',4000,25000)),evInverter:g('evInverter').value,
     evAmps:Math.round(num('evAmps',100,1600)),evRearCount:g('evRearCount').value==='2'?2:1,
     evFront:['pm','im'].includes(g('evFront').value)?g('evFront').value:'none',evFrontD:num('evFrontD',80,260),evFrontStack:num('evFrontStack',40,250),
@@ -16849,12 +16875,12 @@ function syncElectricSections(){
   const ev=typeSel.value==='electric',hs=document.getElementById('edHybrid'),hy=!ev&&!!hs&&hs.value!=='none';
   panel.classList.toggle('ev',ev);
   panel.classList.toggle('hy',hy);   // a hybrid's motor and battery, under its engine (build 186)
-  if(hs){const d=document.getElementById('edHyDeploy');if(d)d.disabled=!hy;}
+  if(hs){const d=document.getElementById('edHyDeploy');if(d)d.disabled=!hy||hs.value==='ps';}   // a power-split deploys all it has (build 189)
   if(ev||hy){
     // a chemistry that had not reached cars by the technology year is offered disabled (decision 9)
     const year=clamp(+document.getElementById('evYear').value||2020,1990,2026),chem=document.getElementById('evChem');
     [...chem.options].forEach(o=>{o.disabled=!chemAvailable(o.value,year);});
-    if(!chemAvailable(chem.value,year))chem.value=['nca','ncaP','liHEV','lfp','nimh','lead'].find(c=>chemAvailable(c,year));
+    if(!chemAvailable(chem.value,year))chem.value=['nca','ncaP','liHEV','lfp','nimhHEV','nimh','lead'].find(c=>chemAvailable(c,year));
     // an induction motor has no magnets to grade or to hold in (build 182): its rotor is a copper cage
     const im=document.getElementById('evMotorType').value==='im';
     document.getElementById('evMagnet').disabled=im;document.getElementById('evRetention').disabled=im;
@@ -17659,7 +17685,7 @@ function evCycleLine(v){
 //   the engine do everything it can and the motor give only what the engine cannot (the most efficient use of a
 //   small pack), and where a lap would still spend more than braking returns, the deploy is cut to the share that
 //   balances (hybridLap). The race burns fuel for the engine's share of the power only.
-const HYBRID_MODES={none:{label:'NONE'},p2:{label:'PARALLEL (P2)'}};
+const HYBRID_MODES={none:{label:'NONE'},p2:{label:'PARALLEL (P2)'},ps:{label:'POWER-SPLIT (eCVT)'}};   // power-split: build 189, src/js/power-split.js
 // DEPLOY: how the controller uses the motor at full throttle. FULL gives everything the motor and pack can. ECO is an
 // efficiency-first calibration (the Ioniq's): the motor only fills the engine's curve up to its peak torque, so it helps
 // off the line and low in the revs and adds nothing at speed, where the pack's energy is spent least well. Hyundai's
@@ -17670,6 +17696,10 @@ const HYBRID_DEPLOY={full:{label:'FULL'},eco:{label:'ECO (TORQUE FILL)'}};
 // 12 poles) and a 1.56 kWh pack of hybrid cells, the size of the Ioniq Hybrid's 32 kW / 170 Nm system.
 const HYB_DEFAULT={evMotorType:'pm',evRotorD:200,evStack:40,evPoles:12,evTurns:28,evMagnet:'ndfeb',evRetention:'bridges',evCooling:'jacket',
   evMaxRpm:8000,evInverter:'igbt',evAmps:400,evRearCount:1,evFront:'none',evChem:'liHEV',evSeries:64,evKWh:1.56,evYear:2016};
+// A power-split's when it is first chosen (build 189): the 4th-generation Prius's MG2 (53 kW and 163 Nm on the 600 V bus,
+// 17,000 rpm) and its 1.31 kWh nickel-metal hydride pack of 168 cells (201.6 V).
+const HYB_DEFAULT_PS={evMotorType:'pm',evRotorD:150,evStack:60,evPoles:8,evTurns:100,evMagnet:'ndfeb',evRetention:'bridges',evCooling:'jacket',
+  evMaxRpm:17000,evInverter:'igbt',evAmps:100,evRearCount:1,evFront:'none',evChem:'nimhHEV',evSeries:168,evKWh:1.31,evYear:2016};
 const HYB_SOC=0.6;   // a charge-sustaining hybrid holds its pack about here, with room above it to take back braking
 const isHybrid=()=>!!engine&&engine.type!=='electric'&&!!engine.hy;
 // Build the hybrid system of a combustion engine from its form fields (the electric drive's), or none.
@@ -17679,13 +17709,18 @@ function buildHybrid(e){
     retention:e.evRetention,cooling:e.evCooling,inverter:e.evInverter,invAmps:e.evAmps,maxRpm:e.evMaxRpm});
   const pack=packBuild({chem:e.evChem,series:e.evSeries,kWh:e.evKWh,year:e.evYear});
   e.hy={mode:e.hyMode,motor,pack,mass:Math.round(motor.mass+pack.mass),cost:motor.cost+pack.cost};
+  if(e.hyMode==='ps'){   // the eCVT: MG1 sized to the engine, and the planetary set (~12 kg) in place of a gearbox
+    const mg1=psMg1Build(e,motor);e.hy.mg1=mg1;e.hy.mass=Math.round(motor.mass+mg1.mass+pack.mass+12);e.hy.cost+=mg1.cost+600;
+  }
   return e.hy;
 }
 // The motor's torque at an engine speed (Nm): its envelope at the pack's charge-sustaining voltage, magnets at 60 C,
 // cut to what the pack gives there (the electric car's own law), and to nothing past the motor's top speed.
+// The bus the motors run on: the pack's own voltage, or a power-split's boost converter's.
+const hybBusV=hy=>hy.mode==='ps'?PS.busV:packOcv(hy.pack,HYB_SOC);
 function hybMotorTq(hy,rpm){
   if(rpm>hy.motor.nMax)return 0;
-  const V=packOcv(hy.pack,HYB_SOC),tc=hy.motor.cool.tCool,cool={w:tc,c:tc,r:60};
+  const V=hybBusV(hy),tc=hy.motor.cool.tCool,cool={w:tc,c:tc,r:60};
   const Pb=packMaxPower(hy.pack,HYB_SOC);
   return driveTorqueRated(hy,Math.max(rpm,1),V,cool,Pb);
 }
@@ -17695,6 +17730,7 @@ let hybDeployShare=1;
 function hybCurves(){
   const e=engine,hy=e.hy;
   if(hy._c&&hy._c.score===e.score)return hy._c;
+  if(hy.mode==='ps'){hy._c=Object.assign({score:e.score},psCurves());return hy._c;}   // on MG2's speed (build 189)
   const eng=buildTorqueCurve(),full=eng.map(p=>hybMotorTq(hy,p.rpm));
   const pk=Math.max(...eng.map(p=>p.tq));
   const mot=e.hyDeploy==='eco'?full.map((t,i)=>Math.min(t,Math.max(0,pk-eng[i].tq))):full;
@@ -17705,13 +17741,20 @@ const hybMotorAt=rpm=>{const c=hybCurves(),R=c.eng;
   if(rpm<=R[0].rpm)return c.mot[0];
   for(let i=1;i<R.length;i++)if(rpm<=R[i].rpm)return c.mot[i-1]+(c.mot[i]-c.mot[i-1])*(rpm-R[i-1].rpm)/(R[i].rpm-R[i-1].rpm);
   return c.mot[c.mot.length-1];};
-// The motor's regeneration on the engine's overrun table (Nm, 500 rpm up in 250s): the electric car's law.
-const hybRegenTable=rl=>evRegenTable(engine.hy,rl);
+// The motor's regeneration on the engine's overrun table (Nm, 500 rpm up in 250s): the electric car's law, on the bus.
+function hybRegenTable(rl){
+  const hy=engine.hy,out=[],V=hy.mode==='ps'?PS.busV:motorRatedV(hy),Pc=hy.pack.pChargeMax;
+  for(let r=500;r<=rl+250;r+=250){
+    const n=Math.min(r,rl),w=n*Math.PI/30,T=motorMaxTorque(hy.motor,n,V,60);
+    out.push(Math.max(0,Math.min(T,Pc/Math.max(1,w))));
+  }
+  return out;
+}
 // A solved lap in the hybrid's terms: per point the motor's power (W: + deploying, the part of the lap's power the
 // engine's full load could not give; - regenerating, its share of the overrun), and the pack's energy over the lap.
 function hybLapEnergy(L){
-  const hy=engine.hy,R=L.replay,n=R.rpm.length,c=hybCurves(),V=packOcv(hy.pack,HYB_SOC),tc=hy.motor.cool.tCool,temp={w:tc+20,c:tc+15,r:60};
-  const v=L.v,p=L.track.line,m=vehicle.mass,rl=engine.redline,regen=hybRegenTable(rl),ov=COMBUSTION.overrunTable(rl);
+  const hy=engine.hy,R=L.replay,n=R.rpm.length,c=hybCurves(),V=hybBusV(hy),tc=hy.motor.cool.tCool,temp={w:tc+20,c:tc+15,r:60};
+  const pt=powertrain(),v=L.v,p=L.track.line,m=vehicle.mass,rl=pt.maxRpm(),regen=hybRegenTable(rl),ov=hy.mode==='ps'?[]:COMBUSTION.overrunTable(rl);   // a power-split's engine stops: no overrun
   const engAt=rpm=>{const R0=c.eng;if(rpm<=R0[0].rpm)return R0[0].tq;for(let i=1;i<R0.length;i++)if(rpm<=R0[i].rpm)return R0[i-1].tq+(R0[i].tq-R0[i-1].tq)*(rpm-R0[i-1].rpm)/(R0[i].rpm-R0[i-1].rpm);return R0[R0.length-1].tq;};
   const pm=new Float32Array(n);let deployJ=0,regenJ=0;
   for(let i=0;i<n;i++){
@@ -17748,9 +17791,175 @@ function hybridLap(key,opts){
 function hybSummaryLine(e){
   const hy=e.hy;if(!hy)return '';
   const c=hybCurves();let sys=0,sysR=0,tq=0;
+  if(hy.mode==='ps'){   // on MG2's shaft, the system's power and the two machines (build 189)
+    c.eng.forEach((p,i)=>{const P=(p.tq+c.mot[i])*p.rpm*Math.PI/30;if(P>sys)sys=P;});
+    return '<br><b>'+tr('HYBRID')+'</b> '+tr(HYBRID_MODES.ps.label)+' • MG1 <b>'+Math.round(motorMaxTorque(hy.mg1,100,PS.busV,60))+' Nm</b>, MG2 <b>'+Math.round(motorMaxTorque(hy.motor,100,PS.busV,60))+' Nm</b> • '+
+      tr('pack')+' '+hy.pack.kWh+' kWh '+tr(hy.pack.chem.label)+' • +'+hy.mass+' kg • '+tr('system')+' <b>'+Math.round(sys/1000)+' kW</b>';
+  }
   c.eng.forEach((p,i)=>{const t=p.tq+c.mot[i],P=t*p.rpm*Math.PI/30;if(P>sys){sys=P;sysR=p.rpm;}tq=Math.max(tq,t);});
   return '<br><b>'+tr('HYBRID')+'</b> '+tr(HYBRID_MODES[hy.mode].label)+', '+tr((HYBRID_DEPLOY[e.hyDeploy]||HYBRID_DEPLOY.full).label)+' • '+tr('motor')+' <b>'+Math.round(Math.max(...c.full))+' Nm</b> • '+
     tr('pack')+' '+hy.pack.kWh+' kWh '+tr(hy.pack.chem.label)+' • +'+hy.mass+' kg • '+tr('system')+' <b>'+Math.round(sys/1000)+' kW</b> '+tr('at')+' '+sysR+' rpm, <b>'+Math.round(tq)+' Nm</b>';
+}
+// ====== POWER-SPLIT: the planetary eCVT (build 189, step 3.3 of plans/hybrid-electric/) ======
+// Toyota's Hybrid Synergy Drive (the Prius since 1997, and its licensees) has no gearbox. One planetary gearset splits
+// the engine's power: the engine drives the carrier, a small motor-generator (MG1) the sun, and the ring turns with the
+// wheels, where the traction motor (MG2) also drives. Speeds and torques in a planetary are fixed by its teeth
+// (Willis: Zs ns + Zr nr = (Zs + Zr) ne), so with rho = Zs/Zr
+//   the sun's speed       ns = ((1 + rho) ne - nr) / rho: MG1 sets the engine's speed for any road speed (an eCVT);
+//   the ring's torque     Tr = Te / (1 + rho): ~72% of the engine's torque goes to the wheels through the gears;
+//   the sun's torque      Ts = rho Te / (1 + rho): MG1 holds it, generating while it turns forward, and its power
+//                         goes to MG2 as electricity (the electrical path), with the pack's own on top.
+// So the engine can sit at whatever speed burns least for the power asked of it, and stop altogether: MG2 then drives
+// alone and MG1 spins backwards freely. What limits it: MG1's torque (it must hold the engine's reaction), MG1's speed,
+// MG2's torque and speed, and the pack.
+// What is derived: every speed and torque above, and the losses on the electrical path (motorLosses for each machine
+// at its own speed and torque). What is a rule, and named:
+//   the gears        the 4th-generation Prius's (P610 transaxle): 30 sun and 78 ring teeth, and MG2 geared 65:17 to
+//                    the ring's counter gear (10.84:1 to the wheels with its 2.834 differential);
+//   the bus          a boost converter raises the pack to 600 V for both machines (Toyota's since 2004);
+//   MG1              the traction motor's design (the GEN-4 MG1 and MG2 share a stator diameter), its stack and
+//                    current set for 110% of the engine's peak reaction torque and for 31% of the engine's peak power
+//                    (22.5 kW against 72 kW on the 4th-generation Prius).
+const PS={rho:30/78,k2:65/17,busV:600,mg1Margin:1.1,mg1Share:22.5/72};
+const isPowerSplit=()=>isHybrid()&&engine.hy.mode==='ps';
+// MG1, from MG2's design: with the winding kept, the torque goes with stack x current and the knee speed against the
+// stack, so the stack sets the knee (MG1's power over its torque) and the current the torque.
+function psMg1Build(e,mg2){
+  const s=mg2.s,rho=PS.rho,T1=PS.mg1Margin*e.score.peakTQ*rho/(1+rho),P1=PS.mg1Share*e.score.peakHP*745.7;
+  const T2=motorMaxTorque(mg2,100,PS.busV,60);
+  let k2=mg2.nMax;for(let r=100;r<=mg2.nMax;r+=100)if(motorMaxTorque(mg2,r,PS.busV,60)<T2*0.999){k2=r;break;}
+  const knee1=P1/T1*30/Math.PI,stack=Math.max(5,s.stackL*k2/knee1);
+  let amps=s.invAmps*(T1/T2)/(stack/s.stackL),m=null;
+  for(let it=0;it<4;it++){   // saturation bends torque from current: settle the current on the torque
+    m=motorBuild(Object.assign({},s,{stackL:stack,invAmps:amps}));
+    amps*=T1/Math.max(1,motorMaxTorque(m,100,PS.busV,60));
+  }
+  return motorBuild(Object.assign({},s,{stackL:stack,invAmps:amps}));
+}
+// The electrical power MG1 puts on the bus (W, negative drawing) holding the sun torque Ts at the sun speed ns.
+function psMg1Elec(hy,Ts,ns,temp){
+  const P=Ts*ns*Math.PI/30;
+  return P-motorLosses(hy.mg1,Math.abs(Ts),Math.max(Math.abs(ns),1),PS.busV,temp).total;
+}
+// MG2's most torque (Nm, negative braking) for the electrical power Pin it has (W): T w + losses(T) <= Pin, on its envelope.
+function psMg2For(hy,n2,Pin,temp){
+  const m=hy.motor,Tm=motorMaxTorque(m,Math.max(n2,1),PS.busV,60),w=n2*Math.PI/30;
+  const need=t=>t*w+motorLosses(m,Math.abs(t),Math.max(n2,1),PS.busV,temp).total;
+  if(need(Tm)<=Pin)return Tm;
+  if(need(-Tm)>Pin)return -Tm;
+  let lo=-Tm,hi=Tm;for(let k=0;k<28;k++){const mid=(lo+hi)/2;if(need(mid)>Pin)hi=mid;else lo=mid;}
+  return lo;
+}
+// The engine speeds MG1 allows at a ring speed (rpm): |ns| within MG1's top speed.
+function psEngineRange(hy,nr){
+  const rho=PS.rho,n1=hy.mg1.nMax,e=engine;
+  return {lo:Math.max(0,(nr-n1*rho)/(1+rho)),hi:Math.min(e.redline,(n1*rho+nr)/(1+rho))};
+}
+// Full throttle at an MG2 speed (rpm): the engine at the speed that gives the most at the wheels, its torque cut to
+// what MG1 can hold, MG1's power through MG2, and the pack's Pb (W) on top. Returns the torque at the MG2 shaft (the
+// powertrain's shaft: the ring's torque comes in through the 65:17 gear) and the engine's speed and power there.
+function psFullLoad(n2,Pb,tqAt){
+  const e=engine,hy=e.hy,rho=PS.rho,nr=n2/PS.k2,R=psEngineRange(hy,nr),tc=hy.motor.cool.tCool,temp={w:tc,c:tc,r:60};
+  let best={tq:psMg2For(hy,n2,Pb,temp),ne:0,Pe:0};   // the engine stopped: MG2 on the pack alone
+  if(R.hi>R.lo){
+    const N=24,r0=Math.max(R.lo,e.idleRpmEff||700);
+    for(let k=0;k<=N;k++){
+      const ne=r0+(R.hi-r0)*k/N;if(ne<=0)continue;
+      const ns=((1+rho)*ne-nr)/rho;
+      const T1=motorMaxTorque(hy.mg1,Math.max(Math.abs(ns),1),PS.busV,60);
+      const Te=Math.min(tqAt(ne),T1*(1+rho)/rho);if(!(Te>0))continue;
+      const Ts=Te*rho/(1+rho),Pe1=psMg1Elec(hy,Ts,ns,temp);
+      const T2=psMg2For(hy,n2,Pe1+Pb,temp),tq=Te/(1+rho)/PS.k2+T2;
+      if(tq>best.tq)best={tq,ne,Pe:Te*ne*Math.PI/30};
+    }
+  }
+  return best;
+}
+// The curves the vehicle reads, on MG2's speed from rest to its top speed: the eCVT on the engine alone (eng), what the
+// pack adds at full deploy (mot), and the share of the engine's power that reaches the shaft (eta: the electrical
+// path's losses), which the lap's fuel uses.
+function psCurves(){
+  const e=engine,hy=e.hy,curve=buildTorqueCurve();
+  const tqAt=rpm=>{if(rpm<=curve[0].rpm)return curve[0].tq;for(let i=1;i<curve.length;i++)if(rpm<=curve[i].rpm)return curve[i-1].tq+(curve[i].tq-curve[i-1].tq)*(rpm-curve[i-1].rpm)/(curve[i].rpm-curve[i-1].rpm);return 0;};
+  const Pb=packMaxPower(hy.pack,HYB_SOC),nMax=hy.motor.nMax,step=Math.max(50,Math.round(nMax/100/50)*50);
+  const eng=[],mot=[],full=[],eta=[],ne=[];
+  for(let r=0;r<=nMax+1;r+=step){
+    const n=Math.min(r,nMax),a=psFullLoad(n,0,tqAt),b=psFullLoad(n,Pb,tqAt),w=Math.max(n,1)*Math.PI/30;
+    eng.push({rpm:n,tq:Math.max(0,a.tq)});mot.push(Math.max(0,b.tq-Math.max(0,a.tq)));full.push(b.tq);ne.push(a.ne);
+    eta.push(a.Pe>0?clamp(Math.max(0,a.tq)*w/a.Pe,0.5,1):0.9);
+    if(n>=nMax)break;
+  }
+  return {eng,mot,full,eta,ne};
+}
+// The engine's best line (the optimal operating line): for each power, the speed that burns least, at the map's
+// warm temperature. A power-split's controller holds the engine on it. Cached per build.
+function psOol(){
+  const e=engine;
+  if(e._ool&&e._ool.score===e.score)return e._ool;
+  const curve=buildTorqueCurve(),r0=Math.max(1000,e.idleRpmEff||800),r1=e.redline,NP=48,NR=36,P=[],ne=[],gs=[];
+  let Pmax=0;for(const q of curve)Pmax=Math.max(Pmax,q.tq*q.rpm*Math.PI/30);
+  const tqAt=rpm=>{if(rpm<=curve[0].rpm)return curve[0].tq;for(let i=1;i<curve.length;i++)if(rpm<=curve[i].rpm)return curve[i-1].tq+(curve[i].tq-curve[i-1].tq)*(rpm-curve[i-1].rpm)/(curve[i].rpm-curve[i-1].rpm);return 0;};
+  for(let i=1;i<=NP;i++){
+    const Pi=Pmax*i/NP;let b=null;
+    for(let j=0;j<=NR;j++){
+      const rpm=r0+(r1-r0)*j/NR,w=rpm*Math.PI/30,T=Pi/w;
+      if(T>tqAt(rpm)*0.98)continue;
+      const f=engineFuelAt(rpm,T,95);if(isFinite(f)&&(!b||f<b.f))b={f,rpm};
+    }
+    if(b){P.push(Pi);ne.push(b.rpm);gs.push(b.f);}
+  }
+  e._ool={score:e.score,P,ne,gs,Pmax:P.length?P[P.length-1]:Pmax};
+  return e._ool;
+}
+// The best line's engine speed and fuel (g/s) for an engine power (W).
+function psOolAt(Pe){
+  const O=psOol(),P=O.P;
+  if(!P.length)return {ne:engine.idleRpmEff,gs:NaN};
+  if(Pe<=P[0])return {ne:O.ne[0],gs:O.gs[0]*Pe/P[0]};
+  for(let i=1;i<P.length;i++)if(Pe<=P[i]){const f=(Pe-P[i-1])/(P[i]-P[i-1]);return {ne:O.ne[i-1]+(O.ne[i]-O.ne[i-1])*f,gs:O.gs[i-1]+(O.gs[i]-O.gs[i-1])*f};}
+  return {ne:O.ne[P.length-1],gs:O.gs[P.length-1]*Pe/P[P.length-1]};
+}
+// The driveline: one fixed reduction from MG2 to the wheels, as an electric car's (src/js/electric-car.js), matched so
+// MG2's top speed falls where drag takes the system's peak power, or the car's published one.
+function psDriveline(v){
+  const gb=PS_REDUCTION,pt=powertrain();
+  v.gb=gb;v.gbLabel=gb.label;v.shiftTime=0;v.shiftCut=0;
+  v.driveEff=EV_DRIVE_EFF[v.drive]||0.97;
+  v.ratios=[1];v.gearsetApprox=false;
+  const pub=v.body&&v.body.fit&&v.body.fit.fd>0?v.body.fit.fd:0;v.fdPublished=pub;
+  let P=0;for(const q of pt.torqueCurve())P=Math.max(P,q.tq*q.rpm*Math.PI/30);
+  const vMax=dragLimitedV(P/1000*v.driveEff,v.cdA,v.crr,v.mass),nMax=pt.maxRpm();
+  const matched=vMax>1?nMax*2*Math.PI*v.rTire/60/vMax:11;
+  v.reductionMatched=matched;
+  v.finalDrive=v.finalDriveSet>0?clamp(v.finalDriveSet,EV_FD_MIN,EV_FD_MAX)
+    :clamp((pub?pub/gearingBias(52):matched)*gearingBias(v.gearing),EV_FD_MIN,EV_FD_MAX);
+}
+const PS_GEAR_NOTE='A power-split hybrid has no gears: one reduction from its traction motor, set with GEARING on the VEHICLE tab.';
+const PS_REDUCTION={label:'eCVT (POWER-SPLIT)',shift:0,powershift:true,eff:1,stall:0,mult:1,cost:900};
+// The lap's and the race's fuel: per point, the engine's share of the shaft power (the replay's power less what the pack
+// gave) over the eCVT's path efficiency at that speed, burnt on the best line. Off the power the engine stops.
+function psFuelRate(){
+  const c=hybCurves(),R0=c.eng;
+  const etaAt=rpm=>{if(rpm<=R0[0].rpm)return c.eta[0];for(let i=1;i<R0.length;i++)if(rpm<=R0[i].rpm)return c.eta[i-1]+(c.eta[i]-c.eta[i-1])*(rpm-R0[i-1].rpm)/(R0[i].rpm-R0[i-1].rpm);return c.eta[c.eta.length-1];};
+  return L=>{const R=L.replay,n=R.rpm.length,out=new Float32Array(n);
+    for(let i=0;i<n;i++){
+      const Ps=R.pwr[i]-(L.hy?Math.max(0,L.hy.pm[i]):0);
+      out[i]=Ps>0?psOolAt(Ps/etaAt(R.rpm[i])).gs:0;
+    }
+    return out;};
+}
+// The driveline line of the VEHICLE summary.
+function psDrivelineLine(v){
+  const hy=engine.hy;
+  return '<br>'+tr('eCVT (POWER-SPLIT)')+' • '+tr('Reduction')+' <b>'+v.finalDrive.toFixed(2)+':1</b> ('+tr('matched')+' '+v.reductionMatched.toFixed(2)+':1) • MG1 '+
+    Math.round(motorMaxTorque(hy.mg1,100,PS.busV,60))+' Nm • MG2 '+Math.round(motorMaxTorque(hy.motor,100,PS.busV,60))+' Nm';
+}
+// The engine's speed at full throttle for an MG2 speed (rpm), off the curves: what the replay's sound plays.
+function psEngineRpmAt(n2){
+  const c=hybCurves(),R=c.eng;
+  if(n2<=R[0].rpm)return c.ne[0];
+  for(let i=1;i<R.length;i++)if(n2<=R[i].rpm)return c.ne[i-1]+(c.ne[i]-c.ne[i-1])*(n2-R[i-1].rpm)/(R[i].rpm-R[i-1].rpm);
+  return c.ne[c.ne.length-1];
 }
 // ====== FUEL CYCLE: an engine's consumption over the WLTP cycle (build 187, step 3.2a of plans/hybrid-electric/) ======
 // The WLTC class 3b trace (src/js/electric-cycle.js) driven second by second with an engine, as the electric car's is
@@ -17872,11 +18081,15 @@ function engineCycleLine(v){
 // charge-sustaining controller: it is found by bisection, so the controller's only parameter comes from the cycle,
 // not from a fit. Rules, named: the engine runs until its coolant reaches 50 C (the catalyst lights and the cabin
 // heats on a real one), and stops at a standstill after; the pack is kept between 35% and 85%; its 12 V load (the
-// alternator's 300 W) comes from the pack.
-const HYB_CYCLE={warmC:50,socLo:0.35,socHi:0.85,splits:[0,0.25,0.5,0.75,1]};
+// alternator's 300 W) comes from the pack. Build 189: a hybrid's engine runs so little that its warm-up is what its
+// makers design for, and both validation cars carry an exhaust heat exchanger into the coolant until it is warm
+// (Toyota's EHR, on the Prius since 2009; Hyundai's EHRS on the Ioniq). About a third of the fuel's energy leaves in
+// the exhaust at light load, and such an exchanger takes about half of it: 15% of the fuel's energy more to the coolant.
+// A power-split's engine can also charge the pack standing still (the brakes hold the ring and MG1 takes it all).
+const HYB_CYCLE={warmC:50,socLo:0.35,socHi:0.85,splits:[0,0.25,0.5,0.75,1],ehr:0.15};
 function hybridCycle(v){
   const e=engine,hy=e.hy,C=FUEL_CYCLE,H=HYB_CYCLE;
-  const key=[v.mass,v.finalDrive,v.cdA,v.crr,v.rTire,v.driveEff,v.ratios.join(','),C.soak,e.hyDeploy].join('|');
+  const key=[v.mass,v.finalDrive,v.cdA,v.crr,v.rTire,v.driveEff,v.ratios.join(','),C.soak,e.hyDeploy,hy.mode].join('|');
   if(e._hcyc&&e._hcyc.score===e.score&&e._hcyc.key===key)return e._hcyc.res;
   const m=v.mass+C.massAdd,r=v.rTire,fd=v.finalDrive,eff=v.driveEff,M=engineFuelMap(),pack=hy.pack,mot=hy.motor;
   const curve=buildTorqueCurve(),Tmax=rpm=>{if(rpm<=curve[0].rpm)return curve[0].tq;for(let i=1;i<curve.length;i++)if(rpm<=curve[i].rpm)return curve[i-1].tq+(curve[i].tq-curve[i-1].tq)*(rpm-curve[i-1].rpm)/(curve[i].rpm-curve[i-1].rpm);return 0;};
@@ -17885,20 +18098,52 @@ function hybridCycle(v){
   const capJ=pack.kWh*3.6e6,tc=mot.cool.tCool,temp={w:tc+20,c:tc+15,r:60};
   // the motor at a shaft speed: what it can give, what it can take back (its own torque, and the pack's acceptance)
   const memo=f=>{const c=new Map();return rpm=>{const k=Math.round(rpm/10);let y=c.get(k);if(y===undefined){y=f(k*10);c.set(k,y);}return y;};};
-  const motUp=memo(rpm=>hybMotorTq(hy,rpm)),motDn=memo(rpm=>Math.min(motorMaxTorque(mot,Math.max(rpm,1),packOcv(pack,HYB_SOC),60),pack.pChargeMax/Math.max(1,rpm*Math.PI/30)));
-  // the pack's chemical energy for a motor torque at a speed for one second (+ drawn), with the 12 V load
-  const packJ=(T,rpm,soc)=>{const w=rpm*Math.PI/30,P=T*w+(T||rpm>0?motorLosses(mot,Math.abs(T),Math.max(rpm,1),packOcv(pack,soc),temp).total:0)+C.auxW;
+  const ps=hy.mode==='ps',busV=soc=>ps?PS.busV:packOcv(pack,soc);   // a power-split's machines run on its 600 V bus (build 189)
+  const motUp=memo(rpm=>hybMotorTq(hy,rpm)),motDn=memo(rpm=>Math.min(motorMaxTorque(mot,Math.max(rpm,1),busV(HYB_SOC),60),pack.pChargeMax/Math.max(1,rpm*Math.PI/30)));
+  // the pack's chemical energy for a motor torque at a speed for one second (+ drawn), with the 12 V load; Pin: what
+  // else is on the bus (a power-split's MG1, generating)
+  const packJ=(T,rpm,soc,Pin=0)=>{const w=rpm*Math.PI/30,P=T*w+(T||rpm>0?motorLosses(mot,Math.abs(T),Math.max(rpm,1),busV(soc),temp).total:0)+C.auxW-Pin;
     const d=packDraw(pack,soc,P);return P+(d?d.heat:0);};
+  const rho=PS.rho,Pbat=packMaxPower(pack,HYB_SOC),Pchg=pack.pChargeMax;
   const run=s=>{
-    let fuel=0,E=0,x=0,Tc=C.soak,evS=0,onS=0,stopS=0;
+    let fuel=0,E=0,x=0,Tc=C.soak,evS=0,onS=0,stopS=0,warmS=null;
     for(let i=0;i<WLTC_3B.length-1;i++){
       const v0=WLTC_3B[i]/36,v1=WLTC_3B[i+1]/36,vm=(v0+v1)/2,a=v1-v0;x+=vm;
-      const soc=HYB_SOC+E/capJ,oilT=Math.max(C.soak,Tc-C.oilLag),cold=Tc<H.warmC;
+      const soc=HYB_SOC+E/capJ,oilT=Math.max(C.soak,Tc-C.oilLag),cold=Tc<H.warmC;if(!cold&&warmS==null)warmS=i;
       let best=null;
       const consider=(gs,J,on)=>{if(J>0&&soc<H.socLo)return;if(J<0&&soc>H.socHi)J=0;const cost=gs+s*J;if(!best||cost<best.cost)best={cost,gs,J,on};};
+      // a power-split's engine on its best line at powers from what the pack cannot give to what it can take back: the
+      // engine's speed where MG1 lets it be, the ring's share of its torque to the wheels and MG2 carrying the rest
+      // (standing, the brakes hold the ring and MG1 takes it all, charging)
+      const psOn=(T,n2,stand)=>{
+        const nr=n2/PS.k2,R=psEngineRange(hy,nr),Pd=Math.max(0,T*n2*Math.PI/30),O=psOol();
+        const Plo=Math.max(O.P[0],Pd-Pbat),Phi=Math.min(O.Pmax,Pd+Pchg);
+        if(!(R.hi>R.lo)||!(Phi>=Plo))return;
+        for(const k of H.splits){
+          const Pe=Plo+(Phi-Plo)*k,ne=clamp(psOolAt(Pe).ne,Math.max(R.lo,rpmMin),R.hi),Te=Pe/(ne*Math.PI/30);
+          if(Te>Tmax(ne)*C.reserve)continue;
+          const ns=((1+rho)*ne-nr)/rho,Ts=Te*rho/(1+rho);
+          if(Ts>motorMaxTorque(hy.mg1,Math.max(Math.abs(ns),1),PS.busV,60))continue;
+          const T2=stand?0:T-Te/(1+rho)/PS.k2;
+          if(Math.abs(T2)>(T2>0?motUp(n2):motorMaxTorque(mot,Math.max(n2,1),PS.busV,60)))continue;
+          const gs=engineFuelAt(ne,Te,oilT);if(!isFinite(gs))continue;
+          consider(gs,packJ(T2,n2,soc,psMg1Elec(hy,Ts,ns,temp)),true);
+        }
+      };
       if(vm<0.1&&a<=0){   // standing: the engine stops when it is warm, or idles
         if(!cold)consider(0,packJ(0,0,soc),false);
         consider(M.idleGs,C.auxW,true);
+        if(ps)psOn(0,0,true);
+      }else if(ps){   // the eCVT (build 189): MG2 alone, or the engine on its best line, MG1 and MG2 carrying the difference
+        const tot=fd,n2=vm/r*tot*60/(2*Math.PI);
+        const meff=m+(v.wheelI||0)/(r*r)+(mot.J||0.01)*(tot/r)**2;
+        const F=meff*a+0.5*AIR_RHO*v.cdA*vm*vm+crrAt(v.crr,vm)*m*G;
+        const T=F>0?F*r/(tot*eff):F*r*eff/tot;   // at MG2's shaft
+        if(T<=0){const Tm=Math.max(T,-motDn(n2));consider(cold?M.idleGs:0,packJ(Tm,n2,soc),cold);}
+        else{
+          if(!cold&&T<=motUp(n2))consider(0,packJ(T,n2,soc),false);
+          psOn(T,n2,false);
+        }
       }else for(let g=0;g<v.ratios.length;g++){
         const tot=v.ratios[g]*fd,rpm=vm/r*tot*60/(2*Math.PI);if(rpm>e.redline)continue;
         const meff=m+(v.wheelI||0)/(r*r)+(e.inertia||0.15)*(tot/r)**2;
@@ -17920,10 +18165,10 @@ function hybridCycle(v){
       }
       if(!best)best={gs:engineFuelAt(rpmMin,Tmax(rpmMin)*C.reserve,oilT)||M.idleGs*3,J:C.auxW,on:true};   // flat out in first
       fuel+=best.gs;E-=best.J;
-      if(best.on){onS++;if(Tc<stat)Tc=Math.min(stat,Tc+best.gs/1000*(fp0.LHV||44)*1e6*C.toCoolant/heatC);}
+      if(best.on){onS++;if(Tc<stat)Tc=Math.min(stat,Tc+best.gs/1000*(fp0.LHV||44)*1e6*(C.toCoolant+(Tc<H.warmC?H.ehr:0))/heatC);}
       else if(vm<0.1)stopS++;else evS++;
     }
-    return {fuel,E,x,evS,onS,stopS};
+    return {fuel,E,x,evS,onS,stopS,warmS};
   };
   // the equivalence factor that sustains the charge: more s, the pack worth more, the controller charges more. A
   // bracketed secant on the pack's end energy, to within 0.5% of the pack's capacity.
@@ -17935,7 +18180,7 @@ function hybridCycle(v){
     if(R.E<0){lo=sm;Rlo=R;}else{hi=sm;Rhi=R;}
   }
   const km=R.x/1000,kg=R.fuel/1000,L=kg/fp0.density;
-  const res={km,l100:L/km*100,co2:kg*0.865*44/12*1000/km,kg,evShare:R.evS/(WLTC_3B.length-1),onShare:R.onS/(WLTC_3B.length-1),dSocKJ:R.E/1000,s:sBest};
+  const res={km,l100:L/km*100,co2:kg*0.865*44/12*1000/km,kg,evShare:R.evS/(WLTC_3B.length-1),onShare:R.onS/(WLTC_3B.length-1),dSocKJ:R.E/1000,s:sBest,warmS:R.warmS};
   e._hcyc={score:e.score,key,res};return res;
 }
 // The VEHICLE tab's line for a hybrid. The energy manager takes ~1 s, so the panel draws first and the line fills in
@@ -18001,12 +18246,26 @@ const HYB_ENGINE_PRESETS=[
    unsure:['redline','cam'],engine:{type:'petrol4',cylinders:4,bore_mm:72,stroke_mm:97,compression:13,redline:6250,intake:'na',injector:'direct',vvt:true,
     cam:'stock',valves:4,octane:95,airFilter:'stock',exhaust:'stock',cat:'stock',intakeSys:'efi',hyMode:'p2',hyDeploy:'eco',
     evMotorType:'pm',evRotorD:200,evStack:40,evPoles:12,evTurns:28,evMagnet:'ndfeb',evRetention:'bridges',evCooling:'jacket',evMaxRpm:8000,
-    evInverter:'igbt',evAmps:400,evRearCount:1,evFront:'none',evChem:'liHEV',evSeries:64,evKWh:1.56,evYear:2016}}
+    evInverter:'igbt',evAmps:400,evRearCount:1,evFront:'none',evChem:'liHEV',evSeries:64,evKWh:1.56,evYear:2016}},
+  // The Toyota Prius, 4th generation (2016; build 189, step 3.3): the 2ZR-FXE, a 1.8 port-injected Atkinson-cycle four
+  // (80.5 x 88.3 mm, 13.0:1, 72 kW at 5200 rpm, 142 Nm at 3600), in the P610 power-split transaxle (src/js/power-split.js)
+  // with a 53 kW / 163 Nm MG2 and a 1.31 kWh NiMH pack of 28 modules (201.6 V): 90 kW together (Toyota GB's
+  // technical specification).
+  {cat:'Hybrid',name:'Toyota 2ZR-FXE 1.8 + power-split (Prius)',real:{hp:96.6,hpRpm:5200,tq:142,tqRpm:3600,motorKW:53,motorNm:163,sysKW:90},
+   unsure:['redline'],engine:{type:'petrol4',cylinders:4,bore_mm:80.5,stroke_mm:88.3,compression:13,redline:5500,intake:'na',injector:'port',vvt:true,
+    cam:'atkinson',valves:4,octane:95,airFilter:'stock',exhaust:'stock',cat:'stock',intakeSys:'efi',hyMode:'ps',hyDeploy:'full',
+    evMotorType:'pm',evRotorD:150,evStack:60,evPoles:8,evTurns:100,evMagnet:'ndfeb',evRetention:'bridges',evCooling:'jacket',evMaxRpm:17000,
+    evInverter:'igbt',evAmps:100,evRearCount:1,evFront:'none',evChem:'nimhHEV',evSeries:168,evKWh:1.31,evYear:2016}}
 ];
 const HYB_VEHICLE_PRESETS=[
   {cat:'Hybrid',name:'Hyundai Ioniq Hybrid (2016)',engine:'Hyundai Kappa 1.6 GDi + P2 (Ioniq Hybrid)',chassis:'hatch',
    body:{kg:1370,cd:0.24,area:2.22,wb:2.70,fWt:0.60},fit:{drive:'fwd',tire:'eco',tw:195,ta:65,wheel:15,brake:'steel',rotor:280,susp:'comfort',gears:6,gearbox:'dct',diff:'open'},
-   real:{t100:10.8,top:185,limited:true},unsure:['kg','fWt']}
+   real:{t100:10.8,top:185,limited:true},unsure:['kg','fWt']},
+  // MG2 to the wheels 10.84:1 (65:17 to the counter gear, 2.834 differential), 195/65 R15 tyres, Cd 0.24, 1375 kg;
+  // 0-100 km/h 10.6 s and 180 km/h (Toyota GB).
+  {cat:'Hybrid',name:'Toyota Prius (2016)',engine:'Toyota 2ZR-FXE 1.8 + power-split (Prius)',chassis:'hatch',
+   body:{kg:1375,cd:0.24,area:2.18,wb:2.70,fWt:0.60},fit:{drive:'fwd',tire:'eco',tw:195,ta:65,wheel:15,brake:'steel',rotor:255,susp:'comfort',diff:'open',fd:10.84},
+   real:{t100:10.6,top:180,limited:true},unsure:['area','fWt']}
 ];
 // What a player picks from: the combustion tables, then the electric and hybrid ones.
 const FACTORY_ENGINES=PRESETS.concat(EV_ENGINE_PRESETS,HYB_ENGINE_PRESETS), FACTORY_CARS=VEHICLE_PRESETS.concat(EV_VEHICLE_PRESETS,HYB_VEHICLE_PRESETS);
@@ -18178,9 +18437,12 @@ function bindControls(){
   document.getElementById('edFuel').addEventListener('change',syncDesignEnable);
   document.getElementById('edTiming').addEventListener('change',syncDesignEnable);
   document.getElementById('edIntakeSys').addEventListener('change',syncDesignEnable);
-  // Fitting a hybrid system starts from a hybrid's motor and pack, not an electric car's (build 186).
+  // Fitting a hybrid system starts from a hybrid's motor and pack, not an electric car's (build 186); changing the layout,
+  // from that layout's (build 189: a power-split's MG2 and pack are the Prius's).
   document.getElementById('edHybrid').addEventListener('change',e=>{
-    if(e.target.value!=='none'&&+document.getElementById('evKWh').value>10)applyElectricToForm(Object.assign({},EV_DEFAULT,HYB_DEFAULT));
+    const v=e.target.value,hybPrev=engine&&engine.type!=='electric'&&engine.hyMode||'none';
+    if(v!=='none'&&(+document.getElementById('evKWh').value>10||hybPrev!=='none'&&hybPrev!==v||v==='ps'))
+      applyElectricToForm(Object.assign({},EV_DEFAULT,v==='ps'?HYB_DEFAULT_PS:HYB_DEFAULT));
     syncDesignEnable();
   });
   // Switching engine type resets CR / redline / cylinders to that cycle's sensible defaults.

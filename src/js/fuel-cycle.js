@@ -118,11 +118,15 @@ function engineCycleLine(v){
 // charge-sustaining controller: it is found by bisection, so the controller's only parameter comes from the cycle,
 // not from a fit. Rules, named: the engine runs until its coolant reaches 50 C (the catalyst lights and the cabin
 // heats on a real one), and stops at a standstill after; the pack is kept between 35% and 85%; its 12 V load (the
-// alternator's 300 W) comes from the pack.
-const HYB_CYCLE={warmC:50,socLo:0.35,socHi:0.85,splits:[0,0.25,0.5,0.75,1]};
+// alternator's 300 W) comes from the pack. Build 189: a hybrid's engine runs so little that its warm-up is what its
+// makers design for, and both validation cars carry an exhaust heat exchanger into the coolant until it is warm
+// (Toyota's EHR, on the Prius since 2009; Hyundai's EHRS on the Ioniq). About a third of the fuel's energy leaves in
+// the exhaust at light load, and such an exchanger takes about half of it: 15% of the fuel's energy more to the coolant.
+// A power-split's engine can also charge the pack standing still (the brakes hold the ring and MG1 takes it all).
+const HYB_CYCLE={warmC:50,socLo:0.35,socHi:0.85,splits:[0,0.25,0.5,0.75,1],ehr:0.15};
 function hybridCycle(v){
   const e=engine,hy=e.hy,C=FUEL_CYCLE,H=HYB_CYCLE;
-  const key=[v.mass,v.finalDrive,v.cdA,v.crr,v.rTire,v.driveEff,v.ratios.join(','),C.soak,e.hyDeploy].join('|');
+  const key=[v.mass,v.finalDrive,v.cdA,v.crr,v.rTire,v.driveEff,v.ratios.join(','),C.soak,e.hyDeploy,hy.mode].join('|');
   if(e._hcyc&&e._hcyc.score===e.score&&e._hcyc.key===key)return e._hcyc.res;
   const m=v.mass+C.massAdd,r=v.rTire,fd=v.finalDrive,eff=v.driveEff,M=engineFuelMap(),pack=hy.pack,mot=hy.motor;
   const curve=buildTorqueCurve(),Tmax=rpm=>{if(rpm<=curve[0].rpm)return curve[0].tq;for(let i=1;i<curve.length;i++)if(rpm<=curve[i].rpm)return curve[i-1].tq+(curve[i].tq-curve[i-1].tq)*(rpm-curve[i-1].rpm)/(curve[i].rpm-curve[i-1].rpm);return 0;};
@@ -131,20 +135,52 @@ function hybridCycle(v){
   const capJ=pack.kWh*3.6e6,tc=mot.cool.tCool,temp={w:tc+20,c:tc+15,r:60};
   // the motor at a shaft speed: what it can give, what it can take back (its own torque, and the pack's acceptance)
   const memo=f=>{const c=new Map();return rpm=>{const k=Math.round(rpm/10);let y=c.get(k);if(y===undefined){y=f(k*10);c.set(k,y);}return y;};};
-  const motUp=memo(rpm=>hybMotorTq(hy,rpm)),motDn=memo(rpm=>Math.min(motorMaxTorque(mot,Math.max(rpm,1),packOcv(pack,HYB_SOC),60),pack.pChargeMax/Math.max(1,rpm*Math.PI/30)));
-  // the pack's chemical energy for a motor torque at a speed for one second (+ drawn), with the 12 V load
-  const packJ=(T,rpm,soc)=>{const w=rpm*Math.PI/30,P=T*w+(T||rpm>0?motorLosses(mot,Math.abs(T),Math.max(rpm,1),packOcv(pack,soc),temp).total:0)+C.auxW;
+  const ps=hy.mode==='ps',busV=soc=>ps?PS.busV:packOcv(pack,soc);   // a power-split's machines run on its 600 V bus (build 189)
+  const motUp=memo(rpm=>hybMotorTq(hy,rpm)),motDn=memo(rpm=>Math.min(motorMaxTorque(mot,Math.max(rpm,1),busV(HYB_SOC),60),pack.pChargeMax/Math.max(1,rpm*Math.PI/30)));
+  // the pack's chemical energy for a motor torque at a speed for one second (+ drawn), with the 12 V load; Pin: what
+  // else is on the bus (a power-split's MG1, generating)
+  const packJ=(T,rpm,soc,Pin=0)=>{const w=rpm*Math.PI/30,P=T*w+(T||rpm>0?motorLosses(mot,Math.abs(T),Math.max(rpm,1),busV(soc),temp).total:0)+C.auxW-Pin;
     const d=packDraw(pack,soc,P);return P+(d?d.heat:0);};
+  const rho=PS.rho,Pbat=packMaxPower(pack,HYB_SOC),Pchg=pack.pChargeMax;
   const run=s=>{
-    let fuel=0,E=0,x=0,Tc=C.soak,evS=0,onS=0,stopS=0;
+    let fuel=0,E=0,x=0,Tc=C.soak,evS=0,onS=0,stopS=0,warmS=null;
     for(let i=0;i<WLTC_3B.length-1;i++){
       const v0=WLTC_3B[i]/36,v1=WLTC_3B[i+1]/36,vm=(v0+v1)/2,a=v1-v0;x+=vm;
-      const soc=HYB_SOC+E/capJ,oilT=Math.max(C.soak,Tc-C.oilLag),cold=Tc<H.warmC;
+      const soc=HYB_SOC+E/capJ,oilT=Math.max(C.soak,Tc-C.oilLag),cold=Tc<H.warmC;if(!cold&&warmS==null)warmS=i;
       let best=null;
       const consider=(gs,J,on)=>{if(J>0&&soc<H.socLo)return;if(J<0&&soc>H.socHi)J=0;const cost=gs+s*J;if(!best||cost<best.cost)best={cost,gs,J,on};};
+      // a power-split's engine on its best line at powers from what the pack cannot give to what it can take back: the
+      // engine's speed where MG1 lets it be, the ring's share of its torque to the wheels and MG2 carrying the rest
+      // (standing, the brakes hold the ring and MG1 takes it all, charging)
+      const psOn=(T,n2,stand)=>{
+        const nr=n2/PS.k2,R=psEngineRange(hy,nr),Pd=Math.max(0,T*n2*Math.PI/30),O=psOol();
+        const Plo=Math.max(O.P[0],Pd-Pbat),Phi=Math.min(O.Pmax,Pd+Pchg);
+        if(!(R.hi>R.lo)||!(Phi>=Plo))return;
+        for(const k of H.splits){
+          const Pe=Plo+(Phi-Plo)*k,ne=clamp(psOolAt(Pe).ne,Math.max(R.lo,rpmMin),R.hi),Te=Pe/(ne*Math.PI/30);
+          if(Te>Tmax(ne)*C.reserve)continue;
+          const ns=((1+rho)*ne-nr)/rho,Ts=Te*rho/(1+rho);
+          if(Ts>motorMaxTorque(hy.mg1,Math.max(Math.abs(ns),1),PS.busV,60))continue;
+          const T2=stand?0:T-Te/(1+rho)/PS.k2;
+          if(Math.abs(T2)>(T2>0?motUp(n2):motorMaxTorque(mot,Math.max(n2,1),PS.busV,60)))continue;
+          const gs=engineFuelAt(ne,Te,oilT);if(!isFinite(gs))continue;
+          consider(gs,packJ(T2,n2,soc,psMg1Elec(hy,Ts,ns,temp)),true);
+        }
+      };
       if(vm<0.1&&a<=0){   // standing: the engine stops when it is warm, or idles
         if(!cold)consider(0,packJ(0,0,soc),false);
         consider(M.idleGs,C.auxW,true);
+        if(ps)psOn(0,0,true);
+      }else if(ps){   // the eCVT (build 189): MG2 alone, or the engine on its best line, MG1 and MG2 carrying the difference
+        const tot=fd,n2=vm/r*tot*60/(2*Math.PI);
+        const meff=m+(v.wheelI||0)/(r*r)+(mot.J||0.01)*(tot/r)**2;
+        const F=meff*a+0.5*AIR_RHO*v.cdA*vm*vm+crrAt(v.crr,vm)*m*G;
+        const T=F>0?F*r/(tot*eff):F*r*eff/tot;   // at MG2's shaft
+        if(T<=0){const Tm=Math.max(T,-motDn(n2));consider(cold?M.idleGs:0,packJ(Tm,n2,soc),cold);}
+        else{
+          if(!cold&&T<=motUp(n2))consider(0,packJ(T,n2,soc),false);
+          psOn(T,n2,false);
+        }
       }else for(let g=0;g<v.ratios.length;g++){
         const tot=v.ratios[g]*fd,rpm=vm/r*tot*60/(2*Math.PI);if(rpm>e.redline)continue;
         const meff=m+(v.wheelI||0)/(r*r)+(e.inertia||0.15)*(tot/r)**2;
@@ -166,10 +202,10 @@ function hybridCycle(v){
       }
       if(!best)best={gs:engineFuelAt(rpmMin,Tmax(rpmMin)*C.reserve,oilT)||M.idleGs*3,J:C.auxW,on:true};   // flat out in first
       fuel+=best.gs;E-=best.J;
-      if(best.on){onS++;if(Tc<stat)Tc=Math.min(stat,Tc+best.gs/1000*(fp0.LHV||44)*1e6*C.toCoolant/heatC);}
+      if(best.on){onS++;if(Tc<stat)Tc=Math.min(stat,Tc+best.gs/1000*(fp0.LHV||44)*1e6*(C.toCoolant+(Tc<H.warmC?H.ehr:0))/heatC);}
       else if(vm<0.1)stopS++;else evS++;
     }
-    return {fuel,E,x,evS,onS,stopS};
+    return {fuel,E,x,evS,onS,stopS,warmS};
   };
   // the equivalence factor that sustains the charge: more s, the pack worth more, the controller charges more. A
   // bracketed secant on the pack's end energy, to within 0.5% of the pack's capacity.
@@ -181,7 +217,7 @@ function hybridCycle(v){
     if(R.E<0){lo=sm;Rlo=R;}else{hi=sm;Rhi=R;}
   }
   const km=R.x/1000,kg=R.fuel/1000,L=kg/fp0.density;
-  const res={km,l100:L/km*100,co2:kg*0.865*44/12*1000/km,kg,evShare:R.evS/(WLTC_3B.length-1),onShare:R.onS/(WLTC_3B.length-1),dSocKJ:R.E/1000,s:sBest};
+  const res={km,l100:L/km*100,co2:kg*0.865*44/12*1000/km,kg,evShare:R.evS/(WLTC_3B.length-1),onShare:R.onS/(WLTC_3B.length-1),dSocKJ:R.E/1000,s:sBest,warmS:R.warmS};
   e._hcyc={score:e.score,key,res};return res;
 }
 // The VEHICLE tab's line for a hybrid. The energy manager takes ~1 s, so the panel draws first and the line fills in

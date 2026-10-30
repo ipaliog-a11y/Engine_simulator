@@ -30,7 +30,7 @@ const rotorWord=m=>m.im?'ROTOR':'MAGNETS';
 function readElectricFromForm(){
   const g=id=>document.getElementById(id),num=(id,lo,hi)=>clamp(+g(id).value||EV_DEFAULT[id],lo,hi);
   return {evMotorType:g('evMotorType').value==='im'?'im':'pm',evRotorD:num('evRotorD',80,260),evStack:num('evStack',40,250),evPoles:+g('evPoles').value||6,
-    evTurns:Math.round(num('evTurns',4,60)),evMagnet:g('evMagnet').value,evRetention:g('evRetention').value,
+    evTurns:Math.round(num('evTurns',4,120)),evMagnet:g('evMagnet').value,evRetention:g('evRetention').value,
     evCooling:g('evCooling').value,evMaxRpm:Math.round(num('evMaxRpm',4000,25000)),evInverter:g('evInverter').value,
     evAmps:Math.round(num('evAmps',100,1600)),evRearCount:g('evRearCount').value==='2'?2:1,
     evFront:['pm','im'].includes(g('evFront').value)?g('evFront').value:'none',evFrontD:num('evFrontD',80,260),evFrontStack:num('evFrontStack',40,250),
@@ -56,12 +56,12 @@ function syncElectricSections(){
   const ev=typeSel.value==='electric',hs=document.getElementById('edHybrid'),hy=!ev&&!!hs&&hs.value!=='none';
   panel.classList.toggle('ev',ev);
   panel.classList.toggle('hy',hy);   // a hybrid's motor and battery, under its engine (build 186)
-  if(hs){const d=document.getElementById('edHyDeploy');if(d)d.disabled=!hy;}
+  if(hs){const d=document.getElementById('edHyDeploy');if(d)d.disabled=!hy||hs.value==='ps';}   // a power-split deploys all it has (build 189)
   if(ev||hy){
     // a chemistry that had not reached cars by the technology year is offered disabled (decision 9)
     const year=clamp(+document.getElementById('evYear').value||2020,1990,2026),chem=document.getElementById('evChem');
     [...chem.options].forEach(o=>{o.disabled=!chemAvailable(o.value,year);});
-    if(!chemAvailable(chem.value,year))chem.value=['nca','ncaP','liHEV','lfp','nimh','lead'].find(c=>chemAvailable(c,year));
+    if(!chemAvailable(chem.value,year))chem.value=['nca','ncaP','liHEV','lfp','nimhHEV','nimh','lead'].find(c=>chemAvailable(c,year));
     // an induction motor has no magnets to grade or to hold in (build 182): its rotor is a copper cage
     const im=document.getElementById('evMotorType').value==='im';
     document.getElementById('evMagnet').disabled=im;document.getElementById('evRetention').disabled=im;

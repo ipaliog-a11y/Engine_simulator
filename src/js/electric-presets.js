@@ -50,12 +50,26 @@ const HYB_ENGINE_PRESETS=[
    unsure:['redline','cam'],engine:{type:'petrol4',cylinders:4,bore_mm:72,stroke_mm:97,compression:13,redline:6250,intake:'na',injector:'direct',vvt:true,
     cam:'stock',valves:4,octane:95,airFilter:'stock',exhaust:'stock',cat:'stock',intakeSys:'efi',hyMode:'p2',hyDeploy:'eco',
     evMotorType:'pm',evRotorD:200,evStack:40,evPoles:12,evTurns:28,evMagnet:'ndfeb',evRetention:'bridges',evCooling:'jacket',evMaxRpm:8000,
-    evInverter:'igbt',evAmps:400,evRearCount:1,evFront:'none',evChem:'liHEV',evSeries:64,evKWh:1.56,evYear:2016}}
+    evInverter:'igbt',evAmps:400,evRearCount:1,evFront:'none',evChem:'liHEV',evSeries:64,evKWh:1.56,evYear:2016}},
+  // The Toyota Prius, 4th generation (2016; build 189, step 3.3): the 2ZR-FXE, a 1.8 port-injected Atkinson-cycle four
+  // (80.5 x 88.3 mm, 13.0:1, 72 kW at 5200 rpm, 142 Nm at 3600), in the P610 power-split transaxle (src/js/power-split.js)
+  // with a 53 kW / 163 Nm MG2 and a 1.31 kWh NiMH pack of 28 modules (201.6 V): 90 kW together (Toyota GB's
+  // technical specification).
+  {cat:'Hybrid',name:'Toyota 2ZR-FXE 1.8 + power-split (Prius)',real:{hp:96.6,hpRpm:5200,tq:142,tqRpm:3600,motorKW:53,motorNm:163,sysKW:90},
+   unsure:['redline'],engine:{type:'petrol4',cylinders:4,bore_mm:80.5,stroke_mm:88.3,compression:13,redline:5500,intake:'na',injector:'port',vvt:true,
+    cam:'atkinson',valves:4,octane:95,airFilter:'stock',exhaust:'stock',cat:'stock',intakeSys:'efi',hyMode:'ps',hyDeploy:'full',
+    evMotorType:'pm',evRotorD:150,evStack:60,evPoles:8,evTurns:100,evMagnet:'ndfeb',evRetention:'bridges',evCooling:'jacket',evMaxRpm:17000,
+    evInverter:'igbt',evAmps:100,evRearCount:1,evFront:'none',evChem:'nimhHEV',evSeries:168,evKWh:1.31,evYear:2016}}
 ];
 const HYB_VEHICLE_PRESETS=[
   {cat:'Hybrid',name:'Hyundai Ioniq Hybrid (2016)',engine:'Hyundai Kappa 1.6 GDi + P2 (Ioniq Hybrid)',chassis:'hatch',
    body:{kg:1370,cd:0.24,area:2.22,wb:2.70,fWt:0.60},fit:{drive:'fwd',tire:'eco',tw:195,ta:65,wheel:15,brake:'steel',rotor:280,susp:'comfort',gears:6,gearbox:'dct',diff:'open'},
-   real:{t100:10.8,top:185,limited:true},unsure:['kg','fWt']}
+   real:{t100:10.8,top:185,limited:true},unsure:['kg','fWt']},
+  // MG2 to the wheels 10.84:1 (65:17 to the counter gear, 2.834 differential), 195/65 R15 tyres, Cd 0.24, 1375 kg;
+  // 0-100 km/h 10.6 s and 180 km/h (Toyota GB).
+  {cat:'Hybrid',name:'Toyota Prius (2016)',engine:'Toyota 2ZR-FXE 1.8 + power-split (Prius)',chassis:'hatch',
+   body:{kg:1375,cd:0.24,area:2.18,wb:2.70,fWt:0.60},fit:{drive:'fwd',tire:'eco',tw:195,ta:65,wheel:15,brake:'steel',rotor:255,susp:'comfort',diff:'open',fd:10.84},
+   real:{t100:10.6,top:180,limited:true},unsure:['area','fWt']}
 ];
 // What a player picks from: the combustion tables, then the electric and hybrid ones.
 const FACTORY_ENGINES=PRESETS.concat(EV_ENGINE_PRESETS,HYB_ENGINE_PRESETS), FACTORY_CARS=VEHICLE_PRESETS.concat(EV_VEHICLE_PRESETS,HYB_VEHICLE_PRESETS);
