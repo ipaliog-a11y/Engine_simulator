@@ -77,7 +77,18 @@ const HYB_ENGINE_PRESETS=[
     injector:'direct',vvt:true,cam:'stock',valves:4,octane:95,airFilter:'stock',exhaust:'stock',cat:'stock',intakeSys:'efi',hyMode:'p2',hyDeploy:'full',hyPlug:true,
     hyTune:{rpm:4000,map:Array(20).fill(100),regen:'high',lps:true,evKmh:0,evKw:0,socLo:12,socT:15,socHi:95},
     evMotorType:'pm',evRotorD:200,evStack:60,evPoles:12,evTurns:48,evMagnet:'ndfeb',evRetention:'bridges',evCooling:'jacket',evMaxRpm:7500,
-    evInverter:'igbt',evAmps:250,evRearCount:1,evFront:'none',evChem:'ncaP',evSeries:96,evKWh:12,evYear:2020}}
+    evInverter:'igbt',evAmps:250,evRearCount:1,evFront:'none',evChem:'ncaP',evSeries:96,evKWh:12,evYear:2020}},
+  // The Porsche 918 Spyder (2013; build 195, step 3.5b): a plug-in with a motor at each end. The 4.6 V8 (95 x 81 mm, 447 kW
+  // at 8700 rpm, 540 Nm at 6700, to 9150), a 115 kW motor between it and the seven-speed PDK, a 95 kW motor driving the
+  // front axle through its own reduction (declutched past its top speed), and a 6.8 kWh pack of 312 cells: 652 kW and 1280
+  // Nm together (Porsche). Neither motor's torque, nor the front's reduction, is published.
+  {cat:'Hybrid',name:'Porsche 4.6 V8 + P2 + front motor (918 Spyder)',real:{hp:599.4,hpRpm:8700,tq:540,tqRpm:6700,motorKW:115,frontKW:95,sysKW:652,sysNm:1280},
+   unsure:['compression','cam','motor torques','front reduction'],engine:{type:'petrol4',cylinders:8,layout:'v',bore_mm:95,stroke_mm:81,compression:13.0,redline:9150,intake:'na',
+    injector:'direct',vvt:true,cam:'race',valves:4,valveMat:'titanium',valveSpring:'race',octane:98,airFilter:'perf',exhaust:'race',cat:'stock',intakeSys:'efi',runner:'variable',
+    hyMode:'p2',hyDeploy:'full',hyPlug:true,hyTune:{rpm:4000,map:Array(20).fill(100),regen:'high',lps:true,evKmh:0,evKw:0,socLo:15,socT:20,socHi:95},
+    evMotorType:'pm',evRotorD:150,evStack:80,evPoles:8,evTurns:30,evMagnet:'ndfeb',evRetention:'bridges',evCooling:'jacket',evMaxRpm:16000,
+    evInverter:'igbt',evAmps:350,evRearCount:1,evFront:'pm',evFrontD:150,evFrontStack:100,evFrontPoles:8,evFrontTurns:30,evFrontAmps:250,evFrontFd:0,
+    evChem:'liHEV',evSeries:104,evKWh:6.8,evYear:2013}}
 ];
 const HYB_VEHICLE_PRESETS=[
   {cat:'Hybrid',name:'Hyundai Ioniq Hybrid (2016)',engine:'Hyundai Kappa 1.6 GDi + P2 (Ioniq Hybrid)',chassis:'hatch',
@@ -96,7 +107,12 @@ const HYB_VEHICLE_PRESETS=[
   // electric range 59-66 km and 1.6-1.9 L/100 km weighted (BMW, by trim).
   {cat:'Hybrid',name:'BMW 330e (2020)',engine:'BMW B48 2.0 turbo + P2 plug-in (330e)',chassis:'sedan',
    body:{kg:1740,cd:0.26,area:2.20,wb:2.85,fWt:0.50},fit:{drive:'rwd',tire:'sport',tw:225,ta:45,wheel:18,brake:'steel',rotor:330,susp:'comfort',gears:8,gearbox:'auto',diff:'open'},
-   real:{t100:5.9,top:230,limited:true},unsure:['area','fWt','cd']}
+   real:{t100:5.9,top:230,limited:true},unsure:['area','fWt','cd']},
+  // 1674 kg (DIN), all-wheel drive through the front motor, seven-speed PDK; 0-100 km/h 2.6 s, 0-200 7.2 s, 0-300 19.9 s,
+  // 345 km/h (Porsche); Nordschleife 6:57 (Weissach package, 2013).
+  {cat:'Hybrid',name:'Porsche 918 Spyder (2013)',engine:'Porsche 4.6 V8 + P2 + front motor (918 Spyder)',chassis:'hyper',
+   body:{kg:1674,cd:0.35,area:1.95,wb:2.73,fWt:0.43},fit:{drive:'awd',tire:'semi',tw:325,ta:30,wheel:21,twF:265,brake:'carbon',rotor:410,susp:'race',gears:7,gearbox:'dct',diff:'clsd'},
+   real:{t100:2.6,t200:7.2,top:345,limited:false},unsure:['cd','area','fWt','tyres']}
 ];
 // What a player picks from: the combustion tables, then the electric and hybrid ones.
 const FACTORY_ENGINES=PRESETS.concat(EV_ENGINE_PRESETS,HYB_ENGINE_PRESETS), FACTORY_CARS=VEHICLE_PRESETS.concat(EV_VEHICLE_PRESETS,HYB_VEHICLE_PRESETS);

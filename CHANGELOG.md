@@ -20,6 +20,20 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 Working toward **v1.0 — every number derived, not fitted.**
 
+### A front axle motor, and the Porsche 918 Spyder (build 195)
+
+- **Step 3.5b of the plan** (3.5 split again: race energy limits are 3.5c). A hybrid can now carry the electric car's
+  **FRONT MOTOR**: it drives the front wheels through its own fixed reduction, outside the gearbox (**FRONT REDUCTION**,
+  or matched so its top speed falls at the car's), and is declutched past its top speed; the car is all-wheel drive
+  and its drivetrain locked, as an electric car with a front motor is. Its force at the wheels is added to the
+  gearbox's in the 0-100, the top speed and the lap (`frontForce` on the powertrain); it shares the pack with the main
+  motor in proportion to their peak powers, and the lap's charge balance counts what it draws where the car is flat
+  out (it does not regenerate in the model: braking is the main motor's).
+- **The Porsche 918 Spyder (2013)**: the 4.6 V8 (552 hp as built, 608 PS published), a 115 kW motor before the
+  seven-speed PDK, a 95 kW front motor, a 6.8 kWh plug-in pack; 1674 kg. With the engine matched to its 447 kW: 0-100
+  km/h 2.39 s against Porsche's 2.6, 0-200 7.35 s against 7.2, 338 km/h against 345. The model's hybrid cells give
+  141 kW from 6.8 kWh, the real pack ~230 kW; neither motor's torque nor the front reduction is published.
+
 ### The plug-in hybrid (build 194)
 
 - **Step 3.5a of the plan** (decision 13's second half). **PLUG-IN** on any hybrid: the pack starts at the charge

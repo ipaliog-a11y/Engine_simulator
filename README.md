@@ -121,7 +121,8 @@ wheels through one reduction, no gearbox. The 2016 Prius, its engine matched to 
 SERIES (build 193) drives the wheels with the motor alone and lets the engine only charge: the Nissan Qashqai
 e-POWER runs 0-100 in 7.4 s against Nissan's 7.9. PLUG-IN (build 194) starts the pack full: WLTP then runs the regulation's
 plug-in procedure, and the BMW 330e gives a 55 km electric range and 1.7 L/100 km weighted against BMW's 59-66 km and
-1.6-1.9.
+1.6-1.9. A hybrid can carry a FRONT MOTOR on its own axle (build 195): the Porsche 918 Spyder runs 0-200 in 7.4 s
+against Porsche's 7.2.
 On the LIVE bench (build 190) a hybrid runs with its motor and pack: a HYBRID panel draws the power flowing between
 engine, motors, pack and brake, gauges the charge, and offers the drive modes (AUTO, EV, HOLD, CHARGE, SPORT, ENGINE
 ONLY, MANUAL). Its VIEW selector also shows the power-split's lever diagram and the engine's BSFC map with the point

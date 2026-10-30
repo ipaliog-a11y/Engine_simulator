@@ -499,15 +499,16 @@ table.hy-map td:focus{outline:2px solid #ffcc00;outline-offset:-2px}
 <div class="field"><label for="evMaxRpm">MAX SPEED (rpm)</label><input type="number" id="evMaxRpm" min="4000" max="25000" step="100" value="18000"></div>
 </div>
 
-<div class="design-section" data-ev data-ev-only>More motors</div>
-<div class="design-grid" data-ev data-ev-only>
-<div class="field"><label for="evRearCount">REAR MOTORS</label><select id="evRearCount"><option value="1">1</option><option value="2">2 (ONE PER WHEEL)</option></select></div>
+<div class="design-section" data-ev>More motors</div>
+<div class="design-grid" data-ev>
+<div class="field" data-ev-only><label for="evRearCount">REAR MOTORS</label><select id="evRearCount"><option value="1">1</option><option value="2">2 (ONE PER WHEEL)</option></select></div>
 <div class="field"><label for="evFront">FRONT MOTOR</label><select id="evFront"><option value="none">NONE</option><option value="pm">PERMANENT MAGNET</option><option value="im">INDUCTION (COPPER CAGE)</option></select></div>
 <div class="field"><label for="evFrontD">FRONT ROTOR DIAMETER (mm)</label><input type="number" id="evFrontD" min="80" max="260" step="1" value="130"></div>
 <div class="field"><label for="evFrontStack">FRONT STACK LENGTH (mm)</label><input type="number" id="evFrontStack" min="40" max="250" step="1" value="110"></div>
 <div class="field"><label for="evFrontPoles">FRONT POLES</label><select id="evFrontPoles"><option value="4">4</option><option value="6">6</option><option value="8">8</option></select></div>
 <div class="field"><label for="evFrontTurns">FRONT TURNS PER PHASE</label><input type="number" id="evFrontTurns" min="4" max="60" step="1" value="12"></div>
 <div class="field"><label for="evFrontAmps">FRONT CURRENT (A rms)</label><input type="number" id="evFrontAmps" min="100" max="1600" step="10" value="700"></div>
+<div class="field" data-hy><label for="evFrontFd">FRONT REDUCTION (0 = MATCHED)</label><input type="number" id="evFrontFd" min="0" max="20" step="0.01" value="0"></div>
 </div>
 
 <div class="design-section" data-ev>Inverter</div>
@@ -4713,7 +4714,7 @@ const I18N={
   'Archetypes':{el:'Αρχέτυπα'},'Kei & City':{el:'Kei & πόλης'},'Compact Turbo':{el:'Μικρά τούρμπο'},'NA Sports':{el:'Ατμοσφαιρικά σπορ'},
   'Turbo Performance':{el:'Τούρμπο επιδόσεων'},'American V8':{el:'Αμερικάνικα V8'},'Supercar':{el:'Supercar'},'Rotary':{el:'Περιστροφικά (Wankel)'},
   'Diesel':{el:'Πετρελαιοκίνητα'},'Electric':{el:'Ηλεκτρικά'},'NCA (POWER CELLS)':{el:'NCA (ΚΥΤΤΑΡΑ ΙΣΧΥΟΣ)'},'ATKINSON (LATE IVC)':{el:'ATKINSON (ΑΡΓΟ ΚΛΕΙΣΙΜΟ ΕΙΣΑΓΩΓΗΣ)'},'engine off':{el:'κινητήρας σβηστός'},'Li-ION (HYBRID CELLS)':{el:'Li-ION (ΚΥΤΤΑΡΑ ΥΒΡΙΔΙΚΩΝ)'},
-  'Hybrid':{el:'Υβριδικό'},'HYBRID':{el:'ΥΒΡΙΔΙΚΟ'},'PARALLEL (P2)':{el:'ΠΑΡΑΛΛΗΛΟ (P2)'},'POWER-SPLIT (eCVT)':{el:'ΔΙΑΙΡΟΥΜΕΝΗΣ ΙΣΧΥΟΣ (eCVT)'},'DRIVE MODE':{el:'ΛΕΙΤΟΥΡΓΙΑ ΟΔΗΓΗΣΗΣ'},'PLUG-IN':{el:'ΕΠΑΝΑΦΟΡΤΙΖΟΜΕΝΟ'},'WLTP weighted':{el:'WLTP σταθμισμένο'},'electric range':{el:'ηλεκτρική αυτονομία'},'sustaining':{el:'συντήρηση φορτίου'},'SERIES':{el:'ΣΕ ΣΕΙΡΑ'},'GEN':{el:'ΓΕΝΝ.'},'SINGLE-SPEED (SERIES)':{el:'ΜΟΝΟΤΑΧΥΤΟ (ΣΕ ΣΕΙΡΑ)'},'A series hybrid has no gears: one reduction from its traction motor, set with GEARING on the VEHICLE tab.':{el:'Ένα υβριδικό σε σειρά δεν έχει ταχύτητες: μία σχέση μείωσης από τον κινητήρα έλξης, ρυθμίζεται με τη ΣΧΕΣΗ ΜΕΙΩΣΗΣ στην καρτέλα ΟΧΗΜΑ.'},'generator':{el:'γεννήτρια'},'charge-corrected':{el:'με διόρθωση φορτίου'},'ASSIST':{el:'ΥΠΟΒΟΗΘΗΣΗ'},'ABOVE RPM':{el:'ΠΑΝΩ ΑΠΟ ΣΤΡΟΦΕΣ'},'BELOW RPM':{el:'ΚΑΤΩ ΑΠΟ ΣΤΡΟΦΕΣ'},'Hybrid tune':{el:'Ρύθμιση υβριδικού'},'ASSIST RPM':{el:'ΣΤΡΟΦΕΣ ΥΠΟΒΟΗΘΗΣΗΣ'},'REGENERATION':{el:'ΑΝΑΚΤΗΣΗ ΕΝΕΡΓΕΙΑΣ'},'LOAD-POINT SHIFTING':{el:'ΜΕΤΑΤΟΠΙΣΗ ΣΗΜΕΙΟΥ ΦΟΡΤΙΟΥ'},'EV UP TO (km/h, 0 = ANY)':{el:'ΗΛΕΚΤΡΙΚΑ ΕΩΣ (km/h, 0 = ΧΩΡΙΣ ΟΡΙΟ)'},'EV POWER (kW, 0 = AUTO)':{el:'ΙΣΧΥΣ ΗΛΕΚΤΡΙΚΗΣ ΚΙΝΗΣΗΣ (kW, 0 = ΑΥΤΟΜΑΤΑ)'},'CHARGE LOW (%)':{el:'ΧΑΜΗΛΟ ΦΟΡΤΙΟ (%)'},'CHARGE TARGET (%)':{el:'ΣΤΟΧΟΣ ΦΟΡΤΙΟΥ (%)'},'CHARGE HIGH (%)':{el:'ΥΨΗΛΟ ΦΟΡΤΙΟ (%)'},'Assist map':{el:'Χάρτης υποβοήθησης'},'PEDAL':{el:'ΠΕΝΤΑΛ'},'SPEED':{el:'ΣΤΡΟΦΕΣ'},'pedal':{el:'πεντάλ'},'speed':{el:'στροφές'},"ASSIST MAP: the share of the motor's help over shaft speed and pedal. Click a cell to step it down by 25% (from 0 back to 100%).":{el:'ΧΑΡΤΗΣ ΥΠΟΒΟΗΘΗΣΗΣ: το μερίδιο της βοήθειας του ηλεκτροκινητήρα ανά στροφές άξονα και πεντάλ. Πατήστε ένα κελί για να το μειώσετε κατά 25% (από 0 πίσω στο 100%).'},'POWER FLOW':{el:'ΡΟΗ ΙΣΧΥΟΣ'},'LEVER (POWER-SPLIT)':{el:'ΜΟΧΛΟΣ (ΔΙΑΙΡΟΥΜΕΝΗΣ ΙΣΧΥΟΣ)'},'BSFC MAP':{el:'ΧΑΡΤΗΣ BSFC'},'LEVER':{el:'ΜΟΧΛΟΣ'},'RING':{el:'ΣΤΕΦΑΝΗ'},'DISCHARGING':{el:'ΕΚΦΟΡΤΙΣΗ'},'CHARGING':{el:'ΦΟΡΤΙΣΗ'},'BATTERY CHARGE':{el:'ΦΟΡΤΙΟ ΜΠΑΤΑΡΙΑΣ'},'MOTOR COMMAND':{el:'ΕΝΤΟΛΗ ΚΙΝΗΤΗΡΑ'},'ENGINE SPEED':{el:'ΣΤΡΟΦΕΣ ΚΙΝΗΤΗΡΑ'},'EV':{el:'ΗΛΕΚΤΡΙΚΟ'},'HOLD':{el:'ΔΙΑΤΗΡΗΣΗ'},'CHARGE':{el:'ΦΟΡΤΙΣΗ'},'ENGINE ONLY':{el:'ΜΟΝΟ ΚΙΝΗΤΗΡΑΣ'},'PACK':{el:'ΜΠΑΤΑΡΙΑ'},'SHAFT':{el:'ΑΞΟΝΑΣ'},'BRAKE':{el:'ΦΡΕΝΟ'},'CLOSED':{el:'ΚΛΕΙΣΤΟΣ'},'ENGINE OFF':{el:'ΚΙΝΗΤΗΡΑΣ ΣΒΗΣΤΟΣ'},'ELECTRIC DRIVE':{el:'ΗΛΕΚΤΡΙΚΗ ΚΙΝΗΣΗ'},'PACK LOW • ENGINE STARTED':{el:'ΧΑΜΗΛΗ ΜΠΑΤΑΡΙΑ • Ο ΚΙΝΗΤΗΡΑΣ ΞΕΚΙΝΗΣΕ'},'eCVT (POWER-SPLIT)':{el:'eCVT (ΔΙΑΙΡΟΥΜΕΝΗΣ ΙΣΧΥΟΣ)'},'NiMH (HYBRID CELLS)':{el:'NiMH (ΚΥΤΤΑΡΑ ΥΒΡΙΔΙΚΩΝ)'},'A power-split hybrid has no gears: one reduction from its traction motor, set with GEARING on the VEHICLE tab.':{el:'Ένα υβριδικό διαιρούμενης ισχύος δεν έχει ταχύτητες: μία σχέση μείωσης από τον κινητήρα έλξης, ρυθμίζεται με τη ΣΧΕΣΗ ΜΕΙΩΣΗΣ στην καρτέλα ΟΧΗΜΑ.'},'DEPLOY':{el:'ΑΠΟΔΟΣΗ ΚΙΝΗΤΗΡΑ'},'FULL':{el:'ΠΛΗΡΗΣ'},'ECO (TORQUE FILL)':{el:'ΟΙΚΟΝΟΜΙΚΟ (ΣΥΜΠΛΗΡΩΣΗ ΡΟΠΗΣ)'},'motor':{el:'κινητήρας'},'pack':{el:'μπαταρία'},'system':{el:'σύστημα'},'WLTP cycle':{el:'Κύκλος WLTP'},'from the pack':{el:'από την μπαταρία'},
+  'Hybrid':{el:'Υβριδικό'},'HYBRID':{el:'ΥΒΡΙΔΙΚΟ'},'PARALLEL (P2)':{el:'ΠΑΡΑΛΛΗΛΟ (P2)'},'POWER-SPLIT (eCVT)':{el:'ΔΙΑΙΡΟΥΜΕΝΗΣ ΙΣΧΥΟΣ (eCVT)'},'DRIVE MODE':{el:'ΛΕΙΤΟΥΡΓΙΑ ΟΔΗΓΗΣΗΣ'},'FRONT REDUCTION (0 = MATCHED)':{el:'ΕΜΠΡΟΣ ΣΧΕΣΗ ΜΕΙΩΣΗΣ (0 = ΑΥΤΟΜΑΤΗ)'},'PLUG-IN':{el:'ΕΠΑΝΑΦΟΡΤΙΖΟΜΕΝΟ'},'WLTP weighted':{el:'WLTP σταθμισμένο'},'electric range':{el:'ηλεκτρική αυτονομία'},'sustaining':{el:'συντήρηση φορτίου'},'SERIES':{el:'ΣΕ ΣΕΙΡΑ'},'GEN':{el:'ΓΕΝΝ.'},'SINGLE-SPEED (SERIES)':{el:'ΜΟΝΟΤΑΧΥΤΟ (ΣΕ ΣΕΙΡΑ)'},'A series hybrid has no gears: one reduction from its traction motor, set with GEARING on the VEHICLE tab.':{el:'Ένα υβριδικό σε σειρά δεν έχει ταχύτητες: μία σχέση μείωσης από τον κινητήρα έλξης, ρυθμίζεται με τη ΣΧΕΣΗ ΜΕΙΩΣΗΣ στην καρτέλα ΟΧΗΜΑ.'},'generator':{el:'γεννήτρια'},'charge-corrected':{el:'με διόρθωση φορτίου'},'ASSIST':{el:'ΥΠΟΒΟΗΘΗΣΗ'},'ABOVE RPM':{el:'ΠΑΝΩ ΑΠΟ ΣΤΡΟΦΕΣ'},'BELOW RPM':{el:'ΚΑΤΩ ΑΠΟ ΣΤΡΟΦΕΣ'},'Hybrid tune':{el:'Ρύθμιση υβριδικού'},'ASSIST RPM':{el:'ΣΤΡΟΦΕΣ ΥΠΟΒΟΗΘΗΣΗΣ'},'REGENERATION':{el:'ΑΝΑΚΤΗΣΗ ΕΝΕΡΓΕΙΑΣ'},'LOAD-POINT SHIFTING':{el:'ΜΕΤΑΤΟΠΙΣΗ ΣΗΜΕΙΟΥ ΦΟΡΤΙΟΥ'},'EV UP TO (km/h, 0 = ANY)':{el:'ΗΛΕΚΤΡΙΚΑ ΕΩΣ (km/h, 0 = ΧΩΡΙΣ ΟΡΙΟ)'},'EV POWER (kW, 0 = AUTO)':{el:'ΙΣΧΥΣ ΗΛΕΚΤΡΙΚΗΣ ΚΙΝΗΣΗΣ (kW, 0 = ΑΥΤΟΜΑΤΑ)'},'CHARGE LOW (%)':{el:'ΧΑΜΗΛΟ ΦΟΡΤΙΟ (%)'},'CHARGE TARGET (%)':{el:'ΣΤΟΧΟΣ ΦΟΡΤΙΟΥ (%)'},'CHARGE HIGH (%)':{el:'ΥΨΗΛΟ ΦΟΡΤΙΟ (%)'},'Assist map':{el:'Χάρτης υποβοήθησης'},'PEDAL':{el:'ΠΕΝΤΑΛ'},'SPEED':{el:'ΣΤΡΟΦΕΣ'},'pedal':{el:'πεντάλ'},'speed':{el:'στροφές'},"ASSIST MAP: the share of the motor's help over shaft speed and pedal. Click a cell to step it down by 25% (from 0 back to 100%).":{el:'ΧΑΡΤΗΣ ΥΠΟΒΟΗΘΗΣΗΣ: το μερίδιο της βοήθειας του ηλεκτροκινητήρα ανά στροφές άξονα και πεντάλ. Πατήστε ένα κελί για να το μειώσετε κατά 25% (από 0 πίσω στο 100%).'},'POWER FLOW':{el:'ΡΟΗ ΙΣΧΥΟΣ'},'LEVER (POWER-SPLIT)':{el:'ΜΟΧΛΟΣ (ΔΙΑΙΡΟΥΜΕΝΗΣ ΙΣΧΥΟΣ)'},'BSFC MAP':{el:'ΧΑΡΤΗΣ BSFC'},'LEVER':{el:'ΜΟΧΛΟΣ'},'RING':{el:'ΣΤΕΦΑΝΗ'},'DISCHARGING':{el:'ΕΚΦΟΡΤΙΣΗ'},'CHARGING':{el:'ΦΟΡΤΙΣΗ'},'BATTERY CHARGE':{el:'ΦΟΡΤΙΟ ΜΠΑΤΑΡΙΑΣ'},'MOTOR COMMAND':{el:'ΕΝΤΟΛΗ ΚΙΝΗΤΗΡΑ'},'ENGINE SPEED':{el:'ΣΤΡΟΦΕΣ ΚΙΝΗΤΗΡΑ'},'EV':{el:'ΗΛΕΚΤΡΙΚΟ'},'HOLD':{el:'ΔΙΑΤΗΡΗΣΗ'},'CHARGE':{el:'ΦΟΡΤΙΣΗ'},'ENGINE ONLY':{el:'ΜΟΝΟ ΚΙΝΗΤΗΡΑΣ'},'PACK':{el:'ΜΠΑΤΑΡΙΑ'},'SHAFT':{el:'ΑΞΟΝΑΣ'},'BRAKE':{el:'ΦΡΕΝΟ'},'CLOSED':{el:'ΚΛΕΙΣΤΟΣ'},'ENGINE OFF':{el:'ΚΙΝΗΤΗΡΑΣ ΣΒΗΣΤΟΣ'},'ELECTRIC DRIVE':{el:'ΗΛΕΚΤΡΙΚΗ ΚΙΝΗΣΗ'},'PACK LOW • ENGINE STARTED':{el:'ΧΑΜΗΛΗ ΜΠΑΤΑΡΙΑ • Ο ΚΙΝΗΤΗΡΑΣ ΞΕΚΙΝΗΣΕ'},'eCVT (POWER-SPLIT)':{el:'eCVT (ΔΙΑΙΡΟΥΜΕΝΗΣ ΙΣΧΥΟΣ)'},'NiMH (HYBRID CELLS)':{el:'NiMH (ΚΥΤΤΑΡΑ ΥΒΡΙΔΙΚΩΝ)'},'A power-split hybrid has no gears: one reduction from its traction motor, set with GEARING on the VEHICLE tab.':{el:'Ένα υβριδικό διαιρούμενης ισχύος δεν έχει ταχύτητες: μία σχέση μείωσης από τον κινητήρα έλξης, ρυθμίζεται με τη ΣΧΕΣΗ ΜΕΙΩΣΗΣ στην καρτέλα ΟΧΗΜΑ.'},'DEPLOY':{el:'ΑΠΟΔΟΣΗ ΚΙΝΗΤΗΡΑ'},'FULL':{el:'ΠΛΗΡΗΣ'},'ECO (TORQUE FILL)':{el:'ΟΙΚΟΝΟΜΙΚΟ (ΣΥΜΠΛΗΡΩΣΗ ΡΟΠΗΣ)'},'motor':{el:'κινητήρας'},'pack':{el:'μπαταρία'},'system':{el:'σύστημα'},'WLTP cycle':{el:'Κύκλος WLTP'},'from the pack':{el:'από την μπαταρία'},
   'at the socket':{el:'από την πρίζα'},'regeneration takes back':{el:'η ανάκτηση επιστρέφει'},'range':{el:'αυτονομία'},'Two-Stroke':{el:'Δίχρονα'},
   '1990s':{el:'Δεκαετία του 1990'},'2000s':{el:'Δεκαετία του 2000'},'2010s':{el:'Δεκαετία του 2010'},'2020s':{el:'Δεκαετία του 2020'},
   // dropdown choices (and the labels the summaries reuse). An option looks up 'opt:'+text first, for
@@ -8440,6 +8441,7 @@ const HYBRID=Object.assign({},COMBUSTION,{
   torqueGrid:()=>{const g=lapTorqueGrid(),k=hybDeployShare,mt=g.rpms.map(r=>k*hybMotorAt(r));
     return Object.assign({},g,{tq:g.tq.map(row=>row.map((t,i)=>t+mt[i]))});},
   overrunTable(rl){const a=COMBUSTION.overrunTable(rl),b=hybRegenTable(rl);return a.map((t,i)=>t+(b[i]||0));},
+  frontForce:vv=>hybFrontF(vv),   // a front axle motor's force at the wheels (N), 0 without one (build 195)
   fuelRate(nom,n){
     const base=COMBUSTION.fuelRate(nom,n);
     // the replay's power is the engine's and the motor's: the fuel map is read with the engine's alone
@@ -8946,6 +8948,7 @@ let vehRev=0;                      // bumped on every rebuild, so lap results ca
 function buildVehicle(){
   vehRev++;
   vehicle=readVehicleFromForm();
+  if(isHybrid()&&engine.hy.front)vehicle.drive='awd';   // a hybrid's front axle motor drives the front wheels (build 195)
   const ch=CHASSIS[vehicle.chassis]||CHASSIS.coupe, tt=TIRE_TYPE[vehicle.tireType]||TIRE_TYPE.sport, wr=WEIGHT_RED[vehicle.weightRed]||WEIGHT_RED.none;
   const body=vehicle.body;
   vehicle.chLabel=body?body.name:ch.label;
@@ -9060,6 +9063,7 @@ function buildVehicle(){
   if(vehicle.ev)electricDriveline(vehicle);   // one fixed reduction, no gearbox (build 180)
   if(vehicle.ecvt)psDriveline(vehicle);       // a power-split's: one reduction from MG2 (build 189)
   syncEvVehicleForm(vehicle.ev||vehicle.ecvt);
+  hybFrontSetup(vehicle);   // a hybrid's front axle motor: its reduction and its force at each speed (build 195)
   vehicle.cost=computeVehicleCost(ch,tt,wr);
   vehicle.powerToWeight=powertrain().ready()?powertrain().rating().peakHP/(vehicle.mass/1000):0;   // hp per tonne
   perf=simulateAccel();
@@ -9226,6 +9230,7 @@ function simulateAccelRun(){
   const shiftTime=gb.shift,tcStall=gb.stall>0?clamp(gb.stall,idle,rl*0.85):0;
   // an electric car has no clutch to slip and no launch speed to choose: the motor turns with the wheels from rest (build 180)
   const ev=pt.kind==='electric'||!!pt.direct;   // a power-split's eCVT neither (build 189)
+  const frontF=vv=>pt.frontForce?pt.frontForce(vv):0;   // a hybrid's front axle motor (build 195)
   const df=vehicle.df||DIFF.open;
   // Most axle torque the car will ever put down — first gear at peak torque. The diff's usable
   // share is referenced against this, so a launch behaves exactly as before while a tall gear
@@ -9331,6 +9336,7 @@ function simulateAccelRun(){
         slipW=Math.max(rpm*TWO_PI/60,slipW+(Teng-Tcl)/Ie*dt);       // the flywheel pays the difference
         driveF=Tcl*totalRatio*eff/r;
       }else driveF=Teng*totalRatio*eff/r;
+      driveF+=frontF(v);   // a hybrid's front axle motor, at the front wheels' speed (build 195)
     }
     // The differential decides how much of the driven axle's grip is actually usable: an open
     // diff is governed by the lighter-loaded wheel and throws the rest away, an LSD recovers
@@ -9403,7 +9409,7 @@ function simulateAccelRun(){
     const tot=gr*fd,vLim=rl*TWO_PI*r/60/tot;
     for(let vv=Math.min(vLim,160);vv>vTop;vv-=0.5){
       const rpm=clamp(vv*tot/r*60/TWO_PI,idle,rl);
-      const F=tqAt(rpm)*tot*eff/r,drag=0.5*AIR_RHO*vehicle.cdA*vv*vv;
+      const F=tqAt(rpm)*tot*eff/r+frontF(vv),drag=0.5*AIR_RHO*vehicle.cdA*vv*vv;
       if(F>drag+crrAt(vehicle.crr,vv)*m*G){vTop=vv;break;}
     }
   }
@@ -10061,7 +10067,7 @@ function lineFor(T,key){
 // and a forward traction/power pass, taking the lower speed at each point. Gearbox shift time is
 // charged per gear change around the lap, so a slow-shifting box loses real time on a circuit.
 function simulateLapRun(key,opts){
-  const pt=powertrain();
+  const pt=powertrain(),frontF=vv=>pt.frontForce?pt.frontForce(vv):0;   // a hybrid's front axle motor (build 195)
   if(!pt.ready()||!vehicle.mass)return null;
   const quick=!!(opts&&opts.quick);
   // fromRest (build 137): the lap of a standing start. The car leaves point 0 from rest and the forward pass
@@ -10107,7 +10113,7 @@ function simulateLapRun(key,opts){
     for(let i=0;i<ratios.length;i++){
       const tot=ratios[i]*fd,rpm=v*tot/rT*60/TWO_PI;
       if(rpm>rl)continue;
-      const f=tqAt(clamp(rpm,idle,rl))*tot*eff/rT;
+      const f=tqAt(clamp(rpm,idle,rl))*tot*eff/rT+frontF(v);   // a hybrid's front axle motor on top (build 195)
       if(f>bf){bf=f;bi=i;bq=tqAt(clamp(rpm,idle,rl))*tot;}
     }
     return{gear:bi,F:Math.max(0,bf),tqFrac:bq/axleTqMax};
@@ -10217,7 +10223,7 @@ function simulateLapRun(key,opts){
     const tot=ratios[g]*fd,rpm=vi*tot/rT*60/TWO_PI;
     if(rpm>rl)return{gear:g,F:0,tqFrac:0};
     const tq=tqAt(clamp(rpm,idle,rl));
-    return{gear:g,F:tq*tot*eff/rT,tqFrac:tq*tot/axleTqMax};
+    return{gear:g,F:tq*tot*eff/rT+frontF(vi),tqFrac:tq*tot/axleTqMax};
   }
   function accFrom(q,vi,boostShare=1,gear=-1){
     const N=loadAt(q,vi),dn=down(vi);
@@ -16877,7 +16883,7 @@ function initGuide(){
 // are step 2.3; until then the VEHICLE, TRACK and RACE tabs say so instead of running an electric car through a
 // combustion gearbox. New words are English for now (decision 11): tr() shows the English where Greek is missing.
 const EV_DEFAULT={evMotorType:'pm',evRotorD:150,evStack:134,evPoles:6,evTurns:12,evMagnet:'ndfeb',evRetention:'bridges',evCooling:'jacket',
-  evMaxRpm:18000,evInverter:'igbt',evAmps:950,evRearCount:1,evFront:'none',evFrontD:130,evFrontStack:110,evFrontPoles:4,evFrontTurns:12,evFrontAmps:700,evChem:'nca',evSeries:96,evKWh:75,evYear:2020};
+  evMaxRpm:18000,evInverter:'igbt',evAmps:950,evRearCount:1,evFront:'none',evFrontD:130,evFrontStack:110,evFrontPoles:4,evFrontTurns:12,evFrontAmps:700,evFrontFd:0,evChem:'nca',evSeries:96,evKWh:75,evYear:2020};
 // The race spends energy, not fuel (step 2.4): until then an electric car drives the 0-100 and the lap but does not race.
 // One reduction is all an electric car has: GEARING on the VEHICLE tab sets it (build 180).
 const EV_GEAR_NOTE='An electric car has one fixed reduction: set it with GEARING on the VEHICLE tab.';
@@ -16901,7 +16907,7 @@ function readElectricFromForm(){
     evTurns:Math.round(num('evTurns',4,120)),evMagnet:g('evMagnet').value,evRetention:g('evRetention').value,
     evCooling:g('evCooling').value,evMaxRpm:Math.round(num('evMaxRpm',4000,25000)),evInverter:g('evInverter').value,
     evAmps:Math.round(num('evAmps',100,1600)),evRearCount:g('evRearCount').value==='2'?2:1,
-    evFront:['pm','im'].includes(g('evFront').value)?g('evFront').value:'none',evFrontD:num('evFrontD',80,260),evFrontStack:num('evFrontStack',40,250),
+    evFront:['pm','im'].includes(g('evFront').value)?g('evFront').value:'none',evFrontFd:Math.max(0,+g('evFrontFd').value||0),evFrontD:num('evFrontD',80,260),evFrontStack:num('evFrontStack',40,250),
     evFrontPoles:+g('evFrontPoles').value||4,evFrontTurns:Math.round(num('evFrontTurns',4,60)),evFrontAmps:Math.round(num('evFrontAmps',100,1600)),evChem:g('evChem').value,evSeries:Math.round(num('evSeries',20,400)),
     evKWh:num('evKWh',0.5,200),evYear:Math.round(num('evYear',1990,2026))};
 }
@@ -16936,10 +16942,10 @@ function syncElectricSections(){
     const im=document.getElementById('evMotorType').value==='im';
     document.getElementById('evMagnet').disabled=im;document.getElementById('evRetention').disabled=im;
   }
-  if(ev){
-    // a front motor (build 183): its fields, and the car is all-wheel drive
+  if(ev||hy){
+    // a front motor (build 183; a hybrid's front axle motor, build 195): its fields, and the car is all-wheel drive
     const front=document.getElementById('evFront').value!=='none';
-    ['evFrontD','evFrontStack','evFrontPoles','evFrontTurns','evFrontAmps'].forEach(id=>{document.getElementById(id).disabled=!front;});
+    ['evFrontD','evFrontStack','evFrontPoles','evFrontTurns','evFrontAmps','evFrontFd'].forEach(id=>{const el=document.getElementById(id);if(el)el.disabled=!front;});
     evDriveLock(front);
   }else evDriveLock(false);
   return ev;
@@ -17446,7 +17452,7 @@ function evLapHeat(e,prof){
 // The VEHICLE tab for an electric car: no gearbox type, speeds or spacing to choose, and GEARING sets the reduction.
 // Called on every build, so an engine gets its own fields back.
 function syncEvVehicleForm(ev){
-  evDriveLock(ev&&!!(engine.motor&&engine.motor.parts&&engine.motor.parts.length>1));
+  evDriveLock(ev&&!!(engine.motor&&engine.motor.parts&&engine.motor.parts.length>1)||isHybrid()&&!!engine.hy.front);   // a hybrid's front axle motor too (build 195)
   ['vhGearbox','vhGears','vhSpacing'].forEach(id=>{const el=document.getElementById(id);
     if(el){const f=el.closest('.field');if(f)f.style.display=ev?'none':'';}});
   const lb=document.getElementById('lblGearing');
@@ -17807,6 +17813,16 @@ function buildHybrid(e){
   if(e.hyMode==='series'){   // the generator on the crank, sized to the engine (build 193); one reduction, no gearbox (~8 kg)
     const gen=seriesGenBuild(e,motor,packOcv(pack,HYB_SOC));e.hy.mg1=gen;e.hy.mass=Math.round(motor.mass+gen.mass+pack.mass+8);e.hy.cost+=gen.cost+300;
   }
+  // a front axle motor (build 195): the electric car's FRONT MOTOR fields, on its own fixed reduction to the front wheels,
+  // the car all-wheel drive; it shares the pack with the main motor in proportion to their peak powers
+  if(e.evFront==='pm'||e.evFront==='im'){
+    const fm=motorBuild({type:e.evFront,rotorD:e.evFrontD,stackL:e.evFrontStack,poles:e.evFrontPoles,turns:e.evFrontTurns,magnet:e.evMagnet,
+      retention:e.evRetention,cooling:e.evCooling,inverter:e.evInverter,invAmps:e.evFrontAmps,maxRpm:e.evMaxRpm});
+    const V=hybBusV(e.hy),pk=m=>{let P=0;for(let r=200;r<=m.nMax;r+=200)P=Math.max(P,motorMaxTorque(m,r,V,60)*r*Math.PI/30);return P;};
+    const Pr=pk(motor),Pf=pk(fm);
+    e.hy.front={motor:fm,fd:e.evFrontFd>0?e.evFrontFd:0,shareF:Pf/(Pr+Pf)};e.hy.shareR=Pr/(Pr+Pf);
+    e.hy.mass+=Math.round(fm.mass+8);e.hy.cost+=fm.cost+500;
+  }
   return e.hy;
 }
 // The motor's torque at an engine speed (Nm): its envelope at the pack's charge-sustaining voltage, magnets at 60 C,
@@ -17816,8 +17832,38 @@ const hybBusV=hy=>hy.mode==='ps'?PS.busV:packOcv(hy.pack,HYB_SOC);
 function hybMotorTq(hy,rpm){
   if(rpm>hy.motor.nMax)return 0;
   const V=hybBusV(hy),tc=hy.motor.cool.tCool,cool={w:tc,c:tc,r:60};
-  const Pb=packMaxPower(hy.pack,HYB_SOC);
+  const Pb=packMaxPower(hy.pack,HYB_SOC)*(hy.shareR||1);   // with a front motor, the main motor's share of the pack (build 195)
   return driveTorqueRated(hy,Math.max(rpm,1),V,cool,Pb);
+}
+// ---- the front axle motor (build 195) ----
+// Its torque at its own speed (Nm): its envelope at the bus, cut to its share of the pack.
+function hybFrontTq(hy,rpm){
+  const f=hy.front,m=f.motor;if(rpm>m.nMax)return 0;
+  const V=hybBusV(hy),tc=m.cool.tCool,cool={w:tc,c:tc,r:60},w=Math.max(rpm,1)*Math.PI/30,Pb=packMaxPower(hy.pack,HYB_SOC)*f.shareF;
+  let T=motorMaxTorque(m,Math.max(rpm,1),V,60);const need=t=>t*w+motorLosses(m,t,Math.max(rpm,1),V,cool).total;
+  if(T>0&&need(T)>Pb){let lo=0,hi=T;for(let k=0;k<30;k++){const mid=(lo+hi)/2;if(need(mid)>Pb)hi=mid;else lo=mid;}T=lo;}
+  return T;
+}
+// Its reduction: published (FRONT REDUCTION), or matched so its top speed falls at the car's top speed (it never has to
+// let go), as an electric car's is; set on the vehicle when it is built. Past its top speed it is declutched.
+const HYB_FRONT_EFF=0.97;
+function hybFrontSetup(v){
+  const hy=engine.hy,f=hy&&hy.front;if(!f){v.frontFd=0;v.frontTab=null;return;}
+  // the car's top speed on everything it has: the engine and main motor's peak, and the front motor's
+  const c=hybCurves();let P=0,Pf=0;c.eng.forEach((q,i)=>{P=Math.max(P,(q.tq+c.mot[i])*q.rpm*Math.PI/30);});
+  for(let r=200;r<=f.motor.nMax;r+=200)Pf=Math.max(Pf,hybFrontTq(hy,r)*r*Math.PI/30);
+  const vMax=dragLimitedV((P+Pf)/1000*v.driveEff,v.cdA,v.crr,v.mass);
+  v.frontFdMatched=vMax>1?f.motor.nMax*2*Math.PI*v.rTire/60/vMax:8;
+  v.frontFd=f.fd>0?f.fd:v.frontFdMatched;
+  // the wheel force every 0.5 m/s, at full deploy (the lap's deploy share scales it)
+  const tab=[];for(let k=0;k<=260;k++){const vv=k*0.5,n=vv/v.rTire*v.frontFd*30/Math.PI;tab.push(n>f.motor.nMax?0:hybFrontTq(hy,n)*v.frontFd*HYB_FRONT_EFF/v.rTire);}
+  v.frontTab=tab;
+}
+// The front motor's force at the wheels (N) at a road speed (m/s).
+function hybFrontF(vv){
+  const t=vehicle&&vehicle.frontTab;if(!t)return 0;
+  const x=Math.max(0,vv)/0.5,i=Math.min(t.length-2,Math.floor(x)),f=x-i;
+  return (t[i]*(1-f)+t[i+1]*f)*hybDeployShare;
 }
 // The deploy share the charge-sustaining controller allows (1 = all the motor gives); hybridLap sets it for a lap.
 let hybDeployShare=1;
@@ -17862,6 +17908,13 @@ function hybLapEnergy(L){
     if(R.pwr[i]>0){
       const Pm=Math.max(0,R.pwr[i]-engAt(rpm)*w);
       if(Pm>0){const T=Pm/Math.max(1,w);pm[i]=Pm;deployJ+=(Pm+motorLosses(hy.motor,T,Math.max(rpm,1),V,temp).total)*dt;}
+      // a front axle motor (build 195) drives where the car is flat out (the engine and main motor at their full): its
+      // force at that speed, its losses at its own speed and torque
+      if(hy.front&&Pm>0){
+        const Ff=hybFrontF(v[i]);
+        if(Ff>0){const nf=v[i]/vehicle.rTire*vehicle.frontFd*30/Math.PI,Tf=Ff*vehicle.rTire/(vehicle.frontFd*HYB_FRONT_EFF);
+          deployJ+=(Ff*v[i]/HYB_FRONT_EFF+motorLosses(hy.front.motor,Tf,Math.max(nf,1),V,temp).total)*dt;}
+      }
     }else if(R.eb&&R.eb[i]>0&&rpm>=500){
       const k=Math.min(regen.length-1,Math.floor((rpm-500)/250)),Tr=regen[k],To=ov[Math.min(ov.length-1,k)]||0;
       const share=Tr/Math.max(1e-6,Tr+To),P=R.eb[i]*m*v[i]*share*(vehicle.driveEff||0.9);   // at the shaft, through the driveline
@@ -18930,7 +18983,18 @@ const HYB_ENGINE_PRESETS=[
     injector:'direct',vvt:true,cam:'stock',valves:4,octane:95,airFilter:'stock',exhaust:'stock',cat:'stock',intakeSys:'efi',hyMode:'p2',hyDeploy:'full',hyPlug:true,
     hyTune:{rpm:4000,map:Array(20).fill(100),regen:'high',lps:true,evKmh:0,evKw:0,socLo:12,socT:15,socHi:95},
     evMotorType:'pm',evRotorD:200,evStack:60,evPoles:12,evTurns:48,evMagnet:'ndfeb',evRetention:'bridges',evCooling:'jacket',evMaxRpm:7500,
-    evInverter:'igbt',evAmps:250,evRearCount:1,evFront:'none',evChem:'ncaP',evSeries:96,evKWh:12,evYear:2020}}
+    evInverter:'igbt',evAmps:250,evRearCount:1,evFront:'none',evChem:'ncaP',evSeries:96,evKWh:12,evYear:2020}},
+  // The Porsche 918 Spyder (2013; build 195, step 3.5b): a plug-in with a motor at each end. The 4.6 V8 (95 x 81 mm, 447 kW
+  // at 8700 rpm, 540 Nm at 6700, to 9150), a 115 kW motor between it and the seven-speed PDK, a 95 kW motor driving the
+  // front axle through its own reduction (declutched past its top speed), and a 6.8 kWh pack of 312 cells: 652 kW and 1280
+  // Nm together (Porsche). Neither motor's torque, nor the front's reduction, is published.
+  {cat:'Hybrid',name:'Porsche 4.6 V8 + P2 + front motor (918 Spyder)',real:{hp:599.4,hpRpm:8700,tq:540,tqRpm:6700,motorKW:115,frontKW:95,sysKW:652,sysNm:1280},
+   unsure:['compression','cam','motor torques','front reduction'],engine:{type:'petrol4',cylinders:8,layout:'v',bore_mm:95,stroke_mm:81,compression:13.0,redline:9150,intake:'na',
+    injector:'direct',vvt:true,cam:'race',valves:4,valveMat:'titanium',valveSpring:'race',octane:98,airFilter:'perf',exhaust:'race',cat:'stock',intakeSys:'efi',runner:'variable',
+    hyMode:'p2',hyDeploy:'full',hyPlug:true,hyTune:{rpm:4000,map:Array(20).fill(100),regen:'high',lps:true,evKmh:0,evKw:0,socLo:15,socT:20,socHi:95},
+    evMotorType:'pm',evRotorD:150,evStack:80,evPoles:8,evTurns:30,evMagnet:'ndfeb',evRetention:'bridges',evCooling:'jacket',evMaxRpm:16000,
+    evInverter:'igbt',evAmps:350,evRearCount:1,evFront:'pm',evFrontD:150,evFrontStack:100,evFrontPoles:8,evFrontTurns:30,evFrontAmps:250,evFrontFd:0,
+    evChem:'liHEV',evSeries:104,evKWh:6.8,evYear:2013}}
 ];
 const HYB_VEHICLE_PRESETS=[
   {cat:'Hybrid',name:'Hyundai Ioniq Hybrid (2016)',engine:'Hyundai Kappa 1.6 GDi + P2 (Ioniq Hybrid)',chassis:'hatch',
@@ -18949,7 +19013,12 @@ const HYB_VEHICLE_PRESETS=[
   // electric range 59-66 km and 1.6-1.9 L/100 km weighted (BMW, by trim).
   {cat:'Hybrid',name:'BMW 330e (2020)',engine:'BMW B48 2.0 turbo + P2 plug-in (330e)',chassis:'sedan',
    body:{kg:1740,cd:0.26,area:2.20,wb:2.85,fWt:0.50},fit:{drive:'rwd',tire:'sport',tw:225,ta:45,wheel:18,brake:'steel',rotor:330,susp:'comfort',gears:8,gearbox:'auto',diff:'open'},
-   real:{t100:5.9,top:230,limited:true},unsure:['area','fWt','cd']}
+   real:{t100:5.9,top:230,limited:true},unsure:['area','fWt','cd']},
+  // 1674 kg (DIN), all-wheel drive through the front motor, seven-speed PDK; 0-100 km/h 2.6 s, 0-200 7.2 s, 0-300 19.9 s,
+  // 345 km/h (Porsche); Nordschleife 6:57 (Weissach package, 2013).
+  {cat:'Hybrid',name:'Porsche 918 Spyder (2013)',engine:'Porsche 4.6 V8 + P2 + front motor (918 Spyder)',chassis:'hyper',
+   body:{kg:1674,cd:0.35,area:1.95,wb:2.73,fWt:0.43},fit:{drive:'awd',tire:'semi',tw:325,ta:30,wheel:21,twF:265,brake:'carbon',rotor:410,susp:'race',gears:7,gearbox:'dct',diff:'clsd'},
+   real:{t100:2.6,t200:7.2,top:345,limited:false},unsure:['cd','area','fWt','tyres']}
 ];
 // What a player picks from: the combustion tables, then the electric and hybrid ones.
 const FACTORY_ENGINES=PRESETS.concat(EV_ENGINE_PRESETS,HYB_ENGINE_PRESETS), FACTORY_CARS=VEHICLE_PRESETS.concat(EV_VEHICLE_PRESETS,HYB_VEHICLE_PRESETS);

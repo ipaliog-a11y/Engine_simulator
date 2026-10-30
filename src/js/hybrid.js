@@ -85,6 +85,16 @@ function buildHybrid(e){
   if(e.hyMode==='series'){   // the generator on the crank, sized to the engine (build 193); one reduction, no gearbox (~8 kg)
     const gen=seriesGenBuild(e,motor,packOcv(pack,HYB_SOC));e.hy.mg1=gen;e.hy.mass=Math.round(motor.mass+gen.mass+pack.mass+8);e.hy.cost+=gen.cost+300;
   }
+  // a front axle motor (build 195): the electric car's FRONT MOTOR fields, on its own fixed reduction to the front wheels,
+  // the car all-wheel drive; it shares the pack with the main motor in proportion to their peak powers
+  if(e.evFront==='pm'||e.evFront==='im'){
+    const fm=motorBuild({type:e.evFront,rotorD:e.evFrontD,stackL:e.evFrontStack,poles:e.evFrontPoles,turns:e.evFrontTurns,magnet:e.evMagnet,
+      retention:e.evRetention,cooling:e.evCooling,inverter:e.evInverter,invAmps:e.evFrontAmps,maxRpm:e.evMaxRpm});
+    const V=hybBusV(e.hy),pk=m=>{let P=0;for(let r=200;r<=m.nMax;r+=200)P=Math.max(P,motorMaxTorque(m,r,V,60)*r*Math.PI/30);return P;};
+    const Pr=pk(motor),Pf=pk(fm);
+    e.hy.front={motor:fm,fd:e.evFrontFd>0?e.evFrontFd:0,shareF:Pf/(Pr+Pf)};e.hy.shareR=Pr/(Pr+Pf);
+    e.hy.mass+=Math.round(fm.mass+8);e.hy.cost+=fm.cost+500;
+  }
   return e.hy;
 }
 // The motor's torque at an engine speed (Nm): its envelope at the pack's charge-sustaining voltage, magnets at 60 C,
@@ -94,8 +104,38 @@ const hybBusV=hy=>hy.mode==='ps'?PS.busV:packOcv(hy.pack,HYB_SOC);
 function hybMotorTq(hy,rpm){
   if(rpm>hy.motor.nMax)return 0;
   const V=hybBusV(hy),tc=hy.motor.cool.tCool,cool={w:tc,c:tc,r:60};
-  const Pb=packMaxPower(hy.pack,HYB_SOC);
+  const Pb=packMaxPower(hy.pack,HYB_SOC)*(hy.shareR||1);   // with a front motor, the main motor's share of the pack (build 195)
   return driveTorqueRated(hy,Math.max(rpm,1),V,cool,Pb);
+}
+// ---- the front axle motor (build 195) ----
+// Its torque at its own speed (Nm): its envelope at the bus, cut to its share of the pack.
+function hybFrontTq(hy,rpm){
+  const f=hy.front,m=f.motor;if(rpm>m.nMax)return 0;
+  const V=hybBusV(hy),tc=m.cool.tCool,cool={w:tc,c:tc,r:60},w=Math.max(rpm,1)*Math.PI/30,Pb=packMaxPower(hy.pack,HYB_SOC)*f.shareF;
+  let T=motorMaxTorque(m,Math.max(rpm,1),V,60);const need=t=>t*w+motorLosses(m,t,Math.max(rpm,1),V,cool).total;
+  if(T>0&&need(T)>Pb){let lo=0,hi=T;for(let k=0;k<30;k++){const mid=(lo+hi)/2;if(need(mid)>Pb)hi=mid;else lo=mid;}T=lo;}
+  return T;
+}
+// Its reduction: published (FRONT REDUCTION), or matched so its top speed falls at the car's top speed (it never has to
+// let go), as an electric car's is; set on the vehicle when it is built. Past its top speed it is declutched.
+const HYB_FRONT_EFF=0.97;
+function hybFrontSetup(v){
+  const hy=engine.hy,f=hy&&hy.front;if(!f){v.frontFd=0;v.frontTab=null;return;}
+  // the car's top speed on everything it has: the engine and main motor's peak, and the front motor's
+  const c=hybCurves();let P=0,Pf=0;c.eng.forEach((q,i)=>{P=Math.max(P,(q.tq+c.mot[i])*q.rpm*Math.PI/30);});
+  for(let r=200;r<=f.motor.nMax;r+=200)Pf=Math.max(Pf,hybFrontTq(hy,r)*r*Math.PI/30);
+  const vMax=dragLimitedV((P+Pf)/1000*v.driveEff,v.cdA,v.crr,v.mass);
+  v.frontFdMatched=vMax>1?f.motor.nMax*2*Math.PI*v.rTire/60/vMax:8;
+  v.frontFd=f.fd>0?f.fd:v.frontFdMatched;
+  // the wheel force every 0.5 m/s, at full deploy (the lap's deploy share scales it)
+  const tab=[];for(let k=0;k<=260;k++){const vv=k*0.5,n=vv/v.rTire*v.frontFd*30/Math.PI;tab.push(n>f.motor.nMax?0:hybFrontTq(hy,n)*v.frontFd*HYB_FRONT_EFF/v.rTire);}
+  v.frontTab=tab;
+}
+// The front motor's force at the wheels (N) at a road speed (m/s).
+function hybFrontF(vv){
+  const t=vehicle&&vehicle.frontTab;if(!t)return 0;
+  const x=Math.max(0,vv)/0.5,i=Math.min(t.length-2,Math.floor(x)),f=x-i;
+  return (t[i]*(1-f)+t[i+1]*f)*hybDeployShare;
 }
 // The deploy share the charge-sustaining controller allows (1 = all the motor gives); hybridLap sets it for a lap.
 let hybDeployShare=1;
@@ -140,6 +180,13 @@ function hybLapEnergy(L){
     if(R.pwr[i]>0){
       const Pm=Math.max(0,R.pwr[i]-engAt(rpm)*w);
       if(Pm>0){const T=Pm/Math.max(1,w);pm[i]=Pm;deployJ+=(Pm+motorLosses(hy.motor,T,Math.max(rpm,1),V,temp).total)*dt;}
+      // a front axle motor (build 195) drives where the car is flat out (the engine and main motor at their full): its
+      // force at that speed, its losses at its own speed and torque
+      if(hy.front&&Pm>0){
+        const Ff=hybFrontF(v[i]);
+        if(Ff>0){const nf=v[i]/vehicle.rTire*vehicle.frontFd*30/Math.PI,Tf=Ff*vehicle.rTire/(vehicle.frontFd*HYB_FRONT_EFF);
+          deployJ+=(Ff*v[i]/HYB_FRONT_EFF+motorLosses(hy.front.motor,Tf,Math.max(nf,1),V,temp).total)*dt;}
+      }
     }else if(R.eb&&R.eb[i]>0&&rpm>=500){
       const k=Math.min(regen.length-1,Math.floor((rpm-500)/250)),Tr=regen[k],To=ov[Math.min(ov.length-1,k)]||0;
       const share=Tr/Math.max(1e-6,Tr+To),P=R.eb[i]*m*v[i]*share*(vehicle.driveEff||0.9);   // at the shaft, through the driveline

@@ -35,6 +35,7 @@ let vehRev=0;                      // bumped on every rebuild, so lap results ca
 function buildVehicle(){
   vehRev++;
   vehicle=readVehicleFromForm();
+  if(isHybrid()&&engine.hy.front)vehicle.drive='awd';   // a hybrid's front axle motor drives the front wheels (build 195)
   const ch=CHASSIS[vehicle.chassis]||CHASSIS.coupe, tt=TIRE_TYPE[vehicle.tireType]||TIRE_TYPE.sport, wr=WEIGHT_RED[vehicle.weightRed]||WEIGHT_RED.none;
   const body=vehicle.body;
   vehicle.chLabel=body?body.name:ch.label;
@@ -149,6 +150,7 @@ function buildVehicle(){
   if(vehicle.ev)electricDriveline(vehicle);   // one fixed reduction, no gearbox (build 180)
   if(vehicle.ecvt)psDriveline(vehicle);       // a power-split's: one reduction from MG2 (build 189)
   syncEvVehicleForm(vehicle.ev||vehicle.ecvt);
+  hybFrontSetup(vehicle);   // a hybrid's front axle motor: its reduction and its force at each speed (build 195)
   vehicle.cost=computeVehicleCost(ch,tt,wr);
   vehicle.powerToWeight=powertrain().ready()?powertrain().rating().peakHP/(vehicle.mass/1000):0;   // hp per tonne
   perf=simulateAccel();
@@ -315,6 +317,7 @@ function simulateAccelRun(){
   const shiftTime=gb.shift,tcStall=gb.stall>0?clamp(gb.stall,idle,rl*0.85):0;
   // an electric car has no clutch to slip and no launch speed to choose: the motor turns with the wheels from rest (build 180)
   const ev=pt.kind==='electric'||!!pt.direct;   // a power-split's eCVT neither (build 189)
+  const frontF=vv=>pt.frontForce?pt.frontForce(vv):0;   // a hybrid's front axle motor (build 195)
   const df=vehicle.df||DIFF.open;
   // Most axle torque the car will ever put down — first gear at peak torque. The diff's usable
   // share is referenced against this, so a launch behaves exactly as before while a tall gear
@@ -420,6 +423,7 @@ function simulateAccelRun(){
         slipW=Math.max(rpm*TWO_PI/60,slipW+(Teng-Tcl)/Ie*dt);       // the flywheel pays the difference
         driveF=Tcl*totalRatio*eff/r;
       }else driveF=Teng*totalRatio*eff/r;
+      driveF+=frontF(v);   // a hybrid's front axle motor, at the front wheels' speed (build 195)
     }
     // The differential decides how much of the driven axle's grip is actually usable: an open
     // diff is governed by the lighter-loaded wheel and throws the rest away, an LSD recovers
@@ -492,7 +496,7 @@ function simulateAccelRun(){
     const tot=gr*fd,vLim=rl*TWO_PI*r/60/tot;
     for(let vv=Math.min(vLim,160);vv>vTop;vv-=0.5){
       const rpm=clamp(vv*tot/r*60/TWO_PI,idle,rl);
-      const F=tqAt(rpm)*tot*eff/r,drag=0.5*AIR_RHO*vehicle.cdA*vv*vv;
+      const F=tqAt(rpm)*tot*eff/r+frontF(vv),drag=0.5*AIR_RHO*vehicle.cdA*vv*vv;
       if(F>drag+crrAt(vehicle.crr,vv)*m*G){vTop=vv;break;}
     }
   }

@@ -9,7 +9,7 @@
 // are step 2.3; until then the VEHICLE, TRACK and RACE tabs say so instead of running an electric car through a
 // combustion gearbox. New words are English for now (decision 11): tr() shows the English where Greek is missing.
 const EV_DEFAULT={evMotorType:'pm',evRotorD:150,evStack:134,evPoles:6,evTurns:12,evMagnet:'ndfeb',evRetention:'bridges',evCooling:'jacket',
-  evMaxRpm:18000,evInverter:'igbt',evAmps:950,evRearCount:1,evFront:'none',evFrontD:130,evFrontStack:110,evFrontPoles:4,evFrontTurns:12,evFrontAmps:700,evChem:'nca',evSeries:96,evKWh:75,evYear:2020};
+  evMaxRpm:18000,evInverter:'igbt',evAmps:950,evRearCount:1,evFront:'none',evFrontD:130,evFrontStack:110,evFrontPoles:4,evFrontTurns:12,evFrontAmps:700,evFrontFd:0,evChem:'nca',evSeries:96,evKWh:75,evYear:2020};
 // The race spends energy, not fuel (step 2.4): until then an electric car drives the 0-100 and the lap but does not race.
 // One reduction is all an electric car has: GEARING on the VEHICLE tab sets it (build 180).
 const EV_GEAR_NOTE='An electric car has one fixed reduction: set it with GEARING on the VEHICLE tab.';
@@ -33,7 +33,7 @@ function readElectricFromForm(){
     evTurns:Math.round(num('evTurns',4,120)),evMagnet:g('evMagnet').value,evRetention:g('evRetention').value,
     evCooling:g('evCooling').value,evMaxRpm:Math.round(num('evMaxRpm',4000,25000)),evInverter:g('evInverter').value,
     evAmps:Math.round(num('evAmps',100,1600)),evRearCount:g('evRearCount').value==='2'?2:1,
-    evFront:['pm','im'].includes(g('evFront').value)?g('evFront').value:'none',evFrontD:num('evFrontD',80,260),evFrontStack:num('evFrontStack',40,250),
+    evFront:['pm','im'].includes(g('evFront').value)?g('evFront').value:'none',evFrontFd:Math.max(0,+g('evFrontFd').value||0),evFrontD:num('evFrontD',80,260),evFrontStack:num('evFrontStack',40,250),
     evFrontPoles:+g('evFrontPoles').value||4,evFrontTurns:Math.round(num('evFrontTurns',4,60)),evFrontAmps:Math.round(num('evFrontAmps',100,1600)),evChem:g('evChem').value,evSeries:Math.round(num('evSeries',20,400)),
     evKWh:num('evKWh',0.5,200),evYear:Math.round(num('evYear',1990,2026))};
 }
@@ -68,10 +68,10 @@ function syncElectricSections(){
     const im=document.getElementById('evMotorType').value==='im';
     document.getElementById('evMagnet').disabled=im;document.getElementById('evRetention').disabled=im;
   }
-  if(ev){
-    // a front motor (build 183): its fields, and the car is all-wheel drive
+  if(ev||hy){
+    // a front motor (build 183; a hybrid's front axle motor, build 195): its fields, and the car is all-wheel drive
     const front=document.getElementById('evFront').value!=='none';
-    ['evFrontD','evFrontStack','evFrontPoles','evFrontTurns','evFrontAmps'].forEach(id=>{document.getElementById(id).disabled=!front;});
+    ['evFrontD','evFrontStack','evFrontPoles','evFrontTurns','evFrontAmps','evFrontFd'].forEach(id=>{const el=document.getElementById(id);if(el)el.disabled=!front;});
     evDriveLock(front);
   }else evDriveLock(false);
   return ev;
