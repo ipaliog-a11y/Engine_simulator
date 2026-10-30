@@ -39,6 +39,17 @@ Working toward **v1.0 — every number derived, not fitted.**
   - 30 laps spread it at a 35% share and finish with 20 kJ of 18,360 left, 3.0 s ahead of the same car not plugged in;
   - a 0.6 MJ deploy limit costs 0.23 s a lap, a 0.5 MJ harvest limit 0.27 s.
 - The RACE tab's telemetry shows a plug-in's PACK and PLUG-IN DEPLOY share. `tests/test113.mjs`.
+- **Fixed: a hybrid flat out on the LIVE bench wore its engine out** (reported on the BMW 330e: AUTO, AUTO THERMAL,
+  over 50% pedal).
+  - The hybrid's pedal asks for the engine's and the motor's torque, so from about half pedal the engine runs at full load.
+  - All five hybrid engine presets had the stock radiator and no oil cooler. At full load the oil settled at 139-150 C,
+    past the 132 C damage threshold.
+  - They now have a large radiator and an oil cooler, as the game's performance presets do (the real engines all have
+    one). Flat out, the oil holds at 118-129 C.
+  - A power-split's or series hybrid's controller held the engine on its redline at full demand, which wears it as
+    OVER-REV. It now keeps the engine at most 97% of the redline.
+  - The base game's thermal model is unchanged.
+  - `tests/test107.mjs` runs every hybrid preset flat out for five minutes.
 
 ### A front axle motor, and the Porsche 918 Spyder (build 195)
 
