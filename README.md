@@ -1,4 +1,4 @@
-# PIXEL ENGINE SIM v0.7 build 190
+# PIXEL ENGINE SIM v0.7 build 191
 
 **A lightweight, 8-bit style internal combustion engine *designer* & simulator** inspired by *Automation*.
 
@@ -120,7 +120,8 @@ wheels through one reduction, no gearbox. The 2016 Prius, its engine matched to 
 10.6, and 4.44 L/100 km on the WLTP cycle at the real engine's efficiency against Toyota's 4.14.
 On the LIVE bench (build 190) a hybrid runs with its motor and pack: a HYBRID panel draws the power flowing between
 engine, motors, pack and brake, gauges the charge, and offers the drive modes (AUTO, EV, HOLD, CHARGE, SPORT, ENGINE
-ONLY, MANUAL).
+ONLY, MANUAL). Its VIEW selector also shows the power-split's lever diagram and the engine's BSFC map with the point
+the controller holds it at (build 191).
 
 ### Simulation & live tuning
 - **Live outputs**: Power (HP), Torque (Nm), BMEP, Volumetric Efficiency, Thermal

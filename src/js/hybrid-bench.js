@@ -29,7 +29,7 @@ function hybBenchState(){
   const hy=engine.hy;
   if(hybBench&&hybBench.hy===hy)return hybBench;
   const prev=hybBench,tc=hy.motor.cool.tCool;
-  hybBench={hy,mode:prev?prev.mode:'auto',soc:prev?prev.soc:HYB_SOC,hold:prev?prev.hold:HYB_SOC,cmd:prev?prev.cmd:0,neSet:prev?prev.neSet:0,
+  hybBench={hy,view:prev?prev.view:'flow',trail:[],mode:prev?prev.mode:'auto',soc:prev?prev.soc:HYB_SOC,hold:prev?prev.hold:HYB_SOC,cmd:prev?prev.cmd:0,neSet:prev?prev.neSet:0,
     n:hy.mode==='ps'?0:engine.idleRpmEff,engOn:true,thrE:state.throttle,Te:0,Tm:0,T1:0,ns:0,ne:engine.idleRpmEff,
     Pe:0,Pm:0,P1:0,Pb:0,Psys:0,mT:{w:tc,c:tc,r:tc},tB:{b:PACK_COOLANT},lowFlash:0};
   state.rpm=engine.idleRpmEff;
@@ -204,7 +204,11 @@ function updateHybridPanel(){
   if(g('valHyCmd'))g('valHyCmd').textContent=Math.round(H.cmd*100);
   const ne=g('hyNe');if(ne){ne.max=engine.redline;if(!H.neSet)H.neSet=Math.round(engine.score.peakTQrpm||3000);if(document.activeElement!==ne)ne.value=H.neSet;}
   if(g('valHyNe'))g('valHyNe').textContent=Math.round(H.neSet);
-  drawHybridFlow(H);
+  // the view (build 191): the power flow, the power-split's lever, or the engine's BSFC map with the operating point
+  if(H.view==='lever'&&!ps)H.view='flow';
+  const vs=g('hyView');if(vs){const lo=vs.querySelector('option[value="lever"]');if(lo)lo.disabled=!ps;if(document.activeElement!==vs&&vs.value!==(H.view||'flow'))vs.value=H.view||'flow';}
+  hybTrailPush(H);
+  if(H.view==='lever')drawHybridLever(H);else if(H.view==='map')drawHybridMap(H);else drawHybridFlow(H);
 }
 // The power-flow diagram: each part a box, each path an arrow as wide as the power on it, coloured by what it is doing.
 function drawHybridFlow(H){
@@ -270,4 +274,5 @@ function bindHybridPanel(){
   g('hySocSet').addEventListener('input',e=>{if(!isHybrid())return;hybBenchState().soc=clamp(+e.target.value/100,0,1);});
   g('hyCmd').addEventListener('input',e=>{if(!isHybrid())return;hybBenchState().cmd=clamp(+e.target.value/100,-1,1);});
   g('hyNe').addEventListener('input',e=>{if(!isHybrid())return;hybBenchState().neSet=+e.target.value;});
+  g('hyView').addEventListener('change',e=>{if(!isHybrid())return;hybBenchState().view=e.target.value;});
 }

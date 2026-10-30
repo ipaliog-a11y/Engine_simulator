@@ -16,7 +16,7 @@
 <body>
 <div class="container">
 <header>
-<h1>PIXEL ENGINE SIM v0.7 build 190</h1>
+<h1>PIXEL ENGINE SIM v0.7 build 191</h1>
 <div class="subtitle" id="subtitle">ENGINE DESIGNER • BUILD IT, THEN DRIVE IT</div>
 </header>
 <div class="build-strip" id="buildStrip">
@@ -324,6 +324,7 @@
 </div>
 <div class="panel" id="hybridPanel" hidden>
 <h2>Hybrid</h2>
+<div class="control-group"><label for="hyView"><span class="ctl-lbl">VIEW</span></label><select id="hyView"><option value="flow">POWER FLOW</option><option value="lever">LEVER (POWER-SPLIT)</option><option value="map">BSFC MAP</option></select></div>
 <canvas id="hyFlow" class="hy-flow" role="img" aria-label="Hybrid power flow: the engine, the motors, the battery pack and the dyno brake, with the power on each path"></canvas>
 <div class="hy-soc" id="hySoc" role="meter" aria-label="Battery state of charge" aria-valuemin="0" aria-valuemax="100" aria-valuenow="60"><div class="hy-soc-win"></div><div class="hy-soc-fill" id="hySocFill"></div></div>
 <div class="readout" id="hyPack">PACK 0.0 kW</div>
@@ -518,6 +519,7 @@
 <!-- @include js/hybrid.js -->
 <!-- @include js/power-split.js -->
 <!-- @include js/hybrid-bench.js -->
+<!-- @include js/hybrid-views.js -->
 <!-- @include js/fuel-cycle.js -->
 <!-- @include js/electric-presets.js -->
 <!-- @include js/controls-boot.js -->
