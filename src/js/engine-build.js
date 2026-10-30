@@ -52,7 +52,7 @@ function readEngineFromForm(){
     alternator:g('edAlternator').value
   };
   if(type==='electric')Object.assign(e,readElectricFromForm());   // the motor and battery (build 179)
-  else{const hm=g('edHybrid')&&g('edHybrid').value;if(hm&&hm!=='none'){e.hyMode=hm;e.hyDeploy=HYBRID_DEPLOY[g('edHyDeploy').value]?g('edHyDeploy').value:'full';e.hyTune=readHybTuneFromForm();Object.assign(e,readElectricFromForm());}}   // a hybrid system (build 186), its tune (192)
+  else{const hm=g('edHybrid')&&g('edHybrid').value;if(hm&&hm!=='none'){e.hyMode=hm;e.hyDeploy=HYBRID_DEPLOY[g('edHyDeploy').value]?g('edHyDeploy').value:'full';e.hyTune=readHybTuneFromForm();if(g('edHyPlug').value==='yes')e.hyPlug=true;Object.assign(e,readElectricFromForm());}}   // a hybrid system (build 186), its tune (192)
   return e;
 }
 function applyEngineToForm(e){
@@ -83,6 +83,7 @@ function applyEngineToForm(e){
   if(g('edHybrid'))g('edHybrid').value=e.type!=='electric'&&HYBRID_MODES[e.hyMode]?e.hyMode:'none';
   if(g('edHyDeploy'))g('edHyDeploy').value=HYBRID_DEPLOY[e.hyDeploy]?e.hyDeploy:'full';
   applyHybTuneToForm(e.type!=='electric'&&e.hyMode?e.hyTune:null);   // build 192
+  if(g('edHyPlug'))g('edHyPlug').value=e.hyPlug?'yes':'no';   // build 194
   syncDesignEnable();
 }
 function syncDesignEnable(){

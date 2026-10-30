@@ -78,17 +78,20 @@ function hybControl(H,dt){
   if(mode==='hold'&&H.lastMode!=='hold')H.hold=H.soc;
   H.lastMode=mode;
   const socT=mode==='charge'?hi:mode==='hold'?H.hold:tu.socT/100;
-  const Pev=tu.evKw>0?tu.evKw*1000:B.evShare*Math.min(Pmax,motorMaxTorque(hy.motor,Math.max(n,1000),hybBusV(hy),60)*Math.max(n,1000)*Math.PI/30);
+  // a plug-in with charge to spare drives on it (build 194): electric up to all the motor and pack give, the motor helping
+  const deplete=e.hyPlug&&(mode==='auto')&&H.soc>tu.socT/100+0.02;
+  const Pev=deplete?Math.min(Pmax,motorMaxTorque(hy.motor,Math.max(n,1000),hybBusV(hy),60)*Math.max(n,1000)*Math.PI/30):tu.evKw>0?tu.evKw*1000:B.evShare*Math.min(Pmax,motorMaxTorque(hy.motor,Math.max(n,1000),hybBusV(hy),60)*Math.max(n,1000)*Math.PI/30);
   let on=H.engOn;
   if(mode==='ev'){on=H.soc<lo;if(on&&!H.lowFlash){H.lowFlash=1;flash(tr('PACK LOW • ENGINE STARTED'),'warn');}if(!on)H.lowFlash=0;}
   else if(mode==='auto'||mode==='hold'){
     const low=H.soc<socT-0.1;
-    on=p>0.01&&(Pd>(on?0.7:1)*Pev||low)||H.soc<lo;
+    on=p>0.01&&(Pd>(on&&!deplete?0.7:1)*Pev||low)||H.soc<lo;   // a depleting plug-in stops its engine as soon as the motor can do it
   }else on=true;
   H.engOn=on;
   // the charging power the controller asks of the engine (W, + charging), from how far the charge is from its target
   let Pc=mode==='charge'?(H.soc<hi?B.chargeShare*Pchg:0):clamp((socT-H.soc)/0.1,-1,1)*B.chargeShare*Pchg;
-  if(!tu.lps&&mode!=='charge'&&H.soc>=lo)Pc=Math.min(0,Pc);   // no load-point shifting: the engine charges only a low pack
+  if(!tu.lps&&mode!=='charge'&&H.soc>=lo)Pc=Math.min(0,Pc);
+  if(deplete)Pc=-B.chargeShare*Pchg;   // no load-point shifting: the engine charges only a low pack
   const pedalThr=mode==='sport'||mode==='engine'||mode==='manual';
   if(ps){
     const nr=n/PS.k2,R=psEngineRange(hy,nr),O=psOol();

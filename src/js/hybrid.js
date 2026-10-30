@@ -189,7 +189,7 @@ let hybMapForm=HYB_TUNE_DEFAULT.map.slice();
 function readHybTuneFromForm(){
   const g=id=>document.getElementById(id),D=HYB_TUNE_DEFAULT;
   const num=(id,lo,hi,d)=>{const v=+g(id).value;return clamp(Math.round(isFinite(v)&&g(id).value!==''?v:d),lo,hi);};
-  const socLo=num('edHySocLo',10,60,D.socLo),socHi=Math.max(socLo+10,num('edHySocHi',40,95,D.socHi)),socT=clamp(num('edHySocT',20,80,D.socT),socLo+5,socHi-5);
+  const socLo=num('edHySocLo',10,60,D.socLo),socHi=Math.max(socLo+10,num('edHySocHi',40,95,D.socHi)),socT=clamp(num('edHySocT',10,80,D.socT),socLo+3,socHi-5);
   return {rpm:num('edHyRpm',1000,12000,D.rpm),map:hybMapForm.slice(),regen:HYB_REGEN[g('edHyRegen').value]?g('edHyRegen').value:'high',
     lps:g('edHyLps').value!=='off',evKmh:num('edHyEvKmh',0,200,D.evKmh),evKw:num('edHyEvKw',0,400,D.evKw),socLo,socT,socHi};
 }

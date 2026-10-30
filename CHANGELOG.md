@@ -20,6 +20,24 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 Working toward **v1.0 — every number derived, not fitted.**
 
+### The plug-in hybrid (build 194)
+
+- **Step 3.5a of the plan** (decision 13's second half). **PLUG-IN** on any hybrid: the pack starts at the charge
+  window's HIGH and is driven down to its LOW before the hybrid sustains it.
+- WLTP the regulation's way for a plug-in (UN R154 / EU 2017/1151): the cycle driven again and again from a full pack
+  until the pack reaches the charge it sustains, with no warm-up running of the engine (a plug-in drives away on its
+  pack; the engine starts cold when it is asked for); the **all-electric range** (where the engine first starts), the
+  depleting cycles' fuel and electricity (at the socket, over a 90% charger), and the **weighted** figure, each
+  depleting cycle by the EU utility factor's step over it and the sustaining test by what is left. While it depletes
+  the energy manager prices the pack's energy at 2% of a charge-sustaining hybrid's. The VEHICLE tab gives the weighted
+  L/100 km and CO2, the electric range, kWh/100 km and the sustaining figure.
+- On the LIVE bench, AUTO drives a plug-in electric while it has charge to spare (up to all the motor and pack give).
+- The CHARGE TARGET can now go down to 10% (a plug-in sustains near the bottom of its pack).
+- **The BMW 330e (2020)**: B48 2.0 turbo (193 hp as built, 184 PS published) with an 80 kW / 265 Nm P2 motor in its
+  eight-speed automatic and a 12 kWh pack (charge window 12-95%, sustained at 15%). WLTP electric range 55 km against
+  BMW's 59-66, weighted 1.71 L/100 km against 1.6-1.9, 15.6 kWh/100 km; 0-100 km/h 5.80 s with the engine matched
+  against 5.9 (XtraBoost), 230 km/h governed.
+
 ### The series hybrid (build 193)
 
 - **Step 3.4 of the plan.** HYBRID gets its third layout, **SERIES** (`src/js/series.js`): the engine turns a generator

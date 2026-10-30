@@ -126,7 +126,7 @@ function engineCycleLine(v){
 const HYB_CYCLE={warmC:50,socLo:0.35,socHi:0.85,splits:[0,0.25,0.5,0.75,1],ehr:0.15};
 function hybridCycle(v){
   const e=engine,hy=e.hy,C=FUEL_CYCLE,H=HYB_CYCLE;
-  const key=[v.mass,v.finalDrive,v.cdA,v.crr,v.rTire,v.driveEff,v.ratios.join(','),C.soak,e.hyDeploy,hy.mode,JSON.stringify(e.hyTune||null)].join('|');
+  const key=[v.mass,v.finalDrive,v.cdA,v.crr,v.rTire,v.driveEff,v.ratios.join(','),C.soak,e.hyDeploy,hy.mode,JSON.stringify(e.hyTune||null),!!e.hyPlug].join('|');
   if(e._hcyc&&e._hcyc.score===e.score&&e._hcyc.key===key)return e._hcyc.res;
   const m=v.mass+C.massAdd,r=v.rTire,fd=v.finalDrive,eff=v.driveEff,M=engineFuelMap(),pack=hy.pack,mot=hy.motor;
   const curve=buildTorqueCurve(),Tmax=rpm=>{if(rpm<=curve[0].rpm)return curve[0].tq;for(let i=1;i<curve.length;i++)if(rpm<=curve[i].rpm)return curve[i-1].tq+(curve[i].tq-curve[i-1].tq)*(rpm-curve[i-1].rpm)/(curve[i].rpm-curve[i-1].rpm);return 0;};
@@ -147,11 +147,13 @@ function hybridCycle(v){
   const tu=hybTune(e),socLo=tu.socLo/100,socHi=tu.socHi/100,soc0=tu.socT/100,kRegen=(HYB_REGEN[tu.regen]||HYB_REGEN.high).k;
   const evOk=(vm,P)=>(tu.evKmh<=0||vm*3.6<=tu.evKmh)&&(tu.evKw<=0||P<=tu.evKw*1000);
   const assist=(rpm,nf,dfrac)=>hybAssistWindow(e,rpm)*hybAssistShare(nf,dfrac,tu);
-  const run=s=>{
-    let fuel=0,E=0,x=0,Tc=C.soak,evS=0,onS=0,stopS=0,warmS=null;
+  // cd (build 194, a plug-in's charge-depleting cycles): start from cd.soc with the engine at cd.Tc, and do not run the
+  // engine to warm it (a plug-in drives away on its pack; the engine starts when it is asked for, cold)
+  const run=(s,cd)=>{
+    let fuel=0,E=0,x=0,Tc=cd?cd.Tc:C.soak,evS=0,onS=0,stopS=0,warmS=null,firstOn=null;
     for(let i=0;i<WLTC_3B.length-1;i++){
       const v0=WLTC_3B[i]/36,v1=WLTC_3B[i+1]/36,vm=(v0+v1)/2,a=v1-v0;x+=vm;
-      const soc=soc0+E/capJ,oilT=Math.max(C.soak,Tc-C.oilLag),cold=Tc<H.warmC;if(!cold&&warmS==null)warmS=i;
+      const soc=(cd?cd.soc:soc0)+E/capJ,oilT=Math.max(C.soak,Tc-C.oilLag),cold=!cd&&Tc<H.warmC;if(!cold&&warmS==null)warmS=i;
       let best=null;
       const consider=(gs,J,on)=>{if(J>0&&soc<socLo)return;if(J<0&&soc>socHi)J=0;const cost=gs+s*J;if(!best||cost<best.cost)best={cost,gs,J,on};};
       // a power-split's engine on its best line at powers from what the pack cannot give to what it can take back: the
@@ -210,10 +212,11 @@ function hybridCycle(v){
       }
       if(!best)best={gs:engineFuelAt(rpmMin,Tmax(rpmMin)*C.reserve,oilT)||M.idleGs*3,J:C.auxW,on:true};   // flat out in first
       fuel+=best.gs;E-=best.J;
+      if(best.on&&firstOn==null)firstOn=x-vm;
       if(best.on){onS++;if(Tc<stat)Tc=Math.min(stat,Tc+best.gs/1000*(fp0.LHV||44)*1e6*(C.toCoolant+(Tc<H.warmC?H.ehr:0))/heatC);}
       else if(vm<0.1)stopS++;else evS++;
     }
-    return {fuel,E,x,evS,onS,stopS,warmS};
+    return {fuel,E,x,evS,onS,stopS,warmS,Tc,firstOn};
   };
   // the equivalence factor that sustains the charge: more s, the pack worth more, the controller charges more. A
   // bracketed secant on the pack's end energy, to within 0.5% of the pack's capacity.
@@ -232,13 +235,48 @@ function hybridCycle(v){
   const corr=Math.abs(R.E)>=capJ*0.005?-R.E/3.6e6*bestBsfc/0.9:0;
   const km=R.x/1000,kg=(R.fuel+corr)/1000,L=kg/fp0.density;
   const res={km,l100:L/km*100,co2:kg*0.865*44/12*1000/km,kg,evShare:R.evS/(WLTC_3B.length-1),onShare:R.onS/(WLTC_3B.length-1),dSocKJ:R.E/1000,s:sBest,warmS:R.warmS,corrected:corr!==0};
+  if(e.hyPlug)res.plug=plugCycles(run,res,tu,capJ,fp0);   // a plug-in's charge-depleting cycles (build 194)
   e._hcyc={score:e.score,key,res};return res;
+}
+// ---- a plug-in hybrid over WLTP (build 194, step 3.5a) ----
+// The regulation's procedure for an off-vehicle-charging hybrid (UN R154 / EU 2017/1151): from a full pack, the cycle is
+// driven again and again, charge-depleting, until the pack reaches the charge it then sustains; the figures quoted are
+// the all-electric range, the charge-depleting cycles' fuel and electricity, and their weighting with the charge-
+// sustaining test by the utility factor, the share of driving a European fleet does within a distance d:
+//   UF(d) = 1 - exp(-sum c_i (d/800 km)^i), c = 26.25, -38.94, -631.05, 5964.83, -25095, 60380.2, -87517, 75513.8,
+//   -35749, 7154.94 (the EU curve, used until 2024).
+// What is a rule, and named: the pack starts at the charge window's HIGH and depletes to its LOW (the tune's); while it
+// depletes the energy manager prices the pack's energy at 2% of a charge-sustaining hybrid's (electricity is what a
+// plug-in is charged with), so the engine starts only when the motor and pack cannot do the job; electricity at the
+// socket is the pack's over a 90% charger.
+const PLUG={uf:[26.25,-38.94,-631.05,5964.83,-25095,60380.2,-87517,75513.8,-35749,7154.94],ufD:800,sShare:0.02,charger:0.9,maxCycles:15};
+const plugUF=km=>{let a=0;for(let i=0;i<10;i++)a+=PLUG.uf[i]*Math.pow(km/PLUG.ufD,i+1);return 1-Math.exp(-a);};
+function plugCycles(run,cs,tu,capJ,fp){
+  const lo=tu.socLo/100;let soc=tu.socHi/100,Tc=FUEL_CYCLE.soak,km=0,aer=null;const cyc=[];
+  for(let j=0;j<PLUG.maxCycles;j++){
+    const R=run(cs.s*PLUG.sShare,{soc,Tc});
+    const d=R.x/1000;if(aer==null&&R.firstOn!=null)aer=km+R.firstOn/1000;
+    cyc.push({km:d,kg:R.fuel/1000,kWh:-R.E/3.6e6,soc0:soc,soc1:soc+R.E/capJ});
+    km+=d;soc+=R.E/capJ;Tc=R.Tc;
+    // the transition cycle: the pack has reached the charge it sustains (within 2% of its floor), or a cycle moved it by
+    // under 1% of its capacity (the regulation's own end is a change of under 4% of the cycle's energy)
+    if(soc<=lo+0.02||Math.abs(R.E)<capJ*0.01)break;
+  }
+  if(aer==null)aer=km;
+  // weighted: each depleting cycle by the utility factor's step over it, the sustaining test by what is left
+  let uf0=0,d=0,L=0,kWh=0;
+  for(const c of cyc){d+=c.km;const uf=plugUF(d),w=uf-uf0;uf0=uf;L+=w*c.kg/fp.density/c.km*100;kWh+=w*c.kWh/PLUG.charger/c.km*100;}
+  L+=(1-uf0)*cs.l100;
+  return {cycles:cyc.length,cdKm:km,aer,l100:L,kWh100:kWh,co2:L*fp.density*0.865*44/12*10,uf:uf0};
 }
 // The VEHICLE tab's line for a hybrid. The energy manager takes ~1 s, so the panel draws first and the line fills in
 // after (once per car: it is cached until the car or its engine changes).
 let hybCycleTimer=0;
 function hybridCycleLine(v){
-  const txt=c=>tr('WLTP cycle')+' <b>'+c.l100.toFixed(1)+' L/100 km</b>'+(c.corrected?' ('+tr('charge-corrected')+')':'')+' • CO₂ '+Math.round(c.co2)+' g/km • '+tr('engine off')+' '+Math.round((1-c.onShare)*100)+'%';
+  const txt=c=>c.plug?   // a plug-in's figures (build 194): weighted by the utility factor, its electric range, its electricity
+    tr('WLTP weighted')+' <b>'+c.plug.l100.toFixed(1)+' L/100 km</b> • CO₂ '+Math.round(c.plug.co2)+' g/km • '+tr('electric range')+' <b>'+Math.round(c.plug.aer)+' km</b> • '+
+      c.plug.kWh100.toFixed(1)+' kWh/100 km • '+tr('sustaining')+' '+c.l100.toFixed(1)+' L/100 km':
+    tr('WLTP cycle')+' <b>'+c.l100.toFixed(1)+' L/100 km</b>'+(c.corrected?' ('+tr('charge-corrected')+')':'')+' • CO₂ '+Math.round(c.co2)+' g/km • '+tr('engine off')+' '+Math.round((1-c.onShare)*100)+'%';
   const e=engine;
   if(e._hcyc&&e._hcyc.score===e.score)return '<br><span id="hybCycle">'+txt(hybridCycle(v))+'</span>';
   clearTimeout(hybCycleTimer);
