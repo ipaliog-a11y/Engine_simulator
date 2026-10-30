@@ -67,6 +67,8 @@ function hybBrakeAt(n,nMax,nMin,ref){
 function hybControl(H,dt){
   const e=engine,hy=e.hy,B=HYB_BENCH,ps=hy.mode==='ps',p=state.throttle,mode=H.mode,n=H.n,w=Math.max(n,1)*Math.PI/30;
   const pack=hy.pack,Pmax=packMaxPower(pack,clamp(H.soc,0.05,1)),Pchg=pack.pChargeMax;
+  // the HYBRID TUNE (build 192): its charge window, electric-driving power, regeneration and load-point shifting
+  const tu=hybTune(e),lo=tu.socLo/100,hi=tu.socHi/100,kRegen=(HYB_REGEN[tu.regen]||HYB_REGEN.high).k;
   // what the shaft can have flat out, and what the pedal asks of it
   let full,TmMax;
   if(ps){const c=hybCurves(),R=c.eng,i=Math.min(R.length-1,Math.max(0,Math.round(n/Math.max(1,R[1].rpm-R[0].rpm))));full=R[i].tq+c.mot[i];TmMax=motorMaxTorque(hy.motor,Math.max(n,1),PS.busV,60);}
@@ -75,17 +77,18 @@ function hybControl(H,dt){
   // the charge the mode wants, and the engine
   if(mode==='hold'&&H.lastMode!=='hold')H.hold=H.soc;
   H.lastMode=mode;
-  const socT=mode==='charge'?B.socHi:mode==='hold'?H.hold:B.socAuto;
-  const Pev=B.evShare*Math.min(Pmax,motorMaxTorque(hy.motor,Math.max(n,1000),hybBusV(hy),60)*Math.max(n,1000)*Math.PI/30);
+  const socT=mode==='charge'?hi:mode==='hold'?H.hold:tu.socT/100;
+  const Pev=tu.evKw>0?tu.evKw*1000:B.evShare*Math.min(Pmax,motorMaxTorque(hy.motor,Math.max(n,1000),hybBusV(hy),60)*Math.max(n,1000)*Math.PI/30);
   let on=H.engOn;
-  if(mode==='ev'){on=H.soc<B.socLo;if(on&&!H.lowFlash){H.lowFlash=1;flash(tr('PACK LOW • ENGINE STARTED'),'warn');}if(!on)H.lowFlash=0;}
+  if(mode==='ev'){on=H.soc<lo;if(on&&!H.lowFlash){H.lowFlash=1;flash(tr('PACK LOW • ENGINE STARTED'),'warn');}if(!on)H.lowFlash=0;}
   else if(mode==='auto'||mode==='hold'){
     const low=H.soc<socT-0.1;
-    on=p>0.01&&(Pd>(on?0.7:1)*Pev||low)||H.soc<B.socLo;
+    on=p>0.01&&(Pd>(on?0.7:1)*Pev||low)||H.soc<lo;
   }else on=true;
   H.engOn=on;
   // the charging power the controller asks of the engine (W, + charging), from how far the charge is from its target
-  const Pc=mode==='charge'?(H.soc<B.socHi?B.chargeShare*Pchg:0):clamp((socT-H.soc)/0.1,-1,1)*B.chargeShare*Pchg;
+  let Pc=mode==='charge'?(H.soc<hi?B.chargeShare*Pchg:0):clamp((socT-H.soc)/0.1,-1,1)*B.chargeShare*Pchg;
+  if(!tu.lps&&mode!=='charge'&&H.soc>=lo)Pc=Math.min(0,Pc);   // no load-point shifting: the engine charges only a low pack
   const pedalThr=mode==='sport'||mode==='engine'||mode==='manual';
   if(ps){
     const nr=n/PS.k2,R=psEngineRange(hy,nr),O=psOol();
@@ -107,10 +110,12 @@ function hybControl(H,dt){
   else{const ref=Math.max(20,e.score.peakTQ);H.thrE=clamp(H.thrE+dt*4*(H.TeWant-H.Te)/ref,0,1);}
   // the motor's torque before the pack's limits
   const Tring=ps&&on?H.Te/(1+PS.rho)/PS.k2:0,TeShaft=ps?Tring:(on?H.Te:0);
-  if(mode==='manual')H.TmWant=H.cmd>=0?H.cmd*TmMax:H.cmd*Math.min(TmMax,Pchg/w);
+  // a P2's help to the engine within ASSIST's window and the assist map at this speed and pedal (the tune)
+  const help=ps?TmMax:TmMax*hybAssistWindow(e,n)*hybAssistShare(n/e.redline,p,tu);
+  if(mode==='manual')H.TmWant=H.cmd>=0?H.cmd*TmMax:H.cmd*Math.min(TmMax,Pchg/w)*kRegen;
   else if(mode==='engine')H.TmWant=ps?null:0;   // null: MG2 passes on what MG1 makes
-  else if(mode==='sport')H.TmWant=p*TmMax;
-  else H.TmWant=D-TeShaft;
+  else if(mode==='sport')H.TmWant=p*help;
+  else H.TmWant=on&&!ps?Math.min(D-TeShaft,help):D-TeShaft;
   return {Pmax,Pchg};
 }
 // One bench step for a hybrid, in place of stepEngine.

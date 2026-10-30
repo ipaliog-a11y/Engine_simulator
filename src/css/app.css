@@ -95,6 +95,7 @@ footer{text-align:center;margin-top:16px;padding:8px;font-size:7px;color:#555;bo
 /* ELECTRIC (build 179): the motor, inverter and battery sections show only for an electric build, the combustion ones only for an engine */
 #designPanel:not(.ev):not(.hy) [data-ev]{display:none!important}
 #designPanel.hy [data-ev-only]{display:none!important}
+#designPanel:not(.hy) [data-hy]{display:none!important}   /* the hybrid tune (build 192) */
 #designPanel.ev .ice-only{display:none!important}
 .design-panel h3{font-size:10px;color:#ffcc00;margin:2px 0 4px}
 .design-panel .hint{font-size:7px;color:#667;margin-bottom:10px}
@@ -397,3 +398,8 @@ table.fuelmap td.live{box-shadow:inset 0 0 0 2px #fff;font-weight:bold}
 #hybridPanel .hy-man{display:none}
 #hybridPanel.manual .hy-man{display:block}
 #hybridPanel.manual:not(.ps) .hy-ps-only{display:none}
+/* the hybrid tune's assist map (build 192) */
+table.hy-map{border-collapse:collapse;font-size:7px;margin:4px 0 10px}
+table.hy-map th{color:#888;font-weight:normal;padding:3px 5px}
+table.hy-map td{border:1px solid #333;padding:4px 6px;text-align:center;cursor:pointer;min-width:30px}
+table.hy-map td:focus{outline:2px solid #ffcc00;outline-offset:-2px}

@@ -167,6 +167,7 @@ function bindControls(){
   document.getElementById('edIntakeSys').addEventListener('change',syncDesignEnable);
   // Fitting a hybrid system starts from a hybrid's motor and pack, not an electric car's (build 186); changing the layout,
   // from that layout's (build 189: a power-split's MG2 and pack are the Prius's).
+  document.getElementById('edHyDeploy').addEventListener('change',syncDesignEnable);   // ASSIST RPM only for ABOVE and BELOW (build 192)
   document.getElementById('edHybrid').addEventListener('change',e=>{
     const v=e.target.value,hybPrev=engine&&engine.type!=='electric'&&engine.hyMode||'none';
     if(v!=='none'&&(+document.getElementById('evKWh').value>10||hybPrev!=='none'&&hybPrev!==v||v==='ps'))
@@ -242,7 +243,7 @@ function loop(now){
   updateUI();
   requestAnimationFrame(loop);
 }
-bindControls();bindHybridPanel();applyEngineToForm(Object.assign({},DEFAULT_ENGINE));buildEngine();
+bindControls();bindHybridPanel();bindHybMap();applyEngineToForm(Object.assign({},DEFAULT_ENGINE));buildEngine();
 applyVehicleToForm(DEFAULT_VEHICLE);buildVehicle();updateVehicleSummary();
 loadFromHash();   // open a shared build if the URL carries one
 applyLang(currentLang);   // localise the UI (persisted choice)
