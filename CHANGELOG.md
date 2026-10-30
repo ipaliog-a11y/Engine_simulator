@@ -20,6 +20,26 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 Working toward **v1.0 — every number derived, not fitted.**
 
+### Racing energy (build 196)
+
+- **Step 3.5c of the hybrid plan** (decision 15's second half).
+- **A racing class's energy limits.** The HYBRID TUNE gains two fields, saved with the build:
+  - **DEPLOY LIMIT:** the most MJ a lap the motors may take from the pack.
+  - **HARVEST LIMIT:** the most MJ a lap braking may put back. Past it the motor stops regenerating and the friction
+    brakes take the rest.
+  - The lap's charge balance (`hybridLap`) holds both, wherever the lap is used: the TRACK tab, the race, the racing line.
+- **A plug-in in a race** (`src/js/hybrid-race.js`, new). It starts on a full pack (the charge window's HIGH) and spends
+  its own charge on top of what braking returns, down to the charge it then sustains (the TARGET):
+  - a second pace grid of depleting laps (the motors free of the balance, to the deploy limit);
+  - the car runs at a share of them, the pace and the fuel straight between the two grids;
+  - the share is chosen so the charge lasts the distance, and chosen again at every crossing of the line;
+  - qualifying is a hot lap on a full pack.
+- **The Porsche 918 Spyder on the technical circuit:**
+  - 5 laps spend the charge flat out;
+  - 30 laps spread it at a 35% share and finish with 20 kJ of 18,360 left, 3.0 s ahead of the same car not plugged in;
+  - a 0.6 MJ deploy limit costs 0.23 s a lap, a 0.5 MJ harvest limit 0.27 s.
+- The RACE tab's telemetry shows a plug-in's PACK and PLUG-IN DEPLOY share. `tests/test113.mjs`.
+
 ### A front axle motor, and the Porsche 918 Spyder (build 195)
 
 - **Step 3.5b of the plan** (3.5 split again: race energy limits are 3.5c). A hybrid can now carry the electric car's

@@ -38,7 +38,7 @@ const HYBRID_DEPLOY={full:{label:'FULL'},eco:{label:'ECO (TORQUE FILL)'},above:{
 //   socLo, socT, socHi   the CHARGE window (%): the engine starts under the low, the controller holds the target, the
 //            pack takes no more charge over the high.
 // The defaults are the controller of builds 186-191, so a build without a tune drives exactly as it did.
-const HYB_TUNE_DEFAULT={rpm:4000,map:Array(20).fill(100),regen:'high',lps:true,evKmh:0,evKw:0,socLo:35,socT:60,socHi:85};
+const HYB_TUNE_DEFAULT={rpm:4000,map:Array(20).fill(100),regen:'high',lps:true,evKmh:0,evKw:0,socLo:35,socT:60,socHi:85,deployMJ:0,harvestMJ:0};   // deployMJ, harvestMJ: a racing class's energy a lap (0 = none; build 196)
 const HYB_REGEN={off:{label:'OFF',k:0},low:{label:'LOW',k:0.5},high:{label:'HIGH',k:1}};
 const HYB_MAP_N=[0,0.25,0.5,0.75,1],HYB_MAP_P=[0.25,0.5,0.75,1];
 function hybTune(e){
@@ -194,22 +194,31 @@ function hybLapEnergy(L){
       pm[i]=-P;regenJ+=Pb*dt;
     }
   }
-  return {pm,deployKJ:deployJ/1000,regenKJ:regenJ/1000};
+  // a racing class's harvest limit (build 196): past it the motor stops regenerating and the friction brakes take the rest
+  const hv=+hybTune().harvestMJ||0,rawKJ=regenJ/1000;
+  return {pm,deployKJ:deployJ/1000,regenKJ:hv>0?Math.min(rawKJ,hv*1000):rawKJ,rawRegenKJ:rawKJ};
 }
 // A lap on a charge-sustaining hybrid: solved with the motor at full deploy; if it spends more of the pack than
 // braking returns, solved again with the deploy cut in proportion, until it balances (two rounds settle it).
+// The budget (build 196): what braking returns (to the class's harvest limit), plus opts.hyExtraKJ, the pack's own charge
+// a plug-in may spend on the lap (Infinity: all the motors give), and never past the class's deploy limit a lap.
+function hybDeployBudget(E,extra){
+  const dl=+hybTune().deployMJ||0;
+  return Math.min(E.regenKJ+(extra||0),dl>0?dl*1000:Infinity);
+}
 function hybridLap(key,opts){
   if(opts&&opts.quick)return simulateLapRun(key,opts);   // the racing line's quick laps: full deploy, no replay to balance
-  // each round scales the share by what came back over what went out, a hair under, so it settles from the safe side
-  let k=1,used=1,L=null,E=null;
+  // each round scales the share by the budget over what went out, a hair under, so it settles from the safe side
+  const extra=opts&&opts.hyExtraKJ||0;
+  let k=1,used=1,L=null,E=null,B=0;
   try{
     for(let it=0;it<6;it++){
-      used=k;hybDeployShare=k;L=simulateLapRun(key,opts);if(!L)return null;E=hybLapEnergy(L);
-      if(E.deployKJ<=E.regenKJ||E.deployKJ<1e-6)break;
-      k=clamp(k*E.regenKJ/E.deployKJ*0.995,0,1);
+      used=k;hybDeployShare=k;L=simulateLapRun(key,opts);if(!L)return null;E=hybLapEnergy(L);B=hybDeployBudget(E,extra);
+      if(E.deployKJ<=B||E.deployKJ<1e-6)break;
+      k=clamp(k*B/E.deployKJ*0.995,0,1);
     }
   }finally{hybDeployShare=1;}
-  L.hy={share:used,pm:E.pm,deployKJ:E.deployKJ,regenKJ:E.regenKJ};
+  L.hy={share:used,pm:E.pm,deployKJ:E.deployKJ,regenKJ:E.regenKJ,rawRegenKJ:E.rawRegenKJ};
   return L;
 }
 // The design summary's line for a hybrid.
@@ -236,15 +245,18 @@ let hybMapForm=HYB_TUNE_DEFAULT.map.slice();
 function readHybTuneFromForm(){
   const g=id=>document.getElementById(id),D=HYB_TUNE_DEFAULT;
   const num=(id,lo,hi,d)=>{const v=+g(id).value;return clamp(Math.round(isFinite(v)&&g(id).value!==''?v:d),lo,hi);};
+  const mj=id=>{const el=g(id),v=el?+el.value:0;return el&&isFinite(v)?clamp(Math.round(v*10)/10,0,50):0;};   // MJ a lap, a tenth's step
   const socLo=num('edHySocLo',10,60,D.socLo),socHi=Math.max(socLo+10,num('edHySocHi',40,95,D.socHi)),socT=clamp(num('edHySocT',10,80,D.socT),socLo+3,socHi-5);
   return {rpm:num('edHyRpm',1000,12000,D.rpm),map:hybMapForm.slice(),regen:HYB_REGEN[g('edHyRegen').value]?g('edHyRegen').value:'high',
-    lps:g('edHyLps').value!=='off',evKmh:num('edHyEvKmh',0,200,D.evKmh),evKw:num('edHyEvKw',0,400,D.evKw),socLo,socT,socHi};
+    lps:g('edHyLps').value!=='off',evKmh:num('edHyEvKmh',0,200,D.evKmh),evKw:num('edHyEvKw',0,400,D.evKw),socLo,socT,socHi,
+    deployMJ:mj('edHyDeployMJ'),harvestMJ:mj('edHyHarvestMJ')};
 }
 function applyHybTuneToForm(t){
   const g=id=>document.getElementById(id);if(!g('edHyRpm'))return;
   t=Object.assign({},HYB_TUNE_DEFAULT,t||{});
   g('edHyRpm').value=t.rpm;g('edHyRegen').value=HYB_REGEN[t.regen]?t.regen:'high';g('edHyLps').value=t.lps===false?'off':'on';
   g('edHyEvKmh').value=t.evKmh;g('edHyEvKw').value=t.evKw;g('edHySocLo').value=t.socLo;g('edHySocT').value=t.socT;g('edHySocHi').value=t.socHi;
+  if(g('edHyDeployMJ')){g('edHyDeployMJ').value=+t.deployMJ||0;g('edHyHarvestMJ').value=+t.harvestMJ||0;}
   hybMapForm=Array.isArray(t.map)&&t.map.length===20?t.map.slice():HYB_TUNE_DEFAULT.map.slice();
   renderHybMap();
 }

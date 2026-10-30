@@ -234,6 +234,7 @@ function renderRacePanel(force){
       '<div class="rt-side"><div class="rt-k">'+esc(tr(th.label))+' • '+tr('age')+' '+x.tyreAge+'</div>'+
       '<div class="rt-k">'+tr(M.ev?'ENERGY':'FUEL')+' '+s.fuelL.toFixed(1)+' / '+M.tankL+' '+(M.unit||'L')+' • '+lapsLeft.toFixed(1)+' '+tr('laps')+'</div>'+
       (M.ev?raceEvLine(c,t):'')+
+      (M.hy?hybRaceLine(c,t):'')+
       '<div class="rt-bar"><div style="width:'+Math.round(fuelPct*100)+'%;background:'+(lapsLeft<1.5?'#ff4444':lapsLeft<3?'#ffcc00':'#00ccff')+'"></div></div>'+
       '<div class="rt-k">'+tr('BRAKES')+' <b style="color:'+brakeTempColour(s.brk,M.brakeOnset)+'">'+Math.round(s.brk)+'°</b> / <b style="color:'+brakeTempColour(s.brkR,M.brakeOnset)+'">'+Math.round(s.brkR)+'°C</b>'+
         (fade>0?' <b style="color:#ff4444">'+tr('FADE')+' −'+fade+'%</b>':'')+'</div>'+

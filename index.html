@@ -483,6 +483,8 @@ table.hy-map td:focus{outline:2px solid #ffcc00;outline-offset:-2px}
 <div class="field"><label for="edHySocLo">CHARGE LOW (%)</label><input type="number" id="edHySocLo" min="10" max="60" step="1" value="35"></div>
 <div class="field"><label for="edHySocT">CHARGE TARGET (%)</label><input type="number" id="edHySocT" min="10" max="80" step="1" value="60"></div>
 <div class="field"><label for="edHySocHi">CHARGE HIGH (%)</label><input type="number" id="edHySocHi" min="40" max="95" step="1" value="85"></div>
+<div class="field"><label for="edHyDeployMJ">DEPLOY LIMIT (MJ/LAP, 0 = NONE)</label><input type="number" id="edHyDeployMJ" min="0" max="50" step="0.1" value="0"></div>
+<div class="field"><label for="edHyHarvestMJ">HARVEST LIMIT (MJ/LAP, 0 = NONE)</label><input type="number" id="edHyHarvestMJ" min="0" max="50" step="0.1" value="0"></div>
 </div>
 <div class="hy-map-wrap" data-hy><div class="hint">ASSIST MAP: the share of the motor's help over shaft speed and pedal. Click a cell to step it down by 25% (from 0 back to 100%).</div><div id="hyAssistMap"></div></div>
 
@@ -4714,7 +4716,7 @@ const I18N={
   'Archetypes':{el:'Αρχέτυπα'},'Kei & City':{el:'Kei & πόλης'},'Compact Turbo':{el:'Μικρά τούρμπο'},'NA Sports':{el:'Ατμοσφαιρικά σπορ'},
   'Turbo Performance':{el:'Τούρμπο επιδόσεων'},'American V8':{el:'Αμερικάνικα V8'},'Supercar':{el:'Supercar'},'Rotary':{el:'Περιστροφικά (Wankel)'},
   'Diesel':{el:'Πετρελαιοκίνητα'},'Electric':{el:'Ηλεκτρικά'},'NCA (POWER CELLS)':{el:'NCA (ΚΥΤΤΑΡΑ ΙΣΧΥΟΣ)'},'ATKINSON (LATE IVC)':{el:'ATKINSON (ΑΡΓΟ ΚΛΕΙΣΙΜΟ ΕΙΣΑΓΩΓΗΣ)'},'engine off':{el:'κινητήρας σβηστός'},'Li-ION (HYBRID CELLS)':{el:'Li-ION (ΚΥΤΤΑΡΑ ΥΒΡΙΔΙΚΩΝ)'},
-  'Hybrid':{el:'Υβριδικό'},'HYBRID':{el:'ΥΒΡΙΔΙΚΟ'},'PARALLEL (P2)':{el:'ΠΑΡΑΛΛΗΛΟ (P2)'},'POWER-SPLIT (eCVT)':{el:'ΔΙΑΙΡΟΥΜΕΝΗΣ ΙΣΧΥΟΣ (eCVT)'},'DRIVE MODE':{el:'ΛΕΙΤΟΥΡΓΙΑ ΟΔΗΓΗΣΗΣ'},'FRONT REDUCTION (0 = MATCHED)':{el:'ΕΜΠΡΟΣ ΣΧΕΣΗ ΜΕΙΩΣΗΣ (0 = ΑΥΤΟΜΑΤΗ)'},'PLUG-IN':{el:'ΕΠΑΝΑΦΟΡΤΙΖΟΜΕΝΟ'},'WLTP weighted':{el:'WLTP σταθμισμένο'},'electric range':{el:'ηλεκτρική αυτονομία'},'sustaining':{el:'συντήρηση φορτίου'},'SERIES':{el:'ΣΕ ΣΕΙΡΑ'},'GEN':{el:'ΓΕΝΝ.'},'SINGLE-SPEED (SERIES)':{el:'ΜΟΝΟΤΑΧΥΤΟ (ΣΕ ΣΕΙΡΑ)'},'A series hybrid has no gears: one reduction from its traction motor, set with GEARING on the VEHICLE tab.':{el:'Ένα υβριδικό σε σειρά δεν έχει ταχύτητες: μία σχέση μείωσης από τον κινητήρα έλξης, ρυθμίζεται με τη ΣΧΕΣΗ ΜΕΙΩΣΗΣ στην καρτέλα ΟΧΗΜΑ.'},'generator':{el:'γεννήτρια'},'charge-corrected':{el:'με διόρθωση φορτίου'},'ASSIST':{el:'ΥΠΟΒΟΗΘΗΣΗ'},'ABOVE RPM':{el:'ΠΑΝΩ ΑΠΟ ΣΤΡΟΦΕΣ'},'BELOW RPM':{el:'ΚΑΤΩ ΑΠΟ ΣΤΡΟΦΕΣ'},'Hybrid tune':{el:'Ρύθμιση υβριδικού'},'ASSIST RPM':{el:'ΣΤΡΟΦΕΣ ΥΠΟΒΟΗΘΗΣΗΣ'},'REGENERATION':{el:'ΑΝΑΚΤΗΣΗ ΕΝΕΡΓΕΙΑΣ'},'LOAD-POINT SHIFTING':{el:'ΜΕΤΑΤΟΠΙΣΗ ΣΗΜΕΙΟΥ ΦΟΡΤΙΟΥ'},'EV UP TO (km/h, 0 = ANY)':{el:'ΗΛΕΚΤΡΙΚΑ ΕΩΣ (km/h, 0 = ΧΩΡΙΣ ΟΡΙΟ)'},'EV POWER (kW, 0 = AUTO)':{el:'ΙΣΧΥΣ ΗΛΕΚΤΡΙΚΗΣ ΚΙΝΗΣΗΣ (kW, 0 = ΑΥΤΟΜΑΤΑ)'},'CHARGE LOW (%)':{el:'ΧΑΜΗΛΟ ΦΟΡΤΙΟ (%)'},'CHARGE TARGET (%)':{el:'ΣΤΟΧΟΣ ΦΟΡΤΙΟΥ (%)'},'CHARGE HIGH (%)':{el:'ΥΨΗΛΟ ΦΟΡΤΙΟ (%)'},'Assist map':{el:'Χάρτης υποβοήθησης'},'PEDAL':{el:'ΠΕΝΤΑΛ'},'SPEED':{el:'ΣΤΡΟΦΕΣ'},'pedal':{el:'πεντάλ'},'speed':{el:'στροφές'},"ASSIST MAP: the share of the motor's help over shaft speed and pedal. Click a cell to step it down by 25% (from 0 back to 100%).":{el:'ΧΑΡΤΗΣ ΥΠΟΒΟΗΘΗΣΗΣ: το μερίδιο της βοήθειας του ηλεκτροκινητήρα ανά στροφές άξονα και πεντάλ. Πατήστε ένα κελί για να το μειώσετε κατά 25% (από 0 πίσω στο 100%).'},'POWER FLOW':{el:'ΡΟΗ ΙΣΧΥΟΣ'},'LEVER (POWER-SPLIT)':{el:'ΜΟΧΛΟΣ (ΔΙΑΙΡΟΥΜΕΝΗΣ ΙΣΧΥΟΣ)'},'BSFC MAP':{el:'ΧΑΡΤΗΣ BSFC'},'LEVER':{el:'ΜΟΧΛΟΣ'},'RING':{el:'ΣΤΕΦΑΝΗ'},'DISCHARGING':{el:'ΕΚΦΟΡΤΙΣΗ'},'CHARGING':{el:'ΦΟΡΤΙΣΗ'},'BATTERY CHARGE':{el:'ΦΟΡΤΙΟ ΜΠΑΤΑΡΙΑΣ'},'MOTOR COMMAND':{el:'ΕΝΤΟΛΗ ΚΙΝΗΤΗΡΑ'},'ENGINE SPEED':{el:'ΣΤΡΟΦΕΣ ΚΙΝΗΤΗΡΑ'},'EV':{el:'ΗΛΕΚΤΡΙΚΟ'},'HOLD':{el:'ΔΙΑΤΗΡΗΣΗ'},'CHARGE':{el:'ΦΟΡΤΙΣΗ'},'ENGINE ONLY':{el:'ΜΟΝΟ ΚΙΝΗΤΗΡΑΣ'},'PACK':{el:'ΜΠΑΤΑΡΙΑ'},'SHAFT':{el:'ΑΞΟΝΑΣ'},'BRAKE':{el:'ΦΡΕΝΟ'},'CLOSED':{el:'ΚΛΕΙΣΤΟΣ'},'ENGINE OFF':{el:'ΚΙΝΗΤΗΡΑΣ ΣΒΗΣΤΟΣ'},'ELECTRIC DRIVE':{el:'ΗΛΕΚΤΡΙΚΗ ΚΙΝΗΣΗ'},'PACK LOW • ENGINE STARTED':{el:'ΧΑΜΗΛΗ ΜΠΑΤΑΡΙΑ • Ο ΚΙΝΗΤΗΡΑΣ ΞΕΚΙΝΗΣΕ'},'eCVT (POWER-SPLIT)':{el:'eCVT (ΔΙΑΙΡΟΥΜΕΝΗΣ ΙΣΧΥΟΣ)'},'NiMH (HYBRID CELLS)':{el:'NiMH (ΚΥΤΤΑΡΑ ΥΒΡΙΔΙΚΩΝ)'},'A power-split hybrid has no gears: one reduction from its traction motor, set with GEARING on the VEHICLE tab.':{el:'Ένα υβριδικό διαιρούμενης ισχύος δεν έχει ταχύτητες: μία σχέση μείωσης από τον κινητήρα έλξης, ρυθμίζεται με τη ΣΧΕΣΗ ΜΕΙΩΣΗΣ στην καρτέλα ΟΧΗΜΑ.'},'DEPLOY':{el:'ΑΠΟΔΟΣΗ ΚΙΝΗΤΗΡΑ'},'FULL':{el:'ΠΛΗΡΗΣ'},'ECO (TORQUE FILL)':{el:'ΟΙΚΟΝΟΜΙΚΟ (ΣΥΜΠΛΗΡΩΣΗ ΡΟΠΗΣ)'},'motor':{el:'κινητήρας'},'pack':{el:'μπαταρία'},'system':{el:'σύστημα'},'WLTP cycle':{el:'Κύκλος WLTP'},'from the pack':{el:'από την μπαταρία'},
+  'Hybrid':{el:'Υβριδικό'},'HYBRID':{el:'ΥΒΡΙΔΙΚΟ'},'PARALLEL (P2)':{el:'ΠΑΡΑΛΛΗΛΟ (P2)'},'POWER-SPLIT (eCVT)':{el:'ΔΙΑΙΡΟΥΜΕΝΗΣ ΙΣΧΥΟΣ (eCVT)'},'DRIVE MODE':{el:'ΛΕΙΤΟΥΡΓΙΑ ΟΔΗΓΗΣΗΣ'},'FRONT REDUCTION (0 = MATCHED)':{el:'ΕΜΠΡΟΣ ΣΧΕΣΗ ΜΕΙΩΣΗΣ (0 = ΑΥΤΟΜΑΤΗ)'},'PLUG-IN':{el:'ΕΠΑΝΑΦΟΡΤΙΖΟΜΕΝΟ'},'WLTP weighted':{el:'WLTP σταθμισμένο'},'electric range':{el:'ηλεκτρική αυτονομία'},'sustaining':{el:'συντήρηση φορτίου'},'SERIES':{el:'ΣΕ ΣΕΙΡΑ'},'GEN':{el:'ΓΕΝΝ.'},'SINGLE-SPEED (SERIES)':{el:'ΜΟΝΟΤΑΧΥΤΟ (ΣΕ ΣΕΙΡΑ)'},'A series hybrid has no gears: one reduction from its traction motor, set with GEARING on the VEHICLE tab.':{el:'Ένα υβριδικό σε σειρά δεν έχει ταχύτητες: μία σχέση μείωσης από τον κινητήρα έλξης, ρυθμίζεται με τη ΣΧΕΣΗ ΜΕΙΩΣΗΣ στην καρτέλα ΟΧΗΜΑ.'},'generator':{el:'γεννήτρια'},'charge-corrected':{el:'με διόρθωση φορτίου'},'ASSIST':{el:'ΥΠΟΒΟΗΘΗΣΗ'},'ABOVE RPM':{el:'ΠΑΝΩ ΑΠΟ ΣΤΡΟΦΕΣ'},'BELOW RPM':{el:'ΚΑΤΩ ΑΠΟ ΣΤΡΟΦΕΣ'},'Hybrid tune':{el:'Ρύθμιση υβριδικού'},'ASSIST RPM':{el:'ΣΤΡΟΦΕΣ ΥΠΟΒΟΗΘΗΣΗΣ'},'REGENERATION':{el:'ΑΝΑΚΤΗΣΗ ΕΝΕΡΓΕΙΑΣ'},'LOAD-POINT SHIFTING':{el:'ΜΕΤΑΤΟΠΙΣΗ ΣΗΜΕΙΟΥ ΦΟΡΤΙΟΥ'},'EV UP TO (km/h, 0 = ANY)':{el:'ΗΛΕΚΤΡΙΚΑ ΕΩΣ (km/h, 0 = ΧΩΡΙΣ ΟΡΙΟ)'},'EV POWER (kW, 0 = AUTO)':{el:'ΙΣΧΥΣ ΗΛΕΚΤΡΙΚΗΣ ΚΙΝΗΣΗΣ (kW, 0 = ΑΥΤΟΜΑΤΑ)'},'CHARGE LOW (%)':{el:'ΧΑΜΗΛΟ ΦΟΡΤΙΟ (%)'},'CHARGE TARGET (%)':{el:'ΣΤΟΧΟΣ ΦΟΡΤΙΟΥ (%)'},'CHARGE HIGH (%)':{el:'ΥΨΗΛΟ ΦΟΡΤΙΟ (%)'},'DEPLOY LIMIT (MJ/LAP, 0 = NONE)':{el:'ΟΡΙΟ ΑΠΟΔΟΣΗΣ (MJ/ΓΥΡΟ, 0 = ΚΑΝΕΝΑ)'},'HARVEST LIMIT (MJ/LAP, 0 = NONE)':{el:'ΟΡΙΟ ΑΝΑΚΤΗΣΗΣ (MJ/ΓΥΡΟ, 0 = ΚΑΝΕΝΑ)'},'PLUG-IN DEPLOY':{el:'ΑΠΟΔΟΣΗ ΑΠΟ ΤΗΝ ΠΡΙΖΑ'},'Assist map':{el:'Χάρτης υποβοήθησης'},'PEDAL':{el:'ΠΕΝΤΑΛ'},'SPEED':{el:'ΣΤΡΟΦΕΣ'},'pedal':{el:'πεντάλ'},'speed':{el:'στροφές'},"ASSIST MAP: the share of the motor's help over shaft speed and pedal. Click a cell to step it down by 25% (from 0 back to 100%).":{el:'ΧΑΡΤΗΣ ΥΠΟΒΟΗΘΗΣΗΣ: το μερίδιο της βοήθειας του ηλεκτροκινητήρα ανά στροφές άξονα και πεντάλ. Πατήστε ένα κελί για να το μειώσετε κατά 25% (από 0 πίσω στο 100%).'},'POWER FLOW':{el:'ΡΟΗ ΙΣΧΥΟΣ'},'LEVER (POWER-SPLIT)':{el:'ΜΟΧΛΟΣ (ΔΙΑΙΡΟΥΜΕΝΗΣ ΙΣΧΥΟΣ)'},'BSFC MAP':{el:'ΧΑΡΤΗΣ BSFC'},'LEVER':{el:'ΜΟΧΛΟΣ'},'RING':{el:'ΣΤΕΦΑΝΗ'},'DISCHARGING':{el:'ΕΚΦΟΡΤΙΣΗ'},'CHARGING':{el:'ΦΟΡΤΙΣΗ'},'BATTERY CHARGE':{el:'ΦΟΡΤΙΟ ΜΠΑΤΑΡΙΑΣ'},'MOTOR COMMAND':{el:'ΕΝΤΟΛΗ ΚΙΝΗΤΗΡΑ'},'ENGINE SPEED':{el:'ΣΤΡΟΦΕΣ ΚΙΝΗΤΗΡΑ'},'EV':{el:'ΗΛΕΚΤΡΙΚΟ'},'HOLD':{el:'ΔΙΑΤΗΡΗΣΗ'},'CHARGE':{el:'ΦΟΡΤΙΣΗ'},'ENGINE ONLY':{el:'ΜΟΝΟ ΚΙΝΗΤΗΡΑΣ'},'PACK':{el:'ΜΠΑΤΑΡΙΑ'},'SHAFT':{el:'ΑΞΟΝΑΣ'},'BRAKE':{el:'ΦΡΕΝΟ'},'CLOSED':{el:'ΚΛΕΙΣΤΟΣ'},'ENGINE OFF':{el:'ΚΙΝΗΤΗΡΑΣ ΣΒΗΣΤΟΣ'},'ELECTRIC DRIVE':{el:'ΗΛΕΚΤΡΙΚΗ ΚΙΝΗΣΗ'},'PACK LOW • ENGINE STARTED':{el:'ΧΑΜΗΛΗ ΜΠΑΤΑΡΙΑ • Ο ΚΙΝΗΤΗΡΑΣ ΞΕΚΙΝΗΣΕ'},'eCVT (POWER-SPLIT)':{el:'eCVT (ΔΙΑΙΡΟΥΜΕΝΗΣ ΙΣΧΥΟΣ)'},'NiMH (HYBRID CELLS)':{el:'NiMH (ΚΥΤΤΑΡΑ ΥΒΡΙΔΙΚΩΝ)'},'A power-split hybrid has no gears: one reduction from its traction motor, set with GEARING on the VEHICLE tab.':{el:'Ένα υβριδικό διαιρούμενης ισχύος δεν έχει ταχύτητες: μία σχέση μείωσης από τον κινητήρα έλξης, ρυθμίζεται με τη ΣΧΕΣΗ ΜΕΙΩΣΗΣ στην καρτέλα ΟΧΗΜΑ.'},'DEPLOY':{el:'ΑΠΟΔΟΣΗ ΚΙΝΗΤΗΡΑ'},'FULL':{el:'ΠΛΗΡΗΣ'},'ECO (TORQUE FILL)':{el:'ΟΙΚΟΝΟΜΙΚΟ (ΣΥΜΠΛΗΡΩΣΗ ΡΟΠΗΣ)'},'motor':{el:'κινητήρας'},'pack':{el:'μπαταρία'},'system':{el:'σύστημα'},'WLTP cycle':{el:'Κύκλος WLTP'},'from the pack':{el:'από την μπαταρία'},
   'at the socket':{el:'από την πρίζα'},'regeneration takes back':{el:'η ανάκτηση επιστρέφει'},'range':{el:'αυτονομία'},'Two-Stroke':{el:'Δίχρονα'},
   '1990s':{el:'Δεκαετία του 1990'},'2000s':{el:'Δεκαετία του 2000'},'2010s':{el:'Δεκαετία του 2010'},'2020s':{el:'Δεκαετία του 2020'},
   // dropdown choices (and the labels the summaries reuse). An option looks up 'opt:'+text first, for
@@ -10893,7 +10895,7 @@ function raceCarModel(entry,key,opts){
     // an electric car (build 181): its pack's usable energy in the tank's place, the pace grid over battery power
     // instead of the tank's mass, every point priced in kWh (src/js/electric-race.js)
     const EV=pt.kind==='electric'?evRaceModel(key,line,grips):null;
-    let fuel,tankL,tankKg,nom,prof,rest;
+    let fuel,tankL,tankKg,nom,prof,rest,HY=null;
     if(EV){fuel={density:1,label:'kWh'};tankKg=EV.usable;tankL=Math.round(tankKg*10)/10;nom=EV.nom;prof=EV.prof;rest=EV.rest;}
     else{
       fuel=pt.fuel();tankL=RACE_TANK_L[vehicle.chassis]||60;tankKg=tankL*fuel.density;
@@ -10907,6 +10909,7 @@ function raceCarModel(entry,key,opts){
         prof.push({v:Float32Array.from(L.v),fr:fuelRate(L),lap:L.lap});
       }
       rest=solve(1,0.5,{fromRest:true});
+      HY=pt.kind==='hybrid'?hybRaceModel(solve,grips,fuelRate,line):null;   // a plug-in's depleting laps (build 196)
     }
     const cum=new Float64Array(n+1);for(let i=0;i<n;i++)cum[i+1]=cum[i]+line[i].ds3;
     const kap=new Float32Array(n),sinT=new Float32Array(n),lim=new Array(n);
@@ -10919,7 +10922,7 @@ function raceCarModel(entry,key,opts){
     const vNom=Float32Array.from(nom.v),vApex=Float32Array.from(nom.v);
     for(let pass=0;pass<2;pass++)for(let k=n-1;k>=0;k--){const j=(k+1)%n;vApex[k]=vNom[j]<vNom[k]?vApex[j]:vNom[k];}   // twice: round the line
     const tt=TIRE_TYPE[vehicle.tireType]||TIRE_TYPE.sport, NF=RACE_FUEL.length, top=(grips.length-1)*NF;
-    const qual=prof[top].lap;   // full grip, empty tank
+    const qual=HY?Math.min(prof[top].lap,HY.qual):prof[top].lap;   // full grip, empty tank (a plug-in: on a full pack)
     // fuel per lap: the flow along the nominal lap (full grip, half a tank), over the time at each point
     const frNom=prof[top+1].fr;
     let fpl=0;for(let i=0;i<n;i++){const j=(i+1)%n;fpl+=frNom[i]*line[i].ds3/Math.max(2,(nom.v[i]+nom.v[j])/2);}
@@ -10937,24 +10940,28 @@ function raceCarModel(entry,key,opts){
       tyre:raceCompound(vehicle.tireType),
       tyreArea:0.25+vehicle.tireWidth/1000,tyreC:TYRE_RACE.cp*vehicle.tireWidth/225,
       chassis:vehicle.chassis,chLabel:vehicle.chLabel,hp:pt.rating().peakHP,
-      ...(EV?{ev:EV.ev,unit:'kWh'}:{})};
+      ...(EV?{ev:EV.ev,unit:'kWh'}:{}),...(HY?{hy:HY}:{})};
   });
 }
-// Speed (m/s) and fuel flow (g/s) the car's limit gives at line point i, for grip g and tank share ff.
-function racePace(M,i,g,ff){
+// Speed (m/s) and fuel flow (g/s) the car's limit gives at line point i, for grip g and tank share ff. A plug-in hybrid
+// (build 196) at share x of its depleting laps: straight between its sustaining grid and its depleting one.
+function racePace(M,i,g,ff,x){
   const GR=M.grips||RACE_GRIP,NG=GR.length,NF=RACE_FUEL.length;
   g=clamp(g,GR[0],1);ff=clamp(ff,0,1);
   let a=0;while(a<NG-2&&g>GR[a+1])a++;
   const fa=(g-GR[a])/(GR[a+1]-GR[a]);
   const b=ff>=0.5?1:0,fb=(ff-RACE_FUEL[b])/(RACE_FUEL[b+1]-RACE_FUEL[b]);
-  const P=M.prof,p00=P[a*NF+b],p01=P[a*NF+b+1],p10=P[(a+1)*NF+b],p11=P[(a+1)*NF+b+1];
-  const v=(p00.v[i]*(1-fb)+p01.v[i]*fb)*(1-fa)+(p10.v[i]*(1-fb)+p11.v[i]*fb)*fa;
-  const fr=(p00.fr[i]*(1-fb)+p01.fr[i]*fb)*(1-fa)+(p10.fr[i]*(1-fb)+p11.fr[i]*fb)*fa;
-  return {v,fr};
+  const at=P=>{const p00=P[a*NF+b],p01=P[a*NF+b+1],p10=P[(a+1)*NF+b],p11=P[(a+1)*NF+b+1];
+    return {v:(p00.v[i]*(1-fb)+p01.v[i]*fb)*(1-fa)+(p10.v[i]*(1-fb)+p11.v[i]*fb)*fa,
+      fr:(p00.fr[i]*(1-fb)+p01.fr[i]*fb)*(1-fa)+(p10.fr[i]*(1-fb)+p11.fr[i]*fb)*fa};};
+  const s=at(M.prof);
+  if(!(x>0)||!M.hy)return s;
+  const d=at(M.hy.prof);
+  return {v:s.v+(d.v-s.v)*x,fr:s.fr+(d.fr-s.fr)*x};
 }
 // The car's speed at a fractional point (i, f along segment i): the two ends of the segment, interpolated.
-function racePaceAt(M,i,f,g,ff){
-  const j=(i+1)%M.n,a=racePace(M,i,g,ff),b=racePace(M,j,g,ff);
+function racePaceAt(M,i,f,g,ff,x){
+  const j=(i+1)%M.n,a=racePace(M,i,g,ff,x),b=racePace(M,j,g,ff,x);
   return {v:a.v+(b.v-a.v)*f,fr:a.fr+(b.fr-a.fr)*f};
 }
 // The launch profile by distance from the start (own line), interpolated.
@@ -11010,7 +11017,7 @@ function raceTyreCallPays(M,cur,next,w,left){
 }
 // A solo run of the car on its own pace, no traffic and no driver error, for the strategy: how many laps a
 // set of tyres lasts to the wear limit, with the lap time at each age, in the conditions at the start.
-function racePractice(M,cfg,maxLaps,mode,ff0){
+function racePractice(M,cfg,maxLaps,mode,ff0,hx){
   const air=cfg.air!=null?cfg.air:RACE.air,w=0;
   const env={air,track:raceTrackTemp(air,w),w};
   const ty=M.tyre,T=[0,0,0,0].fill(cfg.warmers&&ty.key!=='eco'?RACE.warmers:air),W=[0,0,0,0],laps=[];
@@ -11019,7 +11026,7 @@ function racePractice(M,cfg,maxLaps,mode,ff0){
   for(let lap=0;lap<maxLaps;lap++){
     let t=0;
     for(let i=0;i<M.n;i++){
-      const g=raceGrip(M,ty,T,W,w),P=racePace(M,i,g,ff),j=(i+1)%M.n,Pn=racePace(M,j,g,ff);
+      const g=raceGrip(M,ty,T,W,w),P=racePace(M,i,g,ff,hx),j=(i+1)%M.n,Pn=racePace(M,j,g,ff,hx);
       const va=Math.max(2,(P.v+Pn.v)/2)*sv,ds=M.cum[i+1]-M.cum[i],dti=ds/va;
       const ax=(Pn.v*Pn.v-P.v*P.v)/(2*Math.max(0.05,ds))*sv*sv;
       raceTyreStep(M,ty,T,W,va,va*va*M.kap[i],ax,dti,env);
@@ -11038,10 +11045,12 @@ function racePractice(M,cfg,maxLaps,mode,ff0){
 // chooses the power that lasts the distance (evRacePlanFF).
 function racePlan(M,cfg,cc){
   const ev=M.ev?evRacePlanFF(M,cfg.laps,cc.mode):null;
-  const N=cfg.laps, fpl=ev?ev.fpl:M.fuelPerLapKg*1.03*(cc.mode==='save'?0.9:1);
+  // a plug-in hybrid (build 196): its share of the depleting laps, and the fuel a lap between the two
+  const hx=M.hy?hybRacePlanX(M,M.hy.usable,cfg.laps):0,fplH=M.hy?M.fuelPerLapKg+(M.hy.fplKg-M.fuelPerLapKg)*hx:M.fuelPerLapKg;
+  const N=cfg.laps, fpl=ev?ev.fpl:fplH*1.03*(cc.mode==='save'?0.9:1);
   const want=cc.stops==null?(cfg.strategy==='none'?'none':'auto'):cc.stops;
-  if(want==='none')return Object.assign({stops:[],startKg:M.tankKg,est:null,fpl,want},ev?{evFF:ev.ff}:{});
-  const pr=racePractice(M,cfg,Math.min(N,200),cc.mode,ev?ev.ff:undefined);
+  if(want==='none')return Object.assign({stops:[],startKg:M.tankKg,est:null,fpl,want,hyX:hx},ev?{evFF:ev.ff}:{});
+  const pr=racePractice(M,cfg,Math.min(N,200),cc.mode,ev?ev.ff:undefined,hx);
   const lapAt=age=>{const L=pr.laps;return L.length?L[Math.min(L.length-1,age)].t:M.lapNom;};
   const lifeLaps=pr.life===Infinity?Infinity:Math.max(1,Math.floor(pr.life));
   const sFuel=ev?0:Math.max(0,Math.ceil(N*fpl/(M.tankKg*0.97)-1e-9)-1);
@@ -11062,7 +11071,7 @@ function racePlan(M,cfg,cc){
   }
   if(!best){const s=Math.max(sFuel,sTyre);best={s,stints:stintsOf(s),est:null};}
   const stops=[];let acc=0;for(let k=0;k<best.stints.length-1;k++){acc+=best.stints[k];stops.push(acc);}
-  return Object.assign({stops,stints:best.stints,startKg:ev?M.tankKg:Math.min(M.tankKg,(best.stints[0]+1)*fpl),est:best.est,life:lifeLaps,fpl,want},
+  return Object.assign({stops,stints:best.stints,startKg:ev?M.tankKg:Math.min(M.tankKg,(best.stints[0]+1)*fpl),est:best.est,life:lifeLaps,fpl,want,hyX:hx},
     ev?{evFF:ev.ff}:{});
 }
 // ---- the race itself ----
@@ -11102,6 +11111,7 @@ function raceInit(models,cfg){
       // the driver's tyre work: 1 for the average driver; a careful one slides them less, an aggressive one more
       defendT:-8,wide:null,dive:null,yieldT:0,diveZone:-1,switchT:0,slipK:(1.15-0.3*cc.drv.care)*(0.85+0.3*cc.drv.aggr)});
     if(M.ev)evRaceCarInit(R.cars[R.cars.length-1],plan);
+    if(M.hy)hybRaceCarInit(R.cars[R.cars.length-1],plan);
   });
   for(const c of R.cars)c.sTot=raceDist(R,c);
   // recording, sized for the race and grown if it runs long
@@ -11168,7 +11178,7 @@ function raceStepOnce(R){
     // look half a step ahead so the speed is the segment's middle, not its start
     let i=c.i,f=c.f,ahead=c.v*dt/2;
     while(ahead>0){const L=M.cum[i+1]-M.cum[i],rem=(1-f)*L;if(ahead<rem){f+=ahead/L;ahead=0;}else{ahead-=rem;i=(i+1)%M.n;f=0;}}
-    const P=racePaceAt(M,i,f,g,ff),lim=M.lim[i];
+    const P=racePaceAt(M,i,f,g,ff,c.hyX),lim=M.lim[i];
     if(M.ev)c._tq=evRaceTqAt(M,i,f,clamp(g,M.grips[0],1),ff);
     let vLim=P.v;
     // the brakes as they are now against the brakes the lap was solved with: a braking zone to the speed
@@ -11277,6 +11287,7 @@ function raceStepOnce(R){
     const burn=c._fr*r*r*(c.cc.mode==='save'?0.9:1)*dt/1000;
     c.fuelKg-=burn;c.fuelUsed+=burn;
     if(M.ev)evRaceHeatStep(M,c,r,dt,c.cc.mode==='save'?0.9:1);
+    if(M.hy)hybRaceSpend(M,c,c.v*dt);
     if(c.blue>0)c.blue-=dt;
     let adv=c.v*dt;
     if(c.launch)c.launch.d+=adv;
@@ -11327,6 +11338,7 @@ function raceCross(R,c){
     const lap={n:c.lapsDone,t:lt,end:t,fuelKg:c.lastLapKg-c.fuelKg,wear:Math.max(...c.W),pit:false,tyre:c.ty.key,wet:w,pos,
       brake:c.BT.F};
     if(M.ev){lap.pack=c.evT.b;lap.winding=c.evT.w;}
+    if(M.hy){lap.hyE=c.hyE;lap.hyX=c.hyX;}
     c.lastLapKg=c.fuelKg;c.laps.push(lap);
     if(c.best==null||lt<c.best)c.best=lt;
     raceEvent(R,c,'lap',{time:lt,n:c.lapsDone});
@@ -11349,6 +11361,7 @@ function raceCross(R,c){
   if(c.lapsDone<0)return;
   // an electric car's energy manager looks again at what is left for the laps that are left
   if(M.ev&&cfg.laps-c.lapsDone>0)evRaceManage(M,c,cfg.laps-c.lapsDone,mode);
+  if(M.hy&&cfg.laps-c.lapsDone>0)hybRaceManage(M,c,cfg.laps-c.lapsDone);   // a plug-in's, for its own charge (build 196)
   // the pit lane: on the planned lap; now if the fuel or the tyres will not see another; or for the weather
   const left=cfg.laps-c.lapsDone, fpl=c.plan.fpl||M.fuelPerLapKg*1.03;
   const noStops=c.plan.want==='none';
@@ -15768,6 +15781,7 @@ function renderRacePanel(force){
       '<div class="rt-side"><div class="rt-k">'+esc(tr(th.label))+' • '+tr('age')+' '+x.tyreAge+'</div>'+
       '<div class="rt-k">'+tr(M.ev?'ENERGY':'FUEL')+' '+s.fuelL.toFixed(1)+' / '+M.tankL+' '+(M.unit||'L')+' • '+lapsLeft.toFixed(1)+' '+tr('laps')+'</div>'+
       (M.ev?raceEvLine(c,t):'')+
+      (M.hy?hybRaceLine(c,t):'')+
       '<div class="rt-bar"><div style="width:'+Math.round(fuelPct*100)+'%;background:'+(lapsLeft<1.5?'#ff4444':lapsLeft<3?'#ffcc00':'#00ccff')+'"></div></div>'+
       '<div class="rt-k">'+tr('BRAKES')+' <b style="color:'+brakeTempColour(s.brk,M.brakeOnset)+'">'+Math.round(s.brk)+'°</b> / <b style="color:'+brakeTempColour(s.brkR,M.brakeOnset)+'">'+Math.round(s.brkR)+'°C</b>'+
         (fade>0?' <b style="color:#ff4444">'+tr('FADE')+' −'+fade+'%</b>':'')+'</div>'+
@@ -17618,6 +17632,60 @@ function raceEvLine(c,t){
   return '<div class="rt-k">'+tr('BATTERY')+' <b style="color:'+col(b,50)+'">'+Math.round(b)+'°C</b> • '+tr('MOTOR')+' <b style="color:'+col(w,150)+'">'+
     Math.round(w)+'°C</b></div>';
 }
+// ====== HYBRID RACE: a plug-in's own charge spent over the distance (build 196) ======
+// Step 3.5c of plans/hybrid-electric/. A hybrid in a race (src/js/race.js) runs charge-sustaining laps: every lap the motors
+// give what braking puts back (hybridLap), within the class's deploy and harvest limits a lap (the HYBRID TUNE's DEPLOY
+// LIMIT and HARVEST LIMIT). A plug-in starts the race on a full pack (the charge window's HIGH) and has its own charge to
+// spend on top, down to the charge it then sustains (the TARGET):
+//   the grid      a second pace grid, the same grip and tank levels solved with the motors free of the balance (all they
+//                 give, to the deploy limit): the depleting laps. Between it and the sustaining grid the car runs at a
+//                 share x, the pace and the fuel straight between the two;
+//   the price     the pack's net spend a depleting lap (what the motors draw less what braking puts back), at the nominal
+//                 lap (full grip, half a tank), spread over the lap's distance: a car at share x spends x of it a metre;
+//   the manager   chooses x so the charge lasts the laps that are left with a margin in hand (all of it if the race is
+//                 short enough), and chooses again at every crossing of the line with what is left. A spent pack runs
+//                 the sustaining laps.
+// Qualifying is a hot lap on a full pack: the depleting grid's.
+const HYB_RACE={margin:0.97};
+// The plug-in's race model, solved with the build loaded (raceCarModel): solve(grip, ff, opts) a lap at that grip and
+// tank, fuelRate the powertrain's flow along a lap. Returns null for a hybrid that is not a plug-in.
+function hybRaceModel(solve,grips,fuelRate,line){
+  const e=engine;if(!e.hy||!e.hyPlug)return null;
+  const t=hybTune(e),n=line.length,prof=[];let nomD=null;
+  for(const gr of grips)for(const ff of RACE_FUEL){
+    const L=solve(gr,ff,{hyExtraKJ:Infinity});if(gr===1&&ff===0.5)nomD=L;
+    prof.push({v:Float32Array.from(L.v),fr:fuelRate(L),lap:L.lap});
+  }
+  const D=Math.max(0,nomD.hy.deployKJ-nomD.hy.regenKJ);   // kJ a depleting lap takes from the pack
+  const usable=Math.max(0,(t.socHi-t.socT)/100)*e.hy.pack.kWh*3600;
+  const top=(grips.length-1)*RACE_FUEL.length,fr=prof[top+1].fr;
+  let fpl=0;for(let i=0;i<n;i++){const j=(i+1)%n;fpl+=fr[i]*line[i].ds3/Math.max(2,(nomD.v[i]+nomD.v[j])/2);}
+  return {prof,D,usable,fplKg:fpl/1000,qual:prof[top].lap,lapD:nomD.lap,socHi:t.socHi,socT:t.socT,
+    deployKJ:nomD.hy.deployKJ,regenKJ:nomD.hy.regenKJ};
+}
+// The share of the depleting laps that E kJ lasts over the laps left (1: all of them).
+function hybRacePlanX(M,E,left){
+  const H=M.hy;if(!H||!(H.D>0)||left<=0)return 0;
+  return clamp(E*HYB_RACE.margin/(left*H.D),0,1);
+}
+// A car's pack at the start: full, the manager's share from the plan.
+function hybRaceCarInit(c,plan){c.hyE=c.M.hy.usable;c.hyX=plan.hyX||0;}
+// What the car spends over a stretch of ds metres at its share; a spent pack runs the sustaining laps.
+function hybRaceSpend(M,c,ds){
+  if(!(c.hyX>0))return;
+  c.hyE-=c.hyX*M.hy.D*ds/M.L3;
+  if(c.hyE<=0){c.hyE=0;c.hyX=0;}
+}
+// At each crossing of the line, with what is left for the laps that are left.
+function hybRaceManage(M,c,left){c.hyX=c.hyE>0?hybRacePlanX(M,c.hyE,left):0;}
+// The pack's charge (%) with E kJ of the plug-in's own charge left.
+const hybRaceSoc=(M,E)=>M.hy.socT+(M.hy.socHi-M.hy.socT)*E/Math.max(1,M.hy.usable);
+// The RACE tab's line for a plug-in: the pack and the share as the car last crossed the line before time t.
+function hybRaceLine(c,t){
+  let l=null;for(const x of c.laps)if(x.end<=t)l=x;
+  const E=l?l.hyE:c.M.hy.usable,X=l?l.hyX:c.plan.hyX||0;
+  return '<div class="rt-k">'+tr('PACK')+' <b>'+Math.round(hybRaceSoc(c.M,E))+'%</b> • '+tr('PLUG-IN DEPLOY')+' <b>'+Math.round(X*100)+'%</b></div>';
+}
 // ====== ELECTRIC CYCLE: consumption over the WLTP drive cycle (build 184, step 2.5c of plans/hybrid-electric/) ======
 // The energy an electric car takes from its pack to drive the WLTC class 3b cycle (the one every car over 34 W/kg and
 // 120 km/h is homologated on: 1800 s, 23.27 km, four phases to 131 km/h), second by second, through the same drive the
@@ -17766,7 +17834,7 @@ const HYBRID_DEPLOY={full:{label:'FULL'},eco:{label:'ECO (TORQUE FILL)'},above:{
 //   socLo, socT, socHi   the CHARGE window (%): the engine starts under the low, the controller holds the target, the
 //            pack takes no more charge over the high.
 // The defaults are the controller of builds 186-191, so a build without a tune drives exactly as it did.
-const HYB_TUNE_DEFAULT={rpm:4000,map:Array(20).fill(100),regen:'high',lps:true,evKmh:0,evKw:0,socLo:35,socT:60,socHi:85};
+const HYB_TUNE_DEFAULT={rpm:4000,map:Array(20).fill(100),regen:'high',lps:true,evKmh:0,evKw:0,socLo:35,socT:60,socHi:85,deployMJ:0,harvestMJ:0};   // deployMJ, harvestMJ: a racing class's energy a lap (0 = none; build 196)
 const HYB_REGEN={off:{label:'OFF',k:0},low:{label:'LOW',k:0.5},high:{label:'HIGH',k:1}};
 const HYB_MAP_N=[0,0.25,0.5,0.75,1],HYB_MAP_P=[0.25,0.5,0.75,1];
 function hybTune(e){
@@ -17922,22 +17990,31 @@ function hybLapEnergy(L){
       pm[i]=-P;regenJ+=Pb*dt;
     }
   }
-  return {pm,deployKJ:deployJ/1000,regenKJ:regenJ/1000};
+  // a racing class's harvest limit (build 196): past it the motor stops regenerating and the friction brakes take the rest
+  const hv=+hybTune().harvestMJ||0,rawKJ=regenJ/1000;
+  return {pm,deployKJ:deployJ/1000,regenKJ:hv>0?Math.min(rawKJ,hv*1000):rawKJ,rawRegenKJ:rawKJ};
 }
 // A lap on a charge-sustaining hybrid: solved with the motor at full deploy; if it spends more of the pack than
 // braking returns, solved again with the deploy cut in proportion, until it balances (two rounds settle it).
+// The budget (build 196): what braking returns (to the class's harvest limit), plus opts.hyExtraKJ, the pack's own charge
+// a plug-in may spend on the lap (Infinity: all the motors give), and never past the class's deploy limit a lap.
+function hybDeployBudget(E,extra){
+  const dl=+hybTune().deployMJ||0;
+  return Math.min(E.regenKJ+(extra||0),dl>0?dl*1000:Infinity);
+}
 function hybridLap(key,opts){
   if(opts&&opts.quick)return simulateLapRun(key,opts);   // the racing line's quick laps: full deploy, no replay to balance
-  // each round scales the share by what came back over what went out, a hair under, so it settles from the safe side
-  let k=1,used=1,L=null,E=null;
+  // each round scales the share by the budget over what went out, a hair under, so it settles from the safe side
+  const extra=opts&&opts.hyExtraKJ||0;
+  let k=1,used=1,L=null,E=null,B=0;
   try{
     for(let it=0;it<6;it++){
-      used=k;hybDeployShare=k;L=simulateLapRun(key,opts);if(!L)return null;E=hybLapEnergy(L);
-      if(E.deployKJ<=E.regenKJ||E.deployKJ<1e-6)break;
-      k=clamp(k*E.regenKJ/E.deployKJ*0.995,0,1);
+      used=k;hybDeployShare=k;L=simulateLapRun(key,opts);if(!L)return null;E=hybLapEnergy(L);B=hybDeployBudget(E,extra);
+      if(E.deployKJ<=B||E.deployKJ<1e-6)break;
+      k=clamp(k*B/E.deployKJ*0.995,0,1);
     }
   }finally{hybDeployShare=1;}
-  L.hy={share:used,pm:E.pm,deployKJ:E.deployKJ,regenKJ:E.regenKJ};
+  L.hy={share:used,pm:E.pm,deployKJ:E.deployKJ,regenKJ:E.regenKJ,rawRegenKJ:E.rawRegenKJ};
   return L;
 }
 // The design summary's line for a hybrid.
@@ -17964,15 +18041,18 @@ let hybMapForm=HYB_TUNE_DEFAULT.map.slice();
 function readHybTuneFromForm(){
   const g=id=>document.getElementById(id),D=HYB_TUNE_DEFAULT;
   const num=(id,lo,hi,d)=>{const v=+g(id).value;return clamp(Math.round(isFinite(v)&&g(id).value!==''?v:d),lo,hi);};
+  const mj=id=>{const el=g(id),v=el?+el.value:0;return el&&isFinite(v)?clamp(Math.round(v*10)/10,0,50):0;};   // MJ a lap, a tenth's step
   const socLo=num('edHySocLo',10,60,D.socLo),socHi=Math.max(socLo+10,num('edHySocHi',40,95,D.socHi)),socT=clamp(num('edHySocT',10,80,D.socT),socLo+3,socHi-5);
   return {rpm:num('edHyRpm',1000,12000,D.rpm),map:hybMapForm.slice(),regen:HYB_REGEN[g('edHyRegen').value]?g('edHyRegen').value:'high',
-    lps:g('edHyLps').value!=='off',evKmh:num('edHyEvKmh',0,200,D.evKmh),evKw:num('edHyEvKw',0,400,D.evKw),socLo,socT,socHi};
+    lps:g('edHyLps').value!=='off',evKmh:num('edHyEvKmh',0,200,D.evKmh),evKw:num('edHyEvKw',0,400,D.evKw),socLo,socT,socHi,
+    deployMJ:mj('edHyDeployMJ'),harvestMJ:mj('edHyHarvestMJ')};
 }
 function applyHybTuneToForm(t){
   const g=id=>document.getElementById(id);if(!g('edHyRpm'))return;
   t=Object.assign({},HYB_TUNE_DEFAULT,t||{});
   g('edHyRpm').value=t.rpm;g('edHyRegen').value=HYB_REGEN[t.regen]?t.regen:'high';g('edHyLps').value=t.lps===false?'off':'on';
   g('edHyEvKmh').value=t.evKmh;g('edHyEvKw').value=t.evKw;g('edHySocLo').value=t.socLo;g('edHySocT').value=t.socT;g('edHySocHi').value=t.socHi;
+  if(g('edHyDeployMJ')){g('edHyDeployMJ').value=+t.deployMJ||0;g('edHyHarvestMJ').value=+t.harvestMJ||0;}
   hybMapForm=Array.isArray(t.map)&&t.map.length===20?t.map.slice():HYB_TUNE_DEFAULT.map.slice();
   renderHybMap();
 }
