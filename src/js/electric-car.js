@@ -112,7 +112,7 @@ function evLapHeat(e,prof){
 // The VEHICLE tab for an electric car: no gearbox type, speeds or spacing to choose, and GEARING sets the reduction.
 // Called on every build, so an engine gets its own fields back.
 function syncEvVehicleForm(ev){
-  evDriveLock(ev&&!!(engine.motor&&engine.motor.parts&&engine.motor.parts.length>1));
+  evDriveLock(ev&&!!(engine.motor&&engine.motor.parts&&engine.motor.parts.length>1)||isHybrid()&&!!engine.hy.front);   // a hybrid's front axle motor too (build 195)
   ['vhGearbox','vhGears','vhSpacing'].forEach(id=>{const el=document.getElementById(id);
     if(el){const f=el.closest('.field');if(f)f.style.display=ev?'none':'';}});
   const lb=document.getElementById('lblGearing');

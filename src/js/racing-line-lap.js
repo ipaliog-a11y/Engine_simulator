@@ -242,7 +242,7 @@ function lineFor(T,key){
 // and a forward traction/power pass, taking the lower speed at each point. Gearbox shift time is
 // charged per gear change around the lap, so a slow-shifting box loses real time on a circuit.
 function simulateLapRun(key,opts){
-  const pt=powertrain();
+  const pt=powertrain(),frontF=vv=>pt.frontForce?pt.frontForce(vv):0;   // a hybrid's front axle motor (build 195)
   if(!pt.ready()||!vehicle.mass)return null;
   const quick=!!(opts&&opts.quick);
   // fromRest (build 137): the lap of a standing start. The car leaves point 0 from rest and the forward pass
@@ -288,7 +288,7 @@ function simulateLapRun(key,opts){
     for(let i=0;i<ratios.length;i++){
       const tot=ratios[i]*fd,rpm=v*tot/rT*60/TWO_PI;
       if(rpm>rl)continue;
-      const f=tqAt(clamp(rpm,idle,rl))*tot*eff/rT;
+      const f=tqAt(clamp(rpm,idle,rl))*tot*eff/rT+frontF(v);   // a hybrid's front axle motor on top (build 195)
       if(f>bf){bf=f;bi=i;bq=tqAt(clamp(rpm,idle,rl))*tot;}
     }
     return{gear:bi,F:Math.max(0,bf),tqFrac:bq/axleTqMax};
@@ -398,7 +398,7 @@ function simulateLapRun(key,opts){
     const tot=ratios[g]*fd,rpm=vi*tot/rT*60/TWO_PI;
     if(rpm>rl)return{gear:g,F:0,tqFrac:0};
     const tq=tqAt(clamp(rpm,idle,rl));
-    return{gear:g,F:tq*tot*eff/rT,tqFrac:tq*tot/axleTqMax};
+    return{gear:g,F:tq*tot*eff/rT+frontF(vi),tqFrac:tq*tot/axleTqMax};
   }
   function accFrom(q,vi,boostShare=1,gear=-1){
     const N=loadAt(q,vi),dn=down(vi);

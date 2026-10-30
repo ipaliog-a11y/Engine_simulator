@@ -102,6 +102,7 @@ const HYBRID=Object.assign({},COMBUSTION,{
   torqueGrid:()=>{const g=lapTorqueGrid(),k=hybDeployShare,mt=g.rpms.map(r=>k*hybMotorAt(r));
     return Object.assign({},g,{tq:g.tq.map(row=>row.map((t,i)=>t+mt[i]))});},
   overrunTable(rl){const a=COMBUSTION.overrunTable(rl),b=hybRegenTable(rl);return a.map((t,i)=>t+(b[i]||0));},
+  frontForce:vv=>hybFrontF(vv),   // a front axle motor's force at the wheels (N), 0 without one (build 195)
   fuelRate(nom,n){
     const base=COMBUSTION.fuelRate(nom,n);
     // the replay's power is the engine's and the motor's: the fuel map is read with the engine's alone
