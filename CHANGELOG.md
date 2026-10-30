@@ -20,6 +20,25 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 Working toward **v1.0 — every number derived, not fitted.**
 
+### The hybrid tune (build 192)
+
+- **Step 3.6c of the plan.** A **HYBRID TUNE** section on the ENGINE tab for any hybrid, saved with the build and read
+  by the 0-100, the lap, the race, the WLTP cycle and the LIVE bench:
+  - **ASSIST** (was DEPLOY): FULL, ECO (TORQUE FILL), ABOVE or BELOW an **ASSIST RPM**; a power-split is FULL;
+  - the **ASSIST MAP**: the share of the motor's help over shaft speed (0-100% of its top) and pedal (25-100%),
+    clicked down in 25% steps; flat out reads its 100% row;
+  - **REGENERATION** OFF / LOW / HIGH; **LOAD-POINT SHIFTING** on or off;
+  - **EV UP TO** (km/h) and **EV POWER** (kW): how far the energy manager drives on the motor alone;
+  - the **CHARGE** window: LOW (the engine starts), TARGET (held), HIGH (no more charge taken).
+- Untouched, the tune is the controller of builds 186-191: every earlier hybrid figure is unchanged.
+- A tune that cannot sustain the charge over the WLTP cycle has its fuel **charge-corrected** as the regulation
+  corrects such a hybrid (the energy borrowed, priced at the engine's best BSFC through a 90% electrical path), and
+  the VEHICLE tab says so.
+- `tests/test109.mjs` on the Ioniq: ABOVE 4500 rpm 7.75 -> 8.09 s to 100; the map at 50% halves the help (8.61 s);
+  REGENERATION OFF takes nothing back and the lap has nothing to deploy; EV UP TO 30 km/h 5.05 -> 5.37 L/100 km;
+  LOAD-POINT SHIFTING OFF can no longer sustain the charge (5.31 L/100 km charge-corrected); on the bench it stops
+  the engine charging; a 75% target is held.
+
 ### How the controller thinks: the lever and the BSFC map (build 191)
 
 - **Step 3.6b of the plan.** The hybrid panel's VIEW selector adds two views beside the power flow

@@ -126,7 +126,7 @@ function engineCycleLine(v){
 const HYB_CYCLE={warmC:50,socLo:0.35,socHi:0.85,splits:[0,0.25,0.5,0.75,1],ehr:0.15};
 function hybridCycle(v){
   const e=engine,hy=e.hy,C=FUEL_CYCLE,H=HYB_CYCLE;
-  const key=[v.mass,v.finalDrive,v.cdA,v.crr,v.rTire,v.driveEff,v.ratios.join(','),C.soak,e.hyDeploy,hy.mode].join('|');
+  const key=[v.mass,v.finalDrive,v.cdA,v.crr,v.rTire,v.driveEff,v.ratios.join(','),C.soak,e.hyDeploy,hy.mode,JSON.stringify(e.hyTune||null)].join('|');
   if(e._hcyc&&e._hcyc.score===e.score&&e._hcyc.key===key)return e._hcyc.res;
   const m=v.mass+C.massAdd,r=v.rTire,fd=v.finalDrive,eff=v.driveEff,M=engineFuelMap(),pack=hy.pack,mot=hy.motor;
   const curve=buildTorqueCurve(),Tmax=rpm=>{if(rpm<=curve[0].rpm)return curve[0].tq;for(let i=1;i<curve.length;i++)if(rpm<=curve[i].rpm)return curve[i-1].tq+(curve[i].tq-curve[i-1].tq)*(rpm-curve[i-1].rpm)/(curve[i].rpm-curve[i-1].rpm);return 0;};
@@ -142,19 +142,24 @@ function hybridCycle(v){
   const packJ=(T,rpm,soc,Pin=0)=>{const w=rpm*Math.PI/30,P=T*w+(T||rpm>0?motorLosses(mot,Math.abs(T),Math.max(rpm,1),busV(soc),temp).total:0)+C.auxW-Pin;
     const d=packDraw(pack,soc,P);return P+(d?d.heat:0);};
   const rho=PS.rho,Pbat=packMaxPower(pack,HYB_SOC),Pchg=pack.pChargeMax;
+  // the HYBRID TUNE (build 192): the charge window, the regeneration, the motor's help, electric driving, load-point
+  // shifting. Its defaults are the rules above, so an untuned build runs exactly as before.
+  const tu=hybTune(e),socLo=tu.socLo/100,socHi=tu.socHi/100,soc0=tu.socT/100,kRegen=(HYB_REGEN[tu.regen]||HYB_REGEN.high).k;
+  const evOk=(vm,P)=>(tu.evKmh<=0||vm*3.6<=tu.evKmh)&&(tu.evKw<=0||P<=tu.evKw*1000);
+  const assist=(rpm,nf,dfrac)=>hybAssistWindow(e,rpm)*hybAssistShare(nf,dfrac,tu);
   const run=s=>{
     let fuel=0,E=0,x=0,Tc=C.soak,evS=0,onS=0,stopS=0,warmS=null;
     for(let i=0;i<WLTC_3B.length-1;i++){
       const v0=WLTC_3B[i]/36,v1=WLTC_3B[i+1]/36,vm=(v0+v1)/2,a=v1-v0;x+=vm;
-      const soc=HYB_SOC+E/capJ,oilT=Math.max(C.soak,Tc-C.oilLag),cold=Tc<H.warmC;if(!cold&&warmS==null)warmS=i;
+      const soc=soc0+E/capJ,oilT=Math.max(C.soak,Tc-C.oilLag),cold=Tc<H.warmC;if(!cold&&warmS==null)warmS=i;
       let best=null;
-      const consider=(gs,J,on)=>{if(J>0&&soc<H.socLo)return;if(J<0&&soc>H.socHi)J=0;const cost=gs+s*J;if(!best||cost<best.cost)best={cost,gs,J,on};};
+      const consider=(gs,J,on)=>{if(J>0&&soc<socLo)return;if(J<0&&soc>socHi)J=0;const cost=gs+s*J;if(!best||cost<best.cost)best={cost,gs,J,on};};
       // a power-split's engine on its best line at powers from what the pack cannot give to what it can take back: the
       // engine's speed where MG1 lets it be, the ring's share of its torque to the wheels and MG2 carrying the rest
       // (standing, the brakes hold the ring and MG1 takes it all, charging)
       const psOn=(T,n2,stand)=>{
         const nr=n2/PS.k2,R=psEngineRange(hy,nr),Pd=Math.max(0,T*n2*Math.PI/30),O=psOol();
-        const Plo=Math.max(O.P[0],Pd-Pbat),Phi=Math.min(O.Pmax,Pd+Pchg);
+        const Plo=Math.max(O.P[0],Pd-Pbat*assist(0,n2/mot.nMax,Pd/(O.Pmax+Pbat))),Phi=Math.min(O.Pmax,Pd+Pchg);
         if(!(R.hi>R.lo)||!(Phi>=Plo))return;
         for(const k of H.splits){
           const Pe=Plo+(Phi-Plo)*k,ne=clamp(psOolAt(Pe).ne,Math.max(R.lo,rpmMin),R.hi),Te=Pe/(ne*Math.PI/30);
@@ -164,7 +169,9 @@ function hybridCycle(v){
           const T2=stand?0:T-Te/(1+rho)/PS.k2;
           if(Math.abs(T2)>(T2>0?motUp(n2):motorMaxTorque(mot,Math.max(n2,1),PS.busV,60)))continue;
           const gs=engineFuelAt(ne,Te,oilT);if(!isFinite(gs))continue;
-          consider(gs,packJ(T2,n2,soc,psMg1Elec(hy,Ts,ns,temp)),true);
+          const J=packJ(T2,n2,soc,psMg1Elec(hy,Ts,ns,temp));
+          if(!tu.lps&&J<0&&soc>=socLo)continue;   // no load-point shifting: the engine charges only a low pack
+          consider(gs,J,true);
         }
       };
       if(vm<0.1&&a<=0){   // standing: the engine stops when it is warm, or idles
@@ -176,9 +183,9 @@ function hybridCycle(v){
         const meff=m+(v.wheelI||0)/(r*r)+(mot.J||0.01)*(tot/r)**2;
         const F=meff*a+0.5*AIR_RHO*v.cdA*vm*vm+crrAt(v.crr,vm)*m*G;
         const T=F>0?F*r/(tot*eff):F*r*eff/tot;   // at MG2's shaft
-        if(T<=0){const Tm=Math.max(T,-motDn(n2));consider(cold?M.idleGs:0,packJ(Tm,n2,soc),cold);}
+        if(T<=0){const Tm=Math.max(T,-motDn(n2)*kRegen);consider(cold?M.idleGs:0,packJ(Tm,n2,soc),cold);}
         else{
-          if(!cold&&T<=motUp(n2))consider(0,packJ(T,n2,soc),false);
+          if(!cold&&T<=motUp(n2)&&evOk(vm,T*n2*Math.PI/30))consider(0,packJ(T,n2,soc),false);
           psOn(T,n2,false);
         }
       }else for(let g=0;g<v.ratios.length;g++){
@@ -187,15 +194,16 @@ function hybridCycle(v){
         const F=meff*a+0.5*AIR_RHO*v.cdA*vm*vm+crrAt(v.crr,vm)*m*G;
         const T=F>0?F*r/(tot*eff):F*r*eff/tot;   // at the gearbox input: what the wheels need, or what braking gives back
         if(T<=0){   // slowing: regenerate what the motor and pack can; the engine cut (or idling, cold)
-          const Tm=Math.max(T,-motDn(rpm));
+          const Tm=Math.max(T,-motDn(rpm)*kRegen);
           consider(cold?(rpm>C.cutRpm?0:M.idleGs):0,packJ(Tm,rpm,soc),cold);continue;
         }
-        if(!cold&&T<=motUp(rpm))consider(0,packJ(T,rpm,soc),false);   // electric only
+        if(!cold&&T<=motUp(rpm)&&evOk(vm,T*rpm*Math.PI/30))consider(0,packJ(T,rpm,soc),false);   // electric only
         if(rpm<rpmMin)continue;
-        const Te0=Math.min(Tmax(rpm)*C.reserve,T+motDn(rpm));
+        const Te0=Math.min(Tmax(rpm)*C.reserve,T+motDn(rpm)),help=motUp(rpm)*assist(rpm,rpm/e.redline,T/(Tmax(rpm)+motUp(rpm)));
         for(const k of H.splits){   // the engine from the least it can give with the motor's help to its most, charging
-          const Te=Math.max(0,T-motUp(rpm))+(Te0-Math.max(0,T-motUp(rpm)))*k,Tm=T-Te;
+          const Te=Math.max(0,T-help)+(Te0-Math.max(0,T-help))*k,Tm=T-Te;
           if(Te<=0||Te>Tmax(rpm)*C.reserve)continue;
+          if(!tu.lps&&Tm<0&&soc>=socLo)continue;   // no load-point shifting: the engine charges only a low pack
           const gs=engineFuelAt(rpm,Te,oilT);if(!isFinite(gs))continue;
           consider(gs,packJ(Tm,rpm,soc),true);
         }
@@ -216,15 +224,21 @@ function hybridCycle(v){
     if(Math.abs(R.E)<capJ*0.005)break;
     if(R.E<0){lo=sm;Rlo=R;}else{hi=sm;Rhi=R;}
   }
-  const km=R.x/1000,kg=R.fuel/1000,L=kg/fp0.density;
-  const res={km,l100:L/km*100,co2:kg*0.865*44/12*1000/km,kg,evShare:R.evS/(WLTC_3B.length-1),onShare:R.onS/(WLTC_3B.length-1),dSocKJ:R.E/1000,s:sBest,warmS:R.warmS};
+  // A tune that cannot sustain the charge (build 192: load-point shifting off, a narrow window) ends the cycle with the
+  // pack short or over. WLTP corrects such a hybrid's fuel by the energy it borrowed (UN R154, the charge-balance
+  // correction, which prices it at the engine's efficiency through an alternator's): here at the engine's best BSFC
+  // through a 90% electrical path, and added as fuel. Within the 0.5% tolerance nothing is corrected.
+  const bestBsfc=Math.min(...psOol().P.map((P,i)=>psOol().gs[i]*3.6e6/P));
+  const corr=Math.abs(R.E)>=capJ*0.005?-R.E/3.6e6*bestBsfc/0.9:0;
+  const km=R.x/1000,kg=(R.fuel+corr)/1000,L=kg/fp0.density;
+  const res={km,l100:L/km*100,co2:kg*0.865*44/12*1000/km,kg,evShare:R.evS/(WLTC_3B.length-1),onShare:R.onS/(WLTC_3B.length-1),dSocKJ:R.E/1000,s:sBest,warmS:R.warmS,corrected:corr!==0};
   e._hcyc={score:e.score,key,res};return res;
 }
 // The VEHICLE tab's line for a hybrid. The energy manager takes ~1 s, so the panel draws first and the line fills in
 // after (once per car: it is cached until the car or its engine changes).
 let hybCycleTimer=0;
 function hybridCycleLine(v){
-  const txt=c=>tr('WLTP cycle')+' <b>'+c.l100.toFixed(1)+' L/100 km</b> • CO₂ '+Math.round(c.co2)+' g/km • '+tr('engine off')+' '+Math.round((1-c.onShare)*100)+'%';
+  const txt=c=>tr('WLTP cycle')+' <b>'+c.l100.toFixed(1)+' L/100 km</b>'+(c.corrected?' ('+tr('charge-corrected')+')':'')+' • CO₂ '+Math.round(c.co2)+' g/km • '+tr('engine off')+' '+Math.round((1-c.onShare)*100)+'%';
   const e=engine;
   if(e._hcyc&&e._hcyc.score===e.score)return '<br><span id="hybCycle">'+txt(hybridCycle(v))+'</span>';
   clearTimeout(hybCycleTimer);

@@ -1,4 +1,4 @@
-# PIXEL ENGINE SIM v0.7 build 191
+# PIXEL ENGINE SIM v0.7 build 192
 
 **A lightweight, 8-bit style internal combustion engine *designer* & simulator** inspired by *Automation*.
 
@@ -121,7 +121,8 @@ wheels through one reduction, no gearbox. The 2016 Prius, its engine matched to 
 On the LIVE bench (build 190) a hybrid runs with its motor and pack: a HYBRID panel draws the power flowing between
 engine, motors, pack and brake, gauges the charge, and offers the drive modes (AUTO, EV, HOLD, CHARGE, SPORT, ENGINE
 ONLY, MANUAL). Its VIEW selector also shows the power-split's lever diagram and the engine's BSFC map with the point
-the controller holds it at (build 191).
+the controller holds it at (build 191). The ENGINE tab's HYBRID TUNE (build 192) sets how the motor helps (ASSIST, an
+assist map over speed and pedal), regeneration, load-point shifting, electric-driving limits and the charge window.
 
 ### Simulation & live tuning
 - **Live outputs**: Power (HP), Torque (Nm), BMEP, Volumetric Efficiency, Thermal
