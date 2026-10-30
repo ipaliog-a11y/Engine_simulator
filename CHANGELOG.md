@@ -20,6 +20,20 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 Working toward **v1.0 — every number derived, not fitted.**
 
+### How the controller thinks: the lever and the BSFC map (build 191)
+
+- **Step 3.6b of the plan.** The hybrid panel's VIEW selector adds two views beside the power flow
+  (`src/js/hybrid-views.js`):
+  - **LEVER** (power-split only): Toyota's nomograph of the planetary, three bars for MG1 (sun), the engine (carrier,
+    1/(1+rho) of the way along) and the ring (MG2's speed over 65:17), their speeds on one straight line, with the
+    engine's torque, MG1's reaction and MG2's drawn as arrows. With the engine stopped the line passes through zero
+    and MG1 runs backwards.
+  - **BSFC MAP**: the engine's fuel per kWh over speed and torque, off its own map, with its full-load curve, its best
+    line, its best point, and the point the controller holds it at with a trail of the last few seconds.
+- `tests/test108.mjs`: the lever's speeds lie on Willis's line in every mode; the map's best is the best line's, no
+  cell beats it, nothing past full load; on the Ioniq at a light pedal CHARGE moves the engine from 318 to 253 g/kWh
+  (load-point shifting, made visible).
+
 ### The hybrid on the LIVE bench (build 190)
 
 - **Step 3.6a of the plan** (decisions 16-19, chosen in a brainstorm on the hybrid's UI). A hybrid's motor, pack and
