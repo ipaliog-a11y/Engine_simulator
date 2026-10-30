@@ -128,4 +128,4 @@ const POWERSPLIT=Object.assign({},HYBRID,{
   fuelRate:()=>psFuelRate()
 });
 // The powertrain of the car being built: the engine's type chooses it (a saved build without one is combustion).
-function powertrain(){return isElectric()?ELECTRIC:isHybrid()?(engine.hy.mode==='ps'?POWERSPLIT:HYBRID):COMBUSTION;}
+function powertrain(){return isElectric()?ELECTRIC:isHybrid()?(engine.hy.mode==='ps'||engine.hy.mode==='series'?POWERSPLIT:HYBRID):COMBUSTION;}   // a series hybrid drives as a power-split does (build 193)

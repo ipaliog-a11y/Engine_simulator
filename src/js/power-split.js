@@ -20,29 +20,44 @@
 //                    (22.5 kW against 72 kW on the 4th-generation Prius).
 const PS={rho:30/78,k2:65/17,busV:600,mg1Margin:1.1,mg1Share:22.5/72};
 const isPowerSplit=()=>isHybrid()&&engine.hy.mode==='ps';
-// MG1, from MG2's design: with the winding kept, the torque goes with stack x current and the knee speed against the
-// stack, so the stack sets the knee (MG1's power over its torque) and the current the torque.
-function psMg1Build(e,mg2){
-  const s=mg2.s,rho=PS.rho,T1=PS.mg1Margin*e.score.peakTQ*rho/(1+rho),P1=PS.mg1Share*e.score.peakHP*745.7;
-  const T2=motorMaxTorque(mg2,100,PS.busV,60);
-  let k2=mg2.nMax;for(let r=100;r<=mg2.nMax;r+=100)if(motorMaxTorque(mg2,r,PS.busV,60)<T2*0.999){k2=r;break;}
+// A hybrid with no gearbox, whose vehicle shaft is its traction motor's: a power-split, or a series hybrid (build 193).
+const isDirectHybrid=()=>isHybrid()&&(engine.hy.mode==='ps'||engine.hy.mode==='series');
+// A second machine from the traction motor's design, for a torque T1 (Nm) and a power P1 (W) on a bus V: with the winding
+// kept, the torque goes with stack x current and the knee speed against the stack, so the stack sets the knee (the
+// power over the torque) and the current the torque. maxRpm, if given, its own top speed.
+function hybMachineFrom(mg2,T1,P1,V,maxRpm){
+  const s=Object.assign({},mg2.s,maxRpm?{maxRpm}:{}),T2=motorMaxTorque(mg2,100,V,60);
+  let k2=mg2.nMax;for(let r=100;r<=mg2.nMax;r+=100)if(motorMaxTorque(mg2,r,V,60)<T2*0.999){k2=r;break;}
   const knee1=P1/T1*30/Math.PI,stack=Math.max(5,s.stackL*k2/knee1);
   let amps=s.invAmps*(T1/T2)/(stack/s.stackL),m=null;
   for(let it=0;it<4;it++){   // saturation bends torque from current: settle the current on the torque
     m=motorBuild(Object.assign({},s,{stackL:stack,invAmps:amps}));
-    amps*=T1/Math.max(1,motorMaxTorque(m,100,PS.busV,60));
+    amps*=T1/Math.max(1,motorMaxTorque(m,100,V,60));
   }
   return motorBuild(Object.assign({},s,{stackL:stack,invAmps:amps}));
+}
+// MG1, for 110% of the engine's peak reaction torque and 31% of its peak power.
+function psMg1Build(e,mg2){
+  const rho=PS.rho;
+  return hybMachineFrom(mg2,PS.mg1Margin*e.score.peakTQ*rho/(1+rho),PS.mg1Share*e.score.peakHP*745.7,PS.busV);
+}
+// How the engine reaches the shaft (build 193): at an engine speed ne and the shaft's (MG2's) n2, the speed MG1 turns at
+// (ns), its share of the engine's torque (ks: it holds ks Te) and the share that reaches the shaft mechanically (kr, at
+// MG2's speed). A power-split's planetary (Willis); a series hybrid's generator on the crank, nothing mechanical.
+function hybGear(hy,ne,n2){
+  if(hy.mode==='series')return {ns:ne,ks:1,kr:0};
+  const rho=PS.rho,nr=n2/PS.k2;
+  return {ns:((1+rho)*ne-nr)/rho,ks:rho/(1+rho),kr:1/(1+rho)/PS.k2};
 }
 // The electrical power MG1 puts on the bus (W, negative drawing) holding the sun torque Ts at the sun speed ns.
 function psMg1Elec(hy,Ts,ns,temp){
   const P=Ts*ns*Math.PI/30;
-  return P-motorLosses(hy.mg1,Math.abs(Ts),Math.max(Math.abs(ns),1),PS.busV,temp).total;
+  return P-motorLosses(hy.mg1,Math.abs(Ts),Math.max(Math.abs(ns),1),hybBusV(hy),temp).total;
 }
 // MG2's most torque (Nm, negative braking) for the electrical power Pin it has (W): T w + losses(T) <= Pin, on its envelope.
 function psMg2For(hy,n2,Pin,temp){
-  const m=hy.motor,Tm=motorMaxTorque(m,Math.max(n2,1),PS.busV,60),w=n2*Math.PI/30;
-  const need=t=>t*w+motorLosses(m,Math.abs(t),Math.max(n2,1),PS.busV,temp).total;
+  const V=hybBusV(hy),m=hy.motor,Tm=motorMaxTorque(m,Math.max(n2,1),V,60),w=n2*Math.PI/30;
+  const need=t=>t*w+motorLosses(m,Math.abs(t),Math.max(n2,1),V,temp).total;
   if(need(Tm)<=Pin)return Tm;
   if(need(-Tm)>Pin)return -Tm;
   let lo=-Tm,hi=Tm;for(let k=0;k<28;k++){const mid=(lo+hi)/2;if(need(mid)>Pin)hi=mid;else lo=mid;}
@@ -50,6 +65,7 @@ function psMg2For(hy,n2,Pin,temp){
 }
 // The engine speeds MG1 allows at a ring speed (rpm): |ns| within MG1's top speed.
 function psEngineRange(hy,nr){
+  if(hy.mode==='series')return {lo:0,hi:Math.min(engine.redline,hy.mg1.nMax)};   // the generator turns with the crank
   const rho=PS.rho,n1=hy.mg1.nMax,e=engine;
   return {lo:Math.max(0,(nr-n1*rho)/(1+rho)),hi:Math.min(e.redline,(n1*rho+nr)/(1+rho))};
 }
@@ -57,17 +73,17 @@ function psEngineRange(hy,nr){
 // what MG1 can hold, MG1's power through MG2, and the pack's Pb (W) on top. Returns the torque at the MG2 shaft (the
 // powertrain's shaft: the ring's torque comes in through the 65:17 gear) and the engine's speed and power there.
 function psFullLoad(n2,Pb,tqAt){
-  const e=engine,hy=e.hy,rho=PS.rho,nr=n2/PS.k2,R=psEngineRange(hy,nr),tc=hy.motor.cool.tCool,temp={w:tc,c:tc,r:60};
+  const e=engine,hy=e.hy,nr=n2/PS.k2,R=psEngineRange(hy,nr),tc=hy.motor.cool.tCool,temp={w:tc,c:tc,r:60};
   let best={tq:psMg2For(hy,n2,Pb,temp),ne:0,Pe:0};   // the engine stopped: MG2 on the pack alone
   if(R.hi>R.lo){
     const N=24,r0=Math.max(R.lo,e.idleRpmEff||700);
     for(let k=0;k<=N;k++){
       const ne=r0+(R.hi-r0)*k/N;if(ne<=0)continue;
-      const ns=((1+rho)*ne-nr)/rho;
-      const T1=motorMaxTorque(hy.mg1,Math.max(Math.abs(ns),1),PS.busV,60);
-      const Te=Math.min(tqAt(ne),T1*(1+rho)/rho);if(!(Te>0))continue;
-      const Ts=Te*rho/(1+rho),Pe1=psMg1Elec(hy,Ts,ns,temp);
-      const T2=psMg2For(hy,n2,Pe1+Pb,temp),tq=Te/(1+rho)/PS.k2+T2;
+      const G=hybGear(hy,ne,n2),ns=G.ns;
+      const T1=motorMaxTorque(hy.mg1,Math.max(Math.abs(ns),1),hybBusV(hy),60);
+      const Te=Math.min(tqAt(ne),T1/G.ks);if(!(Te>0))continue;
+      const Pe1=psMg1Elec(hy,Te*G.ks,ns,temp);
+      const T2=psMg2For(hy,n2,Pe1+Pb,temp),tq=Te*G.kr+T2;
       if(tq>best.tq)best={tq,ne,Pe:Te*ne*Math.PI/30};
     }
   }
@@ -120,7 +136,7 @@ function psOolAt(Pe){
 // The driveline: one fixed reduction from MG2 to the wheels, as an electric car's (src/js/electric-car.js), matched so
 // MG2's top speed falls where drag takes the system's peak power, or the car's published one.
 function psDriveline(v){
-  const gb=PS_REDUCTION,pt=powertrain();
+  const gb=engine.hy.mode==='series'?SERIES_REDUCTION:PS_REDUCTION,pt=powertrain();
   v.gb=gb;v.gbLabel=gb.label;v.shiftTime=0;v.shiftCut=0;
   v.driveEff=EV_DRIVE_EFF[v.drive]||0.97;
   v.ratios=[1];v.gearsetApprox=false;

@@ -14,7 +14,7 @@
 //   the engine do everything it can and the motor give only what the engine cannot (the most efficient use of a
 //   small pack), and where a lap would still spend more than braking returns, the deploy is cut to the share that
 //   balances (hybridLap). The race burns fuel for the engine's share of the power only.
-const HYBRID_MODES={none:{label:'NONE'},p2:{label:'PARALLEL (P2)'},ps:{label:'POWER-SPLIT (eCVT)'}};   // power-split: build 189, src/js/power-split.js
+const HYBRID_MODES={none:{label:'NONE'},p2:{label:'PARALLEL (P2)'},ps:{label:'POWER-SPLIT (eCVT)'},series:{label:'SERIES'}};   // power-split: build 189, src/js/power-split.js; series: build 193
 // DEPLOY: how the controller uses the motor at full throttle. FULL gives everything the motor and pack can. ECO is an
 // efficiency-first calibration (the Ioniq's): the motor only fills the engine's curve up to its peak torque, so it helps
 // off the line and low in the revs and adds nothing at speed, where the pack's energy is spent least well. Hyundai's
@@ -66,6 +66,10 @@ const HYB_DEFAULT={evMotorType:'pm',evRotorD:200,evStack:40,evPoles:12,evTurns:2
 // 17,000 rpm) and its 1.31 kWh nickel-metal hydride pack of 168 cells (201.6 V).
 const HYB_DEFAULT_PS={evMotorType:'pm',evRotorD:150,evStack:60,evPoles:8,evTurns:100,evMagnet:'ndfeb',evRetention:'bridges',evCooling:'jacket',
   evMaxRpm:17000,evInverter:'igbt',evAmps:100,evRearCount:1,evFront:'none',evChem:'nimhHEV',evSeries:168,evKWh:1.31,evYear:2016};
+// A series hybrid's when it is first chosen (build 193): the Nissan Qashqai e-POWER's traction motor (140 kW, 330 Nm) and
+// its 2.1 kWh pack of hybrid cells.
+const HYB_DEFAULT_SERIES={evMotorType:'pm',evRotorD:160,evStack:100,evPoles:8,evTurns:26,evMagnet:'ndfeb',evRetention:'bridges',evCooling:'jacket',
+  evMaxRpm:14000,evInverter:'igbt',evAmps:450,evRearCount:1,evFront:'none',evChem:'liHEV',evSeries:96,evKWh:2.1,evYear:2021};
 const HYB_SOC=0.6;   // a charge-sustaining hybrid holds its pack about here, with room above it to take back braking
 const isHybrid=()=>!!engine&&engine.type!=='electric'&&!!engine.hy;
 // Build the hybrid system of a combustion engine from its form fields (the electric drive's), or none.
@@ -77,6 +81,9 @@ function buildHybrid(e){
   e.hy={mode:e.hyMode,motor,pack,mass:Math.round(motor.mass+pack.mass),cost:motor.cost+pack.cost};
   if(e.hyMode==='ps'){   // the eCVT: MG1 sized to the engine, and the planetary set (~12 kg) in place of a gearbox
     const mg1=psMg1Build(e,motor);e.hy.mg1=mg1;e.hy.mass=Math.round(motor.mass+mg1.mass+pack.mass+12);e.hy.cost+=mg1.cost+600;
+  }
+  if(e.hyMode==='series'){   // the generator on the crank, sized to the engine (build 193); one reduction, no gearbox (~8 kg)
+    const gen=seriesGenBuild(e,motor,packOcv(pack,HYB_SOC));e.hy.mg1=gen;e.hy.mass=Math.round(motor.mass+gen.mass+pack.mass+8);e.hy.cost+=gen.cost+300;
   }
   return e.hy;
 }
@@ -97,7 +104,7 @@ function hybCurves(){
   const e=engine,hy=e.hy;
   if(hy._c&&hy._c.score===e.score)return hy._c;
   const t=hybTune(e);
-  if(hy.mode==='ps'){   // on MG2's speed (build 189); the assist map's flat-out row on top (build 192)
+  if(hy.mode==='ps'||hy.mode==='series'){   // on MG2's (the traction motor's) speed (builds 189, 193); the assist map's flat-out row on top (192)
     hy._c=Object.assign({score:e.score},psCurves());const R=hy._c.eng,nMax=hy.motor.nMax;
     hy._c.mot=hy._c.mot.map((m,i)=>m*hybAssistShare(R[i].rpm/nMax,1,t));return hy._c;
   }
@@ -125,7 +132,7 @@ function hybRegenTable(rl){
 // engine's full load could not give; - regenerating, its share of the overrun), and the pack's energy over the lap.
 function hybLapEnergy(L){
   const hy=engine.hy,R=L.replay,n=R.rpm.length,c=hybCurves(),V=hybBusV(hy),tc=hy.motor.cool.tCool,temp={w:tc+20,c:tc+15,r:60};
-  const pt=powertrain(),v=L.v,p=L.track.line,m=vehicle.mass,rl=pt.maxRpm(),regen=hybRegenTable(rl),ov=hy.mode==='ps'?[]:COMBUSTION.overrunTable(rl);   // a power-split's engine stops: no overrun
+  const pt=powertrain(),v=L.v,p=L.track.line,m=vehicle.mass,rl=pt.maxRpm(),regen=hybRegenTable(rl),ov=hy.mode!=='p2'?[]:COMBUSTION.overrunTable(rl);   // a power-split's engine stops: no overrun
   const engAt=rpm=>{const R0=c.eng;if(rpm<=R0[0].rpm)return R0[0].tq;for(let i=1;i<R0.length;i++)if(rpm<=R0[i].rpm)return R0[i-1].tq+(R0[i].tq-R0[i-1].tq)*(rpm-R0[i-1].rpm)/(R0[i].rpm-R0[i-1].rpm);return R0[R0.length-1].tq;};
   const pm=new Float32Array(n);let deployJ=0,regenJ=0;
   for(let i=0;i<n;i++){
@@ -162,6 +169,12 @@ function hybridLap(key,opts){
 function hybSummaryLine(e){
   const hy=e.hy;if(!hy)return '';
   const c=hybCurves();let sys=0,sysR=0,tq=0;
+  if(hy.mode==='series'){   // the generator and the traction motor (build 193)
+    c.eng.forEach((p,i)=>{const P=(p.tq+c.mot[i])*p.rpm*Math.PI/30;if(P>sys)sys=P;});
+    const V=hybBusV(hy);
+    return '<br><b>'+tr('HYBRID')+'</b> '+tr(HYBRID_MODES.series.label)+' • '+tr('generator')+' <b>'+Math.round(motorMaxTorque(hy.mg1,100,V,60))+' Nm</b>, '+tr('motor')+' <b>'+Math.round(motorMaxTorque(hy.motor,100,V,60))+' Nm</b> • '+
+      tr('pack')+' '+hy.pack.kWh+' kWh '+tr(hy.pack.chem.label)+' • +'+hy.mass+' kg • '+tr('system')+' <b>'+Math.round(sys/1000)+' kW</b>';
+  }
   if(hy.mode==='ps'){   // on MG2's shaft, the system's power and the two machines (build 189)
     c.eng.forEach((p,i)=>{const P=(p.tq+c.mot[i])*p.rpm*Math.PI/30;if(P>sys)sys=P;});
     return '<br><b>'+tr('HYBRID')+'</b> '+tr(HYBRID_MODES.ps.label)+' • MG1 <b>'+Math.round(motorMaxTorque(hy.mg1,100,PS.busV,60))+' Nm</b>, MG2 <b>'+Math.round(motorMaxTorque(hy.motor,100,PS.busV,60))+' Nm</b> • '+
