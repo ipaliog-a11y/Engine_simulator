@@ -20,6 +20,25 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 Working toward **v1.0 — every number derived, not fitted.**
 
+### The hybrid on the LIVE bench (build 190)
+
+- **Step 3.6a of the plan** (decisions 16-19, chosen in a brainstorm on the hybrid's UI). A hybrid's motor, pack and
+  controller now run with its engine on the LIVE bench, second by second (`src/js/hybrid-bench.js`): a P2's motor on
+  the dyno's shaft with the engine's clutch (the engine stops and the clutch opens in electric drive), a power-split's
+  eCVT with MG1 setting the engine's speed and the brake on MG2's shaft. The engine is the bench's own engine at the
+  throttle the controller gives it; THROTTLE is the driver's pedal. The charge drains and refills through the pack's
+  model, the motor and pack heat.
+- A **HYBRID** panel beside the live readouts, for a hybrid only: a **power-flow diagram** (engine, clutch or
+  planetary, motor or MG1 and MG2, the 600 V bus, the pack and the brake; each path as wide as its power, orange the
+  engine driving, blue the pack, green regeneration, purple the engine charging), a **battery gauge** (the charge in
+  its 35-85% window, the pack's power and temperature), and **DRIVE MODE**: AUTO (charge-sustaining towards 60%), EV,
+  HOLD, CHARGE, SPORT, ENGINE ONLY (the pack does nothing) and MANUAL (MOTOR COMMAND from -100% regenerating to +100%
+  helping, and a power-split's ENGINE SPEED). BATTERY CHARGE sets the charge. The status line says when the engine
+  is off; the engine's sound stops with it.
+- `tests/test107.mjs` drives the Ioniq Hybrid and the Prius through every mode: ENGINE ONLY leaves the pack alone,
+  EV stops the engine (MG1 spinning backwards on the Prius) and starts it again at 35%, CHARGE and AUTO move the
+  charge the right way, the planetary obeys Willis's equation, no more leaves the shaft than the engine and pack put in.
+
 ### The power-split hybrid (build 189)
 
 - **Step 3.3 of the plan.** HYBRID gets a second layout, **POWER-SPLIT (eCVT)** (`src/js/power-split.js`): Toyota's
