@@ -67,7 +67,17 @@ const HYB_ENGINE_PRESETS=[
    unsure:['redline','compression','boost'],engine:{type:'petrol4',cylinders:3,bore_mm:84,stroke_mm:90.1,compression:12,redline:5600,intake:'turbo',boost_bar:0.4,turboSize:'small',
     injector:'direct',vvt:true,cam:'stock',valves:4,octane:95,airFilter:'stock',exhaust:'stock',cat:'stock',intakeSys:'efi',hyMode:'series',hyDeploy:'full',
     evMotorType:'pm',evRotorD:160,evStack:100,evPoles:8,evTurns:26,evMagnet:'ndfeb',evRetention:'bridges',evCooling:'jacket',evMaxRpm:14000,
-    evInverter:'igbt',evAmps:450,evRearCount:1,evFront:'none',evChem:'liHEV',evSeries:96,evKWh:2.1,evYear:2021}}
+    evInverter:'igbt',evAmps:450,evRearCount:1,evFront:'none',evChem:'liHEV',evSeries:96,evKWh:2.1,evYear:2021}},
+  // The BMW 330e (G20, 2020; build 194, step 3.5a): a plug-in P2. The B48, a 2.0 turbo four (82 x 94.6 mm, 10.2:1, 135 kW,
+  // 300 Nm), with an 80 kW / 265 Nm motor in its eight-speed automatic's bellhousing (XtraBoost: the motor's full 80 kW,
+  // 215 kW together), and a 12 kWh pack under the rear seat. The tune holds the charge between 12% and 95% (~10 kWh
+  // usable, BMW's net figure ~10.4) and sustains it at 15%.
+  {cat:'Hybrid',name:'BMW B48 2.0 turbo + P2 plug-in (330e)',real:{hp:181.5,hpRpm:5000,tq:300,tqRpm:1350,motorKW:80,motorNm:265,sysKW:215},
+   unsure:['redline','boost','pack'],engine:{type:'petrol4',cylinders:4,bore_mm:82,stroke_mm:94.6,compression:10.2,redline:6500,intake:'turbo',boost_bar:0.4,turboSize:'small',
+    injector:'direct',vvt:true,cam:'stock',valves:4,octane:95,airFilter:'stock',exhaust:'stock',cat:'stock',intakeSys:'efi',hyMode:'p2',hyDeploy:'full',hyPlug:true,
+    hyTune:{rpm:4000,map:Array(20).fill(100),regen:'high',lps:true,evKmh:0,evKw:0,socLo:12,socT:15,socHi:95},
+    evMotorType:'pm',evRotorD:200,evStack:60,evPoles:12,evTurns:48,evMagnet:'ndfeb',evRetention:'bridges',evCooling:'jacket',evMaxRpm:7500,
+    evInverter:'igbt',evAmps:250,evRearCount:1,evFront:'none',evChem:'ncaP',evSeries:96,evKWh:12,evYear:2020}}
 ];
 const HYB_VEHICLE_PRESETS=[
   {cat:'Hybrid',name:'Hyundai Ioniq Hybrid (2016)',engine:'Hyundai Kappa 1.6 GDi + P2 (Ioniq Hybrid)',chassis:'hatch',
@@ -81,7 +91,12 @@ const HYB_VEHICLE_PRESETS=[
   // 1612 kg, Cd 0.32; 0-100 km/h 7.9 s and 170 km/h governed (Nissan UK); its reduction is not published, so it is matched.
   {cat:'Hybrid',name:'Nissan Qashqai e-POWER (2022)',engine:'Nissan KR15DDT 1.5 VC-T + series (Qashqai e-POWER)',chassis:'hatch',
    body:{kg:1612,cd:0.32,area:2.50,wb:2.67,fWt:0.60},fit:{drive:'fwd',tire:'eco',tw:235,ta:55,wheel:18,brake:'steel',rotor:320,susp:'comfort',diff:'open'},
-   real:{t100:7.9,top:170,limited:true},unsure:['area','fWt','tyres']}
+   real:{t100:7.9,top:170,limited:true},unsure:['area','fWt','tyres']},
+  // 1740 kg (EU, without driver), rear-drive, 8-speed automatic; 0-100 km/h 5.9 s with XtraBoost, 230 km/h governed; WLTP
+  // electric range 59-66 km and 1.6-1.9 L/100 km weighted (BMW, by trim).
+  {cat:'Hybrid',name:'BMW 330e (2020)',engine:'BMW B48 2.0 turbo + P2 plug-in (330e)',chassis:'sedan',
+   body:{kg:1740,cd:0.26,area:2.20,wb:2.85,fWt:0.50},fit:{drive:'rwd',tire:'sport',tw:225,ta:45,wheel:18,brake:'steel',rotor:330,susp:'comfort',gears:8,gearbox:'auto',diff:'open'},
+   real:{t100:5.9,top:230,limited:true},unsure:['area','fWt','cd']}
 ];
 // What a player picks from: the combustion tables, then the electric and hybrid ones.
 const FACTORY_ENGINES=PRESETS.concat(EV_ENGINE_PRESETS,HYB_ENGINE_PRESETS), FACTORY_CARS=VEHICLE_PRESETS.concat(EV_VEHICLE_PRESETS,HYB_VEHICLE_PRESETS);

@@ -16,7 +16,7 @@
 <body>
 <div class="container">
 <header>
-<h1>PIXEL ENGINE SIM v0.7 build 193</h1>
+<h1>PIXEL ENGINE SIM v0.7 build 194</h1>
 <div class="subtitle" id="subtitle">ENGINE DESIGNER • BUILD IT, THEN DRIVE IT</div>
 </header>
 <div class="build-strip" id="buildStrip">
@@ -67,6 +67,7 @@
 <div class="design-grid">
 <div class="field"><label for="edHybrid">HYBRID</label><select id="edHybrid"><option value="none">NONE</option><option value="p2">PARALLEL (P2)</option><option value="ps">POWER-SPLIT (eCVT)</option><option value="series">SERIES</option></select></div>
 <div class="field"><label for="edHyDeploy">ASSIST</label><select id="edHyDeploy"><option value="full">FULL</option><option value="eco">ECO (TORQUE FILL)</option><option value="above">ABOVE RPM</option><option value="below">BELOW RPM</option></select></div>
+<div class="field"><label for="edHyPlug">PLUG-IN</label><select id="edHyPlug"><option value="no">NO</option><option value="yes">YES</option></select></div>
 </div>
 <div class="design-section" data-hy>Hybrid tune</div>
 <div class="design-grid" data-hy>
@@ -76,7 +77,7 @@
 <div class="field"><label for="edHyEvKmh">EV UP TO (km/h, 0 = ANY)</label><input type="number" id="edHyEvKmh" min="0" max="200" step="5" value="0"></div>
 <div class="field"><label for="edHyEvKw">EV POWER (kW, 0 = AUTO)</label><input type="number" id="edHyEvKw" min="0" max="400" step="1" value="0"></div>
 <div class="field"><label for="edHySocLo">CHARGE LOW (%)</label><input type="number" id="edHySocLo" min="10" max="60" step="1" value="35"></div>
-<div class="field"><label for="edHySocT">CHARGE TARGET (%)</label><input type="number" id="edHySocT" min="20" max="80" step="1" value="60"></div>
+<div class="field"><label for="edHySocT">CHARGE TARGET (%)</label><input type="number" id="edHySocT" min="10" max="80" step="1" value="60"></div>
 <div class="field"><label for="edHySocHi">CHARGE HIGH (%)</label><input type="number" id="edHySocHi" min="40" max="95" step="1" value="85"></div>
 </div>
 <div class="hy-map-wrap" data-hy><div class="hint">ASSIST MAP: the share of the motor's help over shaft speed and pedal. Click a cell to step it down by 25% (from 0 back to 100%).</div><div id="hyAssistMap"></div></div>

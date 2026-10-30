@@ -57,7 +57,8 @@ function syncElectricSections(){
   panel.classList.toggle('ev',ev);
   panel.classList.toggle('hy',hy);   // a hybrid's motor and battery, under its engine (build 186)
   if(hs){const d=document.getElementById('edHyDeploy');if(d)d.disabled=!hy||hs.value==='ps'||hs.value==='series';   // a power-split deploys all it has (build 189)
-    const r=document.getElementById('edHyRpm');if(r&&d)r.disabled=d.disabled||!/^(above|below)$/.test(d.value);}
+    const r=document.getElementById('edHyRpm');if(r&&d)r.disabled=d.disabled||!/^(above|below)$/.test(d.value);
+    const pl=document.getElementById('edHyPlug');if(pl)pl.disabled=!hy;}
   if(ev||hy){
     // a chemistry that had not reached cars by the technology year is offered disabled (decision 9)
     const year=clamp(+document.getElementById('evYear').value||2020,1990,2026),chem=document.getElementById('evChem');
