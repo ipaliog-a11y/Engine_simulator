@@ -16,7 +16,7 @@
 <body>
 <div class="container">
 <header>
-<h1>PIXEL ENGINE SIM v0.7 build 189</h1>
+<h1>PIXEL ENGINE SIM v0.7 build 190</h1>
 <div class="subtitle" id="subtitle">ENGINE DESIGNER • BUILD IT, THEN DRIVE IT</div>
 </header>
 <div class="build-strip" id="buildStrip">
@@ -322,6 +322,17 @@
 <div class="stat" id="statHealth"><span class="label">ENGINE HEALTH</span><div class="value">100</div><span class="unit">%</span></div>
 </div>
 </div>
+<div class="panel" id="hybridPanel" hidden>
+<h2>Hybrid</h2>
+<canvas id="hyFlow" class="hy-flow" role="img" aria-label="Hybrid power flow: the engine, the motors, the battery pack and the dyno brake, with the power on each path"></canvas>
+<div class="hy-soc" id="hySoc" role="meter" aria-label="Battery state of charge" aria-valuemin="0" aria-valuemax="100" aria-valuenow="60"><div class="hy-soc-win"></div><div class="hy-soc-fill" id="hySocFill"></div></div>
+<div class="readout" id="hyPack">PACK 0.0 kW</div>
+<div class="readout" id="hyReadout"></div>
+<div class="control-group"><label for="hyDrive"><span class="ctl-lbl">DRIVE MODE</span></label><select id="hyDrive"><option value="auto">AUTO</option><option value="ev">EV</option><option value="hold">HOLD</option><option value="charge">CHARGE</option><option value="sport">SPORT</option><option value="engine">ENGINE ONLY</option><option value="manual">MANUAL</option></select></div>
+<div class="control-group"><label for="hySocSet"><span class="ctl-lbl">BATTERY CHARGE</span> <span class="val" id="valHySoc">60</span> %</label><input type="range" id="hySocSet" min="0" max="100" step="1" value="60" aria-label="Battery state of charge percent"></div>
+<div class="control-group hy-man"><label for="hyCmd"><span class="ctl-lbl">MOTOR COMMAND</span> <span class="val" id="valHyCmd">0</span> %</label><input type="range" id="hyCmd" min="-100" max="100" step="1" value="0" aria-label="Motor command percent, negative regenerating"></div>
+<div class="control-group hy-man hy-ps-only"><label for="hyNe"><span class="ctl-lbl">ENGINE SPEED</span> <span class="val" id="valHyNe">0</span> rpm</label><input type="range" id="hyNe" min="800" max="6000" step="50" value="3000" aria-label="Engine speed target rpm"></div>
+</div>
 <div class="panel" id="controlsPanel">
 <h2>Engine Controls</h2>
 <div class="control-group"><label for="throttle"><span class="ctl-lbl">THROTTLE</span> <span class="val" id="valThrottle">20</span> %</label><input type="range" id="throttle" min="0" max="100" step="1" value="20" aria-label="Throttle pedal position percent"></div>
@@ -506,6 +517,7 @@
 <!-- @include js/electric-cycle.js -->
 <!-- @include js/hybrid.js -->
 <!-- @include js/power-split.js -->
+<!-- @include js/hybrid-bench.js -->
 <!-- @include js/fuel-cycle.js -->
 <!-- @include js/electric-presets.js -->
 <!-- @include js/controls-boot.js -->

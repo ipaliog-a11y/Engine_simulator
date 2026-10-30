@@ -170,6 +170,15 @@ Step 3 lands in parts, one PR each (decisions 12-15):
 | 3.4 | **Series**: the engine only charges. | |
 | 3.5 | **Plug-in and racing energy**: a pack that starts full and depletes before it sustains; regulation deploy and harvest limits per lap. Checked: the BMW 330e or Cayenne E-Hybrid, and the Porsche 918 Spyder (with its front axle motor). | |
 
+**Hybrid on the bench, and its tune** (decisions 16-19), built before 3.4 so the series and plug-in layouts add their
+modes to UI that already exists:
+
+| part | what | state |
+|---|---|---|
+| 3.6a | **The hybrid on the LIVE bench**: the motor (P2) or the eCVT (power-split) run second by second with the engine, a state of charge that drains and refills, the pack's heat. DRIVE MODE (AUTO / EV / HOLD / CHARGE / SPORT / ENGINE ONLY / MANUAL), a starting-charge slider, and in MANUAL a motor command (-100% regenerating to +100% assisting) and, on a power-split, an engine-speed target. The bench drawing becomes a **power-flow diagram** (engine, motor(s), pack, wheels or brake; arrows in kW coloured by drive, boost, regeneration, charging), and a **battery gauge** (charge in its 35-85% window, kW in or out, pack temperature). (`src/js/hybrid-bench.js`, `tests/test107.mjs`). | ✅ build 190 |
+| 3.6b | **How the controller thinks**: the power-split's **lever diagram** (MG1, engine and ring speeds on one line, live) and the engine's **BSFC map** with its best line and the point the controller holds it at (load-point shifting made visible). | |
+| 3.6c | **HYBRID TUNE** on the ENGINE tab, saved with the build and read by the 0-100, the lap, the race and the WLTP cycle: assist strategy (FULL, TORQUE FILL, ABOVE an rpm, LAUNCH ONLY; it replaces DEPLOY), an assist map over rpm x throttle edited like the fuel map, electric-driving limits (speed, power), engine-start rules (demand, charge), regeneration (OFF / LOW / HIGH, coast regen), the charge window and target, an ECO-PERFORMANCE bias on the pack's energy price, load-point shifting on or off. Racing deploy and harvest budgets join it in 3.5. | |
+
 ### 4. Electric sound
 
 A motor and inverter synth beside GAS: an inverter switching tone, motor whine rising with speed,
@@ -197,6 +206,10 @@ gear mesh from the reduction. Built standalone in `tests/proto/` first, the way 
 | 13 | Plug-in | **Charge-sustaining first** (the pack is charged by the engine and braking only); plug-in comes in 3.5. |
 | 14 | Validation | The **Hyundai Ioniq Hybrid** (P2, 3.1-3.2), the **Toyota Prius**, 4th generation (power-split, 3.3), the **BMW 330e or Cayenne E-Hybrid** and the **Porsche 918 Spyder** (plug-in, 3.5). |
 | 15 | Hybrids in a race | **On fuel, charge-sustaining** from 3.1: the battery deploys and harvests within each lap; regulation energy limits come in 3.5. |
+| 16 | Where the hybrid tune lives | A **HYBRID TUNE section on the ENGINE tab**, under the HYBRID fields, saved with the build like the cam and the ECU settings. |
+| 17 | Live diagrams first | The **power-flow diagram**, the **battery gauge**, the power-split's **lever diagram** and the **BSFC map** with the controller's operating point (stacked dyno curves and a strip chart later). |
+| 18 | Driving a hybrid on the bench | **Drive modes and manual**: AUTO / EV / HOLD / CHARGE / SPORT / ENGINE ONLY, and MANUAL with a motor command and (power-split) an engine-speed target. |
+| 19 | When | **Now, before 3.4**: 3.6a-c on the P2 and the power-split, then series and plug-in add their modes. |
 
 **On the three Teslas (decision 10).** Tesla publishes 0–100 / 0–60, top speed, mass and WLTP/EPA
 consumption, which the 0–100, top-speed and Wh/km checks need. It does **not** publish continuous

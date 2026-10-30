@@ -915,6 +915,7 @@ function brakeTorque(){
 // Integrate the dynamic engine: spool → manifold fill → net torque → RPM via inertia.
 function stepEngine(dt){
   if(isElectric())return stepMotorBench(dt);
+  if(isHybrid())return stepHybridBench(dt);   // the motor, the pack and the controller with the engine (build 190)
   stepBoost(dt);
   state.map+=(mapTarget()-state.map)*(1-Math.exp(-MAP_K*engine.intakeRespK*dt));
   if(state.nitrousActive){   // deplete the bottle while spraying at WOT (~14 s per fill)
@@ -934,7 +935,7 @@ function stepEngine(dt){
 // Integrate the battery: charge when the alternator out-supplies demand, drain otherwise.
 // System voltage tracks state of charge; a flat battery weakens the spark (see ignVFactor).
 function stepElectrical(dt){
-  if(isElectric())return;   // no alternator: the traction pack is the bench's (stepMotorBench)
+  if(isElectric()||isHybrid())return;   // no alternator: the traction pack is the bench's (stepMotorBench, stepHybridBench)
   const netA=altOutputA(state.rpm)-elecDemandA();
   state.batterySOC=clamp(state.batterySOC+netA*dt*0.0004,0,1);
   const charging=netA>0&&state.batterySOC<0.999;
@@ -1034,6 +1035,10 @@ function computeEmissions(){
 }
 function updatePhysics(){
   if(isElectric())return;   // the bench step does it (stepMotorBench)
+  if(isHybrid())return hybUpdatePhysics(updateEnginePhysics);   // at the engine's own throttle, or off (build 190)
+  updateEnginePhysics();
+}
+function updateEnginePhysics(){
   const map=liveMap();
   // AUTO (ECU MAP) mode: the ECU sets the live mixture from its load×rpm map, so the AFR
   // readout, fuel flow, emissions and wear all reflect the mapped value.

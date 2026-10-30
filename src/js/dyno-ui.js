@@ -128,6 +128,7 @@ function drawDyno(){
   }else{ctx.fillStyle='#667';ctx.fillText(tr('LOG PULL to snapshot & overlay a curve for comparison'),gX+4,iy+41);}
 }
 function updateUI(){
+  updateHybridPanel();   // build 190: shown for a hybrid, hidden otherwise
   if(isElectric())return updateMotorUI();
   if(vizMode==='design')updateFuelMapMarker();
   document.getElementById('valThrottle').textContent=Math.round(state.throttle*100);
@@ -163,6 +164,7 @@ function updateUI(){
   else if(state.coolant>115){status.textContent=tr('OVERHEAT — REDUCE LOAD OR INCREASE COOLING');status.className='status-bar err'}
   else if(state.oil<55){status.textContent=tr('COLD OIL — HIGH FRICTION, WARM UP RECOMMENDED');status.className='status-bar warn'}
   else if(state.systemVoltage<11.6){status.textContent=tr('LOW VOLTAGE')+' '+state.systemVoltage.toFixed(1)+'V — '+tr('WEAK SPARK / MISFIRE');status.className='status-bar err'}
+  else if(hybBenchEngineOff()){status.textContent=tr('ENGINE OFF')+' • '+tr('ELECTRIC DRIVE')+' • '+tr('SHAFT')+' '+Math.round(hybBench.n)+' RPM';status.className='status-bar'}   // build 190
   else if(state.rpm>=engine.redline-30){status.textContent=tr('REV LIMITER')+' • '+Math.round(state.rpm)+' RPM';status.className='status-bar warn'}
   else if(state.fuelCut){status.textContent=tr('OVERRUN')+' • '+tr('FUEL CUT-OFF (DFCO)')+' • '+Math.round(state.rpm)+' RPM';status.className='status-bar'}
   else if(state.powerHP>5){status.textContent=tr('RUNNING')+' • '+state.powerHP.toFixed(0)+' HP @ '+Math.round(state.rpm)+' RPM • BMEP '+state.bmep.toFixed(1)+' bar';status.className='status-bar'}
