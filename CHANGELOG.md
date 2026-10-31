@@ -25,8 +25,11 @@ Working toward **v1.0 — every number derived, not fitted.**
 - **The AUTO fuel map stays at λ 1 until near full load.** It used to start enriching at 35% manifold pressure and
   reached λ 0.93 by 70%. A real ECU runs closed loop at stoichiometric over almost all of its map, because the three-way
   catalyst only cleans up all three pollutants there. It enriches only near full load, to cool the exhaust.
-  - The map is now slightly lean at light load as before, then λ 1 up to 85% of the engine's full-load pressure,
-    including a turbo engine at part boost.
+  - The map is now slightly lean at light load as before, then λ 1 up to 85% of the full-load pressure at that speed,
+    including a turbo engine at part boost. A turbo at full throttle where its boost tapers, at the top end where its
+    exhaust is hottest, still enriches.
+  - While the map is the factory's, it is read from its curve exactly. The 6 × 8 grid the player sees and edits,
+    interpolated, smeared a band this narrow back into part load. An edited map, and a diesel's, work as before.
   - The full-load enrichment above that is unchanged, and only applies where the engine needs it:
     - where the exhaust at λ 1 would pass a three-way catalyst's limit of about 950 °C, or
     - on a ported engine (rotary, two-stroke), whose enrichment controls detonation.
@@ -38,7 +41,9 @@ Working toward **v1.0 — every number derived, not fitted.**
   - Qashqai e-POWER 6.16 → 5.79, against Nissan's 5.3.
   - The rest of the gap is the engines' efficiency: 37% at best against the makers' 40%. That's the next build.
 - **Conventional cars' WLTP falls 2–5%** where their cycle crosses the old mid-load enrichment.
-  - The four checked against their figures (test104) now sit mostly under them. RMS is about 9%, as before.
+  - The four checked against their figures (test104): GR Yaris −8.8%, Civic Type R −6.8%, RS3 +5.6%, 720S −14.9%.
+    RMS goes from 8.8% to 9.7%, with three of the four under. A real ECU does not enrich at part load, so the model
+    now reads a little optimistic elsewhere; the engines' base efficiency, the hybrids' remaining gap too, is next.
   - The 0–100 and the lap are unchanged: they run on the fixed best-power mixture.
   - Race fuel per lap falls a little.
 - **The hybrid cycle's charge balance always converges.**
