@@ -16,7 +16,7 @@
 <body>
 <div class="container">
 <header>
-<h1>PIXEL ENGINE SIM v0.7 build 204</h1>
+<h1>PIXEL ENGINE SIM v0.7 build 205</h1>
 <div class="subtitle" id="subtitle">ENGINE DESIGNER • BUILD IT, THEN DRIVE IT</div>
 </header>
 <div class="build-strip" id="buildStrip">
@@ -28,6 +28,7 @@
 <div class="viz-tabs">
 <button id="tabDesign">ENGINE</button>
 <button id="tabVehicle">VEHICLE</button>
+<button id="tabParts">PARTS</button>
 <button id="tabGarage">GARAGE</button>
 <button id="tabTrack">TRACK</button>
 <button id="tabRace">RACE</button>
@@ -311,6 +312,39 @@
 </div>
 </div>
 
+<!-- PARTS: design a part, save it, fit it on the ENGINE tab (build 205) -->
+<div class="design-panel parts-panel" id="partsPanel">
+<h3>PART DESIGNER</h3>
+<div class="hint">Pick a type of part, set its dimensions and save it. Saved parts are kept in this browser and appear in the ENGINE tab's choices; a saved build carries its parts with it.</div>
+<div class="design-section">Type of part</div>
+<div class="part-types" id="partTypes"></div>
+<div class="hint" id="partsNoEngine" hidden>An electric drive has no exhaust. Build a combustion engine on the ENGINE tab to design one.</div>
+<div id="partsExhaust">
+<div class="design-section">My exhausts</div>
+<div class="part-list" id="partList"></div>
+<div class="pick-row"><div class="field"><label for="ptFrom">START FROM THIS ENGINE'S</label><select id="ptFrom"><option value="stock">STOCK CAST</option><option value="sport">SPORT HEADER</option><option value="race">RACE HEADER</option></select></div>
+<div class="field"><label>&nbsp;</label><button type="button" id="ptNew">NEW EXHAUST</button></div></div>
+<div class="design-section">Exhaust</div>
+<div class="design-grid">
+<div class="field"><label for="ptName">NAME</label><input type="text" id="ptName" maxlength="40"></div>
+<div class="field"><label for="ptBuild">HEADER</label><select id="ptBuild"><option value="cast">CAST MANIFOLD</option><option value="tubular">TUBULAR HEADER</option><option value="equal">EQUAL-LENGTH HEADER</option></select></div>
+<div class="field"><label for="ptPrimD">PRIMARY DIAMETER (mm)</label><input type="number" id="ptPrimD" min="25" max="76" step="0.5"></div>
+<div class="field"><label for="ptPrimL">PRIMARY LENGTH (mm)</label><input type="number" id="ptPrimL" min="200" max="1000" step="5"></div>
+<div class="field"><label for="ptCutRpm">CUT THE PRIMARIES FOR (rpm)</label><input type="number" id="ptCutRpm" min="1500" max="12000" step="100"></div>
+<div class="field"><label>&nbsp;</label><button type="button" id="ptCut">CUT</button></div>
+<div class="field"><label for="ptPipes">PIPES AFTER THE COLLECTOR</label><select id="ptPipes"><option value="1">1</option><option value="2">2</option></select></div>
+<div class="field"><label for="ptSysD">PIPE DIAMETER (mm)</label><input type="number" id="ptSysD" min="30" max="110" step="0.5"></div>
+<div class="field"><label>&nbsp;</label><button type="button" id="ptSize">SIZE FOR 75 m/s</button></div>
+<div class="field"><label for="ptSysL">SYSTEM LENGTH (m)</label><input type="number" id="ptSysL" min="0.8" max="4.5" step="0.1"></div>
+<div class="field"><label for="ptSil">SILENCER</label><select id="ptSil"><option value="chambered">CHAMBERED</option><option value="absorptive">STRAIGHT-THROUGH</option><option value="straight">NONE (STRAIGHT PIPE)</option></select></div>
+</div>
+<div class="design-section">On this engine</div>
+<div class="part-guide" id="partGuide"></div>
+<div class="part-chart"><div class="gw-leg" id="partLegend"></div><canvas id="partCanvas" role="img" aria-label="Power and torque with this exhaust against the engine as it is"></canvas></div>
+<div class="btn-row part-btns"><button type="button" id="ptSave">SAVE PART</button><button type="button" id="ptSaveFit">SAVE &amp; FIT</button></div>
+</div>
+</div>
+
 <!-- GARAGE: every saved car and engine, to look over and load -->
 <div class="design-panel garage-panel" id="garagePanel">
 <h3>GARAGE</h3>
@@ -547,6 +581,7 @@
 <!-- @include js/race-tab.js -->
 <!-- @include js/fullscreen-track.js -->
 <!-- @include js/dyno-ui.js -->
+<!-- @include js/parts.js -->
 <!-- @include js/guide.js -->
 <!-- @include js/electric-ui.js -->
 <!-- @include js/electric-car.js -->

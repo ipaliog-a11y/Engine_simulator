@@ -179,10 +179,10 @@ function setTab(mode){
   if(mode!=='race'&&racePage.open)closeRacePage();
   if(mode!=='track'&&trackPage.open)closeTrackPage();
   vizMode=mode;
-  ['Design','Vehicle','Garage','Track','Race','Engine','Dyno','Guide','Options'].forEach(m=>
+  ['Design','Vehicle','Parts','Garage','Track','Race','Engine','Dyno','Guide','Options'].forEach(m=>
     document.getElementById('tab'+m).classList.toggle('active',mode===m.toLowerCase()));
   // DESIGN / VEHICLE / GUIDE / OPTIONS are full-panel overlays that replace the canvas.
-  const overlay=mode==='design'||mode==='vehicle'||mode==='garage'||mode==='guide'||mode==='options';
+  const overlay=mode==='design'||mode==='vehicle'||mode==='parts'||mode==='garage'||mode==='guide'||mode==='options';
   canvas.style.display=overlay?'none':'block';
   // The canvas has no layout size while hidden, so re-measure whenever it comes back.
   if(!overlay)sizeCanvas();
@@ -190,6 +190,8 @@ function setTab(mode){
   document.getElementById('vehiclePanelTab').classList.toggle('active',mode==='vehicle');
   document.getElementById('garagePanel').classList.toggle('active',mode==='garage');
   if(mode==='garage')renderGarage();
+  document.getElementById('partsPanel').classList.toggle('active',mode==='parts');
+  if(mode==='parts')renderParts();
   document.getElementById('guidePanel').classList.toggle('active',mode==='guide');
   document.querySelector('.main').classList.toggle('wide',mode==='guide');
   if(mode==='guide'&&typeof startGuideArt==='function')requestAnimationFrame(startGuideArt);   // after the panel has a size

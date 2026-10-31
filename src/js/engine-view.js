@@ -412,7 +412,7 @@ function drawExhaustSide(px,py,S,F,LW,m,portYc,exX){
     drawTurbo(px,py,S,F,LW,m,portYc,exX,gasCol);
     ctx.fillStyle=C.exhaust;ctx.font=F(6.5);ctx.fillText(tr('EXHAUST'),px(400),py(portYc-14));
     ctx.fillStyle='#89b';ctx.font=F(6);
-    ctx.fillText(e.exhaust.toUpperCase()+' • '+tr('CAT')+' '+CAT[e.cat].label.split(' ')[0],px(400),py(portYc+2));
+    ctx.fillText((e.exhaustPart?e.exhaustPart.name.toUpperCase():e.exhaust.toUpperCase())+' • '+tr('CAT')+' '+CAT[e.cat].label.split(' ')[0],px(400),py(portYc+2));
     ctx.fillText(tr('EGT')+' '+egt+'C '+tr('AT THE TURBINE'),px(400),py(portYc+12));
     return;
   }
@@ -449,7 +449,7 @@ function drawExhaustSide(px,py,S,F,LW,m,portYc,exX){
   ctx.fillStyle=C.exhaust;ctx.font=F(6.5);
   ctx.fillText(tr('EXHAUST'),px(330),py(portYc-14));
   ctx.fillStyle='#89b';ctx.font=F(6);
-  ctx.fillText(e.exhaust.toUpperCase()+' '+Math.round((e.primL||0)*1000)+' mm • '+tr('CAT')+' '+CAT[e.cat].label.split(' ')[0],px(330),py(portYc+20));
+  ctx.fillText((e.exhaustPart?e.exhaustPart.name.toUpperCase():e.exhaust.toUpperCase())+' '+Math.round((e.primL||0)*1000)+' mm • '+tr('CAT')+' '+CAT[e.cat].label.split(' ')[0],px(330),py(portYc+20));
   drawExhaustSide.dbg={exX,colX,primPx,wave:waveTxt};   // read by test90
   if(waveTxt){ctx.fillStyle=waveTxt.ok?C.green:'#89b';ctx.fillText(waveTxt.t+(waveTxt.ok?' • '+tr('SCAVENGING'):''),px(330),py(portYc+40));}
   // The model's own exhaust temperature at this load — the same call back-pressure uses. This read

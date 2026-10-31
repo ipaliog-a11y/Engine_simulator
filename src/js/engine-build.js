@@ -28,7 +28,6 @@ function readEngineFromForm(){
     antilag:g('edAntilag').value==='yes',
     scType:g('edScType').value,
     nitrous:g('edNitrous').value,
-    exhaust:g('edExhaust').value,
     cat:g('edCat').value,
     intakeSys:g('edIntakeSys').value,
     airFilter:g('edAirFilter').value,
@@ -51,6 +50,7 @@ function readEngineFromForm(){
     thermostat:clamp(Math.round(+g('edThermostat').value||88),71,95),
     alternator:g('edAlternator').value
   };
+  Object.assign(e,exhaustFromForm());   // a factory exhaust, or a designed one (build 205)
   if(type==='electric')Object.assign(e,readElectricFromForm());   // the motor and battery (build 179)
   else{const hm=g('edHybrid')&&g('edHybrid').value;if(hm&&hm!=='none'){e.hyMode=hm;e.hyDeploy=HYBRID_DEPLOY[g('edHyDeploy').value]?g('edHyDeploy').value:'full';e.hyTune=readHybTuneFromForm();if(g('edHyPlug').value==='yes')e.hyPlug=true;Object.assign(e,readElectricFromForm());}}   // a hybrid system (build 186), its tune (192)
   return e;
@@ -74,7 +74,7 @@ function applyEngineToForm(e){
   g('edValves').value=String(e.valves||4);g('edValveMat').value=e.valveMat||'steel';
   g('edSpring').value=e.valveSpring||'stock';
   g('edFuel').value=e.fuel||'gasoline';
-  g('edExhaust').value=e.exhaust;g('edCat').value=e.cat||'stock';g('edOctane').value=e.octane;g('edInjector').value=e.injector;
+  exhaustToForm(e);g('edCat').value=e.cat||'stock';g('edOctane').value=e.octane;g('edInjector').value=e.injector;
   g('edIgnAdv').value=e.ignitionAdv;g('edIgnType').value=e.ignitionType;g('edTiming').value=e.timingMode||'fixed';g('edAfrMode').value=e.afrMode||'fixed';
   g('edRadiator').value=e.radiator||'stock';g('edFan').value=e.fan||'electric';
   g('edOilCooler').value=e.oilCooler?'yes':'no';g('edThermostat').value=e.thermostat||88;

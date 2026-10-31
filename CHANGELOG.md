@@ -20,6 +20,35 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 Working toward **v1.0 — every number derived, not fitted.**
 
+### The part designer: exhausts (build 205)
+
+- **A PARTS tab.** Pick a type of part, then set its dimensions. The first type is the **exhaust**; the intake
+  manifold, the air filter and the catalytic converter are listed for later builds.
+- **An exhaust is its dimensions:**
+  - the header's construction: a cast manifold, a tubular header, or an equal-length header (how evenly the
+    pulses arrive at the collector);
+  - the primaries' diameter and length, in mm;
+  - how many pipes run after the collector, their diameter, and the system's length;
+  - the silencer: chambered, straight-through, or none.
+- **No new physics, and none asserted.** The three factory exhausts were always three sets of these dimensions, read
+  by the breathing model (scavenging, back-pressure) and by the sound. A designed exhaust gives the same models its
+  own numbers. Written down as a part, each factory exhaust gives the same pull within 0.01%.
+- **The page guides the numbers, on the engine you have built:**
+  - **CUT** cuts the primaries for a speed, with the same tuning relation the factory headers are cut with;
+  - **SIZE FOR 75 m/s** sizes the pipe for the design-practice gas speed at peak power;
+  - it reads out the power and torque against the engine as it is, where the scavenging is strongest, the gas speed
+    in the pipe and the back-pressure, with both curves drawn.
+  - The preview is exactly what the engine makes with the part fitted, and opening the page changes nothing.
+- **Saved parts** are kept in the browser and appear in the ENGINE tab's EXHAUST choices under MY PARTS. A saved
+  build, a file or a share link carries the whole part, so it loads in a browser that never saw it. If that browser's
+  copy of the part has since been edited, the build's version comes back alongside it.
+- **Not modelled yet:** a silencer's own back-pressure (it changes the sound only; a system's restriction is in its
+  pipe, as on the factory systems), the exhaust's material, and the number of tips. On a turbo engine the primary
+  length is set by packaging, as before, and the page says so.
+- A cache keyed on the build's score would have handed the preview the knock timing of the exhaust it replaces. The
+  preview gets its own key and restores the cache afterwards.
+- Test: test120. The Greek interface test (test87) now sweeps the PARTS tab.
+
 ### test46's bands: sourced where a source exists, labelled where not (v1.0 item 7)
 
 - **Sourced:**

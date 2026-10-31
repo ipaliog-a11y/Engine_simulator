@@ -20,7 +20,7 @@ function computeCost(){
     c+=engine.boost_bar*900;                                     // fuelling/plumbing for boost
   }
   c+={none:0,small:500,large:900}[engine.nitrous]||0;
-  c+={stock:0,sport:550,race:1400}[engine.exhaust]||0;
+  c+=engine.exhaustPart?EXHAUST_BUILD[engine.exhaustPart.build].cost:({stock:0,sport:550,race:1400}[engine.exhaust]||0);
   c+={none:0,sport:500,stock:300}[engine.cat]||0;
   c+={carb1:200,carb2:350,carb4:600,sidedraft:1400,mech:1900,efi:1200,itb:2600}[engine.intakeSys]||0;
   c+={none:0,perf:200,stock:60,restrictive:30}[engine.airFilter]||0;
@@ -174,7 +174,7 @@ function updateDesignSummary(){
     '<br>'+tr('Compression')+' <b>'+engine.compression.toFixed(1)+':1</b> • '+tr('Redline')+' <b>'+engine.redline+'</b> rpm'+
     '<br>'+tr('Induction')+' <b>'+induction+'</b>'+
     '<br>'+tr('Intake')+' <b>'+tr(INTAKE_SYS[engine.intakeSys].label)+'</b> • '+tr('Filter')+' <b>'+tr(AIR_FILTER[engine.airFilter].label)+'</b>'+
-    '<br>'+tr('Exhaust')+' <b>'+trOpt(engine.exhaust.toUpperCase())+'</b> • '+tr('Cat')+' <b>'+trOpt(CAT[engine.cat].label.split(' ')[0])+'</b>'+valveLine+
+    '<br>'+tr('Exhaust')+' <b>'+(engine.exhaustPart?esc(engine.exhaustPart.name):trOpt(engine.exhaust.toUpperCase()))+'</b> • '+tr('Cat')+' <b>'+trOpt(CAT[engine.cat].label.split(' ')[0])+'</b>'+valveLine+
     '<br>'+tr('Fuel')+' <b>'+tr(FUELS[engine.fuel].label)+'</b> ('+(engine.ci?'CI':engine.effOctane+' '+tr('oct'))+', '+engine.stoichAFR.toFixed(1)+':1 '+tr('stoich')+(engine.chargeCool?', −'+engine.chargeCool+'°C '+tr('charge'):'')+')'+
     sparkLine+
     '<br>'+tr('Cooling')+' <b>'+trOpt(engine.radiator.toUpperCase())+' '+tr('RAD')+'</b> • <b>'+trOpt(engine.fan.toUpperCase())+' '+tr('FAN')+'</b>'+(engine.oilCooler?' • <b>'+tr('OIL COOLER')+'</b>':'')+' • '+tr('Thermostat')+' <b>'+engine.thermostat+'°C</b>'+

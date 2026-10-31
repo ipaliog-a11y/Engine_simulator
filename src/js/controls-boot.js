@@ -94,6 +94,8 @@ function bindControls(){
   document.getElementById('tabGuide').addEventListener('click',()=>setTab('guide'));
   document.getElementById('tabOptions').addEventListener('click',()=>setTab('options'));
   document.getElementById('tabGarage').addEventListener('click',()=>setTab('garage'));
+  document.getElementById('tabParts').addEventListener('click',()=>setTab('parts'));
+  wireParts();   // the part designer and its library (build 205)
   const rb=document.getElementById('btnReplay');
   rb.addEventListener('click',()=>{lapReplay.playing=!lapReplay.playing;rb.classList.toggle('on',lapReplay.playing);
     rb.setAttribute('aria-pressed',String(lapReplay.playing));rb.textContent=tr(lapReplay.playing?'PAUSE':'PLAY');});
