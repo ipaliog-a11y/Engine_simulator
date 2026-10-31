@@ -60,6 +60,18 @@ Working toward **v1.0 — every number derived, not fitted.**
     down to about 10%, where the pack's own power limit takes over.
   - A full pedal still asks for everything the drive has now, so the full-load figures are unchanged.
   - `tests/test97.mjs` checks both.
+- **An electric car's low charge and limp mode, and what the LIVE panel says of them.**
+  - Below 15% charge the battery management cuts the power it allows, steeply: to 73% of what the cells give at 10%,
+    46% at 5%, 30% at 2%.
+  - Below 2% the car limps on a tenth of the pack's rated power (38 kW on the Model Y), until the pack is empty.
+  - The cut applies on the LIVE bench, the dyno and in a race. The 0-100, the lap and the WLTP cycle run at a fixed
+    charge, so their figures are unchanged.
+  - On the Model Y at 60% pedal and 40% brake: 331 hp at 20%, 267 hp at 10%, 107 hp at 5%, a steady 48 hp limping.
+  - Two new LIVE tiles for an electric car, hidden for an engine:
+    - **PACK CURRENT** (A).
+    - **POWER LIMIT**: what holds the power under the pedal's request (NONE, BATTERY, THERMAL, LOW SOC or LIMP) and how
+      much of the request is delivered.
+  - The status line says LOW CHARGE with the battery management's cut, and LIMP MODE with the power it holds to.
 
 ### A front axle motor, and the Porsche 918 Spyder (build 195)
 

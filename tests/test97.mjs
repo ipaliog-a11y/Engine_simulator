@@ -15,7 +15,8 @@
 //     as combustion; chemistries are offered by the technology year;
 //   · back on petrol, the engine is exactly the one it was: same score, its tiles and its controls back;
 //   · a partial pedal is a torque request: its power holds as the pack's voltage falls, until the pack cannot give it
-//     (build 196); a full pedal asks for all the drive has;
+//     (build 196); a full pedal asks for all the drive has; below 15% the battery management cuts the power steeply,
+//     below 2% the car limps on a tenth of the pack's rated power; PACK CURRENT and POWER LIMIT say so;
 //   · nothing throws on any tab, and Greek keeps the motor's tiles.
 import { chromium } from './pw.mjs';
 import { fileURLToPath, pathToFileURL } from 'url';
@@ -173,7 +174,15 @@ const pd = await page.evaluate(() => {
     return tr;
   };
   const o = { part: run(0.6, 0.9, 180), low: run(0.6, 0.15, 240), full: run(1, 0.9, 60) };
-  applyBuild({ engine: Object.assign({}, DEFAULT_ENGINE), tune: Object.assign({}, STD_TUNE) });
+  // the battery management at a low charge and limp mode, and what the LIVE panel says of it
+  const g = id => document.getElementById(id), at = soc => { state.soc = soc; state.throttle = 0.6; state.load = 0.4; vizMode = 'engine'; step(4); updateUI();
+    return { at: soc, hp: state.powerHP, lim: state.evLimit, amps: +g('statAmps').querySelector('.value').textContent, I: state.battI, tile: g('statLimit').querySelector('.value').textContent,
+      status: g('status').textContent, shown: getComputedStyle(g('statAmps')).display !== 'none' && getComputedStyle(g('statLimit')).display !== 'none' }; };
+  loadVehiclePreset(EV_VEHICLE_PRESETS.find(x => /Model Y/.test(x.name))); setTab('engine'); autoThermal = true;
+  o.soc = { s20: at(0.20), s10: at(0.10), s5: at(0.05), s25: at(0.025), s15: at(0.015), s05: at(0.008) };
+  o.limpKW = EV_BMS.limpShare * packMaxPower(engine.pack, 0.5) / 1000;
+  applyBuild({ engine: Object.assign({}, DEFAULT_ENGINE), tune: Object.assign({}, STD_TUNE) }); setTab('engine'); updateUI();
+  o.iceTiles = getComputedStyle(document.getElementById('statAmps')).display !== 'none';
   return o;
 });
 {
@@ -183,6 +192,15 @@ const pd = await page.evaluate(() => {
   if (!(Math.abs(z.hp / a.hp - 1) < 0.002 && z.V < a.V - 5 && z.I > a.I)) fails.push('a partial pedal does not hold its power as the pack\'s voltage falls');
   if (!(L[L.length - 1].hp < L[0].hp * 0.8)) fails.push('a nearly empty pack does not take the power off a partial pedal');
   if (!F.every(x => Math.abs(x.T - x.Tmax) <= Math.max(0.5, x.Tmax * 0.01))) fails.push('a full pedal does not ask for all the drive has');
+}
+{
+  const S = pd.soc;
+  console.log(`== Model Y at 60% pedal by charge: ` + Object.values(S).map(x => `${f(x.at * 100, 1)}%: ${f(x.hp)} hp, ${f(x.I)} A (tile ${x.amps}), ${x.tile}`).join('; ') + ` ==`);
+  console.log(`   status at 10%: "${S.s10.status}"; at 1.5%: "${S.s15.status}"; limp ${f(pd.limpKW)} kW; tiles shown ${S.s20.shown}, for an engine ${pd.iceTiles}`);
+  if (!(S.s20.lim === '' && S.s10.lim === 'lowsoc' && S.s10.hp < S.s20.hp * 0.95 && S.s5.hp < S.s10.hp * 0.6)) fails.push('below 15% the battery management does not cut the power, steeply');
+  if (!(S.s15.lim === 'limp' && S.s05.lim === 'limp' && Math.abs(S.s15.hp - S.s05.hp) < 1 && S.s15.hp * 0.7457 < pd.limpKW && S.s25.hp >= S.s15.hp - 0.5)) fails.push('below 2% the car does not limp on a steady power');
+  if (!/LOW CHARGE/.test(S.s10.status) || !/LIMP MODE/.test(S.s15.status) || S.s10.tile !== 'LOW SOC' || S.s15.tile !== 'LIMP' || S.s20.tile !== 'NONE') fails.push('the LIVE panel does not say the power is cut for a low charge, or limping');
+  if (!(Math.abs(S.s20.amps - Math.round(S.s20.I)) <= 1 && S.s20.shown && !pd.iceTiles)) fails.push('the PACK CURRENT tile does not read the pack\'s current, or shows for an engine');
 }
 
 await browser.close();

@@ -2742,6 +2742,8 @@ Most other tests check behaviour that is true of real cars: a bigger turbo spool
 </div>
 <div class="gauge-row">
 <div class="stat" id="statHealth"><span class="label">ENGINE HEALTH</span><div class="value">100</div><span class="unit">%</span></div>
+<div class="stat" id="statAmps" style="display:none"><span class="label">PACK CURRENT</span><div class="value">0</div><span class="unit">A</span></div>
+<div class="stat" id="statLimit" style="display:none"><span class="label">POWER LIMIT</span><div class="value">NONE</div><span class="unit"></span></div>
 </div>
 </div>
 <div class="panel" id="hybridPanel" hidden>
@@ -4716,7 +4718,7 @@ const I18N={
   'Archetypes':{el:'Αρχέτυπα'},'Kei & City':{el:'Kei & πόλης'},'Compact Turbo':{el:'Μικρά τούρμπο'},'NA Sports':{el:'Ατμοσφαιρικά σπορ'},
   'Turbo Performance':{el:'Τούρμπο επιδόσεων'},'American V8':{el:'Αμερικάνικα V8'},'Supercar':{el:'Supercar'},'Rotary':{el:'Περιστροφικά (Wankel)'},
   'Diesel':{el:'Πετρελαιοκίνητα'},'Electric':{el:'Ηλεκτρικά'},'NCA (POWER CELLS)':{el:'NCA (ΚΥΤΤΑΡΑ ΙΣΧΥΟΣ)'},'ATKINSON (LATE IVC)':{el:'ATKINSON (ΑΡΓΟ ΚΛΕΙΣΙΜΟ ΕΙΣΑΓΩΓΗΣ)'},'engine off':{el:'κινητήρας σβηστός'},'Li-ION (HYBRID CELLS)':{el:'Li-ION (ΚΥΤΤΑΡΑ ΥΒΡΙΔΙΚΩΝ)'},
-  'Hybrid':{el:'Υβριδικό'},'HYBRID':{el:'ΥΒΡΙΔΙΚΟ'},'PARALLEL (P2)':{el:'ΠΑΡΑΛΛΗΛΟ (P2)'},'POWER-SPLIT (eCVT)':{el:'ΔΙΑΙΡΟΥΜΕΝΗΣ ΙΣΧΥΟΣ (eCVT)'},'DRIVE MODE':{el:'ΛΕΙΤΟΥΡΓΙΑ ΟΔΗΓΗΣΗΣ'},'FRONT REDUCTION (0 = MATCHED)':{el:'ΕΜΠΡΟΣ ΣΧΕΣΗ ΜΕΙΩΣΗΣ (0 = ΑΥΤΟΜΑΤΗ)'},'PLUG-IN':{el:'ΕΠΑΝΑΦΟΡΤΙΖΟΜΕΝΟ'},'WLTP weighted':{el:'WLTP σταθμισμένο'},'electric range':{el:'ηλεκτρική αυτονομία'},'sustaining':{el:'συντήρηση φορτίου'},'SERIES':{el:'ΣΕ ΣΕΙΡΑ'},'GEN':{el:'ΓΕΝΝ.'},'SINGLE-SPEED (SERIES)':{el:'ΜΟΝΟΤΑΧΥΤΟ (ΣΕ ΣΕΙΡΑ)'},'A series hybrid has no gears: one reduction from its traction motor, set with GEARING on the VEHICLE tab.':{el:'Ένα υβριδικό σε σειρά δεν έχει ταχύτητες: μία σχέση μείωσης από τον κινητήρα έλξης, ρυθμίζεται με τη ΣΧΕΣΗ ΜΕΙΩΣΗΣ στην καρτέλα ΟΧΗΜΑ.'},'generator':{el:'γεννήτρια'},'charge-corrected':{el:'με διόρθωση φορτίου'},'ASSIST':{el:'ΥΠΟΒΟΗΘΗΣΗ'},'ABOVE RPM':{el:'ΠΑΝΩ ΑΠΟ ΣΤΡΟΦΕΣ'},'BELOW RPM':{el:'ΚΑΤΩ ΑΠΟ ΣΤΡΟΦΕΣ'},'Hybrid tune':{el:'Ρύθμιση υβριδικού'},'ASSIST RPM':{el:'ΣΤΡΟΦΕΣ ΥΠΟΒΟΗΘΗΣΗΣ'},'REGENERATION':{el:'ΑΝΑΚΤΗΣΗ ΕΝΕΡΓΕΙΑΣ'},'LOAD-POINT SHIFTING':{el:'ΜΕΤΑΤΟΠΙΣΗ ΣΗΜΕΙΟΥ ΦΟΡΤΙΟΥ'},'EV UP TO (km/h, 0 = ANY)':{el:'ΗΛΕΚΤΡΙΚΑ ΕΩΣ (km/h, 0 = ΧΩΡΙΣ ΟΡΙΟ)'},'EV POWER (kW, 0 = AUTO)':{el:'ΙΣΧΥΣ ΗΛΕΚΤΡΙΚΗΣ ΚΙΝΗΣΗΣ (kW, 0 = ΑΥΤΟΜΑΤΑ)'},'CHARGE LOW (%)':{el:'ΧΑΜΗΛΟ ΦΟΡΤΙΟ (%)'},'CHARGE TARGET (%)':{el:'ΣΤΟΧΟΣ ΦΟΡΤΙΟΥ (%)'},'CHARGE HIGH (%)':{el:'ΥΨΗΛΟ ΦΟΡΤΙΟ (%)'},'DEPLOY LIMIT (MJ/LAP, 0 = NONE)':{el:'ΟΡΙΟ ΑΠΟΔΟΣΗΣ (MJ/ΓΥΡΟ, 0 = ΚΑΝΕΝΑ)'},'HARVEST LIMIT (MJ/LAP, 0 = NONE)':{el:'ΟΡΙΟ ΑΝΑΚΤΗΣΗΣ (MJ/ΓΥΡΟ, 0 = ΚΑΝΕΝΑ)'},'PLUG-IN DEPLOY':{el:'ΑΠΟΔΟΣΗ ΑΠΟ ΤΗΝ ΠΡΙΖΑ'},'Assist map':{el:'Χάρτης υποβοήθησης'},'PEDAL':{el:'ΠΕΝΤΑΛ'},'SPEED':{el:'ΣΤΡΟΦΕΣ'},'pedal':{el:'πεντάλ'},'speed':{el:'στροφές'},"ASSIST MAP: the share of the motor's help over shaft speed and pedal. Click a cell to step it down by 25% (from 0 back to 100%).":{el:'ΧΑΡΤΗΣ ΥΠΟΒΟΗΘΗΣΗΣ: το μερίδιο της βοήθειας του ηλεκτροκινητήρα ανά στροφές άξονα και πεντάλ. Πατήστε ένα κελί για να το μειώσετε κατά 25% (από 0 πίσω στο 100%).'},'POWER FLOW':{el:'ΡΟΗ ΙΣΧΥΟΣ'},'LEVER (POWER-SPLIT)':{el:'ΜΟΧΛΟΣ (ΔΙΑΙΡΟΥΜΕΝΗΣ ΙΣΧΥΟΣ)'},'BSFC MAP':{el:'ΧΑΡΤΗΣ BSFC'},'LEVER':{el:'ΜΟΧΛΟΣ'},'RING':{el:'ΣΤΕΦΑΝΗ'},'DISCHARGING':{el:'ΕΚΦΟΡΤΙΣΗ'},'CHARGING':{el:'ΦΟΡΤΙΣΗ'},'BATTERY CHARGE':{el:'ΦΟΡΤΙΟ ΜΠΑΤΑΡΙΑΣ'},'MOTOR COMMAND':{el:'ΕΝΤΟΛΗ ΚΙΝΗΤΗΡΑ'},'ENGINE SPEED':{el:'ΣΤΡΟΦΕΣ ΚΙΝΗΤΗΡΑ'},'EV':{el:'ΗΛΕΚΤΡΙΚΟ'},'HOLD':{el:'ΔΙΑΤΗΡΗΣΗ'},'CHARGE':{el:'ΦΟΡΤΙΣΗ'},'ENGINE ONLY':{el:'ΜΟΝΟ ΚΙΝΗΤΗΡΑΣ'},'PACK':{el:'ΜΠΑΤΑΡΙΑ'},'SHAFT':{el:'ΑΞΟΝΑΣ'},'BRAKE':{el:'ΦΡΕΝΟ'},'CLOSED':{el:'ΚΛΕΙΣΤΟΣ'},'ENGINE OFF':{el:'ΚΙΝΗΤΗΡΑΣ ΣΒΗΣΤΟΣ'},'ELECTRIC DRIVE':{el:'ΗΛΕΚΤΡΙΚΗ ΚΙΝΗΣΗ'},'PACK LOW • ENGINE STARTED':{el:'ΧΑΜΗΛΗ ΜΠΑΤΑΡΙΑ • Ο ΚΙΝΗΤΗΡΑΣ ΞΕΚΙΝΗΣΕ'},'eCVT (POWER-SPLIT)':{el:'eCVT (ΔΙΑΙΡΟΥΜΕΝΗΣ ΙΣΧΥΟΣ)'},'NiMH (HYBRID CELLS)':{el:'NiMH (ΚΥΤΤΑΡΑ ΥΒΡΙΔΙΚΩΝ)'},'A power-split hybrid has no gears: one reduction from its traction motor, set with GEARING on the VEHICLE tab.':{el:'Ένα υβριδικό διαιρούμενης ισχύος δεν έχει ταχύτητες: μία σχέση μείωσης από τον κινητήρα έλξης, ρυθμίζεται με τη ΣΧΕΣΗ ΜΕΙΩΣΗΣ στην καρτέλα ΟΧΗΜΑ.'},'DEPLOY':{el:'ΑΠΟΔΟΣΗ ΚΙΝΗΤΗΡΑ'},'FULL':{el:'ΠΛΗΡΗΣ'},'ECO (TORQUE FILL)':{el:'ΟΙΚΟΝΟΜΙΚΟ (ΣΥΜΠΛΗΡΩΣΗ ΡΟΠΗΣ)'},'motor':{el:'κινητήρας'},'pack':{el:'μπαταρία'},'system':{el:'σύστημα'},'WLTP cycle':{el:'Κύκλος WLTP'},'from the pack':{el:'από την μπαταρία'},
+  'Hybrid':{el:'Υβριδικό'},'HYBRID':{el:'ΥΒΡΙΔΙΚΟ'},'PARALLEL (P2)':{el:'ΠΑΡΑΛΛΗΛΟ (P2)'},'POWER-SPLIT (eCVT)':{el:'ΔΙΑΙΡΟΥΜΕΝΗΣ ΙΣΧΥΟΣ (eCVT)'},'DRIVE MODE':{el:'ΛΕΙΤΟΥΡΓΙΑ ΟΔΗΓΗΣΗΣ'},'FRONT REDUCTION (0 = MATCHED)':{el:'ΕΜΠΡΟΣ ΣΧΕΣΗ ΜΕΙΩΣΗΣ (0 = ΑΥΤΟΜΑΤΗ)'},'PLUG-IN':{el:'ΕΠΑΝΑΦΟΡΤΙΖΟΜΕΝΟ'},'WLTP weighted':{el:'WLTP σταθμισμένο'},'electric range':{el:'ηλεκτρική αυτονομία'},'sustaining':{el:'συντήρηση φορτίου'},'SERIES':{el:'ΣΕ ΣΕΙΡΑ'},'GEN':{el:'ΓΕΝΝ.'},'SINGLE-SPEED (SERIES)':{el:'ΜΟΝΟΤΑΧΥΤΟ (ΣΕ ΣΕΙΡΑ)'},'A series hybrid has no gears: one reduction from its traction motor, set with GEARING on the VEHICLE tab.':{el:'Ένα υβριδικό σε σειρά δεν έχει ταχύτητες: μία σχέση μείωσης από τον κινητήρα έλξης, ρυθμίζεται με τη ΣΧΕΣΗ ΜΕΙΩΣΗΣ στην καρτέλα ΟΧΗΜΑ.'},'generator':{el:'γεννήτρια'},'charge-corrected':{el:'με διόρθωση φορτίου'},'ASSIST':{el:'ΥΠΟΒΟΗΘΗΣΗ'},'ABOVE RPM':{el:'ΠΑΝΩ ΑΠΟ ΣΤΡΟΦΕΣ'},'BELOW RPM':{el:'ΚΑΤΩ ΑΠΟ ΣΤΡΟΦΕΣ'},'Hybrid tune':{el:'Ρύθμιση υβριδικού'},'ASSIST RPM':{el:'ΣΤΡΟΦΕΣ ΥΠΟΒΟΗΘΗΣΗΣ'},'REGENERATION':{el:'ΑΝΑΚΤΗΣΗ ΕΝΕΡΓΕΙΑΣ'},'LOAD-POINT SHIFTING':{el:'ΜΕΤΑΤΟΠΙΣΗ ΣΗΜΕΙΟΥ ΦΟΡΤΙΟΥ'},'EV UP TO (km/h, 0 = ANY)':{el:'ΗΛΕΚΤΡΙΚΑ ΕΩΣ (km/h, 0 = ΧΩΡΙΣ ΟΡΙΟ)'},'EV POWER (kW, 0 = AUTO)':{el:'ΙΣΧΥΣ ΗΛΕΚΤΡΙΚΗΣ ΚΙΝΗΣΗΣ (kW, 0 = ΑΥΤΟΜΑΤΑ)'},'CHARGE LOW (%)':{el:'ΧΑΜΗΛΟ ΦΟΡΤΙΟ (%)'},'CHARGE TARGET (%)':{el:'ΣΤΟΧΟΣ ΦΟΡΤΙΟΥ (%)'},'CHARGE HIGH (%)':{el:'ΥΨΗΛΟ ΦΟΡΤΙΟ (%)'},'PACK CURRENT':{el:'ΡΕΥΜΑ ΜΠΑΤΑΡΙΑΣ'},'POWER LIMIT':{el:'ΟΡΙΟ ΙΣΧΥΟΣ'},'LIMP':{el:'ΑΣΦΑΛΕΙΑΣ'},'LOW SOC':{el:'ΧΑΜΗΛΟ ΦΟΡΤΙΟ'},'THERMAL':{el:'ΘΕΡΜΙΚΟ'},'of asked':{el:'του ζητούμενου'},'LIMP MODE':{el:'ΛΕΙΤΟΥΡΓΙΑ ΑΣΦΑΛΕΙΑΣ'},'power held to':{el:'ισχύς περιορισμένη στα'},'LOW CHARGE':{el:'ΧΑΜΗΛΗ ΦΟΡΤΙΣΗ'},'battery power cut to':{el:'ισχύς μπαταρίας μειωμένη στο'},'LIMITING':{el:'ΠΕΡΙΟΡΙΖΕΙ'},'DEPLOY LIMIT (MJ/LAP, 0 = NONE)':{el:'ΟΡΙΟ ΑΠΟΔΟΣΗΣ (MJ/ΓΥΡΟ, 0 = ΚΑΝΕΝΑ)'},'HARVEST LIMIT (MJ/LAP, 0 = NONE)':{el:'ΟΡΙΟ ΑΝΑΚΤΗΣΗΣ (MJ/ΓΥΡΟ, 0 = ΚΑΝΕΝΑ)'},'PLUG-IN DEPLOY':{el:'ΑΠΟΔΟΣΗ ΑΠΟ ΤΗΝ ΠΡΙΖΑ'},'Assist map':{el:'Χάρτης υποβοήθησης'},'PEDAL':{el:'ΠΕΝΤΑΛ'},'SPEED':{el:'ΣΤΡΟΦΕΣ'},'pedal':{el:'πεντάλ'},'speed':{el:'στροφές'},"ASSIST MAP: the share of the motor's help over shaft speed and pedal. Click a cell to step it down by 25% (from 0 back to 100%).":{el:'ΧΑΡΤΗΣ ΥΠΟΒΟΗΘΗΣΗΣ: το μερίδιο της βοήθειας του ηλεκτροκινητήρα ανά στροφές άξονα και πεντάλ. Πατήστε ένα κελί για να το μειώσετε κατά 25% (από 0 πίσω στο 100%).'},'POWER FLOW':{el:'ΡΟΗ ΙΣΧΥΟΣ'},'LEVER (POWER-SPLIT)':{el:'ΜΟΧΛΟΣ (ΔΙΑΙΡΟΥΜΕΝΗΣ ΙΣΧΥΟΣ)'},'BSFC MAP':{el:'ΧΑΡΤΗΣ BSFC'},'LEVER':{el:'ΜΟΧΛΟΣ'},'RING':{el:'ΣΤΕΦΑΝΗ'},'DISCHARGING':{el:'ΕΚΦΟΡΤΙΣΗ'},'CHARGING':{el:'ΦΟΡΤΙΣΗ'},'BATTERY CHARGE':{el:'ΦΟΡΤΙΟ ΜΠΑΤΑΡΙΑΣ'},'MOTOR COMMAND':{el:'ΕΝΤΟΛΗ ΚΙΝΗΤΗΡΑ'},'ENGINE SPEED':{el:'ΣΤΡΟΦΕΣ ΚΙΝΗΤΗΡΑ'},'EV':{el:'ΗΛΕΚΤΡΙΚΟ'},'HOLD':{el:'ΔΙΑΤΗΡΗΣΗ'},'CHARGE':{el:'ΦΟΡΤΙΣΗ'},'ENGINE ONLY':{el:'ΜΟΝΟ ΚΙΝΗΤΗΡΑΣ'},'PACK':{el:'ΜΠΑΤΑΡΙΑ'},'SHAFT':{el:'ΑΞΟΝΑΣ'},'BRAKE':{el:'ΦΡΕΝΟ'},'CLOSED':{el:'ΚΛΕΙΣΤΟΣ'},'ENGINE OFF':{el:'ΚΙΝΗΤΗΡΑΣ ΣΒΗΣΤΟΣ'},'ELECTRIC DRIVE':{el:'ΗΛΕΚΤΡΙΚΗ ΚΙΝΗΣΗ'},'PACK LOW • ENGINE STARTED':{el:'ΧΑΜΗΛΗ ΜΠΑΤΑΡΙΑ • Ο ΚΙΝΗΤΗΡΑΣ ΞΕΚΙΝΗΣΕ'},'eCVT (POWER-SPLIT)':{el:'eCVT (ΔΙΑΙΡΟΥΜΕΝΗΣ ΙΣΧΥΟΣ)'},'NiMH (HYBRID CELLS)':{el:'NiMH (ΚΥΤΤΑΡΑ ΥΒΡΙΔΙΚΩΝ)'},'A power-split hybrid has no gears: one reduction from its traction motor, set with GEARING on the VEHICLE tab.':{el:'Ένα υβριδικό διαιρούμενης ισχύος δεν έχει ταχύτητες: μία σχέση μείωσης από τον κινητήρα έλξης, ρυθμίζεται με τη ΣΧΕΣΗ ΜΕΙΩΣΗΣ στην καρτέλα ΟΧΗΜΑ.'},'DEPLOY':{el:'ΑΠΟΔΟΣΗ ΚΙΝΗΤΗΡΑ'},'FULL':{el:'ΠΛΗΡΗΣ'},'ECO (TORQUE FILL)':{el:'ΟΙΚΟΝΟΜΙΚΟ (ΣΥΜΠΛΗΡΩΣΗ ΡΟΠΗΣ)'},'motor':{el:'κινητήρας'},'pack':{el:'μπαταρία'},'system':{el:'σύστημα'},'WLTP cycle':{el:'Κύκλος WLTP'},'from the pack':{el:'από την μπαταρία'},
   'at the socket':{el:'από την πρίζα'},'regeneration takes back':{el:'η ανάκτηση επιστρέφει'},'range':{el:'αυτονομία'},'Two-Stroke':{el:'Δίχρονα'},
   '1990s':{el:'Δεκαετία του 1990'},'2000s':{el:'Δεκαετία του 2000'},'2010s':{el:'Δεκαετία του 2010'},'2020s':{el:'Δεκαετία του 2020'},
   // dropdown choices (and the labels the summaries reuse). An option looks up 'opt:'+text first, for
@@ -8338,6 +8340,18 @@ const packDerate=tB=>clamp((60-tB)/10,0,1);
 function packMaxPower(b,soc){
   const V0=packOcv(b,soc),Icut=(V0-b.vMin)/b.R,I=Math.min(b.iMax,Icut);
   return Math.max(0,(V0-I*b.R)*I);
+}
+// An electric car's battery management at a low charge (build 196): below 15% it cuts the power it allows, steeply, to 30%
+// of what the cells could give at 2%; below 2% the car limps, on a tenth of the pack's rated power (its power at 50%),
+// enough to move it off the road. Above 15% it allows all the cells give.
+const EV_BMS={low:0.15,limp:0.02,lowFloor:0.3,limpShare:0.1};
+function evBmsShare(soc){
+  const B=EV_BMS;
+  return soc>=B.low?1:soc>=B.limp?B.lowFloor+(1-B.lowFloor)*(soc-B.limp)/(B.low-B.limp):0;
+}
+function evBmsPower(b,soc){
+  const P=packMaxPower(b,soc),limp=Math.min(P,EV_BMS.limpShare*packMaxPower(b,0.5));
+  return soc<EV_BMS.limp?limp:Math.max(limp,P*evBmsShare(soc));   // the cut never takes it below the limp power
 }
 // ====== POWERTRAIN: what drives the wheels, as the vehicle, the lap and the race see it (build 177) ======
 // The 0-100 run, the lap, the race and the GEAR RATIOS window used to reach into the engine wherever they needed
@@ -17008,7 +17022,7 @@ const motorRatedV=e=>packOcv(e.pack,0.5);
 // derating. The battery cut is solved by bisection on the torque: T w + losses(T) <= the pack's limit.
 function driveMaxTorque(e,rpm,Vdc,temp,soc){
   const m=e.motor;let T=motorMaxTorque(m,rpm,Vdc,temp.r)*motorDerate(e,temp)*(state.engineHealth||1);
-  const w=rpm*Math.PI/30,Pb=packMaxPower(e.pack,soc);
+  const w=rpm*Math.PI/30,Pb=evBmsPower(e.pack,soc);   // the battery management's limit at a low charge (build 196)
   const need=t=>t*w+motorLosses(m,t,rpm,Vdc,temp).total;
   if(T>0&&need(T)>Pb){let lo=0,hi=T;for(let k=0;k<30;k++){const mid=(lo+hi)/2;if(need(mid)>Pb)hi=mid;else lo=mid;}T=lo;}
   return T;
@@ -17101,7 +17115,11 @@ function stepMotorBench(dt){
   const Voc=packOcv(b,st.soc),Vdc=Math.max(b.vMin,Voc-(st.battI||0)*b.R);
   // the pedal asks for a fixed share of the drive at its best (driveRefTorque); the controller draws whatever current that
   // takes, so a partial pedal holds its torque as the pack's voltage falls, until the drive as it is now cannot give it
-  const T=st.soc>0.005?Math.min(st.throttle*driveRefTorque(e,st.rpm),driveMaxTorque(e,st.rpm,Vdc,st.mT,st.soc)):0;
+  const Treq=st.soc>0.005?st.throttle*driveRefTorque(e,st.rpm):0,Tmax=st.soc>0.005?driveMaxTorque(e,st.rpm,Vdc,st.mT,st.soc):0,T=Math.min(Treq,Tmax);
+  // what holds the torque under the pedal's request, for the LIVE panel (build 196): limp mode, the battery management at a
+  // low charge, the controller's heat, or the pack's voltage and current
+  st.evAsked=Treq;
+  st.evLimit=Treq-T<Math.max(0.5,Treq*0.005)?'':st.soc<EV_BMS.limp?'limp':evBmsShare(st.soc)<1?'lowsoc':motorDerate(e,st.mT)<0.999?'thermal':'battery';
   const L=motorLosses(m,T,st.rpm,Vdc,st.mT),w=st.rpm*Math.PI/30,Pb=T*w+L.total;
   const d=packDraw(b,st.soc,Math.max(0,Pb))||{V:b.vMin,I:0,heat:0};
   st.soc=Math.max(0,st.soc-d.I*dt/(b.Ah*3600));
@@ -17226,9 +17244,12 @@ function renderMotorResult(force){
 }
 
 // ---- the readouts ----
+const EV_LIMIT_LABEL={'':'NONE',limp:'LIMP',lowsoc:'LOW SOC',thermal:'THERMAL',battery:'BATTERY'};
 // The LIVE panel's tiles, retitled for a motor; the engine's titles come back when an engine is built again.
 const EV_TILES={statHP:['POWER','HP'],statTQ:['TORQUE','Nm'],statBSFC:['BATTERY','kW'],statEff:['DRIVE EFF','%'],
   statFuel:['CHARGE','%'],statKnock:['WINDING','°C'],statHealth:['MOTOR HEALTH','%']};
+// the tiles only a motor has (build 196): the pack's current and what is limiting the power
+const EV_ONLY_TILES=['statAmps','statLimit'];
 function setLiveLabels(ev){
   for(const id in EV_TILES){
     const el=document.getElementById(id);if(!el)continue;
@@ -17236,6 +17257,7 @@ function setLiveLabels(ev){
     if(L.dataset.ice==null){L.dataset.ice=L.textContent;U.dataset.ice=U.textContent;}
     L.textContent=ev?tr(EV_TILES[id][0]):tr(L.dataset.ice);U.textContent=ev?EV_TILES[id][1]:U.dataset.ice;
   }
+  EV_ONLY_TILES.forEach(id=>{const el=document.getElementById(id);if(el)el.style.display=ev?'':'none';});
   // what a motor has no use for leaves the panel: mixture, intake air, the engine's coolant and oil, the alternator's
   // load, auto-thermal and nitrous, and the printable report (EV_REPORT_NOTE); it comes back with an engine
   ['afr','iat','coolant','oil','elec'].forEach(id=>{const el=document.getElementById(id);
@@ -17255,6 +17277,11 @@ function updateMotorUI(){
   document.querySelector('#statBSFC .value').textContent=(st.battKW||0).toFixed(1);
   document.querySelector('#statEff .value').textContent=st.thermalEff.toFixed(1);
   document.querySelector('#statFuel .value').textContent=Math.round(st.soc*100);
+  const aEl=g('statAmps');if(aEl){aEl.querySelector('.value').textContent=Math.round(st.battI||0);aEl.className='stat'+((st.battI||0)>engine.pack.iMax*0.9?' warning':'');}
+  const lEl=g('statLimit');
+  if(lEl){const why=st.evLimit||'',got=st.evAsked>0.5?Math.round(st.torque/st.evAsked*100):100;
+    lEl.querySelector('.value').textContent=tr(EV_LIMIT_LABEL[why]);lEl.querySelector('.unit').textContent=why?got+'% '+tr('of asked'):'';
+    lEl.className='stat'+(why==='limp'?' danger':why?' warning':'');}
   const wEl=g('statKnock');wEl.querySelector('.value').textContent=Math.round(st.mT.w);
   wEl.className='stat'+(st.mT.w>165?' danger':st.mT.w>140?' warning':'');
   const hp=Math.round(st.engineHealth*100),hEl=g('statHealth');
@@ -17265,7 +17292,9 @@ function updateMotorUI(){
   else if(vizMode==='design'){status.textContent=tr('DESIGN MODE • CONFIGURE & BUILD');status.className='status-bar';}
   else if(st.blown){status.textContent=tr('MOTOR FAILURE')+' ('+tr(st.wearCause)+') — '+tr('REBUILD WITH BUILD & DYNO');status.className='status-bar err';}
   else if(st.wearCause){status.textContent=tr('DAMAGE')+': '+tr(st.wearCause)+' — '+tr('HEALTH')+' '+hp+'%';status.className='status-bar err';}
-  else if(st.soc<0.02){status.textContent=tr('PACK EMPTY — REBUILD TO RECHARGE');status.className='status-bar err';}
+  else if(st.soc<=0.005){status.textContent=tr('PACK EMPTY — REBUILD TO RECHARGE');status.className='status-bar err';}
+  else if(st.soc<EV_BMS.limp){status.textContent=tr('LIMP MODE')+' • '+tr('CHARGE')+' '+(st.soc*100).toFixed(1)+'% • '+tr('power held to')+' '+Math.round(EV_BMS.limpShare*packMaxPower(engine.pack,0.5)/1000)+' kW';status.className='status-bar err';}
+  else if(st.soc<EV_BMS.low){status.textContent=tr('LOW CHARGE')+' • '+Math.round(st.soc*100)+'% • '+tr('battery power cut to')+' '+Math.round(evBmsShare(st.soc)*100)+'%'+(st.evLimit==='lowsoc'?' • '+tr('LIMITING')+' '+Math.round(st.torque/Math.max(1e-6,st.evAsked)*100)+'% '+tr('of asked'):'');status.className='status-bar warn';}
   else if(der<0.999){status.textContent=tr('THERMAL DERATE')+' • '+Math.round(der*100)+'% '+tr('of full current')+' • '+tr('WINDING')+' '+Math.round(st.mT.w)+'°C';status.className='status-bar warn';}
   else if(st.rpm>=engine.redline-30){status.textContent=tr('SPEED LIMIT')+' • '+Math.round(st.rpm)+' RPM';status.className='status-bar warn';}
   else if(st.powerKW>3){status.textContent=tr('RUNNING')+' • '+st.powerKW.toFixed(0)+' kW @ '+Math.round(st.rpm)+' RPM • '+st.thermalEff.toFixed(1)+'%';status.className='status-bar';}
@@ -17609,7 +17638,7 @@ function evRaceManage(M,c,left,mode){
 // controller (the winding's and the magnets') allow less. The controller cuts the current, so the torque; taken here as
 // the same share of the power.
 function evRaceFFNow(M,c){
-  const X=M.ev,want=evRaceCap(c.evFF),bms=packMaxPower(X.pack,evRaceSoc(M,c.fuelKg))*packDerate(c.evT.b)/X.pRef;
+  const X=M.ev,want=evRaceCap(c.evFF),bms=evBmsPower(X.pack,evRaceSoc(M,c.fuelKg))*packDerate(c.evT.b)/X.pRef;   // low charge: build 196
   const cap=Math.min(want,bms,motorDerate(X,c.evT));
   if(cap<want-0.01)c.evCut=true;
   return evRaceFF(cap);
