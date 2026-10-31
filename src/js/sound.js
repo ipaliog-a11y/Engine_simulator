@@ -1071,7 +1071,7 @@ function updateSound(){
     const size=clamp(Math.sqrt((engine.dispCyl_L||0.45)/0.45),0.6,1.5);   // a pulse's energy scales with its cylinder
     const key=[engine.cylinders,engine.layout,engine.type,engine.ci,engine.strokeDiv,engine.exhaust,silencerKey(engine),engine.primD,engine.sysD,engine.sysPipes,engine.cat,
       engine.intake,engine.primL,engine.sysL,engine.exhSigma,engine.redline,engine.scType,engine.airFilter,engine.intakeSys,
-      engine.runnerL,engine.bore_mm,engine.chargeVol].join('|');
+      engine.runnerL,engine.runnerD_mm,engine.bore_mm,engine.chargeVol].join('|');
     if(key!==Sound.cfgKey){Sound.cfgKey=key;Sound.cfg=soundConfig(engine);Sound.node.port.postMessage(Sound.cfg);}
     const p=Sound.node.parameters;
     p.get('rpm').setTargetAtTime(s.rpm,t,0.05);
