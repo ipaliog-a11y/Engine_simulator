@@ -48,7 +48,7 @@ const EV_VEHICLE_PRESETS=[
 const HYB_ENGINE_PRESETS=[
   {cat:'Hybrid',name:'Hyundai Kappa 1.6 GDi + P2 (Ioniq Hybrid)',real:{hp:103.6,hpRpm:5700,tq:147,tqRpm:4000,motorKW:32,motorNm:170,sysKW:104,sysNm:265},
    unsure:['redline','cam'],engine:{type:'petrol4',radiator:'large',oilCooler:true,cylinders:4,bore_mm:72,stroke_mm:97,compression:13,redline:6250,intake:'na',injector:'direct',vvt:true,
-    cam:'stock',valves:4,octane:95,airFilter:'stock',exhaust:'stock',cat:'stock',intakeSys:'efi',hyMode:'p2',hyDeploy:'eco',
+    egr:'cooled',cam:'stock',valves:4,octane:95,airFilter:'stock',exhaust:'stock',cat:'stock',intakeSys:'efi',hyMode:'p2',hyDeploy:'eco',
     evMotorType:'pm',evRotorD:200,evStack:40,evPoles:12,evTurns:28,evMagnet:'ndfeb',evRetention:'bridges',evCooling:'jacket',evMaxRpm:8000,
     evInverter:'igbt',evAmps:400,evRearCount:1,evFront:'none',evChem:'liHEV',evSeries:64,evKWh:1.56,evYear:2016}},
   // The Toyota Prius, 4th generation (2016; build 189, step 3.3): the 2ZR-FXE, a 1.8 port-injected Atkinson-cycle four
@@ -57,7 +57,7 @@ const HYB_ENGINE_PRESETS=[
   // technical specification).
   {cat:'Hybrid',name:'Toyota 2ZR-FXE 1.8 + power-split (Prius)',real:{hp:96.6,hpRpm:5200,tq:142,tqRpm:3600,motorKW:53,motorNm:163,sysKW:90},
    unsure:['redline'],engine:{type:'petrol4',radiator:'large',oilCooler:true,cylinders:4,bore_mm:80.5,stroke_mm:88.3,compression:13,redline:5500,intake:'na',injector:'port',vvt:true,
-    cam:'atkinson',valves:4,octane:95,airFilter:'stock',exhaust:'stock',cat:'stock',intakeSys:'efi',hyMode:'ps',hyDeploy:'full',
+    egr:'cooled-full',cam:'atkinson',valves:4,octane:95,airFilter:'stock',exhaust:'stock',cat:'stock',intakeSys:'efi',hyMode:'ps',hyDeploy:'full',
     evMotorType:'pm',evRotorD:150,evStack:60,evPoles:8,evTurns:100,evMagnet:'ndfeb',evRetention:'bridges',evCooling:'jacket',evMaxRpm:17000,
     evInverter:'igbt',evAmps:100,evRearCount:1,evFront:'none',evChem:'nimhHEV',evSeries:168,evKWh:1.31,evYear:2016}},
   // The Nissan Qashqai e-POWER (2022; build 193, step 3.4): a series hybrid. The KR15DDT, a 1.5 turbo three (84 x 90.1 mm,

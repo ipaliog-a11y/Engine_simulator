@@ -20,6 +20,34 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 Working toward **v1.0 — every number derived, not fitted.**
 
+### Cooled EGR (build 204)
+
+- **EGR is an engine option:** NONE, COOLED (OFF AT FULL LOAD), or COOLED (TO FULL LOAD). It is offered on spark
+  engines only.
+  - Exhaust is taken after the catalyst, cooled to near the intake's temperature, and mixed into the charge.
+  - The ECU recirculates none at light load, where the burn is too slow to take it. It reaches its most, 25%, from mid
+    load.
+  - Most makers take it out near full load for the power. Toyota holds it there, to keep the engine at stoichiometric
+    everywhere (SAE 2016-01-0684). 25% is Toyota's published maximum for the 2016 2ZR-FXE; Hyundai's Kappa runs "over
+    20%".
+- **What it does is derived:**
+  - The trapped charge is that much exhaust, so the same torque takes the throttle wider open. 60 Nm at 2000 rpm on
+    the Prius engine moves from 0.51 to 0.64 bar, and pumping and friction fall from 1.14 to 1.02 bar.
+  - The walls take less of the fuel's heat: the wall trace rerun with the same fuel in more gas, 1.25 points of the
+    fuel's heat at 25%.
+  - Left out: dilution's effect on the gas's specific heats (no published ratio to the lean case's) and on knock.
+- **The Prius's 2ZR-FXE holds it to full load, the Ioniq's Kappa takes it out there.**
+  - The Prius engine now makes 94 hp against Toyota's 96.6. It made 131 hp without EGR; nothing is fitted to this.
+  - The Kappa keeps its power.
+  - WLTP: Prius 4.65 → 4.24 L/100 km against Toyota's 4.14 (+2.5%); Ioniq 4.81 → 4.77, inside Hyundai's 4.4–5.2.
+  - The engines' best BSFC is still about 229 g/kWh (36%) against the makers' 40%.
+- **A gap the old engine hid: the Prius's 0–100.** The test matched the engine to its rated power by scaling only its
+  torque curve, while the power-split's operating line read the fuel map, which kept the unmatched 131 hp. With the
+  engine at its real power on every path, the matched 0–100 is 12.65 s against Toyota's 10.6, and the system makes
+  82 kW against Toyota's 90. test106 names it as a known gap; it gets its own build.
+- **The hybrid lap's charge balance takes up to twelve rounds** to settle, up from six. Laps that settled in six are
+  unchanged.
+- New `tests/test119.mjs`.
 ### The test suite runs on every pull request
 
 - **New workflow `Tests` (`.github/workflows/tests.yml`):** the whole suite on every pull request and every push to

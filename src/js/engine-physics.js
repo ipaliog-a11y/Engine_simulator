@@ -331,10 +331,27 @@ function sparkMixture(lam){
 // energy per kg of air it really does. Rotary and two-stroke keep their measured type factors
 // (typeImep 0.70 / 0.60), still fitted and labelled.
 const REAL_TO_FUELAIR=0.80, GAMMA_FA=1.28;
+// ---- Cooled EGR (build 204) ----
+// Exhaust taken after the catalyst, cooled to near the intake's temperature and mixed into the charge (Toyota's 2ZR-FXE,
+// Hyundai's Kappa 1.6 GDi hybrid engines). The ECU recirculates none at light load, where the burn is too slow to take
+// dilution, up to its most from mid load, and holds it to full load: Toyota runs it at maximum output to keep the
+// engine at stoichiometric everywhere (COOLED, TO FULL LOAD); most makers take it out near full load for the power
+// (COOLED, OFF AT FULL LOAD: from 85% of full load to none at it). 25%: Toyota's published maximum for the 2016 2ZR-FXE (18% on the engine before;
+// Hyundai's Kappa "over 20%"). What it changes here, derived: the trapped charge is that much exhaust, so the air and
+// fuel, and the torque, are (1 - rate) of it at the same manifold pressure, and the same torque is made with the throttle
+// wider open (less pumping, from the pumping loop already modelled); and the walls take less of the fuel's heat (the
+// wall trace, the same fuel in more, cooler gas). Left out: the dilution's effect on the gas's specific heats (no
+// published ratio to the lean case's), and on knock.
+const EGR_COOLED_MAX=0.25;
+function egrRate(rpm,map){
+  if(!(engine.egrMax>0))return 0;
+  const load=map/Math.max(0.5,wotMapAt(rpm));
+  return engine.egrMax*clamp((load-0.3)/0.2,0,1)*(engine.egrFull?1:clamp((1-load)/0.15,0,1));
+}
 function sparkGrossImep(rpm,map,ve){
   const e=engine,st=e.stoichAFR||14.7;
-  const air=map*1e5/(287*(effIAT(map,rpm)+273.15))*ve;               // kg of trapped air per m3 swept
-  const eta=REAL_TO_FUELAIR*(1-Math.pow(Math.max(1.5,e.compression),1-GAMMA_FA))*wallImepFactor(rpm);
+  const x=egrRate(rpm,map),air=map*1e5/(287*(effIAT(map,rpm)+273.15))*ve*(1-x);   // kg of trapped air per m3 swept (less the EGR)
+  const eta=REAL_TO_FUELAIR*(1-Math.pow(Math.max(1.5,e.compression),1-GAMMA_FA))*wallImepFactor(rpm,x);
   return eta*e.typeImep*air/st*(e.fuelLHV||44)*1e6*sparkMixture(curAFR(rpm,map)/st)/1e5;   // bar
 }
 function tempFactors(coolant,oil){
@@ -1085,7 +1102,7 @@ function updateEnginePhysics(){
     return;
   }
   const T_k=effIAT(map,state.rpm)+273.15,MAP_pa=map*1e5,Vd=engine.displacement_L/1000;
-  const airMass_kg_s=(MAP_pa*Vd*(state.rpm/60)*engine.chargesPerRev*state.ve)/(287*T_k);
+  const airMass_kg_s=(MAP_pa*Vd*(state.rpm/60)*engine.chargesPerRev*state.ve)/(287*T_k)*(1-egrRate(state.rpm,map));
   // Imprecise metering (carbs / mechanical injection) wastes fuel; the cycle's thirst factor
   // (typeBsfc) captures combustion/scavenging losses — a 2-stroke short-circuits fresh charge
   // out the exhaust (>1, thirsty). A diesel is 1: its torque is computed from this same fuel.
