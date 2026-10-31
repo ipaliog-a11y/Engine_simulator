@@ -127,6 +127,9 @@ const KNOWN = {
   // claim, timed with the 1 ft rollout US magazines subtract; the one rollout-free 0-100 km/h found is 3.54 s
   // (AutoTopNL, on the road), against the model's 3.59. The slip launch took it from +24% to +28%.
   'Chevrolet Corvette Z06 (C8, 2023)': ['slow-car'],
+  // Build 199 (batch 1): 650 hp through the rear tyres of an automatic, traction-limited off the line as the Hellcat is
+  // (above); the research marks its 3.7 s unsure.
+  'Chevrolet Camaro ZL1 (2017)': ['slow-car'],
   // Short of the 250 km/h governor because their engines are short of their rating (test60): the R34's
   // is the JDM 280 PS figure real cars beat, the STI's boost is unsure. (The Evo IX reaches it since
   // build 101.)

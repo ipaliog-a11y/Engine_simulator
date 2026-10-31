@@ -70,7 +70,7 @@ function simulateLap(key,opts){const r=powertrain().kind==='hybrid'?hybridLap(ke
 function raceDriver(d){return Object.assign({},RACE_DRIVERS.balanced,typeof d==='string'?RACE_DRIVERS[d]:d||{});}
 // Fuel tank by body (litres). Typical of the class, not of any one car: a kei car carries ~30 L,
 // a GT ~80. The quoted curb masses are taken with the tank full, so a race car is lighter by what it burns.
-const RACE_TANK_L={kei:30,hatch:50,roadster:45,coupe:60,sedan:62,muscle:70,rally:55,gt:80,super:80,hyper:85,proto:60,pickup:90,suv:80};
+const RACE_TANK_L={kei:30,hatch:50,roadster:45,coupe:60,sedan:62,muscle:70,rally:55,gt:80,super:80,hyper:85,proto:60,pickup:90,suv:80,openwheel:40};
 // The pace grid: grip scale × tank share. A race that can be wet also solves the lower grip levels.
 const RACE_GRIP=[0.72,0.80,0.88,0.94,1.00], RACE_GRIP_WET=[0.42,0.52,0.62,0.72,0.80,0.88,0.94,1.00], RACE_FUEL=[0,0.5,1];
 // Rain tyres, for the race only (build 141): a grooved tread that clears water, on a softer, cooler-running

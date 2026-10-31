@@ -346,7 +346,7 @@ const I18N={
   'KEI CAR':{el:'ΑΥΤΟΚΙΝΗΤΟ KEI'},'HOT HATCH':{el:'HOT HATCH'},'LIGHT ROADSTER':{el:'ΕΛΑΦΡΥ ROADSTER'},'SPORTS COUPE':{el:'ΣΠΟΡ ΚΟΥΠΕ'},
   'SPORTS SEDAN':{el:'ΣΠΟΡ ΣΕΝΤΑΝ'},'MUSCLE CAR':{el:'MUSCLE CAR'},'RALLY AWD HATCH':{el:'ΤΕΤΡΑΚΙΝΗΤΟ HATCH ΡΑΛΙ'},'GRAND TOURER':{el:'GRAND TOURER'},
   'MID-ENGINE SUPER':{el:'SUPERCAR ΜΕΣΑΙΟΥ ΚΙΝΗΤΗΡΑ'},'CARBON HYPERCAR':{el:'HYPERCAR ΑΝΘΡΑΚΟΝΗΜΑΤΩΝ'},'TRACK PROTOTYPE':{el:'ΠΡΩΤΟΤΥΠΟ ΠΙΣΤΑΣ'},
-  'PICKUP TRUCK':{el:'ΗΜΙΦΟΡΤΗΓΟ PICKUP'},'PERFORMANCE SUV':{el:'SUV ΕΠΙΔΟΣΕΩΝ'},
+  'PICKUP TRUCK':{el:'ΗΜΙΦΟΡΤΗΓΟ PICKUP'},'PERFORMANCE SUV':{el:'SUV ΕΠΙΔΟΣΕΩΝ'},'OPEN-WHEELER':{el:'ΜΟΝΟΘΕΣΙΟ ΑΝΟΙΧΤΩΝ ΤΡΟΧΩΝ'},'Performance SUV':{el:'SUV επιδόσεων'},'Track':{el:'Πίστας'},'Pickup':{el:'Ημιφορτηγά'},
   'OFF (REMOVED)':{el:'ΟΧΙ (ΑΦΑΙΡΕΘΗΚΕ)'},'ON':{el:'ΕΝΕΡΓΟΣ'},'OFF':{el:'ΑΝΕΝΕΡΓΟΣ'},'(Y) — over 300':{el:'(Y) — πάνω από 300'},
   'ECO/TOURING':{el:'ΟΙΚΟΝΟΜΙΚΑ/TOURING'},'STREET':{el:'ΔΡΟΜΟΥ'},'SEMI-SLICK':{el:'ΗΜΙ-SLICK'},'RACE SLICK':{el:'ΑΓΩΝΙΣΤΙΚΑ SLICK'},'DRAG RADIAL':{el:'DRAG RADIAL'},
   'SPLITTER':{el:'SPLITTER'},'FRONT WING':{el:'ΕΜΠΡΟΣ ΑΕΡΟΤΟΜΗ'},'LIP SPOILER':{el:'ΧΕΙΛΟΣ SPOILER'},'REAR WING':{el:'ΠΙΣΩ ΑΕΡΟΤΟΜΗ'},

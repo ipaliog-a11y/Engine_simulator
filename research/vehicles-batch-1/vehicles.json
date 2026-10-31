@@ -1,0 +1,5339 @@
+{
+  "meta": {
+    "title": "Vehicle research batch 1",
+    "count": 50,
+    "combustionOnly": true,
+    "notForDirectImport": "Field names match vehicle-presets.js and engine-options-presets.js. This file is research for a later session. Do not load it from the app yet.",
+    "enginePresetShape": "enginePreset.engine is a delta over DEFAULT_ENGINE, the same way PRESETS entries are written. Omitted fields keep the default (petrol4, inline, na, efi, 4 valves, vvt on, direct injection, octane 95).",
+    "areaEstimate": "Where frontal area is unpublished, area = width_m * height_m * fill, with fill 0.81 for cars and 0.85 for trucks and SUVs. Those values are listed in unsure.",
+    "fWtEstimate": "Where the axle split is unpublished, fWt is a layout estimate and is listed in unsure.",
+    "boostEstimate": "Where peak boost is unpublished, boost_bar is a typical value for that hardware and is listed in unsure.",
+    "powerUnit": "real.unit is PS or hp_SAE. real.hp is that number. 1 PS = 0.986 hp. Torque is always Nm.",
+    "curbConvention": "body.kg is curb mass with fluids and without the driver. A figure that includes a 75 kg driver (EU kerb) has been reduced, and the note says so. Dry weights are not used as body.kg.",
+    "aeroConvention": "Factory wings and splitters are already inside the measured Cd, so fit leaves aF/aR/aFl off unless the note says the Cd is a wing-off estimate (the Radical). This matches the comment in vehicle-presets.js.",
+    "newCategories": [
+      "Performance SUV",
+      "Track",
+      "Pickup"
+    ],
+    "newEngineCount": 49,
+    "existingEnginesUsed": [
+      "Cummins 6.7 (Ram HD 2019 HO)"
+    ]
+  },
+  "vehicles": [
+    {
+      "id": "bmw-x5-m-f85-2015",
+      "name": "BMW X5 M (F85, 2015)",
+      "cat": "Performance SUV",
+      "era": "2010s",
+      "role": "Performance SUV",
+      "confidence": "medium",
+      "chassis": "suv",
+      "chassisFit": "good",
+      "chassisNote": "Fits PERFORMANCE SUV. F85 is pure combustion; the later F95 X5 M is a different car (600 PS) and its 2019 press sheet must not be mixed in. Pre-LCI F85 has no 48V system.",
+      "engineStatus": "new",
+      "engine": "BMW S63B44 4.4 TT V8 (X5 M F85)",
+      "body": {
+        "kg": 2386,
+        "cd": 0.38,
+        "area": 2.96,
+        "wb": 2.933,
+        "fWt": 0.54
+      },
+      "fit": {
+        "drive": "awd",
+        "tire": "sport",
+        "tw": 325,
+        "twF": 285,
+        "ta": 35,
+        "wheel": 20,
+        "brake": "big",
+        "rotor": 395,
+        "susp": "sport",
+        "gears": 8,
+        "gearbox": "auto",
+        "diff": "clsd",
+        "tc": true,
+        "geoF": "wishbone",
+        "geoR": "multilink"
+      },
+      "real": {
+        "t100": 4.2,
+        "top": 250,
+        "limited": true,
+        "unit": "PS"
+      },
+      "gearset": {
+        "r": [
+          5,
+          3.2,
+          2.14,
+          1.72,
+          1.31,
+          1,
+          0.82,
+          0.64
+        ],
+        "fd": 3.15,
+        "src": "US spec compilation of the ZF 8HP ratios and 3.15 axle (autobytel 2015 X5 M). BMW's later F95 sheet uses essentially the same 8HP set with a 3.154 axle."
+      },
+      "enginePreset": {
+        "cat": "Performance SUV",
+        "name": "BMW S63B44 4.4 TT V8 (X5 M F85)",
+        "displacement_cc": 4395,
+        "real": {
+          "hp": 575,
+          "hpRpm": 6000,
+          "tq": 750,
+          "tqRpm": 2200,
+          "unit": "PS"
+        },
+        "unsure": [
+          "boost_bar",
+          "redline",
+          "turboSize"
+        ],
+        "note": "575 PS is 567 hp SAE, which is the US figure. Torque is a plateau 2200-5000 rpm, so tqLimit is set. Peak power is quoted 6000-6500.",
+        "engine": {
+          "cylinders": 8,
+          "layout": "v",
+          "bore_mm": 89,
+          "stroke_mm": 88.3,
+          "compression": 10,
+          "redline": 7200,
+          "intake": "turbo",
+          "boost_bar": 1.2,
+          "turboSize": "medium",
+          "turboConfig": "twin",
+          "intercooler": "large",
+          "injector": "direct",
+          "vvt": true,
+          "cam": "sport",
+          "exhaust": "sport",
+          "airFilter": "perf",
+          "octane": 98,
+          "radiator": "large",
+          "oilCooler": true,
+          "tqLimit": 750
+        }
+      },
+      "sources": {
+        "engine": "https://www.auto-data.net/en/bmw-x5-m-f85-4.4-v8-575hp-xdrive-steptronic-25270 and https://www.bmw-m.com/en/topics/magazine-article-pool/bmw-x5-m-f85.html (575 PS, 750 Nm, bore 89 / stroke 88.3, CR 10.0)",
+        "body": "https://www.autobytel.com/bmw/x5-m/2015/color US curb 5260 lb; wheelbase 2933 mm and Cd 0.38 from auto-data. Frontal area is width 1.985 x height 1.754 x 0.85.",
+        "performance": "https://www.bmw-m.com/en/topics/magazine-article-pool/bmw-x5-m-f85.html 0-100 in 4.2 s, 250 km/h limited (280 with the M Driver's Package).",
+        "gearset": "https://www.autobytel.com/bmw/x5-m/2015/color",
+        "fit": "auto-data lists 285/40 R20 and 325/35 R20. Rotor diameter was not on the F85 sheet captured here."
+      },
+      "unsure": [
+        "kg",
+        "cd",
+        "area",
+        "fWt",
+        "rotor",
+        "boost_bar",
+        "redline"
+      ],
+      "note": "auto-data lists kerb 2275 kg, which does not match the 5260 lb US curb (2386 kg). 2275 kg may be a DIN figure; no F85 BMW press PDF was found to settle it (the BMW attachment in search is the 2019 F95, 2310 kg DIN, 600 PS). fWt is a layout estimate. Do not copy F95 aero 0.38 x 2.99 onto this car without checking; Cd 0.38 here is the auto-data F85 figure and the area is estimated."
+    },
+    {
+      "id": "porsche-cayenne-turbo-958-2014",
+      "name": "Porsche Cayenne Turbo (958.2, 2014)",
+      "cat": "Performance SUV",
+      "era": "2010s",
+      "role": "Performance SUV",
+      "confidence": "high",
+      "chassis": "suv",
+      "chassisFit": "good",
+      "chassisNote": "Fits PERFORMANCE SUV. The 958 Turbo is the twin-turbo 4.8, not the Cayenne S E-Hybrid.",
+      "engineStatus": "new",
+      "engine": "Porsche 4.8 TT V8 (Cayenne Turbo 958)",
+      "body": {
+        "kg": 2185,
+        "cd": 0.36,
+        "area": 2.8,
+        "wb": 2.895,
+        "fWt": 0.55
+      },
+      "fit": {
+        "drive": "awd",
+        "tire": "sport",
+        "tw": 265,
+        "ta": 50,
+        "wheel": 19,
+        "brake": "big",
+        "rotor": 390,
+        "susp": "sport",
+        "gears": 8,
+        "gearbox": "auto",
+        "diff": "visc",
+        "tc": true,
+        "geoF": "wishbone",
+        "geoR": "multilink"
+      },
+      "real": {
+        "t100": 4.5,
+        "top": 279,
+        "limited": false,
+        "unit": "PS"
+      },
+      "gearset": {
+        "r": [
+          4.92,
+          2.81,
+          1.84,
+          1.43,
+          1.21,
+          1,
+          0.83,
+          0.69
+        ],
+        "fd": 2.92,
+        "src": "Porsche press kit for the 958 Cayenne Turbo: eight-speed Tiptronic S, rear-axle final 2.92 (front axle is 2.58). Overall ratio uses the rear final, as the 992 Turbo S gearset does."
+      },
+      "enginePreset": {
+        "cat": "Performance SUV",
+        "name": "Porsche 4.8 TT V8 (Cayenne Turbo 958)",
+        "displacement_cc": 4806,
+        "real": {
+          "hp": 520,
+          "hpRpm": 6000,
+          "tq": 750,
+          "tqRpm": 2250,
+          "unit": "PS"
+        },
+        "unsure": [
+          "boost_bar",
+          "turboSize"
+        ],
+        "note": "Porsche quotes 520 hp (382 kW) at 6000 rpm and 750 Nm from 2250 to 4000 rpm. Direct injection, VarioCam Plus. tqLimit holds the plateau.",
+        "engine": {
+          "cylinders": 8,
+          "layout": "v",
+          "bore_mm": 96,
+          "stroke_mm": 83,
+          "compression": 10.5,
+          "redline": 6700,
+          "intake": "turbo",
+          "boost_bar": 0.9,
+          "turboSize": "medium",
+          "turboConfig": "twin",
+          "intercooler": "large",
+          "injector": "direct",
+          "vvt": true,
+          "cam": "sport",
+          "exhaust": "sport",
+          "airFilter": "stock",
+          "octane": 98,
+          "radiator": "large",
+          "oilCooler": true,
+          "tqLimit": 750
+        }
+      },
+      "sources": {
+        "engine": "https://newsroom.porsche.com/dam/jcr:13b2afec-e26a-4280-8e16-06686a45d53b/Press — bore 96.0, stroke 83.0, 4806 cc, CR 10.5, 520 hp at 6000, 750 Nm at 2250-4000, redline 6700.",
+        "body": "Same press kit: DIN unladen 2185 kg, Cd 0.36, frontal area 2.80 m2, wheelbase 2895 mm.",
+        "performance": "Same press kit: 0-100 km/h 4.5 s (4.4 with Sport Chrono), top speed 279 km/h.",
+        "gearset": "Same press kit, gear ratios and rear final 2.92.",
+        "fit": "Same press kit: 265/50 R19, front discs 390 mm, air suspension, hang-on all-wheel drive."
+      },
+      "unsure": [
+        "fWt",
+        "boost_bar"
+      ],
+      "note": "fWt is not published; 0.55 is a front-engine AWD SUV estimate. Boost pressure is not in the press kit. Sport Chrono is 4.4 s; the base claim is 4.5 s. US sheet curb 4784 lb (2170 kg) is a different weighing convention than DIN 2185 kg; DIN is used here."
+    },
+    {
+      "id": "lamborghini-urus-2018",
+      "name": "Lamborghini Urus (2018)",
+      "cat": "Performance SUV",
+      "era": "2010s",
+      "role": "Performance SUV",
+      "confidence": "medium",
+      "chassis": "suv",
+      "chassisFit": "good",
+      "chassisNote": "Fits PERFORMANCE SUV. This is the 2018-2022 twin-turbo V8, not the 2024 Urus SE plug-in hybrid.",
+      "engineStatus": "new",
+      "engine": "Lamborghini 4.0 TT V8 (Urus)",
+      "body": {
+        "kg": 2197,
+        "cd": 0.36,
+        "area": 2.81,
+        "wb": 3.003,
+        "fWt": 0.58
+      },
+      "fit": {
+        "drive": "awd",
+        "tire": "sport",
+        "tw": 315,
+        "twF": 285,
+        "ta": 40,
+        "wheel": 21,
+        "brake": "carbon",
+        "rotor": 440,
+        "susp": "sport",
+        "gears": 8,
+        "gearbox": "auto",
+        "diff": "clsd",
+        "tc": true,
+        "geoF": "wishbone",
+        "geoR": "multilink"
+      },
+      "real": {
+        "t100": 3.6,
+        "top": 305,
+        "limited": false,
+        "unit": "PS"
+      },
+      "gearset": {
+        "r": null,
+        "fd": null,
+        "src": "Lamborghini's launch release describes an eight-speed automatic but does not publish ratios or the final drive. Do not copy another ZF 8HP set without a source."
+      },
+      "enginePreset": {
+        "cat": "Performance SUV",
+        "name": "Lamborghini 4.0 TT V8 (Urus)",
+        "displacement_cc": 3996,
+        "real": {
+          "hp": 650,
+          "hpRpm": 6000,
+          "tq": 850,
+          "tqRpm": 2250,
+          "unit": "PS"
+        },
+        "unsure": [
+          "boost_bar",
+          "compression",
+          "turboSize"
+        ],
+        "note": "EA825-family 4.0 twin-turbo V8, the first turbo Lamborghini road car. Torque plateau 2250-4500, so tqLimit is set. Compression is commonly published as 9.7:1 but was not in the launch release captured here.",
+        "engine": {
+          "cylinders": 8,
+          "layout": "v",
+          "bore_mm": 86,
+          "stroke_mm": 86,
+          "compression": 9.7,
+          "redline": 6800,
+          "intake": "turbo",
+          "boost_bar": 1.3,
+          "turboSize": "medium",
+          "turboConfig": "twin",
+          "intercooler": "large",
+          "injector": "direct",
+          "vvt": true,
+          "cam": "sport",
+          "exhaust": "sport",
+          "airFilter": "perf",
+          "octane": 98,
+          "radiator": "large",
+          "oilCooler": true,
+          "tqLimit": 850
+        }
+      },
+      "sources": {
+        "engine": "Lamborghini launch release https://preview.thenewsmarket.com/previews/lamb/documentassets/493417.pdf — 650 hp (478 kW) at 6000 rpm, 850 Nm at 2250-4500, redline 6800. Bore 86 x 86 mm from https://www.lamborghininaples.com/lamborghini-urus/ (dealer spec table, matches 3996 cc).",
+        "body": "Launch release: curb weight lower than 2200 kg and 3.38 kg/hp, which is 2197 kg. Wheelbase 3003 mm from the dealer spec table and carfolio. Cd is not published; area is width 2.016 x height 1.638 x 0.85.",
+        "performance": "Launch release: 0-100 km/h 3.6 s, top speed 305 km/h.",
+        "gearset": "Not published in the launch release.",
+        "fit": "Launch release: carbon-ceramic discs 440 mm front / 370 mm rear, Torsen centre diff, 40/60 nominal split. Tyres 285/45 ZR21 and 315/40 ZR21 from https://www.wheel-size.com/size/lamborghini/urus/2018/."
+      },
+      "unsure": [
+        "cd",
+        "area",
+        "fWt",
+        "compression",
+        "boost_bar",
+        "gearset"
+      ],
+      "note": "kg 2197 is 650 x 3.38, the ratio Lamborghini published, not a weighed curb. A secondary page quotes 58/42 front/rear; that split is not in the launch release, so fWt is unsure. The model has no twin-scroll flag; turboConfig twin is the closest."
+    },
+    {
+      "id": "jeep-grand-cherokee-srt-2014",
+      "name": "Jeep Grand Cherokee SRT (WK2, 2014)",
+      "cat": "Performance SUV",
+      "era": "2010s",
+      "role": "Performance SUV",
+      "confidence": "high",
+      "chassis": "suv",
+      "chassisFit": "good",
+      "chassisNote": "Fits PERFORMANCE SUV. This is the naturally aspirated 6.4 SRT, not the supercharged Trackhawk and not the later 4xe hybrid.",
+      "engineStatus": "new",
+      "engine": "Chrysler 6.4 Hemi (Grand Cherokee SRT)",
+      "body": {
+        "kg": 2336,
+        "cd": 0.39,
+        "area": 2.93,
+        "wb": 2.916,
+        "fWt": 0.55
+      },
+      "fit": {
+        "drive": "awd",
+        "tire": "sport",
+        "tw": 295,
+        "ta": 45,
+        "wheel": 20,
+        "brake": "big",
+        "rotor": 380,
+        "susp": "sport",
+        "gears": 8,
+        "gearbox": "auto",
+        "diff": "clsd",
+        "tc": true,
+        "geoF": "wishbone",
+        "geoR": "multilink"
+      },
+      "real": {
+        "t100": 4.9,
+        "top": 257,
+        "limited": false,
+        "unit": "hp_SAE"
+      },
+      "gearset": {
+        "r": [
+          4.7,
+          3.13,
+          2.1,
+          1.67,
+          1.28,
+          1,
+          0.84,
+          0.67
+        ],
+        "fd": 3.7,
+        "src": "2014 Jeep Grand Cherokee SRT specifications, media.chrysler.com PDF: 8HP70 ratios and 3.70 axle."
+      },
+      "enginePreset": {
+        "cat": "Performance SUV",
+        "name": "Chrysler 6.4 Hemi (Grand Cherokee SRT)",
+        "displacement_cc": 6417,
+        "real": {
+          "hp": 470,
+          "hpRpm": 6000,
+          "tq": 630,
+          "tqRpm": 4300,
+          "unit": "hp_SAE"
+        },
+        "unsure": [
+          "stroke_mm"
+        ],
+        "note": "OHV 16-valve Hemi with VCT and MDS. 465 lb-ft is 630 Nm. The brochure prints stroke 94.5 mm; the service manual prints 94.6 mm (4.09 x 3.72 in is 94.5 mm). 94.6 is used.",
+        "engine": {
+          "cylinders": 8,
+          "layout": "v",
+          "valves": 2,
+          "bore_mm": 103.9,
+          "stroke_mm": 94.6,
+          "compression": 10.9,
+          "redline": 6400,
+          "vvt": true,
+          "cam": "sport",
+          "injector": "port",
+          "octane": 91,
+          "exhaust": "sport",
+          "airFilter": "perf",
+          "radiator": "large",
+          "oilCooler": true
+        }
+      },
+      "sources": {
+        "engine": "https://wk2jeeps.knoxgeex.com/pdf/2014_wk2_specifications_srt.pdf — 470 hp at 6000 rpm, 465 lb-ft at 4300 rpm, bore 103.9, stroke listed 94.5, CR 10.9, fuel cut 6400 rpm. Service manual repeats 94.6 mm stroke: https://jdmfsm.info/Auto/Other/Jeep/Jeep%20Grand%20Cherokee%20WK2/2014-2017%20Grand%20Cherokee%20WK2%20Factory%20Service%20Manual/04%20Engine%206.4L%20V8%20SRT.pdf",
+        "body": "Same FCA SRT specifications PDF: Cd 0.39, frontal area 2.93 m2, wheelbase 114.8 in (2916 mm). Curb 5150 lb from the US spec listings (motormatchup / Car and Driver spec page).",
+        "performance": "0-60 mph 4.7 s is a published road-test figure, not an FCA 0-100. t100 4.9 s is that 0-60 plus about 0.2 s and is marked unsure. Top speed is not in the FCA PDF; 160 mph (257 km/h) is the figure used by US spec listings.",
+        "gearset": "https://wk2jeeps.knoxgeex.com/pdf/2014_wk2_specifications_srt.pdf",
+        "fit": "FCA PDF: full-time 4WD, 3.70 electronic LSD rear, 295/45ZR20 is the standard SRT tyre of this generation (confirm against the tyre line of the same PDF if the later session reopens it)."
+      },
+      "unsure": [
+        "fWt",
+        "t100",
+        "top",
+        "stroke_mm",
+        "tw",
+        "ta",
+        "rotor"
+      ],
+      "note": "fWt is not published. Octane 91 is (R+M)/2 premium as FCA specifies, not RON. The Hellcat already in PRESETS is a different, supercharged 6.2."
+    },
+    {
+      "id": "toyota-land-cruiser-200-d4d-2015",
+      "name": "Toyota Land Cruiser 200 VX 4.5 D-4D (2015)",
+      "cat": "Diesel",
+      "era": "2010s",
+      "role": "Heavy SUV",
+      "confidence": "medium",
+      "chassis": "suv",
+      "chassisFit": "fair",
+      "chassisNote": "PERFORMANCE SUV is the only SUV archetype. The 200-series is a heavy off-road wagon: taller, softer, and much heavier than the archetype's 1950 kg sport-SUV sketch. body.kg replaces that mass. A later 'expedition SUV' archetype would fit better. Not the 300-series, some of which are hybrid.",
+      "engineStatus": "new",
+      "engine": "Toyota 1VD-FTV 4.5 V8 diesel (Land Cruiser 200)",
+      "body": {
+        "kg": 2740,
+        "cd": 0.38,
+        "area": 3.14,
+        "wb": 2.85,
+        "fWt": 0.52
+      },
+      "fit": {
+        "drive": "awd",
+        "tire": "eco",
+        "tw": 285,
+        "ta": 60,
+        "wheel": 18,
+        "brake": "hd",
+        "rotor": 354,
+        "susp": "comfort",
+        "gears": 6,
+        "gearbox": "auto",
+        "diff": "clsd",
+        "tc": true,
+        "geoF": "wishbone",
+        "geoR": "solid"
+      },
+      "real": {
+        "t100": 8.7,
+        "top": 210,
+        "limited": false,
+        "unit": "PS"
+      },
+      "gearset": {
+        "r": [
+          3.333,
+          1.96,
+          1.353,
+          1,
+          0.728,
+          0.588
+        ],
+        "fd": 3.909,
+        "src": "Toyota Australia LandCruiser 200 specification sheet for the 1VD-FTV: AB60F ratios and 3.909 differential. Transfer high range is 1:1 and is not part of the gearset."
+      },
+      "enginePreset": {
+        "cat": "Diesel",
+        "name": "Toyota 1VD-FTV 4.5 V8 diesel (Land Cruiser 200)",
+        "displacement_cc": 4461,
+        "real": {
+          "hp": 272,
+          "hpRpm": 3600,
+          "tq": 650,
+          "tqRpm": 1600,
+          "unit": "PS"
+        },
+        "unsure": [
+          "boost_bar",
+          "redline",
+          "vgt"
+        ],
+        "note": "UK/Australia 200 kW / 272 DIN hp tune. Some markets (tax bands) were sold at 183 kW / 249 hp; do not mix them. Twin turbo. govRpm is the rated 3600 rpm.",
+        "engine": {
+          "type": "diesel",
+          "vvt": false,
+          "cylinders": 8,
+          "layout": "v",
+          "bore_mm": 86,
+          "stroke_mm": 96,
+          "compression": 16.8,
+          "redline": 4500,
+          "govRpm": 3600,
+          "intake": "turbo",
+          "boost_bar": 1.4,
+          "turboSize": "medium",
+          "turboConfig": "twin",
+          "vgt": true,
+          "injector": "direct",
+          "intercooler": "large",
+          "exhaust": "stock",
+          "airFilter": "stock",
+          "radiator": "large",
+          "oilCooler": true
+        }
+      },
+      "sources": {
+        "engine": "https://autocatalogarchive.com/wp-content/uploads/2019/05/Toyota-Land-Cruiser-V8-2015-UK.pdf — 200 kW / 272 DIN hp at 3600 rpm, 650 Nm at 1600-2800, CR 16.8. Bore 86 x 96 from the Toyota Australia mechanical specification (same 1VD-FTV).",
+        "body": "UK brochure: kerb 2740 kg, wheelbase 2850 mm, 4950 x 1970 x 1865 mm. Cd and frontal area are not published; area uses width x height x 0.85.",
+        "performance": "0-100 and top speed are not in the UK brochure. 210 km/h is a common catalogue figure for this tune and is unsure. t100 8.7 s is an estimate from period road tests of the 200 kW wagon, not a Toyota claim.",
+        "gearset": "Toyota Australia LandCruiser 200 specification sheet, 1VD-FTV column.",
+        "fit": "Australia sheet: VX/Sahara brakes 354 mm front, tyres 285/60 R18, full-time 4x4 with a Torsen centre diff, live rear axle."
+      },
+      "unsure": [
+        "cd",
+        "area",
+        "fWt",
+        "t100",
+        "top",
+        "boost_bar",
+        "redline",
+        "vgt"
+      ],
+      "note": "The archetype's sport springs and big brakes should not be left on this car; fit sets comfort and heavy-duty brakes. Rear suspension is a four-link live axle, so geoR solid."
+    },
+    {
+      "id": "radical-sr3-rsx-2015",
+      "name": "Radical SR3 RSX 1500 (2015)",
+      "cat": "Track",
+      "era": "2010s",
+      "role": "Track Prototype",
+      "confidence": "low",
+      "chassis": "proto",
+      "chassisFit": "good",
+      "chassisNote": "Fits TRACK PROTOTYPE: winged sports-racer, slicks, sequential gearbox, centre of gravity well below a road car. Radical's quoted power and weight moved between the RS, RSX and XX years. Treat every number below as a 2015 RSX 1500 snapshot, not a single type-approval.",
+      "engineStatus": "new",
+      "engine": "Radical RPE 1500 Suzuki-based I4 (SR3 RSX)",
+      "body": {
+        "kg": 580,
+        "cd": 0.45,
+        "area": 1.4,
+        "wb": 2.37,
+        "fWt": 0.46
+      },
+      "fit": {
+        "drive": "rwd",
+        "tire": "slick",
+        "tw": 275,
+        "twF": 200,
+        "ta": 50,
+        "wheel": 15,
+        "brake": "big",
+        "rotor": 280,
+        "susp": "race",
+        "gears": 6,
+        "gearbox": "sequential",
+        "diff": "spool",
+        "tc": false,
+        "aF": "wing",
+        "aR": "wing",
+        "aFl": "diffuser",
+        "geoF": "wishbone",
+        "geoR": "wishbone"
+      },
+      "real": {
+        "t100": 3.2,
+        "top": 240,
+        "limited": false,
+        "unit": "hp_SAE"
+      },
+      "gearset": {
+        "r": null,
+        "fd": null,
+        "src": "Radical does not publish a road-car gear chart for the SR3 RSX in the sources found. The box is a 6-speed sequential (Hewland or similar). Leave ratios unset."
+      },
+      "enginePreset": {
+        "cat": "Track",
+        "name": "Radical RPE 1500 Suzuki-based I4 (SR3 RSX)",
+        "displacement_cc": 1500,
+        "real": {
+          "hp": 210,
+          "hpRpm": 10000,
+          "tq": 179,
+          "tqRpm": 7000,
+          "unit": "hp_SAE"
+        },
+        "unsure": [
+          "bore_mm",
+          "stroke_mm",
+          "compression",
+          "redline",
+          "hp",
+          "hpRpm",
+          "tq",
+          "tqRpm"
+        ],
+        "note": "Hayabusa-derived inline-four. 1500 cc with an 81 mm bore implies a stroke near 72.8 mm; that pair is a displacement fit, not a Radical drawing. Power was quoted anywhere from about 195 to 260 bhp depending on year and restrictor. 210 bhp is a mid RSX figure, not a certified rating.",
+        "engine": {
+          "cylinders": 4,
+          "bore_mm": 81,
+          "stroke_mm": 72.8,
+          "compression": 12.5,
+          "redline": 10500,
+          "intakeSys": "itb",
+          "airFilter": "none",
+          "cam": "race",
+          "vvt": false,
+          "valveSpring": "race",
+          "valveMat": "titanium",
+          "injector": "port",
+          "exhaust": "race",
+          "cat": "none",
+          "octane": 98,
+          "radiator": "large",
+          "oilCooler": true
+        }
+      },
+      "sources": {
+        "engine": "Radical's own SR3 pages have varied by year. The 1500 cc Suzuki/RPE four and a ~210 bhp class are the usual RSX description; no single 2015 factory PDF was captured in this pass. Geometry is derived from 1500 cc and the Hayabusa's 81 mm bore.",
+        "body": "Wheelbase is commonly listed near 2370 mm for the SR3. Mass near 580 kg is a published club-racer figure and conflicts with lighter 'dry' claims. Cd 0.45 is a wing-off estimate so the prototype wing/diffuser fit can add drag and downforce; it is not a wind-tunnel number.",
+        "performance": "0-100 and top speed are not from a Radical homologation sheet. 3.2 s and 240 km/h are order-of-magnitude track-car figures and must be replaced before the model is scored against this car.",
+        "gearset": "Not found.",
+        "fit": "Slicks and a sequential box are standard SR3 practice. Tyre widths are representative of the 15-inch Radical fitment, not a quoted size from a 2015 brochure."
+      },
+      "unsure": [
+        "kg",
+        "cd",
+        "area",
+        "wb",
+        "fWt",
+        "t100",
+        "top",
+        "tw",
+        "twF",
+        "ta",
+        "rotor",
+        "bore_mm",
+        "stroke_mm",
+        "compression",
+        "redline",
+        "hp",
+        "tq",
+        "gearset"
+      ],
+      "note": "Lowest-confidence car in the batch, included because Track Prototype has no real car yet and the SR3 is the obvious one. Do not tune the model to these performance numbers. If a later session finds Radical's 2015 RSX sheet, replace power, weight and ratios before implementing."
+    },
+    {
+      "id": "bac-mono-2011",
+      "name": "BAC Mono 2.3 (2011)",
+      "cat": "Track",
+      "era": "2010s",
+      "role": "Track Prototype",
+      "confidence": "low",
+      "chassis": null,
+      "chassisNearest": "proto",
+      "chassisSuggestion": "openwheel",
+      "chassisFit": "none",
+      "chassisNote": "No current archetype fits. TRACK PROTOTYPE assumes a wide winged sportscar (Cd 0.60, aero 3.0, track 1.75 m, mass 620 kg). The Mono is a narrow open-wheel single-seater with a diffuser and little wing area; using proto would invent downforce and drag. LIGHT ROADSTER is too heavy and too closed. Suggest a new openwheel archetype: mass about 520 kg, area about 1.15 m2, Cd about 0.55, wheelbase about 2.56 m, cg about 0.32 m, fWt about 0.45, track about 1.55 m, aero about 1.0, slicks, sequential. The later 2.5 Cosworth Mono (about 305 bhp) is a different engine and is not this entry.",
+      "engineStatus": "new",
+      "engine": "Ford Duratec 2.3 Cosworth (BAC Mono)",
+      "body": {
+        "kg": 540,
+        "cd": 0.55,
+        "area": 1.15,
+        "wb": 2.56,
+        "fWt": 0.45,
+        "engPos": "mid"
+      },
+      "fit": {
+        "drive": "rwd",
+        "tire": "slick",
+        "tw": 250,
+        "twF": 200,
+        "ta": 45,
+        "wheel": 16,
+        "brake": "big",
+        "rotor": 295,
+        "susp": "race",
+        "gears": 6,
+        "gearbox": "sequential",
+        "diff": "spool",
+        "tc": false,
+        "aF": "none",
+        "aR": "none",
+        "aFl": "diffuser",
+        "geoF": "wishbone",
+        "geoR": "wishbone"
+      },
+      "real": {
+        "t100": 3,
+        "top": 274,
+        "limited": false,
+        "unit": "hp_SAE"
+      },
+      "gearset": {
+        "r": null,
+        "fd": null,
+        "src": "BAC did not publish gear ratios in the sources found. The 2011 car uses a 6-speed sequential Hewland."
+      },
+      "enginePreset": {
+        "cat": "Track",
+        "name": "Ford Duratec 2.3 Cosworth (BAC Mono)",
+        "displacement_cc": 2261,
+        "real": {
+          "hp": 280,
+          "hpRpm": 7700,
+          "tq": 280,
+          "tqRpm": 6000,
+          "unit": "hp_SAE"
+        },
+        "unsure": [
+          "compression",
+          "redline",
+          "hpRpm",
+          "tq",
+          "tqRpm",
+          "intakeSys"
+        ],
+        "note": "Cosworth-developed 2.3 Duratec (Mazda MZR family), naturally aspirated. Later Monos switched to a 2.5. Bore and stroke are the production 2.3's; the race compression is an estimate.",
+        "engine": {
+          "cylinders": 4,
+          "bore_mm": 87.5,
+          "stroke_mm": 94,
+          "compression": 12,
+          "redline": 8000,
+          "intakeSys": "itb",
+          "airFilter": "none",
+          "cam": "race",
+          "vvt": false,
+          "valveSpring": "race",
+          "injector": "port",
+          "exhaust": "race",
+          "cat": "none",
+          "octane": 98,
+          "radiator": "large",
+          "oilCooler": true
+        }
+      },
+      "sources": {
+        "engine": "BAC launch coverage and later comparisons quote 280 bhp from the 2.3 Cosworth-Duratec. Bore 87.5 mm and stroke 94.0 mm are the Ford/Mazda 2.3 Duratec's, not a BAC drawing captured here.",
+        "body": "540 kg is the figure repeated for the original Mono (Autocar's later 2.5 car is quoted at 580 kg and 305 bhp — do not mix). Cd, area and fWt are estimates for an open-wheel single-seater.",
+        "performance": "0-60 mph in 2.8 s and about 170 mph are the figures in period BAC coverage. t100 3.0 s is that 0-60 plus a small gap, marked unsure. Top 274 km/h is 170 mph.",
+        "gearset": "Not found.",
+        "fit": "Single-seater, sequential gearbox, slick tyres. Section widths are representative, not a BAC tyre label captured here."
+      },
+      "unsure": [
+        "kg",
+        "cd",
+        "area",
+        "wb",
+        "fWt",
+        "t100",
+        "top",
+        "tw",
+        "twF",
+        "rotor",
+        "compression",
+        "hpRpm",
+        "tq",
+        "tqRpm",
+        "gearset"
+      ],
+      "note": "Implement only after choosing the new archetype. Mapping it onto proto will make the lap sim credit a wing the car does not have."
+    },
+    {
+      "id": "nissan-370z-2009",
+      "name": "Nissan 370Z (Z34, 2009)",
+      "cat": "NA Sports",
+      "era": "2000s",
+      "role": "Sports coupe",
+      "confidence": "high",
+      "chassis": "coupe",
+      "chassisFit": "good",
+      "chassisNote": "Fits SPORTS COUPE. Naturally aspirated V6; there is no V6 in PRESETS today.",
+      "engineStatus": "new",
+      "engine": "Nissan VQ37VHR (370Z)",
+      "body": {
+        "kg": 1466,
+        "cd": 0.3,
+        "area": 1.86,
+        "wb": 2.55,
+        "fWt": 0.54
+      },
+      "fit": {
+        "drive": "rwd",
+        "tire": "sport",
+        "tw": 245,
+        "twF": 225,
+        "ta": 45,
+        "wheel": 18,
+        "brake": "slotted",
+        "rotor": 320,
+        "susp": "sport",
+        "gears": 6,
+        "gearbox": "manual",
+        "diff": "visc",
+        "tc": true,
+        "geoF": "wishbone",
+        "geoR": "multilink"
+      },
+      "real": {
+        "t100": 5.1,
+        "top": 250,
+        "limited": false,
+        "unit": "hp_SAE"
+      },
+      "gearset": {
+        "r": [
+          3.794,
+          2.324,
+          1.624,
+          1.271,
+          1,
+          0.794
+        ],
+        "fd": 3.692,
+        "src": "2009 Nissan 370Z specifications PDF, 6-speed manual column, final 3.692."
+      },
+      "enginePreset": {
+        "cat": "NA Sports",
+        "name": "Nissan VQ37VHR (370Z)",
+        "displacement_cc": 3696,
+        "real": {
+          "hp": 332,
+          "hpRpm": 7000,
+          "tq": 366,
+          "tqRpm": 5200,
+          "unit": "hp_SAE"
+        },
+        "unsure": [],
+        "note": "270 lb-ft is 366 Nm. VVEL variable lift, so vvt is on. Port injection, not direct. First V6 in the preset list.",
+        "engine": {
+          "cylinders": 6,
+          "layout": "v",
+          "bore_mm": 95.5,
+          "stroke_mm": 86,
+          "compression": 11,
+          "redline": 7500,
+          "cam": "sport",
+          "vvt": true,
+          "injector": "port",
+          "octane": 98,
+          "exhaust": "sport",
+          "airFilter": "perf",
+          "runner": "variable"
+        }
+      },
+      "sources": {
+        "engine": "http://www.the370z.com/images/370zforum/2009_370Z_Specs_Final.pdf — VQ37VHR, 332 hp at 7000 rpm, 270 lb-ft at 5200 rpm, 95.5 x 86.0 mm, CR 11.0, 7500 rpm limit.",
+        "body": "Same PDF: curb 3232 lb manual, Cd 0.30 (0.29 with the Sport package), wheelbase 100.4 in, weight distribution 54/46. Area is 1.844 m width x 1.316 m height x 0.81.",
+        "performance": "Nissan did not print 0-100 in that PDF. Motor Trend's first test recorded 0-60 mph in 4.7 s (https://www.motortrend.com/reviews/2009-nissan-370z-first-test). t100 5.1 s is an estimate from that 0-60. Top speed is not in the PDF; 250 km/h is a catalogue figure.",
+        "gearset": "Same Nissan PDF, manual column.",
+        "fit": "Nissan press kit: base tyres 225/50R18 front and 245/45R18 rear. Front rotor 12.6 in (320 mm) standard; the Sport package is 14.0 in."
+      },
+      "unsure": [
+        "area",
+        "t100",
+        "top"
+      ],
+      "note": "Spec is the 2009 base manual coupe, not the NISMO (350 hp, different tyres). Viscous LSD was optional (marked O on the spec sheet); the manual car is often open unless the Sport package is fitted. diff visc matches the Sport/LSD option. Set diff open if the base car is the target."
+    },
+    {
+      "id": "honda-nsx-na1-1991",
+      "name": "Honda NSX (NA1, 1991)",
+      "cat": "Supercar",
+      "era": "1990s",
+      "role": "Mid-engine sports",
+      "confidence": "high",
+      "chassis": "super",
+      "chassisFit": "good",
+      "chassisNote": "Fits MID-ENGINE SUPER. This is the naturally aspirated C30A NA1, not the hybrid NC1.",
+      "engineStatus": "new",
+      "engine": "Honda C30A V6 (NSX NA1)",
+      "body": {
+        "kg": 1370,
+        "cd": 0.32,
+        "area": 1.72,
+        "wb": 2.53,
+        "fWt": 0.42
+      },
+      "fit": {
+        "tc": false,
+        "drive": "rwd",
+        "tire": "sport",
+        "tw": 225,
+        "twF": 205,
+        "ta": 50,
+        "wheel": 15,
+        "brake": "slotted",
+        "rotor": 282,
+        "susp": "sport",
+        "gears": 5,
+        "gearbox": "manual",
+        "diff": "clsd",
+        "geoF": "wishbone",
+        "geoR": "wishbone"
+      },
+      "real": {
+        "t100": 5.9,
+        "top": 270,
+        "limited": false,
+        "unit": "PS"
+      },
+      "gearset": {
+        "r": [
+          3.071,
+          1.727,
+          1.23,
+          0.967,
+          0.771
+        ],
+        "fd": 4.062,
+        "src": "1991 Acura NSX specifications, 5-speed column, Honda newsroom."
+      },
+      "enginePreset": {
+        "cat": "Supercar",
+        "era": "1990s",
+        "name": "Honda C30A V6 (NSX NA1)",
+        "displacement_cc": 2977,
+        "real": {
+          "hp": 280,
+          "hpRpm": 7300,
+          "tq": 294,
+          "tqRpm": 5400,
+          "unit": "PS"
+        },
+        "unsure": [],
+        "note": "JDM 5-speed rating 280 PS at 7300 rpm and 30.0 kgf·m (294 Nm) at 5400 rpm. The US Acura rating is 270 hp SAE at 7100 rpm and 210 lb-ft (285 Nm) at 5300 rpm. VTEC, titanium connecting rods, port injection. Naturally aspirated.",
+        "engine": {
+          "cylinders": 6,
+          "layout": "v",
+          "bore_mm": 90,
+          "stroke_mm": 78,
+          "compression": 10.2,
+          "redline": 8000,
+          "cam": "race",
+          "vvt": true,
+          "valveSpring": "perf",
+          "injector": "port",
+          "octane": 98,
+          "exhaust": "sport",
+          "airFilter": "perf",
+          "runner": "variable",
+          "radiator": "large",
+          "oilCooler": true
+        }
+      },
+      "sources": {
+        "engine": "https://global.honda/en/tech/engine/car/C30A_NSX_vtec_DOHC/ and https://www.honda.co.jp/sportscar/vtec_history/C30A/ — 90.0 x 78.0 mm, CR 10.2, 280 PS at 7300, 30.0 kgf·m at 5400, redline 8000. US numbers: https://hondanews.com/en-US/releases/release-ff6633ebcc698302413a3d004c34ca74-1991-acura-nsx-specifications",
+        "body": "Acura spec sheet: wheelbase 2530 mm, 4405 x 1810 x 1170 mm. Kerb 1370 kg is the encyCARpedia figure; Acura's own curb line was not in the captured sheet. Cd 0.32 is the long-standing published figure (supercars.net and others), not printed on the Acura sheet captured here. Area is 1.810 x 1.170 x 0.81.",
+        "performance": "https://www.encycarpedia.com/honda/91-nsx-na1-coupe lists 0-62 mph in 5.9 s and 168 mph. Treat both as secondary.",
+        "gearset": "Acura 1991 specifications, 5-speed, final 4.062.",
+        "fit": "Acura sheet: 205/50 ZR15 front, 225/50 ZR16 rear, ventilated discs 282 mm, aluminium double wishbones, no traction control."
+      },
+      "unsure": [
+        "kg",
+        "cd",
+        "area",
+        "fWt",
+        "t100",
+        "top"
+      ],
+      "note": "Rear tyre is on a 16-inch wheel and the front is 15-inch; fit.wheel is the front diameter and the rear is one inch larger, which the single wheel field cannot say. fWt 0.42 is a mid-engine estimate, not an Acura split. Use the 280 PS rating for a JDM car or 270 hp SAE for the US car; they are the same engine."
+    },
+    {
+      "id": "ford-f150-raptor-2017",
+      "name": "Ford F-150 Raptor (2017)",
+      "cat": "Pickup",
+      "era": "2010s",
+      "role": "Pickup",
+      "confidence": "medium",
+      "chassis": "pickup",
+      "chassisFit": "fair",
+      "chassisNote": "Fits PICKUP TRUCK, with a wider track and long-travel suspension the archetype does not know about. The 2017 Raptor is the second generation, 3.5 EcoBoost, not the later V8 Raptor R. No hybrid system.",
+      "engineStatus": "new",
+      "engine": "Ford 3.5 EcoBoost HO V6 (F-150 Raptor 2017)",
+      "body": {
+        "kg": 2585,
+        "cd": 0.42,
+        "area": 3.5,
+        "wb": 3.683,
+        "fWt": 0.57
+      },
+      "fit": {
+        "drive": "awd",
+        "tire": "eco",
+        "tw": 315,
+        "ta": 70,
+        "wheel": 17,
+        "brake": "hd",
+        "rotor": 350,
+        "susp": "comfort",
+        "gears": 10,
+        "gearbox": "auto",
+        "diff": "clsd",
+        "tc": true,
+        "geoF": "wishbone",
+        "geoR": "solid"
+      },
+      "real": {
+        "t100": 5.4,
+        "top": 180,
+        "limited": true,
+        "unit": "hp_SAE"
+      },
+      "gearset": {
+        "r": [
+          4.696,
+          2.985,
+          2.146,
+          1.769,
+          1.52,
+          1.275,
+          1,
+          0.854,
+          0.689,
+          0.636
+        ],
+        "fd": 4.1,
+        "src": "Ford 10R80 ratio set as published for the 2017 F-150, with the Raptor's 4.10 axle. Marked unsure because the ratio table was not on the Raptor key-messages PDF captured here."
+      },
+      "enginePreset": {
+        "cat": "Pickup",
+        "name": "Ford 3.5 EcoBoost HO V6 (F-150 Raptor 2017)",
+        "displacement_cc": 3496,
+        "real": {
+          "hp": 450,
+          "hpRpm": 5000,
+          "tq": 691,
+          "tqRpm": 3500,
+          "unit": "hp_SAE"
+        },
+        "unsure": [
+          "boost_bar",
+          "hpRpm",
+          "tqRpm",
+          "bore_mm"
+        ],
+        "note": "Second-generation high-output 3.5 twin-turbo V6, 450 hp and 510 lb-ft (691 Nm). Port plus direct injection in production; the model has one injector field, set to direct. Peak-rpm pair is the usual published pair and was not on the truncated engine card.",
+        "engine": {
+          "cylinders": 6,
+          "layout": "v",
+          "bore_mm": 92.5,
+          "stroke_mm": 86.7,
+          "compression": 10.5,
+          "redline": 6500,
+          "intake": "turbo",
+          "boost_bar": 1.3,
+          "turboSize": "medium",
+          "turboConfig": "twin",
+          "intercooler": "large",
+          "injector": "direct",
+          "vvt": true,
+          "cam": "stock",
+          "exhaust": "sport",
+          "airFilter": "stock",
+          "octane": 91,
+          "radiator": "large",
+          "oilCooler": true
+        }
+      },
+      "sources": {
+        "engine": "https://media.ford.com/content/dam/fordmedia/North%20America/US/product/2017/f-150/2017-f150-raptor-engine-cards.pdf — 450 hp and 510 lb-ft. Stroke 86.7 mm and CR 10.5 from Ford's 3.5 EcoBoost Raptor service specifications. Bore 92.5 mm is the standard 3.5 EcoBoost bore (3496 cc with that stroke).",
+        "body": "Curb weight was not in the key-messages PDF. 2585 kg is about 5700 lb, a typical published SuperCrew 4x4 curb, and is unsure. Wheelbase 145 in (3683 mm) is the F-150 SuperCrew's. Cd and area are estimates; Ford only said aero was 5 percent better than the previous Raptor.",
+        "performance": "Ford did not publish 0-60 or top speed in the key messages. t100 5.4 s is a road-test order of magnitude (0-60 near 5.1 s). Top speed is governed; 180 km/h is an estimate.",
+        "gearset": "10R80 ratios are Ford's published set for this transmission; axle 4.10 is the Raptor specification in Ford order guides. Confirm before locking the gearset.",
+        "fit": "BFGoodrich All-Terrain 315/70R17 is the standard 2017 Raptor tyre. The tyre model has no all-terrain compound; eco is the closest treaded bucket and will be slightly grippier or slightly less grippy than a KO2 depending on surface. Drive is awd because the truck's 4A mode is the road mode; 2H is also selectable."
+      },
+      "unsure": [
+        "kg",
+        "cd",
+        "area",
+        "wb",
+        "fWt",
+        "t100",
+        "top",
+        "rotor",
+        "boost_bar",
+        "hpRpm",
+        "tqRpm",
+        "bore_mm",
+        "gearset",
+        "tire"
+      ],
+      "note": "First petrol V6 pickup in the batch, and the reason for a Pickup category separate from Diesel. Octane 91 is AKI, as Ford specifies premium."
+    },
+    {
+      "id": "nissan-gtr-r35-2017",
+      "name": "Nissan GT-R (R35, 2017)",
+      "cat": "Turbo Performance",
+      "era": "2010s",
+      "role": "Sports coupe",
+      "confidence": "high",
+      "chassis": "coupe",
+      "chassisFit": "fair",
+      "chassisNote": "SPORTS COUPE is the closest. The R35 is front-mid engine with a rear transaxle, so the weight is more even than a typical coupe, and it is all-wheel drive. Not a mid-engine supercar. The R34 GT-R already in the list is a different car and a different engine (RB26 inline-six).",
+      "engineStatus": "new",
+      "engine": "Nissan VR38DETT (GT-R R35 2017)",
+      "body": {
+        "kg": 1782,
+        "cd": 0.26,
+        "area": 2.05,
+        "wb": 2.779,
+        "fWt": 0.54
+      },
+      "fit": {
+        "drive": "awd",
+        "tire": "sport",
+        "tw": 285,
+        "twF": 255,
+        "ta": 35,
+        "wheel": 20,
+        "brake": "big",
+        "rotor": 390,
+        "susp": "sport",
+        "gears": 6,
+        "gearbox": "dct",
+        "diff": "clsd",
+        "tc": true,
+        "geoF": "wishbone",
+        "geoR": "multilink"
+      },
+      "real": {
+        "t100": 2.9,
+        "top": 315,
+        "limited": false,
+        "unit": "hp_SAE"
+      },
+      "gearset": {
+        "r": [
+          4.056,
+          2.301,
+          1.595,
+          1.248,
+          1.001,
+          0.796
+        ],
+        "fd": 3.7,
+        "src": "2017 Nissan GT-R press kit. Rear final 3.700; the front axle is 2.937. Ratios are stated against the rear final, same convention as the 992 Turbo S."
+      },
+      "enginePreset": {
+        "cat": "Turbo Performance",
+        "name": "Nissan VR38DETT (GT-R R35 2017)",
+        "displacement_cc": 3799,
+        "real": {
+          "hp": 565,
+          "hpRpm": 6800,
+          "tq": 633,
+          "tqRpm": 3300,
+          "unit": "hp_SAE"
+        },
+        "unsure": [
+          "boost_bar",
+          "turboSize"
+        ],
+        "note": "467 lb-ft is 633 Nm, quoted from 3300 to 5800 rpm, so tqLimit is set. 2017 Premium is 565 hp; earlier R35s were 480-545 and the NISMO is higher. Twin IHI turbos. Hand-built.",
+        "engine": {
+          "cylinders": 6,
+          "layout": "v",
+          "bore_mm": 95.5,
+          "stroke_mm": 88.4,
+          "compression": 9,
+          "redline": 7100,
+          "intake": "turbo",
+          "boost_bar": 0.9,
+          "turboSize": "medium",
+          "turboConfig": "twin",
+          "intercooler": "large",
+          "injector": "port",
+          "vvt": true,
+          "cam": "sport",
+          "exhaust": "sport",
+          "airFilter": "perf",
+          "octane": 98,
+          "radiator": "large",
+          "oilCooler": true,
+          "tqLimit": 633
+        }
+      },
+      "sources": {
+        "engine": "https://usa.nissannews.com/en-US/releases/us-2017-nissan-gt-r-press-kit — VR38DETT, 565 hp at 6800 rpm, 467 lb-ft at 3300-5800, 95.5 x 88.4 mm, CR 9.0, 7100 rpm.",
+        "body": "Same press kit: curb 3939? The captured table says front 2147 lb, rear 1781 lb, total 3929 lb (1782 kg), distribution 54/46, Cd 0.26, wheelbase 109.4 in. Area is 1.895 m width x 1.369 m height x 0.81.",
+        "performance": "0-100 and top speed were not in the captured US specification table. 2.9 s and 315 km/h are the figures Nissan and its NISMO/AU material quote for this generation; both are marked unsure for the US Premium.",
+        "gearset": "Same 2017 US press kit.",
+        "fit": "Same press kit: Dunlop SP Sport Maxx 255/40ZR20 front, 285/35ZR20 rear, Brembo rotors 15.35 in (390 mm) front."
+      },
+      "unsure": [
+        "area",
+        "t100",
+        "top",
+        "boost_bar"
+      ],
+      "note": "The dual-clutch transaxle is modelled as dct. ATTESA can send up to 50 percent forward; the sim's awd split is symmetric, which this car is not. fWt 0.54 is the published static split (2147/3929)."
+    },
+    {
+      "id": "alfa-giulia-quadrifoglio-2017",
+      "name": "Alfa Romeo Giulia Quadrifoglio (2017)",
+      "cat": "Turbo Performance",
+      "era": "2010s",
+      "role": "Sports sedan",
+      "confidence": "high",
+      "chassis": "sedan",
+      "chassisFit": "good",
+      "chassisNote": "Fits SPORTS SEDAN. Rear-drive 2.9 twin-turbo V6. The Quadrifoglio of this generation is combustion only; it is not the later mild-hybrid Giulia.",
+      "engineStatus": "new",
+      "engine": "Alfa Romeo 690T 2.9 V6 (Giulia Quadrifoglio)",
+      "body": {
+        "kg": 1580,
+        "cd": 0.32,
+        "area": 2.16,
+        "wb": 2.82,
+        "fWt": 0.5
+      },
+      "fit": {
+        "drive": "rwd",
+        "tire": "sport",
+        "tw": 285,
+        "twF": 245,
+        "ta": 30,
+        "wheel": 19,
+        "brake": "big",
+        "rotor": 360,
+        "susp": "sport",
+        "gears": 6,
+        "gearbox": "manual",
+        "diff": "clsd",
+        "tc": true,
+        "geoF": "wishbone",
+        "geoR": "multilink"
+      },
+      "real": {
+        "t100": 3.9,
+        "top": 307,
+        "limited": false,
+        "unit": "PS"
+      },
+      "gearset": {
+        "r": [
+          4.055,
+          2.396,
+          1.582,
+          1.192,
+          1,
+          0.872
+        ],
+        "fd": 3.09,
+        "src": "FCA Giulia technical specifications, 2.9 V6 BiTurbo manual column."
+      },
+      "enginePreset": {
+        "cat": "Turbo Performance",
+        "name": "Alfa Romeo 690T 2.9 V6 (Giulia Quadrifoglio)",
+        "displacement_cc": 2891,
+        "real": {
+          "hp": 510,
+          "hpRpm": 6500,
+          "tq": 600,
+          "tqRpm": 2500,
+          "unit": "PS"
+        },
+        "unsure": [
+          "boost_bar",
+          "turboSize"
+        ],
+        "note": "510 PS European rating. The US SAE rating is 505 hp. Torque is 600 Nm; the later UK brochure extends it as 2500-5000 rpm, so tqLimit is set. 90-degree V6, Ferrari-derived, aluminium. Cylinder deactivation is not modelled.",
+        "engine": {
+          "cylinders": 6,
+          "layout": "v",
+          "bore_mm": 86.5,
+          "stroke_mm": 82,
+          "compression": 9.3,
+          "redline": 7200,
+          "intake": "turbo",
+          "boost_bar": 1.4,
+          "turboSize": "medium",
+          "turboConfig": "twin",
+          "intercooler": "large",
+          "injector": "direct",
+          "vvt": true,
+          "cam": "sport",
+          "exhaust": "sport",
+          "airFilter": "perf",
+          "octane": 98,
+          "radiator": "large",
+          "oilCooler": true,
+          "tqLimit": 600
+        }
+      },
+      "sources": {
+        "engine": "https://admin.media.stellantis.com/me-en/download-model-document/19 — 86.5 x 82 mm, 2891 cc, CR 9.3, 375 kW (510 hp) at 6500 rpm, 600 Nm at 2500 rpm.",
+        "body": "Same FCA sheet: manual kerb 1580 kg, wheelbase 2820 mm, length 4639, height 1426. Cd 0.32 is in the UK Quadrifoglio brochure and in FCA's preliminary aero note. Area is 1.873 m (mirrors excluded, the usual body width) x 1.426 x 0.81. The sheet's 2024 mm width includes mirrors.",
+        "performance": "FCA sheet: 0-100 km/h 3.9 s, top speed 307 km/h, for the manual. The automatic is the same 3.9 s claim.",
+        "gearset": "Same FCA sheet, manual column, final 3.090.",
+        "fit": "UK brochure https://www.alfaromeo.com/content/dam/alfa/uk/brochure/quadrifoglio-giulia-stelvio.pdf — 245/35 R19 front, 285/30 R19 rear, front discs 360 mm (390 mm optional carbon-ceramic). The early FCA sheet's 50/50 split was paired with a preliminary 1524 kg curb; fWt stays 0.50 but is unsure."
+      },
+      "unsure": [
+        "area",
+        "fWt",
+        "boost_bar",
+        "redline"
+      ],
+      "note": "Manual is the fully specified early car (1580 kg). Later UK cars are listed at 1620 kg with the 8-speed automatic. Carbon-ceramic 390 mm brakes are optional; the iron 360 mm disc is the base. US cars were automatic and rated 505 hp."
+    },
+    {
+      "id": "nissan-300zx-tt-1990",
+      "name": "Nissan 300ZX Twin Turbo (Z32, 1990)",
+      "cat": "Turbo Performance",
+      "era": "1990s",
+      "role": "Sports coupe",
+      "confidence": "high",
+      "chassis": "coupe",
+      "chassisFit": "good",
+      "chassisNote": "Fits SPORTS COUPE. European brochure dimensions match the 2+2 wheelbase (2570 mm). A 2-seat TT is shorter (2450 mm) and lighter. This entry follows the brochure.",
+      "engineStatus": "new",
+      "engine": "Nissan VG30DETT (300ZX Z32)",
+      "body": {
+        "kg": 1605,
+        "cd": 0.32,
+        "area": 1.83,
+        "wb": 2.57,
+        "fWt": 0.53
+      },
+      "fit": {
+        "tc": false,
+        "drive": "rwd",
+        "tire": "sport",
+        "tw": 245,
+        "twF": 225,
+        "ta": 45,
+        "wheel": 16,
+        "brake": "slotted",
+        "rotor": 280,
+        "susp": "sport",
+        "gears": 5,
+        "gearbox": "manual",
+        "diff": "visc",
+        "geoF": "wishbone",
+        "geoR": "multilink"
+      },
+      "real": {
+        "t100": 5.9,
+        "top": 250,
+        "limited": true,
+        "unit": "PS"
+      },
+      "gearset": {
+        "r": [
+          3.214,
+          1.925,
+          1.302,
+          1,
+          0.752
+        ],
+        "fd": 3.692,
+        "src": "1990 Nissan 300ZX Dutch brochure, manual column, final 3.692. Third gear is printed like 1.102 in the scan; 1.302 is the FS5R30A ratio and matches the rest of the column."
+      },
+      "enginePreset": {
+        "cat": "Turbo Performance",
+        "name": "Nissan VG30DETT (300ZX Z32)",
+        "displacement_cc": 2960,
+        "real": {
+          "hp": 283,
+          "hpRpm": 6400,
+          "tq": 375,
+          "tqRpm": 3600,
+          "unit": "PS"
+        },
+        "unsure": [
+          "boost_bar"
+        ],
+        "note": "European brochure: 208 kW (283 PS) at 6400 rpm and 375 Nm at 3600 rpm. US SAE net is 300 hp and 283 lb-ft. Japanese cars were quoted under the 280 PS agreement. Twin Garrett turbos, about 0.5 bar in stock form according to secondary VG30DETT writeups.",
+        "engine": {
+          "cylinders": 6,
+          "layout": "v",
+          "bore_mm": 87,
+          "stroke_mm": 83,
+          "compression": 8.5,
+          "redline": 7000,
+          "intake": "turbo",
+          "boost_bar": 0.5,
+          "turboSize": "small",
+          "turboConfig": "twin",
+          "intercooler": "large",
+          "injector": "port",
+          "vvt": true,
+          "cam": "sport",
+          "exhaust": "sport",
+          "airFilter": "perf",
+          "octane": 98,
+          "radiator": "large",
+          "oilCooler": true
+        }
+      },
+      "sources": {
+        "engine": "https://autocatalogarchive.com/wp-content/uploads/2017/07/Nissan-300-ZX-1990-NL.pdf — VG30DETT, 87.0 x 83.0 mm, CR 8.5, 208 kW at 6400, 375 Nm at 3600.",
+        "body": "Same brochure: manual curb 1605 kg, Cd 0.32, wheelbase 2570 mm, 4520 x 1800 x 1255 mm. Area is 1.800 x 1.255 x 0.81.",
+        "performance": "Same brochure, manual: 0-100 km/h 5.9 s, top speed 250 km/h.",
+        "gearset": "Same brochure. Third ratio corrected from the known FS5R30A set.",
+        "fit": "Same brochure: 225/50ZR16 front, 245/45ZR16 rear, viscous LSD, four-piston front calipers."
+      },
+      "unsure": [
+        "area",
+        "fWt",
+        "rotor",
+        "boost_bar",
+        "gearset"
+      ],
+      "note": "Top speed 250 km/h on a 1990 European turbo coupe is the gentlemen's-agreement limiter. fWt is estimated. Boost 0.5 bar is the commonly published stock figure, not printed in the brochure."
+    },
+    {
+      "id": "buick-gnx-1987",
+      "name": "Buick GNX (1987)",
+      "cat": "Turbo Performance",
+      "era": "1980s",
+      "role": "Muscle",
+      "confidence": "high",
+      "chassis": "muscle",
+      "chassisFit": "good",
+      "chassisNote": "Fits MUSCLE CAR. Turbo V6, not a V8. The archetype's V8 assumption is only a label; body and the new engine override it.",
+      "engineStatus": "new",
+      "engine": "Buick LC2 turbo V6 (GNX)",
+      "body": {
+        "kg": 1608,
+        "cd": 0.4,
+        "area": 2.15,
+        "wb": 2.746,
+        "fWt": 0.56
+      },
+      "fit": {
+        "tc": false,
+        "drive": "rwd",
+        "tire": "sport",
+        "tw": 255,
+        "twF": 245,
+        "ta": 50,
+        "wheel": 16,
+        "brake": "steel",
+        "rotor": 267,
+        "susp": "sport",
+        "gears": 4,
+        "gearbox": "auto",
+        "diff": "clsd",
+        "geoF": "wishbone",
+        "geoR": "solid"
+      },
+      "real": {
+        "t100": 5,
+        "top": 200,
+        "limited": true,
+        "unit": "hp_SAE"
+      },
+      "gearset": {
+        "r": [
+          2.74,
+          1.57,
+          1,
+          0.67
+        ],
+        "fd": 3.42,
+        "src": "THM 200-4R ratios and 3.42 axle as listed by Buick Turbo Regal registries and Hemmings. Hemmings' table mislabels 4th as reverse; 4th is 0.67 and reverse is about 2.07."
+      },
+      "enginePreset": {
+        "cat": "Turbo Performance",
+        "name": "Buick LC2 turbo V6 (GNX)",
+        "displacement_cc": 3791,
+        "real": {
+          "hp": 276,
+          "hpRpm": 4400,
+          "tq": 488,
+          "tqRpm": 3000,
+          "unit": "hp_SAE"
+        },
+        "unsure": [
+          "redline"
+        ],
+        "note": "Factory rating 276 hp at 4400 rpm and 360 lb-ft at 3000 rpm. Car and Driver's May 1987 test said the engine showed about 300 hp on a dyno; the preset should keep Buick's rating. Boost 15 psi is 1.03 bar. Sequential port injection, Garrett T3, intercooler. OHV, 12 valves.",
+        "engine": {
+          "cylinders": 6,
+          "layout": "v",
+          "valves": 2,
+          "bore_mm": 96.5,
+          "stroke_mm": 86.4,
+          "compression": 8,
+          "redline": 5000,
+          "intake": "turbo",
+          "boost_bar": 1.03,
+          "turboSize": "medium",
+          "intercooler": "large",
+          "vvt": false,
+          "cam": "stock",
+          "injector": "port",
+          "octane": 91,
+          "exhaust": "sport",
+          "airFilter": "perf",
+          "radiator": "large",
+          "oilCooler": true
+        }
+      },
+      "sources": {
+        "engine": "https://www.hemmings.com/stories/black-magic-1987-buick-gnx/ — 231 ci, 3.80 x 3.40 in, CR 8.0, 276 hp at 4400, 360 lb-ft at 3000, 15 psi. Car and Driver's test is https://www.caranddriver.com/reviews/a33502193/tested-1987-buick-gnx/",
+        "body": "Hemmings and Car and Driver both list curb/shipping weight 3545 lb and wheelbase 108.1 in. Cd is not published; 0.40 is a G-body estimate. Area is 1.819 m width x 1.385 m height x 0.85.",
+        "performance": "Car and Driver, May 1987: 0-60 mph in 4.7 s, top speed 124 mph where the fuel cut sits. t100 5.0 s is the 0-60 plus a small gap.",
+        "gearset": "https://buickturboregal.com/buick-gnx-quick-specs/ and the Hemmings table.",
+        "fit": "Car and Driver: Goodyear Eagle VR50, P245/50VR16 front, P255/50VR16 rear. Front discs 10.5 in, rear drums. The model has no drum brake; steel disc at 267 mm will stop shorter than the real car."
+      },
+      "unsure": [
+        "cd",
+        "area",
+        "fWt",
+        "t100",
+        "redline"
+      ],
+      "note": "Rear brakes were drums. Document that when the preset is built, or the 100-0 stop will be optimistic. No traction control. Positraction differential."
+    },
+    {
+      "id": "ferrari-dino-246-gt-1969",
+      "name": "Ferrari Dino 246 GT (1969)",
+      "cat": "Supercar",
+      "era": "1960s",
+      "role": "Classic mid-engine",
+      "confidence": "medium",
+      "chassis": "super",
+      "chassisFit": "fair",
+      "chassisNote": "MID-ENGINE SUPER is the right layout, but the archetype is a modern supercar (DCT, wide tyres, aero). This is a 1969 2.4 V6 on 14-inch tyres with no driver aids. Fit overrides those parts. The transverse V6 is still layout v.",
+      "engineStatus": "new",
+      "engine": "Ferrari Dino 135 CS 2.4 V6 (246 GT)",
+      "body": {
+        "kg": 1200,
+        "cd": 0.4,
+        "area": 1.56,
+        "wb": 2.34,
+        "fWt": 0.43
+      },
+      "fit": {
+        "tc": false,
+        "drive": "rwd",
+        "tire": "street",
+        "tw": 205,
+        "ta": 70,
+        "wheel": 14,
+        "brake": "steel",
+        "rotor": 270,
+        "susp": "sport",
+        "gears": 5,
+        "gearbox": "manual",
+        "diff": "clsd",
+        "geoF": "wishbone",
+        "geoR": "wishbone"
+      },
+      "real": {
+        "t100": 7.1,
+        "top": 235,
+        "limited": false,
+        "unit": "PS"
+      },
+      "gearset": {
+        "r": null,
+        "fd": null,
+        "src": "Ferrari's model page says a 5-speed transaxle and does not print ratios."
+      },
+      "enginePreset": {
+        "cat": "Supercar",
+        "era": "1960s",
+        "name": "Ferrari Dino 135 CS 2.4 V6 (246 GT)",
+        "displacement_cc": 2419,
+        "real": {
+          "hp": 195,
+          "hpRpm": 7600,
+          "tq": 226,
+          "tqRpm": 5500,
+          "unit": "PS"
+        },
+        "unsure": [
+          "tq",
+          "tqRpm"
+        ],
+        "note": "65-degree V6, chain-driven twin cams, two valves, three Weber 40 DCN downdrafts. Ferrari does not publish torque. 226 Nm is the figure widely repeated from period data and is marked unsure. Weber DCN is downdraft; sidedraft is the closest race-carb bucket in the model and is not the physical layout.",
+        "engine": {
+          "cylinders": 6,
+          "layout": "v",
+          "valves": 2,
+          "bore_mm": 92.5,
+          "stroke_mm": 60,
+          "compression": 9,
+          "redline": 7800,
+          "intakeSys": "sidedraft",
+          "vvt": false,
+          "cam": "sport",
+          "injector": "port",
+          "octane": 98,
+          "exhaust": "sport",
+          "airFilter": "perf",
+          "ignitionType": "coil"
+        }
+      },
+      "sources": {
+        "engine": "https://www.ferrari.com/en-EN/auto/dino-246-gt — 92.5 x 60 mm, 2419.20 cc, CR 9.0, 143 kW (195 hp) at 7600 rpm, three Weber 40 DCN.",
+        "body": "Ferrari: dry weight 1080 kg, wheelbase 2340 mm, 4235 x 1700 x 1135 mm, top speed 235 km/h. Curb 1200 kg is dry plus about 120 kg of fluids and is an estimate. Cd is not published. Area is 1.700 x 1.135 x 0.81.",
+        "performance": "Ferrari prints top speed 235 km/h and 0-1000 m in 26.8 s, and leaves 0-100 blank. t100 7.1 s is inferred from that standing kilometre and is unsure.",
+        "gearset": "Not published on the Ferrari page.",
+        "fit": "Ferrari: 205/70 VR14 front and rear, disc brakes, wishbones, 5-speed."
+      },
+      "unsure": [
+        "kg",
+        "cd",
+        "area",
+        "fWt",
+        "t100",
+        "rotor",
+        "tq",
+        "tqRpm",
+        "intakeSys",
+        "gearset"
+      ],
+      "note": "First classic V6, and a transverse mid-engine. The sim's layout field does not encode transverse versus longitudinal."
+    },
+    {
+      "id": "ferrari-f40-1987",
+      "name": "Ferrari F40 (1987)",
+      "cat": "Supercar",
+      "era": "1980s",
+      "role": "Supercar",
+      "confidence": "medium",
+      "chassis": "hyper",
+      "chassisFit": "good",
+      "chassisNote": "Fits CARBON HYPERCAR: composite body, mid-engine, large rear wing. Early cars have no catalyst and no driver aids. The archetype's DCT and carbon-ceramic brakes are overridden; the F40 is a 5-speed manual with iron discs.",
+      "engineStatus": "new",
+      "engine": "Ferrari F120A V8 TT (F40)",
+      "body": {
+        "kg": 1254,
+        "cd": 0.34,
+        "area": 1.79,
+        "wb": 2.45,
+        "fWt": 0.42
+      },
+      "fit": {
+        "tc": false,
+        "drive": "rwd",
+        "tire": "sport",
+        "tw": 335,
+        "twF": 245,
+        "ta": 35,
+        "wheel": 17,
+        "brake": "big",
+        "rotor": 330,
+        "susp": "coilover",
+        "gears": 5,
+        "gearbox": "manual",
+        "diff": "clsd",
+        "aF": "none",
+        "aR": "none",
+        "aFl": "none",
+        "geoF": "wishbone",
+        "geoR": "wishbone"
+      },
+      "real": {
+        "t100": 4.1,
+        "top": 324,
+        "limited": false,
+        "unit": "PS"
+      },
+      "gearset": {
+        "r": null,
+        "fd": null,
+        "src": "Ferrari's page says 5-speed and does not print ratios. Published sets online disagree; leave them unset."
+      },
+      "enginePreset": {
+        "cat": "Supercar",
+        "era": "1980s",
+        "name": "Ferrari F120A V8 TT (F40)",
+        "displacement_cc": 2936,
+        "real": {
+          "hp": 478,
+          "hpRpm": 7000,
+          "tq": 577,
+          "tqRpm": 4000,
+          "unit": "PS"
+        },
+        "unsure": [
+          "boost_bar",
+          "redline",
+          "turboSize"
+        ],
+        "note": "351.5 kW is 478 PS. Twin turbo, Weber-Marelli electronic injection, four valves, dry sump, no catalyst on early European cars. Boost is commonly described near 1.1 bar and was not on the Ferrari page.",
+        "engine": {
+          "cylinders": 8,
+          "layout": "v",
+          "bore_mm": 82,
+          "stroke_mm": 69.5,
+          "compression": 7.7,
+          "redline": 7700,
+          "intake": "turbo",
+          "boost_bar": 1.1,
+          "turboSize": "medium",
+          "turboConfig": "twin",
+          "intercooler": "large",
+          "injector": "port",
+          "intakeSys": "efi",
+          "vvt": false,
+          "cam": "race",
+          "valveSpring": "race",
+          "exhaust": "race",
+          "cat": "none",
+          "airFilter": "perf",
+          "octane": 98,
+          "radiator": "large",
+          "oilCooler": true
+        }
+      },
+      "sources": {
+        "engine": "https://www.ferrari.com/en-EN/auto/f40 — 82 x 69.5 mm, 2936.25 cc, CR 7.7, 351.5 kW at 7000 rpm, 577 Nm at 4000 rpm, twin turbos, Weber-Marelli.",
+        "body": "Ferrari: dry weight 1100 kg, wheelbase 2450 mm, 4358 x 1970 x 1124 mm, tyres 245/40 ZR17 and 335/35 ZR17. European kerb 1254 kg is the figure Wikipedia cites; it is not on the Ferrari page. Cd 0.34 is the published figure Wikipedia attributes to Ferrari material. Area is 1.970 x 1.124 x 0.81.",
+        "performance": "Ferrari: 0-100 km/h 4.1 s, top speed 324 km/h.",
+        "gearset": "Not on the Ferrari page.",
+        "fit": "Ferrari: 5-speed, wishbones, disc brakes. Rotor diameter is not on the page."
+      },
+      "unsure": [
+        "kg",
+        "cd",
+        "area",
+        "fWt",
+        "rotor",
+        "boost_bar",
+        "redline",
+        "gearset"
+      ],
+      "note": "body.kg must be a curb mass. 1100 kg is dry. The wing and the flat underbody are already in the measured Cd, so fit aero parts stay off, matching the existing preset rule. US cars from 1990 gained catalysts; this entry is the early European car (cat none)."
+    },
+    {
+      "id": "jaguar-etype-38-1961",
+      "name": "Jaguar E-Type 3.8 FHC (Series 1, 1961)",
+      "cat": "NA Sports",
+      "era": "1960s",
+      "role": "Classic GT",
+      "confidence": "medium",
+      "chassis": "coupe",
+      "chassisFit": "fair",
+      "chassisNote": "SPORTS COUPE is closer than GRAND TOURER, which is sized as a modern heavy GT. The fixed-head coupé is the entry; the roadster is about 60 kg lighter.",
+      "engineStatus": "new",
+      "engine": "Jaguar XK 3.8 I6 (E-Type S1)",
+      "body": {
+        "kg": 1315,
+        "cd": 0.4,
+        "area": 1.64,
+        "wb": 2.438,
+        "fWt": 0.51
+      },
+      "fit": {
+        "tc": false,
+        "drive": "rwd",
+        "tire": "street",
+        "tw": 185,
+        "ta": 80,
+        "wheel": 15,
+        "brake": "steel",
+        "rotor": 279,
+        "susp": "sport",
+        "gears": 4,
+        "gearbox": "manual",
+        "diff": "clsd",
+        "geoF": "wishbone",
+        "geoR": "wishbone"
+      },
+      "real": {
+        "t100": 7.3,
+        "top": 241,
+        "limited": false,
+        "unit": "hp_SAE"
+      },
+      "gearset": {
+        "r": [
+          3.378,
+          1.861,
+          1.284,
+          1
+        ],
+        "fd": 3.31,
+        "src": "Overall ratios 11.18, 6.16, 4.25, 3.31 with the standard 3.31 axle, as listed for the 3.8 fixed-head. Gear ratios are overall divided by 3.31."
+      },
+      "enginePreset": {
+        "cat": "NA Sports",
+        "era": "1960s",
+        "name": "Jaguar XK 3.8 I6 (E-Type S1)",
+        "displacement_cc": 3781,
+        "real": {
+          "hp": 265,
+          "hpRpm": 5500,
+          "tq": 353,
+          "tqRpm": 4000,
+          "unit": "hp_SAE"
+        },
+        "unsure": [
+          "hp",
+          "tq"
+        ],
+        "note": "265 bhp and 260 lb-ft are SAE gross, a bare-engine figure, not installed net power. The model compares against net ratings. A net number was not published; expect the gross figure to sit above what the installed engine made. Three SU HD8 sidedraft carburettors, DOHC, two valves.",
+        "engine": {
+          "cylinders": 6,
+          "bore_mm": 87,
+          "stroke_mm": 106,
+          "compression": 9,
+          "redline": 5500,
+          "intakeSys": "sidedraft",
+          "vvt": false,
+          "valves": 2,
+          "cam": "stock",
+          "injector": "port",
+          "octane": 98,
+          "exhaust": "stock",
+          "airFilter": "stock"
+        }
+      },
+      "sources": {
+        "engine": "https://jaguaretype.org/specifications — 3781 cc, 87 x 106 mm, CR 9.0, three SU HD8, 265 bhp SAE gross at 5500 rpm, 260 lb-ft at 4000 rpm.",
+        "body": "Wikipedia Series 1 table, citing period dimensions: FHC kerb 2900 lb (1315 kg), wheelbase 96 in. The E-Type archive labels that weight as collated, not a factory kerb it has verified. Cd 0.40 is MotorTrend's retrospective figure, not a 1961 Jaguar number. Area is 1.657 x 1.222 x 0.81.",
+        "performance": "Jaguar's launch claim for the fixed-head was 0-60 mph in 6.9 s and 150 mph. Car and Driver's 1961 roadster test was 6.3 s and an observed 145 mph at 2810 lb. t100 7.3 s is the 6.9 s claim plus a small gap, for the heavier coupé.",
+        "gearset": "https://bmcmotorworks.com/jaguar-e-type/ overall ratios with the 3.31 axle.",
+        "fit": "6.40-15 crossplies on wire wheels, disc brakes 11 in front. fit uses a metric equivalent 185/80R15 and a 279 mm disc. A limited-slip differential was optional; clsd is the performance fit, open is also correct for a base car."
+      },
+      "unsure": [
+        "kg",
+        "cd",
+        "area",
+        "fWt",
+        "t100",
+        "tw",
+        "ta",
+        "hp",
+        "tq"
+      ],
+      "note": "Do not score the engine model against 265 hp. That number is gross. Redline is set at the power peak because a higher limit was not found; the XK will run past 5500, so redline is conservative and listed by the gross-power caveat rather than a separate flag."
+    },
+    {
+      "id": "ford-mustang-289-1965",
+      "name": "Ford Mustang Fastback 289 (1965)",
+      "cat": "American V8",
+      "era": "1960s",
+      "role": "Muscle",
+      "confidence": "medium",
+      "chassis": "muscle",
+      "chassisFit": "good",
+      "chassisNote": "Fits MUSCLE CAR. This is the 225 hp 4-barrel A-code 289 with the 4-speed, not the 271 hp K-code Hi-Po, which has a different cam, compression, axle and gearbox.",
+      "engineStatus": "new",
+      "engine": "Ford Windsor 289 4-bbl (Mustang 1965)",
+      "body": {
+        "kg": 1180,
+        "cd": 0.45,
+        "area": 1.94,
+        "wb": 2.743,
+        "fWt": 0.55
+      },
+      "fit": {
+        "tc": false,
+        "drive": "rwd",
+        "tire": "street",
+        "tw": 175,
+        "ta": 80,
+        "wheel": 14,
+        "brake": "steel",
+        "rotor": 260,
+        "susp": "comfort",
+        "gears": 4,
+        "gearbox": "manual",
+        "diff": "open",
+        "geoF": "wishbone",
+        "geoR": "solid"
+      },
+      "real": {
+        "t100": 8.8,
+        "top": 180,
+        "limited": false,
+        "unit": "hp_SAE"
+      },
+      "gearset": {
+        "r": [
+          3.16,
+          2.21,
+          1.41,
+          1
+        ],
+        "fd": 3,
+        "src": "1965 Mustang fact sheet (Over-Drive Magazine, from the period specifications): four-speed 3.16/2.21/1.41/1.00, and the 225 hp V8's 3.00 axle. Confirmed by the AMA sheet's axle column."
+      },
+      "enginePreset": {
+        "cat": "American V8",
+        "era": "1960s",
+        "name": "Ford Windsor 289 4-bbl (Mustang 1965)",
+        "displacement_cc": 4736,
+        "real": {
+          "hp": 225,
+          "hpRpm": 4800,
+          "tq": 414,
+          "tqRpm": 3200,
+          "unit": "hp_SAE"
+        },
+        "unsure": [
+          "hp",
+          "tq"
+        ],
+        "note": "225 hp at 4800 rpm and 305 lb-ft at 3200 rpm are SAE gross. The AMA sheet lists CR 10.0 for this 4V; a magazine summary says 9.3, which is the 2-barrel engine. Autolite 4-barrel, OHV, two valves. The 271 hp Hi-Po is a different preset if it is added later.",
+        "engine": {
+          "cylinders": 8,
+          "layout": "v",
+          "valves": 2,
+          "bore_mm": 101.6,
+          "stroke_mm": 72.9,
+          "compression": 10,
+          "redline": 5500,
+          "intakeSys": "carb4",
+          "vvt": false,
+          "cam": "stock",
+          "injector": "port",
+          "octane": 95,
+          "exhaust": "stock",
+          "airFilter": "stock"
+        }
+      },
+      "sources": {
+        "engine": "https://over-drive-magazine.com/2022/10/07/1965-ford-mustang-fact-sheet/ and the AMA specifications PDF linked there — 289 4V, 225 hp at 4800, 305 lb-ft at 3200, CR 10.0 on the AMA sheet.",
+        "body": "Fact sheet: wheelbase 108.0 in, hardtop weight 2556 lb. The fastback is a little heavier; 1180 kg is an estimate above the hardtop's 1159 kg. Cd is not a 1965 Ford figure. Area is 1.732 x 1.295 x 0.85.",
+        "performance": "No Ford 0-100 claim was found. t100 8.8 s and top 180 km/h are estimates for a 225-gross-hp fastback with the 3.00 axle, not a road test cited here.",
+        "gearset": "Fact sheet transmission and axle section; AMA sheet axle 3.00 for the 225 hp 4-speed.",
+        "fit": "V8 tyre 6.95-14, converted here to 175/80R14. Base 1965 brakes are drums; front discs arrived as an option. The model has no drums. steel at 260 mm is a stand-in and will out-brake the real car."
+      },
+      "unsure": [
+        "kg",
+        "cd",
+        "area",
+        "fWt",
+        "t100",
+        "top",
+        "tw",
+        "ta",
+        "brake",
+        "rotor",
+        "hp",
+        "tq",
+        "redline"
+      ],
+      "note": "Same gross-versus-net warning as the E-Type. Drum brakes are the larger modelling error on this car."
+    },
+    {
+      "id": "porsche-911-rs-27-1973",
+      "name": "Porsche 911 Carrera RS 2.7 Sport (1973)",
+      "cat": "NA Sports",
+      "era": "1970s",
+      "role": "Classic sports",
+      "confidence": "high",
+      "chassis": "super",
+      "chassisFit": "fair",
+      "chassisNote": "The existing 911s use MID-ENGINE SUPER with engPos rear. This car should do the same. It is a lightweight 1973 RS, not a modern supercar: narrow tyres, 5-speed, no driver aids. The Sport (M471) is the entry; the Touring (M472) is 1075 kg, 6.3 s and 240 km/h per Porsche.",
+      "engineStatus": "new",
+      "engine": "Porsche 911/83 2.7 flat-six (Carrera RS)",
+      "body": {
+        "kg": 960,
+        "cd": 0.39,
+        "area": 1.73,
+        "wb": 2.271,
+        "fWt": 0.4,
+        "engPos": "rear"
+      },
+      "fit": {
+        "tc": false,
+        "drive": "rwd",
+        "tire": "street",
+        "tw": 235,
+        "twF": 215,
+        "ta": 60,
+        "wheel": 15,
+        "brake": "slotted",
+        "rotor": 282,
+        "susp": "sport",
+        "gears": 5,
+        "gearbox": "manual",
+        "diff": "clsd",
+        "aF": "none",
+        "aR": "none",
+        "aFl": "none",
+        "geoF": "strut",
+        "geoR": "wishbone"
+      },
+      "real": {
+        "t100": 5.8,
+        "top": 245,
+        "limited": false,
+        "unit": "PS"
+      },
+      "gearset": {
+        "r": [
+          3.18,
+          1.83,
+          1.26,
+          0.925,
+          0.724
+        ],
+        "fd": 4.43,
+        "src": "Ratios and 4.43 final as compiled by Stuttcars for the RS 2.7. Not re-read from a 1973 Porsche technical sheet in this pass, so the gearset stays unsure."
+      },
+      "enginePreset": {
+        "cat": "NA Sports",
+        "era": "1970s",
+        "name": "Porsche 911/83 2.7 flat-six (Carrera RS)",
+        "displacement_cc": 2687,
+        "real": {
+          "hp": 210,
+          "hpRpm": 6300,
+          "tq": 255,
+          "tqRpm": 5100,
+          "unit": "PS"
+        },
+        "unsure": [],
+        "note": "Bosch mechanical fuel injection, two valves, magnesium case, 8.5:1. Not the later flat-sixes already in PRESETS. Redline 7300 rpm is the figure on Porsche Finder's RS 2.7 technical data.",
+        "engine": {
+          "cylinders": 6,
+          "layout": "boxer",
+          "valves": 2,
+          "bore_mm": 90,
+          "stroke_mm": 70.4,
+          "compression": 8.5,
+          "redline": 7300,
+          "intakeSys": "mech",
+          "vvt": false,
+          "cam": "sport",
+          "injector": "port",
+          "octane": 98,
+          "exhaust": "sport",
+          "airFilter": "perf"
+        }
+      },
+      "sources": {
+        "engine": "https://newsroom.porsche.com/en/2022/history/porsche-50-years-911-carrera-rs-2-7-germanys-fastest-sports-car-28486.html — 210 PS at 6300 rpm, 255 Nm at 5100 rpm. Bore 90 x 70.4 and CR 8.5 from the usual 911/83 specification (Ultimatecarpage / Porsche Finder).",
+        "body": "Porsche newsroom: Sport kerb 960 kg. Wheelbase 2271 mm is the long-standing F-model figure. Cd 0.39 is printed on a Porsche Finder RS 2.7 listing. Area is estimated from about 1.65 x 1.32 x 0.81.",
+        "performance": "Porsche newsroom: Sport 0-100 km/h in 5.8 s, top speed 245 km/h. Touring 6.3 s and 240 km/h.",
+        "gearset": "https://www.stuttcars.com/porsche-911-carrera-rs-2-7-touring-1973-specifications-performance/",
+        "fit": "185/70 and 215/60 sizes are also quoted; Stuttcars lists 215/60VR15 front and 235/60VR15 rear for the Touring. The ducktail is part of the measured Cd, so no extra aero parts."
+      },
+      "unsure": [
+        "cd",
+        "area",
+        "fWt",
+        "tw",
+        "twF",
+        "rotor",
+        "gearset"
+      ],
+      "note": "960 kg is Porsche's 2022 retelling of the Sport kerb. Other compilations say about 1075-1095 kg, which is the Touring. Keep the two cars apart. engPos must be rear or the super archetype will place the engine in the middle."
+    },
+    {
+      "id": "bmw-m3-e30-1986",
+      "name": "BMW M3 (E30, 1986)",
+      "cat": "NA Sports",
+      "era": "1980s",
+      "role": "Sports coupe",
+      "confidence": "high",
+      "chassis": "coupe",
+      "chassisFit": "good",
+      "chassisNote": "Fits SPORTS COUPE. European 200 PS car without a catalyst. The US car is 192-195 hp with a different gearbox and a 4.10 axle.",
+      "engineStatus": "new",
+      "engine": "BMW S14B23 (M3 E30)",
+      "body": {
+        "kg": 1200,
+        "cd": 0.33,
+        "area": 1.85,
+        "wb": 2.562,
+        "fWt": 0.52
+      },
+      "fit": {
+        "tc": false,
+        "drive": "rwd",
+        "tire": "sport",
+        "tw": 205,
+        "ta": 55,
+        "wheel": 15,
+        "brake": "slotted",
+        "rotor": 284,
+        "susp": "sport",
+        "gears": 5,
+        "gearbox": "manual",
+        "diff": "clsd",
+        "aF": "none",
+        "aR": "none",
+        "aFl": "none",
+        "geoF": "strut",
+        "geoR": "wishbone"
+      },
+      "real": {
+        "t100": 6.7,
+        "top": 235,
+        "limited": false,
+        "unit": "PS"
+      },
+      "gearset": {
+        "r": [
+          3.72,
+          2.4,
+          1.77,
+          1.26,
+          1
+        ],
+        "fd": 3.25,
+        "src": "BMW M3 E30 200 PS data sheet (s14motorsport.de, from the BMW brochure): 3.72/2.40/1.77/1.26/1.00 and 3.25 axle. A 3.15 axle was also used."
+      },
+      "enginePreset": {
+        "cat": "NA Sports",
+        "era": "1980s",
+        "name": "BMW S14B23 (M3 E30)",
+        "displacement_cc": 2302,
+        "real": {
+          "hp": 200,
+          "hpRpm": 6750,
+          "tq": 240,
+          "tqRpm": 4750,
+          "unit": "PS"
+        },
+        "unsure": [
+          "redline"
+        ],
+        "note": "Catalyst-free European rating. Cars with a catalyst were 195 PS, and the later Evolution was higher. Individual throttle bodies, Bosch ML-Jetronic on the non-catalyst engine, four valves, no VANOS.",
+        "engine": {
+          "cylinders": 4,
+          "bore_mm": 93.4,
+          "stroke_mm": 84,
+          "compression": 10.5,
+          "redline": 7250,
+          "intakeSys": "itb",
+          "cam": "race",
+          "vvt": false,
+          "valveSpring": "perf",
+          "injector": "port",
+          "octane": 98,
+          "exhaust": "sport",
+          "airFilter": "perf",
+          "runner": "short",
+          "radiator": "large",
+          "oilCooler": true
+        }
+      },
+      "sources": {
+        "engine": "https://www.s14motorsport.de/datenblatt-200ps.htm — 2302 cc, stroke 84 / bore 93.4, CR 10.5, 147 kW / 200 PS at 6750 rpm, 240 Nm at 4750 rpm.",
+        "body": "Same sheet: DIN 1200 kg, Cd 0.33. Wheelbase 2562 mm from the E30 M3 technical summary that matches this sheet. Area is 1.675 x 1.365 x 0.81.",
+        "performance": "Same sheet: 0-100 km/h 6.7 s, top speed 235 km/h.",
+        "gearset": "Same sheet.",
+        "fit": "Same sheet: 205/55 VR15 on 7 J x 15, 25 percent locking differential. Front discs 284 mm from the matching technical summary. The factory wing is inside the 0.33 Cd, so fit aero stays off."
+      },
+      "unsure": [
+        "area",
+        "fWt",
+        "redline"
+      ],
+      "note": "MacPherson front, so geoF strut, not the coupe archetype's default if that default is wrong for this car. The coupe archetype is already strut front. Rear is the E30 semi-trailing arm; wishbone is the nearest independent bucket and is not exact."
+    },
+    {
+      "id": "vw-golf-gti-mk1-1976",
+      "name": "Volkswagen Golf GTI (Mk1, 1976)",
+      "cat": "NA Sports",
+      "era": "1970s",
+      "role": "Hot hatch",
+      "confidence": "high",
+      "chassis": "hatch",
+      "chassisFit": "fair",
+      "chassisNote": "HOT HATCH is the right body, but the archetype is a modern hot hatch (about 1080 kg, 17-inch sport tyres). This 1976 car is 810 kg on 13-inch tyres. body and fit override that. The archetype label can stay.",
+      "engineStatus": "new",
+      "engine": "VW EA827 1.6 K-Jetronic (Golf GTI Mk1)",
+      "body": {
+        "kg": 810,
+        "cd": 0.4,
+        "area": 1.83,
+        "wb": 2.4,
+        "fWt": 0.62
+      },
+      "fit": {
+        "tc": false,
+        "drive": "fwd",
+        "tire": "street",
+        "tw": 175,
+        "ta": 70,
+        "wheel": 13,
+        "brake": "steel",
+        "rotor": 239,
+        "susp": "comfort",
+        "gears": 4,
+        "gearbox": "manual",
+        "diff": "open",
+        "geoF": "strut",
+        "geoR": "twist"
+      },
+      "real": {
+        "t100": 9,
+        "top": 182,
+        "limited": false,
+        "unit": "PS"
+      },
+      "gearset": {
+        "r": [
+          3.45,
+          1.94,
+          1.29,
+          0.969
+        ],
+        "fd": 3.7,
+        "src": "Golf 1 GTI 020 gearbox code GE, 1976-1979, as listed by passiongolfgti: 3.45/1.94/1.29/0.969 and 3.70 final, for 175/70R13."
+      },
+      "enginePreset": {
+        "cat": "NA Sports",
+        "era": "1970s",
+        "name": "VW EA827 1.6 K-Jetronic (Golf GTI Mk1)",
+        "displacement_cc": 1588,
+        "real": {
+          "hp": 110,
+          "hpRpm": 6100,
+          "tq": 140,
+          "tqRpm": 5000,
+          "unit": "PS"
+        },
+        "unsure": [
+          "redline"
+        ],
+        "note": "Bosch K-Jetronic is mechanical injection, which is the model's mech bucket. Heron head, SOHC, two valves, 9.5:1. The later 1.8 GTI is a different engine.",
+        "engine": {
+          "cylinders": 4,
+          "valves": 2,
+          "bore_mm": 79.5,
+          "stroke_mm": 80,
+          "compression": 9.5,
+          "redline": 6500,
+          "intakeSys": "mech",
+          "vvt": false,
+          "cam": "stock",
+          "injector": "port",
+          "octane": 98,
+          "exhaust": "stock",
+          "airFilter": "stock"
+        }
+      },
+      "sources": {
+        "engine": "https://www.carfolio.com/volkswagen-golf-gti-43054 — 1588 cc, 79.5 x 80 mm, CR 9.5, 110 PS at 6100 rpm, 140 Nm at 5000 rpm, K-Jetronic. Motor Sport, September 1976, confirms bore, stroke, CR and 110 bhp.",
+        "body": "Carfolio: kerb 810 kg, wheelbase 2400 mm, 3705 x 1628 x 1390 mm. Cd is not on that page; 0.40 is the usual Mk1 figure and is unsure. Area is 1.628 x 1.390 x 0.81.",
+        "performance": "Carfolio: 0-100 km/h in 9 s, top speed 182 km/h. Volkswagen's own history page confirms 81 kW (110 PS).",
+        "gearset": "https://www.passiongolfgti.com/spip.php?article647=",
+        "fit": "175/70R13 as the gearbox site's standard tyre. Front discs, rear drums; steel is the stand-in, and the rear drums are not modelled."
+      },
+      "unsure": [
+        "cd",
+        "area",
+        "fWt",
+        "rotor",
+        "redline"
+      ],
+      "note": "Four-speed only. The five-speed arrived in 1979 (code FM) and is a different gearset. Category is NA Sports because Compact Turbo is a boosted class; the role is still hot hatch."
+    },
+    {
+      "id": "ferrari-daytona-1968",
+      "name": "Ferrari 365 GTB/4 Daytona (1968)",
+      "cat": "Supercar",
+      "era": "1960s",
+      "role": "Classic GT",
+      "confidence": "medium",
+      "chassis": "gt",
+      "chassisFit": "fair",
+      "chassisNote": "GRAND TOURER matches the front engine and rear transaxle better than MID-ENGINE SUPER. The archetype is a modern GT; fit drops the DCT, the wide tyres and the aero kit.",
+      "engineStatus": "new",
+      "engine": "Ferrari Colombo 4.4 V12 (365 GTB/4)",
+      "body": {
+        "kg": 1600,
+        "cd": 0.4,
+        "area": 1.77,
+        "wb": 2.4,
+        "fWt": 0.48
+      },
+      "fit": {
+        "tc": false,
+        "drive": "rwd",
+        "tire": "street",
+        "tw": 215,
+        "ta": 70,
+        "wheel": 15,
+        "brake": "steel",
+        "rotor": 280,
+        "susp": "sport",
+        "gears": 5,
+        "gearbox": "manual",
+        "diff": "clsd",
+        "geoF": "wishbone",
+        "geoR": "wishbone"
+      },
+      "real": {
+        "t100": 5.4,
+        "top": 280,
+        "limited": false,
+        "unit": "PS"
+      },
+      "gearset": {
+        "r": null,
+        "fd": null,
+        "src": "Ferrari's page says a 5-speed rear transaxle and does not print ratios."
+      },
+      "enginePreset": {
+        "cat": "Supercar",
+        "era": "1960s",
+        "name": "Ferrari Colombo 4.4 V12 (365 GTB/4)",
+        "displacement_cc": 4390,
+        "real": {
+          "hp": 352,
+          "hpRpm": 7500,
+          "tq": 431,
+          "tqRpm": 5500,
+          "unit": "PS"
+        },
+        "unsure": [],
+        "note": "Tipo 251, 60-degree V12, six Weber 40 DCN, two valves, dry sump. 259 kW is 352 PS. Weber DCN downdrafts are filed under sidedraft, the race-carb bucket, which is not the physical layout.",
+        "engine": {
+          "cylinders": 12,
+          "layout": "v",
+          "valves": 2,
+          "bore_mm": 81,
+          "stroke_mm": 71,
+          "compression": 8.8,
+          "redline": 7700,
+          "intakeSys": "sidedraft",
+          "vvt": false,
+          "cam": "sport",
+          "injector": "port",
+          "octane": 98,
+          "exhaust": "sport",
+          "airFilter": "perf"
+        }
+      },
+      "sources": {
+        "engine": "https://www.ferrari.com/en-EN/auto/365-gtb4 — 81 x 71 mm, 4390.35 cc, CR 8.8, 259 kW at 7500 rpm, 431 Nm at 5500 rpm, six Weber 40 DCN.",
+        "body": "Ferrari: wheelbase 2400 mm, 4425 x 1760 x 1245 mm, top speed 280 km/h. The captured page was cut off at the weight line. 1600 kg is a period test-weight order of magnitude, not the dry figure, and is unsure. Cd is unpublished. Area is 1.760 x 1.245 x 0.81.",
+        "performance": "Ferrari: top speed 280 km/h. 0-100 is not on the captured page. 5.4 s is the figure repeated in period tests and is unsure.",
+        "gearset": "Not published on the Ferrari page.",
+        "fit": "Ferrari: 215/70 VR15, wishbones, discs, 5-speed transaxle."
+      },
+      "unsure": [
+        "kg",
+        "cd",
+        "area",
+        "fWt",
+        "t100",
+        "rotor",
+        "intakeSys",
+        "redline",
+        "gearset"
+      ],
+      "note": "Front engine, gearbox in the back. fWt 0.48 reflects the transaxle and is an estimate. The name Daytona is the unofficial one; the factory name is 365 GTB/4."
+    },
+    {
+      "id": "lamborghini-countach-lp400-1974",
+      "name": "Lamborghini Countach LP400 (1974)",
+      "cat": "Supercar",
+      "era": "1970s",
+      "role": "Supercar",
+      "confidence": "low",
+      "chassis": "super",
+      "chassisFit": "fair",
+      "chassisNote": "MID-ENGINE SUPER is the right layout. The LP400 has no wing (the later LP400S and 5000S do). Leave aero parts off. Narrow 1970s tyres, 5-speed, no driver aids.",
+      "engineStatus": "new",
+      "engine": "Lamborghini 3.9 V12 (Countach LP400)",
+      "body": {
+        "kg": 1300,
+        "cd": 0.42,
+        "area": 1.55,
+        "wb": 2.45,
+        "fWt": 0.42
+      },
+      "fit": {
+        "tc": false,
+        "drive": "rwd",
+        "tire": "street",
+        "tw": 215,
+        "twF": 205,
+        "ta": 70,
+        "wheel": 14,
+        "brake": "steel",
+        "rotor": 280,
+        "susp": "sport",
+        "gears": 5,
+        "gearbox": "manual",
+        "diff": "clsd",
+        "geoF": "wishbone",
+        "geoR": "wishbone"
+      },
+      "real": {
+        "t100": 5.6,
+        "top": 290,
+        "limited": false,
+        "unit": "PS"
+      },
+      "gearset": {
+        "r": null,
+        "fd": null,
+        "src": "A 5-speed is certain. Ratio sets published for the LP400 disagree and none was taken from a Lamborghini sheet in this pass."
+      },
+      "enginePreset": {
+        "cat": "Supercar",
+        "era": "1970s",
+        "name": "Lamborghini 3.9 V12 (Countach LP400)",
+        "displacement_cc": 3929,
+        "real": {
+          "hp": 375,
+          "hpRpm": 8000,
+          "tq": 361,
+          "tqRpm": 5000,
+          "unit": "PS"
+        },
+        "unsure": [
+          "compression",
+          "tq",
+          "tqRpm",
+          "bore_mm",
+          "stroke_mm"
+        ],
+        "note": "The LP400 V12 is the 3929 cc engine, quoted at 375 PS at 8000 rpm. Bore 82 mm and stroke 62 mm are the usual pair for this displacement and were not re-read from a factory drawing here. Torque 361 Nm is the usual published peak. Six Weber twin-choke carburettors.",
+        "engine": {
+          "cylinders": 12,
+          "layout": "v",
+          "valves": 2,
+          "bore_mm": 82,
+          "stroke_mm": 62,
+          "compression": 10.5,
+          "redline": 8000,
+          "intakeSys": "sidedraft",
+          "vvt": false,
+          "cam": "sport",
+          "injector": "port",
+          "octane": 98,
+          "exhaust": "sport",
+          "airFilter": "perf"
+        }
+      },
+      "sources": {
+        "engine": "Lamborghini's historical Countach material and period catalogues quote 375 PS at 8000 rpm from 3929 cc. A single factory PDF was not captured in this pass, so geometry, compression and torque stay unsure.",
+        "body": "Wheelbase 2450 mm is the Countach's. Kerb near 1300 kg is a published LP400 figure; dry weights near 1065 kg are also quoted and must not be used as body.kg. Cd and area are estimates (width about 1.89 m, height about 1.07 m, fill 0.81 gives about 1.64; 1.55 is a slightly lower open-wedge estimate).",
+        "performance": "Claimed top speed is often 288-315 km/h depending on the source. 290 km/h and 0-100 in 5.6 s are mid published figures, not a Lamborghini line captured here.",
+        "gearset": "Not settled.",
+        "fit": "Early LP400 tyres are 205/70 VR14 front and 215/70 VR14 rear. Later Countachs grew much wider tyres and a wing; do not use those."
+      },
+      "unsure": [
+        "kg",
+        "cd",
+        "area",
+        "fWt",
+        "t100",
+        "top",
+        "rotor",
+        "bore_mm",
+        "stroke_mm",
+        "compression",
+        "tq",
+        "tqRpm",
+        "gearset"
+      ],
+      "note": "Low confidence on purpose. The car fills the 1970s V12 gap, but the later session should replace the unsure engine and performance fields from a Lamborghini or period-brochure scan before treating it as a validation car."
+    },
+    {
+      "id": "audi-sport-quattro-1984",
+      "name": "Audi Sport quattro (1984)",
+      "cat": "Turbo Performance",
+      "era": "1980s",
+      "role": "Rally",
+      "confidence": "medium",
+      "chassis": "rally",
+      "chassisFit": "good",
+      "chassisNote": "Fits RALLY AWD HATCH. This is the short-wheelbase Sport quattro, not the longer Ur-quattro and not the S1 Pikes Peak car.",
+      "engineStatus": "new",
+      "engine": "Audi 2.1 20V turbo I5 (Sport quattro)",
+      "body": {
+        "kg": 1300,
+        "cd": 0.4,
+        "area": 1.9,
+        "wb": 2.224,
+        "fWt": 0.58
+      },
+      "fit": {
+        "tc": false,
+        "drive": "awd",
+        "tire": "sport",
+        "tw": 225,
+        "ta": 50,
+        "wheel": 15,
+        "brake": "slotted",
+        "rotor": 280,
+        "susp": "sport",
+        "gears": 5,
+        "gearbox": "manual",
+        "diff": "clsd",
+        "geoF": "strut",
+        "geoR": "strut"
+      },
+      "real": {
+        "t100": 4.9,
+        "top": 250,
+        "limited": false,
+        "unit": "PS"
+      },
+      "gearset": {
+        "r": null,
+        "fd": null,
+        "src": "5-speed manual is certain. A ratio set was not taken from an Audi sheet in this pass."
+      },
+      "enginePreset": {
+        "cat": "Turbo Performance",
+        "era": "1980s",
+        "name": "Audi 2.1 20V turbo I5 (Sport quattro)",
+        "displacement_cc": 2133,
+        "real": {
+          "hp": 306,
+          "hpRpm": 6700,
+          "tq": 350,
+          "tqRpm": 3700,
+          "unit": "PS"
+        },
+        "unsure": [
+          "compression",
+          "boost_bar",
+          "bore_mm",
+          "stroke_mm"
+        ],
+        "note": "2133 cc five-cylinder, 20-valve, turbo. Bore 79.3 mm and stroke 86.4 mm multiply to 2133 cc and are the usual published pair. The RS3's 2.5 TFSI already in PRESETS is a different, much later engine.",
+        "engine": {
+          "cylinders": 5,
+          "bore_mm": 79.3,
+          "stroke_mm": 86.4,
+          "compression": 8,
+          "redline": 7200,
+          "intake": "turbo",
+          "boost_bar": 1,
+          "turboSize": "medium",
+          "intercooler": "large",
+          "vvt": false,
+          "cam": "sport",
+          "injector": "port",
+          "octane": 98,
+          "exhaust": "sport",
+          "airFilter": "perf",
+          "radiator": "large",
+          "oilCooler": true
+        }
+      },
+      "sources": {
+        "engine": "Audi's Sport quattro is catalogued at 306 PS at 6700 rpm and 350 Nm at 3700 rpm from 2133 cc. A factory PDF was not opened in this pass; bore, stroke, compression and boost are the usual published set and stay unsure.",
+        "body": "The short wheelbase is 2224 mm (220 mm shorter than the Ur-quattro). Kerb is about 1290-1300 kg in period catalogues. Cd and area are estimates.",
+        "performance": "0-100 km/h in 4.8-4.9 s and about 250 km/h are the period claims. Both stay unsure until an Audi sheet is attached.",
+        "gearset": "Not found.",
+        "fit": "All-wheel drive, 5-speed, about 225/50VR15. Centre diff is a manual lock on this car; clsd is the closest model."
+      },
+      "unsure": [
+        "kg",
+        "cd",
+        "area",
+        "fWt",
+        "t100",
+        "top",
+        "rotor",
+        "bore_mm",
+        "stroke_mm",
+        "compression",
+        "boost_bar",
+        "gearset"
+      ],
+      "note": "The only 1980s five-cylinder, and a short-wheelbase rally special the current rally archetype can represent once the unsure fields are checked."
+    },
+    {
+      "id": "mercedes-190e-2316-1984",
+      "name": "Mercedes-Benz 190E 2.3-16 (1984)",
+      "cat": "NA Sports",
+      "era": "1980s",
+      "role": "Sports sedan",
+      "confidence": "medium",
+      "chassis": "sedan",
+      "chassisFit": "good",
+      "chassisNote": "Fits SPORTS SEDAN. Cosworth 16-valve four, rear-wheel drive, no boost. The later 2.5-16 is a different displacement.",
+      "engineStatus": "new",
+      "engine": "Mercedes M102 2.3-16 (190E)",
+      "body": {
+        "kg": 1260,
+        "cd": 0.34,
+        "area": 1.9,
+        "wb": 2.665,
+        "fWt": 0.54
+      },
+      "fit": {
+        "tc": false,
+        "drive": "rwd",
+        "tire": "sport",
+        "tw": 205,
+        "ta": 55,
+        "wheel": 15,
+        "brake": "slotted",
+        "rotor": 284,
+        "susp": "sport",
+        "gears": 5,
+        "gearbox": "manual",
+        "diff": "clsd",
+        "geoF": "strut",
+        "geoR": "multilink"
+      },
+      "real": {
+        "t100": 7.6,
+        "top": 230,
+        "limited": false,
+        "unit": "PS"
+      },
+      "gearset": {
+        "r": null,
+        "fd": null,
+        "src": "Getrag 5-speed dogleg. Ratios were not taken from a Mercedes sheet in this pass."
+      },
+      "enginePreset": {
+        "cat": "NA Sports",
+        "era": "1980s",
+        "name": "Mercedes M102 2.3-16 (190E)",
+        "displacement_cc": 2299,
+        "real": {
+          "hp": 185,
+          "hpRpm": 6200,
+          "tq": 235,
+          "tqRpm": 4500,
+          "unit": "PS"
+        },
+        "unsure": [
+          "compression",
+          "bore_mm",
+          "stroke_mm"
+        ],
+        "note": "Cosworth 16-valve head on the M102. 185 PS at 6200 rpm and 235 Nm at 4500 rpm are the European non-catalyst figures; catalyst cars were slightly lower. Bore 95.5 mm and stroke 80.25 mm are the M102 pair. Mechanical Bosch KE-Jetronic, so intakeSys mech.",
+        "engine": {
+          "cylinders": 4,
+          "bore_mm": 95.5,
+          "stroke_mm": 80.25,
+          "compression": 10.5,
+          "redline": 7000,
+          "intakeSys": "mech",
+          "vvt": false,
+          "cam": "sport",
+          "injector": "port",
+          "octane": 98,
+          "exhaust": "sport",
+          "airFilter": "perf",
+          "radiator": "large"
+        }
+      },
+      "sources": {
+        "engine": "Mercedes quoted 136 kW (185 PS) at 6200 rpm and 235 Nm at 4500 rpm for the 2.3-16. Geometry is the known M102 2.3 and was not re-read from a Mercedes PDF here.",
+        "body": "W201 wheelbase is 2665 mm. Kerb of the 2.3-16 is about 1260 kg in period catalogues. The base 190E Cd is often given near 0.32-0.34; the 2.3-16 body kit is unpublished in the sources opened here, so 0.34 is unsure.",
+        "performance": "Period claims are about 0-100 km/h in 7.5-8.0 s and 230 km/h. 7.6 s is a midpoint and is unsure.",
+        "gearset": "Not found.",
+        "fit": "205/55 VR15, rear-wheel drive, Getrag dogleg 5-speed, limited-slip optional (standard on many 2.3-16s)."
+      },
+      "unsure": [
+        "kg",
+        "cd",
+        "area",
+        "fWt",
+        "t100",
+        "rotor",
+        "compression",
+        "bore_mm",
+        "stroke_mm",
+        "gearset"
+      ],
+      "note": "A 1980s sports sedan that is not an M-car and not a V8. Check the Getrag ratios before using it as a gearbox validation car."
+    },
+    {
+      "id": "peugeot-205-gti-19-1986",
+      "name": "Peugeot 205 GTI 1.9 (1986)",
+      "cat": "NA Sports",
+      "era": "1980s",
+      "role": "Hot hatch",
+      "confidence": "high",
+      "chassis": "hatch",
+      "chassisFit": "fair",
+      "chassisNote": "HOT HATCH, but far lighter than the archetype. The 1.6 GTI is a different engine (1580 cc, 115 PS). This is the 1905 cc XU9JA.",
+      "engineStatus": "new",
+      "engine": "Peugeot XU9JA 1.9 (205 GTI)",
+      "body": {
+        "kg": 875,
+        "cd": 0.35,
+        "area": 1.74,
+        "wb": 2.42,
+        "fWt": 0.62
+      },
+      "fit": {
+        "tc": false,
+        "drive": "fwd",
+        "tire": "sport",
+        "tw": 185,
+        "ta": 55,
+        "wheel": 15,
+        "brake": "slotted",
+        "rotor": 266,
+        "susp": "sport",
+        "gears": 5,
+        "gearbox": "manual",
+        "diff": "open",
+        "geoF": "strut",
+        "geoR": "twist"
+      },
+      "real": {
+        "t100": 7.8,
+        "top": 198,
+        "limited": false,
+        "unit": "PS"
+      },
+      "gearset": {
+        "r": null,
+        "fd": null,
+        "src": "5-speed manual. The BE1/BE3 ratios for the 1.9 were not copied from a Peugeot sheet in this pass."
+      },
+      "enginePreset": {
+        "cat": "NA Sports",
+        "era": "1980s",
+        "name": "Peugeot XU9JA 1.9 (205 GTI)",
+        "displacement_cc": 1905,
+        "real": {
+          "hp": 130,
+          "hpRpm": 6000,
+          "tq": 161,
+          "tqRpm": 4750,
+          "unit": "PS"
+        },
+        "unsure": [
+          "compression",
+          "bore_mm",
+          "stroke_mm"
+        ],
+        "note": "SOHC 8-valve, Bosch L-Jetronic electronic injection. 119 lb-ft is 161 Nm. Bore 83 mm and stroke 88 mm are the XU9 pair. The 1.6 is 1580 cc and is not this engine.",
+        "engine": {
+          "cylinders": 4,
+          "valves": 2,
+          "bore_mm": 83,
+          "stroke_mm": 88,
+          "compression": 9.6,
+          "redline": 6500,
+          "vvt": false,
+          "cam": "sport",
+          "injector": "port",
+          "octane": 98,
+          "exhaust": "sport",
+          "airFilter": "perf"
+        }
+      },
+      "sources": {
+        "engine": "https://www.autoexpress.co.uk/peugeot/104878/peugeot-205-gti-buying-guide-and-review-1984-1994 — 1905 cc, 130 bhp at 6000 rpm, 119 lb-ft at 4750 rpm.",
+        "body": "Auto Express: kerb 875 kg, wheelbase 2420 mm, 3705 x 1572 x 1372 mm. Cd is the usual 205 figure and was not in that table. Area is 1.572 x 1.372 x 0.81.",
+        "performance": "Auto Express: 0-62 mph in 7.8 s, top speed 123 mph (198 km/h).",
+        "gearset": "Not found in the Auto Express table.",
+        "fit": "15-inch alloys and 185/55 VR15 are the usual 1.9 fit; the table did not print the tyre size. Discs all round, front ventilated."
+      },
+      "unsure": [
+        "cd",
+        "area",
+        "fWt",
+        "tw",
+        "ta",
+        "rotor",
+        "compression",
+        "bore_mm",
+        "stroke_mm",
+        "gearset"
+      ],
+      "note": "No limited-slip differential and no traction control. That open diff on a light front-driver is the point of the car in the sim."
+    },
+    {
+      "id": "ford-sierra-rs-cosworth-1986",
+      "name": "Ford Sierra RS Cosworth (1986)",
+      "cat": "Turbo Performance",
+      "era": "1980s",
+      "role": "Classic sports",
+      "confidence": "medium",
+      "chassis": "coupe",
+      "chassisFit": "fair",
+      "chassisNote": "The three-door RS Cosworth is rear-wheel drive, so RALLY AWD HATCH would be the wrong driven axle. SPORTS COUPE is the closest. The later Sapphire Cosworth 4x4 is a different car. The RS500 is a different boost and aero package.",
+      "engineStatus": "new",
+      "engine": "Ford Cosworth YBB 2.0 turbo (Sierra RS)",
+      "body": {
+        "kg": 1220,
+        "cd": 0.35,
+        "area": 1.95,
+        "wb": 2.608,
+        "fWt": 0.55
+      },
+      "fit": {
+        "tc": false,
+        "drive": "rwd",
+        "tire": "sport",
+        "tw": 205,
+        "ta": 50,
+        "wheel": 15,
+        "brake": "slotted",
+        "rotor": 260,
+        "susp": "sport",
+        "gears": 5,
+        "gearbox": "manual",
+        "diff": "visc",
+        "aF": "none",
+        "aR": "none",
+        "aFl": "none",
+        "geoF": "strut",
+        "geoR": "wishbone"
+      },
+      "real": {
+        "t100": 6.2,
+        "top": 240,
+        "limited": false,
+        "unit": "PS"
+      },
+      "gearset": {
+        "r": null,
+        "fd": null,
+        "src": "BorgWarner T5 5-speed. The Sierra-specific ratio set was not taken from a Ford sheet in this pass."
+      },
+      "enginePreset": {
+        "cat": "Turbo Performance",
+        "era": "1980s",
+        "name": "Ford Cosworth YBB 2.0 turbo (Sierra RS)",
+        "displacement_cc": 1993,
+        "real": {
+          "hp": 204,
+          "hpRpm": 6000,
+          "tq": 276,
+          "tqRpm": 4500,
+          "unit": "PS"
+        },
+        "unsure": [],
+        "note": "201 bhp is 204 PS. 204 lb-ft is 276 Nm. Garrett T03, 0.7 bar, Weber-Marelli port injection, DOHC 16-valve, cast-iron Pinto-based block. The RS500's larger turbo is not this engine.",
+        "engine": {
+          "cylinders": 4,
+          "bore_mm": 90.8,
+          "stroke_mm": 76.95,
+          "compression": 8,
+          "redline": 6500,
+          "intake": "turbo",
+          "boost_bar": 0.7,
+          "turboSize": "medium",
+          "intercooler": "large",
+          "vvt": false,
+          "cam": "sport",
+          "injector": "port",
+          "octane": 98,
+          "exhaust": "sport",
+          "airFilter": "perf",
+          "radiator": "large",
+          "oilCooler": true
+        }
+      },
+      "sources": {
+        "engine": "https://supercarnostalgia.com/blog/ford-sierra-rs-cosworth — 1993 cc, 90.8 x 76.95 mm, CR 8.0, Garrett T03 at 0.7 bar, 201 bhp at 6000 rpm, 204 lb-ft at 4500 rpm, Weber-Marelli.",
+        "body": "Same article: 1220 kg, 0-62 mph in 6.2 s, top speed 149 mph (240 km/h). Sierra wheelbase 2608 mm is the platform figure. Cd of the whale-tail car is often quoted near 0.35 and was not in that article.",
+        "performance": "Same article: 6.2 s to 62 mph, 149 mph.",
+        "gearset": "The article names the BorgWarner T5 and a viscous LSD and does not print ratios.",
+        "fit": "205/50 VR15 is the standard RS tyre. Rear-wheel drive. The whale tail is part of the car's Cd, so fit adds no extra wing."
+      },
+      "unsure": [
+        "cd",
+        "area",
+        "wb",
+        "fWt",
+        "rotor",
+        "gearset"
+      ],
+      "note": "Boost 0.7 bar is one of the few classic turbo pressures that a secondary source states outright, and it is used as given. Confirm against a Ford brochure before treating 0.7 as exact."
+    },
+    {
+      "id": "lancia-delta-integrale-evo-1992",
+      "name": "Lancia Delta HF Integrale Evoluzione (1992)",
+      "cat": "Turbo Performance",
+      "era": "1990s",
+      "role": "Rally",
+      "confidence": "medium",
+      "chassis": "rally",
+      "chassisFit": "good",
+      "chassisNote": "Fits RALLY AWD HATCH. Evoluzione I, 16-valve, 210 PS, not the 8-valve Integrale and not the 1993 Evo 2 (215 PS, catalyst).",
+      "engineStatus": "new",
+      "engine": "Lancia 831 2.0 16V turbo (Delta Integrale Evo)",
+      "body": {
+        "kg": 1340,
+        "cd": 0.4,
+        "area": 1.9,
+        "wb": 2.48,
+        "fWt": 0.53
+      },
+      "fit": {
+        "tc": false,
+        "drive": "awd",
+        "tire": "sport",
+        "tw": 205,
+        "ta": 50,
+        "wheel": 15,
+        "brake": "slotted",
+        "rotor": 281,
+        "susp": "sport",
+        "gears": 5,
+        "gearbox": "manual",
+        "diff": "clsd",
+        "geoF": "strut",
+        "geoR": "strut"
+      },
+      "real": {
+        "t100": 5.7,
+        "top": 220,
+        "limited": false,
+        "unit": "PS"
+      },
+      "gearset": {
+        "r": null,
+        "fd": null,
+        "src": "5-speed manual. Ratios were not taken from a Lancia sheet in this pass."
+      },
+      "enginePreset": {
+        "cat": "Turbo Performance",
+        "era": "1990s",
+        "name": "Lancia 831 2.0 16V turbo (Delta Integrale Evo)",
+        "displacement_cc": 1995,
+        "real": {
+          "hp": 210,
+          "hpRpm": 5750,
+          "tq": 298,
+          "tqRpm": 3500,
+          "unit": "PS"
+        },
+        "unsure": [
+          "boost_bar",
+          "hpRpm",
+          "tq",
+          "tqRpm",
+          "compression"
+        ],
+        "note": "1995 cc, 84 x 90 mm, DOHC 16-valve, Garrett T3, Weber IAW electronic injection. 210 PS for the Evoluzione. Torque is commonly 298-304 Nm; 298 Nm is used and marked unsure. Centre torque split on the 16V and Evo is about 47/53 front/rear.",
+        "engine": {
+          "cylinders": 4,
+          "bore_mm": 84,
+          "stroke_mm": 90,
+          "compression": 8,
+          "redline": 6500,
+          "intake": "turbo",
+          "boost_bar": 1,
+          "turboSize": "small",
+          "intercooler": "large",
+          "vvt": false,
+          "cam": "sport",
+          "injector": "port",
+          "octane": 98,
+          "exhaust": "sport",
+          "airFilter": "perf",
+          "radiator": "large",
+          "oilCooler": true
+        }
+      },
+      "sources": {
+        "engine": "https://www.octane-magazine.com/articles/features/lancia-delta-integrale-the-full-story-from-8-valve-to-evo-2/ — Evoluzione 210 bhp. Bore 84 x 90 mm is the 1995 cc Lampredi twin-cam pair. https://www.supercars.net/blog/all-brands/lancia/lancia-delta-hf-guide/ notes the 47/53 split on the 16V and Evoluzione.",
+        "body": "Delta wheelbase 2480 mm. Kerb of the Evoluzione is often 1300-1400 kg; Octane's 1215 kg is printed on the 8V and repeated on the Evo 2 table and looks copied. 1340 kg is a midpoint and is unsure.",
+        "performance": "Road tests of the Evo cluster around 5.7 s to 100 km/h and about 215-220 km/h. Not a Lancia claim captured here.",
+        "gearset": "Not found.",
+        "fit": "205/50 ZR15, ventilated discs, MacPherson front and strut rear, all-wheel drive, no stability control."
+      },
+      "unsure": [
+        "kg",
+        "cd",
+        "area",
+        "fWt",
+        "t100",
+        "top",
+        "rotor",
+        "boost_bar",
+        "hpRpm",
+        "tq",
+        "tqRpm",
+        "compression",
+        "gearset"
+      ],
+      "note": "The sim's awd model does not take a 47/53 rear bias. Note that when the car is implemented. Green-market cars with the 8-valve catalyst engine are not this entry."
+    },
+    {
+      "id": "honda-integra-type-r-dc2-1995",
+      "name": "Honda Integra Type R (DC2, 1995)",
+      "cat": "NA Sports",
+      "era": "1990s",
+      "role": "Sports coupe",
+      "confidence": "medium",
+      "chassis": "coupe",
+      "chassisFit": "good",
+      "chassisNote": "Fits SPORTS COUPE even though it is front-wheel drive. The coupe archetype's rear-drive default is overridden. JDM DC2, 200 PS, not the later US Integra Type R (195 hp, different gearing).",
+      "engineStatus": "new",
+      "engine": "Honda B18C spec R (Integra Type R DC2)",
+      "body": {
+        "kg": 1060,
+        "cd": 0.33,
+        "area": 1.85,
+        "wb": 2.57,
+        "fWt": 0.62
+      },
+      "fit": {
+        "tc": false,
+        "drive": "fwd",
+        "tire": "sport",
+        "tw": 195,
+        "ta": 55,
+        "wheel": 15,
+        "brake": "slotted",
+        "rotor": 282,
+        "susp": "sport",
+        "gears": 5,
+        "gearbox": "manual",
+        "diff": "clsd",
+        "geoF": "wishbone",
+        "geoR": "wishbone"
+      },
+      "real": {
+        "t100": 6.2,
+        "top": 230,
+        "limited": false,
+        "unit": "PS"
+      },
+      "gearset": {
+        "r": [
+          3.23,
+          2.105,
+          1.458,
+          1.034,
+          0.787
+        ],
+        "fd": 4.4,
+        "src": "JDM DC2 Type R close-ratio 5-speed as published in Honda brochures and owner references (S80 gearbox). Not re-opened as a Honda PDF in this pass, so the gearset is unsure."
+      },
+      "enginePreset": {
+        "cat": "NA Sports",
+        "era": "1990s",
+        "name": "Honda B18C spec R (Integra Type R DC2)",
+        "displacement_cc": 1797,
+        "real": {
+          "hp": 200,
+          "hpRpm": 8000,
+          "tq": 181,
+          "tqRpm": 7500,
+          "unit": "PS"
+        },
+        "unsure": [
+          "compression"
+        ],
+        "note": "B18C spec R, 81.0 x 87.2 mm, hand-ported head, individual-feel intake but a single throttle body on the production manifold (not the old B16 ITBs). 200 PS at 8000 rpm, 18.5 kgf·m (181 Nm) at 7500 rpm. Compression is 11.1:1 in Honda material and is marked unsure because that page was not opened here. Not the K20C1 turbo already in PRESETS.",
+        "engine": {
+          "cylinders": 4,
+          "bore_mm": 81,
+          "stroke_mm": 87.2,
+          "compression": 11.1,
+          "redline": 8400,
+          "cam": "race",
+          "vvt": true,
+          "valveSpring": "race",
+          "injector": "port",
+          "octane": 98,
+          "exhaust": "race",
+          "airFilter": "perf",
+          "runner": "short",
+          "radiator": "large"
+        }
+      },
+      "sources": {
+        "engine": "Honda's JDM Integra Type R rating is 200 PS at 8000 rpm and 181 Nm at 7500 rpm, 1797 cc, 81.0 x 87.2 mm. A Honda PDF was not captured in this pass.",
+        "body": "JDM kerb is about 1060-1080 kg depending on year and options. Wheelbase of the DC2 is 2570 mm. Cd is not a figure opened here.",
+        "performance": "Road tests cluster around 6.2 s to 100 km/h and about 230 km/h. Not a Honda claim attached here.",
+        "gearset": "JDM close-ratio set 3.230/2.105/1.458/1.034/0.787, final 4.400. Confirm against a brochure.",
+        "fit": "195/55R15, limited-slip differential, no traction control on the 1995 car, double wishbones."
+      },
+      "unsure": [
+        "kg",
+        "cd",
+        "area",
+        "fWt",
+        "t100",
+        "top",
+        "rotor",
+        "compression",
+        "gearset"
+      ],
+      "note": "Front-wheel drive with a clutch LSD is the interesting case: the coupe archetype is rear-drive, so fit.drive must be set. VTEC is modelled as vvt."
+    },
+    {
+      "id": "lotus-elise-s1-1996",
+      "name": "Lotus Elise (S1, 1996)",
+      "cat": "NA Sports",
+      "era": "1990s",
+      "role": "Light roadster",
+      "confidence": "medium",
+      "chassis": "roadster",
+      "chassisFit": "good",
+      "chassisNote": "Fits LIGHT ROADSTER. The S1 uses the Rover K-series. The S2 and the later Toyota-engined Elises are different engines and are not this entry. An extruded-aluminium tub, not the archetype's steel sketch, but the mass comes from body.kg.",
+      "engineStatus": "new",
+      "engine": "Rover K-series 1.8 (Elise S1)",
+      "body": {
+        "kg": 731,
+        "cd": 0.36,
+        "area": 1.45,
+        "wb": 2.3,
+        "fWt": 0.4,
+        "engPos": "mid"
+      },
+      "fit": {
+        "tc": false,
+        "drive": "rwd",
+        "tire": "sport",
+        "tw": 205,
+        "twF": 185,
+        "ta": 55,
+        "wheel": 15,
+        "brake": "steel",
+        "rotor": 282,
+        "susp": "sport",
+        "gears": 5,
+        "gearbox": "manual",
+        "diff": "open",
+        "geoF": "wishbone",
+        "geoR": "wishbone"
+      },
+      "real": {
+        "t100": 6.5,
+        "top": 202,
+        "limited": false,
+        "unit": "PS"
+      },
+      "gearset": {
+        "r": null,
+        "fd": null,
+        "src": "Rover PG1 5-speed. Ratios were not taken from a Lotus sheet in this pass."
+      },
+      "enginePreset": {
+        "cat": "NA Sports",
+        "era": "1990s",
+        "name": "Rover K-series 1.8 (Elise S1)",
+        "displacement_cc": 1796,
+        "real": {
+          "hp": 118,
+          "hpRpm": 5500,
+          "tq": 165,
+          "tqRpm": 3000,
+          "unit": "PS"
+        },
+        "unsure": [
+          "compression",
+          "bore_mm",
+          "stroke_mm"
+        ],
+        "note": "K16 1.8, 118 PS at 5500 rpm, 165 Nm at 3000 rpm. Bore 80.0 mm and stroke 89.3 mm are the K-series 1.8 pair. MEMS electronic injection, DOHC 16-valve. The later 135 PS VHPD and the 111S are different tunes.",
+        "engine": {
+          "cylinders": 4,
+          "bore_mm": 80,
+          "stroke_mm": 89.3,
+          "compression": 10.5,
+          "redline": 7000,
+          "vvt": false,
+          "cam": "stock",
+          "injector": "port",
+          "octane": 95,
+          "exhaust": "sport",
+          "airFilter": "perf"
+        }
+      },
+      "sources": {
+        "engine": "Lotus quoted 118 PS at 5500 rpm and 165 Nm at 3000 rpm for the S1. Geometry is the Rover K-series 1.8 and was not re-read from a Lotus PDF here.",
+        "body": "A widely quoted kerb is 731 kg (https://strikeengine.com/car-specs-power-to-weight-ratios-0-60-0-100-top-speed/ lists that figure with 0-60 in 6.1 s and 126 mph). Lotus also published figures near 755 kg depending on fluids. Wheelbase 2300 mm. Cd is an estimate. The mid-engine layout puts more than half the weight on the rear; fWt 0.40 is an estimate.",
+        "performance": "0-60 mph in about 5.8-6.1 s is the period claim. t100 6.5 s allows the gap from 60 mph to 100 km/h. Top 202 km/h is 126 mph.",
+        "gearset": "Not found.",
+        "fit": "185/55R15 front and 205/50R16 rear is a common S1 fit; the single wheel field is 15 and the rear is one inch larger. No traction control, open diff on the base car."
+      },
+      "unsure": [
+        "kg",
+        "cd",
+        "area",
+        "fWt",
+        "t100",
+        "tw",
+        "twF",
+        "rotor",
+        "compression",
+        "bore_mm",
+        "stroke_mm",
+        "gearset"
+      ],
+      "note": "body must carry engPos mid because the roadster archetype defaults to a front engine. The engine sits behind the seats."
+    },
+    {
+      "id": "bmw-m5-e39-2000",
+      "name": "BMW M5 (E39, 2000)",
+      "cat": "NA Sports",
+      "era": "2000s",
+      "role": "Sports sedan",
+      "confidence": "high",
+      "chassis": "sedan",
+      "chassisFit": "good",
+      "chassisNote": "Fits SPORTS SEDAN. Naturally aspirated V8, rear-wheel drive, no hybrid. Not the F90 and not the hybrid G90.",
+      "engineStatus": "new",
+      "engine": "BMW S62 4.9 V8 (M5 E39)",
+      "body": {
+        "kg": 1825,
+        "cd": 0.31,
+        "area": 2.17,
+        "wb": 2.83,
+        "fWt": 0.521
+      },
+      "fit": {
+        "drive": "rwd",
+        "tire": "sport",
+        "tw": 275,
+        "twF": 245,
+        "ta": 40,
+        "wheel": 18,
+        "brake": "slotted",
+        "rotor": 345,
+        "susp": "sport",
+        "gears": 6,
+        "gearbox": "manual",
+        "diff": "clsd",
+        "tc": true,
+        "geoF": "strut",
+        "geoR": "multilink"
+      },
+      "real": {
+        "t100": 5.3,
+        "top": 250,
+        "limited": true,
+        "unit": "hp_SAE"
+      },
+      "gearset": {
+        "r": [
+          4.23,
+          2.53,
+          1.67,
+          1.23,
+          1,
+          0.83
+        ],
+        "fd": 2.81,
+        "src": "BMW USA 2000 M5 specifications: Getrag Type D, 4.23/2.53/1.67/1.23/1.00/0.83, final 2.81. Some European references quote 3.15; the US press sheet says 2.81 and that is what is used."
+      },
+      "enginePreset": {
+        "cat": "NA Sports",
+        "era": "2000s",
+        "name": "BMW S62 4.9 V8 (M5 E39)",
+        "displacement_cc": 4941,
+        "real": {
+          "hp": 400,
+          "hpRpm": 6600,
+          "tq": 500,
+          "tqRpm": 3800,
+          "unit": "hp_SAE"
+        },
+        "unsure": [],
+        "note": "US press sheet: 400 hp SAE at 6600 rpm and 369 lb-ft (500 Nm) at 3800 rpm. European catalogues say 400 PS (294 kW), which is 394 hp, and the same 500 Nm. Double VANOS and eight individual throttles. Not the S54 inline-six already in PRESETS.",
+        "engine": {
+          "cylinders": 8,
+          "layout": "v",
+          "bore_mm": 94,
+          "stroke_mm": 89,
+          "compression": 11,
+          "redline": 7000,
+          "intakeSys": "itb",
+          "cam": "race",
+          "vvt": true,
+          "valveSpring": "perf",
+          "injector": "port",
+          "octane": 98,
+          "exhaust": "sport",
+          "airFilter": "perf",
+          "runner": "short",
+          "radiator": "large",
+          "oilCooler": true
+        }
+      },
+      "sources": {
+        "engine": "https://www.press.bmwgroup.com/usa/article/attachment/T0021914EN_US/41214 — 94.0 x 89.0 mm, 4941 cc, CR 11.0, 400 hp at 6600, 369 lb-ft at 3800, eight individual throttles, Double VANOS.",
+        "body": "Same sheet: curb 4024 lb (1825 kg), distribution 52.1/47.9, Cd 0.31, wheelbase 111.4 in. Area is 1.801 x 1.438 x 0.81. European DIN figures near 1795 kg are a different convention.",
+        "performance": "BMW's European claim is about 5.3 s to 100 km/h. The US sheet's performance table was not in the captured pages; 5.3 s is used and the top speed is the 250 km/h limiter. Mark t100 if a later session only trusts the US sheet's own clock.",
+        "gearset": "Same BMW USA sheet. Final drive 2.81.",
+        "fit": "245/40ZR18 front and 275/35ZR18 rear is the E39 M5 fit. Front discs are about 345 mm. DSC was standard, so tc is on."
+      },
+      "unsure": [
+        "area",
+        "t100",
+        "rotor"
+      ],
+      "note": "real.hp is 400 hp SAE as printed, not 400 PS. The European 400 PS car is the same hardware. Individual throttles are intakeSys itb."
+    },
+    {
+      "id": "trabant-601-1988",
+      "name": "Trabant 601 S (1988)",
+      "cat": "Two-Stroke",
+      "era": "1980s",
+      "role": "City",
+      "confidence": "medium",
+      "chassis": "kei",
+      "chassisFit": "poor",
+      "chassisNote": "KEI CAR is the only small-car archetype and it is the wrong culture: a Trabant is a Duroplast sedan, not a Japanese kei. Mass and wheelbase happen to land near the kei sketch. A 'city sedan' archetype would be more honest. It is still the closest existing body. The engine is a car two-stroke, not the Yamaha RD350LC motorcycle engine already in PRESETS.",
+      "engineStatus": "new",
+      "engine": "Trabant P65 0.6 2-stroke twin (601)",
+      "body": {
+        "kg": 615,
+        "cd": 0.48,
+        "area": 1.8,
+        "wb": 2.02,
+        "fWt": 0.59
+      },
+      "fit": {
+        "tc": false,
+        "drive": "fwd",
+        "tire": "eco",
+        "tw": 145,
+        "ta": 80,
+        "wheel": 13,
+        "brake": "steel",
+        "rotor": 200,
+        "susp": "comfort",
+        "gears": 4,
+        "gearbox": "manual",
+        "diff": "open",
+        "geoF": "wishbone",
+        "geoR": "wishbone"
+      },
+      "real": {
+        "t100": 24,
+        "top": 100,
+        "limited": false,
+        "unit": "PS"
+      },
+      "gearset": {
+        "r": [
+          4.08,
+          2.32,
+          1.53,
+          1.103
+        ],
+        "fd": 3.947,
+        "src": "Hungarian Trabant 601 technical compilation (users.atw.hu/trabi601): post-1974 gearbox, 4th 29/32 = 1.103, differential 19/75 = 3.947. Earlier cars used 4th 1.03 and final 4.33."
+      },
+      "enginePreset": {
+        "cat": "Two-Stroke",
+        "name": "Trabant P65 0.6 2-stroke twin (601)",
+        "displacement_cc": 594,
+        "real": {
+          "hp": 26,
+          "hpRpm": 4200,
+          "tq": 54,
+          "tqRpm": 3000,
+          "unit": "PS"
+        },
+        "unsure": [
+          "redline",
+          "compression"
+        ],
+        "note": "Air-cooled inline twin, crankcase scavenged, mixture lubrication. The model has no air-cooling path; radiator stock is a placeholder and the thermal model will be wrong. Single BVF 28 HB carburettor. Peak power is at 4200 rpm; these engines are not run far past that. Not the RD350: different bore, stroke, cooling and power.",
+        "engine": {
+          "type": "twostroke",
+          "cylinders": 2,
+          "bore_mm": 72,
+          "stroke_mm": 73,
+          "compression": 7.5,
+          "redline": 4500,
+          "intakeSys": "carb1",
+          "vvt": false,
+          "airFilter": "stock",
+          "exhaust": "stock",
+          "cat": "none",
+          "octane": 88,
+          "injector": "port",
+          "ignitionType": "coil",
+          "radiator": "stock"
+        }
+      },
+      "sources": {
+        "engine": "http://users.atw.hu/trabi601/adatok.htm — P65, 594.4 cc, 72 x 73 mm, CR 7.5, 26 PS at 4200 rpm, 54 Nm at 3000 rpm, mixture 40:1 or 50:1, ROZ 88.",
+        "body": "Same sheet: saloon empty mass 615 kg, unladen axle loads 363 kg front and 252 kg rear, so fWt is 0.59. Wheelbase 2020 mm from the Trabant club technical table. Cd is not published; 0.48 is an estimate for an upright 1960s sedan. Area is about 1.50 x 1.44 x 0.85.",
+        "performance": "Factory top speed 100 km/h on the Hungarian sheet. The club table lists acceleration to 100 km/h as 24 s (http://www.pommerngreif.de/1server/web_trab/p601.html). That cell is slightly ambiguous in the layout and is marked unsure.",
+        "gearset": "http://users.atw.hu/trabi601/adatok.htm",
+        "fit": "Front-wheel drive, 4-speed column shift, drum brakes. 145 SR13 tyres are the usual late fit, written here as 145/80R13. The model has no drums; a 200 mm steel disc is a stand-in and is too strong."
+      },
+      "unsure": [
+        "cd",
+        "area",
+        "t100",
+        "tw",
+        "ta",
+        "brake",
+        "rotor",
+        "redline"
+      ],
+      "note": "The one car two-stroke. Drum brakes and air cooling are both outside the model. Score it on gearing and the shape of a small two-stroke, not on a 100-0 stop or on coolant temperature."
+    },
+    {
+      "id": "honda-s660-2015",
+      "name": "Honda S660 (2015)",
+      "cat": "Kei & City",
+      "era": "2010s",
+      "role": "Kei",
+      "confidence": "high",
+      "chassis": "kei",
+      "chassisFit": "fair",
+      "chassisNote": "KEI CAR is right for the class, but the archetype is front-wheel drive and front-engined. The S660 is mid-engined and rear-wheel drive. body.engPos must be mid and fit.drive rwd. Not a hybrid.",
+      "engineStatus": "new",
+      "engine": "Honda S07A turbo (S660)",
+      "body": {
+        "kg": 830,
+        "cd": 0.36,
+        "area": 1.41,
+        "wb": 2.285,
+        "fWt": 0.44,
+        "engPos": "mid"
+      },
+      "fit": {
+        "drive": "rwd",
+        "tire": "eco",
+        "tw": 195,
+        "twF": 165,
+        "ta": 45,
+        "wheel": 15,
+        "brake": "steel",
+        "rotor": 260,
+        "susp": "sport",
+        "gears": 6,
+        "gearbox": "manual",
+        "diff": "open",
+        "tc": true,
+        "geoF": "strut",
+        "geoR": "strut"
+      },
+      "real": {
+        "t100": 11.5,
+        "top": 140,
+        "limited": false,
+        "unit": "PS"
+      },
+      "gearset": {
+        "r": [
+          3.571,
+          2.227,
+          1.529,
+          1.15,
+          0.869,
+          0.686
+        ],
+        "fd": 5.176,
+        "src": "Honda S660 main specifications PDF, 6MT column, final 5.176."
+      },
+      "enginePreset": {
+        "cat": "Kei & City",
+        "name": "Honda S07A turbo (S660)",
+        "displacement_cc": 658,
+        "real": {
+          "hp": 64,
+          "hpRpm": 6000,
+          "tq": 104,
+          "tqRpm": 2600,
+          "unit": "PS"
+        },
+        "unsure": [
+          "boost_bar",
+          "redline"
+        ],
+        "note": "Kei class, 64 PS legal cap, same cap as the Alto Works K6A already in PRESETS, but a different engine: 658 cc, 64.0 x 68.2 mm, CR 9.2, turbo inline-three. The K6A must not be reused.",
+        "engine": {
+          "cylinders": 3,
+          "bore_mm": 64,
+          "stroke_mm": 68.2,
+          "compression": 9.2,
+          "redline": 7700,
+          "intake": "turbo",
+          "boost_bar": 0.9,
+          "turboSize": "small",
+          "intercooler": "small",
+          "injector": "port",
+          "vvt": true,
+          "cam": "stock",
+          "exhaust": "stock",
+          "airFilter": "stock",
+          "octane": 95
+        }
+      },
+      "sources": {
+        "engine": "https://www.honda.co.jp/auto-archive/s660/2022/common/pdf/s660_spec_list_1219.pdf — S07A, 64.0 x 68.2 mm, CR 9.2, 47 kW (64 PS) at 6000 rpm, 104 Nm at 2600 rpm.",
+        "body": "Same PDF: 6MT vehicle weight 830 kg (CVT is 850 kg), wheelbase 2.285 m, 3.395 x 1.475 x 1.180 m. Cd is not printed. Area is 1.475 x 1.180 x 0.81.",
+        "performance": "Honda does not print 0-100 or top speed on that sheet. 11.5 s and 140 km/h are estimates from the 64 PS cap and the 830 kg mass, next to the Alto Works road-test midpoint of 11 s at 670 kg.",
+        "gearset": "Same Honda PDF.",
+        "fit": "Same PDF: 165/55R15 front, 195/45R16 rear, disc brakes, MacPherson struts both ends. fit.wheel is the front 15; the rear is 16."
+      },
+      "unsure": [
+        "cd",
+        "area",
+        "fWt",
+        "t100",
+        "top",
+        "rotor",
+        "boost_bar",
+        "redline"
+      ],
+      "note": "Open differential. VSA is fitted, so tc is on. The rear tyre is wider than the front, which is unusual and is why tw is 195 and twF is 165."
+    },
+    {
+      "id": "honda-beat-1991",
+      "name": "Honda Beat (1991)",
+      "cat": "Kei & City",
+      "era": "1990s",
+      "role": "Kei",
+      "confidence": "high",
+      "chassis": "kei",
+      "chassisFit": "fair",
+      "chassisNote": "KEI CAR class, but mid-engined and rear-wheel drive, like the S660. engPos mid is required. Naturally aspirated, which the Alto Works turbo is not.",
+      "engineStatus": "new",
+      "engine": "Honda E07A MTREC (Beat)",
+      "body": {
+        "kg": 760,
+        "cd": 0.38,
+        "area": 1.33,
+        "wb": 2.28,
+        "fWt": 0.43,
+        "engPos": "mid"
+      },
+      "fit": {
+        "tc": false,
+        "drive": "rwd",
+        "tire": "eco",
+        "tw": 165,
+        "twF": 155,
+        "ta": 60,
+        "wheel": 13,
+        "brake": "steel",
+        "rotor": 230,
+        "susp": "sport",
+        "gears": 5,
+        "gearbox": "manual",
+        "diff": "open",
+        "geoF": "strut",
+        "geoR": "strut"
+      },
+      "real": {
+        "t100": 11.5,
+        "top": 140,
+        "limited": false,
+        "unit": "PS"
+      },
+      "gearset": {
+        "r": [
+          3.428,
+          2.166,
+          1.576,
+          1.172,
+          0.941
+        ],
+        "fd": 5.714,
+        "src": "Honda Beat fact book, May 1991, 5-speed, final 5.714."
+      },
+      "enginePreset": {
+        "cat": "Kei & City",
+        "name": "Honda E07A MTREC (Beat)",
+        "displacement_cc": 656,
+        "real": {
+          "hp": 64,
+          "hpRpm": 8100,
+          "tq": 60,
+          "tqRpm": 7000,
+          "unit": "PS"
+        },
+        "unsure": [
+          "redline"
+        ],
+        "note": "6.1 kgf·m is 60 Nm. MTREC is three individual throttle bodies, so intakeSys itb. SOHC 12-valve, naturally aspirated, not VTEC. 64 PS at 8100 rpm is the kei cap reached at a very high speed, which is why torque is only 60 Nm.",
+        "engine": {
+          "cylinders": 3,
+          "bore_mm": 66,
+          "stroke_mm": 64,
+          "compression": 10,
+          "redline": 8500,
+          "intakeSys": "itb",
+          "cam": "sport",
+          "vvt": false,
+          "injector": "port",
+          "octane": 95,
+          "exhaust": "sport",
+          "airFilter": "perf",
+          "runner": "short"
+        }
+      },
+      "sources": {
+        "engine": "https://www.honda.co.jp/factbook/auto/BEAT/19910515/be91-019.html — E07A, 656 cc, 66.0 x 64.0 mm, CR 10.0, 64 PS at 8100 rpm, 6.1 kgf·m at 7000 rpm.",
+        "body": "Same fact book: 760 kg, wheelbase 2.280 m, 3.295 x 1.395 x 1.175 m. Cd is not printed. Area is 1.395 x 1.175 x 0.81.",
+        "performance": "Honda prints a 50 km/h stop and fuel economy, not 0-100 or top speed. 11.5 s and 140 km/h are estimates. With only 60 Nm the car is slower than the power figure suggests.",
+        "gearset": "Same fact book.",
+        "fit": "Same fact book: 155/65R13 front, 165/60R14 rear, discs, MacPherson struts, no traction control. fit.wheel is the front 13; the rear is 14."
+      },
+      "unsure": [
+        "cd",
+        "area",
+        "fWt",
+        "t100",
+        "top",
+        "rotor",
+        "redline"
+      ],
+      "note": "The interesting engine is the individual throttles and the 8100 rpm power peak, not the acceleration time."
+    },
+    {
+      "id": "suzuki-cappuccino-1991",
+      "name": "Suzuki Cappuccino (EA11R, 1991)",
+      "cat": "Kei & City",
+      "era": "1990s",
+      "role": "Kei",
+      "confidence": "medium",
+      "chassis": "roadster",
+      "chassisFit": "fair",
+      "chassisNote": "LIGHT ROADSTER matches the open two-seater and the rear-wheel drive. The archetype's 980 kg platform mass must not be used; body.kg is 700. KEI CAR would also be defensible and is front-drive by default, so the roadster is the cleaner override. Front engine, not mid.",
+      "engineStatus": "new",
+      "engine": "Suzuki F6A turbo (Cappuccino EA11R)",
+      "body": {
+        "kg": 700,
+        "cd": 0.4,
+        "area": 1.34,
+        "wb": 2.06,
+        "fWt": 0.54
+      },
+      "fit": {
+        "tc": false,
+        "drive": "rwd",
+        "tire": "eco",
+        "tw": 165,
+        "ta": 65,
+        "wheel": 14,
+        "brake": "steel",
+        "rotor": 230,
+        "susp": "sport",
+        "gears": 5,
+        "gearbox": "manual",
+        "diff": "open",
+        "geoF": "wishbone",
+        "geoR": "wishbone"
+      },
+      "real": {
+        "t100": 9.5,
+        "top": 150,
+        "limited": false,
+        "unit": "PS"
+      },
+      "gearset": {
+        "r": [
+          3.478,
+          2.021,
+          1.352,
+          1,
+          0.79
+        ],
+        "fd": 5.125,
+        "src": "Suzuki CAXF factory ratios as summarised by a buyer's guide that quotes the Japanese specification sheet: 3.478/2.021/1.352/1.000/0.790, final 5.125."
+      },
+      "enginePreset": {
+        "cat": "Kei & City",
+        "name": "Suzuki F6A turbo (Cappuccino EA11R)",
+        "displacement_cc": 657,
+        "real": {
+          "hp": 64,
+          "hpRpm": 6500,
+          "tq": 85,
+          "tqRpm": 4000,
+          "unit": "PS"
+        },
+        "unsure": [
+          "boost_bar",
+          "redline"
+        ],
+        "note": "8.7 kgf·m is 85 Nm. DOHC 12-valve turbo three, intercooler, CR 8.3. Same 64 PS cap as the K6A and the S07A, third distinct kei turbo. The later EA21R K6A Cappuccino is a different engine and overlaps the Alto Works K6A; this entry is the F6A on purpose.",
+        "engine": {
+          "cylinders": 3,
+          "bore_mm": 65,
+          "stroke_mm": 66,
+          "compression": 8.3,
+          "redline": 7500,
+          "intake": "turbo",
+          "boost_bar": 0.7,
+          "turboSize": "small",
+          "intercooler": "small",
+          "injector": "port",
+          "vvt": false,
+          "cam": "stock",
+          "exhaust": "stock",
+          "airFilter": "stock",
+          "octane": 95
+        }
+      },
+      "sources": {
+        "engine": "https://www.jdmbuysell.com/learn/suzuki/cappuccino/ea11r/ summarises Suzuki's CAXF sheet: F6A, 657 cc, 65.0 x 66.0 mm, CR 8.3, 64 PS at 6500 rpm, 8.7 kgf·m at 4000 rpm. The guide is secondary; the numbers are presented as Suzuki's.",
+        "body": "Same summary: Suzuki lists 700 kg, wheelbase 2060 mm, 3295 x 1395 x 1185 mm, 165/65R14. Cd is not given. Area is 1.395 x 1.185 x 0.81.",
+        "performance": "0-100 and top speed are not on that sheet. 9.5 s and 150 km/h are estimates for 64 PS and 85 Nm in a 700 kg rear-drive car.",
+        "gearset": "Same summary of the Suzuki sheet.",
+        "fit": "Double wishbones, ventilated front discs, rear discs, 165/65R14, no traction control on the 1991 car."
+      },
+      "unsure": [
+        "cd",
+        "area",
+        "fWt",
+        "t100",
+        "top",
+        "rotor",
+        "boost_bar",
+        "redline",
+        "gearset"
+      ],
+      "note": "UK cars are sometimes quoted at 725 kg after the changes for that market. 700 kg is the Japanese CAXF figure."
+    },
+    {
+      "id": "ford-focus-rs-mk3-2016",
+      "name": "Ford Focus RS (Mk3, 2016)",
+      "cat": "Compact Turbo",
+      "era": "2010s",
+      "role": "Hot hatch",
+      "confidence": "high",
+      "chassis": "rally",
+      "chassisFit": "good",
+      "chassisNote": "RALLY AWD HATCH is the right archetype: all-wheel drive, hot hatch, not the front-drive Focus ST. Combustion only. The Mk2 RS is front-drive and a different engine.",
+      "engineStatus": "new",
+      "engine": "Ford 2.3 EcoBoost (Focus RS Mk3)",
+      "body": {
+        "kg": 1524,
+        "cd": 0.36,
+        "area": 2.22,
+        "wb": 2.647,
+        "fWt": 0.6
+      },
+      "fit": {
+        "drive": "awd",
+        "tire": "sport",
+        "tw": 235,
+        "ta": 35,
+        "wheel": 19,
+        "brake": "big",
+        "rotor": 350,
+        "susp": "sport",
+        "gears": 6,
+        "gearbox": "manual",
+        "diff": "clsd",
+        "tc": true,
+        "geoF": "strut",
+        "geoR": "multilink"
+      },
+      "real": {
+        "t100": 4.7,
+        "top": 266,
+        "limited": false,
+        "unit": "PS"
+      },
+      "gearset": {
+        "r": null,
+        "fd": null,
+        "src": "Ford's Focus RS technical PDF prints 6-speed manual and does not include the ratio table in the pages captured here."
+      },
+      "enginePreset": {
+        "cat": "Compact Turbo",
+        "name": "Ford 2.3 EcoBoost (Focus RS Mk3)",
+        "displacement_cc": 2261,
+        "real": {
+          "hp": 350,
+          "hpRpm": 6000,
+          "tq": 440,
+          "tqRpm": 2000,
+          "unit": "PS"
+        },
+        "unsure": [
+          "boost_bar"
+        ],
+        "note": "350 PS (257 kW) at 6000 rpm, 440 Nm from 2000 to 4500 rpm, with a transient overboost to 470 Nm that the model cannot time. tqLimit is the sustained 440 Nm. Not the 2.3 in the later Focus ST, and not the Mustang 2.3, though the block family is related.",
+        "engine": {
+          "cylinders": 4,
+          "bore_mm": 87.6,
+          "stroke_mm": 94,
+          "compression": 9.4,
+          "redline": 6800,
+          "intake": "turbo",
+          "boost_bar": 1.4,
+          "turboSize": "medium",
+          "intercooler": "large",
+          "injector": "direct",
+          "vvt": true,
+          "cam": "sport",
+          "exhaust": "sport",
+          "airFilter": "perf",
+          "octane": 98,
+          "radiator": "large",
+          "oilCooler": true,
+          "tqLimit": 440
+        }
+      },
+      "sources": {
+        "engine": "https://media.ford.com/content/dam/fordmedia/Europe/documents/productReleases/Focus%20RS/FocusRS_TechnicalSpecifications_EU.pdf — 2261 cc, 87.6 x 94.0 mm, CR 9.4, 350 PS at 6000 rpm, 440 Nm (470 Nm overboost) at 2000-4500 rpm.",
+        "body": "Same PDF: kerb 1599 kg including a 75 kg driver, so the car with fluids and without the driver is 1524 kg. Wheelbase 2647 mm, 4390 x 1823 x 1472 mm without mirrors. Cd is not printed. Area is 1.823 x 1.472 x 0.81.",
+        "performance": "Same PDF: 0-100 km/h 4.7 s, top speed 266 km/h.",
+        "gearset": "Not in the captured PDF pages.",
+        "fit": "Same PDF: 235/35 R19 Michelin Pilot Super Sport, Brembo front discs 350 x 25 mm, all-wheel drive, 6-speed manual."
+      },
+      "unsure": [
+        "cd",
+        "area",
+        "fWt",
+        "boost_bar",
+        "redline",
+        "gearset"
+      ],
+      "note": "Ford's 1599 kg kerb includes the driver. body.kg uses 1524 kg so it matches the other cars' curb-without-driver convention. Drift mode's rear torque bias is not in the sim's awd model."
+    },
+    {
+      "id": "renault-megane-rs-trophy-2018",
+      "name": "Renault Mégane R.S. Trophy (2018)",
+      "cat": "Compact Turbo",
+      "era": "2010s",
+      "role": "Hot hatch",
+      "confidence": "high",
+      "chassis": "hatch",
+      "chassisFit": "good",
+      "chassisNote": "Fits HOT HATCH. Front-wheel drive. The Mégane E-Tech is a hybrid and is not this car. The Trophy-R is lighter and two-seat; this is the five-door Trophy.",
+      "engineStatus": "new",
+      "engine": "Renault M5Pt 1.8 turbo (Mégane R.S. Trophy)",
+      "body": {
+        "kg": 1447,
+        "cd": 0.36,
+        "area": 2.16,
+        "wb": 2.669,
+        "fWt": 0.62
+      },
+      "fit": {
+        "drive": "fwd",
+        "tire": "sport",
+        "tw": 245,
+        "ta": 35,
+        "wheel": 19,
+        "brake": "big",
+        "rotor": 355,
+        "susp": "sport",
+        "gears": 6,
+        "gearbox": "dct",
+        "diff": "clsd",
+        "tc": true,
+        "geoF": "strut",
+        "geoR": "twist"
+      },
+      "real": {
+        "t100": 5.7,
+        "top": 255,
+        "limited": false,
+        "unit": "PS"
+      },
+      "gearset": {
+        "r": null,
+        "fd": null,
+        "src": "The Renault brochure specifies a 6-speed EDC dual-clutch and does not print ratios."
+      },
+      "enginePreset": {
+        "cat": "Compact Turbo",
+        "name": "Renault M5Pt 1.8 turbo (Mégane R.S. Trophy)",
+        "displacement_cc": 1798,
+        "real": {
+          "hp": 300,
+          "hpRpm": 6000,
+          "tq": 420,
+          "tqRpm": 3200,
+          "unit": "PS"
+        },
+        "unsure": [
+          "boost_bar",
+          "redline",
+          "tqRpm"
+        ],
+        "note": "The UK brochure header says 420 Nm at 3200 rpm and the specification table says 420 Nm at 4000 rpm. 3200 is used and tqRpm is unsure. Direct injection, 79.7 x 90.1 mm.",
+        "engine": {
+          "cylinders": 4,
+          "bore_mm": 79.7,
+          "stroke_mm": 90.1,
+          "compression": 9,
+          "redline": 6800,
+          "intake": "turbo",
+          "boost_bar": 1.3,
+          "turboSize": "medium",
+          "intercooler": "large",
+          "injector": "direct",
+          "vvt": true,
+          "cam": "sport",
+          "exhaust": "sport",
+          "airFilter": "perf",
+          "octane": 98,
+          "radiator": "large",
+          "oilCooler": true
+        }
+      },
+      "sources": {
+        "engine": "https://cdn.group.renault.com/ren/gb/transversal-assets/brochures/car-ebrochures/MEGANE-Renault-Sport-eBrochure.pdf.asset.pdf/71732c2d30.pdf — 1798 cc, 79.7 x 90.1 mm, 300 hp at 6000 rpm, 420 Nm. Compression is the usual M5Pt figure and was not in the captured table.",
+        "body": "Same brochure: kerb weight without options 1447 kg, CdA 0.778 / 0.802. cd 0.36 and area 2.16 multiply to 0.778, so they are a split of the published CdA, not two independent measurements. Wheelbase of the Mégane IV is 2669 mm; the brochure's dimension line is ambiguous.",
+        "performance": "Same brochure: 0-62 mph in 5.7 s, top speed 255 km/h, for the EDC Trophy.",
+        "gearset": "Not printed.",
+        "fit": "Same brochure: Trophy tyres 245/35 R19, front discs 355 mm, Brembo calipers, 4-wheel steering is fitted and is NOT in the sim. The manual Cup chassis is a different suspension and was not the column captured."
+      },
+      "unsure": [
+        "cd",
+        "area",
+        "wb",
+        "fWt",
+        "compression",
+        "boost_bar",
+        "redline",
+        "tqRpm",
+        "gearset"
+      ],
+      "note": "4CONTROL four-wheel steering has no field in the vehicle preset. The car will under-represent high-speed response until that exists. Cd and area must be read as a pair: only their product is sourced."
+    },
+    {
+      "id": "suzuki-swift-sport-zc33s-2018",
+      "name": "Suzuki Swift Sport (ZC33S, 2018)",
+      "cat": "Compact Turbo",
+      "era": "2010s",
+      "role": "Hot hatch",
+      "confidence": "medium",
+      "chassis": "hatch",
+      "chassisFit": "fair",
+      "chassisNote": "HOT HATCH, lighter than the archetype. The 2018-2023 ZC33S is the 1.4 Boosterjet, combustion only. The 2024 Swift is a mild hybrid and is excluded.",
+      "engineStatus": "new",
+      "engine": "Suzuki K14C Boosterjet (Swift Sport ZC33S)",
+      "body": {
+        "kg": 970,
+        "cd": 0.33,
+        "area": 2.05,
+        "wb": 2.45,
+        "fWt": 0.62
+      },
+      "fit": {
+        "drive": "fwd",
+        "tire": "sport",
+        "tw": 195,
+        "ta": 45,
+        "wheel": 17,
+        "brake": "slotted",
+        "rotor": 280,
+        "susp": "sport",
+        "gears": 6,
+        "gearbox": "manual",
+        "diff": "open",
+        "tc": true,
+        "geoF": "strut",
+        "geoR": "twist"
+      },
+      "real": {
+        "t100": 8.1,
+        "top": 210,
+        "limited": false,
+        "unit": "PS"
+      },
+      "gearset": {
+        "r": null,
+        "fd": null,
+        "src": "6-speed manual. Ratios were not taken from a Suzuki sheet in this pass."
+      },
+      "enginePreset": {
+        "cat": "Compact Turbo",
+        "name": "Suzuki K14C Boosterjet (Swift Sport ZC33S)",
+        "displacement_cc": 1371,
+        "real": {
+          "hp": 140,
+          "hpRpm": 5500,
+          "tq": 230,
+          "tqRpm": 2500,
+          "unit": "PS"
+        },
+        "unsure": [
+          "boost_bar",
+          "compression",
+          "bore_mm",
+          "stroke_mm",
+          "redline"
+        ],
+        "note": "Japanese and many European catalogues: 140 PS at 5500 rpm and 230 Nm at 2500-3500 rpm, so tqLimit is set. Some markets were 129 PS. K14C is quoted as 73.0 x 81.9 mm or 73.0 x 82.0 mm depending on the rounding; 1371 cc is the displacement. Direct injection, small turbo.",
+        "engine": {
+          "cylinders": 4,
+          "bore_mm": 73,
+          "stroke_mm": 81.9,
+          "compression": 9.9,
+          "redline": 6200,
+          "intake": "turbo",
+          "boost_bar": 1,
+          "turboSize": "small",
+          "intercooler": "small",
+          "injector": "direct",
+          "vvt": true,
+          "cam": "stock",
+          "exhaust": "sport",
+          "airFilter": "stock",
+          "octane": 95,
+          "tqLimit": 230
+        }
+      },
+      "sources": {
+        "engine": "Suzuki's ZC33S catalogue rating is 140 PS at 5500 rpm and 230 Nm from 2500 rpm. A Suzuki PDF was not captured in this pass; geometry and compression are the published K14C figures and stay unsure.",
+        "body": "Kerb is about 970 kg for the manual. Wheelbase of this Swift is 2450 mm. Cd is often listed near 0.33 and was not opened here.",
+        "performance": "Suzuki and period tests quote about 8.1 s to 100 km/h and about 210 km/h. Marked unsure until a brochure is attached.",
+        "gearset": "Not found.",
+        "fit": "195/45R17, front-wheel drive, open diff, discs."
+      },
+      "unsure": [
+        "kg",
+        "cd",
+        "area",
+        "wb",
+        "fWt",
+        "t100",
+        "top",
+        "rotor",
+        "bore_mm",
+        "stroke_mm",
+        "compression",
+        "boost_bar",
+        "redline",
+        "gearset"
+      ],
+      "note": "Included as the light modern hot hatch between the kei cars and the Focus RS. Confirm the 140 vs 129 PS market before implementing."
+    },
+    {
+      "id": "honda-civic-type-r-ek9-1997",
+      "name": "Honda Civic Type R (EK9, 1997)",
+      "cat": "NA Sports",
+      "era": "1990s",
+      "role": "Hot hatch",
+      "confidence": "medium",
+      "chassis": "hatch",
+      "chassisFit": "good",
+      "chassisNote": "Fits HOT HATCH. The FK8 Civic Type R already in the list is the turbo K20C1. This is the naturally aspirated B16B, a different engine, and it must not reuse the K20C1.",
+      "engineStatus": "new",
+      "engine": "Honda B16B (Civic Type R EK9)",
+      "body": {
+        "kg": 1090,
+        "cd": 0.33,
+        "area": 1.9,
+        "wb": 2.62,
+        "fWt": 0.63
+      },
+      "fit": {
+        "tc": false,
+        "drive": "fwd",
+        "tire": "sport",
+        "tw": 195,
+        "ta": 55,
+        "wheel": 15,
+        "brake": "slotted",
+        "rotor": 282,
+        "susp": "sport",
+        "gears": 5,
+        "gearbox": "manual",
+        "diff": "clsd",
+        "geoF": "wishbone",
+        "geoR": "wishbone"
+      },
+      "real": {
+        "t100": 6.7,
+        "top": 235,
+        "limited": false,
+        "unit": "PS"
+      },
+      "gearset": {
+        "r": [
+          3.23,
+          2.105,
+          1.458,
+          1.107,
+          0.848
+        ],
+        "fd": 4.4,
+        "src": "JDM EK9 Type R 5-speed as published in Honda brochures and the S4C gearbox references: 3.230/2.105/1.458/1.107/0.848, final 4.400. Not re-opened as a PDF here."
+      },
+      "enginePreset": {
+        "cat": "NA Sports",
+        "era": "1990s",
+        "name": "Honda B16B (Civic Type R EK9)",
+        "displacement_cc": 1595,
+        "real": {
+          "hp": 185,
+          "hpRpm": 8200,
+          "tq": 160,
+          "tqRpm": 7500,
+          "unit": "PS"
+        },
+        "unsure": [
+          "compression"
+        ],
+        "note": "1595 cc, 81.0 x 77.4 mm, 185 PS at 8200 rpm, 160 Nm at 7500 rpm. Compression 10.8:1 is the Honda figure and is marked unsure because the page was not opened. DOHC VTEC, port injection, single throttle. The DC2's B18C is the stroked relative and is a separate preset in this batch.",
+        "engine": {
+          "cylinders": 4,
+          "bore_mm": 81,
+          "stroke_mm": 77.4,
+          "compression": 10.8,
+          "redline": 8400,
+          "cam": "race",
+          "vvt": true,
+          "valveSpring": "race",
+          "injector": "port",
+          "octane": 98,
+          "exhaust": "race",
+          "airFilter": "perf",
+          "runner": "short"
+        }
+      },
+      "sources": {
+        "engine": "Honda's JDM EK9 rating is 185 PS at 8200 rpm and 160 Nm at 7500 rpm. Geometry 81.0 x 77.4 mm is the B16B pair. A Honda PDF was not captured in this pass.",
+        "body": "Kerb is about 1090 kg in JDM catalogues. Wheelbase of the EK is 2620 mm. Cd is not a figure opened here.",
+        "performance": "Road tests are about 6.7 s to 100 km/h. Top speed is about 235 km/h. Both unsure.",
+        "gearset": "JDM close-ratio set cited above. Confirm before use.",
+        "fit": "195/55R15, limited-slip differential, double wishbones, no traction control."
+      },
+      "unsure": [
+        "kg",
+        "cd",
+        "area",
+        "fWt",
+        "t100",
+        "top",
+        "rotor",
+        "compression",
+        "gearset"
+      ],
+      "note": "The naturally aspirated bookend to the FK8 that is already in the game. Same Honda Type R idea, twenty years and a turbo apart."
+    },
+    {
+      "id": "toyota-gr86-2022",
+      "name": "Toyota GR86 (2022)",
+      "cat": "NA Sports",
+      "era": "2020s",
+      "role": "Sports coupe",
+      "confidence": "high",
+      "chassis": "coupe",
+      "chassisFit": "good",
+      "chassisNote": "Fits SPORTS COUPE. The Subaru BRZ of the same year is the same car with a different badge and is not a second entry. Combustion only; not the later hybrid proposals.",
+      "engineStatus": "new",
+      "engine": "Toyota FA24D 2.4 boxer (GR86)",
+      "body": {
+        "kg": 1275,
+        "cd": 0.276,
+        "area": 1.88,
+        "wb": 2.575,
+        "fWt": 0.53
+      },
+      "fit": {
+        "drive": "rwd",
+        "tire": "sport",
+        "tw": 215,
+        "ta": 45,
+        "wheel": 17,
+        "brake": "slotted",
+        "rotor": 295,
+        "susp": "sport",
+        "gears": 6,
+        "gearbox": "manual",
+        "diff": "clsd",
+        "tc": true,
+        "geoF": "strut",
+        "geoR": "multilink"
+      },
+      "real": {
+        "t100": 6.4,
+        "top": 225,
+        "limited": false,
+        "unit": "PS"
+      },
+      "gearset": {
+        "r": [
+          3.626,
+          2.189,
+          1.541,
+          1.213,
+          1,
+          0.767
+        ],
+        "fd": 4.1,
+        "src": "Toyota USA 2022 GR86 eBrochure, manual TL70: 3.626/2.189/1.541/1.213/1.000/0.767, axle 4.100."
+      },
+      "enginePreset": {
+        "cat": "NA Sports",
+        "name": "Toyota FA24D 2.4 boxer (GR86)",
+        "displacement_cc": 2387,
+        "real": {
+          "hp": 235,
+          "hpRpm": 7000,
+          "tq": 250,
+          "tqRpm": 3700,
+          "unit": "PS"
+        },
+        "unsure": [
+          "redline"
+        ],
+        "note": "The US brochure says 228 hp SAE at 7000 rpm and 184 lb-ft (249 Nm) at 3700 rpm. JDM and European catalogues say 235 PS and 250 Nm at the same speeds. 235 PS / 250 Nm is stored so the figure matches the metric catalogues; the US SAE pair is the same engine. D-4S combined injection is filed as direct. Boxer, naturally aspirated, 12.5:1.",
+        "engine": {
+          "cylinders": 4,
+          "layout": "boxer",
+          "bore_mm": 94,
+          "stroke_mm": 86,
+          "compression": 12.5,
+          "redline": 7500,
+          "cam": "sport",
+          "vvt": true,
+          "injector": "direct",
+          "octane": 98,
+          "exhaust": "sport",
+          "airFilter": "perf",
+          "radiator": "large"
+        }
+      },
+      "sources": {
+        "engine": "https://www.toyota.com/content/dam/toyota/brochures/pdf/2022/gr86_ebrochure.pdf — 2387 cc, 94.0 x 86.0 mm, CR 12.5, 228 hp at 7000 rpm, 184 lb-ft at 3700 rpm, D-4S.",
+        "body": "Same brochure: Cd 0.276, wheelbase 2575 mm, 4265 x 1775 x 1310 mm. Curb weight is not in the captured pages; GVWR is 3682 lb manual. 1275 kg (2811 lb) is the usual published US curb and is unsure. Area is 1.775 x 1.310 x 0.81.",
+        "performance": "Same brochure: maximum speed 140 mph manual (225 km/h), 0-60 mph 6.1 s. t100 6.4 s is that 0-60 plus the gap to 100 km/h.",
+        "gearset": "Same brochure.",
+        "fit": "Michelin Primacy HP 215/45R17 on the base car; Premium is 215/40R18 Pilot Sport 4. Torsen LSD. MacPherson front, multilink rear."
+      },
+      "unsure": [
+        "kg",
+        "area",
+        "fWt",
+        "t100",
+        "rotor",
+        "redline"
+      ],
+      "note": "Do not also add the BRZ. One chassis, two badges. The FA24D is not the turbo FA24F used in the WRX."
+    },
+    {
+      "id": "porsche-718-cayman-gt4-2020",
+      "name": "Porsche 718 Cayman GT4 (2020)",
+      "cat": "NA Sports",
+      "era": "2020s",
+      "role": "Sports coupe",
+      "confidence": "medium",
+      "chassis": "super",
+      "chassisFit": "fair",
+      "chassisNote": "MID-ENGINE SUPER is the right engine position. The car is a sports coupe, not a supercar; the archetype's DCT and semi-slick defaults are overridden by the 2020 manual GT4. Do not reuse the 911 GT3 4.0 preset: same bore and stroke, different compression, intake, redline and power.",
+      "engineStatus": "new",
+      "engine": "Porsche 4.0 flat-six (718 Cayman GT4)",
+      "body": {
+        "kg": 1420,
+        "cd": 0.34,
+        "area": 2,
+        "wb": 2.475,
+        "fWt": 0.45
+      },
+      "fit": {
+        "drive": "rwd",
+        "tire": "semi",
+        "tw": 295,
+        "twF": 245,
+        "ta": 30,
+        "wheel": 20,
+        "brake": "big",
+        "rotor": 380,
+        "susp": "coilover",
+        "gears": 6,
+        "gearbox": "manual",
+        "diff": "clsd",
+        "aF": "none",
+        "aR": "none",
+        "aFl": "none",
+        "geoF": "strut",
+        "geoR": "strut"
+      },
+      "real": {
+        "t100": 4.4,
+        "top": 304,
+        "limited": false,
+        "unit": "PS"
+      },
+      "gearset": {
+        "r": null,
+        "fd": null,
+        "src": "6-speed manual. Porsche's ratio table for the 718 GT4 was not captured in this pass. The 981 Cayman GT4 catalogue is a different, 3.8-litre car and its ratios must not be copied across."
+      },
+      "enginePreset": {
+        "cat": "NA Sports",
+        "era": "2020s",
+        "name": "Porsche 4.0 flat-six (718 Cayman GT4)",
+        "displacement_cc": 3995,
+        "real": {
+          "hp": 420,
+          "hpRpm": 7600,
+          "tq": 420,
+          "tqRpm": 5000,
+          "unit": "PS"
+        },
+        "unsure": [
+          "compression",
+          "bore_mm",
+          "stroke_mm"
+        ],
+        "note": "309 kW (420 PS) at 7600 rpm, 420 Nm from 5000 rpm, 8000 rpm redline. The 4.0 9A2 shares 102.0 x 81.5 mm with the 991.2 GT3 already in PRESETS. GT4 compression is lower (about 13.0 versus 13.3) and the intake is a plenum, not the GT3's individual throttles. Direct injection.",
+        "engine": {
+          "cylinders": 6,
+          "layout": "boxer",
+          "bore_mm": 102,
+          "stroke_mm": 81.5,
+          "compression": 13,
+          "redline": 8000,
+          "cam": "race",
+          "vvt": true,
+          "valveSpring": "race",
+          "injector": "direct",
+          "octane": 98,
+          "exhaust": "race",
+          "airFilter": "perf",
+          "runner": "variable",
+          "radiator": "large",
+          "oilCooler": true
+        }
+      },
+      "sources": {
+        "engine": "Porsche's June 2019 Goodwood launch of the 718 Cayman GT4: 4.0-litre naturally aspirated flat-six, 420 PS, 420 Nm, 8000 rpm. Bore, stroke and 13.0:1 compression are the published 718 GT4 technical-data figures and were not re-read from a PDF in this pass (a search returned the older 981 GT4 catalogue, which is 3.8 litres and 385 PS, and those numbers are not used).",
+        "body": "DIN unladen weight is widely quoted at 1420 kg for the manual GT4. Wheelbase of the 718 Cayman is 2475 mm. Cd is higher than a plain Cayman because of the wing; 0.34 is an estimate. The wing is inside that Cd, so fit aero stays off.",
+        "performance": "Porsche's launch claim: 0-100 km/h in 4.4 s, top speed 304 km/h, with the manual.",
+        "gearset": "Not captured. Do not import the 981 GT4 gearbox.",
+        "fit": "245/35 ZR20 front and 295/30 ZR20 rear, iron discs about 380 mm, mechanical LSD, 6-speed manual. PCCB is optional."
+      },
+      "unsure": [
+        "kg",
+        "cd",
+        "area",
+        "wb",
+        "fWt",
+        "rotor",
+        "compression",
+        "bore_mm",
+        "stroke_mm",
+        "gearset"
+      ],
+      "note": "Medium confidence because the launch numbers are stable across Porsche's own retelling, but this pass did not open the 718 technical PDF. The explicit non-reuse of the GT3 preset is the point of the entry."
+    },
+    {
+      "id": "bmw-m2-competition-f87-2018",
+      "name": "BMW M2 Competition (F87, 2018)",
+      "cat": "Turbo Performance",
+      "era": "2010s",
+      "role": "Sports coupe",
+      "confidence": "medium",
+      "chassis": "coupe",
+      "chassisFit": "good",
+      "chassisNote": "Fits SPORTS COUPE. The Competition uses the S55, not the N55 of the earlier M2. Combustion only. The later G87 M2 is a different car.",
+      "engineStatus": "new",
+      "engine": "BMW S55 3.0 TT I6 (M2 Competition)",
+      "body": {
+        "kg": 1550,
+        "cd": 0.36,
+        "area": 2.15,
+        "wb": 2.693,
+        "fWt": 0.52
+      },
+      "fit": {
+        "drive": "rwd",
+        "tire": "sport",
+        "tw": 265,
+        "twF": 245,
+        "ta": 35,
+        "wheel": 19,
+        "brake": "big",
+        "rotor": 380,
+        "susp": "sport",
+        "gears": 6,
+        "gearbox": "manual",
+        "diff": "clsd",
+        "tc": true,
+        "geoF": "strut",
+        "geoR": "multilink"
+      },
+      "real": {
+        "t100": 4.4,
+        "top": 250,
+        "limited": true,
+        "unit": "PS"
+      },
+      "gearset": {
+        "r": null,
+        "fd": null,
+        "src": "6-speed manual. BMW's ratio table for the F87 Competition was not captured in this pass. The 7-speed DCT is a different gearset and a 4.2 s claim."
+      },
+      "enginePreset": {
+        "cat": "Turbo Performance",
+        "name": "BMW S55 3.0 TT I6 (M2 Competition)",
+        "displacement_cc": 2979,
+        "real": {
+          "hp": 410,
+          "hpRpm": 5250,
+          "tq": 550,
+          "tqRpm": 2350,
+          "unit": "PS"
+        },
+        "unsure": [
+          "boost_bar",
+          "compression",
+          "redline"
+        ],
+        "note": "302 kW (410 PS) from 5250 to 7000 rpm, 550 Nm from 2350 to about 5200 rpm, so tqLimit is set. S55 closed-deck inline-six, twin turbo. Bore 84.0 mm and stroke 89.6 mm, compression about 10.2. Not the S54 (naturally aspirated, already in PRESETS) and not the 2JZ.",
+        "engine": {
+          "cylinders": 6,
+          "bore_mm": 84,
+          "stroke_mm": 89.6,
+          "compression": 10.2,
+          "redline": 7600,
+          "intake": "turbo",
+          "boost_bar": 1.2,
+          "turboSize": "medium",
+          "turboConfig": "twin",
+          "intercooler": "large",
+          "injector": "direct",
+          "vvt": true,
+          "cam": "sport",
+          "exhaust": "sport",
+          "airFilter": "perf",
+          "octane": 98,
+          "radiator": "large",
+          "oilCooler": true,
+          "tqLimit": 550
+        }
+      },
+      "sources": {
+        "engine": "BMW's F87 M2 Competition launch: S55, 410 PS, 550 Nm. Geometry is the S55's published 84.0 x 89.6 mm and was not re-read from a BMW PDF here.",
+        "body": "DIN kerb of the manual Competition is about 1550 kg. Wheelbase of the F87 is 2693 mm. Cd is not a figure opened here.",
+        "performance": "BMW: 0-100 km/h in 4.4 s with the manual and 4.2 s with the DCT, top speed 250 km/h limited (280 with the M Driver's Package).",
+        "gearset": "Not captured.",
+        "fit": "245/35ZR19 front and 265/35ZR19 rear, M compound brakes about 380 mm front, active M differential."
+      },
+      "unsure": [
+        "kg",
+        "cd",
+        "area",
+        "fWt",
+        "rotor",
+        "boost_bar",
+        "compression",
+        "bore_mm",
+        "stroke_mm",
+        "redline",
+        "gearset"
+      ],
+      "note": "Manual is the entry so it does not share the DCT with half the existing list. The torque plateau is the part the engine model needs tqLimit for."
+    },
+    {
+      "id": "ariel-atom-35-2013",
+      "name": "Ariel Atom 3.5 (2013)",
+      "cat": "NA Sports",
+      "era": "2010s",
+      "role": "Light roadster",
+      "confidence": "low",
+      "chassis": "roadster",
+      "chassisFit": "fair",
+      "chassisNote": "LIGHT ROADSTER, not TRACK PROTOTYPE. The Atom has almost no bodywork and no wing; the prototype archetype would add a wing, a diffuser and slick-car drag the Atom does not have. The roadster archetype's own aero factor should not be given splitters either: fit aero parts stay off. engPos is mid. The supercharged 3.5R and the turbo Atom 4 (K20C) are different engines. The K20C1 already in PRESETS is the Civic Type R turbo and is not this naturally aspirated K20.",
+      "engineStatus": "new",
+      "engine": "Honda K20A tuned (Ariel Atom 3.5)",
+      "body": {
+        "kg": 520,
+        "cd": 0.55,
+        "area": 1.2,
+        "wb": 2.345,
+        "fWt": 0.42,
+        "engPos": "mid"
+      },
+      "fit": {
+        "tc": false,
+        "drive": "rwd",
+        "tire": "sport",
+        "tw": 225,
+        "twF": 195,
+        "ta": 50,
+        "wheel": 15,
+        "brake": "slotted",
+        "rotor": 280,
+        "susp": "coilover",
+        "gears": 6,
+        "gearbox": "manual",
+        "diff": "clsd",
+        "aF": "none",
+        "aR": "none",
+        "aFl": "none",
+        "geoF": "wishbone",
+        "geoR": "wishbone"
+      },
+      "real": {
+        "t100": 3.2,
+        "top": 241,
+        "limited": false,
+        "unit": "hp_SAE"
+      },
+      "gearset": {
+        "r": null,
+        "fd": null,
+        "src": "Honda 6-speed close-ratio from the Civic Type R, optionally with a Quaife differential. The ratio set was not copied in this pass."
+      },
+      "enginePreset": {
+        "cat": "NA Sports",
+        "name": "Honda K20A tuned (Ariel Atom 3.5)",
+        "displacement_cc": 1998,
+        "real": {
+          "hp": 245,
+          "hpRpm": 8200,
+          "tq": 209,
+          "tqRpm": 6100,
+          "unit": "hp_SAE"
+        },
+        "unsure": [
+          "compression",
+          "tq",
+          "tqRpm"
+        ],
+        "note": "Ariel's naturally aspirated tune of the K20 Type R, quoted at 245 hp, above the stock Civic's 220 PS. 154 lb-ft is 209 Nm. Bore 86 x 86 mm is the K20. i-VTEC, single throttle body, not ITBs and not the turbo K20C1.",
+        "engine": {
+          "cylinders": 4,
+          "bore_mm": 86,
+          "stroke_mm": 86,
+          "compression": 11.5,
+          "redline": 8600,
+          "cam": "race",
+          "vvt": true,
+          "valveSpring": "race",
+          "injector": "port",
+          "octane": 98,
+          "exhaust": "race",
+          "airFilter": "perf",
+          "runner": "short",
+          "radiator": "large",
+          "oilCooler": true
+        }
+      },
+      "sources": {
+        "engine": "https://www.pistonheads.com/news/ph-buying-guides/ariel-atom-3--ph-used-buying-guide/45222 — Atom 3 / 3.5 naturally aspirated, 1998 cc, 245 hp at 8200 rpm, 154 lb-ft at 6100 rpm. PistonHeads warns the figures are not definitive.",
+        "body": "Same guide: 520 kg, top speed 150 mph, 0-60 in the low threes. Wheelbase of the Atom 3 is about 2345 mm. Cd 0.55 and the small frontal area are estimates for an exposed-frame car. fWt is a mid-engine estimate.",
+        "performance": "PistonHeads: 0-60 in the low threes, 150 mph. t100 3.2 s is that description turned into a number and is unsure. Top 241 km/h is 150 mph.",
+        "gearset": "The guide names the Civic Type R 6-speed and an optional Quaife LSD and does not print ratios.",
+        "fit": "Same guide: 15-inch front and 16-inch rear wheels, 195-section front and 225-section rear. fit.wheel is 15."
+      },
+      "unsure": [
+        "kg",
+        "cd",
+        "area",
+        "wb",
+        "fWt",
+        "t100",
+        "tw",
+        "twF",
+        "rotor",
+        "compression",
+        "tq",
+        "gearset"
+      ],
+      "note": "Low confidence because the best source found says its own weight and power figures are not certain. The chassis decision is the part that should not be reopened: roadster, no wing."
+    },
+    {
+      "id": "mazda-mx5-nd-2015",
+      "name": "Mazda MX-5 2.0 (ND, 2015)",
+      "cat": "NA Sports",
+      "era": "2010s",
+      "role": "Light roadster",
+      "confidence": "medium",
+      "chassis": "roadster",
+      "chassisFit": "good",
+      "chassisNote": "Fits LIGHT ROADSTER. The NA 1.6 MX-5 is already in the list with the B6-ZE. This is the ND Skyactiv-G, a different car and a different engine. The 2019 184 PS revision is not this entry.",
+      "engineStatus": "new",
+      "engine": "Mazda Skyactiv-G 2.0 (MX-5 ND)",
+      "body": {
+        "kg": 1025,
+        "cd": 0.33,
+        "area": 1.75,
+        "wb": 2.31,
+        "fWt": 0.52
+      },
+      "fit": {
+        "drive": "rwd",
+        "tire": "sport",
+        "tw": 205,
+        "ta": 45,
+        "wheel": 17,
+        "brake": "slotted",
+        "rotor": 280,
+        "susp": "sport",
+        "gears": 6,
+        "gearbox": "manual",
+        "diff": "open",
+        "tc": true,
+        "geoF": "wishbone",
+        "geoR": "multilink"
+      },
+      "real": {
+        "t100": 7.3,
+        "top": 214,
+        "limited": false,
+        "unit": "PS"
+      },
+      "gearset": {
+        "r": null,
+        "fd": null,
+        "src": "6-speed manual. Mazda's ND ratio table was not captured in this pass."
+      },
+      "enginePreset": {
+        "cat": "NA Sports",
+        "name": "Mazda Skyactiv-G 2.0 (MX-5 ND)",
+        "displacement_cc": 1998,
+        "real": {
+          "hp": 160,
+          "hpRpm": 6000,
+          "tq": 200,
+          "tqRpm": 4600,
+          "unit": "PS"
+        },
+        "unsure": [
+          "bore_mm",
+          "stroke_mm"
+        ],
+        "note": "European 160 PS at 6000 rpm and 200 Nm at 4600 rpm. The US rating of the same early ND is 155 hp. Compression 13.0:1, direct injection. Bore 83.5 mm and stroke 91.2 mm are the Skyactiv-G 2.0 pair. Not the 1.5 ND and not the B6-ZE.",
+        "engine": {
+          "cylinders": 4,
+          "bore_mm": 83.5,
+          "stroke_mm": 91.2,
+          "compression": 13,
+          "redline": 6800,
+          "cam": "stock",
+          "vvt": true,
+          "injector": "direct",
+          "octane": 95,
+          "exhaust": "sport",
+          "airFilter": "stock"
+        }
+      },
+      "sources": {
+        "engine": "Mazda's European ND launch: Skyactiv-G 2.0, 160 PS at 6000 rpm, 200 Nm at 4600 rpm, CR 13.0. A Mazda PDF was not captured in this pass.",
+        "body": "Early soft-top kerb is about 1025 kg depending on market. Wheelbase 2310 mm. Cd is not a figure opened here; 0.33 is an estimate next to the NA's published 0.38.",
+        "performance": "Mazda's European claim is about 7.3 s to 100 km/h and 214 km/h. Marked unsure until the brochure is attached.",
+        "gearset": "Not found.",
+        "fit": "205/45R17 on the 2.0 Sport, rear-wheel drive, open differential on the base car, limited-slip was an option or a later pack. Wishbones front, multilink rear."
+      },
+      "unsure": [
+        "kg",
+        "cd",
+        "area",
+        "fWt",
+        "t100",
+        "top",
+        "rotor",
+        "bore_mm",
+        "stroke_mm",
+        "gearset"
+      ],
+      "note": "The second MX-5 in the game should be this generation, not another NA trim. Open diff is the base car; a Sport Recaro pack with an LSD can be diff clsd if the later session picks that variant."
+    },
+    {
+      "id": "dodge-viper-srt10-2008",
+      "name": "Dodge Viper SRT-10 (2008)",
+      "cat": "Supercar",
+      "era": "2000s",
+      "role": "Front-engine V10",
+      "confidence": "medium",
+      "chassis": "muscle",
+      "chassisFit": "fair",
+      "chassisNote": "MUSCLE CAR is the closest front-engine, rear-drive shape. The Viper is lower and more specialised than the archetype. A V10 has no home in American V8, so the category is Supercar. The only other V10 in PRESETS is the Carrera GT, which is a different engine.",
+      "engineStatus": "new",
+      "engine": "Dodge Viper 8.4 V10 (SRT-10)",
+      "body": {
+        "kg": 1565,
+        "cd": 0.4,
+        "area": 1.9,
+        "wb": 2.51,
+        "fWt": 0.5
+      },
+      "fit": {
+        "tc": true,
+        "drive": "rwd",
+        "tire": "sport",
+        "tw": 345,
+        "twF": 275,
+        "ta": 30,
+        "wheel": 19,
+        "brake": "big",
+        "rotor": 355,
+        "susp": "sport",
+        "gears": 6,
+        "gearbox": "manual",
+        "diff": "clsd",
+        "geoF": "wishbone",
+        "geoR": "wishbone"
+      },
+      "real": {
+        "t100": 3.9,
+        "top": 325,
+        "limited": false,
+        "unit": "hp_SAE"
+      },
+      "gearset": {
+        "r": [
+          2.66,
+          1.78,
+          1.3,
+          1,
+          0.74,
+          0.5
+        ],
+        "fd": 3.42,
+        "src": "The 2008-2010 Viper uses a Tremec TR6060. The ratio set here is the same TR6060 set already used for the C6 Corvette in this repo (2.66/1.78/1.30/1.00/0.74/0.50) with a 3.42 axle. Viper-specific confirmation was not opened, so the gearset is unsure."
+      },
+      "enginePreset": {
+        "cat": "Supercar",
+        "era": "2000s",
+        "name": "Dodge Viper 8.4 V10 (SRT-10)",
+        "displacement_cc": 8382,
+        "real": {
+          "hp": 600,
+          "hpRpm": 6100,
+          "tq": 760,
+          "tqRpm": 5000,
+          "unit": "hp_SAE"
+        },
+        "unsure": [
+          "bore_mm",
+          "stroke_mm",
+          "compression"
+        ],
+        "note": "8.4-litre OHV V10, 600 hp at 6100 rpm and 560 lb-ft (760 Nm) at 5000 rpm. Bore 103.0 mm and stroke 100.6 mm multiply to 8382 cc. Two valves, no variable valve timing. The 2003-2006 8.3 is a smaller engine.",
+        "engine": {
+          "cylinders": 10,
+          "layout": "v",
+          "valves": 2,
+          "bore_mm": 103,
+          "stroke_mm": 100.6,
+          "compression": 10.2,
+          "redline": 6400,
+          "vvt": false,
+          "cam": "race",
+          "valveSpring": "perf",
+          "injector": "port",
+          "octane": 91,
+          "exhaust": "race",
+          "airFilter": "perf",
+          "radiator": "large",
+          "oilCooler": true
+        }
+      },
+      "sources": {
+        "engine": "Chrysler's 2008 Viper SRT-10 rating is 600 hp and 560 lb-ft. Geometry is the published 8.4 pair and was not re-read from a Chrysler PDF here.",
+        "body": "Curb is about 3450 lb (1565 kg) for the coupe. Wheelbase is 98.8 in (2510 mm). Cd is not a figure opened here.",
+        "performance": "0-60 mph in the mid-3-second range and a top speed a little over 200 mph are the period results. t100 3.9 s and 325 km/h are those figures and are unsure.",
+        "gearset": "TR6060 family, flagged unsure against the Corvette set already in the repo.",
+        "fit": "275/35ZR18 front and 345/30ZR19 rear. fit.wheel is the rear 19. Front discs about 355 mm. Limited-slip differential. Stability control arrived on this generation, so tc is on; earlier Vipers had none."
+      },
+      "unsure": [
+        "kg",
+        "cd",
+        "area",
+        "fWt",
+        "t100",
+        "top",
+        "rotor",
+        "bore_mm",
+        "stroke_mm",
+        "compression",
+        "gearset"
+      ],
+      "note": "The second V10, and the one that is a road car rather than a mid-engine exotic. Octane 91 is AKI."
+    },
+    {
+      "id": "mercedes-amg-c63-w204-2008",
+      "name": "Mercedes-AMG C63 (W204, 2008)",
+      "cat": "NA Sports",
+      "era": "2000s",
+      "role": "Sports sedan",
+      "confidence": "medium",
+      "chassis": "sedan",
+      "chassisFit": "good",
+      "chassisNote": "Fits SPORTS SEDAN. Naturally aspirated 6.2 M156. Not the turbo W205 C63 and not the hybrid W206 C63. The sedan is the entry; the coupe is a different body.",
+      "engineStatus": "new",
+      "engine": "Mercedes-AMG M156 6.2 V8 (C63 W204)",
+      "body": {
+        "kg": 1730,
+        "cd": 0.31,
+        "area": 2.2,
+        "wb": 2.76,
+        "fWt": 0.54
+      },
+      "fit": {
+        "drive": "rwd",
+        "tire": "sport",
+        "tw": 255,
+        "twF": 235,
+        "ta": 35,
+        "wheel": 18,
+        "brake": "big",
+        "rotor": 360,
+        "susp": "sport",
+        "gears": 7,
+        "gearbox": "auto",
+        "diff": "clsd",
+        "tc": true,
+        "geoF": "strut",
+        "geoR": "multilink"
+      },
+      "real": {
+        "t100": 4.5,
+        "top": 250,
+        "limited": true,
+        "unit": "PS"
+      },
+      "gearset": {
+        "r": null,
+        "fd": null,
+        "src": "AMG Speedshift Plus 7G-Tronic, a torque-converter 7-speed, not a dual-clutch. Ratios were not captured."
+      },
+      "enginePreset": {
+        "cat": "NA Sports",
+        "era": "2000s",
+        "name": "Mercedes-AMG M156 6.2 V8 (C63 W204)",
+        "displacement_cc": 6208,
+        "real": {
+          "hp": 457,
+          "hpRpm": 6800,
+          "tq": 600,
+          "tqRpm": 5000,
+          "unit": "PS"
+        },
+        "unsure": [
+          "bore_mm",
+          "stroke_mm",
+          "compression"
+        ],
+        "note": "336 kW (457 PS) at 6800 rpm and 600 Nm at 5000 rpm. Bore 102.2 mm and stroke 94.6 mm are the M156 pair, compression about 11.3. Naturally aspirated, four valves, variable valve timing. The later M177 twin-turbo 4.0 is not this engine.",
+        "engine": {
+          "cylinders": 8,
+          "layout": "v",
+          "bore_mm": 102.2,
+          "stroke_mm": 94.6,
+          "compression": 11.3,
+          "redline": 7200,
+          "cam": "sport",
+          "vvt": true,
+          "valveSpring": "perf",
+          "injector": "port",
+          "octane": 98,
+          "exhaust": "sport",
+          "airFilter": "perf",
+          "radiator": "large",
+          "oilCooler": true
+        }
+      },
+      "sources": {
+        "engine": "Mercedes-AMG's W204 C63 launch rating is 457 PS at 6800 rpm and 600 Nm at 5000 rpm. Geometry is the known M156 and was not re-read from a Mercedes PDF here.",
+        "body": "Kerb of the sedan is about 1730 kg. Wheelbase of the W204 is 2760 mm. Cd of the C-Class is near 0.27-0.31; 0.31 is used for the AMG body and is unsure.",
+        "performance": "AMG: 0-100 km/h in 4.5 s, top speed 250 km/h limited (280 with the driver's package on later cars).",
+        "gearset": "Not captured. Model it as auto, not dct.",
+        "fit": "235/40R18 front and 255/35R18 rear, AMG braking system with about 360 mm front discs, limited-slip differential on the C63, ESP on."
+      },
+      "unsure": [
+        "kg",
+        "cd",
+        "area",
+        "fWt",
+        "rotor",
+        "bore_mm",
+        "stroke_mm",
+        "compression",
+        "gearset"
+      ],
+      "note": "gearbox auto is required. The 7G-Tronic is a torque converter with a lock-up clutch, which the model's auto already represents. A DCT would shift too quickly and too efficiently."
+    },
+    {
+      "id": "ram-2500-cummins-ho-2019",
+      "name": "Ram 2500 HO Cummins (2019)",
+      "cat": "Diesel",
+      "era": "2010s",
+      "role": "Pickup",
+      "confidence": "low",
+      "chassis": "pickup",
+      "chassisFit": "good",
+      "chassisNote": "Fits PICKUP TRUCK, and it is much heavier than the archetype. This is the high-output 6.7 on the Aisin AS69RC, crew-cab 4x4 as the representative truck. The standard-output Cummins uses the 68RFE and is a different tune. Ram 1500 eTorque mild hybrids are a different truck and are excluded. The Cummins itself has no 48V system.",
+      "engineStatus": "existing",
+      "engine": "Cummins 6.7 (Ram HD 2019 HO)",
+      "engineRevision": {
+        "doNotCreateNewPreset": true,
+        "reason": "The engine is already in PRESETS and no car uses it. The 2019 Stellantis press kit fills several fields that preset marks unsure.",
+        "published": {
+          "compression": 16.2,
+          "boost_psi": 33,
+          "boost_bar": 2.28,
+          "hp": 400,
+          "hpRpm": 2800,
+          "tqNm": 1356,
+          "tqRpm": 1800,
+          "highIdleRpm": 3200,
+          "note": "The preset stores compression 17.3, boost_bar 2.0, redline 3500 and govRpm 2800, with compression, boost, redline and runner in unsure. The press kit says the high-output compression is 16.2:1 (the standard output is 19.0:1), boost up to 33 psi (2.28 bar), and high-idle 3200 rpm. Rated speed stays 2800 rpm, which matches govRpm. 1000 lb-ft is 1356 Nm, matching the preset torque."
+        },
+        "source": "https://media.stellantisnorthamerica.com/newsrelease.do?fIId=20519&id=20527&mid=1"
+      },
+      "body": {
+        "kg": 3450,
+        "cd": 0.48,
+        "area": 3.6,
+        "wb": 3.79,
+        "fWt": 0.58
+      },
+      "fit": {
+        "drive": "rwd",
+        "tire": "eco",
+        "tw": 275,
+        "ta": 70,
+        "wheel": 18,
+        "brake": "hd",
+        "rotor": 360,
+        "susp": "comfort",
+        "gears": 6,
+        "gearbox": "auto",
+        "diff": "open",
+        "tc": true,
+        "geoF": "wishbone",
+        "geoR": "solid"
+      },
+      "real": {
+        "t100": 7.5,
+        "top": 170,
+        "limited": true,
+        "unit": "hp_SAE"
+      },
+      "gearset": {
+        "r": [
+          3.75,
+          2,
+          1.34,
+          1,
+          0.77,
+          0.63
+        ],
+        "fd": 3.73,
+        "src": "Aisin AS69RC ratios from the 2020 Ram heavy-duty specifications (3.75/2.00/1.34/1.00/0.77/0.63) and a 3.73 axle. The 2019 press release says the high-output Cummins, including the 2500, uses this Aisin 6-speed rather than the 68RFE. The 2020 PDF titles the ratio block as 3500 HO; the 2500 HO uses the same transmission."
+      },
+      "sources": {
+        "engine": "Existing preset Cummins 6.7 (Ram HD 2019 HO). Revision source: https://media.stellantisnorthamerica.com/newsrelease.do?fIId=20519&id=20527&mid=1 — 400 hp at 2800 rpm, 1000 lb-ft at 1800 rpm, CR 16.2, boost up to 33 psi, high-idle 3200 rpm.",
+        "body": "A single crew-cab 4x4 HO curb weight was not isolated. Car and Driver's first drive gives a lineup range of 5950-9200 lb. The Ram towing chart's 6741 lb row is a lighter standard-output 68RFE truck, not this one. 3450 kg (about 7600 lb) is an estimate for a crew-cab 4x4 and is low confidence. Wheelbase of the crew short bed is about 149 in.",
+        "performance": "Ram does not publish 0-100 or top speed for the HD. 7.5 s and a governed 170 km/h are estimates.",
+        "gearset": "https://www.ramtruck.ca/documents/ramtruck/specifications/2020-ramtruck-3500-specifications-en.pdf Aisin AS69RC section, read as the HO transmission the 2019 release describes.",
+        "fit": "LT275/70R18 is a common 2500 tyre. Part-time 4x4; fit.drive is rwd for the 2H road mode. Open diff unless a limited-slip axle was ordered. Heavy-duty brakes."
+      },
+      "unsure": [
+        "kg",
+        "cd",
+        "area",
+        "wb",
+        "fWt",
+        "t100",
+        "top",
+        "tw",
+        "ta",
+        "rotor",
+        "gearset"
+      ],
+      "note": "The one car in this batch that needs no new engine. Implement it first, and correct the existing engine's unsure compression and boost from the press kit rather than adding a second Cummins. Vehicle mass and the 0-100 time are the weak fields."
+    },
+    {
+      "id": "toyota-hilux-28-2016",
+      "name": "Toyota Hilux 2.8 D-4D (2016)",
+      "cat": "Diesel",
+      "era": "2010s",
+      "role": "Pickup",
+      "confidence": "medium",
+      "chassis": "pickup",
+      "chassisFit": "good",
+      "chassisNote": "Fits PICKUP TRUCK. Double-cab 4x4 automatic, the global 177 PS / 450 Nm tune, not the later 204 PS European retune.",
+      "engineStatus": "new",
+      "engine": "Toyota 1GD-FTV 2.8 diesel (Hilux)",
+      "body": {
+        "kg": 2100,
+        "cd": 0.4,
+        "area": 2.85,
+        "wb": 3.085,
+        "fWt": 0.55
+      },
+      "fit": {
+        "drive": "rwd",
+        "tire": "eco",
+        "tw": 265,
+        "ta": 65,
+        "wheel": 17,
+        "brake": "hd",
+        "rotor": 320,
+        "susp": "comfort",
+        "gears": 6,
+        "gearbox": "auto",
+        "diff": "open",
+        "tc": true,
+        "geoF": "wishbone",
+        "geoR": "solid"
+      },
+      "real": {
+        "t100": 9.5,
+        "top": 185,
+        "limited": false,
+        "unit": "PS"
+      },
+      "gearset": {
+        "r": [
+          3.6,
+          2.09,
+          1.488,
+          1,
+          0.687,
+          0.58
+        ],
+        "fd": 3.909,
+        "src": "Toyota UK Hilux technical specification, 1GD-FTV 6AT column: 3.600/2.090/1.488/1.000/0.687/0.580, final 3.909. The sheet is a later model year of the same gearbox; the 2016 ratios are marked unsure."
+      },
+      "enginePreset": {
+        "cat": "Diesel",
+        "name": "Toyota 1GD-FTV 2.8 diesel (Hilux)",
+        "displacement_cc": 2755,
+        "real": {
+          "hp": 177,
+          "hpRpm": 3400,
+          "tq": 450,
+          "tqRpm": 1600,
+          "unit": "PS"
+        },
+        "unsure": [
+          "boost_bar",
+          "redline"
+        ],
+        "note": "Toyota's June 2015 global release: 130 kW (177 PS) at 3400 rpm and 450 Nm at 1600-2400 rpm for the automatic. The manual is 420 Nm. Variable-geometry turbo, common-rail, CR 15.6. govRpm is the rated 3400 rpm. A later European tune is 204 PS and 500 Nm and is not this entry.",
+        "engine": {
+          "type": "diesel",
+          "vvt": false,
+          "cylinders": 4,
+          "bore_mm": 92,
+          "stroke_mm": 103.6,
+          "compression": 15.6,
+          "redline": 4500,
+          "govRpm": 3400,
+          "intake": "turbo",
+          "boost_bar": 1.4,
+          "turboSize": "small",
+          "vgt": true,
+          "injector": "direct",
+          "intercooler": "large",
+          "exhaust": "stock",
+          "airFilter": "stock",
+          "radiator": "large",
+          "oilCooler": true,
+          "tqLimit": 450
+        }
+      },
+      "sources": {
+        "engine": "https://global.toyota/en/detail/8348091 — 1GD-FTV, 92 x 103.6 mm, CR 15.6, 130 kW (177 PS) at 3400 rpm, 450 Nm at 1600-2400 rpm.",
+        "body": "South African road test of a 2016 double-cab 4x4 automatic: tare 2100 kg, 0-100 in 9.5 s, top speed 185 km/h (https://scarletpumpkin.com/toyota/review_2016_toyota_hilux_28_gd-6_double_cab). Wheelbase 3085 mm is the double-cab platform figure. Cd and area are estimates.",
+        "performance": "Same road test: 9.5 s and 185 km/h. Not a Toyota claim.",
+        "gearset": "https://media.toyota.co.uk/wp-content/uploads/sites/5/2021/03/1611922571210129MHiluxTechSpec.pdf 2.8 6AT column.",
+        "fit": "Double wishbone front, leaf-sprung live rear axle, part-time 4x4. fit.drive is rwd for 2H. Tyres around 265/65R17. Front ventilated discs, rear drums on many grades; hd is a stand-in for a truck brake and the drums are not modelled."
+      },
+      "unsure": [
+        "cd",
+        "area",
+        "wb",
+        "fWt",
+        "rotor",
+        "boost_bar",
+        "redline",
+        "gearset",
+        "brake"
+      ],
+      "note": "The everyday diesel the Duramax and the Cummins are not: a 2.1-tonne work pickup rather than a 3.5-tonne American HD. Rear drums on base grades will make the modelled stop shorter than the real one if hd is left in."
+    },
+    {
+      "id": "vw-amarok-v6-tdi-2018",
+      "name": "Volkswagen Amarok 3.0 V6 TDI (2018)",
+      "cat": "Diesel",
+      "era": "2010s",
+      "role": "Pickup",
+      "confidence": "medium",
+      "chassis": "pickup",
+      "chassisFit": "good",
+      "chassisNote": "Fits PICKUP TRUCK. This is the pre-Ford Amarok, 3.0 V6 diesel, permanent 4MOTION. Not the later Ford-based Amarok and not a 48V hybrid. The 224 PS tune is the entry; a 258 PS overboost tune existed and is not modelled.",
+      "engineStatus": "new",
+      "engine": "VW 3.0 V6 TDI (Amarok)",
+      "body": {
+        "kg": 2165,
+        "cd": 0.4,
+        "area": 2.9,
+        "wb": 3.095,
+        "fWt": 0.55
+      },
+      "fit": {
+        "drive": "awd",
+        "tire": "eco",
+        "tw": 255,
+        "ta": 55,
+        "wheel": 19,
+        "brake": "hd",
+        "rotor": 330,
+        "susp": "comfort",
+        "gears": 8,
+        "gearbox": "auto",
+        "diff": "clsd",
+        "tc": true,
+        "geoF": "wishbone",
+        "geoR": "solid"
+      },
+      "real": {
+        "t100": 7.9,
+        "top": 193,
+        "limited": false,
+        "unit": "PS"
+      },
+      "gearset": {
+        "r": [
+          4.714,
+          3.143,
+          2.106,
+          1.667,
+          1.285,
+          1,
+          0.839,
+          0.667
+        ],
+        "fd": null,
+        "src": "ZF 8HP ratio set, the same family as the existing BMW 330d gearset. The Amarok's final drive was not found, so fd is null and the ratios are the generic 8HP set, marked unsure."
+      },
+      "enginePreset": {
+        "cat": "Diesel",
+        "name": "VW 3.0 V6 TDI (Amarok)",
+        "displacement_cc": 2967,
+        "real": {
+          "hp": 224,
+          "hpRpm": 3000,
+          "tq": 550,
+          "tqRpm": 1400,
+          "unit": "PS"
+        },
+        "unsure": [
+          "boost_bar",
+          "compression",
+          "bore_mm",
+          "stroke_mm",
+          "redline",
+          "hpRpm"
+        ],
+        "note": "EA897-family 3.0 V6, 224 PS and 550 Nm. Bore 83.0 mm and stroke 91.4 mm are that engine's pair. Common-rail, variable-geometry turbo. The Golf's 2.0 TDI already in PRESETS is a different engine. A 258 PS version should not be folded into this one.",
+        "engine": {
+          "type": "diesel",
+          "vvt": false,
+          "cylinders": 6,
+          "layout": "v",
+          "bore_mm": 83,
+          "stroke_mm": 91.4,
+          "compression": 16,
+          "redline": 5000,
+          "govRpm": 3600,
+          "intake": "turbo",
+          "boost_bar": 1.5,
+          "turboSize": "medium",
+          "vgt": true,
+          "injector": "direct",
+          "intercooler": "large",
+          "exhaust": "stock",
+          "airFilter": "stock",
+          "radiator": "large",
+          "oilCooler": true,
+          "tqLimit": 550
+        }
+      },
+      "sources": {
+        "engine": "Volkswagen's Amarok V6 TDI catalogues list 165 kW (224 PS) and 550 Nm, 2967 cc. Geometry is the EA897 3.0 pair and was not re-read from a VW PDF here.",
+        "body": "Kerb of a double-cab 4MOTION automatic is about 2165 kg. Wheelbase is 3095 mm. Cd and area are estimates.",
+        "performance": "VW claims for the 224 PS Amarok are about 7.9 s to 100 km/h and 193 km/h. Marked unsure until the brochure is attached.",
+        "gearset": "8-speed automatic. Ratios are the ZF 8HP set already used for the 330d, without a final drive.",
+        "fit": "Permanent 4MOTION, live rear axle, about 255/55R19 on higher trims, ventilated discs."
+      },
+      "unsure": [
+        "kg",
+        "cd",
+        "area",
+        "wb",
+        "fWt",
+        "t100",
+        "top",
+        "rotor",
+        "bore_mm",
+        "stroke_mm",
+        "compression",
+        "boost_bar",
+        "hpRpm",
+        "redline",
+        "gearset"
+      ],
+      "note": "The diesel V6 the list does not have. The N57 inline-six and the Duramax V8 are the only other multi-cylinder diesels, and neither is in a mid-size pickup."
+    },
+    {
+      "id": "chevrolet-camaro-zl1-2017",
+      "name": "Chevrolet Camaro ZL1 (2017)",
+      "cat": "American V8",
+      "era": "2010s",
+      "role": "Muscle",
+      "confidence": "medium",
+      "chassis": "muscle",
+      "chassisFit": "good",
+      "chassisNote": "Fits MUSCLE CAR. Supercharged LT4, not the Hellcat already in PRESETS (a different 6.2, different blower, different block). The 10-speed automatic is a different gearset; this entry is the 6-speed manual. No hybrid.",
+      "engineStatus": "new",
+      "engine": "GM LT4 6.2 supercharged (Camaro ZL1)",
+      "body": {
+        "kg": 1761,
+        "cd": 0.37,
+        "area": 2.25,
+        "wb": 2.811,
+        "fWt": 0.54
+      },
+      "fit": {
+        "drive": "rwd",
+        "tire": "sport",
+        "tw": 305,
+        "twF": 285,
+        "ta": 30,
+        "wheel": 20,
+        "brake": "big",
+        "rotor": 390,
+        "susp": "sport",
+        "gears": 6,
+        "gearbox": "manual",
+        "diff": "clsd",
+        "tc": true,
+        "geoF": "strut",
+        "geoR": "multilink"
+      },
+      "real": {
+        "t100": 3.7,
+        "top": 319,
+        "limited": false,
+        "unit": "hp_SAE"
+      },
+      "gearset": {
+        "r": [
+          2.66,
+          1.78,
+          1.3,
+          1,
+          0.74,
+          0.5
+        ],
+        "fd": 3.73,
+        "src": "Tremec TR-6060 ratios shared with the C6 Corvette set already in the repo, with the ZL1 manual's 3.73 axle. ZL1-specific confirmation was not opened, so the gearset is unsure."
+      },
+      "enginePreset": {
+        "cat": "American V8",
+        "name": "GM LT4 6.2 supercharged (Camaro ZL1)",
+        "displacement_cc": 6162,
+        "real": {
+          "hp": 650,
+          "hpRpm": 6400,
+          "tq": 881,
+          "tqRpm": 3600,
+          "unit": "hp_SAE"
+        },
+        "unsure": [
+          "boost_bar",
+          "compression"
+        ],
+        "note": "650 hp at 6400 rpm and 650 lb-ft (881 Nm) at 3600 rpm. Bore 103.25 mm and stroke 92.0 mm match the LS3 already in PRESETS; the LT4 adds the supercharger, different heads and a lower compression. Eaton 1.7-litre blower, about 9.4 psi (0.65 bar). Direct injection. Not the Hellcat.",
+        "engine": {
+          "cylinders": 8,
+          "layout": "v",
+          "bore_mm": 103.25,
+          "stroke_mm": 92,
+          "compression": 10,
+          "redline": 6600,
+          "intake": "supercharger",
+          "boost_bar": 0.65,
+          "scType": "roots",
+          "intercooler": "large",
+          "vvt": true,
+          "cam": "sport",
+          "injector": "direct",
+          "octane": 91,
+          "exhaust": "sport",
+          "airFilter": "perf",
+          "radiator": "large",
+          "oilCooler": true
+        }
+      },
+      "sources": {
+        "engine": "Chevrolet's 2017 Camaro ZL1 rating is 650 hp and 650 lb-ft from the LT4. Geometry is the LT-family 103.25 x 92 mm. Boost and compression were not re-read from a GM PDF here.",
+        "body": "Curb of the manual coupe is about 3880 lb (1761 kg). Wheelbase of the sixth-generation Camaro is 110.7 in (2811 mm). Cd is not a figure opened here.",
+        "performance": "GM and magazine tests put 0-60 mph near 3.5 s. t100 3.7 s is that plus a small gap. Top speed is about 198 mph (319 km/h) and is unsure.",
+        "gearset": "TR-6060 family, flagged against the C6 set, axle 3.73.",
+        "fit": "285/30ZR20 front and 305/30ZR20 rear, Brembo front discs about 390 mm, electronic limited-slip differential, Magnetic Ride. The sixth-gen Camaro front suspension is a strut, not the muscle archetype's wishbone."
+      },
+      "unsure": [
+        "kg",
+        "cd",
+        "area",
+        "fWt",
+        "t100",
+        "top",
+        "rotor",
+        "boost_bar",
+        "compression",
+        "gearset"
+      ],
+      "note": "scType roots is the closest bucket to the LT4's Eaton TVS, which is a roots-style four-lobe blower. The Hellcat preset uses scType screw. Keep them distinct."
+    }
+  ]
+}

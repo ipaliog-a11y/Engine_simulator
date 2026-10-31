@@ -101,7 +101,8 @@ const CAR_LOOK={
   hyper:   {h:1.12,ovF:0.36,ovR:0.40,nose:0.22,hood:0.34,ws:0.70,rf:0.60,rr:0.46,bk:0.18,deck:0.62,tail:0.60,col:'#c0c0d0'},
   proto:   {h:1.02,ovF:0.30,ovR:0.36,nose:0.24,hood:0.34,ws:0.66,rf:0.56,rr:0.44,bk:0.22,deck:0.66,tail:0.62,col:'#e8e8f0',stripe:1},
   pickup:  {h:1.86,ovF:0.26,ovR:0.34,nose:0.50,hood:0.60,ws:0.72,rf:0.66,rr:0.47,bk:0.46,deck:0.60,tail:0.60,col:'#a0603a',bed:1},
-  suv:     {h:1.70,ovF:0.30,ovR:0.26,nose:0.46,hood:0.58,ws:0.72,rf:0.62,rr:0.08,bk:0.04,deck:0.60,tail:0.56,col:'#556677'}
+  suv:     {h:1.70,ovF:0.30,ovR:0.26,nose:0.46,hood:0.58,ws:0.72,rf:0.62,rr:0.08,bk:0.04,deck:0.60,tail:0.56,col:'#556677'},
+  openwheel:{h:0.96,ovF:0.22,ovR:0.16,nose:0.18,hood:0.24,ws:0.52,rf:0.50,rr:0.40,bk:0.20,deck:0.42,tail:0.40,col:'#ffaa22',stripe:1}
 };
 const CAR_GW=168,CAR_GH=62,CAR_GY=56,CAR_PXM=26;      // grid, ground row, cells per metre
 const RIDE_M={comfort:0.16,sport:0.13,coilover:0.11,race:0.085};

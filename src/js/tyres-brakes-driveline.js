@@ -297,7 +297,9 @@ const SUSP_REAL={
 // none and take it from here, as their body's name still finds the car.
 function factoryGeo(v){
   const r=v&&v.body&&SUSP_REAL[v.body.name];if(r)return {f:r.f,r:r.r};
-  const f=(CHASSIS[v&&v.chassis]||CHASSIS.coupe).fit;return {f:f.geoF||'strut',r:f.geoR||'multilink'};
+  // a car whose preset carries its own geometry (build 199: batch 1) is built on it, as vehicleFromPreset fits it
+  const f=(CHASSIS[v&&v.chassis]||CHASSIS.coupe).fit,b=v&&v.body&&v.body.fit||{};
+  return {f:b.geoF||f.geoF||'strut',r:b.geoR||f.geoR||'multilink'};
 }
 // One axle's camber recovery: (t/2)/fvsa for an independent wheel, the type's own figure otherwise.
 function geoRecovery(g,track){return g.recov!=null?g.recov:clamp(track/2/g.fvsa,0,1);}
@@ -459,7 +461,7 @@ function lapDiffTraction(df,aLat,cgH){return diffTractionAt(df,aLat,cgH,1);}
 // just behind the front axle (~0.1 of the wheelbase), a mid-engined one ahead of the rear axle (~0.7), a
 // rear-engined one behind it (~1.1), so 1 - x/wheelbase. Used only for the CHANGE an engine swap makes.
 const ENGINE_FRONT_SHARE={front:0.9,mid:0.3,rear:-0.1};
-const engineLayoutOf=(chassis,body)=>(body&&body.engPos)||(['super','hyper','proto'].includes(chassis)?'mid':'front');
+const engineLayoutOf=(chassis,body)=>(body&&body.engPos)||(['super','hyper','proto','openwheel'].includes(chassis)?'mid':'front');
 // ---- rotating parts (build 106) ----
 // The flywheel is sized by the clutch it carries, and the clutch by the torque it must hold: ~1.3x peak,
 // the usual design margin. A single dry plate has two faces, mu ~0.3, at a face pressure ~0.25 MPa with

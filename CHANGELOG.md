@@ -20,6 +20,45 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 Working toward **v1.0 — every number derived, not fitted.**
 
+### 50 more real cars: batch 1 (build 199)
+
+- **The research pack** of PR #127 (`research/vehicles-batch-1/`: the README says why these 50, where every figure came
+  from, and how sure it is) **is in the game**:
+  - 50 combustion cars, on 49 new engines and the existing Cummins;
+  - 29 published gearboxes (the others take their family's average spacing, as before);
+  - three new categories: **Performance SUV**, **Track** and **Pickup**.
+- **What it adds:**
+  - the first real performance SUVs, track cars and pickups beyond the Silverado;
+  - the first V6s (eight petrol and one diesel);
+  - cars from the 1960s to the 1980s;
+  - more kei cars, hot hatches, sports sedans and diesels;
+  - a two-stroke car (the Trabant 601).
+- **A new chassis, OPEN-WHEELER,** for the BAC Mono: narrow, little aero, mid-engined. Neither the winged prototype nor
+  a roadster is that car.
+- **The Ram 2500 HO** runs on the existing Cummins 6.7, moved onto the 2019 Stellantis press kit's compression (16.2)
+  and boost (2.28 bar).
+- **Each boosted engine past its rating** carries a factory ECU taper solved as the older presets' are: from its maker's
+  peak-torque rpm, the gentlest that meets the rating.
+  - The Amarok's governor is set at its rated 3000 rpm.
+  - The Cummins now carries a taper too.
+  - Four engines stay over their rating even at the strongest taper, and the gap is left visible: the Land Cruiser
+    diesel +14%, the GNX +8%, the S660 +9%, the Cappuccino +2%.
+- **The form takes what the cars ship with:**
+  - BRAKE ROTOR runs 200-450 mm (the Mk1 Golf's 239 mm stored as 240, the Trabant's drums as 200);
+  - TYRE ASPECT goes to 80 (the 1960s cars).
+  - `factoryGeo` reads a preset's own suspension geometry, as `vehicleFromPreset` already fitted it, so those cars load
+    as their factory fit.
+- **Against the makers' figures** (the 43 scored engines; the two 1960s SAE gross ratings and the low-confidence cars
+  are reported only):
+  - power within 8.4% RMS;
+  - 0-100 with the engine matched to its rating within 10.0% RMS;
+  - top speed within 9.2% RMS.
+- **Tests:**
+  - `tests/test115.mjs` checks the pack's validator, every car against its research entry, its factory fit and
+    gearbox, and those figures.
+  - The new peak-at-the-limiter engines and the Camaro ZL1's slow 0-100 are named in `test60` and `test61` with their
+    reasons.
+
 ### The electric drive's sound in the app (build 198)
 
 - **Step 4b of the hybrid-electric plan.** An electric car is no longer silent. SOUND ON plays its motor, inverter and

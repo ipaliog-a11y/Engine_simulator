@@ -104,9 +104,9 @@ function readVehicleFromForm(){
     tireType:g('vhTire').value,tireWidth:clamp(Math.round(+g('vhTireW').value||225),135,355),
     // the front tyres' width when narrower or wider than the rears (0 = the same), and the roll balance (build 157)
     tireWidthF:+g('vhTireWF').value>0?clamp(Math.round(+g('vhTireWF').value),135,355):0,
-    tireAspect:clamp(Math.round(+g('vhTireA').value||40),25,70),wheelDia:clamp(Math.round(+g('vhWheel').value||18),13,22),
+    tireAspect:clamp(Math.round(+g('vhTireA').value||40),25,80),wheelDia:clamp(Math.round(+g('vhWheel').value||18),13,22),
     aeroFront:g('vhAeroF').value,aeroRear:g('vhAeroR').value,aeroFloor:g('vhAeroFl').value,weightRed:g('vhWeight').value,
-    brakeType:g('vhBrake').value,rotor:clamp(Math.round(+g('vhRotor').value||330),250,420),suspension:g('vhSusp').value,
+    brakeType:g('vhBrake').value,rotor:clamp(Math.round(+g('vhRotor').value||330),200,450),suspension:g('vhSusp').value,
     // each axle's geometry (build 173)
     suspFront:g('vhGeoF').value,suspRear:g('vhGeoR').value,
     // each axle's springs and anti-roll bar, steps about the kit (build 174)
