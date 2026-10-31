@@ -20,6 +20,21 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 Working toward **v1.0 — every number derived, not fitted.**
 
+### test46's bands: sourced where a source exists, labelled where not (v1.0 item 7)
+
+- **Sourced:**
+  - **Stock back-pressure** is now held to 0.25–0.55 bar near the power peak, the measured 4–8 psi at full throttle
+    and Ford's 8 psi diagnostic limit. It was a cap of 0.85 bar, the author's; the model's 0.334 bar sat inside the
+    measured band all along.
+  - **The ceilings of peak intake ram and of a header's length.** Tuned intakes reach 115–125% volumetric efficiency
+    (SAE 921727; Cranfield), and long-tube street headers run 30–36 in.
+- **Labelled in the test as the author's, unsourced:**
+  - the ram floor, scavenging and race-cam trapping;
+  - the shortest header and system pipe sizes;
+  - most exhaust-temperature bands. The measured studies (SAE 790308, 901503) are paywalled.
+- A band that says it is the author's no longer reads as a measurement.
+- No model change and no build number.
+
 ### Cooled EGR (build 204)
 
 - **EGR is an engine option:** NONE, COOLED (OFF AT FULL LOAD), or COOLED (TO FULL LOAD). It is offered on spark
