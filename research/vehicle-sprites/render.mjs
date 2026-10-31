@@ -15,6 +15,19 @@ const here = path.dirname(fileURLToPath(import.meta.url));
 const repo = path.join(here, '..', '..');
 const data = JSON.parse(readFileSync(path.join(here, 'profiles.json'), 'utf8'));
 
+// The rules in README.md, "The format of one profile". Wheelbase-dependent checks run in the page.
+const bad = [];
+for (const c of data.cars) {
+  const s = c.spec || {}, l = c.look || {}, say = m => bad.push(c.name + ': ' + m);
+  for (const k of ['len_mm', 'h_mm', 'ovF_mm']) if (!Number.isInteger(s[k]) || s[k] <= 0) say('spec.' + k + ' must be a positive whole number of mm');
+  for (const k of ['nose', 'hood', 'deck', 'tail']) if (k in l && !(l[k] >= 0.1 && l[k] <= 0.9)) say('look.' + k + ' must be 0.1-0.9');
+  if ('h' in l || 'ovF' in l || 'ovR' in l || 'col' in l) say('look must not set h, ovF, ovR or col');
+  const u = ['bk', 'rr', 'rf', 'ws'].map(k => l[k]);
+  if (u.some(x => typeof x !== 'number') || !(u[0] >= 0.04 && u[0] < u[1] && u[1] < u[2] && u[2] < u[3] && u[3] <= 0.93))
+    say('look needs 0.04 <= bk < rr < rf < ws <= 0.93');
+}
+if (bad.length) { console.error(bad.join('\n')); process.exit(1); }
+
 const browser = await chromium.launch();
 const page = await browser.newPage();
 const errors = [];
@@ -32,10 +45,12 @@ const out = await page.evaluate(cars => {
   g.fillText('PROPOSED: the car\'s own profile', (CAR_GW + pad * 2) * S, 9 * S);
   const missing = [];
   cars.forEach((c, i) => {
-    const p = VEHICLE_PRESETS.find(q => q.name === c.name);
+    const p = FACTORY_CARS.find(q => q.name === c.name);
     if (!p) { missing.push(c.name); return; }
     const v = vehicleFromPreset(p), wb = v.body.wb, base = CAR_LOOK[v.chassis];
     const s = c.spec, ovF = s.ovF_mm / 1000 / wb, ovR = (s.len_mm / 1000 - wb - s.ovF_mm / 1000) / wb;
+    if (ovR <= 0) missing.push(c.name + ' (front overhang leaves no rear overhang at wb ' + wb + ')');
+    if (s.len_mm / 1000 * CAR_PXM > CAR_GW - 4 || s.h_mm / 1000 * CAR_PXM > CAR_GY - 2) missing.push(c.name + ' (too big for the ' + CAR_GW + 'x' + CAR_GH + ' grid)');
     const own = Object.assign({}, base, c.look, { h: s.h_mm / 1000, ovF, ovR });
     const y = (14 + i * rowH) * S;
     [base, own].forEach((look, j) => {
@@ -54,7 +69,7 @@ const out = await page.evaluate(cars => {
 }, data.cars);
 
 await browser.close();
-if (out.missing.length) console.error('Not in VEHICLE_PRESETS: ' + out.missing.join(', '));
+if (out.missing.length) console.error('Not drawn correctly: ' + out.missing.join(', '));
 if (errors.length) console.error(errors.join('\n'));
 const file = path.join(here, 'compare.png');
 writeFileSync(file, Buffer.from(out.png.split(',')[1], 'base64'));

@@ -84,6 +84,63 @@ The 8-number shape cannot draw curves. The E-Type's fender bulges, the 911's rou
 2. **Read eight shape numbers off a side photo.** Wikimedia Commons is a good source of side-on, freely licensed photos, and maker press photos also work. Measure along the car from the rear bumper (0) to the nose (1): the base of the windscreen, the front and rear of the roof, and the base of the rear glass. Measure heights as a share of the body's height above the sill: nose, bonnet, deck and tail. Only the numbers go into the game. The photo is not shipped.
 3. **Run `render.mjs`.** Check the car against the photo and adjust.
 
+## The format of one profile
+
+One entry in `profiles.json`'s `cars` array. `render.mjs` checks every rule below before it draws.
+
+```json
+{"name": "Porsche 911 Carrera RS 2.7 Sport (1973)",
+ "spec": {"len_mm": 4147, "h_mm": 1320, "ovF_mm": 830},
+ "look": {"nose": 0.38, "hood": 0.52, "ws": 0.70, "rf": 0.58, "rr": 0.46, "bk": 0.08, "deck": 0.58, "tail": 0.46},
+ "src": ["<spec sheet URL>", "<side photo URL>"],
+ "unsure": ["ovF_mm"]}
+```
+
+| Field | Unit | What it is | Where it comes from |
+| --- | --- | --- | --- |
+| `name` | | Exactly the preset's `name` in `VEHICLE_PRESETS` (or the EV and hybrid lists) | The game |
+| `spec.len_mm` | mm, integer | Overall length, bumper to bumper | Spec sheet |
+| `spec.h_mm` | mm, integer | Overall height, unladen, without roof rails or aerials | Spec sheet |
+| `spec.ovF_mm` | mm, integer | Front axle centre to the most forward point of the nose | Press-kit dimension drawing; otherwise measured off the photo against the wheelbase |
+| `look.ws` | share of length | Base of the windscreen | Photo |
+| `look.rf` | share of length | Front end of the flat roof (top of the windscreen) | Photo |
+| `look.rr` | share of length | Rear end of the flat roof (top of the rear glass) | Photo |
+| `look.bk` | share of length | Base of the rear glass, where the deck or tail begins | Photo |
+| `look.nose` | share of body height | Top of the bumper at the very front | Photo |
+| `look.hood` | share of body height | Bonnet height at the base of the windscreen | Photo |
+| `look.deck` | share of body height | Boot lid or engine cover height at the base of the rear glass | Photo |
+| `look.tail` | share of body height | Top of the bumper at the very back | Photo |
+| `src` | | Where the numbers came from | |
+| `unsure` | | Every field that is an estimate rather than read from a source | |
+
+Lengths are measured from the rear bumper (0) to the nose (1). Heights are measured from the bottom of the sill between the wheels (0) to the roof (1): `f = (point − sill) / (roof − sill)`. Two decimals is enough, because one cell is about 1/120 of the car's length.
+
+Rules the drawer needs:
+
+- **Order:** `0.04 ≤ bk < rr < rf < ws ≤ 0.93`. The roof line is drawn through `[0, tail] [0.03, deck] [bk, deck] [rr, 1] [rf, 1] [ws, hood] [0.95, nose+0.06] [1, nose]`, which must run front-to-back without doubling back.
+- **Heights:** each of `nose`, `hood`, `deck` and `tail` is between 0.1 and 0.9.
+- **The window line is not a separate field.** Glass is drawn down to `max(hood, deck) + 0.02`, so `hood` and `deck` set the side-window line as well as the bonnet and boot.
+- **Lengths:** `ovF_mm < len_mm − wb`, so the rear overhang is not negative. `wb` is the preset's `body.wb`, and it must be for the same model generation as the dimensions.
+- **Size:** the grid is 168 × 62 cells at 26 cells per metre, with the ground on row 56. A car longer than about 6.3 m, or taller than about 2.1 m, does not fit. Some crew-cab pickups come close.
+
+Everything else stays out of the profile, because the game already has it or works it out:
+
+- Wheel and tyre size come from `fit` (`wheel`, `tw`, `ta`).
+- Ride height comes from the suspension.
+- Engine position comes from `engPos`.
+- Wings and splitters come from the aero parts.
+- Colour comes from the archetype's livery.
+
+A real paint colour per car would be a separate decision.
+
+**The photo.** A true side elevation:
+
+- Taken from far away with a long lens, and level with the axles, so the car has no perspective taper. Both wheels should look like circles of the same size.
+- At least 800 px across the car.
+- The same generation and model year as the preset, on standard wheels, with no body kit.
+
+Only the numbers read off the photo go into the game.
+
 ## What it would take in the game
 
 The change to the game is small. The profile would live in the preset's `body`, which `vehicleFromPreset` already copies into the vehicle record. That means saved builds and garage thumbnails would pick it up with no extra work. In `carGeometry`:

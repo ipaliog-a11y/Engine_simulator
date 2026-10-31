@@ -22,7 +22,7 @@
      "look": {"nose": 0.40, "hood": 0.52, "ws": 0.70, "rf": 0.62, "rr": 0.32, "bk": 0.20, "deck": 0.56, "tail": 0.50},
      "why": "It is filed under kei, which draws a tall box. A Trabant is a small three-box saloon with a boot."},
     {"name": "Toyota Land Cruiser 200 VX 4.5 D-4D (2015)", "spec": {"len_mm": 4950, "h_mm": 1880, "ovF_mm": 950},
-     "look": {"nose": 0.56, "hood": 0.64, "ws": 0.74, "rf": 0.66, "rr": 0.04, "bk": 0.02, "deck": 0.64, "tail": 0.60},
+     "look": {"nose": 0.56, "hood": 0.64, "ws": 0.74, "rf": 0.66, "rr": 0.06, "bk": 0.04, "deck": 0.64, "tail": 0.60},
      "why": "A square, upright tail and a high bonnet. The suv archetype is a lower crossover."},
     {"name": "Volkswagen Golf GTI (Mk1, 1976)", "spec": {"len_mm": 3815, "h_mm": 1395, "ovF_mm": 720},
      "look": {"nose": 0.42, "hood": 0.52, "ws": 0.70, "rf": 0.60, "rr": 0.14, "bk": 0.05},
