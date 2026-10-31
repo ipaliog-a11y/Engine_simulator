@@ -2,6 +2,8 @@ function bindControls(){
   // Throttle & load are fractions (0..1); AFR/temps are direct values.
   document.getElementById('throttle').addEventListener('input',e=>state.throttle=(+e.target.value)/100);
   document.getElementById('load').addEventListener('input',e=>state.load=(+e.target.value)/100);
+  // an electric drive's pack, set by hand on the bench (build 198), as the hybrid panel's BATTERY CHARGE sets a hybrid's
+  document.getElementById('evSocSet').addEventListener('input',e=>{if(isElectric())state.soc=clamp(+e.target.value/100,0,1);});
   document.getElementById('elec').addEventListener('input',e=>state.elecLoad=(+e.target.value)/100);
   ['afr','iat','coolant','oil'].forEach(id=>{
     document.getElementById(id).addEventListener('input',()=>{

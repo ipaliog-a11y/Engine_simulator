@@ -356,6 +356,7 @@ function setLiveLabels(ev){
     L.textContent=ev?tr(EV_TILES[id][0]):tr(L.dataset.ice);U.textContent=ev?EV_TILES[id][1]:U.dataset.ice;
   }
   EV_ONLY_TILES.forEach(id=>{const el=document.getElementById(id);if(el)el.style.display=ev?'':'none';});
+  const sg=document.getElementById('evSocGroup');if(sg)sg.hidden=!ev;   // the pack's charge, set by hand (build 198)
   // what a motor has no use for leaves the panel: mixture, intake air, the engine's coolant and oil, the alternator's
   // load, auto-thermal and nitrous, and the printable report (EV_REPORT_NOTE); it comes back with an engine
   ['afr','iat','coolant','oil','elec'].forEach(id=>{const el=document.getElementById(id);
@@ -375,6 +376,8 @@ function updateMotorUI(){
   document.querySelector('#statBSFC .value').textContent=(st.battKW||0).toFixed(1);
   document.querySelector('#statEff .value').textContent=st.thermalEff.toFixed(1);
   document.querySelector('#statFuel .value').textContent=Math.round(st.soc*100);
+  const sl=g('evSocSet');if(sl&&document.activeElement!==sl)sl.value=Math.round(st.soc*100);
+  if(g('valEvSoc'))g('valEvSoc').textContent=Math.round(st.soc*100);
   const aEl=g('statAmps');if(aEl){aEl.querySelector('.value').textContent=Math.round(st.battI||0);aEl.className='stat'+((st.battI||0)>engine.pack.iMax*0.9?' warning':'');}
   const lEl=g('statLimit');
   if(lEl){const why=st.evLimit||'',got=st.evAsked>0.5?Math.round(st.torque/st.evAsked*100):100;
@@ -390,7 +393,7 @@ function updateMotorUI(){
   else if(vizMode==='design'){status.textContent=tr('DESIGN MODE • CONFIGURE & BUILD');status.className='status-bar';}
   else if(st.blown){status.textContent=tr('MOTOR FAILURE')+' ('+tr(st.wearCause)+') — '+tr('REBUILD WITH BUILD & DYNO');status.className='status-bar err';}
   else if(st.wearCause){status.textContent=tr('DAMAGE')+': '+tr(st.wearCause)+' — '+tr('HEALTH')+' '+hp+'%';status.className='status-bar err';}
-  else if(st.soc<=0.005){status.textContent=tr('PACK EMPTY — REBUILD TO RECHARGE');status.className='status-bar err';}
+  else if(st.soc<=0.005){status.textContent=tr('PACK EMPTY — SET THE CHARGE OR REBUILD');status.className='status-bar err';}
   else if(st.soc<EV_BMS.limp){status.textContent=tr('LIMP MODE')+' • '+tr('CHARGE')+' '+(st.soc*100).toFixed(1)+'% • '+tr('power held to')+' '+Math.round(EV_BMS.limpShare*packMaxPower(engine.pack,0.5)/1000)+' kW';status.className='status-bar err';}
   else if(st.soc<EV_BMS.low){status.textContent=tr('LOW CHARGE')+' • '+Math.round(st.soc*100)+'% • '+tr('battery power cut to')+' '+Math.round(evBmsShare(st.soc)*100)+'%'+(st.evLimit==='lowsoc'?' • '+tr('LIMITING')+' '+Math.round(st.torque/Math.max(1e-6,st.evAsked)*100)+'% '+tr('of asked'):'');status.className='status-bar warn';}
   else if(der<0.999){status.textContent=tr('THERMAL DERATE')+' • '+Math.round(der*100)+'% '+tr('of full current')+' • '+tr('WINDING')+' '+Math.round(st.mT.w)+'°C';status.className='status-bar warn';}

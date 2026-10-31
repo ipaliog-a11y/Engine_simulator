@@ -35,6 +35,11 @@ Working toward **v1.0 — every number derived, not fitted.**
 - **Level:** set by ear (`MOTOR_SOUND_LEVEL`), through its own limiter. SOUND OFF and the other tabs silence it.
 - **Tests:** `tests/test114.mjs` renders the worklet offline and checks every voice's frequency, the load, the idle front
   motor, and the live page's sources.
+- **An electric car's BATTERY CHARGE on the bench.** A slider under LOAD, shown only for an electric drive, sets the
+  pack's charge, as the hybrid panel's does a hybrid's.
+  - Use it to test the drive at any charge: the voltage, the low-charge cut, limp mode.
+  - It brings an empty pack back. The status now says PACK EMPTY — SET THE CHARGE OR REBUILD.
+  - `tests/test97.mjs` checks it.
 - **Fixed: a hybrid's engine hunted between on and off at the edge of starting** (reported on the Porsche 918: 31% pedal,
   40% brake, the page stalling).
   - A plug-in using its own charge had no hysteresis. When the demand sat at what the motor alone can give, a starting
