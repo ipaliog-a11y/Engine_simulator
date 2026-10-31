@@ -40,7 +40,8 @@ const r = await page.evaluate(pack => {
     const p = VEHICLE_PRESETS.find(x => x.name === v.name), c = { name: v.name, conf: v.confidence };
     if (!p) { c.missing = true; o.cars.push(c); continue; }
     const ep = PRESETS.find(e => e.name === p.engine);
-    c.bodyOk = same(p.body, v.body); c.realOk = p.real.t100 === v.real.t100 && p.real.top === v.real.top && !!p.real.limited === !!v.real.limited;
+    // build 201: a fitted aero factor the pack does not carry (the Radical's)
+    const { aero, ...pb } = p.body; c.bodyOk = same(pb, v.body); c.realOk = p.real.t100 === v.real.t100 && p.real.top === v.real.top && !!p.real.limited === !!v.real.limited;
     c.engineOk = !!ep && p.engine === v.engine && (v.engineStatus !== 'new' || ['cylinders', 'bore_mm', 'stroke_mm', 'compression', 'redline'].every(k => ep.engine[k] === v.enginePreset.engine[k]));
     c.chassis = p.chassis;
     try {
