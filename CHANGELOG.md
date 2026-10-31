@@ -20,6 +20,35 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 Working toward **v1.0 — every number derived, not fitted.**
 
+### A car's brake split, and why its rear brakes stay cool on a lap (build 203)
+
+- **Each car's front/rear brake split now follows the regulation its maker designs to.** It used to come from the
+  brake kit's calipers: 71–74% on the front for every car, whatever its weight.
+  - UN ECE R13-H (and FMVSS 135) requires the front axle to lock first at every deceleration up to 0.8 g. So the
+    front's share is at least the front axle's share of the load while braking at 0.8 g: front weight + 0.8 × CG
+    height / wheelbase. Makers sit at that line.
+  - The split now runs from 0.53 front on a 911 GT3 to 0.82 on a front-heavy small car. The front calipers stay the
+    kit's, and the rear's force follows.
+- **The split was also computed before the car's weight split, wheelbase and CG height were set,** so it read the car
+  loaded before. It now comes after them.
+- **What it changes:**
+  - Almost every stop and lap is limited by the tyres' grip, which ABS shares between the axles, so most lap times do
+    not move.
+  - Five cars whose small brakes, not their tyres, set the limit change by up to 0.03 s a lap: the F355, Diablo VT,
+    Buick GNX, Dino 246 and Countach. Four get slightly quicker, the Dino slightly slower.
+  - Race laps change by up to about a second, through brake heat and fade.
+- **Why the rear brakes stay cool on a lap (the F-150 Raptor's rears near ambient).** This is now in the guide, in
+  English and Greek.
+  - The lap's driver brakes into every corner while already cornering at the limit: 94–98% of the braking energy goes
+    in while the car is turning. There the rear tyres have nothing left for braking, so ABS releases them and the
+    fronts do it all.
+  - On a test oval, the textbook line (straight-line braking, one arc) is 0.9–1.9 s slower in the model than the
+    lap's own line. On that line the rears run 1.5–2.4× cooler than the fronts, as measured cars do (a Clio Cup's
+    rears near cold, a Viper's close to its fronts).
+  - Real drivers keep a stability margin, and so does a car's ESC. No published threshold grounds one, so none is
+    added: the hot lap stays a perfect driver's.
+- New `tests/test118.mjs`.
+
 ### A road ECU's fuel map (build 202)
 
 - **The AUTO fuel map stays at λ 1 until near full load.** It used to start enriching at 35% manifold pressure and
