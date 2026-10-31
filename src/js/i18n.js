@@ -10,6 +10,37 @@ const I18N={
   'DRIVER: BALANCED':{el:'ΟΔΗΓΟΣ: ΙΣΟΡΡΟΠΗΜΕΝΟΣ'},'DRIVER: AGGRESSIVE':{el:'ΟΔΗΓΟΣ: ΕΠΙΘΕΤΙΚΟΣ'},'DRIVER: SMOOTH':{el:'ΟΔΗΓΟΣ: ΣΤΡΩΤΟΣ'},'DRIVER: RAIN MASTER':{el:'ΟΔΗΓΟΣ: ΤΗΣ ΒΡΟΧΗΣ'},'DRIVER: ROOKIE':{el:'ΟΔΗΓΟΣ: ΑΡΧΑΡΙΟΣ'},'BALANCED':{el:'ΙΣΟΡΡΟΠΗΜΕΝΟΣ'},'AGGRESSIVE':{el:'ΕΠΙΘΕΤΙΚΟΣ'},'SMOOTH':{el:'ΣΤΡΩΤΟΣ'},'RAIN MASTER':{el:'ΤΗΣ ΒΡΟΧΗΣ'},'ROOKIE':{el:'ΑΡΧΑΡΙΟΣ'},'dives down the inside of':{el:'βουτάει από μέσα στον'},'runs wide trying to pass':{el:'ανοίγει προσπαθώντας να περάσει τον'},'defends from':{el:'αμύνεται απέναντι στον'},'DEFENDING':{el:'ΑΜΥΝΕΤΑΙ'},
   'Leave full screen':{el:'Έξοδος από πλήρη οθόνη'},'Full screen':{el:'Πλήρης οθόνη'},
   'WEATHER':{el:'ΚΑΙΡΟΣ'},
+  // PARTS: the part designer (build 205)
+  'PARTS':{el:'ΕΞΑΡΤΗΜΑΤΑ'},'PART DESIGNER':{el:'ΣΧΕΔΙΑΣΤΗΣ ΕΞΑΡΤΗΜΑΤΩΝ'},
+  "Pick a type of part, set its dimensions and save it. Saved parts are kept in this browser and appear in the ENGINE tab's choices; a saved build carries its parts with it.":{el:'Διάλεξε είδος εξαρτήματος, όρισε τις διαστάσεις του και αποθήκευσέ το. Τα αποθηκευμένα εξαρτήματα μένουν σε αυτόν τον browser και εμφανίζονται στις επιλογές της καρτέλας ΚΙΝΗΤΗΡΑΣ· ένα αποθηκευμένο build κουβαλά μαζί του τα εξαρτήματά του.'},
+  'Type of part':{el:'Είδος εξαρτήματος'},'My exhausts':{el:'Οι εξατμίσεις μου'},"START FROM THIS ENGINE'S":{el:'ΞΕΚΙΝΑ ΑΠΟ ΑΥΤΟΝ ΤΟΝ ΚΙΝΗΤΗΡΑ:'},
+  'NEW EXHAUST':{el:'ΝΕΑ ΕΞΑΤΜΙΣΗ'},'NAME':{el:'ΟΝΟΜΑ'},'HEADER':{el:'ΠΟΛΛΑΠΛΗ ΕΞΑΓΩΓΗΣ'},
+  'PRIMARY DIAMETER (mm)':{el:'ΔΙΑΜΕΤΡΟΣ ΠΡΩΤΕΥΟΝΤΩΝ (mm)'},'PRIMARY LENGTH (mm)':{el:'ΜΗΚΟΣ ΠΡΩΤΕΥΟΝΤΩΝ (mm)'},
+  'CUT THE PRIMARIES FOR (rpm)':{el:'ΚΟΨΕ ΤΑ ΠΡΩΤΕΥΟΝΤΑ ΓΙΑ (rpm)'},'CUT':{el:'ΚΟΨΕ'},
+  'PIPES AFTER THE COLLECTOR':{el:'ΣΩΛΗΝΕΣ ΜΕΤΑ ΤΟΝ ΣΥΛΛΕΚΤΗ'},'PIPE DIAMETER (mm)':{el:'ΔΙΑΜΕΤΡΟΣ ΣΩΛΗΝΑ (mm)'},
+  'SIZE FOR 75 m/s':{el:'ΔΙΑΣΤΑΣΙΟΛΟΓΗΣΗ ΓΙΑ 75 m/s'},'SYSTEM LENGTH (m)':{el:'ΜΗΚΟΣ ΣΥΣΤΗΜΑΤΟΣ (m)'},'SILENCER':{el:'ΣΙΓΑΣΤΗΡΑΣ'},
+  'On this engine':{el:'Σε αυτόν τον κινητήρα'},'SAVE PART':{el:'ΑΠΟΘΗΚΕΥΣΗ'},'SAVE & FIT':{el:'ΑΠΟΘΗΚΕΥΣΗ & ΤΟΠΟΘΕΤΗΣΗ'},
+  'An electric drive has no exhaust. Build a combustion engine on the ENGINE tab to design one.':{el:'Ένα ηλεκτρικό σύστημα κίνησης δεν έχει εξάτμιση. Φτιάξε κινητήρα εσωτερικής καύσης στην καρτέλα ΚΙΝΗΤΗΡΑΣ για να σχεδιάσεις μία.'},
+  'Power and torque with this exhaust against the engine as it is':{el:'Ισχύς και ροπή με αυτή την εξάτμιση, απέναντι στον κινητήρα όπως είναι'},
+  'CAST MANIFOLD':{el:'ΧΥΤΗ ΠΟΛΛΑΠΛΗ'},'TUBULAR HEADER':{el:'ΣΩΛΗΝΩΤΟ ΧΤΑΠΟΔΙ'},'EQUAL-LENGTH HEADER':{el:'ΧΤΑΠΟΔΙ ΙΣΟΥ ΜΗΚΟΥΣ'},
+  'CHAMBERED':{el:'ΜΕ ΘΑΛΑΜΟΥΣ'},'STRAIGHT-THROUGH':{el:'ΕΥΘΕΙΑΣ ΡΟΗΣ'},'NONE (STRAIGHT PIPE)':{el:'ΚΑΝΕΝΑΣ (ΙΣΙΟΣ ΣΩΛΗΝΑΣ)'},
+  'INTAKE MANIFOLD':{el:'ΠΟΛΛΑΠΛΗ ΕΙΣΑΓΩΓΗΣ'},'CATALYTIC CONVERTER':{el:'ΚΑΤΑΛΥΤΗΣ'},'LATER':{el:'ΑΡΓΟΤΕΡΑ'},
+  'EDIT':{el:'ΕΠΕΞΕΡΓΑΣΙΑ'},'FIT':{el:'ΤΟΠΟΘΕΤΗΣΗ'},
+  "No exhausts designed yet. Start from one of this engine's factory exhausts below.":{el:'Δεν έχεις σχεδιάσει ακόμα εξάτμιση. Ξεκίνα από μία από τις εργοστασιακές εξατμίσεις αυτού του κινητήρα παρακάτω.'},
+  'MY EXHAUST':{el:'Η ΕΞΑΤΜΙΣΗ ΜΟΥ'},'MY PARTS':{el:'ΤΑ ΕΞΑΡΤΗΜΑΤΑ ΜΟΥ'},
+  'PART DELETED: THE ENGINE HAS ITS FACTORY EXHAUST':{el:'ΤΟ ΕΞΑΡΤΗΜΑ ΔΙΑΓΡΑΦΗΚΕ: Ο ΚΙΝΗΤΗΡΑΣ ΕΧΕΙ ΤΗΝ ΕΡΓΟΣΤΑΣΙΑΚΗ ΕΞΑΤΜΙΣΗ'},
+  'PART DELETED':{el:'ΤΟ ΕΞΑΡΤΗΜΑ ΔΙΑΓΡΑΦΗΚΕ'},'PARTS LIBRARY FULL':{el:'Η ΒΙΒΛΙΟΘΗΚΗ ΕΞΑΡΤΗΜΑΤΩΝ ΓΕΜΙΣΕ'},'PART SAVED':{el:'ΤΟ ΕΞΑΡΤΗΜΑ ΑΠΟΘΗΚΕΥΤΗΚΕ'},
+  'PART FITTED':{el:'ΤΟ ΕΞΑΡΤΗΜΑ ΤΟΠΟΘΕΤΗΘΗΚΕ'},'PARTS NOT SAVED (storage blocked)':{el:'ΤΑ ΕΞΑΡΤΗΜΑΤΑ ΔΕΝ ΑΠΟΘΗΚΕΥΤΗΚΑΝ (αποκλεισμένος χώρος)'},
+  'With this exhaust':{el:'Με αυτή την εξάτμιση'},'now':{el:'τώρα'},'Primary':{el:'Πρωτεύον'},'bore':{el:'διάμετρος κυλίνδρου'},
+  'the factory exhausts: cast 0.38, tubular 0.46, race 0.54':{el:'οι εργοστασιακές εξατμίσεις: χυτή 0.38, σωληνωτή 0.46, αγωνιστική 0.54'},
+  'On a turbo engine the manifold is as short as packaging allows: the primary length is not used, and its suction wave turns into a compression against the turbine.':{el:'Σε turbo κινητήρα η πολλαπλή είναι όσο κοντή επιτρέπει ο χώρος: το μήκος των πρωτευόντων δεν χρησιμοποιείται, και το κύμα αναρρόφησης γίνεται συμπίεση πάνω στην τουρμπίνα.'},
+  'A port-timed engine has no valve overlap to scavenge through: the header changes its back-pressure, not its filling.':{el:'Ένας κινητήρας με θυρίδες δεν έχει επικάλυψη βαλβίδων για σάρωση: η πολλαπλή αλλάζει την αντίθλιψη, όχι την πλήρωση.'},
+  'Scavenging is strongest at':{el:'Η σάρωση είναι ισχυρότερη στις'},'wave order':{el:'τάξη κύματος'},'peak power is at':{el:'η μέγιστη ισχύς είναι στις'},
+  'Gas speed in the pipe at peak power':{el:'Ταχύτητα αερίων στον σωλήνα στη μέγιστη ισχύ'},
+  'design practice ~75; quieter road systems run faster, race systems slower':{el:'σχεδιαστική πρακτική ~75· τα πιο αθόρυβα συστήματα δρόμου τρέχουν γρηγορότερα, τα αγωνιστικά πιο αργά'},
+  'Back-pressure at peak power':{el:'Αντίθλιψη στη μέγιστη ισχύ'},
+  'The silencer changes the sound only; its own back-pressure is not modelled yet.':{el:'Ο σιγαστήρας αλλάζει μόνο τον ήχο· η δική του αντίθλιψη δεν μοντελοποιείται ακόμα.'},
+  'this exhaust':{el:'αυτή η εξάτμιση'},
   'AIR °C':{el:'ΑΕΡΑΣ °C'},
   'DRY':{el:'ΣΤΕΓΝΟ'},
   'DAMP':{el:'ΥΓΡΟ'},
@@ -861,7 +892,7 @@ function applyLang(lang){
   currentLang=(lang==='el')?'el':'en';
   try{localStorage.setItem('pes.lang',currentLang);}catch(e){}
   document.documentElement.lang=currentLang;
-  const sel='.viz-tabs button, .design-panel h3, .design-section, .guide-title, .gtier-h, .hint, .panel h2, .stat .label, .opt-note, .opt-row>div>b, .ctl-lbl, .field>label, .build-row button, #btnGearRatios, #btnGG, #controlsPanel .btn-row button, .fuelmap-edit button, .garage-row button, #btnReplayRestart, .gart-cap';
+  const sel='.viz-tabs button, .design-panel h3, .design-section, .guide-title, .gtier-h, .hint, .panel h2, .stat .label, .opt-note, .opt-row>div>b, .ctl-lbl, .field>label, .build-row button, #btnGearRatios, #btnGG, #controlsPanel .btn-row button, .fuelmap-edit button, .garage-row button, #partsPanel button[id], #btnReplayRestart, .gart-cap';
   document.querySelectorAll(sel).forEach(el=>{
     if(el.children.length>0)return;                       // skip nodes with child elements
     if(el.dataset.en===undefined)el.dataset.en=el.textContent.trim();
@@ -906,9 +937,10 @@ function applyLang(lang){
   for(const id of ['garageName','engSaveName']){const gn=document.getElementById(id);
     if(gn){if(gn.dataset.enPh===undefined)gn.dataset.enPh=gn.placeholder;gn.placeholder=tr(gn.dataset.enPh);}}
   if(typeof renderGarage==='function')renderGarage();
+  if(typeof fillExhaustSelect==='function'){fillExhaustSelect();if(typeof vizMode!=='undefined'&&vizMode==='parts')renderParts();}
   // The fixed dropdowns. The pickers filled from data are re-labelled by their own code instead: caching
   // their text here would keep a Greek label as the 'English' one.
-  document.querySelectorAll('#designPanel select:not(#edFamily):not(#edPreset):not(#edChallenge) option, #vehiclePanelTab select:not(#vhFamily):not(#vhPreset):not(#vhSpacing) option, #replayGauges option, #guideNoHit').forEach(o=>{
+  document.querySelectorAll('#designPanel select:not(#edFamily):not(#edPreset):not(#edChallenge) option, #vehiclePanelTab select:not(#vhFamily):not(#vhPreset):not(#vhSpacing) option, #replayGauges option, #partsPanel select option, #guideNoHit').forEach(o=>{
     if(o.dataset.en===undefined)o.dataset.en=o.textContent.trim();o.textContent=o.tagName==='OPTION'?trOpt(o.dataset.en):tr(o.dataset.en);});
   for(const p of [enginePicker,carPicker])if(p)p.relabel();
   {const sp=document.getElementById('vhSpacing');if(sp&&typeof fillSpacingSelect==='function')fillSpacingSelect(!!vehBody,sp.value);}

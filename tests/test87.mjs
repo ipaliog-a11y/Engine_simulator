@@ -38,7 +38,7 @@ const ALLOW = new Set(`BOOST BUILD DYNO ECU LSD VVT ITB PFI DCT AFR RON BTDC MAP
   INTERCOOLER ROOTS COMPOUND DECAT WANKEL Wankel HOT HATCH ROADSTER MUSCLE CAR GRAND TOURER SUPERCAR Supercar HYPERCAR
   PICKUP SUV FWD RWD AWD SPOOL TOURING SLICK DRAG RADIAL SPLITTER SPOILER DIFFUSER COILOVERS Kei KEI wiki WIKI pixel art
   browser coupe build grand prix Sleeper Grand Prix Ring Automation PIXEL ENGINE SIM BMEP BATT kWh Nm bar VGT CdA ClA
-  OFF stall PIT PITS GT boost pit Wastegate Intercooler SYNTH GAS Ange Yaghi CPU WLTP ATKINSON eCVT`.split(/\s+/).filter(Boolean));
+  OFF stall PIT PITS GT boost pit Wastegate Intercooler SYNTH GAS Ange Yaghi CPU WLTP ATKINSON eCVT kPa`.split(/\s+/).filter(Boolean));
 // Selects of names, the app's title, the circuit's name, and the guide's pages (budgeted above).
 const SKIP = '#edPreset, #vhPreset, #raceAddSel, #trkSel, #raceTrk, #edLang, h1, #lapHead, [id^="gp-"]';
 
@@ -101,7 +101,7 @@ if (tables.blocks > GUIDE_BLOCKS_WITHOUT_GREEK) fails.push(`guide blocks without
 if (tables.blocks < GUIDE_BLOCKS_WITHOUT_GREEK) console.log(`  (the budget can come down to ${tables.blocks})`);
 
 // ---------- 2-3. every tab, in Greek, then back in English ----------
-const TABS = ['tabDesign', 'tabVehicle', 'tabGarage', 'tabTrack', 'tabRace', 'tabEngine', 'tabDyno', 'tabGuide', 'tabOptions'];
+const TABS = ['tabDesign', 'tabVehicle', 'tabParts', 'tabGarage', 'tabTrack', 'tabRace', 'tabEngine', 'tabDyno', 'tabGuide', 'tabOptions'];
 const sweep = (p, skip) => p.evaluate((skip) => {
   const vis = el => { for (let e = el; e; e = e.parentElement) { const cs = getComputedStyle(e); if (cs.display === 'none' || cs.visibility === 'hidden' || e.hidden) return false; } return el.getClientRects().length > 0; };
   const out = [], skipped = el => el.closest(skip);

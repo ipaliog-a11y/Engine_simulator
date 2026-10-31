@@ -1,4 +1,4 @@
-# PIXEL ENGINE SIM v0.7 build 204
+# PIXEL ENGINE SIM v0.7 build 205
 
 **A lightweight, 8-bit style internal combustion engine *designer* & simulator** inspired by *Automation*.
 
@@ -129,6 +129,9 @@ Build 199 adds 50 real combustion cars from a research pack (`research/vehicles-
 cars, pickups, the first V6s, classics from the 1960s to the 1980s and more kei cars and hot hatches.
 The VEHICLE tab's G-G DIAGRAM (build 200) draws how hard the car can corner, brake and accelerate at 60, 120 and
 180 km/h, from the lap's own physics, with every point of a lap over it.
+The PARTS tab (build 205) is a part designer: pick a type of part, then its options. The first is the exhaust (header
+construction, primary diameter and length, the pipes after the collector, the silencer), previewed on the engine you
+have built and saved to a library whose parts appear in the ENGINE tab's EXHAUST choices.
 An electric car is heard (build 198): its motor's whine, the inverter's switching and the reduction's gears, each at
 the frequency its build gives it, on the bench and on the lap replay.
 On the LIVE bench (build 190) a hybrid runs with its motor and pack: a HYBRID panel draws the power flowing between
@@ -140,8 +143,8 @@ assist map over speed and pedal), regeneration, load-point shifting, electric-dr
 ### Simulation & live tuning
 - **Live outputs**: Power (HP), Torque (Nm), BMEP, Volumetric Efficiency, Thermal
   Efficiency, BSFC, Fuel Flow, Knock Risk, Engine Health.
-- **Nine tabs** — **ENGINE** (build the engine), **VEHICLE** (drop it in a car & read its
-  performance), **GARAGE** (the saved builds), **TRACK** (lap it round a circuit), **RACE** (race
+- **Ten tabs** — **ENGINE** (build the engine), **VEHICLE** (drop it in a car & read its
+  performance), **PARTS** (design a part and fit it), **GARAGE** (the saved builds), **TRACK** (lap it round a circuit), **RACE** (race
   it against other builds), **LIVE** (the engine running: cutaway, the
   whole bank firing in its real order, and the controls), **DYNO** (power/torque curve,
   scorecard and a static result sheet with run data), **GUIDE** (a wiki: 60 pages in 9 sections, each climbing from real life to the game to the physics, with 8-bit pictures drawn in code, search and cross-links) and **OPTIONS** (sound,
