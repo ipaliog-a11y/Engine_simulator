@@ -29,7 +29,7 @@ const fails = [], errors = [];
 const GUIDE_BLOCKS_WITHOUT_GREEK = 0;   // build 162 translated the guide
 // The electric drive's tr() words with no Greek yet (decision 11: English for now). Lower it as they are translated;
 // never raise it to let new text pass. A word not in electric-ui.js is held to the full rule above.
-const ELECTRIC_WORDS_WITHOUT_GREEK = 64;
+const ELECTRIC_WORDS_WITHOUT_GREEK = 59;
 const EV_SRC = readFileSync(path.join(repo, 'src', 'js', 'electric-ui.js'), 'utf8');
 
 // Kept in Latin letters by the translation (as the existing Greek does: ΣΤΟΧΟΣ BOOST, LSD ΜΕ ΔΙΣΚΟΥΣ), units, and

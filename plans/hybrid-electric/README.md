@@ -189,7 +189,7 @@ gear mesh from the reduction. Built standalone in `tests/proto/` first, the way 
 | Step | What | Status |
 |---|---|---|
 | 4a | **The prototype** (`tests/proto/ev-sound/`): torque ripple at 6 fe and slotting at LCM(slots, poles) × the shaft speed (an induction motor's bars, silent with no torque), the stator mode they sweep through, the inverter's sidebands at fc ± 2 fe and 2 fc ± fe weighted by the modulation depth, the reduction's two gear meshes, windage. Checked on its output: every voice to the FFT bin on its predicted frequency, the whine an order, louder with the load, an idle induction motor 77 dB down, SiC higher and quieter than IGBT, 6–8% of real time. | ✅ build 197 |
-| 4b | **In the app**: the synth in the sound worklet beside GAS, driven by the LIVE bench (an electric car, and a hybrid's motor with its engine) and the TRACK tab's replay; a level against GAS set by ear. | |
+| 4b | **In the app**: the motor-sound worklet beside the engine's, driven where the engine's sound is heard (the bench: an electric car's drive, a hybrid's motor with its engine) and by the TRACK tab's replay (the shaft power over the motor speed, the drive's own braking on a lift). The controller's torque split between the axles (an induction front motor idle until the rear runs short), the gear meshes only where the motor has a reduction of its own (an electric car, a power-split or series hybrid; not a P2). Checked by rendering the worklet offline: every voice on its frequency, the torque heard, the Model Y's idle front motor silent (`tests/test114.mjs`). | ✅ build 198 |
 
 ---
 

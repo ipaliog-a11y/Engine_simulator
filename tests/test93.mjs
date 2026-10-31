@@ -40,8 +40,9 @@ const r = await page.evaluate(() => {
     return { name: p.name, rated: p.real.hpRpm, gov: engine.govRpm, peak: engine.score.peakHPrpm, hp: engine.score.peakHP, real: p.real.hp, rl: engine.redline,
       tqMaxShare: tqAt(engine.redline) / engine.score.peakTQ }; });
   // 3. off: the old curve (peak at the limiter for the Cummins, untouched below the rated speed)
-  load('Cummins'); const onLow = tqAt(2000), onPeak = engine.score.peakHPrpm;
-  load('Cummins', { govRpm: 0 }); out.off = { offPeak: engine.score.peakHPrpm, onPeak, onLow, offLow: tqAt(2000), rl: engine.redline };
+  // the ECU's boost taper is its own control (build 199 gave the Cummins one): off on both sides, so this sees the governor alone
+  load('Cummins', { taperRpm: 0 }); const onLow = tqAt(2000), onPeak = engine.score.peakHPrpm;
+  load('Cummins', { govRpm: 0, taperRpm: 0 }); out.off = { offPeak: engine.score.peakHPrpm, onPeak, onLow, offLow: tqAt(2000), rl: engine.redline };
   // 4. a diesel's field, and the save
   load('Cummins'); const sv = serializeBuild('t', ''); load('2JZ'); const petrolOff = document.getElementById('edGovRpm').disabled;
   applyBuild(JSON.parse(JSON.stringify(sv)));

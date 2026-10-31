@@ -1,7 +1,8 @@
 // Supercar category (build 148): four popular supercars from each decade since the 90s, each a real car on its
 // factory engine. The engines and cars are reported against their makers in test60 and test61, with their known
 // gaps named there; this checks the category itself: it is whole, it loads, the picker groups it by decade, the
-// decades get quicker, and the cars race.
+// decades get quicker, and the cars race. Build 199 added older and other supercars from research batch 1 (they carry
+// a confidence); the four-by-four is build 148's set, and the picker groups every decade the category has.
 import { chromium } from './pw.mjs';
 import { fileURLToPath, pathToFileURL } from 'url';
 import path from 'path';
@@ -17,7 +18,8 @@ const fails = [];
 const ERAS = ['1990s', '2000s', '2010s', '2020s'];
 
 const r = await page.evaluate(ERAS => {
-  const cars = VEHICLE_PRESETS.filter(p => p.cat === 'Supercar');
+  const all = VEHICLE_PRESETS.filter(p => p.cat === 'Supercar'), cars = all.filter(p => !p.confidence);
+  const eras = [...new Set(all.map(p => p.era))].sort().map(e => ({ e, n: all.filter(p => p.era === e).length }));
   const rows = cars.map(p => {
     const ep = PRESETS.find(e => e.name === p.engine);
     loadVehiclePreset(p);
@@ -30,7 +32,7 @@ const r = await page.evaluate(ERAS => {
   const fam = document.getElementById('vhFamily'); fam.value = 'Supercar'; fam.dispatchEvent(new Event('change'));
   const groups = [...document.querySelectorAll('#vhPreset optgroup')].map(g => ({ label: g.label, n: g.querySelectorAll('option').length }));
   const efam = document.getElementById('edFamily'); efam.value = 'Supercar'; efam.dispatchEvent(new Event('change'));
-  const egroups = document.querySelectorAll('#edPreset optgroup').length;
+  const egroups = document.querySelectorAll('#edPreset optgroup').length, eeras = new Set(PRESETS.filter(e => e.cat === 'Supercar').map(e => e.era)).size;
   // other families stay flat
   fam.value = 'NA Sports'; fam.dispatchEvent(new Event('change'));
   const flat = document.querySelectorAll('#vhPreset optgroup').length;
@@ -40,7 +42,7 @@ const r = await page.evaluate(ERAS => {
   const pick = ['McLaren F1', 'Ferrari Enzo', 'McLaren 720S', 'Corvette Z06 (C8'].map(n => cars.find(c => c.name.includes(n)));
   const ms = pick.map(p => raceCarModel(rec(p), 'spa'));
   const R = raceInit(ms, { track: 'spa', laps: 3, seed: 4 }); raceRun(R);
-  return { rows, cats: PRESET_CATS, groups, egroups, flat,
+  return { rows, eras, cats: PRESET_CATS, groups, egroups, eeras, flat,
     race: { done: R.done, laps: R.cars.map(c => c.laps.length), best: R.cars.map(c => Math.min(...c.laps.map(l => l.t))) } };
 }, ERAS);
 
@@ -65,8 +67,8 @@ if (!(pw[3] > pw[0])) fails.push('2020s supercars are not more powerful for thei
 if (!(acc[3] < acc[0])) fails.push('2020s supercars are not quicker to 100 than 1990s ones');
 
 console.log(`\n== picker: ${r.groups.map(g => `${g.label} (${g.n})`).join(', ')}; engine picker ${r.egroups} groups; NA Sports ${r.flat} groups`);
-if (r.groups.length !== 4 || r.groups.some((g, k) => g.label !== ERAS[k] || g.n !== 4)) fails.push('the car picker does not group the supercars into four decades of four');
-if (r.egroups !== 4) fails.push('the engine picker does not group the supercar engines by decade');
+if (r.groups.length !== r.eras.length || r.groups.some((g, k) => g.label !== r.eras[k].e || g.n !== r.eras[k].n)) fails.push('the car picker does not group the supercars by decade');
+if (r.egroups !== r.eeras) fails.push('the engine picker does not group the supercar engines by decade');
 if (r.flat !== 0) fails.push('a family without eras is grouped');
 
 console.log(`\n== one from each decade, three laps of Spa: laps ${r.race.laps.join('/')}, best ${r.race.best.map(t => t.toFixed(1)).join(' / ')} s`);

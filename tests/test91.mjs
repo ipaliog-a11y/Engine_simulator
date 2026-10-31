@@ -37,7 +37,7 @@ const r = await page.evaluate(() => {
   }
   // 2. the constants, from the distinct published boxes
   const seen = new Set(), boxes = [];
-  for (const g of Object.values(GEARSETS)) { const k = g.r.map(x => x.toFixed(3)).join('/'); if (!seen.has(k)) { seen.add(k); boxes.push(g.r); } }
+  for (const g of gearsFitted()) { const k = g.r.map(x => x.toFixed(3)).join('/'); if (!seen.has(k)) { seen.add(k); boxes.push(g.r); } }
   let sx = 0, sy = 0, sxx = 0, sxy = 0;
   for (const b of boxes) { const x = Math.log(b.length - 1), y = Math.log(b[0] / b[b.length - 1]); sx += x; sy += y; sxx += x * x; sxy += x * y; }
   const N = boxes.length, c = (N * sxy - sx * sy) / (N * sxx - sx * sx), d = (sy - c * sx) / N;
@@ -46,6 +46,8 @@ const r = await page.evaluate(() => {
   const pr = boxes.map(b => fitGearbox(b).prog);
   out.consts = { N, c, d, res: [.25, .5, .75].map(p => q(res, p)), phi2: [.25, .5, .75].map(p => q(ph, p)), prog: [.25, .5, .75].map(p => q(pr, p)), progAll: pr, C: GEAR_SPAN_C, D: GEAR_SPAN_D,
     sp: ['close', 'std', 'wide'].map(k => GEAR_SPACING[k]) };
+  // build 199: research batch 1's boxes are held out of the fit; how the law does on them
+  out.held = Object.values(GEARSETS).filter(g => g.batch).map(g => fitGearbox(g.r).res);
   // 3. the published sets against their presets
   out.sets = Object.entries(GEARSETS).map(([name, g]) => { const p = VEHICLE_PRESETS.find(q => q.name === name);
     return { name, found: !!p, gears: p && p.fit.gears, len: g.r.length, falling: g.r.every((x, i) => i === 0 || x < g.r[i - 1]), fd: g.fd, src: !!g.src }; });
@@ -114,6 +116,9 @@ C.sp.forEach((sp, i) => {
   if (Math.abs(sp.prog - C.prog[i]) > 0.001) fails.push(`${sp.label}: progressive share ${sp.prog}, the published boxes' quartile is ${C.prog[i].toFixed(3)}`);
 });
 if (C.N < 25) fails.push('fewer than 25 published boxes behind the constants');
+const H = r.held.slice().sort((a, b) => a - b), hq = p => H[Math.round(p * (H.length - 1))];
+console.log(`  held out (research batch 1, build 199): ${H.length} boxes, span residual quartiles ${[.25, .5, .75].map(p => hq(p).toFixed(3)).join(' / ')} against the law fitted without them`);
+if (H.length && !(Math.abs(hq(0.5)) < 0.15)) fails.push('the span law misses the held-out boxes (median residual past 0.15)');
 
 console.log(`\n== published sets: ${r.sets.length} cars ==`);
 for (const s of r.sets) {

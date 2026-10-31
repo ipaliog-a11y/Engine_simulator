@@ -20,6 +20,87 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 Working toward **v1.0 — every number derived, not fitted.**
 
+### 50 more real cars: batch 1 (build 199)
+
+- **The research pack** of PR #127 (`research/vehicles-batch-1/`: the README says why these 50, where every figure came
+  from, and how sure it is) **is in the game**:
+  - 50 combustion cars, on 49 new engines and the existing Cummins;
+  - 29 published gearboxes (the others take their family's average spacing, as before);
+  - three new categories: **Performance SUV**, **Track** and **Pickup**.
+- **What it adds:**
+  - the first real performance SUVs, track cars and pickups beyond the Silverado;
+  - the first V6s (eight petrol and one diesel);
+  - cars from the 1960s to the 1980s;
+  - more kei cars, hot hatches, sports sedans and diesels;
+  - a two-stroke car (the Trabant 601).
+- **A new chassis, OPEN-WHEELER,** for the BAC Mono: narrow, little aero, mid-engined. Neither the winged prototype nor
+  a roadster is that car.
+- **The Ram 2500 HO** runs on the existing Cummins 6.7, moved onto the 2019 Stellantis press kit's compression (16.2)
+  and boost (2.28 bar).
+- **Each boosted engine past its rating** carries a factory ECU taper solved as the older presets' are: from its maker's
+  peak-torque rpm, the gentlest that meets the rating.
+  - The Amarok's governor is set at its rated 3000 rpm.
+  - The Cummins now carries a taper too.
+  - Four engines stay over their rating even at the strongest taper, and the gap is left visible: the Land Cruiser
+    diesel +14%, the GNX +8%, the S660 +9%, the Cappuccino +2%.
+- **The form takes what the cars ship with:**
+  - BRAKE ROTOR runs 200-450 mm (the Mk1 Golf's 239 mm stored as 240, the Trabant's drums as 200);
+  - TYRE ASPECT goes to 80 (the 1960s cars).
+  - `factoryGeo` reads a preset's own suspension geometry, as `vehicleFromPreset` already fitted it, so those cars load
+    as their factory fit.
+- **What the batch leaves as it was, and what it changes:**
+  - The 29 new gearboxes are held out of the gear-spacing law and the family averages, which stay fitted on the boxes
+    before them. Folding them in would have moved every car that takes its family's average (the 911 GT3 among them).
+    They are now the law's out-of-sample check: their span residual's median is +0.12 (test91).
+  - The cars' suspension geometry comes from the pack. Their tracks were not researched, so they take their class's.
+  - The car and engine pickers group a family by decade only when every car in it has one, oldest first. The batch
+    gives a decade to every car and the older presets none, which split NA Sports and the rest into scattered groups.
+    The Supercar family now runs from the 1960s; decade labels for the 1960s to 1980s are in Greek too.
+  - The Ferrari 365 GTB/4 Daytona runs on SLOTTED/VENTED brakes, not the pack's STEEL DISC: it had vented discs all
+    round.
+  - Two cars' factory brakes stop short of their tyres' limit in the model: the Buick GNX and the Grand Cherokee SRT.
+    Their real calipers are not in the model's set. test63 names them as known gaps.
+- **Against the makers' figures** (the 43 scored engines; the two 1960s SAE gross ratings and the low-confidence cars
+  are reported only):
+  - power within 8.4% RMS;
+  - 0-100 with the engine matched to its rating within 10.0% RMS;
+  - top speed within 9.2% RMS.
+- **Tests:**
+  - `tests/test115.mjs` checks the pack's validator, every car against its research entry, its factory fit and
+    gearbox, and those figures.
+  - The new peak-at-the-limiter engines and the Camaro ZL1's slow 0-100 are named in `test60` and `test61` with their
+    reasons.
+
+### The electric drive's sound in the app (build 198)
+
+- **Step 4b of the hybrid-electric plan.** An electric car is no longer silent. SOUND ON plays its motor, inverter and
+  gears from the `motor-sound` worklet, the prototype's synth (build 197) ported beside the engine's sound.
+- **Where it plays:** wherever the engine's sound is heard from the bench, and on the TRACK tab's replay.
+  - **An electric car:** its drive's speed and torque.
+  - **A hybrid:** its motor's, together with the engine.
+  - **The replay:** the recorded shaft power over the motor's speed, with the drive's own braking as regeneration on a lift.
+- **The torque split:** shared between the axles as the controller does it. On the Model Y the induction front motor
+  carries nothing, and is silent, until the rear runs short.
+- **Gear meshes:** only where the motor has a reduction of its own (an electric car, a power-split or series hybrid; not
+  a P2, whose motor turns inside the gearbox).
+- **Level:** set by ear (`MOTOR_SOUND_LEVEL`), through its own limiter. SOUND OFF and the other tabs silence it.
+- **Tests:** `tests/test114.mjs` renders the worklet offline and checks every voice's frequency, the load, the idle front
+  motor, and the live page's sources.
+- **An electric car's BATTERY CHARGE on the bench.** A slider under LOAD, shown only for an electric drive, sets the
+  pack's charge, as the hybrid panel's does a hybrid's.
+  - Use it to test the drive at any charge: the voltage, the low-charge cut, limp mode.
+  - It brings an empty pack back. The status now says PACK EMPTY — SET THE CHARGE OR REBUILD.
+  - `tests/test97.mjs` checks it.
+- **Fixed: a hybrid's engine hunted between on and off at the edge of starting** (reported on the Porsche 918: 31% pedal,
+  40% brake, the page stalling).
+  - A plug-in using its own charge had no hysteresis. When the demand sat at what the motor alone can give, a starting
+    engine dragged the shaft down for a moment, which took the demand back under the threshold. It switched on almost
+    every frame: 587 times in 10 s.
+  - AUTO and HOLD now have a hysteresis band (a depleting plug-in stops below 90% of the motor's share) and keep the
+    engine started or stopped for at least 2 s unless the charge is low.
+  - Now 0 switches in 20 s on the 918 at 31%, and at most 2 for any hybrid preset from 20% to 50% pedal
+    (`tests/test107.mjs`).
+
 ### The electric drive's sound: the prototype (build 197)
 
 - **Step 4a of the hybrid-electric plan.** `tests/proto/ev-sound/` is a synth for a motor, its inverter and its

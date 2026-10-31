@@ -1,4 +1,4 @@
-# PIXEL ENGINE SIM v0.7 build 197
+# PIXEL ENGINE SIM v0.7 build 199
 
 **A lightweight, 8-bit style internal combustion engine *designer* & simulator** inspired by *Automation*.
 
@@ -125,6 +125,10 @@ plug-in procedure, and the BMW 330e gives a 55 km electric range and 1.7 L/100 k
 against Porsche's 7.2.
 In a race (build 196) a plug-in starts on a full pack and spreads its own charge over the distance, and the HYBRID
 TUNE's DEPLOY LIMIT and HARVEST LIMIT set a racing class's energy a lap.
+Build 199 adds 50 real combustion cars from a research pack (`research/vehicles-batch-1/`): performance SUVs, track
+cars, pickups, the first V6s, classics from the 1960s to the 1980s and more kei cars and hot hatches.
+An electric car is heard (build 198): its motor's whine, the inverter's switching and the reduction's gears, each at
+the frequency its build gives it, on the bench and on the lap replay.
 On the LIVE bench (build 190) a hybrid runs with its motor and pack: a HYBRID panel draws the power flowing between
 engine, motors, pack and brake, gauges the charge, and offers the drive modes (AUTO, EV, HOLD, CHARGE, SPORT, ENGINE
 ONLY, MANUAL). Its VIEW selector also shows the power-split's lever diagram and the engine's BSFC map with the point

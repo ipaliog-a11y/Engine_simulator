@@ -47,7 +47,8 @@ const rows = await page.evaluate(() => PRESETS.filter(p => p.real).map(pr => {
 const KNOWN = {
   // large truck diesels on the large frame: the VGT's open stop cannot hold target at the top. (Build 131: the TDI,
   // the Duramax and the 2JZ left this list with their factory ECU taper, which is what really rolls them off; the
-  // Cummins has none (no taper from its torque peak reaches its rating) and is not counted at the limiter.)
+  // Cummins had none (no taper from its torque peak reached its rating) until build 199 put it on the 2019 press kit's
+  // compression and boost, past its rating, where a taper from its torque peak meets it.)
   'Cummins 6.7 (Ram HD 2019 HO)': ['boost-falls'],
   // build 133: on the maker's 58 mm wheel the FK8's compressor reaches its inducer's choke flow over the top and
   // holds 1.31 of its 1.6 bar at the limiter (305 hp, real 316). The wheel size is from tuners' listings and the
@@ -74,6 +75,21 @@ const KNOWN = {
   'Porsche 3.7 twin-turbo flat-six (911 Turbo S 992)': ['limiter'],
   'GM LT6 flat-plane V8 (Corvette Z06 C8)': ['limiter'],
   'McLaren M840T twin-turbo V8 (750S)': ['limiter'],
+  // build 199, batch 1 (research/vehicles-batch-1): the same missing top-end fade on its high-revving NA engines, each
+  // still climbing at its limiter where the real one peaks short of it (the 370Z, NSX, E30 M3, 190E, M5 E39, Beat, EK9
+  // and GR86), and on four boosted ones past their factory taper (Urus, GT-R, Giulia, Mégane)
+  'Lamborghini 4.0 TT V8 (Urus)': ['limiter'],
+  'Nissan VQ37VHR (370Z)': ['limiter'],
+  'Honda C30A V6 (NSX NA1)': ['limiter'],
+  'Nissan VR38DETT (GT-R R35 2017)': ['limiter'],
+  'Alfa Romeo 690T 2.9 V6 (Giulia Quadrifoglio)': ['limiter'],
+  'BMW S14B23 (M3 E30)': ['limiter'],
+  'Mercedes M102 2.3-16 (190E)': ['limiter'],
+  'BMW S62 4.9 V8 (M5 E39)': ['limiter'],
+  'Honda E07A MTREC (Beat)': ['limiter'],
+  'Renault M5Pt 1.8 turbo (Mégane R.S. Trophy)': ['limiter'],
+  'Honda B16B (Civic Type R EK9)': ['limiter'],
+  'Toyota FA24D 2.4 boxer (GR86)': ['limiter'],
   // (Coyote, F140 and 4A-GE showed 'flat-low-end', torque peaks at 1000-1400 rpm, until build 98 put
   // the walls' extra heat at low speed into the work: peaks now 4700, 4900 and 5600 rpm.)
   // the two-stroke's fitted type factor and no expansion-chamber tuning

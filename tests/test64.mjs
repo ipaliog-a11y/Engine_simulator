@@ -55,7 +55,7 @@ console.log(`== car: ${car.drawn} combinations drawn · wing reaches row ${car.w
   `${car.superEng} (super, mid ${car.superMid.toFixed(0)}) · kei ${car.kei.toFixed(0)} px long, pickup ${car.pickup.toFixed(0)} ==`);
 if (car.thrown.length) fails.push('car sprite threw: ' + car.thrown.slice(0, 3).join('; '));
 if (car.blank.length) fails.push('car sprite nearly empty for: ' + [...new Set(car.blank)].join(', '));
-if (car.drawn !== 13 * 3 * 27) fails.push(`expected ${13 * 3 * 27} car combinations, drew ${car.drawn}`);
+if (car.drawn !== 14 * 3 * 27) fails.push(`expected ${14 * 3 * 27} car combinations, drew ${car.drawn}`);
 if (!(car.wingTop < car.plainTop - 2)) fails.push('a rear wing does not show above the deck');
 if (!(car.wheel20 > car.wheel15)) fails.push('20" wheels are not drawn bigger than 15" ones');
 if (!(car.coupeEng > car.coupeMid)) fails.push('a front-engined coupe does not show its engine in front of the cabin');
