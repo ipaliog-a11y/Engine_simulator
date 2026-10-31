@@ -90,12 +90,22 @@ const BRAKE_LINE_BAR=100;
 const BRAKE_RISE_S=0.2;
 // Brake force the system can put on the road (N), pre-fade: per wheel 2 pads x pad mu x line pressure x
 // piston area x effective radius (the middle of the friction ring, 0.4 D), over the tyre's radius.
+const R13H_Z=0.8;   // the deceleration (g) up to which the front axle must lock first (UN ECE R13-H annex 5)
 function brakeForceCap(v){
   const bt=BRAKE_TYPE[v.brakeType]||BRAKE_TYPE.slotted, p=BRAKE_LINE_BAR*1e5;
   const axle=(pist,D)=>2*(2*bt.pad*p*pist.reduce((a,d)=>a+Math.PI/4*(d/1000)*(d/1000),0)*0.4*D);
-  const f=axle(bt.caliper.f,v.rotor/1000),r=axle(bt.caliper.r,0.9*v.rotor/1000);
-  // Both axles see the same line pressure, so the pistons and rotor radii fix the split (build 117).
-  v.brakeFrontShare=f/(f+r);
+  const f=axle(bt.caliper.f,v.rotor/1000);
+  // Both axles see the same line pressure, so the pistons and rotor radii fix the split (build 117). Build 203: the rear
+  // is sized to the car, as its maker sizes it, not taken from the kit. Until then every car braked 71-74% on the front,
+  // the kit's split, whatever its weight: a 911's rears did too little and stayed near cold on a lap, where measured ones
+  // run as hot as the fronts. The rule: UN ECE R13-H (and FMVSS 135) require the front axle to lock first at every
+  // deceleration from 0.15 to 0.8 g, so the front's share of the braking is at least its share of the load while
+  // braking at 0.8 g, fWt + 0.8 h/L; makers sit at that line, where the rears do the most they safely can. The front
+  // calipers stay the kit's, and the rear's force follows.
+  const ideal=v.fWt>0&&v.wb>0?v.fWt+R13H_Z*(v.cg||0.5)/v.wb:0;
+  const fH=ideal>0?clamp(ideal,0.5,0.85):f/(f+axle(bt.caliper.r,0.9*v.rotor/1000));
+  const r=f*(1-fH)/fH;
+  v.brakeFrontShare=fH;
   return (f+r)/v.rTire;
 }
 // ---- brake temperature (build 107; cooling rebuilt in build 110) ----
