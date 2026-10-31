@@ -20,6 +20,29 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 Working toward **v1.0 — every number derived, not fitted.**
 
+### What the G-G diagram showed, fixed (build 201)
+
+- **The Radical SR3 RSX had 6.45 m² of downforce.** That's more than an F1 car, and it lapped the Nordschleife in
+  5:55.
+  - Its fit (front wing, rear wing, diffuser) was scaled by the TRACK PROTOTYPE class's aero factor of 3.0, which is
+    sized for an LMP car.
+  - A real car can now carry its own aero factor in its preset's body. No existing car uses one, so nothing else
+    moves.
+  - The Radical's factor is fitted to Radical's claim of up to 2 g sustained at high speed: 1.09 gives 2.0 g at
+    180 km/h and ClA 2.34 m². Radical publishes no downforce figure, so it is marked unsure.
+  - Nordschleife now 6:26, Spa 2:26.8, 0–100 3.09 s against the claimed 3.2.
+- **The Huracán STO had no wing fitted, so it had no downforce.** It now has its splitter and wing: ClA 1.20 m², against
+  1.14 from Lamborghini's 420 kg at 280 km/h.
+  - The wing's drag brings its top speed from 317 km/h to 307, against the real 310.
+  - Nordschleife 6:57 (no official time is published).
+- **A street-legal car in Track runs on semi-slicks.** The BAC Mono is road legal and sold on Pirelli P Zero Trofeo R
+  track tyres, but the pack fitted it with slicks.
+  - On SEMI-SLICK its Nordschleife lap goes from 6:22 to 6:37.
+  - Its 0–100 goes from 2.79 s to 3.19 s, against the research pack's 3.0.
+  - The Radical SR3 RSX is a race car, not road legal, so it keeps its slicks.
+- `tests/test116.mjs` checks both cars. `tests/test115.mjs` compares a preset's body with the pack's without the fitted
+  aero factor.
+
 ### The G-G diagram (build 200)
 
 - **G-G DIAGRAM…** on the VEHICLE tab, beside GEAR RATIOS, opens a window that shows how the car gets its lap time.

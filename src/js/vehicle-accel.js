@@ -88,11 +88,15 @@ function buildVehicle(){
     vehicle.fWt=clamp((body.fWt*body.kg+dm*share)/Math.max(1,body.kg+dm),0.25,0.75);
   }
   const af=AERO_FRONT[vehicle.aeroFront]||AERO_FRONT.none, ar=AERO_REAR[vehicle.aeroRear]||AERO_REAR.none, al=AERO_FLOOR[vehicle.aeroFloor]||AERO_FLOOR.none;
-  vehicle.clA=(af.cl+ar.cl+al.cl)*ch.aero;                            // downforce coefficient·area
+  // The class's aero factor scales the parts to the car (a prototype's wing works a bigger, faster body than a hatch's).
+  // A real car whose class factor is not its own carries one in its body (build 201: the Radical SR3, a club racer on the
+  // TRACK PROTOTYPE class, which is sized for an LMP car).
+  const aeroK=body&&body.aero>0?body.aero:ch.aero;
+  vehicle.clA=(af.cl+ar.cl+al.cl)*aeroK;                              // downforce coefficient·area
   // Where that downforce lands (build 105). It was split 50/50 whatever was fitted, so a rear wing helped
   // a front-driver's traction as much as a rear-driver's. Front parts load the front axle, rear parts the
   // rear, and the floor at its centre of pressure (AERO_FLOOR.front).
-  const clF=(af.cl+al.cl*(al.front!=null?al.front:0.5))*ch.aero;
+  const clF=(af.cl+al.cl*(al.front!=null?al.front:0.5))*aeroK;
   vehicle.aeroBal=vehicle.clA>0?clF/vehicle.clA:0.5;   // share of the downforce on the front axle
   // the driven axle's share of the weight (static) and of the downforce
   vehicle.drivenWt=vehicle.drive==='awd'?1:vehicle.drive==='rwd'?1-vehicle.fWt:vehicle.fWt;

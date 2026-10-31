@@ -7,6 +7,7 @@
 //   · it is the lap's physics: the lap run on a levelled copy of a circuit's racing line (the same line with its slope
 //     and its crests and dips taken out, which the envelope assumes) never corners past the envelope at the speed it
 //     is doing at any point, nor brakes or drives past it straight ahead, and at its limit it reaches it;
+//   · build 201: the Radical's cornering at 180 km/h is Radical's 2 g; the Huracán STO's downforce is Lamborghini's;
 //   · the shapes are the physics: no downforce, the same cornering limit at every speed; downforce, a wider one the
 //     faster; a power-limited car drives less hard the faster; the braking and the drive fall as the cornering grows;
 //   · opening it changes nothing: the lap is bit-identical before and after;
@@ -52,6 +53,8 @@ const r = await page.evaluate(() => {
   o.m3 = env().map(e => e && { vk: e.vk, ay: e.ayMax, acc: e.pts.map(p => p.acc), brake: e.pts.map(p => p.brake), kind: e.pts[0].kind });
   o.m3clA = vehicle.clA;
   load('Radical'); o.wing = env().map(e => e && e.ayMax); o.wingClA = vehicle.clA;
+  // build 201: what the diagram showed, fixed: the STO's wing against Lamborghini's 420 kg at 280 km/h
+  load('Huracán STO'); o.sto = { clA: vehicle.clA, want: 420 * 9.81 / (0.5 * AIR_RHO * Math.pow(280 / 3.6, 2)) };
   // 3. nothing moves: the lap before and after opening the window
   load('Golf GTI (Mk7');
   const json = x => JSON.stringify(x, (k, v) => ArrayBuffer.isView(v) ? Array.from(v) : v);
@@ -92,6 +95,10 @@ console.log(`  Radical SR3 (ClA ${f(r.wingClA)} m2): sideways ${r.wing.map(x => 
 if (r.m3clA !== 0) fails.push('the M3 has downforce: the no-downforce check needs a car without');
 if (m3.length !== 3 || Math.max(...m3.map(e => e.ay)) / Math.min(...m3.map(e => e.ay)) > 1.01) fails.push('with no downforce the cornering limit moves with the speed');
 if (!(r.wing[2] > r.wing[1] && r.wing[1] > r.wing[0])) fails.push('with downforce the cornering limit does not grow with the speed');
+// build 201: the Radical's aero is fitted to Radical's 'up to 2 g at high speed'; before, the class's factor gave it 3.2 g
+console.log(`  Huracán STO: ClA ${f(r.sto.clA)} m2 against ${f(r.sto.want)} from Lamborghini's 420 kg at 280 km/h`);
+if (!(Math.abs(r.wing[2] - 2) < 0.05)) fails.push(`the Radical corners at ${f(r.wing[2])} g at 180 km/h, not the 2 g Radical claims`);
+if (!(Math.abs(r.sto.clA / r.sto.want - 1) < 0.1)) fails.push(`the Huracán STO's downforce is ${f(r.sto.clA)} m2, not Lamborghini's ${f(r.sto.want)}`);
 if (!(m3[0].acc[0] > m3[1].acc[0] && m3[1].acc[0] > m3[2].acc[0])) fails.push('the drive does not fall with the speed');
 for (const e of m3) {
   if (e.acc.some((a, i) => i && a > e.acc[i - 1] + 1e-3)) fails.push(`${e.vk} km/h: the drive grows as the cornering does`);
