@@ -72,6 +72,15 @@ Working toward **v1.0 — every number derived, not fitted.**
     - **POWER LIMIT**: what holds the power under the pedal's request (NONE, BATTERY, THERMAL, LOW SOC or LIMP) and how
       much of the request is delivered.
   - The status line says LOW CHARGE with the battery management's cut, and LIMP MODE with the power it holds to.
+- **The wiki covers electric cars and hybrids.** A new section, **Electric & hybrid**, has seven pages. Each has the
+  usual three levels (real life, in the game, the physics), a moving picture, and Greek:
+  - **The electric drive:** the battery, inverter and motor, the LIVE bench's tiles and limits, low charge and limp mode.
+  - **The motor:** every MOTOR field (type, rotor, stack, poles, turns, magnets, retention, cooling, max speed).
+  - **More motors:** REAR MOTORS, FRONT MOTOR and its fields, FRONT REDUCTION.
+  - **The inverter:** SWITCHES and CURRENT RATING.
+  - **The battery:** every chemistry, CELLS IN SERIES, CAPACITY and TECHNOLOGY YEAR.
+  - **Hybrids:** P2, power-split and series, ASSIST, PLUG-IN, and the LIVE bench's drive modes and views.
+  - **The hybrid tune:** every field, including the deploy and harvest limits and the assist map.
 
 ### A front axle motor, and the Porsche 918 Spyder (build 195)
 
