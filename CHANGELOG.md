@@ -20,6 +20,36 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 Working toward **v1.0 — every number derived, not fitted.**
 
+### A road ECU's fuel map (build 202)
+
+- **The AUTO fuel map stays at λ 1 until near full load.** It used to start enriching at 35% manifold pressure and
+  reached λ 0.93 by 70%. A real ECU runs closed loop at stoichiometric over almost all of its map, because the three-way
+  catalyst only cleans up all three pollutants there. It enriches only near full load, to cool the exhaust.
+  - The map is now slightly lean at light load as before, then λ 1 up to 85% of the engine's full-load pressure,
+    including a turbo engine at part boost.
+  - The full-load enrichment above that is unchanged, and only applies where the engine needs it:
+    - where the exhaust at λ 1 would pass a three-way catalyst's limit of about 950 °C, or
+    - on a ported engine (rotary, two-stroke), whose enrichment controls detonation.
+  - The two Atkinson hybrid engines (Prius 2ZR-FXE, Ioniq Kappa) stay at λ 1 everywhere. Toyota runs the 2ZR-FXE at
+    stoichiometric up to maximum output.
+- **The hybrids, which hold their engines at high load, burn what their ECUs let them** (WLTP, L/100 km):
+  - Prius 5.12 → 4.65, against Toyota's 4.14;
+  - Ioniq Hybrid 5.05 → 4.81, against Hyundai's 4.4;
+  - Qashqai e-POWER 6.16 → 5.79, against Nissan's 5.3.
+  - The rest of the gap is the engines' efficiency: 37% at best against the makers' 40%. That's the next build.
+- **Conventional cars' WLTP falls 2–5%** where their cycle crosses the old mid-load enrichment.
+  - The four checked against their figures (test104) now sit mostly under them. RMS is about 9%, as before.
+  - The 0–100 and the lap are unchanged: they run on the fixed best-power mixture.
+  - Race fuel per lap falls a little.
+- **The hybrid cycle's charge balance always converges.**
+  - The search for the equivalence factor now widens its bracket until it holds the root.
+  - Where the secant has not converged in its ten steps, bisection finishes it.
+  - The Ioniq on a 75% target needed this: its pack's end energy sits on two plateaus with a steep step between.
+  - Cycles the secant already settled are bit-identical.
+- **Known gap, unchanged:** rich of λ 1 the model's exhaust temperature is flat by construction. The extra fuel's
+  evaporation cooling is not modelled, so enrichment barely cools the exhaust here.
+- New `tests/test117.mjs`.
+
 ### What the G-G diagram showed, fixed (build 201)
 
 - **The Radical SR3 RSX had 6.45 m² of downforce.** That's more than an F1 car, and it lapped the Nordschleife in

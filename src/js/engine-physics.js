@@ -150,11 +150,39 @@ function baseFuelLambda(rpm,map){
     const l=clamp((map/Math.max(0.3,wotMapAt(rpm))-0.45)/0.55,0,1);
     return 3.4-(3.4-SMOKE_LAMBDA_CI)*l;
   }
-  const boost=Math.max(0,map-1.0);
-  let lam=1.02-0.16*clamp((map-0.35)/0.65,0,1);                          // ~stoich cruise → ~λ0.86 WOT
-  lam-=0.07*clamp(boost/1.2,0,1.1);                                      // enrich under boost (power/EGT)
-  lam-=0.015*clamp((rpm-engine.redline*0.85)/(engine.redline*0.2),0,1); // slight top-end enrichment
+  // Petrol (build 202). A road ECU runs closed loop at stoichiometric over almost all of its map, because the
+  // three-way catalyst only converts all three pollutants there; it leaves it only near full load, and only to cool the
+  // exhaust (the fuel's evaporation and the part that cannot burn carry heat away from the catalyst and the turbine).
+  // Until build 202 this map began enriching at 35% manifold pressure and reached lambda 0.93 by 70%: every point a
+  // hybrid holds its engine at burned 5-10% more fuel than its ECU would give it. Now: slightly lean at light load as
+  // before, lambda 1 to 85% of the full-load line, and the old full-load enrichment above it only on an engine whose
+  // exhaust at lambda 1 would pass the catalyst's limit (wotNeedsEnrichment). An Atkinson hybrid engine's never does.
+  // The top band is 85-100% of the engine's full-load pressure (mapMax, the map's top row), so a turbo engine at part
+  // boost is closed loop too, and the enrichment sits where the load and the exhaust heat are highest; at full load each
+  // term is what it was before build 202. (Against each speed's own full-load pressure the 6-row grid smears the rich
+  // cells back into part load.)
+  const boost=Math.max(0,map-1.0),rich=engine.wotRich!==false,mx=Math.max(1,engine.mapMax||1);
+  let lam=1.02-0.02*clamp((map-0.35)/0.15,0,1);                          // light load a little lean, then lambda 1
+  if(rich){
+    const top=clamp((map/mx-0.85)/0.15,0,1);                              // the band the ECU enriches in
+    lam-=top*(0.14+0.07*clamp(boost/1.2,0,1.1)                            // full-load enrichment → ~λ0.86, more under boost
+      +0.015*clamp((rpm-engine.redline*0.85)/(engine.redline*0.2),0,1)); // and a little at the top end
+  }
   return clamp(lam,0.78,1.05);
+}
+// Whether the engine's exhaust at lambda 1 on its full-load line passes the catalyst's limit anywhere in its range:
+// then the ECU enriches there. CAT_T_LIMIT is a three-way catalyst's continuous ceiling, ~950 C (above it the washcoat
+// sinters and the precious metal grows), applied here to the gas at the port, with no allowance for the pipe's cooling
+// on the way. Diesels are lean and carry no catalyst limit of this kind; carburetted engines have no ECU to enrich.
+// A ported engine (rotary, two-stroke) keeps it whatever its exhaust: its ECU enriches against detonation as much as
+// heat (a boosted rotary famously runs rich for it), and its knock here is the points score that reads the enrichment
+// (KNOCK_RICH), not the end-gas integral. The exhaust model cannot tell either: rich of stoichiometric its temperature
+// is flat by construction (exhaustGasT caps the heat released and does not count the extra fuel's evaporation).
+const CAT_T_LIMIT=950+273.15;
+function wotNeedsEnrichment(){
+  if(engine.ci||!engine.canAutoAFR||engine.ports)return true;
+  for(let r=Math.max(1000,engine.idleRpmEff||800);r<=engine.redline;r+=250)if(egtAt(r,wotMapAt(r),1.0)>CAT_T_LIMIT)return true;
+  return false;
 }
 function mappedAFR(rpm,map){
   const st=engine.stoichAFR;

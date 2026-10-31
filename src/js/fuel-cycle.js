@@ -221,10 +221,23 @@ function hybridCycle(v){
   // the equivalence factor that sustains the charge: more s, the pack worth more, the controller charges more. A
   // bracketed secant on the pack's end energy, to within 0.5% of the pack's capacity.
   let lo=2e-5,hi=3e-4,Rlo=run(lo),Rhi=run(hi),R=Rlo,sBest=lo;
+  // The bracket must hold the root (build 202): an engine efficient enough at high load charges the pack even at the
+  // lowest factor (the Ioniq on a 75% target, once its ECU stopped enriching there), and the secant only pressed against
+  // the bracket's edge. Widened until the pack's end energy changes sign across it; where it already did, unchanged.
+  for(let k=0;k<6&&Rlo.E>0;k++){hi=lo;Rhi=Rlo;lo/=3;Rlo=run(lo);}
+  for(let k=0;k<6&&Rhi.E<0;k++){lo=hi;Rlo=Rhi;hi*=3;Rhi=run(hi);}
+  R=Rlo;sBest=lo;
   for(let k=0;k<10;k++){
     const sm=clamp(lo-Rlo.E*(hi-lo)/(Rhi.E-Rlo.E||1e-9),lo+(hi-lo)*0.05,hi-(hi-lo)*0.05);
     R=run(sm);sBest=sm;
     if(Math.abs(R.E)<capJ*0.005)break;
+    if(R.E<0){lo=sm;Rlo=R;}else{hi=sm;Rhi=R;}
+  }
+  // ... and where the secant has not got there in ten, bisection does (build 202). The end energy can sit on two plateaus
+  // with a steep step between (the controller charging all it may, or none), where a secant crawls; the Ioniq on a 75%
+  // target needed the factor to 1e-7. Cycles the secant settled are not touched.
+  for(let k=0;k<30&&!(Math.abs(R.E)<capJ*0.005);k++){
+    const sm=(lo+hi)/2;R=run(sm);sBest=sm;
     if(R.E<0){lo=sm;Rlo=R;}else{hi=sm;Rhi=R;}
   }
   // A tune that cannot sustain the charge (build 192: load-point shifting off, a narrow window) ends the cycle with the
