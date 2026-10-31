@@ -1,0 +1,55 @@
+name: Tests
+
+# The whole test suite (tests/run.mjs), on every pull request and every push to main. Until this ran here, the suite ran
+# only on the machine that made the change, and a pull request carried its word that it passed.
+#
+# It is ~70 minutes run one test after another, so it runs as five shards in parallel, each a fifth of the suite by
+# running time (tests/durations.json; see tests/run.mjs). Each shard installs the Playwright Chromium the tests drive.
+# The last job turns the five into one result, so a pull request has a single check to read.
+#
+# Refresh tests/durations.json from a full local run when tests are added or get much slower; a test it lacks counts as
+# 30 s, so a new test is still run, only possibly on a shard that finishes a little later.
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+# a newer push to the same branch makes an older run's result moot
+concurrency:
+  group: tests-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  shard:
+    name: shard ${{ matrix.shard }}/5
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    strategy:
+      fail-fast: false   # every shard reports, so one run shows every failing test
+      matrix:
+        shard: [1, 2, 3, 4, 5]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - name: Install Playwright
+        run: npm ci
+      - name: Install Chromium
+        run: npx playwright install --with-deps chromium
+      - name: Run the shard
+        run: node tests/run.mjs --shard=${{ matrix.shard }}/5
+
+  tests:
+    name: Tests
+    if: always()
+    needs: shard
+    runs-on: ubuntu-latest
+    steps:
+      - name: Every shard passed
+        run: test "${{ needs.shard.result }}" = success

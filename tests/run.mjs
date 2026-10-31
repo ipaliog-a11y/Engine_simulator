@@ -8,8 +8,13 @@
 //
 //   node tests/run.mjs              run everything
 //   node tests/run.mjs 41 43 aero   run only those
-//   node tests/run.mjs --list       show what exists
-import { readdirSync } from 'fs';
+//   node tests/run.mjs --list       show what exists (with --shard, what that shard runs)
+//   node tests/run.mjs --shard=2/5  run the 2nd of 5 shares, as CI does (.github/workflows/tests.yml)
+//
+// A shard is a share of the tests by running time, not by count: tests/durations.json holds each test's time from the
+// last full run (a test it lacks counts as 30 s), and the longest are dealt first, each to the shard with the least so
+// far. Every shard computes the same split from the same list, so the shards cover the suite once between them.
+import { readdirSync, readFileSync } from 'fs';
 import { spawn, spawnSync } from 'child_process';
 import { fileURLToPath } from 'url';
 import path from 'path';
@@ -20,9 +25,23 @@ const all = readdirSync(DIR).filter(f => f.endsWith('.mjs') && !['run.mjs','pw.m
   return n(a) - n(b) || a.localeCompare(b);
 });
 const args = process.argv.slice(2);
-if (args.includes('--list')) { all.forEach(f => console.log('  ' + f)); process.exit(0); }
 const pick = args.filter(a => !a.startsWith('--'));
-const run = pick.length ? all.filter(f => pick.some(p => f.includes(p))) : all;
+let run = pick.length ? all.filter(f => pick.some(p => f.includes(p))) : all;
+const shardArg = args.find(a => a.startsWith('--shard='));
+if (shardArg) {
+  const [k, n] = shardArg.slice(8).split('/').map(Number);
+  if (!(n >= 1 && k >= 1 && k <= n)) { console.error('--shard=k/n wants 1 <= k <= n'); process.exit(2); }
+  let ms = {};
+  try { ms = JSON.parse(readFileSync(path.join(DIR, 'durations.json'), 'utf8')); } catch {}
+  const t = f => ms[f] || 30000, load = new Array(n).fill(0), share = new Map();
+  for (const f of [...run].sort((a, b) => t(b) - t(a) || a.localeCompare(b))) {
+    let j = 0; for (let i = 1; i < n; i++) if (load[i] < load[j]) j = i;
+    load[j] += t(f); share.set(f, j);
+  }
+  run = run.filter(f => share.get(f) === k - 1);
+  console.log(`shard ${k}/${n}: ${run.length} tests, ~${Math.round(load[k - 1] / 60000)} min on the last full run's times`);
+}
+if (args.includes('--list')) { run.forEach(f => console.log('  ' + f)); process.exit(0); }   // with --shard: that shard's
 if (!run.length) { console.error('no tests matched ' + pick.join(' ')); process.exit(2); }
 
 // The tests load index.html, which is src/ joined by tools/build.mjs. Run against a stale join and

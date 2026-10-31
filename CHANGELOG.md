@@ -20,6 +20,20 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 Working toward **v1.0 — every number derived, not fitted.**
 
+### The test suite runs on every pull request
+
+- **New workflow `Tests` (`.github/workflows/tests.yml`):** the whole suite on every pull request and every push to
+  `main`.
+  - Until now it ran only on the machine that made the change, and a pull request carried its word that it passed.
+  - The existing `Check` workflow only confirms that `index.html` is its `src/` joined.
+- **Sharded:** the suite is about 70 minutes run one test after another, so it runs as five shards in parallel, each a
+  fifth of it by running time.
+  - `node tests/run.mjs --shard=k/n` deals the tests longest first to the least-loaded shard, using
+    `tests/durations.json`, the last full run's times. A test it lacks counts as 30 s.
+  - `--list --shard=k/n` shows a shard's tests.
+  - A final job turns the five into one result.
+- **No build number:** the app does not change.
+
 ### A car's brake split, and why its rear brakes stay cool on a lap (build 203)
 
 - **Each car's front/rear brake split now follows the regulation its maker designs to.** It used to come from the
