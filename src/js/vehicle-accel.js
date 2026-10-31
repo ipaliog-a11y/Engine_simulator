@@ -60,8 +60,6 @@ function buildVehicle(){
   if(body&&!(body.mass>0))body.mass=Math.max(250,body.kg-vehicle.engineMass);
   if(body&&!(body.engKg>0))body.engKg=vehicle.engineMass;   // the factory engine, for the weight split below
   vehicle.mass=Math.max(380,(body?body.mass:ch.mass)+vehicle.engineMass-wr.kg);
-  // Brakes: the deceleration the hydraulics can command (m/s2, before fade).
-  vehicle.brakeDecelCap=brakeForceCap(vehicle)/vehicle.mass;
   vehicle.wb=body?body.wb:ch.wb;vehicle.cg=ch.cg;vehicle.area=body?body.area:ch.area;
   vehicle.track=(body&&body.track)||ch.track;
   // Each axle's own track and geometry (build 173): a real car's published front and rear tracks, else the archetype's
@@ -87,6 +85,9 @@ function buildVehicle(){
     const dm=vehicle.engineMass-body.engKg, share=ENGINE_FRONT_SHARE[engineLayoutOf(vehicle.chassis,body)];
     vehicle.fWt=clamp((body.fWt*body.kg+dm*share)/Math.max(1,body.kg+dm),0.25,0.75);
   }
+  // Brakes: the deceleration the hydraulics can command (m/s2, before fade). After the weight split, the wheelbase and
+  // the centre of gravity, which size the rear brakes (build 203; until then this ran before them).
+  vehicle.brakeDecelCap=brakeForceCap(vehicle)/vehicle.mass;
   const af=AERO_FRONT[vehicle.aeroFront]||AERO_FRONT.none, ar=AERO_REAR[vehicle.aeroRear]||AERO_REAR.none, al=AERO_FLOOR[vehicle.aeroFloor]||AERO_FLOOR.none;
   // The class's aero factor scales the parts to the car (a prototype's wing works a bigger, faster body than a hatch's).
   // A real car whose class factor is not its own carries one in its body (build 201: the Radical SR3, a club racer on the
