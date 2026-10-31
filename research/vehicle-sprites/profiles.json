@@ -1,0 +1,34 @@
+{
+  "meta": {
+    "what": "Per-car side profiles for eight presets, as a proof of the recommended method. Research only: nothing in src/ reads this file.",
+    "spec": "len_mm, h_mm and ovF_mm (front overhang: front axle to the nose) are spec-sheet or blueprint dimensions. They give the sprite its real height and real overhangs, ovF = ovF_mm/wb and ovR = (len - wb - ovF_mm)/wb, using the preset's own body.wb.",
+    "look": "Every other key is a CAR_LOOK key from src/js/sprites.js. u runs from the rear bumper (0) to the nose (1). Heights are shares of the body's own height above the sill. Keys left out keep the archetype's value.",
+    "confidence": "len_mm, h_mm: published maker figures, quoted from memory, not re-checked against a source this session. ovF_mm and every look key: estimated by eye from the shape of the car, with no reference photo open, because the Wikimedia Commons API rate-limited this session. Read them off a side photo before shipping any of them."
+  },
+  "cars": [
+    {"name": "Porsche 911 Carrera RS 2.7 Sport (1973)", "spec": {"len_mm": 4147, "h_mm": 1320, "ovF_mm": 830},
+     "look": {"nose": 0.38, "hood": 0.52, "ws": 0.70, "rf": 0.58, "rr": 0.46, "bk": 0.08, "deck": 0.58, "tail": 0.46},
+     "why": "The super archetype is a mid-engined wedge. A 911 is a fastback: a short roof, then one long slope over the engine to a ducktail."},
+    {"name": "Lamborghini Countach LP400 (1974)", "spec": {"len_mm": 4140, "h_mm": 1070, "ovF_mm": 1000},
+     "look": {"nose": 0.18, "hood": 0.36, "ws": 0.64, "rf": 0.57, "rr": 0.42, "bk": 0.26, "deck": 0.66, "tail": 0.60},
+     "why": "One straight line from the nose to the roof. It is 1.07 m tall against the archetype's 1.16 m."},
+    {"name": "Jaguar E-Type 3.8 FHC (Series 1, 1961)", "spec": {"len_mm": 4453, "h_mm": 1220, "ovF_mm": 850},
+     "look": {"nose": 0.42, "hood": 0.58, "ws": 0.52, "rf": 0.44, "rr": 0.30, "bk": 0.04, "deck": 0.50, "tail": 0.44},
+     "why": "The cabin sits far back behind the long bonnet, and the fastback roof runs to the tail. The coupe archetype puts the windscreen at u = 0.66."},
+    {"name": "Ford Mustang Fastback 289 (1965)", "spec": {"len_mm": 4613, "h_mm": 1295, "ovF_mm": 860},
+     "look": {"nose": 0.54, "hood": 0.60, "ws": 0.64, "rf": 0.53, "rr": 0.40, "bk": 0.10, "deck": 0.62, "tail": 0.58},
+     "why": "A tall, flat front and a fastback roof. The muscle archetype has a notchback."},
+    {"name": "Trabant 601 S (1988)", "spec": {"len_mm": 3555, "h_mm": 1440, "ovF_mm": 700},
+     "look": {"nose": 0.40, "hood": 0.52, "ws": 0.70, "rf": 0.62, "rr": 0.32, "bk": 0.20, "deck": 0.56, "tail": 0.50},
+     "why": "It is filed under kei, which draws a tall box. A Trabant is a small three-box saloon with a boot."},
+    {"name": "Toyota Land Cruiser 200 VX 4.5 D-4D (2015)", "spec": {"len_mm": 4950, "h_mm": 1880, "ovF_mm": 950},
+     "look": {"nose": 0.56, "hood": 0.64, "ws": 0.74, "rf": 0.66, "rr": 0.04, "bk": 0.02, "deck": 0.64, "tail": 0.60},
+     "why": "A square, upright tail and a high bonnet. The suv archetype is a lower crossover."},
+    {"name": "Volkswagen Golf GTI (Mk1, 1976)", "spec": {"len_mm": 3815, "h_mm": 1395, "ovF_mm": 720},
+     "look": {"nose": 0.42, "hood": 0.52, "ws": 0.70, "rf": 0.60, "rr": 0.14, "bk": 0.05},
+     "why": "A control: the hatch archetype already fits, so only the dimensions change."},
+    {"name": "Honda NSX (NA1, 1991)", "spec": {"len_mm": 4405, "h_mm": 1170, "ovF_mm": 1000},
+     "look": {"nose": 0.24, "hood": 0.38, "ws": 0.74, "rf": 0.64, "rr": 0.46, "bk": 0.20, "deck": 0.66, "tail": 0.64},
+     "why": "A cab-forward canopy and a long, high tail."}
+  ]
+}
