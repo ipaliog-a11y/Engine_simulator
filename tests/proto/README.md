@@ -302,3 +302,10 @@ presets' geometry: the cylinder, runners and collector as lumped gas volumes wit
 between them, the exhaust-runner pressure delayed down the pipe and convolved with a recorded exhaust
 impulse response. Measured: 13.2 bar IMEP flat out on the 1.6 sport four after one stated heat-share
 factor, and a V12 at about half of real time on one core. What shipping it would take is in its README.
+
+## `ev-sound/` — the electric drive's sound
+
+Step 4 of `plans/hybrid-electric/`, built here first as GAS was. A synth for a motor, its inverter and its reduction,
+every voice at the frequency the drive's build gives it (torque ripple, slotting, the inverter's PWM sidebands, two gear
+meshes, windage), checked on its own output by `ev-sound/check.mjs`. Not yet in the app: the README there lists what
+shipping it takes.

@@ -20,6 +20,24 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 Working toward **v1.0 — every number derived, not fitted.**
 
+### The electric drive's sound: the prototype (build 197)
+
+- **Step 4a of the hybrid-electric plan.** `tests/proto/ev-sound/` is a synth for a motor, its inverter and its
+  reduction, built standalone first as GAS was. Nothing in the app plays it yet.
+- **The voices,** each at the frequency the drive's build gives it:
+  - torque ripple at 6 × the electrical frequency;
+  - slotting at LCM(slots, poles) × the shaft speed (an induction rotor's bars instead, silent with no torque);
+  - the inverter's PWM sidebands at fc ± 2 fe and 2 fc ± fe;
+  - the reduction's two gear meshes;
+  - windage.
+- **The drives** are the presets' own, exported from the game (`dump-drives.mjs`).
+- **Checked on its output** (`check.mjs`):
+  - every voice lands on its predicted frequency to the FFT bin;
+  - the whine follows the speed and grows with the load;
+  - an idle induction front motor is 77 dB down;
+  - SiC is higher and quieter than IGBT;
+  - a 20 s drive cycle costs 6–8% of real time.
+
 ### Racing energy (build 196)
 
 - **Step 3.5c of the hybrid plan** (decision 15's second half).

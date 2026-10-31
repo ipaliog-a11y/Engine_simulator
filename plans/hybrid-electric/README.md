@@ -186,6 +186,11 @@ modes to UI that already exists:
 A motor and inverter synth beside GAS: an inverter switching tone, motor whine rising with speed,
 gear mesh from the reduction. Built standalone in `tests/proto/` first, the way GAS was.
 
+| Step | What | Status |
+|---|---|---|
+| 4a | **The prototype** (`tests/proto/ev-sound/`): torque ripple at 6 fe and slotting at LCM(slots, poles) × the shaft speed (an induction motor's bars, silent with no torque), the stator mode they sweep through, the inverter's sidebands at fc ± 2 fe and 2 fc ± fe weighted by the modulation depth, the reduction's two gear meshes, windage. Checked on its output: every voice to the FFT bin on its predicted frequency, the whine an order, louder with the load, an idle induction motor 77 dB down, SiC higher and quieter than IGBT, 6–8% of real time. | ✅ build 197 |
+| 4b | **In the app**: the synth in the sound worklet beside GAS, driven by the LIVE bench (an electric car, and a hybrid's motor with its engine) and the TRACK tab's replay; a level against GAS set by ear. | |
+
 ---
 
 ## Decisions
