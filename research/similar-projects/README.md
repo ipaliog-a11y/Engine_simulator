@@ -63,7 +63,8 @@ that does not move the real-car calibration (`tests/test41.mjs`, `tests/aero.mjs
    power and every lap time would move, and `test41` would have to be recalibrated for a reason
    that is not physics.
 
-2. **A G-G diagram from the car this repo already has, not a new tyre.** Sample `latBalance`,
+2. **A G-G diagram from the car this repo already has, not a new tyre.** *Done in build 200 (the VEHICLE tab's
+   G-G DIAGRAM, `src/js/gg-window.js`). Items 1 and 3 are parked.* Sample `latBalance`,
    the braking pass and the drive pass at one speed and draw `ax` against `ay`. That is what
    `Steady_state::gg_diagram` does with a full vehicle model; here the same picture falls out
    of `simulateLapRun` without Ipopt. It makes aero, diff and axle balance visible, which the

@@ -137,6 +137,8 @@ footer{text-align:center;margin-top:16px;padding:8px;font-size:7px;color:#555;bo
 .gw-leg i{display:inline-block;width:14px;height:0;border-top:2px solid;vertical-align:middle;margin-right:5px}
 .gw-leg i.d{border-top-style:dashed}.gw-leg i.b{height:7px;border:0}
 .gw-tip{position:absolute;pointer-events:none;font-size:7px;line-height:1.6;color:#e0e0e0;background:#151522;border:2px solid #444;padding:4px 6px;white-space:nowrap;display:none}
+.gg-read{display:block}.gg-row{margin-bottom:8px;line-height:1.6}
+.gg-ch canvas{aspect-ratio:4/3;cursor:default}
 @media(max-width:760px){.gw-body{grid-template-columns:1fr}.gw-back{padding:6px}.gw-ch canvas{aspect-ratio:4/3}}
 /* What is loaded right now, on every tab. */
 .build-strip{display:flex;flex-wrap:wrap;gap:6px 14px;align-items:center;font-size:8px;color:#889;padding:6px 10px;margin:-6px 0 10px;background:#0d0d18;border:2px solid #26263a}
