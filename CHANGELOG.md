@@ -50,6 +50,16 @@ Working toward **v1.0 — every number derived, not fitted.**
     OVER-REV. It now keeps the engine at most 97% of the redline.
   - The base game's thermal model is unchanged.
   - `tests/test107.mjs` runs every hybrid preset flat out for five minutes.
+- **Fixed: an electric car's power drifted down at a steady partial pedal on the LIVE bench** (reported on the Tesla
+  Model Y: 60% pedal, 40% brake, about 0.1 hp a second).
+  - The pedal was a share of the most torque the drive could give at that moment. As the pack drained, its voltage fell,
+    and at high speed that maximum falls with it, so the same pedal asked for less.
+  - The pedal is now a torque request: a share of what the drive gives at this speed at its best (a full pack, a cool
+    motor, undamaged). The controller draws whatever current that takes.
+  - On the Model Y the power now holds at 330.9 hp from 87% to 73% charge, the current rising from 733 to 764 A. It holds
+    down to about 10%, where the pack's own power limit takes over.
+  - A full pedal still asks for everything the drive has now, so the full-load figures are unchanged.
+  - `tests/test97.mjs` checks both.
 
 ### A front axle motor, and the Porsche 918 Spyder (build 195)
 

@@ -125,6 +125,23 @@ function driveMaxTorque(e,rpm,Vdc,temp,soc){
   if(T>0&&need(T)>Pb){let lo=0,hi=T;for(let k=0;k<30;k++){const mid=(lo+hi)/2;if(need(mid)>Pb)hi=mid;else lo=mid;}T=lo;}
   return T;
 }
+// The torque the pedal's travel is scaled to (build 196): the drive at its best at this speed, a full pack (its open-circuit
+// voltage and power at 100%), the motor at its coolant's temperature and undamaged. Never below what the drive gives now,
+// so a full pedal asks for all it has; a partial pedal is a torque request that does not move with the pack's charge.
+function driveRefTorque(e,rpm){
+  const c=e._refTq||(e._refTq={m:null,t:new Map()});
+  if(c.m!==e.motor){c.m=e.motor;c.t.clear();}
+  const m=e.motor,tc=m.cool.tCool,temp={w:tc,c:tc,r:tc},V=packOcv(e.pack,1),Pb=packMaxPower(e.pack,1);
+  const at=k=>{   // every 25 rpm, cached per motor
+    if(c.t.has(k))return c.t.get(k);
+    const n=k*25,w=n*Math.PI/30;let T=motorMaxTorque(m,n,V,temp.r);
+    const need=t=>t*w+motorLosses(m,t,Math.max(n,1),V,temp).total;
+    if(T>0&&need(T)>Pb){let lo=0,hi=T;for(let j=0;j<30;j++){const mid=(lo+hi)/2;if(need(mid)>Pb)hi=mid;else lo=mid;}T=lo;}
+    c.t.set(k,T);return T;
+  };
+  const x=Math.max(0,rpm)/25,k=Math.floor(x),f=x-k;
+  return at(k)*(1-f)+at(k+1)*f;
+}
 // The controller protects the drive: full current until the winding reaches 150 C (class H insulation is rated 180),
 // none at 180; the magnets likewise over their last 20 C below the grade's limit.
 function motorDerate(e,temp){
@@ -194,7 +211,9 @@ function motorPeakHold(e,V){
 function stepMotorBench(dt){
   const e=engine,m=e.motor,b=e.pack,st=state;
   const Voc=packOcv(b,st.soc),Vdc=Math.max(b.vMin,Voc-(st.battI||0)*b.R);
-  const T=st.soc>0.005?st.throttle*driveMaxTorque(e,st.rpm,Vdc,st.mT,st.soc):0;
+  // the pedal asks for a fixed share of the drive at its best (driveRefTorque); the controller draws whatever current that
+  // takes, so a partial pedal holds its torque as the pack's voltage falls, until the drive as it is now cannot give it
+  const T=st.soc>0.005?Math.min(st.throttle*driveRefTorque(e,st.rpm),driveMaxTorque(e,st.rpm,Vdc,st.mT,st.soc)):0;
   const L=motorLosses(m,T,st.rpm,Vdc,st.mT),w=st.rpm*Math.PI/30,Pb=T*w+L.total;
   const d=packDraw(b,st.soc,Math.max(0,Pb))||{V:b.vMin,I:0,heat:0};
   st.soc=Math.max(0,st.soc-d.I*dt/(b.Ah*3600));
