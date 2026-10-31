@@ -76,14 +76,16 @@ function fitGearbox(r){
   const L=Math.log(r[0]/r[n-1]);
   return {res:L-(GEAR_SPAN_D+GEAR_SPAN_C*Math.log(n-1)),phi2:Math.exp(b),phi1:Math.exp(a),prog:b*(n-1)*(n-2)/2/L};
 }
+// The published boxes the spacing law and the family averages are fitted on: all but research batch 1's (build 199).
+const gearsFitted=()=>Object.values(GEARSETS).filter(g=>!g.batch);
 // A real car's own box: its published set when there is one for its gear count; otherwise the average of the published
 // boxes in its family (span residual and φ2), with the final drive matched to the engine. approx marks the second.
 function stockGearset(name,n){
   const g=GEARSETS[name];
   if(g&&g.r.length===n)return {r:g.r.slice(),fd:g.fd,approx:false,src:g.src};
   const p=VEHICLE_PRESETS.find(q=>q.name===name);
-  const fam=VEHICLE_PRESETS.filter(q=>q!==p&&(!p||q.cat===p.cat)&&GEARSETS[q.name]).map(q=>fitGearbox(GEARSETS[q.name].r));
-  const pool=fam.length?fam:Object.values(GEARSETS).map(x=>fitGearbox(x.r));
+  const fam=VEHICLE_PRESETS.filter(q=>q!==p&&(!p||q.cat===p.cat)&&GEARSETS[q.name]&&!GEARSETS[q.name].batch).map(q=>fitGearbox(GEARSETS[q.name].r));
+  const pool=fam.length?fam:gearsFitted().map(x=>fitGearbox(x.r));
   const res=pool.reduce((a,f)=>a+f.res,0)/pool.length, prog=pool.reduce((a,f)=>a+f.prog,0)/pool.length;
   return {r:progressiveRatios(n,gearSpan(n,res),prog),fd:null,approx:true,src:'the average of the published boxes in its family'};
 }

@@ -38,10 +38,13 @@ function wireFamilyPicker(famId,itemId,cats,items,catOf,placeholder,onPick){
   const used=cats.filter(c=>items.some(p=>catOf(p)===c));
   fam.innerHTML=used.map(c=>'<option value="'+esc(c)+'">'+esc(tr(c))+'</option>').join('');
   const fill=(keep)=>{
-    // a family whose items carry an era (the supercars) is grouped by it
+    // a family whose items all carry an era (the supercars) is grouped by it, oldest first; one where only some do (build
+    // 199's batch carries an era on every car, the older presets none) is listed as it stands
+    const its=items.map((p,i)=>({p,i})).filter(x=>catOf(x.p)===fam.value),byEra=its.length&&its.every(x=>x.p.era);
+    if(byEra)its.sort((a,b)=>a.p.era<b.p.era?-1:a.p.era>b.p.era?1:a.i-b.i);
     let era=null,html='';
-    items.forEach((p,i)=>{if(catOf(p)!==fam.value)return;
-      if(p.era&&p.era!==era){html+=(era?'</optgroup>':'')+'<optgroup label="'+esc(tr(p.era))+'">';era=p.era;}
+    its.forEach(({p,i})=>{
+      if(byEra&&p.era!==era){html+=(era?'</optgroup>':'')+'<optgroup label="'+esc(tr(p.era))+'">';era=p.era;}
       html+='<option value="'+i+'">'+esc(p.name)+'</option>';});
     sel.innerHTML='<option value="">'+esc(tr(placeholder))+'</option>'+html+(era?'</optgroup>':'');
     sel.value=keep!=null?String(keep):'';

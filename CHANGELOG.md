@@ -48,6 +48,18 @@ Working toward **v1.0 — every number derived, not fitted.**
   - TYRE ASPECT goes to 80 (the 1960s cars).
   - `factoryGeo` reads a preset's own suspension geometry, as `vehicleFromPreset` already fitted it, so those cars load
     as their factory fit.
+- **What the batch leaves as it was, and what it changes:**
+  - The 29 new gearboxes are held out of the gear-spacing law and the family averages, which stay fitted on the boxes
+    before them. Folding them in would have moved every car that takes its family's average (the 911 GT3 among them).
+    They are now the law's out-of-sample check: their span residual's median is +0.12 (test91).
+  - The cars' suspension geometry comes from the pack. Their tracks were not researched, so they take their class's.
+  - The car and engine pickers group a family by decade only when every car in it has one, oldest first. The batch
+    gives a decade to every car and the older presets none, which split NA Sports and the rest into scattered groups.
+    The Supercar family now runs from the 1960s; decade labels for the 1960s to 1980s are in Greek too.
+  - The Ferrari 365 GTB/4 Daytona runs on SLOTTED/VENTED brakes, not the pack's STEEL DISC: it had vented discs all
+    round.
+  - Two cars' factory brakes stop short of their tyres' limit in the model: the Buick GNX and the Grand Cherokee SRT.
+    Their real calipers are not in the model's set. test63 names them as known gaps.
 - **Against the makers' figures** (the 43 scored engines; the two 1960s SAE gross ratings and the low-confidence cars
   are reported only):
   - power within 8.4% RMS;

@@ -2,7 +2,8 @@
 // solid axle) and its own track. The geometry sets the share of the body roll the loaded wheel's camber wins back,
 // (t/2)/fvsa for an independent wheel, and the axle's roll centre, which puts the transfer of the axle's own mass on
 // its own tyres. The real cars carry their published geometry and tracks; saves from before carry none and take the
-// factory's.
+// factory's. Research batch 1 (build 199) carries each car's geometry in its preset; its tracks were not researched,
+// so they are the class's.
 import { chromium } from './pw.mjs';
 import { fileURLToPath, pathToFileURL } from 'url';
 import path from 'path';
@@ -25,7 +26,7 @@ const r = await page.evaluate(() => {
   out.cars = VEHICLE_PRESETS.map(p => {
     loadVehiclePreset(p);
     const e = SUSP_REAL[p.name] || null;
-    return { name: p.name, e, tf: vehicle.trackF, tr: vehicle.trackR, f: vehicle.suspFront, r: vehicle.suspRear,
+    return { name: p.name, e, batch: p.confidence ? { f: p.fit.geoF, r: p.fit.geoR } : null, tf: vehicle.trackF, tr: vehicle.trackR, f: vehicle.suspFront, r: vehicle.suspRear,
       recF: vehicle.camRecF, recR: vehicle.camRecR, camF: vehicle.camberF, camR: vehicle.camberR,
       rcR: vehicle.rcR, rTire: vehicle.rTire, stock: isFactoryFit(readVehicleFromForm()) };
   });
@@ -73,8 +74,12 @@ const r = await page.evaluate(() => {
 
 console.log('== the real cars ==');
 for (const c of r.cars) console.log(`  ${c.name.padEnd(42)} ${(c.f + '/' + c.r).padEnd(20)} track ${c.tf.toFixed(3)}/${c.tr.toFixed(3)}  recovery ${c.recF.toFixed(2)}/${c.recR.toFixed(2)}`);
-const bad = r.cars.filter(c => !c.e || !r.geo[c.e.f] || !r.geo[c.e.r] || !(c.e.tf > 1.2 && c.e.tf < 1.8 && c.e.tr > 1.2 && c.e.tr < 1.8));
+const bad = r.cars.filter(c => !(c.batch && !c.e) && (!c.e || !r.geo[c.e.f] || !r.geo[c.e.r] || !(c.e.tf > 1.2 && c.e.tf < 1.8 && c.e.tr > 1.2 && c.e.tr < 1.8)));
 if (bad.length) fails.push('real cars without a complete geometry entry: ' + bad.map(c => c.name).join(', '));
+for (const c of r.cars.filter(c => c.batch && !c.e)) {
+  if (!r.geo[c.batch.f] || !r.geo[c.batch.r] || c.f !== c.batch.f || c.r !== c.batch.r) fails.push(c.name + ' does not load the geometry its research entry gives');
+  if (!c.stock) fails.push(c.name + ' is not its own factory fit');
+}
 for (const c of r.cars.filter(c => c.e)) {
   if (c.f !== c.e.f || c.r !== c.e.r || Math.abs(c.tf - c.e.tf) > 1e-9 || Math.abs(c.tr - c.e.tr) > 1e-9) fails.push(c.name + ' does not load its own geometry and tracks');
   if (!c.stock) fails.push(c.name + ' is not its own factory fit');
