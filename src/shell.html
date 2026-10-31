@@ -16,7 +16,7 @@
 <body>
 <div class="container">
 <header>
-<h1>PIXEL ENGINE SIM v0.7 build 195</h1>
+<h1>PIXEL ENGINE SIM v0.7 build 196</h1>
 <div class="subtitle" id="subtitle">ENGINE DESIGNER • BUILD IT, THEN DRIVE IT</div>
 </header>
 <div class="build-strip" id="buildStrip">
@@ -79,6 +79,8 @@
 <div class="field"><label for="edHySocLo">CHARGE LOW (%)</label><input type="number" id="edHySocLo" min="10" max="60" step="1" value="35"></div>
 <div class="field"><label for="edHySocT">CHARGE TARGET (%)</label><input type="number" id="edHySocT" min="10" max="80" step="1" value="60"></div>
 <div class="field"><label for="edHySocHi">CHARGE HIGH (%)</label><input type="number" id="edHySocHi" min="40" max="95" step="1" value="85"></div>
+<div class="field"><label for="edHyDeployMJ">DEPLOY LIMIT (MJ/LAP, 0 = NONE)</label><input type="number" id="edHyDeployMJ" min="0" max="50" step="0.1" value="0"></div>
+<div class="field"><label for="edHyHarvestMJ">HARVEST LIMIT (MJ/LAP, 0 = NONE)</label><input type="number" id="edHyHarvestMJ" min="0" max="50" step="0.1" value="0"></div>
 </div>
 <div class="hy-map-wrap" data-hy><div class="hint">ASSIST MAP: the share of the motor's help over shaft speed and pedal. Click a cell to step it down by 25% (from 0 back to 100%).</div><div id="hyAssistMap"></div></div>
 
@@ -334,6 +336,8 @@
 </div>
 <div class="gauge-row">
 <div class="stat" id="statHealth"><span class="label">ENGINE HEALTH</span><div class="value">100</div><span class="unit">%</span></div>
+<div class="stat" id="statAmps" style="display:none"><span class="label">PACK CURRENT</span><div class="value">0</div><span class="unit">A</span></div>
+<div class="stat" id="statLimit" style="display:none"><span class="label">POWER LIMIT</span><div class="value">NONE</div><span class="unit"></span></div>
 </div>
 </div>
 <div class="panel" id="hybridPanel" hidden>
@@ -529,6 +533,7 @@
 <!-- @include js/electric-ui.js -->
 <!-- @include js/electric-car.js -->
 <!-- @include js/electric-race.js -->
+<!-- @include js/hybrid-race.js -->
 <!-- @include js/electric-cycle.js -->
 <!-- @include js/hybrid.js -->
 <!-- @include js/power-split.js -->

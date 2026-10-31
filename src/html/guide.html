@@ -1158,6 +1158,258 @@ Limit: emissions are correlations with the right trends, not combustion chemistr
 </div>
 <div class="guide-see">See also: <a data-gp="firetriangle">Air, fuel and spark</a> · <a data-gp="fuelmap">Fuel, injection &amp; the fuel map</a> · <a data-gp="scorecard">The scorecard</a></div>
 </section>
+<section class="guide-page" id="gp-evdrive" data-cat="electric" data-title="The electric drive" data-tags="electric ev battery inverter motor regen regenerative braking limp low charge soc pack current power limit" hidden>
+<h4 class="guide-title">The electric drive</h4>
+<div class="gtier gt-real"><div class="gtier-h">LV1 · REAL LIFE</div>
+<canvas class="gart" data-art="evdrive"></canvas><div class="gart-cap">Battery, inverter, motor: the whole drivetrain of an electric car.</div>
+<div class="guide-body" data-gk="evdriveReal">
+An electric car has three main parts. The <b>battery</b> stores energy as direct current. The <b>inverter</b> switches that into three-phase alternating current at whatever frequency the motor needs. The <b>motor</b> turns the current into torque. One fixed reduction gear takes the torque to the wheels: there is no clutch, no gearbox and no idle.<br>
+The motor gives its full torque from standstill and holds it up to a speed called the <b>knee</b>. Above the knee the power stays roughly flat and the torque falls. Braking runs the motor backwards as a generator and puts energy back in the battery: <b>regenerative braking</b>.<br>
+A battery's voltage falls as it empties. The car's computer draws more current to make up for it, until the battery runs low. Then it cuts the power to protect the cells, and when the battery is nearly empty it allows only a little: <b>limp mode</b>.
+</div>
+</div>
+<div class="gtier gt-game"><div class="gtier-h">LV2 · IN THE GAME</div>
+<div class="guide-body" data-gk="evdriveGame">
+<b>Building one.</b> On the ENGINE tab set <b>ENGINE TYPE</b> to <b>ELECTRIC</b>. The combustion sections give way to <b>Motor</b>, <b>More motors</b>, <b>Inverter</b> and <b>Battery</b>, each explained on its own page. Press <b>BUILD &amp; DYNO</b> as for an engine. The presets include three Teslas: the Model 3 RWD, the Model Y Long Range and the Model S Plaid.<br>
+<b>On the LIVE bench.</b> <b>THROTTLE</b> asks for torque: a fixed share of what the drive gives at that speed when it is at its best (a full battery, a cool motor, no damage). The controller draws whatever current that takes, so a part throttle holds its power as the battery drains. <b>LOAD</b> is the dyno brake. The tiles show <b>POWER</b>, <b>TORQUE</b>, <b>BATTERY</b> (kW drawn), <b>DRIVE EFF</b>, <b>CHARGE</b>, <b>WINDING</b> temperature, <b>MOTOR HEALTH</b>, <b>PACK CURRENT</b> (A) and <b>POWER LIMIT</b>. POWER LIMIT says what is holding the power below the request, and how much of the request you are getting:<br>
+• <b>NONE</b>: you get all you asked for.<br>
+• <b>BATTERY</b>: the battery's voltage or current limit.<br>
+• <b>THERMAL</b>: the winding or the magnets are too hot.<br>
+• <b>LOW SOC</b>: the battery is below 15% and its management is cutting the power.<br>
+• <b>LIMP</b>: the battery is below 2%.<br>
+The bench never recharges: <b>BUILD &amp; DYNO</b> starts again at 90% charge.<br>
+<b>On the road.</b> GEARING on the VEHICLE tab sets the single reduction. The VEHICLE tab gives the WLTP consumption in Wh/km, from the battery and at the socket, and the range. In a race the battery stands in for the fuel tank: there is no charging in the pit lane, an energy manager chooses the power that lasts the distance, and a car that empties its battery retires OUT OF CHARGE.
+</div>
+</div>
+<div class="gtier gt-phys"><div class="gtier-h">LV3 · THE PHYSICS</div>
+<div class="guide-body" data-gk="evdrivePhys">
+The battery gives the shaft's power plus every loss on the way: the copper's I²R, the iron's hysteresis and eddy currents, friction and windage, and the inverter's conduction and switching.
+<span class="geq">P<sub>pack</sub> = T·ω + P<sub>cu</sub> + P<sub>fe</sub> + P<sub>mech</sub> + P<sub>inv</sub></span>
+The battery is an open-circuit voltage that follows its charge, behind an internal resistance: <span class="geq">V = V<sub>oc</sub>(SoC) − I·R</span> The current solves P = V·I. A pack can give no more than its rated current, and never so much that its voltage falls below the cells' cut-off.<br>
+<b>Limits, in the order they bite.</b><br>
+• <b>Battery temperature:</b> the battery management cuts the power from 50 °C, to nothing at 60 °C.<br>
+• <b>Winding temperature:</b> the controller cuts the current from 150 °C, to nothing at 180 °C.<br>
+• <b>Magnet temperature:</b> it does the same over the last 20 °C below the magnet grade's limit.<br>
+• <b>Low charge:</b> below 15% the battery management allows a share of what the cells could give, falling straight to 30% at 2%.<br>
+• <b>Limp mode:</b> below 2% it holds the power to a tenth of the battery's rated power (its power at 50% charge).<br>
+Damage the controller cannot prevent is permanent: magnets heated past their grade's limit lose flux, and a winding above 200 °C cooks its insulation.<br>
+The 0-100 and the lap run at 50% charge. A race starts at 95% and stops at 5%.
+</div>
+</div>
+<div class="guide-see">See also: <a data-gp="evmotor">The motor</a> · <a data-gp="battery">The battery</a> · <a data-gp="inverter">The inverter</a> · <a data-gp="race">The race</a></div>
+</section>
+<section class="guide-page" id="gp-evmotor" data-cat="electric" data-title="The motor" data-tags="electric motor permanent magnet induction rotor stack poles turns magnets ferrite ndfeb neodymium dysprosium sleeve bridges cooling knee field weakening" hidden>
+<h4 class="guide-title">The motor</h4>
+<div class="gtier gt-real"><div class="gtier-h">LV1 · REAL LIFE</div>
+<canvas class="gart" data-art="evmotor"></canvas><div class="gart-cap">A magnet rotor turning inside a stator of copper windings.</div>
+<div class="guide-body" data-gk="evmotorReal">
+A traction motor has two parts. The <b>stator</b> is a stack of thin steel sheets with copper windings in slots, and it stays still. The <b>rotor</b> spins inside it. Current in the windings makes a magnetic field that rotates, and the rotor follows it.<br>
+In a <b>permanent-magnet</b> motor the rotor carries magnets and turns exactly with the field. In an <b>induction</b> motor the rotor is a cage of copper bars: the stator's field induces currents in the cage, which slip a little behind the field and are pulled along.<br>
+Torque grows with the rotor's volume and with the current. Spinning makes the motor a generator too: its <b>back-EMF</b> rises with speed. Where it reaches the battery's voltage (the <b>knee</b>), the controller weakens the field to keep going. Above the knee the power stays about flat and the torque falls.
+</div>
+</div>
+<div class="gtier gt-game"><div class="gtier-h">LV2 · IN THE GAME</div>
+<div class="guide-body" data-gk="evmotorGame">
+<b>MOTOR TYPE.</b><br>
+• <b>PERMANENT MAGNET</b>: the most torque per amp and the best efficiency. Its magnets cost money, lose strength when hot, and drag a little (iron loss) even when it gives no torque.<br>
+• <b>INDUCTION (COPPER CAGE)</b>: no magnets. It buys its field with current, so it makes less torque per amp, and its rotor heats up. With no torque asked it has no field and no drag, which is why Tesla puts one on the front axle of the Model 3 and Model Y.<br>
+<b>ROTOR DIAMETER</b> (80–260 mm). Torque grows with the diameter squared. A bigger rotor is heavier, has more inertia and reaches its surface-speed limit at lower rpm.<br>
+<b>STACK LENGTH</b> (40–250 mm). Torque grows in proportion to the length, with no effect on the speed limits.<br>
+<b>POLES</b> (4–12). More poles mean shorter end windings and a thinner, lighter core. They also raise the electrical frequency for a given speed: more iron loss, and a lower top speed from the inverter's frequency limit.<br>
+<b>TURNS PER PHASE</b> (4–120). More turns give more torque per amp but more back-EMF, so the knee comes at lower rpm and there is less power at speed. Fewer turns move the knee up and need more current for the same torque. Match the turns to the battery's voltage.<br>
+<b>MAGNETS.</b><br>
+• <b>FERRITE</b>: cheap and survives 250 °C, but it is a third as strong, so it needs twice the volume.<br>
+• <b>NdFeB (SH)</b>: neodymium, the standard; strong, with a limit of 150 °C.<br>
+• <b>NdFeB + Dy (UH)</b>: dysprosium raises the limit to 180 °C for slightly less strength and a higher price.<br>
+<b>MAGNET RETENTION.</b> What holds the magnets in at speed. <b>IRON BRIDGES</b> in the steel sheets allow a rotor surface speed of 150 m/s. A <b>CARBON SLEEVE</b> wound over the rotor allows 220 m/s, which is how the Plaid's large rotors reach 20,000 rpm.<br>
+<b>MOTOR COOLING.</b> Decides how long the peak lasts and what the motor holds for good.<br>
+• <b>AIR (FINNED)</b>: free, but weak.<br>
+• <b>WATER JACKET</b>: coolant round the stator.<br>
+• <b>OIL SPRAY</b>: the jacket, plus oil sprayed on the end windings and the rotor.<br>
+• <b>DIRECT SLOT</b>: coolant inside the slots, against the copper; the best and the dearest.<br>
+<b>MAX SPEED</b> (rpm). The design speed. The motor's real top speed is the lowest of this, the rotor's surface-speed limit and the inverter's frequency limit. Watch the summary under the form.
+</div>
+</div>
+<div class="gtier gt-phys"><div class="gtier-h">LV3 · THE PHYSICS</div>
+<div class="guide-body" data-gk="evmotorPhys">
+Torque is the flux linkage times the current: <span class="geq">T = 3/2 · p · ψ · I,  ψ = k<sub>w</sub> · N · (2/π) · B<sub>g</sub> · τ<sub>p</sub> · L</span> Here p is the pole pairs, N the turns per phase, k<sub>w</sub> = 0.93 the winding factor, τ<sub>p</sub> the pole pitch (πD/poles) and L the stack. The air-gap flux B<sub>g</sub> is 0.85 times the magnets' remanence for a magnet motor (1.28 T for SH NdFeB, 0.42 T for ferrite). An induction motor runs 0.8 T and pays for it with a magnetising current, which takes its share of the inverter's amps.<br>
+The knee is where the back-EMF ω·ψ, with the winding's voltage drop on top (×1.29 at full current), meets the battery's voltage. Above it the power holds to about 4× the knee speed for a magnet motor and 3× for an induction motor.<br>
+<b>Losses.</b> Copper resistance comes from the slot area (40% copper fill) and rises 0.393% per kelvin. Iron loss is Steinmetz's law on 0.35 mm silicon steel.<br>
+<b>Top speed.</b> The lowest of three: MAX SPEED; the rotor surface speed v/(πD); and the inverter's output frequency, 1.2 kHz for IGBTs and 2 kHz for SiC, divided by the pole pairs.<br>
+<b>Heat.</b> Three lumped nodes (winding, stator core, rotor) and the coolant.<br>
+<b>Calibration.</b> Three constants come from one measured motor, the Tesla Model 3 rear (MotorXP, 2020). The 2012 Nissan Leaf as ORNL measured it is the check.
+</div>
+</div>
+<div class="guide-see">See also: <a data-gp="evdrive">The electric drive</a> · <a data-gp="evmotors">More motors</a> · <a data-gp="inverter">The inverter</a></div>
+</section>
+<section class="guide-page" id="gp-evmotors" data-cat="electric" data-title="More motors" data-tags="dual motor awd front motor rear motors plaid tri motor torque vectoring front reduction" hidden>
+<h4 class="guide-title">More motors</h4>
+<div class="gtier gt-real"><div class="gtier-h">LV1 · REAL LIFE</div>
+<canvas class="gart" data-art="evmotors"></canvas><div class="gart-cap">A motor on each axle makes an electric car four-wheel drive with no driveshaft.</div>
+<div class="guide-body" data-gk="evmotorsReal">
+An electric car becomes four-wheel drive by adding a second motor on the other axle; no driveshaft or centre differential is needed. Tesla's dual-motor Model 3 and Model Y pair a magnet motor at the rear with an induction motor at the front, which can idle along at a cruise without dragging. The Model S Plaid has three motors, two at the rear, one for each wheel, and one at the front.<br>
+A hybrid can do the same: the Porsche 918 Spyder drives its front wheels with an electric motor of their own while the engine drives the rear.
+</div>
+</div>
+<div class="gtier gt-game"><div class="gtier-h">LV2 · IN THE GAME</div>
+<div class="guide-body" data-gk="evmotorsGame">
+<b>REAR MOTORS</b> (electric cars only). <b>1</b>, or <b>2 (ONE PER WHEEL)</b>: two of the main motor, twice the torque, the mass and the cost.<br>
+<b>FRONT MOTOR.</b> <b>NONE</b>, <b>PERMANENT MAGNET</b> or <b>INDUCTION (COPPER CAGE)</b>. Fitting one makes the car all-wheel drive and locks the drivetrain field on the VEHICLE tab; taking it off gives the old drive back.<br>
+The front motor has its own <b>FRONT ROTOR DIAMETER</b>, <b>FRONT STACK LENGTH</b>, <b>FRONT POLES</b>, <b>FRONT TURNS PER PHASE</b> and <b>FRONT CURRENT</b>, which work as on <a data-gp="evmotor">The motor</a>. It shares the main motor's magnets, retention, cooling, inverter type and max speed.<br>
+<b>FRONT REDUCTION</b> (hybrids only). The gear ratio from the front motor to the wheels. Leave it at <b>0</b> to have it matched, so the motor's top speed falls at the car's top speed. Above its top speed the front motor is disconnected.
+</div>
+</div>
+<div class="gtier gt-phys"><div class="gtier-h">LV3 · THE PHYSICS</div>
+<div class="guide-body" data-gk="evmotorsPhys">
+<b>On an electric car</b> every motor drives through the same reduction, so they turn at one speed and act as one motor. Their torques, masses, costs and inertias add; the top speed is the lowest of theirs. The controller splits the torque between the axles to lose the least: at a cruise an induction front motor carries nothing, and flat out both give all they have. They share one cooling loop, and the controller's limits are taken at the lowest of their rotors'.<br>
+<b>On a hybrid</b> the front motor has its own reduction. Its force at the wheels is <span class="geq">F = T · i<sub>front</sub> · 0.97 / r<sub>tyre</sub></span> and it is added to the gearbox's in the 0-100, the top speed and the lap. The two motors share the battery's power in proportion to their peak powers, and the lap's charge balance counts what the front one draws. It does not regenerate; only the main motor does.
+</div>
+</div>
+<div class="guide-see">See also: <a data-gp="evmotor">The motor</a> · <a data-gp="traction">Differential &amp; traction</a> · <a data-gp="hybrid">Hybrids</a></div>
+</section>
+<section class="guide-page" id="gp-inverter" data-cat="electric" data-title="The inverter" data-tags="inverter igbt sic silicon carbide mosfet current rating amps switching frequency" hidden>
+<h4 class="guide-title">The inverter</h4>
+<div class="gtier gt-real"><div class="gtier-h">LV1 · REAL LIFE</div>
+<canvas class="gart" data-art="inverter"></canvas><div class="gart-cap">Fast switches chop the battery's steady voltage into the motor's three-phase current.</div>
+<div class="guide-body" data-gk="inverterReal">
+The battery gives a steady voltage; the motor needs three alternating currents that follow the rotor. The <b>inverter</b> makes them with six power switches, turning them on and off thousands of times a second so that the average current traces a sine wave.<br>
+Older and cheaper inverters use <b>silicon IGBTs</b>. Newer ones use <b>silicon carbide (SiC) MOSFETs</b>, which switch faster and lose less, especially at part load. Tesla moved the Model 3 to SiC in 2017. The inverter's <b>current rating</b> sets the motor's torque, since torque is current times flux.
+</div>
+</div>
+<div class="gtier gt-game"><div class="gtier-h">LV2 · IN THE GAME</div>
+<div class="guide-body" data-gk="inverterGame">
+<b>SWITCHES.</b><br>
+• <b>SILICON IGBT</b>: cheaper. It has a fixed voltage drop that costs most at part load, and it limits the output frequency to 1.2 kHz.<br>
+• <b>SiC MOSFET</b>: no fixed drop, a fifth of the switching loss, 2 kHz. It costs nearly twice as much per amp.<br>
+<b>CURRENT RATING</b> (100–1600 A rms). The most current the inverter gives the motor. Torque rises with it; so do the copper's heat (with the square of the current) and the price. The battery has to be able to supply it too: watch the summary for which one limits.
+</div>
+</div>
+<div class="gtier gt-phys"><div class="gtier-h">LV3 · THE PHYSICS</div>
+<div class="guide-body" data-gk="inverterPhys">
+Losses in the three phase legs:
+<span class="geq">P<sub>inv</sub> = 3·(0.9·V<sub>0</sub>·I + R<sub>on</sub>·I²) + 3·(√2/π)·t<sub>sw</sub>·f<sub>sw</sub>·V<sub>dc</sub>·I</span>
+<b>IGBT:</b> V<sub>0</sub> = 0.8 V knee, switching at 10 kHz, t<sub>sw</sub> = 0.23 µs. That is an 820 A automotive module losing about 75 mJ per on-off cycle at 400 V.<br>
+<b>SiC:</b> no knee, 16 kHz, t<sub>sw</sub> = 0.05 µs.<br>
+On-resistance is for a 1000 A device and scales inversely with the rating. The output frequency limit caps the motor's speed at f·60/p rpm. Cost is $6 per amp of rating for IGBT and $11 for SiC.
+</div>
+</div>
+<div class="guide-see">See also: <a data-gp="evmotor">The motor</a> · <a data-gp="battery">The battery</a></div>
+</section>
+<section class="guide-page" id="gp-battery" data-cat="electric" data-title="The battery" data-tags="battery pack chemistry lfp nca nmc nimh lead acid power cells hybrid cells cells in series capacity kwh voltage technology year" hidden>
+<h4 class="guide-title">The battery</h4>
+<div class="gtier gt-real"><div class="gtier-h">LV1 · REAL LIFE</div>
+<canvas class="gart" data-art="battery"></canvas><div class="gart-cap">Cells in series set the voltage; the capacity sets how far it goes.</div>
+<div class="guide-body" data-gk="batteryReal">
+A traction battery is hundreds or thousands of cells. Cells in <b>series</b> add their voltages; groups in <b>parallel</b> add their capacity and the current they can give. The chemistry decides how much energy a kilogram holds, how hard it can be discharged and charged, how long it lasts and what it costs.<br>
+A cell's voltage falls as it empties, and its internal resistance turns some of the current into heat. A battery that is cold, hot or nearly empty gives less power.<br>
+Prices have fallen tenfold: about $1100 per kWh in 2010, $160 in 2019 and $115 in 2024.
+</div>
+</div>
+<div class="gtier gt-game"><div class="gtier-h">LV2 · IN THE GAME</div>
+<div class="guide-body" data-gk="batteryGame">
+<b>CHEMISTRY.</b> Each is offered only from the year it reached cars.<br>
+• <b>LEAD-ACID</b>: heavy (about 40 Wh/kg) and slow to charge; the 1990s.<br>
+• <b>NiMH</b>: from 1996; tough, about 70 Wh/kg.<br>
+• <b>LFP</b> (lithium iron phosphate): from 2005; cheap, safe and long-lived, about 175 Wh/kg by 2023; a flat voltage curve and a low cell voltage (3.2 V). From 2020 it is packed cell-to-pack, which wastes the least weight.<br>
+• <b>NCA / NMC</b>: from 2008; the energy chemistry of long-range cars, about 270 Wh/kg, 3.7 V cells.<br>
+• <b>NCA (POWER CELLS)</b>: from 2012; the same chemistry built for current, as in the Plaid. Less energy per kilogram, but nearly twice the discharge rate.<br>
+• <b>Li-ION (HYBRID CELLS)</b> and <b>NiMH (HYBRID CELLS)</b>: built for hybrids, a small battery that gives and takes 20–25 times its capacity in power.<br>
+<b>CELLS IN SERIES</b> (20–400). Sets the voltage: 96 NCA cells make about 350 V, 110 make about 400 V. Higher voltage moves the motor's knee up (more power at speed) and lowers the current for the same power.<br>
+<b>CAPACITY</b> (kWh). Range, mass and price. A bigger battery also gives and takes more power, because there are more cells in parallel.<br>
+<b>TECHNOLOGY YEAR.</b> Each chemistry's energy per kilogram and price per kWh follow the year: a 2010 battery is heavier and dearer than the same battery in 2024.
+</div>
+</div>
+<div class="gtier gt-phys"><div class="gtier-h">LV3 · THE PHYSICS</div>
+<div class="guide-body" data-gk="batteryPhys">
+Each chemistry is a table of open-circuit voltage against charge, a cut-off voltage, a resistance-capacity product (Ω·Ah), a sustained discharge rate (C) and a charge rate it accepts under braking.<br>
+<b>The pack.</b> Nominal voltage is the cells in series times the mean cell voltage. The capacity in Ah is kWh·1000 / V<sub>nom</sub>. The resistance is <span class="geq">R = N<sub>s</sub> · (R·Ah)<sub>cell</sub> / Ah · 1.1</span> (+10% for busbars, contactors and the fuse).<br>
+<b>Limits.</b> The most current is the C-rate times the Ah (NCA 6C, power cells 10C, hybrid cells 25C). The most power is reached either at that current or at the cut-off voltage, whichever comes first. The charge rate under braking is the lithium-plating limit: about 1C for NCA, 1.5C for LFP.<br>
+<b>Mass.</b> The cells' mass is kWh over Wh/kg at the year, divided by the cells' share of the pack (0.62–0.68, or 0.82 cell-to-pack).<br>
+<b>Heat.</b> The pack is one lumped node: I²R heat in, a liquid cooling plate taking about 2 W/K per kWh to 30 °C coolant. Its management cuts power from 50 °C.
+</div>
+</div>
+<div class="guide-see">See also: <a data-gp="evdrive">The electric drive</a> · <a data-gp="inverter">The inverter</a> · <a data-gp="hybrid">Hybrids</a></div>
+</section>
+<section class="guide-page" id="gp-hybrid" data-cat="electric" data-title="Hybrids" data-tags="hybrid p2 parallel power-split ecvt prius series e-power plug-in phev assist drive modes ev hold charge sport manual lever bsfc" hidden>
+<h4 class="guide-title">Hybrids</h4>
+<div class="gtier gt-real"><div class="gtier-h">LV1 · REAL LIFE</div>
+<canvas class="gart" data-art="hybrid"></canvas><div class="gart-cap">Engine, motor and battery: power flows between all three.</div>
+<div class="guide-body" data-gk="hybridReal">
+A hybrid adds an electric motor and a small battery to an engine. Braking charges the battery. The motor helps the engine when it is least efficient (pulling away, low in the revs) and drives the car alone at low speed with the engine stopped. There are three main layouts:<br>
+• <b>Parallel (P2)</b>: the motor sits between the engine's clutch and the gearbox and turns with the engine; both drive the wheels through the gears. Hyundai, BMW and Porsche use it.<br>
+• <b>Power-split</b>: a planetary gear set divides the engine's power between the wheels and a generator, so the engine runs at any speed it likes: an electric CVT. This is Toyota's system.<br>
+• <b>Series</b>: the engine only drives a generator; a motor alone drives the wheels (Nissan e-POWER).<br>
+A <b>plug-in</b> hybrid has a bigger battery charged from the mains, and drives tens of kilometres on it before it starts behaving like an ordinary hybrid.
+</div>
+</div>
+<div class="gtier gt-game"><div class="gtier-h">LV2 · IN THE GAME</div>
+<div class="guide-body" data-gk="hybridGame">
+<b>HYBRID</b> on the ENGINE tab adds the system to any combustion engine:<br>
+• <b>PARALLEL (P2)</b>: the motor's torque adds to the engine's at engine speed, through the gearbox.<br>
+• <b>POWER-SPLIT (eCVT)</b>: Toyota's planetary; the car has no gears, only one reduction.<br>
+• <b>SERIES</b>: a generator sized from the engine, and the traction motor alone at the wheels.<br>
+The <b>Motor</b>, <b>Inverter</b> and <b>Battery</b> sections then design the hybrid's motor and battery, and the <a data-gp="hybtune">hybrid tune</a> appears.<br>
+<b>ASSIST</b> (P2 only). When the motor helps at full throttle:<br>
+• <b>FULL</b>: everything it has.<br>
+• <b>ECO (TORQUE FILL)</b>: only to fill the engine's curve up to its peak torque.<br>
+• <b>ABOVE RPM</b> or <b>BELOW RPM</b>: only past, or short of, the ASSIST RPM.<br>
+<b>PLUG-IN.</b> YES starts the battery full and drives it down first. The VEHICLE tab then gives the WLTP figures a plug-in is homologated with: weighted consumption, electric range and kWh/100 km. In a race it starts full and spreads that charge over the distance.<br>
+<b>The LIVE bench</b> runs the engine, the motor and the battery together. The HYBRID panel picks the drive mode:<br>
+• <b>AUTO</b>: the controller chooses.<br>
+• <b>EV</b>: electric only, until the battery runs low.<br>
+• <b>HOLD</b>: keeps the charge where it is.<br>
+• <b>CHARGE</b>: the engine charges the battery.<br>
+• <b>SPORT</b>: the motor always helps.<br>
+• <b>ENGINE ONLY</b>.<br>
+• <b>MANUAL</b>: you set the motor command and, on a power-split, the engine's speed.<br>
+<b>VIEW</b> shows the power flow, the power-split's lever diagram, or the engine's BSFC map with its operating point. The pedal asks for the engine's torque plus the motor's, so from about half throttle the engine runs at full load: give it the cooling for that.<br>
+Presets: the Hyundai Ioniq Hybrid, the Toyota Prius, the Nissan Qashqai e-POWER, the BMW 330e and the Porsche 918 Spyder.
+</div>
+</div>
+<div class="gtier gt-phys"><div class="gtier-h">LV3 · THE PHYSICS</div>
+<div class="guide-body" data-gk="hybridPhys">
+<b>The power-split.</b> The planetary obeys Willis's equation, with Toyota's 30/78-tooth gear set and MG2 at 65:17 to the ring, on a 600 V bus: <span class="geq">n<sub>sun</sub> · Z<sub>s</sub> + n<sub>ring</sub> · Z<sub>r</sub> = n<sub>carrier</sub> · (Z<sub>s</sub> + Z<sub>r</sub>)</span> MG1 holds the engine on its optimal operating line, the lowest fuel for each power.<br>
+<b>The series hybrid.</b> The generator is sized for 110% of the engine's peak torque and 105% of its power.<br>
+<b>Laps and races.</b> The lap balances the battery over each lap: it is solved at full assist and solved again with the assist cut until what the motor spends equals what braking returns.<br>
+<b>The WLTP cycle.</b> An equivalent-consumption energy manager (ECMS) prices the battery's energy in fuel and chooses each second between the engine off, load-point shifting and assist. If the charge does not balance, the cycle is corrected as WLTP corrects a hybrid's.<br>
+<b>Plug-ins.</b> Run the regulation's procedure (EU 2017/1151): the cycle from a full battery until it sustains its charge, weighted by the utility factor.
+</div>
+</div>
+<div class="guide-see">See also: <a data-gp="hybtune">The hybrid tune</a> · <a data-gp="evmotor">The motor</a> · <a data-gp="battery">The battery</a></div>
+</section>
+<section class="guide-page" id="gp-hybtune" data-cat="electric" data-title="The hybrid tune" data-tags="hybrid tune assist map regeneration load point shifting ev up to ev power charge window target deploy limit harvest limit mj per lap" hidden>
+<h4 class="guide-title">The hybrid tune</h4>
+<div class="gtier gt-real"><div class="gtier-h">LV1 · REAL LIFE</div>
+<canvas class="gart" data-art="hybtune"></canvas><div class="gart-cap">The charge window, and where in it the controller aims.</div>
+<div class="guide-body" data-gk="hybtuneReal">
+A hybrid's behaviour is a calibration: rules its engineers write into the controller. When does the motor help, and how much? When does the car drive on electricity alone, and how fast? How hard does braking charge the battery? Between what charge levels may the battery swing, and where should it sit?<br>
+A frugal road car keeps the engine off as much as it can. A racing hybrid spends every joule it can get, and racing classes limit how much energy the battery may give and take back on each lap.
+</div>
+</div>
+<div class="gtier gt-game"><div class="gtier-h">LV2 · IN THE GAME</div>
+<div class="guide-body" data-gk="hybtuneGame">
+<b>HYBRID TUNE</b> on the ENGINE tab is saved with the build. The 0-100, the lap, the race, the WLTP cycle and the LIVE bench all read it.<br>
+<b>ASSIST RPM.</b> The engine speed that ASSIST's ABOVE RPM and BELOW RPM settings use.<br>
+<b>REGENERATION.</b> <b>HIGH</b>, <b>LOW</b> (half) or <b>OFF</b>: how hard braking charges the battery.<br>
+<b>LOAD-POINT SHIFTING.</b> <b>ON</b> lets the engine work harder than the car needs and store the surplus, which moves it to where it burns least. <b>OFF</b> charges only from braking and from a low battery.<br>
+<b>EV UP TO</b> (km/h, 0 = ANY). The fastest the car drives with the engine off.<br>
+<b>EV POWER</b> (kW, 0 = AUTO). The most power it asks of the battery before starting the engine.<br>
+<b>CHARGE LOW / TARGET / HIGH</b> (%). The window the battery is used in, and where the controller aims. A plug-in starts at HIGH and drives down to TARGET.<br>
+<b>DEPLOY LIMIT</b> (MJ per lap, 0 = none). The most energy the motors may take from the battery on a lap.<br>
+<b>HARVEST LIMIT</b> (MJ per lap, 0 = none). The most braking may put back on a lap; past it the friction brakes take the rest.<br>
+<b>ASSIST MAP.</b> The share of the motor's help over shaft speed (columns) and pedal (rows). Click a cell to step it down 25%; from 0 it goes back to 100%. Flat out reads the top row.
+</div>
+</div>
+<div class="gtier gt-phys"><div class="gtier-h">LV3 · THE PHYSICS</div>
+<div class="guide-body" data-gk="hybtunePhys">
+The motor's curve is its full torque times the assist map's share at that speed (and, on a P2, times the ASSIST window). Its regeneration is its braking torque, limited by the battery's charge rate, times REGENERATION's share (1, 0.5 or 0).<br>
+<b>The lap's charge balance.</b> What the motors may deploy is <span class="geq">E<sub>deploy</sub> ≤ min(E<sub>harvest</sub> + E<sub>plug-in</sub>, DEPLOY LIMIT)</span> where E<sub>harvest</sub> is what braking returns, to the HARVEST LIMIT, and E<sub>plug-in</sub> is a plug-in's own charge allowed on that lap in a race. If the motors would spend more, the assist is cut in proportion and the lap is solved again.<br>
+<b>Plug-ins in a race.</b> The race keeps a second pace grid of laps with the motors free of the balance. A plug-in runs at a share x of those laps, chosen so that its charge between HIGH and TARGET lasts the race (with 3% in hand), and chosen again every time it crosses the line.<br>
+<b>The WLTP cycle.</b> The cycle's energy manager keeps the charge within the window and aims at the target.
+</div>
+</div>
+<div class="guide-see">See also: <a data-gp="hybrid">Hybrids</a> · <a data-gp="race">The race</a></div>
+</section>
 <section class="guide-page" id="gp-vehicle" data-cat="car" data-title="Chassis &amp; garage" data-tags="chassis vehicle garage save car body weight mass wheelbase cg" hidden>
 <h4 class="guide-title">Chassis &amp; garage</h4>
 <div class="gtier gt-real"><div class="gtier-h">LV1 · REAL LIFE</div>

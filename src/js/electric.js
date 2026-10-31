@@ -380,3 +380,15 @@ function packMaxPower(b,soc){
   const V0=packOcv(b,soc),Icut=(V0-b.vMin)/b.R,I=Math.min(b.iMax,Icut);
   return Math.max(0,(V0-I*b.R)*I);
 }
+// An electric car's battery management at a low charge (build 196): below 15% it cuts the power it allows, steeply, to 30%
+// of what the cells could give at 2%; below 2% the car limps, on a tenth of the pack's rated power (its power at 50%),
+// enough to move it off the road. Above 15% it allows all the cells give.
+const EV_BMS={low:0.15,limp:0.02,lowFloor:0.3,limpShare:0.1};
+function evBmsShare(soc){
+  const B=EV_BMS;
+  return soc>=B.low?1:soc>=B.limp?B.lowFloor+(1-B.lowFloor)*(soc-B.limp)/(B.low-B.limp):0;
+}
+function evBmsPower(b,soc){
+  const P=packMaxPower(b,soc),limp=Math.min(P,EV_BMS.limpShare*packMaxPower(b,0.5));
+  return soc<EV_BMS.limp?limp:Math.max(limp,P*evBmsShare(soc));   // the cut never takes it below the limp power
+}

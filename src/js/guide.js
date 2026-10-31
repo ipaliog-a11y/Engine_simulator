@@ -482,7 +482,69 @@ const GUIDE_ART={
     P.ctxt(80,4,'TEST41: 2.66% RMS',GP.g,0.5);}},
   book:{anim:0,draw(P){
     P.r(30,10,48,54,GP.b);P.r(82,10,48,54,GP.b);P.r(32,12,46,50,GP.white);P.r(82,12,46,50,GP.white);P.r(78,10,4,54,'#1d4e89');
-    ['A  AFR','B  BMEP','C  CA50','D  DIFF'].forEach((s,i)=>P.txt(35,16+i*10,s,'#333',0.45));['E  EGT','F  FMEP','G  GEAR','H  HP'].forEach((s,i)=>P.txt(85,16+i*10,s,'#333',0.45));}}
+    ['A  AFR','B  BMEP','C  CA50','D  DIFF'].forEach((s,i)=>P.txt(35,16+i*10,s,'#333',0.45));['E  EGT','F  FMEP','G  GEAR','H  HP'].forEach((s,i)=>P.txt(85,16+i*10,s,'#333',0.45));}},
+  // --- electric & hybrid (build 196) ---
+  evdrive:{anim:1,draw(P,t){
+    P.r(4,22,30,30,GP.steelD);P.box(4,22,30,30,GP.steel);for(let i=0;i<3;i++)for(let j=0;j<4;j++)P.r(8+i*9,26+j*6,7,4,GP.g);P.r(14,18,4,4,GP.r);P.r(22,18,4,4,GP.steel);
+    P.txt(6,56,'PACK',GP.g,0.55);
+    P.r(60,26,32,22,GP.dark);P.box(60,26,32,22,GP.c);P.plot(63,29,26,16,u=>0.5+0.42*Math.sin(u*2*Math.PI*2+t*6),GP.c);P.txt(56,52,'INVERTER',GP.c,0.55);
+    P.disc(128,37,15,GP.steelD);P.ring(128,37,15,GP.o);P.blades(128,37,2,12,6,t*5,GP.steel);P.disc(128,37,3,GP.steelL);P.txt(116,56,'MOTOR',GP.o,0.55);
+    P.r(34,36,26,2,GP.y);P.r(92,32,21,1,GP.r);P.r(92,37,21,1,GP.g);P.r(92,42,21,1,GP.b);
+    for(let i=0;i<3;i++){const f=gaFrac(i/3+t*0.8);P.r(34+f*24,35,2,4,GP.y);}
+    for(let i=0;i<3;i++){const f=gaFrac(i/3+t*1.2);P.p(92+f*20,32,GP.r);P.p(92+gaFrac(f+0.33)*20,37,GP.g);P.p(92+gaFrac(f+0.66)*20,42,GP.b);}
+    P.ctxt(80,6,'DC  ->  3-PHASE AC  ->  TORQUE',GP.dim,0.5);}},
+  evmotor:{anim:1,draw(P,t){
+    const cx=56,cy=36;P.disc(cx,cy,32,GP.steelD);P.disc(cx,cy,23,GP.bg);
+    for(let i=0;i<18;i++){const a=i/18*2*Math.PI;P.disc(Math.round(cx+27*Math.cos(a)),Math.round(cy+27*Math.sin(a)),2,GP.o);}
+    P.disc(cx,cy,21,GP.steel);
+    for(let k=0;k<6;k++){const a=t*2+k/6*2*Math.PI;P.disc(Math.round(cx+15*Math.cos(a)),Math.round(cy+15*Math.sin(a)),3,k%2?GP.r:GP.b);}
+    P.disc(cx,cy,5,GP.steelL);
+    P.txt(96,10,'STATOR',GP.steel,0.55);P.txt(96,18,'COPPER SLOTS',GP.o,0.55);P.txt(96,30,'ROTOR',GP.steelL,0.55);P.txt(96,38,'N',GP.r,0.55);P.txt(104,38,'S',GP.b,0.55);P.txt(112,38,'MAGNETS',GP.dim,0.5);
+    P.axes(96,48,58,20);P.plot(97,48,56,19,u=>u<0.35?0.9:0.9*0.35/u,GP.y);P.txt(98,44,'TORQUE',GP.y,0.45);}},
+  evmotors:{anim:1,draw(P,t){
+    P.r(40,14,80,44,GP.dark);P.box(40,14,80,44,GP.steel);
+    const wheel=(x,y)=>{P.r(x,y,10,16,GP.rub);for(let i=0;i<3;i++)P.r(x,y+Math.floor(gaFrac(t*2+i/3)*16),10,1,GP.steelD);};
+    wheel(28,16);wheel(122,16);wheel(28,40);wheel(122,40);
+    P.r(52,30,16,12,GP.b);P.txt(46,62,'FRONT',GP.b,0.5);P.r(38,35,14,2,GP.steel);P.r(68,35,4,2,GP.steel);
+    P.r(96,24,12,10,GP.o);P.r(96,38,12,10,GP.o);P.txt(98,62,'REAR',GP.o,0.5);P.r(108,28,14,2,GP.steel);P.r(108,42,14,2,GP.steel);
+    for(let i=0;i<4;i++){const f=gaFrac(i/4+t);P.p(60+Math.round(f*30),36,GP.y);}
+    P.ctxt(80,4,'ONE MOTOR PER AXLE, OR PER WHEEL',GP.dim,0.5);}},
+  inverter:{anim:1,draw(P,t){
+    P.r(4,30,30,3,GP.y);P.txt(4,22,'DC',GP.y,0.55);
+    P.box(40,14,40,40,GP.c);for(let i=0;i<6;i++)P.r(45+(i%3)*12,i<3?20:38,6,8,(Math.floor(t*6)+i)%2?GP.c:GP.steelD);P.txt(42,58,'6 SWITCHES',GP.c,0.5);
+    P.axes(88,10,68,50);const cols=[GP.r,GP.g,GP.b];
+    for(let k=0;k<3;k++)P.plot(89,12,66,46,u=>0.5+0.42*Math.sin((u*2+t*0.5)*2*Math.PI+k*2*Math.PI/3),cols[k]);
+    for(let i=0;i<66;i+=3){const v=Math.sin(((i/66)*2+t*0.5)*2*Math.PI);P.r(89+i,v>0?14:54,1,2,GP.dim);}
+    P.txt(90,62,'PWM -> SINE',GP.dim,0.5);}},
+  battery:{anim:1,draw(P,t){
+    const soc=1-gaFrac(t*0.12);
+    P.box(4,10,68,52,GP.steel);P.r(30,6,16,4,GP.steel);
+    for(let i=0;i<8;i++)for(let j=0;j<5;j++){const lit=(4-j)/5<soc;P.r(8+i*8,14+j*9,6,7,lit?(soc<0.15?GP.r:GP.g):GP.dark);}
+    P.txt(10,64,Math.round(soc*100)+'%',soc<0.15?GP.r:GP.g,0.55);
+    const ocv=u=>{const T=[2.95,3.40,3.50,3.57,3.63,3.69,3.77,3.85,3.93,4.02,4.13],x=u*10,k=Math.min(9,Math.floor(x));return (T[k]+(T[k+1]-T[k])*(x-k)-2.8)/1.4;};
+    P.axes(84,10,72,50);P.plot(85,10,70,49,ocv,GP.y);P.disc(85+Math.round(soc*69),10+48-Math.round(ocv(soc)*48),2,GP.white);
+    P.txt(86,4,'CELL VOLTS',GP.y,0.5);P.txt(118,62,'CHARGE',GP.dim,0.5);}},
+  hybrid:{anim:1,draw(P,t){
+    const mode=Math.floor(t/2.5)%3,lab=['ENGINE + MOTOR','ELECTRIC ONLY','BRAKING: CHARGE'][mode];
+    P.r(6,22,32,26,GP.steelD);P.box(6,22,32,26,GP.steel);for(let i=0;i<3;i++)P.r(10+i*9,18,6,4,mode===1?GP.dim:GP.r);P.txt(6,52,'ENGINE',GP.r,0.5);
+    P.disc(64,35,11,GP.steelD);P.ring(64,35,11,GP.o);P.blades(64,35,2,9,4,t*4,GP.steel);P.txt(70,48,'MOTOR',GP.o,0.5);
+    P.r(52,58,26,10,GP.steelD);P.box(52,58,26,10,GP.g);P.txt(82,60,'PACK',GP.g,0.5);
+    P.disc(140,35,12,GP.rub);P.disc(140,35,5,GP.steel);P.txt(130,52,'WHEELS',GP.steel,0.5);
+    P.r(38,34,15,2,GP.steel);P.r(75,34,53,2,GP.steel);P.r(64,46,2,12,GP.steel);
+    const dots=(x0,y0,x1,y1,c,sp)=>{for(let i=0;i<4;i++){const f=gaFrac(i/4+t*sp);P.r(x0+(x1-x0)*f,y0+(y1-y0)*f,2,2,c);}};
+    if(mode===0){dots(38,33,52,33,GP.r,0.8);dots(76,33,126,33,GP.y,0.8);dots(65,57,65,47,GP.g,0.8);}
+    else if(mode===1){dots(76,33,126,33,GP.y,0.8);dots(65,57,65,47,GP.g,0.8);}
+    else{dots(126,33,76,33,GP.c,0.8);dots(65,47,65,57,GP.c,0.8);}
+    P.ctxt(80,4,lab,mode===2?GP.c:GP.y,0.55);}},
+  hybtune:{anim:1,draw(P,t){
+    P.txt(4,4,'CHARGE WINDOW',GP.dim,0.5);P.r(4,14,152,10,GP.dark);P.box(4,14,152,10,GP.steel);
+    const X=v=>4+Math.round(v*151);P.r(X(0.35),14,X(0.85)-X(0.35),10,'#1f3a26');
+    for(const [v,s,c] of [[0.35,'LOW',GP.o],[0.6,'TARGET',GP.y],[0.85,'HIGH',GP.g]]){P.r(X(v),12,1,14,c);P.ctxt(X(v),28,s,c,0.45);}
+    const soc=0.6+0.17*Math.sin(t*1.1);P.r(X(soc)-1,15,3,8,GP.white);
+    P.txt(4,38,'ASSIST MAP',GP.dim,0.5);
+    const M=[100,100,75,50,25,100,75,50,25,0,75,50,25,0,0,50,25,0,0,0];
+    for(let j=0;j<4;j++)for(let i=0;i<5;i++){const v=M[j*5+i],c=Math.round(40+150*v/100);P.r(52+i*20,40+j*8,18,7,'rgb(10,'+c+','+Math.round(c*0.6)+')');}
+    P.txt(4,48,'PEDAL',GP.dim,0.45);P.txt(4,64,'SPEED ->',GP.dim,0.45);}},
 };
 // Draw one picture into its canvas at time t. The art name comes from data-art; a missing name draws
 // nothing rather than throwing, so a typo in a page cannot take the guide down.
@@ -527,7 +589,7 @@ function startGuideArt(){
 // title), so a page added to the HTML appears in the index and in the prev/next order without
 // touching this code.
 const GUIDE_CATS={start:'Getting started',basics:'How an engine works',engine:'Designing the engine',
-  air:'Breathing & boost',limits:'Knock, heat & wear',car:'The car',track:'The track',score:'Scoring & career',
+  air:'Breathing & boost',limits:'Knock, heat & wear',electric:'Electric & hybrid',car:'The car',track:'The track',score:'Scoring & career',
   more:'Options & reference'};
 const guidePages=()=>[...document.querySelectorAll('#guidePanel .guide-page')];
 let guideCur=null;

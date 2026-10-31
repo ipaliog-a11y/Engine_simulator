@@ -120,10 +120,27 @@ const motorRatedV=e=>packOcv(e.pack,0.5);
 // derating. The battery cut is solved by bisection on the torque: T w + losses(T) <= the pack's limit.
 function driveMaxTorque(e,rpm,Vdc,temp,soc){
   const m=e.motor;let T=motorMaxTorque(m,rpm,Vdc,temp.r)*motorDerate(e,temp)*(state.engineHealth||1);
-  const w=rpm*Math.PI/30,Pb=packMaxPower(e.pack,soc);
+  const w=rpm*Math.PI/30,Pb=evBmsPower(e.pack,soc);   // the battery management's limit at a low charge (build 196)
   const need=t=>t*w+motorLosses(m,t,rpm,Vdc,temp).total;
   if(T>0&&need(T)>Pb){let lo=0,hi=T;for(let k=0;k<30;k++){const mid=(lo+hi)/2;if(need(mid)>Pb)hi=mid;else lo=mid;}T=lo;}
   return T;
+}
+// The torque the pedal's travel is scaled to (build 196): the drive at its best at this speed, a full pack (its open-circuit
+// voltage and power at 100%), the motor at its coolant's temperature and undamaged. Never below what the drive gives now,
+// so a full pedal asks for all it has; a partial pedal is a torque request that does not move with the pack's charge.
+function driveRefTorque(e,rpm){
+  const c=e._refTq||(e._refTq={m:null,t:new Map()});
+  if(c.m!==e.motor){c.m=e.motor;c.t.clear();}
+  const m=e.motor,tc=m.cool.tCool,temp={w:tc,c:tc,r:tc},V=packOcv(e.pack,1),Pb=packMaxPower(e.pack,1);
+  const at=k=>{   // every 25 rpm, cached per motor
+    if(c.t.has(k))return c.t.get(k);
+    const n=k*25,w=n*Math.PI/30;let T=motorMaxTorque(m,n,V,temp.r);
+    const need=t=>t*w+motorLosses(m,t,Math.max(n,1),V,temp).total;
+    if(T>0&&need(T)>Pb){let lo=0,hi=T;for(let j=0;j<30;j++){const mid=(lo+hi)/2;if(need(mid)>Pb)hi=mid;else lo=mid;}T=lo;}
+    c.t.set(k,T);return T;
+  };
+  const x=Math.max(0,rpm)/25,k=Math.floor(x),f=x-k;
+  return at(k)*(1-f)+at(k+1)*f;
 }
 // The controller protects the drive: full current until the winding reaches 150 C (class H insulation is rated 180),
 // none at 180; the magnets likewise over their last 20 C below the grade's limit.
@@ -194,7 +211,13 @@ function motorPeakHold(e,V){
 function stepMotorBench(dt){
   const e=engine,m=e.motor,b=e.pack,st=state;
   const Voc=packOcv(b,st.soc),Vdc=Math.max(b.vMin,Voc-(st.battI||0)*b.R);
-  const T=st.soc>0.005?st.throttle*driveMaxTorque(e,st.rpm,Vdc,st.mT,st.soc):0;
+  // the pedal asks for a fixed share of the drive at its best (driveRefTorque); the controller draws whatever current that
+  // takes, so a partial pedal holds its torque as the pack's voltage falls, until the drive as it is now cannot give it
+  const Treq=st.soc>0.005?st.throttle*driveRefTorque(e,st.rpm):0,Tmax=st.soc>0.005?driveMaxTorque(e,st.rpm,Vdc,st.mT,st.soc):0,T=Math.min(Treq,Tmax);
+  // what holds the torque under the pedal's request, for the LIVE panel (build 196): limp mode, the battery management at a
+  // low charge, the controller's heat, or the pack's voltage and current
+  st.evAsked=Treq;
+  st.evLimit=Treq-T<Math.max(0.5,Treq*0.005)?'':st.soc<EV_BMS.limp?'limp':evBmsShare(st.soc)<1?'lowsoc':motorDerate(e,st.mT)<0.999?'thermal':'battery';
   const L=motorLosses(m,T,st.rpm,Vdc,st.mT),w=st.rpm*Math.PI/30,Pb=T*w+L.total;
   const d=packDraw(b,st.soc,Math.max(0,Pb))||{V:b.vMin,I:0,heat:0};
   st.soc=Math.max(0,st.soc-d.I*dt/(b.Ah*3600));
@@ -319,9 +342,12 @@ function renderMotorResult(force){
 }
 
 // ---- the readouts ----
+const EV_LIMIT_LABEL={'':'NONE',limp:'LIMP',lowsoc:'LOW SOC',thermal:'THERMAL',battery:'BATTERY'};
 // The LIVE panel's tiles, retitled for a motor; the engine's titles come back when an engine is built again.
 const EV_TILES={statHP:['POWER','HP'],statTQ:['TORQUE','Nm'],statBSFC:['BATTERY','kW'],statEff:['DRIVE EFF','%'],
   statFuel:['CHARGE','%'],statKnock:['WINDING','°C'],statHealth:['MOTOR HEALTH','%']};
+// the tiles only a motor has (build 196): the pack's current and what is limiting the power
+const EV_ONLY_TILES=['statAmps','statLimit'];
 function setLiveLabels(ev){
   for(const id in EV_TILES){
     const el=document.getElementById(id);if(!el)continue;
@@ -329,6 +355,7 @@ function setLiveLabels(ev){
     if(L.dataset.ice==null){L.dataset.ice=L.textContent;U.dataset.ice=U.textContent;}
     L.textContent=ev?tr(EV_TILES[id][0]):tr(L.dataset.ice);U.textContent=ev?EV_TILES[id][1]:U.dataset.ice;
   }
+  EV_ONLY_TILES.forEach(id=>{const el=document.getElementById(id);if(el)el.style.display=ev?'':'none';});
   // what a motor has no use for leaves the panel: mixture, intake air, the engine's coolant and oil, the alternator's
   // load, auto-thermal and nitrous, and the printable report (EV_REPORT_NOTE); it comes back with an engine
   ['afr','iat','coolant','oil','elec'].forEach(id=>{const el=document.getElementById(id);
@@ -348,6 +375,11 @@ function updateMotorUI(){
   document.querySelector('#statBSFC .value').textContent=(st.battKW||0).toFixed(1);
   document.querySelector('#statEff .value').textContent=st.thermalEff.toFixed(1);
   document.querySelector('#statFuel .value').textContent=Math.round(st.soc*100);
+  const aEl=g('statAmps');if(aEl){aEl.querySelector('.value').textContent=Math.round(st.battI||0);aEl.className='stat'+((st.battI||0)>engine.pack.iMax*0.9?' warning':'');}
+  const lEl=g('statLimit');
+  if(lEl){const why=st.evLimit||'',got=st.evAsked>0.5?Math.round(st.torque/st.evAsked*100):100;
+    lEl.querySelector('.value').textContent=tr(EV_LIMIT_LABEL[why]);lEl.querySelector('.unit').textContent=why?got+'% '+tr('of asked'):'';
+    lEl.className='stat'+(why==='limp'?' danger':why?' warning':'');}
   const wEl=g('statKnock');wEl.querySelector('.value').textContent=Math.round(st.mT.w);
   wEl.className='stat'+(st.mT.w>165?' danger':st.mT.w>140?' warning':'');
   const hp=Math.round(st.engineHealth*100),hEl=g('statHealth');
@@ -358,7 +390,9 @@ function updateMotorUI(){
   else if(vizMode==='design'){status.textContent=tr('DESIGN MODE • CONFIGURE & BUILD');status.className='status-bar';}
   else if(st.blown){status.textContent=tr('MOTOR FAILURE')+' ('+tr(st.wearCause)+') — '+tr('REBUILD WITH BUILD & DYNO');status.className='status-bar err';}
   else if(st.wearCause){status.textContent=tr('DAMAGE')+': '+tr(st.wearCause)+' — '+tr('HEALTH')+' '+hp+'%';status.className='status-bar err';}
-  else if(st.soc<0.02){status.textContent=tr('PACK EMPTY — REBUILD TO RECHARGE');status.className='status-bar err';}
+  else if(st.soc<=0.005){status.textContent=tr('PACK EMPTY — REBUILD TO RECHARGE');status.className='status-bar err';}
+  else if(st.soc<EV_BMS.limp){status.textContent=tr('LIMP MODE')+' • '+tr('CHARGE')+' '+(st.soc*100).toFixed(1)+'% • '+tr('power held to')+' '+Math.round(EV_BMS.limpShare*packMaxPower(engine.pack,0.5)/1000)+' kW';status.className='status-bar err';}
+  else if(st.soc<EV_BMS.low){status.textContent=tr('LOW CHARGE')+' • '+Math.round(st.soc*100)+'% • '+tr('battery power cut to')+' '+Math.round(evBmsShare(st.soc)*100)+'%'+(st.evLimit==='lowsoc'?' • '+tr('LIMITING')+' '+Math.round(st.torque/Math.max(1e-6,st.evAsked)*100)+'% '+tr('of asked'):'');status.className='status-bar warn';}
   else if(der<0.999){status.textContent=tr('THERMAL DERATE')+' • '+Math.round(der*100)+'% '+tr('of full current')+' • '+tr('WINDING')+' '+Math.round(st.mT.w)+'°C';status.className='status-bar warn';}
   else if(st.rpm>=engine.redline-30){status.textContent=tr('SPEED LIMIT')+' • '+Math.round(st.rpm)+' RPM';status.className='status-bar warn';}
   else if(st.powerKW>3){status.textContent=tr('RUNNING')+' • '+st.powerKW.toFixed(0)+' kW @ '+Math.round(st.rpm)+' RPM • '+st.thermalEff.toFixed(1)+'%';status.className='status-bar';}

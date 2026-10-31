@@ -420,7 +420,7 @@ table.hy-map td:focus{outline:2px solid #ffcc00;outline-offset:-2px}
 <body>
 <div class="container">
 <header>
-<h1>PIXEL ENGINE SIM v0.7 build 195</h1>
+<h1>PIXEL ENGINE SIM v0.7 build 196</h1>
 <div class="subtitle" id="subtitle">ENGINE DESIGNER • BUILD IT, THEN DRIVE IT</div>
 </header>
 <div class="build-strip" id="buildStrip">
@@ -483,6 +483,8 @@ table.hy-map td:focus{outline:2px solid #ffcc00;outline-offset:-2px}
 <div class="field"><label for="edHySocLo">CHARGE LOW (%)</label><input type="number" id="edHySocLo" min="10" max="60" step="1" value="35"></div>
 <div class="field"><label for="edHySocT">CHARGE TARGET (%)</label><input type="number" id="edHySocT" min="10" max="80" step="1" value="60"></div>
 <div class="field"><label for="edHySocHi">CHARGE HIGH (%)</label><input type="number" id="edHySocHi" min="40" max="95" step="1" value="85"></div>
+<div class="field"><label for="edHyDeployMJ">DEPLOY LIMIT (MJ/LAP, 0 = NONE)</label><input type="number" id="edHyDeployMJ" min="0" max="50" step="0.1" value="0"></div>
+<div class="field"><label for="edHyHarvestMJ">HARVEST LIMIT (MJ/LAP, 0 = NONE)</label><input type="number" id="edHyHarvestMJ" min="0" max="50" step="0.1" value="0"></div>
 </div>
 <div class="hy-map-wrap" data-hy><div class="hint">ASSIST MAP: the share of the motor's help over shaft speed and pedal. Click a cell to step it down by 25% (from 0 back to 100%).</div><div id="hyAssistMap"></div></div>
 
@@ -1775,6 +1777,258 @@ Limit: emissions are correlations with the right trends, not combustion chemistr
 </div>
 <div class="guide-see">See also: <a data-gp="firetriangle">Air, fuel and spark</a> · <a data-gp="fuelmap">Fuel, injection &amp; the fuel map</a> · <a data-gp="scorecard">The scorecard</a></div>
 </section>
+<section class="guide-page" id="gp-evdrive" data-cat="electric" data-title="The electric drive" data-tags="electric ev battery inverter motor regen regenerative braking limp low charge soc pack current power limit" hidden>
+<h4 class="guide-title">The electric drive</h4>
+<div class="gtier gt-real"><div class="gtier-h">LV1 · REAL LIFE</div>
+<canvas class="gart" data-art="evdrive"></canvas><div class="gart-cap">Battery, inverter, motor: the whole drivetrain of an electric car.</div>
+<div class="guide-body" data-gk="evdriveReal">
+An electric car has three main parts. The <b>battery</b> stores energy as direct current. The <b>inverter</b> switches that into three-phase alternating current at whatever frequency the motor needs. The <b>motor</b> turns the current into torque. One fixed reduction gear takes the torque to the wheels: there is no clutch, no gearbox and no idle.<br>
+The motor gives its full torque from standstill and holds it up to a speed called the <b>knee</b>. Above the knee the power stays roughly flat and the torque falls. Braking runs the motor backwards as a generator and puts energy back in the battery: <b>regenerative braking</b>.<br>
+A battery's voltage falls as it empties. The car's computer draws more current to make up for it, until the battery runs low. Then it cuts the power to protect the cells, and when the battery is nearly empty it allows only a little: <b>limp mode</b>.
+</div>
+</div>
+<div class="gtier gt-game"><div class="gtier-h">LV2 · IN THE GAME</div>
+<div class="guide-body" data-gk="evdriveGame">
+<b>Building one.</b> On the ENGINE tab set <b>ENGINE TYPE</b> to <b>ELECTRIC</b>. The combustion sections give way to <b>Motor</b>, <b>More motors</b>, <b>Inverter</b> and <b>Battery</b>, each explained on its own page. Press <b>BUILD &amp; DYNO</b> as for an engine. The presets include three Teslas: the Model 3 RWD, the Model Y Long Range and the Model S Plaid.<br>
+<b>On the LIVE bench.</b> <b>THROTTLE</b> asks for torque: a fixed share of what the drive gives at that speed when it is at its best (a full battery, a cool motor, no damage). The controller draws whatever current that takes, so a part throttle holds its power as the battery drains. <b>LOAD</b> is the dyno brake. The tiles show <b>POWER</b>, <b>TORQUE</b>, <b>BATTERY</b> (kW drawn), <b>DRIVE EFF</b>, <b>CHARGE</b>, <b>WINDING</b> temperature, <b>MOTOR HEALTH</b>, <b>PACK CURRENT</b> (A) and <b>POWER LIMIT</b>. POWER LIMIT says what is holding the power below the request, and how much of the request you are getting:<br>
+• <b>NONE</b>: you get all you asked for.<br>
+• <b>BATTERY</b>: the battery's voltage or current limit.<br>
+• <b>THERMAL</b>: the winding or the magnets are too hot.<br>
+• <b>LOW SOC</b>: the battery is below 15% and its management is cutting the power.<br>
+• <b>LIMP</b>: the battery is below 2%.<br>
+The bench never recharges: <b>BUILD &amp; DYNO</b> starts again at 90% charge.<br>
+<b>On the road.</b> GEARING on the VEHICLE tab sets the single reduction. The VEHICLE tab gives the WLTP consumption in Wh/km, from the battery and at the socket, and the range. In a race the battery stands in for the fuel tank: there is no charging in the pit lane, an energy manager chooses the power that lasts the distance, and a car that empties its battery retires OUT OF CHARGE.
+</div>
+</div>
+<div class="gtier gt-phys"><div class="gtier-h">LV3 · THE PHYSICS</div>
+<div class="guide-body" data-gk="evdrivePhys">
+The battery gives the shaft's power plus every loss on the way: the copper's I²R, the iron's hysteresis and eddy currents, friction and windage, and the inverter's conduction and switching.
+<span class="geq">P<sub>pack</sub> = T·ω + P<sub>cu</sub> + P<sub>fe</sub> + P<sub>mech</sub> + P<sub>inv</sub></span>
+The battery is an open-circuit voltage that follows its charge, behind an internal resistance: <span class="geq">V = V<sub>oc</sub>(SoC) − I·R</span> The current solves P = V·I. A pack can give no more than its rated current, and never so much that its voltage falls below the cells' cut-off.<br>
+<b>Limits, in the order they bite.</b><br>
+• <b>Battery temperature:</b> the battery management cuts the power from 50 °C, to nothing at 60 °C.<br>
+• <b>Winding temperature:</b> the controller cuts the current from 150 °C, to nothing at 180 °C.<br>
+• <b>Magnet temperature:</b> it does the same over the last 20 °C below the magnet grade's limit.<br>
+• <b>Low charge:</b> below 15% the battery management allows a share of what the cells could give, falling straight to 30% at 2%.<br>
+• <b>Limp mode:</b> below 2% it holds the power to a tenth of the battery's rated power (its power at 50% charge).<br>
+Damage the controller cannot prevent is permanent: magnets heated past their grade's limit lose flux, and a winding above 200 °C cooks its insulation.<br>
+The 0-100 and the lap run at 50% charge. A race starts at 95% and stops at 5%.
+</div>
+</div>
+<div class="guide-see">See also: <a data-gp="evmotor">The motor</a> · <a data-gp="battery">The battery</a> · <a data-gp="inverter">The inverter</a> · <a data-gp="race">The race</a></div>
+</section>
+<section class="guide-page" id="gp-evmotor" data-cat="electric" data-title="The motor" data-tags="electric motor permanent magnet induction rotor stack poles turns magnets ferrite ndfeb neodymium dysprosium sleeve bridges cooling knee field weakening" hidden>
+<h4 class="guide-title">The motor</h4>
+<div class="gtier gt-real"><div class="gtier-h">LV1 · REAL LIFE</div>
+<canvas class="gart" data-art="evmotor"></canvas><div class="gart-cap">A magnet rotor turning inside a stator of copper windings.</div>
+<div class="guide-body" data-gk="evmotorReal">
+A traction motor has two parts. The <b>stator</b> is a stack of thin steel sheets with copper windings in slots, and it stays still. The <b>rotor</b> spins inside it. Current in the windings makes a magnetic field that rotates, and the rotor follows it.<br>
+In a <b>permanent-magnet</b> motor the rotor carries magnets and turns exactly with the field. In an <b>induction</b> motor the rotor is a cage of copper bars: the stator's field induces currents in the cage, which slip a little behind the field and are pulled along.<br>
+Torque grows with the rotor's volume and with the current. Spinning makes the motor a generator too: its <b>back-EMF</b> rises with speed. Where it reaches the battery's voltage (the <b>knee</b>), the controller weakens the field to keep going. Above the knee the power stays about flat and the torque falls.
+</div>
+</div>
+<div class="gtier gt-game"><div class="gtier-h">LV2 · IN THE GAME</div>
+<div class="guide-body" data-gk="evmotorGame">
+<b>MOTOR TYPE.</b><br>
+• <b>PERMANENT MAGNET</b>: the most torque per amp and the best efficiency. Its magnets cost money, lose strength when hot, and drag a little (iron loss) even when it gives no torque.<br>
+• <b>INDUCTION (COPPER CAGE)</b>: no magnets. It buys its field with current, so it makes less torque per amp, and its rotor heats up. With no torque asked it has no field and no drag, which is why Tesla puts one on the front axle of the Model 3 and Model Y.<br>
+<b>ROTOR DIAMETER</b> (80–260 mm). Torque grows with the diameter squared. A bigger rotor is heavier, has more inertia and reaches its surface-speed limit at lower rpm.<br>
+<b>STACK LENGTH</b> (40–250 mm). Torque grows in proportion to the length, with no effect on the speed limits.<br>
+<b>POLES</b> (4–12). More poles mean shorter end windings and a thinner, lighter core. They also raise the electrical frequency for a given speed: more iron loss, and a lower top speed from the inverter's frequency limit.<br>
+<b>TURNS PER PHASE</b> (4–120). More turns give more torque per amp but more back-EMF, so the knee comes at lower rpm and there is less power at speed. Fewer turns move the knee up and need more current for the same torque. Match the turns to the battery's voltage.<br>
+<b>MAGNETS.</b><br>
+• <b>FERRITE</b>: cheap and survives 250 °C, but it is a third as strong, so it needs twice the volume.<br>
+• <b>NdFeB (SH)</b>: neodymium, the standard; strong, with a limit of 150 °C.<br>
+• <b>NdFeB + Dy (UH)</b>: dysprosium raises the limit to 180 °C for slightly less strength and a higher price.<br>
+<b>MAGNET RETENTION.</b> What holds the magnets in at speed. <b>IRON BRIDGES</b> in the steel sheets allow a rotor surface speed of 150 m/s. A <b>CARBON SLEEVE</b> wound over the rotor allows 220 m/s, which is how the Plaid's large rotors reach 20,000 rpm.<br>
+<b>MOTOR COOLING.</b> Decides how long the peak lasts and what the motor holds for good.<br>
+• <b>AIR (FINNED)</b>: free, but weak.<br>
+• <b>WATER JACKET</b>: coolant round the stator.<br>
+• <b>OIL SPRAY</b>: the jacket, plus oil sprayed on the end windings and the rotor.<br>
+• <b>DIRECT SLOT</b>: coolant inside the slots, against the copper; the best and the dearest.<br>
+<b>MAX SPEED</b> (rpm). The design speed. The motor's real top speed is the lowest of this, the rotor's surface-speed limit and the inverter's frequency limit. Watch the summary under the form.
+</div>
+</div>
+<div class="gtier gt-phys"><div class="gtier-h">LV3 · THE PHYSICS</div>
+<div class="guide-body" data-gk="evmotorPhys">
+Torque is the flux linkage times the current: <span class="geq">T = 3/2 · p · ψ · I,  ψ = k<sub>w</sub> · N · (2/π) · B<sub>g</sub> · τ<sub>p</sub> · L</span> Here p is the pole pairs, N the turns per phase, k<sub>w</sub> = 0.93 the winding factor, τ<sub>p</sub> the pole pitch (πD/poles) and L the stack. The air-gap flux B<sub>g</sub> is 0.85 times the magnets' remanence for a magnet motor (1.28 T for SH NdFeB, 0.42 T for ferrite). An induction motor runs 0.8 T and pays for it with a magnetising current, which takes its share of the inverter's amps.<br>
+The knee is where the back-EMF ω·ψ, with the winding's voltage drop on top (×1.29 at full current), meets the battery's voltage. Above it the power holds to about 4× the knee speed for a magnet motor and 3× for an induction motor.<br>
+<b>Losses.</b> Copper resistance comes from the slot area (40% copper fill) and rises 0.393% per kelvin. Iron loss is Steinmetz's law on 0.35 mm silicon steel.<br>
+<b>Top speed.</b> The lowest of three: MAX SPEED; the rotor surface speed v/(πD); and the inverter's output frequency, 1.2 kHz for IGBTs and 2 kHz for SiC, divided by the pole pairs.<br>
+<b>Heat.</b> Three lumped nodes (winding, stator core, rotor) and the coolant.<br>
+<b>Calibration.</b> Three constants come from one measured motor, the Tesla Model 3 rear (MotorXP, 2020). The 2012 Nissan Leaf as ORNL measured it is the check.
+</div>
+</div>
+<div class="guide-see">See also: <a data-gp="evdrive">The electric drive</a> · <a data-gp="evmotors">More motors</a> · <a data-gp="inverter">The inverter</a></div>
+</section>
+<section class="guide-page" id="gp-evmotors" data-cat="electric" data-title="More motors" data-tags="dual motor awd front motor rear motors plaid tri motor torque vectoring front reduction" hidden>
+<h4 class="guide-title">More motors</h4>
+<div class="gtier gt-real"><div class="gtier-h">LV1 · REAL LIFE</div>
+<canvas class="gart" data-art="evmotors"></canvas><div class="gart-cap">A motor on each axle makes an electric car four-wheel drive with no driveshaft.</div>
+<div class="guide-body" data-gk="evmotorsReal">
+An electric car becomes four-wheel drive by adding a second motor on the other axle; no driveshaft or centre differential is needed. Tesla's dual-motor Model 3 and Model Y pair a magnet motor at the rear with an induction motor at the front, which can idle along at a cruise without dragging. The Model S Plaid has three motors, two at the rear, one for each wheel, and one at the front.<br>
+A hybrid can do the same: the Porsche 918 Spyder drives its front wheels with an electric motor of their own while the engine drives the rear.
+</div>
+</div>
+<div class="gtier gt-game"><div class="gtier-h">LV2 · IN THE GAME</div>
+<div class="guide-body" data-gk="evmotorsGame">
+<b>REAR MOTORS</b> (electric cars only). <b>1</b>, or <b>2 (ONE PER WHEEL)</b>: two of the main motor, twice the torque, the mass and the cost.<br>
+<b>FRONT MOTOR.</b> <b>NONE</b>, <b>PERMANENT MAGNET</b> or <b>INDUCTION (COPPER CAGE)</b>. Fitting one makes the car all-wheel drive and locks the drivetrain field on the VEHICLE tab; taking it off gives the old drive back.<br>
+The front motor has its own <b>FRONT ROTOR DIAMETER</b>, <b>FRONT STACK LENGTH</b>, <b>FRONT POLES</b>, <b>FRONT TURNS PER PHASE</b> and <b>FRONT CURRENT</b>, which work as on <a data-gp="evmotor">The motor</a>. It shares the main motor's magnets, retention, cooling, inverter type and max speed.<br>
+<b>FRONT REDUCTION</b> (hybrids only). The gear ratio from the front motor to the wheels. Leave it at <b>0</b> to have it matched, so the motor's top speed falls at the car's top speed. Above its top speed the front motor is disconnected.
+</div>
+</div>
+<div class="gtier gt-phys"><div class="gtier-h">LV3 · THE PHYSICS</div>
+<div class="guide-body" data-gk="evmotorsPhys">
+<b>On an electric car</b> every motor drives through the same reduction, so they turn at one speed and act as one motor. Their torques, masses, costs and inertias add; the top speed is the lowest of theirs. The controller splits the torque between the axles to lose the least: at a cruise an induction front motor carries nothing, and flat out both give all they have. They share one cooling loop, and the controller's limits are taken at the lowest of their rotors'.<br>
+<b>On a hybrid</b> the front motor has its own reduction. Its force at the wheels is <span class="geq">F = T · i<sub>front</sub> · 0.97 / r<sub>tyre</sub></span> and it is added to the gearbox's in the 0-100, the top speed and the lap. The two motors share the battery's power in proportion to their peak powers, and the lap's charge balance counts what the front one draws. It does not regenerate; only the main motor does.
+</div>
+</div>
+<div class="guide-see">See also: <a data-gp="evmotor">The motor</a> · <a data-gp="traction">Differential &amp; traction</a> · <a data-gp="hybrid">Hybrids</a></div>
+</section>
+<section class="guide-page" id="gp-inverter" data-cat="electric" data-title="The inverter" data-tags="inverter igbt sic silicon carbide mosfet current rating amps switching frequency" hidden>
+<h4 class="guide-title">The inverter</h4>
+<div class="gtier gt-real"><div class="gtier-h">LV1 · REAL LIFE</div>
+<canvas class="gart" data-art="inverter"></canvas><div class="gart-cap">Fast switches chop the battery's steady voltage into the motor's three-phase current.</div>
+<div class="guide-body" data-gk="inverterReal">
+The battery gives a steady voltage; the motor needs three alternating currents that follow the rotor. The <b>inverter</b> makes them with six power switches, turning them on and off thousands of times a second so that the average current traces a sine wave.<br>
+Older and cheaper inverters use <b>silicon IGBTs</b>. Newer ones use <b>silicon carbide (SiC) MOSFETs</b>, which switch faster and lose less, especially at part load. Tesla moved the Model 3 to SiC in 2017. The inverter's <b>current rating</b> sets the motor's torque, since torque is current times flux.
+</div>
+</div>
+<div class="gtier gt-game"><div class="gtier-h">LV2 · IN THE GAME</div>
+<div class="guide-body" data-gk="inverterGame">
+<b>SWITCHES.</b><br>
+• <b>SILICON IGBT</b>: cheaper. It has a fixed voltage drop that costs most at part load, and it limits the output frequency to 1.2 kHz.<br>
+• <b>SiC MOSFET</b>: no fixed drop, a fifth of the switching loss, 2 kHz. It costs nearly twice as much per amp.<br>
+<b>CURRENT RATING</b> (100–1600 A rms). The most current the inverter gives the motor. Torque rises with it; so do the copper's heat (with the square of the current) and the price. The battery has to be able to supply it too: watch the summary for which one limits.
+</div>
+</div>
+<div class="gtier gt-phys"><div class="gtier-h">LV3 · THE PHYSICS</div>
+<div class="guide-body" data-gk="inverterPhys">
+Losses in the three phase legs:
+<span class="geq">P<sub>inv</sub> = 3·(0.9·V<sub>0</sub>·I + R<sub>on</sub>·I²) + 3·(√2/π)·t<sub>sw</sub>·f<sub>sw</sub>·V<sub>dc</sub>·I</span>
+<b>IGBT:</b> V<sub>0</sub> = 0.8 V knee, switching at 10 kHz, t<sub>sw</sub> = 0.23 µs. That is an 820 A automotive module losing about 75 mJ per on-off cycle at 400 V.<br>
+<b>SiC:</b> no knee, 16 kHz, t<sub>sw</sub> = 0.05 µs.<br>
+On-resistance is for a 1000 A device and scales inversely with the rating. The output frequency limit caps the motor's speed at f·60/p rpm. Cost is $6 per amp of rating for IGBT and $11 for SiC.
+</div>
+</div>
+<div class="guide-see">See also: <a data-gp="evmotor">The motor</a> · <a data-gp="battery">The battery</a></div>
+</section>
+<section class="guide-page" id="gp-battery" data-cat="electric" data-title="The battery" data-tags="battery pack chemistry lfp nca nmc nimh lead acid power cells hybrid cells cells in series capacity kwh voltage technology year" hidden>
+<h4 class="guide-title">The battery</h4>
+<div class="gtier gt-real"><div class="gtier-h">LV1 · REAL LIFE</div>
+<canvas class="gart" data-art="battery"></canvas><div class="gart-cap">Cells in series set the voltage; the capacity sets how far it goes.</div>
+<div class="guide-body" data-gk="batteryReal">
+A traction battery is hundreds or thousands of cells. Cells in <b>series</b> add their voltages; groups in <b>parallel</b> add their capacity and the current they can give. The chemistry decides how much energy a kilogram holds, how hard it can be discharged and charged, how long it lasts and what it costs.<br>
+A cell's voltage falls as it empties, and its internal resistance turns some of the current into heat. A battery that is cold, hot or nearly empty gives less power.<br>
+Prices have fallen tenfold: about $1100 per kWh in 2010, $160 in 2019 and $115 in 2024.
+</div>
+</div>
+<div class="gtier gt-game"><div class="gtier-h">LV2 · IN THE GAME</div>
+<div class="guide-body" data-gk="batteryGame">
+<b>CHEMISTRY.</b> Each is offered only from the year it reached cars.<br>
+• <b>LEAD-ACID</b>: heavy (about 40 Wh/kg) and slow to charge; the 1990s.<br>
+• <b>NiMH</b>: from 1996; tough, about 70 Wh/kg.<br>
+• <b>LFP</b> (lithium iron phosphate): from 2005; cheap, safe and long-lived, about 175 Wh/kg by 2023; a flat voltage curve and a low cell voltage (3.2 V). From 2020 it is packed cell-to-pack, which wastes the least weight.<br>
+• <b>NCA / NMC</b>: from 2008; the energy chemistry of long-range cars, about 270 Wh/kg, 3.7 V cells.<br>
+• <b>NCA (POWER CELLS)</b>: from 2012; the same chemistry built for current, as in the Plaid. Less energy per kilogram, but nearly twice the discharge rate.<br>
+• <b>Li-ION (HYBRID CELLS)</b> and <b>NiMH (HYBRID CELLS)</b>: built for hybrids, a small battery that gives and takes 20–25 times its capacity in power.<br>
+<b>CELLS IN SERIES</b> (20–400). Sets the voltage: 96 NCA cells make about 350 V, 110 make about 400 V. Higher voltage moves the motor's knee up (more power at speed) and lowers the current for the same power.<br>
+<b>CAPACITY</b> (kWh). Range, mass and price. A bigger battery also gives and takes more power, because there are more cells in parallel.<br>
+<b>TECHNOLOGY YEAR.</b> Each chemistry's energy per kilogram and price per kWh follow the year: a 2010 battery is heavier and dearer than the same battery in 2024.
+</div>
+</div>
+<div class="gtier gt-phys"><div class="gtier-h">LV3 · THE PHYSICS</div>
+<div class="guide-body" data-gk="batteryPhys">
+Each chemistry is a table of open-circuit voltage against charge, a cut-off voltage, a resistance-capacity product (Ω·Ah), a sustained discharge rate (C) and a charge rate it accepts under braking.<br>
+<b>The pack.</b> Nominal voltage is the cells in series times the mean cell voltage. The capacity in Ah is kWh·1000 / V<sub>nom</sub>. The resistance is <span class="geq">R = N<sub>s</sub> · (R·Ah)<sub>cell</sub> / Ah · 1.1</span> (+10% for busbars, contactors and the fuse).<br>
+<b>Limits.</b> The most current is the C-rate times the Ah (NCA 6C, power cells 10C, hybrid cells 25C). The most power is reached either at that current or at the cut-off voltage, whichever comes first. The charge rate under braking is the lithium-plating limit: about 1C for NCA, 1.5C for LFP.<br>
+<b>Mass.</b> The cells' mass is kWh over Wh/kg at the year, divided by the cells' share of the pack (0.62–0.68, or 0.82 cell-to-pack).<br>
+<b>Heat.</b> The pack is one lumped node: I²R heat in, a liquid cooling plate taking about 2 W/K per kWh to 30 °C coolant. Its management cuts power from 50 °C.
+</div>
+</div>
+<div class="guide-see">See also: <a data-gp="evdrive">The electric drive</a> · <a data-gp="inverter">The inverter</a> · <a data-gp="hybrid">Hybrids</a></div>
+</section>
+<section class="guide-page" id="gp-hybrid" data-cat="electric" data-title="Hybrids" data-tags="hybrid p2 parallel power-split ecvt prius series e-power plug-in phev assist drive modes ev hold charge sport manual lever bsfc" hidden>
+<h4 class="guide-title">Hybrids</h4>
+<div class="gtier gt-real"><div class="gtier-h">LV1 · REAL LIFE</div>
+<canvas class="gart" data-art="hybrid"></canvas><div class="gart-cap">Engine, motor and battery: power flows between all three.</div>
+<div class="guide-body" data-gk="hybridReal">
+A hybrid adds an electric motor and a small battery to an engine. Braking charges the battery. The motor helps the engine when it is least efficient (pulling away, low in the revs) and drives the car alone at low speed with the engine stopped. There are three main layouts:<br>
+• <b>Parallel (P2)</b>: the motor sits between the engine's clutch and the gearbox and turns with the engine; both drive the wheels through the gears. Hyundai, BMW and Porsche use it.<br>
+• <b>Power-split</b>: a planetary gear set divides the engine's power between the wheels and a generator, so the engine runs at any speed it likes: an electric CVT. This is Toyota's system.<br>
+• <b>Series</b>: the engine only drives a generator; a motor alone drives the wheels (Nissan e-POWER).<br>
+A <b>plug-in</b> hybrid has a bigger battery charged from the mains, and drives tens of kilometres on it before it starts behaving like an ordinary hybrid.
+</div>
+</div>
+<div class="gtier gt-game"><div class="gtier-h">LV2 · IN THE GAME</div>
+<div class="guide-body" data-gk="hybridGame">
+<b>HYBRID</b> on the ENGINE tab adds the system to any combustion engine:<br>
+• <b>PARALLEL (P2)</b>: the motor's torque adds to the engine's at engine speed, through the gearbox.<br>
+• <b>POWER-SPLIT (eCVT)</b>: Toyota's planetary; the car has no gears, only one reduction.<br>
+• <b>SERIES</b>: a generator sized from the engine, and the traction motor alone at the wheels.<br>
+The <b>Motor</b>, <b>Inverter</b> and <b>Battery</b> sections then design the hybrid's motor and battery, and the <a data-gp="hybtune">hybrid tune</a> appears.<br>
+<b>ASSIST</b> (P2 only). When the motor helps at full throttle:<br>
+• <b>FULL</b>: everything it has.<br>
+• <b>ECO (TORQUE FILL)</b>: only to fill the engine's curve up to its peak torque.<br>
+• <b>ABOVE RPM</b> or <b>BELOW RPM</b>: only past, or short of, the ASSIST RPM.<br>
+<b>PLUG-IN.</b> YES starts the battery full and drives it down first. The VEHICLE tab then gives the WLTP figures a plug-in is homologated with: weighted consumption, electric range and kWh/100 km. In a race it starts full and spreads that charge over the distance.<br>
+<b>The LIVE bench</b> runs the engine, the motor and the battery together. The HYBRID panel picks the drive mode:<br>
+• <b>AUTO</b>: the controller chooses.<br>
+• <b>EV</b>: electric only, until the battery runs low.<br>
+• <b>HOLD</b>: keeps the charge where it is.<br>
+• <b>CHARGE</b>: the engine charges the battery.<br>
+• <b>SPORT</b>: the motor always helps.<br>
+• <b>ENGINE ONLY</b>.<br>
+• <b>MANUAL</b>: you set the motor command and, on a power-split, the engine's speed.<br>
+<b>VIEW</b> shows the power flow, the power-split's lever diagram, or the engine's BSFC map with its operating point. The pedal asks for the engine's torque plus the motor's, so from about half throttle the engine runs at full load: give it the cooling for that.<br>
+Presets: the Hyundai Ioniq Hybrid, the Toyota Prius, the Nissan Qashqai e-POWER, the BMW 330e and the Porsche 918 Spyder.
+</div>
+</div>
+<div class="gtier gt-phys"><div class="gtier-h">LV3 · THE PHYSICS</div>
+<div class="guide-body" data-gk="hybridPhys">
+<b>The power-split.</b> The planetary obeys Willis's equation, with Toyota's 30/78-tooth gear set and MG2 at 65:17 to the ring, on a 600 V bus: <span class="geq">n<sub>sun</sub> · Z<sub>s</sub> + n<sub>ring</sub> · Z<sub>r</sub> = n<sub>carrier</sub> · (Z<sub>s</sub> + Z<sub>r</sub>)</span> MG1 holds the engine on its optimal operating line, the lowest fuel for each power.<br>
+<b>The series hybrid.</b> The generator is sized for 110% of the engine's peak torque and 105% of its power.<br>
+<b>Laps and races.</b> The lap balances the battery over each lap: it is solved at full assist and solved again with the assist cut until what the motor spends equals what braking returns.<br>
+<b>The WLTP cycle.</b> An equivalent-consumption energy manager (ECMS) prices the battery's energy in fuel and chooses each second between the engine off, load-point shifting and assist. If the charge does not balance, the cycle is corrected as WLTP corrects a hybrid's.<br>
+<b>Plug-ins.</b> Run the regulation's procedure (EU 2017/1151): the cycle from a full battery until it sustains its charge, weighted by the utility factor.
+</div>
+</div>
+<div class="guide-see">See also: <a data-gp="hybtune">The hybrid tune</a> · <a data-gp="evmotor">The motor</a> · <a data-gp="battery">The battery</a></div>
+</section>
+<section class="guide-page" id="gp-hybtune" data-cat="electric" data-title="The hybrid tune" data-tags="hybrid tune assist map regeneration load point shifting ev up to ev power charge window target deploy limit harvest limit mj per lap" hidden>
+<h4 class="guide-title">The hybrid tune</h4>
+<div class="gtier gt-real"><div class="gtier-h">LV1 · REAL LIFE</div>
+<canvas class="gart" data-art="hybtune"></canvas><div class="gart-cap">The charge window, and where in it the controller aims.</div>
+<div class="guide-body" data-gk="hybtuneReal">
+A hybrid's behaviour is a calibration: rules its engineers write into the controller. When does the motor help, and how much? When does the car drive on electricity alone, and how fast? How hard does braking charge the battery? Between what charge levels may the battery swing, and where should it sit?<br>
+A frugal road car keeps the engine off as much as it can. A racing hybrid spends every joule it can get, and racing classes limit how much energy the battery may give and take back on each lap.
+</div>
+</div>
+<div class="gtier gt-game"><div class="gtier-h">LV2 · IN THE GAME</div>
+<div class="guide-body" data-gk="hybtuneGame">
+<b>HYBRID TUNE</b> on the ENGINE tab is saved with the build. The 0-100, the lap, the race, the WLTP cycle and the LIVE bench all read it.<br>
+<b>ASSIST RPM.</b> The engine speed that ASSIST's ABOVE RPM and BELOW RPM settings use.<br>
+<b>REGENERATION.</b> <b>HIGH</b>, <b>LOW</b> (half) or <b>OFF</b>: how hard braking charges the battery.<br>
+<b>LOAD-POINT SHIFTING.</b> <b>ON</b> lets the engine work harder than the car needs and store the surplus, which moves it to where it burns least. <b>OFF</b> charges only from braking and from a low battery.<br>
+<b>EV UP TO</b> (km/h, 0 = ANY). The fastest the car drives with the engine off.<br>
+<b>EV POWER</b> (kW, 0 = AUTO). The most power it asks of the battery before starting the engine.<br>
+<b>CHARGE LOW / TARGET / HIGH</b> (%). The window the battery is used in, and where the controller aims. A plug-in starts at HIGH and drives down to TARGET.<br>
+<b>DEPLOY LIMIT</b> (MJ per lap, 0 = none). The most energy the motors may take from the battery on a lap.<br>
+<b>HARVEST LIMIT</b> (MJ per lap, 0 = none). The most braking may put back on a lap; past it the friction brakes take the rest.<br>
+<b>ASSIST MAP.</b> The share of the motor's help over shaft speed (columns) and pedal (rows). Click a cell to step it down 25%; from 0 it goes back to 100%. Flat out reads the top row.
+</div>
+</div>
+<div class="gtier gt-phys"><div class="gtier-h">LV3 · THE PHYSICS</div>
+<div class="guide-body" data-gk="hybtunePhys">
+The motor's curve is its full torque times the assist map's share at that speed (and, on a P2, times the ASSIST window). Its regeneration is its braking torque, limited by the battery's charge rate, times REGENERATION's share (1, 0.5 or 0).<br>
+<b>The lap's charge balance.</b> What the motors may deploy is <span class="geq">E<sub>deploy</sub> ≤ min(E<sub>harvest</sub> + E<sub>plug-in</sub>, DEPLOY LIMIT)</span> where E<sub>harvest</sub> is what braking returns, to the HARVEST LIMIT, and E<sub>plug-in</sub> is a plug-in's own charge allowed on that lap in a race. If the motors would spend more, the assist is cut in proportion and the lap is solved again.<br>
+<b>Plug-ins in a race.</b> The race keeps a second pace grid of laps with the motors free of the balance. A plug-in runs at a share x of those laps, chosen so that its charge between HIGH and TARGET lasts the race (with 3% in hand), and chosen again every time it crosses the line.<br>
+<b>The WLTP cycle.</b> The cycle's energy manager keeps the charge within the window and aims at the target.
+</div>
+</div>
+<div class="guide-see">See also: <a data-gp="hybrid">Hybrids</a> · <a data-gp="race">The race</a></div>
+</section>
 <section class="guide-page" id="gp-vehicle" data-cat="car" data-title="Chassis &amp; garage" data-tags="chassis vehicle garage save car body weight mass wheelbase cg" hidden>
 <h4 class="guide-title">Chassis &amp; garage</h4>
 <div class="gtier gt-real"><div class="gtier-h">LV1 · REAL LIFE</div>
@@ -2740,6 +2994,8 @@ Most other tests check behaviour that is true of real cars: a bigger turbo spool
 </div>
 <div class="gauge-row">
 <div class="stat" id="statHealth"><span class="label">ENGINE HEALTH</span><div class="value">100</div><span class="unit">%</span></div>
+<div class="stat" id="statAmps" style="display:none"><span class="label">PACK CURRENT</span><div class="value">0</div><span class="unit">A</span></div>
+<div class="stat" id="statLimit" style="display:none"><span class="label">POWER LIMIT</span><div class="value">NONE</div><span class="unit"></span></div>
 </div>
 </div>
 <div class="panel" id="hybridPanel" hidden>
@@ -4714,7 +4970,7 @@ const I18N={
   'Archetypes':{el:'Αρχέτυπα'},'Kei & City':{el:'Kei & πόλης'},'Compact Turbo':{el:'Μικρά τούρμπο'},'NA Sports':{el:'Ατμοσφαιρικά σπορ'},
   'Turbo Performance':{el:'Τούρμπο επιδόσεων'},'American V8':{el:'Αμερικάνικα V8'},'Supercar':{el:'Supercar'},'Rotary':{el:'Περιστροφικά (Wankel)'},
   'Diesel':{el:'Πετρελαιοκίνητα'},'Electric':{el:'Ηλεκτρικά'},'NCA (POWER CELLS)':{el:'NCA (ΚΥΤΤΑΡΑ ΙΣΧΥΟΣ)'},'ATKINSON (LATE IVC)':{el:'ATKINSON (ΑΡΓΟ ΚΛΕΙΣΙΜΟ ΕΙΣΑΓΩΓΗΣ)'},'engine off':{el:'κινητήρας σβηστός'},'Li-ION (HYBRID CELLS)':{el:'Li-ION (ΚΥΤΤΑΡΑ ΥΒΡΙΔΙΚΩΝ)'},
-  'Hybrid':{el:'Υβριδικό'},'HYBRID':{el:'ΥΒΡΙΔΙΚΟ'},'PARALLEL (P2)':{el:'ΠΑΡΑΛΛΗΛΟ (P2)'},'POWER-SPLIT (eCVT)':{el:'ΔΙΑΙΡΟΥΜΕΝΗΣ ΙΣΧΥΟΣ (eCVT)'},'DRIVE MODE':{el:'ΛΕΙΤΟΥΡΓΙΑ ΟΔΗΓΗΣΗΣ'},'FRONT REDUCTION (0 = MATCHED)':{el:'ΕΜΠΡΟΣ ΣΧΕΣΗ ΜΕΙΩΣΗΣ (0 = ΑΥΤΟΜΑΤΗ)'},'PLUG-IN':{el:'ΕΠΑΝΑΦΟΡΤΙΖΟΜΕΝΟ'},'WLTP weighted':{el:'WLTP σταθμισμένο'},'electric range':{el:'ηλεκτρική αυτονομία'},'sustaining':{el:'συντήρηση φορτίου'},'SERIES':{el:'ΣΕ ΣΕΙΡΑ'},'GEN':{el:'ΓΕΝΝ.'},'SINGLE-SPEED (SERIES)':{el:'ΜΟΝΟΤΑΧΥΤΟ (ΣΕ ΣΕΙΡΑ)'},'A series hybrid has no gears: one reduction from its traction motor, set with GEARING on the VEHICLE tab.':{el:'Ένα υβριδικό σε σειρά δεν έχει ταχύτητες: μία σχέση μείωσης από τον κινητήρα έλξης, ρυθμίζεται με τη ΣΧΕΣΗ ΜΕΙΩΣΗΣ στην καρτέλα ΟΧΗΜΑ.'},'generator':{el:'γεννήτρια'},'charge-corrected':{el:'με διόρθωση φορτίου'},'ASSIST':{el:'ΥΠΟΒΟΗΘΗΣΗ'},'ABOVE RPM':{el:'ΠΑΝΩ ΑΠΟ ΣΤΡΟΦΕΣ'},'BELOW RPM':{el:'ΚΑΤΩ ΑΠΟ ΣΤΡΟΦΕΣ'},'Hybrid tune':{el:'Ρύθμιση υβριδικού'},'ASSIST RPM':{el:'ΣΤΡΟΦΕΣ ΥΠΟΒΟΗΘΗΣΗΣ'},'REGENERATION':{el:'ΑΝΑΚΤΗΣΗ ΕΝΕΡΓΕΙΑΣ'},'LOAD-POINT SHIFTING':{el:'ΜΕΤΑΤΟΠΙΣΗ ΣΗΜΕΙΟΥ ΦΟΡΤΙΟΥ'},'EV UP TO (km/h, 0 = ANY)':{el:'ΗΛΕΚΤΡΙΚΑ ΕΩΣ (km/h, 0 = ΧΩΡΙΣ ΟΡΙΟ)'},'EV POWER (kW, 0 = AUTO)':{el:'ΙΣΧΥΣ ΗΛΕΚΤΡΙΚΗΣ ΚΙΝΗΣΗΣ (kW, 0 = ΑΥΤΟΜΑΤΑ)'},'CHARGE LOW (%)':{el:'ΧΑΜΗΛΟ ΦΟΡΤΙΟ (%)'},'CHARGE TARGET (%)':{el:'ΣΤΟΧΟΣ ΦΟΡΤΙΟΥ (%)'},'CHARGE HIGH (%)':{el:'ΥΨΗΛΟ ΦΟΡΤΙΟ (%)'},'Assist map':{el:'Χάρτης υποβοήθησης'},'PEDAL':{el:'ΠΕΝΤΑΛ'},'SPEED':{el:'ΣΤΡΟΦΕΣ'},'pedal':{el:'πεντάλ'},'speed':{el:'στροφές'},"ASSIST MAP: the share of the motor's help over shaft speed and pedal. Click a cell to step it down by 25% (from 0 back to 100%).":{el:'ΧΑΡΤΗΣ ΥΠΟΒΟΗΘΗΣΗΣ: το μερίδιο της βοήθειας του ηλεκτροκινητήρα ανά στροφές άξονα και πεντάλ. Πατήστε ένα κελί για να το μειώσετε κατά 25% (από 0 πίσω στο 100%).'},'POWER FLOW':{el:'ΡΟΗ ΙΣΧΥΟΣ'},'LEVER (POWER-SPLIT)':{el:'ΜΟΧΛΟΣ (ΔΙΑΙΡΟΥΜΕΝΗΣ ΙΣΧΥΟΣ)'},'BSFC MAP':{el:'ΧΑΡΤΗΣ BSFC'},'LEVER':{el:'ΜΟΧΛΟΣ'},'RING':{el:'ΣΤΕΦΑΝΗ'},'DISCHARGING':{el:'ΕΚΦΟΡΤΙΣΗ'},'CHARGING':{el:'ΦΟΡΤΙΣΗ'},'BATTERY CHARGE':{el:'ΦΟΡΤΙΟ ΜΠΑΤΑΡΙΑΣ'},'MOTOR COMMAND':{el:'ΕΝΤΟΛΗ ΚΙΝΗΤΗΡΑ'},'ENGINE SPEED':{el:'ΣΤΡΟΦΕΣ ΚΙΝΗΤΗΡΑ'},'EV':{el:'ΗΛΕΚΤΡΙΚΟ'},'HOLD':{el:'ΔΙΑΤΗΡΗΣΗ'},'CHARGE':{el:'ΦΟΡΤΙΣΗ'},'ENGINE ONLY':{el:'ΜΟΝΟ ΚΙΝΗΤΗΡΑΣ'},'PACK':{el:'ΜΠΑΤΑΡΙΑ'},'SHAFT':{el:'ΑΞΟΝΑΣ'},'BRAKE':{el:'ΦΡΕΝΟ'},'CLOSED':{el:'ΚΛΕΙΣΤΟΣ'},'ENGINE OFF':{el:'ΚΙΝΗΤΗΡΑΣ ΣΒΗΣΤΟΣ'},'ELECTRIC DRIVE':{el:'ΗΛΕΚΤΡΙΚΗ ΚΙΝΗΣΗ'},'PACK LOW • ENGINE STARTED':{el:'ΧΑΜΗΛΗ ΜΠΑΤΑΡΙΑ • Ο ΚΙΝΗΤΗΡΑΣ ΞΕΚΙΝΗΣΕ'},'eCVT (POWER-SPLIT)':{el:'eCVT (ΔΙΑΙΡΟΥΜΕΝΗΣ ΙΣΧΥΟΣ)'},'NiMH (HYBRID CELLS)':{el:'NiMH (ΚΥΤΤΑΡΑ ΥΒΡΙΔΙΚΩΝ)'},'A power-split hybrid has no gears: one reduction from its traction motor, set with GEARING on the VEHICLE tab.':{el:'Ένα υβριδικό διαιρούμενης ισχύος δεν έχει ταχύτητες: μία σχέση μείωσης από τον κινητήρα έλξης, ρυθμίζεται με τη ΣΧΕΣΗ ΜΕΙΩΣΗΣ στην καρτέλα ΟΧΗΜΑ.'},'DEPLOY':{el:'ΑΠΟΔΟΣΗ ΚΙΝΗΤΗΡΑ'},'FULL':{el:'ΠΛΗΡΗΣ'},'ECO (TORQUE FILL)':{el:'ΟΙΚΟΝΟΜΙΚΟ (ΣΥΜΠΛΗΡΩΣΗ ΡΟΠΗΣ)'},'motor':{el:'κινητήρας'},'pack':{el:'μπαταρία'},'system':{el:'σύστημα'},'WLTP cycle':{el:'Κύκλος WLTP'},'from the pack':{el:'από την μπαταρία'},
+  'Hybrid':{el:'Υβριδικό'},'HYBRID':{el:'ΥΒΡΙΔΙΚΟ'},'PARALLEL (P2)':{el:'ΠΑΡΑΛΛΗΛΟ (P2)'},'POWER-SPLIT (eCVT)':{el:'ΔΙΑΙΡΟΥΜΕΝΗΣ ΙΣΧΥΟΣ (eCVT)'},'DRIVE MODE':{el:'ΛΕΙΤΟΥΡΓΙΑ ΟΔΗΓΗΣΗΣ'},'FRONT REDUCTION (0 = MATCHED)':{el:'ΕΜΠΡΟΣ ΣΧΕΣΗ ΜΕΙΩΣΗΣ (0 = ΑΥΤΟΜΑΤΗ)'},'PLUG-IN':{el:'ΕΠΑΝΑΦΟΡΤΙΖΟΜΕΝΟ'},'WLTP weighted':{el:'WLTP σταθμισμένο'},'electric range':{el:'ηλεκτρική αυτονομία'},'sustaining':{el:'συντήρηση φορτίου'},'SERIES':{el:'ΣΕ ΣΕΙΡΑ'},'GEN':{el:'ΓΕΝΝ.'},'SINGLE-SPEED (SERIES)':{el:'ΜΟΝΟΤΑΧΥΤΟ (ΣΕ ΣΕΙΡΑ)'},'A series hybrid has no gears: one reduction from its traction motor, set with GEARING on the VEHICLE tab.':{el:'Ένα υβριδικό σε σειρά δεν έχει ταχύτητες: μία σχέση μείωσης από τον κινητήρα έλξης, ρυθμίζεται με τη ΣΧΕΣΗ ΜΕΙΩΣΗΣ στην καρτέλα ΟΧΗΜΑ.'},'generator':{el:'γεννήτρια'},'charge-corrected':{el:'με διόρθωση φορτίου'},'ASSIST':{el:'ΥΠΟΒΟΗΘΗΣΗ'},'ABOVE RPM':{el:'ΠΑΝΩ ΑΠΟ ΣΤΡΟΦΕΣ'},'BELOW RPM':{el:'ΚΑΤΩ ΑΠΟ ΣΤΡΟΦΕΣ'},'Hybrid tune':{el:'Ρύθμιση υβριδικού'},'ASSIST RPM':{el:'ΣΤΡΟΦΕΣ ΥΠΟΒΟΗΘΗΣΗΣ'},'REGENERATION':{el:'ΑΝΑΚΤΗΣΗ ΕΝΕΡΓΕΙΑΣ'},'LOAD-POINT SHIFTING':{el:'ΜΕΤΑΤΟΠΙΣΗ ΣΗΜΕΙΟΥ ΦΟΡΤΙΟΥ'},'EV UP TO (km/h, 0 = ANY)':{el:'ΗΛΕΚΤΡΙΚΑ ΕΩΣ (km/h, 0 = ΧΩΡΙΣ ΟΡΙΟ)'},'EV POWER (kW, 0 = AUTO)':{el:'ΙΣΧΥΣ ΗΛΕΚΤΡΙΚΗΣ ΚΙΝΗΣΗΣ (kW, 0 = ΑΥΤΟΜΑΤΑ)'},'CHARGE LOW (%)':{el:'ΧΑΜΗΛΟ ΦΟΡΤΙΟ (%)'},'CHARGE TARGET (%)':{el:'ΣΤΟΧΟΣ ΦΟΡΤΙΟΥ (%)'},'CHARGE HIGH (%)':{el:'ΥΨΗΛΟ ΦΟΡΤΙΟ (%)'},'The electric drive':{el:'Η ηλεκτρική κίνηση'},'The motor':{el:'Ο ηλεκτροκινητήρας'},'More motors':{el:'Περισσότεροι κινητήρες'},'The inverter':{el:'Ο αντιστροφέας'},'The battery':{el:'Η μπαταρία'},'Hybrids':{el:'Υβριδικά'},'The hybrid tune':{el:'Η ρύθμιση του υβριδικού'},'Electric & hybrid':{el:'Ηλεκτρικά & υβριδικά'},'Battery, inverter, motor: the whole drivetrain of an electric car.':{el:'Μπαταρία, αντιστροφέας, ηλεκτροκινητήρας: όλο το σύστημα κίνησης ενός ηλεκτρικού.'},'A magnet rotor turning inside a stator of copper windings.':{el:'Ένας δρομέας με μαγνήτες που γυρίζει μέσα σε έναν στάτη με χάλκινες περιελίξεις.'},'A motor on each axle makes an electric car four-wheel drive with no driveshaft.':{el:'Ένας κινητήρας σε κάθε άξονα κάνει ένα ηλεκτρικό τετρακίνητο χωρίς άξονα μετάδοσης.'},"Fast switches chop the battery's steady voltage into the motor's three-phase current.":{el:'Γρήγοροι διακόπτες τεμαχίζουν τη σταθερή τάση της μπαταρίας στο τριφασικό ρεύμα του κινητήρα.'},'Cells in series set the voltage; the capacity sets how far it goes.':{el:'Τα στοιχεία σε σειρά ορίζουν την τάση· η χωρητικότητα ορίζει πόσο μακριά πάει.'},'Engine, motor and battery: power flows between all three.':{el:'Κινητήρας, ηλεκτροκινητήρας και μπαταρία: η ισχύς ρέει ανάμεσα και στα τρία.'},'The charge window, and where in it the controller aims.':{el:'Το παράθυρο φόρτισης, και πού μέσα σε αυτό στοχεύει ο ελεγκτής.'},'PACK CURRENT':{el:'ΡΕΥΜΑ ΜΠΑΤΑΡΙΑΣ'},'POWER LIMIT':{el:'ΟΡΙΟ ΙΣΧΥΟΣ'},'LIMP':{el:'ΑΣΦΑΛΕΙΑΣ'},'LOW SOC':{el:'ΧΑΜΗΛΟ ΦΟΡΤΙΟ'},'THERMAL':{el:'ΘΕΡΜΙΚΟ'},'of asked':{el:'του ζητούμενου'},'LIMP MODE':{el:'ΛΕΙΤΟΥΡΓΙΑ ΑΣΦΑΛΕΙΑΣ'},'power held to':{el:'ισχύς περιορισμένη στα'},'LOW CHARGE':{el:'ΧΑΜΗΛΗ ΦΟΡΤΙΣΗ'},'battery power cut to':{el:'ισχύς μπαταρίας μειωμένη στο'},'LIMITING':{el:'ΠΕΡΙΟΡΙΖΕΙ'},'DEPLOY LIMIT (MJ/LAP, 0 = NONE)':{el:'ΟΡΙΟ ΑΠΟΔΟΣΗΣ (MJ/ΓΥΡΟ, 0 = ΚΑΝΕΝΑ)'},'HARVEST LIMIT (MJ/LAP, 0 = NONE)':{el:'ΟΡΙΟ ΑΝΑΚΤΗΣΗΣ (MJ/ΓΥΡΟ, 0 = ΚΑΝΕΝΑ)'},'PLUG-IN DEPLOY':{el:'ΑΠΟΔΟΣΗ ΑΠΟ ΤΗΝ ΠΡΙΖΑ'},'Assist map':{el:'Χάρτης υποβοήθησης'},'PEDAL':{el:'ΠΕΝΤΑΛ'},'SPEED':{el:'ΣΤΡΟΦΕΣ'},'pedal':{el:'πεντάλ'},'speed':{el:'στροφές'},"ASSIST MAP: the share of the motor's help over shaft speed and pedal. Click a cell to step it down by 25% (from 0 back to 100%).":{el:'ΧΑΡΤΗΣ ΥΠΟΒΟΗΘΗΣΗΣ: το μερίδιο της βοήθειας του ηλεκτροκινητήρα ανά στροφές άξονα και πεντάλ. Πατήστε ένα κελί για να το μειώσετε κατά 25% (από 0 πίσω στο 100%).'},'POWER FLOW':{el:'ΡΟΗ ΙΣΧΥΟΣ'},'LEVER (POWER-SPLIT)':{el:'ΜΟΧΛΟΣ (ΔΙΑΙΡΟΥΜΕΝΗΣ ΙΣΧΥΟΣ)'},'BSFC MAP':{el:'ΧΑΡΤΗΣ BSFC'},'LEVER':{el:'ΜΟΧΛΟΣ'},'RING':{el:'ΣΤΕΦΑΝΗ'},'DISCHARGING':{el:'ΕΚΦΟΡΤΙΣΗ'},'CHARGING':{el:'ΦΟΡΤΙΣΗ'},'BATTERY CHARGE':{el:'ΦΟΡΤΙΟ ΜΠΑΤΑΡΙΑΣ'},'MOTOR COMMAND':{el:'ΕΝΤΟΛΗ ΚΙΝΗΤΗΡΑ'},'ENGINE SPEED':{el:'ΣΤΡΟΦΕΣ ΚΙΝΗΤΗΡΑ'},'EV':{el:'ΗΛΕΚΤΡΙΚΟ'},'HOLD':{el:'ΔΙΑΤΗΡΗΣΗ'},'CHARGE':{el:'ΦΟΡΤΙΣΗ'},'ENGINE ONLY':{el:'ΜΟΝΟ ΚΙΝΗΤΗΡΑΣ'},'PACK':{el:'ΜΠΑΤΑΡΙΑ'},'SHAFT':{el:'ΑΞΟΝΑΣ'},'BRAKE':{el:'ΦΡΕΝΟ'},'CLOSED':{el:'ΚΛΕΙΣΤΟΣ'},'ENGINE OFF':{el:'ΚΙΝΗΤΗΡΑΣ ΣΒΗΣΤΟΣ'},'ELECTRIC DRIVE':{el:'ΗΛΕΚΤΡΙΚΗ ΚΙΝΗΣΗ'},'PACK LOW • ENGINE STARTED':{el:'ΧΑΜΗΛΗ ΜΠΑΤΑΡΙΑ • Ο ΚΙΝΗΤΗΡΑΣ ΞΕΚΙΝΗΣΕ'},'eCVT (POWER-SPLIT)':{el:'eCVT (ΔΙΑΙΡΟΥΜΕΝΗΣ ΙΣΧΥΟΣ)'},'NiMH (HYBRID CELLS)':{el:'NiMH (ΚΥΤΤΑΡΑ ΥΒΡΙΔΙΚΩΝ)'},'A power-split hybrid has no gears: one reduction from its traction motor, set with GEARING on the VEHICLE tab.':{el:'Ένα υβριδικό διαιρούμενης ισχύος δεν έχει ταχύτητες: μία σχέση μείωσης από τον κινητήρα έλξης, ρυθμίζεται με τη ΣΧΕΣΗ ΜΕΙΩΣΗΣ στην καρτέλα ΟΧΗΜΑ.'},'DEPLOY':{el:'ΑΠΟΔΟΣΗ ΚΙΝΗΤΗΡΑ'},'FULL':{el:'ΠΛΗΡΗΣ'},'ECO (TORQUE FILL)':{el:'ΟΙΚΟΝΟΜΙΚΟ (ΣΥΜΠΛΗΡΩΣΗ ΡΟΠΗΣ)'},'motor':{el:'κινητήρας'},'pack':{el:'μπαταρία'},'system':{el:'σύστημα'},'WLTP cycle':{el:'Κύκλος WLTP'},'from the pack':{el:'από την μπαταρία'},
   'at the socket':{el:'από την πρίζα'},'regeneration takes back':{el:'η ανάκτηση επιστρέφει'},'range':{el:'αυτονομία'},'Two-Stroke':{el:'Δίχρονα'},
   '1990s':{el:'Δεκαετία του 1990'},'2000s':{el:'Δεκαετία του 2000'},'2010s':{el:'Δεκαετία του 2010'},'2020s':{el:'Δεκαετία του 2020'},
   // dropdown choices (and the labels the summaries reuse). An option looks up 'opt:'+text first, for
@@ -4984,6 +5240,28 @@ const I18N={
 // figures (fwd, difftrade) had gone stale, so they were re-measured into new blocks (tractionMore1 and 2)
 // and translated again there; the old keys and their Greek are gone.
 const GUIDE_I18N={
+  // the electric and hybrid pages (build 196)
+  evdriveReal:{el:"Ένα ηλεκτρικό αυτοκίνητο έχει τρία κύρια μέρη. Η <b>μπαταρία</b> αποθηκεύει ενέργεια ως συνεχές ρεύμα. Ο <b>αντιστροφέας</b> (inverter) το μετατρέπει σε τριφασικό εναλλασσόμενο, στη συχνότητα που χρειάζεται ο κινητήρας. Ο <b>ηλεκτροκινητήρας</b> μετατρέπει το ρεύμα σε ροπή. Μία σταθερή σχέση μείωσης πάει τη ροπή στους τροχούς: δεν υπάρχει συμπλέκτης, κιβώτιο ούτε ρελαντί.<br>\nΟ κινητήρας δίνει όλη του τη ροπή από στάση και την κρατά ως μια ταχύτητα που λέγεται <b>γόνατο</b>. Πάνω από το γόνατο η ισχύς μένει περίπου σταθερή και η ροπή πέφτει. Στο φρενάρισμα ο κινητήρας γυρίζει ανάποδα ως γεννήτρια και ξαναγεμίζει την μπαταρία: <b>ανακτητική πέδηση</b>.<br>\nΗ τάση της μπαταρίας πέφτει καθώς αδειάζει. Ο υπολογιστής του αυτοκινήτου τραβά περισσότερο ρεύμα για να το αναπληρώσει, μέχρι να χαμηλώσει πολύ η μπαταρία. Τότε κόβει την ισχύ για να προστατέψει τα στοιχεία, και όταν η μπαταρία σχεδόν αδειάσει επιτρέπει μόνο λίγη: <b>λειτουργία ασφαλείας</b> (limp mode)."},
+  evdriveGame:{el:"<b>Κατασκευή.</b> Στην καρτέλα ΚΙΝΗΤΗΡΑΣ βάλε <b>ΤΥΠΟΣ ΚΙΝΗΤΗΡΑ</b> σε <b>ΗΛΕΚΤΡΙΚΟ</b>. Τα τμήματα του θερμικού κινητήρα δίνουν τη θέση τους στα <b>Motor</b>, <b>More motors</b>, <b>Inverter</b> και <b>Battery</b>, το καθένα με τη δική του σελίδα. Πάτα <b>ΚΑΤΑΣΚΕΥΗ &amp; ΔΥΝΑΜΟ</b> όπως σε έναν κινητήρα. Οι έτοιμες επιλογές περιλαμβάνουν τρία Tesla: Model 3 RWD, Model Y Long Range και Model S Plaid.<br>\n<b>Στον πάγκο ΖΩΝΤΑΝΑ.</b> Το <b>ΓΚΑΖΙ</b> ζητά ροπή: ένα σταθερό ποσοστό αυτού που δίνει το σύστημα σε αυτές τις στροφές όταν είναι στα καλύτερά του (γεμάτη μπαταρία, κρύος κινητήρας, χωρίς ζημιά). Ο ελεγκτής τραβά όσο ρεύμα χρειάζεται, οπότε ένα μισό γκάζι κρατά την ισχύ του καθώς αδειάζει η μπαταρία. Η <b>ΦΟΡΤΩΣΗ</b> είναι το φρένο του δυναμόμετρου. Τα πλακίδια δείχνουν <b>ΙΣΧΥΣ</b>, <b>ΡΟΠΗ</b>, <b>ΜΠΑΤΑΡΙΑ</b> (kW που τραβιούνται), <b>DRIVE EFF</b>, <b>CHARGE</b>, θερμοκρασία <b>WINDING</b>, <b>MOTOR HEALTH</b>, <b>ΡΕΥΜΑ ΜΠΑΤΑΡΙΑΣ</b> (A) και <b>ΟΡΙΟ ΙΣΧΥΟΣ</b>. Το ΟΡΙΟ ΙΣΧΥΟΣ λέει τι κρατά την ισχύ κάτω από το ζητούμενο, και πόσο από το ζητούμενο παίρνεις:<br>\n• <b>ΧΩΡΙΣ</b>: παίρνεις ό,τι ζήτησες.<br>\n• <b>ΜΠΑΤΑΡΙΑ</b>: το όριο τάσης ή ρεύματος της μπαταρίας.<br>\n• <b>ΘΕΡΜΙΚΟ</b>: η περιέλιξη ή οι μαγνήτες είναι πολύ ζεστοί.<br>\n• <b>ΧΑΜΗΛΟ ΦΟΡΤΙΟ</b>: η μπαταρία είναι κάτω από 15% και η διαχείρισή της κόβει ισχύ.<br>\n• <b>ΑΣΦΑΛΕΙΑΣ</b>: η μπαταρία είναι κάτω από 2%.<br>\nΟ πάγκος δεν φορτίζει ποτέ: το <b>ΚΑΤΑΣΚΕΥΗ &amp; ΔΥΝΑΜΟ</b> ξεκινά ξανά με 90% φόρτιση.<br>\n<b>Στον δρόμο.</b> Η σχέση μείωσης ορίζεται στην καρτέλα ΟΧΗΜΑ. Η καρτέλα ΟΧΗΜΑ δίνει την κατανάλωση WLTP σε Wh/km, από την μπαταρία και από την πρίζα, και την αυτονομία. Στον αγώνα η μπαταρία παίρνει τη θέση του ρεζερβουάρ: δεν φορτίζει στα πιτ, ένας διαχειριστής ενέργειας διαλέγει την ισχύ που φτάνει ως το τέλος, και ένα αυτοκίνητο που αδειάζει την μπαταρία του εγκαταλείπει με ΑΔΕΙΑ ΜΠΑΤΑΡΙΑ."},
+  evdrivePhys:{el:"Η μπαταρία δίνει την ισχύ του άξονα και κάθε απώλεια στη διαδρομή: το I²R του χαλκού, την υστέρηση και τα δινορεύματα του σιδήρου, τριβές και αερισμό, και την αγωγή και τη μεταγωγή του αντιστροφέα.\n<span class=\"geq\">P<sub>pack</sub> = T·ω + P<sub>cu</sub> + P<sub>fe</sub> + P<sub>mech</sub> + P<sub>inv</sub></span>\nΗ μπαταρία είναι μια τάση ανοιχτού κυκλώματος που ακολουθεί τη φόρτισή της, πίσω από μια εσωτερική αντίσταση: <span class=\"geq\">V = V<sub>oc</sub>(SoC) − I·R</span> Το ρεύμα λύνει την P = V·I. Μια μπαταρία δεν δίνει περισσότερο από το ονομαστικό της ρεύμα, ούτε τόσο ώστε η τάση της να πέσει κάτω από την τάση αποκοπής των στοιχείων.<br>\n<b>Όρια, με τη σειρά που δαγκώνουν.</b><br>\n• <b>Θερμοκρασία μπαταρίας:</b> η διαχείριση κόβει την ισχύ από τους 50 °C, ως το μηδέν στους 60 °C.<br>\n• <b>Θερμοκρασία περιέλιξης:</b> ο ελεγκτής κόβει το ρεύμα από τους 150 °C, ως το μηδέν στους 180 °C.<br>\n• <b>Θερμοκρασία μαγνητών:</b> το ίδιο στους τελευταίους 20 °C κάτω από το όριο της ποιότητάς τους.<br>\n• <b>Χαμηλή φόρτιση:</b> κάτω από 15% η διαχείριση επιτρέπει ένα ποσοστό αυτού που θα έδιναν τα στοιχεία, που πέφτει ευθύγραμμα ως το 30% στο 2%.<br>\n• <b>Λειτουργία ασφαλείας:</b> κάτω από 2% κρατά την ισχύ στο ένα δέκατο της ονομαστικής ισχύος της μπαταρίας (της ισχύος της στο 50%).<br>\nΖημιά που δεν μπορεί να αποτρέψει ο ελεγκτής είναι μόνιμη: μαγνήτες που ζεστάθηκαν πάνω από το όριό τους χάνουν ροή, και μια περιέλιξη πάνω από 200 °C καίει τη μόνωσή της.<br>\nΤο 0-100 και ο γύρος τρέχουν στο 50% φόρτισης. Ένας αγώνας ξεκινά στο 95% και σταματά στο 5%."},
+  evmotorReal:{el:"Ένας κινητήρας έλξης έχει δύο μέρη. Ο <b>στάτης</b> είναι μια στοίβα από λεπτά ελάσματα χάλυβα με χάλκινες περιελίξεις σε αυλάκια, και μένει ακίνητος. Ο <b>δρομέας</b> γυρίζει μέσα του. Το ρεύμα στις περιελίξεις φτιάχνει ένα μαγνητικό πεδίο που περιστρέφεται, και ο δρομέας το ακολουθεί.<br>\nΣε έναν κινητήρα <b>μόνιμου μαγνήτη</b> ο δρομέας φέρει μαγνήτες και γυρίζει ακριβώς μαζί με το πεδίο. Σε έναν <b>επαγωγικό</b> κινητήρα ο δρομέας είναι ένας κλωβός από χάλκινες ράβδους: το πεδίο του στάτη επάγει ρεύματα στον κλωβό, που γλιστρούν λίγο πίσω από το πεδίο και σέρνονται μαζί του.<br>\nΗ ροπή μεγαλώνει με τον όγκο του δρομέα και με το ρεύμα. Όταν γυρίζει, ο κινητήρας είναι και γεννήτρια: η <b>αντι-ΗΕΔ</b> του ανεβαίνει με τις στροφές. Εκεί που φτάνει την τάση της μπαταρίας (το <b>γόνατο</b>), ο ελεγκτής εξασθενεί το πεδίο για να συνεχίσει. Πάνω από το γόνατο η ισχύς μένει περίπου σταθερή και η ροπή πέφτει."},
+  evmotorGame:{el:"<b>MOTOR TYPE.</b><br>\n• <b>PERMANENT MAGNET</b>: η περισσότερη ροπή ανά αμπέρ και η καλύτερη απόδοση. Οι μαγνήτες κοστίζουν, χάνουν δύναμη όταν ζεσταίνονται, και φρενάρουν λίγο (απώλειες σιδήρου) ακόμη κι όταν δεν δίνει ροπή.<br>\n• <b>INDUCTION (COPPER CAGE)</b>: χωρίς μαγνήτες. Αγοράζει το πεδίο του με ρεύμα, οπότε δίνει λιγότερη ροπή ανά αμπέρ, και ο δρομέας του ζεσταίνεται. Χωρίς ζητούμενη ροπή δεν έχει πεδίο ούτε αντίσταση, γι' αυτό η Tesla βάζει έναν στον μπροστινό άξονα των Model 3 και Model Y.<br>\n<b>ROTOR DIAMETER</b> (80–260 mm). Η ροπή μεγαλώνει με το τετράγωνο της διαμέτρου. Ένας μεγαλύτερος δρομέας είναι βαρύτερος, έχει περισσότερη αδράνεια και φτάνει το όριο περιφερειακής ταχύτητας σε λιγότερες στροφές.<br>\n<b>STACK LENGTH</b> (40–250 mm). Η ροπή μεγαλώνει ανάλογα με το μήκος, χωρίς επίδραση στα όρια στροφών.<br>\n<b>POLES</b> (4–12). Περισσότεροι πόλοι σημαίνουν κοντύτερα άκρα περιέλιξης και λεπτότερο, ελαφρύτερο πυρήνα. Ανεβάζουν όμως την ηλεκτρική συχνότητα για τις ίδιες στροφές: περισσότερες απώλειες σιδήρου, και χαμηλότερη τελική ταχύτητα από το όριο συχνότητας του αντιστροφέα.<br>\n<b>TURNS PER PHASE</b> (4–120). Περισσότερες σπείρες δίνουν περισσότερη ροπή ανά αμπέρ αλλά περισσότερη αντι-ΗΕΔ, οπότε το γόνατο έρχεται σε λιγότερες στροφές και μένει λιγότερη ισχύς στις υψηλές. Λιγότερες σπείρες ανεβάζουν το γόνατο και θέλουν περισσότερο ρεύμα για την ίδια ροπή. Ταίριαξε τις σπείρες με την τάση της μπαταρίας.<br>\n<b>MAGNETS.</b><br>\n• <b>FERRITE</b>: φθηνός και αντέχει 250 °C, αλλά έχει το ένα τρίτο της δύναμης, οπότε θέλει διπλάσιο όγκο.<br>\n• <b>NdFeB (SH)</b>: νεοδύμιο, το συνηθισμένο· δυνατός, με όριο 150 °C.<br>\n• <b>NdFeB + Dy (UH)</b>: το δυσπρόσιο ανεβάζει το όριο στους 180 °C για λίγο λιγότερη δύναμη και ψηλότερη τιμή.<br>\n<b>MAGNET RETENTION.</b> Τι κρατά τους μαγνήτες στη θέση τους στις υψηλές στροφές. Οι <b>IRON BRIDGES</b> στα ελάσματα επιτρέπουν περιφερειακή ταχύτητα δρομέα 150 m/s. Ένα <b>CARBON SLEEVE</b> τυλιγμένο γύρω από τον δρομέα επιτρέπει 220 m/s: έτσι οι μεγάλοι δρομείς του Plaid φτάνουν τις 20.000 στροφές.<br>\n<b>MOTOR COOLING.</b> Ορίζει πόσο κρατά η μέγιστη ισχύς και τι αντέχει ο κινητήρας συνεχώς.<br>\n• <b>AIR (FINNED)</b>: δωρεάν, αλλά αδύναμη.<br>\n• <b>WATER JACKET</b>: ψυκτικό γύρω από τον στάτη.<br>\n• <b>OIL SPRAY</b>: ο μανδύας, συν λάδι ψεκασμένο στα άκρα της περιέλιξης και στον δρομέα.<br>\n• <b>DIRECT SLOT</b>: ψυκτικό μέσα στα αυλάκια, πάνω στον χαλκό· η καλύτερη και η ακριβότερη.<br>\n<b>MAX SPEED</b> (rpm). Οι στροφές σχεδίασης. Η πραγματική τελική ταχύτητα του κινητήρα είναι η μικρότερη από αυτές, το όριο περιφερειακής ταχύτητας του δρομέα και το όριο συχνότητας του αντιστροφέα. Δες τη σύνοψη κάτω από τη φόρμα."},
+  evmotorPhys:{el:"Η ροπή είναι η πεπλεγμένη ροή επί το ρεύμα: <span class=\"geq\">T = 3/2 · p · ψ · I,  ψ = k<sub>w</sub> · N · (2/π) · B<sub>g</sub> · τ<sub>p</sub> · L</span> Εδώ p είναι τα ζεύγη πόλων, N οι σπείρες ανά φάση, k<sub>w</sub> = 0,93 ο συντελεστής περιέλιξης, τ<sub>p</sub> το βήμα πόλου (πD/πόλοι) και L το μήκος. Η ροή στο διάκενο B<sub>g</sub> είναι 0,85 φορές η παραμένουσα μαγνήτιση για κινητήρα μαγνήτη (1,28 T για NdFeB SH, 0,42 T για φερρίτη). Ένας επαγωγικός κινητήρας δουλεύει με 0,8 T και την πληρώνει με ρεύμα μαγνήτισης, που παίρνει μερίδιο από τα αμπέρ του αντιστροφέα.<br>\nΤο γόνατο είναι εκεί που η αντι-ΗΕΔ ω·ψ, με την πτώση τάσης της περιέλιξης από πάνω (×1,29 σε πλήρες ρεύμα), συναντά την τάση της μπαταρίας. Πάνω από αυτό η ισχύς κρατιέται ως περίπου 4× τις στροφές του γονάτου για κινητήρα μαγνήτη και 3× για επαγωγικό.<br>\n<b>Απώλειες.</b> Η αντίσταση του χαλκού προκύπτει από το εμβαδόν των αυλακιών (40% πλήρωση χαλκού) και ανεβαίνει 0,393% ανά βαθμό. Οι απώλειες σιδήρου είναι ο νόμος του Steinmetz σε πυριτιούχο χάλυβα 0,35 mm.<br>\n<b>Τελική ταχύτητα.</b> Η μικρότερη από τρεις: το MAX SPEED· την περιφερειακή ταχύτητα του δρομέα v/(πD)· και τη συχνότητα εξόδου του αντιστροφέα, 1,2 kHz για IGBT και 2 kHz για SiC, διά τα ζεύγη πόλων.<br>\n<b>Θερμότητα.</b> Τρεις συγκεντρωμένοι κόμβοι (περιέλιξη, πυρήνας στάτη, δρομέας) και το ψυκτικό.<br>\n<b>Βαθμονόμηση.</b> Τρεις σταθερές προέρχονται από έναν μετρημένο κινητήρα, τον πίσω του Tesla Model 3 (MotorXP, 2020). Ο έλεγχος είναι το Nissan Leaf του 2012 όπως το μέτρησε το ORNL."},
+  evmotorsReal:{el:"Ένα ηλεκτρικό αυτοκίνητο γίνεται τετρακίνητο προσθέτοντας δεύτερο κινητήρα στον άλλο άξονα· δεν χρειάζεται άξονας μετάδοσης ούτε κεντρικό διαφορικό. Τα δικινητήρια Model 3 και Model Y της Tesla ζευγαρώνουν έναν κινητήρα μαγνήτη πίσω με έναν επαγωγικό μπροστά, που κυλά χωρίς να φρενάρει στη σταθερή πορεία. Το Model S Plaid έχει τρεις κινητήρες, δύο πίσω, έναν για κάθε τροχό, και έναν μπροστά.<br>\nΈνα υβριδικό μπορεί να κάνει το ίδιο: η Porsche 918 Spyder κινεί τους μπροστινούς τροχούς με δικό τους ηλεκτροκινητήρα ενώ ο κινητήρας κινεί τους πίσω."},
+  evmotorsGame:{el:"<b>REAR MOTORS</b> (μόνο ηλεκτρικά). <b>1</b>, ή <b>2 (ONE PER WHEEL)</b>: δύο φορές ο κύριος κινητήρας, διπλάσια ροπή, μάζα και κόστος.<br>\n<b>FRONT MOTOR.</b> <b>ΧΩΡΙΣ</b>, <b>PERMANENT MAGNET</b> ή <b>INDUCTION (COPPER CAGE)</b>. Με μπροστινό κινητήρα το αυτοκίνητο γίνεται τετρακίνητο και κλειδώνει το πεδίο μετάδοσης στην καρτέλα ΟΧΗΜΑ· αν τον βγάλεις, επιστρέφει η προηγούμενη μετάδοση.<br>\nΟ μπροστινός κινητήρας έχει δικά του <b>FRONT ROTOR DIAMETER</b>, <b>FRONT STACK LENGTH</b>, <b>FRONT POLES</b>, <b>FRONT TURNS PER PHASE</b> και <b>FRONT CURRENT</b>, που δουλεύουν όπως στη σελίδα <a data-gp=\"evmotor\">The motor</a>. Μοιράζεται με τον κύριο κινητήρα τους μαγνήτες, τη συγκράτηση, την ψύξη, τον τύπο αντιστροφέα και τις μέγιστες στροφές.<br>\n<b>ΕΜΠΡΟΣ ΣΧΕΣΗ ΜΕΙΩΣΗΣ</b> (μόνο υβριδικά). Η σχέση από τον μπροστινό κινητήρα στους τροχούς. Άφησέ τη στο <b>0</b> για να ταιριάξει αυτόματα, ώστε οι μέγιστες στροφές του κινητήρα να πέφτουν στην τελική ταχύτητα του αυτοκινήτου. Πάνω από αυτές ο μπροστινός κινητήρας αποσυμπλέκεται."},
+  evmotorsPhys:{el:"<b>Σε ηλεκτρικό αυτοκίνητο</b> κάθε κινητήρας κινεί μέσω της ίδιας σχέσης μείωσης, οπότε γυρίζουν με τις ίδιες στροφές και λειτουργούν σαν ένας. Οι ροπές, οι μάζες, το κόστος και οι αδράνειές τους προστίθενται· οι μέγιστες στροφές είναι οι μικρότερες από τις δικές τους. Ο ελεγκτής μοιράζει τη ροπή ανάμεσα στους άξονες για τις λιγότερες απώλειες: στη σταθερή πορεία ένας επαγωγικός μπροστινός κινητήρας δεν φέρει τίποτα, και στο τέρμα δίνουν και οι δύο όλα όσα έχουν. Μοιράζονται ένα κύκλωμα ψύξης, και τα όρια του ελεγκτή λαμβάνονται από τον πιο ευαίσθητο δρομέα.<br>\n<b>Σε υβριδικό</b> ο μπροστινός κινητήρας έχει δική του σχέση μείωσης. Η δύναμή του στους τροχούς είναι <span class=\"geq\">F = T · i<sub>front</sub> · 0,97 / r<sub>tyre</sub></span> και προστίθεται σε αυτή του κιβωτίου στο 0-100, στην τελική ταχύτητα και στον γύρο. Οι δύο κινητήρες μοιράζονται την ισχύ της μπαταρίας ανάλογα με τη μέγιστη ισχύ τους, και το ισοζύγιο φόρτισης του γύρου μετρά ό,τι τραβά ο μπροστινός. Δεν κάνει ανάκτηση· μόνο ο κύριος κινητήρας."},
+  inverterReal:{el:"Η μπαταρία δίνει σταθερή τάση· ο κινητήρας χρειάζεται τρία εναλλασσόμενα ρεύματα που ακολουθούν τον δρομέα. Ο <b>αντιστροφέας</b> τα φτιάχνει με έξι διακόπτες ισχύος, που ανοιγοκλείνουν χιλιάδες φορές το δευτερόλεπτο ώστε το μέσο ρεύμα να διαγράφει ημιτονοειδή κυματομορφή.<br>\nΟι παλαιότεροι και φθηνότεροι αντιστροφείς χρησιμοποιούν <b>IGBT πυριτίου</b>. Οι νεότεροι χρησιμοποιούν <b>MOSFET καρβιδίου του πυριτίου (SiC)</b>, που αλλάζουν κατάσταση γρηγορότερα και χάνουν λιγότερο, ιδίως σε μερικό φορτίο. Η Tesla πέρασε το Model 3 σε SiC το 2017. Το <b>ονομαστικό ρεύμα</b> του αντιστροφέα ορίζει τη ροπή του κινητήρα, αφού η ροπή είναι ρεύμα επί ροή."},
+  inverterGame:{el:"<b>SWITCHES.</b><br>\n• <b>SILICON IGBT</b>: φθηνότερο. Έχει μια σταθερή πτώση τάσης που κοστίζει περισσότερο σε μερικό φορτίο, και περιορίζει τη συχνότητα εξόδου στα 1,2 kHz.<br>\n• <b>SiC MOSFET</b>: χωρίς σταθερή πτώση, το ένα πέμπτο των απωλειών μεταγωγής, 2 kHz. Κοστίζει σχεδόν διπλάσια ανά αμπέρ.<br>\n<b>CURRENT RATING</b> (100–1600 A rms). Το μέγιστο ρεύμα που δίνει ο αντιστροφέας στον κινητήρα. Η ροπή ανεβαίνει μαζί του· το ίδιο και η θερμότητα του χαλκού (με το τετράγωνο του ρεύματος) και η τιμή. Πρέπει να μπορεί να το δώσει και η μπαταρία: δες στη σύνοψη ποιο από τα δύο περιορίζει."},
+  inverterPhys:{el:"Οι απώλειες στους τρεις κλάδους φάσης:\n<span class=\"geq\">P<sub>inv</sub> = 3·(0,9·V<sub>0</sub>·I + R<sub>on</sub>·I²) + 3·(√2/π)·t<sub>sw</sub>·f<sub>sw</sub>·V<sub>dc</sub>·I</span>\n<b>IGBT:</b> γόνατο V<sub>0</sub> = 0,8 V, μεταγωγή στα 10 kHz, t<sub>sw</sub> = 0,23 µs. Αυτό είναι ένα αυτοκινητιστικό module 820 A που χάνει περίπου 75 mJ σε κάθε άνοιγμα-κλείσιμο στα 400 V.<br>\n<b>SiC:</b> χωρίς γόνατο, 16 kHz, t<sub>sw</sub> = 0,05 µs.<br>\nΗ αντίσταση αγωγής δίνεται για διάταξη 1000 A και κλιμακώνεται αντίστροφα με το ονομαστικό ρεύμα. Το όριο συχνότητας εξόδου περιορίζει τις στροφές του κινητήρα σε f·60/p. Το κόστος είναι $6 ανά αμπέρ για IGBT και $11 για SiC."},
+  batteryReal:{el:"Μια μπαταρία έλξης είναι εκατοντάδες ή χιλιάδες στοιχεία. Στοιχεία <b>σε σειρά</b> προσθέτουν τις τάσεις τους· ομάδες <b>παράλληλα</b> προσθέτουν τη χωρητικότητα και το ρεύμα που μπορούν να δώσουν. Η χημεία αποφασίζει πόση ενέργεια χωρά σε ένα κιλό, πόσο γρήγορα αδειάζει και φορτίζει, πόσο κρατά και πόσο κοστίζει.<br>\nΗ τάση ενός στοιχείου πέφτει καθώς αδειάζει, και η εσωτερική του αντίσταση μετατρέπει μέρος του ρεύματος σε θερμότητα. Μια μπαταρία κρύα, ζεστή ή σχεδόν άδεια δίνει λιγότερη ισχύ.<br>\nΟι τιμές έπεσαν δεκαπλάσια: περίπου $1100 ανά kWh το 2010, $160 το 2019 και $115 το 2024."},
+  batteryGame:{el:"<b>CHEMISTRY.</b> Η καθεμία διατίθεται μόνο από τη χρονιά που έφτασε στα αυτοκίνητα.<br>\n• <b>LEAD-ACID</b>: βαριά (περίπου 40 Wh/kg) και αργή στη φόρτιση· η δεκαετία του '90.<br>\n• <b>NiMH</b>: από το 1996· ανθεκτική, περίπου 70 Wh/kg.<br>\n• <b>LFP</b> (φωσφορικός σίδηρος λιθίου): από το 2005· φθηνή, ασφαλής και μακρόβια, περίπου 175 Wh/kg ως το 2023· επίπεδη καμπύλη τάσης και χαμηλή τάση στοιχείου (3,2 V). Από το 2020 συναρμολογείται cell-to-pack, που σπαταλά το λιγότερο βάρος.<br>\n• <b>NCA / NMC</b>: από το 2008· η χημεία ενέργειας των αυτοκινήτων μεγάλης αυτονομίας, περίπου 270 Wh/kg, στοιχεία 3,7 V.<br>\n• <b>NCA (POWER CELLS)</b>: από το 2012· η ίδια χημεία φτιαγμένη για ρεύμα, όπως στο Plaid. Λιγότερη ενέργεια ανά κιλό, αλλά σχεδόν διπλάσιος ρυθμός εκφόρτισης.<br>\n• <b>Li-ION (HYBRID CELLS)</b> και <b>NiMH (ΚΥΤΤΑΡΑ ΥΒΡΙΔΙΚΩΝ)</b>: φτιαγμένες για υβριδικά, μια μικρή μπαταρία που δίνει και παίρνει ισχύ 20–25 φορές τη χωρητικότητά της.<br>\n<b>CELLS IN SERIES</b> (20–400). Ορίζει την τάση: 96 στοιχεία NCA δίνουν περίπου 350 V, 110 περίπου 400 V. Η ψηλότερη τάση ανεβάζει το γόνατο του κινητήρα (περισσότερη ισχύς στις υψηλές) και μειώνει το ρεύμα για την ίδια ισχύ.<br>\n<b>CAPACITY</b> (kWh). Αυτονομία, μάζα και τιμή. Μια μεγαλύτερη μπαταρία δίνει και παίρνει επίσης περισσότερη ισχύ, γιατί έχει περισσότερα στοιχεία παράλληλα.<br>\n<b>TECHNOLOGY YEAR.</b> Η ενέργεια ανά κιλό και η τιμή ανά kWh κάθε χημείας ακολουθούν τη χρονιά: μια μπαταρία του 2010 είναι βαρύτερη και ακριβότερη από την ίδια του 2024."},
+  batteryPhys:{el:"Κάθε χημεία είναι ένας πίνακας τάσης ανοιχτού κυκλώματος ανά φόρτιση, μια τάση αποκοπής, ένα γινόμενο αντίστασης-χωρητικότητας (Ω·Ah), ένας διαρκής ρυθμός εκφόρτισης (C) και ένας ρυθμός φόρτισης που δέχεται στο φρενάρισμα.<br>\n<b>Η μπαταρία.</b> Η ονομαστική τάση είναι τα στοιχεία σε σειρά επί τη μέση τάση στοιχείου. Η χωρητικότητα σε Ah είναι kWh·1000 / V<sub>nom</sub>. Η αντίσταση είναι <span class=\"geq\">R = N<sub>s</sub> · (R·Ah)<sub>cell</sub> / Ah · 1,1</span> (+10% για μπάρες, ρελέ και ασφάλεια).<br>\n<b>Όρια.</b> Το μέγιστο ρεύμα είναι ο ρυθμός C επί τα Ah (NCA 6C, στοιχεία ισχύος 10C, υβριδικά 25C). Η μέγιστη ισχύς φτάνεται είτε σε αυτό το ρεύμα είτε στην τάση αποκοπής, όποιο έρθει πρώτο. Ο ρυθμός φόρτισης στο φρενάρισμα είναι το όριο επιμετάλλωσης λιθίου: περίπου 1C για NCA, 1,5C για LFP.<br>\n<b>Μάζα.</b> Η μάζα των στοιχείων είναι kWh διά Wh/kg της χρονιάς, διά το μερίδιο των στοιχείων στη μπαταρία (0,62–0,68, ή 0,82 cell-to-pack).<br>\n<b>Θερμότητα.</b> Η μπαταρία είναι ένας συγκεντρωμένος κόμβος: θερμότητα I²R μέσα, μια πλάκα υγρής ψύξης που παίρνει περίπου 2 W/K ανά kWh προς ψυκτικό 30 °C. Η διαχείρισή της κόβει ισχύ από τους 50 °C."},
+  hybridReal:{el:"Ένα υβριδικό προσθέτει σε έναν κινητήρα έναν ηλεκτροκινητήρα και μια μικρή μπαταρία. Το φρενάρισμα φορτίζει την μπαταρία. Ο ηλεκτροκινητήρας βοηθά τον κινητήρα εκεί που είναι λιγότερο αποδοτικός (στο ξεκίνημα, χαμηλά στις στροφές) και κινεί μόνος του το αυτοκίνητο σε χαμηλή ταχύτητα με τον κινητήρα σβηστό. Υπάρχουν τρεις κύριες διατάξεις:<br>\n• <b>Παράλληλο (P2)</b>: ο ηλεκτροκινητήρας κάθεται ανάμεσα στον συμπλέκτη και το κιβώτιο και γυρίζει με τον κινητήρα· κινούν και οι δύο τους τροχούς μέσα από τις σχέσεις. Το χρησιμοποιούν Hyundai, BMW και Porsche.<br>\n• <b>Διαιρούμενης ισχύος</b>: ένα πλανητικό σύστημα μοιράζει την ισχύ του κινητήρα ανάμεσα στους τροχούς και μια γεννήτρια, ώστε ο κινητήρας να δουλεύει σε όποιες στροφές θέλει: ένα ηλεκτρικό CVT. Είναι το σύστημα της Toyota.<br>\n• <b>Σε σειρά</b>: ο κινητήρας κινεί μόνο μια γεννήτρια· ένας ηλεκτροκινητήρας μόνος του κινεί τους τροχούς (Nissan e-POWER).<br>\nΈνα <b>επαναφορτιζόμενο</b> υβριδικό έχει μεγαλύτερη μπαταρία που φορτίζει από την πρίζα, και κάνει δεκάδες χιλιόμετρα με αυτή πριν αρχίσει να συμπεριφέρεται σαν κοινό υβριδικό."},
+  hybridGame:{el:"Το <b>ΥΒΡΙΔΙΚΟ</b> στην καρτέλα ΚΙΝΗΤΗΡΑΣ προσθέτει το σύστημα σε κάθε θερμικό κινητήρα:<br>\n• <b>ΠΑΡΑΛΛΗΛΟ (P2)</b>: η ροπή του ηλεκτροκινητήρα προστίθεται σε αυτή του κινητήρα στις ίδιες στροφές, μέσα από το κιβώτιο.<br>\n• <b>ΔΙΑΙΡΟΥΜΕΝΗΣ ΙΣΧΥΟΣ (eCVT)</b>: το πλανητικό της Toyota· το αυτοκίνητο δεν έχει σχέσεις, μόνο μία σχέση μείωσης.<br>\n• <b>ΣΕ ΣΕΙΡΑ</b>: μια γεννήτρια διαστασιολογημένη από τον κινητήρα, και ο κινητήρας έλξης μόνος του στους τροχούς.<br>\nΤα τμήματα <b>Motor</b>, <b>Inverter</b> και <b>Battery</b> σχεδιάζουν τότε τον ηλεκτροκινητήρα και την μπαταρία του υβριδικού, και εμφανίζεται η <a data-gp=\"hybtune\">ρύθμιση υβριδικού</a>.<br>\n<b>ΥΠΟΒΟΗΘΗΣΗ</b> (μόνο P2). Πότε βοηθά ο ηλεκτροκινητήρας με γκάζι στο τέρμα:<br>\n• <b>ΠΛΗΡΗΣ</b>: όλα όσα έχει.<br>\n• <b>ΟΙΚΟΝΟΜΙΚΟ (ΣΥΜΠΛΗΡΩΣΗ ΡΟΠΗΣ)</b>: μόνο για να γεμίσει την καμπύλη του κινητήρα ως τη μέγιστη ροπή του.<br>\n• <b>ΠΑΝΩ ΑΠΟ ΣΤΡΟΦΕΣ</b> ή <b>ΚΑΤΩ ΑΠΟ ΣΤΡΟΦΕΣ</b>: μόνο πάνω ή κάτω από τις ΣΤΡΟΦΕΣ ΥΠΟΒΟΗΘΗΣΗΣ.<br>\n<b>ΕΠΑΝΑΦΟΡΤΙΖΟΜΕΝΟ.</b> Το ΝΑΙ ξεκινά με γεμάτη μπαταρία και την αδειάζει πρώτα. Η καρτέλα ΟΧΗΜΑ δίνει τότε τα στοιχεία WLTP με τα οποία εγκρίνεται ένα επαναφορτιζόμενο: σταθμισμένη κατανάλωση, ηλεκτρική αυτονομία και kWh/100 km. Στον αγώνα ξεκινά γεμάτο και μοιράζει αυτή τη φόρτιση σε όλη την απόσταση.<br>\n<b>Ο πάγκος ΖΩΝΤΑΝΑ</b> τρέχει μαζί τον κινητήρα, τον ηλεκτροκινητήρα και την μπαταρία. Το πλαίσιο ΥΒΡΙΔΙΚΟ διαλέγει τη λειτουργία οδήγησης:<br>\n• <b>ΑΥΤΟΜ.</b>: διαλέγει ο ελεγκτής.<br>\n• <b>ΗΛΕΚΤΡΙΚΟ</b>: μόνο ηλεκτρικά, ώσπου να χαμηλώσει η μπαταρία.<br>\n• <b>ΔΙΑΤΗΡΗΣΗ</b>: κρατά τη φόρτιση εκεί που είναι.<br>\n• <b>ΦΟΡΤΙΣΗ</b>: ο κινητήρας φορτίζει την μπαταρία.<br>\n• <b>ΣΠΟΡ</b>: ο ηλεκτροκινητήρας βοηθά πάντα.<br>\n• <b>ΜΟΝΟ ΚΙΝΗΤΗΡΑΣ</b>.<br>\n• <b>ΧΕΙΡΟΚΙΝΗΤΟ</b>: ορίζεις εσύ την εντολή του ηλεκτροκινητήρα και, σε σύστημα διαιρούμενης ισχύος, τις στροφές του κινητήρα.<br>\nΗ <b>ΠΡΟΒΟΛΗ</b> δείχνει τη ροή ισχύος, το διάγραμμα μοχλού του συστήματος διαιρούμενης ισχύος, ή τον χάρτη BSFC του κινητήρα με το σημείο λειτουργίας. Το γκάζι ζητά τη ροπή του κινητήρα συν του ηλεκτροκινητήρα, οπότε από περίπου μισό γκάζι ο κινητήρας δουλεύει σε πλήρες φορτίο: δώσε του την ψύξη που χρειάζεται.<br>\nΈτοιμες επιλογές: Hyundai Ioniq Hybrid, Toyota Prius, Nissan Qashqai e-POWER, BMW 330e και Porsche 918 Spyder."},
+  hybridPhys:{el:"<b>Η διαιρούμενη ισχύς.</b> Το πλανητικό υπακούει στην εξίσωση του Willis, με το σύστημα 30/78 δοντιών της Toyota και το MG2 σε 65:17 προς τη στεφάνη, σε δίαυλο 600 V: <span class=\"geq\">n<sub>sun</sub> · Z<sub>s</sub> + n<sub>ring</sub> · Z<sub>r</sub> = n<sub>carrier</sub> · (Z<sub>s</sub> + Z<sub>r</sub>)</span> Το MG1 κρατά τον κινητήρα στη βέλτιστη γραμμή λειτουργίας του, τη μικρότερη κατανάλωση για κάθε ισχύ.<br>\n<b>Το υβριδικό σε σειρά.</b> Η γεννήτρια διαστασιολογείται για 110% της μέγιστης ροπής του κινητήρα και 105% της ισχύος του.<br>\n<b>Γύροι και αγώνες.</b> Ο γύρος ισοσκελίζει την μπαταρία σε κάθε γύρο: λύνεται με πλήρη υποβοήθηση και ξαναλύνεται με μειωμένη υποβοήθηση ώσπου ό,τι ξοδεύει ο ηλεκτροκινητήρας να ισούται με ό,τι επιστρέφει το φρενάρισμα.<br>\n<b>Ο κύκλος WLTP.</b> Ένας διαχειριστής ενέργειας ισοδύναμης κατανάλωσης (ECMS) τιμολογεί την ενέργεια της μπαταρίας σε καύσιμο και διαλέγει κάθε δευτερόλεπτο ανάμεσα σε σβηστό κινητήρα, μετατόπιση σημείου φορτίου και υποβοήθηση. Αν η φόρτιση δεν ισοσκελιστεί, ο κύκλος διορθώνεται όπως το WLTP διορθώνει ένα υβριδικό.<br>\n<b>Επαναφορτιζόμενα.</b> Τρέχουν τη διαδικασία του κανονισμού (ΕΕ 2017/1151): τον κύκλο από γεμάτη μπαταρία ώσπου να συντηρεί τη φόρτισή της, σταθμισμένο με τον συντελεστή χρησιμότητας."},
+  hybtuneReal:{el:"Η συμπεριφορά ενός υβριδικού είναι μια βαθμονόμηση: κανόνες που γράφουν οι μηχανικοί του στον ελεγκτή. Πότε βοηθά ο ηλεκτροκινητήρας, και πόσο; Πότε κινείται το αυτοκίνητο μόνο με ρεύμα, και πόσο γρήγορα; Πόσο δυνατά φορτίζει την μπαταρία το φρενάρισμα; Ανάμεσα σε ποια επίπεδα φόρτισης μπορεί να κινείται η μπαταρία, και πού πρέπει να κάθεται;<br>\nΈνα οικονομικό αυτοκίνητο δρόμου κρατά τον κινητήρα σβηστό όσο μπορεί. Ένα αγωνιστικό υβριδικό ξοδεύει κάθε τζάουλ που βρίσκει, και οι αγωνιστικές κατηγορίες περιορίζουν πόση ενέργεια μπορεί να δώσει και να πάρει πίσω η μπαταρία σε κάθε γύρο."},
+  hybtuneGame:{el:"Η <b>ρύθμιση υβριδικού</b> στην καρτέλα ΚΙΝΗΤΗΡΑΣ αποθηκεύεται με την κατασκευή. Τη διαβάζουν το 0-100, ο γύρος, ο αγώνας, ο κύκλος WLTP και ο πάγκος ΖΩΝΤΑΝΑ.<br>\n<b>ΣΤΡΟΦΕΣ ΥΠΟΒΟΗΘΗΣΗΣ.</b> Οι στροφές κινητήρα που χρησιμοποιούν οι ρυθμίσεις ΠΑΝΩ ΑΠΟ ΣΤΡΟΦΕΣ και ΚΑΤΩ ΑΠΟ ΣΤΡΟΦΕΣ της ΥΠΟΒΟΗΘΗΣΗΣ.<br>\n<b>ΑΝΑΚΤΗΣΗ ΕΝΕΡΓΕΙΑΣ.</b> <b>ΥΨΗΛΟΣ</b>, <b>ΧΑΜΗΛΟΣ</b> (μισή) ή <b>ΑΝΕΝΕΡΓΟΣ</b>: πόσο δυνατά φορτίζει την μπαταρία το φρενάρισμα.<br>\n<b>ΜΕΤΑΤΟΠΙΣΗ ΣΗΜΕΙΟΥ ΦΟΡΤΙΟΥ.</b> Το <b>ΕΝΕΡΓΟΣ</b> αφήνει τον κινητήρα να δουλεύει περισσότερο απ' όσο χρειάζεται το αυτοκίνητο και να αποθηκεύει το περίσσευμα, μετακινώντας τον εκεί που καίει λιγότερο. Το <b>ΑΝΕΝΕΡΓΟΣ</b> φορτίζει μόνο από το φρενάρισμα και όταν η μπαταρία είναι χαμηλή.<br>\n<b>ΗΛΕΚΤΡΙΚΑ ΕΩΣ</b> (km/h, 0 = χωρίς όριο). Η μεγαλύτερη ταχύτητα με σβηστό κινητήρα.<br>\n<b>ΙΣΧΥΣ ΗΛΕΚΤΡΙΚΗΣ ΚΙΝΗΣΗΣ</b> (kW, 0 = αυτόματα). Η μέγιστη ισχύς που ζητά από την μπαταρία πριν ανάψει ο κινητήρας.<br>\n<b>ΧΑΜΗΛΟ / ΣΤΟΧΟΣ / ΥΨΗΛΟ ΦΟΡΤΙΟ</b> (%). Το παράθυρο μέσα στο οποίο χρησιμοποιείται η μπαταρία, και πού στοχεύει ο ελεγκτής. Ένα επαναφορτιζόμενο ξεκινά από το ΥΨΗΛΟ και κατεβαίνει ως τον ΣΤΟΧΟ.<br>\n<b>ΟΡΙΟ ΑΠΟΔΟΣΗΣ</b> (MJ ανά γύρο, 0 = κανένα). Η μέγιστη ενέργεια που μπορούν να πάρουν οι ηλεκτροκινητήρες από την μπαταρία σε έναν γύρο.<br>\n<b>ΟΡΙΟ ΑΝΑΚΤΗΣΗΣ</b> (MJ ανά γύρο, 0 = κανένα). Το μέγιστο που μπορεί να επιστρέψει το φρενάρισμα σε έναν γύρο· πέρα από αυτό αναλαμβάνουν τα φρένα τριβής.<br>\n<b>ΧΑΡΤΗΣ ΥΠΟΒΟΗΘΗΣΗΣ.</b> Το μερίδιο της βοήθειας του ηλεκτροκινητήρα ανά στροφές άξονα (στήλες) και πεντάλ (γραμμές). Πάτα ένα κελί για να το μειώσεις κατά 25%· από το 0 επιστρέφει στο 100%. Με γκάζι στο τέρμα διαβάζεται η πάνω γραμμή."},
+  hybtunePhys:{el:"Η καμπύλη του ηλεκτροκινητήρα είναι η πλήρης ροπή του επί το μερίδιο του χάρτη υποβοήθησης σε αυτές τις στροφές (και, σε P2, επί το παράθυρο της ΥΠΟΒΟΗΘΗΣΗΣ). Η ανάκτησή του είναι η ροπή πέδησής του, περιορισμένη από τον ρυθμό φόρτισης της μπαταρίας, επί το μερίδιο της ΑΝΑΚΤΗΣΗΣ ΕΝΕΡΓΕΙΑΣ (1, 0,5 ή 0).<br>\n<b>Το ισοζύγιο φόρτισης του γύρου.</b> Όσα μπορούν να αποδώσουν οι ηλεκτροκινητήρες είναι <span class=\"geq\">E<sub>deploy</sub> ≤ min(E<sub>harvest</sub> + E<sub>plug-in</sub>, ΟΡΙΟ ΑΠΟΔΟΣΗΣ)</span> όπου E<sub>harvest</sub> είναι ό,τι επιστρέφει το φρενάρισμα, ως το ΟΡΙΟ ΑΝΑΚΤΗΣΗΣ, και E<sub>plug-in</sub> η φόρτιση ενός επαναφορτιζόμενου που επιτρέπεται σε αυτόν τον γύρο στον αγώνα. Αν οι ηλεκτροκινητήρες θα ξόδευαν περισσότερα, η υποβοήθηση μειώνεται αναλογικά και ο γύρος λύνεται ξανά.<br>\n<b>Επαναφορτιζόμενα στον αγώνα.</b> Ο αγώνας κρατά ένα δεύτερο πλέγμα ρυθμού με γύρους όπου οι ηλεκτροκινητήρες είναι ελεύθεροι από το ισοζύγιο. Ένα επαναφορτιζόμενο τρέχει σε ένα μερίδιο x αυτών των γύρων, διαλεγμένο ώστε η φόρτισή του ανάμεσα σε ΥΨΗΛΟ και ΣΤΟΧΟ να φτάσει ως το τέλος του αγώνα (με 3% περιθώριο), και ξαναδιαλέγεται κάθε φορά που περνά τη γραμμή.<br>\n<b>Ο κύκλος WLTP.</b> Ο διαχειριστής ενέργειας του κύκλου κρατά τη φόρτιση μέσα στο παράθυρο και στοχεύει στον ΣΤΟΧΟ."},
   guideIntro:{el:"Ένα wiki του προσομοιωτή. Κάθε σελίδα ανεβαίνει τρία επίπεδα: <b>LV1</b> πώς δουλεύει το πράγμα σε ένα πραγματικό αυτοκίνητο, <b>LV2</b> τι κάνει στο παιχνίδι, <b>LV3</b> τη φυσική που λύνει πραγματικά ο προσομοιωτής. Διάβασε όσο θέλεις."},
   loop:{el:"<b>1. ΚΙΝΗΤΗΡΑΣ</b> — σχεδίασε έναν κινητήρα (κάτω μέρος, διαδρομή αέρα, καύσιμο & σπινθήρας, ψύξη…), μετά πάτα <b>BUILD & DYNO</b>. <b>2. ΔΥΝΑΜΟ</b> δείχνει όλη την καμπύλη ισχύος/ροπής και μια βαθμολογία. <b>3. ΖΩΝΤΑΝΑ</b> είναι πάγκος δοκιμών σε λειτουργία: ρυθμίζεις <b>ΓΚΑΖΙ</b> και <b>ΦΟΡΤΙΟ</b> και βλέπεις τον κινητήρα να αποκρίνεται σε πραγματικό χρόνο. Δεν ορίζεις ποτέ απευθείας τις στροφές — τον οδηγείς.<br>Μετά βάλ' τον σε αυτοκίνητο στο <b>ΟΧΗΜΑ</b> και πήγαινέ τον σε πίστα στην <b>ΠΙΣΤΑ</b>. Κάθε αριθμός βγαίνει από την ίδια φυσική, οπότε μια αλλαγή στην καρτέλα ΚΙΝΗΤΗΡΑΣ φαίνεται στο 0–100, στην τελική και στον χρόνο γύρου."},
   driving:{el:"<b>ΓΚΑΖΙ</b> — ανοίγει την εισαγωγή· αυξάνει την πίεση πολλαπλής → ροπή → στροφές.<br><b>ΦΟΡΤΙΟ (φρένο δυναμό)</b> — αντίσταση που ορίζει τις <i>στροφές κρατήματος</i>. 0% = ελεύθερες στροφές ως το όριο· 100% = κρατά κοντά στο ρελαντί. Αντιστέκεται μόνο <i>πάνω</i> από τον στόχο, οπότε κάθε κινητήρας ανεβαίνει πάντα ως εκεί.<br><b>ΗΛΕΚ. ΦΟΡΤΙΟ</b> — κατανάλωση παρελκομένων (φώτα/AC). Μεγάλο φορτίο + μικρό δυναμό στο ρελαντί αδειάζει την μπαταρία → χαμηλή τάση → αδύναμος σπινθήρας.<br><b>AFR</b> — αναλογία αέρα-καυσίμου. Βενζίνη: μέγιστη ισχύς κοντά σε λ0.86 (πλούσιο), καλύτερη οικονομία κοντά σε λ1.1 (φτωχό). Ντίζελ: πλήρες καύσιμο στο όριο καπνού, λ1.2· φτωχότερο δίνει λιγότερη ροπή αλλά λιγότερο καύσιμο ανά kWh.<br><b>IAT / ΨΥΚΤΙΚΟ / ΛΑΔΙ</b> — θερμοκρασίες χαρμανιού & κινητήρα (αυτόματα σε AUTO THERMAL).<br><b>ΝΙΤΡΟ</b> — αν υπάρχει, ψεκάζει με τέρμα γκάζι από φιάλη που αδειάζει."},
@@ -8337,6 +8615,18 @@ function packMaxPower(b,soc){
   const V0=packOcv(b,soc),Icut=(V0-b.vMin)/b.R,I=Math.min(b.iMax,Icut);
   return Math.max(0,(V0-I*b.R)*I);
 }
+// An electric car's battery management at a low charge (build 196): below 15% it cuts the power it allows, steeply, to 30%
+// of what the cells could give at 2%; below 2% the car limps, on a tenth of the pack's rated power (its power at 50%),
+// enough to move it off the road. Above 15% it allows all the cells give.
+const EV_BMS={low:0.15,limp:0.02,lowFloor:0.3,limpShare:0.1};
+function evBmsShare(soc){
+  const B=EV_BMS;
+  return soc>=B.low?1:soc>=B.limp?B.lowFloor+(1-B.lowFloor)*(soc-B.limp)/(B.low-B.limp):0;
+}
+function evBmsPower(b,soc){
+  const P=packMaxPower(b,soc),limp=Math.min(P,EV_BMS.limpShare*packMaxPower(b,0.5));
+  return soc<EV_BMS.limp?limp:Math.max(limp,P*evBmsShare(soc));   // the cut never takes it below the limp power
+}
 // ====== POWERTRAIN: what drives the wheels, as the vehicle, the lap and the race see it (build 177) ======
 // The 0-100 run, the lap, the race and the GEAR RATIOS window used to reach into the engine wherever they needed
 // something: engine.redline here, engine.score there, a turbo's shaft, the fuel map, a block of overrun torque
@@ -10893,7 +11183,7 @@ function raceCarModel(entry,key,opts){
     // an electric car (build 181): its pack's usable energy in the tank's place, the pace grid over battery power
     // instead of the tank's mass, every point priced in kWh (src/js/electric-race.js)
     const EV=pt.kind==='electric'?evRaceModel(key,line,grips):null;
-    let fuel,tankL,tankKg,nom,prof,rest;
+    let fuel,tankL,tankKg,nom,prof,rest,HY=null;
     if(EV){fuel={density:1,label:'kWh'};tankKg=EV.usable;tankL=Math.round(tankKg*10)/10;nom=EV.nom;prof=EV.prof;rest=EV.rest;}
     else{
       fuel=pt.fuel();tankL=RACE_TANK_L[vehicle.chassis]||60;tankKg=tankL*fuel.density;
@@ -10907,6 +11197,7 @@ function raceCarModel(entry,key,opts){
         prof.push({v:Float32Array.from(L.v),fr:fuelRate(L),lap:L.lap});
       }
       rest=solve(1,0.5,{fromRest:true});
+      HY=pt.kind==='hybrid'?hybRaceModel(solve,grips,fuelRate,line):null;   // a plug-in's depleting laps (build 196)
     }
     const cum=new Float64Array(n+1);for(let i=0;i<n;i++)cum[i+1]=cum[i]+line[i].ds3;
     const kap=new Float32Array(n),sinT=new Float32Array(n),lim=new Array(n);
@@ -10919,7 +11210,7 @@ function raceCarModel(entry,key,opts){
     const vNom=Float32Array.from(nom.v),vApex=Float32Array.from(nom.v);
     for(let pass=0;pass<2;pass++)for(let k=n-1;k>=0;k--){const j=(k+1)%n;vApex[k]=vNom[j]<vNom[k]?vApex[j]:vNom[k];}   // twice: round the line
     const tt=TIRE_TYPE[vehicle.tireType]||TIRE_TYPE.sport, NF=RACE_FUEL.length, top=(grips.length-1)*NF;
-    const qual=prof[top].lap;   // full grip, empty tank
+    const qual=HY?Math.min(prof[top].lap,HY.qual):prof[top].lap;   // full grip, empty tank (a plug-in: on a full pack)
     // fuel per lap: the flow along the nominal lap (full grip, half a tank), over the time at each point
     const frNom=prof[top+1].fr;
     let fpl=0;for(let i=0;i<n;i++){const j=(i+1)%n;fpl+=frNom[i]*line[i].ds3/Math.max(2,(nom.v[i]+nom.v[j])/2);}
@@ -10937,24 +11228,28 @@ function raceCarModel(entry,key,opts){
       tyre:raceCompound(vehicle.tireType),
       tyreArea:0.25+vehicle.tireWidth/1000,tyreC:TYRE_RACE.cp*vehicle.tireWidth/225,
       chassis:vehicle.chassis,chLabel:vehicle.chLabel,hp:pt.rating().peakHP,
-      ...(EV?{ev:EV.ev,unit:'kWh'}:{})};
+      ...(EV?{ev:EV.ev,unit:'kWh'}:{}),...(HY?{hy:HY}:{})};
   });
 }
-// Speed (m/s) and fuel flow (g/s) the car's limit gives at line point i, for grip g and tank share ff.
-function racePace(M,i,g,ff){
+// Speed (m/s) and fuel flow (g/s) the car's limit gives at line point i, for grip g and tank share ff. A plug-in hybrid
+// (build 196) at share x of its depleting laps: straight between its sustaining grid and its depleting one.
+function racePace(M,i,g,ff,x){
   const GR=M.grips||RACE_GRIP,NG=GR.length,NF=RACE_FUEL.length;
   g=clamp(g,GR[0],1);ff=clamp(ff,0,1);
   let a=0;while(a<NG-2&&g>GR[a+1])a++;
   const fa=(g-GR[a])/(GR[a+1]-GR[a]);
   const b=ff>=0.5?1:0,fb=(ff-RACE_FUEL[b])/(RACE_FUEL[b+1]-RACE_FUEL[b]);
-  const P=M.prof,p00=P[a*NF+b],p01=P[a*NF+b+1],p10=P[(a+1)*NF+b],p11=P[(a+1)*NF+b+1];
-  const v=(p00.v[i]*(1-fb)+p01.v[i]*fb)*(1-fa)+(p10.v[i]*(1-fb)+p11.v[i]*fb)*fa;
-  const fr=(p00.fr[i]*(1-fb)+p01.fr[i]*fb)*(1-fa)+(p10.fr[i]*(1-fb)+p11.fr[i]*fb)*fa;
-  return {v,fr};
+  const at=P=>{const p00=P[a*NF+b],p01=P[a*NF+b+1],p10=P[(a+1)*NF+b],p11=P[(a+1)*NF+b+1];
+    return {v:(p00.v[i]*(1-fb)+p01.v[i]*fb)*(1-fa)+(p10.v[i]*(1-fb)+p11.v[i]*fb)*fa,
+      fr:(p00.fr[i]*(1-fb)+p01.fr[i]*fb)*(1-fa)+(p10.fr[i]*(1-fb)+p11.fr[i]*fb)*fa};};
+  const s=at(M.prof);
+  if(!(x>0)||!M.hy)return s;
+  const d=at(M.hy.prof);
+  return {v:s.v+(d.v-s.v)*x,fr:s.fr+(d.fr-s.fr)*x};
 }
 // The car's speed at a fractional point (i, f along segment i): the two ends of the segment, interpolated.
-function racePaceAt(M,i,f,g,ff){
-  const j=(i+1)%M.n,a=racePace(M,i,g,ff),b=racePace(M,j,g,ff);
+function racePaceAt(M,i,f,g,ff,x){
+  const j=(i+1)%M.n,a=racePace(M,i,g,ff,x),b=racePace(M,j,g,ff,x);
   return {v:a.v+(b.v-a.v)*f,fr:a.fr+(b.fr-a.fr)*f};
 }
 // The launch profile by distance from the start (own line), interpolated.
@@ -11010,7 +11305,7 @@ function raceTyreCallPays(M,cur,next,w,left){
 }
 // A solo run of the car on its own pace, no traffic and no driver error, for the strategy: how many laps a
 // set of tyres lasts to the wear limit, with the lap time at each age, in the conditions at the start.
-function racePractice(M,cfg,maxLaps,mode,ff0){
+function racePractice(M,cfg,maxLaps,mode,ff0,hx){
   const air=cfg.air!=null?cfg.air:RACE.air,w=0;
   const env={air,track:raceTrackTemp(air,w),w};
   const ty=M.tyre,T=[0,0,0,0].fill(cfg.warmers&&ty.key!=='eco'?RACE.warmers:air),W=[0,0,0,0],laps=[];
@@ -11019,7 +11314,7 @@ function racePractice(M,cfg,maxLaps,mode,ff0){
   for(let lap=0;lap<maxLaps;lap++){
     let t=0;
     for(let i=0;i<M.n;i++){
-      const g=raceGrip(M,ty,T,W,w),P=racePace(M,i,g,ff),j=(i+1)%M.n,Pn=racePace(M,j,g,ff);
+      const g=raceGrip(M,ty,T,W,w),P=racePace(M,i,g,ff,hx),j=(i+1)%M.n,Pn=racePace(M,j,g,ff,hx);
       const va=Math.max(2,(P.v+Pn.v)/2)*sv,ds=M.cum[i+1]-M.cum[i],dti=ds/va;
       const ax=(Pn.v*Pn.v-P.v*P.v)/(2*Math.max(0.05,ds))*sv*sv;
       raceTyreStep(M,ty,T,W,va,va*va*M.kap[i],ax,dti,env);
@@ -11038,10 +11333,12 @@ function racePractice(M,cfg,maxLaps,mode,ff0){
 // chooses the power that lasts the distance (evRacePlanFF).
 function racePlan(M,cfg,cc){
   const ev=M.ev?evRacePlanFF(M,cfg.laps,cc.mode):null;
-  const N=cfg.laps, fpl=ev?ev.fpl:M.fuelPerLapKg*1.03*(cc.mode==='save'?0.9:1);
+  // a plug-in hybrid (build 196): its share of the depleting laps, and the fuel a lap between the two
+  const hx=M.hy?hybRacePlanX(M,M.hy.usable,cfg.laps):0,fplH=M.hy?M.fuelPerLapKg+(M.hy.fplKg-M.fuelPerLapKg)*hx:M.fuelPerLapKg;
+  const N=cfg.laps, fpl=ev?ev.fpl:fplH*1.03*(cc.mode==='save'?0.9:1);
   const want=cc.stops==null?(cfg.strategy==='none'?'none':'auto'):cc.stops;
-  if(want==='none')return Object.assign({stops:[],startKg:M.tankKg,est:null,fpl,want},ev?{evFF:ev.ff}:{});
-  const pr=racePractice(M,cfg,Math.min(N,200),cc.mode,ev?ev.ff:undefined);
+  if(want==='none')return Object.assign({stops:[],startKg:M.tankKg,est:null,fpl,want,hyX:hx},ev?{evFF:ev.ff}:{});
+  const pr=racePractice(M,cfg,Math.min(N,200),cc.mode,ev?ev.ff:undefined,hx);
   const lapAt=age=>{const L=pr.laps;return L.length?L[Math.min(L.length-1,age)].t:M.lapNom;};
   const lifeLaps=pr.life===Infinity?Infinity:Math.max(1,Math.floor(pr.life));
   const sFuel=ev?0:Math.max(0,Math.ceil(N*fpl/(M.tankKg*0.97)-1e-9)-1);
@@ -11062,7 +11359,7 @@ function racePlan(M,cfg,cc){
   }
   if(!best){const s=Math.max(sFuel,sTyre);best={s,stints:stintsOf(s),est:null};}
   const stops=[];let acc=0;for(let k=0;k<best.stints.length-1;k++){acc+=best.stints[k];stops.push(acc);}
-  return Object.assign({stops,stints:best.stints,startKg:ev?M.tankKg:Math.min(M.tankKg,(best.stints[0]+1)*fpl),est:best.est,life:lifeLaps,fpl,want},
+  return Object.assign({stops,stints:best.stints,startKg:ev?M.tankKg:Math.min(M.tankKg,(best.stints[0]+1)*fpl),est:best.est,life:lifeLaps,fpl,want,hyX:hx},
     ev?{evFF:ev.ff}:{});
 }
 // ---- the race itself ----
@@ -11102,6 +11399,7 @@ function raceInit(models,cfg){
       // the driver's tyre work: 1 for the average driver; a careful one slides them less, an aggressive one more
       defendT:-8,wide:null,dive:null,yieldT:0,diveZone:-1,switchT:0,slipK:(1.15-0.3*cc.drv.care)*(0.85+0.3*cc.drv.aggr)});
     if(M.ev)evRaceCarInit(R.cars[R.cars.length-1],plan);
+    if(M.hy)hybRaceCarInit(R.cars[R.cars.length-1],plan);
   });
   for(const c of R.cars)c.sTot=raceDist(R,c);
   // recording, sized for the race and grown if it runs long
@@ -11168,7 +11466,7 @@ function raceStepOnce(R){
     // look half a step ahead so the speed is the segment's middle, not its start
     let i=c.i,f=c.f,ahead=c.v*dt/2;
     while(ahead>0){const L=M.cum[i+1]-M.cum[i],rem=(1-f)*L;if(ahead<rem){f+=ahead/L;ahead=0;}else{ahead-=rem;i=(i+1)%M.n;f=0;}}
-    const P=racePaceAt(M,i,f,g,ff),lim=M.lim[i];
+    const P=racePaceAt(M,i,f,g,ff,c.hyX),lim=M.lim[i];
     if(M.ev)c._tq=evRaceTqAt(M,i,f,clamp(g,M.grips[0],1),ff);
     let vLim=P.v;
     // the brakes as they are now against the brakes the lap was solved with: a braking zone to the speed
@@ -11277,6 +11575,7 @@ function raceStepOnce(R){
     const burn=c._fr*r*r*(c.cc.mode==='save'?0.9:1)*dt/1000;
     c.fuelKg-=burn;c.fuelUsed+=burn;
     if(M.ev)evRaceHeatStep(M,c,r,dt,c.cc.mode==='save'?0.9:1);
+    if(M.hy)hybRaceSpend(M,c,c.v*dt);
     if(c.blue>0)c.blue-=dt;
     let adv=c.v*dt;
     if(c.launch)c.launch.d+=adv;
@@ -11327,6 +11626,7 @@ function raceCross(R,c){
     const lap={n:c.lapsDone,t:lt,end:t,fuelKg:c.lastLapKg-c.fuelKg,wear:Math.max(...c.W),pit:false,tyre:c.ty.key,wet:w,pos,
       brake:c.BT.F};
     if(M.ev){lap.pack=c.evT.b;lap.winding=c.evT.w;}
+    if(M.hy){lap.hyE=c.hyE;lap.hyX=c.hyX;}
     c.lastLapKg=c.fuelKg;c.laps.push(lap);
     if(c.best==null||lt<c.best)c.best=lt;
     raceEvent(R,c,'lap',{time:lt,n:c.lapsDone});
@@ -11349,6 +11649,7 @@ function raceCross(R,c){
   if(c.lapsDone<0)return;
   // an electric car's energy manager looks again at what is left for the laps that are left
   if(M.ev&&cfg.laps-c.lapsDone>0)evRaceManage(M,c,cfg.laps-c.lapsDone,mode);
+  if(M.hy&&cfg.laps-c.lapsDone>0)hybRaceManage(M,c,cfg.laps-c.lapsDone);   // a plug-in's, for its own charge (build 196)
   // the pit lane: on the planned lap; now if the fuel or the tyres will not see another; or for the weather
   const left=cfg.laps-c.lapsDone, fpl=c.plan.fpl||M.fuelPerLapKg*1.03;
   const noStops=c.plan.want==='none';
@@ -15768,6 +16069,7 @@ function renderRacePanel(force){
       '<div class="rt-side"><div class="rt-k">'+esc(tr(th.label))+' • '+tr('age')+' '+x.tyreAge+'</div>'+
       '<div class="rt-k">'+tr(M.ev?'ENERGY':'FUEL')+' '+s.fuelL.toFixed(1)+' / '+M.tankL+' '+(M.unit||'L')+' • '+lapsLeft.toFixed(1)+' '+tr('laps')+'</div>'+
       (M.ev?raceEvLine(c,t):'')+
+      (M.hy?hybRaceLine(c,t):'')+
       '<div class="rt-bar"><div style="width:'+Math.round(fuelPct*100)+'%;background:'+(lapsLeft<1.5?'#ff4444':lapsLeft<3?'#ffcc00':'#00ccff')+'"></div></div>'+
       '<div class="rt-k">'+tr('BRAKES')+' <b style="color:'+brakeTempColour(s.brk,M.brakeOnset)+'">'+Math.round(s.brk)+'°</b> / <b style="color:'+brakeTempColour(s.brkR,M.brakeOnset)+'">'+Math.round(s.brkR)+'°C</b>'+
         (fade>0?' <b style="color:#ff4444">'+tr('FADE')+' −'+fade+'%</b>':'')+'</div>'+
@@ -16755,7 +17057,69 @@ const GUIDE_ART={
     P.ctxt(80,4,'TEST41: 2.66% RMS',GP.g,0.5);}},
   book:{anim:0,draw(P){
     P.r(30,10,48,54,GP.b);P.r(82,10,48,54,GP.b);P.r(32,12,46,50,GP.white);P.r(82,12,46,50,GP.white);P.r(78,10,4,54,'#1d4e89');
-    ['A  AFR','B  BMEP','C  CA50','D  DIFF'].forEach((s,i)=>P.txt(35,16+i*10,s,'#333',0.45));['E  EGT','F  FMEP','G  GEAR','H  HP'].forEach((s,i)=>P.txt(85,16+i*10,s,'#333',0.45));}}
+    ['A  AFR','B  BMEP','C  CA50','D  DIFF'].forEach((s,i)=>P.txt(35,16+i*10,s,'#333',0.45));['E  EGT','F  FMEP','G  GEAR','H  HP'].forEach((s,i)=>P.txt(85,16+i*10,s,'#333',0.45));}},
+  // --- electric & hybrid (build 196) ---
+  evdrive:{anim:1,draw(P,t){
+    P.r(4,22,30,30,GP.steelD);P.box(4,22,30,30,GP.steel);for(let i=0;i<3;i++)for(let j=0;j<4;j++)P.r(8+i*9,26+j*6,7,4,GP.g);P.r(14,18,4,4,GP.r);P.r(22,18,4,4,GP.steel);
+    P.txt(6,56,'PACK',GP.g,0.55);
+    P.r(60,26,32,22,GP.dark);P.box(60,26,32,22,GP.c);P.plot(63,29,26,16,u=>0.5+0.42*Math.sin(u*2*Math.PI*2+t*6),GP.c);P.txt(56,52,'INVERTER',GP.c,0.55);
+    P.disc(128,37,15,GP.steelD);P.ring(128,37,15,GP.o);P.blades(128,37,2,12,6,t*5,GP.steel);P.disc(128,37,3,GP.steelL);P.txt(116,56,'MOTOR',GP.o,0.55);
+    P.r(34,36,26,2,GP.y);P.r(92,32,21,1,GP.r);P.r(92,37,21,1,GP.g);P.r(92,42,21,1,GP.b);
+    for(let i=0;i<3;i++){const f=gaFrac(i/3+t*0.8);P.r(34+f*24,35,2,4,GP.y);}
+    for(let i=0;i<3;i++){const f=gaFrac(i/3+t*1.2);P.p(92+f*20,32,GP.r);P.p(92+gaFrac(f+0.33)*20,37,GP.g);P.p(92+gaFrac(f+0.66)*20,42,GP.b);}
+    P.ctxt(80,6,'DC  ->  3-PHASE AC  ->  TORQUE',GP.dim,0.5);}},
+  evmotor:{anim:1,draw(P,t){
+    const cx=56,cy=36;P.disc(cx,cy,32,GP.steelD);P.disc(cx,cy,23,GP.bg);
+    for(let i=0;i<18;i++){const a=i/18*2*Math.PI;P.disc(Math.round(cx+27*Math.cos(a)),Math.round(cy+27*Math.sin(a)),2,GP.o);}
+    P.disc(cx,cy,21,GP.steel);
+    for(let k=0;k<6;k++){const a=t*2+k/6*2*Math.PI;P.disc(Math.round(cx+15*Math.cos(a)),Math.round(cy+15*Math.sin(a)),3,k%2?GP.r:GP.b);}
+    P.disc(cx,cy,5,GP.steelL);
+    P.txt(96,10,'STATOR',GP.steel,0.55);P.txt(96,18,'COPPER SLOTS',GP.o,0.55);P.txt(96,30,'ROTOR',GP.steelL,0.55);P.txt(96,38,'N',GP.r,0.55);P.txt(104,38,'S',GP.b,0.55);P.txt(112,38,'MAGNETS',GP.dim,0.5);
+    P.axes(96,48,58,20);P.plot(97,48,56,19,u=>u<0.35?0.9:0.9*0.35/u,GP.y);P.txt(98,44,'TORQUE',GP.y,0.45);}},
+  evmotors:{anim:1,draw(P,t){
+    P.r(40,14,80,44,GP.dark);P.box(40,14,80,44,GP.steel);
+    const wheel=(x,y)=>{P.r(x,y,10,16,GP.rub);for(let i=0;i<3;i++)P.r(x,y+Math.floor(gaFrac(t*2+i/3)*16),10,1,GP.steelD);};
+    wheel(28,16);wheel(122,16);wheel(28,40);wheel(122,40);
+    P.r(52,30,16,12,GP.b);P.txt(46,62,'FRONT',GP.b,0.5);P.r(38,35,14,2,GP.steel);P.r(68,35,4,2,GP.steel);
+    P.r(96,24,12,10,GP.o);P.r(96,38,12,10,GP.o);P.txt(98,62,'REAR',GP.o,0.5);P.r(108,28,14,2,GP.steel);P.r(108,42,14,2,GP.steel);
+    for(let i=0;i<4;i++){const f=gaFrac(i/4+t);P.p(60+Math.round(f*30),36,GP.y);}
+    P.ctxt(80,4,'ONE MOTOR PER AXLE, OR PER WHEEL',GP.dim,0.5);}},
+  inverter:{anim:1,draw(P,t){
+    P.r(4,30,30,3,GP.y);P.txt(4,22,'DC',GP.y,0.55);
+    P.box(40,14,40,40,GP.c);for(let i=0;i<6;i++)P.r(45+(i%3)*12,i<3?20:38,6,8,(Math.floor(t*6)+i)%2?GP.c:GP.steelD);P.txt(42,58,'6 SWITCHES',GP.c,0.5);
+    P.axes(88,10,68,50);const cols=[GP.r,GP.g,GP.b];
+    for(let k=0;k<3;k++)P.plot(89,12,66,46,u=>0.5+0.42*Math.sin((u*2+t*0.5)*2*Math.PI+k*2*Math.PI/3),cols[k]);
+    for(let i=0;i<66;i+=3){const v=Math.sin(((i/66)*2+t*0.5)*2*Math.PI);P.r(89+i,v>0?14:54,1,2,GP.dim);}
+    P.txt(90,62,'PWM -> SINE',GP.dim,0.5);}},
+  battery:{anim:1,draw(P,t){
+    const soc=1-gaFrac(t*0.12);
+    P.box(4,10,68,52,GP.steel);P.r(30,6,16,4,GP.steel);
+    for(let i=0;i<8;i++)for(let j=0;j<5;j++){const lit=(4-j)/5<soc;P.r(8+i*8,14+j*9,6,7,lit?(soc<0.15?GP.r:GP.g):GP.dark);}
+    P.txt(10,64,Math.round(soc*100)+'%',soc<0.15?GP.r:GP.g,0.55);
+    const ocv=u=>{const T=[2.95,3.40,3.50,3.57,3.63,3.69,3.77,3.85,3.93,4.02,4.13],x=u*10,k=Math.min(9,Math.floor(x));return (T[k]+(T[k+1]-T[k])*(x-k)-2.8)/1.4;};
+    P.axes(84,10,72,50);P.plot(85,10,70,49,ocv,GP.y);P.disc(85+Math.round(soc*69),10+48-Math.round(ocv(soc)*48),2,GP.white);
+    P.txt(86,4,'CELL VOLTS',GP.y,0.5);P.txt(118,62,'CHARGE',GP.dim,0.5);}},
+  hybrid:{anim:1,draw(P,t){
+    const mode=Math.floor(t/2.5)%3,lab=['ENGINE + MOTOR','ELECTRIC ONLY','BRAKING: CHARGE'][mode];
+    P.r(6,22,32,26,GP.steelD);P.box(6,22,32,26,GP.steel);for(let i=0;i<3;i++)P.r(10+i*9,18,6,4,mode===1?GP.dim:GP.r);P.txt(6,52,'ENGINE',GP.r,0.5);
+    P.disc(64,35,11,GP.steelD);P.ring(64,35,11,GP.o);P.blades(64,35,2,9,4,t*4,GP.steel);P.txt(70,48,'MOTOR',GP.o,0.5);
+    P.r(52,58,26,10,GP.steelD);P.box(52,58,26,10,GP.g);P.txt(82,60,'PACK',GP.g,0.5);
+    P.disc(140,35,12,GP.rub);P.disc(140,35,5,GP.steel);P.txt(130,52,'WHEELS',GP.steel,0.5);
+    P.r(38,34,15,2,GP.steel);P.r(75,34,53,2,GP.steel);P.r(64,46,2,12,GP.steel);
+    const dots=(x0,y0,x1,y1,c,sp)=>{for(let i=0;i<4;i++){const f=gaFrac(i/4+t*sp);P.r(x0+(x1-x0)*f,y0+(y1-y0)*f,2,2,c);}};
+    if(mode===0){dots(38,33,52,33,GP.r,0.8);dots(76,33,126,33,GP.y,0.8);dots(65,57,65,47,GP.g,0.8);}
+    else if(mode===1){dots(76,33,126,33,GP.y,0.8);dots(65,57,65,47,GP.g,0.8);}
+    else{dots(126,33,76,33,GP.c,0.8);dots(65,47,65,57,GP.c,0.8);}
+    P.ctxt(80,4,lab,mode===2?GP.c:GP.y,0.55);}},
+  hybtune:{anim:1,draw(P,t){
+    P.txt(4,4,'CHARGE WINDOW',GP.dim,0.5);P.r(4,14,152,10,GP.dark);P.box(4,14,152,10,GP.steel);
+    const X=v=>4+Math.round(v*151);P.r(X(0.35),14,X(0.85)-X(0.35),10,'#1f3a26');
+    for(const [v,s,c] of [[0.35,'LOW',GP.o],[0.6,'TARGET',GP.y],[0.85,'HIGH',GP.g]]){P.r(X(v),12,1,14,c);P.ctxt(X(v),28,s,c,0.45);}
+    const soc=0.6+0.17*Math.sin(t*1.1);P.r(X(soc)-1,15,3,8,GP.white);
+    P.txt(4,38,'ASSIST MAP',GP.dim,0.5);
+    const M=[100,100,75,50,25,100,75,50,25,0,75,50,25,0,0,50,25,0,0,0];
+    for(let j=0;j<4;j++)for(let i=0;i<5;i++){const v=M[j*5+i],c=Math.round(40+150*v/100);P.r(52+i*20,40+j*8,18,7,'rgb(10,'+c+','+Math.round(c*0.6)+')');}
+    P.txt(4,48,'PEDAL',GP.dim,0.45);P.txt(4,64,'SPEED ->',GP.dim,0.45);}},
 };
 // Draw one picture into its canvas at time t. The art name comes from data-art; a missing name draws
 // nothing rather than throwing, so a typo in a page cannot take the guide down.
@@ -16800,7 +17164,7 @@ function startGuideArt(){
 // title), so a page added to the HTML appears in the index and in the prev/next order without
 // touching this code.
 const GUIDE_CATS={start:'Getting started',basics:'How an engine works',engine:'Designing the engine',
-  air:'Breathing & boost',limits:'Knock, heat & wear',car:'The car',track:'The track',score:'Scoring & career',
+  air:'Breathing & boost',limits:'Knock, heat & wear',electric:'Electric & hybrid',car:'The car',track:'The track',score:'Scoring & career',
   more:'Options & reference'};
 const guidePages=()=>[...document.querySelectorAll('#guidePanel .guide-page')];
 let guideCur=null;
@@ -16994,10 +17358,27 @@ const motorRatedV=e=>packOcv(e.pack,0.5);
 // derating. The battery cut is solved by bisection on the torque: T w + losses(T) <= the pack's limit.
 function driveMaxTorque(e,rpm,Vdc,temp,soc){
   const m=e.motor;let T=motorMaxTorque(m,rpm,Vdc,temp.r)*motorDerate(e,temp)*(state.engineHealth||1);
-  const w=rpm*Math.PI/30,Pb=packMaxPower(e.pack,soc);
+  const w=rpm*Math.PI/30,Pb=evBmsPower(e.pack,soc);   // the battery management's limit at a low charge (build 196)
   const need=t=>t*w+motorLosses(m,t,rpm,Vdc,temp).total;
   if(T>0&&need(T)>Pb){let lo=0,hi=T;for(let k=0;k<30;k++){const mid=(lo+hi)/2;if(need(mid)>Pb)hi=mid;else lo=mid;}T=lo;}
   return T;
+}
+// The torque the pedal's travel is scaled to (build 196): the drive at its best at this speed, a full pack (its open-circuit
+// voltage and power at 100%), the motor at its coolant's temperature and undamaged. Never below what the drive gives now,
+// so a full pedal asks for all it has; a partial pedal is a torque request that does not move with the pack's charge.
+function driveRefTorque(e,rpm){
+  const c=e._refTq||(e._refTq={m:null,t:new Map()});
+  if(c.m!==e.motor){c.m=e.motor;c.t.clear();}
+  const m=e.motor,tc=m.cool.tCool,temp={w:tc,c:tc,r:tc},V=packOcv(e.pack,1),Pb=packMaxPower(e.pack,1);
+  const at=k=>{   // every 25 rpm, cached per motor
+    if(c.t.has(k))return c.t.get(k);
+    const n=k*25,w=n*Math.PI/30;let T=motorMaxTorque(m,n,V,temp.r);
+    const need=t=>t*w+motorLosses(m,t,Math.max(n,1),V,temp).total;
+    if(T>0&&need(T)>Pb){let lo=0,hi=T;for(let j=0;j<30;j++){const mid=(lo+hi)/2;if(need(mid)>Pb)hi=mid;else lo=mid;}T=lo;}
+    c.t.set(k,T);return T;
+  };
+  const x=Math.max(0,rpm)/25,k=Math.floor(x),f=x-k;
+  return at(k)*(1-f)+at(k+1)*f;
 }
 // The controller protects the drive: full current until the winding reaches 150 C (class H insulation is rated 180),
 // none at 180; the magnets likewise over their last 20 C below the grade's limit.
@@ -17068,7 +17449,13 @@ function motorPeakHold(e,V){
 function stepMotorBench(dt){
   const e=engine,m=e.motor,b=e.pack,st=state;
   const Voc=packOcv(b,st.soc),Vdc=Math.max(b.vMin,Voc-(st.battI||0)*b.R);
-  const T=st.soc>0.005?st.throttle*driveMaxTorque(e,st.rpm,Vdc,st.mT,st.soc):0;
+  // the pedal asks for a fixed share of the drive at its best (driveRefTorque); the controller draws whatever current that
+  // takes, so a partial pedal holds its torque as the pack's voltage falls, until the drive as it is now cannot give it
+  const Treq=st.soc>0.005?st.throttle*driveRefTorque(e,st.rpm):0,Tmax=st.soc>0.005?driveMaxTorque(e,st.rpm,Vdc,st.mT,st.soc):0,T=Math.min(Treq,Tmax);
+  // what holds the torque under the pedal's request, for the LIVE panel (build 196): limp mode, the battery management at a
+  // low charge, the controller's heat, or the pack's voltage and current
+  st.evAsked=Treq;
+  st.evLimit=Treq-T<Math.max(0.5,Treq*0.005)?'':st.soc<EV_BMS.limp?'limp':evBmsShare(st.soc)<1?'lowsoc':motorDerate(e,st.mT)<0.999?'thermal':'battery';
   const L=motorLosses(m,T,st.rpm,Vdc,st.mT),w=st.rpm*Math.PI/30,Pb=T*w+L.total;
   const d=packDraw(b,st.soc,Math.max(0,Pb))||{V:b.vMin,I:0,heat:0};
   st.soc=Math.max(0,st.soc-d.I*dt/(b.Ah*3600));
@@ -17193,9 +17580,12 @@ function renderMotorResult(force){
 }
 
 // ---- the readouts ----
+const EV_LIMIT_LABEL={'':'NONE',limp:'LIMP',lowsoc:'LOW SOC',thermal:'THERMAL',battery:'BATTERY'};
 // The LIVE panel's tiles, retitled for a motor; the engine's titles come back when an engine is built again.
 const EV_TILES={statHP:['POWER','HP'],statTQ:['TORQUE','Nm'],statBSFC:['BATTERY','kW'],statEff:['DRIVE EFF','%'],
   statFuel:['CHARGE','%'],statKnock:['WINDING','°C'],statHealth:['MOTOR HEALTH','%']};
+// the tiles only a motor has (build 196): the pack's current and what is limiting the power
+const EV_ONLY_TILES=['statAmps','statLimit'];
 function setLiveLabels(ev){
   for(const id in EV_TILES){
     const el=document.getElementById(id);if(!el)continue;
@@ -17203,6 +17593,7 @@ function setLiveLabels(ev){
     if(L.dataset.ice==null){L.dataset.ice=L.textContent;U.dataset.ice=U.textContent;}
     L.textContent=ev?tr(EV_TILES[id][0]):tr(L.dataset.ice);U.textContent=ev?EV_TILES[id][1]:U.dataset.ice;
   }
+  EV_ONLY_TILES.forEach(id=>{const el=document.getElementById(id);if(el)el.style.display=ev?'':'none';});
   // what a motor has no use for leaves the panel: mixture, intake air, the engine's coolant and oil, the alternator's
   // load, auto-thermal and nitrous, and the printable report (EV_REPORT_NOTE); it comes back with an engine
   ['afr','iat','coolant','oil','elec'].forEach(id=>{const el=document.getElementById(id);
@@ -17222,6 +17613,11 @@ function updateMotorUI(){
   document.querySelector('#statBSFC .value').textContent=(st.battKW||0).toFixed(1);
   document.querySelector('#statEff .value').textContent=st.thermalEff.toFixed(1);
   document.querySelector('#statFuel .value').textContent=Math.round(st.soc*100);
+  const aEl=g('statAmps');if(aEl){aEl.querySelector('.value').textContent=Math.round(st.battI||0);aEl.className='stat'+((st.battI||0)>engine.pack.iMax*0.9?' warning':'');}
+  const lEl=g('statLimit');
+  if(lEl){const why=st.evLimit||'',got=st.evAsked>0.5?Math.round(st.torque/st.evAsked*100):100;
+    lEl.querySelector('.value').textContent=tr(EV_LIMIT_LABEL[why]);lEl.querySelector('.unit').textContent=why?got+'% '+tr('of asked'):'';
+    lEl.className='stat'+(why==='limp'?' danger':why?' warning':'');}
   const wEl=g('statKnock');wEl.querySelector('.value').textContent=Math.round(st.mT.w);
   wEl.className='stat'+(st.mT.w>165?' danger':st.mT.w>140?' warning':'');
   const hp=Math.round(st.engineHealth*100),hEl=g('statHealth');
@@ -17232,7 +17628,9 @@ function updateMotorUI(){
   else if(vizMode==='design'){status.textContent=tr('DESIGN MODE • CONFIGURE & BUILD');status.className='status-bar';}
   else if(st.blown){status.textContent=tr('MOTOR FAILURE')+' ('+tr(st.wearCause)+') — '+tr('REBUILD WITH BUILD & DYNO');status.className='status-bar err';}
   else if(st.wearCause){status.textContent=tr('DAMAGE')+': '+tr(st.wearCause)+' — '+tr('HEALTH')+' '+hp+'%';status.className='status-bar err';}
-  else if(st.soc<0.02){status.textContent=tr('PACK EMPTY — REBUILD TO RECHARGE');status.className='status-bar err';}
+  else if(st.soc<=0.005){status.textContent=tr('PACK EMPTY — REBUILD TO RECHARGE');status.className='status-bar err';}
+  else if(st.soc<EV_BMS.limp){status.textContent=tr('LIMP MODE')+' • '+tr('CHARGE')+' '+(st.soc*100).toFixed(1)+'% • '+tr('power held to')+' '+Math.round(EV_BMS.limpShare*packMaxPower(engine.pack,0.5)/1000)+' kW';status.className='status-bar err';}
+  else if(st.soc<EV_BMS.low){status.textContent=tr('LOW CHARGE')+' • '+Math.round(st.soc*100)+'% • '+tr('battery power cut to')+' '+Math.round(evBmsShare(st.soc)*100)+'%'+(st.evLimit==='lowsoc'?' • '+tr('LIMITING')+' '+Math.round(st.torque/Math.max(1e-6,st.evAsked)*100)+'% '+tr('of asked'):'');status.className='status-bar warn';}
   else if(der<0.999){status.textContent=tr('THERMAL DERATE')+' • '+Math.round(der*100)+'% '+tr('of full current')+' • '+tr('WINDING')+' '+Math.round(st.mT.w)+'°C';status.className='status-bar warn';}
   else if(st.rpm>=engine.redline-30){status.textContent=tr('SPEED LIMIT')+' • '+Math.round(st.rpm)+' RPM';status.className='status-bar warn';}
   else if(st.powerKW>3){status.textContent=tr('RUNNING')+' • '+st.powerKW.toFixed(0)+' kW @ '+Math.round(st.rpm)+' RPM • '+st.thermalEff.toFixed(1)+'%';status.className='status-bar';}
@@ -17576,7 +17974,7 @@ function evRaceManage(M,c,left,mode){
 // controller (the winding's and the magnets') allow less. The controller cuts the current, so the torque; taken here as
 // the same share of the power.
 function evRaceFFNow(M,c){
-  const X=M.ev,want=evRaceCap(c.evFF),bms=packMaxPower(X.pack,evRaceSoc(M,c.fuelKg))*packDerate(c.evT.b)/X.pRef;
+  const X=M.ev,want=evRaceCap(c.evFF),bms=evBmsPower(X.pack,evRaceSoc(M,c.fuelKg))*packDerate(c.evT.b)/X.pRef;   // low charge: build 196
   const cap=Math.min(want,bms,motorDerate(X,c.evT));
   if(cap<want-0.01)c.evCut=true;
   return evRaceFF(cap);
@@ -17617,6 +18015,60 @@ function raceEvLine(c,t){
   const col=(v,lim)=>v>=lim?'#ff4444':v>=lim-10?'#ffcc00':'#00ff88';
   return '<div class="rt-k">'+tr('BATTERY')+' <b style="color:'+col(b,50)+'">'+Math.round(b)+'°C</b> • '+tr('MOTOR')+' <b style="color:'+col(w,150)+'">'+
     Math.round(w)+'°C</b></div>';
+}
+// ====== HYBRID RACE: a plug-in's own charge spent over the distance (build 196) ======
+// Step 3.5c of plans/hybrid-electric/. A hybrid in a race (src/js/race.js) runs charge-sustaining laps: every lap the motors
+// give what braking puts back (hybridLap), within the class's deploy and harvest limits a lap (the HYBRID TUNE's DEPLOY
+// LIMIT and HARVEST LIMIT). A plug-in starts the race on a full pack (the charge window's HIGH) and has its own charge to
+// spend on top, down to the charge it then sustains (the TARGET):
+//   the grid      a second pace grid, the same grip and tank levels solved with the motors free of the balance (all they
+//                 give, to the deploy limit): the depleting laps. Between it and the sustaining grid the car runs at a
+//                 share x, the pace and the fuel straight between the two;
+//   the price     the pack's net spend a depleting lap (what the motors draw less what braking puts back), at the nominal
+//                 lap (full grip, half a tank), spread over the lap's distance: a car at share x spends x of it a metre;
+//   the manager   chooses x so the charge lasts the laps that are left with a margin in hand (all of it if the race is
+//                 short enough), and chooses again at every crossing of the line with what is left. A spent pack runs
+//                 the sustaining laps.
+// Qualifying is a hot lap on a full pack: the depleting grid's.
+const HYB_RACE={margin:0.97};
+// The plug-in's race model, solved with the build loaded (raceCarModel): solve(grip, ff, opts) a lap at that grip and
+// tank, fuelRate the powertrain's flow along a lap. Returns null for a hybrid that is not a plug-in.
+function hybRaceModel(solve,grips,fuelRate,line){
+  const e=engine;if(!e.hy||!e.hyPlug)return null;
+  const t=hybTune(e),n=line.length,prof=[];let nomD=null;
+  for(const gr of grips)for(const ff of RACE_FUEL){
+    const L=solve(gr,ff,{hyExtraKJ:Infinity});if(gr===1&&ff===0.5)nomD=L;
+    prof.push({v:Float32Array.from(L.v),fr:fuelRate(L),lap:L.lap});
+  }
+  const D=Math.max(0,nomD.hy.deployKJ-nomD.hy.regenKJ);   // kJ a depleting lap takes from the pack
+  const usable=Math.max(0,(t.socHi-t.socT)/100)*e.hy.pack.kWh*3600;
+  const top=(grips.length-1)*RACE_FUEL.length,fr=prof[top+1].fr;
+  let fpl=0;for(let i=0;i<n;i++){const j=(i+1)%n;fpl+=fr[i]*line[i].ds3/Math.max(2,(nomD.v[i]+nomD.v[j])/2);}
+  return {prof,D,usable,fplKg:fpl/1000,qual:prof[top].lap,lapD:nomD.lap,socHi:t.socHi,socT:t.socT,
+    deployKJ:nomD.hy.deployKJ,regenKJ:nomD.hy.regenKJ};
+}
+// The share of the depleting laps that E kJ lasts over the laps left (1: all of them).
+function hybRacePlanX(M,E,left){
+  const H=M.hy;if(!H||!(H.D>0)||left<=0)return 0;
+  return clamp(E*HYB_RACE.margin/(left*H.D),0,1);
+}
+// A car's pack at the start: full, the manager's share from the plan.
+function hybRaceCarInit(c,plan){c.hyE=c.M.hy.usable;c.hyX=plan.hyX||0;}
+// What the car spends over a stretch of ds metres at its share; a spent pack runs the sustaining laps.
+function hybRaceSpend(M,c,ds){
+  if(!(c.hyX>0))return;
+  c.hyE-=c.hyX*M.hy.D*ds/M.L3;
+  if(c.hyE<=0){c.hyE=0;c.hyX=0;}
+}
+// At each crossing of the line, with what is left for the laps that are left.
+function hybRaceManage(M,c,left){c.hyX=c.hyE>0?hybRacePlanX(M,c.hyE,left):0;}
+// The pack's charge (%) with E kJ of the plug-in's own charge left.
+const hybRaceSoc=(M,E)=>M.hy.socT+(M.hy.socHi-M.hy.socT)*E/Math.max(1,M.hy.usable);
+// The RACE tab's line for a plug-in: the pack and the share as the car last crossed the line before time t.
+function hybRaceLine(c,t){
+  let l=null;for(const x of c.laps)if(x.end<=t)l=x;
+  const E=l?l.hyE:c.M.hy.usable,X=l?l.hyX:c.plan.hyX||0;
+  return '<div class="rt-k">'+tr('PACK')+' <b>'+Math.round(hybRaceSoc(c.M,E))+'%</b> • '+tr('PLUG-IN DEPLOY')+' <b>'+Math.round(X*100)+'%</b></div>';
 }
 // ====== ELECTRIC CYCLE: consumption over the WLTP drive cycle (build 184, step 2.5c of plans/hybrid-electric/) ======
 // The energy an electric car takes from its pack to drive the WLTC class 3b cycle (the one every car over 34 W/kg and
@@ -17766,7 +18218,7 @@ const HYBRID_DEPLOY={full:{label:'FULL'},eco:{label:'ECO (TORQUE FILL)'},above:{
 //   socLo, socT, socHi   the CHARGE window (%): the engine starts under the low, the controller holds the target, the
 //            pack takes no more charge over the high.
 // The defaults are the controller of builds 186-191, so a build without a tune drives exactly as it did.
-const HYB_TUNE_DEFAULT={rpm:4000,map:Array(20).fill(100),regen:'high',lps:true,evKmh:0,evKw:0,socLo:35,socT:60,socHi:85};
+const HYB_TUNE_DEFAULT={rpm:4000,map:Array(20).fill(100),regen:'high',lps:true,evKmh:0,evKw:0,socLo:35,socT:60,socHi:85,deployMJ:0,harvestMJ:0};   // deployMJ, harvestMJ: a racing class's energy a lap (0 = none; build 196)
 const HYB_REGEN={off:{label:'OFF',k:0},low:{label:'LOW',k:0.5},high:{label:'HIGH',k:1}};
 const HYB_MAP_N=[0,0.25,0.5,0.75,1],HYB_MAP_P=[0.25,0.5,0.75,1];
 function hybTune(e){
@@ -17922,22 +18374,31 @@ function hybLapEnergy(L){
       pm[i]=-P;regenJ+=Pb*dt;
     }
   }
-  return {pm,deployKJ:deployJ/1000,regenKJ:regenJ/1000};
+  // a racing class's harvest limit (build 196): past it the motor stops regenerating and the friction brakes take the rest
+  const hv=+hybTune().harvestMJ||0,rawKJ=regenJ/1000;
+  return {pm,deployKJ:deployJ/1000,regenKJ:hv>0?Math.min(rawKJ,hv*1000):rawKJ,rawRegenKJ:rawKJ};
 }
 // A lap on a charge-sustaining hybrid: solved with the motor at full deploy; if it spends more of the pack than
 // braking returns, solved again with the deploy cut in proportion, until it balances (two rounds settle it).
+// The budget (build 196): what braking returns (to the class's harvest limit), plus opts.hyExtraKJ, the pack's own charge
+// a plug-in may spend on the lap (Infinity: all the motors give), and never past the class's deploy limit a lap.
+function hybDeployBudget(E,extra){
+  const dl=+hybTune().deployMJ||0;
+  return Math.min(E.regenKJ+(extra||0),dl>0?dl*1000:Infinity);
+}
 function hybridLap(key,opts){
   if(opts&&opts.quick)return simulateLapRun(key,opts);   // the racing line's quick laps: full deploy, no replay to balance
-  // each round scales the share by what came back over what went out, a hair under, so it settles from the safe side
-  let k=1,used=1,L=null,E=null;
+  // each round scales the share by the budget over what went out, a hair under, so it settles from the safe side
+  const extra=opts&&opts.hyExtraKJ||0;
+  let k=1,used=1,L=null,E=null,B=0;
   try{
     for(let it=0;it<6;it++){
-      used=k;hybDeployShare=k;L=simulateLapRun(key,opts);if(!L)return null;E=hybLapEnergy(L);
-      if(E.deployKJ<=E.regenKJ||E.deployKJ<1e-6)break;
-      k=clamp(k*E.regenKJ/E.deployKJ*0.995,0,1);
+      used=k;hybDeployShare=k;L=simulateLapRun(key,opts);if(!L)return null;E=hybLapEnergy(L);B=hybDeployBudget(E,extra);
+      if(E.deployKJ<=B||E.deployKJ<1e-6)break;
+      k=clamp(k*B/E.deployKJ*0.995,0,1);
     }
   }finally{hybDeployShare=1;}
-  L.hy={share:used,pm:E.pm,deployKJ:E.deployKJ,regenKJ:E.regenKJ};
+  L.hy={share:used,pm:E.pm,deployKJ:E.deployKJ,regenKJ:E.regenKJ,rawRegenKJ:E.rawRegenKJ};
   return L;
 }
 // The design summary's line for a hybrid.
@@ -17964,15 +18425,18 @@ let hybMapForm=HYB_TUNE_DEFAULT.map.slice();
 function readHybTuneFromForm(){
   const g=id=>document.getElementById(id),D=HYB_TUNE_DEFAULT;
   const num=(id,lo,hi,d)=>{const v=+g(id).value;return clamp(Math.round(isFinite(v)&&g(id).value!==''?v:d),lo,hi);};
+  const mj=id=>{const el=g(id),v=el?+el.value:0;return el&&isFinite(v)?clamp(Math.round(v*10)/10,0,50):0;};   // MJ a lap, a tenth's step
   const socLo=num('edHySocLo',10,60,D.socLo),socHi=Math.max(socLo+10,num('edHySocHi',40,95,D.socHi)),socT=clamp(num('edHySocT',10,80,D.socT),socLo+3,socHi-5);
   return {rpm:num('edHyRpm',1000,12000,D.rpm),map:hybMapForm.slice(),regen:HYB_REGEN[g('edHyRegen').value]?g('edHyRegen').value:'high',
-    lps:g('edHyLps').value!=='off',evKmh:num('edHyEvKmh',0,200,D.evKmh),evKw:num('edHyEvKw',0,400,D.evKw),socLo,socT,socHi};
+    lps:g('edHyLps').value!=='off',evKmh:num('edHyEvKmh',0,200,D.evKmh),evKw:num('edHyEvKw',0,400,D.evKw),socLo,socT,socHi,
+    deployMJ:mj('edHyDeployMJ'),harvestMJ:mj('edHyHarvestMJ')};
 }
 function applyHybTuneToForm(t){
   const g=id=>document.getElementById(id);if(!g('edHyRpm'))return;
   t=Object.assign({},HYB_TUNE_DEFAULT,t||{});
   g('edHyRpm').value=t.rpm;g('edHyRegen').value=HYB_REGEN[t.regen]?t.regen:'high';g('edHyLps').value=t.lps===false?'off':'on';
   g('edHyEvKmh').value=t.evKmh;g('edHyEvKw').value=t.evKw;g('edHySocLo').value=t.socLo;g('edHySocT').value=t.socT;g('edHySocHi').value=t.socHi;
+  if(g('edHyDeployMJ')){g('edHyDeployMJ').value=+t.deployMJ||0;g('edHyHarvestMJ').value=+t.harvestMJ||0;}
   hybMapForm=Array.isArray(t.map)&&t.map.length===20?t.map.slice():HYB_TUNE_DEFAULT.map.slice();
   renderHybMap();
 }
@@ -18221,7 +18685,7 @@ function seriesDrivelineLine(v){
 const HYB_DRIVE={auto:{label:'AUTO'},ev:{label:'EV'},hold:{label:'HOLD'},charge:{label:'CHARGE'},sport:{label:'SPORT'},engine:{label:'ENGINE ONLY'},manual:{label:'MANUAL'}};
 // Named rules: the electric-driving threshold (a share of what the motor and pack can give together), the charge
 // window, the charging rate the controller asks of the engine, the engine-speed response MG1 gives, the 12 V load.
-const HYB_BENCH={evShare:0.35,socLo:0.35,socHi:0.85,socAuto:0.6,chargeShare:0.5,neTau:0.25,auxW:300};
+const HYB_BENCH={evShare:0.35,socLo:0.35,socHi:0.85,socAuto:0.6,chargeShare:0.5,neTau:0.25,auxW:300,neMax:0.97};
 let hybBench=null;   // the bench's hybrid state; rebuilt when the engine's hybrid system is
 function hybBenchState(){
   const hy=engine.hy;
@@ -18299,7 +18763,9 @@ function hybControl(H,dt){
       else if(mode==='sport')ne=psEngineRpmAt(n);
       else if(mode==='engine')ne=psOolAt(Math.max(O.P[0],p*O.Pmax)).ne;
       else{const Pe=clamp(Pd+Pc,O.P[0],O.Pmax);H.PeWant=Pe;ne=psOolAt(Pe).ne;}
-      H.neT=clamp(ne,Math.max(R.lo,e.idleRpmEff),Math.max(R.hi,e.idleRpmEff));
+      // never held on the redline: the ECU keeps the engine under the over-rev margin (stepWear wears it past 98.5%)
+      const neHi=Math.min(R.hi,e.redline*HYB_BENCH.neMax);
+      H.neT=clamp(ne,Math.max(R.lo,e.idleRpmEff),Math.max(neHi,e.idleRpmEff));
     }
     H.TeWant=on&&!pedalThr?(H.PeWant||0)/Math.max(1,H.neT*Math.PI/30):null;
   }else{
@@ -18953,7 +19419,7 @@ const EV_VEHICLE_PRESETS=[
 // cam yet) makes ~116 hp, not 104 (tests/test103.mjs checks the car both as built and matched to the published power).
 const HYB_ENGINE_PRESETS=[
   {cat:'Hybrid',name:'Hyundai Kappa 1.6 GDi + P2 (Ioniq Hybrid)',real:{hp:103.6,hpRpm:5700,tq:147,tqRpm:4000,motorKW:32,motorNm:170,sysKW:104,sysNm:265},
-   unsure:['redline','cam'],engine:{type:'petrol4',cylinders:4,bore_mm:72,stroke_mm:97,compression:13,redline:6250,intake:'na',injector:'direct',vvt:true,
+   unsure:['redline','cam'],engine:{type:'petrol4',radiator:'large',oilCooler:true,cylinders:4,bore_mm:72,stroke_mm:97,compression:13,redline:6250,intake:'na',injector:'direct',vvt:true,
     cam:'stock',valves:4,octane:95,airFilter:'stock',exhaust:'stock',cat:'stock',intakeSys:'efi',hyMode:'p2',hyDeploy:'eco',
     evMotorType:'pm',evRotorD:200,evStack:40,evPoles:12,evTurns:28,evMagnet:'ndfeb',evRetention:'bridges',evCooling:'jacket',evMaxRpm:8000,
     evInverter:'igbt',evAmps:400,evRearCount:1,evFront:'none',evChem:'liHEV',evSeries:64,evKWh:1.56,evYear:2016}},
@@ -18962,7 +19428,7 @@ const HYB_ENGINE_PRESETS=[
   // with a 53 kW / 163 Nm MG2 and a 1.31 kWh NiMH pack of 28 modules (201.6 V): 90 kW together (Toyota GB's
   // technical specification).
   {cat:'Hybrid',name:'Toyota 2ZR-FXE 1.8 + power-split (Prius)',real:{hp:96.6,hpRpm:5200,tq:142,tqRpm:3600,motorKW:53,motorNm:163,sysKW:90},
-   unsure:['redline'],engine:{type:'petrol4',cylinders:4,bore_mm:80.5,stroke_mm:88.3,compression:13,redline:5500,intake:'na',injector:'port',vvt:true,
+   unsure:['redline'],engine:{type:'petrol4',radiator:'large',oilCooler:true,cylinders:4,bore_mm:80.5,stroke_mm:88.3,compression:13,redline:5500,intake:'na',injector:'port',vvt:true,
     cam:'atkinson',valves:4,octane:95,airFilter:'stock',exhaust:'stock',cat:'stock',intakeSys:'efi',hyMode:'ps',hyDeploy:'full',
     evMotorType:'pm',evRotorD:150,evStack:60,evPoles:8,evTurns:100,evMagnet:'ndfeb',evRetention:'bridges',evCooling:'jacket',evMaxRpm:17000,
     evInverter:'igbt',evAmps:100,evRearCount:1,evFront:'none',evChem:'nimhHEV',evSeries:168,evKWh:1.31,evYear:2016}},
@@ -18970,7 +19436,7 @@ const HYB_ENGINE_PRESETS=[
   // variable compression 8-14:1, the model's fixed 12:1 between them), 116 kW (158 PS), drives a generator only; a 140 kW /
   // 330 Nm motor drives the front wheels through one reduction, with a 2.1 kWh pack (Nissan; UK press release).
   {cat:'Hybrid',name:'Nissan KR15DDT 1.5 VC-T + series (Qashqai e-POWER)',real:{hp:155.6,hpRpm:5000,tq:250,tqRpm:2400,motorKW:140,motorNm:330},
-   unsure:['redline','compression','boost'],engine:{type:'petrol4',cylinders:3,bore_mm:84,stroke_mm:90.1,compression:12,redline:5600,intake:'turbo',boost_bar:0.4,turboSize:'small',
+   unsure:['redline','compression','boost'],engine:{type:'petrol4',radiator:'large',oilCooler:true,cylinders:3,bore_mm:84,stroke_mm:90.1,compression:12,redline:5600,intake:'turbo',boost_bar:0.4,turboSize:'small',
     injector:'direct',vvt:true,cam:'stock',valves:4,octane:95,airFilter:'stock',exhaust:'stock',cat:'stock',intakeSys:'efi',hyMode:'series',hyDeploy:'full',
     evMotorType:'pm',evRotorD:160,evStack:100,evPoles:8,evTurns:26,evMagnet:'ndfeb',evRetention:'bridges',evCooling:'jacket',evMaxRpm:14000,
     evInverter:'igbt',evAmps:450,evRearCount:1,evFront:'none',evChem:'liHEV',evSeries:96,evKWh:2.1,evYear:2021}},
@@ -18979,7 +19445,7 @@ const HYB_ENGINE_PRESETS=[
   // 215 kW together), and a 12 kWh pack under the rear seat. The tune holds the charge between 12% and 95% (~10 kWh
   // usable, BMW's net figure ~10.4) and sustains it at 15%.
   {cat:'Hybrid',name:'BMW B48 2.0 turbo + P2 plug-in (330e)',real:{hp:181.5,hpRpm:5000,tq:300,tqRpm:1350,motorKW:80,motorNm:265,sysKW:215},
-   unsure:['redline','boost','pack'],engine:{type:'petrol4',cylinders:4,bore_mm:82,stroke_mm:94.6,compression:10.2,redline:6500,intake:'turbo',boost_bar:0.4,turboSize:'small',
+   unsure:['redline','boost','pack'],engine:{type:'petrol4',radiator:'large',oilCooler:true,cylinders:4,bore_mm:82,stroke_mm:94.6,compression:10.2,redline:6500,intake:'turbo',boost_bar:0.4,turboSize:'small',
     injector:'direct',vvt:true,cam:'stock',valves:4,octane:95,airFilter:'stock',exhaust:'stock',cat:'stock',intakeSys:'efi',hyMode:'p2',hyDeploy:'full',hyPlug:true,
     hyTune:{rpm:4000,map:Array(20).fill(100),regen:'high',lps:true,evKmh:0,evKw:0,socLo:12,socT:15,socHi:95},
     evMotorType:'pm',evRotorD:200,evStack:60,evPoles:12,evTurns:48,evMagnet:'ndfeb',evRetention:'bridges',evCooling:'jacket',evMaxRpm:7500,
@@ -18989,7 +19455,7 @@ const HYB_ENGINE_PRESETS=[
   // front axle through its own reduction (declutched past its top speed), and a 6.8 kWh pack of 312 cells: 652 kW and 1280
   // Nm together (Porsche). Neither motor's torque, nor the front's reduction, is published.
   {cat:'Hybrid',name:'Porsche 4.6 V8 + P2 + front motor (918 Spyder)',real:{hp:599.4,hpRpm:8700,tq:540,tqRpm:6700,motorKW:115,frontKW:95,sysKW:652,sysNm:1280},
-   unsure:['compression','cam','motor torques','front reduction'],engine:{type:'petrol4',cylinders:8,layout:'v',bore_mm:95,stroke_mm:81,compression:13.0,redline:9150,intake:'na',
+   unsure:['compression','cam','motor torques','front reduction'],engine:{type:'petrol4',radiator:'large',oilCooler:true,cylinders:8,layout:'v',bore_mm:95,stroke_mm:81,compression:13.0,redline:9150,intake:'na',
     injector:'direct',vvt:true,cam:'race',valves:4,valveMat:'titanium',valveSpring:'race',octane:98,airFilter:'perf',exhaust:'race',cat:'stock',intakeSys:'efi',runner:'variable',
     hyMode:'p2',hyDeploy:'full',hyPlug:true,hyTune:{rpm:4000,map:Array(20).fill(100),regen:'high',lps:true,evKmh:0,evKw:0,socLo:15,socT:20,socHi:95},
     evMotorType:'pm',evRotorD:150,evStack:80,evPoles:8,evTurns:30,evMagnet:'ndfeb',evRetention:'bridges',evCooling:'jacket',evMaxRpm:16000,

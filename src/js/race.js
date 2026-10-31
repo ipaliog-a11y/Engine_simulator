@@ -176,7 +176,7 @@ function raceCarModel(entry,key,opts){
     // an electric car (build 181): its pack's usable energy in the tank's place, the pace grid over battery power
     // instead of the tank's mass, every point priced in kWh (src/js/electric-race.js)
     const EV=pt.kind==='electric'?evRaceModel(key,line,grips):null;
-    let fuel,tankL,tankKg,nom,prof,rest;
+    let fuel,tankL,tankKg,nom,prof,rest,HY=null;
     if(EV){fuel={density:1,label:'kWh'};tankKg=EV.usable;tankL=Math.round(tankKg*10)/10;nom=EV.nom;prof=EV.prof;rest=EV.rest;}
     else{
       fuel=pt.fuel();tankL=RACE_TANK_L[vehicle.chassis]||60;tankKg=tankL*fuel.density;
@@ -190,6 +190,7 @@ function raceCarModel(entry,key,opts){
         prof.push({v:Float32Array.from(L.v),fr:fuelRate(L),lap:L.lap});
       }
       rest=solve(1,0.5,{fromRest:true});
+      HY=pt.kind==='hybrid'?hybRaceModel(solve,grips,fuelRate,line):null;   // a plug-in's depleting laps (build 196)
     }
     const cum=new Float64Array(n+1);for(let i=0;i<n;i++)cum[i+1]=cum[i]+line[i].ds3;
     const kap=new Float32Array(n),sinT=new Float32Array(n),lim=new Array(n);
@@ -202,7 +203,7 @@ function raceCarModel(entry,key,opts){
     const vNom=Float32Array.from(nom.v),vApex=Float32Array.from(nom.v);
     for(let pass=0;pass<2;pass++)for(let k=n-1;k>=0;k--){const j=(k+1)%n;vApex[k]=vNom[j]<vNom[k]?vApex[j]:vNom[k];}   // twice: round the line
     const tt=TIRE_TYPE[vehicle.tireType]||TIRE_TYPE.sport, NF=RACE_FUEL.length, top=(grips.length-1)*NF;
-    const qual=prof[top].lap;   // full grip, empty tank
+    const qual=HY?Math.min(prof[top].lap,HY.qual):prof[top].lap;   // full grip, empty tank (a plug-in: on a full pack)
     // fuel per lap: the flow along the nominal lap (full grip, half a tank), over the time at each point
     const frNom=prof[top+1].fr;
     let fpl=0;for(let i=0;i<n;i++){const j=(i+1)%n;fpl+=frNom[i]*line[i].ds3/Math.max(2,(nom.v[i]+nom.v[j])/2);}
@@ -220,24 +221,28 @@ function raceCarModel(entry,key,opts){
       tyre:raceCompound(vehicle.tireType),
       tyreArea:0.25+vehicle.tireWidth/1000,tyreC:TYRE_RACE.cp*vehicle.tireWidth/225,
       chassis:vehicle.chassis,chLabel:vehicle.chLabel,hp:pt.rating().peakHP,
-      ...(EV?{ev:EV.ev,unit:'kWh'}:{})};
+      ...(EV?{ev:EV.ev,unit:'kWh'}:{}),...(HY?{hy:HY}:{})};
   });
 }
-// Speed (m/s) and fuel flow (g/s) the car's limit gives at line point i, for grip g and tank share ff.
-function racePace(M,i,g,ff){
+// Speed (m/s) and fuel flow (g/s) the car's limit gives at line point i, for grip g and tank share ff. A plug-in hybrid
+// (build 196) at share x of its depleting laps: straight between its sustaining grid and its depleting one.
+function racePace(M,i,g,ff,x){
   const GR=M.grips||RACE_GRIP,NG=GR.length,NF=RACE_FUEL.length;
   g=clamp(g,GR[0],1);ff=clamp(ff,0,1);
   let a=0;while(a<NG-2&&g>GR[a+1])a++;
   const fa=(g-GR[a])/(GR[a+1]-GR[a]);
   const b=ff>=0.5?1:0,fb=(ff-RACE_FUEL[b])/(RACE_FUEL[b+1]-RACE_FUEL[b]);
-  const P=M.prof,p00=P[a*NF+b],p01=P[a*NF+b+1],p10=P[(a+1)*NF+b],p11=P[(a+1)*NF+b+1];
-  const v=(p00.v[i]*(1-fb)+p01.v[i]*fb)*(1-fa)+(p10.v[i]*(1-fb)+p11.v[i]*fb)*fa;
-  const fr=(p00.fr[i]*(1-fb)+p01.fr[i]*fb)*(1-fa)+(p10.fr[i]*(1-fb)+p11.fr[i]*fb)*fa;
-  return {v,fr};
+  const at=P=>{const p00=P[a*NF+b],p01=P[a*NF+b+1],p10=P[(a+1)*NF+b],p11=P[(a+1)*NF+b+1];
+    return {v:(p00.v[i]*(1-fb)+p01.v[i]*fb)*(1-fa)+(p10.v[i]*(1-fb)+p11.v[i]*fb)*fa,
+      fr:(p00.fr[i]*(1-fb)+p01.fr[i]*fb)*(1-fa)+(p10.fr[i]*(1-fb)+p11.fr[i]*fb)*fa};};
+  const s=at(M.prof);
+  if(!(x>0)||!M.hy)return s;
+  const d=at(M.hy.prof);
+  return {v:s.v+(d.v-s.v)*x,fr:s.fr+(d.fr-s.fr)*x};
 }
 // The car's speed at a fractional point (i, f along segment i): the two ends of the segment, interpolated.
-function racePaceAt(M,i,f,g,ff){
-  const j=(i+1)%M.n,a=racePace(M,i,g,ff),b=racePace(M,j,g,ff);
+function racePaceAt(M,i,f,g,ff,x){
+  const j=(i+1)%M.n,a=racePace(M,i,g,ff,x),b=racePace(M,j,g,ff,x);
   return {v:a.v+(b.v-a.v)*f,fr:a.fr+(b.fr-a.fr)*f};
 }
 // The launch profile by distance from the start (own line), interpolated.
@@ -293,7 +298,7 @@ function raceTyreCallPays(M,cur,next,w,left){
 }
 // A solo run of the car on its own pace, no traffic and no driver error, for the strategy: how many laps a
 // set of tyres lasts to the wear limit, with the lap time at each age, in the conditions at the start.
-function racePractice(M,cfg,maxLaps,mode,ff0){
+function racePractice(M,cfg,maxLaps,mode,ff0,hx){
   const air=cfg.air!=null?cfg.air:RACE.air,w=0;
   const env={air,track:raceTrackTemp(air,w),w};
   const ty=M.tyre,T=[0,0,0,0].fill(cfg.warmers&&ty.key!=='eco'?RACE.warmers:air),W=[0,0,0,0],laps=[];
@@ -302,7 +307,7 @@ function racePractice(M,cfg,maxLaps,mode,ff0){
   for(let lap=0;lap<maxLaps;lap++){
     let t=0;
     for(let i=0;i<M.n;i++){
-      const g=raceGrip(M,ty,T,W,w),P=racePace(M,i,g,ff),j=(i+1)%M.n,Pn=racePace(M,j,g,ff);
+      const g=raceGrip(M,ty,T,W,w),P=racePace(M,i,g,ff,hx),j=(i+1)%M.n,Pn=racePace(M,j,g,ff,hx);
       const va=Math.max(2,(P.v+Pn.v)/2)*sv,ds=M.cum[i+1]-M.cum[i],dti=ds/va;
       const ax=(Pn.v*Pn.v-P.v*P.v)/(2*Math.max(0.05,ds))*sv*sv;
       raceTyreStep(M,ty,T,W,va,va*va*M.kap[i],ax,dti,env);
@@ -321,10 +326,12 @@ function racePractice(M,cfg,maxLaps,mode,ff0){
 // chooses the power that lasts the distance (evRacePlanFF).
 function racePlan(M,cfg,cc){
   const ev=M.ev?evRacePlanFF(M,cfg.laps,cc.mode):null;
-  const N=cfg.laps, fpl=ev?ev.fpl:M.fuelPerLapKg*1.03*(cc.mode==='save'?0.9:1);
+  // a plug-in hybrid (build 196): its share of the depleting laps, and the fuel a lap between the two
+  const hx=M.hy?hybRacePlanX(M,M.hy.usable,cfg.laps):0,fplH=M.hy?M.fuelPerLapKg+(M.hy.fplKg-M.fuelPerLapKg)*hx:M.fuelPerLapKg;
+  const N=cfg.laps, fpl=ev?ev.fpl:fplH*1.03*(cc.mode==='save'?0.9:1);
   const want=cc.stops==null?(cfg.strategy==='none'?'none':'auto'):cc.stops;
-  if(want==='none')return Object.assign({stops:[],startKg:M.tankKg,est:null,fpl,want},ev?{evFF:ev.ff}:{});
-  const pr=racePractice(M,cfg,Math.min(N,200),cc.mode,ev?ev.ff:undefined);
+  if(want==='none')return Object.assign({stops:[],startKg:M.tankKg,est:null,fpl,want,hyX:hx},ev?{evFF:ev.ff}:{});
+  const pr=racePractice(M,cfg,Math.min(N,200),cc.mode,ev?ev.ff:undefined,hx);
   const lapAt=age=>{const L=pr.laps;return L.length?L[Math.min(L.length-1,age)].t:M.lapNom;};
   const lifeLaps=pr.life===Infinity?Infinity:Math.max(1,Math.floor(pr.life));
   const sFuel=ev?0:Math.max(0,Math.ceil(N*fpl/(M.tankKg*0.97)-1e-9)-1);
@@ -345,7 +352,7 @@ function racePlan(M,cfg,cc){
   }
   if(!best){const s=Math.max(sFuel,sTyre);best={s,stints:stintsOf(s),est:null};}
   const stops=[];let acc=0;for(let k=0;k<best.stints.length-1;k++){acc+=best.stints[k];stops.push(acc);}
-  return Object.assign({stops,stints:best.stints,startKg:ev?M.tankKg:Math.min(M.tankKg,(best.stints[0]+1)*fpl),est:best.est,life:lifeLaps,fpl,want},
+  return Object.assign({stops,stints:best.stints,startKg:ev?M.tankKg:Math.min(M.tankKg,(best.stints[0]+1)*fpl),est:best.est,life:lifeLaps,fpl,want,hyX:hx},
     ev?{evFF:ev.ff}:{});
 }
 // ---- the race itself ----
@@ -385,6 +392,7 @@ function raceInit(models,cfg){
       // the driver's tyre work: 1 for the average driver; a careful one slides them less, an aggressive one more
       defendT:-8,wide:null,dive:null,yieldT:0,diveZone:-1,switchT:0,slipK:(1.15-0.3*cc.drv.care)*(0.85+0.3*cc.drv.aggr)});
     if(M.ev)evRaceCarInit(R.cars[R.cars.length-1],plan);
+    if(M.hy)hybRaceCarInit(R.cars[R.cars.length-1],plan);
   });
   for(const c of R.cars)c.sTot=raceDist(R,c);
   // recording, sized for the race and grown if it runs long
@@ -451,7 +459,7 @@ function raceStepOnce(R){
     // look half a step ahead so the speed is the segment's middle, not its start
     let i=c.i,f=c.f,ahead=c.v*dt/2;
     while(ahead>0){const L=M.cum[i+1]-M.cum[i],rem=(1-f)*L;if(ahead<rem){f+=ahead/L;ahead=0;}else{ahead-=rem;i=(i+1)%M.n;f=0;}}
-    const P=racePaceAt(M,i,f,g,ff),lim=M.lim[i];
+    const P=racePaceAt(M,i,f,g,ff,c.hyX),lim=M.lim[i];
     if(M.ev)c._tq=evRaceTqAt(M,i,f,clamp(g,M.grips[0],1),ff);
     let vLim=P.v;
     // the brakes as they are now against the brakes the lap was solved with: a braking zone to the speed
@@ -560,6 +568,7 @@ function raceStepOnce(R){
     const burn=c._fr*r*r*(c.cc.mode==='save'?0.9:1)*dt/1000;
     c.fuelKg-=burn;c.fuelUsed+=burn;
     if(M.ev)evRaceHeatStep(M,c,r,dt,c.cc.mode==='save'?0.9:1);
+    if(M.hy)hybRaceSpend(M,c,c.v*dt);
     if(c.blue>0)c.blue-=dt;
     let adv=c.v*dt;
     if(c.launch)c.launch.d+=adv;
@@ -610,6 +619,7 @@ function raceCross(R,c){
     const lap={n:c.lapsDone,t:lt,end:t,fuelKg:c.lastLapKg-c.fuelKg,wear:Math.max(...c.W),pit:false,tyre:c.ty.key,wet:w,pos,
       brake:c.BT.F};
     if(M.ev){lap.pack=c.evT.b;lap.winding=c.evT.w;}
+    if(M.hy){lap.hyE=c.hyE;lap.hyX=c.hyX;}
     c.lastLapKg=c.fuelKg;c.laps.push(lap);
     if(c.best==null||lt<c.best)c.best=lt;
     raceEvent(R,c,'lap',{time:lt,n:c.lapsDone});
@@ -632,6 +642,7 @@ function raceCross(R,c){
   if(c.lapsDone<0)return;
   // an electric car's energy manager looks again at what is left for the laps that are left
   if(M.ev&&cfg.laps-c.lapsDone>0)evRaceManage(M,c,cfg.laps-c.lapsDone,mode);
+  if(M.hy&&cfg.laps-c.lapsDone>0)hybRaceManage(M,c,cfg.laps-c.lapsDone);   // a plug-in's, for its own charge (build 196)
   // the pit lane: on the planned lap; now if the fuel or the tyres will not see another; or for the weather
   const left=cfg.laps-c.lapsDone, fpl=c.plan.fpl||M.fuelPerLapKg*1.03;
   const noStops=c.plan.want==='none';

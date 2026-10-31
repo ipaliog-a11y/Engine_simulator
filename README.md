@@ -1,4 +1,4 @@
-# PIXEL ENGINE SIM v0.7 build 195
+# PIXEL ENGINE SIM v0.7 build 196
 
 **A lightweight, 8-bit style internal combustion engine *designer* & simulator** inspired by *Automation*.
 
@@ -123,6 +123,8 @@ e-POWER runs 0-100 in 7.4 s against Nissan's 7.9. PLUG-IN (build 194) starts the
 plug-in procedure, and the BMW 330e gives a 55 km electric range and 1.7 L/100 km weighted against BMW's 59-66 km and
 1.6-1.9. A hybrid can carry a FRONT MOTOR on its own axle (build 195): the Porsche 918 Spyder runs 0-200 in 7.4 s
 against Porsche's 7.2.
+In a race (build 196) a plug-in starts on a full pack and spreads its own charge over the distance, and the HYBRID
+TUNE's DEPLOY LIMIT and HARVEST LIMIT set a racing class's energy a lap.
 On the LIVE bench (build 190) a hybrid runs with its motor and pack: a HYBRID panel draws the power flowing between
 engine, motors, pack and brake, gauges the charge, and offers the drive modes (AUTO, EV, HOLD, CHARGE, SPORT, ENGINE
 ONLY, MANUAL). Its VIEW selector also shows the power-split's lever diagram and the engine's BSFC map with the point

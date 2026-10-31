@@ -12,7 +12,9 @@
 //   · MANUAL: the motor command regenerates or helps as asked, and a power-split holds the engine at ENGINE SPEED;
 //   · the planetary obeys Willis's equation, and no more comes out of the shaft than goes in from the engine and pack;
 //   · the LIVE tab: the hybrid panel only for a hybrid, the manual controls only in MANUAL, the diagram drawn, the status
-//     line saying the engine is off.
+//     line saying the engine is off;
+//   · every hybrid preset survives five minutes flat out in AUTO with AUTO THERMAL on: cooled for its full load, and a
+//     power-split's or series engine kept off its redline (build 196).
 import { chromium } from './pw.mjs';
 import { fileURLToPath, pathToFileURL } from 'url';
 import path from 'path';
@@ -57,6 +59,15 @@ const r = await page.evaluate(() => {
     c.ui.lit = lit / (d.length / 4);
     const sel = document.getElementById('hyDrive'); sel.value = 'charge'; sel.dispatchEvent(new Event('change')); c.ui.select = H.mode;
   }
+  // every hybrid preset flat out in AUTO for five minutes, AUTO THERMAL on (a user's report): the engine runs at full load
+  // there (the pedal is the engine's and the motor's), so it must be cooled for it, and a power-split or series engine,
+  // whose speed the controller sets, must not be held on its redline
+  o.flat = HYB_VEHICLE_PRESETS.map(vp => {
+    loadVehiclePreset(vp); setTab('engine'); autoThermal = true; state.coolant = 90; state.oil = 95; state.throttle = 1;
+    const H = hybBenchState(); H.mode = 'auto'; H.soc = 0.6; let rpmMax = 0;
+    for (let k = 0; k < 30; k++) { step(10); rpmMax = Math.max(rpmMax, state.rpm); }
+    return { name: vp.name, oil: state.oil, coolant: state.coolant, rpmMax, redline: engine.redline, health: state.engineHealth, cause: state.wearCause, blown: state.blown };
+  });
   // an electric car has no hybrid panel
   loadVehiclePreset(EV_VEHICLE_PRESETS[0]); setTab('engine'); updateUI(); o.evPanel = vis('#hybridPanel');
   applyBuild({ engine: Object.assign({}, DEFAULT_ENGINE), tune: Object.assign({}, STD_TUNE) });
@@ -93,6 +104,11 @@ for (const [name, c] of Object.entries(r.cars)) {
   const U = c.ui;
   console.log(`   panel shown ${U.panel}, manual controls ${U.cmd} (in AUTO ${U.cmdAuto}), engine speed ${U.ne}, diagram ${f(U.lit * 100)}% drawn, select -> ${U.select}; "${U.text}"`);
   if (!U.panel || !U.cmd || U.cmdAuto || U.ne !== ps || !(U.lit > 0.02) || U.select !== 'charge') fails.push(`${name}: the hybrid panel does not show as it should`);
+}
+
+for (const F of r.flat) {
+  console.log(`== ${F.name} flat out in AUTO, 5 min: oil ${f(F.oil, 0)} C, coolant ${f(F.coolant, 0)} C, engine up to ${f(F.rpmMax, 0)} rpm (redline ${F.redline}), health ${f(F.health, 3)}${F.cause ? ' (' + F.cause + ')' : ''} ==`);
+  if (F.blown || F.cause || F.oil > 132 || F.rpmMax > F.redline * 0.985) fails.push(`${F.name}: flat out in AUTO the engine wears (${F.cause || 'oil ' + f(F.oil, 0) + ' C'})`);
 }
 
 await browser.close();

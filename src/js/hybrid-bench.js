@@ -23,7 +23,7 @@
 const HYB_DRIVE={auto:{label:'AUTO'},ev:{label:'EV'},hold:{label:'HOLD'},charge:{label:'CHARGE'},sport:{label:'SPORT'},engine:{label:'ENGINE ONLY'},manual:{label:'MANUAL'}};
 // Named rules: the electric-driving threshold (a share of what the motor and pack can give together), the charge
 // window, the charging rate the controller asks of the engine, the engine-speed response MG1 gives, the 12 V load.
-const HYB_BENCH={evShare:0.35,socLo:0.35,socHi:0.85,socAuto:0.6,chargeShare:0.5,neTau:0.25,auxW:300};
+const HYB_BENCH={evShare:0.35,socLo:0.35,socHi:0.85,socAuto:0.6,chargeShare:0.5,neTau:0.25,auxW:300,neMax:0.97};
 let hybBench=null;   // the bench's hybrid state; rebuilt when the engine's hybrid system is
 function hybBenchState(){
   const hy=engine.hy;
@@ -101,7 +101,9 @@ function hybControl(H,dt){
       else if(mode==='sport')ne=psEngineRpmAt(n);
       else if(mode==='engine')ne=psOolAt(Math.max(O.P[0],p*O.Pmax)).ne;
       else{const Pe=clamp(Pd+Pc,O.P[0],O.Pmax);H.PeWant=Pe;ne=psOolAt(Pe).ne;}
-      H.neT=clamp(ne,Math.max(R.lo,e.idleRpmEff),Math.max(R.hi,e.idleRpmEff));
+      // never held on the redline: the ECU keeps the engine under the over-rev margin (stepWear wears it past 98.5%)
+      const neHi=Math.min(R.hi,e.redline*HYB_BENCH.neMax);
+      H.neT=clamp(ne,Math.max(R.lo,e.idleRpmEff),Math.max(neHi,e.idleRpmEff));
     }
     H.TeWant=on&&!pedalThr?(H.PeWant||0)/Math.max(1,H.neT*Math.PI/30):null;
   }else{

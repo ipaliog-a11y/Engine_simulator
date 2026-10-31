@@ -47,7 +47,7 @@ const EV_VEHICLE_PRESETS=[
 // cam yet) makes ~116 hp, not 104 (tests/test103.mjs checks the car both as built and matched to the published power).
 const HYB_ENGINE_PRESETS=[
   {cat:'Hybrid',name:'Hyundai Kappa 1.6 GDi + P2 (Ioniq Hybrid)',real:{hp:103.6,hpRpm:5700,tq:147,tqRpm:4000,motorKW:32,motorNm:170,sysKW:104,sysNm:265},
-   unsure:['redline','cam'],engine:{type:'petrol4',cylinders:4,bore_mm:72,stroke_mm:97,compression:13,redline:6250,intake:'na',injector:'direct',vvt:true,
+   unsure:['redline','cam'],engine:{type:'petrol4',radiator:'large',oilCooler:true,cylinders:4,bore_mm:72,stroke_mm:97,compression:13,redline:6250,intake:'na',injector:'direct',vvt:true,
     cam:'stock',valves:4,octane:95,airFilter:'stock',exhaust:'stock',cat:'stock',intakeSys:'efi',hyMode:'p2',hyDeploy:'eco',
     evMotorType:'pm',evRotorD:200,evStack:40,evPoles:12,evTurns:28,evMagnet:'ndfeb',evRetention:'bridges',evCooling:'jacket',evMaxRpm:8000,
     evInverter:'igbt',evAmps:400,evRearCount:1,evFront:'none',evChem:'liHEV',evSeries:64,evKWh:1.56,evYear:2016}},
@@ -56,7 +56,7 @@ const HYB_ENGINE_PRESETS=[
   // with a 53 kW / 163 Nm MG2 and a 1.31 kWh NiMH pack of 28 modules (201.6 V): 90 kW together (Toyota GB's
   // technical specification).
   {cat:'Hybrid',name:'Toyota 2ZR-FXE 1.8 + power-split (Prius)',real:{hp:96.6,hpRpm:5200,tq:142,tqRpm:3600,motorKW:53,motorNm:163,sysKW:90},
-   unsure:['redline'],engine:{type:'petrol4',cylinders:4,bore_mm:80.5,stroke_mm:88.3,compression:13,redline:5500,intake:'na',injector:'port',vvt:true,
+   unsure:['redline'],engine:{type:'petrol4',radiator:'large',oilCooler:true,cylinders:4,bore_mm:80.5,stroke_mm:88.3,compression:13,redline:5500,intake:'na',injector:'port',vvt:true,
     cam:'atkinson',valves:4,octane:95,airFilter:'stock',exhaust:'stock',cat:'stock',intakeSys:'efi',hyMode:'ps',hyDeploy:'full',
     evMotorType:'pm',evRotorD:150,evStack:60,evPoles:8,evTurns:100,evMagnet:'ndfeb',evRetention:'bridges',evCooling:'jacket',evMaxRpm:17000,
     evInverter:'igbt',evAmps:100,evRearCount:1,evFront:'none',evChem:'nimhHEV',evSeries:168,evKWh:1.31,evYear:2016}},
@@ -64,7 +64,7 @@ const HYB_ENGINE_PRESETS=[
   // variable compression 8-14:1, the model's fixed 12:1 between them), 116 kW (158 PS), drives a generator only; a 140 kW /
   // 330 Nm motor drives the front wheels through one reduction, with a 2.1 kWh pack (Nissan; UK press release).
   {cat:'Hybrid',name:'Nissan KR15DDT 1.5 VC-T + series (Qashqai e-POWER)',real:{hp:155.6,hpRpm:5000,tq:250,tqRpm:2400,motorKW:140,motorNm:330},
-   unsure:['redline','compression','boost'],engine:{type:'petrol4',cylinders:3,bore_mm:84,stroke_mm:90.1,compression:12,redline:5600,intake:'turbo',boost_bar:0.4,turboSize:'small',
+   unsure:['redline','compression','boost'],engine:{type:'petrol4',radiator:'large',oilCooler:true,cylinders:3,bore_mm:84,stroke_mm:90.1,compression:12,redline:5600,intake:'turbo',boost_bar:0.4,turboSize:'small',
     injector:'direct',vvt:true,cam:'stock',valves:4,octane:95,airFilter:'stock',exhaust:'stock',cat:'stock',intakeSys:'efi',hyMode:'series',hyDeploy:'full',
     evMotorType:'pm',evRotorD:160,evStack:100,evPoles:8,evTurns:26,evMagnet:'ndfeb',evRetention:'bridges',evCooling:'jacket',evMaxRpm:14000,
     evInverter:'igbt',evAmps:450,evRearCount:1,evFront:'none',evChem:'liHEV',evSeries:96,evKWh:2.1,evYear:2021}},
@@ -73,7 +73,7 @@ const HYB_ENGINE_PRESETS=[
   // 215 kW together), and a 12 kWh pack under the rear seat. The tune holds the charge between 12% and 95% (~10 kWh
   // usable, BMW's net figure ~10.4) and sustains it at 15%.
   {cat:'Hybrid',name:'BMW B48 2.0 turbo + P2 plug-in (330e)',real:{hp:181.5,hpRpm:5000,tq:300,tqRpm:1350,motorKW:80,motorNm:265,sysKW:215},
-   unsure:['redline','boost','pack'],engine:{type:'petrol4',cylinders:4,bore_mm:82,stroke_mm:94.6,compression:10.2,redline:6500,intake:'turbo',boost_bar:0.4,turboSize:'small',
+   unsure:['redline','boost','pack'],engine:{type:'petrol4',radiator:'large',oilCooler:true,cylinders:4,bore_mm:82,stroke_mm:94.6,compression:10.2,redline:6500,intake:'turbo',boost_bar:0.4,turboSize:'small',
     injector:'direct',vvt:true,cam:'stock',valves:4,octane:95,airFilter:'stock',exhaust:'stock',cat:'stock',intakeSys:'efi',hyMode:'p2',hyDeploy:'full',hyPlug:true,
     hyTune:{rpm:4000,map:Array(20).fill(100),regen:'high',lps:true,evKmh:0,evKw:0,socLo:12,socT:15,socHi:95},
     evMotorType:'pm',evRotorD:200,evStack:60,evPoles:12,evTurns:48,evMagnet:'ndfeb',evRetention:'bridges',evCooling:'jacket',evMaxRpm:7500,
@@ -83,7 +83,7 @@ const HYB_ENGINE_PRESETS=[
   // front axle through its own reduction (declutched past its top speed), and a 6.8 kWh pack of 312 cells: 652 kW and 1280
   // Nm together (Porsche). Neither motor's torque, nor the front's reduction, is published.
   {cat:'Hybrid',name:'Porsche 4.6 V8 + P2 + front motor (918 Spyder)',real:{hp:599.4,hpRpm:8700,tq:540,tqRpm:6700,motorKW:115,frontKW:95,sysKW:652,sysNm:1280},
-   unsure:['compression','cam','motor torques','front reduction'],engine:{type:'petrol4',cylinders:8,layout:'v',bore_mm:95,stroke_mm:81,compression:13.0,redline:9150,intake:'na',
+   unsure:['compression','cam','motor torques','front reduction'],engine:{type:'petrol4',radiator:'large',oilCooler:true,cylinders:8,layout:'v',bore_mm:95,stroke_mm:81,compression:13.0,redline:9150,intake:'na',
     injector:'direct',vvt:true,cam:'race',valves:4,valveMat:'titanium',valveSpring:'race',octane:98,airFilter:'perf',exhaust:'race',cat:'stock',intakeSys:'efi',runner:'variable',
     hyMode:'p2',hyDeploy:'full',hyPlug:true,hyTune:{rpm:4000,map:Array(20).fill(100),regen:'high',lps:true,evKmh:0,evKw:0,socLo:15,socT:20,socHi:95},
     evMotorType:'pm',evRotorD:150,evStack:80,evPoles:8,evTurns:30,evMagnet:'ndfeb',evRetention:'bridges',evCooling:'jacket',evMaxRpm:16000,

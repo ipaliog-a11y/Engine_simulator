@@ -20,6 +20,68 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 Working toward **v1.0 — every number derived, not fitted.**
 
+### Racing energy (build 196)
+
+- **Step 3.5c of the hybrid plan** (decision 15's second half).
+- **A racing class's energy limits.** The HYBRID TUNE gains two fields, saved with the build:
+  - **DEPLOY LIMIT:** the most MJ a lap the motors may take from the pack.
+  - **HARVEST LIMIT:** the most MJ a lap braking may put back. Past it the motor stops regenerating and the friction
+    brakes take the rest.
+  - The lap's charge balance (`hybridLap`) holds both, wherever the lap is used: the TRACK tab, the race, the racing line.
+- **A plug-in in a race** (`src/js/hybrid-race.js`, new). It starts on a full pack (the charge window's HIGH) and spends
+  its own charge on top of what braking returns, down to the charge it then sustains (the TARGET):
+  - a second pace grid of depleting laps (the motors free of the balance, to the deploy limit);
+  - the car runs at a share of them, the pace and the fuel straight between the two grids;
+  - the share is chosen so the charge lasts the distance, and chosen again at every crossing of the line;
+  - qualifying is a hot lap on a full pack.
+- **The Porsche 918 Spyder on the technical circuit:**
+  - 5 laps spend the charge flat out;
+  - 30 laps spread it at a 35% share and finish with 20 kJ of 18,360 left, 3.0 s ahead of the same car not plugged in;
+  - a 0.6 MJ deploy limit costs 0.23 s a lap, a 0.5 MJ harvest limit 0.27 s.
+- The RACE tab's telemetry shows a plug-in's PACK and PLUG-IN DEPLOY share. `tests/test113.mjs`.
+- **Fixed: a hybrid flat out on the LIVE bench wore its engine out** (reported on the BMW 330e: AUTO, AUTO THERMAL,
+  over 50% pedal).
+  - The hybrid's pedal asks for the engine's and the motor's torque, so from about half pedal the engine runs at full load.
+  - All five hybrid engine presets had the stock radiator and no oil cooler. At full load the oil settled at 139-150 C,
+    past the 132 C damage threshold.
+  - They now have a large radiator and an oil cooler, as the game's performance presets do (the real engines all have
+    one). Flat out, the oil holds at 118-129 C.
+  - A power-split's or series hybrid's controller held the engine on its redline at full demand, which wears it as
+    OVER-REV. It now keeps the engine at most 97% of the redline.
+  - The base game's thermal model is unchanged.
+  - `tests/test107.mjs` runs every hybrid preset flat out for five minutes.
+- **Fixed: an electric car's power drifted down at a steady partial pedal on the LIVE bench** (reported on the Tesla
+  Model Y: 60% pedal, 40% brake, about 0.1 hp a second).
+  - The pedal was a share of the most torque the drive could give at that moment. As the pack drained, its voltage fell,
+    and at high speed that maximum falls with it, so the same pedal asked for less.
+  - The pedal is now a torque request: a share of what the drive gives at this speed at its best (a full pack, a cool
+    motor, undamaged). The controller draws whatever current that takes.
+  - On the Model Y the power now holds at 330.9 hp from 87% to 73% charge, the current rising from 733 to 764 A. It holds
+    down to about 10%, where the pack's own power limit takes over.
+  - A full pedal still asks for everything the drive has now, so the full-load figures are unchanged.
+  - `tests/test97.mjs` checks both.
+- **An electric car's low charge and limp mode, and what the LIVE panel says of them.**
+  - Below 15% charge the battery management cuts the power it allows, steeply: to 73% of what the cells give at 10%,
+    46% at 5%, 30% at 2%.
+  - Below 2% the car limps on a tenth of the pack's rated power (38 kW on the Model Y), until the pack is empty.
+  - The cut applies on the LIVE bench, the dyno and in a race. The 0-100, the lap and the WLTP cycle run at a fixed
+    charge, so their figures are unchanged.
+  - On the Model Y at 60% pedal and 40% brake: 331 hp at 20%, 267 hp at 10%, 107 hp at 5%, a steady 48 hp limping.
+  - Two new LIVE tiles for an electric car, hidden for an engine:
+    - **PACK CURRENT** (A).
+    - **POWER LIMIT**: what holds the power under the pedal's request (NONE, BATTERY, THERMAL, LOW SOC or LIMP) and how
+      much of the request is delivered.
+  - The status line says LOW CHARGE with the battery management's cut, and LIMP MODE with the power it holds to.
+- **The wiki covers electric cars and hybrids.** A new section, **Electric & hybrid**, has seven pages. Each has the
+  usual three levels (real life, in the game, the physics), a moving picture, and Greek:
+  - **The electric drive:** the battery, inverter and motor, the LIVE bench's tiles and limits, low charge and limp mode.
+  - **The motor:** every MOTOR field (type, rotor, stack, poles, turns, magnets, retention, cooling, max speed).
+  - **More motors:** REAR MOTORS, FRONT MOTOR and its fields, FRONT REDUCTION.
+  - **The inverter:** SWITCHES and CURRENT RATING.
+  - **The battery:** every chemistry, CELLS IN SERIES, CAPACITY and TECHNOLOGY YEAR.
+  - **Hybrids:** P2, power-split and series, ASSIST, PLUG-IN, and the LIVE bench's drive modes and views.
+  - **The hybrid tune:** every field, including the deploy and harvest limits and the assist map.
+
 ### A front axle motor, and the Porsche 918 Spyder (build 195)
 
 - **Step 3.5b of the plan** (3.5 split again: race energy limits are 3.5c). A hybrid can now carry the electric car's
