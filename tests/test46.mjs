@@ -39,6 +39,12 @@ const egt = await page.evaluate(() => {
   // at ~830 C continuous, and the ECU fuels up to it, so a band of 800 contradicted the model's own
   // hardware limit.
   const ciHi = VANE_T_LIMIT - 273;
+  // SOURCES (v1.0 item 7), honestly: these bands are mostly UNSOURCED, the author's. The measured studies (Goto et al.,
+  // SAE 790308, six petrol engines; Raine & Jones, SAE 901503) are behind a paywall and their figures are not quoted
+  // here. What is sourced: a thermocouple reads ~20 K under the time-averaged gas (Caton, SAE 820050), which the model
+  // applies (egtProbeRatio); a boosted rotary reads ~1000 C, ~950 run rich (owners' logs, Mazda Rotary Club forum,
+  // anecdotal), inside the rotary band; the diesels' ceiling is the model's own vane limit. The petrol 820-980, the
+  // diesels' 560 floor and the rotary 900-1250: the author's.
   for (const [n, lo, hi] of [['1.6 Sport NA I4', 820, 980], ['2.0 Turbo Diesel I4', 560, ciHi],
                              ['1.3 Rotary NA (Renesis)', 900, 1250], ['6.6 V8 Turbodiesel', 560, ciHi]]) {
     const pr = PRESETS.find(x => x.name === n);
@@ -103,6 +109,10 @@ hdr.forEach(h => {
   if (h.turbo) {
     if (!(h.L < h.naL && h.L >= 100)) fails.push(`${h.n}: ${h.L} mm turbo runner should be shorter than its ${h.naL} mm tuned header`);
   } else if (h.L < 350 || h.L > 900) fails.push(`${h.n}: ${h.L} mm primary is not a buildable header`);
+  // SOURCES (v1.0 item 7). 900 mm: long-tube street headers run 30-36 in (760-915 mm), commonly 32-34 (Stainless
+  // Headers, "Header Primary Length"; JEGS, "A Buyer's Guide to Exhaust Headers"). 350 mm, the shortest worth
+  // calling a header: UNSOURCED, the author's. The system pipe's 35-110 mm: UNSOURCED, the author's (no published
+  // size-against-power table was found that gives figures).
   if (h.sys < 35 || h.sys > 110) fails.push(`${h.n}: ${h.sys} mm system pipe is not a real size`);
 });
 // The system pipe must scale with the engine, not be a fixed number — a V12 and a kei car do not
@@ -123,7 +133,11 @@ const bp = await page.evaluate(() => ['stock', 'sport', 'race'].map(x => {
 bp.forEach(b => console.log(`  ${b.x.padEnd(6)} ${b.bar} bar near the power peak`));
 if (!(bp[0].bar > bp[1].bar && bp[1].bar > bp[2].bar))
   fails.push('a freer exhaust must have less back-pressure');
-if (bp[0].bar > 0.85) fails.push(`stock back-pressure ${bp[0].bar} bar is beyond anything real`);
+// SOURCE (v1.0 item 7): a stock system reads 4-8 psi (0.28-0.55 bar) at full throttle (AA1Car, "Exhaust
+// Backpressure"), and Ford's diagnostic limit for a stock vehicle is 8 psi at WOT under load (as quoted on the Explorer
+// forum). Until v1.0 item 7 this was "no more than 0.85 bar", the author's; the model's stock system sat inside the
+// sourced band all along (0.334 bar here). The 0.25 floor allows the low end's rounding.
+if (bp[0].bar > 0.55 || bp[0].bar < 0.25) fails.push(`stock back-pressure ${bp[0].bar} bar is outside the measured 0.28-0.55 bar`);
 if (bp[2].bar < 0.005) fails.push(`race back-pressure ${bp[2].bar} bar is implausibly free`);
 
 // ==================================================================== 5. the waves swing BOTH ways
@@ -147,14 +161,21 @@ const swing = await page.evaluate(() => {
 console.log(`  intake ram      ${swing.rlo}% .. +${swing.rhi}%`);
 console.log(`  exhaust scavenge ${swing.slo}% .. +${swing.shi}%`);
 if (!(swing.rlo < -0.5)) fails.push('intake ram never goes negative — it is still a free bonus');
-if (!(swing.rhi > 5 && swing.rhi < 25)) fails.push(`peak ram ${swing.rhi}% is outside the real 8-20% band`);
+// SOURCES (v1.0 item 7) for the ceiling: a tuned intake holds volumetric efficiency over 115% across 65% of the speed
+// range (SAE 921727), and naturally aspirated racing engines pass 125% (Cranfield, "The acoustics of racing engine intake
+// systems"); past a stock engine's ~90-95%, that is the waves' doing, so a peak ram past 25% is beyond the best measured.
+// The 5% floor (an ITB race engine's tuned intake gains at least that much): UNSOURCED, the author's. (The message here
+// said 8-20% while the check was 5-25%; it now says what is checked.)
+if (!(swing.rhi > 5 && swing.rhi < 25)) fails.push(`peak ram ${swing.rhi}% is outside 5-25%`);
 if (!(swing.slo < -0.5)) fails.push('scavenging never goes negative — reversion is not modelled');
 // Build 116: the overlap's flow area comes from the cam (the smaller of the two curtains across the window,
 // Cd 0.6), not a fixed 15% of full lift held across it, and the exhaust wave's pipe friction from the
 // boundary layers, not 0.35/m. On this race cam the suction pulse arrives at 0.13-0.16 bar, and the valves
 // are barely open while it does, so the charge it pulls through tops out near 3%; the floor was 4% when the
 // curtain was four times too big.
-if (!(swing.shi > 2 && swing.shi < 25)) fails.push(`peak scavenging ${swing.shi}% is outside the real band`);
+// The 2-25% band: UNSOURCED, the author's (v1.0 item 7 found no published measurement of the charge an exhaust's
+// suction pulse adds).
+if (!(swing.shi > 2 && swing.shi < 25)) fails.push(`peak scavenging ${swing.shi}% is outside the author's 2-25%`);
 
 // ==================================================================== 6. runner length moves the peak
 // This is what replaces CAM.peakShift: the powerband position is now a consequence of a length you
@@ -181,7 +202,8 @@ const trap = await page.evaluate(() => {
 console.log(`  stock cam, no VVT  ${trap.stock}   race cam, no VVT  ${trap.race}   race cam + VVT  ${trap.raceVVT}`);
 if (!(trap.race < trap.stock)) fails.push('a longer-duration cam must trap LESS charge at low rpm');
 if (!(trap.raceVVT > trap.race)) fails.push('VVT must recover some of the late-IVC loss');
-if (trap.race < 0.75 || trap.race > 0.95) fails.push(`race-cam trapping ${trap.race} is outside a believable band`);
+// The 0.75-0.95 band: UNSOURCED, the author's (v1.0 item 7).
+if (trap.race < 0.75 || trap.race > 0.95) fails.push(`race-cam trapping ${trap.race} is outside the author's 0.75-0.95`);
 
 // ==================================================================== 8. no preset peaks at the limiter
 // The outcome this whole conversion existed to deliver. Real engines peak at 90-98% of redline;
