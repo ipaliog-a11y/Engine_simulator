@@ -20,6 +20,22 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 Working toward **v1.0 — every number derived, not fitted.**
 
+### The electric drive's sound in the app (build 198)
+
+- **Step 4b of the hybrid-electric plan.** An electric car is no longer silent. SOUND ON plays its motor, inverter and
+  gears from the `motor-sound` worklet, the prototype's synth (build 197) ported beside the engine's sound.
+- **Where it plays:** wherever the engine's sound is heard from the bench, and on the TRACK tab's replay.
+  - **An electric car:** its drive's speed and torque.
+  - **A hybrid:** its motor's, together with the engine.
+  - **The replay:** the recorded shaft power over the motor's speed, with the drive's own braking as regeneration on a lift.
+- **The torque split:** shared between the axles as the controller does it. On the Model Y the induction front motor
+  carries nothing, and is silent, until the rear runs short.
+- **Gear meshes:** only where the motor has a reduction of its own (an electric car, a power-split or series hybrid; not
+  a P2, whose motor turns inside the gearbox).
+- **Level:** set by ear (`MOTOR_SOUND_LEVEL`), through its own limiter. SOUND OFF and the other tabs silence it.
+- **Tests:** `tests/test114.mjs` renders the worklet offline and checks every voice's frequency, the load, the idle front
+  motor, and the live page's sources.
+
 ### The electric drive's sound: the prototype (build 197)
 
 - **Step 4a of the hybrid-electric plan.** `tests/proto/ev-sound/` is a synth for a motor, its inverter and its
