@@ -35,6 +35,11 @@ Working toward **v1.0 — every number derived, not fitted.**
   1.14 from Lamborghini's 420 kg at 280 km/h.
   - The wing's drag brings its top speed from 317 km/h to 307, against the real 310.
   - Nordschleife 6:57 (no official time is published).
+- **A street-legal car in Track runs on semi-slicks.** The BAC Mono is road legal and sold on Pirelli P Zero Trofeo R
+  track tyres, but the pack fitted it with slicks.
+  - On SEMI-SLICK its Nordschleife lap goes from 6:22 to 6:37.
+  - Its 0–100 goes from 2.79 s to 3.19 s, against the research pack's 3.0.
+  - The Radical SR3 RSX is a race car, not road legal, so it keeps its slicks.
 - `tests/test116.mjs` checks both cars. `tests/test115.mjs` compares a preset's body with the pack's without the fitted
   aero factor.
 
