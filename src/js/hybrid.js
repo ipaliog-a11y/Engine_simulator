@@ -208,11 +208,13 @@ function hybDeployBudget(E,extra){
 }
 function hybridLap(key,opts){
   if(opts&&opts.quick)return simulateLapRun(key,opts);   // the racing line's quick laps: full deploy, no replay to balance
-  // each round scales the share by the budget over what went out, a hair under, so it settles from the safe side
+  // each round scales the share by the budget over what went out, a hair under, so it settles from the safe side. Up to
+  // twelve rounds (build 204; six until then): the regeneration moves with the share too, as the lap's speeds do, and a
+  // Prius whose engine makes its real power took more than six. Laps that settled in six are unchanged.
   const extra=opts&&opts.hyExtraKJ||0;
   let k=1,used=1,L=null,E=null,B=0;
   try{
-    for(let it=0;it<6;it++){
+    for(let it=0;it<12;it++){
       used=k;hybDeployShare=k;L=simulateLapRun(key,opts);if(!L)return null;E=hybLapEnergy(L);B=hybDeployBudget(E,extra);
       if(E.deployKJ<=B||E.deployKJ<1e-6)break;
       k=clamp(k*B/E.deployKJ*0.995,0,1);

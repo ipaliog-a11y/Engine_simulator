@@ -32,7 +32,7 @@ function readEngineFromForm(){
     cat:g('edCat').value,
     intakeSys:g('edIntakeSys').value,
     airFilter:g('edAirFilter').value,
-    cam:g('edCam').value,
+    cam:g('edCam').value,egr:g('edEgr').value,
     runner:g('edRunner').value,
     vvt:g('edVVT').value==='yes',
     valves:clamp(Math.round(+g('edValves').value||4),2,5),
@@ -70,7 +70,7 @@ function applyEngineToForm(e){
   g('edAntilag').value=e.antilag?'yes':'no';
   g('edScType').value=e.scType||'roots';g('edNitrous').value=e.nitrous||'none';
   g('edIntakeSys').value=e.intakeSys||'efi';g('edAirFilter').value=e.airFilter||'stock';
-  g('edRunner').value=e.runner||'medium';g('edCam').value=e.cam||'stock';g('edVVT').value=e.vvt?'yes':'no';
+  g('edRunner').value=e.runner||'medium';g('edCam').value=e.cam||'stock';g('edEgr').value=e.egr||'none';g('edVVT').value=e.vvt?'yes':'no';
   g('edValves').value=String(e.valves||4);g('edValveMat').value=e.valveMat||'steel';
   g('edSpring').value=e.valveSpring||'stock';
   g('edFuel').value=e.fuel||'gasoline';
@@ -118,7 +118,7 @@ function syncDesignEnable(){
   g('edAntilag').disabled=!turbo;
   g('edScType').disabled=intake!=='supercharger';
   // No poppet valvetrain on 2-stroke / rotary.
-  g('edCam').disabled=tp.ports;
+  g('edCam').disabled=tp.ports;g('edEgr').disabled=tp.ports||tp.ci;   // the spark engines' cooled EGR (build 204)
   g('edVVT').disabled=tp.ports;
   ['edValves','edValveMat','edSpring'].forEach(id=>{g(id).disabled=tp.ports;});
   // Spark & timing only exist on spark-ignition engines (diesel is CI).

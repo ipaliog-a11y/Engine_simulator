@@ -144,7 +144,8 @@ function wallHeatExtra(rpm){
 // a spark engine's 0.8 x fuel-air at the reference engines' rated speed (WALL_BSP_REF), a diesel's
 // ETA_GROSS_CI at 2000 rpm on a passenger-car DI diesel (BURN_REF_RPM). Since build 101 the wall share at
 // each speed is Woschni's own, traced (wallTrace), not a (B Sp)^-0.2 scaling about a reference.
-const wallImepFactor=rpm=>engine.wallK>0&&engine.wallTab?1-engine.wallK*wallHeatExtra(rpm)/engine.wallEtaI:1;
+// Cooled EGR (build 204) takes egrWall (negative) off the share at its full rate, in proportion at a lower one.
+const wallImepFactor=(rpm,egr=0)=>engine.wallK>0&&engine.wallTab?1-engine.wallK*(wallHeatExtra(rpm)+(engine.egrMax>0?egr/engine.egrMax*engine.egrWall:0))/engine.wallEtaI:1;
 const WALL_BSP_REF=1234;   // mm.m/s: bore x piston speed at rated power of the reference spark engines
 // kappa, from one full-load cycle at the anchor speed: intake BDC -> compression -> Wiebe heat release
 // (this model's own burn: SI_BURN_DEG / SI_CA50, or the diesel's fixed-time burn from SOC_CI) ->
@@ -154,9 +155,10 @@ const WALL_BSP_REF=1234;   // mm.m/s: bore x piston speed at rated power of the 
 // closed, 6.18 gas exchange; C2 3.24e-3 burning and expanding, 0 compressing) times (T - T_wall) times
 // the wall the gas touches (head and crown plus the liner above the piston). Woschni's constants and
 // the 450 K wall are his published values; only the SHAPE of the flux matters here, so his 3.26 cancels.
-function wallTrace(e,rpm,map){
+function wallTrace(e,rpm,map,egr=0){
   const g=1.30,R=287,cv=R/(g-1),cr=e.compression,B=e.bore_mm/1000,S=e.stroke_mm/1000,Sp=2*S*rpm/60;
-  const lam=e.ci?LAMBDA_REF_CI:0.9, q=(e.fuelLHV||43)*1e6/(Math.max(1,lam)*(e.stoichAFR||14.7));   // J per kg of charge, released
+  // egr: the share of the charge that is cooled exhaust (build 204), at the intake's temperature: the same fuel in more gas
+  const lam=e.ci?LAMBDA_REF_CI:0.9, q=(1-egr)*(e.fuelLHV||43)*1e6/(Math.max(1,lam)*(e.stoichAFR||14.7));   // J per kg of charge, released
   const burn=e.ci?6*rpm*BURN_T_CI:SI_BURN_DEG, soc=e.ci?SOC_CI:SI_CA50-wiebeX50()*SI_BURN_DEG;
   const evo=360-e.camLSA-e.camDur/2, Vt=th=>pistonVol(th,cr), Vevo=Vt(evo);
   const T1=330,p1=map*1e5,v1=R*T1/p1, Vd=Math.PI/4*B*B*S, hc=S/(cr-1), V1=Vd*cr/(cr-1), m=p1*V1/(R*T1);
@@ -962,6 +964,9 @@ function deriveGasDynamics(){
   // The work's share of extra wall heat (wallWorkShare), at the anchor where it is zero-referenced, and
   // the gross indicated efficiency it is a share of there. Set here, from the cam just read and before
   // the first exhaust temperature below. Ported engines carry no wall term. (maxBoost is set later.)
+  // Cooled EGR (build 204): the most the ECU recirculates, on a spark engine with the hardware; and what that dilution
+  // takes off the walls' share of the fuel's heat at the anchor (the same trace with the charge diluted, the same fuel).
+  e.egrMax=(e.egr==='cooled'||e.egr==='cooled-full')&&!e.ci&&!e.ports?EGR_COOLED_MAX:0;e.egrFull=e.egr==='cooled-full';e.egrWall=0;
   e.wallK=0;e.wallEtaI=1;e.wallTab=null;
   if(!e.ports){
     const n=e.ci?BURN_REF_RPM:WALL_BSP_REF*60/(e.bore_mm*2*e.stroke_mm/1000);
@@ -970,6 +975,7 @@ function deriveGasDynamics(){
     // the absolute wall share by rpm, every 100, for the energy balance (exhaustHeatFrac)
     e.wallTab=[];for(let r=0;r<=e.redline*1.3+200;r+=100)e.wallTab.push(wallTrace(e,Math.max(300,r),map).share);
     e.wallRefRpm=n;e.wallRefShare=wallShareAt(n);
+    if(e.egrMax>0)e.egrWall=wallTrace(e,n,map,e.egrMax).share-wallTrace(e,n,map).share;
     e.wallEtaI=e.ci?ETA_GROSS_CI*otto(e.compression)/otto(CR_REF_CI)
                    :REAL_TO_FUELAIR*(1-Math.pow(Math.max(1.5,e.compression),1-GAMMA_FA))*(e.typeImep||1);
   }

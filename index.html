@@ -422,7 +422,7 @@ table.hy-map td:focus{outline:2px solid #ffcc00;outline-offset:-2px}
 <body>
 <div class="container">
 <header>
-<h1>PIXEL ENGINE SIM v0.7 build 203</h1>
+<h1>PIXEL ENGINE SIM v0.7 build 204</h1>
 <div class="subtitle" id="subtitle">ENGINE DESIGNER • BUILD IT, THEN DRIVE IT</div>
 </header>
 <div class="build-strip" id="buildStrip">
@@ -569,6 +569,7 @@ table.hy-map td:focus{outline:2px solid #ffcc00;outline-offset:-2px}
 
 <div class="design-section">Valvetrain</div>
 <div class="design-grid">
+<div class="field"><label for="edEgr">EGR</label><select id="edEgr"><option value="none">NONE</option><option value="cooled">COOLED, OFF AT FULL LOAD</option><option value="cooled-full">COOLED, TO FULL LOAD</option></select></div>
 <div class="field"><label for="edCam">CAM PROFILE</label><select id="edCam"><option value="stock">STOCK</option><option value="sport">SPORT</option><option value="race">RACE</option><option value="atkinson">ATKINSON (LATE IVC)</option></select></div>
 <div class="field"><label for="edVVT">VARIABLE VALVE TIMING</label><select id="edVVT"><option value="no">NONE</option><option value="yes">VVT</option></select></div>
 <div class="field"><label for="edValves">VALVES / CYLINDER</label><select id="edValves"><option value="2">2 (WEDGE)</option><option value="4">4 (PENT-ROOF)</option><option value="5">5</option></select></div>
@@ -3530,7 +3531,8 @@ function wallHeatExtra(rpm){
 // a spark engine's 0.8 x fuel-air at the reference engines' rated speed (WALL_BSP_REF), a diesel's
 // ETA_GROSS_CI at 2000 rpm on a passenger-car DI diesel (BURN_REF_RPM). Since build 101 the wall share at
 // each speed is Woschni's own, traced (wallTrace), not a (B Sp)^-0.2 scaling about a reference.
-const wallImepFactor=rpm=>engine.wallK>0&&engine.wallTab?1-engine.wallK*wallHeatExtra(rpm)/engine.wallEtaI:1;
+// Cooled EGR (build 204) takes egrWall (negative) off the share at its full rate, in proportion at a lower one.
+const wallImepFactor=(rpm,egr=0)=>engine.wallK>0&&engine.wallTab?1-engine.wallK*(wallHeatExtra(rpm)+(engine.egrMax>0?egr/engine.egrMax*engine.egrWall:0))/engine.wallEtaI:1;
 const WALL_BSP_REF=1234;   // mm.m/s: bore x piston speed at rated power of the reference spark engines
 // kappa, from one full-load cycle at the anchor speed: intake BDC -> compression -> Wiebe heat release
 // (this model's own burn: SI_BURN_DEG / SI_CA50, or the diesel's fixed-time burn from SOC_CI) ->
@@ -3540,9 +3542,10 @@ const WALL_BSP_REF=1234;   // mm.m/s: bore x piston speed at rated power of the 
 // closed, 6.18 gas exchange; C2 3.24e-3 burning and expanding, 0 compressing) times (T - T_wall) times
 // the wall the gas touches (head and crown plus the liner above the piston). Woschni's constants and
 // the 450 K wall are his published values; only the SHAPE of the flux matters here, so his 3.26 cancels.
-function wallTrace(e,rpm,map){
+function wallTrace(e,rpm,map,egr=0){
   const g=1.30,R=287,cv=R/(g-1),cr=e.compression,B=e.bore_mm/1000,S=e.stroke_mm/1000,Sp=2*S*rpm/60;
-  const lam=e.ci?LAMBDA_REF_CI:0.9, q=(e.fuelLHV||43)*1e6/(Math.max(1,lam)*(e.stoichAFR||14.7));   // J per kg of charge, released
+  // egr: the share of the charge that is cooled exhaust (build 204), at the intake's temperature: the same fuel in more gas
+  const lam=e.ci?LAMBDA_REF_CI:0.9, q=(1-egr)*(e.fuelLHV||43)*1e6/(Math.max(1,lam)*(e.stoichAFR||14.7));   // J per kg of charge, released
   const burn=e.ci?6*rpm*BURN_T_CI:SI_BURN_DEG, soc=e.ci?SOC_CI:SI_CA50-wiebeX50()*SI_BURN_DEG;
   const evo=360-e.camLSA-e.camDur/2, Vt=th=>pistonVol(th,cr), Vevo=Vt(evo);
   const T1=330,p1=map*1e5,v1=R*T1/p1, Vd=Math.PI/4*B*B*S, hc=S/(cr-1), V1=Vd*cr/(cr-1), m=p1*V1/(R*T1);
@@ -4348,6 +4351,9 @@ function deriveGasDynamics(){
   // The work's share of extra wall heat (wallWorkShare), at the anchor where it is zero-referenced, and
   // the gross indicated efficiency it is a share of there. Set here, from the cam just read and before
   // the first exhaust temperature below. Ported engines carry no wall term. (maxBoost is set later.)
+  // Cooled EGR (build 204): the most the ECU recirculates, on a spark engine with the hardware; and what that dilution
+  // takes off the walls' share of the fuel's heat at the anchor (the same trace with the charge diluted, the same fuel).
+  e.egrMax=(e.egr==='cooled'||e.egr==='cooled-full')&&!e.ci&&!e.ports?EGR_COOLED_MAX:0;e.egrFull=e.egr==='cooled-full';e.egrWall=0;
   e.wallK=0;e.wallEtaI=1;e.wallTab=null;
   if(!e.ports){
     const n=e.ci?BURN_REF_RPM:WALL_BSP_REF*60/(e.bore_mm*2*e.stroke_mm/1000);
@@ -4356,6 +4362,7 @@ function deriveGasDynamics(){
     // the absolute wall share by rpm, every 100, for the energy balance (exhaustHeatFrac)
     e.wallTab=[];for(let r=0;r<=e.redline*1.3+200;r+=100)e.wallTab.push(wallTrace(e,Math.max(300,r),map).share);
     e.wallRefRpm=n;e.wallRefShare=wallShareAt(n);
+    if(e.egrMax>0)e.egrWall=wallTrace(e,n,map,e.egrMax).share-wallTrace(e,n,map).share;
     e.wallEtaI=e.ci?ETA_GROSS_CI*otto(e.compression)/otto(CR_REF_CI)
                    :REAL_TO_FUELAIR*(1-Math.pow(Math.max(1.5,e.compression),1-GAMMA_FA))*(e.typeImep||1);
   }
@@ -4934,6 +4941,7 @@ const I18N={
   'VEHICLE':{el:'ΟΧΗΜΑ'},'VEHICLE DESIGN':{el:'ΣΧΕΔΙΑΣΗ ΟΧΗΜΑΤΟΣ'},
   'Pick a chassis and it arrives on its factory spec — matching tyres, wheels, brakes, suspension and aero. Swap any part from there; your current engine is dropped in and the performance is computed live.':{el:'Διάλεξε σασί και έρχεται με τον εργοστασιακό του εξοπλισμό — ταιριαστά ελαστικά, ζάντες, φρένα, ανάρτηση και αεροδυναμική. Άλλαξε ό,τι θέλεις από εκεί· ο τρέχων κινητήρας μπαίνει μέσα και οι επιδόσεις υπολογίζονται ζωντανά.'},
   'Chassis & Drivetrain':{el:'Σασί & Μετάδοση'},'CHASSIS':{el:'ΣΑΣΙ'},'DRIVETRAIN':{el:'ΜΕΤΑΔΟΣΗ'},'GEARBOX (SPEEDS)':{el:'ΚΙΒΩΤΙΟ (ΣΧΕΣΕΙΣ)'},'GEAR SPACING':{el:'ΚΛΙΜΑΚΩΣΗ ΣΧΕΣΕΩΝ'},'DIESEL RATED SPEED (rpm, 0 = off)':{el:'ΟΝΟΜΑΣΤΙΚΕΣ ΣΤΡΟΦΕΣ ΠΕΤΡΕΛΑΙΟΥ (rpm, 0 = εκτός)'},'no drive cut':{el:'χωρίς διακοπή μετάδοσης'},'RATIOS & GRAPHS':{el:'ΣΧΕΣΕΙΣ & ΓΡΑΦΗΜΑΤΑ'},'GEAR RATIOS…':{el:'ΣΧΕΣΕΙΣ ΚΙΒΩΤΙΟΥ…'},'GEAR RATIOS':{el:'ΣΧΕΣΕΙΣ ΚΙΒΩΤΙΟΥ'},
+  'EGR':{el:'ΑΝΑΚΥΚΛΟΦΟΡΙΑ ΚΑΥΣΑΕΡΙΩΝ'},'COOLED, OFF AT FULL LOAD':{el:'ΨΥΧΟΜΕΝΗ, ΟΧΙ ΣΤΟ ΠΛΗΡΕΣ ΦΟΡΤΙΟ'},'COOLED, TO FULL LOAD':{el:'ΨΥΧΟΜΕΝΗ, ΩΣ ΤΟ ΠΛΗΡΕΣ ΦΟΡΤΙΟ'},   // cooled EGR (build 204)
   // the G-G DIAGRAM window (build 200)
   'G-G DIAGRAM…':{el:'ΔΙΑΓΡΑΜΜΑ G-G…'},'G-G DIAGRAM':{el:'ΔΙΑΓΡΑΜΜΑ G-G'},'ACCELERATION ALONG THE ROAD AGAINST SIDEWAYS (g)':{el:'ΔΙΑΜΗΚΗΣ ΕΠΙΤΑΧΥΝΣΗ ΩΣ ΠΡΟΣ ΠΛΕΥΡΙΚΗ (g)'},'the lap':{el:'ο γύρος'},'sideways':{el:'πλευρικά'},'braking':{el:'φρενάρισμα'},'power':{el:'ισχύς'},'traction':{el:'πρόσφυση'},'brakes':{el:'φρένα'},'tyres':{el:'ελαστικά'},'DRIVE':{el:'ΩΘΗΣΗ'},'SIDEWAYS':{el:'ΠΛΕΥΡΙΚΑ'},'accelerating':{el:'επιτάχυνση'},'Every point is the lap\'s own physics at that speed on level road: the tightest corner the car can take, and at each share of it the most it can brake and drive. The downforce widens the envelope with speed; the drag and the power shrink its top. The dots are every point of the lap on the TRACK tab\'s circuit: a car driven at its limit runs round the edge, and past it where a dip in the road presses it down.':{el:'Κάθε σημείο είναι η φυσική του ίδιου του γύρου σε αυτή την ταχύτητα σε επίπεδο δρόμο: η πιο κλειστή στροφή που μπορεί να πάρει το αυτοκίνητο, και σε κάθε μέρος της το περισσότερο φρενάρισμα και ώθηση. Η κάθετη δύναμη ανοίγει το περίγραμμα με την ταχύτητα· η αντίσταση αέρα και η ισχύς μικραίνουν την κορυφή του. Οι κουκκίδες είναι κάθε σημείο του γύρου στην πίστα της καρτέλας ΠΙΣΤΑ: ένα αυτοκίνητο στο όριό του κινείται γύρω από την άκρη, και πέρα από αυτήν όπου μια βύθιση του δρόμου το πιέζει προς τα κάτω.'},'G-G diagram: the car\'s braking, drive and cornering limits at three road speeds, with the lap\'s points':{el:'Διάγραμμα G-G: τα όρια φρεναρίσματος, ώθησης και στροφής του αυτοκινήτου σε τρεις ταχύτητες, με τα σημεία του γύρου'},
   'SPACING':{el:'ΚΛΙΜΑΚΩΣΗ'},'RATIO · ROAD SPEED AT THE LIMITER':{el:'ΣΧΕΣΗ · ΤΑΧΥΤΗΤΑ ΣΤΟΝ ΚΟΦΤΗ'},'ENGINE RPM AGAINST ROAD SPEED':{el:'ΣΤΡΟΦΕΣ ΚΙΝΗΤΗΡΑ ΠΡΟΣ ΤΑΧΥΤΗΤΑ'},
@@ -6790,7 +6798,7 @@ function readEngineFromForm(){
     cat:g('edCat').value,
     intakeSys:g('edIntakeSys').value,
     airFilter:g('edAirFilter').value,
-    cam:g('edCam').value,
+    cam:g('edCam').value,egr:g('edEgr').value,
     runner:g('edRunner').value,
     vvt:g('edVVT').value==='yes',
     valves:clamp(Math.round(+g('edValves').value||4),2,5),
@@ -6828,7 +6836,7 @@ function applyEngineToForm(e){
   g('edAntilag').value=e.antilag?'yes':'no';
   g('edScType').value=e.scType||'roots';g('edNitrous').value=e.nitrous||'none';
   g('edIntakeSys').value=e.intakeSys||'efi';g('edAirFilter').value=e.airFilter||'stock';
-  g('edRunner').value=e.runner||'medium';g('edCam').value=e.cam||'stock';g('edVVT').value=e.vvt?'yes':'no';
+  g('edRunner').value=e.runner||'medium';g('edCam').value=e.cam||'stock';g('edEgr').value=e.egr||'none';g('edVVT').value=e.vvt?'yes':'no';
   g('edValves').value=String(e.valves||4);g('edValveMat').value=e.valveMat||'steel';
   g('edSpring').value=e.valveSpring||'stock';
   g('edFuel').value=e.fuel||'gasoline';
@@ -6876,7 +6884,7 @@ function syncDesignEnable(){
   g('edAntilag').disabled=!turbo;
   g('edScType').disabled=intake!=='supercharger';
   // No poppet valvetrain on 2-stroke / rotary.
-  g('edCam').disabled=tp.ports;
+  g('edCam').disabled=tp.ports;g('edEgr').disabled=tp.ports||tp.ci;   // the spark engines' cooled EGR (build 204)
   g('edVVT').disabled=tp.ports;
   ['edValves','edValveMat','edSpring'].forEach(id=>{g(id).disabled=tp.ports;});
   // Spark & timing only exist on spark-ignition engines (diesel is CI).
@@ -7667,10 +7675,27 @@ function sparkMixture(lam){
 // energy per kg of air it really does. Rotary and two-stroke keep their measured type factors
 // (typeImep 0.70 / 0.60), still fitted and labelled.
 const REAL_TO_FUELAIR=0.80, GAMMA_FA=1.28;
+// ---- Cooled EGR (build 204) ----
+// Exhaust taken after the catalyst, cooled to near the intake's temperature and mixed into the charge (Toyota's 2ZR-FXE,
+// Hyundai's Kappa 1.6 GDi hybrid engines). The ECU recirculates none at light load, where the burn is too slow to take
+// dilution, up to its most from mid load, and holds it to full load: Toyota runs it at maximum output to keep the
+// engine at stoichiometric everywhere (COOLED, TO FULL LOAD); most makers take it out near full load for the power
+// (COOLED, OFF AT FULL LOAD: from 85% of full load to none at it). 25%: Toyota's published maximum for the 2016 2ZR-FXE (18% on the engine before;
+// Hyundai's Kappa "over 20%"). What it changes here, derived: the trapped charge is that much exhaust, so the air and
+// fuel, and the torque, are (1 - rate) of it at the same manifold pressure, and the same torque is made with the throttle
+// wider open (less pumping, from the pumping loop already modelled); and the walls take less of the fuel's heat (the
+// wall trace, the same fuel in more, cooler gas). Left out: the dilution's effect on the gas's specific heats (no
+// published ratio to the lean case's), and on knock.
+const EGR_COOLED_MAX=0.25;
+function egrRate(rpm,map){
+  if(!(engine.egrMax>0))return 0;
+  const load=map/Math.max(0.5,wotMapAt(rpm));
+  return engine.egrMax*clamp((load-0.3)/0.2,0,1)*(engine.egrFull?1:clamp((1-load)/0.15,0,1));
+}
 function sparkGrossImep(rpm,map,ve){
   const e=engine,st=e.stoichAFR||14.7;
-  const air=map*1e5/(287*(effIAT(map,rpm)+273.15))*ve;               // kg of trapped air per m3 swept
-  const eta=REAL_TO_FUELAIR*(1-Math.pow(Math.max(1.5,e.compression),1-GAMMA_FA))*wallImepFactor(rpm);
+  const x=egrRate(rpm,map),air=map*1e5/(287*(effIAT(map,rpm)+273.15))*ve*(1-x);   // kg of trapped air per m3 swept (less the EGR)
+  const eta=REAL_TO_FUELAIR*(1-Math.pow(Math.max(1.5,e.compression),1-GAMMA_FA))*wallImepFactor(rpm,x);
   return eta*e.typeImep*air/st*(e.fuelLHV||44)*1e6*sparkMixture(curAFR(rpm,map)/st)/1e5;   // bar
 }
 function tempFactors(coolant,oil){
@@ -8421,7 +8446,7 @@ function updateEnginePhysics(){
     return;
   }
   const T_k=effIAT(map,state.rpm)+273.15,MAP_pa=map*1e5,Vd=engine.displacement_L/1000;
-  const airMass_kg_s=(MAP_pa*Vd*(state.rpm/60)*engine.chargesPerRev*state.ve)/(287*T_k);
+  const airMass_kg_s=(MAP_pa*Vd*(state.rpm/60)*engine.chargesPerRev*state.ve)/(287*T_k)*(1-egrRate(state.rpm,map));
   // Imprecise metering (carbs / mechanical injection) wastes fuel; the cycle's thirst factor
   // (typeBsfc) captures combustion/scavenging losses — a 2-stroke short-circuits fresh charge
   // out the exhaust (>1, thirsty). A diesel is 1: its torque is computed from this same fuel.
@@ -9737,7 +9762,7 @@ function steadyBSFC(rpm,map){
   const r=calcAtRpm(rpm,map);
   if(!(r.powerKW>0.5))return {bsfc:Infinity,r};
   const T=effIAT(map,rpm)+273.15, Vd=engine.displacement_L/1000;
-  const air=(map*1e5*Vd*(rpm/60)*engine.chargesPerRev*r.ve)/(287*T);
+  const air=(map*1e5*Vd*(rpm/60)*engine.chargesPerRev*r.ve)/(287*T)*(1-egrRate(rpm,map));
   const fuel=(air/curAFR(rpm,map))/engine.meteringEff*engine.typeBsfc;
   return {bsfc:fuel*3600*1000/r.powerKW,r};
 }
@@ -14329,7 +14354,7 @@ function scoreEngine(){
   for(const mm of [0.8,1.0,Math.min(1.2,engine.mapMax)]){const cm=Math.min(mm,engine.mapMax);
     for(const rf of [0.6,0.85,1.05]){const rr=Math.round(clamp(peakTQrpm*rf,1200,rMax));
       const cr=calcAtRpm(rr,cm);
-      const airMass=(cm*1e5*(engine.displacement_L/1000)*(rr/60)*engine.chargesPerRev*cr.ve)/(287*(effIAT(cm,rr)+273.15));
+      const airMass=(cm*1e5*(engine.displacement_L/1000)*(rr/60)*engine.chargesPerRev*cr.ve)/(287*(effIAT(cm,rr)+273.15))*(1-egrRate(rr,cm));
       const fuelPower=((airMass/curAFR(rr,cm))/engine.meteringEff*engine.typeBsfc)*engine.fuelLHV*1e6/1000;
       if(fuelPower>0.1)thEff=Math.max(thEff,clamp((cr.powerKW/fuelPower)*100,0,46));
     }}
@@ -18856,11 +18881,13 @@ function hybDeployBudget(E,extra){
 }
 function hybridLap(key,opts){
   if(opts&&opts.quick)return simulateLapRun(key,opts);   // the racing line's quick laps: full deploy, no replay to balance
-  // each round scales the share by the budget over what went out, a hair under, so it settles from the safe side
+  // each round scales the share by the budget over what went out, a hair under, so it settles from the safe side. Up to
+  // twelve rounds (build 204; six until then): the regeneration moves with the share too, as the lap's speeds do, and a
+  // Prius whose engine makes its real power took more than six. Laps that settled in six are unchanged.
   const extra=opts&&opts.hyExtraKJ||0;
   let k=1,used=1,L=null,E=null,B=0;
   try{
-    for(let it=0;it<6;it++){
+    for(let it=0;it<12;it++){
       used=k;hybDeployShare=k;L=simulateLapRun(key,opts);if(!L)return null;E=hybLapEnergy(L);B=hybDeployBudget(E,extra);
       if(E.deployKJ<=B||E.deployKJ<1e-6)break;
       k=clamp(k*B/E.deployKJ*0.995,0,1);
@@ -19908,7 +19935,7 @@ const EV_VEHICLE_PRESETS=[
 const HYB_ENGINE_PRESETS=[
   {cat:'Hybrid',name:'Hyundai Kappa 1.6 GDi + P2 (Ioniq Hybrid)',real:{hp:103.6,hpRpm:5700,tq:147,tqRpm:4000,motorKW:32,motorNm:170,sysKW:104,sysNm:265},
    unsure:['redline','cam'],engine:{type:'petrol4',radiator:'large',oilCooler:true,cylinders:4,bore_mm:72,stroke_mm:97,compression:13,redline:6250,intake:'na',injector:'direct',vvt:true,
-    cam:'stock',valves:4,octane:95,airFilter:'stock',exhaust:'stock',cat:'stock',intakeSys:'efi',hyMode:'p2',hyDeploy:'eco',
+    egr:'cooled',cam:'stock',valves:4,octane:95,airFilter:'stock',exhaust:'stock',cat:'stock',intakeSys:'efi',hyMode:'p2',hyDeploy:'eco',
     evMotorType:'pm',evRotorD:200,evStack:40,evPoles:12,evTurns:28,evMagnet:'ndfeb',evRetention:'bridges',evCooling:'jacket',evMaxRpm:8000,
     evInverter:'igbt',evAmps:400,evRearCount:1,evFront:'none',evChem:'liHEV',evSeries:64,evKWh:1.56,evYear:2016}},
   // The Toyota Prius, 4th generation (2016; build 189, step 3.3): the 2ZR-FXE, a 1.8 port-injected Atkinson-cycle four
@@ -19917,7 +19944,7 @@ const HYB_ENGINE_PRESETS=[
   // technical specification).
   {cat:'Hybrid',name:'Toyota 2ZR-FXE 1.8 + power-split (Prius)',real:{hp:96.6,hpRpm:5200,tq:142,tqRpm:3600,motorKW:53,motorNm:163,sysKW:90},
    unsure:['redline'],engine:{type:'petrol4',radiator:'large',oilCooler:true,cylinders:4,bore_mm:80.5,stroke_mm:88.3,compression:13,redline:5500,intake:'na',injector:'port',vvt:true,
-    cam:'atkinson',valves:4,octane:95,airFilter:'stock',exhaust:'stock',cat:'stock',intakeSys:'efi',hyMode:'ps',hyDeploy:'full',
+    egr:'cooled-full',cam:'atkinson',valves:4,octane:95,airFilter:'stock',exhaust:'stock',cat:'stock',intakeSys:'efi',hyMode:'ps',hyDeploy:'full',
     evMotorType:'pm',evRotorD:150,evStack:60,evPoles:8,evTurns:100,evMagnet:'ndfeb',evRetention:'bridges',evCooling:'jacket',evMaxRpm:17000,
     evInverter:'igbt',evAmps:100,evRearCount:1,evFront:'none',evChem:'nimhHEV',evSeries:168,evKWh:1.31,evYear:2016}},
   // The Nissan Qashqai e-POWER (2022; build 193, step 3.4): a series hybrid. The KR15DDT, a 1.5 turbo three (84 x 90.1 mm,

@@ -54,7 +54,7 @@ function scoreEngine(){
   for(const mm of [0.8,1.0,Math.min(1.2,engine.mapMax)]){const cm=Math.min(mm,engine.mapMax);
     for(const rf of [0.6,0.85,1.05]){const rr=Math.round(clamp(peakTQrpm*rf,1200,rMax));
       const cr=calcAtRpm(rr,cm);
-      const airMass=(cm*1e5*(engine.displacement_L/1000)*(rr/60)*engine.chargesPerRev*cr.ve)/(287*(effIAT(cm,rr)+273.15));
+      const airMass=(cm*1e5*(engine.displacement_L/1000)*(rr/60)*engine.chargesPerRev*cr.ve)/(287*(effIAT(cm,rr)+273.15))*(1-egrRate(rr,cm));
       const fuelPower=((airMass/curAFR(rr,cm))/engine.meteringEff*engine.typeBsfc)*engine.fuelLHV*1e6/1000;
       if(fuelPower>0.1)thEff=Math.max(thEff,clamp((cr.powerKW/fuelPower)*100,0,46));
     }}
