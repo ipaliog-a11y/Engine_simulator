@@ -428,6 +428,9 @@ function simulateLapRun(key,opts){
     const aAcc=Math.min(aPow,aGrip);
     return {cap:Math.sqrt(Math.max(1,vi*vi+2*aAcc*q.ds3)),kind:aPow<aGrip?'power':'traction',u};
   }
+  // The G-G diagram (build 200): the car's limits at one point of road, from the lap's own solvers and nothing else (the
+  // cornering ceiling, the braking with the cornering it is doing, the drive out). Returned before the lap is solved.
+  if(opts&&opts.probe)return {ceilAt,brakeFrom,accFrom,brakesBound:()=>bfBound,VMAX};
   let v,vB,shiftsCut=false,boostShare=null;
   const cutAt=new Uint8Array(n);
   const ebA=new Float64Array(n),brakeBound=new Uint8Array(n);   // the engine's braking at each point, m/s2 (build 149)

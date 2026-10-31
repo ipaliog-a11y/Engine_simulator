@@ -127,6 +127,8 @@ In a race (build 196) a plug-in starts on a full pack and spreads its own charge
 TUNE's DEPLOY LIMIT and HARVEST LIMIT set a racing class's energy a lap.
 Build 199 adds 50 real combustion cars from a research pack (`research/vehicles-batch-1/`): performance SUVs, track
 cars, pickups, the first V6s, classics from the 1960s to the 1980s and more kei cars and hot hatches.
+The VEHICLE tab's G-G DIAGRAM (build 200) draws how hard the car can corner, brake and accelerate at 60, 120 and
+180 km/h, from the lap's own physics, with every point of a lap over it.
 An electric car is heard (build 198): its motor's whine, the inverter's switching and the reduction's gears, each at
 the frequency its build gives it, on the bench and on the lap replay.
 On the LIVE bench (build 190) a hybrid runs with its motor and pack: a HYBRID panel draws the power flowing between

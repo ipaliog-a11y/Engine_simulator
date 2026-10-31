@@ -20,6 +20,28 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 Working toward **v1.0 — every number derived, not fitted.**
 
+### The G-G diagram (build 200)
+
+- **G-G DIAGRAM…** on the VEHICLE tab, beside GEAR RATIOS, opens a window that shows how the car gets its lap time.
+  - Acceleration along the road is plotted against acceleration sideways, at 60, 120 and 180 km/h. A speed past the
+    car's top speed is left out.
+  - The edge is the car's limit: the tightest corner it can take at that speed, and at each share of that corner the
+    most it can brake and accelerate.
+  - The dots are every point of a lap of the circuit chosen on the TRACK tab.
+  - The readout gives each speed's three limits and what sets them (tyres or brakes; traction or power), then the
+    lap's peaks.
+- **It is the lap's physics, not a second model.** `simulateLapRun` gains a `probe` option that returns its own
+  cornering, braking and drive solvers before it solves a lap, and the window runs them on level road.
+  - Run on a levelled copy of a racing line, the lap reaches exactly 100.0% of the envelope and never passes it.
+  - On a real circuit, dots past the edge are where a dip in the road presses the car down.
+- **What it shows on the cars already here:**
+  - A car with no downforce has the same cornering limit at every speed. Its drive falls with speed as the power and
+    the drag take over.
+  - A winged car's envelope widens with speed. It shows that batch 1's Radical SR3 carries too much downforce: 3.2 g
+    sideways at 180 km/h.
+  - The Huracán STO has no wing fitted in its preset, so it corners like a car without one.
+- The window is in Greek too. It changes no number: every lap is bit-identical (`tests/test116.mjs`).
+
 ### 50 more real cars: batch 1 (build 199)
 
 - **The research pack** of PR #127 (`research/vehicles-batch-1/`: the README says why these 50, where every figure came

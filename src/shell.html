@@ -259,6 +259,7 @@
 <div class="field"><label for="vhGears">GEARBOX (SPEEDS)</label><select id="vhGears"><option value="4">4</option><option value="5">5</option><option value="6">6</option><option value="7">7</option><option value="8">8</option><option value="9">9</option><option value="10">10</option></select></div>
 <div class="field"><label for="vhSpacing">GEAR SPACING</label><select id="vhSpacing"><option value="std">STANDARD</option></select></div>
 <div class="field"><label for="btnGearRatios">RATIOS &amp; GRAPHS</label><button id="btnGearRatios" type="button">GEAR RATIOS…</button></div>
+<div class="field"><label for="btnGG">GRIP</label><button id="btnGG" type="button">G-G DIAGRAM…</button></div>
 <div class="field"><label for="vhGearing"><span id="lblGearing" class="ctl-lbl">GEARING (FINAL DRIVE)</span> <span class="val" id="valGearing">52</span></label><input type="range" id="vhGearing" min="0" max="100" step="1" value="52" aria-label="Gearing short to tall"></div>
 <div class="field"><label for="vhLimiter">SPEED LIMITER</label><select id="vhLimiter"><option value="off">OFF (REMOVED)</option><option value="on">ON</option></select></div>
 <div class="field"><label for="vhTC">TRACTION CONTROL</label><select id="vhTC"><option value="on">ON</option><option value="off">OFF</option></select></div>
@@ -496,6 +497,20 @@
 </div>
 </div>
 </div>
+<div class="gw-back" id="ggWin" hidden>
+<div class="gw" role="dialog" aria-modal="true" aria-labelledby="ggTitle">
+<div class="gw-head"><h3 id="ggTitle">G-G DIAGRAM</h3><span class="sub" id="ggSub"></span><button id="ggClose" type="button" aria-label="Close">✕</button></div>
+<div class="gw-body">
+<div>
+<div class="gw-read gg-read" id="ggRead"></div>
+<div class="gw-note" id="ggNote"></div>
+</div>
+<div>
+<div class="gw-ch gg-ch"><div class="t" id="ggT">ACCELERATION ALONG THE ROAD AGAINST SIDEWAYS (g)</div><div class="gw-leg" id="ggLeg"></div><canvas id="ggCanvas" role="img" aria-label="G-G diagram: the car's braking, drive and cornering limits at three road speeds, with the lap's points"></canvas></div>
+</div>
+</div>
+</div>
+</div>
 <script src="tracks/real-circuits.js"></script>
 <script>
 <!-- @include js/fuels-engine-types.js -->
@@ -515,6 +530,7 @@
 <!-- @include js/powertrain.js -->
 <!-- @include js/vehicle-spec.js -->
 <!-- @include js/gear-window.js -->
+<!-- @include js/gg-window.js -->
 <!-- @include js/vehicle-accel.js -->
 <!-- @include js/tracks-gpx.js -->
 <!-- @include js/racing-line-lap.js -->
