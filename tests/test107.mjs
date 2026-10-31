@@ -14,7 +14,9 @@
 //   · the LIVE tab: the hybrid panel only for a hybrid, the manual controls only in MANUAL, the diagram drawn, the status
 //     line saying the engine is off;
 //   · every hybrid preset survives five minutes flat out in AUTO with AUTO THERMAL on: cooled for its full load, and a
-//     power-split's or series engine kept off its redline (build 196).
+//     power-split's or series engine kept off its redline (build 196);
+//   · on the edge of starting, the engine does not hunt: the 918 at 31% pedal starts or stops a few times in 20 s at most,
+//     not on every frame (a hysteresis band and a 2 s dwell; build 198).
 import { chromium } from './pw.mjs';
 import { fileURLToPath, pathToFileURL } from 'url';
 import path from 'path';
@@ -68,6 +70,14 @@ const r = await page.evaluate(() => {
     for (let k = 0; k < 30; k++) { step(10); rpmMax = Math.max(rpmMax, state.rpm); }
     return { name: vp.name, oil: state.oil, coolant: state.coolant, rpmMax, redline: engine.redline, health: state.engineHealth, cause: state.wearCause, blown: state.blown };
   });
+  // the engine on the edge of starting (a user's report, build 198): the Porsche 918 at 31% pedal against a 40% brake asks
+  // what the motor alone can just give; in AUTO the engine must not start and stop on every frame
+  {
+    loadVehiclePreset(HYB_VEHICLE_PRESETS.find(x => /918/.test(x.name))); setTab('engine'); state.throttle = 0.31; state.load = 0.4;
+    const H = hybBenchState(); H.mode = 'auto'; let flips = 0, last = H.engOn;
+    for (let k = 0; k < 1200; k++) { stepThermal(1 / 60); stepEngine(1 / 60); stepElectrical(1 / 60); updatePhysics(); if (H.engOn !== last) { flips++; last = H.engOn; } }
+    o.edge = { flips, on: H.engOn };
+  }
   // an electric car has no hybrid panel
   loadVehiclePreset(EV_VEHICLE_PRESETS[0]); setTab('engine'); updateUI(); o.evPanel = vis('#hybridPanel');
   applyBuild({ engine: Object.assign({}, DEFAULT_ENGINE), tune: Object.assign({}, STD_TUNE) });
@@ -110,6 +120,9 @@ for (const F of r.flat) {
   console.log(`== ${F.name} flat out in AUTO, 5 min: oil ${f(F.oil, 0)} C, coolant ${f(F.coolant, 0)} C, engine up to ${f(F.rpmMax, 0)} rpm (redline ${F.redline}), health ${f(F.health, 3)}${F.cause ? ' (' + F.cause + ')' : ''} ==`);
   if (F.blown || F.cause || F.oil > 132 || F.rpmMax > F.redline * 0.985) fails.push(`${F.name}: flat out in AUTO the engine wears (${F.cause || 'oil ' + f(F.oil, 0) + ' C'})`);
 }
+
+console.log(`== 918 at 31% pedal, 40% brake, AUTO for 20 s: the engine started or stopped ${r.edge.flips} times, ends ${r.edge.on ? 'on' : 'off'} ==`);
+if (r.edge.flips > 3) fails.push(`the 918's engine hunts on the edge of starting (${r.edge.flips} switches in 20 s)`);
 
 await browser.close();
 if (errors.length) console.log('ERRORS:\n  ' + errors.join('\n  '));

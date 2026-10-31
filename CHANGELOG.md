@@ -35,6 +35,15 @@ Working toward **v1.0 — every number derived, not fitted.**
 - **Level:** set by ear (`MOTOR_SOUND_LEVEL`), through its own limiter. SOUND OFF and the other tabs silence it.
 - **Tests:** `tests/test114.mjs` renders the worklet offline and checks every voice's frequency, the load, the idle front
   motor, and the live page's sources.
+- **Fixed: a hybrid's engine hunted between on and off at the edge of starting** (reported on the Porsche 918: 31% pedal,
+  40% brake, the page stalling).
+  - A plug-in using its own charge had no hysteresis. When the demand sat at what the motor alone can give, a starting
+    engine dragged the shaft down for a moment, which took the demand back under the threshold. It switched on almost
+    every frame: 587 times in 10 s.
+  - AUTO and HOLD now have a hysteresis band (a depleting plug-in stops below 90% of the motor's share) and keep the
+    engine started or stopped for at least 2 s unless the charge is low.
+  - Now 0 switches in 20 s on the 918 at 31%, and at most 2 for any hybrid preset from 20% to 50% pedal
+    (`tests/test107.mjs`).
 
 ### The electric drive's sound: the prototype (build 197)
 

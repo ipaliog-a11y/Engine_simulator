@@ -18816,8 +18816,9 @@ function seriesDrivelineLine(v){
 //                 power-split, the engine at ENGINE SPEED.
 const HYB_DRIVE={auto:{label:'AUTO'},ev:{label:'EV'},hold:{label:'HOLD'},charge:{label:'CHARGE'},sport:{label:'SPORT'},engine:{label:'ENGINE ONLY'},manual:{label:'MANUAL'}};
 // Named rules: the electric-driving threshold (a share of what the motor and pack can give together), the charge
-// window, the charging rate the controller asks of the engine, the engine-speed response MG1 gives, the 12 V load.
-const HYB_BENCH={evShare:0.35,socLo:0.35,socHi:0.85,socAuto:0.6,chargeShare:0.5,neTau:0.25,auxW:300,neMax:0.97};
+// window, the charging rate the controller asks of the engine, the engine-speed response MG1 gives, the 12 V load, and the
+// shortest time the engine stays started or stopped in AUTO and HOLD (2 s; build 198).
+const HYB_BENCH={evShare:0.35,socLo:0.35,socHi:0.85,socAuto:0.6,chargeShare:0.5,neTau:0.25,auxW:300,neMax:0.97,dwell:2};
 let hybBench=null;   // the bench's hybrid state; rebuilt when the engine's hybrid system is
 function hybBenchState(){
   const hy=engine.hy;
@@ -18879,8 +18880,14 @@ function hybControl(H,dt){
   if(mode==='ev'){on=H.soc<lo;if(on&&!H.lowFlash){H.lowFlash=1;flash(tr('PACK LOW • ENGINE STARTED'),'warn');}if(!on)H.lowFlash=0;}
   else if(mode==='auto'||mode==='hold'){
     const low=H.soc<socT-0.1;
-    on=p>0.01&&(Pd>(on&&!deplete?0.7:1)*Pev||low)||H.soc<lo;   // a depleting plug-in stops its engine as soon as the motor can do it
+    // a hysteresis band: the engine starts past the motor's share and stops only well below it (a depleting plug-in's band
+    // is narrow, so it stops as soon as the motor can clearly do it), and once it has started or stopped it stays so for
+    // B.dwell seconds unless the charge is low (build 198). Without both, a demand at the threshold flips the engine every
+    // frame: starting, it drags the shaft down for a moment, which takes the demand back under the threshold.
+    const want=p>0.01&&(Pd>(on?(deplete?0.9:0.7):1)*Pev||low)||H.soc<lo;
+    on=want===on||H.soc<lo||(H.dwell||0)>=B.dwell?want:on;
   }else on=true;
+  if(on!==H.engOn)H.dwell=0;else H.dwell=(H.dwell||0)+dt;
   H.engOn=on;
   // the charging power the controller asks of the engine (W, + charging), from how far the charge is from its target
   let Pc=mode==='charge'?(H.soc<hi?B.chargeShare*Pchg:0):clamp((socT-H.soc)/0.1,-1,1)*B.chargeShare*Pchg;
