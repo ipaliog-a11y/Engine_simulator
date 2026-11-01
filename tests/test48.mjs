@@ -236,11 +236,10 @@ const POWER_OVER_15_BUDGET = 0;
 // take less, worth ~3% at 4000 rpm: the right direction for the physics, on an engine already short of
 // whatever makes a real diesel fade at speed. Retire when the diesel top end is modelled.
 // build 121: the Alto 20 -> 22, the integrated intake stroke's +3% on its known gap
-const POWER_KNOWN = { 'Suzuki Alto Works (K6A)': 22, 'VW Golf 2.0 TDI 150': 18,
-  // build 116: boost held to the limiter (a real 2JZ-GTE's ECU tapers it), and the S54's flat top
-  // build 121: 33, the integrated intake stroke's +3% on the same gap; build 122: 35, the valve curtain's coefficient
-  // now averaging Taylor's 0.42 (it averaged ~0.3), which gives every engine back its high-rpm breathing
-  'Toyota Supra RZ (2JZ-GTE)': 35, 'BMW M3 E46 (S54)': 18 };
+// build 211: the list is empty. Every car on it is back inside the default cap: the Alto (+2%) since its maker's 40 mm
+// wheel could be set (build 136), the TDI (+5%) since the diesel governor (build 172), the Supra (+0%) since the presets
+// carry their ECU's boost taper (build 131), the S54 (+6%) since the charge heating (build 122).
+const POWER_KNOWN = {};
 const pErr = out.map(r => pc(r.modHp, r.real.hp));
 const pRms = rms(pErr);
 const bigP = out.filter(r => Math.abs(pc(r.modHp, r.real.hp)) > 15);

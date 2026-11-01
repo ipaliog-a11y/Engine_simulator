@@ -220,7 +220,8 @@ for (const c of cars) {
   // single stop from 100 km/h faded by up to ~17% on a heat budget, which real brakes do not do in one
   // stop, and that hid it. The fix is the review's tyre item (load sensitivity in place of those
   // multipliers). Held at a floor.
-  const BRAKE_FLOOR_KNOWN = { 'super': 24 };
+  // Build 211: closed. Since tyre grip comes from load (build 109) the two stop in ~31 m, as real cars like them do.
+  const BRAKE_FLOOR_KNOWN = {};
   const lo = BRAKE_FLOOR_KNOWN[c.ch] != null ? BRAKE_FLOOR_KNOWN[c.ch] : 25;
   if (c.brake !== null && (c.brake < lo || c.brake > 55))
     fails.push(`${c.p} / ${c.ch}: 100-0 in ${c.brake} m is outside ${lo}-55 m`);

@@ -155,10 +155,10 @@ for (const x of r.limit) {
 console.log('== brakes from the hydraulics, 100-0 with a 0.2 s pressure build-up ==');
 for (const b of r.brakes) if (/Aygo|Fiesta|M3|GT3|Silverado/.test(b.n))
   console.log(`  ${b.n.slice(0, 34).padEnd(34)} ${b.type.padEnd(7)} brakes ${b.cap.toFixed(2)} g vs tyres ${b.grip.toFixed(2)} g  100-0 ${b.d.toFixed(1)} m`);
-// Known gaps (build 199): the model's calipers are one set per brake type. The GNX's single 2.5 in piston is bigger than
-// STEEL DISC's 54 mm, and the Grand Cherokee SRT's six-piston Brembos than BIG BRAKE KIT's two; both cars lock their
-// tyres in life. Reported, not failed.
-const BRAKE_KNOWN = ['Buick GNX (1987)', 'Jeep Grand Cherokee SRT (WK2, 2014)'];
+// Known gaps (build 199) closed in build 211: the model's calipers were one set per brake type, and the GNX's single 2.5 in
+// piston is bigger than STEEL DISC's 54 mm, the Grand Cherokee SRT's six-piston Brembo than BIG BRAKE KIT's two. A real
+// car now carries its own front caliper (fit.caliperF), and both reach their tyres' limit, as they lock them in life.
+const BRAKE_KNOWN = [];
 for (const b of r.brakes) if (!(b.cap > b.grip)) {
   if (BRAKE_KNOWN.includes(b.n)) console.log(`  known: ${b.n} brakes ${b.cap.toFixed(2)} g vs tyres ${b.grip.toFixed(2)} g (its caliper is not in the model)`);
   else fails.push(`${b.n}: its factory brakes cannot reach its tyres' limit`);
