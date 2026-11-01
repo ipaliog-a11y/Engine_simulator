@@ -51,7 +51,13 @@ dampers waited (build 174) for something to work against. That is now the road.
     grows by 70%), and too stiff shakes them again;
   - the ride, the body's RMS acceleration, gets steadily harsher as the dampers stiffen;
   - on an M3 E46, the road costs 0.02% of a lap at Riverside and 0.05% on the Nordschleife; dampers far too soft cost
-    another 0.8 s there.
+    another 0.8 s there;
+  - across the fingerprint's 213 laps (every real car and archetype at Ashdown Park, six cars at Spa, the race
+    models), laps move by +0.03% on average, from −0.14% to +0.27%. The 49 that got faster are the racing line, not
+    grip: the line is re-optimised under the new grip and the optimiser lands a little differently. On a perfectly
+    smooth road with its line rebuilt, the Focus RS gives the old lap to the last digit; on its own road the optimiser
+    found a line 0.1 s better. On a fixed line the road only costs time;
+  - nothing else moves: the 0–100, top speed, braking and masses are identical.
 - **The summary** shows each axle's damping as a share of critical, the wheel-hop frequency and the ride (m/s² at
   80 km/h on a class B road, unweighted). The spec sheet shows the damping.
 - **The guide** has a new page, *Dampers & the road*, with a moving quarter car, in Greek too. *Known limits* says what
