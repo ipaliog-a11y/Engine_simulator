@@ -20,6 +20,22 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 Working toward **v1.0 — every number derived, not fitted.**
 
+### The side column and the dyno, tidied (build 213)
+
+- **LIVE OUTPUT shows on LIVE and DYNO only**, where an engine runs. The ENGINE, PARTS, GARAGE and OPTIONS tabs have
+  nothing else for the right column, so their page now takes the whole width, as the GUIDE's already did.
+- **LIVE OUTPUT is compact and folds.** The tiles are tighter, and a button by the title folds the panel to its first
+  row (POWER, TORQUE, BSFC), each tile on one line: about a third of its height (35%). The choice is kept in this
+  browser.
+- **DYNO's buttons below RESET are in a MORE menu.** AUTO THERMAL through SHARE (eleven buttons) drop down under MORE as
+  the same buttons, not a select. A pick, Escape or a click elsewhere closes it. On LIVE they stay laid out, since they
+  drive the engine there.
+- **The dyno's rpm table is behind a button** (SHOW TABLE, every 250 or 500 rpm, the motor's too). It stays open or
+  shut as chosen while the result re-renders.
+- **RESET on each part designer** puts the dimensions back to the factory part chosen in START FROM. It keeps the part's
+  name and identity, so SAVE then overwrites the same part. Nothing is saved until SAVE.
+- test125 checks all of it, in Greek too; test31 opens MORE before it clicks the report buttons.
+
 ### Housekeeping: the PARTS guide page, and the shards rebalanced (build 212)
 
 - **The guide has a page for the PARTS tab**: *Designing your own parts*, under Breathing & boost, in English and Greek,

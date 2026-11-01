@@ -5,6 +5,24 @@
 // real text under the curve: the BEST-POWER pull (the scorecard / objective figures) and YOUR pull
 // as currently tuned (the curve drawn above, which is also what the PDF tabulates).
 let dynoResultKey='';
+// The pull's table, a row every 250 or 500 rpm, is behind a button: the cards above carry the peaks. Whether it is
+// open is kept for the session and across a re-render.
+let dynoTableOpen=false;
+function dynoTableToggle(step){
+  return '<div class="btn-row dr-tbl-btn"><button type="button" id="btnDynoTable" aria-expanded="'+dynoTableOpen+'" aria-controls="dynoTable" data-step="'+step+'">'
+    +esc(tr(dynoTableOpen?'HIDE TABLE':'SHOW TABLE'))+' ('+tr('every')+' '+step+' rpm)</button></div>';
+}
+function toggleDynoTable(){
+  dynoTableOpen=!dynoTableOpen;
+  const t=document.getElementById('dynoTable'),b=document.getElementById('btnDynoTable');
+  if(t)t.hidden=!dynoTableOpen;
+  if(b){b.setAttribute('aria-expanded',String(dynoTableOpen));b.textContent=tr(dynoTableOpen?'HIDE TABLE':'SHOW TABLE')+' ('+tr('every')+' '+b.dataset.step+' rpm)';}
+}
+// The MORE menu on the DYNO tab: the same buttons, opened under it and closed by a pick, Escape or a click elsewhere.
+function setMoreMenu(open){
+  const m=document.getElementById('ctlMore'),b=document.getElementById('btnMore');if(!m||!b)return;
+  m.classList.toggle('open',!!open);b.setAttribute('aria-expanded',String(!!open));
+}
 function renderDynoResult(force){
   if(isElectric())return renderMotorResult(force);
   const box=document.getElementById('dynoResult');
@@ -36,7 +54,8 @@ function renderDynoResult(force){
     '<p class="dr-note"><b>'+tr('BEST-POWER PULL')+'</b> — '+tr('wide open throttle at the best-power mixture, 25 °C intake, 90 °C coolant: the figures the grade and the objectives use, and what MAX POWER on the LIVE tab drives to.')+'<br>'+
     '<b>'+tr('YOUR PULL (AS TUNED)')+'</b> — '+tr('the curve drawn above, at the mixture and conditions set right now')+' ('+tuned+', '+Math.round(state.iat)+' °C). '+
     tr('It is what the PDF report tabulates.')+(dynoPulls.length?' '+dynoPulls.length+' '+tr('logged pull(s) overlaid on the chart.'):'')+'</p>'+
-    '<table class="dr-table"><thead><tr><th>RPM</th><th>HP</th><th>kW</th><th>Nm</th><th>lb-ft</th>'+(boosted?'<th>'+tr('BOOST')+' bar</th>':'')+'</tr></thead><tbody>'+
+    dynoTableToggle(step)+
+    '<table class="dr-table" id="dynoTable"'+(dynoTableOpen?'':' hidden')+'><thead><tr><th>RPM</th><th>HP</th><th>kW</th><th>Nm</th><th>lb-ft</th>'+(boosted?'<th>'+tr('BOOST')+' bar</th>':'')+'</tr></thead><tbody>'+
     rows.map(r=>{const v=at(r);return '<tr'+(near(r,pP.r)||near(r,pT.r)?' class="pk"':'')+'><td>'+r+'</td><td class="hp">'+v.hp.toFixed(1)+'</td><td>'+kW(v.hp).toFixed(1)+
       '</td><td class="tq">'+v.tq.toFixed(1)+'</td><td>'+lbft(v.tq).toFixed(1)+'</td>'+(boosted?'<td>'+Math.max(0,v.map-1).toFixed(2)+'</td>':'')+'</tr>';}).join('')+
     '</tbody></table>';
@@ -193,7 +212,9 @@ function setTab(mode){
   document.getElementById('partsPanel').classList.toggle('active',mode==='parts');
   if(mode==='parts')renderParts();
   document.getElementById('guidePanel').classList.toggle('active',mode==='guide');
-  document.querySelector('.main').classList.toggle('wide',mode==='guide');
+  // The right column holds the engine's live readout and controls (LIVE, DYNO), the car's figures (VEHICLE) and the
+  // lap's and race's panels. The other tabs have nothing to put there, so their page takes the whole width.
+  document.querySelector('.main').classList.toggle('wide',['guide','design','parts','garage','options'].includes(mode));
   if(mode==='guide'&&typeof startGuideArt==='function')requestAnimationFrame(startGuideArt);   // after the panel has a size
   // On the track map a touch drag pans the map; everywhere else it must still scroll the page.
   canvas.style.touchAction=mode==='track'||mode==='race'?'none':'';
@@ -201,11 +222,14 @@ function setTab(mode){
   const dr=document.getElementById('dynoResult');if(dr){dr.hidden=(mode!=='dyno');if(mode==='dyno')renderDynoResult(true);}
   // Right column: runtime Engine Controls while driving/dyno; the Performance panel on VEHICLE.
   document.getElementById('controlsPanel').style.display=(mode==='engine'||mode==='dyno')?'':'none';
+  // On DYNO the controls below RESET fold into the MORE menu; on LIVE they stay laid out, since they drive the engine.
+  document.getElementById('controlsPanel').classList.toggle('menu',mode==='dyno');
+  setMoreMenu(false);
   document.getElementById('vehiclePanel').style.display=(mode==='vehicle')?'':'none';
   document.getElementById('trackPanel').style.display=(mode==='track')?'':'none';
   document.getElementById('racePanel').style.display=(mode==='race')?'':'none';
-  // the engine's live readout belongs to the engine; on the track the lap has its own instruments
-  document.getElementById('livePanel').style.display=(mode==='track'||mode==='race')?'none':'';
+  // the engine's live readout belongs to the running engine: the LIVE and DYNO tabs only
+  document.getElementById('livePanel').style.display=(mode==='engine'||mode==='dyno')?'':'none';
   if(mode==='vehicle'){buildVehicle();updateVehicleSummary();}
   if(mode==='track'){buildVehicle();refreshLap();}
   if(mode==='race'){const ts=document.getElementById('raceTrk');fillTrackSelect(ts,ts.value||trackKey);raceFillAdd();openRacePage(prevMode);renderRaceSetup();renderRacePanel(true);}

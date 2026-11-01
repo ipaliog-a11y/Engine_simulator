@@ -467,6 +467,31 @@ table.hy-map td:focus{outline:2px solid #ffcc00;outline-offset:-2px}
 @media(max-width:420px){
   .title-menu{grid-template-columns:1fr}
 }
+/* LIVE OUTPUT, compact (build 213): tighter tiles, and a fold button by the title that leaves the first row of gauges */
+#livePanel{padding:8px}
+#livePanel .live-h{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:6px}
+#livePanel .gauge-row{gap:5px;margin-bottom:5px}
+#livePanel .stat{padding:3px 5px}
+#livePanel .stat .value{margin-top:1px}
+#livePanel.folded .gauge-row{margin-bottom:0}
+.fold-btn{font-size:9px;line-height:1;padding:2px 7px;min-width:0}
+/* DYNO's MORE menu: the buttons below RESET, dropped down under MORE (a button that opens a panel of buttons, not a select) */
+.more-wrap{position:relative}
+.more-row{display:none}
+#controlsPanel.menu .more-row{display:flex}
+#controlsPanel.menu .more-btn{flex:1}
+#controlsPanel.menu .more-btn::after{content:' ▾'}
+#controlsPanel.menu .more-btn[aria-expanded="true"]::after{content:' ▴'}
+#controlsPanel.menu .ctl-more{display:none;position:absolute;left:0;right:0;top:100%;z-index:30;background:#161622;border:3px solid #00ccff;
+  padding:2px 8px 8px;box-shadow:0 6px 0 rgba(0,0,0,.5)}
+#controlsPanel.menu .ctl-more.open{display:block}
+/* the dyno's rpm table, behind its button */
+.dr-tbl-btn{margin:6px 0}
+/* folded: one line per tile (label, value, unit), so the panel keeps about a third of its height */
+#livePanel.folded .live-h{margin-bottom:4px;padding-bottom:2px}
+#livePanel.folded .stat{display:flex;flex-wrap:wrap;align-items:baseline;justify-content:center;gap:0 4px;padding:2px 4px}
+#livePanel.folded .stat .label{display:inline}
+#livePanel.folded .stat .value{margin-top:0}
 </style>
 </head>
 <body>
@@ -489,7 +514,7 @@ table.hy-map td:focus{outline:2px solid #ffcc00;outline-offset:-2px}
 </div>
 <div class="container">
 <header>
-<h1>PIXEL ENGINE SIM v0.7 build 212</h1>
+<h1>PIXEL ENGINE SIM v0.7 build 213</h1>
 <div class="subtitle" id="subtitle">ENGINE DESIGNER • BUILD IT, THEN DRIVE IT</div>
 </header>
 <div class="build-strip" id="buildStrip">
@@ -3089,7 +3114,7 @@ Most other tests check behaviour that is true of real cars: a bigger turbo spool
 <div class="design-section">My exhausts</div>
 <div class="part-list" id="partList"></div>
 <div class="pick-row"><div class="field"><label for="ptFrom">START FROM THIS ENGINE'S</label><select id="ptFrom"><option value="stock">STOCK CAST</option><option value="sport">SPORT HEADER</option><option value="race">RACE HEADER</option></select></div>
-<div class="field"><label>&nbsp;</label><button type="button" id="ptNew">NEW EXHAUST</button></div></div>
+<div class="field"><label>&nbsp;</label><button type="button" id="ptNew">NEW EXHAUST</button><button type="button" id="ptReset" title="Put the dimensions back to the factory part chosen above, keeping the name">RESET</button></div></div>
 <div class="design-section">Exhaust</div>
 <div class="design-grid">
 <div class="field"><label for="ptName">NAME</label><input type="text" id="ptName" maxlength="40"></div>
@@ -3113,7 +3138,7 @@ Most other tests check behaviour that is true of real cars: a bigger turbo spool
 <div class="design-section">My intakes</div>
 <div class="part-list" id="piList"></div>
 <div class="pick-row"><div class="field"><label for="piFrom">START FROM THIS ENGINE'S</label><select id="piFrom"><option value="long">LONG (TORQUE)</option><option value="medium">MEDIUM</option><option value="short">SHORT (POWER)</option><option value="variable">VARIABLE</option></select></div>
-<div class="field"><label>&nbsp;</label><button type="button" id="piNew">NEW INTAKE</button></div></div>
+<div class="field"><label>&nbsp;</label><button type="button" id="piNew">NEW INTAKE</button><button type="button" id="piReset" title="Put the dimensions back to the factory part chosen above, keeping the name">RESET</button></div></div>
 <div class="design-section">Intake manifold</div>
 <div class="design-grid">
 <div class="field"><label for="piName">NAME</label><input type="text" id="piName" maxlength="40"></div>
@@ -3134,7 +3159,7 @@ Most other tests check behaviour that is true of real cars: a bigger turbo spool
 <div class="design-section">My air filters</div>
 <div class="part-list" id="pfList"></div>
 <div class="pick-row"><div class="field"><label for="pfFrom">START FROM THIS ENGINE'S</label><select id="pfFrom"><option value="none">NONE (STACKS)</option><option value="perf">PERFORMANCE</option><option value="stock">STOCK PAPER</option><option value="restrictive">RESTRICTIVE</option></select></div>
-<div class="field"><label>&nbsp;</label><button type="button" id="pfNew">NEW AIR FILTER</button></div></div>
+<div class="field"><label>&nbsp;</label><button type="button" id="pfNew">NEW AIR FILTER</button><button type="button" id="pfReset" title="Put the dimensions back to the factory part chosen above, keeping the name">RESET</button></div></div>
 <div class="design-section">Air filter</div>
 <div class="design-grid">
 <div class="field"><label for="pfName">NAME</label><input type="text" id="pfName" maxlength="40"></div>
@@ -3165,12 +3190,13 @@ Most other tests check behaviour that is true of real cars: a bigger turbo spool
 </div>
 <div class="side-panel">
 <div class="panel" id="livePanel">
-<h2>Live Output</h2>
+<h2 class="live-h"><span>Live Output</span><button type="button" id="btnLiveFold" class="fold-btn" aria-expanded="true" aria-controls="liveRows2" title="Collapse the live output">▴</button></h2>
 <div class="gauge-row">
 <div class="stat" id="statHP"><span class="label">POWER</span><div class="value">0</div><span class="unit">HP</span></div>
 <div class="stat" id="statTQ"><span class="label">TORQUE</span><div class="value">0</div><span class="unit">Nm</span></div>
 <div class="stat" id="statBSFC"><span class="label">BSFC</span><div class="value">0</div><span class="unit">g/kWh</span></div>
 </div>
+<div id="liveRows2">
 <div class="gauge-row">
 <div class="stat" id="statEff"><span class="label">THERMAL EFF</span><div class="value">0</div><span class="unit">%</span></div>
 <div class="stat" id="statFuel"><span class="label">FUEL FLOW</span><div class="value">0</div><span class="unit">L/h</span></div>
@@ -3180,6 +3206,7 @@ Most other tests check behaviour that is true of real cars: a bigger turbo spool
 <div class="stat" id="statHealth"><span class="label">ENGINE HEALTH</span><div class="value">100</div><span class="unit">%</span></div>
 <div class="stat" id="statAmps" style="display:none"><span class="label">PACK CURRENT</span><div class="value">0</div><span class="unit">A</span></div>
 <div class="stat" id="statLimit" style="display:none"><span class="label">POWER LIMIT</span><div class="value">NONE</div><span class="unit"></span></div>
+</div>
 </div>
 </div>
 <div class="panel" id="hybridPanel" hidden>
@@ -3211,6 +3238,9 @@ Most other tests check behaviour that is true of real cars: a bigger turbo spool
 <button id="btnEco" title="The operating point where this engine burns the least fuel per kWh">ECO</button>
 <button id="btnReset" class="danger">RESET</button>
 </div>
+<div class="more-wrap">
+<div class="btn-row more-row"><button type="button" id="btnMore" class="more-btn" aria-haspopup="true" aria-expanded="false" aria-controls="ctlMore">MORE</button></div>
+<div class="ctl-more" id="ctlMore">
 <div class="btn-row">
 <button id="btnAutoThermal" class="toggle" aria-pressed="false">AUTO THERMAL</button>
 <button id="btnNitrous" class="toggle" aria-pressed="false" disabled>NITROUS</button>
@@ -3229,6 +3259,8 @@ Most other tests check behaviour that is true of real cars: a bigger turbo spool
 <button id="btnExport">SAVE FILE</button>
 <button id="btnImport">OPEN FILE</button>
 <button id="btnShare">SHARE</button>
+</div>
+</div>
 </div>
 <input type="file" id="fileInput" accept="application/json,.json" style="display:none">
 <div class="status-bar" id="status">READY • DESIGN AN ENGINE • THEN DYNO IT</div>
@@ -4955,6 +4987,10 @@ const I18N={
   'Leave full screen':{el:'Έξοδος από πλήρη οθόνη'},'Full screen':{el:'Πλήρης οθόνη'},
   'WEATHER':{el:'ΚΑΙΡΟΣ'},
   // PARTS: the part designer (build 205)
+  'MORE':{el:'ΠΕΡΙΣΣΟΤΕΡΑ'},'SHOW TABLE':{el:'ΔΕΙΞΕ ΤΟΝ ΠΙΝΑΚΑ'},'HIDE TABLE':{el:'ΚΡΥΨΕ ΤΟΝ ΠΙΝΑΚΑ'},'every':{el:'ανά'},
+  'Collapse the live output':{el:'Σύμπτυξη των ζωντανών ενδείξεων'},'Expand the live output':{el:'Ανάπτυξη των ζωντανών ενδείξεων'},
+  'Put the dimensions back to the factory part chosen above, keeping the name':{el:'Επαναφορά των διαστάσεων στο εργοστασιακό εξάρτημα που επιλέχθηκε παραπάνω, με το ίδιο όνομα'},
+  'PART RESET TO THE FACTORY DIMENSIONS: SAVE TO KEEP IT':{el:'ΤΟ ΕΞΑΡΤΗΜΑ ΕΠΑΝΗΛΘΕ ΣΤΙΣ ΕΡΓΟΣΤΑΣΙΑΚΕΣ ΔΙΑΣΤΑΣΕΙΣ: ΑΠΟΘΗΚΕΥΣΕ ΓΙΑ ΝΑ ΤΟ ΚΡΑΤΗΣΕΙΣ'},
   'PARTS':{el:'ΕΞΑΡΤΗΜΑΤΑ'},'PART DESIGNER':{el:'ΣΧΕΔΙΑΣΤΗΣ ΕΞΑΡΤΗΜΑΤΩΝ'},
   "Pick a type of part, set its dimensions and save it. Saved parts are kept in this browser and appear in the ENGINE tab's choices; a saved build carries its parts with it.":{el:'Διάλεξε είδος εξαρτήματος, όρισε τις διαστάσεις του και αποθήκευσέ το. Τα αποθηκευμένα εξαρτήματα μένουν σε αυτόν τον browser και εμφανίζονται στις επιλογές της καρτέλας ΚΙΝΗΤΗΡΑΣ· ένα αποθηκευμένο build κουβαλά μαζί του τα εξαρτήματά του.'},
   'Type of part':{el:'Είδος εξαρτήματος'},'My exhausts':{el:'Οι εξατμίσεις μου'},"START FROM THIS ENGINE'S":{el:'ΞΕΚΙΝΑ ΑΠΟ ΑΥΤΟΝ ΤΟΝ ΚΙΝΗΤΗΡΑ:'},
@@ -5879,7 +5915,7 @@ function applyLang(lang){
   currentLang=(lang==='el')?'el':'en';
   try{localStorage.setItem('pes.lang',currentLang);}catch(e){}
   document.documentElement.lang=currentLang;
-  const sel='.viz-tabs button, .design-panel h3, .design-section, .guide-title, .gtier-h, .hint, .panel h2, .stat .label, .opt-note, .opt-row>div>b, .ctl-lbl, .field>label, .build-row button, #btnGearRatios, #btnGG, #controlsPanel .btn-row button, .fuelmap-edit button, .garage-row button, #partsPanel button[id], #btnReplayRestart, .gart-cap, #btnMenu, .title-brand p, .title-menu button, .title-hint';
+  const sel='.viz-tabs button, .design-panel h3, .design-section, .guide-title, .gtier-h, .hint, .panel h2, .stat .label, .opt-note, .opt-row>div>b, .ctl-lbl, .field>label, .build-row button, #btnGearRatios, #btnGG, #controlsPanel .btn-row button, .fuelmap-edit button, .garage-row button, #partsPanel button[id], #livePanel h2>span, #btnMore, #btnReplayRestart, .gart-cap, #btnMenu, .title-brand p, .title-menu button, .title-hint';
   document.querySelectorAll(sel).forEach(el=>{
     if(el.children.length>0)return;                       // skip nodes with child elements
     if(el.dataset.en===undefined)el.dataset.en=el.textContent.trim();
@@ -17305,6 +17341,24 @@ function refreshLap(){
 // real text under the curve: the BEST-POWER pull (the scorecard / objective figures) and YOUR pull
 // as currently tuned (the curve drawn above, which is also what the PDF tabulates).
 let dynoResultKey='';
+// The pull's table, a row every 250 or 500 rpm, is behind a button: the cards above carry the peaks. Whether it is
+// open is kept for the session and across a re-render.
+let dynoTableOpen=false;
+function dynoTableToggle(step){
+  return '<div class="btn-row dr-tbl-btn"><button type="button" id="btnDynoTable" aria-expanded="'+dynoTableOpen+'" aria-controls="dynoTable" data-step="'+step+'">'
+    +esc(tr(dynoTableOpen?'HIDE TABLE':'SHOW TABLE'))+' ('+tr('every')+' '+step+' rpm)</button></div>';
+}
+function toggleDynoTable(){
+  dynoTableOpen=!dynoTableOpen;
+  const t=document.getElementById('dynoTable'),b=document.getElementById('btnDynoTable');
+  if(t)t.hidden=!dynoTableOpen;
+  if(b){b.setAttribute('aria-expanded',String(dynoTableOpen));b.textContent=tr(dynoTableOpen?'HIDE TABLE':'SHOW TABLE')+' ('+tr('every')+' '+b.dataset.step+' rpm)';}
+}
+// The MORE menu on the DYNO tab: the same buttons, opened under it and closed by a pick, Escape or a click elsewhere.
+function setMoreMenu(open){
+  const m=document.getElementById('ctlMore'),b=document.getElementById('btnMore');if(!m||!b)return;
+  m.classList.toggle('open',!!open);b.setAttribute('aria-expanded',String(!!open));
+}
 function renderDynoResult(force){
   if(isElectric())return renderMotorResult(force);
   const box=document.getElementById('dynoResult');
@@ -17336,7 +17390,8 @@ function renderDynoResult(force){
     '<p class="dr-note"><b>'+tr('BEST-POWER PULL')+'</b> — '+tr('wide open throttle at the best-power mixture, 25 °C intake, 90 °C coolant: the figures the grade and the objectives use, and what MAX POWER on the LIVE tab drives to.')+'<br>'+
     '<b>'+tr('YOUR PULL (AS TUNED)')+'</b> — '+tr('the curve drawn above, at the mixture and conditions set right now')+' ('+tuned+', '+Math.round(state.iat)+' °C). '+
     tr('It is what the PDF report tabulates.')+(dynoPulls.length?' '+dynoPulls.length+' '+tr('logged pull(s) overlaid on the chart.'):'')+'</p>'+
-    '<table class="dr-table"><thead><tr><th>RPM</th><th>HP</th><th>kW</th><th>Nm</th><th>lb-ft</th>'+(boosted?'<th>'+tr('BOOST')+' bar</th>':'')+'</tr></thead><tbody>'+
+    dynoTableToggle(step)+
+    '<table class="dr-table" id="dynoTable"'+(dynoTableOpen?'':' hidden')+'><thead><tr><th>RPM</th><th>HP</th><th>kW</th><th>Nm</th><th>lb-ft</th>'+(boosted?'<th>'+tr('BOOST')+' bar</th>':'')+'</tr></thead><tbody>'+
     rows.map(r=>{const v=at(r);return '<tr'+(near(r,pP.r)||near(r,pT.r)?' class="pk"':'')+'><td>'+r+'</td><td class="hp">'+v.hp.toFixed(1)+'</td><td>'+kW(v.hp).toFixed(1)+
       '</td><td class="tq">'+v.tq.toFixed(1)+'</td><td>'+lbft(v.tq).toFixed(1)+'</td>'+(boosted?'<td>'+Math.max(0,v.map-1).toFixed(2)+'</td>':'')+'</tr>';}).join('')+
     '</tbody></table>';
@@ -17493,7 +17548,9 @@ function setTab(mode){
   document.getElementById('partsPanel').classList.toggle('active',mode==='parts');
   if(mode==='parts')renderParts();
   document.getElementById('guidePanel').classList.toggle('active',mode==='guide');
-  document.querySelector('.main').classList.toggle('wide',mode==='guide');
+  // The right column holds the engine's live readout and controls (LIVE, DYNO), the car's figures (VEHICLE) and the
+  // lap's and race's panels. The other tabs have nothing to put there, so their page takes the whole width.
+  document.querySelector('.main').classList.toggle('wide',['guide','design','parts','garage','options'].includes(mode));
   if(mode==='guide'&&typeof startGuideArt==='function')requestAnimationFrame(startGuideArt);   // after the panel has a size
   // On the track map a touch drag pans the map; everywhere else it must still scroll the page.
   canvas.style.touchAction=mode==='track'||mode==='race'?'none':'';
@@ -17501,11 +17558,14 @@ function setTab(mode){
   const dr=document.getElementById('dynoResult');if(dr){dr.hidden=(mode!=='dyno');if(mode==='dyno')renderDynoResult(true);}
   // Right column: runtime Engine Controls while driving/dyno; the Performance panel on VEHICLE.
   document.getElementById('controlsPanel').style.display=(mode==='engine'||mode==='dyno')?'':'none';
+  // On DYNO the controls below RESET fold into the MORE menu; on LIVE they stay laid out, since they drive the engine.
+  document.getElementById('controlsPanel').classList.toggle('menu',mode==='dyno');
+  setMoreMenu(false);
   document.getElementById('vehiclePanel').style.display=(mode==='vehicle')?'':'none';
   document.getElementById('trackPanel').style.display=(mode==='track')?'':'none';
   document.getElementById('racePanel').style.display=(mode==='race')?'':'none';
-  // the engine's live readout belongs to the engine; on the track the lap has its own instruments
-  document.getElementById('livePanel').style.display=(mode==='track'||mode==='race')?'none':'';
+  // the engine's live readout belongs to the running engine: the LIVE and DYNO tabs only
+  document.getElementById('livePanel').style.display=(mode==='engine'||mode==='dyno')?'':'none';
   if(mode==='vehicle'){buildVehicle();updateVehicleSummary();}
   if(mode==='track'){buildVehicle();refreshLap();}
   if(mode==='race'){const ts=document.getElementById('raceTrk');fillTrackSelect(ts,ts.value||trackKey);raceFillAdd();openRacePage(prevMode);renderRaceSetup();renderRacePanel(true);}
@@ -17849,15 +17909,15 @@ const pv=id=>document.getElementById(id);
 const fittedPart=kind=>engine&&engine[PART_DEF[kind].field];
 // the ids of each kind's editor
 const PART_UI={
-  exhaust:{box:'partsExhaust',list:'partList',from:'ptFrom',neu:'ptNew',save:'ptSave',saveFit:'ptSaveFit',guide:'partGuide',canvas:'partCanvas',legend:'partLegend',
+  exhaust:{reset:'ptReset',box:'partsExhaust',list:'partList',from:'ptFrom',neu:'ptNew',save:'ptSave',saveFit:'ptSaveFit',guide:'partGuide',canvas:'partCanvas',legend:'partLegend',
     none:"No exhausts designed yet. Start from one of this engine's factory exhausts below.",
     fields:['ptName','ptBuild','ptPrimD','ptPrimL','ptPipes','ptSysD','ptSysL','ptSil'],
     spec:p=>tr(EXHAUST_BUILD[p.build].label)+' · '+p.primD_mm+'/'+p.primL_mm+' mm · '+p.pipes+'× '+p.sysD_mm+' mm'},
-  intake:{box:'partsIntake',list:'piList',from:'piFrom',neu:'piNew',save:'piSave',saveFit:'piSaveFit',guide:'piGuide',canvas:'piCanvas',legend:'piLegend',
+  intake:{reset:'piReset',box:'partsIntake',list:'piList',from:'piFrom',neu:'piNew',save:'piSave',saveFit:'piSaveFit',guide:'piGuide',canvas:'piCanvas',legend:'piLegend',
     none:"No intakes designed yet. Start from one of this engine's factory manifolds below.",
     fields:['piName','piL','piD','piVar','piShort'],
     spec:p=>p.runnerL_mm+' × '+p.runnerD_mm+' mm'+(p.variable?' · '+tr('VARIABLE')+' '+p.shortL_mm+' mm':'')},
-  filter:{box:'partsFilter',list:'pfList',from:'pfFrom',neu:'pfNew',save:'pfSave',saveFit:'pfSaveFit',guide:'pfGuide',canvas:'pfCanvas',legend:'pfLegend',
+  filter:{reset:'pfReset',box:'partsFilter',list:'pfList',from:'pfFrom',neu:'pfNew',save:'pfSave',saveFit:'pfSaveFit',guide:'pfGuide',canvas:'pfCanvas',legend:'pfLegend',
     none:"No air filters designed yet. Start from one of this engine's factory filters below.",
     fields:['pfName','pfMedia','pfArea','pfHousing','pfInlet'],
     spec:p=>tr(FILTER_MEDIA[p.media].label)+' · '+p.area_m2+' m² · '+tr(FILTER_HOUSING[p.housing].label)+(p.housing==='none'?'':' '+p.inletD_mm+' mm')}
@@ -17945,6 +18005,14 @@ function fitPart(id){
   const p=partById(id);
   fillPartSelects();pv(PART_DEF[p.kind].select).value='part:'+id;buildEngine();
   flash(tr('PART FITTED')+': '+p.name);renderParts();
+}
+// RESET: the dimensions back to the factory part chosen in START FROM, keeping the part's name and identity, so a saved
+// part that is reset and saved again is the same part with the factory's numbers. Nothing is saved until SAVE.
+function resetPart(kind){
+  const U=PART_UI[kind],ed=partsUI.edit[kind],name=pv(U.fields[0]).value.trim()||tr(PART_DEF[kind].newName);
+  partsUI.edit[kind]=Object.assign(partFromFactory(pv(U.from).value,kind),{id:ed&&ed.id||newPartId(),name});
+  partToEditor(kind,partsUI.edit[kind]);previewPart(kind);
+  flash(tr('PART RESET TO THE FACTORY DIMENSIONS: SAVE TO KEEP IT'));
 }
 function newPartFrom(kind,key){partsUI.edit[kind]=Object.assign(partFromFactory(key,kind),{id:newPartId(),name:tr(PART_DEF[kind].newName)});renderParts();}
 const fmt=(x,d=0)=>(+x).toFixed(d),dlt=(a,b)=>{const d=a-b;return (d>=0?'+':'')+d;};
@@ -18037,6 +18105,7 @@ function wireParts(){
     pv(U.save).addEventListener('click',()=>savePart(kind));
     pv(U.saveFit).addEventListener('click',()=>{const p=savePart(kind);if(p)fitPart(p.id);});
     pv(U.neu).addEventListener('click',()=>newPartFrom(kind,pv(U.from).value));
+    pv(U.reset).addEventListener('click',()=>resetPart(kind));
   }
   pv('ptCut').addEventListener('click',()=>{pv('ptPrimL').value=primaryFor(clamp(+pv('ptCutRpm').value||6000,1500,engine.redline));previewPart('exhaust');});
   pv('ptSize').addEventListener('click',()=>{const r=(engine.score&&engine.score.peakHPrpm)||engine.redline*0.9;pv('ptSysD').value=pipeFor(75,+pv('ptPipes').value,r);previewPart('exhaust');});
@@ -19064,7 +19133,8 @@ function renderMotorResult(force){
     '</div><p class="dr-note">'+tr('Rated at the pack\'s half-charge voltage')+' ('+Math.round(motorRatedV(engine))+' V), '+
     tr('magnets at 60 °C. The curve above is the drive as it is right now: the pack\'s charge and the magnets\' heat move it.')+
     ' '+tr(m.mag.label)+', '+m.poles+' '+tr('poles')+', '+m.N+' '+tr('turns')+' • '+tr(b.chem.label)+' '+b.series+'s, '+b.kWh+' kWh</p>'+
-    '<table class="dr-table"><thead><tr><th>RPM</th><th>kW</th><th>HP</th><th>Nm</th><th>'+tr('EFF')+' %</th></tr></thead><tbody>'+
+    dynoTableToggle(step)+
+    '<table class="dr-table" id="dynoTable"'+(dynoTableOpen?'':' hidden')+'><thead><tr><th>RPM</th><th>kW</th><th>HP</th><th>Nm</th><th>'+tr('EFF')+' %</th></tr></thead><tbody>'+
     rows.map(r=>{const v=at(r);return '<tr><td>'+r+'</td><td class="hp">'+v.kW.toFixed(1)+'</td><td>'+(v.kW/0.7457).toFixed(1)+
       '</td><td class="tq">'+v.tq.toFixed(1)+'</td><td>'+(v.eff*100).toFixed(1)+'</td></tr>';}).join('')+'</tbody></table>';
 }
@@ -21294,6 +21364,22 @@ function bindControls(){
   document.getElementById('tabGarage').addEventListener('click',()=>setTab('garage'));
   document.getElementById('tabParts').addEventListener('click',()=>setTab('parts'));
   wireParts();   // the part designer and its library (build 205)
+  // DYNO's MORE menu (build 213): the buttons below RESET, opened under MORE, closed by a pick, Escape or a click elsewhere
+  {const more=document.getElementById('btnMore'),menu=document.getElementById('ctlMore');
+    more.addEventListener('click',e=>{e.stopPropagation();setMoreMenu(!menu.classList.contains('open'));});
+    menu.addEventListener('click',e=>{if(e.target.closest('button'))setTimeout(()=>setMoreMenu(false),0);});
+    document.addEventListener('click',e=>{if(menu.classList.contains('open')&&!e.target.closest('.more-wrap'))setMoreMenu(false);});
+    document.addEventListener('keydown',e=>{if(e.key==='Escape'&&menu.classList.contains('open')){setMoreMenu(false);more.focus();}});}
+  // the dyno's rpm table, behind its button (the result box is re-rendered, so the click is caught on the box)
+  document.getElementById('dynoResult').addEventListener('click',e=>{if(e.target.closest('#btnDynoTable'))toggleDynoTable();});
+  // LIVE OUTPUT folds to its first row of gauges, a third of its height; the choice is kept in this browser
+  {const fold=document.getElementById('btnLiveFold'),panel=document.getElementById('livePanel');
+    const setFold=f=>{panel.classList.toggle('folded',f);document.getElementById('liveRows2').hidden=f;
+      fold.setAttribute('aria-expanded',String(!f));fold.textContent=f?'▾':'▴';
+      fold.setAttribute('title',f?'Expand the live output':'Collapse the live output');if(typeof trAttrs==='function')trAttrs();   // English in, the language's out
+      try{localStorage.setItem('pes.liveFold',f?'1':'');}catch(e){}};
+    let f0=false;try{f0=localStorage.getItem('pes.liveFold')==='1';}catch(e){}
+    setFold(f0);fold.addEventListener('click',()=>setFold(!panel.classList.contains('folded')));}
   const rb=document.getElementById('btnReplay');
   rb.addEventListener('click',()=>{lapReplay.playing=!lapReplay.playing;rb.classList.toggle('on',lapReplay.playing);
     rb.setAttribute('aria-pressed',String(lapReplay.playing));rb.textContent=tr(lapReplay.playing?'PAUSE':'PLAY');});

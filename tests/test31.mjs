@@ -69,6 +69,7 @@ if (!/[Cc]ompression ignition/.test(rows['6.6 V8 Turbodiesel'].spec.join(' '))) 
 // 4. PDF export produces a real, structurally valid PDF
 const dl = page.waitForEvent('download');
 await page.click('#tabDyno'); await page.waitForTimeout(200);
+await page.click('#btnMore');   // on DYNO the report buttons are in the MORE menu (build 213)
 await page.click('#btnReportPdf');
 const d = await dl;
 const pdfPath = '/tmp/claude-0/-home-user-Engine-simulator/367f578e-6004-580f-ae9f-7158e9c4f5ba/scratchpad/report.pdf';
@@ -125,6 +126,7 @@ if (!/\.pdf$/.test(d.suggestedFilename())) fails.push('PDF filename wrong');
 
 // 5. PNG export downloads
 const dl2 = page.waitForEvent('download');
+await page.click('#btnMore');
 await page.click('#btnReportPng');
 const d2 = await dl2;
 const pngPath = pdfPath.replace('.pdf', '.png');

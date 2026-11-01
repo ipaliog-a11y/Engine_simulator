@@ -336,7 +336,8 @@ function renderMotorResult(force){
     '</div><p class="dr-note">'+tr('Rated at the pack\'s half-charge voltage')+' ('+Math.round(motorRatedV(engine))+' V), '+
     tr('magnets at 60 °C. The curve above is the drive as it is right now: the pack\'s charge and the magnets\' heat move it.')+
     ' '+tr(m.mag.label)+', '+m.poles+' '+tr('poles')+', '+m.N+' '+tr('turns')+' • '+tr(b.chem.label)+' '+b.series+'s, '+b.kWh+' kWh</p>'+
-    '<table class="dr-table"><thead><tr><th>RPM</th><th>kW</th><th>HP</th><th>Nm</th><th>'+tr('EFF')+' %</th></tr></thead><tbody>'+
+    dynoTableToggle(step)+
+    '<table class="dr-table" id="dynoTable"'+(dynoTableOpen?'':' hidden')+'><thead><tr><th>RPM</th><th>kW</th><th>HP</th><th>Nm</th><th>'+tr('EFF')+' %</th></tr></thead><tbody>'+
     rows.map(r=>{const v=at(r);return '<tr><td>'+r+'</td><td class="hp">'+v.kW.toFixed(1)+'</td><td>'+(v.kW/0.7457).toFixed(1)+
       '</td><td class="tq">'+v.tq.toFixed(1)+'</td><td>'+(v.eff*100).toFixed(1)+'</td></tr>';}).join('')+'</tbody></table>';
 }

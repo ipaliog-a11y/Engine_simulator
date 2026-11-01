@@ -335,15 +335,15 @@ const pv=id=>document.getElementById(id);
 const fittedPart=kind=>engine&&engine[PART_DEF[kind].field];
 // the ids of each kind's editor
 const PART_UI={
-  exhaust:{box:'partsExhaust',list:'partList',from:'ptFrom',neu:'ptNew',save:'ptSave',saveFit:'ptSaveFit',guide:'partGuide',canvas:'partCanvas',legend:'partLegend',
+  exhaust:{reset:'ptReset',box:'partsExhaust',list:'partList',from:'ptFrom',neu:'ptNew',save:'ptSave',saveFit:'ptSaveFit',guide:'partGuide',canvas:'partCanvas',legend:'partLegend',
     none:"No exhausts designed yet. Start from one of this engine's factory exhausts below.",
     fields:['ptName','ptBuild','ptPrimD','ptPrimL','ptPipes','ptSysD','ptSysL','ptSil'],
     spec:p=>tr(EXHAUST_BUILD[p.build].label)+' · '+p.primD_mm+'/'+p.primL_mm+' mm · '+p.pipes+'× '+p.sysD_mm+' mm'},
-  intake:{box:'partsIntake',list:'piList',from:'piFrom',neu:'piNew',save:'piSave',saveFit:'piSaveFit',guide:'piGuide',canvas:'piCanvas',legend:'piLegend',
+  intake:{reset:'piReset',box:'partsIntake',list:'piList',from:'piFrom',neu:'piNew',save:'piSave',saveFit:'piSaveFit',guide:'piGuide',canvas:'piCanvas',legend:'piLegend',
     none:"No intakes designed yet. Start from one of this engine's factory manifolds below.",
     fields:['piName','piL','piD','piVar','piShort'],
     spec:p=>p.runnerL_mm+' × '+p.runnerD_mm+' mm'+(p.variable?' · '+tr('VARIABLE')+' '+p.shortL_mm+' mm':'')},
-  filter:{box:'partsFilter',list:'pfList',from:'pfFrom',neu:'pfNew',save:'pfSave',saveFit:'pfSaveFit',guide:'pfGuide',canvas:'pfCanvas',legend:'pfLegend',
+  filter:{reset:'pfReset',box:'partsFilter',list:'pfList',from:'pfFrom',neu:'pfNew',save:'pfSave',saveFit:'pfSaveFit',guide:'pfGuide',canvas:'pfCanvas',legend:'pfLegend',
     none:"No air filters designed yet. Start from one of this engine's factory filters below.",
     fields:['pfName','pfMedia','pfArea','pfHousing','pfInlet'],
     spec:p=>tr(FILTER_MEDIA[p.media].label)+' · '+p.area_m2+' m² · '+tr(FILTER_HOUSING[p.housing].label)+(p.housing==='none'?'':' '+p.inletD_mm+' mm')}
@@ -431,6 +431,14 @@ function fitPart(id){
   const p=partById(id);
   fillPartSelects();pv(PART_DEF[p.kind].select).value='part:'+id;buildEngine();
   flash(tr('PART FITTED')+': '+p.name);renderParts();
+}
+// RESET: the dimensions back to the factory part chosen in START FROM, keeping the part's name and identity, so a saved
+// part that is reset and saved again is the same part with the factory's numbers. Nothing is saved until SAVE.
+function resetPart(kind){
+  const U=PART_UI[kind],ed=partsUI.edit[kind],name=pv(U.fields[0]).value.trim()||tr(PART_DEF[kind].newName);
+  partsUI.edit[kind]=Object.assign(partFromFactory(pv(U.from).value,kind),{id:ed&&ed.id||newPartId(),name});
+  partToEditor(kind,partsUI.edit[kind]);previewPart(kind);
+  flash(tr('PART RESET TO THE FACTORY DIMENSIONS: SAVE TO KEEP IT'));
 }
 function newPartFrom(kind,key){partsUI.edit[kind]=Object.assign(partFromFactory(key,kind),{id:newPartId(),name:tr(PART_DEF[kind].newName)});renderParts();}
 const fmt=(x,d=0)=>(+x).toFixed(d),dlt=(a,b)=>{const d=a-b;return (d>=0?'+':'')+d;};
@@ -523,6 +531,7 @@ function wireParts(){
     pv(U.save).addEventListener('click',()=>savePart(kind));
     pv(U.saveFit).addEventListener('click',()=>{const p=savePart(kind);if(p)fitPart(p.id);});
     pv(U.neu).addEventListener('click',()=>newPartFrom(kind,pv(U.from).value));
+    pv(U.reset).addEventListener('click',()=>resetPart(kind));
   }
   pv('ptCut').addEventListener('click',()=>{pv('ptPrimL').value=primaryFor(clamp(+pv('ptCutRpm').value||6000,1500,engine.redline));previewPart('exhaust');});
   pv('ptSize').addEventListener('click',()=>{const r=(engine.score&&engine.score.peakHPrpm)||engine.redline*0.9;pv('ptSysD').value=pipeFor(75,+pv('ptPipes').value,r);previewPart('exhaust');});

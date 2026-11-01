@@ -11,6 +11,10 @@ const I18N={
   'Leave full screen':{el:'Έξοδος από πλήρη οθόνη'},'Full screen':{el:'Πλήρης οθόνη'},
   'WEATHER':{el:'ΚΑΙΡΟΣ'},
   // PARTS: the part designer (build 205)
+  'MORE':{el:'ΠΕΡΙΣΣΟΤΕΡΑ'},'SHOW TABLE':{el:'ΔΕΙΞΕ ΤΟΝ ΠΙΝΑΚΑ'},'HIDE TABLE':{el:'ΚΡΥΨΕ ΤΟΝ ΠΙΝΑΚΑ'},'every':{el:'ανά'},
+  'Collapse the live output':{el:'Σύμπτυξη των ζωντανών ενδείξεων'},'Expand the live output':{el:'Ανάπτυξη των ζωντανών ενδείξεων'},
+  'Put the dimensions back to the factory part chosen above, keeping the name':{el:'Επαναφορά των διαστάσεων στο εργοστασιακό εξάρτημα που επιλέχθηκε παραπάνω, με το ίδιο όνομα'},
+  'PART RESET TO THE FACTORY DIMENSIONS: SAVE TO KEEP IT':{el:'ΤΟ ΕΞΑΡΤΗΜΑ ΕΠΑΝΗΛΘΕ ΣΤΙΣ ΕΡΓΟΣΤΑΣΙΑΚΕΣ ΔΙΑΣΤΑΣΕΙΣ: ΑΠΟΘΗΚΕΥΣΕ ΓΙΑ ΝΑ ΤΟ ΚΡΑΤΗΣΕΙΣ'},
   'PARTS':{el:'ΕΞΑΡΤΗΜΑΤΑ'},'PART DESIGNER':{el:'ΣΧΕΔΙΑΣΤΗΣ ΕΞΑΡΤΗΜΑΤΩΝ'},
   "Pick a type of part, set its dimensions and save it. Saved parts are kept in this browser and appear in the ENGINE tab's choices; a saved build carries its parts with it.":{el:'Διάλεξε είδος εξαρτήματος, όρισε τις διαστάσεις του και αποθήκευσέ το. Τα αποθηκευμένα εξαρτήματα μένουν σε αυτόν τον browser και εμφανίζονται στις επιλογές της καρτέλας ΚΙΝΗΤΗΡΑΣ· ένα αποθηκευμένο build κουβαλά μαζί του τα εξαρτήματά του.'},
   'Type of part':{el:'Είδος εξαρτήματος'},'My exhausts':{el:'Οι εξατμίσεις μου'},"START FROM THIS ENGINE'S":{el:'ΞΕΚΙΝΑ ΑΠΟ ΑΥΤΟΝ ΤΟΝ ΚΙΝΗΤΗΡΑ:'},
@@ -935,7 +939,7 @@ function applyLang(lang){
   currentLang=(lang==='el')?'el':'en';
   try{localStorage.setItem('pes.lang',currentLang);}catch(e){}
   document.documentElement.lang=currentLang;
-  const sel='.viz-tabs button, .design-panel h3, .design-section, .guide-title, .gtier-h, .hint, .panel h2, .stat .label, .opt-note, .opt-row>div>b, .ctl-lbl, .field>label, .build-row button, #btnGearRatios, #btnGG, #controlsPanel .btn-row button, .fuelmap-edit button, .garage-row button, #partsPanel button[id], #btnReplayRestart, .gart-cap, #btnMenu, .title-brand p, .title-menu button, .title-hint';
+  const sel='.viz-tabs button, .design-panel h3, .design-section, .guide-title, .gtier-h, .hint, .panel h2, .stat .label, .opt-note, .opt-row>div>b, .ctl-lbl, .field>label, .build-row button, #btnGearRatios, #btnGG, #controlsPanel .btn-row button, .fuelmap-edit button, .garage-row button, #partsPanel button[id], #livePanel h2>span, #btnMore, #btnReplayRestart, .gart-cap, #btnMenu, .title-brand p, .title-menu button, .title-hint';
   document.querySelectorAll(sel).forEach(el=>{
     if(el.children.length>0)return;                       // skip nodes with child elements
     if(el.dataset.en===undefined)el.dataset.en=el.textContent.trim();
