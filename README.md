@@ -1,4 +1,4 @@
-# PIXEL ENGINE SIM v0.7 build 212
+# PIXEL ENGINE SIM v0.7 build 213
 
 **A lightweight, 8-bit style internal combustion engine *designer* & simulator** inspired by *Automation*.
 
@@ -764,8 +764,13 @@ philosophy).
 
 ## Project Structure
 
+**Working on the code (people and coding agents):** read [`AGENTS.md`](AGENTS.md) first. It describes how a change
+becomes a build and a pull request (branching, stamping, tests, the CHANGELOG), so work from different tools never
+conflicts. Cursor picks it up through `.cursor/rules/development.mdc`, which applies on every task.
+
 ```
 .
+├── AGENTS.md                      # How every build is made — read this before changing the code
 ├── index.html                     # Complete single-file app (HTML + CSS + JS) — BUILT from src/, committed
 ├── src/                           # The source of index.html — edit here
 │   ├── shell.html                 #   the page, with an @include line where each part goes, in order
