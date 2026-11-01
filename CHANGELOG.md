@@ -56,6 +56,12 @@ the car, reaching the front axle before the rear: what it disturbs is the balanc
   ("cross") weight, as racers set it.
 - **Laps** on the M3: the kerbs' width makes Riverside 0.56% quicker and Spa 0.48%. Their twist costs back 0–0.03%:
   the optimiser mounts them gently.
+- **Across the fingerprint's 213 laps** (every real car and archetype at Ashdown Park, six cars at Spa, the race
+  models), laps are 0.42% quicker on average, from −0.77% to +0.50%:
+  - 210 are quicker;
+  - three low-powered archetypes are slower: the 500 cc two-stroke (+0.50%), the 1.5 Eco (+0.14%) and the kei turbo
+    (+0.12%). More room cannot slow a car, so that is the line optimiser settling in a different local optimum.
+  - Nothing else moves: the 0–100, top speed, braking and masses are identical.
 - **Fixed on the way:** the optimiser's first stage held the line within the room at coarse nodes 25 m apart, so where
   the room changed between nodes the curve was clamped back, and a clamp is a kink. A node now takes the narrowest
   room over its own span. This alone moves a few laps by a hair (Riverside without kerbs 67.367 → 67.317 s).
