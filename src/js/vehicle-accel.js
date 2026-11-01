@@ -7,7 +7,7 @@ function fitmentLabel(v){
 function isFactoryFit(v){
   const ch=CHASSIS[v.chassis];if(!ch||!ch.fit)return false;const f=v.body?v.body.fit:ch.fit;
   return v.drive===(v.body?f.drive:ch.drive)&&(v.governor||0)===(f.gov||0)&&(v.tc!==false)===(f.tc!==false)&&v.gears===f.gears&&v.gearing===f.gearing&&v.spacing===(v.body?'stock':'std')&&!(v.finalDriveSet>0)&&v.gearbox===f.gearbox&&v.diff===f.diff&&
-    v.tireType===f.tire&&v.tireWidth===f.tw&&(v.tireWidthF||0)===(f.twF||0)&&!stepOf(v.springF)&&!stepOf(v.springR)&&!stepOf(v.barF)&&!stepOf(v.barR)&&v.tireAspect===f.ta&&v.wheelDia===f.wheel&&
+    v.tireType===f.tire&&v.tireWidth===f.tw&&(v.tireWidthF||0)===(f.twF||0)&&!stepOf(v.springF)&&!stepOf(v.springR)&&!stepOf(v.barF)&&!stepOf(v.barR)&&!stepOf(v.damperF)&&!stepOf(v.damperR)&&v.tireAspect===f.ta&&v.wheelDia===f.wheel&&
     v.aeroFront===f.aF&&v.aeroRear===f.aR&&v.aeroFloor===f.aFl&&v.weightRed===f.weight&&
     v.brakeType===f.brake&&v.rotor===f.rotor&&v.suspension===f.susp&&geoStock(v);
 }
@@ -23,7 +23,8 @@ function computeVehicleCost(ch,tt,wr){
    if(vehicle.suspRear&&vehicle.suspRear!==fg.r)c+=(SUSP_GEO[vehicle.suspRear]||{cost:0}).cost;}
   // springs and bars off STANDARD are new parts (build 174)
   c+=(stepOf(vehicle.springF)?1:0)*STIFF_STEP_COST.spring+(stepOf(vehicle.springR)?1:0)*STIFF_STEP_COST.spring+
-     (stepOf(vehicle.barF)?1:0)*STIFF_STEP_COST.bar+(stepOf(vehicle.barR)?1:0)*STIFF_STEP_COST.bar;
+     (stepOf(vehicle.barF)?1:0)*STIFF_STEP_COST.bar+(stepOf(vehicle.barR)?1:0)*STIFF_STEP_COST.bar+
+     (stepOf(vehicle.damperF)?1:0)*STIFF_STEP_COST.damper+(stepOf(vehicle.damperR)?1:0)*STIFF_STEP_COST.damper;   // dampers: build 215
   c+=Math.max(0,vehicle.rotor-320)*6;
   c+={fwd:0,rwd:800,awd:2500}[vehicle.drive]||0;
   c+=(vehicle.ev?EV_REDUCTION:vehicle.ecvt?PS_REDUCTION:(GEARBOX[vehicle.gearbox]||GEARBOX.manual)).cost+(DIFF[vehicle.diff]||DIFF.open).cost;
@@ -115,6 +116,12 @@ function buildVehicle(){
    vehicle.rollKF=K.F/(K.F+K.R);vehicle.rollK=K.F+K.R;
    vehicle.rollGrad=vehicle.mass*G*arm/vehicle.rollK*180/Math.PI;   // deg per g
    vehicle.lltdF=clamp((arm*vehicle.rollKF+fw*vehicle.rcF)/Math.max(0.05,arm+zAx),0.15,0.85);}
+  // The dampers (build 215): each axle's quarter car on the road, as the swing of its tyres' load per root of
+  // Gd(n0) v (roadSigma), and the body's acceleration likewise (the ride).
+  {const qF=quarterCar(vehicle,'F'),qR=quarterCar(vehicle,'R'),cF=quarterCoef(qF),cR=quarterCoef(qR);
+   vehicle.roughF=cF.F;vehicle.roughR=cR.F;vehicle.rideF=cF.A;vehicle.rideR=cR.A;
+   vehicle.zetaF=qF.cs/(2*Math.sqrt(qF.ks*qF.ms));vehicle.zetaR=qR.cs/(2*Math.sqrt(qR.ks*qR.ms));
+   vehicle.hopHz=Math.sqrt((qF.kt+qF.ks)/qF.mu)/(2*Math.PI);}
   vehicle.drivenAero=vehicle.drive==='awd'?1:vehicle.drive==='rwd'?1-vehicle.aeroBal:vehicle.aeroBal;
   vehicle.cdA=((body?body.cd:ch.cd)+af.cd+ar.cd+al.cd)*vehicle.area;  // drag coefficient·area
   const gb=GEARBOX[vehicle.gearbox]||GEARBOX.manual,df=DIFF[vehicle.diff]||DIFF.open;

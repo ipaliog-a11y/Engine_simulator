@@ -338,7 +338,7 @@ function vehicleFromPreset(p){
   const keys=Object.keys(SPEED_RATING), i=keys.findIndex(k=>SPEED_RATING[k].kmh>=p.real.top);
   const rating=keys[Math.min(keys.length-1,(i<0?keys.length-1:i)+(p.real.limited?1:0))];
   return {chassis:p.chassis,drive:fit.drive,gearbox:fit.gearbox,diff:fit.diff,gears:fit.gears,gearing:fit.gearing,
-    tireType:fit.tire,tireWidth:fit.tw,tireWidthF:fit.twF||0,springF:0,springR:0,barF:0,barR:0,tireAspect:fit.ta,wheelDia:fit.wheel,
+    tireType:fit.tire,tireWidth:fit.tw,tireWidthF:fit.twF||0,springF:0,springR:0,barF:0,barR:0,damperF:0,damperR:0,tireAspect:fit.ta,wheelDia:fit.wheel,
     aeroFront:fit.aF,aeroRear:fit.aR,aeroFloor:fit.aFl,weightRed:fit.weight,
     brakeType:fit.brake,rotor:fit.rotor,suspension:fit.susp,speedRating:rating,governor:fit.gov,limitKmh:fit.gov||250,
     tc:fit.tc!==false,spacing:'stock',suspFront:(SUSP_REAL[p.name]||{}).f||fit.geoF,suspRear:(SUSP_REAL[p.name]||{}).r||fit.geoR,

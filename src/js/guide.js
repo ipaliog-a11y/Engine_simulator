@@ -416,6 +416,19 @@ const GUIDE_ART={
     P.r(70,18,14,36,GP.y);P.r(72,20,10,32,'#c09000');
     P.txt(96,8,'SPEED',GP.c,0.55);P.txt(96,16,'BECOMES',GP.c,0.55);P.txt(96,24,'HEAT',GP.r,0.55);
     P.txt(96,40,Math.round(150+h*700)+' C',col,0.6);if(h>0.8)P.txt(96,52,'FADE!',GP.r,0.6);}},
+  // a quarter car on a bumpy road: the road scrolls under the tyre, the wheel follows it closely, the body floats above
+  // on the spring and damper and moves far less; the bar on the right is the tyre's load swinging about its mean
+  quartercar:{anim:1,draw(P,t){
+    const road=x=>3*Math.sin(x*0.21)+1.6*Math.sin(x*0.57+1)+0.8*Math.sin(x*1.3+2);
+    const sp=t*22,X=48;
+    for(let x=0;x<112;x++){const y=60+Math.round(road(x+sp));P.r(x,y,1,72-y,GP.road);P.p(x,y,GP.steel);}
+    const zr=road(X+sp),zu=0.85*zr+0.6*Math.sin(t*9),zs=0.25*road(X+sp-6)+0.4*Math.sin(t*2.2);
+    const wy=Math.round(54+zu);P.disc(X,wy,6,GP.rub);P.disc(X,wy,2,GP.steel);                       // the wheel and tyre
+    const by=Math.round(14+zs);P.r(X-16,by,32,10,GP.b);P.box(X-16,by,32,10,GP.c);                  // the body's corner
+    for(let y=by+10;y<wy-6;y+=2)P.r(X-8+((y>>1)%2)*2,y,4,1,GP.y);                                  // the spring
+    P.r(X+5,by+10,3,Math.max(2,Math.round((wy-6-by-10)/2)),GP.steelL);P.r(X+6,by+10+Math.round((wy-6-by-10)/2),1,Math.round((wy-6-by-10)/2),GP.steel);   // the damper
+    const load=0.5+0.42*(zr-zu)/3;P.box(120,8,10,50,GP.line);P.r(121,9+Math.round(48*(1-clamp(load,0,1))),8,Math.max(1,Math.round(48*clamp(load,0,1))),load<0.15?GP.r:GP.g);
+    P.r(118,33,14,1,GP.ink);P.txt(134,30,'MEAN',GP.dim,0.45);P.txt(116,62,'TYRE LOAD',GP.dim,0.45);}},
   roll:{anim:1,draw(P,t){
     const r=0.12*Math.sin(t*1.2);P.r(0,62,160,10,GP.road);
     const cx=80,cy=34;const pt=(x,y)=>[cx+(x-cx)*Math.cos(r)-(y-cy)*Math.sin(r),cy+(x-cx)*Math.sin(r)+(y-cy)*Math.cos(r)];

@@ -113,6 +113,8 @@ function readVehicleFromForm(){
     suspFront:g('vhGeoF').value,suspRear:g('vhGeoR').value,
     // each axle's springs and anti-roll bar, steps about the kit (build 174)
     springF:stepOf(g('vhSpringF').value),springR:stepOf(g('vhSpringR').value),barF:stepOf(g('vhBarF').value),barR:stepOf(g('vhBarR').value),
+    // each axle's dampers, steps about the kit's damping ratio (build 215)
+    damperF:stepOf(g('vhDamperF').value),damperR:stepOf(g('vhDamperR').value),
     speedRating:g('vhRating').value,body:vehBody,
     // Steering-wheel turns per road-wheel turn. Only the live-timing wheel reads it; the lap does not.
     steerRatio:clamp(numOr(g('vhSteer').value,15),8,22),
@@ -156,6 +158,7 @@ function applyVehicleToForm(v){
   // saves from before build 174 carry ROLL BALANCE (arbBal), the front bar against the rear: it becomes the front bar
   g('vhSpringF').value=String(stepOf(v.springF));g('vhSpringR').value=String(stepOf(v.springR));
   g('vhBarF').value=String(stepOf(v.barF!=null?v.barF:v.arbBal));g('vhBarR').value=String(stepOf(v.barR));
+  g('vhDamperF').value=String(stepOf(v.damperF));g('vhDamperR').value=String(stepOf(v.damperR));   // none before build 215: the kit's own
   g('vhSteer').value=v.steerRatio||15;   // saves from before build 130 carry none
   updateGearingLabel();
 }
@@ -170,7 +173,7 @@ function applyChassisFit(key,body){
   g('vhGears').value=f.gears;g('vhGearing').value=f.gearing;
   fillSpacingSelect(!!body,body?'stock':'std');vehRatioSet=null;vehFinalDriveSet=0;
   g('vhTire').value=f.tire;g('vhTireW').value=f.tw;g('vhTireWF').value=f.twF||0;
-  ['vhSpringF','vhSpringR','vhBarF','vhBarR'].forEach(id=>g(id).value='0');g('vhTireA').value=f.ta;g('vhWheel').value=f.wheel;
+  ['vhSpringF','vhSpringR','vhBarF','vhBarR','vhDamperF','vhDamperR'].forEach(id=>g(id).value='0');g('vhTireA').value=f.ta;g('vhWheel').value=f.wheel;
   g('vhRating').value=(TIRE_TYPE[f.tire]||TIRE_TYPE.sport).rating;
   if(body){const top=FACTORY_CARS.find(p=>p.name===body.name);
     if(top)g('vhRating').value=vehicleFromPreset(top).speedRating;}
