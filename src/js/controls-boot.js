@@ -140,7 +140,7 @@ function bindControls(){
       buildVehicle();updateVehicleSummary();
     });
   });
-  wireGearWin();wireGGWin();
+  wireGearWin();wireGGWin();wireSuspWin();
   // Refit the current chassis to its factory spec (undo your part swaps).
   const btnFit=document.getElementById('btnRefit');
   if(btnFit)btnFit.addEventListener('click',()=>{
