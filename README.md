@@ -183,7 +183,7 @@ assist map over speed and pedal), regeneration, load-point shifting, electric-dr
 
   ![Hot lap report](docs/lap-report.png)
 
-- **Dyno report (new)** — **REPORT PNG** / **REPORT PDF** on the dyno save the current pull as a
+- **Dyno report (new)** — **REPORT PNG** / **REPORT PDF** (under **MORE** on the dyno) save the current pull as a
   printable A4 sheet laid out like a real dynamometer print-out: power and torque traces with the
   peaks called out, a peak-result band, the full engine specification, the conditions the run was
   made under, and a tabulated run-data list. Logged pulls are overlaid faintly for comparison.
