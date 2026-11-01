@@ -1,4 +1,4 @@
-# PIXEL ENGINE SIM v0.7 build 217
+# PIXEL ENGINE SIM v0.7 build 218
 
 **A lightweight, 8-bit style internal combustion engine *designer* & simulator** inspired by *Automation*.
 
@@ -748,8 +748,9 @@ Curve** tab remains a wide-open-throttle steady-state sweep for reading the full
   0.0004 ms/call), since the dyno scorecard redraws sixty times a second.
 - Strategy: each part carries a rough build cost, summed into a total (so budget challenges
   and power-per-dollar have meaning); a design reliability index estimates durability from
-  knock margin, boost/specific-output stress, high-strung choices (anti-lag, nitrous, sky-high
-  redline) and cooling adequacy for the power made. These are design-time estimates, not the
+  knock the ECU cannot hold off, boost or specific-output stress (the larger, not both), mean
+  piston speed above 25 m/s, high-strung choices (anti-lag, nitrous) and cooling adequacy for the
+  power made, where a real engine's stock radiator is sized for its own rated power. These are design-time estimates, not the
   live wear model (which still plays out as you drive).
 - Electrical: the alternator (output rising with RPM) charges the battery when it
   out-supplies demand and drains it otherwise; system voltage tracks state of charge. Low

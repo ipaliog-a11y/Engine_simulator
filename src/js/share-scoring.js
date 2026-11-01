@@ -28,6 +28,8 @@ function logPull(){
 }
 function clearPulls(){dynoPulls=[];flash(tr('DYNO PULLS CLEARED'));}
 // ---- Scoring: rate the design at a standard WOT best-power condition ----
+// The mean piston speed past which revs count against reliability (build 218; see the reliability index below).
+const PISTON_SPEED_LIMIT=25;   // m/s
 function scoreEngine(){
   const sv={afr:state.afr,iat:state.iat,coolant:state.coolant,oil:state.oil,eh:state.engineHealth,bl:state.blown,el:state.elecLoad,map:state.map,rpm:state.rpm};
   const savedAfrMode=engine.afrMode;engine.afrMode='fixed';   // score against the explicit sweep AFRs, independent of the ECU map
@@ -79,13 +81,24 @@ function scoreEngine(){
   const grade=overall>=88?'S':overall>=76?'A':overall>=62?'B':overall>=46?'C':overall>=30?'D':'F';
   // Design reliability index (0-100): a static estimate of how much abuse the build invites,
   // from knock margin, boost/specific-output stress, high-strung choices and cooling adequacy.
+  // The weights (45, 11 per bar, 0.30, 7 per m/s, 30, the type terms) are judgement, not derived: this is an index,
+  // not a life prediction. Build 218 took out four terms that charged factory engines for being what they are.
   let rel=100;
-  rel-=(1-safety)*45;                                   // knock-prone = grenade
+  // Knock: only knock the ECU cannot hold off. KNOCK_TARGET is where the end-gas integral reaches 1, i.e. the end gas
+  // autoignites before the flame arrives. An auto-timing ECU retards spark until knock sits exactly on it, so every
+  // knock-limited engine read safety 60 and lost 18 points, whatever it was: the ECU doing its job, charged as a fault
+  // (build 218). Now it is the excess over the target that costs: fixed timing past the knock limit, or an engine that
+  // still knocks at full retard. The 'safety' sub-score of the grade is unchanged.
+  rel-=clamp((100*(1-safety)-KNOCK_TARGET)/(100-KNOCK_TARGET),0,1)*45;   // knock-prone = grenade
   // Boost stress on internals: half of it in the midrange (peak boost), half where it is still held at the
   // limiter (build 131), where the rods and bearings carry the highest inertia and gas loads together. With no
   // taper the two halves are the old single term.
-  rel-=Math.max(0,engine.maxBoost-0.5)*11+Math.max(0,boostTarget(engine.redline)-0.5)*11;
-  rel-=Math.max(0,hpPerL-110)*0.30;                    // highly-strung specific output
+  // Specific output past 110 hp/L is mostly that same boost on a turbo engine, so the two are one stress, charged once
+  // at the larger (build 218). They were added: a Civic Type R K20C1 paid -24 for its boost and -13 again for the
+  // hp/L the boost makes. A taper still buys reliability wherever the boost term is the larger.
+  const boostStress=Math.max(0,engine.maxBoost-0.5)*11+Math.max(0,boostTarget(engine.redline)-0.5)*11;
+  const outputStress=Math.max(0,hpPerL-110)*0.30;      // highly-strung specific output
+  rel-=Math.max(boostStress,outputStress);
   rel-=engine.antilag?15:0;                            // ALS cooks turbo/exhaust
   // The vane ring is the hottest MOVING part in the exhaust, and this is the real reason VGT is a
   // diesel technology rather than a universal one. The nickel-base alloys the vanes and their
@@ -97,9 +110,22 @@ function scoreEngine(){
   if(engine.vgt&&engine.intake==='turbo')
     rel-=clamp((engine.peakEgtGas-VANE_T_LIMIT)/100*14,0,28);
   rel-=engine.nitrous!=='none'?12:0;                   // chemical stress
-  rel-=Math.max(0,engine.redline-(engine.ports?9800:7500))/100*2;   // sky-high redline (rotary/2-str rev high by design)
+  // Revs (build 218). What revs load is the reciprocating mass, and that scales with mean piston speed
+  // (2 x stroke x rpm), not rpm: a short stroke is how an engine is built to rev. A flat 7500 rpm threshold charged
+  // a 911 GT3 -30 and a Ferrari 458 -30 at 24.3-24.4 m/s, while a long-stroke engine at 7400 rpm paid nothing. The limit is
+  // 25 m/s, the owner's choice, at the top of what production engines run at their redline: the presets' own
+  // bore/stroke/redline put the Ferrari 458 at 24.3, the 991.2 GT3 at 24.4 and the Honda F20C at 24.9 m/s (Heywood,
+  // Internal Combustion Engine Fundamentals, 1988, ch. 2, gives 8-15 m/s as the usual rated range for road engines).
+  // 7 points per m/s is the old 2 per 100 rpm carried over at an 84 mm stroke, about the presets' median.
+  // A rotary has no piston: it keeps the rpm rule, with its own higher threshold.
+  if(engine.type==='rotary')rel-=Math.max(0,engine.redline-9800)/100*2;
+  else rel-=Math.max(0,2*engine.stroke_mm/1000*engine.redline/60-PISTON_SPEED_LIMIT)*7;
+  // Cooling (build 218). A STOCK radiator is the one the engine came with, sized for that engine's rated power
+  // (engine.radHp, a factory preset's real.hp); a design that never had one gets the generic part, sized for 260 hp.
+  // Before, every stock radiator was the generic part, so a Corvette LS3 or a 458 on its own factory radiator lost
+  // 12 points for being "under-cooled". Only power added past what the radiator was sized for is charged now.
   const coolNeed=clamp(peakHP/260,0,1.6);
-  const coolHave=engine.radCap+(engine.oilCooler?0.4:0)+(engine.fan==='none'?0:0.2);
+  const coolHave=engine.radCap*Math.max(260,engine.radHp||0)/260+(engine.oilCooler?0.4:0)+(engine.fan==='none'?0:0.2);
   rel-=Math.max(0,coolNeed-coolHave)*30;               // under-cooled for the power
   rel+=engine.ci?16:0;                                 // diesels are built heavy & robust
   rel-=engine.type==='rotary'?18:0;                    // apex-seal wear

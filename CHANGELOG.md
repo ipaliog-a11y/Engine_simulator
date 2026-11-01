@@ -20,6 +20,49 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 Working toward **v1.0 — every number derived, not fitted.**
 
+### Real engines no longer read as grenades (build 218)
+
+The design reliability index (REL) put 11 real engines in the red and 42 in the yellow. Among them were a 911 GT3
+(36), a Ferrari 458 (38), a Civic Type R (44) and a McLaren 750S (35). The engines were fine. Four of the index's
+terms charged factory engines for being what they are:
+
+- **Knock: only knock the ECU can't hold off now costs.** An AUTO-timing ECU retards the spark until knock sits
+  exactly on the knock limit, where the end gas autoignites. So every knock-limited petrol engine read safety 60 and
+  lost 18 points, whatever it was. That was 84 of the 88 petrol engines, all on exactly 60, so in effect a petrol
+  engine started at 82. Now only knock above the limit costs: fixed timing past it, or an engine that still knocks at
+  full retard. An MX-5 NA on fixed 40° still loses 41. The grade's *safety* sub-score is unchanged.
+- **Revs are mean piston speed, not rpm.** A flat 2 points per 100 rpm above 7,500 rpm charged short-stroke engines
+  built to rev: GT3 −30 at 24.4 m/s, 458 −30, S2000 −28 at 24.9 m/s, Radical −40. Now it is 7 points per m/s above **25 m/s**,
+  the limit the owner chose. That is the top of what production engines run at their redline: from the presets' own
+  dimensions, the 458 runs 24.3 m/s, the GT3 24.4 and the F20C 24.9. (Heywood gives 8–15 m/s as the usual rated range
+  for road engines.) 7 per m/s is the old rate carried over at an 84 mm stroke. A rotary has no piston and keeps its
+  rpm rule. Above 25 m/s today: Huracán (26.3 m/s, −9), and Murciélago and BAC Mono (25.1–25.2 m/s, about −1).
+- **Boost and specific output are one stress, charged once.** On a turbo engine, power above 110 hp/L is mostly the
+  boost, and both terms were charged. A K20C1 paid −24 for boost and −13 again for the hp/L the boost makes. Now the
+  larger of the two counts. The build-131 split of boost between the midrange and the limiter stays, so a taper still
+  buys reliability (2.0 turbo at 1.6 bar: 67 flat, 83 tapered).
+- **A real engine's STOCK radiator is its maker's.** Every stock radiator used to be a generic part sized for about
+  300 hp, so an LS3, a Coyote, a Hellcat, a 458 or a GT3 on its own factory radiator lost up to 12 points for being
+  "under-cooled". A new design field, `radHp`, holds what the stock radiator was sized for. Factory presets set it to
+  their rated power (`real.hp`), it is saved with the design, and a modified engine is judged against the radiator it
+  came with. Designs of your own, and builds saved before this one, keep the generic 260 hp part. The bench's thermal
+  model doesn't read it.
+- **The result:** 0 red (was 11), 2 yellow (was 42), 96 green (was 45), out of 98 real combustion engines. The two
+  yellows have real reasons. The RX-7 FD's 13B-REW (72) carries the rotary's apex-seal penalty. The R34's RB26 (72)
+  makes 437 hp in the model against a 276 hp radiator rating, because the model doesn't reproduce the JDM 280 PS
+  agreement figure. That gap belongs to the RB26's power model, not to reliability.
+- **What this changes in play:** many real engines now read 100, so a factory engine is the reference for "tough".
+  Challenges with reliability targets are easier to meet with factory-like builds: Reliability Run (82 or more), Club
+  Sprint (50 or more), Nordschleife (45 or more). Their targets are not changed here. Power, laps, 0–100 and races
+  are untouched: the fingerprint is identical.
+- **Left open:** the index's weights (45, 11 per bar, 0.30, 7 per m/s, 30, and the diesel, rotary and two-stroke
+  terms) are still judgement, not derived. A derived index would charge peak cylinder pressure and piston
+  acceleration against material limits. The grade's *safety* sub-score still reads 60 on every knock-limited engine,
+  for the same reason the knock term did. It weighs 15% of the grade, and fixing it would move every grade, so it
+  needs its own build.
+- test129 checks each rule, that no real engine reads red, and the guide in both languages. The Wear & reliability
+  guide page and the README describe the new index.
+
 ### Kerbs (build 217)
 
 Stage 3 of the suspension, part b. A kerb is not a roughness spectrum but one sharp, known shape under one side of
