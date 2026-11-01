@@ -15,7 +15,7 @@
 //     into a browser that never saw it, a changed library part with the same id comes back as a copy, deleting the
 //     fitted part puts the factory exhaust back;
 //   · the sound reads the part's silencer;
-//   · the page: four part types, three of them later; the exhaust editor; nothing for an electric drive; Greek.
+//   · the page: four part types, two of them later (build 206 made the intake ready, test121); the exhaust editor; nothing for an electric drive; Greek.
 import { chromium } from './pw.mjs';
 import { fileURLToPath, pathToFileURL } from 'url';
 import path from 'path';
@@ -48,7 +48,7 @@ const r = await page.evaluate(() => {
   const base = partFromFactory('race');
   const q = Object.assign({}, base, { name: 'TEST 5500', primL_mm: primaryFor(5500), sysD_mm: 60 });
   const pre = exhaustReport(q);
-  document.getElementById('ptCut').click(); document.getElementById('ptSize').click(); previewPart();
+  document.getElementById('ptCut').click(); document.getElementById('ptSize').click(); previewPart('exhaust');
   o.still = before.score === json(engine.score) && before.pull === json(wotPull()) && before.lap === json(simulateLap('mixed'));
   // 4. the physics
   const R = x => exhaustReport(Object.assign({}, base, x));
@@ -60,7 +60,7 @@ const r = await page.evaluate(() => {
   o.turboL = [300, 900].map(L => json(exhaustReport(Object.assign({}, gb, { primL_mm: L })).pts));
   // 5. the library
   load('BMW M3 (E46'); setTab('parts');
-  partsUI.edit = Object.assign({}, q); partToEditor(partsUI.edit);
+  partsUI.kind = 'exhaust'; partsUI.edit.exhaust = Object.assign({}, q); partToEditor('exhaust', partsUI.edit.exhaust);
   document.getElementById('ptSaveFit').click();
   const id = engine.exhaustPart && engine.exhaustPart.id;
   o.fit = { id: !!id, form: document.getElementById('edExhaust').value === 'part:' + id, pull: json(wotPull().pts) === json(pre.pts),
@@ -70,7 +70,7 @@ const r = await page.evaluate(() => {
   const saved = serializeBuild('t', '');
   o.saved = !!(saved.engine.exhaustPart && saved.engine.exhaustPart.primL_mm === q.primL_mm);
   // a browser that never saw the part
-  partLib = []; persistParts(); fillExhaustSelect(); load('Golf GTI (Mk7');
+  partLib = []; persistParts(); fillPartSelects(); load('Golf GTI (Mk7');
   applyBuild(saved);
   o.imported = { lib: partLib.length, fitted: !!engine.exhaustPart && engine.exhaustPart.name === 'TEST 5500', pull: json(wotPull().pts) === json(pre.pts) };
   // the library's part changed since: the build's comes back as a copy, and the build is what it was
@@ -84,7 +84,7 @@ const r = await page.evaluate(() => {
   partAction('del', engine.exhaustPart.id);
   o.del = { part: !!engine.exhaustPart, exh: engine.exhaust, lib: partLib.length };
   // 7. the page
-  setTab('parts');
+  partsUI.kind = 'exhaust'; setTab('parts');
   o.page = { types: [...document.querySelectorAll('#partTypes button')].map(b => [b.dataset.kind, b.disabled]), editor: !document.getElementById('partsExhaust').hidden,
     lit: (() => { const c = document.getElementById('partCanvas'), d = c.getContext('2d').getImageData(0, 0, c.width, c.height).data; let n = 0; for (let i = 3; i < d.length; i += 4) if (d[i]) n++; return n; })() };
   load('Model 3'); setTab('parts');
@@ -117,7 +117,7 @@ console.log(`== the silencer's sound gain: chambered / straight-through / none $
 if (!(r.sound[0] < r.sound[1] && r.sound[1] < r.sound[2])) fails.push('the sound does not read the part\'s silencer');
 if (r.del.part || r.del.exh !== 'race' || r.del.lib !== 1) fails.push('deleting the fitted part does not put its factory exhaust back');
 console.log(`== page: ${r.page.types.map(([k, d]) => k + (d ? ' (later)' : '')).join(', ')}; editor ${r.page.editor}; ${r.page.lit} pixels drawn; electric: note ${r.ev.note}, editor ${r.ev.editor}; Greek: ${r.el.tab} · ${r.el.h} · ${r.el.guide} ==`);
-if (r.page.types.length !== 4 || r.page.types[0][0] !== 'exhaust' || r.page.types[0][1] || r.page.types.slice(1).some(t => !t[1])) fails.push('the part types are not the exhaust and three for later');
+if (r.page.types.length !== 4 || r.page.types[0][0] !== 'exhaust' || r.page.types[0][1] || r.page.types[1][0] !== 'intake' || r.page.types[1][1] || r.page.types.slice(2).some(t => !t[1])) fails.push('the part types are not the exhaust, the intake and two for later');
 if (!r.page.editor || r.page.lit < 3000) fails.push('the exhaust editor and its chart are not shown');
 if (!r.ev.note || r.ev.editor) fails.push('an electric drive is offered an exhaust');
 if (!/ΕΞΑΡΤΗΜΑΤΑ/.test(r.el.tab) || !/ΣΧΕΔΙΑΣΤΗΣ/.test(r.el.h) || /With this exhaust/.test(r.el.guide)) fails.push('the PARTS page is not in Greek');

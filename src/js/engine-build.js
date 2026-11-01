@@ -32,7 +32,6 @@ function readEngineFromForm(){
     intakeSys:g('edIntakeSys').value,
     airFilter:g('edAirFilter').value,
     cam:g('edCam').value,egr:g('edEgr').value,
-    runner:g('edRunner').value,
     vvt:g('edVVT').value==='yes',
     valves:clamp(Math.round(+g('edValves').value||4),2,5),
     valveMat:g('edValveMat').value,
@@ -50,7 +49,7 @@ function readEngineFromForm(){
     thermostat:clamp(Math.round(+g('edThermostat').value||88),71,95),
     alternator:g('edAlternator').value
   };
-  Object.assign(e,exhaustFromForm());   // a factory exhaust, or a designed one (build 205)
+  Object.assign(e,partsFromForm());   // the factory exhaust and runners, or designed ones (builds 205, 206)
   if(type==='electric')Object.assign(e,readElectricFromForm());   // the motor and battery (build 179)
   else{const hm=g('edHybrid')&&g('edHybrid').value;if(hm&&hm!=='none'){e.hyMode=hm;e.hyDeploy=HYBRID_DEPLOY[g('edHyDeploy').value]?g('edHyDeploy').value:'full';e.hyTune=readHybTuneFromForm();if(g('edHyPlug').value==='yes')e.hyPlug=true;Object.assign(e,readElectricFromForm());}}   // a hybrid system (build 186), its tune (192)
   return e;
@@ -70,11 +69,11 @@ function applyEngineToForm(e){
   g('edAntilag').value=e.antilag?'yes':'no';
   g('edScType').value=e.scType||'roots';g('edNitrous').value=e.nitrous||'none';
   g('edIntakeSys').value=e.intakeSys||'efi';g('edAirFilter').value=e.airFilter||'stock';
-  g('edRunner').value=e.runner||'medium';g('edCam').value=e.cam||'stock';g('edEgr').value=e.egr||'none';g('edVVT').value=e.vvt?'yes':'no';
+  g('edCam').value=e.cam||'stock';g('edEgr').value=e.egr||'none';g('edVVT').value=e.vvt?'yes':'no';
   g('edValves').value=String(e.valves||4);g('edValveMat').value=e.valveMat||'steel';
   g('edSpring').value=e.valveSpring||'stock';
   g('edFuel').value=e.fuel||'gasoline';
-  exhaustToForm(e);g('edCat').value=e.cat||'stock';g('edOctane').value=e.octane;g('edInjector').value=e.injector;
+  partsToForm(e);g('edCat').value=e.cat||'stock';g('edOctane').value=e.octane;g('edInjector').value=e.injector;
   g('edIgnAdv').value=e.ignitionAdv;g('edIgnType').value=e.ignitionType;g('edTiming').value=e.timingMode||'fixed';g('edAfrMode').value=e.afrMode||'fixed';
   g('edRadiator').value=e.radiator||'stock';g('edFan').value=e.fan||'electric';
   g('edOilCooler').value=e.oilCooler?'yes':'no';g('edThermostat').value=e.thermostat||88;

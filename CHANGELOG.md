@@ -20,6 +20,35 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 Working toward **v1.0 — every number derived, not fitted.**
 
+### The part designer: intake manifolds (build 206)
+
+- **INTAKE MANIFOLD is the second type of part on the PARTS tab.** Its options:
+  - the runner length, from the plenum to the head (the port in the head is added, as on the factory manifolds);
+  - the runner diameter;
+  - a variable length: a second, shorter length opened by a flap (a DISA or VarioRam).
+- **No new physics.** The four factory manifolds (LONG, MEDIUM, SHORT, VARIABLE) were always runner lengths, read by
+  the integrated intake stroke, with a bore matched to the ports behind it. A designed manifold gives the same model
+  its own length and bore. Written down as a part, each factory manifold gives the same pull within 0.003%.
+- **The page guides the numbers, on the engine you have built:**
+  - **CUT** sets the runner length so the intake stroke fills best at the asked speed, within 1% on the M3 E46 for
+    5500, 6500 and 7500 rpm. It is solved on the fill model itself, not the runner's resonance alone: the moving
+    column moves the fill's peak 20–25% above the resonance. Where no runner can fill best at that speed, CUT sets
+    the nearest and says so.
+  - **MATCH THE PORTS** sets the bore the factory gives this engine.
+  - It reads out where the runner's resonance would tune it, where the stroke fills best, where a variable manifold
+    opens its short runners, and the gas speed in the runner, with the curves against the engine as it is.
+- **What the dimensions do, through the physics** (M3 E46):
+  - runners of 450, 300 and 150 mm fill best at 6050, 6800 and 7300 rpm;
+  - a 34 mm bore makes 330 Nm at 3000 rpm against a 50 mm bore's 318, and 366 hp against 370;
+  - a variable 645/190 mm manifold opens its short runners at 7300 rpm and makes 370 hp, where the long runners alone
+    make 351.
+- An engine with no intake valves (a two-stroke, a rotary) is told its runners change nothing. A part designed for one
+  engine is still a part: fitted to another, its runners are what they are.
+- **Not modelled yet:** the plenum's volume and the throttle (the plenum is taken as holding steady pressure).
+- The PARTS code now handles more than one type of part: the ENGINE tab's INTAKE RUNNER choice lists your intakes
+  under MY PARTS, as EXHAUST lists your exhausts, and a build carries both.
+- Test: test121; test120 updated for the second type.
+
 ### The part designer: exhausts (build 205)
 
 - **A PARTS tab.** Pick a type of part, then set its dimensions. The first type is the **exhaust**; the intake

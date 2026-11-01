@@ -989,13 +989,15 @@ function deriveGasDynamics(){
   const Vd=e.dispCyl_L/1000;
   e.vEffCyl=Vd/Math.max(1.5,e.compression-1)+Vd/2;       // mean cylinder volume over induction
   // Runner bore matches the port behind it, which matches the valve throat it feeds.
-  e.runnerD_mm=e.ivDia_mm?Math.sqrt(e.ivCount)*THROAT_RATIO*e.ivDia_mm:0.42*e.bore_mm;
+  // A designed intake (build 206, parts.js) gives its own runners: length, bore, and a variable one's short length.
+  const IP=e.intakePart||null;
+  e.runnerD_mm=IP?IP.runnerD_mm:e.ivDia_mm?Math.sqrt(e.ivCount)*THROAT_RATIO*e.ivDia_mm:0.42*e.bore_mm;
   e.runnerA=Math.PI/4*Math.pow(e.runnerD_mm/1000,2);
-  const rn=RUNNER[e.runner]||RUNNER.medium;
-  e.runnerVariable=(e.runner==='variable');
+  const rn=IP?null:(RUNNER[e.runner]||RUNNER.medium);
+  e.runnerVariable=IP?!!IP.variable:(e.runner==='variable');
   const port=0.95*(e.bore_mm/1000);
-  e.runnerL=(rn.mm!=null?rn.mm/1000:RUNNER.long.mm/1000)+port;
-  e.runnerLShort=RUNNER.short.mm/1000+port;              // the flap's other position
+  e.runnerL=(IP?IP.runnerL_mm/1000:rn.mm!=null?rn.mm/1000:RUNNER.long.mm/1000)+port;
+  e.runnerLShort=(IP&&IP.variable?IP.shortL_mm:RUNNER.short.mm)/1000+port;   // the flap's other position
   // The header is cut for the gas that flows at its target speed, so take the temperature there.
   const tgtRpm=P?e.redline*0.90:(ex.targetRpm||e.redline*0.90);
   const T=exhaustGasT(1.0,tgtRpm);

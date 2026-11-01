@@ -16,7 +16,7 @@
 <body>
 <div class="container">
 <header>
-<h1>PIXEL ENGINE SIM v0.7 build 205</h1>
+<h1>PIXEL ENGINE SIM v0.7 build 206</h1>
 <div class="subtitle" id="subtitle">ENGINE DESIGNER • BUILD IT, THEN DRIVE IT</div>
 </header>
 <div class="build-strip" id="buildStrip">
@@ -318,7 +318,7 @@
 <div class="hint">Pick a type of part, set its dimensions and save it. Saved parts are kept in this browser and appear in the ENGINE tab's choices; a saved build carries its parts with it.</div>
 <div class="design-section">Type of part</div>
 <div class="part-types" id="partTypes"></div>
-<div class="hint" id="partsNoEngine" hidden>An electric drive has no exhaust. Build a combustion engine on the ENGINE tab to design one.</div>
+<div class="hint" id="partsNoEngine" hidden>An electric drive has no exhaust or intake. Build a combustion engine on the ENGINE tab to design parts for it.</div>
 <div id="partsExhaust">
 <div class="design-section">My exhausts</div>
 <div class="part-list" id="partList"></div>
@@ -342,6 +342,27 @@
 <div class="part-guide" id="partGuide"></div>
 <div class="part-chart"><div class="gw-leg" id="partLegend"></div><canvas id="partCanvas" role="img" aria-label="Power and torque with this exhaust against the engine as it is"></canvas></div>
 <div class="btn-row part-btns"><button type="button" id="ptSave">SAVE PART</button><button type="button" id="ptSaveFit">SAVE &amp; FIT</button></div>
+</div>
+<div id="partsIntake" hidden>
+<div class="design-section">My intakes</div>
+<div class="part-list" id="piList"></div>
+<div class="pick-row"><div class="field"><label for="piFrom">START FROM THIS ENGINE'S</label><select id="piFrom"><option value="long">LONG (TORQUE)</option><option value="medium">MEDIUM</option><option value="short">SHORT (POWER)</option><option value="variable">VARIABLE</option></select></div>
+<div class="field"><label>&nbsp;</label><button type="button" id="piNew">NEW INTAKE</button></div></div>
+<div class="design-section">Intake manifold</div>
+<div class="design-grid">
+<div class="field"><label for="piName">NAME</label><input type="text" id="piName" maxlength="40"></div>
+<div class="field"><label for="piL">RUNNER LENGTH (mm)</label><input type="number" id="piL" min="40" max="800" step="5"></div>
+<div class="field"><label for="piCutRpm">CUT THE RUNNERS FOR (rpm)</label><input type="number" id="piCutRpm" min="1000" max="12000" step="100"></div>
+<div class="field"><label>&nbsp;</label><button type="button" id="piCut">CUT</button></div>
+<div class="field"><label for="piD">RUNNER DIAMETER (mm)</label><input type="number" id="piD" min="20" max="80" step="0.5"></div>
+<div class="field"><label>&nbsp;</label><button type="button" id="piMatch">MATCH THE PORTS</button></div>
+<div class="field"><label for="piVar">VARIABLE LENGTH</label><select id="piVar"><option value="no">NO</option><option value="yes">YES (FLAP)</option></select></div>
+<div class="field"><label for="piShort">SHORT LENGTH (mm)</label><input type="number" id="piShort" min="40" max="400" step="5"></div>
+</div>
+<div class="design-section">On this engine</div>
+<div class="part-guide" id="piGuide"></div>
+<div class="part-chart"><div class="gw-leg" id="piLegend"></div><canvas id="piCanvas" role="img" aria-label="Power and torque with this intake against the engine as it is"></canvas></div>
+<div class="btn-row part-btns"><button type="button" id="piSave">SAVE PART</button><button type="button" id="piSaveFit">SAVE &amp; FIT</button></div>
 </div>
 </div>
 
