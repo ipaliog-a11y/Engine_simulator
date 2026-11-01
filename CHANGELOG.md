@@ -20,6 +20,59 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 Working toward **v1.0 — every number derived, not fitted.**
 
+### Dampers and the road (build 216)
+
+Stage 3 of the suspension, part a. The lap is solved as a string of steady corners, where a damper does nothing, so
+dampers waited (build 174) for something to work against. That is now the road.
+
+- **Every circuit has a road.** Its roughness follows ISO 8608: a profile whose spectrum falls as the square of the
+  spatial frequency, set by Gd(n0) at 0.1 cycle/m (class A, very good, up to 32e-6 m3). No circuit's surface has been
+  measured to ISO 8608 that we can find, so each is an estimate by its kind, and labelled so:
+  - permanent circuits are smooth (8e-6, half of class A's middle);
+  - circuits on public or park roads, or with a bumpy reputation, are at 16e-6 (COTA, Interlagos, Mexico, Montreal,
+    Albert Park, Sochi, Brands Hatch, Ashdown Park, and imported traces);
+  - the Nordschleife, a public road, is at 32e-6.
+- **Each axle is a quarter car.** It is the body's share on the spring and damper, the wheel under it (12% of the
+  corner's mass), and the tyre's vertical stiffness under that (250 kN/m for a 205/55R16, scaled as the root of the
+  tyre's width times its diameter, Rhyne's form). Real cars come out with a 12–15 Hz wheel hop. Driven over the road at
+  speed v, the tyres' load swings by σ = c √(Gd v), with c from the quarter car's own response.
+- **A swinging load grips less.** A tyre's force goes as its load to the power 0.85 (load sensitivity), so a load
+  swinging about its mean averages less force than a steady one. It cannot pull on the road, and its mean stays the
+  car's weight. Each tyre keeps E[L^0.85] of its force, the lightly loaded inside tyre the least. This applies
+  cornering, braking and driving, on the lap only. The 0–100, braking and skidpad tests run on a smooth surface and do
+  not move.
+- **FRONT DAMPERS and REAR DAMPERS** on VEHICLE, SOFT −2 to STIFF +2 about the kit's damping. Each step is 1.3× the
+  damping, and off STANDARD they cost $350 an axle and make the car *(modified)*. The kits are damped at 0.25 / 0.30 /
+  0.45 / 0.60 of critical (comfort, sport, coilovers, race). Passenger cars run 0.2–0.3 and race cars 0.5–0.7 (the
+  FSAE damping guide), with 0.45 called the optimum for a racing car (Milliken). A spring step leaves the damper alone,
+  so stiffer springs on the same dampers are damped less.
+- **What it does:**
+  - the tyres' load swings least near half of critical damping; far too soft lets the wheels hop (the swing
+    grows by 70%), and too stiff shakes them again;
+  - the ride, the body's RMS acceleration, gets steadily harsher as the dampers stiffen;
+  - on an M3 E46, the road costs 0.02% of a lap at Riverside and 0.05% on the Nordschleife; dampers far too soft cost
+    another 0.8 s there;
+  - across the fingerprint's 213 laps (every real car and archetype at Ashdown Park, six cars at Spa, the race
+    models), laps move by +0.03% on average, from −0.14% to +0.27%. The 49 that got faster are the racing line, not
+    grip: the line is re-optimised under the new grip and the optimiser lands a little differently. On a perfectly
+    smooth road with its line rebuilt, the Focus RS gives the old lap to the last digit; on its own road the optimiser
+    found a line 0.1 s better. On a fixed line the road only costs time;
+  - nothing else moves: the 0–100, top speed, braking and masses are identical.
+- **The summary** shows each axle's damping as a share of critical, the wheel-hop frequency and the ride (m/s² at
+  80 km/h on a class B road, unweighted). The spec sheet shows the damping.
+- **The guide** has a new page, *Dampers & the road*, with a moving quarter car, in Greek too. *Known limits* says what
+  is left out.
+- **Left open:** this is the least the road costs. The tyre's force also lags a change of load, kerbs are single sharp
+  bumps, and dampers also steady the body at turn-in and hold an aero car's floor at its height. None of that is
+  modelled yet; the body at turn-in is part b (transient roll).
+- **Tests:** test127 (new):
+  - the quarter car (the kit's ratio, the step, the wheel hop) and how the swing scales with roughness and speed;
+  - the swing against the damping (least near half), the ride against it, and stiffer springs on the same dampers;
+  - the grip kept;
+  - laps: a smooth road gives the old lap, the Nordschleife costs more than a GP circuit, and far too soft is slower;
+  - the performance tests unchanged;
+  - cost, *(modified)*, saves (old ones get the kit's dampers), REFIT, the summary and Greek.
+
 ### Title screen: three more shop rooms, and a slow pan (build 215)
 
 - The main menu still opens over an 8-bit workshop, but the stage now cycles **four rooms**, five seconds each,

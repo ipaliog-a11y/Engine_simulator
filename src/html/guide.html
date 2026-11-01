@@ -1782,7 +1782,45 @@ Ways to move the balance:
 TRACK shows which axle sets the limit through the corners.
 </div>
 </div>
-<div class="guide-see">See also: <a data-gp="tyres">Tyres &amp; grip</a> · <a data-gp="lapsolve">Solving a lap</a></div>
+<div class="guide-see">See also: <a data-gp="dampers">Dampers &amp; the road</a> · <a data-gp="tyres">Tyres &amp; grip</a> · <a data-gp="lapsolve">Solving a lap</a></div>
+</section>
+<section class="guide-page" id="gp-dampers" data-cat="car" data-title="Dampers &amp; the road" data-tags="dampers shock absorbers damping bumps road roughness iso 8608 wheel hop ride comfort quarter car tyre load" hidden>
+<h4 class="guide-title">Dampers &amp; the road</h4>
+<div class="gtier gt-real"><div class="gtier-h">LV1 · REAL LIFE</div>
+<canvas class="gart" data-art="quartercar"></canvas><div class="gart-cap">The wheel follows the road; the body floats above it; the tyre's load swings with every bump.</div>
+<div class="guide-body" data-gk="dampersReal">
+No road is flat. Over every bump the wheel is pushed up, the spring is squeezed, and the tyre is pressed harder into the road; over every dip it is let go. A <b>damper</b> (a shock absorber) is an oil-filled piston that resists movement, so the wheel and body stop bouncing instead of carrying on. Too soft and the wheel skips over the bumps, sometimes leaving the road altogether (<b>wheel hop</b>). Too stiff and every bump goes straight into the body and the tyre is jolted instead of pressed steadily down. Road cars are damped softly for comfort; race cars more firmly, to keep the tyres working.
+</div>
+</div>
+<div class="gtier gt-game"><div class="gtier-h">LV2 · IN THE GAME</div>
+<div class="guide-body" data-gk="dampers">
+<b>FRONT DAMPERS</b> and <b>REAR DAMPERS</b> on the VEHICLE tab go from SOFT −2 to STIFF +2 about the suspension kit's own damping. Each step is 1.3× the damping; off STANDARD they are new parts.<br>
+The summary shows each axle's damping as a share of critical damping, the wheel-hop frequency, and the <b>ride</b>: how hard the body is shaken at 80 km/h on an ordinary good road. Lower is more comfortable.<br>
+On the TRACK, every circuit has a road surface: purpose-built circuits are smooth, older and public-road circuits bumpier, and the Nordschleife bumpiest. The bumps cost grip wherever the tyres work, cornering, braking and driving, and more at speed. Damping near half of critical keeps the tyres' load steadiest. Softer is more comfortable but lets the wheels hop; stiffer shakes the car and the tyres again. Stiffer springs on the same dampers are damped less, and cost a little grip on bumps.<br>
+The 0–100, braking and skidpad tests are run on a smooth surface, so the dampers do not change them.
+</div>
+</div>
+<div class="gtier gt-phys"><div class="gtier-h">LV3 · THE PHYSICS</div>
+<div class="guide-body" data-gk="dampersPhys">
+<div class="gtab-wrap"><table class="gtab"><tr><th>setup</th><th>damping (share of critical)</th></tr>
+<tr><td>comfort</td><td>0.25</td></tr><tr><td>sport</td><td>0.30</td></tr><tr><td>coilovers</td><td>0.45</td></tr><tr><td>race</td><td>0.60</td></tr></table></div>
+Passenger cars are damped at 0.2–0.3 of critical, race cars at 0.5–0.7, and 0.45 is called the optimum for a racing car.<br>
+<b>The quarter car.</b> Each corner is the body's share on the spring and damper, the wheel (12% of the corner's mass) under it, and the tyre's vertical stiffness under that (250 kN/m for a 205/55R16, scaling with the root of the tyre's width times its diameter). That gives the 10–15 Hz wheel hop real cars have.<br>
+<b>The road</b> is ISO 8608's: a profile whose spectrum falls as the square of the spatial frequency,
+<span class="geq">G<sub>d</sub>(n) = G<sub>d</sub>(n<sub>0</sub>) · (n / n<sub>0</sub>)<sup>−2</sup>, n<sub>0</sub> = 0.1 cycle/m</span>
+Class A, very good, runs up to 32×10⁻⁶ m³, and each class is four times the one before. Driven at speed v, that is a white velocity input, so the tyre's load swings by
+<span class="geq">σ<sub>F</sub> = c · √(G<sub>d</sub>(n<sub>0</sub>) · v)</span>
+with c from the quarter car's response, worked out for each axle from its own springs, dampers, masses and tyres.<br>
+<b>Why a swinging load costs grip.</b> A tyre's grip grows less than in proportion to its load (load sensitivity, μ ∝ F<sub>z</sub><sup>−0.15</sup>), so its force goes as F<sub>z</sub><sup>0.85</sup>, a curve that bends down. A load swinging about its mean therefore averages less force than a steady one. The load cannot pull on the road, so it stops at zero while the wheel is in the air, and its mean stays the car's weight (the landing is harder):
+<span class="geq">grip kept = E[ L<sup>0.85</sup> ],  L = max(0, 1 + x) rescaled to mean 1,  x ~ Normal(0, σ<sub>F</sub>/F<sub>z</sub>)</span>
+Each tyre keeps that share of its force, the lightly loaded inside tyre the least. At 180 km/h on a smooth circuit a road car's tyres swing about 10% and lose under 0.1%; on the Nordschleife about 17% and roughly 0.1–0.2%.<br>
+<b>The ride</b> is the body's RMS vertical acceleration from the same quarter car, unweighted (ISO 2631's comfort weighting is not applied).
+</div>
+<div class="guide-limit" data-gk="dampersLimit">
+Limit: the bumps act only through load sensitivity and wheel hop. A real tyre's force also lags a change of load, kerbs are sharp single bumps rather than a spectrum, and dampers also steady the body at turn-in and keep an aero car's floor at its height; none of these is modelled, so this is the least the road costs. No circuit's surface has been measured to ISO 8608 that we can find, so each circuit's roughness is an estimate by its kind.
+</div>
+</div>
+<div class="guide-see">See also: <a data-gp="suspension">Suspension, roll &amp; camber</a> · <a data-gp="tyres">Tyres &amp; grip</a> · <a data-gp="lapsolve">Solving a lap</a></div>
 </section>
 <section class="guide-page" id="gp-performance" data-cat="car" data-title="Performance tests" data-tags="performance 0-100 quarter mile 400m top speed braking 100-0 0-200-0 acceleration" hidden>
 <h4 class="guide-title">Performance tests</h4>
@@ -2215,6 +2253,7 @@ This is a physics model, and like every model it leaves things out. These are th
 · <b>No vibration or balance</b> is modelled (<a data-gp="firing">Crank &amp; firing order</a>).<br>
 · <b>The lap is quasi-steady</b>: the car is always exactly at the speed grip, power and brakes allow, turning in takes no time (no yaw inertia). Each axle's grip is its own, so a car understeers or oversteers (build 157), but only as a limit: it never slides or spins, the driver never makes a mistake, and the line is the best one near minimum curvature (<a data-gp="trackline">The racing line</a>).<br>
 · <b>A lap is a single hot lap</b>: no tyre wear, no fuel burn, no traffic. A <a data-gp="race">The race</a> adds all three, but its traffic, overtaking, tow, dirty air, pit losses and driver errors are rules, and its tyre temperature and wear constants are fitted.<br>
+· <b>Dampers act only through the road's bumps</b>: the tyres' load swing costs grip by load sensitivity and wheel hop; the tyre's lag, kerbs, the body at turn-in and an aero car's ride height are not modelled, and each circuit's roughness is an estimate by its kind (<a data-gp="dampers">Dampers &amp; the road</a>).<br>
 · <b>Imported circuits have modelled width</b>, because a GPX file carries none (<a data-gp="gpx">Importing a circuit</a>).<br>
 · <b>The reference cars are matched, not reproduced</b>: the 0–100 and top speed errors on <a data-gp="calibration">How we check against reality</a> are the honest size of what is left.
 </div>

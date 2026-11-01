@@ -122,7 +122,7 @@ function bindControls(){
     try{localStorage.setItem('pes.gauges',lapReplay.gauges);}catch(err){}});
   // Vehicle design: recompute performance live on any change. Picking a chassis fits its whole
   // factory spec (drivetrain, gearbox, tyres/wheels, brakes, suspension, aero, weight).
-  ['vhChassis','vhDrive','vhGearbox','vhDiff','vhGears','vhSpacing','vhGearing','vhLimiter','vhLimitKmh','vhTC','vhRating','vhTire','vhTireW','vhTireWF','vhTireA','vhWheel','vhAeroF','vhAeroR','vhAeroFl','vhWeight','vhBrake','vhRotor','vhSusp','vhGeoF','vhGeoR','vhSpringF','vhSpringR','vhBarF','vhBarR','vhSteer'].forEach(id=>{
+  ['vhChassis','vhDrive','vhGearbox','vhDiff','vhGears','vhSpacing','vhGearing','vhLimiter','vhLimitKmh','vhTC','vhRating','vhTire','vhTireW','vhTireWF','vhTireA','vhWheel','vhAeroF','vhAeroR','vhAeroFl','vhWeight','vhBrake','vhRotor','vhSusp','vhGeoF','vhGeoR','vhSpringF','vhSpringR','vhBarF','vhBarR','vhDamperF','vhDamperR','vhSteer'].forEach(id=>{
     const el=document.getElementById(id);if(!el)return;
     el.addEventListener('input',()=>{
       if(id==='vhChassis'){

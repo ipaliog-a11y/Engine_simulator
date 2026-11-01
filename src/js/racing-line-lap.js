@@ -226,7 +226,7 @@ function carLineKey(){
   const v=vehicle,pt=powertrain(),s=pt.rating()||{};
   return [v.mass,v.muRef,v.FzRef,v.clA,v.cdA,v.aeroBal,v.drivenAero,v.drivenWt,v.track,v.tireWidth,v.cg,v.wb,v.fWt,
     v.finalDrive,(v.ratios||[]).join('/'),v.driveEff,v.drive,v.diff,v.brakeDecelCap,v.governor,v.tc,v.camber,v.rollGrad,
-    v.trackF,v.trackR,v.lltdF,v.FzRefF,v.camRecF,v.camRecR,v.camberF,v.camberR,
+    v.trackF,v.trackR,v.lltdF,v.FzRefF,v.camRecF,v.camRecR,v.camberF,v.camberR,v.roughF,v.roughR,
     s.peakHP,s.peakTQ,pt.maxRpm()].map(x=>typeof x==='number'?+x.toFixed(4):x).join('|');
 }
 function lineFor(T,key){
@@ -241,7 +241,17 @@ function lineFor(T,key){
 // Quasi-steady-state lap: a cornering-speed ceiling at every point, then a backward braking pass
 // and a forward traction/power pass, taking the lower speed at each point. Gearbox shift time is
 // charged per gear change around the lap, so a slow-shifting box loses real time on a circuit.
+// The circuit's road under the whole solve (build 216): its bumps cost the tyres grip wherever they work, in a corner,
+// braking and driving. opts.road overrides it (0 is a perfectly smooth surface); ROAD is put back however it ends.
 function simulateLapRun(key,opts){
+  const gd=opts&&opts.road!=null?opts.road:TRACK_ROAD[trackRoad(key)]||0;
+  const onRoad=f=>function(){const prev=ROAD.gd;ROAD.gd=gd;try{return f.apply(this,arguments);}finally{ROAD.gd=prev;}};
+  const r=onRoad(simulateLapCore)(key,opts);
+  // a probe hands back the solver's own functions (the g-g window): they keep the circuit's road when called later
+  if(r&&opts&&opts.probe)for(const k of ['ceilAt','brakeFrom','accFrom'])if(typeof r[k]==='function')r[k]=onRoad(r[k]);
+  return r;
+}
+function simulateLapCore(key,opts){
   const pt=powertrain(),frontF=vv=>pt.frontForce?pt.frontForce(vv):0;   // a hybrid's front axle motor (build 195)
   if(!pt.ready()||!vehicle.mass)return null;
   const quick=!!(opts&&opts.quick);
@@ -258,7 +268,7 @@ function simulateLapRun(key,opts){
   const dCorner=df.corner!=null?df.corner:1;   // locking the diff scrubs lateral grip
   // Lateral grip at a normal load and lateral acceleration: the tyres under load transfer and roll
   // camber (latMuEff, build 109), less the diff's scrub.
-  const muLatAt=(N,ay,vv)=>latMuEff(N,ay,down(vv))*dCorner;   // vv: the speed, for the downforce's share of N
+  const muLatAt=(N,ay,vv)=>latBalance(N,ay,down(vv),0,vv).mu*dCorner;   // vv: the speed, for the downforce's share of N and the road's bumps
   const axleTqMax=Math.max(1,curve.reduce((a,q)=>Math.max(a,q.tq),0)*ratios[0]*fd*(vehicle.gb&&vehicle.gb.mult||1));
   const down=v=>0.5*AIR_RHO*vehicle.clA*v*v;
   // Normal load at a point: weight resolved onto the slope + downforce − vertical-curvature term.
@@ -359,9 +369,11 @@ function simulateLapRun(key,opts){
   // used the whole car's pooled lateral use.
   function axles(q,vv,a,ay){
     const N=loadAt(q,vv),dn=down(vv),tr=m*a*hL;
-    const B=latBalance(N,ay,dn,tr),Nf=B.Nf,Nr=B.Nr;
+    const B=latBalance(N,ay,dn,tr,vv),Nf=B.Nf,Nr=B.Nr;
     const uF=clamp(m*ay*fWt/Math.max(1,B.capF*dCorner),0,1),uR=clamp(m*ay*(1-fWt)/Math.max(1,B.capR*dCorner),0,1);
-    return {Nf,Nr,uF,uR,gF:tyreMuX(Nf/2,vehicle.FzRefF)*Nf*Math.sqrt(Math.max(0,1-uF*uF)),gR:tyreMuX(Nr/2)*Nr*Math.sqrt(Math.max(0,1-uR*uR))};
+    // braking on a bumpy road: each axle's tyres keep roadGrip of their force, as in a corner (build 216)
+    const sF=roadSigma('F',vv),sR=roadSigma('R',vv);
+    return {Nf,Nr,uF,uR,gF:tyreMuX(Nf/2,vehicle.FzRefF)*Nf*roadGrip(sF/Math.max(1,Nf/2))*Math.sqrt(Math.max(0,1-uF*uF)),gR:tyreMuX(Nr/2)*Nr*roadGrip(sR/Math.max(1,Nr/2))*Math.sqrt(Math.max(0,1-uR*uR))};
   }
   let bfBound=false;   // the brakes, not the tyres, set the last answer
   function brakeFrom(q,vi0,vNext,fade,ea=0,fadeRr=fade){
@@ -406,14 +418,15 @@ function simulateLapRun(key,opts){
     const aLat=vi*vi/q.r;
     // the share of the grip in use sideways: the car's (for the 'corner' call) and the driven axle's own, which is
     // what is left for the drive (build 157: a rear-driver's rears may be nearer their limit than the car is)
-    const B=latBalance(N,aLat,dn),aLatMax=B.mu*dCorner*N/m,u=clamp(aLat/Math.max(0.1,aLatMax),0,1);
+    const B=latBalance(N,aLat,dn,0,vi),aLatMax=B.mu*dCorner*N/m,u=clamp(aLat/Math.max(0.1,aLatMax),0,1);
     const uFa=clamp(m*aLat*vehicle.fWt/Math.max(1,B.capF*dCorner),0,1),uRa=clamp(m*aLat*(1-vehicle.fWt)/Math.max(1,B.capR*dCorner),0,1);
     const uD=vehicle.drive==='fwd'?uFa:vehicle.drive==='rwd'?uRa:Math.max(uFa,uRa);
     // Diff traction is evaluated at the lateral load transfer actually happening here, so an
     // open diff falls apart on a fast corner exit while a locked one doesn't.
     const g0=gear>=0?inGear(vi,gear):gearAt(vi),bg=boostShare<1?{gear:g0.gear,F:g0.F*boostShare,tqFrac:g0.tqFrac*boostShare}:g0;
     const R=(drag(vi)+rollF(vi)*q.cosT+corneringDrag(m,aLat,N))/m+G*q.sinT;
-    const kk=tyreMuX(N0/(vehicle.drive==='awd'?4:2),vehicle.drive==='fwd'?vehicle.FzRefF:vehicle.FzRef)*diffTractionAt(df,aLat,vehicle.cg,bg.tqFrac)*Math.sqrt(Math.max(0,1-uD*uD));
+    const nD=vehicle.drive==='awd'?4:2,sD=vehicle.drive==='fwd'?roadSigma('F',vi):vehicle.drive==='rwd'?roadSigma('R',vi):(roadSigma('F',vi)+roadSigma('R',vi))/2;   // the driven tyres' load swing (build 216)
+    const kk=tyreMuX(N0/nD,vehicle.drive==='fwd'?vehicle.FzRefF:vehicle.FzRef)*roadGrip(sD/Math.max(1,N0/nD))*diffTractionAt(df,aLat,vehicle.cg,bg.tqFrac)*Math.sqrt(Math.max(0,1-uD*uD));
     // On power the drive force also spins up the engine and wheels (vehicleMassEff, build 106): a = (F -
     // m R) / mE. On grip the tyres are slipping, the surplus only spins the wheels, and the car gets the
     // tyre's force over its own mass, with the load transfer following that acceleration:
@@ -869,7 +882,7 @@ function simulateLapRun(key,opts){
   // Balance (build 157): through the corner-limited stretches, which axle runs out first. Front = understeer.
   const balance={under:0,over:0,margin:0};
   for(let i=0;i<n;i++)if(lim[i]==='corner'){
-    const B=latBalance(loadAt(p[i],v[i]),v[i]*v[i]/p[i].r,down(v[i]));
+    const B=latBalance(loadAt(p[i],v[i]),v[i]*v[i]/p[i].r,down(v[i]),0,v[i]);
     if(B.muF<B.muR)balance.under+=p[i].ds3;else balance.over+=p[i].ds3;
     balance.margin+=(B.muR-B.muF)/Math.max(1e-6,B.mu)*p[i].ds3;   // + = the rear has grip to spare
   }

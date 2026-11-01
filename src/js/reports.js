@@ -433,7 +433,7 @@ function lapVehicleRows(){
     ['Tyres',(TIRE_TYPE[v.tireType]||{}).label+'  '+v.tireWidth+'/'+v.tireAspect+'R'+v.wheelDia],
     ['Grip coefficient','μ '+v.mu.toFixed(2)],
     ['Brakes',(BRAKE_TYPE[v.brakeType]||{}).label+' '+v.rotor+' mm  ('+(v.brakeDecelCap/G).toFixed(2)+' g)'],
-    ['Suspension',(SUSPENSION[v.suspension]||{}).label+'  ('+v.rollGrad.toFixed(1)+' deg/g roll)'],
+    ['Suspension',(SUSPENSION[v.suspension]||{}).label+'  ('+v.rollGrad.toFixed(1)+' deg/g roll, damping '+v.zetaF.toFixed(2)+' / '+v.zetaR.toFixed(2)+')'],
     ['Geometry',(SUSP_GEO[v.suspFront]||{}).label+' / '+(SUSP_GEO[v.suspRear]||{}).label],
     ['Aero',(v.clA>0.01?'ClA '+v.clA.toFixed(2)+' m²':'no downforce')+'  ·  CdA '+v.cdA.toFixed(2)+' m²'],
     ['Build cost',fmtCost(v.cost+(e.cost||0))]
