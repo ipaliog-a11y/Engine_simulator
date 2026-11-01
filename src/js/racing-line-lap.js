@@ -9,6 +9,49 @@
 // first. Now the line is refined for the car (step 2 below), from the lap time itself.
 // T = the track, margin = half the car's width (its centre may come no closer to an edge), lapOf =
 // a function that solves the car's speed on a candidate line (null: minimum curvature only).
+// ---- kerbs (build 217) ----
+// The FIA's circuit drawing standard (List of requirements for the circuit drawing, 2024, "Verge and kerbs") sets the
+// kerb types a circuit draws: type 1, Vallelunga, a progressive wide-ribbed kerb for the apexes rising to 5 or 10 cm
+// above the track at the rear; type 2, Melbourne or negative, a progressive wide-ribbed kerb sinking to 5 cm below
+// the track at the rear, for the exits of corners; type 3, bevelled, a smooth incline to 5 cm, for apexes; type 4, a
+// smooth kerb 80 cm wide rising to 12 cm behind a type 1 or 3. "The kerbs shall be outside the track edges": a car on
+// one uses width the track does not have. So every corner here has an apex kerb on its inside (5 cm Vallelunga) and an
+// exit kerb on its outside (5 cm Melbourne), each a ramp 0.8 m wide (the one width the standard gives; the others'
+// are not stated). Where on a real circuit each kerb is and how long it runs is not in the track data: the kerbs are
+// placed where the corner is, an estimate, and labelled so. The ribs are left out (the standard gives no spacing).
+const KERB_W=0.8,KERB_APEX=0.05,KERB_EXIT=-0.05;
+// Each centreline point's kerbs: P / N, the kerb's height at its rear edge on the +normal / -normal side (0: none), and
+// wP / wN, the share of the kerb's width the line may use there. An apex kerb runs on the inside where the bend is at
+// least 0.8 of its tightest within 60 m and tighter than a corner (CORNER_R), at most 40 m; an exit kerb on the outside
+// from the end of the apex kerb for as long again (15-50 m). A kerb's ends are cut at an angle, so its width comes in
+// over the first and last KERB_TAPER metres: a line may not step 0.8 m sideways in one point.
+const KERB_TAPER=10;
+function kerbZones(c,kc){
+  const n=c.length,P=new Float64Array(n),N=new Float64Array(n),apex=new Int8Array(n);
+  const ds=Math.max(1,c[0].ds||5),W=Math.max(1,Math.round(60/ds)),maxA=Math.max(1,Math.round(40/ds));
+  const peak=new Float64Array(n);
+  for(let i=0;i<n;i++){let mx=0;for(let d=-W;d<=W;d++)mx=Math.max(mx,Math.abs(kc[(i+d+n)%n]));peak[i]=mx;}
+  for(let i=0;i<n;i++){const k=Math.abs(kc[i]);if(k>1/CORNER_R&&k>=0.8*peak[i])apex[i]=kc[i]>0?1:-1;}
+  // an apex run longer than 40 m keeps its middle 40 m
+  for(let i=0;i<n;i++){
+    if(!apex[i]||apex[(i-1+n)%n]===apex[i])continue;
+    let len=0;while(len<n&&apex[(i+len)%n]===apex[i])len++;
+    if(len>maxA){const cut=(len-maxA)>>1;for(let k=0;k<len;k++)if(k<cut||k>=cut+maxA)apex[(i+k)%n]=0;}
+  }
+  for(let i=0;i<n;i++)if(apex[i]){if(apex[i]>0)P[i]=KERB_APEX;else N[i]=KERB_APEX;}
+  for(let i=0;i<n;i++){
+    const nx=(i+1)%n;if(!apex[i]||apex[nx]===apex[i])continue;
+    let len=1;for(let j=i;len<n&&apex[(j-1+n)%n]===apex[i];j--)len++;
+    const run=clamp(len,Math.round(15/ds),Math.round(50/ds)),out=-apex[i];
+    for(let k=1;k<=run;k++){const j=(i+k)%n;if(apex[j])break;
+      if(out>0){if(!P[j])P[j]=KERB_EXIT;}else{if(!N[j])N[j]=KERB_EXIT;}}
+  }
+  // the usable width: full in the middle of a kerb, coming in over KERB_TAPER at each end
+  const taper=H=>{const w=new Float64Array(n),T=Math.max(1,KERB_TAPER/ds);
+    for(let i=0;i<n;i++){if(!H[i])continue;let a=0,b=0;while(a<n&&H[(i-a-1+n)%n])a++;while(b<n&&H[(i+b+1)%n])b++;
+      w[i]=Math.min(1,(Math.min(a,b)+0.5)/T);}return w;};
+  return {P,N,wP:taper(P),wN:taper(N)};
+}
 function optimiseLine(T,margin,lapOf){
   const c=T.pts,n=c.length,half=T.width/2,mg=margin||0;
   const nx=new Array(n),ny=new Array(n),lim=new Array(n);
@@ -22,6 +65,15 @@ function optimiseLine(T,margin,lapOf){
     // The car's CENTRE runs on the line, so it may come no closer to the edge than half the car (build 115).
     lim[i]=Math.max(0,Math.min((c[i].hw!=null?c[i].hw:half)-mg,Math.max(1,c[i].r*0.45)));
   }
+  // The centreline's signed curvature (positive turning towards +normal), then the kerbs: a kerb's side may be used to
+  // its full width beyond the edge (build 217), so each point's room is its own on either side.
+  const kc=new Array(n),dkc=new Array(n);
+  for(let i=0;i<n;i++){const a=c[(i-1+n)%n],b=c[(i+1)%n],q=c[i];
+    const cr=(q.x-a.x)*(b.y-q.y)-(q.y-a.y)*(b.x-q.x);kc[i]=(cr>=0?1:-1)/Math.max(1,q.r);}
+  for(let i=0;i<n;i++){const a=(i-1+n)%n,b=(i+1)%n;dkc[i]=(kc[b]-kc[a])/Math.max(0.1,c[a].ds+c[i].ds);}
+  const KZ=T.kerbs||(T.kerbs=kerbZones(c,kc));
+  const limP=new Array(n),limN=new Array(n);
+  for(let i=0;i<n;i++){limP[i]=lim[i]+KERB_W*KZ.wP[i];limN[i]=lim[i]+KERB_W*KZ.wN[i];}
   // Solved on a COARSE subset of the samples, not all of them. At 5 m spacing the bending of one point
   // barely changes and the solver crawls; worse, the centreline is a Catmull-Rom cubic, which already
   // sits at a stationary point. Coarse nodes (~25 m apart) make the same problem well conditioned; the
@@ -56,7 +108,10 @@ function optimiseLine(T,margin,lapOf){
       for(let j=0;j<m;j++){co[j]=clamp(co[j]-step*gr[j],lo[j],hi[j]);qsync(j);}
     }
   }
-  const lo=idx.map(i=>-lim[i]),hi=idx.map(i=>lim[i]);
+  // A coarse node stands for the ~25 m around it: it gets the narrowest room over that span, so the curve between nodes
+  // is not clamped back where a kerb's width tapers away (build 217: a clamp is a kink, and a kink is a tight radius).
+  const spanMin=(L,i)=>{let x=L[i];for(let d=-(K>>1);d<=(K>>1);d++)x=Math.min(x,L[(i+d+n)%n]);return x;};
+  const lo=idx.map(i=>-spanMin(limN,i)),hi=idx.map(i=>spanMin(limP,i));
   // 1. Minimum curvature: the least bending, sum of kappa^2 l. (Build 115: this used to be sum |Q''|^2,
   //    the raw second difference, which is not curvature: per node it is ~ l^2 x the turn, so a SHORTER
   //    line scored better, and on a constant bend, where the turning cannot be spread out, it pulled the
@@ -79,7 +134,7 @@ function optimiseLine(T,margin,lapOf){
       for(let d=0;d<span;d++){
         const t=d/span,t2=t*t,t3=t2*t,i=(i0+d)%n;
         const o=0.5*(2*p1+(-p0+p2)*t+(2*p0-5*p1+4*p2-p3)*t2+(-p0+3*p1-3*p2+p3)*t3);
-        off[i]=clamp(o,-lim[i],lim[i]);
+        off[i]=clamp(o,-limN[i],limP[i]);
       }
     }
     // a few gentle passes to round off where the line runs onto and off the edge
@@ -87,7 +142,7 @@ function optimiseLine(T,margin,lapOf){
       const prev=off.slice();
       for(let i=0;i<n;i++){
         const a=(i-1+n)%n,b=(i+1)%n;
-        off[i]=clamp((prev[a]+2*prev[i]+prev[b])/4,-lim[i],lim[i]);
+        off[i]=clamp((prev[a]+2*prev[i]+prev[b])/4,-limN[i],limP[i]);
       }
     }
     return measure(off);
@@ -102,10 +157,6 @@ function optimiseLine(T,margin,lapOf){
   // between. Through the neighbouring points instead, it is all noise: the spacing of the line's points
   // bunches on the inside of a bend, and a 25 m corner read radii of 3 m. The offset curve's curvature
   // depends on neither.
-  const kc=new Array(n),dkc=new Array(n);
-  for(let i=0;i<n;i++){const a=c[(i-1+n)%n],b=c[(i+1)%n],q=c[i];
-    const cr=(q.x-a.x)*(b.y-q.y)-(q.y-a.y)*(b.x-q.x);kc[i]=(cr>=0?1:-1)/Math.max(1,q.r);}
-  for(let i=0;i<n;i++){const a=(i-1+n)%n,b=(i+1)%n;dkc[i]=(kc[b]-kc[a])/Math.max(0.1,c[a].ds+c[i].ds);}
   const radiusAt=(i,oa,o,ob)=>{
     const a=(i-1+n)%n,h1=Math.max(0.1,c[a].ds),h2=Math.max(0.1,c[i].ds);
     const o1=(ob-oa)/(h1+h2),o2=2*(ob*h1-o*(h1+h2)+oa*h2)/(h1*h2*(h1+h2));
@@ -113,7 +164,23 @@ function optimiseLine(T,margin,lapOf){
     const k=Math.abs(num/Math.max(1e-9,den));
     return k>1e-6?Math.min(1e6,1/k):1e6;};
   const pointAt=(i,o)=>({x:c[i].x+o*nx[i],y:c[i].y+o*ny[i],z:c[i].z||0,off:o,
-    grade:c[i].grade||0,sinT:c[i].sinT||0,cosT:c[i].cosT!=null?c[i].cosT:1,kv:c[i].kv||0});
+    grade:c[i].grade||0,sinT:c[i].sinT||0,cosT:c[i].cosT!=null?c[i].cosT:1,kv:c[i].kv||0,turn:kc[i]>=0?1:-1});
+  // The kerb under a wheel at lateral position y at centreline point i (m, + up): the ramp's height in proportion to how
+  // far onto it the wheel is. The car's warp at point i (rad): the front axle's tilt across its track less the rear's,
+  // the rear wheels a wheelbase back along the line. A car with both wheels of one side on the same kerb is only
+  // rolled, not warped; a wheel on a kerb alone, or the front on it before the rear, twists the car (build 217).
+  const kerbZ=(i,y)=>{const hw=c[i].hw!=null?c[i].hw:half;
+    if(y>hw&&KZ.P[i])return KZ.P[i]*Math.min(1,(y-hw)/KERB_W);
+    if(y<-hw&&KZ.N[i])return KZ.N[i]*Math.min(1,(-hw-y)/KERB_W);return 0;};
+  const warpAt=(i,offOf)=>{
+    const tF=vehicle.trackF||vehicle.track||1.55,tR=vehicle.trackR||vehicle.track||1.55,wb=vehicle.wb||2.6,o=offOf(i);
+    const zF=kerbZ(i,o+tF/2)-kerbZ(i,o-tF/2);
+    let back=wb,j=i;while(back>0){const a=(j-1+n)%n,d=Math.max(0.1,c[a].ds||5);if(back<d){break;}back-=d;j=a;}
+    const a=(j-1+n)%n,f=back/Math.max(0.1,c[a].ds||5),oR=offOf(j)*(1-f)+offOf(a)*f;
+    const zR=(kerbZ(j,oR+tR/2)-kerbZ(j,oR-tR/2))*(1-f)+(kerbZ(a,oR+tR/2)-kerbZ(a,oR-tR/2))*f;
+    return zF/tF-zR/tR;};
+  const warpRate=(i,offOf)=>{const a=(i-1+n)%n,b=(i+1)%n;return (warpAt(b,offOf)-warpAt(a,offOf))/Math.max(0.1,(c[a].ds||5)+(c[i].ds||5));};
+  const setWarp=(q,i,offOf)=>{q.kw=warpAt(i,offOf);q.kws=warpRate(i,offOf);};
   const stepOf=(q,nq)=>{q.ds=Math.max(0.05,Math.hypot(nq.x-q.x,nq.y-q.y));q.ds3=Math.max(0.05,Math.hypot(q.ds,nq.z-q.z));};
   const radiusOf=(a,b,d)=>{
     const ab=Math.hypot(b.x-a.x,b.y-a.y),bd=Math.hypot(d.x-b.x,d.y-b.y),da=Math.hypot(a.x-d.x,a.y-d.y);
@@ -125,6 +192,7 @@ function optimiseLine(T,margin,lapOf){
     for(let i=0;i<n;i++)L.push(pointAt(i,off[i]));
     for(let i=0;i<n;i++)stepOf(L[i],L[(i+1)%n]);
     for(let i=0;i<n;i++)L[i].r=radiusAt(i,off[(i-1+n)%n],off[i],off[(i+1)%n]);
+    const offOf=j=>off[j];for(let i=0;i<n;i++)setWarp(L[i],i,offOf);
     return finish(L);
   }
   function finish(L){
@@ -150,7 +218,7 @@ function optimiseLine(T,margin,lapOf){
   function tryMove(ctr,d){
     // the moved offsets, and the points whose geometry changes (the radius looks one either side)
     const no=new Map();
-    for(let k=-B;k<=B;k++){const i=wrap(ctr+k),o=clamp(off[i]+d*(1+Math.cos(Math.PI*k/B))/2,-lim[i],lim[i]);
+    for(let k=-B;k<=B;k++){const i=wrap(ctr+k),o=clamp(off[i]+d*(1+Math.cos(Math.PI*k/B))/2,-limN[i],limP[i]);
       if(Math.abs(o-off[i])>1e-9)no.set(i,o);}
     if(!no.size)return 0;
     const P=new Map(),get=i=>P.get(i)||L[i];
@@ -158,6 +226,7 @@ function optimiseLine(T,margin,lapOf){
     for(let k=-EDGE;k<=EDGE;k++){const i=wrap(ctr+k);stepOf(P.get(i),get(wrap(i+1)));P.get(i).r=L[i].r;}
     const offAt=i=>no.has(i)?no.get(i):off[i];
     for(let k=-B-1;k<=B+1;k++){const i=wrap(ctr+k);P.get(i).r=radiusAt(i,offAt(wrap(i-1)),offAt(i),offAt(wrap(i+1)));}
+    for(let k=-EDGE;k<=EDGE;k++){const i=wrap(ctr+k);setWarp(P.get(i),i,offAt);}   // the kerbs under the moved stretch
     // Re-solve outward from the change, and stop where the speeds come back to the ones already solved:
     // past that point nothing the move touched can reach. Exact, and only as long as the move's reach.
     // braking pass, leftwards from the right edge of the change (to its right nothing changed)
@@ -226,7 +295,7 @@ function carLineKey(){
   const v=vehicle,pt=powertrain(),s=pt.rating()||{};
   return [v.mass,v.muRef,v.FzRef,v.clA,v.cdA,v.aeroBal,v.drivenAero,v.drivenWt,v.track,v.tireWidth,v.cg,v.wb,v.fWt,
     v.finalDrive,(v.ratios||[]).join('/'),v.driveEff,v.drive,v.diff,v.brakeDecelCap,v.governor,v.tc,v.camber,v.rollGrad,
-    v.trackF,v.trackR,v.lltdF,v.FzRefF,v.camRecF,v.camRecR,v.camberF,v.camberR,v.roughF,v.roughR,
+    v.trackF,v.trackR,v.lltdF,v.FzRefF,v.camRecF,v.camRecR,v.camberF,v.camberR,v.roughF,v.roughR,v.warpK,v.warpC,
     s.peakHP,s.peakTQ,pt.maxRpm()].map(x=>typeof x==='number'?+x.toFixed(4):x).join('|');
 }
 function lineFor(T,key){
@@ -268,7 +337,7 @@ function simulateLapCore(key,opts){
   const dCorner=df.corner!=null?df.corner:1;   // locking the diff scrubs lateral grip
   // Lateral grip at a normal load and lateral acceleration: the tyres under load transfer and roll
   // camber (latMuEff, build 109), less the diff's scrub.
-  const muLatAt=(N,ay,vv)=>latBalance(N,ay,down(vv),0,vv).mu*dCorner;   // vv: the speed, for the downforce's share of N and the road's bumps
+  const muLatAt=(N,ay,vv,q)=>latBalance(N,ay,down(vv),0,vv,q).mu*dCorner;   // vv: the speed, for the downforce's share of N and the road's bumps
   const axleTqMax=Math.max(1,curve.reduce((a,q)=>Math.max(a,q.tq),0)*ratios[0]*fd*(vehicle.gb&&vehicle.gb.mult||1));
   const down=v=>0.5*AIR_RHO*vehicle.clA*v*v;
   // Normal load at a point: weight resolved onto the slope + downforce − vertical-curvature term.
@@ -341,7 +410,7 @@ function simulateLapCore(key,opts){
       const num=muLat*m*G*q.cosT+extra;
       vv=denom>1e-6?Math.min(VMAX,Math.sqrt(Math.max(0,num/denom))):VMAX;
     }
-    muLat=muLatAt(loadAt(q,vv),vv*vv/q.r,vv);
+    muLat=muLatAt(loadAt(q,vv),vv*vv/q.r,vv,q);
     }
     return vv;
   }
@@ -369,7 +438,7 @@ function simulateLapCore(key,opts){
   // used the whole car's pooled lateral use.
   function axles(q,vv,a,ay){
     const N=loadAt(q,vv),dn=down(vv),tr=m*a*hL;
-    const B=latBalance(N,ay,dn,tr,vv),Nf=B.Nf,Nr=B.Nr;
+    const B=latBalance(N,ay,dn,tr,vv,q),Nf=B.Nf,Nr=B.Nr;
     const uF=clamp(m*ay*fWt/Math.max(1,B.capF*dCorner),0,1),uR=clamp(m*ay*(1-fWt)/Math.max(1,B.capR*dCorner),0,1);
     // braking on a bumpy road: each axle's tyres keep roadGrip of their force, as in a corner (build 216)
     const sF=roadSigma('F',vv),sR=roadSigma('R',vv);
@@ -418,7 +487,7 @@ function simulateLapCore(key,opts){
     const aLat=vi*vi/q.r;
     // the share of the grip in use sideways: the car's (for the 'corner' call) and the driven axle's own, which is
     // what is left for the drive (build 157: a rear-driver's rears may be nearer their limit than the car is)
-    const B=latBalance(N,aLat,dn,0,vi),aLatMax=B.mu*dCorner*N/m,u=clamp(aLat/Math.max(0.1,aLatMax),0,1);
+    const B=latBalance(N,aLat,dn,0,vi,q),aLatMax=B.mu*dCorner*N/m,u=clamp(aLat/Math.max(0.1,aLatMax),0,1);
     const uFa=clamp(m*aLat*vehicle.fWt/Math.max(1,B.capF*dCorner),0,1),uRa=clamp(m*aLat*(1-vehicle.fWt)/Math.max(1,B.capR*dCorner),0,1);
     const uD=vehicle.drive==='fwd'?uFa:vehicle.drive==='rwd'?uRa:Math.max(uFa,uRa);
     // Diff traction is evaluated at the lateral load transfer actually happening here, so an
@@ -882,7 +951,7 @@ function simulateLapCore(key,opts){
   // Balance (build 157): through the corner-limited stretches, which axle runs out first. Front = understeer.
   const balance={under:0,over:0,margin:0};
   for(let i=0;i<n;i++)if(lim[i]==='corner'){
-    const B=latBalance(loadAt(p[i],v[i]),v[i]*v[i]/p[i].r,down(v[i]),0,v[i]);
+    const B=latBalance(loadAt(p[i],v[i]),v[i]*v[i]/p[i].r,down(v[i]),0,v[i],p[i]);
     if(B.muF<B.muR)balance.under+=p[i].ds3;else balance.over+=p[i].ds3;
     balance.margin+=(B.muR-B.muF)/Math.max(1e-6,B.mu)*p[i].ds3;   // + = the rear has grip to spare
   }

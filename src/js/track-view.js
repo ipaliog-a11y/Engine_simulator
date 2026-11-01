@@ -260,6 +260,15 @@ function drawTrackSurface(T,px,py,scV){
   const pts=T.pts,n=pts.length;
   ctx.lineCap='round';ctx.lineJoin='round';
   ctx.fillStyle='#23232f';trackRibbon(ctx,T,px,py,scV,3);
+  // the kerbs (build 217), outside the edges where the corners are: red and white blocks, to scale, at least a pixel wide
+  if(T.kerbs){const K=T.kerbs,kw=Math.max(1.5,KERB_W*scV);
+    for(let i=0;i<n;i++){const a=pts[i],b=pts[(i+1)%n];
+      for(const [H,s,w] of [[K.P,1,K.wP],[K.N,-1,K.wN]]){if(!H[i]||!H[(i+1)%n])continue;
+        const hA=(a.hw!=null?a.hw:T.width/2)*scV,hB=(b.hw!=null?b.hw:T.width/2)*scV;
+        ctx.fillStyle=(i>>0)%2?'#e8e8ee':'#d23a3a';ctx.beginPath();
+        ctx.moveTo(px(a)+s*a.nx*hA,py(a)+s*a.ny*hA);ctx.lineTo(px(b)+s*b.nx*hB,py(b)+s*b.ny*hB);
+        ctx.lineTo(px(b)+s*b.nx*(hB+kw*w[(i+1)%n]),py(b)+s*b.ny*(hB+kw*w[(i+1)%n]));ctx.lineTo(px(a)+s*a.nx*(hA+kw*w[i]),py(a)+s*a.ny*(hA+kw*w[i]));
+        ctx.closePath();ctx.fill();}}}
   ctx.strokeStyle='#34344a';ctx.lineWidth=1;ctx.setLineDash([4,6]);
   ctx.beginPath();ctx.moveTo(px(pts[0]),py(pts[0]));
   for(let i=1;i<n;i++)ctx.lineTo(px(pts[i]),py(pts[i]));

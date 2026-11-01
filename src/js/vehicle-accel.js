@@ -122,6 +122,12 @@ function buildVehicle(){
    vehicle.roughF=cF.F;vehicle.roughR=cR.F;vehicle.rideF=cF.A;vehicle.rideR=cR.A;
    vehicle.zetaF=qF.cs/(2*Math.sqrt(qF.ks*qF.ms));vehicle.zetaR=qR.cs/(2*Math.sqrt(qR.ks*qR.ms));
    vehicle.hopHz=Math.sqrt((qF.kt+qF.ks)/qF.mu)/(2*Math.PI);}
+  // The car twisted on a kerb (build 217): front and rear roll stiffness in series, K_F K_R / (K_F + K_R), and the dampers'
+  // roll damping, each axle's c t^2/2, in series likewise (at the low rates a kerb ramp is driven at:
+  // (K_R^2 C_F + K_F^2 C_R) / (K_F + K_R)^2).
+  {const K=rollStiffness(vehicle),tF=vehicle.trackF||vehicle.track,tR=vehicle.trackR||vehicle.track;
+   const CF=quarterCar(vehicle,'F').cs*tF*tF/2,CR=quarterCar(vehicle,'R').cs*tR*tR/2,S=K.F+K.R;
+   vehicle.warpK=K.F*K.R/S;vehicle.warpC=(K.R*K.R*CF+K.F*K.F*CR)/(S*S);}
   vehicle.drivenAero=vehicle.drive==='awd'?1:vehicle.drive==='rwd'?1-vehicle.aeroBal:vehicle.aeroBal;
   vehicle.cdA=((body?body.cd:ch.cd)+af.cd+ar.cd+al.cd)*vehicle.area;  // drag coefficient·area
   const gb=GEARBOX[vehicle.gearbox]||GEARBOX.manual,df=DIFF[vehicle.diff]||DIFF.open;
