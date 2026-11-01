@@ -20,6 +20,16 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 Working toward **v1.0 — every number derived, not fitted.**
 
+### Real cars, drawn as themselves (build 208)
+
+- Each of the 100 real cars has its own side profile: brochure length and height, a front overhang,
+  and the eight silhouette numbers the sprite drawer already uses. A 911 is a fastback, a Countach
+  is a wedge, a Trabant is a small saloon, a Land Cruiser is a tall square wagon.
+- Wheels, ride height, wings, the x-rayed engine and the archetype's colour still follow the build.
+  A pickup keeps its open bed. Changing the chassis still drops the real car, and the picture with it.
+- An Atom and a Mono are drawn as an open-wheeler: a pontoon and a hoop.
+- A car longer than the grid (the Silverado) shrinks, wheels included, instead of running off the edge.
+
 ### The Prius's 0–100: its battery at full throttle (build 207)
 
 - **The gap.** Matched to Toyota's 72 kW engine, the Prius took 12.65 s to 100 km/h against Toyota's 10.6 s, a known

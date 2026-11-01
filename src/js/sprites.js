@@ -88,6 +88,8 @@ function pixCaption(g,k,ox,gw,gh,title,sub){
 // ws = base of the windscreen, rf/rr = the roof's front and rear, bk = base of the rear glass.
 // ovF/ovR are the overhangs as a share of the wheelbase. Length then comes from the wheelbase
 // itself, so a kei is short and a pickup long without either being drawn to a fixed size.
+// A real car (CAR_PROFILES, keyed by the preset's name) replaces h, the overhangs and the eight
+// shape numbers. Colour, a pickup's open bed and a stripe stay with the archetype.
 const CAR_LOOK={
   kei:     {h:1.55,ovF:0.20,ovR:0.14,nose:0.40,hood:0.52,ws:0.80,rf:0.70,rr:0.10,bk:0.04,deck:0.55,tail:0.50,col:'#ffcc00'},
   hatch:   {h:1.44,ovF:0.30,ovR:0.18,nose:0.36,hood:0.50,ws:0.70,rf:0.56,rr:0.14,bk:0.06,deck:0.55,tail:0.50,col:'#ff4444'},
@@ -113,49 +115,91 @@ function carLivery(v){return (CAR_LOOK[(v&&v.chassis)||'coupe']||CAR_LOOK.coupe)
 function enginePlace(v){return engineLayoutOf(v.chassis,v.body);}
 // The shape of the car from its record alone (never from what is loaded now), so a garage thumbnail
 // shows the car that was saved. Old records may lack fields; each falls back to the archetype.
+// A saved real car carries body.name, which selects its profile. A chassis change clears the body,
+// so the picture becomes the archetype, the same moment the car stops being that car.
+function carProfileLook(v,base){
+  const spec=v&&v.body&&typeof CAR_PROFILES!=='undefined'&&CAR_PROFILES[v.body.name];
+  if(!spec) return base;
+  const wb=v.body.wb;
+  if(!(wb>0)||!(spec.len>wb)||!(spec.front>0)||!(spec.len-wb-spec.front>0)) return base;
+  const L=Object.assign({},base,{h:spec.h,ovF:spec.front/wb,ovR:(spec.len-wb-spec.front)/wb,
+    nose:spec.nose,hood:spec.hood,ws:spec.ws,rf:spec.rf,rr:spec.rr,bk:spec.bk,deck:spec.deck,tail:spec.tail});
+  if(spec.belt!=null) L.belt=spec.belt;
+  if(spec.tub) L.tub=1;
+  return L;
+}
 function carGeometry(v){
-  const ch=CHASSIS[v.chassis]||CHASSIS.coupe,L=CAR_LOOK[v.chassis]||CAR_LOOK.coupe;
+  const ch=CHASSIS[v.chassis]||CHASSIS.coupe,L=carProfileLook(v,CAR_LOOK[v.chassis]||CAR_LOOK.coupe);
   const wb=(v.body&&v.body.wb)||ch.wb;
   const wheel=v.wheelDia||18,tw=v.tireWidth||225,ta=v.tireAspect||40;
   const rTyre=((wheel*25.4)/2+tw*ta/100)/1000;                       // m, the same sum buildVehicle does
   let clear=(RIDE_M[v.suspension]||RIDE_M.sport)+(v.chassis==='pickup'||v.chassis==='suv'?0.08:0)-(v.chassis==='proto'?0.03:0);
-  clear=Math.max(0.05,clear);
-  const wbPx=wb*CAR_PXM,lenPx=wbPx*(1+L.ovF+L.ovR);
+  clear=Math.max(0.05,Math.min(clear,L.h-0.35));                     // the body stays a body on a tall ride height
+  // 26 cells a metre, unless this car would leave the grid: a crew-cab then shrinks, wheels with it,
+  // and keeps its shape. Anything shorter stays at the real scale, so a kei is still small.
+  let pxm=CAR_PXM;
+  const lenM=wb*(1+L.ovF+L.ovR);
+  if(lenM*pxm>CAR_GW-12) pxm=(CAR_GW-12)/lenM;
+  if(L.h*pxm>CAR_GY-2) pxm=(CAR_GY-2)/L.h;
+  const wbPx=wb*pxm,lenPx=lenM*pxm;
   const x0=(CAR_GW-lenPx)/2;
-  return {L,wb,wbPx,lenPx,x0,clear,rTyre,rPx:rTyre*CAR_PXM,rimFrac:(wheel*25.4/2)/(rTyre*1000),
+  return {L,wb,wbPx,lenPx,x0,clear,rTyre,rPx:rTyre*pxm,pxm,rimFrac:(wheel*25.4/2)/(rTyre*1000),
     xr:x0+L.ovR*wbPx,xf:x0+(L.ovR+1)*wbPx,
-    bodyBot:CAR_GY-clear*CAR_PXM,bodyH:(L.h-clear)*CAR_PXM};
+    bodyBot:CAR_GY-clear*pxm,bodyH:Math.max(8,(L.h-clear)*pxm)};
 }
 function drawCarSprite(buf,v,e,t){
   v=v||DEFAULT_VEHICLE;t=t||0;
   const G=carGeometry(v),L=G.L,col=L.col;
   const X=u=>G.x0+u*G.lenPx,Y=f=>G.bodyBot-f*G.bodyH;
-  // the silhouette, rear bumper to nose
-  const top=[[0,L.tail],[0.03,L.deck],[L.bk,L.deck],[L.rr,1],[L.rf,1],[L.ws,L.hood],[0.95,L.nose+0.06],[1,L.nose]];
-  const pts=top.map(p=>[X(p[0]),Y(p[1])]);
-  pts.push([X(1),Y(0.16)],[X(0.985),Y(0)],[X(0.015),Y(0)],[X(0),Y(0.18)]);
-  buf.poly(pts,col);
-  // roof line per column, for the glass, the highlight and the stripes
-  const topAt=x=>{const u=(x-G.x0)/G.lenPx;
-    for(let k=0;k+1<top.length;k++){const a=top[k],b=top[k+1];if(u>=a[0]&&u<=b[0])return Y(a[1]+(b[1]-a[1])*(u-a[0])/Math.max(1e-6,b[0]-a[0]));}
-    return Y(L.nose);};
-  const belt=Y(Math.max(L.hood,L.deck)+0.02),lower=Y(0.30);
+  // Side glass stops at belt when the profile sets one (a high boot must not shorten the doors).
+  // Otherwise it is just above the higher of the bonnet and the deck, as the archetypes always were.
+  const belt=Y(L.belt!=null?L.belt:Math.max(L.hood,L.deck)+0.02),lower=Y(0.30);
   const hi=shadeHex(col,0.4),lo=shadeHex(col,-0.3),glass='#1a2a3a';
-  for(let x=Math.ceil(X(0));x<=Math.floor(X(1));x++){
-    const ty=Math.ceil(topAt(x+0.5)-0.5);
-    if(buf.get(x,ty)===col)buf.set(x,ty,hi);
-    for(let y=Math.ceil(lower);y<G.bodyBot;y++)if(buf.get(x,y)===col)buf.set(x,y,lo);
-    const u=(x+0.5-G.x0)/G.lenPx;
-    if(u>L.bk+0.02&&u<L.ws-0.015&&ty+2<belt){
-      const pillar=Math.abs(u-(L.rf+L.rr)/2)*G.lenPx<1.2&&v.chassis!=='roadster';
-      for(let y=ty+1;y<belt;y++)buf.set(x,y,pillar?col:glass);
+  if(L.tub){
+    // An open-wheeler: a pontoon, a nose and a hoop. The cabin is the empty space inside the hoop.
+    const sh=0.40;
+    buf.poly([[X(0),Y(0.20)],[X(0.05),Y(sh)],[X(0.96),Y(sh*0.85)],[X(1),Y(Math.min(0.26,L.nose))],
+      [X(1),Y(0.10)],[X(0.985),Y(0)],[X(0.015),Y(0)],[X(0),Y(0.16)]],col);
+    const yTop=Y(0.96),ySh=Y(sh),xH0=X(L.rr),xH1=X(L.rf);
+    buf.rect(xH0,yTop,Math.max(2,xH1-xH0),2,col);
+    buf.rect(xH0,yTop,1.6,Math.max(2,ySh-yTop),col);
+    buf.rect(xH1-1.6,yTop,1.6,Math.max(2,ySh-yTop),col);
+    buf.rect(xH1-1.6,yTop+2,1.6,Math.max(2,(ySh-yTop)*0.35),'#1a2a3a');
+  }else{
+    // the silhouette, rear bumper to nose
+    const top=[[0,L.tail],[0.03,L.deck],[L.bk,L.deck],[L.rr,1],[L.rf,1],[L.ws,L.hood],[0.95,L.nose+0.06],[1,L.nose]];
+    const pts=top.map(p=>[X(p[0]),Y(p[1])]);
+    pts.push([X(1),Y(0.16)],[X(0.985),Y(0)],[X(0.015),Y(0)],[X(0),Y(0.18)]);
+    buf.poly(pts,col);
+    // roof line per column, for the glass, the highlight and the stripes
+    const topAt=x=>{const u=(x-G.x0)/G.lenPx;
+      for(let k=0;k+1<top.length;k++){const a=top[k],b=top[k+1];if(u>=a[0]&&u<=b[0])return Y(a[1]+(b[1]-a[1])*(u-a[0])/Math.max(1e-6,b[0]-a[0]));}
+      return Y(L.nose);};
+    for(let x=Math.ceil(X(0));x<=Math.floor(X(1));x++){
+      const ty=Math.ceil(topAt(x+0.5)-0.5);
+      if(buf.get(x,ty)===col)buf.set(x,ty,hi);
+      for(let y=Math.ceil(lower);y<G.bodyBot;y++)if(buf.get(x,y)===col)buf.set(x,y,lo);
+      const u=(x+0.5-G.x0)/G.lenPx;
+      if(u>L.bk+0.02&&u<L.ws-0.015&&ty+2<belt){
+        const pillar=Math.abs(u-(L.rf+L.rr)/2)*G.lenPx<1.2&&v.chassis!=='roadster';
+        for(let y=ty+1;y<belt;y++)buf.set(x,y,pillar?col:glass);
+      }
+    }
+    // the pickup's bed is open
+    if(L.bed)for(let x=Math.ceil(X(0.04));x<X(L.bk-0.02);x++){buf.set(x,Math.ceil(Y(L.deck)),'#2a2a3a');buf.set(x,Math.ceil(Y(L.deck))+1,lo);}
+  }
+  if(L.tub){
+    for(let x=Math.ceil(X(0));x<=Math.floor(X(1));x++){
+      let ty=null;for(let y=0;y<buf.h;y++)if(buf.get(x,y)===col){ty=y;break;}
+      if(ty!=null)buf.set(x,ty,hi);
+      for(let y=Math.ceil(lower);y<G.bodyBot;y++)if(buf.get(x,y)===col)buf.set(x,y,lo);
     }
   }
-  // the pickup's bed is open
-  if(L.bed)for(let x=Math.ceil(X(0.04));x<X(L.bk-0.02);x++){buf.set(x,Math.ceil(Y(L.deck)),'#2a2a3a');buf.set(x,Math.ceil(Y(L.deck))+1,lo);}
-  // glint on the screen, door shut-line, lamps
-  buf.set(X(L.ws)-4,belt-3,'#00ccff');buf.set(X(L.ws)-5,belt-4,'#00ccff');
-  for(let y=Math.ceil(belt);y<G.bodyBot-2;y++)buf.set(X((L.rf+L.ws)/2),y,shadeHex(col,-0.45));
+  // glint on the screen, door shut-line, lamps. An open-wheeler has no door.
+  if(!L.tub){
+    buf.set(X(L.ws)-4,belt-3,'#00ccff');buf.set(X(L.ws)-5,belt-4,'#00ccff');
+    for(let y=Math.ceil(belt);y<G.bodyBot-2;y++)buf.set(X((L.rf+L.ws)/2),y,shadeHex(col,-0.45));
+  }
   buf.rect(X(1)-2,Y(L.nose)+1,2,1,'#fff2a8');
   buf.rect(X(0),Y(L.tail)+1,1,2,'#ff4444');
   if(L.stripe)buf.rect(X(0.06),belt+2,G.lenPx*0.86,1,v.chassis==='proto'?'#00ff88':'#f0f0f0');
@@ -163,7 +207,9 @@ function drawCarSprite(buf,v,e,t){
   if(v.weightRed==='race'){const cx=X((L.rf+L.rr)/2),cy=(belt+G.bodyBot)/2;buf.disc(cx,cy,3,'#f0f0f0');buf.rect(cx-0.5,cy-1.5,1,3,'#111118');}
   // the engine, x-rayed where it sits, so front-, mid- and rear-engined cars read differently
   const place=enginePlace(v);
-  const eu=(place==='front'?G.xf-G.wbPx*0.14:place==='mid'?G.xr+G.wbPx*0.24:G.xr-G.wbPx*0.10)-G.x0;
+  // A rear engine sits in the tail, behind the tyre, or a wide rear wheel covers the only clue that it is a 911.
+  const rearOf=G.xr-Math.max(G.wbPx*0.10,G.rPx+4);
+  const eu=(place==='front'?G.xf-G.wbPx*0.14:place==='mid'?G.xr+G.wbPx*0.24:rearOf)-G.x0;
   const ex=X(Math.min(0.93,Math.max(0.07,eu/G.lenPx))),ey=G.bodyBot-G.bodyH*0.24;
   buf.rect(ex-4,ey-2,8,4,'#0d0d18');buf.rect(ex-3,ey-1,6,2,'#00ff88');
   if(e&&e.intake==='turbo')buf.rect(ex-6,ey-1,2,2,'#ff6600');
