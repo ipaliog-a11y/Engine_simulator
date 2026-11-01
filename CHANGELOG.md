@@ -20,6 +20,26 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 Working toward **v1.0 — every number derived, not fitted.**
 
+### The Prius's 0–100: its battery at full throttle (build 207)
+
+- **The gap.** Matched to Toyota's 72 kW engine, the Prius took 12.65 s to 100 km/h against Toyota's 10.6 s, a known
+  gap since build 204. The power-split was not at fault: at 30–100 km/h the engine's mechanical share through the
+  ring gear is small, so MG1 (Toyota's 23 kW / 40 Nm, confirmed by Argonne's teardown data) and the battery set the
+  power at the wheels. The model already reached what those limits allow. The gear ratios check against the
+  P610 transaxle's: 2.834 from the ring to the wheels, 10.84 from MG2.
+- **The fix: the pack is rated by what its cells give in a full-throttle pull.** The hybrid NiMH cells were rated by
+  their 10-second pulse, 21 kW from the Prius's 168 cells. The same cells measured 30.0 kW over a 1-second pulse
+  (INL, 2004 Prius pack) and peaked at 28.6 and 29.2 kW in 0–60 mph runs (DOE/INL, 2010 Prius and 2013 Prius
+  Plug-in). The cells are now about 0.27 Ω and 29C for the pack, which gives about 29 kW at its working charge.
+- **The Prius now takes 11.11 s to 100 km/h, 4.8% from Toyota's 10.6.** The known-gap note in test106 is gone, and the
+  check is back to 8%. The remaining half-second is the electrical path at Toyota's own MG1 and MG2 ratings. Nothing
+  published says the real car exceeds them, so it stays.
+- **The WLTP figure is unchanged in substance.** The Prius reads 4.34 L/100 km against build 206's 4.24. That is the
+  cycle's energy manager trying the engine at five powers across the range the pack can cover. A larger pack spreads
+  those five further apart. With 17 or 33 samples the cycle converges to 4.31 for the old pack and 4.32 for the new,
+  so the five-sample figure scatters by about 2% either way. The five samples stay, for speed.
+- Only the Prius uses these cells; every other car is unchanged.
+
 ### The part designer: intake manifolds (build 206)
 
 - **INTAKE MANIFOLD is the second type of part on the PARTS tab.** Its options:
