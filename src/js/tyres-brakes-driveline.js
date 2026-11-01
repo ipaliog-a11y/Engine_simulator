@@ -455,11 +455,15 @@ function latCamberF(ay,camber,recov){return 1-CAMBER_LOSS*Math.abs(camber+vehicl
 // sg: the tyres' load swing on the road (N, build 216): each tyre keeps roadGrip of its force, the lightly loaded inside one
 // the least of it.
 function axleLatCap(Nax,d,FzRef,sg){
-  const F=Nax/2,o=F+d,inr=Math.max(0,F-d);
+  const F=Nax/2,o=Math.max(0,F+d),inr=Math.max(0,F-d);
   if(!(sg>0))return tyreMu(o,FzRef)*o+(inr>0?tyreMu(inr,FzRef)*inr:0);
   return tyreMu(o,FzRef)*o*roadGrip(sg/Math.max(1,o))+(inr>0?tyreMu(inr,FzRef)*inr*roadGrip(sg/inr):0);
 }
-function latBalance(N,ay,dn,ax,v){   // v: the speed, for the road's bumps (build 216); none on a smooth test surface
+// v: the speed, for the road's bumps (build 216); none on a smooth test surface. q: the line point, for the kerbs under the
+// wheels (build 217): the car's warp q.kw (rad) and its rate along the line q.kws (rad/m) twist it through the springs,
+// bars and dampers, the warp moment Mk = K_warp kw + C_warp kws v, and each axle's outside tyre gains or loses Mk over its
+// track (front and rear opposite: the diagonal pair gains, the other loses).
+function latBalance(N,ay,dn,ax,v,q){
   const m=vehicle.mass,fWt=vehicle.fWt||0.55,aF=vehicle.aeroBal!=null?vehicle.aeroBal:0.5,lt=vehicle.lltdF!=null?vehicle.lltdF:fWt;
   const tr=ax||0;   // longitudinal load transfer onto the front (N): braking +, accelerating -
   const Nf=clamp((N-(dn||0))*fWt+(dn||0)*aF+tr,0.05*N,0.95*N),Nr=N-Nf;
@@ -467,8 +471,10 @@ function latBalance(N,ay,dn,ax,v){   // v: the speed, for the road's bumps (buil
   const M=m*Math.abs(ay)*vehicle.cg,tF=vehicle.trackF||vehicle.track,tR=vehicle.trackR||vehicle.track;
   const rF=vehicle.camRecF!=null?vehicle.camRecF:CAMBER_RECOVERY,rR=vehicle.camRecR!=null?vehicle.camRecR:CAMBER_RECOVERY;
   const cF=vehicle.camberF!=null?vehicle.camberF:vehicle.camber,cR=vehicle.camberR!=null?vehicle.camberR:vehicle.camber;
-  const capF=axleLatCap(Nf,M*lt/Math.max(0.8,tF),vehicle.FzRefF,roadSigma('F',v))*latCamberF(ay,cF,rF),
-        capR=axleLatCap(Nr,M*(1-lt)/Math.max(0.8,tR),vehicle.FzRef,roadSigma('R',v))*latCamberF(ay,cR,rR);
+  let kF=0,kR=0;
+  if(q&&q.kw){const Mk=(vehicle.warpK||0)*q.kw+(vehicle.warpC||0)*(q.kws||0)*(v||0);kF=-q.turn*Mk/Math.max(0.8,tF);kR=q.turn*Mk/Math.max(0.8,tR);}
+  const capF=axleLatCap(Nf,M*lt/Math.max(0.8,tF)+kF,vehicle.FzRefF,roadSigma('F',v))*latCamberF(ay,cF,rF),
+        capR=axleLatCap(Nr,M*(1-lt)/Math.max(0.8,tR)+kR,vehicle.FzRef,roadSigma('R',v))*latCamberF(ay,cR,rR);
   // the lateral acceleration each axle alone would allow, as a share of N
   const muF=capF/Math.max(1,fWt*N),muR=capR/Math.max(1,(1-fWt)*N);
   return {mu:Math.min(muF,muR),muF,muR,capF,capR,Nf,Nr};

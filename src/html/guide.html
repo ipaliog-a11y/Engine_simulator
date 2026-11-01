@@ -1817,7 +1817,7 @@ Each tyre keeps that share of its force, the lightly loaded inside tyre the leas
 <b>The ride</b> is the body's RMS vertical acceleration from the same quarter car, unweighted (ISO 2631's comfort weighting is not applied).
 </div>
 <div class="guide-limit" data-gk="dampersLimit">
-Limit: the bumps act only through load sensitivity and wheel hop. A real tyre's force also lags a change of load, kerbs are sharp single bumps rather than a spectrum, and dampers also steady the body at turn-in and keep an aero car's floor at its height; none of these is modelled, so this is the least the road costs. No circuit's surface has been measured to ISO 8608 that we can find, so each circuit's roughness is an estimate by its kind.
+Limit: the bumps act only through load sensitivity and wheel hop. A real tyre's force also lags a change of load (kerbs are their own page: <a data-gp="kerbs">Kerbs</a>), and dampers also steady the body at turn-in and keep an aero car's floor at its height; none of these is modelled, so this is the least the road costs. No circuit's surface has been measured to ISO 8608 that we can find, so each circuit's roughness is an estimate by its kind.
 </div>
 </div>
 <div class="guide-see">See also: <a data-gp="suspension">Suspension, roll &amp; camber</a> · <a data-gp="tyres">Tyres &amp; grip</a> · <a data-gp="lapsolve">Solving a lap</a></div>
@@ -1910,6 +1910,43 @@ different line (taking a corner on the other side entirely) would not be found.<
 </div>
 </div>
 <div class="guide-see">See also: <a data-gp="lapsolve">Solving a lap</a> · <a data-gp="elevation">Elevation, crests &amp; compressions</a> · <a data-gp="gpx">Importing a circuit</a></div>
+</section>
+<section class="guide-page" id="gp-kerbs" data-cat="track" data-title="Kerbs" data-tags="kerbs curbs apex exit vallelunga melbourne fia warp twist balance diagonal wheel" hidden>
+<h4 class="guide-title">Kerbs</h4>
+<div class="gtier gt-real"><div class="gtier-h">LV1 · REAL LIFE</div>
+<canvas class="gart" data-art="kerbwarp"></canvas><div class="gart-cap">One wheel on the kerb twists the car; both wheels of a side on it only lean it.</div>
+<div class="guide-body" data-gk="kerbsReal">
+<b>Kerbs</b> are the red and white strips at the edge of a circuit's corners. The rules put them <b>outside</b> the track's edge, so a driver who uses one gains width: a straighter line through the apex, a wider exit. The price is the jolt. When one wheel climbs a kerb and the other three do not, the car is twisted across its diagonal: that wheel and the one diagonally opposite press harder, the other two lighter. The front reaches the kerb first and the rear a moment later, so the balance swings one way and then back. Drivers use kerbs where the width is worth the upset, and stay off the ones that throw the car around.
+</div>
+</div>
+<div class="gtier gt-game"><div class="gtier-h">LV2 · IN THE GAME</div>
+<div class="guide-body" data-gk="kerbs">
+Every corner has an apex kerb on its inside and an exit kerb on its outside, drawn in red and white on the TRACK map. The racing line may run onto them, up to their full width, and the line optimiser decides corner by corner whether the width is worth the kerb's effect on the car.<br>
+While the car is on a kerb, each axle's outside tyre carries more or less load, which changes how hard that axle can corner. Stiff springs and bars twist the car harder; stiff dampers add a jolt as the car mounts or leaves the kerb fast. The TRACK's balance shows which axle runs out of grip, kerbs included.
+</div>
+</div>
+<div class="gtier gt-phys"><div class="gtier-h">LV3 · THE PHYSICS</div>
+<div class="guide-body" data-gk="kerbsPhys">
+<div class="gtab-wrap"><table class="gtab"><tr><th>FIA kerb type</th><th>profile</th><th>where</th></tr>
+<tr><td>1 Vallelunga</td><td>progressive, wide-ribbed, rising to 5 or 10 cm</td><td>apexes</td></tr>
+<tr><td>2 Melbourne</td><td>progressive, wide-ribbed, sinking to 5 cm below the track</td><td>exits</td></tr>
+<tr><td>3 bevelled</td><td>smooth incline to a flat top 5 cm high</td><td>apexes</td></tr>
+<tr><td>4 combination</td><td>smooth, 80 cm wide, rising to 12 cm</td><td>behind a type 1 or 3</td></tr></table></div>
+From the FIA's circuit drawing standard, which also says the kerbs shall be outside the track edges. The game uses a 5 cm Vallelunga ramp at the apex and a 5 cm Melbourne ramp at the exit, each 0.8 m wide. A wheel's height on one is in proportion to how far onto it the wheel is.<br>
+<b>Where they are.</b> The track data has no kerbs, so they are placed by the corner's own shape. The apex kerb runs on the inside where the bend is within 80% of its tightest (at most 40 m). The exit kerb runs on the outside after it, for as long again (15–50 m). Its width tapers in over the first and last 10 m, as a kerb's angled ends do.<br>
+<b>The twist.</b> The kerbs under the four wheels give the car's warp, the front axle's tilt across its track less the rear's, with the rear wheels a wheelbase back along the line:
+<span class="geq">w = (z<sub>FL</sub> − z<sub>FR</sub>)/t<sub>F</sub> − (z<sub>RL</sub> − z<sub>RR</sub>)/t<sub>R</sub></span>
+Both wheels of one side equally high is a roll, not a warp, and moves no load. The car resists warp with its front and rear roll stiffness (springs and bars) in series, and while the warp is changing with its dampers likewise:
+<span class="geq">M = K<sub>F</sub>K<sub>R</sub>/(K<sub>F</sub>+K<sub>R</sub>) · w + C<sub>warp</sub> · dw/dt</span>
+Each axle's outside tyre gains or loses M over its own track, front and rear in opposite senses. A diagonal pair gains, the other loses.<br>
+Because a tyre's grip grows less than its load, an axle whose outside tyre loses load has its two tyres more evenly loaded and grips <b>more</b>, and the axle whose outside tyre gains grips less. So a front wheel alone on an apex kerb, or dropping alone onto an exit kerb, moves the car towards <b>oversteer</b>, and the rear wheel following it alone moves it back towards <b>understeer</b>. This is the same diagonal ("cross") weight racers set on corner-weight scales.<br>
+On an M3 E46 the warp stiffness is about 20 kN·m/rad. A wheel 5 cm up on its own moves about 450 N, against roughly 6 kN on a loaded outside tyre.
+</div>
+<div class="guide-limit" data-gk="kerbsLimit">
+Limit: kerbs are ramps; the ribs are left out (the standard gives no spacing), as are the sausage kerbs and grass behind them. The wheel's own bounce on a kerb's edge is not resolved, only the twist and the dampers at the rate the line mounts it. Where each kerb sits and how long it runs is placed from the corner's shape, not taken from the circuit.
+</div>
+</div>
+<div class="guide-see">See also: <a data-gp="trackline">The racing line</a> · <a data-gp="dampers">Dampers &amp; the road</a> · <a data-gp="suspension">Suspension, roll &amp; camber</a></div>
 </section>
 <section class="guide-page" id="gp-lapsolve" data-cat="track" data-title="Solving a lap" data-tags="lap time lap solver cornering speed braking point friction circle limited by quasi-steady" hidden>
 <h4 class="guide-title">Solving a lap</h4>
@@ -2253,7 +2290,8 @@ This is a physics model, and like every model it leaves things out. These are th
 · <b>No vibration or balance</b> is modelled (<a data-gp="firing">Crank &amp; firing order</a>).<br>
 · <b>The lap is quasi-steady</b>: the car is always exactly at the speed grip, power and brakes allow, turning in takes no time (no yaw inertia). Each axle's grip is its own, so a car understeers or oversteers (build 157), but only as a limit: it never slides or spins, the driver never makes a mistake, and the line is the best one near minimum curvature (<a data-gp="trackline">The racing line</a>).<br>
 · <b>A lap is a single hot lap</b>: no tyre wear, no fuel burn, no traffic. A <a data-gp="race">The race</a> adds all three, but its traffic, overtaking, tow, dirty air, pit losses and driver errors are rules, and its tyre temperature and wear constants are fitted.<br>
-· <b>Dampers act only through the road's bumps</b>: the tyres' load swing costs grip by load sensitivity and wheel hop; the tyre's lag, kerbs, the body at turn-in and an aero car's ride height are not modelled, and each circuit's roughness is an estimate by its kind (<a data-gp="dampers">Dampers &amp; the road</a>).<br>
+· <b>Dampers act only through the road's bumps</b>: the tyres' load swing costs grip by load sensitivity and wheel hop; the tyre's lag, the body at turn-in and an aero car's ride height are not modelled, and each circuit's roughness is an estimate by its kind (<a data-gp="dampers">Dampers &amp; the road</a>).<br>
+· <b>Kerbs are placed by the corner's shape</b>, not from the circuit, and are ramps without their ribs (<a data-gp="kerbs">Kerbs</a>).<br>
 · <b>Imported circuits have modelled width</b>, because a GPX file carries none (<a data-gp="gpx">Importing a circuit</a>).<br>
 · <b>The reference cars are matched, not reproduced</b>: the 0–100 and top speed errors on <a data-gp="calibration">How we check against reality</a> are the honest size of what is left.
 </div>

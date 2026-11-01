@@ -20,6 +20,73 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 Working toward **v1.0 — every number derived, not fitted.**
 
+### Kerbs (build 217)
+
+Stage 3 of the suspension, part b. A kerb is not a roughness spectrum but one sharp, known shape under one side of
+the car, reaching the front axle before the rear: what it disturbs is the balance.
+
+- **The FIA's kerbs.** The circuit drawing standard (List of requirements for the circuit drawing, 2024, *Verge and
+  kerbs*) gives the types and their shapes:
+  - type 1, Vallelunga: progressive and wide-ribbed, for apexes, rising to 5 or 10 cm above the track;
+  - type 2, Melbourne: progressive and wide-ribbed, for corner exits, sinking to 5 cm below the track;
+  - type 3, bevelled: a smooth incline to 5 cm;
+  - type 4: a smooth kerb 80 cm wide rising to 12 cm, behind a type 1 or 3.
+  The standard also says **the kerbs shall be outside the track edges.** Every corner here gets a 5 cm Vallelunga
+  ramp on its inside at the apex and a 5 cm Melbourne ramp on its outside at the exit, each 0.8 m wide (the one width
+  the standard states). The ribs are left out, because the standard gives no spacing.
+- **Where they are.** The track data has no kerbs, so they are placed from each corner's own shape, an estimate and
+  labelled so:
+  - the apex kerb runs where the bend is within 80% of its tightest, at most 40 m;
+  - the exit kerb runs on the outside after it, for as long again (15–50 m);
+  - the width tapers in over 10 m at each end.
+  They cover 20–34% of the lap's points at Spa and Riverside. The TRACK map draws them in red and white.
+- **The line may use them.** The optimiser's room is now its own on each side of each point. A line beyond the edge
+  is only ever on a kerb, and by no more than its width. The optimiser decides corner by corner whether the width is
+  worth the kerb's effect.
+- **The twist.** The kerb heights under the four wheels (the rear ones a wheelbase back along the line) give the car's
+  warp: the front axle's tilt less the rear's. Both wheels of a side equally high is a roll and moves no load. The car
+  resists warp with its front and rear roll stiffness in series, and while the warp changes, with its dampers'
+  roll damping in series. Each axle's outside tyre gains or loses the warp moment over its track, the diagonal pair
+  in opposite senses.
+  - On an M3 E46, the warp stiffness is 20.5 kN·m/rad, and one wheel 5 cm up moves 452 N.
+  - Stiffer bars twist harder (29.7 kN·m/rad on STIFF +2); stiffer dampers jolt harder.
+- **The balance.** A tyre's grip grows less than its load, so an axle whose outside tyre loses load grips more, and
+  the one whose outside tyre gains grips less. A front wheel alone on an apex kerb, or dropping alone onto an exit
+  kerb, moves the car towards oversteer; the rear following it moves it back towards understeer. This is diagonal
+  ("cross") weight, as racers set it.
+- **Laps** on the M3: the kerbs' width makes Riverside 0.56% quicker and Spa 0.48%. Their twist costs back 0–0.03%:
+  the optimiser mounts them gently.
+- **Across the fingerprint's 213 laps** (every real car and archetype at Ashdown Park, six cars at Spa, the race
+  models), laps are 0.42% quicker on average, from −0.77% to +0.50%:
+  - 210 are quicker;
+  - three low-powered archetypes are slower: the 500 cc two-stroke (+0.50%), the 1.5 Eco (+0.14%) and the kei turbo
+    (+0.12%). More room cannot slow a car, so that is the line optimiser settling in a different local optimum.
+  - Nothing else moves: the 0–100, top speed, braking and masses are identical.
+- **Fixed on the way:** the optimiser's first stage held the line within the room at coarse nodes 25 m apart, so where
+  the room changed between nodes the curve was clamped back, and a clamp is a kink. A node now takes the narrowest
+  room over its own span. This alone moves a few laps by a hair (Riverside without kerbs 67.367 → 67.317 s).
+- **The guide** has a new page, *Kerbs*, with a car twisting over a kerb, in Greek too. *Dampers & the road* and
+  *Known limits* are updated.
+- **Left open:**
+  - the kerb ribs, sausage kerbs and the grass behind them;
+  - the wheel's own bounce at a kerb's edge;
+  - kerbs' real positions on each circuit.
+- **Tests:** test128 (new):
+  - the zones (FIA heights and width, apex inside and exit outside, coverage, taper);
+  - the line only beyond the edge on a kerb, and never past its width;
+  - laps quicker with kerbs;
+  - warp stiffness as the roll stiffnesses in series, stiffer bars and dampers;
+  - a 5 cm wheel's load, and the grip moving from rear to front;
+  - the map and the Greek page.
+
+  Changed in the open:
+  - test32 and test38 checked that the line never leaves the track. It may now leave it onto a kerb, by no more than
+    the kerb's usable width there, and that is what they check.
+  - test35's floor of 15 corners on an imported Nordschleife sat exactly at the old count. Corners are counted on the
+    line driven, and the kerbs open one of them past the counting radius (15 → 14). Against the real circuits'
+    official counts, the line's count is as close as before (53 corners off in all on build 216, 56 on 217). The
+    centreline's own count, which kerbs would not move, is further off, so the line's count stays.
+
 ### Dampers and the road (build 216)
 
 Stage 3 of the suspension, part a. The lap is solved as a string of steady corners, where a damper does nothing, so

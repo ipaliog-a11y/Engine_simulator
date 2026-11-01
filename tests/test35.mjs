@@ -70,7 +70,10 @@ if (Math.abs(geo.net) > 0.01) fails.push('imported loop does not close in elevat
 // Build 157: 6.5 s. Main at build 155 took 4.4-6.0 s here (failing 5 s three times in four, the machine slower than
 // when 5 s was set); build 157 adds the per-axle grip and tabulates the tyre's load curve, and runs in 4.9-6.3 s.
 if (geo.ms > 6500) fails.push(`import+solve too slow (${geo.ms} ms)`);
-if (geo.corners < 15) fails.push('too few corners detected on a 20 km circuit');
+// Corners are counted on the line driven (corners-thermal.js). Build 217's kerbs let that line open one of this trace's
+// corners past the counting radius: 15 -> 14. On the real circuits, against their official counts, the line's count is
+// as close as before (53 corners off in all on build 216, 56 on 217; the centreline's own count is further off).
+if (geo.corners < 14) fails.push('too few corners detected on a 20 km circuit');
 if (geo.lap < 300 || geo.lap > 900) fails.push(`lap time ${geo.lap}s implausible`);
 
 // 3. Report renders for the imported track

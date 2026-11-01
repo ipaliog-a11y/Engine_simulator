@@ -416,6 +416,21 @@ const GUIDE_ART={
     P.r(70,18,14,36,GP.y);P.r(72,20,10,32,'#c09000');
     P.txt(96,8,'SPEED',GP.c,0.55);P.txt(96,16,'BECOMES',GP.c,0.55);P.txt(96,24,'HEAT',GP.r,0.55);
     P.txt(96,40,Math.round(150+h*700)+' C',col,0.6);if(h>0.8)P.txt(96,52,'FADE!',GP.r,0.6);}},
+  // a car from above crossing an apex kerb: the front-left wheel climbs it first, then the rear; while only one is on it
+  // the car is twisted and the diagonal pair carries more (bars beside each wheel); with both on it, it is only rolled
+  kerbwarp:{anim:1,draw(P,t){
+    const s=gaFrac(t/3),kerbY=Math.round(70-s*110);                    // the kerb slides down past the car
+    P.r(0,0,160,72,GP.road);P.r(0,0,30,72,GP.grass);
+    for(let y=kerbY;y<kerbY+44;y+=4)P.r(30,y,8,4,((y-kerbY)>>2)%2?GP.white:GP.r);   // the kerb, outside the edge
+    P.r(38,0,1,72,GP.ink);
+    const cx=60,fy=18,ry=50,on=y=>y>=kerbY&&y<kerbY+44;
+    P.r(cx-14,fy-4,30,ry-fy+8,GP.b);P.box(cx-14,fy-4,30,ry-fy+8,GP.c);
+    const wF=on(fy),wR=on(ry),warp=(wF?1:0)-(wR?1:0);                 // front on alone: +1; rear on alone: -1
+    const wheels=[[cx-18,fy,1],[cx+16,fy,-1],[cx-18,ry,-1],[cx+16,ry,1]];
+    wheels.forEach(([x,y,sg],k)=>{const lift=(k===0&&wF)||(k===2&&wR);P.r(x-(lift?3:0),y-4,5,9,lift?GP.y:GP.rub);
+      const ld=0.5+0.3*warp*sg,h=Math.round(16*ld);P.r(x+(x<cx?-8:8)+(x<cx?0:0),y+6-h,3,h,ld>0.6?GP.g:ld<0.4?GP.r:GP.steel);});
+    P.txt(96,8,warp?'TWISTED':(wF&&wR?'ROLLED':'LEVEL'),warp?GP.y:GP.dim,0.5);
+    P.txt(96,58,'KERB 5 CM',GP.dim,0.45);}},
   // a quarter car on a bumpy road: the road scrolls under the tyre, the wheel follows it closely, the body floats above
   // on the spring and damper and moves far less; the bar on the right is the tyre's load swinging about its mean
   quartercar:{anim:1,draw(P,t){
