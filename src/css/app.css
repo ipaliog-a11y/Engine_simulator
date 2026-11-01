@@ -455,3 +455,28 @@ table.hy-map td:focus{outline:2px solid #ffcc00;outline-offset:-2px}
 @media(max-width:420px){
   .title-menu{grid-template-columns:1fr}
 }
+/* LIVE OUTPUT, compact (build 213): tighter tiles, and a fold button by the title that leaves the first row of gauges */
+#livePanel{padding:8px}
+#livePanel .live-h{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:6px}
+#livePanel .gauge-row{gap:5px;margin-bottom:5px}
+#livePanel .stat{padding:3px 5px}
+#livePanel .stat .value{margin-top:1px}
+#livePanel.folded .gauge-row{margin-bottom:0}
+.fold-btn{font-size:9px;line-height:1;padding:2px 7px;min-width:0}
+/* DYNO's MORE menu: the buttons below RESET, dropped down under MORE (a button that opens a panel of buttons, not a select) */
+.more-wrap{position:relative}
+.more-row{display:none}
+#controlsPanel.menu .more-row{display:flex}
+#controlsPanel.menu .more-btn{flex:1}
+#controlsPanel.menu .more-btn::after{content:' ▾'}
+#controlsPanel.menu .more-btn[aria-expanded="true"]::after{content:' ▴'}
+#controlsPanel.menu .ctl-more{display:none;position:absolute;left:0;right:0;top:100%;z-index:30;background:#161622;border:3px solid #00ccff;
+  padding:2px 8px 8px;box-shadow:0 6px 0 rgba(0,0,0,.5)}
+#controlsPanel.menu .ctl-more.open{display:block}
+/* the dyno's rpm table, behind its button */
+.dr-tbl-btn{margin:6px 0}
+/* folded: one line per tile (label, value, unit), so the panel keeps about a third of its height */
+#livePanel.folded .live-h{margin-bottom:4px;padding-bottom:2px}
+#livePanel.folded .stat{display:flex;flex-wrap:wrap;align-items:baseline;justify-content:center;gap:0 4px;padding:2px 4px}
+#livePanel.folded .stat .label{display:inline}
+#livePanel.folded .stat .value{margin-top:0}

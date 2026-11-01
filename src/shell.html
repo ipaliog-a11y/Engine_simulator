@@ -33,7 +33,7 @@
 </div>
 <div class="container">
 <header>
-<h1>PIXEL ENGINE SIM v0.7 build 212</h1>
+<h1>PIXEL ENGINE SIM v0.7 build 214</h1>
 <div class="subtitle" id="subtitle">ENGINE DESIGNER • BUILD IT, THEN DRIVE IT</div>
 </header>
 <div class="build-strip" id="buildStrip">
@@ -341,7 +341,7 @@
 <div class="design-section">My exhausts</div>
 <div class="part-list" id="partList"></div>
 <div class="pick-row"><div class="field"><label for="ptFrom">START FROM THIS ENGINE'S</label><select id="ptFrom"><option value="stock">STOCK CAST</option><option value="sport">SPORT HEADER</option><option value="race">RACE HEADER</option></select></div>
-<div class="field"><label>&nbsp;</label><button type="button" id="ptNew">NEW EXHAUST</button></div></div>
+<div class="field"><label>&nbsp;</label><button type="button" id="ptNew">NEW EXHAUST</button><button type="button" id="ptReset" title="Put the dimensions back to the factory part chosen above, keeping the name">RESET</button></div></div>
 <div class="design-section">Exhaust</div>
 <div class="design-grid">
 <div class="field"><label for="ptName">NAME</label><input type="text" id="ptName" maxlength="40"></div>
@@ -365,7 +365,7 @@
 <div class="design-section">My intakes</div>
 <div class="part-list" id="piList"></div>
 <div class="pick-row"><div class="field"><label for="piFrom">START FROM THIS ENGINE'S</label><select id="piFrom"><option value="long">LONG (TORQUE)</option><option value="medium">MEDIUM</option><option value="short">SHORT (POWER)</option><option value="variable">VARIABLE</option></select></div>
-<div class="field"><label>&nbsp;</label><button type="button" id="piNew">NEW INTAKE</button></div></div>
+<div class="field"><label>&nbsp;</label><button type="button" id="piNew">NEW INTAKE</button><button type="button" id="piReset" title="Put the dimensions back to the factory part chosen above, keeping the name">RESET</button></div></div>
 <div class="design-section">Intake manifold</div>
 <div class="design-grid">
 <div class="field"><label for="piName">NAME</label><input type="text" id="piName" maxlength="40"></div>
@@ -386,7 +386,7 @@
 <div class="design-section">My air filters</div>
 <div class="part-list" id="pfList"></div>
 <div class="pick-row"><div class="field"><label for="pfFrom">START FROM THIS ENGINE'S</label><select id="pfFrom"><option value="none">NONE (STACKS)</option><option value="perf">PERFORMANCE</option><option value="stock">STOCK PAPER</option><option value="restrictive">RESTRICTIVE</option></select></div>
-<div class="field"><label>&nbsp;</label><button type="button" id="pfNew">NEW AIR FILTER</button></div></div>
+<div class="field"><label>&nbsp;</label><button type="button" id="pfNew">NEW AIR FILTER</button><button type="button" id="pfReset" title="Put the dimensions back to the factory part chosen above, keeping the name">RESET</button></div></div>
 <div class="design-section">Air filter</div>
 <div class="design-grid">
 <div class="field"><label for="pfName">NAME</label><input type="text" id="pfName" maxlength="40"></div>
@@ -417,12 +417,13 @@
 </div>
 <div class="side-panel">
 <div class="panel" id="livePanel">
-<h2>Live Output</h2>
+<h2 class="live-h"><span>Live Output</span><button type="button" id="btnLiveFold" class="fold-btn" aria-expanded="true" aria-controls="liveRows2" title="Collapse the live output">▴</button></h2>
 <div class="gauge-row">
 <div class="stat" id="statHP"><span class="label">POWER</span><div class="value">0</div><span class="unit">HP</span></div>
 <div class="stat" id="statTQ"><span class="label">TORQUE</span><div class="value">0</div><span class="unit">Nm</span></div>
 <div class="stat" id="statBSFC"><span class="label">BSFC</span><div class="value">0</div><span class="unit">g/kWh</span></div>
 </div>
+<div id="liveRows2">
 <div class="gauge-row">
 <div class="stat" id="statEff"><span class="label">THERMAL EFF</span><div class="value">0</div><span class="unit">%</span></div>
 <div class="stat" id="statFuel"><span class="label">FUEL FLOW</span><div class="value">0</div><span class="unit">L/h</span></div>
@@ -432,6 +433,7 @@
 <div class="stat" id="statHealth"><span class="label">ENGINE HEALTH</span><div class="value">100</div><span class="unit">%</span></div>
 <div class="stat" id="statAmps" style="display:none"><span class="label">PACK CURRENT</span><div class="value">0</div><span class="unit">A</span></div>
 <div class="stat" id="statLimit" style="display:none"><span class="label">POWER LIMIT</span><div class="value">NONE</div><span class="unit"></span></div>
+</div>
 </div>
 </div>
 <div class="panel" id="hybridPanel" hidden>
@@ -463,6 +465,9 @@
 <button id="btnEco" title="The operating point where this engine burns the least fuel per kWh">ECO</button>
 <button id="btnReset" class="danger">RESET</button>
 </div>
+<div class="more-wrap">
+<div class="btn-row more-row"><button type="button" id="btnMore" class="more-btn" aria-haspopup="true" aria-expanded="false" aria-controls="ctlMore">MORE</button></div>
+<div class="ctl-more" id="ctlMore">
 <div class="btn-row">
 <button id="btnAutoThermal" class="toggle" aria-pressed="false">AUTO THERMAL</button>
 <button id="btnNitrous" class="toggle" aria-pressed="false" disabled>NITROUS</button>
@@ -481,6 +486,8 @@
 <button id="btnExport">SAVE FILE</button>
 <button id="btnImport">OPEN FILE</button>
 <button id="btnShare">SHARE</button>
+</div>
+</div>
 </div>
 <input type="file" id="fileInput" accept="application/json,.json" style="display:none">
 <div class="status-bar" id="status">READY • DESIGN AN ENGINE • THEN DYNO IT</div>

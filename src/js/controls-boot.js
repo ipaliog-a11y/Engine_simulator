@@ -96,6 +96,22 @@ function bindControls(){
   document.getElementById('tabGarage').addEventListener('click',()=>setTab('garage'));
   document.getElementById('tabParts').addEventListener('click',()=>setTab('parts'));
   wireParts();   // the part designer and its library (build 205)
+  // DYNO's MORE menu (build 213): the buttons below RESET, opened under MORE, closed by a pick, Escape or a click elsewhere
+  {const more=document.getElementById('btnMore'),menu=document.getElementById('ctlMore');
+    more.addEventListener('click',e=>{e.stopPropagation();setMoreMenu(!menu.classList.contains('open'));});
+    menu.addEventListener('click',e=>{if(e.target.closest('button'))setTimeout(()=>setMoreMenu(false),0);});
+    document.addEventListener('click',e=>{if(menu.classList.contains('open')&&!e.target.closest('.more-wrap'))setMoreMenu(false);});
+    document.addEventListener('keydown',e=>{if(e.key==='Escape'&&menu.classList.contains('open')){setMoreMenu(false);more.focus();}});}
+  // the dyno's rpm table, behind its button (the result box is re-rendered, so the click is caught on the box)
+  document.getElementById('dynoResult').addEventListener('click',e=>{if(e.target.closest('#btnDynoTable'))toggleDynoTable();});
+  // LIVE OUTPUT folds to its first row of gauges, a third of its height; the choice is kept in this browser
+  {const fold=document.getElementById('btnLiveFold'),panel=document.getElementById('livePanel');
+    const setFold=f=>{panel.classList.toggle('folded',f);document.getElementById('liveRows2').hidden=f;
+      fold.setAttribute('aria-expanded',String(!f));fold.textContent=f?'▾':'▴';
+      fold.setAttribute('title',f?'Expand the live output':'Collapse the live output');if(typeof trAttrs==='function')trAttrs();   // English in, the language's out
+      try{localStorage.setItem('pes.liveFold',f?'1':'');}catch(e){}};
+    let f0=false;try{f0=localStorage.getItem('pes.liveFold')==='1';}catch(e){}
+    setFold(f0);fold.addEventListener('click',()=>setFold(!panel.classList.contains('folded')));}
   const rb=document.getElementById('btnReplay');
   rb.addEventListener('click',()=>{lapReplay.playing=!lapReplay.playing;rb.classList.toggle('on',lapReplay.playing);
     rb.setAttribute('aria-pressed',String(lapReplay.playing));rb.textContent=tr(lapReplay.playing?'PAUSE':'PLAY');});

@@ -20,6 +20,38 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 Working toward **v1.0 — every number derived, not fitted.**
 
+### Development instructions for coding agents (build 214)
+
+- **`AGENTS.md`** writes down the method every build here has followed, so that work started in Cursor and work
+  continued here never conflict:
+  - the repository's shape: edit `src/`, join it into `index.html`, which is committed;
+  - one change = one build = one pull request, stamped once, from a fresh branch off `main`;
+  - what to do when `main` moves under an open PR: merge (never rebase), take main's build line, re-stamp, regenerate
+    `index.html` rather than hand-merge it, and keep both CHANGELOG entries;
+  - the physics rules: derive from cited sources, never fit to a test, and fingerprint what a change moves;
+  - tests (`WHY THIS EXISTS`, exit codes, known-gap lists that only shrink, `durations.json`) and the checks before a
+    push;
+  - the CHANGELOG, commit and PR format;
+  - Greek for every visible string, the guide's three levels, and the owner's part (squash-merge, tags, releases).
+- **`.cursor/rules/development.mdc`** is an always-applied Cursor rule that points every Cursor agent to `AGENTS.md`,
+  with the essentials in brief. The README's *Project Structure* links to it too.
+
+### The side column and the dyno, tidied (build 213)
+
+- **LIVE OUTPUT shows on LIVE and DYNO only**, where an engine runs. The ENGINE, PARTS, GARAGE and OPTIONS tabs have
+  nothing else for the right column, so their page now takes the whole width, as the GUIDE's already did.
+- **LIVE OUTPUT is compact and folds.** The tiles are tighter, and a button by the title folds the panel to its first
+  row (POWER, TORQUE, BSFC), each tile on one line: about a third of its height (35%). The choice is kept in this
+  browser.
+- **DYNO's buttons below RESET are in a MORE menu.** AUTO THERMAL through SHARE (eleven buttons) drop down under MORE as
+  the same buttons, not a select. A pick, Escape or a click elsewhere closes it. On LIVE they stay laid out, since they
+  drive the engine there.
+- **The dyno's rpm table is behind a button** (SHOW TABLE, every 250 or 500 rpm, the motor's too). It stays open or
+  shut as chosen while the result re-renders.
+- **RESET on each part designer** puts the dimensions back to the factory part chosen in START FROM. It keeps the part's
+  name and identity, so SAVE then overwrites the same part. Nothing is saved until SAVE.
+- test125 checks all of it, in Greek too; test31 opens MORE before it clicks the report buttons.
+
 ### Housekeeping: the PARTS guide page, and the shards rebalanced (build 212)
 
 - **The guide has a page for the PARTS tab**: *Designing your own parts*, under Breathing & boost, in English and Greek,

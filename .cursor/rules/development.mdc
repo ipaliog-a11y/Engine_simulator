@@ -1,0 +1,14 @@
+---
+description: How changes are made in this repository (builds, tests, PRs). Applies to every task.
+alwaysApply: true
+---
+
+Before changing anything, read `AGENTS.md` at the repository root and follow it. In short:
+
+- Branch from the latest `origin/main` (`cursor/<topic>`); never push to `main` or to `ccr-*` branches.
+- Edit `src/`, never `index.html`; regenerate it with `node tools/build.mjs`.
+- One PR = one build: `node tools/stamp.mjs` once per PR; if main moves, merge it (no rebase), re-stamp and rebuild.
+- Physics is derived from cited sources, never fitted to pass a test; record and compare `tools/fingerprint.mjs`.
+- Every change adds or updates `tests/testNNN.mjs` (WHY THIS EXISTS header, exit code); never skip or loosen tests.
+- Every visible string has Greek (`tr()` + `I18N`); run `node tests/run.mjs 87` on UI changes.
+- CHANGELOG entry `### <title> (build N)`; commit and PR titled `Build N: <title>`; the owner merges (squash) and tags.
