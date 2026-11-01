@@ -65,13 +65,24 @@ dampers waited (build 174) for something to work against. That is now the road.
 - **Left open:** this is the least the road costs. The tyre's force also lags a change of load, kerbs are single sharp
   bumps, and dampers also steady the body at turn-in and hold an aero car's floor at its height. None of that is
   modelled yet; the body at turn-in is part b (transient roll).
-- **Tests:** test126 (new):
+- **Tests:** test127 (new):
   - the quarter car (the kit's ratio, the step, the wheel hop) and how the swing scales with roughness and speed;
   - the swing against the damping (least near half), the ride against it, and stiffer springs on the same dampers;
   - the grip kept;
   - laps: a smooth road gives the old lap, the Nordschleife costs more than a GP circuit, and far too soft is slower;
   - the performance tests unchanged;
   - cost, *(modified)*, saves (old ones get the kit's dampers), REFIT, the summary and Greek.
+
+### Title screen: three more shop rooms, and a slow pan (build 215)
+
+- The main menu still opens over an 8-bit workshop, but the stage now cycles **four rooms**, five seconds each,
+  with a slow left-to-right pan across a scene wider than the view:
+  - the original hoist bay (extended so the pan has somewhere to walk);
+  - a **tyre bay**: four-post alignment lift with a car up, a tyre changing machine, and a balancer;
+  - a **V8 flat-lay** on the floor, seen from above: block, heads, covers, crank, pistons and rods;
+  - a **race pit**: car on jack stands with its wheels off, toolbox, air gun, and the lane through the bay mouth.
+- The physics and the menu buttons are unchanged. test126 checks the four scenes, the five-second hold, the pan, and
+  that each room paints.
 
 ### Development instructions for coding agents (build 214)
 

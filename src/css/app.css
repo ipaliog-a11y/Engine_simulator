@@ -421,7 +421,7 @@ table.hy-map{border-collapse:collapse;font-size:7px;margin:4px 0 10px}
 table.hy-map th{color:#888;font-weight:normal;padding:3px 5px}
 table.hy-map td{border:1px solid #333;padding:4px 6px;text-align:center;cursor:pointer;min-width:30px}
 table.hy-map td:focus{outline:2px solid #ffcc00;outline-offset:-2px}
-/* Title screen: the workshop fills the stage; the menu sits beside it (under it on a phone). */
+/* Title screen: the shop scenes fill the stage (panning); the menu sits beside it (under it on a phone). */
 .title-screen{position:fixed;inset:0;z-index:70;background:#0a0a12;display:grid;grid-template-rows:minmax(0,1fr) auto}
 .title-screen[hidden]{display:none!important}
 .title-stage{grid-row:1;position:relative;min-height:0;background:#1b2433;overflow:hidden}
