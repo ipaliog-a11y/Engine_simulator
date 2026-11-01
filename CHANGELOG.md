@@ -20,6 +20,41 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 Working toward **v1.0 — every number derived, not fitted.**
 
+### The air filter: its own restriction, and the part designer's air filters (build 210)
+
+- **The air filter is physics now.** Until build 210 it was a VE loss fitted in proportion to rpm: stock −4% at the
+  redline, performance −1%, restrictive −10%, open stacks +2%. Now it is the filter's pressure drop at the flow it
+  passes, and the charge is that much thinner. There are two terms:
+  - **the media, by Darcy's law:** the drop goes with the face velocity (the flow over the pleated media's area). How
+    much a medium passes is its air permeability at 200 Pa. Car intake papers measure 540–685 m³/m²h, the lower one
+    with a nanofibre layer (Dziubak, *Materials* 13, 3498, 2020). For oiled cotton, only its makers' claim of about
+    50% more than paper exists, and the page says so.
+  - **the housing, by its velocity head:** an airbox (snorkel, bends and box, K ≈ 3) or an open element's neck
+    (K ≈ 0.5).
+- **The factory filters are sized to each engine's largest flow,** at restrictions from measurements:
+  - stock (a clean element in an OEM airbox): 3.75 kPa, the top of the 2–3.75 kPa that restriction gauges read on
+    new filters at full throttle;
+  - restrictive (clogged): 6.5 kPa, from Oak Ridge's 6–7 kPa for a clogged filter (ORNL/TM-2009/021);
+  - performance (an open oiled-cotton element): 1.0 kPa, as it was fitted;
+  - open stacks: nothing.
+- **What moved, across the 113 combustion presets** (peak power):
+  - performance, NA: −0.5 to +2.4%;
+  - performance, turbo: −0.5 to +0.4%;
+  - stock, NA: 0 to +4.2%, the largest being 1 hp on a 25 hp two-stroke;
+  - stock, turbo: −1.5 to +1.6%;
+  - open stacks: −2.2 to −1.7%. The +2% the stacks were given was not a filter's; they no longer gain it.
+  - The mean error against the real cars' published power goes from 6.58% to 6.62%. Every factory filter restricts
+    less at part load than before, where the old loss applied at any throttle.
+- **On a boosted engine** the drop is taken off the charge as on an NA one. That holds where the compressor is at its
+  limit and overstates it where the wastegate has boost to spare. The page says so.
+- **AIR FILTER on the PARTS tab:**
+  - housing (airbox, open element or open stacks), media (paper, paper with nanofibre, oiled cotton), media area, and
+    inlet diameter;
+  - **SIZE FOR 0.25 m/s** sizes the media as a factory element is sized;
+  - the readout gives the restriction at peak power, split between media and housing, against the measured range;
+  - written down as a part, each factory filter gives the factory pull exactly.
+- A build carries its exhaust, intake and air filter together. Test: test124.
+
 ### Title screen (build 209)
 
 - Opening the app shows a main menu over an 8-bit workshop: an engine hanging on a hoist, a toolbox beside it.

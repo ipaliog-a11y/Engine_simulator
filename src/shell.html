@@ -33,7 +33,7 @@
 </div>
 <div class="container">
 <header>
-<h1>PIXEL ENGINE SIM v0.7 build 209</h1>
+<h1>PIXEL ENGINE SIM v0.7 build 210</h1>
 <div class="subtitle" id="subtitle">ENGINE DESIGNER • BUILD IT, THEN DRIVE IT</div>
 </header>
 <div class="build-strip" id="buildStrip">
@@ -336,7 +336,7 @@
 <div class="hint">Pick a type of part, set its dimensions and save it. Saved parts are kept in this browser and appear in the ENGINE tab's choices; a saved build carries its parts with it.</div>
 <div class="design-section">Type of part</div>
 <div class="part-types" id="partTypes"></div>
-<div class="hint" id="partsNoEngine" hidden>An electric drive has no exhaust or intake. Build a combustion engine on the ENGINE tab to design parts for it.</div>
+<div class="hint" id="partsNoEngine" hidden>An electric drive has no exhaust, intake or air filter. Build a combustion engine on the ENGINE tab to design parts for it.</div>
 <div id="partsExhaust">
 <div class="design-section">My exhausts</div>
 <div class="part-list" id="partList"></div>
@@ -381,6 +381,25 @@
 <div class="part-guide" id="piGuide"></div>
 <div class="part-chart"><div class="gw-leg" id="piLegend"></div><canvas id="piCanvas" role="img" aria-label="Power and torque with this intake against the engine as it is"></canvas></div>
 <div class="btn-row part-btns"><button type="button" id="piSave">SAVE PART</button><button type="button" id="piSaveFit">SAVE &amp; FIT</button></div>
+</div>
+<div id="partsFilter" hidden>
+<div class="design-section">My air filters</div>
+<div class="part-list" id="pfList"></div>
+<div class="pick-row"><div class="field"><label for="pfFrom">START FROM THIS ENGINE'S</label><select id="pfFrom"><option value="none">NONE (STACKS)</option><option value="perf">PERFORMANCE</option><option value="stock">STOCK PAPER</option><option value="restrictive">RESTRICTIVE</option></select></div>
+<div class="field"><label>&nbsp;</label><button type="button" id="pfNew">NEW AIR FILTER</button></div></div>
+<div class="design-section">Air filter</div>
+<div class="design-grid">
+<div class="field"><label for="pfName">NAME</label><input type="text" id="pfName" maxlength="40"></div>
+<div class="field"><label for="pfHousing">HOUSING</label><select id="pfHousing"><option value="airbox">AIRBOX</option><option value="open">OPEN ELEMENT</option><option value="none">NONE (STACKS)</option></select></div>
+<div class="field"><label for="pfMedia">MEDIA</label><select id="pfMedia"><option value="paper">PAPER (CELLULOSE)</option><option value="nano">PAPER + NANOFIBRE</option><option value="cotton">OILED COTTON</option></select></div>
+<div class="field"><label for="pfArea">MEDIA AREA (m²)</label><input type="number" id="pfArea" min="0.02" max="3" step="0.01"></div>
+<div class="field"><label>&nbsp;</label><button type="button" id="pfSize">SIZE FOR 0.25 m/s</button></div>
+<div class="field"><label for="pfInlet">INLET DIAMETER (mm)</label><input type="number" id="pfInlet" min="30" max="160" step="1"></div>
+</div>
+<div class="design-section">On this engine</div>
+<div class="part-guide" id="pfGuide"></div>
+<div class="part-chart"><div class="gw-leg" id="pfLegend"></div><canvas id="pfCanvas" role="img" aria-label="Power and torque with this air filter against the engine as it is"></canvas></div>
+<div class="btn-row part-btns"><button type="button" id="pfSave">SAVE PART</button><button type="button" id="pfSaveFit">SAVE &amp; FIT</button></div>
 </div>
 </div>
 
