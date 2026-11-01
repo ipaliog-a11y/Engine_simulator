@@ -20,6 +20,38 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 Working toward **v1.0 — every number derived, not fitted.**
 
+### The known gaps, taken together (build 211)
+
+- **Closed with physics: the Buick GNX's and the Grand Cherokee SRT's brakes.** The model gave each brake type one
+  catalogue caliper, so the GNX's single 2.5 in front piston (owners' measurements, 4.91 in²) became STEEL DISC's
+  54 mm, and the SRT's Brembo six-pot (Chrysler's spec sheet) became BIG BRAKE KIT's two. Neither could reach its
+  tyres' grip. A real car now carries its own front caliper while its factory brakes are fitted (`fit.caliperF`), and
+  both reach the limit, as they lock their tyres in life. The SRT's 40 mm piston size comes only from a rebuild kit's
+  listing and is marked unsure.
+- **Already closed by earlier builds; their entries come out of the tests:**
+  - test48's power list is empty: the Alto (+2%, since build 136), the 2.0 TDI (+5%, build 172), the Supra (+0%,
+    build 131) and the M3 E46 (+6%, build 122) are all inside the default cap;
+  - test47's brake floor for the super chassis: they stop in ~31 m since tyre grip comes from load (build 109);
+  - test44's at-limiter list: only the 1.6 Sport NA I4 is still there, and the budget drops from 3 to 1;
+  - test41's 0–100 caps are ratcheted to where the cars stand: the Supra 20 → 16% (now +14.4%), the STI 13 → 11%
+    (+9.8%).
+- **Still open, and why:**
+  - **Turbo manifold heat loss** (the 2JZ archetype reads 1001 °C against a 1000 °C ceiling). A first estimate
+    (Dittus–Boelter over the derived manifold) puts the loss at 50–65 K. But it rests on the manifold wall's
+    temperature and on how much pulsing flow raises the transfer, neither measured here, and it would move every
+    turbo preset's spool. It needs its own build, checked against measured manifold temperatures.
+  - **The rotary's and the two-stroke's exhaust heat** (Renesis 842 °C, two-stroke 764 °C, below their bands): there
+    is no model yet of the Wankel's trailing burn or the two-stroke's port timing. This is the ported-engine item
+    of v1.0.
+  - **The hybrid engines' efficiency** (Kappa 127 hp against 105 PS; about 36% peak against 40%): the engine's
+    breathing and combustion work for v1.0.
+  - **The Tesla motor's phase resistance** (3.08 against a measured 4.75 mΩ): the end turns are modelled. The rest
+    is the leads, the strand insulation and the slot shape, with no source to derive them from. Closing it would mean
+    tuning the copper fill to the answer.
+  - **The Supra RZ's 0–100 in test48** (5.72 s, its 2-3 shift at 100 km/h, build 210): a threshold, not an engine.
+  - **The 1.6 Sport NA I4 archetype** peaks at its limiter and reads 2 °C under its EGT band: the real engines'
+    top-end fade is missing.
+
 ### The air filter: its own restriction, and the part designer's air filters (build 210)
 
 - **The air filter is physics now.** Until build 210 it was a VE loss fitted in proportion to rpm: stock −4% at the

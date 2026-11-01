@@ -94,7 +94,10 @@ const R13H_Z=0.8;   // the deceleration (g) up to which the front axle must lock
 function brakeForceCap(v){
   const bt=BRAKE_TYPE[v.brakeType]||BRAKE_TYPE.slotted, p=BRAKE_LINE_BAR*1e5;
   const axle=(pist,D)=>2*(2*bt.pad*p*pist.reduce((a,d)=>a+Math.PI/4*(d/1000)*(d/1000),0)*0.4*D);
-  const f=axle(bt.caliper.f,v.rotor/1000);
+  // A real car carries its own front caliper where the type's catalogue one is not it (build 211: the GNX's single 2.5 in
+  // piston, the Grand Cherokee SRT's Brembo six-pot), while its factory brakes are fitted.
+  const own=v.body&&v.body.fit&&v.body.fit.caliperF&&v.brakeType===v.body.fit.brake?v.body.fit.caliperF:null;
+  const f=axle(own||bt.caliper.f,v.rotor/1000);
   // Both axles see the same line pressure, so the pistons and rotor radii fix the split (build 117). Build 203: the rear
   // is sized to the car, as its maker sizes it, not taken from the kit. Until then every car braked 71-74% on the front,
   // the kit's split, whatever its weight: a 911's rears did too little and stayed near cold on a lap, where measured ones
