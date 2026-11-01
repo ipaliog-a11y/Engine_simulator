@@ -20,6 +20,21 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 Working toward **v1.0 — every number derived, not fitted.**
 
+### Housekeeping: the PARTS guide page, and the shards rebalanced (build 212)
+
+- **The guide has a page for the PARTS tab**: *Designing your own parts*, under Breathing & boost, in English and Greek,
+  with its own moving picture. It climbs the three levels like every page: what aftermarket and one-off parts are,
+  how to design, preview, save and fit one in the game (CUT, SIZE, MATCH THE PORTS, the MY PARTS lists, a build carrying
+  its parts), and which equations each part's numbers go into. Its limits are the silencer's own back-pressure and the
+  plenum's volume, which are not modelled, and the catalytic converter, which cannot be designed yet. *The tabs*, *The air
+  path*, *Intake runner waves* and *Exhaust headers* link to it.
+- **Two guide passages were stale since build 210** and said the air filters' restrictions are hand-set. They are
+  derived now (Darcy's law for the media, the velocity head for the housing); *Induction & throttle* and *Known limits*
+  say so, in both languages.
+- **`tests/durations.json` knows every test again.** Tests 120–124 were missing and counted as 30 s each. The times
+  now come from build 211's own CI run, the machine the shards run on, so each of the five shards plans ~12 minutes;
+  on that run they took between 8.5 and 13.1.
+
 ### The known gaps, taken together (build 211)
 
 - **Closed with physics: the Buick GNX's and the Grand Cherokee SRT's brakes.** The model gave each brake type one
