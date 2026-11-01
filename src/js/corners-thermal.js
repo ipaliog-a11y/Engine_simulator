@@ -89,6 +89,7 @@ function updateVehicleSummary(){
   const dl={fwd:'FWD',rwd:'RWD',awd:'AWD'}[vehicle.drive]||'RWD';
   el.className='design-summary vehicleSummaryWrap';
   const stock=isFactoryFit(vehicle);
+  syncCarArt();
   el.innerHTML='<b>'+tr(vehicle.chLabel)+'</b> • '+dl+' • '+(vehicle.ev||vehicle.ecvt&&isSeries()?tr('SINGLE-SPEED'):vehicle.ecvt?'eCVT':vehicle.gears+tr('-speed'))+
     ' <span style="color:'+(stock?'#7a8':'#ffcc00')+'">'+tr(stock?'(factory spec)':'(modified)')+'</span>'+
     '<br>'+tr('Curb weight')+' <b>'+Math.round(vehicle.mass)+' kg</b> ('+tr('engine')+' ~'+vehicle.engineMass+' kg) • '+vehicle.powerToWeight.toFixed(0)+' hp/t'+
