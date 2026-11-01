@@ -8,9 +8,9 @@
 //   · the planetary's laws: the sun's speed is Willis's, MG1 holds the engine's reaction torque, and MG1 is sized to it;
 //   · the eCVT drives like one: no gears, no clutch, a single reduction from MG2 (10.84:1 on the Prius), the gearbox
 //     fields hidden, DEPLOY not offered (a power-split deploys all it has), and a P2 is untouched;
-//   · the Toyota Prius (2016), its MG2 (53 kW, 163 Nm) and pack (1.31 kWh NiMH, ~20 kW) as Toyota gives them, and
+//   · the Toyota Prius (2016), its MG2 (53 kW, 163 Nm) and pack (1.31 kWh NiMH, ~29 kW at its peak) as Toyota gives them, and
 //     with its engine matched to the published 72 kW as tests/test41.mjs matches the combustion cars: 90 kW together,
-//     0-100 km/h in 10.6 s and 180 km/h (Toyota GB); since build 204 the 0-100 is a named known gap (below);
+//     0-100 km/h in 10.6 s and 180 km/h (Toyota GB); the pack at the ~29 kW its cells give in a full-throttle pull;
 //   · charge-sustaining over a lap, and a race to the flag on fuel;
 //   · the WLTP cycle: Toyota GB's 68.3 mpg combined (4.14 L/100 km, 15-inch wheels). The model's 2ZR-FXE burns 249
 //     g/kWh at its best against the real engine's 40% (210 g/kWh; the Atkinson cam's gap, tests/test105.mjs), so the
@@ -82,7 +82,8 @@ const C = r.car;
 console.log(`== Prius: ${C.kind}, eCVT ${C.ecvt} (${C.ratios} ratio, ${f(C.fd, 2)}:1, idle ${C.idle}); engine ${C.hp} hp as built; MG2 ${f(C.mg2, 0)} Nm (163); ` +
   `pack ${C.kWh} kWh, ${f(C.packKW)} kW; MG1 ${f(C.mg1, 0)} Nm against a ${f(C.reaction, 0)} Nm reaction; +${C.hyMass} kg, ${C.mass} kg ==`);
 if (C.kind !== 'hybrid' || !C.direct || !C.ecvt || C.ratios !== 1 || C.idle !== 0) fails.push('a power-split does not drive through one reduction without a clutch');
-if (Math.abs(C.mg2 - 163) > 5 || !(C.packKW > 17 && C.packKW < 28)) fails.push('the Prius\'s MG2 and pack are not Toyota\'s');
+// the pack at its peak: the same 168 cells gave 30.0 kW over 1 s (INL) and 28.6-29.2 kW in 0-60 mph runs (DOE) (build 207)
+if (Math.abs(C.mg2 - 163) > 5 || !(C.packKW > 26 && C.packKW < 32)) fails.push('the Prius\'s MG2 and pack are not Toyota\'s');
 if (!(C.mg1 >= C.reaction && C.mg1 < C.reaction * 1.3)) fails.push('MG1 is not sized to hold the engine\'s reaction torque');
 console.log(`== Willis at 60 km/h, engine 2500 rpm: 30 ns + 78 nr = ${f(r.willis.lhs, 0)}, 108 ne = ${f(r.willis.rhs, 0)} ==`);
 if (Math.abs(r.willis.lhs - r.willis.rhs) > 1) fails.push('the planetary does not obey Willis\'s equation');
@@ -93,17 +94,11 @@ const M = r.matched;
 console.log(`== as built: system ${f(C.sysKW)} kW, 0-100 ${f(C.asBuilt.t100, 2)} s; matched to 72 kW: system ${f(M.sysKW)} kW (90), 0-100 ${f(M.t100, 2)} s ` +
   `(Toyota 10.6, ${f(pct(M.t100, 10.6))}%), top ${f(M.top, 0)} km/h, free ${f(M.free, 0)} (180) ==`);
 if (Math.abs(pct(M.sysKW, 90)) > 12) fails.push(`the matched Prius makes ${f(M.sysKW)} kW together, not 90`);
-// KNOWN GAP (build 204). Until cooled EGR the model's 2ZR-FXE made 131 hp as built, and this check passed at 11.18 s. But
-// matching scales only the engine's torque curve: the power-split's operating line comes from the fuel map, which kept
-// the unmatched 131 hp, so the 0-100 was flattered. With its EGR held to full load the engine makes its real power (94 hp
-// against Toyota's 96.6) on every path, and the eCVT's full-throttle 0-100 shows its own gap: about 19% slow, and 82 kW
-// together against Toyota's 90. Its own build investigates it. Held where it is: worse fails, and so does closed (take
-// the note away then).
-const T100_KNOWN = 12.65;
-if (Math.abs(pct(M.t100, 10.6)) > 8) {
-  if (M.t100 > T100_KNOWN * 1.02) fails.push(`the matched Prius's 0-100 ${f(M.t100, 2)} s is worse than its known gap (${T100_KNOWN})`);
-  else console.log(`   known gap: the eCVT's full-throttle 0-100, ${f(M.t100, 2)} s against Toyota's 10.6 (build 204)`);
-} else if (M.t100 < 10.6 * 1.08) console.log('   the known 0-100 gap has closed: take its note away');
+// The 0-100 (build 207): within 8% of Toyota's 10.6 s. It was a known gap from build 204 to 206 (12.65 s): the pack was
+// rated by its 10 s pulse (21 kW), where a full-throttle pull takes the ~29 kW its cells give at their peak (INL, DOE).
+// The ~0.5 s left is the electrical path at Toyota's own ratings (MG1 23 kW, MG2 53 kW), which bound the mid-speed
+// power wherever the engine's mechanical share through the ring is small.
+if (Math.abs(pct(M.t100, 10.6)) > 8) fails.push(`the matched Prius's 0-100 is ${f(M.t100, 2)} s, not within 8% of Toyota's 10.6`);
 if (M.free < 180 || Math.abs(M.top - 180) > 2) fails.push('the Prius cannot reach its 180 km/h');
 
 console.log(`== lap (tech): deploy share ${f(r.lap.share * 100, 0)}%, ${f(r.lap.dep, 0)} kJ out, ${f(r.lap.reg, 0)} kJ back; race ${r.race.state}, ${f(r.race.fuel, 2)} L; saved "${r.saved}" ==`);
