@@ -20,6 +20,17 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 Working toward **v1.0 — every number derived, not fitted.**
 
+### Title screen: three more shop rooms, and a slow pan (build 215)
+
+- The main menu still opens over an 8-bit workshop, but the stage now cycles **four rooms**, five seconds each,
+  with a slow left-to-right pan across a scene wider than the view:
+  - the original hoist bay (extended so the pan has somewhere to walk);
+  - a **tyre bay**: four-post alignment lift with a car up, a tyre changing machine, and a balancer;
+  - a **V8 flat-lay** on the floor, seen from above: block, heads, covers, crank, pistons and rods;
+  - a **race pit**: car on jack stands with its wheels off, toolbox, air gun, and the lane through the bay mouth.
+- The physics and the menu buttons are unchanged. test126 checks the four scenes, the five-second hold, the pan, and
+  that each room paints.
+
 ### Development instructions for coding agents (build 214)
 
 - **`AGENTS.md`** writes down the method every build here has followed, so that work started in Cursor and work
