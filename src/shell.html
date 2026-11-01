@@ -33,7 +33,7 @@
 </div>
 <div class="container">
 <header>
-<h1>PIXEL ENGINE SIM v0.7 build 218</h1>
+<h1>PIXEL ENGINE SIM v0.7 build 219</h1>
 <div class="subtitle" id="subtitle">ENGINE DESIGNER • BUILD IT, THEN DRIVE IT</div>
 </header>
 <div class="build-strip" id="buildStrip">
@@ -318,6 +318,7 @@
 <div class="field"><label for="vhBarR">REAR ANTI-ROLL BAR</label><select id="vhBarR"><option value="-2">SOFT −2</option><option value="-1">SOFT −1</option><option value="0" selected>STANDARD</option><option value="1">STIFF +1</option><option value="2">STIFF +2</option></select></div>
 <div class="field"><label for="vhDamperF">FRONT DAMPERS</label><select id="vhDamperF"><option value="-2">SOFT −2</option><option value="-1">SOFT −1</option><option value="0" selected>STANDARD</option><option value="1">STIFF +1</option><option value="2">STIFF +2</option></select></div>
 <div class="field"><label for="vhDamperR">REAR DAMPERS</label><select id="vhDamperR"><option value="-2">SOFT −2</option><option value="-1">SOFT −1</option><option value="0" selected>STANDARD</option><option value="1">STIFF +1</option><option value="2">STIFF +2</option></select></div>
+<div class="field"><label for="btnSusp">QUARTER CAR</label><button id="btnSusp" type="button">SUSPENSION CALCULATOR…</button></div>
 </div>
 <div class="build-row">
 <button id="btnRefit">REFIT FACTORY SPEC</button>
@@ -613,6 +614,24 @@
 </div>
 </div>
 </div>
+<div class="gw-back" id="susWin" hidden>
+<div class="gw" role="dialog" aria-modal="true" aria-labelledby="susTitle">
+<div class="gw-head"><h3 id="susTitle">SUSPENSION CALCULATOR</h3><span class="sub" id="susSub"></span><button id="susClose" type="button" aria-label="Close">✕</button></div>
+<div class="gw-body">
+<div>
+<div class="gw-k" id="susKC">CORNER</div><div class="gw-sp" id="susCorner"></div>
+<div id="susForm" class="sc-form"></div>
+<div class="btn-row"><button id="susReset" type="button">FROM THE CAR</button></div>
+<div class="gw-note" id="susNote"></div>
+</div>
+<div>
+<div class="gw-read gg-read" id="susRead"></div>
+<div class="gw-ch"><div class="t" id="susTF">RESPONSE TO A ROAD WAVE</div><div class="gw-leg" id="susLegF"></div><canvas id="susFreq" role="img" aria-label="The body's and the wheel's movement over the road's, against the road wave's frequency"></canvas></div>
+<div class="gw-ch"><div class="t" id="susTS">OVER A STEP IN THE ROAD (mm)</div><div class="gw-leg" id="susLegS"></div><canvas id="susStep" role="img" aria-label="The body, the wheel and the road against time, over a step in the road"></canvas></div>
+</div>
+</div>
+</div>
+</div>
 <script src="tracks/real-circuits.js"></script>
 <script>
 <!-- @include js/fuels-engine-types.js -->
@@ -633,6 +652,7 @@
 <!-- @include js/vehicle-spec.js -->
 <!-- @include js/gear-window.js -->
 <!-- @include js/gg-window.js -->
+<!-- @include js/susp-window.js -->
 <!-- @include js/vehicle-accel.js -->
 <!-- @include js/tracks-gpx.js -->
 <!-- @include js/racing-line-lap.js -->

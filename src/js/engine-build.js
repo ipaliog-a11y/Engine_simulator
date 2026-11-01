@@ -43,7 +43,7 @@ function readEngineFromForm(){
     timingMode:g('edTiming').value,
     afrMode:g('edAfrMode').value,
     radiator:g('edRadiator').value,
-    radHp:Math.max(0,+g('edRadHp').value||0),   // what a STOCK radiator was sized for (build 218)
+    radHp:Math.max(0,+g('edRadHp').value||0),   // what a STOCK radiator was sized for (build 219)
     fan:g('edFan').value,
     oilCooler:g('edOilCooler').value==='yes',
     thermostat:clamp(Math.round(+g('edThermostat').value||88),71,95),

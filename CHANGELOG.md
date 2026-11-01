@@ -20,7 +20,7 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 Working toward **v1.0 — every number derived, not fitted.**
 
-### Real engines no longer read as grenades (build 218)
+### Real engines no longer read as grenades (build 219)
 
 The design reliability index (REL) put 11 real engines in the red and 42 in the yellow. Among them were a 911 GT3
 (36), a Ferrari 458 (38), a Civic Type R (44) and a McLaren 750S (35). The engines were fine. Four of the index's
@@ -60,8 +60,52 @@ terms charged factory engines for being what they are:
   acceleration against material limits. The grade's *safety* sub-score still reads 60 on every knock-limited engine,
   for the same reason the knock term did. It weighs 15% of the grade, and fixing it would move every grade, so it
   needs its own build.
-- test129 checks each rule, that no real engine reads red, and the guide in both languages. The Wear & reliability
+- test130 checks each rule, that no real engine reads red, and the guide in both languages. The Wear & reliability
   guide page and the README describe the new index.
+
+### Suspension calculator (build 218)
+
+A window for working out one corner of the car by hand, without changing it. **SUSPENSION CALCULATOR…** sits beside the
+dampers on the VEHICLE tab.
+
+- **It starts from the car's own corner**, the quarter car the lap runs on (build 216): sprung and unsprung mass,
+  wheel rate, damping and tyre rate, front or rear. Every input can then be changed: **sprung mass, unsprung mass,
+  spring rate, motion ratio, bound damping, rebound damping, tyre rate**, and the height of a **step in the road**.
+  FROM THE CAR puts the car's corner back, and a change of car starts it again from the new one.
+- **What it reads:**
+  - **the two natural frequencies**, exactly, as the roots of the two-mass system's equation, with the textbook
+    shortcuts beside them: the body on its ride rate (spring and tyre in series), √(k_ride/m_s), and the wheel
+    between the spring and the tyre, √((k_s + k_t)/m_u). On the M3 E46's front: 1.28 Hz body, 12.7 Hz wheel hop;
+  - the wheel rate and ride rate. A spring or damper whose end moves MR times the wheel's travel acts at the wheel
+    with MR² of its rate;
+  - **the damping as a share of critical**, 2√(k m_s), in bound, in rebound, and on a road wave; the body's damped
+    frequency, and the wheel hop's own damping;
+  - **the resonances**: a chart of the body's and the wheel's movement over the road's against the road wave's
+    frequency (0.3–40 Hz), with each peak marked. On the M3: the body ×2.23 at 1.23 Hz, the wheel ×2.04 at 11.7 Hz;
+  - **a step in the road, in time**: the body, wheel and road over 2 s, the body's overshoot, when it settles within
+    5%, the tyre's load range, and how long the wheel is in the air.
+- **Bound and rebound.** A damper stiffer one way than the other is not linear. Over a sine, the first harmonic of its
+  force is set by the mean of the two coefficients (its describing function), so the frequency chart uses the mean.
+  The step is solved in time (fourth-order Runge–Kutta, 0.1 ms) with each coefficient in its own direction, and with a
+  tyre that cannot pull on the road. Checked: a sine at the M3's body mode with rebound twice bound gives ×2.203 in
+  time against ×2.208 from the mean, 0.2% apart. The difference shows as a steady offset of the body (−25% of the wave
+  there), which the frequency chart cannot show.
+- **Sources:** Gillespie, *Fundamentals of Vehicle Dynamics*, ch. 5; Milliken & Milliken, *RCVD*, ch. 16; Dixon,
+  *The Shock Absorber Handbook* (2007), ch. 1 and 3.
+- **It changes nothing in the car.** The fingerprint (4824 values) is identical to build 217's.
+- **The guide's** *Dampers & the road* page describes the window (LV2) and the equations (LV3), in Greek too.
+- **Left open:** the lap's dampers are still one coefficient each way. Bound/rebound asymmetry on the lap, bump stops,
+  spring preload and progression, the damper's blow-off (a straight force-speed line is assumed), and the tyre's own
+  damping are not modelled, in the calculator or the lap. Putting asymmetric damping into the lap would move every
+  car's numbers, so it would be its own build.
+- **Tests:** test129 (new):
+  - the car's corner and damping;
+  - the modes against their equation, and the motion ratio;
+  - the resonance against the damping;
+  - the two-way damper in time against its describing function;
+  - rebound against overshoot, and the wheel leaving the road;
+  - nothing moves;
+  - the window, in Greek.
 
 ### Kerbs (build 217)
 

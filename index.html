@@ -148,6 +148,11 @@ footer{text-align:center;margin-top:16px;padding:8px;font-size:7px;color:#555;bo
 .gw-leg{display:flex;flex-wrap:wrap;gap:3px 12px;font-size:7px;color:#aab;margin-bottom:5px}
 .gw-leg i{display:inline-block;width:14px;height:0;border-top:2px solid;vertical-align:middle;margin-right:5px}
 .gw-leg i.d{border-top-style:dashed}.gw-leg i.b{height:7px;border:0}
+.sc-form{display:grid;gap:6px;margin:4px 0 8px}
+.sc-row{display:grid;grid-template-columns:minmax(0,1fr) 88px;gap:8px;align-items:center;font-size:7px;color:#aab;line-height:1.5}
+.sc-row input{width:100%;box-sizing:border-box;font-family:'Press Start 2P',monospace;font-size:8px;padding:5px;background:#12121c;color:#00ff88;border:2px solid #555;outline:none}
+.sc-row input:focus{border-color:#00ccff}
+.sc-dim{font-size:7px;color:#667}
 .gw-tip{position:absolute;pointer-events:none;font-size:7px;line-height:1.6;color:#e0e0e0;background:#151522;border:2px solid #444;padding:4px 6px;white-space:nowrap;display:none}
 .gg-read{display:block}.gg-row{margin-bottom:8px;line-height:1.6}
 .gg-ch canvas{aspect-ratio:4/3;cursor:default}
@@ -514,7 +519,7 @@ table.hy-map td:focus{outline:2px solid #ffcc00;outline-offset:-2px}
 </div>
 <div class="container">
 <header>
-<h1>PIXEL ENGINE SIM v0.7 build 218</h1>
+<h1>PIXEL ENGINE SIM v0.7 build 219</h1>
 <div class="subtitle" id="subtitle">ENGINE DESIGNER • BUILD IT, THEN DRIVE IT</div>
 </header>
 <div class="build-strip" id="buildStrip">
@@ -2513,7 +2518,8 @@ No road is flat. Over every bump the wheel is pushed up, the spring is squeezed,
 <b>FRONT DAMPERS</b> and <b>REAR DAMPERS</b> on the VEHICLE tab go from SOFT −2 to STIFF +2 about the suspension kit's own damping. Each step is 1.3× the damping; off STANDARD they are new parts.<br>
 The summary shows each axle's damping as a share of critical damping, the wheel-hop frequency, and the <b>ride</b>: how hard the body is shaken at 80 km/h on an ordinary good road. Lower is more comfortable.<br>
 On the TRACK, every circuit has a road surface: purpose-built circuits are smooth, older and public-road circuits bumpier, and the Nordschleife bumpiest. The bumps cost grip wherever the tyres work, cornering, braking and driving, and more at speed. Damping near half of critical keeps the tyres' load steadiest. Softer is more comfortable but lets the wheels hop; stiffer shakes the car and the tyres again. Stiffer springs on the same dampers are damped less, and cost a little grip on bumps.<br>
-The 0–100, braking and skidpad tests are run on a smooth surface, so the dampers do not change them.
+The 0–100, braking and skidpad tests are run on a smooth surface, so the dampers do not change them.<br>
+<b>SUSPENSION CALCULATOR…</b>, beside the dampers, opens one corner of the car on its own: its sprung and unsprung mass, spring rate and motion ratio, bound and rebound damping and tyre rate, all of which you can change. It shows the two natural frequencies (the body's bounce and the wheel's hop), the damping as a share of critical, how much the body and the wheel move over a road wave at each frequency, and the corner driven onto a step in the road. Nothing changed there goes back to the car.
 </div>
 </div>
 <div class="gtier gt-phys"><div class="gtier-h">LV3 · THE PHYSICS</div>
@@ -2530,7 +2536,10 @@ with c from the quarter car's response, worked out for each axle from its own sp
 <b>Why a swinging load costs grip.</b> A tyre's grip grows less than in proportion to its load (load sensitivity, μ ∝ F<sub>z</sub><sup>−0.15</sup>), so its force goes as F<sub>z</sub><sup>0.85</sup>, a curve that bends down. A load swinging about its mean therefore averages less force than a steady one. The load cannot pull on the road, so it stops at zero while the wheel is in the air, and its mean stays the car's weight (the landing is harder):
 <span class="geq">grip kept = E[ L<sup>0.85</sup> ],  L = max(0, 1 + x) rescaled to mean 1,  x ~ Normal(0, σ<sub>F</sub>/F<sub>z</sub>)</span>
 Each tyre keeps that share of its force, the lightly loaded inside tyre the least. At 180 km/h on a smooth circuit a road car's tyres swing about 10% and lose under 0.1%; on the Nordschleife about 17% and roughly 0.1–0.2%.<br>
-<b>The ride</b> is the body's RMS vertical acceleration from the same quarter car, unweighted (ISO 2631's comfort weighting is not applied).
+<b>The ride</b> is the body's RMS vertical acceleration from the same quarter car, unweighted (ISO 2631's comfort weighting is not applied).<br>
+<b>The calculator's two frequencies</b> are the undamped quarter car's modes, the roots of
+<span class="geq">m<sub>s</sub> m<sub>u</sub> ω⁴ − (m<sub>s</sub>(k<sub>s</sub> + k<sub>t</sub>) + m<sub>u</sub> k<sub>s</sub>) ω² + k<sub>s</sub> k<sub>t</sub> = 0</span>
+close to the shortcuts √(k<sub>ride</sub>/m<sub>s</sub>), the body on the spring and tyre in series, and √((k<sub>s</sub> + k<sub>t</sub>)/m<sub>u</sub>), the wheel between them. A spring or damper whose end moves MR times the wheel acts at the wheel with MR² of its rate. A damper stiffer in rebound than in bound is not linear: over a road wave the first harmonic of its force is set by the mean of the two, so that is the damper the frequency response uses; the step is run in time with each in its own direction, and shows what the mean hides.
 </div>
 <div class="guide-limit" data-gk="dampersLimit">
 Limit: the bumps act only through load sensitivity and wheel hop. A real tyre's force also lags a change of load (kerbs are their own page: <a data-gp="kerbs">Kerbs</a>), and dampers also steady the body at turn-in and keep an aero car's floor at its height; none of these is modelled, so this is the least the road costs. No circuit's surface has been measured to ISO 8608 that we can find, so each circuit's roughness is an estimate by its kind.
@@ -3168,6 +3177,7 @@ Most other tests check behaviour that is true of real cars: a bigger turbo spool
 <div class="field"><label for="vhBarR">REAR ANTI-ROLL BAR</label><select id="vhBarR"><option value="-2">SOFT −2</option><option value="-1">SOFT −1</option><option value="0" selected>STANDARD</option><option value="1">STIFF +1</option><option value="2">STIFF +2</option></select></div>
 <div class="field"><label for="vhDamperF">FRONT DAMPERS</label><select id="vhDamperF"><option value="-2">SOFT −2</option><option value="-1">SOFT −1</option><option value="0" selected>STANDARD</option><option value="1">STIFF +1</option><option value="2">STIFF +2</option></select></div>
 <div class="field"><label for="vhDamperR">REAR DAMPERS</label><select id="vhDamperR"><option value="-2">SOFT −2</option><option value="-1">SOFT −1</option><option value="0" selected>STANDARD</option><option value="1">STIFF +1</option><option value="2">STIFF +2</option></select></div>
+<div class="field"><label for="btnSusp">QUARTER CAR</label><button id="btnSusp" type="button">SUSPENSION CALCULATOR…</button></div>
 </div>
 <div class="build-row">
 <button id="btnRefit">REFIT FACTORY SPEC</button>
@@ -3459,6 +3469,24 @@ Most other tests check behaviour that is true of real cars: a bigger turbo spool
 </div>
 <div>
 <div class="gw-ch gg-ch"><div class="t" id="ggT">ACCELERATION ALONG THE ROAD AGAINST SIDEWAYS (g)</div><div class="gw-leg" id="ggLeg"></div><canvas id="ggCanvas" role="img" aria-label="G-G diagram: the car's braking, drive and cornering limits at three road speeds, with the lap's points"></canvas></div>
+</div>
+</div>
+</div>
+</div>
+<div class="gw-back" id="susWin" hidden>
+<div class="gw" role="dialog" aria-modal="true" aria-labelledby="susTitle">
+<div class="gw-head"><h3 id="susTitle">SUSPENSION CALCULATOR</h3><span class="sub" id="susSub"></span><button id="susClose" type="button" aria-label="Close">✕</button></div>
+<div class="gw-body">
+<div>
+<div class="gw-k" id="susKC">CORNER</div><div class="gw-sp" id="susCorner"></div>
+<div id="susForm" class="sc-form"></div>
+<div class="btn-row"><button id="susReset" type="button">FROM THE CAR</button></div>
+<div class="gw-note" id="susNote"></div>
+</div>
+<div>
+<div class="gw-read gg-read" id="susRead"></div>
+<div class="gw-ch"><div class="t" id="susTF">RESPONSE TO A ROAD WAVE</div><div class="gw-leg" id="susLegF"></div><canvas id="susFreq" role="img" aria-label="The body's and the wheel's movement over the road's, against the road wave's frequency"></canvas></div>
+<div class="gw-ch"><div class="t" id="susTS">OVER A STEP IN THE ROAD (mm)</div><div class="gw-leg" id="susLegS"></div><canvas id="susStep" role="img" aria-label="The body, the wheel and the road against time, over a step in the road"></canvas></div>
 </div>
 </div>
 </div>
@@ -5329,6 +5357,23 @@ const I18N={
   'Pick a chassis and it arrives on its factory spec — matching tyres, wheels, brakes, suspension and aero. Swap any part from there; your current engine is dropped in and the performance is computed live.':{el:'Διάλεξε σασί και έρχεται με τον εργοστασιακό του εξοπλισμό — ταιριαστά ελαστικά, ζάντες, φρένα, ανάρτηση και αεροδυναμική. Άλλαξε ό,τι θέλεις από εκεί· ο τρέχων κινητήρας μπαίνει μέσα και οι επιδόσεις υπολογίζονται ζωντανά.'},
   'Chassis & Drivetrain':{el:'Σασί & Μετάδοση'},'CHASSIS':{el:'ΣΑΣΙ'},'DRIVETRAIN':{el:'ΜΕΤΑΔΟΣΗ'},'GEARBOX (SPEEDS)':{el:'ΚΙΒΩΤΙΟ (ΣΧΕΣΕΙΣ)'},'GEAR SPACING':{el:'ΚΛΙΜΑΚΩΣΗ ΣΧΕΣΕΩΝ'},'DIESEL RATED SPEED (rpm, 0 = off)':{el:'ΟΝΟΜΑΣΤΙΚΕΣ ΣΤΡΟΦΕΣ ΠΕΤΡΕΛΑΙΟΥ (rpm, 0 = εκτός)'},'no drive cut':{el:'χωρίς διακοπή μετάδοσης'},'RATIOS & GRAPHS':{el:'ΣΧΕΣΕΙΣ & ΓΡΑΦΗΜΑΤΑ'},'GEAR RATIOS…':{el:'ΣΧΕΣΕΙΣ ΚΙΒΩΤΙΟΥ…'},'GEAR RATIOS':{el:'ΣΧΕΣΕΙΣ ΚΙΒΩΤΙΟΥ'},
   'EGR':{el:'ΑΝΑΚΥΚΛΟΦΟΡΙΑ ΚΑΥΣΑΕΡΙΩΝ'},'COOLED, OFF AT FULL LOAD':{el:'ΨΥΧΟΜΕΝΗ, ΟΧΙ ΣΤΟ ΠΛΗΡΕΣ ΦΟΡΤΙΟ'},'COOLED, TO FULL LOAD':{el:'ΨΥΧΟΜΕΝΗ, ΩΣ ΤΟ ΠΛΗΡΕΣ ΦΟΡΤΙΟ'},   // cooled EGR (build 204)
+  // the SUSPENSION CALCULATOR window (build 218)
+  'QUARTER CAR':{el:'ΤΕΤΑΡΤΟ ΑΥΤΟΚΙΝΗΤΟΥ'},'SUSPENSION CALCULATOR…':{el:'ΥΠΟΛΟΓΙΣΤΗΣ ΑΝΑΡΤΗΣΗΣ…'},'SUSPENSION CALCULATOR':{el:'ΥΠΟΛΟΓΙΣΤΗΣ ΑΝΑΡΤΗΣΗΣ'},
+  'CORNER':{el:'ΓΩΝΙΑ'},'FRONT':{el:'ΕΜΠΡΟΣ'},'REAR':{el:'ΠΙΣΩ'},'FROM THE CAR':{el:'ΑΠΟ ΤΟ ΑΥΤΟΚΙΝΗΤΟ'},
+  'SPRUNG MASS (kg)':{el:'ΑΝΑΡΤΗΜΕΝΗ ΜΑΖΑ (kg)'},'UNSPRUNG MASS (kg)':{el:'ΜΗ ΑΝΑΡΤΗΜΕΝΗ ΜΑΖΑ (kg)'},'SPRING RATE (N/mm)':{el:'ΣΚΛΗΡΟΤΗΤΑ ΕΛΑΤΗΡΙΟΥ (N/mm)'},
+  'MOTION RATIO (spring / wheel travel)':{el:'ΛΟΓΟΣ ΚΙΝΗΣΗΣ (διαδρομή ελατηρίου / τροχού)'},'BOUND DAMPING (N·s/m)':{el:'ΑΠΟΣΒΕΣΗ ΣΥΜΠΙΕΣΗΣ (N·s/m)'},
+  'REBOUND DAMPING (N·s/m)':{el:'ΑΠΟΣΒΕΣΗ ΕΚΤΑΣΗΣ (N·s/m)'},'TYRE RATE (N/mm)':{el:'ΣΚΛΗΡΟΤΗΤΑ ΕΛΑΣΤΙΚΟΥ (N/mm)'},'STEP IN THE ROAD (mm)':{el:'ΣΚΑΛΟΠΑΤΙ ΣΤΟΝ ΔΡΟΜΟ (mm)'},
+  'Body bounce':{el:'Ταλάντωση αμαξώματος'},'Wheel hop':{el:'Αναπήδηση τροχού'},'shortcut':{el:'σύντομος τύπος'},'Wheel rate':{el:'Σκληρότητα στον τροχό'},'Ride rate':{el:'Σκληρότητα κύλισης'},
+  'Damping, share of critical':{el:'Απόσβεση, μέρος της κρίσιμης'},'bound':{el:'συμπίεση'},'rebound':{el:'έκταση'},'on a road wave':{el:'σε κύμα του δρόμου'},
+  'Damped body bounce':{el:'Ταλάντωση αμαξώματος με απόσβεση'},'none: past critical':{el:'καμία: πέρα από την κρίσιμη'},'Wheel hop damping':{el:'Απόσβεση αναπήδησης τροχού'},
+  'Resonance: body':{el:'Συντονισμός: αμάξωμα'},'Resonance: wheel':{el:'Συντονισμός: τροχός'},'at':{el:'στα'},
+  'Over the step: body overshoot':{el:'Στο σκαλοπάτι: υπέρβαση αμαξώματος'},'Settles within 5%':{el:'Ηρεμεί εντός 5%'},'not within 2 s':{el:'όχι μέσα σε 2 s'},
+  'Tyre load':{el:'Φορτίο ελαστικού'},'of static':{el:'του στατικού'},'Wheel in the air':{el:'Τροχός στον αέρα'},'never':{el:'ποτέ'},
+  'RESPONSE TO A ROAD WAVE: MOVEMENT OVER THE ROAD\'S':{el:'ΑΠΟΚΡΙΣΗ ΣΕ ΚΥΜΑ ΤΟΥ ΔΡΟΜΟΥ: ΚΙΝΗΣΗ ΩΣ ΠΡΟΣ ΤΗΝ ΚΙΝΗΣΗ ΤΟΥ ΔΡΟΜΟΥ'},'OVER A STEP IN THE ROAD (mm)':{el:'ΠΑΝΩ ΑΠΟ ΣΚΑΛΟΠΑΤΙ ΣΤΟΝ ΔΡΟΜΟ (mm)'},
+  'body':{el:'αμάξωμα'},'wheel':{el:'τροχός'},'road':{el:'δρόμος'},'the two natural frequencies':{el:'οι δύο ιδιοσυχνότητες'},
+  'A calculator: it starts from the car\'s own corner, the quarter car the lap runs on, and nothing changed here goes back to the car. The rates are taken at the wheel through the motion ratio squared. A road wave meets the mean of the bound and rebound damping; the step uses each in its own direction, and the tyre cannot pull on the road. Bump stops, preload and the damper\'s blow-off are left out.':{el:'Ένας υπολογιστής: ξεκινά από την ίδια τη γωνία του αυτοκινήτου, το τέταρτο αυτοκινήτου με το οποίο λύνεται ο γύρος, και τίποτα από όσα αλλάζεις εδώ δεν περνά στο αυτοκίνητο. Οι σκληρότητες λογίζονται στον τροχό μέσω του τετραγώνου του λόγου κίνησης. Ένα κύμα του δρόμου συναντά τον μέσο όρο της απόσβεσης συμπίεσης και έκτασης· το σκαλοπάτι χρησιμοποιεί την καθεμία στη δική της κατεύθυνση, και το ελαστικό δεν μπορεί να τραβήξει τον δρόμο. Οι αναστολείς διαδρομής, η προφόρτιση και η βαλβίδα εκτόνωσης του αμορτισέρ παραλείπονται.'},
+  'The body\'s and the wheel\'s movement over the road\'s, against the road wave\'s frequency':{el:'Η κίνηση του αμαξώματος και του τροχού ως προς του δρόμου, ανάλογα με τη συχνότητα του κύματος'},
+  'The body, the wheel and the road against time, over a step in the road':{el:'Το αμάξωμα, ο τροχός και ο δρόμος στον χρόνο, πάνω από σκαλοπάτι στον δρόμο'},
   // the G-G DIAGRAM window (build 200)
   'G-G DIAGRAM…':{el:'ΔΙΑΓΡΑΜΜΑ G-G…'},'G-G DIAGRAM':{el:'ΔΙΑΓΡΑΜΜΑ G-G'},'ACCELERATION ALONG THE ROAD AGAINST SIDEWAYS (g)':{el:'ΔΙΑΜΗΚΗΣ ΕΠΙΤΑΧΥΝΣΗ ΩΣ ΠΡΟΣ ΠΛΕΥΡΙΚΗ (g)'},'the lap':{el:'ο γύρος'},'sideways':{el:'πλευρικά'},'braking':{el:'φρενάρισμα'},'power':{el:'ισχύς'},'traction':{el:'πρόσφυση'},'brakes':{el:'φρένα'},'tyres':{el:'ελαστικά'},'DRIVE':{el:'ΩΘΗΣΗ'},'SIDEWAYS':{el:'ΠΛΕΥΡΙΚΑ'},'accelerating':{el:'επιτάχυνση'},'Every point is the lap\'s own physics at that speed on level road: the tightest corner the car can take, and at each share of it the most it can brake and drive. The downforce widens the envelope with speed; the drag and the power shrink its top. The dots are every point of the lap on the TRACK tab\'s circuit: a car driven at its limit runs round the edge, and past it where a dip in the road presses it down.':{el:'Κάθε σημείο είναι η φυσική του ίδιου του γύρου σε αυτή την ταχύτητα σε επίπεδο δρόμο: η πιο κλειστή στροφή που μπορεί να πάρει το αυτοκίνητο, και σε κάθε μέρος της το περισσότερο φρενάρισμα και ώθηση. Η κάθετη δύναμη ανοίγει το περίγραμμα με την ταχύτητα· η αντίσταση αέρα και η ισχύς μικραίνουν την κορυφή του. Οι κουκκίδες είναι κάθε σημείο του γύρου στην πίστα της καρτέλας ΠΙΣΤΑ: ένα αυτοκίνητο στο όριό του κινείται γύρω από την άκρη, και πέρα από αυτήν όπου μια βύθιση του δρόμου το πιέζει προς τα κάτω.'},'G-G diagram: the car\'s braking, drive and cornering limits at three road speeds, with the lap\'s points':{el:'Διάγραμμα G-G: τα όρια φρεναρίσματος, ώθησης και στροφής του αυτοκινήτου σε τρεις ταχύτητες, με τα σημεία του γύρου'},
   'SPACING':{el:'ΚΛΙΜΑΚΩΣΗ'},'RATIO · ROAD SPEED AT THE LIMITER':{el:'ΣΧΕΣΗ · ΤΑΧΥΤΗΤΑ ΣΤΟΝ ΚΟΦΤΗ'},'ENGINE RPM AGAINST ROAD SPEED':{el:'ΣΤΡΟΦΕΣ ΚΙΝΗΤΗΡΑ ΠΡΟΣ ΤΑΧΥΤΗΤΑ'},
@@ -5852,8 +5897,8 @@ const GUIDE_I18N={
   backpressure:{el:"<b>Η αντίθλιψη είναι φόρος σε όλα.</b> Ό,τι δεν μπορεί να σπρώξει έξω το έμβολο, το πληρώνει δύο φορές: μία ως έργο άντλησης στον χρόνο εξαγωγής, και ξανά ως <b>υπολειμματικά καυσαέρια</b> — ζεστό καμένο φορτίο που μένει στον νεκρό όγκο και παίρνει τη θέση του φρέσκου αέρα. Ο βρόχος άντλησης είναι απλώς <i>p<sub>exhaust</sub> − p<sub>intake</sub></i>, οπότε μια εξάτμιση που αναπνέει ελεύθερα αξίζει πραγματική ισχύ και μια περιοριστική αξίζει λιγότερο απ' όσο υπονοεί μόνος του ο αριθμός της αντίθλιψης."},
   backpressurePhys:{el:"Η αντίθλιψη είναι η τριβή Darcy-Weisbach στον σωλήνα με την ταχύτητα που πραγματικά ρέει, συν ό,τι υπάρχει μετά τον συλλέκτη (ένα σύστημα διαστασιολογημένο για τη ροή του ίδιου του κινητήρα: περίπου 105 m/s μέση ταχύτητα αερίου για εργοστασιακό σύστημα, 78 για σπορ, 58 για αγωνιστικό), συν τον καταλύτη ως πορώδες πώμα: <span class=\"geq\">Δp = f · (L/D) · ½ρv²</span> Το καμένο αέριο που μένει πίσω εξαρτάται από την πίεση εξαγωγής απέναντι στην πίεση <i>εισαγωγής</i>, που μετράει τεράστια σε έναν τούρμπο κινητήρα: <span class=\"geq\">f<sub>res</sub> = 1/(r<sub>c</sub> − 1) · (p<sub>exh</sub> / p<sub>int</sub>)<sup>1/γ</sup></span> Η απώλεια VE είναι η υπέρβαση πάνω από την ισορροπημένη περίπτωση <i>p<sub>exh</sub> = p<sub>int</sub></i>. Το υπόλοιπο αέριο είναι επίσης ζεστό, περίπου 1000 K σε πλήρες φορτίο, οπότε ζεσταίνει το φρέσκο φορτίο και το σπρώχνει προς τα πειράκια."},
   dampersReal:{el:"Κανένας δρόμος δεν είναι επίπεδος. Σε κάθε ανωμαλία ο τροχός σπρώχνεται πάνω, το ελατήριο συμπιέζεται και το ελαστικό πιέζεται πιο δυνατά στον δρόμο· σε κάθε βύθισμα αφήνεται. Ένα <b>αμορτισέρ</b> είναι ένα έμβολο μέσα σε λάδι που αντιστέκεται στην κίνηση, ώστε ο τροχός και το αμάξωμα να σταματούν να αναπηδούν αντί να συνεχίζουν. Πολύ μαλακό, και ο τροχός χοροπηδά πάνω στις ανωμαλίες, μερικές φορές αφήνοντας εντελώς τον δρόμο (<b>αναπήδηση τροχού</b>). Πολύ σκληρό, και κάθε ανωμαλία περνά κατευθείαν στο αμάξωμα και το ελαστικό τινάζεται αντί να πιέζεται σταθερά. Τα αυτοκίνητα δρόμου έχουν μαλακή απόσβεση για άνεση· τα αγωνιστικά πιο σφιχτή, για να δουλεύουν τα ελαστικά."},
-  dampers:{el:"Τα <b>ΑΜΟΡΤΙΣΕΡ ΕΜΠΡΟΣ</b> και <b>ΑΜΟΡΤΙΣΕΡ ΠΙΣΩ</b> στην καρτέλα ΟΧΗΜΑ πάνε από ΜΑΛΑΚΑ −2 έως ΣΚΛΗΡΑ +2 γύρω από την απόσβεση του κιτ ανάρτησης. Κάθε βήμα είναι 1.3× η απόσβεση· εκτός ΣΤΑΝΤΑΡ είναι νέα εξαρτήματα.<br>Η σύνοψη δείχνει την απόσβεση κάθε άξονα ως μέρος της κρίσιμης, τη συχνότητα αναπήδησης του τροχού και την <b>άνεση κύλισης</b>: πόσο δυνατά τινάζεται το αμάξωμα στα 80 km/h σε έναν συνηθισμένο καλό δρόμο. Μικρότερο είναι πιο άνετο.<br>Στην ΠΙΣΤΑ, κάθε πίστα έχει την επιφάνειά της: οι αγωνιστικές πίστες είναι λείες, οι παλιότερες και όσες τρέχουν σε δημόσιους δρόμους πιο ανώμαλες, και το Nordschleife το πιο ανώμαλο. Οι ανωμαλίες κοστίζουν πρόσφυση όπου δουλεύουν τα ελαστικά, στη στροφή, στο φρενάρισμα και στην επιτάχυνση, και περισσότερο με ταχύτητα. Απόσβεση κοντά στο μισό της κρίσιμης κρατά πιο σταθερό το φορτίο των ελαστικών. Πιο μαλακά είναι πιο άνετα αλλά αφήνουν τους τροχούς να αναπηδούν· πιο σκληρά τινάζουν ξανά το αυτοκίνητο και τα ελαστικά. Τα σκληρότερα ελατήρια στα ίδια αμορτισέρ έχουν λιγότερη απόσβεση και κοστίζουν λίγη πρόσφυση στις ανωμαλίες.<br>Οι δοκιμές 0–100, φρεναρίσματος και skidpad γίνονται σε λεία επιφάνεια, οπότε τα αμορτισέρ δεν τις αλλάζουν."},
-  dampersPhys:{el:"<div class=\"gtab-wrap\"><table class=\"gtab\"><tr><th>στήσιμο</th><th>απόσβεση (μέρος της κρίσιμης)</th></tr><tr><td>άνεση</td><td>0.25</td></tr><tr><td>σπορ</td><td>0.30</td></tr><tr><td>coilovers</td><td>0.45</td></tr><tr><td>αγωνιστικό</td><td>0.60</td></tr></table></div>Τα επιβατικά έχουν απόσβεση 0.2–0.3 της κρίσιμης, τα αγωνιστικά 0.5–0.7, και το 0.45 θεωρείται το βέλτιστο για αγωνιστικό.<br><b>Το τέταρτο του αυτοκινήτου.</b> Κάθε γωνία είναι το μερίδιο του αμαξώματος πάνω στο ελατήριο και το αμορτισέρ, ο τροχός (12% της μάζας της γωνίας) από κάτω, και η κατακόρυφη ακαμψία του ελαστικού κάτω από αυτόν (250 kN/m για ένα 205/55R16, ανάλογα με τη ρίζα του πλάτους επί τη διάμετρο). Αυτό δίνει την αναπήδηση 10–15 Hz που έχουν τα πραγματικά αυτοκίνητα.<br><b>Ο δρόμος</b> είναι του ISO 8608: ένα προφίλ του οποίου το φάσμα πέφτει με το τετράγωνο της χωρικής συχνότητας,<span class=\"geq\">G<sub>d</sub>(n) = G<sub>d</sub>(n<sub>0</sub>) · (n / n<sub>0</sub>)<sup>−2</sup>, n<sub>0</sub> = 0.1 κύκλος/m</span>Η κατηγορία A, πολύ καλή, φτάνει έως 32×10⁻⁶ m³, και κάθε κατηγορία είναι τετραπλάσια της προηγούμενης. Με ταχύτητα v, αυτό είναι λευκή είσοδος ταχύτητας, οπότε το φορτίο του ελαστικού ταλαντεύεται κατά<span class=\"geq\">σ<sub>F</sub> = c · √(G<sub>d</sub>(n<sub>0</sub>) · v)</span>με το c από την απόκριση του τέταρτου του αυτοκινήτου, για κάθε άξονα από τα δικά του ελατήρια, αμορτισέρ, μάζες και ελαστικά.<br><b>Γιατί ένα ταλαντευόμενο φορτίο κοστίζει πρόσφυση.</b> Η πρόσφυση ενός ελαστικού μεγαλώνει λιγότερο από ανάλογα με το φορτίο του (ευαισθησία φορτίου, μ ∝ F<sub>z</sub><sup>−0.15</sup>), άρα η δύναμή του πάει ως F<sub>z</sub><sup>0.85</sup>, μια καμπύλη που λυγίζει προς τα κάτω. Ένα φορτίο που ταλαντεύεται γύρω από τη μέση τιμή του δίνει κατά μέσο όρο λιγότερη δύναμη από ένα σταθερό. Το φορτίο δεν μπορεί να τραβήξει τον δρόμο, οπότε σταματά στο μηδέν όσο ο τροχός είναι στον αέρα, και η μέση τιμή του μένει το βάρος του αυτοκινήτου (η προσγείωση είναι πιο σκληρή):<span class=\"geq\">πρόσφυση που μένει = E[ L<sup>0.85</sup> ],  L = max(0, 1 + x) αναγμένο σε μέση τιμή 1,  x ~ Κανονική(0, σ<sub>F</sub>/F<sub>z</sub>)</span>Κάθε ελαστικό κρατά αυτό το μερίδιο της δύναμής του, το ελαφριά φορτωμένο εσωτερικό το λιγότερο. Στα 180 km/h σε λεία πίστα τα ελαστικά ενός αυτοκινήτου δρόμου ταλαντεύονται περίπου 10% και χάνουν κάτω από 0.1%· στο Nordschleife περίπου 17% και χονδρικά 0.1–0.2%.<br><b>Η άνεση κύλισης</b> είναι η RMS κατακόρυφη επιτάχυνση του αμαξώματος από το ίδιο μοντέλο, χωρίς στάθμιση (η στάθμιση άνεσης του ISO 2631 δεν εφαρμόζεται)."},
+  dampers:{el:"Τα <b>ΑΜΟΡΤΙΣΕΡ ΕΜΠΡΟΣ</b> και <b>ΑΜΟΡΤΙΣΕΡ ΠΙΣΩ</b> στην καρτέλα ΟΧΗΜΑ πάνε από ΜΑΛΑΚΑ −2 έως ΣΚΛΗΡΑ +2 γύρω από την απόσβεση του κιτ ανάρτησης. Κάθε βήμα είναι 1.3× η απόσβεση· εκτός ΣΤΑΝΤΑΡ είναι νέα εξαρτήματα.<br>Η σύνοψη δείχνει την απόσβεση κάθε άξονα ως μέρος της κρίσιμης, τη συχνότητα αναπήδησης του τροχού και την <b>άνεση κύλισης</b>: πόσο δυνατά τινάζεται το αμάξωμα στα 80 km/h σε έναν συνηθισμένο καλό δρόμο. Μικρότερο είναι πιο άνετο.<br>Στην ΠΙΣΤΑ, κάθε πίστα έχει την επιφάνειά της: οι αγωνιστικές πίστες είναι λείες, οι παλιότερες και όσες τρέχουν σε δημόσιους δρόμους πιο ανώμαλες, και το Nordschleife το πιο ανώμαλο. Οι ανωμαλίες κοστίζουν πρόσφυση όπου δουλεύουν τα ελαστικά, στη στροφή, στο φρενάρισμα και στην επιτάχυνση, και περισσότερο με ταχύτητα. Απόσβεση κοντά στο μισό της κρίσιμης κρατά πιο σταθερό το φορτίο των ελαστικών. Πιο μαλακά είναι πιο άνετα αλλά αφήνουν τους τροχούς να αναπηδούν· πιο σκληρά τινάζουν ξανά το αυτοκίνητο και τα ελαστικά. Τα σκληρότερα ελατήρια στα ίδια αμορτισέρ έχουν λιγότερη απόσβεση και κοστίζουν λίγη πρόσφυση στις ανωμαλίες.<br>Οι δοκιμές 0–100, φρεναρίσματος και skidpad γίνονται σε λεία επιφάνεια, οπότε τα αμορτισέρ δεν τις αλλάζουν.<br><b>ΥΠΟΛΟΓΙΣΤΗΣ ΑΝΑΡΤΗΣΗΣ…</b>, δίπλα στα αμορτισέρ, ανοίγει μία γωνία του αυτοκινήτου μόνη της: την αναρτημένη και τη μη αναρτημένη μάζα, τη σκληρότητα του ελατηρίου και τον λόγο κίνησης, την απόσβεση συμπίεσης και έκτασης και τη σκληρότητα του ελαστικού, που μπορείς όλα να τα αλλάξεις. Δείχνει τις δύο ιδιοσυχνότητες (την ταλάντωση του αμαξώματος και την αναπήδηση του τροχού), την απόσβεση ως μέρος της κρίσιμης, πόσο κινούνται το αμάξωμα και ο τροχός πάνω από ένα κύμα του δρόμου σε κάθε συχνότητα, και τη γωνία να ανεβαίνει σε σκαλοπάτι του δρόμου. Τίποτα από όσα αλλάζεις εκεί δεν περνά στο αυτοκίνητο."},
+  dampersPhys:{el:"<div class=\"gtab-wrap\"><table class=\"gtab\"><tr><th>στήσιμο</th><th>απόσβεση (μέρος της κρίσιμης)</th></tr><tr><td>άνεση</td><td>0.25</td></tr><tr><td>σπορ</td><td>0.30</td></tr><tr><td>coilovers</td><td>0.45</td></tr><tr><td>αγωνιστικό</td><td>0.60</td></tr></table></div>Τα επιβατικά έχουν απόσβεση 0.2–0.3 της κρίσιμης, τα αγωνιστικά 0.5–0.7, και το 0.45 θεωρείται το βέλτιστο για αγωνιστικό.<br><b>Το τέταρτο του αυτοκινήτου.</b> Κάθε γωνία είναι το μερίδιο του αμαξώματος πάνω στο ελατήριο και το αμορτισέρ, ο τροχός (12% της μάζας της γωνίας) από κάτω, και η κατακόρυφη ακαμψία του ελαστικού κάτω από αυτόν (250 kN/m για ένα 205/55R16, ανάλογα με τη ρίζα του πλάτους επί τη διάμετρο). Αυτό δίνει την αναπήδηση 10–15 Hz που έχουν τα πραγματικά αυτοκίνητα.<br><b>Ο δρόμος</b> είναι του ISO 8608: ένα προφίλ του οποίου το φάσμα πέφτει με το τετράγωνο της χωρικής συχνότητας,<span class=\"geq\">G<sub>d</sub>(n) = G<sub>d</sub>(n<sub>0</sub>) · (n / n<sub>0</sub>)<sup>−2</sup>, n<sub>0</sub> = 0.1 κύκλος/m</span>Η κατηγορία A, πολύ καλή, φτάνει έως 32×10⁻⁶ m³, και κάθε κατηγορία είναι τετραπλάσια της προηγούμενης. Με ταχύτητα v, αυτό είναι λευκή είσοδος ταχύτητας, οπότε το φορτίο του ελαστικού ταλαντεύεται κατά<span class=\"geq\">σ<sub>F</sub> = c · √(G<sub>d</sub>(n<sub>0</sub>) · v)</span>με το c από την απόκριση του τέταρτου του αυτοκινήτου, για κάθε άξονα από τα δικά του ελατήρια, αμορτισέρ, μάζες και ελαστικά.<br><b>Γιατί ένα ταλαντευόμενο φορτίο κοστίζει πρόσφυση.</b> Η πρόσφυση ενός ελαστικού μεγαλώνει λιγότερο από ανάλογα με το φορτίο του (ευαισθησία φορτίου, μ ∝ F<sub>z</sub><sup>−0.15</sup>), άρα η δύναμή του πάει ως F<sub>z</sub><sup>0.85</sup>, μια καμπύλη που λυγίζει προς τα κάτω. Ένα φορτίο που ταλαντεύεται γύρω από τη μέση τιμή του δίνει κατά μέσο όρο λιγότερη δύναμη από ένα σταθερό. Το φορτίο δεν μπορεί να τραβήξει τον δρόμο, οπότε σταματά στο μηδέν όσο ο τροχός είναι στον αέρα, και η μέση τιμή του μένει το βάρος του αυτοκινήτου (η προσγείωση είναι πιο σκληρή):<span class=\"geq\">πρόσφυση που μένει = E[ L<sup>0.85</sup> ],  L = max(0, 1 + x) αναγμένο σε μέση τιμή 1,  x ~ Κανονική(0, σ<sub>F</sub>/F<sub>z</sub>)</span>Κάθε ελαστικό κρατά αυτό το μερίδιο της δύναμής του, το ελαφριά φορτωμένο εσωτερικό το λιγότερο. Στα 180 km/h σε λεία πίστα τα ελαστικά ενός αυτοκινήτου δρόμου ταλαντεύονται περίπου 10% και χάνουν κάτω από 0.1%· στο Nordschleife περίπου 17% και χονδρικά 0.1–0.2%.<br><b>Η άνεση κύλισης</b> είναι η RMS κατακόρυφη επιτάχυνση του αμαξώματος από το ίδιο μοντέλο, χωρίς στάθμιση (η στάθμιση άνεσης του ISO 2631 δεν εφαρμόζεται).<br><b>Οι δύο συχνότητες του υπολογιστή</b> είναι οι ιδιομορφές του τετάρτου αυτοκινήτου χωρίς απόσβεση, οι ρίζες της<span class=\"geq\">m<sub>s</sub> m<sub>u</sub> ω⁴ − (m<sub>s</sub>(k<sub>s</sub> + k<sub>t</sub>) + m<sub>u</sub> k<sub>s</sub>) ω² + k<sub>s</sub> k<sub>t</sub> = 0</span>κοντά στους σύντομους τύπους √(k<sub>ride</sub>/m<sub>s</sub>), το αμάξωμα πάνω στο ελατήριο και στο ελαστικό σε σειρά, και √((k<sub>s</sub> + k<sub>t</sub>)/m<sub>u</sub>), ο τροχός ανάμεσά τους. Ένα ελατήριο ή αμορτισέρ που η άκρη του κινείται MR φορές όσο ο τροχός δρα στον τροχό με MR² της σκληρότητάς του. Ένα αμορτισέρ πιο σκληρό στην έκταση από τη συμπίεση δεν είναι γραμμικό: σε κύμα του δρόμου η πρώτη αρμονική της δύναμής του ορίζεται από τον μέσο όρο των δύο, και αυτό είναι το αμορτισέρ που χρησιμοποιεί η απόκριση συχνότητας· το σκαλοπάτι λύνεται στον χρόνο με την καθεμία στη δική της κατεύθυνση, και δείχνει ό,τι κρύβει ο μέσος όρος."},
   dampersLimit:{el:"Όριο: οι ανωμαλίες δρουν μόνο μέσω της ευαισθησίας φορτίου και της αναπήδησης του τροχού. Η δύναμη ενός πραγματικού ελαστικού καθυστερεί επίσης μια αλλαγή φορτίου (τα κερμπ έχουν δική τους σελίδα: <a data-gp=\"kerbs\">Κερμπ</a>), και τα αμορτισέρ επίσης σταθεροποιούν το αμάξωμα στην είσοδο της στροφής και κρατούν το δάπεδο ενός αεροδυναμικού αυτοκινήτου στο ύψος του· τίποτα από αυτά δεν μοντελοποιείται, άρα αυτό είναι το λιγότερο που κοστίζει ο δρόμος. Καμία επιφάνεια πίστας δεν έχει μετρηθεί κατά ISO 8608 απ' όσο βρίσκουμε, άρα η τραχύτητα κάθε πίστας είναι εκτίμηση ανάλογα με το είδος της."},
   kerbsReal:{el:"Τα <b>κερμπ</b> είναι οι κόκκινες και άσπρες λωρίδες στην άκρη των στροφών μιας πίστας. Οι κανονισμοί τα βάζουν <b>έξω</b> από την άκρη της πίστας, οπότε ένας οδηγός που τα χρησιμοποιεί κερδίζει πλάτος: πιο ίσια γραμμή στην κορυφή, πιο φαρδιά έξοδο. Το τίμημα είναι το τράνταγμα. Όταν ένας τροχός ανεβαίνει σε κερμπ και οι άλλοι τρεις όχι, το αυτοκίνητο στρίβει διαγώνια: αυτός ο τροχός και ο διαγώνια απέναντι πιέζουν περισσότερο, οι άλλοι δύο λιγότερο. Το εμπρός φτάνει πρώτο στο κερμπ και το πίσω μια στιγμή μετά, έτσι η ισορροπία γέρνει προς τη μία πλευρά και μετά επιστρέφει. Οι οδηγοί πατούν τα κερμπ όπου το πλάτος αξίζει την αναστάτωση, και αποφεύγουν όσα πετούν το αυτοκίνητο."},
   kerbs:{el:"Κάθε στροφή έχει ένα κερμπ κορυφής στο εσωτερικό της και ένα κερμπ εξόδου στο εξωτερικό, σχεδιασμένα κόκκινα και άσπρα στον χάρτη της ΠΙΣΤΑΣ. Η γραμμή μπορεί να πατήσει πάνω τους, έως όλο το πλάτος τους, και ο βελτιστοποιητής της γραμμής αποφασίζει σε κάθε στροφή αν το πλάτος αξίζει την επίδραση του κερμπ στο αυτοκίνητο.<br>Όσο το αυτοκίνητο είναι σε κερμπ, το εξωτερικό ελαστικό κάθε άξονα σηκώνει περισσότερο ή λιγότερο φορτίο, κι αυτό αλλάζει πόσο δυνατά μπορεί να στρίψει ο άξονας. Τα σκληρά ελατήρια και οι αντιστρεπτικές στρίβουν πιο δυνατά το αυτοκίνητο· τα σκληρά αμορτισέρ προσθέτουν ένα τράνταγμα όταν το αυτοκίνητο ανεβαίνει ή φεύγει γρήγορα από το κερμπ. Η ισορροπία στην ΠΙΣΤΑ δείχνει ποιος άξονας μένει χωρίς πρόσφυση, με τα κερμπ μέσα."},
@@ -6005,7 +6050,7 @@ function applyLang(lang){
   currentLang=(lang==='el')?'el':'en';
   try{localStorage.setItem('pes.lang',currentLang);}catch(e){}
   document.documentElement.lang=currentLang;
-  const sel='.viz-tabs button, .design-panel h3, .design-section, .guide-title, .gtier-h, .hint, .panel h2, .stat .label, .opt-note, .opt-row>div>b, .ctl-lbl, .field>label, .build-row button, #btnGearRatios, #btnGG, #controlsPanel .btn-row button, .fuelmap-edit button, .garage-row button, #partsPanel button[id], #livePanel h2>span, #btnMore, #btnReplayRestart, .gart-cap, #btnMenu, .title-brand p, .title-menu button, .title-hint';
+  const sel='.viz-tabs button, .design-panel h3, .design-section, .guide-title, .gtier-h, .hint, .panel h2, .stat .label, .opt-note, .opt-row>div>b, .ctl-lbl, .field>label, .build-row button, #btnGearRatios, #btnGG, #btnSusp, #controlsPanel .btn-row button, .fuelmap-edit button, .garage-row button, #partsPanel button[id], #livePanel h2>span, #btnMore, #btnReplayRestart, .gart-cap, #btnMenu, .title-brand p, .title-menu button, .title-hint';
   document.querySelectorAll(sel).forEach(el=>{
     if(el.children.length>0)return;                       // skip nodes with child elements
     if(el.dataset.en===undefined)el.dataset.en=el.textContent.trim();
@@ -6047,6 +6092,7 @@ function applyLang(lang){
   });
   if(typeof showGuide==='function'&&document.getElementById('guideIndex'))showGuide(guideCur);
   if(typeof renderLap==='function'&&lapResult)renderLap();
+  if(typeof renderSuspWin==='function'&&sc.open){buildSuspForm();renderSuspWin();}   // the suspension calculator, if open (build 218)
   for(const id of ['garageName','engSaveName']){const gn=document.getElementById(id);
     if(gn){if(gn.dataset.enPh===undefined)gn.dataset.enPh=gn.placeholder;gn.placeholder=tr(gn.dataset.enPh);}}
   if(typeof renderGarage==='function')renderGarage();
@@ -7303,7 +7349,7 @@ function readEngineFromForm(){
     timingMode:g('edTiming').value,
     afrMode:g('edAfrMode').value,
     radiator:g('edRadiator').value,
-    radHp:Math.max(0,+g('edRadHp').value||0),   // what a STOCK radiator was sized for (build 218)
+    radHp:Math.max(0,+g('edRadHp').value||0),   // what a STOCK radiator was sized for (build 219)
     fan:g('edFan').value,
     oilCooler:g('edOilCooler').value==='yes',
     thermostat:clamp(Math.round(+g('edThermostat').value||88),71,95),
@@ -10049,6 +10095,243 @@ function wireGGWin(){
   w.addEventListener('click',e=>{if(e.target===w)closeGGWin();});
   document.addEventListener('keydown',e=>{if(e.key==='Escape'&&gg.open)closeGGWin();});
   window.addEventListener('resize',()=>{if(gg.open)drawGG();});
+}
+// ====== SUSPENSION CALCULATOR window (build 218) ======
+// Over the VEHICLE tab: one corner of the car as a quarter car, to be read and played with. It opens on the car's own
+// front or rear corner, the quarterCar() the lap runs on (build 216), and every input can then be changed: the sprung
+// and unsprung mass, the spring rate and its motion ratio, the damping in bound and in rebound, the tyre's rate, and
+// the height of a step in the road. Nothing typed here goes back to the car: it is a calculator, and the lap, the tests
+// and the car's own figures do not move.
+//
+// What it works out, all from the two masses and three rates (Gillespie, Fundamentals of Vehicle Dynamics, ch. 5;
+// Milliken & Milliken, RCVD ch. 16; Dixon, The Shock Absorber Handbook, 2007, ch. 1 and 3):
+//   · the rates at the wheel. A spring or damper whose end moves MR times the wheel's travel acts at the wheel with
+//     MR^2 of its rate: the force is MR times as large and is felt over MR times the travel. The ride rate is the
+//     spring and the tyre in series, ks kt / (ks + kt);
+//   · the two natural frequencies, exactly: the undamped two-mass system's modes, the roots of
+//     ms mu w^4 - (ms (ks + kt) + mu ks) w^2 + ks kt = 0. The textbook shortcuts are shown beside them: the body on its
+//     ride rate, sqrt(kr / ms), and the wheel between the spring and the tyre, sqrt((ks + kt) / mu);
+//   · the damping as a share of critical, 2 sqrt(ks ms), in bound and in rebound. The car's own figure (vehicle.zetaF)
+//     is taken against the same wheel rate;
+//   · the response to a road wave, frequency by frequency, of the body and the wheel (their movement over the road's).
+//     A damper stiffer one way than the other is not linear, so this uses its describing function: under a sine
+//     movement the force's first harmonic is the mean of the two coefficients (the bound half-cycle at cb, the rebound
+//     half-cycle at cr), so (cb + cr) / 2 is the damper a road wave meets. The difference shows as a steady offset,
+//     the damper's 'jacking', which a frequency response cannot show and the step can;
+//   · the car driven onto a step in the road, in time, with the real damper (cb while the damper closes, cr while it
+//     opens), and the tyre unable to pull on the road: its load is the static load plus kt times its squash, and never
+//     below zero. Time stepped with fourth-order Runge-Kutta at 0.1 ms, a hundredth of a 100 Hz wheel hop's period.
+// Left out, as in the lap's quarter car: bump stops and the end of the travel, the spring's preload and progression,
+// the damper's blow-off (its force against speed is taken as straight), the tyre's own damping and its width over a
+// short bump (it is a point on the road).
+const SC_DT=1e-4, SC_T=2.0, SC_KEEP=20;   // s: the time step, the time the step response runs for, a sample kept every 2 ms
+const SC_FMIN=0.3, SC_FMAX=40, SC_NF=240;  // Hz: the frequency response's range and its points, spaced evenly in log f
+const SC_SETTLE=0.05;                       // the body has settled once it stays within 5% of the step
+const sc={open:false,ax:'F',p:null,r:null,rev:-1};   // rev: the car (vehRev) the inputs were taken from
+// the inputs: key, label, unit, smallest and largest accepted, step of the field, decimals shown
+const SC_IN=[
+  ['ms','SPRUNG MASS (kg)',5,3000,1,0],
+  ['mu','UNSPRUNG MASS (kg)',1,500,0.5,1],
+  ['k','SPRING RATE (N/mm)',0.5,2000,0.5,1],
+  ['mr','MOTION RATIO (spring / wheel travel)',0.2,1.5,0.01,2],
+  ['cb','BOUND DAMPING (N·s/m)',0,100000,10,0],
+  ['cr','REBOUND DAMPING (N·s/m)',0,100000,10,0],
+  ['kt','TYRE RATE (N/mm)',10,2000,1,0],
+  ['step','STEP IN THE ROAD (mm)',-150,150,1,0]
+];
+// The car's own corner, at the wheel (motion ratio 1), and a 25 mm step: about a kerb's lip or a raised drain cover.
+function scFromCar(ax){
+  const q=quarterCar(vehicle,ax);
+  return {ms:q.ms,mu:q.mu,k:q.ks/1000,mr:1,cb:q.cs,cr:q.cs,kt:q.kt/1000,step:25};
+}
+// Everything at the wheel, in SI units.
+function scWheel(p){
+  const m2=p.mr*p.mr;
+  return {ms:p.ms,mu:p.mu,ks:p.k*1000*m2,cb:p.cb*m2,cr:p.cr*m2,kt:p.kt*1000};
+}
+// The undamped modes (Hz): the body's (the lower) and the wheel's.
+function scModes(w){
+  const a=w.ms*w.mu,b=w.ms*(w.ks+w.kt)+w.mu*w.ks,c=w.ks*w.kt,d=Math.sqrt(Math.max(0,b*b-4*a*c));
+  const lo=(b-d)/(2*a),hi=(b+d)/(2*a),hz=x=>Math.sqrt(Math.max(0,x))/(2*Math.PI);
+  return {body:hz(lo),hop:hz(hi)};
+}
+// The response at f (Hz) to a road wave of amplitude 1, with a linear damper c at the wheel: the body's and the wheel's
+// movement (amplitude ratios) and the tyre's load swing (N per m of road).
+function scFreq(w,c,f){
+  const om=2*Math.PI*f,o2=om*om;
+  // ms Zs'' = ks (Zu - Zs) + c (Zu' - Zs');  mu Zu'' = -ks (Zu - Zs) - c (Zu' - Zs') + kt (Zr - Zu)
+  // as  a Zs + b Zu = 0,  b Zs + d Zu = kt Zr  with complex a, b, d
+  const a=[w.ks-w.ms*o2,om*c],b=[-w.ks,-om*c],d=[w.ks+w.kt-w.mu*o2,om*c];
+  const mul=(x,y)=>[x[0]*y[0]-x[1]*y[1],x[0]*y[1]+x[1]*y[0]],div=(x,y)=>{const n=y[0]*y[0]+y[1]*y[1];return [(x[0]*y[0]+x[1]*y[1])/n,(x[1]*y[0]-x[0]*y[1])/n];};
+  const ad=mul(a,d),bb=mul(b,b),det=[ad[0]-bb[0],ad[1]-bb[1]];
+  const zu=div([a[0]*w.kt,a[1]*w.kt],det),zs=div(mul([-b[0],-b[1]],zu),a);
+  return {body:Math.hypot(zs[0],zs[1]),wheel:Math.hypot(zu[0],zu[1]),load:w.kt*Math.hypot(1-zu[0],zu[1])};
+}
+// The quarter car in time over a road zr(t) (m), from rest at its static height. Positions are measured from there,
+// upward. Returns the samples kept and what the run did: the tyre's least and greatest load, and the time it spent in
+// the air.
+function scSim(w,road,T){
+  const g=G,Fst=(w.ms+w.mu)*g,n=Math.round(T/SC_DT);
+  let s=[0,0,0,0];   // body position, body speed, wheel position, wheel speed
+  const acc=(t,x)=>{
+    const vr=x[3]-x[1],c=vr>0?w.cb:w.cr;   // the damper closing (the wheel rising on the body) is bound
+    const Fs=w.ks*(x[2]-x[0])+c*vr;         // what the spring and damper push the body up and the wheel down with
+    const Ft=Math.max(0,Fst+w.kt*(road(t)-x[2]));   // the tyre: its static load and its squash, never pulling
+    return [x[1],Fs/w.ms,x[3],(Ft-Fst-Fs)/w.mu];   // the static loads balance: (ms + mu) g = Fst
+  };
+  const add=(x,k,h)=>x.map((v,i)=>v+k[i]*h);
+  const out={t:[],zs:[],zu:[],zr:[],ft:[],air:0,ftMin:Infinity,ftMax:0};
+  for(let i=0;i<=n;i++){
+    const t=i*SC_DT,Ft=Math.max(0,Fst+w.kt*(road(t)-s[2]));
+    if(Ft<=0)out.air+=SC_DT;
+    out.ftMin=Math.min(out.ftMin,Ft);out.ftMax=Math.max(out.ftMax,Ft);
+    if(i%SC_KEEP===0){out.t.push(t);out.zs.push(s[0]);out.zu.push(s[2]);out.zr.push(road(t));out.ft.push(Ft);}
+    if(i===n)break;
+    const k1=acc(t,s),k2=acc(t+SC_DT/2,add(s,k1,SC_DT/2)),k3=acc(t+SC_DT/2,add(s,k2,SC_DT/2)),k4=acc(t+SC_DT,add(s,k3,SC_DT));
+    s=s.map((v,j)=>v+SC_DT/6*(k1[j]+2*k2[j]+2*k3[j]+k4[j]));
+  }
+  out.Fst=Fst;
+  return out;
+}
+// Everything the window shows, for inputs p.
+function scCalc(p){
+  const w=scWheel(p),m=scModes(w),ce=(w.cb+w.cr)/2,cc=2*Math.sqrt(w.ks*w.ms);
+  const kr=w.ks*w.kt/(w.ks+w.kt);
+  const r={w,modes:m,ce,kr,
+    simple:{body:Math.sqrt(kr/w.ms)/(2*Math.PI),hop:Math.sqrt((w.ks+w.kt)/w.mu)/(2*Math.PI)},
+    zb:w.cb/cc,zr:w.cr/cc,ze:ce/cc,zh:ce/(2*Math.sqrt((w.ks+w.kt)*w.mu))};
+  r.fd=r.ze<1?m.body*Math.sqrt(1-r.ze*r.ze):0;   // the body's damped frequency: none past critical, it does not swing
+  // the frequency response, and the two peaks: the body's below the point between the modes, the wheel's above it
+  r.f=[];r.body=[];r.wheel=[];r.load=[];
+  const fMid=Math.sqrt(m.body*m.hop);
+  r.pkB={f:0,a:0};r.pkW={f:0,a:0};
+  for(let i=0;i<SC_NF;i++){
+    const f=SC_FMIN*Math.pow(SC_FMAX/SC_FMIN,i/(SC_NF-1)),x=scFreq(w,ce,f);
+    r.f.push(f);r.body.push(x.body);r.wheel.push(x.wheel);r.load.push(x.load);
+    if(f<fMid&&x.body>r.pkB.a)r.pkB={f,a:x.body};
+    if(f>=fMid&&x.wheel>r.pkW.a)r.pkW={f,a:x.wheel};
+  }
+  // the step: up (or down) by p.step mm at t = 0
+  const h=p.step/1000;
+  r.sim=scSim(w,t=>t>0?h:0,SC_T);
+  if(Math.abs(h)>1e-6){
+    const zs=r.sim.zs,peak=zs.reduce((a,z)=>Math.max(a,z/h),-Infinity);
+    r.over=Math.max(0,peak-1);
+    let last=0;for(let i=0;i<zs.length;i++)if(Math.abs(zs[i]-h)>SC_SETTLE*Math.abs(h))last=r.sim.t[i];
+    r.settle=last<SC_T-SC_KEEP*SC_DT?last:null;   // null: still moving at the end of the run
+  }else{r.over=0;r.settle=0;}
+  return r;
+}
+function openSuspWin(){
+  const w=document.getElementById('susWin');if(!w||!vehicle||!vehicle.mass)return;
+  w.hidden=false;sc.open=true;
+  if(!sc.p||sc.rev!==vehRev){sc.p=scFromCar(sc.ax);sc.rev=vehRev;}   // a car changed since: start again from its corner
+  buildSuspForm();renderSuspWin();
+  document.getElementById('susClose').focus();
+}
+function closeSuspWin(){
+  const w=document.getElementById('susWin');if(!w||w.hidden)return;
+  w.hidden=true;sc.open=false;
+  const b=document.getElementById('btnSusp');if(b)b.focus();
+}
+// The left column: which corner, the inputs, and the button that puts the car's own corner back.
+function buildSuspForm(){
+  const el=id=>document.getElementById(id);
+  el('susTitle').textContent=tr('SUSPENSION CALCULATOR');
+  el('susClose').setAttribute('aria-label',tr('CLOSE'));
+  el('susKC').textContent=tr('CORNER');
+  el('susCorner').innerHTML=['F','R'].map(a=>'<button type="button" data-ax="'+a+'" class="'+(sc.ax===a?'on':'')+'">'+esc(tr(a==='F'?'FRONT':'REAR'))+'</button>').join('');
+  el('susForm').innerHTML=SC_IN.map(([k,lab,lo,hi,st,dp])=>
+    '<label class="sc-row"><span>'+esc(tr(lab))+'</span><input type="number" id="sc_'+k+'" min="'+lo+'" max="'+hi+'" step="'+st+'" value="'+(+sc.p[k]).toFixed(dp)+'"></label>').join('');
+  el('susReset').textContent=tr('FROM THE CAR');
+}
+function scReadForm(){
+  for(const [k,,lo,hi] of SC_IN){const i=document.getElementById('sc_'+k);if(!i)continue;const v=parseFloat(i.value);if(isFinite(v))sc.p[k]=clamp(v,lo,hi);}
+}
+const SC_COL={body:'#00ccff',wheel:'#ffcc00',road:'#667',load:'#ff6b6b'};
+function renderSuspWin(){
+  if(!sc.open)return;
+  const el=id=>document.getElementById(id),r=sc.r=scCalc(sc.p),w=r.w,f1=x=>x.toFixed(1),f2=x=>x.toFixed(2);
+  el('susSub').textContent=tr(vehicle.chLabel)+' · '+tr(sc.ax==='F'?'front':'rear');
+  const row=(k,v,x)=>'<div class="gg-row">'+esc(tr(k))+' <b>'+v+'</b>'+(x?' <span class="sc-dim">('+esc(tr('shortcut'))+' '+x+')</span>':'')+'</div>';
+  let h='';
+  h+=row('Body bounce',f2(r.modes.body)+' Hz',f2(r.simple.body)+' Hz');
+  h+=row('Wheel hop',f1(r.modes.hop)+' Hz',f1(r.simple.hop)+' Hz');
+  h+=row('Wheel rate',f1(w.ks/1000)+' N/mm')+row('Ride rate',f1(r.kr/1000)+' N/mm');
+  h+=row('Damping, share of critical',f2(r.zb)+' '+esc(tr('bound'))+' · '+f2(r.zr)+' '+esc(tr('rebound'))+' · '+f2(r.ze)+' '+esc(tr('on a road wave')));
+  h+=row('Damped body bounce',r.fd>0?f2(r.fd)+' Hz':esc(tr('none: past critical')));
+  h+=row('Wheel hop damping',f2(r.zh)+' '+esc(tr('of critical')));
+  h+=row('Resonance: body',(r.pkB.a>0?'×'+f2(r.pkB.a)+' '+esc(tr('at'))+' '+f2(r.pkB.f)+' Hz':'—'));
+  h+=row('Resonance: wheel',(r.pkW.a>0?'×'+f2(r.pkW.a)+' '+esc(tr('at'))+' '+f1(r.pkW.f)+' Hz':'—'));
+  if(Math.abs(sc.p.step)>0){
+    h+=row('Over the step: body overshoot',Math.round(r.over*100)+'%')+
+       row('Settles within 5%',r.settle==null?esc(tr('not within 2 s')):f2(r.settle)+' s')+
+       row('Tyre load',Math.round(r.sim.ftMin/r.sim.Fst*100)+'–'+Math.round(r.sim.ftMax/r.sim.Fst*100)+'% '+esc(tr('of static')))+
+       row('Wheel in the air',r.sim.air>0?Math.round(r.sim.air*1000)+' ms':esc(tr('never')));
+  }
+  el('susRead').innerHTML=h;
+  el('susTF').textContent=tr('RESPONSE TO A ROAD WAVE: MOVEMENT OVER THE ROAD\'S');
+  el('susLegF').innerHTML='<span><i style="border-color:'+SC_COL.body+'"></i>'+esc(tr('body'))+'</span><span><i style="border-color:'+SC_COL.wheel+'"></i>'+esc(tr('wheel'))+'</span>'+
+    '<span><i class="d" style="border-color:#556"></i>'+esc(tr('the two natural frequencies'))+'</span>';
+  el('susTS').textContent=tr('OVER A STEP IN THE ROAD (mm)');
+  el('susLegS').innerHTML='<span><i style="border-color:'+SC_COL.body+'"></i>'+esc(tr('body'))+'</span><span><i style="border-color:'+SC_COL.wheel+'"></i>'+esc(tr('wheel'))+'</span>'+
+    '<span><i style="border-color:'+SC_COL.road+'"></i>'+esc(tr('road'))+'</span>';
+  el('susNote').textContent=tr('A calculator: it starts from the car\'s own corner, the quarter car the lap runs on, and nothing changed here goes back to the car. The rates are taken at the wheel through the motion ratio squared. A road wave meets the mean of the bound and rebound damping; the step uses each in its own direction, and the tyre cannot pull on the road. Bump stops, preload and the damper\'s blow-off are left out.');
+  drawSuspFreq();drawSuspStep();
+}
+function drawSuspFreq(){
+  const C=gwCanvas('susFreq');if(!C||!sc.r)return;const {g,W,H}=C,r=sc.r;
+  const yMax=Math.max(1.5,Math.ceil(Math.max(...r.body,...r.wheel)*2)/2);
+  const x0=40,x1=W-10,y0=H-26,y1=16,lf0=Math.log(SC_FMIN),lf1=Math.log(SC_FMAX);
+  const px=f=>x0+(x1-x0)*(Math.log(f)-lf0)/(lf1-lf0),py=a=>y0-(y0-y1)*a/yMax;
+  g.lineWidth=1;g.strokeStyle='#1e1e2c';g.fillStyle='#667';g.textAlign='center';
+  for(const f of [0.5,1,2,5,10,20]){g.beginPath();g.moveTo(px(f),y0);g.lineTo(px(f),y1);g.stroke();g.fillText(String(f),px(f),y0+9);}
+  const st=gwNice(yMax,5);g.textAlign='right';
+  for(let a=0;a<=yMax+1e-9;a+=st){g.beginPath();g.moveTo(x0,py(a));g.lineTo(x1,py(a));g.stroke();g.fillText(a.toFixed(st<1?1:0),x0-4,py(a));}
+  g.strokeStyle='#444';g.beginPath();g.moveTo(x0,y1);g.lineTo(x0,y0);g.lineTo(x1,y0);g.stroke();
+  g.fillStyle='#667';g.textAlign='right';g.fillText('Hz',x1,y0+19);
+  // the road's own movement, 1, and the two modes
+  g.setLineDash([4,3]);g.strokeStyle='#556';
+  for(const f of [r.modes.body,r.modes.hop])if(f>SC_FMIN&&f<SC_FMAX){g.beginPath();g.moveTo(px(f),y0);g.lineTo(px(f),y1);g.stroke();}
+  g.beginPath();g.moveTo(x0,py(1));g.lineTo(x1,py(1));g.stroke();g.setLineDash([]);
+  const line=(ys,col)=>{g.strokeStyle=col;g.lineWidth=2;g.beginPath();r.f.forEach((f,i)=>{const X=px(f),Y=py(Math.min(yMax,ys[i]));i?g.lineTo(X,Y):g.moveTo(X,Y);});g.stroke();g.lineWidth=1;};
+  line(r.wheel,SC_COL.wheel);line(r.body,SC_COL.body);
+  // the peaks, labelled
+  g.fillStyle='#e0e0e0';g.textAlign='left';
+  if(r.pkB.a>0)g.fillText(r.pkB.f.toFixed(2)+' Hz',px(r.pkB.f)+4,py(Math.min(yMax,r.pkB.a))-7);
+  if(r.pkW.a>0)g.fillText(r.pkW.f.toFixed(1)+' Hz',Math.min(x1-50,px(r.pkW.f)+4),py(Math.min(yMax,r.pkW.a))-7);
+}
+function drawSuspStep(){
+  const C=gwCanvas('susStep');if(!C||!sc.r)return;const {g,W,H}=C,s=sc.r.sim;
+  const mm=a=>a*1000,all=[...s.zs,...s.zu,...s.zr].map(mm);
+  let lo=Math.min(0,...all),hi=Math.max(0,...all);if(hi-lo<1){hi+=0.5;lo-=0.5;}
+  const st=gwNice(hi-lo,5);lo=Math.floor(lo/st)*st;hi=Math.ceil(hi/st)*st;
+  const x0=40,x1=W-10,y0=H-26,y1=16,px=t=>x0+(x1-x0)*t/SC_T,py=v=>y0-(y0-y1)*(v-lo)/(hi-lo);
+  g.lineWidth=1;g.strokeStyle='#1e1e2c';g.fillStyle='#667';g.textAlign='center';
+  for(let t=0;t<=SC_T+1e-9;t+=0.25){g.beginPath();g.moveTo(px(t),y0);g.lineTo(px(t),y1);g.stroke();if(Math.abs(t*2-Math.round(t*2))<1e-9)g.fillText(String(t),px(t),y0+9);}
+  g.textAlign='right';
+  for(let v=lo;v<=hi+1e-9;v+=st){g.beginPath();g.moveTo(x0,py(v));g.lineTo(x1,py(v));g.stroke();g.fillText(String(Math.round(v*10)/10),x0-4,py(v));}
+  g.strokeStyle='#444';g.beginPath();g.moveTo(x0,y1);g.lineTo(x0,y0);g.lineTo(x1,y0);g.stroke();
+  g.fillStyle='#667';g.textAlign='right';g.fillText('s',x1,y0+19);
+  // the wheel in the air, shaded
+  g.fillStyle='rgba(255,107,107,0.25)';
+  for(let i=0;i<s.t.length;i++)if(s.ft[i]<=0)g.fillRect(px(s.t[i])-1,y1,Math.max(1,px(SC_KEEP*SC_DT)-px(0)),y0-y1);
+  const line=(ys,col,w)=>{g.strokeStyle=col;g.lineWidth=w;g.beginPath();s.t.forEach((t,i)=>{const X=px(t),Y=py(mm(ys[i]));i?g.lineTo(X,Y):g.moveTo(X,Y);});g.stroke();g.lineWidth=1;};
+  line(s.zr,SC_COL.road,1);line(s.zu,SC_COL.wheel,2);line(s.zs,SC_COL.body,2);
+}
+function wireSuspWin(){
+  const b=document.getElementById('btnSusp'),w=document.getElementById('susWin');if(!b||!w)return;
+  b.addEventListener('click',openSuspWin);
+  document.getElementById('susClose').addEventListener('click',closeSuspWin);
+  w.addEventListener('click',e=>{if(e.target===w)closeSuspWin();});
+  document.getElementById('susCorner').addEventListener('click',e=>{
+    const a=e.target.closest('button[data-ax]');if(!a)return;
+    sc.ax=a.dataset.ax;sc.p=scFromCar(sc.ax);sc.rev=vehRev;buildSuspForm();renderSuspWin();
+  });
+  document.getElementById('susForm').addEventListener('input',()=>{scReadForm();renderSuspWin();});
+  document.getElementById('susReset').addEventListener('click',()=>{sc.p=scFromCar(sc.ax);sc.rev=vehRev;buildSuspForm();renderSuspWin();});
+  document.addEventListener('keydown',e=>{if(e.key==='Escape'&&sc.open)closeSuspWin();});
+  window.addEventListener('resize',()=>{if(sc.open){drawSuspFreq();drawSuspStep();}});
 }
 // The rolling diameter the fitted tyre actually gives (in), for the fitment read-out.
 function fitmentLabel(v){
@@ -14927,7 +15210,7 @@ function logPull(){
 }
 function clearPulls(){dynoPulls=[];flash(tr('DYNO PULLS CLEARED'));}
 // ---- Scoring: rate the design at a standard WOT best-power condition ----
-// The mean piston speed past which revs count against reliability (build 218; see the reliability index below).
+// The mean piston speed past which revs count against reliability (build 219; see the reliability index below).
 const PISTON_SPEED_LIMIT=25;   // m/s
 function scoreEngine(){
   const sv={afr:state.afr,iat:state.iat,coolant:state.coolant,oil:state.oil,eh:state.engineHealth,bl:state.blown,el:state.elecLoad,map:state.map,rpm:state.rpm};
@@ -14981,19 +15264,19 @@ function scoreEngine(){
   // Design reliability index (0-100): a static estimate of how much abuse the build invites,
   // from knock margin, boost/specific-output stress, high-strung choices and cooling adequacy.
   // The weights (45, 11 per bar, 0.30, 7 per m/s, 30, the type terms) are judgement, not derived: this is an index,
-  // not a life prediction. Build 218 took out four terms that charged factory engines for being what they are.
+  // not a life prediction. Build 219 took out four terms that charged factory engines for being what they are.
   let rel=100;
   // Knock: only knock the ECU cannot hold off. KNOCK_TARGET is where the end-gas integral reaches 1, i.e. the end gas
   // autoignites before the flame arrives. An auto-timing ECU retards spark until knock sits exactly on it, so every
   // knock-limited engine read safety 60 and lost 18 points, whatever it was: the ECU doing its job, charged as a fault
-  // (build 218). Now it is the excess over the target that costs: fixed timing past the knock limit, or an engine that
+  // (build 219). Now it is the excess over the target that costs: fixed timing past the knock limit, or an engine that
   // still knocks at full retard. The 'safety' sub-score of the grade is unchanged.
   rel-=clamp((100*(1-safety)-KNOCK_TARGET)/(100-KNOCK_TARGET),0,1)*45;   // knock-prone = grenade
   // Boost stress on internals: half of it in the midrange (peak boost), half where it is still held at the
   // limiter (build 131), where the rods and bearings carry the highest inertia and gas loads together. With no
   // taper the two halves are the old single term.
   // Specific output past 110 hp/L is mostly that same boost on a turbo engine, so the two are one stress, charged once
-  // at the larger (build 218). They were added: a Civic Type R K20C1 paid -24 for its boost and -13 again for the
+  // at the larger (build 219). They were added: a Civic Type R K20C1 paid -24 for its boost and -13 again for the
   // hp/L the boost makes. A taper still buys reliability wherever the boost term is the larger.
   const boostStress=Math.max(0,engine.maxBoost-0.5)*11+Math.max(0,boostTarget(engine.redline)-0.5)*11;
   const outputStress=Math.max(0,hpPerL-110)*0.30;      // highly-strung specific output
@@ -15009,7 +15292,7 @@ function scoreEngine(){
   if(engine.vgt&&engine.intake==='turbo')
     rel-=clamp((engine.peakEgtGas-VANE_T_LIMIT)/100*14,0,28);
   rel-=engine.nitrous!=='none'?12:0;                   // chemical stress
-  // Revs (build 218). What revs load is the reciprocating mass, and that scales with mean piston speed
+  // Revs (build 219). What revs load is the reciprocating mass, and that scales with mean piston speed
   // (2 x stroke x rpm), not rpm: a short stroke is how an engine is built to rev. A flat 7500 rpm threshold charged
   // a 911 GT3 -30 and a Ferrari 458 -30 at 24.3-24.4 m/s, while a long-stroke engine at 7400 rpm paid nothing. The limit is
   // 25 m/s, the owner's choice, at the top of what production engines run at their redline: the presets' own
@@ -15019,7 +15302,7 @@ function scoreEngine(){
   // A rotary has no piston: it keeps the rpm rule, with its own higher threshold.
   if(engine.type==='rotary')rel-=Math.max(0,engine.redline-9800)/100*2;
   else rel-=Math.max(0,2*engine.stroke_mm/1000*engine.redline/60-PISTON_SPEED_LIMIT)*7;
-  // Cooling (build 218). A STOCK radiator is the one the engine came with, sized for that engine's rated power
+  // Cooling (build 219). A STOCK radiator is the one the engine came with, sized for that engine's rated power
   // (engine.radHp, a factory preset's real.hp); a design that never had one gets the generic part, sized for 260 hp.
   // Before, every stock radiator was the generic part, so a Corvette LS3 or a 458 on its own factory radiator lost
   // 12 points for being "under-cooled". Only power added past what the radiator was sized for is charged now.
@@ -21417,7 +21700,7 @@ const HYB_VEHICLE_PRESETS=[
 ];
 // What a player picks from: the combustion tables, then the electric and hybrid ones.
 const FACTORY_ENGINES=PRESETS.concat(EV_ENGINE_PRESETS,HYB_ENGINE_PRESETS), FACTORY_CARS=VEHICLE_PRESETS.concat(EV_VEHICLE_PRESETS,HYB_VEHICLE_PRESETS);
-// A real engine's STOCK radiator is its maker's, sized for the engine's rated power (build 218). The reliability index
+// A real engine's STOCK radiator is its maker's, sized for the engine's rated power (build 219). The reliability index
 // reads it as engine.radHp; it travels with the design, so a modified factory engine is judged against its own radiator.
 for(const p of FACTORY_ENGINES)if(p.real&&p.real.hp>0&&p.engine.radHp==null)p.engine.radHp=p.real.hp;
 const FACTORY_ENGINE_CATS=PRESET_CATS.concat(['Electric','Hybrid']), FACTORY_CAR_CATS=VEHICLE_CATS.concat(['Electric','Hybrid']);
@@ -22029,7 +22312,7 @@ function bindControls(){
       buildVehicle();updateVehicleSummary();
     });
   });
-  wireGearWin();wireGGWin();
+  wireGearWin();wireGGWin();wireSuspWin();
   // Refit the current chassis to its factory spec (undo your part swaps).
   const btnFit=document.getElementById('btnRefit');
   if(btnFit)btnFit.addEventListener('click',()=>{

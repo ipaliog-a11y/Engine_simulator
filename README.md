@@ -1,4 +1,4 @@
-# PIXEL ENGINE SIM v0.7 build 218
+# PIXEL ENGINE SIM v0.7 build 219
 
 **A lightweight, 8-bit style internal combustion engine *designer* & simulator** inspired by *Automation*.
 
@@ -129,6 +129,9 @@ Build 199 adds 50 real combustion cars from a research pack (`research/vehicles-
 cars, pickups, the first V6s, classics from the 1960s to the 1980s and more kei cars and hot hatches.
 The VEHICLE tab's G-G DIAGRAM (build 200) draws how hard the car can corner, brake and accelerate at 60, 120 and
 180 km/h, from the lap's own physics, with every point of a lap over it.
+Its SUSPENSION CALCULATOR (build 218) opens one corner of the car as a quarter car: change the sprung and unsprung mass,
+spring rate, motion ratio, bound and rebound damping and tyre rate, and read the body's and the wheel's natural
+frequencies, the damping as a share of critical, the response to a road wave and the corner driven onto a step.
 The PARTS tab (build 205) is a part designer: pick a type of part, then its options. The first is the exhaust (header
 construction, primary diameter and length, the pipes after the collector, the silencer), previewed on the engine you
 have built and saved to a library whose parts appear in the ENGINE tab's EXHAUST choices. The second is the intake
@@ -1020,6 +1023,7 @@ measurement finds things. Each item is one PR.
 | — | Springs and anti-roll bars | ✅ build 174 | Stage 2 of 3. FRONT/REAR SPRINGS and FRONT/REAR ANTI-ROLL BAR, SOFT −2 to STIFF +2 about the kit (no spring rates). Springs from the kit's ride frequency (1.0 / 1.25 / 1.6 / 2.0 Hz), K = m_axle (2πf)² t²/4, bars 55% of that at STANDARD; roll = m g (h − z_axis) / (K_F + K_R), so each car rolls by its own CG, track and roll centres (a typical car gets the old 6 / 4 / 2.5 / 1.5 deg/g back); the stiffness split replaces ROLL BALANCE. Laps −0.3% to +1.0%. test95. |
 | — | Dampers and the road | ✅ build 216 | Stage 3 of 3, part a. Each circuit has a road (ISO 8608 roughness, estimated by kind of circuit) and each axle a quarter car (body, spring, damper, wheel, tyre); the tyres' load swings over the bumps, and a swinging load grips less (load sensitivity, wheel hop). FRONT/REAR DAMPERS, SOFT −2 to STIFF +2 about the kit's damping (0.25 / 0.30 / 0.45 / 0.60 of critical); the summary shows the damping, wheel hop and the ride. Laps +0.03% on average (−0.14% to +0.27%, the spread being the racing line re-optimised; on a fixed line the road only costs time). Not yet: the tyre's lag, kerbs, the body at turn-in (part b, transient roll). |
 | — | Kerbs | ✅ build 217 | Stage 3 of 3, part b. Every corner has the FIA's kerbs outside its edges: a 5 cm Vallelunga ramp on the inside at the apex and a 5 cm Melbourne ramp on the outside at the exit, 0.8 m wide, placed from the corner's shape (an estimate; the track data has none). The racing line may use their width, and pays for the warp: one axle's wheel on a kerb and not the other's twists the car through its roll stiffness in series and its dampers, moving load across the diagonal. A front wheel alone on a kerb moves the balance towards oversteer, the rear towards understeer. Ribs not modelled (no spacing in the standard). |
+| — | Suspension calculator | ✅ build 218 | A window on the VEHICLE tab: one corner as a quarter car, from the car's own (sprung and unsprung mass, wheel rate, damping, tyre rate) and then free to change, with a motion ratio and separate bound and rebound damping. Exact two-mass modes beside the textbook shortcuts, damping as a share of critical, the body's and wheel's response to a road wave (the damper's describing function, the mean of bound and rebound), and a step in the road solved in time with the real damper and a tyre that cannot pull. A calculator only: the car does not move. |
 | — | Spark torque from fuel | ✅ build 95 | `IMEP_K` replaced by Heywood's 0.8 × fuel-air cycle efficiency; each fuel's LHV/AFR_st enters. Spark torque −2.7%, full-load BSFC 280 g/kWh (real 270–300). Rotary/two-stroke type factors still fitted. |
 | — | `turboChoke` (boost taper) | ✅ build 94 | Retired. Turbine efficiency from blade speed ratio U/C, per-point compressor efficiency, a continuous rich-knock slope in place of a step, and sequential turbos staged as two turbines. Calibration improved on every measure. |
 | — | Rotary exhaust heat | ✅ build 92 | The slow, late Wankel burn (130° ES, CA50 37.5° ATDC) leaves ~10% of the expansion work undone, and that heat now reaches the exhaust: 13B 775 → 942 °C, off the limiter. |
