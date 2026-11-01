@@ -292,6 +292,10 @@ body.race-open{overflow:hidden}
 .garage-detail b{color:#ffcc00;font-weight:normal}
 .gcount{font-size:7px;color:#667;margin:-2px 0 6px}
 .garage-thumb{display:block;width:100%;height:auto;margin:-2px 0 6px;image-rendering:pixelated;border:2px solid #1e1e2e;background:#0a0a10}
+.garage-thumb.art{aspect-ratio:168/74;object-fit:cover;object-position:50% 78%;image-rendering:auto}
+.car-showroom{display:block;max-width:560px;margin:0 auto 12px;border:2px solid #333;background:#0a0a10}
+.car-showroom img{display:block;width:100%;height:auto;aspect-ratio:2/1;object-fit:cover;object-position:50% 75%}
+.car-showroom figcaption{font-size:9px;line-height:1.5;color:#9aa;padding:6px 8px;border-top:2px solid #1e1e2e}
 /* 5 tabs — tighten padding so labels fit */
 .viz-tabs button{padding:10px 4px;font-size:7.5px;letter-spacing:0}
 /* ---- Guide & Options tabs (reuse the scrollable design-panel shell) ---- */
@@ -519,7 +523,7 @@ table.hy-map td:focus{outline:2px solid #ffcc00;outline-offset:-2px}
 </div>
 <div class="container">
 <header>
-<h1>PIXEL ENGINE SIM v0.7 build 219</h1>
+<h1>PIXEL ENGINE SIM v0.7 build 220</h1>
 <div class="subtitle" id="subtitle">ENGINE DESIGNER • BUILD IT, THEN DRIVE IT</div>
 </header>
 <div class="build-strip" id="buildStrip">
@@ -2194,7 +2198,10 @@ the top of the ENGINE tab follows the form as you edit, before you build: an inl
 so you can count its cylinders, and a V or a boxer is drawn from the front so you can see the angle of
 its banks. Its turbos, blower, carbs or throttle bodies, headers, cat, intercooler, radiator and
 nitrous bottle are all drawn. Saved cars and engines show the same pictures on their GARAGE cards,
-and on the TRACK map the car runs the lap in its own colours.
+and on the TRACK map the car runs the lap in its own colours. A real car loaded from the picker also
+gets its <b>showroom picture</b> under the picker: a detailed side view of that car as it left the
+factory. It does not change with the parts you fit (the drawn car above does), and a saved real car
+shows it on its GARAGE card.
 </div>
 <div class="guide-body" data-gk="garage">
 <b>The GARAGE</b> tab keeps your finished cars and engines. Name a car at the bottom of this tab and
@@ -3123,6 +3130,7 @@ Most other tests check behaviour that is true of real cars: a bigger turbo spool
 <div class="field"><label for="vhFamily">CAR FAMILY</label><select id="vhFamily"></select></div>
 <div class="field"><label for="vhPreset">FACTORY CAR</label><select id="vhPreset"><option value="">— load a real car —</option></select></div>
 </div>
+<figure class="car-showroom" id="vhShowroom" hidden><img id="vhArt" alt="" decoding="async"><figcaption id="vhArtCap"></figcaption></figure>
 
 <div class="design-section">Chassis &amp; Drivetrain</div>
 <div class="design-grid">
@@ -5452,7 +5460,7 @@ const I18N={
   'DAMAGE':{el:'ΖΗΜΙΑ'},'HEALTH':{el:'ΥΓΕΙΑ'},'BOTTLE':{el:'ΦΙΑΛΗ'},'RUNNING':{el:'ΛΕΙΤΟΥΡΓΕΙ'},'IDLE':{el:'ΡΕΛΑΝΤΙ'},
   'COOL':{el:'ΨΥΞΗ'},
   'REFIT FACTORY SPEC':{el:'ΕΡΓΟΣΤΑΣΙΑΚΟΣ ΕΞΟΠΛΙΣΜΟΣ'},'FITTED':{el:'ΤΟΠΟΘΕΤΗΘΗΚΕ'},'REFITTED TO FACTORY SPEC':{el:'ΕΠΑΝΑΦΟΡΑ ΣΤΟΝ ΕΡΓΟΣΤΑΣΙΑΚΟ ΕΞΟΠΛΙΣΜΟ'},
-  '(factory spec)':{el:'(εργοστασιακό)'},'(modified)':{el:'(τροποποιημένο)'},
+  '(factory spec)':{el:'(εργοστασιακό)'},'as it left the factory':{el:'όπως βγήκε από το εργοστάσιο'},'(modified)':{el:'(τροποποιημένο)'},
   'Wheels & Tyres':{el:'Τροχοί & Ελαστικά'},'TYRE COMPOUND':{el:'ΤΥΠΟΣ ΕΛΑΣΤΙΚΟΥ'},'WHEEL DIA (in)':{el:'ΔΙΑΜ. ΖΑΝΤΑΣ (in)'},'TYRE WIDTH (mm)':{el:'ΠΛΑΤΟΣ ΕΛΑΣΤ. (mm)'},'TYRE ASPECT (%)':{el:'ΠΡΟΦΙΛ ΕΛΑΣΤ. (%)'},
   'Aerodynamics':{el:'Αεροδυναμική'},'FRONT AERO':{el:'ΕΜΠΡΟΣ ΑΕΡΟΔ.'},'REAR AERO':{el:'ΠΙΣΩ ΑΕΡΟΔ.'},'FLOOR / DIFFUSER':{el:'ΠΑΤΩΜΑ / DIFFUSER'},'WEIGHT REDUCTION':{el:'ΜΕΙΩΣΗ ΒΑΡΟΥΣ'},
   'Brakes & Suspension':{el:'Φρένα & Ανάρτηση'},'BRAKES':{el:'ΦΡΕΝΑ'},'ROTOR SIZE (mm)':{el:'ΔΙΑΜ. ΔΙΣΚΟΥ (mm)'},'SUSPENSION':{el:'ΑΝΑΡΤΗΣΗ'},'STEERING RATIO (:1)':{el:'ΣΧΕΣΗ ΤΙΜΟΝΙΟΥ (:1)'},'STEER':{el:'ΤΙΜΟΝΙ'},'PWR':{el:'ΙΣΧΥΣ'},
@@ -5791,7 +5799,7 @@ const GUIDE_I18N={
   airpath:{el:"<b>Διαδρομή αέρα</b> — τούρμπο (γεμίζει με τις στροφές) ή υπερσυμπιεστής (boost από ρελαντί)· το intercooler ψύχει το χάρμανι· εξάτμιση & καταλύτης ανταλλάσσουν ροή με αντίθλιψη/εκπομπές· το νιτρό είναι εμφιαλωμένη ισχύς."},
   boostCost:{el:"<b>Το boost δεν είναι δωρεάν, και το τούρμπο έχει μέγεθος.</b> Ένας συμπιεστής παράγει πίεση περιστρεφόμενος, και αυτές οι στροφές πληρώνονται με ενέργεια από την εξάτμιση — άρα <i>όσο περισσότερο boost ζητάς από ένα δεδομένο τούρμπο, τόσο αργότερα έρχεται και τόσο πιο αργά χτίζεται</i>. Το ίδιο μικρό τούρμπο που έχει γεμίσει στις 1200 σ.α.λ. με 0.5 bar δεν φτάνει το μισό των 2.5 bar πριν τις ~3000. Ο αριθμός γεμίσματος στη σύνοψη σχεδίασης αφορά το boost που ζήτησες, δεν είναι σταθερή ιδιότητα του τούρμπο."},
   ratedFlow:{el:"Κάθε τούρμπο έχει επίσης <b>ονομαστική παροχή</b> — μικρό 32, μεσαίο 55, μεγάλο 82 lb/min, και οι διατάξεις με πολλά τούρμπο περνούν περισσότερο (twin ×1.85, sequential ×1.55, compound ×2.3). Αυτός είναι ο άξονας πάνω στον οποίο σχεδιάζεται ένας πραγματικός χάρτης συμπιεστή. Αν ζητήσεις από τον κινητήρα να περάσει περισσότερο αέρα από όσο αντέχει το τούρμπο, βγαίνεις εκτός χάρτη: η απόδοση του συμπιεστή καταρρέει, οι ψηλές στροφές πνίγονται και — το χειρότερο — το χάρμανι φτάνει <b>καυτό</b>. Η συμπίεση του αέρα τον θερμαίνει κατά <i>T&middot;(PR<sup>0.283</sup> − 1) / απόδοση</i>, που αυξάνεται πιο γρήγορα από το boost και ακόμη περισσότερο καθώς πέφτει η απόδοση. Ένας 2.0 L που ζητά 2.5 bar από μικρό τούρμπο θέλει 1.7× την ονομαστική του παροχή, και το χάρμανι φτάνει στις βαλβίδες στους <b>74 °C</b> εκεί που το σωστό τούρμπο δίνει 58 °C — οπότε κάνει πειράκια, βγάζει 120 hp <i>λιγότερα</i> από το μεσαίο, και είναι πιο αργός στον γύρο από τον ίδιο κινητήρα στα 0.8 bar. Τίποτα δεν σε εμποδίζει να τον φτιάξεις· απλώς δεν είναι έτσι που βγαίνει ισχύς."},
-  pixart:{el:"<b>Οι εικόνες σχεδιάζονται από το δικό σου σύνολο.</b> Το αυτοκίνητο στην κορυφή της καρτέλας ΟΧΗΜΑ παίρνει το μήκος του από το μεταξόνιο, τους τροχούς από τα μεγέθη ζάντας και ελαστικού και το ύψος από την ανάρτηση. Φοράει το splitter, την αεροτομή και τον diffuser που τοποθετείς. Οι κινητήριοι τροχοί έχουν πράσινες πλήμνες και ένα πράσινο μπλοκ δείχνει πού κάθεται ο κινητήρας: μπροστά από την καμπίνα, πίσω της ή πίσω από τον πίσω άξονα. Ο κινητήρας στην κορυφή της καρτέλας ΚΙΝΗΤΗΡΑΣ ακολουθεί τη φόρμα καθώς την αλλάζεις, πριν το BUILD: ένας εν σειρά σχεδιάζεται από το πλάι ώστε να μετράς τους κυλίνδρους του, ενώ ένας V ή boxer σχεδιάζεται από μπροστά για να φαίνεται η γωνία των συστοιχιών του. Σχεδιάζονται όλα: τα turbo, ο υπερσυμπιεστής, τα καρμπιρατέρ ή οι πεταλούδες, οι εξαγωγές, ο καταλύτης, το intercooler, το ψυγείο και η φιάλη νιτρικών. Τα αποθηκευμένα αυτοκίνητα και οι κινητήρες δείχνουν τις ίδιες εικόνες στις κάρτες του ΓΚΑΡΑΖ, και στον χάρτη της ΠΙΣΤΑΣ το αυτοκίνητο τρέχει τον γύρο με τα δικά του χρώματα."},
+  pixart:{el:"<b>Οι εικόνες σχεδιάζονται από το δικό σου σύνολο.</b> Το αυτοκίνητο στην κορυφή της καρτέλας ΟΧΗΜΑ παίρνει το μήκος του από το μεταξόνιο, τους τροχούς από τα μεγέθη ζάντας και ελαστικού και το ύψος από την ανάρτηση. Φοράει το splitter, την αεροτομή και τον diffuser που τοποθετείς. Οι κινητήριοι τροχοί έχουν πράσινες πλήμνες και ένα πράσινο μπλοκ δείχνει πού κάθεται ο κινητήρας: μπροστά από την καμπίνα, πίσω της ή πίσω από τον πίσω άξονα. Ο κινητήρας στην κορυφή της καρτέλας ΚΙΝΗΤΗΡΑΣ ακολουθεί τη φόρμα καθώς την αλλάζεις, πριν το BUILD: ένας εν σειρά σχεδιάζεται από το πλάι ώστε να μετράς τους κυλίνδρους του, ενώ ένας V ή boxer σχεδιάζεται από μπροστά για να φαίνεται η γωνία των συστοιχιών του. Σχεδιάζονται όλα: τα turbo, ο υπερσυμπιεστής, τα καρμπιρατέρ ή οι πεταλούδες, οι εξαγωγές, ο καταλύτης, το intercooler, το ψυγείο και η φιάλη νιτρικών. Τα αποθηκευμένα αυτοκίνητα και οι κινητήρες δείχνουν τις ίδιες εικόνες στις κάρτες του ΓΚΑΡΑΖ, και στον χάρτη της ΠΙΣΤΑΣ το αυτοκίνητο τρέχει τον γύρο με τα δικά του χρώματα. Ένα πραγματικό αυτοκίνητο που φορτώνεις από την επιλογή παίρνει και τη <b>φωτογραφία εκθεσιακού χώρου</b> κάτω από την επιλογή: μια λεπτομερή πλαϊνή όψη του αυτοκινήτου όπως βγήκε από το εργοστάσιο. Δεν αλλάζει με τα εξαρτήματα που τοποθετείς (το σχεδιασμένο αυτοκίνητο από πάνω αλλάζει), και ένα αποθηκευμένο πραγματικό αυτοκίνητο τη δείχνει στην κάρτα του στο ΓΚΑΡΑΖ."},
   chassis:{el:"Στην καρτέλα <b>ΟΧΗΜΑ</b> βάζεις τον κινητήρα σου σε αυτοκίνητο. Διάλεξε <b>σασί</b> και έρχεται με τον <b>εργοστασιακό του εξοπλισμό</b> — τα ελαστικά, ζάντες, φρένα, ανάρτηση, αεροδυναμική και κιβώτιο που θα φορούσε πραγματικά: ένα kei εμφανίζεται με στενά οικονομικά ελαστικά και μικρούς ατσάλινους δίσκους, ενώ ένα hypercar παίρνει φαρδιά semi-slick, carbon-ceramic φρένα και πακέτο αεροτομής/diffuser. Όλα παραμένουν επεξεργάσιμα· το <b>ΕΡΓΟΣΤΑΣΙΑΚΟΣ ΕΞΟΠΛΙΣΜΟΣ</b> τα επαναφέρει."},
   garage:{el:"Η καρτέλα <b>ΓΚΑΡΑΖ</b> κρατά τα αυτοκίνητα και τους κινητήρες σου. Δώσε όνομα σε ένα αυτοκίνητο στο κάτω μέρος αυτής της καρτέλας και πάτησε <b>ΑΠΟΘΗΚΕΥΣΗ ΣΤΟ ΓΚΑΡΑΖ</b> και αποθηκεύεται το σύνολο — το αμάξωμα, κάθε εξάρτημα πάνω του, <i>και</i> ο κινητήρας μέσα, μέχρι και ο χειροκίνητα ρυθμισμένος χάρτης καυσίμου. Στην καρτέλα ΚΙΝΗΤΗΡΑΣ, η <b>ΑΠΟΘΗΚΕΥΣΗ ΚΙΝΗΤΗΡΑ</b> κρατά μόνο τον κινητήρα, που μπαίνει σε όποιο αυτοκίνητο έχεις όταν τον φορτώσεις. Η <b>ΠΡΟΒΟΛΗ</b> σε μια κάρτα δείχνει τι θα φορτώσει. Κάθε κάρτα δείχνει τα βασικά νούμερα που είχε όταν την αποθήκευσες (ισχύ, βάρος, 0–100, τελική, χρόνο γύρου και συνολικό κόστος), οπότε μπορείς να παρατάξεις τρεις κατασκευές και να τις συγκρίνεις χωρίς να ξαναφτιάξεις καμία. Η <b>ΦΟΡΤΩΣΗ</b> επαναφέρει το αυτοκίνητο ακριβώς όπως ήταν· αν γράψεις όνομα που υπάρχει ήδη, η κάρτα του τονίζεται και η αποθήκευση το αντικαθιστά. Αυτό είναι ξεχωριστό από τα <b>ΑΠΟΘΗΚ.</b>/<b>ΦΟΡΤΩΣΗ</b>, που είναι μία μοναδική θέση γρήγορης αποθήκευσης. Μια εγγραφή του γκαράζ είναι η ίδια που γράφει η <b>ΑΠΟΘ. ΑΡΧΕΙΟΥ</b> και μεταφέρει ένα σύνδεσμος κοινοποίησης. Όλα μένουν μόνο σε αυτόν τον browser — αν καθαρίσεις τα δεδομένα ιστότοπου, χάνεται το γκαράζ, και η <b>ΑΠΟΘ. ΑΡΧΕΙΟΥ</b> είναι αυτή που σώζει μια κατασκευή από αυτό."},
   tuning:{el:"Από εκεί ρυθμίζεις <b>μετάδοση</b> (FWD/RWD/AWD — το AWD ξεκινά καλύτερα), <b>κιβώτιο</b> (τύπος, σχέσεις + ρυθμιστικό τελικής), <b>ελαστικά</b> (τύπος + πλάτος/προφίλ/διάμετρος), <b>αεροδυναμική</b> (εμπρός/πίσω/πάτωμα = κάθετη δύναμη & οπισθέλκουσα), <b>φρένα</b> (τύπος + διάμετρος δίσκου) και <b>ανάρτηση</b> (πόσο γέρνει το αμάξωμα και η κλίση των τροχών). Η πρόσφυση δεν είναι πολλαπλασιαστής: ένα ελαστικό πιάνει περισσότερο όσο λιγότερο φορτίο σηκώνει για το μέγεθός του, οπότε μεγαλύτερο ελαστικό, ελαφρύτερο αυτοκίνητο και λιγότερη μεταφορά βάρους στους εξωτερικούς τροχούς (χαμηλό, φαρδύ αυτοκίνητο) στρίβουν γρηγορότερα· το γέρσιμο που βγάζει το φορτωμένο ελαστικό από την καλύτερη γωνία του κοστίζει πρόσφυση."},
@@ -13039,6 +13047,7 @@ function updateVehicleSummary(){
   const dl={fwd:'FWD',rwd:'RWD',awd:'AWD'}[vehicle.drive]||'RWD';
   el.className='design-summary vehicleSummaryWrap';
   const stock=isFactoryFit(vehicle);
+  syncCarArt();
   el.innerHTML='<b>'+tr(vehicle.chLabel)+'</b> • '+dl+' • '+(vehicle.ev||vehicle.ecvt&&isSeries()?tr('SINGLE-SPEED'):vehicle.ecvt?'eCVT':vehicle.gears+tr('-speed'))+
     ' <span style="color:'+(stock?'#7a8':'#ffcc00')+'">'+tr(stock?'(factory spec)':'(modified)')+'</span>'+
     '<br>'+tr('Curb weight')+' <b>'+Math.round(vehicle.mass)+' kg</b> ('+tr('engine')+' ~'+vehicle.engineMass+' kg) • '+vehicle.powerToWeight.toFixed(0)+' hp/t'+
@@ -14480,6 +14489,9 @@ const garageThumbs=new Map();
 function garageThumb(g){
   const b=g&&g.build;if(!b||!b.engine)return '';
   const car=gKind(g)==='car'&&b.vehicle;
+  // a real car's body is shown by its showroom picture (car-art.js); a generic chassis is drawn
+  const art=car&&b.vehicle.body&&carArtUrl(b.vehicle.body.name);
+  if(art)return art;
   const key=(car?'c':'e')+JSON.stringify(car?[b.vehicle,b.engine.intake]:b.engine);
   if(garageThumbs.has(key))return garageThumbs.get(key);
   let url='';
@@ -14505,7 +14517,7 @@ function garageCard(g,cur){
   const open=garageOpen.has(g.id);
   const thumb=garageThumb(g);
   return '<div class="garage-item'+(cur&&g.name.toLowerCase()===cur?' current':'')+'">'+
-    (thumb?'<img class="garage-thumb" alt="" src="'+thumb+'">':'')+
+    (thumb?'<img class="garage-thumb'+(/^data:/.test(thumb)?'':' art')+'" alt="" loading="lazy" src="'+esc(thumb)+'">':'')+
     '<div class="garage-head"><span class="garage-name">'+esc(g.name)+'</span><span class="garage-date">'+esc(g.date||'')+'</span></div>'+
     '<div class="garage-spec">'+esc(s.engine||'')+(s.chassis?' '+tr('in')+' '+esc(tr(s.chassis)):'')+'</div>'+
     '<div class="garage-stats">'+bits.join(' &middot; ')+'</div>'+
@@ -15466,6 +15478,133 @@ const CAR_PROFILES={
   'BMW 330e (2020)':{len:4.709,h:1.444,front:0.892,nose:0.38,hood:0.52,ws:0.68,rf:0.58,rr:0.32,bk:0.18,deck:0.54,tail:0.48,belt:0.54},
   'Porsche 918 Spyder (2013)':{len:4.643,h:1.167,front:1.052,nose:0.20,hood:0.34,ws:0.62,rf:0.52,rr:0.40,bk:0.24,deck:0.48,tail:0.36,belt:0.40},
 };
+// Showroom pictures of every factory car (build 220).
+//
+// One 960x640 side view per car, all facing left on the same coastal road, generated by the repository owner in a
+// pixel-art style from their own Honda S2000 picture (assets/cars/README.md, with each car's prompt in
+// assets/cars/manifest.json). They are pictures, not data: no number in the sim comes from them.
+//
+// A picture cannot show the parts you fit, so it is used where the car is shown as it left the factory or
+// as a saved card: the VEHICLE tab's showroom under the car picker and the GARAGE cards of real cars. The
+// live views (the VEHICLE preview, the track, the race) keep the car drawn in code by drawCarSprite, which
+// changes with the wheels, ride height, wings and engine fitted.
+//
+// The files sit beside index.html in assets/cars/, so they load from file:// as well as from the web, and
+// the service worker keeps each one once it has been seen. Keyed by the preset's name.
+const CAR_ART_DIR='assets/cars/';
+const CAR_ART={
+  'Suzuki Alto Works (HA36S, 2015)':'suzuki-alto-works-ha36s-2015',
+  'Toyota Aygo 1.0 (2014)':'toyota-aygo-mk2-2014',
+  'Fiat 500 TwinAir 85 (2011)':'fiat-500-twinair-2011',
+  'Ford Fiesta 1.0 EcoBoost 125 (2013)':'ford-fiesta-ecoboost-mk7-2013',
+  'VW Golf GTI (Mk7, 2013)':'volkswagen-golf-gti-mk7-2013',
+  'Toyota GR Yaris (2020)':'toyota-gr-yaris-2020',
+  'Honda Civic Type R (FK8, 2017)':'honda-civic-type-r-fk8-2017',
+  'Mazda MX-5 1.6 (NA, 1989)':'mazda-mx-5-na-1989',
+  'Toyota Corolla Levin GT-APEX (AE86)':'toyota-corolla-levin-ae86-1985',
+  'Honda S2000 (AP1, 2000)':'honda-s2000-ap1-2000',
+  'BMW M3 (E46, 2000)':'bmw-m3-e46-2000',
+  'Porsche 911 GT3 (991.2, 2017)':'porsche-911-gt3-991-2-2017',
+  'Toyota Supra RZ (A80, 1993)':'toyota-supra-a80-1993',
+  'Nissan Skyline GT-R V-spec (R34, 1999)':'nissan-skyline-gt-r-r34-1999',
+  'Subaru Impreza WRX STI (GD, 2004)':'subaru-impreza-wrx-sti-gd-2004',
+  'Mitsubishi Lancer Evolution IX (2006)':'mitsubishi-lancer-evolution-ix-2006',
+  'Audi RS3 Sportback (8V, 2017)':'audi-rs3-sportback-8v-2017',
+  'Chevrolet Corvette (C6, LS3, 2008)':'chevrolet-corvette-c6-2008',
+  'Chevrolet Corvette Z06 (C6, 2006)':'chevrolet-corvette-z06-c6-2006',
+  'Ford Mustang GT (2018)':'ford-mustang-gt-s550-2018',
+  'Dodge Challenger SRT Hellcat (2015)':'dodge-challenger-srt-hellcat-2015',
+  'Ferrari F355 Berlinetta (1994)':'ferrari-f355-berlinetta-1994',
+  'Lamborghini Diablo VT (1993)':'lamborghini-diablo-vt-1993',
+  'McLaren F1 (1994)':'mclaren-f1-1994',
+  'Porsche 911 Turbo (993, 1995)':'porsche-911-turbo-993-1995',
+  'Ferrari Enzo (2002)':'ferrari-enzo-2002',
+  'Porsche Carrera GT (2004)':'porsche-carrera-gt-2004',
+  'Ford GT (2005)':'ford-gt-2005',
+  'Lamborghini Murciélago LP640 (2006)':'lamborghini-murcielago-lp640-2006',
+  'Ferrari 458 Italia (2010)':'ferrari-458-italia-2010',
+  'Lamborghini Huracán LP610-4 (2014)':'lamborghini-huracan-lp610-4-2014',
+  'McLaren 720S (2017)':'mclaren-720s-2017',
+  'Ferrari 812 Superfast (2017)':'ferrari-812-superfast-2017',
+  'Porsche 911 Turbo S (992, 2020)':'porsche-911-turbo-s-992-2020',
+  'Lamborghini Huracán STO (2021)':'lamborghini-huracan-sto-2021',
+  'Chevrolet Corvette Z06 (C8, 2023)':'chevrolet-corvette-z06-c8-2023',
+  'McLaren 750S (2023)':'mclaren-750s-2023',
+  'Mazda RX-7 (FD, 1993)':'mazda-rx-7-fd-1993',
+  'Mazda RX-8 (2004)':'mazda-rx-8-2004',
+  'VW Golf 2.0 TDI 150 (Mk7, 2013)':'volkswagen-golf-tdi-mk7-2013',
+  'BMW 330d (F30, 2012)':'bmw-330d-f30-2012',
+  'Chevrolet Silverado 2500HD Duramax (2020)':'chevrolet-silverado-2500hd-2020',
+  'BMW X5 M (F85, 2015)':'bmw-x5-m-f85-2015',
+  'Porsche Cayenne Turbo (958.2, 2014)':'porsche-cayenne-turbo-958-2014',
+  'Lamborghini Urus (2018)':'lamborghini-urus-2018',
+  'Jeep Grand Cherokee SRT (WK2, 2014)':'jeep-grand-cherokee-srt-wk2-2014',
+  'Toyota Land Cruiser 200 VX 4.5 D-4D (2015)':'toyota-land-cruiser-200-2015',
+  'Radical SR3 RSX 1500 (2015)':'radical-sr3-rsx-2015',
+  'BAC Mono 2.3 (2011)':'bac-mono-2011',
+  'Nissan 370Z (Z34, 2009)':'nissan-370z-z34-2009',
+  'Honda NSX (NA1, 1991)':'honda-nsx-na1-1991',
+  'Ford F-150 Raptor (2017)':'ford-f-150-raptor-2017',
+  'Nissan GT-R (R35, 2017)':'nissan-gt-r-r35-2017',
+  'Alfa Romeo Giulia Quadrifoglio (2017)':'alfa-romeo-giulia-quadrifoglio-2017',
+  'Nissan 300ZX Twin Turbo (Z32, 1990)':'nissan-300zx-twin-turbo-z32-1990',
+  'Buick GNX (1987)':'buick-gnx-1987',
+  'Ferrari Dino 246 GT (1969)':'ferrari-dino-246-gt-1969',
+  'Ferrari F40 (1987)':'ferrari-f40-1987',
+  'Jaguar E-Type 3.8 FHC (Series 1, 1961)':'jaguar-e-type-series-1-1961',
+  'Ford Mustang Fastback 289 (1965)':'ford-mustang-fastback-1965',
+  'Porsche 911 Carrera RS 2.7 Sport (1973)':'porsche-911-carrera-rs-2-7-1973',
+  'BMW M3 (E30, 1986)':'bmw-m3-e30-1986',
+  'Volkswagen Golf GTI (Mk1, 1976)':'volkswagen-golf-gti-mk1-1976',
+  'Ferrari 365 GTB/4 Daytona (1968)':'ferrari-365-gtb4-daytona-1968',
+  'Lamborghini Countach LP400 (1974)':'lamborghini-countach-lp400-1974',
+  'Audi Sport quattro (1984)':'audi-sport-quattro-1984',
+  'Mercedes-Benz 190E 2.3-16 (1984)':'mercedes-benz-190e-2-3-16-1984',
+  'Peugeot 205 GTI 1.9 (1986)':'peugeot-205-gti-1-9-1986',
+  'Ford Sierra RS Cosworth (1986)':'ford-sierra-rs-cosworth-1986',
+  'Lancia Delta HF Integrale Evoluzione (1992)':'lancia-delta-integrale-evo-1992',
+  'Honda Integra Type R (DC2, 1995)':'honda-integra-type-r-dc2-1995',
+  'Lotus Elise (S1, 1996)':'lotus-elise-s1-1996',
+  'BMW M5 (E39, 2000)':'bmw-m5-e39-2000',
+  'Trabant 601 S (1988)':'trabant-601-s-1988',
+  'Honda S660 (2015)':'honda-s660-2015',
+  'Honda Beat (1991)':'honda-beat-1991',
+  'Suzuki Cappuccino (EA11R, 1991)':'suzuki-cappuccino-ea11r-1991',
+  'Ford Focus RS (Mk3, 2016)':'ford-focus-rs-mk3-2016',
+  'Renault Mégane R.S. Trophy (2018)':'renault-megane-rs-trophy-2018',
+  'Suzuki Swift Sport (ZC33S, 2018)':'suzuki-swift-sport-zc33s-2018',
+  'Honda Civic Type R (EK9, 1997)':'honda-civic-type-r-ek9-1997',
+  'Toyota GR86 (2022)':'toyota-gr86-2022',
+  'Porsche 718 Cayman GT4 (2020)':'porsche-718-cayman-gt4-2020',
+  'BMW M2 Competition (F87, 2018)':'bmw-m2-competition-f87-2018',
+  'Ariel Atom 3.5 (2013)':'ariel-atom-3-5-2013',
+  'Mazda MX-5 2.0 (ND, 2015)':'mazda-mx-5-nd-2015',
+  'Dodge Viper SRT-10 (2008)':'dodge-viper-srt-10-2008',
+  'Mercedes-AMG C63 (W204, 2008)':'mercedes-amg-c63-w204-2008',
+  'Ram 2500 HO Cummins (2019)':'ram-2500-cummins-2019',
+  'Toyota Hilux 2.8 D-4D (2016)':'toyota-hilux-2-8-d-4d-2016',
+  'Volkswagen Amarok 3.0 V6 TDI (2018)':'volkswagen-amarok-v6-2018',
+  'Chevrolet Camaro ZL1 (2017)':'chevrolet-camaro-zl1-2017',
+  'Tesla Model 3 RWD (2021)':'tesla-model-3-2021',
+  'Tesla Model Y Long Range (2022)':'tesla-model-y-2022',
+  'Tesla Model S Plaid (2021)':'tesla-model-s-plaid-2021',
+  'Hyundai Ioniq Hybrid (2016)':'hyundai-ioniq-hybrid-2016',
+  'Toyota Prius (2016)':'toyota-prius-xw50-2016',
+  'Nissan Qashqai e-POWER (2022)':'nissan-qashqai-e-power-j12-2022',
+  'BMW 330e (2020)':'bmw-330e-g20-2020',
+  'Porsche 918 Spyder (2013)':'porsche-918-spyder-2013',
+};
+function carArtUrl(name){const s=name&&CAR_ART[name];return s?CAR_ART_DIR+s+'.webp':'';}
+// The VEHICLE tab's showroom: the real car the body comes from, or nothing for a generic chassis.
+function syncCarArt(){
+  const fig=document.getElementById('vhShowroom'),img=document.getElementById('vhArt');if(!fig||!img)return;
+  const name=(typeof vehBody!=='undefined'&&vehBody&&vehBody.name)||'',url=carArtUrl(name);
+  fig.hidden=!url;
+  if(!url){img.removeAttribute('src');img.alt='';return;}
+  if(img.getAttribute('src')!==url){img.src=url;img.alt=name;}
+  const cap=document.getElementById('vhArtCap');
+  if(cap)cap.textContent=name+(isFactoryFit(vehicle)?'':' — '+tr('as it left the factory'));
+}
 // ====== PIXEL SPRITES: the car and the engine you built, drawn as 8-bit art ======
 // The ENGINE, VEHICLE and GARAGE tabs were forms and nothing else: you could build a mid-engine
 // hypercar on semi-slicks with a rear wing and never once see it. These sprites are drawn FROM the

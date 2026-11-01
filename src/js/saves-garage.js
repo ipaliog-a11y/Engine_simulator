@@ -206,6 +206,9 @@ const garageThumbs=new Map();
 function garageThumb(g){
   const b=g&&g.build;if(!b||!b.engine)return '';
   const car=gKind(g)==='car'&&b.vehicle;
+  // a real car's body is shown by its showroom picture (car-art.js); a generic chassis is drawn
+  const art=car&&b.vehicle.body&&carArtUrl(b.vehicle.body.name);
+  if(art)return art;
   const key=(car?'c':'e')+JSON.stringify(car?[b.vehicle,b.engine.intake]:b.engine);
   if(garageThumbs.has(key))return garageThumbs.get(key);
   let url='';
@@ -231,7 +234,7 @@ function garageCard(g,cur){
   const open=garageOpen.has(g.id);
   const thumb=garageThumb(g);
   return '<div class="garage-item'+(cur&&g.name.toLowerCase()===cur?' current':'')+'">'+
-    (thumb?'<img class="garage-thumb" alt="" src="'+thumb+'">':'')+
+    (thumb?'<img class="garage-thumb'+(/^data:/.test(thumb)?'':' art')+'" alt="" loading="lazy" src="'+esc(thumb)+'">':'')+
     '<div class="garage-head"><span class="garage-name">'+esc(g.name)+'</span><span class="garage-date">'+esc(g.date||'')+'</span></div>'+
     '<div class="garage-spec">'+esc(s.engine||'')+(s.chassis?' '+tr('in')+' '+esc(tr(s.chassis)):'')+'</div>'+
     '<div class="garage-stats">'+bits.join(' &middot; ')+'</div>'+
