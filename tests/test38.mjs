@@ -28,7 +28,8 @@ const w = await page.evaluate(() => Object.keys(TRACKS).map(k => {
   const constW = !!TRACKS[k].real && TRACKS[k].wprof.every(m => Math.abs(m - 1) < 0.02);
   return { k, label: T.label, constW, nominal: T.width, avg: +avg.toFixed(2), min: +T.wMin.toFixed(1), max: +T.wMax.toFixed(1),
     label_: T.wLabel, tightW: +tightW.toFixed(1), openW: +openW.toFixed(1),
-    offTrack: T.line.filter((p, i) => Math.abs(p.off) > T.pts[i].hw + 1e-6).length };
+    // beyond the edge only onto a kerb, and by no more than its usable width there (build 217: kerbs are outside the edges)
+    offTrack: T.line.filter((q, i) => Math.abs(q.off) > T.pts[i].hw + ((T.kerbs && (q.off > 0 ? T.kerbs.wP[i] : T.kerbs.wN[i])) || 0) * KERB_W + 1e-6).length };
 }));
 w.forEach(x => console.log(`  ${x.label.padEnd(14)} ${x.label_.padEnd(9)} nominal ${x.nominal} m, measured avg ${x.avg} m | tightest fifth ${x.tightW} m vs most open fifth ${x.openW} m | off track ${x.offTrack} pts`));
 w.forEach(x => {

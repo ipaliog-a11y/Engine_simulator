@@ -79,6 +79,14 @@ the car, reaching the front axle before the rear: what it disturbs is the balanc
   - a 5 cm wheel's load, and the grip moving from rear to front;
   - the map and the Greek page.
 
+  Changed in the open:
+  - test32 and test38 checked that the line never leaves the track. It may now leave it onto a kerb, by no more than
+    the kerb's usable width there, and that is what they check.
+  - test35's floor of 15 corners on an imported Nordschleife sat exactly at the old count. Corners are counted on the
+    line driven, and the kerbs open one of them past the counting radius (15 → 14). Against the real circuits'
+    official counts, the line's count is as close as before (53 corners off in all on build 216, 56 on 217). The
+    centreline's own count, which kerbs would not move, is further off, so the line's count stays.
+
 ### Dampers and the road (build 216)
 
 Stage 3 of the suspension, part a. The lap is solved as a string of steady corners, where a damper does nothing, so

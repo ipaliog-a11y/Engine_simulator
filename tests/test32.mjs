@@ -19,7 +19,8 @@ const geo = await page.evaluate(() => Object.keys(TRACKS).map(k => {
   const T = buildTrack(k), L = T.line, half = T.width / 2;
   const offs = L.map(q => q.off);
   const worst = Math.max(...offs.map(Math.abs));
-  const off_track = L.filter((q, i) => Math.abs(q.off) > T.pts[i].hw + 1e-6).length;
+  // beyond the edge only onto a kerb, and by no more than its usable width there (build 217: kerbs are outside the edges)
+  const off_track = L.filter((q, i) => Math.abs(q.off) > T.pts[i].hw + ((T.kerbs && (q.off > 0 ? T.kerbs.wP[i] : T.kerbs.wN[i])) || 0) * KERB_W + 1e-6).length;
   // sign changes = the line crossing the track, i.e. genuinely working the width
   let cross = 0; for (let i = 0; i < L.length; i++) { const a = offs[i], b = offs[(i + 1) % L.length]; if (a * b < 0 && Math.abs(a - b) > 0.5) cross++; }
   // A real circuit's width is measured, not authored: the Indianapolis oval really is one width.
