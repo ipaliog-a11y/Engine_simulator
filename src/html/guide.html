@@ -1797,7 +1797,8 @@ No road is flat. Over every bump the wheel is pushed up, the spring is squeezed,
 <b>FRONT DAMPERS</b> and <b>REAR DAMPERS</b> on the VEHICLE tab go from SOFT −2 to STIFF +2 about the suspension kit's own damping. Each step is 1.3× the damping; off STANDARD they are new parts.<br>
 The summary shows each axle's damping as a share of critical damping, the wheel-hop frequency, and the <b>ride</b>: how hard the body is shaken at 80 km/h on an ordinary good road. Lower is more comfortable.<br>
 On the TRACK, every circuit has a road surface: purpose-built circuits are smooth, older and public-road circuits bumpier, and the Nordschleife bumpiest. The bumps cost grip wherever the tyres work, cornering, braking and driving, and more at speed. Damping near half of critical keeps the tyres' load steadiest. Softer is more comfortable but lets the wheels hop; stiffer shakes the car and the tyres again. Stiffer springs on the same dampers are damped less, and cost a little grip on bumps.<br>
-The 0–100, braking and skidpad tests are run on a smooth surface, so the dampers do not change them.
+The 0–100, braking and skidpad tests are run on a smooth surface, so the dampers do not change them.<br>
+<b>SUSPENSION CALCULATOR…</b>, beside the dampers, opens one corner of the car on its own: its sprung and unsprung mass, spring rate and motion ratio, bound and rebound damping and tyre rate, all of which you can change. It shows the two natural frequencies (the body's bounce and the wheel's hop), the damping as a share of critical, how much the body and the wheel move over a road wave at each frequency, and the corner driven onto a step in the road. Nothing changed there goes back to the car.
 </div>
 </div>
 <div class="gtier gt-phys"><div class="gtier-h">LV3 · THE PHYSICS</div>
@@ -1814,7 +1815,10 @@ with c from the quarter car's response, worked out for each axle from its own sp
 <b>Why a swinging load costs grip.</b> A tyre's grip grows less than in proportion to its load (load sensitivity, μ ∝ F<sub>z</sub><sup>−0.15</sup>), so its force goes as F<sub>z</sub><sup>0.85</sup>, a curve that bends down. A load swinging about its mean therefore averages less force than a steady one. The load cannot pull on the road, so it stops at zero while the wheel is in the air, and its mean stays the car's weight (the landing is harder):
 <span class="geq">grip kept = E[ L<sup>0.85</sup> ],  L = max(0, 1 + x) rescaled to mean 1,  x ~ Normal(0, σ<sub>F</sub>/F<sub>z</sub>)</span>
 Each tyre keeps that share of its force, the lightly loaded inside tyre the least. At 180 km/h on a smooth circuit a road car's tyres swing about 10% and lose under 0.1%; on the Nordschleife about 17% and roughly 0.1–0.2%.<br>
-<b>The ride</b> is the body's RMS vertical acceleration from the same quarter car, unweighted (ISO 2631's comfort weighting is not applied).
+<b>The ride</b> is the body's RMS vertical acceleration from the same quarter car, unweighted (ISO 2631's comfort weighting is not applied).<br>
+<b>The calculator's two frequencies</b> are the undamped quarter car's modes, the roots of
+<span class="geq">m<sub>s</sub> m<sub>u</sub> ω⁴ − (m<sub>s</sub>(k<sub>s</sub> + k<sub>t</sub>) + m<sub>u</sub> k<sub>s</sub>) ω² + k<sub>s</sub> k<sub>t</sub> = 0</span>
+close to the shortcuts √(k<sub>ride</sub>/m<sub>s</sub>), the body on the spring and tyre in series, and √((k<sub>s</sub> + k<sub>t</sub>)/m<sub>u</sub>), the wheel between them. A spring or damper whose end moves MR times the wheel acts at the wheel with MR² of its rate. A damper stiffer in rebound than in bound is not linear: over a road wave the first harmonic of its force is set by the mean of the two, so that is the damper the frequency response uses; the step is run in time with each in its own direction, and shows what the mean hides.
 </div>
 <div class="guide-limit" data-gk="dampersLimit">
 Limit: the bumps act only through load sensitivity and wheel hop. A real tyre's force also lags a change of load (kerbs are their own page: <a data-gp="kerbs">Kerbs</a>), and dampers also steady the body at turn-in and keep an aero car's floor at its height; none of these is modelled, so this is the least the road costs. No circuit's surface has been measured to ISO 8608 that we can find, so each circuit's roughness is an estimate by its kind.
