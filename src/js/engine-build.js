@@ -43,6 +43,7 @@ function readEngineFromForm(){
     timingMode:g('edTiming').value,
     afrMode:g('edAfrMode').value,
     radiator:g('edRadiator').value,
+    radHp:Math.max(0,+g('edRadHp').value||0),   // what a STOCK radiator was sized for (build 219)
     fan:g('edFan').value,
     oilCooler:g('edOilCooler').value==='yes',
     thermostat:clamp(Math.round(+g('edThermostat').value||88),71,95),
@@ -74,7 +75,7 @@ function applyEngineToForm(e){
   g('edFuel').value=e.fuel||'gasoline';
   partsToForm(e);g('edCat').value=e.cat||'stock';g('edOctane').value=e.octane;g('edInjector').value=e.injector;
   g('edIgnAdv').value=e.ignitionAdv;g('edIgnType').value=e.ignitionType;g('edTiming').value=e.timingMode||'fixed';g('edAfrMode').value=e.afrMode||'fixed';
-  g('edRadiator').value=e.radiator||'stock';g('edFan').value=e.fan||'electric';
+  g('edRadiator').value=e.radiator||'stock';g('edRadHp').value=e.radHp||0;g('edFan').value=e.fan||'electric';
   g('edOilCooler').value=e.oilCooler?'yes':'no';g('edThermostat').value=e.thermostat||88;
   g('edAlternator').value=e.alternator||'120';
   applyElectricToForm(e);

@@ -43,7 +43,7 @@ const DEFAULT_ENGINE={
   intakeSys:'efi',airFilter:'perf',
   cam:'stock',vvt:true,valves:4,valveMat:'steel',valveSpring:'stock',runner:'medium',
   fuel:'gasoline',octane:95,injector:'direct',ignitionAdv:22,ignitionType:'coil',timingMode:'auto',afrMode:'auto',
-  radiator:'stock',fan:'electric',oilCooler:false,thermostat:88,
+  radiator:'stock',radHp:0,fan:'electric',oilCooler:false,thermostat:88,
   alternator:'120'
 };
 // Ready-made popular builds (deltas over DEFAULT_ENGINE). Loaded from the DESIGN dropdown.

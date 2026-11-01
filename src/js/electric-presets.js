@@ -116,4 +116,7 @@ const HYB_VEHICLE_PRESETS=[
 ];
 // What a player picks from: the combustion tables, then the electric and hybrid ones.
 const FACTORY_ENGINES=PRESETS.concat(EV_ENGINE_PRESETS,HYB_ENGINE_PRESETS), FACTORY_CARS=VEHICLE_PRESETS.concat(EV_VEHICLE_PRESETS,HYB_VEHICLE_PRESETS);
+// A real engine's STOCK radiator is its maker's, sized for the engine's rated power (build 219). The reliability index
+// reads it as engine.radHp; it travels with the design, so a modified factory engine is judged against its own radiator.
+for(const p of FACTORY_ENGINES)if(p.real&&p.real.hp>0&&p.engine.radHp==null)p.engine.radHp=p.real.hp;
 const FACTORY_ENGINE_CATS=PRESET_CATS.concat(['Electric','Hybrid']), FACTORY_CAR_CATS=VEHICLE_CATS.concat(['Electric','Hybrid']);
