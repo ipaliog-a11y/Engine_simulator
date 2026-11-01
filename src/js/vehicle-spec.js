@@ -113,7 +113,7 @@ function readVehicleFromForm(){
     suspFront:g('vhGeoF').value,suspRear:g('vhGeoR').value,
     // each axle's springs and anti-roll bar, steps about the kit (build 174)
     springF:stepOf(g('vhSpringF').value),springR:stepOf(g('vhSpringR').value),barF:stepOf(g('vhBarF').value),barR:stepOf(g('vhBarR').value),
-    // each axle's dampers, steps about the kit's damping ratio (build 215)
+    // each axle's dampers, steps about the kit's damping ratio (build 216)
     damperF:stepOf(g('vhDamperF').value),damperR:stepOf(g('vhDamperR').value),
     speedRating:g('vhRating').value,body:vehBody,
     // Steering-wheel turns per road-wheel turn. Only the live-timing wheel reads it; the lap does not.
@@ -158,7 +158,7 @@ function applyVehicleToForm(v){
   // saves from before build 174 carry ROLL BALANCE (arbBal), the front bar against the rear: it becomes the front bar
   g('vhSpringF').value=String(stepOf(v.springF));g('vhSpringR').value=String(stepOf(v.springR));
   g('vhBarF').value=String(stepOf(v.barF!=null?v.barF:v.arbBal));g('vhBarR').value=String(stepOf(v.barR));
-  g('vhDamperF').value=String(stepOf(v.damperF));g('vhDamperR').value=String(stepOf(v.damperR));   // none before build 215: the kit's own
+  g('vhDamperF').value=String(stepOf(v.damperF));g('vhDamperR').value=String(stepOf(v.damperR));   // none before build 216: the kit's own
   g('vhSteer').value=v.steerRatio||15;   // saves from before build 130 carry none
   updateGearingLabel();
 }

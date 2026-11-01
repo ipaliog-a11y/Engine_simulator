@@ -514,7 +514,7 @@ table.hy-map td:focus{outline:2px solid #ffcc00;outline-offset:-2px}
 </div>
 <div class="container">
 <header>
-<h1>PIXEL ENGINE SIM v0.7 build 215</h1>
+<h1>PIXEL ENGINE SIM v0.7 build 216</h1>
 <div class="subtitle" id="subtitle">ENGINE DESIGNER • BUILD IT, THEN DRIVE IT</div>
 </header>
 <div class="build-strip" id="buildStrip">
@@ -6801,7 +6801,7 @@ function brakeHeatStep(st,th,a,vCar,dt,cv,frIn){
 // ~1.6, a race car without big aero ~2.0 (passenger cars 0.5-1.5 Hz, OptimumG, Springs & Dampers).
 // camber = the static negative camber each is set up with (deg): a road alignment ~-0.5, a sports one ~-1,
 // track coilovers ~-1.8, a race car ~-2.5, so that under roll the loaded tyre stands near its best angle.
-// zeta = the dampers' ratio to critical damping in bounce (build 215): passenger cars 0.2-0.3 (the textbooks' figure,
+// zeta = the dampers' ratio to critical damping in bounce (build 216): passenger cars 0.2-0.3 (the textbooks' figure,
 // and ~0.3 measured on passenger cars: Slaski), race cars 0.5-0.7 (Kasprzak, A Guide to Your Dampers, FSAE), and 0.45
 // called the optimum for a racing car (Milliken). A sports setup and track coilovers sit between.
 const SUSPENSION={
@@ -6818,14 +6818,14 @@ const SUSPENSION={
 // load transfer, build 157's ROLL BALANCE step. At STANDARD both axles share the kit's frequency, so the roll
 // stiffness splits as m t^2, the weight split on equal tracks: build 157's NEUTRAL.
 const BAR_SHARE=0.55, SPRING_STEP=1.3, BAR_STEP=1.5;
-const STIFF_STEP_COST={spring:400,bar:250,damper:350};   // per axle off STANDARD (dampers: build 215)
+const STIFF_STEP_COST={spring:400,bar:250,damper:350};   // per axle off STANDARD (dampers: build 216)
 // Roll stiffness of each axle (N m per rad) for car v (mass, fWt, tracks, kit, steps).
 function rollStiffness(v){
   const w=2*Math.PI*(SUSPENSION[v.suspension]||SUSPENSION.sport).hz,w2=w*w;
   const ax=(m,t,sp,bar)=>{const k=m*w2*t*t/4;return k*Math.pow(SPRING_STEP,sp||0)+BAR_SHARE*k*Math.pow(BAR_STEP,bar||0);};
   return {F:ax(v.mass*v.fWt,v.trackF,v.springF,v.barF),R:ax(v.mass*(1-v.fWt),v.trackR,v.springR,v.barR)};
 }
-// ---- dampers and the road (build 215) ----
+// ---- dampers and the road (build 216) ----
 // In a steady corner a damper does nothing: it only works while the suspension moves. On a real circuit it always
 // moves, because the road is not flat, and every bump makes the tyres' load swing about its mean. A tyre's grip
 // grows less than in proportion to its load (tyreMu, load sensitivity), so a tyre whose load swings grips less on
@@ -6887,13 +6887,13 @@ function roadGrip(s){if(!(s>0))return 1;const T=ROAD_G||roadGripTable(),x=Math.m
 // The road under the lap being solved: its Gd(n0) (m3). 0 is a perfectly smooth surface, the one the acceleration,
 // braking and skidpad tests are run on. simulateLap sets it from the circuit and puts it back.
 const ROAD={gd:0};
-// The ride (build 215): the body's RMS vertical acceleration (m/s2), front and rear averaged, at 80 km/h on a class B road
+// The ride (build 216): the body's RMS vertical acceleration (m/s2), front and rear averaged, at 80 km/h on a class B road
 // (64e-6 m3, the middle of ISO 8608's 'good'). Unweighted: ISO 2631's comfort weighting is not applied, so it reads
 // somewhat above what the standard's tables would; it is for comparing setups, not a comfort grade.
 function rideRms(v){const k=Math.sqrt(64e-6*80/3.6);return (v.rideF+v.rideR)/2*k;}
 // Each axle's tyre load swing (N) at speed v on the current road.
 function roadSigma(ax,v){return ROAD.gd>0&&v>0?(ax==='F'?vehicle.roughF:vehicle.roughR)*Math.sqrt(ROAD.gd*v):0;}
-// A circuit's road (build 215). No circuit's surface has been measured to ISO 8608 that we can find, so these are
+// A circuit's road (build 216). No circuit's surface has been measured to ISO 8608 that we can find, so these are
 // estimates by kind of circuit, and labelled so: a permanent circuit's asphalt, laid and kept for racing, half of class
 // A's middle (8e-6 m3); a circuit run on public or park roads, or one whose bumps its drivers complain of, class A's
 // middle (16e-6); the Nordschleife, a public toll road from 1927, the A/B boundary (32e-6).
@@ -7036,14 +7036,14 @@ function corneringDrag(m,ay,N){return m*m*ay*ay/(Math.max(1,N)*TYRE_CC);}
 // Build 173: per axle, its own static camber and the share of the roll its geometry recovers (SUSP_GEO).
 function latCamberF(ay,camber,recov){return 1-CAMBER_LOSS*Math.abs(camber+vehicle.rollGrad*Math.abs(ay)/G*(1-recov)-CAMBER_BEST);}
 // one axle's two tyres at normal load Nax with lateral transfer d across them (N)
-// sg: the tyres' load swing on the road (N, build 215): each tyre keeps roadGrip of its force, the lightly loaded inside one
+// sg: the tyres' load swing on the road (N, build 216): each tyre keeps roadGrip of its force, the lightly loaded inside one
 // the least of it.
 function axleLatCap(Nax,d,FzRef,sg){
   const F=Nax/2,o=F+d,inr=Math.max(0,F-d);
   if(!(sg>0))return tyreMu(o,FzRef)*o+(inr>0?tyreMu(inr,FzRef)*inr:0);
   return tyreMu(o,FzRef)*o*roadGrip(sg/Math.max(1,o))+(inr>0?tyreMu(inr,FzRef)*inr*roadGrip(sg/inr):0);
 }
-function latBalance(N,ay,dn,ax,v){   // v: the speed, for the road's bumps (build 215); none on a smooth test surface
+function latBalance(N,ay,dn,ax,v){   // v: the speed, for the road's bumps (build 216); none on a smooth test surface
   const m=vehicle.mass,fWt=vehicle.fWt||0.55,aF=vehicle.aeroBal!=null?vehicle.aeroBal:0.5,lt=vehicle.lltdF!=null?vehicle.lltdF:fWt;
   const tr=ax||0;   // longitudinal load transfer onto the front (N): braking +, accelerating -
   const Nf=clamp((N-(dn||0))*fWt+(dn||0)*aF+tr,0.05*N,0.95*N),Nr=N-Nf;
@@ -9555,7 +9555,7 @@ function readVehicleFromForm(){
     suspFront:g('vhGeoF').value,suspRear:g('vhGeoR').value,
     // each axle's springs and anti-roll bar, steps about the kit (build 174)
     springF:stepOf(g('vhSpringF').value),springR:stepOf(g('vhSpringR').value),barF:stepOf(g('vhBarF').value),barR:stepOf(g('vhBarR').value),
-    // each axle's dampers, steps about the kit's damping ratio (build 215)
+    // each axle's dampers, steps about the kit's damping ratio (build 216)
     damperF:stepOf(g('vhDamperF').value),damperR:stepOf(g('vhDamperR').value),
     speedRating:g('vhRating').value,body:vehBody,
     // Steering-wheel turns per road-wheel turn. Only the live-timing wheel reads it; the lap does not.
@@ -9600,7 +9600,7 @@ function applyVehicleToForm(v){
   // saves from before build 174 carry ROLL BALANCE (arbBal), the front bar against the rear: it becomes the front bar
   g('vhSpringF').value=String(stepOf(v.springF));g('vhSpringR').value=String(stepOf(v.springR));
   g('vhBarF').value=String(stepOf(v.barF!=null?v.barF:v.arbBal));g('vhBarR').value=String(stepOf(v.barR));
-  g('vhDamperF').value=String(stepOf(v.damperF));g('vhDamperR').value=String(stepOf(v.damperR));   // none before build 215: the kit's own
+  g('vhDamperF').value=String(stepOf(v.damperF));g('vhDamperR').value=String(stepOf(v.damperR));   // none before build 216: the kit's own
   g('vhSteer').value=v.steerRatio||15;   // saves from before build 130 carry none
   updateGearingLabel();
 }
@@ -10026,7 +10026,7 @@ function computeVehicleCost(ch,tt,wr){
   // springs and bars off STANDARD are new parts (build 174)
   c+=(stepOf(vehicle.springF)?1:0)*STIFF_STEP_COST.spring+(stepOf(vehicle.springR)?1:0)*STIFF_STEP_COST.spring+
      (stepOf(vehicle.barF)?1:0)*STIFF_STEP_COST.bar+(stepOf(vehicle.barR)?1:0)*STIFF_STEP_COST.bar+
-     (stepOf(vehicle.damperF)?1:0)*STIFF_STEP_COST.damper+(stepOf(vehicle.damperR)?1:0)*STIFF_STEP_COST.damper;   // dampers: build 215
+     (stepOf(vehicle.damperF)?1:0)*STIFF_STEP_COST.damper+(stepOf(vehicle.damperR)?1:0)*STIFF_STEP_COST.damper;   // dampers: build 216
   c+=Math.max(0,vehicle.rotor-320)*6;
   c+={fwd:0,rwd:800,awd:2500}[vehicle.drive]||0;
   c+=(vehicle.ev?EV_REDUCTION:vehicle.ecvt?PS_REDUCTION:(GEARBOX[vehicle.gearbox]||GEARBOX.manual)).cost+(DIFF[vehicle.diff]||DIFF.open).cost;
@@ -10118,7 +10118,7 @@ function buildVehicle(){
    vehicle.rollKF=K.F/(K.F+K.R);vehicle.rollK=K.F+K.R;
    vehicle.rollGrad=vehicle.mass*G*arm/vehicle.rollK*180/Math.PI;   // deg per g
    vehicle.lltdF=clamp((arm*vehicle.rollKF+fw*vehicle.rcF)/Math.max(0.05,arm+zAx),0.15,0.85);}
-  // The dampers (build 215): each axle's quarter car on the road, as the swing of its tyres' load per root of
+  // The dampers (build 216): each axle's quarter car on the road, as the swing of its tyres' load per root of
   // Gd(n0) v (roadSigma), and the body's acceleration likewise (the ride).
   {const qF=quarterCar(vehicle,'F'),qR=quarterCar(vehicle,'R'),cF=quarterCoef(qF),cR=quarterCoef(qR);
    vehicle.roughF=cF.F;vehicle.roughR=cR.F;vehicle.rideF=cF.A;vehicle.rideR=cR.A;
@@ -11167,7 +11167,7 @@ function lineFor(T,key){
 // Quasi-steady-state lap: a cornering-speed ceiling at every point, then a backward braking pass
 // and a forward traction/power pass, taking the lower speed at each point. Gearbox shift time is
 // charged per gear change around the lap, so a slow-shifting box loses real time on a circuit.
-// The circuit's road under the whole solve (build 215): its bumps cost the tyres grip wherever they work, in a corner,
+// The circuit's road under the whole solve (build 216): its bumps cost the tyres grip wherever they work, in a corner,
 // braking and driving. opts.road overrides it (0 is a perfectly smooth surface); ROAD is put back however it ends.
 function simulateLapRun(key,opts){
   const gd=opts&&opts.road!=null?opts.road:TRACK_ROAD[trackRoad(key)]||0;
@@ -11297,7 +11297,7 @@ function simulateLapCore(key,opts){
     const N=loadAt(q,vv),dn=down(vv),tr=m*a*hL;
     const B=latBalance(N,ay,dn,tr,vv),Nf=B.Nf,Nr=B.Nr;
     const uF=clamp(m*ay*fWt/Math.max(1,B.capF*dCorner),0,1),uR=clamp(m*ay*(1-fWt)/Math.max(1,B.capR*dCorner),0,1);
-    // braking on a bumpy road: each axle's tyres keep roadGrip of their force, as in a corner (build 215)
+    // braking on a bumpy road: each axle's tyres keep roadGrip of their force, as in a corner (build 216)
     const sF=roadSigma('F',vv),sR=roadSigma('R',vv);
     return {Nf,Nr,uF,uR,gF:tyreMuX(Nf/2,vehicle.FzRefF)*Nf*roadGrip(sF/Math.max(1,Nf/2))*Math.sqrt(Math.max(0,1-uF*uF)),gR:tyreMuX(Nr/2)*Nr*roadGrip(sR/Math.max(1,Nr/2))*Math.sqrt(Math.max(0,1-uR*uR))};
   }
@@ -11351,7 +11351,7 @@ function simulateLapCore(key,opts){
     // open diff falls apart on a fast corner exit while a locked one doesn't.
     const g0=gear>=0?inGear(vi,gear):gearAt(vi),bg=boostShare<1?{gear:g0.gear,F:g0.F*boostShare,tqFrac:g0.tqFrac*boostShare}:g0;
     const R=(drag(vi)+rollF(vi)*q.cosT+corneringDrag(m,aLat,N))/m+G*q.sinT;
-    const nD=vehicle.drive==='awd'?4:2,sD=vehicle.drive==='fwd'?roadSigma('F',vi):vehicle.drive==='rwd'?roadSigma('R',vi):(roadSigma('F',vi)+roadSigma('R',vi))/2;   // the driven tyres' load swing (build 215)
+    const nD=vehicle.drive==='awd'?4:2,sD=vehicle.drive==='fwd'?roadSigma('F',vi):vehicle.drive==='rwd'?roadSigma('R',vi):(roadSigma('F',vi)+roadSigma('R',vi))/2;   // the driven tyres' load swing (build 216)
     const kk=tyreMuX(N0/nD,vehicle.drive==='fwd'?vehicle.FzRefF:vehicle.FzRef)*roadGrip(sD/Math.max(1,N0/nD))*diffTractionAt(df,aLat,vehicle.cg,bg.tqFrac)*Math.sqrt(Math.max(0,1-uD*uD));
     // On power the drive force also spins up the engine and wheels (vehicleMassEff, build 106): a = (F -
     // m R) / mE. On grip the tyres are slipping, the surplus only spins the wheels, and the car gets the

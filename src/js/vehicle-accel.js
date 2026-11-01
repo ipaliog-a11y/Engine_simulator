@@ -24,7 +24,7 @@ function computeVehicleCost(ch,tt,wr){
   // springs and bars off STANDARD are new parts (build 174)
   c+=(stepOf(vehicle.springF)?1:0)*STIFF_STEP_COST.spring+(stepOf(vehicle.springR)?1:0)*STIFF_STEP_COST.spring+
      (stepOf(vehicle.barF)?1:0)*STIFF_STEP_COST.bar+(stepOf(vehicle.barR)?1:0)*STIFF_STEP_COST.bar+
-     (stepOf(vehicle.damperF)?1:0)*STIFF_STEP_COST.damper+(stepOf(vehicle.damperR)?1:0)*STIFF_STEP_COST.damper;   // dampers: build 215
+     (stepOf(vehicle.damperF)?1:0)*STIFF_STEP_COST.damper+(stepOf(vehicle.damperR)?1:0)*STIFF_STEP_COST.damper;   // dampers: build 216
   c+=Math.max(0,vehicle.rotor-320)*6;
   c+={fwd:0,rwd:800,awd:2500}[vehicle.drive]||0;
   c+=(vehicle.ev?EV_REDUCTION:vehicle.ecvt?PS_REDUCTION:(GEARBOX[vehicle.gearbox]||GEARBOX.manual)).cost+(DIFF[vehicle.diff]||DIFF.open).cost;
@@ -116,7 +116,7 @@ function buildVehicle(){
    vehicle.rollKF=K.F/(K.F+K.R);vehicle.rollK=K.F+K.R;
    vehicle.rollGrad=vehicle.mass*G*arm/vehicle.rollK*180/Math.PI;   // deg per g
    vehicle.lltdF=clamp((arm*vehicle.rollKF+fw*vehicle.rcF)/Math.max(0.05,arm+zAx),0.15,0.85);}
-  // The dampers (build 215): each axle's quarter car on the road, as the swing of its tyres' load per root of
+  // The dampers (build 216): each axle's quarter car on the road, as the swing of its tyres' load per root of
   // Gd(n0) v (roadSigma), and the body's acceleration likewise (the ride).
   {const qF=quarterCar(vehicle,'F'),qR=quarterCar(vehicle,'R'),cF=quarterCoef(qF),cR=quarterCoef(qR);
    vehicle.roughF=cF.F;vehicle.roughR=cR.F;vehicle.rideF=cF.A;vehicle.rideR=cR.A;

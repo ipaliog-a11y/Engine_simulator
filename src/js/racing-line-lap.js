@@ -241,7 +241,7 @@ function lineFor(T,key){
 // Quasi-steady-state lap: a cornering-speed ceiling at every point, then a backward braking pass
 // and a forward traction/power pass, taking the lower speed at each point. Gearbox shift time is
 // charged per gear change around the lap, so a slow-shifting box loses real time on a circuit.
-// The circuit's road under the whole solve (build 215): its bumps cost the tyres grip wherever they work, in a corner,
+// The circuit's road under the whole solve (build 216): its bumps cost the tyres grip wherever they work, in a corner,
 // braking and driving. opts.road overrides it (0 is a perfectly smooth surface); ROAD is put back however it ends.
 function simulateLapRun(key,opts){
   const gd=opts&&opts.road!=null?opts.road:TRACK_ROAD[trackRoad(key)]||0;
@@ -371,7 +371,7 @@ function simulateLapCore(key,opts){
     const N=loadAt(q,vv),dn=down(vv),tr=m*a*hL;
     const B=latBalance(N,ay,dn,tr,vv),Nf=B.Nf,Nr=B.Nr;
     const uF=clamp(m*ay*fWt/Math.max(1,B.capF*dCorner),0,1),uR=clamp(m*ay*(1-fWt)/Math.max(1,B.capR*dCorner),0,1);
-    // braking on a bumpy road: each axle's tyres keep roadGrip of their force, as in a corner (build 215)
+    // braking on a bumpy road: each axle's tyres keep roadGrip of their force, as in a corner (build 216)
     const sF=roadSigma('F',vv),sR=roadSigma('R',vv);
     return {Nf,Nr,uF,uR,gF:tyreMuX(Nf/2,vehicle.FzRefF)*Nf*roadGrip(sF/Math.max(1,Nf/2))*Math.sqrt(Math.max(0,1-uF*uF)),gR:tyreMuX(Nr/2)*Nr*roadGrip(sR/Math.max(1,Nr/2))*Math.sqrt(Math.max(0,1-uR*uR))};
   }
@@ -425,7 +425,7 @@ function simulateLapCore(key,opts){
     // open diff falls apart on a fast corner exit while a locked one doesn't.
     const g0=gear>=0?inGear(vi,gear):gearAt(vi),bg=boostShare<1?{gear:g0.gear,F:g0.F*boostShare,tqFrac:g0.tqFrac*boostShare}:g0;
     const R=(drag(vi)+rollF(vi)*q.cosT+corneringDrag(m,aLat,N))/m+G*q.sinT;
-    const nD=vehicle.drive==='awd'?4:2,sD=vehicle.drive==='fwd'?roadSigma('F',vi):vehicle.drive==='rwd'?roadSigma('R',vi):(roadSigma('F',vi)+roadSigma('R',vi))/2;   // the driven tyres' load swing (build 215)
+    const nD=vehicle.drive==='awd'?4:2,sD=vehicle.drive==='fwd'?roadSigma('F',vi):vehicle.drive==='rwd'?roadSigma('R',vi):(roadSigma('F',vi)+roadSigma('R',vi))/2;   // the driven tyres' load swing (build 216)
     const kk=tyreMuX(N0/nD,vehicle.drive==='fwd'?vehicle.FzRefF:vehicle.FzRef)*roadGrip(sD/Math.max(1,N0/nD))*diffTractionAt(df,aLat,vehicle.cg,bg.tqFrac)*Math.sqrt(Math.max(0,1-uD*uD));
     // On power the drive force also spins up the engine and wheels (vehicleMassEff, build 106): a = (F -
     // m R) / mE. On grip the tyres are slipping, the surplus only spins the wheels, and the car gets the

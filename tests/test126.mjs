@@ -1,4 +1,4 @@
-// Dampers and the road (build 215).
+// Dampers and the road (build 216).
 //
 // WHY THIS EXISTS. The lap was solved as a string of steady corners, where a damper does nothing, so stage 3 of the
 // suspension (dampers) waited. Build 215 gives the circuits a road: ISO 8608 roughness, and a quarter car at each
@@ -122,7 +122,7 @@ console.log(`== parts: ${JSON.stringify(r.parts)} ==`);
 if (!r.parts.modified) fails.push('dampers off STANDARD do not make the car (modified)');
 if (r.parts.one - r.parts.base !== 350) fails.push(`one axle's dampers off STANDARD cost ${r.parts.one - r.parts.base}, not 350`);
 if (r.parts.saved.r !== '2' || r.parts.saved.damperR !== 2) fails.push('a save does not keep the dampers');
-if (r.parts.old.f !== '0' || r.parts.old.r !== '0') fails.push('a save from before build 215 does not get the kit\'s dampers');
+if (r.parts.old.f !== '0' || r.parts.old.r !== '0') fails.push('a save from before build 216 does not get the kit\'s dampers');
 if (r.parts.refit !== '0') fails.push('REFIT does not put the dampers back');
 console.log(`== summary: ${(r.summary.match(/Dampers[^\n]*/) || [''])[0]} ==`);
 console.log(`== Greek: ${r.el.label} · ${r.el.guide} · ${(r.el.summary.match(/Αμορτισέρ[^\n]*/) || [''])[0]} ==`);

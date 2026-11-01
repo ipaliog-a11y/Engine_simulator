@@ -217,7 +217,7 @@ function brakeHeatStep(st,th,a,vCar,dt,cv,frIn){
 // ~1.6, a race car without big aero ~2.0 (passenger cars 0.5-1.5 Hz, OptimumG, Springs & Dampers).
 // camber = the static negative camber each is set up with (deg): a road alignment ~-0.5, a sports one ~-1,
 // track coilovers ~-1.8, a race car ~-2.5, so that under roll the loaded tyre stands near its best angle.
-// zeta = the dampers' ratio to critical damping in bounce (build 215): passenger cars 0.2-0.3 (the textbooks' figure,
+// zeta = the dampers' ratio to critical damping in bounce (build 216): passenger cars 0.2-0.3 (the textbooks' figure,
 // and ~0.3 measured on passenger cars: Slaski), race cars 0.5-0.7 (Kasprzak, A Guide to Your Dampers, FSAE), and 0.45
 // called the optimum for a racing car (Milliken). A sports setup and track coilovers sit between.
 const SUSPENSION={
@@ -234,14 +234,14 @@ const SUSPENSION={
 // load transfer, build 157's ROLL BALANCE step. At STANDARD both axles share the kit's frequency, so the roll
 // stiffness splits as m t^2, the weight split on equal tracks: build 157's NEUTRAL.
 const BAR_SHARE=0.55, SPRING_STEP=1.3, BAR_STEP=1.5;
-const STIFF_STEP_COST={spring:400,bar:250,damper:350};   // per axle off STANDARD (dampers: build 215)
+const STIFF_STEP_COST={spring:400,bar:250,damper:350};   // per axle off STANDARD (dampers: build 216)
 // Roll stiffness of each axle (N m per rad) for car v (mass, fWt, tracks, kit, steps).
 function rollStiffness(v){
   const w=2*Math.PI*(SUSPENSION[v.suspension]||SUSPENSION.sport).hz,w2=w*w;
   const ax=(m,t,sp,bar)=>{const k=m*w2*t*t/4;return k*Math.pow(SPRING_STEP,sp||0)+BAR_SHARE*k*Math.pow(BAR_STEP,bar||0);};
   return {F:ax(v.mass*v.fWt,v.trackF,v.springF,v.barF),R:ax(v.mass*(1-v.fWt),v.trackR,v.springR,v.barR)};
 }
-// ---- dampers and the road (build 215) ----
+// ---- dampers and the road (build 216) ----
 // In a steady corner a damper does nothing: it only works while the suspension moves. On a real circuit it always
 // moves, because the road is not flat, and every bump makes the tyres' load swing about its mean. A tyre's grip
 // grows less than in proportion to its load (tyreMu, load sensitivity), so a tyre whose load swings grips less on
@@ -303,13 +303,13 @@ function roadGrip(s){if(!(s>0))return 1;const T=ROAD_G||roadGripTable(),x=Math.m
 // The road under the lap being solved: its Gd(n0) (m3). 0 is a perfectly smooth surface, the one the acceleration,
 // braking and skidpad tests are run on. simulateLap sets it from the circuit and puts it back.
 const ROAD={gd:0};
-// The ride (build 215): the body's RMS vertical acceleration (m/s2), front and rear averaged, at 80 km/h on a class B road
+// The ride (build 216): the body's RMS vertical acceleration (m/s2), front and rear averaged, at 80 km/h on a class B road
 // (64e-6 m3, the middle of ISO 8608's 'good'). Unweighted: ISO 2631's comfort weighting is not applied, so it reads
 // somewhat above what the standard's tables would; it is for comparing setups, not a comfort grade.
 function rideRms(v){const k=Math.sqrt(64e-6*80/3.6);return (v.rideF+v.rideR)/2*k;}
 // Each axle's tyre load swing (N) at speed v on the current road.
 function roadSigma(ax,v){return ROAD.gd>0&&v>0?(ax==='F'?vehicle.roughF:vehicle.roughR)*Math.sqrt(ROAD.gd*v):0;}
-// A circuit's road (build 215). No circuit's surface has been measured to ISO 8608 that we can find, so these are
+// A circuit's road (build 216). No circuit's surface has been measured to ISO 8608 that we can find, so these are
 // estimates by kind of circuit, and labelled so: a permanent circuit's asphalt, laid and kept for racing, half of class
 // A's middle (8e-6 m3); a circuit run on public or park roads, or one whose bumps its drivers complain of, class A's
 // middle (16e-6); the Nordschleife, a public toll road from 1927, the A/B boundary (32e-6).
@@ -452,14 +452,14 @@ function corneringDrag(m,ay,N){return m*m*ay*ay/(Math.max(1,N)*TYRE_CC);}
 // Build 173: per axle, its own static camber and the share of the roll its geometry recovers (SUSP_GEO).
 function latCamberF(ay,camber,recov){return 1-CAMBER_LOSS*Math.abs(camber+vehicle.rollGrad*Math.abs(ay)/G*(1-recov)-CAMBER_BEST);}
 // one axle's two tyres at normal load Nax with lateral transfer d across them (N)
-// sg: the tyres' load swing on the road (N, build 215): each tyre keeps roadGrip of its force, the lightly loaded inside one
+// sg: the tyres' load swing on the road (N, build 216): each tyre keeps roadGrip of its force, the lightly loaded inside one
 // the least of it.
 function axleLatCap(Nax,d,FzRef,sg){
   const F=Nax/2,o=F+d,inr=Math.max(0,F-d);
   if(!(sg>0))return tyreMu(o,FzRef)*o+(inr>0?tyreMu(inr,FzRef)*inr:0);
   return tyreMu(o,FzRef)*o*roadGrip(sg/Math.max(1,o))+(inr>0?tyreMu(inr,FzRef)*inr*roadGrip(sg/inr):0);
 }
-function latBalance(N,ay,dn,ax,v){   // v: the speed, for the road's bumps (build 215); none on a smooth test surface
+function latBalance(N,ay,dn,ax,v){   // v: the speed, for the road's bumps (build 216); none on a smooth test surface
   const m=vehicle.mass,fWt=vehicle.fWt||0.55,aF=vehicle.aeroBal!=null?vehicle.aeroBal:0.5,lt=vehicle.lltdF!=null?vehicle.lltdF:fWt;
   const tr=ax||0;   // longitudinal load transfer onto the front (N): braking +, accelerating -
   const Nf=clamp((N-(dn||0))*fWt+(dn||0)*aF+tr,0.05*N,0.95*N),Nr=N-Nf;
