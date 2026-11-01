@@ -30,7 +30,6 @@ function readEngineFromForm(){
     nitrous:g('edNitrous').value,
     cat:g('edCat').value,
     intakeSys:g('edIntakeSys').value,
-    airFilter:g('edAirFilter').value,
     cam:g('edCam').value,egr:g('edEgr').value,
     vvt:g('edVVT').value==='yes',
     valves:clamp(Math.round(+g('edValves').value||4),2,5),
@@ -68,7 +67,7 @@ function applyEngineToForm(e){
   g('edTurboConfig').value=e.turboConfig||'single';g('edVGT').value=e.vgt?'yes':'no';g('edHousing').value=e.housing||'stock';
   g('edAntilag').value=e.antilag?'yes':'no';
   g('edScType').value=e.scType||'roots';g('edNitrous').value=e.nitrous||'none';
-  g('edIntakeSys').value=e.intakeSys||'efi';g('edAirFilter').value=e.airFilter||'stock';
+  g('edIntakeSys').value=e.intakeSys||'efi';
   g('edCam').value=e.cam||'stock';g('edEgr').value=e.egr||'none';g('edVVT').value=e.vvt?'yes':'no';
   g('edValves').value=String(e.valves||4);g('edValveMat').value=e.valveMat||'steel';
   g('edSpring').value=e.valveSpring||'stock';
@@ -218,7 +217,7 @@ function buildEngine(){
   // (low) redline and peak power lands realistically early, instead of climbing to the limiter.
   // Induction system (metering + throttle) and air filter → breathing, AFR precision,
   // manifold response, idle quality. Direct injection is only possible on EFI systems.
-  const sys=INTAKE_SYS[engine.intakeSys]||INTAKE_SYS.efi,filt=AIR_FILTER[engine.airFilter]||AIR_FILTER.stock;
+  const sys=INTAKE_SYS[engine.intakeSys]||INTAKE_SYS.efi;
   if(!sys.di)engine.injector='port';          // carbs / mechanical injection: no DI
   engine.canAutoAFR=(engine.intakeSys==='efi'||engine.intakeSys==='itb');   // only EFI has an ECU fuel map
   if(!engine.canAutoAFR)engine.afrMode='fixed';   // carbs / mechanical injection: mixture is mechanical
@@ -226,7 +225,8 @@ function buildEngine(){
   // top-end breathing (folded into the top-end flow term, like an extra restrictive filter).
   const catp=CAT[engine.cat]||CAT.stock;
   engine.catConv=catp.conv;engine.catRestrict=catp.restrict;
-  engine.inductionFlowTop=sys.flowTop+filt.flowTop-catp.restrict;
+  engine.inductionFlowTop=sys.flowTop-catp.restrict;
+  deriveFilter();   // the air filter's restriction, from its media and housing (build 210)
   engine.inductionFlowLow=sys.flowLow;
   engine.meteringEff=sys.metering;            // AFR precision → thermal efficiency
   engine.intakeRespK=sys.resp;                // manifold fill speed (dynamic model)

@@ -15,7 +15,7 @@
 //     into a browser that never saw it, a changed library part with the same id comes back as a copy, deleting the
 //     fitted part puts the factory exhaust back;
 //   · the sound reads the part's silencer;
-//   · the page: four part types, two of them later (build 206 made the intake ready, test121); the exhaust editor; nothing for an electric drive; Greek.
+//   · the page: four part types, one of them later (build 206 made the intake ready, test121; build 210 the air filter, test124); the exhaust editor; nothing for an electric drive; Greek.
 import { chromium } from './pw.mjs';
 import { fileURLToPath, pathToFileURL } from 'url';
 import path from 'path';
@@ -117,7 +117,7 @@ console.log(`== the silencer's sound gain: chambered / straight-through / none $
 if (!(r.sound[0] < r.sound[1] && r.sound[1] < r.sound[2])) fails.push('the sound does not read the part\'s silencer');
 if (r.del.part || r.del.exh !== 'race' || r.del.lib !== 1) fails.push('deleting the fitted part does not put its factory exhaust back');
 console.log(`== page: ${r.page.types.map(([k, d]) => k + (d ? ' (later)' : '')).join(', ')}; editor ${r.page.editor}; ${r.page.lit} pixels drawn; electric: note ${r.ev.note}, editor ${r.ev.editor}; Greek: ${r.el.tab} · ${r.el.h} · ${r.el.guide} ==`);
-if (r.page.types.length !== 4 || r.page.types[0][0] !== 'exhaust' || r.page.types[0][1] || r.page.types[1][0] !== 'intake' || r.page.types[1][1] || r.page.types.slice(2).some(t => !t[1])) fails.push('the part types are not the exhaust, the intake and two for later');
+if (r.page.types.length !== 4 || r.page.types.map(t => t[0]).join() !== 'exhaust,intake,filter,cat' || r.page.types.slice(0, 3).some(t => t[1]) || !r.page.types[3][1]) fails.push('the part types are not the exhaust, the intake, the air filter and one for later');
 if (!r.page.editor || r.page.lit < 3000) fails.push('the exhaust editor and its chart are not shown');
 if (!r.ev.note || r.ev.editor) fails.push('an electric drive is offered an exhaust');
 if (!/ΕΞΑΡΤΗΜΑΤΑ/.test(r.el.tab) || !/ΣΧΕΔΙΑΣΤΗΣ/.test(r.el.h) || /With this exhaust/.test(r.el.guide)) fails.push('the PARTS page is not in Greek');

@@ -36,12 +36,67 @@ const EXHAUST_SILENCER={
 // a primary is 200-1000 mm, past either end of the 350-900 mm a fabricator can route round an engine bay. A runner
 // runs from a 40 mm stub (an ITB's trumpet) to 800 mm, past the factory LONG's 460.
 const PART_LIMITS={primD_mm:[25,76],primL_mm:[200,1000],pipes:[1,2],sysD_mm:[30,110],sysL_m:[0.8,4.5],
-  runnerL_mm:[40,800],runnerD_mm:[20,80],shortL_mm:[40,400]};
+  runnerL_mm:[40,800],runnerD_mm:[20,80],shortL_mm:[40,400],area_m2:[0.02,3],inletD_mm:[30,160]};
+
+// ---- the air filter (build 210) ----
+// What a filter restricts is its pressure drop at the flow through it, and the charge is that much thinner (computeVE).
+// Two terms, each from a measured or a textbook law:
+//   the media     Darcy's law: the drop goes with the face velocity, the flow over the media's (pleated) area. How much
+//                 a medium passes is its air permeability, measured at 200 Pa (EN ISO 9237): Dziubak (Materials 13, 3498,
+//                 2020) measured car intake papers at 540-685 m3/m2h, the lower one with a nanofibre layer; oiled cotton
+//                 is its makers' claim, ~50% more than paper, there being no measured figure;
+//   the housing   a velocity head, K (rho/2) v^2, at the inlet: an airbox's snorkel, bends and box (K ~3, entry, expansion
+//                 and contraction losses together), or an open element's neck (K ~0.5, a plain entry).
+// The flow is the engine's at its manifold pressure, as volume at ambient density (a turbo's filter passes its boost's
+// worth). On a boosted engine the drop is taken off the charge the same way, which holds where the compressor is at its
+// limit and overstates it where the wastegate could make it up.
+const FILTER_MEDIA={
+  paper: {label:'PAPER (CELLULOSE)',perm:685/3600},
+  nano:  {label:'PAPER + NANOFIBRE',perm:540/3600},
+  cotton:{label:'OILED COTTON',     perm:1.5*685/3600}
+};
+const FILTER_HOUSING={airbox:{label:'AIRBOX',K:3.0},open:{label:'OPEN ELEMENT',K:0.5},none:{label:'NONE (STACKS)',K:0}};
+const FILTER_FACE_V=0.25;   // a factory element's face velocity at full flow (m/s): sizes its media area
+const AIR_RHO0=1.2;
+// The engine's flow through its filter (m3/s at ambient density): its displacement at this speed, filling, and the
+// manifold pressure's worth of air.
+const airFlowM3s=(rpm,map,ve)=>{const e=engine;return (e.displacement_L/1000)*(rpm/60)*(e.chargesPerRev||0.5)*ve*Math.max(0.1,map);};
+// The full flow a factory filter is sized to: the most the engine draws, over its range, at the boost its ECU's taper
+// asks for there (the hardware's, so not the diesel governor's: a governor set or not leaves the engine below it as it
+// was, test93; the torque limit is solved later, on the finished engine).
+function filterQref(e){
+  let best=0;
+  for(let r=1000;r<=e.redline;r+=100)
+    best=Math.max(best,r*(e.intake==='na'?1:1+(e.boost_bar||0)*boostTaperFrac(r)));
+  return (e.displacement_L/1000)*(best/60)*(e.chargesPerRev||0.5)*0.95;
+}
+const filterDp=Q=>{const f=engine.filt;return f?f.a*Q+f.b*Q*Q:0;};   // Pa
+// The filter's coefficients (a: Pa per m3/s, the media; b: Pa per (m3/s)^2, the housing), from a designed filter or a
+// factory one sized to this engine's full flow.
+function deriveFilter(){
+  const e=engine,P=e.filterPart||null;
+  if(P){
+    const H=FILTER_HOUSING[P.housing];
+    if(P.housing==='none'){e.filt={a:0,b:0};return;}
+    const Ain=Math.PI/4*Math.pow(P.inletD_mm/1000,2);
+    e.filt={a:200/(FILTER_MEDIA[P.media].perm*P.area_m2),b:H.K*AIR_RHO0/2/(Ain*Ain)};
+    return;
+  }
+  const F=AIR_FILTER[e.airFilter]||AIR_FILTER.stock,Q=filterQref(e);
+  if(!(F.kPa>0)||!(Q>0)){e.filt={a:0,b:0};return;}
+  const dpm=200*FILTER_FACE_V/FILTER_MEDIA[F.media].perm;
+  if(F.clogged){   // the stock box, its element loaded with dust: the media takes the rest
+    const S=AIR_FILTER.stock,dph=S.kPa*1000-200*FILTER_FACE_V/FILTER_MEDIA[S.media].perm;
+    e.filt={a:(F.kPa*1000-dph)/Q,b:dph/(Q*Q)};
+  }else e.filt={a:dpm/Q,b:(F.kPa*1000-dpm)/(Q*Q)};
+}
+// A filter, as the factory class the rest of the app reads (sprites, sound, cost): by its housing.
+const filterClass=p=>({none:'none',open:'perf',airbox:'stock'})[p.housing]||'stock';
 const PARTS_KEY='pes.parts',PARTS_MAX=40;
 const PART_KINDS=[
   {kind:'exhaust',label:'EXHAUST',ready:true},
   {kind:'intake', label:'INTAKE MANIFOLD',ready:true},
-  {kind:'filter', label:'AIR FILTER',ready:false},
+  {kind:'filter', label:'AIR FILTER',ready:true},
   {kind:'cat',    label:'CATALYTIC CONVERTER',ready:false}
 ];
 // A designed intake, as the factory class the rest of the app reads: a variable one is VARIABLE, a fixed one the
@@ -56,7 +111,9 @@ const PART_DEF={
   exhaust:{field:'exhaustPart',cls:'exhaust',select:'edExhaust',def:'stock',valid:k=>!!EXHAUST[k],clsOf:p=>EXHAUST_BUILD[p.build].cls,
     label:k=>EXHAUST[k].label,newName:'MY EXHAUST',factory:['stock','sport','race']},
   intake: {field:'intakePart', cls:'runner', select:'edRunner', def:'medium',valid:k=>!!RUNNER[k], clsOf:intakeClass,
-    label:k=>RUNNER[k].label,newName:'MY INTAKE',factory:['long','medium','short','variable']}
+    label:k=>RUNNER[k].label,newName:'MY INTAKE',factory:['long','medium','short','variable']},
+  filter: {field:'filterPart', cls:'airFilter', select:'edAirFilter', def:'stock',valid:k=>!!AIR_FILTER[k], clsOf:filterClass,
+    label:k=>AIR_FILTER[k].label,newName:'MY AIR FILTER',factory:['none','perf','stock','restrictive']}
 };
 
 let partLib=[];
@@ -76,6 +133,9 @@ const newPartId=()=>'p'+Date.now().toString(36)+Math.floor(Math.random()*1296).t
 function normPart(p){
   const L=PART_LIMITS,n=(v,k,d)=>{const x=+v;return Number.isFinite(x)?clamp(x,L[k][0],L[k][1]):d;};
   const id=String(p.id||newPartId());
+  if(p.kind==='filter')return {id,kind:'filter',name:String(p.name||'AIR FILTER').slice(0,40),
+    media:FILTER_MEDIA[p.media]?p.media:'paper',area_m2:n(p.area_m2,'area_m2',0.4),
+    housing:FILTER_HOUSING[p.housing]?p.housing:'airbox',inletD_mm:n(p.inletD_mm,'inletD_mm',70)};
   if(p.kind==='intake'){
     const rL=n(p.runnerL_mm,'runnerL_mm',320),variable=!!p.variable;
     return {id,kind:'intake',name:String(p.name||'INTAKE').slice(0,40),runnerL_mm:rL,runnerD_mm:n(p.runnerD_mm,'runnerD_mm',40),
@@ -139,6 +199,7 @@ function partsToForm(e){
 // Everything buildEngine derives from the exhaust and the runners, from deriveGasDynamics on; nothing before it reads them.
 function rederiveBreathing(){
   const e=engine;
+  deriveFilter();
   deriveGasDynamics();
   if(e.turboConfig==='sequential'&&e.intake==='turbo'&&e.turbineArea>0){
     e.seqStageRpm=0;let st=e.redline+1;
@@ -202,11 +263,29 @@ function intakeReport(x){
       gasV:runnerGasV(e,pull.peakHPrpm,e.runnerD_mm),portD:portRunnerD(e)});
   });
 }
+// What the designer reads out for an air filter on this engine: the pull, and the drop at peak power, media and housing.
+function filterReport(x){
+  return withPart('filter',x,e=>{
+    const pull=wotPull(),r=pull.peakHPrpm,map=wotMapAt(r);
+    const sv=Object.assign({},state);Object.assign(state,{iat:25,coolant:90,oil:100});
+    const ve=calcAtRpm(r,map).ve;Object.assign(state,sv);
+    const Q=airFlowM3s(r,map,ve),f=e.filt;
+    return Object.assign(pull,{Q,dp:filterDp(Q),dpMedia:f.a*Q,dpHousing:f.b*Q*Q,Qref:filterQref(e)});
+  });
+}
 // A factory part, as this engine has it, written down as a part: the start of a design.
 function partFromFactory(key,kind){
   kind=kind||'exhaust';
+  if(kind==='filter')return withPart('filter',key,e=>{
+    const F=AIR_FILTER[key],Q=filterQref(e),f=e.filt,H=FILTER_HOUSING[F.housing];
+    // the media's area from its coefficient (a clogged element is the area its dust cake leaves it), the inlet's from
+    // the housing's
+    const area=f.a>0?200/(FILTER_MEDIA[F.media].perm*f.a):Q/FILTER_FACE_V;
+    const inletD=f.b>0&&H.K>0?Math.sqrt(4/Math.PI*Math.sqrt(H.K*AIR_RHO0/2/f.b))*1000:70;
+    return normPart({kind:'filter',name:tr(F.label),media:F.media,area_m2:+area.toFixed(6),housing:F.housing,inletD_mm:+inletD.toFixed(4)});
+  });
   if(kind==='intake')return withPart('intake',key,e=>normPart({kind:'intake',name:tr(RUNNER[key].label),
-    runnerL_mm:RUNNER[key].mm!=null?RUNNER[key].mm:RUNNER.long.mm,runnerD_mm:+e.runnerD_mm.toFixed(2),
+    runnerL_mm:RUNNER[key].mm!=null?RUNNER[key].mm:RUNNER.long.mm,runnerD_mm:+e.runnerD_mm.toFixed(4),
     variable:key==='variable',shortL_mm:RUNNER.short.mm}));
   return withExhaust(key,e=>normPart({name:tr(EXHAUST[key].label),build:{stock:'cast',sport:'tubular',race:'equal'}[key],
     primD_mm:+(e.primD*1000).toFixed(2),primL_mm:Math.round((e.intake==='turbo'?(EXHAUST[key].fixedL||0.55):e.primL)*1000),
@@ -263,7 +342,11 @@ const PART_UI={
   intake:{box:'partsIntake',list:'piList',from:'piFrom',neu:'piNew',save:'piSave',saveFit:'piSaveFit',guide:'piGuide',canvas:'piCanvas',legend:'piLegend',
     none:"No intakes designed yet. Start from one of this engine's factory manifolds below.",
     fields:['piName','piL','piD','piVar','piShort'],
-    spec:p=>p.runnerL_mm+' × '+p.runnerD_mm+' mm'+(p.variable?' · '+tr('VARIABLE')+' '+p.shortL_mm+' mm':'')}
+    spec:p=>p.runnerL_mm+' × '+p.runnerD_mm+' mm'+(p.variable?' · '+tr('VARIABLE')+' '+p.shortL_mm+' mm':'')},
+  filter:{box:'partsFilter',list:'pfList',from:'pfFrom',neu:'pfNew',save:'pfSave',saveFit:'pfSaveFit',guide:'pfGuide',canvas:'pfCanvas',legend:'pfLegend',
+    none:"No air filters designed yet. Start from one of this engine's factory filters below.",
+    fields:['pfName','pfMedia','pfArea','pfHousing','pfInlet'],
+    spec:p=>tr(FILTER_MEDIA[p.media].label)+' · '+p.area_m2+' m² · '+tr(FILTER_HOUSING[p.housing].label)+(p.housing==='none'?'':' '+p.inletD_mm+' mm')}
 };
 function renderParts(){
   const types=pv('partTypes');if(!types)return;
@@ -292,6 +375,11 @@ function renderParts(){
 }
 function partToEditor(kind,p){
   const peak=Math.round((engine.score&&engine.score.peakHPrpm||engine.redline*0.9)/100)*100;
+  if(kind==='filter'){
+    pv('pfName').value=p.name;pv('pfMedia').value=p.media;pv('pfArea').value=p.area_m2;pv('pfHousing').value=p.housing;pv('pfInlet').value=p.inletD_mm;
+    pv('pfInlet').disabled=p.housing==='none';pv('pfMedia').disabled=pv('pfArea').disabled=p.housing==='none';
+    return;
+  }
   if(kind==='intake'){
     pv('piName').value=p.name;pv('piL').value=p.runnerL_mm;pv('piD').value=p.runnerD_mm;pv('piVar').value=p.variable?'yes':'no';pv('piShort').value=p.shortL_mm;
     pv('piShort').disabled=!p.variable;
@@ -305,6 +393,8 @@ function partToEditor(kind,p){
 function partFromEditor(kind){
   kind=kind||'exhaust';
   const ed=partsUI.edit[kind],newName=tr(PART_DEF[kind].newName);
+  if(kind==='filter')return normPart({kind,id:ed&&ed.id,name:pv('pfName').value.trim()||newName,media:pv('pfMedia').value,
+    area_m2:pv('pfArea').value,housing:pv('pfHousing').value,inletD_mm:pv('pfInlet').value});
   if(kind==='intake')return normPart({kind,id:ed&&ed.id,name:pv('piName').value.trim()||newName,runnerL_mm:pv('piL').value,runnerD_mm:pv('piD').value,
     variable:pv('piVar').value==='yes',shortL_mm:pv('piShort').value});
   return normPart({kind,id:ed&&ed.id,name:pv('ptName').value.trim()||newName,build:pv('ptBuild').value,
@@ -320,7 +410,7 @@ function partAction(a,id){
     partLib=partLib.filter(x=>x.id!==id);persistParts();
     const f=fittedPart(kind);
     if(f&&f.id===id){pv(D.select).value=engine[D.cls];fillPartSelects();buildEngine();
-      flash(tr(kind==='intake'?'PART DELETED: THE ENGINE HAS ITS FACTORY INTAKE':'PART DELETED: THE ENGINE HAS ITS FACTORY EXHAUST'));}
+      flash(tr(kind==='intake'?'PART DELETED: THE ENGINE HAS ITS FACTORY INTAKE':kind==='filter'?'PART DELETED: THE ENGINE HAS ITS FACTORY AIR FILTER':'PART DELETED: THE ENGINE HAS ITS FACTORY EXHAUST'));}
     else{fillPartSelects();flash(tr('PART DELETED'));}
     if(partsUI.edit[kind]&&partsUI.edit[kind].id===id)partsUI.edit[kind]=null;
     renderParts();
@@ -349,6 +439,7 @@ const headline=(what,r,now)=>tr(what)+': <b>'+r.peakHP+' hp</b> @ '+r.peakHPrpm+
 function previewPart(kind){
   kind=kind||'exhaust';
   if(kind==='intake')return previewIntake();
+  if(kind==='filter')return previewFilter();
   const p=partFromEditor('exhaust'),now=exhaustReport(engine.exhaustPart||engine.exhaust),r=exhaustReport(p);
   partsUI.last={kind,p,now,r};
   const turbo=engine.intake==='turbo',ported=!!engine.ports;
@@ -388,6 +479,25 @@ function previewIntake(){
   pv('piGuide').innerHTML=lines.map(l=>'<div>'+l+'</div>').join('');
   drawPartCurves('intake',now,r);
 }
+function previewFilter(){
+  const p=partFromEditor('filter'),now=filterReport(engine.filterPart||engine.airFilter),r=filterReport(p);
+  partsUI.last={kind:'filter',p,now,r};
+  const none=p.housing==='none';
+  pv('pfInlet').disabled=none;pv('pfMedia').disabled=pv('pfArea').disabled=none;
+  const kPa=x=>fmt(x/1000,2)+' kPa',lines=[];
+  lines.push(headline('With this filter',r,now));
+  lines.push(tr('Restriction at peak power')+': <b>'+kPa(r.dp)+'</b> ('+tr('media')+' '+kPa(r.dpMedia)+', '+tr('housing')+' '+kPa(r.dpHousing)+')'
+    +' <span class="dim">('+tr('now')+' '+kPa(now.dp)+'; '+tr('new filters read 2-3.75 kPa at full throttle, clogged ones 6-7')+')</span>');
+  if(!none){
+    const vFace=r.Q/p.area_m2,vIn=r.Q/(Math.PI/4*Math.pow(p.inletD_mm/1000,2));
+    lines.push(tr('Air through the media')+': <b>'+fmt(vFace,2)+' m/s</b> <span class="dim">('+tr('a factory element is sized for')+' '+FILTER_FACE_V+')</span>; '
+      +tr('through the inlet')+': <b>'+fmt(vIn)+' m/s</b>.');
+  }else lines.push(tr('Open stacks: nothing in the way, and nothing filtered.'));
+  if(engine.intake!=='na')lines.push('<span class="dim">'+tr('On a boosted engine the drop is taken off the charge, as if the turbo were at its limit; with boost to spare the wastegate would make most of it up.')+'</span>');
+  lines.push('<span class="dim">'+tr('Oiled cotton\'s permeability is its makers\' claim (about 50% more than paper); paper\'s is measured.')+'</span>');
+  pv('pfGuide').innerHTML=lines.map(l=>'<div>'+l+'</div>').join('');
+  drawPartCurves('filter',now,r);
+}
 function drawPartCurves(kind,now,r){
   const U=PART_UI[kind],c=pv(U.canvas);if(!c)return;
   const w=c.clientWidth||480,h=c.clientHeight||200,dpr=window.devicePixelRatio||1;
@@ -403,7 +513,7 @@ function drawPartCurves(kind,now,r){
   line(now.pts,'tq',tqMax,'#4a8',true);line(now.pts,'hp',hpMax,'#c84',true);
   line(r.pts,'tq',tqMax,'#6fc',false);line(r.pts,'hp',hpMax,'#fa4',false);
   g.fillStyle='#fa4';g.fillText('hp',R+4,T+8);g.fillStyle='#6fc';g.fillText('Nm',4,T+8);
-  pv(U.legend).innerHTML='<span style="color:#fa4">━ '+esc(tr(kind==='intake'?'this intake':'this exhaust'))+'</span> <span style="color:#c84">┅ '+esc(tr('now'))+'</span>';
+  pv(U.legend).innerHTML='<span style="color:#fa4">━ '+esc(tr(kind==='intake'?'this intake':kind==='filter'?'this filter':'this exhaust'))+'</span> <span style="color:#c84">┅ '+esc(tr('now'))+'</span>';
 }
 function schedulePreview(){clearTimeout(partsUI.timer);partsUI.timer=setTimeout(()=>{if(vizMode==='parts')previewPart(partsUI.kind);},120);}
 function wireParts(){
@@ -422,6 +532,7 @@ function wireParts(){
     const got=partsUI.last&&partsUI.last.r.ramPeakRpm;
     if(got&&Math.abs(got/want-1)>0.08)flash(tr('NO RUNNER FILLS BEST THERE ON THIS ENGINE: THE NEAREST IS SET'),'warn');
   });
+  pv('pfSize').addEventListener('click',()=>{const r=filterReport(partFromEditor('filter'));pv('pfArea').value=+(r.Q/FILTER_FACE_V).toFixed(3);previewPart('filter');});
   pv('piMatch').addEventListener('click',()=>{pv('piD').value=+portRunnerD(engine).toFixed(1);previewPart('intake');});
   window.addEventListener('resize',()=>{if(vizMode==='parts'&&partsUI.last)drawPartCurves(partsUI.last.kind,partsUI.last.now,partsUI.last.r);});
 }

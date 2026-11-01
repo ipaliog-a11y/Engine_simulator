@@ -120,9 +120,11 @@ function computeVE(rpm,map){
     const demand=(engine.displacement_L/1000)*ve*(rpm/60*engine.chargesPerRev)*rho;
     if(demand>engine.chokeFlow_kgs)ve*=engine.chokeFlow_kgs/demand;
   }
-  // Induction system + air filter: restriction/flow weighted by airflow demand (rpm).
+  // Induction system: restriction/flow weighted by airflow demand (rpm).
   const breathe=clamp(rpm/engine.redline,0,1);
   ve*=1+engine.inductionFlowTop*breathe+engine.inductionFlowLow*(1-breathe);
+  // The air filter (build 210): its pressure drop at the flow it passes leaves the charge that much thinner.
+  ve*=1-filterDp(airFlowM3s(rpm,map,ve))/101325;
   ve*=(0.97+0.03*clamp(map/engine.mapMax,0,1.2));
   // ---- derived valvetrain limits (see PHYSICS CORE) ----
   // These replace a valve-float term that only fired ABOVE the redline and so never ran inside the

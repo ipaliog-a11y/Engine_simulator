@@ -14,12 +14,22 @@ const INTAKE_SYS={
   efi:      {label:'EFI (SINGLE TB)', flowTop:0.00, flowLow:0.00, metering:1.00,resp:1.00,idle:0,  di:true},
   itb:      {label:'EFI (ITB)',       flowTop:+0.08,flowLow:-0.03,metering:1.00,resp:1.25,idle:180,di:true}
 };
-// Air filter restriction (a top-end-weighted VE loss; open stacks flow best but don't filter).
+// Air filter (build 210): the factory systems, as what they restrict at the engine's peak flow. Until build 210 each was
+// a VE loss fitted in proportion to rpm (stock -4% at the redline, stacks +2%); now the restriction is the filter's
+// own pressure drop at the flow it passes (parts.js: the media by Darcy's law, the housing by its velocity head), and
+// these are the factory sizings, at full flow:
+//   stock        an OEM airbox with a clean paper element: 3.75 kPa, the top of the 2-3.75 kPa read by restriction
+//                gauges on new filters at full throttle (BITOG gauge reports; ORNL/TM-2009/021's cars);
+//   perf         an open element of oiled cotton: 1.0 kPa, as it was fitted (no measured figure: makers claim ~50%
+//                more flow than paper per area);
+//   restrictive  the stock box with a clogged element: 6.5 kPa, ORNL's 6-7 kPa for a clogged filter at full throttle;
+//   none         open stacks: nothing in the way.
+// media is the element's: its face velocity at full flow sets the media's share; the housing takes the rest.
 const AIR_FILTER={
-  none:       {label:'NONE (STACKS)',flowTop:+0.02},
-  perf:       {label:'PERFORMANCE',  flowTop:-0.01},
-  stock:      {label:'STOCK PAPER',  flowTop:-0.04},
-  restrictive:{label:'RESTRICTIVE',  flowTop:-0.10}
+  none:       {label:'NONE (STACKS)',kPa:0,   housing:'none',  media:'cotton'},
+  perf:       {label:'PERFORMANCE',  kPa:1.0, housing:'open',  media:'cotton'},
+  stock:      {label:'STOCK PAPER',  kPa:3.75,housing:'airbox',media:'paper'},
+  restrictive:{label:'RESTRICTIVE',  kPa:6.5, housing:'airbox',media:'paper',clogged:true}
 };
 
 // The engine build spec. Everything downstream derives from this object, so new
