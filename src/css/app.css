@@ -421,3 +421,37 @@ table.hy-map{border-collapse:collapse;font-size:7px;margin:4px 0 10px}
 table.hy-map th{color:#888;font-weight:normal;padding:3px 5px}
 table.hy-map td{border:1px solid #333;padding:4px 6px;text-align:center;cursor:pointer;min-width:30px}
 table.hy-map td:focus{outline:2px solid #ffcc00;outline-offset:-2px}
+/* Title screen: the workshop fills the stage; the menu sits beside it (under it on a phone). */
+.title-screen{position:fixed;inset:0;z-index:70;background:#0a0a12;display:grid;grid-template-rows:minmax(0,1fr) auto}
+.title-screen[hidden]{display:none!important}
+.title-stage{grid-row:1;position:relative;min-height:0;background:#1b2433;overflow:hidden}
+.title-dock{grid-row:2;padding:14px 16px 16px;background:linear-gradient(180deg,#1a1a2e 0%,#0a0a12 100%);border-top:4px solid #333}
+#titleBg{width:100%;height:100%;display:block}
+.title-brand{text-align:center;margin-bottom:12px}
+.title-brand h2{font-size:13px;color:#ffcc00;text-shadow:2px 2px 0 #000,-1px -1px 0 #aa6600;font-weight:normal;letter-spacing:1px}
+.title-brand p{font-size:8px;color:#888;margin-top:6px}
+.title-menu{display:grid;grid-template-columns:1fr 1fr;gap:8px;max-width:720px;margin:0 auto}
+.title-menu button{font-size:8px;padding:12px 10px;text-align:left;white-space:nowrap}
+.title-menu button::before{content:'>';display:inline-block;width:12px;color:#333;margin-right:6px}
+.title-menu button.on,.title-menu button:hover,.title-menu button:focus{border-color:#00ff88;color:#00ff88;background:#004422;outline:none}
+.title-menu button.on::before,.title-menu button:hover::before,.title-menu button:focus::before{color:#00ff88}
+.title-hint{text-align:center;font-size:7px;color:#556;margin-top:10px}
+.title-ver{text-align:center;font-size:7px;color:#445;margin-top:6px}
+#btnMenu{margin-left:auto;font-size:8px;padding:4px 8px;box-shadow:none;border:2px solid #33334a;background:#151522;color:#ffcc00}
+#btnMenu:hover{border-color:#ffcc00;color:#ffcc00}
+@media(min-width:960px){
+  .title-screen{grid-template-columns:minmax(300px,400px) minmax(0,1fr);grid-template-rows:1fr}
+  .title-dock{grid-column:1;grid-row:1;display:flex;flex-direction:column;justify-content:center;border-top:0;border-right:4px solid #333;padding:28px 22px}
+  .title-stage{grid-column:2;grid-row:1}
+  .title-menu{grid-template-columns:1fr;max-width:none}
+  .title-brand,.title-hint,.title-ver{text-align:left}
+}
+@media(orientation:portrait){
+  .title-brand h2{font-size:12px}
+  .title-brand p{font-size:8px}
+  .title-menu button{font-size:8px;padding:12px 10px}
+  .title-hint{font-size:7px}
+}
+@media(max-width:420px){
+  .title-menu{grid-template-columns:1fr}
+}

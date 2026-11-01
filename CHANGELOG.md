@@ -20,6 +20,14 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 Working toward **v1.0 — every number derived, not fitted.**
 
+### Title screen (build 209)
+
+- Opening the app shows a main menu over an 8-bit workshop: an engine hanging on a hoist, a toolbox beside it.
+- **BUILD AN ENGINE**, **BUILD A VEHICLE**, **OPEN WIKI** and **SETTINGS** open the engine, vehicle, guide and options tabs.
+- **MENU** on the build strip brings the title screen back. Arrow keys and Enter work. Escape returns to the bench.
+- A shared-build link, and the automated tests, still open straight on the bench. `?title=1` forces the menu.
+- Test: test123. test120 stays the exhaust part designer.
+
 ### Real cars, drawn as themselves (build 208)
 
 - Each of the 100 real cars has its own side profile: brochure length and height, a front overhang,

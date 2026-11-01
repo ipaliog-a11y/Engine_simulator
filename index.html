@@ -433,17 +433,69 @@ table.hy-map{border-collapse:collapse;font-size:7px;margin:4px 0 10px}
 table.hy-map th{color:#888;font-weight:normal;padding:3px 5px}
 table.hy-map td{border:1px solid #333;padding:4px 6px;text-align:center;cursor:pointer;min-width:30px}
 table.hy-map td:focus{outline:2px solid #ffcc00;outline-offset:-2px}
+/* Title screen: the workshop fills the stage; the menu sits beside it (under it on a phone). */
+.title-screen{position:fixed;inset:0;z-index:70;background:#0a0a12;display:grid;grid-template-rows:minmax(0,1fr) auto}
+.title-screen[hidden]{display:none!important}
+.title-stage{grid-row:1;position:relative;min-height:0;background:#1b2433;overflow:hidden}
+.title-dock{grid-row:2;padding:14px 16px 16px;background:linear-gradient(180deg,#1a1a2e 0%,#0a0a12 100%);border-top:4px solid #333}
+#titleBg{width:100%;height:100%;display:block}
+.title-brand{text-align:center;margin-bottom:12px}
+.title-brand h2{font-size:13px;color:#ffcc00;text-shadow:2px 2px 0 #000,-1px -1px 0 #aa6600;font-weight:normal;letter-spacing:1px}
+.title-brand p{font-size:8px;color:#888;margin-top:6px}
+.title-menu{display:grid;grid-template-columns:1fr 1fr;gap:8px;max-width:720px;margin:0 auto}
+.title-menu button{font-size:8px;padding:12px 10px;text-align:left;white-space:nowrap}
+.title-menu button::before{content:'>';display:inline-block;width:12px;color:#333;margin-right:6px}
+.title-menu button.on,.title-menu button:hover,.title-menu button:focus{border-color:#00ff88;color:#00ff88;background:#004422;outline:none}
+.title-menu button.on::before,.title-menu button:hover::before,.title-menu button:focus::before{color:#00ff88}
+.title-hint{text-align:center;font-size:7px;color:#556;margin-top:10px}
+.title-ver{text-align:center;font-size:7px;color:#445;margin-top:6px}
+#btnMenu{margin-left:auto;font-size:8px;padding:4px 8px;box-shadow:none;border:2px solid #33334a;background:#151522;color:#ffcc00}
+#btnMenu:hover{border-color:#ffcc00;color:#ffcc00}
+@media(min-width:960px){
+  .title-screen{grid-template-columns:minmax(300px,400px) minmax(0,1fr);grid-template-rows:1fr}
+  .title-dock{grid-column:1;grid-row:1;display:flex;flex-direction:column;justify-content:center;border-top:0;border-right:4px solid #333;padding:28px 22px}
+  .title-stage{grid-column:2;grid-row:1}
+  .title-menu{grid-template-columns:1fr;max-width:none}
+  .title-brand,.title-hint,.title-ver{text-align:left}
+}
+@media(orientation:portrait){
+  .title-brand h2{font-size:12px}
+  .title-brand p{font-size:8px}
+  .title-menu button{font-size:8px;padding:12px 10px}
+  .title-hint{font-size:7px}
+}
+@media(max-width:420px){
+  .title-menu{grid-template-columns:1fr}
+}
 </style>
 </head>
 <body>
+<div id="titleScreen" class="title-screen" role="dialog" aria-modal="true" aria-labelledby="titleHeading" hidden>
+<div class="title-dock">
+<div class="title-brand">
+<h2 id="titleHeading">PIXEL ENGINE SIM</h2>
+<p>BUILD IT, THEN DRIVE IT</p>
+</div>
+<nav class="title-menu" aria-label="Main menu">
+<button type="button" data-go="design">BUILD AN ENGINE</button>
+<button type="button" data-go="vehicle">BUILD A VEHICLE</button>
+<button type="button" data-go="guide">OPEN WIKI</button>
+<button type="button" data-go="options">SETTINGS</button>
+</nav>
+<p class="title-hint">ARROWS SELECT · ENTER OPENS</p>
+<p class="title-ver" id="titleVer"></p>
+</div>
+<div class="title-stage"><canvas id="titleBg" aria-hidden="true"></canvas></div>
+</div>
 <div class="container">
 <header>
-<h1>PIXEL ENGINE SIM v0.7 build 208</h1>
+<h1>PIXEL ENGINE SIM v0.7 build 209</h1>
 <div class="subtitle" id="subtitle">ENGINE DESIGNER • BUILD IT, THEN DRIVE IT</div>
 </header>
 <div class="build-strip" id="buildStrip">
 <span class="k" id="bsEngineK">ENGINE</span><button id="bsEngine" title="Go to the engine">—</button>
 <span class="k" id="bsCarK">CAR</span><button id="bsCar" title="Go to the car">—</button>
+<button id="btnMenu" type="button">MENU</button>
 </div>
 <div class="main">
 <div class="viz-panel">
@@ -5025,6 +5077,10 @@ const I18N={
   "page":{el:"σελίδα"},
   "of":{el:"από"},
   'DESIGN':{el:'ΣΧΕΔΙΑΣΗ'},'ENGINE':{el:'ΚΙΝΗΤΗΡΑΣ'},'LIVE':{el:'ΖΩΝΤΑΝΑ'},'DYNO':{el:'ΔΥΝΑΜΟ'},'GUIDE':{el:'ΟΔΗΓΟΣ'},'OPTIONS':{el:'ΕΠΙΛΟΓΕΣ'},
+  'MENU':{el:'ΜΕΝΟΥ'},'Main menu':{el:'Κεντρικό μενού'},
+  'BUILD AN ENGINE':{el:'ΦΤΙΑΞΕ ΚΙΝΗΤΗΡΑ'},'BUILD A VEHICLE':{el:'ΦΤΙΑΞΕ ΟΧΗΜΑ'},'OPEN WIKI':{el:'ΑΝΟΙΞΕ ΟΔΗΓΟ'},'SETTINGS':{el:'ΡΥΘΜΙΣΕΙΣ'},
+  'BUILD IT, THEN DRIVE IT':{el:'ΦΤΙΑΞΕ ΤΟ, ΜΕΤΑ ΟΔΗΓΗΣΕ ΤΟ'},
+  'ARROWS SELECT · ENTER OPENS':{el:'ΒΕΛΗ ΓΙΑ ΕΠΙΛΟΓΗ · ΕΠΙΒΕΒΑΙΩΣΗ ΑΝΟΙΓΕΙ'},
   'ENGINE DESIGN':{el:'ΣΧΕΔΙΑΣΗ ΚΙΝΗΤΗΡΑ'},
   'Load a preset, or configure a build and press BUILD & DYNO. Physics update live.':{el:'Φόρτωσε προεπιλογή ή στήσε ένα build και πάτα BUILD & DYNO. Η φυσική ενημερώνεται ζωντανά.'},
   'LOAD A PRESET':{el:'ΦΟΡΤΩΣΗ ΠΡΟΕΠΙΛΟΓΗΣ'},
@@ -5735,7 +5791,7 @@ function applyLang(lang){
   currentLang=(lang==='el')?'el':'en';
   try{localStorage.setItem('pes.lang',currentLang);}catch(e){}
   document.documentElement.lang=currentLang;
-  const sel='.viz-tabs button, .design-panel h3, .design-section, .guide-title, .gtier-h, .hint, .panel h2, .stat .label, .opt-note, .opt-row>div>b, .ctl-lbl, .field>label, .build-row button, #btnGearRatios, #btnGG, #controlsPanel .btn-row button, .fuelmap-edit button, .garage-row button, #partsPanel button[id], #btnReplayRestart, .gart-cap';
+  const sel='.viz-tabs button, .design-panel h3, .design-section, .guide-title, .gtier-h, .hint, .panel h2, .stat .label, .opt-note, .opt-row>div>b, .ctl-lbl, .field>label, .build-row button, #btnGearRatios, #btnGG, #controlsPanel .btn-row button, .fuelmap-edit button, .garage-row button, #partsPanel button[id], #btnReplayRestart, .gart-cap, #btnMenu, .title-brand p, .title-menu button, .title-hint';
   document.querySelectorAll(sel).forEach(el=>{
     if(el.children.length>0)return;                       // skip nodes with child elements
     if(el.dataset.en===undefined)el.dataset.en=el.textContent.trim();
@@ -20731,6 +20787,195 @@ const HYB_VEHICLE_PRESETS=[
 // What a player picks from: the combustion tables, then the electric and hybrid ones.
 const FACTORY_ENGINES=PRESETS.concat(EV_ENGINE_PRESETS,HYB_ENGINE_PRESETS), FACTORY_CARS=VEHICLE_PRESETS.concat(EV_VEHICLE_PRESETS,HYB_VEHICLE_PRESETS);
 const FACTORY_ENGINE_CATS=PRESET_CATS.concat(['Electric','Hybrid']), FACTORY_CAR_CATS=VEHICLE_CATS.concat(['Electric','Hybrid']);
+// ====== TITLE SCREEN ======
+// The sim used to open on the live bench, which is the right place once you are building and the wrong
+// place the first time you arrive. This is the front door: four ways in, over a workshop drawn the same
+// way as the car and the engine (a PixBuf, whole cells, no smoothing). It is a draft of that room —
+// a hoist, an engine on it, a toolbox — not a second game.
+//
+// The automated tests drive the bench directly and never ask for this screen, so it stays down when the
+// browser reports itself as automated. ?title=1 forces it (the test for this screen) and ?title=0
+// suppresses it. A shared build in the hash opens on the bench too: the link is the destination.
+const SHOP_W=192,SHOP_H=112;
+let titlePhase=0,titleRAF=0,titleLast=0,titleSel=0;
+
+function pixBox(buf,x,y,w,h,fill,hi,lo){
+  buf.rect(x,y,w,h,fill);
+  if(hi){buf.rect(x,y,w,1,hi);buf.rect(x,y,1,h,hi);}
+  if(lo){buf.rect(x,y+h-1,w,1,lo);buf.rect(x+w-1,y,1,h,lo);}
+}
+
+// A tidy bay, side on. Daylight stays out: the whole app lives in the same navy, and a bright sky
+// would be a different game. The room is clean on purpose — grout lines, a hazard stripe, one tray
+// under the engine — rather than a stained garage.
+function drawWorkshop(buf,t){
+  const wall='#1b2433',mortar='#121820';
+  buf.rect(0,0,SHOP_W,90,wall);
+  for(let y=6;y<88;y+=8){
+    buf.rect(0,y,SHOP_W,1,mortar);
+    const off=(Math.round(y/8)%2)?10:0;
+    for(let x=off;x<SHOP_W;x+=20)buf.rect(x,y-5,1,5,mortar);
+  }
+  // one high window, left, so the hoist stays the subject
+  pixBox(buf,10,8,44,24,'#243044','#c0c0d0','#3a3a4a');
+  buf.rect(12,10,40,9,'#31425c');
+  buf.rect(18,13,7,5,'#d8d0b0');
+  buf.set(20,14,'#fff8e0');
+  buf.rect(31,10,1,20,'#6a6a7a');
+  buf.rect(12,19,40,1,'#6a6a7a');
+  buf.set(42,14,'#c0c0d0');buf.set(46,17,'#889');buf.set(38,12,'#c0c0d0');
+  buf.rect(12,30,40,2,'#9a9aaa');
+  // pegboard behind the bay, drawn before the hoist so the chain sits in front of it
+  buf.rect(70,28,48,26,'#243028');
+  buf.rect(70,28,48,1,'#3a5244');
+  for(let y=32;y<52;y+=4)for(let x=74;x<116;x+=4)buf.set(x,y,'#1a2820');
+  buf.rect(78,34,8,2,'#c0c0d0');buf.rect(78,32,2,2,'#c0c0d0');buf.rect(84,32,2,2,'#c0c0d0');
+  buf.rect(96,33,2,12,'#c08040');buf.rect(94,42,6,2,'#ffcc00');
+
+  // hazard stripe, then the tiled floor
+  buf.rect(0,88,SHOP_W,4,'#1a1a22');
+  for(let x=0;x<SHOP_W;x+=8)buf.rect(x,88,4,4,'#e0b000');
+  buf.rect(0,92,SHOP_W,SHOP_H-92,'#2a2a34');
+  for(let y=92;y<SHOP_H;y+=10)buf.rect(0,y,SHOP_W,1,'#1e1e28');
+  for(let x=0;x<SHOP_W;x+=16)buf.rect(x,92,1,SHOP_H-92,'#1e1e28');
+  // the pool of the shop lamp, a few tiles lighter, under the engine
+  buf.rect(78,102,36,8,'#34343e');
+
+  const sway=Math.sin(t)>0.5?1:Math.sin(t)<-0.5?-1:0;
+  // gantry: two posts, a yellow beam, a trolley, a chain
+  pixBox(buf,64,22,4,66,'#8a8a98','#c0c0d0','#3a3a4a');
+  pixBox(buf,124,22,4,66,'#8a8a98','#c0c0d0','#3a3a4a');
+  pixBox(buf,58,84,16,4,'#5a5a68','#9a9aaa','#2a2a3a');
+  pixBox(buf,118,84,16,4,'#5a5a68','#9a9aaa','#2a2a3a');
+  pixBox(buf,60,16,72,6,'#e0b000','#ffe070','#8a6800');
+  const hx=88+sway;
+  pixBox(buf,hx,22,14,6,'#3a3a4a','#6a6a7a','#1a1a22');
+  buf.rect(hx+2,24,2,2,(Math.floor(t*2)%10===0)?'#886622':'#00ff88');
+  for(let y=28;y<48;y+=3)buf.rect(hx+6,y,2,2,(Math.floor(y/3)%2)?'#c0c0d0':'#6a6a7a');
+  buf.rect(hx+5,48,4,2,'#ffcc00');
+  buf.rect(hx+8,50,2,3,'#ffcc00');
+  // lamp, fixed to the beam, not to the swaying trolley
+  buf.rect(104,22,1,8,'#3a3a4a');
+  pixBox(buf,98,30,14,4,'#3a3a4a','#6a6a7a','#1a1a22');
+  buf.rect(100,34,10,2,'#fff2a8');
+
+  // the engine, hung clear of the floor. Same block / gold cover / header colours as the engine sprite.
+  const ex=hx-12,ey=54;
+  buf.rect(ex+4,106,30,2,'#14141c');
+  pixBox(buf,ex+2,100,32,3,'#3a3a28','#6a6a40','#1a1a14');
+  pixBox(buf,ex,ey+8,34,12,'#6a6a7a','#9a9aaa','#3a3a4a');
+  for(let k=1;k<4;k++)buf.rect(ex+k*8,ey+10,1,8,'#4a4a58');
+  pixBox(buf,ex+4,ey+20,26,4,'#2a2a3a','#4a4a5a','#1a1a22');
+  pixBox(buf,ex+1,ey+4,32,5,'#9a9aaa','#c0c0d0','#5a5a68');
+  pixBox(buf,ex+4,ey,26,5,'#e0b000','#ffe070','#8a6800');
+  buf.rect(ex+8,ey+1,2,2,'#3a3a4a');buf.rect(ex+15,ey+1,2,2,'#3a3a4a');buf.rect(ex+22,ey+1,2,2,'#3a3a4a');
+  // the hook's eye, so the chain meets the cover
+  buf.rect(hx+6,ey-2,4,2,'#ffcc00');
+  pixBox(buf,ex+8,ey-5,14,4,'#2a2a3a','#4a4a5a','#1a1a22');
+  const hc='#c08040';
+  buf.rect(ex+2,ey+15,28,3,hc);
+  buf.rect(ex-1,ey+14,4,5,hc);
+  buf.disc(ex+36,ey+14,4,'#3a3a4a');buf.disc(ex+36,ey+14,2,'#9a9aaa');
+  pixBox(buf,ex-8,ey+11,7,7,'#ff6600','#ffaa44','#8a3000');
+
+  // toolbox, on the floor, to the right of the hoist
+  const tx=150,ty=52;
+  buf.rect(tx+2,106,32,2,'#14141c');
+  pixBox(buf,tx,ty+12,36,32,'#c42828','#ff5a5a','#6a1414');
+  pixBox(buf,tx-1,ty+5,38,8,'#e23a3a','#ff7070','#8a1818');
+  buf.rect(tx+13,ty+2,12,4,'#3a3a4a');
+  buf.rect(tx+15,ty,8,2,'#6a6a7a');
+  for(let i=0;i<3;i++){
+    const dy=ty+16+i*9;
+    buf.rect(tx+3,dy,30,7,i%2?'#a82020':'#b42424');
+    buf.rect(tx+14,dy+2,8,2,'#e8e8f0');
+  }
+  // a wrench lying on the lid
+  buf.rect(tx+4,ty+7,11,2,'#c0c0d0');
+  buf.rect(tx+4,ty+5,3,2,'#c0c0d0');
+  buf.rect(tx+12,ty+5,3,2,'#c0c0d0');
+
+  // a spare tyre against the wall, left of the gantry
+  buf.disc(46,86,11,'#0e0e14');
+  buf.disc(46,86,9,'#1c1c26');
+  buf.disc(46,86,4,'#6a6a7a');
+  buf.rect(42,86,8,1,'#33334a');
+}
+
+function paintTitle(){
+  const cv=document.getElementById('titleBg');if(!cv)return;
+  const stage=cv.parentElement,rect=stage.getBoundingClientRect();
+  if(rect.width<2||rect.height<2)return;
+  const dpr=Math.min(2,window.devicePixelRatio||1);
+  const bw=Math.max(1,Math.round(rect.width*dpr)),bh=Math.max(1,Math.round(rect.height*dpr));
+  if(cv.width!==bw||cv.height!==bh){cv.width=bw;cv.height=bh;}
+  const g=cv.getContext('2d');
+  g.setTransform(1,0,0,1,0,0);g.imageSmoothingEnabled=false;
+  g.fillStyle='#1b2433';g.fillRect(0,0,bw,bh);
+  const buf=new PixBuf(SHOP_W,SHOP_H);
+  drawWorkshop(buf,titlePhase);
+  const k=Math.max(1,Math.floor(Math.min(bw/SHOP_W,bh/SHOP_H)));
+  const iw=SHOP_W*k,ih=SHOP_H*k;
+  g.drawImage(buf.canvas(),Math.floor((bw-iw)/2),Math.floor((bh-ih)/2),iw,ih);
+}
+
+function titleButtons(){return [...document.querySelectorAll('#titleScreen .title-menu button')];}
+function titleMark(){
+  titleButtons().forEach((b,i)=>b.classList.toggle('on',i===titleSel));
+}
+function titleGo(mode){
+  closeTitleScreen();
+  setTab(mode);
+}
+function openTitleScreen(){
+  const el=document.getElementById('titleScreen');if(!el)return;
+  const h1=document.querySelector('header h1');
+  const ver=document.getElementById('titleVer');
+  if(ver&&h1)ver.textContent=h1.textContent;
+  el.hidden=false;
+  document.body.classList.add('title-open');
+  titleSel=0;titleMark();
+  requestAnimationFrame(()=>{paintTitle();const b=titleButtons()[0];if(b)b.focus();});
+  if(!titleRAF)titleRAF=requestAnimationFrame(titleLoop);
+}
+function closeTitleScreen(){
+  const el=document.getElementById('titleScreen');if(!el||el.hidden)return;
+  el.hidden=true;
+  document.body.classList.remove('title-open');
+}
+function titleLoop(now){
+  const el=document.getElementById('titleScreen');
+  if(!el||el.hidden){titleRAF=0;return;}
+  if(now-titleLast>90){titleLast=now;titlePhase+=0.45;paintTitle();}
+  titleRAF=requestAnimationFrame(titleLoop);
+}
+function titleOnLoad(){
+  const q=new URLSearchParams(location.search);
+  if(q.get('title')==='0')return false;
+  if(q.get('title')==='1')return true;
+  if(navigator.webdriver)return false;
+  if(location.hash&&location.hash.length>1)return false;
+  return true;
+}
+function bindTitleScreen(){
+  const el=document.getElementById('titleScreen');if(!el)return;
+  titleButtons().forEach((b,i)=>{
+    b.addEventListener('click',()=>titleGo(b.dataset.go));
+    b.addEventListener('focus',()=>{titleSel=i;titleMark();});
+  });
+  document.getElementById('btnMenu').addEventListener('click',openTitleScreen);
+  document.addEventListener('keydown',e=>{
+    if(el.hidden)return;
+    const n=titleButtons().length;
+    if(e.key==='ArrowDown'||e.key==='ArrowRight'){titleSel=(titleSel+1)%n;titleMark();titleButtons()[titleSel].focus();e.preventDefault();}
+    else if(e.key==='ArrowUp'||e.key==='ArrowLeft'){titleSel=(titleSel+n-1)%n;titleMark();titleButtons()[titleSel].focus();e.preventDefault();}
+    else if(e.key==='Enter'){titleGo(titleButtons()[titleSel].dataset.go);e.preventDefault();}
+    else if(e.key==='Escape'){closeTitleScreen();e.preventDefault();}
+    else return;
+    e.stopPropagation();
+  },true);
+  window.addEventListener('resize',()=>{if(!el.hidden)paintTitle();});
+}
 function bindControls(){
   // Throttle & load are fractions (0..1); AFR/temps are direct values.
   document.getElementById('throttle').addEventListener('input',e=>state.throttle=(+e.target.value)/100);
@@ -20990,6 +21235,8 @@ bindRace();
 bindRacePage();
 bindTrackPage();
 sizeCanvas();updatePhysics();updateUI();requestAnimationFrame(loop);
+bindTitleScreen();
+if(titleOnLoad())openTitleScreen();
 
 // Register service worker for offline/installable PWA (no-op on file://).
 if('serviceWorker' in navigator && location.protocol.startsWith('http')){
