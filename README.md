@@ -1,4 +1,4 @@
-# PIXEL ENGINE SIM v0.7 build 213
+# PIXEL ENGINE SIM v0.7 build 214
 
 **A lightweight, 8-bit style internal combustion engine *designer* & simulator** inspired by *Automation*.
 
@@ -763,6 +763,10 @@ model — it's tuned for fun, learning and rapid experimentation (the "light Aut
 philosophy).
 
 ## Project Structure
+
+**Working on the code (people and coding agents):** read [`AGENTS.md`](AGENTS.md) first. It describes how a change
+becomes a build and a pull request (branching, stamping, tests, the CHANGELOG), so work from different tools never
+conflicts. Cursor picks it up through `.cursor/rules/development.mdc`.
 
 ```
 .

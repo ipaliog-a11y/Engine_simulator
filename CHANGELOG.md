@@ -20,6 +20,22 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 Working toward **v1.0 — every number derived, not fitted.**
 
+### Development instructions for coding agents (build 214)
+
+- **`AGENTS.md`** writes down the method every build here has followed, so that work started in Cursor and work
+  continued here never conflict:
+  - the repository's shape: edit `src/`, join it into `index.html`, which is committed;
+  - one change = one build = one pull request, stamped once, from a fresh branch off `main`;
+  - what to do when `main` moves under an open PR: merge (never rebase), take main's build line, re-stamp, regenerate
+    `index.html` rather than hand-merge it, and keep both CHANGELOG entries;
+  - the physics rules: derive from cited sources, never fit to a test, and fingerprint what a change moves;
+  - tests (`WHY THIS EXISTS`, exit codes, known-gap lists that only shrink, `durations.json`) and the checks before a
+    push;
+  - the CHANGELOG, commit and PR format;
+  - Greek for every visible string, the guide's three levels, and the owner's part (squash-merge, tags, releases).
+- **`.cursor/rules/development.mdc`** is an always-applied Cursor rule that points every Cursor agent to `AGENTS.md`,
+  with the essentials in brief. The README's *Project Structure* links to it too.
+
 ### The side column and the dyno, tidied (build 213)
 
 - **LIVE OUTPUT shows on LIVE and DYNO only**, where an engine runs. The ENGINE, PARTS, GARAGE and OPTIONS tabs have
