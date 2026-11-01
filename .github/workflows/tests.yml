@@ -7,8 +7,9 @@ name: Tests
 # running time (tests/durations.json; see tests/run.mjs). Each shard installs the Playwright Chromium the tests drive.
 # The last job turns the five into one result, so a pull request has a single check to read.
 #
-# Refresh tests/durations.json from a full local run when tests are added or get much slower; a test it lacks counts as
-# 30 s, so a new test is still run, only possibly on a shard that finishes a little later.
+# Refresh tests/durations.json when tests are added or get much slower, from a full local run or from the five shards'
+# logs here (each prints every test's time); a test it lacks counts as 30 s, so a new test is still run, only possibly on
+# a shard that finishes a little later.
 
 on:
   pull_request:

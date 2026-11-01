@@ -66,6 +66,9 @@ A car company is split into departments that hand the same project along: <b>pow
 <div class="guide-body" data-gk="tabs">
 <b>ENGINE</b> — the design form: every part of the engine, a preset list to start from, an objective to aim at, and <b>BUILD &amp; DYNO</b>.<br><b>VEHICLE</b> — drop the engine into a chassis, choose tyres, gearbox, aero and brakes, and read the performance figures. The garage lives at the bottom.<br><b>TRACK</b> — a solved lap of a real or imported circuit, with the racing line and what limits the car at every point.<br><b>LIVE</b> — the engine running: a cutaway of one cylinder, the whole bank firing in order, and the controls on the right to drive it.<br><b>DYNO</b> — the power and torque curves, the scorecard, and printable reports.<br><b>GUIDE</b> — this manual. <b>OPTIONS</b> — sound, wear and language.
 </div>
+<div class="guide-body" data-gk="tabsMore2">
+<b>PARTS</b> — design your own exhaust, intake manifold or air filter for the engine you built, preview it against what the engine has now, and keep it in a library that the ENGINE tab's lists offer under MY PARTS. See <a data-gp="parts">Designing your own parts</a>.
+</div>
 <div class="guide-body" data-gk="tabsMore1">
 <b>RACE</b> — two to eight cars on one circuit, run to a lap count, with tyres that heat and wear, fuel that burns off, pit stops and traffic. Nobody drives; you set it up and watch. See <a data-gp="race">The race</a>.
 </div>
@@ -512,7 +515,7 @@ Manifold pressure is a state with a time constant: it fills toward the target se
 at a closed throttle, which is engine braking. The metering accuracy of each system scales the fuel actually needed (a carburettor or mechanical injection delivers about 7–12% more fuel than the engine needs).
 </div>
 <div class="guide-limit" data-gk="inductionLimit">
-Limit: the induction systems' flow and response factors and the air filters' restrictions are hand-set to real relative behaviour, not derived from their geometry.
+Limit: the induction systems' flow and response factors are hand-set to real relative behaviour, not derived from their geometry. The air filter's restriction is derived (build 210): its media by Darcy's law, its housing by its velocity head (<a data-gp="parts">Designing your own parts</a>).
 </div>
 </div>
 <div class="guide-see">See also: <a data-gp="airpath">The air path</a> · <a data-gp="fuelmap">Fuel, injection &amp; the fuel map</a> · <a data-gp="friction">Friction, oil &amp; pumping</a></div>
@@ -696,7 +699,7 @@ The air an engine swallows per second, four-stroke, with <i>ρ = p/(R·T)</i> th
 For a poppet-valve engine VE is not a fitted curve: it is the product of what the model derives, the fill of the integrated intake stroke (with the charge's momentum, heating and the cam's closing point), the exhaust's scavenging or reversion, residual gas, inlet Mach choking (Taylor), valve float, the induction system and filter, and for a turbo the compressor's choke flow. The next pages take those one at a time.
 </div>
 </div>
-<div class="guide-see">See also: <a data-gp="waves">Intake runner waves</a> · <a data-gp="header">Exhaust headers &amp; scavenging</a> · <a data-gp="backpressure">Back-pressure &amp; residuals</a> · <a data-gp="turbo">Turbochargers</a></div>
+<div class="guide-see">See also: <a data-gp="waves">Intake runner waves</a> · <a data-gp="header">Exhaust headers &amp; scavenging</a> · <a data-gp="backpressure">Back-pressure &amp; residuals</a> · <a data-gp="turbo">Turbochargers</a> · <a data-gp="parts">Designing your own parts</a></div>
 </section>
 <section class="guide-page" id="gp-waves" data-cat="air" data-title="Intake runner waves" data-tags="intake runner helmholtz resonance ram tuning variable intake disa" hidden>
 <h4 class="guide-title">Intake runner waves</h4>
@@ -732,7 +735,7 @@ Engelman's tuned-intake experiments put the main ram peak where <i>f<sub>H</sub>
 with the valve curtain opening on the cam's lift curve, the cylinder heated by the hot residual and the walls (first law), and the damping set to the Q of about 4 a flow rig measures. The column's momentum is what keeps air flowing in after BDC, which is why a late-closing race cam makes power high. Pressure is converted to trapped mass isentropically, <i>Δρ/ρ = (1 + Δp/p)<sup>1/γ</sup> − 1</i>, so a +35% pressure spike is not +35% VE.
 </div>
 </div>
-<div class="guide-see">See also: <a data-gp="header">Exhaust headers &amp; scavenging</a> · <a data-gp="vvt">Variable valve timing</a> · <a data-gp="valvetrain">Valvetrain &amp; cams</a></div>
+<div class="guide-see">See also: <a data-gp="header">Exhaust headers &amp; scavenging</a> · <a data-gp="vvt">Variable valve timing</a> · <a data-gp="valvetrain">Valvetrain &amp; cams</a> · <a data-gp="parts">Designing your own parts</a></div>
 </section>
 <section class="guide-page" id="gp-header" data-cat="air" data-title="Exhaust headers &amp; scavenging" data-tags="exhaust header manifold primary collector scavenging overlap reflection" hidden>
 <h4 class="guide-title">Exhaust headers &amp; scavenging</h4>
@@ -761,7 +764,7 @@ The pulse leaves at exhaust-valve opening, reflects as a rarefaction, and is use
 Waves lose strength to the pipe walls (Kirchhoff's boundary-layer damping), <i>α = √(ων/2) · (1 + (γ−1)/√Pr) / (r·c)</i>, and both waves swing both ways: <i>−cos(πn)</i> is +1 at a tuned order and −1 between them, so a mismatched pipe costs VE. The suction only helps through the small curtain both valves have open, averaged over the overlap window.
 </div>
 </div>
-<div class="guide-see">See also: <a data-gp="waves">Intake runner waves</a> · <a data-gp="backpressure">Back-pressure &amp; residuals</a> · <a data-gp="valvetrain">Valvetrain &amp; cams</a></div>
+<div class="guide-see">See also: <a data-gp="waves">Intake runner waves</a> · <a data-gp="backpressure">Back-pressure &amp; residuals</a> · <a data-gp="valvetrain">Valvetrain &amp; cams</a> · <a data-gp="parts">Designing your own parts</a></div>
 </section>
 <section class="guide-page" id="gp-backpressure" data-cat="air" data-title="Back-pressure &amp; residuals" data-tags="back pressure exhaust restriction residual gas catalyst silencer darcy" hidden>
 <h4 class="guide-title">Back-pressure &amp; residuals</h4>
@@ -790,6 +793,40 @@ The VE loss is the excess over the balanced case <i>p<sub>exh</sub> = p<sub>int<
 </div>
 </div>
 <div class="guide-see">See also: <a data-gp="header">Exhaust headers &amp; scavenging</a> · <a data-gp="friction">Friction, oil &amp; pumping</a> · <a data-gp="turbo">Turbochargers</a> · <a data-gp="knock">Compression &amp; knock</a></div>
+</section>
+<section class="guide-page" id="gp-parts" data-cat="air" data-title="Designing your own parts" data-tags="parts designer design exhaust header primary intake manifold runner air filter library save fit custom my parts" hidden>
+<h4 class="guide-title">Designing your own parts</h4>
+<div class="gtier gt-real"><div class="gtier-h">LV1 · REAL LIFE</div>
+<canvas class="gart" data-art="partsbench"></canvas><div class="gart-cap">Pick a part, change a dimension, and compare the new curve with the one the engine has now.</div>
+<div class="guide-body" data-gk="partsReal">
+Much of an engine's breathing is bought in. Aftermarket makers sell exhausts, intake manifolds and air filters, and tuners have their own made: a header welded from bent tube, runners cut to a length, a filter element sized for the flow. Each is drawn to dimensions first, and the dimensions decide what it does: a primary pipe's length sets the rpm where its pressure wave helps empty the cylinder, a runner's length the rpm where the intake's wave helps fill it, a filter's area how hard the air has to push through it. A good part is tested on the dyno against the one it replaces before it goes on the car.
+</div>
+</div>
+<div class="gtier gt-game"><div class="gtier-h">LV2 · IN THE GAME</div>
+<div class="guide-body" data-gk="parts">
+<b>Pick a kind.</b> The PARTS tab works on the engine you built. Choose EXHAUST, INTAKE MANIFOLD or AIR FILTER at the top; the catalytic converter comes later. An electric drive has none of them.<br>
+<b>Start from a factory part.</b> Your own parts of that kind are listed first, with EDIT, FIT and DELETE. To begin a new one, take one of this engine's factory parts as the starting point, name it, and change its dimensions: for an exhaust the header's construction, the primaries' bore and length, one or two pipes, their bore and length, and the silencer; for an intake the runners' length and bore, and a variable manifold's short length; for a filter the media, its area, the housing and its inlet.<br>
+<b>Let the designer help.</b> <b>CUT</b> sets the exhaust primaries' length, or the intake runners', for the rpm you type. <b>SIZE FOR 75 m/s</b> picks the exhaust pipe's bore, <b>MATCH THE PORTS</b> the runners' bore, <b>SIZE FOR 0.25 m/s</b> the filter's area. The lines under the form say what the part does and what real ones measure.<br>
+<b>Read the preview.</b> The chart lays the pull with this part (solid) over the engine as it is now (dashed), and the headline gives peak power and torque and the change. Nothing on the engine moves until you fit the part.<br>
+<b>Save and fit.</b> <b>SAVE PART</b> keeps it in your library (up to 40 parts, in this browser); <b>SAVE &amp; FIT</b> also puts it on the engine. A saved part appears on the ENGINE tab under <b>MY PARTS</b> in the Exhaust, Runner and Air filter lists, so any engine can wear it. Where the app needs a factory class (the price, the drawing, the sound), a part counts as the one it is nearest to, an exhaust by its construction.<br>
+<b>It travels with the build.</b> A saved build, a garage car or a share code carries its parts, and loading one into a browser that lacks them adds them to its library. Deleting a fitted part puts the factory part back.
+</div>
+</div>
+<div class="gtier gt-phys"><div class="gtier-h">LV3 · THE PHYSICS</div>
+<div class="guide-body" data-gk="partsPhys">
+A designed part puts its own numbers into the equations the factory parts use; nothing is added for it.<br>
+· The <b>exhaust</b>: its construction sets how sharp the reflected wave stays (a cast manifold's unequal pipes blur it, an equal-length header keeps it sharp), the primaries' length and bore set the rpm and order of the wave that scavenges (<a data-gp="header">Exhaust headers &amp; scavenging</a>), and the pipes' bore, number and length set the Darcy–Weisbach back-pressure (<a data-gp="backpressure">Back-pressure &amp; residuals</a>).<br>
+· The <b>intake manifold</b> gives the integrated intake stroke its runner (the length plus the port in the head) and bore (<a data-gp="waves">Intake runner waves</a>). A variable one opens its short runners from the rpm where they fill better. CUT searches that same fill model for the length, because the runner's resonance alone puts the peak 20–25% low.<br>
+· The <b>air filter</b> is a pressure drop in two parts, the media by Darcy's law (proportional to the flow) and the housing by its velocity head (proportional to its square):
+<span class="geq">Δp = a·Q + b·Q²</span>
+taken off the charge as <i>VE × (1 − Δp/p<sub>0</sub>)</i>. A new factory filter reads about 3.75 kPa at full throttle, a clogged one about 6.5.<br>
+The preview runs the whole build on a copy of the engine, at the scoring conditions, and puts everything back afterwards, so the curve of a fitted part is its preview exactly.
+</div>
+<div class="guide-limit" data-gk="partsLimit">
+Limit: the silencer changes only the sound; its own back-pressure is not modelled. The intake plenum is taken as holding steady pressure, so its volume and the throttle are not part of the design. Oiled cotton's permeability is its makers' claim; paper's is measured. The catalytic converter cannot be designed yet.
+</div>
+</div>
+<div class="guide-see">See also: <a data-gp="airpath">The air path</a> · <a data-gp="header">Exhaust headers &amp; scavenging</a> · <a data-gp="waves">Intake runner waves</a> · <a data-gp="backpressure">Back-pressure &amp; residuals</a> · <a data-gp="induction">Induction &amp; throttle</a></div>
 </section>
 <section class="guide-page" id="gp-turbo" data-cat="air" data-title="Turbochargers" data-tags="turbo turbocharger turbine compressor boost exhaust energy shaft" hidden>
 <h4 class="guide-title">Turbochargers</h4>
@@ -2172,7 +2209,8 @@ This is a physics model, and like every model it leaves things out. These are th
 · <b>Two-strokes and rotaries are partly fitted.</b> Their work rests on measured type factors, their breathing on a fitted VE curve, and their knock on an older points score. Four-stroke poppet-valve engines, petrol and diesel, are derived (<a data-gp="types">Engine types</a>).<br>
 · <b>Twin-scroll manifolds are not rewarded</b>, though each cylinder's blowdown pulse now feeds the turbine (<a data-gp="turbo">Turbochargers</a>).<br>
 · <b>A turbo cannot fail from overspeed.</b> Its tip speed is a cap the model respects; nothing breaks if you exceed what a real cartridge survives.<br>
-· <b>Some hardware is hand-set to real relative behaviour</b> rather than derived: the induction systems and air filters, the supercharger boost laws, the nitrous shot, the MBT spark rule, the friction curve's shape, the cooling-system model (<a data-gp="induction">Induction &amp; throttle</a>, <a data-gp="supercharger">Superchargers</a>, <a data-gp="nitrous">Nitrous oxide</a>, <a data-gp="ignition">Ignition &amp; spark timing</a>, <a data-gp="friction">Friction, oil &amp; pumping</a>, <a data-gp="heat">Heat, cooling &amp; EGT</a>).<br>
+· <b>Some hardware is hand-set to real relative behaviour</b> rather than derived: the induction systems, the supercharger boost laws, the nitrous shot, the MBT spark rule, the friction curve's shape, the cooling-system model (<a data-gp="induction">Induction &amp; throttle</a>, <a data-gp="supercharger">Superchargers</a>, <a data-gp="nitrous">Nitrous oxide</a>, <a data-gp="ignition">Ignition &amp; spark timing</a>, <a data-gp="friction">Friction, oil &amp; pumping</a>, <a data-gp="heat">Heat, cooling &amp; EGT</a>).<br>
+· <b>Designed parts leave two things out</b>: a silencer's own back-pressure, and the intake plenum's volume (<a data-gp="parts">Designing your own parts</a>).<br>
 · <b>Emissions are trend correlations</b>, not chemistry (<a data-gp="emissions">Emissions &amp; the catalyst</a>). <b>Wear rates are game rules</b> (<a data-gp="wear">Wear &amp; reliability</a>). The <b>scorecard's weights</b> are design choices (<a data-gp="scorecard">The scorecard</a>).<br>
 · <b>No vibration or balance</b> is modelled (<a data-gp="firing">Crank &amp; firing order</a>).<br>
 · <b>The lap is quasi-steady</b>: the car is always exactly at the speed grip, power and brakes allow, turning in takes no time (no yaw inertia). Each axle's grip is its own, so a car understeers or oversteers (build 157), but only as a limit: it never slides or spins, the driver never makes a mistake, and the line is the best one near minimum curvature (<a data-gp="trackline">The racing line</a>).<br>

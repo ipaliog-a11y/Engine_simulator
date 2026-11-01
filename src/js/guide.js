@@ -275,6 +275,19 @@ const GUIDE_ART={
     const f=gaFrac(t/2);const going=f<0.5,u=going?f*2:2-f*2;const x=12+u*88,y=12+(34-12)*u;
     P.disc(Math.round(x),Math.round(y),2,going?GP.r:GP.b);
     P.txt(4,58,going?'BLOWDOWN PULSE ->':'<- SUCTION WAVE',going?GP.r:GP.b,0.55);P.txt(100,42,'COLLECTOR',GP.dim,0.5);}},
+  // the PARTS page: pick a kind, change a dimension, and the new curve moves against the one the engine has now
+  partsbench:{anim:1,draw(P,t){
+    const sel=Math.floor(t/2)%3,names=['EXHAUST','INTAKE','FILTER'];
+    names.forEach((n,i)=>{const y=6+i*16;if(i===sel)P.r(2,y-2,58,13,GP.dark);P.box(2,y-2,58,13,i===sel?GP.y:GP.line);P.txt(18,y+2,n,i===sel?GP.y:GP.dim,0.5);});
+    P.r(5,8,10,3,GP.steel);P.r(13,6,2,7,GP.steelD);                                   // a header pipe
+    P.r(5,24,3,7,GP.steel);P.r(9,24,3,7,GP.steel);P.r(4,23,9,2,GP.steelD);              // two runners
+    for(let j=0;j<4;j++)P.r(5,38+j*2,9,1,j%2?GP.steelD:GP.ice);                         // a pleated element
+    P.axes(70,4,88,46);
+    const shift=0.12*Math.sin(t*1.6+sel);
+    P.plot(71,4,86,45,u=>0.15+0.6*Math.exp(-Math.pow((u-0.6)/0.4,2)),GP.dim);
+    P.plot(71,4,86,45,u=>0.15+0.62*Math.exp(-Math.pow((u-0.6-shift)/0.4,2)),GP.o);
+    P.txt(74,54,'NOW',GP.dim,0.5);P.txt(100,54,'NEW',GP.o,0.5);
+    P.txt(2,62,'DESIGN · PREVIEW · SAVE · FIT',GP.y,0.5);}},
   backpress:{anim:1,draw(P,t){
     P.r(2,28,156,10,GP.dark);P.r(2,27,156,1,GP.steel);P.r(2,38,156,1,GP.steel);
     P.r(46,22,26,22,GP.steelD);for(let j=0;j<5;j++)P.r(47,24+j*4,24,1,GP.dark);
