@@ -61,12 +61,13 @@ const AIR_RHO0=1.2;
 // The engine's flow through its filter (m3/s at ambient density): its displacement at this speed, filling, and the
 // manifold pressure's worth of air.
 const airFlowM3s=(rpm,map,ve)=>{const e=engine;return (e.displacement_L/1000)*(rpm/60)*(e.chargesPerRev||0.5)*ve*Math.max(0.1,map);};
-// The full flow a factory filter is sized to: the most the engine draws, over its range, at the boost the ECU asks for
-// there (its taper and its governor; the torque limit is solved later, on the finished engine).
+// The full flow a factory filter is sized to: the most the engine draws, over its range, at the boost its ECU's taper
+// asks for there (the hardware's, so not the diesel governor's: a governor set or not leaves the engine below it as it
+// was, test93; the torque limit is solved later, on the finished engine).
 function filterQref(e){
   let best=0;
   for(let r=1000;r<=e.redline;r+=100)
-    best=Math.max(best,r*(e.intake==='na'?1:1+(e.boost_bar||0)*boostTaperFrac(r)*govBoostFrac(r)));
+    best=Math.max(best,r*(e.intake==='na'?1:1+(e.boost_bar||0)*boostTaperFrac(r)));
   return (e.displacement_L/1000)*(best/60)*(e.chargesPerRev||0.5)*0.95;
 }
 const filterDp=Q=>{const f=engine.filt;return f?f.a*Q+f.b*Q*Q:0;};   // Pa
@@ -284,7 +285,7 @@ function partFromFactory(key,kind){
     return normPart({kind:'filter',name:tr(F.label),media:F.media,area_m2:+area.toFixed(6),housing:F.housing,inletD_mm:+inletD.toFixed(4)});
   });
   if(kind==='intake')return withPart('intake',key,e=>normPart({kind:'intake',name:tr(RUNNER[key].label),
-    runnerL_mm:RUNNER[key].mm!=null?RUNNER[key].mm:RUNNER.long.mm,runnerD_mm:+e.runnerD_mm.toFixed(2),
+    runnerL_mm:RUNNER[key].mm!=null?RUNNER[key].mm:RUNNER.long.mm,runnerD_mm:+e.runnerD_mm.toFixed(4),
     variable:key==='variable',shortL_mm:RUNNER.short.mm}));
   return withExhaust(key,e=>normPart({name:tr(EXHAUST[key].label),build:{stock:'cast',sport:'tubular',race:'equal'}[key],
     primD_mm:+(e.primD*1000).toFixed(2),primL_mm:Math.round((e.intake==='turbo'?(EXHAUST[key].fixedL||0.55):e.primL)*1000),

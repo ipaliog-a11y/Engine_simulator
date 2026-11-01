@@ -123,7 +123,10 @@ function engineCycleLine(v){
 // (Toyota's EHR, on the Prius since 2009; Hyundai's EHRS on the Ioniq). About a third of the fuel's energy leaves in
 // the exhaust at light load, and such an exchanger takes about half of it: 15% of the fuel's energy more to the coolant.
 // A power-split's engine can also charge the pack standing still (the brakes hold the ring and MG1 takes it all).
-const HYB_CYCLE={warmC:50,socLo:0.35,socHi:0.85,splits:[0,0.25,0.5,0.75,1],ehr:0.15};
+// splitsDirect (build 210): an eCVT or a series hybrid samples its engine's power at nine points, not five. Its range
+// runs from what the pack can cover to what it can take back, so a larger pack spaced five points so far apart that
+// the Prius's cycle scattered ~2% either way (build 207: 4.24 and 4.34 L/100 km at five, 4.31 and 4.32 at 17 or 33).
+const HYB_CYCLE={warmC:50,socLo:0.35,socHi:0.85,splits:[0,0.25,0.5,0.75,1],splitsDirect:[0,0.125,0.25,0.375,0.5,0.625,0.75,0.875,1],ehr:0.15};
 function hybridCycle(v){
   const e=engine,hy=e.hy,C=FUEL_CYCLE,H=HYB_CYCLE;
   const key=[v.mass,v.finalDrive,v.cdA,v.crr,v.rTire,v.driveEff,v.ratios.join(','),C.soak,e.hyDeploy,hy.mode,JSON.stringify(e.hyTune||null),!!e.hyPlug].join('|');
@@ -163,7 +166,7 @@ function hybridCycle(v){
         const nr=n2/PS.k2,R=psEngineRange(hy,nr),Pd=Math.max(0,T*n2*Math.PI/30),O=psOol();
         const Plo=Math.max(O.P[0],Pd-Pbat*assist(0,n2/mot.nMax,Pd/(O.Pmax+Pbat))),Phi=Math.min(O.Pmax,Pd+Pchg);
         if(!(R.hi>R.lo)||!(Phi>=Plo))return;
-        for(const k of H.splits){
+        for(const k of H.splitsDirect){
           const Pe=Plo+(Phi-Plo)*k,ne=clamp(psOolAt(Pe).ne,Math.max(R.lo,rpmMin),R.hi),Te=Pe/(ne*Math.PI/30);
           if(Te>Tmax(ne)*C.reserve)continue;
           const G=hybGear(hy,ne,n2),ns=G.ns,Ts=Te*G.ks;   // the planetary, or a series hybrid's generator on the crank
