@@ -646,7 +646,7 @@ const SILENCER={
 // The exhaust's sound, from the same geometry the breathing model uses (engine.primL, exhSigma, sysL).
 function exhaustSound(e){
   const T=exhaustGasT(0.7,0.6*e.redline,0);                 // a typical cruise-to-pull EGT
-  const sil=SILENCER[e.exhaust]||SILENCER.stock,cat=CAT[e.cat]||CAT.stock;
+  const sil=SILENCER[silencerKey(e)]||SILENCER.stock,cat=CAT[e.cat]||CAT.stock;
   const turbo=e.intake==='turbo';
   // A cat's honeycomb is thousands of narrow channels: it absorbs the top end in proportion to how
   // restrictive it is. A turbine is the best silencer on the car: the pulse spends itself on the wheel.
@@ -1012,8 +1012,8 @@ function gasReference(cfg){
 // What the build does to the gas model's sound after the worklet: which impulse response, and the silencer,
 // cat and turbine as a low-pass and a level (as exhaustSound's, with the cut it already works out).
 function gasChainFor(e){
-  const x=exhaustSound(e),cut=x.muffleHz/(SILENCER[e.exhaust]||SILENCER.stock).muffleHz;
-  return {ir:e.exhaust==='race'?'minimal':'mild',lpHz:(GAS_SILENCER_HZ[e.exhaust]||GAS_SILENCER_HZ.stock)*cut,gain:x.gain};
+  const sk=silencerKey(e),x=exhaustSound(e),cut=x.muffleHz/(SILENCER[sk]||SILENCER.stock).muffleHz;
+  return {ir:sk==='race'?'minimal':'mild',lpHz:(GAS_SILENCER_HZ[sk]||GAS_SILENCER_HZ.stock)*cut,gain:x.gain};
 }
 // How much of the worklet's levelled signal the impulse response lets through for this engine: rendered
 // offline at full load through the convolver alone, at six speeds from 20% to 80% of the redline, once per
@@ -1069,9 +1069,9 @@ function updateSound(){
   if(Sound.node){
     const d=soundDrive(Math.min(0.1,t-(Sound.lastT||t)),s);Sound.lastT=t;
     const size=clamp(Math.sqrt((engine.dispCyl_L||0.45)/0.45),0.6,1.5);   // a pulse's energy scales with its cylinder
-    const key=[engine.cylinders,engine.layout,engine.type,engine.ci,engine.strokeDiv,engine.exhaust,engine.cat,
+    const key=[engine.cylinders,engine.layout,engine.type,engine.ci,engine.strokeDiv,engine.exhaust,silencerKey(engine),engine.primD,engine.sysD,engine.sysPipes,engine.cat,
       engine.intake,engine.primL,engine.sysL,engine.exhSigma,engine.redline,engine.scType,engine.airFilter,engine.intakeSys,
-      engine.runnerL,engine.bore_mm,engine.chargeVol].join('|');
+      engine.runnerL,engine.runnerD_mm,engine.bore_mm,engine.chargeVol].join('|');
     if(key!==Sound.cfgKey){Sound.cfgKey=key;Sound.cfg=soundConfig(engine);Sound.node.port.postMessage(Sound.cfg);}
     const p=Sound.node.parameters;
     p.get('rpm').setTargetAtTime(s.rpm,t,0.05);

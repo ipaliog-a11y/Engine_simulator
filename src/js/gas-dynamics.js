@@ -958,7 +958,9 @@ const residualLoss=(pExhBar,pIntBar,cr)=>clamp(
 // route round an engine bay (350-900 mm). That is how a fabricator actually works.
 function deriveGasDynamics(){
   const e=engine;
-  const cam=CAM[e.cam]||CAM.stock, ex=EXHAUST[e.exhaust]||EXHAUST.stock;
+  // A designed exhaust (build 205, parts.js) gives its own dimensions; a factory one is sized to this engine below.
+  const P=e.exhaustPart||null;
+  const cam=CAM[e.cam]||CAM.stock, ex=P?null:(EXHAUST[e.exhaust]||EXHAUST.stock);
   e.camDur=cam.dur; e.camLSA=cam.lsa;
   e.overlap=e.ports?0:overlapDeg(cam.dur,cam.lsa);
   // The work's share of extra wall heat (wallWorkShare), at the anchor where it is zero-referenced, and
@@ -987,17 +989,19 @@ function deriveGasDynamics(){
   const Vd=e.dispCyl_L/1000;
   e.vEffCyl=Vd/Math.max(1.5,e.compression-1)+Vd/2;       // mean cylinder volume over induction
   // Runner bore matches the port behind it, which matches the valve throat it feeds.
-  e.runnerD_mm=e.ivDia_mm?Math.sqrt(e.ivCount)*THROAT_RATIO*e.ivDia_mm:0.42*e.bore_mm;
+  // A designed intake (build 206, parts.js) gives its own runners: length, bore, and a variable one's short length.
+  const IP=e.intakePart||null;
+  e.runnerD_mm=IP?IP.runnerD_mm:e.ivDia_mm?Math.sqrt(e.ivCount)*THROAT_RATIO*e.ivDia_mm:0.42*e.bore_mm;
   e.runnerA=Math.PI/4*Math.pow(e.runnerD_mm/1000,2);
-  const rn=RUNNER[e.runner]||RUNNER.medium;
-  e.runnerVariable=(e.runner==='variable');
+  const rn=IP?null:(RUNNER[e.runner]||RUNNER.medium);
+  e.runnerVariable=IP?!!IP.variable:(e.runner==='variable');
   const port=0.95*(e.bore_mm/1000);
-  e.runnerL=(rn.mm!=null?rn.mm/1000:RUNNER.long.mm/1000)+port;
-  e.runnerLShort=RUNNER.short.mm/1000+port;              // the flap's other position
+  e.runnerL=(IP?IP.runnerL_mm/1000:rn.mm!=null?rn.mm/1000:RUNNER.long.mm/1000)+port;
+  e.runnerLShort=(IP&&IP.variable?IP.shortL_mm:RUNNER.short.mm)/1000+port;   // the flap's other position
   // The header is cut for the gas that flows at its target speed, so take the temperature there.
-  const tgtRpm=ex.targetRpm||e.redline*0.90;
+  const tgtRpm=P?e.redline*0.90:(ex.targetRpm||e.redline*0.90);
   const T=exhaustGasT(1.0,tgtRpm);
-  e.exhSigma=ex.sigma; e.sysL=ex.sysL;
+  e.exhSigma=P?EXHAUST_BUILD[P.build].sigma:ex.sigma; e.sysL=P?P.sysL_m:ex.sysL;
   // Turbine throat, from the housing A/R and the turbine wheel it is wrapped around. Twin frames
   // split the exhaust between two turbines, so each sees half the flow.
   if(e.intake==='turbo'){
@@ -1017,9 +1021,12 @@ function deriveGasDynamics(){
   const m3sPeak=(e.dispCyl_L/1000)*(T/320)*e.cylinders*(e.redline*0.9/60*(e.chargesPerRev||0.5));
   // One system per BANK: a V or a boxer has two heads pointing opposite ways and runs two pipes,
   // and so does a big inline six. That is why a V12 does not need a 140 mm tailpipe.
+  if(P){e.sysPipes=P.pipes;e.sysD=P.sysD_mm/1000;e.primD=P.primD_mm/1000;}
+  else{
   e.sysPipes=(e.layout==='v'||e.layout==='boxer')?2:(e.cylinders>=6&&e.displacement_L>3?2:1);
   e.sysD=clamp(Math.sqrt(4/Math.PI*(m3sPeak/e.sysPipes)/ex.sysV),0.030,0.110);
   e.primD=ex.dOverBore*(e.bore_mm/1000);
+  }
   if(e.intake==='turbo'){
     // A turbo manifold is not tuned. Against a turbine the returning wave is a compression, which only
     // hurts (exhaustWaveP flips its sign), and every litre of manifold smooths away the blowdown pulse
@@ -1027,6 +1034,12 @@ function deriveGasDynamics(){
     // port to a turbine at mid-bank, (n-1)/2 cylinder pitches plus the port exit.
     const perBank=(e.layout==='v'||e.layout==='boxer')?Math.ceil(e.cylinders/2):e.cylinders;
     e.primL=0.10+Math.max(0,perBank-1)/2*1.15*(e.bore_mm/1000);e.primK=0;
+  }
+  else if(P){
+    // the length is the part's; the order is the one whose tuned speed lies nearest the speed it was cut for
+    e.primL=P.primL_mm/1000;e.primK=0;
+    if(P.build!=='cast'){const n1=(cam.dur/2+90)*sonic(T)/(12*e.primL);let best=1e9;
+      for(let k=1;k<=9;k+=2){const d=Math.abs(n1/k-tgtRpm);if(d<best){best=d;e.primK=k;}}}
   }
   else if(ex.fixedL){e.primL=ex.fixedL;e.primK=0;}
   else{

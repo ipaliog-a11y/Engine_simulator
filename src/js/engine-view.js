@@ -295,7 +295,7 @@ function drawIntakeSide(px,py,S,F,LW,m,portYc,itX,crank){
   const chargeCol=na?C.intake:vizTempCol(effIAT(m,state.rpm));
   const sys=e.intakeSys||'efi',indiv=na&&(sys==='itb'||sys==='sidedraft'||sys==='mech'),carb=na&&/^carb/.test(sys);
   // the runner outside the head, to scale (the rest of it is the port, drawn in the head)
-  const Lmm=Math.max(30,(e.runnerVariable?RUNNER.long.mm:e.runnerL*1000-0.95*e.bore_mm));
+  const Lmm=Math.max(30,(e.intakePart?e.intakePart.runnerL_mm:e.runnerVariable?RUNNER.long.mm:e.runnerL*1000-0.95*e.bore_mm));
   const rPx=clamp(Lmm/TRACT_MM,10,itX-x0-44),rX=itX-rPx;
   const thr=state.throttle;
   const butterfly=(bx,r)=>{ctx.strokeStyle='#cfe';ctx.lineWidth=LW(2.4);ctx.beginPath();
@@ -337,7 +337,7 @@ function drawIntakeSide(px,py,S,F,LW,m,portYc,itX,crank){
   let rLnow=e.runnerL;
   if(e.runnerVariable){
     rLnow=runnerLAt(state.rpm);const shortOn=rLnow<(e.runnerL+e.runnerLShort)/2;
-    const sx=itX-clamp(RUNNER.short.mm/TRACT_MM,8,rPx-4);
+    const sx=itX-clamp((e.intakePart?e.intakePart.shortL_mm:RUNNER.short.mm)/TRACT_MM,8,rPx-4);
     vizBox(px,py,S,LW,sx-8,portYc+5,16,9,'#18283a','#6a7a8a');
     ctx.strokeStyle=shortOn?C.yellow:'#aab';ctx.lineWidth=LW(1.6);ctx.beginPath();
     if(shortOn){ctx.moveTo(px(sx-5),py(portYc+5));ctx.lineTo(px(sx-1),py(portYc+11));}else{ctx.moveTo(px(sx-6),py(portYc+4.5));ctx.lineTo(px(sx+6),py(portYc+4.5));}
@@ -412,7 +412,7 @@ function drawExhaustSide(px,py,S,F,LW,m,portYc,exX){
     drawTurbo(px,py,S,F,LW,m,portYc,exX,gasCol);
     ctx.fillStyle=C.exhaust;ctx.font=F(6.5);ctx.fillText(tr('EXHAUST'),px(400),py(portYc-14));
     ctx.fillStyle='#89b';ctx.font=F(6);
-    ctx.fillText(e.exhaust.toUpperCase()+' • '+tr('CAT')+' '+CAT[e.cat].label.split(' ')[0],px(400),py(portYc+2));
+    ctx.fillText((e.exhaustPart?e.exhaustPart.name.toUpperCase():e.exhaust.toUpperCase())+' • '+tr('CAT')+' '+CAT[e.cat].label.split(' ')[0],px(400),py(portYc+2));
     ctx.fillText(tr('EGT')+' '+egt+'C '+tr('AT THE TURBINE'),px(400),py(portYc+12));
     return;
   }
@@ -449,7 +449,7 @@ function drawExhaustSide(px,py,S,F,LW,m,portYc,exX){
   ctx.fillStyle=C.exhaust;ctx.font=F(6.5);
   ctx.fillText(tr('EXHAUST'),px(330),py(portYc-14));
   ctx.fillStyle='#89b';ctx.font=F(6);
-  ctx.fillText(e.exhaust.toUpperCase()+' '+Math.round((e.primL||0)*1000)+' mm • '+tr('CAT')+' '+CAT[e.cat].label.split(' ')[0],px(330),py(portYc+20));
+  ctx.fillText((e.exhaustPart?e.exhaustPart.name.toUpperCase():e.exhaust.toUpperCase())+' '+Math.round((e.primL||0)*1000)+' mm • '+tr('CAT')+' '+CAT[e.cat].label.split(' ')[0],px(330),py(portYc+20));
   drawExhaustSide.dbg={exX,colX,primPx,wave:waveTxt};   // read by test90
   if(waveTxt){ctx.fillStyle=waveTxt.ok?C.green:'#89b';ctx.fillText(waveTxt.t+(waveTxt.ok?' • '+tr('SCAVENGING'):''),px(330),py(portYc+40));}
   // The model's own exhaust temperature at this load — the same call back-pressure uses. This read

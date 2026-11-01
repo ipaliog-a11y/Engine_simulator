@@ -20,12 +20,71 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 Working toward **v1.0 — every number derived, not fitted.**
 
-### Title screen (draft)
+### Title screen (build 207)
 
 - Opening the app shows a main menu over an 8-bit workshop: an engine hanging on a hoist, a toolbox beside it.
 - **BUILD AN ENGINE**, **BUILD A VEHICLE**, **OPEN WIKI** and **SETTINGS** open the engine, vehicle, guide and options tabs.
 - **MENU** on the build strip brings the title screen back. Arrow keys and Enter work. Escape returns to the bench.
 - A shared-build link, and the automated tests, still open straight on the bench. `?title=1` forces the menu.
+- Test: test122. test120 stays the exhaust part designer.
+
+### The part designer: intake manifolds (build 206)
+
+- **INTAKE MANIFOLD is the second type of part on the PARTS tab.** Its options:
+  - the runner length, from the plenum to the head (the port in the head is added, as on the factory manifolds);
+  - the runner diameter;
+  - a variable length: a second, shorter length opened by a flap (a DISA or VarioRam).
+- **No new physics.** The four factory manifolds (LONG, MEDIUM, SHORT, VARIABLE) were always runner lengths, read by
+  the integrated intake stroke, with a bore matched to the ports behind it. A designed manifold gives the same model
+  its own length and bore. Written down as a part, each factory manifold gives the same pull within 0.003%.
+- **The page guides the numbers, on the engine you have built:**
+  - **CUT** sets the runner length so the intake stroke fills best at the asked speed, within 1% on the M3 E46 for
+    5500, 6500 and 7500 rpm. It is solved on the fill model itself, not the runner's resonance alone: the moving
+    column moves the fill's peak 20–25% above the resonance. Where no runner can fill best at that speed, CUT sets
+    the nearest and says so.
+  - **MATCH THE PORTS** sets the bore the factory gives this engine.
+  - It reads out where the runner's resonance would tune it, where the stroke fills best, where a variable manifold
+    opens its short runners, and the gas speed in the runner, with the curves against the engine as it is.
+- **What the dimensions do, through the physics** (M3 E46):
+  - runners of 450, 300 and 150 mm fill best at 6050, 6800 and 7300 rpm;
+  - a 34 mm bore makes 330 Nm at 3000 rpm against a 50 mm bore's 318, and 366 hp against 370;
+  - a variable 645/190 mm manifold opens its short runners at 7300 rpm and makes 370 hp, where the long runners alone
+    make 351.
+- An engine with no intake valves (a two-stroke, a rotary) is told its runners change nothing. A part designed for one
+  engine is still a part: fitted to another, its runners are what they are.
+- **Not modelled yet:** the plenum's volume and the throttle (the plenum is taken as holding steady pressure).
+- The PARTS code now handles more than one type of part: the ENGINE tab's INTAKE RUNNER choice lists your intakes
+  under MY PARTS, as EXHAUST lists your exhausts, and a build carries both.
+- Test: test121; test120 updated for the second type.
+
+### The part designer: exhausts (build 205)
+
+- **A PARTS tab.** Pick a type of part, then set its dimensions. The first type is the **exhaust**; the intake
+  manifold, the air filter and the catalytic converter are listed for later builds.
+- **An exhaust is its dimensions:**
+  - the header's construction: a cast manifold, a tubular header, or an equal-length header (how evenly the
+    pulses arrive at the collector);
+  - the primaries' diameter and length, in mm;
+  - how many pipes run after the collector, their diameter, and the system's length;
+  - the silencer: chambered, straight-through, or none.
+- **No new physics, and none asserted.** The three factory exhausts were always three sets of these dimensions, read
+  by the breathing model (scavenging, back-pressure) and by the sound. A designed exhaust gives the same models its
+  own numbers. Written down as a part, each factory exhaust gives the same pull within 0.01%.
+- **The page guides the numbers, on the engine you have built:**
+  - **CUT** cuts the primaries for a speed, with the same tuning relation the factory headers are cut with;
+  - **SIZE FOR 75 m/s** sizes the pipe for the design-practice gas speed at peak power;
+  - it reads out the power and torque against the engine as it is, where the scavenging is strongest, the gas speed
+    in the pipe and the back-pressure, with both curves drawn.
+  - The preview is exactly what the engine makes with the part fitted, and opening the page changes nothing.
+- **Saved parts** are kept in the browser and appear in the ENGINE tab's EXHAUST choices under MY PARTS. A saved
+  build, a file or a share link carries the whole part, so it loads in a browser that never saw it. If that browser's
+  copy of the part has since been edited, the build's version comes back alongside it.
+- **Not modelled yet:** a silencer's own back-pressure (it changes the sound only; a system's restriction is in its
+  pipe, as on the factory systems), the exhaust's material, and the number of tips. On a turbo engine the primary
+  length is set by packaging, as before, and the page says so.
+- A cache keyed on the build's score would have handed the preview the knock timing of the exhaust it replaces. The
+  preview gets its own key and restores the cache afterwards.
+- Test: test120. The Greek interface test (test87) now sweeps the PARTS tab.
 
 ### test46's bands: sourced where a source exists, labelled where not (v1.0 item 7)
 

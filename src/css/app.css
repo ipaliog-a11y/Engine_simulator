@@ -255,6 +255,22 @@ body.race-open{overflow:hidden}
 .garage-panel .garage-list{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));max-height:none;overflow:visible;align-items:start}
 .garage-panel .garage-name{font-size:9px}
 .garage-panel .garage-spec,.garage-panel .garage-stats{font-size:8px}
+/* PARTS: the part designer (build 205) */
+.part-types{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:6px;margin-bottom:10px}
+.part-types button{padding:8px 6px;font-size:8px;text-align:left}
+.part-types button.on{border-color:#ffcc00;color:#ffcc00}
+.part-types button:disabled{opacity:.45;cursor:default}
+.part-types .soon{display:block;font-size:6px;color:#889;margin-top:3px}
+.part-list{display:grid;gap:4px;margin-bottom:8px}
+.part-row{display:flex;flex-wrap:wrap;align-items:center;gap:6px;padding:5px 6px;border:1px solid #223;font-size:8px}
+.part-row.sel{border-color:#ffcc00}
+.part-row .pn{flex:1 1 140px;color:#dde}.part-row .pn b{color:#6fc;font-size:7px}
+.part-row .ps{flex:2 1 200px;color:#889;font-size:7px}
+.part-row button{font-size:7px;padding:3px 6px}
+.part-guide{font-size:8px;line-height:1.6;color:#bbc;margin-bottom:8px}
+.part-guide .dim{color:#667}
+.part-chart canvas{width:100%;height:200px;display:block;background:#0a0a14;border:1px solid #223}
+.part-btns{margin-top:10px}
 .garage-detail{font-size:7px;color:#aab;line-height:1.8;margin-top:6px;padding-top:6px;border-top:2px solid #1e1e2e}
 .garage-detail b{color:#ffcc00;font-weight:normal}
 .gcount{font-size:7px;color:#667;margin:-2px 0 6px}
