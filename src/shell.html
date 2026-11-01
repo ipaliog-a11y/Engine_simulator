@@ -14,14 +14,32 @@
 </style>
 </head>
 <body>
+<div id="titleScreen" class="title-screen" role="dialog" aria-modal="true" aria-labelledby="titleHeading" hidden>
+<div class="title-dock">
+<div class="title-brand">
+<h2 id="titleHeading">PIXEL ENGINE SIM</h2>
+<p>BUILD IT, THEN DRIVE IT</p>
+</div>
+<nav class="title-menu" aria-label="Main menu">
+<button type="button" data-go="design">BUILD AN ENGINE</button>
+<button type="button" data-go="vehicle">BUILD A VEHICLE</button>
+<button type="button" data-go="guide">OPEN WIKI</button>
+<button type="button" data-go="options">SETTINGS</button>
+</nav>
+<p class="title-hint">ARROWS SELECT · ENTER OPENS</p>
+<p class="title-ver" id="titleVer"></p>
+</div>
+<div class="title-stage"><canvas id="titleBg" aria-hidden="true"></canvas></div>
+</div>
 <div class="container">
 <header>
-<h1>PIXEL ENGINE SIM v0.7 build 204</h1>
+<h1>PIXEL ENGINE SIM v0.7 build 205</h1>
 <div class="subtitle" id="subtitle">ENGINE DESIGNER • BUILD IT, THEN DRIVE IT</div>
 </header>
 <div class="build-strip" id="buildStrip">
 <span class="k" id="bsEngineK">ENGINE</span><button id="bsEngine" title="Go to the engine">—</button>
 <span class="k" id="bsCarK">CAR</span><button id="bsCar" title="Go to the car">—</button>
+<button id="btnMenu" type="button">MENU</button>
 </div>
 <div class="main">
 <div class="viz-panel">
@@ -560,6 +578,7 @@
 <!-- @include js/hybrid-views.js -->
 <!-- @include js/fuel-cycle.js -->
 <!-- @include js/electric-presets.js -->
+<!-- @include js/title-screen.js -->
 <!-- @include js/controls-boot.js -->
 </script>
 </body>

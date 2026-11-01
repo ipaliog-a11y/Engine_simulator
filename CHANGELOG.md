@@ -20,6 +20,13 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 Working toward **v1.0 — every number derived, not fitted.**
 
+### Title screen (draft)
+
+- Opening the app shows a main menu over an 8-bit workshop: an engine hanging on a hoist, a toolbox beside it.
+- **BUILD AN ENGINE**, **BUILD A VEHICLE**, **OPEN WIKI** and **SETTINGS** open the engine, vehicle, guide and options tabs.
+- **MENU** on the build strip brings the title screen back. Arrow keys and Enter work. Escape returns to the bench.
+- A shared-build link, and the automated tests, still open straight on the bench. `?title=1` forces the menu.
+
 ### test46's bands: sourced where a source exists, labelled where not (v1.0 item 7)
 
 - **Sourced:**

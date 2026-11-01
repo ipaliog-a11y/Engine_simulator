@@ -151,6 +151,10 @@ const I18N={
   "page":{el:"σελίδα"},
   "of":{el:"από"},
   'DESIGN':{el:'ΣΧΕΔΙΑΣΗ'},'ENGINE':{el:'ΚΙΝΗΤΗΡΑΣ'},'LIVE':{el:'ΖΩΝΤΑΝΑ'},'DYNO':{el:'ΔΥΝΑΜΟ'},'GUIDE':{el:'ΟΔΗΓΟΣ'},'OPTIONS':{el:'ΕΠΙΛΟΓΕΣ'},
+  'MENU':{el:'ΜΕΝΟΥ'},'Main menu':{el:'Κεντρικό μενού'},
+  'BUILD AN ENGINE':{el:'ΦΤΙΑΞΕ ΚΙΝΗΤΗΡΑ'},'BUILD A VEHICLE':{el:'ΦΤΙΑΞΕ ΟΧΗΜΑ'},'OPEN WIKI':{el:'ΑΝΟΙΞΕ ΟΔΗΓΟ'},'SETTINGS':{el:'ΡΥΘΜΙΣΕΙΣ'},
+  'BUILD IT, THEN DRIVE IT':{el:'ΦΤΙΑΞΕ ΤΟ, ΜΕΤΑ ΟΔΗΓΗΣΕ ΤΟ'},
+  'ARROWS SELECT · ENTER OPENS':{el:'ΒΕΛΗ ΓΙΑ ΕΠΙΛΟΓΗ · ΕΠΙΒΕΒΑΙΩΣΗ ΑΝΟΙΓΕΙ'},
   'ENGINE DESIGN':{el:'ΣΧΕΔΙΑΣΗ ΚΙΝΗΤΗΡΑ'},
   'Load a preset, or configure a build and press BUILD & DYNO. Physics update live.':{el:'Φόρτωσε προεπιλογή ή στήσε ένα build και πάτα BUILD & DYNO. Η φυσική ενημερώνεται ζωντανά.'},
   'LOAD A PRESET':{el:'ΦΟΡΤΩΣΗ ΠΡΟΕΠΙΛΟΓΗΣ'},
@@ -861,7 +865,7 @@ function applyLang(lang){
   currentLang=(lang==='el')?'el':'en';
   try{localStorage.setItem('pes.lang',currentLang);}catch(e){}
   document.documentElement.lang=currentLang;
-  const sel='.viz-tabs button, .design-panel h3, .design-section, .guide-title, .gtier-h, .hint, .panel h2, .stat .label, .opt-note, .opt-row>div>b, .ctl-lbl, .field>label, .build-row button, #btnGearRatios, #btnGG, #controlsPanel .btn-row button, .fuelmap-edit button, .garage-row button, #btnReplayRestart, .gart-cap';
+  const sel='.viz-tabs button, .design-panel h3, .design-section, .guide-title, .gtier-h, .hint, .panel h2, .stat .label, .opt-note, .opt-row>div>b, .ctl-lbl, .field>label, .build-row button, #btnGearRatios, #btnGG, #controlsPanel .btn-row button, .fuelmap-edit button, .garage-row button, #btnReplayRestart, .gart-cap, #btnMenu, .title-brand p, .title-menu button, .title-hint';
   document.querySelectorAll(sel).forEach(el=>{
     if(el.children.length>0)return;                       // skip nodes with child elements
     if(el.dataset.en===undefined)el.dataset.en=el.textContent.trim();
