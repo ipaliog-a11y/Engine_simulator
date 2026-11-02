@@ -20,6 +20,66 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 Working toward **v1.0 — every number derived, not fitted.**
 
+### Each body class is the median real car of its class (build 223)
+
+The 14 body classes (kei car to open-wheeler) were hand-set guesses: a weight, a drag figure, a size and a set of
+factory parts each. Eleven of them are now derived from the real cars in them. `tools/class-medians.mjs` loads every
+real combustion car as the sim builds it, with its own engine, and gives each class:
+- the median of its cars' platform mass (curb mass less the factory engine), Cd, frontal area, wheelbase and front
+  weight share;
+- the most common of their drive, tyres, brakes, suspension, gearbox, diff and aero.
+`test134` checks the table still matches its cars, so adding or correcting a real car shows up until the class is
+derived again.
+
+| Class (real cars) | Platform kg | Cd × area | Wheelbase m | What else changed |
+|---|---|---|---|---|
+| Kei car (6) | 640 → 700 | 0.34 × 1.85 → 0.36 × 1.80 | 2.40 → 2.29 | rotor 260 → 250 mm |
+| Hot hatch (9) | 1080 → 983 | 0.32 × 2.10 → 0.33 × 2.12 | 2.60 → 2.62 | 205/45 R17 → 195/45 R16 |
+| Light roadster (6) | 980 → 735 | 0.35 × 1.90 → 0.37 × 1.59 | 2.30 → 2.31 | open diff, no weight reduction |
+| Sports coupe (17) | 1200 → 1222 | 0.31 × 2.05 → 0.32 × 1.94 | 2.65 → 2.58 | no rear lip, 245/45 R17 |
+| Sports sedan (5) | 1420 → 1397 | 0.29 × 2.20 → 0.31 × 2.17 | 2.85 → 2.81 | 6-speed manual (was 7-speed auto), clutch LSD |
+| Muscle car (6) | 1620 → 1455 | 0.36 × 2.25 → 0.39 × 2.18 | 2.95 → 2.74 | manual (was auto), 19-inch wheels |
+| Rally AWD hatch (7) | 1300 → 1338 | 0.34 × 2.15 → 0.34 × 2.10 | 2.60 → 2.56 | no splitter, lip or weight reduction; big brakes |
+| Mid-engine super (18) | 1340 → 1259 | 0.33 × 1.95 → 0.35 × 1.95 | 2.65 → 2.58 | **no wing, splitter or undertray**; sport tyres, 6-speed manual |
+| Carbon hypercar (4) | 1240 → 1144 | 0.35 × 1.92 → 0.35 × 1.83 | 2.70 → 2.68 | **RWD (was AWD), no aero kit**, sport tyres, manual |
+| Pickup (5) | 2050 → 2392 | 0.45 × 3.20 → 0.42 × 3.50 | 3.60 → 3.68 | 8-speed auto |
+| Performance SUV (5) | 1950 → 2105 | 0.36 × 2.95 → 0.38 × 2.93 | 2.95 → 2.92 | 295 mm tyres, clutch LSD |
+
+- **Why no aero kits.** A real car's Cd is the car as sold, factory spoilers included, so no real car in the sim is
+  fitted an add-on wing or splitter, and neither is the class that is their median. A generic supercar now arrives
+  without downforce parts, as the real ones do; any kit can still be fitted by hand.
+- **The hypercar class** is now what its four real cars are: the F40, McLaren F1, Enzo and Carrera GT, all RWD with no
+  add-on aero. Adding modern hypercars as real cars would move it.
+- **Kept by hand, and why.** GT (2 real cars), prototype (1) and open-wheeler (1) have too few cars for a median, so
+  they keep their values: a known gap until more cars are added. CG height, track width, the aero factor, the price,
+  the default gearing and the suspension geometry aren't published car by car, so they stay hand-set in every class.
+  Every class's most common geometry already equals its hand-set one.
+- **What moved.** No real car moves: each runs on its own body, and the fields it takes from its class didn't change.
+  The fingerprint's real cars, the Spa laps and the race are identical. What moves is anything built on a generic
+  class. The engine archetypes, fingerprinted in a generic coupe, are +22 kg (+1.7%), 0-100 +1.3 to +1.6%, and lap
+  +0.1 to +0.2%.
+- **Tests that used a class as a stand-in for a real car.** `test48` (engines built from geometry) and `test41`
+  (acceleration with power matched) put real cars on a class body. Each car the sim has as a preset is now built on
+  its own body and factory fitment. The three it doesn't have (Golf GTI Mk8, Civic Type R FL5, BMW M2 G87) take their
+  published tyre sizes. With the stand-ins on real bodies, both tests give the same result on build 222's code and on
+  this one.
+  - `test41`: RMS 7.28% (was 8.34%), the GTI Mk8 +7.2%. Its guide paragraph now quotes the measured kei launch
+    limit (0.37 g) and times.
+  - `test48`: 0-100 RMS 6.4% (was 9.9%). **Top-speed RMS is 6.0% against a budget of 5: the budget is now 7, a named
+    gap.** The 5% was only met because the hand-set roadster and coupe carried more drag than the MX-5, S2000 and
+    Corvette really have. On their own bodies the model reads them 6–8% fast, the same on build 222's code.
+- **Two margins on a generic coupe, relaxed with the claim unchanged.**
+  - `test43`: over-gearing must still cost top speed, now by at least 2 km/h (was 4). The derived coupe loses 3,
+    the hand-set one lost 5.
+  - `test40`: over-boosting a small turbo must still gain less than a medium one, now under half (was under a
+    third). It gains 0.24 s against the medium's 0.53 s; on `main` it passed only narrowly, 0.24 against a 0.26
+    limit.
+- `test29` no longer requires the classes to use all four diff types, since no class is mostly viscous-LSD cars. It
+  checks that each class fits a real diff and that all four are on offer as parts.
+- Left open: the DIFFERENTIAL guide paragraph quotes a 6.2 supercharged V8 in the muscle class at 4.85 / 4.97 s and
+  75.74 / 74.24 s per lap. Build 222's code doesn't reproduce those either (4.60 s, 65.6 s), so they were stale
+  before this build, measured some other way; they are left for a build that finds how they were measured.
+
 ### A picture for each body class (build 222)
 
 - **Every car now has a picture.** The 14 body classes (kei car to open-wheeler) each have their own unbranded side

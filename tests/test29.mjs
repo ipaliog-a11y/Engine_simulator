@@ -51,6 +51,7 @@ console.log('\ntop speed unaffected by diff:', strong[0].top === strong[3].top);
 
 // 4. Chassis fits carry a diff, round-trip, and use a range of types
 console.log('\n== chassis factory differentials ==');
+const DIFF_KEYS = await page.evaluate(() => Object.keys(DIFF));
 const fits = await page.evaluate(() => Object.keys(CHASSIS).map(k => {
   applyChassisFit(k); buildVehicle();
   const v = readVehicleFromForm();
@@ -58,7 +59,11 @@ const fits = await page.evaluate(() => Object.keys(CHASSIS).map(k => {
 }));
 fits.forEach(f => console.log(`  ${f.label.padEnd(18)} ${f.gb.padEnd(11)} ${f.df.padEnd(6)} stock=${f.stock}`));
 if (fits.some(f => !f.stock)) fails.push('a chassis fit does not round-trip through isFactoryFit');
-if (new Set(fits.map(f => f.df)).size < 4) fails.push('chassis fits do not use all four diff types');
+// Until build 223 the hand-set classes were chosen to use all four diff types. Since then a class's diff is the most
+// common one among its real cars (tools/class-medians.mjs, test134), and no class is mostly viscous-LSD cars, so what
+// holds now is that every class fits a real diff, and that all four types are still on offer as parts.
+if (!fits.every(f => DIFF_KEYS.includes(f.df))) fails.push('a chassis fit names a diff that does not exist');
+if (DIFF_KEYS.length < 4 || !['open', 'visc', 'clsd', 'spool'].every(k => DIFF_KEYS.includes(k))) fails.push('the four diff types are not all on offer');
 
 // 5. Serialize + legacy defaults
 const ser = await page.evaluate(() => {

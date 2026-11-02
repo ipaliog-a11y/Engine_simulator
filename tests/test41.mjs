@@ -37,12 +37,20 @@ const ref = await page.evaluate(() => {
   // the gear count where the real car's is known but its ratios are not: the Mk8 GTI's seven-speed DSG, the M2's eight-speed ZF
   const NGEARS = { 'VW Golf GTI (Mk8)': 7, 'BMW M2 (G87)': 8 };
   const BOX = { 'Toyota Supra RZ (A80)': 'Toyota Supra RZ (A80, 1993)', 'Subaru WRX STI (GD)': 'Subaru Impreza WRX STI (GD, 2004)', 'Suzuki Alto Works': 'Suzuki Alto Works (HA36S, 2015)' };
+  // Build 223: the body classes became the median real car of their class, so a class no longer stands in for any one
+  // car. A car the sim has as a preset (the BOX ones) is built on its own body and factory fitment (Cd, frontal area,
+  // wheelbase, weight split, tyres, brakes); the three it does not have run on their class's body with their own
+  // published tyres, from the makers' spec sheets: the Mk8 GTI 225/40 R18 (VW UK, 2020), the FL5 Type R 265/30 R19
+  // (Honda, 2022), the G87 M2 285/30 R20 on the driven rear axle (BMW, 2023).
+  const TYRES = { 'VW Golf GTI (Mk8)': [225, 40, 18], 'Honda Civic Type R (FL5)': [265, 30, 19], 'BMW M2 (G87)': [285, 30, 20] };
   return REF.map(([label, hp, kg, realT, ch, drive, tire, diff, gbx, redline]) => {
     applyEngineToForm(Object.assign({}, DEFAULT_ENGINE, { cylinders: 6, bore_mm: 84, stroke_mm: 90,
       compression: 10, redline, intake: 'turbo', turboSize: 'medium', boost_bar: 0.5,
       octane: 98, injector: 'port', cam: 'sport' }));
     buildEngine();
-    applyChassisFit(ch);
+    if (BOX[label]) applyVehicleToForm(vehicleFromPreset(FACTORY_CARS.find(p => p.name === BOX[label])));
+    else { vehBody = null; applyChassisFit(ch); }   // a class body: the last preset's must not carry over
+    if (TYRES[label]) { const [w, a, d] = TYRES[label]; document.getElementById('vhTireW').value = w; document.getElementById('vhTireA').value = a; document.getElementById('vhWheel').value = d; }
     document.getElementById('vhDrive').value = drive;
     document.getElementById('vhTire').value = tire;
     document.getElementById('vhDiff').value = diff;
@@ -129,7 +137,7 @@ console.log('\n== launch ceiling decomposes the way the guide says it does ==');
 const ceil = await page.evaluate(() => ['kei', 'hatch', 'coupe', 'rally'].map(ch => {
   const pr = PRESETS.find(x => x.name === '2.0 Turbo Hot-Hatch I4');
   applyEngineToForm(Object.assign({}, DEFAULT_ENGINE, pr.engine)); buildEngine();
-  applyChassisFit(ch); buildVehicle();
+  vehBody = null; applyChassisFit(ch); buildVehicle();
   const share = vehicle.drive === 'awd' ? 1 : (vehicle.drive === 'rwd' ? 1 - vehicle.fWt : vehicle.fWt);
   const k = vehicle.cg / vehicle.wb, sgn = vehicle.drive === 'rwd' ? 1 : (vehicle.drive === 'awd' ? 0 : -1);
   const dT = vehicle.diffTraction;
