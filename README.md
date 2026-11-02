@@ -1,4 +1,4 @@
-# PIXEL ENGINE SIM v0.7 build 222
+# PIXEL ENGINE SIM v0.7 build 223
 
 **A lightweight, 8-bit style internal combustion engine *designer* & simulator** inspired by *Automation*.
 
@@ -159,8 +159,9 @@ assist map over speed and pedal), regeneration, load-point shifting, electric-dr
 - **Vehicle & performance (new)** — pick a **chassis** (13 archetypes, each with its own weight,
   size, drivetrain and grip) and it arrives on its **factory spec**: the tyres, wheels, brakes,
   suspension, aero and gearbox that car would really wear, so a kei car turns up on skinny eco
-  tyres and small steel discs while a hypercar gets wide semi-slicks, carbon-ceramics and a
-  wing/diffuser package. Every part stays editable from there, and **REFIT FACTORY SPEC** puts it
+  tyres and small steel discs while a hypercar gets wide tyres and carbon-ceramics. Since build 223
+  each class is the median real car of its class (`tools/class-medians.mjs`): weight, drag, size and
+  parts, with no add-on aero kit, as no real car has one. Every part stays editable from there, and **REFIT FACTORY SPEC** puts it
   all back; the summary marks the car *(factory spec)* or *(modified)*. Tune the
   **drivetrain** (FWD/RWD/AWD), the **differential** (open / viscous LSD / clutch-plate LSD /
   spool — how much of the driven axle's grip you can actually put down), the **gearbox** — **type** (manual / sequential / DCT /

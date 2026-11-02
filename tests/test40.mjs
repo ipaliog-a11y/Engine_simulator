@@ -134,8 +134,11 @@ if (!(at(2.5, 'small').hp / at(2.5, 'medium').hp < at(0.8, 'small').hp / at(0.8,
 // 60.82 s): the knock trace compresses the charge the engine actually trapped, and a choked compressor delivers less
 // than its 2.5 bar target, so it knocks less than a cylinder taken full at 2.5 bar did. What is asserted is the
 // penalty against a frame that can feed the engine: the over-flowed frame gains under a third of what the medium does.
+// Under half since build 223: the default car became the median real coupe (no add-on rear lip, its real cars' tyres),
+// which is more grip-limited on the lap, so the medium frame's extra power buys 0.53 s where it bought 0.78 s on the
+// hand-set coupe; the small frame's gain is the same 0.24 s on both. The penalty still lands, at under half the medium's.
 const gain = sz => at(0.8, sz).lap - at(2.5, sz).lap;
-if (!(gain('small') < gain('medium') / 3))
+if (!(gain('small') < gain('medium') / 2))
   fails.push(`2.5 bar on an over-flowed small frame gains ${gain('small').toFixed(2)} s against the medium frame's ${gain('medium').toFixed(2)} — no penalty landed`);
 // a frame that is far too big must spool too late to be worth having
 if (!(at(2.5, 'large').spool50 > at(2.5, 'medium').spool50)) fails.push('the large frame does not spool later than the medium one');

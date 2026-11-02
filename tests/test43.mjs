@@ -120,8 +120,11 @@ for (const s2 of sweep)
 // Falling off on BOTH sides is what makes it an optimum rather than a plateau.
 if (!(sweep[0].top < fastestTop.top - 5))
   fails.push(`short gearing should cost top speed (${sweep[0].top} vs ${fastestTop.top})`);
-// (4 km/h: since build 116 the power curves are flatter over the top, so over-gearing costs a little less)
-if (!(sweep[sweep.length - 1].top <= fastestTop.top - 4))
+// (4 km/h: since build 116 the power curves are flatter over the top, so over-gearing costs a little less.
+//  2 km/h since build 223: the generic coupe became the median real coupe, with no add-on rear lip and less drag, and
+//  over-gearing it costs 3 km/h (382 -> 379) where the hand-set coupe lost 5 (377 -> 372). The claim is unchanged — an
+//  interior optimum that falls off on both sides — and 2 km/h is still twice the 1 km/h the speeds are rounded to.)
+if (!(sweep[sweep.length - 1].top <= fastestTop.top - 2))
   fails.push(`tall gearing should cost top speed too (${sweep[sweep.length-1].top} vs ${fastestTop.top})`);
 // Gearing still has to MATTER somewhere, or the slider is inert.
 const topSpread = fastestTop.top - Math.min(...sweep.map(x => x.top));
