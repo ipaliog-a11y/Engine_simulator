@@ -483,7 +483,10 @@ function drawMotorView(dt){
 // ---- the motor as pixel art (the ENGINE tab's preview and the garage) ----
 function drawMotorSprite(buf,e,t){
   const D=clamp(e.evRotorD||150,80,260),Ls=clamp(e.evStack||134,40,250);
-  const h=Math.round(18+D/9),w=Math.round(30+Ls/5),x0=Math.round(70-w/2),y0=Math.round(52-h/2);
+  const h=Math.round(18+D/9),w=Math.round(30+Ls/5);
+  // The motor was drawn for the old 150×78 grid. Centre that same picture on whatever grid it is given.
+  const ox=Math.round(((buf&&buf.w)||150)/2-70),oy=Math.round(((buf&&buf.h)||78)/2-40);
+  const x0=ox+Math.round(70-w/2),y0=oy+Math.round(52-h/2);
   const body='#5a5a6a',hi='#8a8a9a',lo='#3a3a48',fin='#4a4a58';
   buf.rect(x0-8,y0+4,8,h-8,lo);buf.rect(x0+w,y0+4,8,h-8,lo);                      // end bells
   buf.rect(x0,y0,w,h,body);buf.rect(x0,y0,w,2,hi);buf.rect(x0,y0+h-2,w,2,lo);
@@ -495,10 +498,11 @@ function drawMotorSprite(buf,e,t){
   buf.rect(x0+Math.round(w/2)-10,y0-12,20,8,'#2a3a2a');buf.rect(x0+Math.round(w/2)-10,y0-12,20,1,'#5a7a5a');
   buf.rect(x0+Math.round(w/2)-6,y0-4,2,4,'#ff8800');buf.rect(x0+Math.round(w/2)+4,y0-4,2,4,'#ff8800');
   // the battery underneath, as long as its capacity
-  const bw=Math.round(clamp(20+(e.evKWh||75)*0.9,24,140)),bx=Math.round(70-bw/2);
-  buf.rect(bx,68,bw,7,'#22303a');buf.rect(bx,68,bw,1,'#44606a');
-  for(let k=4;k<bw-2;k+=6)buf.rect(bx+k,70,4,3,e.evChem==='lfp'?'#3a7a5a':e.evChem==='lead'?'#5a5a5a':'#3a5a8a');
-  buf.rect(bx+bw-2,64,2,4,'#ff8800');buf.rect(bx+bw-2,y0+h-2,2,64-(y0+h-2),'#ff8800');
+  const bw=Math.round(clamp(20+(e.evKWh||75)*0.9,24,140)),bx=ox+Math.round(70-bw/2),by=oy+68;
+  buf.rect(bx,by,bw,7,'#22303a');buf.rect(bx,by,bw,1,'#44606a');
+  for(let k=4;k<bw-2;k+=6)buf.rect(bx+k,oy+70,4,3,e.evChem==='lfp'?'#3a7a5a':e.evChem==='lead'?'#5a5a5a':'#3a5a8a');
+  buf.rect(bx+bw-2,oy+64,2,4,'#ff8800');
+  const cable=oy+64-(y0+h-2);if(cable>0)buf.rect(bx+bw-2,y0+h-2,2,cable,'#ff8800');
   buf.outline('#000000');
 }
 const motorCaption=e=>'PM '+(e.evRotorD||150)+'×'+(e.evStack||134)+' '+(e.evKWh||75)+'kWh';

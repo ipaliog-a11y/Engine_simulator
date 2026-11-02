@@ -65,34 +65,99 @@ if (car.enginePlace911 !== 'rear') fails.push(`a rear-engined real car reads as 
 
 // ---- 2. every engine type x layout x count x induction draws; parts change the picture ----
 const eng = await page.evaluate(() => {
-  const out = { drawn: 0, thrown: [], blank: [] };
+  const out = { drawn: 0, thrown: [], blank: [], same: [] };
   const sig = b => b.c.join(',');
   const cases = [];
-  for (const type of ['petrol4', 'diesel', 'twostroke', 'rotary'])
-    for (const layout of type === 'rotary' ? ['rotary'] : ['inline', 'v', 'boxer'])
-      for (const cylinders of type === 'rotary' ? [1, 2, 3, 4] : [1, 2, 3, 4, 6, 8, 12])
+  for (const type of ['petrol4', 'diesel', 'twostroke', 'rotary']) {
+    const layouts = type === 'rotary' ? ['rotary'] : ['inline', 'v', 'boxer'];
+    const cyls = type === 'rotary' ? [1, 2, 3, 4] : type === 'twostroke' ? [1, 2, 3, 4, 5, 6] : [1, 2, 3, 4, 5, 6, 8, 10, 12];
+    for (const layout of layouts)
+      for (const cylinders of cyls)
         for (const intake of ['na', 'turbo', 'supercharger'])
-          for (const intakeSys of ['carb4', 'sidedraft', 'itb', 'efi'])
+          for (const intakeSys of ['carb1', 'carb2', 'carb4', 'sidedraft', 'mech', 'efi', 'itb'])
             cases.push({ type, layout, cylinders, intake, intakeSys });
+  }
   for (const c of cases) {
     const b = new PixBuf(ENG_GW, ENG_GH);
-    try { drawEngineSprite(b, Object.assign({}, DEFAULT_ENGINE, c, { scType: ['roots', 'screw', 'centrifugal'][out.drawn % 3], turboConfig: ['single', 'twin', 'sequential', 'compound'][out.drawn % 4] }), 0.3); }
+    try {
+      drawEngineSprite(b, Object.assign({}, DEFAULT_ENGINE, c, {
+        scType: ['roots', 'screw', 'centrifugal'][out.drawn % 3],
+        turboConfig: ['single', 'twin', 'sequential', 'compound'][out.drawn % 4],
+        turboSize: ['small', 'medium', 'large'][out.drawn % 3],
+        intercooler: ['none', 'small', 'large'][out.drawn % 3],
+        valves: [2, 4, 5][out.drawn % 3],
+        fan: ['none', 'mechanical', 'electric'][out.drawn % 3],
+        nitrous: ['none', 'small', 'large'][out.drawn % 3]
+      }), 0.3);
+    }
     catch (e) { out.thrown.push(JSON.stringify(c) + ' ' + e.message); continue; }
-    out.drawn++; if (b.c.filter(Boolean).length < 300) out.blank.push(JSON.stringify(c));
+    out.drawn++; if (b.c.filter(Boolean).length < 800) out.blank.push(JSON.stringify(c));
   }
   const draw = o => { const b = new PixBuf(ENG_GW, ENG_GH); drawEngineSprite(b, Object.assign({}, DEFAULT_ENGINE, o), 0); return b; };
+  const iron = new Set((ENG_RAMP.iron || []).map(i => ENG_PAL[i]));
+  const span = b => { let lo = ENG_GW, hi = 0; for (let y = 0; y < ENG_GH; y++) for (let x = 0; x < ENG_GW; x++) if (iron.has(b.get(x, y))) { lo = Math.min(lo, x); hi = Math.max(hi, x); } return hi - lo; };
   out.turboDiffers = sig(draw({ intake: 'na' })) !== sig(draw({ intake: 'turbo', boost_bar: 1 }));
+  out.scDiffers = sig(draw({ intake: 'na' })) !== sig(draw({ intake: 'supercharger', scType: 'roots' }));
+  out.scTypes = ['roots', 'screw', 'centrifugal'].map(scType => sig(draw({ intake: 'supercharger', scType })));
   out.layoutDiffers = sig(draw({ layout: 'inline', cylinders: 6 })) !== sig(draw({ layout: 'v', cylinders: 6 }));
-  const width = b => { let lo = ENG_GW, hi = 0; for (let x = 0; x < ENG_GW; x++) if (b.get(x, 55) === '#6a6a7a') { lo = Math.min(lo, x); hi = Math.max(hi, x); } return hi - lo; };
-  out.i4 = width(draw({ layout: 'inline', cylinders: 4, intake: 'na' })); out.i6 = width(draw({ layout: 'inline', cylinders: 6, intake: 'na' }));
+  out.i4 = span(draw({ layout: 'inline', cylinders: 4, intake: 'na' }));
+  out.i6 = span(draw({ layout: 'inline', cylinders: 6, intake: 'na' }));
+  out.v6 = sig(draw({ layout: 'v', cylinders: 6, intake: 'na' }));
+  out.v8 = sig(draw({ layout: 'v', cylinders: 8, intake: 'na' }));
+  out.v12 = sig(draw({ layout: 'v', cylinders: 12, intake: 'na' }));
+  out.b4 = sig(draw({ layout: 'boxer', cylinders: 4, intake: 'na' }));
+  out.b6 = sig(draw({ layout: 'boxer', cylinders: 6, intake: 'na' }));
+  out.b2 = sig(draw({ layout: 'boxer', cylinders: 2, intake: 'na' }));
+  const turbo = { intake: 'turbo', intercooler: 'small' };
+  const vary = (base, key, vals) => {
+    const pics = vals.map(v => sig(draw(Object.assign({}, base, { [key]: v }))));
+    if (new Set(pics).size !== vals.length) out.same.push(key);
+  };
+  vary(turbo, 'turboSize', ['small', 'medium', 'large']);
+  vary(turbo, 'turboConfig', ['single', 'twin', 'sequential', 'compound']);
+  vary(turbo, 'intercooler', ['none', 'small', 'large']);
+  vary(turbo, 'housing', ['tight', 'stock', 'loose']);
+  vary({}, 'intakeSys', ['carb1', 'carb2', 'carb4', 'sidedraft', 'mech', 'efi', 'itb']);
+  vary({}, 'airFilter', ['none', 'perf', 'stock', 'restrictive']);
+  vary({}, 'exhaust', ['stock', 'sport', 'race']);
+  vary({}, 'cat', ['none', 'sport', 'stock']);
+  vary({}, 'cam', ['stock', 'sport', 'race', 'atkinson']);
+  vary({}, 'valves', [2, 4, 5]);
+  vary({}, 'radiator', ['small', 'stock', 'large']);
+  vary({}, 'fan', ['none', 'mechanical', 'electric']);
+  vary({}, 'nitrous', ['none', 'small', 'large']);
+  vary({}, 'alternator', ['60', '120', '180']);
+  vary({}, 'runner', ['short', 'medium', 'long', 'variable']);
+  vary({ hyMode: 'p2' }, 'hyMode', ['p2', 'ps', 'series']);
+  out.vvt = sig(draw({ vvt: false })) !== sig(draw({ vvt: true }));
+  out.oil = sig(draw({ oilCooler: false })) !== sig(draw({ oilCooler: true }));
+  out.vgt = sig(draw(turbo)) !== sig(draw(Object.assign({ vgt: true }, turbo)));
+  out.als = sig(draw(turbo)) !== sig(draw(Object.assign({ antilag: true }, turbo)));
+  out.bore = sig(draw({ bore_mm: 62, stroke_mm: 54 })) !== sig(draw({ bore_mm: 108, stroke_mm: 120 }));
+  out.ecc = sig(draw({ type: 'rotary', cylinders: 2, ecc_mm: 8 })) !== sig(draw({ type: 'rotary', cylinders: 2, ecc_mm: 24 }));
+  try { draw({ type: 'electric' }); out.electric = true; } catch (e) { out.electric = e.message; }
   return out;
 });
-console.log(`== engine: ${eng.drawn} combinations drawn · turbo changes the picture: ${eng.turboDiffers} · V vs inline: ${eng.layoutDiffers} · block ${eng.i4} px (I4) vs ${eng.i6} px (I6) ==`);
+console.log(`== engine: ${eng.drawn} combinations drawn · turbo ${eng.turboDiffers} · supercharger ${eng.scDiffers} · ` +
+  `V vs inline ${eng.layoutDiffers} · block ${eng.i4} px (I4) vs ${eng.i6} px (I6) · ` +
+  `V6/V8/V12 differ ${eng.v6 !== eng.v8 && eng.v8 !== eng.v12 && eng.v6 !== eng.v12} · boxer 4/6 differ ${eng.b4 !== eng.b6} ==`);
 if (eng.thrown.length) fails.push('engine sprite threw: ' + eng.thrown.slice(0, 3).join('; '));
 if (eng.blank.length) fails.push('engine sprite nearly empty for: ' + eng.blank.slice(0, 3).join('; '));
 if (!eng.turboDiffers) fails.push('adding a turbo does not change the engine picture');
+if (!eng.scDiffers) fails.push('adding a supercharger does not change the engine picture');
+if (new Set(eng.scTypes).size !== 3) fails.push('roots, screw and centrifugal superchargers are not all drawn differently');
 if (!eng.layoutDiffers) fails.push('a V6 is drawn the same as an inline six');
 if (!(eng.i6 > eng.i4)) fails.push('an inline six is not drawn longer than an inline four');
+if (!(eng.v6 !== eng.v8 && eng.v8 !== eng.v12 && eng.v6 !== eng.v12)) fails.push('a V6, V8 and V12 are not all drawn differently');
+if (!(eng.b4 !== eng.b6 && eng.b2 !== eng.b4)) fails.push('a boxer 2, 4 and 6 are not all drawn differently');
+if (eng.same.length) fails.push('these choices do not change the picture: ' + eng.same.join(', '));
+if (!eng.vvt) fails.push('VVT does not change the picture');
+if (!eng.oil) fails.push('an oil cooler does not change the picture');
+if (!eng.vgt) fails.push('a variable-geometry turbo does not change the picture');
+if (!eng.als) fails.push('anti-lag does not change the picture');
+if (!eng.bore) fails.push('bore and stroke do not change the block');
+if (!eng.ecc) fails.push('rotary eccentricity does not change the housings');
+if (eng.electric !== true) fails.push('the electric motor picture threw: ' + eng.electric);
 
 // ---- 3. the previews on their tabs are drawn, and follow the form ----
 const lit = sel => page.evaluate(s => {

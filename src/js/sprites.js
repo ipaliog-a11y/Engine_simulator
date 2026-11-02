@@ -258,188 +258,13 @@ function paintCar(cv,v,e,opts){
 }
 
 // ---- the engine, from outside ----
-// An inline is drawn side on, so you can count its cylinders; a V and a boxer are drawn from the front,
-// because the angle between the banks IS the layout; a rotary is its stack of housings. Around the
-// block sit the parts you chose, each where it really lives: induction on top, exhaust and turbos
-// on the hot side, intercooler and radiator out front, the nitrous bottle off to the side.
-const ENG_GW=150,ENG_GH=78;
-const CAM_COL={stock:'#4a4a5e',sport:'#ff4444',race:'#ffcc00'};
-const FUEL_COL={gasoline:'#00cc66',race:'#9a44ff',e85:'#44aaff',methanol:'#00ccff',diesel:'#2a2a2a'};
-const HDR_COL={stock:'#6a4a3a',sport:'#c08040',race:'#e0a060'};
-function drawEngineSprite(buf,e,t){
+// One front three-quarter for every layout, composed in engine-art.js from the parts on the form.
+// drawEngineSprite is the entry paintEngine, the garage and the tests already call.
+const ENG_GW=ENG_ART_W,ENG_GH=ENG_ART_H;
+function drawEngineSprite(buf,e,t,live){
   e=e||DEFAULT_ENGINE;t=t||0;
   if(e.type==='electric')return drawMotorSprite(buf,e,t);
-  const n=Math.max(1,e.cylinders||4),bore=e.bore_mm||86,stroke=e.stroke_mm||86;
-  const type=e.type||'petrol4',two=type==='twostroke';
-  const layout=type==='rotary'?'rotary':(e.layout||'inline');
-  const block='#6a6a7a',head='#9a9aaa',cover=type==='diesel'&&e.cam==='stock'?'#2a6a4a':(CAM_COL[e.cam]||CAM_COL.stock);
-  const chrome='#c0c0d0',steel='#9a9aaa',dark='#3a3a4a';
-  let top,left,right,exX,exY,pulley,bankTops=[];    // anchors the bolt-ons hang from
-  if(layout==='inline'){
-    const pitch=Math.max(4,Math.min(Math.round(bore/11),Math.floor(78/n)));
-    const bw=n*pitch+6,bh=Math.max(12,Math.min(24,Math.round(stroke/5)));
-    const bx=Math.round(70-bw/2),yb=66;
-    buf.rect(bx+3,yb,bw-6,5,dark);                                       // sump
-    buf.rect(bx,yb-bh,bw,bh,block);
-    for(let k=1;k<n;k++)buf.rect(bx+3+k*pitch,yb-bh+2,1,bh-4,shadeHex(block,-0.25));
-    const hy=yb-bh-6;
-    if(two){for(let k=0;k<3;k++)buf.rect(bx+1,hy+k*2,bw-2,1,head);}     // finned two-stroke head
-    else{buf.rect(bx+1,hy,bw-2,6,head);buf.rect(bx+2,hy-4,bw-4,4,cover);
-      for(let k=0;k<n;k++)buf.rect(bx+3+k*pitch+Math.floor(pitch/2)-1,hy-3,2,2,type==='diesel'?chrome:'#111118');
-      if(e.vvt)buf.rect(bx+bw-5,hy-3,2,2,'#00ff88');}
-    top={x0:bx+2,x1:bx+bw-2,y:two?hy:hy-4,cyls:n,pitch,bx0:bx+3};
-    left=bx;right=bx+bw;exX=bx-2;exY=yb-4;
-    // headers, one primary per cylinder, sweeping back to the collector
-    const hc=HDR_COL[e.exhaust]||HDR_COL.stock;
-    // headers: a cast log on a stock engine, a primary per cylinder into a collector rail otherwise
-    const ry=hy+(e.exhaust==='stock'?6:10);
-    if(e.exhaust==='stock')buf.rect(bx+2,hy+6,bw-4,3,hc);
-    else{for(let k=0;k<n;k++)buf.rect(bx+3+k*pitch+Math.floor(pitch/2)-1,hy+6,e.exhaust==='race'?1:2,4,hc);
-      buf.rect(bx+2,ry,bw-4,2,hc);}
-    buf.line(bx+2,ry+1,exX,exY,hc);
-    buf.rect(exX-1,exY-1,3,3,hc);
-    pulley={x:right+3,y:yb-4,cam:two?null:{x:right+2,y:hy+2}};
-  }else if(layout==='rotary'){
-    const r=Math.max(1,Math.min(4,n)),hw=11,hh=Math.max(26,Math.min(36,Math.round((e.bore_mm||105)/3.3)));
-    const bw=r*hw+(r+1)*3,bx=Math.round(70-bw/2),yb=66;
-    buf.rect(bx,yb-hh,bw,hh,dark);                                       // end and intermediate plates
-    for(let k=0;k<r;k++){const x=bx+3+k*(hw+3);
-      buf.poly([[x+2,yb-hh],[x+hw-2,yb-hh],[x+hw,yb-hh+3],[x+hw,yb-3],[x+hw-2,yb],[x+2,yb],[x,yb-3],[x,yb-hh+3]],head);
-      buf.rect(x+2,yb-hh+4,hw-4,1,shadeHex(head,0.3));}
-    buf.rect(bx+3,yb,bw-6,4,dark);
-    top={x0:bx+2,x1:bx+bw-2,y:yb-hh,cyls:r*2,pitch:Math.floor((bw-4)/(r*2)),bx0:bx+2};
-    left=bx;right=bx+bw;exX=bx-2;exY=yb-10;
-    buf.rect(exX-1,exY-1,3,3,HDR_COL[e.exhaust]||HDR_COL.stock);
-    buf.line(bx,yb-hh/2,exX,exY,HDR_COL[e.exhaust]||HDR_COL.stock);
-    pulley={x:right+3,y:yb-hh/2,cam:null};
-  }else{
-    // front view: the crank in the middle, a bank up each side
-    const boxer=layout==='boxer',cx=70,cy=boxer?46:54;
-    const ang=boxer?Math.PI/2:Math.PI/6;                                 // from vertical
-    const bl=Math.max(12,Math.min(22,Math.round(stroke/5))),bwid=Math.max(9,Math.min(15,Math.round(bore/7)));
-    const seg=(s,d0,d1,w,col)=>{const dx=Math.sin(s*ang),dy=-Math.cos(s*ang),px_=-dy,py_=dx,h=w/2;
-      buf.poly([[cx+dx*d0+px_*h,cy+dy*d0+py_*h],[cx+dx*d1+px_*h,cy+dy*d1+py_*h],[cx+dx*d1-px_*h,cy+dy*d1-py_*h],[cx+dx*d0-px_*h,cy+dy*d0-py_*h]],col);
-      return [cx+dx*d1,cy+dy*d1];};
-    buf.disc(cx,cy,11,block);
-    buf.rect(cx-11,cy+(boxer?6:4),22,boxer?8:12,dark);                 // sump
-    for(const s of [-1,1]){
-      seg(s,5,5+bl,bwid,block);seg(s,5+bl,11+bl,bwid+2,head);
-      const end=two?seg(s,11+bl,11+bl,bwid,head):seg(s,11+bl,15+bl,bwid,cover);
-      bankTops.push(end);
-      if(e.vvt&&!two){buf.rect(end[0]-1,end[1]-1,2,2,'#00ff88');}
-    }
-    const vt=boxer?cy-12:cy-bl-6;
-    top={x0:cx-(boxer?10:7),x1:cx+(boxer?10:7),y:vt,cyls:2,pitch:boxer?10:7,bx0:cx-(boxer?10:7)};
-    left=cx-(boxer?bl+16:Math.sin(ang)*(bl+15)+bwid/2);right=2*cx-left;
-    // exhaust leaves each bank's outer, lower face and runs to a collector under the left bank
-    const hc=HDR_COL[e.exhaust]||HDR_COL.stock;
-    exX=Math.round(left)-2;exY=boxer?cy+14:cy+10;
-    for(const s of [-1,1]){const [hx,hy]=seg(s,7+bl,7+bl,0,head);
-      buf.line(hx+s*(bwid/2+1),hy+(boxer?bwid/2+1:2),s<0?exX:hx+s*2,s<0?exY:exY+2,hc);
-      if(s>0)buf.line(hx+s*2,exY+2,exX,exY+2,hc);}
-    buf.rect(exX-1,exY-1,3,4,hc);
-    pulley={x:cx,y:cy,cam:null,front:true};
-  }
-  // ---- crank pulley and the accessory belt ----
-  const spin=t*4;
-  const pul=(x,y,r)=>{buf.disc(x,y,r,dark);buf.disc(x,y,r-1,steel);buf.set(x-0.5+Math.cos(spin)*(r-1.5),y-0.5+Math.sin(spin)*(r-1.5),'#111118');};
-  pul(pulley.x,pulley.y,pulley.front?5:4);
-  if(pulley.cam){pul(pulley.cam.x+1,pulley.cam.y,3);buf.line(pulley.x+3,pulley.y,pulley.cam.x+3,pulley.cam.y,'#111118');}
-  // ---- induction ----
-  const sys=e.intakeSys||'efi',filt=e.airFilter||'stock';
-  const filterAt=(x,y,big)=>{
-    if(filt==='none')return;
-    if(filt==='perf'){buf.poly([[x,y-2],[x-5,y-3],[x-5,y+3],[x,y+2]],'#ff4444');buf.rect(x-6,y-3,1,6,'#cc2222');}
-    else if(filt==='stock')buf.rect(x-6,y-3,6,6,'#222230');
-    else buf.rect(x-4,y-2,4,4,'#222230');};
-  let iy=top.y;                                                     // the top of whatever we have stacked so far
-  const wide=top.x1-top.x0;
-  const sc=e.intake==='supercharger'&&(e.scType||'roots')!=='centrifugal';
-  // plenum: everything except ITBs, sidedrafts and the mechanical stacks sits on one
-  const plenumless=sys==='itb'||sys==='mech'||sys==='sidedraft';
-  if(!plenumless||sc){
-    for(let x=top.x0+2;x<top.x1-2;x+=Math.max(3,top.pitch))buf.rect(x,iy-3,2,3,steel);
-    buf.rect(top.x0,iy-7,wide,4,'#8a8a9a');iy-=7;
-  }
-  if(sc){                                                            // the blower sits on the manifold
-    const sw=Math.min(wide,26),sx=Math.round((top.x0+top.x1-sw)/2),sh=e.scType==='screw'?7:9;
-    buf.rect(sx,iy-sh,sw,sh,e.scType==='screw'?steel:chrome);
-    for(let x=sx+2;x<sx+sw-1;x+=3)buf.rect(x,iy-sh+1,1,sh-2,dark);
-    buf.disc(sx+sw+2,iy-sh/2,3,dark);buf.disc(sx+sw+2,iy-sh/2,2,steel);
-    buf.line(sx+sw+4,iy-sh/2,pulley.x+(pulley.front?5:4),pulley.y,'#111118');
-    iy-=sh;
-  }
-  if(sys==='itb'||sys==='mech'){
-    const k=Math.min(top.cyls,Math.max(1,Math.floor(wide/4)));
-    for(let j=0;j<k;j++){const x=Math.round(top.x0+(j+0.5)*wide/k);
-      buf.rect(x-1,iy-6,2,6,sys==='mech'?steel:chrome);buf.rect(x-2,iy-7,4,1,chrome);
-      if(filt!=='none')buf.rect(x-2,iy-9,4,2,filt==='perf'?'#ff4444':'#222230');}
-    if(sys==='mech')buf.rect(top.x1+1,iy-4,4,4,'#4a4a5e');
-    iy-=9;
-  }else if(sys==='sidedraft'){
-    const k=Math.max(1,Math.min(Math.ceil(top.cyls/2),Math.floor(wide/7)));
-    for(let j=0;j<k;j++){const x=Math.round(top.x0+(j+0.5)*wide/k);
-      buf.rect(x-3,iy-5,6,5,steel);buf.rect(x-2,iy-8,4,3,chrome);
-      if(filt!=='none')buf.rect(x-3,iy-10,6,2,filt==='perf'?'#ff4444':'#222230');}
-    iy-=10;
-  }else if(sys==='carb1'||sys==='carb2'||sys==='carb4'){
-    const cx=Math.round((top.x0+top.x1)/2),cw=sys==='carb4'?8:6;
-    buf.rect(cx-cw/2,iy-4,cw,4,steel);
-    if(filt==='none'){buf.rect(cx-cw/2+1,iy-7,cw-2,3,chrome);iy-=7;}
-    else{const pw=sys==='carb4'?18:sys==='carb2'?14:10;
-      buf.rect(cx-pw/2,iy-7,pw,3,filt==='perf'?'#ff4444':chrome);buf.rect(cx-pw/2+1,iy-6,pw-2,1,'#222230');iy-=7;}
-  }else if(!sc||e.intake!=='supercharger'){
-    // EFI: a throttle body on the plenum's back end and a pipe to the filter
-    buf.rect(top.x0-3,iy+2,3,4,chrome);
-    if(e.intake!=='turbo'){buf.rect(top.x0-9,iy+3,6,2,dark);filterAt(top.x0-9,iy+4);}
-  }
-  // ---- forced induction ----
-  const icW=e.intake==='na'?0:e.intercooler==='large'?7:e.intercooler==='small'?5:0,icH=e.intercooler==='large'?24:14;
-  const icX=Math.max(right+8,112),icY=56-icH;
-  if(icW){buf.rect(icX,icY,icW,icH,dark);for(let y=icY+1;y<icY+icH-1;y+=2)buf.rect(icX+1,y,icW-2,1,'#6a6a7a');}
-  if(e.intake==='turbo'){
-    const R={small:5,medium:6,large:8}[e.turboSize]||6,cfg=e.turboConfig||'single';
-    const units=cfg==='single'?[R]:cfg==='twin'?[R-1,R-1]:cfg==='sequential'?[R-2,R]:[R-1,R+1];
-    let ty=exY-R-2,tx=Math.min(exX-R-3,left-R-4);
-    units.forEach((r,j)=>{
-      const x=Math.max(r+12,tx),y=ty-j*(r*2+3);
-      buf.disc(x,y,r,'#c06030');buf.disc(x+1,y-1,r-2,'#ff6600');    // turbine, glowing
-      if(e.vgt)for(let k=0;k<8;k++){const a=k*Math.PI/4;buf.set(x+0.5+Math.cos(a)*(r-1),y+Math.sin(a)*(r-1),'#ffcc00');}
-      const cxx=x,cyy=y-r-2;buf.disc(cxx,cyy,r-1,steel);
-      for(let k=0;k<3;k++){const a=t*9+k*Math.PI*2/3;buf.line(cxx-0.5,cyy-0.5,cxx-0.5+Math.cos(a)*(r-2),cyy-0.5+Math.sin(a)*(r-2),'#4a4a5e');}
-      if(j===0)buf.line(x,y+r,exX,exY,HDR_COL[e.exhaust]||HDR_COL.stock);
-    });
-    // charge pipe: compressor, over the top, to the intercooler (or straight into the plenum)
-    const cy0=ty-units.length*(R*2+3)+R,pipeY=Math.max(3,iy-4),cxp=Math.max(units[0]+12,tx);
-    buf.line(cxp,cy0,cxp,pipeY,steel);
-    if(icW){buf.line(cxp,pipeY,icX+icW/2,pipeY,steel);buf.line(icX+icW/2,pipeY,icX+icW/2,icY,steel);}
-    else buf.line(cxp,pipeY,top.x0,pipeY,steel);
-    filterAt(cxp-R,cy0+1);
-    if(e.antilag)buf.rect(cxp-1,ty+R+1,2,2,'#ffcc00');
-  }
-  if(e.intake==='supercharger'&&e.scType==='centrifugal'){
-    const x=right+6,y=pulley.y-12;buf.disc(x,y,5,steel);buf.disc(x,y,3,chrome);
-    buf.line(x,y+5,pulley.x,pulley.y,'#111118');
-    buf.line(x,y-5,x,Math.max(3,iy-3),steel);buf.line(x,Math.max(3,iy-3),top.x1-2,Math.max(3,iy-3),steel);
-  }
-  // ---- exhaust tail: cat brick, then the pipe out of frame ----
-  const hc=HDR_COL[e.exhaust]||HDR_COL.stock,pipeT=e.exhaust==='race'?3:2;
-  const tailY=72;
-  buf.line(exX,exY,exX,tailY,hc);buf.rect(1,tailY,exX,pipeT,shadeHex(hc,-0.2));
-  if(e.cat&&e.cat!=='none'){const cw=e.cat==='stock'?9:6;buf.rect(Math.round(exX/2-cw/2),tailY-2,cw,pipeT+4,steel);
-    for(let x=Math.round(exX/2-cw/2)+1;x<exX/2+cw/2-1;x+=2)buf.rect(x,tailY-1,1,pipeT+2,dark);}
-  // ---- radiator and oil cooler, out front ----
-  const radH={small:24,stock:32,large:40}[e.radiator]||32,rx=Math.max(icX+icW+3,140)-(icW?0:4);
-  buf.rect(rx,70-radH,6,radH,'#26263a');
-  for(let y=70-radH+2;y<68;y+=2)buf.rect(rx+1,y,4,1,'#4a4a5e');
-  buf.rect(rx,70-radH-2,6,2,'#00ccff');
-  if(e.oilCooler)buf.rect(rx-1,71,8,3,'#6a6a7a');
-  // ---- nitrous bottle and fuel can ----
-  if(e.nitrous&&e.nitrous!=='none'){const h=e.nitrous==='large'?22:15;buf.rect(4,66-h,5,h,'#4466ff');buf.rect(5,64-h,3,2,chrome);buf.rect(4,60-h/2,5,1,'#f0f0f0');}
-  const fc=FUEL_COL[e.fuel]||FUEL_COL.gasoline;
-  buf.rect(12,62,5,6,fc);buf.rect(13,61,2,1,type==='diesel'?'#ffcc00':chrome);
-  buf.outline('#05050a');
-  buf.under(0,75,ENG_GW,1,'#26263a');
+  drawEngineArt(buf,e,t,live);
 }
 function engineCaption(e){
   if(e.type==='electric')return motorCaption(e);
@@ -450,15 +275,26 @@ function engineCaption(e){
   const ind=e.intake==='turbo'?' TURBO':e.intake==='supercharger'?' SC':'';
   return conf+' '+d.toFixed(1)+'L'+ind;
 }
+// One scratch grid and one scratch canvas for the preview, reused every frame. The static
+// layers of a configuration live in drawEngineArt's cache; only the spinning parts are new.
+let _engFrame=null,_engBlit=null;
 function paintEngine(cv,e,opts){
   opts=opts||{};
   const gh=opts.caption?ENG_GH+12:ENG_GH;
   const F=fitPixCanvas(cv,ENG_GW,gh);if(!F)return false;
   const {g,k,ox,bw,bh}=F;
   pixBackdrop(g,bw,bh,k,ox,null);
-  const buf=new PixBuf(ENG_GW,ENG_GH);
-  drawEngineSprite(buf,e,opts.t||0);
-  g.drawImage(buf.canvas(),ox,0,ENG_GW*k,ENG_GH*k);
+  if(!_engFrame||_engFrame.w!==ENG_GW||_engFrame.h!==ENG_GH)_engFrame=new PixBuf(ENG_GW,ENG_GH);
+  else _engFrame.c.fill(null);
+  drawEngineSprite(_engFrame,e,opts.t||0,opts.live);
+  if(!_engBlit||_engBlit.width!==ENG_GW||_engBlit.height!==ENG_GH){
+    _engBlit=document.createElement('canvas');_engBlit.width=ENG_GW;_engBlit.height=ENG_GH;
+  }
+  const ig=_engBlit.getContext('2d'),img=ig.createImageData(ENG_GW,ENG_GH),d=img.data,cells=_engFrame.c;
+  for(let i=0;i<cells.length;i++){const col=cells[i];if(!col)continue;const rgb=hexRgb(col);
+    d[i*4]=rgb[0];d[i*4+1]=rgb[1];d[i*4+2]=rgb[2];d[i*4+3]=255;}
+  ig.putImageData(img,0,0);
+  g.drawImage(_engBlit,ox,0,ENG_GW*k,ENG_GH*k);
   if(opts.caption)pixCaption(g,k,ox,ENG_GW,ENG_GH,opts.title,opts.sub);
   return true;
 }
@@ -479,7 +315,10 @@ function renderCarPreview(){
 function renderEnginePreview(){
   const cv=document.getElementById('enginePreview');if(!cv)return;
   const e=readEngineFromForm();
-  paintEngine(cv,e,{t:previewT,caption:true,title:engineCaption(e),sub:tr(e.type==='electric'?'ELECTRIC':(ENGINE_TYPE[e.type]||ENGINE_TYPE.petrol4).label)});
+  // Live crank / turbo / blower angles exist once the LIVE tab has been turning the cutaway.
+  // Until then the picture sweeps idle to redline on previewT (see engMotion).
+  const live=(typeof crankAngle==='number'&&typeof state!=='undefined'&&state)?{rpm:state.rpm,crank:crankAngle,turbo:turboAngle,sc:scAngle}:null;
+  paintEngine(cv,e,{t:previewT,live,caption:true,title:engineCaption(e),sub:tr(e.type==='electric'?'ELECTRIC':(ENGINE_TYPE[e.type]||ENGINE_TYPE.petrol4).label)});
 }
 function stepPreviews(dt){
   if(!previewStill)previewT+=dt;

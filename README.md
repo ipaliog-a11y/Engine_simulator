@@ -1,4 +1,4 @@
-# PIXEL ENGINE SIM v0.7 build 222
+# PIXEL ENGINE SIM v0.7 build 223
 
 **A lightweight, 8-bit style internal combustion engine *designer* & simulator** inspired by *Automation*.
 
@@ -388,11 +388,12 @@ assist map over speed and pedal), regeneration, load-point shifting, electric-dr
 
   ![garage](docs/garage.png)
 
-- **Pixel-art car and engine (new)** — the VEHICLE tab shows your car side on and the ENGINE tab
+- **Pixel-art car and engine** — the VEHICLE tab shows your car side on and the ENGINE tab
   shows your engine from outside, both drawn from the build:
   - the car's wheelbase, wheels, ride height, aero parts, driven wheels and engine position
-  - the engine's layout and bank angle, its turbos or blower, induction, headers, intercooler and
-    radiator
+  - the engine in one front three-quarter view, so an inline, a V and a boxer can all be counted
+    cylinder by cylinder, with the turbos or blower, induction, headers, intercooler, radiator,
+    fan, alternator and nitrous that are fitted
 
   Garage cards carry the same pictures, and the car runs the TRACK map in its own livery.
 

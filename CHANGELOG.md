@@ -20,6 +20,15 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 Working toward **v1.0 — every number derived, not fitted.**
 
+### A counted engine, drawn from the parts (build 223)
+
+- **One view for every layout.** The ENGINE tab picture is a front three-quarter, the same camera for an inline, a V and a boxer, so the cylinders can be counted. A V6, a V8 and a V12 are different pictures, and so are a flat-four and a flat-six. A two-stroke keeps its fins and a rotary its housings.
+- **Built from the form.** The block and the heads follow the bore, the stroke and the layout. The cam cover follows the cam and the valve count (a pushrod cover, a twin-cam, a five-valve). Carbs, sidedrafts, ITBs and a single throttle body each have their own intake. Turbo size and arrangement, the three superchargers, the intercooler, the headers, the cat, the radiator, the fan, the alternator, the oil cooler, the nitrous bottle and a hybrid motor are all drawn.
+- **Sprites are data, not image files.** The showpiece parts (turbo, blower, carb, ITB, intercooler, radiator, fan, nitrous, alternator, hybrid motor) are palette-index pictures baked into the page by `tools/engine-art.mjs`. The game never draws an image file into the canvas, so a garage thumbnail still exports under `file://`. The PNG copies in `assets/engine-parts/` are there to look at; the concepts they were simplified from are in `docs/engine-art/`.
+- **What moves.** The static parts of a configuration are cached. Each frame redraws the pulley spokes, the compressor wheel and the fan. On the ENGINE tab the picture sweeps from idle to redline. If the LIVE tab has already been turning the cutaway, the wheels follow that crank, turbo and blower angle instead.
+- The compressor-wheel diameter in millimetres still chooses the small, medium or large snail. There is no separate picture for every millimetre.
+- No number in the sim moves. The fingerprint is identical to build 222.
+
 ### A picture for each body class (build 222)
 
 - **Every car now has a picture.** The 14 body classes (kei car to open-wheeler) each have their own unbranded side
