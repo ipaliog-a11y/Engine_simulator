@@ -1,0 +1,134 @@
+{
+  "size": "960x640",
+  "aspect": "3:2",
+  "facing": "left",
+  "key": "CHASSIS class id in src/js/vehicle-presets.js",
+  "classes": {
+    "kei": {
+      "file": "generic-kei-car.png",
+      "name": "KEI CAR",
+      "class_id": "kei",
+      "prompt": "8-bit pixel-art side profile of a generic unbranded Japanese-style kei car, tiny tall boxy two-box city car with short bonnet, upright windscreen, small 14-inch wheels, pale mint green paint, not resembling any specific real model, no badges or lettering on the body. Typical body shape and proportions for this class of vehicle. Exact side elevation, car facing LEFT (nose on the left), centred, wheels on the road, the car spans about 80% of the image width. Match the reference image's style exactly: chunky visible pixels, retro 16-bit/8-bit game palette, the same coastal road scene behind the car - grey asphalt foreground, metal guardrail, blue sea, green hills/mountains on the left, bright blue sky with white pixel clouds. Same framing and lighting as the reference. No text, no logos, no watermark.",
+      "style_reference": "reference/honda-s2000-reference.jpg",
+      "generated_size": "1152x864",
+      "post_process": "crop 1080x720 at (36,90), nearest-neighbour resize to 960x640"
+    },
+    "hatch": {
+      "file": "generic-hot-hatch.png",
+      "name": "HOT HATCH",
+      "class_id": "hatch",
+      "prompt": "8-bit pixel-art side profile of a generic unbranded modern hot hatch, compact three-door hatchback with a steeply raked rear hatch, wide body, aggressive front bumper with large intakes, roof spoiler, black multi-spoke wheels, bright white paint, a fictional design that does not resemble any specific real model, no badges or lettering on the body. Use the reference image ONLY for the art style and background scene, do NOT copy the car in it. Typical body shape and proportions for this class of vehicle. Exact side elevation, car facing LEFT (nose on the left), centred, wheels on the road, the car spans about 80% of the image width. Match the reference image's style exactly: chunky visible pixels, retro 16-bit/8-bit game palette, the same coastal road scene behind the car - grey asphalt foreground, metal guardrail, blue sea, green hills/mountains on the left, bright blue sky with white pixel clouds. Same framing and lighting as the reference. No text, no logos, no watermark.",
+      "style_reference": "reference/honda-s2000-reference.jpg",
+      "generated_size": "1152x864",
+      "post_process": "crop 1080x720 at (36,90), nearest-neighbour resize to 960x640"
+    },
+    "roadster": {
+      "file": "generic-light-roadster.png",
+      "name": "LIGHT ROADSTER",
+      "class_id": "roadster",
+      "prompt": "8-bit pixel-art side profile of a generic unbranded classic-style light two-seat roadster, small rounded body, open top with soft top folded, round headlights, short curvy bonnet, chrome wire-style wheels, racing green paint, a fictional design that does not resemble any specific real model, no badges or lettering on the body. Use the reference image ONLY for the art style and background scene, replace the car in it completely with this roadster. Typical body shape and proportions for this class of vehicle. Exact side elevation, car facing LEFT (nose on the left), centred, wheels on the road, the car spans about 80% of the image width. Match the reference image's style exactly: chunky visible pixels, retro 16-bit/8-bit game palette, the same coastal road scene behind the car - grey asphalt foreground, metal guardrail, blue sea, green hills/mountains on the left, bright blue sky with white pixel clouds. Same framing and lighting as the reference. No text, no logos, no watermark.",
+      "style_reference": "generic-kei-car.png (generated kei image, used as style reference)",
+      "generated_size": "1152x864",
+      "post_process": "crop 1080x720 at (36,90), nearest-neighbour resize to 960x640"
+    },
+    "coupe": {
+      "file": "generic-sports-coupe.png",
+      "name": "SPORTS COUPE",
+      "class_id": "coupe",
+      "prompt": "8-bit pixel-art side profile of a generic unbranded front-engined 2+2 sports coupe, two doors, long bonnet, smooth sloping fastback roof that flows into a short tail with a small ducktail lip, slim modern headlights, five-spoke dark wheels, signal yellow paint, a fictional design that does not resemble any specific real model, no badges or lettering on the body. Use the reference image ONLY for the art style and background scene, replace the car in it completely with this coupe. Typical body shape and proportions for this class of vehicle. Exact side elevation, car facing LEFT (nose on the left), centred, wheels on the road, the car spans about 80% of the image width. Match the reference image's style exactly: chunky visible pixels, retro 16-bit/8-bit game palette, the same coastal road scene behind the car - grey asphalt foreground, metal guardrail, blue sea, green hills/mountains on the left, bright blue sky with white pixel clouds. Same framing and lighting as the reference. No text, no logos, no watermark.",
+      "style_reference": "generic-kei-car.png (generated kei image, used as style reference)",
+      "generated_size": "1152x864",
+      "post_process": "crop 1080x720 at (36,90), nearest-neighbour resize to 960x640"
+    },
+    "sedan": {
+      "file": "generic-sports-sedan.png",
+      "name": "SPORTS SEDAN",
+      "class_id": "sedan",
+      "prompt": "8-bit pixel-art side profile of a generic unbranded four-door sports sedan, three-box saloon shape, sporty stance, dark gunmetal grey paint, not resembling any specific real model, no badges or lettering on the body. Typical body shape and proportions for this class of vehicle. Exact side elevation, car facing LEFT (nose on the left), centred, wheels on the road, the car spans about 80% of the image width. Match the reference image's style exactly: chunky visible pixels, retro 16-bit/8-bit game palette, the same coastal road scene behind the car - grey asphalt foreground, metal guardrail, blue sea, green hills/mountains on the left, bright blue sky with white pixel clouds. Same framing and lighting as the reference. No text, no logos, no watermark.",
+      "style_reference": "reference/honda-s2000-reference.jpg",
+      "generated_size": "1152x864",
+      "post_process": "crop 1080x720 at (36,90), nearest-neighbour resize to 960x640"
+    },
+    "muscle": {
+      "file": "generic-muscle-car.png",
+      "name": "MUSCLE CAR",
+      "class_id": "muscle",
+      "prompt": "8-bit pixel-art side profile of a generic unbranded American-style muscle car, two-door coupe, long flat bonnet with scoop, short deck, wide rear tyres, black paint with no stripes, not resembling any specific real model, no badges or lettering on the body. Typical body shape and proportions for this class of vehicle. Exact side elevation, car facing LEFT (nose on the left), centred, wheels on the road, the car spans about 80% of the image width. Match the reference image's style exactly: chunky visible pixels, retro 16-bit/8-bit game palette, the same coastal road scene behind the car - grey asphalt foreground, metal guardrail, blue sea, green hills/mountains on the left, bright blue sky with white pixel clouds. Same framing and lighting as the reference. No text, no logos, no watermark.",
+      "style_reference": "reference/honda-s2000-reference.jpg",
+      "generated_size": "1152x864",
+      "post_process": "crop 1080x720 at (36,90), nearest-neighbour resize to 960x640"
+    },
+    "rally": {
+      "file": "generic-rally-awd-hatch.png",
+      "name": "RALLY AWD HATCH",
+      "class_id": "rally",
+      "prompt": "8-bit pixel-art side profile of a generic unbranded rally-bred AWD hatchback, boxy five-door hatch, flared wheel arches, bonnet scoop, roof vent, big rear wing, mud flaps, plain white paint with no livery, not resembling any specific real model, no badges or lettering on the body. Typical body shape and proportions for this class of vehicle. Exact side elevation, car facing LEFT (nose on the left), centred, wheels on the road, the car spans about 80% of the image width. Match the reference image's style exactly: chunky visible pixels, retro 16-bit/8-bit game palette, the same coastal road scene behind the car - grey asphalt foreground, metal guardrail, blue sea, green hills/mountains on the left, bright blue sky with white pixel clouds. Same framing and lighting as the reference. No text, no logos, no watermark.",
+      "style_reference": "reference/honda-s2000-reference.jpg",
+      "generated_size": "1152x864",
+      "post_process": "crop 1080x720 at (36,90), nearest-neighbour resize to 960x640"
+    },
+    "gt": {
+      "file": "generic-grand-tourer.png",
+      "name": "GRAND TOURER",
+      "class_id": "gt",
+      "prompt": "8-bit pixel-art side profile of a generic unbranded front-engined grand tourer COUPE with only TWO doors (one long door per side), low and wide, very long elegant bonnet with a side vent, small cabin set far back near the rear axle, sweeping fastback roof flowing into a short rounded tail, large multi-spoke wheels, deep burgundy paint, not a sedan, no rear doors, a fictional design that does not resemble any specific real model, no badges or lettering on the body. Use the reference image ONLY for the art style and background scene, replace the car in it completely. Typical body shape and proportions for this class of vehicle. Exact side elevation, car facing LEFT (nose on the left), centred, wheels on the road, the car spans about 80% of the image width. Match the reference image's style exactly: chunky visible pixels, retro 16-bit/8-bit game palette, the same coastal road scene behind the car - grey asphalt foreground, metal guardrail, blue sea, green hills/mountains on the left, bright blue sky with white pixel clouds. Same framing and lighting as the reference. No text, no logos, no watermark.",
+      "style_reference": "generic-kei-car.png (generated kei image, used as style reference)",
+      "generated_size": "1152x864",
+      "post_process": "crop 1080x720 at (36,90), nearest-neighbour resize to 960x640"
+    },
+    "super": {
+      "file": "generic-mid-engine-super.png",
+      "name": "MID-ENGINE SUPER",
+      "class_id": "super",
+      "prompt": "8-bit pixel-art side profile of a generic unbranded mid-engined supercar, low wedge shape, cab-forward cabin, large side air intakes behind the doors, rear wing, bright orange paint, absolutely no badges, emblems or shields, a fictional design that does not resemble any specific real model, no badges or lettering on the body. Use the reference image ONLY for the art style and background scene, replace the car in it completely with this supercar. Typical body shape and proportions for this class of vehicle. Exact side elevation, car facing LEFT (nose on the left), centred, wheels on the road, the car spans about 80% of the image width. Match the reference image's style exactly: chunky visible pixels, retro 16-bit/8-bit game palette, the same coastal road scene behind the car - grey asphalt foreground, metal guardrail, blue sea, green hills/mountains on the left, bright blue sky with white pixel clouds. Same framing and lighting as the reference. No text, no logos, no watermark.",
+      "style_reference": "generic-kei-car.png (generated kei image, used as style reference)",
+      "generated_size": "1152x864",
+      "post_process": "crop 1080x720 at (36,90), nearest-neighbour resize to 960x640"
+    },
+    "hyper": {
+      "file": "generic-carbon-hypercar.png",
+      "name": "CARBON HYPERCAR",
+      "class_id": "hyper",
+      "prompt": "8-bit pixel-art side profile of a generic unbranded carbon-fibre hypercar, extremely low and wide, teardrop canopy, large front splitter, huge rear wing and diffuser, exposed black carbon fibre panels with silver paint, a fictional design that does not resemble any specific real model, no badges or lettering on the body. Use the reference image ONLY for the art style and background scene, do NOT copy the car in it. Typical body shape and proportions for this class of vehicle. Exact side elevation, car facing LEFT (nose on the left), centred, wheels on the road, the car spans about 80% of the image width. Match the reference image's style exactly: chunky visible pixels, retro 16-bit/8-bit game palette, the same coastal road scene behind the car - grey asphalt foreground, metal guardrail, blue sea, green hills/mountains on the left, bright blue sky with white pixel clouds. Same framing and lighting as the reference. No text, no logos, no watermark.",
+      "style_reference": "reference/honda-s2000-reference.jpg",
+      "generated_size": "1152x864",
+      "post_process": "crop 1080x720 at (36,90), nearest-neighbour resize to 960x640"
+    },
+    "proto": {
+      "file": "generic-track-prototype.png",
+      "name": "TRACK PROTOTYPE",
+      "class_id": "proto",
+      "prompt": "8-bit pixel-art side profile of a generic unbranded closed-cockpit track prototype race car, Le Mans style, enclosed fenders over wheels, shark fin engine cover, very large rear wing, low long body, plain light blue paint with no sponsor livery or numbers, a fictional design that does not resemble any specific real model, no badges or lettering on the body. Use the reference image ONLY for the art style and background scene, do NOT copy the car in it. Typical body shape and proportions for this class of vehicle. Exact side elevation, car facing LEFT (nose on the left), centred, wheels on the road, the car spans about 80% of the image width. Match the reference image's style exactly: chunky visible pixels, retro 16-bit/8-bit game palette, the same coastal road scene behind the car - grey asphalt foreground, metal guardrail, blue sea, green hills/mountains on the left, bright blue sky with white pixel clouds. Same framing and lighting as the reference. No text, no logos, no watermark.",
+      "style_reference": "reference/honda-s2000-reference.jpg",
+      "generated_size": "1152x864",
+      "post_process": "crop 1080x720 at (36,90), nearest-neighbour resize to 960x640"
+    },
+    "pickup": {
+      "file": "generic-pickup-truck.png",
+      "name": "PICKUP TRUCK",
+      "class_id": "pickup",
+      "prompt": "8-bit pixel-art side profile of a generic unbranded full-size pickup truck, crew cab with four doors, long open cargo bed, tall ride height, chunky tyres, dark navy blue paint, a fictional design that does not resemble any specific real model, no badges or lettering on the body. Use the reference image ONLY for the art style and background scene, do NOT copy the car in it. Typical body shape and proportions for this class of vehicle. Exact side elevation, car facing LEFT (nose on the left), centred, wheels on the road, the car spans about 80% of the image width. Match the reference image's style exactly: chunky visible pixels, retro 16-bit/8-bit game palette, the same coastal road scene behind the car - grey asphalt foreground, metal guardrail, blue sea, green hills/mountains on the left, bright blue sky with white pixel clouds. Same framing and lighting as the reference. No text, no logos, no watermark.",
+      "style_reference": "reference/honda-s2000-reference.jpg",
+      "generated_size": "1152x864",
+      "post_process": "crop 1080x720 at (36,90), nearest-neighbour resize to 960x640"
+    },
+    "suv": {
+      "file": "generic-performance-suv.png",
+      "name": "PERFORMANCE SUV",
+      "class_id": "suv",
+      "prompt": "8-bit pixel-art side profile of a generic unbranded performance SUV, large five-door sport utility vehicle, sloping roofline, big alloy wheels, sporty stance, metallic silver-grey paint, a fictional design that does not resemble any specific real model, no badges or lettering on the body. Use the reference image ONLY for the art style and background scene, do NOT copy the car in it. Typical body shape and proportions for this class of vehicle. Exact side elevation, car facing LEFT (nose on the left), centred, wheels on the road, the car spans about 80% of the image width. Match the reference image's style exactly: chunky visible pixels, retro 16-bit/8-bit game palette, the same coastal road scene behind the car - grey asphalt foreground, metal guardrail, blue sea, green hills/mountains on the left, bright blue sky with white pixel clouds. Same framing and lighting as the reference. No text, no logos, no watermark.",
+      "style_reference": "reference/honda-s2000-reference.jpg",
+      "generated_size": "1152x864",
+      "post_process": "crop 1080x720 at (36,90), nearest-neighbour resize to 960x640"
+    },
+    "openwheel": {
+      "file": "generic-open-wheeler.png",
+      "name": "OPEN-WHEELER",
+      "class_id": "openwheel",
+      "prompt": "8-bit pixel-art side profile of a generic unbranded single-seater open-wheel race car like a formula car, narrow cigar-shaped body, long pointed nose, all four wheels completely exposed and outside the body with no fenders or wheel arches, visible suspension arms, open cockpit with a driver in a helmet, small front wing and small rear wing, plain purple paint with no sponsor livery or numbers, a fictional design that does not resemble any specific real model, no badges or lettering on the body. Use the reference image ONLY for the art style and background scene, replace the car in it completely with this race car. Typical body shape and proportions for this class of vehicle. Exact side elevation, car facing LEFT (nose on the left), centred, wheels on the road, the car spans about 80% of the image width. Match the reference image's style exactly: chunky visible pixels, retro 16-bit/8-bit game palette, the same coastal road scene behind the car - grey asphalt foreground, metal guardrail, blue sea, green hills/mountains on the left, bright blue sky with white pixel clouds. Same framing and lighting as the reference. No text, no logos, no watermark.",
+      "style_reference": "generic-kei-car.png (generated kei image, used as style reference)",
+      "generated_size": "1152x864",
+      "post_process": "crop 1080x720 at (36,90), nearest-neighbour resize to 960x640"
+    }
+  }
+}
