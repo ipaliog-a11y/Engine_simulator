@@ -7,7 +7,8 @@
 //   · every factory car (FACTORY_CARS: combustion, electric, hybrid) has a picture, and every picture is a car: no
 //     name in CAR_ART that is not a preset, and no file in assets/cars/ that no car uses;
 //   · every picture loads from file:// and is 960x640;
-//   · the VEHICLE tab: loading a real car from the picker shows its picture under the picker, captioned with its name;
+//   · the VEHICLE tab: loading a real car from the picker shows its picture (at the top since build 221), captioned with
+//     its number and name;
 //     a change of car changes the picture; a part changed says the picture is the car as it left the factory; going
 //     to a generic chassis hides it; the live car preview is still drawn;
 //   · the GARAGE: a saved real car's card shows its picture; a saved generic chassis is still drawn (a PNG data URL);
@@ -83,7 +84,8 @@ await page.waitForTimeout(200);
 const generic = await room();
 console.log(`== showroom: start hidden ${before.hidden}; S2000 ${s2k.src} (${s2k.w}px) "${s2k.cap}"; F40 ${f40.src}; modified "${modded.cap}"; generic hidden ${generic.hidden}; live preview ${preview} lit pixels ==`);
 if (!s2k.shown || !/honda-s2000-ap1-2000\.webp$/.test(s2k.src) || s2k.w !== 960) fails.push('loading the S2000 does not show its picture');
-if (s2k.cap !== 'Honda S2000 (AP1, 2000)') fails.push('the showroom caption is not the car\'s name: ' + s2k.cap);
+// since build 221 the caption leads with the car's order number (test132)
+if (s2k.cap !== '010 · Honda S2000 (AP1, 2000)') fails.push('the showroom caption is not the car\'s number and name: ' + s2k.cap);
 if (!/ferrari-f40-1987\.webp$/.test(f40.src)) fails.push('a change of car does not change the picture');
 if (modded.hidden || !/as it left the factory/.test(modded.cap)) fails.push('a modified car does not say the picture is the factory car');
 if (!generic.hidden) fails.push('a generic chassis still shows a real car\'s picture');
