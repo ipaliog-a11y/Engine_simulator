@@ -1,4 +1,4 @@
-# PIXEL ENGINE SIM v0.7 build 220
+# PIXEL ENGINE SIM v0.7 build 221
 
 **A lightweight, 8-bit style internal combustion engine *designer* & simulator** inspired by *Automation*.
 
@@ -397,8 +397,13 @@ assist map over speed and pedal), regeneration, load-point shifting, electric-dr
   Garage cards carry the same pictures, and the car runs the TRACK map in its own livery.
 
   Each of the 100 factory cars also has a **showroom picture** (build 220): a detailed pixel-art side view
-  in `assets/cars/`, shown under the car picker when you load that car, and on the GARAGE card of a saved
-  real car. It is the car as it left the factory, so the live views keep the car drawn from the build.
+  in `assets/cars/`, at the top of the VEHICLE tab when you load that car, and on the GARAGE card of a saved
+  real car. It stays however you modify the car, with the drawn car under it as YOUR BUILD, since that is
+  the view that follows the parts.
+
+  Every real car has an **order number** (build 221), 001 upward, shown before its name in the lists. A
+  number is given once and never changes. **COPY FROM** takes a real car's body and parts by its number or
+  name and keeps your engine: the result is a custom car, "Custom (from 012)".
 
   ![Engine view](docs/engine-view.png)
 

@@ -32,7 +32,8 @@ function applyBuild(s){
 // One long list of 43 engines (and 28 cars) was the problem; each family holds a handful. The chosen
 // build stays selected after loading, so the page always says what it came from.
 let enginePicker=null,carPicker=null;
-function wireFamilyPicker(famId,itemId,cats,items,catOf,placeholder,onPick){
+function wireFamilyPicker(famId,itemId,cats,items,catOf,placeholder,onPick,labelOf){
+  labelOf=labelOf||(p=>p.name);
   const fam=document.getElementById(famId),sel=document.getElementById(itemId);
   if(!fam||!sel)return null;
   const used=cats.filter(c=>items.some(p=>catOf(p)===c));
@@ -45,7 +46,7 @@ function wireFamilyPicker(famId,itemId,cats,items,catOf,placeholder,onPick){
     let era=null,html='';
     its.forEach(({p,i})=>{
       if(byEra&&p.era!==era){html+=(era?'</optgroup>':'')+'<optgroup label="'+esc(tr(p.era))+'">';era=p.era;}
-      html+='<option value="'+i+'">'+esc(p.name)+'</option>';});
+      html+='<option value="'+i+'">'+esc(labelOf(p))+'</option>';});
     sel.innerHTML='<option value="">'+esc(tr(placeholder))+'</option>'+html+(era?'</optgroup>':'');
     sel.value=keep!=null?String(keep):'';
   };
@@ -207,7 +208,7 @@ function garageThumb(g){
   const b=g&&g.build;if(!b||!b.engine)return '';
   const car=gKind(g)==='car'&&b.vehicle;
   // a real car's body is shown by its showroom picture (car-art.js); a generic chassis is drawn
-  const art=car&&b.vehicle.body&&carArtUrl(b.vehicle.body.name);
+  const art=car&&b.vehicle.body&&!b.vehicle.body.copyOf&&carArtUrl(b.vehicle.body.name);
   if(art)return art;
   const key=(car?'c':'e')+JSON.stringify(car?[b.vehicle,b.engine.intake]:b.engine);
   if(garageThumbs.has(key))return garageThumbs.get(key);

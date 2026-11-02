@@ -39,7 +39,7 @@ function buildVehicle(){
   if(isHybrid()&&engine.hy.front)vehicle.drive='awd';   // a hybrid's front axle motor drives the front wheels (build 195)
   const ch=CHASSIS[vehicle.chassis]||CHASSIS.coupe, tt=TIRE_TYPE[vehicle.tireType]||TIRE_TYPE.sport, wr=WEIGHT_RED[vehicle.weightRed]||WEIGHT_RED.none;
   const body=vehicle.body;
-  vehicle.chLabel=body?body.name:ch.label;
+  vehicle.chLabel=body?carLabel(body):ch.label;
   const sidewall=vehicle.tireWidth*(vehicle.tireAspect/100);           // mm
   vehicle.rTire=((vehicle.wheelDia*25.4)/2+sidewall)/1000;            // rolling radius (m)
   vehicle.wheelI=roadWheelInertia(vehicle);                                // kg m2, all four

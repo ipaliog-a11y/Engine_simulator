@@ -28,7 +28,7 @@ function raceFillAdd(){
   let h='<optgroup label="'+esc(tr('THIS BUILD'))+'"><option value="cur">'+esc(tr('The car on the VEHICLE tab'))+'</option></optgroup>';
   if(cars.length)h+='<optgroup label="'+esc(tr('GARAGE'))+'">'+cars.map(g=>'<option value="g:'+esc(g.id)+'">'+esc(g.name)+'</option>').join('')+'</optgroup>';
   const cats=[...new Set(FACTORY_CARS.map(p=>p.cat))];
-  for(const c of cats)h+='<optgroup label="'+esc(tr(c))+'">'+FACTORY_CARS.map((p,i)=>p.cat===c?'<option value="p:'+i+'">'+esc(p.name)+'</option>':'').join('')+'</optgroup>';
+  for(const c of cats)h+='<optgroup label="'+esc(tr(c))+'">'+FACTORY_CARS.map((p,i)=>p.cat===c?'<option value="p:'+i+'">'+esc(carNoName(p.name))+'</option>':'').join('')+'</optgroup>';
   const keep=sel.value;sel.innerHTML=h;if(keep&&[...sel.options].some(o=>o.value===keep))sel.value=keep;
 }
 function raceEntrantFrom(v){

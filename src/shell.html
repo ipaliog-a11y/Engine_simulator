@@ -33,7 +33,7 @@
 </div>
 <div class="container">
 <header>
-<h1>PIXEL ENGINE SIM v0.7 build 220</h1>
+<h1>PIXEL ENGINE SIM v0.7 build 221</h1>
 <div class="subtitle" id="subtitle">ENGINE DESIGNER • BUILD IT, THEN DRIVE IT</div>
 </header>
 <div class="build-strip" id="buildStrip">
@@ -257,6 +257,8 @@
 <!-- VEHICLE: drop the engine into a car and read its acceleration & top speed -->
 <div class="design-panel vehicle-panel" id="vehiclePanelTab">
 <h3>VEHICLE DESIGN</h3>
+<figure class="car-showroom" id="vhShowroom" hidden><img id="vhArt" alt="" decoding="async"><figcaption id="vhArtCap"></figcaption></figure>
+<div class="build-cap" id="vhBuildCap" hidden>YOUR BUILD — the drawn car follows the parts you fit</div>
 <canvas id="carPreview" class="pix-preview car" role="img" aria-label="Pixel-art side view of the car as configured"></canvas>
 <div class="hint">Pick a chassis and it arrives on its factory spec — matching tyres, wheels, brakes, suspension and aero. Swap any part from there; your current engine is dropped in and the performance is computed live.</div>
 
@@ -264,7 +266,10 @@
 <div class="field"><label for="vhFamily">CAR FAMILY</label><select id="vhFamily"></select></div>
 <div class="field"><label for="vhPreset">FACTORY CAR</label><select id="vhPreset"><option value="">— load a real car —</option></select></div>
 </div>
-<figure class="car-showroom" id="vhShowroom" hidden><img id="vhArt" alt="" decoding="async"><figcaption id="vhArtCap"></figcaption></figure>
+<div class="pick-row copy-row">
+<div class="field"><label for="vhCopyQ">COPY FROM (No. OR NAME)</label><input type="text" id="vhCopyQ" maxlength="40" autocomplete="off" placeholder="e.g. 071" aria-describedby="vhCopyHit"><div class="copy-hit" id="vhCopyHit" aria-live="polite"></div></div>
+<div class="field"><label for="btnCopyFrom">BODY &amp; PARTS ONLY</label><button id="btnCopyFrom" type="button" disabled>COPY FROM</button></div>
+</div>
 
 <div class="design-section">Chassis &amp; Drivetrain</div>
 <div class="design-grid">

@@ -115,13 +115,159 @@ const CAR_ART={
   'Porsche 918 Spyder (2013)':'porsche-918-spyder-2013',
 };
 function carArtUrl(name){const s=name&&CAR_ART[name];return s?CAR_ART_DIR+s+'.webp':'';}
-// The VEHICLE tab's showroom: the real car the body comes from, or nothing for a generic chassis.
+
+// Order numbers (build 221). Each real car has one, given once in the order the cars came into the sim, and never
+// changed or reused: a new car takes the next free number, and a removed car's number is retired. So 071 means the
+// same car in the picker, in COPY FROM and in the showcase, in this build and every later one.
+const CAR_NO={
+  'Suzuki Alto Works (HA36S, 2015)':1,
+  'Toyota Aygo 1.0 (2014)':2,
+  'Fiat 500 TwinAir 85 (2011)':3,
+  'Ford Fiesta 1.0 EcoBoost 125 (2013)':4,
+  'VW Golf GTI (Mk7, 2013)':5,
+  'Toyota GR Yaris (2020)':6,
+  'Honda Civic Type R (FK8, 2017)':7,
+  'Mazda MX-5 1.6 (NA, 1989)':8,
+  'Toyota Corolla Levin GT-APEX (AE86)':9,
+  'Honda S2000 (AP1, 2000)':10,
+  'BMW M3 (E46, 2000)':11,
+  'Porsche 911 GT3 (991.2, 2017)':12,
+  'Toyota Supra RZ (A80, 1993)':13,
+  'Nissan Skyline GT-R V-spec (R34, 1999)':14,
+  'Subaru Impreza WRX STI (GD, 2004)':15,
+  'Mitsubishi Lancer Evolution IX (2006)':16,
+  'Audi RS3 Sportback (8V, 2017)':17,
+  'Chevrolet Corvette (C6, LS3, 2008)':18,
+  'Chevrolet Corvette Z06 (C6, 2006)':19,
+  'Ford Mustang GT (2018)':20,
+  'Dodge Challenger SRT Hellcat (2015)':21,
+  'Ferrari F355 Berlinetta (1994)':22,
+  'Lamborghini Diablo VT (1993)':23,
+  'McLaren F1 (1994)':24,
+  'Porsche 911 Turbo (993, 1995)':25,
+  'Ferrari Enzo (2002)':26,
+  'Porsche Carrera GT (2004)':27,
+  'Ford GT (2005)':28,
+  'Lamborghini Murciélago LP640 (2006)':29,
+  'Ferrari 458 Italia (2010)':30,
+  'Lamborghini Huracán LP610-4 (2014)':31,
+  'McLaren 720S (2017)':32,
+  'Ferrari 812 Superfast (2017)':33,
+  'Porsche 911 Turbo S (992, 2020)':34,
+  'Lamborghini Huracán STO (2021)':35,
+  'Chevrolet Corvette Z06 (C8, 2023)':36,
+  'McLaren 750S (2023)':37,
+  'Mazda RX-7 (FD, 1993)':38,
+  'Mazda RX-8 (2004)':39,
+  'VW Golf 2.0 TDI 150 (Mk7, 2013)':40,
+  'BMW 330d (F30, 2012)':41,
+  'Chevrolet Silverado 2500HD Duramax (2020)':42,
+  'BMW X5 M (F85, 2015)':43,
+  'Porsche Cayenne Turbo (958.2, 2014)':44,
+  'Lamborghini Urus (2018)':45,
+  'Jeep Grand Cherokee SRT (WK2, 2014)':46,
+  'Toyota Land Cruiser 200 VX 4.5 D-4D (2015)':47,
+  'Radical SR3 RSX 1500 (2015)':48,
+  'BAC Mono 2.3 (2011)':49,
+  'Nissan 370Z (Z34, 2009)':50,
+  'Honda NSX (NA1, 1991)':51,
+  'Ford F-150 Raptor (2017)':52,
+  'Nissan GT-R (R35, 2017)':53,
+  'Alfa Romeo Giulia Quadrifoglio (2017)':54,
+  'Nissan 300ZX Twin Turbo (Z32, 1990)':55,
+  'Buick GNX (1987)':56,
+  'Ferrari Dino 246 GT (1969)':57,
+  'Ferrari F40 (1987)':58,
+  'Jaguar E-Type 3.8 FHC (Series 1, 1961)':59,
+  'Ford Mustang Fastback 289 (1965)':60,
+  'Porsche 911 Carrera RS 2.7 Sport (1973)':61,
+  'BMW M3 (E30, 1986)':62,
+  'Volkswagen Golf GTI (Mk1, 1976)':63,
+  'Ferrari 365 GTB/4 Daytona (1968)':64,
+  'Lamborghini Countach LP400 (1974)':65,
+  'Audi Sport quattro (1984)':66,
+  'Mercedes-Benz 190E 2.3-16 (1984)':67,
+  'Peugeot 205 GTI 1.9 (1986)':68,
+  'Ford Sierra RS Cosworth (1986)':69,
+  'Lancia Delta HF Integrale Evoluzione (1992)':70,
+  'Honda Integra Type R (DC2, 1995)':71,
+  'Lotus Elise (S1, 1996)':72,
+  'BMW M5 (E39, 2000)':73,
+  'Trabant 601 S (1988)':74,
+  'Honda S660 (2015)':75,
+  'Honda Beat (1991)':76,
+  'Suzuki Cappuccino (EA11R, 1991)':77,
+  'Ford Focus RS (Mk3, 2016)':78,
+  'Renault Mégane R.S. Trophy (2018)':79,
+  'Suzuki Swift Sport (ZC33S, 2018)':80,
+  'Honda Civic Type R (EK9, 1997)':81,
+  'Toyota GR86 (2022)':82,
+  'Porsche 718 Cayman GT4 (2020)':83,
+  'BMW M2 Competition (F87, 2018)':84,
+  'Ariel Atom 3.5 (2013)':85,
+  'Mazda MX-5 2.0 (ND, 2015)':86,
+  'Dodge Viper SRT-10 (2008)':87,
+  'Mercedes-AMG C63 (W204, 2008)':88,
+  'Ram 2500 HO Cummins (2019)':89,
+  'Toyota Hilux 2.8 D-4D (2016)':90,
+  'Volkswagen Amarok 3.0 V6 TDI (2018)':91,
+  'Chevrolet Camaro ZL1 (2017)':92,
+  'Tesla Model 3 RWD (2021)':93,
+  'Tesla Model Y Long Range (2022)':94,
+  'Tesla Model S Plaid (2021)':95,
+  'Hyundai Ioniq Hybrid (2016)':96,
+  'Toyota Prius (2016)':97,
+  'Nissan Qashqai e-POWER (2022)':98,
+  'BMW 330e (2020)':99,
+  'Porsche 918 Spyder (2013)':100,
+};
+const carNo=name=>CAR_NO[name]?String(CAR_NO[name]).padStart(3,'0'):'';
+// The picker's line for a real car: its number, then its name.
+const carNoName=name=>(carNo(name)?carNo(name)+' · ':'')+name;
+// A car made by COPY FROM is not that car any more: it is a custom car carrying its body and parts.
+function carLabel(body){return body.copyOf?tr('Custom')+' ('+tr('from')+' '+(carNo(body.name)||body.name)+')':body.name;}
+
+// The VEHICLE tab's showroom (build 220, at the top since build 221): a real car's picture holds the top
+// slot as long as that car's body is on, modified or not, and the drawn car moves under it as YOUR BUILD
+// (the only view of the parts fitted). A generic chassis or a copied car has no picture: the drawn car alone.
 function syncCarArt(){
   const fig=document.getElementById('vhShowroom'),img=document.getElementById('vhArt');if(!fig||!img)return;
-  const name=(typeof vehBody!=='undefined'&&vehBody&&vehBody.name)||'',url=carArtUrl(name);
+  const body=typeof vehBody!=='undefined'&&vehBody,name=(body&&!body.copyOf&&body.name)||'',url=carArtUrl(name);
   fig.hidden=!url;
+  const cv=document.getElementById('carPreview'),cap2=document.getElementById('vhBuildCap');
+  if(cv)cv.classList.toggle('under-art',!!url);
+  if(cap2)cap2.hidden=!url;
   if(!url){img.removeAttribute('src');img.alt='';return;}
   if(img.getAttribute('src')!==url){img.src=url;img.alt=name;}
   const cap=document.getElementById('vhArtCap');
-  if(cap)cap.textContent=name+(isFactoryFit(vehicle)?'':' — '+tr('as it left the factory'));
+  if(cap)cap.textContent=carNoName(name)+(isFactoryFit(vehicle)?'':' — '+tr('as it left the factory'));
+}
+
+// COPY FROM: a real car's body and parts, by its number or a piece of its name, with the engine you have
+// kept in it. The body's own mass is taken with its factory engine in (as loading the car does), so the
+// engine you keep then moves the mass and the weight split by the difference, as a swap on the real car would.
+function findCarFor(q){
+  q=String(q||'').trim().toLowerCase();if(!q)return [];
+  if(/^\d{1,3}$/.test(q))return FACTORY_CARS.filter(p=>CAR_NO[p.name]===+q);
+  return FACTORY_CARS.filter(p=>p.name.toLowerCase().includes(q)).sort((a,b)=>CAR_NO[a.name]-CAR_NO[b.name]);
+}
+function syncCopyHit(){
+  const inp=document.getElementById('vhCopyQ'),out=document.getElementById('vhCopyHit'),btn=document.getElementById('btnCopyFrom');
+  if(!inp||!out)return;
+  const hits=findCarFor(inp.value);
+  out.textContent=!inp.value.trim()?'':hits.length?'> '+carNoName(hits[0].name)+(hits.length>1?' (+'+(hits.length-1)+' '+tr('more')+')':''):tr('no such car');
+  out.classList.toggle('miss',!!inp.value.trim()&&!hits.length);
+  if(btn)btn.disabled=!hits.length;
+}
+function copyCarFrom(p){
+  if(!p)return null;
+  const keep=serializeBuild(engine.name||'',''),engName=engine.name;
+  loadVehiclePreset(p);                                  // the car with its own engine: fixes the body's own mass
+  const v=readVehicleFromForm();
+  v.body=Object.assign({},v.body,{copyOf:CAR_NO[p.name]||0});
+  applyBuild(Object.assign({},keep,{vehicle:v}));        // then your engine, tune and fuel map back in
+  engine.name=engName;
+  if(carPicker)carPicker.show(null);
+  markLoaded('car',vehicle.chLabel);
+  return vehicle.chLabel;
 }

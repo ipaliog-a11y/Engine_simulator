@@ -156,7 +156,14 @@ function bindControls(){
     if(enginePicker)enginePicker.show(ei);
     markLoaded('engine',FACTORY_CARS[i].engine);markLoaded('car',name);
     flash(tr('LOADED:')+' '+name+(perf&&perf.t100?' • 0–100 '+perf.t100.toFixed(1)+'s':''));
-  });
+  },p=>carNoName(p.name));
+  {const q=document.getElementById('vhCopyQ'),btn=document.getElementById('btnCopyFrom');
+   if(q){q.addEventListener('input',syncCopyHit);q.addEventListener('keydown',e=>{if(e.key==='Enter'&&btn&&!btn.disabled)btn.click();});}
+   if(btn)btn.addEventListener('click',()=>{
+     const p=findCarFor(q&&q.value)[0];if(!p){flash(tr('no such car'),'warn');return;}
+     const label=copyCarFrom(p);flash(tr('COPIED')+': '+label+' • '+tr('your engine kept'));
+   });
+   syncCopyHit();}
   // Garage. The list is rebuilt on every change, so LOAD/DELETE are delegated off the container
   // rather than rebound per card.
   for(const [kind,btnId] of [['car','btnGarageSave'],['engine','btnEngineSave']]){
