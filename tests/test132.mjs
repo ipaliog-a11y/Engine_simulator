@@ -9,12 +9,12 @@
 //     Alto Works, 010 the S2000, 012 the 911 GT3): a number never moves to another car;
 //   · the FACTORY CAR list and the RACE tab's list lead each car with its number;
 //   · a real car's picture sits above the drawn car and stays when a part changes (the caption then says it is the car
-//     as it left the factory); the drawn car is still drawn, under it, at whole cells; a generic chassis has no picture;
+//     as it left the factory); the drawn car is still drawn, under it, at whole cells; a generic chassis shows its class's picture (since build 222);
 //   · COPY FROM finds a car by number and by name, says what it found before you press it, and refuses a miss;
 //   · a copy keeps the engine (the same form, name and power) and takes the car's body and parts (its Cd, frontal area,
 //     wheelbase and factory fitment); its mass is the real car's with the engine difference, as an engine swap is; it is
-//     labelled as a custom car from that number, has no picture, and the picker no longer claims the real car;
-//   · a copy saves and loads as a copy, and its GARAGE card is drawn, not the real car's picture;
+//     labelled as a custom car from that number, shows its class's picture (since build 222), and the picker no longer claims the real car;
+//   · a copy saves and loads as a copy, and its GARAGE card shows its class's picture, not the real car's (since build 222);
 //   · the copy reads in Greek.
 import { chromium } from './pw.mjs';
 import { fileURLToPath, pathToFileURL } from 'url';
@@ -71,7 +71,7 @@ const top = await page.evaluate(async () => {
   let lit = 0; for (let k = 0; k < d.length; k += 4) if (d[k] + d[k + 1] + d[k + 2] > 120) lit++;
   o.lit = lit;
   const c = document.getElementById('vhChassis'); c.value = 'coupe'; c.dispatchEvent(new Event('input'));
-  o.genShown = !fig.hidden; o.genUnder = cv.classList.contains('under-art'); o.genCap = !document.getElementById('vhBuildCap').hidden;
+  o.genSrc = document.getElementById('vhArt').getAttribute('src') || ''; o.genShown = !fig.hidden; o.genUnder = cv.classList.contains('under-art'); o.genCap = !document.getElementById('vhBuildCap').hidden;
   return o;
 });
 console.log(`== top: picture above the drawn car ${top.above}; "${top.cap}"; modified: shown ${top.modShown} "${top.modCap}", drawn under it ${top.under} (${top.cssW}px, ${top.lit} lit); generic: picture ${top.genShown} ==`);
@@ -80,7 +80,7 @@ if (top.cap !== '058 · Ferrari F40 (1987)') fails.push('the caption is not the 
 if (!top.modShown || !/as it left the factory/.test(top.modCap)) fails.push('the picture does not stay, so marked, when the car is modified');
 if (!top.under || !top.buildCap || top.lit < 300) fails.push('the drawn car is not kept under the picture as YOUR BUILD');
 if (top.cssW !== 340) fails.push('the drawn car under the picture is not at whole cells: ' + top.cssW + 'px');
-if (top.genShown || top.genUnder || top.genCap) fails.push('a generic chassis still shows a picture');
+if (!top.genShown || !top.genUnder || !top.genCap || !/generic-sports-coupe\.webp$/.test(top.genSrc)) fails.push('a generic chassis does not show its class\'s picture over YOUR BUILD: ' + top.genSrc);
 
 // 3. COPY FROM: finding
 const find = await page.evaluate(() => {
@@ -112,7 +112,7 @@ const copy = await page.evaluate(() => {
   o.tyre = vehicle.tireWidth + '/' + vehicle.tireAspect + 'R' + vehicle.wheelDia; o.brake = vehicle.brakeType + ' ' + vehicle.rotor;
   o.mass = vehicle.mass; o.want = o.realMass - o.realEng + myEng;
   o.label = vehicle.chLabel; o.copyOf = vehicle.body.copyOf;
-  o.pic = !document.getElementById('vhShowroom').hidden; o.picker = document.getElementById('vhPreset').value;
+  o.pic = document.getElementById('vhArt').getAttribute('src') || ''; o.picClass = classArtUrl(vehicle.chassis); o.picker = document.getElementById('vhPreset').value;
   o.strip = document.getElementById('bsCar').textContent;
   // save and load it back
   const saved = JSON.parse(JSON.stringify(serializeBuild('T132 copy', '')));
@@ -121,7 +121,7 @@ const copy = await page.evaluate(() => {
   garage.push({ id: 't132', kind: 'car', name: 'T132 copy', date: '2026-11-02', stats: {}, build: saved }); renderGarage();
   const card = [...document.querySelectorAll('#garageList .garage-item')].find(c => c.textContent.includes('T132 copy'));
   const th = card && card.querySelector('.garage-thumb');
-  o.thumb = ((th && th.getAttribute('src')) || '').slice(0, 22);
+  o.thumb = (th && th.getAttribute('src')) || ''; o.thumbClass = classArtUrl(saved.vehicle.chassis);
   garage = garage.filter(g => g.id !== 't132'); renderGarage();
   // Greek
   applyLang('el'); o.el = vehicle.chLabel; q.value = 'ferrari'; q.dispatchEvent(new Event('input')); o.elHit = document.getElementById('vhCopyHit').textContent;
@@ -138,10 +138,10 @@ if (copy.cd !== copy.realCd || Math.abs(copy.area - copy.realArea) > 1e-9 || cop
 if (copy.tyre !== copy.realTyre || copy.brake !== copy.realBrake) fails.push('COPY FROM did not take the car\'s factory parts');
 if (Math.abs(copy.mass - copy.want) > 0.5) fails.push(`the copy's mass is not the real car's with the engine difference: ${copy.mass} against ${copy.want}`);
 if (copy.label !== 'Custom (from 012)' || copy.copyOf !== 12) fails.push('the copy is not labelled as a custom car from 012: ' + copy.label);
-if (copy.pic) fails.push('a copy still shows the real car\'s picture');
+if (copy.pic !== copy.picClass) fails.push('a copy does not show its class\'s picture (since build 222): ' + copy.pic);
 if (copy.picker !== '') fails.push('the picker still claims the real car after a copy');
 if (copy.reCopy !== 12 || copy.reLabel !== 'Custom (from 012)' || Math.abs(copy.reMass - copy.mass) > 0.5) fails.push('a copy does not save and load as a copy');
-if (!/^data:image\/png/.test(copy.thumb)) fails.push('a copy\'s garage card shows the real car\'s picture, not the drawn car');
+if (copy.thumb !== copy.thumbClass) fails.push('a copy\'s garage card does not show its class\'s picture (since build 222): ' + copy.thumb);
 if (copy.el !== 'Προσαρμοσμένο (από 012)' || !/ακόμη/.test(copy.elHit) || copy.elBtn !== 'ΑΝΤΙΓΡΑΦΗ') fails.push('COPY FROM is not in Greek');
 
 if (errors.length) fails.push(...errors);

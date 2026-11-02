@@ -207,8 +207,9 @@ const garageThumbs=new Map();
 function garageThumb(g){
   const b=g&&g.build;if(!b||!b.engine)return '';
   const car=gKind(g)==='car'&&b.vehicle;
-  // a real car's body is shown by its showroom picture (car-art.js); a generic chassis is drawn
-  const art=car&&b.vehicle.body&&!b.vehicle.body.copyOf&&carArtUrl(b.vehicle.body.name);
+  // a car is shown by its picture (car-art.js): a real car's own, a generic chassis's or a copy's its class's.
+  // An engine is drawn, as is a car whose class has no picture.
+  const art=car&&vehicleArt(b.vehicle).url;
   if(art)return art;
   const key=(car?'c':'e')+JSON.stringify(car?[b.vehicle,b.engine.intake]:b.engine);
   if(garageThumbs.has(key))return garageThumbs.get(key);

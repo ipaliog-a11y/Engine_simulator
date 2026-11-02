@@ -124,10 +124,13 @@ const thumbs = await page.evaluate(() => {
     build: { engine: { type: 'petrol4', cylinders: 4, bore_mm: 86, stroke_mm: 86, layout: 'inline', intake: 'na' }, vehicle: { chassis: 'hatch' } }, stats: {} };
   const eng = { id: 'legacy2', name: 'Old engine', date: '2025-01-01', kind: 'engine', build: { engine: { cylinders: 8, layout: 'v' } }, stats: {} };
   garage.push(old, eng); renderGarage(); setTab('garage');
-  const imgs = [...document.querySelectorAll('#garagePanel .garage-thumb')];
-  return { n: imgs.length, ok: imgs.every(i => /^data:image\/png/.test(i.src) && i.src.length > 500) };
+  // since build 222 a car's card shows its class's picture (test133); an engine's is still drawn
+  const card = n => [...document.querySelectorAll('#garagePanel .garage-item')].find(c => c.textContent.includes(n));
+  const car = card('Old car').querySelector('.garage-thumb'), engT = card('Old engine').querySelector('.garage-thumb');
+  const imgs = [car, engT].filter(Boolean);
+  return { n: imgs.length, ok: /generic-hot-hatch\.webp$/.test(car.getAttribute('src')) && /^data:image\/png/.test(engT.src) && engT.src.length > 500 };
 });
-console.log(`== garage: ${thumbs.n} thumbnails, all drawn: ${thumbs.ok} ==`);
+console.log(`== garage: ${thumbs.n} thumbnails, the car its class picture and the engine drawn: ${thumbs.ok} ==`);
 if (thumbs.n < 2 || !thumbs.ok) fails.push('saved cars and engines do not all get a thumbnail');
 
 // ---- 5. the car on the track map is drawn where the replay puts it ----
