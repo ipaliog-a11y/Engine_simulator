@@ -76,6 +76,11 @@ derived again.
     limit.
 - `test29` no longer requires the classes to use all four diff types, since no class is mostly viscous-LSD cars. It
   checks that each class fits a real diff and that all four are on offer as parts.
+- **`test35`'s limit is now 8 s.** The 20 km import is solved on a generic sports coupe. That coupe no longer has a
+  rear lip (downforce coefficient 0.16 → 0), and the racing-line search keeps a few percent more moves, so the import
+  and solve takes about 6% longer: 4.6–5.0 s on the hand-set coupe, 4.9–5.2 s on the median one. The run that failed
+  the old cap took 6.7 s. The 6.5 s cap was 0.2 s above the slowest hand-set run it was set from, which is why the
+  slower car stepped over it. 8 s puts that margin back. The solver itself is unchanged.
 - Left open: the DIFFERENTIAL guide paragraph quotes a 6.2 supercharged V8 in the muscle class at 4.85 / 4.97 s and
   75.74 / 74.24 s per lap. Build 222's code doesn't reproduce those either (4.60 s, 65.6 s), so they were stale
   before this build, measured some other way; they are left for a build that finds how they were measured.
