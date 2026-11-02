@@ -10,8 +10,8 @@
 //   · the VEHICLE tab: loading a real car from the picker shows its picture (at the top since build 221), captioned with
 //     its number and name;
 //     a change of car changes the picture; a part changed says the picture is the car as it left the factory; going
-//     to a generic chassis hides it; the live car preview is still drawn;
-//   · the GARAGE: a saved real car's card shows its picture; a saved generic chassis is still drawn (a PNG data URL);
+//     to a generic chassis shows its class's picture instead (build 222, test133); the live car preview is still drawn;
+//   · the GARAGE: a saved real car's card shows its picture; a saved generic chassis its class's (since build 222);
 //   · the caption reads in Greek.
 import { chromium } from './pw.mjs';
 import { fileURLToPath, pathToFileURL } from 'url';
@@ -82,13 +82,13 @@ const preview = await page.evaluate(() => {
 await page.evaluate(() => { const c = document.getElementById('vhChassis'); c.value = 'coupe'; c.dispatchEvent(new Event('input')); });
 await page.waitForTimeout(200);
 const generic = await room();
-console.log(`== showroom: start hidden ${before.hidden}; S2000 ${s2k.src} (${s2k.w}px) "${s2k.cap}"; F40 ${f40.src}; modified "${modded.cap}"; generic hidden ${generic.hidden}; live preview ${preview} lit pixels ==`);
+console.log(`== showroom: start hidden ${before.hidden}; S2000 ${s2k.src} (${s2k.w}px) "${s2k.cap}"; F40 ${f40.src}; modified "${modded.cap}"; generic ${generic.src}; live preview ${preview} lit pixels ==`);
 if (!s2k.shown || !/honda-s2000-ap1-2000\.webp$/.test(s2k.src) || s2k.w !== 960) fails.push('loading the S2000 does not show its picture');
 // since build 221 the caption leads with the car's order number (test132)
 if (s2k.cap !== '010 · Honda S2000 (AP1, 2000)') fails.push('the showroom caption is not the car\'s number and name: ' + s2k.cap);
 if (!/ferrari-f40-1987\.webp$/.test(f40.src)) fails.push('a change of car does not change the picture');
 if (modded.hidden || !/as it left the factory/.test(modded.cap)) fails.push('a modified car does not say the picture is the factory car');
-if (!generic.hidden) fails.push('a generic chassis still shows a real car\'s picture');
+if (!/generic\/generic-sports-coupe\.webp$/.test(generic.src)) fails.push('a generic chassis does not show its class\'s picture: ' + generic.src);
 if (preview < 500) fails.push('the live car preview is no longer drawn');
 
 // 4. the GARAGE
@@ -102,13 +102,13 @@ const garageR = await page.evaluate(async () => {
   const card = n => [...document.querySelectorAll('#garageList .garage-item')].find(c => c.textContent.includes(n));
   const a = card('T131 real').querySelector('.garage-thumb'), b = card('T131 generic').querySelector('.garage-thumb');
   await new Promise(r => a.complete ? r() : (a.onload = a.onerror = r));
-  const out = { real: a.getAttribute('src'), realW: a.naturalWidth, art: a.classList.contains('art'), gen: (b.getAttribute('src') || '').slice(0, 22) };
+  const out = { real: a.getAttribute('src'), realW: a.naturalWidth, art: a.classList.contains('art'), gen: b.getAttribute('src') || '' };
   garage = garage.filter(g => !/^t131/.test(g.id)); renderGarage();
   return out;
 });
-console.log(`== garage: real car ${garageR.real} (${garageR.realW}px, art ${garageR.art}); generic ${garageR.gen}… ==`);
+console.log(`== garage: real car ${garageR.real} (${garageR.realW}px, art ${garageR.art}); generic ${garageR.gen.slice(0, 60)} ==`);
 if (!/mazda-mx-5-na-1989\.webp$/.test(garageR.real) || garageR.realW !== 960 || !garageR.art) fails.push('a saved real car\'s garage card does not show its picture');
-if (!/^data:image\/png/.test(garageR.gen)) fails.push('a saved generic chassis is no longer drawn');
+if (!/generic-hot-hatch\.webp$/.test(garageR.gen)) fails.push('a saved generic chassis does not show its class\'s picture: ' + garageR.gen);
 
 // 5. Greek
 const el = await page.evaluate(() => {
