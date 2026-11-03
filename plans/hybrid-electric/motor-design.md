@@ -205,4 +205,5 @@ capacity and voltage, reduction ratio. About 12 fields, each of which moves a nu
 simulator measures.
 
 **Later:** round wire vs hairpin, copper vs aluminium, lamination thickness, axial flux and
-switched reluctance, multi-motor torque vectoring, two-speed gearbox.
+switched reluctance, multi-motor torque vectoring, two-speed gearbox. The order, and the test
+that has to stay still while each one lands, are in [drivetrain.md](drivetrain.md).

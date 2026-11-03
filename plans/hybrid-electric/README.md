@@ -1,6 +1,8 @@
 # Plan: electric, then hybrids
 
-**Status:** steps 0-2 done: battery electric shipped as **v0.7** (builds 176-184). Step 3, hybrids, under way. Written at build 175.
+**Status:** steps 0-4 done: battery electric shipped as **v0.7** (builds 176-184), hybrids through build 196, electric sound in builds 197-198. Written at build 175.
+
+**What comes next** is [drivetrain.md](drivetrain.md): the stages after v0.7, and the lock in `tests/test136.mjs` that stops a stage from moving a number it did not mean to.
 
 Should hybrid and electric cars become a new game built from this one, or live in this one? This
 document answers that, lists what would have to change, and gives an order to build it in.
