@@ -20,6 +20,21 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 Working toward **v1.0 — every number derived, not fitted.**
 
+### A plan for the electric drivetrain, and a lock on its numbers (build 225)
+
+The electric drive shipped in builds 178–184. Deepening it — laminations, regen, cold cells, copper
+loss at high frequency, real field weakening, a second gear — has an order now, in
+`plans/hybrid-electric/drivetrain.md`. Each stage is one build. A stage marked still must not move
+a number. A stage marked moves has to say by how much, against the published figures.
+
+`test136` locks the model's own output, tighter than the 8–20% bands in the Tesla and Leaf tests.
+Those bands can hide a drift. The lock holds the three Teslas (power, torque, knee, pack, WLTP
+Wh/km, 0–100, top speed, centre of gravity), the rectangle above the knee (flat to 4×, then 4/5 at
+5×), and the five factory hybrids' motors, which share this drive. A later stage edits a locked
+value only when the plan names that stage for that block.
+
+Nothing in the simulation moved.
+
 ### The drawn car is off the VEHICLE tab (build 224)
 
 The VEHICLE tab showed two pictures of the car: the showroom picture, and under it a car drawn from the
