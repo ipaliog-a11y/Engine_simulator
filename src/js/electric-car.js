@@ -76,10 +76,10 @@ function evGrid(e){const c=evCurve(e);return {rpms:c.map(p=>p.rpm),boosts:[0],tq
 // capped by the power the pack takes back. Below ~500 rpm a real car fades it out to stop smoothly; the table's floor
 // does the same.
 function evRegenTable(e,rl){
-  const out=[],V=motorRatedV(e),Pc=e.pack.pChargeMax;
+  const out=[],V=motorRatedV(e),Pc=e.pack.pChargeMax,k=(EV_REGEN[e.evRegen]||EV_REGEN.high).k;
   for(let r=500;r<=rl+250;r+=250){
     const w=Math.min(r,rl)*Math.PI/30,T=motorMaxTorque(e.motor,Math.min(r,rl),V,60);
-    out.push(Math.max(0,Math.min(T,Pc/Math.max(1,w))));
+    out.push(k*Math.max(0,Math.min(T,Pc/Math.max(1,w))));
   }
   return out;
 }
@@ -124,7 +124,7 @@ function syncEvVehicleForm(ev){
 // The vehicle summary's driveline line for an electric car, in place of the ratios.
 function evDrivelineLine(v){
   return '<br>'+tr('Reduction')+' <b>'+v.finalDrive.toFixed(2)+':1</b> ('+tr('matched')+' '+v.reductionMatched.toFixed(2)+':1) • '+
-    tr('regeneration up to')+' <b>'+Math.round(engine.pack.pChargeMax/1000)+' kW</b> • '+tr('motor and pack')+' '+powertrain().mass()+' kg';
+    tr('regeneration up to')+' <b>'+Math.round(engine.pack.pChargeMax/1000*(EV_REGEN[engine.evRegen]||EV_REGEN.high).k)+' kW</b> • '+tr('motor and pack')+' '+powertrain().mass()+' kg';
 }
 // The TRACK panel's cells for an electric car: the motor's hottest and how much of the lap it was cut back, the pack's
 // hottest, and the energy the lap drew and took back.

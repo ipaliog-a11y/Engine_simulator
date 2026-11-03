@@ -8,7 +8,7 @@
 //   · the shape above the knee, on a motor that can actually rev past 4× its knee: power flat through 4×,
 //     then 4/5 at 5× and 4/6 at 6× (the rectangle motorMaxTorque imposes, CPSR = 4);
 //   · the five factory hybrids' motors, which share this drive;
-//   · LAMINATIONS is on the form and defaults to 0.35 mm (stage 1). Wire, regen strength and a second gear
+//   · LAMINATIONS defaults to 0.35 mm (stage 1) and REGENERATION to HIGH (stage 2). Wire and a second gear
 //     are not on the form yet. CPSR is 4 (3 for an induction motor).
 // A later stage edits a locked value only when drivetrain.md names that stage for that block, in the same
 // commit as the physics, with the old number and the new one in the CHANGELOG. A stage marked "still"
@@ -98,9 +98,9 @@ const r = await page.evaluate(() => {
   const m = motorBuild({ rotorD: 100, stackL: 80, poles: 4, turns: 40, magnet: 'ndfeb', retention: 'sleeve', cooling: 'jacket', inverter: 'sic', invAmps: 200, maxRpm: 40000 });
   const V = 350, psi = motorPsi(m, 60), knee = motorBaseW(m, V, psi) * 30 / Math.PI;
   const P = n => motorMaxTorque(m, n, V, 60) * n * Math.PI / 30;
-  const absent = ['evWire', 'evRegen', 'evGear2'].filter(id => document.getElementById(id));
-  const lamEl = document.getElementById('evLamination');
-  return { cars, hy, tail: { knee, nMax: m.nMax, p1: P(knee), p2: P(2 * knee), p4: P(4 * knee), p5: P(5 * knee), p6: P(6 * knee) }, absent, lam: lamEl ? lamEl.value : null, cpsr: CPSR, im: IM_CPSR };
+  const absent = ['evWire', 'evGear2'].filter(id => document.getElementById(id));
+  const lamEl = document.getElementById('evLamination'), regenEl = document.getElementById('evRegen');
+  return { cars, hy, tail: { knee, nMax: m.nMax, p1: P(knee), p2: P(2 * knee), p4: P(4 * knee), p5: P(5 * knee), p6: P(6 * knee) }, absent, lam: lamEl ? lamEl.value : null, regen: regenEl ? regenEl.value : null, cpsr: CPSR, im: IM_CPSR };
 });
 
 const f = (x, d = 2) => (+x).toFixed(d);
@@ -172,8 +172,9 @@ for (const [key, want] of Object.entries(HYB)) {
   near(h.front, want.front, 0.002, 0.2, `${key} front motor torque`);
 }
 
-console.log(`== LAMINATIONS ${r.lam}; later fields still absent (${r.absent.join(', ') || 'none'}); CPSR ${r.cpsr}, induction ${r.im} ==`);
+console.log(`== LAMINATIONS ${r.lam}; REGENERATION ${r.regen}; later fields still absent (${r.absent.join(', ') || 'none'}); CPSR ${r.cpsr}, induction ${r.im} ==`);
 if (r.lam !== '0.35') fails.push('LAMINATIONS is not on the form at 0.35 mm');
+if (r.regen !== 'high') fails.push('REGENERATION is not on the form at HIGH');
 if (r.absent.length) fails.push('a later field is already on the form: ' + r.absent.join(', '));
 exact(r.cpsr, 4, 'magnet CPSR');
 exact(r.im, 3, 'induction CPSR');
