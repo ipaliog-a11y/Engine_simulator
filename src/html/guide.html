@@ -1356,7 +1356,8 @@ Prices have fallen tenfold: about $1100 per kWh in 2010, $160 in 2019 and $115 i
 • <b>Li-ION (HYBRID CELLS)</b> and <b>NiMH (HYBRID CELLS)</b>: built for hybrids, a small battery that gives and takes 20–25 times its capacity in power.<br>
 <b>CELLS IN SERIES</b> (20–400). Sets the voltage: 96 NCA cells make about 350 V, 110 make about 400 V. Higher voltage moves the motor's knee up (more power at speed) and lowers the current for the same power.<br>
 <b>CAPACITY</b> (kWh). Range, mass and price. A bigger battery also gives and takes more power, because there are more cells in parallel.<br>
-<b>TECHNOLOGY YEAR.</b> Each chemistry's energy per kilogram and price per kWh follow the year: a 2010 battery is heavier and dearer than the same battery in 2024.
+<b>TECHNOLOGY YEAR.</b> Each chemistry's energy per kilogram and price per kWh follow the year: a 2010 battery is heavier and dearer than the same battery in 2024.<br>
+The power and the regeneration the car is rated at are at 25 °C. A colder lithium pack can give and take less. The lap does not yet start the pack cold.
 </div>
 </div>
 <div class="gtier gt-phys"><div class="gtier-h">LV3 · THE PHYSICS</div>
@@ -1365,7 +1366,8 @@ Each chemistry is a table of open-circuit voltage against charge, a cut-off volt
 <b>The pack.</b> Nominal voltage is the cells in series times the mean cell voltage. The capacity in Ah is kWh·1000 / V<sub>nom</sub>. The resistance is <span class="geq">R = N<sub>s</sub> · (R·Ah)<sub>cell</sub> / Ah · 1.1</span> (+10% for busbars, contactors and the fuse).<br>
 <b>Limits.</b> The most current is the C-rate times the Ah (NCA 6C, power cells 10C, hybrid cells 25C). The most power is reached either at that current or at the cut-off voltage, whichever comes first. The charge rate under braking is the lithium-plating limit: about 1C for NCA, 1.5C for LFP.<br>
 <b>Mass.</b> The cells' mass is kWh over Wh/kg at the year, divided by the cells' share of the pack (0.62–0.68, or 0.82 cell-to-pack).<br>
-<b>Heat.</b> The pack is one lumped node: I²R heat in, a liquid cooling plate taking about 2 W/K per kWh to 30 °C coolant. Its management cuts power from 50 °C.
+<b>Heat.</b> The pack is one lumped node: I²R heat in, a liquid cooling plate taking about 2 W/K per kWh to 30 °C coolant. Its management cuts power from 50 °C. That cut is separate from the resistance.<br>
+<b>Cold.</b> The resistance above is at 25 °C. A graphite-anode lithium pack's rises when it is colder, with the 68 kJ/mol of the lithium charge transfer at the graphite (Jow, Xue and Zhang, 2011). Applied to the whole pack resistance this overstates the cold, because the busbars and the ohmic part of the electrolyte are less activated. Lead-acid and NiMH stay at the 25 °C resistance until a cited energy exists for them. The lap, the cycle and the race still use 25 °C.
 </div>
 </div>
 <div class="guide-see">See also: <a data-gp="evdrive">The electric drive</a> · <a data-gp="inverter">The inverter</a> · <a data-gp="hybrid">Hybrids</a></div>

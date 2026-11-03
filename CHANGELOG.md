@@ -20,6 +20,26 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 Working toward **v1.0 — every number derived, not fitted.**
 
+### A cold lithium pack resists more (build 228)
+
+A pack's resistance was one number at every temperature. It is now the 25 °C value the drive was
+already using, so the Model Y at 25 °C is still 0.053 Ω, 377 kW out and 78 kW back, and its WLTP
+figure stays 141 Wh/km. The lap, the cycle and the race still call that 25 °C resistance. They do
+not yet pass the pack's own temperature in.
+
+A graphite-anode lithium cell (LFP, NCA, the power cells, the hybrid lithium cells) rises when it
+is colder, with the 68 kJ/mol of the lithium charge transfer at the graphite (Jow, Xue and Zhang,
+Journal of the Electrochemical Society, 2011). On the Model Y that is 0.65 Ω and 36 kW at 0 °C,
+and 2.0 Ω and 11 kW at −10 °C. What it can take back at 80% charge falls from 78 kW to 16 kW and
+5 kW. Putting the interface's energy on the whole pack resistance overstates the cold: the busbars
+and the ohmic part of the electrolyte are less activated, and there is no measured split to separate
+them. Lead-acid and NiMH stay at 25 °C until a cited energy exists for them.
+
+The cut from 50 °C to nothing at 60 °C is unchanged, and it is not this curve. At 40 °C, still
+below that cut, the same pack gives 445 kW because the resistance has fallen.
+
+Stage 3 of `plans/hybrid-electric/drivetrain.md`.
+
 ### Regeneration strength on an electric car (build 227)
 
 An electric car always regenerated at whatever the motor and the pack could take back. REGENERATION
