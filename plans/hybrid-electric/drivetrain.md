@@ -1,8 +1,9 @@
 # Plan: the electric drivetrain after v0.7
 
 **Status:** stage 0 is the lock in `tests/test136.mjs` (build 225). Stage 1, lamination
-thickness, is build 226. Stages 2–13 are not built. The locked numbers are the drive as it
-stood at build 224, with the lamination field now present at 0.35 mm.
+thickness, is build 226. Stage 2, regeneration strength, is build 227. Stages 3–13 are not
+built. The locked numbers are the drive as it stood at build 224, with lamination at 0.35 mm
+and regeneration at HIGH.
 
 The drive that shipped in builds 178–184 is a real machine up to the knee and a drawn shape
 after it. This is the order for deepening it. Each stage is one build and one pull request.
@@ -118,6 +119,11 @@ Wh/km, and a lap's brake energy moves the same way. Below about 500 rpm the fade
 `evRegenTable` stays.
 
 Guide: the electric-drive page. `test87`.
+
+**Shipped** as build 227. HIGH is the old table. On the Model Y, OFF takes the WLTP figure from
+141 Wh/km to 196. LOW barely moves that cycle, because its stops ask for less than half the motor;
+on the technical circuit the energy put back is 0.182, 0.094 and 0 kWh, and the front rotor 563,
+579 and 595 °C.
 
 ---
 

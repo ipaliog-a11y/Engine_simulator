@@ -8,7 +8,7 @@
 // The car does not drive on it yet. A single-speed reduction, regenerative braking and the motor's heat over a lap
 // are step 2.3; until then the VEHICLE, TRACK and RACE tabs say so instead of running an electric car through a
 // combustion gearbox. New words are English for now (decision 11): tr() shows the English where Greek is missing.
-const EV_DEFAULT={evMotorType:'pm',evRotorD:150,evStack:134,evPoles:6,evTurns:12,evMagnet:'ndfeb',evRetention:'bridges',evCooling:'jacket',evLamination:0.35,
+const EV_DEFAULT={evMotorType:'pm',evRotorD:150,evStack:134,evPoles:6,evTurns:12,evMagnet:'ndfeb',evRetention:'bridges',evCooling:'jacket',evLamination:0.35,evRegen:'high',
   evMaxRpm:18000,evInverter:'igbt',evAmps:950,evRearCount:1,evFront:'none',evFrontD:130,evFrontStack:110,evFrontPoles:4,evFrontTurns:12,evFrontAmps:700,evFrontFd:0,evChem:'nca',evSeries:96,evKWh:75,evYear:2020};
 // The race spends energy, not fuel (step 2.4): until then an electric car drives the 0-100 and the lap but does not race.
 // One reduction is all an electric car has: GEARING on the VEHICLE tab sets it (build 180).
@@ -31,7 +31,8 @@ function readElectricFromForm(){
   const g=id=>document.getElementById(id),num=(id,lo,hi)=>clamp(+g(id).value||EV_DEFAULT[id],lo,hi);
   return {evMotorType:g('evMotorType').value==='im'?'im':'pm',evRotorD:num('evRotorD',80,260),evStack:num('evStack',40,250),evPoles:+g('evPoles').value||6,
     evTurns:Math.round(num('evTurns',4,120)),evMagnet:g('evMagnet').value,evRetention:g('evRetention').value,
-    evCooling:g('evCooling').value,evLamination:+g('evLamination').value===0.2?0.2:0.35,evMaxRpm:Math.round(num('evMaxRpm',4000,25000)),evInverter:g('evInverter').value,
+    evCooling:g('evCooling').value,evLamination:+g('evLamination').value===0.2?0.2:0.35,
+    evRegen:EV_REGEN[g('evRegen').value]?g('evRegen').value:'high',evMaxRpm:Math.round(num('evMaxRpm',4000,25000)),evInverter:g('evInverter').value,
     evAmps:Math.round(num('evAmps',100,1600)),evRearCount:g('evRearCount').value==='2'?2:1,
     evFront:['pm','im'].includes(g('evFront').value)?g('evFront').value:'none',evFrontFd:Math.max(0,+g('evFrontFd').value||0),evFrontD:num('evFrontD',80,260),evFrontStack:num('evFrontStack',40,250),
     evFrontPoles:+g('evFrontPoles').value||4,evFrontTurns:Math.round(num('evFrontTurns',4,60)),evFrontAmps:Math.round(num('evFrontAmps',100,1600)),evChem:g('evChem').value,evSeries:Math.round(num('evSeries',20,400)),
@@ -424,7 +425,7 @@ function updateMotorSummary(){
     '<br>'+tr('Knee')+' <b>'+s.knee+'</b> rpm '+tr('at')+' '+Math.round(V)+' V • '+tr('Top speed')+' <b>'+e.redline+'</b> rpm, '+tr('set by')+' '+lim+
     (m.parts?'<br>'+tr('Motors')+' <b>'+m.parts.map(q=>(q.n>1?q.n+' × ':'')+tr(q===m.parts[0]?'rear':'front')+' '+tr(q.m.im?'induction':'magnet')+' '+
       q.m.s.rotorD+'×'+q.m.s.stackL+' mm, '+q.m.Imax+' A').join(' + ')+'</b>':'')+
-    '<br>'+tr('Inverter')+' <b>'+tr(m.inv.label)+'</b> '+m.Imax+' A • '+tr('Cooling')+' <b>'+tr(m.cool.label)+'</b> • '+tr('Laminations')+' <b>'+tr(m.lam.label)+'</b>'+
+    '<br>'+tr('Inverter')+' <b>'+tr(m.inv.label)+'</b> '+m.Imax+' A • '+tr('Cooling')+' <b>'+tr(m.cool.label)+'</b> • '+tr('Laminations')+' <b>'+tr(m.lam.label)+'</b> • '+tr('REGENERATION')+' <b>'+tr((EV_REGEN[e.evRegen]||EV_REGEN.high).label)+'</b>'+
     '<br>'+tr('Motor')+' <b>'+Math.round(m.mass)+' kg</b> ('+m.mCu.toFixed(1)+' kg '+tr('copper')+', '+(m.im?m.mCage.toFixed(1)+' kg '+tr('cage'):m.mMag.toFixed(1)+' kg '+tr('magnet'))+') • <b>'+s.kWkg+'</b> kW/kg'+
     '<br>'+tr('Battery')+' <b>'+tr(b.chem.label)+'</b> '+b.series+'s • <b>'+b.kWh+' kWh</b>, '+Math.round(b.Vnom)+' V, '+Math.round(b.Ah)+' Ah • <b>'+Math.round(b.mass)+' kg</b> ('+Math.round(whkg)+' Wh/kg) • '+e.evYear+
     '<br>'+tr('Pack gives')+' <b>'+Math.round(packMaxPower(b,0.9)/1000)+'</b> kW '+tr('full')+', '+Math.round(packMaxPower(b,0.2)/1000)+' kW '+tr('at 20%')+

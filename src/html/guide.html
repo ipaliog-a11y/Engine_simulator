@@ -1195,7 +1195,7 @@ Limit: emissions are correlations with the right trends, not combustion chemistr
 </div>
 <div class="guide-see">See also: <a data-gp="firetriangle">Air, fuel and spark</a> · <a data-gp="fuelmap">Fuel, injection &amp; the fuel map</a> · <a data-gp="scorecard">The scorecard</a></div>
 </section>
-<section class="guide-page" id="gp-evdrive" data-cat="electric" data-title="The electric drive" data-tags="electric ev battery inverter motor regen regenerative braking limp low charge soc pack current power limit" hidden>
+<section class="guide-page" id="gp-evdrive" data-cat="electric" data-title="The electric drive" data-tags="electric ev battery inverter motor regen regenerative braking regeneration high low off limp low charge soc pack current power limit" hidden>
 <h4 class="guide-title">The electric drive</h4>
 <div class="gtier gt-real"><div class="gtier-h">LV1 · REAL LIFE</div>
 <canvas class="gart" data-art="evdrive"></canvas><div class="gart-cap">Battery, inverter, motor: the whole drivetrain of an electric car.</div>
@@ -1216,7 +1216,7 @@ A battery's voltage falls as it empties. The car's computer draws more current t
 • <b>LIMP</b>: the battery is below 2%.<br>
 The bench never recharges by itself: set <b>BATTERY CHARGE</b> (under LOAD) to test the drive at any charge, or <b>BUILD &amp; DYNO</b> to start again at 90%.<br>
 <b>SOUND ON</b> plays the drive: the motor's whine (its torque ripple and its slotting, both rising with speed and louder with torque), the inverter's switching tone, and the gears of the reduction, each at the frequency the build gives it.<br>
-<b>On the road.</b> GEARING on the VEHICLE tab sets the single reduction. The VEHICLE tab gives the WLTP consumption in Wh/km, from the battery and at the socket, and the range. In a race the battery stands in for the fuel tank: there is no charging in the pit lane, an energy manager chooses the power that lasts the distance, and a car that empties its battery retires OUT OF CHARGE.
+<b>On the road.</b> GEARING on the VEHICLE tab sets the single reduction. <b>REGENERATION</b> is <b>HIGH</b> (everything the motor and the pack can take back), <b>LOW</b> (half) or <b>OFF</b>. HIGH is the default, and it is what the three Teslas run. Below about 500 rpm it fades out, whichever you pick. The VEHICLE tab gives the WLTP consumption in Wh/km, from the battery and at the socket, and the range. In a race the battery stands in for the fuel tank: there is no charging in the pit lane, an energy manager chooses the power that lasts the distance, and a car that empties its battery retires OUT OF CHARGE.
 </div>
 </div>
 <div class="gtier gt-phys"><div class="gtier-h">LV3 · THE PHYSICS</div>
@@ -1230,6 +1230,7 @@ The battery is an open-circuit voltage that follows its charge, behind an intern
 • <b>Magnet temperature:</b> it does the same over the last 20 °C below the magnet grade's limit.<br>
 • <b>Low charge:</b> below 15% the battery management allows a share of what the cells could give, falling straight to 30% at 2%.<br>
 • <b>Limp mode:</b> below 2% it holds the power to a tenth of the battery's rated power (its power at 50% charge).<br>
+Regeneration is that braking torque times 1, 0.5 or 0. The table still starts at 500 rpm, so the fade into a stop stays.<br>
 Damage the controller cannot prevent is permanent: magnets heated past their grade's limit lose flux, and a winding above 200 °C cooks its insulation.<br>
 The 0-100 and the lap run at 50% charge. A race starts at 95% and stops at 5%.
 </div>

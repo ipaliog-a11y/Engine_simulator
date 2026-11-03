@@ -79,7 +79,7 @@ const EV_CYCLE={massAdd:100,auxW:250,chargeEff:0.85,soc:0.8,temp:{w:70,c:65,r:60
 // Drive the cycle with the car as built. Returns the pack energy per km (Wh/km), at the socket, how much regeneration
 // took back, the drive's own losses, and the range on the pack's usable energy. Cached per build.
 function evCycle(e,v){
-  const key=[v.mass,v.finalDrive,v.cdA,v.crr,v.rTire,v.driveEff,v.wheelI].join('|');
+  const key=[v.mass,v.finalDrive,v.cdA,v.crr,v.rTire,v.driveEff,v.wheelI,e.evRegen||'high'].join('|');
   if(e._cycle&&e._cycle.score===e.score&&e._cycle.key===key)return e._cycle.res;
   const C=EV_CYCLE,m=v.mass+C.massAdd,r=v.rTire,fd=v.finalDrive,eff=v.driveEff,V=motorRatedV(e),temp=Object.assign({},C.temp);
   const meff=m+(v.wheelI||0)/(r*r)+e.motor.J*(fd/r)**2,regen=evRegenTable(e,e.redline);

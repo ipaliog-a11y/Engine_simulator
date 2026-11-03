@@ -45,6 +45,10 @@ const FE_KH=0.0206, FE_KE=6.71e-5, FE_T_REF=0.35;
 // EV-grade coil near $8/kg (Huaxiao Alloy, "How Much Does Electrical Steel Cost?", 2025 — a supplier's survey,
 // so probable, not a standard).
 const LAMINATION={'0.35':{mm:0.35,label:'0.35 mm',premium:0},'0.20':{mm:0.2,label:'0.20 mm',premium:4}};
+// How hard lifting off and braking run the motor as a generator (stage 2). The same three steps a hybrid's
+// REGENERATION uses: all the motor and the pack can take back, half of that, or none. The table still starts
+// at 500 rpm, so a stop fades out at any of the three.
+const EV_REGEN={off:{label:'OFF',k:0},low:{label:'LOW',k:0.5},high:{label:'HIGH',k:1}};
 const laminationOf=mm=>Math.abs(+mm-0.2)<0.02?LAMINATION['0.20']:LAMINATION['0.35'];
 // Magnets: remanence at 20 C (T), its temperature coefficient (/K), the highest temperature before the coercivity
 // gives way and the loss is permanent (C), and the price ($/kg). SH and UH grades: Hcj >= 20 kOe and 25 kOe.

@@ -20,6 +20,21 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 Working toward **v1.0 — every number derived, not fitted.**
 
+### Regeneration strength on an electric car (build 227)
+
+An electric car always regenerated at whatever the motor and the pack could take back. REGENERATION
+is now HIGH, LOW or OFF, the same three steps a hybrid already has. HIGH is the default, and the
+three Teslas stay on it, so their consumption and 0–100 do not move. The fade below about 500 rpm
+stays at all three.
+
+OFF takes nothing back. On the Model Y the WLTP cycle goes from 141 Wh/km to 196. LOW is half the
+torque, but the cycle's stops ask for less than half this motor, so it stays at 141 Wh/km. A lap is
+where it shows: on the technical circuit the Model Y puts back 0.182 kWh at HIGH, 0.094 at LOW and
+nothing at OFF, and the front rotor runs at 563 °C, 579 °C and 595 °C. A saved build with no setting
+still reads as HIGH.
+
+Stage 2 of `plans/hybrid-electric/drivetrain.md`.
+
 ### Lamination thickness on the motor (build 226)
 
 The iron-loss model already cut eddy currents with the square of the sheet thickness, and every
