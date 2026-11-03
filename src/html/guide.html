@@ -1236,7 +1236,7 @@ The 0-100 and the lap run at 50% charge. A race starts at 95% and stops at 5%.
 </div>
 <div class="guide-see">See also: <a data-gp="evmotor">The motor</a> · <a data-gp="battery">The battery</a> · <a data-gp="inverter">The inverter</a> · <a data-gp="race">The race</a></div>
 </section>
-<section class="guide-page" id="gp-evmotor" data-cat="electric" data-title="The motor" data-tags="electric motor permanent magnet induction rotor stack poles turns magnets ferrite ndfeb neodymium dysprosium sleeve bridges cooling knee field weakening" hidden>
+<section class="guide-page" id="gp-evmotor" data-cat="electric" data-title="The motor" data-tags="electric motor permanent magnet induction rotor stack poles turns magnets ferrite ndfeb neodymium dysprosium sleeve bridges cooling lamination thickness sheet steel knee field weakening" hidden>
 <h4 class="guide-title">The motor</h4>
 <div class="gtier gt-real"><div class="gtier-h">LV1 · REAL LIFE</div>
 <canvas class="gart" data-art="evmotor"></canvas><div class="gart-cap">A magnet rotor turning inside a stator of copper windings.</div>
@@ -1260,6 +1260,7 @@ Torque grows with the rotor's volume and with the current. Spinning makes the mo
 • <b>NdFeB (SH)</b>: neodymium, the standard; strong, with a limit of 150 °C.<br>
 • <b>NdFeB + Dy (UH)</b>: dysprosium raises the limit to 180 °C for slightly less strength and a higher price.<br>
 <b>MAGNET RETENTION.</b> What holds the magnets in at speed. <b>IRON BRIDGES</b> in the steel sheets allow a rotor surface speed of 150 m/s. A <b>CARBON SLEEVE</b> wound over the rotor allows 220 m/s, which is how the Plaid's large rotors reach 20,000 rpm.<br>
+<b>LAMINATIONS.</b> How thick the core's steel sheets are. <b>0.35 mm</b> is ordinary silicon steel, the thickness the loss model is built on. <b>0.20 mm</b> cuts the eddy-current part of the iron loss, which grows with the square of the thickness, and the iron costs more. At low speed the two stay close, because hysteresis does not follow the thickness.<br>
 <b>MOTOR COOLING.</b> Decides how long the peak lasts and what the motor holds for good.<br>
 • <b>AIR (FINNED)</b>: free, but weak.<br>
 • <b>WATER JACKET</b>: coolant round the stator.<br>
@@ -1272,7 +1273,7 @@ Torque grows with the rotor's volume and with the current. Spinning makes the mo
 <div class="guide-body" data-gk="evmotorPhys">
 Torque is the flux linkage times the current: <span class="geq">T = 3/2 · p · ψ · I,  ψ = k<sub>w</sub> · N · (2/π) · B<sub>g</sub> · τ<sub>p</sub> · L</span> Here p is the pole pairs, N the turns per phase, k<sub>w</sub> = 0.93 the winding factor, τ<sub>p</sub> the pole pitch (πD/poles) and L the stack. The air-gap flux B<sub>g</sub> is 0.85 times the magnets' remanence for a magnet motor (1.28 T for SH NdFeB, 0.42 T for ferrite). An induction motor runs 0.8 T and pays for it with a magnetising current, which takes its share of the inverter's amps.<br>
 The knee is where the back-EMF ω·ψ, with the winding's voltage drop on top (×1.29 at full current), meets the battery's voltage. Above it the power holds to about 4× the knee speed for a magnet motor and 3× for an induction motor.<br>
-<b>Losses.</b> Copper resistance comes from the slot area (40% copper fill) and rises 0.393% per kelvin. Iron loss is Steinmetz's law on 0.35 mm silicon steel.<br>
+<b>Losses.</b> Copper resistance comes from the slot area (40% copper fill) and rises 0.393% per kelvin. Iron loss is Steinmetz's law on silicon steel: hysteresis follows frequency and flux, and the eddy term also follows the square of the sheet thickness (0.35 mm, or 0.20 mm when LAMINATIONS says so).<br>
 <b>Top speed.</b> The lowest of three: MAX SPEED; the rotor surface speed v/(πD); and the inverter's output frequency, 1.2 kHz for IGBTs and 2 kHz for SiC, divided by the pole pairs.<br>
 <b>Heat.</b> Three lumped nodes (winding, stator core, rotor) and the coolant.<br>
 <b>Calibration.</b> Three constants come from one measured motor, the Tesla Model 3 rear (MotorXP, 2020). The 2012 Nissan Leaf as ORNL measured it is the check.
