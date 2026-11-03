@@ -12,7 +12,11 @@
 //     are not on the form yet. CPSR is 4 (3 for an induction motor).
 // A later stage edits a locked value only when drivetrain.md names that stage for that block, in the same
 // commit as the physics, with the old number and the new one in the CHANGELOG. A stage marked "still"
-// does not edit the numbers.
+// does not edit the numbers. Stage 4 (AC copper) moved the continuous power and the hold, and the Model Y
+// and Plaid peaks by 1 kW, and the pack-limited torque at the redline: Model 3 continuous 294 → 288 kW,
+// hold 54 → 52 s, 108.36 → 108.06 Nm at 18000 rpm; Model Y peak 358 → 357 kW, hold 116 → 114 s,
+// 189.83 → 189.32 Nm; Plaid peak 804 → 803 kW, continuous 817 → 804 kW, 382.34 → 380.65 Nm at 20000 rpm.
+// Torque at 1000 rpm, the Wh/km inside the lock's tolerance, the 0-100 and the tail did not.
 import { chromium } from './pw.mjs';
 import { fileURLToPath, pathToFileURL } from 'url';
 import path from 'path';
@@ -29,25 +33,25 @@ const fails = [];
 // Locked at build 224. See plans/hybrid-electric/drivetrain.md for which stage may change which block.
 const CARS = {
   'Model 3': {
-    peakKW: 205, peakTQ: 424, knee: 6671, contKW: 294, holdS: 54, best: 0.9768, kWkg: 3.7, redline: 18000,
+    peakKW: 205, peakTQ: 424, knee: 6671, contKW: 288, holdS: 52, best: 0.9768, kWkg: 3.7, redline: 18000,
     motors: 1, massM: 56.09, massP: 440.12, R: 0.066236, Vnom: 340.84, p50: 209737, p10: 202273,
     whkm: 119.53, wall: 140.63, regen: 49.64, range: 451.8, fd: 9.03, drive: 'rwd',
     t100: 6.185, t60: 5.925, top: 225, cg: 0.52,
-    pts: { 1000: 424.46, 6671: 289.05, 13342: 146.72, 18000: 108.36 }
+    pts: { 1000: 424.46, 6671: 289.05, 13342: 146.72, 18000: 108.06 }
   },
   'Model Y': {
-    peakKW: 358, peakTQ: 541, knee: 6859, contKW: 288, holdS: 116, best: 0.9788, kWkg: 3.6, redline: 18000,
+    peakKW: 357, peakTQ: 541, knee: 6859, contKW: 288, holdS: 114, best: 0.9788, kWkg: 3.6, redline: 18000,
     motors: 2, massM: 99.24, massP: 424.84, R: 0.05256, Vnom: 352.93, p50: 377316, p10: 294578,
     whkm: 141.33, wall: 166.27, regen: 56.44, range: 496.7, fd: 9.03, drive: 'awd',
     t100: 4.55, t60: 4.375, top: 217, cg: 0.66,
-    pts: { 1000: 540.52, 6859: 492.32, 13718: 249.23, 18000: 189.83 }
+    pts: { 1000: 540.52, 6859: 492.32, 13718: 249.23, 18000: 189.32 }
   },
   Plaid: {
-    peakKW: 804, peakTQ: 1408, knee: 6109, contKW: 817, holdS: 19, best: 0.9752, kWkg: 4.8, redline: 20000,
+    peakKW: 803, peakTQ: 1408, knee: 6109, contKW: 804, holdS: 19, best: 0.9752, kWkg: 4.8, redline: 20000,
     motors: 3, massM: 168.27, massP: 625.78, R: 0.029359, Vnom: 404.4, p50: 824184, p10: 692384,
     whkm: 166.27, wall: 195.61, regen: 59.69, range: 541.3, fd: 7.56, drive: 'awd',
     t100: 2.525, t60: 2.435, top: 322, cg: 0.52,
-    pts: { 1000: 1407.64, 6109: 1218.13, 12218: 628.36, 20000: 382.34 }
+    pts: { 1000: 1407.64, 6109: 1218.13, 12218: 628.36, 20000: 380.65 }
   }
 };
 const HYB = {
