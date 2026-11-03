@@ -76,7 +76,7 @@ const isHybrid=()=>!!engine&&engine.type!=='electric'&&!!engine.hy;
 function buildHybrid(e){
   if(!e.hyMode||e.hyMode==='none'){delete e.hy;return null;}
   const motor=motorBuild({type:e.evMotorType,rotorD:e.evRotorD,stackL:e.evStack,poles:e.evPoles,turns:e.evTurns,magnet:e.evMagnet,
-    retention:e.evRetention,cooling:e.evCooling,inverter:e.evInverter,invAmps:e.evAmps,maxRpm:e.evMaxRpm});
+    retention:e.evRetention,cooling:e.evCooling,lamination:e.evLamination,inverter:e.evInverter,invAmps:e.evAmps,maxRpm:e.evMaxRpm});
   const pack=packBuild({chem:e.evChem,series:e.evSeries,kWh:e.evKWh,year:e.evYear});
   e.hy={mode:e.hyMode,motor,pack,mass:Math.round(motor.mass+pack.mass),cost:motor.cost+pack.cost};
   if(e.hyMode==='ps'){   // the eCVT: MG1 sized to the engine, and the planetary set (~12 kg) in place of a gearbox
@@ -89,7 +89,7 @@ function buildHybrid(e){
   // the car all-wheel drive; it shares the pack with the main motor in proportion to their peak powers
   if(e.evFront==='pm'||e.evFront==='im'){
     const fm=motorBuild({type:e.evFront,rotorD:e.evFrontD,stackL:e.evFrontStack,poles:e.evFrontPoles,turns:e.evFrontTurns,magnet:e.evMagnet,
-      retention:e.evRetention,cooling:e.evCooling,inverter:e.evInverter,invAmps:e.evFrontAmps,maxRpm:e.evMaxRpm});
+      retention:e.evRetention,cooling:e.evCooling,lamination:e.evLamination,inverter:e.evInverter,invAmps:e.evFrontAmps,maxRpm:e.evMaxRpm});
     const V=hybBusV(e.hy),pk=m=>{let P=0;for(let r=200;r<=m.nMax;r+=200)P=Math.max(P,motorMaxTorque(m,r,V,60)*r*Math.PI/30);return P;};
     const Pr=pk(motor),Pf=pk(fm);
     e.hy.front={motor:fm,fd:e.evFrontFd>0?e.evFrontFd:0,shareF:Pf/(Pr+Pf)};e.hy.shareR=Pr/(Pr+Pf);

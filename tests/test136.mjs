@@ -8,8 +8,8 @@
 //   · the shape above the knee, on a motor that can actually rev past 4× its knee: power flat through 4×,
 //     then 4/5 at 5× and 4/6 at 6× (the rectangle motorMaxTorque imposes, CPSR = 4);
 //   · the five factory hybrids' motors, which share this drive;
-//   · lamination thickness, wire, regen strength and a second gear are not on the form yet, and CPSR is 4
-//     (3 for an induction motor).
+//   · LAMINATIONS is on the form and defaults to 0.35 mm (stage 1). Wire, regen strength and a second gear
+//     are not on the form yet. CPSR is 4 (3 for an induction motor).
 // A later stage edits a locked value only when drivetrain.md names that stage for that block, in the same
 // commit as the physics, with the old number and the new one in the CHANGELOG. A stage marked "still"
 // does not edit the numbers.
@@ -98,8 +98,9 @@ const r = await page.evaluate(() => {
   const m = motorBuild({ rotorD: 100, stackL: 80, poles: 4, turns: 40, magnet: 'ndfeb', retention: 'sleeve', cooling: 'jacket', inverter: 'sic', invAmps: 200, maxRpm: 40000 });
   const V = 350, psi = motorPsi(m, 60), knee = motorBaseW(m, V, psi) * 30 / Math.PI;
   const P = n => motorMaxTorque(m, n, V, 60) * n * Math.PI / 30;
-  const absent = ['evLamination', 'evWire', 'evRegen', 'evGear2'].filter(id => document.getElementById(id));
-  return { cars, hy, tail: { knee, nMax: m.nMax, p1: P(knee), p2: P(2 * knee), p4: P(4 * knee), p5: P(5 * knee), p6: P(6 * knee) }, absent, cpsr: CPSR, im: IM_CPSR };
+  const absent = ['evWire', 'evRegen', 'evGear2'].filter(id => document.getElementById(id));
+  const lamEl = document.getElementById('evLamination');
+  return { cars, hy, tail: { knee, nMax: m.nMax, p1: P(knee), p2: P(2 * knee), p4: P(4 * knee), p5: P(5 * knee), p6: P(6 * knee) }, absent, lam: lamEl ? lamEl.value : null, cpsr: CPSR, im: IM_CPSR };
 });
 
 const f = (x, d = 2) => (+x).toFixed(d);
@@ -124,7 +125,7 @@ for (const [key, want] of Object.entries(CARS)) {
   exact(c.motors, want.motors, `${key} motors`);
   exact(c.drive, want.drive, `${key} drive`);
   exact(c.kWkg, want.kWkg, `${key} kW/kg`);
-  exact(c.lam, null, `${key} lamination override`);
+  exact(c.lam, 0.35, `${key} lamination`);
   near(c.best, want.best, 0.002, 0.0005, `${key} best efficiency`);
   near(c.massM, want.massM, 0.002, 0.05, `${key} motor mass`);
   near(c.massP, want.massP, 0.002, 0.05, `${key} pack mass`);
@@ -171,7 +172,8 @@ for (const [key, want] of Object.entries(HYB)) {
   near(h.front, want.front, 0.002, 0.2, `${key} front motor torque`);
 }
 
-console.log(`== form has none of the later fields (${r.absent.join(', ') || 'none'}); CPSR ${r.cpsr}, induction ${r.im} ==`);
+console.log(`== LAMINATIONS ${r.lam}; later fields still absent (${r.absent.join(', ') || 'none'}); CPSR ${r.cpsr}, induction ${r.im} ==`);
+if (r.lam !== '0.35') fails.push('LAMINATIONS is not on the form at 0.35 mm');
 if (r.absent.length) fails.push('a later field is already on the form: ' + r.absent.join(', '));
 exact(r.cpsr, 4, 'magnet CPSR');
 exact(r.im, 3, 'induction CPSR');

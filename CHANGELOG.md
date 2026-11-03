@@ -20,6 +20,21 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 Working toward **v1.0 — every number derived, not fitted.**
 
+### Lamination thickness on the motor (build 226)
+
+The iron-loss model already cut eddy currents with the square of the sheet thickness, and every
+motor was 0.35 mm because the form never chose one. LAMINATIONS is now on the motor form: 0.35 mm,
+the M270-35A the loss model is built on, or 0.20 mm. The thin sheet costs $4 more per kilogram of
+iron, the gap between a 0.35 mm coil near $4/kg and a thin EV-grade coil near $8/kg in a 2025
+supplier survey, so the figure is probable rather than a standard. The $3/kg already on the iron
+stays the 0.35 mm price, and every factory car stays there.
+
+On the Model 3 geometry, at 60 Nm, the iron loss is 713 W at 15,000 rpm on 0.35 mm and 372 W on
+0.20 mm. At 500 rpm it is 36 W and 34 W: hysteresis, which does not follow the thickness, is most
+of the loss down there. A saved build with no thickness still reads as 0.35 mm.
+
+Stage 1 of `plans/hybrid-electric/drivetrain.md`. Nothing else on the drive moved.
+
 ### A plan for the electric drivetrain, and a lock on its numbers (build 225)
 
 The electric drive shipped in builds 178–184. Deepening it — laminations, regen, cold cells, copper

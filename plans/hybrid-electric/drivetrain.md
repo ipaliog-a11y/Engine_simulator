@@ -1,7 +1,8 @@
 # Plan: the electric drivetrain after v0.7
 
-**Status:** stage 0 is this plan and the lock in `tests/test136.mjs` (build 225). Stages 1–13
-are not built. The locked numbers are the drive as it stood at build 224.
+**Status:** stage 0 is the lock in `tests/test136.mjs` (build 225). Stage 1, lamination
+thickness, is build 226. Stages 2–13 are not built. The locked numbers are the drive as it
+stood at build 224, with the lamination field now present at 0.35 mm.
 
 The drive that shipped in builds 178–184 is a real machine up to the knee and a drawn shape
 after it. This is the order for deepening it. Each stage is one build and one pull request.
@@ -96,6 +97,10 @@ requires the direction.
 Guide: the motor page gains the field. `test87` for the new strings.
 
 `test136`: replace only the "no lamination field" line. No locked number moves.
+
+**Shipped** as build 226. On the Model 3 geometry at 60 Nm the iron loss is 713 W at 15,000 rpm
+on 0.35 mm and 372 W on 0.20 mm, and 36 W against 34 W at 500 rpm. The thin sheet adds $4 per
+kilogram of iron. The three Teslas stay on 0.35 mm.
 
 ---
 
