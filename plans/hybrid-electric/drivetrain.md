@@ -1,9 +1,9 @@
 # Plan: the electric drivetrain after v0.7
 
 **Status:** stage 0 is the lock in `tests/test136.mjs` (build 225). Stage 1, lamination
-thickness, is build 226. Stage 2, regeneration strength, is build 227. Stages 3–13 are not
-built. The locked numbers are the drive as it stood at build 224, with lamination at 0.35 mm
-and regeneration at HIGH.
+thickness, is build 226. Stage 2, regeneration strength, is build 227. Stage 3, cell
+resistance against temperature, is build 228. Stages 4–13 are not built. The locked numbers
+are the drive at 25 °C, with lamination at 0.35 mm and regeneration at HIGH.
 
 The drive that shipped in builds 178–184 is a real machine up to the knee and a drawn shape
 after it. This is the order for deepening it. Each stage is one build and one pull request.
@@ -140,6 +140,11 @@ curve in the same build.
 WLTP keeps the warm set-point in `EV_CYCLE`, so the locked Wh/km stays. The new test drives the
 same cycle, or a single full-power point, at 0 °C and at −10 °C and requires less power and
 less regen acceptance than at 25 °C, and the 25 °C point equal to the lock.
+
+**Shipped** as build 228. The 68 kJ/mol is Jow, Xue and Zhang, 2011, the graphite interface,
+applied to the whole pack resistance: on the Model Y, 377 kW at 25 °C, 36 kW at 0 °C, 11 kW at
+−10 °C. That overstates the cold, and the comment says so. Lead-acid and NiMH are unchanged.
+The lap still uses 25 °C. The 50 °C cut is untouched.
 
 ---
 
