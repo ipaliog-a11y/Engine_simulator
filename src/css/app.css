@@ -101,7 +101,6 @@ footer{text-align:center;margin-top:16px;padding:8px;font-size:7px;color:#555;bo
 .design-panel .hint{font-size:7px;color:#667;margin-bottom:10px}
 /* The car and engine as pixel art, drawn from the build (see PixBuf). */
 .pix-preview{display:block;width:100%;max-width:560px;margin:2px auto 10px;border:2px solid #333;background:#0a0a10;image-rendering:pixelated}
-.pix-preview.car{aspect-ratio:168/74}
 .pix-preview.eng{aspect-ratio:150/90}
 .design-section{font-size:8px;color:#00ccff;margin:12px 0 6px;border-bottom:2px solid #26263a;padding-bottom:3px;text-transform:uppercase}
 /* Fields are a size, not a share of the panel. A 1fr/1fr grid stretched every select and number box to
@@ -283,8 +282,6 @@ body.race-open{overflow:hidden}
 .garage-thumb.art{aspect-ratio:168/74;object-fit:cover;object-position:50% 78%;image-rendering:auto}
 .car-showroom{display:block;max-width:560px;margin:0 auto 12px;border:2px solid #333;background:#0a0a10}
 .car-showroom img{display:block;width:100%;height:auto;aspect-ratio:2/1;object-fit:cover;object-position:50% 75%}
-.pix-preview.car.under-art{max-width:340px}   /* 2 x 168 + border: whole cells */
-.build-cap{max-width:560px;margin:0 auto 4px;font-size:8px;color:#778;text-align:center}
 .copy-row .copy-hit{font-size:8px;line-height:1.5;color:#7a8;margin-top:4px;min-height:12px;overflow-wrap:anywhere}
 .copy-row .copy-hit.miss{color:#ff7766}
 .car-showroom figcaption{font-size:9px;line-height:1.5;color:#9aa;padding:6px 8px;border-top:2px solid #1e1e2e}

@@ -243,19 +243,6 @@ function drawCarSprite(buf,v,e,t){
   buf.under(G.x0-2,CAR_GY,G.lenPx+4,1,'#05050a');                      // contact shadow
   return G;
 }
-// Paint a car into a canvas: backdrop, sprite and (optionally) the caption band under it.
-function paintCar(cv,v,e,opts){
-  opts=opts||{};
-  const gh=opts.caption?CAR_GH+12:CAR_GH;
-  const F=fitPixCanvas(cv,CAR_GW,gh);if(!F)return false;
-  const {g,k,ox,bw,bh}=F;
-  pixBackdrop(g,bw,bh,k,ox,CAR_GY+1);
-  const buf=new PixBuf(CAR_GW,CAR_GH);
-  drawCarSprite(buf,v,e,opts.t||0);
-  g.drawImage(buf.canvas(),ox,0,CAR_GW*k,CAR_GH*k);
-  if(opts.caption)pixCaption(g,k,ox,CAR_GW,CAR_GH,opts.title,opts.sub);
-  return true;
-}
 
 // ---- the engine, from outside ----
 // An inline is drawn side on, so you can count its cylinders; a V and a boxer are drawn from the front,
@@ -463,19 +450,12 @@ function paintEngine(cv,e,opts){
   return true;
 }
 
-// ---- the live previews on the ENGINE and VEHICLE tabs ----
-// Redrawn every frame while their tab is open (see loop): the car is the BUILT car, which buildVehicle
-// refreshes on every field change; the engine is the FORM, so it changes as you edit, before BUILD.
-// Wheels turn and the turbo spins slowly unless the system asks for reduced motion.
+// ---- the live preview on the ENGINE tab ----
+// Redrawn every frame while that tab is open (see loop): the engine is the FORM, so it changes as you
+// edit, before BUILD. The turbo spins slowly unless the system asks for reduced motion. The VEHICLE tab
+// shows the showroom picture (car-art.js), not a car drawn from the parts; the track and the race still draw one.
 let previewT=0;
 const previewStill=!!(window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches);
-function renderCarPreview(){
-  const cv=document.getElementById('carPreview');if(!cv||!vehicle||!vehicle.chassis)return;
-  const dl={fwd:'FWD',rwd:'RWD',awd:'AWD'}[vehicle.drive]||'RWD';
-  const fw=(vehicle.fWt!=null?vehicle.fWt:(CHASSIS[vehicle.chassis]||CHASSIS.coupe).fWt);
-  paintCar(cv,vehicle,engine,{t:previewT*2.5,caption:true,title:tr(vehicle.chLabel||''),
-    sub:dl+' • '+Math.round(vehicle.mass||0)+' kg • '+Math.round(fw*100)+'% F'});
-}
 function renderEnginePreview(){
   const cv=document.getElementById('enginePreview');if(!cv)return;
   const e=readEngineFromForm();
@@ -484,7 +464,6 @@ function renderEnginePreview(){
 function stepPreviews(dt){
   if(!previewStill)previewT+=dt;
   if(vizMode==='design')renderEnginePreview();
-  else if(vizMode==='vehicle')renderCarPreview();
 }
 // ---- top-down car for the track map ----
 // 14 x 8 cells, built once per livery and pedal state and then rotated: a car you can see turning,

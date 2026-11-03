@@ -113,7 +113,6 @@ footer{text-align:center;margin-top:16px;padding:8px;font-size:7px;color:#555;bo
 .design-panel .hint{font-size:7px;color:#667;margin-bottom:10px}
 /* The car and engine as pixel art, drawn from the build (see PixBuf). */
 .pix-preview{display:block;width:100%;max-width:560px;margin:2px auto 10px;border:2px solid #333;background:#0a0a10;image-rendering:pixelated}
-.pix-preview.car{aspect-ratio:168/74}
 .pix-preview.eng{aspect-ratio:150/90}
 .design-section{font-size:8px;color:#00ccff;margin:12px 0 6px;border-bottom:2px solid #26263a;padding-bottom:3px;text-transform:uppercase}
 /* Fields are a size, not a share of the panel. A 1fr/1fr grid stretched every select and number box to
@@ -295,8 +294,6 @@ body.race-open{overflow:hidden}
 .garage-thumb.art{aspect-ratio:168/74;object-fit:cover;object-position:50% 78%;image-rendering:auto}
 .car-showroom{display:block;max-width:560px;margin:0 auto 12px;border:2px solid #333;background:#0a0a10}
 .car-showroom img{display:block;width:100%;height:auto;aspect-ratio:2/1;object-fit:cover;object-position:50% 75%}
-.pix-preview.car.under-art{max-width:340px}   /* 2 x 168 + border: whole cells */
-.build-cap{max-width:560px;margin:0 auto 4px;font-size:8px;color:#778;text-align:center}
 .copy-row .copy-hit{font-size:8px;line-height:1.5;color:#7a8;margin-top:4px;min-height:12px;overflow-wrap:anywhere}
 .copy-row .copy-hit.miss{color:#ff7766}
 .car-showroom figcaption{font-size:9px;line-height:1.5;color:#9aa;padding:6px 8px;border-top:2px solid #1e1e2e}
@@ -527,7 +524,7 @@ table.hy-map td:focus{outline:2px solid #ffcc00;outline-offset:-2px}
 </div>
 <div class="container">
 <header>
-<h1>PIXEL ENGINE SIM v0.7 build 223</h1>
+<h1>PIXEL ENGINE SIM v0.7 build 224</h1>
 <div class="subtitle" id="subtitle">ENGINE DESIGNER • BUILD IT, THEN DRIVE IT</div>
 </header>
 <div class="build-strip" id="buildStrip">
@@ -2200,20 +2197,18 @@ car's body and parts, by its number or a piece of its name, and keeps the engine
 is a custom car, labelled with the number it came from.
 </div>
 <div class="guide-body" data-gk="pixart">
-<b>The pictures are drawn from your build.</b> The car at the top of the VEHICLE tab gets its length
-from the wheelbase, its wheels from the rim and tyre sizes, and its ride height from the suspension.
-It wears the splitter, wing and diffuser you fit. The driven wheels have green hubs, and a green block
-marks where the engine sits: in front of the cabin, behind it, or behind the rear axle. The engine at
-the top of the ENGINE tab follows the form as you edit, before you build: an inline is drawn side on
-so you can count its cylinders, and a V or a boxer is drawn from the front so you can see the angle of
-its banks. Its turbos, blower, carbs or throttle bodies, headers, cat, intercooler, radiator and
-nitrous bottle are all drawn. Saved cars and engines show the same pictures on their GARAGE cards,
-and on the TRACK map the car runs the lap in its own colours. A real car loaded from the picker gets
-its <b>showroom picture</b> at the top of the VEHICLE tab: a detailed side view of that car as it left
-the factory. It stays there however you modify the car, and the drawn car moves under it as <b>YOUR
-BUILD</b>, because it is the one that shows the parts you fit. A saved real car shows its picture on its
-GARAGE card. A generic chassis, or a car made by COPY FROM, shows the picture of its <b>body class</b>
-instead: one unbranded car for each of the 14 classes, from kei car to open-wheeler.
+<b>The pictures.</b> The top of the VEHICLE tab is a picture of the car, not one drawn from the parts.
+A real car shows its <b>showroom picture</b>, a detailed side view of that car as it left the factory,
+and it stays however you modify the car — the caption then says so. A generic chassis, or a car made
+by COPY FROM, shows the picture of its <b>body class</b> instead: one unbranded car for each of the 14
+classes, from kei car to open-wheeler. A saved car shows the same picture on its GARAGE card. The engine
+at the top of the ENGINE tab is drawn from the form as you edit, before you build: an inline is drawn
+side on so you can count its cylinders, and a V or a boxer is drawn from the front so you can see the
+angle of its banks. Its turbos, blower, carbs or throttle bodies, headers, cat, intercooler, radiator
+and nitrous bottle are all drawn, and a saved engine shows the same picture on its GARAGE card. On the
+TRACK map the car is still drawn from the build, in its own colours: its length from the wheelbase, its
+wheels from the rim and tyre sizes, its ride height from the suspension, and the splitter, wing and
+diffuser you fit. The driven wheels have green hubs, and a green block marks where the engine sits.
 </div>
 <div class="guide-body" data-gk="garage">
 <b>The GARAGE</b> tab keeps your finished cars and engines. Name a car at the bottom of this tab and
@@ -3136,8 +3131,6 @@ Most other tests check behaviour that is true of real cars: a bigger turbo spool
 <div class="design-panel vehicle-panel" id="vehiclePanelTab">
 <h3>VEHICLE DESIGN</h3>
 <figure class="car-showroom" id="vhShowroom" hidden><img id="vhArt" alt="" decoding="async"><figcaption id="vhArtCap"></figcaption></figure>
-<div class="build-cap" id="vhBuildCap" hidden>YOUR BUILD — the drawn car follows the parts you fit</div>
-<canvas id="carPreview" class="pix-preview car" role="img" aria-label="Pixel-art side view of the car as configured"></canvas>
 <div class="hint">Pick a chassis and it arrives on its factory spec — matching tyres, wheels, brakes, suspension and aero. Swap any part from there; your current engine is dropped in and the performance is computed live.</div>
 
 <div class="pick-row">
@@ -5445,7 +5438,7 @@ const I18N={
   'ENGINE FAMILY':{el:'ΟΙΚΟΓΕΝΕΙΑ ΚΙΝΗΤΗΡΑ'},'LOAD A BUILD':{el:'ΦΟΡΤΩΣΗ ΚΑΤΑΣΚΕΥΗΣ'},'CAR FAMILY':{el:'ΟΙΚΟΓΕΝΕΙΑ ΑΥΤΟΚΙΝΗΤΟΥ'},
   'FACTORY CAR':{el:'ΕΡΓΟΣΤΑΣΙΑΚΟ ΑΥΤΟΚΙΝΗΤΟ'},
   'COPY FROM (No. OR NAME)':{el:'ΑΝΤΙΓΡΑΦΗ ΑΠΟ (Αρ. Ή ΟΝΟΜΑ)'},'BODY & PARTS ONLY':{el:'ΜΟΝΟ ΑΜΑΞΩΜΑ & ΜΕΡΗ'},'COPY FROM':{el:'ΑΝΤΙΓΡΑΦΗ'},
-  'e.g. 071':{el:'π.χ. 071'},'YOUR BUILD — the drawn car follows the parts you fit':{el:'Η ΚΑΤΑΣΚΕΥΗ ΣΟΥ — το σχεδιασμένο αυτοκίνητο ακολουθεί τα μέρη που τοποθετείς'},
+  'e.g. 071':{el:'π.χ. 071'},
   'Custom':{el:'Προσαρμοσμένο'},'from':{el:'από'},'more':{el:'ακόμη'},'no such car':{el:'δεν υπάρχει τέτοιο αυτοκίνητο'},'COPIED':{el:'ΑΝΤΙΓΡΑΦΗΚΕ'},'your engine kept':{el:'ο κινητήρας σου έμεινε'},'— choose a build —':{el:'— διάλεξε κατασκευή —'},'— load a real car —':{el:'— φόρτωσε πραγματικό αυτοκίνητο —'},
   'CAR':{el:'ΑΥΤΟΚΙΝΗΤΟ'},'custom':{el:'δικός σου'},'modified':{el:'τροποποιημένο'},'SAVE TO GARAGE':{el:'ΑΠΟΘΗΚΕΥΣΗ ΣΤΟ ΓΚΑΡΑΖ'},
   'DELETE':{el:'ΔΙΑΓΡΑΦΗ'},'SAVED TO GARAGE':{el:'ΑΠΟΘΗΚΕΥΤΗΚΕ ΣΤΟ ΓΚΑΡΑΖ'},'BUILD UPDATED':{el:'Η ΚΑΤΑΣΚΕΥΗ ΕΝΗΜΕΡΩΘΗΚΕ'},
@@ -5819,7 +5812,7 @@ const GUIDE_I18N={
   airpath:{el:"<b>Διαδρομή αέρα</b> — τούρμπο (γεμίζει με τις στροφές) ή υπερσυμπιεστής (boost από ρελαντί)· το intercooler ψύχει το χάρμανι· εξάτμιση & καταλύτης ανταλλάσσουν ροή με αντίθλιψη/εκπομπές· το νιτρό είναι εμφιαλωμένη ισχύς."},
   boostCost:{el:"<b>Το boost δεν είναι δωρεάν, και το τούρμπο έχει μέγεθος.</b> Ένας συμπιεστής παράγει πίεση περιστρεφόμενος, και αυτές οι στροφές πληρώνονται με ενέργεια από την εξάτμιση — άρα <i>όσο περισσότερο boost ζητάς από ένα δεδομένο τούρμπο, τόσο αργότερα έρχεται και τόσο πιο αργά χτίζεται</i>. Το ίδιο μικρό τούρμπο που έχει γεμίσει στις 1200 σ.α.λ. με 0.5 bar δεν φτάνει το μισό των 2.5 bar πριν τις ~3000. Ο αριθμός γεμίσματος στη σύνοψη σχεδίασης αφορά το boost που ζήτησες, δεν είναι σταθερή ιδιότητα του τούρμπο."},
   ratedFlow:{el:"Κάθε τούρμπο έχει επίσης <b>ονομαστική παροχή</b> — μικρό 32, μεσαίο 55, μεγάλο 82 lb/min, και οι διατάξεις με πολλά τούρμπο περνούν περισσότερο (twin ×1.85, sequential ×1.55, compound ×2.3). Αυτός είναι ο άξονας πάνω στον οποίο σχεδιάζεται ένας πραγματικός χάρτης συμπιεστή. Αν ζητήσεις από τον κινητήρα να περάσει περισσότερο αέρα από όσο αντέχει το τούρμπο, βγαίνεις εκτός χάρτη: η απόδοση του συμπιεστή καταρρέει, οι ψηλές στροφές πνίγονται και — το χειρότερο — το χάρμανι φτάνει <b>καυτό</b>. Η συμπίεση του αέρα τον θερμαίνει κατά <i>T&middot;(PR<sup>0.283</sup> − 1) / απόδοση</i>, που αυξάνεται πιο γρήγορα από το boost και ακόμη περισσότερο καθώς πέφτει η απόδοση. Ένας 2.0 L που ζητά 2.5 bar από μικρό τούρμπο θέλει 1.7× την ονομαστική του παροχή, και το χάρμανι φτάνει στις βαλβίδες στους <b>74 °C</b> εκεί που το σωστό τούρμπο δίνει 58 °C — οπότε κάνει πειράκια, βγάζει 120 hp <i>λιγότερα</i> από το μεσαίο, και είναι πιο αργός στον γύρο από τον ίδιο κινητήρα στα 0.8 bar. Τίποτα δεν σε εμποδίζει να τον φτιάξεις· απλώς δεν είναι έτσι που βγαίνει ισχύς."},
-  pixart:{el:"<b>Οι εικόνες σχεδιάζονται από το δικό σου σύνολο.</b> Το αυτοκίνητο στην κορυφή της καρτέλας ΟΧΗΜΑ παίρνει το μήκος του από το μεταξόνιο, τους τροχούς από τα μεγέθη ζάντας και ελαστικού και το ύψος από την ανάρτηση. Φοράει το splitter, την αεροτομή και τον diffuser που τοποθετείς. Οι κινητήριοι τροχοί έχουν πράσινες πλήμνες και ένα πράσινο μπλοκ δείχνει πού κάθεται ο κινητήρας: μπροστά από την καμπίνα, πίσω της ή πίσω από τον πίσω άξονα. Ο κινητήρας στην κορυφή της καρτέλας ΚΙΝΗΤΗΡΑΣ ακολουθεί τη φόρμα καθώς την αλλάζεις, πριν το BUILD: ένας εν σειρά σχεδιάζεται από το πλάι ώστε να μετράς τους κυλίνδρους του, ενώ ένας V ή boxer σχεδιάζεται από μπροστά για να φαίνεται η γωνία των συστοιχιών του. Σχεδιάζονται όλα: τα turbo, ο υπερσυμπιεστής, τα καρμπιρατέρ ή οι πεταλούδες, οι εξαγωγές, ο καταλύτης, το intercooler, το ψυγείο και η φιάλη νιτρικών. Τα αποθηκευμένα αυτοκίνητα και οι κινητήρες δείχνουν τις ίδιες εικόνες στις κάρτες του ΓΚΑΡΑΖ, και στον χάρτη της ΠΙΣΤΑΣ το αυτοκίνητο τρέχει τον γύρο με τα δικά του χρώματα. Ένα πραγματικό αυτοκίνητο που φορτώνεις από την επιλογή παίρνει τη <b>φωτογραφία εκθεσιακού χώρου</b> στην κορυφή της καρτέλας ΟΧΗΜΑ: μια λεπτομερή πλαϊνή όψη του αυτοκινήτου όπως βγήκε από το εργοστάσιο. Μένει εκεί όπως κι αν το τροποποιήσεις, και το σχεδιασμένο αυτοκίνητο πηγαίνει από κάτω ως <b>Η ΚΑΤΑΣΚΕΥΗ ΣΟΥ</b>, γιατί αυτό δείχνει τα μέρη που τοποθετείς. Ένα αποθηκευμένο πραγματικό αυτοκίνητο δείχνει τη φωτογραφία του στην κάρτα του στο ΓΚΑΡΑΖ. Ένα γενικό σασί, ή ένα αυτοκίνητο από ΑΝΤΙΓΡΑΦΗ, δείχνει αντί γι' αυτό την εικόνα της <b>κατηγορίας αμαξώματός</b> του: ένα αυτοκίνητο χωρίς σήματα για καθεμία από τις 14 κατηγορίες, από το kei car ως το μονοθέσιο."},
+  pixart:{el:"<b>Οι εικόνες.</b> Η κορυφή της καρτέλας ΟΧΗΜΑ είναι μια εικόνα του αυτοκινήτου, όχι μία σχεδιασμένη από τα μέρη. Ένα πραγματικό αυτοκίνητο δείχνει τη <b>φωτογραφία εκθεσιακού χώρου</b> του, μια λεπτομερή πλαϊνή όψη όπως βγήκε από το εργοστάσιο, και μένει εκεί όπως κι αν το τροποποιήσεις — η λεζάντα το λέει τότε. Ένα γενικό σασί, ή ένα αυτοκίνητο από ΑΝΤΙΓΡΑΦΗ, δείχνει αντί γι' αυτό την εικόνα της <b>κατηγορίας αμαξώματός</b> του: ένα αυτοκίνητο χωρίς σήματα για καθεμία από τις 14 κατηγορίες, από το kei car ως το μονοθέσιο. Ένα αποθηκευμένο αυτοκίνητο δείχνει την ίδια εικόνα στην κάρτα του στο ΓΚΑΡΑΖ. Ο κινητήρας στην κορυφή της καρτέλας ΚΙΝΗΤΗΡΑΣ σχεδιάζεται από τη φόρμα καθώς την αλλάζεις, πριν το BUILD: ένας εν σειρά σχεδιάζεται από το πλάι ώστε να μετράς τους κυλίνδρους του, ενώ ένας V ή boxer σχεδιάζεται από μπροστά για να φαίνεται η γωνία των συστοιχιών του. Σχεδιάζονται όλα: τα turbo, ο υπερσυμπιεστής, τα καρμπιρατέρ ή οι πεταλούδες, οι εξαγωγές, ο καταλύτης, το intercooler, το ψυγείο και η φιάλη νιτρικών, και ένας αποθηκευμένος κινητήρας δείχνει την ίδια εικόνα στην κάρτα του στο ΓΚΑΡΑΖ. Στον χάρτη της ΠΙΣΤΑΣ το αυτοκίνητο σχεδιάζεται ακόμα από την κατασκευή, με τα δικά του χρώματα: το μήκος του από το μεταξόνιο, οι τροχοί από τα μεγέθη ζάντας και ελαστικού, το ύψος από την ανάρτηση, και το splitter, η αεροτομή και ο diffuser που τοποθετείς. Οι κινητήριοι τροχοί έχουν πράσινες πλήμνες και ένα πράσινο μπλοκ δείχνει πού κάθεται ο κινητήρας."},
   chassis:{el:"Στην καρτέλα <b>ΟΧΗΜΑ</b> βάζεις τον κινητήρα σου σε αυτοκίνητο. Διάλεξε <b>σασί</b> και έρχεται με τον <b>εργοστασιακό του εξοπλισμό</b> — τα ελαστικά, ζάντες, φρένα, ανάρτηση, αεροδυναμική και κιβώτιο που θα φορούσε πραγματικά: ένα kei εμφανίζεται με στενά οικονομικά ελαστικά και μικρούς ατσάλινους δίσκους, ενώ ένα hypercar παίρνει φαρδιά ελαστικά και carbon-ceramic φρένα. Κάθε κατηγορία είναι το <b>διάμεσο πραγματικό αυτοκίνητο</b> της κατηγορίας: το βάρος, η αντίσταση αέρα, οι διαστάσεις και τα μέρη της είναι η μέση των πραγματικών αυτοκινήτων της, και όπως εκείνα δεν έχει πρόσθετη αεροτομή (η αντίσταση ενός πραγματικού αυτοκινήτου περιλαμβάνει ήδη τα εργοστασιακά του σπόιλερ). Όλα παραμένουν επεξεργάσιμα· το <b>ΕΡΓΟΣΤΑΣΙΑΚΟΣ ΕΞΟΠΛΙΣΜΟΣ</b> τα επαναφέρει. Κάθε πραγματικό αυτοκίνητο έχει <b>αριθμό σειράς</b>, από το 001 και πάνω, που φαίνεται πριν από το όνομά του στη λίστα ΕΡΓΟΣΤΑΣΙΑΚΟ ΑΥΤΟΚΙΝΗΤΟ. Ο αριθμός δίνεται μία φορά και δεν αλλάζει ποτέ, οπότε το 071 είναι πάντα το ίδιο αυτοκίνητο. Η <b>ΑΝΤΙΓΡΑΦΗ</b> παίρνει το αμάξωμα και τα μέρη ενός πραγματικού αυτοκινήτου, με τον αριθμό του ή ένα κομμάτι του ονόματός του, και κρατά τον κινητήρα που έχεις: το αποτέλεσμα είναι ένα προσαρμοσμένο αυτοκίνητο, με τον αριθμό από τον οποίο προήλθε."},
   garage:{el:"Η καρτέλα <b>ΓΚΑΡΑΖ</b> κρατά τα αυτοκίνητα και τους κινητήρες σου. Δώσε όνομα σε ένα αυτοκίνητο στο κάτω μέρος αυτής της καρτέλας και πάτησε <b>ΑΠΟΘΗΚΕΥΣΗ ΣΤΟ ΓΚΑΡΑΖ</b> και αποθηκεύεται το σύνολο — το αμάξωμα, κάθε εξάρτημα πάνω του, <i>και</i> ο κινητήρας μέσα, μέχρι και ο χειροκίνητα ρυθμισμένος χάρτης καυσίμου. Στην καρτέλα ΚΙΝΗΤΗΡΑΣ, η <b>ΑΠΟΘΗΚΕΥΣΗ ΚΙΝΗΤΗΡΑ</b> κρατά μόνο τον κινητήρα, που μπαίνει σε όποιο αυτοκίνητο έχεις όταν τον φορτώσεις. Η <b>ΠΡΟΒΟΛΗ</b> σε μια κάρτα δείχνει τι θα φορτώσει. Κάθε κάρτα δείχνει τα βασικά νούμερα που είχε όταν την αποθήκευσες (ισχύ, βάρος, 0–100, τελική, χρόνο γύρου και συνολικό κόστος), οπότε μπορείς να παρατάξεις τρεις κατασκευές και να τις συγκρίνεις χωρίς να ξαναφτιάξεις καμία. Η <b>ΦΟΡΤΩΣΗ</b> επαναφέρει το αυτοκίνητο ακριβώς όπως ήταν· αν γράψεις όνομα που υπάρχει ήδη, η κάρτα του τονίζεται και η αποθήκευση το αντικαθιστά. Αυτό είναι ξεχωριστό από τα <b>ΑΠΟΘΗΚ.</b>/<b>ΦΟΡΤΩΣΗ</b>, που είναι μία μοναδική θέση γρήγορης αποθήκευσης. Μια εγγραφή του γκαράζ είναι η ίδια που γράφει η <b>ΑΠΟΘ. ΑΡΧΕΙΟΥ</b> και μεταφέρει ένα σύνδεσμος κοινοποίησης. Όλα μένουν μόνο σε αυτόν τον browser — αν καθαρίσεις τα δεδομένα ιστότοπου, χάνεται το γκαράζ, και η <b>ΑΠΟΘ. ΑΡΧΕΙΟΥ</b> είναι αυτή που σώζει μια κατασκευή από αυτό."},
   tuning:{el:"Από εκεί ρυθμίζεις <b>μετάδοση</b> (FWD/RWD/AWD — το AWD ξεκινά καλύτερα), <b>κιβώτιο</b> (τύπος, σχέσεις + ρυθμιστικό τελικής), <b>ελαστικά</b> (τύπος + πλάτος/προφίλ/διάμετρος), <b>αεροδυναμική</b> (εμπρός/πίσω/πάτωμα = κάθετη δύναμη & οπισθέλκουσα), <b>φρένα</b> (τύπος + διάμετρος δίσκου) και <b>ανάρτηση</b> (πόσο γέρνει το αμάξωμα και η κλίση των τροχών). Η πρόσφυση δεν είναι πολλαπλασιαστής: ένα ελαστικό πιάνει περισσότερο όσο λιγότερο φορτίο σηκώνει για το μέγεθός του, οπότε μεγαλύτερο ελαστικό, ελαφρύτερο αυτοκίνητο και λιγότερη μεταφορά βάρους στους εξωτερικούς τροχούς (χαμηλό, φαρδύ αυτοκίνητο) στρίβουν γρηγορότερα· το γέρσιμο που βγάζει το φορτωμένο ελαστικό από την καλύτερη γωνία του κοστίζει πρόσφυση."},
@@ -6078,7 +6071,7 @@ function applyLang(lang){
   currentLang=(lang==='el')?'el':'en';
   try{localStorage.setItem('pes.lang',currentLang);}catch(e){}
   document.documentElement.lang=currentLang;
-  const sel='.viz-tabs button, .design-panel h3, .design-section, .guide-title, .gtier-h, .hint, .panel h2, .stat .label, .opt-note, .opt-row>div>b, .ctl-lbl, .field>label, .build-row button, #btnGearRatios, #btnGG, #btnSusp, #controlsPanel .btn-row button, .fuelmap-edit button, .garage-row button, #partsPanel button[id], #livePanel h2>span, #btnMore, #btnReplayRestart, .gart-cap, #btnMenu, .title-brand p, .title-menu button, .title-hint, .build-cap, #btnCopyFrom';
+  const sel='.viz-tabs button, .design-panel h3, .design-section, .guide-title, .gtier-h, .hint, .panel h2, .stat .label, .opt-note, .opt-row>div>b, .ctl-lbl, .field>label, .build-row button, #btnGearRatios, #btnGG, #btnSusp, #controlsPanel .btn-row button, .fuelmap-edit button, .garage-row button, #partsPanel button[id], #livePanel h2>span, #btnMore, #btnReplayRestart, .gart-cap, #btnMenu, .title-brand p, .title-menu button, .title-hint, #btnCopyFrom';
   document.querySelectorAll(sel).forEach(el=>{
     if(el.children.length>0)return;                       // skip nodes with child elements
     if(el.dataset.en===undefined)el.dataset.en=el.textContent.trim();
@@ -15514,10 +15507,9 @@ const CAR_PROFILES={
 // pixel-art style from their own Honda S2000 picture (assets/cars/README.md, with each car's prompt in
 // assets/cars/manifest.json). They are pictures, not data: no number in the sim comes from them.
 //
-// A picture cannot show the parts you fit, so it is used where the car is shown as it left the factory or
-// as a saved card: the VEHICLE tab's showroom under the car picker and the GARAGE cards of real cars. The
-// live views (the VEHICLE preview, the track, the race) keep the car drawn in code by drawCarSprite, which
-// changes with the wheels, ride height, wings and engine fitted.
+// A picture cannot show the parts you fit. It is the car on the VEHICLE tab (a real car's own picture, or
+// its class's) and on a saved car's GARAGE card. The track and the race still draw the car in code with
+// drawCarSprite, which changes with the wheels, ride height, wings and engine fitted.
 //
 // The files sit beside index.html in assets/cars/, so they load from file:// as well as from the web, and
 // the service worker keeps each one once it has been seen. Keyed by the preset's name.
@@ -15753,18 +15745,14 @@ function vehicleArt(v){
   return {url:classArtUrl(key),real:false,name:tr((CHASSIS[key]||{}).label||key)};
 }
 
-// The VEHICLE tab's showroom (build 220; at the top since build 221; every car since build 222): the picture
-// holds the top slot, modified or not, and the drawn car sits under it as YOUR BUILD (the only view of the
-// parts fitted). A real car shows its own picture; a generic chassis or a copy shows its class's.
+// The VEHICLE tab's showroom (build 220; at the top since build 221; every car since build 222; the drawn
+// car under it went in build 224). A real car shows its own picture; a generic chassis or a copy shows its class's.
 function syncCarArt(){
   const fig=document.getElementById('vhShowroom'),img=document.getElementById('vhArt');if(!fig||!img)return;
   const body=typeof vehBody!=='undefined'&&vehBody;
   const key=(document.getElementById('vhChassis')||{}).value||(vehicle&&vehicle.chassis);
   const art=vehicleArt({body,chassis:key}),url=art.url;
   fig.hidden=!url;
-  const cv=document.getElementById('carPreview'),cap2=document.getElementById('vhBuildCap');
-  if(cv)cv.classList.toggle('under-art',!!url);
-  if(cap2)cap2.hidden=!url;
   if(!url){img.removeAttribute('src');img.alt='';return;}
   if(img.getAttribute('src')!==url)img.src=url;
   img.alt=art.name;
@@ -16046,19 +16034,6 @@ function drawCarSprite(buf,v,e,t){
   buf.under(G.x0-2,CAR_GY,G.lenPx+4,1,'#05050a');                      // contact shadow
   return G;
 }
-// Paint a car into a canvas: backdrop, sprite and (optionally) the caption band under it.
-function paintCar(cv,v,e,opts){
-  opts=opts||{};
-  const gh=opts.caption?CAR_GH+12:CAR_GH;
-  const F=fitPixCanvas(cv,CAR_GW,gh);if(!F)return false;
-  const {g,k,ox,bw,bh}=F;
-  pixBackdrop(g,bw,bh,k,ox,CAR_GY+1);
-  const buf=new PixBuf(CAR_GW,CAR_GH);
-  drawCarSprite(buf,v,e,opts.t||0);
-  g.drawImage(buf.canvas(),ox,0,CAR_GW*k,CAR_GH*k);
-  if(opts.caption)pixCaption(g,k,ox,CAR_GW,CAR_GH,opts.title,opts.sub);
-  return true;
-}
 
 // ---- the engine, from outside ----
 // An inline is drawn side on, so you can count its cylinders; a V and a boxer are drawn from the front,
@@ -16266,19 +16241,12 @@ function paintEngine(cv,e,opts){
   return true;
 }
 
-// ---- the live previews on the ENGINE and VEHICLE tabs ----
-// Redrawn every frame while their tab is open (see loop): the car is the BUILT car, which buildVehicle
-// refreshes on every field change; the engine is the FORM, so it changes as you edit, before BUILD.
-// Wheels turn and the turbo spins slowly unless the system asks for reduced motion.
+// ---- the live preview on the ENGINE tab ----
+// Redrawn every frame while that tab is open (see loop): the engine is the FORM, so it changes as you
+// edit, before BUILD. The turbo spins slowly unless the system asks for reduced motion. The VEHICLE tab
+// shows the showroom picture (car-art.js), not a car drawn from the parts; the track and the race still draw one.
 let previewT=0;
 const previewStill=!!(window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches);
-function renderCarPreview(){
-  const cv=document.getElementById('carPreview');if(!cv||!vehicle||!vehicle.chassis)return;
-  const dl={fwd:'FWD',rwd:'RWD',awd:'AWD'}[vehicle.drive]||'RWD';
-  const fw=(vehicle.fWt!=null?vehicle.fWt:(CHASSIS[vehicle.chassis]||CHASSIS.coupe).fWt);
-  paintCar(cv,vehicle,engine,{t:previewT*2.5,caption:true,title:tr(vehicle.chLabel||''),
-    sub:dl+' • '+Math.round(vehicle.mass||0)+' kg • '+Math.round(fw*100)+'% F'});
-}
 function renderEnginePreview(){
   const cv=document.getElementById('enginePreview');if(!cv)return;
   const e=readEngineFromForm();
@@ -16287,7 +16255,6 @@ function renderEnginePreview(){
 function stepPreviews(dt){
   if(!previewStill)previewT+=dt;
   if(vizMode==='design')renderEnginePreview();
-  else if(vizMode==='vehicle')renderCarPreview();
 }
 // ---- top-down car for the track map ----
 // 14 x 8 cells, built once per livery and pedal state and then rotated: a car you can see turning,

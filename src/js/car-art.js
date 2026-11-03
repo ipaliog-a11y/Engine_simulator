@@ -4,10 +4,9 @@
 // pixel-art style from their own Honda S2000 picture (assets/cars/README.md, with each car's prompt in
 // assets/cars/manifest.json). They are pictures, not data: no number in the sim comes from them.
 //
-// A picture cannot show the parts you fit, so it is used where the car is shown as it left the factory or
-// as a saved card: the VEHICLE tab's showroom under the car picker and the GARAGE cards of real cars. The
-// live views (the VEHICLE preview, the track, the race) keep the car drawn in code by drawCarSprite, which
-// changes with the wheels, ride height, wings and engine fitted.
+// A picture cannot show the parts you fit. It is the car on the VEHICLE tab (a real car's own picture, or
+// its class's) and on a saved car's GARAGE card. The track and the race still draw the car in code with
+// drawCarSprite, which changes with the wheels, ride height, wings and engine fitted.
 //
 // The files sit beside index.html in assets/cars/, so they load from file:// as well as from the web, and
 // the service worker keeps each one once it has been seen. Keyed by the preset's name.
@@ -243,18 +242,14 @@ function vehicleArt(v){
   return {url:classArtUrl(key),real:false,name:tr((CHASSIS[key]||{}).label||key)};
 }
 
-// The VEHICLE tab's showroom (build 220; at the top since build 221; every car since build 222): the picture
-// holds the top slot, modified or not, and the drawn car sits under it as YOUR BUILD (the only view of the
-// parts fitted). A real car shows its own picture; a generic chassis or a copy shows its class's.
+// The VEHICLE tab's showroom (build 220; at the top since build 221; every car since build 222; the drawn
+// car under it went in build 224). A real car shows its own picture; a generic chassis or a copy shows its class's.
 function syncCarArt(){
   const fig=document.getElementById('vhShowroom'),img=document.getElementById('vhArt');if(!fig||!img)return;
   const body=typeof vehBody!=='undefined'&&vehBody;
   const key=(document.getElementById('vhChassis')||{}).value||(vehicle&&vehicle.chassis);
   const art=vehicleArt({body,chassis:key}),url=art.url;
   fig.hidden=!url;
-  const cv=document.getElementById('carPreview'),cap2=document.getElementById('vhBuildCap');
-  if(cv)cv.classList.toggle('under-art',!!url);
-  if(cap2)cap2.hidden=!url;
   if(!url){img.removeAttribute('src');img.alt='';return;}
   if(img.getAttribute('src')!==url)img.src=url;
   img.alt=art.name;
