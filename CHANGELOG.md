@@ -20,6 +20,14 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 Working toward **v1.0 — every number derived, not fitted.**
 
+### The drawn car is off the VEHICLE tab (build 224)
+
+The VEHICLE tab showed two pictures of the car: the showroom picture, and under it a car drawn from the
+parts, captioned YOUR BUILD, with the name, drive, weight and front weight share painted on it. The drawn
+one is gone. The showroom picture stays — a real car's own, or the class picture for a generic chassis or
+a copy — and it still stays when you change a part. The ENGINE tab still draws the engine. The TRACK map
+and the race still draw the car from the build. Nothing in the simulation moved.
+
 ### Each body class is the median real car of its class (build 223)
 
 The 14 body classes (kei car to open-wheeler) were hand-set guesses: a weight, a drag figure, a size and a set of

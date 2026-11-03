@@ -102,20 +102,16 @@ const lit = sel => page.evaluate(s => {
   return n;
 }, sel);
 await page.click('#tabVehicle'); await page.waitForTimeout(300);
-const carLit = await lit('#carPreview');
-const carA = await page.evaluate(() => document.getElementById('carPreview').toDataURL());
-await page.selectOption('#vhAeroR', 'wing'); await page.waitForTimeout(200);
-const carB = await page.evaluate(() => document.getElementById('carPreview').toDataURL());
+const carGone = await page.evaluate(() => !document.getElementById('carPreview') && !document.getElementById('vhBuildCap'));
 await page.click('#tabDesign'); await page.waitForTimeout(300);
 const engLit = await lit('#enginePreview');
 await page.selectOption('#edIntake', 'na'); await page.waitForTimeout(150);
 const engA = await page.evaluate(() => { previewT = 0; renderEnginePreview(); return document.getElementById('enginePreview').toDataURL(); });
 await page.selectOption('#edIntake', 'turbo'); await page.waitForTimeout(150);
 const engB = await page.evaluate(() => { previewT = 0; renderEnginePreview(); return document.getElementById('enginePreview').toDataURL(); });
-console.log(`== previews: car ${carLit} bright pixels, engine ${engLit} · wing changes the car: ${carA !== carB} · turbo changes the engine: ${engA !== engB} ==`);
-if (carLit < 500) fails.push('the VEHICLE tab car preview is blank');
+console.log(`== previews: drawn car on the VEHICLE tab ${carGone ? 'gone' : 'still there'}, engine ${engLit} · turbo changes the engine: ${engA !== engB} ==`);
+if (!carGone) fails.push('the VEHICLE tab still has the drawn car');
 if (engLit < 500) fails.push('the ENGINE tab engine preview is blank');
-if (carA === carB) fails.push('fitting a rear wing did not change the car preview');
 if (engA === engB) fails.push('choosing a turbo did not change the engine preview');
 
 // ---- 4. garage thumbnails, including an old record without the newer fields ----

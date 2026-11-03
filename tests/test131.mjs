@@ -73,23 +73,19 @@ const f40 = await room();
 await page.evaluate(() => { const w = document.getElementById('vhWheel'); w.value = String(+w.value + 1); w.dispatchEvent(new Event('input')); });
 await page.waitForTimeout(200);
 const modded = await room();
-const preview = await page.evaluate(() => {
-  const c = document.getElementById('carPreview'), g = c.getContext('2d'), d = g.getImageData(0, 0, c.width, c.height).data;
-  let lit = 0; for (let k = 0; k < d.length; k += 4) if (d[k] + d[k + 1] + d[k + 2] > 120) lit++;
-  return lit;
-});
+const preview = await page.evaluate(() => !!document.getElementById('carPreview') || !!document.getElementById('vhBuildCap'));
 // a generic chassis
 await page.evaluate(() => { const c = document.getElementById('vhChassis'); c.value = 'coupe'; c.dispatchEvent(new Event('input')); });
 await page.waitForTimeout(200);
 const generic = await room();
-console.log(`== showroom: start hidden ${before.hidden}; S2000 ${s2k.src} (${s2k.w}px) "${s2k.cap}"; F40 ${f40.src}; modified "${modded.cap}"; generic ${generic.src}; live preview ${preview} lit pixels ==`);
+console.log(`== showroom: start hidden ${before.hidden}; S2000 ${s2k.src} (${s2k.w}px) "${s2k.cap}"; F40 ${f40.src}; modified "${modded.cap}"; generic ${generic.src}; drawn car still on the tab ${preview} ==`);
 if (!s2k.shown || !/honda-s2000-ap1-2000\.webp$/.test(s2k.src) || s2k.w !== 960) fails.push('loading the S2000 does not show its picture');
 // since build 221 the caption leads with the car's order number (test132)
 if (s2k.cap !== '010 · Honda S2000 (AP1, 2000)') fails.push('the showroom caption is not the car\'s number and name: ' + s2k.cap);
 if (!/ferrari-f40-1987\.webp$/.test(f40.src)) fails.push('a change of car does not change the picture');
 if (modded.hidden || !/as it left the factory/.test(modded.cap)) fails.push('a modified car does not say the picture is the factory car');
 if (!/generic\/generic-sports-coupe\.webp$/.test(generic.src)) fails.push('a generic chassis does not show its class\'s picture: ' + generic.src);
-if (preview < 500) fails.push('the live car preview is no longer drawn');
+if (preview) fails.push('the VEHICLE tab still draws a car under the picture');
 
 // 4. the GARAGE
 const garageR = await page.evaluate(async () => {

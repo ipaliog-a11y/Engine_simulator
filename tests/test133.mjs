@@ -2,12 +2,12 @@
 //
 // WHY THIS EXISTS. Each chassis class in CHASSIS got its own unbranded side view (assets/cars/generic/*.webp). A
 // generic chassis, and a car made by COPY FROM (no longer the real car), now show their class's picture where a real
-// car shows its own: the top of the VEHICLE tab, with the drawn car under it as YOUR BUILD, and the GARAGE cards.
+// car shows its own: the top of the VEHICLE tab, and the GARAGE cards.
 // What must hold:
 //   · every class in CHASSIS has a picture, every picture is a class (no file in assets/cars/generic/ unused), and all
 //     of them load from file:// at 960x640;
 //   · a generic chassis shows its class's picture at the top, captioned with the class, and a change of class changes
-//     it; a part changed keeps it, marked as the car as it left the factory; the drawn car stays under it;
+//     it; a part changed keeps it, marked as the car as it left the factory;
 //   · a real car still shows its own picture, and a copy shows its class's, captioned as a copy;
 //   · the GARAGE: a generic car's card shows its class's picture; an engine's card is still drawn;
 //   · the caption reads in Greek.
@@ -42,8 +42,7 @@ if (bad.length) fails.push('pictures that do not load at 960x640: ' + bad.map(x 
 // 2. the VEHICLE tab
 const room = () => {
   const f = document.getElementById('vhShowroom'), i = document.getElementById('vhArt');
-  return { shown: !f.hidden, src: i.getAttribute('src') || '', cap: document.getElementById('vhArtCap').textContent,
-    under: document.getElementById('carPreview').classList.contains('under-art') && !document.getElementById('vhBuildCap').hidden };
+  return { shown: !f.hidden, src: i.getAttribute('src') || '', cap: document.getElementById('vhArtCap').textContent };
 };
 const v = await page.evaluate(new Function('room', `
   room = (${room.toString()});
@@ -58,7 +57,7 @@ const v = await page.evaluate(new Function('room', `
   set('kei'); applyLang('el'); o.el = room(); applyLang('en');
   return o;`), null);
 console.log(`== kei "${v.kei.cap}" ${v.kei.src}; pickup "${v.pickup.cap}"; modified "${v.mod.cap}"; real "${v.real.cap}"; copy "${v.copy.cap}" ${v.copy.src}; Greek "${v.el.cap}" ==`);
-if (!v.kei.shown || !/generic-kei-car\.webp$/.test(v.kei.src) || v.kei.cap !== 'KEI CAR' || !v.kei.under) fails.push('a generic kei car does not show its class picture over YOUR BUILD');
+if (!v.kei.shown || !/generic-kei-car\.webp$/.test(v.kei.src) || v.kei.cap !== 'KEI CAR') fails.push('a generic kei car does not show its class picture');
 if (!/generic-pickup-truck\.webp$/.test(v.pickup.src) || v.pickup.cap !== 'PICKUP TRUCK') fails.push('a change of class does not change the picture');
 if (!/generic-pickup-truck\.webp$/.test(v.mod.src) || !/as it left the factory/.test(v.mod.cap)) fails.push('a modified generic car does not keep its picture, marked');
 if (!/toyota-supra-a80-1993\.webp$/.test(v.real.src)) fails.push('a real car no longer shows its own picture');
