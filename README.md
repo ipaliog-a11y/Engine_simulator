@@ -1,4 +1,4 @@
-# PIXEL ENGINE SIM v0.7 build 233
+# PIXEL ENGINE SIM v0.7 build 234
 
 **A lightweight, 8-bit style internal combustion engine *designer* & simulator** inspired by *Automation*.
 
@@ -69,8 +69,9 @@ screamer, 2JZ six, muscle V8, blown V8, V12 supercar…), or configure your own 
 - **Cooling** — radiator size (small / stock / large), cooling fan (none / mechanical /
   electric), oil cooler, and thermostat opening temperature.
 - **Reliability / wear** — the engine has a live **health** that falls under abuse:
-  sustained detonation, overheating and lean-under-boost wear it (a clean tune barely ages;
-  holding the rev limiter does not, since a redline is the speed an engine is rated for). A worn engine makes less power; at zero health it lets go and must be
+  sustained detonation, overheating, lean-under-boost and running past valve float wear it (a
+  clean tune barely ages; holding the rev limiter does not, since a redline is the speed an
+  engine is rated for, and a real engine's stock springs are sized to float past it). A worn engine makes less power; at zero health it lets go and must be
   rebuilt (BUILD & DYNO or RESET). This puts real stakes on every design and tune choice.
 
 These couple realistically: octane, compression, boost, intake temperature and ignition

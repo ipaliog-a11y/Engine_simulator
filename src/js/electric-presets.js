@@ -119,4 +119,6 @@ const FACTORY_ENGINES=PRESETS.concat(EV_ENGINE_PRESETS,HYB_ENGINE_PRESETS), FACT
 // A real engine's STOCK radiator is its maker's, sized for the engine's rated power (build 219). The reliability index
 // reads it as engine.radHp; it travels with the design, so a modified factory engine is judged against its own radiator.
 for(const p of FACTORY_ENGINES)if(p.real&&p.real.hp>0&&p.engine.radHp==null)p.engine.radHp=p.real.hp;
+// Its springs, likewise, are its maker's, sized for its own redline (build 234; see SPRING_FLOAT_MARGIN).
+for(const p of FACTORY_ENGINES)if(p.real&&p.engine.springRpm==null)p.engine.springRpm=p.engine.redline||DEFAULT_ENGINE.redline;
 const FACTORY_ENGINE_CATS=PRESET_CATS.concat(['Electric','Hybrid']), FACTORY_CAR_CATS=VEHICLE_CATS.concat(['Electric','Hybrid']);

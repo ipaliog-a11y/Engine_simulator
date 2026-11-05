@@ -44,6 +44,7 @@ function readEngineFromForm(){
     afrMode:g('edAfrMode').value,
     radiator:g('edRadiator').value,
     radHp:Math.max(0,+g('edRadHp').value||0),   // what a STOCK radiator was sized for (build 219)
+    springRpm:Math.max(0,Math.round(+g('edSpringRpm').value||0)),   // the redline the STOCK springs were sized for (build 234)
     fan:g('edFan').value,
     oilCooler:g('edOilCooler').value==='yes',
     thermostat:clamp(Math.round(+g('edThermostat').value||88),71,95),
@@ -71,7 +72,7 @@ function applyEngineToForm(e){
   g('edIntakeSys').value=e.intakeSys||'efi';
   g('edCam').value=e.cam||'stock';g('edEgr').value=e.egr||'none';g('edVVT').value=e.vvt?'yes':'no';
   g('edValves').value=String(e.valves||4);g('edValveMat').value=e.valveMat||'steel';
-  g('edSpring').value=e.valveSpring||'stock';
+  g('edSpring').value=e.valveSpring||'stock';g('edSpringRpm').value=e.springRpm||0;
   g('edFuel').value=e.fuel||'gasoline';
   partsToForm(e);g('edCat').value=e.cat||'stock';g('edOctane').value=e.octane;g('edInjector').value=e.injector;
   g('edIgnAdv').value=e.ignitionAdv;g('edIgnType').value=e.ignitionType;g('edTiming').value=e.timingMode||'fixed';g('edAfrMode').value=e.afrMode||'fixed';

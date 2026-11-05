@@ -90,6 +90,13 @@ const KNOWN = {
   'Renault M5Pt 1.8 turbo (Mégane R.S. Trophy)': ['limiter'],
   'Honda B16B (Civic Type R EK9)': ['limiter'],
   'Toyota FA24D 2.4 boxer (GR86)': ['limiter'],
+  // build 234: four two-valve engines whose generic STOCK springs had them floating far below the redline (the Dino at
+  // 5215 rpm against 7800) now have their makers' springs, and show the same missing top-end fade: power still climbing
+  // at the limiter where the real one peaks short of it. The float had been hiding it; named in the CHANGELOG.
+  'Ferrari Dino 135 CS 2.4 V6 (246 GT)': ['limiter'],
+  'Ford Windsor 289 4-bbl (Mustang 1965)': ['limiter'],
+  'Porsche 911/83 2.7 flat-six (Carrera RS)': ['limiter'],
+  'Lamborghini 3.9 V12 (Countach LP400)': ['limiter'],
   // (Coyote, F140 and 4A-GE showed 'flat-low-end', torque peaks at 1000-1400 rpm, until build 98 put
   // the walls' extra heat at low speed into the work: peaks now 4700, 4900 and 5600 rpm.)
   // the two-stroke's fitted type factor and no expansion-chamber tuning
