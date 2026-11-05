@@ -20,6 +20,44 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 Working toward **v1.0 — every number derived, not fitted.**
 
+### A cold pack loses some power, not nine-tenths of it (build 232)
+
+Build 228 raised a lithium pack's whole resistance with the 68 kJ/mol of the graphite charge transfer. Its own comment
+said that overstated the cold. It did so badly: the Model Y kept 9% of its power at 0 °C.
+
+- **The fix.** A cell's resistance is two kinds. The ohmic part (electrolyte, current collectors, tabs, the pack's
+  busbars) barely moves with temperature. Only the charge transfer at the electrodes is activated. Now only that
+  share rises with the cold.
+- **Where the share comes from.** Nagasubramanian (J. Appl. Electrochem. 31, 2001) measured commercial 18650 cells:
+  the ohmic resistance stays nearly constant from 25 to −20 °C while the whole impedance rises by an order of
+  magnitude. With the 68 kJ/mol, charge transfer rises 131-fold over that range. A tenfold total then makes charge
+  transfer 0.069 of the 25 °C resistance. The share is derived, not fitted to a power figure.
+- **Marked probable.** "An order of magnitude" is a round figure: eightfold would make the share 0.054, fifteenfold
+  0.108. It is the low-frequency impedance, not a 10 s pulse resistance, from cells of that era.
+
+| Model Y, half charge | 25 °C | 0 °C | −10 °C |
+|---|---|---|---|
+| Resistance | 1× | ×12.3 → **×1.78** | ×38 → **×3.59** |
+| Power | 377 kW | 35 → **245 kW** | 11 → **122 kW** |
+| Takes back | 78 kW | 31 → **78 kW** | 10 → **78 kW** |
+
+The other lithium packs move the same way; the Plaid gives 824 / 576 / 286 kW. Unsourced vendor guides put the cold
+rise at +35–60% at 0 °C and +70–120% at −10 °C, so the 0 °C figure is close and −10 °C is a little harsh.
+
+- **Nothing at 25 °C moved.** The fingerprint's new electric section (build 231) shows only the cold pack values
+  changing: no WLTP figure, 0–100, top speed or lap moved. The lap, the cycle and the race still run at 25 °C.
+- **A gap this exposes: a cold pack's charge acceptance.** Charging is the lower of the plating limit and the
+  voltage limit. With the resistance corrected, the Model Y is on its plating limit at all three temperatures, so it
+  takes back the same 78 kW at −10 °C as warm. Real cells are rated to charge only above about 0 °C because lithium
+  plates in the cold, and that is the effect that matters. This model does not vary the plating limit with
+  temperature yet. It belongs in stage 10 (charging), which builds on this.
+  - `test139` asked a colder pack to take back strictly less. That only held because of the overstated resistance.
+    It now requires never more.
+  - The new `test142` requires less where the voltage limit binds: the Model 3 at −10 °C, 90 → 69 kW.
+- New test: `test142`, covering the tenfold rise to −20 °C that the share comes from, 25 °C unchanged, power at 0 °C
+  above half and at −10 °C between a quarter and a half, lead-acid and NiMH unchanged, and the charge acceptance
+  above.
+
 ### The fingerprint covers the electric and hybrid cars (build 231)
 
 `tools/fingerprint.mjs` is how a build proves it moved nothing, and every stage of the electric-drivetrain plan is told

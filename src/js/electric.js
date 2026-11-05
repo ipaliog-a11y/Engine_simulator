@@ -395,22 +395,29 @@ function packBuild(s){
   const cost=Math.round(s.kWh*atYear(c.cost,year));
   return {s,chem:c,year,Vnom,pChargeMax:c.cCharge*s.kWh*1000,Ah,R,kWh:s.kWh,mass,cost,series:s.series,vMin:s.series*c.vMin,iMax:c.cMax*Ah};
 }
-// Resistance against temperature (stage 3). b.R is the 25 °C value the rest of the drive already uses.
-// A graphite-anode lithium cell's charge transfer at that anode is about 68 kJ/mol (Jow, Xue, Zhang et al.,
-// "Distinguishing Li+ Charge Transfer Kinetics…", J. Electrochem. Soc. 158, 2011; the NCA interface in the
-// same paper is about 50, and the graphite one limits the cold). LFP, NCA and the hybrid lithium cells here
-// all have a graphite anode, so they share it. Putting that energy on the whole pack resistance overstates
-// the cold: the busbars and the electrolyte's ohmic part are less activated, and this model has no measured
-// split between them. Lead-acid and NiMH have no cited energy here, so they stay at 25 °C. The 50 °C power
-// cut (packDerate) is the cells' own limit and is not this curve. The lap, the cycle and the race still call
-// the 25 °C resistance; they do not yet pass the pack's temperature in.
+// Resistance against temperature (stage 3; split in build 232). b.R is the 25 °C value the rest of the drive uses.
+// A cell's resistance is two kinds. The ohmic part (electrolyte, current collectors, tabs, and here the pack's busbars)
+// barely moves with temperature. The charge-transfer part at the electrodes is activated: about 68 kJ/mol at a
+// graphite anode (Jow, Xue, Zhang et al., "Distinguishing Li+ Charge Transfer Kinetics…", J. Electrochem. Soc. 158,
+// 2011). Build 228 put that energy on the whole resistance, which took the Model Y from 377 kW at 25 °C to 35 kW at
+// 0 °C: no real pack loses 90% at freezing.
+// The split comes from one measurement. Nagasubramanian (J. Appl. Electrochem. 31, 2001), on commercial 18650 cells:
+// the ohmic resistance stays nearly constant from 25 to −20 °C while the cell's impedance rises by an order of magnitude.
+// With charge transfer rising exp(Ea/R (1/T − 1/T0)), 131-fold from 25 to −20 °C, a tenfold total leaves charge
+// transfer (10 − 1) / (131 − 1) = 0.07 of the 25 °C resistance and the ohmic part 0.93. That gives 1.8× at 0 °C and
+// 3.6× at −10 °C. PROBABLE: "an order of magnitude" is a round figure. Eightfold makes the share 0.054, fifteenfold
+// 0.108. The paper's own impedance spectra would pin it. It is the low-frequency impedance, not a 10 s pulse
+// resistance, and the 18650s are of the 2000 era; it is used for every graphite-anode lithium chemistry here.
+// Lead-acid and NiMH have no cited energy here, so they stay at 25 °C. The 50 °C power cut (packDerate) is the cells'
+// own limit and is not this curve. The lap, the cycle and the race still call the 25 °C resistance.
 const PACK_T_REF=25, R_GAS=8.314462618;
+const R_CT_SHARE=(10-1)/(Math.exp(68000/R_GAS*(1/(273.15-20)-1/(273.15+PACK_T_REF)))-1);   // ≈ 0.07, from the tenfold rise to −20 °C
 function packR(b,tC){
   if(tC==null||tC===PACK_T_REF)return b.R;
   const ea=b.chem.ea;
   if(!(ea>0))return b.R;
   const T=tC+273.15,T0=PACK_T_REF+273.15;
-  return b.R*Math.exp(ea/R_GAS*(1/T-1/T0));
+  return b.R*((1-R_CT_SHARE)+R_CT_SHARE*Math.exp(ea/R_GAS*(1/T-1/T0)));
 }
 // Open-circuit voltage at a state of charge (0..1).
 function packOcv(b,soc){
