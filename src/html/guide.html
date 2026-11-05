@@ -1195,7 +1195,7 @@ Limit: emissions are correlations with the right trends, not combustion chemistr
 </div>
 <div class="guide-see">See also: <a data-gp="firetriangle">Air, fuel and spark</a> · <a data-gp="fuelmap">Fuel, injection &amp; the fuel map</a> · <a data-gp="scorecard">The scorecard</a></div>
 </section>
-<section class="guide-page" id="gp-evdrive" data-cat="electric" data-title="The electric drive" data-tags="electric ev battery inverter motor regen regenerative braking limp low charge soc pack current power limit" hidden>
+<section class="guide-page" id="gp-evdrive" data-cat="electric" data-title="The electric drive" data-tags="electric ev battery inverter motor regen regenerative braking regeneration high low off limp low charge soc pack current power limit" hidden>
 <h4 class="guide-title">The electric drive</h4>
 <div class="gtier gt-real"><div class="gtier-h">LV1 · REAL LIFE</div>
 <canvas class="gart" data-art="evdrive"></canvas><div class="gart-cap">Battery, inverter, motor: the whole drivetrain of an electric car.</div>
@@ -1216,7 +1216,7 @@ A battery's voltage falls as it empties. The car's computer draws more current t
 • <b>LIMP</b>: the battery is below 2%.<br>
 The bench never recharges by itself: set <b>BATTERY CHARGE</b> (under LOAD) to test the drive at any charge, or <b>BUILD &amp; DYNO</b> to start again at 90%.<br>
 <b>SOUND ON</b> plays the drive: the motor's whine (its torque ripple and its slotting, both rising with speed and louder with torque), the inverter's switching tone, and the gears of the reduction, each at the frequency the build gives it.<br>
-<b>On the road.</b> GEARING on the VEHICLE tab sets the single reduction. The VEHICLE tab gives the WLTP consumption in Wh/km, from the battery and at the socket, and the range. In a race the battery stands in for the fuel tank: there is no charging in the pit lane, an energy manager chooses the power that lasts the distance, and a car that empties its battery retires OUT OF CHARGE.
+<b>On the road.</b> GEARING on the VEHICLE tab sets the single reduction. <b>REGENERATION</b> is <b>HIGH</b> (everything the motor and the pack can take back), <b>LOW</b> (half) or <b>OFF</b>. HIGH is the default, and it is what the three Teslas run. Below about 500 rpm it fades out, whichever you pick. The VEHICLE tab gives the WLTP consumption in Wh/km, from the battery and at the socket, and the range. In a race the battery stands in for the fuel tank: there is no charging in the pit lane, an energy manager chooses the power that lasts the distance, and a car that empties its battery retires OUT OF CHARGE.
 </div>
 </div>
 <div class="gtier gt-phys"><div class="gtier-h">LV3 · THE PHYSICS</div>
@@ -1230,13 +1230,14 @@ The battery is an open-circuit voltage that follows its charge, behind an intern
 • <b>Magnet temperature:</b> it does the same over the last 20 °C below the magnet grade's limit.<br>
 • <b>Low charge:</b> below 15% the battery management allows a share of what the cells could give, falling straight to 30% at 2%.<br>
 • <b>Limp mode:</b> below 2% it holds the power to a tenth of the battery's rated power (its power at 50% charge).<br>
+Regeneration is that braking torque times 1, 0.5 or 0. The table still starts at 500 rpm, so the fade into a stop stays.<br>
 Damage the controller cannot prevent is permanent: magnets heated past their grade's limit lose flux, and a winding above 200 °C cooks its insulation.<br>
 The 0-100 and the lap run at 50% charge. A race starts at 95% and stops at 5%.
 </div>
 </div>
 <div class="guide-see">See also: <a data-gp="evmotor">The motor</a> · <a data-gp="battery">The battery</a> · <a data-gp="inverter">The inverter</a> · <a data-gp="race">The race</a></div>
 </section>
-<section class="guide-page" id="gp-evmotor" data-cat="electric" data-title="The motor" data-tags="electric motor permanent magnet induction rotor stack poles turns magnets ferrite ndfeb neodymium dysprosium sleeve bridges cooling knee field weakening" hidden>
+<section class="guide-page" id="gp-evmotor" data-cat="electric" data-title="The motor" data-tags="electric motor permanent magnet induction rotor stack poles turns magnets ferrite ndfeb neodymium dysprosium sleeve bridges cooling lamination thickness sheet steel knee field weakening" hidden>
 <h4 class="guide-title">The motor</h4>
 <div class="gtier gt-real"><div class="gtier-h">LV1 · REAL LIFE</div>
 <canvas class="gart" data-art="evmotor"></canvas><div class="gart-cap">A magnet rotor turning inside a stator of copper windings.</div>
@@ -1260,6 +1261,7 @@ Torque grows with the rotor's volume and with the current. Spinning makes the mo
 • <b>NdFeB (SH)</b>: neodymium, the standard; strong, with a limit of 150 °C.<br>
 • <b>NdFeB + Dy (UH)</b>: dysprosium raises the limit to 180 °C for slightly less strength and a higher price.<br>
 <b>MAGNET RETENTION.</b> What holds the magnets in at speed. <b>IRON BRIDGES</b> in the steel sheets allow a rotor surface speed of 150 m/s. A <b>CARBON SLEEVE</b> wound over the rotor allows 220 m/s, which is how the Plaid's large rotors reach 20,000 rpm.<br>
+<b>LAMINATIONS.</b> How thick the core's steel sheets are. <b>0.35 mm</b> is ordinary silicon steel, the thickness the loss model is built on. <b>0.20 mm</b> cuts the eddy-current part of the iron loss, which grows with the square of the thickness, and the iron costs more. At low speed the two stay close, because hysteresis does not follow the thickness.<br>
 <b>MOTOR COOLING.</b> Decides how long the peak lasts and what the motor holds for good.<br>
 • <b>AIR (FINNED)</b>: free, but weak.<br>
 • <b>WATER JACKET</b>: coolant round the stator.<br>
@@ -1272,7 +1274,7 @@ Torque grows with the rotor's volume and with the current. Spinning makes the mo
 <div class="guide-body" data-gk="evmotorPhys">
 Torque is the flux linkage times the current: <span class="geq">T = 3/2 · p · ψ · I,  ψ = k<sub>w</sub> · N · (2/π) · B<sub>g</sub> · τ<sub>p</sub> · L</span> Here p is the pole pairs, N the turns per phase, k<sub>w</sub> = 0.93 the winding factor, τ<sub>p</sub> the pole pitch (πD/poles) and L the stack. The air-gap flux B<sub>g</sub> is 0.85 times the magnets' remanence for a magnet motor (1.28 T for SH NdFeB, 0.42 T for ferrite). An induction motor runs 0.8 T and pays for it with a magnetising current, which takes its share of the inverter's amps.<br>
 The knee is where the back-EMF ω·ψ, with the winding's voltage drop on top (×1.29 at full current), meets the battery's voltage. Above it the power holds to about 4× the knee speed for a magnet motor and 3× for an induction motor.<br>
-<b>Losses.</b> Copper resistance comes from the slot area (40% copper fill) and rises 0.393% per kelvin. Iron loss is Steinmetz's law on 0.35 mm silicon steel.<br>
+<b>Losses.</b> Copper resistance comes from the slot area (40% copper fill) and rises 0.393% per kelvin. Iron loss is Steinmetz's law on silicon steel: hysteresis follows frequency and flux, and the eddy term also follows the square of the sheet thickness (0.35 mm, or 0.20 mm when LAMINATIONS says so).<br>
 <b>Top speed.</b> The lowest of three: MAX SPEED; the rotor surface speed v/(πD); and the inverter's output frequency, 1.2 kHz for IGBTs and 2 kHz for SiC, divided by the pole pairs.<br>
 <b>Heat.</b> Three lumped nodes (winding, stator core, rotor) and the coolant.<br>
 <b>Calibration.</b> Three constants come from one measured motor, the Tesla Model 3 rear (MotorXP, 2020). The 2012 Nissan Leaf as ORNL measured it is the check.
@@ -1354,7 +1356,8 @@ Prices have fallen tenfold: about $1100 per kWh in 2010, $160 in 2019 and $115 i
 • <b>Li-ION (HYBRID CELLS)</b> and <b>NiMH (HYBRID CELLS)</b>: built for hybrids, a small battery that gives and takes 20–25 times its capacity in power.<br>
 <b>CELLS IN SERIES</b> (20–400). Sets the voltage: 96 NCA cells make about 350 V, 110 make about 400 V. Higher voltage moves the motor's knee up (more power at speed) and lowers the current for the same power.<br>
 <b>CAPACITY</b> (kWh). Range, mass and price. A bigger battery also gives and takes more power, because there are more cells in parallel.<br>
-<b>TECHNOLOGY YEAR.</b> Each chemistry's energy per kilogram and price per kWh follow the year: a 2010 battery is heavier and dearer than the same battery in 2024.
+<b>TECHNOLOGY YEAR.</b> Each chemistry's energy per kilogram and price per kWh follow the year: a 2010 battery is heavier and dearer than the same battery in 2024.<br>
+The power and the regeneration the car is rated at are at 25 °C. A colder lithium pack can give and take less. The lap does not yet start the pack cold.
 </div>
 </div>
 <div class="gtier gt-phys"><div class="gtier-h">LV3 · THE PHYSICS</div>
@@ -1363,7 +1366,8 @@ Each chemistry is a table of open-circuit voltage against charge, a cut-off volt
 <b>The pack.</b> Nominal voltage is the cells in series times the mean cell voltage. The capacity in Ah is kWh·1000 / V<sub>nom</sub>. The resistance is <span class="geq">R = N<sub>s</sub> · (R·Ah)<sub>cell</sub> / Ah · 1.1</span> (+10% for busbars, contactors and the fuse).<br>
 <b>Limits.</b> The most current is the C-rate times the Ah (NCA 6C, power cells 10C, hybrid cells 25C). The most power is reached either at that current or at the cut-off voltage, whichever comes first. The charge rate under braking is the lithium-plating limit: about 1C for NCA, 1.5C for LFP.<br>
 <b>Mass.</b> The cells' mass is kWh over Wh/kg at the year, divided by the cells' share of the pack (0.62–0.68, or 0.82 cell-to-pack).<br>
-<b>Heat.</b> The pack is one lumped node: I²R heat in, a liquid cooling plate taking about 2 W/K per kWh to 30 °C coolant. Its management cuts power from 50 °C.
+<b>Heat.</b> The pack is one lumped node: I²R heat in, a liquid cooling plate taking about 2 W/K per kWh to 30 °C coolant. Its management cuts power from 50 °C. That cut is separate from the resistance.<br>
+<b>Cold.</b> The resistance above is at 25 °C. A graphite-anode lithium pack's rises when it is colder, with the 68 kJ/mol of the lithium charge transfer at the graphite (Jow, Xue and Zhang, 2011). Applied to the whole pack resistance this overstates the cold, because the busbars and the ohmic part of the electrolyte are less activated. Lead-acid and NiMH stay at the 25 °C resistance until a cited energy exists for them. The lap, the cycle and the race still use 25 °C.
 </div>
 </div>
 <div class="guide-see">See also: <a data-gp="evdrive">The electric drive</a> · <a data-gp="inverter">The inverter</a> · <a data-gp="hybrid">Hybrids</a></div>
@@ -1471,20 +1475,18 @@ car's body and parts, by its number or a piece of its name, and keeps the engine
 is a custom car, labelled with the number it came from.
 </div>
 <div class="guide-body" data-gk="pixart">
-<b>The pictures are drawn from your build.</b> The car at the top of the VEHICLE tab gets its length
-from the wheelbase, its wheels from the rim and tyre sizes, and its ride height from the suspension.
-It wears the splitter, wing and diffuser you fit. The driven wheels have green hubs, and a green block
-marks where the engine sits: in front of the cabin, behind it, or behind the rear axle. The engine at
-the top of the ENGINE tab follows the form as you edit, before you build: an inline is drawn side on
-so you can count its cylinders, and a V or a boxer is drawn from the front so you can see the angle of
-its banks. Its turbos, blower, carbs or throttle bodies, headers, cat, intercooler, radiator and
-nitrous bottle are all drawn. Saved cars and engines show the same pictures on their GARAGE cards,
-and on the TRACK map the car runs the lap in its own colours. A real car loaded from the picker gets
-its <b>showroom picture</b> at the top of the VEHICLE tab: a detailed side view of that car as it left
-the factory. It stays there however you modify the car, and the drawn car moves under it as <b>YOUR
-BUILD</b>, because it is the one that shows the parts you fit. A saved real car shows its picture on its
-GARAGE card. A generic chassis, or a car made by COPY FROM, shows the picture of its <b>body class</b>
-instead: one unbranded car for each of the 14 classes, from kei car to open-wheeler.
+<b>The pictures.</b> The top of the VEHICLE tab is a picture of the car, not one drawn from the parts.
+A real car shows its <b>showroom picture</b>, a detailed side view of that car as it left the factory,
+and it stays however you modify the car — the caption then says so. A generic chassis, or a car made
+by COPY FROM, shows the picture of its <b>body class</b> instead: one unbranded car for each of the 14
+classes, from kei car to open-wheeler. A saved car shows the same picture on its GARAGE card. The engine
+at the top of the ENGINE tab is drawn from the form as you edit, before you build: an inline is drawn
+side on so you can count its cylinders, and a V or a boxer is drawn from the front so you can see the
+angle of its banks. Its turbos, blower, carbs or throttle bodies, headers, cat, intercooler, radiator
+and nitrous bottle are all drawn, and a saved engine shows the same picture on its GARAGE card. On the
+TRACK map the car is still drawn from the build, in its own colours: its length from the wheelbase, its
+wheels from the rim and tyre sizes, its ride height from the suspension, and the splitter, wing and
+diffuser you fit. The driven wheels have green hubs, and a green block marks where the engine sits.
 </div>
 <div class="guide-body" data-gk="garage">
 <b>The GARAGE</b> tab keeps your finished cars and engines. Name a car at the bottom of this tab and

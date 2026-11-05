@@ -1,4 +1,4 @@
-# PIXEL ENGINE SIM v0.7 build 223
+# PIXEL ENGINE SIM v0.7 build 228
 
 **A lightweight, 8-bit style internal combustion engine *designer* & simulator** inspired by *Automation*.
 
@@ -389,18 +389,17 @@ assist map over speed and pedal), regeneration, load-point shifting, electric-dr
 
   ![garage](docs/garage.png)
 
-- **Pixel-art car and engine (new)** — the VEHICLE tab shows your car side on and the ENGINE tab
-  shows your engine from outside, both drawn from the build:
-  - the car's wheelbase, wheels, ride height, aero parts, driven wheels and engine position
-  - the engine's layout and bank angle, its turbos or blower, induction, headers, intercooler and
-    radiator
+- **Pixel-art car and engine (new)** — the ENGINE tab shows your engine from outside, drawn from
+  the build: its layout and bank angle, its turbos or blower, induction, headers, intercooler and
+  radiator. A saved engine's GARAGE card shows the same picture.
 
-  Garage cards carry the same pictures, and the car runs the TRACK map in its own livery.
+  The VEHICLE tab shows a picture of the car, not one drawn from the parts. The car on the TRACK map
+  is still drawn from the build, in its own livery: wheelbase, wheels, ride height, aero, driven
+  wheels and where the engine sits.
 
   Each of the 100 factory cars also has a **showroom picture** (build 220): a detailed pixel-art side view
   in `assets/cars/`, at the top of the VEHICLE tab when you load that car, and on the GARAGE card of a saved
-  real car. It stays however you modify the car, with the drawn car under it as YOUR BUILD, since that is
-  the view that follows the parts.
+  real car. It stays however you modify the car.
 
   Every real car has an **order number** (build 221), 001 upward, shown before its name in the lists. A
   number is given once and never changes. **COPY FROM** takes a real car's body and parts by its number or

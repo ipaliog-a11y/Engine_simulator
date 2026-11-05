@@ -38,6 +38,18 @@ const B_CORE=1.5;          // peak flux density in the teeth and yoke at full fl
 // Non-oriented silicon steel, 0.35 mm (M270-35A class): about 2.7 W/kg at 1.5 T 50 Hz and 19 W/kg at 1.0 T 400 Hz.
 // Split into hysteresis (∝ f B²) and eddy (∝ (t f B)²), solved from those two points; a thinner sheet cuts only the eddy.
 const FE_KH=0.0206, FE_KE=6.71e-5, FE_T_REF=0.35;
+// Sheet thickness, the player's choice (stage 1). Eddy loss already scales with (t/0.35)²; hysteresis does not.
+// 0.35 mm is the M270-35A the two Steinmetz points were solved from. 0.20 mm is the thin non-oriented gauge
+// (NO20). The iron's $3/kg is the 0.35 mm price, so the thin gauge is a premium on top of it, not a new price
+// for every motor: about $4/kg of iron, the gap between a 0.35 mm non-oriented coil near $4/kg and a thin
+// EV-grade coil near $8/kg (Huaxiao Alloy, "How Much Does Electrical Steel Cost?", 2025 — a supplier's survey,
+// so probable, not a standard).
+const LAMINATION={'0.35':{mm:0.35,label:'0.35 mm',premium:0},'0.20':{mm:0.2,label:'0.20 mm',premium:4}};
+// How hard lifting off and braking run the motor as a generator (stage 2). The same three steps a hybrid's
+// REGENERATION uses: all the motor and the pack can take back, half of that, or none. The table still starts
+// at 500 rpm, so a stop fades out at any of the three.
+const EV_REGEN={off:{label:'OFF',k:0},low:{label:'LOW',k:0.5},high:{label:'HIGH',k:1}};
+const laminationOf=mm=>Math.abs(+mm-0.2)<0.02?LAMINATION['0.20']:LAMINATION['0.35'];
 // Magnets: remanence at 20 C (T), its temperature coefficient (/K), the highest temperature before the coercivity
 // gives way and the loss is permanent (C), and the price ($/kg). SH and UH grades: Hcj >= 20 kOe and 25 kOe.
 const MAGNET={
@@ -100,6 +112,7 @@ function motorBuild(s){
   const im=s.type==='im';
   const mag=im?IM_ROTOR:MAGNET[s.magnet]||MAGNET.ndfeb, ret=im?RETENTION.bridges:RETENTION[s.retention]||RETENTION.bridges;
   const cool=MOTOR_COOLING[s.cooling]||MOTOR_COOLING.jacket, inv=INVERTER[s.inverter]||INVERTER.igbt;
+  const lam=laminationOf(s.lamination);
   const D=s.rotorD/1000, L=s.stackL/1000, poles=s.poles, p=poles/2, N=s.turns, Lfe=0.95*L;
   const Ds=D+2*(im?IM_GAP:GAP), OD=Ds/SPLIT, h=(OD-Ds)/2, hSlot=TOOTH_BAND*h;
   const slots=3*poles*(poles<=6?3:2)*(im&&poles===4?5/3:1);       // q = 3 slots per pole per phase up to 6 poles, then 2;
@@ -136,8 +149,8 @@ function motorBuild(s){
   const nTip=ret.vTip/(Math.PI*D)*60, nFreq=(s.inverter==='sic'?2000:1200)*60/p;
   const nMax=Math.min(s.maxRpm||20000,nTip,nFreq);
   const Imax=s.invAmps;
-  const cost=Math.round(mCu*11+(mFeS+mFeR)*3+mMag*mag.cost+ret.cost+cool.cost+Imax*inv.costA+400+(im?mCage*11+150:0));
-  return {s,im,mag,ret,cool,inv,D,L,Lfe,Ds,OD,poles,p,N,slots,Bg,psi20,R20,mlt,Acu,mCu,mFeS,mFeR,mMag,mRotor,J,mass,
+  const cost=Math.round(mCu*11+(mFeS+mFeR)*(3+lam.premium)+mMag*mag.cost+ret.cost+cool.cost+Imax*inv.costA+400+(im?mCage*11+150:0));
+  return {s,im,mag,ret,cool,inv,lam,D,L,Lfe,Ds,OD,poles,p,N,slots,Bg,psi20,R20,mlt,Acu,mCu,mFeS,mFeR,mMag,mRotor,J,mass,
           nTip,nFreq,nMax,Imax,cost,Qr,Rr20,mCage,ImR,vDrop,cpsr:im?IM_CPSR:CPSR,
           // thermal network (W/K, J/K): winding -> core through the slot liner (0.2 W/mK, 0.4 mm over the slot walls),
           // core -> coolant through the housing, rotor -> core across the gap (h ~ 100), and the direct paths
@@ -312,18 +325,18 @@ const CHEM={
         whkg:{1990:35,2020:42},cost:{1990:150,2020:150}},
   nimh:{label:'NiMH',ocv:[1.10,1.22,1.25,1.26,1.27,1.28,1.29,1.30,1.31,1.33,1.40],vMin:1.00,rAh:0.30,cMax:10,cCharge:5,from:1996,
         whkg:{1996:60,2005:70,2020:80},cost:{1996:1000,2005:700,2020:400}},
-  lfp: {label:'LFP',ocv:[2.80,3.15,3.20,3.22,3.24,3.25,3.26,3.27,3.28,3.30,3.40],vMin:2.50,rAh:0.10,cMax:4,cCharge:1.5,from:2005,
+  lfp: {label:'LFP',ocv:[2.80,3.15,3.20,3.22,3.24,3.25,3.26,3.27,3.28,3.30,3.40],vMin:2.50,vMax:3.65,rAh:0.10,ea:68000,cMax:4,cCharge:1.5,from:2005,
         whkg:{2005:90,2015:140,2023:175},cost:{2005:1400,2010:1000,2016:280,2019:140,2024:95}},
-  nca: {label:'NCA / NMC',ocv:[2.95,3.40,3.50,3.57,3.63,3.69,3.77,3.85,3.93,4.02,4.13],vMin:2.80,rAh:0.11,cMax:6,cCharge:1.0,from:2008,
+  nca: {label:'NCA / NMC',ocv:[2.95,3.40,3.50,3.57,3.63,3.69,3.77,3.85,3.93,4.02,4.13],vMin:2.80,vMax:4.20,rAh:0.11,ea:68000,cMax:6,cCharge:1.0,from:2008,
         whkg:{2008:180,2012:240,2020:270},cost:{2008:1300,2010:1100,2013:650,2016:300,2019:160,2024:115}},
   // power cells (build 183): the same chemistry built for current, not energy - thinner electrodes, more tab and current
   // collector per amp-hour. The Model S Plaid's 18650s: its 110s72p pack sustains ~2300 A, ~9C. Less energy per kg and
   // dearer per kWh for it.
-  ncaP:{label:'NCA (POWER CELLS)',ocv:[2.95,3.40,3.50,3.57,3.63,3.69,3.77,3.85,3.93,4.02,4.13],vMin:2.80,rAh:0.06,cMax:10,cCharge:1.5,from:2012,
+  ncaP:{label:'NCA (POWER CELLS)',ocv:[2.95,3.40,3.50,3.57,3.63,3.69,3.77,3.85,3.93,4.02,4.13],vMin:2.80,vMax:4.20,rAh:0.06,ea:68000,cMax:10,cCharge:1.5,from:2012,
         whkg:{2012:200,2020:235},cost:{2012:900,2016:360,2019:200,2024:140}},
   // hybrid cells (build 186): lithium-ion built for a pack that is mostly power and little energy, cycled shallow
   // thousands of times a day; a 1.5 kWh pack gives and takes 30-40 kW (the Ioniq Hybrid's 1.56 kWh LiPo, ~25C).
-  liHEV:{label:'Li-ION (HYBRID CELLS)',ocv:[3.30,3.50,3.58,3.63,3.68,3.73,3.79,3.86,3.94,4.03,4.13],vMin:2.80,rAh:0.025,cMax:25,cCharge:20,from:2009,
+  liHEV:{label:'Li-ION (HYBRID CELLS)',ocv:[3.30,3.50,3.58,3.63,3.68,3.73,3.79,3.86,3.94,4.03,4.13],vMin:2.80,vMax:4.20,rAh:0.025,ea:68000,cMax:25,cCharge:20,from:2009,
         whkg:{2009:70,2016:85,2024:100},cost:{2009:2200,2016:1100,2024:700}},
   // nickel-metal hydride hybrid cells (build 189): the Prius's since 1997, prismatic 6.5 Ah cells in 7.2 V modules built for
   // current (the 4th generation's 168 cells: 1.31 kWh, 40 kg). Rated by what they give in a full-throttle pull (build 207):
@@ -354,6 +367,23 @@ function packBuild(s){
   const cost=Math.round(s.kWh*atYear(c.cost,year));
   return {s,chem:c,year,Vnom,pChargeMax:c.cCharge*s.kWh*1000,Ah,R,kWh:s.kWh,mass,cost,series:s.series,vMin:s.series*c.vMin,iMax:c.cMax*Ah};
 }
+// Resistance against temperature (stage 3). b.R is the 25 °C value the rest of the drive already uses.
+// A graphite-anode lithium cell's charge transfer at that anode is about 68 kJ/mol (Jow, Xue, Zhang et al.,
+// "Distinguishing Li+ Charge Transfer Kinetics…", J. Electrochem. Soc. 158, 2011; the NCA interface in the
+// same paper is about 50, and the graphite one limits the cold). LFP, NCA and the hybrid lithium cells here
+// all have a graphite anode, so they share it. Putting that energy on the whole pack resistance overstates
+// the cold: the busbars and the electrolyte's ohmic part are less activated, and this model has no measured
+// split between them. Lead-acid and NiMH have no cited energy here, so they stay at 25 °C. The 50 °C power
+// cut (packDerate) is the cells' own limit and is not this curve. The lap, the cycle and the race still call
+// the 25 °C resistance; they do not yet pass the pack's temperature in.
+const PACK_T_REF=25, R_GAS=8.314462618;
+function packR(b,tC){
+  if(tC==null||tC===PACK_T_REF)return b.R;
+  const ea=b.chem.ea;
+  if(!(ea>0))return b.R;
+  const T=tC+273.15,T0=PACK_T_REF+273.15;
+  return b.R*Math.exp(ea/R_GAS*(1/T-1/T0));
+}
 // Open-circuit voltage at a state of charge (0..1).
 function packOcv(b,soc){
   const t=b.chem.ocv,x=Math.max(0,Math.min(1,soc))*10,k=Math.min(9,Math.floor(x));
@@ -379,9 +409,23 @@ function packHeatStep(b,temp,heatW,dt){
 }
 const packDerate=tB=>clamp((60-tB)/10,0,1);
 // The most a pack can give at a state of charge (W): the lower of its rate limit and the power at its cut-off voltage.
-function packMaxPower(b,soc){
-  const V0=packOcv(b,soc),Icut=(V0-b.vMin)/b.R,I=Math.min(b.iMax,Icut);
-  return Math.max(0,(V0-I*b.R)*I);
+// tC omitted, or 25, is the resistance the lock was taken at.
+function packMaxPower(b,soc,tC){
+  const R=packR(b,tC),V0=packOcv(b,soc),Icut=(V0-b.vMin)/R,I=Math.min(b.iMax,Icut);
+  return Math.max(0,(V0-I*R)*I);
+}
+// The most it can take back (W): the plating limit, or the current that would lift the cells to their charge
+// voltage, whichever is lower. At 25 °C the plating limit is the lower one on the factory packs, so the
+// regeneration cap does not move. vMax is the usual charge voltage: 4.20 V for NCA/NMC, 3.65 V for LFP.
+function packChargePower(b,soc,tC){
+  const R=packR(b,tC),V0=packOcv(b,soc);
+  let P=b.pChargeMax;
+  const vmax=b.chem.vMax;
+  if(vmax>0&&V0<b.series*vmax){
+    const I=Math.max(0,(b.series*vmax-V0)/R);
+    P=Math.min(P,I*b.series*vmax);
+  }
+  return Math.max(0,P);
 }
 // An electric car's battery management at a low charge (build 196): below 15% it cuts the power it allows, steeply, to 30%
 // of what the cells could give at 2%; below 2% the car limps, on a tenth of the pack's rated power (its power at 50%),

@@ -20,6 +20,79 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 Working toward **v1.0 — every number derived, not fitted.**
 
+### A cold lithium pack resists more (build 228)
+
+A pack's resistance was one number at every temperature. It is now the 25 °C value the drive was
+already using, so the Model Y at 25 °C is still 0.053 Ω, 377 kW out and 78 kW back, and its WLTP
+figure stays 141 Wh/km. The lap, the cycle and the race still call that 25 °C resistance. They do
+not yet pass the pack's own temperature in.
+
+A graphite-anode lithium cell (LFP, NCA, the power cells, the hybrid lithium cells) rises when it
+is colder, with the 68 kJ/mol of the lithium charge transfer at the graphite (Jow, Xue and Zhang,
+Journal of the Electrochemical Society, 2011). On the Model Y that is 0.65 Ω and 36 kW at 0 °C,
+and 2.0 Ω and 11 kW at −10 °C. What it can take back at 80% charge falls from 78 kW to 16 kW and
+5 kW. Putting the interface's energy on the whole pack resistance overstates the cold: the busbars
+and the ohmic part of the electrolyte are less activated, and there is no measured split to separate
+them. Lead-acid and NiMH stay at 25 °C until a cited energy exists for them.
+
+The cut from 50 °C to nothing at 60 °C is unchanged, and it is not this curve. At 40 °C, still
+below that cut, the same pack gives 445 kW because the resistance has fallen.
+
+Stage 3 of `plans/hybrid-electric/drivetrain.md`.
+
+### Regeneration strength on an electric car (build 227)
+
+An electric car always regenerated at whatever the motor and the pack could take back. REGENERATION
+is now HIGH, LOW or OFF, the same three steps a hybrid already has. HIGH is the default, and the
+three Teslas stay on it, so their consumption and 0–100 do not move. The fade below about 500 rpm
+stays at all three.
+
+OFF takes nothing back. On the Model Y the WLTP cycle goes from 141 Wh/km to 196. LOW is half the
+torque, but the cycle's stops ask for less than half this motor, so it stays at 141 Wh/km. A lap is
+where it shows: on the technical circuit the Model Y puts back 0.182 kWh at HIGH, 0.094 at LOW and
+nothing at OFF, and the front rotor runs at 563 °C, 579 °C and 595 °C. A saved build with no setting
+still reads as HIGH.
+
+Stage 2 of `plans/hybrid-electric/drivetrain.md`.
+
+### Lamination thickness on the motor (build 226)
+
+The iron-loss model already cut eddy currents with the square of the sheet thickness, and every
+motor was 0.35 mm because the form never chose one. LAMINATIONS is now on the motor form: 0.35 mm,
+the M270-35A the loss model is built on, or 0.20 mm. The thin sheet costs $4 more per kilogram of
+iron, the gap between a 0.35 mm coil near $4/kg and a thin EV-grade coil near $8/kg in a 2025
+supplier survey, so the figure is probable rather than a standard. The $3/kg already on the iron
+stays the 0.35 mm price, and every factory car stays there.
+
+On the Model 3 geometry, at 60 Nm, the iron loss is 713 W at 15,000 rpm on 0.35 mm and 372 W on
+0.20 mm. At 500 rpm it is 36 W and 34 W: hysteresis, which does not follow the thickness, is most
+of the loss down there. A saved build with no thickness still reads as 0.35 mm.
+
+Stage 1 of `plans/hybrid-electric/drivetrain.md`. Nothing else on the drive moved.
+
+### A plan for the electric drivetrain, and a lock on its numbers (build 225)
+
+The electric drive shipped in builds 178–184. Deepening it — laminations, regen, cold cells, copper
+loss at high frequency, real field weakening, a second gear — has an order now, in
+`plans/hybrid-electric/drivetrain.md`. Each stage is one build. A stage marked still must not move
+a number. A stage marked moves has to say by how much, against the published figures.
+
+`test136` locks the model's own output, tighter than the 8–20% bands in the Tesla and Leaf tests.
+Those bands can hide a drift. The lock holds the three Teslas (power, torque, knee, pack, WLTP
+Wh/km, 0–100, top speed, centre of gravity), the rectangle above the knee (flat to 4×, then 4/5 at
+5×), and the five factory hybrids' motors, which share this drive. A later stage edits a locked
+value only when the plan names that stage for that block.
+
+Nothing in the simulation moved.
+
+### The drawn car is off the VEHICLE tab (build 224)
+
+The VEHICLE tab showed two pictures of the car: the showroom picture, and under it a car drawn from the
+parts, captioned YOUR BUILD, with the name, drive, weight and front weight share painted on it. The drawn
+one is gone. The showroom picture stays — a real car's own, or the class picture for a generic chassis or
+a copy — and it still stays when you change a part. The ENGINE tab still draws the engine. The TRACK map
+and the race still draw the car from the build. Nothing in the simulation moved.
+
 ### Each body class is the median real car of its class (build 223)
 
 The 14 body classes (kei car to open-wheeler) were hand-set guesses: a weight, a drag figure, a size and a set of
@@ -76,6 +149,11 @@ derived again.
     limit.
 - `test29` no longer requires the classes to use all four diff types, since no class is mostly viscous-LSD cars. It
   checks that each class fits a real diff and that all four are on offer as parts.
+- **`test35`'s limit is now 8 s.** The 20 km import is solved on a generic sports coupe. That coupe no longer has a
+  rear lip (downforce coefficient 0.16 → 0), and the racing-line search keeps a few percent more moves, so the import
+  and solve takes about 6% longer: 4.6–5.0 s on the hand-set coupe, 4.9–5.2 s on the median one. The run that failed
+  the old cap took 6.7 s. The 6.5 s cap was 0.2 s above the slowest hand-set run it was set from, which is why the
+  slower car stepped over it. 8 s puts that margin back. The solver itself is unchanged.
 - Left open: the DIFFERENTIAL guide paragraph quotes a 6.2 supercharged V8 in the muscle class at 4.85 / 4.97 s and
   75.74 / 74.24 s per lap. Build 222's code doesn't reproduce those either (4.60 s, 65.6 s), so they were stale
   before this build, measured some other way; they are left for a build that finds how they were measured.

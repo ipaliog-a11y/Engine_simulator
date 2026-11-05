@@ -2,14 +2,14 @@
 //
 // WHY THIS EXISTS. Every real car got an order number (001 upward, given once, never changed or reused), shown before
 // its name in the lists. A real car's picture took the top of the VEHICLE tab and stays there however the car is
-// modified, with the drawn car under it as YOUR BUILD. COPY FROM takes a real car's body and parts, by its number or a
+// modified. COPY FROM takes a real car's body and parts, by its number or a
 // piece of its name, and keeps the engine you have.
 // What must hold:
 //   · every factory car has a number, no two share one, and the first numbers stay where they were given (001 is the
 //     Alto Works, 010 the S2000, 012 the 911 GT3): a number never moves to another car;
 //   · the FACTORY CAR list and the RACE tab's list lead each car with its number;
-//   · a real car's picture sits above the drawn car and stays when a part changes (the caption then says it is the car
-//     as it left the factory); the drawn car is still drawn, under it, at whole cells; a generic chassis shows its class's picture (since build 222);
+//   · a real car's picture stays when a part changes (the caption then says it is the car as it left the factory);
+//     the tab does not also draw a car under it; a generic chassis shows its class's picture (since build 222);
 //   · COPY FROM finds a car by number and by name, says what it found before you press it, and refuses a miss;
 //   · a copy keeps the engine (the same form, name and power) and takes the car's body and parts (its Cd, frontal area,
 //     wheelbase and factory fitment); its mass is the real car's with the engine difference, as an engine swap is; it is
@@ -60,27 +60,21 @@ const top = await page.evaluate(async () => {
   const i = FACTORY_CARS.findIndex(p => /F40/.test(p.name));
   const fam = document.getElementById('vhFamily'), sel = document.getElementById('vhPreset');
   fam.value = FACTORY_CARS[i].cat; fam.dispatchEvent(new Event('change')); sel.value = String(i); sel.dispatchEvent(new Event('change'));
-  const fig = document.getElementById('vhShowroom'), cv = document.getElementById('carPreview');
-  const o = { above: !!(fig.compareDocumentPosition(cv) & Node.DOCUMENT_POSITION_FOLLOWING), shown: !fig.hidden, cap: document.getElementById('vhArtCap').textContent };
+  const fig = document.getElementById('vhShowroom');
+  const o = { shown: !fig.hidden, cap: document.getElementById('vhArtCap').textContent, drawn: !!document.getElementById('carPreview') || !!document.getElementById('vhBuildCap') };
   const r = document.getElementById('vhAeroR'); r.value = [...r.options].pop().value; r.dispatchEvent(new Event('input'));
   await new Promise(res => requestAnimationFrame(() => requestAnimationFrame(res)));
   o.modShown = !fig.hidden; o.modCap = document.getElementById('vhArtCap').textContent;
-  o.under = cv.classList.contains('under-art'); o.buildCap = !document.getElementById('vhBuildCap').hidden;
-  o.cssW = Math.round(cv.getBoundingClientRect().width);
-  const g = cv.getContext('2d'), d = g.getImageData(0, 0, cv.width, cv.height).data;
-  let lit = 0; for (let k = 0; k < d.length; k += 4) if (d[k] + d[k + 1] + d[k + 2] > 120) lit++;
-  o.lit = lit;
   const c = document.getElementById('vhChassis'); c.value = 'coupe'; c.dispatchEvent(new Event('input'));
-  o.genSrc = document.getElementById('vhArt').getAttribute('src') || ''; o.genShown = !fig.hidden; o.genUnder = cv.classList.contains('under-art'); o.genCap = !document.getElementById('vhBuildCap').hidden;
+  o.genSrc = document.getElementById('vhArt').getAttribute('src') || ''; o.genShown = !fig.hidden;
   return o;
 });
-console.log(`== top: picture above the drawn car ${top.above}; "${top.cap}"; modified: shown ${top.modShown} "${top.modCap}", drawn under it ${top.under} (${top.cssW}px, ${top.lit} lit); generic: picture ${top.genShown} ==`);
-if (!top.above || !top.shown) fails.push('a real car\'s picture is not at the top of the VEHICLE tab');
+console.log(`== top: picture shown ${top.shown}; "${top.cap}"; modified: shown ${top.modShown} "${top.modCap}"; generic: picture ${top.genShown}; drawn car ${top.drawn} ==`);
+if (!top.shown) fails.push('a real car\'s picture is not at the top of the VEHICLE tab');
 if (top.cap !== '058 · Ferrari F40 (1987)') fails.push('the caption is not the number and name: ' + top.cap);
 if (!top.modShown || !/as it left the factory/.test(top.modCap)) fails.push('the picture does not stay, so marked, when the car is modified');
-if (!top.under || !top.buildCap || top.lit < 300) fails.push('the drawn car is not kept under the picture as YOUR BUILD');
-if (top.cssW !== 340) fails.push('the drawn car under the picture is not at whole cells: ' + top.cssW + 'px');
-if (!top.genShown || !top.genUnder || !top.genCap || !/generic-sports-coupe\.webp$/.test(top.genSrc)) fails.push('a generic chassis does not show its class\'s picture over YOUR BUILD: ' + top.genSrc);
+if (top.drawn) fails.push('the VEHICLE tab still draws a car under the picture');
+if (!top.genShown || !/generic-sports-coupe\.webp$/.test(top.genSrc)) fails.push('a generic chassis does not show its class\'s picture: ' + top.genSrc);
 
 // 3. COPY FROM: finding
 const find = await page.evaluate(() => {
