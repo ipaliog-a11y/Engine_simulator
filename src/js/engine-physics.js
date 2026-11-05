@@ -992,8 +992,17 @@ function stepElectrical(dt){
 }
 // ---- Reliability / wear ----
 // A worn engine makes less power (down on compression, more friction). Health drops fast
-// under detonation, overheat, lean-under-boost, and over-rev — the things that really kill
-// engines. A clean tune barely wears. At zero health the engine lets go (rebuild = BUILD).
+// under detonation, overheat and lean-under-boost — the things that really kill engines.
+// A clean tune barely wears. At zero health the engine lets go (rebuild = BUILD).
+//
+// Not the limiter (build 233). Running at the redline was charged 0.006 a second from 98.5% of it, so every engine
+// held on its limiter was blown in under three minutes: an Aygo, a GT3 and a 458 alike. A redline is the speed the
+// maker rates the engine to run at, with margin to its mechanical limit, and that is how engines are validated: the
+// NATO-style durability test is 400 hours at full load and wide-open throttle, passed on 95% of the starting power
+// (Banks Power's account of it), and a marine type test 240 hours at rated load and speed (CIFT). The limiter
+// exists so the engine cannot pass the redline, and on this bench it cannot: stepEngine clamps the speed to it. What
+// over-revving kills is the engine forced past it, or a redline set past what the valvetrain holds (valve float):
+// neither happens here yet, so no rpm term is charged.
 function healthFactor(){return state.blown?0:(0.5+0.5*state.engineHealth);}
 function stepWear(dt){
   if(isElectric())return stepMotorWear(dt);
@@ -1005,7 +1014,6 @@ function stepWear(dt){
   add(state.knockRisk>55?(state.knockRisk-55)/45*0.060:0,'DETONATION');          // knock is the big killer
   add(state.coolant>112?(state.coolant-112)/18*0.030:0,'OVERHEAT');
   add(state.oil>132?(state.oil-132)/22*0.025:0,'OIL TEMP');
-  add(state.rpm>engine.redline*0.985?0.006:0,'OVER-REV');
   if(!engine.ci)add(Math.max(0,lam-1.05)*Math.max(0,state.map-0.9)*0.14,'LEAN/BOOST');  // burnt pistons (diesels run lean by design)
   if(engine.ci)add(state.emPM>35?(state.emPM-35)/40*0.020:0,'OVER-FUEL/EGT');     // diesel: over-fuelling → soot & heat
   add(state.oil<55&&state.powerHP>15?0.004:0,'COLD-OIL');

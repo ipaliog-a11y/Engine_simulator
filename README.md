@@ -1,4 +1,4 @@
-# PIXEL ENGINE SIM v0.7 build 232
+# PIXEL ENGINE SIM v0.7 build 233
 
 **A lightweight, 8-bit style internal combustion engine *designer* & simulator** inspired by *Automation*.
 
@@ -69,8 +69,8 @@ screamer, 2JZ six, muscle V8, blown V8, V12 supercar…), or configure your own 
 - **Cooling** — radiator size (small / stock / large), cooling fan (none / mechanical /
   electric), oil cooler, and thermostat opening temperature.
 - **Reliability / wear** — the engine has a live **health** that falls under abuse:
-  sustained detonation, overheating, lean-under-boost, and over-rev all wear it (a clean
-  tune barely ages). A worn engine makes less power; at zero health it lets go and must be
+  sustained detonation, overheating and lean-under-boost wear it (a clean tune barely ages;
+  holding the rev limiter does not, since a redline is the speed an engine is rated for). A worn engine makes less power; at zero health it lets go and must be
   rebuilt (BUILD & DYNO or RESET). This puts real stakes on every design and tune choice.
 
 These couple realistically: octane, compression, boost, intake temperature and ignition
@@ -573,7 +573,7 @@ Curve** tab remains a wide-open-throttle steady-state sweep for reading the full
 - Cooling balances load-generated heat against radiator capacity + airflow (RPM-driven)
   and fan; the thermostat sets the floor temperature. Overheating (>~108 °C) costs power.
 - Reliability: engine health accumulates wear from detonation (the big killer), overheat,
-  lean-under-boost (burnt pistons) and over-rev; a clean tune barely wears. Lower health
+  lean-under-boost (burnt pistons); a clean tune barely wears, and the rev limiter does not wear it. Lower health
   cuts power; zero health = catastrophic failure until rebuilt. Damage happens over tens of
   seconds of abuse — long enough to heed the warnings and back off.
 - Vehicle: acceleration is integrated step-by-step — the engine's best-power torque curve is
@@ -1341,7 +1341,7 @@ block, title or picture caption with no Greek now fails the same test.
 - [x] Induction/metering systems (carbs, mechanical injection, EFI, ITBs) + air filters
 - [x] Ignition control: Fixed vs Auto (ECU, MBT-tracking & knock-limited timing)
 - [x] Fuel mixture: Manual (fixed AFR) vs Auto (editable 3D ECU fuel map, load×RPM, with a live heat-grid)
-- [x] Reliability / wear simulation (health falls under detonation/overheat/lean-boost/over-rev)
+- [x] Reliability / wear simulation (health falls under detonation/overheat/lean-boost)
 - [x] Scoring / rating (graded scorecard) and dyno-pull logging & overlay
 - [x] Save to / open from named files (with notes) and shareable build links
 - [x] Emissions (engine-out CO/HC/NOx + three-way catalytic converter) with a live analyser & score

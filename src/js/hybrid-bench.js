@@ -108,7 +108,7 @@ function hybControl(H,dt){
       else if(mode==='sport')ne=psEngineRpmAt(n);
       else if(mode==='engine')ne=psOolAt(Math.max(O.P[0],p*O.Pmax)).ne;
       else{const Pe=clamp(Pd+Pc,O.P[0],O.Pmax);H.PeWant=Pe;ne=psOolAt(Pe).ne;}
-      // never held on the redline: the ECU keeps the engine under the over-rev margin (stepWear wears it past 98.5%)
+      // never held on the redline: the ECU keeps the engine just under it (until build 233 stepWear wore it past 98.5%)
       const neHi=Math.min(R.hi,e.redline*HYB_BENCH.neMax);
       H.neT=clamp(ne,Math.max(R.lo,e.idleRpmEff),Math.max(neHi,e.idleRpmEff));
     }

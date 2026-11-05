@@ -524,7 +524,7 @@ table.hy-map td:focus{outline:2px solid #ffcc00;outline-offset:-2px}
 </div>
 <div class="container">
 <header>
-<h1>PIXEL ENGINE SIM v0.7 build 232</h1>
+<h1>PIXEL ENGINE SIM v0.7 build 233</h1>
 <div class="subtitle" id="subtitle">ENGINE DESIGNER • BUILD IT, THEN DRIVE IT</div>
 </header>
 <div class="build-strip" id="buildStrip">
@@ -1068,7 +1068,7 @@ Spin an engine faster and it makes more power, until something gives. Four thing
 </div>
 <div class="gtier gt-game"><div class="gtier-h">LV2 · IN THE GAME</div>
 <div class="guide-body" data-gk="redlineGame">
-The ENGINE tab shows the <b>valve float</b> rpm next to the springs, in red if it is below your redline. A <b>rev limiter</b> cuts fuel at the redline you set; with WEAR on, sitting at it wears the engine (OVER-REV). Pick a short stroke, light valves and stiff springs to rev high, see <a data-gp="bottom">Bore, stroke &amp; displacement</a> and <a data-gp="valvetrain">Valvetrain &amp; cams</a>.
+The ENGINE tab shows the <b>valve float</b> rpm next to the springs, in red if it is below your redline. A <b>rev limiter</b> cuts fuel at the redline you set, and holding the engine there does not wear it: a redline is the speed an engine is rated to run at, and makers test engines for hundreds of hours at full load and full speed. Pick a short stroke, light valves and stiff springs to rev high, see <a data-gp="bottom">Bore, stroke &amp; displacement</a> and <a data-gp="valvetrain">Valvetrain &amp; cams</a>.
 </div>
 </div>
 <div class="gtier gt-phys"><div class="gtier-h">LV3 · THE PHYSICS</div>
@@ -1889,7 +1889,6 @@ Health falls each second by the sum of the damage rates that apply:
 <tr><td>overheat</td><td>coolant above 112 °C</td><td>up to 0.030</td></tr>
 <tr><td>oil temperature</td><td>oil above 132 °C</td><td>up to 0.025</td></tr>
 <tr><td>lean under boost</td><td>λ above 1.05 with MAP above 0.9 (petrol)</td><td>0.14 × excess λ × excess MAP</td></tr>
-<tr><td>over-rev</td><td>above 98.5% of redline</td><td>0.006</td></tr>
 <tr><td>nitrous / anti-lag / cold oil</td><td>while active</td><td>0.011 / 0.004 / 0.004</td></tr></table></div>
 REL starts at 100. It loses up to 45 for knock the ECU cannot hold off: knock above the point where the end gas autoignites, which an AUTO-timing ECU never lets it pass. It loses the larger of the boost stress (11 per bar above 0.5, counted at the midrange peak and again at the limiter) and the output stress (0.3 per hp/L above 110), since on a turbo engine they are the same load. It loses 7 per m/s of mean piston speed at the redline above 25 m/s (a rotary: 2 per 100 rpm above 9800), 15 for anti-lag, 12 for nitrous, up to 28 for a VGT run above its vanes' creep limit, and 30 per unit of cooling short of the power. A STOCK radiator on a real engine is its maker's, sized for its rated power; on a design of your own it is sized for 260 hp. A diesel gains 16 for its heavy build; a rotary loses 18 (apex seals), a two-stroke 12.
 </div>
@@ -3125,7 +3124,7 @@ Most other tests check behaviour that is true of real cars: a bigger turbo spool
 <select id="edSoundModel" class="opt-select"><option value="synth">SYNTH</option><option value="gas">GAS</option></select></div>
 
 <div class="design-section">Simulation</div>
-<div class="opt-row"><div><b>WEAR &amp; DAMAGE</b><div class="opt-note">On: detonation/overheat/lean-boost/over-rev damage the engine. Off: invincible, for free experimentation.</div></div>
+<div class="opt-row"><div><b>WEAR &amp; DAMAGE</b><div class="opt-note">On: detonation/overheat/lean-boost damage the engine. Off: invincible, for free experimentation.</div></div>
 <button id="btnWear" class="toggle on" aria-pressed="true">WEAR ON</button></div>
 
 <div class="design-section">Language</div>
@@ -5363,7 +5362,7 @@ const I18N={
   'SYNTH: firing pulses through modelled pipes (light). GAS: the cylinders, runners and exhaust simulated as gas, after engine-sim by Ange Yaghi, with a recorded exhaust (heavier; a V12 uses about half a CPU core). Four-strokes, two-strokes and rotaries all have their own gas model.':{el:'SYNTH: παλμοί ανάφλεξης μέσα από μοντελοποιημένους σωλήνες (ελαφρύ). GAS: οι κύλινδροι, οι αγωγοί και η εξάτμιση προσομοιώνονται ως αέριο, κατά το engine-sim του Ange Yaghi, με ηχογραφημένη εξάτμιση (βαρύτερο· ένας V12 θέλει περίπου μισό πυρήνα CPU). Οι τετράχρονοι, οι δίχρονοι και οι περιστροφικοί έχουν ο καθένας το δικό του μοντέλο αερίου.'},
   'Synthesised from the firing pulses (firing order, one exhaust per bank; lumpy idle from wild cams). Plays on the DYNO tab, and on the TRACK tab with the lap replay.':{el:'Συντίθεται από τους παλμούς ανάφλεξης (σειρά ανάφλεξης, μία εξάτμιση ανά σειρά κυλίνδρων· ανώμαλο ρελαντί με άγρια εκκεντροφόρο). Ακούγεται στην καρτέλα ΔΥΝΑΜΟ και στην καρτέλα ΠΙΣΤΑ με την αναπαραγωγή του γύρου.'},
   'Simulation':{el:'Προσομοίωση'},'WEAR & DAMAGE':{el:'ΦΘΟΡΑ & ΖΗΜΙΑ'},
-  'On: detonation/overheat/lean-boost/over-rev damage the engine. Off: invincible, for free experimentation.':{el:'Ενεργό: πειράκι/υπερθέρμανση/φτωχό-boost/υπερστροφή κάνουν ζημιά. Ανενεργό: άφθαρτος, για ελεύθερο πειραματισμό.'},
+  'On: detonation/overheat/lean-boost damage the engine. Off: invincible, for free experimentation.':{el:'Ενεργό: πειράκι/υπερθέρμανση/φτωχό-boost κάνουν ζημιά. Ανενεργό: άφθαρτος, για ελεύθερο πειραματισμό.'},
   'Language':{el:'Γλώσσα'},'LANGUAGE PACK':{el:'ΠΑΚΕΤΟ ΓΛΩΣΣΑΣ'},
   'Switch the interface language (chrome, guide & readouts).':{el:'Άλλαξε τη γλώσσα του περιβάλλοντος (μενού & οδηγός).'},
   'Live Output':{el:'Ζωντανές Ενδείξεις'},
@@ -5601,7 +5600,7 @@ const I18N={
   'Bore/stroke set displacement. Octane+compression+boost+ignition feed the knock model.':{el:'Διάμετρος/διαδρομή ορίζουν τον κυβισμό. Οκτάνια+συμπίεση+boost+ανάφλεξη τροφοδοτούν το μοντέλο πειρακιών.'},
   'Cooling (radiator/fan/oil cooler/thermostat) sets running temps in AUTO THERMAL mode.':{el:'Η ψύξη (ψυγείο/βεντιλατέρ/ψυγείο λαδιού/θερμοστάτης) ορίζει τις θερμοκρασίες λειτουργίας στο ΑΥΤ. ΘΕΡΜΙΚΟ.'},
   'THROTTLE makes power; LOAD (dyno brake) sets the hold RPM — more load = lower RPM, zero = free-rev to limiter.':{el:'Το ΓΚΑΖΙ βγάζει ισχύ· το ΦΟΡΤΙΟ (φρένο δυναμόμετρου) κρατά τις στροφές — περισσότερο φορτίο = λιγότερες στροφές, μηδέν = ελεύθερο ανέβασμα ως τον κόφτη.'},
-  'Lift off at speed → engine braking + fuel cut. Detonation/overheat/lean-boost/over-rev wear the engine.':{el:'Κόψε γκάζι με ταχύτητα → φρένο κινητήρα + διακοπή καυσίμου. Πειράκια/υπερθέρμανση/φτωχό-boost/υπερστροφές φθείρουν τον κινητήρα.'},
+  'Lift off at speed → engine braking + fuel cut. Detonation/overheat/lean-boost wear the engine.':{el:'Κόψε γκάζι με ταχύτητα → φρένο κινητήρα + διακοπή καυσίμου. Πειράκια/υπερθέρμανση/φτωχό-boost φθείρουν τον κινητήρα.'},
   'Dyno shows full power & torque curves to redline.':{el:'Το δυναμόμετρο δείχνει τις πλήρεις καμπύλες ισχύος & ροπής ως το όριο στροφών.'},
   'Green line = current RPM. Peaks marked with dots.':{el:'Πράσινη γραμμή = τρέχουσες στροφές. Οι κορυφές σημειώνονται με τελείες.'},
   // tooltips and screen-reader labels
@@ -5868,7 +5867,7 @@ const GUIDE_I18N={
   torquepowerGame:{el:"Η καρτέλα ΔΥΝΑΜΟ σχεδιάζει και τις δύο καμπύλες. Η μέγιστη ροπή έρχεται εκεί όπου ο κινητήρας αναπνέει καλύτερα ανά κύκλο· η μέγιστη ισχύς έρχεται αργότερα, γιατί οι στροφές συνεχίζουν να ανεβαίνουν ενώ η ροπή πέφτει μόνο ήπια. Μεγάλη απόσταση ανάμεσα στις δύο κορυφές, και επίπεδη καμπύλη ροπής, κάνουν ένα αυτοκίνητο εύκολο στην οδήγηση: η βαθμολογία τα μετρά ως <b>εύρος</b> (band) και <b>οδηγησιμότητα</b> (drive)."},
   torquepowerPhys:{el:"<span class=\"geq\">P = T · ω = T · 2πN/60 &nbsp;&nbsp; dP/dN = 0 &nbsp;⇔&nbsp; dT/dN = −T/N</span> Η ισχύς κορυφώνεται εκεί όπου η ροπή πέφτει τόσο γρήγορα, αναλογικά, όσο ανεβαίνουν οι στροφές. Στους τροχούς, μέσα από τη συνολική σχέση <i>i</i> με απόδοση <i>η</i>, η δύναμη κίνησης σε τροχό ακτίνας <i>r</i> είναι <span class=\"geq\">F = T · i · η / r &nbsp;&nbsp; v = ω · r / i &nbsp;⇒&nbsp; F · v = T · ω · η</span> Οι σχέσεις απαλείφονται από το γινόμενο: σε κάθε ταχύτητα δρόμου η μεγαλύτερη δύναμη που μπορείς να έχεις είναι η μεγαλύτερη <i>ισχύς</i> που μπορεί να βγάλει ο κινητήρας σε κάποιες στροφές, διά την ταχύτητα. Γι' αυτό οι σχέσεις του αυτοκινήτου κρατούν τον κινητήρα κοντά στην κορυφή της ισχύος του."},
   redlineReal:{el:"Γύρνα έναν κινητήρα πιο γρήγορα και βγάζει περισσότερη ισχύ, ώσπου κάτι να υποχωρήσει. Τέσσερα πράγματα συνασπίζονται εναντίον του: <br>· <b>Ταχύτητα εμβόλου</b>: το έμβολο σταματά και ξεκινά δύο φορές σε κάθε στροφή, και οι δυνάμεις που χρειάζονται γι' αυτό μεγαλώνουν με το τετράγωνο των στροφών. Οι διωστήρες τεντώνουν, τα κουζινέτα αστοχούν. <br>· <b>Πλεύση βαλβίδων</b>: το ελατήριο που κλείνει κάθε βαλβίδα μπορεί να την τραβήξει πίσω μόνο τόσο γρήγορα. Πέρα από αυτό η βαλβίδα σταματά να ακολουθεί τον εκκεντροφόρο και μπορεί να συναντήσει το έμβολο. <br>· <b>Αναπνοή</b>: ο αέρας έχει όλο και λιγότερο χρόνο να μπει, και οι βαλβίδες αρχίζουν να τον πνίγουν. <br>· <b>Χρόνος καύσης</b>: η φλόγα χρειάζεται χρόνο για να διασχίσει τον θάλαμο. Η αργή καύση του πετρελαιοκινητήρα είναι ο λόγος που ανεβαίνει τόσο λίγο στις στροφές."},
-  redlineGame:{el:"Η καρτέλα ΚΙΝΗΤΗΡΑΣ δείχνει τις στροφές <b>πλεύσης βαλβίδων</b> δίπλα στα ελατήρια, με κόκκινο αν είναι κάτω από το όριο στροφών σου. Ένας <b>κόφτης στροφών</b> κόβει το καύσιμο στο όριο που ορίζεις· με τη ΦΘΟΡΑ ενεργή, η παραμονή σε αυτόν φθείρει τον κινητήρα (ΥΠΕΡΣΤΡΟΦΕΣ). Διάλεξε κοντή διαδρομή, ελαφριές βαλβίδες και σκληρά ελατήρια για να ανεβαίνει ψηλά, δες <a data-gp=\"bottom\">Διάμετρος, διαδρομή &amp; κυβισμός</a> και <a data-gp=\"valvetrain\">Βαλβίδες &amp; εκκεντροφόροι</a>."},
+  redlineGame:{el:"Η καρτέλα ΚΙΝΗΤΗΡΑΣ δείχνει τις στροφές <b>πλεύσης βαλβίδων</b> δίπλα στα ελατήρια, με κόκκινο αν είναι κάτω από το όριο στροφών σου. Ένας <b>κόφτης στροφών</b> κόβει το καύσιμο στο όριο που ορίζεις, και η παραμονή εκεί δεν φθείρει τον κινητήρα: το όριο στροφών είναι η ταχύτητα στην οποία ο κινητήρας είναι πιστοποιημένος να δουλεύει, και οι κατασκευαστές δοκιμάζουν κινητήρες για εκατοντάδες ώρες σε πλήρες φορτίο και πλήρεις στροφές. Διάλεξε κοντή διαδρομή, ελαφριές βαλβίδες και σκληρά ελατήρια για να ανεβαίνει ψηλά, δες <a data-gp=\"bottom\">Διάμετρος, διαδρομή &amp; κυβισμός</a> και <a data-gp=\"valvetrain\">Βαλβίδες &amp; εκκεντροφόροι</a>."},
   redlinePhys:{el:"<span class=\"geq\">μέση ταχύτητα εμβόλου S<sub>p</sub> = 2 · S · N / 60</span> Οι κινητήρες δρόμου κάθονται στα 15–25 m/s στον κόφτη, οι αγωνιστικοί κοντά στα 30. Η βαλβίδα μένει πάνω στον εκκεντροφόρο όσο η δύναμη του ελατηρίου στην πλήρη άρση ξεπερνά την αδράνεια της βαλβίδας στη μύτη του λοβού: <span class=\"geq\">m<sub>eff</sub> · a<sub>cam</sub> · (L/2) · (2π/θ<sub>cam</sub>)² · ω<sub>cam</sub>² ≤ F<sub>seat</sub> + k·L</span> λυμένη ως προς τις στροφές. Η αναπνοή είναι ο <b>δείκτης Mach εισαγωγής</b> του Taylor, <i>Z = (A<sub>piston</sub>/A<sub>valve</sub>) · S<sub>p</sub> / (C<sub>i</sub> · c)</i>: η ογκομετρική απόδοση κρατά ως περίπου Z = 0.5 και πέφτει πέρα από αυτό. Ο χρόνος καύσης είναι στη σελίδα <a data-gp=\"combustion\">Η καύση</a>."},
   // build 162: Designing the engine
   typesReal:{el:"Οι <b>βενζινοκινητήρες</b> (Otto, 1876) συμπιέζουν ένα μείγμα αέρα και καυσίμου και το ανάβουν με σπινθήρα. Οι <b>πετρελαιοκινητήρες</b> (Rudolf Diesel, 1893) συμπιέζουν μόνο αέρα, τόσο δυνατά που ζεσταίνεται αρκετά για να ανάψει το καύσιμο που ψεκάζεται κατευθείαν μέσα του: καθόλου σπινθήρας. Οι <b>δίχρονοι</b>, σε αλυσοπρίονα, σκούτερ και παλιά αυτοκίνητα ράλι, ανάβουν σε κάθε στροφή αντί για κάθε δεύτερη, με τρύπες στο τοίχωμα του κυλίνδρου αντί για βαλβίδες. Ο περιστροφικός <b>Wankel</b>, που έγινε διάσημος με τα RX-7 και RX-8 της Mazda, αντικαθιστά το έμβολο με έναν τριγωνικό ρότορα που γυρίζει μέσα σε ένα οβάλ κέλυφος."},
@@ -5977,7 +5976,7 @@ const GUIDE_I18N={
   fuelsPhys:{el:"<div class=\"gtab-wrap\"><table class=\"gtab\"><tbody><tr><th>καύσιμο</th><th>πυκνότητα kg/L</th><th>LHV MJ/kg</th><th>AFR st</th><th>οκτάνια</th><th>ευαισθησία</th><th>ψύξη φορτίου</th></tr> <tr><td>αμόλυβδη</td><td>0.745</td><td>44.0</td><td>14.7</td><td>ορίζεται RON</td><td>10</td><td>—</td></tr> <tr><td>αγωνιστική βενζίνη</td><td>0.735</td><td>43.5</td><td>14.7</td><td>105</td><td>10</td><td>2 °C</td></tr> <tr><td>E85</td><td>0.785</td><td>29.2</td><td>9.8</td><td>102</td><td>17</td><td>15 °C</td></tr> <tr><td>μεθανόλη</td><td>0.792</td><td>19.9</td><td>6.45</td><td>109</td><td>20</td><td>25 °C</td></tr> <tr><td>πετρέλαιο</td><td>0.832</td><td>42.8</td><td>14.5</td><td>—</td><td>—</td><td>—</td></tr></tbody></table></div> Η ροή καυσίμου ακολουθεί από τον αέρα: <i>ṁ<sub>fuel</sub> = ṁ<sub>air</sub> / (λ · AFR<sub>st</sub>)</i>, οπότε η μεθανόλη θέλει περίπου 2.3 φορές τη μάζα καυσίμου της βενζίνης για τον ίδιο αέρα. Το πετρέλαιο βαθμολογείται με κετάνια (πόσο εύκολα αναφλέγεται) αντί για οκτάνια· δεν έχει πειράκια σπινθήρα, μόνο το κροτάλισμα της καθυστέρησης ανάφλεξης."},
   wearReal:{el:"Οι κινητήρες σπάνια φθείρονται ήπια στους αγώνες· σκοτώνονται. Οι συνηθισμένοι δολοφόνοι είναι η <b>κρουστική καύση</b> (τα πειράκια σφυροκοπούν τα έμβολα), η <b>υπερθέρμανση</b>, τα <b>φτωχά μείγματα με boost</b> (καμένα έμβολα και βαλβίδες), οι <b>υπερστροφές</b> (στραβές βαλβίδες, σπασμένοι διωστήρες), το κρύο λάδι που δουλεύει σκληρά, και το νίτρο ή το anti-lag χρησιμοποιημένα πολύ ελεύθερα. Ένας καλά ρυθμισμένος κινητήρας που τα αποφεύγει όλα μπορεί να κάνει εκατοντάδες χιλιάδες χιλιόμετρα."},
   wearGame:{el:"Ενεργοποίησε τη <b>ΦΘΟΡΑ</b> στις ΕΠΙΛΟΓΕΣ και ο κινητήρας της ΖΩΝΤΑΝΑ αποκτά έναν αριθμό <b>ΥΓΕΙΑ</b>. Η κακομεταχείριση τον αδειάζει και ονομάζει την αιτία· στο 0% ο κινητήρας είναι τιναγμένος ώσπου να τον ξαναφτιάξεις (ΚΑΤΑΣΚΕΥΗ). Ένας φθαρμένος κινητήρας βγάζει λιγότερη ισχύ. Ο αριθμός <b>ΑΞΙΟΠ.</b> στην καρτέλα ΚΙΝΗΤΗΡΑΣ είναι μια ξεχωριστή, στατική εκτίμηση του πόση κακομεταχείριση προκαλεί ένα σχέδιο."},
-  wearPhys:{el:"Η υγεία πέφτει κάθε δευτερόλεπτο κατά το άθροισμα των ρυθμών ζημιάς που ισχύουν: <div class=\"gtab-wrap\"><table class=\"gtab\"><tbody><tr><th>αιτία</th><th>πότε</th><th>ρυθμός (ανά s)</th></tr> <tr><td>κρουστική καύση</td><td>βαθμός πειρακιών πάνω από 55</td><td>ως 0.060</td></tr> <tr><td>υπερθέρμανση</td><td>ψυκτικό πάνω από 112 °C</td><td>ως 0.030</td></tr> <tr><td>θερμοκρασία λαδιού</td><td>λάδι πάνω από 132 °C</td><td>ως 0.025</td></tr> <tr><td>φτωχό με boost</td><td>λ πάνω από 1.05 με MAP πάνω από 0.9 (βενζίνη)</td><td>0.14 × υπέρβαση λ × υπέρβαση MAP</td></tr> <tr><td>υπερστροφές</td><td>πάνω από 98.5% του ορίου</td><td>0.006</td></tr> <tr><td>νίτρο / anti-lag / κρύο λάδι</td><td>όσο είναι ενεργά</td><td>0.011 / 0.004 / 0.004</td></tr></tbody></table></div> Η ΑΞΙΟΠ. ξεκινά από το 100. Χάνει ως 45 για πειράκια που η ECU δεν μπορεί να συγκρατήσει: πειράκια πάνω από το σημείο όπου το άκαυστο μείγμα αυτοαναφλέγεται, που μια ECU με AUTO χρονισμό δεν το αφήνει ποτέ να ξεπεράσει. Χάνει το μεγαλύτερο από την καταπόνηση του boost (11 ανά bar πάνω από 0.5, μετρημένο στην κορυφή των μεσαίων και ξανά στον κόφτη) και την καταπόνηση της απόδοσης (0.3 ανά hp/L πάνω από 110), αφού σε έναν turbo κινητήρα είναι το ίδιο φορτίο. Χάνει 7 ανά m/s μέσης ταχύτητας εμβόλου στο όριο στροφών πάνω από 25 m/s (ένας περιστροφικός: 2 ανά 100 rpm πάνω από 9800), 15 για anti-lag, 12 για νίτρο, ως 28 για ένα VGT που τρέχει πάνω από το όριο ερπυσμού των πτερυγίων του, και 30 ανά μονάδα ψύξης που λείπει για την ισχύ. Το ΕΡΓΟΣΤΑΣΙΑΚΟ ψυγείο ενός πραγματικού κινητήρα είναι του κατασκευαστή του, διαστασιολογημένο για την ονομαστική του ισχύ· σε δικό σας σχέδιο είναι για 260 hp. Ένας πετρελαιοκινητήρας κερδίζει 16 για τη βαριά του κατασκευή· ένας περιστροφικός χάνει 18 (τα στεγανοποιητικά των κορυφών), ένας δίχρονος 12."},
+  wearPhys:{el:"Η υγεία πέφτει κάθε δευτερόλεπτο κατά το άθροισμα των ρυθμών ζημιάς που ισχύουν: <div class=\"gtab-wrap\"><table class=\"gtab\"><tbody><tr><th>αιτία</th><th>πότε</th><th>ρυθμός (ανά s)</th></tr> <tr><td>κρουστική καύση</td><td>βαθμός πειρακιών πάνω από 55</td><td>ως 0.060</td></tr> <tr><td>υπερθέρμανση</td><td>ψυκτικό πάνω από 112 °C</td><td>ως 0.030</td></tr> <tr><td>θερμοκρασία λαδιού</td><td>λάδι πάνω από 132 °C</td><td>ως 0.025</td></tr> <tr><td>φτωχό με boost</td><td>λ πάνω από 1.05 με MAP πάνω από 0.9 (βενζίνη)</td><td>0.14 × υπέρβαση λ × υπέρβαση MAP</td></tr> <tr><td>νίτρο / anti-lag / κρύο λάδι</td><td>όσο είναι ενεργά</td><td>0.011 / 0.004 / 0.004</td></tr></tbody></table></div> Η ΑΞΙΟΠ. ξεκινά από το 100. Χάνει ως 45 για πειράκια που η ECU δεν μπορεί να συγκρατήσει: πειράκια πάνω από το σημείο όπου το άκαυστο μείγμα αυτοαναφλέγεται, που μια ECU με AUTO χρονισμό δεν το αφήνει ποτέ να ξεπεράσει. Χάνει το μεγαλύτερο από την καταπόνηση του boost (11 ανά bar πάνω από 0.5, μετρημένο στην κορυφή των μεσαίων και ξανά στον κόφτη) και την καταπόνηση της απόδοσης (0.3 ανά hp/L πάνω από 110), αφού σε έναν turbo κινητήρα είναι το ίδιο φορτίο. Χάνει 7 ανά m/s μέσης ταχύτητας εμβόλου στο όριο στροφών πάνω από 25 m/s (ένας περιστροφικός: 2 ανά 100 rpm πάνω από 9800), 15 για anti-lag, 12 για νίτρο, ως 28 για ένα VGT που τρέχει πάνω από το όριο ερπυσμού των πτερυγίων του, και 30 ανά μονάδα ψύξης που λείπει για την ισχύ. Το ΕΡΓΟΣΤΑΣΙΑΚΟ ψυγείο ενός πραγματικού κινητήρα είναι του κατασκευαστή του, διαστασιολογημένο για την ονομαστική του ισχύ· σε δικό σας σχέδιο είναι για 260 hp. Ένας πετρελαιοκινητήρας κερδίζει 16 για τη βαριά του κατασκευή· ένας περιστροφικός χάνει 18 (τα στεγανοποιητικά των κορυφών), ένας δίχρονος 12."},
   wearLimit:{el:"Όριο: αυτοί οι ρυθμοί ζημιάς είναι κανόνες παιχνιδιού διαλεγμένοι για λογική συμπεριφορά, όχι μοντέλο κόπωσης."},
   emissionsReal:{el:"Τα καυσαέρια ενός κινητήρα κουβαλούν τρεις ρυπαντές που ρυθμίζονται από τον νόμο. Το <b>CO</b> (μονοξείδιο του άνθρακα) έρχεται από καύσιμο που έμεινε χωρίς οξυγόνο: πλούσια μείγματα. Οι <b>HC</b> (άκαυστοι υδρογονάνθρακες) είναι καύσιμο που δεν κάηκε καθόλου. Τα <b>NOx</b> (οξείδια του αζώτου) σχηματίζονται όταν η φλόγα είναι πολύ ζεστή με οξυγόνο να περισσεύει: ελαφρώς φτωχό, μεγάλο φορτίο.<br> Ένας <b>τριοδικός καταλύτης</b> καθαρίζει και τα τρία μαζί, αλλά μόνο σε ένα στενό παράθυρο γύρω από το χημικά ακριβές μείγμα, λ = 1. Γι' αυτό οι σύγχρονοι βενζινοκινητήρες κρατούν το στοιχειομετρικό σχεδόν παντού. Οι πετρελαιοκινητήρες τρέχουν φτωχά, οπότε χρειάζονται φίλτρο σωματιδίων (DPF) για την αιθάλη και ψεκασμό ουρίας (SCR) για τα NOx."},
   emissionsGame:{el:"Η ένδειξη <b>ΕΚΠΟΜΠΕΣ</b> βγαίνει από έναν προσομοιωμένο αναλυτή καυσαερίων. Διάλεξε <b>ΚΑΤΑΛΥΤΗΣ</b>: εργοστασιακός (μετατροπή 97%), σπορ (85%) ή κανένας. Ο βαθμός <b>εκπομπών</b> στη βαθμολογία μετρά μια στοιχειομετρική πορεία και το μερικό φορτίο."},
@@ -8912,8 +8911,17 @@ function stepElectrical(dt){
 }
 // ---- Reliability / wear ----
 // A worn engine makes less power (down on compression, more friction). Health drops fast
-// under detonation, overheat, lean-under-boost, and over-rev — the things that really kill
-// engines. A clean tune barely wears. At zero health the engine lets go (rebuild = BUILD).
+// under detonation, overheat and lean-under-boost — the things that really kill engines.
+// A clean tune barely wears. At zero health the engine lets go (rebuild = BUILD).
+//
+// Not the limiter (build 233). Running at the redline was charged 0.006 a second from 98.5% of it, so every engine
+// held on its limiter was blown in under three minutes: an Aygo, a GT3 and a 458 alike. A redline is the speed the
+// maker rates the engine to run at, with margin to its mechanical limit, and that is how engines are validated: the
+// NATO-style durability test is 400 hours at full load and wide-open throttle, passed on 95% of the starting power
+// (Banks Power's account of it), and a marine type test 240 hours at rated load and speed (CIFT). The limiter
+// exists so the engine cannot pass the redline, and on this bench it cannot: stepEngine clamps the speed to it. What
+// over-revving kills is the engine forced past it, or a redline set past what the valvetrain holds (valve float):
+// neither happens here yet, so no rpm term is charged.
 function healthFactor(){return state.blown?0:(0.5+0.5*state.engineHealth);}
 function stepWear(dt){
   if(isElectric())return stepMotorWear(dt);
@@ -8925,7 +8933,6 @@ function stepWear(dt){
   add(state.knockRisk>55?(state.knockRisk-55)/45*0.060:0,'DETONATION');          // knock is the big killer
   add(state.coolant>112?(state.coolant-112)/18*0.030:0,'OVERHEAT');
   add(state.oil>132?(state.oil-132)/22*0.025:0,'OIL TEMP');
-  add(state.rpm>engine.redline*0.985?0.006:0,'OVER-REV');
   if(!engine.ci)add(Math.max(0,lam-1.05)*Math.max(0,state.map-0.9)*0.14,'LEAN/BOOST');  // burnt pistons (diesels run lean by design)
   if(engine.ci)add(state.emPM>35?(state.emPM-35)/40*0.020:0,'OVER-FUEL/EGT');     // diesel: over-fuelling → soot & heat
   add(state.oil<55&&state.powerHP>15?0.004:0,'COLD-OIL');
@@ -18509,7 +18516,7 @@ function updateUI(){
   else if(state.powerHP>5){status.textContent=tr('RUNNING')+' • '+state.powerHP.toFixed(0)+' HP @ '+Math.round(state.rpm)+' RPM • BMEP '+state.bmep.toFixed(1)+' bar';status.className='status-bar'}
   else{status.textContent=tr('IDLE / LOW LOAD')+' • '+Math.round(state.rpm)+' RPM';status.className='status-bar'}
   if(vizMode==='design')legend.innerHTML=tr('Bore/stroke set displacement. Octane+compression+boost+ignition feed the knock model.')+'<br>'+tr('Cooling (radiator/fan/oil cooler/thermostat) sets running temps in AUTO THERMAL mode.');
-  else if(vizMode==='engine')legend.innerHTML=tr('THROTTLE makes power; LOAD (dyno brake) sets the hold RPM — more load = lower RPM, zero = free-rev to limiter.')+'<br>'+tr('Lift off at speed → engine braking + fuel cut. Detonation/overheat/lean-boost/over-rev wear the engine.');
+  else if(vizMode==='engine')legend.innerHTML=tr('THROTTLE makes power; LOAD (dyno brake) sets the hold RPM — more load = lower RPM, zero = free-rev to limiter.')+'<br>'+tr('Lift off at speed → engine braking + fuel cut. Detonation/overheat/lean-boost wear the engine.');
   else legend.innerHTML=tr('Dyno shows full power & torque curves to redline.')+'<br>'+tr('Green line = current RPM. Peaks marked with dots.');
 }
 
@@ -21348,7 +21355,7 @@ function hybControl(H,dt){
       else if(mode==='sport')ne=psEngineRpmAt(n);
       else if(mode==='engine')ne=psOolAt(Math.max(O.P[0],p*O.Pmax)).ne;
       else{const Pe=clamp(Pd+Pc,O.P[0],O.Pmax);H.PeWant=Pe;ne=psOolAt(Pe).ne;}
-      // never held on the redline: the ECU keeps the engine under the over-rev margin (stepWear wears it past 98.5%)
+      // never held on the redline: the ECU keeps the engine just under it (until build 233 stepWear wore it past 98.5%)
       const neHi=Math.min(R.hi,e.redline*HYB_BENCH.neMax);
       H.neT=clamp(ne,Math.max(R.lo,e.idleRpmEff),Math.max(neHi,e.idleRpmEff));
     }

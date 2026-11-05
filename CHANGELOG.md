@@ -20,6 +20,34 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 Working toward **v1.0 — every number derived, not fitted.**
 
+### The rev limiter no longer wears the engine (build 233)
+
+The first of three builds that correct the live wear model, after a fact-check of what kills real engines.
+
+- **Holding the limiter cost 0.006 health a second.** With WEAR on, the bench charged OVER-REV whenever the engine ran
+  above 98.5% of its redline. The bench clamps the speed *at* the redline, so the engine could never actually
+  over-rev: it was charged for sitting on its own limiter. Free-revving at full throttle, every one of the 93 real
+  combustion engines lost health, and 48 were blown within two minutes, the Aygo 1.0 as fast as a GT3 or a 458.
+- **A redline is the speed an engine is rated to run at.** Makers set it with margin to the mechanical limit, and the
+  limiter exists so it can't be passed. Engines are validated by running flat out: a NATO-style durability test is
+  400 hours at full load and wide-open throttle, passed on 95% of the starting power (Banks Power's account), and a
+  marine type test is 240 hours at rated load and speed (CIFT, India). What over-revving kills is an engine forced
+  *past* its redline (a missed downshift), or a redline set beyond what its valvetrain holds (valve float). Neither
+  happens on the bench yet, so the term is gone, and no rpm is charged.
+- **Now:** all 93 real engines held on their limiter at full throttle for 30 s (temperatures held) keep their health
+  to the baseline fatigue (0.9998). Knock (an EA888 at 40° fixed timing, blown) and a lean mixture under boost (λ
+  1.25: 19% health left after 30 s) still wear exactly as before.
+- **Left open, the next two builds:** the model's valve-float rpm is below the redline on 24 of the 89 real valved
+  engines (a Hellcat floats at 4,440 rpm against its 6,200 rpm redline). So it can't yet decide whether a redline is
+  too high for the parts, and it already costs those engines airflow above it. That is the next build, and with it
+  comes wear for an engine run past its own float speed. After that, heat: the bench takes it from rpm and throttle,
+  not from fuel burned, so free-revving at full throttle with no load still heats the oil past 132 °C within about a
+  minute. With AUTO THERMAL on, 54 of the engines still take OIL TEMP wear on the limiter until then.
+- The hybrid bench keeps its engine at 97% of the redline. That rule was written around the old 98.5% charge, and it
+  is left as it is: changing it would move the hybrid bench, which is not this build.
+- The "Wear & reliability" and "Why engines have a redline" guide pages (English and Greek), the WEAR option's note, the dyno legend and the
+  README no longer say the limiter wears the engine. test143.
+
 ### A cold pack loses some power, not nine-tenths of it (build 232)
 
 Build 228 raised a lithium pack's whole resistance with the 68 kJ/mol of the graphite charge transfer. Its own comment
