@@ -57,6 +57,9 @@ conductor's resistivity, mass, heat capacity and price; nothing multiplies a tor
 - **Tests.** In `test136`, the "WINDING not on the form" line becomes "WINDING and CONDUCTOR default to ROUND and
   COPPER", as the plan's table allows stage 6. New test: `test143` checks the default as before, factory motors on
   round copper, the hairpin and aluminium directions, a hybrid's motor taking the fields, and the Greek.
+  `test97` expected the motor's live WINDING tile to read "WINDING" in Greek, because the word had no Greek. It has
+  now (ΤΥΛΙΓΜΑ, the same word as the new field), so the tile is checked against its Greek and against the engine's
+  knock tile.
 
 ### A cold pack loses some power, not nine-tenths of it (build 232)
 

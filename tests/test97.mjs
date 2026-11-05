@@ -97,7 +97,7 @@ const r = await page.evaluate(() => {
   // 10. every tab, and Greek
   setType('electric'); buildEngine();
   for (const t of ['design', 'vehicle', 'garage', 'track', 'race', 'engine', 'dyno', 'guide', 'options', 'design']) { setTab(t); updateUI(); stepPreviews(0.016); if (t === 'engine') drawEngine(0.016); }
-  applyLang('el'); o.greek = document.querySelector('#statKnock .label').textContent; applyLang('en');
+  applyLang('el'); o.greek = document.querySelector('#statKnock .label').textContent; o.greekWant = tr('WINDING'); o.greekKnock = tr('KNOCK RISK'); applyLang('en');
   return o;
 });
 const f = (x, d = 0) => (+x).toFixed(d);
@@ -160,7 +160,9 @@ console.log(`== back on petrol: ${Bk.hp} hp (was ${Bk.hp0}), $${Bk.cost} (was $$
 if (Bk.hp !== Bk.hp0 || Bk.cost !== Bk.cost0) fails.push('the engine after an electric round trip is not the one before');
 if (Bk.kind !== 'combustion' || Bk.tile !== 'KNOCK RISK' || !Bk.afrVis || !Bk.perf) fails.push('the engine\'s tiles, controls or car did not come back');
 console.log(`== Greek keeps the motor's tile: "${r.greek}" ==`);
-if (r.greek !== 'WINDING') fails.push(`switching to Greek put an engine title on the motor's tile ("${r.greek}")`);
+// since build 233 'WINDING' has Greek (ΤΥΛΙΓΜΑ, the stage 6 field shares the word): the tile must read the motor's
+// title in Greek, never the engine's knock tile
+if (r.greek !== r.greekWant || r.greek === r.greekKnock) fails.push(`switching to Greek put an engine title on the motor's tile ("${r.greek}")`);
 
 // a partial pedal is a torque request (build 196, a user's report): on the Model Y at 60% pedal against a 40% brake the
 // power holds as the pack's voltage falls, the controller drawing more current for it, until the pack itself cannot
