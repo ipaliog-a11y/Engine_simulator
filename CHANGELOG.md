@@ -20,6 +20,32 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 Working toward **v1.0 — every number derived, not fitted.**
 
+### The fingerprint covers the electric and hybrid cars (build 231)
+
+`tools/fingerprint.mjs` is how a build proves it moved nothing, and every stage of the electric-drivetrain plan is told
+to use it. It walked the combustion presets only, so a change to `electric.js` came back "identical" whatever it moved.
+Build 229 (copper loss) said so in its PR.
+
+- **What it records now.** The three Teslas and the five hybrids: the drive's score; the pack (resistance, energy,
+  voltage, mass, and its discharge and charge power at half charge at 25, 0 and −10 °C); the WLTP figure (Wh/km for
+  an electric car, L/100 km for a hybrid, plus a hash of the whole cycle); the 0–100 and top speed; and a lap of the
+  technical circuit.
+- **`--only=electric`** records just that section in about 15 s, against 3½ minutes for the full recording.
+- **Two things had to change for "identical" to mean something:**
+  - A lap's result points at the track, and the track caches the racing line of every car solved before. Hashed
+    with it, a lap depended on what ran first. The electric section hashes the lap without the track. The sections
+    above keep their old hash, so earlier recordings still compare.
+  - The electric drive's score varies from the 9th significant digit between runs of the same page: on the Model 3,
+    the best-efficiency torque is 163.1725194 or 163.1725196 Nm. It is hashed at 6 significant digits.
+- **Left open:** that variation. The search itself is a plain grid and the motor functions are pure, so it comes from
+  the torque curve the score reads, probably state the bench changes while the page runs. It is far below anything
+  physical, and is left for a build that traces it.
+- What the new section shows today, for the record: every lithium pack loses about 90% of its power at 0 °C (Model Y
+  377 → 35 kW; build 228's temperature model). The next build is about that.
+- No number in the sim moves; this changes a tool and adds a test. New test: `test141` records the electric section
+  twice and requires the two to be identical, all eight cars present, each with its WLTP figure and its pack warm
+  and cold.
+
 ### The title screen shows the owner's workshop pictures (build 230)
 
 - **The four rooms behind the menu are now the owner's generated pictures**, not drafts drawn in code. In order: a
