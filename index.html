@@ -524,7 +524,7 @@ table.hy-map td:focus{outline:2px solid #ffcc00;outline-offset:-2px}
 </div>
 <div class="container">
 <header>
-<h1>PIXEL ENGINE SIM v0.7 build 228</h1>
+<h1>PIXEL ENGINE SIM v0.7 build 229</h1>
 <div class="subtitle" id="subtitle">ENGINE DESIGNER • BUILD IT, THEN DRIVE IT</div>
 </header>
 <div class="build-strip" id="buildStrip">
@@ -2002,7 +2002,7 @@ Torque grows with the rotor's volume and with the current. Spinning makes the mo
 <div class="guide-body" data-gk="evmotorPhys">
 Torque is the flux linkage times the current: <span class="geq">T = 3/2 · p · ψ · I,  ψ = k<sub>w</sub> · N · (2/π) · B<sub>g</sub> · τ<sub>p</sub> · L</span> Here p is the pole pairs, N the turns per phase, k<sub>w</sub> = 0.93 the winding factor, τ<sub>p</sub> the pole pitch (πD/poles) and L the stack. The air-gap flux B<sub>g</sub> is 0.85 times the magnets' remanence for a magnet motor (1.28 T for SH NdFeB, 0.42 T for ferrite). An induction motor runs 0.8 T and pays for it with a magnetising current, which takes its share of the inverter's amps.<br>
 The knee is where the back-EMF ω·ψ, with the winding's voltage drop on top (×1.29 at full current), meets the battery's voltage. Above it the power holds to about 4× the knee speed for a magnet motor and 3× for an induction motor.<br>
-<b>Losses.</b> Copper resistance comes from the slot area (40% copper fill) and rises 0.393% per kelvin. Iron loss is Steinmetz's law on silicon steel: hysteresis follows frequency and flux, and the eddy term also follows the square of the sheet thickness (0.35 mm, or 0.20 mm when LAMINATIONS says so).<br>
+<b>Losses.</b> Copper resistance comes from the slot area (40% copper fill, 1 mm round strands) and rises 0.393% per kelvin. At stall that is the whole copper loss. Spinning, the slot leakage adds eddy currents in the strands, so the copper loss rises with the electrical frequency (Dowell). Iron loss is Steinmetz's law on silicon steel: hysteresis follows frequency and flux, and the eddy term also follows the square of the sheet thickness (0.35 mm, or 0.20 mm when LAMINATIONS says so).<br>
 <b>Top speed.</b> The lowest of three: MAX SPEED; the rotor surface speed v/(πD); and the inverter's output frequency, 1.2 kHz for IGBTs and 2 kHz for SiC, divided by the pole pairs.<br>
 <b>Heat.</b> Three lumped nodes (winding, stator core, rotor) and the coolant.<br>
 <b>Calibration.</b> Three constants come from one measured motor, the Tesla Model 3 rear (MotorXP, 2020). The 2012 Nissan Leaf as ORNL measured it is the check.
@@ -5789,7 +5789,7 @@ const GUIDE_I18N={
   evdrivePhys:{el:"Η μπαταρία δίνει την ισχύ του άξονα και κάθε απώλεια στη διαδρομή: το I²R του χαλκού, την υστέρηση και τα δινορεύματα του σιδήρου, τριβές και αερισμό, και την αγωγή και τη μεταγωγή του αντιστροφέα.\n<span class=\"geq\">P<sub>pack</sub> = T·ω + P<sub>cu</sub> + P<sub>fe</sub> + P<sub>mech</sub> + P<sub>inv</sub></span>\nΗ μπαταρία είναι μια τάση ανοιχτού κυκλώματος που ακολουθεί τη φόρτισή της, πίσω από μια εσωτερική αντίσταση: <span class=\"geq\">V = V<sub>oc</sub>(SoC) − I·R</span> Το ρεύμα λύνει την P = V·I. Μια μπαταρία δεν δίνει περισσότερο από το ονομαστικό της ρεύμα, ούτε τόσο ώστε η τάση της να πέσει κάτω από την τάση αποκοπής των στοιχείων.<br>\n<b>Όρια, με τη σειρά που δαγκώνουν.</b><br>\n• <b>Θερμοκρασία μπαταρίας:</b> η διαχείριση κόβει την ισχύ από τους 50 °C, ως το μηδέν στους 60 °C.<br>\n• <b>Θερμοκρασία περιέλιξης:</b> ο ελεγκτής κόβει το ρεύμα από τους 150 °C, ως το μηδέν στους 180 °C.<br>\n• <b>Θερμοκρασία μαγνητών:</b> το ίδιο στους τελευταίους 20 °C κάτω από το όριο της ποιότητάς τους.<br>\n• <b>Χαμηλή φόρτιση:</b> κάτω από 15% η διαχείριση επιτρέπει ένα ποσοστό αυτού που θα έδιναν τα στοιχεία, που πέφτει ευθύγραμμα ως το 30% στο 2%.<br>\n• <b>Λειτουργία ασφαλείας:</b> κάτω από 2% κρατά την ισχύ στο ένα δέκατο της ονομαστικής ισχύος της μπαταρίας (της ισχύος της στο 50%).<br>\nΗ ανάκτηση είναι αυτή η ροπή φρεναρίσματος επί 1, 0,5 ή 0. Ο πίνακας αρχίζει και πάλι στις 500 rpm, οπότε το σβήσιμο ως το σταμάτημα μένει.<br>\nΖημιά που δεν μπορεί να αποτρέψει ο ελεγκτής είναι μόνιμη: μαγνήτες που ζεστάθηκαν πάνω από το όριό τους χάνουν ροή, και μια περιέλιξη πάνω από 200 °C καίει τη μόνωσή της.<br>\nΤο 0-100 και ο γύρος τρέχουν στο 50% φόρτισης. Ένας αγώνας ξεκινά στο 95% και σταματά στο 5%."},
   evmotorReal:{el:"Ένας κινητήρας έλξης έχει δύο μέρη. Ο <b>στάτης</b> είναι μια στοίβα από λεπτά ελάσματα χάλυβα με χάλκινες περιελίξεις σε αυλάκια, και μένει ακίνητος. Ο <b>δρομέας</b> γυρίζει μέσα του. Το ρεύμα στις περιελίξεις φτιάχνει ένα μαγνητικό πεδίο που περιστρέφεται, και ο δρομέας το ακολουθεί.<br>\nΣε έναν κινητήρα <b>μόνιμου μαγνήτη</b> ο δρομέας φέρει μαγνήτες και γυρίζει ακριβώς μαζί με το πεδίο. Σε έναν <b>επαγωγικό</b> κινητήρα ο δρομέας είναι ένας κλωβός από χάλκινες ράβδους: το πεδίο του στάτη επάγει ρεύματα στον κλωβό, που γλιστρούν λίγο πίσω από το πεδίο και σέρνονται μαζί του.<br>\nΗ ροπή μεγαλώνει με τον όγκο του δρομέα και με το ρεύμα. Όταν γυρίζει, ο κινητήρας είναι και γεννήτρια: η <b>αντι-ΗΕΔ</b> του ανεβαίνει με τις στροφές. Εκεί που φτάνει την τάση της μπαταρίας (το <b>γόνατο</b>), ο ελεγκτής εξασθενεί το πεδίο για να συνεχίσει. Πάνω από το γόνατο η ισχύς μένει περίπου σταθερή και η ροπή πέφτει."},
   evmotorGame:{el:"<b>MOTOR TYPE.</b><br>\n• <b>PERMANENT MAGNET</b>: η περισσότερη ροπή ανά αμπέρ και η καλύτερη απόδοση. Οι μαγνήτες κοστίζουν, χάνουν δύναμη όταν ζεσταίνονται, και φρενάρουν λίγο (απώλειες σιδήρου) ακόμη κι όταν δεν δίνει ροπή.<br>\n• <b>INDUCTION (COPPER CAGE)</b>: χωρίς μαγνήτες. Αγοράζει το πεδίο του με ρεύμα, οπότε δίνει λιγότερη ροπή ανά αμπέρ, και ο δρομέας του ζεσταίνεται. Χωρίς ζητούμενη ροπή δεν έχει πεδίο ούτε αντίσταση, γι' αυτό η Tesla βάζει έναν στον μπροστινό άξονα των Model 3 και Model Y.<br>\n<b>ROTOR DIAMETER</b> (80–260 mm). Η ροπή μεγαλώνει με το τετράγωνο της διαμέτρου. Ένας μεγαλύτερος δρομέας είναι βαρύτερος, έχει περισσότερη αδράνεια και φτάνει το όριο περιφερειακής ταχύτητας σε λιγότερες στροφές.<br>\n<b>STACK LENGTH</b> (40–250 mm). Η ροπή μεγαλώνει ανάλογα με το μήκος, χωρίς επίδραση στα όρια στροφών.<br>\n<b>POLES</b> (4–12). Περισσότεροι πόλοι σημαίνουν κοντύτερα άκρα περιέλιξης και λεπτότερο, ελαφρύτερο πυρήνα. Ανεβάζουν όμως την ηλεκτρική συχνότητα για τις ίδιες στροφές: περισσότερες απώλειες σιδήρου, και χαμηλότερη τελική ταχύτητα από το όριο συχνότητας του αντιστροφέα.<br>\n<b>TURNS PER PHASE</b> (4–120). Περισσότερες σπείρες δίνουν περισσότερη ροπή ανά αμπέρ αλλά περισσότερη αντι-ΗΕΔ, οπότε το γόνατο έρχεται σε λιγότερες στροφές και μένει λιγότερη ισχύς στις υψηλές. Λιγότερες σπείρες ανεβάζουν το γόνατο και θέλουν περισσότερο ρεύμα για την ίδια ροπή. Ταίριαξε τις σπείρες με την τάση της μπαταρίας.<br>\n<b>MAGNETS.</b><br>\n• <b>FERRITE</b>: φθηνός και αντέχει 250 °C, αλλά έχει το ένα τρίτο της δύναμης, οπότε θέλει διπλάσιο όγκο.<br>\n• <b>NdFeB (SH)</b>: νεοδύμιο, το συνηθισμένο· δυνατός, με όριο 150 °C.<br>\n• <b>NdFeB + Dy (UH)</b>: το δυσπρόσιο ανεβάζει το όριο στους 180 °C για λίγο λιγότερη δύναμη και ψηλότερη τιμή.<br>\n<b>MAGNET RETENTION.</b> Τι κρατά τους μαγνήτες στη θέση τους στις υψηλές στροφές. Οι <b>IRON BRIDGES</b> στα ελάσματα επιτρέπουν περιφερειακή ταχύτητα δρομέα 150 m/s. Ένα <b>CARBON SLEEVE</b> τυλιγμένο γύρω από τον δρομέα επιτρέπει 220 m/s: έτσι οι μεγάλοι δρομείς του Plaid φτάνουν τις 20.000 στροφές.<br>\n<b>LAMINATIONS.</b> Πόσο χοντρά είναι τα ελάσματα του πυρήνα. Τα <b>0,35 mm</b> είναι συνηθισμένος πυριτιούχος χάλυβας, το πάχος πάνω στο οποίο στηρίζεται το μοντέλο απωλειών. Τα <b>0,20 mm</b> κόβουν το μέρος των απωλειών σιδήρου που οφείλεται στα δινορεύματα, το οποίο μεγαλώνει με το τετράγωνο του πάχους, και ο σίδηρος κοστίζει περισσότερο. Στις χαμηλές στροφές τα δύο μένουν κοντά, γιατί η υστέρηση δεν ακολουθεί το πάχος.<br>\n<b>MOTOR COOLING.</b> Ορίζει πόσο κρατά η μέγιστη ισχύς και τι αντέχει ο κινητήρας συνεχώς.<br>\n• <b>AIR (FINNED)</b>: δωρεάν, αλλά αδύναμη.<br>\n• <b>WATER JACKET</b>: ψυκτικό γύρω από τον στάτη.<br>\n• <b>OIL SPRAY</b>: ο μανδύας, συν λάδι ψεκασμένο στα άκρα της περιέλιξης και στον δρομέα.<br>\n• <b>DIRECT SLOT</b>: ψυκτικό μέσα στα αυλάκια, πάνω στον χαλκό· η καλύτερη και η ακριβότερη.<br>\n<b>MAX SPEED</b> (rpm). Οι στροφές σχεδίασης. Η πραγματική τελική ταχύτητα του κινητήρα είναι η μικρότερη από αυτές, το όριο περιφερειακής ταχύτητας του δρομέα και το όριο συχνότητας του αντιστροφέα. Δες τη σύνοψη κάτω από τη φόρμα."},
-  evmotorPhys:{el:"Η ροπή είναι η πεπλεγμένη ροή επί το ρεύμα: <span class=\"geq\">T = 3/2 · p · ψ · I,  ψ = k<sub>w</sub> · N · (2/π) · B<sub>g</sub> · τ<sub>p</sub> · L</span> Εδώ p είναι τα ζεύγη πόλων, N οι σπείρες ανά φάση, k<sub>w</sub> = 0,93 ο συντελεστής περιέλιξης, τ<sub>p</sub> το βήμα πόλου (πD/πόλοι) και L το μήκος. Η ροή στο διάκενο B<sub>g</sub> είναι 0,85 φορές η παραμένουσα μαγνήτιση για κινητήρα μαγνήτη (1,28 T για NdFeB SH, 0,42 T για φερρίτη). Ένας επαγωγικός κινητήρας δουλεύει με 0,8 T και την πληρώνει με ρεύμα μαγνήτισης, που παίρνει μερίδιο από τα αμπέρ του αντιστροφέα.<br>\nΤο γόνατο είναι εκεί που η αντι-ΗΕΔ ω·ψ, με την πτώση τάσης της περιέλιξης από πάνω (×1,29 σε πλήρες ρεύμα), συναντά την τάση της μπαταρίας. Πάνω από αυτό η ισχύς κρατιέται ως περίπου 4× τις στροφές του γονάτου για κινητήρα μαγνήτη και 3× για επαγωγικό.<br>\n<b>Απώλειες.</b> Η αντίσταση του χαλκού προκύπτει από το εμβαδόν των αυλακιών (40% πλήρωση χαλκού) και ανεβαίνει 0,393% ανά βαθμό. Οι απώλειες σιδήρου είναι ο νόμος του Steinmetz σε πυριτιούχο χάλυβα: η υστέρηση ακολουθεί τη συχνότητα και τη ροή, και το δινορρευματικό μέρος ακολουθεί και το τετράγωνο του πάχους του ελάσματος (0,35 mm, ή 0,20 mm όταν το LAMINATIONS λέει έτσι).<br>\n<b>Τελική ταχύτητα.</b> Η μικρότερη από τρεις: το MAX SPEED· την περιφερειακή ταχύτητα του δρομέα v/(πD)· και τη συχνότητα εξόδου του αντιστροφέα, 1,2 kHz για IGBT και 2 kHz για SiC, διά τα ζεύγη πόλων.<br>\n<b>Θερμότητα.</b> Τρεις συγκεντρωμένοι κόμβοι (περιέλιξη, πυρήνας στάτη, δρομέας) και το ψυκτικό.<br>\n<b>Βαθμονόμηση.</b> Τρεις σταθερές προέρχονται από έναν μετρημένο κινητήρα, τον πίσω του Tesla Model 3 (MotorXP, 2020). Ο έλεγχος είναι το Nissan Leaf του 2012 όπως το μέτρησε το ORNL."},
+  evmotorPhys:{el:"Η ροπή είναι η πεπλεγμένη ροή επί το ρεύμα: <span class=\"geq\">T = 3/2 · p · ψ · I,  ψ = k<sub>w</sub> · N · (2/π) · B<sub>g</sub> · τ<sub>p</sub> · L</span> Εδώ p είναι τα ζεύγη πόλων, N οι σπείρες ανά φάση, k<sub>w</sub> = 0,93 ο συντελεστής περιέλιξης, τ<sub>p</sub> το βήμα πόλου (πD/πόλοι) και L το μήκος. Η ροή στο διάκενο B<sub>g</sub> είναι 0,85 φορές η παραμένουσα μαγνήτιση για κινητήρα μαγνήτη (1,28 T για NdFeB SH, 0,42 T για φερρίτη). Ένας επαγωγικός κινητήρας δουλεύει με 0,8 T και την πληρώνει με ρεύμα μαγνήτισης, που παίρνει μερίδιο από τα αμπέρ του αντιστροφέα.<br>\nΤο γόνατο είναι εκεί που η αντι-ΗΕΔ ω·ψ, με την πτώση τάσης της περιέλιξης από πάνω (×1,29 σε πλήρες ρεύμα), συναντά την τάση της μπαταρίας. Πάνω από αυτό η ισχύς κρατιέται ως περίπου 4× τις στροφές του γονάτου για κινητήρα μαγνήτη και 3× για επαγωγικό.<br>\n<b>Απώλειες.</b> Η αντίσταση του χαλκού προκύπτει από το εμβαδόν των αυλακιών (40% πλήρωση, στρογγυλές ίνες 1 mm) και ανεβαίνει 0,393% ανά βαθμό. Στο σταμάτημα αυτή είναι όλη η απώλεια χαλκού. Στριφογυρίζοντας, η διαρροή των αυλακιών προσθέτει δινορεύματα στις ίνες, οπότε η απώλεια χαλκού ανεβαίνει με την ηλεκτρική συχνότητα (Dowell). Οι απώλειες σιδήρου είναι ο νόμος του Steinmetz σε πυριτιούχο χάλυβα: η υστέρηση ακολουθεί τη συχνότητα και τη ροή, και το δινορρευματικό μέρος ακολουθεί και το τετράγωνο του πάχους του ελάσματος (0,35 mm, ή 0,20 mm όταν το LAMINATIONS λέει έτσι).<br>\n<b>Τελική ταχύτητα.</b> Η μικρότερη από τρεις: το MAX SPEED· την περιφερειακή ταχύτητα του δρομέα v/(πD)· και τη συχνότητα εξόδου του αντιστροφέα, 1,2 kHz για IGBT και 2 kHz για SiC, διά τα ζεύγη πόλων.<br>\n<b>Θερμότητα.</b> Τρεις συγκεντρωμένοι κόμβοι (περιέλιξη, πυρήνας στάτη, δρομέας) και το ψυκτικό.<br>\n<b>Βαθμονόμηση.</b> Τρεις σταθερές προέρχονται από έναν μετρημένο κινητήρα, τον πίσω του Tesla Model 3 (MotorXP, 2020). Ο έλεγχος είναι το Nissan Leaf του 2012 όπως το μέτρησε το ORNL."},
   evmotorsReal:{el:"Ένα ηλεκτρικό αυτοκίνητο γίνεται τετρακίνητο προσθέτοντας δεύτερο κινητήρα στον άλλο άξονα· δεν χρειάζεται άξονας μετάδοσης ούτε κεντρικό διαφορικό. Τα δικινητήρια Model 3 και Model Y της Tesla ζευγαρώνουν έναν κινητήρα μαγνήτη πίσω με έναν επαγωγικό μπροστά, που κυλά χωρίς να φρενάρει στη σταθερή πορεία. Το Model S Plaid έχει τρεις κινητήρες, δύο πίσω, έναν για κάθε τροχό, και έναν μπροστά.<br>\nΈνα υβριδικό μπορεί να κάνει το ίδιο: η Porsche 918 Spyder κινεί τους μπροστινούς τροχούς με δικό τους ηλεκτροκινητήρα ενώ ο κινητήρας κινεί τους πίσω."},
   evmotorsGame:{el:"<b>REAR MOTORS</b> (μόνο ηλεκτρικά). <b>1</b>, ή <b>2 (ONE PER WHEEL)</b>: δύο φορές ο κύριος κινητήρας, διπλάσια ροπή, μάζα και κόστος.<br>\n<b>FRONT MOTOR.</b> <b>ΧΩΡΙΣ</b>, <b>PERMANENT MAGNET</b> ή <b>INDUCTION (COPPER CAGE)</b>. Με μπροστινό κινητήρα το αυτοκίνητο γίνεται τετρακίνητο και κλειδώνει το πεδίο μετάδοσης στην καρτέλα ΟΧΗΜΑ· αν τον βγάλεις, επιστρέφει η προηγούμενη μετάδοση.<br>\nΟ μπροστινός κινητήρας έχει δικά του <b>FRONT ROTOR DIAMETER</b>, <b>FRONT STACK LENGTH</b>, <b>FRONT POLES</b>, <b>FRONT TURNS PER PHASE</b> και <b>FRONT CURRENT</b>, που δουλεύουν όπως στη σελίδα <a data-gp=\"evmotor\">The motor</a>. Μοιράζεται με τον κύριο κινητήρα τους μαγνήτες, τη συγκράτηση, την ψύξη, τον τύπο αντιστροφέα και τις μέγιστες στροφές.<br>\n<b>ΕΜΠΡΟΣ ΣΧΕΣΗ ΜΕΙΩΣΗΣ</b> (μόνο υβριδικά). Η σχέση από τον μπροστινό κινητήρα στους τροχούς. Άφησέ τη στο <b>0</b> για να ταιριάξει αυτόματα, ώστε οι μέγιστες στροφές του κινητήρα να πέφτουν στην τελική ταχύτητα του αυτοκινήτου. Πάνω από αυτές ο μπροστινός κινητήρας αποσυμπλέκεται."},
   evmotorsPhys:{el:"<b>Σε ηλεκτρικό αυτοκίνητο</b> κάθε κινητήρας κινεί μέσω της ίδιας σχέσης μείωσης, οπότε γυρίζουν με τις ίδιες στροφές και λειτουργούν σαν ένας. Οι ροπές, οι μάζες, το κόστος και οι αδράνειές τους προστίθενται· οι μέγιστες στροφές είναι οι μικρότερες από τις δικές τους. Ο ελεγκτής μοιράζει τη ροπή ανάμεσα στους άξονες για τις λιγότερες απώλειες: στη σταθερή πορεία ένας επαγωγικός μπροστινός κινητήρας δεν φέρει τίποτα, και στο τέρμα δίνουν και οι δύο όλα όσα έχουν. Μοιράζονται ένα κύκλωμα ψύξης, και τα όρια του ελεγκτή λαμβάνονται από τον πιο ευαίσθητο δρομέα.<br>\n<b>Σε υβριδικό</b> ο μπροστινός κινητήρας έχει δική του σχέση μείωσης. Η δύναμή του στους τροχούς είναι <span class=\"geq\">F = T · i<sub>front</sub> · 0,97 / r<sub>tyre</sub></span> και προστίθεται σε αυτή του κιβωτίου στο 0-100, στην τελική ταχύτητα και στον γύρο. Οι δύο κινητήρες μοιράζονται την ισχύ της μπαταρίας ανάλογα με τη μέγιστη ισχύ τους, και το ισοζύγιο φόρτισης του γύρου μετρά ό,τι τραβά ο μπροστινός. Δεν κάνει ανάκτηση· μόνο ο κύριος κινητήρας."},
@@ -9079,6 +9079,9 @@ const KW_WIND=0.93;        // winding factor: distributed, q = 2-3 slots per pol
 const SPLIT=0.67;          // bore over stator outside diameter (Model 3 0.672, Leaf 0.66; 0.6-0.7 for traction motors)
 const GAP=0.0007;          // air gap (m): 0.7 mm, the Model 3's
 const SLOT_SHARE=0.5, TOOTH_BAND=0.6, FILL=0.40;   // slots are half the band the teeth occupy, 60% of the radial depth; copper fills 40% of a slot (stranded)
+// Round magnet wire, 1.0 mm. That is a usual stranded size for this fill, not a strand measured on the Model 3
+// (that motor is a hairpin, which is a later choice). A build may pass s.strand (m) to try another.
+const STRAND=0.001;
 const B_CORE=1.5;          // peak flux density in the teeth and yoke at full flux (T), a usual design point for silicon steel
 // Non-oriented silicon steel, 0.35 mm (M270-35A class): about 2.7 W/kg at 1.5 T 50 Hz and 19 W/kg at 1.0 T 400 Hz.
 // Split into hysteresis (∝ f B²) and eddy (∝ (t f B)²), solved from those two points; a thinner sheet cuts only the eddy.
@@ -9171,6 +9174,11 @@ function motorBuild(s){
   const pitch=Math.PI*(Ds+hSlot)/poles*5/6, endTurn=Math.PI/2*pitch;
   const mlt=2*L+2*endTurn;
   const R20=6*RHO_CU*N*N*mlt/Acu;                                   // per phase: independent of the parallel paths
+  // how the slot copper is stranded, for the AC loss: strands across the slot width, and the radial layers Dowell counts
+  const dStrand=s.strand>0?s.strand:STRAND;
+  const slotW=SLOT_SHARE*Math.PI*(Ds+hSlot)/slots;
+  const nStrand=(Acu/slots)/(Math.PI*dStrand*dStrand/4);
+  const cuLayers=Math.max(1,nStrand/Math.max(1,slotW/dStrand));
   // masses (kg) and the rotor's inertia
   const mCu=RHO_CU_M*Acu*mlt/2;
   const mFeS=RHO_FE*(Math.PI/4*(OD*OD-Ds*Ds)-SLOT_SHARE*band)*Lfe;
@@ -9196,6 +9204,7 @@ function motorBuild(s){
   const Imax=s.invAmps;
   const cost=Math.round(mCu*11+(mFeS+mFeR)*(3+lam.premium)+mMag*mag.cost+ret.cost+cool.cost+Imax*inv.costA+400+(im?mCage*11+150:0));
   return {s,im,mag,ret,cool,inv,lam,D,L,Lfe,Ds,OD,poles,p,N,slots,Bg,psi20,R20,mlt,Acu,mCu,mFeS,mFeR,mMag,mRotor,J,mass,
+          strand:dStrand,cuLayers,
           nTip,nFreq,nMax,Imax,cost,Qr,Rr20,mCage,ImR,vDrop,cpsr:im?IM_CPSR:CPSR,
           // thermal network (W/K, J/K): winding -> core through the slot liner (0.2 W/mK, 0.4 mm over the slot walls),
           // core -> coolant through the housing, rotor -> core across the gap (h ~ 100), and the direct paths
@@ -9209,6 +9218,25 @@ function motorBuild(s){
 // Flux linkage and resistance at temperature: the magnets lose remanence as they warm, the copper gains resistance.
 const motorPsi=(m,tMag)=>m.psi20*(1+m.mag.alpha*(tMag-20));   // an induction motor's alpha is 0: its flux is the field's
 const motorR=(m,tW)=>m.R20*(1+ALPHA_CU*(tW-20));
+// AC copper in the slots (stage 4). Dowell, Proc. IEE 113 (1966): m layers of height h,
+//   Rac/Rdc = M + ((m²−1)/3) D
+//   M = Δ (sinh 2Δ + sin 2Δ) / (cosh 2Δ − cos 2Δ),  D = 2Δ (sinh Δ − sin Δ) / (cosh Δ + cos Δ),  Δ = h/δ.
+// Round wire uses the foil height (π/4)^(3/4) · d, which matches its low-frequency proximity
+// (Nan and Sullivan, IEEE PESC 2003). At stall Δ is 0 and the factor is 1, so the measured
+// phase resistance is the DC one. The cage of an induction motor is bars, not these strands.
+function copperAC(m,rpm,tW){
+  if(!(rpm>0)||!(m.strand>0))return 1;
+  const f=m.p*rpm/60;
+  if(!(f>0))return 1;
+  const rho=RHO_CU*(1+ALPHA_CU*((tW||20)-20));
+  const delta=Math.sqrt(rho/(Math.PI*f*MU0));
+  const Delta=Math.pow(Math.PI/4,0.75)*m.strand/delta;
+  if(!(Delta>1e-4))return 1;
+  const M=Delta*(Math.sinh(2*Delta)+Math.sin(2*Delta))/(Math.cosh(2*Delta)-Math.cos(2*Delta));
+  const D=2*Delta*(Math.sinh(Delta)-Math.sin(Delta))/(Math.cosh(Delta)+Math.cos(Delta));
+  const layers=m.cuLayers>1?m.cuLayers:1;
+  return M+((layers*layers-1)/3)*D;
+}
 // Torque per amp falls with saturation as the electric loading (A/m of bore) rises.
 const motorLoading=(m,I)=>6*m.N*I/(Math.PI*m.D);
 const motorTorqueAtI=(m,I,psi)=>1.5*m.p*psi*Math.SQRT2*I*(1-SAT_K*(motorLoading(m,I)/SAT_A_REF)**2);
@@ -9258,7 +9286,7 @@ function motorLosses(m,T,rpm,Vdc,temp){
   if(m.parts)return motorSetLosses(m,T,rpm,Vdc,temp);
   if(m.im)return imLosses(m,T,rpm,Vdc,temp);
   const psi=motorPsi(m,temp.r),I=motorCurrent(m,T,rpm,Vdc,psi),w=rpm*Math.PI/30;
-  const cu=3*I*I*motorR(m,temp.w);
+  const cu=3*I*I*motorR(m,temp.w)*copperAC(m,rpm,temp.w);
   const f=m.p*rpm/60,wb=motorBaseW(m,Vdc,psi),flux=w>wb?Math.max(0.4,wb/w):1,B=B_CORE*flux;
   const t=(m.s.lamination||0.35)/FE_T_REF;
   const fe=(FE_KH*f*B*B+FE_KE*t*t*f*f*B*B)*(m.mFeS+m.mFeR);
@@ -9309,7 +9337,7 @@ function motorSetLosses(set,T,rpm,Vdc,temp){
 // iron on the field it runs at, the rest as a magnet machine's.
 function imLosses(m,T,rpm,Vdc,temp){
   const c=imCurrents(m,T,rpm,Vdc),I=c.I,w=rpm*Math.PI/30;
-  const cu=3*I*I*motorR(m,temp.w),rcu=3*c.Iq*c.Iq*m.Rr20*(1+ALPHA_CU*(temp.r-20));
+  const cu=3*I*I*motorR(m,temp.w)*copperAC(m,rpm,temp.w),rcu=3*c.Iq*c.Iq*m.Rr20*(1+ALPHA_CU*(temp.r-20));
   const f=m.p*rpm/60,B=B_CORE*c.fl,t=(m.s.lamination||0.35)/FE_T_REF;
   const fe=(FE_KH*f*B*B+FE_KE*t*t*f*f*B*B)*(m.mFeS+m.mFeR);
   const mech=0.15*w+5e-8*w*w*w*(m.D/0.15)**4*(m.L/0.134);

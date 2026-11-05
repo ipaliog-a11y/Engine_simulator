@@ -34,6 +34,9 @@ const KW_WIND=0.93;        // winding factor: distributed, q = 2-3 slots per pol
 const SPLIT=0.67;          // bore over stator outside diameter (Model 3 0.672, Leaf 0.66; 0.6-0.7 for traction motors)
 const GAP=0.0007;          // air gap (m): 0.7 mm, the Model 3's
 const SLOT_SHARE=0.5, TOOTH_BAND=0.6, FILL=0.40;   // slots are half the band the teeth occupy, 60% of the radial depth; copper fills 40% of a slot (stranded)
+// Round magnet wire, 1.0 mm. That is a usual stranded size for this fill, not a strand measured on the Model 3
+// (that motor is a hairpin, which is a later choice). A build may pass s.strand (m) to try another.
+const STRAND=0.001;
 const B_CORE=1.5;          // peak flux density in the teeth and yoke at full flux (T), a usual design point for silicon steel
 // Non-oriented silicon steel, 0.35 mm (M270-35A class): about 2.7 W/kg at 1.5 T 50 Hz and 19 W/kg at 1.0 T 400 Hz.
 // Split into hysteresis (∝ f B²) and eddy (∝ (t f B)²), solved from those two points; a thinner sheet cuts only the eddy.
@@ -126,6 +129,11 @@ function motorBuild(s){
   const pitch=Math.PI*(Ds+hSlot)/poles*5/6, endTurn=Math.PI/2*pitch;
   const mlt=2*L+2*endTurn;
   const R20=6*RHO_CU*N*N*mlt/Acu;                                   // per phase: independent of the parallel paths
+  // how the slot copper is stranded, for the AC loss: strands across the slot width, and the radial layers Dowell counts
+  const dStrand=s.strand>0?s.strand:STRAND;
+  const slotW=SLOT_SHARE*Math.PI*(Ds+hSlot)/slots;
+  const nStrand=(Acu/slots)/(Math.PI*dStrand*dStrand/4);
+  const cuLayers=Math.max(1,nStrand/Math.max(1,slotW/dStrand));
   // masses (kg) and the rotor's inertia
   const mCu=RHO_CU_M*Acu*mlt/2;
   const mFeS=RHO_FE*(Math.PI/4*(OD*OD-Ds*Ds)-SLOT_SHARE*band)*Lfe;
@@ -151,6 +159,7 @@ function motorBuild(s){
   const Imax=s.invAmps;
   const cost=Math.round(mCu*11+(mFeS+mFeR)*(3+lam.premium)+mMag*mag.cost+ret.cost+cool.cost+Imax*inv.costA+400+(im?mCage*11+150:0));
   return {s,im,mag,ret,cool,inv,lam,D,L,Lfe,Ds,OD,poles,p,N,slots,Bg,psi20,R20,mlt,Acu,mCu,mFeS,mFeR,mMag,mRotor,J,mass,
+          strand:dStrand,cuLayers,
           nTip,nFreq,nMax,Imax,cost,Qr,Rr20,mCage,ImR,vDrop,cpsr:im?IM_CPSR:CPSR,
           // thermal network (W/K, J/K): winding -> core through the slot liner (0.2 W/mK, 0.4 mm over the slot walls),
           // core -> coolant through the housing, rotor -> core across the gap (h ~ 100), and the direct paths
@@ -164,6 +173,25 @@ function motorBuild(s){
 // Flux linkage and resistance at temperature: the magnets lose remanence as they warm, the copper gains resistance.
 const motorPsi=(m,tMag)=>m.psi20*(1+m.mag.alpha*(tMag-20));   // an induction motor's alpha is 0: its flux is the field's
 const motorR=(m,tW)=>m.R20*(1+ALPHA_CU*(tW-20));
+// AC copper in the slots (stage 4). Dowell, Proc. IEE 113 (1966): m layers of height h,
+//   Rac/Rdc = M + ((m²−1)/3) D
+//   M = Δ (sinh 2Δ + sin 2Δ) / (cosh 2Δ − cos 2Δ),  D = 2Δ (sinh Δ − sin Δ) / (cosh Δ + cos Δ),  Δ = h/δ.
+// Round wire uses the foil height (π/4)^(3/4) · d, which matches its low-frequency proximity
+// (Nan and Sullivan, IEEE PESC 2003). At stall Δ is 0 and the factor is 1, so the measured
+// phase resistance is the DC one. The cage of an induction motor is bars, not these strands.
+function copperAC(m,rpm,tW){
+  if(!(rpm>0)||!(m.strand>0))return 1;
+  const f=m.p*rpm/60;
+  if(!(f>0))return 1;
+  const rho=RHO_CU*(1+ALPHA_CU*((tW||20)-20));
+  const delta=Math.sqrt(rho/(Math.PI*f*MU0));
+  const Delta=Math.pow(Math.PI/4,0.75)*m.strand/delta;
+  if(!(Delta>1e-4))return 1;
+  const M=Delta*(Math.sinh(2*Delta)+Math.sin(2*Delta))/(Math.cosh(2*Delta)-Math.cos(2*Delta));
+  const D=2*Delta*(Math.sinh(Delta)-Math.sin(Delta))/(Math.cosh(Delta)+Math.cos(Delta));
+  const layers=m.cuLayers>1?m.cuLayers:1;
+  return M+((layers*layers-1)/3)*D;
+}
 // Torque per amp falls with saturation as the electric loading (A/m of bore) rises.
 const motorLoading=(m,I)=>6*m.N*I/(Math.PI*m.D);
 const motorTorqueAtI=(m,I,psi)=>1.5*m.p*psi*Math.SQRT2*I*(1-SAT_K*(motorLoading(m,I)/SAT_A_REF)**2);
@@ -213,7 +241,7 @@ function motorLosses(m,T,rpm,Vdc,temp){
   if(m.parts)return motorSetLosses(m,T,rpm,Vdc,temp);
   if(m.im)return imLosses(m,T,rpm,Vdc,temp);
   const psi=motorPsi(m,temp.r),I=motorCurrent(m,T,rpm,Vdc,psi),w=rpm*Math.PI/30;
-  const cu=3*I*I*motorR(m,temp.w);
+  const cu=3*I*I*motorR(m,temp.w)*copperAC(m,rpm,temp.w);
   const f=m.p*rpm/60,wb=motorBaseW(m,Vdc,psi),flux=w>wb?Math.max(0.4,wb/w):1,B=B_CORE*flux;
   const t=(m.s.lamination||0.35)/FE_T_REF;
   const fe=(FE_KH*f*B*B+FE_KE*t*t*f*f*B*B)*(m.mFeS+m.mFeR);
@@ -264,7 +292,7 @@ function motorSetLosses(set,T,rpm,Vdc,temp){
 // iron on the field it runs at, the rest as a magnet machine's.
 function imLosses(m,T,rpm,Vdc,temp){
   const c=imCurrents(m,T,rpm,Vdc),I=c.I,w=rpm*Math.PI/30;
-  const cu=3*I*I*motorR(m,temp.w),rcu=3*c.Iq*c.Iq*m.Rr20*(1+ALPHA_CU*(temp.r-20));
+  const cu=3*I*I*motorR(m,temp.w)*copperAC(m,rpm,temp.w),rcu=3*c.Iq*c.Iq*m.Rr20*(1+ALPHA_CU*(temp.r-20));
   const f=m.p*rpm/60,B=B_CORE*c.fl,t=(m.s.lamination||0.35)/FE_T_REF;
   const fe=(FE_KH*f*B*B+FE_KE*t*t*f*f*B*B)*(m.mFeS+m.mFeR);
   const mech=0.15*w+5e-8*w*w*w*(m.D/0.15)**4*(m.L/0.134);
