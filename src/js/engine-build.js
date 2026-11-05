@@ -306,7 +306,7 @@ function buildEngine(){
   buildBoostTable(26);
   engine.nitrousBar=NITROUS_BAR[engine.nitrous]||0;
   state.boostActual=0;state.nitrousActive=false;state.nitrousCharge=1.0;   // fresh tanks
-  state.engineHealth=1.0;state.blown=false;state.wearCause='';   // a fresh (rebuilt) engine
+  state.engineHealth=1.0;state.blown=false;state.wearCause='';state.limFrac=1;   // a fresh (rebuilt) engine
   // Reference brake torque (~peak) used to scale the dyno brake load.
   engine.loadRefTq=(IMEP_K*engine.typeImep*engine.mapMax*0.95*1e5*(engine.displacement_L/1000))/engine.strokeDiv;
   // Rotating inertia, from the parts that spin (build 106). It was 0.04 + 0.06 L^1.5 x stroke/86, a

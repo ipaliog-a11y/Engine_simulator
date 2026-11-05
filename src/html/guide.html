@@ -613,7 +613,7 @@ Only about a third of the fuel's energy turns the crank. Roughly another third l
 ignition type set charging and the misfire RPM limit.
 </div>
 <div class="guide-body" data-gk="heatMore1">
-With <b>AUTO THERMAL</b> on, coolant and oil temperatures drift with load toward a level set by the radiator, fan and thermostat. An under-cooled build heat-soaks: watch COOLANT climb, and with WEAR on, OVERHEAT and OIL TEMP start eating the engine's health. The <b>EGT</b> readout is the exhaust gas temperature, computed from the energy balance below.
+With <b>AUTO THERMAL</b> on, coolant and oil temperatures drift toward a level set by the heat of the fuel being burned against the radiator, fan and thermostat. Free-revving on the limiter burns little fuel and stays cool; full load at full power is what heats an engine. An under-cooled build heat-soaks: watch COOLANT climb, and with WEAR on, OVERHEAT and OIL TEMP start eating the engine's health. The <b>EGT</b> readout is the exhaust gas temperature, computed from the energy balance below.
 </div>
 </div>
 <div class="gtier gt-phys"><div class="gtier-h">LV3 · THE PHYSICS</div>
@@ -624,7 +624,7 @@ The wall heat comes from <b>Woschni's</b> correlation integrated over a traced c
 EGT is shown two ways in the model: the mass-averaged temperature the turbine works on, and what a thermocouple in the pipe would read (closer to the time average, a little cooler, because the hottest gas passes quickest).
 </div>
 <div class="guide-limit" data-gk="heatLimit">
-Limit: the coolant and oil temperatures come from a lumped model (a heat load against a cooling capacity, with first-order lags), not from heat flows through the block.
+Limit: the coolant and oil temperatures come from a lumped model, not from heat flows through the block: a heat load (the fuel burned, against the fuel the engine burns at the power its radiator was sized for at 29% brake efficiency) against a cooling capacity, with first-order lags. Its temperature rises are fitted, and at sustained full rated power they still take the oil past 132 °C on most engines without an oil cooler.
 </div>
 </div>
 <div class="guide-see">See also: <a data-gp="combustion">Combustion &amp; the burn</a> · <a data-gp="friction">Friction, oil &amp; pumping</a> · <a data-gp="wear">Wear &amp; reliability</a></div>

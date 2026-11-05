@@ -1,4 +1,4 @@
-# PIXEL ENGINE SIM v0.7 build 234
+# PIXEL ENGINE SIM v0.7 build 235
 
 **A lightweight, 8-bit style internal combustion engine *designer* & simulator** inspired by *Automation*.
 
@@ -571,8 +571,9 @@ Curve** tab remains a wide-open-throttle steady-state sweep for reading the full
   so the AFR slider rescales per fuel), knock rating and evaporative charge cooling. E85 and
   methanol resist knock and cool the intake charge (more power) but need much more fuel
   flow (higher BSFC), while race gas is high-octane pump gas.
-- Cooling balances load-generated heat against radiator capacity + airflow (RPM-driven)
-  and fan; the thermostat sets the floor temperature. Overheating (>~108 °C) costs power.
+- Cooling balances the heat of the fuel burned (against the fuel the engine burns at the power
+  its radiator was sized for) against radiator capacity + airflow (RPM-driven) and fan, so
+  free-revving on the limiter stays cool and full load at full power heats the engine; the thermostat sets the floor temperature. Overheating (>~108 °C) costs power.
 - Reliability: engine health accumulates wear from detonation (the big killer), overheat,
   lean-under-boost (burnt pistons); a clean tune barely wears, and the rev limiter does not wear it. Lower health
   cuts power; zero health = catastrophic failure until rebuilt. Damage happens over tens of
