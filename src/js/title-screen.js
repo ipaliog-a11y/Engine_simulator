@@ -4,8 +4,8 @@
 //
 // Four rooms cycle behind the menu, five seconds each, with a slow left-to-right pan: a pickup on the hoist
 // in a back-street workshop, an F355 on stands with its wheels off, an electric car's service bay with its
-// drive unit on a dolly, and the F355 in a race pit (build 229). They are pictures the owner generated
-// (assets/landing/README.md), with the makers' and sponsors' logos pixelated out; until build 228 they were
+// drive unit on a dolly, and the F355 in a race pit (build 230). They are pictures the owner generated
+// (assets/landing/README.md), with the makers' and sponsors' logos pixelated out; until build 229 they were
 // drafts drawn in code. Each is shown as an <img>, not drawn on a canvas, so the page can open from file://
 // without tainting anything, and smoothly scaled: they are detailed pictures, not a cell grid.
 //

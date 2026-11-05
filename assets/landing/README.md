@@ -9,7 +9,7 @@ The four rooms behind the title screen's menu, in the order they cycle (five sec
 | `service-bay-ev.webp` | an electric car's service bay, its drive unit on a dolly | `assets/landing/tesla-model-y.jpg` |
 | `pit-f355.webp` | the F355 in a race pit | `assets/landing/ferrari-f355.jpg` |
 
-The owner generated them in a pixel-art style. Before they went in (build 229):
+The owner generated them in a pixel-art style. Before they went in (build 230):
 - **Logos pixelated.** Every maker's and sponsor's logo was pixelated out with a 26 px mosaic: RAM, Ferrari (signs,
   shields, the windscreen banner, the "Ferrari Club Italia" boards), Pirelli, Shell, Agip, Tesla and Powerpack.
 - **Garbled text pixelated.** The few bits of garbled lettering the generator left were pixelated the same way.

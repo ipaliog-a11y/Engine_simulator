@@ -1,4 +1,4 @@
-# PIXEL ENGINE SIM v0.7 build 229
+# PIXEL ENGINE SIM v0.7 build 230
 
 **A lightweight, 8-bit style internal combustion engine *designer* & simulator** inspired by *Automation*.
 
@@ -406,7 +406,7 @@ assist map over speed and pedal), regeneration, load-point shifting, electric-dr
   name and keeps your engine: the result is a custom car, "Custom (from 012)".
 
   The **title screen** (the menu the sim opens on, and MENU) cycles through four workshop pictures with a slow
-  pan (build 229, `assets/landing/`), with the makers' and sponsors' logos pixelated out.
+  pan (build 230, `assets/landing/`), with the makers' and sponsors' logos pixelated out.
 
   A generic chassis, or a copy, shows the picture of its **body class** (build 222): one unbranded car for
   each of the 14 classes, in `assets/cars/generic/`.

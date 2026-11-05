@@ -5,7 +5,7 @@
 //   · four scenes, each held 5000 ms, drawn wider than the stage so the pan has somewhere to go;
 //   · titleAdvance(0) starts on scene 0 at pan 0; late in the hold the pan has moved right;
 //   · crossing 5000 ms lands on the next scene and resets the pan;
-//   · every scene shows its picture (since build 229, assets/landing/*.webp in an <img>), covering the stage, placed
+//   · every scene shows its picture (since build 230, assets/landing/*.webp in an <img>), covering the stage, placed
 //     where the pan says;
 //   · the existing menu still opens on ?title=1 (test123 covers the buttons).
 import { chromium } from './pw.mjs';
@@ -37,7 +37,7 @@ if (!(mid.pan > start.pan + 20)) fails.push('pan should have walked right by 4 s
 
 const next = await page.evaluate(() => titleAdvance(5100));
 if (next.idx !== 1) fails.push('at 5.1 s expected scene 1, got ' + next.idx);
-// in picture pixels since build 229 (the picture is ~1900 px wide): 100 ms in, the pan is 2% of its walk
+// in picture pixels since build 230 (the picture is ~1900 px wide): 100 ms in, the pan is 2% of its walk
 if (next.pan > next.maxPan * 0.05) fails.push('a new scene should restart the pan near 0, got ' + next.pan + ' of ' + next.maxPan);
 
 const third = await page.evaluate(() => titleAdvance(10100));
@@ -47,7 +47,7 @@ if (fourth.idx !== 3) fails.push('at 15.1 s expected scene 3 (pit garage), got '
 const wrap = await page.evaluate(() => titleAdvance(20100));
 if (wrap.idx !== 0) fails.push('at 20.1 s should wrap to scene 0, got ' + wrap.idx);
 
-// Since build 229 each room is a picture (an <img>, assets/landing/): each must load, be the right room's picture,
+// Since build 230 each room is a picture (an <img>, assets/landing/): each must load, be the right room's picture,
 // cover the stage, and sit where the pan says (its left edge at -pan × scale).
 const seen = new Set();
 for (const ms of [0, 4000, 5100, 10100, 15100]) {

@@ -1,9 +1,9 @@
 # Plan: the electric drivetrain after v0.7
 
-**Status:** stage 0 is the lock in `tests/test136.mjs` (build 225). Stage 1, lamination
-thickness, is build 226. Stage 2, regeneration strength, is build 227. Stage 3, cell
-resistance against temperature, is build 228. Stages 4–13 are not built. The locked numbers
-are the drive at 25 °C, with lamination at 0.35 mm and regeneration at HIGH.
+**Status:** stage 0 is the lock in `tests/test136.mjs` (build 225). Stages 1–3 are builds
+226–228. Stage 4, copper loss that rises with frequency, is build 229. Stages 5–13 are not
+built. The lock is the drive at 25 °C with lamination 0.35 mm, regeneration HIGH, and the
+AC copper of 1 mm strands.
 
 The drive that shipped in builds 178–184 is a real machine up to the knee and a drawn shape
 after it. This is the order for deepening it. Each stage is one build and one pull request.
@@ -168,6 +168,13 @@ Wh/km figures against 117, 138 and 158. If one leaves the 8% band, say so. Do no
 
 `test136`: edit the score, the best efficiency, the hold, the continuous power and the Wh/km.
 Do not edit the tail block.
+
+**Shipped** as build 229. Round wire, 1 mm, Dowell with the round-wire height from Nan and
+Sullivan. At stall the factor is 1. At 15,000 rpm on the Model 3 it is 1.13; a 0.5 mm strand
+is 1.03. Wh/km moved 119.53 → 119.57, 141.33 → 141.35, 166.27 → 166.29, all inside the 8%
+band (117, 138, 158). Continuous power and the hold moved, and so did the pack-limited torque
+at the redline. Torque at 1000 rpm, the 0–100 and the tail did not. The Leaf check in `test96`
+still passes.
 
 ---
 

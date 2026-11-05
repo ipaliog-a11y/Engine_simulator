@@ -20,7 +20,7 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 Working toward **v1.0 — every number derived, not fitted.**
 
-### The title screen shows the owner's workshop pictures (build 229)
+### The title screen shows the owner's workshop pictures (build 230)
 
 - **The four rooms behind the menu are now the owner's generated pictures**, not drafts drawn in code. In order: a
   pickup on the hoist, an F355 on stands with its wheels off, an electric car's service bay with its drive unit on a
@@ -38,6 +38,27 @@ Working toward **v1.0 — every number derived, not fitted.**
 - Tests: `test123` and `test126` read the old canvas's pixels. They now check that each room's picture loads, covers
   the stage, and sits where the pan puts it. `test126`'s "the pan restarts near 0" check is now relative, since the
   pan is measured in picture pixels.
+
+### Copper loss rises with speed (build 229)
+
+Slot copper was DC resistance only, so a motor paid nothing extra for spinning the strands in
+their own slot leakage. It now follows Dowell (Proc. IEE, 1966): the AC factor of a many-layer
+winding, with the round-wire height (π/4)^(3/4) times the strand diameter from Nan and Sullivan
+(IEEE PESC, 2003). The strands are 1 mm round wire, a usual size for the 40% fill this model
+already assumed. The Model 3's real winding is a hairpin; that choice is still ahead. At stall
+the factor is 1, so the phase resistance stays the DC one (the Model 3 geometry is still 3.08 mΩ,
+inside the measured 4.75 mΩ band).
+
+At 15,000 rpm on that geometry the factor is 1.13. A 0.5 mm strand is 1.03. The WLTP figures
+moved from 119.53 to 119.57, 141.33 to 141.35 and 166.27 to 166.29 Wh/km, against 117, 138 and
+158, all inside the 8% band. Where the pack is the limit, the extra loss leaves less torque:
+the Model 3's continuous power 294 → 288 kW and its hold 54 → 52 s, the Model Y's peak 358 →
+357 kW and its hold 116 → 114 s, the Plaid's peak 804 → 803 kW and its continuous power 817 →
+804 kW. At the redline the torque is 108.36 → 108.06 Nm, 189.83 → 189.32 Nm and 382.34 →
+380.65 Nm. Torque at 1000 rpm, the 0–100 and the shape of the constant-power tail did not move.
+The Leaf's check still passes.
+
+Stage 4 of `plans/hybrid-electric/drivetrain.md`.
 
 ### A cold lithium pack resists more (build 228)
 

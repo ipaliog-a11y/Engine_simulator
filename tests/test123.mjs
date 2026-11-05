@@ -22,7 +22,7 @@ if (!await open()) fails.push('title screen did not open on ?title=1');
 const labels = await page.$$eval('#titleScreen .title-menu button', bs => bs.map(b => b.textContent.trim()));
 const want = ['BUILD AN ENGINE', 'BUILD A VEHICLE', 'OPEN WIKI', 'SETTINGS'];
 if (labels.join('|') !== want.join('|')) fails.push('menu labels: ' + labels.join(' | '));
-// since build 229 the room is a picture (an <img>), not a canvas: it must be loaded and cover the stage
+// since build 230 the room is a picture (an <img>), not a canvas: it must be loaded and cover the stage
 await page.waitForFunction(() => { const i = document.getElementById('titleImg'); return i && !i.hidden && i.complete && i.naturalWidth > 0; }, null, { timeout: 5000 }).catch(() => {});
 const painted = await page.evaluate(() => {
   const i = document.getElementById('titleImg'), r = i.getBoundingClientRect(), s = i.parentElement.getBoundingClientRect();
