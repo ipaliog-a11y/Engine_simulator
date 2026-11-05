@@ -20,6 +20,44 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 Working toward **v1.0 — every number derived, not fitted.**
 
+### Hairpin or round wire, copper or aluminium (build 233)
+
+Stage 6 of `plans/hybrid-electric/drivetrain.md`. The motor's slot copper was one kind, stranded round wire at a 40%
+fill. Two fields are on the motor form now, WINDING and CONDUCTOR. Each acts through the slot's copper area and the
+conductor's resistivity, mass, heat capacity and price; nothing multiplies a torque or an efficiency.
+
+- **HAIRPIN.** Rectangular bars fill about 70% of a slot. Charged EVs gives "about 70%", Ansys up to ~0.8, and an
+  OSTI traction study 0.63–0.64, so it is marked probable. There are four bars a slot, the Model 3's own layout
+  (MotorXP: 54 slots, 12 series turns as 2 turns in 3 paths, double layer). Each bar's AC loss is Dowell's on its
+  own height, with the slot's porosity.
+- **ALUMINIUM.** IEC 60889 winding aluminium: 0.028264 ohm mm²/m and 0.403%/K, 2703 kg/m³, 897 J/kg K. It costs
+  about 30% of copper's price per kilogram (Redalyc, citing Sullivan 2007 and Widmer et al.; probable): $3.3 against
+  $11.
+- **On the Model 3 geometry, at 350 V:**
+
+| | DC resistance | Conductor | AC factor, 15,000 rpm | Copper loss, 400 Nm at 1000 rpm | Copper loss, 60 Nm at 15,000 rpm | Motor |
+|---|---|---|---|---|---|---|
+| Round copper (default) | 3.083 mΩ | 5.5 kg | 1.13 | 10.5 kW | 2.0 kW | 56.0 kg, $6448 |
+| Hairpin copper | 1.762 mΩ | 9.7 kg | 9.6 | 6.3 kW | 9.6 kW | 62.6 kg, $6494 |
+| Round aluminium | 5.066 mΩ | 1.7 kg | 1.05 | 17.4 kW | 3.0 kW | 49.8 kg, $6393 |
+| Hairpin aluminium | 2.895 mΩ | 2.9 kg | 4.6 | 10.1 kW | 7.6 kW | 51.8 kg, $6397 |
+
+- **The trade.** Hairpin wins at high torque and low speed, and loses at high speed. Aluminium is lighter and
+  cheaper and loses more.
+- **The hairpin's 9.6 is likely high.** Its bar height is the slot depth shared over four layers, about 4.6 mm. That
+  is a little taller than production bars, and Dowell grows steeply with height; four-layer hairpins are usually
+  quoted at 2–6 near 1 kHz. More layers would cut it, and that is a field for a later build. The bar height was not
+  tuned to bring it down.
+- **Nothing moved.** Every factory motor stays on round copper; `CONDUCTOR.copper` is exactly the old constants. The
+  electric fingerprint (build 231) is identical to build 232's: 392 values.
+- **Stage 5 (field weakening) is parked.** The plan's stage 5 section says why: no measured d-axis inductance or
+  saliency for a production interior-magnet motor was found, and without one the Leaf and the locked knees cannot
+  both be met honestly. ORNL's Prius standstill test (176 Nm magnet torque, 120 Nm reluctance torque at 150 A) is
+  recorded there as a partial source.
+- **Tests.** In `test136`, the "WINDING not on the form" line becomes "WINDING and CONDUCTOR default to ROUND and
+  COPPER", as the plan's table allows stage 6. New test: `test143` checks the default as before, factory motors on
+  round copper, the hairpin and aluminium directions, a hybrid's motor taking the fields, and the Greek.
+
 ### A cold pack loses some power, not nine-tenths of it (build 232)
 
 Build 228 raised a lithium pack's whole resistance with the 68 kJ/mol of the graphite charge transfer. Its own comment

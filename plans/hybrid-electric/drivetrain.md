@@ -2,9 +2,10 @@
 
 **Status:** stage 0 is the lock in `tests/test136.mjs` (build 225). Stages 1–3 are builds
 226–228. Stage 4, copper loss that rises with frequency, is build 229. Build 231 extends the fingerprint
-to the electric and hybrid cars (`--only=electric`), and build 232 corrects stage 3's cold. Stages
-5–13 are not built. The lock is the drive at 25 °C with lamination 0.35 mm, regeneration HIGH, and the
-AC copper of 1 mm strands.
+to the electric and hybrid cars (`--only=electric`), and build 232 corrects stage 3's cold. **Stage 5 is
+parked** (no measured Ld/Lq; see its section). Stage 6, the winding, is build 233. Stages 7–13 are not
+built. The lock is the drive at 25 °C with lamination 0.35 mm, regeneration HIGH, the AC copper of 1 mm
+strands, and round copper.
 
 The drive that shipped in builds 178–184 is a real machine up to the knee and a drawn shape
 after it. This is the order for deepening it. Each stage is one build and one pull request.
@@ -210,6 +211,20 @@ weakening current; a motor with a higher characteristic current holds power furt
 
 Fingerprint the hybrids as well as the three Teslas.
 
+
+**Parked** (after build 232). Field weakening needs the d-axis inductance itself: the characteristic
+current ψ/Ld sets how far power holds. Deriving Ld from geometry, calibrated once on the Model 3's
+measured V_DROP, moves every knee (the Leaf 2685 → 3174 rpm, outside its 10%; the locked Model Y and
+Plaid knees too). Keeping the knees, a non-salient machine gives no plateau: power rises to about 1.3×
+the knee power at 2–4× the knee and collapses near 9×, so the Leaf would leave its 80–100 kW. Real
+interior-magnet machines owe much of their high-speed torque to saliency (Lq > Ld), and the model has
+no rotor-barrier geometry to derive it from. The search found only part of it: ORNL/TM-2004/185
+measures the 2004 Prius at standstill, 176 Nm of magnet torque and 120 Nm of reluctance torque at 150 A,
+which fixes (Lq − Ld)·I/ψ ≈ 1.36 for that motor at that current, not Ld. MotorXP's Model 3 analysis
+plots the split but gives no numbers, and no source in the search gives the Leaf's. It starts when a
+measured Ld and Lq for a production interior-magnet traction motor is in hand (the numbers behind
+MotorXP's DQ map, or ORNL's Camry or LS 600h reports). Until then the rectangle stays, and stage 6 goes
+first.
 ---
 
 ## Stage 6 — hairpin or round wire, copper or aluminium
@@ -226,6 +241,13 @@ a cited fill, not from a torque multiplier.
 The new test checks those three directions and that the default reproduces the locked DC
 resistance.
 
+
+**Shipped** as build 233. `WIRE` (ROUND 0.40, HAIRPIN 0.70 with four bars a slot, the Model 3's
+layout) and `CONDUCTOR` (COPPER, ALUMINIUM at IEC 60889's 0.028264 ohm mm²/m). On the Model 3
+geometry: round copper 3.083 mΩ (unchanged), hairpin 1.762 mΩ and an AC factor of 9.6 at 15,000 rpm
+against 1.13, aluminium 5.066 mΩ and 6 kg lighter. The hairpin's 9.6 is likely high: its bar height
+is the slot depth shared over four layers, about 4.6 mm. More layers would cut it, and that is a
+field for later. Every factory motor stays on round copper; the electric fingerprint is identical.
 ---
 
 ## Stage 7 — the inverter as a part that gets hot, and a voltage class
