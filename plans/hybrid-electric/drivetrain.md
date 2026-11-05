@@ -1,8 +1,9 @@
 # Plan: the electric drivetrain after v0.7
 
 **Status:** stage 0 is the lock in `tests/test136.mjs` (build 225). Stages 1–3 are builds
-226–228. Stage 4, copper loss that rises with frequency, is build 229. Stages 5–13 are not
-built. The lock is the drive at 25 °C with lamination 0.35 mm, regeneration HIGH, and the
+226–228. Stage 4, copper loss that rises with frequency, is build 229. Build 231 extends the fingerprint
+to the electric and hybrid cars (`--only=electric`), and build 232 corrects stage 3's cold. Stages
+5–13 are not built. The lock is the drive at 25 °C with lamination 0.35 mm, regeneration HIGH, and the
 AC copper of 1 mm strands.
 
 The drive that shipped in builds 178–184 is a real machine up to the knee and a drawn shape
@@ -145,6 +146,11 @@ less regen acceptance than at 25 °C, and the 25 °C point equal to the lock.
 applied to the whole pack resistance: on the Model Y, 377 kW at 25 °C, 36 kW at 0 °C, 11 kW at
 −10 °C. That overstates the cold, and the comment says so. Lead-acid and NiMH are unchanged.
 The lap still uses 25 °C. The 50 °C cut is untouched.
+
+**Corrected** in build 232: the energy applies to the charge-transfer share only, 0.07 of the 25 °C
+resistance, from Nagasubramanian (2001): ohmic resistance flat from 25 to −20 °C while the impedance
+rises tenfold. The Model Y is 377 kW at 25 °C, 245 kW at 0 °C, 122 kW at −10 °C. Stage 10 builds
+its cold charging on this.
 
 ---
 
