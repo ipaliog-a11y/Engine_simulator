@@ -20,6 +20,25 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 Working toward **v1.0 — every number derived, not fitted.**
 
+### The title screen shows the owner's workshop pictures (build 229)
+
+- **The four rooms behind the menu are now the owner's generated pictures**, not drafts drawn in code. In order: a
+  pickup on the hoist, an F355 on stands with its wheels off, an electric car's service bay with its drive unit on a
+  dolly, and the F355 in a race pit. They still cycle every five seconds with a slow left-to-right pan.
+- **Logos.** Every maker's and sponsor's logo in them is pixelated out: RAM, Ferrari, Pirelli, Shell, Agip, Tesla and
+  Powerpack. So is the garbled lettering the generator left. Some tiny marks remain, too small to read: a bonnet
+  badge, wheel centre caps. The originals are on the branch `assets/car-profiles-and-landing`, and
+  `assets/landing/README.md` lists what was changed.
+- **Pan.** Each picture is shown 12% past covering the stage, so it always has room to pan, whatever the shape of the
+  window.
+- **Size.** 1920 px wide WebP at quality 82: 0.8 MB for the four, from 11 MB of JPEGs.
+- **An image, not a canvas.** Each room is an `<img>`. Drawing a local picture into a canvas from `file://` taints
+  the canvas, so the pictures load without one. The four drawing functions (about 300 lines) are gone.
+- No number in the sim moves. The fingerprint is identical.
+- Tests: `test123` and `test126` read the old canvas's pixels. They now check that each room's picture loads, covers
+  the stage, and sits where the pan puts it. `test126`'s "the pan restarts near 0" check is now relative, since the
+  pan is measured in picture pixels.
+
 ### A cold lithium pack resists more (build 228)
 
 A pack's resistance was one number at every temperature. It is now the 25 °C value the drive was
