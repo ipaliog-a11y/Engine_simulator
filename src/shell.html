@@ -33,7 +33,7 @@
 </div>
 <div class="container">
 <header>
-<h1>PIXEL ENGINE SIM v0.7 build 233</h1>
+<h1>PIXEL ENGINE SIM v0.7 build 234</h1>
 <div class="subtitle" id="subtitle">ENGINE DESIGNER • BUILD IT, THEN DRIVE IT</div>
 </header>
 <div class="build-strip" id="buildStrip">
@@ -189,7 +189,7 @@
 <div class="field"><label for="edVVT">VARIABLE VALVE TIMING</label><select id="edVVT"><option value="no">NONE</option><option value="yes">VVT</option></select></div>
 <div class="field"><label for="edValves">VALVES / CYLINDER</label><select id="edValves"><option value="2">2 (WEDGE)</option><option value="4">4 (PENT-ROOF)</option><option value="5">5</option></select></div>
 <div class="field"><label for="edValveMat">VALVE MATERIAL</label><select id="edValveMat"><option value="steel">STEEL</option><option value="titanium">TITANIUM</option></select></div>
-<div class="field"><label for="edSpring">VALVE SPRINGS</label><select id="edSpring"><option value="stock">STOCK</option><option value="perf">PERFORMANCE</option><option value="race">RACE</option></select></div>
+<div class="field"><label for="edSpring">VALVE SPRINGS</label><select id="edSpring"><option value="stock">STOCK</option><option value="perf">PERFORMANCE</option><option value="race">RACE</option></select><input type="hidden" id="edSpringRpm" value="0"></div>
 <div class="field"><label>VALVE FLOAT</label><span class="val" id="valFloat">—</span></div>
 <div class="field"><label>CAM OVERLAP</label><span class="val" id="valOverlap">—</span></div>
 </div>
@@ -248,7 +248,7 @@
 <select id="edSoundModel" class="opt-select"><option value="synth">SYNTH</option><option value="gas">GAS</option></select></div>
 
 <div class="design-section">Simulation</div>
-<div class="opt-row"><div><b>WEAR &amp; DAMAGE</b><div class="opt-note">On: detonation/overheat/lean-boost damage the engine. Off: invincible, for free experimentation.</div></div>
+<div class="opt-row"><div><b>WEAR &amp; DAMAGE</b><div class="opt-note">On: detonation/overheat/lean-boost/valve float damage the engine. Off: invincible, for free experimentation.</div></div>
 <button id="btnWear" class="toggle on" aria-pressed="true">WEAR ON</button></div>
 
 <div class="design-section">Language</div>

@@ -20,6 +20,49 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 Working toward **v1.0 — every number derived, not fitted.**
 
+### A factory engine's valve springs are its maker's (build 234)
+
+The second of three builds correcting the live wear model.
+
+- **Every STOCK spring was one generic part**, 250 N on the seat at 22 N/mm (the code calls it a small-engine
+  spring). A big-valve engine on it floated far below the redline its maker rates it to: 24 of the 89 real valved
+  engines, among them a Hellcat at 4,440 rpm against 6,200, a 6.4 Hemi at 4,440 against 6,400, a 993 Turbo at 4,686
+  against 6,700 and an LS3 at 5,869 against 6,600. No factory engine floats inside its own rev range, because the
+  limiter is set below float. The same mistake as the generic stock radiator in build 219.
+- **Now a factory preset carries `springRpm`**, the redline its springs were sized for (its own). Its STOCK springs
+  carry the seat load that floats the valves 5% past it, and PERFORMANCE and RACE are the same 1.6× and 2.2× steps
+  over that spring as over the generic one. It is saved with the build. A design of your own, and a build saved before
+  this one, keep the generic springs. All 94 real valved engines now float past their redline (lowest 1.05×, median
+  1.26×). The 5% margin is probable, not measured: GM rates a stock LS3 to its 6,600 rpm limiter, and owners report
+  its stock springs holding to about 6,500–7,000 rpm (LS1Tech, Speedmaster). Any margin above zero gives a factory
+  engine the same power. The margin decides only where a factory engine with a raised redline starts to float.
+- **Wear past valve float.** With WEAR on, running past the float speed now wears the engine (VALVE FLOAT, 0.004 a
+  second at the float speed and 0.01 more per 10% past it, a game rule like the other rates), since the valve can
+  meet the piston. That is the real "redline too high for the parts". An LS3 on stock springs with its redline
+  raised to 7,500 rpm (float 6,930) drops to 77% health in 20 s on its limiter. At its factory 6,600 rpm it doesn't
+  wear.
+- **Power moved on 8 engines, all further from their real figures.** Float had been cutting their top-end airflow,
+  and without it a separate over-prediction of high-rpm breathing shows:
+  - Mustang 289: 278 → 310 hp (real 225).
+  - Dino 246 GT: 203 → 250 (real 195).
+  - Countach LP400: 397 → 430 (real 375).
+  - 911 Turbo 993: 420 → 461 (real 408).
+  - Carrera RS 2.7: 223 → 246 (real 210).
+  - Hellcat: 709 → 742 (real 707).
+  - 6.4 Hemi: 466 → 484 (real 470).
+  - 365 GTB/4: 407 → 410 (real 352).
+
+  Torque didn't move. Mean power error over the 98 real engines goes from 6.62% to 7.39%. The owner chose to ship
+  the honest springs and name the gap rather than keep a wrong float that happened to hide it. All eight are two-valve
+  engines (four of them on carburettors, one on mechanical injection), so the next place to look is the breathing of
+  two-valve heads at high rpm. No preset was changed to compensate.
+- A preset that lists PERFORMANCE or RACE springs now gets that step over its own sized spring: more float margin,
+  no change in power, since its float already lay past its redline.
+- The "Valvetrain & cams", "Why engines have a redline" and "Wear & reliability" guide pages (English and Greek), the
+  WEAR option's note, the dyno legend and the README describe it. test144.
+- **Left open, the next build:** heat from fuel burned, so free-revving at full throttle no longer heats the oil to
+  OIL TEMP wear.
+
 ### The rev limiter no longer wears the engine (build 233)
 
 The first of three builds that correct the live wear model, after a fact-check of what kills real engines.

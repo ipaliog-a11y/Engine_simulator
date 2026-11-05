@@ -1001,8 +1001,10 @@ function stepElectrical(dt){
 // NATO-style durability test is 400 hours at full load and wide-open throttle, passed on 95% of the starting power
 // (Banks Power's account of it), and a marine type test 240 hours at rated load and speed (CIFT). The limiter
 // exists so the engine cannot pass the redline, and on this bench it cannot: stepEngine clamps the speed to it. What
-// over-revving kills is the engine forced past it, or a redline set past what the valvetrain holds (valve float):
-// neither happens here yet, so no rpm term is charged.
+// over-revving kills is the engine forced past it, or a redline set past what the valvetrain holds (valve float).
+// The first cannot happen here. The second can, on a design whose redline is past its own float speed (build 234):
+// the valve stops following the cam and can meet the piston, so running past floatRpm wears the engine, from 0.004 a
+// second at the float speed and 0.01 more for each 10% past it. Those rates are game rules, like the others here.
 function healthFactor(){return state.blown?0:(0.5+0.5*state.engineHealth);}
 function stepWear(dt){
   if(isElectric())return stepMotorWear(dt);
@@ -1014,6 +1016,7 @@ function stepWear(dt){
   add(state.knockRisk>55?(state.knockRisk-55)/45*0.060:0,'DETONATION');          // knock is the big killer
   add(state.coolant>112?(state.coolant-112)/18*0.030:0,'OVERHEAT');
   add(state.oil>132?(state.oil-132)/22*0.025:0,'OIL TEMP');
+  if(engine.floatRpm>0&&state.rpm>engine.floatRpm)add(0.004+0.1*(state.rpm/engine.floatRpm-1),'VALVE FLOAT');
   if(!engine.ci)add(Math.max(0,lam-1.05)*Math.max(0,state.map-0.9)*0.14,'LEAN/BOOST');  // burnt pistons (diesels run lean by design)
   if(engine.ci)add(state.emPM>35?(state.emPM-35)/40*0.020:0,'OVER-FUEL/EGT');     // diesel: over-fuelling → soot & heat
   add(state.oil<55&&state.powerHP>15?0.004:0,'COLD-OIL');
