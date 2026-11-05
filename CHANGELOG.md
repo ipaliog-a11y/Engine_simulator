@@ -55,7 +55,13 @@ The second of three builds correcting the live wear model.
   Torque didn't move. Mean power error over the 98 real engines goes from 6.62% to 7.39%. The owner chose to ship
   the honest springs and name the gap rather than keep a wrong float that happened to hide it. All eight are two-valve
   engines (four of them on carburettors, one on mechanical injection), so the next place to look is the breathing of
-  two-valve heads at high rpm. No preset was changed to compensate.
+  two-valve heads at high rpm. No preset was changed to compensate. They are named in tests as known gaps: test60's
+  `KNOWN` list (the Dino, Mustang 289, Carrera RS and Countach now peak on their limiter, the documented missing
+  top-end fade) and a new `RATING_KNOWN` in test115 (the Dino, +28% against its 25% band).
+- **Fingerprint:** numbers moved on exactly those 8 cars (power, power-to-weight, acceleration, laps). 41 more cars
+  show a changed lap *hash* only: a solved lap carries the track's shared racing-line cache, which holds every
+  earlier car's line keyed by its power, so the Hellcat's new key reaches every lap solved after it. Their own laps
+  are bit-identical when solved fresh (checked on the McLaren F1).
 - A preset that lists PERFORMANCE or RACE springs now gets that step over its own sized spring: more float margin,
   no change in power, since its float already lay past its redline.
 - The "Valvetrain & cams", "Why engines have a redline" and "Wear & reliability" guide pages (English and Greek), the
