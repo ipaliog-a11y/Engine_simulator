@@ -524,7 +524,7 @@ table.hy-map td:focus{outline:2px solid #ffcc00;outline-offset:-2px}
 </div>
 <div class="container">
 <header>
-<h1>PIXEL ENGINE SIM v0.7 build 234</h1>
+<h1>PIXEL ENGINE SIM v0.7 build 235</h1>
 <div class="subtitle" id="subtitle">ENGINE DESIGNER • BUILD IT, THEN DRIVE IT</div>
 </header>
 <div class="build-strip" id="buildStrip">
@@ -1341,7 +1341,7 @@ Only about a third of the fuel's energy turns the crank. Roughly another third l
 ignition type set charging and the misfire RPM limit.
 </div>
 <div class="guide-body" data-gk="heatMore1">
-With <b>AUTO THERMAL</b> on, coolant and oil temperatures drift with load toward a level set by the radiator, fan and thermostat. An under-cooled build heat-soaks: watch COOLANT climb, and with WEAR on, OVERHEAT and OIL TEMP start eating the engine's health. The <b>EGT</b> readout is the exhaust gas temperature, computed from the energy balance below.
+With <b>AUTO THERMAL</b> on, coolant and oil temperatures drift toward a level set by the heat of the fuel being burned against the radiator, fan and thermostat. Free-revving on the limiter burns little fuel and stays cool; full load at full power is what heats an engine. An under-cooled build heat-soaks: watch COOLANT climb, and with WEAR on, OVERHEAT and OIL TEMP start eating the engine's health. The <b>EGT</b> readout is the exhaust gas temperature, computed from the energy balance below.
 </div>
 </div>
 <div class="gtier gt-phys"><div class="gtier-h">LV3 · THE PHYSICS</div>
@@ -1352,7 +1352,7 @@ The wall heat comes from <b>Woschni's</b> correlation integrated over a traced c
 EGT is shown two ways in the model: the mass-averaged temperature the turbine works on, and what a thermocouple in the pipe would read (closer to the time average, a little cooler, because the hottest gas passes quickest).
 </div>
 <div class="guide-limit" data-gk="heatLimit">
-Limit: the coolant and oil temperatures come from a lumped model (a heat load against a cooling capacity, with first-order lags), not from heat flows through the block.
+Limit: the coolant and oil temperatures come from a lumped model, not from heat flows through the block: a heat load (the fuel burned, against the fuel the engine burns at the power its radiator was sized for at 29% brake efficiency) against a cooling capacity, with first-order lags. Its temperature rises are fitted, and at sustained full rated power they still take the oil past 132 °C on most engines without an oil cooler.
 </div>
 </div>
 <div class="guide-see">See also: <a data-gp="combustion">Combustion &amp; the burn</a> · <a data-gp="friction">Friction, oil &amp; pumping</a> · <a data-gp="wear">Wear &amp; reliability</a></div>
@@ -5915,9 +5915,9 @@ const GUIDE_I18N={
   combustionGame:{el:"Την καύση τη βλέπεις έμμεσα: στο σχήμα της καμπύλης ροπής, στη <b>θερμοκρασία καυσαερίων</b> (η θερμότητα που δεν έγινε έργο φεύγει από την εξάτμιση), και στη μπάρα πειρακιών. Η τομή της ΖΩΝΤΑΝΑ χρωματίζει τον θάλαμο όσο καίγεται."},
   combustionPhys:{el:"Το καμένο ποσοστό ακολουθεί τη συνάρτηση του Wiebe (του Heywood a = 5, m = 2): <span class=\"geq\">x<sub>b</sub>(θ) = 1 − exp(−a · ((θ − θ<sub>0</sub>)/Δθ)<sup>m+1</sup>)</span> με Δθ = 50° για κινητήρα με σπινθήρα, 130° για περιστροφικό, και σταθερά 2.5 ms για πετρελαιοκινητήρα (30° στις 2000 rpm, 72° στις 4800). Κάθε κομμάτι θερμότητας κερδίζει την απόδοση Otto της εκτόνωσης που έχει ακόμα μπροστά του: <span class=\"geq\">η(θ) = 1 − (V(θ)/V<sub>BDC</sub>)<sup>γ−1</sup></span> και η απόδοση του κύκλου είναι αυτή, σταθμισμένη με τον ρυθμό καύσης. Ό,τι δεν γίνεται έργο μένει στο αέριο και φεύγει από την εξάτμιση, οπότε μια αργή καύση φαίνεται ως ζεστότερα καυσαέρια, που σε έναν τούρμπο πετρελαιοκινητήρα είναι αυτό που τελικά περιορίζει το καύσιμο (η ECU δεν σπρώχνει το αέριο στην τουρμπίνα πέρα από τους 1100 K)."},
   heatReal:{el:"Μόνο περίπου το ένα τρίτο της ενέργειας του καυσίμου γυρίζει τον στρόφαλο. Περίπου άλλο ένα τρίτο φεύγει ως ζεστά καυσαέρια (συχνά 800–950 °C σε βενζινοκινητήρα με πλήρη ισχύ), και το περισσότερο από το υπόλοιπο ποτίζει τα τοιχώματα των κυλίνδρων, το ψυκτικό και το λάδι. Το <b>σύστημα ψύξης</b> μεταφέρει αυτή τη θερμότητα στο <b>ψυγείο</b>, όπου ο αέρας που περνά από μέσα την παίρνει· ένας <b>θερμοστάτης</b> κρατά τον κινητήρα κλειστό από το ψυγείο ώσπου να ζεσταθεί· ένα <b>βεντιλατέρ</b> τραβά αέρα όταν το αυτοκίνητο πάει αργά."},
-  heatMore1:{el:"Με το <b>ΑΥΤ. ΘΕΡΜΙΚΟ</b> ενεργό, οι θερμοκρασίες ψυκτικού και λαδιού κινούνται με το φορτίο προς ένα επίπεδο που ορίζουν το ψυγείο, το βεντιλατέρ και ο θερμοστάτης. Μια κατασκευή με ανεπαρκή ψύξη υπερθερμαίνεται: δες το ΨΥΚΤΙΚΟ να ανεβαίνει, και με τη ΦΘΟΡΑ ενεργή, η ΥΠΕΡΘΕΡΜΑΝΣΗ και η ΘΕΡΜ. ΛΑΔΙΟΥ αρχίζουν να τρώνε την υγεία του κινητήρα. Η ένδειξη <b>θερμοκρασίας καυσαερίων</b> υπολογίζεται από το ενεργειακό ισοζύγιο παρακάτω."},
+  heatMore1:{el:"Με το <b>ΑΥΤ. ΘΕΡΜΙΚΟ</b> ενεργό, οι θερμοκρασίες ψυκτικού και λαδιού κινούνται προς ένα επίπεδο που ορίζει η θερμότητα του καυσίμου που καίγεται απέναντι στο ψυγείο, το βεντιλατέρ και τον θερμοστάτη. Οι ελεύθερες στροφές στον κόφτη καίνε λίγο καύσιμο και μένουν δροσερές· το πλήρες φορτίο σε πλήρη ισχύ είναι αυτό που ζεσταίνει έναν κινητήρα. Μια κατασκευή με ανεπαρκή ψύξη υπερθερμαίνεται: δες το ΨΥΚΤΙΚΟ να ανεβαίνει, και με τη ΦΘΟΡΑ ενεργή, η ΥΠΕΡΘΕΡΜΑΝΣΗ και η ΘΕΡΜ. ΛΑΔΙΟΥ αρχίζουν να τρώνε την υγεία του κινητήρα. Η ένδειξη <b>θερμοκρασίας καυσαερίων</b> υπολογίζεται από το ενεργειακό ισοζύγιο παρακάτω."},
   heatPhys:{el:"Για τους κινητήρες με βαλβίδες το μερίδιο της εξάτμισης είναι ένα ενεργειακό ισοζύγιο, κλειστό: <span class=\"geq\">Q<sub>exhaust</sub> = Q<sub>fuel</sub> − W<sub>gross</sub> − Q<sub>walls</sub> − Q<sub>port</sub></span> Η θερμότητα στα τοιχώματα βγαίνει από τη συσχέτιση του <b>Woschni</b> ολοκληρωμένη πάνω σε έναν ιχνηλατημένο κύκλο, <i>h ∝ B<sup>−0.2</sup> p<sup>0.8</sup> T<sup>−0.55</sup> w<sup>0.8</sup></i>, με την ταχύτητα αερίου <i>w</i> από την ταχύτητα εμβόλου συν έναν όρο καύσης και τα τοιχώματα στους 450 K. Το μερίδιο της θυρίδας εξαγωγής χρησιμοποιεί τη μετρημένη σχέση των Caton &amp; Heywood <i>Nu = 0.0483 Re<sup>0.783</sup></i>. Ένα τζάουλ που χάνεται στο τοίχωμα νωρίς στην εκτόνωση θα είχε κάνει έργο· ένα που χάνεται αργά θα είχε απλώς φύγει από την εξάτμιση, και το μοντέλο τα χωρίζει έτσι, οπότε η ενέργεια διατηρείται εκ κατασκευής.<br> Η θερμοκρασία καυσαερίων δείχνεται με δύο τρόπους στο μοντέλο: η σταθμισμένη κατά μάζα θερμοκρασία με την οποία δουλεύει η τουρμπίνα, και αυτό που θα διάβαζε ένα θερμοστοιχείο μέσα στον σωλήνα (πιο κοντά στον χρονικό μέσο όρο, λίγο πιο κρύο, γιατί το πιο ζεστό αέριο περνά πιο γρήγορα)."},
-  heatLimit:{el:"Όριο: οι θερμοκρασίες ψυκτικού και λαδιού βγαίνουν από ένα συγκεντρωτικό μοντέλο (ένα θερμικό φορτίο απέναντι σε μια ικανότητα ψύξης, με καθυστερήσεις πρώτης τάξης), όχι από ροές θερμότητας μέσα στο μπλοκ."},
+  heatLimit:{el:"Όριο: οι θερμοκρασίες ψυκτικού και λαδιού βγαίνουν από ένα συγκεντρωτικό μοντέλο, όχι από ροές θερμότητας μέσα στο μπλοκ: ένα θερμικό φορτίο (το καύσιμο που καίγεται, απέναντι στο καύσιμο που καίει ο κινητήρας στην ισχύ για την οποία διαστασιολογήθηκε το ψυγείο του, με απόδοση 29%) απέναντι σε μια ικανότητα ψύξης, με καθυστερήσεις πρώτης τάξης. Οι ανόδοι θερμοκρασίας του είναι προσαρμοσμένες, και σε παρατεταμένη πλήρη ονομαστική ισχύ ακόμα ανεβάζουν το λάδι πάνω από 132 °C στους περισσότερους κινητήρες χωρίς ψυγείο λαδιού."},
   frictionReal:{el:"Μέρος του έργου που κάνει το αέριο στα έμβολα δεν φτάνει ποτέ στο βολάν. Το παίρνουν οι <b>τριβές</b>: τα ελατήρια των εμβόλων που ξύνουν τον κύλινδρο, τα κουζινέτα που γυρίζουν μέσα στο λάδι, ο μηχανισμός των βαλβίδων, η αντλία λαδιού και η αντλία νερού. Και ο κινητήρας πρέπει να <b>αντλεί</b> αέρα: να τον ρουφήξει περνώντας από μια μισόκλειστη πεταλούδα και να σπρώξει τα καυσαέρια έξω από τους σωλήνες. Σε μικρό φορτίο αυτή η άντληση είναι μεγάλο μέρος του καυσίμου που καίει ένα αυτοκίνητο, γι' αυτό ένας πετρελαιοκινητήρας (χωρίς πεταλούδα) είναι τόσο οικονομικός στην κίνηση.<br> Κλείσε το γκάζι εν κινήσει και αυτές οι απώλειες επιβραδύνουν το αυτοκίνητο: αυτό είναι το <b>φρένο κινητήρα</b>."},
   frictionGame:{el:"Τις τριβές τις βλέπεις ως τη διαφορά ανάμεσα σε αυτό που βγάζουν οι κύλινδροι και αυτό που δίνει ο στρόφαλος, και στο πόσο γρήγορα πέφτει ο κινητήρας όταν κόβεις γκάζι. Το κρύο, πηχτό λάδι προσθέτει τριβή: ένας κρύος κινητήρας έχει λιγότερη ισχύ ώσπου να ζεσταθεί."},
   frictionPhys:{el:"Οι μέσες πραγματικές πιέσεις αθροίζονται και αφαιρούνται από το ακαθάριστο έργο: <span class=\"geq\">BMEP = IMEP<sub>gross</sub> − FMEP − PMEP<br>FMEP = (0.55 + 1.8·10<sup>−8</sup> N²) · k<sub>oil</sub> · k<sub>stroke</sub> + δυναμό + κίνηση υπερσυμπιεστή<br>PMEP = (p<sub>exhaust</sub> − 1) + 0.9 · (1 − p<sub>manifold</sub>) &nbsp; [bar]</span> Το μισό της εξάτμισης παράγεται από την αντίθλιψη που πραγματικά κάνουν οι σωλήνες και η τουρμπίνα (δες <a data-gp=\"backpressure\">Αντίθλιψη &amp; υπολειμματικά αέρια</a>)· το μισό της εισαγωγής είναι το στραγγάλισμα. Ο βρόχος ενός πετρελαιοκινητήρα χρεώνεται με το πρόσημό του, οπότε ένα τούρμπο που κάνει περισσότερο boost από αντίθλιψη δίνει έργο πίσω. Η αντίσταση του δυναμό είναι η ηλεκτρική ισχύς που βγάζει διά απόδοση 0.55, διά τις στροφές του στροφάλου: μεγάλη στο ρελαντί, αμελητέα ψηλά."},
@@ -7663,7 +7663,7 @@ function buildEngine(){
   buildBoostTable(26);
   engine.nitrousBar=NITROUS_BAR[engine.nitrous]||0;
   state.boostActual=0;state.nitrousActive=false;state.nitrousCharge=1.0;   // fresh tanks
-  state.engineHealth=1.0;state.blown=false;state.wearCause='';   // a fresh (rebuilt) engine
+  state.engineHealth=1.0;state.blown=false;state.wearCause='';state.limFrac=1;   // a fresh (rebuilt) engine
   // Reference brake torque (~peak) used to scale the dyno brake load.
   engine.loadRefTq=(IMEP_K*engine.typeImep*engine.mapMax*0.95*1e5*(engine.displacement_L/1000))/engine.strokeDiv;
   // Rotating inertia, from the parts that spin (build 106). It was 0.04 + 0.06 L^1.5 x stroke/86, a
@@ -8915,6 +8915,17 @@ function stepEngine(dt){
   let tq=brakeTorqueRaw(state.rpm,state.map,cut);
   tq-=brakeTorque();
   const omega=state.rpm*2*Math.PI/60+tq/engine.inertia*dt;
+  // The share of this step's firing the engine needed (build 235). Off the limiter a firing step adds a full charge's
+  // work, and the clamp below throws away whatever overshoots the redline, so the bench bounced off it burning and
+  // cutting in turn and burned about half its full-power fuel to hold a speed that, unloaded, needs only its friction.
+  // A real limiter cuts just enough firing events to hold the speed. The rpm is unchanged; limFrac, the share of the
+  // step whose work was used (a burn of limFrac against a cut of 1-limFrac lands exactly on the redline), scales the
+  // fuel the cooling system sees (state.heatFuelLph).
+  const w0=state.rpm*2*Math.PI/60,wRed=engine.redline*2*Math.PI/60;
+  if(!cut&&omega>wRed){
+    const tqCut=brakeTorqueRaw(state.rpm,state.map,true)-brakeTorque(),need=(wRed-w0)*engine.inertia/dt;
+    state.limFrac=clamp((need-tqCut)/Math.max(1e-9,tq-tqCut),0,1);
+  }else if(!cut)state.limFrac=1;
   state.rpm=clamp(omega*60/(2*Math.PI),engine.idleRpmEff,engine.redline);
 }
 // Integrate the battery: charge when the alternator out-supplies demand, drain otherwise.
@@ -9046,7 +9057,7 @@ function updateEnginePhysics(){
   state.bmep=r.bmep;state.ve=r.ve;state.knockRisk=r.knock;
 
   if(state.fuelCut){   // overrun / limiter fuel cut → no fuel burned, engine braking
-    state.fuelFlowLph=0;state.bsfc=999;state.thermalEff=0;
+    state.fuelFlowLph=0;state.heatFuelLph=0;state.bsfc=999;state.thermalEff=0;
     if(state.rpm<engine.redline){state.torque=Math.min(0,brakeTorqueRaw(state.rpm,map,true));state.powerKW=state.torque*state.rpm*2*Math.PI/60/1000;state.powerHP=state.powerKW/0.7457;}
     return;
   }
@@ -9057,6 +9068,7 @@ function updateEnginePhysics(){
   // out the exhaust (>1, thirsty). A diesel is 1: its torque is computed from this same fuel.
   const meteredFuel=(airMass_kg_s/curAFR(state.rpm,map))/engine.meteringEff*engine.typeBsfc;
   state.fuelFlowLph=(meteredFuel*3600)/engine.fuelDensity;
+  state.heatFuelLph=state.fuelFlowLph*(state.limFrac!=null?state.limFrac:1);   // what was burned, on the limiter too (build 235)
   const fuelPower=meteredFuel*engine.fuelLHV*1e6/1000;
   state.thermalEff=fuelPower>0.1?clamp((state.powerKW/fuelPower)*100,0,46):0;
   state.bsfc=state.powerKW>0.5?(meteredFuel*3600*1000)/state.powerKW:999;
@@ -13246,11 +13258,24 @@ function coolingEffectiveness(){
   const fanTerm=engine.fanFloor+(engine.fan==='mechanical'?0.30*af:0);
   return clamp(engine.radCap*(0.40+0.50*af+fanTerm),0.30,2.20);
 }
+// A road spark engine's brake efficiency at rated power: 25-30% (Heywood, Table 12.1); BSFC ~280 g/kWh on petrol.
+const HEAT_REF_EFF=0.29;
 function stepThermal(dt){
   if(isElectric())return;   // the motor's heat is stepped with its losses (stepMotorBench)
   if(!autoThermal)return;
-  const loadFrac=clamp((state.rpm-800)/(engine.redline-800),0,1)*0.6
-                +clamp((state.map-0.4)/(engine.mapMax-0.4),0,1)*0.4;
+  // The heat is the fuel's (build 235). It was a load figure made of rpm and throttle, so free-revving at full throttle,
+  // where the limiter cuts the fuel and the engine makes only its own friction, counted as full load and took the oil
+  // past 132 C in about a minute (55 of the 93 real engines took OIL TEMP or OVERHEAT wear). What a radiator and the oil carry away
+  // is a share of the fuel's energy: Heywood (Internal Combustion Engine Fundamentals, 1988, ch. 12, Table 12.1) puts it
+  // at 17-26% to the coolant for a spark engine at full load, beside 25-28% at the crank. So the load here is the fuel
+  // burned against the fuel the engine burns at the power its radiator was sized for (engine.radHp, a factory preset's
+  // rating; the generic 260 hp part otherwise) at a road engine's brake efficiency at rated power, HEAT_REF_EFF. A factory
+  // engine at its rated power on its own radiator is then at 1, where full load was before; a diesel, which burns less
+  // fuel for its power, runs cooler; a free-revving engine is near idle's heat; a build making more power than its
+  // radiator was sized for heats past 1, to 1.6.
+  const fuelKW=(state.heatFuelLph!=null?state.heatFuelLph:state.fuelFlowLph||0)*(engine.fuelDensity||0.745)/3600*(engine.fuelLHV||44)*1000;
+  const designFuelKW=Math.max(260,engine.radHp||0)*0.7457/HEAT_REF_EFF;
+  const loadFrac=clamp(fuelKW/designFuelKW,0,1.6);
   const cooling=coolingEffectiveness();
   // Heat load raises temps; cooling capacity divides that rise back down.
   let heat=loadFrac*34+(state.knockRisk>60?6:0);

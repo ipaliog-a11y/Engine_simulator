@@ -979,6 +979,17 @@ function stepEngine(dt){
   let tq=brakeTorqueRaw(state.rpm,state.map,cut);
   tq-=brakeTorque();
   const omega=state.rpm*2*Math.PI/60+tq/engine.inertia*dt;
+  // The share of this step's firing the engine needed (build 235). Off the limiter a firing step adds a full charge's
+  // work, and the clamp below throws away whatever overshoots the redline, so the bench bounced off it burning and
+  // cutting in turn and burned about half its full-power fuel to hold a speed that, unloaded, needs only its friction.
+  // A real limiter cuts just enough firing events to hold the speed. The rpm is unchanged; limFrac, the share of the
+  // step whose work was used (a burn of limFrac against a cut of 1-limFrac lands exactly on the redline), scales the
+  // fuel the cooling system sees (state.heatFuelLph).
+  const w0=state.rpm*2*Math.PI/60,wRed=engine.redline*2*Math.PI/60;
+  if(!cut&&omega>wRed){
+    const tqCut=brakeTorqueRaw(state.rpm,state.map,true)-brakeTorque(),need=(wRed-w0)*engine.inertia/dt;
+    state.limFrac=clamp((need-tqCut)/Math.max(1e-9,tq-tqCut),0,1);
+  }else if(!cut)state.limFrac=1;
   state.rpm=clamp(omega*60/(2*Math.PI),engine.idleRpmEff,engine.redline);
 }
 // Integrate the battery: charge when the alternator out-supplies demand, drain otherwise.
@@ -1110,7 +1121,7 @@ function updateEnginePhysics(){
   state.bmep=r.bmep;state.ve=r.ve;state.knockRisk=r.knock;
 
   if(state.fuelCut){   // overrun / limiter fuel cut → no fuel burned, engine braking
-    state.fuelFlowLph=0;state.bsfc=999;state.thermalEff=0;
+    state.fuelFlowLph=0;state.heatFuelLph=0;state.bsfc=999;state.thermalEff=0;
     if(state.rpm<engine.redline){state.torque=Math.min(0,brakeTorqueRaw(state.rpm,map,true));state.powerKW=state.torque*state.rpm*2*Math.PI/60/1000;state.powerHP=state.powerKW/0.7457;}
     return;
   }
@@ -1121,6 +1132,7 @@ function updateEnginePhysics(){
   // out the exhaust (>1, thirsty). A diesel is 1: its torque is computed from this same fuel.
   const meteredFuel=(airMass_kg_s/curAFR(state.rpm,map))/engine.meteringEff*engine.typeBsfc;
   state.fuelFlowLph=(meteredFuel*3600)/engine.fuelDensity;
+  state.heatFuelLph=state.fuelFlowLph*(state.limFrac!=null?state.limFrac:1);   // what was burned, on the limiter too (build 235)
   const fuelPower=meteredFuel*engine.fuelLHV*1e6/1000;
   state.thermalEff=fuelPower>0.1?clamp((state.powerKW/fuelPower)*100,0,46):0;
   state.bsfc=state.powerKW>0.5?(meteredFuel*3600*1000)/state.powerKW:999;

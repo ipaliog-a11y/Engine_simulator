@@ -20,6 +20,43 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 Working toward **v1.0 — every number derived, not fitted.**
 
+### The bench's heat is the fuel's (build 235)
+
+The last of three builds correcting the live wear model.
+
+- **Heat came from rpm and throttle.** With AUTO THERMAL on, coolant and oil were heated by a load figure made of
+  engine speed and throttle. An engine free-revving on its limiter, where the fuel is cut and it makes only its own
+  friction, counted as full load. Within about a minute the oil passed 132 °C. Of the 93 real combustion engines, 55
+  took OIL TEMP or OVERHEAT wear in two minutes of free-revving, and 36 were blown.
+- **Now the heat is the fuel burned.** What a cooling system carries away is a share of the fuel's energy: 17–26% to
+  the coolant for a spark engine at full load, beside 25–28% at the crank (Heywood, *Internal Combustion Engine
+  Fundamentals*, 1988, ch. 12, Table 12.1). The thermal load is the fuel burned, measured against the fuel the engine
+  burns at the power its radiator was sized for (`radHp` from build 219, or the generic 260 hp part) at a road engine's
+  29% brake efficiency at rated power (BSFC about 280 g/kWh). A factory engine at its rated power on its own radiator
+  sits where full load sat before. A diesel, burning less fuel for its power, runs cooler. A build making more power
+  than its radiator was sized for heats past it, to 1.6×.
+- **The limiter burned half the fuel of full power.** Off the limiter, a firing step on the bench adds a full charge's
+  work, and the redline clamp threw away whatever overshot. So the bench bounced off the redline, burning and cutting
+  in turn, and burned about half its full-power fuel to hold a speed that, unloaded, needs only its friction. A real
+  limiter cuts just enough firing events to hold the speed. Now `stepEngine` records the share of a firing step's work
+  that was needed to reach the redline, and the cooling system sees only that fuel (`state.heatFuelLph`). The rpm, the
+  displayed fuel flow, the limiter's sound and the fuel cut are unchanged.
+- **Result, 93 real engines with AUTO THERMAL and WEAR on:**
+  - Free-revving at full throttle, 120 s: none take wear (was 55 damaged, 36 blown). Oil median 100 °C, highest
+    112 °C.
+  - Full load held at the rpm of peak power, 120–180 s: 14 take wear (was 54, 46 of them blown).
+  - On an LS7 at full load: its own radiator runs 114 °C, the generic 260 hp part 129 °C, SMALL 122 °C, LARGE 107 °C.
+- **Left open:** the 14 that still wear at sustained full rated power. They are a named list in test145
+  (`FULL_LOAD_KNOWN`) that may only shrink. 12 of the 14 have no oil cooler: the Golf GTI Mk7, Supra A80, WRX STI,
+  Evo IX, LS3, LS7, Coyote, Murciélago LP640, 458, both Huracáns and the E-Type. The RX-7 FD and Buick GNX do have one.
+  The cause is the lumped thermal model's fitted temperature rises: 34 °C of coolant at full heat over the cooling
+  capacity, and 8 + 30 °C of oil over the coolant. At rated power these put the oil past the 132 °C wear line. A
+  factory cooling system is sized to hold its engine's rated power for as long as it's run, as the durability tests
+  in build 233 show, so the right fix derives that design point. It's its own change. The model already integrates
+  wall heat (Woschni) over its traced cycle, which would be the better source for the coolant's share.
+- The "Heat, cooling & EGT" guide page (English and Greek) and the README describe where the heat comes from.
+  test145.
+
 ### A factory engine's valve springs are its maker's (build 234)
 
 The second of three builds correcting the live wear model.
