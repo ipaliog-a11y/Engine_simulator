@@ -37,6 +37,23 @@ const SLOT_SHARE=0.5, TOOTH_BAND=0.6, FILL=0.40;   // slots are half the band th
 // Round magnet wire, 1.0 mm. That is a usual stranded size for this fill, not a strand measured on the Model 3
 // (that motor is a hairpin, which is a later choice). A build may pass s.strand (m) to try another.
 const STRAND=0.001;
+// The winding (stage 6, build 236): how the copper sits in the slot, and what it is made of. Both act through the slot's
+// copper area, its resistivity, its mass and its price; nothing multiplies a torque or an efficiency.
+//   ROUND     stranded magnet wire at the 40% fill above (FILL): today's winding, so every factory motor stays on it.
+//   HAIRPIN   rectangular bars bent into hairpins and welded: about 70% of the slot is copper ("about 70%", Charged EVs,
+//             "A closer look at hairpin motor windings", 2020; Ansys gives up to ~0.8 and an ORNL/OSTI traction-motor
+//             study 0.63-0.64, so PROBABLE). Four conductors per slot, the Model 3's own layout (MotorXP: 54 slots, 12
+//             series turns as 2 turns in 3 paths, double layer: 6·12·3/54 = 4). A bar is one tall conductor, so its AC
+//             loss is Dowell's on that height, with the slot's porosity: more copper and less DC resistance, but more
+//             loss at high frequency, as the plan says it must.
+const WIRE={round:{label:'ROUND (STRANDED)',fill:FILL,layers:0},hairpin:{label:'HAIRPIN',fill:0.70,layers:4}};
+// The conductor. Copper is the annealed copper standard (IEC 60028: 0.017241 ohm mm²/m at 20 C, 0.393%/K; the model's
+// RHO_CU and ALPHA_CU), 8960 kg/m³, 385 J/kg K, $11/kg as before. Aluminium for windings, 61% IACS: 0.028264 ohm mm²/m at
+// 20 C and 0.403%/K (IEC 60889), 2703 kg/m³, 897 J/kg K, at about 30% of copper's price per kilogram (Redalyc, Ingeniería e
+// Investigación, citing Sullivan 2007 and Widmer et al. 2014-16; PROBABLE, prices move): $3.3/kg. Its own higher heat
+// capacity per kilogram is kept; its lower thermal conductivity in the slot is not modelled (the liner dominates).
+const CONDUCTOR={copper:{label:'COPPER',rho:RHO_CU,alpha:ALPHA_CU,dens:RHO_CU_M,cp:385,cost:11},
+  aluminium:{label:'ALUMINIUM',rho:2.8264e-8,alpha:0.00403,dens:2703,cp:897,cost:3.3}};
 const B_CORE=1.5;          // peak flux density in the teeth and yoke at full flux (T), a usual design point for silicon steel
 // Non-oriented silicon steel, 0.35 mm (M270-35A class): about 2.7 W/kg at 1.5 T 50 Hz and 19 W/kg at 1.0 T 400 Hz.
 // Split into hysteresis (∝ f B²) and eddy (∝ (t f B)²), solved from those two points; a thinner sheet cuts only the eddy.
@@ -116,6 +133,7 @@ function motorBuild(s){
   const mag=im?IM_ROTOR:MAGNET[s.magnet]||MAGNET.ndfeb, ret=im?RETENTION.bridges:RETENTION[s.retention]||RETENTION.bridges;
   const cool=MOTOR_COOLING[s.cooling]||MOTOR_COOLING.jacket, inv=INVERTER[s.inverter]||INVERTER.igbt;
   const lam=laminationOf(s.lamination);
+  const wire=WIRE[s.wire]||WIRE.round, cond=CONDUCTOR[s.conductor]||CONDUCTOR.copper;
   const D=s.rotorD/1000, L=s.stackL/1000, poles=s.poles, p=poles/2, N=s.turns, Lfe=0.95*L;
   const Ds=D+2*(im?IM_GAP:GAP), OD=Ds/SPLIT, h=(OD-Ds)/2, hSlot=TOOTH_BAND*h;
   const slots=3*poles*(poles<=6?3:2)*(im&&poles===4?5/3:1);       // q = 3 slots per pole per phase up to 6 poles, then 2;
@@ -125,17 +143,19 @@ function motorBuild(s){
   const Bg=im?IM_BG:FLUX_KM*mag.Br, tau=Math.PI*D/poles, phiPole=2/Math.PI*Bg*tau*Lfe;
   const psi20=KW_WIND*N*phiPole;                                    // peak flux linkage per phase at 20 C (V s)
   // copper: the slots' share of the tooth band, at the fill; a turn runs the stack twice and round two end turns
-  const band=Math.PI/4*((Ds+2*hSlot)**2-Ds*Ds), Acu=SLOT_SHARE*band*FILL;
+  const band=Math.PI/4*((Ds+2*hSlot)**2-Ds*Ds), Acu=SLOT_SHARE*band*wire.fill;
   const pitch=Math.PI*(Ds+hSlot)/poles*5/6, endTurn=Math.PI/2*pitch;
   const mlt=2*L+2*endTurn;
-  const R20=6*RHO_CU*N*N*mlt/Acu;                                   // per phase: independent of the parallel paths
+  const R20=6*cond.rho*N*N*mlt/Acu;                                   // per phase: independent of the parallel paths
   // how the slot copper is stranded, for the AC loss: strands across the slot width, and the radial layers Dowell counts
   const dStrand=s.strand>0?s.strand:STRAND;
   const slotW=SLOT_SHARE*Math.PI*(Ds+hSlot)/slots;
   const nStrand=(Acu/slots)/(Math.PI*dStrand*dStrand/4);
-  const cuLayers=Math.max(1,nStrand/Math.max(1,slotW/dStrand));
+  const cuLayers=wire.layers||Math.max(1,nStrand/Math.max(1,slotW/dStrand));
+  // a hairpin bar: the slot's copper height shared by its layers, the width the fill leaves (porosity sqrt(fill) each way)
+  const barH=wire.layers?hSlot*Math.sqrt(wire.fill)/wire.layers:0, barEta=Math.sqrt(wire.fill);
   // masses (kg) and the rotor's inertia
-  const mCu=RHO_CU_M*Acu*mlt/2;
+  const mCu=cond.dens*Acu*mlt/2;
   const mFeS=RHO_FE*(Math.PI/4*(OD*OD-Ds*Ds)-SLOT_SHARE*band)*Lfe;
   const Dsh=0.47*D, rotorVol=Math.PI/4*D*D*L;
   const mMag=im?0:RHO_MAG*0.06*rotorVol*(mag.Br<1?2.2:1);         // ferrite needs ~2x the volume for less flux
@@ -157,8 +177,8 @@ function motorBuild(s){
   const nTip=ret.vTip/(Math.PI*D)*60, nFreq=(s.inverter==='sic'?2000:1200)*60/p;
   const nMax=Math.min(s.maxRpm||20000,nTip,nFreq);
   const Imax=s.invAmps;
-  const cost=Math.round(mCu*11+(mFeS+mFeR)*(3+lam.premium)+mMag*mag.cost+ret.cost+cool.cost+Imax*inv.costA+400+(im?mCage*11+150:0));
-  return {s,im,mag,ret,cool,inv,lam,D,L,Lfe,Ds,OD,poles,p,N,slots,Bg,psi20,R20,mlt,Acu,mCu,mFeS,mFeR,mMag,mRotor,J,mass,
+  const cost=Math.round(mCu*cond.cost+(mFeS+mFeR)*(3+lam.premium)+mMag*mag.cost+ret.cost+cool.cost+Imax*inv.costA+400+(im?mCage*11+150:0));
+  return {s,im,mag,ret,cool,inv,lam,wire,cond,barH,barEta,D,L,Lfe,Ds,OD,poles,p,N,slots,Bg,psi20,R20,mlt,Acu,mCu,mFeS,mFeR,mMag,mRotor,J,mass,
           strand:dStrand,cuLayers,
           nTip,nFreq,nMax,Imax,cost,Qr,Rr20,mCage,ImR,vDrop,cpsr:im?IM_CPSR:CPSR,
           // thermal network (W/K, J/K): winding -> core through the slot liner (0.2 W/mK, 0.4 mm over the slot walls),
@@ -168,11 +188,11 @@ function motorBuild(s){
           // (spray reaches the end windings, ~50 mm out each side; slot cooling also runs along every slot wall)
           Gwk:cool.wind*(Math.PI*(Ds+hSlot)*2*0.05+(cool.inSlot?2*hSlot*L*slots:0)),
           Grc:100*Math.PI*D*L+cool.rotor*Math.PI*Dsh*L,
-          Cw:385*mCu, Cc:460*mFeS+900*0.5*mFeS, Cr:460*mRotor};
+          Cw:cond.cp*mCu, Cc:460*mFeS+900*0.5*mFeS, Cr:460*mRotor};
 }
 // Flux linkage and resistance at temperature: the magnets lose remanence as they warm, the copper gains resistance.
 const motorPsi=(m,tMag)=>m.psi20*(1+m.mag.alpha*(tMag-20));   // an induction motor's alpha is 0: its flux is the field's
-const motorR=(m,tW)=>m.R20*(1+ALPHA_CU*(tW-20));
+const motorR=(m,tW)=>m.R20*(1+(m.cond?m.cond.alpha:ALPHA_CU)*(tW-20));
 // AC copper in the slots (stage 4). Dowell, Proc. IEE 113 (1966): m layers of height h,
 //   Rac/Rdc = M + ((m²−1)/3) D
 //   M = Δ (sinh 2Δ + sin 2Δ) / (cosh 2Δ − cos 2Δ),  D = 2Δ (sinh Δ − sin Δ) / (cosh Δ + cos Δ),  Δ = h/δ.
@@ -180,12 +200,14 @@ const motorR=(m,tW)=>m.R20*(1+ALPHA_CU*(tW-20));
 // (Nan and Sullivan, IEEE PESC 2003). At stall Δ is 0 and the factor is 1, so the measured
 // phase resistance is the DC one. The cage of an induction motor is bars, not these strands.
 function copperAC(m,rpm,tW){
-  if(!(rpm>0)||!(m.strand>0))return 1;
+  if(!(rpm>0)||!(m.strand>0||m.barH>0))return 1;
   const f=m.p*rpm/60;
   if(!(f>0))return 1;
-  const rho=RHO_CU*(1+ALPHA_CU*((tW||20)-20));
+  const c=m.cond||{rho:RHO_CU,alpha:ALPHA_CU};
+  const rho=c.rho*(1+c.alpha*((tW||20)-20));
   const delta=Math.sqrt(rho/(Math.PI*f*MU0));
-  const Delta=Math.pow(Math.PI/4,0.75)*m.strand/delta;
+  // a round strand as the foil (π/4)^(3/4) d; a hairpin bar as its own height, with the slot's porosity (Dowell's η)
+  const Delta=m.barH>0?m.barH*Math.sqrt(m.barEta)/delta:Math.pow(Math.PI/4,0.75)*m.strand/delta;
   if(!(Delta>1e-4))return 1;
   const M=Delta*(Math.sinh(2*Delta)+Math.sin(2*Delta))/(Math.cosh(2*Delta)-Math.cos(2*Delta));
   const D=2*Delta*(Math.sinh(Delta)-Math.sin(Delta))/(Math.cosh(Delta)+Math.cos(Delta));

@@ -8,8 +8,8 @@
 //   · the shape above the knee, on a motor that can actually rev past 4× its knee: power flat through 4×,
 //     then 4/5 at 5× and 4/6 at 6× (the rectangle motorMaxTorque imposes, CPSR = 4);
 //   · the five factory hybrids' motors, which share this drive;
-//   · LAMINATIONS defaults to 0.35 mm (stage 1) and REGENERATION to HIGH (stage 2). Wire and a second gear
-//     are not on the form yet. CPSR is 4 (3 for an induction motor).
+//   · LAMINATIONS defaults to 0.35 mm (stage 1), REGENERATION to HIGH (stage 2), and WINDING and CONDUCTOR to
+//     ROUND and COPPER (stage 6). A second gear is not on the form yet. CPSR is 4 (3 for an induction motor).
 // A later stage edits a locked value only when drivetrain.md names that stage for that block, in the same
 // commit as the physics, with the old number and the new one in the CHANGELOG. A stage marked "still"
 // does not edit the numbers. Stage 4 (AC copper) moved the continuous power and the hold, and the Model Y
@@ -102,9 +102,11 @@ const r = await page.evaluate(() => {
   const m = motorBuild({ rotorD: 100, stackL: 80, poles: 4, turns: 40, magnet: 'ndfeb', retention: 'sleeve', cooling: 'jacket', inverter: 'sic', invAmps: 200, maxRpm: 40000 });
   const V = 350, psi = motorPsi(m, 60), knee = motorBaseW(m, V, psi) * 30 / Math.PI;
   const P = n => motorMaxTorque(m, n, V, 60) * n * Math.PI / 30;
-  const absent = ['evWire', 'evGear2'].filter(id => document.getElementById(id));
+  // stage 6 (build 236) put WINDING and CONDUCTOR on the form, defaulting to today's round copper
+  const absent = ['evGear2'].filter(id => document.getElementById(id));
+  const wireEl = document.getElementById('evWire'), condEl = document.getElementById('evConductor');
   const lamEl = document.getElementById('evLamination'), regenEl = document.getElementById('evRegen');
-  return { cars, hy, tail: { knee, nMax: m.nMax, p1: P(knee), p2: P(2 * knee), p4: P(4 * knee), p5: P(5 * knee), p6: P(6 * knee) }, absent, lam: lamEl ? lamEl.value : null, regen: regenEl ? regenEl.value : null, cpsr: CPSR, im: IM_CPSR };
+  return { cars, hy, tail: { knee, nMax: m.nMax, p1: P(knee), p2: P(2 * knee), p4: P(4 * knee), p5: P(5 * knee), p6: P(6 * knee) }, absent, wire: wireEl ? wireEl.value : null, cond: condEl ? condEl.value : null, lam: lamEl ? lamEl.value : null, regen: regenEl ? regenEl.value : null, cpsr: CPSR, im: IM_CPSR };
 });
 
 const f = (x, d = 2) => (+x).toFixed(d);
@@ -178,6 +180,7 @@ for (const [key, want] of Object.entries(HYB)) {
 
 console.log(`== LAMINATIONS ${r.lam}; REGENERATION ${r.regen}; later fields still absent (${r.absent.join(', ') || 'none'}); CPSR ${r.cpsr}, induction ${r.im} ==`);
 if (r.lam !== '0.35') fails.push('LAMINATIONS is not on the form at 0.35 mm');
+if (r.wire !== 'round' || r.cond !== 'copper') fails.push(`WINDING and CONDUCTOR are not on the form at ROUND and COPPER (${r.wire}, ${r.cond})`);
 if (r.regen !== 'high') fails.push('REGENERATION is not on the form at HIGH');
 if (r.absent.length) fails.push('a later field is already on the form: ' + r.absent.join(', '));
 exact(r.cpsr, 4, 'magnet CPSR');
