@@ -20,6 +20,37 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 Working toward **v1.0 — every number derived, not fitted.**
 
+### A car showcase on the title menu (build 237)
+
+The showroom pictures of build 220 were only ever seen one at a time, on the VEHICLE tab of the car you had loaded.
+Build 220's entry promised a showcase page; this is its first version.
+
+- **Where.** **CAR SHOWCASE** is the title menu's fifth item. It opens a page of its own over the app. **BACK** or
+  Escape returns to the menu.
+- **What it shows.** One card per factory car, all 100 (92 combustion, 3 electric, 5 hybrid): its picture, number
+  and name, in number order (001 to 100). Family buttons (ALL, then the FACTORY CAR picker's families) narrow the
+  grid. The chosen car is shown large beside the grid (above it on a phone) with the figures its maker published:
+  engine, power and torque with their rpm, a hybrid's system power, curb mass, 0–100 km/h, top speed (marked
+  "governed" where it is) and driven wheels.
+- **Nothing is computed.** The figures are the presets' own, with the sources already cited beside them. A figure a
+  preset doesn't carry is left out, not estimated. So the three Teslas show no power line, because their drive
+  presets have no single published power figure. The page says the sim works out its own figures once you drive
+  the car.
+- **DRIVE THIS CAR** (or Enter, or a double-click on a card) loads the car exactly as the FACTORY CAR picker does,
+  through one shared function (`loadFactoryCarUI`, which the picker now uses too). It shows the car in both
+  pickers and opens the VEHICLE tab. The arrow keys walk the cards. Opening the showcase again starts on the car
+  you have loaded.
+- **Phone.** One column: the bar stays at the top and the chosen car sits above the grid. Picking a card scrolls
+  up to it. No sideways scroll in either language.
+- No number in the sim moves. The fingerprint is identical to build 236's.
+- **Left open, for the next showcase builds:** the sim's own figures beside the maker's (each car would have to be
+  built, about 100 builds, so it wants a cache or a lazy fill); the electric drives' published power, once each
+  figure is sourced; sorting by power, mass or year; and the body-class pictures, which aren't real cars and
+  aren't shown.
+- Tests: new `test147` covers the menu item, the cards and their order, the families, the figures against the
+  presets, the keys, DRIVE (the same car as the picker's), Greek, and phone width. `test123` now expects five menu
+  items.
+
 ### Hairpin or round wire, copper or aluminium (build 236)
 
 Stage 6 of `plans/hybrid-electric/drivetrain.md`. The motor's slot copper was one kind, stranded round wire at a 40%

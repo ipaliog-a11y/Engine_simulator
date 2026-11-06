@@ -25,15 +25,22 @@
 <button type="button" data-go="vehicle">BUILD A VEHICLE</button>
 <button type="button" data-go="guide">OPEN WIKI</button>
 <button type="button" data-go="options">SETTINGS</button>
+<button type="button" data-go="showcase">CAR SHOWCASE</button>
 </nav>
 <p class="title-hint">ARROWS SELECT · ENTER OPENS</p>
 <p class="title-ver" id="titleVer"></p>
 </div>
 <div class="title-stage"><img id="titleImg" alt="" aria-hidden="true" hidden></div>
 </div>
+<!-- CAR SHOWCASE (build 237): every factory car, its picture and its maker's figures -->
+<div id="showcase" class="showcase" role="dialog" aria-modal="true" aria-labelledby="scHeading" hidden>
+<div class="sc-bar"><h2 id="scHeading">CAR SHOWCASE</h2><span class="sc-count" id="scCount"></span><button type="button" id="scClose">BACK</button></div>
+<div class="sc-filters" id="scFilters" role="toolbar" aria-label="Car families"></div>
+<div class="sc-body"><div class="sc-grid" id="scGrid"></div><aside class="sc-detail" id="scDetail" aria-live="polite"></aside></div>
+</div>
 <div class="container">
 <header>
-<h1>PIXEL ENGINE SIM v0.7 build 236</h1>
+<h1>PIXEL ENGINE SIM v0.7 build 237</h1>
 <div class="subtitle" id="subtitle">ENGINE DESIGNER • BUILD IT, THEN DRIVE IT</div>
 </header>
 <div class="build-strip" id="buildStrip">
@@ -693,6 +700,7 @@
 <!-- @include js/fuel-cycle.js -->
 <!-- @include js/electric-presets.js -->
 <!-- @include js/title-screen.js -->
+<!-- @include js/showcase.js -->
 <!-- @include js/controls-boot.js -->
 </script>
 </body>

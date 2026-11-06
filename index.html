@@ -454,6 +454,7 @@ table.hy-map td:focus{outline:2px solid #ffcc00;outline-offset:-2px}
 .title-brand p{font-size:8px;color:#888;margin-top:6px}
 .title-menu{display:grid;grid-template-columns:1fr 1fr;gap:8px;max-width:720px;margin:0 auto}
 .title-menu button{font-size:8px;padding:12px 10px;text-align:left;white-space:nowrap}
+.title-menu button:last-child:nth-child(odd){grid-column:1 / -1}
 .title-menu button::before{content:'>';display:inline-block;width:12px;color:#333;margin-right:6px}
 .title-menu button.on,.title-menu button:hover,.title-menu button:focus{border-color:#00ff88;color:#00ff88;background:#004422;outline:none}
 .title-menu button.on::before,.title-menu button:hover::before,.title-menu button:focus::before{color:#00ff88}
@@ -476,6 +477,42 @@ table.hy-map td:focus{outline:2px solid #ffcc00;outline-offset:-2px}
 }
 @media(max-width:420px){
   .title-menu{grid-template-columns:1fr}
+}
+/* CAR SHOWCASE (build 237): a page of its own over the app, like the title screen. A grid of the factory cars, and the
+   chosen one large beside it (above it on a phone, where the whole page scrolls instead of each column). */
+.showcase{position:fixed;inset:0;z-index:72;background:#0a0a12;display:grid;grid-template-rows:auto auto minmax(0,1fr);overflow:hidden}
+.showcase[hidden]{display:none!important}
+body.showcase-open{overflow:hidden}
+.sc-bar{display:flex;align-items:center;gap:12px;padding:12px 16px;background:linear-gradient(180deg,#1a1a2e 0%,#0a0a12 100%);border-bottom:4px solid #333}
+.sc-bar h2{font-size:12px;color:#ffcc00;text-shadow:2px 2px 0 #000,-1px -1px 0 #aa6600;font-weight:normal;letter-spacing:1px}
+.sc-count{flex:1;font-size:7px;color:#667}
+.sc-filters{display:flex;flex-wrap:wrap;gap:6px;padding:10px 16px;border-bottom:2px solid #1e1e2e}
+.sc-filters button{font-size:7px;padding:6px 8px;box-shadow:2px 2px 0 #000}
+.sc-body{display:grid;grid-template-columns:minmax(0,1fr) minmax(320px,440px);min-height:0}
+.sc-grid{overflow-y:auto;padding:12px 16px 24px;display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px;align-content:start}
+.sc-card{display:flex;flex-direction:column;align-items:stretch;padding:0;text-align:left;background:#11111c;border:3px solid #2a2a3a;box-shadow:2px 2px 0 #000;font-size:7px;line-height:1.5;color:#bbc;min-width:0}
+.sc-card img,.sc-card .sc-noart{display:block;width:100%;height:auto;aspect-ratio:2/1;object-fit:cover;object-position:50% 75%;image-rendering:auto;background:#1b2433}
+.sc-card .sc-no{color:#ffcc00;padding:5px 6px 0}
+.sc-card .sc-nm{padding:2px 6px 6px;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow-wrap:anywhere}
+.sc-card:hover{background:#1a1a2e;border-color:#666}
+.sc-card.on,.sc-card:focus{border-color:#00ff88;background:#004422;color:#dfe;outline:none}
+.sc-detail{overflow-y:auto;padding:14px 16px 24px;border-left:4px solid #333;background:#0d0d18}
+.sc-big{display:block;width:100%;height:auto;aspect-ratio:3/2;object-fit:cover;image-rendering:auto;border:2px solid #333;background:#1b2433}
+.sc-detail h3{font-size:10px;line-height:1.6;color:#eee;font-weight:normal;margin:10px 0 4px;overflow-wrap:anywhere}
+.sc-detail h3 span{color:#ffcc00}
+.sc-cat{font-size:7px;color:#778;margin-bottom:10px}
+.sc-figs{display:grid;grid-template-columns:auto minmax(0,1fr);gap:6px 12px;font-size:8px;line-height:1.5}
+.sc-figs dt{color:#889}
+.sc-figs dd{color:#00ff88;overflow-wrap:anywhere}
+.sc-src{font-size:7px;line-height:1.7;color:#667;margin:12px 0}
+.sc-act{display:grid;grid-template-columns:auto 1fr auto;gap:8px}
+.sc-drive{border-color:#00ff88;color:#00ff88;background:#004422}
+@media(max-width:800px){
+  .showcase{display:block;overflow-y:auto}
+  .sc-body{display:flex;flex-direction:column}
+  .sc-detail{order:-1;overflow:visible;border-left:0;border-bottom:4px solid #333;scroll-margin-top:64px}
+  .sc-grid{overflow:visible;grid-template-columns:repeat(auto-fill,minmax(130px,1fr))}
+  .sc-bar{position:sticky;top:0;z-index:1}
 }
 /* LIVE OUTPUT, compact (build 213): tighter tiles, and a fold button by the title that leaves the first row of gauges */
 #livePanel{padding:8px}
@@ -516,15 +553,22 @@ table.hy-map td:focus{outline:2px solid #ffcc00;outline-offset:-2px}
 <button type="button" data-go="vehicle">BUILD A VEHICLE</button>
 <button type="button" data-go="guide">OPEN WIKI</button>
 <button type="button" data-go="options">SETTINGS</button>
+<button type="button" data-go="showcase">CAR SHOWCASE</button>
 </nav>
 <p class="title-hint">ARROWS SELECT · ENTER OPENS</p>
 <p class="title-ver" id="titleVer"></p>
 </div>
 <div class="title-stage"><img id="titleImg" alt="" aria-hidden="true" hidden></div>
 </div>
+<!-- CAR SHOWCASE (build 237): every factory car, its picture and its maker's figures -->
+<div id="showcase" class="showcase" role="dialog" aria-modal="true" aria-labelledby="scHeading" hidden>
+<div class="sc-bar"><h2 id="scHeading">CAR SHOWCASE</h2><span class="sc-count" id="scCount"></span><button type="button" id="scClose">BACK</button></div>
+<div class="sc-filters" id="scFilters" role="toolbar" aria-label="Car families"></div>
+<div class="sc-body"><div class="sc-grid" id="scGrid"></div><aside class="sc-detail" id="scDetail" aria-live="polite"></aside></div>
+</div>
 <div class="container">
 <header>
-<h1>PIXEL ENGINE SIM v0.7 build 236</h1>
+<h1>PIXEL ENGINE SIM v0.7 build 237</h1>
 <div class="subtitle" id="subtitle">ENGINE DESIGNER • BUILD IT, THEN DRIVE IT</div>
 </header>
 <div class="build-strip" id="buildStrip">
@@ -2211,7 +2255,9 @@ is a custom car, labelled with the number it came from.
 A real car shows its <b>showroom picture</b>, a detailed side view of that car as it left the factory,
 and it stays however you modify the car — the caption then says so. A generic chassis, or a car made
 by COPY FROM, shows the picture of its <b>body class</b> instead: one unbranded car for each of the 14
-classes, from kei car to open-wheeler. A saved car shows the same picture on its GARAGE card. The engine
+classes, from kei car to open-wheeler. A saved car shows the same picture on its GARAGE card. All the
+real cars' pictures are together in the <b>CAR SHOWCASE</b> on the menu, in number order, each with the
+figures its maker published; <b>DRIVE THIS CAR</b> loads the one you pick. The engine
 at the top of the ENGINE tab is drawn from the form as you edit, before you build: an inline is drawn
 side on so you can count its cylinders, and a V or a boxer is drawn from the front so you can see the
 angle of its banks. Its turbos, blower, carbs or throttle bodies, headers, cat, intercooler, radiator
@@ -5350,6 +5396,11 @@ const I18N={
   'BUILD AN ENGINE':{el:'ΦΤΙΑΞΕ ΚΙΝΗΤΗΡΑ'},'BUILD A VEHICLE':{el:'ΦΤΙΑΞΕ ΟΧΗΜΑ'},'OPEN WIKI':{el:'ΑΝΟΙΞΕ ΟΔΗΓΟ'},'SETTINGS':{el:'ΡΥΘΜΙΣΕΙΣ'},
   'BUILD IT, THEN DRIVE IT':{el:'ΦΤΙΑΞΕ ΤΟ, ΜΕΤΑ ΟΔΗΓΗΣΕ ΤΟ'},
   'ARROWS SELECT · ENTER OPENS':{el:'ΒΕΛΗ ΓΙΑ ΕΠΙΛΟΓΗ · ΕΠΙΒΕΒΑΙΩΣΗ ΑΝΟΙΓΕΙ'},
+  // the car showcase (build 237)
+  'CAR SHOWCASE':{el:'ΕΚΘΕΣΗ ΑΥΤΟΚΙΝΗΤΩΝ'},'BACK':{el:'ΠΙΣΩ'},'ALL':{el:'ΟΛΑ'},'cars':{el:'αυτοκίνητα'},'Car families':{el:'Οικογένειες αυτοκινήτων'},
+  'SYSTEM POWER':{el:'ΙΣΧΥΣ ΣΥΣΤΗΜΑΤΟΣ'},'MASS':{el:'ΜΑΖΑ'},'DRIVEN WHEELS':{el:'ΚΙΝΗΤΗΡΙΟΙ ΤΡΟΧΟΙ'},'DRIVE THIS CAR':{el:'ΟΔΗΓΗΣΕ ΤΟ'},
+  'Previous car':{el:'Προηγούμενο αυτοκίνητο'},'Next car':{el:'Επόμενο αυτοκίνητο'},
+  "The maker's published figures. The sim works out its own from the physics once you drive the car.":{el:'Τα επίσημα στοιχεία του κατασκευαστή. Η προσομοίωση βγάζει τα δικά της από τη φυσική μόλις οδηγήσεις το αυτοκίνητο.'},
   'ENGINE DESIGN':{el:'ΣΧΕΔΙΑΣΗ ΚΙΝΗΤΗΡΑ'},
   'Load a preset, or configure a build and press BUILD & DYNO. Physics update live.':{el:'Φόρτωσε προεπιλογή ή στήσε ένα build και πάτα BUILD & DYNO. Η φυσική ενημερώνεται ζωντανά.'},
   'LOAD A PRESET':{el:'ΦΟΡΤΩΣΗ ΠΡΟΕΠΙΛΟΓΗΣ'},
@@ -5839,7 +5890,7 @@ const GUIDE_I18N={
   airpath:{el:"<b>Διαδρομή αέρα</b> — τούρμπο (γεμίζει με τις στροφές) ή υπερσυμπιεστής (boost από ρελαντί)· το intercooler ψύχει το χάρμανι· εξάτμιση & καταλύτης ανταλλάσσουν ροή με αντίθλιψη/εκπομπές· το νιτρό είναι εμφιαλωμένη ισχύς."},
   boostCost:{el:"<b>Το boost δεν είναι δωρεάν, και το τούρμπο έχει μέγεθος.</b> Ένας συμπιεστής παράγει πίεση περιστρεφόμενος, και αυτές οι στροφές πληρώνονται με ενέργεια από την εξάτμιση — άρα <i>όσο περισσότερο boost ζητάς από ένα δεδομένο τούρμπο, τόσο αργότερα έρχεται και τόσο πιο αργά χτίζεται</i>. Το ίδιο μικρό τούρμπο που έχει γεμίσει στις 1200 σ.α.λ. με 0.5 bar δεν φτάνει το μισό των 2.5 bar πριν τις ~3000. Ο αριθμός γεμίσματος στη σύνοψη σχεδίασης αφορά το boost που ζήτησες, δεν είναι σταθερή ιδιότητα του τούρμπο."},
   ratedFlow:{el:"Κάθε τούρμπο έχει επίσης <b>ονομαστική παροχή</b> — μικρό 32, μεσαίο 55, μεγάλο 82 lb/min, και οι διατάξεις με πολλά τούρμπο περνούν περισσότερο (twin ×1.85, sequential ×1.55, compound ×2.3). Αυτός είναι ο άξονας πάνω στον οποίο σχεδιάζεται ένας πραγματικός χάρτης συμπιεστή. Αν ζητήσεις από τον κινητήρα να περάσει περισσότερο αέρα από όσο αντέχει το τούρμπο, βγαίνεις εκτός χάρτη: η απόδοση του συμπιεστή καταρρέει, οι ψηλές στροφές πνίγονται και — το χειρότερο — το χάρμανι φτάνει <b>καυτό</b>. Η συμπίεση του αέρα τον θερμαίνει κατά <i>T&middot;(PR<sup>0.283</sup> − 1) / απόδοση</i>, που αυξάνεται πιο γρήγορα από το boost και ακόμη περισσότερο καθώς πέφτει η απόδοση. Ένας 2.0 L που ζητά 2.5 bar από μικρό τούρμπο θέλει 1.7× την ονομαστική του παροχή, και το χάρμανι φτάνει στις βαλβίδες στους <b>74 °C</b> εκεί που το σωστό τούρμπο δίνει 58 °C — οπότε κάνει πειράκια, βγάζει 120 hp <i>λιγότερα</i> από το μεσαίο, και είναι πιο αργός στον γύρο από τον ίδιο κινητήρα στα 0.8 bar. Τίποτα δεν σε εμποδίζει να τον φτιάξεις· απλώς δεν είναι έτσι που βγαίνει ισχύς."},
-  pixart:{el:"<b>Οι εικόνες.</b> Η κορυφή της καρτέλας ΟΧΗΜΑ είναι μια εικόνα του αυτοκινήτου, όχι μία σχεδιασμένη από τα μέρη. Ένα πραγματικό αυτοκίνητο δείχνει τη <b>φωτογραφία εκθεσιακού χώρου</b> του, μια λεπτομερή πλαϊνή όψη όπως βγήκε από το εργοστάσιο, και μένει εκεί όπως κι αν το τροποποιήσεις — η λεζάντα το λέει τότε. Ένα γενικό σασί, ή ένα αυτοκίνητο από ΑΝΤΙΓΡΑΦΗ, δείχνει αντί γι' αυτό την εικόνα της <b>κατηγορίας αμαξώματός</b> του: ένα αυτοκίνητο χωρίς σήματα για καθεμία από τις 14 κατηγορίες, από το kei car ως το μονοθέσιο. Ένα αποθηκευμένο αυτοκίνητο δείχνει την ίδια εικόνα στην κάρτα του στο ΓΚΑΡΑΖ. Ο κινητήρας στην κορυφή της καρτέλας ΚΙΝΗΤΗΡΑΣ σχεδιάζεται από τη φόρμα καθώς την αλλάζεις, πριν το BUILD: ένας εν σειρά σχεδιάζεται από το πλάι ώστε να μετράς τους κυλίνδρους του, ενώ ένας V ή boxer σχεδιάζεται από μπροστά για να φαίνεται η γωνία των συστοιχιών του. Σχεδιάζονται όλα: τα turbo, ο υπερσυμπιεστής, τα καρμπιρατέρ ή οι πεταλούδες, οι εξαγωγές, ο καταλύτης, το intercooler, το ψυγείο και η φιάλη νιτρικών, και ένας αποθηκευμένος κινητήρας δείχνει την ίδια εικόνα στην κάρτα του στο ΓΚΑΡΑΖ. Στον χάρτη της ΠΙΣΤΑΣ το αυτοκίνητο σχεδιάζεται ακόμα από την κατασκευή, με τα δικά του χρώματα: το μήκος του από το μεταξόνιο, οι τροχοί από τα μεγέθη ζάντας και ελαστικού, το ύψος από την ανάρτηση, και το splitter, η αεροτομή και ο diffuser που τοποθετείς. Οι κινητήριοι τροχοί έχουν πράσινες πλήμνες και ένα πράσινο μπλοκ δείχνει πού κάθεται ο κινητήρας."},
+  pixart:{el:"<b>Οι εικόνες.</b> Η κορυφή της καρτέλας ΟΧΗΜΑ είναι μια εικόνα του αυτοκινήτου, όχι μία σχεδιασμένη από τα μέρη. Ένα πραγματικό αυτοκίνητο δείχνει τη <b>φωτογραφία εκθεσιακού χώρου</b> του, μια λεπτομερή πλαϊνή όψη όπως βγήκε από το εργοστάσιο, και μένει εκεί όπως κι αν το τροποποιήσεις — η λεζάντα το λέει τότε. Ένα γενικό σασί, ή ένα αυτοκίνητο από ΑΝΤΙΓΡΑΦΗ, δείχνει αντί γι' αυτό την εικόνα της <b>κατηγορίας αμαξώματός</b> του: ένα αυτοκίνητο χωρίς σήματα για καθεμία από τις 14 κατηγορίες, από το kei car ως το μονοθέσιο. Ένα αποθηκευμένο αυτοκίνητο δείχνει την ίδια εικόνα στην κάρτα του στο ΓΚΑΡΑΖ. Όλες οι εικόνες των πραγματικών αυτοκινήτων είναι μαζί στην <b>ΕΚΘΕΣΗ ΑΥΤΟΚΙΝΗΤΩΝ</b> του μενού, με τη σειρά των αριθμών τους, καθεμία με τα στοιχεία που δημοσίευσε ο κατασκευαστής· το <b>ΟΔΗΓΗΣΕ ΤΟ</b> φορτώνει αυτό που διαλέγεις. Ο κινητήρας στην κορυφή της καρτέλας ΚΙΝΗΤΗΡΑΣ σχεδιάζεται από τη φόρμα καθώς την αλλάζεις, πριν το BUILD: ένας εν σειρά σχεδιάζεται από το πλάι ώστε να μετράς τους κυλίνδρους του, ενώ ένας V ή boxer σχεδιάζεται από μπροστά για να φαίνεται η γωνία των συστοιχιών του. Σχεδιάζονται όλα: τα turbo, ο υπερσυμπιεστής, τα καρμπιρατέρ ή οι πεταλούδες, οι εξαγωγές, ο καταλύτης, το intercooler, το ψυγείο και η φιάλη νιτρικών, και ένας αποθηκευμένος κινητήρας δείχνει την ίδια εικόνα στην κάρτα του στο ΓΚΑΡΑΖ. Στον χάρτη της ΠΙΣΤΑΣ το αυτοκίνητο σχεδιάζεται ακόμα από την κατασκευή, με τα δικά του χρώματα: το μήκος του από το μεταξόνιο, οι τροχοί από τα μεγέθη ζάντας και ελαστικού, το ύψος από την ανάρτηση, και το splitter, η αεροτομή και ο diffuser που τοποθετείς. Οι κινητήριοι τροχοί έχουν πράσινες πλήμνες και ένα πράσινο μπλοκ δείχνει πού κάθεται ο κινητήρας."},
   chassis:{el:"Στην καρτέλα <b>ΟΧΗΜΑ</b> βάζεις τον κινητήρα σου σε αυτοκίνητο. Διάλεξε <b>σασί</b> και έρχεται με τον <b>εργοστασιακό του εξοπλισμό</b> — τα ελαστικά, ζάντες, φρένα, ανάρτηση, αεροδυναμική και κιβώτιο που θα φορούσε πραγματικά: ένα kei εμφανίζεται με στενά οικονομικά ελαστικά και μικρούς ατσάλινους δίσκους, ενώ ένα hypercar παίρνει φαρδιά ελαστικά και carbon-ceramic φρένα. Κάθε κατηγορία είναι το <b>διάμεσο πραγματικό αυτοκίνητο</b> της κατηγορίας: το βάρος, η αντίσταση αέρα, οι διαστάσεις και τα μέρη της είναι η μέση των πραγματικών αυτοκινήτων της, και όπως εκείνα δεν έχει πρόσθετη αεροτομή (η αντίσταση ενός πραγματικού αυτοκινήτου περιλαμβάνει ήδη τα εργοστασιακά του σπόιλερ). Όλα παραμένουν επεξεργάσιμα· το <b>ΕΡΓΟΣΤΑΣΙΑΚΟΣ ΕΞΟΠΛΙΣΜΟΣ</b> τα επαναφέρει. Κάθε πραγματικό αυτοκίνητο έχει <b>αριθμό σειράς</b>, από το 001 και πάνω, που φαίνεται πριν από το όνομά του στη λίστα ΕΡΓΟΣΤΑΣΙΑΚΟ ΑΥΤΟΚΙΝΗΤΟ. Ο αριθμός δίνεται μία φορά και δεν αλλάζει ποτέ, οπότε το 071 είναι πάντα το ίδιο αυτοκίνητο. Η <b>ΑΝΤΙΓΡΑΦΗ</b> παίρνει το αμάξωμα και τα μέρη ενός πραγματικού αυτοκινήτου, με τον αριθμό του ή ένα κομμάτι του ονόματός του, και κρατά τον κινητήρα που έχεις: το αποτέλεσμα είναι ένα προσαρμοσμένο αυτοκίνητο, με τον αριθμό από τον οποίο προήλθε."},
   garage:{el:"Η καρτέλα <b>ΓΚΑΡΑΖ</b> κρατά τα αυτοκίνητα και τους κινητήρες σου. Δώσε όνομα σε ένα αυτοκίνητο στο κάτω μέρος αυτής της καρτέλας και πάτησε <b>ΑΠΟΘΗΚΕΥΣΗ ΣΤΟ ΓΚΑΡΑΖ</b> και αποθηκεύεται το σύνολο — το αμάξωμα, κάθε εξάρτημα πάνω του, <i>και</i> ο κινητήρας μέσα, μέχρι και ο χειροκίνητα ρυθμισμένος χάρτης καυσίμου. Στην καρτέλα ΚΙΝΗΤΗΡΑΣ, η <b>ΑΠΟΘΗΚΕΥΣΗ ΚΙΝΗΤΗΡΑ</b> κρατά μόνο τον κινητήρα, που μπαίνει σε όποιο αυτοκίνητο έχεις όταν τον φορτώσεις. Η <b>ΠΡΟΒΟΛΗ</b> σε μια κάρτα δείχνει τι θα φορτώσει. Κάθε κάρτα δείχνει τα βασικά νούμερα που είχε όταν την αποθήκευσες (ισχύ, βάρος, 0–100, τελική, χρόνο γύρου και συνολικό κόστος), οπότε μπορείς να παρατάξεις τρεις κατασκευές και να τις συγκρίνεις χωρίς να ξαναφτιάξεις καμία. Η <b>ΦΟΡΤΩΣΗ</b> επαναφέρει το αυτοκίνητο ακριβώς όπως ήταν· αν γράψεις όνομα που υπάρχει ήδη, η κάρτα του τονίζεται και η αποθήκευση το αντικαθιστά. Αυτό είναι ξεχωριστό από τα <b>ΑΠΟΘΗΚ.</b>/<b>ΦΟΡΤΩΣΗ</b>, που είναι μία μοναδική θέση γρήγορης αποθήκευσης. Μια εγγραφή του γκαράζ είναι η ίδια που γράφει η <b>ΑΠΟΘ. ΑΡΧΕΙΟΥ</b> και μεταφέρει ένα σύνδεσμος κοινοποίησης. Όλα μένουν μόνο σε αυτόν τον browser — αν καθαρίσεις τα δεδομένα ιστότοπου, χάνεται το γκαράζ, και η <b>ΑΠΟΘ. ΑΡΧΕΙΟΥ</b> είναι αυτή που σώζει μια κατασκευή από αυτό."},
   tuning:{el:"Από εκεί ρυθμίζεις <b>μετάδοση</b> (FWD/RWD/AWD — το AWD ξεκινά καλύτερα), <b>κιβώτιο</b> (τύπος, σχέσεις + ρυθμιστικό τελικής), <b>ελαστικά</b> (τύπος + πλάτος/προφίλ/διάμετρος), <b>αεροδυναμική</b> (εμπρός/πίσω/πάτωμα = κάθετη δύναμη & οπισθέλκουσα), <b>φρένα</b> (τύπος + διάμετρος δίσκου) και <b>ανάρτηση</b> (πόσο γέρνει το αμάξωμα και η κλίση των τροχών). Η πρόσφυση δεν είναι πολλαπλασιαστής: ένα ελαστικό πιάνει περισσότερο όσο λιγότερο φορτίο σηκώνει για το μέγεθός του, οπότε μεγαλύτερο ελαστικό, ελαφρύτερο αυτοκίνητο και λιγότερη μεταφορά βάρους στους εξωτερικούς τροχούς (χαμηλό, φαρδύ αυτοκίνητο) στρίβουν γρηγορότερα· το γέρσιμο που βγάζει το φορτωμένο ελαστικό από την καλύτερη γωνία του κοστίζει πρόσφυση."},
@@ -6141,7 +6192,8 @@ function applyLang(lang){
   });
   if(typeof showGuide==='function'&&document.getElementById('guideIndex'))showGuide(guideCur);
   if(typeof renderLap==='function'&&lapResult)renderLap();
-  if(typeof renderSuspWin==='function'&&sc.open){buildSuspForm();renderSuspWin();}   // the suspension calculator, if open (build 218)
+  if(typeof renderSuspWin==='function'&&sc.open){buildSuspForm();renderSuspWin();}
+  if(typeof renderShowcase==='function'&&showcase.open)renderShowcase();   // the car showcase, if open (build 237)   // the suspension calculator, if open (build 218)
   for(const id of ['garageName','engSaveName']){const gn=document.getElementById(id);
     if(gn){if(gn.dataset.enPh===undefined)gn.dataset.enPh=gn.placeholder;gn.placeholder=tr(gn.dataset.enPh);}}
   if(typeof renderGarage==='function')renderGarage();
@@ -14560,6 +14612,18 @@ function loadVehiclePreset(p){
   engine.name=ep.name;
   return p.name;
 }
+// The same load as picking it in FACTORY CAR (VEHICLE tab), from wherever a factory car is chosen: the picker, or the
+// car showcase (build 237). Both pickers then show what was loaded, and the strip names it.
+function loadFactoryCarUI(i){
+  const p=FACTORY_CARS[i];if(!p)return null;
+  const name=loadVehiclePreset(p);
+  const ei=FACTORY_ENGINES.findIndex(q=>q.name===p.engine);
+  if(enginePicker)enginePicker.show(ei);
+  if(carPicker)carPicker.show(i);
+  markLoaded('engine',p.engine);markLoaded('car',name);
+  flash(tr('LOADED:')+' '+name+(perf&&perf.t100?' • 0–100 '+perf.t100.toFixed(1)+'s':''));
+  return name;
+}
 function saveSetup(){
   try{localStorage.setItem(SAVE_KEY,JSON.stringify(serializeBuild('quicksave','')));flash(tr('BUILD SAVED'));}
   catch(e){flash(tr('SAVE FAILED (storage blocked)'),'err');}
@@ -22176,7 +22240,8 @@ for(const p of FACTORY_ENGINES)if(p.real&&p.engine.springRpm==null)p.engine.spri
 const FACTORY_ENGINE_CATS=PRESET_CATS.concat(['Electric','Hybrid']), FACTORY_CAR_CATS=VEHICLE_CATS.concat(['Electric','Hybrid']);
 // ====== TITLE SCREEN ======
 // The sim used to open on the live bench, which is the right place once you are building and the wrong
-// place the first time you arrive. This is the front door: four ways in, over four workshops.
+// place the first time you arrive. This is the front door: four ways in, over four workshops, and the car
+// showcase (build 237, src/js/showcase.js).
 //
 // Four rooms cycle behind the menu, five seconds each, with a slow left-to-right pan: a pickup on the hoist
 // in a back-street workshop, an F355 on stands with its wheels off, an electric car's service bay with its
@@ -22247,6 +22312,7 @@ function titleMark(){
 }
 function titleGo(mode){
   closeTitleScreen();
+  if(mode==='showcase'){openShowcase('title');return;}   // the car showcase is a page of its own (build 237)
   setTab(mode);
 }
 function openTitleScreen(){
@@ -22299,6 +22365,147 @@ function bindTitleScreen(){
     e.stopPropagation();
   },true);
   window.addEventListener('resize',()=>{if(!el.hidden)paintTitle();});
+}
+// ====== CAR SHOWCASE (build 237) ======
+// Every factory car in one place: its showroom picture (src/js/car-art.js), its order number, and the figures its maker
+// published, as the presets carry them with their sources. Pick a card to see the car large; DRIVE THIS CAR loads it
+// with its own engine, exactly as the FACTORY CAR picker on the VEHICLE tab does, and opens that tab.
+//
+// What it shows is the maker's figures only, never the sim's: those come from the physics once the car is loaded, and
+// the VEHICLE tab shows them beside the maker's. So nothing here is computed, and no number in the sim moves.
+//   · power and torque: the factory engine's `real` (FACTORY_ENGINES); a hybrid adds the system output where the
+//     maker gave one (sysKW). The electric drives carry no single published power figure in their presets, so their
+//     line shows the drive itself.
+//   · mass: the body's curb mass (body.kg); 0–100 and top speed: the car's `real`, with `limited` for a governed top.
+//   · drive: the factory fitment's driven wheels.
+// Opened from the title menu (CAR SHOWCASE); BACK returns there. Arrow keys walk the cards, Enter drives, Escape backs.
+const SC_ALL='ALL';
+const showcase={open:false,fam:SC_ALL,sel:0,from:null};
+// The cars of the family shown, in order-number order: the number is the car's place in the collection.
+function scList(){
+  return FACTORY_CARS.map((p,i)=>({p,i})).filter(x=>showcase.fam===SC_ALL||x.p.cat===showcase.fam)
+    .sort((a,b)=>(CAR_NO[a.p.name]||999)-(CAR_NO[b.p.name]||999));
+}
+// The figures one card shows: the maker's, read from the presets. Missing figures are left out, never estimated.
+function scFigures(p){
+  const ep=FACTORY_ENGINES.find(x=>x.name===p.engine)||{},er=ep.real||{},cr=p.real||{},rows=[];
+  const n=(v,d)=>Number(v).toLocaleString('en-US',{maximumFractionDigits:d||0});
+  rows.push(['ENGINE',ep.name||p.engine]);
+  if(er.hp)rows.push(['POWER',n(er.hp)+' hp'+(er.hpRpm?' @ '+n(er.hpRpm)+' rpm':'')]);
+  if(er.tq)rows.push(['TORQUE',n(er.tq)+' Nm'+(er.tqRpm?' @ '+n(er.tqRpm)+' rpm':'')]);
+  if(er.sysKW)rows.push(['SYSTEM POWER',n(er.sysKW)+' kW ('+n(er.sysKW/0.7457)+' hp)']);
+  if(p.body&&p.body.kg)rows.push(['MASS',n(p.body.kg)+' kg']);
+  if(cr.t100)rows.push(['0–100 km/h',cr.t100.toFixed(1)+' s']);
+  if(cr.top)rows.push(['TOP SPEED',n(cr.top)+' km/h'+(cr.limited?' ('+tr('governed')+')':'')]);
+  const dr=p.fit&&p.fit.drive;
+  if(dr)rows.push(['DRIVEN WHEELS',dr.toUpperCase()]);
+  return rows;
+}
+function scCard(x,k){
+  const p=x.p,url=carArtUrl(p.name);
+  return '<button type="button" class="sc-card'+(k===showcase.sel?' on':'')+'" data-k="'+k+'" aria-pressed="'+(k===showcase.sel)+'">'+
+    (url?'<img src="'+esc(url)+'" alt="" loading="lazy" decoding="async" width="960" height="640">':'<span class="sc-noart"></span>')+
+    '<span class="sc-no">'+esc(carNo(p.name))+'</span><span class="sc-nm">'+esc(p.name)+'</span></button>';
+}
+function renderShowcaseFilters(){
+  const box=document.getElementById('scFilters');if(!box)return;
+  const fams=[SC_ALL].concat(FACTORY_CAR_CATS.filter(c=>FACTORY_CARS.some(p=>p.cat===c)));
+  box.innerHTML=fams.map(c=>'<button type="button" class="toggle'+(c===showcase.fam?' on':'')+'" data-fam="'+esc(c)+'" aria-pressed="'+(c===showcase.fam)+'">'+
+    esc(tr(c))+'</button>').join('');
+}
+function renderShowcaseDetail(){
+  const box=document.getElementById('scDetail');if(!box)return;
+  const L=scList(),x=L[showcase.sel];
+  if(!x){box.innerHTML='';return;}
+  const p=x.p,url=carArtUrl(p.name);
+  box.innerHTML=(url?'<img class="sc-big" src="'+esc(url)+'" alt="'+esc(p.name)+'" decoding="async" width="960" height="640">':'')+
+    '<h3 id="scName"><span>'+esc(carNo(p.name))+'</span> '+esc(p.name)+'</h3>'+
+    '<p class="sc-cat">'+esc(tr(p.cat))+' · '+(showcase.sel+1)+' / '+L.length+'</p>'+
+    '<dl class="sc-figs">'+scFigures(p).map(([k,v])=>'<dt>'+esc(tr(k))+'</dt><dd>'+esc(v)+'</dd>').join('')+'</dl>'+
+    '<p class="sc-src">'+esc(tr("The maker's published figures. The sim works out its own from the physics once you drive the car."))+'</p>'+
+    '<div class="sc-act"><button type="button" id="scPrev" aria-label="'+esc(tr('Previous car'))+'">&lt;</button>'+
+    '<button type="button" id="scDrive" class="sc-drive">'+esc(tr('DRIVE THIS CAR'))+'</button>'+
+    '<button type="button" id="scNext" aria-label="'+esc(tr('Next car'))+'">&gt;</button></div>';
+}
+function renderShowcase(){
+  const grid=document.getElementById('scGrid');if(!grid)return;
+  const L=scList();
+  if(showcase.sel>=L.length)showcase.sel=0;
+  const h=document.getElementById('scHeading');if(h)h.textContent=tr('CAR SHOWCASE');
+  const cnt=document.getElementById('scCount');if(cnt)cnt.textContent=L.length+' '+tr(L.length===1?'car':'cars');
+  const back=document.getElementById('scClose');if(back)back.textContent=tr('BACK');
+  const fl=document.getElementById('scFilters');if(fl)fl.setAttribute('aria-label',tr('Car families'));
+  renderShowcaseFilters();
+  grid.innerHTML=L.map(scCard).join('');
+  renderShowcaseDetail();
+}
+// Move the choice without rebuilding the grid, so the pictures already loaded stay put and the list keeps its scroll.
+// On a wide screen the grid scrolls beside the detail, so the card is brought into view. On a phone the page is one
+// column with the detail on top: a card picked by touch (reveal) scrolls the page up to it, and opening leaves it be.
+function scSelect(k,focus,reveal){
+  const L=scList();if(!L.length)return;
+  showcase.sel=((k%L.length)+L.length)%L.length;
+  document.querySelectorAll('#scGrid .sc-card').forEach(b=>{const on=+b.dataset.k===showcase.sel;b.classList.toggle('on',on);b.setAttribute('aria-pressed',on);});
+  renderShowcaseDetail();
+  const card=document.querySelector('#scGrid .sc-card[data-k="'+showcase.sel+'"]');
+  const narrow=window.matchMedia&&window.matchMedia('(max-width:800px)').matches;
+  if(card){
+    if(!narrow)card.scrollIntoView({block:'nearest'});
+    else if(reveal){const d=document.getElementById('scDetail');if(d)d.scrollIntoView({block:'start'});}
+    if(focus)card.focus({preventScroll:true});
+  }
+}
+function scDrive(){
+  const x=scList()[showcase.sel];if(!x)return;
+  closeShowcase(true);
+  setTab('vehicle');
+  loadFactoryCarUI(x.i);
+}
+function openShowcase(from){
+  const el=document.getElementById('showcase');if(!el)return;
+  showcase.from=from||null;
+  // open on the car you have loaded, when it is a factory car; else where you last left it
+  const cur=typeof vehBody!=='undefined'&&vehBody&&!vehBody.copyOf?vehBody.name:null;
+  if(cur){
+    if(!scList().some(x=>x.p.name===cur))showcase.fam=SC_ALL;
+    showcase.sel=Math.max(0,scList().findIndex(x=>x.p.name===cur));
+  }
+  el.hidden=false;showcase.open=true;
+  document.body.classList.add('showcase-open');
+  el.scrollTop=0;
+  renderShowcase();
+  requestAnimationFrame(()=>scSelect(showcase.sel,true));
+}
+// leaving: back to the title menu if that is where you came from, unless you are off to drive the car
+function closeShowcase(stay){
+  const el=document.getElementById('showcase');if(!el||el.hidden)return;
+  el.hidden=true;showcase.open=false;
+  document.body.classList.remove('showcase-open');
+  if(!stay&&showcase.from==='title')openTitleScreen();
+}
+function bindShowcase(){
+  const el=document.getElementById('showcase');if(!el)return;
+  el.addEventListener('click',e=>{
+    const b=e.target.closest('button');if(!b||!el.contains(b))return;
+    if(b.id==='scClose')closeShowcase();
+    else if(b.id==='scDrive')scDrive();
+    else if(b.id==='scPrev')scSelect(showcase.sel-1);
+    else if(b.id==='scNext')scSelect(showcase.sel+1);
+    else if(b.dataset.fam!=null){showcase.fam=b.dataset.fam;showcase.sel=0;renderShowcase();scSelect(0);}
+    else if(b.dataset.k!=null)scSelect(+b.dataset.k,false,true);
+  });
+  el.addEventListener('dblclick',e=>{const b=e.target.closest('.sc-card');if(b){scSelect(+b.dataset.k);scDrive();}});
+  document.addEventListener('keydown',e=>{
+    if(el.hidden)return;
+    const inFilters=e.target&&e.target.closest&&e.target.closest('#scFilters');
+    if(e.key==='Escape'){closeShowcase();}
+    else if(inFilters&&e.key==='Enter')return;               // a family button: let it press itself
+    else if(e.key==='ArrowRight'||e.key==='ArrowDown'){scSelect(showcase.sel+1,true);}
+    else if(e.key==='ArrowLeft'||e.key==='ArrowUp'){scSelect(showcase.sel-1,true);}
+    else if(e.key==='Enter'&&!(e.target&&e.target.id&&/^sc(Close|Prev|Next)$/.test(e.target.id))){scDrive();}
+    else return;
+    e.preventDefault();e.stopPropagation();
+  },true);
 }
 function bindControls(){
   // Throttle & load are fractions (0..1); AFR/temps are direct values.
@@ -22452,13 +22659,7 @@ function bindControls(){
     if(ch)flash(tr('REFITTED TO FACTORY SPEC')+': '+(vehBody?vehBody.name:tr(ch.label)));
   });
   // Real cars: the factory engine and the car's own body and fitment, together.
-  carPicker=wireFamilyPicker('vhFamily','vhPreset',FACTORY_CAR_CATS,FACTORY_CARS,p=>p.cat,'— load a real car —',i=>{
-    const name=loadVehiclePreset(FACTORY_CARS[i]);
-    const ei=FACTORY_ENGINES.findIndex(p=>p.name===FACTORY_CARS[i].engine);
-    if(enginePicker)enginePicker.show(ei);
-    markLoaded('engine',FACTORY_CARS[i].engine);markLoaded('car',name);
-    flash(tr('LOADED:')+' '+name+(perf&&perf.t100?' • 0–100 '+perf.t100.toFixed(1)+'s':''));
-  },p=>carNoName(p.name));
+  carPicker=wireFamilyPicker('vhFamily','vhPreset',FACTORY_CAR_CATS,FACTORY_CARS,p=>p.cat,'— load a real car —',loadFactoryCarUI,p=>carNoName(p.name));
   {const q=document.getElementById('vhCopyQ'),btn=document.getElementById('btnCopyFrom');
    if(q){q.addEventListener('input',syncCopyHit);q.addEventListener('keydown',e=>{if(e.key==='Enter'&&btn&&!btn.disabled)btn.click();});}
    if(btn)btn.addEventListener('click',()=>{
@@ -22583,6 +22784,7 @@ bindRacePage();
 bindTrackPage();
 sizeCanvas();updatePhysics();updateUI();requestAnimationFrame(loop);
 bindTitleScreen();
+bindShowcase();
 if(titleOnLoad())openTitleScreen();
 
 // Register service worker for offline/installable PWA (no-op on file://).

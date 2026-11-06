@@ -1,6 +1,7 @@
 // The title screen (draft).
 //
-// Opening the app is a menu: build an engine, build a vehicle, open the wiki, settings. The workshop
+// Opening the app is a menu: build an engine, build a vehicle, open the wiki, settings, and (since build 237) the car
+// showcase, which test147 covers. The workshop
 // behind it is drawn, and each choice lands on the tab it names. The suite drives the bench, so the
 // menu stays down unless the page is asked for it (?title=1). MENU brings it back; Escape leaves it.
 import { chromium } from './pw.mjs';
@@ -20,7 +21,7 @@ const open = () => page.evaluate(() => !document.getElementById('titleScreen').h
 const mode = () => page.evaluate(() => vizMode);
 if (!await open()) fails.push('title screen did not open on ?title=1');
 const labels = await page.$$eval('#titleScreen .title-menu button', bs => bs.map(b => b.textContent.trim()));
-const want = ['BUILD AN ENGINE', 'BUILD A VEHICLE', 'OPEN WIKI', 'SETTINGS'];
+const want = ['BUILD AN ENGINE', 'BUILD A VEHICLE', 'OPEN WIKI', 'SETTINGS', 'CAR SHOWCASE'];
 if (labels.join('|') !== want.join('|')) fails.push('menu labels: ' + labels.join(' | '));
 // since build 230 the room is a picture (an <img>), not a canvas: it must be loaded and cover the stage
 await page.waitForFunction(() => { const i = document.getElementById('titleImg'); return i && !i.hidden && i.complete && i.naturalWidth > 0; }, null, { timeout: 5000 }).catch(() => {});
@@ -57,7 +58,7 @@ await gk.addInitScript(() => { try { localStorage.setItem('pes.lang', 'el'); } c
 await gk.goto(url, { waitUntil: 'networkidle' });
 await gk.waitForTimeout(200);
 const greek = await gk.$$eval('#titleScreen .title-menu button, #btnMenu', bs => bs.map(b => b.textContent.trim()));
-const greekWant = ['ΦΤΙΑΞΕ ΚΙΝΗΤΗΡΑ', 'ΦΤΙΑΞΕ ΟΧΗΜΑ', 'ΑΝΟΙΞΕ ΟΔΗΓΟ', 'ΡΥΘΜΙΣΕΙΣ', 'ΜΕΝΟΥ'];
+const greekWant = ['ΦΤΙΑΞΕ ΚΙΝΗΤΗΡΑ', 'ΦΤΙΑΞΕ ΟΧΗΜΑ', 'ΑΝΟΙΞΕ ΟΔΗΓΟ', 'ΡΥΘΜΙΣΕΙΣ', 'ΕΚΘΕΣΗ ΑΥΤΟΚΙΝΗΤΩΝ', 'ΜΕΝΟΥ'];
 if (greek.join('|') !== greekWant.join('|')) fails.push('Greek menu: ' + greek.join(' | '));
 await gk.close();
 

@@ -150,13 +150,7 @@ function bindControls(){
     if(ch)flash(tr('REFITTED TO FACTORY SPEC')+': '+(vehBody?vehBody.name:tr(ch.label)));
   });
   // Real cars: the factory engine and the car's own body and fitment, together.
-  carPicker=wireFamilyPicker('vhFamily','vhPreset',FACTORY_CAR_CATS,FACTORY_CARS,p=>p.cat,'— load a real car —',i=>{
-    const name=loadVehiclePreset(FACTORY_CARS[i]);
-    const ei=FACTORY_ENGINES.findIndex(p=>p.name===FACTORY_CARS[i].engine);
-    if(enginePicker)enginePicker.show(ei);
-    markLoaded('engine',FACTORY_CARS[i].engine);markLoaded('car',name);
-    flash(tr('LOADED:')+' '+name+(perf&&perf.t100?' • 0–100 '+perf.t100.toFixed(1)+'s':''));
-  },p=>carNoName(p.name));
+  carPicker=wireFamilyPicker('vhFamily','vhPreset',FACTORY_CAR_CATS,FACTORY_CARS,p=>p.cat,'— load a real car —',loadFactoryCarUI,p=>carNoName(p.name));
   {const q=document.getElementById('vhCopyQ'),btn=document.getElementById('btnCopyFrom');
    if(q){q.addEventListener('input',syncCopyHit);q.addEventListener('keydown',e=>{if(e.key==='Enter'&&btn&&!btn.disabled)btn.click();});}
    if(btn)btn.addEventListener('click',()=>{
@@ -281,6 +275,7 @@ bindRacePage();
 bindTrackPage();
 sizeCanvas();updatePhysics();updateUI();requestAnimationFrame(loop);
 bindTitleScreen();
+bindShowcase();
 if(titleOnLoad())openTitleScreen();
 
 // Register service worker for offline/installable PWA (no-op on file://).

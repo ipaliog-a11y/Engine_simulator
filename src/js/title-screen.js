@@ -1,6 +1,7 @@
 // ====== TITLE SCREEN ======
 // The sim used to open on the live bench, which is the right place once you are building and the wrong
-// place the first time you arrive. This is the front door: four ways in, over four workshops.
+// place the first time you arrive. This is the front door: four ways in, over four workshops, and the car
+// showcase (build 237, src/js/showcase.js).
 //
 // Four rooms cycle behind the menu, five seconds each, with a slow left-to-right pan: a pickup on the hoist
 // in a back-street workshop, an F355 on stands with its wheels off, an electric car's service bay with its
@@ -71,6 +72,7 @@ function titleMark(){
 }
 function titleGo(mode){
   closeTitleScreen();
+  if(mode==='showcase'){openShowcase('title');return;}   // the car showcase is a page of its own (build 237)
   setTab(mode);
 }
 function openTitleScreen(){
