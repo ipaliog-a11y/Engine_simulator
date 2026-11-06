@@ -256,6 +256,10 @@ function loop(now){
   updatePhysics();
   stepWear(dt);
   updateSound();
+  // Under the title menu or the car showcase nothing of the app is on view, so it is not drawn: the bench keeps running
+  // (and sounding) underneath, and the menu's pan has the frame to itself (build 237). The first frame after either
+  // closes draws everything again.
+  if(appCovered()){requestAnimationFrame(loop);return;}
   if(vizMode==='engine')drawEngine(dt);
   else if(vizMode==='dyno'){drawDyno();renderDynoResult(false);}
   else if(vizMode==='track'){stepReplay(dt);drawTrack();}
@@ -264,6 +268,7 @@ function loop(now){
   updateUI();
   requestAnimationFrame(loop);
 }
+function appCovered(){const c=document.body.classList;return c.contains('title-open')||c.contains('showcase-open');}
 bindControls();bindHybridPanel();bindHybMap();applyEngineToForm(Object.assign({},DEFAULT_ENGINE));buildEngine();
 applyVehicleToForm(DEFAULT_VEHICLE);buildVehicle();updateVehicleSummary();
 loadFromHash();   // open a shared build if the URL carries one

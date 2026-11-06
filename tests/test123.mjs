@@ -24,10 +24,11 @@ const labels = await page.$$eval('#titleScreen .title-menu button', bs => bs.map
 const want = ['BUILD AN ENGINE', 'BUILD A VEHICLE', 'OPEN WIKI', 'SETTINGS', 'CAR SHOWCASE'];
 if (labels.join('|') !== want.join('|')) fails.push('menu labels: ' + labels.join(' | '));
 // since build 230 the room is a picture (an <img>), not a canvas: it must be loaded and cover the stage
-await page.waitForFunction(() => { const i = document.getElementById('titleImg'); return i && !i.hidden && i.complete && i.naturalWidth > 0; }, null, { timeout: 5000 }).catch(() => {});
+// (since build 237 each room is its own <img>, and titleRoomEl() is the one on view)
+await page.waitForFunction(() => { const i = titleRoomEl(); return i && i.classList.contains('on') && i.complete && i.naturalWidth > 0; }, null, { timeout: 5000 }).catch(() => {});
 const painted = await page.evaluate(() => {
-  const i = document.getElementById('titleImg'), r = i.getBoundingClientRect(), s = i.parentElement.getBoundingClientRect();
-  return { shown: !i.hidden, w: i.naturalWidth, covers: r.left <= s.left + 1 && r.right >= s.right - 1 && r.top <= s.top + 1 && r.bottom >= s.bottom - 1 };
+  const i = titleRoomEl(), r = i.getBoundingClientRect(), s = i.parentElement.getBoundingClientRect();
+  return { shown: i.classList.contains('on'), w: i.naturalWidth, covers: r.left <= s.left + 1 && r.right >= s.right - 1 && r.top <= s.top + 1 && r.bottom >= s.bottom - 1 };
 });
 console.log('workshop picture', painted.w + ' px wide, shown ' + painted.shown + ', covers the stage ' + painted.covers);
 if (!painted.shown || painted.w < 50 || !painted.covers) fails.push('workshop was not drawn');

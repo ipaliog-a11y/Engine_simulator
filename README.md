@@ -407,7 +407,9 @@ assist map over speed and pedal), regeneration, load-point shifting, electric-dr
   name and keeps your engine: the result is a custom car, "Custom (from 012)".
 
   The **title screen** (the menu the sim opens on, and MENU) cycles through four workshop pictures with a slow
-  pan (build 230, `assets/landing/`), with the makers' and sponsors' logos pixelated out.
+  pan (build 230, `assets/landing/`), with the makers' and sponsors' logos pixelated out. Since build 237 the pan is
+  a browser animation, smooth on every frame, each room fades into the next, and the bench behind the menu stops
+  drawing while it is covered. With "reduce motion" set, the pictures hold still.
 
   **CAR SHOWCASE** (build 237), the menu's fifth item, shows every factory car on one page: its showroom
   picture and number, in number order, filtered by family. Pick one to see it large with the figures its maker
