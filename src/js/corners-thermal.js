@@ -154,11 +154,24 @@ function coolingEffectiveness(){
   const fanTerm=engine.fanFloor+(engine.fan==='mechanical'?0.30*af:0);
   return clamp(engine.radCap*(0.40+0.50*af+fanTerm),0.30,2.20);
 }
+// A road spark engine's brake efficiency at rated power: 25-30% (Heywood, Table 12.1); BSFC ~280 g/kWh on petrol.
+const HEAT_REF_EFF=0.29;
 function stepThermal(dt){
   if(isElectric())return;   // the motor's heat is stepped with its losses (stepMotorBench)
   if(!autoThermal)return;
-  const loadFrac=clamp((state.rpm-800)/(engine.redline-800),0,1)*0.6
-                +clamp((state.map-0.4)/(engine.mapMax-0.4),0,1)*0.4;
+  // The heat is the fuel's (build 235). It was a load figure made of rpm and throttle, so free-revving at full throttle,
+  // where the limiter cuts the fuel and the engine makes only its own friction, counted as full load and took the oil
+  // past 132 C in about a minute (55 of the 93 real engines took OIL TEMP or OVERHEAT wear). What a radiator and the oil carry away
+  // is a share of the fuel's energy: Heywood (Internal Combustion Engine Fundamentals, 1988, ch. 12, Table 12.1) puts it
+  // at 17-26% to the coolant for a spark engine at full load, beside 25-28% at the crank. So the load here is the fuel
+  // burned against the fuel the engine burns at the power its radiator was sized for (engine.radHp, a factory preset's
+  // rating; the generic 260 hp part otherwise) at a road engine's brake efficiency at rated power, HEAT_REF_EFF. A factory
+  // engine at its rated power on its own radiator is then at 1, where full load was before; a diesel, which burns less
+  // fuel for its power, runs cooler; a free-revving engine is near idle's heat; a build making more power than its
+  // radiator was sized for heats past 1, to 1.6.
+  const fuelKW=(state.heatFuelLph!=null?state.heatFuelLph:state.fuelFlowLph||0)*(engine.fuelDensity||0.745)/3600*(engine.fuelLHV||44)*1000;
+  const designFuelKW=Math.max(260,engine.radHp||0)*0.7457/HEAT_REF_EFF;
+  const loadFrac=clamp(fuelKW/designFuelKW,0,1.6);
   const cooling=coolingEffectiveness();
   // Heat load raises temps; cooling capacity divides that rise back down.
   let heat=loadFrac*34+(state.knockRisk>60?6:0);

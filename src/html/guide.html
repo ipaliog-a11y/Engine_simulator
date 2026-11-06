@@ -340,7 +340,7 @@ Spin an engine faster and it makes more power, until something gives. Four thing
 </div>
 <div class="gtier gt-game"><div class="gtier-h">LV2 · IN THE GAME</div>
 <div class="guide-body" data-gk="redlineGame">
-The ENGINE tab shows the <b>valve float</b> rpm next to the springs, in red if it is below your redline. A <b>rev limiter</b> cuts fuel at the redline you set; with WEAR on, sitting at it wears the engine (OVER-REV). Pick a short stroke, light valves and stiff springs to rev high, see <a data-gp="bottom">Bore, stroke &amp; displacement</a> and <a data-gp="valvetrain">Valvetrain &amp; cams</a>.
+The ENGINE tab shows the <b>valve float</b> rpm next to the springs, in red if it is below your redline; with WEAR on, running past it wears the engine (VALVE FLOAT), since the valve can meet the piston. A <b>rev limiter</b> cuts fuel at the redline you set, and holding the engine there does not wear it: a redline is the speed an engine is rated to run at, and makers test engines for hundreds of hours at full load and full speed. Pick a short stroke, light valves and stiff springs to rev high, see <a data-gp="bottom">Bore, stroke &amp; displacement</a> and <a data-gp="valvetrain">Valvetrain &amp; cams</a>.
 </div>
 </div>
 <div class="gtier gt-phys"><div class="gtier-h">LV3 · THE PHYSICS</div>
@@ -467,7 +467,7 @@ Overlap is not an input, it falls out of the grind: with <i>θ</i> the duration 
 <tr><td>race</td><td>284°</td><td>106°</td><td>72°</td><td>68°</td><td>0.28</td></tr></table></div>
 Valve size comes from what fits in the bore: one valve at 0.50 bore, two at 0.39, three at 0.31, so total intake area is 0.250, 0.304 and 0.288 of the bore area: five valves flow <i>less</i> than four. The open area is the lesser of the curtain and the throat behind it,
 <span class="geq">A = min(π·D·L, (π/4)(0.85·D)²)</span>
-so past L/D ≈ 0.18 more lift buys no flow. Valve mass comes from the head disc and a fixed stem in steel (7800 kg/m³) or titanium (4500), and the float rpm from the spring equation on <a data-gp="redline">Why engines have a redline</a>. Above float the valve reaches only <i>(N<sub>float</sub>/N)²</i> of its lift.
+so past L/D ≈ 0.18 more lift buys no flow. Valve mass comes from the head disc and a fixed stem in steel (7800 kg/m³) or titanium (4500), and the float rpm from the spring equation on <a data-gp="redline">Why engines have a redline</a>. Above float the valve reaches only <i>(N<sub>float</sub>/N)²</i> of its lift. On a real engine the STOCK springs are its maker's, carrying the seat load that floats the valves 5% past its own redline (no factory engine floats inside its rev range); PERFORMANCE and RACE carry 1.6× and 2.2× that load. A design of your own starts from a generic 250 N spring.
 </div>
 </div>
 <div class="guide-see">See also: <a data-gp="vvt">Variable valve timing</a> · <a data-gp="waves">Intake runner waves</a> · <a data-gp="header">Exhaust headers &amp; scavenging</a> · <a data-gp="redline">Why engines have a redline</a></div>
@@ -613,7 +613,7 @@ Only about a third of the fuel's energy turns the crank. Roughly another third l
 ignition type set charging and the misfire RPM limit.
 </div>
 <div class="guide-body" data-gk="heatMore1">
-With <b>AUTO THERMAL</b> on, coolant and oil temperatures drift with load toward a level set by the radiator, fan and thermostat. An under-cooled build heat-soaks: watch COOLANT climb, and with WEAR on, OVERHEAT and OIL TEMP start eating the engine's health. The <b>EGT</b> readout is the exhaust gas temperature, computed from the energy balance below.
+With <b>AUTO THERMAL</b> on, coolant and oil temperatures drift toward a level set by the heat of the fuel being burned against the radiator, fan and thermostat. Free-revving on the limiter burns little fuel and stays cool; full load at full power is what heats an engine. An under-cooled build heat-soaks: watch COOLANT climb, and with WEAR on, OVERHEAT and OIL TEMP start eating the engine's health. The <b>EGT</b> readout is the exhaust gas temperature, computed from the energy balance below.
 </div>
 </div>
 <div class="gtier gt-phys"><div class="gtier-h">LV3 · THE PHYSICS</div>
@@ -624,7 +624,7 @@ The wall heat comes from <b>Woschni's</b> correlation integrated over a traced c
 EGT is shown two ways in the model: the mass-averaged temperature the turbine works on, and what a thermocouple in the pipe would read (closer to the time average, a little cooler, because the hottest gas passes quickest).
 </div>
 <div class="guide-limit" data-gk="heatLimit">
-Limit: the coolant and oil temperatures come from a lumped model (a heat load against a cooling capacity, with first-order lags), not from heat flows through the block.
+Limit: the coolant and oil temperatures come from a lumped model, not from heat flows through the block: a heat load (the fuel burned, against the fuel the engine burns at the power its radiator was sized for at 29% brake efficiency) against a cooling capacity, with first-order lags. Its temperature rises are fitted, and at sustained full rated power they still take the oil past 132 °C on most engines without an oil cooler.
 </div>
 </div>
 <div class="guide-see">See also: <a data-gp="combustion">Combustion &amp; the burn</a> · <a data-gp="friction">Friction, oil &amp; pumping</a> · <a data-gp="wear">Wear &amp; reliability</a></div>
@@ -1160,8 +1160,8 @@ Health falls each second by the sum of the damage rates that apply:
 <tr><td>detonation</td><td>knock score above 55</td><td>up to 0.060</td></tr>
 <tr><td>overheat</td><td>coolant above 112 °C</td><td>up to 0.030</td></tr>
 <tr><td>oil temperature</td><td>oil above 132 °C</td><td>up to 0.025</td></tr>
+<tr><td>valve float</td><td>above the valve-float rpm (a redline set past it)</td><td>0.004 + 0.1 × the share past float</td></tr>
 <tr><td>lean under boost</td><td>λ above 1.05 with MAP above 0.9 (petrol)</td><td>0.14 × excess λ × excess MAP</td></tr>
-<tr><td>over-rev</td><td>above 98.5% of redline</td><td>0.006</td></tr>
 <tr><td>nitrous / anti-lag / cold oil</td><td>while active</td><td>0.011 / 0.004 / 0.004</td></tr></table></div>
 REL starts at 100. It loses up to 45 for knock the ECU cannot hold off: knock above the point where the end gas autoignites, which an AUTO-timing ECU never lets it pass. It loses the larger of the boost stress (11 per bar above 0.5, counted at the midrange peak and again at the limiter) and the output stress (0.3 per hp/L above 110), since on a turbo engine they are the same load. It loses 7 per m/s of mean piston speed at the redline above 25 m/s (a rotary: 2 per 100 rpm above 9800), 15 for anti-lag, 12 for nitrous, up to 28 for a VGT run above its vanes' creep limit, and 30 per unit of cooling short of the power. A STOCK radiator on a real engine is its maker's, sized for its rated power; on a design of your own it is sized for 260 hp. A diesel gains 16 for its heavy build; a rotary loses 18 (apex seals), a two-stroke 12.
 </div>

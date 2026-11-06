@@ -1,69 +1,76 @@
-// Hairpin or round wire, copper or aluminium (plans/hybrid-electric/drivetrain.md, stage 6; build 233).
+// The rev limiter does not wear the engine (build 233).
 //
-// WHY THIS EXISTS. The slot copper was one kind: stranded round wire at a 40% fill. A hairpin winding (about 70%, four
-// bars a slot, the Model 3's layout) and an aluminium conductor (1.64 times copper's resistivity, a third of its mass,
-// about 30% of its price a kilogram) are now on the form. Each acts through the slot's copper area, the conductor's
-// resistivity, mass, heat capacity and price; nothing multiplies a torque or an efficiency. What must hold:
-//   · the default, ROUND and COPPER, is today's motor: the Model 3 geometry's DC resistance near the measured 4.75 mOhm
-//     (test96's band) and exactly what it was before, and every factory motor builds on it;
-//   · HAIRPIN: more copper, lower DC resistance, less copper loss at high torque and low speed, but a higher AC factor and
-//     more copper loss at high speed (a tall bar in the slot's field), and a dearer motor;
-//   · ALUMINIUM: higher resistance and more copper loss for the same current, a lighter and cheaper motor;
-//   · both reach a hybrid's motor too, and both read in Greek on the form.
+// WHY THIS EXISTS. With WEAR on, an engine held on its limiter was charged 0.006 health a second from 98.5% of the
+// redline, so every real engine free-revving at full throttle was blown in under three minutes, an Aygo as fast as a
+// GT3. A redline is the speed the maker rates the engine to run at; the limiter exists so it cannot pass it, and real
+// engines are validated with hundreds of hours at full load and full speed. What must hold:
+//   · every real combustion engine, held on its limiter at full throttle for 30 s with its temperatures held, keeps
+//     its health to the baseline fatigue alone, and no wear cause shows;
+//   · the bench still cannot pass the redline;
+//   · abuse still wears: knock (fixed timing far past the knock limit, at full load) and a lean mixture under boost;
+//   · the guide no longer says the limiter wears the engine, in English or Greek; the over-rev row is gone.
 import { chromium } from './pw.mjs';
 import { fileURLToPath, pathToFileURL } from 'url';
 import path from 'path';
 const repo = fileURLToPath(new URL('..', import.meta.url));
 const browser = await chromium.launch();
-const page = await browser.newPage({ viewport: { width: 1200, height: 900 } });
+const page = await browser.newPage({ viewport: { width: 1280, height: 900 } });
 const errors = [];
 page.on('console', m => { if (m.type() === 'error' && !/ERR_FILE_NOT_FOUND/.test(m.text())) errors.push('console: ' + m.text()); });
 page.on('pageerror', e => errors.push('pageerror: ' + e.message));
 await page.goto(pathToFileURL(path.join(repo, 'index.html')).href, { waitUntil: 'networkidle' });
 await page.waitForTimeout(400);
 const fails = [];
+
 const r = await page.evaluate(() => {
-  const M3 = { rotorD: 149.9, stackL: 134, poles: 6, turns: 12, magnet: 'ndfeb', retention: 'bridges', cooling: 'jacket', inverter: 'igbt', invAmps: 953, maxRpm: 18000 };
-  const V = 350, pt = { w: 90, r: 70 };
-  const one = (wire, conductor) => {
-    const m = motorBuild(Object.assign({}, M3, wire ? { wire, conductor } : {}));
-    return { R: m.R20 * 1000, mCu: m.mCu, mass: m.mass, cost: m.cost, ac: copperAC(m, 15000, 90), wire: m.wire.label, cond: m.cond.label,
-      cuLow: motorLosses(m, 400, 1000, V, pt).cu, cuHigh: motorLosses(m, 60, 15000, V, pt).cu };
+  const dt = 0.05;
+  const load = (p, over) => applyBuild({ engine: Object.assign({}, p.engine, over || {}), tune: Object.assign({}, STD_TUNE),
+    vehicle: Object.assign({}, DEFAULT_VEHICLE), name: p.name });
+  // run the live bench: temperatures held (AUTO THERMAL off), so only the wear rules are under test
+  const run = (secs, thr, ld, lambda) => {
+    wearEnabled = true; setAutoThermal(false); state.coolant = 90; state.oil = 100;
+    state.engineHealth = 1; state.blown = false; state.throttle = thr; state.load = ld;
+    if (lambda) { engine.afrMode = 'fixed'; state.afr = engine.stoichAFR * lambda; }
+    const causes = new Set(); let maxRpm = 0, atLimit = 0;
+    for (let i = 0; i < secs / dt; i++) {
+      stepEngine(dt); stepElectrical(dt); updatePhysics(); stepWear(dt);
+      maxRpm = Math.max(maxRpm, state.rpm); if (state.rpm >= engine.redline * 0.9) atLimit += dt;   // the fuel cut bounces it off the redline (deepest on a light two-stroke)
+      if (state.wearCause) causes.add(state.wearCause);
+    }
+    return { h: state.engineHealth, causes: [...causes], maxRpm, red: engine.redline, atLimit };
   };
-  const o = { none: one(), rc: one('round', 'copper'), hc: one('hairpin', 'copper'), ra: one('round', 'aluminium'), ha: one('hairpin', 'aluminium') };
-  o.factory = FACTORY_CARS.filter(p => p.cat === 'Electric' || p.cat === 'Hybrid').map(p => {
-    loadVehiclePreset(p); const m = engine.motor || (engine.hy && engine.hy.motor);
-    const parts = m.parts ? m.parts.map(q => q.m) : [m];
-    return { n: p.name, ok: parts.every(q => q.wire && q.wire.label === 'ROUND (STRANDED)' && q.cond.label === 'COPPER') };
-  });
-  // a hybrid's motor takes the fields too
-  loadVehiclePreset(HYB_VEHICLE_PRESETS[0]);
-  const e = Object.assign({}, engine, { evWire: 'hairpin', evConductor: 'aluminium' }); buildHybrid(e);
-  o.hybrid = { wire: e.hy.motor.wire.label, cond: e.hy.motor.cond.label };
-  setTab('design'); applyLang('el');
-  o.el = [...document.querySelectorAll('label[for="evWire"], label[for="evConductor"], #evWire option, #evConductor option')].map(x => x.textContent.trim());
-  applyLang('en');
+  const o = { all: [] };
+  for (const p of FACTORY_ENGINES.filter(p => p.real && p.engine.type !== 'electric' && !p.engine.hyMode)) {
+    load(p); o.all.push(Object.assign({ n: p.name }, run(30, 1, 0)));
+  }
+  const gti = FACTORY_ENGINES.find(p => p.name.includes('EA888'));
+  load(gti, { timingMode: 'fixed', ignitionAdv: 40 }); o.knock = run(30, 1, 0.5);
+  load(gti); o.lean = run(30, 1, 0.4, 1.25);
+  o.fatigue = 1 - 30 * 0.000006;
+  o.guide = { en: document.querySelector('[data-gk="redlineGame"]').textContent + document.querySelector('[data-gk="wearPhys"]').textContent,
+    el: GUIDE_I18N.redlineGame.el + GUIDE_I18N.wearPhys.el };
   return o;
 });
-const f = (x, d = 2) => (+x).toFixed(d);
-for (const k of ['rc', 'hc', 'ra', 'ha']) { const m = r[k];
-  console.log(`== ${m.wire} ${m.cond}: ${f(m.R, 3)} mOhm, ${f(m.mCu)} kg conductor, motor ${f(m.mass, 1)} kg, $${m.cost}; AC ×${f(m.ac)} at 15000 rpm; copper loss ${Math.round(m.cuLow)} W at 400 Nm 1000 rpm, ${Math.round(m.cuHigh)} W at 60 Nm 15000 rpm ==`); }
-console.log(`== hybrid motor: ${r.hybrid.wire}, ${r.hybrid.cond}; Greek: ${r.el.join(' · ')} ==`);
-// the default is today's motor
-if (r.none.R !== r.rc.R || r.none.cost !== r.rc.cost || r.none.mass !== r.rc.mass) fails.push('ROUND COPPER is not the motor with no winding chosen');
-if (!(r.rc.R > 0.5 * 4.75 && r.rc.R < 1.5 * 4.75)) fails.push(`the default's DC resistance ${f(r.rc.R, 3)} mOhm left test96's band around 4.75`);
-if (Math.abs(r.rc.R - 3.083) > 0.001) fails.push(`the default's DC resistance ${f(r.rc.R, 4)} mOhm is not the 3.083 it was`);
-const bad = r.factory.filter(x => !x.ok); if (bad.length) fails.push('factory motors not on round copper: ' + bad.map(x => x.n).join(', '));
-// hairpin
-if (!(r.hc.mCu > r.rc.mCu && r.hc.R < r.rc.R && r.hc.cuLow < r.rc.cuLow)) fails.push('a hairpin does not bring more copper, less resistance and less loss at low speed');
-if (!(r.hc.ac > r.rc.ac && r.hc.cuHigh > r.rc.cuHigh)) fails.push('a hairpin does not lose more at high speed');
-if (!(r.hc.cost > r.rc.cost)) fails.push('a hairpin does not cost more');
-// aluminium
-if (!(r.ra.R > 1.5 * r.rc.R && r.ra.R < 1.8 * r.rc.R && r.ra.cuLow > r.rc.cuLow)) fails.push('aluminium is not ~1.64× the resistance, with more loss');
-if (!(r.ra.mass < r.rc.mass && r.ra.cost < r.rc.cost)) fails.push('aluminium is not lighter and cheaper');
-if (r.hybrid.wire !== 'HAIRPIN' || r.hybrid.cond !== 'ALUMINIUM') fails.push('a hybrid motor does not take the winding');
-if (r.el.length !== 6 || r.el.some(t => /WINDING|CONDUCTOR|STRANDED|COPPER|ALUMINIUM/.test(t))) fails.push('the winding fields are not in Greek: ' + r.el.join(' · '));
-if (errors.length) fails.push(...errors);
-console.log(fails.length ? '\nFAIL:\n  ' + fails.join('\n  ') : '\nPASS');
+
+const f = (x, d = 4) => (+x).toFixed(d);
+const worn = r.all.filter(x => x.h < r.fatigue - 1e-6 || x.causes.length);
+const past = r.all.filter(x => x.maxRpm > x.red + 1e-6);
+const notAtLimit = r.all.filter(x => x.atLimit < 20 || x.maxRpm < x.red * 0.95);   // a governed diesel holds just under it
+console.log(`== ${r.all.length} real engines, 30 s on the limiter at full throttle: ${r.all.length - worn.length} unworn (health ${f(r.fatigue)}, baseline fatigue only) ==`);
+worn.forEach(x => { console.log(`   ${x.n}: health ${f(x.h)} ${x.causes.join(', ')}`); fails.push(`${x.n} wears on its limiter (${f(x.h)}, ${x.causes.join(', ') || 'no cause'})`); });
+past.forEach(x => fails.push(`${x.n} passed its redline on the bench (${Math.round(x.maxRpm)} > ${x.red})`));
+notAtLimit.forEach(x => fails.push(`${x.n} did not sit on its limiter (${f(x.atLimit, 1)} s of 30): the check proves nothing for it`));
+console.log(`== abuse: knock ${f(r.knock.h)} (${r.knock.causes.join(', ')}); lean under boost ${f(r.lean.h)} (${r.lean.causes.join(', ')}) ==`);
+if (!(r.knock.h < 0.9 && r.knock.causes.includes('DETONATION'))) fails.push('fixed timing far past the knock limit no longer wears the engine');
+if (!(r.lean.h < 0.95 && r.lean.causes.includes('LEAN/BOOST'))) fails.push('a lean mixture under boost no longer wears the engine');
+const enOk = /does not wear it/.test(r.guide.en) && !/98\.5|OVER-REV/.test(r.guide.en);
+const elOk = /δεν φθείρει τον κινητήρα/.test(r.guide.el) && !/98\.5|ΥΠΕΡΣΤΡΟΦΕΣ/.test(r.guide.el);
+console.log(`== guide: English ${enOk ? 'updated' : 'STALE'}, Greek ${elOk ? 'updated' : 'STALE'} ==`);
+if (!enOk) fails.push('the guide still says the limiter wears the engine');
+if (!elOk) fails.push('the Greek guide still says the limiter wears the engine');
+
+if (errors.length) console.log('ERRORS:\n  ' + errors.join('\n  '));
+if (fails.length) console.log('\nFAIL:\n  ' + fails.join('\n  '));
+else console.log('\nOK: the limiter holds the redline without wearing the engine; knock and lean boost still do.');
 await browser.close();
-process.exit(fails.length ? 1 : 0);
+process.exit(fails.length || errors.length ? 1 : 0);

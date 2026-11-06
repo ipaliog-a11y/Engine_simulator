@@ -20,7 +20,7 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 Working toward **v1.0 — every number derived, not fitted.**
 
-### Hairpin or round wire, copper or aluminium (build 233)
+### Hairpin or round wire, copper or aluminium (build 236)
 
 Stage 6 of `plans/hybrid-electric/drivetrain.md`. The motor's slot copper was one kind, stranded round wire at a 40%
 fill. Two fields are on the motor form now, WINDING and CONDUCTOR. Each acts through the slot's copper area and the
@@ -55,11 +55,125 @@ conductor's resistivity, mass, heat capacity and price; nothing multiplies a tor
   both be met honestly. ORNL's Prius standstill test (176 Nm magnet torque, 120 Nm reluctance torque at 150 A) is
   recorded there as a partial source.
 - **Tests.** In `test136`, the "WINDING not on the form" line becomes "WINDING and CONDUCTOR default to ROUND and
-  COPPER", as the plan's table allows stage 6. New test: `test143` checks the default as before, factory motors on
+  COPPER", as the plan's table allows stage 6. New test: `test146` checks the default as before, factory motors on
   round copper, the hairpin and aluminium directions, a hybrid's motor taking the fields, and the Greek.
   `test97` expected the motor's live WINDING tile to read "WINDING" in Greek, because the word had no Greek. It has
   now (ΤΥΛΙΓΜΑ, the same word as the new field), so the tile is checked against its Greek and against the engine's
   knock tile.
+
+### The bench's heat is the fuel's (build 235)
+
+The last of three builds correcting the live wear model.
+
+- **Heat came from rpm and throttle.** With AUTO THERMAL on, coolant and oil were heated by a load figure made of
+  engine speed and throttle. An engine free-revving on its limiter, where the fuel is cut and it makes only its own
+  friction, counted as full load. Within about a minute the oil passed 132 °C. Of the 93 real combustion engines, 55
+  took OIL TEMP or OVERHEAT wear in two minutes of free-revving, and 36 were blown.
+- **Now the heat is the fuel burned.** What a cooling system carries away is a share of the fuel's energy: 17–26% to
+  the coolant for a spark engine at full load, beside 25–28% at the crank (Heywood, *Internal Combustion Engine
+  Fundamentals*, 1988, ch. 12, Table 12.1). The thermal load is the fuel burned, measured against the fuel the engine
+  burns at the power its radiator was sized for (`radHp` from build 219, or the generic 260 hp part) at a road engine's
+  29% brake efficiency at rated power (BSFC about 280 g/kWh). A factory engine at its rated power on its own radiator
+  sits where full load sat before. A diesel, burning less fuel for its power, runs cooler. A build making more power
+  than its radiator was sized for heats past it, to 1.6×.
+- **The limiter burned half the fuel of full power.** Off the limiter, a firing step on the bench adds a full charge's
+  work, and the redline clamp threw away whatever overshot. So the bench bounced off the redline, burning and cutting
+  in turn, and burned about half its full-power fuel to hold a speed that, unloaded, needs only its friction. A real
+  limiter cuts just enough firing events to hold the speed. Now `stepEngine` records the share of a firing step's work
+  that was needed to reach the redline, and the cooling system sees only that fuel (`state.heatFuelLph`). The rpm, the
+  displayed fuel flow, the limiter's sound and the fuel cut are unchanged.
+- **Result, 93 real engines with AUTO THERMAL and WEAR on:**
+  - Free-revving at full throttle, 120 s: none take wear (was 55 damaged, 36 blown). Oil median 100 °C, highest
+    112 °C.
+  - Full load held at the rpm of peak power, 120–180 s: 14 take wear (was 54, 46 of them blown).
+  - On an LS7 at full load: its own radiator runs 114 °C, the generic 260 hp part 129 °C, SMALL 122 °C, LARGE 107 °C.
+- **Left open:** the 14 that still wear at sustained full rated power. They are a named list in test145
+  (`FULL_LOAD_KNOWN`) that may only shrink. 12 of the 14 have no oil cooler: the Golf GTI Mk7, Supra A80, WRX STI,
+  Evo IX, LS3, LS7, Coyote, Murciélago LP640, 458, both Huracáns and the E-Type. The RX-7 FD and Buick GNX do have one.
+  The cause is the lumped thermal model's fitted temperature rises: 34 °C of coolant at full heat over the cooling
+  capacity, and 8 + 30 °C of oil over the coolant. At rated power these put the oil past the 132 °C wear line. A
+  factory cooling system is sized to hold its engine's rated power for as long as it's run, as the durability tests
+  in build 233 show, so the right fix derives that design point. It's its own change. The model already integrates
+  wall heat (Woschni) over its traced cycle, which would be the better source for the coolant's share.
+- The "Heat, cooling & EGT" guide page (English and Greek) and the README describe where the heat comes from.
+  test145.
+
+### A factory engine's valve springs are its maker's (build 234)
+
+The second of three builds correcting the live wear model.
+
+- **Every STOCK spring was one generic part**, 250 N on the seat at 22 N/mm (the code calls it a small-engine
+  spring). A big-valve engine on it floated far below the redline its maker rates it to: 24 of the 89 real valved
+  engines, among them a Hellcat at 4,440 rpm against 6,200, a 6.4 Hemi at 4,440 against 6,400, a 993 Turbo at 4,686
+  against 6,700 and an LS3 at 5,869 against 6,600. No factory engine floats inside its own rev range, because the
+  limiter is set below float. The same mistake as the generic stock radiator in build 219.
+- **Now a factory preset carries `springRpm`**, the redline its springs were sized for (its own). Its STOCK springs
+  carry the seat load that floats the valves 5% past it, and PERFORMANCE and RACE are the same 1.6× and 2.2× steps
+  over that spring as over the generic one. It is saved with the build. A design of your own, and a build saved before
+  this one, keep the generic springs. All 94 real valved engines now float past their redline (lowest 1.05×, median
+  1.26×). The 5% margin is probable, not measured: GM rates a stock LS3 to its 6,600 rpm limiter, and owners report
+  its stock springs holding to about 6,500–7,000 rpm (LS1Tech, Speedmaster). Any margin above zero gives a factory
+  engine the same power. The margin decides only where a factory engine with a raised redline starts to float.
+- **Wear past valve float.** With WEAR on, running past the float speed now wears the engine (VALVE FLOAT, 0.004 a
+  second at the float speed and 0.01 more per 10% past it, a game rule like the other rates), since the valve can
+  meet the piston. That is the real "redline too high for the parts". An LS3 on stock springs with its redline
+  raised to 7,500 rpm (float 6,930) drops to 77% health in 20 s on its limiter. At its factory 6,600 rpm it doesn't
+  wear.
+- **Power moved on 8 engines, all further from their real figures.** Float had been cutting their top-end airflow,
+  and without it a separate over-prediction of high-rpm breathing shows:
+  - Mustang 289: 278 → 310 hp (real 225).
+  - Dino 246 GT: 203 → 250 (real 195).
+  - Countach LP400: 397 → 430 (real 375).
+  - 911 Turbo 993: 420 → 461 (real 408).
+  - Carrera RS 2.7: 223 → 246 (real 210).
+  - Hellcat: 709 → 742 (real 707).
+  - 6.4 Hemi: 466 → 484 (real 470).
+  - 365 GTB/4: 407 → 410 (real 352).
+
+  Torque didn't move. Mean power error over the 98 real engines goes from 6.62% to 7.39%. The owner chose to ship
+  the honest springs and name the gap rather than keep a wrong float that happened to hide it. All eight are two-valve
+  engines (four of them on carburettors, one on mechanical injection), so the next place to look is the breathing of
+  two-valve heads at high rpm. No preset was changed to compensate. They are named in tests as known gaps: test60's
+  `KNOWN` list (the Dino, Mustang 289, Carrera RS and Countach now peak on their limiter, the documented missing
+  top-end fade) and a new `RATING_KNOWN` in test115 (the Dino, +28% against its 25% band).
+- **Fingerprint:** numbers moved on exactly those 8 cars (power, power-to-weight, acceleration, laps). 41 more cars
+  show a changed lap *hash* only: a solved lap carries the track's shared racing-line cache, which holds every
+  earlier car's line keyed by its power, so the Hellcat's new key reaches every lap solved after it. Their own laps
+  are bit-identical when solved fresh (checked on the McLaren F1).
+- A preset that lists PERFORMANCE or RACE springs now gets that step over its own sized spring: more float margin,
+  no change in power, since its float already lay past its redline.
+- The "Valvetrain & cams", "Why engines have a redline" and "Wear & reliability" guide pages (English and Greek), the
+  WEAR option's note, the dyno legend and the README describe it. test144.
+- **Left open, the next build:** heat from fuel burned, so free-revving at full throttle no longer heats the oil to
+  OIL TEMP wear.
+
+### The rev limiter no longer wears the engine (build 233)
+
+The first of three builds that correct the live wear model, after a fact-check of what kills real engines.
+
+- **Holding the limiter cost 0.006 health a second.** With WEAR on, the bench charged OVER-REV whenever the engine ran
+  above 98.5% of its redline. The bench clamps the speed *at* the redline, so the engine could never actually
+  over-rev: it was charged for sitting on its own limiter. Free-revving at full throttle, every one of the 93 real
+  combustion engines lost health, and 48 were blown within two minutes, the Aygo 1.0 as fast as a GT3 or a 458.
+- **A redline is the speed an engine is rated to run at.** Makers set it with margin to the mechanical limit, and the
+  limiter exists so it can't be passed. Engines are validated by running flat out: a NATO-style durability test is
+  400 hours at full load and wide-open throttle, passed on 95% of the starting power (Banks Power's account), and a
+  marine type test is 240 hours at rated load and speed (CIFT, India). What over-revving kills is an engine forced
+  *past* its redline (a missed downshift), or a redline set beyond what its valvetrain holds (valve float). Neither
+  happens on the bench yet, so the term is gone, and no rpm is charged.
+- **Now:** all 93 real engines held on their limiter at full throttle for 30 s (temperatures held) keep their health
+  to the baseline fatigue (0.9998). Knock (an EA888 at 40° fixed timing, blown) and a lean mixture under boost (λ
+  1.25: 19% health left after 30 s) still wear exactly as before.
+- **Left open, the next two builds:** the model's valve-float rpm is below the redline on 24 of the 89 real valved
+  engines (a Hellcat floats at 4,440 rpm against its 6,200 rpm redline). So it can't yet decide whether a redline is
+  too high for the parts, and it already costs those engines airflow above it. That is the next build, and with it
+  comes wear for an engine run past its own float speed. After that, heat: the bench takes it from rpm and throttle,
+  not from fuel burned, so free-revving at full throttle with no load still heats the oil past 132 °C within about a
+  minute. With AUTO THERMAL on, 54 of the engines still take OIL TEMP wear on the limiter until then.
+- The hybrid bench keeps its engine at 97% of the redline. That rule was written around the old 98.5% charge, and it
+  is left as it is: changing it would move the hybrid bench, which is not this build.
+- The "Wear & reliability" and "Why engines have a redline" guide pages (English and Greek), the WEAR option's note, the dyno legend and the
+  README no longer say the limiter wears the engine. test143.
 
 ### A cold pack loses some power, not nine-tenths of it (build 232)
 

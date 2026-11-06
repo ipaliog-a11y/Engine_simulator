@@ -107,16 +107,31 @@ function updateGasLabels(){
     (e.scavPeakGain>0.002?Math.round(e.scavPeakRpm)+' rpm +'+(e.scavPeakGain*100).toFixed(1)+'%':tr('no scavenging')),
     e.scavPeakGain>0.002?'#7ee08a':'#778');
 }
+// A factory engine's springs are its maker's, sized for the engine (build 234). Every STOCK spring used to be one
+// generic part, 250 N on the seat, so a big-valve engine floated far below the redline its maker rates it to:
+// a Hellcat at 4440 rpm against 6200, a 6.4 Hemi at 4440 against 6400, an LS3 at 5869 against 6600 (24 of the 89 real
+// valved engines). No factory engine floats inside its own rev range: the limiter is set below float. So a factory
+// preset carries engine.springRpm, the redline its springs were sized for (its own), and its STOCK spring carries the
+// seat load that floats the valves SPRING_FLOAT_MARGIN past it; PERFORMANCE and RACE are the same steps over that spring
+// as over the generic one (1.6x and 2.2x the seat load). A design of your own (springRpm 0) keeps the generic springs.
+// The margin is probable, not measured: GM rates a stock LS3 to its 6600 rpm limiter and owners report its stock springs
+// holding to about 6500-7000 rpm (LS1Tech, Speedmaster); any margin above zero gives a factory engine the same power,
+// since float then lies past its rev range. It decides only where a factory engine's raised redline starts to float.
+const SPRING_FLOAT_MARGIN=1.05;
 function deriveValvetrain(){
   const e=engine;
-  if(e.type==='rotary'||e.ports){e.ivDia_mm=0;e.floatRpm=0;e.valveMass_g=0;return;}
+  if(e.type==='rotary'||e.ports){e.ivDia_mm=0;e.floatRpm=0;e.valveMass_g=0;e.springScale=1;return;}
   const pack=VALVE_PACK[e.valves]||VALVE_PACK[4];
   const cam=CAM[e.cam]||CAM.stock;
-  const spring=VALVE_SPRING[e.valveSpring]||VALVE_SPRING.stock;
   e.ivCount=pack.n;
   e.ivDia_mm=pack.dOverB*e.bore_mm;
   e.ivLift_mm=cam.lOverD*e.ivDia_mm;
   e.valveMass_g=valveMass(e.ivDia_mm,e.valveMat)*1000;
-  e.floatRpm=valveFloatRpm(e.ivLift_mm,cam.dur,spring,e.valveMass_g/1000,cam.accel,2);
+  const floatWith=sp=>valveFloatRpm(e.ivLift_mm,cam.dur,sp,e.valveMass_g/1000,cam.accel,2);
+  // the spring force the float speed needs goes with its square; never softer than the generic part
+  const f0=floatWith(VALVE_SPRING.stock);
+  e.springScale=e.springRpm>0?Math.max(1,Math.pow(e.springRpm*SPRING_FLOAT_MARGIN/f0,2)):1;
+  const g=VALVE_SPRING[e.valveSpring]||VALVE_SPRING.stock;
+  e.floatRpm=floatWith({seat:g.seat*e.springScale,rate:g.rate*e.springScale});
   e.floatMargin=e.floatRpm/Math.max(1,e.redline);
 }

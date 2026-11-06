@@ -3,7 +3,7 @@
 **Status:** stage 0 is the lock in `tests/test136.mjs` (build 225). Stages 1–3 are builds
 226–228. Stage 4, copper loss that rises with frequency, is build 229. Build 231 extends the fingerprint
 to the electric and hybrid cars (`--only=electric`), and build 232 corrects stage 3's cold. **Stage 5 is
-parked** (no measured Ld/Lq; see its section). Stage 6, the winding, is build 233. Stages 7–13 are not
+parked** (no measured Ld/Lq; see its section). Stage 6, the winding, is build 236. Stages 7–13 are not
 built. The lock is the drive at 25 °C with lamination 0.35 mm, regeneration HIGH, the AC copper of 1 mm
 strands, and round copper.
 
@@ -242,7 +242,7 @@ The new test checks those three directions and that the default reproduces the l
 resistance.
 
 
-**Shipped** as build 233. `WIRE` (ROUND 0.40, HAIRPIN 0.70 with four bars a slot, the Model 3's
+**Shipped** as build 236. `WIRE` (ROUND 0.40, HAIRPIN 0.70 with four bars a slot, the Model 3's
 layout) and `CONDUCTOR` (COPPER, ALUMINIUM at IEC 60889's 0.028264 ohm mm²/m). On the Model 3
 geometry: round copper 3.083 mΩ (unchanged), hairpin 1.762 mΩ and an AC factor of 9.6 at 15,000 rpm
 against 1.13, aluminium 5.066 mΩ and 6 kg lighter. The hairpin's 9.6 is likely high: its bar height

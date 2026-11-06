@@ -102,7 +102,7 @@ const r = await page.evaluate(() => {
   const m = motorBuild({ rotorD: 100, stackL: 80, poles: 4, turns: 40, magnet: 'ndfeb', retention: 'sleeve', cooling: 'jacket', inverter: 'sic', invAmps: 200, maxRpm: 40000 });
   const V = 350, psi = motorPsi(m, 60), knee = motorBaseW(m, V, psi) * 30 / Math.PI;
   const P = n => motorMaxTorque(m, n, V, 60) * n * Math.PI / 30;
-  // stage 6 (build 233) put WINDING and CONDUCTOR on the form, defaulting to today's round copper
+  // stage 6 (build 236) put WINDING and CONDUCTOR on the form, defaulting to today's round copper
   const absent = ['evGear2'].filter(id => document.getElementById(id));
   const wireEl = document.getElementById('evWire'), condEl = document.getElementById('evConductor');
   const lamEl = document.getElementById('evLamination'), regenEl = document.getElementById('evRegen');

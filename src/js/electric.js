@@ -37,7 +37,7 @@ const SLOT_SHARE=0.5, TOOTH_BAND=0.6, FILL=0.40;   // slots are half the band th
 // Round magnet wire, 1.0 mm. That is a usual stranded size for this fill, not a strand measured on the Model 3
 // (that motor is a hairpin, which is a later choice). A build may pass s.strand (m) to try another.
 const STRAND=0.001;
-// The winding (stage 6, build 233): how the copper sits in the slot, and what it is made of. Both act through the slot's
+// The winding (stage 6, build 236): how the copper sits in the slot, and what it is made of. Both act through the slot's
 // copper area, its resistivity, its mass and its price; nothing multiplies a torque or an efficiency.
 //   ROUND     stranded magnet wire at the 40% fill above (FILL): today's winding, so every factory motor stays on it.
 //   HAIRPIN   rectangular bars bent into hairpins and welded: about 70% of the slot is copper ("about 70%", Charged EVs,

@@ -979,6 +979,17 @@ function stepEngine(dt){
   let tq=brakeTorqueRaw(state.rpm,state.map,cut);
   tq-=brakeTorque();
   const omega=state.rpm*2*Math.PI/60+tq/engine.inertia*dt;
+  // The share of this step's firing the engine needed (build 235). Off the limiter a firing step adds a full charge's
+  // work, and the clamp below throws away whatever overshoots the redline, so the bench bounced off it burning and
+  // cutting in turn and burned about half its full-power fuel to hold a speed that, unloaded, needs only its friction.
+  // A real limiter cuts just enough firing events to hold the speed. The rpm is unchanged; limFrac, the share of the
+  // step whose work was used (a burn of limFrac against a cut of 1-limFrac lands exactly on the redline), scales the
+  // fuel the cooling system sees (state.heatFuelLph).
+  const w0=state.rpm*2*Math.PI/60,wRed=engine.redline*2*Math.PI/60;
+  if(!cut&&omega>wRed){
+    const tqCut=brakeTorqueRaw(state.rpm,state.map,true)-brakeTorque(),need=(wRed-w0)*engine.inertia/dt;
+    state.limFrac=clamp((need-tqCut)/Math.max(1e-9,tq-tqCut),0,1);
+  }else if(!cut)state.limFrac=1;
   state.rpm=clamp(omega*60/(2*Math.PI),engine.idleRpmEff,engine.redline);
 }
 // Integrate the battery: charge when the alternator out-supplies demand, drain otherwise.
@@ -992,8 +1003,19 @@ function stepElectrical(dt){
 }
 // ---- Reliability / wear ----
 // A worn engine makes less power (down on compression, more friction). Health drops fast
-// under detonation, overheat, lean-under-boost, and over-rev — the things that really kill
-// engines. A clean tune barely wears. At zero health the engine lets go (rebuild = BUILD).
+// under detonation, overheat and lean-under-boost — the things that really kill engines.
+// A clean tune barely wears. At zero health the engine lets go (rebuild = BUILD).
+//
+// Not the limiter (build 233). Running at the redline was charged 0.006 a second from 98.5% of it, so every engine
+// held on its limiter was blown in under three minutes: an Aygo, a GT3 and a 458 alike. A redline is the speed the
+// maker rates the engine to run at, with margin to its mechanical limit, and that is how engines are validated: the
+// NATO-style durability test is 400 hours at full load and wide-open throttle, passed on 95% of the starting power
+// (Banks Power's account of it), and a marine type test 240 hours at rated load and speed (CIFT). The limiter
+// exists so the engine cannot pass the redline, and on this bench it cannot: stepEngine clamps the speed to it. What
+// over-revving kills is the engine forced past it, or a redline set past what the valvetrain holds (valve float).
+// The first cannot happen here. The second can, on a design whose redline is past its own float speed (build 234):
+// the valve stops following the cam and can meet the piston, so running past floatRpm wears the engine, from 0.004 a
+// second at the float speed and 0.01 more for each 10% past it. Those rates are game rules, like the others here.
 function healthFactor(){return state.blown?0:(0.5+0.5*state.engineHealth);}
 function stepWear(dt){
   if(isElectric())return stepMotorWear(dt);
@@ -1005,7 +1027,7 @@ function stepWear(dt){
   add(state.knockRisk>55?(state.knockRisk-55)/45*0.060:0,'DETONATION');          // knock is the big killer
   add(state.coolant>112?(state.coolant-112)/18*0.030:0,'OVERHEAT');
   add(state.oil>132?(state.oil-132)/22*0.025:0,'OIL TEMP');
-  add(state.rpm>engine.redline*0.985?0.006:0,'OVER-REV');
+  if(engine.floatRpm>0&&state.rpm>engine.floatRpm)add(0.004+0.1*(state.rpm/engine.floatRpm-1),'VALVE FLOAT');
   if(!engine.ci)add(Math.max(0,lam-1.05)*Math.max(0,state.map-0.9)*0.14,'LEAN/BOOST');  // burnt pistons (diesels run lean by design)
   if(engine.ci)add(state.emPM>35?(state.emPM-35)/40*0.020:0,'OVER-FUEL/EGT');     // diesel: over-fuelling → soot & heat
   add(state.oil<55&&state.powerHP>15?0.004:0,'COLD-OIL');
@@ -1099,7 +1121,7 @@ function updateEnginePhysics(){
   state.bmep=r.bmep;state.ve=r.ve;state.knockRisk=r.knock;
 
   if(state.fuelCut){   // overrun / limiter fuel cut → no fuel burned, engine braking
-    state.fuelFlowLph=0;state.bsfc=999;state.thermalEff=0;
+    state.fuelFlowLph=0;state.heatFuelLph=0;state.bsfc=999;state.thermalEff=0;
     if(state.rpm<engine.redline){state.torque=Math.min(0,brakeTorqueRaw(state.rpm,map,true));state.powerKW=state.torque*state.rpm*2*Math.PI/60/1000;state.powerHP=state.powerKW/0.7457;}
     return;
   }
@@ -1110,6 +1132,7 @@ function updateEnginePhysics(){
   // out the exhaust (>1, thirsty). A diesel is 1: its torque is computed from this same fuel.
   const meteredFuel=(airMass_kg_s/curAFR(state.rpm,map))/engine.meteringEff*engine.typeBsfc;
   state.fuelFlowLph=(meteredFuel*3600)/engine.fuelDensity;
+  state.heatFuelLph=state.fuelFlowLph*(state.limFrac!=null?state.limFrac:1);   // what was burned, on the limiter too (build 235)
   const fuelPower=meteredFuel*engine.fuelLHV*1e6/1000;
   state.thermalEff=fuelPower>0.1?clamp((state.powerKW/fuelPower)*100,0,46):0;
   state.bsfc=state.powerKW>0.5?(meteredFuel*3600*1000)/state.powerKW:999;
