@@ -436,12 +436,16 @@ table.hy-map td:focus{outline:2px solid #ffcc00;outline-offset:-2px}
 .title-screen[hidden]{display:none!important}
 .title-stage{grid-row:1;position:relative;min-height:0;background:#1b2433;overflow:hidden}
 .title-dock{grid-row:2;padding:14px 16px 16px;background:linear-gradient(180deg,#1a1a2e 0%,#0a0a12 100%);border-top:4px solid #333}
-#titleImg{position:absolute;display:block;max-width:none;user-select:none;pointer-events:none}
+/* the four rooms, stacked (build 237): the one on view fades in over the one before; each walks by its own transform */
+.title-room{position:absolute;display:block;max-width:none;user-select:none;pointer-events:none;opacity:0;will-change:transform,opacity;backface-visibility:hidden}
+.title-room.on{opacity:1;transition:opacity .7s linear}
+@media(prefers-reduced-motion:reduce){.title-room.on{transition:none}}
 .title-brand{text-align:center;margin-bottom:12px}
 .title-brand h2{font-size:13px;color:#ffcc00;text-shadow:2px 2px 0 #000,-1px -1px 0 #aa6600;font-weight:normal;letter-spacing:1px}
 .title-brand p{font-size:8px;color:#888;margin-top:6px}
 .title-menu{display:grid;grid-template-columns:1fr 1fr;gap:8px;max-width:720px;margin:0 auto}
 .title-menu button{font-size:8px;padding:12px 10px;text-align:left;white-space:nowrap}
+.title-menu button:last-child:nth-child(odd){grid-column:1 / -1}
 .title-menu button::before{content:'>';display:inline-block;width:12px;color:#333;margin-right:6px}
 .title-menu button.on,.title-menu button:hover,.title-menu button:focus{border-color:#00ff88;color:#00ff88;background:#004422;outline:none}
 .title-menu button.on::before,.title-menu button:hover::before,.title-menu button:focus::before{color:#00ff88}
@@ -464,6 +468,42 @@ table.hy-map td:focus{outline:2px solid #ffcc00;outline-offset:-2px}
 }
 @media(max-width:420px){
   .title-menu{grid-template-columns:1fr}
+}
+/* CAR SHOWCASE (build 237): a page of its own over the app, like the title screen. A grid of the factory cars, and the
+   chosen one large beside it (above it on a phone, where the whole page scrolls instead of each column). */
+.showcase{position:fixed;inset:0;z-index:72;background:#0a0a12;display:grid;grid-template-rows:auto auto minmax(0,1fr);overflow:hidden}
+.showcase[hidden]{display:none!important}
+body.showcase-open{overflow:hidden}
+.sc-bar{display:flex;align-items:center;gap:12px;padding:12px 16px;background:linear-gradient(180deg,#1a1a2e 0%,#0a0a12 100%);border-bottom:4px solid #333}
+.sc-bar h2{font-size:12px;color:#ffcc00;text-shadow:2px 2px 0 #000,-1px -1px 0 #aa6600;font-weight:normal;letter-spacing:1px}
+.sc-count{flex:1;font-size:7px;color:#667}
+.sc-filters{display:flex;flex-wrap:wrap;gap:6px;padding:10px 16px;border-bottom:2px solid #1e1e2e}
+.sc-filters button{font-size:7px;padding:6px 8px;box-shadow:2px 2px 0 #000}
+.sc-body{display:grid;grid-template-columns:minmax(0,1fr) minmax(320px,440px);min-height:0}
+.sc-grid{overflow-y:auto;padding:12px 16px 24px;display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px;align-content:start}
+.sc-card{display:flex;flex-direction:column;align-items:stretch;padding:0;text-align:left;background:#11111c;border:3px solid #2a2a3a;box-shadow:2px 2px 0 #000;font-size:7px;line-height:1.5;color:#bbc;min-width:0}
+.sc-card img,.sc-card .sc-noart{display:block;width:100%;height:auto;aspect-ratio:2/1;object-fit:cover;object-position:50% 75%;image-rendering:auto;background:#1b2433}
+.sc-card .sc-no{color:#ffcc00;padding:5px 6px 0}
+.sc-card .sc-nm{padding:2px 6px 6px;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow-wrap:anywhere}
+.sc-card:hover{background:#1a1a2e;border-color:#666}
+.sc-card.on,.sc-card:focus{border-color:#00ff88;background:#004422;color:#dfe;outline:none}
+.sc-detail{overflow-y:auto;padding:14px 16px 24px;border-left:4px solid #333;background:#0d0d18}
+.sc-big{display:block;width:100%;height:auto;aspect-ratio:3/2;object-fit:cover;image-rendering:auto;border:2px solid #333;background:#1b2433}
+.sc-detail h3{font-size:10px;line-height:1.6;color:#eee;font-weight:normal;margin:10px 0 4px;overflow-wrap:anywhere}
+.sc-detail h3 span{color:#ffcc00}
+.sc-cat{font-size:7px;color:#778;margin-bottom:10px}
+.sc-figs{display:grid;grid-template-columns:auto minmax(0,1fr);gap:6px 12px;font-size:8px;line-height:1.5}
+.sc-figs dt{color:#889}
+.sc-figs dd{color:#00ff88;overflow-wrap:anywhere}
+.sc-src{font-size:7px;line-height:1.7;color:#667;margin:12px 0}
+.sc-act{display:grid;grid-template-columns:auto 1fr auto;gap:8px}
+.sc-drive{border-color:#00ff88;color:#00ff88;background:#004422}
+@media(max-width:800px){
+  .showcase{display:block;overflow-y:auto}
+  .sc-body{display:flex;flex-direction:column}
+  .sc-detail{order:-1;overflow:visible;border-left:0;border-bottom:4px solid #333;scroll-margin-top:64px}
+  .sc-grid{overflow:visible;grid-template-columns:repeat(auto-fill,minmax(130px,1fr))}
+  .sc-bar{position:sticky;top:0;z-index:1}
 }
 /* LIVE OUTPUT, compact (build 213): tighter tiles, and a fold button by the title that leaves the first row of gauges */
 #livePanel{padding:8px}

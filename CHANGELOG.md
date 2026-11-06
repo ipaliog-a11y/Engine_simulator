@@ -20,6 +20,66 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 Working toward **v1.0 — every number derived, not fitted.**
 
+### A car showcase on the title menu, and a smooth pan behind it (build 237)
+
+The showroom pictures of build 220 were only ever seen one at a time, on the VEHICLE tab of the car you had loaded.
+Build 220's entry promised a showcase page; this is its first version.
+
+- **Where.** **CAR SHOWCASE** is the title menu's fifth item. It opens a page of its own over the app. **BACK** or
+  Escape returns to the menu.
+- **What it shows.** One card per factory car, all 100 (92 combustion, 3 electric, 5 hybrid): its picture, number
+  and name, in number order (001 to 100). Family buttons (ALL, then the FACTORY CAR picker's families) narrow the
+  grid. The chosen car is shown large beside the grid (above it on a phone) with the figures its maker published:
+  engine, power and torque with their rpm, a hybrid's system power, curb mass, 0–100 km/h, top speed (marked
+  "governed" where it is) and driven wheels.
+- **Nothing is computed.** The figures are the presets' own, with the sources already cited beside them. A figure a
+  preset doesn't carry is left out, not estimated. So the three Teslas show no power line, because their drive
+  presets have no single published power figure. The page says the sim works out its own figures once you drive
+  the car.
+- **DRIVE THIS CAR** (or Enter, or a double-click on a card) loads the car exactly as the FACTORY CAR picker does,
+  through one shared function (`loadFactoryCarUI`, which the picker now uses too). It shows the car in both
+  pickers and opens the VEHICLE tab. The arrow keys walk the cards. Opening the showcase again starts on the car
+  you have loaded.
+- **Phone.** One column: the bar stays at the top and the chosen car sits above the grid. Picking a card scrolls
+  up to it. No sideways scroll in either language.
+- **Left open, for the next showcase builds:** the sim's own figures beside the maker's (each car would have to be
+  built, about 100 builds, so it wants a cache or a lazy fill); the electric drives' published power, once each
+  figure is sourced; sorting by power, mass or year; and the body-class pictures, which aren't real cars and
+  aren't shown.
+
+**The title screen's pan no longer stutters.** The owner asked for it in this same build. Measured over 60 frames in
+the test browser, the old pan moved on 16 frames, in jumps of 5 to 10 px. The new one moves on all 60, by about
+2.1 px each. There were five causes:
+
+- **A step every 50 ms.** The script repainted 20 times a second, not on every frame.
+- **Whole pixels, twice.** The pan was rounded to a picture pixel, then the position to a screen pixel.
+- **`left`, on the main thread.** Each step moved the picture by its `left`, so the page was laid out again.
+- **The bench drawn underneath.** The LIVE canvas (about 0.85 ms a frame) and every readout were drawn under the
+  menu, on every frame, though none of it was on view.
+- **A swap at every room.** One `<img>` changed its src each room: a fresh decode of a 1920 px picture, and a jump
+  cut back to the start of the pan.
+
+What it does now:
+
+- **Four stacked pictures.** Each room is its own `<img>`, decoded once before it is first shown. No picture is
+  swapped again.
+- **The browser walks the picture.** Each walk is a Web Animation of the picture's transform, which the browser runs
+  every frame at sub-pixel positions, whatever the main thread is doing.
+- **A 0.7 s crossfade.** The next room fades in over the last one. A room walks at one speed for its 5 s hold plus
+  the fade, so it is still moving as it fades out, and it reaches the picture's edge just as the fade ends, so the
+  stage is never uncovered. The script still keeps the clock, so tests can jump to any moment (`titleAdvance`).
+- **Nothing drawn under the menu.** While the menu or the showcase covers the app, the loop still steps the physics
+  and the sound (0.16 ms a frame), so the engine keeps running and sounding, but draws nothing. The first frame
+  after closing draws it all again. A replay or race on view pauses under the menu.
+- **Reduce motion.** With the system's "reduce motion" setting, the rooms hold still and change without a fade.
+
+- No number in the sim moves. The fingerprint is identical to build 236's.
+- Tests: new `test147` covers the menu item, the cards and their order, the families, the figures against the
+  presets, the keys, DRIVE (the same car as the picker's), Greek, and phone width. New `test148` covers the pan:
+  four pictures whose src never changes, motion on every frame in even sub-pixel steps, the crossfade, the stage
+  covered at every point of the walk, reduce motion, and no drawing under the menu. `test123` now expects five
+  menu items. `test123` and `test126` read the picture on view (`titleRoomEl()`) in place of the one `#titleImg`.
+
 ### Hairpin or round wire, copper or aluminium (build 236)
 
 Stage 6 of `plans/hybrid-electric/drivetrain.md`. The motor's slot copper was one kind, stranded round wire at a 40%

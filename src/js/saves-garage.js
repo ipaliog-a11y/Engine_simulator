@@ -91,6 +91,18 @@ function loadVehiclePreset(p){
   engine.name=ep.name;
   return p.name;
 }
+// The same load as picking it in FACTORY CAR (VEHICLE tab), from wherever a factory car is chosen: the picker, or the
+// car showcase (build 237). Both pickers then show what was loaded, and the strip names it.
+function loadFactoryCarUI(i){
+  const p=FACTORY_CARS[i];if(!p)return null;
+  const name=loadVehiclePreset(p);
+  const ei=FACTORY_ENGINES.findIndex(q=>q.name===p.engine);
+  if(enginePicker)enginePicker.show(ei);
+  if(carPicker)carPicker.show(i);
+  markLoaded('engine',p.engine);markLoaded('car',name);
+  flash(tr('LOADED:')+' '+name+(perf&&perf.t100?' • 0–100 '+perf.t100.toFixed(1)+'s':''));
+  return name;
+}
 function saveSetup(){
   try{localStorage.setItem(SAVE_KEY,JSON.stringify(serializeBuild('quicksave','')));flash(tr('BUILD SAVED'));}
   catch(e){flash(tr('SAVE FAILED (storage blocked)'),'err');}

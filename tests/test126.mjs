@@ -5,8 +5,8 @@
 //   · four scenes, each held 5000 ms, drawn wider than the stage so the pan has somewhere to go;
 //   · titleAdvance(0) starts on scene 0 at pan 0; late in the hold the pan has moved right;
 //   · crossing 5000 ms lands on the next scene and resets the pan;
-//   · every scene shows its picture (since build 230, assets/landing/*.webp in an <img>), covering the stage, placed
-//     where the pan says;
+//   · every scene shows its picture (since build 230, assets/landing/*.webp in an <img>; since build 237 one <img> per
+//     room, titleRoomEl() the one on view), covering the stage, placed where the pan says (test148 covers how it moves);
 //   · the existing menu still opens on ?title=1 (test123 covers the buttons).
 import { chromium } from './pw.mjs';
 import { fileURLToPath, pathToFileURL } from 'url';
@@ -52,11 +52,11 @@ if (wrap.idx !== 0) fails.push('at 20.1 s should wrap to scene 0, got ' + wrap.i
 const seen = new Set();
 for (const ms of [0, 4000, 5100, 10100, 15100]) {
   await page.evaluate(t => titleAdvance(t), ms);
-  await page.waitForFunction(() => { const i = document.getElementById('titleImg'); return !i.hidden && i.complete && i.naturalWidth > 0; }, null, { timeout: 5000 }).catch(() => {});
+  await page.waitForFunction(() => { const i = titleRoomEl(); return i && i.classList.contains('on') && i.complete && i.naturalWidth > 0; }, null, { timeout: 5000 }).catch(() => {});
   const r = await page.evaluate(t => {
-    const st = titleAdvance(t), i = document.getElementById('titleImg'), b = i.getBoundingClientRect(), s = i.parentElement.getBoundingClientRect();
+    const st = titleAdvance(t), i = titleRoomEl(), b = i.getBoundingClientRect(), s = i.parentElement.getBoundingClientRect();
     const scale = b.width / i.naturalWidth;
-    return { idx: st.idx, pan: st.pan, src: i.getAttribute('src') || i.src, room: TITLE_ROOMS[st.idx], shown: !i.hidden, w: i.naturalWidth,
+    return { idx: st.idx, pan: st.pan, src: i.getAttribute('src') || i.src, room: TITLE_ROOMS[st.idx], shown: i.classList.contains('on'), w: i.naturalWidth,
       covers: b.left <= s.left + 1 && b.right >= s.right - 1 && b.top <= s.top + 1 && b.bottom >= s.bottom - 1,
       leftOk: Math.abs((b.left - s.left) + st.pan * scale) <= 2 };
   }, ms);

@@ -150,13 +150,7 @@ function bindControls(){
     if(ch)flash(tr('REFITTED TO FACTORY SPEC')+': '+(vehBody?vehBody.name:tr(ch.label)));
   });
   // Real cars: the factory engine and the car's own body and fitment, together.
-  carPicker=wireFamilyPicker('vhFamily','vhPreset',FACTORY_CAR_CATS,FACTORY_CARS,p=>p.cat,'— load a real car —',i=>{
-    const name=loadVehiclePreset(FACTORY_CARS[i]);
-    const ei=FACTORY_ENGINES.findIndex(p=>p.name===FACTORY_CARS[i].engine);
-    if(enginePicker)enginePicker.show(ei);
-    markLoaded('engine',FACTORY_CARS[i].engine);markLoaded('car',name);
-    flash(tr('LOADED:')+' '+name+(perf&&perf.t100?' • 0–100 '+perf.t100.toFixed(1)+'s':''));
-  },p=>carNoName(p.name));
+  carPicker=wireFamilyPicker('vhFamily','vhPreset',FACTORY_CAR_CATS,FACTORY_CARS,p=>p.cat,'— load a real car —',loadFactoryCarUI,p=>carNoName(p.name));
   {const q=document.getElementById('vhCopyQ'),btn=document.getElementById('btnCopyFrom');
    if(q){q.addEventListener('input',syncCopyHit);q.addEventListener('keydown',e=>{if(e.key==='Enter'&&btn&&!btn.disabled)btn.click();});}
    if(btn)btn.addEventListener('click',()=>{
@@ -262,6 +256,10 @@ function loop(now){
   updatePhysics();
   stepWear(dt);
   updateSound();
+  // Under the title menu or the car showcase nothing of the app is on view, so it is not drawn: the bench keeps running
+  // (and sounding) underneath, and the menu's pan has the frame to itself (build 237). The first frame after either
+  // closes draws everything again.
+  if(appCovered()){requestAnimationFrame(loop);return;}
   if(vizMode==='engine')drawEngine(dt);
   else if(vizMode==='dyno'){drawDyno();renderDynoResult(false);}
   else if(vizMode==='track'){stepReplay(dt);drawTrack();}
@@ -270,6 +268,7 @@ function loop(now){
   updateUI();
   requestAnimationFrame(loop);
 }
+function appCovered(){const c=document.body.classList;return c.contains('title-open')||c.contains('showcase-open');}
 bindControls();bindHybridPanel();bindHybMap();applyEngineToForm(Object.assign({},DEFAULT_ENGINE));buildEngine();
 applyVehicleToForm(DEFAULT_VEHICLE);buildVehicle();updateVehicleSummary();
 loadFromHash();   // open a shared build if the URL carries one
@@ -281,6 +280,7 @@ bindRacePage();
 bindTrackPage();
 sizeCanvas();updatePhysics();updateUI();requestAnimationFrame(loop);
 bindTitleScreen();
+bindShowcase();
 if(titleOnLoad())openTitleScreen();
 
 // Register service worker for offline/installable PWA (no-op on file://).
