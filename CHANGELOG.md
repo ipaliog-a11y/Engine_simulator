@@ -20,6 +20,64 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 Working toward **v1.0 — every number derived, not fitted.**
 
+### The combustion engine's design as cards, with help and a live preview (build 239)
+
+Build 238 put the electric drive in cards. The combustion engine, about fifty fields in seven grids of bare values,
+now gets the same treatment. This is the second part of the interface update; VEHICLE and PARTS would follow.
+
+- **Six cards.** BLOCK (cylinders, layout, bore, stroke, eccentricity, compression, redline), HEAD & VALVES (valves,
+  cam, VVT, the overlap readout, valve material, springs, the valve-float readout, EGR), AIR & BOOST (intake type,
+  boost, intercooler, turbo size and arrangement, compressor wheel, housing, VGT, anti-lag, supercharger, boost taper,
+  torque limit, diesel governor, nitrous), INTAKE & EXHAUST (metering, air filter, runners and their readout, exhaust
+  and its readout, catalyst), FUEL & SPARK and COOLING & ELECTRICS. ENGINE TYPE stays above the cards, as it serves the
+  electric build too. The fuel map, the hybrid sections and the electric drive's cards follow the engine's cards.
+- **The same help as the motor's.** One line per input, with a slider whose ticks are the 95 factory combustion engines
+  and the range they span shaded. A ? explains every input, readouts included, and links to the guide page for that
+  input (compression to knock, the runners to intake waves, and so on). The effect of each change appears beside the
+  input. BASIC hides 14 finer settings; ADVANCED shows them.
+- **Fields the design does not use are not shown.** These are the fields the form already disabled: boost and the
+  turbo's settings on an engine without one, the octane on diesel, the eccentricity on a piston engine. Before, they
+  sat greyed out in the grid.
+- **WHAT YOUR ENGINE DOES**: peak power and torque (and where they arrive), displacement, grade, reliability, cost,
+  the power and torque curve and the mean piston speed at the redline. **WHAT HOLDS IT BACK** compares the valve-float
+  rpm with the redline, and knock with the limit an AUTO ECU retards to (KNOCK_TARGET), and says which binds, with a
+  ▲ on the redline or compression and in the menu when one does. On a phone it is a bar at the bottom (hp · Nm · L ·
+  grade). A hybrid shows the engine's cards and the motor's; on a phone only the engine's bar is fixed.
+- **A picture**: one cylinder to scale, the piston at the top and the bottom of its stroke, with the space left above
+  it, which the compression ratio sets.
+
+How the preview stays honest:
+
+- It is BUILD itself. `buildEngine` is now `buildEngineCore` (the engine, from the form) plus the screens it refreshes
+  (the summary, the challenge, the fuel map, the vehicle). The preview runs `buildEngineCore` on the form against the
+  live engine and state, then puts back the engine, the state, the build counter and the dyno and knock caches. The
+  readouts in the form (valve float, overlap, runner, primary) now follow the form as you change it, not only on BUILD.
+- test150 checks all 95 factory combustion engines: preview and BUILD give the same peak power, torque, reliability,
+  grade and cost, and the live engine and state are untouched after a preview.
+- The fingerprint is identical to build 238's: splitting `buildEngine` moved nothing.
+
+The cards themselves moved into `src/js/design-cards.js`, shared by both forms. `src/js/ev-designer.js` and
+`src/js/engine-designer.js` are now configs: the fields' help, the preview, the limits and the pictures. A new
+parameter is its field in the right card and one entry in its form's table. The motor's cards are unchanged (test149
+passes as it was), and the Plaid's preview fell from about 90 to about 50 ms on the way.
+
+Left open:
+
+- An engine with an ECU torque limit (the GTI's EA888, the Civic Type R's K20C1) takes about 0.4 s per preview,
+  because the boost is solved against the limit. Others take 40–200 ms. The preview waits until a slider stops for
+  150 ms, so dragging is smooth, but the figures arrive a moment after.
+- Two pictures are still to come: valve lift against crank angle, and the compressor map, which the LIVE tab already
+  draws.
+- test64 opens the AIR & BOOST card before choosing a turbo, because a Playwright click needs the field on screen.
+  Nothing else in it changed.
+
+- test87, the Greek sweep, skips the sliders' ticks, as it skips the preset lists. A tick's hover text is the names of
+  the real engines at that value ("Ford Windsor 289 4-bbl, Prius: 5,500"), and the words around them are in Greek. A
+  hybrid's engine is named by its car there (Prius, 918 Spyder), as the motor's ticks are, not by a description with
+  English words in it.
+
+Tests: test150 (new), test64 and test87 (updated as above), test149 (unchanged).
+
 ### The electric drive's design as cards, with help and a live preview (build 238)
 
 The ENGINE tab's motor, inverter and battery were 27 bare fields in four grids. Nothing said what a field does, what

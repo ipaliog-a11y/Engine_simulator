@@ -87,7 +87,7 @@ function applyEngineToForm(e){
   syncDesignEnable();
 }
 function syncDesignEnable(){
-  if(syncElectricSections())return;   // an electric build has its own sections (build 179)
+  if(syncElectricSections()){if(typeof icdSync==='function')icdSync(false);return;}   // an electric build has its own sections (build 179)
   const g=id=>document.getElementById(id);
   const type=g('edType').value, tp=ENGINE_TYPE[type]||ENGINE_TYPE.petrol4;
   // Diesel is compression-ignition (no spark, runs on diesel); 2-stroke & rotary use ports
@@ -136,11 +136,26 @@ function syncDesignEnable(){
   const efi=g('edIntakeSys').value==='efi'||g('edIntakeSys').value==='itb';
   if(!efi)g('edAfrMode').value='fixed';
   g('edAfrMode').disabled=!efi;
+  if(typeof icdSync==='function')icdSync(true);   // the engine's cards follow the form (build 239)
 }
 function buildEngine(){
   if(document.getElementById('edType').value==='electric')return buildElectric();   // build 179
   setLiveLabels(false);
   const prevStoich=(engine&&engine.stoichAFR)||14.7;   // to preserve lambda across fuel swaps
+  buildEngineCore(prevStoich,false);
+  updateEngineLabels();
+  updateDesignSummary();
+  renderChallenge();
+  // In AUTO (ECU MAP) mode the ECU sets the mixture, so the manual AFR slider is read-only.
+  const afrSlider=document.getElementById('afr');if(afrSlider)afrSlider.disabled=(engine.afrMode==='auto');
+  manageFuelMap();renderFuelMap();
+  if(document.getElementById('vhChassis')){buildVehicle();updateVehicleSummary();}   // refresh vehicle performance for the new engine
+}
+// The engine itself, from the form: everything BUILD works out, without the screens it then refreshes (build 239).
+// quiet: leave the LIVE bench's AFR slider alone, for the ENGINE tab's preview, which runs this on a copy of the live
+// state and puts it all back (icdCompute in src/js/engine-designer.js). The form's own readouts (valve float, overlap,
+// runner and primary) follow the form either way.
+function buildEngineCore(prevStoich,quiet){
   engine=readEngineFromForm();
   // Engine cycle/type: power-stroke divisor, compression-ignition & port-induction flags, and
   // the peak-pressure / thirst multipliers that give each type its character.
@@ -341,19 +356,19 @@ function buildEngine(){
   state.map=clamp(state.map,0.12,engine.mapMax);
   // Re-range the AFR slider. Diesel is quality-governed: air is unthrottled and power is set
   // by how much fuel is injected, so it always runs lean (λ≥1) from the smoke limit to idle.
-  const afrEl=document.getElementById('afr'),lam=state.afr/prevStoich;
+  const lam=state.afr/prevStoich,afrR={};
   if(engine.ci){
-    afrEl.min=(engine.stoichAFR*SMOKE_LAMBDA_CI).toFixed(1);   // smoke limit (full fuelling)
-    afrEl.max=(engine.stoichAFR*4.2).toFixed(1);    // light-load / idle (very lean)
-    afrEl.step=0.2;
-    state.afr=clamp(state.afr<engine.stoichAFR*SMOKE_LAMBDA_CI?engine.stoichAFR*1.4:lam*engine.stoichAFR,+afrEl.min,+afrEl.max);
+    afrR.min=(engine.stoichAFR*SMOKE_LAMBDA_CI).toFixed(1);   // smoke limit (full fuelling)
+    afrR.max=(engine.stoichAFR*4.2).toFixed(1);    // light-load / idle (very lean)
+    afrR.step=0.2;
+    state.afr=clamp(state.afr<engine.stoichAFR*SMOKE_LAMBDA_CI?engine.stoichAFR*1.4:lam*engine.stoichAFR,+afrR.min,+afrR.max);
   }else{
-    afrEl.min=(engine.stoichAFR*0.68).toFixed(1);
-    afrEl.max=(engine.stoichAFR*1.22).toFixed(1);
-    afrEl.step=engine.stoichAFR<10?0.05:0.1;
-    state.afr=clamp(lam*engine.stoichAFR,+afrEl.min,+afrEl.max);
+    afrR.min=(engine.stoichAFR*0.68).toFixed(1);
+    afrR.max=(engine.stoichAFR*1.22).toFixed(1);
+    afrR.step=engine.stoichAFR<10?0.05:0.1;
+    state.afr=clamp(lam*engine.stoichAFR,+afrR.min,+afrR.max);
   }
-  syncSliders();
+  if(!quiet){const afrEl=document.getElementById('afr');afrEl.min=afrR.min;afrEl.max=afrR.max;afrEl.step=afrR.step;syncSliders();}
   buildBoostTable(26);
   engine.tqLimTable=null;
   if(engine.tqLimit>0){buildTorqueLimit();buildBoostTable(26);}   // the ECU's torque limit lowers the target: re-solve the shaft
@@ -366,11 +381,4 @@ function buildEngine(){
   engine.score=scoreEngine();
   if(buildHybrid(engine))engine.cost+=engine.hy.cost;   // a hybrid system: the motor and pack on top (build 186)
   engine.inertia=engineInertia(engine.score.peakTQ);   // the clutch is sized for the torque it carries
-  updateEngineLabels();
-  updateDesignSummary();
-  renderChallenge();
-  // In AUTO (ECU MAP) mode the ECU sets the mixture, so the manual AFR slider is read-only.
-  const afrSlider=document.getElementById('afr');if(afrSlider)afrSlider.disabled=(engine.afrMode==='auto');
-  manageFuelMap();renderFuelMap();
-  if(document.getElementById('vhChassis')){buildVehicle();updateVehicleSummary();}   // refresh vehicle performance for the new engine
 }

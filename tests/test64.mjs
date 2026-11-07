@@ -105,6 +105,8 @@ await page.click('#tabVehicle'); await page.waitForTimeout(300);
 const carGone = await page.evaluate(() => !document.getElementById('carPreview') && !document.getElementById('vhBuildCap'));
 await page.click('#tabDesign'); await page.waitForTimeout(300);
 const engLit = await lit('#enginePreview');
+// since build 239 the intake is on the AIR & BOOST card, which the menu opens
+await page.click('#icdRb-air'); await page.waitForTimeout(150);
 await page.selectOption('#edIntake', 'na'); await page.waitForTimeout(150);
 const engA = await page.evaluate(() => { previewT = 0; renderEnginePreview(); return document.getElementById('enginePreview').toDataURL(); });
 await page.selectOption('#edIntake', 'turbo'); await page.waitForTimeout(150);
