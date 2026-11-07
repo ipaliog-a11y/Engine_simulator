@@ -1,6 +1,6 @@
-// A hybrid's 12 V side runs off its pack through a DC-DC converter, not an alternator (build 241).
+// A hybrid's 12 V side runs off its pack through a DC-DC converter, not an alternator (build 245).
 //
-// WHY THIS EXISTS. Until build 241 the combustion physics charged every engine for an alternator: a constant belt drag
+// WHY THIS EXISTS. Until build 245 the combustion physics charged every engine for an alternator: a constant belt drag
 // (0.035 bar of friction for the 120 A one) and the torque to make the 12 V current. A hybrid has no alternator. The
 // Prius, the Ioniq, the Qashqai e-POWER, the 330e and the 918 all run their 12 V side off the traction pack through a
 // DC-DC converter, and the hybrid's own code already took the 12 V load from the pack. So its engine paid twice. Owner's

@@ -33,7 +33,7 @@ function computeCost(){
   c+={small:200,stock:400,large:800}[engine.radiator]||0;
   c+={none:0,mechanical:150,electric:350}[engine.fan]||0;
   if(engine.oilCooler)c+=500;
-  // a hybrid's DC-DC converter in place of the alternator (build 241), priced as the 120 A alternator for want of a source
+  // a hybrid's DC-DC converter in place of the alternator (build 245), priced as the 120 A alternator for want of a source
   c+=engine.dcdc?250:({'60':150,'120':250,'180':450}[engine.alternator]||0);
   return Math.max(500,Math.round(c/50)*50);   // round to nearest $50
 }

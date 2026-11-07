@@ -120,11 +120,11 @@ function computeVE(rpm,map){
     const demand=(engine.displacement_L/1000)*ve*(rpm/60*engine.chargesPerRev)*rho;
     if(demand>engine.chokeFlow_kgs)ve*=engine.chokeFlow_kgs/demand;
   }
-  // Induction system: restriction/flow weighted by airflow demand (rpm).
-  const breathe=clamp(rpm/engine.redline,0,1);
-  ve*=1+engine.inductionFlowTop*breathe+engine.inductionFlowLow*(1-breathe);
-  // The air filter (build 210): its pressure drop at the flow it passes leaves the charge that much thinner.
-  ve*=1-filterDp(airFlowM3s(rpm,map,ve))/101325;
+  // The air filter (build 210) and a carburettor's venturi (build 244): the pressure each drops at the flow it passes
+  // leaves the charge that much thinner.
+  ve*=1-engine.catRampTop*clamp(rpm/engine.redline,0,1);   // the catalyst, fitted and counted twice (see buildEngineCore)
+  const Q=airFlowM3s(rpm,map,ve);
+  ve*=1-(filterDp(Q)+carbDp(Q))/101325;
   ve*=(0.97+0.03*clamp(map/engine.mapMax,0,1.2));
   // ---- derived valvetrain limits (see PHYSICS CORE) ----
   // These replace a valve-float term that only fired ABOVE the redline and so never ran inside the
@@ -599,7 +599,7 @@ function pumpingMEP(rpm,map){
 }
 // Friction + pumping mean effective pressure.
 function pumpFrictionMEP(rpm,map,oilFrictionMult){
-  let fmep=(0.55+1.8e-8*rpm*rpm)*oilFrictionMult*engine.strokeFrictionMult;
+  let fmep=mechFrictionMEP(rpm,map)*oilFrictionMult;               // rubbing + auxiliary, derived (src/js/friction.js)
   if(engine.intake==='supercharger')
     fmep+=0.18*(SC_TYPE[engine.scType]||SC_TYPE.roots).drag*Math.max(0,map-1.0)*(0.4+0.6*rpm/engine.redline);  // parasitic drive (by type)
   fmep+=pumpingMEP(rpm,map);

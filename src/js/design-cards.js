@@ -75,6 +75,13 @@ class DesignCards{
     box.addEventListener('input',e=>{if(e.target.matches('.evd-fields input[type=number]'))this.changed(e.target.id,false);});
     box.addEventListener('change',e=>{if(e.target.matches('.evd-fields input[type=number], .evd-fields select'))this.changed(e.target.id,true);});
     let wasNarrow=null;window.addEventListener('resize',()=>{const n=this.narrow();if(n!==wasNarrow){wasNarrow=n;this.layout();}this.drawViz();this.drawCurve();});
+    // The pictures are drawn only while they are on screen. A canvas that comes into view (the ENGINE tab opened after a
+    // preset jumped to DYNO, a card opened, the phone's bar opened) changes size from nothing, so redraw it then (build 240).
+    if(typeof ResizeObserver==='function'){
+      const ro=new ResizeObserver(()=>{this.drawViz();this.drawCurve();});
+      ro.observe(this.el('Curve'));
+      for(const c of this.cfg.cards)if(c.viz)ro.observe(this.el('Viz-'+c.id));
+    }
     return true;
   }
   // One field: [?] LABEL [slider] [box], then a line that appears when there is something to say, then the help (phone).

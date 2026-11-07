@@ -56,7 +56,7 @@ const HYB_ENGINE_PRESETS=[
   // with a 53 kW / 163 Nm MG2 and a 1.31 kWh NiMH pack of 28 modules (201.6 V): 90 kW together (Toyota GB's
   // technical specification).
   {cat:'Hybrid',name:'Toyota 2ZR-FXE 1.8 + power-split (Prius)',real:{hp:96.6,hpRpm:5200,tq:142,tqRpm:3600,motorKW:53,motorNm:163,sysKW:90},
-   unsure:['redline'],engine:{type:'petrol4',radiator:'large',oilCooler:true,cylinders:4,bore_mm:80.5,stroke_mm:88.3,compression:13,redline:5500,intake:'na',injector:'port',vvt:true,
+   unsure:['valvetrain','redline'],engine:{valvetrain:'dohc-roller',type:'petrol4',radiator:'large',oilCooler:true,cylinders:4,bore_mm:80.5,stroke_mm:88.3,compression:13,redline:5500,intake:'na',injector:'port',vvt:true,
     egr:'cooled-full',cam:'atkinson',valves:4,octane:95,airFilter:'stock',exhaust:'stock',cat:'stock',intakeSys:'efi',hyMode:'ps',hyDeploy:'full',
     evMotorType:'pm',evRotorD:150,evStack:60,evPoles:8,evTurns:100,evMagnet:'ndfeb',evRetention:'bridges',evCooling:'jacket',evMaxRpm:17000,
     evInverter:'igbt',evAmps:100,evRearCount:1,evFront:'none',evChem:'nimhHEV',evSeries:168,evKWh:1.31,evYear:2016}},
@@ -73,7 +73,7 @@ const HYB_ENGINE_PRESETS=[
   // 215 kW together), and a 12 kWh pack under the rear seat. The tune holds the charge between 12% and 95% (~10 kWh
   // usable, BMW's net figure ~10.4) and sustains it at 15%.
   {cat:'Hybrid',name:'BMW B48 2.0 turbo + P2 plug-in (330e)',real:{hp:181.5,hpRpm:5000,tq:300,tqRpm:1350,motorKW:80,motorNm:265,sysKW:215},
-   unsure:['redline','boost','pack'],engine:{type:'petrol4',radiator:'large',oilCooler:true,cylinders:4,bore_mm:82,stroke_mm:94.6,compression:10.2,redline:6500,intake:'turbo',boost_bar:0.4,turboSize:'small',
+   unsure:['redline','boost','pack'],engine:{valvetrain:'dohc-roller',type:'petrol4',radiator:'large',oilCooler:true,cylinders:4,bore_mm:82,stroke_mm:94.6,compression:10.2,redline:6500,intake:'turbo',boost_bar:0.4,turboSize:'small',
     injector:'direct',vvt:true,cam:'stock',valves:4,octane:95,airFilter:'stock',exhaust:'stock',cat:'stock',intakeSys:'efi',hyMode:'p2',hyDeploy:'full',hyPlug:true,
     hyTune:{rpm:4000,map:Array(20).fill(100),regen:'high',lps:true,evKmh:0,evKw:0,socLo:12,socT:15,socHi:95},
     evMotorType:'pm',evRotorD:200,evStack:60,evPoles:12,evTurns:48,evMagnet:'ndfeb',evRetention:'bridges',evCooling:'jacket',evMaxRpm:7500,

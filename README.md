@@ -1,4 +1,4 @@
-# PIXEL ENGINE SIM v0.7 build 241
+# PIXEL ENGINE SIM v0.7 build 245
 
 **A lightweight, 8-bit style internal combustion engine *designer* & simulator** inspired by *Automation*.
 
@@ -45,8 +45,9 @@ screamer, 2JZ six, muscle V8, blown V8, V12 supercar…), or configure your own 
   back-pressure; deleting it frees a few hp at the cost of emissions.
 - **Induction (metering)** — intake system (1/2/4-bbl carburetor, sidedraft carbs,
   mechanical injection, single-throttle EFI, or individual throttle bodies) and air filter
-  (open stacks → restrictive). These set top-end breathing, AFR-metering precision (EFI is
-  most efficient; carbs waste fuel), throttle response and idle quality.
+  (open stacks → restrictive). A carburettor's venturi and the filter cost the charge the
+  pressure they drop at the flow (so a carb engine fades at the top); the system also sets
+  AFR-metering precision (EFI is most efficient; carbs waste fuel), throttle response and idle quality.
 - **Valvetrain (derived physics)** — cam profile (stock / sport / race), variable valve timing,
   **valves per cylinder** (2 / 4 / 5), **valve material** (steel / titanium) and **valve springs**
   (stock / performance / race). Nothing here is a lookup multiplier: the intake valve diameter your
@@ -57,6 +58,8 @@ screamer, 2JZ six, muscle V8, blown V8, V12 supercar…), or configure your own 
   then the engine cannot use the rev range it claims. A
   wilder cam moves the powerband up and adds top-end at the cost of low-end torque and idle
   quality; VVT recovers the bottom end for a broad powerband.
+  **VALVETRAIN** (twin or single cam over buckets, rockers or roller fingers, or pushrods) sets how much the cams rub:
+  the engine's friction is built from its own bearings, pistons, rings and valvetrain (the Sandoval–Heywood model).
 - **Electrical** — alternator size (60 / 120 / 180 A). With a live **ELEC LOAD** control
   (lights/AC), a small alternator plus heavy load at idle drains the battery — low system
   voltage then weakens the spark. Ignition type sets a dwell/misfire RPM limit (a

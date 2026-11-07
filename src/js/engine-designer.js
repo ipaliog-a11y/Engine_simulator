@@ -32,6 +32,8 @@ const ICD_FIELDS={
     trade:'More rpm is more power while the engine still breathes there, but the pistons and rods carry more load and the valves may float. VALVE FLOAT, on HEAD & VALVES, says how high the valvetrain can go.'},
   edValves:{what:'How many valves each cylinder has.',
     trade:'More valves give more flow area, so better breathing at high rpm. Two valves in a wedge head are cheaper and give their best low down.'},
+  edValvetrain:{guide:'friction',what:'How the cams work the valves: two cams over the head or one, or a cam in the block with pushrods, and whether the follower slides or rolls on the cam.',
+    trade:'Buckets straight under the cams rub the least. Rockers and fingers rub more, and pushrods with their lifters more still. A roller on a rocker, finger or lifter rolls instead of sliding, which wins back much of that.'},
   edCam:{what:'How far and how long the cam opens the valves.',
     trade:'A wilder cam breathes better at high rpm, at the cost of low-end torque and a rougher idle. ATKINSON closes the intake late: more efficient, less power.'},
   edVVT:{guide:'vvt',what:'Whether the ECU can shift the cam timing while the engine runs.',
@@ -117,7 +119,7 @@ const ICD_FIELDS={
 };
 // Where a field's value lives on a factory engine, and how a choice is written there.
 const ICD_KEY={edCyl:'cylinders',edLayout:'layout',edBore:'bore_mm',edStroke:'stroke_mm',edEcc:'ecc_mm',edCR:'compression',edRedline:'redline',
-  edValves:'valves',edCam:'cam',edVVT:'vvt',edValveMat:'valveMat',edSpring:'valveSpring',edEgr:'egr',edIntake:'intake',edBoost:'boost_bar',
+  edValves:'valves',edValvetrain:'valvetrain',edCam:'cam',edVVT:'vvt',edValveMat:'valveMat',edSpring:'valveSpring',edEgr:'egr',edIntake:'intake',edBoost:'boost_bar',
   edIntercooler:'intercooler',edTurboSize:'turboSize',edTurboConfig:'turboConfig',edCompWheel:'compExd_mm',edHousing:'housing',edVGT:'vgt',
   edAntilag:'antilag',edScType:'scType',edTaperRpm:'taperRpm',edTaperPct:'taperPct',edTqLimit:'tqLimit',edGovRpm:'govRpm',edNitrous:'nitrous',
   edIntakeSys:'intakeSys',edAirFilter:'airFilter',edRunner:'runner',edExhaust:'exhaust',edCat:'cat',edFuel:'fuel',edOctane:'octane',
