@@ -410,9 +410,7 @@ redline shift the powerband up.
 <div class="gtier gt-phys"><div class="gtier-h">LV3 · THE PHYSICS</div>
 <div class="guide-body" data-gk="bottomPhys">
 <span class="geq">V<sub>d</sub> = (π/4) · B² · S · n<sub>cyl</sub> &nbsp;&nbsp; r<sub>c</sub> = (V<sub>swept</sub> + V<sub>c</sub>) / V<sub>c</sub></span>
-Friction grows with speed and with stroke. The model's friction mean effective pressure (bar) is
-<span class="geq">FMEP = (0.55 + 1.8·10<sup>−8</sup> N²) · k<sub>oil</sub> · k<sub>stroke</sub></span>
-plus pumping work and the alternator, see <a data-gp="friction">Friction, oil &amp; pumping</a>. The installed engine's mass is estimated from its size and layout (about 50 kg + 18 kg per litre + 7 kg per cylinder, 35% heavier for a diesel, more with a turbo or blower) and added to the car.<br>
+Friction grows with speed, and with piston speed most of all: the skirt's share is <i>2.94·10² · S<sub>p</sub> / B</i> kPa, so a long stroke in a small bore pays the most. The whole model is built from the bore, stroke, cylinders, valves and valvetrain, plus pumping work and the alternator, see <a data-gp="friction">Friction, oil &amp; pumping</a>. The installed engine's mass is estimated from its size and layout (about 50 kg + 18 kg per litre + 7 kg per cylinder, 35% heavier for a diesel, more with a turbo or blower) and added to the car.<br>
 Compression ratio enters three ways: efficiency through the fuel-air cycle, <i>1 − r<sub>c</sub><sup>−0.28</sup></i>; knock through the end-gas temperature after compression; and residual gas, a fraction about <i>1/(r<sub>c</sub> − 1)</i> of the charge.
 </div>
 </div>
@@ -640,17 +638,17 @@ Close the throttle while moving and those losses slow the car: that is <b>engine
 </div>
 <div class="gtier gt-game"><div class="gtier-h">LV2 · IN THE GAME</div>
 <div class="guide-body" data-gk="frictionGame">
-You see friction as the gap between what the cylinders make and what the crank delivers, and in how fast the engine slows when you lift. Cold, thick oil adds friction: a cold engine is down on power until it warms.
+You see friction as the gap between what the cylinders make and what the crank delivers, and in how fast the engine slows when you lift. Cold, thick oil adds friction: a cold engine is down on power until it warms. VALVETRAIN, on HEAD &amp; VALVES, sets how much the cams rub: buckets less than rockers or pushrods, a roller follower least.
 </div>
 </div>
 <div class="gtier gt-phys"><div class="gtier-h">LV3 · THE PHYSICS</div>
 <div class="guide-body" data-gk="frictionPhys">
 The mean effective pressures are added up and taken off the gross work:
-<span class="geq">BMEP = IMEP<sub>gross</sub> − FMEP − PMEP<br>FMEP = (0.55 + 1.8·10<sup>−8</sup> N²) · k<sub>oil</sub> · k<sub>stroke</sub> + alternator + blower drive<br>PMEP = (p<sub>exhaust</sub> − 1) + 0.9 · (1 − p<sub>manifold</sub>) &nbsp; [bar]</span>
-The exhaust half is derived from the back-pressure the pipes and turbine actually make (see <a data-gp="backpressure">Back-pressure &amp; residuals</a>); the intake half is the throttling. A diesel's loop is charged with its sign, so a turbo that makes more boost than back-pressure gives work back. The alternator's drag is the electrical power it is making divided by 0.55 efficiency, over crank speed: large at idle, negligible at the top.
+<span class="geq">BMEP = IMEP<sub>gross</sub> − FMEP − PMEP<br>FMEP = (crank + reciprocating + rings under gas load + valvetrain + pumps) · k<sub>oil</sub> + alternator + blower drive<br>PMEP = (p<sub>exhaust</sub> − 1) + 0.9 · (1 − p<sub>manifold</sub>) &nbsp; [bar]</span>
+FMEP is the Patton–Nitschke–Heywood model as revised by Sandoval and Heywood (SAE 2003-01-0725): each part in its lubrication regime, a constant where it rubs dry (seals, flat followers), ∝ N where an oil film shears (bearings, skirt), ∝ N² where oil is pumped through the bearings. It reads the bore B, stroke S, cylinders, valves and lift, compression (the rings' gas load), intake pressure and the valvetrain's constants (Table 4.2: a flat bucket 133, a flat rocker 400, a roller 0.005 to 0.023). Bearing sizes are 0.65 and 0.56 of the bore. At 3000 rpm it gives about 1.1 bar for a 2.3 litre four, against 0.7 bar from the old fitted curve.<br>The exhaust half is derived from the back-pressure the pipes and turbine actually make (see <a data-gp="backpressure">Back-pressure &amp; residuals</a>); the intake half is the throttling. A diesel's loop is charged with its sign, so a turbo that makes more boost than back-pressure gives work back. The alternator's drag is the electrical power it is making divided by 0.55 efficiency, over crank speed: large at idle, negligible at the top.
 </div>
 <div class="guide-limit" data-gk="frictionLimit">
-Limit: the friction curve is a standard correlation shape, not built from ring, bearing and valvetrain friction separately.
+Limit: oil viscosity, ring tension and liner roughness are held at the model's 1980s reference engine (10W-30 at 90 °C), so a modern low-tension ring pack is charged a little too much; warm-up still uses the older oil-temperature factor. Rotaries and two-strokes keep the old fitted curve.
 </div>
 </div>
 <div class="guide-see">See also: <a data-gp="heat">Heat, cooling &amp; EGT</a> · <a data-gp="backpressure">Back-pressure &amp; residuals</a> · <a data-gp="electrical">Electrical &amp; charging</a></div>

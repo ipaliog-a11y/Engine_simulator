@@ -599,7 +599,7 @@ function pumpingMEP(rpm,map){
 }
 // Friction + pumping mean effective pressure.
 function pumpFrictionMEP(rpm,map,oilFrictionMult){
-  let fmep=(0.55+1.8e-8*rpm*rpm)*oilFrictionMult*engine.strokeFrictionMult;
+  let fmep=mechFrictionMEP(rpm,map)*oilFrictionMult;               // rubbing + auxiliary, derived (src/js/friction.js)
   if(engine.intake==='supercharger')
     fmep+=0.18*(SC_TYPE[engine.scType]||SC_TYPE.roots).drag*Math.max(0,map-1.0)*(0.4+0.6*rpm/engine.redline);  // parasitic drive (by type)
   fmep+=pumpingMEP(rpm,map);
