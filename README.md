@@ -1,4 +1,4 @@
-# PIXEL ENGINE SIM v0.7 build 244
+# PIXEL ENGINE SIM v0.7 build 245
 
 **A lightweight, 8-bit style internal combustion engine *designer* & simulator** inspired by *Automation*.
 
@@ -808,7 +808,8 @@ philosophy).
 
 **Working on the code (people and coding agents):** read [`AGENTS.md`](AGENTS.md) first. It describes how a change
 becomes a build and a pull request (branching, stamping, tests, the CHANGELOG), so work from different tools never
-conflicts. Cursor picks it up through `.cursor/rules/development.mdc`.
+conflicts. Cursor picks it up through `.cursor/rules/development.mdc`. Its section 10 covers keeping an agent's
+context small, which is most of what a pull request costs to make.
 
 ```
 .
@@ -828,8 +829,10 @@ conflicts. Cursor picks it up through `.cursor/rules/development.mdc`.
 │   └── proto/                     #   parked models, not run by the suite — see tests/proto/README.md
 ├── tools/build.mjs                # Joins src/ into index.html; --check verifies the committed file
 ├── tools/stamp.mjs                # Stamps + verifies the build number
+├── tools/split-i18n.mjs          # One translation per line in src/js/i18n.js (keeps diffs small)
 ├── tools/fingerprint.mjs          # Every car's 0-100, laps and a race, exactly; --compare proves a refactor moved nothing
 ├── plans/                         # Proposals not yet built — plans/hybrid-electric/
+├── .gitattributes / .ignore       # Keep the generated index.html out of git diffs and out of searches
 └── .github/workflows/             # pages.yml: auto-deploy to GitHub Pages · check.yml: index.html is src/ joined
 ```
 

@@ -1,0 +1,7 @@
+# Files that searches (ripgrep, and the agents' search tools built on it) skip. Each one repeats text that lives in
+# src/, so a search would print every match twice, and their lines run to tens of thousands of characters.
+#   index.html      src/ joined by tools/build.mjs; edit src/, never this
+#   _v_late6.html   an old snapshot of the page, kept since build 191
+# To search them anyway: rg --no-ignore PATTERN index.html
+index.html
+_v_late6.html

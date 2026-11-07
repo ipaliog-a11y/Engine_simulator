@@ -20,6 +20,35 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 Working toward **v1.0 — every number derived, not fitted.**
 
+### Smaller diffs and searches for the agents that build the game (build 245)
+
+Nothing in the game changes: the fingerprint of every car, lap and race is identical to build 244's. This build is about
+what each pull request costs to make. A session measured on builds 238–244 spent $74 on about six pull requests, and 67%
+of that went to re-reading its own context on every call. That context grew to ~380k tokens, partly from very large
+diffs and search results that stayed in it for the rest of the session.
+
+- **`src/js/i18n.js`: one translation per line.** Builds had been adding their strings onto a single line, and the
+  longest held 31,380 characters, mostly Greek. A diff or search that touches a line prints all of it, so build 239's
+  six changed lines made an 80 KB diff, and `index.html` repeated it. 274 such lines are now 1,334, one entry each. The
+  three tables are byte-for-byte the same objects, keys in the same order (checked by evaluating them before and
+  after). What is still long is a single guide paragraph each, the longest 8,730 characters. `tools/split-i18n.mjs`
+  does the split, refuses to write if any translation would change, and reproduces this build's file byte for byte
+  from build 240's. Branches that still add strings the old way resolve with it: keep both sides' entries, run it.
+- **`.gitattributes`: `index.html` is `-diff linguist-generated`.** `git diff` and `git show` print one line for it
+  instead of repeating the `src/` diff (191 KB of build 239's 406 KB `git show`), and GitHub folds it in a pull request.
+  Merging is unchanged; `git diff --text -- index.html` still shows it.
+- **`.ignore`: searches skip `index.html` and `_v_late6.html`.** Both only repeat `src/`. A search for
+  "Combustion engine" printed 63 KB; it now prints 460 bytes.
+- **`AGENTS.md` section 10, "Keeping the context small",** and a line in the README: one session per pull request, no
+  waits over an hour in a session (the cache lasts an hour), check CI once, `git diff --stat` before a full diff, and
+  large files read in parts.
+- **test156** checks that every line of the three translation tables is one entry, that the page holds exactly the
+  keys those lines give, that Greek still comes through, and that git and searches treat `index.html` as generated.
+
+Left open, for the owner: `CHANGELOG.md` is 376 KB, and an agent that opens it whole reads its first 2,000 lines;
+moving older entries to an archive file would help, but past entries are the owner's. `_v_late6.html` (695 KB, an old
+snapshot of the page unchanged since build 191) could probably be deleted.
+
 ### A carburettor's restriction is its venturi, and the intake systems lose their fitted ramps (build 244)
 
 The second step of the top-end fade the owner asked for (build 243 was the first, the derived friction). The inlet
