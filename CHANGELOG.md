@@ -52,6 +52,10 @@ friction (build 243). On top of it, the hybrids' WLTP figures fall from 4.51 to 
 4.14), from 4.99 to 4.83 (Ioniq) and from 5.91 to 5.80 (Qashqai e-POWER). test117 and test119 had set build 243's
 figures as floors, and those floors are now tightened to these values.
 
+The hybrid BSFC map stores its cells as 32-bit floats but kept its best as a 64-bit number. A cell could then read up
+to about 1e-5 g/kWh under the "best", and with this build's figures test108 caught one. The best is now taken at the
+map's own precision.
+
 Tests: test152 (new) checks every hybrid has no alternator and the same engine without its hybrid system keeps one,
 that power never falls, and the form and summaries say DC-DC.
 ### A carburettor's restriction is its venturi, and the intake systems lose their fitted ramps (build 244)

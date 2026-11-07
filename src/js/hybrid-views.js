@@ -74,7 +74,7 @@ function hybBsfcMap(){
     for(let j=0;j<NT;j++){
       const T=T1*(j+0.5)/NT;let b=NaN;
       if(T<=Tf){const f=engineFuelAt(rpm,T,95);if(isFinite(f)&&T*w>500)b=f/(T*w)*3.6e6;}
-      g[i*NT+j]=b;if(b<best.b)best={b,rpm,T};
+      g[i*NT+j]=b;if(g[i*NT+j]<best.b)best={b:g[i*NT+j],rpm,T};   // the best at the map's own (32-bit) precision
     }
   }
   hy._bsfc={score:e.score,NR,NT,r0,r1,T1,g,best,img:null};
