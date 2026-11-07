@@ -20,7 +20,7 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 Working toward **v1.0 — every number derived, not fitted.**
 
-### A hybrid's 12 V comes from its pack through a DC-DC converter, not an alternator (build 245)
+### A hybrid's 12 V comes from its pack through a DC-DC converter, not an alternator (build 246)
 
 The combustion physics charged every engine for an alternator: a constant belt drag (0.035 bar of friction for the
 120 A one) and the torque to make the 12 V current. A hybrid has no alternator. The Prius, the Ioniq, the Qashqai
@@ -47,7 +47,7 @@ What moved (fingerprint, 134 values, only the five hybrids):
 The three hybrids with a maker's WLTP figure all come closer to it. Engine power moves 1-2 hp: closer for three cars,
 1 point further for the Ioniq and the 330e, whose engines were already over their ratings.
 
-This build was written at build 240 and merged after builds 242–244, so the table above is from before the derived
+This build was written at build 240 and merged after builds 242–245, so the table above is from before the derived
 friction (build 243). On top of it, the hybrids' WLTP figures fall from 4.51 to 4.33 (Prius, 4.6% over Toyota's
 4.14), from 4.99 to 4.83 (Ioniq) and from 5.91 to 5.80 (Qashqai e-POWER). test117 and test119 had set build 243's
 figures as floors, and those floors are now tightened to these values.
@@ -58,6 +58,35 @@ map's own precision.
 
 Tests: test152 (new) checks every hybrid has no alternator and the same engine without its hybrid system keeps one,
 that power never falls, and the form and summaries say DC-DC.
+### Smaller diffs and searches for the agents that build the game (build 245)
+
+Nothing in the game changes: the fingerprint of every car, lap and race is identical to build 244's. This build is about
+what each pull request costs to make. A session measured on builds 238–244 spent $74 on about six pull requests, and 67%
+of that went to re-reading its own context on every call. That context grew to ~380k tokens, partly from very large
+diffs and search results that stayed in it for the rest of the session.
+
+- **`src/js/i18n.js`: one translation per line.** Builds had been adding their strings onto a single line, and the
+  longest held 31,380 characters, mostly Greek. A diff or search that touches a line prints all of it, so build 239's
+  six changed lines made an 80 KB diff, and `index.html` repeated it. 274 such lines are now 1,334, one entry each. The
+  three tables are byte-for-byte the same objects, keys in the same order (checked by evaluating them before and
+  after). What is still long is a single guide paragraph each, the longest 8,730 characters. `tools/split-i18n.mjs`
+  does the split, refuses to write if any translation would change, and reproduces this build's file byte for byte
+  from build 240's. Branches that still add strings the old way resolve with it: keep both sides' entries, run it.
+- **`.gitattributes`: `index.html` is `-diff linguist-generated`.** `git diff` and `git show` print one line for it
+  instead of repeating the `src/` diff (191 KB of build 239's 406 KB `git show`), and GitHub folds it in a pull request.
+  Merging is unchanged; `git diff --text -- index.html` still shows it.
+- **`.ignore`: searches skip `index.html` and `_v_late6.html`.** Both only repeat `src/`. A search for
+  "Combustion engine" printed 63 KB; it now prints 460 bytes.
+- **`AGENTS.md` section 10, "Keeping the context small",** and a line in the README: one session per pull request, no
+  waits over an hour in a session (the cache lasts an hour), check CI once, `git diff --stat` before a full diff, and
+  large files read in parts.
+- **test156** checks that every line of the three translation tables is one entry, that the page holds exactly the
+  keys those lines give, that Greek still comes through, and that git and searches treat `index.html` as generated.
+
+Left open, for the owner: `CHANGELOG.md` is 376 KB, and an agent that opens it whole reads its first 2,000 lines;
+moving older entries to an archive file would help, but past entries are the owner's. `_v_late6.html` (695 KB, an old
+snapshot of the page unchanged since build 191) could probably be deleted.
+
 ### A carburettor's restriction is its venturi, and the intake systems lose their fitted ramps (build 244)
 
 The second step of the top-end fade the owner asked for (build 243 was the first, the derived friction). The inlet
