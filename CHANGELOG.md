@@ -20,6 +20,36 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 Working toward **v1.0 — every number derived, not fitted.**
 
+### A hybrid's 12 V comes from its pack through a DC-DC converter, not an alternator (build 241)
+
+The combustion physics charged every engine for an alternator: a constant belt drag (0.035 bar of friction for the
+120 A one) and the torque to make the 12 V current. A hybrid has no alternator. The Prius, the Ioniq, the Qashqai
+e-POWER, the 330e and the 918 all run their 12 V side off the traction pack through a DC-DC converter. The hybrid's own
+code already took that load from the pack (300 W in the drive cycle, 14 V on the LIVE bench), so a hybrid paid for its
+12 V twice. Reported by the owner.
+
+- **Physics:** a hybrid's engine has no alternator drag and no charging torque (`engine.dcdc`). An engine without a
+  hybrid system keeps its alternator as before.
+- **Form:** ALTERNATOR is hidden for a hybrid. COOLING & ELECTRICS, the design summary and the report say "12 V: DC-DC
+  from the pack". The guide's electrical page says so too, in English and Greek.
+- **Cost:** the DC-DC converter is priced as the 120 A alternator it replaces, for want of a source.
+
+What moved (fingerprint, 134 values, only the five hybrids):
+
+| Hybrid | Engine power | WLTP, L/100 km (maker) | 0-100 km/h |
+|---|---|---|---|
+| Ioniq Hybrid | 117 → 118 hp (real 104) | 4.77 → 4.62 (4.4): +8.4% → +5.0% | 9.46 → 9.36 s |
+| Prius | 95 → 96 hp (real 97) | 4.34 → 4.21 (4.14): +4.8% → +1.7% | 11.11 → 11.03 s |
+| Qashqai e-POWER | 154 → 155 hp (real 156) | 5.77 → 5.62 (5.3): +8.9% → +6.0% | unchanged |
+| 330e | 195 → 197 hp (real 182) | 6.60 → 6.49, held charge | 5.66 → 5.65 s |
+| 918 Spyder | 552 → 554 hp (real 599) | 7.01 → 6.88, held charge | unchanged |
+
+The three hybrids with a maker's WLTP figure all come closer to it. Engine power moves 1-2 hp: closer for three cars,
+1 point further for the Ioniq and the 330e, whose engines were already over their ratings.
+
+Tests: test152 (new) checks every hybrid has no alternator and the same engine without its hybrid system keeps one,
+that power never falls, and the form and summaries say DC-DC.
+
 ### The combustion engine's design as cards, with help and a live preview (build 239)
 
 Build 238 put the electric drive in cards. The combustion engine, about fifty fields in seven grids of bare values,

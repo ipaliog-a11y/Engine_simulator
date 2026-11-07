@@ -122,6 +122,7 @@ class DesignCards{
     if(!this.init())return;
     this.st.mode=mode;
     this.renderText();
+    this.renderFields();   // which fields the form now uses shows at once; the figures follow on the next frame
     this.queue(false,true);
   }
   // The preview runs at most once a frame while a slider is dragged; a slow one (cfg.delay) once the dragging stops.
