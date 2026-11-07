@@ -4,7 +4,7 @@
 //   node tools/split-i18n.mjs            rewrite src/js/i18n.js in place, then prove the tables did not change
 //
 // Why: a diff or a search that touches a line prints all of it, and lines that held a whole build's strings (31,380
-// characters at the longest) made a six-string change an 80 KB diff (build 241; AGENTS.md section 10; test156).
+// characters at the longest) made a six-string change an 80 KB diff (build 245; AGENTS.md section 10; test156).
 // Use it after merging a branch that still adds strings the old way: take either side's i18n.js, add the other side's
 // entries, and run this. A line that is a comment, blank, or one entry is left as it is; a trailing comment moves to a
 // line of its own above the entries. It evaluates the tables before and after, and fails if they differ in any key,

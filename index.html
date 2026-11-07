@@ -713,7 +713,7 @@ body.showcase-open{overflow:hidden}
 </div>
 <div class="container">
 <header>
-<h1>PIXEL ENGINE SIM v0.7 build 241</h1>
+<h1>PIXEL ENGINE SIM v0.7 build 245</h1>
 <div class="subtitle" id="subtitle">ENGINE DESIGNER • BUILD IT, THEN DRIVE IT</div>
 </header>
 <div class="build-strip" id="buildStrip">
@@ -771,6 +771,7 @@ body.showcase-open{overflow:hidden}
 </div></section>
 <section class="evd-card" id="icdCard-head" data-card="head"><div class="evd-fields">
 <div class="field"><label for="edValves">VALVES / CYLINDER</label><select id="edValves"><option value="2">2 (WEDGE)</option><option value="4">4 (PENT-ROOF)</option><option value="5">5</option></select></div>
+<div class="field"><label for="edValvetrain">VALVETRAIN</label><select id="edValvetrain"><option value="dohc-bucket">DOHC, BUCKET</option><option value="dohc-finger">DOHC, ROCKER</option><option value="dohc-roller">DOHC, ROLLER FINGER</option><option value="sohc-bucket">SOHC, BUCKET</option><option value="sohc-rocker">SOHC, ROCKER</option><option value="sohc-roller">SOHC, ROLLER ROCKER</option><option value="ohv">PUSHROD</option><option value="ohv-roller">PUSHROD, ROLLER</option></select></div>
 <div class="field"><label for="edCam">CAM PROFILE</label><select id="edCam"><option value="stock">STOCK</option><option value="sport">SPORT</option><option value="race">RACE</option><option value="atkinson">ATKINSON (LATE IVC)</option></select></div>
 <div class="field"><label for="edVVT">VARIABLE VALVE TIMING</label><select id="edVVT"><option value="no">NONE</option><option value="yes">VVT</option></select></div>
 <div class="field"><label>CAM OVERLAP</label><span class="val" id="valOverlap">—</span></div>
@@ -1335,9 +1336,7 @@ redline shift the powerband up.
 <div class="gtier gt-phys"><div class="gtier-h">LV3 · THE PHYSICS</div>
 <div class="guide-body" data-gk="bottomPhys">
 <span class="geq">V<sub>d</sub> = (π/4) · B² · S · n<sub>cyl</sub> &nbsp;&nbsp; r<sub>c</sub> = (V<sub>swept</sub> + V<sub>c</sub>) / V<sub>c</sub></span>
-Friction grows with speed and with stroke. The model's friction mean effective pressure (bar) is
-<span class="geq">FMEP = (0.55 + 1.8·10<sup>−8</sup> N²) · k<sub>oil</sub> · k<sub>stroke</sub></span>
-plus pumping work and the alternator, see <a data-gp="friction">Friction, oil &amp; pumping</a>. The installed engine's mass is estimated from its size and layout (about 50 kg + 18 kg per litre + 7 kg per cylinder, 35% heavier for a diesel, more with a turbo or blower) and added to the car.<br>
+Friction grows with speed, and with piston speed most of all: the skirt's share is <i>2.94·10² · S<sub>p</sub> / B</i> kPa, so a long stroke in a small bore pays the most. The whole model is built from the bore, stroke, cylinders, valves and valvetrain, plus pumping work and the alternator, see <a data-gp="friction">Friction, oil &amp; pumping</a>. The installed engine's mass is estimated from its size and layout (about 50 kg + 18 kg per litre + 7 kg per cylinder, 35% heavier for a diesel, more with a turbo or blower) and added to the car.<br>
 Compression ratio enters three ways: efficiency through the fuel-air cycle, <i>1 − r<sub>c</sub><sup>−0.28</sup></i>; knock through the end-gas temperature after compression; and residual gas, a fraction about <i>1/(r<sub>c</sub> − 1)</i> of the charge.
 </div>
 </div>
@@ -1437,10 +1436,12 @@ How fuel is added has changed over the decades: a <b>carburettor</b> uses the su
 <div class="guide-body" data-gk="inductionPhys">
 Manifold pressure is a state with a time constant: it fills toward the target set by throttle, rpm and boost at a rate set by the intake system's response (ITBs fastest, small carburettors slowest). Throttling costs pumping work, charged as
 <span class="geq">PMEP<sub>intake</sub> = 0.9 bar × (1 − p<sub>man</sub>)</span>
-at a closed throttle, which is engine braking. The metering accuracy of each system scales the fuel actually needed (a carburettor or mechanical injection delivers about 7–12% more fuel than the engine needs).
+at a closed throttle, which is engine braking. The metering accuracy of each system scales the fuel actually needed (a carburettor or mechanical injection delivers about 7–12% more fuel than the engine needs).<br>A carburettor's venturi costs the charge the pressure it drops, which goes with the square of the flow:
+<span class="geq">Δp = 5.08 kPa × (Q / Q<sub>rated</sub>)²</span>
+Carburettors are rated by the air they pass at 1.5 inHg (5.08 kPa). This one is sized by the makers' rule, CFM = CID × rpm × 0.85 / 3456 at the redline (Holley), so it drops about 5% of the charge at full revs and almost nothing low down. Injection has no venturi.
 </div>
 <div class="guide-limit" data-gk="inductionLimit">
-Limit: the induction systems' flow and response factors are hand-set to real relative behaviour, not derived from their geometry. The air filter's restriction is derived (build 210): its media by Darcy's law, its housing by its velocity head (<a data-gp="parts">Designing your own parts</a>).
+Limit: the induction systems' response, metering and idle factors are hand-set to real relative behaviour. Every carburettor is sized by the same rule, so a one-barrel breathes like a four-barrel at full throttle, and the throttle plates of injection, wide open, are left out. The air filter's restriction is derived (build 210): its media by Darcy's law, its housing by its velocity head (<a data-gp="parts">Designing your own parts</a>).
 </div>
 </div>
 <div class="guide-see">See also: <a data-gp="airpath">The air path</a> · <a data-gp="fuelmap">Fuel, injection &amp; the fuel map</a> · <a data-gp="friction">Friction, oil &amp; pumping</a></div>
@@ -1565,17 +1566,17 @@ Close the throttle while moving and those losses slow the car: that is <b>engine
 </div>
 <div class="gtier gt-game"><div class="gtier-h">LV2 · IN THE GAME</div>
 <div class="guide-body" data-gk="frictionGame">
-You see friction as the gap between what the cylinders make and what the crank delivers, and in how fast the engine slows when you lift. Cold, thick oil adds friction: a cold engine is down on power until it warms.
+You see friction as the gap between what the cylinders make and what the crank delivers, and in how fast the engine slows when you lift. Cold, thick oil adds friction: a cold engine is down on power until it warms. VALVETRAIN, on HEAD &amp; VALVES, sets how much the cams rub: buckets least, rockers more, pushrods more still, and a roller wins back much of it.
 </div>
 </div>
 <div class="gtier gt-phys"><div class="gtier-h">LV3 · THE PHYSICS</div>
 <div class="guide-body" data-gk="frictionPhys">
 The mean effective pressures are added up and taken off the gross work:
-<span class="geq">BMEP = IMEP<sub>gross</sub> − FMEP − PMEP<br>FMEP = (0.55 + 1.8·10<sup>−8</sup> N²) · k<sub>oil</sub> · k<sub>stroke</sub> + alternator + blower drive<br>PMEP = (p<sub>exhaust</sub> − 1) + 0.9 · (1 − p<sub>manifold</sub>) &nbsp; [bar]</span>
-The exhaust half is derived from the back-pressure the pipes and turbine actually make (see <a data-gp="backpressure">Back-pressure &amp; residuals</a>); the intake half is the throttling. A diesel's loop is charged with its sign, so a turbo that makes more boost than back-pressure gives work back. The alternator's drag is the electrical power it is making divided by 0.55 efficiency, over crank speed: large at idle, negligible at the top.
+<span class="geq">BMEP = IMEP<sub>gross</sub> − FMEP − PMEP<br>FMEP = (crank + reciprocating + rings under gas load + valvetrain + pumps) · k<sub>oil</sub> + alternator + blower drive<br>PMEP = (p<sub>exhaust</sub> − 1) + 0.9 · (1 − p<sub>manifold</sub>) &nbsp; [bar]</span>
+FMEP is the Patton–Nitschke–Heywood model as revised by Sandoval and Heywood (SAE 2003-01-0725): each part in its lubrication regime, a constant where it rubs dry (seals, flat followers), ∝ N where an oil film shears (bearings, skirt), ∝ N² where oil is pumped through the bearings. It reads the bore B, stroke S, cylinders, valves and lift, compression (the rings' gas load), intake pressure and the valvetrain's constants (Table 4.2: a flat bucket 133, a flat rocker 400, a roller 0.005 to 0.023). Bearing sizes are 0.65 and 0.56 of the bore. At 3000 rpm it gives about 1.1 bar for a 2.3 litre four, against 0.7 bar from the old fitted curve.<br>The exhaust half is derived from the back-pressure the pipes and turbine actually make (see <a data-gp="backpressure">Back-pressure &amp; residuals</a>); the intake half is the throttling. A diesel's loop is charged with its sign, so a turbo that makes more boost than back-pressure gives work back. The alternator's drag is the electrical power it is making divided by 0.55 efficiency, over crank speed: large at idle, negligible at the top.
 </div>
 <div class="guide-limit" data-gk="frictionLimit">
-Limit: the friction curve is a standard correlation shape, not built from ring, bearing and valvetrain friction separately.
+Limit: oil viscosity, ring tension and liner roughness are held at the model's 1980s reference engine (10W-30 at 90 °C), so a modern low-tension ring pack is charged a little too much; warm-up still uses the older oil-temperature factor. Rotaries and two-strokes keep the old fitted curve.
 </div>
 </div>
 <div class="guide-see">See also: <a data-gp="heat">Heat, cooling &amp; EGT</a> · <a data-gp="backpressure">Back-pressure &amp; residuals</a> · <a data-gp="electrical">Electrical &amp; charging</a></div>
@@ -3945,6 +3946,85 @@ function deriveValvetrain(){
   e.floatMargin=e.floatRpm/Math.max(1,e.redline);
 }
 // ================================================================================================
+// PHYSICS CORE — MECHANICAL FRICTION (build 243)
+// ------------------------------------------------------------------------------------------------
+// Until build 243 the engine's rubbing friction was one fitted curve, (0.55 + 1.8e-8·N²) bar times a stroke factor
+// 1 + (S − 86)/320, the same for a pushrod V8 and a bucket-tappet four. Nothing in it came from a measurement.
+//
+// It is now the Patton–Nitschke–Heywood friction model (SAE 890836, 1989) as revised by Sandoval and Heywood
+// ("An Improved Friction Model for Spark-Ignition Engines", SAE 2003-01-0725; D. Sandoval, MIT thesis 2002, App. A-2),
+// built from the engine's own bore, stroke, cylinders, valves, compression ratio, valvetrain and intake pressure. Each
+// term is a lubrication regime (boundary: constant; hydrodynamic: ~N; turbulent dissipation: ~N²) on one part:
+//
+//   crankshaft     main-bearing seals, main-bearing hydrodynamic, oil pumped through the bearings
+//   reciprocating  piston skirt, rings (mixed), connecting-rod bearings, and the rings' extra load from gas pressure
+//   valvetrain     camshaft bearings, cam/follower contact (flat or roller), the valves and lifters in their guides
+//   auxiliary      oil pump, water pump and an uncharged alternator
+//
+// All in kPa; B, S, bearing sizes and valve lift in mm; N in rpm; mean piston speed Sp in m/s. Pumping is not here:
+// the sim derives its own gas-exchange loop (pumpingMEP), so the thesis's pumping terms are left out.
+//
+// What is held at the model's reference rather than derived per engine, and why:
+//   · oil viscosity: the model's 10W-30 at 90 C (√(μ/μ0) = 1). Warm-up and overheating still go through the existing
+//     oil-temperature factor (tempFactors), applied to the whole as before. Replacing that with the thesis's Vogel
+//     viscosity is left open.
+//   · ring tension and liner roughness (Ft/Ft0, Cr) = 1: the thesis gives no values, only that a modern ring pack is
+//     lower; 1 is Patton's original engine, so this errs on the side of more friction.
+//   · bearing sizes: no preset carries them. Main journal 0.65 × bore and crankpin 0.56 × bore are the means of maker
+//     figures (Honda B16A 55/45 mm at 81 bore, BMW S14 60/48 at 93.4, Toyota 2JZ 62/53 at 86, GM LS1 64.5/53.3 at 99,
+//     Ford 289 57.2/53.2 at 101.6, VW EA827 54/47.8 at 81; service-manual figures, probable). Bearing width 0.35 ×
+//     its diameter, typical of passenger-car shells (probable).
+//   · rotaries and two-strokes have no poppet valvetrain and a different crank; the model was built for four-stroke
+//     piston engines, so they keep the old curve.
+const FRIC_MAIN_D=0.65,FRIC_PIN_D=0.56,FRIC_BRG_LD=0.35,FRIC_K=2.38e-2;
+// Table 4.2 of the thesis: cam follower (flat Cff, roller Crf), oscillating hydrodynamic (Coh) and oscillating mixed
+// (Com) constants by mechanism. A follower is flat or rolling, so only one of Cff, Crf applies. The thesis prints
+// Crf = 0.5 for OHV, the same as its Coh and 33 times the other rollers: taken as a misprint, and an OHV roller uses
+// the SOHC rocker's 0.0151, since the thesis says the other mechanisms were scaled from SOHC and OHV's flat constant
+// equals the rocker's.
+const VALVETRAIN={
+  'dohc-bucket': {label:'DOHC, BUCKET',      cams:2,ff:133,rf:0,     oh:0.5,om:10.7},
+  'dohc-finger': {label:'DOHC, ROCKER',      cams:2,ff:600,rf:0,     oh:0.2,om:25.8},
+  'dohc-roller': {label:'DOHC, ROLLER FINGER',cams:2,ff:0, rf:0.0227,oh:0.2,om:25.8},
+  'sohc-bucket': {label:'SOHC, BUCKET',      cams:1,ff:200,rf:0,     oh:0.5,om:10.7},
+  'sohc-rocker': {label:'SOHC, ROCKER',      cams:1,ff:400,rf:0,     oh:0.5,om:21.4},
+  'sohc-roller': {label:'SOHC, ROLLER ROCKER',cams:1,ff:0, rf:0.0151,oh:0.5,om:21.4},
+  'ohv':         {label:'PUSHROD',           cams:0,ff:400,rf:0,     oh:0.5,om:32.1},
+  'ohv-roller':  {label:'PUSHROD, ROLLER',   cams:0,ff:0, rf:0.0151,oh:0.5,om:32.1}
+};
+// A design that does not say: four or five valves are almost always two cams over buckets, two valves one cam and rockers.
+const valvetrainDefault=valves=>(+valves||4)>=4?'dohc-bucket':'sohc-rocker';
+// The engine's fixed geometry for the model, once per build (deriveFriction, after deriveValvetrain).
+function deriveFriction(){
+  const e=engine;
+  e.vtMech=VALVETRAIN[e.valvetrain]?e.valvetrain:valvetrainDefault(e.valves);
+  if(e.type==='rotary'||e.ports){e.fric=null;return;}
+  const nc=e.cylinders,banks=e.layout==='inline'?1:2,perBank=Math.ceil(nc/banks);
+  const vt=VALVETRAIN[e.vtMech];
+  e.fric={B:e.bore_mm,S:e.stroke_mm,nc,rc:e.compression,vt,
+    nMain:perBank+1,                                   // a main bearing either side of each throw (V and flat: shared throws)
+    nPin:nc,
+    nCam:vt.cams?vt.cams*banks*(perBank+1):perBank+1,   // OHV: one cam in the block, on as many journals as the crank
+    nv:(e.valves||4)*nc,
+    Lv:e.ivLift_mm||0.28*0.39*e.bore_mm,
+    Dm:FRIC_MAIN_D*e.bore_mm,Dp:FRIC_PIN_D*e.bore_mm};
+}
+// Rubbing + auxiliary friction mean effective pressure (bar) at N rpm and intake pressure map (bar absolute).
+function mechFrictionMEP(N,map){
+  const f=engine.fric;
+  if(!f)return (0.55+1.8e-8*N*N)*(1+(engine.stroke_mm-86)/320);   // rotary / two-stroke: the old curve (see above)
+  N=Math.max(N,300);
+  const {B,S,nc,rc,vt,nMain,nPin,nCam,nv,Lv,Dm,Dp}=f,B2S=B*B*S,Sp=2*S*N/60000,bnd=1+500/N;
+  const brg=(D,n)=>3.03e-4*N*D*D*D*FRIC_BRG_LD*D*n/(B2S*nc);
+  const crank=1.22e5*Dm/(B2S*nc)+brg(Dm,nMain)+1.35e-10*Dm*Dm*N*N*nMain/nc;
+  const recip=2.94e2*Sp/B+4.06e4*bnd/(B*B)+brg(Dp,nPin);
+  const gas=6.89*Math.max(0.2,map)*(0.088*rc+0.182*Math.pow(rc,1.33-2*FRIC_K*Sp));
+  const valve=244*N*nCam/(B2S*nc)+4.12+vt.ff*bnd*nv/(S*nc)+vt.rf*N*nv/(S*nc)
+             +vt.oh*Math.pow(Lv,1.5)*Math.sqrt(N)*nv/(B*S*nc)+vt.om*bnd*Lv*nv/(S*nc);
+  const aux=6.23+5.22e-3*N-1.79e-7*N*N;
+  return (crank+recip+gas+valve+aux)/100;
+}
+// ================================================================================================
 // PHYSICS CORE — GAS DYNAMICS
 // ------------------------------------------------------------------------------------------------
 // Third v1.0 conversion, and the one that retires the most fitted numbers at once:
@@ -5026,20 +5106,19 @@ function deriveGasDynamics(){
   e.egtPeak=T-273;
 }
 // ================================================================================================
-// Induction / metering system. flowTop = top-end breathing adjustment (airflow: restrictive
-// carbs choke up top, ITB/sidedraft/mech-injection breathe best). flowLow = low-rpm effect
-// (small carbs keep intake velocity; race setups sacrifice low-end plenum). metering = AFR
+// Induction / metering system. Until build 244 each also had flowTop and flowLow, a fitted top-end and low-rpm VE ramp;
+// a carburettor's restriction is now its venturi (carbDp, src/js/parts.js). metering = AFR
 // precision → efficiency (EFI holds optimal AFR everywhere; carbs/mech run rich & waste
 // fuel). resp = manifold response for the dynamic model. idle = idle-rpm penalty. di =
 // whether direct injection is available. Values chosen to reflect real relative behaviour.
 const INTAKE_SYS={
-  carb1:    {label:'1-BBL CARB',      flowTop:-0.16,flowLow:+0.03,metering:0.90,resp:0.90,idle:0,  di:false},
-  carb2:    {label:'2-BBL CARB',      flowTop:-0.09,flowLow:+0.01,metering:0.92,resp:0.95,idle:0,  di:false},
-  carb4:    {label:'4-BBL CARB',      flowTop:-0.03,flowLow:-0.02,metering:0.93,resp:1.00,idle:40, di:false},
-  sidedraft:{label:'SIDEDRAFT CARBS', flowTop:+0.06,flowLow:-0.05,metering:0.92,resp:1.15,idle:250,di:false},
-  mech:     {label:'MECH INJECTION',  flowTop:+0.05,flowLow:-0.07,metering:0.89,resp:1.10,idle:300,di:false},
-  efi:      {label:'EFI (SINGLE TB)', flowTop:0.00, flowLow:0.00, metering:1.00,resp:1.00,idle:0,  di:true},
-  itb:      {label:'EFI (ITB)',       flowTop:+0.08,flowLow:-0.03,metering:1.00,resp:1.25,idle:180,di:true}
+  carb1:    {label:'1-BBL CARB',       metering:0.90,resp:0.90,idle:0,  di:false},
+  carb2:    {label:'2-BBL CARB',      metering:0.92,resp:0.95,idle:0,  di:false},
+  carb4:    {label:'4-BBL CARB',      metering:0.93,resp:1.00,idle:40, di:false},
+  sidedraft:{label:'SIDEDRAFT CARBS', metering:0.92,resp:1.15,idle:250,di:false},
+  mech:     {label:'MECH INJECTION',  metering:0.89,resp:1.10,idle:300,di:false},
+  efi:      {label:'EFI (SINGLE TB)', metering:1.00,resp:1.00,idle:0,  di:true},
+  itb:      {label:'EFI (ITB)',       metering:1.00,resp:1.25,idle:180,di:true}
 };
 // Air filter (build 210): the factory systems, as what they restrict at the engine's peak flow. Until build 210 each was
 // a VE loss fitted in proportion to rpm (stock -4% at the redline, stacks +2%); now the restriction is the filter's
@@ -5082,8 +5161,8 @@ const PRESETS=[
   {cat:'Archetypes',name:'2.0 ITB NA Screamer I4', engine:{valves:4,valveMat:'titanium',valveSpring:'race',cylinders:4,bore_mm:87,stroke_mm:84,compression:11.7,redline:8800,intakeSys:'itb',airFilter:'none',cam:'race',exhaust:'race',cat:'none',octane:98,injector:'port',radiator:'large',oilCooler:true}},
   {cat:'Archetypes',name:'2.5 Turbo I5 (RS)',      engine:{valveSpring:'perf',cylinders:5,bore_mm:82.5,stroke_mm:92.8,compression:10,redline:7000,intake:'turbo',boost_bar:1.1,turboSize:'medium',octane:98,cam:'sport',exhaust:'sport',radiator:'large',oilCooler:true}},
   {cat:'Archetypes',name:'3.0 Turbo I6 (2JZ)',     engine:{valveSpring:'perf',cylinders:6,bore_mm:84,stroke_mm:90,compression:10.2,redline:7000,intake:'turbo',boost_bar:0.9,turboSize:'medium',octane:98,cam:'sport',exhaust:'sport',radiator:'large',oilCooler:true}},
-  {cat:'Archetypes',name:'5.0 V8 NA Muscle',       engine:{valves:2,valveSpring:'perf',cylinders:8,bore_mm:93,stroke_mm:92.7,compression:12,layout:'v',redline:7500,cam:'sport',exhaust:'sport',radiator:'large',oilCooler:true}},
-  {cat:'Archetypes',name:'6.2 Supercharged V8',    engine:{valves:2,valveSpring:'race',cylinders:8,bore_mm:103.9,stroke_mm:90.9,compression:9.5,layout:'v',redline:6400,intake:'supercharger',boost_bar:0.65,octane:98,injector:'port',vvt:false,cam:'sport',exhaust:'sport',radiator:'large',oilCooler:true}},
+  {cat:'Archetypes',name:'5.0 V8 NA Muscle',       engine:{valvetrain:'ohv-roller',valves:2,valveSpring:'perf',cylinders:8,bore_mm:93,stroke_mm:92.7,compression:12,layout:'v',redline:7500,cam:'sport',exhaust:'sport',radiator:'large',oilCooler:true}},
+  {cat:'Archetypes',name:'6.2 Supercharged V8',    engine:{valvetrain:'ohv-roller',valves:2,valveSpring:'race',cylinders:8,bore_mm:103.9,stroke_mm:90.9,compression:9.5,layout:'v',redline:6400,intake:'supercharger',boost_bar:0.65,octane:98,injector:'port',vvt:false,cam:'sport',exhaust:'sport',radiator:'large',oilCooler:true}},
   {cat:'Archetypes',name:'6.5 V12 NA Supercar',    engine:{valves:4,valveMat:'titanium',valveSpring:'race',cylinders:12,bore_mm:95,stroke_mm:76.4,compression:11.8,layout:'v',redline:8500,intakeSys:'itb',cam:'race',exhaust:'race',cat:'sport',octane:98,injector:'port',radiator:'large',oilCooler:true}},
   // A 2.0 turbodiesel runs a SMALL variable-geometry frame (a ~49 mm compressor, BV43/GTB1749V class).
   // It carried the medium frame until build 87, which on a 2.0 L does not make full boost until 2800 rpm.
@@ -5115,6 +5194,12 @@ const PRESETS=[
   // 480 Nm 1700-5850, TDI 320 Nm 1750-3000, N57 560 Nm 1500-3000): a flat line across thousands of rpm is a
   // torque-based ECU's calibration, not an engine's curve. Engines quoted at a single peak (the 2JZ, EJ257, 4G63,
   // RB26, the kei and city turbos, the truck diesels) carry none. The tapers above were solved with it in place.
+  // valvetrain (build 243), which the friction model reads (src/js/friction.js): set where the maker's layout is well
+  // documented (pushrods with roller lifters on the GM small-blocks, the Hemis, the Viper and the two diesels; flat tappets
+  // on the 1965 Windsor; rockers on the air-cooled Porsches and Honda's VTEC engines; roller fingers on the EcoBoosts,
+  // the modular Fords and BMW's and VW's turbo engines; single-cam buckets on the EA827 and the XU9; twin-cam buckets on
+  // the 2-valve Jaguar, Ferrari and Lamborghini engines). Elsewhere it follows the valves: four or five, twin cams over
+  // buckets; two, a single cam with rockers. unsure marks the Honda K20s, the GNX and the Prius.
   // the gap between the dyno and `real` IS the comparison. `unsure` names the inputs that are not in
   // the maker's published data and were set from typical practice (mostly boost pressure). Ratings
   // marked `note` are not what the engine makes: the JDM 280 PS / kei 64 PS gentlemen's agreements.
@@ -5125,23 +5210,23 @@ const PRESETS=[
   {cat:'Kei & City',name:'Fiat 0.9 TwinAir turbo',real:{hp:84,hpRpm:5500,tq:145,tqRpm:1900},unsure:['boost_bar'],
    engine:{cylinders:2,bore_mm:80.5,stroke_mm:86.0,compression:10.0,redline:6000,intake:'turbo',boost_bar:1.0,turboSize:'small',compExd_mm:40,cam:'stock',vvt:true,injector:'port',intercooler:'small',exhaust:'stock',airFilter:'stock',octane:95,taperRpm:2000,taperPct:35}},
   {cat:'Compact Turbo',name:'Ford 1.0 EcoBoost (Fiesta 125)',real:{hp:123,hpRpm:6000,tq:170,tqRpm:1400},unsure:['boost_bar'],
-   engine:{cylinders:3,bore_mm:71.9,stroke_mm:82.0,compression:10.0,redline:6500,intake:'turbo',boost_bar:1.2,turboSize:'small',cam:'stock',vvt:true,injector:'direct',intercooler:'small',exhaust:'stock',airFilter:'stock',octane:95,taperRpm:3000,taperPct:53,tqLimit:170}},
+   engine:{valvetrain:'dohc-roller',cylinders:3,bore_mm:71.9,stroke_mm:82.0,compression:10.0,redline:6500,intake:'turbo',boost_bar:1.2,turboSize:'small',cam:'stock',vvt:true,injector:'direct',intercooler:'small',exhaust:'stock',airFilter:'stock',octane:95,taperRpm:3000,taperPct:53,tqLimit:170}},
   {cat:'Compact Turbo',name:'VW EA888 2.0 TSI (Golf GTI Mk7)',real:{hp:220,hpRpm:4500,tq:350,tqRpm:1500},
-   engine:{cylinders:4,bore_mm:82.5,stroke_mm:92.8,compression:9.6,redline:6500,intake:'turbo',boost_bar:1.1,turboSize:'small',cam:'stock',injector:'direct',intercooler:'large',exhaust:'stock',airFilter:'stock',octane:98,taperRpm:1500,taperPct:60,tqLimit:350}},
+   engine:{valvetrain:'dohc-roller',cylinders:4,bore_mm:82.5,stroke_mm:92.8,compression:9.6,redline:6500,intake:'turbo',boost_bar:1.1,turboSize:'small',cam:'stock',injector:'direct',intercooler:'large',exhaust:'stock',airFilter:'stock',octane:98,taperRpm:1500,taperPct:60,tqLimit:350}},
   {cat:'Compact Turbo',name:'Toyota G16E-GTS (GR Yaris)',real:{hp:257,hpRpm:6500,tq:360,tqRpm:3000},unsure:['boost_bar'],
    engine:{cylinders:3,bore_mm:87.5,stroke_mm:89.7,compression:10.5,redline:7000,intake:'turbo',boost_bar:1.4,turboSize:'medium',compExd_mm:56,cam:'sport',vvt:true,injector:'direct',intercooler:'large',exhaust:'sport',airFilter:'perf',octane:98,taperRpm:3000,taperPct:60,tqLimit:360}},
-  {cat:'Compact Turbo',name:'Honda K20C1 (Civic Type R FK8)',real:{hp:316,hpRpm:6500,tq:400,tqRpm:2500},unsure:['boost_bar'],
-   engine:{cylinders:4,bore_mm:86.0,stroke_mm:85.9,compression:9.8,redline:7000,intake:'turbo',boost_bar:1.6,turboSize:'medium',compExd_mm:58,cam:'sport',vvt:true,injector:'direct',intercooler:'large',exhaust:'sport',airFilter:'perf',octane:98,tqLimit:400}},
+  {cat:'Compact Turbo',name:'Honda K20C1 (Civic Type R FK8)',real:{hp:316,hpRpm:6500,tq:400,tqRpm:2500},unsure:['valvetrain','boost_bar'],
+   engine:{valvetrain:'dohc-finger',cylinders:4,bore_mm:86.0,stroke_mm:85.9,compression:9.8,redline:7000,intake:'turbo',boost_bar:1.6,turboSize:'medium',compExd_mm:58,cam:'sport',vvt:true,injector:'direct',intercooler:'large',exhaust:'sport',airFilter:'perf',octane:98,tqLimit:400}},
   {cat:'NA Sports',name:'Mazda B6-ZE (MX-5 NA)',real:{hp:115,hpRpm:6500,tq:136,tqRpm:5500},
    engine:{cylinders:4,bore_mm:78.0,stroke_mm:83.6,compression:9.4,redline:7200,cam:'stock',vvt:false,injector:'port',octane:95,exhaust:'stock',airFilter:'stock'}},
   {cat:'NA Sports',name:'Toyota 4A-GE (AE86)',real:{hp:128,hpRpm:6600,tq:149,tqRpm:5200},
    engine:{cylinders:4,bore_mm:81.0,stroke_mm:77.0,compression:9.4,redline:7600,cam:'sport',vvt:false,injector:'port',octane:95,exhaust:'stock',airFilter:'stock',runner:'medium'}},
   {cat:'NA Sports',name:'Honda F20C (S2000 AP1)',real:{hp:240,hpRpm:8300,tq:208,tqRpm:7500},
-   engine:{cylinders:4,bore_mm:87.0,stroke_mm:84.0,compression:11.0,redline:8900,cam:'race',injector:'port',octane:98,airFilter:'perf',runner:'short',exhaust:'race'}},
+   engine:{valvetrain:'dohc-finger',cylinders:4,bore_mm:87.0,stroke_mm:84.0,compression:11.0,redline:8900,cam:'race',injector:'port',octane:98,airFilter:'perf',runner:'short',exhaust:'race'}},
   {cat:'NA Sports',name:'BMW S54 (M3 E46)',real:{hp:343,hpRpm:7900,tq:365,tqRpm:4900},
    engine:{cylinders:6,bore_mm:87.0,stroke_mm:91.0,compression:11.5,redline:8000,cam:'race',injector:'port',octane:98,intakeSys:'itb',airFilter:'perf',runner:'short',exhaust:'race'}},
   {cat:'NA Sports',name:'Porsche 4.0 flat-six (911 GT3 991.2)',real:{hp:493,hpRpm:8250,tq:460,tqRpm:6000},
-   engine:{cylinders:6,layout:'boxer',bore_mm:102.0,stroke_mm:81.5,compression:13.3,redline:9000,cam:'race',vvt:true,valveSpring:'race',valveMat:'titanium',injector:'direct',octane:98,exhaust:'race',airFilter:'perf',runner:'variable'}},
+   engine:{valvetrain:'dohc-finger',cylinders:6,layout:'boxer',bore_mm:102.0,stroke_mm:81.5,compression:13.3,redline:9000,cam:'race',vvt:true,valveSpring:'race',valveMat:'titanium',injector:'direct',octane:98,exhaust:'race',airFilter:'perf',runner:'variable'}},
   {cat:'Turbo Performance',name:'Toyota 2JZ-GTE (Supra A80)',real:{hp:320,hpRpm:5600,tq:427,tqRpm:4000},unsure:['compExd_mm'],note:'export rating; JDM cars were quoted at 280 PS',
    engine:{cylinders:6,bore_mm:86.0,stroke_mm:86.0,compression:8.5,redline:6800,intake:'turbo',boost_bar:0.75,turboSize:'medium',compExd_mm:58,turboConfig:'sequential',cam:'sport',vvt:false,injector:'port',intercooler:'large',exhaust:'sport',airFilter:'perf',octane:98,taperRpm:4000,taperPct:35}},   // VVT-i only from mid-1997 (MY1998)
   {cat:'Turbo Performance',name:'Nissan RB26DETT (Skyline GT-R R34)',real:{hp:276,hpRpm:6800,tq:392,tqRpm:4400},unsure:['runner'],note:'JDM 280 PS gentlemen\'s agreement; real output is higher',
@@ -5151,15 +5236,15 @@ const PRESETS=[
   {cat:'Turbo Performance',name:'Mitsubishi 4G63T (Lancer Evo IX)',real:{hp:286,hpRpm:6500,tq:392,tqRpm:3500},unsure:['boost_bar','compExd_mm'],
    engine:{cylinders:4,bore_mm:85.0,stroke_mm:88.0,compression:8.8,redline:7000,intake:'turbo',boost_bar:1.3,turboSize:'medium',compExd_mm:68,cam:'sport',vvt:true,injector:'port',intercooler:'large',exhaust:'sport',airFilter:'perf',octane:98,taperRpm:3500,taperPct:49}},
   {cat:'Turbo Performance',name:'Audi 2.5 TFSI (RS3 8V)',real:{hp:394,hpRpm:5850,tq:480,tqRpm:1700},unsure:['boost_bar','turboSize'],
-   engine:{cylinders:5,bore_mm:82.5,stroke_mm:92.8,compression:10.0,redline:7000,intake:'turbo',boost_bar:1.4,turboSize:'medium',cam:'sport',vvt:true,injector:'direct',octane:98,intercooler:'large',exhaust:'sport',airFilter:'perf',taperRpm:2000,taperPct:64,tqLimit:480}},
+   engine:{valvetrain:'dohc-roller',cylinders:5,bore_mm:82.5,stroke_mm:92.8,compression:10.0,redline:7000,intake:'turbo',boost_bar:1.4,turboSize:'medium',cam:'sport',vvt:true,injector:'direct',octane:98,intercooler:'large',exhaust:'sport',airFilter:'perf',taperRpm:2000,taperPct:64,tqLimit:480}},
   {cat:'American V8',name:'GM LS3 (Corvette C6)',real:{hp:430,hpRpm:5900,tq:575,tqRpm:4600},
-   engine:{cylinders:8,layout:'v',bore_mm:103.25,stroke_mm:92.0,compression:10.7,redline:6600,valves:2,cam:'sport',vvt:false,valveSpring:'perf',injector:'port',octane:98,exhaust:'sport',airFilter:'perf'}},
+   engine:{valvetrain:'ohv-roller',cylinders:8,layout:'v',bore_mm:103.25,stroke_mm:92.0,compression:10.7,redline:6600,valves:2,cam:'sport',vvt:false,valveSpring:'perf',injector:'port',octane:98,exhaust:'sport',airFilter:'perf'}},
   {cat:'American V8',name:'GM LS7 (Corvette Z06 C6)',real:{hp:505,hpRpm:6300,tq:637,tqRpm:4800},
-   engine:{cylinders:8,layout:'v',bore_mm:104.8,stroke_mm:101.6,compression:11.0,redline:7000,valves:2,cam:'race',vvt:false,valveSpring:'race',valveMat:'titanium',injector:'port',octane:98,exhaust:'sport',airFilter:'perf'}},
+   engine:{valvetrain:'ohv-roller',cylinders:8,layout:'v',bore_mm:104.8,stroke_mm:101.6,compression:11.0,redline:7000,valves:2,cam:'race',vvt:false,valveSpring:'race',valveMat:'titanium',injector:'port',octane:98,exhaust:'sport',airFilter:'perf'}},
   {cat:'American V8',name:'Ford Coyote 5.0 (Mustang GT 2018)',real:{hp:460,hpRpm:7000,tq:569,tqRpm:4600},
-   engine:{cylinders:8,layout:'v',bore_mm:93.0,stroke_mm:92.7,compression:12.0,redline:7500,cam:'sport',vvt:true,injector:'direct',octane:98,exhaust:'sport',airFilter:'perf',runner:'variable'}},
+   engine:{valvetrain:'dohc-roller',cylinders:8,layout:'v',bore_mm:93.0,stroke_mm:92.7,compression:12.0,redline:7500,cam:'sport',vvt:true,injector:'direct',octane:98,exhaust:'sport',airFilter:'perf',runner:'variable'}},
   {cat:'American V8',name:'Dodge 6.2 Hellcat (Challenger SRT)',real:{hp:707,hpRpm:6000,tq:881,tqRpm:4000},
-   engine:{cylinders:8,layout:'v',bore_mm:103.9,stroke_mm:90.9,compression:9.5,redline:6200,intake:'supercharger',boost_bar:0.8,scType:'screw',valves:2,cam:'sport',vvt:true,injector:'port',octane:98,intercooler:'large',exhaust:'sport',airFilter:'perf',taperRpm:4000,taperPct:72}},
+   engine:{valvetrain:'ohv-roller',cylinders:8,layout:'v',bore_mm:103.9,stroke_mm:90.9,compression:9.5,redline:6200,intake:'supercharger',boost_bar:0.8,scType:'screw',valves:2,cam:'sport',vvt:true,injector:'port',octane:98,intercooler:'large',exhaust:'sport',airFilter:'perf',taperRpm:4000,taperPct:72}},
   // Supercar (build 148): four popular cars from each decade since the 90s, by their makers' figures. The 2020s are
   // the combustion-only ones: the model has no electric motor, so the hybrids of the decade are left out.
   {cat:'Supercar',era:'1990s',name:'Ferrari F129B V8 (F355)',real:{hp:375,hpRpm:8250,tq:363,tqRpm:6000},
@@ -5169,13 +5254,13 @@ const PRESETS=[
   {cat:'Supercar',era:'1990s',name:'BMW S70/2 V12 (McLaren F1)',real:{hp:627,hpRpm:7400,tq:651,tqRpm:5600},
    engine:{cylinders:12,layout:'v',bore_mm:86.0,stroke_mm:87.0,compression:11.0,redline:7500,cam:'race',vvt:true,valveSpring:'race',injector:'port',intakeSys:'itb',octane:98,exhaust:'race',airFilter:'perf',runner:'medium',oilCooler:true,radiator:'large'}},
   {cat:'Supercar',era:'1990s',name:'Porsche M64/60 twin-turbo flat-six (911 Turbo 993)',real:{hp:408,hpRpm:5750,tq:540,tqRpm:4500},unsure:['boost_bar','turboSize'],
-   engine:{cylinders:6,layout:'boxer',bore_mm:100.0,stroke_mm:76.4,compression:8.0,redline:6700,valves:2,intake:'turbo',boost_bar:0.8,turboSize:'small',turboConfig:'twin',intercooler:'large',cam:'sport',vvt:false,injector:'port',octane:98,exhaust:'sport',airFilter:'perf',runner:'medium',oilCooler:true,radiator:'large'}},
+   engine:{valvetrain:'sohc-rocker',cylinders:6,layout:'boxer',bore_mm:100.0,stroke_mm:76.4,compression:8.0,redline:6700,valves:2,intake:'turbo',boost_bar:0.8,turboSize:'small',turboConfig:'twin',intercooler:'large',cam:'sport',vvt:false,injector:'port',octane:98,exhaust:'sport',airFilter:'perf',runner:'medium',oilCooler:true,radiator:'large'}},
   {cat:'Supercar',era:'2000s',name:'Ferrari F140B V12 (Enzo)',real:{hp:651,hpRpm:7800,tq:657,tqRpm:5500},
    engine:{cylinders:12,layout:'v',bore_mm:92.0,stroke_mm:75.2,compression:11.2,redline:8200,valveMat:'titanium',injector:'port',cam:'race',vvt:true,valveSpring:'race',octane:98,exhaust:'race',airFilter:'perf',runner:'variable'}},
   {cat:'Supercar',era:'2000s',name:'Porsche 5.7 V10 (Carrera GT)',real:{hp:604,hpRpm:8000,tq:590,tqRpm:5750},
    engine:{cylinders:10,layout:'v',bore_mm:98.0,stroke_mm:76.0,compression:12.0,redline:8400,valveMat:'titanium',injector:'port',cam:'race',vvt:true,valveSpring:'race',octane:98,exhaust:'race',airFilter:'perf',runner:'variable'}},
   {cat:'Supercar',era:'2000s',name:'Ford 5.4 supercharged V8 (Ford GT)',real:{hp:550,hpRpm:6500,tq:678,tqRpm:3750},unsure:['boost_bar','intercooler'],note:'the real blower makes 0.83 bar; from that the model makes 30% more than the rating, so the boost is set lower',
-   engine:{cylinders:8,layout:'v',bore_mm:90.2,stroke_mm:105.8,compression:8.4,redline:6500,intake:'supercharger',scType:'screw',boost_bar:0.55,intercooler:'small',cam:'sport',vvt:false,valveSpring:'perf',injector:'port',octane:98,exhaust:'sport',airFilter:'perf',runner:'medium',oilCooler:true,radiator:'large'}},
+   engine:{valvetrain:'dohc-roller',cylinders:8,layout:'v',bore_mm:90.2,stroke_mm:105.8,compression:8.4,redline:6500,intake:'supercharger',scType:'screw',boost_bar:0.55,intercooler:'small',cam:'sport',vvt:false,valveSpring:'perf',injector:'port',octane:98,exhaust:'sport',airFilter:'perf',runner:'medium',oilCooler:true,radiator:'large'}},
   {cat:'Supercar',era:'2000s',name:'Lamborghini 6.5 V12 (Murciélago LP640)',real:{hp:631,hpRpm:8000,tq:660,tqRpm:6000},
    engine:{cylinders:12,layout:'v',bore_mm:88.0,stroke_mm:89.0,compression:11.0,redline:8500,injector:'port',cam:'race',vvt:true,valveSpring:'race',octane:98,exhaust:'race',airFilter:'perf',runner:'variable'}},
   {cat:'Supercar',era:'2010s',name:'Ferrari F136 FB V8 (458 Italia)',real:{hp:562,hpRpm:9000,tq:540,tqRpm:6000},
@@ -5202,66 +5287,72 @@ const PRESETS=[
   {cat:'Rotary',name:'Mazda 13B-MSP Renesis (RX-8)',real:{hp:232,hpRpm:8200,tq:211,tqRpm:5500},
    engine:{type:'rotary',cylinders:2,bore_mm:105,stroke_mm:80,ecc_mm:15,compression:10.0,redline:9000,injector:'port',octane:98,exhaust:'stock',airFilter:'stock',radiator:'large',oilCooler:true}},
   {cat:'Diesel',name:'VW EA288 2.0 TDI (Golf 150)',real:{hp:148,hpRpm:3500,tq:320,tqRpm:1750},unsure:['runner'],
-   engine:{type:'diesel',vvt:false,cylinders:4,bore_mm:81.0,stroke_mm:95.5,compression:16.2,redline:4800,intake:'turbo',boost_bar:1.3,turboSize:'small',vgt:true,injector:'direct',intercooler:'large',exhaust:'stock',airFilter:'stock',runner:'short',taperRpm:2000,taperPct:44,tqLimit:320,govRpm:4000}},
+   engine:{valvetrain:'dohc-roller',type:'diesel',vvt:false,cylinders:4,bore_mm:81.0,stroke_mm:95.5,compression:16.2,redline:4800,intake:'turbo',boost_bar:1.3,turboSize:'small',vgt:true,injector:'direct',intercooler:'large',exhaust:'stock',airFilter:'stock',runner:'short',taperRpm:2000,taperPct:44,tqLimit:320,govRpm:4000}},
   {cat:'Diesel',name:'BMW N57 3.0d (330d F30)',real:{hp:254,hpRpm:4000,tq:560,tqRpm:2000},unsure:['boost_bar','runner'],
-   engine:{type:'diesel',vvt:false,cylinders:6,bore_mm:84.0,stroke_mm:90.0,compression:16.5,redline:5000,intake:'turbo',boost_bar:1.5,turboSize:'medium',vgt:true,injector:'direct',intercooler:'large',exhaust:'stock',airFilter:'stock',runner:'short',taperRpm:2000,taperPct:54,tqLimit:560,govRpm:4000}},
+   engine:{valvetrain:'dohc-roller',type:'diesel',vvt:false,cylinders:6,bore_mm:84.0,stroke_mm:90.0,compression:16.5,redline:5000,intake:'turbo',boost_bar:1.5,turboSize:'medium',vgt:true,injector:'direct',intercooler:'large',exhaust:'stock',airFilter:'stock',runner:'short',taperRpm:2000,taperPct:54,tqLimit:560,govRpm:4000}},
   // GM: rated 2800 rpm, maximum powered speed 3450 (the governed maximum; it was 3800 here, unsure)
   {cat:'Diesel',name:'GM Duramax L5P 6.6 (Silverado HD)',real:{hp:445,hpRpm:2800,tq:1234,tqRpm:1600},unsure:['boost_bar','runner'],
-   engine:{type:'diesel',vvt:false,cylinders:8,layout:'v',bore_mm:103.0,stroke_mm:99.0,compression:16.0,redline:3450,intake:'turbo',boost_bar:1.9,turboSize:'large',vgt:true,injector:'direct',intercooler:'large',exhaust:'stock',airFilter:'stock',runner:'short',taperRpm:2000,taperPct:51,govRpm:2800}},
+   engine:{valvetrain:'ohv-roller',type:'diesel',vvt:false,cylinders:8,layout:'v',bore_mm:103.0,stroke_mm:99.0,compression:16.0,redline:3450,intake:'turbo',boost_bar:1.9,turboSize:'large',vgt:true,injector:'direct',intercooler:'large',exhaust:'stock',airFilter:'stock',runner:'short',taperRpm:2000,taperPct:51,govRpm:2800}},
   {cat:'Diesel',name:'Cummins 6.7 (Ram HD 2019 HO)',real:{hp:400,hpRpm:2800,tq:1356,tqRpm:1800},unsure:['redline','runner'],   // compression and boost: the 2019 Stellantis press kit (build 199)
-   engine:{type:'diesel',vvt:false,cylinders:6,bore_mm:107.0,stroke_mm:124.0,compression:16.2,redline:3500,intake:'turbo',boost_bar:2.28,turboSize:'large',vgt:true,injector:'direct',intercooler:'large',exhaust:'stock',airFilter:'stock',runner:'short',govRpm:2800,taperRpm:2000,taperPct:38}},
+   engine:{valvetrain:'ohv-roller',type:'diesel',vvt:false,cylinders:6,bore_mm:107.0,stroke_mm:124.0,compression:16.2,redline:3500,intake:'turbo',boost_bar:2.28,turboSize:'large',vgt:true,injector:'direct',intercooler:'large',exhaust:'stock',airFilter:'stock',runner:'short',govRpm:2800,taperRpm:2000,taperPct:38}},
   {cat:'Two-Stroke',name:'Yamaha RD350LC (2-stroke twin)',real:{hp:46,hpRpm:8500,tq:40,tqRpm:8000},unsure:['compression','redline'],
    engine:{type:'twostroke',cylinders:2,bore_mm:64.0,stroke_mm:54.0,compression:7,redline:9500,intakeSys:'carb2',octane:95,exhaust:'race',airFilter:'stock'}},  // Batch 1 (build 199): the engines of the 50 cars researched in research/vehicles-batch-1 (README there), each by its
   // maker's figures with what is estimated in unsure. real.gross marks a 1960s SAE gross rating, which no net model meets.
-  {cat:'Performance SUV',name:'BMW S63B44 4.4 TT V8 (X5 M F85)',real:{hp:575,hpRpm:6000,tq:750,tqRpm:2200},unsure:['boost_bar','redline','turboSize'],engine:{cylinders:8,layout:'v',bore_mm:89,stroke_mm:88.3,compression:10,redline:7200,intake:'turbo',boost_bar:1.2,turboSize:'medium',turboConfig:'twin',intercooler:'large',injector:'direct',vvt:true,cam:'sport',exhaust:'sport',airFilter:'perf',octane:98,radiator:'large',oilCooler:true,tqLimit:750,taperRpm:2500,taperPct:32}},
+  {cat:'Performance SUV',name:'BMW S63B44 4.4 TT V8 (X5 M F85)',real:{hp:575,hpRpm:6000,tq:750,tqRpm:2200},unsure:['boost_bar','redline','turboSize'],engine:{valvetrain:'dohc-roller',cylinders:8,layout:'v',bore_mm:89,stroke_mm:88.3,compression:10,redline:7200,intake:'turbo',boost_bar:1.2,turboSize:'medium',turboConfig:'twin',intercooler:'large',injector:'direct',vvt:true,cam:'sport',exhaust:'sport',airFilter:'perf',octane:98,radiator:'large',oilCooler:true,tqLimit:750,taperRpm:2500,taperPct:32}},
   {cat:'Performance SUV',name:'Porsche 4.8 TT V8 (Cayenne Turbo 958)',real:{hp:520,hpRpm:6000,tq:750,tqRpm:2250},unsure:['boost_bar','turboSize'],engine:{cylinders:8,layout:'v',bore_mm:96,stroke_mm:83,compression:10.5,redline:6700,intake:'turbo',boost_bar:0.9,turboSize:'medium',turboConfig:'twin',intercooler:'large',injector:'direct',vvt:true,cam:'sport',exhaust:'sport',airFilter:'stock',octane:98,radiator:'large',oilCooler:true,tqLimit:750,taperRpm:2500,taperPct:26}},
   {cat:'Performance SUV',name:'Lamborghini 4.0 TT V8 (Urus)',real:{hp:650,hpRpm:6000,tq:850,tqRpm:2250},unsure:['boost_bar','compression','turboSize'],engine:{cylinders:8,layout:'v',bore_mm:86,stroke_mm:86,compression:9.7,redline:6800,intake:'turbo',boost_bar:1.3,turboSize:'medium',turboConfig:'twin',intercooler:'large',injector:'direct',vvt:true,cam:'sport',exhaust:'sport',airFilter:'perf',octane:98,radiator:'large',oilCooler:true,tqLimit:850,taperRpm:2500,taperPct:65}},
-  {cat:'Performance SUV',name:'Chrysler 6.4 Hemi (Grand Cherokee SRT)',real:{hp:470,hpRpm:6000,tq:630,tqRpm:4300},unsure:['stroke_mm'],engine:{cylinders:8,layout:'v',valves:2,bore_mm:103.9,stroke_mm:94.6,compression:10.9,redline:6400,vvt:true,cam:'sport',injector:'port',octane:91,exhaust:'sport',airFilter:'perf',radiator:'large',oilCooler:true}},
+  {cat:'Performance SUV',name:'Chrysler 6.4 Hemi (Grand Cherokee SRT)',real:{hp:470,hpRpm:6000,tq:630,tqRpm:4300},unsure:['stroke_mm'],engine:{valvetrain:'ohv-roller',cylinders:8,layout:'v',valves:2,bore_mm:103.9,stroke_mm:94.6,compression:10.9,redline:6400,vvt:true,cam:'sport',injector:'port',octane:91,exhaust:'sport',airFilter:'perf',radiator:'large',oilCooler:true}},
   {cat:'Diesel',name:'Toyota 1VD-FTV 4.5 V8 diesel (Land Cruiser 200)',real:{hp:272,hpRpm:3600,tq:650,tqRpm:1600},unsure:['boost_bar','redline','vgt'],engine:{type:'diesel',vvt:false,cylinders:8,layout:'v',bore_mm:86,stroke_mm:96,compression:16.8,redline:4500,govRpm:3600,intake:'turbo',boost_bar:1.4,turboSize:'medium',turboConfig:'twin',vgt:true,injector:'direct',intercooler:'large',exhaust:'stock',airFilter:'stock',radiator:'large',oilCooler:true,taperRpm:1600,taperPct:20}},
   {cat:'Track',name:'Radical RPE 1500 Suzuki-based I4 (SR3 RSX)',real:{hp:210,hpRpm:10000,tq:179,tqRpm:7000},unsure:['bore_mm','stroke_mm','compression','redline','hp','hpRpm','tq','tqRpm'],engine:{cylinders:4,bore_mm:81,stroke_mm:72.8,compression:12.5,redline:10500,intakeSys:'itb',airFilter:'none',cam:'race',vvt:false,valveSpring:'race',valveMat:'titanium',injector:'port',exhaust:'race',cat:'none',octane:98,radiator:'large',oilCooler:true}},
   {cat:'Track',name:'Ford Duratec 2.3 Cosworth (BAC Mono)',real:{hp:280,hpRpm:7700,tq:280,tqRpm:6000},unsure:['compression','redline','hpRpm','tq','tqRpm','intakeSys'],engine:{cylinders:4,bore_mm:87.5,stroke_mm:94,compression:12,redline:8000,intakeSys:'itb',airFilter:'none',cam:'race',vvt:false,valveSpring:'race',injector:'port',exhaust:'race',cat:'none',octane:98,radiator:'large',oilCooler:true}},
   {cat:'NA Sports',name:'Nissan VQ37VHR (370Z)',real:{hp:332,hpRpm:7000,tq:366,tqRpm:5200},engine:{cylinders:6,layout:'v',bore_mm:95.5,stroke_mm:86,compression:11,redline:7500,cam:'sport',vvt:true,injector:'port',octane:98,exhaust:'sport',airFilter:'perf',runner:'variable'}},
-  {cat:'Supercar',era:'1990s',name:'Honda C30A V6 (NSX NA1)',real:{hp:280,hpRpm:7300,tq:294,tqRpm:5400},engine:{cylinders:6,layout:'v',bore_mm:90,stroke_mm:78,compression:10.2,redline:8000,cam:'race',vvt:true,valveSpring:'perf',injector:'port',octane:98,exhaust:'sport',airFilter:'perf',runner:'variable',radiator:'large',oilCooler:true}},
-  {cat:'Pickup',name:'Ford 3.5 EcoBoost HO V6 (F-150 Raptor 2017)',real:{hp:450,hpRpm:5000,tq:691,tqRpm:3500},unsure:['boost_bar','hpRpm','tqRpm','bore_mm'],engine:{cylinders:6,layout:'v',bore_mm:92.5,stroke_mm:86.7,compression:10.5,redline:6500,intake:'turbo',boost_bar:1.3,turboSize:'medium',turboConfig:'twin',intercooler:'large',injector:'direct',vvt:true,cam:'stock',exhaust:'sport',airFilter:'stock',octane:91,radiator:'large',oilCooler:true,taperRpm:3500,taperPct:39}},
+  {cat:'Supercar',era:'1990s',name:'Honda C30A V6 (NSX NA1)',real:{hp:280,hpRpm:7300,tq:294,tqRpm:5400},engine:{valvetrain:'dohc-finger',cylinders:6,layout:'v',bore_mm:90,stroke_mm:78,compression:10.2,redline:8000,cam:'race',vvt:true,valveSpring:'perf',injector:'port',octane:98,exhaust:'sport',airFilter:'perf',runner:'variable',radiator:'large',oilCooler:true}},
+  {cat:'Pickup',name:'Ford 3.5 EcoBoost HO V6 (F-150 Raptor 2017)',real:{hp:450,hpRpm:5000,tq:691,tqRpm:3500},unsure:['boost_bar','hpRpm','tqRpm','bore_mm'],engine:{valvetrain:'dohc-roller',cylinders:6,layout:'v',bore_mm:92.5,stroke_mm:86.7,compression:10.5,redline:6500,intake:'turbo',boost_bar:1.3,turboSize:'medium',turboConfig:'twin',intercooler:'large',injector:'direct',vvt:true,cam:'stock',exhaust:'sport',airFilter:'stock',octane:91,radiator:'large',oilCooler:true,taperRpm:3500,taperPct:39}},
   {cat:'Turbo Performance',name:'Nissan VR38DETT (GT-R R35 2017)',real:{hp:565,hpRpm:6800,tq:633,tqRpm:3300},unsure:['boost_bar','turboSize'],engine:{cylinders:6,layout:'v',bore_mm:95.5,stroke_mm:88.4,compression:9,redline:7100,intake:'turbo',boost_bar:0.9,turboSize:'medium',turboConfig:'twin',intercooler:'large',injector:'port',vvt:true,cam:'sport',exhaust:'sport',airFilter:'perf',octane:98,radiator:'large',oilCooler:true,tqLimit:633,taperRpm:3500,taperPct:73}},
   {cat:'Turbo Performance',name:'Alfa Romeo 690T 2.9 V6 (Giulia Quadrifoglio)',real:{hp:510,hpRpm:6500,tq:600,tqRpm:2500},unsure:['boost_bar','turboSize'],engine:{cylinders:6,layout:'v',bore_mm:86.5,stroke_mm:82,compression:9.3,redline:7200,intake:'turbo',boost_bar:1.4,turboSize:'medium',turboConfig:'twin',intercooler:'large',injector:'direct',vvt:true,cam:'sport',exhaust:'sport',airFilter:'perf',octane:98,radiator:'large',oilCooler:true,tqLimit:600,taperRpm:2500,taperPct:64}},
   {cat:'Turbo Performance',name:'Nissan VG30DETT (300ZX Z32)',real:{hp:283,hpRpm:6400,tq:375,tqRpm:3600},unsure:['boost_bar'],engine:{cylinders:6,layout:'v',bore_mm:87,stroke_mm:83,compression:8.5,redline:7000,intake:'turbo',boost_bar:0.5,turboSize:'small',turboConfig:'twin',intercooler:'large',injector:'port',vvt:true,cam:'sport',exhaust:'sport',airFilter:'perf',octane:98,radiator:'large',oilCooler:true,taperRpm:4000,taperPct:20}},
-  {cat:'Turbo Performance',name:'Buick LC2 turbo V6 (GNX)',real:{hp:276,hpRpm:4400,tq:488,tqRpm:3000},unsure:['redline'],engine:{cylinders:6,layout:'v',valves:2,bore_mm:96.5,stroke_mm:86.4,compression:8,redline:5000,intake:'turbo',boost_bar:1.03,turboSize:'medium',intercooler:'large',vvt:false,cam:'stock',injector:'port',octane:91,exhaust:'sport',airFilter:'perf',radiator:'large',oilCooler:true,taperRpm:3000,taperPct:20}},
-  {cat:'Supercar',era:'1960s',name:'Ferrari Dino 135 CS 2.4 V6 (246 GT)',real:{hp:195,hpRpm:7600,tq:226,tqRpm:5500},unsure:['tq','tqRpm'],engine:{cylinders:6,layout:'v',valves:2,bore_mm:92.5,stroke_mm:60,compression:9,redline:7800,intakeSys:'sidedraft',vvt:false,cam:'sport',injector:'port',octane:98,exhaust:'sport',airFilter:'perf',ignitionType:'coil'}},
+  {cat:'Turbo Performance',name:'Buick LC2 turbo V6 (GNX)',real:{hp:276,hpRpm:4400,tq:488,tqRpm:3000},unsure:['valvetrain','redline'],engine:{valvetrain:'ohv-roller',cylinders:6,layout:'v',valves:2,bore_mm:96.5,stroke_mm:86.4,compression:8,redline:5000,intake:'turbo',boost_bar:1.03,turboSize:'medium',intercooler:'large',vvt:false,cam:'stock',injector:'port',octane:91,exhaust:'sport',airFilter:'perf',radiator:'large',oilCooler:true,taperRpm:3000,taperPct:20}},
+  {cat:'Supercar',era:'1960s',name:'Ferrari Dino 135 CS 2.4 V6 (246 GT)',real:{hp:195,hpRpm:7600,tq:226,tqRpm:5500},unsure:['tq','tqRpm'],engine:{valvetrain:'dohc-bucket',cylinders:6,layout:'v',valves:2,bore_mm:92.5,stroke_mm:60,compression:9,redline:7800,intakeSys:'sidedraft',vvt:false,cam:'sport',injector:'port',octane:98,exhaust:'sport',airFilter:'perf',ignitionType:'coil'}},
   {cat:'Supercar',era:'1980s',name:'Ferrari F120A V8 TT (F40)',real:{hp:478,hpRpm:7000,tq:577,tqRpm:4000},unsure:['boost_bar','redline','turboSize'],engine:{cylinders:8,layout:'v',bore_mm:82,stroke_mm:69.5,compression:7.7,redline:7700,intake:'turbo',boost_bar:1.1,turboSize:'medium',turboConfig:'twin',intercooler:'large',injector:'port',intakeSys:'efi',vvt:false,cam:'race',valveSpring:'race',exhaust:'race',cat:'none',airFilter:'perf',octane:98,radiator:'large',oilCooler:true,taperRpm:4000,taperPct:46}},
-  {cat:'NA Sports',name:'Jaguar XK 3.8 I6 (E-Type S1)',real:{hp:265,hpRpm:5500,tq:353,tqRpm:4000,gross:true},unsure:['hp','tq'],engine:{cylinders:6,bore_mm:87,stroke_mm:106,compression:9,redline:5500,intakeSys:'sidedraft',vvt:false,valves:2,cam:'stock',injector:'port',octane:98,exhaust:'stock',airFilter:'stock'}},
-  {cat:'American V8',name:'Ford Windsor 289 4-bbl (Mustang 1965)',real:{hp:225,hpRpm:4800,tq:414,tqRpm:3200,gross:true},unsure:['hp','tq'],engine:{cylinders:8,layout:'v',valves:2,bore_mm:101.6,stroke_mm:72.9,compression:10,redline:5500,intakeSys:'carb4',vvt:false,cam:'stock',injector:'port',octane:95,exhaust:'stock',airFilter:'stock'}},
-  {cat:'NA Sports',name:'Porsche 911/83 2.7 flat-six (Carrera RS)',real:{hp:210,hpRpm:6300,tq:255,tqRpm:5100},engine:{cylinders:6,layout:'boxer',valves:2,bore_mm:90,stroke_mm:70.4,compression:8.5,redline:7300,intakeSys:'mech',vvt:false,cam:'sport',injector:'port',octane:98,exhaust:'sport',airFilter:'perf'}},
-  {cat:'NA Sports',name:'BMW S14B23 (M3 E30)',real:{hp:200,hpRpm:6750,tq:240,tqRpm:4750},unsure:['redline'],engine:{cylinders:4,bore_mm:93.4,stroke_mm:84,compression:10.5,redline:7250,intakeSys:'itb',cam:'race',vvt:false,valveSpring:'perf',injector:'port',octane:98,exhaust:'sport',airFilter:'perf',runner:'short',radiator:'large',oilCooler:true}},
-  {cat:'NA Sports',name:'VW EA827 1.6 K-Jetronic (Golf GTI Mk1)',real:{hp:110,hpRpm:6100,tq:140,tqRpm:5000},unsure:['redline'],engine:{cylinders:4,valves:2,bore_mm:79.5,stroke_mm:80,compression:9.5,redline:6500,intakeSys:'mech',vvt:false,cam:'stock',injector:'port',octane:98,exhaust:'stock',airFilter:'stock'}},
-  {cat:'Supercar',era:'1960s',name:'Ferrari Colombo 4.4 V12 (365 GTB/4)',real:{hp:352,hpRpm:7500,tq:431,tqRpm:5500},engine:{cylinders:12,layout:'v',valves:2,bore_mm:81,stroke_mm:71,compression:8.8,redline:7700,intakeSys:'sidedraft',vvt:false,cam:'sport',injector:'port',octane:98,exhaust:'sport',airFilter:'perf'}},
-  {cat:'Supercar',era:'1970s',name:'Lamborghini 3.9 V12 (Countach LP400)',real:{hp:375,hpRpm:8000,tq:361,tqRpm:5000},unsure:['compression','tq','tqRpm','bore_mm','stroke_mm'],engine:{cylinders:12,layout:'v',valves:2,bore_mm:82,stroke_mm:62,compression:10.5,redline:8000,intakeSys:'sidedraft',vvt:false,cam:'sport',injector:'port',octane:98,exhaust:'sport',airFilter:'perf'}},
+  {cat:'NA Sports',name:'Jaguar XK 3.8 I6 (E-Type S1)',real:{hp:265,hpRpm:5500,tq:353,tqRpm:4000,gross:true},unsure:['hp','tq'],engine:{valvetrain:'dohc-bucket',cylinders:6,bore_mm:87,stroke_mm:106,compression:9,redline:5500,intakeSys:'sidedraft',vvt:false,valves:2,cam:'stock',injector:'port',octane:98,exhaust:'stock',airFilter:'stock'}},
+  {cat:'American V8',name:'Ford Windsor 289 4-bbl (Mustang 1965)',real:{hp:225,hpRpm:4800,tq:414,tqRpm:3200,gross:true},unsure:['hp','tq'],engine:{valvetrain:'ohv',cylinders:8,layout:'v',valves:2,bore_mm:101.6,stroke_mm:72.9,compression:10,redline:5500,intakeSys:'carb4',vvt:false,cam:'stock',injector:'port',octane:95,exhaust:'stock',airFilter:'stock'}},
+  {cat:'NA Sports',name:'Porsche 911/83 2.7 flat-six (Carrera RS)',real:{hp:210,hpRpm:6300,tq:255,tqRpm:5100},engine:{valvetrain:'sohc-rocker',cylinders:6,layout:'boxer',valves:2,bore_mm:90,stroke_mm:70.4,compression:8.5,redline:7300,intakeSys:'mech',vvt:false,cam:'sport',injector:'port',octane:98,exhaust:'sport',airFilter:'perf'}},
+  // The 1986 launch car (build 242, owner's check): 147 kW / 200 PS (197.3 hp) at 6750 rpm and 240 Nm at 4750, without a
+  // catalyst. The catalyst came to Germany in 1987 and cut it to 143 kW / 195 PS and 230 Nm (BMW Group Classic, "BMW M3
+  // E30"; ADAC, "M3 Kat. 09/86-05/89"). The stock intake cam is about 246 deg with 10.7 mm lift (S14 cam listings that
+  // compare Schrick's 276 and 284 deg race cams with it), nearest this model's SPORT grade (252 deg), not RACE (284 deg,
+  // which is Schrick's competition cam). The road car breathes through BMW's airbox and paper element: STOCK, probable.
+  // Until build 242 it carried the RACE cam, the default STOCK catalyst, a PERFORMANCE filter and 200 "hp".
+  {cat:'NA Sports',name:'BMW S14B23 (M3 E30)',real:{hp:197.3,hpRpm:6750,tq:240,tqRpm:4750},unsure:['redline','airFilter','runner','valveSpring'],engine:{cylinders:4,bore_mm:93.4,stroke_mm:84,compression:10.5,redline:7250,intakeSys:'itb',cam:'sport',vvt:false,valveSpring:'perf',injector:'port',octane:98,exhaust:'sport',cat:'none',airFilter:'stock',runner:'short',radiator:'large',oilCooler:true}},
+  {cat:'NA Sports',name:'VW EA827 1.6 K-Jetronic (Golf GTI Mk1)',real:{hp:110,hpRpm:6100,tq:140,tqRpm:5000},unsure:['redline'],engine:{valvetrain:'sohc-bucket',cylinders:4,valves:2,bore_mm:79.5,stroke_mm:80,compression:9.5,redline:6500,intakeSys:'mech',vvt:false,cam:'stock',injector:'port',octane:98,exhaust:'stock',airFilter:'stock'}},
+  {cat:'Supercar',era:'1960s',name:'Ferrari Colombo 4.4 V12 (365 GTB/4)',real:{hp:352,hpRpm:7500,tq:431,tqRpm:5500},engine:{valvetrain:'dohc-bucket',cylinders:12,layout:'v',valves:2,bore_mm:81,stroke_mm:71,compression:8.8,redline:7700,intakeSys:'sidedraft',vvt:false,cam:'sport',injector:'port',octane:98,exhaust:'sport',airFilter:'perf'}},
+  {cat:'Supercar',era:'1970s',name:'Lamborghini 3.9 V12 (Countach LP400)',real:{hp:375,hpRpm:8000,tq:361,tqRpm:5000},unsure:['compression','tq','tqRpm','bore_mm','stroke_mm'],engine:{valvetrain:'dohc-bucket',cylinders:12,layout:'v',valves:2,bore_mm:82,stroke_mm:62,compression:10.5,redline:8000,intakeSys:'sidedraft',vvt:false,cam:'sport',injector:'port',octane:98,exhaust:'sport',airFilter:'perf'}},
   {cat:'Turbo Performance',name:'Audi 2.1 20V turbo I5 (Sport quattro)',real:{hp:306,hpRpm:6700,tq:350,tqRpm:3700},unsure:['compression','boost_bar','bore_mm','stroke_mm'],engine:{cylinders:5,bore_mm:79.3,stroke_mm:86.4,compression:8,redline:7200,intake:'turbo',boost_bar:1,turboSize:'medium',intercooler:'large',vvt:false,cam:'sport',injector:'port',octane:98,exhaust:'sport',airFilter:'perf',radiator:'large',oilCooler:true,taperRpm:4000,taperPct:70}},
   {cat:'NA Sports',name:'Mercedes M102 2.3-16 (190E)',real:{hp:185,hpRpm:6200,tq:235,tqRpm:4500},unsure:['compression','bore_mm','stroke_mm'],engine:{cylinders:4,bore_mm:95.5,stroke_mm:80.25,compression:10.5,redline:7000,intakeSys:'mech',vvt:false,cam:'sport',injector:'port',octane:98,exhaust:'sport',airFilter:'perf',radiator:'large'}},
-  {cat:'NA Sports',name:'Peugeot XU9JA 1.9 (205 GTI)',real:{hp:130,hpRpm:6000,tq:161,tqRpm:4750},unsure:['compression','bore_mm','stroke_mm'],engine:{cylinders:4,valves:2,bore_mm:83,stroke_mm:88,compression:9.6,redline:6500,vvt:false,cam:'sport',injector:'port',octane:98,exhaust:'sport',airFilter:'perf'}},
+  {cat:'NA Sports',name:'Peugeot XU9JA 1.9 (205 GTI)',real:{hp:130,hpRpm:6000,tq:161,tqRpm:4750},unsure:['compression','bore_mm','stroke_mm'],engine:{valvetrain:'sohc-bucket',cylinders:4,valves:2,bore_mm:83,stroke_mm:88,compression:9.6,redline:6500,vvt:false,cam:'sport',injector:'port',octane:98,exhaust:'sport',airFilter:'perf'}},
   {cat:'Turbo Performance',name:'Ford Cosworth YBB 2.0 turbo (Sierra RS)',real:{hp:204,hpRpm:6000,tq:276,tqRpm:4500},engine:{cylinders:4,bore_mm:90.8,stroke_mm:76.95,compression:8,redline:6500,intake:'turbo',boost_bar:0.7,turboSize:'medium',intercooler:'large',vvt:false,cam:'sport',injector:'port',octane:98,exhaust:'sport',airFilter:'perf',radiator:'large',oilCooler:true,taperRpm:4500,taperPct:30}},
   {cat:'Turbo Performance',name:'Lancia 831 2.0 16V turbo (Delta Integrale Evo)',real:{hp:210,hpRpm:5750,tq:298,tqRpm:3500},unsure:['boost_bar','hpRpm','tq','tqRpm','compression'],engine:{cylinders:4,bore_mm:84,stroke_mm:90,compression:8,redline:6500,intake:'turbo',boost_bar:1,turboSize:'small',intercooler:'large',vvt:false,cam:'sport',injector:'port',octane:98,exhaust:'sport',airFilter:'perf',radiator:'large',oilCooler:true,taperRpm:3500,taperPct:47}},
-  {cat:'NA Sports',name:'Honda B18C spec R (Integra Type R DC2)',real:{hp:200,hpRpm:8000,tq:181,tqRpm:7500},unsure:['compression'],engine:{cylinders:4,bore_mm:81,stroke_mm:87.2,compression:11.1,redline:8400,cam:'race',vvt:true,valveSpring:'race',injector:'port',octane:98,exhaust:'race',airFilter:'perf',runner:'short',radiator:'large'}},
+  {cat:'NA Sports',name:'Honda B18C spec R (Integra Type R DC2)',real:{hp:200,hpRpm:8000,tq:181,tqRpm:7500},unsure:['compression'],engine:{valvetrain:'dohc-finger',cylinders:4,bore_mm:81,stroke_mm:87.2,compression:11.1,redline:8400,cam:'race',vvt:true,valveSpring:'race',injector:'port',octane:98,exhaust:'race',airFilter:'perf',runner:'short',radiator:'large'}},
   {cat:'NA Sports',name:'Rover K-series 1.8 (Elise S1)',real:{hp:118,hpRpm:5500,tq:165,tqRpm:3000},unsure:['compression','bore_mm','stroke_mm'],engine:{cylinders:4,bore_mm:80,stroke_mm:89.3,compression:10.5,redline:7000,vvt:false,cam:'stock',injector:'port',octane:95,exhaust:'sport',airFilter:'perf'}},
   {cat:'NA Sports',name:'BMW S62 4.9 V8 (M5 E39)',real:{hp:400,hpRpm:6600,tq:500,tqRpm:3800},engine:{cylinders:8,layout:'v',bore_mm:94,stroke_mm:89,compression:11,redline:7000,intakeSys:'itb',cam:'race',vvt:true,valveSpring:'perf',injector:'port',octane:98,exhaust:'sport',airFilter:'perf',runner:'short',radiator:'large',oilCooler:true}},
   {cat:'Two-Stroke',name:'Trabant P65 0.6 2-stroke twin (601)',real:{hp:26,hpRpm:4200,tq:54,tqRpm:3000},unsure:['redline','compression'],engine:{type:'twostroke',cylinders:2,bore_mm:72,stroke_mm:73,compression:7.5,redline:4500,intakeSys:'carb1',vvt:false,airFilter:'stock',exhaust:'stock',cat:'none',octane:88,injector:'port',ignitionType:'coil',radiator:'stock'}},
   {cat:'Kei & City',name:'Honda S07A turbo (S660)',real:{hp:64,hpRpm:6000,tq:104,tqRpm:2600},unsure:['boost_bar','redline'],engine:{cylinders:3,bore_mm:64,stroke_mm:68.2,compression:9.2,redline:7700,intake:'turbo',boost_bar:0.9,turboSize:'small',intercooler:'small',injector:'port',vvt:true,cam:'stock',exhaust:'stock',airFilter:'stock',octane:95,taperRpm:2600,taperPct:20}},
-  {cat:'Kei & City',name:'Honda E07A MTREC (Beat)',real:{hp:64,hpRpm:8100,tq:60,tqRpm:7000},unsure:['redline'],engine:{cylinders:3,bore_mm:66,stroke_mm:64,compression:10,redline:8500,intakeSys:'itb',cam:'sport',vvt:false,injector:'port',octane:95,exhaust:'sport',airFilter:'perf',runner:'short'}},
+  {cat:'Kei & City',name:'Honda E07A MTREC (Beat)',real:{hp:64,hpRpm:8100,tq:60,tqRpm:7000},unsure:['redline'],engine:{valvetrain:'sohc-rocker',cylinders:3,bore_mm:66,stroke_mm:64,compression:10,redline:8500,intakeSys:'itb',cam:'sport',vvt:false,injector:'port',octane:95,exhaust:'sport',airFilter:'perf',runner:'short'}},
   {cat:'Kei & City',name:'Suzuki F6A turbo (Cappuccino EA11R)',real:{hp:64,hpRpm:6500,tq:85,tqRpm:4000},unsure:['boost_bar','redline'],engine:{cylinders:3,bore_mm:65,stroke_mm:66,compression:8.3,redline:7500,intake:'turbo',boost_bar:0.7,turboSize:'small',intercooler:'small',injector:'port',vvt:false,cam:'stock',exhaust:'stock',airFilter:'stock',octane:95,taperRpm:4000,taperPct:20}},
-  {cat:'Compact Turbo',name:'Ford 2.3 EcoBoost (Focus RS Mk3)',real:{hp:350,hpRpm:6000,tq:440,tqRpm:2000},unsure:['boost_bar'],engine:{cylinders:4,bore_mm:87.6,stroke_mm:94,compression:9.4,redline:6800,intake:'turbo',boost_bar:1.4,turboSize:'medium',intercooler:'large',injector:'direct',vvt:true,cam:'sport',exhaust:'sport',airFilter:'perf',octane:98,radiator:'large',oilCooler:true,tqLimit:440,taperRpm:2000,taperPct:61}},
+  {cat:'Compact Turbo',name:'Ford 2.3 EcoBoost (Focus RS Mk3)',real:{hp:350,hpRpm:6000,tq:440,tqRpm:2000},unsure:['boost_bar'],engine:{valvetrain:'dohc-roller',cylinders:4,bore_mm:87.6,stroke_mm:94,compression:9.4,redline:6800,intake:'turbo',boost_bar:1.4,turboSize:'medium',intercooler:'large',injector:'direct',vvt:true,cam:'sport',exhaust:'sport',airFilter:'perf',octane:98,radiator:'large',oilCooler:true,tqLimit:440,taperRpm:2000,taperPct:61}},
   {cat:'Compact Turbo',name:'Renault M5Pt 1.8 turbo (Mégane R.S. Trophy)',real:{hp:300,hpRpm:6000,tq:420,tqRpm:3200},unsure:['boost_bar','redline','tqRpm'],engine:{cylinders:4,bore_mm:79.7,stroke_mm:90.1,compression:9,redline:6800,intake:'turbo',boost_bar:1.3,turboSize:'medium',intercooler:'large',injector:'direct',vvt:true,cam:'sport',exhaust:'sport',airFilter:'perf',octane:98,radiator:'large',oilCooler:true,taperRpm:3500,taperPct:74}},
   {cat:'Compact Turbo',name:'Suzuki K14C Boosterjet (Swift Sport ZC33S)',real:{hp:140,hpRpm:5500,tq:230,tqRpm:2500},unsure:['boost_bar','compression','bore_mm','stroke_mm','redline'],engine:{cylinders:4,bore_mm:73,stroke_mm:81.9,compression:9.9,redline:6200,intake:'turbo',boost_bar:1,turboSize:'small',intercooler:'small',injector:'direct',vvt:true,cam:'stock',exhaust:'sport',airFilter:'stock',octane:95,tqLimit:230,taperRpm:2500,taperPct:39}},
-  {cat:'NA Sports',name:'Honda B16B (Civic Type R EK9)',real:{hp:185,hpRpm:8200,tq:160,tqRpm:7500},unsure:['compression'],engine:{cylinders:4,bore_mm:81,stroke_mm:77.4,compression:10.8,redline:8400,cam:'race',vvt:true,valveSpring:'race',injector:'port',octane:98,exhaust:'race',airFilter:'perf',runner:'short'}},
-  {cat:'NA Sports',name:'Toyota FA24D 2.4 boxer (GR86)',real:{hp:235,hpRpm:7000,tq:250,tqRpm:3700},unsure:['redline'],engine:{cylinders:4,layout:'boxer',bore_mm:94,stroke_mm:86,compression:12.5,redline:7500,cam:'sport',vvt:true,injector:'direct',octane:98,exhaust:'sport',airFilter:'perf',radiator:'large'}},
+  {cat:'NA Sports',name:'Honda B16B (Civic Type R EK9)',real:{hp:185,hpRpm:8200,tq:160,tqRpm:7500},unsure:['compression'],engine:{valvetrain:'dohc-finger',cylinders:4,bore_mm:81,stroke_mm:77.4,compression:10.8,redline:8400,cam:'race',vvt:true,valveSpring:'race',injector:'port',octane:98,exhaust:'race',airFilter:'perf',runner:'short'}},
+  {cat:'NA Sports',name:'Toyota FA24D 2.4 boxer (GR86)',real:{hp:235,hpRpm:7000,tq:250,tqRpm:3700},unsure:['redline'],engine:{valvetrain:'dohc-roller',cylinders:4,layout:'boxer',bore_mm:94,stroke_mm:86,compression:12.5,redline:7500,cam:'sport',vvt:true,injector:'direct',octane:98,exhaust:'sport',airFilter:'perf',radiator:'large'}},
   {cat:'NA Sports',name:'Porsche 4.0 flat-six (718 Cayman GT4)',real:{hp:420,hpRpm:7600,tq:420,tqRpm:5000},unsure:['compression','bore_mm','stroke_mm'],engine:{cylinders:6,layout:'boxer',bore_mm:102,stroke_mm:81.5,compression:13,redline:8000,cam:'race',vvt:true,valveSpring:'race',injector:'direct',octane:98,exhaust:'race',airFilter:'perf',runner:'variable',radiator:'large',oilCooler:true}},
-  {cat:'Turbo Performance',name:'BMW S55 3.0 TT I6 (M2 Competition)',real:{hp:410,hpRpm:5250,tq:550,tqRpm:2350},unsure:['boost_bar','compression','redline'],engine:{cylinders:6,bore_mm:84,stroke_mm:89.6,compression:10.2,redline:7600,intake:'turbo',boost_bar:1.2,turboSize:'medium',turboConfig:'twin',intercooler:'large',injector:'direct',vvt:true,cam:'sport',exhaust:'sport',airFilter:'perf',octane:98,radiator:'large',oilCooler:true,tqLimit:550,taperRpm:2500,taperPct:31}},
-  {cat:'NA Sports',name:'Honda K20A tuned (Ariel Atom 3.5)',real:{hp:245,hpRpm:8200,tq:209,tqRpm:6100},unsure:['compression','tq','tqRpm'],engine:{cylinders:4,bore_mm:86,stroke_mm:86,compression:11.5,redline:8600,cam:'race',vvt:true,valveSpring:'race',injector:'port',octane:98,exhaust:'race',airFilter:'perf',runner:'short',radiator:'large',oilCooler:true}},
+  {cat:'Turbo Performance',name:'BMW S55 3.0 TT I6 (M2 Competition)',real:{hp:410,hpRpm:5250,tq:550,tqRpm:2350},unsure:['boost_bar','compression','redline'],engine:{valvetrain:'dohc-roller',cylinders:6,bore_mm:84,stroke_mm:89.6,compression:10.2,redline:7600,intake:'turbo',boost_bar:1.2,turboSize:'medium',turboConfig:'twin',intercooler:'large',injector:'direct',vvt:true,cam:'sport',exhaust:'sport',airFilter:'perf',octane:98,radiator:'large',oilCooler:true,tqLimit:550,taperRpm:2500,taperPct:31}},
+  {cat:'NA Sports',name:'Honda K20A tuned (Ariel Atom 3.5)',real:{hp:245,hpRpm:8200,tq:209,tqRpm:6100},unsure:['valvetrain','compression','tq','tqRpm'],engine:{valvetrain:'dohc-finger',cylinders:4,bore_mm:86,stroke_mm:86,compression:11.5,redline:8600,cam:'race',vvt:true,valveSpring:'race',injector:'port',octane:98,exhaust:'race',airFilter:'perf',runner:'short',radiator:'large',oilCooler:true}},
   {cat:'NA Sports',name:'Mazda Skyactiv-G 2.0 (MX-5 ND)',real:{hp:160,hpRpm:6000,tq:200,tqRpm:4600},unsure:['bore_mm','stroke_mm'],engine:{cylinders:4,bore_mm:83.5,stroke_mm:91.2,compression:13,redline:6800,cam:'stock',vvt:true,injector:'direct',octane:95,exhaust:'sport',airFilter:'stock'}},
-  {cat:'Supercar',era:'2000s',name:'Dodge Viper 8.4 V10 (SRT-10)',real:{hp:600,hpRpm:6100,tq:760,tqRpm:5000},unsure:['bore_mm','stroke_mm','compression'],engine:{cylinders:10,layout:'v',valves:2,bore_mm:103,stroke_mm:100.6,compression:10.2,redline:6400,vvt:false,cam:'race',valveSpring:'perf',injector:'port',octane:91,exhaust:'race',airFilter:'perf',radiator:'large',oilCooler:true}},
+  {cat:'Supercar',era:'2000s',name:'Dodge Viper 8.4 V10 (SRT-10)',real:{hp:600,hpRpm:6100,tq:760,tqRpm:5000},unsure:['bore_mm','stroke_mm','compression'],engine:{valvetrain:'ohv-roller',cylinders:10,layout:'v',valves:2,bore_mm:103,stroke_mm:100.6,compression:10.2,redline:6400,vvt:false,cam:'race',valveSpring:'perf',injector:'port',octane:91,exhaust:'race',airFilter:'perf',radiator:'large',oilCooler:true}},
   {cat:'NA Sports',name:'Mercedes-AMG M156 6.2 V8 (C63 W204)',real:{hp:457,hpRpm:6800,tq:600,tqRpm:5000},unsure:['bore_mm','stroke_mm','compression'],engine:{cylinders:8,layout:'v',bore_mm:102.2,stroke_mm:94.6,compression:11.3,redline:7200,cam:'sport',vvt:true,valveSpring:'perf',injector:'port',octane:98,exhaust:'sport',airFilter:'perf',radiator:'large',oilCooler:true}},
   {cat:'Diesel',name:'Toyota 1GD-FTV 2.8 diesel (Hilux)',real:{hp:177,hpRpm:3400,tq:450,tqRpm:1600},unsure:['boost_bar','redline'],engine:{type:'diesel',vvt:false,cylinders:4,bore_mm:92,stroke_mm:103.6,compression:15.6,redline:4500,govRpm:3400,intake:'turbo',boost_bar:1.4,turboSize:'small',vgt:true,injector:'direct',intercooler:'large',exhaust:'stock',airFilter:'stock',radiator:'large',oilCooler:true,tqLimit:450,taperRpm:1600,taperPct:23}},
   {cat:'Diesel',name:'VW 3.0 V6 TDI (Amarok)',real:{hp:224,hpRpm:3000,tq:550,tqRpm:1400},unsure:['boost_bar','compression','bore_mm','stroke_mm','redline','hpRpm'],engine:{type:'diesel',vvt:false,cylinders:6,layout:'v',bore_mm:83,stroke_mm:91.4,compression:16,redline:5000,govRpm:3000,intake:'turbo',boost_bar:1.5,turboSize:'medium',vgt:true,injector:'direct',intercooler:'large',exhaust:'stock',airFilter:'stock',radiator:'large',oilCooler:true,tqLimit:550,taperRpm:1500,taperPct:67}},
-  {cat:'American V8',name:'GM LT4 6.2 supercharged (Camaro ZL1)',real:{hp:650,hpRpm:6400,tq:881,tqRpm:3600},unsure:['boost_bar','compression'],engine:{cylinders:8,layout:'v',bore_mm:103.25,stroke_mm:92,compression:10,redline:6600,intake:'supercharger',boost_bar:0.65,scType:'roots',intercooler:'large',vvt:true,cam:'sport',injector:'direct',octane:91,exhaust:'sport',airFilter:'perf',radiator:'large',oilCooler:true,taperRpm:4000,taperPct:27}},
+  {cat:'American V8',name:'GM LT4 6.2 supercharged (Camaro ZL1)',real:{hp:650,hpRpm:6400,tq:881,tqRpm:3600},unsure:['boost_bar','compression'],engine:{valvetrain:'ohv-roller',cylinders:8,layout:'v',bore_mm:103.25,stroke_mm:92,compression:10,redline:6600,intake:'supercharger',boost_bar:0.65,scType:'roots',intercooler:'large',vvt:true,cam:'sport',injector:'direct',octane:91,exhaust:'sport',airFilter:'perf',radiator:'large',oilCooler:true,taperRpm:4000,taperPct:27}},
 ];
 // Category order for the preset list (the dropdown groups by it; the UI pass will build on this).
 const PRESET_CATS=['Archetypes','Kei & City','Compact Turbo','NA Sports','Turbo Performance','American V8','Supercar','Performance SUV','Track','Rotary','Diesel','Pickup','Two-Stroke'];
@@ -6398,6 +6489,15 @@ const I18N={
   'SPORT':{el:'ΣΠΟΡ'},
   'opt:RACE':{el:'ΑΓΩΝΙΣΤΙΚΟ'},
   '2 (WEDGE)':{el:'2 (ΣΦΗΝΑ)'},
+  'VALVETRAIN':{el:'ΜΗΧΑΝΙΣΜΟΣ ΒΑΛΒΙΔΩΝ'},
+  'DOHC, BUCKET':{el:'DOHC, ΚΥΠΕΛΛΟ'},
+  'DOHC, ROCKER':{el:'DOHC, ΚΟΚΟΡΑΚΙ'},
+  'DOHC, ROLLER FINGER':{el:'DOHC, ΚΟΚΟΡΑΚΙ ΜΕ ΡΑΟΥΛΟ'},
+  'SOHC, BUCKET':{el:'SOHC, ΚΥΠΕΛΛΟ'},
+  'SOHC, ROCKER':{el:'SOHC, ΚΟΚΟΡΑΚΙ'},
+  'SOHC, ROLLER ROCKER':{el:'SOHC, ΚΟΚΟΡΑΚΙ ΜΕ ΡΑΟΥΛΟ'},
+  'PUSHROD':{el:'ΩΣΤΗΡΙΑ'},
+  'PUSHROD, ROLLER':{el:'ΩΣΤΗΡΙΑ ΜΕ ΡΑΟΥΛΟ'},
   '4 (PENT-ROOF)':{el:'4 (ΣΤΕΓΗ)'},
   'STEEL':{el:'ΧΑΛΥΒΑΣ'},
   'TITANIUM':{el:'ΤΙΤΑΝΙΟ'},
@@ -6961,6 +7061,8 @@ const I18N={
   "The highest rpm the engine is allowed to reach.":{el:"Οι υψηλότερες στροφές που επιτρέπεται να φτάσει ο κινητήρας."},
   "More rpm is more power while the engine still breathes there, but the pistons and rods carry more load and the valves may float. VALVE FLOAT, on HEAD & VALVES, says how high the valvetrain can go.":{el:"Περισσότερες στροφές σημαίνουν περισσότερη ισχύ όσο ο κινητήρας αναπνέει ακόμη εκεί, αλλά τα έμβολα και οι μπιέλες φορτίζονται περισσότερο και οι βαλβίδες μπορεί να πλεύσουν. Η ΠΛΕΥΣΗ ΒΑΛΒΙΔΩΝ, στην ΚΕΦΑΛΗ & ΒΑΛΒΙΔΕΣ, λέει πόσο ψηλά αντέχει ο μηχανισμός βαλβίδων."},
   "How many valves each cylinder has.":{el:"Πόσες βαλβίδες έχει κάθε κύλινδρος."},
+  "How the cams work the valves: two cams over the head or one, or a cam in the block with pushrods, and whether the follower slides or rolls on the cam.":{el:"Πώς κινούν οι εκκεντροφόροι τις βαλβίδες: δύο εκκεντροφόροι πάνω στην κεφαλή ή ένας, ή ένας στο μπλοκ με ωστήρια, και αν το πέλμα γλιστράει ή κυλάει πάνω στο έκκεντρο."},
+  "Buckets straight under the cams rub the least. Rockers and fingers rub more, and pushrods with their lifters more still. A roller on a rocker, finger or lifter rolls instead of sliding, which wins back much of that.":{el:"Τα κύπελλα ακριβώς κάτω από τους εκκεντροφόρους τρίβουν λιγότερο. Τα κοκοράκια τρίβουν περισσότερο, και τα ωστήρια με τα ποτηράκια τους ακόμα περισσότερο. Ένα ράουλο σε κοκοράκι ή ποτηράκι κυλάει αντί να γλιστράει, και κερδίζει πίσω μεγάλο μέρος από αυτό."},
   "More valves give more flow area, so better breathing at high rpm. Two valves in a wedge head are cheaper and give their best low down.":{el:"Περισσότερες βαλβίδες δίνουν περισσότερη επιφάνεια ροής, άρα καλύτερη αναπνοή ψηλά. Δύο βαλβίδες σε κεφαλή σφήνας είναι φθηνότερες και αποδίδουν καλύτερα χαμηλά."},
   "How far and how long the cam opens the valves.":{el:"Πόσο και για πόσο ανοίγει ο εκκεντροφόρος τις βαλβίδες."},
   "A wilder cam breathes better at high rpm, at the cost of low-end torque and a rougher idle. ATKINSON closes the intake late: more efficient, less power.":{el:"Ένας πιο άγριος εκκεντροφόρος αναπνέει καλύτερα ψηλά, με κόστος τη ροπή χαμηλά και ένα πιο άγριο ρελαντί. Ο ATKINSON κλείνει αργά την εισαγωγή: πιο αποδοτικός, λιγότερη ισχύς."},
@@ -7165,7 +7267,7 @@ const GUIDE_I18N={
   typesLimit:{el:"Όριο: το έργο του δίχρονου και του περιστροφικού στηρίζεται ακόμα σε μετρημένους συντελεστές τύπου (0.60 και 0.70 του IMEP ενός τετράχρονου) και σε μια προσαρμοσμένη καμπύλη αναπνοής· μόνο οι τετράχρονοι κύκλοι είναι πλήρως παραγόμενοι. Δες <a data-gp=\"limits\">Γνωστά όρια</a>."},
   bottomReal:{el:"Ο <b>κυβισμός</b> (το «2.0» σε ένα 2.0 λίτρων) είναι ο όγκος που σαρώνουν τα έμβολα: εμβαδόν διαμέτρου × διαδρομή × αριθμός κυλίνδρων. Ένας κινητήρας Formula 1 της εποχής των V10 είχε διάμετρο σχεδόν διπλάσια από τη διαδρομή του (<b>υπερτετράγωνος</b>) και ανέβαινε στις 19.000 rpm· ένας πετρελαιοκινητήρας φορτηγού έχει διαδρομή μεγαλύτερη από τη διάμετρο (<b>υποτετράγωνος</b>) και τραβά από το ρελαντί.<br> Η <b>σχέση συμπίεσης</b> είναι το πόσο δυνατά συμπιέζεται το φορτίο: ο όγκος με το έμβολο κάτω διά τον όγκο με το έμβολο πάνω. Πιο ψηλή βγάζει περισσότερο έργο από το ίδιο καύσιμο, ώσπου το φορτίο να ζεσταθεί τόσο που να εκραγεί μόνο του: αυτά είναι τα πειράκια."},
   bottomMore:{el:"<b>Διάμετρος και διαδρομή.</b> Ο κυβισμός είναι εμβαδόν διαμέτρου × διαδρομή × κύλινδροι, αλλά το <i>σχήμα</i> μετράει όσο και το μέγεθος. Μια κοντή διαδρομή (υπερτετράγωνος) σημαίνει ότι το έμβολο ταξιδεύει λιγότερο ανά στροφή, οπότε ο κινητήρας ανεβαίνει ψηλότερα πριν η ταχύτητα του εμβόλου γίνει επικίνδυνη, και μια φαρδιά διάμετρος αφήνει χώρο για μεγαλύτερες βαλβίδες. Μια μακριά διαδρομή (υποτετράγωνος) δίνει περισσότερη μόχλευση και γεμίζει καλά στις χαμηλές.<br><b>Η μέση ταχύτητα εμβόλου</b> είναι το όριο που πραγματικά σταματά έναν κινητήρα να ανεβαίνει: <i>2 × διαδρομή × στροφές / 60</i>. Οι κινητήρες δρόμου κάθονται στα 15–25 m/s στον κόφτη και οι αγωνιστικοί φτάνουν περίπου τα 30. Βάλε όριο στροφών πολύ πέρα από αυτό και τα παλινδρομικά μέρη δεν είναι πια κινητήρα δρόμου.<br><b>Η σχέση συμπίεσης</b> ορίζει τη θερμική απόδοση — μια ψηλότερη σχέση βγάζει περισσότερο έργο από το ίδιο καύσιμο — και ορίζει τα πειράκια: όσο περισσότερο συμπιέζεται το φορτίο, τόσο πιο ζεστό είναι το τελικό αέριο και τόσο πιο κοντά στην αυτανάφλεξη. Ένας ατμοσφαιρικός βενζινοκινητήρας δουλεύει 10.5–12.5:1, ένας τούρμπο 8.5–10:1, ένας πετρελαιοκινητήρας 15–20:1.<br><b>Η διάταξη</b> — σε σειρά, V ή μπόξερ — αποφασίζει πώς μπαίνουν οι κύλινδροι και, μαζί με τον αριθμό τους, τη σειρά ανάφλεξης που βλέπεις στην καρτέλα ΖΩΝΤΑΝΑ. Ένας V ή ένας μπόξερ έχει μία εξάτμιση ανά σειρά κυλίνδρων."},
-  bottomPhys:{el:"<span class=\"geq\">V<sub>d</sub> = (π/4) · B² · S · n<sub>cyl</sub> &nbsp;&nbsp; r<sub>c</sub> = (V<sub>swept</sub> + V<sub>c</sub>) / V<sub>c</sub></span> Οι τριβές μεγαλώνουν με τις στροφές και με τη διαδρομή. Η μέση πίεση τριβών του μοντέλου (bar) είναι <span class=\"geq\">FMEP = (0.55 + 1.8·10<sup>−8</sup> N²) · k<sub>oil</sub> · k<sub>stroke</sub></span> συν το έργο άντλησης και το δυναμό, δες <a data-gp=\"friction\">Τριβές, λάδι &amp; απώλειες άντλησης</a>. Η μάζα του τοποθετημένου κινητήρα εκτιμάται από το μέγεθος και τη διάταξή του (περίπου 50 kg + 18 kg ανά λίτρο + 7 kg ανά κύλινδρο, 35% βαρύτερος για πετρελαιοκινητήρα, περισσότερο με τούρμπο ή υπερσυμπιεστή) και προστίθεται στο αυτοκίνητο.<br> Η σχέση συμπίεσης μπαίνει με τρεις τρόπους: στην απόδοση μέσω του κύκλου καυσίμου-αέρα, <i>1 − r<sub>c</sub><sup>−0.28</sup></i>· στα πειράκια μέσω της θερμοκρασίας του τελικού αερίου μετά τη συμπίεση· και στα υπολειμματικά καυσαέρια, ένα ποσοστό περίπου <i>1/(r<sub>c</sub> − 1)</i> του φορτίου."},
+  bottomPhys:{el:"<span class=\"geq\">V<sub>d</sub> = (π/4) · B² · S · n<sub>cyl</sub> &nbsp;&nbsp; r<sub>c</sub> = (V<sub>swept</sub> + V<sub>c</sub>) / V<sub>c</sub></span> Οι τριβές μεγαλώνουν με τις στροφές, και πάνω απ' όλα με τη μέση ταχύτητα του εμβόλου: το μερίδιο της φούστας είναι <i>2.94·10² · S<sub>p</sub> / B</i> kPa, οπότε μια μεγάλη διαδρομή σε μικρή διάμετρο πληρώνει τα περισσότερα. Όλο το μοντέλο χτίζεται από τη διάμετρο, τη διαδρομή, τους κυλίνδρους, τις βαλβίδες και τον μηχανισμό τους, συν το έργο άντλησης και το δυναμό, δες <a data-gp=\"friction\">Τριβές, λάδι &amp; απώλειες άντλησης</a>. Η μάζα του τοποθετημένου κινητήρα εκτιμάται από το μέγεθος και τη διάταξή του (περίπου 50 kg + 18 kg ανά λίτρο + 7 kg ανά κύλινδρο, 35% βαρύτερος για πετρελαιοκινητήρα, περισσότερο με τούρμπο ή υπερσυμπιεστή) και προστίθεται στο αυτοκίνητο.<br> Η σχέση συμπίεσης μπαίνει με τρεις τρόπους: στην απόδοση μέσω του κύκλου καυσίμου-αέρα, <i>1 − r<sub>c</sub><sup>−0.28</sup></i>· στα πειράκια μέσω της θερμοκρασίας του τελικού αερίου μετά τη συμπίεση· και στα υπολειμματικά καυσαέρια, ένα ποσοστό περίπου <i>1/(r<sub>c</sub> − 1)</i> του φορτίου."},
   firingReal:{el:"Ο στρόφαλος μετατρέπει το πάνω-κάτω των εμβόλων σε περιστροφή, και το σχήμα του καθορίζει πότε μπορεί να ανάψει κάθε κύλινδρος. Οι μηχανικοί απλώνουν τις αναφλέξεις ομοιόμορφα ώστε ο κινητήρας να δουλεύει στρωτά, και διαλέγουν τη σειρά ώστε γειτονικοί κύλινδροι να μην ανάβουν ο ένας μετά τον άλλο (αυτό θα φόρτωνε ένα κομμάτι του στροφάλου και θα στερούσε αέρα από ένα κομμάτι της εισαγωγής).<br> Κάποιοι κινητήρες είναι από τη φύση τους στρωτοί: ένας <b>εξακύλινδρος σε σειρά</b> και ένας <b>V12</b> αλληλοαναιρούν όλες τις δυνάμεις κραδασμών τους. Ένας <b>τετρακύλινδρος σε σειρά</b> βουίζει στη διπλάσια συχνότητα των στροφών, γι' αυτό οι μεγαλύτεροι τετρακύλινδροι έχουν άξονες ζυγοστάθμισης. Το κλασικό αμερικάνικο <b>cross-plane V8</b> ανάβει τις δύο σειρές του ανομοιόμορφα, και αυτός ο ανομοιόμορφος παλμός είναι το διάσημο μπουμπουνητό του."},
   liveFiring:{el:"<b>Η σειρά κυλίνδρων και η σειρά ανάφλεξης.</b> Το πλαίσιο δεξιά από την τομή σχεδιάζει κάθε κύλινδρο, αριθμημένο, στο δικό του σημείο του κύκλου. Ο αριθμός πάνω από έναν κύλινδρο ανάβει όσο αυτός ο κύλινδρος πυροδοτεί, οπότε διαβάζεις τη σειρά κατευθείαν από το σχέδιο, και η λεζάντα από κάτω τη γράφει ολόκληρη.<br>Οι κύλινδροι δεν ανάβουν με τη σειρά της αρίθμησής τους. Ένας τετρακύλινδρος σε σειρά ανάβει <b>1-3-4-2</b>, που είναι και ο λόγος που τα έμβολα 1 και 4 είναι πάντα μαζί πάνω και τα 2 και 3 κάτω: η σειρά ανάφλεξης και η γεωμετρία του στροφάλου είναι το ίδιο γεγονός. Ένας εξακύλινδρος σε σειρά ανάβει 1-5-3-6-2-4, ένα V8 1-5-4-8-6-3-7-2, ένα V12 1-7-5-11-3-9-6-12-2-8-4-10.<br>Οι V και οι μπόξερ αριθμούνται <b>ανά σειρά κυλίνδρων</b> — η σειρά A είναι οι 1 έως n/2 στην πάνω γραμμή, η σειρά B οι υπόλοιποι από κάτω — που είναι ο τρόπος αρίθμησης των BMW, Audi, Ferrari και Porsche, και οι παραπάνω σειρές είναι σε αυτή την αρίθμηση. (Η GM αριθμεί ένα V8 μονά αριστερά, ζυγά δεξιά, οπότε το γνωστό της 1-8-4-3-6-5-7-2 είναι ο ίδιος κινητήρας γραμμένος αλλιώς.) Αριθμοί κυλίνδρων χωρίς διάταξη παραγωγής, όπως ένα V5, ανάβουν με τη σειρά, που είναι πάλι ομοιόμορφα κατανεμημένη."},
   firingPhys:{el:"Σε έναν τετράχρονο κάθε κύλινδρος ανάβει μία φορά σε 720° στροφάλου, οπότε οι ομοιόμορφες αναφλέξεις απέχουν <b>720°/n</b>: 180° για έναν τετρακύλινδρο, 120° για έναν εξακύλινδρο, 90° για ένα V8. Η δεύτερη αρμονική του μηχανισμού στροφάλου-διωστήρα (<i>r/l</i> στη σελίδα <a data-gp=\"live\">Ο κινητήρας σε λειτουργία</a>) είναι ο λόγος που ένας επίπεδος στρόφαλος τετρακυλίνδρου αφήνει μια αζυγοστάθμιστη δύναμη κραδασμού στη διπλάσια συχνότητα του στροφάλου, παρόλο που τα έμβολα είναι σε ζευγάρια.<br> Η σειρά ανάφλεξης χρησιμοποιείται πραγματικά σε δύο σημεία: η σειρά κυλίνδρων της ΖΩΝΤΑΝΑ σχεδιάζει κάθε κύλινδρο στη δική του φάση, και ο ήχος του κινητήρα στέλνει τον παλμό εξαγωγής κάθε κυλίνδρου με αυτή τη σειρά στον σωλήνα της δικής του σειράς κυλίνδρων, οπότε η ακολουθία σειρών A-B-A-B-B-A-B-A ενός cross-plane V8 βγάζει τον παλμό του χωρίς τίποτα στον κώδικα να ξέρει πώς ακούγεται ένα V8."},
@@ -7177,8 +7279,8 @@ const GUIDE_I18N={
   vvtGame:{el:"Βάλε το <b>ΜΕΤΑΒΛΗΤΟΣ ΧΡΟΝΙΣΜΟΣ</b> σε VVT στην καρτέλα ΚΙΝΗΤΗΡΑΣ. Αξίζει περισσότερο σε έναν μεγάλο εκκεντροφόρο: φέρνει πίσω τις χαμηλές που του πήρε ο εκκεντροφόρος χωρίς να χάσει τις ψηλές."},
   vvtPhys:{el:"Ο χρονιστής εδώ μπορεί να προπορεύσει τον λοβό εισαγωγής ως και <b>45 μοίρες στροφάλου</b>, που μετακινεί το σημείο κλεισίματος της εισαγωγής κατά όλο το ποσό. Στις χαμηλές στροφές το φορτίο έχει χρόνο να σπρωχτεί πίσω έξω πριν κλείσει η βαλβίδα, οπότε αυτό που παγιδεύεται είναι ο όγκος του κυλίνδρου στο IVC, όχι στο BDC: <span class=\"geq\">ποσοστό παγίδευσης ≈ V(IVC) / V(BDC) &nbsp; (από τον μηχανισμό στροφάλου-διωστήρα)</span> Στις ψηλές στροφές η ορμή της στήλης αέρα συνεχίζει να γεμίζει τον κύλινδρο μετά το BDC. Το μοντέλο ολοκληρώνει αυτόν τον χρόνο εισαγωγής για κάθε κινητήρα (δες <a data-gp=\"waves\">Κύματα στους αγωγούς εισαγωγής</a>) και πινακοποιεί το γέμισμα σε κάθε ταχύτητα για κάθε θέση του χρονιστή, και μετά τρέχει, σε πλήρες φορτίο, τη φάση που γεμίζει καλύτερα: αυτό που κάνει η βαθμονόμηση τέρμα γκαζιού μιας ECU."},
   inductionReal:{el:"Ένας βενζινοκινητήρας ελέγχεται στερώντας του αέρα. Η <b>πεταλούδα</b>, ένα κλαπέτο στην εισαγωγή, κλείνει για να πνίξει τη ροή· η πίεση στην πολλαπλή πίσω της πέφτει, κάθε κύλινδρος γεμίζει με πιο αραιό αέρα, και η ισχύς πέφτει. Πάτα τέρμα το πεντάλ και το κλαπέτο στέκεται με την κόψη.<br> Ο τρόπος που προστίθεται το καύσιμο έχει αλλάξει με τις δεκαετίες: ένα <b>καρμπιρατέρ</b> χρησιμοποιεί την αναρρόφηση του αέρα μέσα από ένα βεντούρι για να τραβήξει καύσιμο· ο <b>ψεκασμός</b> (EFI) ψεκάζει μια μετρημένη ποσότητα με έλεγχο από υπολογιστή· οι <b>ατομικές πεταλούδες</b> (ITB) δίνουν σε κάθε κύλινδρο το δικό του κλαπέτο, για ακαριαία απόκριση και ουρλιαχτό εισαγωγής αγωνιστικού."},
-  inductionPhys:{el:"Η πίεση πολλαπλής είναι μια κατάσταση με χρονική σταθερά: γεμίζει προς τον στόχο που ορίζουν γκάζι, στροφές και boost με ρυθμό που ορίζει η απόκριση του συστήματος εισαγωγής (οι ITB οι πιο γρήγορες, τα μικρά καρμπιρατέρ τα πιο αργά). Το στραγγάλισμα κοστίζει έργο άντλησης, που χρεώνεται ως <span class=\"geq\">PMEP<sub>intake</sub> = 0.9 bar × (1 − p<sub>man</sub>)</span> με κλειστή πεταλούδα, και αυτό είναι το φρένο κινητήρα. Η ακρίβεια δοσομέτρησης κάθε συστήματος κλιμακώνει το καύσιμο που πραγματικά χρειάζεται (ένα καρμπιρατέρ ή ο μηχανικός ψεκασμός δίνει περίπου 7–12% περισσότερο καύσιμο απ' όσο χρειάζεται ο κινητήρας)."},
-  inductionLimit:{el:"Όριο: οι συντελεστές ροής και απόκρισης των συστημάτων εισαγωγής έχουν οριστεί με το χέρι σύμφωνα με την πραγματική σχετική συμπεριφορά, δεν παράγονται από τη γεωμετρία τους. Ο περιορισμός του φίλτρου αέρα παράγεται (build 210): του υλικού με τον νόμο του Darcy, του κελύφους από τη δυναμική πίεση της ροής (<a data-gp=\"parts\">Σχεδίασε τα δικά σου εξαρτήματα</a>)."},
+  inductionPhys:{el:"Η πίεση πολλαπλής είναι μια κατάσταση με χρονική σταθερά: γεμίζει προς τον στόχο που ορίζουν γκάζι, στροφές και boost με ρυθμό που ορίζει η απόκριση του συστήματος εισαγωγής (οι ITB οι πιο γρήγορες, τα μικρά καρμπιρατέρ τα πιο αργά). Το στραγγάλισμα κοστίζει έργο άντλησης, που χρεώνεται ως <span class=\"geq\">PMEP<sub>intake</sub> = 0.9 bar × (1 − p<sub>man</sub>)</span> με κλειστή πεταλούδα, και αυτό είναι το φρένο κινητήρα. Η ακρίβεια δοσομέτρησης κάθε συστήματος κλιμακώνει το καύσιμο που πραγματικά χρειάζεται (ένα καρμπιρατέρ ή ο μηχανικός ψεκασμός δίνει περίπου 7–12% περισσότερο καύσιμο απ' όσο χρειάζεται ο κινητήρας).<br>Ο διαχύτης (βεντούρι) ενός καρμπιρατέρ κοστίζει στο φορτίο την πίεση που ρίχνει, η οποία πάει με το τετράγωνο της ροής: <span class=\"geq\">Δp = 5.08 kPa × (Q / Q<sub>rated</sub>)²</span> Τα καρμπιρατέρ βαθμολογούνται με τον αέρα που περνούν στα 1.5 inHg (5.08 kPa). Αυτό εδώ διαστασιολογείται με τον κανόνα των κατασκευαστών, CFM = CID × rpm × 0.85 / 3456 στον κόφτη (Holley), οπότε ρίχνει περίπου 5% του φορτίου στις πλήρεις στροφές και σχεδόν τίποτα χαμηλά. Ο ψεκασμός δεν έχει βεντούρι."},
+  inductionLimit:{el:"Όριο: οι συντελεστές απόκρισης, δοσομέτρησης και ρελαντί των συστημάτων εισαγωγής έχουν οριστεί με το χέρι σύμφωνα με την πραγματική σχετική συμπεριφορά. Κάθε καρμπιρατέρ διαστασιολογείται με τον ίδιο κανόνα, οπότε ένα μονό αναπνέει όπως ένα τετραπλό με γκάζι στο τέρμα, και οι πεταλούδες του ψεκασμού, ανοιχτές, παραλείπονται. Ο περιορισμός του φίλτρου αέρα παράγεται (build 210): του υλικού με τον νόμο του Darcy, του κελύφους από τη δυναμική πίεση της ροής (<a data-gp=\"parts\">Σχεδίασε τα δικά σου εξαρτήματα</a>)."},
   fuelmapReal:{el:"Ο υπολογιστής ενός σύγχρονου κινητήρα, η <b>ECU</b>, βρίσκει πόσο καύσιμο να ψεκάσει από έναν <b>χάρτη</b>: έναν πίνακα με τις στροφές στη μία πλευρά και το φορτίο στην άλλη. Σε χαλαρή πορεία με μικρό φορτίο στοχεύει ακριβώς στο στοιχειομετρικό, όπου δουλεύει ο καταλύτης και δεν σπαταλιέται καύσιμο. Σε πλήρες φορτίο προσθέτει καύσιμο: ένα πλουσιότερο μείγμα βγάζει λίγη περισσότερη ισχύ και, κυρίως, δροσίζει τα καυσαέρια και τα έμβολα.<br> Ο <b>ψεκασμός στην πολλαπλή</b> ψεκάζει στην πίσω πλευρά της βαλβίδας εισαγωγής. Ο <b>άμεσος ψεκασμός</b> ψεκάζει μέσα στον ίδιο τον κύλινδρο, όπου το καύσιμο που εξατμίζεται δροσίζει το φορτίο και κάνει τα πειράκια λιγότερο πιθανά."},
   fuelmapPhys:{el:"Ο εργοστασιακός χάρτης σε αυτό το μοντέλο, για έναν κινητήρα με σπινθήρα, σε λ: <span class=\"geq\">λ = 1.02 − 0.16 · φορτίο − 0.07 · (boost/1.2) − 0.015 · (κοντά στο όριο στροφών), &nbsp; 0.78 ≤ λ ≤ 1.05</span> δηλαδή περίπου λ 1.0 στην πορεία και 0.86 με τέρμα γκάζι, πλουσιότερο με boost για να κρατηθεί η θερμοκρασία καυσαερίων. Ο χάρτης ενός πετρελαιοκινητήρα πηγαίνει από λ 3.4 σε μικρό φορτίο ως το όριο καπνού 1.20 με τέρμα πεντάλ, με όσο αέρα έχει σε εκείνες τις στροφές.<br> Ο άμεσος ψεκασμός εξατμίζει το καύσιμο μέσα στον κύλινδρο, παίρνοντας τη λανθάνουσα θερμότητά του από το φορτίο: <i>ΔT = h<sub>fg</sub> · (F/A) / c<sub>p</sub></i>, με h<sub>fg</sub> 350 kJ/kg για τη βενζίνη. Οι αλκοόλες δροσίζουν πολύ περισσότερο (E85 15 °C, μεθανόλη 25 °C σε αυτό το μοντέλο), που είναι μεγάλο μέρος της αντοχής τους στα πειράκια."},
   ignitionReal:{el:"Ένα μπουζί ανάβει το μείγμα, αλλά η φλόγα χρειάζεται χρόνο για να απλωθεί στον θάλαμο, ένα ή δύο χιλιοστά του δευτερολέπτου. Έτσι ο σπινθήρας δίνεται <b>πριν</b> το έμβολο φτάσει στην κορυφή (<b>προπορεία</b>), χρονισμένος ώστε η πίεση να κορυφωθεί λίγο μετά το άνω νεκρό σημείο, όταν μπορεί να σπρώξει το έμβολο κάτω πιο δυνατά. Πολύ λίγη προπορεία σπαταλά την καύση σε ένα έμβολο που ήδη κατεβαίνει· πάρα πολλή παλεύει με το έμβολο όσο ανεβαίνει και προσκαλεί πειράκια.<br> Το σύστημα ανάφλεξης πρέπει επίσης να ξαναφορτίζει τον πολλαπλασιαστή του ανάμεσα στους σπινθήρες. Ένας παλιός <b>διανομέας</b> με έναν πολλαπλασιαστή μένει από χρόνο στις ψηλές στροφές και αστοχεί· ο <b>πολλαπλασιαστής ανά μπουζί</b> δίνει σε κάθε κύλινδρο τον δικό του."},
@@ -7193,9 +7295,9 @@ const GUIDE_I18N={
   heatPhys:{el:"Για τους κινητήρες με βαλβίδες το μερίδιο της εξάτμισης είναι ένα ενεργειακό ισοζύγιο, κλειστό: <span class=\"geq\">Q<sub>exhaust</sub> = Q<sub>fuel</sub> − W<sub>gross</sub> − Q<sub>walls</sub> − Q<sub>port</sub></span> Η θερμότητα στα τοιχώματα βγαίνει από τη συσχέτιση του <b>Woschni</b> ολοκληρωμένη πάνω σε έναν ιχνηλατημένο κύκλο, <i>h ∝ B<sup>−0.2</sup> p<sup>0.8</sup> T<sup>−0.55</sup> w<sup>0.8</sup></i>, με την ταχύτητα αερίου <i>w</i> από την ταχύτητα εμβόλου συν έναν όρο καύσης και τα τοιχώματα στους 450 K. Το μερίδιο της θυρίδας εξαγωγής χρησιμοποιεί τη μετρημένη σχέση των Caton &amp; Heywood <i>Nu = 0.0483 Re<sup>0.783</sup></i>. Ένα τζάουλ που χάνεται στο τοίχωμα νωρίς στην εκτόνωση θα είχε κάνει έργο· ένα που χάνεται αργά θα είχε απλώς φύγει από την εξάτμιση, και το μοντέλο τα χωρίζει έτσι, οπότε η ενέργεια διατηρείται εκ κατασκευής.<br> Η θερμοκρασία καυσαερίων δείχνεται με δύο τρόπους στο μοντέλο: η σταθμισμένη κατά μάζα θερμοκρασία με την οποία δουλεύει η τουρμπίνα, και αυτό που θα διάβαζε ένα θερμοστοιχείο μέσα στον σωλήνα (πιο κοντά στον χρονικό μέσο όρο, λίγο πιο κρύο, γιατί το πιο ζεστό αέριο περνά πιο γρήγορα)."},
   heatLimit:{el:"Όριο: οι θερμοκρασίες ψυκτικού και λαδιού βγαίνουν από ένα συγκεντρωτικό μοντέλο, όχι από ροές θερμότητας μέσα στο μπλοκ: ένα θερμικό φορτίο (το καύσιμο που καίγεται, απέναντι στο καύσιμο που καίει ο κινητήρας στην ισχύ για την οποία διαστασιολογήθηκε το ψυγείο του, με απόδοση 29%) απέναντι σε μια ικανότητα ψύξης, με καθυστερήσεις πρώτης τάξης. Οι ανόδοι θερμοκρασίας του είναι προσαρμοσμένες, και σε παρατεταμένη πλήρη ονομαστική ισχύ ακόμα ανεβάζουν το λάδι πάνω από 132 °C στους περισσότερους κινητήρες χωρίς ψυγείο λαδιού."},
   frictionReal:{el:"Μέρος του έργου που κάνει το αέριο στα έμβολα δεν φτάνει ποτέ στο βολάν. Το παίρνουν οι <b>τριβές</b>: τα ελατήρια των εμβόλων που ξύνουν τον κύλινδρο, τα κουζινέτα που γυρίζουν μέσα στο λάδι, ο μηχανισμός των βαλβίδων, η αντλία λαδιού και η αντλία νερού. Και ο κινητήρας πρέπει να <b>αντλεί</b> αέρα: να τον ρουφήξει περνώντας από μια μισόκλειστη πεταλούδα και να σπρώξει τα καυσαέρια έξω από τους σωλήνες. Σε μικρό φορτίο αυτή η άντληση είναι μεγάλο μέρος του καυσίμου που καίει ένα αυτοκίνητο, γι' αυτό ένας πετρελαιοκινητήρας (χωρίς πεταλούδα) είναι τόσο οικονομικός στην κίνηση.<br> Κλείσε το γκάζι εν κινήσει και αυτές οι απώλειες επιβραδύνουν το αυτοκίνητο: αυτό είναι το <b>φρένο κινητήρα</b>."},
-  frictionGame:{el:"Τις τριβές τις βλέπεις ως τη διαφορά ανάμεσα σε αυτό που βγάζουν οι κύλινδροι και αυτό που δίνει ο στρόφαλος, και στο πόσο γρήγορα πέφτει ο κινητήρας όταν κόβεις γκάζι. Το κρύο, πηχτό λάδι προσθέτει τριβή: ένας κρύος κινητήρας έχει λιγότερη ισχύ ώσπου να ζεσταθεί."},
-  frictionPhys:{el:"Οι μέσες πραγματικές πιέσεις αθροίζονται και αφαιρούνται από το ακαθάριστο έργο: <span class=\"geq\">BMEP = IMEP<sub>gross</sub> − FMEP − PMEP<br>FMEP = (0.55 + 1.8·10<sup>−8</sup> N²) · k<sub>oil</sub> · k<sub>stroke</sub> + δυναμό + κίνηση υπερσυμπιεστή<br>PMEP = (p<sub>exhaust</sub> − 1) + 0.9 · (1 − p<sub>manifold</sub>) &nbsp; [bar]</span> Το μισό της εξάτμισης παράγεται από την αντίθλιψη που πραγματικά κάνουν οι σωλήνες και η τουρμπίνα (δες <a data-gp=\"backpressure\">Αντίθλιψη &amp; υπολειμματικά αέρια</a>)· το μισό της εισαγωγής είναι το στραγγάλισμα. Ο βρόχος ενός πετρελαιοκινητήρα χρεώνεται με το πρόσημό του, οπότε ένα τούρμπο που κάνει περισσότερο boost από αντίθλιψη δίνει έργο πίσω. Η αντίσταση του δυναμό είναι η ηλεκτρική ισχύς που βγάζει διά απόδοση 0.55, διά τις στροφές του στροφάλου: μεγάλη στο ρελαντί, αμελητέα ψηλά."},
-  frictionLimit:{el:"Όριο: η καμπύλη τριβών είναι ένα τυπικό σχήμα συσχέτισης, δεν χτίζεται χωριστά από τις τριβές των ελατηρίων, των κουζινέτων και των βαλβίδων."},
+  frictionGame:{el:"Τις τριβές τις βλέπεις ως τη διαφορά ανάμεσα σε αυτό που βγάζουν οι κύλινδροι και αυτό που δίνει ο στρόφαλος, και στο πόσο γρήγορα πέφτει ο κινητήρας όταν κόβεις γκάζι. Το κρύο, πηχτό λάδι προσθέτει τριβή: ένας κρύος κινητήρας έχει λιγότερη ισχύ ώσπου να ζεσταθεί. Ο ΜΗΧΑΝΙΣΜΟΣ ΒΑΛΒΙΔΩΝ, στην ΚΕΦΑΛΗ &amp; ΒΑΛΒΙΔΕΣ, ορίζει πόσο τρίβουν οι εκκεντροφόροι: τα κύπελλα λιγότερο, τα κοκοράκια περισσότερο, τα ωστήρια ακόμα περισσότερο, και ένα ράουλο κερδίζει πίσω μεγάλο μέρος."},
+  frictionPhys:{el:"Οι μέσες πραγματικές πιέσεις αθροίζονται και αφαιρούνται από το ακαθάριστο έργο: <span class=\"geq\">BMEP = IMEP<sub>gross</sub> − FMEP − PMEP<br>FMEP = (στρόφαλος + παλινδρομικά + ελατήρια υπό πίεση αερίου + μηχανισμός βαλβίδων + αντλίες) · k<sub>oil</sub> + δυναμό + κίνηση υπερσυμπιεστή<br>PMEP = (p<sub>exhaust</sub> − 1) + 0.9 · (1 − p<sub>manifold</sub>) &nbsp; [bar]</span> Το FMEP είναι το μοντέλο Patton–Nitschke–Heywood όπως το αναθεώρησαν οι Sandoval και Heywood (SAE 2003-01-0725): κάθε μέρος στο δικό του καθεστώς λίπανσης, σταθερό όπου τρίβει χωρίς λάδι (τσιμούχες, επίπεδα πέλματα), ∝ N όπου διατέμνεται ένα φιλμ λαδιού (κουζινέτα, φούστα), ∝ N² όπου το λάδι αντλείται μέσα από τα κουζινέτα. Διαβάζει τη διάμετρο B, τη διαδρομή S, τους κυλίνδρους, τις βαλβίδες και το άνοιγμά τους, τη συμπίεση (το φορτίο αερίου στα ελατήρια), την πίεση εισαγωγής και τις σταθερές του μηχανισμού (Πίνακας 4.2: επίπεδο κύπελλο 133, επίπεδο κοκοράκι 400, ράουλο 0.005 ως 0.023). Τα κουζινέτα είναι 0.65 και 0.56 της διαμέτρου. Στις 3000 rpm δίνει περίπου 1.1 bar για έναν τετρακύλινδρο 2.3 λίτρων, έναντι 0.7 bar από την παλιά προσαρμοσμένη καμπύλη.<br>Το μισό της εξάτμισης παράγεται από την αντίθλιψη που πραγματικά κάνουν οι σωλήνες και η τουρμπίνα (δες <a data-gp=\"backpressure\">Αντίθλιψη &amp; υπολειμματικά αέρια</a>)· το μισό της εισαγωγής είναι το στραγγάλισμα. Ο βρόχος ενός πετρελαιοκινητήρα χρεώνεται με το πρόσημό του, οπότε ένα τούρμπο που κάνει περισσότερο boost από αντίθλιψη δίνει έργο πίσω. Η αντίσταση του δυναμό είναι η ηλεκτρική ισχύς που βγάζει διά απόδοση 0.55, διά τις στροφές του στροφάλου: μεγάλη στο ρελαντί, αμελητέα ψηλά."},
+  frictionLimit:{el:"Όριο: το ιξώδες του λαδιού, η τάση των ελατηρίων και η τραχύτητα του χιτωνίου μένουν σε αυτά του κινητήρα αναφοράς του μοντέλου, της δεκαετίας του 1980 (10W-30 στους 90 °C), οπότε ένα σύγχρονο πακέτο ελατηρίων χαμηλής τάσης χρεώνεται λίγο παραπάνω· το ζέσταμα χρησιμοποιεί ακόμα τον παλιότερο συντελεστή θερμοκρασίας λαδιού. Τα περιστροφικά και οι δίχρονοι κρατούν την παλιά προσαρμοσμένη καμπύλη."},
   electricalReal:{el:"Ο κινητήρας φτιάχνει μόνος του το ρεύμα του. Ένας ιμάντας από τον στρόφαλο γυρίζει ένα <b>δυναμό</b>, που φορτίζει τη <b>μπαταρία</b> και τροφοδοτεί καθετί ηλεκτρικό: την ECU, την αντλία καυσίμου, τα φώτα, το βεντιλατέρ. Στο ρελαντί ένα μικρό δυναμό δεν προλαβαίνει ένα μεγάλο ηλεκτρικό φορτίο, η μπαταρία αδειάζει, η τάση πέφτει, και ένας αδύναμος σπινθήρας αρχίζει να αστοχεί."},
   electricalGame:{el:"Το <b>ΗΛΕΚ. ΦΟΡΤΙΟ</b> στην καρτέλα ΖΩΝΤΑΝΑ είναι τα παρελκόμενα (φώτα, κλιματισμός, ηχοσύστημα). Διάλεξε το μέγεθος του <b>ΔΥΝΑΜΟ (ALT)</b> στην καρτέλα ΚΙΝΗΤΗΡΑΣ: 60, 120 ή 180 A. Πρόσεχε την τάση της μπαταρίας στο ρελαντί με το φορτίο ανεβασμένο."},
   electricalPhys:{el:"Το δυναμό δίνει περίπου το 35% της ονομαστικής του τιμής στο ρελαντί, ανεβαίνοντας σε πλήρη απόδοση ως τις 2500 rpm. Η ζήτηση είναι μια βάση 12 A (ECU, αντλία, ανάφλεξη), ως 55 A για παρελκόμενα και 22 A για ηλεκτρικό βεντιλατέρ όταν το ψυκτικό είναι ζεστό. Η μπαταρία ολοκληρώνει τη διαφορά, και η τάση του συστήματος ακολουθεί την κατάσταση φόρτισής της. Η δύναμη του σπινθήρα κλιμακώνεται με την τάση ανάμεσα στα 9.5 και 13 V, και το όριο φόρτισης της ανάφλεξης πέφτει μαζί της, οπότε μια άδεια μπαταρία και ένας διανομέας αστοχούν νωρίς. Η ισχύς που τραβιέται κοστίζει ροπή στον στρόφαλο: <span class=\"geq\">T<sub>alt</sub> = I · 14 V / 0.55 / ω</span>"},
@@ -8665,6 +8767,7 @@ function readEngineFromForm(){
     cam:g('edCam').value,egr:g('edEgr').value,
     vvt:g('edVVT').value==='yes',
     valves:clamp(Math.round(+g('edValves').value||4),2,5),
+    valvetrain:g('edValvetrain').value,
     valveMat:g('edValveMat').value,
     valveSpring:g('edSpring').value,
     fuel,
@@ -8703,7 +8806,7 @@ function applyEngineToForm(e){
   g('edScType').value=e.scType||'roots';g('edNitrous').value=e.nitrous||'none';
   g('edIntakeSys').value=e.intakeSys||'efi';
   g('edCam').value=e.cam||'stock';g('edEgr').value=e.egr||'none';g('edVVT').value=e.vvt?'yes':'no';
-  g('edValves').value=String(e.valves||4);g('edValveMat').value=e.valveMat||'steel';
+  g('edValves').value=String(e.valves||4);g('edValvetrain').value=VALVETRAIN[e.valvetrain]?e.valvetrain:valvetrainDefault(e.valves);g('edValveMat').value=e.valveMat||'steel';
   g('edSpring').value=e.valveSpring||'stock';g('edSpringRpm').value=e.springRpm||0;
   g('edFuel').value=e.fuel||'gasoline';
   partsToForm(e);g('edCat').value=e.cat||'stock';g('edOctane').value=e.octane;g('edInjector').value=e.injector;
@@ -8752,7 +8855,7 @@ function syncDesignEnable(){
   // No poppet valvetrain on 2-stroke / rotary.
   g('edCam').disabled=tp.ports;g('edEgr').disabled=tp.ports||tp.ci;   // the spark engines' cooled EGR (build 204)
   g('edVVT').disabled=tp.ports;
-  ['edValves','edValveMat','edSpring'].forEach(id=>{g(id).disabled=tp.ports;});
+  ['edValves','edValvetrain','edValveMat','edSpring'].forEach(id=>{g(id).disabled=tp.ports;});
   // Spark & timing only exist on spark-ignition engines (diesel is CI).
   g('edIgnType').disabled=tp.ci;
   g('edTiming').disabled=tp.ci;
@@ -8870,13 +8973,15 @@ function buildEngineCore(prevStoich,quiet){
   if(!sys.di)engine.injector='port';          // carbs / mechanical injection: no DI
   engine.canAutoAFR=(engine.intakeSys==='efi'||engine.intakeSys==='itb');   // only EFI has an ECU fuel map
   if(!engine.canAutoAFR)engine.afrMode='fixed';   // carbs / mechanical injection: mixture is mechanical
-  // Catalytic converter: conversion efficiency + a small exhaust back-pressure that costs
-  // top-end breathing (folded into the top-end flow term, like an extra restrictive filter).
+  // Catalytic converter: conversion efficiency, and its brick as a porous plug in the exhaust (backPressureBar). It is
+  // ALSO still taken off the charge as a fitted ramp to the redline (up to 5% for a stock cat), which counts it twice.
+  // Taking that out (build 244 tried) lifts nearly every factory engine 5-6%, so it has been holding down an error
+  // elsewhere; it is left for the audit of fitted parts, named, rather than removed blind.
   const catp=CAT[engine.cat]||CAT.stock;
   engine.catConv=catp.conv;engine.catRestrict=catp.restrict;
-  engine.inductionFlowTop=sys.flowTop-catp.restrict;
+  engine.catRampTop=catp.restrict;
   deriveFilter();   // the air filter's restriction, from its media and housing (build 210)
-  engine.inductionFlowLow=sys.flowLow;
+  deriveCarb();     // a carburettor's venturi, sized to the engine (build 244)
   engine.meteringEff=sys.metering;            // AFR precision → thermal efficiency
   engine.intakeRespK=sys.resp;                // manifold fill speed (dynamic model)
   engine.idleRpmEff=IDLE_RPM+idlePenalty+sys.idle;   // wild cam / race intake idle higher & lumpier
@@ -8884,7 +8989,7 @@ function buildEngineCore(prevStoich,quiet){
   buildBurnTable();         // diesel burn phasing vs rpm; exhaustGasT reads it from here on
   deriveGasDynamics();      // runner + header geometry; needs crFactor, catRestrict and idleRpmEff
   updateGasLabels();
-  engine.strokeFrictionMult=1+(engine.stroke_mm-86)/320;  // longer stroke = more friction
+  deriveFriction();         // the friction model's geometry: bearings, cams, valves (build 243)
   engine.maxBoost=engine.intake==='na'?0:engine.boost_bar;
   engine.mapMax=engine.intake==='na'?1.05:1.0+engine.maxBoost;
   // Intercooler core: charge-heat residual (feeds effIAT) and its spool-lag penalty.
@@ -9339,11 +9444,11 @@ function computeVE(rpm,map){
     const demand=(engine.displacement_L/1000)*ve*(rpm/60*engine.chargesPerRev)*rho;
     if(demand>engine.chokeFlow_kgs)ve*=engine.chokeFlow_kgs/demand;
   }
-  // Induction system: restriction/flow weighted by airflow demand (rpm).
-  const breathe=clamp(rpm/engine.redline,0,1);
-  ve*=1+engine.inductionFlowTop*breathe+engine.inductionFlowLow*(1-breathe);
-  // The air filter (build 210): its pressure drop at the flow it passes leaves the charge that much thinner.
-  ve*=1-filterDp(airFlowM3s(rpm,map,ve))/101325;
+  // The air filter (build 210) and a carburettor's venturi (build 244): the pressure each drops at the flow it passes
+  // leaves the charge that much thinner.
+  ve*=1-engine.catRampTop*clamp(rpm/engine.redline,0,1);   // the catalyst, fitted and counted twice (see buildEngineCore)
+  const Q=airFlowM3s(rpm,map,ve);
+  ve*=1-(filterDp(Q)+carbDp(Q))/101325;
   ve*=(0.97+0.03*clamp(map/engine.mapMax,0,1.2));
   // ---- derived valvetrain limits (see PHYSICS CORE) ----
   // These replace a valve-float term that only fired ABOVE the redline and so never ran inside the
@@ -9818,7 +9923,7 @@ function pumpingMEP(rpm,map){
 }
 // Friction + pumping mean effective pressure.
 function pumpFrictionMEP(rpm,map,oilFrictionMult){
-  let fmep=(0.55+1.8e-8*rpm*rpm)*oilFrictionMult*engine.strokeFrictionMult;
+  let fmep=mechFrictionMEP(rpm,map)*oilFrictionMult;               // rubbing + auxiliary, derived (src/js/friction.js)
   if(engine.intake==='supercharger')
     fmep+=0.18*(SC_TYPE[engine.scType]||SC_TYPE.roots).drag*Math.max(0,map-1.0)*(0.4+0.6*rpm/engine.redline);  // parasitic drive (by type)
   fmep+=pumpingMEP(rpm,map);
@@ -11362,8 +11467,17 @@ function drawGearForce(){
   const C=gwCanvas('gwForce');if(!C)return;const {g,W,H}=C,V=vehicle,n=V.ratios.length,pt=powertrain(),rl=pt.maxRpm(),s=pt.rating();
   const curve=pt.torqueCurve(),idle=pt.idleRpm()||800;
   const tq=rpm=>{if(rpm<=curve[0].rpm)return curve[0].tq;for(let k=1;k<curve.length;k++)if(rpm<=curve[k].rpm){const a=curve[k-1],b=curve[k];return a.tq+(b.tq-a.tq)*(rpm-a.rpm)/(b.rpm-a.rpm);}return curve[curve.length-1].tq;};
-  // the ideal from the same curve the gears are drawn from, so no gear can touch more than it
-  const eff=V.driveEff,r=V.rTire,fd=V.finalDrive,Pmax=curve.reduce((m,q)=>Math.max(m,q.tq*q.rpm*(2*Math.PI)/60),0);
+  // the ideal from the same curve the gears are drawn from, so no gear can touch more than it. Between two points the
+  // torque is a straight line, so the power T(N)·N is a parabola and can peak between them (a power peak short of the
+  // limiter does): its vertex counts too, not only the points.
+  let Pmax=0;
+  for(let k=0;k<curve.length;k++){
+    const q=curve[k];Pmax=Math.max(Pmax,q.tq*q.rpm);
+    if(k){const a=curve[k-1],m=(q.tq-a.tq)/(q.rpm-a.rpm),c=a.tq-m*a.rpm;   // T = c + m·N on this segment
+      if(m<0){const nv=-c/(2*m);if(nv>a.rpm&&nv<q.rpm)Pmax=Math.max(Pmax,(c+m*nv)*nv);}}
+  }
+  Pmax*=2*Math.PI/60;
+  const eff=V.driveEff,r=V.rTire,fd=V.finalDrive;
   const Fgear=(i,vms)=>{const rpm=vms*(V.ratios[i]*fd)/r*60/(2*Math.PI);return rpm<idle||rpm>rl?null:tq(rpm)*V.ratios[i]*fd*eff/r;};
   const Fres=vms=>0.5*AIR_RHO*V.cdA*vms*vms+crrAt(V.crr,vms)*V.mass*G;
   const grip=V.mu*V.mass*G*V.drivenWt;   // the driven tyres' grip at rest (weight transfer and downforce move it)
@@ -19998,6 +20112,20 @@ function filterQref(e){
   return (e.displacement_L/1000)*(best/60)*(e.chargesPerRev||0.5)*0.95;
 }
 const filterDp=Q=>{const f=engine.filt;return f?f.a*Q+f.b*Q*Q:0;};   // Pa
+// A carburettor's venturi (build 244). Until build 244 every induction system scaled the charge by a fitted ramp from
+// idle to the redline (a 4-barrel −3% at the redline, a 1-barrel −16%, mechanical injection +5%, ITBs +8%). (The
+// catalyst's −2 to −5% rode on the same ramp and still does, for now: see buildEngineCore.) A carburettor's restriction is its venturis, and carburettors are rated by it: the
+// air they pass at a set pressure drop, 1.5 inHg (5.08 kPa) for a four-barrel (Holley's and the industry's rating;
+// one- and two-barrels are rated at 3.0 inHg, the same venturi measured harder). A venturi's drop goes with the square
+// of the flow. No preset gives its carburettor's rating, so it is sized by the makers' rule, CFM = CID x rpm x VE /
+// 3456 at the redline with VE 0.85 (Holley), every type at the 1.5 inHg rating. Injection (single throttle, ITBs or
+// mechanical) has no venturi; its throttle plates wide open are left out, as before.
+const CARB_DP_REF=5080;   // Pa, 1.5 inHg
+const carbDp=Q=>{const r=engine.carbQref;return r>0?CARB_DP_REF*(Q/r)*(Q/r):0;};   // Pa
+function deriveCarb(){
+  const e=engine,carb={carb1:1,carb2:1,carb4:1,sidedraft:1}[e.intakeSys];
+  e.carbQref=carb?(e.displacement_L/1000)*(e.redline/60)*(e.chargesPerRev||0.5)*0.85:0;   // m3/s at its rating
+}
 // The filter's coefficients (a: Pa per m3/s, the media; b: Pa per (m3/s)^2, the housing), from a designed filter or a
 // factory one sized to this engine's full flow.
 function deriveFilter(){
@@ -23404,7 +23532,7 @@ const HYB_ENGINE_PRESETS=[
   // with a 53 kW / 163 Nm MG2 and a 1.31 kWh NiMH pack of 28 modules (201.6 V): 90 kW together (Toyota GB's
   // technical specification).
   {cat:'Hybrid',name:'Toyota 2ZR-FXE 1.8 + power-split (Prius)',real:{hp:96.6,hpRpm:5200,tq:142,tqRpm:3600,motorKW:53,motorNm:163,sysKW:90},
-   unsure:['redline'],engine:{type:'petrol4',radiator:'large',oilCooler:true,cylinders:4,bore_mm:80.5,stroke_mm:88.3,compression:13,redline:5500,intake:'na',injector:'port',vvt:true,
+   unsure:['valvetrain','redline'],engine:{valvetrain:'dohc-roller',type:'petrol4',radiator:'large',oilCooler:true,cylinders:4,bore_mm:80.5,stroke_mm:88.3,compression:13,redline:5500,intake:'na',injector:'port',vvt:true,
     egr:'cooled-full',cam:'atkinson',valves:4,octane:95,airFilter:'stock',exhaust:'stock',cat:'stock',intakeSys:'efi',hyMode:'ps',hyDeploy:'full',
     evMotorType:'pm',evRotorD:150,evStack:60,evPoles:8,evTurns:100,evMagnet:'ndfeb',evRetention:'bridges',evCooling:'jacket',evMaxRpm:17000,
     evInverter:'igbt',evAmps:100,evRearCount:1,evFront:'none',evChem:'nimhHEV',evSeries:168,evKWh:1.31,evYear:2016}},
@@ -23421,7 +23549,7 @@ const HYB_ENGINE_PRESETS=[
   // 215 kW together), and a 12 kWh pack under the rear seat. The tune holds the charge between 12% and 95% (~10 kWh
   // usable, BMW's net figure ~10.4) and sustains it at 15%.
   {cat:'Hybrid',name:'BMW B48 2.0 turbo + P2 plug-in (330e)',real:{hp:181.5,hpRpm:5000,tq:300,tqRpm:1350,motorKW:80,motorNm:265,sysKW:215},
-   unsure:['redline','boost','pack'],engine:{type:'petrol4',radiator:'large',oilCooler:true,cylinders:4,bore_mm:82,stroke_mm:94.6,compression:10.2,redline:6500,intake:'turbo',boost_bar:0.4,turboSize:'small',
+   unsure:['redline','boost','pack'],engine:{valvetrain:'dohc-roller',type:'petrol4',radiator:'large',oilCooler:true,cylinders:4,bore_mm:82,stroke_mm:94.6,compression:10.2,redline:6500,intake:'turbo',boost_bar:0.4,turboSize:'small',
     injector:'direct',vvt:true,cam:'stock',valves:4,octane:95,airFilter:'stock',exhaust:'stock',cat:'stock',intakeSys:'efi',hyMode:'p2',hyDeploy:'full',hyPlug:true,
     hyTune:{rpm:4000,map:Array(20).fill(100),regen:'high',lps:true,evKmh:0,evKw:0,socLo:12,socT:15,socHi:95},
     evMotorType:'pm',evRotorD:200,evStack:60,evPoles:12,evTurns:48,evMagnet:'ndfeb',evRetention:'bridges',evCooling:'jacket',evMaxRpm:7500,
@@ -24069,6 +24197,8 @@ const ICD_FIELDS={
     trade:'More rpm is more power while the engine still breathes there, but the pistons and rods carry more load and the valves may float. VALVE FLOAT, on HEAD & VALVES, says how high the valvetrain can go.'},
   edValves:{what:'How many valves each cylinder has.',
     trade:'More valves give more flow area, so better breathing at high rpm. Two valves in a wedge head are cheaper and give their best low down.'},
+  edValvetrain:{guide:'friction',what:'How the cams work the valves: two cams over the head or one, or a cam in the block with pushrods, and whether the follower slides or rolls on the cam.',
+    trade:'Buckets straight under the cams rub the least. Rockers and fingers rub more, and pushrods with their lifters more still. A roller on a rocker, finger or lifter rolls instead of sliding, which wins back much of that.'},
   edCam:{what:'How far and how long the cam opens the valves.',
     trade:'A wilder cam breathes better at high rpm, at the cost of low-end torque and a rougher idle. ATKINSON closes the intake late: more efficient, less power.'},
   edVVT:{guide:'vvt',what:'Whether the ECU can shift the cam timing while the engine runs.',
@@ -24154,7 +24284,7 @@ const ICD_FIELDS={
 };
 // Where a field's value lives on a factory engine, and how a choice is written there.
 const ICD_KEY={edCyl:'cylinders',edLayout:'layout',edBore:'bore_mm',edStroke:'stroke_mm',edEcc:'ecc_mm',edCR:'compression',edRedline:'redline',
-  edValves:'valves',edCam:'cam',edVVT:'vvt',edValveMat:'valveMat',edSpring:'valveSpring',edEgr:'egr',edIntake:'intake',edBoost:'boost_bar',
+  edValves:'valves',edValvetrain:'valvetrain',edCam:'cam',edVVT:'vvt',edValveMat:'valveMat',edSpring:'valveSpring',edEgr:'egr',edIntake:'intake',edBoost:'boost_bar',
   edIntercooler:'intercooler',edTurboSize:'turboSize',edTurboConfig:'turboConfig',edCompWheel:'compExd_mm',edHousing:'housing',edVGT:'vgt',
   edAntilag:'antilag',edScType:'scType',edTaperRpm:'taperRpm',edTaperPct:'taperPct',edTqLimit:'tqLimit',edGovRpm:'govRpm',edNitrous:'nitrous',
   edIntakeSys:'intakeSys',edAirFilter:'airFilter',edRunner:'runner',edExhaust:'exhaust',edCat:'cat',edFuel:'fuel',edOctane:'octane',

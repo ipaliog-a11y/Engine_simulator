@@ -168,8 +168,17 @@ function drawGearForce(){
   const C=gwCanvas('gwForce');if(!C)return;const {g,W,H}=C,V=vehicle,n=V.ratios.length,pt=powertrain(),rl=pt.maxRpm(),s=pt.rating();
   const curve=pt.torqueCurve(),idle=pt.idleRpm()||800;
   const tq=rpm=>{if(rpm<=curve[0].rpm)return curve[0].tq;for(let k=1;k<curve.length;k++)if(rpm<=curve[k].rpm){const a=curve[k-1],b=curve[k];return a.tq+(b.tq-a.tq)*(rpm-a.rpm)/(b.rpm-a.rpm);}return curve[curve.length-1].tq;};
-  // the ideal from the same curve the gears are drawn from, so no gear can touch more than it
-  const eff=V.driveEff,r=V.rTire,fd=V.finalDrive,Pmax=curve.reduce((m,q)=>Math.max(m,q.tq*q.rpm*(2*Math.PI)/60),0);
+  // the ideal from the same curve the gears are drawn from, so no gear can touch more than it. Between two points the
+  // torque is a straight line, so the power T(N)·N is a parabola and can peak between them (a power peak short of the
+  // limiter does): its vertex counts too, not only the points.
+  let Pmax=0;
+  for(let k=0;k<curve.length;k++){
+    const q=curve[k];Pmax=Math.max(Pmax,q.tq*q.rpm);
+    if(k){const a=curve[k-1],m=(q.tq-a.tq)/(q.rpm-a.rpm),c=a.tq-m*a.rpm;   // T = c + m·N on this segment
+      if(m<0){const nv=-c/(2*m);if(nv>a.rpm&&nv<q.rpm)Pmax=Math.max(Pmax,(c+m*nv)*nv);}}
+  }
+  Pmax*=2*Math.PI/60;
+  const eff=V.driveEff,r=V.rTire,fd=V.finalDrive;
   const Fgear=(i,vms)=>{const rpm=vms*(V.ratios[i]*fd)/r*60/(2*Math.PI);return rpm<idle||rpm>rl?null:tq(rpm)*V.ratios[i]*fd*eff/r;};
   const Fres=vms=>0.5*AIR_RHO*V.cdA*vms*vms+crrAt(V.crr,vms)*V.mass*G;
   const grip=V.mu*V.mass*G*V.drivenWt;   // the driven tyres' grip at rest (weight transfer and downforce move it)

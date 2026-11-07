@@ -1,4 +1,4 @@
-// Translation tables one entry per line, and generated files kept out of diffs and searches (build 241).
+// Translation tables one entry per line, and generated files kept out of diffs and searches (build 245).
 //
 // WHY THIS EXISTS. A diff or a search that touches a line prints the whole line. src/js/i18n.js had grown lines that
 // held a whole build's strings (the longest 31,380 characters, mostly Greek), so adding six strings made an 80 KB diff,

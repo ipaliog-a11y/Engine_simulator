@@ -193,4 +193,4 @@ one that only said "still waiting", re-read all of it.
   `src/html/guide.html` (by `data-gk`) and `src/js/i18n.js` (by key), instead of opening them whole.
 - **`src/js/i18n.js` holds one entry per line.** Add each new string on a line of its own; never append it to an
   existing line (`node tools/split-i18n.mjs` fixes one that was). `test156` checks this. A diff or search that touches
-  a line prints all of it, and until build 241 one line held a whole build's strings, 31,380 characters.
+  a line prints all of it, and until build 245 one line held a whole build's strings, 31,380 characters.
