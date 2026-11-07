@@ -5,7 +5,7 @@
 // the oil passed 132 C in about a minute and 55 of the 93 real engines took OIL TEMP or OVERHEAT wear, 36 of them blown
 // in two minutes. What a cooling system carries away is a share of the fuel's energy. What must hold:
 //   · every real combustion engine free-revving at full throttle for 120 s, AUTO THERMAL and WEAR on, takes no wear;
-//   · full load at the rpm of peak power heats each engine more than free-revving does;
+//   · full load at the rpm of peak power heats each engine more than free-revving does (the oil at the end of the run);
 //   · a radiator sized for less power runs hotter at full load (the generic 260 hp part against an LS7's own, SMALL
 //     against LARGE);
 //   · full load at peak power for 120 s: the engines that still take wear are a named list that may only shrink
@@ -51,7 +51,7 @@ const r = await page.evaluate(() => {
       stepThermal(dt); stepEngine(dt); stepElectrical(dt); updatePhysics(); stepWear(dt);
       oil = Math.max(oil, state.oil); cool = Math.max(cool, state.coolant); if (state.wearCause) causes.add(state.wearCause);
     }
-    return { h: state.engineHealth, causes: [...causes], oil, cool };
+    return { h: state.engineHealth, causes: [...causes], oil, cool, oilEnd: state.oil };
   };
   // the dyno load that holds the engine at the rpm of its peak power
   const atPeak = () => Math.max(0.01, (engine.redline - engine.score.peakHPrpm) / (engine.redline - engine.idleRpmEff));
@@ -76,8 +76,11 @@ const freeWorn = r.all.filter(x => x.free.causes.length || x.free.h < 0.999);
 const oils = r.all.map(x => x.free.oil).sort((a, b) => a - b);
 console.log(`== ${r.all.length} real engines free-revving 120 s, AUTO THERMAL on: ${r.all.length - freeWorn.length} unworn; oil median ${f(oils[oils.length >> 1])} C, highest ${f(oils[oils.length - 1])} C ==`);
 freeWorn.forEach(x => fails.push(`${x.n} wears free-revving (${x.free.causes.join(', ')}, oil ${f(x.free.oil)} C)`));
-const notHotter = r.all.filter(x => !(x.full.oil > x.free.oil));
-notHotter.forEach(x => fails.push(`${x.n}: full load at peak power is no hotter than free-revving (oil ${f(x.full.oil)} vs ${f(x.free.oil)} C)`));
+// Compared at the end of the run, not by the highest reading: both runs start the oil at 100 C, and an engine whose oil
+// cooler holds it below that (the E30 M3 from build 242: 99.9 C at full load against 96.3 free-revving) peaks at its
+// starting value in both, which says nothing about which run heats it more.
+const notHotter = r.all.filter(x => !(x.full.oilEnd > x.free.oilEnd));
+notHotter.forEach(x => fails.push(`${x.n}: full load at peak power is no hotter than free-revving (oil ${f(x.full.oilEnd, 1)} vs ${f(x.free.oilEnd, 1)} C at 120 s)`));
 const fullWorn = r.all.filter(x => x.full.causes.length);
 console.log(`== full load at peak power 120 s: ${fullWorn.length} take wear (known ${FULL_LOAD_KNOWN.size}) ==`);
 fullWorn.forEach(x => { if (!FULL_LOAD_KNOWN.has(x.n)) fails.push(`${x.n} newly wears at full load (${x.full.causes.join(', ')}, oil ${f(x.full.oil)} C)`); });
