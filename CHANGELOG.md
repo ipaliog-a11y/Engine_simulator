@@ -47,6 +47,25 @@ test145 now compares the oil at the end of its two 120 s runs, not the highest r
 100 C. The corrected E30's oil cooler holds it below that at full load, so both runs peaked at 100.0 and the test said
 full load was no hotter. At 120 s it reads 99.9 C at full load and 96.3 free-revving, with the coolant at 91.6 and
 89.7, so full load still heats it more. On `main` the old preset had passed by 0.1 C.
+### The cards' pictures are drawn when you come back to them, and PLUG-IN stays PLUG-IN (build 240)
+
+- **Blank pictures.** In builds 238 and 239 the cards' pictures and the side panel's curve were drawn only while they
+  were on screen. Picking a build from the list jumps to the DYNO tab, so they were worked out while hidden, and
+  nothing drew them when you came back to ENGINE. The rotor and stator, the battery, the cylinder and the WHAT THE
+  MOTOR DOES / WHAT YOUR ENGINE DOES curve stayed blank until you changed something. Now a picture is redrawn whenever
+  it comes into view or changes size (a ResizeObserver in `src/js/design-cards.js`), so both forms are fixed at once.
+  Reported by the owner.
+- **PLUG-IN in Greek.** A plug-in hybrid is "plug-in" in Greek too, as its makers and buyers say it. The field PLUG-IN,
+  PLUG-IN DEPLOY (now ΑΠΟΔΟΣΗ PLUG-IN) and the hybrid guide pages said ΕΠΑΝΑΦΟΡΤΙΖΟΜΕΝΟ; they now say PLUG-IN or
+  plug-in. "Από την πρίζα" stays where it means energy taken from the wall socket. test87 allows the word PLUG in Greek
+  text, as it allows WLTP and eCVT.
+- No numbers moved: the fingerprint is identical to build 239's.
+
+Left for the next build: hybrids are still charged for a belt-driven alternator (its drag and its charging torque on
+the crank). Real ones run the 12 V system from the traction pack through a DC-DC converter. That is a physics change,
+so it gets its own build.
+
+Tests: test151 (new); test87 (allows PLUG).
 
 ### The combustion engine's design as cards, with help and a live preview (build 239)
 
