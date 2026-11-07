@@ -33,6 +33,10 @@ const FULL_LOAD_KNOWN = new Set([
   'Mitsubishi 4G63T (Lancer Evo IX)', 'GM LS3 (Corvette C6)', 'GM LS7 (Corvette Z06 C6)', 'Ford Coyote 5.0 (Mustang GT 2018)',
   'Lamborghini 6.5 V12 (Murciélago LP640)', 'Ferrari F136 FB V8 (458 Italia)', 'Lamborghini 5.2 V10 (Huracán LP610-4)',
   'Lamborghini 5.2 V10 (Huracán STO)', 'Mazda 13B-REW (RX-7 FD)', 'Buick LC2 turbo V6 (GNX)', 'Jaguar XK 3.8 I6 (E-Type S1)',
+  // build 244: the Daytona's carburettors now fade at the top (their venturi drop), so its power peaks below the limiter
+  // and "full load at peak power" holds it hard for the first time, where its peak used to sit near the limiter on almost
+  // no dyno load. The same fitted temperature rises put its oil at 149 C; named in the CHANGELOG.
+  'Ferrari Colombo 4.4 V12 (365 GTB/4)',
 ]);
 
 const r = await page.evaluate(() => {

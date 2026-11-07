@@ -20,6 +20,78 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 Working toward **v1.0 — every number derived, not fitted.**
 
+### A carburettor's restriction is its venturi, and the intake systems lose their fitted ramps (build 244)
+
+The second step of the top-end fade the owner asked for (build 243 was the first, the derived friction). The inlet
+Mach index turned out not to be the gap: on the corrected E30 M3 it reaches Taylor's knee (Z ≈ 0.5) right at the real
+power peak, which is how engines are designed. What was missing is in the intake systems.
+
+- **The fitted ramps are gone.** Every intake system scaled the charge by a fitted ramp from idle to the redline:
+  individual throttle bodies +8% at the redline, sidedraft carburettors +6%, mechanical injection +5%, a 4-barrel
+  −3%, a 1-barrel −16%, with low-rpm terms of −7% to +3%. Ramps that rise with rpm were holding up the top end of the
+  ITB and mechanical-injection engines (the E30 and E46 M3s, the M5 E39, the 190E, the McLaren F1).
+- **A carburettor's restriction is its venturi.** Carburettors are rated by the air they pass at a set pressure drop,
+  1.5 inHg (5.08 kPa) for a four-barrel (Holley; one- and two-barrels are rated at 3.0 inHg, the same venturi measured
+  harder), and a venturi's drop goes with the square of the flow. No preset gives its carburettor's rating, so each is
+  sized by the makers' rule, CFM = CID × rpm × 0.85 / 3456 at the redline. It costs about 5% of the charge at full
+  revs and almost nothing low down: a carburettor engine's own fade.
+- **Injection** (a single throttle, ITBs or mechanical) has no venturi. Its throttle plates, wide open, are left out,
+  as before.
+
+| Against 98 real engines' rated power | Build 243 | Build 244 |
+|---|---|---|
+| Mean signed error | −0.1% | −1.7% |
+| Mean absolute error | 7.5% | 6.9% |
+| Median absolute error | 3.6% | 3.6% |
+| Within 10% | 78 | 82 |
+
+It moves the 18 engines with carburettors, ITBs or mechanical injection, by −15 to −2%:
+
+| Engine | Build 243 | Build 244 | Rated |
+|---|---|---|---|
+| Ferrari Dino 2.4 V6 | 245 hp | 208 | 195 |
+| Lamborghini Countach 3.9 V12 | 425 | 362 | 375 |
+| Ferrari 365 GTB/4 4.4 V12 | 404 | 349 | 352 |
+| BMW S70/2 (McLaren F1) | 651 | 593 | 627 |
+| BMW S62 (M5 E39) | 461 | 420 | 400 |
+| BMW S54 (M3 E46) | 354 | 323 | 343 |
+| Mercedes M102 2.3-16 (190E) | 217 | 204 | 185 |
+| Porsche 911 2.7 RS | 240 | 225 | 210 |
+
+The Jaguar XK (180 against a 1960s gross 265) and the 289 (282 against a gross 225) are gross ratings no net model
+meets. No other engine moves.
+
+Left open, named:
+- **The catalyst's fitted ramp is kept.** Its brick is already a porous plug in the exhaust back-pressure, and it was
+  also taken off the charge as a ramp to the redline (up to 5% for a stock catalyst), which counts it twice. Removing
+  it lifted nearly every factory engine 5–6% (mean signed error +3.6%, 70 within 10%), so it has been holding down an
+  error elsewhere. It is named in the code and left for the audit of fitted parts, not removed blind.
+- **The E30's torque shape is still flat.** It makes 217 Nm at 4750 and 213 at 6750, where BMW's figures are 240 and
+  208. The rest of the fade is in the integrated intake stroke, whose fill keeps rising to the limiter on short
+  runners. Its peak is 212 hp at 7200 against 197 at 6750.
+- **Every carburettor type is sized by the same rule,** so at full throttle a one-barrel breathes like a four-barrel.
+  The types still differ in metering, response and idle.
+
+test145's list of engines that wear at full load grows by one, the Ferrari 365 GTB/4. Its carburettors now fade at
+the top, so its power peaks below the limiter. Held at full load there for 120 s, as the test does, the lumped
+thermal model's fitted temperature rises put its oil at 149 C. Before, its peak sat near the limiter, where the test
+puts almost no load on the dyno. This is the same fitted thermal model that test145 already names for 14 engines.
+test60's RMS power error across 89 engines falls from 11.2% to 10.4%; torque goes from 8.5% to 8.9%.
+
+test153 had required the E30's torque within 5% of BMW's 240 Nm. It is now 218 Nm (−9.2%). The 240 had depended on
+the fitted ITB ramp, worth +4% of the charge at 4750 rpm, and on the old friction. Its power came down from +21%
+(build 242) to +7.5% (212 hp against 197.3). The test keeps the 5% check and takes build 244's 218 Nm as a floor,
+naming the gap: the integrated intake stroke's fill, which shapes the curve.
+
+The GEAR RATIOS window's "ideal" line, peak power at every speed, took the peak from the torque curve's sample
+points. It draws torque as straight lines between them, so power, which is torque times rpm, is a parabola there and
+can peak between two points. With the M3 E46's power now peaking short of its limiter, one gear was drawn above the
+ideal, and test92 caught it. The ideal now includes each segment's vertex.
+
+Tests: test155 (new) checks that a carburettor costs its venturi's drop at each rpm, sized by the rule; that the loss
+grows from under 1% to over 5% at the redline; that injection systems breathe alike at full throttle, as do the
+carburettor types; and that the catalyst's named ramp is still there.
+
 ### Engine friction is derived from the engine's own bearings, pistons, rings and valvetrain (build 243)
 
 Until now every piston engine's rubbing friction was one fitted curve, (0.55 + 1.8·10⁻⁸ N²) bar times a stroke factor
