@@ -45,11 +45,6 @@ const rows = await page.evaluate(() => PRESETS.filter(p => p.real).map(pr => {
 
 // What real engines show today, and why. Each entry is a model limit, not a preset to fix by tuning.
 const KNOWN = {
-  // large truck diesels on the large frame: the VGT's open stop cannot hold target at the top. (Build 131: the TDI,
-  // the Duramax and the 2JZ left this list with their factory ECU taper, which is what really rolls them off; the
-  // Cummins had none (no taper from its torque peak reached its rating) until build 199 put it on the 2019 press kit's
-  // compression and boost, past its rating, where a taper from its torque peak meets it.)
-  'Cummins 6.7 (Ram HD 2019 HO)': ['boost-falls'],
   // build 133: on the maker's 58 mm wheel the FK8's compressor reaches its inducer's choke flow over the top and
   // holds 1.31 of its 1.6 bar at the limiter (305 hp, real 316). The wheel size is from tuners' listings and the
   // boost pressure is unsure, so either input may be what is off; the choke flow is derived, not fitted.
@@ -58,8 +53,6 @@ const KNOWN = {
   // at 5200); power then creeps up ~1 hp per 200 rpm to the 7600 limiter (139 hp) where the real engine falls
   // from 128 at 6600. The same missing top-end fade as the F140 below.
   'Toyota 4A-GE (AE86)': ['limiter'],
-  // build 122: the Aygo's 1KR-FE likewise, 75 hp at its 6500 limiter (real 68 at 6000): the same missing top-end fade
-  'Toyota 1KR-FE (Aygo 1.0)': ['limiter'],
   // build 116: with the overlap's reverse flow derived from the cam (it was a fixed 15% lift on every cam,
   // and grew with back-pressure), the F140's power is flat over the top: 825 hp at 8500, 831 at the 8900
   // limiter (real 789 at 8500). Within 1%; the top-end breathing (port Mach index) bites only at 8900.
@@ -90,6 +83,11 @@ const KNOWN = {
   'Renault M5Pt 1.8 turbo (Mégane R.S. Trophy)': ['limiter'],
   'Honda B16B (Civic Type R EK9)': ['limiter'],
   'Toyota FA24D 2.4 boxer (GR86)': ['limiter'],
+  // build 243: the derived friction (Sandoval–Heywood) rises more nearly with rpm than the old fitted N² curve, so it
+  // no longer holds the F40's peak below its limiter: 466 hp at 7600 against the 7700 limiter (real 478 at 7000). The
+  // same missing top-end fade as the engines above. The same build cleared the Aygo's 'limiter' and the Cummins's
+  // 'boost-falls', so the list is one shorter.
+  'Ferrari F120A V8 TT (F40)': ['limiter'],
   // build 234: four two-valve engines whose generic STOCK springs had them floating far below the redline (the Dino at
   // 5215 rpm against 7800) now have their makers' springs, and show the same missing top-end fade: power still climbing
   // at the limiter where the real one peaks short of it. The float had been hiding it; named in the CHANGELOG.
