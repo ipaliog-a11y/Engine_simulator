@@ -602,7 +602,7 @@ body.showcase-open{overflow:hidden}
 .evd-stat .v{font-size:10px;color:#00ff88;white-space:nowrap}
 .evd-stat .v small{font-size:6px;color:#889;margin-left:2px}
 .evd-stat .dd{font-size:6px;min-height:7px}
-#evdCurve{width:100%;background:#12121c;border:2px solid #26263a;image-rendering:pixelated}
+.evd-curve{width:100%;background:#12121c;border:2px solid #26263a;image-rendering:pixelated}
 .evd-legend{display:flex;flex-wrap:wrap;gap:8px;font-size:6px;color:#889}
 .evd-legend i{display:inline-block;width:10px;height:3px;vertical-align:middle;margin-right:4px}
 .evd-legend i.p{background:#00ff88}.evd-legend i.t{background:#ffcc00}.evd-legend i.m{background:#889}
@@ -667,4 +667,8 @@ body.showcase-open{overflow:hidden}
     padding:12px 0;text-align:left;position:sticky;top:0;cursor:pointer}
   .evd-mini small{font-size:6px;color:#889}
   .evd-mini .ar{justify-self:end;color:#889}
+  /* a hybrid shows the engine's cards and its motor's: one bar at the bottom (the engine's), the motor's panel in place */
+  #designPanel.hy #evDesigner .evd-side{position:static;max-height:none;border-top:0;padding:0;background:none}
+  #designPanel.hy #evDesigner .evd-side .evd-panel{display:flex}
+  #designPanel.hy #evDesigner .evd-mini{display:none}
 }

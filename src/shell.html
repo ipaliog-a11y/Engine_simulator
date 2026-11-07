@@ -40,7 +40,7 @@
 </div>
 <div class="container">
 <header>
-<h1>PIXEL ENGINE SIM v0.7 build 238</h1>
+<h1>PIXEL ENGINE SIM v0.7 build 239</h1>
 <div class="subtitle" id="subtitle">ENGINE DESIGNER • BUILD IT, THEN DRIVE IT</div>
 </header>
 <div class="build-strip" id="buildStrip">
@@ -77,9 +77,17 @@
 <div class="pick-row"><div class="field"><label for="edChallenge">OBJECTIVE</label><select id="edChallenge"></select></div></div>
 <div class="challenge-card" id="challengeCard"></div>
 
-<div class="design-section">Bottom End</div>
 <div class="design-grid">
 <div class="field"><label for="edType">ENGINE TYPE</label><select id="edType"><option value="petrol4">PETROL 4-STROKE</option><option value="diesel">DIESEL (CI)</option><option value="twostroke">2-STROKE</option><option value="rotary">ROTARY (WANKEL)</option><option value="electric">ELECTRIC (BATTERY)</option></select></div>
+</div>
+
+<div class="design-section">Combustion engine</div>
+<!-- The combustion engine as cards (build 239): src/js/engine-designer.js adds each card's heading, picture, sliders and
+     help around these fields, which keep their ids, so saves, presets and the build read them as before. -->
+<div class="evd" id="icDesigner">
+<nav class="evd-rail" id="icdRail" aria-label="Combustion engine"></nav>
+<div class="evd-cards" id="icdCards">
+<section class="evd-card" id="icdCard-block" data-card="block"><div class="evd-fields">
 <div class="field"><label for="edCyl"><span id="lblCyl">CYLINDERS</span></label><select id="edCyl"><option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option><option value="6">6</option><option value="8">8</option><option value="10">10</option><option value="12">12</option></select></div>
 <div class="field"><label for="edLayout">LAYOUT</label><select id="edLayout"><option value="inline">INLINE</option><option value="v">V</option><option value="boxer">BOXER</option></select></div>
 <div class="field"><label for="edBore"><span id="lblBore">BORE (mm)</span></label><input type="number" id="edBore" min="60" max="110" step="0.5" value="86"></div>
@@ -87,7 +95,74 @@
 <div class="field"><label for="edEcc">ECCENTRICITY e (mm)</label><input type="number" id="edEcc" min="8" max="25" step="0.5" value="15"></div>
 <div class="field"><label for="edCR">COMPRESSION</label><input type="number" id="edCR" min="7" max="24" step="0.1" value="10.5"></div>
 <div class="field"><label for="edRedline">REDLINE (rpm)</label><input type="number" id="edRedline" min="2000" max="11000" step="50" value="7000"></div>
+</div></section>
+<section class="evd-card" id="icdCard-head" data-card="head"><div class="evd-fields">
+<div class="field"><label for="edValves">VALVES / CYLINDER</label><select id="edValves"><option value="2">2 (WEDGE)</option><option value="4">4 (PENT-ROOF)</option><option value="5">5</option></select></div>
+<div class="field"><label for="edCam">CAM PROFILE</label><select id="edCam"><option value="stock">STOCK</option><option value="sport">SPORT</option><option value="race">RACE</option><option value="atkinson">ATKINSON (LATE IVC)</option></select></div>
+<div class="field"><label for="edVVT">VARIABLE VALVE TIMING</label><select id="edVVT"><option value="no">NONE</option><option value="yes">VVT</option></select></div>
+<div class="field"><label>CAM OVERLAP</label><span class="val" id="valOverlap">—</span></div>
+<div class="field"><label for="edValveMat">VALVE MATERIAL</label><select id="edValveMat"><option value="steel">STEEL</option><option value="titanium">TITANIUM</option></select></div>
+<div class="field"><label for="edSpring">VALVE SPRINGS</label><select id="edSpring"><option value="stock">STOCK</option><option value="perf">PERFORMANCE</option><option value="race">RACE</option></select><input type="hidden" id="edSpringRpm" value="0"></div>
+<div class="field"><label>VALVE FLOAT</label><span class="val" id="valFloat">—</span></div>
+<div class="field"><label for="edEgr">EGR</label><select id="edEgr"><option value="none">NONE</option><option value="cooled">COOLED, OFF AT FULL LOAD</option><option value="cooled-full">COOLED, TO FULL LOAD</option></select></div>
+</div></section>
+<section class="evd-card" id="icdCard-air" data-card="air"><div class="evd-fields">
+<div class="field"><label for="edIntake">INTAKE TYPE</label><select id="edIntake"><option value="na">NATURALLY ASP.</option><option value="turbo">TURBO</option><option value="supercharger">SUPERCHARGER</option></select></div>
+<div class="field"><label for="edBoost">BOOST TARGET (bar)</label><input type="number" id="edBoost" min="0" max="2.5" step="0.05" value="0"></div>
+<div class="field"><label for="edIntercooler">INTERCOOLER</label><select id="edIntercooler"><option value="none">NONE</option><option value="small">SMALL CORE</option><option value="large">LARGE CORE</option></select></div>
+<div class="field"><label for="edTurboSize">TURBO SIZE</label><select id="edTurboSize"><option value="small">SMALL</option><option value="medium">MEDIUM</option><option value="large">LARGE</option></select></div>
+<div class="field"><label for="edTurboConfig">TURBO CONFIG</label><select id="edTurboConfig"><option value="single">SINGLE</option><option value="twin">TWIN</option><option value="sequential">SEQUENTIAL</option><option value="compound">COMPOUND</option></select></div>
+<div class="field"><label for="edCompWheel">COMPRESSOR WHEEL (mm, 0 = size)</label><input type="number" id="edCompWheel" min="0" max="110" step="1" value="0"></div>
+<div class="field"><label for="edHousing">TURBINE A/R</label><select id="edHousing"><option value="tight">TIGHT (RESPONSE)</option><option value="stock">STOCK</option><option value="loose">LOOSE (TOP END)</option></select></div>
+<div class="field"><label for="edVGT">TURBINE</label><select id="edVGT"><option value="no">FIXED HOUSING</option><option value="yes">VARIABLE GEOMETRY</option></select></div>
+<div class="field"><label for="edAntilag">ANTI-LAG (ALS)</label><select id="edAntilag"><option value="no">NO</option><option value="yes">YES</option></select></div>
+<div class="field"><label for="edScType">SUPERCHARGER</label><select id="edScType"><option value="roots">ROOTS</option><option value="screw">TWIN-SCREW</option><option value="centrifugal">CENTRIFUGAL</option></select></div>
+<div class="field"><label for="edTaperRpm">BOOST TAPER FROM (rpm, 0 = off)</label><input type="number" id="edTaperRpm" min="0" max="12000" step="100" value="0"></div>
+<div class="field"><label for="edTaperPct">BOOST AT LIMITER (%)</label><input type="number" id="edTaperPct" min="20" max="100" step="1" value="100"></div>
+<div class="field"><label for="edTqLimit">ECU TORQUE LIMIT (Nm, 0 = off)</label><input type="number" id="edTqLimit" min="0" max="5000" step="10" value="0"></div>
+<div class="field"><label for="edGovRpm">DIESEL RATED SPEED (rpm, 0 = off)</label><input type="number" id="edGovRpm" min="0" max="8000" step="50" value="0"></div>
+<div class="field"><label for="edNitrous">NITROUS (N2O)</label><select id="edNitrous"><option value="none">NONE</option><option value="small">SMALL SHOT</option><option value="large">BIG SHOT</option></select></div>
+</div></section>
+<section class="evd-card" id="icdCard-flow" data-card="flow"><div class="evd-fields">
+<div class="field"><label for="edIntakeSys">INTAKE SYSTEM</label><select id="edIntakeSys">
+<option value="carb1">1-BBL CARB</option>
+<option value="carb2">2-BBL CARB</option>
+<option value="carb4">4-BBL CARB</option>
+<option value="sidedraft">SIDEDRAFT CARBS</option>
+<option value="mech">MECH INJECTION</option>
+<option value="efi">EFI (SINGLE TB)</option>
+<option value="itb">EFI (ITB)</option>
+</select></div>
+<div class="field"><label for="edAirFilter">AIR FILTER</label><select id="edAirFilter"><option value="none">NONE (STACKS)</option><option value="perf">PERFORMANCE</option><option value="stock">STOCK PAPER</option><option value="restrictive">RESTRICTIVE</option></select></div>
+<div class="field"><label for="edRunner">INTAKE RUNNER</label><select id="edRunner"><option value="long">LONG (TORQUE)</option><option value="medium">MEDIUM</option><option value="short">SHORT (POWER)</option><option value="variable">VARIABLE</option></select></div>
+<div class="field"><label>RUNNER / RAM PEAK</label><span class="val" id="valRam">—</span></div>
+<div class="field"><label for="edExhaust">EXHAUST</label><select id="edExhaust"><option value="stock">STOCK CAST</option><option value="sport">SPORT HEADER</option><option value="race">RACE HEADER</option></select></div>
+<div class="field"><label>PRIMARY / SCAVENGE</label><span class="val" id="valScav">—</span></div>
+<div class="field"><label for="edCat">CATALYTIC CONV.</label><select id="edCat"><option value="none">NONE (DECAT)</option><option value="sport">SPORT CAT</option><option value="stock">STOCK CAT</option></select></div>
+</div></section>
+<section class="evd-card" id="icdCard-fuel" data-card="fuel"><div class="evd-fields">
+<div class="field"><label for="edFuel">FUEL TYPE</label><select id="edFuel"><option value="gasoline">PUMP GAS</option><option value="race">RACE GAS</option><option value="e85">E85</option><option value="methanol">METHANOL</option><option value="diesel">DIESEL</option></select></div>
+<div class="field"><label for="edOctane">FUEL OCTANE (RON)</label><input type="number" id="edOctane" min="87" max="110" step="1" value="95"></div>
+<div class="field"><label for="edInjector">INJECTOR</label><select id="edInjector"><option value="port">PORT (PFI)</option><option value="direct">DIRECT (DI)</option></select></div>
+<div class="field"><label for="edIgnType">IGNITION TYPE</label><select id="edIgnType"><option value="distributor">DISTRIBUTOR</option><option value="wasted">WASTED SPARK</option><option value="coil">COIL-ON-PLUG</option></select></div>
+<div class="field"><label for="edTiming">IGNITION CONTROL</label><select id="edTiming"><option value="fixed">FIXED (LOCKED)</option><option value="auto">AUTO (ECU / KNOCK-LIMITED)</option></select></div>
+<div class="field"><label for="edIgnAdv">IGNITION ADV (° BTDC)</label><input type="number" id="edIgnAdv" min="5" max="40" step="1" value="22"></div>
+<div class="field"><label for="edAfrMode">FUEL MIXTURE</label><select id="edAfrMode"><option value="fixed">MANUAL (FIXED AFR)</option><option value="auto">AUTO (ECU MAP)</option></select></div>
+</div></section>
+<section class="evd-card" id="icdCard-cool" data-card="cool"><div class="evd-fields">
+<div class="field"><label for="edRadiator">RADIATOR</label><select id="edRadiator"><option value="small">SMALL</option><option value="stock">STOCK</option><option value="large">LARGE</option></select><input type="hidden" id="edRadHp" value="0"></div>
+<div class="field"><label for="edFan">COOLING FAN</label><select id="edFan"><option value="none">NONE</option><option value="mechanical">MECHANICAL</option><option value="electric">ELECTRIC</option></select></div>
+<div class="field"><label for="edOilCooler">OIL COOLER</label><select id="edOilCooler"><option value="no">NO</option><option value="yes">YES</option></select></div>
+<div class="field"><label for="edThermostat">THERMOSTAT (°C)</label><input type="number" id="edThermostat" min="71" max="95" step="1" value="88"></div>
+<div class="field"><label for="edAlternator">ALTERNATOR</label><select id="edAlternator"><option value="60">60 A</option><option value="120">120 A</option><option value="180">180 A (HD)</option></select></div>
+</div></section>
 </div>
+<aside class="evd-side" id="icdSide"></aside>
+</div>
+
+<div class="design-section" id="fuelMapHdr">ECU Fuel Map (target AFR)</div>
+<div class="fuelmap-wrap" id="fuelMapBox"></div>
+<div class="fuelmap-edit" id="fuelMapEdit" style="display:none"><span id="fmSelInfo"></span><span class="fm-btns"><button type="button" id="fmLean">− LEAN</button><button type="button" id="fmRich">+ RICH</button><button type="button" id="fmReset">RESET MAP</button></span></div>
 
 <div class="design-section">Hybrid</div>
 <div class="design-grid">
@@ -159,83 +234,6 @@
 </div></section>
 </div>
 <aside class="evd-side" id="evdSide"></aside>
-</div>
-
-<div class="design-section">Air Path</div>
-<div class="design-grid">
-<div class="field"><label for="edIntake">INTAKE TYPE</label><select id="edIntake"><option value="na">NATURALLY ASP.</option><option value="turbo">TURBO</option><option value="supercharger">SUPERCHARGER</option></select></div>
-<div class="field"><label for="edBoost">BOOST TARGET (bar)</label><input type="number" id="edBoost" min="0" max="2.5" step="0.05" value="0"></div>
-<div class="field"><label for="edTaperRpm">BOOST TAPER FROM (rpm, 0 = off)</label><input type="number" id="edTaperRpm" min="0" max="12000" step="100" value="0"></div>
-<div class="field"><label for="edTaperPct">BOOST AT LIMITER (%)</label><input type="number" id="edTaperPct" min="20" max="100" step="1" value="100"></div>
-<div class="field"><label for="edTqLimit">ECU TORQUE LIMIT (Nm, 0 = off)</label><input type="number" id="edTqLimit" min="0" max="5000" step="10" value="0"></div>
-<div class="field"><label for="edGovRpm">DIESEL RATED SPEED (rpm, 0 = off)</label><input type="number" id="edGovRpm" min="0" max="8000" step="50" value="0"></div>
-<div class="field"><label for="edIntercooler">INTERCOOLER</label><select id="edIntercooler"><option value="none">NONE</option><option value="small">SMALL CORE</option><option value="large">LARGE CORE</option></select></div>
-<div class="field"><label for="edTurboSize">TURBO SIZE</label><select id="edTurboSize"><option value="small">SMALL</option><option value="medium">MEDIUM</option><option value="large">LARGE</option></select></div>
-<div class="field"><label for="edCompWheel">COMPRESSOR WHEEL (mm, 0 = size)</label><input type="number" id="edCompWheel" min="0" max="110" step="1" value="0"></div>
-<div class="field"><label for="edTurboConfig">TURBO CONFIG</label><select id="edTurboConfig"><option value="single">SINGLE</option><option value="twin">TWIN</option><option value="sequential">SEQUENTIAL</option><option value="compound">COMPOUND</option></select></div>
-<div class="field"><label for="edHousing">TURBINE A/R</label><select id="edHousing"><option value="tight">TIGHT (RESPONSE)</option><option value="stock">STOCK</option><option value="loose">LOOSE (TOP END)</option></select></div>
-<div class="field"><label for="edVGT">TURBINE</label><select id="edVGT"><option value="no">FIXED HOUSING</option><option value="yes">VARIABLE GEOMETRY</option></select></div>
-<div class="field"><label for="edAntilag">ANTI-LAG (ALS)</label><select id="edAntilag"><option value="no">NO</option><option value="yes">YES</option></select></div>
-<div class="field"><label for="edScType">SUPERCHARGER</label><select id="edScType"><option value="roots">ROOTS</option><option value="screw">TWIN-SCREW</option><option value="centrifugal">CENTRIFUGAL</option></select></div>
-<div class="field"><label for="edExhaust">EXHAUST</label><select id="edExhaust"><option value="stock">STOCK CAST</option><option value="sport">SPORT HEADER</option><option value="race">RACE HEADER</option></select></div>
-<div class="field"><label for="edRunner">INTAKE RUNNER</label><select id="edRunner"><option value="long">LONG (TORQUE)</option><option value="medium">MEDIUM</option><option value="short">SHORT (POWER)</option><option value="variable">VARIABLE</option></select></div>
-<div class="field"><label>RUNNER / RAM PEAK</label><span class="val" id="valRam">—</span></div>
-<div class="field"><label>PRIMARY / SCAVENGE</label><span class="val" id="valScav">—</span></div>
-<div class="field"><label for="edCat">CATALYTIC CONV.</label><select id="edCat"><option value="none">NONE (DECAT)</option><option value="sport">SPORT CAT</option><option value="stock">STOCK CAT</option></select></div>
-<div class="field"><label for="edNitrous">NITROUS (N2O)</label><select id="edNitrous"><option value="none">NONE</option><option value="small">SMALL SHOT</option><option value="large">BIG SHOT</option></select></div>
-</div>
-
-<div class="design-section">Induction (Metering)</div>
-<div class="design-grid">
-<div class="field"><label for="edIntakeSys">INTAKE SYSTEM</label><select id="edIntakeSys">
-<option value="carb1">1-BBL CARB</option>
-<option value="carb2">2-BBL CARB</option>
-<option value="carb4">4-BBL CARB</option>
-<option value="sidedraft">SIDEDRAFT CARBS</option>
-<option value="mech">MECH INJECTION</option>
-<option value="efi">EFI (SINGLE TB)</option>
-<option value="itb">EFI (ITB)</option>
-</select></div>
-<div class="field"><label for="edAirFilter">AIR FILTER</label><select id="edAirFilter"><option value="none">NONE (STACKS)</option><option value="perf">PERFORMANCE</option><option value="stock">STOCK PAPER</option><option value="restrictive">RESTRICTIVE</option></select></div>
-</div>
-
-<div class="design-section">Valvetrain</div>
-<div class="design-grid">
-<div class="field"><label for="edEgr">EGR</label><select id="edEgr"><option value="none">NONE</option><option value="cooled">COOLED, OFF AT FULL LOAD</option><option value="cooled-full">COOLED, TO FULL LOAD</option></select></div>
-<div class="field"><label for="edCam">CAM PROFILE</label><select id="edCam"><option value="stock">STOCK</option><option value="sport">SPORT</option><option value="race">RACE</option><option value="atkinson">ATKINSON (LATE IVC)</option></select></div>
-<div class="field"><label for="edVVT">VARIABLE VALVE TIMING</label><select id="edVVT"><option value="no">NONE</option><option value="yes">VVT</option></select></div>
-<div class="field"><label for="edValves">VALVES / CYLINDER</label><select id="edValves"><option value="2">2 (WEDGE)</option><option value="4">4 (PENT-ROOF)</option><option value="5">5</option></select></div>
-<div class="field"><label for="edValveMat">VALVE MATERIAL</label><select id="edValveMat"><option value="steel">STEEL</option><option value="titanium">TITANIUM</option></select></div>
-<div class="field"><label for="edSpring">VALVE SPRINGS</label><select id="edSpring"><option value="stock">STOCK</option><option value="perf">PERFORMANCE</option><option value="race">RACE</option></select><input type="hidden" id="edSpringRpm" value="0"></div>
-<div class="field"><label>VALVE FLOAT</label><span class="val" id="valFloat">—</span></div>
-<div class="field"><label>CAM OVERLAP</label><span class="val" id="valOverlap">—</span></div>
-</div>
-
-<div class="design-section">Fuel &amp; Spark</div>
-<div class="design-grid">
-<div class="field"><label for="edFuel">FUEL TYPE</label><select id="edFuel"><option value="gasoline">PUMP GAS</option><option value="race">RACE GAS</option><option value="e85">E85</option><option value="methanol">METHANOL</option><option value="diesel">DIESEL</option></select></div>
-<div class="field"><label for="edOctane">FUEL OCTANE (RON)</label><input type="number" id="edOctane" min="87" max="110" step="1" value="95"></div>
-<div class="field"><label for="edInjector">INJECTOR</label><select id="edInjector"><option value="port">PORT (PFI)</option><option value="direct">DIRECT (DI)</option></select></div>
-<div class="field"><label for="edIgnType">IGNITION TYPE</label><select id="edIgnType"><option value="distributor">DISTRIBUTOR</option><option value="wasted">WASTED SPARK</option><option value="coil">COIL-ON-PLUG</option></select></div>
-<div class="field"><label for="edTiming">IGNITION CONTROL</label><select id="edTiming"><option value="fixed">FIXED (LOCKED)</option><option value="auto">AUTO (ECU / KNOCK-LIMITED)</option></select></div>
-<div class="field"><label for="edIgnAdv">IGNITION ADV (° BTDC)</label><input type="number" id="edIgnAdv" min="5" max="40" step="1" value="22"></div>
-<div class="field"><label for="edAfrMode">FUEL MIXTURE</label><select id="edAfrMode"><option value="fixed">MANUAL (FIXED AFR)</option><option value="auto">AUTO (ECU MAP)</option></select></div>
-</div>
-<div class="design-section" id="fuelMapHdr">ECU Fuel Map (target AFR)</div>
-<div class="fuelmap-wrap" id="fuelMapBox"></div>
-<div class="fuelmap-edit" id="fuelMapEdit" style="display:none"><span id="fmSelInfo"></span><span class="fm-btns"><button type="button" id="fmLean">− LEAN</button><button type="button" id="fmRich">+ RICH</button><button type="button" id="fmReset">RESET MAP</button></span></div>
-
-<div class="design-section">Cooling</div>
-<div class="design-grid">
-<div class="field"><label for="edRadiator">RADIATOR</label><select id="edRadiator"><option value="small">SMALL</option><option value="stock">STOCK</option><option value="large">LARGE</option></select><input type="hidden" id="edRadHp" value="0"></div>
-<div class="field"><label for="edFan">COOLING FAN</label><select id="edFan"><option value="none">NONE</option><option value="mechanical">MECHANICAL</option><option value="electric">ELECTRIC</option></select></div>
-<div class="field"><label for="edOilCooler">OIL COOLER</label><select id="edOilCooler"><option value="no">NO</option><option value="yes">YES</option></select></div>
-<div class="field"><label for="edThermostat">THERMOSTAT (°C)</label><input type="number" id="edThermostat" min="71" max="95" step="1" value="88"></div>
-</div>
-
-<div class="design-section">Electrical</div>
-<div class="design-grid">
-<div class="field"><label for="edAlternator">ALTERNATOR</label><select id="edAlternator"><option value="60">60 A</option><option value="120">120 A</option><option value="180">180 A (HD)</option></select></div>
 </div>
 
 <div class="design-summary" id="designSummary"></div>
@@ -707,7 +705,9 @@
 <!-- @include js/hybrid-views.js -->
 <!-- @include js/fuel-cycle.js -->
 <!-- @include js/electric-presets.js -->
+<!-- @include js/design-cards.js -->
 <!-- @include js/ev-designer.js -->
+<!-- @include js/engine-designer.js -->
 <!-- @include js/title-screen.js -->
 <!-- @include js/showcase.js -->
 <!-- @include js/controls-boot.js -->
