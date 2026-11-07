@@ -72,6 +72,12 @@ Left open, named:
 - **Every carburettor type is sized by the same rule,** so at full throttle a one-barrel breathes like a four-barrel.
   The types still differ in metering, response and idle.
 
+test145's list of engines that wear at full load grows by one, the Ferrari 365 GTB/4. Its carburettors now fade at
+the top, so its power peaks below the limiter. Held at full load there for 120 s, as the test does, the lumped
+thermal model's fitted temperature rises put its oil at 149 C. Before, its peak sat near the limiter, where the test
+puts almost no load on the dyno. This is the same fitted thermal model that test145 already names for 14 engines.
+test60's RMS power error across 89 engines falls from 11.2% to 10.4%; torque goes from 8.5% to 8.9%.
+
 Tests: test155 (new) checks that a carburettor costs its venturi's drop at each rpm, sized by the rule; that the loss
 grows from under 1% to over 5% at the redline; that injection systems breathe alike at full throttle, as do the
 carburettor types; and that the catalyst's named ramp is still there.
