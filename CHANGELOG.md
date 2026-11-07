@@ -42,7 +42,7 @@ friction first.
 - **Size of the change.** For the S14 at 3000 rpm it is 1.09 bar, against 0.71 from the old curve; at 6000 rpm, 1.68
   against 1.19. Every piston engine loses power, from 0 to 6.5% (2.8% on average).
 
-| Against 98 real engines' rated power | Before | After |
+| Against 98 real engines' rated power (measured before build 242's E30 preset merged) | Before | After |
 |---|---|---|
 | Mean signed error | +2.8% | −0.1% |
 | Mean absolute error | 7.4% | 7.5% |
@@ -83,6 +83,52 @@ That is the same missing top-end fade, and it is the next build's.
 Tests: test154 (new) computes the S14's friction by hand from the thesis's equations and checks that the sim gives the
 same value. It also checks that friction rises with rpm, intake pressure and stroke, the valvetrains' order, that
 rotaries and two-strokes keep the old curve, the VALVETRAIN field and its Greek.
+### The BMW M3 E30's engine is the 1986 car's: sport cam, no catalyst, its airbox (build 242)
+
+The owner asked whether the E30 M3 had a catalytic converter, and why it ran a race cam. It didn't, and it shouldn't.
+
+- **Catalyst: none.** The 1986 launch car made 147 kW / 200 PS at 6750 rpm and 240 Nm at 4750 without a catalyst.
+  The catalyst came to the German market in 1987 and cut it to 143 kW / 195 PS and 230 Nm (BMW Group Classic; ADAC).
+  The preset had no `cat` field, so it took the default STOCK catalyst.
+- **Cam: SPORT, not RACE.** The S14's stock intake cam is about 246 deg with 10.7 mm lift. This model's grades are
+  STOCK 220, SPORT 252 and RACE 284 deg, and 284 deg is Schrick's competition cam for the S14.
+- **Filter: STOCK.** The road car breathes through BMW's airbox and paper element (probable; marked `unsure`).
+- **Rating: 197.3 hp.** 200 PS is 197.3 mechanical hp, the unit every other preset uses. It was entered as 200.
+
+| | Before | After | BMW |
+|---|---|---|---|
+| Power | 220 hp at 7200 (+11.5%) | 239 hp at 7200 (+21.1%) | 197.3 hp at 6750 |
+| Torque | 221 Nm (−7.9%) | 240 Nm (0.0%) | 240 Nm at 4750 |
+
+The torque now matches exactly. The power reads further over, because the wrong cam and the catalyst had been
+cancelling part of a model error: the **missing top-end fade** that test60 has named for this engine since build 199.
+Its power keeps climbing to the 7250 rpm limiter, where the real S14 peaks at 6750 and falls away. That is the next
+build (243). The fingerprint moves only this engine and the M3 (E30) car built on it.
+
+Tests: test153 (new) checks the preset's sourced inputs, its torque within 5%, and its power inside test115's 25% band.
+test145 now compares the oil at the end of its two 120 s runs, not the highest reading. Both runs start the oil at
+100 C. The corrected E30's oil cooler holds it below that at full load, so both runs peaked at 100.0 and the test said
+full load was no hotter. At 120 s it reads 99.9 C at full load and 96.3 free-revving, with the coolant at 91.6 and
+89.7, so full load still heats it more. On `main` the old preset had passed by 0.1 C.
+### The cards' pictures are drawn when you come back to them, and PLUG-IN stays PLUG-IN (build 240)
+
+- **Blank pictures.** In builds 238 and 239 the cards' pictures and the side panel's curve were drawn only while they
+  were on screen. Picking a build from the list jumps to the DYNO tab, so they were worked out while hidden, and
+  nothing drew them when you came back to ENGINE. The rotor and stator, the battery, the cylinder and the WHAT THE
+  MOTOR DOES / WHAT YOUR ENGINE DOES curve stayed blank until you changed something. Now a picture is redrawn whenever
+  it comes into view or changes size (a ResizeObserver in `src/js/design-cards.js`), so both forms are fixed at once.
+  Reported by the owner.
+- **PLUG-IN in Greek.** A plug-in hybrid is "plug-in" in Greek too, as its makers and buyers say it. The field PLUG-IN,
+  PLUG-IN DEPLOY (now ΑΠΟΔΟΣΗ PLUG-IN) and the hybrid guide pages said ΕΠΑΝΑΦΟΡΤΙΖΟΜΕΝΟ; they now say PLUG-IN or
+  plug-in. "Από την πρίζα" stays where it means energy taken from the wall socket. test87 allows the word PLUG in Greek
+  text, as it allows WLTP and eCVT.
+- No numbers moved: the fingerprint is identical to build 239's.
+
+Left for the next build: hybrids are still charged for a belt-driven alternator (its drag and its charging torque on
+the crank). Real ones run the 12 V system from the traction pack through a DC-DC converter. That is a physics change,
+so it gets its own build.
+
+Tests: test151 (new); test87 (allows PLUG).
 
 ### The combustion engine's design as cards, with help and a live preview (build 239)
 
