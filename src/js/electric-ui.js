@@ -75,6 +75,7 @@ function syncElectricSections(){
     ['evFrontD','evFrontStack','evFrontPoles','evFrontTurns','evFrontAmps','evFrontFd'].forEach(id=>{const el=document.getElementById(id);if(el)el.disabled=!front;});
     evDriveLock(front);
   }else evDriveLock(false);
+  if(typeof evdSync==='function')evdSync(ev,hy);   // the drive's cards follow the form (build 238)
   return ev;
 }
 
@@ -86,17 +87,22 @@ function evDriveLock(on){
   else if(dr.disabled){dr.value=dr.dataset.prev||dr.value;dr.disabled=false;}
 }
 
-// ---- the build ----
-function buildElectric(){
-  engine=readEngineFromForm();   // type 'electric'; the combustion fields stay with it, for switching back
-  const e=engine;
+// The motor, or the set of motors, an electric build's fields describe (build 179; more than one motor, build 183). Its own
+// function since build 238, so the ENGINE tab's cards preview exactly the drive BUILD makes.
+function evMotorOf(e){
   const rear=motorBuild({type:e.evMotorType,rotorD:e.evRotorD,stackL:e.evStack,poles:e.evPoles,turns:e.evTurns,magnet:e.evMagnet,
     retention:e.evRetention,cooling:e.evCooling,lamination:e.evLamination,wire:e.evWire,conductor:e.evConductor,inverter:e.evInverter,invAmps:e.evAmps,maxRpm:e.evMaxRpm});
   // more than one motor (build 183): the rear group, and a front motor sharing the magnet grade, cooling and inverter
   const parts=[{m:rear,n:e.evRearCount===2?2:1}];
   if(e.evFront==='pm'||e.evFront==='im')parts.push({m:motorBuild({type:e.evFront,rotorD:e.evFrontD,stackL:e.evFrontStack,poles:e.evFrontPoles,
     turns:e.evFrontTurns,magnet:e.evMagnet,retention:e.evRetention,cooling:e.evCooling,lamination:e.evLamination,wire:e.evWire,conductor:e.evConductor,inverter:e.evInverter,invAmps:e.evFrontAmps,maxRpm:e.evMaxRpm}),n:1});
-  e.motor=parts.length===1&&parts[0].n===1?rear:motorSet(parts);
+  return parts.length===1&&parts[0].n===1?rear:motorSet(parts);
+}
+// ---- the build ----
+function buildElectric(){
+  engine=readEngineFromForm();   // type 'electric'; the combustion fields stay with it, for switching back
+  const e=engine;
+  e.motor=evMotorOf(e);
   e.pack=packBuild({chem:e.evChem,series:e.evSeries,kWh:e.evKWh,year:e.evYear});
   // What the rest of the app reads off any engine: its speed range, its inertia, and the bench brake's scale.
   e.redline=Math.floor(e.motor.nMax/50)*50;e.idleRpmEff=0;e.inertia=e.motor.J;

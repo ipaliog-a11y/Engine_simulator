@@ -20,6 +20,66 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 Working toward **v1.0 — every number derived, not fitted.**
 
+### The electric drive's design as cards, with help and a live preview (build 238)
+
+The ENGINE tab's motor, inverter and battery were 27 bare fields in four grids. Nothing said what a field does, what
+real drives use, or what a change did until BUILD & DYNO. They are now a set of cards that guide the choice. This is
+the first part of the interface update; the combustion engine, VEHICLE and PARTS would follow in the same pattern.
+
+- **Cards.** Seven cards: ROTOR & STATOR, WINDING, MAGNETS & TOP SPEED, COOLING & IRON, INVERTER, MORE MOTORS and
+  BATTERY. A menu on the left lists them, each with a one-line summary (for example "LFP · 345 V · 60 kWh · 440 kg"),
+  and shows one at a time, so the page barely scrolls. A ▲ in the menu marks a card with a warning. On a narrower
+  panel the menu becomes a strip of buttons; on a phone the cards stack and fold, one open at a time.
+- **One line per input.** A **?**, the label, a slider and the number box. The slider's blue ticks are the real
+  drives in the presets (the three Teslas and the five hybrids' motors), and the green band is the range they span.
+  Press a tick to take that value. Capacity runs on a log scale, from 1.3 kWh hybrid packs to 100 kWh. Under an input,
+  a line appears only when there is something to say: which real drives use your value, a warning, or the effect of
+  your last change.
+- **The effect of each change**, beside the input that made it: + or − kW, Nm, top rpm, motor kg, pack kg and cost.
+- **Help.** **?** explains the input in the side panel: what it is, what it trades, every real drive's value (or, for
+  a choice, every option and who uses it), and a button to the guide page. On a phone the help opens under the field.
+- **WHAT YOUR DRIVE DOES**: peak power and torque, top rpm, motor and pack mass, cost, and the power and torque curve,
+  with the motor's own envelope dotted beside the battery-limited one. Below it: how long the cooling holds the peak
+  torque, and what the motor holds for good. **WHAT HOLDS IT BACK** says whether the battery or the motor sets the
+  peak, and whether the rotor's rim, the inverter's frequency or the design limit sets the top rpm, in a sentence that
+  says what would help. On a phone this panel is a bar at the bottom (kW · Nm · rpm · kg) that opens.
+- **Warnings** in the field that causes them: a rotor whose rim passes its speed limit before the design speed, and
+  a pole count whose frequency the inverter cannot reach.
+- **Pictures** drawn from the design: a to-scale section of the stator, slots and rotor poles with the stack beside
+  it; the knee, as the back-EMF line against the battery's voltage; and the pack's cells in series and parallel.
+- **BASIC / ADVANCED.** BASIC hides seven finer settings (winding, conductor, magnet retention, design top speed,
+  laminations, technology year, a hybrid's front reduction). Each card says how many more ADVANCED would show. The
+  choice is remembered (`pes.evdAdv`).
+- **Greek.** Every new word has its Greek, and so do the motor, inverter and battery fields' own labels and choices
+  (33 of them, English until now: ROTOR DIAMETER, STACK LENGTH, POLES, WATER JACKET and the rest). The cards repeat
+  them in the summaries and the help. Only numbers and names stay as they are (NdFeB, SiC MOSFET, LFP, NiMH).
+- **Hybrids** get the same cards for their motor and pack, titled WHAT THE MOTOR DOES, without the electric car's own
+  fields (REGENERATION, REAR MOTORS).
+
+What did not change:
+
+- **No numbers moved.** The preview runs the functions BUILD and the DYNO run: `driveTorqueRated` over scoreMotor's
+  sweep for an electric car (its peaks are the scorecard's: Model 3 RWD 205 kW and 424 Nm, Model Y 357 kW and
+  541 Nm, Plaid 803 kW and 1408 Nm, both ways), and `buildHybrid` with `hybMotorTq` for a hybrid's motor. The one
+  change to existing code is that `buildElectric`'s motor construction became its own function, `evMotorOf`, so the
+  preview builds exactly the same drive. The fingerprint (tools/fingerprint.mjs) is identical to build 237's.
+- **The fields keep their ids** (#evRotorD and the rest), so saves, presets, the build and every earlier test read
+  them as before. Choices stay dropdowns: the mockup's buttons would have hidden the selects the tests and the
+  presets set.
+- **One font.** The mockup's second, more readable font has no Greek and would need the network, so the help is in
+  the game's own pixel font.
+
+Left open:
+
+- With three motors (the Plaid), one preview takes about 90 ms, so a slider moves at about 10 frames a second on that
+  preset; a single motor takes about 2 ms. The battery-limit search inside the motor set is the cost.
+- The front motor has no picture of its own yet; its fields share the main motor's help.
+- The guide's LV2 page for the electric drive (and its Greek) describes the cards. The motor, inverter and battery
+  pages still list each input as before.
+
+Tests: test149 (new) checks the fields, the cards and menu, that the preview equals the DYNO for all three Teslas,
+the slider, ticks, chips, rim warning, help and guide link, BASIC/ADVANCED, a hybrid, Greek, and the phone layout.
+
 ### A car showcase on the title menu, and a smooth pan behind it (build 237)
 
 The showroom pictures of build 220 were only ever seen one at a time, on the VEHICLE tab of the car you had loaded.

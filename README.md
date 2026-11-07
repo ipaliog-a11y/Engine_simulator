@@ -1,4 +1,4 @@
-# PIXEL ENGINE SIM v0.7 build 237
+# PIXEL ENGINE SIM v0.7 build 238
 
 **A lightweight, 8-bit style internal combustion engine *designer* & simulator** inspired by *Automation*.
 
@@ -86,7 +86,11 @@ saps power; a large radiator, electric fan and oil cooler keep it cool.
 ### Electric drive (in progress — the plan is in `plans/hybrid-electric/`)
 Pick **ELECTRIC (BATTERY)** as the engine type and the ENGINE tab trades the combustion sections for **MOTOR**
 (rotor diameter and stack, poles, turns per phase, magnet grade and retention, cooling, top speed), **INVERTER**
-(silicon IGBT or SiC, current rating) and **BATTERY** (chemistry, cells in series, capacity, technology year). Torque,
+(silicon IGBT or SiC, current rating) and **BATTERY** (chemistry, cells in series, capacity, technology year). Since
+build 238 these are seven cards picked from a menu (stacked and folding on a phone), each number with a slider whose
+ticks are the real drives in the presets, a **?** that explains the input, the effect of every change beside it, and a
+side panel of what the drive gives and what holds it back (battery or motor; rim, inverter or design limit), worked
+out live by the same physics as the DYNO; **BASIC** hides the finer settings that **ADVANCED** shows. Torque,
 the knee where the voltage runs out, the top speed, every loss and the heat are derived from those
 (`src/js/electric.js`, checked against the measured Tesla Model 3 motor and ORNL's 2012 Leaf). The LIVE bench runs the
 drive against the dyno brake with the pack sagging and the winding heating until the controller derates it; the DYNO
