@@ -128,6 +128,14 @@ Held at the model's reference rather than derived, and left open:
 - **The alternator** is in the model's accessory term while not charging, and the sim still charges its own belt drag
   (0.02–0.05 bar), so 2–5 kPa is counted twice.
 - **Rotaries and two-strokes** keep the old curve, because the model was built for poppet-valve four-strokes.
+- **The hybrids burn 5–7% more on the WLTP cycle.** The model's ring and liner reference is a 1980s engine, which
+  overcharges the efficient engines hybrids use: Ioniq 4.62 → 4.99 L/100 km (Hyundai 4.4), Prius 4.21 → 4.51 (4.14),
+  Qashqai e-POWER 5.62 → 5.91 (5.3). A modern oil does not help: by the thesis's own table, a 5W-20 is no thinner than
+  its 10W-30 at 90 C. test117 required the Ioniq to stay 0.1 L/100 km under build 201's 5.05, and it is now 0.06
+  under. It now records build 243's figures as a floor, so the hybrids may not burn more, and names the gap until a
+  ring factor for modern engines is sourced. test119 had required the Prius's engine within 5% of Toyota's 96.6 hp
+  (it now makes 89) and its cycle within 5% of 4.14. It keeps those checks, but where the gap applies it takes build
+  243's 89 hp and 4.51 as the floor. This was the owner's call.
 
 test60's list of known anomalies is one shorter. The Aygo's power no longer climbs to its limiter, and the
 Cummins's boost no longer falls away. The F40 joins the engines whose power still climbs at the limiter: 466 hp at
