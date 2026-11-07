@@ -43,6 +43,10 @@ Its power keeps climbing to the 7250 rpm limiter, where the real S14 peaks at 67
 build (243). The fingerprint moves only this engine and the M3 (E30) car built on it.
 
 Tests: test153 (new) checks the preset's sourced inputs, its torque within 5%, and its power inside test115's 25% band.
+test145 now compares the oil at the end of its two 120 s runs, not the highest reading. Both runs start the oil at
+100 C. The corrected E30's oil cooler holds it below that at full load, so both runs peaked at 100.0 and the test said
+full load was no hotter. At 120 s it reads 99.9 C at full load and 96.3 free-revving, with the coolant at 91.6 and
+89.7, so full load still heats it more. On `main` the old preset had passed by 0.1 C.
 
 ### The combustion engine's design as cards, with help and a live preview (build 239)
 
