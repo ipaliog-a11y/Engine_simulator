@@ -71,7 +71,12 @@ Left open:
 - test64 opens the AIR & BOOST card before choosing a turbo, because a Playwright click needs the field on screen.
   Nothing else in it changed.
 
-Tests: test150 (new), test64 (updated as above), test149 (unchanged).
+- test87, the Greek sweep, skips the sliders' ticks, as it skips the preset lists. A tick's hover text is the names of
+  the real engines at that value ("Ford Windsor 289 4-bbl, Prius: 5,500"), and the words around them are in Greek. A
+  hybrid's engine is named by its car there (Prius, 918 Spyder), as the motor's ticks are, not by a description with
+  English words in it.
+
+Tests: test150 (new), test64 and test87 (updated as above), test149 (unchanged).
 
 ### The electric drive's design as cards, with help and a live preview (build 238)
 

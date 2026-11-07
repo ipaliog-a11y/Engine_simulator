@@ -126,10 +126,10 @@ const ICD_KEY={edCyl:'cylinders',edLayout:'layout',edBore:'bore_mm',edStroke:'st
 const ICD_DEPS=['edIntake','edFuel','edTiming','edIntakeSys','edVGT'];   // their change enables or disables other fields
 
 // The factory combustion engines behind the ticks, by their own name ("GM LS3"), or their car's where the name is only
-// a description ("3.0 Turbo I6 (2JZ)" -> "2JZ").
+// a description ("3.0 Turbo I6 (2JZ)" -> "2JZ") or a hybrid's ("Toyota 2ZR-FXE 1.8 + power-split (Prius)" -> "Prius").
 function icdRealEngines(){
   return FACTORY_ENGINES.filter(p=>p.engine.type!=='electric').map(p=>{
-    const m=/^(.*?)\s*\(([^)]+)\)\s*$/.exec(p.name),name=m?(/^\d/.test(m[1])?m[2]:m[1]):p.name;
+    const m=/^(.*?)\s*\(([^)]+)\)\s*$/.exec(p.name),name=m?(/^\d/.test(m[1])||p.cat==='Hybrid'?m[2]:m[1]):p.name;
     return {name,e:p.engine};
   });
 }

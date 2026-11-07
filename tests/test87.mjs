@@ -39,8 +39,10 @@ const ALLOW = new Set(`BOOST BUILD DYNO ECU LSD VVT ITB PFI DCT AFR RON BTDC MAP
   PICKUP SUV FWD RWD AWD SPOOL TOURING SLICK DRAG RADIAL SPLITTER SPOILER DIFFUSER COILOVERS Kei KEI wiki WIKI pixel art
   browser coupe build grand prix Sleeper Grand Prix Ring Automation PIXEL ENGINE SIM BMEP BATT kWh Nm bar VGT CdA ClA
   OFF stall PIT PITS GT boost pit Wastegate Intercooler SYNTH GAS Ange Yaghi CPU WLTP ATKINSON eCVT kPa`.split(/\s+/).filter(Boolean));
-// Selects of names, the app's title, the circuit's name, and the guide's pages (budgeted above).
-const SKIP = '#edPreset, #vhPreset, #raceAddSel, #trkSel, #raceTrk, #edLang, h1, #lapHead, [id^="gp-"]';
+// Selects of names, the app's title, the circuit's name, and the guide's pages (budgeted above). Since build 239 the
+// design cards' slider ticks too: their hover text is the names of the real engines and drives at that value
+// ("Ford Windsor 289 4-bbl, Prius: 5,500"), as the preset lists are; the words around them are Greek.
+const SKIP = '#edPreset, #vhPreset, #raceAddSel, #trkSel, #raceTrk, #edLang, h1, #lapHead, [id^="gp-"], .evd-tick';
 
 // ---------- 1. the tables ----------
 const i18nSrc = SRC.slice(SRC.indexOf('const I18N={'), SRC.indexOf('\n};', SRC.indexOf('const I18N={')));
