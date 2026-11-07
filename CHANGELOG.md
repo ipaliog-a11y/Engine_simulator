@@ -59,7 +59,7 @@ It moves the 18 engines with carburettors, ITBs or mechanical injection, by −1
 | Porsche 911 2.7 RS | 240 | 225 | 210 |
 
 The Jaguar XK (180 against a 1960s gross 265) and the 289 (282 against a gross 225) are gross ratings no net model
-meets. The other engines move by 0.2–0.7%, from the order of the filter and catalyst terms.
+meets. No other engine moves.
 
 Left open, named:
 - **The catalyst's fitted ramp is kept.** Its brick is already a porous plug in the exhaust back-pressure, and it was
