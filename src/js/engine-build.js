@@ -33,6 +33,7 @@ function readEngineFromForm(){
     cam:g('edCam').value,egr:g('edEgr').value,
     vvt:g('edVVT').value==='yes',
     valves:clamp(Math.round(+g('edValves').value||4),2,5),
+    valvetrain:g('edValvetrain').value,
     valveMat:g('edValveMat').value,
     valveSpring:g('edSpring').value,
     fuel,
@@ -71,7 +72,7 @@ function applyEngineToForm(e){
   g('edScType').value=e.scType||'roots';g('edNitrous').value=e.nitrous||'none';
   g('edIntakeSys').value=e.intakeSys||'efi';
   g('edCam').value=e.cam||'stock';g('edEgr').value=e.egr||'none';g('edVVT').value=e.vvt?'yes':'no';
-  g('edValves').value=String(e.valves||4);g('edValveMat').value=e.valveMat||'steel';
+  g('edValves').value=String(e.valves||4);g('edValvetrain').value=VALVETRAIN[e.valvetrain]?e.valvetrain:valvetrainDefault(e.valves);g('edValveMat').value=e.valveMat||'steel';
   g('edSpring').value=e.valveSpring||'stock';g('edSpringRpm').value=e.springRpm||0;
   g('edFuel').value=e.fuel||'gasoline';
   partsToForm(e);g('edCat').value=e.cat||'stock';g('edOctane').value=e.octane;g('edInjector').value=e.injector;
@@ -120,7 +121,7 @@ function syncDesignEnable(){
   // No poppet valvetrain on 2-stroke / rotary.
   g('edCam').disabled=tp.ports;g('edEgr').disabled=tp.ports||tp.ci;   // the spark engines' cooled EGR (build 204)
   g('edVVT').disabled=tp.ports;
-  ['edValves','edValveMat','edSpring'].forEach(id=>{g(id).disabled=tp.ports;});
+  ['edValves','edValvetrain','edValveMat','edSpring'].forEach(id=>{g(id).disabled=tp.ports;});
   // Spark & timing only exist on spark-ignition engines (diesel is CI).
   g('edIgnType').disabled=tp.ci;
   g('edTiming').disabled=tp.ci;
@@ -238,13 +239,15 @@ function buildEngineCore(prevStoich,quiet){
   if(!sys.di)engine.injector='port';          // carbs / mechanical injection: no DI
   engine.canAutoAFR=(engine.intakeSys==='efi'||engine.intakeSys==='itb');   // only EFI has an ECU fuel map
   if(!engine.canAutoAFR)engine.afrMode='fixed';   // carbs / mechanical injection: mixture is mechanical
-  // Catalytic converter: conversion efficiency + a small exhaust back-pressure that costs
-  // top-end breathing (folded into the top-end flow term, like an extra restrictive filter).
+  // Catalytic converter: conversion efficiency, and its brick as a porous plug in the exhaust (backPressureBar). It is
+  // ALSO still taken off the charge as a fitted ramp to the redline (up to 5% for a stock cat), which counts it twice.
+  // Taking that out (build 244 tried) lifts nearly every factory engine 5-6%, so it has been holding down an error
+  // elsewhere; it is left for the audit of fitted parts, named, rather than removed blind.
   const catp=CAT[engine.cat]||CAT.stock;
   engine.catConv=catp.conv;engine.catRestrict=catp.restrict;
-  engine.inductionFlowTop=sys.flowTop-catp.restrict;
+  engine.catRampTop=catp.restrict;
   deriveFilter();   // the air filter's restriction, from its media and housing (build 210)
-  engine.inductionFlowLow=sys.flowLow;
+  deriveCarb();     // a carburettor's venturi, sized to the engine (build 244)
   engine.meteringEff=sys.metering;            // AFR precision → thermal efficiency
   engine.intakeRespK=sys.resp;                // manifold fill speed (dynamic model)
   engine.idleRpmEff=IDLE_RPM+idlePenalty+sys.idle;   // wild cam / race intake idle higher & lumpier
@@ -252,7 +255,7 @@ function buildEngineCore(prevStoich,quiet){
   buildBurnTable();         // diesel burn phasing vs rpm; exhaustGasT reads it from here on
   deriveGasDynamics();      // runner + header geometry; needs crFactor, catRestrict and idleRpmEff
   updateGasLabels();
-  engine.strokeFrictionMult=1+(engine.stroke_mm-86)/320;  // longer stroke = more friction
+  deriveFriction();         // the friction model's geometry: bearings, cams, valves (build 243)
   engine.maxBoost=engine.intake==='na'?0:engine.boost_bar;
   engine.mapMax=engine.intake==='na'?1.05:1.0+engine.maxBoost;
   // Intercooler core: charge-heat residual (feeds effIAT) and its spool-lag penalty.
