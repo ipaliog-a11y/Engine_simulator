@@ -78,6 +78,11 @@ thermal model's fitted temperature rises put its oil at 149 C. Before, its peak 
 puts almost no load on the dyno. This is the same fitted thermal model that test145 already names for 14 engines.
 test60's RMS power error across 89 engines falls from 11.2% to 10.4%; torque goes from 8.5% to 8.9%.
 
+The GEAR RATIOS window's "ideal" line, peak power at every speed, took the peak from the torque curve's sample
+points. It draws torque as straight lines between them, so power, which is torque times rpm, is a parabola there and
+can peak between two points. With the M3 E46's power now peaking short of its limiter, one gear was drawn above the
+ideal, and test92 caught it. The ideal now includes each segment's vertex.
+
 Tests: test155 (new) checks that a carburettor costs its venturi's drop at each rpm, sized by the rule; that the loss
 grows from under 1% to over 5% at the redline; that injection systems breathe alike at full throttle, as do the
 carburettor types; and that the catalyst's named ramp is still there.
