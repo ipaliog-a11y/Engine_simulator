@@ -48,6 +48,7 @@ friction first.
 | Mean absolute error | 7.4% | 7.5% |
 | Median absolute error | 3.7% | 3.6% |
 | Within 10% | 74 | 78 |
+| test60's RMS error, 89 engines: power / torque | 11.8% / 8.4% | 11.2% / 8.5% |
 
 The sim no longer overrates engines on average. The engines furthest from their figures are where they were: the
 rotaries, the 1960s gross ratings and the high-revving NA engines, whose power still climbs to the limiter. That is
@@ -65,6 +66,11 @@ Held at the model's reference rather than derived, and left open:
 - **The alternator** is in the model's accessory term while not charging, and the sim still charges its own belt drag
   (0.02–0.05 bar), so 2–5 kPa is counted twice.
 - **Rotaries and two-strokes** keep the old curve, because the model was built for poppet-valve four-strokes.
+
+test60's list of known anomalies is one shorter. The Aygo's power no longer climbs to its limiter, and the
+Cummins's boost no longer falls away. The F40 joins the engines whose power still climbs at the limiter: 466 hp at
+7600 rpm against its 7700 limiter (real 478 at 7000). The old curve's N² term had been holding its peak just below.
+That is the same missing top-end fade, and it is the next build's.
 
 Tests: test154 (new) computes the S14's friction by hand from the thesis's equations and checks that the sim gives the
 same value. It also checks that friction rises with rpm, intake pressure and stroke, the valvetrains' order, that
