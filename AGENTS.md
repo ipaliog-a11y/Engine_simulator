@@ -7,6 +7,16 @@ before your first change**, and follow it unless the repository owner tells you 
 Pixel Engine Sim is one HTML page (`index.html`) that simulates an engine, a car, a lap and a race from physics. The
 goal for v1.0 is **every number derived, not fitted**. That goal decides most of the rules below.
 
+## 0. Owner decisions in force (override the sections below until the owner lifts them)
+
+1. **Greek translations are paused.** Do not add Greek to `I18N` or `GUIDE_I18N` for new text. Still wrap interface
+   text in `tr('...')` so it can be translated later. Do not run `test87`; if a test fails only for missing Greek,
+   note it in the PR rather than translating.
+2. **Strict token diet; tests to the minimum.** Write a new test only when the change cannot be checked otherwise, and
+   run only the tests that cover what you touched. Keep diffs, comments, CHANGELOG entries and PR text short.
+3. **Sanity checks against preset (real) cars are paused** unless the owner asks for them: no fingerprint
+   comparisons or published-figure checks per change. The physics rules on deriving and citing still hold.
+
 ---
 
 ## 1. The shape of the repository
