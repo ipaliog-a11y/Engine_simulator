@@ -30,7 +30,7 @@ function reportSpecRows(){
     ['Mixture',e.afrMode==='auto'?'ECU fuel map (load × rpm)'+(fuelMapCustom?', hand-tuned':''):'Fixed '+state.afr.toFixed(1)+' : 1'],
     ['Exhaust',(e.exhaustPart?e.exhaustPart.name+' ('+EXHAUST_BUILD[e.exhaustPart.build].label.toLowerCase()+')':e.exhaust)+(e.cat&&e.cat!=='none'?', '+e.cat+' catalyst':', no catalyst')],
     ['Cooling',e.radiator+' radiator, '+e.fan+' fan'+(e.oilCooler?', oil cooler':'')+', '+e.thermostat+'°C stat'],
-    ['Charging',e.altMaxA+' A alternator'],
+    ['Charging',e.dcdc?'12 V from the pack through a DC-DC converter':e.altMaxA+' A alternator'],
     ['Est. installed mass',engineMass()+' kg']
   ];
   return rows;

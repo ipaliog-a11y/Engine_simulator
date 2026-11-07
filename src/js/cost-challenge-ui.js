@@ -33,7 +33,8 @@ function computeCost(){
   c+={small:200,stock:400,large:800}[engine.radiator]||0;
   c+={none:0,mechanical:150,electric:350}[engine.fan]||0;
   if(engine.oilCooler)c+=500;
-  c+={'60':150,'120':250,'180':450}[engine.alternator]||0;
+  // a hybrid's DC-DC converter in place of the alternator (build 246), priced as the 120 A alternator for want of a source
+  c+=engine.dcdc?250:({'60':150,'120':250,'180':450}[engine.alternator]||0);
   return Math.max(500,Math.round(c/50)*50);   // round to nearest $50
 }
 // A lap time for scoring, cached on the engine + vehicle build so it isn't re-solved on every
@@ -165,9 +166,10 @@ function updateDesignSummary(){
   const sparkLine=engine.ci?
     '<br><b>'+tr('Compression ignition')+'</b> • <b>'+tr('Direct inj')+'</b> • '+tr('Diesel (cetane)')+mixTxt:
     '<br>'+(engine.injector==='direct'?'<b>'+tr('Direct inj')+'</b> • ':'')+tr('Ignition')+' <b>'+(engine.timingMode==='auto'?tr('AUTO (ECU)'):engine.ignitionAdv+'° '+tr('fixed'))+' '+ignTxt+'</b>'+mixTxt;
+  const supply=engine.dcdc?tr('12 V: DC-DC from the pack'):engine.altMaxA+'A '+tr('alt');
   const elecLine=engine.ci?
-    '<br>'+tr('Electrical')+' <b>'+engine.altMaxA+'A '+tr('alt')+'</b> • '+tr('glow-plug start (no spark)'):
-    '<br>'+tr('Electrical')+' <b>'+engine.altMaxA+'A '+tr('alt')+'</b> • '+tr('Ignition misfire above')+' <b>~'+engine.dwellLimit+'</b> rpm ('+ignTxt+')';
+    '<br>'+tr('Electrical')+' <b>'+supply+'</b> • '+tr('glow-plug start (no spark)'):
+    '<br>'+tr('Electrical')+' <b>'+supply+'</b> • '+tr('Ignition misfire above')+' <b>~'+engine.dwellLimit+'</b> rpm ('+ignTxt+')';
   document.getElementById('designSummary').innerHTML=
     '<b>'+tr(ENGINE_TYPE[engine.type].label)+'</b> • <b>'+unitWord+'</b>'+
     '<br><b>'+engine.cylinders+' × '+engine.bore_mm+'×'+engine.stroke_mm+dimLabel+'</b> → <b>'+disp+' L</b>'+

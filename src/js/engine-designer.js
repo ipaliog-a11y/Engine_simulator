@@ -114,7 +114,7 @@ const ICD_FIELDS={
     trade:'It keeps the oil from overheating under long, hard use.'},
   edThermostat:{adv:true,what:'The temperature at which the thermostat opens.',
     trade:'A cooler setting holds the engine cooler, a little further from knock; a warmer one wastes less heat.'},
-  edAlternator:{guide:'electrical',what:'How much current the alternator can give.',
+  edAlternator:{guide:'electrical',what:'How much current the alternator can give. A hybrid has none: its 12 V side runs off the pack through a DC-DC converter.',
     trade:'A bigger alternator keeps the battery up under a heavy electrical load, and takes more power from the crank while it charges.'}
 };
 // Where a field's value lives on a factory engine, and how a choice is written there.
@@ -180,7 +180,7 @@ function icdSummary(c,r){
       (g('edNitrous')!=='none'?' · N2O':'');
     case 'flow':return o('edIntakeSys')+' · '+o('edRunner')+' · '+o('edExhaust')+' · '+o('edCat');
     case 'fuel':return o('edFuel')+(document.getElementById('edOctane').disabled?'':' · '+g('edOctane')+' RON')+' · '+o('edTiming');
-    case 'cool':return o('edRadiator')+' · '+o('edFan')+' · '+o('edAlternator');
+    case 'cool':return o('edRadiator')+' · '+o('edFan')+' · '+(document.getElementById('edAlternator').disabled?tr('12 V: DC-DC from the pack'):o('edAlternator'));
   }
   return '';
 }

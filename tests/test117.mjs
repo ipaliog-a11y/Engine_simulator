@@ -31,7 +31,8 @@ const BEFORE = { 'Toyota Prius (2016)': 5.12, 'Hyundai Ioniq Hybrid (2016)': 5.0
 // and their cycles rose 5-7% (Ioniq 4.62 -> 4.99, Prius 4.21 -> 4.51, Qashqai 5.62 -> 5.91): a known gap, named in the
 // CHANGELOG, until a modern ring factor is sourced. Build 202's map is still in these figures; from build 243 they are
 // the floor, so anything that makes the hybrids burn more fails here.
-const KNOWN_GAP_243 = { 'Toyota Prius (2016)': 4.51, 'Hyundai Ioniq Hybrid (2016)': 4.99, 'Nissan Qashqai e-POWER (2022)': 5.91 };
+// Build 245 took the hybrids' alternator off (a DC-DC converter from the pack), and the floors are tightened to it.
+const KNOWN_GAP_243 = { 'Toyota Prius (2016)': 4.33, 'Hyundai Ioniq Hybrid (2016)': 4.83, 'Nissan Qashqai e-POWER (2022)': 5.80 };
 const REAL = { 'Toyota Prius (2016)': 4.14, 'Hyundai Ioniq Hybrid (2016)': 4.4, 'Nissan Qashqai e-POWER (2022)': 5.3 };
 
 const r = await page.evaluate(() => {
@@ -64,11 +65,11 @@ for (const e of r.engines) {
   if (e.rich ? !(e.wot < 0.92) : Math.abs(e.wot - 1) > 0.005) fails.push(`${e.name}: lambda ${f(e.wot, 3)} at full load`);
 }
 for (const n of ['2ZR-FXE', 'Kappa']) { const e = r.engines.find(x => x.name.includes(n)); if (e.rich) fails.push(`${e.name}: an Atkinson hybrid engine enriches`); }
-console.log('\n== the hybrids on the WLTP cycle (L/100 km): build 201 -> now (build 243\'s floor), the maker ==');
+console.log('\n== the hybrids on the WLTP cycle (L/100 km): build 201 -> now (the recorded floor), the maker ==');
 for (const [n, c] of Object.entries(r.cycles)) {
   console.log(`  ${n.padEnd(32)} ${f(BEFORE[n])} -> ${f(c.l100)} (${KNOWN_GAP_243[n]})  (${REAL[n]}, ${(c.l100 / REAL[n] * 100 - 100).toFixed(1)}%)  pack ${f(c.dE, 0)} kJ${c.corrected ? ', charge-corrected' : ''}`);
   if (!(c.l100 < BEFORE[n])) fails.push(`${n}: the cycle did not fall from build 201's ${BEFORE[n]}`);
-  if (c.l100 > KNOWN_GAP_243[n] + 0.005) fails.push(`${n}: the cycle burns more than build 243's ${KNOWN_GAP_243[n]}`);
+  if (c.l100 > KNOWN_GAP_243[n] + 0.005) fails.push(`${n}: the cycle burns more than the recorded floor, ${KNOWN_GAP_243[n]}`);
   if (c.corrected) fails.push(`${n}: the untuned cycle does not sustain its charge`);
 }
 

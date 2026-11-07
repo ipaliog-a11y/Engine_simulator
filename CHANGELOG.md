@@ -20,6 +20,44 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 Working toward **v1.0 — every number derived, not fitted.**
 
+### A hybrid's 12 V comes from its pack through a DC-DC converter, not an alternator (build 246)
+
+The combustion physics charged every engine for an alternator: a constant belt drag (0.035 bar of friction for the
+120 A one) and the torque to make the 12 V current. A hybrid has no alternator. The Prius, the Ioniq, the Qashqai
+e-POWER, the 330e and the 918 all run their 12 V side off the traction pack through a DC-DC converter. The hybrid's own
+code already took that load from the pack (300 W in the drive cycle, 14 V on the LIVE bench), so a hybrid paid for its
+12 V twice. Reported by the owner.
+
+- **Physics:** a hybrid's engine has no alternator drag and no charging torque (`engine.dcdc`). An engine without a
+  hybrid system keeps its alternator as before.
+- **Form:** ALTERNATOR is hidden for a hybrid. COOLING & ELECTRICS, the design summary and the report say "12 V: DC-DC
+  from the pack". The guide's electrical page says so too, in English and Greek.
+- **Cost:** the DC-DC converter is priced as the 120 A alternator it replaces, for want of a source.
+
+What moved (fingerprint, 134 values, only the five hybrids):
+
+| Hybrid | Engine power | WLTP, L/100 km (maker) | 0-100 km/h |
+|---|---|---|---|
+| Ioniq Hybrid | 117 → 118 hp (real 104) | 4.77 → 4.62 (4.4): +8.4% → +5.0% | 9.46 → 9.36 s |
+| Prius | 95 → 96 hp (real 97) | 4.34 → 4.21 (4.14): +4.8% → +1.7% | 11.11 → 11.03 s |
+| Qashqai e-POWER | 154 → 155 hp (real 156) | 5.77 → 5.62 (5.3): +8.9% → +6.0% | unchanged |
+| 330e | 195 → 197 hp (real 182) | 6.60 → 6.49, held charge | 5.66 → 5.65 s |
+| 918 Spyder | 552 → 554 hp (real 599) | 7.01 → 6.88, held charge | unchanged |
+
+The three hybrids with a maker's WLTP figure all come closer to it. Engine power moves 1-2 hp: closer for three cars,
+1 point further for the Ioniq and the 330e, whose engines were already over their ratings.
+
+This build was written at build 240 and merged after builds 242–245, so the table above is from before the derived
+friction (build 243). On top of it, the hybrids' WLTP figures fall from 4.51 to 4.33 (Prius, 4.6% over Toyota's
+4.14), from 4.99 to 4.83 (Ioniq) and from 5.91 to 5.80 (Qashqai e-POWER). test117 and test119 had set build 243's
+figures as floors, and those floors are now tightened to these values.
+
+The hybrid BSFC map stores its cells as 32-bit floats but kept its best as a 64-bit number. A cell could then read up
+to about 1e-5 g/kWh under the "best", and with this build's figures test108 caught one. The best is now taken at the
+map's own precision.
+
+Tests: test152 (new) checks every hybrid has no alternator and the same engine without its hybrid system keeps one,
+that power never falls, and the form and summaries say DC-DC.
 ### Smaller diffs and searches for the agents that build the game (build 245)
 
 Nothing in the game changes: the fingerprint of every car, lap and race is identical to build 244's. This build is about

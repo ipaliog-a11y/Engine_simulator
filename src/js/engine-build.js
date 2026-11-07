@@ -137,6 +137,8 @@ function syncDesignEnable(){
   const efi=g('edIntakeSys').value==='efi'||g('edIntakeSys').value==='itb';
   if(!efi)g('edAfrMode').value='fixed';
   g('edAfrMode').disabled=!efi;
+  const hyOn=!!g('edHybrid')&&g('edHybrid').value!=='none';
+  g('edAlternator').disabled=hyOn;   // a hybrid's 12 V comes from its pack through a DC-DC converter (build 246)
   if(typeof icdSync==='function')icdSync(true);   // the engine's cards follow the form (build 239)
 }
 function buildEngine(){
@@ -339,7 +341,12 @@ function buildEngineCore(prevStoich,quiet){
   engine.fanFloor={none:0,mechanical:0.15,electric:0.5}[engine.fan];
   // Electrical: alternator rated output & belt drag; ignition dwell (misfire) limit.
   const alt=ALT[engine.alternator]||ALT['120'];
-  engine.altMaxA=alt.maxA;engine.altDragMEP=alt.drag;
+  // A hybrid has no alternator (build 246). Its 12 V side runs off the traction pack through a DC-DC converter, as on
+  // every hybrid here (the Prius, the Ioniq, the Qashqai e-POWER, the 330e and the 918), so its crank carries neither
+  // the belt's drag nor the charging torque. The hybrid's own code already draws the 12 V load from the pack (300 W
+  // in the drive cycle, src/js/fuel-cycle.js; 14 V on the LIVE bench, src/js/hybrid-bench.js).
+  engine.dcdc=!!engine.hyMode&&engine.hyMode!=='none';
+  engine.altMaxA=engine.dcdc?0:alt.maxA;engine.altDragMEP=engine.dcdc?0:alt.drag;
   engine.dwellLimit=DWELL_RPM[engine.ignitionType]||6800;
   // Engine "note" character: how lumpy/lopey the idle & low end sound. Big cams (overlap),
   // few cylinders, cross-plane V8s and anti-lag all add burble; VVT smooths it back out.

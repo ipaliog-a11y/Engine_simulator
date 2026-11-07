@@ -713,7 +713,7 @@ body.showcase-open{overflow:hidden}
 </div>
 <div class="container">
 <header>
-<h1>PIXEL ENGINE SIM v0.7 build 245</h1>
+<h1>PIXEL ENGINE SIM v0.7 build 246</h1>
 <div class="subtitle" id="subtitle">ENGINE DESIGNER • BUILD IT, THEN DRIVE IT</div>
 </header>
 <div class="build-strip" id="buildStrip">
@@ -1591,7 +1591,7 @@ The engine makes its own electricity. A belt from the crank spins an <b>alternat
 </div>
 <div class="gtier gt-game"><div class="gtier-h">LV2 · IN THE GAME</div>
 <div class="guide-body" data-gk="electricalGame">
-<b>ELEC LOAD</b> on the LIVE tab is the accessories (lights, air conditioning, audio). Pick the <b>ALTERNATOR</b> size on the ENGINE tab: 60, 120 or 180 A. Watch the battery voltage at idle with the load turned up.
+<b>ELEC LOAD</b> on the LIVE tab is the accessories (lights, air conditioning, audio). Pick the <b>ALTERNATOR</b> size on the ENGINE tab: 60, 120 or 180 A. Watch the battery voltage at idle with the load turned up.<br>A <b>hybrid</b> has no alternator: its 12 V side runs off the traction pack through a DC-DC converter, as on every real hybrid, so its engine carries no belt drag or charging load. The ALTERNATOR field is hidden for a hybrid, and the 12 V load (300 W) comes out of the pack.
 </div>
 </div>
 <div class="gtier gt-phys"><div class="gtier-h">LV3 · THE PHYSICS</div>
@@ -7144,7 +7144,8 @@ const I18N={
   "It keeps the oil from overheating under long, hard use.":{el:"Κρατά το λάδι από το να υπερθερμανθεί σε μακριά, σκληρή χρήση."},
   "The temperature at which the thermostat opens.":{el:"Η θερμοκρασία στην οποία ανοίγει ο θερμοστάτης."},
   "A cooler setting holds the engine cooler, a little further from knock; a warmer one wastes less heat.":{el:"Μια πιο κρύα ρύθμιση κρατά τον κινητήρα πιο κρύο, λίγο πιο μακριά από τα πειράκια· μια πιο ζεστή χάνει λιγότερη θερμότητα."},
-  "How much current the alternator can give.":{el:"Πόσο ρεύμα μπορεί να δώσει ο εναλλακτήρας."},
+  "How much current the alternator can give. A hybrid has none: its 12 V side runs off the pack through a DC-DC converter.":{el:"Πόσο ρεύμα μπορεί να δώσει ο εναλλακτήρας. Ένα υβριδικό δεν έχει: το κύκλωμα των 12 V τροφοδοτείται από τη μπαταρία μέσω ενός μετατροπέα DC-DC."},
+  "12 V: DC-DC from the pack":{el:"12 V: DC-DC από τη μπαταρία"},
   "A bigger alternator keeps the battery up under a heavy electrical load, and takes more power from the crank while it charges.":{el:"Ένας μεγαλύτερος εναλλακτήρας κρατά τη μπαταρία φορτισμένη σε βαρύ ηλεκτρικό φορτίο, και παίρνει περισσότερη ισχύ από τον στρόφαλο όσο φορτίζει."},
   "DISPLACEMENT":{el:"ΚΥΒΙΣΜΟΣ"},
   "RELIABILITY":{el:"ΑΞΙΟΠΙΣΤΙΑ"},
@@ -7299,7 +7300,7 @@ const GUIDE_I18N={
   frictionPhys:{el:"Οι μέσες πραγματικές πιέσεις αθροίζονται και αφαιρούνται από το ακαθάριστο έργο: <span class=\"geq\">BMEP = IMEP<sub>gross</sub> − FMEP − PMEP<br>FMEP = (στρόφαλος + παλινδρομικά + ελατήρια υπό πίεση αερίου + μηχανισμός βαλβίδων + αντλίες) · k<sub>oil</sub> + δυναμό + κίνηση υπερσυμπιεστή<br>PMEP = (p<sub>exhaust</sub> − 1) + 0.9 · (1 − p<sub>manifold</sub>) &nbsp; [bar]</span> Το FMEP είναι το μοντέλο Patton–Nitschke–Heywood όπως το αναθεώρησαν οι Sandoval και Heywood (SAE 2003-01-0725): κάθε μέρος στο δικό του καθεστώς λίπανσης, σταθερό όπου τρίβει χωρίς λάδι (τσιμούχες, επίπεδα πέλματα), ∝ N όπου διατέμνεται ένα φιλμ λαδιού (κουζινέτα, φούστα), ∝ N² όπου το λάδι αντλείται μέσα από τα κουζινέτα. Διαβάζει τη διάμετρο B, τη διαδρομή S, τους κυλίνδρους, τις βαλβίδες και το άνοιγμά τους, τη συμπίεση (το φορτίο αερίου στα ελατήρια), την πίεση εισαγωγής και τις σταθερές του μηχανισμού (Πίνακας 4.2: επίπεδο κύπελλο 133, επίπεδο κοκοράκι 400, ράουλο 0.005 ως 0.023). Τα κουζινέτα είναι 0.65 και 0.56 της διαμέτρου. Στις 3000 rpm δίνει περίπου 1.1 bar για έναν τετρακύλινδρο 2.3 λίτρων, έναντι 0.7 bar από την παλιά προσαρμοσμένη καμπύλη.<br>Το μισό της εξάτμισης παράγεται από την αντίθλιψη που πραγματικά κάνουν οι σωλήνες και η τουρμπίνα (δες <a data-gp=\"backpressure\">Αντίθλιψη &amp; υπολειμματικά αέρια</a>)· το μισό της εισαγωγής είναι το στραγγάλισμα. Ο βρόχος ενός πετρελαιοκινητήρα χρεώνεται με το πρόσημό του, οπότε ένα τούρμπο που κάνει περισσότερο boost από αντίθλιψη δίνει έργο πίσω. Η αντίσταση του δυναμό είναι η ηλεκτρική ισχύς που βγάζει διά απόδοση 0.55, διά τις στροφές του στροφάλου: μεγάλη στο ρελαντί, αμελητέα ψηλά."},
   frictionLimit:{el:"Όριο: το ιξώδες του λαδιού, η τάση των ελατηρίων και η τραχύτητα του χιτωνίου μένουν σε αυτά του κινητήρα αναφοράς του μοντέλου, της δεκαετίας του 1980 (10W-30 στους 90 °C), οπότε ένα σύγχρονο πακέτο ελατηρίων χαμηλής τάσης χρεώνεται λίγο παραπάνω· το ζέσταμα χρησιμοποιεί ακόμα τον παλιότερο συντελεστή θερμοκρασίας λαδιού. Τα περιστροφικά και οι δίχρονοι κρατούν την παλιά προσαρμοσμένη καμπύλη."},
   electricalReal:{el:"Ο κινητήρας φτιάχνει μόνος του το ρεύμα του. Ένας ιμάντας από τον στρόφαλο γυρίζει ένα <b>δυναμό</b>, που φορτίζει τη <b>μπαταρία</b> και τροφοδοτεί καθετί ηλεκτρικό: την ECU, την αντλία καυσίμου, τα φώτα, το βεντιλατέρ. Στο ρελαντί ένα μικρό δυναμό δεν προλαβαίνει ένα μεγάλο ηλεκτρικό φορτίο, η μπαταρία αδειάζει, η τάση πέφτει, και ένας αδύναμος σπινθήρας αρχίζει να αστοχεί."},
-  electricalGame:{el:"Το <b>ΗΛΕΚ. ΦΟΡΤΙΟ</b> στην καρτέλα ΖΩΝΤΑΝΑ είναι τα παρελκόμενα (φώτα, κλιματισμός, ηχοσύστημα). Διάλεξε το μέγεθος του <b>ΔΥΝΑΜΟ (ALT)</b> στην καρτέλα ΚΙΝΗΤΗΡΑΣ: 60, 120 ή 180 A. Πρόσεχε την τάση της μπαταρίας στο ρελαντί με το φορτίο ανεβασμένο."},
+  electricalGame:{el:"Το <b>ΗΛΕΚ. ΦΟΡΤΙΟ</b> στην καρτέλα ΖΩΝΤΑΝΑ είναι τα παρελκόμενα (φώτα, κλιματισμός, ηχοσύστημα). Διάλεξε το μέγεθος του <b>ΔΥΝΑΜΟ (ALT)</b> στην καρτέλα ΚΙΝΗΤΗΡΑΣ: 60, 120 ή 180 A. Πρόσεχε την τάση της μπαταρίας στο ρελαντί με το φορτίο ανεβασμένο.<br>Ένα <b>υβριδικό</b> δεν έχει δυναμό: το κύκλωμα των 12 V τροφοδοτείται από τη μπαταρία κίνησης μέσω ενός μετατροπέα DC-DC, όπως σε κάθε πραγματικό υβριδικό, οπότε ο κινητήρας του δεν έχει αντίσταση ιμάντα ούτε φορτίο φόρτισης. Το πεδίο ΔΥΝΑΜΟ (ALT) κρύβεται σε ένα υβριδικό, και το φορτίο των 12 V (300 W) βγαίνει από τη μπαταρία."},
   electricalPhys:{el:"Το δυναμό δίνει περίπου το 35% της ονομαστικής του τιμής στο ρελαντί, ανεβαίνοντας σε πλήρη απόδοση ως τις 2500 rpm. Η ζήτηση είναι μια βάση 12 A (ECU, αντλία, ανάφλεξη), ως 55 A για παρελκόμενα και 22 A για ηλεκτρικό βεντιλατέρ όταν το ψυκτικό είναι ζεστό. Η μπαταρία ολοκληρώνει τη διαφορά, και η τάση του συστήματος ακολουθεί την κατάσταση φόρτισής της. Η δύναμη του σπινθήρα κλιμακώνεται με την τάση ανάμεσα στα 9.5 και 13 V, και το όριο φόρτισης της ανάφλεξης πέφτει μαζί της, οπότε μια άδεια μπαταρία και ένας διανομέας αστοχούν νωρίς. Η ισχύς που τραβιέται κοστίζει ροπή στον στρόφαλο: <span class=\"geq\">T<sub>alt</sub> = I · 14 V / 0.55 / ω</span>"},
   // build 162: Breathing & boost
   airpathReal:{el:"Ένας κινητήρας είναι μια <b>αντλία αέρα</b> που τυχαίνει να καίει καύσιμο. Το καύσιμο προστίθεται εύκολα· ο αέρας είναι το δύσκολο, γιατί μπορείς να κάψεις μόνο όσο καύσιμο σου επιτρέπει ο αέρας που έχεις. Έτσι σχεδόν κάθε τρόπος να βγάλεις περισσότερη ισχύ είναι στην ουσία ένας τρόπος να περάσει περισσότερος αέρας: μεγαλύτερες βαλβίδες, συντονισμένοι σωλήνες, περισσότερες στροφές, ή ένας συμπιεστής που τον σπρώχνει μέσα.<br> Η <b>ογκομετρική απόδοση</b> (VE) είναι το πόσο γεμίζει ο κύλινδρος σε σχέση με τον δικό του όγκο σε εξωτερικό αέρα. Ένας καλός ατμοσφαιρικός κινητήρας φτάνει 90–100% στην κορυφή της ροπής του, και οι συντονισμένοι σωλήνες μπορούν να τον περάσουν πάνω από 100%."},
@@ -8871,6 +8872,8 @@ function syncDesignEnable(){
   const efi=g('edIntakeSys').value==='efi'||g('edIntakeSys').value==='itb';
   if(!efi)g('edAfrMode').value='fixed';
   g('edAfrMode').disabled=!efi;
+  const hyOn=!!g('edHybrid')&&g('edHybrid').value!=='none';
+  g('edAlternator').disabled=hyOn;   // a hybrid's 12 V comes from its pack through a DC-DC converter (build 246)
   if(typeof icdSync==='function')icdSync(true);   // the engine's cards follow the form (build 239)
 }
 function buildEngine(){
@@ -9073,7 +9076,12 @@ function buildEngineCore(prevStoich,quiet){
   engine.fanFloor={none:0,mechanical:0.15,electric:0.5}[engine.fan];
   // Electrical: alternator rated output & belt drag; ignition dwell (misfire) limit.
   const alt=ALT[engine.alternator]||ALT['120'];
-  engine.altMaxA=alt.maxA;engine.altDragMEP=alt.drag;
+  // A hybrid has no alternator (build 246). Its 12 V side runs off the traction pack through a DC-DC converter, as on
+  // every hybrid here (the Prius, the Ioniq, the Qashqai e-POWER, the 330e and the 918), so its crank carries neither
+  // the belt's drag nor the charging torque. The hybrid's own code already draws the 12 V load from the pack (300 W
+  // in the drive cycle, src/js/fuel-cycle.js; 14 V on the LIVE bench, src/js/hybrid-bench.js).
+  engine.dcdc=!!engine.hyMode&&engine.hyMode!=='none';
+  engine.altMaxA=engine.dcdc?0:alt.maxA;engine.altDragMEP=engine.dcdc?0:alt.drag;
   engine.dwellLimit=DWELL_RPM[engine.ignitionType]||6800;
   // Engine "note" character: how lumpy/lopey the idle & low end sound. Big cams (overlap),
   // few cylinders, cross-plane V8s and anti-lag all add burble; VVT smooths it back out.
@@ -9154,7 +9162,8 @@ function computeCost(){
   c+={small:200,stock:400,large:800}[engine.radiator]||0;
   c+={none:0,mechanical:150,electric:350}[engine.fan]||0;
   if(engine.oilCooler)c+=500;
-  c+={'60':150,'120':250,'180':450}[engine.alternator]||0;
+  // a hybrid's DC-DC converter in place of the alternator (build 246), priced as the 120 A alternator for want of a source
+  c+=engine.dcdc?250:({'60':150,'120':250,'180':450}[engine.alternator]||0);
   return Math.max(500,Math.round(c/50)*50);   // round to nearest $50
 }
 // A lap time for scoring, cached on the engine + vehicle build so it isn't re-solved on every
@@ -9286,9 +9295,10 @@ function updateDesignSummary(){
   const sparkLine=engine.ci?
     '<br><b>'+tr('Compression ignition')+'</b> • <b>'+tr('Direct inj')+'</b> • '+tr('Diesel (cetane)')+mixTxt:
     '<br>'+(engine.injector==='direct'?'<b>'+tr('Direct inj')+'</b> • ':'')+tr('Ignition')+' <b>'+(engine.timingMode==='auto'?tr('AUTO (ECU)'):engine.ignitionAdv+'° '+tr('fixed'))+' '+ignTxt+'</b>'+mixTxt;
+  const supply=engine.dcdc?tr('12 V: DC-DC from the pack'):engine.altMaxA+'A '+tr('alt');
   const elecLine=engine.ci?
-    '<br>'+tr('Electrical')+' <b>'+engine.altMaxA+'A '+tr('alt')+'</b> • '+tr('glow-plug start (no spark)'):
-    '<br>'+tr('Electrical')+' <b>'+engine.altMaxA+'A '+tr('alt')+'</b> • '+tr('Ignition misfire above')+' <b>~'+engine.dwellLimit+'</b> rpm ('+ignTxt+')';
+    '<br>'+tr('Electrical')+' <b>'+supply+'</b> • '+tr('glow-plug start (no spark)'):
+    '<br>'+tr('Electrical')+' <b>'+supply+'</b> • '+tr('Ignition misfire above')+' <b>~'+engine.dwellLimit+'</b> rpm ('+ignTxt+')';
   document.getElementById('designSummary').innerHTML=
     '<b>'+tr(ENGINE_TYPE[engine.type].label)+'</b> • <b>'+unitWord+'</b>'+
     '<br><b>'+engine.cylinders+' × '+engine.bore_mm+'×'+engine.stroke_mm+dimLabel+'</b> → <b>'+disp+' L</b>'+
@@ -16177,7 +16187,7 @@ function reportSpecRows(){
     ['Mixture',e.afrMode==='auto'?'ECU fuel map (load × rpm)'+(fuelMapCustom?', hand-tuned':''):'Fixed '+state.afr.toFixed(1)+' : 1'],
     ['Exhaust',(e.exhaustPart?e.exhaustPart.name+' ('+EXHAUST_BUILD[e.exhaustPart.build].label.toLowerCase()+')':e.exhaust)+(e.cat&&e.cat!=='none'?', '+e.cat+' catalyst':', no catalyst')],
     ['Cooling',e.radiator+' radiator, '+e.fan+' fan'+(e.oilCooler?', oil cooler':'')+', '+e.thermostat+'°C stat'],
-    ['Charging',e.altMaxA+' A alternator'],
+    ['Charging',e.dcdc?'12 V from the pack through a DC-DC converter':e.altMaxA+' A alternator'],
     ['Est. installed mass',engineMass()+' kg']
   ];
   return rows;
@@ -23125,7 +23135,7 @@ function hybBsfcMap(){
     for(let j=0;j<NT;j++){
       const T=T1*(j+0.5)/NT;let b=NaN;
       if(T<=Tf){const f=engineFuelAt(rpm,T,95);if(isFinite(f)&&T*w>500)b=f/(T*w)*3.6e6;}
-      g[i*NT+j]=b;if(b<best.b)best={b,rpm,T};
+      g[i*NT+j]=b;if(g[i*NT+j]<best.b)best={b:g[i*NT+j],rpm,T};   // the best at the map's own (32-bit) precision
     }
   }
   hy._bsfc={score:e.score,NR,NT,r0,r1,T1,g,best,img:null};
@@ -23729,6 +23739,7 @@ class DesignCards{
     if(!this.init())return;
     this.st.mode=mode;
     this.renderText();
+    this.renderFields();   // which fields the form now uses shows at once; the figures follow on the next frame
     this.queue(false,true);
   }
   // The preview runs at most once a frame while a slider is dragged; a slow one (cfg.delay) once the dragging stops.
@@ -24279,7 +24290,7 @@ const ICD_FIELDS={
     trade:'It keeps the oil from overheating under long, hard use.'},
   edThermostat:{adv:true,what:'The temperature at which the thermostat opens.',
     trade:'A cooler setting holds the engine cooler, a little further from knock; a warmer one wastes less heat.'},
-  edAlternator:{guide:'electrical',what:'How much current the alternator can give.',
+  edAlternator:{guide:'electrical',what:'How much current the alternator can give. A hybrid has none: its 12 V side runs off the pack through a DC-DC converter.',
     trade:'A bigger alternator keeps the battery up under a heavy electrical load, and takes more power from the crank while it charges.'}
 };
 // Where a field's value lives on a factory engine, and how a choice is written there.
@@ -24345,7 +24356,7 @@ function icdSummary(c,r){
       (g('edNitrous')!=='none'?' · N2O':'');
     case 'flow':return o('edIntakeSys')+' · '+o('edRunner')+' · '+o('edExhaust')+' · '+o('edCat');
     case 'fuel':return o('edFuel')+(document.getElementById('edOctane').disabled?'':' · '+g('edOctane')+' RON')+' · '+o('edTiming');
-    case 'cool':return o('edRadiator')+' · '+o('edFan')+' · '+o('edAlternator');
+    case 'cool':return o('edRadiator')+' · '+o('edFan')+' · '+(document.getElementById('edAlternator').disabled?tr('12 V: DC-DC from the pack'):o('edAlternator'));
   }
   return '';
 }

@@ -61,7 +61,8 @@ const f = (x, d = 2) => (+x).toFixed(d), pct = (a, b) => (a / b - 1) * 100;
 // Build 243's derived friction (Sandoval–Heywood, with a 1980s ring-pack reference the thesis gives no modern figures
 // for) charges the 2ZR-FXE more: 96 -> 89 hp, and the Prius's cycle 4.21 -> 4.51 L/100 km. A known gap, named in the
 // CHANGELOG, until a modern ring factor is sourced; build 243's figures are the floor, so nothing may make them worse.
-const KNOWN_GAP_243 = { hp: 89, prius: 4.51 };
+// Build 245 took its alternator off (a DC-DC converter from the pack): the floors are tightened to it.
+const KNOWN_GAP_243 = { hp: 90, prius: 4.33 };
 console.log(`== the ECU's EGR at 3000 rpm, 20/40/50/70/90/100% load: ${r.sched.map(x => f(x * 100, 0) + '%').join(' / ')}; the Kappa's at 70% and full load ${f(r.kappa.mid * 100, 0)}% / ${f(r.kappa.full * 100, 0)}% ==`);
 const [s20, s40, s50, s70, s90, s100] = r.sched;
 if (s20 !== 0) fails.push('EGR at light load, where the burn cannot take it');
@@ -69,7 +70,7 @@ if (!(s40 > 0 && s40 < s50) || Math.abs(s50 - 0.25) > 1e-9 || Math.abs(s70 - 0.2
 if (Math.abs(s100 - 0.25) > 1e-9) fails.push('COOLED, TO FULL LOAD does not hold it at full load (Toyota runs it at maximum output)');
 if (r.kappa.egr !== 'cooled' || r.kappa.full !== 0 || Math.abs(r.kappa.mid - 0.25) > 1e-9) fails.push('COOLED, OFF AT FULL LOAD does not take it out at full load');
 console.log(`== the 2ZR-FXE: ${r.prius.hp} hp with its EGR (Toyota ${r.prius.real}, ${f(pct(r.prius.hp, r.prius.real), 1)}%); without, ${r.none.hp} hp; the walls' share ${f(r.prius.egrWall * 100, 2)} points at 25% ==`);
-if (Math.abs(pct(r.prius.hp, r.prius.real)) > 5 && r.prius.hp < KNOWN_GAP_243.hp) fails.push(`the 2ZR-FXE makes ${r.prius.hp} hp, under build 243's ${KNOWN_GAP_243.hp} (Toyota's ${r.prius.real})`);
+if (Math.abs(pct(r.prius.hp, r.prius.real)) > 5 && r.prius.hp < KNOWN_GAP_243.hp) fails.push(`the 2ZR-FXE makes ${r.prius.hp} hp, under the recorded floor, ${KNOWN_GAP_243.hp} (Toyota's ${r.prius.real})`);
 if (!(r.none.hp > r.prius.hp * 1.2) || r.none.egrMax !== 0 || r.none.rate !== 0) fails.push('an engine without EGR is not the engine it was');
 if (!(r.prius.egrWall < -0.005)) fails.push('dilution does not take heat off the walls');
 const P = r.part;
@@ -78,7 +79,7 @@ if (!(P.mapEgr > P.mapNone * 1.05)) fails.push('the same torque is not made with
 if (!(P.pmpEgr < P.pmpNone)) fails.push('the wider throttle does not pump less');
 if (!(P.bsfcEgr < P.bsfcNone)) fails.push('EGR does not lower the part-load fuel per kWh');
 console.log(`== WLTP: Prius ${f(r.cyc['Prius'])} L/100 km (Toyota 4.14, ${f(pct(r.cyc['Prius'], 4.14), 1)}%), Ioniq ${f(r.cyc['Ioniq Hybrid'])} (Hyundai 4.4-5.2) ==`);
-if (Math.abs(pct(r.cyc['Prius'], 4.14)) > 5 && r.cyc['Prius'] > KNOWN_GAP_243.prius + 0.005) fails.push(`the Prius burns ${f(r.cyc['Prius'])} L/100 km, more than build 243's ${KNOWN_GAP_243.prius} (Toyota's 4.14)`);
+if (Math.abs(pct(r.cyc['Prius'], 4.14)) > 5 && r.cyc['Prius'] > KNOWN_GAP_243.prius + 0.005) fails.push(`the Prius burns ${f(r.cyc['Prius'])} L/100 km, more than the recorded floor, ${KNOWN_GAP_243.prius} (Toyota's 4.14)`);
 if (!(r.cyc['Ioniq Hybrid'] >= 4.4 && r.cyc['Ioniq Hybrid'] <= 5.2)) fails.push(`the Ioniq burns ${f(r.cyc['Ioniq Hybrid'])} L/100 km, outside Hyundai's 4.4-5.2`);
 console.log(`== form: petrol ${r.form.petrol}, diesel disabled ${r.form.diesel}, ${r.form.opts.join(' / ')}; Greek ${r.form.el.join(' / ')} ==`);
 if (!r.form.petrol || !r.form.diesel || r.form.opts.join() !== 'none,cooled,cooled-full') fails.push('the EGR choice is not on the spark engines\' form');
