@@ -20,6 +20,26 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 Working toward **v1.0 — every number derived, not fitted.**
 
+### The cards' pictures are drawn when you come back to them, and PLUG-IN stays PLUG-IN (build 240)
+
+- **Blank pictures.** In builds 238 and 239 the cards' pictures and the side panel's curve were drawn only while they
+  were on screen. Picking a build from the list jumps to the DYNO tab, so they were worked out while hidden, and
+  nothing drew them when you came back to ENGINE. The rotor and stator, the battery, the cylinder and the WHAT THE
+  MOTOR DOES / WHAT YOUR ENGINE DOES curve stayed blank until you changed something. Now a picture is redrawn whenever
+  it comes into view or changes size (a ResizeObserver in `src/js/design-cards.js`), so both forms are fixed at once.
+  Reported by the owner.
+- **PLUG-IN in Greek.** A plug-in hybrid is "plug-in" in Greek too, as its makers and buyers say it. The field PLUG-IN,
+  PLUG-IN DEPLOY (now ΑΠΟΔΟΣΗ PLUG-IN) and the hybrid guide pages said ΕΠΑΝΑΦΟΡΤΙΖΟΜΕΝΟ; they now say PLUG-IN or
+  plug-in. "Από την πρίζα" stays where it means energy taken from the wall socket. test87 allows the word PLUG in Greek
+  text, as it allows WLTP and eCVT.
+- No numbers moved: the fingerprint is identical to build 239's.
+
+Left for the next build: hybrids are still charged for a belt-driven alternator (its drag and its charging torque on
+the crank). Real ones run the 12 V system from the traction pack through a DC-DC converter. That is a physics change,
+so it gets its own build.
+
+Tests: test151 (new); test87 (allows PLUG).
+
 ### The combustion engine's design as cards, with help and a live preview (build 239)
 
 Build 238 put the electric drive in cards. The combustion engine, about fifty fields in seven grids of bare values,

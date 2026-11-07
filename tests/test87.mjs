@@ -33,12 +33,13 @@ const ELECTRIC_WORDS_WITHOUT_GREEK = 59;
 const EV_SRC = readFileSync(path.join(repo, 'src', 'js', 'electric-ui.js'), 'utf8');
 
 // Kept in Latin letters by the translation (as the existing Greek does: ΣΤΟΧΟΣ BOOST, LSD ΜΕ ΔΙΣΚΟΥΣ), units, and
-// names (SYNTH and GAS are the two sound models'; WLTP the regulation's own name, ATKINSON the cycle's inventor's, eCVT the transmission's). Matched as whole words, case-sensitive.
+// names (SYNTH and GAS are the two sound models'; WLTP the regulation's own name, ATKINSON the cycle's inventor's, eCVT the transmission's;
+// PLUG-IN as Greek buyers and makers say it, build 240). Matched as whole words, case-sensitive.
 const ALLOW = new Set(`BOOST BUILD DYNO ECU LSD VVT ITB PFI DCT AFR RON BTDC MAP RPM rpm BSFC PNG PDF GPX ALT ALS ANTI LAG
   INTERCOOLER ROOTS COMPOUND DECAT WANKEL Wankel HOT HATCH ROADSTER MUSCLE CAR GRAND TOURER SUPERCAR Supercar HYPERCAR
   PICKUP SUV FWD RWD AWD SPOOL TOURING SLICK DRAG RADIAL SPLITTER SPOILER DIFFUSER COILOVERS Kei KEI wiki WIKI pixel art
   browser coupe build grand prix Sleeper Grand Prix Ring Automation PIXEL ENGINE SIM BMEP BATT kWh Nm bar VGT CdA ClA
-  OFF stall PIT PITS GT boost pit Wastegate Intercooler SYNTH GAS Ange Yaghi CPU WLTP ATKINSON eCVT kPa`.split(/\s+/).filter(Boolean));
+  OFF stall PIT PITS GT boost pit Wastegate Intercooler SYNTH GAS Ange Yaghi CPU WLTP ATKINSON eCVT kPa PLUG plug`.split(/\s+/).filter(Boolean));
 // Selects of names, the app's title, the circuit's name, and the guide's pages (budgeted above). Since build 239 the
 // design cards' slider ticks too: their hover text is the names of the real engines and drives at that value
 // ("Ford Windsor 289 4-bbl, Prius: 5,500"), as the preset lists are; the words around them are Greek.
