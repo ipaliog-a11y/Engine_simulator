@@ -1,4 +1,4 @@
-# PIXEL ENGINE SIM v0.7 build 243
+# PIXEL ENGINE SIM v0.7 build 244
 
 **A lightweight, 8-bit style internal combustion engine *designer* & simulator** inspired by *Automation*.
 
@@ -45,8 +45,9 @@ screamer, 2JZ six, muscle V8, blown V8, V12 supercar…), or configure your own 
   back-pressure; deleting it frees a few hp at the cost of emissions.
 - **Induction (metering)** — intake system (1/2/4-bbl carburetor, sidedraft carbs,
   mechanical injection, single-throttle EFI, or individual throttle bodies) and air filter
-  (open stacks → restrictive). These set top-end breathing, AFR-metering precision (EFI is
-  most efficient; carbs waste fuel), throttle response and idle quality.
+  (open stacks → restrictive). A carburettor's venturi and the filter cost the charge the
+  pressure they drop at the flow (so a carb engine fades at the top); the system also sets
+  AFR-metering precision (EFI is most efficient; carbs waste fuel), throttle response and idle quality.
 - **Valvetrain (derived physics)** — cam profile (stock / sport / race), variable valve timing,
   **valves per cylinder** (2 / 4 / 5), **valve material** (steel / titanium) and **valve springs**
   (stock / performance / race). Nothing here is a lookup multiplier: the intake valve diameter your
