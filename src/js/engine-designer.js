@@ -33,7 +33,7 @@ const ICD_FIELDS={
   edValves:{what:'How many valves each cylinder has.',
     trade:'More valves give more flow area, so better breathing at high rpm. Two valves in a wedge head are cheaper and give their best low down.'},
   edValvetrain:{guide:'friction',what:'How the cams work the valves: two cams over the head or one, or a cam in the block with pushrods, and whether the follower slides or rolls on the cam.',
-    trade:'Buckets straight under the cam rub the least of the sliding kinds; rockers and pushrods rub more. A roller follower rolls instead of sliding, so it takes much less, which is why most new engines use one.'},
+    trade:'Buckets straight under the cams rub the least. Rockers and fingers rub more, and pushrods with their lifters more still. A roller on a rocker, finger or lifter rolls instead of sliding, which wins back much of that.'},
   edCam:{what:'How far and how long the cam opens the valves.',
     trade:'A wilder cam breathes better at high rpm, at the cost of low-end torque and a rougher idle. ATKINSON closes the intake late: more efficient, less power.'},
   edVVT:{guide:'vvt',what:'Whether the ECU can shift the cam timing while the engine runs.',
