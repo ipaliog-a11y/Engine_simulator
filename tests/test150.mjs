@@ -108,15 +108,25 @@ console.log(`== bore slider to 90%: ${slide.val} mm, ${slide.chips} chips (${sli
 if (!(slide.val > 100)) fails.push('the slider did not write the bore: ' + slide.val);
 if (!slide.chips) fails.push('a change shows no effect beside the field');
 if (slide.nowV !== slide.tickV) fails.push(`the tick did not set its value: ${slide.nowV} vs ${slide.tickV}`);
+// a factory engine whose valves float below the highest redline its type allows, its redline set 200 rpm past the float
 const flt = await page.evaluate(async () => {
-  const f = icdState.res.float, red = document.getElementById('edRedline');
-  red.value = Math.min(+red.max, Math.ceil((f + 600) / 50) * 50); red.dispatchEvent(new Event('change', { bubbles: true }));
-  await new Promise(r => setTimeout(r, 400));
-  const out = { float: f, red: +red.value, warn: !!document.querySelector('#icdMeta-edRedline .evd-warn'), verdict: document.getElementById('icdVerdict').textContent,
+  let pr = null, f = 0;
+  for (const q of FACTORY_ENGINES.filter(q => q.engine.type === 'petrol4')) {
+    applyBuild({ engine: Object.assign({}, q.engine), tune: Object.assign({}, STD_TUNE), vehicle: readVehicleFromForm(), name: q.name });
+    const fl = engine.floatRpm, mx = ENGINE_TYPE.petrol4.redMax;
+    if (fl > 0 && fl + 250 < mx) { pr = q; f = fl; break; }
+  }
+  if (!pr) return { none: true };
+  setTab('design'); ICD.update();
+  const red = document.getElementById('edRedline');
+  red.value = Math.ceil((f + 200) / 50) * 50; red.dispatchEvent(new Event('change', { bubbles: true }));
+  await new Promise(r => setTimeout(r, 600));
+  const out = { name: pr.name, float: icdState.res.float, red: icdState.res.redline, warn: !!document.querySelector('#icdMeta-edRedline .evd-warn'), verdict: document.getElementById('icdVerdict').textContent,
     railWarn: document.getElementById('icdRb-block').classList.contains('warn') };
   return out;
 });
-console.log(`== redline ${flt.red} past float ${Math.round(flt.float)}: warning ${flt.warn}, menu ▲ ${flt.railWarn}; "${flt.verdict.slice(0, 70)}…" ==`);
+if (flt.none) { fails.push('no factory engine floats below its type\'s highest redline: the check has nothing to test'); flt.verdict = ''; }
+else console.log(`== ${flt.name}: redline ${flt.red} past float ${Math.round(flt.float)}: warning ${flt.warn}, menu ▲ ${flt.railWarn}; "${flt.verdict.slice(0, 70)}…" ==`);
 if (!flt.warn || !flt.railWarn) fails.push('a redline past valve float is not flagged on the redline and in the menu');
 if (!/float/.test(flt.verdict)) fails.push('WHAT HOLDS IT BACK does not name the valve float');
 
