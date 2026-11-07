@@ -20,6 +20,69 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 Working toward **v1.0 — every number derived, not fitted.**
 
+### Engine friction is derived from the engine's own bearings, pistons, rings and valvetrain (build 243)
+
+Until now every piston engine's rubbing friction was one fitted curve, (0.55 + 1.8·10⁻⁸ N²) bar times a stroke factor
+1 + (S − 86)/320, the same for a pushrod V8 and a twin-cam four. Nothing in it came from a measurement. It was found
+while looking for the E30 M3's missing top-end fade (build 242): the owner asked for that fix next, in two steps,
+friction first.
+
+- **The model.** Friction is now the Patton–Nitschke–Heywood model (SAE 890836) as revised by Sandoval and Heywood
+  (SAE 2003-01-0725; D. Sandoval, MIT thesis 2002, App. A-2), in `src/js/friction.js`. Each part is charged in its own
+  lubrication regime: main-bearing seals, main and rod bearings, the oil pumped through them, the piston skirt, the
+  rings and their extra load under gas pressure, the camshaft bearings, the cam followers, the valves in their
+  guides, and the oil pump, water pump and alternator. It reads bore, stroke, cylinders, valves, lift, compression,
+  intake pressure and the valvetrain.
+- **A new input, VALVETRAIN,** on HEAD & VALVES: twin or single cam over buckets, rockers or roller fingers, or
+  pushrods with flat or roller lifters. Its constants are the thesis's Table 4.2. Twin cams over buckets rub the
+  least; a roller beats the same layout sliding. It is set on 42 factory engines where the layout is well documented
+  (for example the GM and Chrysler pushrod engines, Honda's VTEC rockers, the EcoBoosts and BMW's turbo engines). The
+  Honda K20s, the GNX and the Prius are marked `unsure`. Elsewhere, and on a design of your own, it follows the valves:
+  four or five valves get twin cams over buckets, two get a single cam with rockers.
+- **Size of the change.** For the S14 at 3000 rpm it is 1.09 bar, against 0.71 from the old curve; at 6000 rpm, 1.68
+  against 1.19. Every piston engine loses power, from 0 to 6.5% (2.8% on average).
+
+| Against 98 real engines' rated power (measured before build 242's E30 preset merged) | Before | After |
+|---|---|---|
+| Mean signed error | +2.8% | −0.1% |
+| Mean absolute error | 7.4% | 7.5% |
+| Median absolute error | 3.7% | 3.6% |
+| Within 10% | 74 | 78 |
+| test60's RMS error, 89 engines: power / torque | 11.8% / 8.4% | 11.2% / 8.5% |
+
+The sim no longer overrates engines on average. The engines furthest from their figures are where they were: the
+rotaries, the 1960s gross ratings and the high-revving NA engines, whose power still climbs to the limiter. That is
+the missing top-end fade, which is the next build.
+
+Held at the model's reference rather than derived, and left open:
+- **Oil viscosity, ring tension and liner roughness** are the thesis's 1980s reference engine (10W-30 at 90 C), so a
+  modern low-tension ring pack is charged a little too much. Warm-up and overheating still use the older
+  oil-temperature factor, now applied to the derived friction. Replacing that with the thesis's Vogel viscosity is
+  its own change.
+- **Bearing sizes** are 0.65 (main) and 0.56 (crankpin) of the bore, the mean of six engines' maker figures, with a
+  width of 0.35 of the diameter. Both are probable.
+- **The pushrod roller constant.** The thesis prints 0.5, the same as its oscillating constant and 33 times the other
+  rollers. That is taken as a misprint, and the single-cam rocker's 0.0151 is used.
+- **The alternator** is in the model's accessory term while not charging, and the sim still charges its own belt drag
+  (0.02–0.05 bar), so 2–5 kPa is counted twice.
+- **Rotaries and two-strokes** keep the old curve, because the model was built for poppet-valve four-strokes.
+- **The hybrids burn 5–7% more on the WLTP cycle.** The model's ring and liner reference is a 1980s engine, which
+  overcharges the efficient engines hybrids use: Ioniq 4.62 → 4.99 L/100 km (Hyundai 4.4), Prius 4.21 → 4.51 (4.14),
+  Qashqai e-POWER 5.62 → 5.91 (5.3). A modern oil does not help: by the thesis's own table, a 5W-20 is no thinner than
+  its 10W-30 at 90 C. test117 required the Ioniq to stay 0.1 L/100 km under build 201's 5.05, and it is now 0.06
+  under. It now records build 243's figures as a floor, so the hybrids may not burn more, and names the gap until a
+  ring factor for modern engines is sourced. test119 had required the Prius's engine within 5% of Toyota's 96.6 hp
+  (it now makes 89) and its cycle within 5% of 4.14. It keeps those checks, but where the gap applies it takes build
+  243's 89 hp and 4.51 as the floor. This was the owner's call.
+
+test60's list of known anomalies is one shorter. The Aygo's power no longer climbs to its limiter, and the
+Cummins's boost no longer falls away. The F40 joins the engines whose power still climbs at the limiter: 466 hp at
+7600 rpm against its 7700 limiter (real 478 at 7000). The old curve's N² term had been holding its peak just below.
+That is the same missing top-end fade, and it is the next build's.
+
+Tests: test154 (new) computes the S14's friction by hand from the thesis's equations and checks that the sim gives the
+same value. It also checks that friction rises with rpm, intake pressure and stroke, the valvetrains' order, that
+rotaries and two-strokes keep the old curve, the VALVETRAIN field and its Greek.
 ### The BMW M3 E30's engine is the 1986 car's: sport cam, no catalyst, its airbox (build 242)
 
 The owner asked whether the E30 M3 had a catalytic converter, and why it ran a race cam. It didn't, and it shouldn't.

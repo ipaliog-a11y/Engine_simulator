@@ -1,4 +1,4 @@
-# PIXEL ENGINE SIM v0.7 build 242
+# PIXEL ENGINE SIM v0.7 build 243
 
 **A lightweight, 8-bit style internal combustion engine *designer* & simulator** inspired by *Automation*.
 
@@ -57,6 +57,8 @@ screamer, 2JZ six, muscle V8, blown V8, V12 supercar…), or configure your own 
   then the engine cannot use the rev range it claims. A
   wilder cam moves the powerband up and adds top-end at the cost of low-end torque and idle
   quality; VVT recovers the bottom end for a broad powerband.
+  **VALVETRAIN** (twin or single cam over buckets, rockers or roller fingers, or pushrods) sets how much the cams rub:
+  the engine's friction is built from its own bearings, pistons, rings and valvetrain (the Sandoval–Heywood model).
 - **Electrical** — alternator size (60 / 120 / 180 A). With a live **ELEC LOAD** control
   (lights/AC), a small alternator plus heavy load at idle drains the battery — low system
   voltage then weakens the spark. Ignition type sets a dwell/misfire RPM limit (a
