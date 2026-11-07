@@ -1,0 +1,908 @@
+{
+  "size": "960x640",
+  "aspect": "3:2",
+  "facing": "left",
+  "key": "preset `name` from VEHICLE_PRESETS / EV / HYB presets",
+  "cars": {
+    "Suzuki Alto Works (HA36S, 2015)": {
+      "file": "suzuki-alto-works-ha36s-2015.png",
+      "name": "Suzuki Alto Works (HA36S, 2015)",
+      "slug": "suzuki-alto-works-ha36s-2015",
+      "prompt": "8-bit pixel-art side profile of a 2015 Suzuki Alto Works (HA36S) kei-car five-door hatchback, tiny boxy body, upright tailgate, red accents, pearl white paint, small alloy wheels. Accurate body shape and proportions for this exact model and generation. Exact side elevation, car facing LEFT (nose on the left), centred, wheels on the road, the car spans about 80% of the image width. Match the reference image's style exactly: chunky visible pixels, retro 16-bit/8-bit game palette, the same coastal road scene behind the car - grey asphalt foreground, metal guardrail, blue sea, green hills/mountains on the left, bright blue sky with white pixel clouds. Same framing and lighting as the reference. No text, no logos, no watermark.",
+      "reference_image": "reference/honda-s2000-reference.jpg",
+      "generated_size": "1152x864",
+      "post_process": "crop 1080x720 at (36,90), nearest-neighbour resize to 960x640"
+    },
+    "Toyota Aygo 1.0 (2014)": {
+      "file": "toyota-aygo-mk2-2014.png",
+      "name": "Toyota Aygo 1.0 (2014)",
+      "slug": "toyota-aygo-mk2-2014",
+      "prompt": "8-bit pixel-art side profile of a 2014 Toyota Aygo second generation small city car five-door hatchback, X-shaped front, short overhangs, steep glass tailgate, bright red paint. Accurate body shape and proportions for this exact model and generation. Exact side elevation, car facing LEFT (nose on the left), centred, wheels on the road, the car spans about 80% of the image width. Match the reference image's style exactly: chunky visible pixels, retro 16-bit/8-bit game palette, the same coastal road scene behind the car - grey asphalt foreground, metal guardrail, blue sea, green hills/mountains on the left, bright blue sky with white pixel clouds. Same framing and lighting as the reference. No text, no logos, no watermark.",
+      "reference_image": "reference/honda-s2000-reference.jpg",
+      "generated_size": "1152x864",
+      "post_process": "crop 1080x720 at (36,90), nearest-neighbour resize to 960x640"
+    },
+    "Fiat 500 TwinAir 85 (2011)": {
+      "file": "fiat-500-twinair-2011.png",
+      "name": "Fiat 500 TwinAir 85 (2011)",
+      "slug": "fiat-500-twinair-2011",
+      "prompt": "8-bit pixel-art side profile of a 2011 Fiat 500 (312) three-door city car, rounded retro bubble shape, short bonnet, round headlights, chrome trim, pastel mint green paint. Accurate body shape and proportions for this exact model and generation. Exact side elevation, car facing LEFT (nose on the left), centred, wheels on the road, the car spans about 80% of the image width. Match the reference image's style exactly: chunky visible pixels, retro 16-bit/8-bit game palette, the same coastal road scene behind the car - grey asphalt foreground, metal guardrail, blue sea, green hills/mountains on the left, bright blue sky with white pixel clouds. Same framing and lighting as the reference. No text, no logos, no watermark.",
+      "reference_image": "reference/honda-s2000-reference.jpg",
+      "generated_size": "1152x864",
+      "post_process": "crop 1080x720 at (36,90), nearest-neighbour resize to 960x640"
+    },
+    "Ford Fiesta 1.0 EcoBoost 125 (2013)": {
+      "file": "ford-fiesta-ecoboost-mk7-2013.png",
+      "name": "Ford Fiesta 1.0 EcoBoost 125 (2013)",
+      "slug": "ford-fiesta-ecoboost-mk7-2013",
+      "prompt": "8-bit pixel-art side profile of a 2013 Ford Fiesta Mk7 facelift three-door hatchback, Aston-style trapezoid grille, rising beltline, blue paint. Accurate body shape and proportions for this exact model and generation. Exact side elevation, car facing LEFT (nose on the left), centred, wheels on the road, the car spans about 80% of the image width. Match the reference image's style exactly: chunky visible pixels, retro 16-bit/8-bit game palette, the same coastal road scene behind the car - grey asphalt foreground, metal guardrail, blue sea, green hills/mountains on the left, bright blue sky with white pixel clouds. Same framing and lighting as the reference. No text, no logos, no watermark.",
+      "reference_image": "reference/honda-s2000-reference.jpg",
+      "generated_size": "1152x864",
+      "post_process": "crop 1080x720 at (36,90), nearest-neighbour resize to 960x640"
+    },
+    "VW Golf GTI (Mk7, 2013)": {
+      "file": "volkswagen-golf-gti-mk7-2013.png",
+      "name": "VW Golf GTI (Mk7, 2013)",
+      "slug": "volkswagen-golf-gti-mk7-2013",
+      "prompt": "8-bit pixel-art side profile of a 2013 Volkswagen Golf GTI Mk7 three-door hot hatch, thick C-pillar, red grille stripe, honeycomb grille, red brake calipers, tornado red paint, 18-inch alloys. Accurate body shape and proportions for this exact model and generation. Exact side elevation, car facing LEFT (nose on the left), centred, wheels on the road, the car spans about 80% of the image width. Match the reference image's style exactly: chunky visible pixels, retro 16-bit/8-bit game palette, the same coastal road scene behind the car - grey asphalt foreground, metal guardrail, blue sea, green hills/mountains on the left, bright blue sky with white pixel clouds. Same framing and lighting as the reference. No text, no logos, no watermark.",
+      "reference_image": "reference/honda-s2000-reference.jpg",
+      "generated_size": "1152x864",
+      "post_process": "crop 1080x720 at (36,90), nearest-neighbour resize to 960x640"
+    },
+    "Toyota GR Yaris (2020)": {
+      "file": "toyota-gr-yaris-2020.png",
+      "name": "Toyota GR Yaris (2020)",
+      "slug": "toyota-gr-yaris-2020",
+      "prompt": "8-bit pixel-art side profile of a 2020 Toyota GR Yaris three-door hot hatch, sloping coupe roofline, wide flared arches, roof spoiler, white paint with black roof. Accurate body shape and proportions for this exact model and generation. Exact side elevation, car facing LEFT (nose on the left), centred, wheels on the road, the car spans about 80% of the image width. Match the reference image's style exactly: chunky visible pixels, retro 16-bit/8-bit game palette, the same coastal road scene behind the car - grey asphalt foreground, metal guardrail, blue sea, green hills/mountains on the left, bright blue sky with white pixel clouds. Same framing and lighting as the reference. No text, no logos, no watermark.",
+      "reference_image": "reference/honda-s2000-reference.jpg",
+      "generated_size": "1152x864",
+      "post_process": "crop 1080x720 at (36,90), nearest-neighbour resize to 960x640"
+    },
+    "Honda Civic Type R (FK8, 2017)": {
+      "file": "honda-civic-type-r-fk8-2017.png",
+      "name": "Honda Civic Type R (FK8, 2017)",
+      "slug": "honda-civic-type-r-fk8-2017",
+      "prompt": "8-bit pixel-art side profile of a 2017 Honda Civic Type R FK8 five-door hatchback, aggressive vents, big rear wing, sloping fastback tail, championship white paint, black wheels, red accents. Accurate body shape and proportions for this exact model and generation. Exact side elevation, car facing LEFT (nose on the left), centred, wheels on the road, the car spans about 80% of the image width. Match the reference image's style exactly: chunky visible pixels, retro 16-bit/8-bit game palette, the same coastal road scene behind the car - grey asphalt foreground, metal guardrail, blue sea, green hills/mountains on the left, bright blue sky with white pixel clouds. Same framing and lighting as the reference. No text, no logos, no watermark.",
+      "reference_image": "reference/honda-s2000-reference.jpg",
+      "generated_size": "1152x864",
+      "post_process": "crop 1080x720 at (36,90), nearest-neighbour resize to 960x640"
+    },
+    "Mazda MX-5 1.6 (NA, 1989)": {
+      "file": "mazda-mx-5-na-1989.png",
+      "name": "Mazda MX-5 1.6 (NA, 1989)",
+      "slug": "mazda-mx-5-na-1989",
+      "prompt": "8-bit pixel-art side profile of a 1989 Mazda MX-5 Miata NA two-seat roadster, soft top folded down, pop-up headlights closed, classic red paint, small five-spoke alloys. Accurate body shape and proportions for this exact model and generation. Exact side elevation, car facing LEFT (nose on the left), centred, wheels on the road, the car spans about 80% of the image width. Match the reference image's style exactly: chunky visible pixels, retro 16-bit/8-bit game palette, the same coastal road scene behind the car - grey asphalt foreground, metal guardrail, blue sea, green hills/mountains on the left, bright blue sky with white pixel clouds. Same framing and lighting as the reference. No text, no logos, no watermark.",
+      "reference_image": "reference/honda-s2000-reference.jpg",
+      "generated_size": "1152x864",
+      "post_process": "crop 1080x720 at (36,90), nearest-neighbour resize to 960x640"
+    },
+    "Toyota Corolla Levin GT-APEX (AE86)": {
+      "file": "toyota-corolla-levin-ae86-1985.png",
+      "name": "Toyota Corolla Levin GT-APEX (AE86)",
+      "slug": "toyota-corolla-levin-ae86-1985",
+      "prompt": "8-bit pixel-art side profile of a 1985 Toyota Corolla Levin GT-APEX AE86 two-door notchback coupe with fixed headlights, boxy 1980s shape, panda two-tone white over black paint, black lower body. Accurate body shape and proportions for this exact model and generation. Exact side elevation, car facing LEFT (nose on the left), centred, wheels on the road, the car spans about 80% of the image width. Match the reference image's style exactly: chunky visible pixels, retro 16-bit/8-bit game palette, the same coastal road scene behind the car - grey asphalt foreground, metal guardrail, blue sea, green hills/mountains on the left, bright blue sky with white pixel clouds. Same framing and lighting as the reference. No text, no logos, no watermark.",
+      "reference_image": "reference/honda-s2000-reference.jpg",
+      "generated_size": "1152x864",
+      "post_process": "crop 1080x720 at (36,90), nearest-neighbour resize to 960x640"
+    },
+    "Honda S2000 (AP1, 2000)": {
+      "file": "honda-s2000-ap1-2000.png",
+      "name": "Honda S2000 (AP1, 2000)",
+      "slug": "honda-s2000-ap1-2000",
+      "source": "user-supplied Grok Imagine reference (1728x1152), nearest-neighbour resize to 960x640",
+      "prompt": null
+    },
+    "BMW M3 (E46, 2000)": {
+      "file": "bmw-m3-e46-2000.png",
+      "name": "BMW M3 (E46, 2000)",
+      "slug": "bmw-m3-e46-2000",
+      "prompt": "8-bit pixel-art side profile of a 2000 BMW M3 E46 two-door coupe, power-dome bonnet, side gills on front fenders, kidney grille, Laguna Seca blue paint, double-spoke alloys. Accurate body shape and proportions for this exact model and generation. Exact side elevation, car facing LEFT (nose on the left), centred, wheels on the road, the car spans about 80% of the image width. Match the reference image's style exactly: chunky visible pixels, retro 16-bit/8-bit game palette, the same coastal road scene behind the car - grey asphalt foreground, metal guardrail, blue sea, green hills/mountains on the left, bright blue sky with white pixel clouds. Same framing and lighting as the reference. No text, no logos, no watermark.",
+      "reference_image": "reference/honda-s2000-reference.jpg",
+      "generated_size": "1152x864",
+      "post_process": "crop 1080x720 at (36,90), nearest-neighbour resize to 960x640"
+    },
+    "Porsche 911 GT3 (991.2, 2017)": {
+      "file": "porsche-911-gt3-991-2-2017.png",
+      "name": "Porsche 911 GT3 (991.2, 2017)",
+      "slug": "porsche-911-gt3-991-2-2017",
+      "prompt": "8-bit pixel-art side profile of a 2017 Porsche 911 GT3 991.2, rear-engined coupe with classic 911 sloping roofline, large fixed rear wing on the engine lid, round headlights, GT silver paint, centre-lock wheels. Accurate body shape and proportions for this exact model and generation. Exact side elevation, car facing LEFT (nose on the left), centred, wheels on the road, the car spans about 80% of the image width. Match the reference image's style exactly: chunky visible pixels, retro 16-bit/8-bit game palette, the same coastal road scene behind the car - grey asphalt foreground, metal guardrail, blue sea, green hills/mountains on the left, bright blue sky with white pixel clouds. Same framing and lighting as the reference. No text, no logos, no watermark.",
+      "reference_image": "reference/honda-s2000-reference.jpg",
+      "generated_size": "1152x864",
+      "post_process": "crop 1080x720 at (36,90), nearest-neighbour resize to 960x640"
+    },
+    "Toyota Supra RZ (A80, 1993)": {
+      "file": "toyota-supra-a80-1993.png",
+      "name": "Toyota Supra RZ (A80, 1993)",
+      "slug": "toyota-supra-a80-1993",
+      "prompt": "8-bit pixel-art side profile of a 1993 Toyota Supra RZ A80 mk4 two-door coupe, long rounded nose, large hoop rear wing, curvy body, super white paint. Accurate body shape and proportions for this exact model and generation. Exact side elevation, car facing LEFT (nose on the left), centred, wheels on the road, the car spans about 80% of the image width. Match the reference image's style exactly: chunky visible pixels, retro 16-bit/8-bit game palette, the same coastal road scene behind the car - grey asphalt foreground, metal guardrail, blue sea, green hills/mountains on the left, bright blue sky with white pixel clouds. Same framing and lighting as the reference. No text, no logos, no watermark.",
+      "reference_image": "reference/honda-s2000-reference.jpg",
+      "generated_size": "1152x864",
+      "post_process": "crop 1080x720 at (36,90), nearest-neighbour resize to 960x640"
+    },
+    "Nissan Skyline GT-R V-spec (R34, 1999)": {
+      "file": "nissan-skyline-gt-r-r34-1999.png",
+      "name": "Nissan Skyline GT-R V-spec (R34, 1999)",
+      "slug": "nissan-skyline-gt-r-r34-1999",
+      "prompt": "8-bit pixel-art side profile of a 1999 Nissan Skyline GT-R V-spec R34 two-door coupe, boxy muscular shape, adjustable rear wing on the boot, Bayside Blue paint, six-spoke wheels. Accurate body shape and proportions for this exact model and generation. Exact side elevation, car facing LEFT (nose on the left), centred, wheels on the road, the car spans about 80% of the image width. Match the reference image's style exactly: chunky visible pixels, retro 16-bit/8-bit game palette, the same coastal road scene behind the car - grey asphalt foreground, metal guardrail, blue sea, green hills/mountains on the left, bright blue sky with white pixel clouds. Same framing and lighting as the reference. No text, no logos, no watermark.",
+      "reference_image": "reference/honda-s2000-reference.jpg",
+      "generated_size": "1152x864",
+      "post_process": "crop 1080x720 at (36,90), nearest-neighbour resize to 960x640"
+    },
+    "Subaru Impreza WRX STI (GD, 2004)": {
+      "file": "subaru-impreza-wrx-sti-gd-2004.png",
+      "name": "Subaru Impreza WRX STI (GD, 2004)",
+      "slug": "subaru-impreza-wrx-sti-gd-2004",
+      "prompt": "8-bit pixel-art side profile of a 2004 Subaru Impreza WRX STI GD four-door sedan, bonnet scoop, tall rear wing on the boot, World Rally Blue paint, gold wheels. Accurate body shape and proportions for this exact model and generation. Exact side elevation, car facing LEFT (nose on the left), centred, wheels on the road, the car spans about 80% of the image width. Match the reference image's style exactly: chunky visible pixels, retro 16-bit/8-bit game palette, the same coastal road scene behind the car - grey asphalt foreground, metal guardrail, blue sea, green hills/mountains on the left, bright blue sky with white pixel clouds. Same framing and lighting as the reference. No text, no logos, no watermark.",
+      "reference_image": "reference/honda-s2000-reference.jpg",
+      "generated_size": "1152x864",
+      "post_process": "crop 1080x720 at (36,90), nearest-neighbour resize to 960x640"
+    },
+    "Mitsubishi Lancer Evolution IX (2006)": {
+      "file": "mitsubishi-lancer-evolution-ix-2006.png",
+      "name": "Mitsubishi Lancer Evolution IX (2006)",
+      "slug": "mitsubishi-lancer-evolution-ix-2006",
+      "prompt": "8-bit pixel-art side profile of a 2006 Mitsubishi Lancer Evolution IX four-door sedan, vented bonnet, large rear wing on the boot, white paint, BBS-style wheels. Accurate body shape and proportions for this exact model and generation. Exact side elevation, car facing LEFT (nose on the left), centred, wheels on the road, the car spans about 80% of the image width. Match the reference image's style exactly: chunky visible pixels, retro 16-bit/8-bit game palette, the same coastal road scene behind the car - grey asphalt foreground, metal guardrail, blue sea, green hills/mountains on the left, bright blue sky with white pixel clouds. Same framing and lighting as the reference. No text, no logos, no watermark.",
+      "reference_image": "reference/honda-s2000-reference.jpg",
+      "generated_size": "1152x864",
+      "post_process": "crop 1080x720 at (36,90), nearest-neighbour resize to 960x640"
+    },
+    "Audi RS3 Sportback (8V, 2017)": {
+      "file": "audi-rs3-sportback-8v-2017.png",
+      "name": "Audi RS3 Sportback (8V, 2017)",
+      "slug": "audi-rs3-sportback-8v-2017",
+      "prompt": "8-bit pixel-art side profile of a 2017 Audi RS3 Sportback 8V five-door hatchback, honeycomb single-frame grille, roof spoiler, Nardo grey paint. Accurate body shape and proportions for this exact model and generation. Exact side elevation, car facing LEFT (nose on the left), centred, wheels on the road, the car spans about 80% of the image width. Match the reference image's style exactly: chunky visible pixels, retro 16-bit/8-bit game palette, the same coastal road scene behind the car - grey asphalt foreground, metal guardrail, blue sea, green hills/mountains on the left, bright blue sky with white pixel clouds. Same framing and lighting as the reference. No text, no logos, no watermark.",
+      "reference_image": "reference/honda-s2000-reference.jpg",
+      "generated_size": "1152x864",
+      "post_process": "crop 1080x720 at (36,90), nearest-neighbour resize to 960x640"
+    },
+    "Chevrolet Corvette (C6, LS3, 2008)": {
+      "file": "chevrolet-corvette-c6-2008.png",
+      "name": "Chevrolet Corvette (C6, LS3, 2008)",
+      "slug": "chevrolet-corvette-c6-2008",
+      "prompt": "8-bit pixel-art side profile of a 2008 Chevrolet Corvette C6 two-door coupe, long low bonnet, exposed fixed headlights, fastback roof with targa line, short tail with small ducktail, Victory Red paint. Accurate body shape and proportions for this exact model and generation. Exact side elevation, car facing LEFT (nose on the left), centred, wheels on the road, the car spans about 80% of the image width. Match the reference image's style exactly: chunky visible pixels, retro 16-bit/8-bit game palette, the same coastal road scene behind the car - grey asphalt foreground, metal guardrail, blue sea, green hills/mountains on the left, bright blue sky with white pixel clouds. Same framing and lighting as the reference. No text, no logos, no watermark.",
+      "reference_image": "reference/honda-s2000-reference.jpg",
+      "generated_size": "1152x864",
+      "post_process": "crop 1080x720 at (36,90), nearest-neighbour resize to 960x640"
+    },
+    "Chevrolet Corvette Z06 (C6, 2006)": {
+      "file": "chevrolet-corvette-z06-c6-2006.png",
+      "name": "Chevrolet Corvette Z06 (C6, 2006)",
+      "slug": "chevrolet-corvette-z06-c6-2006",
+      "prompt": "8-bit pixel-art side profile of a 2006 Chevrolet Corvette Z06 C6 fixed-roof coupe, wide fenders, front fender vents, bonnet scoop, Velocity Yellow paint, silver spoke wheels. Accurate body shape and proportions for this exact model and generation. Exact side elevation, car facing LEFT (nose on the left), centred, wheels on the road, the car spans about 80% of the image width. Match the reference image's style exactly: chunky visible pixels, retro 16-bit/8-bit game palette, the same coastal road scene behind the car - grey asphalt foreground, metal guardrail, blue sea, green hills/mountains on the left, bright blue sky with white pixel clouds. Same framing and lighting as the reference. No text, no logos, no watermark.",
+      "reference_image": "reference/honda-s2000-reference.jpg",
+      "generated_size": "1152x864",
+      "post_process": "crop 1080x720 at (36,90), nearest-neighbour resize to 960x640"
+    },
+    "Ford Mustang GT (2018)": {
+      "file": "ford-mustang-gt-s550-2018.png",
+      "name": "Ford Mustang GT (2018)",
+      "slug": "ford-mustang-gt-s550-2018",
+      "prompt": "8-bit pixel-art side profile of a 2018 Ford Mustang GT S550 facelift fastback coupe, long bonnet with vents, sloping fastback roof, short rear deck, Race Red paint. Accurate body shape and proportions for this exact model and generation. Exact side elevation, car facing LEFT (nose on the left), centred, wheels on the road, the car spans about 80% of the image width. Match the reference image's style exactly: chunky visible pixels, retro 16-bit/8-bit game palette, the same coastal road scene behind the car - grey asphalt foreground, metal guardrail, blue sea, green hills/mountains on the left, bright blue sky with white pixel clouds. Same framing and lighting as the reference. No text, no logos, no watermark.",
+      "reference_image": "reference/honda-s2000-reference.jpg",
+      "generated_size": "1152x864",
+      "post_process": "crop 1080x720 at (36,90), nearest-neighbour resize to 960x640"
+    },
+    "Dodge Challenger SRT Hellcat (2015)": {
+      "file": "dodge-challenger-srt-hellcat-2015.png",
+      "name": "Dodge Challenger SRT Hellcat (2015)",
+      "slug": "dodge-challenger-srt-hellcat-2015",
+      "prompt": "8-bit pixel-art side profile of a 2015 Dodge Challenger SRT Hellcat two-door muscle car, long boxy body, retro 1970 style flat sides, bonnet with scoop, rear spoiler, black paint. Accurate body shape and proportions for this exact model and generation. Exact side elevation, car facing LEFT (nose on the left), centred, wheels on the road, the car spans about 80% of the image width. Match the reference image's style exactly: chunky visible pixels, retro 16-bit/8-bit game palette, the same coastal road scene behind the car - grey asphalt foreground, metal guardrail, blue sea, green hills/mountains on the left, bright blue sky with white pixel clouds. Same framing and lighting as the reference. No text, no logos, no watermark.",
+      "reference_image": "reference/honda-s2000-reference.jpg",
+      "generated_size": "1152x864",
+      "post_process": "crop 1080x720 at (36,90), nearest-neighbour resize to 960x640"
+    },
+    "Ferrari F355 Berlinetta (1994)": {
+      "file": "ferrari-f355-berlinetta-1994.png",
+      "name": "Ferrari F355 Berlinetta (1994)",
+      "slug": "ferrari-f355-berlinetta-1994",
+      "prompt": "8-bit pixel-art side profile of a 1994 Ferrari F355 Berlinetta mid-engined coupe, pop-up headlights closed, side air intake behind the doors, flying buttress roofline, Rosso Corsa red paint, five-spoke star wheels. Accurate body shape and proportions for this exact model and generation. Exact side elevation, car facing LEFT (nose on the left), centred, wheels on the road, the car spans about 80% of the image width. Match the reference image's style exactly: chunky visible pixels, retro 16-bit/8-bit game palette, the same coastal road scene behind the car - grey asphalt foreground, metal guardrail, blue sea, green hills/mountains on the left, bright blue sky with white pixel clouds. Same framing and lighting as the reference. No text, no logos, no watermark.",
+      "reference_image": "reference/honda-s2000-reference.jpg",
+      "generated_size": "1152x864",
+      "post_process": "crop 1080x720 at (36,90), nearest-neighbour resize to 960x640"
+    },
+    "Lamborghini Diablo VT (1993)": {
+      "file": "lamborghini-diablo-vt-1993.png",
+      "name": "Lamborghini Diablo VT (1993)",
+      "slug": "lamborghini-diablo-vt-1993",
+      "prompt": "8-bit pixel-art side profile of a 1993 Lamborghini Diablo VT wedge supercar, very long low wedge, pop-up headlights closed, large side intakes, scissor-door shape, purple-violet paint. Accurate body shape and proportions for this exact model and generation. Exact side elevation, car facing LEFT (nose on the left), centred, wheels on the road, the car spans about 80% of the image width. Match the reference image's style exactly: chunky visible pixels, retro 16-bit/8-bit game palette, the same coastal road scene behind the car - grey asphalt foreground, metal guardrail, blue sea, green hills/mountains on the left, bright blue sky with white pixel clouds. Same framing and lighting as the reference. No text, no logos, no watermark.",
+      "reference_image": "reference/honda-s2000-reference.jpg",
+      "generated_size": "1152x864",
+      "post_process": "crop 1080x720 at (36,90), nearest-neighbour resize to 960x640"
+    },
+    "McLaren F1 (1994)": {
+      "file": "mclaren-f1-1994.png",
+      "name": "McLaren F1 (1994)",
+      "slug": "mclaren-f1-1994",
+      "prompt": "8-bit pixel-art side profile of a 1994 McLaren F1 mid-engined supercar, low teardrop canopy, roof scoop intake, dihedral door lines, smooth curved tail, papaya orange paint. Accurate body shape and proportions for this exact model and generation. Exact side elevation, car facing LEFT (nose on the left), centred, wheels on the road, the car spans about 80% of the image width. Match the reference image's style exactly: chunky visible pixels, retro 16-bit/8-bit game palette, the same coastal road scene behind the car - grey asphalt foreground, metal guardrail, blue sea, green hills/mountains on the left, bright blue sky with white pixel clouds. Same framing and lighting as the reference. No text, no logos, no watermark.",
+      "reference_image": "reference/honda-s2000-reference.jpg",
+      "generated_size": "1152x864",
+      "post_process": "crop 1080x720 at (36,90), nearest-neighbour resize to 960x640"
+    },
+    "Porsche 911 Turbo (993, 1995)": {
+      "file": "porsche-911-turbo-993-1995.png",
+      "name": "Porsche 911 Turbo (993, 1995)",
+      "slug": "porsche-911-turbo-993-1995",
+      "prompt": "8-bit pixel-art side profile of a 1995 Porsche 911 Turbo 993, classic rounded air-cooled 911 shape, wide rear arches, fixed rear wing with intakes, Guards Red paint, hollow-spoke alloys. Accurate body shape and proportions for this exact model and generation. Exact side elevation, car facing LEFT (nose on the left), centred, wheels on the road, the car spans about 80% of the image width. Match the reference image's style exactly: chunky visible pixels, retro 16-bit/8-bit game palette, the same coastal road scene behind the car - grey asphalt foreground, metal guardrail, blue sea, green hills/mountains on the left, bright blue sky with white pixel clouds. Same framing and lighting as the reference. No text, no logos, no watermark.",
+      "reference_image": "reference/honda-s2000-reference.jpg",
+      "generated_size": "1152x864",
+      "post_process": "crop 1080x720 at (36,90), nearest-neighbour resize to 960x640"
+    },
+    "Ferrari Enzo (2002)": {
+      "file": "ferrari-enzo-2002.png",
+      "name": "Ferrari Enzo (2002)",
+      "slug": "ferrari-enzo-2002",
+      "prompt": "8-bit pixel-art side profile of a 2002 Ferrari Enzo hypercar, F1-style pointed nose, bubble canopy cockpit, long rear deck, butterfly door lines, Rosso Corsa red paint. Accurate body shape and proportions for this exact model and generation. Exact side elevation, car facing LEFT (nose on the left), centred, wheels on the road, the car spans about 80% of the image width. Match the reference image's style exactly: chunky visible pixels, retro 16-bit/8-bit game palette, the same coastal road scene behind the car - grey asphalt foreground, metal guardrail, blue sea, green hills/mountains on the left, bright blue sky with white pixel clouds. Same framing and lighting as the reference. No text, no logos, no watermark.",
+      "reference_image": "reference/honda-s2000-reference.jpg",
+      "generated_size": "1152x864",
+      "post_process": "crop 1080x720 at (36,90), nearest-neighbour resize to 960x640"
+    },
+    "Porsche Carrera GT (2004)": {
+      "file": "porsche-carrera-gt-2004.png",
+      "name": "Porsche Carrera GT (2004)",
+      "slug": "porsche-carrera-gt-2004",
+      "prompt": "8-bit pixel-art side profile of a 2004 Porsche Carrera GT mid-engined roadster with targa roof, long cabin, twin roll-hoop fairings, rear wing, GT silver paint, five-spoke wheels. Accurate body shape and proportions for this exact model and generation. Exact side elevation, car facing LEFT (nose on the left), centred, wheels on the road, the car spans about 80% of the image width. Match the reference image's style exactly: chunky visible pixels, retro 16-bit/8-bit game palette, the same coastal road scene behind the car - grey asphalt foreground, metal guardrail, blue sea, green hills/mountains on the left, bright blue sky with white pixel clouds. Same framing and lighting as the reference. No text, no logos, no watermark.",
+      "reference_image": "reference/honda-s2000-reference.jpg",
+      "generated_size": "1152x864",
+      "post_process": "crop 1080x720 at (36,90), nearest-neighbour resize to 960x640"
+    },
+    "Ford GT (2005)": {
+      "file": "ford-gt-2005.png",
+      "name": "Ford GT (2005)",
+      "slug": "ford-gt-2005",
+      "prompt": "8-bit pixel-art side profile of a 2005 Ford GT mid-engined supercar, low GT40-style shape, side scoop behind the doors, roof-cut doors, Heritage Gulf light blue paint with orange stripe. Accurate body shape and proportions for this exact model and generation. Exact side elevation, car facing LEFT (nose on the left), centred, wheels on the road, the car spans about 80% of the image width. Match the reference image's style exactly: chunky visible pixels, retro 16-bit/8-bit game palette, the same coastal road scene behind the car - grey asphalt foreground, metal guardrail, blue sea, green hills/mountains on the left, bright blue sky with white pixel clouds. Same framing and lighting as the reference. No text, no logos, no watermark.",
+      "reference_image": "reference/honda-s2000-reference.jpg",
+      "generated_size": "1152x864",
+      "post_process": "crop 1080x720 at (36,90), nearest-neighbour resize to 960x640"
+    },
+    "Lamborghini Murci\u00e9lago LP640 (2006)": {
+      "file": "lamborghini-murcielago-lp640-2006.png",
+      "name": "Lamborghini Murci\u00e9lago LP640 (2006)",
+      "slug": "lamborghini-murcielago-lp640-2006",
+      "prompt": "8-bit pixel-art side profile of a 2006 Lamborghini Murcielago LP640 V12 supercar, wedge one-box profile, large side intake behind the door, scissor doors line, Arancio orange paint. Accurate body shape and proportions for this exact model and generation. Exact side elevation, car facing LEFT (nose on the left), centred, wheels on the road, the car spans about 80% of the image width. Match the reference image's style exactly: chunky visible pixels, retro 16-bit/8-bit game palette, the same coastal road scene behind the car - grey asphalt foreground, metal guardrail, blue sea, green hills/mountains on the left, bright blue sky with white pixel clouds. Same framing and lighting as the reference. No text, no logos, no watermark.",
+      "reference_image": "reference/honda-s2000-reference.jpg",
+      "generated_size": "1152x864",
+      "post_process": "crop 1080x720 at (36,90), nearest-neighbour resize to 960x640"
+    },
+    "Ferrari 458 Italia (2010)": {
+      "file": "ferrari-458-italia-2010.png",
+      "name": "Ferrari 458 Italia (2010)",
+      "slug": "ferrari-458-italia-2010",
+      "prompt": "8-bit pixel-art side profile of a 2010 Ferrari 458 Italia mid-engined coupe, swept-back headlights, side intake, sloping glass engine cover, Rosso Corsa red paint. Accurate body shape and proportions for this exact model and generation. Exact side elevation, car facing LEFT (nose on the left), centred, wheels on the road, the car spans about 80% of the image width. Match the reference image's style exactly: chunky visible pixels, retro 16-bit/8-bit game palette, the same coastal road scene behind the car - grey asphalt foreground, metal guardrail, blue sea, green hills/mountains on the left, bright blue sky with white pixel clouds. Same framing and lighting as the reference. No text, no logos, no watermark.",
+      "reference_image": "reference/honda-s2000-reference.jpg",
+      "generated_size": "1152x864",
+      "post_process": "crop 1080x720 at (36,90), nearest-neighbour resize to 960x640"
+    },
+    "Lamborghini Hurac\u00e1n LP610-4 (2014)": {
+      "file": "lamborghini-huracan-lp610-4-2014.png",
+      "name": "Lamborghini Hurac\u00e1n LP610-4 (2014)",
+      "slug": "lamborghini-huracan-lp610-4-2014",
+      "prompt": "8-bit pixel-art side profile of a 2014 Lamborghini Huracan LP610-4 mid-engined supercar, sharp wedge, hexagonal side intake, low flat roof, Verde Mantis lime green paint. Accurate body shape and proportions for this exact model and generation. Exact side elevation, car facing LEFT (nose on the left), centred, wheels on the road, the car spans about 80% of the image width. Match the reference image's style exactly: chunky visible pixels, retro 16-bit/8-bit game palette, the same coastal road scene behind the car - grey asphalt foreground, metal guardrail, blue sea, green hills/mountains on the left, bright blue sky with white pixel clouds. Same framing and lighting as the reference. No text, no logos, no watermark.",
+      "reference_image": "reference/honda-s2000-reference.jpg",
+      "generated_size": "1152x864",
+      "post_process": "crop 1080x720 at (36,90), nearest-neighbour resize to 960x640"
+    },
+    "McLaren 720S (2017)": {
+      "file": "mclaren-720s-2017.png",
+      "name": "McLaren 720S (2017)",
+      "slug": "mclaren-720s-2017",
+      "prompt": "8-bit pixel-art side profile of a 2017 McLaren 720S mid-engined supercar, teardrop canopy with dihedral doors, eye-socket headlights, flying buttresses, papaya orange paint. Accurate body shape and proportions for this exact model and generation. Exact side elevation, car facing LEFT (nose on the left), centred, wheels on the road, the car spans about 80% of the image width. Match the reference image's style exactly: chunky visible pixels, retro 16-bit/8-bit game palette, the same coastal road scene behind the car - grey asphalt foreground, metal guardrail, blue sea, green hills/mountains on the left, bright blue sky with white pixel clouds. Same framing and lighting as the reference. No text, no logos, no watermark.",
+      "reference_image": "reference/honda-s2000-reference.jpg",
+      "generated_size": "1152x864",
+      "post_process": "crop 1080x720 at (36,90), nearest-neighbour resize to 960x640"
+    },
+    "Ferrari 812 Superfast (2017)": {
+      "file": "ferrari-812-superfast-2017.png",
+      "name": "Ferrari 812 Superfast (2017)",
+      "slug": "ferrari-812-superfast-2017",
+      "prompt": "8-bit pixel-art side profile of a 2017 Ferrari 812 Superfast front-engined V12 grand tourer coupe, very long bonnet, cabin set far back, fastback rear, Rosso Corsa red paint. Accurate body shape and proportions for this exact model and generation. Exact side elevation, car facing LEFT (nose on the left), centred, wheels on the road, the car spans about 80% of the image width. Match the reference image's style exactly: chunky visible pixels, retro 16-bit/8-bit game palette, the same coastal road scene behind the car - grey asphalt foreground, metal guardrail, blue sea, green hills/mountains on the left, bright blue sky with white pixel clouds. Same framing and lighting as the reference. No text, no logos, no watermark.",
+      "reference_image": "reference/honda-s2000-reference.jpg",
+      "generated_size": "1152x864",
+      "post_process": "crop 1080x720 at (36,90), nearest-neighbour resize to 960x640"
+    },
+    "Porsche 911 Turbo S (992, 2020)": {
+      "file": "porsche-911-turbo-s-992-2020.png",
+      "name": "Porsche 911 Turbo S (992, 2020)",
+      "slug": "porsche-911-turbo-s-992-2020",
+      "prompt": "8-bit pixel-art side profile of a 2020 Porsche 911 Turbo S 992, wide modern 911 shape, side intakes ahead of rear wheels, active rear wing, full-width light bar, Gentian blue paint. Accurate body shape and proportions for this exact model and generation. Exact side elevation, car facing LEFT (nose on the left), centred, wheels on the road, the car spans about 80% of the image width. Match the reference image's style exactly: chunky visible pixels, retro 16-bit/8-bit game palette, the same coastal road scene behind the car - grey asphalt foreground, metal guardrail, blue sea, green hills/mountains on the left, bright blue sky with white pixel clouds. Same framing and lighting as the reference. No text, no logos, no watermark.",
+      "reference_image": "reference/honda-s2000-reference.jpg",
+      "generated_size": "1152x864",
+      "post_process": "crop 1080x720 at (36,90), nearest-neighbour resize to 960x640"
+    },
+    "Lamborghini Hurac\u00e1n STO (2021)": {
+      "file": "lamborghini-huracan-sto-2021.png",
+      "name": "Lamborghini Hurac\u00e1n STO (2021)",
+      "slug": "lamborghini-huracan-sto-2021",
+      "prompt": "8-bit pixel-art side profile of a 2021 Lamborghini Huracan STO track-focused supercar, roof snorkel scoop, shark fin on engine cover, big rear wing, Blu Laufey blue paint with orange accents. Accurate body shape and proportions for this exact model and generation. Exact side elevation, car facing LEFT (nose on the left), centred, wheels on the road, the car spans about 80% of the image width. Match the reference image's style exactly: chunky visible pixels, retro 16-bit/8-bit game palette, the same coastal road scene behind the car - grey asphalt foreground, metal guardrail, blue sea, green hills/mountains on the left, bright blue sky with white pixel clouds. Same framing and lighting as the reference. No text, no logos, no watermark.",
+      "reference_image": "reference/honda-s2000-reference.jpg",
+      "generated_size": "1152x864",
+      "post_process": "crop 1080x720 at (36,90), nearest-neighbour resize to 960x640"
+    },
+    "Chevrolet Corvette Z06 (C8, 2023)": {
+      "file": "chevrolet-corvette-z06-c8-2023.png",
+      "name": "Chevrolet Corvette Z06 (C8, 2023)",
+      "slug": "chevrolet-corvette-z06-c8-2023",
+      "prompt": "8-bit pixel-art side profile of a 2023 Chevrolet Corvette Z06 C8 mid-engined supercar, large side intakes, angular body, rear wing, Accelerate Yellow paint. Accurate body shape and proportions for this exact model and generation. Exact side elevation, car facing LEFT (nose on the left), centred, wheels on the road, the car spans about 80% of the image width. Match the reference image's style exactly: chunky visible pixels, retro 16-bit/8-bit game palette, the same coastal road scene behind the car - grey asphalt foreground, metal guardrail, blue sea, green hills/mountains on the left, bright blue sky with white pixel clouds. Same framing and lighting as the reference. No text, no logos, no watermark.",
+      "reference_image": "reference/honda-s2000-reference.jpg",
+      "generated_size": "1152x864",
+      "post_process": "crop 1080x720 at (36,90), nearest-neighbour resize to 960x640"
+    },
+    "McLaren 750S (2023)": {
+      "file": "mclaren-750s-2023.png",
+      "name": "McLaren 750S (2023)",
+      "slug": "mclaren-750s-2023",
+      "prompt": "8-bit pixel-art side profile of a 2023 McLaren 750S mid-engined supercar, teardrop canopy, dihedral door lines, active rear wing, light grey-blue paint. Accurate body shape and proportions for this exact model and generation. Exact side elevation, car facing LEFT (nose on the left), centred, wheels on the road, the car spans about 80% of the image width. Match the reference image's style exactly: chunky visible pixels, retro 16-bit/8-bit game palette, the same coastal road scene behind the car - grey asphalt foreground, metal guardrail, blue sea, green hills/mountains on the left, bright blue sky with white pixel clouds. Same framing and lighting as the reference. No text, no logos, no watermark.",
+      "reference_image": "reference/honda-s2000-reference.jpg",
+      "generated_size": "1152x864",
+      "post_process": "crop 1080x720 at (36,90), nearest-neighbour resize to 960x640"
+    },
+    "Mazda RX-7 (FD, 1993)": {
+      "file": "mazda-rx-7-fd-1993.png",
+      "name": "Mazda RX-7 (FD, 1993)",
+      "slug": "mazda-rx-7-fd-1993",
+      "prompt": "8-bit pixel-art side profile of a 1993 Mazda RX-7 FD3S sports coupe, smooth curvy low body, pop-up headlights closed, double-bubble roof, hoop rear spoiler, Vintage Red paint. Accurate body shape and proportions for this exact model and generation. Exact side elevation, car facing LEFT (nose on the left), centred, wheels on the road, the car spans about 80% of the image width. Match the reference image's style exactly: chunky visible pixels, retro 16-bit/8-bit game palette, the same coastal road scene behind the car - grey asphalt foreground, metal guardrail, blue sea, green hills/mountains on the left, bright blue sky with white pixel clouds. Same framing and lighting as the reference. No text, no logos, no watermark.",
+      "reference_image": "reference/honda-s2000-reference.jpg",
+      "generated_size": "1152x864",
+      "post_process": "crop 1080x720 at (36,90), nearest-neighbour resize to 960x640"
+    },
+    "Mazda RX-8 (2004)": {
+      "file": "mazda-rx-8-2004.png",
+      "name": "Mazda RX-8 (2004)",
+      "slug": "mazda-rx-8-2004",
+      "prompt": "8-bit pixel-art side profile of a 2004 Mazda RX-8 four-seat sports coupe with rear-hinged freestyle doors, curved fenders, Velocity Red paint. Accurate body shape and proportions for this exact model and generation. Exact side elevation, car facing LEFT (nose on the left), centred, wheels on the road, the car spans about 80% of the image width. Match the reference image's style exactly: chunky visible pixels, retro 16-bit/8-bit game palette, the same coastal road scene behind the car - grey asphalt foreground, metal guardrail, blue sea, green hills/mountains on the left, bright blue sky with white pixel clouds. Same framing and lighting as the reference. No text, no logos, no watermark.",
+      "reference_image": "reference/honda-s2000-reference.jpg",
+      "generated_size": "1152x864",
+      "post_process": "crop 1080x720 at (36,90), nearest-neighbour resize to 960x640"
+    },
+    "VW Golf 2.0 TDI 150 (Mk7, 2013)": {
+      "file": "volkswagen-golf-tdi-mk7-2013.png",
+      "name": "VW Golf 2.0 TDI 150 (Mk7, 2013)",
+      "slug": "volkswagen-golf-tdi-mk7-2013",
+      "prompt": "8-bit pixel-art side profile of a 2013 Volkswagen Golf Mk7 2.0 TDI five-door hatchback, sober family hatch, chrome grille strip, silver paint, regular alloy wheels. Accurate body shape and proportions for this exact model and generation. Exact side elevation, car facing LEFT (nose on the left), centred, wheels on the road, the car spans about 80% of the image width. Match the reference image's style exactly: chunky visible pixels, retro 16-bit/8-bit game palette, the same coastal road scene behind the car - grey asphalt foreground, metal guardrail, blue sea, green hills/mountains on the left, bright blue sky with white pixel clouds. Same framing and lighting as the reference. No text, no logos, no watermark.",
+      "reference_image": "reference/honda-s2000-reference.jpg",
+      "generated_size": "1152x864",
+      "post_process": "crop 1080x720 at (36,90), nearest-neighbour resize to 960x640"
+    },
+    "BMW 330d (F30, 2012)": {
+      "file": "bmw-330d-f30-2012.png",
+      "name": "BMW 330d (F30, 2012)",
+      "slug": "bmw-330d-f30-2012",
+      "prompt": "8-bit pixel-art side profile of a 2012 BMW 330d F30 four-door sports sedan, kidney grille, Hofmeister kink, Estoril blue paint. Accurate body shape and proportions for this exact model and generation. Exact side elevation, car facing LEFT (nose on the left), centred, wheels on the road, the car spans about 80% of the image width. Match the reference image's style exactly: chunky visible pixels, retro 16-bit/8-bit game palette, the same coastal road scene behind the car - grey asphalt foreground, metal guardrail, blue sea, green hills/mountains on the left, bright blue sky with white pixel clouds. Same framing and lighting as the reference. No text, no logos, no watermark.",
+      "reference_image": "reference/honda-s2000-reference.jpg",
+      "generated_size": "1152x864",
+      "post_process": "crop 1080x720 at (36,90), nearest-neighbour resize to 960x640"
+    },
+    "Chevrolet Silverado 2500HD Duramax (2020)": {
+      "file": "chevrolet-silverado-2500hd-2020.png",
+      "name": "Chevrolet Silverado 2500HD Duramax (2020)",
+      "slug": "chevrolet-silverado-2500hd-2020",
+      "prompt": "8-bit pixel-art side profile of a 2020 Chevrolet Silverado 2500HD crew-cab heavy-duty pickup truck with long open bed, tall bluff grille, Duramax badge, summit white paint. Accurate body shape and proportions for this exact model and generation. Exact side elevation, car facing LEFT (nose on the left), centred, wheels on the road, the car spans about 80% of the image width. Match the reference image's style exactly: chunky visible pixels, retro 16-bit/8-bit game palette, the same coastal road scene behind the car - grey asphalt foreground, metal guardrail, blue sea, green hills/mountains on the left, bright blue sky with white pixel clouds. Same framing and lighting as the reference. No text, no logos, no watermark.",
+      "reference_image": "reference/honda-s2000-reference.jpg",
+      "generated_size": "1152x864",
+      "post_process": "crop 1080x720 at (36,90), nearest-neighbour resize to 960x640"
+    },
+    "BMW X5 M (F85, 2015)": {
+      "file": "bmw-x5-m-f85-2015.png",
+      "name": "BMW X5 M (F85, 2015)",
+      "slug": "bmw-x5-m-f85-2015",
+      "prompt": "8-bit pixel-art side profile of a 2015 BMW X5 M F85 large performance SUV, kidney grille, sporty wagon-like roof, Long Beach blue paint. Accurate body shape and proportions for this exact model and generation. Exact side elevation, car facing LEFT (nose on the left), centred, wheels on the road, the car spans about 80% of the image width. Match the reference image's style exactly: chunky visible pixels, retro 16-bit/8-bit game palette, the same coastal road scene behind the car - grey asphalt foreground, metal guardrail, blue sea, green hills/mountains on the left, bright blue sky with white pixel clouds. Same framing and lighting as the reference. No text, no logos, no watermark.",
+      "reference_image": "reference/honda-s2000-reference.jpg",
+      "generated_size": "1152x864",
+      "post_process": "crop 1080x720 at (36,90), nearest-neighbour resize to 960x640"
+    },
+    "Porsche Cayenne Turbo (958.2, 2014)": {
+      "file": "porsche-cayenne-turbo-958-2014.png",
+      "name": "Porsche Cayenne Turbo (958.2, 2014)",
+      "slug": "porsche-cayenne-turbo-958-2014",
+      "prompt": "8-bit pixel-art side profile of a 2014 Porsche Cayenne Turbo 958.2 facelift performance SUV, sloping roof with spoiler, 911-like headlights, black paint. Accurate body shape and proportions for this exact model and generation. Exact side elevation, car facing LEFT (nose on the left), centred, wheels on the road, the car spans about 80% of the image width. Match the reference image's style exactly: chunky visible pixels, retro 16-bit/8-bit game palette, the same coastal road scene behind the car - grey asphalt foreground, metal guardrail, blue sea, green hills/mountains on the left, bright blue sky with white pixel clouds. Same framing and lighting as the reference. No text, no logos, no watermark.",
+      "reference_image": "reference/honda-s2000-reference.jpg",
+      "generated_size": "1152x864",
+      "post_process": "crop 1080x720 at (36,90), nearest-neighbour resize to 960x640"
+    },
+    "Lamborghini Urus (2018)": {
+      "file": "lamborghini-urus-2018.png",
+      "name": "Lamborghini Urus (2018)",
+      "slug": "lamborghini-urus-2018",
+      "prompt": "8-bit pixel-art side profile of a 2018 Lamborghini Urus super SUV, coupe-like sloping roofline, angular body, hexagonal arches, Giallo yellow paint. Accurate body shape and proportions for this exact model and generation. Exact side elevation, car facing LEFT (nose on the left), centred, wheels on the road, the car spans about 80% of the image width. Match the reference image's style exactly: chunky visible pixels, retro 16-bit/8-bit game palette, the same coastal road scene behind the car - grey asphalt foreground, metal guardrail, blue sea, green hills/mountains on the left, bright blue sky with white pixel clouds. Same framing and lighting as the reference. No text, no logos, no watermark.",
+      "reference_image": "reference/honda-s2000-reference.jpg",
+      "generated_size": "1152x864",
+      "post_process": "crop 1080x720 at (36,90), nearest-neighbour resize to 960x640"
+    },
+    "Jeep Grand Cherokee SRT (WK2, 2014)": {
+      "file": "jeep-grand-cherokee-srt-wk2-2014.png",
+      "name": "Jeep Grand Cherokee SRT (WK2, 2014)",
+      "slug": "jeep-grand-cherokee-srt-wk2-2014",
+      "prompt": "8-bit pixel-art side profile of a 2014 Jeep Grand Cherokee SRT WK2 performance SUV, seven-slot grille, boxy SUV body, vented bonnet, granite grey paint. Accurate body shape and proportions for this exact model and generation. Exact side elevation, car facing LEFT (nose on the left), centred, wheels on the road, the car spans about 80% of the image width. Match the reference image's style exactly: chunky visible pixels, retro 16-bit/8-bit game palette, the same coastal road scene behind the car - grey asphalt foreground, metal guardrail, blue sea, green hills/mountains on the left, bright blue sky with white pixel clouds. Same framing and lighting as the reference. No text, no logos, no watermark.",
+      "reference_image": "reference/honda-s2000-reference.jpg",
+      "generated_size": "1152x864",
+      "post_process": "crop 1080x720 at (36,90), nearest-neighbour resize to 960x640"
+    },
+    "Toyota Land Cruiser 200 VX 4.5 D-4D (2015)": {
+      "file": "toyota-land-cruiser-200-2015.png",
+      "name": "Toyota Land Cruiser 200 VX 4.5 D-4D (2015)",
+      "slug": "toyota-land-cruiser-200-2015",
+      "prompt": "8-bit pixel-art side profile of a 2015 Toyota Land Cruiser 200 VX facelift, tall boxy full-size 4x4 SUV with square tail, chrome grille, pearl white paint. Accurate body shape and proportions for this exact model and generation. Exact side elevation, car facing LEFT (nose on the left), centred, wheels on the road, the car spans about 80% of the image width. Match the reference image's style exactly: chunky visible pixels, retro 16-bit/8-bit game palette, the same coastal road scene behind the car - grey asphalt foreground, metal guardrail, blue sea, green hills/mountains on the left, bright blue sky with white pixel clouds. Same framing and lighting as the reference. No text, no logos, no watermark.",
+      "reference_image": "reference/honda-s2000-reference.jpg",
+      "generated_size": "1152x864",
+      "post_process": "crop 1080x720 at (36,90), nearest-neighbour resize to 960x640"
+    },
+    "Radical SR3 RSX 1500 (2015)": {
+      "file": "radical-sr3-rsx-2015.png",
+      "name": "Radical SR3 RSX 1500 (2015)",
+      "slug": "radical-sr3-rsx-2015",
+      "prompt": "8-bit pixel-art side profile of a 2015 Radical SR3 RSX open-cockpit sports prototype race car, low long body, enclosed wheels, high rear wing, driver in helmet, white and green livery. Accurate body shape and proportions for this exact model and generation. Exact side elevation, car facing LEFT (nose on the left), centred, wheels on the road, the car spans about 80% of the image width. Match the reference image's style exactly: chunky visible pixels, retro 16-bit/8-bit game palette, the same coastal road scene behind the car - grey asphalt foreground, metal guardrail, blue sea, green hills/mountains on the left, bright blue sky with white pixel clouds. Same framing and lighting as the reference. No text, no logos, no watermark.",
+      "reference_image": "reference/honda-s2000-reference.jpg",
+      "generated_size": "1152x864",
+      "post_process": "crop 1080x720 at (36,90), nearest-neighbour resize to 960x640"
+    },
+    "BAC Mono 2.3 (2011)": {
+      "file": "bac-mono-2011.png",
+      "name": "BAC Mono 2.3 (2011)",
+      "slug": "bac-mono-2011",
+      "prompt": "8-bit pixel-art side profile of a 2011 BAC Mono: a single-seater open-wheel car like a Formula 3 racer for the road. The four wheels are fully EXPOSED with NO fenders or bodywork over them, visible wishbone and pushrod suspension arms connecting the wheels to a narrow central carbon tub, pointed nose, driver in helmet sitting in the middle, roll hoop airbox behind the driver's head, grey with orange stripe livery. Accurate body shape and proportions for this exact model and generation. Exact side elevation, car facing LEFT (nose on the left), centred, wheels on the road, the car spans about 80% of the image width. Match the reference image's style exactly: chunky visible pixels, retro 16-bit/8-bit game palette, the same coastal road scene behind the car - grey asphalt foreground, metal guardrail, blue sea, green hills/mountains on the left, bright blue sky with white pixel clouds. Same framing and lighting as the reference. No text, no logos, no watermark.",
+      "reference_image": "reference/honda-s2000-reference.jpg",
+      "generated_size": "1152x864",
+      "post_process": "crop 1080x720 at (36,90), nearest-neighbour resize to 960x640",
+      "note": "approximate - partly enclosed wheels, reads more like a KTM X-Bow than a Mono"
+    },
+    "Nissan 370Z (Z34, 2009)": {
+      "file": "nissan-370z-z34-2009.png",
+      "name": "Nissan 370Z (Z34, 2009)",
+      "slug": "nissan-370z-z34-2009",
+      "prompt": "8-bit pixel-art side profile of a 2009 Nissan 370Z Z34 two-door sports coupe, boomerang headlights, arched roofline, short tail, Solar orange paint. Accurate body shape and proportions for this exact model and generation. Exact side elevation, car facing LEFT (nose on the left), centred, wheels on the road, the car spans about 80% of the image width. Match the reference image's style exactly: chunky visible pixels, retro 16-bit/8-bit game palette, the same coastal road scene behind the car - grey asphalt foreground, metal guardrail, blue sea, green hills/mountains on the left, bright blue sky with white pixel clouds. Same framing and lighting as the reference. No text, no logos, no watermark.",
+      "reference_image": "reference/honda-s2000-reference.jpg",
+      "generated_size": "1152x864",
+      "post_process": "crop 1080x720 at (36,90), nearest-neighbour resize to 960x640"
+    },
+    "Honda NSX (NA1, 1991)": {
+      "file": "honda-nsx-na1-1991.png",
+      "name": "Honda NSX (NA1, 1991)",
+      "slug": "honda-nsx-na1-1991",
+      "prompt": "8-bit pixel-art side profile of a 1991 Honda NSX NA1 mid-engined coupe, pop-up headlights closed, long cabin canopy, full-width rear wing integrated into the tail, Formula Red paint. Accurate body shape and proportions for this exact model and generation. Exact side elevation, car facing LEFT (nose on the left), centred, wheels on the road, the car spans about 80% of the image width. Match the reference image's style exactly: chunky visible pixels, retro 16-bit/8-bit game palette, the same coastal road scene behind the car - grey asphalt foreground, metal guardrail, blue sea, green hills/mountains on the left, bright blue sky with white pixel clouds. Same framing and lighting as the reference. No text, no logos, no watermark.",
+      "reference_image": "reference/honda-s2000-reference.jpg",
+      "generated_size": "1152x864",
+      "post_process": "crop 1080x720 at (36,90), nearest-neighbour resize to 960x640"
+    },
+    "Ford F-150 Raptor (2017)": {
+      "file": "ford-f-150-raptor-2017.png",
+      "name": "Ford F-150 Raptor (2017)",
+      "slug": "ford-f-150-raptor-2017",
+      "prompt": "8-bit pixel-art side profile of a 2017 Ford F-150 Raptor SuperCrew off-road pickup truck, FORD lettering grille, flared fenders, big off-road tyres, open bed, Lightning Blue paint. Accurate body shape and proportions for this exact model and generation. Exact side elevation, car facing LEFT (nose on the left), centred, wheels on the road, the car spans about 80% of the image width. Match the reference image's style exactly: chunky visible pixels, retro 16-bit/8-bit game palette, the same coastal road scene behind the car - grey asphalt foreground, metal guardrail, blue sea, green hills/mountains on the left, bright blue sky with white pixel clouds. Same framing and lighting as the reference. No text, no logos, no watermark.",
+      "reference_image": "reference/honda-s2000-reference.jpg",
+      "generated_size": "1152x864",
+      "post_process": "crop 1080x720 at (36,90), nearest-neighbour resize to 960x640"
+    },
+    "Nissan GT-R (R35, 2017)": {
+      "file": "nissan-gt-r-r35-2017.png",
+      "name": "Nissan GT-R (R35, 2017)",
+      "slug": "nissan-gt-r-r35-2017",
+      "prompt": "8-bit pixel-art side profile of a 2017 Nissan GT-R R35 four-seat coupe, muscular body, rear wing on boot, quad round tail lights, Katsura orange paint. Accurate body shape and proportions for this exact model and generation. Exact side elevation, car facing LEFT (nose on the left), centred, wheels on the road, the car spans about 80% of the image width. Match the reference image's style exactly: chunky visible pixels, retro 16-bit/8-bit game palette, the same coastal road scene behind the car - grey asphalt foreground, metal guardrail, blue sea, green hills/mountains on the left, bright blue sky with white pixel clouds. Same framing and lighting as the reference. No text, no logos, no watermark.",
+      "reference_image": "reference/honda-s2000-reference.jpg",
+      "generated_size": "1152x864",
+      "post_process": "crop 1080x720 at (36,90), nearest-neighbour resize to 960x640"
+    },
+    "Alfa Romeo Giulia Quadrifoglio (2017)": {
+      "file": "alfa-romeo-giulia-quadrifoglio-2017.png",
+      "name": "Alfa Romeo Giulia Quadrifoglio (2017)",
+      "slug": "alfa-romeo-giulia-quadrifoglio-2017",
+      "prompt": "8-bit pixel-art side profile of a 2017 Alfa Romeo Giulia Quadrifoglio four-door sports sedan, triangular scudetto grille, bonnet vents, Rosso Competizione red paint. Accurate body shape and proportions for this exact model and generation. Exact side elevation, car facing LEFT (nose on the left), centred, wheels on the road, the car spans about 80% of the image width. Match the reference image's style exactly: chunky visible pixels, retro 16-bit/8-bit game palette, the same coastal road scene behind the car - grey asphalt foreground, metal guardrail, blue sea, green hills/mountains on the left, bright blue sky with white pixel clouds. Same framing and lighting as the reference. No text, no logos, no watermark.",
+      "reference_image": "reference/honda-s2000-reference.jpg",
+      "generated_size": "1152x864",
+      "post_process": "crop 1080x720 at (36,90), nearest-neighbour resize to 960x640"
+    },
+    "Nissan 300ZX Twin Turbo (Z32, 1990)": {
+      "file": "nissan-300zx-twin-turbo-z32-1990.png",
+      "name": "Nissan 300ZX Twin Turbo (Z32, 1990)",
+      "slug": "nissan-300zx-twin-turbo-z32-1990",
+      "prompt": "8-bit pixel-art side profile of a 1990 Nissan 300ZX Twin Turbo Z32 wide low two-seat coupe, raked fixed headlights, T-top roof, small rear spoiler, red paint. Accurate body shape and proportions for this exact model and generation. Exact side elevation, car facing LEFT (nose on the left), centred, wheels on the road, the car spans about 80% of the image width. Match the reference image's style exactly: chunky visible pixels, retro 16-bit/8-bit game palette, the same coastal road scene behind the car - grey asphalt foreground, metal guardrail, blue sea, green hills/mountains on the left, bright blue sky with white pixel clouds. Same framing and lighting as the reference. No text, no logos, no watermark.",
+      "reference_image": "reference/honda-s2000-reference.jpg",
+      "generated_size": "1152x864",
+      "post_process": "crop 1080x720 at (36,90), nearest-neighbour resize to 960x640"
+    },
+    "Buick GNX (1987)": {
+      "file": "buick-gnx-1987.png",
+      "name": "Buick GNX (1987)",
+      "slug": "buick-gnx-1987",
+      "prompt": "8-bit pixel-art side profile of a 1987 Buick GNX two-door G-body coupe, long bonnet, formal notchback roof, square shape, all-black paint, black mesh wheels. Accurate body shape and proportions for this exact model and generation. Exact side elevation, car facing LEFT (nose on the left), centred, wheels on the road, the car spans about 80% of the image width. Match the reference image's style exactly: chunky visible pixels, retro 16-bit/8-bit game palette, the same coastal road scene behind the car - grey asphalt foreground, metal guardrail, blue sea, green hills/mountains on the left, bright blue sky with white pixel clouds. Same framing and lighting as the reference. No text, no logos, no watermark.",
+      "reference_image": "reference/honda-s2000-reference.jpg",
+      "generated_size": "1152x864",
+      "post_process": "crop 1080x720 at (36,90), nearest-neighbour resize to 960x640"
+    },
+    "Ferrari Dino 246 GT (1969)": {
+      "file": "ferrari-dino-246-gt-1969.png",
+      "name": "Ferrari Dino 246 GT (1969)",
+      "slug": "ferrari-dino-246-gt-1969",
+      "prompt": "8-bit pixel-art side profile of a 1969 Ferrari Dino 246 GT small mid-engined coupe, flowing curved fenders, covered headlights, concave rear window with flying buttresses, Rosso red paint. Accurate body shape and proportions for this exact model and generation. Exact side elevation, car facing LEFT (nose on the left), centred, wheels on the road, the car spans about 80% of the image width. Match the reference image's style exactly: chunky visible pixels, retro 16-bit/8-bit game palette, the same coastal road scene behind the car - grey asphalt foreground, metal guardrail, blue sea, green hills/mountains on the left, bright blue sky with white pixel clouds. Same framing and lighting as the reference. No text, no logos, no watermark.",
+      "reference_image": "reference/honda-s2000-reference.jpg",
+      "generated_size": "1152x864",
+      "post_process": "crop 1080x720 at (36,90), nearest-neighbour resize to 960x640"
+    },
+    "Ferrari F40 (1987)": {
+      "file": "ferrari-f40-1987.png",
+      "name": "Ferrari F40 (1987)",
+      "slug": "ferrari-f40-1987",
+      "prompt": "8-bit pixel-art side profile of a 1987 Ferrari F40 mid-engined supercar, sharp wedge, pop-up headlights closed, NACA ducts, tall full-width rear wing on the tail, louvred plexiglass engine cover, Rosso Corsa red paint. Accurate body shape and proportions for this exact model and generation. Exact side elevation, car facing LEFT (nose on the left), centred, wheels on the road, the car spans about 80% of the image width. Match the reference image's style exactly: chunky visible pixels, retro 16-bit/8-bit game palette, the same coastal road scene behind the car - grey asphalt foreground, metal guardrail, blue sea, green hills/mountains on the left, bright blue sky with white pixel clouds. Same framing and lighting as the reference. No text, no logos, no watermark.",
+      "reference_image": "reference/honda-s2000-reference.jpg",
+      "generated_size": "1152x864",
+      "post_process": "crop 1080x720 at (36,90), nearest-neighbour resize to 960x640"
+    },
+    "Jaguar E-Type 3.8 FHC (Series 1, 1961)": {
+      "file": "jaguar-e-type-series-1-1961.png",
+      "name": "Jaguar E-Type 3.8 FHC (Series 1, 1961)",
+      "slug": "jaguar-e-type-series-1-1961",
+      "prompt": "8-bit pixel-art side profile of a 1961 Jaguar E-Type Series 1 fixed-head coupe, extremely long bonnet, covered headlights, small cabin far back, tapering fastback tail, British racing green paint, wire wheels. Accurate body shape and proportions for this exact model and generation. Exact side elevation, car facing LEFT (nose on the left), centred, wheels on the road, the car spans about 80% of the image width. Match the reference image's style exactly: chunky visible pixels, retro 16-bit/8-bit game palette, the same coastal road scene behind the car - grey asphalt foreground, metal guardrail, blue sea, green hills/mountains on the left, bright blue sky with white pixel clouds. Same framing and lighting as the reference. No text, no logos, no watermark.",
+      "reference_image": "reference/honda-s2000-reference.jpg",
+      "generated_size": "1152x864",
+      "post_process": "crop 1080x720 at (36,90), nearest-neighbour resize to 960x640"
+    },
+    "Ford Mustang Fastback 289 (1965)": {
+      "file": "ford-mustang-fastback-1965.png",
+      "name": "Ford Mustang Fastback 289 (1965)",
+      "slug": "ford-mustang-fastback-1965",
+      "prompt": "8-bit pixel-art side profile of a 1965 Ford Mustang 2+2 Fastback 289, long bonnet, short deck, sloping fastback roof, C-pillar vents, Wimbledon white paint with blue stripes. Accurate body shape and proportions for this exact model and generation. Exact side elevation, car facing LEFT (nose on the left), centred, wheels on the road, the car spans about 80% of the image width. Match the reference image's style exactly: chunky visible pixels, retro 16-bit/8-bit game palette, the same coastal road scene behind the car - grey asphalt foreground, metal guardrail, blue sea, green hills/mountains on the left, bright blue sky with white pixel clouds. Same framing and lighting as the reference. No text, no logos, no watermark.",
+      "reference_image": "reference/honda-s2000-reference.jpg",
+      "generated_size": "1152x864",
+      "post_process": "crop 1080x720 at (36,90), nearest-neighbour resize to 960x640"
+    },
+    "Porsche 911 Carrera RS 2.7 Sport (1973)": {
+      "file": "porsche-911-carrera-rs-2-7-1973.png",
+      "name": "Porsche 911 Carrera RS 2.7 Sport (1973)",
+      "slug": "porsche-911-carrera-rs-2-7-1973",
+      "prompt": "8-bit pixel-art side profile of a 1973 Porsche 911 Carrera RS 2.7 classic air-cooled 911 coupe, round headlights, ducktail rear spoiler, white paint with green Carrera side script stripe, Fuchs wheels. Accurate body shape and proportions for this exact model and generation. Exact side elevation, car facing LEFT (nose on the left), centred, wheels on the road, the car spans about 80% of the image width. Match the reference image's style exactly: chunky visible pixels, retro 16-bit/8-bit game palette, the same coastal road scene behind the car - grey asphalt foreground, metal guardrail, blue sea, green hills/mountains on the left, bright blue sky with white pixel clouds. Same framing and lighting as the reference. No text, no logos, no watermark.",
+      "reference_image": "reference/honda-s2000-reference.jpg",
+      "generated_size": "1152x864",
+      "post_process": "crop 1080x720 at (36,90), nearest-neighbour resize to 960x640"
+    },
+    "BMW M3 (E30, 1986)": {
+      "file": "bmw-m3-e30-1986.png",
+      "name": "BMW M3 (E30, 1986)",
+      "slug": "bmw-m3-e30-1986",
+      "prompt": "8-bit pixel-art side profile of a 1986 BMW M3 E30 boxy two-door sedan, flared box arches, rear wing on boot, Alpine white paint. Accurate body shape and proportions for this exact model and generation. Exact side elevation, car facing LEFT (nose on the left), centred, wheels on the road, the car spans about 80% of the image width. Match the reference image's style exactly: chunky visible pixels, retro 16-bit/8-bit game palette, the same coastal road scene behind the car - grey asphalt foreground, metal guardrail, blue sea, green hills/mountains on the left, bright blue sky with white pixel clouds. Same framing and lighting as the reference. No text, no logos, no watermark.",
+      "reference_image": "reference/honda-s2000-reference.jpg",
+      "generated_size": "1152x864",
+      "post_process": "crop 1080x720 at (36,90), nearest-neighbour resize to 960x640"
+    },
+    "Volkswagen Golf GTI (Mk1, 1976)": {
+      "file": "volkswagen-golf-gti-mk1-1976.png",
+      "name": "Volkswagen Golf GTI (Mk1, 1976)",
+      "slug": "volkswagen-golf-gti-mk1-1976",
+      "prompt": "8-bit pixel-art side profile of a 1976 Volkswagen Golf GTI Mk1 three-door boxy hatchback, round headlights, red grille trim, black wheel arch extensions, Mars red paint. Accurate body shape and proportions for this exact model and generation. Exact side elevation, car facing LEFT (nose on the left), centred, wheels on the road, the car spans about 80% of the image width. Match the reference image's style exactly: chunky visible pixels, retro 16-bit/8-bit game palette, the same coastal road scene behind the car - grey asphalt foreground, metal guardrail, blue sea, green hills/mountains on the left, bright blue sky with white pixel clouds. Same framing and lighting as the reference. No text, no logos, no watermark.",
+      "reference_image": "reference/honda-s2000-reference.jpg",
+      "generated_size": "1152x864",
+      "post_process": "crop 1080x720 at (36,90), nearest-neighbour resize to 960x640"
+    },
+    "Ferrari 365 GTB/4 Daytona (1968)": {
+      "file": "ferrari-365-gtb4-daytona-1968.png",
+      "name": "Ferrari 365 GTB/4 Daytona (1968)",
+      "slug": "ferrari-365-gtb4-daytona-1968",
+      "prompt": "8-bit pixel-art side profile of a 1968 Ferrari 365 GTB/4 Daytona front-engined V12 grand tourer, very long sharp-nosed bonnet, small cabin set back, Kamm tail, Rosso red paint. Accurate body shape and proportions for this exact model and generation. Exact side elevation, car facing LEFT (nose on the left), centred, wheels on the road, the car spans about 80% of the image width. Match the reference image's style exactly: chunky visible pixels, retro 16-bit/8-bit game palette, the same coastal road scene behind the car - grey asphalt foreground, metal guardrail, blue sea, green hills/mountains on the left, bright blue sky with white pixel clouds. Same framing and lighting as the reference. No text, no logos, no watermark.",
+      "reference_image": "reference/honda-s2000-reference.jpg",
+      "generated_size": "1152x864",
+      "post_process": "crop 1080x720 at (36,90), nearest-neighbour resize to 960x640"
+    },
+    "Lamborghini Countach LP400 (1974)": {
+      "file": "lamborghini-countach-lp400-1974.png",
+      "name": "Lamborghini Countach LP400 (1974)",
+      "slug": "lamborghini-countach-lp400-1974",
+      "prompt": "8-bit pixel-art side profile of a 1974 Lamborghini Countach LP400 periscopio, extreme flat wedge, trapezoid windows, NACA duct on the side, no rear wing, clean original body, Giallo Fly yellow paint. Accurate body shape and proportions for this exact model and generation. Exact side elevation, car facing LEFT (nose on the left), centred, wheels on the road, the car spans about 80% of the image width. Match the reference image's style exactly: chunky visible pixels, retro 16-bit/8-bit game palette, the same coastal road scene behind the car - grey asphalt foreground, metal guardrail, blue sea, green hills/mountains on the left, bright blue sky with white pixel clouds. Same framing and lighting as the reference. No text, no logos, no watermark.",
+      "reference_image": "reference/honda-s2000-reference.jpg",
+      "generated_size": "1152x864",
+      "post_process": "crop 1080x720 at (36,90), nearest-neighbour resize to 960x640"
+    },
+    "Audi Sport quattro (1984)": {
+      "file": "audi-sport-quattro-1984.png",
+      "name": "Audi Sport quattro (1984)",
+      "slug": "audi-sport-quattro-1984",
+      "prompt": "8-bit pixel-art side profile of a 1984 Audi Sport quattro short-wheelbase boxy coupe, wide box arches, steep rear window, Tornado red paint. Accurate body shape and proportions for this exact model and generation. Exact side elevation, car facing LEFT (nose on the left), centred, wheels on the road, the car spans about 80% of the image width. Match the reference image's style exactly: chunky visible pixels, retro 16-bit/8-bit game palette, the same coastal road scene behind the car - grey asphalt foreground, metal guardrail, blue sea, green hills/mountains on the left, bright blue sky with white pixel clouds. Same framing and lighting as the reference. No text, no logos, no watermark.",
+      "reference_image": "reference/honda-s2000-reference.jpg",
+      "generated_size": "1152x864",
+      "post_process": "crop 1080x720 at (36,90), nearest-neighbour resize to 960x640"
+    },
+    "Mercedes-Benz 190E 2.3-16 (1984)": {
+      "file": "mercedes-benz-190e-2-3-16-1984.png",
+      "name": "Mercedes-Benz 190E 2.3-16 (1984)",
+      "slug": "mercedes-benz-190e-2-3-16-1984",
+      "prompt": "8-bit pixel-art side profile of a 1984 Mercedes-Benz 190E 2.3-16 Cosworth W201 compact sedan, body kit and rear lip spoiler, smoke silver paint. Accurate body shape and proportions for this exact model and generation. Exact side elevation, car facing LEFT (nose on the left), centred, wheels on the road, the car spans about 80% of the image width. Match the reference image's style exactly: chunky visible pixels, retro 16-bit/8-bit game palette, the same coastal road scene behind the car - grey asphalt foreground, metal guardrail, blue sea, green hills/mountains on the left, bright blue sky with white pixel clouds. Same framing and lighting as the reference. No text, no logos, no watermark.",
+      "reference_image": "reference/honda-s2000-reference.jpg",
+      "generated_size": "1152x864",
+      "post_process": "crop 1080x720 at (36,90), nearest-neighbour resize to 960x640"
+    },
+    "Peugeot 205 GTI 1.9 (1986)": {
+      "file": "peugeot-205-gti-1-9-1986.png",
+      "name": "Peugeot 205 GTI 1.9 (1986)",
+      "slug": "peugeot-205-gti-1-9-1986",
+      "prompt": "8-bit pixel-art side profile of a 1986 Peugeot 205 GTI 1.9 small three-door hatchback, red pinstripe, black wheel arch trims, white paint, pepperpot alloys. Accurate body shape and proportions for this exact model and generation. Exact side elevation, car facing LEFT (nose on the left), centred, wheels on the road, the car spans about 80% of the image width. Match the reference image's style exactly: chunky visible pixels, retro 16-bit/8-bit game palette, the same coastal road scene behind the car - grey asphalt foreground, metal guardrail, blue sea, green hills/mountains on the left, bright blue sky with white pixel clouds. Same framing and lighting as the reference. No text, no logos, no watermark.",
+      "reference_image": "reference/honda-s2000-reference.jpg",
+      "generated_size": "1152x864",
+      "post_process": "crop 1080x720 at (36,90), nearest-neighbour resize to 960x640"
+    },
+    "Ford Sierra RS Cosworth (1986)": {
+      "file": "ford-sierra-rs-cosworth-1986.png",
+      "name": "Ford Sierra RS Cosworth (1986)",
+      "slug": "ford-sierra-rs-cosworth-1986",
+      "prompt": "8-bit pixel-art side profile of a 1986 Ford Sierra RS Cosworth three-door hatchback, huge whale-tail rear wing, bonnet vents, white paint. Accurate body shape and proportions for this exact model and generation. Exact side elevation, car facing LEFT (nose on the left), centred, wheels on the road, the car spans about 80% of the image width. Match the reference image's style exactly: chunky visible pixels, retro 16-bit/8-bit game palette, the same coastal road scene behind the car - grey asphalt foreground, metal guardrail, blue sea, green hills/mountains on the left, bright blue sky with white pixel clouds. Same framing and lighting as the reference. No text, no logos, no watermark.",
+      "reference_image": "reference/honda-s2000-reference.jpg",
+      "generated_size": "1152x864",
+      "post_process": "crop 1080x720 at (36,90), nearest-neighbour resize to 960x640"
+    },
+    "Lancia Delta HF Integrale Evoluzione (1992)": {
+      "file": "lancia-delta-integrale-evo-1992.png",
+      "name": "Lancia Delta HF Integrale Evoluzione (1992)",
+      "slug": "lancia-delta-integrale-evo-1992",
+      "prompt": "8-bit pixel-art side profile of a 1992 Lancia Delta HF Integrale Evoluzione boxy five-door hatchback, bulging box arches, adjustable roof spoiler, red paint. Accurate body shape and proportions for this exact model and generation. Exact side elevation, car facing LEFT (nose on the left), centred, wheels on the road, the car spans about 80% of the image width. Match the reference image's style exactly: chunky visible pixels, retro 16-bit/8-bit game palette, the same coastal road scene behind the car - grey asphalt foreground, metal guardrail, blue sea, green hills/mountains on the left, bright blue sky with white pixel clouds. Same framing and lighting as the reference. No text, no logos, no watermark.",
+      "reference_image": "reference/honda-s2000-reference.jpg",
+      "generated_size": "1152x864",
+      "post_process": "crop 1080x720 at (36,90), nearest-neighbour resize to 960x640"
+    },
+    "Honda Integra Type R (DC2, 1995)": {
+      "file": "honda-integra-type-r-dc2-1995.png",
+      "name": "Honda Integra Type R (DC2, 1995)",
+      "slug": "honda-integra-type-r-dc2-1995",
+      "prompt": "8-bit pixel-art side profile of a 1995 Honda Integra Type R DC2 three-door coupe, rounded headlights, tall rear wing, Championship white paint. Accurate body shape and proportions for this exact model and generation. Exact side elevation, car facing LEFT (nose on the left), centred, wheels on the road, the car spans about 80% of the image width. Match the reference image's style exactly: chunky visible pixels, retro 16-bit/8-bit game palette, the same coastal road scene behind the car - grey asphalt foreground, metal guardrail, blue sea, green hills/mountains on the left, bright blue sky with white pixel clouds. Same framing and lighting as the reference. No text, no logos, no watermark.",
+      "reference_image": "reference/honda-s2000-reference.jpg",
+      "generated_size": "1152x864",
+      "post_process": "crop 1080x720 at (36,90), nearest-neighbour resize to 960x640"
+    },
+    "Lotus Elise (S1, 1996)": {
+      "file": "lotus-elise-s1-1996.png",
+      "name": "Lotus Elise (S1, 1996)",
+      "slug": "lotus-elise-s1-1996",
+      "prompt": "8-bit pixel-art side profile of a 1996 Lotus Elise S1 tiny mid-engined roadster, round headlights under covers, open top, curvy fenders, Norfolk mustard yellow paint. Accurate body shape and proportions for this exact model and generation. Exact side elevation, car facing LEFT (nose on the left), centred, wheels on the road, the car spans about 80% of the image width. Match the reference image's style exactly: chunky visible pixels, retro 16-bit/8-bit game palette, the same coastal road scene behind the car - grey asphalt foreground, metal guardrail, blue sea, green hills/mountains on the left, bright blue sky with white pixel clouds. Same framing and lighting as the reference. No text, no logos, no watermark.",
+      "reference_image": "reference/honda-s2000-reference.jpg",
+      "generated_size": "1152x864",
+      "post_process": "crop 1080x720 at (36,90), nearest-neighbour resize to 960x640"
+    },
+    "BMW M5 (E39, 2000)": {
+      "file": "bmw-m5-e39-2000.png",
+      "name": "BMW M5 (E39, 2000)",
+      "slug": "bmw-m5-e39-2000",
+      "prompt": "8-bit pixel-art side profile of a 2000 BMW M5 E39 four-door executive sports sedan, elegant classic proportions, Le Mans blue paint. Accurate body shape and proportions for this exact model and generation. Exact side elevation, car facing LEFT (nose on the left), centred, wheels on the road, the car spans about 80% of the image width. Match the reference image's style exactly: chunky visible pixels, retro 16-bit/8-bit game palette, the same coastal road scene behind the car - grey asphalt foreground, metal guardrail, blue sea, green hills/mountains on the left, bright blue sky with white pixel clouds. Same framing and lighting as the reference. No text, no logos, no watermark.",
+      "reference_image": "reference/honda-s2000-reference.jpg",
+      "generated_size": "1152x864",
+      "post_process": "crop 1080x720 at (36,90), nearest-neighbour resize to 960x640"
+    },
+    "Trabant 601 S (1988)": {
+      "file": "trabant-601-s-1988.png",
+      "name": "Trabant 601 S (1988)",
+      "slug": "trabant-601-s-1988",
+      "prompt": "8-bit pixel-art side profile of a 1988 Trabant 601 S small East German two-door saloon, flat Duroplast body, tiny wheels, pastel light blue paint, white roof. Accurate body shape and proportions for this exact model and generation. Exact side elevation, car facing LEFT (nose on the left), centred, wheels on the road, the car spans about 80% of the image width. Match the reference image's style exactly: chunky visible pixels, retro 16-bit/8-bit game palette, the same coastal road scene behind the car - grey asphalt foreground, metal guardrail, blue sea, green hills/mountains on the left, bright blue sky with white pixel clouds. Same framing and lighting as the reference. No text, no logos, no watermark.",
+      "reference_image": "reference/honda-s2000-reference.jpg",
+      "generated_size": "1152x864",
+      "post_process": "crop 1080x720 at (36,90), nearest-neighbour resize to 960x640"
+    },
+    "Honda S660 (2015)": {
+      "file": "honda-s660-2015.png",
+      "name": "Honda S660 (2015)",
+      "slug": "honda-s660-2015",
+      "prompt": "8-bit pixel-art side profile of a 2015 Honda S660 tiny mid-engined kei roadster, targa top, sharp angular body, yellow paint with black roof. Accurate body shape and proportions for this exact model and generation. Exact side elevation, car facing LEFT (nose on the left), centred, wheels on the road, the car spans about 80% of the image width. Match the reference image's style exactly: chunky visible pixels, retro 16-bit/8-bit game palette, the same coastal road scene behind the car - grey asphalt foreground, metal guardrail, blue sea, green hills/mountains on the left, bright blue sky with white pixel clouds. Same framing and lighting as the reference. No text, no logos, no watermark.",
+      "reference_image": "reference/honda-s2000-reference.jpg",
+      "generated_size": "1152x864",
+      "post_process": "crop 1080x720 at (36,90), nearest-neighbour resize to 960x640"
+    },
+    "Honda Beat (1991)": {
+      "file": "honda-beat-1991.png",
+      "name": "Honda Beat (1991)",
+      "slug": "honda-beat-1991",
+      "prompt": "8-bit pixel-art side profile of a 1991 Honda Beat tiny mid-engined kei convertible, soft top down, simple wedge body, Carnival yellow paint. Accurate body shape and proportions for this exact model and generation. Exact side elevation, car facing LEFT (nose on the left), centred, wheels on the road, the car spans about 80% of the image width. Match the reference image's style exactly: chunky visible pixels, retro 16-bit/8-bit game palette, the same coastal road scene behind the car - grey asphalt foreground, metal guardrail, blue sea, green hills/mountains on the left, bright blue sky with white pixel clouds. Same framing and lighting as the reference. No text, no logos, no watermark.",
+      "reference_image": "reference/honda-s2000-reference.jpg",
+      "generated_size": "1152x864",
+      "post_process": "crop 1080x720 at (36,90), nearest-neighbour resize to 960x640"
+    },
+    "Suzuki Cappuccino (EA11R, 1991)": {
+      "file": "suzuki-cappuccino-ea11r-1991.png",
+      "name": "Suzuki Cappuccino (EA11R, 1991)",
+      "slug": "suzuki-cappuccino-ea11r-1991",
+      "prompt": "8-bit pixel-art side profile of a 1991 Suzuki Cappuccino tiny front-engined kei roadster, long bonnet, small cabin far back, removable hard top roof on, red paint. Accurate body shape and proportions for this exact model and generation. Exact side elevation, car facing LEFT (nose on the left), centred, wheels on the road, the car spans about 80% of the image width. Match the reference image's style exactly: chunky visible pixels, retro 16-bit/8-bit game palette, the same coastal road scene behind the car - grey asphalt foreground, metal guardrail, blue sea, green hills/mountains on the left, bright blue sky with white pixel clouds. Same framing and lighting as the reference. No text, no logos, no watermark.",
+      "reference_image": "reference/honda-s2000-reference.jpg",
+      "generated_size": "1152x864",
+      "post_process": "crop 1080x720 at (36,90), nearest-neighbour resize to 960x640"
+    },
+    "Ford Focus RS (Mk3, 2016)": {
+      "file": "ford-focus-rs-mk3-2016.png",
+      "name": "Ford Focus RS (Mk3, 2016)",
+      "slug": "ford-focus-rs-mk3-2016",
+      "prompt": "8-bit pixel-art side profile of a 2016 Ford Focus RS Mk3 five-door hot hatch, large lower intakes, roof spoiler, Nitrous blue paint, blue brake calipers. Accurate body shape and proportions for this exact model and generation. Exact side elevation, car facing LEFT (nose on the left), centred, wheels on the road, the car spans about 80% of the image width. Match the reference image's style exactly: chunky visible pixels, retro 16-bit/8-bit game palette, the same coastal road scene behind the car - grey asphalt foreground, metal guardrail, blue sea, green hills/mountains on the left, bright blue sky with white pixel clouds. Same framing and lighting as the reference. No text, no logos, no watermark.",
+      "reference_image": "reference/honda-s2000-reference.jpg",
+      "generated_size": "1152x864",
+      "post_process": "crop 1080x720 at (36,90), nearest-neighbour resize to 960x640"
+    },
+    "Renault M\u00e9gane R.S. Trophy (2018)": {
+      "file": "renault-megane-rs-trophy-2018.png",
+      "name": "Renault M\u00e9gane R.S. Trophy (2018)",
+      "slug": "renault-megane-rs-trophy-2018",
+      "prompt": "8-bit pixel-art side profile of a 2018 Renault Megane R.S. Trophy five-door hot hatch, C-shaped daytime lights, wide arches, central exhaust, Tonic orange paint. Accurate body shape and proportions for this exact model and generation. Exact side elevation, car facing LEFT (nose on the left), centred, wheels on the road, the car spans about 80% of the image width. Match the reference image's style exactly: chunky visible pixels, retro 16-bit/8-bit game palette, the same coastal road scene behind the car - grey asphalt foreground, metal guardrail, blue sea, green hills/mountains on the left, bright blue sky with white pixel clouds. Same framing and lighting as the reference. No text, no logos, no watermark.",
+      "reference_image": "reference/honda-s2000-reference.jpg",
+      "generated_size": "1152x864",
+      "post_process": "crop 1080x720 at (36,90), nearest-neighbour resize to 960x640"
+    },
+    "Suzuki Swift Sport (ZC33S, 2018)": {
+      "file": "suzuki-swift-sport-zc33s-2018.png",
+      "name": "Suzuki Swift Sport (ZC33S, 2018)",
+      "slug": "suzuki-swift-sport-zc33s-2018",
+      "prompt": "8-bit pixel-art side profile of a 2018 Suzuki Swift Sport ZC33S small five-door hot hatch with hidden rear door handles, floating roof, Champion yellow paint. Accurate body shape and proportions for this exact model and generation. Exact side elevation, car facing LEFT (nose on the left), centred, wheels on the road, the car spans about 80% of the image width. Match the reference image's style exactly: chunky visible pixels, retro 16-bit/8-bit game palette, the same coastal road scene behind the car - grey asphalt foreground, metal guardrail, blue sea, green hills/mountains on the left, bright blue sky with white pixel clouds. Same framing and lighting as the reference. No text, no logos, no watermark.",
+      "reference_image": "reference/honda-s2000-reference.jpg",
+      "generated_size": "1152x864",
+      "post_process": "crop 1080x720 at (36,90), nearest-neighbour resize to 960x640"
+    },
+    "Honda Civic Type R (EK9, 1997)": {
+      "file": "honda-civic-type-r-ek9-1997.png",
+      "name": "Honda Civic Type R (EK9, 1997)",
+      "slug": "honda-civic-type-r-ek9-1997",
+      "prompt": "8-bit pixel-art side profile of a 1997 Honda Civic Type R EK9 three-door hatchback, rounded 1990s body, small roof spoiler, Championship white paint, white wheels, red badge. Accurate body shape and proportions for this exact model and generation. Exact side elevation, car facing LEFT (nose on the left), centred, wheels on the road, the car spans about 80% of the image width. Match the reference image's style exactly: chunky visible pixels, retro 16-bit/8-bit game palette, the same coastal road scene behind the car - grey asphalt foreground, metal guardrail, blue sea, green hills/mountains on the left, bright blue sky with white pixel clouds. Same framing and lighting as the reference. No text, no logos, no watermark.",
+      "reference_image": "reference/honda-s2000-reference.jpg",
+      "generated_size": "1152x864",
+      "post_process": "crop 1080x720 at (36,90), nearest-neighbour resize to 960x640"
+    },
+    "Toyota GR86 (2022)": {
+      "file": "toyota-gr86-2022.png",
+      "name": "Toyota GR86 (2022)",
+      "slug": "toyota-gr86-2022",
+      "prompt": "8-bit pixel-art side profile of a 2022 Toyota GR86 two-door sports coupe, long bonnet, ducktail spoiler, front fender vent, Track bright red paint. Accurate body shape and proportions for this exact model and generation. Exact side elevation, car facing LEFT (nose on the left), centred, wheels on the road, the car spans about 80% of the image width. Match the reference image's style exactly: chunky visible pixels, retro 16-bit/8-bit game palette, the same coastal road scene behind the car - grey asphalt foreground, metal guardrail, blue sea, green hills/mountains on the left, bright blue sky with white pixel clouds. Same framing and lighting as the reference. No text, no logos, no watermark.",
+      "reference_image": "reference/honda-s2000-reference.jpg",
+      "generated_size": "1152x864",
+      "post_process": "crop 1080x720 at (36,90), nearest-neighbour resize to 960x640"
+    },
+    "Porsche 718 Cayman GT4 (2020)": {
+      "file": "porsche-718-cayman-gt4-2020.png",
+      "name": "Porsche 718 Cayman GT4 (2020)",
+      "slug": "porsche-718-cayman-gt4-2020",
+      "prompt": "8-bit pixel-art side profile of a 2020 Porsche 718 Cayman GT4 mid-engined coupe, side intakes behind doors, large swan-neck rear wing, Racing yellow paint. Accurate body shape and proportions for this exact model and generation. Exact side elevation, car facing LEFT (nose on the left), centred, wheels on the road, the car spans about 80% of the image width. Match the reference image's style exactly: chunky visible pixels, retro 16-bit/8-bit game palette, the same coastal road scene behind the car - grey asphalt foreground, metal guardrail, blue sea, green hills/mountains on the left, bright blue sky with white pixel clouds. Same framing and lighting as the reference. No text, no logos, no watermark.",
+      "reference_image": "reference/honda-s2000-reference.jpg",
+      "generated_size": "1152x864",
+      "post_process": "crop 1080x720 at (36,90), nearest-neighbour resize to 960x640"
+    },
+    "BMW M2 Competition (F87, 2018)": {
+      "file": "bmw-m2-competition-f87-2018.png",
+      "name": "BMW M2 Competition (F87, 2018)",
+      "slug": "bmw-m2-competition-f87-2018",
+      "prompt": "8-bit pixel-art side profile of a 2018 BMW M2 Competition compact two-door coupe, wide flared arches, short boot with lip spoiler, Hockenheim silver paint. Accurate body shape and proportions for this exact model and generation. Exact side elevation, car facing LEFT (nose on the left), centred, wheels on the road, the car spans about 80% of the image width. Match the reference image's style exactly: chunky visible pixels, retro 16-bit/8-bit game palette, the same coastal road scene behind the car - grey asphalt foreground, metal guardrail, blue sea, green hills/mountains on the left, bright blue sky with white pixel clouds. Same framing and lighting as the reference. No text, no logos, no watermark.",
+      "reference_image": "reference/honda-s2000-reference.jpg",
+      "generated_size": "1152x864",
+      "post_process": "crop 1080x720 at (36,90), nearest-neighbour resize to 960x640"
+    },
+    "Ariel Atom 3.5 (2013)": {
+      "file": "ariel-atom-3-5-2013.png",
+      "name": "Ariel Atom 3.5 (2013)",
+      "slug": "ariel-atom-3-5-2013",
+      "prompt": "8-bit pixel-art side profile of a 2013 Ariel Atom 3.5 exoskeleton sports car, exposed tubular frame chassis, no doors or roof, exposed wheels, driver in helmet, red frame. Accurate body shape and proportions for this exact model and generation. Exact side elevation, car facing LEFT (nose on the left), centred, wheels on the road, the car spans about 80% of the image width. Match the reference image's style exactly: chunky visible pixels, retro 16-bit/8-bit game palette, the same coastal road scene behind the car - grey asphalt foreground, metal guardrail, blue sea, green hills/mountains on the left, bright blue sky with white pixel clouds. Same framing and lighting as the reference. No text, no logos, no watermark.",
+      "reference_image": "reference/honda-s2000-reference.jpg",
+      "generated_size": "1152x864",
+      "post_process": "crop 1080x720 at (36,90), nearest-neighbour resize to 960x640"
+    },
+    "Mazda MX-5 2.0 (ND, 2015)": {
+      "file": "mazda-mx-5-nd-2015.png",
+      "name": "Mazda MX-5 2.0 (ND, 2015)",
+      "slug": "mazda-mx-5-nd-2015",
+      "prompt": "8-bit pixel-art side profile of a 2015 Mazda MX-5 ND roadster, soft top down, sharp modern Kodo-design body, Soul red crystal paint. Accurate body shape and proportions for this exact model and generation. Exact side elevation, car facing LEFT (nose on the left), centred, wheels on the road, the car spans about 80% of the image width. Match the reference image's style exactly: chunky visible pixels, retro 16-bit/8-bit game palette, the same coastal road scene behind the car - grey asphalt foreground, metal guardrail, blue sea, green hills/mountains on the left, bright blue sky with white pixel clouds. Same framing and lighting as the reference. No text, no logos, no watermark.",
+      "reference_image": "reference/honda-s2000-reference.jpg",
+      "generated_size": "1152x864",
+      "post_process": "crop 1080x720 at (36,90), nearest-neighbour resize to 960x640"
+    },
+    "Dodge Viper SRT-10 (2008)": {
+      "file": "dodge-viper-srt-10-2008.png",
+      "name": "Dodge Viper SRT-10 (2008)",
+      "slug": "dodge-viper-srt-10-2008",
+      "prompt": "8-bit pixel-art side profile of a 2008 Dodge Viper SRT-10 coupe, extremely long bonnet with vents, double-bubble roof, side exhausts, Viper blue paint with white racing stripes, no badges or lettering on the body. Accurate body shape and proportions for this exact model and generation. Exact side elevation, car facing LEFT (nose on the left), centred, wheels on the road, the car spans about 80% of the image width. Match the reference image's style exactly: chunky visible pixels, retro 16-bit/8-bit game palette, the same coastal road scene behind the car - grey asphalt foreground, metal guardrail, blue sea, green hills/mountains on the left, bright blue sky with white pixel clouds. Same framing and lighting as the reference. No text, no logos, no watermark.",
+      "reference_image": "reference/honda-s2000-reference.jpg",
+      "generated_size": "1152x864",
+      "post_process": "crop 1080x720 at (36,90), nearest-neighbour resize to 960x640",
+      "note": "model kept painting a HONDA side badge; removed by pixel retouch"
+    },
+    "Mercedes-AMG C63 (W204, 2008)": {
+      "file": "mercedes-amg-c63-w204-2008.png",
+      "name": "Mercedes-AMG C63 (W204, 2008)",
+      "slug": "mercedes-amg-c63-w204-2008",
+      "prompt": "8-bit pixel-art side profile of a 2008 Mercedes-Benz C63 AMG W204 four-door sedan, powerdome bonnet, wide front fenders, obsidian black paint. Accurate body shape and proportions for this exact model and generation. Exact side elevation, car facing LEFT (nose on the left), centred, wheels on the road, the car spans about 80% of the image width. Match the reference image's style exactly: chunky visible pixels, retro 16-bit/8-bit game palette, the same coastal road scene behind the car - grey asphalt foreground, metal guardrail, blue sea, green hills/mountains on the left, bright blue sky with white pixel clouds. Same framing and lighting as the reference. No text, no logos, no watermark.",
+      "reference_image": "reference/honda-s2000-reference.jpg",
+      "generated_size": "1152x864",
+      "post_process": "crop 1080x720 at (36,90), nearest-neighbour resize to 960x640"
+    },
+    "Ram 2500 HO Cummins (2019)": {
+      "file": "ram-2500-cummins-2019.png",
+      "name": "Ram 2500 HO Cummins (2019)",
+      "slug": "ram-2500-cummins-2019",
+      "prompt": "8-bit pixel-art side profile of a 2019 Ram 2500 Heavy Duty crew-cab pickup truck with long open bed, huge RAM letter grille, Cummins badge, tall body, red paint. Accurate body shape and proportions for this exact model and generation. Exact side elevation, car facing LEFT (nose on the left), centred, wheels on the road, the car spans about 80% of the image width. Match the reference image's style exactly: chunky visible pixels, retro 16-bit/8-bit game palette, the same coastal road scene behind the car - grey asphalt foreground, metal guardrail, blue sea, green hills/mountains on the left, bright blue sky with white pixel clouds. Same framing and lighting as the reference. No text, no logos, no watermark.",
+      "reference_image": "reference/honda-s2000-reference.jpg",
+      "generated_size": "1152x864",
+      "post_process": "crop 1080x720 at (36,90), nearest-neighbour resize to 960x640"
+    },
+    "Toyota Hilux 2.8 D-4D (2016)": {
+      "file": "toyota-hilux-2-8-d-4d-2016.png",
+      "name": "Toyota Hilux 2.8 D-4D (2016)",
+      "slug": "toyota-hilux-2-8-d-4d-2016",
+      "prompt": "8-bit pixel-art side profile of a 2016 Toyota Hilux eighth generation double-cab pickup truck with open bed, silver paint. Accurate body shape and proportions for this exact model and generation. Exact side elevation, car facing LEFT (nose on the left), centred, wheels on the road, the car spans about 80% of the image width. Match the reference image's style exactly: chunky visible pixels, retro 16-bit/8-bit game palette, the same coastal road scene behind the car - grey asphalt foreground, metal guardrail, blue sea, green hills/mountains on the left, bright blue sky with white pixel clouds. Same framing and lighting as the reference. No text, no logos, no watermark.",
+      "reference_image": "reference/honda-s2000-reference.jpg",
+      "generated_size": "1152x864",
+      "post_process": "crop 1080x720 at (36,90), nearest-neighbour resize to 960x640"
+    },
+    "Volkswagen Amarok 3.0 V6 TDI (2018)": {
+      "file": "volkswagen-amarok-v6-2018.png",
+      "name": "Volkswagen Amarok 3.0 V6 TDI (2018)",
+      "slug": "volkswagen-amarok-v6-2018",
+      "prompt": "8-bit pixel-art side profile of a 2018 Volkswagen Amarok V6 double-cab pickup truck with open bed, square horizontal grille, dark blue paint. Accurate body shape and proportions for this exact model and generation. Exact side elevation, car facing LEFT (nose on the left), centred, wheels on the road, the car spans about 80% of the image width. Match the reference image's style exactly: chunky visible pixels, retro 16-bit/8-bit game palette, the same coastal road scene behind the car - grey asphalt foreground, metal guardrail, blue sea, green hills/mountains on the left, bright blue sky with white pixel clouds. Same framing and lighting as the reference. No text, no logos, no watermark.",
+      "reference_image": "reference/honda-s2000-reference.jpg",
+      "generated_size": "1152x864",
+      "post_process": "crop 1080x720 at (36,90), nearest-neighbour resize to 960x640"
+    },
+    "Chevrolet Camaro ZL1 (2017)": {
+      "file": "chevrolet-camaro-zl1-2017.png",
+      "name": "Chevrolet Camaro ZL1 (2017)",
+      "slug": "chevrolet-camaro-zl1-2017",
+      "prompt": "8-bit pixel-art side profile of a 2017 Chevrolet Camaro ZL1 sixth generation muscle coupe, low roof with narrow side windows, carbon bonnet extractor, rear spoiler, black paint. Accurate body shape and proportions for this exact model and generation. Exact side elevation, car facing LEFT (nose on the left), centred, wheels on the road, the car spans about 80% of the image width. Match the reference image's style exactly: chunky visible pixels, retro 16-bit/8-bit game palette, the same coastal road scene behind the car - grey asphalt foreground, metal guardrail, blue sea, green hills/mountains on the left, bright blue sky with white pixel clouds. Same framing and lighting as the reference. No text, no logos, no watermark.",
+      "reference_image": "reference/honda-s2000-reference.jpg",
+      "generated_size": "1152x864",
+      "post_process": "crop 1080x720 at (36,90), nearest-neighbour resize to 960x640"
+    },
+    "Tesla Model 3 RWD (2021)": {
+      "file": "tesla-model-3-2021.png",
+      "name": "Tesla Model 3 RWD (2021)",
+      "slug": "tesla-model-3-2021",
+      "prompt": "8-bit pixel-art side profile of a 2021 Tesla Model 3 four-door electric sedan, smooth grille-less nose, glass roof, fastback-like roofline, pearl white paint. Accurate body shape and proportions for this exact model and generation. Exact side elevation, car facing LEFT (nose on the left), centred, wheels on the road, the car spans about 80% of the image width. Match the reference image's style exactly: chunky visible pixels, retro 16-bit/8-bit game palette, the same coastal road scene behind the car - grey asphalt foreground, metal guardrail, blue sea, green hills/mountains on the left, bright blue sky with white pixel clouds. Same framing and lighting as the reference. No text, no logos, no watermark.",
+      "reference_image": "reference/honda-s2000-reference.jpg",
+      "generated_size": "1152x864",
+      "post_process": "crop 1080x720 at (36,90), nearest-neighbour resize to 960x640"
+    },
+    "Tesla Model Y Long Range (2022)": {
+      "file": "tesla-model-y-2022.png",
+      "name": "Tesla Model Y Long Range (2022)",
+      "slug": "tesla-model-y-2022",
+      "prompt": "8-bit pixel-art side profile of a 2022 Tesla Model Y electric crossover SUV, grille-less nose, high rounded sloping roof, deep blue metallic paint. Accurate body shape and proportions for this exact model and generation. Exact side elevation, car facing LEFT (nose on the left), centred, wheels on the road, the car spans about 80% of the image width. Match the reference image's style exactly: chunky visible pixels, retro 16-bit/8-bit game palette, the same coastal road scene behind the car - grey asphalt foreground, metal guardrail, blue sea, green hills/mountains on the left, bright blue sky with white pixel clouds. Same framing and lighting as the reference. No text, no logos, no watermark.",
+      "reference_image": "reference/honda-s2000-reference.jpg",
+      "generated_size": "1152x864",
+      "post_process": "crop 1080x720 at (36,90), nearest-neighbour resize to 960x640"
+    },
+    "Tesla Model S Plaid (2021)": {
+      "file": "tesla-model-s-plaid-2021.png",
+      "name": "Tesla Model S Plaid (2021)",
+      "slug": "tesla-model-s-plaid-2021",
+      "prompt": "8-bit pixel-art side profile of a 2021 Tesla Model S Plaid large electric liftback sedan, smooth grille-less nose, sleek fastback roofline, small lip spoiler, ultra red paint. Accurate body shape and proportions for this exact model and generation. Exact side elevation, car facing LEFT (nose on the left), centred, wheels on the road, the car spans about 80% of the image width. Match the reference image's style exactly: chunky visible pixels, retro 16-bit/8-bit game palette, the same coastal road scene behind the car - grey asphalt foreground, metal guardrail, blue sea, green hills/mountains on the left, bright blue sky with white pixel clouds. Same framing and lighting as the reference. No text, no logos, no watermark.",
+      "reference_image": "reference/honda-s2000-reference.jpg",
+      "generated_size": "1152x864",
+      "post_process": "crop 1080x720 at (36,90), nearest-neighbour resize to 960x640"
+    },
+    "Hyundai Ioniq Hybrid (2016)": {
+      "file": "hyundai-ioniq-hybrid-2016.png",
+      "name": "Hyundai Ioniq Hybrid (2016)",
+      "slug": "hyundai-ioniq-hybrid-2016",
+      "prompt": "8-bit pixel-art side profile of a 2016 Hyundai Ioniq Hybrid five-door liftback, Kammback tail with split rear window, aerodynamic shape, blue paint. Accurate body shape and proportions for this exact model and generation. Exact side elevation, car facing LEFT (nose on the left), centred, wheels on the road, the car spans about 80% of the image width. Match the reference image's style exactly: chunky visible pixels, retro 16-bit/8-bit game palette, the same coastal road scene behind the car - grey asphalt foreground, metal guardrail, blue sea, green hills/mountains on the left, bright blue sky with white pixel clouds. Same framing and lighting as the reference. No text, no logos, no watermark.",
+      "reference_image": "reference/honda-s2000-reference.jpg",
+      "generated_size": "1152x864",
+      "post_process": "crop 1080x720 at (36,90), nearest-neighbour resize to 960x640"
+    },
+    "Toyota Prius (2016)": {
+      "file": "toyota-prius-xw50-2016.png",
+      "name": "Toyota Prius (2016)",
+      "slug": "toyota-prius-xw50-2016",
+      "prompt": "8-bit pixel-art side profile of a 2016 Toyota Prius XW50 fourth generation hybrid liftback, triangular wedge roof peak, sharp angular tail lights, Hypersonic red paint. Accurate body shape and proportions for this exact model and generation. Exact side elevation, car facing LEFT (nose on the left), centred, wheels on the road, the car spans about 80% of the image width. Match the reference image's style exactly: chunky visible pixels, retro 16-bit/8-bit game palette, the same coastal road scene behind the car - grey asphalt foreground, metal guardrail, blue sea, green hills/mountains on the left, bright blue sky with white pixel clouds. Same framing and lighting as the reference. No text, no logos, no watermark.",
+      "reference_image": "reference/honda-s2000-reference.jpg",
+      "generated_size": "1152x864",
+      "post_process": "crop 1080x720 at (36,90), nearest-neighbour resize to 960x640"
+    },
+    "Nissan Qashqai e-POWER (2022)": {
+      "file": "nissan-qashqai-e-power-j12-2022.png",
+      "name": "Nissan Qashqai e-POWER (2022)",
+      "slug": "nissan-qashqai-e-power-j12-2022",
+      "prompt": "8-bit pixel-art side profile of a 2022 Nissan Qashqai J12 e-POWER compact crossover SUV, V-motion grille, floating roof two-tone, grey paint with black roof. Accurate body shape and proportions for this exact model and generation. Exact side elevation, car facing LEFT (nose on the left), centred, wheels on the road, the car spans about 80% of the image width. Match the reference image's style exactly: chunky visible pixels, retro 16-bit/8-bit game palette, the same coastal road scene behind the car - grey asphalt foreground, metal guardrail, blue sea, green hills/mountains on the left, bright blue sky with white pixel clouds. Same framing and lighting as the reference. No text, no logos, no watermark.",
+      "reference_image": "reference/honda-s2000-reference.jpg",
+      "generated_size": "1152x864",
+      "post_process": "crop 1080x720 at (36,90), nearest-neighbour resize to 960x640"
+    },
+    "BMW 330e (2020)": {
+      "file": "bmw-330e-g20-2020.png",
+      "name": "BMW 330e (2020)",
+      "slug": "bmw-330e-g20-2020",
+      "prompt": "8-bit pixel-art side profile of a 2020 BMW 330e G20 plug-in hybrid four-door sedan, large kidney grille, Portimao blue paint. Accurate body shape and proportions for this exact model and generation. Exact side elevation, car facing LEFT (nose on the left), centred, wheels on the road, the car spans about 80% of the image width. Match the reference image's style exactly: chunky visible pixels, retro 16-bit/8-bit game palette, the same coastal road scene behind the car - grey asphalt foreground, metal guardrail, blue sea, green hills/mountains on the left, bright blue sky with white pixel clouds. Same framing and lighting as the reference. No text, no logos, no watermark.",
+      "reference_image": "reference/honda-s2000-reference.jpg",
+      "generated_size": "1152x864",
+      "post_process": "crop 1080x720 at (36,90), nearest-neighbour resize to 960x640"
+    },
+    "Porsche 918 Spyder (2013)": {
+      "file": "porsche-918-spyder-2013.png",
+      "name": "Porsche 918 Spyder (2013)",
+      "slug": "porsche-918-spyder-2013",
+      "prompt": "8-bit pixel-art side profile of a 2013 Porsche 918 Spyder mid-engined hybrid hypercar roadster, low curvy body, top-exit exhausts behind seats, liquid metal silver paint. Accurate body shape and proportions for this exact model and generation. Exact side elevation, car facing LEFT (nose on the left), centred, wheels on the road, the car spans about 80% of the image width. Match the reference image's style exactly: chunky visible pixels, retro 16-bit/8-bit game palette, the same coastal road scene behind the car - grey asphalt foreground, metal guardrail, blue sea, green hills/mountains on the left, bright blue sky with white pixel clouds. Same framing and lighting as the reference. No text, no logos, no watermark.",
+      "reference_image": "reference/honda-s2000-reference.jpg",
+      "generated_size": "1152x864",
+      "post_process": "crop 1080x720 at (36,90), nearest-neighbour resize to 960x640"
+    }
+  }
+}
