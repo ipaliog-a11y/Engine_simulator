@@ -1436,10 +1436,12 @@ How fuel is added has changed over the decades: a <b>carburettor</b> uses the su
 <div class="guide-body" data-gk="inductionPhys">
 Manifold pressure is a state with a time constant: it fills toward the target set by throttle, rpm and boost at a rate set by the intake system's response (ITBs fastest, small carburettors slowest). Throttling costs pumping work, charged as
 <span class="geq">PMEP<sub>intake</sub> = 0.9 bar × (1 − p<sub>man</sub>)</span>
-at a closed throttle, which is engine braking. The metering accuracy of each system scales the fuel actually needed (a carburettor or mechanical injection delivers about 7–12% more fuel than the engine needs).
+at a closed throttle, which is engine braking. The metering accuracy of each system scales the fuel actually needed (a carburettor or mechanical injection delivers about 7–12% more fuel than the engine needs).<br>A carburettor's venturi costs the charge the pressure it drops, which goes with the square of the flow:
+<span class="geq">Δp = 5.08 kPa × (Q / Q<sub>rated</sub>)²</span>
+Carburettors are rated by the air they pass at 1.5 inHg (5.08 kPa). This one is sized by the makers' rule, CFM = CID × rpm × 0.85 / 3456 at the redline (Holley), so it drops about 5% of the charge at full revs and almost nothing low down. Injection has no venturi.
 </div>
 <div class="guide-limit" data-gk="inductionLimit">
-Limit: the induction systems' flow and response factors are hand-set to real relative behaviour, not derived from their geometry. The air filter's restriction is derived (build 210): its media by Darcy's law, its housing by its velocity head (<a data-gp="parts">Designing your own parts</a>).
+Limit: the induction systems' response, metering and idle factors are hand-set to real relative behaviour. Every carburettor is sized by the same rule, so a one-barrel breathes like a four-barrel at full throttle, and the throttle plates of injection, wide open, are left out. The air filter's restriction is derived (build 210): its media by Darcy's law, its housing by its velocity head (<a data-gp="parts">Designing your own parts</a>).
 </div>
 </div>
 <div class="guide-see">See also: <a data-gp="airpath">The air path</a> · <a data-gp="fuelmap">Fuel, injection &amp; the fuel map</a> · <a data-gp="friction">Friction, oil &amp; pumping</a></div>
@@ -5104,20 +5106,19 @@ function deriveGasDynamics(){
   e.egtPeak=T-273;
 }
 // ================================================================================================
-// Induction / metering system. flowTop = top-end breathing adjustment (airflow: restrictive
-// carbs choke up top, ITB/sidedraft/mech-injection breathe best). flowLow = low-rpm effect
-// (small carbs keep intake velocity; race setups sacrifice low-end plenum). metering = AFR
+// Induction / metering system. Until build 244 each also had flowTop and flowLow, a fitted top-end and low-rpm VE ramp;
+// a carburettor's restriction is now its venturi (carbDp, src/js/parts.js). metering = AFR
 // precision → efficiency (EFI holds optimal AFR everywhere; carbs/mech run rich & waste
 // fuel). resp = manifold response for the dynamic model. idle = idle-rpm penalty. di =
 // whether direct injection is available. Values chosen to reflect real relative behaviour.
 const INTAKE_SYS={
-  carb1:    {label:'1-BBL CARB',      flowTop:-0.16,flowLow:+0.03,metering:0.90,resp:0.90,idle:0,  di:false},
-  carb2:    {label:'2-BBL CARB',      flowTop:-0.09,flowLow:+0.01,metering:0.92,resp:0.95,idle:0,  di:false},
-  carb4:    {label:'4-BBL CARB',      flowTop:-0.03,flowLow:-0.02,metering:0.93,resp:1.00,idle:40, di:false},
-  sidedraft:{label:'SIDEDRAFT CARBS', flowTop:+0.06,flowLow:-0.05,metering:0.92,resp:1.15,idle:250,di:false},
-  mech:     {label:'MECH INJECTION',  flowTop:+0.05,flowLow:-0.07,metering:0.89,resp:1.10,idle:300,di:false},
-  efi:      {label:'EFI (SINGLE TB)', flowTop:0.00, flowLow:0.00, metering:1.00,resp:1.00,idle:0,  di:true},
-  itb:      {label:'EFI (ITB)',       flowTop:+0.08,flowLow:-0.03,metering:1.00,resp:1.25,idle:180,di:true}
+  carb1:    {label:'1-BBL CARB',       metering:0.90,resp:0.90,idle:0,  di:false},
+  carb2:    {label:'2-BBL CARB',      metering:0.92,resp:0.95,idle:0,  di:false},
+  carb4:    {label:'4-BBL CARB',      metering:0.93,resp:1.00,idle:40, di:false},
+  sidedraft:{label:'SIDEDRAFT CARBS', metering:0.92,resp:1.15,idle:250,di:false},
+  mech:     {label:'MECH INJECTION',  metering:0.89,resp:1.10,idle:300,di:false},
+  efi:      {label:'EFI (SINGLE TB)', metering:1.00,resp:1.00,idle:0,  di:true},
+  itb:      {label:'EFI (ITB)',       metering:1.00,resp:1.25,idle:180,di:true}
 };
 // Air filter (build 210): the factory systems, as what they restrict at the engine's peak flow. Until build 210 each was
 // a VE loss fitted in proportion to rpm (stock -4% at the redline, stacks +2%); now the restriction is the filter's
@@ -6200,8 +6201,8 @@ const GUIDE_I18N={
   vvtGame:{el:"Βάλε το <b>ΜΕΤΑΒΛΗΤΟΣ ΧΡΟΝΙΣΜΟΣ</b> σε VVT στην καρτέλα ΚΙΝΗΤΗΡΑΣ. Αξίζει περισσότερο σε έναν μεγάλο εκκεντροφόρο: φέρνει πίσω τις χαμηλές που του πήρε ο εκκεντροφόρος χωρίς να χάσει τις ψηλές."},
   vvtPhys:{el:"Ο χρονιστής εδώ μπορεί να προπορεύσει τον λοβό εισαγωγής ως και <b>45 μοίρες στροφάλου</b>, που μετακινεί το σημείο κλεισίματος της εισαγωγής κατά όλο το ποσό. Στις χαμηλές στροφές το φορτίο έχει χρόνο να σπρωχτεί πίσω έξω πριν κλείσει η βαλβίδα, οπότε αυτό που παγιδεύεται είναι ο όγκος του κυλίνδρου στο IVC, όχι στο BDC: <span class=\"geq\">ποσοστό παγίδευσης ≈ V(IVC) / V(BDC) &nbsp; (από τον μηχανισμό στροφάλου-διωστήρα)</span> Στις ψηλές στροφές η ορμή της στήλης αέρα συνεχίζει να γεμίζει τον κύλινδρο μετά το BDC. Το μοντέλο ολοκληρώνει αυτόν τον χρόνο εισαγωγής για κάθε κινητήρα (δες <a data-gp=\"waves\">Κύματα στους αγωγούς εισαγωγής</a>) και πινακοποιεί το γέμισμα σε κάθε ταχύτητα για κάθε θέση του χρονιστή, και μετά τρέχει, σε πλήρες φορτίο, τη φάση που γεμίζει καλύτερα: αυτό που κάνει η βαθμονόμηση τέρμα γκαζιού μιας ECU."},
   inductionReal:{el:"Ένας βενζινοκινητήρας ελέγχεται στερώντας του αέρα. Η <b>πεταλούδα</b>, ένα κλαπέτο στην εισαγωγή, κλείνει για να πνίξει τη ροή· η πίεση στην πολλαπλή πίσω της πέφτει, κάθε κύλινδρος γεμίζει με πιο αραιό αέρα, και η ισχύς πέφτει. Πάτα τέρμα το πεντάλ και το κλαπέτο στέκεται με την κόψη.<br> Ο τρόπος που προστίθεται το καύσιμο έχει αλλάξει με τις δεκαετίες: ένα <b>καρμπιρατέρ</b> χρησιμοποιεί την αναρρόφηση του αέρα μέσα από ένα βεντούρι για να τραβήξει καύσιμο· ο <b>ψεκασμός</b> (EFI) ψεκάζει μια μετρημένη ποσότητα με έλεγχο από υπολογιστή· οι <b>ατομικές πεταλούδες</b> (ITB) δίνουν σε κάθε κύλινδρο το δικό του κλαπέτο, για ακαριαία απόκριση και ουρλιαχτό εισαγωγής αγωνιστικού."},
-  inductionPhys:{el:"Η πίεση πολλαπλής είναι μια κατάσταση με χρονική σταθερά: γεμίζει προς τον στόχο που ορίζουν γκάζι, στροφές και boost με ρυθμό που ορίζει η απόκριση του συστήματος εισαγωγής (οι ITB οι πιο γρήγορες, τα μικρά καρμπιρατέρ τα πιο αργά). Το στραγγάλισμα κοστίζει έργο άντλησης, που χρεώνεται ως <span class=\"geq\">PMEP<sub>intake</sub> = 0.9 bar × (1 − p<sub>man</sub>)</span> με κλειστή πεταλούδα, και αυτό είναι το φρένο κινητήρα. Η ακρίβεια δοσομέτρησης κάθε συστήματος κλιμακώνει το καύσιμο που πραγματικά χρειάζεται (ένα καρμπιρατέρ ή ο μηχανικός ψεκασμός δίνει περίπου 7–12% περισσότερο καύσιμο απ' όσο χρειάζεται ο κινητήρας)."},
-  inductionLimit:{el:"Όριο: οι συντελεστές ροής και απόκρισης των συστημάτων εισαγωγής έχουν οριστεί με το χέρι σύμφωνα με την πραγματική σχετική συμπεριφορά, δεν παράγονται από τη γεωμετρία τους. Ο περιορισμός του φίλτρου αέρα παράγεται (build 210): του υλικού με τον νόμο του Darcy, του κελύφους από τη δυναμική πίεση της ροής (<a data-gp=\"parts\">Σχεδίασε τα δικά σου εξαρτήματα</a>)."},
+  inductionPhys:{el:"Η πίεση πολλαπλής είναι μια κατάσταση με χρονική σταθερά: γεμίζει προς τον στόχο που ορίζουν γκάζι, στροφές και boost με ρυθμό που ορίζει η απόκριση του συστήματος εισαγωγής (οι ITB οι πιο γρήγορες, τα μικρά καρμπιρατέρ τα πιο αργά). Το στραγγάλισμα κοστίζει έργο άντλησης, που χρεώνεται ως <span class=\"geq\">PMEP<sub>intake</sub> = 0.9 bar × (1 − p<sub>man</sub>)</span> με κλειστή πεταλούδα, και αυτό είναι το φρένο κινητήρα. Η ακρίβεια δοσομέτρησης κάθε συστήματος κλιμακώνει το καύσιμο που πραγματικά χρειάζεται (ένα καρμπιρατέρ ή ο μηχανικός ψεκασμός δίνει περίπου 7–12% περισσότερο καύσιμο απ' όσο χρειάζεται ο κινητήρας).<br>Ο διαχύτης (βεντούρι) ενός καρμπιρατέρ κοστίζει στο φορτίο την πίεση που ρίχνει, η οποία πάει με το τετράγωνο της ροής: <span class=\"geq\">Δp = 5.08 kPa × (Q / Q<sub>rated</sub>)²</span> Τα καρμπιρατέρ βαθμολογούνται με τον αέρα που περνούν στα 1.5 inHg (5.08 kPa). Αυτό εδώ διαστασιολογείται με τον κανόνα των κατασκευαστών, CFM = CID × rpm × 0.85 / 3456 στον κόφτη (Holley), οπότε ρίχνει περίπου 5% του φορτίου στις πλήρεις στροφές και σχεδόν τίποτα χαμηλά. Ο ψεκασμός δεν έχει βεντούρι."},
+  inductionLimit:{el:"Όριο: οι συντελεστές απόκρισης, δοσομέτρησης και ρελαντί των συστημάτων εισαγωγής έχουν οριστεί με το χέρι σύμφωνα με την πραγματική σχετική συμπεριφορά. Κάθε καρμπιρατέρ διαστασιολογείται με τον ίδιο κανόνα, οπότε ένα μονό αναπνέει όπως ένα τετραπλό με γκάζι στο τέρμα, και οι πεταλούδες του ψεκασμού, ανοιχτές, παραλείπονται. Ο περιορισμός του φίλτρου αέρα παράγεται (build 210): του υλικού με τον νόμο του Darcy, του κελύφους από τη δυναμική πίεση της ροής (<a data-gp=\"parts\">Σχεδίασε τα δικά σου εξαρτήματα</a>)."},
   fuelmapReal:{el:"Ο υπολογιστής ενός σύγχρονου κινητήρα, η <b>ECU</b>, βρίσκει πόσο καύσιμο να ψεκάσει από έναν <b>χάρτη</b>: έναν πίνακα με τις στροφές στη μία πλευρά και το φορτίο στην άλλη. Σε χαλαρή πορεία με μικρό φορτίο στοχεύει ακριβώς στο στοιχειομετρικό, όπου δουλεύει ο καταλύτης και δεν σπαταλιέται καύσιμο. Σε πλήρες φορτίο προσθέτει καύσιμο: ένα πλουσιότερο μείγμα βγάζει λίγη περισσότερη ισχύ και, κυρίως, δροσίζει τα καυσαέρια και τα έμβολα.<br> Ο <b>ψεκασμός στην πολλαπλή</b> ψεκάζει στην πίσω πλευρά της βαλβίδας εισαγωγής. Ο <b>άμεσος ψεκασμός</b> ψεκάζει μέσα στον ίδιο τον κύλινδρο, όπου το καύσιμο που εξατμίζεται δροσίζει το φορτίο και κάνει τα πειράκια λιγότερο πιθανά."},
   fuelmapPhys:{el:"Ο εργοστασιακός χάρτης σε αυτό το μοντέλο, για έναν κινητήρα με σπινθήρα, σε λ: <span class=\"geq\">λ = 1.02 − 0.16 · φορτίο − 0.07 · (boost/1.2) − 0.015 · (κοντά στο όριο στροφών), &nbsp; 0.78 ≤ λ ≤ 1.05</span> δηλαδή περίπου λ 1.0 στην πορεία και 0.86 με τέρμα γκάζι, πλουσιότερο με boost για να κρατηθεί η θερμοκρασία καυσαερίων. Ο χάρτης ενός πετρελαιοκινητήρα πηγαίνει από λ 3.4 σε μικρό φορτίο ως το όριο καπνού 1.20 με τέρμα πεντάλ, με όσο αέρα έχει σε εκείνες τις στροφές.<br> Ο άμεσος ψεκασμός εξατμίζει το καύσιμο μέσα στον κύλινδρο, παίρνοντας τη λανθάνουσα θερμότητά του από το φορτίο: <i>ΔT = h<sub>fg</sub> · (F/A) / c<sub>p</sub></i>, με h<sub>fg</sub> 350 kJ/kg για τη βενζίνη. Οι αλκοόλες δροσίζουν πολύ περισσότερο (E85 15 °C, μεθανόλη 25 °C σε αυτό το μοντέλο), που είναι μεγάλο μέρος της αντοχής τους στα πειράκια."},
   ignitionReal:{el:"Ένα μπουζί ανάβει το μείγμα, αλλά η φλόγα χρειάζεται χρόνο για να απλωθεί στον θάλαμο, ένα ή δύο χιλιοστά του δευτερολέπτου. Έτσι ο σπινθήρας δίνεται <b>πριν</b> το έμβολο φτάσει στην κορυφή (<b>προπορεία</b>), χρονισμένος ώστε η πίεση να κορυφωθεί λίγο μετά το άνω νεκρό σημείο, όταν μπορεί να σπρώξει το έμβολο κάτω πιο δυνατά. Πολύ λίγη προπορεία σπαταλά την καύση σε ένα έμβολο που ήδη κατεβαίνει· πάρα πολλή παλεύει με το έμβολο όσο ανεβαίνει και προσκαλεί πειράκια.<br> Το σύστημα ανάφλεξης πρέπει επίσης να ξαναφορτίζει τον πολλαπλασιαστή του ανάμεσα στους σπινθήρες. Ένας παλιός <b>διανομέας</b> με έναν πολλαπλασιαστή μένει από χρόνο στις ψηλές στροφές και αστοχεί· ο <b>πολλαπλασιαστής ανά μπουζί</b> δίνει σε κάθε κύλινδρο τον δικό του."},
@@ -7894,13 +7895,12 @@ function buildEngineCore(prevStoich,quiet){
   if(!sys.di)engine.injector='port';          // carbs / mechanical injection: no DI
   engine.canAutoAFR=(engine.intakeSys==='efi'||engine.intakeSys==='itb');   // only EFI has an ECU fuel map
   if(!engine.canAutoAFR)engine.afrMode='fixed';   // carbs / mechanical injection: mixture is mechanical
-  // Catalytic converter: conversion efficiency + a small exhaust back-pressure that costs
-  // top-end breathing (folded into the top-end flow term, like an extra restrictive filter).
+  // Catalytic converter: conversion efficiency, and its brick as a porous plug in the exhaust (backPressureBar). Until
+  // build 244 it was also taken off the intake's top-end flow, a second time.
   const catp=CAT[engine.cat]||CAT.stock;
   engine.catConv=catp.conv;engine.catRestrict=catp.restrict;
-  engine.inductionFlowTop=sys.flowTop-catp.restrict;
   deriveFilter();   // the air filter's restriction, from its media and housing (build 210)
-  engine.inductionFlowLow=sys.flowLow;
+  deriveCarb();     // a carburettor's venturi, sized to the engine (build 244)
   engine.meteringEff=sys.metering;            // AFR precision → thermal efficiency
   engine.intakeRespK=sys.resp;                // manifold fill speed (dynamic model)
   engine.idleRpmEff=IDLE_RPM+idlePenalty+sys.idle;   // wild cam / race intake idle higher & lumpier
@@ -8363,11 +8363,10 @@ function computeVE(rpm,map){
     const demand=(engine.displacement_L/1000)*ve*(rpm/60*engine.chargesPerRev)*rho;
     if(demand>engine.chokeFlow_kgs)ve*=engine.chokeFlow_kgs/demand;
   }
-  // Induction system: restriction/flow weighted by airflow demand (rpm).
-  const breathe=clamp(rpm/engine.redline,0,1);
-  ve*=1+engine.inductionFlowTop*breathe+engine.inductionFlowLow*(1-breathe);
-  // The air filter (build 210): its pressure drop at the flow it passes leaves the charge that much thinner.
-  ve*=1-filterDp(airFlowM3s(rpm,map,ve))/101325;
+  // The air filter (build 210) and a carburettor's venturi (build 244): the pressure each drops at the flow it passes
+  // leaves the charge that much thinner.
+  const Q=airFlowM3s(rpm,map,ve);
+  ve*=1-(filterDp(Q)+carbDp(Q))/101325;
   ve*=(0.97+0.03*clamp(map/engine.mapMax,0,1.2));
   // ---- derived valvetrain limits (see PHYSICS CORE) ----
   // These replace a valve-float term that only fired ABOVE the redline and so never ran inside the
@@ -19022,6 +19021,20 @@ function filterQref(e){
   return (e.displacement_L/1000)*(best/60)*(e.chargesPerRev||0.5)*0.95;
 }
 const filterDp=Q=>{const f=engine.filt;return f?f.a*Q+f.b*Q*Q:0;};   // Pa
+// A carburettor's venturi (build 244). Until build 244 every induction system scaled the charge by a fitted ramp from
+// idle to the redline (a 4-barrel −3% at the redline, a 1-barrel −16%, mechanical injection +5%, ITBs +8%), with the
+// catalyst's −2 to −5% folded in. A carburettor's restriction is its venturis, and carburettors are rated by it: the
+// air they pass at a set pressure drop, 1.5 inHg (5.08 kPa) for a four-barrel (Holley's and the industry's rating;
+// one- and two-barrels are rated at 3.0 inHg, the same venturi measured harder). A venturi's drop goes with the square
+// of the flow. No preset gives its carburettor's rating, so it is sized by the makers' rule, CFM = CID x rpm x VE /
+// 3456 at the redline with VE 0.85 (Holley), every type at the 1.5 inHg rating. Injection (single throttle, ITBs or
+// mechanical) has no venturi; its throttle plates wide open are left out, as before.
+const CARB_DP_REF=5080;   // Pa, 1.5 inHg
+const carbDp=Q=>{const r=engine.carbQref;return r>0?CARB_DP_REF*(Q/r)*(Q/r):0;};   // Pa
+function deriveCarb(){
+  const e=engine,carb={carb1:1,carb2:1,carb4:1,sidedraft:1}[e.intakeSys];
+  e.carbQref=carb?(e.displacement_L/1000)*(e.redline/60)*(e.chargesPerRev||0.5)*0.85:0;   // m3/s at its rating
+}
 // The filter's coefficients (a: Pa per m3/s, the media; b: Pa per (m3/s)^2, the housing), from a designed filter or a
 // factory one sized to this engine's full flow.
 function deriveFilter(){

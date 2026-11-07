@@ -71,6 +71,20 @@ function filterQref(e){
   return (e.displacement_L/1000)*(best/60)*(e.chargesPerRev||0.5)*0.95;
 }
 const filterDp=Q=>{const f=engine.filt;return f?f.a*Q+f.b*Q*Q:0;};   // Pa
+// A carburettor's venturi (build 244). Until build 244 every induction system scaled the charge by a fitted ramp from
+// idle to the redline (a 4-barrel −3% at the redline, a 1-barrel −16%, mechanical injection +5%, ITBs +8%), with the
+// catalyst's −2 to −5% folded in. A carburettor's restriction is its venturis, and carburettors are rated by it: the
+// air they pass at a set pressure drop, 1.5 inHg (5.08 kPa) for a four-barrel (Holley's and the industry's rating;
+// one- and two-barrels are rated at 3.0 inHg, the same venturi measured harder). A venturi's drop goes with the square
+// of the flow. No preset gives its carburettor's rating, so it is sized by the makers' rule, CFM = CID x rpm x VE /
+// 3456 at the redline with VE 0.85 (Holley), every type at the 1.5 inHg rating. Injection (single throttle, ITBs or
+// mechanical) has no venturi; its throttle plates wide open are left out, as before.
+const CARB_DP_REF=5080;   // Pa, 1.5 inHg
+const carbDp=Q=>{const r=engine.carbQref;return r>0?CARB_DP_REF*(Q/r)*(Q/r):0;};   // Pa
+function deriveCarb(){
+  const e=engine,carb={carb1:1,carb2:1,carb4:1,sidedraft:1}[e.intakeSys];
+  e.carbQref=carb?(e.displacement_L/1000)*(e.redline/60)*(e.chargesPerRev||0.5)*0.85:0;   // m3/s at its rating
+}
 // The filter's coefficients (a: Pa per m3/s, the media; b: Pa per (m3/s)^2, the housing), from a designed filter or a
 // factory one sized to this engine's full flow.
 function deriveFilter(){
