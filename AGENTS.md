@@ -63,6 +63,9 @@ node tools/build.mjs             # regenerate index.html from the merged src/
 node tools/stamp.mjs --check && node tools/build.mjs --check
 ```
 
+In `src/js/i18n.js`, keep both sides' entries, then run `node tools/split-i18n.mjs`: it puts any entries that arrived
+joined on one line back on lines of their own, and fails if that would change a single translation.
+
 In `CHANGELOG.md`, keep both entries, put yours on top, and correct the build number in your heading to the new
 stamp. Then rerun the tests your change touches, and push.
 
@@ -170,3 +173,24 @@ The owner creates releases and tags by hand. **Do not** create tags or releases,
 - If a requirement is ambiguous, or a change would move many cars' numbers, ask the owner before building it.
 - Write down what you found, in the code comment, the CHANGELOG or the PR, so the next session doesn't have to find it
   again.
+
+## 10. Keeping the context small
+
+Each call an agent makes re-reads its whole conversation, so anything that enters the context is paid for once to
+store, then again on every later call. A session measured on builds 238–244 (one session for all six) spent 67% of its
+cost re-reading, 20% storing new context and 13% writing output. Its context reached ~380k tokens, so every call, even
+one that only said "still waiting", re-read all of it.
+
+- **One session per pull request.** Open the PR, see CI through, then start the next build in a fresh session. Do not
+  start a second build, or watch a second PR, in a session that already carries one.
+- **No waits over an hour inside a session.** The cache lasts an hour; the first call after a longer wait stores the
+  whole context again. Leave the full suite (~80 minutes) to CI's shards and run only the tests for what you touched.
+- **Check CI once,** when it should be done (~45 minutes), rather than reacting to every shard.
+- **Look before you read.** `git diff --stat` first, then only the files you need. `index.html`'s diff is hidden
+  (`.gitattributes`; `git diff --text -- index.html` shows it), and `.ignore` keeps searches off `index.html` and
+  `_v_late6.html`, which only repeat `src/`.
+- **Read large files in parts:** `head -80 CHANGELOG.md` for the last builds, and `grep -n` into `README.md`,
+  `src/html/guide.html` (by `data-gk`) and `src/js/i18n.js` (by key), instead of opening them whole.
+- **`src/js/i18n.js` holds one entry per line.** Add each new string on a line of its own; never append it to an
+  existing line (`node tools/split-i18n.mjs` fixes one that was). `test156` checks this. A diff or search that touches
+  a line prints all of it, and until build 241 one line held a whole build's strings, 31,380 characters.

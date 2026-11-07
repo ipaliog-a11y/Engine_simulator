@@ -1,0 +1,5 @@
+# index.html is src/ joined by tools/build.mjs (see AGENTS.md). Its diff repeats the src/ diff, so it is hidden:
+#   -diff                     git diff / git show print one line for it ("Binary files differ"), not ~200 KB
+#   linguist-generated=true   GitHub folds it in a pull request and leaves it out of the language count
+# Merging is unchanged. To read its diff anyway: git diff --text -- index.html
+index.html -diff linguist-generated=true
