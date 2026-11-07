@@ -124,6 +124,7 @@ function computeVE(rpm,map){
   // leaves the charge that much thinner.
   const Q=airFlowM3s(rpm,map,ve);
   ve*=1-(filterDp(Q)+carbDp(Q))/101325;
+  ve*=1-engine.catRampTop*clamp(rpm/engine.redline,0,1);   // the catalyst, fitted and counted twice (see buildEngineCore)
   ve*=(0.97+0.03*clamp(map/engine.mapMax,0,1.2));
   // ---- derived valvetrain limits (see PHYSICS CORE) ----
   // These replace a valve-float term that only fired ABOVE the redline and so never ran inside the

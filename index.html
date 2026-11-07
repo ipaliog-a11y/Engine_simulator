@@ -7895,10 +7895,13 @@ function buildEngineCore(prevStoich,quiet){
   if(!sys.di)engine.injector='port';          // carbs / mechanical injection: no DI
   engine.canAutoAFR=(engine.intakeSys==='efi'||engine.intakeSys==='itb');   // only EFI has an ECU fuel map
   if(!engine.canAutoAFR)engine.afrMode='fixed';   // carbs / mechanical injection: mixture is mechanical
-  // Catalytic converter: conversion efficiency, and its brick as a porous plug in the exhaust (backPressureBar). Until
-  // build 244 it was also taken off the intake's top-end flow, a second time.
+  // Catalytic converter: conversion efficiency, and its brick as a porous plug in the exhaust (backPressureBar). It is
+  // ALSO still taken off the charge as a fitted ramp to the redline (up to 5% for a stock cat), which counts it twice.
+  // Taking that out (build 244 tried) lifts nearly every factory engine 5-6%, so it has been holding down an error
+  // elsewhere; it is left for the audit of fitted parts, named, rather than removed blind.
   const catp=CAT[engine.cat]||CAT.stock;
   engine.catConv=catp.conv;engine.catRestrict=catp.restrict;
+  engine.catRampTop=catp.restrict;
   deriveFilter();   // the air filter's restriction, from its media and housing (build 210)
   deriveCarb();     // a carburettor's venturi, sized to the engine (build 244)
   engine.meteringEff=sys.metering;            // AFR precision → thermal efficiency
@@ -8367,6 +8370,7 @@ function computeVE(rpm,map){
   // leaves the charge that much thinner.
   const Q=airFlowM3s(rpm,map,ve);
   ve*=1-(filterDp(Q)+carbDp(Q))/101325;
+  ve*=1-engine.catRampTop*clamp(rpm/engine.redline,0,1);   // the catalyst, fitted and counted twice (see buildEngineCore)
   ve*=(0.97+0.03*clamp(map/engine.mapMax,0,1.2));
   // ---- derived valvetrain limits (see PHYSICS CORE) ----
   // These replace a valve-float term that only fired ABOVE the redline and so never ran inside the
@@ -19022,8 +19026,8 @@ function filterQref(e){
 }
 const filterDp=Q=>{const f=engine.filt;return f?f.a*Q+f.b*Q*Q:0;};   // Pa
 // A carburettor's venturi (build 244). Until build 244 every induction system scaled the charge by a fitted ramp from
-// idle to the redline (a 4-barrel −3% at the redline, a 1-barrel −16%, mechanical injection +5%, ITBs +8%), with the
-// catalyst's −2 to −5% folded in. A carburettor's restriction is its venturis, and carburettors are rated by it: the
+// idle to the redline (a 4-barrel −3% at the redline, a 1-barrel −16%, mechanical injection +5%, ITBs +8%). (The
+// catalyst's −2 to −5% rode on the same ramp and still does, for now: see buildEngineCore.) A carburettor's restriction is its venturis, and carburettors are rated by it: the
 // air they pass at a set pressure drop, 1.5 inHg (5.08 kPa) for a four-barrel (Holley's and the industry's rating;
 // one- and two-barrels are rated at 3.0 inHg, the same venturi measured harder). A venturi's drop goes with the square
 // of the flow. No preset gives its carburettor's rating, so it is sized by the makers' rule, CFM = CID x rpm x VE /

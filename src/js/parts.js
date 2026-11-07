@@ -72,8 +72,8 @@ function filterQref(e){
 }
 const filterDp=Q=>{const f=engine.filt;return f?f.a*Q+f.b*Q*Q:0;};   // Pa
 // A carburettor's venturi (build 244). Until build 244 every induction system scaled the charge by a fitted ramp from
-// idle to the redline (a 4-barrel −3% at the redline, a 1-barrel −16%, mechanical injection +5%, ITBs +8%), with the
-// catalyst's −2 to −5% folded in. A carburettor's restriction is its venturis, and carburettors are rated by it: the
+// idle to the redline (a 4-barrel −3% at the redline, a 1-barrel −16%, mechanical injection +5%, ITBs +8%). (The
+// catalyst's −2 to −5% rode on the same ramp and still does, for now: see buildEngineCore.) A carburettor's restriction is its venturis, and carburettors are rated by it: the
 // air they pass at a set pressure drop, 1.5 inHg (5.08 kPa) for a four-barrel (Holley's and the industry's rating;
 // one- and two-barrels are rated at 3.0 inHg, the same venturi measured harder). A venturi's drop goes with the square
 // of the flow. No preset gives its carburettor's rating, so it is sized by the makers' rule, CFM = CID x rpm x VE /

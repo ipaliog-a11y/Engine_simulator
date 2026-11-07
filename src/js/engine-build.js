@@ -239,10 +239,13 @@ function buildEngineCore(prevStoich,quiet){
   if(!sys.di)engine.injector='port';          // carbs / mechanical injection: no DI
   engine.canAutoAFR=(engine.intakeSys==='efi'||engine.intakeSys==='itb');   // only EFI has an ECU fuel map
   if(!engine.canAutoAFR)engine.afrMode='fixed';   // carbs / mechanical injection: mixture is mechanical
-  // Catalytic converter: conversion efficiency, and its brick as a porous plug in the exhaust (backPressureBar). Until
-  // build 244 it was also taken off the intake's top-end flow, a second time.
+  // Catalytic converter: conversion efficiency, and its brick as a porous plug in the exhaust (backPressureBar). It is
+  // ALSO still taken off the charge as a fitted ramp to the redline (up to 5% for a stock cat), which counts it twice.
+  // Taking that out (build 244 tried) lifts nearly every factory engine 5-6%, so it has been holding down an error
+  // elsewhere; it is left for the audit of fitted parts, named, rather than removed blind.
   const catp=CAT[engine.cat]||CAT.stock;
   engine.catConv=catp.conv;engine.catRestrict=catp.restrict;
+  engine.catRampTop=catp.restrict;
   deriveFilter();   // the air filter's restriction, from its media and housing (build 210)
   deriveCarb();     // a carburettor's venturi, sized to the engine (build 244)
   engine.meteringEff=sys.metering;            // AFR precision → thermal efficiency
