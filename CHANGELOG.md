@@ -20,6 +20,30 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 Working toward **v1.0 — every number derived, not fitted.**
 
+### The BMW M3 E30's engine is the 1986 car's: sport cam, no catalyst, its airbox (build 242)
+
+The owner asked whether the E30 M3 had a catalytic converter, and why it ran a race cam. It didn't, and it shouldn't.
+
+- **Catalyst: none.** The 1986 launch car made 147 kW / 200 PS at 6750 rpm and 240 Nm at 4750 without a catalyst.
+  The catalyst came to the German market in 1987 and cut it to 143 kW / 195 PS and 230 Nm (BMW Group Classic; ADAC).
+  The preset had no `cat` field, so it took the default STOCK catalyst.
+- **Cam: SPORT, not RACE.** The S14's stock intake cam is about 246 deg with 10.7 mm lift. This model's grades are
+  STOCK 220, SPORT 252 and RACE 284 deg, and 284 deg is Schrick's competition cam for the S14.
+- **Filter: STOCK.** The road car breathes through BMW's airbox and paper element (probable; marked `unsure`).
+- **Rating: 197.3 hp.** 200 PS is 197.3 mechanical hp, the unit every other preset uses. It was entered as 200.
+
+| | Before | After | BMW |
+|---|---|---|---|
+| Power | 220 hp at 7200 (+11.5%) | 239 hp at 7200 (+21.1%) | 197.3 hp at 6750 |
+| Torque | 221 Nm (−7.9%) | 240 Nm (0.0%) | 240 Nm at 4750 |
+
+The torque now matches exactly. The power reads further over, because the wrong cam and the catalyst had been
+cancelling part of a model error: the **missing top-end fade** that test60 has named for this engine since build 199.
+Its power keeps climbing to the 7250 rpm limiter, where the real S14 peaks at 6750 and falls away. That is the next
+build (243). The fingerprint moves only this engine and the M3 (E30) car built on it.
+
+Tests: test153 (new) checks the preset's sourced inputs, its torque within 5%, and its power inside test115's 25% band.
+
 ### The combustion engine's design as cards, with help and a live preview (build 239)
 
 Build 238 put the electric drive in cards. The combustion engine, about fifty fields in seven grids of bare values,
