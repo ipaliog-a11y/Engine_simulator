@@ -11,7 +11,7 @@
 //     bar at the bottom that opens.
 // Nothing here is physics. cfg.compute() returns what the preview shows, from the functions the build itself runs.
 // A new parameter is its field in the right card in src/shell.html and one entry in the form's field table; a new form
-// is a config (src/js/ev-designer.js, src/js/engine-designer.js). Classes are .evd-* for both: the styles are shared.
+// is a config (src/js/ev-designer.js, src/js/engine-designer.js, src/js/vehicle-designer.js). Classes are .evd-* for all.
 const DC_COLOURS={well:'#12121c',edge:'#26263a',edge2:'#3a3a55',dim:'#8a8aa6',green:'#00ff88',cyan:'#00ccff',yellow:'#ffcc00',red:'#ff4d5e',
   blue:'#3d7bff',copper:'#d9853b',steel:'#6b6b85',fg:'#d8d8e8'};
 const dcFmt=(x,d=0)=>(+x).toLocaleString('en-US',{maximumFractionDigits:d,minimumFractionDigits:d});
@@ -23,7 +23,9 @@ class DesignCards{
   // cfg: prefix, root, cards [{id,title,guide,viz,cap,vizH}], fields {id:{what,trade,adv,log}}, ticks(id), using(id,val),
   // choices(id) -> Map(value -> names), realHead, compute(), slow(res), active(), depFields, deltas, stats(res,d),
   // slowText(res,slow), curve(res), legend, limits(res), mini(res), summary(card,res), warnings(res), h1(), drawViz(dc,res),
-  // icons {card: fn(P,C)}, visible(f), helpEmpty, delay (ms after typing stops; 0 = next frame)
+  // icons {card: fn(P,C)}, visible(f), helpEmpty, delay (ms after typing stops; 0 = next frame), panel (the element whose
+  // width is narrow; default designPanel), live (a form that rebuilds on its fields' input events: the sliders and ticks
+  // send those events instead of calling the preview themselves)
   constructor(cfg){
     this.cfg=cfg;this.p=cfg.prefix;
     this.st={ready:false,card:cfg.cards[0].id,adv:false,help:null,res:null,prev:null,last:null,chips:'',mode:'',queued:0,timer:0,wait:0,slow:null};
@@ -32,10 +34,13 @@ class DesignCards{
   box(){return document.getElementById(this.cfg.root);}
   q(sel){const b=this.box();return b?[...b.querySelectorAll(sel)]:[];}
   // Narrow is the panel's width, as the stylesheet's container queries read it (700 px); hidden, the screen's.
-  narrow(){const p=document.getElementById('designPanel'),w=p?p.getBoundingClientRect().width:0;
+  narrow(){const p=document.getElementById(this.cfg.panel||'designPanel'),w=p?p.getBoundingClientRect().width:0;
     if(w>0)return w<=700;try{return matchMedia('(max-width:760px)').matches;}catch(e){return false;}}
   field(id){const el=document.getElementById(id);return el&&el.closest('.field');}
-  ctl(f){return f.querySelector('select,input:not([type=range]):not([type=hidden])');}
+  // A field's control: a box or a list, or a slider of its own (VEHICLE's GEARING), not the one a card adds beside a box.
+  ctl(f){return f.querySelector('select,input:not([type=range]):not([type=hidden])')||f.querySelector(':scope>input[type=range]');}
+  // Tell the form a control changed, as a person would (a live form rebuilds on input), or run the preview.
+  send(ctl,type){if(this.cfg.live||type==='change')ctl.dispatchEvent(new Event(type,{bubbles:true}));else this.changed(ctl.id,false);}
 
   // ---- building the cards around the fields (once) ----
   init(){
@@ -72,7 +77,7 @@ class DesignCards{
       '<section class="evd-panel"><h4 id="'+p+'H2"></h4><div class="evd-lims" id="'+p+'Lims"></div><div class="evd-verdict" id="'+p+'Verdict"></div></section>'+
       '<section class="evd-panel evd-helpbox" aria-live="polite"><h4 id="'+p+'H3"></h4><div class="evd-help" id="'+p+'Help"></div></section>';
     this.el('Mini').addEventListener('click',()=>{const o=this.el('Side').classList.toggle('open');this.el('Mini').setAttribute('aria-expanded',o);this.renderResults();});
-    box.addEventListener('input',e=>{if(e.target.matches('.evd-fields input[type=number]'))this.changed(e.target.id,false);});
+    box.addEventListener('input',e=>{if(e.target.matches('.evd-fields input[type=number], .evd-fields>.field>input[type=range]'))this.changed(e.target.id,false);});
     box.addEventListener('change',e=>{if(e.target.matches('.evd-fields input[type=number], .evd-fields select'))this.changed(e.target.id,true);});
     let wasNarrow=null;window.addEventListener('resize',()=>{const n=this.narrow();if(n!==wasNarrow){wasNarrow=n;this.layout();}this.drawViz();this.drawCurve();});
     // The pictures are drawn only while they are on screen. A canvas that comes into view (the ENGINE tab opened after a
@@ -103,11 +108,11 @@ class DesignCards{
       const rng=document.createElement('input');rng.type='range';rng.min=0;rng.max=1000;rng.step=1;rng.tabIndex=-1;rng.setAttribute('aria-hidden','true');
       rng.dataset.f=id;tr0.appendChild(rng);
       const toVal=k=>{const x=spec.log?lo*Math.pow(hi/lo,k/1000):lo+(hi-lo)*k/1000,s=+ctl.step||1;return Math.round(x/s)*s;};
-      rng.addEventListener('input',()=>{ctl.value=+toVal(+rng.value).toFixed(2);this.changed(id,false);});
-      rng.addEventListener('change',()=>{ctl.dispatchEvent(new Event('change',{bubbles:true}));});
+      rng.addEventListener('input',()=>{ctl.value=+toVal(+rng.value).toFixed(2);this.send(ctl,'input');});
+      rng.addEventListener('change',()=>this.send(ctl,'change'));
       for(const t of ticks){const b=document.createElement('button');b.type='button';b.className='evd-tick';b.style.left=pos(t.v)+'%';
         b.dataset.v=t.v;b.dataset.names=t.names.slice(0,6).join(', ')+(t.names.length>6?' +'+(t.names.length-6):'');
-        b.addEventListener('click',()=>{ctl.value=t.v;ctl.dispatchEvent(new Event('change',{bubbles:true}));});tr0.appendChild(b);}
+        b.addEventListener('click',()=>{ctl.value=t.v;if(this.cfg.live)this.send(ctl,'input');this.send(ctl,'change');});tr0.appendChild(b);}
       tr0._pos=pos;
       f.insertBefore(tr0,ctl);
     }
@@ -207,7 +212,7 @@ class DesignCards{
       const ctl=this.ctl(f),id=ctl?ctl.id:(f.querySelector('.val')||{}).id;
       if(ctl)f.classList.toggle('evd-off',ctl.disabled);   // a field the design has no use for: a turbo's on an engine without one
       f.classList.toggle('evd-hide',f.classList.contains('evd-adv')&&!st.adv);
-      const rng=f.querySelector('input[type=range]');
+      const rng=f.querySelector('.evd-track>input[type=range]');
       if(rng){const tr0=rng.parentElement,v=+ctl.value;rng.value=Math.round(Math.max(0,Math.min(100,tr0._pos(v)))*10);}
       const meta=document.getElementById(p+'Meta-'+id);if(!meta)return;
       let h='';
@@ -283,16 +288,19 @@ class DesignCards{
   drawViz(){const r=this.st.res;if(r&&this.cfg.drawViz)this.cfg.drawViz(this,r);}
   vizCanvas(card){const cv=this.el('Viz-'+card);return dcShown(cv)?cv:null;}
   // The curve: a (green, left axis) and b (yellow, right axis) against x, a0/b0 dotted beside them, one marked x.
+  // Optional: xStep (x rounded up to it; 2000 rpm), xLab(x) (the x labels; "4k"), yStep (50), shared (one scale for both).
   drawCurve(){
     const r=this.st.res,cv=this.el('Curve');if(!r||!dcShown(cv))return;
     const c=this.cfg.curve(r),C=DC_COLOURS,x=dcCtx(cv),W=cv.width,H=cv.height,pl=30,pr=30,pt=10,pb=18,iw=W-pl-pr,ih=H-pt-pb;
     const pts=c.pts,step=(m,s)=>Math.max(s,Math.ceil(m/s)*s);
-    const xMax=Math.ceil(c.xMax/2000)*2000,Am=step(Math.max(...pts.map(q=>Math.max(q.a,q.a0==null?0:q.a0))),50),Bm=step(Math.max(...pts.map(q=>Math.max(q.b,q.b0==null?0:q.b0))),50);
+    const xs=c.xStep||2000,ys=c.yStep||50,xMax=Math.ceil(c.xMax/xs)*xs,xLab=c.xLab||(v=>dcFmt(v/1000)+'k');
+    let Am=step(Math.max(...pts.map(q=>Math.max(q.a,q.a0==null?0:q.a0))),ys),Bm=step(Math.max(...pts.map(q=>Math.max(q.b,q.b0==null?0:q.b0))),ys);
+    if(c.shared)Am=Bm=Math.max(Am,Bm);
     const X=n=>pl+n/xMax*iw,YA=v=>pt+ih-v/Am*ih,YB=v=>pt+ih-v/Bm*ih;
     x.font='7px "Press Start 2P"';x.strokeStyle=C.edge;x.lineWidth=1;
     for(let i=0;i<=4;i++){const y=Math.round(pt+ih*i/4)+.5;x.beginPath();x.moveTo(pl,y);x.lineTo(W-pr,y);x.stroke();
       x.textAlign='right';x.fillStyle=C.green;x.fillText(dcFmt(Am*(1-i/4)),pl-3,y+3);x.textAlign='left';x.fillStyle=C.yellow;x.fillText(dcFmt(Bm*(1-i/4)),W-pr+3,y+3);}
-    x.fillStyle=C.dim;x.textAlign='center';for(let k=0;k<=4;k++)x.fillText(dcFmt(xMax*k/4000)+'k',X(xMax*k/4),H-5);
+    x.fillStyle=C.dim;x.textAlign='center';for(let k=0;k<=4;k++)x.fillText(xLab(xMax*k/4),X(xMax*k/4),H-5);
     if(c.mark&&c.mark.x<c.xMax){const mx=Math.round(X(c.mark.x))+.5;x.strokeStyle=C.edge2;x.setLineDash([3,3]);x.beginPath();x.moveTo(mx,pt);x.lineTo(mx,pt+ih);x.stroke();x.setLineDash([]);
       x.fillStyle=C.dim;x.fillText(c.mark.label,X(c.mark.x),pt+8);}
     const line=(k,Y,col,w,dash)=>{if(pts[0][k]==null)return;x.strokeStyle=col;x.lineWidth=w;x.setLineDash(dash||[]);x.beginPath();pts.forEach((q,i)=>{i?x.lineTo(X(q.x),Y(q[k])):x.moveTo(X(q.x),Y(q[k]));});x.stroke();x.setLineDash([]);};
