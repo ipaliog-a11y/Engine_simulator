@@ -19,7 +19,7 @@ Each new part is two builds:
 | # | Part | What the player sets | Physics it feeds | Fitted number to retire after |
 |---|---|---|---|---|
 | 1 | **Camshaft** (build 249) | duration, lift, lobe separation, lobe profile, phaser range | intake stroke (IVC), overlap, trapping, valve float, friction | `CAM.ampMul`, `idleRpm` (idle), `loWiden` |
-| 2 | Cylinder head & springs | valve diameter, port flow, spring seat load and rate | Mach index, valve mass and float, friction | `THROAT_RATIO`/`dOverB` per pack, the 3 spring steps |
+| 2 | **Cylinder head & springs** (build 250) | valve diameter, port flow, spring seat load and rate | Mach index, valve mass and float, friction | `THROAT_RATIO`/`dOverB` per pack, the 3 spring steps |
 | 3 | Chassis numbers | CG height, wheelbase, track, weight split, ballast | load transfer, roll, diff traction | class-median CG/track on real cars (sourced per car) |
 | 4 | Intercooler | core face, depth, fins, pipe length | effectiveness (NTU), charge volume, **pressure drop (new)** | `INTERCOOLER.eff` |
 | 5 | Turbocharger | compressor and turbine wheels, A/R, wastegate | compressor map, back-pressure, spool | `TURB_WHEEL`, `TURBO_CONFIG` multipliers |

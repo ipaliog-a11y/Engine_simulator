@@ -27,6 +27,18 @@
 // What the factory cams still carry as fitted grades (CAM.ampMul, loWiden, idleRpm: the airflow estimates, the idle) a
 // designed cam takes from the factory cam its duration and separation are nearest (camClass). Retiring them is the next
 // build (plans/parts-design-space.md).
+// The CYLINDER HEAD (build 250) is the valve and port the valvetrain model reads (deriveValvetrain), and its springs:
+//   intake valve   head diameter, mm, in place of the packing ratio of the head's layout (VALVE_PACK.dOverB); the
+//                  number of valves stays the engine's, and the exhaust valve is 0.83 of the intake (EV_RATIO);
+//   port throat    as a share of the valve, in place of THROAT_RATIO's 0.85: the flow area at full lift, Taylor's
+//                  plateau of the inlet flow coefficient (inletCi) and the factory runner matched to the port;
+//   springs        seat load (N) and rate (N/mm), in place of the maker's spring sized for the factory cam and the
+//                  redline (springRpm), times the STOCK, PERFORMANCE or RACE step. They are what holds the valve on
+//                  the cam: valve float (valveFloatRpm).
+// A factory head written as a part is the engine's own: its valve, 0.85, and the springs it is fitted with, as sized.
+// Not in it: whether the valves physically fit the bore (a designed valve may pass the factory packing; the preview
+// says so), the spring's travel to coil bind, and the springs' load on the cam's friction (the friction model, Patton
+// and Sandoval, has no spring-load term). Retiring THROAT_RATIO, the packing ratios and the three steps is the next build.
 // A build carries the full part (engine.exhaustPart, engine.intakePart), so a saved build, a file and a share link work in another
 // browser that never saw the part; loading such a build adds the part to that browser's library.
 
@@ -52,7 +64,10 @@ const CAM_PROFILE={
 };
 // A cam runs from 180 degrees (shorter than any factory cam's 220) to 320 (past a race cam's 284); lift 4-16 mm at the
 // valve; the separation from 98 to 130 degrees, about the 106-125 the factory cams span; a phaser to 60 degrees.
-const PART_LIMITS={dur:[180,320],lift_mm:[4,16],lsa:[98,130],vvt_deg:[0,60],primD_mm:[25,76],primL_mm:[200,1000],pipes:[1,2],sysD_mm:[30,110],sysL_m:[0.8,4.5],
+// A head's intake valve 15-75 mm (a 50 cc single's to a big-bore diesel's); its throat 0.75 of the valve (a restrictive
+// production port) to 0.92 (a fully ported race head: the 45 degree seat needs the rest); springs 100-1500 N on the seat
+// and 10-200 N/mm, past the RACE step on the biggest factory valve (sized for a Hellcat's redline, ~1180 N and 130 N/mm).
+const PART_LIMITS={valveD_mm:[15,75],throat:[0.75,0.92],seat_N:[100,1500],rate_Nmm:[10,200],dur:[180,320],lift_mm:[4,16],lsa:[98,130],vvt_deg:[0,60],primD_mm:[25,76],primL_mm:[200,1000],pipes:[1,2],sysD_mm:[30,110],sysL_m:[0.8,4.5],
   runnerL_mm:[40,800],runnerD_mm:[20,80],shortL_mm:[40,400],area_m2:[0.02,3],inletD_mm:[30,160]};
 
 // ---- the air filter (build 210) ----
@@ -129,6 +144,7 @@ const PART_KINDS=[
   {kind:'intake', label:'INTAKE MANIFOLD',ready:true},
   {kind:'filter', label:'AIR FILTER',ready:true},
   {kind:'cam',    label:'CAMSHAFT',ready:true},
+  {kind:'head',   label:'CYLINDER HEAD',ready:true},
   {kind:'cat',    label:'CATALYTIC CONVERTER',ready:false}
 ];
 // A designed intake, as the factory class the rest of the app reads: a variable one is VARIABLE, a fixed one the
@@ -143,6 +159,12 @@ function intakeClass(p){
 function camClass(p){
   let best='stock',d=1e9;
   for(const k in CAM){const c=CAM[k],x=Math.hypot(c.dur-p.dur,c.lsa-p.lsa);if(x<d){d=x;best=k;}}
+  return best;
+}
+// A designed head, as the spring step the rest of the app reads: the one whose seat load is nearest (on a log scale).
+function headClass(p){
+  let best='stock',d=1e9;
+  for(const k in VALVE_SPRING){const x=Math.abs(Math.log(p.seat_N/VALVE_SPRING[k].seat));if(x<d){d=x;best=k;}}
   return best;
 }
 // The cam as the physics reads it: the factory cam's, or a designed one's dimensions over its class's fitted grades.
@@ -160,7 +182,9 @@ const PART_DEF={
   filter: {field:'filterPart', cls:'airFilter', select:'edAirFilter', def:'stock',valid:k=>!!AIR_FILTER[k], clsOf:filterClass,
     label:k=>AIR_FILTER[k].label,newName:'MY AIR FILTER',factory:['none','perf','stock','restrictive']},
   cam:    {field:'camPart',    cls:'cam',       select:'edCam',       def:'stock',valid:k=>!!CAM[k],       clsOf:camClass,
-    label:k=>CAM[k].label,newName:'MY CAM',factory:['stock','sport','race','atkinson']}
+    label:k=>CAM[k].label,newName:'MY CAM',factory:['stock','sport','race','atkinson']},
+  head:   {field:'headPart',   cls:'valveSpring',select:'edSpring',    def:'stock',valid:k=>!!VALVE_SPRING[k],clsOf:headClass,
+    label:k=>VALVE_SPRING[k].label,newName:'MY HEAD',factory:['stock','perf','race']}
 };
 
 let partLib=[];
@@ -183,6 +207,8 @@ function normPart(p){
   if(p.kind==='filter')return {id,kind:'filter',name:String(p.name||'AIR FILTER').slice(0,40),
     media:FILTER_MEDIA[p.media]?p.media:'paper',area_m2:n(p.area_m2,'area_m2',0.4),
     housing:FILTER_HOUSING[p.housing]?p.housing:'airbox',inletD_mm:n(p.inletD_mm,'inletD_mm',70)};
+  if(p.kind==='head')return {id,kind:'head',name:String(p.name||'HEAD').slice(0,40),valveD_mm:n(p.valveD_mm,'valveD_mm',34),
+    throat:n(p.throat,'throat',THROAT_RATIO),seat_N:n(p.seat_N,'seat_N',250),rate_Nmm:n(p.rate_Nmm,'rate_Nmm',22)};
   if(p.kind==='cam')return {id,kind:'cam',name:String(p.name||'CAM').slice(0,40),dur:n(p.dur,'dur',220),
     lift_mm:n(p.lift_mm,'lift_mm',9),lsa:n(p.lsa,'lsa',114),profile:CAM_PROFILE[p.profile]?p.profile:'gentle',
     vvt_deg:n(p.vvt_deg,'vvt_deg',VVT_AUTHORITY)};
@@ -270,7 +296,7 @@ function rederiveBreathing(){
 function withPart(kind,x,fn){
   const D=PART_DEF[kind],keep=engine,sv=Object.assign({},state),dc=dynoCache,dk=dynoCacheKey,kc=_knockCache;
   engine=Object.assign({},keep,{score:Object.assign({},keep.score),_fmaps:null,_fcyc:null});
-  if(kind==='cam'&&keep.ports)x='stock';   // a port-timed engine has no cam: the build fits none (buildEngineCore)
+  if((kind==='cam'||kind==='head')&&keep.ports)x=D.def;   // a port-timed engine has no cam or valves: the build fits none (buildEngineCore)
   if(typeof x==='string'){engine[D.cls]=x;delete engine[D.field];}
   else{engine[D.field]=normPart(Object.assign({},x,{kind}));engine[D.cls]=D.clsOf(engine[D.field]);}
   try{rederiveBreathing();return fn(engine);}
@@ -299,7 +325,7 @@ function exhaustReport(x){
   });
 }
 // The runner diameter the factory manifold gives this engine: matched to the ports behind it (deriveGasDynamics).
-const portRunnerD=e=>e.ivDia_mm?Math.sqrt(e.ivCount)*THROAT_RATIO*e.ivDia_mm:0.42*e.bore_mm;
+const portRunnerD=e=>e.ivDia_mm?Math.sqrt(e.ivCount)*e.throatRatio*e.ivDia_mm:0.42*e.bore_mm;
 // The speed a runner's own main tuning lands at: its Helmholtz frequency against the cylinder, at Engelman's ratio.
 const runnerTuneRpm=(e,L)=>helmholtzHz(e.runnerA,L,e.vEffCyl,313)*60/ENGELMAN_K;
 // The gas in the runner while the valve draws: the mean piston speed through the runner's bore (intakeRamGain's u).
@@ -335,9 +361,26 @@ function camReport(x){
       ramPeakRpm:e.ramPeakRpm,cls:e.cam,vvt:!!e.vvt,auth:e.vvt?(camSpec(e).vvtMax??VVT_AUTHORITY):0});
   });
 }
+// What the designer reads out for a head on this engine.
+function headReport(x){
+  return withPart('head',x,e=>{
+    const pull=wotPull(),valved=!!e.ivDia_mm,pack=VALVE_PACK[e.valves]||VALVE_PACK[4];
+    if(!valved)return Object.assign(pull,{valved});
+    const T=effIAT(e.mapMax,e.redline)+273.15;
+    return Object.assign(pull,{valved,n:e.ivCount,valveD:e.ivDia_mm,dOverB:e.ivDia_mm/e.bore_mm,packD:pack.dOverB,throat:e.throatRatio,
+      Ci:inletCi(e),z:inletMachZ(e.redline,T),mass:e.valveMass_g,seat:e.springSeat_N,rate:e.springRate,
+      atLift:e.springSeat_N+e.springRate*e.ivLift_mm,lift:e.ivLift_mm,floatRpm:e.floatRpm});
+  });
+}
 // A factory part, as this engine has it, written down as a part: the start of a design.
 function partFromFactory(key,kind){
   kind=kind||'exhaust';
+  // the head the engine has: its valve, the factory throat, and the springs of that step as the maker sized them
+  if(kind==='head')return withPart('head',key,e=>{
+    const g=VALVE_SPRING[key]||VALVE_SPRING.stock,k=e.springScale||1;
+    return normPart({kind:'head',name:tr(g.label),valveD_mm:+(e.ivDia_mm||0.39*e.bore_mm).toFixed(4),throat:THROAT_RATIO,
+      seat_N:+(g.seat*k).toFixed(3),rate_Nmm:+(g.rate*k).toFixed(4)});
+  });
   if(kind==='cam')return withPart('cam',key,e=>{
     const C=CAM[key]||CAM.stock;
     return normPart({kind:'cam',name:tr(C.label),dur:C.dur,lsa:C.lsa,
@@ -398,7 +441,7 @@ function runnerFor(rpm,Dmm){
 }
 
 // ---- the PARTS page ----
-const partsUI={kind:'exhaust',edit:{exhaust:null,intake:null,filter:null,cam:null},timer:0};
+const partsUI={kind:'exhaust',edit:{exhaust:null,intake:null,filter:null,cam:null,head:null},timer:0};
 const pv=id=>document.getElementById(id);
 const fittedPart=kind=>engine&&engine[PART_DEF[kind].field];
 // the ids of each kind's editor
@@ -418,7 +461,11 @@ const PART_UI={
   cam:{reset:'pcReset',box:'partsCam',list:'pcList',from:'pcFrom',neu:'pcNew',save:'pcSave',saveFit:'pcSaveFit',guide:'pcGuide',canvas:'pcCanvas',legend:'pcLegend',
     none:"No cams designed yet. Start from one of the factory cams below.",
     fields:['pcName','pcDur','pcLift','pcLsa','pcProfile','pcVvt'],
-    spec:p=>p.dur+'° · '+p.lift_mm+' mm · LSA '+p.lsa+'° · '+tr(CAM_PROFILE[p.profile].label)}
+    spec:p=>p.dur+'° · '+p.lift_mm+' mm · LSA '+p.lsa+'° · '+tr(CAM_PROFILE[p.profile].label)},
+  head:{reset:'phReset',box:'partsHead',list:'phList',from:'phFrom',neu:'phNew',save:'phSave',saveFit:'phSaveFit',guide:'phGuide',canvas:'phCanvas',legend:'phLegend',
+    none:"No cylinder heads designed yet. Start from this engine's head with one of the factory springs below.",
+    fields:['phName','phValve','phThroat','phSeat','phRate'],
+    spec:p=>p.valveD_mm+' mm · '+tr('throat')+' '+p.throat+' · '+Math.round(p.seat_N)+' N, '+(+p.rate_Nmm).toFixed(1)+' N/mm'}
 };
 function renderParts(){
   const types=pv('partTypes');if(!types)return;
@@ -447,6 +494,10 @@ function renderParts(){
 }
 function partToEditor(kind,p){
   const peak=Math.round((engine.score&&engine.score.peakHPrpm||engine.redline*0.9)/100)*100;
+  if(kind==='head'){
+    pv('phName').value=p.name;pv('phValve').value=p.valveD_mm;pv('phThroat').value=p.throat;pv('phSeat').value=p.seat_N;pv('phRate').value=p.rate_Nmm;
+    return;
+  }
   if(kind==='cam'){
     pv('pcName').value=p.name;pv('pcDur').value=p.dur;pv('pcLift').value=p.lift_mm;pv('pcLsa').value=p.lsa;pv('pcProfile').value=p.profile;pv('pcVvt').value=p.vvt_deg;
     return;
@@ -469,6 +520,8 @@ function partToEditor(kind,p){
 function partFromEditor(kind){
   kind=kind||'exhaust';
   const ed=partsUI.edit[kind],newName=tr(PART_DEF[kind].newName);
+  if(kind==='head')return normPart({kind,id:ed&&ed.id,name:pv('phName').value.trim()||newName,valveD_mm:pv('phValve').value,
+    throat:pv('phThroat').value,seat_N:pv('phSeat').value,rate_Nmm:pv('phRate').value});
   if(kind==='cam')return normPart({kind,id:ed&&ed.id,name:pv('pcName').value.trim()||newName,dur:pv('pcDur').value,
     lift_mm:pv('pcLift').value,lsa:pv('pcLsa').value,profile:pv('pcProfile').value,vvt_deg:pv('pcVvt').value});
   if(kind==='filter')return normPart({kind,id:ed&&ed.id,name:pv('pfName').value.trim()||newName,media:pv('pfMedia').value,
@@ -488,7 +541,7 @@ function partAction(a,id){
     partLib=partLib.filter(x=>x.id!==id);persistParts();
     const f=fittedPart(kind);
     if(f&&f.id===id){pv(D.select).value=engine[D.cls];fillPartSelects();buildEngine();
-      flash(tr(kind==='intake'?'PART DELETED: THE ENGINE HAS ITS FACTORY INTAKE':kind==='cam'?'PART DELETED: THE ENGINE HAS ITS FACTORY CAM':kind==='filter'?'PART DELETED: THE ENGINE HAS ITS FACTORY AIR FILTER':'PART DELETED: THE ENGINE HAS ITS FACTORY EXHAUST'));}
+      flash(tr(kind==='intake'?'PART DELETED: THE ENGINE HAS ITS FACTORY INTAKE':kind==='cam'?'PART DELETED: THE ENGINE HAS ITS FACTORY CAM':kind==='head'?'PART DELETED: THE ENGINE HAS ITS FACTORY HEAD':kind==='filter'?'PART DELETED: THE ENGINE HAS ITS FACTORY AIR FILTER':'PART DELETED: THE ENGINE HAS ITS FACTORY EXHAUST'));}
     else{fillPartSelects();flash(tr('PART DELETED'));}
     if(partsUI.edit[kind]&&partsUI.edit[kind].id===id)partsUI.edit[kind]=null;
     renderParts();
@@ -527,6 +580,7 @@ function previewPart(kind){
   if(kind==='intake')return previewIntake();
   if(kind==='filter')return previewFilter();
   if(kind==='cam')return previewCam();
+  if(kind==='head')return previewHead();
   const p=partFromEditor('exhaust'),now=exhaustReport(engine.exhaustPart||engine.exhaust),r=exhaustReport(p);
   partsUI.last={kind,p,now,r};
   const turbo=engine.intake==='turbo',ported=!!engine.ports;
@@ -603,6 +657,32 @@ function previewCam(){
   pv('pcGuide').innerHTML=lines.map(l=>'<div>'+l+'</div>').join('');
   drawPartCurves('cam',now,r);
 }
+function previewHead(){
+  const p=partFromEditor('head'),now=headReport(engine.headPart||engine.valveSpring),r=headReport(p);
+  partsUI.last={kind:'head',p,now,r};
+  const lines=[];
+  lines.push(headline('With this head',r,now));
+  if(!r.valved)lines.push(tr('A port-timed engine has no poppet valves: a head of valves changes nothing.'));
+  else{
+    const big=r.dOverB>r.packD+1e-9;
+    lines.push(tr('Intake valves')+': '+r.n+' × <b>'+fmt(r.valveD,1)+' mm</b> = '+fmt(r.dOverB,3)+' × '+tr('the bore')
+      +' <span class="dim">('+tr('the factory packing for this layout')+': '+fmt(r.packD,2)+')</span>'
+      +(big?' <b class="warn">'+tr('bigger than the factory packing: check they fit the bore')+'</b>':''));
+    lines.push(tr('Port throat')+': '+fmt(r.throat,3)+' × '+tr('the valve')+'; '+tr('mean flow coefficient')+' <b>'+fmt(r.Ci,3)
+      +'</b> <span class="dim">('+tr('now')+' '+fmt(now.Ci,3)+'; '+tr("Taylor's 0.42 on a 0.85 throat")+')</span>'
+      +(r.Ci<0.42*Math.pow(r.throat/THROAT_RATIO,2)-1e-9?' '+tr('The lift limits it, not the throat: a bigger port needs a cam that lifts more.'):''));
+    lines.push(tr('Inlet Mach index at the redline')+': <b>'+fmt(r.z,2)+'</b> <span class="dim">('+tr('now')+' '+fmt(now.z,2)+'; '
+      +tr('filling holds to 0.5 and falls past it')+')</span>');
+    lines.push(tr('Springs')+': '+Math.round(r.seat)+' N '+tr('on the seat')+', '+fmt(r.rate,1)+' N/mm, '+Math.round(r.atLift)+' N '+tr('at full lift')
+      +' ('+fmt(r.lift,2)+' mm); '+tr('each valve weighs')+' '+fmt(r.mass,0)+' g.');
+    const fl=r.floatRpm>engine.redline?'':' <b class="warn">'+tr('below the redline')+'</b>';
+    lines.push(tr('The valves float at')+' <b>'+Math.round(r.floatRpm/100)*100+' rpm</b>'+fl+' <span class="dim">('+tr('now')+' '+Math.round(now.floatRpm/100)*100
+      +'; '+tr('a bigger valve is heavier and floats sooner; a stiffer spring holds it')+')</span>');
+  }
+  lines.push('<span class="dim">'+tr('The springs are fixed: they no longer re-size for the cam or the redline.')+'</span>');
+  pv('phGuide').innerHTML=lines.map(l=>'<div>'+l+'</div>').join('');
+  drawPartCurves('head',now,r);
+}
 function drawPartCurves(kind,now,r){
   const U=PART_UI[kind],c=pv(U.canvas);if(!c)return;
   const w=c.clientWidth||480,h=c.clientHeight||200,dpr=window.devicePixelRatio||1;
@@ -618,7 +698,7 @@ function drawPartCurves(kind,now,r){
   line(now.pts,'tq',tqMax,'#4a8',true);line(now.pts,'hp',hpMax,'#c84',true);
   line(r.pts,'tq',tqMax,'#6fc',false);line(r.pts,'hp',hpMax,'#fa4',false);
   g.fillStyle='#fa4';g.fillText('hp',R+4,T+8);g.fillStyle='#6fc';g.fillText('Nm',4,T+8);
-  pv(U.legend).innerHTML='<span style="color:#fa4">━ '+esc(tr(kind==='intake'?'this intake':kind==='filter'?'this filter':kind==='cam'?'this cam':'this exhaust'))+'</span> <span style="color:#c84">┅ '+esc(tr('now'))+'</span>';
+  pv(U.legend).innerHTML='<span style="color:#fa4">━ '+esc(tr(kind==='intake'?'this intake':kind==='filter'?'this filter':kind==='cam'?'this cam':kind==='head'?'this head':'this exhaust'))+'</span> <span style="color:#c84">┅ '+esc(tr('now'))+'</span>';
 }
 function schedulePreview(){clearTimeout(partsUI.timer);partsUI.timer=setTimeout(()=>{if(vizMode==='parts')previewPart(partsUI.kind);},120);}
 function wireParts(){

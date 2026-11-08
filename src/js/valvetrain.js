@@ -37,9 +37,15 @@ function valveMass(D_mm,mat){
 // Effective flow area: the lesser of the curtain the valve opens and the throat behind it. Past
 // L/D = 0.18 the curtain already exceeds the throat, so more lift buys no flow while costing
 // inertia in full — which is exactly why real designs stop around L/D 0.22–0.28.
-function valveFlowArea(D_mm,lift_mm){
-  return Math.min(Math.PI*D_mm*lift_mm, Math.PI/4*Math.pow(THROAT_RATIO*D_mm,2));
+// The throat is the head's (build 250: a designed head's port, THROAT_RATIO on a factory one).
+function valveFlowArea(D_mm,lift_mm,throat){
+  return Math.min(Math.PI*D_mm*lift_mm, Math.PI/4*Math.pow((throat||THROAT_RATIO)*D_mm,2));
 }
+// The mean inlet flow coefficient on the valve head's area (Taylor): 1.5 L/D while the curtain limits, and a plateau
+// of 0.42 where the throat does. The plateau is the throat's: 0.42 on a head whose throat is THROAT_RATIO of the valve
+// is a discharge coefficient of 0.42/0.85^2 = 0.58 on the throat's own area, so a throat opened up (a ported head,
+// build 250) raises it by the square of its ratio, and a factory head keeps Taylor's 0.42 exactly.
+const inletCi=e=>Math.min(0.42*Math.pow((e.throatRatio||THROAT_RATIO)/THROAT_RATIO,2),1.5*(e.ivLift_mm/e.ivDia_mm));
 // Valve float. Approximating the lift as harmonic over the opening duration, the peak deceleration
 // over the nose is a = accel·(L/2)·(2π/θ_cam)²·ω_cam². The valve stays on the cam while the spring
 // at full lift can supply m·a:
@@ -64,8 +70,8 @@ function inletMachZ(rpm,chargeK){
   const mps=2*(e.stroke_mm/1000)*rpm/60;
   const areaRatio=(e.bore_mm*e.bore_mm)/(e.ivCount*e.ivDia_mm*e.ivDia_mm);
   // Mean inlet flow coefficient rises with L/D and plateaus near 0.42 — a standard flow-bench
-  // result for a poppet valve, not a free parameter.
-  const Ci=Math.min(0.42,1.5*(e.ivLift_mm/e.ivDia_mm));
+  // result for a poppet valve, not a free parameter (inletCi: the plateau is the throat's).
+  const Ci=inletCi(e);
   const c=20.05*Math.sqrt(Math.max(200,chargeK||320));    // sqrt(gamma·R·T) for air
   return areaRatio*mps/(Ci*c);
 }
@@ -76,7 +82,7 @@ function veFloatLoss(rpm){
   const e=engine;
   if(!e.floatRpm||rpm<=e.floatRpm)return 1;
   const lift=e.ivLift_mm*Math.pow(e.floatRpm/rpm,2);
-  return valveFlowArea(e.ivDia_mm,lift)/Math.max(1e-6,valveFlowArea(e.ivDia_mm,e.ivLift_mm));
+  return valveFlowArea(e.ivDia_mm,lift,e.throatRatio)/Math.max(1e-6,valveFlowArea(e.ivDia_mm,e.ivLift_mm,e.throatRatio));
 }
 // Derive the whole valvetrain from the engine's own geometry. Poppet valves only — a rotary has
 // ports in the housing and a piston-ported two-stroke has no valvetrain to float.
@@ -118,13 +124,17 @@ function updateGasLabels(){
 // holding to about 6500-7000 rpm (LS1Tech, Speedmaster); any margin above zero gives a factory engine the same power,
 // since float then lies past its rev range. It decides only where a factory engine's raised redline starts to float.
 const SPRING_FLOAT_MARGIN=1.05;
+// A designed cylinder head (build 250, parts.js: engine.headPart) gives its own intake valve, port throat and springs
+// in place of the packing ratio, THROAT_RATIO and the maker's sized spring step; the number of valves stays the
+// engine's. Its springs are hardware: they do not re-size for the cam or the redline.
 function deriveValvetrain(){
-  const e=engine;
-  if(e.type==='rotary'||e.ports){e.ivDia_mm=0;e.floatRpm=0;e.valveMass_g=0;e.springScale=1;return;}
+  const e=engine,H=e.headPart||null;
+  if(e.type==='rotary'||e.ports){e.ivDia_mm=0;e.floatRpm=0;e.valveMass_g=0;e.springScale=1;e.throatRatio=THROAT_RATIO;return;}
   const pack=VALVE_PACK[e.valves]||VALVE_PACK[4];
   const cam=camSpec(e);
   e.ivCount=pack.n;
-  e.ivDia_mm=pack.dOverB*e.bore_mm;
+  e.ivDia_mm=H?H.valveD_mm:pack.dOverB*e.bore_mm;
+  e.throatRatio=H?H.throat:THROAT_RATIO;
   e.ivLift_mm=cam.lift_mm!=null?cam.lift_mm:cam.lOverD*e.ivDia_mm;   // a designed cam's lift is its own (build 249)
   e.valveMass_g=valveMass(e.ivDia_mm,e.valveMat)*1000;
   const floatWith=sp=>valveFloatRpm(e.ivLift_mm,cam.dur,sp,e.valveMass_g/1000,cam.accel,2);
@@ -134,6 +144,9 @@ function deriveValvetrain(){
   const f0=e.camPart?valveFloatRpm(F.lOverD*e.ivDia_mm,F.dur,VALVE_SPRING.stock,e.valveMass_g/1000,F.accel,2):floatWith(VALVE_SPRING.stock);
   e.springScale=e.springRpm>0?Math.max(1,Math.pow(e.springRpm*SPRING_FLOAT_MARGIN/f0,2)):1;
   const g=VALVE_SPRING[e.valveSpring]||VALVE_SPRING.stock;
-  e.floatRpm=floatWith({seat:g.seat*e.springScale,rate:g.rate*e.springScale});
+  const sp=H?{seat:H.seat_N,rate:H.rate_Nmm}:{seat:g.seat*e.springScale,rate:g.rate*e.springScale};
+  if(H)e.springScale=1;
+  e.springSeat_N=sp.seat;e.springRate=sp.rate;
+  e.floatRpm=floatWith(sp);
   e.floatMargin=e.floatRpm/Math.max(1,e.redline);
 }

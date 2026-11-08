@@ -727,7 +727,7 @@ body.showcase-open{overflow:hidden}
 </div>
 <div class="container">
 <header>
-<h1>PIXEL ENGINE SIM v0.7 build 249</h1>
+<h1>PIXEL ENGINE SIM v0.7 build 250</h1>
 <div class="subtitle" id="subtitle">ENGINE DESIGNER • BUILD IT, THEN DRIVE IT</div>
 </header>
 <div class="build-strip" id="buildStrip">
@@ -790,7 +790,7 @@ body.showcase-open{overflow:hidden}
 <div class="field"><label for="edVVT">VARIABLE VALVE TIMING</label><select id="edVVT"><option value="no">NONE</option><option value="yes">VVT</option></select></div>
 <div class="field"><label>CAM OVERLAP</label><span class="val" id="valOverlap">—</span></div>
 <div class="field"><label for="edValveMat">VALVE MATERIAL</label><select id="edValveMat"><option value="steel">STEEL</option><option value="titanium">TITANIUM</option></select></div>
-<div class="field"><label for="edSpring">VALVE SPRINGS</label><select id="edSpring"><option value="stock">STOCK</option><option value="perf">PERFORMANCE</option><option value="race">RACE</option></select><input type="hidden" id="edSpringRpm" value="0"></div>
+<div class="field"><label for="edSpring">HEAD &amp; SPRINGS</label><select id="edSpring"><option value="stock">STOCK</option><option value="perf">PERFORMANCE</option><option value="race">RACE</option></select><input type="hidden" id="edSpringRpm" value="0"></div>
 <div class="field"><label>VALVE FLOAT</label><span class="val" id="valFloat">—</span></div>
 <div class="field"><label for="edEgr">EGR</label><select id="edEgr"><option value="none">NONE</option><option value="cooled">COOLED, OFF AT FULL LOAD</option><option value="cooled-full">COOLED, TO FULL LOAD</option></select></div>
 </div></section>
@@ -1396,7 +1396,7 @@ A "big" race cam opens the valves wider and longer: at high rpm the air has mome
 </div>
 <div class="gtier gt-game"><div class="gtier-h">LV2 · IN THE GAME</div>
 <div class="guide-body" data-gk="valvetrain">
-<b>Valvetrain</b> — wilder cams move power up top &amp; idle lumpy; VVT restores the bottom end. <b>Valves per cylinder</b>, <b>valve material</b> and <b>springs</b> are now modelled from real geometry rather than assumed. Four valves flow about 22% more than two for the same bore (and five flow no more than four — which is why nobody builds them any more). The app derives the valve diameter your bore can physically fit, works out what that valve weighs, and tells you the <b>valve float</b> rpm — the speed at which the spring can no longer pull the valve back down and it stops following the cam. <span style="color:#ff6b6b">If that number is below your redline, the engine cannot use the rev range it claims.</span> Fit stiffer springs, lighter titanium valves, less lift, or lower the redline. Big-bore two-valve engines also choke on inlet airflow near the limiter, which is the real reason a big pushrod V8 makes its power low and a four-valve screamer can rev.
+<b>Valvetrain</b> — wilder cams move power up top &amp; idle lumpy; VVT restores the bottom end. <b>Valves per cylinder</b>, <b>valve material</b> and <b>springs</b> are now modelled from real geometry rather than assumed. Four valves flow about 22% more than two for the same bore (and five flow no more than four — which is why nobody builds them any more). The app derives the valve diameter your bore can physically fit, works out what that valve weighs, and tells you the <b>valve float</b> rpm — the speed at which the spring can no longer pull the valve back down and it stops following the cam. <span style="color:#ff6b6b">If that number is below your redline, the engine cannot use the rev range it claims.</span> Fit stiffer springs, lighter titanium valves, less lift, or lower the redline. To set the valve's size, the port's throat or the springs' load yourself, design a cylinder head on the PARTS tab. Big-bore two-valve engines also choke on inlet airflow near the limiter, which is the real reason a big pushrod V8 makes its power low and a four-valve screamer can rev.
 </div>
 </div>
 <div class="gtier gt-phys"><div class="gtier-h">LV3 · THE PHYSICS</div>
@@ -1748,11 +1748,11 @@ Much of an engine's breathing is bought in. Aftermarket makers sell exhausts, in
 </div>
 <div class="gtier gt-game"><div class="gtier-h">LV2 · IN THE GAME</div>
 <div class="guide-body" data-gk="parts">
-<b>Pick a kind.</b> The PARTS tab works on the engine you built. Choose EXHAUST, INTAKE MANIFOLD, AIR FILTER or CAMSHAFT at the top; the catalytic converter comes later. An electric drive has none of them.<br>
-<b>Start from a factory part.</b> Your own parts of that kind are listed first, with EDIT, FIT and DELETE. To begin a new one, take one of this engine's factory parts as the starting point, name it, and change its dimensions: for an exhaust the header's construction, the primaries' bore and length, one or two pipes, their bore and length, and the silencer; for an intake the runners' length and bore, and a variable manifold's short length; for a filter the media, its area, the housing and its inlet.<br>
+<b>Pick a kind.</b> The PARTS tab works on the engine you built. Choose EXHAUST, INTAKE MANIFOLD, AIR FILTER, CAMSHAFT or CYLINDER HEAD at the top; the catalytic converter comes later. An electric drive has none of them.<br>
+<b>Start from a factory part.</b> Your own parts of that kind are listed first, with EDIT, FIT and DELETE. To begin a new one, take one of this engine's factory parts as the starting point, name it, and change its dimensions: for an exhaust the header's construction, the primaries' bore and length, one or two pipes, their bore and length, and the silencer; for an intake the runners' length and bore, and a variable manifold's short length; for a filter the media, its area, the housing and its inlet; for a cylinder head the intake valve, the port's throat and the springs' seat load and rate.<br>
 <b>Let the designer help.</b> <b>CUT</b> sets the exhaust primaries' length, or the intake runners', for the rpm you type. <b>SIZE FOR 75 m/s</b> picks the exhaust pipe's bore, <b>MATCH THE PORTS</b> the runners' bore, <b>SIZE FOR 0.25 m/s</b> the filter's area. The lines under the form say what the part does and what real ones measure.<br>
 <b>Read the preview.</b> The chart lays the pull with this part (solid) over the engine as it is now (dashed), and the headline gives peak power and torque and the change. Nothing on the engine moves until you fit the part.<br>
-<b>Save and fit.</b> <b>SAVE PART</b> keeps it in your library (up to 40 parts, in this browser); <b>SAVE &amp; FIT</b> also puts it on the engine. A saved part appears on the ENGINE tab under <b>MY PARTS</b> in the Exhaust, Runner, Air filter and Cam lists, so any engine can wear it. Where the app needs a factory class (the price, the drawing, the sound), a part counts as the one it is nearest to, an exhaust by its construction.<br>
+<b>Save and fit.</b> <b>SAVE PART</b> keeps it in your library (up to 40 parts, in this browser); <b>SAVE &amp; FIT</b> also puts it on the engine. A saved part appears on the ENGINE tab under <b>MY PARTS</b> in the Exhaust, Runner, Air filter, Cam and Head &amp; springs lists, so any engine can wear it. Where the app needs a factory class (the price, the drawing, the sound), a part counts as the one it is nearest to, an exhaust by its construction.<br>
 <b>It travels with the build.</b> A saved build, a garage car or a share code carries its parts, and loading one into a browser that lacks them adds them to its library. Deleting a fitted part puts the factory part back.
 </div>
 </div>
@@ -1765,10 +1765,13 @@ A designed part puts its own numbers into the equations the factory parts use; n
 <span class="geq">Δp = a·Q + b·Q²</span>
 taken off the charge as <i>VE × (1 − Δp/p<sub>0</sub>)</i>. A new factory filter reads about 3.75 kPa at full throttle, a clogged one about 6.5.<br>
 · The <b>camshaft</b> gives the integrated intake stroke its valve events: the duration and lobe separation set the overlap (duration − 2 × separation) and where the intake closes, the lift the valve's curtain, and the lift, duration and lobe profile the valve's deceleration over the nose, so where it floats on the springs the maker fitted for the factory cam (<a data-gp="valvetrain">Valvetrain</a>). With VVT the phaser advances it up to its range.<br>
+· The <b>cylinder head</b> gives the valvetrain its intake valve, port and springs. The valve's size sets the inlet Mach index (the bore's area over the valves', times the piston's speed) and the valve's weight; the throat sets the flow at full lift and the plateau of Taylor's flow coefficient, 0.42 on a throat 0.85 of the valve, a discharge coefficient of 0.58 on the throat's own area; the seat load and rate are what holds the valve on the cam:
+<span class="geq">m·a<sub>nose</sub> ≤ F<sub>seat</sub> + k·L</span>
+A designed head's springs are fixed, where the maker's are sized for the factory cam and the redline.<br>
 The preview runs the whole build on a copy of the engine, at the scoring conditions, and puts everything back afterwards, so the curve of a fitted part is its preview exactly.
 </div>
 <div class="guide-limit" data-gk="partsLimit">
-Limit: a designed cam's exhaust lobe is taken as the same as its intake lobe, and its idle and the airflow estimates still take the fitted grade of the factory cam nearest in duration and separation. The silencer changes only the sound; its own back-pressure is not modelled. The intake plenum is taken as holding steady pressure, so its volume and the throttle are not part of the design. Oiled cotton's permeability is its makers' claim; paper's is measured. The catalytic converter cannot be designed yet.
+Limit: a designed head's valves are not checked against the bore (the preview says when one is bigger than the factory packing), its springs are not checked for coil bind, and their load does not add to the cam's friction. A designed cam's exhaust lobe is taken as the same as its intake lobe, and its idle and the airflow estimates still take the fitted grade of the factory cam nearest in duration and separation. The silencer changes only the sound; its own back-pressure is not modelled. The intake plenum is taken as holding steady pressure, so its volume and the throttle are not part of the design. Oiled cotton's permeability is its makers' claim; paper's is measured. The catalytic converter cannot be designed yet.
 </div>
 </div>
 <div class="guide-see">See also: <a data-gp="airpath">The air path</a> · <a data-gp="header">Exhaust headers &amp; scavenging</a> · <a data-gp="waves">Intake runner waves</a> · <a data-gp="backpressure">Back-pressure &amp; residuals</a> · <a data-gp="induction">Induction &amp; throttle</a></div>
@@ -3452,7 +3455,7 @@ Most other tests check behaviour that is true of real cars: a bigger turbo spool
 <div class="hint">Pick a type of part, set its dimensions and save it. Saved parts are kept in this browser and appear in the ENGINE tab's choices; a saved build carries its parts with it.</div>
 <div class="design-section">Type of part</div>
 <div class="part-types" id="partTypes"></div>
-<div class="hint" id="partsNoEngine" hidden>An electric drive has no exhaust, intake, air filter or cam. Build a combustion engine on the ENGINE tab to design parts for it.</div>
+<div class="hint" id="partsNoEngine" hidden>An electric drive has no exhaust, intake, air filter, cam or cylinder head. Build a combustion engine on the ENGINE tab to design parts for it.</div>
 <div id="partsExhaust">
 <div class="design-section">My exhausts</div>
 <div class="part-list" id="partList"></div>
@@ -3535,6 +3538,25 @@ Most other tests check behaviour that is true of real cars: a bigger turbo spool
 <div class="part-guide" id="pcGuide"></div>
 <div class="part-chart"><div class="gw-leg" id="pcLegend"></div><canvas id="pcCanvas" role="img" aria-label="Power and torque with this cam against the engine as it is"></canvas></div>
 <div class="btn-row part-btns"><button type="button" id="pcSave">SAVE PART</button><button type="button" id="pcSaveFit">SAVE &amp; FIT</button></div>
+</div>
+<div id="partsHead" hidden>
+<div class="design-section">My cylinder heads</div>
+<div class="part-list" id="phList"></div>
+<div class="pick-row"><div class="field"><label for="phFrom">START FROM THIS ENGINE'S HEAD, WITH</label><select id="phFrom"><option value="stock">STOCK</option><option value="perf">PERFORMANCE</option><option value="race">RACE</option></select></div>
+<div class="field"><label>&nbsp;</label><button type="button" id="phNew">NEW HEAD</button><button type="button" id="phReset" title="Put the dimensions back to the factory part chosen above, keeping the name">RESET</button></div></div>
+<div class="design-section">Cylinder head</div>
+<div class="hint">The number of valves, the valvetrain and the valve material stay on the ENGINE tab.</div>
+<div class="design-grid">
+<div class="field"><label for="phName">NAME</label><input type="text" id="phName" maxlength="40"></div>
+<div class="field"><label for="phValve">INTAKE VALVE (mm)</label><input type="number" id="phValve" min="15" max="75" step="0.5"></div>
+<div class="field"><label for="phThroat">PORT THROAT (× VALVE)</label><input type="number" id="phThroat" min="0.75" max="0.92" step="0.01"></div>
+<div class="field"><label for="phSeat">SPRING SEAT LOAD (N)</label><input type="number" id="phSeat" min="100" max="1500" step="10"></div>
+<div class="field"><label for="phRate">SPRING RATE (N/mm)</label><input type="number" id="phRate" min="10" max="200" step="1"></div>
+</div>
+<div class="design-section">On this engine</div>
+<div class="part-guide" id="phGuide"></div>
+<div class="part-chart"><div class="gw-leg" id="phLegend"></div><canvas id="phCanvas" role="img" aria-label="Power and torque with this cylinder head against the engine as it is"></canvas></div>
+<div class="btn-row part-btns"><button type="button" id="phSave">SAVE PART</button><button type="button" id="phSaveFit">SAVE &amp; FIT</button></div>
 </div>
 </div>
 
@@ -3894,9 +3916,15 @@ function valveMass(D_mm,mat){
 // Effective flow area: the lesser of the curtain the valve opens and the throat behind it. Past
 // L/D = 0.18 the curtain already exceeds the throat, so more lift buys no flow while costing
 // inertia in full — which is exactly why real designs stop around L/D 0.22–0.28.
-function valveFlowArea(D_mm,lift_mm){
-  return Math.min(Math.PI*D_mm*lift_mm, Math.PI/4*Math.pow(THROAT_RATIO*D_mm,2));
+// The throat is the head's (build 250: a designed head's port, THROAT_RATIO on a factory one).
+function valveFlowArea(D_mm,lift_mm,throat){
+  return Math.min(Math.PI*D_mm*lift_mm, Math.PI/4*Math.pow((throat||THROAT_RATIO)*D_mm,2));
 }
+// The mean inlet flow coefficient on the valve head's area (Taylor): 1.5 L/D while the curtain limits, and a plateau
+// of 0.42 where the throat does. The plateau is the throat's: 0.42 on a head whose throat is THROAT_RATIO of the valve
+// is a discharge coefficient of 0.42/0.85^2 = 0.58 on the throat's own area, so a throat opened up (a ported head,
+// build 250) raises it by the square of its ratio, and a factory head keeps Taylor's 0.42 exactly.
+const inletCi=e=>Math.min(0.42*Math.pow((e.throatRatio||THROAT_RATIO)/THROAT_RATIO,2),1.5*(e.ivLift_mm/e.ivDia_mm));
 // Valve float. Approximating the lift as harmonic over the opening duration, the peak deceleration
 // over the nose is a = accel·(L/2)·(2π/θ_cam)²·ω_cam². The valve stays on the cam while the spring
 // at full lift can supply m·a:
@@ -3921,8 +3949,8 @@ function inletMachZ(rpm,chargeK){
   const mps=2*(e.stroke_mm/1000)*rpm/60;
   const areaRatio=(e.bore_mm*e.bore_mm)/(e.ivCount*e.ivDia_mm*e.ivDia_mm);
   // Mean inlet flow coefficient rises with L/D and plateaus near 0.42 — a standard flow-bench
-  // result for a poppet valve, not a free parameter.
-  const Ci=Math.min(0.42,1.5*(e.ivLift_mm/e.ivDia_mm));
+  // result for a poppet valve, not a free parameter (inletCi: the plateau is the throat's).
+  const Ci=inletCi(e);
   const c=20.05*Math.sqrt(Math.max(200,chargeK||320));    // sqrt(gamma·R·T) for air
   return areaRatio*mps/(Ci*c);
 }
@@ -3933,7 +3961,7 @@ function veFloatLoss(rpm){
   const e=engine;
   if(!e.floatRpm||rpm<=e.floatRpm)return 1;
   const lift=e.ivLift_mm*Math.pow(e.floatRpm/rpm,2);
-  return valveFlowArea(e.ivDia_mm,lift)/Math.max(1e-6,valveFlowArea(e.ivDia_mm,e.ivLift_mm));
+  return valveFlowArea(e.ivDia_mm,lift,e.throatRatio)/Math.max(1e-6,valveFlowArea(e.ivDia_mm,e.ivLift_mm,e.throatRatio));
 }
 // Derive the whole valvetrain from the engine's own geometry. Poppet valves only — a rotary has
 // ports in the housing and a piston-ported two-stroke has no valvetrain to float.
@@ -3975,13 +4003,17 @@ function updateGasLabels(){
 // holding to about 6500-7000 rpm (LS1Tech, Speedmaster); any margin above zero gives a factory engine the same power,
 // since float then lies past its rev range. It decides only where a factory engine's raised redline starts to float.
 const SPRING_FLOAT_MARGIN=1.05;
+// A designed cylinder head (build 250, parts.js: engine.headPart) gives its own intake valve, port throat and springs
+// in place of the packing ratio, THROAT_RATIO and the maker's sized spring step; the number of valves stays the
+// engine's. Its springs are hardware: they do not re-size for the cam or the redline.
 function deriveValvetrain(){
-  const e=engine;
-  if(e.type==='rotary'||e.ports){e.ivDia_mm=0;e.floatRpm=0;e.valveMass_g=0;e.springScale=1;return;}
+  const e=engine,H=e.headPart||null;
+  if(e.type==='rotary'||e.ports){e.ivDia_mm=0;e.floatRpm=0;e.valveMass_g=0;e.springScale=1;e.throatRatio=THROAT_RATIO;return;}
   const pack=VALVE_PACK[e.valves]||VALVE_PACK[4];
   const cam=camSpec(e);
   e.ivCount=pack.n;
-  e.ivDia_mm=pack.dOverB*e.bore_mm;
+  e.ivDia_mm=H?H.valveD_mm:pack.dOverB*e.bore_mm;
+  e.throatRatio=H?H.throat:THROAT_RATIO;
   e.ivLift_mm=cam.lift_mm!=null?cam.lift_mm:cam.lOverD*e.ivDia_mm;   // a designed cam's lift is its own (build 249)
   e.valveMass_g=valveMass(e.ivDia_mm,e.valveMat)*1000;
   const floatWith=sp=>valveFloatRpm(e.ivLift_mm,cam.dur,sp,e.valveMass_g/1000,cam.accel,2);
@@ -3991,7 +4023,10 @@ function deriveValvetrain(){
   const f0=e.camPart?valveFloatRpm(F.lOverD*e.ivDia_mm,F.dur,VALVE_SPRING.stock,e.valveMass_g/1000,F.accel,2):floatWith(VALVE_SPRING.stock);
   e.springScale=e.springRpm>0?Math.max(1,Math.pow(e.springRpm*SPRING_FLOAT_MARGIN/f0,2)):1;
   const g=VALVE_SPRING[e.valveSpring]||VALVE_SPRING.stock;
-  e.floatRpm=floatWith({seat:g.seat*e.springScale,rate:g.rate*e.springScale});
+  const sp=H?{seat:H.seat_N,rate:H.rate_Nmm}:{seat:g.seat*e.springScale,rate:g.rate*e.springScale};
+  if(H)e.springScale=1;
+  e.springSeat_N=sp.seat;e.springRate=sp.rate;
+  e.floatRpm=floatWith(sp);
   e.floatMargin=e.floatRpm/Math.max(1,e.redline);
 }
 // ================================================================================================
@@ -4192,7 +4227,7 @@ const EV_RATIO=0.83;
 function portLossShare(n,lam,f0){
   const e=engine;
   if(!e.ivDia_mm)return 0;
-  const nEx=Math.max(1,(e.valves||4)-e.ivCount), D=THROAT_RATIO*EV_RATIO*e.ivDia_mm/1000, L=e.bore_mm/1000;
+  const nEx=Math.max(1,(e.valves||4)-e.ivCount), D=(e.throatRatio||THROAT_RATIO)*EV_RATIO*e.ivDia_mm/1000, L=e.bore_mm/1000;
   const st=e.stoichAFR||14.7, afr=st*Math.max(1,lam);
   const rho=(1+(e.intake==='na'?0:(e.boost_bar||0)))*1e5/(287*313);
   const air=rho*(e.dispCyl_L/1000)*(e.veAmp||0.95)*n/60*(e.chargesPerRev||0.5);   // kg/s per cylinder
@@ -4391,8 +4426,8 @@ function intakeRamGain(rpm,chargeK){
 function intakeCd(){
   const e=engine,D=e.ivDia_mm,ref=Math.PI/4*D*D,N=90;
   let acc=0;
-  for(let k=0;k<N;k++)acc+=valveFlowArea(D,e.ivLift_mm*Math.pow(Math.sin(Math.PI*(k+0.5)/N),2))/ref;
-  return Math.min(0.42,1.5*(e.ivLift_mm/D))/Math.max(1e-6,acc/N);
+  for(let k=0;k<N;k++)acc+=valveFlowArea(D,e.ivLift_mm*Math.pow(Math.sin(Math.PI*(k+0.5)/N),2),e.throatRatio)/ref;
+  return inletCi(e)/Math.max(1e-6,acc/N);
 }
 // Build 122: the charge is HEATED as it is drawn in, by the first law in the cylinder:
 //     d(m cv T) = cp T_in dm_in + cp T dm_out - p dV + h A (T_wall - T) dt
@@ -4415,7 +4450,7 @@ function intakeFill(rpm,adv,L,Tres,Cd){
   const Tr=Tres>0?Tres:T0;
   let T=Tr,m=p0*V(th0)/(R*Tr),u=0;const m0=m;
   for(let th=th0;th<th1;th+=dth){
-    const Av=Cd*e.ivCount*valveFlowArea(e.ivDia_mm,e.ivLift_mm*Math.pow(Math.sin(Math.PI*(th-thO)/dur),2))*1e-6;
+    const Av=Cd*e.ivCount*valveFlowArea(e.ivDia_mm,e.ivLift_mm*Math.pow(Math.sin(Math.PI*(th-thO)/dur),2),e.throatRatio)*1e-6;
     const Vc=V(th),pc=m*R*T/Vc,k=0.5*rho0*Math.pow(Ar/Math.max(1e-9,Av),2);
     const rhs=p0-pc+rho0*L/dt*u;   // implicit in u: k u|u| + a u = rhs
     u=rhs>=0?(-a+Math.sqrt(a*a+4*k*rhs))/(2*k):(a-Math.sqrt(a*a-4*k*rhs))/(2*k);
@@ -5066,7 +5101,7 @@ function deriveGasDynamics(){
   // Runner bore matches the port behind it, which matches the valve throat it feeds.
   // A designed intake (build 206, parts.js) gives its own runners: length, bore, and a variable one's short length.
   const IP=e.intakePart||null;
-  e.runnerD_mm=IP?IP.runnerD_mm:e.ivDia_mm?Math.sqrt(e.ivCount)*THROAT_RATIO*e.ivDia_mm:0.42*e.bore_mm;
+  e.runnerD_mm=IP?IP.runnerD_mm:e.ivDia_mm?Math.sqrt(e.ivCount)*e.throatRatio*e.ivDia_mm:0.42*e.bore_mm;
   e.runnerA=Math.PI/4*Math.pow(e.runnerD_mm/1000,2);
   const rn=IP?null:(RUNNER[e.runner]||RUNNER.medium);
   e.runnerVariable=IP?!!IP.variable:(e.runner==='variable');
@@ -8954,7 +8989,7 @@ function buildEngineCore(prevStoich,quiet){
   // a two-stroke every turn; a rotor fills one of its three chambers every shaft turn (it turns once
   // for three of the shaft). Every air-flow rate below is displacement x rpm x this.
   engine.chargesPerRev=2*Math.PI/engine.strokeDiv;
-  if(engine.ports){engine.cam='stock';delete engine.camPart;engine.vvt=false;}   // 2-stroke / rotary: no poppet valvetrain
+  if(engine.ports){engine.cam='stock';delete engine.camPart;delete engine.headPart;engine.vvt=false;}   // 2-stroke / rotary: no poppet valvetrain
   if(engine.ci)engine.injector='direct';                   // diesel: direct injection
   // Fuel: energy content, stoichiometry, knock rating and charge cooling.
   const fp=FUELS[engine.fuel]||FUELS.gasoline;
@@ -20273,6 +20308,18 @@ function setTab(mode){
 // What the factory cams still carry as fitted grades (CAM.ampMul, loWiden, idleRpm: the airflow estimates, the idle) a
 // designed cam takes from the factory cam its duration and separation are nearest (camClass). Retiring them is the next
 // build (plans/parts-design-space.md).
+// The CYLINDER HEAD (build 250) is the valve and port the valvetrain model reads (deriveValvetrain), and its springs:
+//   intake valve   head diameter, mm, in place of the packing ratio of the head's layout (VALVE_PACK.dOverB); the
+//                  number of valves stays the engine's, and the exhaust valve is 0.83 of the intake (EV_RATIO);
+//   port throat    as a share of the valve, in place of THROAT_RATIO's 0.85: the flow area at full lift, Taylor's
+//                  plateau of the inlet flow coefficient (inletCi) and the factory runner matched to the port;
+//   springs        seat load (N) and rate (N/mm), in place of the maker's spring sized for the factory cam and the
+//                  redline (springRpm), times the STOCK, PERFORMANCE or RACE step. They are what holds the valve on
+//                  the cam: valve float (valveFloatRpm).
+// A factory head written as a part is the engine's own: its valve, 0.85, and the springs it is fitted with, as sized.
+// Not in it: whether the valves physically fit the bore (a designed valve may pass the factory packing; the preview
+// says so), the spring's travel to coil bind, and the springs' load on the cam's friction (the friction model, Patton
+// and Sandoval, has no spring-load term). Retiring THROAT_RATIO, the packing ratios and the three steps is the next build.
 // A build carries the full part (engine.exhaustPart, engine.intakePart), so a saved build, a file and a share link work in another
 // browser that never saw the part; loading such a build adds the part to that browser's library.
 
@@ -20298,7 +20345,10 @@ const CAM_PROFILE={
 };
 // A cam runs from 180 degrees (shorter than any factory cam's 220) to 320 (past a race cam's 284); lift 4-16 mm at the
 // valve; the separation from 98 to 130 degrees, about the 106-125 the factory cams span; a phaser to 60 degrees.
-const PART_LIMITS={dur:[180,320],lift_mm:[4,16],lsa:[98,130],vvt_deg:[0,60],primD_mm:[25,76],primL_mm:[200,1000],pipes:[1,2],sysD_mm:[30,110],sysL_m:[0.8,4.5],
+// A head's intake valve 15-75 mm (a 50 cc single's to a big-bore diesel's); its throat 0.75 of the valve (a restrictive
+// production port) to 0.92 (a fully ported race head: the 45 degree seat needs the rest); springs 100-1500 N on the seat
+// and 10-200 N/mm, past the RACE step on the biggest factory valve (sized for a Hellcat's redline, ~1180 N and 130 N/mm).
+const PART_LIMITS={valveD_mm:[15,75],throat:[0.75,0.92],seat_N:[100,1500],rate_Nmm:[10,200],dur:[180,320],lift_mm:[4,16],lsa:[98,130],vvt_deg:[0,60],primD_mm:[25,76],primL_mm:[200,1000],pipes:[1,2],sysD_mm:[30,110],sysL_m:[0.8,4.5],
   runnerL_mm:[40,800],runnerD_mm:[20,80],shortL_mm:[40,400],area_m2:[0.02,3],inletD_mm:[30,160]};
 
 // ---- the air filter (build 210) ----
@@ -20375,6 +20425,7 @@ const PART_KINDS=[
   {kind:'intake', label:'INTAKE MANIFOLD',ready:true},
   {kind:'filter', label:'AIR FILTER',ready:true},
   {kind:'cam',    label:'CAMSHAFT',ready:true},
+  {kind:'head',   label:'CYLINDER HEAD',ready:true},
   {kind:'cat',    label:'CATALYTIC CONVERTER',ready:false}
 ];
 // A designed intake, as the factory class the rest of the app reads: a variable one is VARIABLE, a fixed one the
@@ -20389,6 +20440,12 @@ function intakeClass(p){
 function camClass(p){
   let best='stock',d=1e9;
   for(const k in CAM){const c=CAM[k],x=Math.hypot(c.dur-p.dur,c.lsa-p.lsa);if(x<d){d=x;best=k;}}
+  return best;
+}
+// A designed head, as the spring step the rest of the app reads: the one whose seat load is nearest (on a log scale).
+function headClass(p){
+  let best='stock',d=1e9;
+  for(const k in VALVE_SPRING){const x=Math.abs(Math.log(p.seat_N/VALVE_SPRING[k].seat));if(x<d){d=x;best=k;}}
   return best;
 }
 // The cam as the physics reads it: the factory cam's, or a designed one's dimensions over its class's fitted grades.
@@ -20406,7 +20463,9 @@ const PART_DEF={
   filter: {field:'filterPart', cls:'airFilter', select:'edAirFilter', def:'stock',valid:k=>!!AIR_FILTER[k], clsOf:filterClass,
     label:k=>AIR_FILTER[k].label,newName:'MY AIR FILTER',factory:['none','perf','stock','restrictive']},
   cam:    {field:'camPart',    cls:'cam',       select:'edCam',       def:'stock',valid:k=>!!CAM[k],       clsOf:camClass,
-    label:k=>CAM[k].label,newName:'MY CAM',factory:['stock','sport','race','atkinson']}
+    label:k=>CAM[k].label,newName:'MY CAM',factory:['stock','sport','race','atkinson']},
+  head:   {field:'headPart',   cls:'valveSpring',select:'edSpring',    def:'stock',valid:k=>!!VALVE_SPRING[k],clsOf:headClass,
+    label:k=>VALVE_SPRING[k].label,newName:'MY HEAD',factory:['stock','perf','race']}
 };
 
 let partLib=[];
@@ -20429,6 +20488,8 @@ function normPart(p){
   if(p.kind==='filter')return {id,kind:'filter',name:String(p.name||'AIR FILTER').slice(0,40),
     media:FILTER_MEDIA[p.media]?p.media:'paper',area_m2:n(p.area_m2,'area_m2',0.4),
     housing:FILTER_HOUSING[p.housing]?p.housing:'airbox',inletD_mm:n(p.inletD_mm,'inletD_mm',70)};
+  if(p.kind==='head')return {id,kind:'head',name:String(p.name||'HEAD').slice(0,40),valveD_mm:n(p.valveD_mm,'valveD_mm',34),
+    throat:n(p.throat,'throat',THROAT_RATIO),seat_N:n(p.seat_N,'seat_N',250),rate_Nmm:n(p.rate_Nmm,'rate_Nmm',22)};
   if(p.kind==='cam')return {id,kind:'cam',name:String(p.name||'CAM').slice(0,40),dur:n(p.dur,'dur',220),
     lift_mm:n(p.lift_mm,'lift_mm',9),lsa:n(p.lsa,'lsa',114),profile:CAM_PROFILE[p.profile]?p.profile:'gentle',
     vvt_deg:n(p.vvt_deg,'vvt_deg',VVT_AUTHORITY)};
@@ -20516,7 +20577,7 @@ function rederiveBreathing(){
 function withPart(kind,x,fn){
   const D=PART_DEF[kind],keep=engine,sv=Object.assign({},state),dc=dynoCache,dk=dynoCacheKey,kc=_knockCache;
   engine=Object.assign({},keep,{score:Object.assign({},keep.score),_fmaps:null,_fcyc:null});
-  if(kind==='cam'&&keep.ports)x='stock';   // a port-timed engine has no cam: the build fits none (buildEngineCore)
+  if((kind==='cam'||kind==='head')&&keep.ports)x=D.def;   // a port-timed engine has no cam or valves: the build fits none (buildEngineCore)
   if(typeof x==='string'){engine[D.cls]=x;delete engine[D.field];}
   else{engine[D.field]=normPart(Object.assign({},x,{kind}));engine[D.cls]=D.clsOf(engine[D.field]);}
   try{rederiveBreathing();return fn(engine);}
@@ -20545,7 +20606,7 @@ function exhaustReport(x){
   });
 }
 // The runner diameter the factory manifold gives this engine: matched to the ports behind it (deriveGasDynamics).
-const portRunnerD=e=>e.ivDia_mm?Math.sqrt(e.ivCount)*THROAT_RATIO*e.ivDia_mm:0.42*e.bore_mm;
+const portRunnerD=e=>e.ivDia_mm?Math.sqrt(e.ivCount)*e.throatRatio*e.ivDia_mm:0.42*e.bore_mm;
 // The speed a runner's own main tuning lands at: its Helmholtz frequency against the cylinder, at Engelman's ratio.
 const runnerTuneRpm=(e,L)=>helmholtzHz(e.runnerA,L,e.vEffCyl,313)*60/ENGELMAN_K;
 // The gas in the runner while the valve draws: the mean piston speed through the runner's bore (intakeRamGain's u).
@@ -20581,9 +20642,26 @@ function camReport(x){
       ramPeakRpm:e.ramPeakRpm,cls:e.cam,vvt:!!e.vvt,auth:e.vvt?(camSpec(e).vvtMax??VVT_AUTHORITY):0});
   });
 }
+// What the designer reads out for a head on this engine.
+function headReport(x){
+  return withPart('head',x,e=>{
+    const pull=wotPull(),valved=!!e.ivDia_mm,pack=VALVE_PACK[e.valves]||VALVE_PACK[4];
+    if(!valved)return Object.assign(pull,{valved});
+    const T=effIAT(e.mapMax,e.redline)+273.15;
+    return Object.assign(pull,{valved,n:e.ivCount,valveD:e.ivDia_mm,dOverB:e.ivDia_mm/e.bore_mm,packD:pack.dOverB,throat:e.throatRatio,
+      Ci:inletCi(e),z:inletMachZ(e.redline,T),mass:e.valveMass_g,seat:e.springSeat_N,rate:e.springRate,
+      atLift:e.springSeat_N+e.springRate*e.ivLift_mm,lift:e.ivLift_mm,floatRpm:e.floatRpm});
+  });
+}
 // A factory part, as this engine has it, written down as a part: the start of a design.
 function partFromFactory(key,kind){
   kind=kind||'exhaust';
+  // the head the engine has: its valve, the factory throat, and the springs of that step as the maker sized them
+  if(kind==='head')return withPart('head',key,e=>{
+    const g=VALVE_SPRING[key]||VALVE_SPRING.stock,k=e.springScale||1;
+    return normPart({kind:'head',name:tr(g.label),valveD_mm:+(e.ivDia_mm||0.39*e.bore_mm).toFixed(4),throat:THROAT_RATIO,
+      seat_N:+(g.seat*k).toFixed(3),rate_Nmm:+(g.rate*k).toFixed(4)});
+  });
   if(kind==='cam')return withPart('cam',key,e=>{
     const C=CAM[key]||CAM.stock;
     return normPart({kind:'cam',name:tr(C.label),dur:C.dur,lsa:C.lsa,
@@ -20644,7 +20722,7 @@ function runnerFor(rpm,Dmm){
 }
 
 // ---- the PARTS page ----
-const partsUI={kind:'exhaust',edit:{exhaust:null,intake:null,filter:null,cam:null},timer:0};
+const partsUI={kind:'exhaust',edit:{exhaust:null,intake:null,filter:null,cam:null,head:null},timer:0};
 const pv=id=>document.getElementById(id);
 const fittedPart=kind=>engine&&engine[PART_DEF[kind].field];
 // the ids of each kind's editor
@@ -20664,7 +20742,11 @@ const PART_UI={
   cam:{reset:'pcReset',box:'partsCam',list:'pcList',from:'pcFrom',neu:'pcNew',save:'pcSave',saveFit:'pcSaveFit',guide:'pcGuide',canvas:'pcCanvas',legend:'pcLegend',
     none:"No cams designed yet. Start from one of the factory cams below.",
     fields:['pcName','pcDur','pcLift','pcLsa','pcProfile','pcVvt'],
-    spec:p=>p.dur+'° · '+p.lift_mm+' mm · LSA '+p.lsa+'° · '+tr(CAM_PROFILE[p.profile].label)}
+    spec:p=>p.dur+'° · '+p.lift_mm+' mm · LSA '+p.lsa+'° · '+tr(CAM_PROFILE[p.profile].label)},
+  head:{reset:'phReset',box:'partsHead',list:'phList',from:'phFrom',neu:'phNew',save:'phSave',saveFit:'phSaveFit',guide:'phGuide',canvas:'phCanvas',legend:'phLegend',
+    none:"No cylinder heads designed yet. Start from this engine's head with one of the factory springs below.",
+    fields:['phName','phValve','phThroat','phSeat','phRate'],
+    spec:p=>p.valveD_mm+' mm · '+tr('throat')+' '+p.throat+' · '+Math.round(p.seat_N)+' N, '+(+p.rate_Nmm).toFixed(1)+' N/mm'}
 };
 function renderParts(){
   const types=pv('partTypes');if(!types)return;
@@ -20693,6 +20775,10 @@ function renderParts(){
 }
 function partToEditor(kind,p){
   const peak=Math.round((engine.score&&engine.score.peakHPrpm||engine.redline*0.9)/100)*100;
+  if(kind==='head'){
+    pv('phName').value=p.name;pv('phValve').value=p.valveD_mm;pv('phThroat').value=p.throat;pv('phSeat').value=p.seat_N;pv('phRate').value=p.rate_Nmm;
+    return;
+  }
   if(kind==='cam'){
     pv('pcName').value=p.name;pv('pcDur').value=p.dur;pv('pcLift').value=p.lift_mm;pv('pcLsa').value=p.lsa;pv('pcProfile').value=p.profile;pv('pcVvt').value=p.vvt_deg;
     return;
@@ -20715,6 +20801,8 @@ function partToEditor(kind,p){
 function partFromEditor(kind){
   kind=kind||'exhaust';
   const ed=partsUI.edit[kind],newName=tr(PART_DEF[kind].newName);
+  if(kind==='head')return normPart({kind,id:ed&&ed.id,name:pv('phName').value.trim()||newName,valveD_mm:pv('phValve').value,
+    throat:pv('phThroat').value,seat_N:pv('phSeat').value,rate_Nmm:pv('phRate').value});
   if(kind==='cam')return normPart({kind,id:ed&&ed.id,name:pv('pcName').value.trim()||newName,dur:pv('pcDur').value,
     lift_mm:pv('pcLift').value,lsa:pv('pcLsa').value,profile:pv('pcProfile').value,vvt_deg:pv('pcVvt').value});
   if(kind==='filter')return normPart({kind,id:ed&&ed.id,name:pv('pfName').value.trim()||newName,media:pv('pfMedia').value,
@@ -20734,7 +20822,7 @@ function partAction(a,id){
     partLib=partLib.filter(x=>x.id!==id);persistParts();
     const f=fittedPart(kind);
     if(f&&f.id===id){pv(D.select).value=engine[D.cls];fillPartSelects();buildEngine();
-      flash(tr(kind==='intake'?'PART DELETED: THE ENGINE HAS ITS FACTORY INTAKE':kind==='cam'?'PART DELETED: THE ENGINE HAS ITS FACTORY CAM':kind==='filter'?'PART DELETED: THE ENGINE HAS ITS FACTORY AIR FILTER':'PART DELETED: THE ENGINE HAS ITS FACTORY EXHAUST'));}
+      flash(tr(kind==='intake'?'PART DELETED: THE ENGINE HAS ITS FACTORY INTAKE':kind==='cam'?'PART DELETED: THE ENGINE HAS ITS FACTORY CAM':kind==='head'?'PART DELETED: THE ENGINE HAS ITS FACTORY HEAD':kind==='filter'?'PART DELETED: THE ENGINE HAS ITS FACTORY AIR FILTER':'PART DELETED: THE ENGINE HAS ITS FACTORY EXHAUST'));}
     else{fillPartSelects();flash(tr('PART DELETED'));}
     if(partsUI.edit[kind]&&partsUI.edit[kind].id===id)partsUI.edit[kind]=null;
     renderParts();
@@ -20773,6 +20861,7 @@ function previewPart(kind){
   if(kind==='intake')return previewIntake();
   if(kind==='filter')return previewFilter();
   if(kind==='cam')return previewCam();
+  if(kind==='head')return previewHead();
   const p=partFromEditor('exhaust'),now=exhaustReport(engine.exhaustPart||engine.exhaust),r=exhaustReport(p);
   partsUI.last={kind,p,now,r};
   const turbo=engine.intake==='turbo',ported=!!engine.ports;
@@ -20849,6 +20938,32 @@ function previewCam(){
   pv('pcGuide').innerHTML=lines.map(l=>'<div>'+l+'</div>').join('');
   drawPartCurves('cam',now,r);
 }
+function previewHead(){
+  const p=partFromEditor('head'),now=headReport(engine.headPart||engine.valveSpring),r=headReport(p);
+  partsUI.last={kind:'head',p,now,r};
+  const lines=[];
+  lines.push(headline('With this head',r,now));
+  if(!r.valved)lines.push(tr('A port-timed engine has no poppet valves: a head of valves changes nothing.'));
+  else{
+    const big=r.dOverB>r.packD+1e-9;
+    lines.push(tr('Intake valves')+': '+r.n+' × <b>'+fmt(r.valveD,1)+' mm</b> = '+fmt(r.dOverB,3)+' × '+tr('the bore')
+      +' <span class="dim">('+tr('the factory packing for this layout')+': '+fmt(r.packD,2)+')</span>'
+      +(big?' <b class="warn">'+tr('bigger than the factory packing: check they fit the bore')+'</b>':''));
+    lines.push(tr('Port throat')+': '+fmt(r.throat,3)+' × '+tr('the valve')+'; '+tr('mean flow coefficient')+' <b>'+fmt(r.Ci,3)
+      +'</b> <span class="dim">('+tr('now')+' '+fmt(now.Ci,3)+'; '+tr("Taylor's 0.42 on a 0.85 throat")+')</span>'
+      +(r.Ci<0.42*Math.pow(r.throat/THROAT_RATIO,2)-1e-9?' '+tr('The lift limits it, not the throat: a bigger port needs a cam that lifts more.'):''));
+    lines.push(tr('Inlet Mach index at the redline')+': <b>'+fmt(r.z,2)+'</b> <span class="dim">('+tr('now')+' '+fmt(now.z,2)+'; '
+      +tr('filling holds to 0.5 and falls past it')+')</span>');
+    lines.push(tr('Springs')+': '+Math.round(r.seat)+' N '+tr('on the seat')+', '+fmt(r.rate,1)+' N/mm, '+Math.round(r.atLift)+' N '+tr('at full lift')
+      +' ('+fmt(r.lift,2)+' mm); '+tr('each valve weighs')+' '+fmt(r.mass,0)+' g.');
+    const fl=r.floatRpm>engine.redline?'':' <b class="warn">'+tr('below the redline')+'</b>';
+    lines.push(tr('The valves float at')+' <b>'+Math.round(r.floatRpm/100)*100+' rpm</b>'+fl+' <span class="dim">('+tr('now')+' '+Math.round(now.floatRpm/100)*100
+      +'; '+tr('a bigger valve is heavier and floats sooner; a stiffer spring holds it')+')</span>');
+  }
+  lines.push('<span class="dim">'+tr('The springs are fixed: they no longer re-size for the cam or the redline.')+'</span>');
+  pv('phGuide').innerHTML=lines.map(l=>'<div>'+l+'</div>').join('');
+  drawPartCurves('head',now,r);
+}
 function drawPartCurves(kind,now,r){
   const U=PART_UI[kind],c=pv(U.canvas);if(!c)return;
   const w=c.clientWidth||480,h=c.clientHeight||200,dpr=window.devicePixelRatio||1;
@@ -20864,7 +20979,7 @@ function drawPartCurves(kind,now,r){
   line(now.pts,'tq',tqMax,'#4a8',true);line(now.pts,'hp',hpMax,'#c84',true);
   line(r.pts,'tq',tqMax,'#6fc',false);line(r.pts,'hp',hpMax,'#fa4',false);
   g.fillStyle='#fa4';g.fillText('hp',R+4,T+8);g.fillStyle='#6fc';g.fillText('Nm',4,T+8);
-  pv(U.legend).innerHTML='<span style="color:#fa4">━ '+esc(tr(kind==='intake'?'this intake':kind==='filter'?'this filter':kind==='cam'?'this cam':'this exhaust'))+'</span> <span style="color:#c84">┅ '+esc(tr('now'))+'</span>';
+  pv(U.legend).innerHTML='<span style="color:#fa4">━ '+esc(tr(kind==='intake'?'this intake':kind==='filter'?'this filter':kind==='cam'?'this cam':kind==='head'?'this head':'this exhaust'))+'</span> <span style="color:#c84">┅ '+esc(tr('now'))+'</span>';
 }
 function schedulePreview(){clearTimeout(partsUI.timer);partsUI.timer=setTimeout(()=>{if(vizMode==='parts')previewPart(partsUI.kind);},120);}
 function wireParts(){
@@ -24505,7 +24620,7 @@ const ICD_FIELDS={
     trade:'Overlap lets the exhaust pull fresh charge in at high rpm. At low rpm it lets exhaust back in: a rougher idle and more emissions.'},
   edValveMat:{adv:true,what:'What the valves are made of.',
     trade:'Titanium valves are much lighter, so the springs keep them on the cam to a higher rpm before they float. They cost more.'},
-  edSpring:{adv:true,what:'How stiff the valve springs are.',
+  edSpring:{adv:true,what:'How stiff the valve springs are, or a cylinder head of your own from the PARTS tab (its valves, ports and springs).',
     trade:'Stiffer springs keep the valves following the cam to a higher rpm. They cost more.'},
   valFloat:{what:'The rpm where the springs can no longer keep the valves on the cam, as the form stands.',
     trade:'Above it the valves bounce: power falls and the engine can be damaged. Keep it above the redline: lighter valves or stiffer springs raise it.'},
