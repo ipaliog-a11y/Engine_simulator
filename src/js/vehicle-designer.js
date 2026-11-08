@@ -1,5 +1,5 @@
 // ====== THE VEHICLE AS CARDS (build 247) ======
-// The VEHICLE tab's fields, grouped in six cards (src/shell.html, #vhDesigner), with the cards of src/js/design-cards.js
+// The VEHICLE tab's fields, grouped in seven cards (CHASSIS NUMBERS since build 250) (src/shell.html, #vhDesigner), with the cards of src/js/design-cards.js
 // around them: a slider and the factory cars' ticks beside each number, a "?" that explains it, the effect of each
 // change, and a side panel of what the car does and what holds it back.
 // The form is live: each field's own input listener (src/js/controls-boot.js) runs buildVehicle, which fits the car and
@@ -8,6 +8,7 @@
 
 const VCD_CARDS=[
   {id:'chassis',title:'CHASSIS & DRIVE',guide:'vehicle'},
+  {id:'dims',title:'CHASSIS NUMBERS',guide:'vehicle'},
   {id:'gearbox',title:'GEARBOX',guide:'gearbox'},
   {id:'tyres',title:'WHEELS & TYRES',guide:'tyres',viz:'tyre',vizH:150,cap:'To scale: the tyre in section, its tread width and its sidewall (the width times the aspect) around the rim.'},
   {id:'aero',title:'AERO & WEIGHT',guide:'aero'},
@@ -27,6 +28,24 @@ const VCD_FIELDS={
     trade:'Many fast cars are limited to 250 km/h. It holds the top speed down; it cannot add speed the car does not have.'},
   vhLimitKmh:{guide:'performance',what:'The road speed the limiter holds, when it is on.',
     trade:'Set it under the tyres\' speed rating. Off, the figure is kept for when you turn it back on.'},
+  vhDims:{what:'FACTORY: the car\'s own wheelbase, tracks, CG height and weight split. DESIGNED: the numbers below, set by hand.',
+    trade:'Changing any number below makes it DESIGNED. Ballast works on either.'},
+  vhWb:{what:'The distance between the front and rear axles.',
+    trade:'A longer wheelbase moves less weight between the axles under braking and acceleration: steadier, less traction gained at the driven rear. It does not add mass or drag here.'},
+  vhTrackF:{what:'How far apart the front wheels are, centre to centre.',
+    trade:'A wider track rolls less and moves less weight across the car. On the same springs a wider axle is also stiffer in roll (as the track squared), so it takes more of the roll, like a stiffer bar: a wider front leans toward understeer.'},
+  vhTrackR:{what:'How far apart the rear wheels are, centre to centre.',
+    trade:'A wider rear track rolls less, and on the same springs takes more of the roll, like a stiffer rear bar: toward oversteer.'},
+  vhCg:{what:'The height of the car\'s centre of gravity above the road. Makers rarely publish it: the factory figure is its class\'s.',
+    trade:'Lower is better everywhere: less weight moved in corners, under braking and under power, and less roll. A tall car loses grip to its own load transfer.'},
+  vhFwt:{what:'The share of the car\'s weight on the front axle at rest, with this engine in it.',
+    trade:'More weight on the driven axle gives more traction at launch. Nearer 50% balances the two axles in corners. Swapping the engine moves the FACTORY split, not a designed one.'},
+  vhBallast:{guide:'vehicle',what:'Added mass, bolted to the floor: a race series\' minimum weight, or a way to move the balance.',
+    trade:'Every kg slows acceleration, braking and cornering. Placed low and forward or rearward, it moves the weight split and lowers the centre of gravity.'},
+  vhBallastPos:{what:'Where the ballast sits along the car: the share of its weight on the front axle.',
+    trade:'0% is on the rear axle, 100% on the front axle, 50% half way. It moves the weight split by its mass against the car\'s.'},
+  vhBallastH:{what:'The height of the ballast\'s own centre above the road.',
+    trade:'Below the car\'s centre of gravity it lowers it, above it raises it, by its mass against the car\'s.'},
   vhGearbox:{what:'The kind of gearbox.',
     trade:'A manual is light and cheap, with a cut in drive at every shift. A sequential or a dual-clutch shifts faster (a DCT without a cut), and a torque-converter auto multiplies torque at launch, for more loss.'},
   vhGears:{guide:'gearing',what:'How many forward gears.',
@@ -84,7 +103,7 @@ const VCD_FIELDS={
 const VCD_KEY={vhChassis:'chassis',vhDrive:'drive',vhDiff:'diff',vhTC:'tc',vhLimiter:'governor',vhLimitKmh:'governor',vhGearbox:'gearbox',vhGears:'gears',
   vhTire:'tireType',vhRating:'speedRating',vhWheel:'wheelDia',vhTireW:'tireWidth',vhTireA:'tireAspect',vhTireWF:'tireWidthF',
   vhAeroF:'aeroFront',vhAeroR:'aeroRear',vhAeroFl:'aeroFloor',vhWeight:'weightRed',vhBrake:'brakeType',vhRotor:'rotor',vhSusp:'suspension',
-  vhGeoF:'suspFront',vhGeoR:'suspRear'};
+  vhGeoF:'suspFront',vhGeoR:'suspRear',vhWb:'dWb',vhTrackF:'dTrackF',vhTrackR:'dTrackR',vhCg:'dCg',vhFwt:'dFwt'};
 const VCD_ZERO_NONE=['vhLimitKmh','vhTireWF'];   // 0 is "none" or "the same", not a real car's value: no tick
 const VCD_CHOICE={vhTC:v=>v?'on':'off',vhLimiter:v=>+v>0?'on':'off'};
 
@@ -93,7 +112,10 @@ let vcdCars=null;
 function vcdRealCars(){
   if(vcdCars)return vcdCars;
   vcdCars=[];
-  for(const p of FACTORY_CARS){try{vcdCars.push({name:p.name.replace(/\s*\([^)]*\)\s*$/,''),e:vehicleFromPreset(p)});}catch(e){}}
+  // each with its factory chassis numbers (build 250), for the CHASSIS NUMBERS card's ticks
+  for(const p of FACTORY_CARS){try{const e=vehicleFromPreset(p),F=factoryDims(e);
+    Object.assign(e,{dWb:F.wb,dTrackF:F.trackF,dTrackR:F.trackR,dCg:F.cg,dFwt:+(F.fWt*100).toFixed(1)});
+    vcdCars.push({name:p.name.replace(/\s*\([^)]*\)\s*$/,''),e});}catch(e){}}
   return vcdCars;
 }
 const vcdTicks=id=>VCD_KEY[id]?dcTicks(vcdRealCars(),VCD_KEY[id],d=>!(VCD_ZERO_NONE.includes(id)&&!(+d.e[VCD_KEY[id]]>0))):[];
@@ -129,6 +151,7 @@ function vcdSummary(c,r){
   const g=id=>document.getElementById(id).value,o=dcOptText,f=dcFmt;
   switch(c){
     case 'chassis':return o('vhChassis')+' · '+o('vhDrive')+' · '+o('vhDiff')+(r?' · '+f(r.mass)+' kg':'');
+    case 'dims':return o('vhDims')+' · '+g('vhWb')+' m · '+g('vhCg')+' m · '+g('vhFwt')+'% '+tr('front')+(+g('vhBallast').value>0?' · +'+g('vhBallast')+' kg':'');
     case 'gearbox':return (r&&r.ev?tr('SINGLE-SPEED'):o('vhGearbox')+' · '+g('vhGears')+' '+tr('speeds'))+(r?' · '+tr('final drive')+' '+f(r.fd,2):'');
     case 'tyres':return o('vhTire')+' · '+g('vhTireW')+'/'+g('vhTireA')+' R'+g('vhWheel')+' · '+g('vhRating').replace('YY','(Y)');
     case 'aero':return [o('vhAeroF'),o('vhAeroR'),o('vhAeroFl')].join(' / ')+' · '+o('vhWeight');
@@ -177,6 +200,7 @@ const VCD=new DesignCards({
   drawViz:(dc,r)=>vcdDrawTyre(dc,r),
   icons:{
     chassis:(P,C)=>{P(C.steel,[[3,4,7,3],[1,7,12,3]]);P(C.cyan,[[4,5,2,2],[7,5,2,2]]);P(C.fg,[[2,10,3,3],[9,10,3,3]]);},
+    dims:(P,C)=>{P(C.fg,[[1,9,3,3],[10,9,3,3]]);P(C.steel,[[2,6,10,2]]);P(C.cyan,[[6,3,2,2]]);P(C.yellow,[[1,13,12,1]]);},
     gearbox:(P,C)=>{P(C.steel,[[2,2,2,10],[6,2,2,10],[10,2,2,10],[2,6,10,2]]);P(C.yellow,[[10,10,2,2]]);},
     tyres:(P,C)=>{P(C.dim,[[3,1,8,12],[1,3,12,8]]);P(C.well,[[4,4,6,6]]);P(C.fg,[[6,6,2,2]]);},
     aero:(P,C)=>{P(C.fg,[[1,3,12,2]]);P(C.steel,[[3,5,1,6],[10,5,1,6]]);P(C.cyan,[[1,11,12,1]]);},
