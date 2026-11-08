@@ -280,9 +280,45 @@ function drawDyno(){
     dynoPulls.forEach((pl,i)=>{ctx.fillStyle=pl.color;ctx.fillText('— '+pl.label,gX+4+i*132,iy+41);});
   }else{ctx.fillStyle='#667';ctx.fillText(tr('LOG PULL to snapshot & overlay a curve for comparison'),gX+4,iy+41);}
 }
+// Dashboard telltales (build 254): thresholds match the status line / canvas gauge bars. Oil pressure and fault
+// codes are placeholders until those systems are modeled; hybrid mode only for a hybrid; ICE-only lamps hide on EV.
+function updateDashLamps(){
+  const g=id=>document.getElementById(id),row=g('dashLamps');if(!row)return;
+  const ev=isElectric(),hy=isHybrid(),set=(id,cls,lbl,title)=>{
+    const el=g(id);if(!el)return;
+    const stub=el.classList.contains('lamp-stub');
+    el.className='lamp'+(stub?' lamp-stub':'')+(cls?' '+cls:'');
+    el.setAttribute('aria-pressed',cls==='warn'||cls==='danger'||cls==='on'?'true':'false');
+    if(lbl!=null){const L=el.querySelector('.lamp-lbl');if(L)L.textContent=lbl;}
+    if(title!=null)el.title=title;
+  };
+  // ICE temp lamps: hide on a pure EV (no coolant/oil loop on the bench)
+  ['lampCool','lampOil','lampOilP'].forEach(id=>{const el=g(id);if(el)el.hidden=ev;});
+  if(!ev){
+    set('lampCool',state.coolant>115?'danger':state.coolant>108?'warn':'');
+    set('lampOil',state.oil>132?'danger':state.oil<55?'warn':'');
+    set('lampOilP','');   // stub: never lights
+  }
+  set('lampFault','');   // stub: never lights
+  const hyEl=g('lampHyb');
+  if(hyEl){
+    hyEl.hidden=!hy;
+    if(hy){
+      const H=hybBenchState(),mode=H.mode||'auto',lab=tr((HYB_DRIVE[mode]||HYB_DRIVE.auto).label);
+      set('lampHyb',H.engOn?'on':'warn',lab,tr('DRIVE MODE')+' • '+lab+(H.engOn?'':' • '+tr('ENGINE OFF')));
+    }
+  }
+  // 12 V side: ICE/hybrid systemVoltage; EV uses the bus readout but keep BATT as pack-low warn
+  if(ev)set('lampBatt',state.soc<0.2?'danger':state.soc<0.35?'warn':'');
+  else set('lampBatt',state.systemVoltage<11.6?'danger':state.batterySOC<0.35?'warn':'');
+  // Starter / Power Off: EV has no combustion engine to start
+  const st=g('btnStarter'),po=g('btnPowerOff');
+  if(st){st.disabled=ev;st.title=ev?tr('NO ENGINE — ELECTRIC DRIVE'):tr('Start the engine');}
+  if(po){po.disabled=ev;po.title=ev?tr('NO ENGINE — ELECTRIC DRIVE'):tr('Switch the engine off');}
+}
 function updateUI(){
   updateHybridPanel();   // build 190: shown for a hybrid, hidden otherwise
-  if(isElectric())return updateMotorUI();
+  if(isElectric()){updateMotorUI();updateDashLamps();return;}
   if(vizMode==='design')updateFuelMapMarker();
   document.getElementById('valThrottle').textContent=Math.round(state.throttle*100);
   document.getElementById('valLoad').textContent=Math.round(state.load*100);
@@ -325,6 +361,7 @@ function updateUI(){
   if(vizMode==='design')legend.innerHTML=tr('Bore/stroke set displacement. Octane+compression+boost+ignition feed the knock model.')+'<br>'+tr('Cooling (radiator/fan/oil cooler/thermostat) sets running temps in AUTO THERMAL mode.');
   else if(vizMode==='engine')legend.innerHTML=tr('THROTTLE makes power; LOAD (dyno brake) sets the hold RPM — more load = lower RPM, zero = free-rev to limiter.')+'<br>'+tr('Lift off at speed → engine braking + fuel cut. Detonation/overheat/lean-boost/valve float wear the engine.');
   else legend.innerHTML=tr('Dyno shows full power & torque curves to redline.')+'<br>'+tr('Green line = current RPM. Peaks marked with dots.');
+  updateDashLamps();
 }
 
 function setTab(mode){

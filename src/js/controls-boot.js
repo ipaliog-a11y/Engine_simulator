@@ -41,6 +41,25 @@ function bindControls(){
   document.getElementById('btnMaxPower').addEventListener('click',()=>applyOperatingPoint('power'));
   document.getElementById('btnEco').addEventListener('click',()=>applyOperatingPoint('eco'));
   document.getElementById('btnReset').addEventListener('click',()=>{setAutoThermal(false);state.engineHealth=1.0;state.blown=false;state.wearCause='';state.coolant=90;state.oil=100;state.batterySOC=1.0;applyPreset({throttle:0.10,load:0.20,afr:14.7,iat:25,coolant:90,oil:100})});
+  // Starter / Power Off (build 254): hybrid reuses engOn; ICE start-stop is not modeled yet; EV has no engine.
+  document.getElementById('btnStarter').addEventListener('click',()=>{
+    if(isElectric()){flash(tr('NO ENGINE — ELECTRIC DRIVE'),'warn');return;}
+    if(isHybrid()){
+      const H=hybBenchState();
+      if(H.engOn){flash(tr('ENGINE ALREADY ON'));return;}
+      H.engOn=true;H.dwell=0;flash(tr('STARTER')+' • '+tr('ENGINE ON'));return;
+    }
+    flash(tr('STARTER — not yet (ICE start-stop not modeled)'),'warn');
+  });
+  document.getElementById('btnPowerOff').addEventListener('click',()=>{
+    if(isElectric()){flash(tr('NO ENGINE — ELECTRIC DRIVE'),'warn');return;}
+    if(isHybrid()){
+      const H=hybBenchState();
+      if(!H.engOn){flash(tr('ENGINE ALREADY OFF'));return;}
+      H.engOn=false;H.dwell=0;flash(tr('POWER OFF')+' • '+tr('ENGINE OFF'));return;
+    }
+    flash(tr('POWER OFF — not yet (ICE start-stop not modeled)'),'warn');
+  });
   document.getElementById('btnAutoThermal').addEventListener('click',()=>setAutoThermal(!autoThermal));
   document.getElementById('btnWear').addEventListener('click',()=>{
     wearEnabled=!wearEnabled;

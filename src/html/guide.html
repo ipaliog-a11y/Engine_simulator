@@ -126,7 +126,14 @@ the battery → low voltage → weak spark.<br>
 <b>AFR</b> — air-fuel ratio. Petrol: peak power near λ0.86 (rich), best economy near λ1.1 (lean).
 Diesel: full fuel at the smoke limit, λ1.2; leaner is less torque but less fuel per kWh.<br>
 <b>IAT / COOLANT / OIL</b> — charge &amp; engine temps (auto in AUTO THERMAL mode).<br>
-<b>NITROUS</b> — if fitted, sprays at wide-open throttle from a bottle that depletes.
+<b>NITROUS</b> — if fitted, sprays at wide-open throttle from a bottle that depletes.<br>
+<b>Dashboard lamps</b> — under LIVE OUTPUT: <b>COOL</b> and <b>OIL</b> light when coolant or oil
+temp is out of range, <b>BATT</b> when the 12&nbsp;V side is low, and on a hybrid <b>HYB</b> shows the
+drive mode (and warns when the engine is off). <b>OIL P</b> (oil pressure) and <b>FAULT</b> (codes)
+are placeholders — those systems are not modeled yet, so the lamps stay dim.<br>
+<b>STARTER · POWER OFF</b> — on a hybrid they start and stop the engine (the same <i>engOn</i> the
+drive mode uses). On a plain ICE they flash that start-stop is not modeled yet; on a pure EV they
+are disabled (there is no engine).
 </div>
 <div class="guide-body" data-gk="opButtons">
 <b>PEAK TORQUE · MAX POWER · ECO</b> — three buttons that put the engine you built on a real

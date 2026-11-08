@@ -20,6 +20,23 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 Working toward **v1.0 — every number derived, not fitted.**
 
+### Dashboard lamps and starter/power stubs on LIVE and DYNO (build 254)
+
+Telltales under LIVE OUTPUT, and Starter / Power Off above the throttle — UI only; no physics change.
+
+- **Lamps:** COOL and OIL follow the existing overheat / cold-oil / hot-oil cuts (same as the status line and
+  canvas bars). BATT lights on low 12&nbsp;V (or low pack SOC on an EV). On a hybrid, HYB shows the drive mode
+  and warns when the engine is off. OIL P and FAULT stay dim stubs: oil pressure and fault codes are not
+  modeled yet.
+- **STARTER / POWER OFF:** on a hybrid they set and clear `engOn` (the same flag drive mode already uses). On
+  a plain ICE they flash that start-stop is not modeled yet and leave rpm alone. On a pure EV they are
+  disabled.
+- **Guide** (`gp-driving`) mentions the lamps and the stubs. Greek for the new strings is paused.
+- **Left open:** oil-pressure model, OBD/DTC fault codes, and ICE cranking / start-stop physics (the buttons
+  are ready for them).
+
+Tests: test162 (new). Fingerprint unchanged (UI only).
+
 ### Real cars' own tracks and CG height, batch 3 (build 253)
 
 Item 3 of `plans/parts-design-space.md`, step 2, last batch: the remaining categories and the earlier gaps.
