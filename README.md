@@ -1,4 +1,4 @@
-# PIXEL ENGINE SIM v0.7 build 247
+# PIXEL ENGINE SIM v0.7 build 248
 
 **A lightweight, 8-bit style internal combustion engine *designer* & simulator** inspired by *Automation*.
 
@@ -167,7 +167,7 @@ assist map over speed and pedal), regeneration, load-point shifting, electric-dr
   performance), **PARTS** (design a part and fit it), **GARAGE** (the saved builds), **TRACK** (lap it round a circuit), **RACE** (race
   it against other builds), **LIVE** (the engine running: cutaway, the
   whole bank firing in its real order, and the controls), **DYNO** (power/torque curve,
-  scorecard and a static result sheet with run data), **GUIDE** (a wiki: 60 pages in 9 sections, each climbing from real life to the game to the physics, with 8-bit pictures drawn in code, search and cross-links) and **OPTIONS** (sound,
+  scorecard, a static result sheet with run data, and a diagnosis of what keeps the engine from running smoothly), **GUIDE** (a wiki: 60 pages in 9 sections, each climbing from real life to the game to the physics, with 8-bit pictures drawn in code, search and cross-links) and **OPTIONS** (sound,
   wear and **language**). The right column is context-aware: runtime Engine Controls while
   driving/on the dyno, the live **Performance** panel on VEHICLE, the **Lap Time** panel on
   TRACK and the race's setup, timing tower and telemetry on RACE.

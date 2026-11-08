@@ -23,12 +23,144 @@ function setMoreMenu(open){
   const m=document.getElementById('ctlMore'),b=document.getElementById('btnMore');if(!m||!b)return;
   m.classList.toggle('open',!!open);b.setAttribute('aria-expanded',String(!!open));
 }
+// Diagnose: read the build's specs, the scorecard and the as-tuned dyno pull, and name what is keeping the
+// engine from running smoothly — the same limits WHAT HOLDS IT BACK and the grade already use, as workshop
+// suggestions under the curve (build 248). Thresholds come from those models (KNOCK_TARGET, PISTON_SPEED_LIMIT,
+// the scorecard's band/drive marks), not from fitted cut-offs.
+function diagnoseEngine(){
+  if(!engine||!engine.score)return {ok:false,smooth:false,findings:[{sev:'warn',id:'nobuild',
+    title:tr('NO BUILD'),detail:tr('Nothing to diagnose yet.'),suggest:tr('Press BUILD & DYNO on the ENGINE tab.')}]};
+  if(isElectric())return diagnoseMotor();
+  const e=engine,s=e.score,findings=[],add=(sev,id,title,detail,suggest)=>findings.push({sev,id,title,detail,suggest});
+  const knock=100-s.safety;
+  // Valves float before the redline: the valvetrain cannot follow the cam (valvetrain.js / ICD).
+  if(e.floatRpm>0&&e.floatRpm<e.redline)
+    add('err','float',tr('VALVE FLOAT'),
+      tr('The valves float at {f} rpm, before the {r} rpm redline.').replace('{f}',Math.round(e.floatRpm/100)*100).replace('{r}',e.redline),
+      tr('Stiffer springs, lighter valves, a milder cam, or a lower redline.'));
+  // Knock past what an AUTO ECU holds off (KNOCK_TARGET is the end-gas integral of 1).
+  if(knock>KNOCK_TARGET+0.5)
+    add('err','knock',tr('KNOCK PAST THE ECU'),
+      tr('Worst knock on a stoich WOT sweep is {k}, above the limit of {t}.')
+        .replace('{k}',Math.round(knock)).replace('{t}',KNOCK_TARGET),
+      tr('More octane, less compression or boost, a larger intercooler, or AUTO ignition timing.'));
+  // Lumpy idle / low-end lope from overlap (and layout): the same number the sound uses.
+  if((e.lumpiness||0)>=0.55)
+    add('warn','lope',tr('LUMPY IDLE'),
+      tr('Overlap and the layout make a lopey idle (lumpiness {l}).')
+        .replace('{l}',e.lumpiness.toFixed(2)),
+      tr('A milder cam, less overlap, or VVT for a smoother street idle.'));
+  // Narrow powerband: the scorecard's band mark is full at 55% of redline; under ~35% feels peaky.
+  if(s.band<e.redline*0.35)
+    add('warn','band',tr('PEAKY POWERBAND'),
+      tr('Power stays above 80% of peak for only {b} rpm of a {r} rpm redline.')
+        .replace('{b}',s.band).replace('{r}',e.redline),
+      tr('A milder cam, longer intake runners, or less boost taper for a wider band.'));
+  // Weak low-end: drive is torque@2000 / peak, scored 0–100 from 0.4→0.9.
+  if(s.drive<55)
+    add('warn','drive',tr('WEAK LOW-END TORQUE'),
+      tr('Torque at 2000 rpm is {d}% of peak — a car will feel gutless off the line.').replace('{d}',s.drive),
+      tr('More displacement per cylinder, a milder cam, more low-rpm boost, or an ECU torque plateau.'));
+  // Mean piston speed past the reliability limit (25 m/s, share-scoring.js).
+  if(e.type!=='rotary'){
+    const mps=2*(e.stroke_mm/1000)*e.redline/60;
+    if(mps>PISTON_SPEED_LIMIT)
+      add('warn','piston',tr('HIGH PISTON SPEED'),
+        tr('Mean piston speed at redline is {v} m/s (limit {l}).')
+          .replace('{v}',mps.toFixed(1)).replace('{l}',PISTON_SPEED_LIMIT),
+        tr('A shorter stroke, a lower redline, or accept the reliability cost.'));
+  }
+  // Cooling undersized for the scored peak power (same terms as the reliability index).
+  {const coolNeed=clamp(s.peakHP/260,0,1.6);
+    const coolHave=e.radCap*Math.max(260,e.radHp||0)/260+(e.oilCooler?0.4:0)+(e.fan==='none'?0:0.2);
+    if(coolNeed>coolHave+0.05)
+      add('warn','cool',tr('UNDER-COOLED'),
+        tr('Peak power asks for more cooling than this radiator, fan and oil cooler give.'),
+        tr('A larger radiator, an oil cooler, or a working fan; or less power.'));}
+  // Petrol VGT: vane metal past creep (VANE_T_LIMIT) — reliability already charges it.
+  if(e.vgt&&e.intake==='turbo'&&!e.ci&&e.peakEgtGas>VANE_T_LIMIT)
+    add('warn','vgt',tr('PETROL VGT HEAT'),
+      tr('Exhaust at the vanes reaches {t} K; nickel alloys creep above {l} K.')
+        .replace('{t}',Math.round(e.peakEgtGas)).replace('{l}',VANE_T_LIMIT),
+      tr('Drop the boost, richen for cooler gas, or leave VGT to diesels.'));
+  // As-tuned pull well below the best-power scorecard: mixture or conditions, not the design.
+  {const data=getDynoData();let your=0;data.forEach(p=>{if(p.powerHP>your)your=p.powerHP;});
+    if(s.peakHP>1&&your/s.peakHP<0.92)
+      add('warn','tune',tr('AS-TUNED BELOW BEST-POWER'),
+        tr('Your pull peaks at {y} hp against the best-power {b} hp.')
+          .replace('{y}',your.toFixed(0)).replace('{b}',s.peakHP),
+        tr('Set AFR nearer the best-power mixture (or AUTO fuel), cool the intake, and warm the oil.'));}
+  // Emissions and reliability as soft notes when they are clearly poor.
+  if(s.emissions<40)
+    add('info','emit',tr('DIRTY EMISSIONS'),
+      tr('The cruise / part-load emit mark is {e}.').replace('{e}',s.emissions),
+      tr('A catalytic converter, precise injection, less overlap, and a stoich cruise.'));
+  if(s.reliability<45)
+    add('info','rel',tr('LOW RELIABILITY INDEX'),
+      tr('The design reliability index is {r}/100.').replace('{r}',s.reliability),
+      tr('Ease knock, boost, piston speed or cooling — see the findings above.'));
+  // Live bench state, if the engine is already hurting on the cell.
+  if(state.blown)
+    add('err','blown',tr('ENGINE BLOWN'),
+      tr('The bench reports a failure')+' ('+tr(state.wearCause||'FAILURE')+').',
+      tr('Rebuild with BUILD & DYNO, then fix the cause (knock, heat, float, lean boost).'));
+  else if(state.wearCause)
+    add('err','wear',tr('DAMAGE IN PROGRESS'),
+      tr('Health is falling from')+' '+tr(state.wearCause)+'.',
+      tr('Back off load and rpm; fix the cause before another pull.'));
+  else if(state.coolant>115)
+    add('warn','hot',tr('OVERHEAT ON THE BENCH'),
+      tr('Coolant is at {t} °C.').replace('{t}',Math.round(state.coolant)),
+      tr('More cooling, less load, or AUTO THERMAL.'));
+  else if(state.oil<55)
+    add('warn','oil',tr('COLD OIL'),
+      tr('Oil is at {t} °C — friction is high and the pull is not fair.').replace('{t}',Math.round(state.oil)),
+      tr('Warm the oil (AUTO THERMAL, or raise OIL TEMP) before reading the curve.'));
+  else if(!e.dcdc&&state.systemVoltage<11.6)
+    add('warn','volt',tr('LOW VOLTAGE / MISFIRE RISK'),
+      tr('System voltage is {v} V.').replace('{v}',state.systemVoltage.toFixed(1)),
+      tr('A stronger alternator, less electrical load, or a cooler idle.'));
+  const rough=findings.some(f=>f.sev==='err'||f.id==='lope'||f.id==='knock'||f.id==='float'||f.id==='wear'||f.id==='blown'||f.id==='volt');
+  return {ok:!findings.some(f=>f.sev==='err'),smooth:!rough&&!findings.some(f=>f.sev==='warn'),findings,grade:s.grade,overall:s.overall};
+}
+function diagnoseMotor(){
+  const e=engine,s=e.score,findings=[],add=(sev,id,title,detail,suggest)=>findings.push({sev,id,title,detail,suggest});
+  if(s.holdS!=null&&s.holdS<10)
+    add('warn','hold',tr('SHORT PEAK HOLD'),
+      tr('Peak power only holds for {s} s before thermal cutback.').replace('{s}',s.holdS),
+      tr('More motor cooling, a lower continuous rating demand, or accept the burst.'));
+  if(state.soc!=null&&state.soc<0.15)
+    add('warn','soc',tr('PACK LOW'),
+      tr('State of charge is {p}% — the curve is already limited.').replace('{p}',Math.round(state.soc*100)),
+      tr('Raise BATTERY CHARGE on the LIVE / DYNO controls before reading the pull.'));
+  if(state.mT&&state.mT.w>140)
+    add('warn','wind',tr('HOT WINDING'),
+      tr('Winding temperature is {t} °C.').replace('{t}',Math.round(state.mT.w)),
+      tr('Cool the motor, or ease the load until it recovers.'));
+  if(state.blown||(state.engineHealth!=null&&state.engineHealth<0.3))
+    add('err','health',tr('MOTOR DAMAGED'),
+      tr('Motor health is low — rebuild the drive.'),
+      tr('Press BUILD & DYNO after cooling and resetting abuse.'));
+  const rough=findings.some(f=>f.sev==='err'||f.sev==='warn');
+  return {ok:!findings.some(f=>f.sev==='err'),smooth:!rough,findings,grade:s.grade,overall:s.overall};
+}
+function dynoDiagHtml(d){
+  if(!d)return '';
+  if(!d.findings.length)
+    return '<div class="dr-diag ok" id="dynoDiag"><h5>'+esc(tr('DIAGNOSIS'))+'</h5><p class="dr-diag-ok">'+
+      esc(tr('Running smoothly — the scorecard, the valvetrain and the as-tuned pull show no issues.'))+'</p></div>';
+  const head=d.smooth?tr('DIAGNOSIS'):tr('DIAGNOSIS — NOT RUNNING SMOOTH');
+  return '<div class="dr-diag'+(d.ok?'':' bad')+'" id="dynoDiag"><h5>'+esc(head)+'</h5><ul>'+
+    d.findings.map(f=>'<li class="sev-'+f.sev+'"><b>'+esc(f.title)+'</b> — '+esc(f.detail)+
+      ' <span class="sug">'+esc(tr('Try')+': '+f.suggest)+'</span></li>').join('')+
+    '</ul></div>';
+}
 function renderDynoResult(force){
   if(isElectric())return renderMotorResult(force);
   const box=document.getElementById('dynoResult');
   if(!box||box.hidden||!engine.score)return;
   const data=getDynoData();
-  const key=buildRev+'|'+dynoCacheKey+'|'+dynoPulls.length+'|'+currentLang;
+  const key=buildRev+'|'+dynoCacheKey+'|'+dynoPulls.length+'|'+currentLang+'|'+Math.round(state.coolant)+'|'+Math.round(state.oil)+'|'+state.systemVoltage.toFixed(1);
   if(!force&&key===dynoResultKey)return;
   dynoResultKey=key;
   const s=engine.score, kW=hp=>hp*0.7457, lbft=nm=>nm*0.73756;
@@ -45,6 +177,7 @@ function renderDynoResult(force){
   if(rows[rows.length-1]!==engine.redline)rows.push(engine.redline);
   const boosted=engine.intake!=='na';
   const near=(r,pk)=>Math.abs(r-pk)<step/2;
+  const diag=diagnoseEngine();
   box.innerHTML='<h4>'+tr('DYNO RESULT')+'</h4>'+
     '<div class="dr-cards">'+
       card('hp',tr('PEAK POWER')+' — '+tr('BEST-POWER PULL'),s.peakHP+' hp',Math.round(kW(s.peakHP))+' kW @ '+s.peakHPrpm+' rpm')+
@@ -54,6 +187,7 @@ function renderDynoResult(force){
     '<p class="dr-note"><b>'+tr('BEST-POWER PULL')+'</b> — '+tr('wide open throttle at the best-power mixture, 25 °C intake, 90 °C coolant: the figures the grade and the objectives use, and what MAX POWER on the LIVE tab drives to.')+'<br>'+
     '<b>'+tr('YOUR PULL (AS TUNED)')+'</b> — '+tr('the curve drawn above, at the mixture and conditions set right now')+' ('+tuned+', '+Math.round(state.iat)+' °C). '+
     tr('It is what the PDF report tabulates.')+(dynoPulls.length?' '+dynoPulls.length+' '+tr('logged pull(s) overlaid on the chart.'):'')+'</p>'+
+    dynoDiagHtml(diag)+
     dynoTableToggle(step)+
     '<table class="dr-table" id="dynoTable"'+(dynoTableOpen?'':' hidden')+'><thead><tr><th>RPM</th><th>HP</th><th>kW</th><th>Nm</th><th>lb-ft</th>'+(boosted?'<th>'+tr('BOOST')+' bar</th>':'')+'</tr></thead><tbody>'+
     rows.map(r=>{const v=at(r);return '<tr'+(near(r,pP.r)||near(r,pT.r)?' class="pk"':'')+'><td>'+r+'</td><td class="hp">'+v.hp.toFixed(1)+'</td><td>'+kW(v.hp).toFixed(1)+

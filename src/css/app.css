@@ -302,6 +302,18 @@ body.race-open{overflow:hidden}
 .dr-card.hp .v{color:#ffcc00}.dr-card.tq .v{color:#00ccff}
 .dr-note{font-size:9px;color:#889;line-height:1.8;margin:0 0 12px}
 .dr-note b{color:#cde}
+.dr-diag{margin:0 0 14px;padding:10px 12px;background:#12121c;border:2px solid #2a2a3e}
+.dr-diag.bad{border-color:#664444}
+.dr-diag.ok{border-color:#2a4a3a}
+.dr-diag h5{font-size:10px;color:#ffcc00;margin:0 0 8px}
+.dr-diag.ok h5{color:#00ff88}
+.dr-diag ul{margin:0;padding:0 0 0 14px}
+.dr-diag li{font-size:9px;color:#cde;line-height:1.7;margin:0 0 6px}
+.dr-diag li .sug{display:block;color:#9ab;margin-top:2px}
+.dr-diag li.sev-err{color:#ff8888}
+.dr-diag li.sev-warn{color:#ffcc88}
+.dr-diag li.sev-info{color:#99aabb}
+.dr-diag-ok{font-size:9px;color:#88ccaa;margin:0;line-height:1.7}
 .dr-table{width:100%;border-collapse:collapse;font-size:10px}
 .dr-table th{color:#889;font-weight:normal;text-align:right;padding:6px 8px;border-bottom:2px solid #2a2a3e}
 .dr-table td{text-align:right;padding:5px 8px;color:#cde}
