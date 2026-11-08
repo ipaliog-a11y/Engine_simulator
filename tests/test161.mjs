@@ -5,13 +5,14 @@
 // of 0.388 and, as the paper says, does not depend on the class. A real car with a published overall height (body.h)
 // now has CG = 0.388 h. What must hold:
 //   · CG_ROOF_RATIO is the measured median, and every car with h has exactly that CG, loaded and in factoryDims;
-//   · each h is a car's (1.0 to 2.1 m), so each CG lands between a supercar's and a pickup's (0.40 to 0.75 m);
+//   · each h is a car's (1.0 to 2.1 m), so each CG lands between a supercar's and a heavy pickup's (0.40 to 0.85 m: NHTSA measured
+//     F-250s at 0.744-0.757 m on 1.83-1.87 m roofs; build 253's 2.03 m Silverado HD is 0.79);
 //   · a roofless car (Atom, Mono, SR3) has no h: its published height is a roll hoop's;
 //   · NO_H_BUDGET: the real cars still on their class's CG, which may only shrink as later batches source heights.
 import { chromium } from './pw.mjs';
 import { fileURLToPath, pathToFileURL } from 'url';
 import path from 'path';
-const NO_H_BUDGET = 34;   // build 252: 58 of 92 cars have h; the rest are batch 3 (and 5 with no verified figure)
+const NO_H_BUDGET = 7;    // build 253: 85 of 92 cars have h; Dino 246, GNX, Sierra Cosworth, F-150 Raptor unsourced; Atom, Mono, SR3 roofless
 const repo = fileURLToPath(new URL('..', import.meta.url));
 const browser = await chromium.launch();
 const page = await browser.newPage();
@@ -30,7 +31,7 @@ console.log(`== CG_ROOF_RATIO ${r.ratio}; ${withH.length} cars with h, ${noH.len
 if (r.ratio !== 0.388) fails.push('CG_ROOF_RATIO is not the measured median 0.388');
 for (const c of withH) {
   if (Math.abs(c.cg - 0.388 * c.h) > 1e-12) fails.push(`${c.name}: CG ${c.cg} is not 0.388 × ${c.h}`);
-  if (c.h < 1.0 || c.h > 2.1 || c.cg < 0.40 || c.cg > 0.75) fails.push(`${c.name}: h ${c.h} m or CG ${c.cg.toFixed(3)} m is not a car's`);
+  if (c.h < 1.0 || c.h > 2.1 || c.cg < 0.40 || c.cg > 0.85) fails.push(`${c.name}: h ${c.h} m or CG ${c.cg.toFixed(3)} m is not a car's`);
 }
 const lo = withH.reduce((a, b) => a.cg < b.cg ? a : b), hi = withH.reduce((a, b) => a.cg > b.cg ? a : b);
 console.log(`  lowest ${lo.name} ${lo.cg.toFixed(3)} m, highest ${hi.name} ${hi.cg.toFixed(3)} m; M3 E46 loaded: ${r.m3.cg.toFixed(4)} m (h ${r.m3.h})`);
