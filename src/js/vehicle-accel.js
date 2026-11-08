@@ -3,11 +3,18 @@ function fitmentLabel(v){
   const dia=(v.wheelDia*25.4+2*v.tireWidth*v.tireAspect/100)/25.4;
   return v.tireWidth+'/'+v.tireAspect+'R'+v.wheelDia+' ('+dia.toFixed(1)+'in Ø)';
 }
+// A car's CG height is CG_ROOF_RATIO times its overall (roof) height (build 251). Makers almost never publish the CG;
+// they always publish the height. NHTSA measured both on 330 light vehicles weighed unladen (SAE 1999-01-1336,
+// Heydinger et al., "Measured Vehicle Inertial Parameters - NHTSA's Data Through November 1998"): CG / roof height has
+// a median of 0.388 (sd 0.017; cars 0.391 of 104, trucks, SUVs and vans 0.385 of 226), and the paper finds the ratio
+// "does not discriminate between vehicle classes or mass". research/cg-height/README.md has the method. Not for a car
+// with no roof, whose published height is its roll hoop's (body.h left out: its class's CG stands).
+const CG_ROOF_RATIO=0.388;
 // The factory's chassis numbers (build 250): a real car's own wheelbase, published tracks (SUSP_REAL) and split with its
-// factory engine; the class's CG height, which is not published car by car; an archetype's class figures throughout.
+// factory engine; its CG from its height (body.h, build 251), else its class's; an archetype's class figures throughout.
 function factoryDims(v){
   const ch=CHASSIS[v.chassis]||CHASSIS.coupe,b=v.body,sr=b&&SUSP_REAL[b.name],t=(b&&b.track)||ch.track;
-  return {wb:b?b.wb:ch.wb,cg:ch.cg,trackF:sr?sr.tf:t,trackR:sr?sr.tr:t,fWt:b?b.fWt:ch.fWt};
+  return {wb:b?b.wb:ch.wb,cg:b&&b.h>0?CG_ROOF_RATIO*b.h:ch.cg,trackF:sr?sr.tf:t,trackR:sr?sr.tr:t,fWt:b?b.fWt:ch.fWt};
 }
 // True when every fitted part still matches the chassis' factory spec.
 function isFactoryFit(v){

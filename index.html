@@ -7863,7 +7863,8 @@ const CHASSIS={
 // is one member of it with its own BODY: curb mass (kg, with the engine and fluids), the measured
 // drag coefficient of the car as sold (its factory spoilers are part of that number, so the fit
 // carries no extra aero parts), frontal area (m²), wheelbase (m) and static front weight share. The
-// archetype still supplies what is not published car by car: CG height and its mechanical grip.
+// archetype still supplies what is not published car by car: its mechanical grip, and the CG height of a car without
+// h, its overall height in m (build 251: the CG is CG_ROOF_RATIO × h, from NHTSA's measured cars).
 // Fit is the factory fitment, driven-axle tyre for staggered setups; omitted fields take the
 // archetype's. real = the maker's 0-100 km/h (s) and top speed (km/h); limited = the top speed is a
 // governor, which the model does not have. unsure = inputs from secondary sources, worth checking.
@@ -12022,11 +12023,18 @@ function fitmentLabel(v){
   const dia=(v.wheelDia*25.4+2*v.tireWidth*v.tireAspect/100)/25.4;
   return v.tireWidth+'/'+v.tireAspect+'R'+v.wheelDia+' ('+dia.toFixed(1)+'in Ø)';
 }
+// A car's CG height is CG_ROOF_RATIO times its overall (roof) height (build 251). Makers almost never publish the CG;
+// they always publish the height. NHTSA measured both on 330 light vehicles weighed unladen (SAE 1999-01-1336,
+// Heydinger et al., "Measured Vehicle Inertial Parameters - NHTSA's Data Through November 1998"): CG / roof height has
+// a median of 0.388 (sd 0.017; cars 0.391 of 104, trucks, SUVs and vans 0.385 of 226), and the paper finds the ratio
+// "does not discriminate between vehicle classes or mass". research/cg-height/README.md has the method. Not for a car
+// with no roof, whose published height is its roll hoop's (body.h left out: its class's CG stands).
+const CG_ROOF_RATIO=0.388;
 // The factory's chassis numbers (build 250): a real car's own wheelbase, published tracks (SUSP_REAL) and split with its
-// factory engine; the class's CG height, which is not published car by car; an archetype's class figures throughout.
+// factory engine; its CG from its height (body.h, build 251), else its class's; an archetype's class figures throughout.
 function factoryDims(v){
   const ch=CHASSIS[v.chassis]||CHASSIS.coupe,b=v.body,sr=b&&SUSP_REAL[b.name],t=(b&&b.track)||ch.track;
-  return {wb:b?b.wb:ch.wb,cg:ch.cg,trackF:sr?sr.tf:t,trackR:sr?sr.tr:t,fWt:b?b.fWt:ch.fWt};
+  return {wb:b?b.wb:ch.wb,cg:b&&b.h>0?CG_ROOF_RATIO*b.h:ch.cg,trackF:sr?sr.tf:t,trackR:sr?sr.tr:t,fWt:b?b.fWt:ch.fWt};
 }
 // True when every fitted part still matches the chassis' factory spec.
 function isFactoryFit(v){
@@ -24812,7 +24820,7 @@ const VCD_FIELDS={
     trade:'A wider track rolls less and moves less weight across the car. On the same springs a wider axle is also stiffer in roll (as the track squared), so it takes more of the roll, like a stiffer bar: a wider front leans toward understeer.'},
   vhTrackR:{what:'How far apart the rear wheels are, centre to centre.',
     trade:'A wider rear track rolls less, and on the same springs takes more of the roll, like a stiffer rear bar: toward oversteer.'},
-  vhCg:{what:'The height of the car\'s centre of gravity above the road. Makers rarely publish it: the factory figure is its class\'s.',
+  vhCg:{what:'The height of the car\'s centre of gravity above the road. Makers rarely publish it: a real car\'s is 0.388 × its overall height, the median NHTSA measured.',
     trade:'Lower is better everywhere: less weight moved in corners, under braking and under power, and less roll. A tall car loses grip to its own load transfer.'},
   vhFwt:{what:'The share of the car\'s weight on the front axle at rest, with this engine in it.',
     trade:'More weight on the driven axle gives more traction at launch. Nearer 50% balances the two axles in corners. Swapping the engine moves the FACTORY split, not a designed one.'},

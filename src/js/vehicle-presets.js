@@ -51,7 +51,8 @@ const CHASSIS={
 // is one member of it with its own BODY: curb mass (kg, with the engine and fluids), the measured
 // drag coefficient of the car as sold (its factory spoilers are part of that number, so the fit
 // carries no extra aero parts), frontal area (m²), wheelbase (m) and static front weight share. The
-// archetype still supplies what is not published car by car: CG height and its mechanical grip.
+// archetype still supplies what is not published car by car: its mechanical grip, and the CG height of a car without
+// h, its overall height in m (build 251: the CG is CG_ROOF_RATIO × h, from NHTSA's measured cars).
 // Fit is the factory fitment, driven-axle tyre for staggered setups; omitted fields take the
 // archetype's. real = the maker's 0-100 km/h (s) and top speed (km/h); limited = the top speed is a
 // governor, which the model does not have. unsure = inputs from secondary sources, worth checking.
