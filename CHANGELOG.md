@@ -20,6 +20,18 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 Working toward **v1.0 — every number derived, not fitted.**
 
+### Diagnosis notes vs faults — factory cars are not all lumpy (build 249)
+
+Build 248's diagnosis marked most factory cars "NOT RUNNING SMOOTH" because race-cam lope and a peaky band were
+warnings, and because `engine.lumpiness` folds diesel clatter into the same number the sound uses.
+
+- **Faults** (valve float, knock past the ECU, damage) still mark it not smooth. **Warnings** are an unfair cell
+  (cold oil, overheat, as-tuned under best-power). **Notes** cover design character: race-cam lope, a clearly peaky
+  band, weak low-end, piston speed, cooling, petrol VGT, emissions, reliability.
+- **Lope is cam overlap only** (≥ 50°). Diesels are no longer flagged as lumpy idle. A GT3 that lopes shows
+  DIAGNOSIS — NOTES, not NOT RUNNING SMOOTH.
+- test158 now sweeps the 100 factory cars (0 not-smooth from notes alone; no diesel lope).
+
 ### A diagnosis under the dyno curve (build 248)
 
 The DYNO tab already showed peaks, the grade and the rpm table. It did not say what to change when the engine was not
