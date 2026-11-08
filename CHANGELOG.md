@@ -27,8 +27,8 @@ Item 3 of `plans/parts-design-space.md`, step 2, last batch: the remaining categ
 - **27 cars** get their published tracks and overall height, or the height alone where their tracks were already
   listed or not published (auto-data.net, each car's own page): the Turbo Performance, American V8, Supercar, Diesel,
   SUV and two-stroke cars, and the MX-5 ND, Civic Type R FK8, Evo IX, RS3 8V and Silverado HD left open before.
-  **85 of 92 real cars now carry their own CG** (0.388 × height) and 87 their own tracks.
-- **What moved:** 580 fingerprint values, all on these 27 cars. 0-100 −0.10 s (Silverado HD) to +0.08 s; laps of
+  **85 of 92 real cars now carry their own CG** (0.388 × height) and 81 their own tracks.
+- **What moved:** 580 fingerprint values, all on these 27 cars. 0-100 −0.10 s (Silverado HD) to +0.05 s; laps of
   'tech' −0.37% (Urus) to +1.60% (Silverado HD, the tallest: CG 0.79 m). Mean 0-100 error against the real figures on
   these cars **9.55% → 9.51%**. 7 other cars change only their lap hash (the racing-line cache, as before).
 - **Unsure:** sibling-trim figures for the Land Cruiser, Ram 2500, Hilux (2.4 page) and Delta Integrale (16V Evo);
