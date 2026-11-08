@@ -16,11 +16,12 @@
 // road), the sky, every colour, and the body's width, which is drawn a little narrower than the width the racing line
 // keeps from the edge (track + one tyre) so that the wheels show.
 //
-// The picture is drawn with WebGL into a small canvas, about a third of the screen's resolution, and blown up onto the
-// map canvas with smoothing off, so every pixel is a hard square. Light comes in a few bands, dithered into each
+// The picture is drawn with WebGL into a small canvas, about half the view's resolution, and blown up onto the view's
+// own canvas (under the race controls, beside the map, which it never touches) with smoothing off, so every pixel is a
+// hard square. Light comes in a few bands, dithered into each
 // other with a 4x4 Bayer pattern, and the shadows are a checkerboard of dark pixels: the look of 8-bit art, from a 3D
 // scene. No library: the page must still open from file:// with nothing installed.
-const R3D={mode:'map',gl:null,cv:null,prog:null,loc:null,failed:false,warned:false,track:null,cars:null,carsFor:null,
+const R3D={mode:'off',raf:0,gl:null,cv:null,prog:null,loc:null,failed:false,warned:false,track:null,cars:null,carsFor:null,
   unit:null,wheel:null};
 const R3D_FAR=650;           // m, the far clip; the fog closes in well before it
 const R3D_BANK=1.5;          // horizontal metres per metre of drop on the banks beside the road (decoration)
@@ -346,13 +347,13 @@ function r3dVP(R,T,S,asp){
   }
   return {VP:m4.mul(m4.persp(fov*Math.PI/180,asp,0.5,R3D_FAR),m4.look(eye,at,[0,1,0])),eye,fog,x};
 }
-// Draw the race at time t into the region (x0,y0,w,h) of the map canvas. False when the 3D view is off or cannot
-// run (no WebGL), and the map draws instead.
-function race3dDraw(R,t,S,x0,y0,w,h){
+// Draw the race at time t into the region (x0,y0,w,h) of the 2D context g (the 3D view's own canvas). False when the
+// 3D view is off or cannot run (no WebGL).
+function race3dDraw(g,R,t,S,x0,y0,w,h){
   if(!race3dOn())return false;
   if(!r3dInit()){r3dGiveUp();return false;}
   const gl=R3D.gl,L=R3D.loc;
-  const pw=clamp(Math.round(w/2.5),160,440),ph=Math.max(90,Math.round(pw*h/w));
+  const pw=clamp(Math.round(w/2),160,440),ph=Math.max(90,Math.round(pw*h/w));
   if(R3D.cv.width!==pw||R3D.cv.height!==ph){R3D.cv.width=pw;R3D.cv.height=ph;}
   if(!R3D.track||R3D.track.key!==R.cfg.track){
     const tm=r3dTrackMesh(R.cfg.track);R3D.track={key:tm.key,buf:r3dUpload(tm.mesh),zG:tm.zG,T:tm.T};
@@ -371,7 +372,7 @@ function race3dDraw(R,t,S,x0,y0,w,h){
   r3dDraw(R3D.track.buf,m4.id());
   const drawn=[];
   for(const x of S){
-    if(raceParked(x,t))continue;
+    if(r3dParked(x,t))continue;
     const C=cars[x.k];if(!C)continue;
     const P=r3dCarPose(R,T,Object.assign({rg:C.rollGrad},x),t),lk=C.look;
     // the shadow: a chequer of dark pixels on the road under the car
@@ -384,45 +385,70 @@ function race3dDraw(R,t,S,x0,y0,w,h){
       r3dDraw(C.wheel,m4.mul(P.base,m4.wheel(ax*lk.wb/2,lk.rT,sg*lk.track/2,spin,ax>0?-P.steer:0)));
     drawn.push({x,p:P.p});
   }
-  // onto the map canvas, every pixel a hard square
-  const sm=ctx.imageSmoothingEnabled;ctx.imageSmoothingEnabled=false;
-  ctx.drawImage(R3D.cv,x0,y0,w,h);ctx.imageSmoothingEnabled=sm;
+  // onto the view's own canvas, every pixel a hard square
+  const sm=g.imageSmoothingEnabled;g.imageSmoothingEnabled=false;
+  g.drawImage(R3D.cv,x0,y0,w,h);g.imageSmoothingEnabled=sm;
   // the position over each car, and what the camera is following
-  ctx.font='6px "Press Start 2P"';ctx.textAlign='center';
+  g.font='6px "Press Start 2P"';g.textAlign='center';
   for(const d of drawn){
     const q=r3dProject(V.VP,[d.p[0],d.p[1]+2.2,d.p[2]]);if(!q)continue;
     const sx=x0+(q[0]*0.5+0.5)*w,sy=y0+(0.5-q[1]*0.5)*h;
     if(sx<x0||sx>x0+w||sy<y0||sy>y0+h)continue;
-    ctx.fillStyle='rgba(10,10,18,0.75)';ctx.fillRect(sx-8,sy-8,16,10);
-    ctx.fillStyle=RACE_COLS[d.x.c.id];ctx.fillText(String(d.x.pos),sx,sy);
+    g.fillStyle='rgba(10,10,18,0.75)';g.fillRect(sx-8,sy-8,16,10);
+    g.fillStyle=RACE_COLS[d.x.c.id];g.fillText(String(d.x.pos),sx,sy);
   }
-  ctx.textAlign='left';
+  g.textAlign='left';
   const f=V.x,nm=f.c.M.name.length>22?f.c.M.name.slice(0,21)+'…':f.c.M.name;
   const txt='P'+f.pos+' '+nm+'  '+Math.round(f.s.v*3.6)+' km/h';
-  ctx.font='7px "Press Start 2P"';const tw=ctx.measureText(txt).width;
-  ctx.fillStyle='rgba(10,10,18,0.8)';ctx.fillRect(x0+6,y0+h-20,tw+16,14);
-  ctx.fillStyle=RACE_COLS[f.c.id];ctx.fillRect(x0+10,y0+h-16,6,6);
-  ctx.fillStyle='#eee';ctx.fillText(txt,x0+20,y0+h-10);
+  g.font='7px "Press Start 2P"';const tw=g.measureText(txt).width;
+  g.fillStyle='rgba(10,10,18,0.8)';g.fillRect(x0+6,y0+h-20,tw+16,14);
+  g.fillStyle=RACE_COLS[f.c.id];g.fillRect(x0+10,y0+h-16,6,6);
+  g.fillStyle='#eee';g.fillText(txt,x0+20,y0+h-10);
   return true;
 }
 function r3dProject(VP,p){
   const x=VP[0]*p[0]+VP[4]*p[1]+VP[8]*p[2]+VP[12],y=VP[1]*p[0]+VP[5]*p[1]+VP[9]*p[2]+VP[13],w=VP[3]*p[0]+VP[7]*p[1]+VP[11]*p[2]+VP[15];
   return w>0.1?[x/w,y/w]:null;
 }
-// No WebGL here: say so once, and go back to the map.
+// A car not on the circuit, as the map leaves it out: retired and stopped, in the pit lane, or parked after the flag.
+function r3dParked(x,t){const s=x.s;return (x.dnf&&s.v<0.1&&s.flag===3)||s.flag===1||(x.fin&&s.v<0.1&&t>x.fin.t+0.5);}
+// The 3D view has its own canvas under the race controls and its own frame loop. It only reads the race (raceUI.run at
+// raceUI.t); the map, its canvas and its code are untouched, and draw as they always have.
+function r3dFrame(){
+  R3D.raf=0;
+  const cv=document.getElementById('race3dView');
+  if(!race3dOn()||!cv)return;
+  R3D.raf=requestAnimationFrame(r3dFrame);
+  const R=raceUI.run;
+  if(!R||raceUI.phase!=='live'||!cv.offsetParent)return;
+  const w=cv.clientWidth,h=cv.clientHeight,dpr=Math.min(3,Math.max(1,window.devicePixelRatio||1));
+  if(!(w>0&&h>0))return;
+  const bw=Math.round(w*dpr),bh=Math.round(h*dpr);
+  if(cv.width!==bw||cv.height!==bh){cv.width=bw;cv.height=bh;}
+  const g=cv.getContext('2d');g.setTransform(dpr,0,0,dpr,0,0);
+  const t=raceUI.t;
+  if(!race3dDraw(g,R,t,raceStandings(R,t),0,0,w,h))return;
+}
+// No WebGL here: say so once, and close the 3D view.
 function r3dGiveUp(){
-  R3D.mode='map';
-  const sel=document.getElementById('raceView');if(sel)sel.value='map';
+  race3dSetMode('off');
   if(!R3D.warned){R3D.warned=true;flash(tr('3D needs WebGL, which this browser has turned off: showing the map'),'warn');}
 }
 function race3dSetMode(m){
-  R3D.mode=m==='chase'||m==='top'?m:'map';
+  R3D.mode=m==='chase'||m==='top'?m:'off';
   try{localStorage.setItem('pes.raceView',R3D.mode);}catch(e){}
-  const sel=document.getElementById('raceView');if(sel&&sel.value!==R3D.mode)sel.value=R3D.mode;
+  const cv=document.getElementById('race3dView');if(cv)cv.hidden=!race3dOn();
+  for(const [id,k] of [['race3dChase','chase'],['race3dTop','top']]){
+    const b=document.getElementById(id);if(b){b.classList.toggle('on',R3D.mode===k);b.setAttribute('aria-pressed',String(R3D.mode===k));}
+  }
+  if(race3dOn()&&!R3D.raf)R3D.raf=requestAnimationFrame(r3dFrame);
 }
+// A button opens its camera; pressing it again closes the 3D view.
 function race3dBind(){
-  let m='map';try{m=localStorage.getItem('pes.raceView')||'map';}catch(e){}
+  let m='off';try{m=localStorage.getItem('pes.raceView')||'off';}catch(e){}
   race3dSetMode(m);
-  const sel=document.getElementById('raceView');
-  if(sel)sel.addEventListener('change',()=>race3dSetMode(sel.value));
+  for(const [id,k] of [['race3dChase','chase'],['race3dTop','top']]){
+    const b=document.getElementById(id);if(b)b.addEventListener('click',()=>race3dSetMode(R3D.mode===k?'off':k));
+  }
 }
+if(document.readyState==='loading')addEventListener('DOMContentLoaded',race3dBind);else race3dBind();

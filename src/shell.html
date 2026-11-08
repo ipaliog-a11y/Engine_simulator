@@ -579,11 +579,12 @@
 <button id="raceNew">NEW RACE</button>
 </div>
 <div class="replay-row race-rpt">
-<select id="raceView" class="opt-select" aria-label="Race view"><option value="map">MAP</option><option value="chase">3D CHASE</option><option value="top">3D OVERHEAD</option></select>
 <button id="raceRptPng" title="Save the race report as an image">REPORT PNG</button>
 <button id="raceRptPdf" title="Save the race report as a PDF">PDF</button>
 </div>
 <input type="range" id="raceScrub" min="0" max="1000" value="0" aria-label="Race time">
+<div class="replay-row race-3d-row"><button id="race3dChase" class="toggle">3D CHASE</button><button id="race3dTop" class="toggle">3D OVERHEAD</button></div>
+<canvas id="race3dView" class="race-3d-view" hidden></canvas>
 <div id="raceTower"></div>
 <div class="design-section">Cars</div>
 <div id="raceTele"></div>

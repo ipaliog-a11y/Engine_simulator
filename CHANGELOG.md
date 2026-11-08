@@ -22,8 +22,10 @@ Working toward **v1.0 — every number derived, not fitted.**
 
 ### The race can be watched in 3D, from behind a car or from above (build 247)
 
-RACE only had a map. The picker beside REPORT PNG now also offers **3D CHASE**, a camera riding behind a car, and
-**3D OVERHEAD**, looking down on it from above with the map's north at the top, the way a top-down game's camera does.
+Under RACE's scrub bar, **3D CHASE** (a camera riding behind a car) and **3D OVERHEAD** (looking down from above,
+the map's north at the top, as a top-down game's camera does) open a 3D view in a canvas of its own under the controls.
+It adds to the race and replaces nothing: the map, its code and every control are as they were, and the map draws the
+same pixels with the 3D view open or closed (test157).
 This is the first step of a 3D race view the owner asked for. It draws the race the simulator already recorded and works
 nothing out again, so no result changes.
 
@@ -38,12 +40,13 @@ nothing out again, so no result changes.
   kinematic angle atan(wheelbase × curvature). **The body rolls** out of a corner by the car's own roll gradient (the
   number the lap solver uses, from its springs, bars and roll centres) times v²κ/g. For example, 0.9° for the 911 GT3
   at 100 km/h and 2.9° for the Civic Type R at 89 km/h in the same race.
-- **The look:** WebGL with no library (the page still opens from `file://`), drawn at about a third of the screen's
+- **The look:** WebGL with no library (the page still opens from `file://`), drawn at about half the view's
   resolution and blown up into hard pixels. Light comes in five bands, and bands and fog are dithered into each other
-  with a 4×4 Bayer pattern. Each car has a chequered pixel shadow. The overlay (the order, the events, the rain) is
-  drawn over the 3D view as over the map, with each car's position above it and the followed car's speed in a corner.
+  with a 4×4 Bayer pattern. Each car has a chequered pixel shadow, its position above it,
+  and the followed car's speed sits in a corner.
   The camera follows the car clicked in the timing tower, or the leader.
-- **Without WebGL** the page says so once and stays on the map. The choice is kept in `pes.raceView`.
+- **Without WebGL** the view closes and says why once. Pressing the lit button again closes it. The choice is kept in
+  `pes.raceView`. Greek: the two buttons and the guide block have it; Greek for new text is now paused (owner decision).
 - **Size:** about 10,000 triangles for Ashdown Park and 67,000 for the Nordschleife, built once per circuit.
 
 Left open, and why:
