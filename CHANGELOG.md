@@ -28,8 +28,8 @@ Item 3 of `plans/parts-design-space.md`, step 2, second batch: the NA Sports, Ke
   page, checked against Wikipedia), so their CG is 0.388 × height (build 251's NHTSA rule) and their load transfer
   uses their own tracks. The Honda Beat gets its height only (no published track). A new body field carries the
   tracks (`tf`, `tr`) of a car whose suspension `SUSP_REAL` does not list, so no car's geometry changes.
-- **What moved:** 548 fingerprint values, all on these 20 cars. 0-100 −0.06 s (911 RS 2.7, Cayman GT4, C63) to
-  +0.06 s; laps of 'tech' −0.87% (Beat) to +1.34% (911 RS 2.7). Mean 0-100 error against the real figures on these
+- **What moved:** 548 fingerprint values, all on these 20 cars. 0-100 −0.06 s (911 RS 2.7, C63) to
+  +0.06 s (Swift Sport); laps of 'tech' −0.87% (Beat) to +1.34% (911 RS 2.7). Mean 0-100 error against the real figures on these
   cars **7.77% → 7.69%**. 23 other cars change only their lap hash (the circuit's racing-line cache, as in build 251).
 - **Unsure** (marked on the preset): a sibling trim's figures for the Integra Type R DC2, 911 Carrera RS 2.7 and
   E-Type 3.8; ranges or disputed figures for the 370Z, Swift Sport, Golf GTI Mk1, 205 GTI and M5 E39.
