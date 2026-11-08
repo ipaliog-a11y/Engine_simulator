@@ -219,6 +219,12 @@ const ICD=new DesignCards({
     if(icdKnockOver(r)){w.edCR=tr('It knocks past what the ECU can hold off.');if(document.getElementById('edTiming').value==='fixed')w.edIgnAdv=w.edCR;}
     return w;},
   drawViz:(dc,r)=>icdDrawCylinder(dc,r),
+  // low against high: the cylinder for what it shapes, the power curve for all four
+  compare:{fields:{edBore:{pic:1,curve:1,h:170,u:' mm'},edStroke:{pic:1,curve:1,h:170,u:' mm'},edCR:{pic:1,curve:1,h:170,u:':1',dp:1},
+      edRedline:{curve:1,u:' rpm'}},
+    ok:()=>document.getElementById('edType').value!=='rotary',
+    at:()=>icdCompute(),draw:icdCmpDraw,
+    text:(id,v,r)=>dcFmt(r.hp)+' hp · '+dcFmt(r.tq)+' Nm · '+tr('reliability')+' '+dcFmt(r.rel)},
   icons:{
     block:(P,C)=>{P(C.steel,[[2,1,2,12],[10,1,2,12],[2,12,10,1]]);P(C.fg,[[4,6,6,3]]);P(C.dim,[[6,9,2,3]]);},
     head:(P,C)=>{P(C.steel,[[1,2,12,2]]);P(C.fg,[[3,4,1,6],[10,4,1,6]]);P(C.yellow,[[2,10,3,1],[9,10,3,1]]);},
@@ -232,20 +238,34 @@ const icdState=ICD.st;
 // Called by syncDesignEnable whenever the form is synced: on for a combustion engine (with or without a hybrid), off else.
 function icdSync(on){ICD.sync(on?'ice':'');}
 
-// ---- the picture: one cylinder to scale, the piston at the top and the bottom of its stroke ----
-function icdDrawCylinder(dc,r){
-  const cv=dc.vizCanvas('block');if(!cv)return;
-  const C=DC_COLOURS,x=dcCtx(cv),W=cv.width,H=cv.height;
-  x.font='7px "Press Start 2P"';x.textAlign='center';
-  if(r.rotary){x.fillStyle=C.dim;x.fillText(tr('ROTOR'),W/2,H/2);return;}
-  const s=0.95,B=r.bore*s,S=r.stroke*s,clr=S/(r.cr-1),pH=Math.min(34,B*0.42);   // the clearance height: Vc = Vs/(CR-1)
-  const cx=W/2-20,top=14,bdcY=top+clr+S;   // the piston's crown at TDC sits clr below the head, at BDC a stroke lower
+// One cylinder in section at s px per mm, its head at top: the clearance height is Vc = Vs/(CR-1) over the bore,
+// the piston solid at the top of its stroke and outlined at the bottom.
+function icdCylShape(x,r,cx,top,s){
+  const C=DC_COLOURS,B=r.bore*s,S=r.stroke*s,clr=S/(r.cr-1),pH=Math.min(34,B*0.42),bdcY=top+clr+S;
   x.fillStyle=C.steel;x.fillRect(cx-B/2-6,top-6,B+12,6);   // the head
   x.fillRect(cx-B/2-6,top,6,clr+S+pH);x.fillRect(cx+B/2,top,6,clr+S+pH);   // the walls
   x.fillStyle='#3a2a1a';x.fillRect(cx-B/2,top,B,clr);   // the clearance volume
   x.strokeStyle=C.dim;x.lineWidth=1;x.strokeRect(cx-B/2+.5,bdcY+.5,B-1,pH-1);   // the piston at the bottom of its stroke
   x.fillStyle='#b8b8c8';x.fillRect(cx-B/2,top+clr,B,pH);   // the piston at the top
   x.fillStyle=C.yellow;x.fillRect(cx-B/2,top+clr-1,B,1);
+  return {B,S,clr,pH,bdcY};
+}
+// Low against high (build 251): both cylinders at one scale, the larger fitting its half of the picture.
+function icdCmpDraw(x,id,res,vals,W,H){
+  const C=DC_COLOURS,top=16,ext=r=>r.stroke/(r.cr-1)+r.stroke+0.42*r.bore;   // the piston is at most 0.42 bore tall
+  const s=Math.min(0.95,(W/2-20)/Math.max(...res.map(r=>r.bore)),(H-top-14)/Math.max(...res.map(ext)));
+  x.font='7px "Press Start 2P"';x.textAlign='center';
+  res.forEach((r,i)=>{const cx=W/4+i*W/2;icdCylShape(x,r,cx,top,s);
+    x.fillStyle=i?C.green:C.cyan;x.fillText(tr(i?'HIGH':'LOW'),cx,9);
+    x.fillText(dcFmt(vals[i],id==='edCR'?1:0)+(id==='edCR'?':1':' mm'),cx,H-3);});
+}
+// ---- the picture: one cylinder to scale, the piston at the top and the bottom of its stroke ----
+function icdDrawCylinder(dc,r){
+  const cv=dc.vizCanvas('block');if(!cv)return;
+  const C=DC_COLOURS,x=dcCtx(cv),W=cv.width,H=cv.height;
+  x.font='7px "Press Start 2P"';x.textAlign='center';
+  if(r.rotary){x.fillStyle=C.dim;x.fillText(tr('ROTOR'),W/2,H/2);return;}
+  const s=0.95,cx=W/2-20,top=14,{B,S,clr,pH,bdcY}=icdCylShape(x,r,cx,top,s);
   // dimensions
   const dx=cx+B/2+14;
   x.strokeStyle=C.cyan;x.beginPath();x.moveTo(dx,top+clr);x.lineTo(dx,bdcY);x.stroke();

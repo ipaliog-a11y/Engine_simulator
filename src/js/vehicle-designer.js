@@ -198,6 +198,9 @@ const VCD=new DesignCards({
     if(vcdTyresShort(r))w.vhRating=tr('The car reaches {v} km/h, past this rating.').replace('{v}',dcFmt(r.top));
     return w;},
   drawViz:(dc,r)=>vcdDrawTyre(dc,r),
+  compare:{fields:{vhWheel:{pic:1,h:150,u:' in'},vhTireW:{pic:1,h:150,u:' mm'},vhTireA:{pic:1,h:150,u:'%'}},
+    at:(id,v,res)=>res&&Object.assign({},res,{[VCD_CMP_KEY[id]]:v}),draw:vcdCmpDraw,
+    text:(id,v,r)=>{const {sw,D}=vcdTyreDims(r);return tr('diameter')+' '+dcFmt(D)+' mm · '+tr('sidewall')+' '+dcFmt(sw)+' mm';}},
   icons:{
     chassis:(P,C)=>{P(C.steel,[[3,4,7,3],[1,7,12,3]]);P(C.cyan,[[4,5,2,2],[7,5,2,2]]);P(C.fg,[[2,10,3,3],[9,10,3,3]]);},
     dims:(P,C)=>{P(C.fg,[[1,9,3,3],[10,9,3,3]]);P(C.steel,[[2,6,10,2]]);P(C.cyan,[[6,3,2,2]]);P(C.yellow,[[1,13,12,1]]);},
@@ -217,15 +220,30 @@ function vcdRefresh(){
 }
 
 // ---- the picture: the tyre in section, to scale ----
-function vcdDrawTyre(dc,r){
-  const cv=dc.vizCanvas('tyres');if(!cv)return;
-  const C=DC_COLOURS,x=dcCtx(cv),W=cv.width,H=cv.height;
-  const sw=r.tw*r.ta/100,rim=r.wheel*25.4,D=rim+2*sw,s=Math.min((H-(r.twF>0?40:30))/D,(W-110)/r.tw);
-  const tw=r.tw*s,th=D*s,cx=Math.round(W/2-24),top=10,left=Math.round(cx-tw/2),swp=sw*s;
+// The tyre's section: the sidewall is the width times the aspect, the diameter the rim's plus two sidewalls.
+const vcdTyreDims=r=>{const sw=r.tw*r.ta/100;return {sw,D:r.wheel*25.4+2*sw};};
+function vcdTyreShape(x,r,cx,top,s){
+  const C=DC_COLOURS,{sw,D}=vcdTyreDims(r),tw=r.tw*s,th=D*s,left=Math.round(cx-tw/2),swp=sw*s;
   x.fillStyle='#2a2a33';x.fillRect(left,top,tw,th);   // the tyre
   x.fillStyle='#14141a';for(let i=3;i<tw-2;i+=5){x.fillRect(left+i,top,2,3);x.fillRect(left+i,top+th-3,2,3);}   // tread
   x.fillStyle=C.steel;x.fillRect(left+2,top+swp,tw-4,th-2*swp);   // the rim
   x.fillStyle=C.dim;x.fillRect(left-4,Math.round(top+th/2)-1,tw+8,2);   // the axle
+  return {tw,th,left,swp};
+}
+// Low against high (build 251): both sections at one scale. Only the tyre's own geometry changes; the car is not rebuilt.
+const VCD_CMP_KEY={vhWheel:'wheel',vhTireW:'tw',vhTireA:'ta'};
+function vcdCmpDraw(x,id,res,vals,W,H){
+  const C=DC_COLOURS,top=16,s=Math.min((W/2-24)/Math.max(...res.map(r=>r.tw)),(H-top-14)/Math.max(...res.map(r=>vcdTyreDims(r).D)));
+  x.font='7px "Press Start 2P"';x.textAlign='center';
+  res.forEach((r,i)=>{const cx=Math.round(W/4+i*W/2);vcdTyreShape(x,r,cx,top,s);
+    x.fillStyle=i?C.green:C.cyan;x.fillText(tr(i?'HIGH':'LOW'),cx,9);
+    x.fillText((id==='vhWheel'?'R':'')+dcFmt(vals[i])+(id==='vhTireW'?' mm':id==='vhTireA'?'%':''),cx,H-3);});
+}
+function vcdDrawTyre(dc,r){
+  const cv=dc.vizCanvas('tyres');if(!cv)return;
+  const C=DC_COLOURS,x=dcCtx(cv),W=cv.width,H=cv.height;
+  const {sw,D}=vcdTyreDims(r),s=Math.min((H-(r.twF>0?40:30))/D,(W-110)/r.tw),cx=Math.round(W/2-24),top=10;
+  const {tw,th,left,swp}=vcdTyreShape(x,r,cx,top,s);
   x.font='7px "Press Start 2P"';
   const dx=left+tw+10;
   x.strokeStyle=C.cyan;x.beginPath();x.moveTo(dx+.5,top);x.lineTo(dx+.5,top+swp);x.stroke();

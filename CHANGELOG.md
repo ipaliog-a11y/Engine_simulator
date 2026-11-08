@@ -20,6 +20,23 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 Working toward **v1.0 — every number derived, not fitted.**
 
+### The help shows a value at its lowest and highest real example (build 251)
+
+- Press **?** on BORE, STROKE or COMPRESSION, and the help now draws the cylinder twice to one scale: at the lowest
+  and at the highest value a factory engine uses (the slider's first and last ticks). Under them are both power
+  curves on one pair of axes. REDLINE shows the curves alone, because its cylinder would look the same. On the
+  EA888, for example, a 64 mm bore gives 139 hp and a 107 mm bore 261 hp.
+- On the VEHICLE tab, WHEEL DIA, TYRE WIDTH and TYRE ASPECT draw the tyre's section at both ends of the real range,
+  to scale, with its diameter and sidewall.
+- Nothing is drawn by hand. Each side is the form's own preview with only that field changed, and the form, the
+  live engine and the state are put back afterwards. This replaces the generated "value diagrams", which had
+  identical panels and invented curves (`plans/designer-diagrams-in-code.md`; the icon brief for real photos is
+  `plans/designer-art-brief.md`).
+- Left open: a rotary engine has no cylinder to draw, so its fields show no comparison. Tyre width and aspect change
+  only the drawing, not the car: their effect on grip would need the car rebuilt, which comes in a later build.
+  Front tyre width is left out, because the section drawn is the rear tyre's. The other cards follow in the
+  plan's order.
+
 ### The chassis numbers as a part (build 250)
 
 Item 3 of `plans/parts-design-space.md`, step 1: the part itself.

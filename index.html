@@ -647,6 +647,8 @@ body.showcase-open{overflow:hidden}
 .evd-help ul{margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:3px}
 .evd-help li{padding-left:8px;border-left:2px solid #3a3a55;color:#889;font-size:6px}
 .evd-help li.on{border-color:#00ff88;color:#e0e0e0}
+.evd-help canvas.evd-cmp{width:100%;max-width:232px;background:#12121c;border:2px solid #26263a;image-rendering:pixelated}
+.evd-cmpt{display:flex;flex-direction:column;gap:3px;font-size:6px;color:#cdd}.evd-cmpt i{font-style:normal}
 .evd-help li span{color:#00ff88;margin-right:6px}
 .evd-help .empty{color:#889}
 .evd-guide{align-self:flex-start;font-family:inherit;font-size:7px;background:#12121c;color:#ffcc00;border:2px solid #3a3a55;padding:5px 8px;cursor:pointer;margin-top:4px}
@@ -727,7 +729,7 @@ body.showcase-open{overflow:hidden}
 </div>
 <div class="container">
 <header>
-<h1>PIXEL ENGINE SIM v0.7 build 250</h1>
+<h1>PIXEL ENGINE SIM v0.7 build 251</h1>
 <div class="subtitle" id="subtitle">ENGINE DESIGNER • BUILD IT, THEN DRIVE IT</div>
 </header>
 <div class="build-strip" id="buildStrip">
@@ -2417,7 +2419,8 @@ drag, size and parts are the middle of the real cars in it, and like them it car
 (a real car's drag already includes its factory spoilers). Everything stays editable from
 there; <b>REFIT FACTORY SPEC</b> puts it all back.
 The parts are six cards, picked from a menu (on a phone they stack and fold), as on the ENGINE tab: each number has a
-slider whose blue ticks are the factory cars, <b>?</b> explains any input, and <b>WHAT YOUR CAR DOES</b> shows the
+slider whose blue ticks are the factory cars, <b>?</b> explains any input (for the wheel and the tyre's width and
+aspect it draws the tyre at the lowest and highest real value, to scale), and <b>WHAT YOUR CAR DOES</b> shows the
 0–100, the top speed and the drive force against drag as you change them. <b>WHAT HOLDS IT BACK</b> says whether the
 tyres' speed rating, the limiter or the grip at the launch is what stops the car.
 <b>CHASSIS NUMBERS</b> shows the car's wheelbase, tracks, CG height and weight split; change one and the chassis is
@@ -24212,6 +24215,10 @@ class DesignCards{
       if(real.length)h+='<b>'+tr(this.cfg.realHead)+'</b><ul>'+real.map(t=>'<li class="'+(+ctl.value===t.v?'on':'')+'"><span>'+dcFmt(t.v,t.v%1?2:0)+'</span>'+
         t.names.slice(0,5).join(', ')+(t.names.length>5?' +'+(t.names.length-5):'')+'</li>').join('')+'</ul>';
     }
+    const cm=this.cmpSpec(id);
+    if(cm)h+='<b>'+tr('LOW AGAINST HIGH')+'</b><span>'+tr('The lowest and the highest real example, with everything else as you set it.')+'</span>'+
+      (cm.pic?'<canvas class="evd-cmp" data-cmp="pic" width="232" height="'+(cm.h||150)+'"></canvas>':'')+
+      (cm.curve?'<canvas class="evd-cmp" data-cmp="curve" width="232" height="110"></canvas>':'')+'<div class="evd-cmpt" data-cmp="txt"></div>';
     const card=this.cfg.cards.find(c=>c.id===(f&&f.closest('.evd-card').dataset.card));
     const guide=spec.guide||(card&&card.guide);
     if(guide)h+='<button type="button" class="evd-guide" data-gp="'+guide+'">'+tr('GUIDE')+' ▸</button>';
@@ -24228,6 +24235,60 @@ class DesignCards{
     this.q('.evd-inhelp').forEach(x=>{const on=!!id&&x.dataset.f===id&&this.narrow();x.hidden=!on;x.innerHTML=on?box.innerHTML:'';});
     this.q('.evd-guide').forEach(b=>b.addEventListener('click',()=>{const t=document.getElementById('tabGuide');if(t)t.click();if(typeof showGuide==='function')showGuide(b.dataset.gp);}));
     if(!quiet&&id&&this.narrow()){const f=this.field(id);if(f)f.scrollIntoView({block:'nearest'});}
+    if(id&&this.cmpSpec(id)){clearTimeout(st.cmpT);st.cmpT=setTimeout(()=>{if(st.help===id)this.drawCompare(id);},0);}
+  }
+
+  // ---- low against high (build 251): a number at its lowest and highest real example, drawn and worked out by the
+  // form's own code (cfg.compare.at), never by hand. The rest of the form is as set, and is put back. ----
+  // cfg.compare: {fields:{id:{pic,curve,h,u,dp}}, ok(id) (the form can show it now), at(id,v,res) (the result with the
+  // field at v; the field's box holds v meanwhile), draw(ctx,id,res,vals,W,H) (both pictures, at one scale), text(id,v,r)}.
+  cmpSpec(id){
+    const c=this.cfg.compare,s=c&&c.fields[id];
+    if(!s||(c.ok&&!c.ok(id))||!this.cmpValues(id))return null;
+    return s;
+  }
+  // the lowest and the highest real example; with fewer than two, the box's own range
+  cmpValues(id){
+    const ctl=document.getElementById(id);if(!ctl||ctl.type!=='number')return null;
+    const t=this.cfg.ticks(id);let lo=+ctl.min,hi=+ctl.max;
+    if(t.length>=2){lo=t[0].v;hi=t[t.length-1].v;}
+    return lo<hi?[lo,hi]:null;
+  }
+  // the results at both values, kept until another input changes (this one's own value does not enter them)
+  cmpRun(id){
+    const ctl=document.getElementById(id),vals=this.cmpValues(id);if(!vals)return null;
+    const sig=id+'|'+this.q('input,select').filter(e=>e!==ctl&&e.type!=='range').map(e=>e.value).join('|');
+    if(this.st.cmp&&this.st.cmp.sig===sig)return this.st.cmp;
+    const keep=ctl.value,res=[];
+    try{for(const v of vals){ctl.value=v;let r=null;try{r=this.cfg.compare.at(id,v,this.st.res);}catch(e){r=null;}res.push(r);}}
+    finally{ctl.value=keep;}
+    if(res.some(r=>!r))return null;
+    return this.st.cmp={sig,id,vals,res};
+  }
+  drawCompare(id){
+    const s=this.cmpSpec(id),run=s&&this.cmpRun(id);if(!run)return;
+    const C=DC_COLOURS,boxes=[this.el('Help')].concat(this.q('.evd-inhelp').filter(x=>!x.hidden));
+    const txt=run.vals.map((v,i)=>'<span><i style="color:'+(i?C.green:C.cyan)+'">■</i> '+tr(i?'HIGH':'LOW')+' '+dcFmt(v,s.dp||0)+(s.u||'')+': '+
+      this.cfg.compare.text(id,v,run.res[i])+'</span>').join('');
+    for(const b of boxes){if(!b)continue;
+      const pic=b.querySelector('canvas[data-cmp=pic]'),cur=b.querySelector('canvas[data-cmp=curve]'),t=b.querySelector('[data-cmp=txt]');
+      if(pic){const x=dcCtx(pic);this.cfg.compare.draw(x,id,run.res,run.vals,pic.width,pic.height);}
+      if(cur)this.cmpCurve(cur,run);
+      if(t)t.innerHTML=txt;
+    }
+  }
+  // the form's curve (its first line, a) at both values, on one pair of axes: LOW in cyan, HIGH in green
+  cmpCurve(cv,run){
+    const C=DC_COLOURS,x=dcCtx(cv),W=cv.width,H=cv.height,pl=30,pr=8,pt=8,pb=16,iw=W-pl-pr,ih=H-pt-pb;
+    const cs=run.res.map(r=>this.cfg.curve(r)),xs=cs[0].xStep||2000,ys=cs[0].yStep||50,xLab=cs[0].xLab||(v=>dcFmt(v/1000)+'k');
+    const xMax=Math.ceil(Math.max(...cs.map(c=>c.xMax))/xs)*xs,yMax=Math.max(ys,Math.ceil(Math.max(...cs.map(c=>Math.max(...c.pts.map(q=>q.a))))/ys)*ys);
+    const X=v=>pl+v/xMax*iw,Y=v=>pt+ih-v/yMax*ih;
+    x.font='7px "Press Start 2P"';x.strokeStyle=C.edge;x.lineWidth=1;
+    for(let i=0;i<=2;i++){const y=Math.round(pt+ih*i/2)+.5;x.beginPath();x.moveTo(pl,y);x.lineTo(W-pr,y);x.stroke();
+      x.textAlign='right';x.fillStyle=C.dim;x.fillText(dcFmt(yMax*(1-i/2)),pl-3,y+3);}
+    x.textAlign='center';for(let k=0;k<=2;k++)x.fillText(xLab(xMax*k/2),X(xMax*k/2),H-4);
+    x.textAlign='right';x.fillText(tr(this.cfg.legend[0][1]),W-pr,pt+7);
+    cs.forEach((c,i)=>{x.strokeStyle=i?C.green:C.cyan;x.lineWidth=2;x.beginPath();c.pts.forEach((q,j)=>{j?x.lineTo(X(q.x),Y(q.a)):x.moveTo(X(q.x),Y(q.a));});x.stroke();});
   }
 
   // ---- pictures ----
@@ -24739,6 +24800,12 @@ const ICD=new DesignCards({
     if(icdKnockOver(r)){w.edCR=tr('It knocks past what the ECU can hold off.');if(document.getElementById('edTiming').value==='fixed')w.edIgnAdv=w.edCR;}
     return w;},
   drawViz:(dc,r)=>icdDrawCylinder(dc,r),
+  // low against high: the cylinder for what it shapes, the power curve for all four
+  compare:{fields:{edBore:{pic:1,curve:1,h:170,u:' mm'},edStroke:{pic:1,curve:1,h:170,u:' mm'},edCR:{pic:1,curve:1,h:170,u:':1',dp:1},
+      edRedline:{curve:1,u:' rpm'}},
+    ok:()=>document.getElementById('edType').value!=='rotary',
+    at:()=>icdCompute(),draw:icdCmpDraw,
+    text:(id,v,r)=>dcFmt(r.hp)+' hp · '+dcFmt(r.tq)+' Nm · '+tr('reliability')+' '+dcFmt(r.rel)},
   icons:{
     block:(P,C)=>{P(C.steel,[[2,1,2,12],[10,1,2,12],[2,12,10,1]]);P(C.fg,[[4,6,6,3]]);P(C.dim,[[6,9,2,3]]);},
     head:(P,C)=>{P(C.steel,[[1,2,12,2]]);P(C.fg,[[3,4,1,6],[10,4,1,6]]);P(C.yellow,[[2,10,3,1],[9,10,3,1]]);},
@@ -24752,20 +24819,34 @@ const icdState=ICD.st;
 // Called by syncDesignEnable whenever the form is synced: on for a combustion engine (with or without a hybrid), off else.
 function icdSync(on){ICD.sync(on?'ice':'');}
 
-// ---- the picture: one cylinder to scale, the piston at the top and the bottom of its stroke ----
-function icdDrawCylinder(dc,r){
-  const cv=dc.vizCanvas('block');if(!cv)return;
-  const C=DC_COLOURS,x=dcCtx(cv),W=cv.width,H=cv.height;
-  x.font='7px "Press Start 2P"';x.textAlign='center';
-  if(r.rotary){x.fillStyle=C.dim;x.fillText(tr('ROTOR'),W/2,H/2);return;}
-  const s=0.95,B=r.bore*s,S=r.stroke*s,clr=S/(r.cr-1),pH=Math.min(34,B*0.42);   // the clearance height: Vc = Vs/(CR-1)
-  const cx=W/2-20,top=14,bdcY=top+clr+S;   // the piston's crown at TDC sits clr below the head, at BDC a stroke lower
+// One cylinder in section at s px per mm, its head at top: the clearance height is Vc = Vs/(CR-1) over the bore,
+// the piston solid at the top of its stroke and outlined at the bottom.
+function icdCylShape(x,r,cx,top,s){
+  const C=DC_COLOURS,B=r.bore*s,S=r.stroke*s,clr=S/(r.cr-1),pH=Math.min(34,B*0.42),bdcY=top+clr+S;
   x.fillStyle=C.steel;x.fillRect(cx-B/2-6,top-6,B+12,6);   // the head
   x.fillRect(cx-B/2-6,top,6,clr+S+pH);x.fillRect(cx+B/2,top,6,clr+S+pH);   // the walls
   x.fillStyle='#3a2a1a';x.fillRect(cx-B/2,top,B,clr);   // the clearance volume
   x.strokeStyle=C.dim;x.lineWidth=1;x.strokeRect(cx-B/2+.5,bdcY+.5,B-1,pH-1);   // the piston at the bottom of its stroke
   x.fillStyle='#b8b8c8';x.fillRect(cx-B/2,top+clr,B,pH);   // the piston at the top
   x.fillStyle=C.yellow;x.fillRect(cx-B/2,top+clr-1,B,1);
+  return {B,S,clr,pH,bdcY};
+}
+// Low against high (build 251): both cylinders at one scale, the larger fitting its half of the picture.
+function icdCmpDraw(x,id,res,vals,W,H){
+  const C=DC_COLOURS,top=16,ext=r=>r.stroke/(r.cr-1)+r.stroke+0.42*r.bore;   // the piston is at most 0.42 bore tall
+  const s=Math.min(0.95,(W/2-20)/Math.max(...res.map(r=>r.bore)),(H-top-14)/Math.max(...res.map(ext)));
+  x.font='7px "Press Start 2P"';x.textAlign='center';
+  res.forEach((r,i)=>{const cx=W/4+i*W/2;icdCylShape(x,r,cx,top,s);
+    x.fillStyle=i?C.green:C.cyan;x.fillText(tr(i?'HIGH':'LOW'),cx,9);
+    x.fillText(dcFmt(vals[i],id==='edCR'?1:0)+(id==='edCR'?':1':' mm'),cx,H-3);});
+}
+// ---- the picture: one cylinder to scale, the piston at the top and the bottom of its stroke ----
+function icdDrawCylinder(dc,r){
+  const cv=dc.vizCanvas('block');if(!cv)return;
+  const C=DC_COLOURS,x=dcCtx(cv),W=cv.width,H=cv.height;
+  x.font='7px "Press Start 2P"';x.textAlign='center';
+  if(r.rotary){x.fillStyle=C.dim;x.fillText(tr('ROTOR'),W/2,H/2);return;}
+  const s=0.95,cx=W/2-20,top=14,{B,S,clr,pH,bdcY}=icdCylShape(x,r,cx,top,s);
   // dimensions
   const dx=cx+B/2+14;
   x.strokeStyle=C.cyan;x.beginPath();x.moveTo(dx,top+clr);x.lineTo(dx,bdcY);x.stroke();
@@ -24974,6 +25055,9 @@ const VCD=new DesignCards({
     if(vcdTyresShort(r))w.vhRating=tr('The car reaches {v} km/h, past this rating.').replace('{v}',dcFmt(r.top));
     return w;},
   drawViz:(dc,r)=>vcdDrawTyre(dc,r),
+  compare:{fields:{vhWheel:{pic:1,h:150,u:' in'},vhTireW:{pic:1,h:150,u:' mm'},vhTireA:{pic:1,h:150,u:'%'}},
+    at:(id,v,res)=>res&&Object.assign({},res,{[VCD_CMP_KEY[id]]:v}),draw:vcdCmpDraw,
+    text:(id,v,r)=>{const {sw,D}=vcdTyreDims(r);return tr('diameter')+' '+dcFmt(D)+' mm · '+tr('sidewall')+' '+dcFmt(sw)+' mm';}},
   icons:{
     chassis:(P,C)=>{P(C.steel,[[3,4,7,3],[1,7,12,3]]);P(C.cyan,[[4,5,2,2],[7,5,2,2]]);P(C.fg,[[2,10,3,3],[9,10,3,3]]);},
     dims:(P,C)=>{P(C.fg,[[1,9,3,3],[10,9,3,3]]);P(C.steel,[[2,6,10,2]]);P(C.cyan,[[6,3,2,2]]);P(C.yellow,[[1,13,12,1]]);},
@@ -24993,15 +25077,30 @@ function vcdRefresh(){
 }
 
 // ---- the picture: the tyre in section, to scale ----
-function vcdDrawTyre(dc,r){
-  const cv=dc.vizCanvas('tyres');if(!cv)return;
-  const C=DC_COLOURS,x=dcCtx(cv),W=cv.width,H=cv.height;
-  const sw=r.tw*r.ta/100,rim=r.wheel*25.4,D=rim+2*sw,s=Math.min((H-(r.twF>0?40:30))/D,(W-110)/r.tw);
-  const tw=r.tw*s,th=D*s,cx=Math.round(W/2-24),top=10,left=Math.round(cx-tw/2),swp=sw*s;
+// The tyre's section: the sidewall is the width times the aspect, the diameter the rim's plus two sidewalls.
+const vcdTyreDims=r=>{const sw=r.tw*r.ta/100;return {sw,D:r.wheel*25.4+2*sw};};
+function vcdTyreShape(x,r,cx,top,s){
+  const C=DC_COLOURS,{sw,D}=vcdTyreDims(r),tw=r.tw*s,th=D*s,left=Math.round(cx-tw/2),swp=sw*s;
   x.fillStyle='#2a2a33';x.fillRect(left,top,tw,th);   // the tyre
   x.fillStyle='#14141a';for(let i=3;i<tw-2;i+=5){x.fillRect(left+i,top,2,3);x.fillRect(left+i,top+th-3,2,3);}   // tread
   x.fillStyle=C.steel;x.fillRect(left+2,top+swp,tw-4,th-2*swp);   // the rim
   x.fillStyle=C.dim;x.fillRect(left-4,Math.round(top+th/2)-1,tw+8,2);   // the axle
+  return {tw,th,left,swp};
+}
+// Low against high (build 251): both sections at one scale. Only the tyre's own geometry changes; the car is not rebuilt.
+const VCD_CMP_KEY={vhWheel:'wheel',vhTireW:'tw',vhTireA:'ta'};
+function vcdCmpDraw(x,id,res,vals,W,H){
+  const C=DC_COLOURS,top=16,s=Math.min((W/2-24)/Math.max(...res.map(r=>r.tw)),(H-top-14)/Math.max(...res.map(r=>vcdTyreDims(r).D)));
+  x.font='7px "Press Start 2P"';x.textAlign='center';
+  res.forEach((r,i)=>{const cx=Math.round(W/4+i*W/2);vcdTyreShape(x,r,cx,top,s);
+    x.fillStyle=i?C.green:C.cyan;x.fillText(tr(i?'HIGH':'LOW'),cx,9);
+    x.fillText((id==='vhWheel'?'R':'')+dcFmt(vals[i])+(id==='vhTireW'?' mm':id==='vhTireA'?'%':''),cx,H-3);});
+}
+function vcdDrawTyre(dc,r){
+  const cv=dc.vizCanvas('tyres');if(!cv)return;
+  const C=DC_COLOURS,x=dcCtx(cv),W=cv.width,H=cv.height;
+  const {sw,D}=vcdTyreDims(r),s=Math.min((H-(r.twF>0?40:30))/D,(W-110)/r.tw),cx=Math.round(W/2-24),top=10;
+  const {tw,th,left,swp}=vcdTyreShape(x,r,cx,top,s);
   x.font='7px "Press Start 2P"';
   const dx=left+tw+10;
   x.strokeStyle=C.cyan;x.beginPath();x.moveTo(dx+.5,top);x.lineTo(dx+.5,top+swp);x.stroke();

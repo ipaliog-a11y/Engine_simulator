@@ -1,4 +1,4 @@
-# PIXEL ENGINE SIM v0.7 build 250
+# PIXEL ENGINE SIM v0.7 build 251
 
 **A lightweight, 8-bit style internal combustion engine *designer* & simulator** inspired by *Automation*.
 
@@ -16,7 +16,8 @@ watch the physics respond. Web-based, fully offline-capable, installable as a PW
 Since build 239 the ENGINE tab shows the engine as six cards, picked from a menu (stacked and folding on a phone):
 **BLOCK**, **HEAD & VALVES**, **AIR & BOOST**, **INTAKE & EXHAUST**, **FUEL & SPARK** and **COOLING & ELECTRICS**. Each
 number has a slider whose ticks are the factory engines, a **?** explains every input (what it is, what it trades, the
-factory engines' values), each change shows its effect beside it, and a side panel shows what the engine gives (power,
+factory engines' values; for bore, stroke, compression and redline, the engine at the lowest and highest real value, drawn
+and computed), each change shows its effect beside it, and a side panel shows what the engine gives (power,
 torque, grade, reliability, cost, the curve) and what holds it back (valve float against the redline, knock against its
 limit), worked out by BUILD's own code before you press it. **BASIC** hides the finer settings that **ADVANCED** shows.
 
