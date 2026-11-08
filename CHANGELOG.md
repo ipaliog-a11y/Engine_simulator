@@ -40,7 +40,8 @@ Item 3 of `plans/parts-design-space.md`, step 2, first batch: retiring the class
   kept). The 50 cars without published tracks come in later batches, by category. The roofless Atom, Mono and SR3 keep
   their class CG for good: their published height is a roll hoop's. The classes' own CG stays hand-set.
 
-Tests: test161 (new; `NO_H_BUDGET` 54 may only shrink).
+Tests: test161 (new; `NO_H_BUDGET` 54 may only shrink); test160 now sets the exact CG when it writes the factory's
+numbers as DESIGNED (the form shows them to 1 mm).
 
 ### The chassis numbers as a part (build 250)
 
