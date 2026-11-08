@@ -349,15 +349,16 @@ function deriveCharge(){
   engine.maxBoost=engine.intake==='na'?0:engine.boost_bar;
   engine.mapMax=engine.intake==='na'?1.05:1.0+engine.maxBoost;
   // Intercooler core: charge-heat residual (feeds effIAT) and its spool-lag penalty.
-  const ic=INTERCOOLER[engine.intercooler]||INTERCOOLER.large;
-  engine.icEff=ic.eff;
+  // A designed core (build 254) brings its own pipe, volume and effectiveness (icPartNtu in src/js/parts.js).
+  const ic=INTERCOOLER[engine.intercooler]||INTERCOOLER.large,P=engine.icPart;
   // the flow the core's effectiveness is quoted at: the engine's peak revs at the 1 bar the frames are characterised at
   // (TURBO_PR_REF). Not at this build's boost: the core is hardware, and more boost runs it past its rating.
   engine.icRefFlow=airFlowAt(engine.redline,TURBO_PR_REF);
+  engine.icEff=P?1-Math.exp(-icPartNtu(P,1)):ic.eff;
   // charge volume between compressor and throttle, m3 — ducting bore follows the compressor OUTLET,
   // ~0.72 of the exducer (a GT28: 2-inch outlet on a 71 mm wheel)
   const duct=0.72*turboFrame(engine).exd;
-  engine.chargeVol=ic.pipe*Math.PI/4*duct*duct+ic.core/1000;
+  engine.chargeVol=(P?P.pipe_m:ic.pipe)*Math.PI/4*duct*duct+(P?icCoreL(P):ic.core)/1000;
   // Turbo spool characteristics scaled to redline, then modified by the turbo config
   // (twin/sequential/compound), anti-lag (keeps it spooled) and intercooler volume (lag).
   const tb=turboFrame(engine), cfg=TURBO_CONFIG[engine.turboConfig]||TURBO_CONFIG.single;

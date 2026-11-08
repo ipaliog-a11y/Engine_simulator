@@ -45,7 +45,7 @@ function liveMap(){return state.map;}
 function icEffAt(m){
   const e0=engine.icEff;
   if(!(e0>0&&e0<1)||!(m>0)||!(engine.icRefFlow>0))return e0||0;
-  const r=engine.icRefFlow/m, ntu=-Math.log(1-e0)*r*2/(1+Math.pow(r,0.8));
+  const r=engine.icRefFlow/m, ntu=engine.icPart?icPartNtu(engine.icPart,r):-Math.log(1-e0)*r*2/(1+Math.pow(r,0.8));
   return 1-Math.exp(-ntu);
 }
 function effIAT(map,rpm){

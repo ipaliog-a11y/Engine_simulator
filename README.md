@@ -1,4 +1,4 @@
-# PIXEL ENGINE SIM v0.7 build 253
+# PIXEL ENGINE SIM v0.7 build 254
 
 **A lightweight, 8-bit style internal combustion engine *designer* & simulator** inspired by *Automation*.
 
@@ -152,7 +152,9 @@ construction, primary diameter and length, the pipes after the collector, the si
 have built and saved to a library whose parts appear in the ENGINE tab's EXHAUST choices. The second is the intake
 manifold (build 206): runner length and bore, and a variable length with a flap. The third is the air filter (build 210):
 its media and housing, whose pressure drop at the flow the engine draws is now what any filter costs. The fourth is the
-camshaft (build 249): duration, lift, lobe separation, lobe profile and the VVT phaser's range.
+camshaft (build 249): duration, lift, lobe separation, lobe profile and the VVT phaser's range. The fifth is the
+intercooler (build 254): core face, depth, cooling fins and charge pipe, with its effectiveness, charge volume and
+pressure drop on the engine.
 An electric car is heard (build 198): its motor's whine, the inverter's switching and the reduction's gears, each at
 the frequency its build gives it, on the bench and on the lap replay.
 On the LIVE bench (build 190) a hybrid runs with its motor and pack: a HYBRID panel draws the power flowing between

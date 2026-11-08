@@ -20,6 +20,28 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 Working toward **v1.0 — every number derived, not fitted.**
 
+### The intercooler as a part (build 254)
+
+Item 4 of `plans/parts-design-space.md`, step 1.
+
+- **The PARTS tab designs an intercooler**: the core's width (the charge's path), height and depth, its cooling fins
+  per inch, and the charge pipe's length. It feeds the charge path the same numbers the two factory cores always fed:
+  the volume to fill (pipe plus the core's charge side, 40% of its gross volume), which sets spool, and the
+  effectiveness. The effectiveness keeps build 136's NTU law, with each side's conductance scaled by the core's own
+  surfaces: the charge side by w·(h·d)^0.2 (area, and speed through the end), the cooling side by w·h·d·fpi.
+- **The factory cores as dimensions**: SMALL 250×150×80 mm, LARGE 600×250×75 mm, 14 fpi (typical cores, probable).
+  Written down as a part, each is that core exactly (0 difference in torque, effectiveness and volume on three turbo
+  cars). On the Golf GTI Mk7, a large core 400 → 600 → 800 mm wide reads 0.79 → 0.86 → 0.93 at peak power.
+- **Pressure drop (new), shown only**: the charge passages' offset-strip fins by Manglik & Bergles (1995), the tanks'
+  Kc + Ke ≈ 1 (Kays & London), the pipe by Blasius. The Golf's large core reads 5.8 kPa plus 7.3 kPa in its pipe at peak
+  power; design practice is 1–2 psi (7–14 kPa) at full flow.
+- **No factory car moved**: the factory path is unchanged and fingerprint identical.
+- **Left open, the next build:** the effectiveness is still anchored to the factory cores' quoted 0.62 and 0.82
+  (`INTERCOOLER.eff`), interpolated on log volume between them, and the pressure drop is not yet taken off the boost.
+  Both go together, for every intercooled car. One core carries a twin-turbo's whole flow. Greek is paused.
+
+Tests: test162 (new); test120 now lists the part kinds as built (it still expected four, without the cam of build 249).
+
 ### Real cars' own tracks and CG height, batch 3 (build 253)
 
 Item 3 of `plans/parts-design-space.md`, step 2, last batch: the remaining categories and the earlier gaps.

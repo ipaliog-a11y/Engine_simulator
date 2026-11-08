@@ -40,7 +40,7 @@
 </div>
 <div class="container">
 <header>
-<h1>PIXEL ENGINE SIM v0.7 build 253</h1>
+<h1>PIXEL ENGINE SIM v0.7 build 254</h1>
 <div class="subtitle" id="subtitle">ENGINE DESIGNER • BUILD IT, THEN DRIVE IT</div>
 </header>
 <div class="build-strip" id="buildStrip">
@@ -460,6 +460,25 @@
 <div class="part-guide" id="pcGuide"></div>
 <div class="part-chart"><div class="gw-leg" id="pcLegend"></div><canvas id="pcCanvas" role="img" aria-label="Power and torque with this cam against the engine as it is"></canvas></div>
 <div class="btn-row part-btns"><button type="button" id="pcSave">SAVE PART</button><button type="button" id="pcSaveFit">SAVE &amp; FIT</button></div>
+</div>
+<div id="partsIc" hidden>
+<div class="design-section">My intercoolers</div>
+<div class="part-list" id="pxList"></div>
+<div class="pick-row"><div class="field"><label for="pxFrom">START FROM</label><select id="pxFrom"><option value="small">SMALL CORE</option><option value="large">LARGE CORE</option></select></div>
+<div class="field"><label>&nbsp;</label><button type="button" id="pxNew">NEW INTERCOOLER</button><button type="button" id="pxReset" title="Put the dimensions back to the factory part chosen above, keeping the name">RESET</button></div></div>
+<div class="design-section">Intercooler</div>
+<div class="design-grid">
+<div class="field"><label for="pxName">NAME</label><input type="text" id="pxName" maxlength="40"></div>
+<div class="field"><label for="pxW">CORE WIDTH, THE CHARGE'S PATH (mm)</label><input type="number" id="pxW" min="150" max="900" step="10"></div>
+<div class="field"><label for="pxH">CORE HEIGHT (mm)</label><input type="number" id="pxH" min="80" max="400" step="10"></div>
+<div class="field"><label for="pxD">CORE DEPTH (mm)</label><input type="number" id="pxD" min="30" max="120" step="1"></div>
+<div class="field"><label for="pxFpi">COOLING FINS PER INCH</label><input type="number" id="pxFpi" min="8" max="30" step="1"></div>
+<div class="field"><label for="pxPipe">CHARGE PIPE LENGTH (m)</label><input type="number" id="pxPipe" min="0.3" max="5" step="0.1"></div>
+</div>
+<div class="design-section">On this engine</div>
+<div class="part-guide" id="pxGuide"></div>
+<div class="part-chart"><div class="gw-leg" id="pxLegend"></div><canvas id="pxCanvas" role="img" aria-label="Power and torque with this intercooler against the engine as it is"></canvas></div>
+<div class="btn-row part-btns"><button type="button" id="pxSave">SAVE PART</button><button type="button" id="pxSaveFit">SAVE &amp; FIT</button></div>
 </div>
 </div>
 
