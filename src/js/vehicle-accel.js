@@ -3,13 +3,19 @@ function fitmentLabel(v){
   const dia=(v.wheelDia*25.4+2*v.tireWidth*v.tireAspect/100)/25.4;
   return v.tireWidth+'/'+v.tireAspect+'R'+v.wheelDia+' ('+dia.toFixed(1)+'in Ø)';
 }
+// The factory's chassis numbers (build 250): a real car's own wheelbase, published tracks (SUSP_REAL) and split with its
+// factory engine; the class's CG height, which is not published car by car; an archetype's class figures throughout.
+function factoryDims(v){
+  const ch=CHASSIS[v.chassis]||CHASSIS.coupe,b=v.body,sr=b&&SUSP_REAL[b.name],t=(b&&b.track)||ch.track;
+  return {wb:b?b.wb:ch.wb,cg:ch.cg,trackF:sr?sr.tf:t,trackR:sr?sr.tr:t,fWt:b?b.fWt:ch.fWt};
+}
 // True when every fitted part still matches the chassis' factory spec.
 function isFactoryFit(v){
   const ch=CHASSIS[v.chassis];if(!ch||!ch.fit)return false;const f=v.body?v.body.fit:ch.fit;
   return v.drive===(v.body?f.drive:ch.drive)&&(v.governor||0)===(f.gov||0)&&(v.tc!==false)===(f.tc!==false)&&v.gears===f.gears&&v.gearing===f.gearing&&v.spacing===(v.body?'stock':'std')&&!(v.finalDriveSet>0)&&v.gearbox===f.gearbox&&v.diff===f.diff&&
     v.tireType===f.tire&&v.tireWidth===f.tw&&(v.tireWidthF||0)===(f.twF||0)&&!stepOf(v.springF)&&!stepOf(v.springR)&&!stepOf(v.barF)&&!stepOf(v.barR)&&!stepOf(v.damperF)&&!stepOf(v.damperR)&&v.tireAspect===f.ta&&v.wheelDia===f.wheel&&
     v.aeroFront===f.aF&&v.aeroRear===f.aR&&v.aeroFloor===f.aFl&&v.weightRed===f.weight&&
-    v.brakeType===f.brake&&v.rotor===f.rotor&&v.suspension===f.susp&&geoStock(v);
+    v.brakeType===f.brake&&v.rotor===f.rotor&&v.suspension===f.susp&&geoStock(v)&&!v.dims&&!(v.ballastKg>0);
 }
 // Both axles on the factory's geometry (build 173); a save from before carries none, which is the factory's.
 function geoStock(v){const fg=factoryGeo(v);return (v.suspFront||fg.f)===fg.f&&(v.suspRear||fg.r)===fg.r;}
@@ -61,13 +67,18 @@ function buildVehicle(){
   if(body&&!(body.mass>0))body.mass=Math.max(250,body.kg-vehicle.engineMass);
   if(body&&!(body.engKg>0))body.engKg=vehicle.engineMass;   // the factory engine, for the weight split below
   vehicle.mass=Math.max(380,(body?body.mass:ch.mass)+vehicle.engineMass-wr.kg);
-  vehicle.wb=body?body.wb:ch.wb;vehicle.cg=ch.cg;vehicle.area=body?body.area:ch.area;
-  vehicle.track=(body&&body.track)||ch.track;
+  // Ballast (build 250) is mass like any other: on the scales before anything reads them, and in the weight split and
+  // the centre of gravity below, at its own place.
+  const m0=vehicle.mass,bk=vehicle.ballastKg>0?vehicle.ballastKg:0;vehicle.mass+=bk;
+  vehicle.area=body?body.area:ch.area;
   // Each axle's own track and geometry (build 173): a real car's published front and rear tracks, else the archetype's
-  // for both. The camber the outside wheel wins back from the roll follows the axle's track (geoRecovery); a solid axle
-  // carries no static camber, the axle sets it; a solid axle's roll centre is its own wheel centre.
-  {const sr=body&&SUSP_REAL[body.name],fg=factoryGeo(vehicle);
-   vehicle.trackF=sr?sr.tf:vehicle.track;vehicle.trackR=sr?sr.tr:vehicle.track;
+  // for both (factoryDims). The camber the outside wheel wins back from the roll follows the axle's track (geoRecovery); a
+  // solid axle carries no static camber, the axle sets it; a solid axle's roll centre is its own wheel centre.
+  // Chassis numbers set by hand (build 250: vehicle.dims) take the place of the factory's wheelbase, CG height and tracks.
+  const FD=factoryDims(vehicle),D=vehicle.dims;vehicle.dimsFactory=FD;
+  vehicle.wb=D?D.wb:FD.wb;vehicle.cg=D?D.cg:FD.cg;
+  {const fg=factoryGeo(vehicle);
+   vehicle.trackF=D?D.trackF:FD.trackF;vehicle.trackR=D?D.trackR:FD.trackR;
    vehicle.track=(vehicle.trackF+vehicle.trackR)/2;
    if(!SUSP_GEO[vehicle.suspFront])vehicle.suspFront=fg.f;
    if(!SUSP_GEO[vehicle.suspRear])vehicle.suspRear=fg.r;
@@ -86,6 +97,11 @@ function buildVehicle(){
     const dm=vehicle.engineMass-body.engKg, share=ENGINE_FRONT_SHARE[engineLayoutOf(vehicle.chassis,body)];
     vehicle.fWt=clamp((body.fWt*body.kg+dm*share)/Math.max(1,body.kg+dm),0.25,0.75);
   }
+  FD.fWtCar=vehicle.fWt;   // the factory's split with this engine in it: what the CHASSIS NUMBERS card shows
+  if(D)vehicle.fWt=D.fWt;  // a designed split is the car's own, as built with this engine
+  // the ballast at its place along the car (its front axle's share) and its height: the mass-weighted mean of the two
+  if(bk>0){vehicle.fWt=(vehicle.fWt*m0+bk*vehicle.ballastPos)/vehicle.mass;vehicle.cg=(vehicle.cg*m0+bk*vehicle.ballastH)/vehicle.mass;}
+  syncDimsForm();
   // Brakes: the deceleration the hydraulics can command (m/s2, before fade). After the weight split, the wheelbase and
   // the centre of gravity, which size the rear brakes (build 203; until then this ran before them).
   vehicle.brakeDecelCap=brakeForceCap(vehicle)/vehicle.mass;

@@ -125,8 +125,30 @@ function readVehicleFromForm(){
     tc:g('vhTC').value!=='off',
     // Gear spacing (build 169): CLOSE / STANDARD / WIDE, STOCK (a real car's own box) or CUSTOM. The hand-set ratios
     // and a hand-set final drive (0 = matched to the engine) live beside the form, like the body.
-    spacing:g('vhSpacing').value,ratioSet:vehRatioSet?vehRatioSet.slice():null,finalDriveSet:vehFinalDriveSet
+    spacing:g('vhSpacing').value,ratioSet:vehRatioSet?vehRatioSet.slice():null,finalDriveSet:vehFinalDriveSet,
+    // The chassis numbers (build 250): null on the factory's, else the wheelbase, tracks and CG height (m) and the static
+    // front weight share set by hand. Ballast (kg) at its front axle's share and its height (m); 0 kg is none.
+    dims:g('vhDims').value==='design'?{wb:clamp(numOr(g('vhWb').value,2.6),DIMS_LIMITS.wb[0],DIMS_LIMITS.wb[1]),
+      trackF:clamp(numOr(g('vhTrackF').value,1.55),DIMS_LIMITS.track[0],DIMS_LIMITS.track[1]),
+      trackR:clamp(numOr(g('vhTrackR').value,1.55),DIMS_LIMITS.track[0],DIMS_LIMITS.track[1]),
+      cg:clamp(numOr(g('vhCg').value,0.5),DIMS_LIMITS.cg[0],DIMS_LIMITS.cg[1]),
+      fWt:clamp(numOr(g('vhFwt').value,50),DIMS_LIMITS.fWt[0],DIMS_LIMITS.fWt[1])/100}:null,
+    ballastKg:clamp(Math.round(+g('vhBallast').value||0),0,DIMS_LIMITS.ballast[1]),
+    ballastPos:clamp(numOr(g('vhBallastPos').value,50),0,100)/100,
+    ballastH:clamp(numOr(g('vhBallastH').value,0.15),DIMS_LIMITS.ballastH[0],DIMS_LIMITS.ballastH[1])
   };
+}
+// What the chassis numbers may be (build 250): a wheelbase from under a kei car's (2.27 m) to past a long pickup's (3.68);
+// tracks from a narrow city car's to past a prototype's 1.75; a CG from a single-seater's 0.30 m to past an SUV's 0.66;
+// the split as far as the factory one's clamp allows after an engine swap. Ballast to 200 kg, from the floor (0.05 m) up.
+const DIMS_LIMITS={wb:[1.8,4.0],track:[1.1,2.0],cg:[0.25,0.9],fWt:[25,75],ballast:[0,200],ballastH:[0.05,0.8]};
+// On FACTORY the CHASSIS NUMBERS card shows the factory's own numbers for this car, the start of a design (buildVehicle).
+function syncDimsForm(){
+  const g=id=>document.getElementById(id),sel=g('vhDims');
+  if(!sel||sel.value!=='factory'||!vehicle||!vehicle.dimsFactory)return;
+  const F=vehicle.dimsFactory;
+  g('vhWb').value=+F.wb.toFixed(3);g('vhTrackF').value=+F.trackF.toFixed(3);g('vhTrackR').value=+F.trackR.toFixed(3);
+  g('vhCg').value=+F.cg.toFixed(3);g('vhFwt').value=+(F.fWtCar*100).toFixed(1);
 }
 // A spring or bar step from a form value or a record: an integer from -2 to 2, 0 when missing.
 function stepOf(x){return clamp(Math.round(+x||0),-2,2);}
@@ -160,6 +182,10 @@ function applyVehicleToForm(v){
   g('vhBarF').value=String(stepOf(v.barF!=null?v.barF:v.arbBal));g('vhBarR').value=String(stepOf(v.barR));
   g('vhDamperF').value=String(stepOf(v.damperF));g('vhDamperR').value=String(stepOf(v.damperR));   // none before build 216: the kit's own
   g('vhSteer').value=v.steerRatio||15;   // saves from before build 130 carry none
+  // the chassis numbers and ballast (build 250); saves from before carry none: the factory's, and no ballast
+  {const D=v.dims;g('vhDims').value=D?'design':'factory';
+   if(D){g('vhWb').value=D.wb;g('vhTrackF').value=D.trackF;g('vhTrackR').value=D.trackR;g('vhCg').value=D.cg;g('vhFwt').value=+(D.fWt*100).toFixed(4);}
+   g('vhBallast').value=v.ballastKg||0;g('vhBallastPos').value=v.ballastPos!=null?+(v.ballastPos*100).toFixed(2):50;g('vhBallastH').value=v.ballastH||0.15;}
   updateGearingLabel();
 }
 // Fit a chassis with its factory-spec parts, so picking a chassis gives a coherent car instead of
@@ -183,6 +209,7 @@ function applyChassisFit(key,body){
   g('vhAeroF').value=f.aF;g('vhAeroR').value=f.aR;g('vhAeroFl').value=f.aFl;g('vhWeight').value=f.weight;
   g('vhBrake').value=f.brake;g('vhRotor').value=f.rotor;g('vhSusp').value=f.susp;
   {const fg=factoryGeo({chassis:key,body});g('vhGeoF').value=fg.f;g('vhGeoR').value=fg.r;}
+  g('vhDims').value='factory';g('vhBallast').value=0;   // the factory's chassis numbers, without ballast (build 250)
   updateGearingLabel();
   return ch;
 }

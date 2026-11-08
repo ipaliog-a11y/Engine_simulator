@@ -20,6 +20,29 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 Working toward **v1.0 — every number derived, not fitted.**
 
+### The chassis numbers as a part (build 250)
+
+Item 3 of `plans/parts-design-space.md`, step 1: the part itself.
+
+- **A CHASSIS NUMBERS card on the VEHICLE tab**: wheelbase, front and rear track, CG height and the static front weight
+  share. On FACTORY it shows the car's own (a real car's wheelbase, published tracks and split with this engine; the
+  class's CG). Change any of them and the chassis is DESIGNED: the numbers take the factory's place in the same load
+  transfer, roll, brake balance and diff traction. On the M3 E46, CG 0.36 → 0.60 m rolls 2.8 → 5.2 deg/g and laps the
+  mixed circuit 66.4 → 67.9 s; a rear track 0.15 m wider rolls 4.0 → 3.6 deg/g and, on the same springs, takes more of
+  the roll (an axle's roll stiffness grows as its track squared).
+- **Ballast**: kg, where it sits along the car (its front axle's share) and its height. It is mass on the scales, and it
+  moves the split and the CG by its mass against the car's (mass-weighted means; no fitted number).
+- A designed chassis or ballast is not the factory fit; REFIT FACTORY SPEC and a new chassis put the factory's back.
+  Both travel with a saved build and a share link.
+- **No factory car moved.** The factory's numbers written down as DESIGNED give the same lap, 0-100 and load transfer,
+  exactly, on a Golf GTI, an M3 and the SPORTS COUPE class. Fingerprint identical.
+- **Left open:** a longer wheelbase or a wider track adds no mass, frontal area or cost here, and the car's picture keeps
+  the factory wheelbase. A designed split is the car's own as built, so a later engine swap moves the FACTORY split but
+  not a designed one. Step 2 (the next build) retires the class-median CG height and track the real cars still carry,
+  for each car's own sourced figures. Greek for the new text is paused (owner's decision).
+
+Tests: test160 (new).
+
 ### The camshaft as a part, and a plan for the parts to come (build 249)
 
 - **A plan** (`plans/parts-design-space.md`): which parts to open to design next, in what order, and the rule the owner
