@@ -36,7 +36,8 @@ Item 3 of `plans/parts-design-space.md`, step 2, second batch: the NA Sports, Ke
 - **Left open:** no figures yet for the MX-5 ND, no track for the Ariel Atom (its CG stays its class's, it has no
   roof). Batch 3: Turbo Performance, American V8, Supercar, Diesel, SUV, pickup, two-stroke and track cars.
 
-Tests: test161 (`NO_H_BUDGET` 54 → 34).
+Tests: test161 (`NO_H_BUDGET` 54 → 34); test115 compares a preset's body with the research pack's without the fields
+sourced after it (tf, tr, h).
 
 ### A real car's CG height from its overall height, batch 1 (build 251)
 
