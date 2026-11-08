@@ -170,7 +170,7 @@ function buildEngineCore(prevStoich,quiet){
   // a two-stroke every turn; a rotor fills one of its three chambers every shaft turn (it turns once
   // for three of the shaft). Every air-flow rate below is displacement x rpm x this.
   engine.chargesPerRev=2*Math.PI/engine.strokeDiv;
-  if(engine.ports){engine.cam='stock';engine.vvt=false;}   // 2-stroke / rotary: no poppet valvetrain
+  if(engine.ports){engine.cam='stock';delete engine.camPart;engine.vvt=false;}   // 2-stroke / rotary: no poppet valvetrain
   if(engine.ci)engine.injector='direct';                   // diesel: direct injection
   // Fuel: energy content, stoichiometry, knock rating and charge cooling.
   const fp=FUELS[engine.fuel]||FUELS.gasoline;
@@ -192,7 +192,7 @@ function buildEngineCore(prevStoich,quiet){
   engine.displacement_L=vcyl_cc*engine.cylinders/1000;
   engine.boreStroke=engine.bore_mm/engine.stroke_mm;
   // The VE ceiling: the plateau the derived terms below shape (or the bell's height, where kept).
-  engine.veAmp=0.95+(engine.injector==='direct'?0.02:0);
+  engine.veAmp0=0.95+(engine.injector==='direct'?0.02:0);   // before the cam's grade (deriveCam)
   // THE VE BELL — retired for every poppet-valve petrol engine, NA, supercharged and turbo alike, and
   // carried only where the physics that replaces it does not exist yet.
   //
@@ -210,26 +210,20 @@ function buildEngineCore(prevStoich,quiet){
   // the limiter, and cuts the boost-threshold torque cliffs from 5 to 4. What remains fitted here:
   //   · diesels keep it (their load runs through a throttle they should not have; see pumpingMEP),
   //   · rotaries and two-strokes keep it (no poppet valves, so no trapping/Mach/float physics),
-  //   · CAM.ampMul still scales veAmp by cam grade (+4% sport, +8% race).
+  //   · CAM.ampMul still scales veAmp by cam grade (+4% sport, +8% race): since build 122 only in the airflow
+  //     estimates (exhaust pulse, blowdown, compressor demand), the fill table having taken over the charge.
   engine.veBell=!!et.ports;
   // For the engines that keep it, vePeakRpm is still asserted:
   engine.vePeakRpm=clamp(engine.redline*0.60+(engine.boreStroke-1)*1500,3000,engine.redline*0.95);
   // Asymmetric generalized-bell breathing curve: a steeper low-rpm side (so torque
   // builds later and peaks up in the midrange) and a gentle high-rpm side (so power
   // keeps climbing toward redline instead of falling off a Gaussian cliff).
-  engine.veWidthLo=engine.redline*0.42;
-  engine.veWidthHi=engine.redline*0.66;
   engine.veShoulder=1.4;
   // Camshaft: a wilder cam shifts the VE peak up and adds top-end breathing at the cost of
   // low-end VE and idle quality. VVT recovers most of the low end (cam advances down low),
   // giving a broad powerband — strong bottom AND top.
-  const cam=CAM[engine.cam]||CAM.stock;
-  deriveValvetrain();
+  deriveCam();
   updateFloatLabel();
-  let loWiden=cam.loWiden,idlePenalty=cam.idleRpm;
-  if(engine.vvt){loWiden+= (1-loWiden)*0.8;idlePenalty*=0.3;engine.veWidthHi*=1.06;}
-  engine.veAmp*=cam.ampMul;
-  engine.veWidthLo*=loWiden;
   // peakShift is gone: where the powerband sits now comes out of the intake runner length via the
   // Helmholtz resonance, not from a per-cam constant asserting it.
   // Diesels breathe poorly up top (airflow/turbo-limited) and make their power low in the rev
@@ -252,68 +246,12 @@ function buildEngineCore(prevStoich,quiet){
   deriveCarb();     // a carburettor's venturi, sized to the engine (build 244)
   engine.meteringEff=sys.metering;            // AFR precision → thermal efficiency
   engine.intakeRespK=sys.resp;                // manifold fill speed (dynamic model)
-  engine.idleRpmEff=IDLE_RPM+idlePenalty+sys.idle;   // wild cam / race intake idle higher & lumpier
   engine.crFactor=otto(engine.compression)/otto(10.5);   // 1.0 at CR 10.5
   buildBurnTable();         // diesel burn phasing vs rpm; exhaustGasT reads it from here on
   deriveGasDynamics();      // runner + header geometry; needs crFactor, catRestrict and idleRpmEff
   updateGasLabels();
   deriveFriction();         // the friction model's geometry: bearings, cams, valves (build 243)
-  engine.maxBoost=engine.intake==='na'?0:engine.boost_bar;
-  engine.mapMax=engine.intake==='na'?1.05:1.0+engine.maxBoost;
-  // Intercooler core: charge-heat residual (feeds effIAT) and its spool-lag penalty.
-  const ic=INTERCOOLER[engine.intercooler]||INTERCOOLER.large;
-  engine.icEff=ic.eff;
-  // the flow the core's effectiveness is quoted at: the engine's peak revs at the 1 bar the frames are characterised at
-  // (TURBO_PR_REF). Not at this build's boost: the core is hardware, and more boost runs it past its rating.
-  engine.icRefFlow=airFlowAt(engine.redline,TURBO_PR_REF);
-  // charge volume between compressor and throttle, m3 — ducting bore follows the compressor OUTLET,
-  // ~0.72 of the exducer (a GT28: 2-inch outlet on a 71 mm wheel)
-  const duct=0.72*turboFrame(engine).exd;
-  engine.chargeVol=ic.pipe*Math.PI/4*duct*duct+ic.core/1000;
-  // Turbo spool characteristics scaled to redline, then modified by the turbo config
-  // (twin/sequential/compound), anti-lag (keeps it spooled) and intercooler volume (lag).
-  const tb=turboFrame(engine), cfg=TURBO_CONFIG[engine.turboConfig]||TURBO_CONFIG.single;
-  const als=engine.antilag?0.62:1.0;
-  // ---- How hard is this engine leaning on that frame? ----
-  // Air demanded at peak power, in lb/min — the axis a real compressor map is drawn against.
-  // Deliberately computed from the DESIGN VE amplitude and a fixed reference charge
-  // temperature rather than the live VE/IAT solution: those depend on compressor efficiency,
-  // which depends on this, and the loop would not close.
-  const PR=1+engine.maxBoost;
-  const perRev=engine.chargesPerRev;                      // intake events per revolution
-  const rhoRef=PR*1e5/(287*(273+40));
-  const kgs=rhoRef*(engine.displacement_L/1000)*perRev*(engine.redline*0.85/60)*engine.veAmp;
-  engine.turboFlow=kgs*132.28;                            // kg/s → lb/min
-  engine.turboCap=compChokeFlow(tb.exd)*cfg.flow;         // derived from the wheel, not tabulated
-  engine.turboLoad=engine.intake==='turbo'?engine.turboFlow/engine.turboCap:0;   // 1.0 = at rating
-  // Compressor efficiency, as a position on the frame's own map rather than a formula in PR.
-  // A compressor has an efficiency ISLAND: it peaks near a particular fraction of its choke flow
-  // and falls away in every direction — toward surge if you starve it, toward choke if you shove
-  // too much through, and with pressure ratio because the losses grow with the work done. Peak
-  // efficiency near 62% of choke flow and ~0.78 at the island centre are standard for an
-  // automotive centrifugal wheel, not fitted to these engines.
-  //
-  // This is what makes over-flowing a small frame a real penalty rather than a free lunch: past
-  // choke the wheel cannot pass more air however fast it spins, and the efficiency it does have
-  // collapses, so what does get through arrives hot. That heat then costs density through effIAT
-  // and knock margin on top — the punishment is paid in physics rather than by a `choke` constant.
-  engine.compEff=engine.intake==='na'?1:compIslandEff(engine.turboLoad,PR);
-  // ---- Spool point and rate, both priced off pressure ratio ----
-  // A compressor makes pressure by spinning, and shaft speed has to be bought with exhaust
-  // energy. Turbine speed for a given pressure ratio goes like √(PR^0.283 − 1), so asking a
-  // frame for more than it was characterised at pushes its spool point up and slows its
-  // response; asking for less brings both forward. Over-flowing the frame delays it further.
-  const shaft=pr=>Math.sqrt(Math.max(0,Math.pow(pr,0.283)-1));
-  const prMul=engine.intake==='turbo'
-    ? Math.pow(shaft(PR)/shaft(TURBO_PR_REF),SPOOL_PR_EXP)*(1+0.25*Math.max(0,engine.turboLoad-1))
-    : 1;
-  engine.spoolPRMul=prMul;
-  engine.spool50=tb.spool50*cfg.spool*als*prMul*engine.redline;
-  engine.spoolWidth=tb.width*cfg.width*engine.redline;
-  // Past its rated flow the compressor runs out of map and the top end chokes off in earnest.
-  // The hard airflow ceiling this frame can pass, in kg/s. Derived from the same inducer choke as
-  // the flow rating, so the rating and the limit cannot disagree.
-  engine.chokeFlow_kgs=engine.intake==='turbo'?compChokeFlow(tb.exd)*cfg.flow/132.28:0;
+  deriveCharge();           // the charge path: intercooler, compressor frame, spool
   // Solving the shaft balance costs a few thousand iterations, and boostAvail is called for every
   // rpm of every torque-curve build. Sample it once per engine into a table and interpolate — the
   // same reason a compressor map is a map and not a formula evaluated at runtime.
@@ -391,4 +329,77 @@ function buildEngineCore(prevStoich,quiet){
   engine.score=scoreEngine();
   if(buildHybrid(engine))engine.cost+=engine.hy.cost;   // a hybrid system: the motor and pack on top (build 186)
   engine.inertia=engineInertia(engine.score.peakTQ);   // the clutch is sized for the torque it carries
+}
+// The cam's share of the build (build 249, split out so the part designer can re-run it): the valvetrain it drives, and
+// the fitted terms that still ride on its grade (CAM.ampMul, loWiden, idleRpm), a designed cam taking its class's.
+function deriveCam(){
+  const cam=camSpec(engine);
+  deriveValvetrain();
+  engine.veWidthLo=engine.redline*0.42;
+  engine.veWidthHi=engine.redline*0.66;
+  let loWiden=cam.loWiden,idlePenalty=cam.idleRpm;
+  if(engine.vvt){loWiden+= (1-loWiden)*0.8;idlePenalty*=0.3;engine.veWidthHi*=1.06;}
+  engine.veAmp=engine.veAmp0*cam.ampMul;
+  engine.veWidthLo*=loWiden;
+  const sys=INTAKE_SYS[engine.intakeSys]||INTAKE_SYS.efi;
+  engine.idleRpmEff=IDLE_RPM+idlePenalty+sys.idle;   // wild cam / race intake idle higher & lumpier
+}
+// The charge path, from the boost asked for to the spool (split out in build 249: it reads veAmp, which the cam sets).
+function deriveCharge(){
+  engine.maxBoost=engine.intake==='na'?0:engine.boost_bar;
+  engine.mapMax=engine.intake==='na'?1.05:1.0+engine.maxBoost;
+  // Intercooler core: charge-heat residual (feeds effIAT) and its spool-lag penalty.
+  const ic=INTERCOOLER[engine.intercooler]||INTERCOOLER.large;
+  engine.icEff=ic.eff;
+  // the flow the core's effectiveness is quoted at: the engine's peak revs at the 1 bar the frames are characterised at
+  // (TURBO_PR_REF). Not at this build's boost: the core is hardware, and more boost runs it past its rating.
+  engine.icRefFlow=airFlowAt(engine.redline,TURBO_PR_REF);
+  // charge volume between compressor and throttle, m3 — ducting bore follows the compressor OUTLET,
+  // ~0.72 of the exducer (a GT28: 2-inch outlet on a 71 mm wheel)
+  const duct=0.72*turboFrame(engine).exd;
+  engine.chargeVol=ic.pipe*Math.PI/4*duct*duct+ic.core/1000;
+  // Turbo spool characteristics scaled to redline, then modified by the turbo config
+  // (twin/sequential/compound), anti-lag (keeps it spooled) and intercooler volume (lag).
+  const tb=turboFrame(engine), cfg=TURBO_CONFIG[engine.turboConfig]||TURBO_CONFIG.single;
+  const als=engine.antilag?0.62:1.0;
+  // ---- How hard is this engine leaning on that frame? ----
+  // Air demanded at peak power, in lb/min — the axis a real compressor map is drawn against.
+  // Deliberately computed from the DESIGN VE amplitude and a fixed reference charge
+  // temperature rather than the live VE/IAT solution: those depend on compressor efficiency,
+  // which depends on this, and the loop would not close.
+  const PR=1+engine.maxBoost;
+  const perRev=engine.chargesPerRev;                      // intake events per revolution
+  const rhoRef=PR*1e5/(287*(273+40));
+  const kgs=rhoRef*(engine.displacement_L/1000)*perRev*(engine.redline*0.85/60)*engine.veAmp;
+  engine.turboFlow=kgs*132.28;                            // kg/s → lb/min
+  engine.turboCap=compChokeFlow(tb.exd)*cfg.flow;         // derived from the wheel, not tabulated
+  engine.turboLoad=engine.intake==='turbo'?engine.turboFlow/engine.turboCap:0;   // 1.0 = at rating
+  // Compressor efficiency, as a position on the frame's own map rather than a formula in PR.
+  // A compressor has an efficiency ISLAND: it peaks near a particular fraction of its choke flow
+  // and falls away in every direction — toward surge if you starve it, toward choke if you shove
+  // too much through, and with pressure ratio because the losses grow with the work done. Peak
+  // efficiency near 62% of choke flow and ~0.78 at the island centre are standard for an
+  // automotive centrifugal wheel, not fitted to these engines.
+  //
+  // This is what makes over-flowing a small frame a real penalty rather than a free lunch: past
+  // choke the wheel cannot pass more air however fast it spins, and the efficiency it does have
+  // collapses, so what does get through arrives hot. That heat then costs density through effIAT
+  // and knock margin on top — the punishment is paid in physics rather than by a `choke` constant.
+  engine.compEff=engine.intake==='na'?1:compIslandEff(engine.turboLoad,PR);
+  // ---- Spool point and rate, both priced off pressure ratio ----
+  // A compressor makes pressure by spinning, and shaft speed has to be bought with exhaust
+  // energy. Turbine speed for a given pressure ratio goes like √(PR^0.283 − 1), so asking a
+  // frame for more than it was characterised at pushes its spool point up and slows its
+  // response; asking for less brings both forward. Over-flowing the frame delays it further.
+  const shaft=pr=>Math.sqrt(Math.max(0,Math.pow(pr,0.283)-1));
+  const prMul=engine.intake==='turbo'
+    ? Math.pow(shaft(PR)/shaft(TURBO_PR_REF),SPOOL_PR_EXP)*(1+0.25*Math.max(0,engine.turboLoad-1))
+    : 1;
+  engine.spoolPRMul=prMul;
+  engine.spool50=tb.spool50*cfg.spool*als*prMul*engine.redline;
+  engine.spoolWidth=tb.width*cfg.width*engine.redline;
+  // Past its rated flow the compressor runs out of map and the top end chokes off in earnest.
+  // The hard airflow ceiling this frame can pass, in kg/s. Derived from the same inducer choke as
+  // the flow rating, so the rating and the limit cannot disagree.
+  engine.chokeFlow_kgs=engine.intake==='turbo'?compChokeFlow(tb.exd)*cfg.flow/132.28:0;
 }

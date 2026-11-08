@@ -20,6 +20,26 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 Working toward **v1.0 — every number derived, not fitted.**
 
+### The camshaft as a part, and a plan for the parts to come (build 249)
+
+- **A plan** (`plans/parts-design-space.md`): which parts to open to design next, in what order, and the rule the owner
+  set for them: values stay honest. A part's numbers come from a real car's published spec or one rule applied to every
+  car, never tuned to win back a figure. Each part comes in two builds: the part itself, which moves no factory car, then
+  the retirement of the fitted number it stood beside, which reports what moved.
+- **The PARTS tab designs a camshaft**: duration (seat to seat), valve lift in mm, lobe separation, lobe profile
+  (GENTLE, STREET or RACE, the three grinds the factory cams use) and the VVT phaser's range. It feeds the same physics
+  the four factory cams always fed: the integrated intake stroke (where the intake closes), the overlap, trapping, valve
+  float and friction. On the M3 E46 a sport cam stretched from 236 to 276 degrees fills best at 6300 → 6800 rpm, and
+  more lift (7 → 10 mm) or a harder lobe floats the valves sooner (8900 → 8000 rpm).
+- **A designed cam runs on the maker's springs.** A factory engine's springs are sized for its factory cam; a designed
+  cam keeps the springs of the factory cam its class is, so a wilder cam floats sooner instead of bringing its own.
+- **No factory car moved.** The cam's share of the build and the charge path were split into `deriveCam` and
+  `deriveCharge` so the preview can re-run them; a factory cam written down as a part gives the same engine (within
+  1e-6 of torque, from rounding the lift). Fingerprint identical.
+- **Left open, the next build:** what the factory cams still carry as fitted grades (`CAM.ampMul` in the airflow
+  estimates, `idleRpm`, `loWiden`) a designed cam takes from the factory cam nearest in duration and separation. The
+  exhaust lobe is taken as the same as the intake's. Greek for the new text is paused (owner's decision).
+
 ### A diagnosis under the dyno curve (build 248)
 
 The DYNO tab already showed peaks, the grade and the rpm table. It did not say what to change when the engine was not

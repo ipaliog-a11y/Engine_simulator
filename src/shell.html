@@ -40,7 +40,7 @@
 </div>
 <div class="container">
 <header>
-<h1>PIXEL ENGINE SIM v0.7 build 248</h1>
+<h1>PIXEL ENGINE SIM v0.7 build 249</h1>
 <div class="subtitle" id="subtitle">ENGINE DESIGNER • BUILD IT, THEN DRIVE IT</div>
 </header>
 <div class="build-strip" id="buildStrip">
@@ -366,7 +366,7 @@
 <div class="hint">Pick a type of part, set its dimensions and save it. Saved parts are kept in this browser and appear in the ENGINE tab's choices; a saved build carries its parts with it.</div>
 <div class="design-section">Type of part</div>
 <div class="part-types" id="partTypes"></div>
-<div class="hint" id="partsNoEngine" hidden>An electric drive has no exhaust, intake or air filter. Build a combustion engine on the ENGINE tab to design parts for it.</div>
+<div class="hint" id="partsNoEngine" hidden>An electric drive has no exhaust, intake, air filter or cam. Build a combustion engine on the ENGINE tab to design parts for it.</div>
 <div id="partsExhaust">
 <div class="design-section">My exhausts</div>
 <div class="part-list" id="partList"></div>
@@ -430,6 +430,25 @@
 <div class="part-guide" id="pfGuide"></div>
 <div class="part-chart"><div class="gw-leg" id="pfLegend"></div><canvas id="pfCanvas" role="img" aria-label="Power and torque with this air filter against the engine as it is"></canvas></div>
 <div class="btn-row part-btns"><button type="button" id="pfSave">SAVE PART</button><button type="button" id="pfSaveFit">SAVE &amp; FIT</button></div>
+</div>
+<div id="partsCam" hidden>
+<div class="design-section">My cams</div>
+<div class="part-list" id="pcList"></div>
+<div class="pick-row"><div class="field"><label for="pcFrom">START FROM THIS ENGINE'S</label><select id="pcFrom"><option value="stock">STOCK</option><option value="sport">SPORT</option><option value="race">RACE</option><option value="atkinson">ATKINSON (LATE IVC)</option></select></div>
+<div class="field"><label>&nbsp;</label><button type="button" id="pcNew">NEW CAM</button><button type="button" id="pcReset" title="Put the dimensions back to the factory part chosen above, keeping the name">RESET</button></div></div>
+<div class="design-section">Camshaft</div>
+<div class="design-grid">
+<div class="field"><label for="pcName">NAME</label><input type="text" id="pcName" maxlength="40"></div>
+<div class="field"><label for="pcDur">DURATION, SEAT TO SEAT (°)</label><input type="number" id="pcDur" min="180" max="320" step="2"></div>
+<div class="field"><label for="pcLift">VALVE LIFT (mm)</label><input type="number" id="pcLift" min="4" max="16" step="0.1"></div>
+<div class="field"><label for="pcLsa">LOBE SEPARATION (°)</label><input type="number" id="pcLsa" min="98" max="130" step="1"></div>
+<div class="field"><label for="pcProfile">LOBE PROFILE</label><select id="pcProfile"><option value="gentle">GENTLE (OEM)</option><option value="street">STREET</option><option value="race">RACE</option></select></div>
+<div class="field"><label for="pcVvt">PHASER RANGE, WITH VVT (°)</label><input type="number" id="pcVvt" min="0" max="60" step="5"></div>
+</div>
+<div class="design-section">On this engine</div>
+<div class="part-guide" id="pcGuide"></div>
+<div class="part-chart"><div class="gw-leg" id="pcLegend"></div><canvas id="pcCanvas" role="img" aria-label="Power and torque with this cam against the engine as it is"></canvas></div>
+<div class="btn-row part-btns"><button type="button" id="pcSave">SAVE PART</button><button type="button" id="pcSaveFit">SAVE &amp; FIT</button></div>
 </div>
 </div>
 

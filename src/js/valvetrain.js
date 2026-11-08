@@ -122,14 +122,16 @@ function deriveValvetrain(){
   const e=engine;
   if(e.type==='rotary'||e.ports){e.ivDia_mm=0;e.floatRpm=0;e.valveMass_g=0;e.springScale=1;return;}
   const pack=VALVE_PACK[e.valves]||VALVE_PACK[4];
-  const cam=CAM[e.cam]||CAM.stock;
+  const cam=camSpec(e);
   e.ivCount=pack.n;
   e.ivDia_mm=pack.dOverB*e.bore_mm;
-  e.ivLift_mm=cam.lOverD*e.ivDia_mm;
+  e.ivLift_mm=cam.lift_mm!=null?cam.lift_mm:cam.lOverD*e.ivDia_mm;   // a designed cam's lift is its own (build 249)
   e.valveMass_g=valveMass(e.ivDia_mm,e.valveMat)*1000;
   const floatWith=sp=>valveFloatRpm(e.ivLift_mm,cam.dur,sp,e.valveMass_g/1000,cam.accel,2);
-  // the spring force the float speed needs goes with its square; never softer than the generic part
-  const f0=floatWith(VALVE_SPRING.stock);
+  // the spring force the float speed needs goes with its square; never softer than the generic part. The maker sized
+  // them for a factory cam: a designed cam (build 249) runs on the springs of the factory cam of its class.
+  const F=CAM[e.cam]||CAM.stock;
+  const f0=e.camPart?valveFloatRpm(F.lOverD*e.ivDia_mm,F.dur,VALVE_SPRING.stock,e.valveMass_g/1000,F.accel,2):floatWith(VALVE_SPRING.stock);
   e.springScale=e.springRpm>0?Math.max(1,Math.pow(e.springRpm*SPRING_FLOAT_MARGIN/f0,2)):1;
   const g=VALVE_SPRING[e.valveSpring]||VALVE_SPRING.stock;
   e.floatRpm=floatWith({seat:g.seat*e.springScale,rate:g.rate*e.springScale});

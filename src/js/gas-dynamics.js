@@ -361,7 +361,7 @@ function buildFillTable(){
   for(let r=lo;r<=hi;r+=250){
     let f=0,best=0,bestL=lens[0];
     const Tres=wallTrace(e,r,1).Tres;
-    const auth=e.vvt?((CAM[e.cam]||CAM.stock).vvtMax??VVT_AUTHORITY):0;   // an Atkinson cam's phaser is shorter (build 188)
+    const auth=e.vvt?(camSpec(e).vvtMax??VVT_AUTHORITY):0;   // an Atkinson cam's phaser is shorter (build 188)
     for(const L of lens)for(let adv=0;adv<=auth;adv+=5){
       const x=intakeFill(r,adv,L,Tres,Cd);if(x>f){f=x;best=adv;bestL=L;}
     }
@@ -960,7 +960,7 @@ function deriveGasDynamics(){
   const e=engine;
   // A designed exhaust (build 205, parts.js) gives its own dimensions; a factory one is sized to this engine below.
   const P=e.exhaustPart||null;
-  const cam=CAM[e.cam]||CAM.stock, ex=P?null:(EXHAUST[e.exhaust]||EXHAUST.stock);
+  const cam=camSpec(e), ex=P?null:(EXHAUST[e.exhaust]||EXHAUST.stock);
   e.camDur=cam.dur; e.camLSA=cam.lsa;
   e.overlap=e.ports?0:overlapDeg(cam.dur,cam.lsa);
   // The work's share of extra wall heat (wallWorkShare), at the anchor where it is zero-referenced, and
