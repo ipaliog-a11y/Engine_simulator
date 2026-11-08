@@ -14,7 +14,9 @@ const CG_ROOF_RATIO=0.388;
 // factory engine; its CG from its height (body.h, build 251), else its class's; an archetype's class figures throughout.
 function factoryDims(v){
   const ch=CHASSIS[v.chassis]||CHASSIS.coupe,b=v.body,sr=b&&SUSP_REAL[b.name],t=(b&&b.track)||ch.track;
-  return {wb:b?b.wb:ch.wb,cg:b&&b.h>0?CG_ROOF_RATIO*b.h:ch.cg,trackF:sr?sr.tf:t,trackR:sr?sr.tr:t,fWt:b?b.fWt:ch.fWt};
+  // published tracks: SUSP_REAL's with the car's suspension, else the body's own (build 252: tf, tr), else the class's
+  const tf=sr?sr.tf:b&&b.tf>0?b.tf:t,tr=sr?sr.tr:b&&b.tr>0?b.tr:t;
+  return {wb:b?b.wb:ch.wb,cg:b&&b.h>0?CG_ROOF_RATIO*b.h:ch.cg,trackF:tf,trackR:tr,fWt:b?b.fWt:ch.fWt};
 }
 // True when every fitted part still matches the chassis' factory spec.
 function isFactoryFit(v){

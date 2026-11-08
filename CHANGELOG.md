@@ -20,6 +20,25 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 Working toward **v1.0 — every number derived, not fitted.**
 
+### Real cars' own tracks and CG height, batch 2 (build 252)
+
+Item 3 of `plans/parts-design-space.md`, step 2, second batch: the NA Sports, Kei & City and Compact Turbo cars.
+
+- **20 cars get their published front and rear tracks and their overall height** (auto-data.net, each car's own
+  page, checked against Wikipedia), so their CG is 0.388 × height (build 251's NHTSA rule) and their load transfer
+  uses their own tracks. The Honda Beat gets its height only (no published track). A new body field carries the
+  tracks (`tf`, `tr`) of a car whose suspension `SUSP_REAL` does not list, so no car's geometry changes.
+- **What moved:** 548 fingerprint values, all on these 20 cars. 0-100 −0.06 s (911 RS 2.7, C63) to
+  +0.06 s (Swift Sport); laps of 'tech' −0.87% (Beat) to +1.34% (911 RS 2.7). Mean 0-100 error against the real figures on these
+  cars **7.77% → 7.69%**. 23 other cars change only their lap hash (the circuit's racing-line cache, as in build 251).
+- **Unsure** (marked on the preset): a sibling trim's figures for the Integra Type R DC2, 911 Carrera RS 2.7 and
+  E-Type 3.8; ranges or disputed figures for the 370Z, Swift Sport, Golf GTI Mk1, 205 GTI and M5 E39.
+- **Left open:** no figures yet for the MX-5 ND, no track for the Ariel Atom (its CG stays its class's, it has no
+  roof). Batch 3: Turbo Performance, American V8, Supercar, Diesel, SUV, pickup, two-stroke and track cars.
+
+Tests: test161 (`NO_H_BUDGET` 54 → 34); test115 compares a preset's body with the research pack's without the fields
+sourced after it (tf, tr, h).
+
 ### A real car's CG height from its overall height, batch 1 (build 251)
 
 Item 3 of `plans/parts-design-space.md`, step 2, first batch: retiring the class CG height the real cars carried.
