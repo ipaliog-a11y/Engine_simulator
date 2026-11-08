@@ -11,7 +11,7 @@
 import { chromium } from './pw.mjs';
 import { fileURLToPath, pathToFileURL } from 'url';
 import path from 'path';
-const NO_H_BUDGET = 54;   // build 251: 38 of 92 cars have h; the rest are later batches (and 4 with no verified figure)
+const NO_H_BUDGET = 34;   // build 252: 58 of 92 cars have h; the rest are batch 3 (and 5 with no verified figure)
 const repo = fileURLToPath(new URL('..', import.meta.url));
 const browser = await chromium.launch();
 const page = await browser.newPage();
