@@ -1334,9 +1334,8 @@ Also queued: a **UI redesign** for the DESIGN and VEHICLE tabs, which are alread
 get more so as derived physics adds inputs. Progressive disclosure — headline inputs by default, a
 detail expander per subsystem — after the first conversion lands, when the final input set is known.
 
-Greek translation **resumed in build 161**: the interface is complete and `tests/test87.mjs` sweeps every
-tab in Greek, so new English text fails a test instead of shipping. The GUIDE followed in build 162; a guide
-block, title or picture caption with no Greek now fails the same test.
+Greek translation is **paused** by owner decision: text added from now on ships in English only, and the
+Greek sweep (`test87`) was removed. Existing Greek stays.
 - **Charge the acceleration and lap solvers for spool lag**, closing the first limit above. It
   needs a transient pass rather than the current per-rpm steady solve.
 - **A hand-editable ignition map**, to match the fuel map editor — the last piece of item 2.
