@@ -36,4 +36,6 @@ Each new part is two builds:
 - Chassis: all 92 vehicle presets move once each has its own sourced CG height and track. Build 251, batch 1: CG = 0.388 × overall height
   (NHTSA's measured median, `research/cg-height/`) on the 38 cars with published tracks; mean 0-100 error 10.10 → 9.77%.
   Build 252, batch 2: tracks and height for 20 NA Sports, Kei & City and Compact Turbo cars (error 7.77 → 7.69%).
-  Batch 3: Turbo Performance, American V8, Supercar, Diesel, SUV, pickup, two-stroke, track cars; MX-5 ND.
+  Build 253, batch 3: the rest; 85 of 92 cars carry their own CG, 81 their own tracks (error 9.55 → 9.51% on batch 3).
+  Still open: Dino 246, GNX, Sierra Cosworth, F-150 Raptor (unsourced); Atom, Mono, SR3 (roofless). Class CG and track
+  stay hand-set.

@@ -20,6 +20,27 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 Working toward **v1.0 — every number derived, not fitted.**
 
+### Real cars' own tracks and CG height, batch 3 (build 253)
+
+Item 3 of `plans/parts-design-space.md`, step 2, last batch: the remaining categories and the earlier gaps.
+
+- **27 cars** get their published tracks and overall height, or the height alone where their tracks were already
+  listed or not published (auto-data.net, each car's own page): the Turbo Performance, American V8, Supercar, Diesel,
+  SUV and two-stroke cars, and the MX-5 ND, Civic Type R FK8, Evo IX, RS3 8V and Silverado HD left open before.
+  **85 of 92 real cars now carry their own CG** (0.388 × height) and 81 their own tracks.
+- **What moved:** 580 fingerprint values, all on these 27 cars. 0-100 −0.10 s (Silverado HD) to +0.05 s; laps of
+  'tech' −0.37% (Urus) to +1.60% (Silverado HD, the tallest: CG 0.79 m). Mean 0-100 error against the real figures on
+  these cars **9.55% → 9.51%**. 7 other cars change only their lap hash (the racing-line cache, as before).
+- **Unsure:** sibling-trim figures for the Land Cruiser, Ram 2500, Hilux (2.4 page) and Delta Integrale (16V Evo);
+  the Mustang's height is the hardtop's; disputed heights for the Cayenne and Grand Cherokee; the Trabant's is the
+  601 generation's. Batch 3 was checked against one source only.
+- **Left open (7 cars on their class's CG):** no verified figures for the Ferrari Dino 246, Buick GNX and Sierra RS
+  Cosworth, nor the F-150 Raptor (the only page found was the plain F-150's, a narrower truck); the roofless Atom,
+  Mono and SR3 for good. The classes' own CG and track stay hand-set.
+
+Tests: test161 (`NO_H_BUDGET` 34 → 7; the CG ceiling 0.75 → 0.85 m: NHTSA measured F-250s at 0.744–0.757 m on
+1.83–1.87 m roofs, and the 2.03 m Silverado HD is 0.79 m).
+
 ### Real cars' own tracks and CG height, batch 2 (build 252)
 
 Item 3 of `plans/parts-design-space.md`, step 2, second batch: the NA Sports, Kei & City and Compact Turbo cars.
