@@ -1,0 +1,157 @@
+{
+  "style_reference": "assets/cars/honda-s2000-ap1-2000.webp",
+  "seed": null,
+  "seed_note": "This Imagine stack does not return a seed. The same STYLE and FORMAT blocks are pasted in front of every subject.",
+  "palette": [
+    "#12121c",
+    "#26263a",
+    "#3a3a55",
+    "#6b6b85",
+    "#d8d8e8",
+    "#8a8aa6",
+    "#00ff88",
+    "#00ccff",
+    "#ffcc00",
+    "#ff4d5e",
+    "#3d7bff",
+    "#d9853b",
+    "#000000"
+  ],
+  "icons": "128x128 from a 64x64 grid",
+  "diagrams": "960x540 from a 240x135 grid",
+  "status": "in progress \u2014 engine types, layouts, cyl 1 and 2, and the bore diagram. The rest of the brief is not drawn yet.",
+  "files": {
+    "icons/_none.webp": {
+      "file": "icons/_none.webp",
+      "kind": "icon",
+      "form": "_none",
+      "subject": "an empty engine-bay mounting bracket with four bolt holes and nothing fitted",
+      "prompt": "8-bit pixel art in the style of a late-1980s / early-1990s console game manual illustration. Chunky, clearly visible square pixels on a strict grid, hard edges, no anti-aliasing, no blur, no gradients, only flat colour bands with dithering where shading is needed. Limited palette: background #12121c, panel lines #26263a and #3a3a55, metal #6b6b85 with highlights #d8d8e8, dim parts #8a8aa6, accents green #00ff88, cyan #00ccff, yellow #ffcc00, red #ff4d5e, blue #3d7bff, copper #d9853b. 1-pixel black outline around objects. Technically accurate mechanical shapes, like a cutaway in a workshop manual. No text, no letters, no numbers, no logos, no brand names, no watermark.\n\nSingle object, centred, three-quarter isometric view from the upper left, filling about 80% of a square frame. Plain solid background #12121c, nothing else in the frame. Drawn on a 64\u00d764 pixel grid. Square 1:1 image.\n\nan empty engine-bay mounting bracket with four bolt holes and nothing fitted",
+      "seed": null,
+      "reference_image": "assets/cars/honda-s2000-ap1-2000.webp",
+      "generated_size": "1408x1408",
+      "post_process": "area-average onto 64\u00d764, nearest palette colour, nearest-neighbour \u00d72 to 128\u00d7128, WebP quality 82"
+    },
+    "icons/engine/edType-petrol4.webp": {
+      "file": "icons/engine/edType-petrol4.webp",
+      "kind": "icon",
+      "form": "engine",
+      "subject": "a petrol four-stroke inline-four engine block with a spark plug on top of each cylinder",
+      "prompt": "8-bit pixel art in the style of a late-1980s / early-1990s console game manual illustration. Chunky, clearly visible square pixels on a strict grid, hard edges, no anti-aliasing, no blur, no gradients, only flat colour bands with dithering where shading is needed. Limited palette: background #12121c, panel lines #26263a and #3a3a55, metal #6b6b85 with highlights #d8d8e8, dim parts #8a8aa6, accents green #00ff88, cyan #00ccff, yellow #ffcc00, red #ff4d5e, blue #3d7bff, copper #d9853b. 1-pixel black outline around objects. Technically accurate mechanical shapes, like a cutaway in a workshop manual. No text, no letters, no numbers, no logos, no brand names, no watermark.\n\nSingle object, centred, three-quarter isometric view from the upper left, filling about 80% of a square frame. Plain solid background #12121c, nothing else in the frame. Drawn on a 64\u00d764 pixel grid. Square 1:1 image.\n\na petrol four-stroke inline-four engine block with a spark plug on top of each cylinder",
+      "seed": null,
+      "reference_image": "assets/cars/honda-s2000-ap1-2000.webp",
+      "generated_size": "1408x1408",
+      "post_process": "area-average onto 64\u00d764, nearest palette colour, nearest-neighbour \u00d72 to 128\u00d7128, WebP quality 82"
+    },
+    "icons/engine/edType-diesel.webp": {
+      "file": "icons/engine/edType-diesel.webp",
+      "kind": "icon",
+      "form": "engine",
+      "subject": "a heavy diesel engine block with thick injector lines and a tall iron block",
+      "prompt": "8-bit pixel art in the style of a late-1980s / early-1990s console game manual illustration. Chunky, clearly visible square pixels on a strict grid, hard edges, no anti-aliasing, no blur, no gradients, only flat colour bands with dithering where shading is needed. Limited palette: background #12121c, panel lines #26263a and #3a3a55, metal #6b6b85 with highlights #d8d8e8, dim parts #8a8aa6, accents green #00ff88, cyan #00ccff, yellow #ffcc00, red #ff4d5e, blue #3d7bff, copper #d9853b. 1-pixel black outline around objects. Technically accurate mechanical shapes, like a cutaway in a workshop manual. No text, no letters, no numbers, no logos, no brand names, no watermark.\n\nSingle object, centred, three-quarter isometric view from the upper left, filling about 80% of a square frame. Plain solid background #12121c, nothing else in the frame. Drawn on a 64\u00d764 pixel grid. Square 1:1 image.\n\na heavy diesel engine block with thick injector lines and a tall iron block",
+      "seed": null,
+      "reference_image": "assets/cars/honda-s2000-ap1-2000.webp",
+      "generated_size": "1408x1408",
+      "post_process": "area-average onto 64\u00d764, nearest palette colour, nearest-neighbour \u00d72 to 128\u00d7128, WebP quality 82"
+    },
+    "icons/engine/edType-twostroke.webp": {
+      "file": "icons/engine/edType-twostroke.webp",
+      "kind": "icon",
+      "form": "engine",
+      "subject": "a small air-cooled two-stroke single cylinder with deep cooling fins and an expansion-chamber pipe",
+      "prompt": "8-bit pixel art in the style of a late-1980s / early-1990s console game manual illustration. Chunky, clearly visible square pixels on a strict grid, hard edges, no anti-aliasing, no blur, no gradients, only flat colour bands with dithering where shading is needed. Limited palette: background #12121c, panel lines #26263a and #3a3a55, metal #6b6b85 with highlights #d8d8e8, dim parts #8a8aa6, accents green #00ff88, cyan #00ccff, yellow #ffcc00, red #ff4d5e, blue #3d7bff, copper #d9853b. 1-pixel black outline around objects. Technically accurate mechanical shapes, like a cutaway in a workshop manual. No text, no letters, no numbers, no logos, no brand names, no watermark.\n\nSingle object, centred, three-quarter isometric view from the upper left, filling about 80% of a square frame. Plain solid background #12121c, nothing else in the frame. Drawn on a 64\u00d764 pixel grid. Square 1:1 image.\n\na small air-cooled two-stroke single cylinder with deep cooling fins and an expansion-chamber pipe",
+      "seed": null,
+      "reference_image": "assets/cars/honda-s2000-ap1-2000.webp",
+      "generated_size": "1408x1408",
+      "post_process": "area-average onto 64\u00d764, nearest palette colour, nearest-neighbour \u00d72 to 128\u00d7128, WebP quality 82"
+    },
+    "icons/engine/edType-rotary.webp": {
+      "file": "icons/engine/edType-rotary.webp",
+      "kind": "icon",
+      "form": "engine",
+      "subject": "a Wankel rotary engine: a triangular rotor inside an epitrochoid (figure-eight) housing, cut away",
+      "prompt": "8-bit pixel art in the style of a late-1980s / early-1990s console game manual illustration. Chunky, clearly visible square pixels on a strict grid, hard edges, no anti-aliasing, no blur, no gradients, only flat colour bands with dithering where shading is needed. Limited palette: background #12121c, panel lines #26263a and #3a3a55, metal #6b6b85 with highlights #d8d8e8, dim parts #8a8aa6, accents green #00ff88, cyan #00ccff, yellow #ffcc00, red #ff4d5e, blue #3d7bff, copper #d9853b. 1-pixel black outline around objects. Technically accurate mechanical shapes, like a cutaway in a workshop manual. No text, no letters, no numbers, no logos, no brand names, no watermark.\n\nSingle object, centred, three-quarter isometric view from the upper left, filling about 80% of a square frame. Plain solid background #12121c, nothing else in the frame. Drawn on a 64\u00d764 pixel grid. Square 1:1 image.\n\na Wankel rotary engine: a triangular rotor inside an epitrochoid (figure-eight) housing, cut away",
+      "seed": null,
+      "reference_image": "assets/cars/honda-s2000-ap1-2000.webp",
+      "generated_size": "1408x1408",
+      "post_process": "area-average onto 64\u00d764, nearest palette colour, nearest-neighbour \u00d72 to 128\u00d7128, WebP quality 82"
+    },
+    "icons/engine/edType-electric.webp": {
+      "file": "icons/engine/edType-electric.webp",
+      "kind": "icon",
+      "form": "engine",
+      "subject": "a cylindrical electric motor with copper windings showing through a cutaway, and an orange high-voltage cable",
+      "prompt": "8-bit pixel art in the style of a late-1980s / early-1990s console game manual illustration. Chunky, clearly visible square pixels on a strict grid, hard edges, no anti-aliasing, no blur, no gradients, only flat colour bands with dithering where shading is needed. Limited palette: background #12121c, panel lines #26263a and #3a3a55, metal #6b6b85 with highlights #d8d8e8, dim parts #8a8aa6, accents green #00ff88, cyan #00ccff, yellow #ffcc00, red #ff4d5e, blue #3d7bff, copper #d9853b. 1-pixel black outline around objects. Technically accurate mechanical shapes, like a cutaway in a workshop manual. No text, no letters, no numbers, no logos, no brand names, no watermark.\n\nSingle object, centred, three-quarter isometric view from the upper left, filling about 80% of a square frame. Plain solid background #12121c, nothing else in the frame. Drawn on a 64\u00d764 pixel grid. Square 1:1 image.\n\na cylindrical electric motor with copper windings showing through a cutaway, and an orange high-voltage cable",
+      "seed": null,
+      "reference_image": "assets/cars/honda-s2000-ap1-2000.webp",
+      "generated_size": "1408x1408",
+      "post_process": "area-average onto 64\u00d764, nearest palette colour, nearest-neighbour \u00d72 to 128\u00d7128, WebP quality 82. First pass painted the letters HV on the cable; replaced with a redraw that has a plain cable."
+    },
+    "icons/engine/edLayout-inline.webp": {
+      "file": "icons/engine/edLayout-inline.webp",
+      "kind": "icon",
+      "form": "engine",
+      "subject": "a cutaway engine block with four cylinders standing in one straight row on one crankshaft",
+      "prompt": "8-bit pixel art in the style of a late-1980s / early-1990s console game manual illustration. Chunky, clearly visible square pixels on a strict grid, hard edges, no anti-aliasing, no blur, no gradients, only flat colour bands with dithering where shading is needed. Limited palette: background #12121c, panel lines #26263a and #3a3a55, metal #6b6b85 with highlights #d8d8e8, dim parts #8a8aa6, accents green #00ff88, cyan #00ccff, yellow #ffcc00, red #ff4d5e, blue #3d7bff, copper #d9853b. 1-pixel black outline around objects. Technically accurate mechanical shapes, like a cutaway in a workshop manual. No text, no letters, no numbers, no logos, no brand names, no watermark.\n\nSingle object, centred, three-quarter isometric view from the upper left, filling about 80% of a square frame. Plain solid background #12121c, nothing else in the frame. Drawn on a 64\u00d764 pixel grid. Square 1:1 image.\n\na cutaway engine block with four cylinders standing in one straight row on one crankshaft",
+      "seed": null,
+      "reference_image": "assets/cars/honda-s2000-ap1-2000.webp",
+      "generated_size": "1408x1408",
+      "post_process": "area-average onto 64\u00d764, nearest palette colour, nearest-neighbour \u00d72 to 128\u00d7128, WebP quality 82"
+    },
+    "icons/engine/edLayout-v.webp": {
+      "file": "icons/engine/edLayout-v.webp",
+      "kind": "icon",
+      "form": "engine",
+      "subject": "a cutaway V engine block, two banks of cylinders angled apart in a V on one crankshaft",
+      "prompt": "8-bit pixel art in the style of a late-1980s / early-1990s console game manual illustration. Chunky, clearly visible square pixels on a strict grid, hard edges, no anti-aliasing, no blur, no gradients, only flat colour bands with dithering where shading is needed. Limited palette: background #12121c, panel lines #26263a and #3a3a55, metal #6b6b85 with highlights #d8d8e8, dim parts #8a8aa6, accents green #00ff88, cyan #00ccff, yellow #ffcc00, red #ff4d5e, blue #3d7bff, copper #d9853b. 1-pixel black outline around objects. Technically accurate mechanical shapes, like a cutaway in a workshop manual. No text, no letters, no numbers, no logos, no brand names, no watermark.\n\nSingle object, centred, three-quarter isometric view from the upper left, filling about 80% of a square frame. Plain solid background #12121c, nothing else in the frame. Drawn on a 64\u00d764 pixel grid. Square 1:1 image.\n\na cutaway V engine block, two banks of cylinders angled apart in a V on one crankshaft",
+      "seed": null,
+      "reference_image": "assets/cars/honda-s2000-ap1-2000.webp",
+      "generated_size": "1408x1408",
+      "post_process": "area-average onto 64\u00d764, nearest palette colour, nearest-neighbour \u00d72 to 128\u00d7128, WebP quality 82"
+    },
+    "icons/engine/edLayout-boxer.webp": {
+      "file": "icons/engine/edLayout-boxer.webp",
+      "kind": "icon",
+      "form": "engine",
+      "subject": "a cutaway flat (boxer) engine, cylinders lying horizontal and opposed on both sides of one crankshaft",
+      "prompt": "8-bit pixel art in the style of a late-1980s / early-1990s console game manual illustration. Chunky, clearly visible square pixels on a strict grid, hard edges, no anti-aliasing, no blur, no gradients, only flat colour bands with dithering where shading is needed. Limited palette: background #12121c, panel lines #26263a and #3a3a55, metal #6b6b85 with highlights #d8d8e8, dim parts #8a8aa6, accents green #00ff88, cyan #00ccff, yellow #ffcc00, red #ff4d5e, blue #3d7bff, copper #d9853b. 1-pixel black outline around objects. Technically accurate mechanical shapes, like a cutaway in a workshop manual. No text, no letters, no numbers, no logos, no brand names, no watermark.\n\nSingle object, centred, three-quarter isometric view from the upper left, filling about 80% of a square frame. Plain solid background #12121c, nothing else in the frame. Drawn on a 64\u00d764 pixel grid. Square 1:1 image.\n\na cutaway flat (boxer) engine, cylinders lying horizontal and opposed on both sides of one crankshaft",
+      "seed": null,
+      "reference_image": "assets/cars/honda-s2000-ap1-2000.webp",
+      "generated_size": "1408x1408",
+      "post_process": "area-average onto 64\u00d764, nearest palette colour, nearest-neighbour \u00d72 to 128\u00d7128, WebP quality 82"
+    },
+    "icons/engine/edCyl-1.webp": {
+      "file": "icons/engine/edCyl-1.webp",
+      "kind": "icon",
+      "form": "engine",
+      "subject": "a row of 1 piston seen from above as a metal disc. Draw exactly 1.",
+      "prompt": "8-bit pixel art in the style of a late-1980s / early-1990s console game manual illustration. Chunky, clearly visible square pixels on a strict grid, hard edges, no anti-aliasing, no blur, no gradients, only flat colour bands with dithering where shading is needed. Limited palette: background #12121c, panel lines #26263a and #3a3a55, metal #6b6b85 with highlights #d8d8e8, dim parts #8a8aa6, accents green #00ff88, cyan #00ccff, yellow #ffcc00, red #ff4d5e, blue #3d7bff, copper #d9853b. 1-pixel black outline around objects. Technically accurate mechanical shapes, like a cutaway in a workshop manual. No text, no letters, no numbers, no logos, no brand names, no watermark.\n\nSingle object, centred, three-quarter isometric view from the upper left, filling about 80% of a square frame. Plain solid background #12121c, nothing else in the frame. Drawn on a 64\u00d764 pixel grid. Square 1:1 image.\n\na row of 1 piston seen from above as a metal disc. Draw exactly 1.",
+      "seed": null,
+      "reference_image": "assets/cars/honda-s2000-ap1-2000.webp",
+      "generated_size": "1408x1408",
+      "post_process": "area-average onto 64\u00d764, nearest palette colour, nearest-neighbour \u00d72 to 128\u00d7128, WebP quality 82"
+    },
+    "icons/engine/edCyl-2.webp": {
+      "file": "icons/engine/edCyl-2.webp",
+      "kind": "icon",
+      "form": "engine",
+      "subject": "a row of 2 pistons seen from above as metal discs. Draw exactly 2.",
+      "prompt": "8-bit pixel art in the style of a late-1980s / early-1990s console game manual illustration. Chunky, clearly visible square pixels on a strict grid, hard edges, no anti-aliasing, no blur, no gradients, only flat colour bands with dithering where shading is needed. Limited palette: background #12121c, panel lines #26263a and #3a3a55, metal #6b6b85 with highlights #d8d8e8, dim parts #8a8aa6, accents green #00ff88, cyan #00ccff, yellow #ffcc00, red #ff4d5e, blue #3d7bff, copper #d9853b. 1-pixel black outline around objects. Technically accurate mechanical shapes, like a cutaway in a workshop manual. No text, no letters, no numbers, no logos, no brand names, no watermark.\n\nSingle object, centred, three-quarter isometric view from the upper left, filling about 80% of a square frame. Plain solid background #12121c, nothing else in the frame. Drawn on a 64\u00d764 pixel grid. Square 1:1 image.\n\na row of 2 pistons seen from above as metal discs. Draw exactly 2.",
+      "seed": null,
+      "reference_image": "assets/cars/honda-s2000-ap1-2000.webp",
+      "generated_size": "1408x1408",
+      "post_process": "area-average onto 64\u00d764, nearest palette colour, nearest-neighbour \u00d72 to 128\u00d7128, WebP quality 82"
+    },
+    "diagrams/engine/edBore.webp": {
+      "file": "diagrams/engine/edBore.webp",
+      "kind": "diagram",
+      "form": "engine",
+      "subject": "LEFT: a narrow cylinder with small valves. RIGHT: a wide cylinder with large valves; a red flame front with further to travel to the cylinder wall.",
+      "prompt": "8-bit pixel art in the style of a late-1980s / early-1990s console game manual illustration. Chunky, clearly visible square pixels on a strict grid, hard edges, no anti-aliasing, no blur, no gradients, only flat colour bands with dithering where shading is needed. Limited palette: background #12121c, panel lines #26263a and #3a3a55, metal #6b6b85 with highlights #d8d8e8, dim parts #8a8aa6, accents green #00ff88, cyan #00ccff, yellow #ffcc00, red #ff4d5e, blue #3d7bff, copper #d9853b. 1-pixel black outline around objects. Technically accurate mechanical shapes, like a cutaway in a workshop manual. No text, no letters, no numbers, no logos, no brand names, no watermark.\n\nA wide 16:9 explanatory diagram on a 240\u00d7135 pixel grid, background #12121c. Two panels side by side, divided by a thin #3a3a55 line: the LEFT panel shows the LOW value, the RIGHT panel the HIGH value, of the same part from the same viewpoint (side view or cutaway). Use arrows (yellow #ffcc00) for motion and flow, red #ff4d5e for heat or loss, cyan #00ccff for air, green #00ff88 for the gain. No text, no numbers.\n\nLEFT: a narrow cylinder with small valves. RIGHT: a wide cylinder with large valves; a red flame front with further to travel to the cylinder wall.",
+      "seed": null,
+      "reference_image": "assets/cars/honda-s2000-ap1-2000.webp",
+      "generated_size": "1792x1008",
+      "post_process": "crop to 16:9, area-average onto 240\u00d7135, nearest palette colour, nearest-neighbour \u00d74 to 960\u00d7540, WebP quality 82"
+    }
+  }
+}
