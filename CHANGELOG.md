@@ -20,6 +20,23 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 Working toward **v1.0 — every number derived, not fitted.**
 
+### A diagnosis under the dyno curve (build 248)
+
+The DYNO tab already showed peaks, the grade and the rpm table. It did not say what to change when the engine was not
+running smoothly — the engineer had to read the scorecard marks and guess.
+
+- **`diagnoseEngine()`** reads the build's specs, the scorecard and the as-tuned pull (and the live bench when it is
+  already hurting). Findings reuse the same limits as WHAT HOLDS IT BACK and the reliability index: valve float before
+  the redline, knock past `KNOCK_TARGET`, lumpy idle from overlap, a peaky band, weak low-end, piston speed above
+  25 m/s, under-cooling, petrol VGT heat, an as-tuned pull well under best-power, plus cold oil / overheat / low
+  voltage on the cell. Each finding names a fix.
+- **On the DYNO result sheet**, a DIAGNOSIS block lists them (or says the pull is smooth). An electric drive gets the
+  same block for short peak hold, low pack charge and a hot winding.
+- **Guide and README** mention it. No physics change; fingerprint unchanged. Greek for the new strings is paused
+  (owner decision); the guide's Greek for `dynoResult` is still the pre-diagnosis text.
+
+Tests: test158 (new).
+
 ### The vehicle's design as cards, like the engine's (build 247)
 
 Builds 238 and 239 put the electric drive and the combustion engine in cards. The VEHICLE tab, about thirty fields in
