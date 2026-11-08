@@ -40,7 +40,7 @@
 </div>
 <div class="container">
 <header>
-<h1>PIXEL ENGINE SIM v0.7 build 246</h1>
+<h1>PIXEL ENGINE SIM v0.7 build 247</h1>
 <div class="subtitle" id="subtitle">ENGINE DESIGNER • BUILD IT, THEN DRIVE IT</div>
 </header>
 <div class="build-strip" id="buildStrip">
@@ -579,6 +579,7 @@
 <button id="raceNew">NEW RACE</button>
 </div>
 <div class="replay-row race-rpt">
+<select id="raceView" class="opt-select" aria-label="Race view"><option value="map">MAP</option><option value="chase">3D CHASE</option><option value="top">3D OVERHEAD</option></select>
 <button id="raceRptPng" title="Save the race report as an image">REPORT PNG</button>
 <button id="raceRptPdf" title="Save the race report as a PDF">PDF</button>
 </div>
@@ -691,6 +692,7 @@
 <!-- @include js/engine-view.js -->
 <!-- @include js/track-view.js -->
 <!-- @include js/race-tab.js -->
+<!-- @include js/race-3d.js -->
 <!-- @include js/fullscreen-track.js -->
 <!-- @include js/dyno-ui.js -->
 <!-- @include js/parts.js -->

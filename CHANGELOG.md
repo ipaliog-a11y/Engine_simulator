@@ -20,6 +20,44 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 Working toward **v1.0 — every number derived, not fitted.**
 
+### The race can be watched in 3D, from behind a car or from above (build 247)
+
+RACE only had a map. The picker beside REPORT PNG now also offers **3D CHASE**, a camera riding behind a car, and
+**3D OVERHEAD**, looking down on it from above with the map's north at the top, the way a top-down game's camera does.
+This is the first step of a 3D race view the owner asked for. It draws the race the simulator already recorded and works
+nothing out again, so no result changes.
+
+- **The road** is the circuit's own data: the centreline the lap solver drives, its height at every point (the
+  Nordschleife's GPX trace, 290 m of climb), its width there, and the FIA kerbs build 217 placed, in red and white
+  blocks of about 1.5 m. White edge lines and a chequered start line are drawn on it.
+- **The cars** are where the race's 50 ms recording puts them, on their own racing lines, 2.5 m to the side when
+  passing, as the map draws a pass. Each car is built from its own numbers: the race model's wheelbase and track, the
+  profile's length and side silhouette (the same `CAR_PROFILES` the side sprite uses, so a 911 GT3 is drawn 4.545 m
+  long, its brochure length), its ride height and its tyres. A rear wing shows when one is fitted.
+- **The wheels** turn through the distance covered over the tyre's radius. The fronts steer to the line by the
+  kinematic angle atan(wheelbase × curvature). **The body rolls** out of a corner by the car's own roll gradient (the
+  number the lap solver uses, from its springs, bars and roll centres) times v²κ/g. For example, 0.9° for the 911 GT3
+  at 100 km/h and 2.9° for the Civic Type R at 89 km/h in the same race.
+- **The look:** WebGL with no library (the page still opens from `file://`), drawn at about a third of the screen's
+  resolution and blown up into hard pixels. Light comes in five bands, and bands and fog are dithered into each other
+  with a 4×4 Bayer pattern. Each car has a chequered pixel shadow. The overlay (the order, the events, the rain) is
+  drawn over the 3D view as over the map, with each car's position above it and the followed car's speed in a corner.
+  The camera follows the car clicked in the timing tower, or the leader.
+- **Without WebGL** the page says so once and stays on the map. The choice is kept in `pes.raceView`.
+- **Size:** about 10,000 triangles for Ashdown Park and 67,000 for the Nordschleife, built once per circuit.
+
+Left open, and why:
+
+- **Scenery is decoration, not data:** the grass, the banks down to a ground plane, the barriers 10 m out and the
+  trees. The track data holds only the road. Where a circuit crosses itself, the banks of one part can show through
+  the other.
+- **The body does not pitch** under braking and power. The recording keeps speed but not acceleration, and the
+  vehicle has no pitch gradient yet to derive it from.
+- **The body is drawn a little narrower** than the width the racing line keeps from the edge (track + one tyre), so
+  that the wheels show. The line still keeps the full width.
+- **TRACK still uses the map.** Its single-car replay could use the same renderer next, then trackside cameras, tyre
+  smoke and brake glow from the recorded brake temperatures.
+
 ### A hybrid's 12 V comes from its pack through a DC-DC converter, not an alternator (build 246)
 
 The combustion physics charged every engine for an alternator: a constant belt drag (0.035 bar of friction for the

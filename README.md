@@ -1,4 +1,4 @@
-# PIXEL ENGINE SIM v0.7 build 246
+# PIXEL ENGINE SIM v0.7 build 247
 
 **A lightweight, 8-bit style internal combustion engine *designer* & simulator** inspired by *Automation*.
 
@@ -240,6 +240,9 @@ assist map over speed and pedal), regeneration, load-point shifting, electric-dr
   laps it is good for, and **front and rear brake temperature with fade**. Play it at 1–100×,
   scrub, click a car to follow it, and save the **race report** as PNG or PDF: classification, a lap
   chart, lap times with the wet shaded in, every car's stints by compound, and the key moments.
+  The race can also be watched **in 3D**, from behind a car or from above: an 8-bit world drawn with WebGL
+  from the same recording, the circuit's own centreline, width, height and kerbs, and each car's own size,
+  profile and tyres, its wheels steering to the line and its body rolling by its own roll gradient.
   - **Pace is the lap solver's.** Each car's lap is solved on its own racing line at five grip levels
     and three fuel loads, plus a standing start; the race reads its speed off those solves for the
     grip its tyres have and the fuel it carries at that moment. Alone on perfect tyres a car laps in

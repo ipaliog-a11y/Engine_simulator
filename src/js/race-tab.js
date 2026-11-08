@@ -289,6 +289,26 @@ function drawRace(){
   ctx.textAlign='left';
   ctx.font='6px "Press Start 2P"';ctx.fillStyle='#88aacc';ctx.textAlign='right';
   ctx.fillText(raceWeatherText(S[0].s.wet)+'  '+R.cfg.air+'°C',W-44,topBar-2);ctx.textAlign='left';
+  const wNow=S[0].s.wet,wx=wNow/RACE.wetFull;
+  // the cars in the pit lane or parked after the flag, listed by the line (back of the field first)
+  const pitN=S.slice().reverse().filter(x=>raceParked(x,t)==='pit');
+  // the 3D view (build 247), when it is chosen and the browser can draw it; otherwise the map
+  ctx.save();ctx.beginPath();ctx.rect(0,topBar-8,W,H-topBar-botBar+8);ctx.clip();
+  if(!race3dDraw(R,t,S,0,topBar,W,H-topBar-botBar))drawRaceMap(R,t,S,W,H,topBar,botBar,wx);
+  drawRaceRain(W,H,topBar,botBar,wx,t);
+  ctx.restore();
+  drawRaceOverlay(R,t,S,W,H,topBar,botBar,pitN);
+}
+// A car that is not on the circuit to be drawn: 'out' (retired and stopped), 'pit' (in the pit lane, or parked
+// after the flag), or '' (racing).
+function raceParked(x,t){
+  const s=x.s;
+  if(x.dnf&&s.v<0.1&&s.flag===3)return 'out';
+  if(s.flag===1||(x.fin&&s.v<0.1&&t>x.fin.t+0.5))return 'pit';
+  return '';
+}
+// The map: the circuit from above, and the cars on it.
+function drawRaceMap(R,t,S,W,H,topBar,botBar,wx){
   const T=buildTrack(R.cfg.track);
   const {px,py,scV}=trackMapView(T,W,H,topBar,botBar,W);
   // follow a car: pan the view so it stays in the middle
@@ -297,20 +317,16 @@ function drawRace(){
     const q={x:M.line[i].x+(M.line[j].x-M.line[i].x)*f,y:M.line[i].y+(M.line[j].y-M.line[i].y)*f};
     trackView.x+=trackView.mcx-px(q);trackView.y+=trackView.mcy-py(q);
   }
-  ctx.save();ctx.beginPath();ctx.rect(0,topBar-8,W,H-topBar-botBar+8);ctx.clip();
   drawTrackSurface(T,px,py,scV);
-  const wNow=S[0].s.wet,wx=wNow/RACE.wetFull;
   if(wx>0.02){   // a wet surface: the ribbon darkened and sheened blue
     ctx.globalAlpha=0.45*wx;ctx.fillStyle='#1d3a66';trackRibbon(ctx,T,px,py,scV,3);ctx.globalAlpha=1;
   }
   const p0=T.pts[0];
   ctx.fillStyle='#fff';ctx.fillRect(px(p0)-4,py(p0)-4,8,8);ctx.fillStyle='#000';ctx.fillRect(px(p0)-2,py(p0)-2,4,4);
   // the cars, back of the field first so the leader is drawn on top
-  const pitN=[];
   for(const x of S.slice().reverse()){
-    const k=x.k,c=x.c,M=c.M,s=x.s;
-    if(x.dnf&&s.v<0.1&&s.flag===3){continue;}
-    if(s.flag===1||(x.fin&&s.v<0.1&&t>x.fin.t+0.5)){pitN.push(x);continue;}
+    const c=x.c,M=c.M,s=x.s;
+    if(raceParked(x,t))continue;
     const i=Math.floor(s.pos)%M.n,j=(i+1)%M.n,f=s.pos-Math.floor(s.pos);
     const q={x:M.line[i].x+(M.line[j].x-M.line[i].x)*f,y:M.line[i].y+(M.line[j].y-M.line[i].y)*f};
     let cx=px(q),cy=py(q);const hd=Math.atan2(py(M.line[j])-py(M.line[i]),px(M.line[j])-px(M.line[i]));
@@ -319,7 +335,9 @@ function drawRace(){
     ctx.font='6px "Press Start 2P"';ctx.fillStyle=RACE_COLS[c.id];ctx.fillText(String(x.pos),cx+7,cy-6);
     if(raceUI.follow===c.id){ctx.strokeStyle='#fff';ctx.lineWidth=1;ctx.strokeRect(cx-9,cy-9,18,18);}
   }
-  // rain, falling at the race clock's pace
+}
+// Rain, falling at the race clock's pace, over the map or the 3D view.
+function drawRaceRain(W,H,topBar,botBar,wx,t){
   if(wx>0.02){
     ctx.strokeStyle='rgba(150,180,255,'+(0.25+0.3*wx)+')';ctx.lineWidth=1;ctx.beginPath();
     const nDrops=Math.round(40+160*wx),ph=t*9;
@@ -329,7 +347,9 @@ function drawRace(){
     }
     ctx.stroke();
   }
-  ctx.restore();
+}
+// What sits over the map or the 3D view: the cars parked by the line, the order, the latest events, the winner.
+function drawRaceOverlay(R,t,S,W,H,topBar,botBar,pitN){
   // pit lane / finished cars, parked by the line
   ctx.font='6px "Press Start 2P"';
   pitN.forEach((x,n)=>{const bx=W-110,by=topBar+8+n*11;ctx.fillStyle=RACE_COLS[x.c.id];ctx.fillRect(bx,by-5,6,6);
@@ -371,6 +391,7 @@ function bindRace(){
   const sc=g('raceScrub');
   sc.addEventListener('input',()=>{if(!raceUI.run)return;raceUI.scrubbing=true;raceUI.t=raceUI.run.t*(+sc.value)/1000;renderRacePanel(true);});
   sc.addEventListener('change',()=>{raceUI.scrubbing=false;});
+  race3dBind();
   raceFillAdd();renderRaceSetup();
 }
 // ---- the race page (build 141): RACE as a page of its own, filling the window ----

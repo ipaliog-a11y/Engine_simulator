@@ -186,6 +186,7 @@ footer{text-align:center;margin-top:16px;padding:8px;font-size:7px;color:#555;bo
 .replay-row{display:flex;gap:6px;align-items:stretch;margin:4px 0 10px}
 .replay-row button{flex:1;padding:6px 4px}
 .replay-row select{flex:0 0 64px;min-width:0}
+.replay-row #raceView{flex:1 1 0}
 .replay-row #replayGauges{flex:0 0 86px}
 .replay-row .tp-full{flex:0 0 40px;color:#00ccff;border-color:#00ccff}
 /* the full-screen track view (build 143): the lap, its instruments and the replay controls, in landscape */
