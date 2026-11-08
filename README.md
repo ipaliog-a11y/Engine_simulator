@@ -1,4 +1,4 @@
-# PIXEL ENGINE SIM v0.7 build 246
+# PIXEL ENGINE SIM v0.7 build 247
 
 **A lightweight, 8-bit style internal combustion engine *designer* & simulator** inspired by *Automation*.
 
@@ -461,7 +461,11 @@ The interface is fully translatable (English / Ελληνικά) and fills the s
 
 ![Greek UI](docs/greek.png)
 
-The **VEHICLE** tab drops your engine into a car and computes acceleration & top speed:
+The **VEHICLE** tab drops your engine into a car and computes acceleration & top speed. Since build 247 its parts are
+six cards in the same style (**CHASSIS & DRIVE**, **GEARBOX**, **WHEELS & TYRES**, **AERO & WEIGHT**, **BRAKES &
+STEERING**, **SUSPENSION**), with the factory cars as the sliders' ticks, a **?** on every input, and a side panel of
+what the car does (0–100, top speed, 400 m, weight, grip, cost, drive force against drag) and what holds it back (the
+tyres' speed rating, the limiter, grip at the launch):
 
 ![Vehicle & performance](docs/vehicle.png)
 

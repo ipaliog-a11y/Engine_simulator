@@ -40,7 +40,7 @@
 </div>
 <div class="container">
 <header>
-<h1>PIXEL ENGINE SIM v0.7 build 246</h1>
+<h1>PIXEL ENGINE SIM v0.7 build 247</h1>
 <div class="subtitle" id="subtitle">ENGINE DESIGNER • BUILD IT, THEN DRIVE IT</div>
 </header>
 <div class="build-strip" id="buildStrip">
@@ -287,8 +287,12 @@
 <div class="field"><label for="btnCopyFrom">BODY &amp; PARTS ONLY</label><button id="btnCopyFrom" type="button" disabled>COPY FROM</button></div>
 </div>
 
-<div class="design-section">Chassis &amp; Drivetrain</div>
-<div class="design-grid">
+<!-- The vehicle as cards (build 247): src/js/vehicle-designer.js adds each card's heading, picture, sliders and help
+     around these fields, which keep their ids, so saves, presets and the build read them as before. -->
+<div class="evd" id="vhDesigner">
+<nav class="evd-rail" id="vcdRail" aria-label="Vehicle"></nav>
+<div class="evd-cards" id="vcdCards">
+<section class="evd-card" id="vcdCard-chassis" data-card="chassis"><div class="evd-fields">
 <div class="field"><label for="vhChassis">CHASSIS</label><select id="vhChassis">
 <option value="kei">KEI CAR</option><option value="hatch">HOT HATCH</option><option value="roadster">LIGHT ROADSTER</option>
 <option value="coupe">SPORTS COUPE</option><option value="sedan">SPORTS SEDAN</option><option value="muscle">MUSCLE CAR</option>
@@ -297,40 +301,37 @@
 </select></div>
 <div class="field"><label for="vhDrive">DRIVETRAIN</label><select id="vhDrive"><option value="fwd">FWD</option><option value="rwd">RWD</option><option value="awd">AWD</option></select></div>
 <div class="field"><label for="vhDiff">DIFFERENTIAL</label><select id="vhDiff"><option value="open">OPEN</option><option value="visc">VISCOUS LSD</option><option value="clsd">CLUTCH-PLATE LSD</option><option value="spool">SPOOL / LOCKED</option></select></div>
+<div class="field"><label for="vhTC">TRACTION CONTROL</label><select id="vhTC"><option value="on">ON</option><option value="off">OFF</option></select></div>
+<div class="field"><label for="vhLimiter">SPEED LIMITER</label><select id="vhLimiter"><option value="off">OFF (REMOVED)</option><option value="on">ON</option></select></div>
+<div class="field"><label for="vhLimitKmh">LIMIT (km/h)</label><input type="number" id="vhLimitKmh" min="80" max="400" step="5" value="250"></div>
+</div></section>
+<section class="evd-card" id="vcdCard-gearbox" data-card="gearbox"><div class="evd-fields">
 <div class="field"><label for="vhGearbox">GEARBOX TYPE</label><select id="vhGearbox"><option value="manual">MANUAL (H-PATTERN)</option><option value="sequential">SEQUENTIAL</option><option value="dct">DUAL-CLUTCH (DCT)</option><option value="auto">TORQUE-CONV AUTO</option></select></div>
 <div class="field"><label for="vhGears">GEARBOX (SPEEDS)</label><select id="vhGears"><option value="4">4</option><option value="5">5</option><option value="6">6</option><option value="7">7</option><option value="8">8</option><option value="9">9</option><option value="10">10</option></select></div>
 <div class="field"><label for="vhSpacing">GEAR SPACING</label><select id="vhSpacing"><option value="std">STANDARD</option></select></div>
-<div class="field"><label for="btnGearRatios">RATIOS &amp; GRAPHS</label><button id="btnGearRatios" type="button">GEAR RATIOS…</button></div>
-<div class="field"><label for="btnGG">GRIP</label><button id="btnGG" type="button">G-G DIAGRAM…</button></div>
 <div class="field"><label for="vhGearing"><span id="lblGearing" class="ctl-lbl">GEARING (FINAL DRIVE)</span> <span class="val" id="valGearing">52</span></label><input type="range" id="vhGearing" min="0" max="100" step="1" value="52" aria-label="Gearing short to tall"></div>
-<div class="field"><label for="vhLimiter">SPEED LIMITER</label><select id="vhLimiter"><option value="off">OFF (REMOVED)</option><option value="on">ON</option></select></div>
-<div class="field"><label for="vhTC">TRACTION CONTROL</label><select id="vhTC"><option value="on">ON</option><option value="off">OFF</option></select></div>
-<div class="field"><label for="vhLimitKmh">LIMIT (km/h)</label><input type="number" id="vhLimitKmh" min="80" max="400" step="5" value="250"></div>
-</div>
-
-<div class="design-section">Wheels &amp; Tyres</div>
-<div class="design-grid">
-<div class="field"><label for="vhRating">TYRE SPEED RATING</label><select id="vhRating"><option value="T">T — 190 km/h</option><option value="H">H — 210</option><option value="V">V — 240</option><option value="W">W — 270</option><option value="Y">Y — 300</option><option value="YY">(Y) — over 300</option></select></div>
+<div class="field"><label for="btnGearRatios">RATIOS &amp; GRAPHS</label><button id="btnGearRatios" type="button">GEAR RATIOS…</button></div>
+</div></section>
+<section class="evd-card" id="vcdCard-tyres" data-card="tyres"><div class="evd-fields">
 <div class="field"><label for="vhTire">TYRE COMPOUND</label><select id="vhTire"><option value="eco">ECO/TOURING</option><option value="street">STREET</option><option value="sport">SPORT</option><option value="semi">SEMI-SLICK</option><option value="slick">RACE SLICK</option><option value="drag">DRAG RADIAL</option></select></div>
+<div class="field"><label for="vhRating">TYRE SPEED RATING</label><select id="vhRating"><option value="T">T — 190 km/h</option><option value="H">H — 210</option><option value="V">V — 240</option><option value="W">W — 270</option><option value="Y">Y — 300</option><option value="YY">(Y) — over 300</option></select></div>
 <div class="field"><label for="vhWheel">WHEEL DIA (in)</label><input type="number" id="vhWheel" min="13" max="22" step="1" value="18"></div>
 <div class="field"><label for="vhTireW">TYRE WIDTH (mm)</label><input type="number" id="vhTireW" min="135" max="355" step="5" value="235"></div>
-<div class="field"><label for="vhTireWF">FRONT WIDTH (mm, 0 = same)</label><input type="number" id="vhTireWF" min="0" max="355" step="5" value="0"></div>
 <div class="field"><label for="vhTireA">TYRE ASPECT (%)</label><input type="number" id="vhTireA" min="25" max="80" step="5" value="40"></div>
-</div>
-
-<div class="design-section">Aerodynamics</div>
-<div class="design-grid">
+<div class="field"><label for="vhTireWF">FRONT WIDTH (mm, 0 = same)</label><input type="number" id="vhTireWF" min="0" max="355" step="5" value="0"></div>
+</div></section>
+<section class="evd-card" id="vcdCard-aero" data-card="aero"><div class="evd-fields">
 <div class="field"><label for="vhAeroF">FRONT AERO</label><select id="vhAeroF"><option value="none">NONE</option><option value="splitter">SPLITTER</option><option value="wing">FRONT WING</option></select></div>
 <div class="field"><label for="vhAeroR">REAR AERO</label><select id="vhAeroR"><option value="none">NONE</option><option value="lip">LIP SPOILER</option><option value="wing">REAR WING</option></select></div>
 <div class="field"><label for="vhAeroFl">FLOOR / DIFFUSER</label><select id="vhAeroFl"><option value="none">NONE</option><option value="undertray">UNDERTRAY</option><option value="diffuser">DIFFUSER</option></select></div>
 <div class="field"><label for="vhWeight">WEIGHT REDUCTION</label><select id="vhWeight"><option value="none">NONE</option><option value="street">STREET</option><option value="sport">SPORT</option><option value="race">RACE</option></select></div>
-</div>
-
-<div class="design-section">Brakes &amp; Suspension</div>
-<div class="design-grid">
+</div></section>
+<section class="evd-card" id="vcdCard-brakes" data-card="brakes"><div class="evd-fields">
 <div class="field"><label for="vhBrake">BRAKES</label><select id="vhBrake"><option value="steel">STEEL DISC</option><option value="slotted">SLOTTED/VENTED</option><option value="big">BIG BRAKE KIT</option><option value="carbon">CARBON-CERAMIC</option><option value="hd">HEAVY-DUTY</option></select></div>
 <div class="field"><label for="vhRotor">ROTOR SIZE (mm)</label><input type="number" id="vhRotor" min="200" max="450" step="10" value="330"></div>
 <div class="field"><label for="vhSteer">STEERING RATIO (:1)</label><input type="number" id="vhSteer" min="8" max="22" step="0.5" value="15"></div>
+</div></section>
+<section class="evd-card" id="vcdCard-susp" data-card="susp"><div class="evd-fields">
 <div class="field"><label for="vhSusp">SUSPENSION</label><select id="vhSusp"><option value="comfort">COMFORT</option><option value="sport">SPORT</option><option value="coilover">COILOVERS</option><option value="race">RACE/ADJUST</option></select></div>
 <div class="field"><label for="vhGeoF">FRONT GEOMETRY</label><select id="vhGeoF"><option value="strut">MACPHERSON STRUT</option><option value="wishbone">DOUBLE WISHBONE</option><option value="multilink">MULTI-LINK</option><option value="solid">SOLID AXLE</option></select></div>
 <div class="field"><label for="vhGeoR">REAR GEOMETRY</label><select id="vhGeoR"><option value="strut">MACPHERSON STRUT</option><option value="wishbone">DOUBLE WISHBONE</option><option value="multilink">MULTI-LINK</option><option value="twist">TWIST BEAM</option><option value="solid">SOLID AXLE</option></select></div>
@@ -341,6 +342,10 @@
 <div class="field"><label for="vhDamperF">FRONT DAMPERS</label><select id="vhDamperF"><option value="-2">SOFT −2</option><option value="-1">SOFT −1</option><option value="0" selected>STANDARD</option><option value="1">STIFF +1</option><option value="2">STIFF +2</option></select></div>
 <div class="field"><label for="vhDamperR">REAR DAMPERS</label><select id="vhDamperR"><option value="-2">SOFT −2</option><option value="-1">SOFT −1</option><option value="0" selected>STANDARD</option><option value="1">STIFF +1</option><option value="2">STIFF +2</option></select></div>
 <div class="field"><label for="btnSusp">QUARTER CAR</label><button id="btnSusp" type="button">SUSPENSION CALCULATOR…</button></div>
+<div class="field"><label for="btnGG">GRIP</label><button id="btnGG" type="button">G-G DIAGRAM…</button></div>
+</div></section>
+</div>
+<aside class="evd-side" id="vcdSide"></aside>
 </div>
 <div class="build-row">
 <button id="btnRefit">REFIT FACTORY SPEC</button>
@@ -710,6 +715,7 @@
 <!-- @include js/design-cards.js -->
 <!-- @include js/ev-designer.js -->
 <!-- @include js/engine-designer.js -->
+<!-- @include js/vehicle-designer.js -->
 <!-- @include js/title-screen.js -->
 <!-- @include js/showcase.js -->
 <!-- @include js/controls-boot.js -->

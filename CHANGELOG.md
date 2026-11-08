@@ -20,6 +20,36 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 Working toward **v1.0 — every number derived, not fitted.**
 
+### The vehicle's design as cards, like the engine's (build 247)
+
+Builds 238 and 239 put the electric drive and the combustion engine in cards. The VEHICLE tab, about thirty fields in
+four grids of bare values, now gets the same treatment, on the same code (`src/js/design-cards.js`).
+
+- **Six cards.** CHASSIS & DRIVE (chassis, drivetrain, differential, traction control, speed limiter), GEARBOX (type,
+  speeds, spacing, the GEARING slider, GEAR RATIOS…), WHEELS & TYRES (compound, speed rating, wheel, width, aspect,
+  front width), AERO & WEIGHT, BRAKES & STEERING, and SUSPENSION (kit, geometry, springs, bars, dampers, the
+  SUSPENSION CALCULATOR… and G-G DIAGRAM… buttons). Every field keeps its id, so saves, presets and the physics read
+  them as before.
+- **The same help as the engine's.** A slider whose ticks are the 100 factory cars, a ? on every input (what it is,
+  what it trades, which real cars use each choice, a link to its guide page), and the effect of each change beside it.
+  BASIC hides 8 finer settings (front tyre width, steering ratio, the six spring, bar and damper steps).
+- **WHAT YOUR CAR DOES**: 0–100, top speed, 400 m, weight, grip, cost, and a graph of the drive force in the best gear
+  against drag and rolling resistance over road speed, which cross at the top speed, with the driven tyres' grip
+  dotted. **WHAT HOLDS IT BACK** names what stops the car: the tyres' speed rating (with a ▲ on the rating and in the
+  menu when the car outruns it), the limiter, or grip at the launch. On a phone it is a bar at the bottom.
+- **A picture**: the tyre in section, to scale.
+- **Nothing is new physics.** The form was already live: each field rebuilds the car on input. The cards read the car
+  and its run as `buildVehicle` leaves them, so the side panel's figures are PERFORMANCE's. The fingerprint is
+  identical to build 246's.
+
+Left open:
+
+- The GEARING slider's label shows the slider's nominal final drive (4.90 to 2.60), while the car runs the one matched
+  to its engine; the GEARBOX card's summary shows the one it runs. They have differed since the matching was added.
+- test28 opens the GEARBOX card before choosing a gearbox, because a Playwright click needs the field on screen.
+
+Tests: test157 (new); test28 (updated as above).
+
 ### A hybrid's 12 V comes from its pack through a DC-DC converter, not an alternator (build 246)
 
 The combustion physics charged every engine for an alternator: a constant belt drag (0.035 bar of friction for the

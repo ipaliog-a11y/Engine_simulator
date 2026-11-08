@@ -137,6 +137,7 @@ if (legacy.gb !== 'manual' || !legacy.ok) fails.push('legacy save without a gear
 
 // 6. UI + Greek
 await page.click('#tabVehicle'); await page.waitForTimeout(150);
+await page.evaluate(() => { VCD.st.card = 'gearbox'; VCD.layout(); });   // its card (build 247): a click needs the field on screen
 await page.selectOption('#vhGearbox', 'auto'); await page.waitForTimeout(120);
 const summary = await page.evaluate(() => document.getElementById('vehicleSummary').textContent);
 console.log('\nsummary contains converter line:', /converter stall/.test(summary));
