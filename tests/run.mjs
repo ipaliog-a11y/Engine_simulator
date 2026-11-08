@@ -9,7 +9,7 @@
 //   node tests/run.mjs              run everything
 //   node tests/run.mjs 41 43 aero   run only those
 //   node tests/run.mjs --list       show what exists (with --shard, what that shard runs)
-//   node tests/run.mjs --shard=2/5  run the 2nd of 5 shares, as CI does (.github/workflows/tests.yml)
+//   node tests/run.mjs --shard=2/5  run the 2nd of 5 shares by running time
 //
 // A shard is a share of the tests by running time, not by count: tests/durations.json holds each test's time from the
 // last full run (a test it lacks counts as 30 s), and the longest are dealt first, each to the shard with the least so
@@ -26,7 +26,9 @@ const all = readdirSync(DIR).filter(f => f.endsWith('.mjs') && !['run.mjs','pw.m
 });
 const args = process.argv.slice(2);
 const pick = args.filter(a => !a.startsWith('--'));
-let run = pick.length ? all.filter(f => pick.some(p => f.includes(p))) : all;
+// "41" or "test41.mjs" picks exactly test41.mjs; any other word picks every file whose name contains it ("aero")
+const hit = (f, p) => /^\d+$/.test(p) ? f === `test${p}.mjs` : p.endsWith('.mjs') ? f === p : f.includes(p);
+let run = pick.length ? all.filter(f => pick.some(p => hit(f, p))) : all;
 const shardArg = args.find(a => a.startsWith('--shard='));
 if (shardArg) {
   const [k, n] = shardArg.slice(8).split('/').map(Number);

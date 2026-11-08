@@ -7,6 +7,16 @@ before your first change**, and follow it unless the repository owner tells you 
 Pixel Engine Sim is one HTML page (`index.html`) that simulates an engine, a car, a lap and a race from physics. The
 goal for v1.0 is **every number derived, not fitted**. That goal decides most of the rules below.
 
+## 0. Owner decisions in force (override the sections below until the owner lifts them)
+
+1. **Greek translations are paused.** Do not add Greek to `I18N` or `GUIDE_I18N` for new text. Still wrap interface
+   text in `tr('...')` so it can be translated later. `test87` (the Greek sweep) has been removed; if another test fails
+   only for missing Greek, note it in the PR rather than translating.
+2. **Strict token diet; tests to the minimum.** Write a new test only when the change cannot be checked otherwise, and
+   run only the tests that cover what you touched. Keep diffs, comments, CHANGELOG entries and PR text short.
+3. **Sanity checks against preset (real) cars are paused** unless the owner asks for them: no fingerprint
+   comparisons or published-figure checks per change. The physics rules on deriving and citing still hold.
+
 ---
 
 ## 1. The shape of the repository
@@ -19,7 +29,7 @@ goal for v1.0 is **every number derived, not fitted**. That goal decides most of
 | `tools/build.mjs` | `node tools/build.mjs` writes `index.html`; `--check` fails if it is not exactly what `src/` builds |
 | `tools/stamp.mjs` | Bumps the build number in `src/shell.html`, `index.html` and `README.md`; `--check` verifies it |
 | `tools/fingerprint.mjs` | Records ~4800 numbers the simulators produce, and compares two recordings exactly |
-| `tests/` | One file per behaviour (`testNNN.mjs`), run by `tests/run.mjs`; `tests/durations.json` balances CI shards |
+| `tests/` | One file per behaviour (`testNNN.mjs`), run by `tests/run.mjs`; `tests/durations.json` holds each test's time |
 | `CHANGELOG.md` | One entry per build, newest first, under `## [Unreleased]` |
 | `plans/`, `research/` | Design notes and source material behind past builds |
 
@@ -104,24 +114,23 @@ These are what reviewers check first.
   add to one to get green; if a gap is real and out of scope, add it **and** state it in the CHANGELOG.
 - **Never skip, disable or delete a test** to get green. A failing test is either a bug you fix, or a change in
   behaviour you explain and update the test for, in the open.
-- **Tests that touch the interface must pass in Greek too.** See section 8.
-- If you add a test, add its time to `tests/durations.json` (in milliseconds) so CI's shards stay balanced. A test
-  missing from the file counts as 30 s.
+- If you add a test, add its time to `tests/durations.json` (in milliseconds), for `--shard` runs.
 
 ## 5. Checks before every push
 
 ```
 node tools/build.mjs --check          # index.html is exactly src/ joined
 node tools/stamp.mjs --check          # the build number is consistent and ahead of main
-node tests/run.mjs 87 <your tests> <tests for what you touched>
+node tests/run.mjs <your tests> <tests for what you touched>
 ```
 
-- `test87` is the Greek-interface sweep; run it on every interface change.
-- `tests/run.mjs 41 43 aero` runs only those tests, and `--list` shows what exists.
-- The full suite takes about 70 minutes on one machine. CI runs it in five shards (`.github/workflows/tests.yml`) on
-  every pull request, and the PR is ready only when the **Tests** check and the **Check** workflow are green.
+- `tests/run.mjs 41 43 aero` runs only those tests (a number picks exactly that `testN.mjs`), and `--list` shows what exists.
+- CI (`.github/workflows/tests.yml`) runs only the relevant tests: every `tests/*.mjs` the PR adds or modifies, plus
+  any named on a line `Tests: 41 aero` in the PR description. Name there the existing tests that cover what you
+  touched. The PR is ready when the **Tests** check and the **Check** workflow are green. The full suite (~70 min)
+  runs only locally, with `node tests/run.mjs`.
 - Before pushing, read your own diff as a reviewer would: what would make CI reject it?
-- When a CI shard fails, read its log, reproduce the failure locally with `node tests/run.mjs <that test>`, fix the
+- When CI fails, read its log, reproduce the failure locally with `node tests/run.mjs <that test>`, fix the
   cause, and push. "Flaky" is not a cause. Do not re-run a job hoping it passes.
 
 ## 6. CHANGELOG
@@ -151,9 +160,8 @@ The owner creates releases and tags by hand. **Do not** create tags or releases,
 
 ## 8. Interface and text
 
-- **Every visible English string has Greek.** Pass interface text through `tr('...')` and add the Greek to `I18N` in
-  `src/js/i18n.js`. `test87` fails on any `tr()` literal without Greek, and on any status message passed to `flash()`
-  without `tr()`.
+- **Pass interface text through `tr('...')`**, status messages to `flash()` included. Greek in `I18N`
+  (`src/js/i18n.js`) is paused; see section 0.
 - **Guide pages** live in `src/html/guide.html`. Each page climbs three levels: LV1 real life, LV2 in the game, LV3 the
   physics. Each page has a picture drawn in code in `src/js/guide.js`. Each `data-gk` block needs its Greek in
   `GUIDE_I18N`, and the budget of blocks without Greek is 0. `test73` and `test51` check the structure.
