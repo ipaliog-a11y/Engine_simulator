@@ -32,7 +32,7 @@ const r = await page.evaluate(() => {
   for (const car of ['Golf GTI (Mk7', 'BMW M3 (E46', null]) {
     if (car) load(car); else { g('vhChassis').value = 'coupe'; g('vhChassis').dispatchEvent(new Event('input')); }
     const F = vehicle.dimsFactory, a = { lap: lap(), t100: perf.t100, lltd: vehicle.lltdF, form: g('vhWb').value };
-    set({ vhDims: 'design', vhFwt: F.fWtCar * 100 });
+    set({ vhDims: 'design', vhFwt: F.fWtCar * 100, vhCg: F.cg });   // exact: the form shows them rounded (build 251: CG = 0.388 h)
     o.fac.push({ car: vehicle.chLabel, a, b: { lap: lap(), t100: perf.t100, lltd: vehicle.lltdF }, dims: JSON.stringify(vehicle.dims),
       wb: vehicle.wb === F.wb && vehicle.trackF === F.trackF && vehicle.trackR === F.trackR && vehicle.cg === F.cg });
   }

@@ -36,7 +36,7 @@ const VCD_FIELDS={
     trade:'A wider track rolls less and moves less weight across the car. On the same springs a wider axle is also stiffer in roll (as the track squared), so it takes more of the roll, like a stiffer bar: a wider front leans toward understeer.'},
   vhTrackR:{what:'How far apart the rear wheels are, centre to centre.',
     trade:'A wider rear track rolls less, and on the same springs takes more of the roll, like a stiffer rear bar: toward oversteer.'},
-  vhCg:{what:'The height of the car\'s centre of gravity above the road. Makers rarely publish it: the factory figure is its class\'s.',
+  vhCg:{what:'The height of the car\'s centre of gravity above the road. Makers rarely publish it: a real car\'s is 0.388 × its overall height, the median NHTSA measured.',
     trade:'Lower is better everywhere: less weight moved in corners, under braking and under power, and less roll. A tall car loses grip to its own load transfer.'},
   vhFwt:{what:'The share of the car\'s weight on the front axle at rest, with this engine in it.',
     trade:'More weight on the driven axle gives more traction at launch. Nearer 50% balances the two axles in corners. Swapping the engine moves the FACTORY split, not a designed one.'},

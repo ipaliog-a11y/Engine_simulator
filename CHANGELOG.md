@@ -20,6 +20,29 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 Working toward **v1.0 — every number derived, not fitted.**
 
+### A real car's CG height from its overall height, batch 1 (build 251)
+
+Item 3 of `plans/parts-design-space.md`, step 2, first batch: retiring the class CG height the real cars carried.
+
+- **The rule.** Makers almost never publish a CG height; they always publish the overall height. NHTSA measured both on
+  330 light vehicles weighed unladen (SAE 1999-01-1336, Heydinger et al.). CG / roof height has a median of **0.388**
+  (sd 0.017; cars 0.391, trucks, SUVs and vans 0.385), and the paper finds it "does not discriminate between vehicle
+  classes or mass". So a real car with a published height `h` now has CG = 0.388 h (`CG_ROOF_RATIO`). The method and
+  the script are in `research/cg-height/`.
+- **Batch 1: the 38 cars that already had published tracks** get their overall height (Wikipedia spec boxes; where
+  only a range over trims is given, its lowest, marked unsure). CGs move from the class's 0.44–0.52 m to 0.429 m
+  (Diablo VT) – 0.582 m (Alto Works); most rise 0.02–0.06 m (the hand-set class figures sat low).
+- **What moved:** 920 fingerprint values, all on these 38 cars. 0-100: −0.12 s (Hellcat) to +0.05 s; laps of 'tech'
+  −0.15% to +0.93% (the tall city cars slow most). Mean 0-100 error against the real figures **10.10% → 9.77%**. 15
+  other cars show a changed lap hash with identical lap times: the hash includes the circuit's cache of the last ~13
+  cars' racing lines, not a change to those cars.
+- **Left open:** no verified height yet for the Civic Type R FK8, Lancer Evo IX, RS3 8V and Silverado 2500HD (class CG
+  kept). The 50 cars without published tracks come in later batches, by category. The roofless Atom, Mono and SR3 keep
+  their class CG for good: their published height is a roll hoop's. The classes' own CG stays hand-set.
+
+Tests: test161 (new; `NO_H_BUDGET` 54 may only shrink); test160 now sets the exact CG when it writes the factory's
+numbers as DESIGNED (the form shows them to 1 mm).
+
 ### The chassis numbers as a part (build 250)
 
 Item 3 of `plans/parts-design-space.md`, step 1: the part itself.

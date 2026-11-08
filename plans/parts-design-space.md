@@ -33,4 +33,6 @@ Each new part is two builds:
   left in the airflow estimates (exhaust pulse, blowdown, compressor demand). Its removal should move turbo spool most.
 - Intercooler: every intercooled preset (45) loses its core's pressure drop.
 - Catalytic converter: removing the double count lifts nearly every engine 5–6% (build 244): find what it hides first.
-- Chassis: all 92 vehicle presets move once each has its own sourced CG height and track.
+- Chassis: all 92 vehicle presets move once each has its own sourced CG height and track. Build 251, batch 1: CG = 0.388 × overall height
+  (NHTSA's measured median, `research/cg-height/`) on the 38 cars with published tracks; mean 0-100 error 10.10 → 9.77%.
+  Next batches: the 50 cars without published tracks, by category (track and height together).
