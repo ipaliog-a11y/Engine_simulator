@@ -26,12 +26,14 @@ The DYNO tab already showed peaks, the grade and the rpm table. It did not say w
 running smoothly — the engineer had to read the scorecard marks and guess.
 
 - **`diagnoseEngine()`** reads the build's specs, the scorecard and the as-tuned pull (and the live bench when it is
-  already hurting). Findings reuse the same limits as WHAT HOLDS IT BACK and the reliability index: valve float before
-  the redline, knock past `KNOCK_TARGET`, lumpy idle from overlap, a peaky band, weak low-end, piston speed above
-  25 m/s, under-cooling, petrol VGT heat, an as-tuned pull well under best-power, plus cold oil / overheat / low
-  voltage on the cell. Each finding names a fix.
-- **On the DYNO result sheet**, a DIAGNOSIS block lists them (or says the pull is smooth). An electric drive gets the
-  same block for short peak hold, low pack charge and a hot winding.
+  already hurting). Faults (valve float, knock past `KNOCK_TARGET`, damage) mark it not smooth. Cell/tune problems
+  (cold oil, overheat, as-tuned well under best-power) are warnings. Design trade-offs (race-cam lope from overlap ≥
+  50°, a clearly peaky band, weak low-end, piston speed, cooling, petrol VGT, emissions, reliability) are notes only.
+- **Lope is cam overlap only.** `engine.lumpiness` also folds in diesel clatter for the sound; that must not flag a
+  Duramax or a Land Cruiser diesel as a lumpy idle. After the first cut, most factory cars read "NOT RUNNING SMOOTH"
+  from band/lope notes — fixed by splitting severities.
+- **On the DYNO result sheet**, a DIAGNOSIS block lists them (or NOTES, or “running smoothly”). An electric drive gets
+  the same block for peak hold, pack charge and winding heat.
 - **Guide and README** mention it. No physics change; fingerprint unchanged. Greek for the new strings is paused
   (owner decision); the guide's Greek for `dynoResult` is still the pre-diagnosis text.
 
