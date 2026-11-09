@@ -40,7 +40,7 @@
 </div>
 <div class="container">
 <header>
-<h1>PIXEL ENGINE SIM v0.7 build 253</h1>
+<h1>PIXEL ENGINE SIM v0.7 build 254</h1>
 <div class="subtitle" id="subtitle">ENGINE DESIGNER • BUILD IT, THEN DRIVE IT</div>
 </header>
 <div class="build-strip" id="buildStrip">
@@ -494,6 +494,14 @@
 <div class="stat" id="statAmps" style="display:none"><span class="label">PACK CURRENT</span><div class="value">0</div><span class="unit">A</span></div>
 <div class="stat" id="statLimit" style="display:none"><span class="label">POWER LIMIT</span><div class="value">NONE</div><span class="unit"></span></div>
 </div>
+<div class="dash-lamps" id="dashLamps" role="group" aria-label="Dashboard lamps">
+<button type="button" class="lamp" id="lampCool" disabled aria-pressed="false" title="Coolant temperature"><span class="lamp-dot"></span><span class="lamp-lbl">COOL</span></button>
+<button type="button" class="lamp" id="lampOil" disabled aria-pressed="false" title="Oil temperature"><span class="lamp-dot"></span><span class="lamp-lbl">OIL</span></button>
+<button type="button" class="lamp lamp-stub" id="lampOilP" disabled aria-pressed="false" title="Oil pressure — not modeled yet" aria-label="Oil pressure, not modeled yet"><span class="lamp-dot"></span><span class="lamp-lbl">OIL P</span></button>
+<button type="button" class="lamp lamp-stub" id="lampFault" disabled aria-pressed="false" title="Fault codes — not modeled yet" aria-label="Fault codes, not modeled yet"><span class="lamp-dot"></span><span class="lamp-lbl">FAULT</span></button>
+<button type="button" class="lamp" id="lampHyb" disabled aria-pressed="false" hidden title="Hybrid drive mode"><span class="lamp-dot"></span><span class="lamp-lbl">HYB</span></button>
+<button type="button" class="lamp" id="lampBatt" disabled aria-pressed="false" title="12 V battery"><span class="lamp-dot"></span><span class="lamp-lbl">BATT</span></button>
+</div>
 </div>
 </div>
 <div class="panel" id="hybridPanel" hidden>
@@ -510,6 +518,10 @@
 </div>
 <div class="panel" id="controlsPanel">
 <h2>Engine Controls</h2>
+<div class="btn-row" id="dashPowerRow">
+<button type="button" id="btnStarter" title="Start the engine">STARTER</button>
+<button type="button" id="btnPowerOff" class="danger" title="Switch the engine off">POWER OFF</button>
+</div>
 <div class="control-group"><label for="throttle"><span class="ctl-lbl">THROTTLE</span> <span class="val" id="valThrottle">20</span> %</label><input type="range" id="throttle" min="0" max="100" step="1" value="20" aria-label="Throttle pedal position percent"></div>
 <div class="control-group"><label for="load"><span class="ctl-lbl">LOAD (DYNO BRAKE)</span> <span class="val" id="valLoad">20</span> %</label><input type="range" id="load" min="0" max="100" step="1" value="20" aria-label="Applied dyno brake load percent"></div>
 <div class="control-group" id="evSocGroup" hidden><label for="evSocSet"><span class="ctl-lbl">BATTERY CHARGE</span> <span class="val" id="valEvSoc">90</span> %</label><input type="range" id="evSocSet" min="0" max="100" step="1" value="90" aria-label="Battery state of charge percent"></div>
