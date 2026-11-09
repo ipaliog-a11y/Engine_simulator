@@ -194,7 +194,7 @@ const INTERCOOLER={
   // pipe: metres of charge ducting compressor -> throttle; core: litres inside the intercooler. A
   // top-mount small core sits close; a front-mount large core runs the ducting the length of the bay.
   // w, h, d: the core's face (width along the charge's path, height) and depth in mm, fpi its cooling fins per inch
-  // (build 254, the intercooler as a part): a top-mount's 250x150x80 and a front-mount's 600x250x75, about the cores
+  // (build 255, the intercooler as a part): a top-mount's 250x150x80 and a front-mount's 600x250x75, about the cores
   // sold for such cars (probable). Each holds `core` of charge at IC_SIGMA of its gross volume (src/js/parts.js).
   none: {label:'NONE',      eff:0.00,pipe:1.0,core:0.0},
   small:{label:'SMALL CORE',eff:0.62,pipe:1.5,core:1.2,w:250,h:150,d:80,fpi:14},

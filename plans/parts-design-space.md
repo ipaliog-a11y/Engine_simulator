@@ -21,7 +21,7 @@ Each new part is two builds:
 | 1 | **Camshaft** (build 249) | duration, lift, lobe separation, lobe profile, phaser range | intake stroke (IVC), overlap, trapping, valve float, friction | `CAM.ampMul`, `idleRpm` (idle), `loWiden` |
 | 2 | Cylinder head & springs | valve diameter, port flow, spring seat load and rate | Mach index, valve mass and float, friction | `THROAT_RATIO`/`dOverB` per pack, the 3 spring steps |
 | 3 | **Chassis numbers** (build 250) | CG height, wheelbase, track, weight split, ballast | load transfer, roll, diff traction | class-median CG/track on real cars (sourced per car) |
-| 4 | **Intercooler** (build 254) | core face, depth, fins, pipe length | effectiveness (NTU), charge volume, **pressure drop (new)** | `INTERCOOLER.eff` |
+| 4 | **Intercooler** (build 255) | core face, depth, fins, pipe length | effectiveness (NTU), charge volume, **pressure drop (new)** | `INTERCOOLER.eff` |
 | 5 | Turbocharger | compressor and turbine wheels, A/R, wastegate | compressor map, back-pressure, spool | `TURB_WHEEL`, `TURBO_CONFIG` multipliers |
 | 6 | Wings, brake bias | span, chord, angle; front share | lift and induced drag; lock-up order | `AERO_FRONT/REAR` tables |
 | 7 | Plenum & throttle, flywheel, wheels, tyre pressure | volume, bore, mass, material, pressure | Helmholtz, `MAP_K`, inertia, unsprung mass, contact patch | `MAP_K`, `UNSPRUNG_SHARE` |

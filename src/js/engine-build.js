@@ -349,7 +349,7 @@ function deriveCharge(){
   engine.maxBoost=engine.intake==='na'?0:engine.boost_bar;
   engine.mapMax=engine.intake==='na'?1.05:1.0+engine.maxBoost;
   // Intercooler core: charge-heat residual (feeds effIAT) and its spool-lag penalty.
-  // A designed core (build 254) brings its own pipe, volume and effectiveness (icPartNtu in src/js/parts.js).
+  // A designed core (build 255) brings its own pipe, volume and effectiveness (icPartNtu in src/js/parts.js).
   const ic=INTERCOOLER[engine.intercooler]||INTERCOOLER.large,P=engine.icPart;
   // the flow the core's effectiveness is quoted at: the engine's peak revs at the 1 bar the frames are characterised at
   // (TURBO_PR_REF). Not at this build's boost: the core is hardware, and more boost runs it past its rating.

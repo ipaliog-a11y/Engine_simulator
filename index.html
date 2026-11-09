@@ -536,6 +536,22 @@ body.showcase-open{overflow:hidden}
 #livePanel .stat{padding:3px 5px}
 #livePanel .stat .value{margin-top:1px}
 #livePanel.folded .gauge-row{margin-bottom:0}
+/* Dashboard telltales on LIVE/DYNO (build 254): small lamps, not gauge tiles; stubs stay dim */
+.dash-lamps{display:flex;flex-wrap:wrap;gap:4px;margin:4px 0 2px}
+.lamp{display:inline-flex;align-items:center;gap:4px;padding:3px 5px;min-width:0;font-family:'Press Start 2P',monospace;font-size:6px;line-height:1.2;color:#555;background:#0a0a10;border:2px solid #2a2a3a;box-shadow:none;cursor:default;opacity:1}
+.lamp:hover,.lamp:active{background:#0a0a10;color:#555;box-shadow:none;transform:none}
+.lamp .lamp-dot{width:8px;height:8px;flex:0 0 auto;background:#1a1a22;border:1px solid #333}
+.lamp .lamp-lbl{letter-spacing:0}
+.lamp.on{color:#00ff88;border-color:#005533}
+.lamp.on .lamp-dot{background:#00ff88;border-color:#00aa66}
+.lamp.warn{color:#ffaa00;border-color:#664400}
+.lamp.warn .lamp-dot{background:#ffaa00;border-color:#aa7700}
+.lamp.danger{color:#ff4444;border-color:#662222}
+.lamp.danger .lamp-dot{background:#ff4444;border-color:#aa3333}
+.lamp.lamp-stub{color:#333;border-color:#222;opacity:0.55}
+.lamp.lamp-stub .lamp-dot{background:#14141a;border-color:#222}
+#livePanel.folded .dash-lamps{margin:2px 0 0}
+#dashPowerRow{margin-top:0;margin-bottom:8px}
 .fold-btn{font-size:9px;line-height:1;padding:2px 7px;min-width:0}
 /* DYNO's MORE menu: the buttons below RESET, dropped down under MORE (a button that opens a panel of buttons, not a select) */
 .more-wrap{position:relative}
@@ -727,7 +743,7 @@ body.showcase-open{overflow:hidden}
 </div>
 <div class="container">
 <header>
-<h1>PIXEL ENGINE SIM v0.7 build 254</h1>
+<h1>PIXEL ENGINE SIM v0.7 build 255</h1>
 <div class="subtitle" id="subtitle">ENGINE DESIGNER • BUILD IT, THEN DRIVE IT</div>
 </header>
 <div class="build-strip" id="buildStrip">
@@ -1066,7 +1082,14 @@ the battery → low voltage → weak spark.<br>
 <b>AFR</b> — air-fuel ratio. Petrol: peak power near λ0.86 (rich), best economy near λ1.1 (lean).
 Diesel: full fuel at the smoke limit, λ1.2; leaner is less torque but less fuel per kWh.<br>
 <b>IAT / COOLANT / OIL</b> — charge &amp; engine temps (auto in AUTO THERMAL mode).<br>
-<b>NITROUS</b> — if fitted, sprays at wide-open throttle from a bottle that depletes.
+<b>NITROUS</b> — if fitted, sprays at wide-open throttle from a bottle that depletes.<br>
+<b>Dashboard lamps</b> — under LIVE OUTPUT: <b>COOL</b> and <b>OIL</b> light when coolant or oil
+temp is out of range, <b>BATT</b> when the 12&nbsp;V side is low, and on a hybrid <b>HYB</b> shows the
+drive mode (and warns when the engine is off). <b>OIL P</b> (oil pressure) and <b>FAULT</b> (codes)
+are placeholders — those systems are not modeled yet, so the lamps stay dim.<br>
+<b>STARTER · POWER OFF</b> — on a hybrid they start and stop the engine (the same <i>engOn</i> the
+drive mode uses). On a plain ICE they flash that start-stop is not modeled yet; on a pure EV they
+are disabled (there is no engine).
 </div>
 <div class="guide-body" data-gk="opButtons">
 <b>PEAK TORQUE · MAX POWER · ECO</b> — three buttons that put the engine you built on a real
@@ -3604,6 +3627,14 @@ Most other tests check behaviour that is true of real cars: a bigger turbo spool
 <div class="stat" id="statAmps" style="display:none"><span class="label">PACK CURRENT</span><div class="value">0</div><span class="unit">A</span></div>
 <div class="stat" id="statLimit" style="display:none"><span class="label">POWER LIMIT</span><div class="value">NONE</div><span class="unit"></span></div>
 </div>
+<div class="dash-lamps" id="dashLamps" role="group" aria-label="Dashboard lamps">
+<button type="button" class="lamp" id="lampCool" disabled aria-pressed="false" title="Coolant temperature"><span class="lamp-dot"></span><span class="lamp-lbl">COOL</span></button>
+<button type="button" class="lamp" id="lampOil" disabled aria-pressed="false" title="Oil temperature"><span class="lamp-dot"></span><span class="lamp-lbl">OIL</span></button>
+<button type="button" class="lamp lamp-stub" id="lampOilP" disabled aria-pressed="false" title="Oil pressure — not modeled yet" aria-label="Oil pressure, not modeled yet"><span class="lamp-dot"></span><span class="lamp-lbl">OIL P</span></button>
+<button type="button" class="lamp lamp-stub" id="lampFault" disabled aria-pressed="false" title="Fault codes — not modeled yet" aria-label="Fault codes, not modeled yet"><span class="lamp-dot"></span><span class="lamp-lbl">FAULT</span></button>
+<button type="button" class="lamp" id="lampHyb" disabled aria-pressed="false" hidden title="Hybrid drive mode"><span class="lamp-dot"></span><span class="lamp-lbl">HYB</span></button>
+<button type="button" class="lamp" id="lampBatt" disabled aria-pressed="false" title="12 V battery"><span class="lamp-dot"></span><span class="lamp-lbl">BATT</span></button>
+</div>
 </div>
 </div>
 <div class="panel" id="hybridPanel" hidden>
@@ -3620,6 +3651,10 @@ Most other tests check behaviour that is true of real cars: a bigger turbo spool
 </div>
 <div class="panel" id="controlsPanel">
 <h2>Engine Controls</h2>
+<div class="btn-row" id="dashPowerRow">
+<button type="button" id="btnStarter" title="Start the engine">STARTER</button>
+<button type="button" id="btnPowerOff" class="danger" title="Switch the engine off">POWER OFF</button>
+</div>
 <div class="control-group"><label for="throttle"><span class="ctl-lbl">THROTTLE</span> <span class="val" id="valThrottle">20</span> %</label><input type="range" id="throttle" min="0" max="100" step="1" value="20" aria-label="Throttle pedal position percent"></div>
 <div class="control-group"><label for="load"><span class="ctl-lbl">LOAD (DYNO BRAKE)</span> <span class="val" id="valLoad">20</span> %</label><input type="range" id="load" min="0" max="100" step="1" value="20" aria-label="Applied dyno brake load percent"></div>
 <div class="control-group" id="evSocGroup" hidden><label for="evSocSet"><span class="ctl-lbl">BATTERY CHARGE</span> <span class="val" id="valEvSoc">90</span> %</label><input type="range" id="evSocSet" min="0" max="100" step="1" value="90" aria-label="Battery state of charge percent"></div>
@@ -7818,7 +7853,7 @@ const INTERCOOLER={
   // pipe: metres of charge ducting compressor -> throttle; core: litres inside the intercooler. A
   // top-mount small core sits close; a front-mount large core runs the ducting the length of the bay.
   // w, h, d: the core's face (width along the charge's path, height) and depth in mm, fpi its cooling fins per inch
-  // (build 254, the intercooler as a part): a top-mount's 250x150x80 and a front-mount's 600x250x75, about the cores
+  // (build 255, the intercooler as a part): a top-mount's 250x150x80 and a front-mount's 600x250x75, about the cores
   // sold for such cars (probable). Each holds `core` of charge at IC_SIGMA of its gross volume (src/js/parts.js).
   none: {label:'NONE',      eff:0.00,pipe:1.0,core:0.0},
   small:{label:'SMALL CORE',eff:0.62,pipe:1.5,core:1.2,w:250,h:150,d:80,fpi:14},
@@ -9179,7 +9214,7 @@ function deriveCharge(){
   engine.maxBoost=engine.intake==='na'?0:engine.boost_bar;
   engine.mapMax=engine.intake==='na'?1.05:1.0+engine.maxBoost;
   // Intercooler core: charge-heat residual (feeds effIAT) and its spool-lag penalty.
-  // A designed core (build 254) brings its own pipe, volume and effectiveness (icPartNtu in src/js/parts.js).
+  // A designed core (build 255) brings its own pipe, volume and effectiveness (icPartNtu in src/js/parts.js).
   const ic=INTERCOOLER[engine.intercooler]||INTERCOOLER.large,P=engine.icPart;
   // the flow the core's effectiveness is quoted at: the engine's peak revs at the 1 bar the frames are characterised at
   // (TURBO_PR_REF). Not at this build's boost: the core is hardware, and more boost runs it past its rating.
@@ -20253,9 +20288,45 @@ function drawDyno(){
     dynoPulls.forEach((pl,i)=>{ctx.fillStyle=pl.color;ctx.fillText('— '+pl.label,gX+4+i*132,iy+41);});
   }else{ctx.fillStyle='#667';ctx.fillText(tr('LOG PULL to snapshot & overlay a curve for comparison'),gX+4,iy+41);}
 }
+// Dashboard telltales (build 254): thresholds match the status line / canvas gauge bars. Oil pressure and fault
+// codes are placeholders until those systems are modeled; hybrid mode only for a hybrid; ICE-only lamps hide on EV.
+function updateDashLamps(){
+  const g=id=>document.getElementById(id),row=g('dashLamps');if(!row)return;
+  const ev=isElectric(),hy=isHybrid(),set=(id,cls,lbl,title)=>{
+    const el=g(id);if(!el)return;
+    const stub=el.classList.contains('lamp-stub');
+    el.className='lamp'+(stub?' lamp-stub':'')+(cls?' '+cls:'');
+    el.setAttribute('aria-pressed',cls==='warn'||cls==='danger'||cls==='on'?'true':'false');
+    if(lbl!=null){const L=el.querySelector('.lamp-lbl');if(L)L.textContent=lbl;}
+    if(title!=null)el.title=title;
+  };
+  // ICE temp lamps: hide on a pure EV (no coolant/oil loop on the bench)
+  ['lampCool','lampOil','lampOilP'].forEach(id=>{const el=g(id);if(el)el.hidden=ev;});
+  if(!ev){
+    set('lampCool',state.coolant>115?'danger':state.coolant>108?'warn':'');
+    set('lampOil',state.oil>132?'danger':state.oil<55?'warn':'');
+    set('lampOilP','');   // stub: never lights
+  }
+  set('lampFault','');   // stub: never lights
+  const hyEl=g('lampHyb');
+  if(hyEl){
+    hyEl.hidden=!hy;
+    if(hy){
+      const H=hybBenchState(),mode=H.mode||'auto',lab=tr((HYB_DRIVE[mode]||HYB_DRIVE.auto).label);
+      set('lampHyb',H.engOn?'on':'warn',lab,tr('DRIVE MODE')+' • '+lab+(H.engOn?'':' • '+tr('ENGINE OFF')));
+    }
+  }
+  // 12 V side: ICE/hybrid systemVoltage; EV uses the bus readout but keep BATT as pack-low warn
+  if(ev)set('lampBatt',state.soc<0.2?'danger':state.soc<0.35?'warn':'');
+  else set('lampBatt',state.systemVoltage<11.6?'danger':state.batterySOC<0.35?'warn':'');
+  // Starter / Power Off: EV has no combustion engine to start
+  const st=g('btnStarter'),po=g('btnPowerOff');
+  if(st){st.disabled=ev;st.title=ev?tr('NO ENGINE — ELECTRIC DRIVE'):tr('Start the engine');}
+  if(po){po.disabled=ev;po.title=ev?tr('NO ENGINE — ELECTRIC DRIVE'):tr('Switch the engine off');}
+}
 function updateUI(){
   updateHybridPanel();   // build 190: shown for a hybrid, hidden otherwise
-  if(isElectric())return updateMotorUI();
+  if(isElectric()){updateMotorUI();updateDashLamps();return;}
   if(vizMode==='design')updateFuelMapMarker();
   document.getElementById('valThrottle').textContent=Math.round(state.throttle*100);
   document.getElementById('valLoad').textContent=Math.round(state.load*100);
@@ -20298,6 +20369,7 @@ function updateUI(){
   if(vizMode==='design')legend.innerHTML=tr('Bore/stroke set displacement. Octane+compression+boost+ignition feed the knock model.')+'<br>'+tr('Cooling (radiator/fan/oil cooler/thermostat) sets running temps in AUTO THERMAL mode.');
   else if(vizMode==='engine')legend.innerHTML=tr('THROTTLE makes power; LOAD (dyno brake) sets the hold RPM — more load = lower RPM, zero = free-rev to limiter.')+'<br>'+tr('Lift off at speed → engine braking + fuel cut. Detonation/overheat/lean-boost/valve float wear the engine.');
   else legend.innerHTML=tr('Dyno shows full power & torque curves to redline.')+'<br>'+tr('Green line = current RPM. Peaks marked with dots.');
+  updateDashLamps();
 }
 
 function setTab(mode){
@@ -20369,7 +20441,7 @@ function setTab(mode){
 //   separation     the lobe separation angle: with the duration it sets the overlap and the intake's closing;
 //   lobe profile   how hard the nose is ground (accel, against simple harmonic motion): valve float;
 //   phaser range   how far a VVT phaser may advance it (45 degrees; an Atkinson cam's 15).
-// The INTERCOOLER (build 254) is a core and its pipes, read by the charge path (deriveCharge, icEffAt):
+// The INTERCOOLER (build 255) is a core and its pipes, read by the charge path (deriveCharge, icEffAt):
 //   face, depth    the core's width (the charge's path), height and depth, mm; with IC_SIGMA they set the charge
 //                  volume to fill (spool) and the charge side's flow area;
 //   fins           the cooling side's fins per inch: its surface;
@@ -20478,7 +20550,7 @@ function deriveFilter(){
 // A filter, as the factory class the rest of the app reads (sprites, sound, cost): by its housing.
 const filterClass=p=>({none:'none',open:'perf',airbox:'stock'})[p.housing]||'stock';
 
-// ---- the intercooler (build 254) ----
+// ---- the intercooler (build 255) ----
 // IC_SIGMA: the share of a bar-and-plate core's gross volume the charge flows through (charge layers about half the
 // stack, their internal fins taking ~15% of that; probable), so also the charge side's free-flow share of its h x d end.
 const IC_SIGMA=0.4;
@@ -25523,6 +25595,25 @@ function bindControls(){
   document.getElementById('btnMaxPower').addEventListener('click',()=>applyOperatingPoint('power'));
   document.getElementById('btnEco').addEventListener('click',()=>applyOperatingPoint('eco'));
   document.getElementById('btnReset').addEventListener('click',()=>{setAutoThermal(false);state.engineHealth=1.0;state.blown=false;state.wearCause='';state.coolant=90;state.oil=100;state.batterySOC=1.0;applyPreset({throttle:0.10,load:0.20,afr:14.7,iat:25,coolant:90,oil:100})});
+  // Starter / Power Off (build 254): hybrid reuses engOn; ICE start-stop is not modeled yet; EV has no engine.
+  document.getElementById('btnStarter').addEventListener('click',()=>{
+    if(isElectric()){flash(tr('NO ENGINE — ELECTRIC DRIVE'),'warn');return;}
+    if(isHybrid()){
+      const H=hybBenchState();
+      if(H.engOn){flash(tr('ENGINE ALREADY ON'));return;}
+      H.engOn=true;H.dwell=0;flash(tr('STARTER')+' • '+tr('ENGINE ON'));return;
+    }
+    flash(tr('STARTER — not yet (ICE start-stop not modeled)'),'warn');
+  });
+  document.getElementById('btnPowerOff').addEventListener('click',()=>{
+    if(isElectric()){flash(tr('NO ENGINE — ELECTRIC DRIVE'),'warn');return;}
+    if(isHybrid()){
+      const H=hybBenchState();
+      if(!H.engOn){flash(tr('ENGINE ALREADY OFF'));return;}
+      H.engOn=false;H.dwell=0;flash(tr('POWER OFF')+' • '+tr('ENGINE OFF'));return;
+    }
+    flash(tr('POWER OFF — not yet (ICE start-stop not modeled)'),'warn');
+  });
   document.getElementById('btnAutoThermal').addEventListener('click',()=>setAutoThermal(!autoThermal));
   document.getElementById('btnWear').addEventListener('click',()=>{
     wearEnabled=!wearEnabled;

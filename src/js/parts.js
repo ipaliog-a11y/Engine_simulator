@@ -24,7 +24,7 @@
 //   separation     the lobe separation angle: with the duration it sets the overlap and the intake's closing;
 //   lobe profile   how hard the nose is ground (accel, against simple harmonic motion): valve float;
 //   phaser range   how far a VVT phaser may advance it (45 degrees; an Atkinson cam's 15).
-// The INTERCOOLER (build 254) is a core and its pipes, read by the charge path (deriveCharge, icEffAt):
+// The INTERCOOLER (build 255) is a core and its pipes, read by the charge path (deriveCharge, icEffAt):
 //   face, depth    the core's width (the charge's path), height and depth, mm; with IC_SIGMA they set the charge
 //                  volume to fill (spool) and the charge side's flow area;
 //   fins           the cooling side's fins per inch: its surface;
@@ -133,7 +133,7 @@ function deriveFilter(){
 // A filter, as the factory class the rest of the app reads (sprites, sound, cost): by its housing.
 const filterClass=p=>({none:'none',open:'perf',airbox:'stock'})[p.housing]||'stock';
 
-// ---- the intercooler (build 254) ----
+// ---- the intercooler (build 255) ----
 // IC_SIGMA: the share of a bar-and-plate core's gross volume the charge flows through (charge layers about half the
 // stack, their internal fins taking ~15% of that; probable), so also the charge side's free-flow share of its h x d end.
 const IC_SIGMA=0.4;

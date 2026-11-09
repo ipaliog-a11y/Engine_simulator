@@ -524,6 +524,22 @@ body.showcase-open{overflow:hidden}
 #livePanel .stat{padding:3px 5px}
 #livePanel .stat .value{margin-top:1px}
 #livePanel.folded .gauge-row{margin-bottom:0}
+/* Dashboard telltales on LIVE/DYNO (build 254): small lamps, not gauge tiles; stubs stay dim */
+.dash-lamps{display:flex;flex-wrap:wrap;gap:4px;margin:4px 0 2px}
+.lamp{display:inline-flex;align-items:center;gap:4px;padding:3px 5px;min-width:0;font-family:'Press Start 2P',monospace;font-size:6px;line-height:1.2;color:#555;background:#0a0a10;border:2px solid #2a2a3a;box-shadow:none;cursor:default;opacity:1}
+.lamp:hover,.lamp:active{background:#0a0a10;color:#555;box-shadow:none;transform:none}
+.lamp .lamp-dot{width:8px;height:8px;flex:0 0 auto;background:#1a1a22;border:1px solid #333}
+.lamp .lamp-lbl{letter-spacing:0}
+.lamp.on{color:#00ff88;border-color:#005533}
+.lamp.on .lamp-dot{background:#00ff88;border-color:#00aa66}
+.lamp.warn{color:#ffaa00;border-color:#664400}
+.lamp.warn .lamp-dot{background:#ffaa00;border-color:#aa7700}
+.lamp.danger{color:#ff4444;border-color:#662222}
+.lamp.danger .lamp-dot{background:#ff4444;border-color:#aa3333}
+.lamp.lamp-stub{color:#333;border-color:#222;opacity:0.55}
+.lamp.lamp-stub .lamp-dot{background:#14141a;border-color:#222}
+#livePanel.folded .dash-lamps{margin:2px 0 0}
+#dashPowerRow{margin-top:0;margin-bottom:8px}
 .fold-btn{font-size:9px;line-height:1;padding:2px 7px;min-width:0}
 /* DYNO's MORE menu: the buttons below RESET, dropped down under MORE (a button that opens a panel of buttons, not a select) */
 .more-wrap{position:relative}
