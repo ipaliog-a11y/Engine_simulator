@@ -345,19 +345,27 @@ function updateUI(){
   healthEl.querySelector('.value').textContent=state.blown?tr('DEAD'):hp;
   healthEl.className='stat'+(state.blown||hp<30?' danger':(hp<70?' warning':''));
   // Exhaust analyser (build 257): CLEAN / OK / DIRTY from emRating; rates in g/s.
+  // Per-species tone (build 258): same g/kg (and CO2 g/kWh) thresholds the rating uses.
   const emEl=document.getElementById('statEmit');
   if(emEl){
     const r=state.emRating,lab=r>=70?'CLEAN':r>=40?'OK':'DIRTY';
     emEl.querySelector('.value').textContent=tr(lab);
     emEl.className='stat'+(r<40?' danger':r<70?' warning':'');
     const fmt=x=>x>=10?x.toFixed(1):x>=1?x.toFixed(2):x.toFixed(3);
-    document.querySelector('#statCO2 .value').textContent=fmt(state.emCO2||0);
-    document.querySelector('#statCO .value').textContent=fmt(state.emCO||0);
-    document.querySelector('#statHC .value').textContent=fmt(state.emHC||0);
-    document.querySelector('#statNOx .value').textContent=fmt(state.emNOx||0);
+    const fkg=Math.max(1e-9,(state.fuelFlowLph/3600)*(engine.fuelDensity||0.75));
+    const tone=(ei,warn,bad)=>ei>=bad?' danger':ei>=warn?' warning':'';
+    const setEm=(id,val,cls)=>{const el=document.getElementById(id);if(!el)return;
+      el.querySelector('.value').textContent=fmt(val);el.className='stat'+cls;};
+    // CO2: brake-specific g/kWh when making power (≈ idle/cruise SI ~700–900); else quiet.
+    const co2kwh=state.powerKW>0.5?(state.emCO2||0)*3600/state.powerKW:0;
+    setEm('statCO2',state.emCO2||0,co2kwh?tone(co2kwh,900,1200):'');
+    // Pollutants: g/kg fuel — denoms match computeEmissions' emRating (40 / 25 / 20 / 8).
+    setEm('statCO',state.emCO||0,tone((state.emCO||0)/fkg,16,40));
+    setEm('statHC',state.emHC||0,tone((state.emHC||0)/fkg,10,25));
+    setEm('statNOx',state.emNOx||0,tone((state.emNOx||0)/fkg,8,20));
     const pmEl=document.getElementById('statPM');
-    if(engine.ci){pmEl.querySelector('.value').textContent=fmt(state.emPM||0);pmEl.style.visibility='';}
-    else{pmEl.querySelector('.value').textContent='—';pmEl.style.visibility='';}
+    if(engine.ci){setEm('statPM',state.emPM||0,tone((state.emPM||0)/fkg,3.2,8));}
+    else if(pmEl){pmEl.querySelector('.value').textContent='—';pmEl.className='stat';}
   }
   const status=document.getElementById('status'),legend=document.getElementById('legend');
   if(performance.now()<statusFlashUntil){/* keep transient flash message */}

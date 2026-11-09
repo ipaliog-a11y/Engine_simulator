@@ -743,7 +743,7 @@ body.showcase-open{overflow:hidden}
 </div>
 <div class="container">
 <header>
-<h1>PIXEL ENGINE SIM v0.7 build 257</h1>
+<h1>PIXEL ENGINE SIM v0.7 build 258</h1>
 <div class="subtitle" id="subtitle">ENGINE DESIGNER • BUILD IT, THEN DRIVE IT</div>
 </header>
 <div class="build-strip" id="buildStrip">
@@ -2151,7 +2151,7 @@ A <b>three-way catalytic converter</b> cleans all three at once, but only in a n
 </div>
 <div class="gtier gt-game"><div class="gtier-h">LV2 · IN THE GAME</div>
 <div class="guide-body" data-gk="emissionsGame">
-The LIVE panel's <b>EMISSIONS</b> analyser shows CLEAN / OK / DIRTY plus tailpipe <b>CO₂</b>, <b>CO</b>, <b>HC</b>, <b>NOx</b> and (diesel) <b>PM</b> in g/s from the design, the tune and the live operating point. Choose the <b>CATALYTIC CONV.</b>: stock (97% conversion), sport (85%) or none. The scorecard's <b>emit</b> score still rates a stoich cruise and part load.
+The LIVE panel's <b>EMISSIONS</b> analyser shows CLEAN / OK / DIRTY plus tailpipe <b>CO₂</b>, <b>CO</b>, <b>HC</b>, <b>NOx</b> and (diesel) <b>PM</b> in g/s from the design, the tune and the live operating point. Each species tile turns <b>amber</b> then <b>red</b> as that pollutant (g per kg of fuel) climbs the same scale the emit score uses; CO₂ uses g/kWh when you are making power. Choose the <b>CATALYTIC CONV.</b>: stock (97% conversion), sport (85%) or none. The scorecard's <b>emit</b> score still rates a stoich cruise and part load.
 </div>
 </div>
 <div class="gtier gt-phys"><div class="gtier-h">LV3 · THE PHYSICS</div>
@@ -3630,13 +3630,13 @@ Most other tests check behaviour that is true of real cars: a bigger turbo spool
 <div id="liveEmRows">
 <div class="gauge-row">
 <div class="stat" id="statEmit" title="Exhaust analyser cleanliness"><span class="label">EMISSIONS</span><div class="value">CLEAN</div><span class="unit"></span></div>
-<div class="stat" id="statCO2" title="Tailpipe carbon dioxide"><span class="label">CO2</span><div class="value">0</div><span class="unit">g/s</span></div>
-<div class="stat" id="statCO" title="Tailpipe carbon monoxide"><span class="label">CO</span><div class="value">0</div><span class="unit">g/s</span></div>
+<div class="stat" id="statCO2" title="Tailpipe CO2 — amber/red by g/kWh when making power"><span class="label">CO2</span><div class="value">0</div><span class="unit">g/s</span></div>
+<div class="stat" id="statCO" title="Tailpipe CO — amber/red by g per kg of fuel"><span class="label">CO</span><div class="value">0</div><span class="unit">g/s</span></div>
 </div>
 <div class="gauge-row">
-<div class="stat" id="statHC" title="Tailpipe unburned hydrocarbons"><span class="label">HC</span><div class="value">0</div><span class="unit">g/s</span></div>
-<div class="stat" id="statNOx" title="Tailpipe nitrogen oxides as NO"><span class="label">NOx</span><div class="value">0</div><span class="unit">g/s</span></div>
-<div class="stat" id="statPM" title="Tailpipe particulate matter (diesel)"><span class="label">PM</span><div class="value">—</div><span class="unit">g/s</span></div>
+<div class="stat" id="statHC" title="Tailpipe HC — amber/red by g per kg of fuel"><span class="label">HC</span><div class="value">0</div><span class="unit">g/s</span></div>
+<div class="stat" id="statNOx" title="Tailpipe NOx — amber/red by g per kg of fuel"><span class="label">NOx</span><div class="value">0</div><span class="unit">g/s</span></div>
+<div class="stat" id="statPM" title="Tailpipe PM — amber/red by g per kg of fuel (diesel)"><span class="label">PM</span><div class="value">—</div><span class="unit">g/s</span></div>
 </div>
 </div>
 <div class="dash-lamps" id="dashLamps" role="group" aria-label="Dashboard lamps">
@@ -20438,19 +20438,27 @@ function updateUI(){
   healthEl.querySelector('.value').textContent=state.blown?tr('DEAD'):hp;
   healthEl.className='stat'+(state.blown||hp<30?' danger':(hp<70?' warning':''));
   // Exhaust analyser (build 257): CLEAN / OK / DIRTY from emRating; rates in g/s.
+  // Per-species tone (build 258): same g/kg (and CO2 g/kWh) thresholds the rating uses.
   const emEl=document.getElementById('statEmit');
   if(emEl){
     const r=state.emRating,lab=r>=70?'CLEAN':r>=40?'OK':'DIRTY';
     emEl.querySelector('.value').textContent=tr(lab);
     emEl.className='stat'+(r<40?' danger':r<70?' warning':'');
     const fmt=x=>x>=10?x.toFixed(1):x>=1?x.toFixed(2):x.toFixed(3);
-    document.querySelector('#statCO2 .value').textContent=fmt(state.emCO2||0);
-    document.querySelector('#statCO .value').textContent=fmt(state.emCO||0);
-    document.querySelector('#statHC .value').textContent=fmt(state.emHC||0);
-    document.querySelector('#statNOx .value').textContent=fmt(state.emNOx||0);
+    const fkg=Math.max(1e-9,(state.fuelFlowLph/3600)*(engine.fuelDensity||0.75));
+    const tone=(ei,warn,bad)=>ei>=bad?' danger':ei>=warn?' warning':'';
+    const setEm=(id,val,cls)=>{const el=document.getElementById(id);if(!el)return;
+      el.querySelector('.value').textContent=fmt(val);el.className='stat'+cls;};
+    // CO2: brake-specific g/kWh when making power (≈ idle/cruise SI ~700–900); else quiet.
+    const co2kwh=state.powerKW>0.5?(state.emCO2||0)*3600/state.powerKW:0;
+    setEm('statCO2',state.emCO2||0,co2kwh?tone(co2kwh,900,1200):'');
+    // Pollutants: g/kg fuel — denoms match computeEmissions' emRating (40 / 25 / 20 / 8).
+    setEm('statCO',state.emCO||0,tone((state.emCO||0)/fkg,16,40));
+    setEm('statHC',state.emHC||0,tone((state.emHC||0)/fkg,10,25));
+    setEm('statNOx',state.emNOx||0,tone((state.emNOx||0)/fkg,8,20));
     const pmEl=document.getElementById('statPM');
-    if(engine.ci){pmEl.querySelector('.value').textContent=fmt(state.emPM||0);pmEl.style.visibility='';}
-    else{pmEl.querySelector('.value').textContent='—';pmEl.style.visibility='';}
+    if(engine.ci){setEm('statPM',state.emPM||0,tone((state.emPM||0)/fkg,3.2,8));}
+    else if(pmEl){pmEl.querySelector('.value').textContent='—';pmEl.className='stat';}
   }
   const status=document.getElementById('status'),legend=document.getElementById('legend');
   if(performance.now()<statusFlashUntil){/* keep transient flash message */}
