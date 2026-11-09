@@ -196,9 +196,10 @@ const INTERCOOLER={
   // w, h, d: the core's face (width along the charge's path, height) and depth in mm, fpi its cooling fins per inch
   // (build 255, the intercooler as a part): a top-mount's 250x150x80 and a front-mount's 600x250x75, about the cores
   // sold for such cars (probable). Each holds `core` of charge at IC_SIGMA of its gross volume (src/js/parts.js).
-  none: {label:'NONE',      eff:0.00,pipe:1.0,core:0.0},
-  small:{label:'SMALL CORE',eff:0.62,pipe:1.5,core:1.2,w:250,h:150,d:80,fpi:14},
-  large:{label:'LARGE CORE',eff:0.82,pipe:3.0,core:4.5,w:600,h:250,d:75,fpi:14}
+  // The quoted effectiveness each carried (0.62, 0.82) is retired (build 256): it comes from the core (icEps).
+  none: {label:'NONE',      pipe:1.0,core:0.0},
+  small:{label:'SMALL CORE',pipe:1.5,core:1.2,w:250,h:150,d:80,fpi:14},
+  large:{label:'LARGE CORE',pipe:3.0,core:4.5,w:600,h:250,d:75,fpi:14}
 };
 // Catalytic converter: a three-way cat only cleans efficiently in a narrow window around
 // stoich. conv = peak conversion efficiency; restrict = exhaust back-pressure (a small

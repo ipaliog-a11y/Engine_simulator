@@ -530,7 +530,7 @@ function turbineThroatAt(rpm,map,T){
   const mAir=(e.dispCyl_L/1000)*e.cylinders*(rpm/60*(e.chargesPerRev||0.5))*(101325*Math.max(1,map)/(287*313));
   const u=unitsAt(rpm), mEx=mAir*1.06/u, mA=mAir/u;
   const Ut=turbineTipFor(1+boostTarget(rpm),compFlowFrac(rpm,mAir),298);
-  return vgtThroat(mEx,compPowerAt(mA,1+boostTarget(rpm),313,e.compEff),T,e.turbineArea,e.vgtShut,map,Ut).area;
+  return vgtThroat(mEx,compPowerAt(mA,1+boostTarget(rpm)+icDpBar(mAir,1+boostTarget(rpm)),313,e.compEff),T,e.turbineArea,e.vgtShut,map,Ut).area;
 }
 // ---- late intake valve closing: why a big cam guts the bottom end ----
 // This is what CAM.lowLoss was standing in for, and it is pure geometry. A cam does not close the
@@ -868,7 +868,12 @@ function shaftNetPower(shaftRpm,mAir,T3,T01,rpm){
   // in steadyBoost asks "can the shaft reach this PR", and if it only ever sees the capped value it
   // can never answer yes at the cap itself — which silently reported a frame as unable to make a
   // boost it had 40 kW of turbine power spare to make.
-  const prCap=Math.min(pr,1+boostTarget(rpm||0));
+  // The wheel delivers the manifold's pressure plus the intercooler's and the pipe's drop at this flow (build 256): the
+  // wastegate holds the MANIFOLD at target, so the compressor works to target + drop, and what it reports is the
+  // manifold's. The drop's density is taken at the manifold (at most the target).
+  const tgt=1+boostTarget(rpm||0),dp=icDpBar(mAir,Math.min(Math.max(1,pr),tgt));
+  const prCap=Math.min(pr,tgt+dp);
+  const pMan=Math.max(1,prCap-dp);   // the intake manifold, which the exhaust pulses are shaped against
   const mEx=mAir*1.06/units, mA=mAir/units;
   const Ut=Math.PI*TURB_WHEEL*e.compExd*Math.max(0,shaftRpm)/60;   // turbine tip speed
   // VGT vanes schedule against the BOOST TARGET, not against what the compressor happens to be
@@ -882,12 +887,12 @@ function shaftNetPower(shaftRpm,mAir,T3,T01,rpm){
   // while the steady solver (which does not) said it held 1.20. A wastegated frame never showed it,
   // because it always has surplus to dump.
   const t=e.vgtShut>0
-    ? vgtThroat(mEx,compPowerAt(mA,1+boostTarget(rpm||0),T01,eta)+shaftLossPower(shaftRpm)/units,T3,e.turbineArea,e.vgtShut,prCap,Ut)
-    : turbinePower(mEx,e.turbineArea,T3,prCap,0,Ut);
+    ? vgtThroat(mEx,compPowerAt(mA,tgt+dp,T01,eta)+shaftLossPower(shaftRpm)/units,T3,e.turbineArea,e.vgtShut,pMan,Ut)
+    : turbinePower(mEx,e.turbineArea,T3,pMan,0,Ut);
   const area=t.area||e.turbineArea;
   const Pt=t.P;
   const Pc=compPowerAt(mA,prCap,T01,eta);
-  return{net:Pt-Pc,pr:prCap,prRaw:pr,eta,Pt,Pc,turbArea:area};
+  return{net:Pt-Pc,pr:pMan,prRaw:pr-dp,eta,Pt,Pc,turbArea:area};
 }
 // Bearing drag — the loss that makes spool take real time. Applied only on the transient path so a
 // wastegated frame still holds its target once lit. (A housing heat-soak hook lived here with its

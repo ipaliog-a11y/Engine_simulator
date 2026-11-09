@@ -280,7 +280,8 @@ function vizCore(px,py,S,LW,x,y,w,h,hot){
 // The compressor's outlet temperature, before the intercooler gives most of the rise back (effIAT), and what
 // the charge pipe is coloured by: the isentropic rise over the compressor's efficiency at this flow.
 function compOutletT(map,rpm){
-  const PR=Math.max(1,map),t=state.iat;
+  // the compressor delivers the boost plus what the intercooler and its pipe drop (build 256)
+  const PR=Math.max(1,map)+(rpm>0?icDpBar(airFlowAt(rpm,Math.max(1,map)),map):0),t=state.iat;
   const eta=(rpm>0&&engine.intake==='turbo'&&engine.chokeFlow_kgs>0)
     ?compIslandEff(compFlowFrac(rpm,airFlowAt(rpm,PR)),PR):engine.compEff;
   return t+(t+273.15)*(Math.pow(PR,0.283)-1)/clamp(eta||0.72,0.30,0.85);

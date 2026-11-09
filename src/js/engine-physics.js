@@ -35,19 +35,10 @@ function wotMapAt(rpm){return 1.0+boostAvail(rpm);}
 function liveMap(){return state.map;}
 
 // ---- Physics (all derived from the engine spec + live state) ----
-// The intercooler's effectiveness at a charge flow (build 136). It was the core's quoted figure at every flow;
-// a heat exchanger's rises as the flow through it falls, since each kilogram meets the same surface for longer.
-// eps = 1 - exp(-NTU), NTU = UA / (m cp), the cooling air's capacity taken as large against the charge's. The
-// quoted figure (INTERCOOLER eff) is read at the engine's peak flow at 1 bar of boost, where such figures are quoted,
-// which fixes NTU there. UA is the two sides in series: the charge side's film coefficient follows the flow as m^0.8 (turbulent
-// flow in the tubes, Dittus-Boelter), the cooling side's does not depend on it, and a gas-to-gas core is designed
-// with the two sides' conductance balanced (Shah & Sekulic), so at the reference each carries half the resistance.
-function icEffAt(m){
-  const e0=engine.icEff;
-  if(!(e0>0&&e0<1)||!(m>0)||!(engine.icRefFlow>0))return e0||0;
-  const r=engine.icRefFlow/m, ntu=engine.icPart?icPartNtu(engine.icPart,r):-Math.log(1-e0)*r*2/(1+Math.pow(r,0.8));
-  return 1-Math.exp(-ntu);
-}
+// The intercooler's effectiveness at a charge flow: it rises as the flow falls, each kilogram meeting the same surface
+// for longer (build 136). Since build 256 it is the core's own, from its fins on both sides (icEps in src/js/parts.js);
+// it was the factory cores' quoted 0.62 and 0.82 at the redline flow at 1 bar, with an NTU law around it.
+function icEffAt(m){return icEps(icGeom(engine),m);}
 function effIAT(map,rpm){
   // Forced induction heats the charge; an intercooler removes most of it. High-enthalpy
   // fuels (ethanol/methanol) evaporatively cool the charge — denser air and less knock.
@@ -66,7 +57,7 @@ function effIAT(map,rpm){
     // part of why a turbo engine rolls off before its limiter. (Turbos only; a supercharger's
     // efficiency is another law, and it keeps its design value.)
     const rise=compOutletT(map,rpm)-t;
-    t+=rise*(1-(rpm>0?icEffAt(airFlowAt(rpm,PR)):(engine.icEff!=null?engine.icEff:0.82)));
+    t+=rise*(1-(rpm>0?icEffAt(airFlowAt(rpm,PR)):(engine.icEff||0)));
   }
   t-=engine.chargeCool*(engine.injector==='direct'?1.15:1.0);   // DI cools the charge slightly more
   return t;
@@ -601,7 +592,7 @@ function pumpingMEP(rpm,map){
 function pumpFrictionMEP(rpm,map,oilFrictionMult){
   let fmep=mechFrictionMEP(rpm,map)*oilFrictionMult;               // rubbing + auxiliary, derived (src/js/friction.js)
   if(engine.intake==='supercharger')
-    fmep+=0.18*(SC_TYPE[engine.scType]||SC_TYPE.roots).drag*Math.max(0,map-1.0)*(0.4+0.6*rpm/engine.redline);  // parasitic drive (by type)
+    fmep+=0.18*(SC_TYPE[engine.scType]||SC_TYPE.roots).drag*Math.max(0,map-1.0+icDpBar(airFlowAt(rpm,map),map))*(0.4+0.6*rpm/engine.redline);  // parasitic drive (by type), against the intercooler's drop too (build 256)
   fmep+=pumpingMEP(rpm,map);
   fmep+=engine.altDragMEP;                                         // alternator belt drag (baseline)
   return fmep;
