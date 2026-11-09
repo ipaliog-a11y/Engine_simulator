@@ -832,11 +832,11 @@ A designed part puts its own numbers into the equations the factory parts use; n
 <span class="geq">Δp = a·Q + b·Q²</span>
 taken off the charge as <i>VE × (1 − Δp/p<sub>0</sub>)</i>. A new factory filter reads about 3.75 kPa at full throttle, a clogged one about 6.5.<br>
 · The <b>camshaft</b> gives the integrated intake stroke its valve events: the duration and lobe separation set the overlap (duration − 2 × separation) and where the intake closes, the lift the valve's curtain, and the lift, duration and lobe profile the valve's deceleration over the nose, so where it floats on the springs the maker fitted for the factory cam (<a data-gp="valvetrain">Valvetrain</a>). With VVT the phaser advances it up to its range.<br>
-· The <b>intercooler</b> gives the charge path its volume to fill (the pipe plus the core's charge side, which slows spool) and its effectiveness, ε = 1 − e<sup>−NTU</sup>: each side's conductance grows with its surface, the charge side's also with its speed through a smaller end (<a data-gp="intercooler">Intercooler</a>). Its pressure drop is worked out from the fins inside the charge passages (Manglik &amp; Bergles) and shown.<br>
+· The <b>intercooler</b> gives the charge path its volume to fill (the pipe plus the core's charge side, which slows spool). Its effectiveness and its pressure drop, which the compressor makes up, come from its fins on both sides (<a data-gp="intercooler">Intercooler</a>).<br>
 The preview runs the whole build on a copy of the engine, at the scoring conditions, and puts everything back afterwards, so the curve of a fitted part is its preview exactly.
 </div>
 <div class="guide-limit" data-gk="partsLimit">
-Limit: a designed cam's exhaust lobe is taken as the same as its intake lobe, and its idle and the airflow estimates still take the fitted grade of the factory cam nearest in duration and separation. The silencer changes only the sound; its own back-pressure is not modelled. The intake plenum is taken as holding steady pressure, so its volume and the throttle are not part of the design. Oiled cotton's permeability is its makers' claim; paper's is measured. A designed intercooler's effectiveness is still anchored to the factory cores' quoted figures, and its pressure drop is shown but not yet taken off the boost. The catalytic converter cannot be designed yet.
+Limit: a designed cam's exhaust lobe is taken as the same as its intake lobe, and its idle and the airflow estimates still take the fitted grade of the factory cam nearest in duration and separation. The silencer changes only the sound; its own back-pressure is not modelled. The intake plenum is taken as holding steady pressure, so its volume and the throttle are not part of the design. Oiled cotton's permeability is its makers' claim; paper's is measured. An intercooler's cooling air is the same 11 m/s at any car speed. The catalytic converter cannot be designed yet.
 </div>
 </div>
 <div class="guide-see">See also: <a data-gp="airpath">The air path</a> · <a data-gp="header">Exhaust headers &amp; scavenging</a> · <a data-gp="waves">Intake runner waves</a> · <a data-gp="backpressure">Back-pressure &amp; residuals</a> · <a data-gp="induction">Induction &amp; throttle</a></div>
@@ -1054,16 +1054,16 @@ Compressing air heats it: a turbo at 1 bar of boost can send air out at 100 °C 
 </div>
 <div class="gtier gt-game"><div class="gtier-h">LV2 · IN THE GAME</div>
 <div class="guide-body" data-gk="intercoolerGame">
-<b>INTERCOOLER</b>: none, a small core or a large one. A bigger core cools better but holds more air, so the turbo takes a little longer to fill it (more lag).
+<b>INTERCOOLER</b>: none, a small core or a large one, each sized for the engine it is fitted to; or one you design on the PARTS tab. A bigger core cools better and drops less pressure, but holds more air, so the turbo takes a little longer to fill it (more lag).
 </div>
 </div>
 <div class="gtier gt-phys"><div class="gtier-h">LV3 · THE PHYSICS</div>
 <div class="guide-body" data-gk="intercoolerPhys">
 A heat exchanger is rated by its <b>effectiveness</b> ε, the share of the temperature rise it gives back:
 <span class="geq">T<sub>charge</sub> = T<sub>amb</sub> + ΔT<sub>comp</sub> · (1 − ε)</span>
-ε is not a constant. Each kilogram of charge that passes slowly meets the same metal for longer, so a core cools better at low flow. The model uses the number of transfer units (build 136):
-<span class="geq">ε = 1 − e<sup>−NTU</sup> &nbsp;&nbsp; NTU = UA / (ṁ c<sub>p</sub>)</span>
-with the cooling air's capacity large against the charge's. <i>UA</i> is the two sides in series: the charge side's film coefficient follows the flow as ṁ<sup>0.8</sup> (turbulent flow in the tubes, Dittus–Boelter), the outside does not depend on it, and the two are balanced at the reference point (Shah &amp; Sekulic). The quoted figures, 0.62 for the small core and 0.82 for the large, hold at the engine's flow at its redline at 1 bar of boost; at half that flow they rise to about 0.76 and 0.92. At the reference, the 90 K rise of 2.0 PR leaves about 34 K through the small core and 16 K through the large. The charge volume (the core holds 1.2 L small or 4.5 L large, plus 1.5 or 3 m of ducting) is what the turbo has to fill when boost rises (see <a data-gp="lag">Turbo lag</a>).
+Since build 256 ε comes from the core itself. Each side's film coefficient is a measured j-factor: the offset-strip fins inside the charge passages (Manglik &amp; Bergles) and the louvred fins the cooling air passes (Chang &amp; Wang), with 11 m/s of cooling air through the face, about a car at motorway speed. Over each side's surface, with its fins' efficiency, they give <i>UA</i>, and the cross-flow law gives ε:
+<span class="geq">ε = 1 − exp[ NTU<sup>0.22</sup>/C<sub>r</sub> · (e<sup>−C<sub>r</sub>·NTU<sup>0.78</sup></sup> − 1) ] &nbsp;&nbsp; NTU = UA / C<sub>min</sub></span>
+A core cools better at low flow, since each kilogram meets the same metal for longer. The factory SMALL core is 250 × 150 × 80 mm and the LARGE 600 × 250 × 75 mm, made taller when the engine's full flow is more than Garrett's rating for that end (its 600 hp core: 0.5 kg/s through 203 × 89 mm). The charge also loses pressure through the fins and the pipe, and the compressor makes it up: it delivers the boost <i>plus</i> the drop, so the charge leaves it hotter and the turbo works harder. The charge volume (the core's charge side plus the ducting) is what the turbo has to fill when boost rises (see <a data-gp="lag">Turbo lag</a>).
 </div>
 </div>
 <div class="guide-see">See also: <a data-gp="compmap">Compressor maps &amp; rated flow</a> · <a data-gp="knock">Compression &amp; knock</a> · <a data-gp="lag">Turbo lag</a></div>

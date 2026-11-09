@@ -29,9 +29,8 @@
 //                  volume to fill (spool) and the charge side's flow area;
 //   fins           the cooling side's fins per inch: its surface;
 //   pipe           metres of ducting, compressor to throttle, at the compressor outlet's bore.
-// Its effectiveness is the factory cores' NTU law with the two sides' conductances scaled by the core's own surfaces
-// (icPartNtu); the factory cores' quoted effectiveness is still the anchor (INTERCOOLER.eff, retired next build). Its
-// pressure drop is worked out and shown, not yet taken off the boost: taking it is the next build, for every core.
+// Its effectiveness comes from its fins on both sides (icEps), and its pressure drop is what the compressor has to make
+// up on top of the boost (icDpBar), for every core, the factory two included (build 256).
 // What the factory cams still carry as fitted grades (CAM.ampMul, loWiden, idleRpm: the airflow estimates, the idle) a
 // designed cam takes from the factory cam its duration and separation are nearest (camClass). Retiring them is the next
 // build (plans/parts-design-space.md).
@@ -62,7 +61,7 @@ const CAM_PROFILE={
 // valve; the separation from 98 to 130 degrees, about the 106-125 the factory cams span; a phaser to 60 degrees.
 const PART_LIMITS={dur:[180,320],lift_mm:[4,16],lsa:[98,130],vvt_deg:[0,60],primD_mm:[25,76],primL_mm:[200,1000],pipes:[1,2],sysD_mm:[30,110],sysL_m:[0.8,4.5],
   runnerL_mm:[40,800],runnerD_mm:[20,80],shortL_mm:[40,400],area_m2:[0.02,3],inletD_mm:[30,160],
-  w:[150,900],h:[80,400],d:[30,120],fpi:[8,30],pipe_m:[0.3,5]};
+  w:[150,900],h:[80,800],d:[30,120],fpi:[8,30],pipe_m:[0.3,5]};
 
 // ---- the air filter (build 210) ----
 // What a filter restricts is its pressure drop at the flow through it, and the charge is that much thinner (computeVE).
@@ -136,32 +135,67 @@ const filterClass=p=>({none:'none',open:'perf',airbox:'stock'})[p.housing]||'sto
 // ---- the intercooler (build 255) ----
 // IC_SIGMA: the share of a bar-and-plate core's gross volume the charge flows through (charge layers about half the
 // stack, their internal fins taking ~15% of that; probable), so also the charge side's free-flow share of its h x d end.
-const IC_SIGMA=0.4;
+const IC_SIGMA=0.4,IC_FIN={s:2.5,h:7,t:0.2,l:3.2};   // IC_FIN: the charge passages' offset-strip fins (see icDp)
 const icGrossL=p=>p.w*p.h*p.d/1e6, icCoreL=p=>icGrossL(p)*IC_SIGMA;
-// The NTU at a flow (r = the reference flow over this one): icEffAt's law, eps = 1-exp(-NTU) with the charge side's
-// film conductance going as m^0.8 and the two sides balanced in the factory core. A designed core scales each side's
-// conductance by its own surfaces against a factory core's: the charge side by its area (w h d) and its velocity at
-// a flow (h d)^-0.8, so w (h d)^0.2; the cooling side by its area times its fins, w h d fpi (the fins taken as not
-// slowing the cooling air). The anchor is the factory cores' quoted effectiveness: SMALL's below its volume, LARGE's
-// above, in between interpolated on log volume, so a factory core written as a part is that core.
-function icPartNtu(P,r){
-  const g=F=>{const gc=(P.w/F.w)*Math.pow(P.h*P.d/(F.h*F.d),0.2),ga=P.w*P.h*P.d*P.fpi/(F.w*F.h*F.d*F.fpi);
-    return -Math.log(1-F.eff)*r*2/(Math.pow(r,0.8)/gc+1/ga);};
-  const S=INTERCOOLER.small,L=INTERCOOLER.large,k=Math.log(icGrossL(P)/icGrossL(S))/Math.log(icGrossL(L)/icGrossL(S));
-  if(k<=0)return g(S);if(k>=1)return g(L);
-  return Math.exp((1-k)*Math.log(g(S))+k*Math.log(g(L)));
+// The core's effectiveness at a charge flow m (kg/s), from its dimensions (build 256; it was the factory cores' quoted
+// 0.62 and 0.82, INTERCOOLER.eff). UA is the two sides in series, each a film coefficient from a measured j-factor
+// over its surface with its fins' efficiency (aluminium, k 180 and 200 W/m K):
+//   charge side   the offset-strip fins of IC_FIN, Manglik & Bergles' j (Exp. Thermal Fluid Sci. 10, 1995); its
+//                 surface 4 V / Dh over the charge volume;
+//   cooling side  louvred fins (IC_LOUVER, a typical automotive core: probable), Chang & Wang's j (Int. J. Heat Mass
+//                 Transfer 40, 1997, Re_Lp 100-3000; a 75-80 mm core is deeper than the cores it was fitted to);
+//                 its fins 2/Fp and walls 2/Fl per unit of the cooling layers' volume;
+//   cooling air   through the face at IC_FACE_V, 11 m/s: a radiator's face velocity at freeway speed, ~25 mph (US
+//                 patent 6818254's account of measured cars; probable), the same for every car (owner's decision).
+// Cross-flow, both fluids unmixed (Incropera): eps = 1 - exp(NTU^0.22/Cr (exp(-Cr NTU^0.78) - 1)), on the smaller
+// capacity; returned as the share of the charge's own rise it gives back.
+const IC_LOUVER={Lp:1.0,th:27,Fl:8,Ll:6.4,df:0.1,Tp:16},IC_FACE_V=11,IC_PR=0.71,IC_CP=1005;
+const IC_DH=(F=>4*F.s*F.h*F.l/(2*(F.s*F.l+F.h*F.l+F.t*F.h)+F.t*F.s)/1000)({s:2.5,h:7,t:0.2,l:3.2});
+const finEff=(h,k,t,L)=>{const x=Math.sqrt(2*h/(k*t))*L;return x>0?Math.tanh(x)/x:1;};
+function icEps(P,m){
+  if(!P||!P.w||!(m>0))return 0;
+  const F=IC_FIN,L=IC_LOUVER,w=P.w/1e3,h=P.h/1e3,d=P.d/1e3,muc=2.08e-5,mua=1.84e-5,rhoa=1.18,pr=Math.pow(IC_PR,-2/3);
+  const G=m/(h*d*IC_SIGMA),Re=G*IC_DH/muc,al=F.s/F.h,de=F.t/F.l,ga=F.t/F.s;
+  const jc=0.6522*Math.pow(Re,-0.5403)*Math.pow(al,-0.1541)*Math.pow(de,0.1499)*Math.pow(ga,-0.0678)
+    *Math.pow(1+5.269e-5*Math.pow(Re,1.340)*Math.pow(al,0.504)*Math.pow(de,0.456)*Math.pow(ga,-1.055),0.1);
+  const hc=jc*G*IC_CP*pr,Ac=4*w*h*d*IC_SIGMA/IC_DH,oc=1-F.h/(F.s+F.h)*(1-finEff(hc,180,F.t/1e3,F.h/2e3));
+  const Fp=25.4/P.fpi,sa=(L.Fl/L.Tp)*(1-L.df/Fp),Vc=IC_FACE_V/sa,ReL=rhoa*Vc*L.Lp/1e3/mua;
+  const ja=Math.pow(ReL,-0.49)*Math.pow(L.th/90,0.27)*Math.pow(Fp/L.Lp,-0.14)*Math.pow(L.Fl/L.Lp,-0.29)*Math.pow(P.d/L.Lp,-0.23)
+    *Math.pow(L.Ll/L.Lp,0.68)*Math.pow(L.Tp/L.Lp,-0.28)*Math.pow(L.df/L.Lp,-0.05);
+  const ha=ja*rhoa*Vc*IC_CP*pr,Aa=w*h*d*(L.Fl/L.Tp)*(2e3/Fp+2e3/L.Fl),fa=(1/Fp)/(1/Fp+1/L.Fl);
+  const oa=1-fa*(1-finEff(ha,200,L.df/1e3,L.Fl/2e3));
+  const UA=1/(1/(oc*hc*Ac)+1/(oa*ha*Aa)),Cc=m*IC_CP,Ca=rhoa*IC_FACE_V*w*h*IC_CP,Cmin=Math.min(Cc,Ca),Cr=Cmin/Math.max(Cc,Ca),NTU=UA/Cmin;
+  return (1-Math.exp(Math.pow(NTU,0.22)/Cr*(Math.exp(-Cr*Math.pow(NTU,0.78))-1)))*Cmin/Cc;
+}
+// A factory core is sized for its engine (build 256, one rule for every car, as the factory air filter is): its listed
+// size, or taller when the engine's full flow (at the redline at full boost) is more than that size is rated to carry.
+// The rating is Garrett's: its 610 x 203 x 89 mm air-air core (703520-6010) for 600 hp, which Garrett's own airflow
+// rule (lb/min = hp x AFR x BSFC / 60, AFR 12 and BSFC 0.55 in its example) puts at 0.50 kg/s through its 203 x 89 end.
+const IC_RATED_FLUX=600*12*0.55/60*0.45359/60/(0.203*0.089);   // kg/s per m2 of the charge end
+function icFactoryGeom(e,key){
+  const F=INTERCOOLER[key];if(!F||!F.w)return null;
+  const k=airFlowAt(e.redline,e.mapMax||1)/(IC_RATED_FLUX*F.h*F.d/1e6);
+  return k>1?Object.assign({},F,{h:+(F.h*k).toFixed(1)}):F;
+}
+// The core an engine has: a designed one, or its factory core as sized for it (none for NONE).
+const icGeom=e=>e.icPart||icFactoryGeom(e,INTERCOOLER[e.intercooler]?e.intercooler:'large');
+// The drop in bar the compressor must make up at a charge flow and manifold pressure (build 256), the charge taken
+// at 313 K, the temperature airFlowAt takes it at (the circle would not close on the live charge temperature).
+function icDpBar(m,map){
+  if(!(m>0)||engine.intake==='na')return 0;
+  const d=icDp(engine,m,Math.max(1,map),313);return (d.core+d.pipe)/1e5;
 }
 const icClass=p=>icGrossL(p)<Math.sqrt(icGrossL(INTERCOOLER.small)*icGrossL(INTERCOOLER.large))?'small':'large';
 // The pressure drop through the core and its pipe at a charge flow m (kg/s), pressure pBar (absolute) and mean charge
 // temperature Tk. Core: the charge passages' offset-strip fins by Manglik & Bergles' correlation (Exp. Thermal Fluid
 // Sci. 10, 1995) on a typical bar-and-plate passage (2.5 mm pitch, 7 mm high, 0.2 mm fin, 3.2 mm strips: probable),
 // plus the tanks' contraction and expansion, Kc + Ke ~ 1.0 at sigma 0.4 (Kays & London). Pipe: Blasius, smooth tube.
-const IC_FIN={s:2.5,h:7,t:0.2,l:3.2},IC_KTANK=1.0;
+const IC_KTANK=1.0;
 function icDp(e,m,pBar,Tk){
-  const G0=e.icPart||INTERCOOLER[e.intercooler]||{},rho=pBar*1e5/(287*Tk),mu=1.85e-5*Math.pow(Tk/300,0.7);
+  const G0=icGeom(e)||{},rho=pBar*1e5/(287*Tk),mu=1.85e-5*Math.pow(Tk/300,0.7);
   let core=0;
   if(G0.w){
-    const F=IC_FIN,Dh=4*F.s*F.h*F.l/(2*(F.s*F.l+F.h*F.l+F.t*F.h)+F.t*F.s)/1000;
+    const F=IC_FIN,Dh=IC_DH;
     const al=F.s/F.h,de=F.t/F.l,ga=F.t/F.s,G=m/(G0.h*G0.d/1e6*IC_SIGMA),Re=G*Dh/mu;
     const f=9.6243*Math.pow(Re,-0.7422)*Math.pow(al,-0.1856)*Math.pow(de,0.3053)*Math.pow(ga,-0.2659)
       *Math.pow(1+7.669e-8*Math.pow(Re,4.429)*Math.pow(al,0.920)*Math.pow(de,3.767)*Math.pow(ga,0.236),0.1);
@@ -394,13 +428,13 @@ function icReport(x){
     if(!o.boosted)return o;
     const sv=Object.assign({},state);Object.assign(state,{iat:25});
     const m=airFlowAt(r,map),tin=compOutletT(map,r),tout=effIAT(map,r);Object.assign(state,sv);
-    return Object.assign(o,{m,eff:icEffAt(m),eff0:e.icEff,tin,tout,dp:icDp(e,m,map,(tin+tout)/2+273.15)});
+    return Object.assign(o,{m,eff:icEffAt(m),eff0:e.icEff,tin,tout,dp:icDp(e,m,map,313)});
   });
 }
 // A factory part, as this engine has it, written down as a part: the start of a design.
 function partFromFactory(key,kind){
   kind=kind||'exhaust';
-  if(kind==='intercooler'){const F=INTERCOOLER[key]||INTERCOOLER.large;
+  if(kind==='intercooler'){const F=icFactoryGeom(engine,INTERCOOLER[key]&&INTERCOOLER[key].w?key:'large');
     return normPart({kind,name:tr(F.label),w:F.w,h:F.h,d:F.d,fpi:F.fpi,pipe_m:F.pipe});}
   if(kind==='cam')return withPart('cam',key,e=>{
     const C=CAM[key]||CAM.stock;
@@ -687,13 +721,12 @@ function previewIc(){
   if(!r.boosted)lines.push(tr('An intercooler only matters with forced induction: this engine breathes at atmosphere.'));
   else{
     lines.push(tr('Effectiveness at peak power')+': <b>'+fmt(r.eff,2)+'</b> <span class="dim">('+tr('now')+' '+fmt(now.eff,2)
-      +'; '+tr('at 1 bar and the redline')+' '+fmt(r.eff0,2)+'; '+tr('the factory cores: small 0.62, large 0.82')+')</span>');
+      +'; '+tr('at 1 bar and the redline')+' '+fmt(r.eff0,2)+'; '+tr('in 11 m/s of cooling air, about a car at motorway speed')+')</span>');
     lines.push(tr('The charge leaves the compressor at')+' '+fmt(r.tin)+' °C '+tr('and the core at')+' <b>'+fmt(r.tout)+' °C</b> <span class="dim">('+tr('now')+' '+fmt(now.tout)+' °C, '+tr('in 25 °C air')+')</span>');
     lines.push(tr('Core')+': '+fmt(icGrossL(p),1)+' L, '+tr('holding')+' '+fmt(icCoreL(p),1)+' L '+tr('of charge')+'; '+tr('the charge system to fill')+': <b>'+fmt(r.vol,1)+' L</b> <span class="dim">('+tr('now')+' '+fmt(now.vol,1)+'; '+tr('more to fill spools slower')+')</span>');
     lines.push(tr('Pressure drop at peak power')+': <b>'+kPa(r.dp.core+r.dp.pipe)+'</b> ('+tr('core')+' '+kPa(r.dp.core)+', '+tr('pipe')+' '+kPa(r.dp.pipe)+')'
-      +' <span class="dim">('+tr('now')+' '+kPa(now.dp.core+now.dp.pipe)+'; '+tr('design practice: about 7-14 kPa, 1-2 psi, at full flow')+')</span>');
+      +' <span class="dim">('+tr('now')+' '+kPa(now.dp.core+now.dp.pipe)+'; '+tr('design practice: about 7-14 kPa, 1-2 psi, at full flow; the compressor makes it up on top of the boost')+')</span>');
   }
-  lines.push('<span class="dim">'+tr('The pressure drop is not taken off the boost yet, and the core\'s effectiveness is still anchored to the factory cores\' quoted figures: both are the next build.')+'</span>');
   pv('pxGuide').innerHTML=lines.map(l=>'<div>'+l+'</div>').join('');
   drawPartCurves('intercooler',now,r);
 }

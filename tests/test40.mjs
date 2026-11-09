@@ -26,13 +26,15 @@ const spool = await page.evaluate(({ base }) => [0.5, 1.0, 1.5, 2.0, 2.5].map(ba
   state.rpm = 6000; state.throttle = 1; state.boostActual = 0; state.shaftE = 0; let t = 0;
   while (t < 30 && state.boostActual < 0.9 * bar) { stepBoost(1 / 240); t += 1 / 240; }
   return { bar, spool50: Math.round(engine.spool50), 
-    t90: +t.toFixed(2), iat: Math.round(effIAT(1 + bar)),
+    // build 256: the compressor's outlet, before the core. A derived large core gives back nearly all of the rise on
+    // an engine this size, so what leaves it barely moves with boost; the heating this checks is the compression's.
+    t90: +t.toFixed(2), iat: Math.round(compOutletT(1 + bar)),
     // knock at best-torque spark, before the ECU retards (build 131: the ECU now holds the score at its target, 40,
     // wherever it can, so the controlled score cannot show how much harder the end gas is being pushed)
     knock: Math.round(knockAt(engine.score.peakHPrpm, 1 + bar, mbtAdvance(engine.score.peakHPrpm, 1 + bar))),
     eff: +engine.compEff.toFixed(2), load: +engine.turboLoad.toFixed(2), hp: engine.score.peakHP };
 }), { base: KEI });
-console.log('boost   spool50   time to 90%   charge temp   knock   comp.eff   flow load');
+console.log('boost   spool50   time to 90%   comp. out     knock   comp.eff   flow load');
 spool.forEach(s => console.log(`${s.bar.toFixed(1)} bar ${String(s.spool50).padStart(8)} ${String(s.t90 + ' s').padStart(13)} ${String(s.iat + ' C').padStart(13)} ${String(s.knock).padStart(7)} ${String(s.eff).padStart(10)} ${String(s.load).padStart(11)}`));
 for (let i = 1; i < spool.length; i++) {
   if (!(spool[i].spool50 > spool[i - 1].spool50)) fails.push(`spool point did not rise from ${spool[i - 1].bar} to ${spool[i].bar} bar`);
@@ -58,7 +60,7 @@ if (!(hi.knock > lo.knock + 15)) fails.push(`2.5 bar on a 9.5:1 engine should be
 
 // charge heating must be super-linear in boost, not a flat per-bar constant
 const rises = spool.map(s => s.iat - 25);
-console.log(`charge temp rise over ambient: ${rises.join(' / ')} C  — ratio 2.5bar/0.5bar = ${(rises[4] / rises[0]).toFixed(2)}x for 5x the boost`);
+console.log(`compressor outlet rise over ambient: ${rises.join(' / ')} C  — ratio 2.5bar/0.5bar = ${(rises[4] / rises[0]).toFixed(2)}x for 5x the boost`);
 if (!((rises[4] / rises[0]) > (hi.bar / lo.bar) * 0.5)) fails.push('charge heating barely responds to boost');
 if (rises[0] <= 0) fails.push('no charge heating at all');
 
@@ -85,7 +87,7 @@ const frames = await page.evaluate(() => {
         // output, not an error: a grossly over-flowed frame can choke an engine on its own
         // back-pressure badly enough that it never gets there. Carry the null through and let the
         // assertions decide — throwing on it turns a real result into a harness crash.
-        iat: Math.round(effIAT(1 + bar)), t100: perf.t100 == null ? null : +perf.t100.toFixed(2),
+        iat: Math.round(compOutletT(1 + bar)), t100: perf.t100 == null ? null : +perf.t100.toFixed(2),
         lap: +simulateLap('mixed').lap.toFixed(2) });
     }
   }
