@@ -34,6 +34,13 @@ Each new part is two builds:
 - Intercooler: every intercooled preset (45) loses its core's pressure drop. Done in build 256 with the effectiveness from
   the fins and the factory cores sized to their engines: 43 cars moved, −12% to +7.5% peak power, mean 0-100 error
   7.76 → 8.24%. Still open: twin and water-to-air cores per car.
+
+## Parked (owner's decision, after build 256)
+
+- **Water-to-air intercoolers** (and twin cores per car): not to be started until the owner lifts it. The cars that
+  really use them (Ford GT, Hellcat, ZL1, 720S/750S, GT-R) stay on one air-to-air core sized by build 256's rule, and
+  stay among its largest movers. When it resumes: per-car core type and count from published specs, a coolant loop
+  (pump flow, front heat exchanger) feeding the same eps-NTU law, then the fingerprint and error report as usual.
 - Catalytic converter: removing the double count lifts nearly every engine 5–6% (build 244): find what it hides first.
 - Chassis: all 92 vehicle presets move once each has its own sourced CG height and track. Build 251, batch 1: CG = 0.388 × overall height
   (NHTSA's measured median, `research/cg-height/`) on the 38 cars with published tracks; mean 0-100 error 10.10 → 9.77%.
