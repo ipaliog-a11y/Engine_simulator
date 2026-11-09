@@ -190,6 +190,7 @@ function hybUpdatePhysics(run){
   const H=hybBenchState();
   if(!H.engOn||state.rpm<engine.idleRpmEff*0.5){
     state.torque=0;state.powerKW=0;state.powerHP=0;state.fuelFlowLph=0;state.bsfc=999;state.thermalEff=0;state.knockRisk=0;state.fuelCut=true;
+    if(typeof zeroEmissions==='function')zeroEmissions();   // no pipe emissions with the engine off (build 257)
     return;
   }
   withEngThr(H,run);

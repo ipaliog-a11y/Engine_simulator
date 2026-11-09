@@ -177,6 +177,7 @@ function buildEngineCore(prevStoich,quiet){
   engine.fuelDensity=fp.density;engine.fuelLHV=fp.LHV;engine.stoichAFR=fp.stoich;
   engine.effOctane=fp.octane!=null?fp.octane:engine.octane;
   engine.fuelKnockBonus=fp.knockBonus;engine.chargeCool=fp.chargeCool;
+  engine.fuelHC=fp.hc;engine.fuelOC=fp.oc;   // atoms per C for exhaust composition (build 257)
   // Geometry → displacement (bore/stroke in mm → cm³ → L).
   // A Wankel chamber is not a cylinder. Its swept volume is the difference between the largest and
   // smallest volume one rotor flank encloses in the epitrochoid housing, 3√3·e·R·W per chamber, with

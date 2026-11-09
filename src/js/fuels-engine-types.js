@@ -2,12 +2,16 @@
 // RON slider), chargeCool = evaporative charge cooling °C (denser charge + less knock),
 // knockBonus = extra knock margin beyond octane. Alcohols: low energy/kg (more fuel flow)
 // but great knock resistance + big charge cooling → more power headroom.
+// hc / oc = H and O atoms per C atom for pipe-emissions atom balance (build 257). Gasoline and
+// diesel: Heywood Internal Combustion Engine Fundamentals, typical CH1.87 / CH1.80. Methanol is
+// CH3OH. E85: 85/15 by volume ethanol/gasoline, converted to a C-basis average (ethanol dens
+// 0.789, gasoline 0.745; ethanol C2H6O → hc 3, oc 0.5 per C).
 const FUELS={
-  gasoline:{label:'PUMP GAS',density:0.745,LHV:44.0,stoich:14.7,octane:null,chargeCool:0, knockBonus:0},
-  race:    {label:'RACE GAS',density:0.735,LHV:43.5,stoich:14.7,octane:105, chargeCool:2, knockBonus:2},
-  e85:     {label:'E85',     density:0.785,LHV:29.2,stoich:9.8, octane:102, chargeCool:15,knockBonus:8},
-  methanol:{label:'METHANOL',density:0.792,LHV:19.9,stoich:6.45,octane:109, chargeCool:25,knockBonus:14},
-  diesel:  {label:'DIESEL',  density:0.832,LHV:42.8,stoich:14.5,octane:null,chargeCool:0, knockBonus:0}   // compression-ignition; octane N/A (cetane)
+  gasoline:{label:'PUMP GAS',density:0.745,LHV:44.0,stoich:14.7,octane:null,chargeCool:0, knockBonus:0,hc:1.87,oc:0},
+  race:    {label:'RACE GAS',density:0.735,LHV:43.5,stoich:14.7,octane:105, chargeCool:2, knockBonus:2,hc:1.87,oc:0},
+  e85:     {label:'E85',     density:0.785,LHV:29.2,stoich:9.8, octane:102, chargeCool:15,knockBonus:8,hc:2.80,oc:0.41},
+  methanol:{label:'METHANOL',density:0.792,LHV:19.9,stoich:6.45,octane:109, chargeCool:25,knockBonus:14,hc:4.00,oc:1},
+  diesel:  {label:'DIESEL',  density:0.832,LHV:42.8,stoich:14.5,octane:null,chargeCool:0, knockBonus:0,hc:1.80,oc:0}   // compression-ignition; octane N/A (cetane)
 };
 // ---- Engine cycle / type ----
 // Each type reshapes the physics: strokeDiv is the power-stroke divisor in the torque

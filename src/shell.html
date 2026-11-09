@@ -40,7 +40,7 @@
 </div>
 <div class="container">
 <header>
-<h1>PIXEL ENGINE SIM v0.7 build 256</h1>
+<h1>PIXEL ENGINE SIM v0.7 build 257</h1>
 <div class="subtitle" id="subtitle">ENGINE DESIGNER • BUILD IT, THEN DRIVE IT</div>
 </header>
 <div class="build-strip" id="buildStrip">
@@ -512,6 +512,18 @@
 <div class="stat" id="statHealth"><span class="label">ENGINE HEALTH</span><div class="value">100</div><span class="unit">%</span></div>
 <div class="stat" id="statAmps" style="display:none"><span class="label">PACK CURRENT</span><div class="value">0</div><span class="unit">A</span></div>
 <div class="stat" id="statLimit" style="display:none"><span class="label">POWER LIMIT</span><div class="value">NONE</div><span class="unit"></span></div>
+</div>
+<div id="liveEmRows">
+<div class="gauge-row">
+<div class="stat" id="statEmit" title="Exhaust analyser cleanliness"><span class="label">EMISSIONS</span><div class="value">CLEAN</div><span class="unit"></span></div>
+<div class="stat" id="statCO2" title="Tailpipe carbon dioxide"><span class="label">CO2</span><div class="value">0</div><span class="unit">g/s</span></div>
+<div class="stat" id="statCO" title="Tailpipe carbon monoxide"><span class="label">CO</span><div class="value">0</div><span class="unit">g/s</span></div>
+</div>
+<div class="gauge-row">
+<div class="stat" id="statHC" title="Tailpipe unburned hydrocarbons"><span class="label">HC</span><div class="value">0</div><span class="unit">g/s</span></div>
+<div class="stat" id="statNOx" title="Tailpipe nitrogen oxides as NO"><span class="label">NOx</span><div class="value">0</div><span class="unit">g/s</span></div>
+<div class="stat" id="statPM" title="Tailpipe particulate matter (diesel)"><span class="label">PM</span><div class="value">—</div><span class="unit">g/s</span></div>
+</div>
 </div>
 <div class="dash-lamps" id="dashLamps" role="group" aria-label="Dashboard lamps">
 <button type="button" class="lamp" id="lampCool" disabled aria-pressed="false" title="Coolant temperature"><span class="lamp-dot"></span><span class="lamp-lbl">COOL</span></button>
