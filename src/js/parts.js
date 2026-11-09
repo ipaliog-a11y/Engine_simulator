@@ -24,6 +24,14 @@
 //   separation     the lobe separation angle: with the duration it sets the overlap and the intake's closing;
 //   lobe profile   how hard the nose is ground (accel, against simple harmonic motion): valve float;
 //   phaser range   how far a VVT phaser may advance it (45 degrees; an Atkinson cam's 15).
+// The INTERCOOLER (build 255) is a core and its pipes, read by the charge path (deriveCharge, icEffAt):
+//   face, depth    the core's width (the charge's path), height and depth, mm; with IC_SIGMA they set the charge
+//                  volume to fill (spool) and the charge side's flow area;
+//   fins           the cooling side's fins per inch: its surface;
+//   pipe           metres of ducting, compressor to throttle, at the compressor outlet's bore.
+// Its effectiveness is the factory cores' NTU law with the two sides' conductances scaled by the core's own surfaces
+// (icPartNtu); the factory cores' quoted effectiveness is still the anchor (INTERCOOLER.eff, retired next build). Its
+// pressure drop is worked out and shown, not yet taken off the boost: taking it is the next build, for every core.
 // What the factory cams still carry as fitted grades (CAM.ampMul, loWiden, idleRpm: the airflow estimates, the idle) a
 // designed cam takes from the factory cam its duration and separation are nearest (camClass). Retiring them is the next
 // build (plans/parts-design-space.md).
@@ -53,7 +61,8 @@ const CAM_PROFILE={
 // A cam runs from 180 degrees (shorter than any factory cam's 220) to 320 (past a race cam's 284); lift 4-16 mm at the
 // valve; the separation from 98 to 130 degrees, about the 106-125 the factory cams span; a phaser to 60 degrees.
 const PART_LIMITS={dur:[180,320],lift_mm:[4,16],lsa:[98,130],vvt_deg:[0,60],primD_mm:[25,76],primL_mm:[200,1000],pipes:[1,2],sysD_mm:[30,110],sysL_m:[0.8,4.5],
-  runnerL_mm:[40,800],runnerD_mm:[20,80],shortL_mm:[40,400],area_m2:[0.02,3],inletD_mm:[30,160]};
+  runnerL_mm:[40,800],runnerD_mm:[20,80],shortL_mm:[40,400],area_m2:[0.02,3],inletD_mm:[30,160],
+  w:[150,900],h:[80,400],d:[30,120],fpi:[8,30],pipe_m:[0.3,5]};
 
 // ---- the air filter (build 210) ----
 // What a filter restricts is its pressure drop at the flow through it, and the charge is that much thinner (computeVE).
@@ -123,12 +132,51 @@ function deriveFilter(){
 }
 // A filter, as the factory class the rest of the app reads (sprites, sound, cost): by its housing.
 const filterClass=p=>({none:'none',open:'perf',airbox:'stock'})[p.housing]||'stock';
+
+// ---- the intercooler (build 255) ----
+// IC_SIGMA: the share of a bar-and-plate core's gross volume the charge flows through (charge layers about half the
+// stack, their internal fins taking ~15% of that; probable), so also the charge side's free-flow share of its h x d end.
+const IC_SIGMA=0.4;
+const icGrossL=p=>p.w*p.h*p.d/1e6, icCoreL=p=>icGrossL(p)*IC_SIGMA;
+// The NTU at a flow (r = the reference flow over this one): icEffAt's law, eps = 1-exp(-NTU) with the charge side's
+// film conductance going as m^0.8 and the two sides balanced in the factory core. A designed core scales each side's
+// conductance by its own surfaces against a factory core's: the charge side by its area (w h d) and its velocity at
+// a flow (h d)^-0.8, so w (h d)^0.2; the cooling side by its area times its fins, w h d fpi (the fins taken as not
+// slowing the cooling air). The anchor is the factory cores' quoted effectiveness: SMALL's below its volume, LARGE's
+// above, in between interpolated on log volume, so a factory core written as a part is that core.
+function icPartNtu(P,r){
+  const g=F=>{const gc=(P.w/F.w)*Math.pow(P.h*P.d/(F.h*F.d),0.2),ga=P.w*P.h*P.d*P.fpi/(F.w*F.h*F.d*F.fpi);
+    return -Math.log(1-F.eff)*r*2/(Math.pow(r,0.8)/gc+1/ga);};
+  const S=INTERCOOLER.small,L=INTERCOOLER.large,k=Math.log(icGrossL(P)/icGrossL(S))/Math.log(icGrossL(L)/icGrossL(S));
+  if(k<=0)return g(S);if(k>=1)return g(L);
+  return Math.exp((1-k)*Math.log(g(S))+k*Math.log(g(L)));
+}
+const icClass=p=>icGrossL(p)<Math.sqrt(icGrossL(INTERCOOLER.small)*icGrossL(INTERCOOLER.large))?'small':'large';
+// The pressure drop through the core and its pipe at a charge flow m (kg/s), pressure pBar (absolute) and mean charge
+// temperature Tk. Core: the charge passages' offset-strip fins by Manglik & Bergles' correlation (Exp. Thermal Fluid
+// Sci. 10, 1995) on a typical bar-and-plate passage (2.5 mm pitch, 7 mm high, 0.2 mm fin, 3.2 mm strips: probable),
+// plus the tanks' contraction and expansion, Kc + Ke ~ 1.0 at sigma 0.4 (Kays & London). Pipe: Blasius, smooth tube.
+const IC_FIN={s:2.5,h:7,t:0.2,l:3.2},IC_KTANK=1.0;
+function icDp(e,m,pBar,Tk){
+  const G0=e.icPart||INTERCOOLER[e.intercooler]||{},rho=pBar*1e5/(287*Tk),mu=1.85e-5*Math.pow(Tk/300,0.7);
+  let core=0;
+  if(G0.w){
+    const F=IC_FIN,Dh=4*F.s*F.h*F.l/(2*(F.s*F.l+F.h*F.l+F.t*F.h)+F.t*F.s)/1000;
+    const al=F.s/F.h,de=F.t/F.l,ga=F.t/F.s,G=m/(G0.h*G0.d/1e6*IC_SIGMA),Re=G*Dh/mu;
+    const f=9.6243*Math.pow(Re,-0.7422)*Math.pow(al,-0.1856)*Math.pow(de,0.3053)*Math.pow(ga,-0.2659)
+      *Math.pow(1+7.669e-8*Math.pow(Re,4.429)*Math.pow(al,0.920)*Math.pow(de,3.767)*Math.pow(ga,0.236),0.1);
+    core=(4*f*(G0.w/1000)/Dh+IC_KTANK)*G*G/(2*rho);
+  }
+  const D=0.72*turboFrame(e).exd,Gp=m/(Math.PI/4*D*D),Rp=Gp*D/mu,L=e.icPart?e.icPart.pipe_m:(INTERCOOLER[e.intercooler]||INTERCOOLER.large).pipe;
+  return {core,pipe:0.316*Math.pow(Rp,-0.25)*L/D*Gp*Gp/(2*rho)};
+}
 const PARTS_KEY='pes.parts',PARTS_MAX=40;
 const PART_KINDS=[
   {kind:'exhaust',label:'EXHAUST',ready:true},
   {kind:'intake', label:'INTAKE MANIFOLD',ready:true},
   {kind:'filter', label:'AIR FILTER',ready:true},
   {kind:'cam',    label:'CAMSHAFT',ready:true},
+  {kind:'intercooler',label:'INTERCOOLER',ready:true},
   {kind:'cat',    label:'CATALYTIC CONVERTER',ready:false}
 ];
 // A designed intake, as the factory class the rest of the app reads: a variable one is VARIABLE, a fixed one the
@@ -160,7 +208,9 @@ const PART_DEF={
   filter: {field:'filterPart', cls:'airFilter', select:'edAirFilter', def:'stock',valid:k=>!!AIR_FILTER[k], clsOf:filterClass,
     label:k=>AIR_FILTER[k].label,newName:'MY AIR FILTER',factory:['none','perf','stock','restrictive']},
   cam:    {field:'camPart',    cls:'cam',       select:'edCam',       def:'stock',valid:k=>!!CAM[k],       clsOf:camClass,
-    label:k=>CAM[k].label,newName:'MY CAM',factory:['stock','sport','race','atkinson']}
+    label:k=>CAM[k].label,newName:'MY CAM',factory:['stock','sport','race','atkinson']},
+  intercooler:{field:'icPart',cls:'intercooler',select:'edIntercooler',def:'large',valid:k=>!!INTERCOOLER[k],clsOf:icClass,
+    label:k=>INTERCOOLER[k].label,newName:'MY INTERCOOLER',factory:['small','large'],from:v=>v===true?'large':v===false?'none':v}
 };
 
 let partLib=[];
@@ -183,6 +233,8 @@ function normPart(p){
   if(p.kind==='filter')return {id,kind:'filter',name:String(p.name||'AIR FILTER').slice(0,40),
     media:FILTER_MEDIA[p.media]?p.media:'paper',area_m2:n(p.area_m2,'area_m2',0.4),
     housing:FILTER_HOUSING[p.housing]?p.housing:'airbox',inletD_mm:n(p.inletD_mm,'inletD_mm',70)};
+  if(p.kind==='intercooler')return {id,kind:'intercooler',name:String(p.name||'INTERCOOLER').slice(0,40),
+    w:n(p.w,'w',600),h:n(p.h,'h',250),d:n(p.d,'d',75),fpi:n(p.fpi,'fpi',14),pipe_m:n(p.pipe_m,'pipe_m',3)};
   if(p.kind==='cam')return {id,kind:'cam',name:String(p.name||'CAM').slice(0,40),dur:n(p.dur,'dur',220),
     lift_mm:n(p.lift_mm,'lift_mm',9),lsa:n(p.lsa,'lsa',114),profile:CAM_PROFILE[p.profile]?p.profile:'gentle',
     vvt_deg:n(p.vvt_deg,'vvt_deg',VVT_AUTHORITY)};
@@ -241,7 +293,7 @@ function partsToForm(e){
   for(const D of Object.values(PART_DEF)){
     const s=document.getElementById(D.select);
     if(e[D.field]){const id=ensurePart(e[D.field]);fillPartSelects();s.value='part:'+id;}
-    else s.value=e[D.cls]||D.def;
+    else s.value=(D.from?D.from(e[D.cls]):e[D.cls])||D.def;
   }
 }
 
@@ -335,9 +387,21 @@ function camReport(x){
       ramPeakRpm:e.ramPeakRpm,cls:e.cam,vvt:!!e.vvt,auth:e.vvt?(camSpec(e).vvtMax??VVT_AUTHORITY):0});
   });
 }
+// What the designer reads out for an intercooler on this engine: the pull, and the core at peak power.
+function icReport(x){
+  return withPart('intercooler',x,e=>{
+    const pull=wotPull(),r=pull.peakHPrpm,map=wotMapAt(r),o=Object.assign(pull,{boosted:e.intake!=='na',vol:e.chargeVol*1000});
+    if(!o.boosted)return o;
+    const sv=Object.assign({},state);Object.assign(state,{iat:25});
+    const m=airFlowAt(r,map),tin=compOutletT(map,r),tout=effIAT(map,r);Object.assign(state,sv);
+    return Object.assign(o,{m,eff:icEffAt(m),eff0:e.icEff,tin,tout,dp:icDp(e,m,map,(tin+tout)/2+273.15)});
+  });
+}
 // A factory part, as this engine has it, written down as a part: the start of a design.
 function partFromFactory(key,kind){
   kind=kind||'exhaust';
+  if(kind==='intercooler'){const F=INTERCOOLER[key]||INTERCOOLER.large;
+    return normPart({kind,name:tr(F.label),w:F.w,h:F.h,d:F.d,fpi:F.fpi,pipe_m:F.pipe});}
   if(kind==='cam')return withPart('cam',key,e=>{
     const C=CAM[key]||CAM.stock;
     return normPart({kind:'cam',name:tr(C.label),dur:C.dur,lsa:C.lsa,
@@ -398,7 +462,7 @@ function runnerFor(rpm,Dmm){
 }
 
 // ---- the PARTS page ----
-const partsUI={kind:'exhaust',edit:{exhaust:null,intake:null,filter:null,cam:null},timer:0};
+const partsUI={kind:'exhaust',edit:{exhaust:null,intake:null,filter:null,cam:null,intercooler:null},timer:0};
 const pv=id=>document.getElementById(id);
 const fittedPart=kind=>engine&&engine[PART_DEF[kind].field];
 // the ids of each kind's editor
@@ -418,7 +482,11 @@ const PART_UI={
   cam:{reset:'pcReset',box:'partsCam',list:'pcList',from:'pcFrom',neu:'pcNew',save:'pcSave',saveFit:'pcSaveFit',guide:'pcGuide',canvas:'pcCanvas',legend:'pcLegend',
     none:"No cams designed yet. Start from one of the factory cams below.",
     fields:['pcName','pcDur','pcLift','pcLsa','pcProfile','pcVvt'],
-    spec:p=>p.dur+'° · '+p.lift_mm+' mm · LSA '+p.lsa+'° · '+tr(CAM_PROFILE[p.profile].label)}
+    spec:p=>p.dur+'° · '+p.lift_mm+' mm · LSA '+p.lsa+'° · '+tr(CAM_PROFILE[p.profile].label)},
+  intercooler:{reset:'pxReset',box:'partsIc',list:'pxList',from:'pxFrom',neu:'pxNew',save:'pxSave',saveFit:'pxSaveFit',guide:'pxGuide',canvas:'pxCanvas',legend:'pxLegend',
+    none:"No intercoolers designed yet. Start from one of the factory cores below.",
+    fields:['pxName','pxW','pxH','pxD','pxFpi','pxPipe'],
+    spec:p=>p.w+' × '+p.h+' × '+p.d+' mm · '+p.fpi+' fpi · '+p.pipe_m+' m'}
 };
 function renderParts(){
   const types=pv('partTypes');if(!types)return;
@@ -439,14 +507,19 @@ function renderParts(){
     +'<button type="button" data-a="del" data-id="'+esc(p.id)+'">'+esc(tr('DELETE'))+'</button></div>').join('')
     :'<div class="hint">'+esc(tr(U.none))+'</div>';
   list.querySelectorAll('button[data-a]').forEach(b=>b.addEventListener('click',()=>partAction(b.dataset.a,b.dataset.id)));
-  if(!ed)pv(U.from).value=D.valid(engine[D.cls])?engine[D.cls]:D.def;
+  const start=D.factory.includes(engine[D.cls])?engine[D.cls]:D.def;
+  if(!ed)pv(U.from).value=start;
   if(!ed)partsUI.edit[kind]=fittedPart(kind)?Object.assign({},fittedPart(kind))
-    :Object.assign(partFromFactory(D.valid(engine[D.cls])?engine[D.cls]:D.def,kind),{name:tr(D.newName)});
+    :Object.assign(partFromFactory(start,kind),{name:tr(D.newName)});
   partToEditor(kind,partsUI.edit[kind]);
   previewPart(kind);
 }
 function partToEditor(kind,p){
   const peak=Math.round((engine.score&&engine.score.peakHPrpm||engine.redline*0.9)/100)*100;
+  if(kind==='intercooler'){
+    pv('pxName').value=p.name;pv('pxW').value=p.w;pv('pxH').value=p.h;pv('pxD').value=p.d;pv('pxFpi').value=p.fpi;pv('pxPipe').value=p.pipe_m;
+    return;
+  }
   if(kind==='cam'){
     pv('pcName').value=p.name;pv('pcDur').value=p.dur;pv('pcLift').value=p.lift_mm;pv('pcLsa').value=p.lsa;pv('pcProfile').value=p.profile;pv('pcVvt').value=p.vvt_deg;
     return;
@@ -469,6 +542,8 @@ function partToEditor(kind,p){
 function partFromEditor(kind){
   kind=kind||'exhaust';
   const ed=partsUI.edit[kind],newName=tr(PART_DEF[kind].newName);
+  if(kind==='intercooler')return normPart({kind,id:ed&&ed.id,name:pv('pxName').value.trim()||newName,w:pv('pxW').value,
+    h:pv('pxH').value,d:pv('pxD').value,fpi:pv('pxFpi').value,pipe_m:pv('pxPipe').value});
   if(kind==='cam')return normPart({kind,id:ed&&ed.id,name:pv('pcName').value.trim()||newName,dur:pv('pcDur').value,
     lift_mm:pv('pcLift').value,lsa:pv('pcLsa').value,profile:pv('pcProfile').value,vvt_deg:pv('pcVvt').value});
   if(kind==='filter')return normPart({kind,id:ed&&ed.id,name:pv('pfName').value.trim()||newName,media:pv('pfMedia').value,
@@ -488,7 +563,7 @@ function partAction(a,id){
     partLib=partLib.filter(x=>x.id!==id);persistParts();
     const f=fittedPart(kind);
     if(f&&f.id===id){pv(D.select).value=engine[D.cls];fillPartSelects();buildEngine();
-      flash(tr(kind==='intake'?'PART DELETED: THE ENGINE HAS ITS FACTORY INTAKE':kind==='cam'?'PART DELETED: THE ENGINE HAS ITS FACTORY CAM':kind==='filter'?'PART DELETED: THE ENGINE HAS ITS FACTORY AIR FILTER':'PART DELETED: THE ENGINE HAS ITS FACTORY EXHAUST'));}
+      flash(tr(kind==='intake'?'PART DELETED: THE ENGINE HAS ITS FACTORY INTAKE':kind==='intercooler'?'PART DELETED: THE ENGINE HAS ITS FACTORY INTERCOOLER':kind==='cam'?'PART DELETED: THE ENGINE HAS ITS FACTORY CAM':kind==='filter'?'PART DELETED: THE ENGINE HAS ITS FACTORY AIR FILTER':'PART DELETED: THE ENGINE HAS ITS FACTORY EXHAUST'));}
     else{fillPartSelects();flash(tr('PART DELETED'));}
     if(partsUI.edit[kind]&&partsUI.edit[kind].id===id)partsUI.edit[kind]=null;
     renderParts();
@@ -527,6 +602,7 @@ function previewPart(kind){
   if(kind==='intake')return previewIntake();
   if(kind==='filter')return previewFilter();
   if(kind==='cam')return previewCam();
+  if(kind==='intercooler')return previewIc();
   const p=partFromEditor('exhaust'),now=exhaustReport(engine.exhaustPart||engine.exhaust),r=exhaustReport(p);
   partsUI.last={kind,p,now,r};
   const turbo=engine.intake==='turbo',ported=!!engine.ports;
@@ -603,6 +679,24 @@ function previewCam(){
   pv('pcGuide').innerHTML=lines.map(l=>'<div>'+l+'</div>').join('');
   drawPartCurves('cam',now,r);
 }
+function previewIc(){
+  const p=partFromEditor('intercooler'),now=icReport(engine.icPart||engine.intercooler),r=icReport(p);
+  partsUI.last={kind:'intercooler',p,now,r};
+  const kPa=x=>fmt(x/1000,1)+' kPa',lines=[];
+  lines.push(headline('With this intercooler',r,now));
+  if(!r.boosted)lines.push(tr('An intercooler only matters with forced induction: this engine breathes at atmosphere.'));
+  else{
+    lines.push(tr('Effectiveness at peak power')+': <b>'+fmt(r.eff,2)+'</b> <span class="dim">('+tr('now')+' '+fmt(now.eff,2)
+      +'; '+tr('at 1 bar and the redline')+' '+fmt(r.eff0,2)+'; '+tr('the factory cores: small 0.62, large 0.82')+')</span>');
+    lines.push(tr('The charge leaves the compressor at')+' '+fmt(r.tin)+' °C '+tr('and the core at')+' <b>'+fmt(r.tout)+' °C</b> <span class="dim">('+tr('now')+' '+fmt(now.tout)+' °C, '+tr('in 25 °C air')+')</span>');
+    lines.push(tr('Core')+': '+fmt(icGrossL(p),1)+' L, '+tr('holding')+' '+fmt(icCoreL(p),1)+' L '+tr('of charge')+'; '+tr('the charge system to fill')+': <b>'+fmt(r.vol,1)+' L</b> <span class="dim">('+tr('now')+' '+fmt(now.vol,1)+'; '+tr('more to fill spools slower')+')</span>');
+    lines.push(tr('Pressure drop at peak power')+': <b>'+kPa(r.dp.core+r.dp.pipe)+'</b> ('+tr('core')+' '+kPa(r.dp.core)+', '+tr('pipe')+' '+kPa(r.dp.pipe)+')'
+      +' <span class="dim">('+tr('now')+' '+kPa(now.dp.core+now.dp.pipe)+'; '+tr('design practice: about 7-14 kPa, 1-2 psi, at full flow')+')</span>');
+  }
+  lines.push('<span class="dim">'+tr('The pressure drop is not taken off the boost yet, and the core\'s effectiveness is still anchored to the factory cores\' quoted figures: both are the next build.')+'</span>');
+  pv('pxGuide').innerHTML=lines.map(l=>'<div>'+l+'</div>').join('');
+  drawPartCurves('intercooler',now,r);
+}
 function drawPartCurves(kind,now,r){
   const U=PART_UI[kind],c=pv(U.canvas);if(!c)return;
   const w=c.clientWidth||480,h=c.clientHeight||200,dpr=window.devicePixelRatio||1;
@@ -618,7 +712,7 @@ function drawPartCurves(kind,now,r){
   line(now.pts,'tq',tqMax,'#4a8',true);line(now.pts,'hp',hpMax,'#c84',true);
   line(r.pts,'tq',tqMax,'#6fc',false);line(r.pts,'hp',hpMax,'#fa4',false);
   g.fillStyle='#fa4';g.fillText('hp',R+4,T+8);g.fillStyle='#6fc';g.fillText('Nm',4,T+8);
-  pv(U.legend).innerHTML='<span style="color:#fa4">━ '+esc(tr(kind==='intake'?'this intake':kind==='filter'?'this filter':kind==='cam'?'this cam':'this exhaust'))+'</span> <span style="color:#c84">┅ '+esc(tr('now'))+'</span>';
+  pv(U.legend).innerHTML='<span style="color:#fa4">━ '+esc(tr(kind==='intake'?'this intake':kind==='filter'?'this filter':kind==='cam'?'this cam':kind==='intercooler'?'this intercooler':'this exhaust'))+'</span> <span style="color:#c84">┅ '+esc(tr('now'))+'</span>';
 }
 function schedulePreview(){clearTimeout(partsUI.timer);partsUI.timer=setTimeout(()=>{if(vizMode==='parts')previewPart(partsUI.kind);},120);}
 function wireParts(){
