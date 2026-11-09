@@ -28,11 +28,11 @@ Item 4 of `plans/parts-design-space.md`, step 2: `INTERCOOLER.eff` (0.62 small, 
   offset-strip fins by Manglik & Bergles (1995), the cooling side's louvred fins by Chang & Wang (1997), over each
   side's surface with its fins' efficiency; cross-flow, both fluids unmixed (Incropera), the cooling air's own capacity
   counted. Cooling air: **11 m/s through the face for every car** (owner's decision): a radiator's face velocity at
-  freeway speed, ~25 mph (US patent 6818254; probable). Result at full flow: the Golf GTI's large core 0.96, the
-  small core about 0.62 at the Golf's flow.
+  freeway speed, ~25 mph (US patent 6818254; probable). The Golf GTI's large core reads 0.97 at peak power (0.94 at
+  full flow at the redline, 0.99 at half of it); the small core about 0.62 at the Golf's flow.
 - **The drop is made up by the compressor.** The wastegate holds the manifold at target, so the wheel delivers target
   plus the core's and the pipe's drop: hotter charge, more turbine work, and a supercharger's drive pays for it too.
-  Golf GTI at peak power: 5 kPa core + 5 kPa pipe.
+  Golf GTI: 5.1 kPa through the core at peak power, 8.9 kPa core and pipe at 5000 rpm.
 - **A factory core is sized for its engine** (owner's decision; one rule for every car, as the factory air filter is):
   its listed size, or taller when the engine's full flow passes Garrett's rating for that end (its 600 hp
   610×203×89 mm core, 0.50 kg/s by Garrett's airflow rule; probable). Without it a 550 hp V8 pushed 0.5 kg/s through a
@@ -45,7 +45,9 @@ Item 4 of `plans/parts-design-space.md`, step 2: `INTERCOOLER.eff` (0.62 small, 
   GT-R) are on one air-to-air core; the cooling air does not follow car speed; Chang & Wang's correlation is
   extrapolated to 75-80 mm deep cores (its data run shallower); the drop's density is taken at 313 K.
 
-Tests: test163 (step-2 checks added).
+Tests: test163 (step-2 checks added); test40 now reads its charge-heating checks at the compressor's outlet, before
+the core: a derived large core gives back nearly all the rise on its small fixtures, so the charge after it barely
+moves with boost. That is the core's physics, and the compression heating the test is about is unchanged.
 
 ### The intercooler as a part (build 255)
 
