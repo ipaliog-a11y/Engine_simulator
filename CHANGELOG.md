@@ -20,6 +20,33 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 Working toward **v1.0 — every number derived, not fitted.**
 
+### An intercooler's effectiveness from its fins, and its pressure drop on the compressor (build 256)
+
+Item 4 of `plans/parts-design-space.md`, step 2: `INTERCOOLER.eff` (0.62 small, 0.82 large) is retired.
+
+- **Effectiveness from the core.** Each side's film coefficient is a measured j-factor: the charge passages'
+  offset-strip fins by Manglik & Bergles (1995), the cooling side's louvred fins by Chang & Wang (1997), over each
+  side's surface with its fins' efficiency; cross-flow, both fluids unmixed (Incropera), the cooling air's own capacity
+  counted. Cooling air: **11 m/s through the face for every car** (owner's decision): a radiator's face velocity at
+  freeway speed, ~25 mph (US patent 6818254; probable). Result at full flow: the Golf GTI's large core 0.96, the
+  small core about 0.62 at the Golf's flow.
+- **The drop is made up by the compressor.** The wastegate holds the manifold at target, so the wheel delivers target
+  plus the core's and the pipe's drop: hotter charge, more turbine work, and a supercharger's drive pays for it too.
+  Golf GTI at peak power: 5 kPa core + 5 kPa pipe.
+- **A factory core is sized for its engine** (owner's decision; one rule for every car, as the factory air filter is):
+  its listed size, or taller when the engine's full flow passes Garrett's rating for that end (its 600 hp
+  610×203×89 mm core, 0.50 kg/s by Garrett's airflow rule; probable). Without it a 550 hp V8 pushed 0.5 kg/s through a
+  Golf's core: the Ford GT lost 20%, the Hellcat 9%.
+- **What moved:** 43 boosted cars (and the e-POWER's engine). Peak power −12.2% (Ford GT, small core at 0.44) to +7.5%
+  (Civic Type R); most small turbo cars +2 to +4%, the big supercharged V8s −4 to −5%, the RX-7 −7.5% (its small core
+  falls to 0.52). Mean 0-100 error against the real figures on these cars **7.76% → 8.24% (worse)**: most small turbo
+  cars were already quicker than their real figures, and a cooler charge makes them quicker still. Not tuned back.
+- **Left open:** the big-flow cars that really use two cores or a water-to-air one (Ford GT, Hellcat, ZL1, 720S/750S,
+  GT-R) are on one air-to-air core; the cooling air does not follow car speed; Chang & Wang's correlation is
+  extrapolated to 75-80 mm deep cores (its data run shallower); the drop's density is taken at 313 K.
+
+Tests: test163 (step-2 checks added).
+
 ### The intercooler as a part (build 255)
 
 Item 4 of `plans/parts-design-space.md`, step 1.

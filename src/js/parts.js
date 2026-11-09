@@ -61,7 +61,7 @@ const CAM_PROFILE={
 // valve; the separation from 98 to 130 degrees, about the 106-125 the factory cams span; a phaser to 60 degrees.
 const PART_LIMITS={dur:[180,320],lift_mm:[4,16],lsa:[98,130],vvt_deg:[0,60],primD_mm:[25,76],primL_mm:[200,1000],pipes:[1,2],sysD_mm:[30,110],sysL_m:[0.8,4.5],
   runnerL_mm:[40,800],runnerD_mm:[20,80],shortL_mm:[40,400],area_m2:[0.02,3],inletD_mm:[30,160],
-  w:[150,900],h:[80,400],d:[30,120],fpi:[8,30],pipe_m:[0.3,5]};
+  w:[150,900],h:[80,800],d:[30,120],fpi:[8,30],pipe_m:[0.3,5]};
 
 // ---- the air filter (build 210) ----
 // What a filter restricts is its pressure drop at the flow through it, and the charge is that much thinner (computeVE).
@@ -167,8 +167,18 @@ function icEps(P,m){
   const UA=1/(1/(oc*hc*Ac)+1/(oa*ha*Aa)),Cc=m*IC_CP,Ca=rhoa*IC_FACE_V*w*h*IC_CP,Cmin=Math.min(Cc,Ca),Cr=Cmin/Math.max(Cc,Ca),NTU=UA/Cmin;
   return (1-Math.exp(Math.pow(NTU,0.22)/Cr*(Math.exp(-Cr*Math.pow(NTU,0.78))-1)))*Cmin/Cc;
 }
-// The core an engine has: a designed one, or its factory core's dimensions (none for NONE).
-const icGeom=e=>e.icPart||((INTERCOOLER[e.intercooler]||INTERCOOLER.large).w?INTERCOOLER[e.intercooler]||INTERCOOLER.large:null);
+// A factory core is sized for its engine (build 256, one rule for every car, as the factory air filter is): its listed
+// size, or taller when the engine's full flow (at the redline at full boost) is more than that size is rated to carry.
+// The rating is Garrett's: its 610 x 203 x 89 mm air-air core (703520-6010) for 600 hp, which Garrett's own airflow
+// rule (lb/min = hp x AFR x BSFC / 60, AFR 12 and BSFC 0.55 in its example) puts at 0.50 kg/s through its 203 x 89 end.
+const IC_RATED_FLUX=600*12*0.55/60*0.45359/60/(0.203*0.089);   // kg/s per m2 of the charge end
+function icFactoryGeom(e,key){
+  const F=INTERCOOLER[key];if(!F||!F.w)return null;
+  const k=airFlowAt(e.redline,e.mapMax||1)/(IC_RATED_FLUX*F.h*F.d/1e6);
+  return k>1?Object.assign({},F,{h:+(F.h*k).toFixed(1)}):F;
+}
+// The core an engine has: a designed one, or its factory core as sized for it (none for NONE).
+const icGeom=e=>e.icPart||icFactoryGeom(e,INTERCOOLER[e.intercooler]?e.intercooler:'large');
 // The drop in bar the compressor must make up at a charge flow and manifold pressure (build 256), the charge taken
 // at 313 K, the temperature airFlowAt takes it at (the circle would not close on the live charge temperature).
 function icDpBar(m,map){
@@ -424,7 +434,7 @@ function icReport(x){
 // A factory part, as this engine has it, written down as a part: the start of a design.
 function partFromFactory(key,kind){
   kind=kind||'exhaust';
-  if(kind==='intercooler'){const F=INTERCOOLER[key]||INTERCOOLER.large;
+  if(kind==='intercooler'){const F=icFactoryGeom(engine,INTERCOOLER[key]&&INTERCOOLER[key].w?key:'large');
     return normPart({kind,name:tr(F.label),w:F.w,h:F.h,d:F.d,fpi:F.fpi,pipe_m:F.pipe});}
   if(kind==='cam')return withPart('cam',key,e=>{
     const C=CAM[key]||CAM.stock;

@@ -358,7 +358,8 @@ function deriveCharge(){
   // charge volume between compressor and throttle, m3 — ducting bore follows the compressor OUTLET,
   // ~0.72 of the exducer (a GT28: 2-inch outlet on a 71 mm wheel)
   const duct=0.72*turboFrame(engine).exd;
-  engine.chargeVol=(P?P.pipe_m:ic.pipe)*Math.PI/4*duct*duct+(P?icCoreL(P):ic.core)/1000;
+  const G=icGeom(engine);   // a factory core as sized for this engine (build 256)
+  engine.chargeVol=(P?P.pipe_m:ic.pipe)*Math.PI/4*duct*duct+(G?icCoreL(G):0)/1000;
   // Turbo spool characteristics scaled to redline, then modified by the turbo config
   // (twin/sequential/compound), anti-lag (keeps it spooled) and intercooler volume (lag).
   const tb=turboFrame(engine), cfg=TURBO_CONFIG[engine.turboConfig]||TURBO_CONFIG.single;

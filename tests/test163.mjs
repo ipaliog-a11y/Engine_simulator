@@ -1,4 +1,4 @@
-// The intercooler as a part (build 255).
+// The intercooler as a part (build 255); its effectiveness from its fins, its drop on the compressor (build 256).
 //
 // WHY THIS EXISTS. The two factory cores were a quoted effectiveness, a pipe length and a volume. The PARTS page now
 // designs a core by its face, depth, fins and pipe, and the charge path reads its own volume and an effectiveness
@@ -6,7 +6,10 @@
 //   · a factory core written down as a part is that core, exactly, on three turbo engines (the fingerprint is identical);
 //   · a wider core cools better and drops more pressure; more fins cool better; a longer pipe holds more charge;
 //   · the preview moves nothing; SAVE & FIT fits the core as previewed, as its class, and it travels with a build;
-//   · an old build's boolean intercooler still loads as its factory core; an NA engine is told a core changes nothing.
+//   · an old build's boolean intercooler still loads as its factory core; an NA engine is told a core changes nothing;
+//   · (256) no core carries a quoted effectiveness any more; a core cools better at a lower flow; the compressor makes up
+//     the drop (the boost still reaches its target where it did, the compressor works to target + drop); a factory core
+//     grows for an engine whose full flow is past its rating (the Ford GT's small core) and not for one within it.
 import { chromium } from './pw.mjs';
 import { fileURLToPath, pathToFileURL } from 'url';
 import path from 'path';
@@ -34,6 +37,14 @@ const r = await page.evaluate(() => {
       o.fac.push({ car: vehicle.body.name, k, hp: a.peakHP, cls: icClass(p), d: maxDiff(a, b), de: Math.abs(a.eff - b.eff), dv: Math.abs(a.vol - b.vol) });
     }
   }
+  // 256: derived effectiveness, the drop on the compressor, the factory core sized for its engine
+  o.quoted = Object.values(INTERCOOLER).some(c => 'eff' in c);
+  load('Golf GTI (Mk7');
+  { const G = icGeom(engine), m = airFlowAt(engine.redline, engine.mapMax); o.flowEff = [icEps(G, m), icEps(G, m / 2)]; o.golfH = G.h;
+    const rpm = 5000, tgt = 1 + boostTarget(rpm), dp = icDpBar(airFlowAt(rpm, tgt), tgt); o.dp = dp; o.hold = Math.abs(steadyBoost(rpm) + 1 - tgt);
+    const sv = state.iat; state.iat = 25; const keep = icDpBar; o.tOut = [compOutletT(tgt, rpm)]; icDpBar = () => 0; o.tOut.push(compOutletT(tgt, rpm)); icDpBar = keep; state.iat = sv; }
+  load('Ford GT (2005');
+  o.gtH = icGeom(engine).h;
   load('Golf GTI (Mk7');
   const base = partFromFactory('large', 'intercooler'), R = x => icReport(Object.assign({}, base, x));
   o.w = [400, 600, 800].map(w => { const q = R({ w }); return { eff: q.eff, dp: q.dp.core }; });
@@ -68,6 +79,12 @@ for (const c of r.fac) {
   if (c.cls !== c.k) fails.push(`${c.car} ${c.k}: the part's class is ${c.cls}`);
 }
 const f = x => x.toFixed(3);
+console.log(`== 256: quoted eff left: ${r.quoted}; Golf large core eff at full / half flow ${f(r.flowEff[0])} / ${f(r.flowEff[1])}; drop at 5000 rpm ${(r.dp * 100).toFixed(1)} kPa; boost held to ${r.hold.toExponential(1)} bar; core height Golf ${r.golfH}, Ford GT ${r.gtH} mm ==`);
+if (r.quoted) fails.push('a factory core still carries a quoted effectiveness');
+if (!(r.flowEff[1] > r.flowEff[0] && r.flowEff[0] > 0.5 && r.flowEff[1] < 1)) fails.push('the large core does not cool better at a lower flow');
+if (!(r.dp > 0.01 && r.hold < 0.01)) fails.push('the drop is not made up by the compressor');
+if (!(r.tOut[0] > r.tOut[1])) fails.push('the compressor does not deliver more than the boost (its outlet is no hotter with the drop)');
+if (r.golfH !== 250 || !(r.gtH > 150)) fails.push('the factory cores are not sized to their engines as the rule says');
 console.log(`== width 400/600/800: eff ${r.w.map(x => f(x.eff)).join(' / ')}, core drop ${r.w.map(x => (x.dp / 1000).toFixed(1)).join(' / ')} kPa ==`);
 console.log(`== fins 10/14/20: eff ${r.fpi.map(f).join(' / ')}; pipe 1/3/5 m: ${r.pipe.map(x => x.toFixed(2)).join(' / ')} L ==`);
 const up = a => a[0] < a[1] && a[1] < a[2];
