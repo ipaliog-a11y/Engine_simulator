@@ -1,4 +1,4 @@
-# PIXEL ENGINE SIM v0.7 build 256
+# PIXEL ENGINE SIM v0.7 build 257
 
 **A lightweight, 8-bit style internal combustion engine *designer* & simulator** inspired by *Automation*.
 
@@ -331,11 +331,11 @@ assist map over speed and pedal), regeneration, load-point shifting, electric-dr
   move where moving teaches something (a piston, a pulse in a header, a turbo spooling, a wastegate
   opening); they hold still for reduced motion. A search box filters the index, pages link to each
   other, and a glossary, a known-limits page and a calibration page sit at the end.
-- **Emissions** — engine-out CO / HC / NOx computed from the mixture (λ) and combustion
-  temperature, then cleaned by the catalytic converter *only* in a narrow window around
-  stoich: run rich and CO/HC spike (no O₂ to burn them); run lean and NOx slips past (a cat
-  can't reduce it with excess O₂). A **DIRTY** analyser is the price of chasing power on a rich
-  or decatted tune.
+- **Emissions** — LIVE analyser in g/s: CO₂ / O₂ from the fuel's C/H/O atoms and λ; CO / HC /
+  NOx / (diesel) PM from mixture and temperature trends scaled by fuel mass, then cleaned by
+  the catalytic converter *only* in a narrow window around stoich. Run rich and CO/HC spike;
+  run lean and NOx slips past. A **DIRTY** analyser is the price of chasing power on a rich or
+  decatted tune.
 - **WEAR toggle** — turn damage/wear off for free experimentation (invincible engine) or on
   for consequences.
 - **Dyno Curve** — full power & torque vs RPM out to your redline, with peak markers and a
@@ -589,13 +589,12 @@ Curve** tab remains a wide-open-throttle steady-state sweep for reading the full
   waste fuel (worse BSFC). The air filter adds an airflow-weighted restriction.
 - Knock combines boost, compression, charge/coolant temperature, RPM, timing and mixture,
   offset by fuel octane, charge cooling and direct injection; high knock derates power.
-- Emissions: CO rises sharply when rich (incomplete combustion); HC is U-shaped — high rich
-  (excess fuel) and very lean (misfire), plus cam-overlap scavenging, imprecise metering and
-  a cold engine; NOx is thermal, peaking slightly lean (~λ1.08) and scaling with combustion
-  temperature (load, compression, spark advance, hot charge). A three-way cat needs excess O₂
-  to oxidise CO/HC but an O₂-free exhaust to reduce NOx, so only a stoich mixture cleans all
-  three at once — the rating rewards a cat + precise stoich metering and punishes rich/lean/
-  decatted running. The cat also adds a little exhaust back-pressure (a small top-end VE loss).
+- Emissions: major pipe species from fuel C/H/O + λ (rich side via water-gas shift); CO rises
+  sharply when rich; HC is U-shaped — high rich and very lean (misfire), plus overlap, metering
+  and cold running; NOx peaks slightly lean (~λ1.08) and scales with combustion temperature.
+  Rates are g/s from the live fuel mass. A three-way cat needs excess O₂ to oxidise CO/HC but
+  an O₂-free exhaust to reduce NOx, so only stoich cleans all three — the rating rewards a cat
+  + precise stoich metering. The cat also adds a little exhaust back-pressure (a small VE loss).
 - Fuel type sets energy density, stoichiometric AFR (the mixture control works in lambda,
   so the AFR slider rescales per fuel), knock rating and evaporative charge cooling. E85 and
   methanol resist knock and cool the intake charge (more power) but need much more fuel

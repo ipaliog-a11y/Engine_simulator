@@ -1020,7 +1020,10 @@ function stepWear(dt){
   add(state.oil>132?(state.oil-132)/22*0.025:0,'OIL TEMP');
   if(engine.floatRpm>0&&state.rpm>engine.floatRpm)add(0.004+0.1*(state.rpm/engine.floatRpm-1),'VALVE FLOAT');
   if(!engine.ci)add(Math.max(0,lam-1.05)*Math.max(0,state.map-0.9)*0.14,'LEAN/BOOST');  // burnt pistons (diesels run lean by design)
-  if(engine.ci)add(state.emPM>35?(state.emPM-35)/40*0.020:0,'OVER-FUEL/EGT');     // diesel: over-fuelling → soot & heat
+  // Diesel soot wear: emission index g PM / kg fuel. ~2.5 g/kg is where smoke is obvious near
+  // the smoke limit (Heywood ch.11 diesel PM order); was a dimensionless analyser index before build 257.
+  {const fkg=(state.fuelFlowLph/3600)*(engine.fuelDensity||0.83),ei=fkg>1e-6?state.emPM/fkg:0;
+   if(engine.ci)add(ei>2.5?(ei-2.5)/8*0.020:0,'OVER-FUEL/EGT');}
   add(state.oil<55&&state.powerHP>15?0.004:0,'COLD-OIL');
   add(nitrousImep()>0?0.011:0,'NITROUS');                                        // nitrous stresses everything
   add(engine.antilag&&state.rpm>2500?0.004:0,'ANTI-LAG');                        // ALS cooks the turbo/exhaust
@@ -1029,68 +1032,133 @@ function stepWear(dt){
   state.wearCause=worst>0.001?cause:'';
   if(state.engineHealth<=0){state.blown=true;state.engineHealth=0;state.wearCause=cause||'FAILURE';}
 }
-// ---- Emissions: engine-out CO / HC / NOx vs mixture & combustion temperature, then a
-// three-way catalytic converter that only cleans efficiently in a narrow window around
-// stoich. Stored on state for the analyser display; also fed a 0-100 cleanliness rating.
-//   CO  — incomplete combustion: high when RICH (no O2), near-zero at/above stoich.
-//   HC  — unburned fuel: U-shaped — high rich (excess fuel) AND very lean (misfire), plus
-//         cam-overlap scavenging, imprecise metering (carbs) and a cold engine.
-//   NOx — thermal: peaks slightly LEAN (~λ1.08, hot + excess O2), scaling with combustion
-//         temperature (load, compression, spark advance, hot charge/chamber).
-// The cat needs excess O2 to oxidise CO/HC (works stoich→lean) but a reducing, O2-free
-// exhaust to reduce NOx (works stoich→rich) — so only stoich cleans all three at once.
+// ---- Exhaust-pipe emissions (build 257) ----
+// Major species (CO2, H2O, O2, N2, and rich CO/H2) from fuel C/H/O atom balance + λ.
+// Rich products use a fixed water-gas constant K=(nCO·nH2O)/(nCO2·nH2)=3.5 (Heywood §4.9,
+// burned-gas order at ~1700 K). HC / residual lean CO / NOx / PM keep the pre-257 trend
+// shapes vs λ and temperature, scaled to g/s via fuel mass and cited emission-index anchors.
+// Aftertreatment: three-way cat (SI) or DOC+DPF(+SCR) (CI), same λ-window as before.
+const AIR_N2_PER_O2=3.773;           // moles N2 per mole O2 in dry air
+const WGS_K=3.5;                     // water-gas shift K (Heywood §4.9, ~1700 K)
+const MW_C=12.011,MW_H=1.008,MW_O=16.00,MW_CO2=44.01,MW_CO=28.01,MW_H2O=18.015,MW_O2=32.00,MW_NO=30.01;
+// Emission-index anchors (g pollutant / kg fuel) at the correlation's unity point.
+// NOx ~15 g/kg near SI peak (Heywood ch.11 order); diesel PM ~4 g/kg near smoke without a DPF.
+const EI_NOX_REF=15,EI_PM_REF=4;
+function zeroEmissions(){
+  state.emCO=0;state.emHC=0;state.emNOx=0;state.emPM=0;state.emCO2=0;state.emO2=0;state.emRating=100;
+}
+// Fuel as CH_y O_z (y=fuelHC, z=fuelOC). Returns moles of each product per mole of fuel-C,
+// then mass rates in g/s from burn kg/s.
+function pipeProducts(y,z,lam,burn_kg_s){
+  const aS=1+y/4-z/2;                          // stoich O2 moles per mole fuel-C
+  const nO2air=Math.max(0,lam)*aS;
+  const MWf=MW_C+y*MW_H+z*MW_O;                // g per mole fuel-C
+  const nFuel=burn_kg_s*1000/MWf;              // mol fuel-C / s
+  let nCO2,nCO,nH2O,nH2,nO2;
+  if(lam>=1-1e-9){
+    nCO2=1;nCO=0;nH2O=y/2;nH2=0;nO2=(lam-1)*aS;
+  }else{
+    // Rich: no free O2. Solve WGS + atom balances for nCO2 (Heywood §4.3 / §4.9).
+    const rhs=z+2*nO2air-1;                    // nCO2 + nH2O from oxygen balance
+    // K nCO2 (y/2 - rhs + nCO2) = (1-nCO2)(rhs - nCO2)
+    // → (K+1) n² + (K(y/2-rhs) - rhs - 1) n + rhs = 0
+    const A=WGS_K+1,B=WGS_K*(y/2-rhs)-rhs-1,C=rhs;
+    const disc=Math.max(0,B*B-4*A*C),n=(-B+Math.sqrt(disc))/(2*A);
+    nCO2=clamp(n,0,1);nCO=1-nCO2;nH2O=rhs-nCO2;nH2=y/2-nH2O;nO2=0;
+    if(nH2O<0){nH2O=0;nH2=y/2;nCO2=clamp(rhs,0,1);nCO=1-nCO2;}
+    if(nH2<0){nH2=0;nH2O=y/2;nCO2=clamp(rhs-nH2O,0,1);nCO=1-nCO2;}
+  }
+  const nN2=AIR_N2_PER_O2*nO2air;
+  return{
+    co2:nFuel*nCO2*MW_CO2, co:nFuel*nCO*MW_CO, h2o:nFuel*nH2O*MW_H2O,
+    o2:nFuel*nO2*MW_O2, n2:nFuel*nN2*28.014, burn:burn_kg_s, MWf
+  };
+}
 function computeEmissions(){
+  if(!engine||engine.type==='electric'){zeroEmissions();return state.emRating;}
+  if(state.fuelCut){zeroEmissions();return state.emRating;}
   const map=liveMap(),lam=state.afr/engine.stoichAFR;
+  const T_k=effIAT(map,state.rpm)+273.15,MAP_pa=map*1e5,Vd=engine.displacement_L/1000;
+  const airMass=(MAP_pa*Vd*(state.rpm/60)*engine.chargesPerRev*Math.max(0.05,state.ve))/(287*T_k)*(1-egrRate(state.rpm,map));
+  const afr=Math.max(3,curAFR(state.rpm,map));
+  const metered=(airMass/afr)/engine.meteringEff*engine.typeBsfc;   // kg/s delivered
+  const burn=metered/Math.max(1,engine.typeBsfc);                   // kg/s trapped / burned
+  const shortHC=Math.max(0,metered-burn);                           // 2-stroke short-circuit etc.
+  if(burn<1e-9&&shortHC<1e-9){zeroEmissions();return state.emRating;}
+
+  const y=engine.fuelHC!=null?engine.fuelHC:1.87,z=engine.fuelOC!=null?engine.fuelOC:0;
+  const prod=pipeProducts(y,z,lam,burn);
+
+  // Unburned HC fraction of the trapped charge (Heywood fig. 3-9 midpoints via COMB_INEFF_*),
+  // plus cold / overlap / metering / lean-misfire / rotary leakage. Carbon removed from CO2/CO.
+  const cold=state.coolant<60?(60-state.coolant)/60:0,meterSlop=1-engine.meteringEff;
+  let phiHC=(engine.ci?COMB_INEFF_CI:COMB_INEFF_SI);
+  if(engine.type==='twostroke')phiHC+=0.08;
+  else if(engine.type==='rotary')phiHC+=0.05+Math.max(0,lam-1.06)*0.12;
+  else{
+    phiHC+=Math.max(0,engine.overlap||0)/90*0.04+meterSlop*0.05+cold*0.08;
+    phiHC+=Math.max(0,lam-1.06)*0.15+Math.max(0,1.0-lam)*0.02;
+  }
+  if(engine.ci){const fuelling=clamp((1.7-lam)/1.0,0,1);phiHC+=fuelling*0.02+cold*0.04;}
+  phiHC=clamp(phiHC,0,0.45);
+  let mHC=(phiHC*burn+shortHC)*1000;                // g/s as fuel mass
+  const cFrac=MW_C/(MW_C+y*MW_H+z*MW_O);
+  // Pull carbon out of CO2 first, then CO, so atom balance still closes.
+  let cNeed=mHC*cFrac,cFromCO2=Math.min(prod.co2*(MW_C/MW_CO2),cNeed);
+  prod.co2-=cFromCO2*(MW_CO2/MW_C);cNeed-=cFromCO2;
+  if(cNeed>0){const cFromCO=Math.min(prod.co*(MW_C/MW_CO),cNeed);prod.co-=cFromCO*(MW_CO/MW_C);}
+
+  // Residual lean/stoich CO beyond the rich WGS path: part of combustion inefficiency as CO.
+  let mCO=prod.co;
+  if(lam>=1){
+    const phiCO=clamp((engine.ci?COMB_INEFF_CI:COMB_INEFF_SI)*0.4+meterSlop*0.03,0,0.08);
+    const addCO=phiCO*burn*1000*(MW_CO/prod.MWf);
+    const cTake=Math.min(prod.co2*(MW_C/MW_CO2),addCO*(MW_C/MW_CO));
+    prod.co2-=cTake*(MW_CO2/MW_C);mCO+=cTake*(MW_CO/MW_C);
+  }
+
+  // NOx / PM: prior correlation shapes, scaled to g/s. NOx as NO (MW 30).
   const load=clamp((state.rpm-800)/(engine.redline-800),0,1)*0.5+clamp((map-0.3)/(engine.mapMax-0.3),0,1)*0.5;
   const adv=activeAdvance(state.rpm,map),mbt=mbtAdvance(state.rpm,map);
   const tempF=clamp(0.4+load*0.9+Math.max(0,engine.compression-9)*0.05
     +Math.max(0,effIAT(map,state.rpm)-30)*0.006+Math.max(0,adv-mbt+8)*0.010
     +Math.max(0,state.coolant-90)*0.004,0.2,2.4);
-  const cold=state.coolant<60?(60-state.coolant)/60:0;
-  const meterSlop=1-engine.meteringEff;   // carbs/mech injection run imprecise & rich
-  // Engine-out pollutants differ sharply by cycle. PM (soot) is a diesel-specific pollutant.
-  let coEO,hcEO,noxEO,pmEO=0;
+  let noxIdx,pmIdx=0;
   if(engine.ci){
-    // Diesel: lean CI. Low CO/HC, high thermal NOx, and soot (PM) that climbs toward the
-    // smoke limit (λ→1, lots of fuel in little excess air) and with imprecise metering.
-    const fuelling=clamp((1.7-lam)/1.0,0,1);           // ~0 very lean, ~1 near smoke limit
-    coEO =3+fuelling*9;
-    hcEO =2+fuelling*6+cold*20;
-    noxEO=8+130*clamp(tempF*0.62,0,1.4);               // hot lean flame → lots of NOx
-    pmEO =2+Math.pow(fuelling,1.6)*80+meterSlop*30;    // black smoke near full fuelling
-  }else if(engine.type==='twostroke'){
-    coEO =6+Math.max(0,1.0-lam)*260+meterSlop*120;
-    hcEO =42+Math.max(0,1.0-lam)*120+engine.typeBsfc*18;   // oil burning + short-circuit scavenging → very high HC
-    noxEO=2+42*Math.exp(-Math.pow((lam-1.08)/0.13,2))*tempF;
-  }else if(engine.type==='rotary'){
-    coEO =6+Math.max(0,1.0-lam)*300+meterSlop*120;
-    hcEO =26+Math.max(0,1.0-lam)*120+Math.max(0,lam-1.06)*200;   // apex-seal leakage → high HC
-    noxEO=2+55*Math.exp(-Math.pow((lam-1.08)/0.12,2))*tempF;
-  }else{
-    coEO =4+Math.max(0,1.0-lam)*300+meterSlop*140;
-    hcEO =3+Math.max(0,1.0-lam)*95+Math.max(0,lam-1.06)*280+Math.max(0,engine.overlap||0)/90*0.08*130+meterSlop*70+cold*45;
-    noxEO=2+100*Math.exp(-Math.pow((lam-1.08)/0.11,2))*tempF;
-  }
-  if(state.fuelCut){coEO=Math.min(coEO,1);hcEO=Math.min(hcEO,2);noxEO=Math.min(noxEO,1);pmEO=0;}
-  // Aftertreatment. Diesel uses DOC (CO/HC) + DPF (PM) always, plus SCR (NOx) on the full
-  // "stock" system; a spark engine's three-way cat only works in the stoich window.
+    const fuelling=clamp((1.7-lam)/1.0,0,1);
+    noxIdx=8+130*clamp(tempF*0.62,0,1.4);
+    pmIdx=2+Math.pow(fuelling,1.6)*80+meterSlop*30;
+    mCO+= (3+fuelling*9)/300*burn*1000*0.15;         // small diesel CO EI on top of majors
+  }else if(engine.type==='twostroke')noxIdx=2+42*Math.exp(-Math.pow((lam-1.08)/0.13,2))*tempF;
+  else if(engine.type==='rotary')noxIdx=2+55*Math.exp(-Math.pow((lam-1.08)/0.12,2))*tempF;
+  else noxIdx=2+100*Math.exp(-Math.pow((lam-1.08)/0.11,2))*tempF;
+  let mNOx=(noxIdx/100)*EI_NOX_REF*burn;             // g/s (EI_NOX_REF g/kg × kg/s)
+  let mPM=(pmIdx/80)*EI_PM_REF*burn;
+
+  // Aftertreatment on the regulated species; oxidised CO/HC become extra CO2.
   let oxEff,redEff,pmEff=0;
   if(engine.ci){
     const hot=state.coolant<50?0.3:1;
-    oxEff =engine.catConv*hot;                       // DOC oxidises CO/HC
-    pmEff =engine.catConv*hot;                       // DPF traps soot
-    redEff=(engine.cat==='stock'?0.9:0)*hot;         // SCR reduces NOx (full system only)
+    oxEff=engine.catConv*hot;pmEff=engine.catConv*hot;redEff=(engine.cat==='stock'?0.9:0)*hot;
   }else{
     const w=Math.exp(-Math.pow((lam-1.0)/0.02,2));
-    const leanO2=clamp((lam-1.0)/0.05,0,1),richRed=clamp((1.0-lam)/0.05,0,1);
-    const litoff=state.coolant<50?0.25:1;
-    oxEff =engine.catConv*litoff*Math.max(w,leanO2*0.85);
+    const leanO2=clamp((lam-1.0)/0.05,0,1),richRed=clamp((1.0-lam)/0.05,0,1),litoff=state.coolant<50?0.25:1;
+    oxEff=engine.catConv*litoff*Math.max(w,leanO2*0.85);
     redEff=engine.catConv*litoff*Math.max(w,richRed*0.85);
   }
-  state.emCO=coEO*(1-oxEff);state.emHC=hcEO*(1-oxEff);state.emNOx=noxEO*(1-redEff);state.emPM=pmEO*(1-pmEff);
-  // Cleanliness rating 0-100 (higher = cleaner): saturating penalties per pollutant, weighted
-  // to each cycle's signature (diesel = NOx + soot; spark = CO/HC/NOx).
-  const coBad=clamp(state.emCO/40,0,1),hcBad=clamp(state.emHC/25,0,1),noxBad=clamp(state.emNOx/70,0,1),pmBad=clamp(state.emPM/45,0,1);
+  const dCO=mCO*oxEff,dHC=mHC*oxEff;
+  mCO-=dCO;mHC-=dHC;mNOx*=(1-redEff);mPM*=(1-pmEff);
+  let mCO2=prod.co2+dCO*(MW_CO2/MW_CO)+dHC*cFrac*(MW_CO2/MW_C);
+  let mO2=prod.o2;
+  // Oxidation consumes O2 when lean/stoich spare O2 is present.
+  mO2=Math.max(0,mO2-dCO*(0.5*MW_O2/MW_CO)-dHC*cFrac*(MW_O2/MW_C));
+
+  state.emCO=mCO;state.emHC=mHC;state.emNOx=mNOx;state.emPM=mPM;state.emCO2=mCO2;state.emO2=mO2;
+  // Cleanliness from emission indices (g/kg fuel) so large and small engines share a scale.
+  // Denominators: cruise-dirty references after a failed/decat tune (g/kg).
+  const fkg=Math.max(burn,1e-9);
+  const coBad=clamp((mCO/fkg)/40,0,1),hcBad=clamp((mHC/fkg)/25,0,1);
+  const noxBad=clamp((mNOx/fkg)/20,0,1),pmBad=clamp((mPM/fkg)/8,0,1);
   if(engine.ci)state.emRating=Math.round(clamp(100-(coBad*14+hcBad*12+noxBad*36+pmBad*34),0,100));
   else state.emRating=Math.round(clamp(100-(coBad*38+hcBad*30+noxBad*32),0,100));
   return state.emRating;
@@ -1105,7 +1173,6 @@ function updateEnginePhysics(){
   // AUTO (ECU MAP) mode: the ECU sets the live mixture from its load×rpm map, so the AFR
   // readout, fuel flow, emissions and wear all reflect the mapped value.
   if(engine.afrMode==='auto')state.afr=mappedAFR(state.rpm,map);
-  computeEmissions();
   state.fuelCut=overrunFuelCut()||state.rpm>=engine.redline;
   const r=calcAtRpm(state.rpm,map);
   state.torque=r.torque;state.powerKW=r.powerKW;state.powerHP=r.powerHP;
@@ -1114,6 +1181,7 @@ function updateEnginePhysics(){
   if(state.fuelCut){   // overrun / limiter fuel cut → no fuel burned, engine braking
     state.fuelFlowLph=0;state.heatFuelLph=0;state.bsfc=999;state.thermalEff=0;
     if(state.rpm<engine.redline){state.torque=Math.min(0,brakeTorqueRaw(state.rpm,map,true));state.powerKW=state.torque*state.rpm*2*Math.PI/60/1000;state.powerHP=state.powerKW/0.7457;}
+    computeEmissions();   // zeros the analyser (fuelCut)
     return;
   }
   const T_k=effIAT(map,state.rpm)+273.15,MAP_pa=map*1e5,Vd=engine.displacement_L/1000;
@@ -1127,6 +1195,7 @@ function updateEnginePhysics(){
   const fuelPower=meteredFuel*engine.fuelLHV*1e6/1000;
   state.thermalEff=fuelPower>0.1?clamp((state.powerKW/fuelPower)*100,0,46):0;
   state.bsfc=state.powerKW>0.5?(meteredFuel*3600*1000)/state.powerKW:999;
+  computeEmissions();
 }
 function getDynoData(){
   if(isElectric())return motorDynoData();

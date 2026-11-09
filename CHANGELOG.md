@@ -20,6 +20,18 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 Working toward **v1.0 — every number derived, not fitted.**
 
+### Derived pipe emissions on LIVE (build 257)
+
+Tailpipe rates from the engine's design, tune and live operating point, not dimensionless analyser indices.
+
+- **Major species from fuel atoms:** each fuel carries H/C and O/C (Heywood CH1.87 / CH1.80; methanol CH3OH; E85 volume blend). CO₂, H₂O, O₂, N₂ and rich CO/H₂ follow λ with a water-gas constant K = 3.5 (Heywood §4.9).
+- **CO / HC / NOx / PM as g/s:** the prior λ and temperature trends, scaled by live fuel mass (NOx and diesel PM anchors 15 and 4 g/kg fuel). The cat still cleans in its λ window; oxidised CO/HC add to CO₂.
+- **LIVE analyser:** CLEAN / OK / DIRTY plus CO₂, CO, HC, NOx and (diesel) PM in g/s. Hidden on a pure EV. Scorecard `emit` still uses the 0–100 rating (now from g/kg indices).
+- **Wear:** diesel OVER-FUEL uses PM g/kg (>2.5) instead of the old index threshold.
+- **Left open:** dyno emission columns, Zeldovich NOx, cat brick temperature / O₂ storage, g/km cycles. Challenge emit targets may need a later look if scores shift.
+
+Tests: test164 (new).
+
 ### An intercooler's effectiveness from its fins, and its pressure drop on the compressor (build 256)
 
 Item 4 of `plans/parts-design-space.md`, step 2: `INTERCOOLER.eff` (0.62 small, 0.82 large) is retired.

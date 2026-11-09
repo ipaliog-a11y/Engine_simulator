@@ -344,6 +344,21 @@ function updateUI(){
   const hp=Math.round(state.engineHealth*100),healthEl=document.getElementById('statHealth');
   healthEl.querySelector('.value').textContent=state.blown?tr('DEAD'):hp;
   healthEl.className='stat'+(state.blown||hp<30?' danger':(hp<70?' warning':''));
+  // Exhaust analyser (build 257): CLEAN / OK / DIRTY from emRating; rates in g/s.
+  const emEl=document.getElementById('statEmit');
+  if(emEl){
+    const r=state.emRating,lab=r>=70?'CLEAN':r>=40?'OK':'DIRTY';
+    emEl.querySelector('.value').textContent=tr(lab);
+    emEl.className='stat'+(r<40?' danger':r<70?' warning':'');
+    const fmt=x=>x>=10?x.toFixed(1):x>=1?x.toFixed(2):x.toFixed(3);
+    document.querySelector('#statCO2 .value').textContent=fmt(state.emCO2||0);
+    document.querySelector('#statCO .value').textContent=fmt(state.emCO||0);
+    document.querySelector('#statHC .value').textContent=fmt(state.emHC||0);
+    document.querySelector('#statNOx .value').textContent=fmt(state.emNOx||0);
+    const pmEl=document.getElementById('statPM');
+    if(engine.ci){pmEl.querySelector('.value').textContent=fmt(state.emPM||0);pmEl.style.visibility='';}
+    else{pmEl.querySelector('.value').textContent='—';pmEl.style.visibility='';}
+  }
   const status=document.getElementById('status'),legend=document.getElementById('legend');
   if(performance.now()<statusFlashUntil){/* keep transient flash message */}
   else if(vizMode==='design'){status.textContent=tr('DESIGN MODE • CONFIGURE & BUILD');status.className='status-bar'}

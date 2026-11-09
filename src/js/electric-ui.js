@@ -240,6 +240,7 @@ function stepMotorBench(dt){
   st.torque=T;st.powerKW=T*w/1000;st.powerHP=st.powerKW/0.7457;
   st.thermalEff=Pb>100?clamp(T*w/Pb*100,0,100):0;
   st.fuelFlowLph=0;st.bsfc=999;st.knockRisk=0;st.fuelCut=false;
+  if(typeof zeroEmissions==='function')zeroEmissions();   // no tailpipe on a pure EV (build 257)
 }
 // Damage the controller cannot prevent: magnets past their grade's limit lose flux for good (the remanence a hot NdFeB
 // magnet gives up past its coercivity does not come back), a winding past 200 C cooks its insulation.
@@ -365,6 +366,7 @@ function setLiveLabels(ev){
     L.textContent=ev?tr(EV_TILES[id][0]):tr(L.dataset.ice);U.textContent=ev?EV_TILES[id][1]:U.dataset.ice;
   }
   EV_ONLY_TILES.forEach(id=>{const el=document.getElementById(id);if(el)el.style.display=ev?'':'none';});
+  const em=document.getElementById('liveEmRows');if(em)em.hidden=!!ev;   // no exhaust analyser on a pure EV (build 257)
   const sg=document.getElementById('evSocGroup');if(sg)sg.hidden=!ev;   // the pack's charge, set by hand (build 198)
   // what a motor has no use for leaves the panel: mixture, intake air, the engine's coolant and oil, the alternator's
   // load, auto-thermal and nitrous, and the printable report (EV_REPORT_NOTE); it comes back with an engine
