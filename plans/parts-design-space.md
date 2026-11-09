@@ -33,7 +33,8 @@ Each new part is two builds:
   left in the airflow estimates (exhaust pulse, blowdown, compressor demand). Its removal should move turbo spool most.
 - Intercooler: every intercooled preset (45) loses its core's pressure drop. Done in build 256 with the effectiveness from
   the fins and the factory cores sized to their engines: 43 cars moved, −12% to +7.5% peak power, mean 0-100 error
-  7.76 → 8.24%. Still open: twin and water-to-air cores per car.
+  7.76 → 8.24%. Still open: twin and water-to-air cores per car. The owner accepted this drift on merge; it is to be won
+  back in future updates by missing physics, not by tuning.
 
 ## Parked (owner's decision, after build 256)
 

@@ -41,6 +41,9 @@ Item 4 of `plans/parts-design-space.md`, step 2: `INTERCOOLER.eff` (0.62 small, 
   (Civic Type R); most small turbo cars +2 to +4%, the big supercharged V8s −4 to −5%, the RX-7 −7.5% (its small core
   falls to 0.52). Mean 0-100 error against the real figures on these cars **7.76% → 8.24% (worse)**: most small turbo
   cars were already quicker than their real figures, and a cooler charge makes them quicker still. Not tuned back.
+  **The owner accepted this drift for release** (2026-11-09): it is to be fixed in future updates, by the physics that
+  is missing (per-car twin and water-to-air cores, parked; whatever else makes the small turbo cars quick), never by
+  tuning values back.
 - **Left open:** the big-flow cars that really use two cores or a water-to-air one (Ford GT, Hellcat, ZL1, 720S/750S,
   GT-R) are on one air-to-air core; the cooling air does not follow car speed; Chang & Wang's correlation is
   extrapolated to 75-80 mm deep cores (its data run shallower); the drop's density is taken at 313 K.
