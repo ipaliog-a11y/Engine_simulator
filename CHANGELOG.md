@@ -20,6 +20,13 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 Working toward **v1.0 — every number derived, not fitted.**
 
+### Emission tile colors on LIVE (build 258)
+
+- **Each species tile** (CO₂, CO, HC, NOx, PM) turns amber then red: pollutants by g/kg fuel on the same denoms as the emit score (40 / 25 / 20 / 8); CO₂ by g/kWh when making power (900 / 1200).
+- **Guide wiki** (`gp-emissions`) and README say so. Greek paused.
+
+Tests: test165 (new).
+
 ### Derived pipe emissions on LIVE (build 257)
 
 Tailpipe rates from the engine's design, tune and live operating point, not dimensionless analyser indices.

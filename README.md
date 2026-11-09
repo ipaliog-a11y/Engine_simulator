@@ -1,4 +1,4 @@
-# PIXEL ENGINE SIM v0.7 build 257
+# PIXEL ENGINE SIM v0.7 build 258
 
 **A lightweight, 8-bit style internal combustion engine *designer* & simulator** inspired by *Automation*.
 
@@ -333,9 +333,9 @@ assist map over speed and pedal), regeneration, load-point shifting, electric-dr
   other, and a glossary, a known-limits page and a calibration page sit at the end.
 - **Emissions** — LIVE analyser in g/s: CO₂ / O₂ from the fuel's C/H/O atoms and λ; CO / HC /
   NOx / (diesel) PM from mixture and temperature trends scaled by fuel mass, then cleaned by
-  the catalytic converter *only* in a narrow window around stoich. Run rich and CO/HC spike;
-  run lean and NOx slips past. A **DIRTY** analyser is the price of chasing power on a rich or
-  decatted tune.
+  the catalytic converter *only* in a narrow window around stoich. Each species tile turns
+  amber then red on the same g/kg (CO₂: g/kWh) scale the emit score uses. Run rich and CO/HC
+  spike; run lean and NOx slips past. A **DIRTY** analyser is the price of a rich or decatted tune.
 - **WEAR toggle** — turn damage/wear off for free experimentation (invincible engine) or on
   for consequences.
 - **Dyno Curve** — full power & torque vs RPM out to your redline, with peak markers and a
