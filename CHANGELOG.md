@@ -20,6 +20,22 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 Working toward **v1.0 — every number derived, not fitted.**
 
+### Four sections in place of ten tabs on a phone (build 261)
+
+Owner's decisions 12 and 13 (phone and desktop alike; declutter). No physics changes.
+
+- **BUILD · TEST · DRIVE · MORE.** The ten tabs are four sections: BUILD (engine, vehicle, parts, garage), TEST (live,
+  dyno), DRIVE (track, race), MORE (guide, options). On a phone held upright a bar of the four, each with a pixel icon,
+  sits at the foot of the screen as an app's does, and the tabs are one strip, four to a screen, that slides to the
+  open section and stays at the top while the page scrolls. A section opens on the tab last used in it. The bar keeps clear of a phone's home
+  indicator (safe-area inset), and the full-screen TRACK and RACE pages stop above it.
+- **Desktop** keeps the ten tabs in one row, with a gap between sections.
+- **The header on a phone** is one line of title and one of subtitle; it took three.
+- **Left open:** the LIVE cutaway's labels are too small to read on a phone (the canvas is drawn for 640 px and scaled
+  down); it needs a phone drawing of its own.
+
+Tests: test167 (new). Tests: 73 51
+
 ### The engine's airflow estimates read its own filling, and the manifold answers by its volume (build 260)
 
 Phase B of `plans/road-to-v1.md`: two fitted numbers off the valved engines.

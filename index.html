@@ -714,6 +714,32 @@ body.showcase-open{overflow:hidden}
   #designPanel.hy #evDesigner .evd-side .evd-panel{display:flex}
   #designPanel.hy #evDesigner .evd-mini{display:none}
 }
+
+/* ---- The four sections (build 261). Desktop: the ten tabs in one row, a gap between sections. Phone (portrait): a bar
+   of the four at the foot of the screen, as an app has, and the tabs as one strip that slides to the open section. ---- */
+.viz-groups{display:none}
+.viz-tabs button[data-g="drive"]:nth-child(5),.viz-tabs button[data-g="test"]:nth-child(7),.viz-tabs button[data-g="more"]:nth-child(9){border-left:4px solid #0a0a12}
+@media(orientation:portrait){
+  header{padding:6px 8px;margin-bottom:8px;border-bottom-width:2px}
+  header h1{font-size:9px;letter-spacing:0}
+  header .subtitle{font-size:7px;margin-top:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .build-strip{margin:0 0 8px;padding:5px 8px;gap:4px 8px;font-size:8px}
+  .build-strip button{font-size:8px;padding:6px 8px}
+  .viz-tabs{flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none;scroll-behavior:smooth;position:sticky;top:0;z-index:20}
+  .viz-tabs::-webkit-scrollbar{display:none}
+  .viz-panel{min-width:0}   /* a grid item grows to its content's width unless told otherwise: the strip must scroll, not push */
+  .viz-tabs button{flex:0 0 25%;border-left:none!important}
+  .viz-tabs button:not(.ing){opacity:.55}
+  body{padding-bottom:calc(58px + env(safe-area-inset-bottom,0px))}
+  .evd-side{max-height:calc(75vh - 58px)}
+  body:has(#designPanel.active.ev),body:has(#designPanel.active.hy),body:has(#vehiclePanelTab.active),body:has(#designPanel.active .evd-side){padding-bottom:calc(122px + env(safe-area-inset-bottom,0px))}
+  .viz-groups{display:flex;position:fixed;left:0;right:0;bottom:0;z-index:25;background:#0a0a12;border-top:3px solid #333;padding-bottom:env(safe-area-inset-bottom,0px)}
+  .viz-groups button{flex:1;display:flex;flex-direction:column;align-items:center;gap:5px;padding:8px 2px 7px;font-size:8px;background:#12121c;color:#778;border:none;border-right:2px solid #26263a;box-shadow:none}
+  .viz-groups button:last-child{border-right:none}
+  .viz-groups svg{width:20px;height:20px;fill:currentColor}
+  .viz-groups button.active{background:#004422;color:#00ff88}
+  .track-page,.race-page,.evd-side{bottom:calc(58px + env(safe-area-inset-bottom,0px))}   /* the full pages stop above the bar */
+}
 </style>
 </head>
 <body>
@@ -743,7 +769,7 @@ body.showcase-open{overflow:hidden}
 </div>
 <div class="container">
 <header>
-<h1>PIXEL ENGINE SIM v0.7 build 260</h1>
+<h1>PIXEL ENGINE SIM v0.7 build 261</h1>
 <div class="subtitle" id="subtitle">ENGINE DESIGNER • BUILD IT, THEN DRIVE IT</div>
 </header>
 <div class="build-strip" id="buildStrip">
@@ -751,19 +777,25 @@ body.showcase-open{overflow:hidden}
 <span class="k" id="bsCarK">CAR</span><button id="bsCar" title="Go to the car">—</button>
 <button id="btnMenu" type="button">MENU</button>
 </div>
+<nav class="viz-groups" id="vizGroups" aria-label="Sections">
+<button type="button" data-g="build"><svg viewBox="0 0 8 8" shape-rendering="crispEdges" aria-hidden="true"><path d="M2 0h1v1h-1zM3 0h1v1h-1zM1 1h1v1h-1zM1 2h1v1h-1zM4 2h1v1h-1zM2 3h1v1h-1zM3 3h1v1h-1zM4 3h1v1h-1zM3 4h1v1h-1zM4 4h1v1h-1zM5 4h1v1h-1zM4 5h1v1h-1zM5 5h1v1h-1zM6 5h1v1h-1zM5 6h1v1h-1zM6 6h1v1h-1zM7 6h1v1h-1zM6 7h1v1h-1zM7 7h1v1h-1z"/></svg><span>BUILD</span></button>
+<button type="button" data-g="test" class="active"><svg viewBox="0 0 8 8" shape-rendering="crispEdges" aria-hidden="true"><path d="M2 0h1v1h-1zM3 0h1v1h-1zM4 0h1v1h-1zM5 0h1v1h-1zM1 1h1v1h-1zM6 1h1v1h-1zM0 2h1v1h-1zM5 2h1v1h-1zM7 2h1v1h-1zM0 3h1v1h-1zM4 3h1v1h-1zM7 3h1v1h-1zM0 4h1v1h-1zM3 4h1v1h-1zM7 4h1v1h-1zM0 5h1v1h-1zM7 5h1v1h-1zM1 6h1v1h-1zM6 6h1v1h-1z"/></svg><span>TEST</span></button>
+<button type="button" data-g="drive"><svg viewBox="0 0 8 8" shape-rendering="crispEdges" aria-hidden="true"><path d="M0 0h1v1h-1zM2 0h1v1h-1zM4 0h1v1h-1zM1 1h1v1h-1zM3 1h1v1h-1zM5 1h1v1h-1zM0 2h1v1h-1zM2 2h1v1h-1zM4 2h1v1h-1zM1 3h1v1h-1zM3 3h1v1h-1zM5 3h1v1h-1zM0 4h1v1h-1zM0 5h1v1h-1zM0 6h1v1h-1zM0 7h1v1h-1z"/></svg><span>DRIVE</span></button>
+<button type="button" data-g="more"><svg viewBox="0 0 8 8" shape-rendering="crispEdges" aria-hidden="true"><path d="M1 1h1v1h-1zM2 1h1v1h-1zM5 1h1v1h-1zM6 1h1v1h-1zM0 2h1v1h-1zM3 2h1v1h-1zM4 2h1v1h-1zM7 2h1v1h-1zM0 3h1v1h-1zM3 3h1v1h-1zM4 3h1v1h-1zM7 3h1v1h-1zM0 4h1v1h-1zM3 4h1v1h-1zM4 4h1v1h-1zM7 4h1v1h-1zM0 5h1v1h-1zM3 5h1v1h-1zM4 5h1v1h-1zM7 5h1v1h-1zM1 6h1v1h-1zM2 6h1v1h-1zM5 6h1v1h-1zM6 6h1v1h-1z"/></svg><span>MORE</span></button>
+</nav>
 <div class="main">
 <div class="viz-panel">
 <div class="viz-tabs">
-<button id="tabDesign">ENGINE</button>
-<button id="tabVehicle">VEHICLE</button>
-<button id="tabParts">PARTS</button>
-<button id="tabGarage">GARAGE</button>
-<button id="tabTrack">TRACK</button>
-<button id="tabRace">RACE</button>
-<button id="tabEngine" class="active">LIVE</button>
-<button id="tabDyno">DYNO</button>
-<button id="tabGuide">GUIDE</button>
-<button id="tabOptions">OPTIONS</button>
+<button id="tabDesign" data-g="build">ENGINE</button>
+<button id="tabVehicle" data-g="build">VEHICLE</button>
+<button id="tabParts" data-g="build">PARTS</button>
+<button id="tabGarage" data-g="build">GARAGE</button>
+<button id="tabTrack" data-g="drive">TRACK</button>
+<button id="tabRace" data-g="drive">RACE</button>
+<button id="tabEngine" data-g="test" class="active ing">LIVE</button>
+<button id="tabDyno" data-g="test" class="ing">DYNO</button>
+<button id="tabGuide" data-g="more">GUIDE</button>
+<button id="tabOptions" data-g="more">OPTIONS</button>
 </div>
 <canvas id="engineCanvas" width="640" height="420" role="img" aria-label="Engine test-bench schematic with live values"></canvas>
 <div class="design-panel" id="designPanel">
@@ -20502,6 +20534,7 @@ function updateUI(){
   updateDashLamps();
 }
 
+const tabOfGroup={build:'design',test:'engine',drive:'track',more:'guide'};
 function setTab(mode){
   const prevMode=vizMode;
   if(mode!=='race'&&racePage.open)closeRacePage();
@@ -20509,6 +20542,13 @@ function setTab(mode){
   vizMode=mode;
   ['Design','Vehicle','Parts','Garage','Track','Race','Engine','Dyno','Guide','Options'].forEach(m=>
     document.getElementById('tab'+m).classList.toggle('active',mode===m.toLowerCase()));
+  // The four sections (build 261): BUILD, TEST, DRIVE, MORE. On a phone the tabs are one strip that slides to the open
+  // section, over a bar of the four at the foot of the screen; a section opens on the tab last used in it.
+  const grp=document.getElementById('tab'+(mode==='design'?'Design':mode==='engine'?'Engine':mode[0].toUpperCase()+mode.slice(1))).dataset.g;
+  tabOfGroup[grp]=mode;
+  document.querySelectorAll('.viz-tabs button').forEach(b=>b.classList.toggle('ing',b.dataset.g===grp));
+  document.querySelectorAll('#vizGroups button').forEach(b=>b.classList.toggle('active',b.dataset.g===grp));
+  {const strip=document.querySelector('.viz-tabs'),first=strip.querySelector('.ing');if(first&&strip.scrollWidth>strip.clientWidth)strip.scrollLeft=first.offsetLeft-strip.offsetLeft;}
   // DESIGN / VEHICLE / GUIDE / OPTIONS are full-panel overlays that replace the canvas.
   const overlay=mode==='design'||mode==='vehicle'||mode==='parts'||mode==='garage'||mode==='guide'||mode==='options';
   canvas.style.display=overlay?'none':'block';
@@ -25810,6 +25850,8 @@ function bindControls(){
   document.getElementById('fileInput').addEventListener('change',e=>{const f=e.target.files&&e.target.files[0];if(f)readBuildFile(f);e.target.value='';});
 
   document.getElementById('tabDesign').addEventListener('click',()=>setTab('design'));
+  document.querySelectorAll('#vizGroups button').forEach(b=>b.addEventListener('click',()=>setTab(tabOfGroup[b.dataset.g])));
+  {const strip=document.querySelector('.viz-tabs'),first=strip.querySelector('.ing');if(first)strip.scrollLeft=first.offsetLeft-strip.offsetLeft;}   // open on the first section's tabs
   document.getElementById('tabVehicle').addEventListener('click',()=>setTab('vehicle'));
   document.getElementById('tabTrack').addEventListener('click',()=>setTab('track'));
   document.getElementById('tabRace').addEventListener('click',()=>setTab('race'));

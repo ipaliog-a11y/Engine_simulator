@@ -40,7 +40,7 @@
 </div>
 <div class="container">
 <header>
-<h1>PIXEL ENGINE SIM v0.7 build 260</h1>
+<h1>PIXEL ENGINE SIM v0.7 build 261</h1>
 <div class="subtitle" id="subtitle">ENGINE DESIGNER • BUILD IT, THEN DRIVE IT</div>
 </header>
 <div class="build-strip" id="buildStrip">
@@ -48,19 +48,25 @@
 <span class="k" id="bsCarK">CAR</span><button id="bsCar" title="Go to the car">—</button>
 <button id="btnMenu" type="button">MENU</button>
 </div>
+<nav class="viz-groups" id="vizGroups" aria-label="Sections">
+<button type="button" data-g="build"><svg viewBox="0 0 8 8" shape-rendering="crispEdges" aria-hidden="true"><path d="M2 0h1v1h-1zM3 0h1v1h-1zM1 1h1v1h-1zM1 2h1v1h-1zM4 2h1v1h-1zM2 3h1v1h-1zM3 3h1v1h-1zM4 3h1v1h-1zM3 4h1v1h-1zM4 4h1v1h-1zM5 4h1v1h-1zM4 5h1v1h-1zM5 5h1v1h-1zM6 5h1v1h-1zM5 6h1v1h-1zM6 6h1v1h-1zM7 6h1v1h-1zM6 7h1v1h-1zM7 7h1v1h-1z"/></svg><span>BUILD</span></button>
+<button type="button" data-g="test" class="active"><svg viewBox="0 0 8 8" shape-rendering="crispEdges" aria-hidden="true"><path d="M2 0h1v1h-1zM3 0h1v1h-1zM4 0h1v1h-1zM5 0h1v1h-1zM1 1h1v1h-1zM6 1h1v1h-1zM0 2h1v1h-1zM5 2h1v1h-1zM7 2h1v1h-1zM0 3h1v1h-1zM4 3h1v1h-1zM7 3h1v1h-1zM0 4h1v1h-1zM3 4h1v1h-1zM7 4h1v1h-1zM0 5h1v1h-1zM7 5h1v1h-1zM1 6h1v1h-1zM6 6h1v1h-1z"/></svg><span>TEST</span></button>
+<button type="button" data-g="drive"><svg viewBox="0 0 8 8" shape-rendering="crispEdges" aria-hidden="true"><path d="M0 0h1v1h-1zM2 0h1v1h-1zM4 0h1v1h-1zM1 1h1v1h-1zM3 1h1v1h-1zM5 1h1v1h-1zM0 2h1v1h-1zM2 2h1v1h-1zM4 2h1v1h-1zM1 3h1v1h-1zM3 3h1v1h-1zM5 3h1v1h-1zM0 4h1v1h-1zM0 5h1v1h-1zM0 6h1v1h-1zM0 7h1v1h-1z"/></svg><span>DRIVE</span></button>
+<button type="button" data-g="more"><svg viewBox="0 0 8 8" shape-rendering="crispEdges" aria-hidden="true"><path d="M1 1h1v1h-1zM2 1h1v1h-1zM5 1h1v1h-1zM6 1h1v1h-1zM0 2h1v1h-1zM3 2h1v1h-1zM4 2h1v1h-1zM7 2h1v1h-1zM0 3h1v1h-1zM3 3h1v1h-1zM4 3h1v1h-1zM7 3h1v1h-1zM0 4h1v1h-1zM3 4h1v1h-1zM4 4h1v1h-1zM7 4h1v1h-1zM0 5h1v1h-1zM3 5h1v1h-1zM4 5h1v1h-1zM7 5h1v1h-1zM1 6h1v1h-1zM2 6h1v1h-1zM5 6h1v1h-1zM6 6h1v1h-1z"/></svg><span>MORE</span></button>
+</nav>
 <div class="main">
 <div class="viz-panel">
 <div class="viz-tabs">
-<button id="tabDesign">ENGINE</button>
-<button id="tabVehicle">VEHICLE</button>
-<button id="tabParts">PARTS</button>
-<button id="tabGarage">GARAGE</button>
-<button id="tabTrack">TRACK</button>
-<button id="tabRace">RACE</button>
-<button id="tabEngine" class="active">LIVE</button>
-<button id="tabDyno">DYNO</button>
-<button id="tabGuide">GUIDE</button>
-<button id="tabOptions">OPTIONS</button>
+<button id="tabDesign" data-g="build">ENGINE</button>
+<button id="tabVehicle" data-g="build">VEHICLE</button>
+<button id="tabParts" data-g="build">PARTS</button>
+<button id="tabGarage" data-g="build">GARAGE</button>
+<button id="tabTrack" data-g="drive">TRACK</button>
+<button id="tabRace" data-g="drive">RACE</button>
+<button id="tabEngine" data-g="test" class="active ing">LIVE</button>
+<button id="tabDyno" data-g="test" class="ing">DYNO</button>
+<button id="tabGuide" data-g="more">GUIDE</button>
+<button id="tabOptions" data-g="more">OPTIONS</button>
 </div>
 <canvas id="engineCanvas" width="640" height="420" role="img" aria-label="Engine test-bench schematic with live values"></canvas>
 <div class="design-panel" id="designPanel">

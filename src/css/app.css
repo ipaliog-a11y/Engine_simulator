@@ -702,3 +702,29 @@ body.showcase-open{overflow:hidden}
   #designPanel.hy #evDesigner .evd-side .evd-panel{display:flex}
   #designPanel.hy #evDesigner .evd-mini{display:none}
 }
+
+/* ---- The four sections (build 261). Desktop: the ten tabs in one row, a gap between sections. Phone (portrait): a bar
+   of the four at the foot of the screen, as an app has, and the tabs as one strip that slides to the open section. ---- */
+.viz-groups{display:none}
+.viz-tabs button[data-g="drive"]:nth-child(5),.viz-tabs button[data-g="test"]:nth-child(7),.viz-tabs button[data-g="more"]:nth-child(9){border-left:4px solid #0a0a12}
+@media(orientation:portrait){
+  header{padding:6px 8px;margin-bottom:8px;border-bottom-width:2px}
+  header h1{font-size:9px;letter-spacing:0}
+  header .subtitle{font-size:7px;margin-top:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .build-strip{margin:0 0 8px;padding:5px 8px;gap:4px 8px;font-size:8px}
+  .build-strip button{font-size:8px;padding:6px 8px}
+  .viz-tabs{flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none;scroll-behavior:smooth;position:sticky;top:0;z-index:20}
+  .viz-tabs::-webkit-scrollbar{display:none}
+  .viz-panel{min-width:0}   /* a grid item grows to its content's width unless told otherwise: the strip must scroll, not push */
+  .viz-tabs button{flex:0 0 25%;border-left:none!important}
+  .viz-tabs button:not(.ing){opacity:.55}
+  body{padding-bottom:calc(58px + env(safe-area-inset-bottom,0px))}
+  .evd-side{max-height:calc(75vh - 58px)}
+  body:has(#designPanel.active.ev),body:has(#designPanel.active.hy),body:has(#vehiclePanelTab.active),body:has(#designPanel.active .evd-side){padding-bottom:calc(122px + env(safe-area-inset-bottom,0px))}
+  .viz-groups{display:flex;position:fixed;left:0;right:0;bottom:0;z-index:25;background:#0a0a12;border-top:3px solid #333;padding-bottom:env(safe-area-inset-bottom,0px)}
+  .viz-groups button{flex:1;display:flex;flex-direction:column;align-items:center;gap:5px;padding:8px 2px 7px;font-size:8px;background:#12121c;color:#778;border:none;border-right:2px solid #26263a;box-shadow:none}
+  .viz-groups button:last-child{border-right:none}
+  .viz-groups svg{width:20px;height:20px;fill:currentColor}
+  .viz-groups button.active{background:#004422;color:#00ff88}
+  .track-page,.race-page,.evd-side{bottom:calc(58px + env(safe-area-inset-bottom,0px))}   /* the full pages stop above the bar */
+}
