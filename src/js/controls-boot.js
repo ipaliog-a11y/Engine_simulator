@@ -90,6 +90,8 @@ function bindControls(){
   document.getElementById('fileInput').addEventListener('change',e=>{const f=e.target.files&&e.target.files[0];if(f)readBuildFile(f);e.target.value='';});
 
   document.getElementById('tabDesign').addEventListener('click',()=>setTab('design'));
+  document.querySelectorAll('#vizGroups button').forEach(b=>b.addEventListener('click',()=>setTab(tabOfGroup[b.dataset.g])));
+  {const strip=document.querySelector('.viz-tabs'),first=strip.querySelector('.ing');if(first)strip.scrollLeft=first.offsetLeft-strip.offsetLeft;}   // open on the first section's tabs
   document.getElementById('tabVehicle').addEventListener('click',()=>setTab('vehicle'));
   document.getElementById('tabTrack').addEventListener('click',()=>setTab('track'));
   document.getElementById('tabRace').addEventListener('click',()=>setTab('race'));

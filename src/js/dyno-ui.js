@@ -387,6 +387,7 @@ function updateUI(){
   updateDashLamps();
 }
 
+const tabOfGroup={build:'design',test:'engine',drive:'track',more:'guide'};
 function setTab(mode){
   const prevMode=vizMode;
   if(mode!=='race'&&racePage.open)closeRacePage();
@@ -394,6 +395,13 @@ function setTab(mode){
   vizMode=mode;
   ['Design','Vehicle','Parts','Garage','Track','Race','Engine','Dyno','Guide','Options'].forEach(m=>
     document.getElementById('tab'+m).classList.toggle('active',mode===m.toLowerCase()));
+  // The four sections (build 261): BUILD, TEST, DRIVE, MORE. On a phone the tabs are one strip that slides to the open
+  // section, over a bar of the four at the foot of the screen; a section opens on the tab last used in it.
+  const grp=document.getElementById('tab'+(mode==='design'?'Design':mode==='engine'?'Engine':mode[0].toUpperCase()+mode.slice(1))).dataset.g;
+  tabOfGroup[grp]=mode;
+  document.querySelectorAll('.viz-tabs button').forEach(b=>b.classList.toggle('ing',b.dataset.g===grp));
+  document.querySelectorAll('#vizGroups button').forEach(b=>b.classList.toggle('active',b.dataset.g===grp));
+  {const strip=document.querySelector('.viz-tabs'),first=strip.querySelector('.ing');if(first&&strip.scrollWidth>strip.clientWidth)strip.scrollLeft=first.offsetLeft-strip.offsetLeft;}
   // DESIGN / VEHICLE / GUIDE / OPTIONS are full-panel overlays that replace the canvas.
   const overlay=mode==='design'||mode==='vehicle'||mode==='parts'||mode==='garage'||mode==='guide'||mode==='options';
   canvas.style.display=overlay?'none':'block';

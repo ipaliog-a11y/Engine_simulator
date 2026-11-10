@@ -136,10 +136,10 @@ function stepHybridBench(dt){
   const lim=hybControl(H,dt);
   // the engine's air path and torque at its own throttle; off, it coasts to a stop with its manifold at the air
   if(H.engOn){
-    withEngThr(H,()=>{stepBoost(dt);state.map+=(mapTarget()-state.map)*(1-Math.exp(-MAP_K*e.intakeRespK*dt));});
+    withEngThr(H,()=>{stepBoost(dt);state.map+=(mapTarget()-state.map)*(1-Math.exp(-mapRateK(state.rpm)*dt));});
     const cut=state.rpm>=e.redline||withEngThr(H,overrunFuelCut);
     H.Te=withEngThr(H,()=>brakeTorqueRaw(Math.max(state.rpm,e.idleRpmEff),state.map,cut));
-  }else{H.Te=0;state.map+=(1-state.map)*(1-Math.exp(-MAP_K*dt));}
+  }else{H.Te=0;state.map+=(1-state.map)*(1-Math.exp(-mapRateK(e.idleRpmEff)*dt));}
   const tc=m.cool.tCool,temp=H.mT,w0=Math.max(H.n,1)*Math.PI/30;
   // MG1 (power-split): the engine's speed and its reaction
   let P1=0;

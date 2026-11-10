@@ -714,6 +714,32 @@ body.showcase-open{overflow:hidden}
   #designPanel.hy #evDesigner .evd-side .evd-panel{display:flex}
   #designPanel.hy #evDesigner .evd-mini{display:none}
 }
+
+/* ---- The four sections (build 261). Desktop: the ten tabs in one row, a gap between sections. Phone (portrait): a bar
+   of the four at the foot of the screen, as an app has, and the tabs as one strip that slides to the open section. ---- */
+.viz-groups{display:none}
+.viz-tabs button[data-g="drive"]:nth-child(5),.viz-tabs button[data-g="test"]:nth-child(7),.viz-tabs button[data-g="more"]:nth-child(9){border-left:4px solid #0a0a12}
+@media(orientation:portrait){
+  header{padding:6px 8px;margin-bottom:8px;border-bottom-width:2px}
+  header h1{font-size:9px;letter-spacing:0}
+  header .subtitle{font-size:7px;margin-top:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .build-strip{margin:0 0 8px;padding:5px 8px;gap:4px 8px;font-size:8px}
+  .build-strip button{font-size:8px;padding:6px 8px}
+  .viz-tabs{flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none;scroll-behavior:smooth;position:sticky;top:0;z-index:20}
+  .viz-tabs::-webkit-scrollbar{display:none}
+  .viz-panel{min-width:0}   /* a grid item grows to its content's width unless told otherwise: the strip must scroll, not push */
+  .viz-tabs button{flex:0 0 25%;border-left:none!important}
+  .viz-tabs button:not(.ing){opacity:.55}
+  body{padding-bottom:calc(58px + env(safe-area-inset-bottom,0px))}
+  .evd-side{max-height:calc(75vh - 58px)}
+  body:has(#designPanel.active.ev),body:has(#designPanel.active.hy),body:has(#vehiclePanelTab.active),body:has(#designPanel.active .evd-side){padding-bottom:calc(122px + env(safe-area-inset-bottom,0px))}
+  .viz-groups{display:flex;position:fixed;left:0;right:0;bottom:0;z-index:25;background:#0a0a12;border-top:3px solid #333;padding-bottom:env(safe-area-inset-bottom,0px)}
+  .viz-groups button{flex:1;display:flex;flex-direction:column;align-items:center;gap:5px;padding:8px 2px 7px;font-size:8px;background:#12121c;color:#778;border:none;border-right:2px solid #26263a;box-shadow:none}
+  .viz-groups button:last-child{border-right:none}
+  .viz-groups svg{width:20px;height:20px;fill:currentColor}
+  .viz-groups button.active{background:#004422;color:#00ff88}
+  .track-page,.race-page,.evd-side{bottom:calc(58px + env(safe-area-inset-bottom,0px))}   /* the full pages stop above the bar */
+}
 </style>
 </head>
 <body>
@@ -743,7 +769,7 @@ body.showcase-open{overflow:hidden}
 </div>
 <div class="container">
 <header>
-<h1>PIXEL ENGINE SIM v0.7 build 258</h1>
+<h1>PIXEL ENGINE SIM v0.7 build 264</h1>
 <div class="subtitle" id="subtitle">ENGINE DESIGNER • BUILD IT, THEN DRIVE IT</div>
 </header>
 <div class="build-strip" id="buildStrip">
@@ -751,19 +777,25 @@ body.showcase-open{overflow:hidden}
 <span class="k" id="bsCarK">CAR</span><button id="bsCar" title="Go to the car">—</button>
 <button id="btnMenu" type="button">MENU</button>
 </div>
+<nav class="viz-groups" id="vizGroups" aria-label="Sections">
+<button type="button" data-g="build"><svg viewBox="0 0 8 8" shape-rendering="crispEdges" aria-hidden="true"><path d="M2 0h1v1h-1zM3 0h1v1h-1zM1 1h1v1h-1zM1 2h1v1h-1zM4 2h1v1h-1zM2 3h1v1h-1zM3 3h1v1h-1zM4 3h1v1h-1zM3 4h1v1h-1zM4 4h1v1h-1zM5 4h1v1h-1zM4 5h1v1h-1zM5 5h1v1h-1zM6 5h1v1h-1zM5 6h1v1h-1zM6 6h1v1h-1zM7 6h1v1h-1zM6 7h1v1h-1zM7 7h1v1h-1z"/></svg><span>BUILD</span></button>
+<button type="button" data-g="test" class="active"><svg viewBox="0 0 8 8" shape-rendering="crispEdges" aria-hidden="true"><path d="M2 0h1v1h-1zM3 0h1v1h-1zM4 0h1v1h-1zM5 0h1v1h-1zM1 1h1v1h-1zM6 1h1v1h-1zM0 2h1v1h-1zM5 2h1v1h-1zM7 2h1v1h-1zM0 3h1v1h-1zM4 3h1v1h-1zM7 3h1v1h-1zM0 4h1v1h-1zM3 4h1v1h-1zM7 4h1v1h-1zM0 5h1v1h-1zM7 5h1v1h-1zM1 6h1v1h-1zM6 6h1v1h-1z"/></svg><span>TEST</span></button>
+<button type="button" data-g="drive"><svg viewBox="0 0 8 8" shape-rendering="crispEdges" aria-hidden="true"><path d="M0 0h1v1h-1zM2 0h1v1h-1zM4 0h1v1h-1zM1 1h1v1h-1zM3 1h1v1h-1zM5 1h1v1h-1zM0 2h1v1h-1zM2 2h1v1h-1zM4 2h1v1h-1zM1 3h1v1h-1zM3 3h1v1h-1zM5 3h1v1h-1zM0 4h1v1h-1zM0 5h1v1h-1zM0 6h1v1h-1zM0 7h1v1h-1z"/></svg><span>DRIVE</span></button>
+<button type="button" data-g="more"><svg viewBox="0 0 8 8" shape-rendering="crispEdges" aria-hidden="true"><path d="M1 1h1v1h-1zM2 1h1v1h-1zM5 1h1v1h-1zM6 1h1v1h-1zM0 2h1v1h-1zM3 2h1v1h-1zM4 2h1v1h-1zM7 2h1v1h-1zM0 3h1v1h-1zM3 3h1v1h-1zM4 3h1v1h-1zM7 3h1v1h-1zM0 4h1v1h-1zM3 4h1v1h-1zM4 4h1v1h-1zM7 4h1v1h-1zM0 5h1v1h-1zM3 5h1v1h-1zM4 5h1v1h-1zM7 5h1v1h-1zM1 6h1v1h-1zM2 6h1v1h-1zM5 6h1v1h-1zM6 6h1v1h-1z"/></svg><span>MORE</span></button>
+</nav>
 <div class="main">
 <div class="viz-panel">
 <div class="viz-tabs">
-<button id="tabDesign">ENGINE</button>
-<button id="tabVehicle">VEHICLE</button>
-<button id="tabParts">PARTS</button>
-<button id="tabGarage">GARAGE</button>
-<button id="tabTrack">TRACK</button>
-<button id="tabRace">RACE</button>
-<button id="tabEngine" class="active">LIVE</button>
-<button id="tabDyno">DYNO</button>
-<button id="tabGuide">GUIDE</button>
-<button id="tabOptions">OPTIONS</button>
+<button id="tabDesign" data-g="build">ENGINE</button>
+<button id="tabVehicle" data-g="build">VEHICLE</button>
+<button id="tabParts" data-g="build">PARTS</button>
+<button id="tabGarage" data-g="build">GARAGE</button>
+<button id="tabTrack" data-g="drive">TRACK</button>
+<button id="tabRace" data-g="drive">RACE</button>
+<button id="tabEngine" data-g="test" class="active ing">LIVE</button>
+<button id="tabDyno" data-g="test" class="ing">DYNO</button>
+<button id="tabGuide" data-g="more">GUIDE</button>
+<button id="tabOptions" data-g="more">OPTIONS</button>
 </div>
 <canvas id="engineCanvas" width="640" height="420" role="img" aria-label="Engine test-bench schematic with live values"></canvas>
 <div class="design-panel" id="designPanel">
@@ -4281,7 +4313,7 @@ function portLossShare(n,lam,f0){
   const nEx=Math.max(1,(e.valves||4)-e.ivCount), D=THROAT_RATIO*EV_RATIO*e.ivDia_mm/1000, L=e.bore_mm/1000;
   const st=e.stoichAFR||14.7, afr=st*Math.max(1,lam);
   const rho=(1+(e.intake==='na'?0:(e.boost_bar||0)))*1e5/(287*313);
-  const air=rho*(e.dispCyl_L/1000)*(e.veAmp||0.95)*n/60*(e.chargesPerRev||0.5);   // kg/s per cylinder
+  const air=rho*(e.dispCyl_L/1000)*refFill(n)*n/60*(e.chargesPerRev||0.5);   // kg/s per cylinder
   const open=clamp((e.camDur||240)/720,0.2,1), mdot=air*(1+1/afr)/open/nEx;         // per port, while open
   const Tg=300+(e.fuelLHV||44)*1e6*f0/((afr+1)*CP_EXH);
   const mu=1.716e-5*Math.pow(Tg/273,1.5)*(273+111)/(Tg+111), k=mu*CP_EXH/0.7;
@@ -4529,6 +4561,16 @@ function buildFillTable(){
     tb.push({rpm:r,f,adv:best,L:bestL});
   }
   e.fillTable=tb;
+  let s=0,k=0;for(const t of tb)if(t.rpm>=1000&&t.rpm<=e.redline){s+=t.f;k++;}
+  e.fillMean=k?s/k:0;
+}
+// The filling the airflow estimates use (the exhaust port's flow, a blowdown's mass, the compressor's demand): the
+// engine's own integrated intake stroke at that speed, or its mean over the rev range where no speed is in scope
+// (build 260). Until then a flat 0.95 times a cam grade's bonus (CAM.ampMul) stood here. A ported engine, with no
+// integrated stroke yet, keeps that reference.
+function refFill(rpm){
+  const e=engine;if(!e.fillTable)return e.veAmp||0.95;
+  return rpm>0?fillAt(rpm):e.fillMean;
 }
 // The intake phaser's advance at this rpm, as the fill table chose it (0 without VVT: the table never advances)
 function camAdvAt(rpm){
@@ -4849,7 +4891,7 @@ function pulseShape(mEx,area,T3,mapBar,prMean){
   const pEvo=Math.max(pExh,Math.pow(pInt*(T/Tint)*Math.pow(pExh,-K_EXH),1/(1-K_EXH)));
   const fb=clamp(1-Math.pow(pExh/pEvo,1/GAMMA_EXH),0,1);
   const vCyl=(e.displacement_L/1000)/Math.max(1,e.cylinders);
-  const vB=(pInt/pExh)*(T/Tint)*vCyl*(e.veAmp||0.95)*fb;       // one blowdown, at manifold conditions
+  const vB=(pInt/pExh)*(T/Tint)*vCyl*refFill()*fb;       // one blowdown, at manifold conditions
   const vMan=Math.PI/4*e.primD*e.primD*e.primL*perTurbine;
   return {phi,fb,keep:vB/(vB+vMan),pExh};
 }
@@ -5069,7 +5111,7 @@ function shaftLossPower(shaftRpm){
 // term, and calling it from here would close a loop that does not converge.
 function airFlowAt(rpm,pr){
   const e=engine;
-  return (e.displacement_L/1000)*(e.veAmp||0.95)*(rpm/60*(e.chargesPerRev||0.5))*(pr*101325/(287*313));
+  return (e.displacement_L/1000)*refFill(rpm)*(rpm/60*(e.chargesPerRev||0.5))*(pr*101325/(287*313));
 }
 // Steady boost: the shaft speed where turbine and compressor balance, found by bracketing on boost
 // rather than by relaxation — the states switch discontinuously and a fixed point orbits them.
@@ -5249,16 +5291,17 @@ function deriveGasDynamics(){
 // Induction / metering system. Until build 244 each also had flowTop and flowLow, a fitted top-end and low-rpm VE ramp;
 // a carburettor's restriction is now its venturi (carbDp, src/js/parts.js). metering = AFR
 // precision → efficiency (EFI holds optimal AFR everywhere; carbs/mech run rich & waste
-// fuel). resp = manifold response for the dynamic model. idle = idle-rpm penalty. di =
+// fuel). perCyl = a throttle per cylinder (sidedraft carburettors, throttle bodies, and the slide or butterfly sets
+// mechanical injection ran: probable), which sets the manifold volume behind the throttle (mapRateK). idle = idle-rpm penalty. di =
 // whether direct injection is available. Values chosen to reflect real relative behaviour.
 const INTAKE_SYS={
-  carb1:    {label:'1-BBL CARB',       metering:0.90,resp:0.90,idle:0,  di:false},
-  carb2:    {label:'2-BBL CARB',      metering:0.92,resp:0.95,idle:0,  di:false},
-  carb4:    {label:'4-BBL CARB',      metering:0.93,resp:1.00,idle:40, di:false},
-  sidedraft:{label:'SIDEDRAFT CARBS', metering:0.92,resp:1.15,idle:250,di:false},
-  mech:     {label:'MECH INJECTION',  metering:0.89,resp:1.10,idle:300,di:false},
-  efi:      {label:'EFI (SINGLE TB)', metering:1.00,resp:1.00,idle:0,  di:true},
-  itb:      {label:'EFI (ITB)',       metering:1.00,resp:1.25,idle:180,di:true}
+  carb1:    {label:'1-BBL CARB',       metering:0.90,idle:0,  di:false},
+  carb2:    {label:'2-BBL CARB',      metering:0.92,idle:0,  di:false},
+  carb4:    {label:'4-BBL CARB',      metering:0.93,idle:40, di:false},
+  sidedraft:{label:'SIDEDRAFT CARBS', metering:0.92,idle:250,di:false,perCyl:true},
+  mech:     {label:'MECH INJECTION',  metering:0.89,idle:300,di:false,perCyl:true},
+  efi:      {label:'EFI (SINGLE TB)', metering:1.00,idle:0,  di:true},
+  itb:      {label:'EFI (ITB)',       metering:1.00,idle:180,di:true,perCyl:true}
 };
 // Air filter (build 210): the factory systems, as what they restrict at the engine's peak flow. Until build 210 each was
 // a VE loss fitted in proportion to rpm (stock -4% at the redline, stacks +2%); now the restriction is the filter's
@@ -7682,7 +7725,18 @@ const RAD_CAP={small:0.75,stock:1.0,large:1.35};   // relative heat-rejection ca
 const IMEP_K=13.2;   // bar — ONLY scales the dyno brake's reference torque now (loadRefTq); torque itself comes from fuel
 // Dynamic (throttle-driven) model tuning:
 const PUMP_K=0.9;    // pumping loss (bar) at full manifold vacuum → engine braking
-const MAP_K=9;       // manifold-pressure response rate (1/s) — fast
+// How fast the manifold's pressure follows the throttle (build 263). The manifold is a volume the cylinders pump down:
+// emptying it, dp/dt = -(R T / V_m) m_cyl, so the pressure relaxes at K = VE Vd (N/60)(charges per rev) / V_m (the
+// filling-and-emptying model, Heywood 7.6.2; Hendricks' mean-value engine model). V_m is what lies between the
+// throttle and the valves: behind one throttle, the plenum and all the runners; with a throttle per cylinder, one
+// runner fed by one cylinder's flow, which is why such an engine answers the pedal at once. The plenum is taken as
+// the engine's displacement, the usual size of a road manifold (probable; to become the intake part's own figure).
+// Until build 263 a constant 9 /s times a factor per induction system (0.90 to 1.25).
+function mapRateK(rpm){
+  const e=engine,Vd=e.displacement_L/1000,n=Math.max(1,e.cylinders||1),run=(e.runnerL||0.3)*(e.runnerA||8e-4);
+  const flow=(state.ve||0.85)*Vd*Math.max(rpm,300)/60*(e.chargesPerRev||0.5);
+  return e.throttlePerCyl?flow/n/run:flow/(Vd+n*run);
+}
 const THR_K=0.12;    // throttle-vs-rpm restriction (higher = more vacuum at rpm)
 const IDLE_AIR=0.03; // idle bypass air (fraction of throttle area at 0% pedal)
 const IDLE_RPM=850;  // idle-controller floor — the engine can't stall below this
@@ -8506,16 +8560,41 @@ function rollStiffness(v){
 // spectrum Gd(n) = Gd(n0) (n/n0)^-2 at n0 = 0.1 cycle/m (class A, very good, up to 32e-6 m3; B 32-128e-6; each class
 // 4x the one before). Driven at v, the road is a white velocity input whose strength grows with v, so the tyre's
 // load swings by sigma = c sqrt(Gd(n0) v): c is worked out once per axle, from the quarter car's response.
-// UNSPRUNG_SHARE: the wheel, tyre, brake and upright as a share of the corner's mass (~43 kg on a ~350 kg corner in
-// the quarter-car literature): a labelled estimate, the same for every car. TYRE_KZ: a road tyre's vertical stiffness,
+// The unsprung mass is the corner's own parts, weighed (unsprungMass, build 262); until then 12% of the corner's mass
+// for every car. TYRE_KZ: a road tyre's vertical stiffness,
 // 200-300 kN/m, taken as 250 kN/m for a 205/55R16 and scaled as the root of its width times its diameter (the form of
 // Rhyne's relation, Tire Sci. Tech. 33(3), 2005, at one inflation pressure). Together they give the 10-12 Hz wheel hop
 // a road car has.
-const UNSPRUNG_SHARE=0.12, TYRE_KZ=250e3, TYRE_KZ_REF=Math.sqrt(0.205*0.632), DAMPER_STEP=1.3, ISO_N0=0.1;
+const TYRE_KZ=250e3, TYRE_KZ_REF=Math.sqrt(0.205*0.632), DAMPER_STEP=1.3, ISO_N0=0.1;
+// A CORNER'S UNSPRUNG MASS, FROM ITS PARTS (build 262): what moves with the wheel over a bump.
+//   tyre and wheel   the masses roadWheelInertia already weighs, at this axle's own tyre width;
+//   rotor            the brake model's own disc (brakeThermal: its ring, vanes and hat; a carbon-ceramic one is light);
+//   caliper          a sliding cast-iron caliper with its bracket ~4.5 kg, a fixed alloy opposed-piston one ~3 kg, a
+//                    truck's twin-piston slider ~7 kg (makers' catalogue weights; probable);
+//   upright and hub  knuckle, hub and bearing, sized by the load they carry: 9 kg on a 350 kg corner (teardown
+//                    weights of mid-size cars; probable), in proportion to the corner's mass;
+//   links            half of the arms, spring and damper (the other half hangs on the body): 4 kg on that corner;
+//   driveshaft       half of a driven corner's shaft, ~3.5 kg;
+//   a beam           a solid axle is unsprung whole: its tube and, driven, its differential and shafts (a Ford
+//                    8.8 in axle ~80 kg bare; probable), half to each wheel, in place of upright, links and shaft
+//                    shares above 1/3; a twist beam (~20 kg) hangs half on the body.
+const UNSPRUNG={calSlide:4.5,calFixed:3.0,calHD:7,upright:9/350,links:4/350,shaft:3.5,solidDriven:80,solidDead:35,twist:20};
+function unsprungMass(v,front){
+  const U=UNSPRUNG,mc=v.mass*(front?v.fWt:1-v.fWt)/2;
+  const D=2*(v.rTire||0.32),dr=(v.wheelDia||16)*0.0254,w=((front&&v.tireWidthF)||v.tireWidth||225)/1000;
+  const tyre=15*Math.PI*D*w+6*2*Math.PI/4*(D*D-dr*dr),wheel=0.075*(v.wheelDia||16)*(0.8*w/0.0254);
+  const bt=BRAKE_TYPE[v.brakeType]||BRAKE_TYPE.slotted,th=v.rotor?brakeThermal(v):null,rotor=th?(front?th.front:th.rear).m:6;
+  const pist=(bt.caliper[front?'f':'r']||[]).length,cal=v.brakeType==='hd'?U.calHD:pist>1?U.calFixed:U.calSlide;
+  const driven=v.drive==='awd'||(v.drive==='rwd')!==front,geo=front?v.suspFront:v.suspRear;
+  let rest=U.upright*mc+U.links*mc+(driven?U.shaft:0);
+  if(geo==='solid')rest=(driven?U.solidDriven:U.solidDead)/2+U.upright*mc/3;
+  else if(geo==='twist')rest=U.twist/4+U.upright*mc+U.links*mc/2;
+  return tyre+wheel+rotor+cal+rest;
+}
 // A corner's quarter car for axle 'F' or 'R' of car v: sprung and unsprung mass (kg), wheel rate, damping, tyre rate.
 function quarterCar(v,ax){
   const front=ax==='F',mc=v.mass*(front?v.fWt:1-v.fWt)/2,kit=SUSPENSION[v.suspension]||SUSPENSION.sport,w=2*Math.PI*kit.hz;
-  const mu=UNSPRUNG_SHARE*mc,ms=mc-mu,k0=mc*w*w,ks=k0*Math.pow(SPRING_STEP,(front?v.springF:v.springR)||0);   // the rate rollStiffness uses
+  const mu=Math.min(unsprungMass(v,front),0.5*mc),ms=mc-mu,k0=mc*w*w,ks=k0*Math.pow(SPRING_STEP,(front?v.springF:v.springR)||0);   // the rate rollStiffness uses
   // the damper is the kit's, matched to the kit's springs: a stiffer spring on the same damper is damped less
   const cs=2*kit.zeta*Math.sqrt(k0*ms)*Math.pow(DAMPER_STEP,(front?v.damperF:v.damperR)||0);
   const tw=((front&&v.tireWidthF)||v.tireWidth||225)/1000,od=2*(v.rTire||0.32);
@@ -9133,7 +9212,7 @@ function buildEngineCore(prevStoich,quiet){
   deriveFilter();   // the air filter's restriction, from its media and housing (build 210)
   deriveCarb();     // a carburettor's venturi, sized to the engine (build 244)
   engine.meteringEff=sys.metering;            // AFR precision → thermal efficiency
-  engine.intakeRespK=sys.resp;                // manifold fill speed (dynamic model)
+  engine.throttlePerCyl=!!sys.perCyl;         // what the manifold's volume is (mapRateK)
   engine.crFactor=otto(engine.compression)/otto(10.5);   // 1.0 at CR 10.5
   buildBurnTable();         // diesel burn phasing vs rpm; exhaustGasT reads it from here on
   deriveGasDynamics();      // runner + header geometry; needs crFactor, catRestrict and idleRpmEff
@@ -9227,7 +9306,7 @@ function deriveCam(){
   engine.veWidthHi=engine.redline*0.66;
   let loWiden=cam.loWiden,idlePenalty=cam.idleRpm;
   if(engine.vvt){loWiden+= (1-loWiden)*0.8;idlePenalty*=0.3;engine.veWidthHi*=1.06;}
-  engine.veAmp=engine.veAmp0*cam.ampMul;
+  engine.veAmp=engine.veAmp0*(engine.ports?cam.ampMul:1);   // a valved engine's estimates read its own filling (refFill, build 260)
   engine.veWidthLo*=loWiden;
   const sys=INTAKE_SYS[engine.intakeSys]||INTAKE_SYS.efi;
   engine.idleRpmEff=IDLE_RPM+idlePenalty+sys.idle;   // wild cam / race intake idle higher & lumpier
@@ -9260,7 +9339,7 @@ function deriveCharge(){
   const PR=1+engine.maxBoost;
   const perRev=engine.chargesPerRev;                      // intake events per revolution
   const rhoRef=PR*1e5/(287*(273+40));
-  const kgs=rhoRef*(engine.displacement_L/1000)*perRev*(engine.redline*0.85/60)*engine.veAmp;
+  const kgs=rhoRef*(engine.displacement_L/1000)*perRev*(engine.redline*0.85/60)*refFill(engine.redline*0.85);
   engine.turboFlow=kgs*132.28;                            // kg/s → lb/min
   engine.turboCap=compChokeFlow(tb.exd)*cfg.flow;         // derived from the wheel, not tabulated
   engine.turboLoad=engine.intake==='turbo'?engine.turboFlow/engine.turboCap:0;   // 1.0 = at rating
@@ -10457,7 +10536,7 @@ function stepEngine(dt){
   if(isElectric())return stepMotorBench(dt);
   if(isHybrid())return stepHybridBench(dt);   // the motor, the pack and the controller with the engine (build 190)
   stepBoost(dt);
-  state.map+=(mapTarget()-state.map)*(1-Math.exp(-MAP_K*engine.intakeRespK*dt));
+  state.map+=(mapTarget()-state.map)*(1-Math.exp(-mapRateK(state.rpm)*dt));
   if(state.nitrousActive){   // deplete the bottle while spraying at WOT (~14 s per fill)
     if(state.throttle>0.5&&state.nitrousCharge>0)state.nitrousCharge=Math.max(0,state.nitrousCharge-0.07*dt);
     if(state.nitrousCharge<=0)state.nitrousActive=false;
@@ -12724,6 +12803,210 @@ function simulateAccelRun(){
   return {t100:M.t100,q400:M.q400,q800:M.q800,q1000:M.q1000,topSpeed,governed,freeSpeed:vFree*3.6,mass:m,ptw:vehicle.powerToWeight,
     gripT:M.gripT,lagT:M.lagT,spinT:M.spinT,launchRpm:M.launchRpm,shifts:M.shifts.map(x=>({g:x.g,v:x.v,rpm:x.rpm,rpmTo:x.rpmTo})),
     t200:M.v200?M.v200.t:null,x200:M.v200?M.v200.x:null,t60:M.t60,rollout:M.roll};
+}
+// ================================================================================================
+// THE CAR STEPPED IN TIME (build 263): four wheels, a driver's inputs, one step. The base of a driving game.
+//
+// The lap, the 0-100 and the race solve a whole run at once, on one line, at the limit (quasi-steady). A game needs
+// the other thing: where is the car one step later, given the wheel, the pedals and the gear. That is stepCar().
+//
+// Two halves, kept apart on purpose:
+//   driveCar()                 reads the designed car (vehicle, powertrain) and returns PLAIN DATA: numbers and arrays,
+//                              nothing else. JSON.stringify(driveCar()) is a complete car.
+//   stepCar(car, s, u, dt)     advances state s by dt under inputs u. It reads only its arguments and Math: no page,
+//                              no canvas, no globals of this app. A separate game can load this file and a car's JSON.
+//
+// WHAT IS MODELLED
+//   Body      three freedoms in the plane: forward and sideways speed and yaw. m(vx' - vy r) = sum Fx, m(vy' + vx r) =
+//             sum Fy, Izz r' = sum of the tyre forces' moments (Milliken & Milliken, RCVD ch. 5). Izz = m a b, the yaw
+//             inertia of a car whose dynamic index is 1 (road cars measure 0.9-1.1, NHTSA's inertia database: probable).
+//   Loads     each wheel's share of the weight, the downforce by its balance, and the transfer under acceleration
+//             (m ax h / L) and cornering (m ay h / t, shared between the axles by the car's own roll stiffness and
+//             roll centres, vehicle.lltdF). The transfer follows the acceleration through the springs, not at once:
+//             a first-order lag at the body's ride frequency.
+//   Tyre      the brush model (Fiala 1954; Pacejka, Tyre and Vehicle Dynamics ch. 3): tread elements that deflect with
+//             slip until the pressure can no longer hold them. With theta = C / (3 mu Fz), the force is
+//             mu Fz (3s - 3s^2 + s^3) up to full sliding at s = 1. Drive, braking and cornering share one slip vector,
+//             so using the grip one way leaves less the other way: combined slip needs no extra rule. Its inputs are
+//             the lap's own: the grip mu(Fz) with its load sensitivity, the cornering stiffness (TYRE_CC, 0.2/deg of
+//             the load, Gillespie), the longitudinal peak at TYRE_SLIP_OPT, braking and traction at TYRE_MU_X of the
+//             lateral grip, and past the peak the launch model's own falling curve (0.81 in a full slide).
+//             A tyre's side force builds over a rolling distance, the relaxation length (about the tyre's radius;
+//             Pacejka ch. 5: probable).
+//   Wheels    each spins on its own: I w' = drive - brake - Fx r - rolling resistance. This is what lets a wheel spin
+//             up or lock.
+//   Drive     the engine's full-load curve by the pedal, its own overrun torque off it, its inertia, a clutch that
+//             slips (capacity 1.5 x peak torque), the gearbox with its shift time, the differential (open: equal
+//             torque; limited-slip: torque moved to the slower wheel by its lock), all-wheel drive split evenly.
+//   Brakes    the hydraulics' own force and front share; ABS and traction control as wheel-slip limits when fitted.
+//   Aero      drag and downforce on the square of the speed; rolling resistance by the load.
+//
+// NOT YET (named, so nobody rediscovers them): the turbo's shaft in time (boost is the settled curve's), tyre and
+// brake temperatures, camber and roll steer, the road's bumps and kerbs, a hybrid's controller. The lap solver has
+// each of these; they move here in later builds of phase E.
+// ================================================================================================
+const DRIVE_G=9.81, DRIVE_RHO=1.20;
+// The designed car as plain data. Everything stepCar needs, and nothing that is not a number, a string or an array.
+function driveCar(){
+  const v=vehicle,pt=powertrain(),L=v.wb,a=L*(1-v.fWt),b=L*v.fWt;
+  const curve=pt.torqueCurve(),rl=pt.maxRpm(),peak=curve.reduce((m,p)=>Math.max(m,p.tq),0);
+  const ride=(SUSPENSION[v.suspension]||SUSPENSION.sport).hz;
+  return {
+    name:v.chLabel||'',m:v.mass,Izz:v.mass*a*b,a,b,h:v.cg,tF:v.trackF||v.track,tR:v.trackR||v.track,
+    r:v.rTire,Iw:(v.wheelI||2)/4,
+    mu:tyreMu(v.FzRef,v.FzRef),muF:tyreMu(v.FzRefF||v.FzRef,v.FzRefF||v.FzRef),FzRef:v.FzRef,FzRefF:v.FzRefF||v.FzRef,
+    loadSens:LOAD_SENS,muX:TYRE_MU_X,cc:TYRE_CC,slipOpt:TYRE_SLIP_OPT,slipC:TYRE_SLIP_C,relax:v.rTire,
+    cdA:v.cdA,clA:v.clA||0,aeroBal:v.aeroBal==null?0.5:v.aeroBal,crr:v.crr,
+    lltdF:v.lltdF==null?v.fWt:v.lltdF,tauLoad:1/(2*Math.PI*ride),
+    drive:v.drive,lock:(v.df&&v.df.lock)||0,ratios:(v.ratios||[1]).slice(),fd:v.finalDrive||1,eff:v.driveEff||0.9,
+    shiftTime:v.shiftCut||0,ev:!!v.ev,tc:!!v.tc,abs:true,
+    rpm:curve.map(p=>p.rpm),tq:curve.map(p=>p.tq),ov:pt.overrunTable(rl),idle:pt.idleRpm()||0,redline:rl,
+    Ie:pt.inertia()||0.15,clutchCap:1.5*peak,
+    // where a driver holds the engine to pull away flat out: at its torque peak, no higher than 60% of the redline
+    launchRpm:Math.min(curve.reduce((m,p)=>p.tq>m.tq?p:m,curve[0]).rpm,0.6*rl),
+    brakeF:brakeForceCap(v),brakeFront:v.brakeFrontShare,
+    steerLock:8.5/(v.steerRatio||15)        // 2.7 turns of the hand wheel lock to lock (probable), through the ratio
+  };
+}
+// A car at rest, in neutral for a clutch car until the driver asks for a gear.
+function driveState(car){
+  return {t:0,x:0,y:0,psi:0,vx:0,vy:0,yaw:0,w:[0,0,0,0],we:car.idle*Math.PI/30,gear:1,shiftT:0,
+    axF:0,ayF:0,al:[0,0,0,0],abs:[1,1,1,1],tcF:1,clF:1,pull:false,
+    ax:0,ay:0,Fz:[0,0,0,0],kappa:[0,0,0,0],alpha:[0,0,0,0],Fx:[0,0,0,0],Fy:[0,0,0,0],rpm:car.idle,speed:0,delta:0};
+}
+function driveLerp(xs,ys,x){
+  const n=xs.length;if(x<=xs[0])return ys[0];if(x>=xs[n-1])return ys[n-1];
+  let i=1;while(xs[i]<x)i++;
+  return ys[i-1]+(ys[i]-ys[i-1])*(x-xs[i-1])/(xs[i]-xs[i-1]);
+}
+// One tyre: the force along and across the wheel (N) for a load Fz, a slip ratio and a slip angle (rad).
+// Returns [Fl, Ft, s, dFl/dkappa]: s is the share of the grip in use (1 = sliding all over the contact patch).
+function driveTyre(car,Fz,kappa,alpha,front){
+  if(!(Fz>1))return [0,0,0,0];
+  const ref=front?car.FzRefF:car.FzRef,muY=(front?car.muF:car.mu)*Math.pow(Math.max(200,Fz)/ref,-car.loadSens),muX=car.muX*muY;
+  const Ca=car.cc*Fz,Ck=3*muX*Fz/car.slipOpt;                 // the longitudinal peak sits at slipOpt, as the launch has it
+  const sx=Ck*kappa/(3*muX*Fz),sy=Ca*Math.tan(alpha)/(3*muY*Fz),s=Math.hypot(sx,sy);
+  if(s<1e-9)return [0,0,0,Ck];
+  let f;
+  if(s<=1)f=3*s-3*s*s+s*s*s;
+  else{const B=Math.tan(Math.PI/(2*car.slipC))/car.slipOpt;f=Math.sin(car.slipC*Math.atan(B*car.slipOpt*Math.min(s,30)));}   // sliding: the launch's curve
+  return [muX*Fz*f*sx/s,muY*Fz*f*sy/s,s,Ck*Math.max(0.02,s<1?(1-s)*(1-s):0.02)];
+}
+// The engine's torque at the crank (Nm) for a pedal and a speed: full load by the pedal, its own drag off it,
+// nothing past the limiter, and an idle governor that holds it up.
+function driveEngine(car,thr,rpm){
+  const wot=driveLerp(car.rpm,car.tq,rpm),ov=car.ev?0:car.ov[Math.max(0,Math.min(car.ov.length-1,Math.round((rpm-500)/250)))]||0;
+  if(rpm>=car.redline)return -ov;
+  let T=thr*wot-(1-thr)*ov;
+  if(!car.ev&&rpm<car.idle)T+=Math.min(0.4*wot+ov,(car.idle-rpm)*0.5);
+  return T;
+}
+// Advance s by dt (s) under u = {steer -1..1 (left positive), throttle 0..1, brake 0..1, clutch 0..1 or null for an
+// automatic clutch, gear 1.. or null for automatic shifts}. Returns s, with what happened in it for the instruments.
+function stepCar(car,s,u,dt){
+  const H=0.001,n=Math.max(1,Math.ceil(dt/H)),h=dt/n,g=DRIVE_G,L=car.a+car.b;
+  const xw=[car.a,car.a,-car.b,-car.b],yw=[car.tF/2,-car.tF/2,car.tR/2,-car.tR/2];
+  const drv=car.drive==='awd'?[1,1,1,1]:car.drive==='fwd'?[1,1,0,0]:[0,0,1,1],nd=drv[0]+drv[1]+drv[2]+drv[3];
+  const steer=Math.max(-1,Math.min(1,u.steer||0)),brake=Math.max(0,Math.min(1,u.brake||0));
+  let thr=Math.max(0,Math.min(1,u.throttle||0));
+  for(let k=0;k<n;k++){
+    const v=Math.hypot(s.vx,s.vy),delta=steer*car.steerLock,cd=Math.cos(delta),sd=Math.sin(delta);
+    // ---- gearbox
+    const top=car.ratios.length;
+    if(s.shiftT>0){s.shiftT-=h;
+      // with an automatic clutch the driver matches the revs for the gear coming (a blip going down), so the clutch
+      // takes up without a jolt through the driven tyres
+      if(s.shiftT<=0&&u.clutch==null&&!car.ev&&s.gear>0){let wm=0,nm=0;for(let i=0;i<4;i++)if(drv[i]){wm+=s.w[i];nm++;}
+        s.we=Math.max(car.idle*Math.PI/30,wm/nm*car.ratios[s.gear-1]*car.fd);}}
+    if(u.gear!=null){const gq=Math.max(0,Math.min(top,u.gear|0));if(gq!==s.gear){s.gear=gq;s.shiftT=car.shiftTime;}}
+    else if(!car.ev&&s.shiftT<=0&&s.gear>0){
+      let wdn=0,nn=0;for(let i=0;i<4;i++)if(drv[i]){wdn+=s.w[i];nn++;}
+      const rpmNow=wdn/nn*car.ratios[s.gear-1]*car.fd*30/Math.PI;      // the speed the wheels give the engine in this gear
+      if(rpmNow>0.97*car.redline&&s.gear<top){s.gear++;s.shiftT=car.shiftTime;}
+      else if(s.gear>1&&rpmNow<0.42*car.redline&&rpmNow*car.ratios[s.gear-2]/car.ratios[s.gear-1]<0.85*car.redline&&thr<0.99){s.gear--;s.shiftT=car.shiftTime;}
+      else if(s.gear>1&&rpmNow<Math.max(car.idle*1.15,0.22*car.redline)){s.gear--;s.shiftT=car.shiftTime;}
+    }
+    const ratio=s.gear>0?car.ratios[Math.min(top,s.gear)-1]*car.fd:0;
+    // ---- loads
+    const down=0.5*DRIVE_RHO*car.clA*v*v,WF=car.m*g*car.b/L+down*car.aeroBal,WR=car.m*g*car.a/L+down*(1-car.aeroBal);
+    const dX=car.m*s.axF*car.h/L,dYF=car.lltdF*car.m*s.ayF*car.h/car.tF,dYR=(1-car.lltdF)*car.m*s.ayF*car.h/car.tR;
+    const Fz=s.Fz;
+    Fz[0]=Math.max(0,(WF-dX)/2-dYF);Fz[1]=Math.max(0,(WF-dX)/2+dYF);Fz[2]=Math.max(0,(WR+dX)/2-dYR);Fz[3]=Math.max(0,(WR+dX)/2+dYR);
+    // ---- tyres
+    let FX=0,FY=0,MZ=0;const dF=[0,0,0,0],Fl=[0,0,0,0];
+    for(let i=0;i<4;i++){
+      const front=i<2,vxw=s.vx-s.yaw*yw[i],vyw=s.vy+s.yaw*xw[i];
+      const vl=front?vxw*cd+vyw*sd:vxw,vt=front?-vxw*sd+vyw*cd:vyw,den=Math.max(Math.abs(vl),3);
+      const kap=(s.w[i]*car.r-vl)/den,alp=-Math.atan2(vt,Math.max(Math.abs(vl),0.5));
+      s.al[i]+=(alp-s.al[i])*Math.min(1,Math.abs(vl)*h/car.relax);          // the side force builds over the relaxation length
+      const T=driveTyre(car,Fz[i],kap,s.al[i],front);
+      Fl[i]=T[0];dF[i]=T[3]*car.r/den;s.kappa[i]=kap;s.alpha[i]=s.al[i];
+      const fx=front?T[0]*cd-T[1]*sd:T[0],fy=front?T[0]*sd+T[1]*cd:T[1];
+      s.Fx[i]=fx;s.Fy[i]=fy;FX+=fx;FY+=fy;MZ+=xw[i]*fy-yw[i]*fx;
+    }
+    // ---- engine, clutch, driveline
+    let wd=0;for(let i=0;i<4;i++)if(drv[i])wd+=s.w[i];wd/=nd;
+    // How far the driven tyres are past their peak, as a rate for whoever is holding them there (the ECU's traction
+    // control on the throttle, or the driver's clutch foot pulling away): zero at the peak, closing fast beyond it.
+    let worst=0;for(let i=0;i<4;i++)if(drv[i])worst=Math.max(worst,s.kappa[i]);
+    const hold=Math.max(-30,Math.min(8,12*(1-worst/car.slipOpt)));
+    const pulling=!car.ev&&u.clutch==null&&s.gear===1&&s.shiftT<=0&&s.we-wd*car.ratios[0]*car.fd>1;   // the clutch is still slipping from rest
+    if(car.tc&&!pulling){s.tcF=Math.max(0.05,Math.min(1,s.tcF+hold*h));thr*=s.tcF;}else s.tcF=1;
+    const rpm=s.we*30/Math.PI;let Te=driveEngine(car,s.shiftT>0?0:thr,rpm);   // the driver lifts for a shift
+    let Tw=0;                                                              // torque at the driven wheels, all of them (Nm)
+    if(car.ev){Tw=driveEngine(car,thr,Math.abs(wd)*ratio*30/Math.PI)*ratio*car.eff;s.we=Math.abs(wd)*ratio;}
+    else{
+      // The clutch. A pedal if the driver gives one; otherwise a driver's two feet pulling away: the left feeds the
+      // clutch in no faster than the tyres can take, the right holds the engine at the speed the pedal asks (idle off
+      // it, the launch speed flat out) until the wheels have caught up and the clutch locks.
+      const auto=u.clutch==null,slip=s.we-wd*ratio,pedal=Math.max(0,Math.min(1,u.throttle||0));
+      let cap=ratio===0||s.shiftT>0?0:car.clutchCap*(auto?1:1-Math.max(0,Math.min(1,u.clutch)));
+      if(auto&&cap>0&&slip>1&&(s.gear===1||wd*ratio<car.idle*Math.PI/30)){
+        const wT=(car.idle+(s.gear===1?pedal*(car.launchRpm-car.idle):0))*Math.PI/30,avail=Math.max(0,driveEngine(car,thr,rpm));
+        if(!s.pull){s.pull=true;s.clF=0.1;}                                   // the bite point, then in
+        s.clF=Math.max(0.05,Math.min(1,s.clF+hold*h));
+        cap*=s.clF;
+        if(s.we<wT)cap=Math.min(cap,Math.max(0,avail-4*(wT-s.we)));        // below it: let the engine come back up
+        else Te=Math.min(Te,cap+4*(wT-s.we));            // above it: no more fuel than holds it there
+      }else{s.clF=1;s.pull=false;}
+      // Locked, the clutch passes exactly the torque that keeps the engine and the wheels turning together (the
+      // torque that brings their slip to nothing in this step, from each side's own acceleration: Karnopp's stick
+      // condition); it slips when that is more than it can hold, and then passes what it can hold.
+      let Id=0,aW=0;for(let i=0;i<4;i++)if(drv[i]){const Iq=car.Iw+h*car.r*dF[i];Id+=Iq;aW-=(Fl[i]*car.r+car.crr*Fz[i]*car.r*Math.tanh(s.w[i]*car.r/0.5))/Iq;}
+      aW/=nd;
+      let Tcl=(slip/h+Te/car.Ie-ratio*aW)/(1/car.Ie+ratio*ratio*car.eff/Id);
+      Tcl=Math.max(-cap,Math.min(cap,Tcl));
+      s.we=Math.max(0,s.we+h*(Te-Tcl)/car.Ie);
+      Tw=Tcl*ratio*car.eff;
+    }
+    // ---- wheels
+    for(let ax=0;ax<2;ax++){
+      const i=ax*2,j=i+1,driven=drv[i];
+      let Ti=driven?Tw/nd:0,Tj=Ti;
+      if(driven&&car.lock>0){const Tc=Math.max(-car.clutchCap*car.fd,Math.min(car.clutchCap*car.fd,car.lock*300*(s.w[i]-s.w[j])));Ti-=Tc;Tj+=Tc;}
+      const share=ax===0?car.brakeFront:1-car.brakeFront;
+      for(const [q,Tq] of [[i,Ti],[j,Tj]]){
+        if(car.abs){const vl=Math.abs(s.vx);s.abs[q]=Math.max(0.05,Math.min(1,s.abs[q]+((s.kappa[q]<-car.slipOpt*1.3&&vl>2)?-25:12)*h));}
+        const Tb=brake*car.brakeF*share/2*car.r*(car.abs?s.abs[q]:1);
+        const roll=car.crr*Fz[q]*car.r*Math.tanh(s.w[q]*car.r/0.5);
+        const Iq=car.Iw+h*car.r*dF[q];                                      // the tyre's own stiffness taken implicitly
+        let wq=s.w[q]+h*(Tq-Fl[q]*car.r-roll)/Iq;
+        const db=h*Tb/Iq;                                                  // the brake can stop a wheel, never turn it back
+        if(Math.abs(wq)<=db)wq=0;else wq-=Math.sign(wq)*db;
+        s.w[q]=wq;
+      }
+    }
+    // ---- body
+    const drag=0.5*DRIVE_RHO*car.cdA*v*s.vx,ax=(FX-drag)/car.m,ay=FY/car.m;
+    s.vx+=h*(ax+s.vy*s.yaw);s.vy+=h*(ay-s.vx*s.yaw);s.yaw+=h*MZ/car.Izz;
+    if(brake>0&&thr===0&&Math.abs(s.vx)<0.05&&Math.abs(s.vy)<0.05){s.vx=0;s.vy=0;s.yaw=0;}   // held on the brakes
+    s.psi+=h*s.yaw;const c=Math.cos(s.psi),sn=Math.sin(s.psi);
+    s.x+=h*(s.vx*c-s.vy*sn);s.y+=h*(s.vx*sn+s.vy*c);
+    const kL=Math.min(1,h/car.tauLoad);s.axF+=(ax-s.axF)*kL;s.ayF+=(ay-s.ayF)*kL;
+    s.ax=ax;s.ay=ay;s.delta=delta;s.t+=h;
+  }
+  s.rpm=s.we*30/Math.PI;s.speed=Math.hypot(s.vx,s.vy);
+  return s;
 }
 // ====== TEST TRACK: circuits, lap solver ======
 // A circuit is a ring of control points (metres). A closed Catmull-Rom spline through them gives
@@ -20480,6 +20763,7 @@ function updateUI(){
   updateDashLamps();
 }
 
+const tabOfGroup={build:'design',test:'engine',drive:'track',more:'guide'};
 function setTab(mode){
   const prevMode=vizMode;
   if(mode!=='race'&&racePage.open)closeRacePage();
@@ -20487,6 +20771,13 @@ function setTab(mode){
   vizMode=mode;
   ['Design','Vehicle','Parts','Garage','Track','Race','Engine','Dyno','Guide','Options'].forEach(m=>
     document.getElementById('tab'+m).classList.toggle('active',mode===m.toLowerCase()));
+  // The four sections (build 261): BUILD, TEST, DRIVE, MORE. On a phone the tabs are one strip that slides to the open
+  // section, over a bar of the four at the foot of the screen; a section opens on the tab last used in it.
+  const grp=document.getElementById('tab'+(mode==='design'?'Design':mode==='engine'?'Engine':mode[0].toUpperCase()+mode.slice(1))).dataset.g;
+  tabOfGroup[grp]=mode;
+  document.querySelectorAll('.viz-tabs button').forEach(b=>b.classList.toggle('ing',b.dataset.g===grp));
+  document.querySelectorAll('#vizGroups button').forEach(b=>b.classList.toggle('active',b.dataset.g===grp));
+  {const strip=document.querySelector('.viz-tabs'),first=strip.querySelector('.ing');if(first&&strip.scrollWidth>strip.clientWidth)strip.scrollLeft=first.offsetLeft-strip.offsetLeft;}
   // DESIGN / VEHICLE / GUIDE / OPTIONS are full-panel overlays that replace the canvas.
   const overlay=mode==='design'||mode==='vehicle'||mode==='parts'||mode==='garage'||mode==='guide'||mode==='options';
   canvas.style.display=overlay?'none':'block';
@@ -23576,10 +23867,10 @@ function stepHybridBench(dt){
   const lim=hybControl(H,dt);
   // the engine's air path and torque at its own throttle; off, it coasts to a stop with its manifold at the air
   if(H.engOn){
-    withEngThr(H,()=>{stepBoost(dt);state.map+=(mapTarget()-state.map)*(1-Math.exp(-MAP_K*e.intakeRespK*dt));});
+    withEngThr(H,()=>{stepBoost(dt);state.map+=(mapTarget()-state.map)*(1-Math.exp(-mapRateK(state.rpm)*dt));});
     const cut=state.rpm>=e.redline||withEngThr(H,overrunFuelCut);
     H.Te=withEngThr(H,()=>brakeTorqueRaw(Math.max(state.rpm,e.idleRpmEff),state.map,cut));
-  }else{H.Te=0;state.map+=(1-state.map)*(1-Math.exp(-MAP_K*dt));}
+  }else{H.Te=0;state.map+=(1-state.map)*(1-Math.exp(-mapRateK(e.idleRpmEff)*dt));}
   const tc=m.cool.tCool,temp=H.mT,w0=Math.max(H.n,1)*Math.PI/30;
   // MG1 (power-split): the engine's speed and its reaction
   let P1=0;
@@ -25788,6 +26079,8 @@ function bindControls(){
   document.getElementById('fileInput').addEventListener('change',e=>{const f=e.target.files&&e.target.files[0];if(f)readBuildFile(f);e.target.value='';});
 
   document.getElementById('tabDesign').addEventListener('click',()=>setTab('design'));
+  document.querySelectorAll('#vizGroups button').forEach(b=>b.addEventListener('click',()=>setTab(tabOfGroup[b.dataset.g])));
+  {const strip=document.querySelector('.viz-tabs'),first=strip.querySelector('.ing');if(first)strip.scrollLeft=first.offsetLeft-strip.offsetLeft;}   // open on the first section's tabs
   document.getElementById('tabVehicle').addEventListener('click',()=>setTab('vehicle'));
   document.getElementById('tabTrack').addEventListener('click',()=>setTab('track'));
   document.getElementById('tabRace').addEventListener('click',()=>setTab('race'));

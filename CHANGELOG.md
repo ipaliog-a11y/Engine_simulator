@@ -20,6 +20,120 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 Working toward **v1.0 — every number derived, not fitted.**
 
+### The stepped car matches its revs on a shift (build 264)
+
+Phase E, a small step on build 263's `stepCar`. Nothing in the app reads it yet.
+
+- **Rev matching.** With the automatic clutch the engine is brought to the coming gear's speed before the clutch
+  takes up (the blip on a downshift), so a downshift under braking no longer jolts the driven tyres.
+- **Tried and not kept: a lap by a line-following driver.** A pure-pursuit driver holding the lap solver's speeds
+  round the test circuit lapped the WRX STI in 82.3–83.7 s against the solver's 75.3 (+9 to +11%), and slid the
+  rear-drive cars off at the first fast corner, even at 94% of the speeds. Two causes: the circuit's crests and dips
+  load the tyres and the stepped car's road is flat; and with the lap's cornering stiffness the brush tyre peaks at
+  13.7° of slip where a road tyre peaks at 6–8°. `plans/road-to-v1.md` (phase E, step 5) has what comes next.
+
+Tests: 168
+
+### The car stepped in time: four wheels, a driver's inputs, one step (build 263)
+
+Phase E of `plans/road-to-v1.md`, first build: the base a driving game can stand on. Nothing in the app reads it yet,
+so no number on any screen moves.
+
+- **`stepCar(car, state, inputs, dt)`** (`src/js/drive-model.js`): the car one step later, from the steering wheel,
+  the pedals and the gear. Three freedoms of the body (forward, sideways, yaw), four wheels that each spin on their
+  own, loads that shift under acceleration and cornering through the car's own roll stiffness, the engine with its
+  inertia behind a clutch that slips and locks, the gearbox's shift time, the differential's lock, brakes from the
+  hydraulics, ABS and traction control where fitted, drag and downforce.
+- **One tyre model, derived:** the brush model (Fiala; Pacejka ch. 3), fed with the lap's own inputs (grip with its
+  load sensitivity, the cornering stiffness, the slip peak). Drive, braking and cornering share one slip vector, so
+  combined slip needs no rule of its own.
+- **A car is plain data.** `driveCar()` returns numbers and arrays only, and `stepCar` reads nothing but its
+  arguments: a separate game app can load this one file and a car's JSON (owner's decision 10).
+- **Against the solvers beside it:** 0-100 MX-5 8.21 s (solver 8.49), Golf GTI Mk1 8.11 (8.48), WRX STI 5.52 (5.26),
+  Mustang GT 5.68 (5.12), 911 GT3 3.89 (3.39); a stop from 100 km/h at 0.97–1.02 of the tyres' braking grip
+  (MX-5 37.7 m, GT3 29.5 m); a 40 m skidpad at 0.81–0.93 of their lateral grip.
+- **What the lap could not do, and this does:** lifting mid-corner tightens the line; full power swings a Mustang's
+  tail round and pushes a Civic Type R wide; without ABS the wheels lock and an MX-5 stops in 43.0 m against 37.9.
+- **Speed:** 20 s of driving steps in about 25 ms.
+- **Left open, named in the file:** the turbo's shaft in time (boost is the settled curve's), tyre and brake
+  temperatures, camber and roll steer, bumps and kerbs, a hybrid's controller; all-wheel drive is split evenly; the
+  two powerful rear-drivers launch 11–15% slower than the solver. The lap's own fitted pieces this model will
+  replace (`DIFF_ASYM0`, `KVCAP`, the launch-only slip curve) stay in the register until the lap reads it.
+
+Tests: test168 (new).
+
+### A corner's unsprung mass is its own parts, weighed (build 262)
+
+Phase D of `plans/road-to-v1.md`: `UNSPRUNG_SHARE` (12% of the corner's mass, every car) is retired.
+
+- **What is weighed:** the tyre and wheel (the masses the wheels' inertia already uses, at that axle's width), the
+  brake model's own rotor (a carbon-ceramic one is light), the caliper (sliding iron ~4.5 kg, fixed alloy ~3 kg, a
+  truck's ~7 kg: catalogue weights, probable), the upright, hub and bearing (9 kg on a 350 kg corner, in proportion:
+  teardown weights, probable), half the links, spring and damper, and half a driven corner's shaft. A solid axle is
+  unsprung whole (a Ford 8.8 in axle ~80 kg, probable); half a twist beam hangs on the body.
+- **What it gives:** MX-5 NA 32 kg a corner (13%), Golf GTI Mk1 34 front / 29 rear, 911 GT3 50 / 62, Mustang GT 57 / 58,
+  F-150 Raptor 81 / 92 on its solid axle. Wheel hop 11–14 Hz, as road cars have. Bigger wheels and brakes now cost
+  grip over bumps; light ones give it back.
+- **What moved:** laps only, through the tyres' load swing over the road: −0.06% (Viper) to +0.13% (Ariel Atom) round
+  the test circuit, mean +0.01%. No 0-100, top speed or power moves.
+- **Register:** 26 open.
+
+Tests: test166 (updated). Tests: 127 129
+
+### Four sections in place of ten tabs on a phone (build 261)
+
+Owner's decisions 12 and 13 (phone and desktop alike; declutter). No physics changes.
+
+- **BUILD · TEST · DRIVE · MORE.** The ten tabs are four sections: BUILD (engine, vehicle, parts, garage), TEST (live,
+  dyno), DRIVE (track, race), MORE (guide, options). On a phone held upright a bar of the four, each with a pixel icon,
+  sits at the foot of the screen as an app's does, and the tabs are one strip, four to a screen, that slides to the
+  open section and stays at the top while the page scrolls. A section opens on the tab last used in it. The bar keeps clear of a phone's home
+  indicator (safe-area inset), and the full-screen TRACK and RACE pages stop above it.
+- **Desktop** keeps the ten tabs in one row, with a gap between sections.
+- **The header on a phone** is one line of title and one of subtitle; it took three.
+- **Left open:** the LIVE cutaway's labels are too small to read on a phone (the canvas is drawn for 640 px and scaled
+  down); it needs a phone drawing of its own.
+
+Tests: test167 (new). Tests: 73 51
+
+### The engine's airflow estimates read its own filling, and the manifold answers by its volume (build 260)
+
+Phase B of `plans/road-to-v1.md`: two fitted numbers off the valved engines.
+
+- **`CAM.ampMul` no longer acts on a valved engine.** The exhaust port's flow, a blowdown's mass and the compressor's
+  demand were estimated from a flat 0.95 filling times a cam grade's bonus (+4% SPORT, +8% RACE). They now read the
+  engine's own integrated intake stroke at that speed (`refFill`). Rotary and two-stroke engines keep the old
+  reference until their ports are geometry.
+- **What moved:** 41 boosted cars; naturally aspirated power is unchanged. Peak power −5.4% (Civic Type R FK8) to +8.6%
+  (Ram 2500 Cummins), most within ±2%; 0-100 −4.9% to +3.6%. Not yet scored against the makers' figures (the check
+  runs at the end of the phase); the Cummins was already over its rating and is now further over.
+- **Manifold pressure on LIVE follows the manifold's volume** (`mapRateK`): K = VE·Vd·(N/60)·(charges per rev) / V,
+  the filling-and-emptying model (Heywood 7.6.2). Behind one throttle V is the plenum and the runners; with a throttle
+  per cylinder (ITB, sidedraft, mechanical injection) it is one runner, so those engines answer at once. A 911 GT3
+  reads 8 /s at 3000 rpm and 2.7 /s at idle, where every engine had 9 /s times a factor per system. Only the LIVE
+  bench reads it; no lap or 0-100 moves.
+- **Left open:** the plenum is taken as the engine's displacement (to become the intake part's own figure). Idle speed
+  from valve overlap was tried (Fox, Cheng & Heywood's residual correlation with a 30% dilution limit) and not kept: it
+  gave 1400 rpm on a SPORT cam and no stable idle on RACE, because the model idles at 0.15 bar where real engines
+  hold 0.3–0.4. The register records it.
+- **Register:** `MAP_K` becomes "plenum volume"; one number found on the way and added (the induction systems'
+  metering and idle); 27 open.
+
+Tests: test166 (updated).
+
+### A register of what is still fitted, and the road to v1.0 (build 259)
+
+Phase A of `plans/road-to-v1.md`. No physics changes; no number moves.
+
+- **`plans/road-to-v1.md`:** the route to v1.0 in phases A to H, with the owner's decisions (every drivetrain, each
+  car within 10%, a four-wheel car stepped in time as the base of a later driving game, phone and desktop alike).
+- **`plans/fitted-register.json`:** 26 fitted numbers still in the code, each with what it stands in for and the part
+  that retires it; 2 kept as game rules (drivers' characters, part costs); 11 files not yet audited (electric,
+  hybrid, thermal, friction).
+- **README:** the roadmap's finished working queue (builds 70 to 258) moved to `plans/v1-history.md`, unchanged.
+
+Tests: test166 (new; the register only shrinks).
+
 ### Emission tile colors on LIVE (build 258)
 
 - **Each species tile** (CO₂, CO, HC, NOx, PM) turns amber then red: pollutants by g/kg fuel on the same denoms as the emit score (40 / 25 / 20 / 8); CO₂ by g/kWh when making power (900 / 1200).

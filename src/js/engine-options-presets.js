@@ -2,16 +2,17 @@
 // Induction / metering system. Until build 244 each also had flowTop and flowLow, a fitted top-end and low-rpm VE ramp;
 // a carburettor's restriction is now its venturi (carbDp, src/js/parts.js). metering = AFR
 // precision → efficiency (EFI holds optimal AFR everywhere; carbs/mech run rich & waste
-// fuel). resp = manifold response for the dynamic model. idle = idle-rpm penalty. di =
+// fuel). perCyl = a throttle per cylinder (sidedraft carburettors, throttle bodies, and the slide or butterfly sets
+// mechanical injection ran: probable), which sets the manifold volume behind the throttle (mapRateK). idle = idle-rpm penalty. di =
 // whether direct injection is available. Values chosen to reflect real relative behaviour.
 const INTAKE_SYS={
-  carb1:    {label:'1-BBL CARB',       metering:0.90,resp:0.90,idle:0,  di:false},
-  carb2:    {label:'2-BBL CARB',      metering:0.92,resp:0.95,idle:0,  di:false},
-  carb4:    {label:'4-BBL CARB',      metering:0.93,resp:1.00,idle:40, di:false},
-  sidedraft:{label:'SIDEDRAFT CARBS', metering:0.92,resp:1.15,idle:250,di:false},
-  mech:     {label:'MECH INJECTION',  metering:0.89,resp:1.10,idle:300,di:false},
-  efi:      {label:'EFI (SINGLE TB)', metering:1.00,resp:1.00,idle:0,  di:true},
-  itb:      {label:'EFI (ITB)',       metering:1.00,resp:1.25,idle:180,di:true}
+  carb1:    {label:'1-BBL CARB',       metering:0.90,idle:0,  di:false},
+  carb2:    {label:'2-BBL CARB',      metering:0.92,idle:0,  di:false},
+  carb4:    {label:'4-BBL CARB',      metering:0.93,idle:40, di:false},
+  sidedraft:{label:'SIDEDRAFT CARBS', metering:0.92,idle:250,di:false,perCyl:true},
+  mech:     {label:'MECH INJECTION',  metering:0.89,idle:300,di:false,perCyl:true},
+  efi:      {label:'EFI (SINGLE TB)', metering:1.00,idle:0,  di:true},
+  itb:      {label:'EFI (ITB)',       metering:1.00,idle:180,di:true,perCyl:true}
 };
 // Air filter (build 210): the factory systems, as what they restrict at the engine's peak flow. Until build 210 each was
 // a VE loss fitted in proportion to rpm (stock -4% at the redline, stacks +2%); now the restriction is the filter's
