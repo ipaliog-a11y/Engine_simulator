@@ -1,20 +1,34 @@
-# Plan: the road to v1.0 (draft for the owner)
+# Plan: the road to v1.0
 
-Written at build 258 (v0.7) from the code, `README.md`'s roadmap, `CHANGELOG.md` and the two existing plans. It is a
-proposal: nothing here is decided until the owner says so. Open questions are at the end.
+Written at build 258 (v0.7) from the code, `README.md`'s roadmap, `CHANGELOG.md` and the two existing plans, then
+revised with the owner's answers (see *Owner's decisions*). The order of the phases is still a proposal.
 
-## The vision, as read from the repository
+## The vision
 
 1. **A designer, not a tuner's lookup table.** You design an engine, a car and its parts, and the page works out
    the dyno, the 0–100, the lap and the race from physics. One HTML file, 8-bit look, runs offline from `file://`.
-2. **v1.0 = every number derived, not fitted.** A number comes from geometry, a physical law and a sourced input.
-   Accuracy is whatever that gives; a miss is named as a known gap, never tuned away.
-3. **Parts are real objects.** Each fitted table becomes a part with dimensions (camshaft, chassis, intercooler so
-   far), and a factory car is just that part written down from its published spec.
-4. **It teaches.** Every model has a guide page (real life → in the game → the physics) and something to look at:
-   the cutaway, the compressor map, the lever diagram, the G-G diagram.
-5. **Electric and hybrid are powertrain types of the same game** (shipped as v0.7), not a separate one.
-6. **Small, cheap, traceable builds.** One change, one build, one PR; short text; few tests.
+2. **v1.0 = every number derived, not fitted**, for every powertrain: piston, rotary, two-stroke, diesel, electric
+   and every hybrid layout. A miss is named as a known gap, never tuned away.
+3. **A fun, educational game first.** Accuracy is not chased: within 10% of known values is enough.
+4. **Parts are real objects.** Each fitted table becomes a part with dimensions, and a factory car is that part
+   written down from its published spec.
+5. **Two kinds of player.** A learner puts guided values together and has a car that works. An enthusiast tunes
+   every part to get the best out of it. The same parts serve both.
+6. **v1.0 is the base of a driving game.** It must already simulate every value a playable driving game needs;
+   the game itself, and 3D 8-bit cars matching the still profile images, come after v1.0.
+7. **Small, cheap, traceable builds.** One change, one build, one PR; short text; few tests.
+
+## Owner's decisions (November 2026)
+
+| # | Question | Decision |
+|---|---|---|
+| 1 | Scope of v1.0 | **Everything, all drivetrain types.** |
+| 2 | Finish line and accuracy | Definition not fixed yet. No chase for high accuracy; if a number is needed, **under 10% against known values**. |
+| 3 | Checks against real cars | **Back after each big phase**, not per build. |
+| 4 | Greek | **Decided after v1.0.** Text stays wrapped in `tr()`. |
+| 5 | Parked work (water-to-air intercoolers, catalytic converter) | **Before v1.0.** |
+| 6 | After v1.0 | 3D 8-bit graphics matching the car profiles; a playable driving game; more game and more physics. |
+| 7 | Audience | **Learners and car enthusiasts**, both. |
 
 ## Where it stands
 
@@ -25,65 +39,83 @@ proposal: nothing here is decided until the owner says so. Open questions are at
   catalytic converter, rods and pistons.
 - **Fitted numbers still in the code** (a quick count, not a full audit): `ampMul`, `loWiden`, `THROAT_RATIO`,
   `TURB_WHEEL`, `TURBO_CONFIG` multipliers, `AERO_FRONT/REAR`, `MAP_K`, `UNSPRUNG_SHARE`, `catRampTop`, `DIFF_ASYM0`,
-  `KVCAP`, the rotary and two-stroke VE bell and type factors, and the race's tyre and racecraft constants.
+  `KVCAP`, the rotary and two-stroke VE bell and type factors, and the race's tyre and racecraft constants. The
+  electric and hybrid side has not been audited for fitted numbers at all.
+- **What a driving game would miss today.** The car is solved as a lap (quasi-steady, on one line), not stepped in
+  time from a driver's inputs. There is no yaw, no slip angle that builds, no transient load transfer, no force per
+  wheel under combined slip, and the tyre past its limit is a launch-only model. A car cannot slide or spin.
 
-## What stands between here and v1.0
-
-- **There is no finish line written down.** "Every number derived" has no list to tick off, so v1.0 cannot be
-  called. The README's roadmap is a 70-row table of finished work; the open work is spread over three files.
-- **Accuracy drifts quietly.** Retiring a fitted number honestly costs accuracy (build 256: mean 0–100 error
-  7.76 → 8.24%). With per-build checks against real cars paused, nobody sees the running total.
-- **Recent builds left tails:** emissions (dyno columns, Zeldovich NOx, cat temperature, g/km), water-to-air
-  intercoolers (parked), the cat's double count (parked).
-- **Documentation debt grows:** Greek is paused while new text lands every build; `i18n.js` is 608 KB of the 2.5 MB
-  page.
-
-## Suggested route
+## Route
 
 Each line is one build unless it says two (the part, then the retirement, as the parts plan sets).
 
 **A. Draw the finish line (1 build, no physics).**
-A register of every fitted number left: name, file, what it stands in for, which part retires it, or "kept as a
-rule, owner's decision". A small test checks that the register only shrinks. The README's roadmap is cut to one
-screen that points at it; finished rows stay in the CHANGELOG. v1.0 is then "the register is empty or signed off".
+A register of every fitted number left, across all powertrains and the race: name, file, what it stands in for,
+which part retires it, or "kept as a rule, owner's decision". A small test checks it only shrinks. The README's
+roadmap is cut to one screen that points at it. v1.0 is then "the register is empty or signed off, and the
+scoreboard is under 10%".
 
-**B. Engine parts (about 8 builds).** In this order, because each feeds the next:
-1. Camshaft, step 2: retire `ampMul`, `loWiden` and the idle number (moves turbo spool most).
-2. Cylinder head and springs (2 builds): valve size, port flow, spring load; retires `THROAT_RATIO` and spring steps.
-3. Turbocharger (2 builds): wheels, A/R, wastegate; retires `TURB_WHEEL` and `TURBO_CONFIG` multipliers. This is
-   where the largest named gaps live (RS3 and EcoBoost low-rpm torque).
-4. Plenum, throttle and flywheel (2 builds): retires `MAP_K`.
-5. Catalytic converter: find what the double count hides first; needs the owner before it starts.
+**B. Combustion engine parts (about 10 builds).**
+1. Camshaft, step 2: retire `ampMul`, `loWiden` and the idle number.
+2. Cylinder head and springs (2): retires `THROAT_RATIO` and the spring steps.
+3. Turbocharger (2): wheels, A/R, wastegate; retires `TURB_WHEEL` and `TURBO_CONFIG` multipliers. The largest named
+   gaps live here (RS3 and EcoBoost low-rpm torque).
+4. Water-to-air and twin intercoolers, per car from published specs.
+5. Plenum, throttle and flywheel (2): retires `MAP_K`.
+6. Catalytic converter: find what the double count hides, then the part (2).
+7. Rotary and two-stroke breathing: ports as geometry, in place of the VE bell and type factors.
 
-**C. Vehicle parts (about 4 builds).** Wings and brake bias (retires `AERO_FRONT/REAR`); wheels and tyre pressure
-(retires `UNSPRUNG_SHARE`).
+*Scoreboard run at the end of B.*
 
-**D. Tails (as the owner picks).** Emissions on the dyno and per km on the WLTP cycle; water-to-air intercoolers;
-the ported engines' bell (rotary, two-stroke), if they are in v1.0's scope.
+**C. Electric and hybrid audit (2–4 builds).** The same register, applied to the motor, inverter, battery and the
+hybrid controllers; each fitted number found gets a part or a cited rule.
 
-**E. The v1.0 gate (1–2 builds).** One full-suite run and one scoreboard against the real cars (power, 0–100, top
-speed, lap), published with the known-gaps list. Guide and README pass. Greek either filled in or formally dropped.
-The owner tags the release.
+**D. Vehicle parts (about 4 builds).** Wings and brake bias (retires `AERO_FRONT/REAR`); wheels and tyre pressure
+(retires `UNSPRUNG_SHARE`); the differential (`DIFF_ASYM0`).
 
-**F. After v1.0 (candidates, not ordered).** Editable spark and VE tables (the parked ECU idea in
-`research/similar-projects/`); transient handling (yaw, lift-off oversteer); a derived race tyre; a career or
-progression layer on top of the challenges.
+*Scoreboard run at the end of D.*
 
-**Two suggestions on method, to keep cost and drift down:**
-- Keep per-build real-car checks paused, but run the scoreboard once at the end of each phase (B, C, E), so drift is
-  seen four times, not never and not every build.
-- Stay with one session per PR and two builds per part; batch preset sourcing (as builds 251–253 did) apart from
-  physics.
+**E. Driving-ready values (about 6–8 builds, the largest new piece).** No graphics and no game: the numbers only,
+behind one function a game can call, `stepCar(dt, steer, throttle, brake, clutch, gear)`.
+1. The tyre as one model: force from slip ratio and slip angle together (combined slip), per wheel, with its load.
+   The launch's slip curve and the lap's grip limit become two readings of it.
+2. The car's motion in the plane: yaw inertia from the car's own mass and dimensions, four wheel loads with
+   transient load transfer through the springs, dampers and bars already modelled.
+3. The powertrain in time: the engine, turbo, clutch, gearbox and differential stepped from pedal inputs (the LIVE
+   bench and the lap's turbo walk already do most of this), the motor and hybrid controllers the same way.
+4. Brakes, ABS and traction control per wheel, in time.
+5. A check: the stepped car, driven round the solved racing line by a simple driver, laps within a few percent of
+   the lap solver; a skidpad and a lane change give sensible numbers. One headless test.
+6. The body's dimensions every preset needs for 3D later (length, width, height, overhangs, wheel and tyre size)
+   recorded with their sources.
 
-## Questions for the owner
+**F. The race's rules (2–4 builds).** Tyre heat, wear and wet grip from the tyre model of E; the tow and dirty air
+from the cars' own aero. Overtaking decisions and weather stay rules, signed off in the register.
 
-1. **Scope of v1.0.** Combustion engine and car only (as the hybrid plan's decision 4 says), or also the rotary and
-   two-stroke bell, the race's tyre and racecraft constants, and the electric side?
-2. **The finish line.** Is "every fitted number retired, or listed as a rule you signed off" the right definition?
-   Is there an accuracy floor below which v1.0 should not ship?
-3. **The pauses.** Should the real-car checks come back only at phase ends, as suggested? Does Greek come back
-   before v1.0, after it, or not at all?
-4. **Parked work.** Water-to-air intercoolers and the catalytic converter: before v1.0, or after?
-5. **After v1.0.** More game (career, progression, tuning maps) or more physics (transient handling)?
-6. **Who it is for.** Learners, car enthusiasts, or players? It decides whether the next UI effort goes to the
-   guide, to the real-car presets, or to the challenges.
+**G. For both players (2–3 builds).** A guided build for the learner: a few questions (what kind of car, what
+budget) give a complete, working car with each choice explained, then every part stays open on its card for the
+enthusiast. The guide pages for the new parts.
+
+**H. The v1.0 gate (1–2 builds).** Full-suite run; the scoreboard against the real cars (power, torque, 0–100, top
+speed, lap, consumption) under 10% mean on each, with the cars outside it named; guide and README pass. The owner
+tags the release.
+
+**After v1.0.** 3D 8-bit cars from the profile images and the recorded dimensions; the driving game on `stepCar`;
+the Greek decision; editable spark and VE tables; a career layer.
+
+## Method
+
+- Real-car checks stay off per build and run at the ends of B, D and H.
+- One session per PR; two builds per part; preset sourcing batched apart from physics (as builds 251–253 did).
+- If a retirement pushes a figure past 10%, the missing physics is named and queued; nothing is tuned back.
+
+## Still open
+
+1. **The finish line's exact wording** (owner undecided). Proposed above: register empty or signed off, scoreboard
+   under 10% mean per figure.
+2. **Is 10% a mean over the cars, or a limit for each car?** A per-car limit would fail today (the RS3 is ~46% short
+   at 1700 rpm). The plan assumes the mean, with outliers named.
+3. **Phase E's depth.** A driving game can start on a simpler car (a bicycle model with one tyre per axle) or wait
+   for four wheels. The plan assumes four wheels, since the suspension and per-axle grip already exist.
+4. **Does the driving game stay in this one HTML file**, or become a second page that loads the same physics?
+   It decides how `stepCar` is packaged.
