@@ -20,6 +20,24 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 Working toward **v1.0 — every number derived, not fitted.**
 
+### A corner's unsprung mass is its own parts, weighed (build 262)
+
+Phase D of `plans/road-to-v1.md`: `UNSPRUNG_SHARE` (12% of the corner's mass, every car) is retired.
+
+- **What is weighed:** the tyre and wheel (the masses the wheels' inertia already uses, at that axle's width), the
+  brake model's own rotor (a carbon-ceramic one is light), the caliper (sliding iron ~4.5 kg, fixed alloy ~3 kg, a
+  truck's ~7 kg: catalogue weights, probable), the upright, hub and bearing (9 kg on a 350 kg corner, in proportion:
+  teardown weights, probable), half the links, spring and damper, and half a driven corner's shaft. A solid axle is
+  unsprung whole (a Ford 8.8 in axle ~80 kg, probable); half a twist beam hangs on the body.
+- **What it gives:** MX-5 NA 32 kg a corner (13%), Golf GTI Mk1 34 front / 29 rear, 911 GT3 50 / 62, Mustang GT 57 / 58,
+  F-150 Raptor 81 / 92 on its solid axle. Wheel hop 11–14 Hz, as road cars have. Bigger wheels and brakes now cost
+  grip over bumps; light ones give it back.
+- **What moved:** laps only, through the tyres' load swing over the road: −0.06% (Viper) to +0.13% (Ariel Atom) round
+  the test circuit, mean +0.01%. No 0-100, top speed or power moves.
+- **Register:** 26 open.
+
+Tests: test166 (updated). Tests: 127 129
+
 ### Four sections in place of ten tabs on a phone (build 261)
 
 Owner's decisions 12 and 13 (phone and desktop alike; declutter). No physics changes.

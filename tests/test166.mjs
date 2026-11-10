@@ -9,7 +9,7 @@ import { readFileSync } from 'fs';
 import { fileURLToPath } from 'url';
 import path from 'path';
 const repo = fileURLToPath(new URL('..', import.meta.url));
-const OPEN = 27, AUDIT = 11, RULES = ['RACE_DRIVERS', 'part costs'];
+const OPEN = 26, AUDIT = 11, RULES = ['RACE_DRIVERS', 'part costs'];
 const reg = JSON.parse(readFileSync(path.join(repo, 'plans/fitted-register.json'), 'utf8'));
 const fails = [];
 for (const e of reg.entries) {

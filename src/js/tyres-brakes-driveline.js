@@ -252,16 +252,41 @@ function rollStiffness(v){
 // spectrum Gd(n) = Gd(n0) (n/n0)^-2 at n0 = 0.1 cycle/m (class A, very good, up to 32e-6 m3; B 32-128e-6; each class
 // 4x the one before). Driven at v, the road is a white velocity input whose strength grows with v, so the tyre's
 // load swings by sigma = c sqrt(Gd(n0) v): c is worked out once per axle, from the quarter car's response.
-// UNSPRUNG_SHARE: the wheel, tyre, brake and upright as a share of the corner's mass (~43 kg on a ~350 kg corner in
-// the quarter-car literature): a labelled estimate, the same for every car. TYRE_KZ: a road tyre's vertical stiffness,
+// The unsprung mass is the corner's own parts, weighed (unsprungMass, build 262); until then 12% of the corner's mass
+// for every car. TYRE_KZ: a road tyre's vertical stiffness,
 // 200-300 kN/m, taken as 250 kN/m for a 205/55R16 and scaled as the root of its width times its diameter (the form of
 // Rhyne's relation, Tire Sci. Tech. 33(3), 2005, at one inflation pressure). Together they give the 10-12 Hz wheel hop
 // a road car has.
-const UNSPRUNG_SHARE=0.12, TYRE_KZ=250e3, TYRE_KZ_REF=Math.sqrt(0.205*0.632), DAMPER_STEP=1.3, ISO_N0=0.1;
+const TYRE_KZ=250e3, TYRE_KZ_REF=Math.sqrt(0.205*0.632), DAMPER_STEP=1.3, ISO_N0=0.1;
+// A CORNER'S UNSPRUNG MASS, FROM ITS PARTS (build 262): what moves with the wheel over a bump.
+//   tyre and wheel   the masses roadWheelInertia already weighs, at this axle's own tyre width;
+//   rotor            the brake model's own disc (brakeThermal: its ring, vanes and hat; a carbon-ceramic one is light);
+//   caliper          a sliding cast-iron caliper with its bracket ~4.5 kg, a fixed alloy opposed-piston one ~3 kg, a
+//                    truck's twin-piston slider ~7 kg (makers' catalogue weights; probable);
+//   upright and hub  knuckle, hub and bearing, sized by the load they carry: 9 kg on a 350 kg corner (teardown
+//                    weights of mid-size cars; probable), in proportion to the corner's mass;
+//   links            half of the arms, spring and damper (the other half hangs on the body): 4 kg on that corner;
+//   driveshaft       half of a driven corner's shaft, ~3.5 kg;
+//   a beam           a solid axle is unsprung whole: its tube and, driven, its differential and shafts (a Ford
+//                    8.8 in axle ~80 kg bare; probable), half to each wheel, in place of upright, links and shaft
+//                    shares above 1/3; a twist beam (~20 kg) hangs half on the body.
+const UNSPRUNG={calSlide:4.5,calFixed:3.0,calHD:7,upright:9/350,links:4/350,shaft:3.5,solidDriven:80,solidDead:35,twist:20};
+function unsprungMass(v,front){
+  const U=UNSPRUNG,mc=v.mass*(front?v.fWt:1-v.fWt)/2;
+  const D=2*(v.rTire||0.32),dr=(v.wheelDia||16)*0.0254,w=((front&&v.tireWidthF)||v.tireWidth||225)/1000;
+  const tyre=15*Math.PI*D*w+6*2*Math.PI/4*(D*D-dr*dr),wheel=0.075*(v.wheelDia||16)*(0.8*w/0.0254);
+  const bt=BRAKE_TYPE[v.brakeType]||BRAKE_TYPE.slotted,th=v.rotor?brakeThermal(v):null,rotor=th?(front?th.front:th.rear).m:6;
+  const pist=(bt.caliper[front?'f':'r']||[]).length,cal=v.brakeType==='hd'?U.calHD:pist>1?U.calFixed:U.calSlide;
+  const driven=v.drive==='awd'||(v.drive==='rwd')!==front,geo=front?v.suspFront:v.suspRear;
+  let rest=U.upright*mc+U.links*mc+(driven?U.shaft:0);
+  if(geo==='solid')rest=(driven?U.solidDriven:U.solidDead)/2+U.upright*mc/3;
+  else if(geo==='twist')rest=U.twist/4+U.upright*mc+U.links*mc/2;
+  return tyre+wheel+rotor+cal+rest;
+}
 // A corner's quarter car for axle 'F' or 'R' of car v: sprung and unsprung mass (kg), wheel rate, damping, tyre rate.
 function quarterCar(v,ax){
   const front=ax==='F',mc=v.mass*(front?v.fWt:1-v.fWt)/2,kit=SUSPENSION[v.suspension]||SUSPENSION.sport,w=2*Math.PI*kit.hz;
-  const mu=UNSPRUNG_SHARE*mc,ms=mc-mu,k0=mc*w*w,ks=k0*Math.pow(SPRING_STEP,(front?v.springF:v.springR)||0);   // the rate rollStiffness uses
+  const mu=Math.min(unsprungMass(v,front),0.5*mc),ms=mc-mu,k0=mc*w*w,ks=k0*Math.pow(SPRING_STEP,(front?v.springF:v.springR)||0);   // the rate rollStiffness uses
   // the damper is the kit's, matched to the kit's springs: a stiffer spring on the same damper is damped less
   const cs=2*kit.zeta*Math.sqrt(k0*ms)*Math.pow(DAMPER_STEP,(front?v.damperF:v.damperR)||0);
   const tw=((front&&v.tireWidthF)||v.tireWidth||225)/1000,od=2*(v.rTire||0.32);

@@ -137,15 +137,6 @@
    "state": "open"
   },
   {
-   "id": "UNSPRUNG_SHARE",
-   "file": "tyres-brakes-driveline.js",
-   "match": "UNSPRUNG_SHARE=",
-   "standsFor": "unsprung mass as 12% of a corner's mass",
-   "retiredBy": "wheels part (wheel, tyre, brake and hub masses, already computed for inertia)",
-   "phase": "D",
-   "state": "open"
-  },
-  {
    "id": "TYRE_KZ",
    "file": "tyres-brakes-driveline.js",
    "match": "TYRE_KZ=",
