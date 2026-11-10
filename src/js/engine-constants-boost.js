@@ -2,7 +2,18 @@ const RAD_CAP={small:0.75,stock:1.0,large:1.35};   // relative heat-rejection ca
 const IMEP_K=13.2;   // bar — ONLY scales the dyno brake's reference torque now (loadRefTq); torque itself comes from fuel
 // Dynamic (throttle-driven) model tuning:
 const PUMP_K=0.9;    // pumping loss (bar) at full manifold vacuum → engine braking
-const MAP_K=9;       // manifold-pressure response rate (1/s) — fast
+// How fast the manifold's pressure follows the throttle (build 263). The manifold is a volume the cylinders pump down:
+// emptying it, dp/dt = -(R T / V_m) m_cyl, so the pressure relaxes at K = VE Vd (N/60)(charges per rev) / V_m (the
+// filling-and-emptying model, Heywood 7.6.2; Hendricks' mean-value engine model). V_m is what lies between the
+// throttle and the valves: behind one throttle, the plenum and all the runners; with a throttle per cylinder, one
+// runner fed by one cylinder's flow, which is why such an engine answers the pedal at once. The plenum is taken as
+// the engine's displacement, the usual size of a road manifold (probable; to become the intake part's own figure).
+// Until build 263 a constant 9 /s times a factor per induction system (0.90 to 1.25).
+function mapRateK(rpm){
+  const e=engine,Vd=e.displacement_L/1000,n=Math.max(1,e.cylinders||1),run=(e.runnerL||0.3)*(e.runnerA||8e-4);
+  const flow=(state.ve||0.85)*Vd*Math.max(rpm,300)/60*(e.chargesPerRev||0.5);
+  return e.throttlePerCyl?flow/n/run:flow/(Vd+n*run);
+}
 const THR_K=0.12;    // throttle-vs-rpm restriction (higher = more vacuum at rpm)
 const IDLE_AIR=0.03; // idle bypass air (fraction of throttle area at 0% pedal)
 const IDLE_RPM=850;  // idle-controller floor — the engine can't stall below this

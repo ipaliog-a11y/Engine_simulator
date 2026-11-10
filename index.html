@@ -743,7 +743,7 @@ body.showcase-open{overflow:hidden}
 </div>
 <div class="container">
 <header>
-<h1>PIXEL ENGINE SIM v0.7 build 259</h1>
+<h1>PIXEL ENGINE SIM v0.7 build 260</h1>
 <div class="subtitle" id="subtitle">ENGINE DESIGNER • BUILD IT, THEN DRIVE IT</div>
 </header>
 <div class="build-strip" id="buildStrip">
@@ -4281,7 +4281,7 @@ function portLossShare(n,lam,f0){
   const nEx=Math.max(1,(e.valves||4)-e.ivCount), D=THROAT_RATIO*EV_RATIO*e.ivDia_mm/1000, L=e.bore_mm/1000;
   const st=e.stoichAFR||14.7, afr=st*Math.max(1,lam);
   const rho=(1+(e.intake==='na'?0:(e.boost_bar||0)))*1e5/(287*313);
-  const air=rho*(e.dispCyl_L/1000)*(e.veAmp||0.95)*n/60*(e.chargesPerRev||0.5);   // kg/s per cylinder
+  const air=rho*(e.dispCyl_L/1000)*refFill(n)*n/60*(e.chargesPerRev||0.5);   // kg/s per cylinder
   const open=clamp((e.camDur||240)/720,0.2,1), mdot=air*(1+1/afr)/open/nEx;         // per port, while open
   const Tg=300+(e.fuelLHV||44)*1e6*f0/((afr+1)*CP_EXH);
   const mu=1.716e-5*Math.pow(Tg/273,1.5)*(273+111)/(Tg+111), k=mu*CP_EXH/0.7;
@@ -4529,6 +4529,16 @@ function buildFillTable(){
     tb.push({rpm:r,f,adv:best,L:bestL});
   }
   e.fillTable=tb;
+  let s=0,k=0;for(const t of tb)if(t.rpm>=1000&&t.rpm<=e.redline){s+=t.f;k++;}
+  e.fillMean=k?s/k:0;
+}
+// The filling the airflow estimates use (the exhaust port's flow, a blowdown's mass, the compressor's demand): the
+// engine's own integrated intake stroke at that speed, or its mean over the rev range where no speed is in scope
+// (build 260). Until then a flat 0.95 times a cam grade's bonus (CAM.ampMul) stood here. A ported engine, with no
+// integrated stroke yet, keeps that reference.
+function refFill(rpm){
+  const e=engine;if(!e.fillTable)return e.veAmp||0.95;
+  return rpm>0?fillAt(rpm):e.fillMean;
 }
 // The intake phaser's advance at this rpm, as the fill table chose it (0 without VVT: the table never advances)
 function camAdvAt(rpm){
@@ -4849,7 +4859,7 @@ function pulseShape(mEx,area,T3,mapBar,prMean){
   const pEvo=Math.max(pExh,Math.pow(pInt*(T/Tint)*Math.pow(pExh,-K_EXH),1/(1-K_EXH)));
   const fb=clamp(1-Math.pow(pExh/pEvo,1/GAMMA_EXH),0,1);
   const vCyl=(e.displacement_L/1000)/Math.max(1,e.cylinders);
-  const vB=(pInt/pExh)*(T/Tint)*vCyl*(e.veAmp||0.95)*fb;       // one blowdown, at manifold conditions
+  const vB=(pInt/pExh)*(T/Tint)*vCyl*refFill()*fb;       // one blowdown, at manifold conditions
   const vMan=Math.PI/4*e.primD*e.primD*e.primL*perTurbine;
   return {phi,fb,keep:vB/(vB+vMan),pExh};
 }
@@ -5069,7 +5079,7 @@ function shaftLossPower(shaftRpm){
 // term, and calling it from here would close a loop that does not converge.
 function airFlowAt(rpm,pr){
   const e=engine;
-  return (e.displacement_L/1000)*(e.veAmp||0.95)*(rpm/60*(e.chargesPerRev||0.5))*(pr*101325/(287*313));
+  return (e.displacement_L/1000)*refFill(rpm)*(rpm/60*(e.chargesPerRev||0.5))*(pr*101325/(287*313));
 }
 // Steady boost: the shaft speed where turbine and compressor balance, found by bracketing on boost
 // rather than by relaxation — the states switch discontinuously and a fixed point orbits them.
@@ -5249,16 +5259,17 @@ function deriveGasDynamics(){
 // Induction / metering system. Until build 244 each also had flowTop and flowLow, a fitted top-end and low-rpm VE ramp;
 // a carburettor's restriction is now its venturi (carbDp, src/js/parts.js). metering = AFR
 // precision → efficiency (EFI holds optimal AFR everywhere; carbs/mech run rich & waste
-// fuel). resp = manifold response for the dynamic model. idle = idle-rpm penalty. di =
+// fuel). perCyl = a throttle per cylinder (sidedraft carburettors, throttle bodies, and the slide or butterfly sets
+// mechanical injection ran: probable), which sets the manifold volume behind the throttle (mapRateK). idle = idle-rpm penalty. di =
 // whether direct injection is available. Values chosen to reflect real relative behaviour.
 const INTAKE_SYS={
-  carb1:    {label:'1-BBL CARB',       metering:0.90,resp:0.90,idle:0,  di:false},
-  carb2:    {label:'2-BBL CARB',      metering:0.92,resp:0.95,idle:0,  di:false},
-  carb4:    {label:'4-BBL CARB',      metering:0.93,resp:1.00,idle:40, di:false},
-  sidedraft:{label:'SIDEDRAFT CARBS', metering:0.92,resp:1.15,idle:250,di:false},
-  mech:     {label:'MECH INJECTION',  metering:0.89,resp:1.10,idle:300,di:false},
-  efi:      {label:'EFI (SINGLE TB)', metering:1.00,resp:1.00,idle:0,  di:true},
-  itb:      {label:'EFI (ITB)',       metering:1.00,resp:1.25,idle:180,di:true}
+  carb1:    {label:'1-BBL CARB',       metering:0.90,idle:0,  di:false},
+  carb2:    {label:'2-BBL CARB',      metering:0.92,idle:0,  di:false},
+  carb4:    {label:'4-BBL CARB',      metering:0.93,idle:40, di:false},
+  sidedraft:{label:'SIDEDRAFT CARBS', metering:0.92,idle:250,di:false,perCyl:true},
+  mech:     {label:'MECH INJECTION',  metering:0.89,idle:300,di:false,perCyl:true},
+  efi:      {label:'EFI (SINGLE TB)', metering:1.00,idle:0,  di:true},
+  itb:      {label:'EFI (ITB)',       metering:1.00,idle:180,di:true,perCyl:true}
 };
 // Air filter (build 210): the factory systems, as what they restrict at the engine's peak flow. Until build 210 each was
 // a VE loss fitted in proportion to rpm (stock -4% at the redline, stacks +2%); now the restriction is the filter's
@@ -7682,7 +7693,18 @@ const RAD_CAP={small:0.75,stock:1.0,large:1.35};   // relative heat-rejection ca
 const IMEP_K=13.2;   // bar — ONLY scales the dyno brake's reference torque now (loadRefTq); torque itself comes from fuel
 // Dynamic (throttle-driven) model tuning:
 const PUMP_K=0.9;    // pumping loss (bar) at full manifold vacuum → engine braking
-const MAP_K=9;       // manifold-pressure response rate (1/s) — fast
+// How fast the manifold's pressure follows the throttle (build 263). The manifold is a volume the cylinders pump down:
+// emptying it, dp/dt = -(R T / V_m) m_cyl, so the pressure relaxes at K = VE Vd (N/60)(charges per rev) / V_m (the
+// filling-and-emptying model, Heywood 7.6.2; Hendricks' mean-value engine model). V_m is what lies between the
+// throttle and the valves: behind one throttle, the plenum and all the runners; with a throttle per cylinder, one
+// runner fed by one cylinder's flow, which is why such an engine answers the pedal at once. The plenum is taken as
+// the engine's displacement, the usual size of a road manifold (probable; to become the intake part's own figure).
+// Until build 263 a constant 9 /s times a factor per induction system (0.90 to 1.25).
+function mapRateK(rpm){
+  const e=engine,Vd=e.displacement_L/1000,n=Math.max(1,e.cylinders||1),run=(e.runnerL||0.3)*(e.runnerA||8e-4);
+  const flow=(state.ve||0.85)*Vd*Math.max(rpm,300)/60*(e.chargesPerRev||0.5);
+  return e.throttlePerCyl?flow/n/run:flow/(Vd+n*run);
+}
 const THR_K=0.12;    // throttle-vs-rpm restriction (higher = more vacuum at rpm)
 const IDLE_AIR=0.03; // idle bypass air (fraction of throttle area at 0% pedal)
 const IDLE_RPM=850;  // idle-controller floor — the engine can't stall below this
@@ -9133,7 +9155,7 @@ function buildEngineCore(prevStoich,quiet){
   deriveFilter();   // the air filter's restriction, from its media and housing (build 210)
   deriveCarb();     // a carburettor's venturi, sized to the engine (build 244)
   engine.meteringEff=sys.metering;            // AFR precision → thermal efficiency
-  engine.intakeRespK=sys.resp;                // manifold fill speed (dynamic model)
+  engine.throttlePerCyl=!!sys.perCyl;         // what the manifold's volume is (mapRateK)
   engine.crFactor=otto(engine.compression)/otto(10.5);   // 1.0 at CR 10.5
   buildBurnTable();         // diesel burn phasing vs rpm; exhaustGasT reads it from here on
   deriveGasDynamics();      // runner + header geometry; needs crFactor, catRestrict and idleRpmEff
@@ -9227,7 +9249,7 @@ function deriveCam(){
   engine.veWidthHi=engine.redline*0.66;
   let loWiden=cam.loWiden,idlePenalty=cam.idleRpm;
   if(engine.vvt){loWiden+= (1-loWiden)*0.8;idlePenalty*=0.3;engine.veWidthHi*=1.06;}
-  engine.veAmp=engine.veAmp0*cam.ampMul;
+  engine.veAmp=engine.veAmp0*(engine.ports?cam.ampMul:1);   // a valved engine's estimates read its own filling (refFill, build 260)
   engine.veWidthLo*=loWiden;
   const sys=INTAKE_SYS[engine.intakeSys]||INTAKE_SYS.efi;
   engine.idleRpmEff=IDLE_RPM+idlePenalty+sys.idle;   // wild cam / race intake idle higher & lumpier
@@ -9260,7 +9282,7 @@ function deriveCharge(){
   const PR=1+engine.maxBoost;
   const perRev=engine.chargesPerRev;                      // intake events per revolution
   const rhoRef=PR*1e5/(287*(273+40));
-  const kgs=rhoRef*(engine.displacement_L/1000)*perRev*(engine.redline*0.85/60)*engine.veAmp;
+  const kgs=rhoRef*(engine.displacement_L/1000)*perRev*(engine.redline*0.85/60)*refFill(engine.redline*0.85);
   engine.turboFlow=kgs*132.28;                            // kg/s → lb/min
   engine.turboCap=compChokeFlow(tb.exd)*cfg.flow;         // derived from the wheel, not tabulated
   engine.turboLoad=engine.intake==='turbo'?engine.turboFlow/engine.turboCap:0;   // 1.0 = at rating
@@ -10457,7 +10479,7 @@ function stepEngine(dt){
   if(isElectric())return stepMotorBench(dt);
   if(isHybrid())return stepHybridBench(dt);   // the motor, the pack and the controller with the engine (build 190)
   stepBoost(dt);
-  state.map+=(mapTarget()-state.map)*(1-Math.exp(-MAP_K*engine.intakeRespK*dt));
+  state.map+=(mapTarget()-state.map)*(1-Math.exp(-mapRateK(state.rpm)*dt));
   if(state.nitrousActive){   // deplete the bottle while spraying at WOT (~14 s per fill)
     if(state.throttle>0.5&&state.nitrousCharge>0)state.nitrousCharge=Math.max(0,state.nitrousCharge-0.07*dt);
     if(state.nitrousCharge<=0)state.nitrousActive=false;
@@ -23576,10 +23598,10 @@ function stepHybridBench(dt){
   const lim=hybControl(H,dt);
   // the engine's air path and torque at its own throttle; off, it coasts to a stop with its manifold at the air
   if(H.engOn){
-    withEngThr(H,()=>{stepBoost(dt);state.map+=(mapTarget()-state.map)*(1-Math.exp(-MAP_K*e.intakeRespK*dt));});
+    withEngThr(H,()=>{stepBoost(dt);state.map+=(mapTarget()-state.map)*(1-Math.exp(-mapRateK(state.rpm)*dt));});
     const cut=state.rpm>=e.redline||withEngThr(H,overrunFuelCut);
     H.Te=withEngThr(H,()=>brakeTorqueRaw(Math.max(state.rpm,e.idleRpmEff),state.map,cut));
-  }else{H.Te=0;state.map+=(1-state.map)*(1-Math.exp(-MAP_K*dt));}
+  }else{H.Te=0;state.map+=(1-state.map)*(1-Math.exp(-mapRateK(e.idleRpmEff)*dt));}
   const tc=m.cool.tCool,temp=H.mT,w0=Math.max(H.n,1)*Math.PI/30;
   // MG1 (power-split): the engine's speed and its reaction
   let P1=0;

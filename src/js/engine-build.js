@@ -246,7 +246,7 @@ function buildEngineCore(prevStoich,quiet){
   deriveFilter();   // the air filter's restriction, from its media and housing (build 210)
   deriveCarb();     // a carburettor's venturi, sized to the engine (build 244)
   engine.meteringEff=sys.metering;            // AFR precision → thermal efficiency
-  engine.intakeRespK=sys.resp;                // manifold fill speed (dynamic model)
+  engine.throttlePerCyl=!!sys.perCyl;         // what the manifold's volume is (mapRateK)
   engine.crFactor=otto(engine.compression)/otto(10.5);   // 1.0 at CR 10.5
   buildBurnTable();         // diesel burn phasing vs rpm; exhaustGasT reads it from here on
   deriveGasDynamics();      // runner + header geometry; needs crFactor, catRestrict and idleRpmEff
@@ -340,7 +340,7 @@ function deriveCam(){
   engine.veWidthHi=engine.redline*0.66;
   let loWiden=cam.loWiden,idlePenalty=cam.idleRpm;
   if(engine.vvt){loWiden+= (1-loWiden)*0.8;idlePenalty*=0.3;engine.veWidthHi*=1.06;}
-  engine.veAmp=engine.veAmp0*cam.ampMul;
+  engine.veAmp=engine.veAmp0*(engine.ports?cam.ampMul:1);   // a valved engine's estimates read its own filling (refFill, build 260)
   engine.veWidthLo*=loWiden;
   const sys=INTAKE_SYS[engine.intakeSys]||INTAKE_SYS.efi;
   engine.idleRpmEff=IDLE_RPM+idlePenalty+sys.idle;   // wild cam / race intake idle higher & lumpier
@@ -373,7 +373,7 @@ function deriveCharge(){
   const PR=1+engine.maxBoost;
   const perRev=engine.chargesPerRev;                      // intake events per revolution
   const rhoRef=PR*1e5/(287*(273+40));
-  const kgs=rhoRef*(engine.displacement_L/1000)*perRev*(engine.redline*0.85/60)*engine.veAmp;
+  const kgs=rhoRef*(engine.displacement_L/1000)*perRev*(engine.redline*0.85/60)*refFill(engine.redline*0.85);
   engine.turboFlow=kgs*132.28;                            // kg/s → lb/min
   engine.turboCap=compChokeFlow(tb.exd)*cfg.flow;         // derived from the wheel, not tabulated
   engine.turboLoad=engine.intake==='turbo'?engine.turboFlow/engine.turboCap:0;   // 1.0 = at rating

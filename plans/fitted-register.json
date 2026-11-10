@@ -5,18 +5,18 @@
    "id": "CAM.ampMul",
    "file": "fuels-engine-types.js",
    "match": "ampMul:",
-   "standsFor": "a cam grade's airflow bonus, left in the pulse, blowdown and compressor-demand estimates",
-   "retiredBy": "the camshaft part, step 2",
-   "phase": "B1",
+   "standsFor": "a cam grade's airflow bonus; since build 260 only on rotary and two-stroke engines (a valved engine's estimates read its own integrated filling)",
+   "retiredBy": "ports as geometry",
+   "phase": "B7",
    "state": "open"
   },
   {
    "id": "CAM.loWiden",
    "file": "fuels-engine-types.js",
    "match": "loWiden:",
-   "standsFor": "how a hotter cam narrows the low side of the breathing",
-   "retiredBy": "the camshaft part, step 2",
-   "phase": "B1",
+   "standsFor": "how a hotter cam narrows the low side of the VE bell; the bell is only on rotary and two-stroke engines",
+   "retiredBy": "ports as geometry",
+   "phase": "B7",
    "state": "open"
   },
   {
@@ -24,7 +24,7 @@
    "file": "fuels-engine-types.js",
    "match": "idleRpm:",
    "standsFor": "idle speed added per cam grade",
-   "retiredBy": "the camshaft part, step 2 (idle from overlap and residuals)",
+   "retiredBy": "idle from overlap and residuals. Tried in build 260: Fox, Cheng & Heywood's residual correlation (SAE 931025) with a 30% dilution limit gave 1400 rpm on SPORT and no stable idle on RACE, because the model idles at 0.15 bar of manifold pressure (real 0.3-0.4) and the correlation is outside its range past ~40 deg of overlap. Needs combustion that weakens with dilution first.",
    "phase": "B1",
    "state": "open"
   },
@@ -83,11 +83,11 @@
    "state": "open"
   },
   {
-   "id": "MAP_K",
+   "id": "plenum volume",
    "file": "engine-constants-boost.js",
-   "match": "const MAP_K",
-   "standsFor": "how fast manifold pressure follows the throttle",
-   "retiredBy": "plenum and throttle part (filling and emptying of the plenum's volume)",
+   "match": "function mapRateK",
+   "standsFor": "the plenum taken as the engine's displacement, for every engine",
+   "retiredBy": "the plenum as a dimension of the intake part",
    "phase": "B5",
    "state": "open"
   },
@@ -252,6 +252,15 @@
    "retiredBy": "kept: the game's economy, not physics",
    "phase": "-",
    "state": "rule"
+  },
+  {
+   "id": "INTAKE_SYS metering and idle",
+   "file": "engine-options-presets.js",
+   "match": "const INTAKE_SYS",
+   "standsFor": "each induction system's fuel-metering efficiency and the idle speed it adds",
+   "retiredBy": "mixture spread between cylinders from the system's layout; idle with the cam's (CAM.idleRpm)",
+   "phase": "B5",
+   "state": "open"
   }
  ],
  "audit": [

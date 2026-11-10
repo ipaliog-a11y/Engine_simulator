@@ -120,7 +120,7 @@ function portLossShare(n,lam,f0){
   const nEx=Math.max(1,(e.valves||4)-e.ivCount), D=THROAT_RATIO*EV_RATIO*e.ivDia_mm/1000, L=e.bore_mm/1000;
   const st=e.stoichAFR||14.7, afr=st*Math.max(1,lam);
   const rho=(1+(e.intake==='na'?0:(e.boost_bar||0)))*1e5/(287*313);
-  const air=rho*(e.dispCyl_L/1000)*(e.veAmp||0.95)*n/60*(e.chargesPerRev||0.5);   // kg/s per cylinder
+  const air=rho*(e.dispCyl_L/1000)*refFill(n)*n/60*(e.chargesPerRev||0.5);   // kg/s per cylinder
   const open=clamp((e.camDur||240)/720,0.2,1), mdot=air*(1+1/afr)/open/nEx;         // per port, while open
   const Tg=300+(e.fuelLHV||44)*1e6*f0/((afr+1)*CP_EXH);
   const mu=1.716e-5*Math.pow(Tg/273,1.5)*(273+111)/(Tg+111), k=mu*CP_EXH/0.7;
@@ -368,6 +368,16 @@ function buildFillTable(){
     tb.push({rpm:r,f,adv:best,L:bestL});
   }
   e.fillTable=tb;
+  let s=0,k=0;for(const t of tb)if(t.rpm>=1000&&t.rpm<=e.redline){s+=t.f;k++;}
+  e.fillMean=k?s/k:0;
+}
+// The filling the airflow estimates use (the exhaust port's flow, a blowdown's mass, the compressor's demand): the
+// engine's own integrated intake stroke at that speed, or its mean over the rev range where no speed is in scope
+// (build 260). Until then a flat 0.95 times a cam grade's bonus (CAM.ampMul) stood here. A ported engine, with no
+// integrated stroke yet, keeps that reference.
+function refFill(rpm){
+  const e=engine;if(!e.fillTable)return e.veAmp||0.95;
+  return rpm>0?fillAt(rpm):e.fillMean;
 }
 // The intake phaser's advance at this rpm, as the fill table chose it (0 without VVT: the table never advances)
 function camAdvAt(rpm){
@@ -688,7 +698,7 @@ function pulseShape(mEx,area,T3,mapBar,prMean){
   const pEvo=Math.max(pExh,Math.pow(pInt*(T/Tint)*Math.pow(pExh,-K_EXH),1/(1-K_EXH)));
   const fb=clamp(1-Math.pow(pExh/pEvo,1/GAMMA_EXH),0,1);
   const vCyl=(e.displacement_L/1000)/Math.max(1,e.cylinders);
-  const vB=(pInt/pExh)*(T/Tint)*vCyl*(e.veAmp||0.95)*fb;       // one blowdown, at manifold conditions
+  const vB=(pInt/pExh)*(T/Tint)*vCyl*refFill()*fb;       // one blowdown, at manifold conditions
   const vMan=Math.PI/4*e.primD*e.primD*e.primL*perTurbine;
   return {phi,fb,keep:vB/(vB+vMan),pExh};
 }
@@ -908,7 +918,7 @@ function shaftLossPower(shaftRpm){
 // term, and calling it from here would close a loop that does not converge.
 function airFlowAt(rpm,pr){
   const e=engine;
-  return (e.displacement_L/1000)*(e.veAmp||0.95)*(rpm/60*(e.chargesPerRev||0.5))*(pr*101325/(287*313));
+  return (e.displacement_L/1000)*refFill(rpm)*(rpm/60*(e.chargesPerRev||0.5))*(pr*101325/(287*313));
 }
 // Steady boost: the shaft speed where turbine and compressor balance, found by bracketing on boost
 // rather than by relaxation — the states switch discontinuously and a fixed point orbits them.

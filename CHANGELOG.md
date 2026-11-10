@@ -20,6 +20,31 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 Working toward **v1.0 — every number derived, not fitted.**
 
+### The engine's airflow estimates read its own filling, and the manifold answers by its volume (build 260)
+
+Phase B of `plans/road-to-v1.md`: two fitted numbers off the valved engines.
+
+- **`CAM.ampMul` no longer acts on a valved engine.** The exhaust port's flow, a blowdown's mass and the compressor's
+  demand were estimated from a flat 0.95 filling times a cam grade's bonus (+4% SPORT, +8% RACE). They now read the
+  engine's own integrated intake stroke at that speed (`refFill`). Rotary and two-stroke engines keep the old
+  reference until their ports are geometry.
+- **What moved:** 41 boosted cars; naturally aspirated power is unchanged. Peak power −5.4% (Civic Type R FK8) to +8.6%
+  (Ram 2500 Cummins), most within ±2%; 0-100 −4.9% to +3.6%. Not yet scored against the makers' figures (the check
+  runs at the end of the phase); the Cummins was already over its rating and is now further over.
+- **Manifold pressure on LIVE follows the manifold's volume** (`mapRateK`): K = VE·Vd·(N/60)·(charges per rev) / V,
+  the filling-and-emptying model (Heywood 7.6.2). Behind one throttle V is the plenum and the runners; with a throttle
+  per cylinder (ITB, sidedraft, mechanical injection) it is one runner, so those engines answer at once. A 911 GT3
+  reads 8 /s at 3000 rpm and 2.7 /s at idle, where every engine had 9 /s times a factor per system. Only the LIVE
+  bench reads it; no lap or 0-100 moves.
+- **Left open:** the plenum is taken as the engine's displacement (to become the intake part's own figure). Idle speed
+  from valve overlap was tried (Fox, Cheng & Heywood's residual correlation with a 30% dilution limit) and not kept: it
+  gave 1400 rpm on a SPORT cam and no stable idle on RACE, because the model idles at 0.15 bar where real engines
+  hold 0.3–0.4. The register records it.
+- **Register:** `MAP_K` becomes "plenum volume"; one number found on the way and added (the induction systems'
+  metering and idle); 27 open.
+
+Tests: test166 (updated).
+
 ### A register of what is still fitted, and the road to v1.0 (build 259)
 
 Phase A of `plans/road-to-v1.md`. No physics changes; no number moves.

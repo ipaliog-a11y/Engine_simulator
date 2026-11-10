@@ -957,7 +957,7 @@ function stepEngine(dt){
   if(isElectric())return stepMotorBench(dt);
   if(isHybrid())return stepHybridBench(dt);   // the motor, the pack and the controller with the engine (build 190)
   stepBoost(dt);
-  state.map+=(mapTarget()-state.map)*(1-Math.exp(-MAP_K*engine.intakeRespK*dt));
+  state.map+=(mapTarget()-state.map)*(1-Math.exp(-mapRateK(state.rpm)*dt));
   if(state.nitrousActive){   // deplete the bottle while spraying at WOT (~14 s per fill)
     if(state.throttle>0.5&&state.nitrousCharge>0)state.nitrousCharge=Math.max(0,state.nitrousCharge-0.07*dt);
     if(state.nitrousCharge<=0)state.nitrousActive=false;
