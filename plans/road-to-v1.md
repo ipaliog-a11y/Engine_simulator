@@ -33,6 +33,10 @@ revised with the owner's answers (see *Owner's decisions*). The order of the pha
 | 9 | Depth of the driving model | **Four wheels.** |
 | 10 | Where the driving game lives | **It may be a separate app.** v1.0 must not constrain it. |
 
+| 11 | How the work runs | **Through the phases without stopping**, except for a major decision. Builds stack on one branch. |
+| 12 | Screens | **Phone and desktop alike**; nothing that stops it becoming a mobile app later (touch first, no hover-only controls, layout from the width). |
+| 13 | Interface | **Declutter freely.** Fewer on-screen explanations, more pictures: a part is shown, not described. Long text belongs in the guide. |
+
 ## Where it stands
 
 - **Done:** the whole original feature plan; the gas-dynamics, friction, knock, brakes, tyre-load, suspension and
@@ -52,7 +56,7 @@ revised with the owner's answers (see *Owner's decisions*). The order of the pha
 
 Each line is one build unless it says two (the part, then the retirement, as the parts plan sets).
 
-**A. Draw the finish line (1 build, no physics).**
+**A. Draw the finish line (1 build, no physics). Done, build 259:** `plans/fitted-register.json`, `tests/test166.mjs`.
 A register of every fitted number left, across all powertrains and the race: name, file, what it stands in for,
 which part retires it, or "kept as a rule, owner's decision". A small test checks it only shrinks. The README's
 roadmap is cut to one screen that points at it. v1.0 is then "the register is empty or signed off, and the

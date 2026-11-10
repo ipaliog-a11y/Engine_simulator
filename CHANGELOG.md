@@ -20,6 +20,19 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 Working toward **v1.0 — every number derived, not fitted.**
 
+### A register of what is still fitted, and the road to v1.0 (build 259)
+
+Phase A of `plans/road-to-v1.md`. No physics changes; no number moves.
+
+- **`plans/road-to-v1.md`:** the route to v1.0 in phases A to H, with the owner's decisions (every drivetrain, each
+  car within 10%, a four-wheel car stepped in time as the base of a later driving game, phone and desktop alike).
+- **`plans/fitted-register.json`:** 26 fitted numbers still in the code, each with what it stands in for and the part
+  that retires it; 2 kept as game rules (drivers' characters, part costs); 11 files not yet audited (electric,
+  hybrid, thermal, friction).
+- **README:** the roadmap's finished working queue (builds 70 to 258) moved to `plans/v1-history.md`, unchanged.
+
+Tests: test166 (new; the register only shrinks).
+
 ### Emission tile colors on LIVE (build 258)
 
 - **Each species tile** (CO₂, CO, HC, NOx, PM) turns amber then red: pollutants by g/kg fuel on the same denoms as the emit score (40 / 25 / 20 / 8); CO₂ by g/kWh when making power (900 / 1200).

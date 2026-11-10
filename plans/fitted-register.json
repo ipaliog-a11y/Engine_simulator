@@ -1,0 +1,270 @@
+{
+ "about": "Every fitted number left in src/js. 'open' entries are retired by the part named; 'rule' entries are kept by the owner's decision. 'audit' lists files not yet read for fitted numbers. tests/test166.mjs: the lists only shrink.",
+ "entries": [
+  {
+   "id": "CAM.ampMul",
+   "file": "fuels-engine-types.js",
+   "match": "ampMul:",
+   "standsFor": "a cam grade's airflow bonus, left in the pulse, blowdown and compressor-demand estimates",
+   "retiredBy": "the camshaft part, step 2",
+   "phase": "B1",
+   "state": "open"
+  },
+  {
+   "id": "CAM.loWiden",
+   "file": "fuels-engine-types.js",
+   "match": "loWiden:",
+   "standsFor": "how a hotter cam narrows the low side of the breathing",
+   "retiredBy": "the camshaft part, step 2",
+   "phase": "B1",
+   "state": "open"
+  },
+  {
+   "id": "CAM.idleRpm",
+   "file": "fuels-engine-types.js",
+   "match": "idleRpm:",
+   "standsFor": "idle speed added per cam grade",
+   "retiredBy": "the camshaft part, step 2 (idle from overlap and residuals)",
+   "phase": "B1",
+   "state": "open"
+  },
+  {
+   "id": "THROAT_RATIO",
+   "file": "valvetrain.js",
+   "match": "const THROAT_RATIO",
+   "standsFor": "port throat over valve head diameter, one value for every head",
+   "retiredBy": "the cylinder head part",
+   "phase": "B2",
+   "state": "open"
+  },
+  {
+   "id": "EV_RATIO",
+   "file": "gas-dynamics.js",
+   "match": "const EV_RATIO",
+   "standsFor": "exhaust valve over intake valve diameter, one value for every head",
+   "retiredBy": "the cylinder head part",
+   "phase": "B2",
+   "state": "open"
+  },
+  {
+   "id": "TURB_WHEEL",
+   "file": "engine-constants-boost.js",
+   "match": "const TURB_WHEEL",
+   "standsFor": "turbine wheel as a share of the compressor exducer",
+   "retiredBy": "the turbocharger part",
+   "phase": "B3",
+   "state": "open"
+  },
+  {
+   "id": "TURBO_CONFIG",
+   "file": "engine-constants-boost.js",
+   "match": "const TURBO_CONFIG",
+   "standsFor": "spool, width and flow multipliers for twin, sequential and compound layouts",
+   "retiredBy": "the turbocharger part (each turbo its own wheel and shaft)",
+   "phase": "B3",
+   "state": "open"
+  },
+  {
+   "id": "SC_TYPE",
+   "file": "engine-constants-boost.js",
+   "match": "const SC_TYPE",
+   "standsFor": "a supercharger's boost against rpm and its drive load as curves",
+   "retiredBy": "a supercharger part (displacement, pulley ratio, adiabatic efficiency)",
+   "phase": "B3",
+   "state": "open"
+  },
+  {
+   "id": "VANE_R2/VANE_H",
+   "file": "gas-dynamics.js",
+   "match": "const VANE_R2",
+   "standsFor": "a VGT ring's radius and nozzle height as shares of the wheel",
+   "retiredBy": "the turbocharger part",
+   "phase": "B3",
+   "state": "open"
+  },
+  {
+   "id": "MAP_K",
+   "file": "engine-constants-boost.js",
+   "match": "const MAP_K",
+   "standsFor": "how fast manifold pressure follows the throttle",
+   "retiredBy": "plenum and throttle part (filling and emptying of the plenum's volume)",
+   "phase": "B5",
+   "state": "open"
+  },
+  {
+   "id": "catRampTop",
+   "file": "engine-physics.js",
+   "match": "engine.catRampTop",
+   "standsFor": "a catalyst's VE loss ramped to the redline, on top of its back-pressure (counted twice)",
+   "retiredBy": "the catalytic converter part",
+   "phase": "B6",
+   "state": "open"
+  },
+  {
+   "id": "veBell",
+   "file": "engine-physics.js",
+   "match": "engine.veBell",
+   "standsFor": "the VE bell of rotary and two-stroke engines",
+   "retiredBy": "ports as geometry (timing and area), integrated like the poppet engines' intake stroke",
+   "phase": "B7",
+   "state": "open"
+  },
+  {
+   "id": "typeImep",
+   "file": "engine-build.js",
+   "match": "engine.typeImep",
+   "standsFor": "work per charge of a rotary and a two-stroke as a factor (0.70 / 0.60)",
+   "retiredBy": "the ported engines' own cycle (trapping, short-circuiting, the slow rotary burn)",
+   "phase": "B7",
+   "state": "open"
+  },
+  {
+   "id": "AERO_FRONT/REAR",
+   "file": "tyres-brakes-driveline.js",
+   "match": "const AERO_FRONT",
+   "standsFor": "lift and drag coefficients per front and rear aero kit",
+   "retiredBy": "wing part (span, chord, angle: lifting-line lift and induced drag)",
+   "phase": "D",
+   "state": "open"
+  },
+  {
+   "id": "AERO_FLOOR",
+   "file": "tyres-brakes-driveline.js",
+   "match": "const AERO_FLOOR",
+   "standsFor": "lift, drag and centre of pressure per floor kit",
+   "retiredBy": "floor part (ride height, diffuser area and angle)",
+   "phase": "D",
+   "state": "open"
+  },
+  {
+   "id": "UNSPRUNG_SHARE",
+   "file": "tyres-brakes-driveline.js",
+   "match": "UNSPRUNG_SHARE=",
+   "standsFor": "unsprung mass as 12% of a corner's mass",
+   "retiredBy": "wheels part (wheel, tyre, brake and hub masses, already computed for inertia)",
+   "phase": "D",
+   "state": "open"
+  },
+  {
+   "id": "TYRE_KZ",
+   "file": "tyres-brakes-driveline.js",
+   "match": "TYRE_KZ=",
+   "standsFor": "a tyre's vertical stiffness, one reference value",
+   "retiredBy": "tyre pressure (stiffness from pressure and section)",
+   "phase": "D",
+   "state": "open"
+  },
+  {
+   "id": "SPRING_STEP/BAR_STEP/DAMPER_STEP",
+   "file": "tyres-brakes-driveline.js",
+   "match": "SPRING_STEP=",
+   "standsFor": "springs, bars and dampers as steps about a kit",
+   "retiredBy": "spring, bar and damper rates as parts (N/mm, Ns/m)",
+   "phase": "D",
+   "state": "open"
+  },
+  {
+   "id": "DIFF_ASYM0",
+   "file": "tyres-brakes-driveline.js",
+   "match": "const DIFF_ASYM0",
+   "standsFor": "load asymmetry across a driven axle at launch",
+   "retiredBy": "the four-wheel model: each driven wheel's own load and torque",
+   "phase": "E",
+   "state": "open"
+  },
+  {
+   "id": "KVCAP",
+   "file": "racing-line-lap.js",
+   "match": "const KVCAP",
+   "standsFor": "a cap on the load a crest or dip adds",
+   "retiredBy": "the four-wheel model: the body on its springs over the road's profile",
+   "phase": "E",
+   "state": "open"
+  },
+  {
+   "id": "TYRE_SLIP",
+   "file": "tyres-brakes-driveline.js",
+   "match": "const TYRE_SLIP_OPT",
+   "standsFor": "the tyre's slip curve in the launch only (peak at 10%, shape 1.4)",
+   "retiredBy": "one combined-slip tyre model per wheel, sourced per compound",
+   "phase": "E",
+   "state": "open"
+  },
+  {
+   "id": "TIRE_TYPE windows",
+   "file": "tyres-brakes-driveline.js",
+   "match": "wetKeep:",
+   "standsFor": "each compound's temperature window, wear rate and wet grip",
+   "retiredBy": "the tyre model of phase E with a compound's measured window",
+   "phase": "F",
+   "state": "open"
+  },
+  {
+   "id": "TYRE_RACE",
+   "file": "race.js",
+   "match": "const TYRE_RACE",
+   "standsFor": "the race tyre's heat, grip-window and wear constants",
+   "retiredBy": "the tyre model of phase E (tread heat balance, wear from sliding energy)",
+   "phase": "F",
+   "state": "open"
+  },
+  {
+   "id": "RACE tow and dirty air",
+   "file": "race.js",
+   "match": "const RACE=",
+   "standsFor": "the tow, dirty air and pit loss as numbers",
+   "retiredBy": "the cars' own drag and downforce in a wake; pit loss from the lane's length and limit",
+   "phase": "F",
+   "state": "open"
+  },
+  {
+   "id": "HYB_RACE.margin",
+   "file": "hybrid-race.js",
+   "match": "const HYB_RACE",
+   "standsFor": "a hybrid's safety margin on its lap energy",
+   "retiredBy": "phase C audit",
+   "phase": "C",
+   "state": "open"
+  },
+  {
+   "id": "EV_RACE",
+   "file": "electric-race.js",
+   "match": "const EV_RACE",
+   "standsFor": "an electric car's race energy management constants",
+   "retiredBy": "phase C audit",
+   "phase": "C",
+   "state": "open"
+  },
+  {
+   "id": "RACE_DRIVERS",
+   "file": "race.js",
+   "match": "const RACE_DRIVERS",
+   "standsFor": "a driver's character (aggression, consistency)",
+   "retiredBy": "kept: a game rule, not physics",
+   "phase": "-",
+   "state": "rule"
+  },
+  {
+   "id": "part costs",
+   "file": "cost-challenge-ui.js",
+   "match": "ballpark",
+   "standsFor": "what each part costs",
+   "retiredBy": "kept: the game's economy, not physics",
+   "phase": "-",
+   "state": "rule"
+  }
+ ],
+ "audit": [
+  "electric.js",
+  "electric-car.js",
+  "electric-cycle.js",
+  "ev-designer.js",
+  "hybrid.js",
+  "power-split.js",
+  "hybrid-bench.js",
+  "fuel-cycle.js",
+  "corners-thermal.js",
+  "friction.js",
+  "sound.js"
+ ]
+}
