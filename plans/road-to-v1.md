@@ -29,6 +29,9 @@ revised with the owner's answers (see *Owner's decisions*). The order of the pha
 | 5 | Parked work (water-to-air intercoolers, catalytic converter) | **Before v1.0.** |
 | 6 | After v1.0 | 3D 8-bit graphics matching the car profiles; a playable driving game; more game and more physics. |
 | 7 | Audience | **Learners and car enthusiasts**, both. |
+| 8 | What 10% applies to | **Each car.** A car that fails hard is first suspected of wrong parts or tune in its preset, not of wrong physics. |
+| 9 | Depth of the driving model | **Four wheels.** |
+| 10 | Where the driving game lives | **It may be a separate app.** v1.0 must not constrain it. |
 
 ## Where it stands
 
@@ -53,7 +56,7 @@ Each line is one build unless it says two (the part, then the retirement, as the
 A register of every fitted number left, across all powertrains and the race: name, file, what it stands in for,
 which part retires it, or "kept as a rule, owner's decision". A small test checks it only shrinks. The README's
 roadmap is cut to one screen that points at it. v1.0 is then "the register is empty or signed off, and the
-scoreboard is under 10%".
+scoreboard holds (phase H)".
 
 **B. Combustion engine parts (about 10 builds).**
 1. Camshaft, step 2: retire `ampMul`, `loWiden` and the idle number.
@@ -76,7 +79,8 @@ hybrid controllers; each fitted number found gets a part or a cited rule.
 *Scoreboard run at the end of D.*
 
 **E. Driving-ready values (about 6–8 builds, the largest new piece).** No graphics and no game: the numbers only,
-behind one function a game can call, `stepCar(dt, steer, throttle, brake, clutch, gear)`.
+behind one function a game can call, `stepCar(dt, steer, throttle, brake, clutch, gear)`. Four wheels. The physics
+it needs must load without the page (no DOM, no canvas), so a separate game app can take the same source files.
 1. The tyre as one model: force from slip ratio and slip angle together (combined slip), per wheel, with its load.
    The launch's slip curve and the lap's grip limit become two readings of it.
 2. The car's motion in the plane: yaw inertia from the car's own mass and dimensions, four wheel loads with
@@ -97,7 +101,7 @@ budget) give a complete, working car with each choice explained, then every part
 enthusiast. The guide pages for the new parts.
 
 **H. The v1.0 gate (1–2 builds).** Full-suite run; the scoreboard against the real cars (power, torque, 0–100, top
-speed, lap, consumption) under 10% mean on each, with the cars outside it named; guide and README pass. The owner
+speed, lap, consumption): every car under 10% on each, or named with its reason (unsourced part, missing physics); guide and README pass. The owner
 tags the release.
 
 **After v1.0.** 3D 8-bit cars from the profile images and the recorded dimensions; the driving game on `stepCar`;
@@ -107,15 +111,12 @@ the Greek decision; editable spark and VE tables; a career layer.
 
 - Real-car checks stay off per build and run at the ends of B, D and H.
 - One session per PR; two builds per part; preset sourcing batched apart from physics (as builds 251–253 did).
-- If a retirement pushes a figure past 10%, the missing physics is named and queued; nothing is tuned back.
+- **A car past 10% gets a preset review before anything else**: its parts and tune against the maker's published
+  spec (cam, turbo wheel, intercooler, gearing, tyres, ECU limits), each correction cited. A value with no source
+  stays on the preset's `unsure` list. Only if the sourced car still misses is the physics suspected; if several
+  cars miss the same way, it is one missing piece of physics. A preset is never changed just to pass.
 
 ## Still open
 
-1. **The finish line's exact wording** (owner undecided). Proposed above: register empty or signed off, scoreboard
-   under 10% mean per figure.
-2. **Is 10% a mean over the cars, or a limit for each car?** A per-car limit would fail today (the RS3 is ~46% short
-   at 1700 rpm). The plan assumes the mean, with outliers named.
-3. **Phase E's depth.** A driving game can start on a simpler car (a bicycle model with one tyre per axle) or wait
-   for four wheels. The plan assumes four wheels, since the suspension and per-axle grip already exist.
-4. **Does the driving game stay in this one HTML file**, or become a second page that loads the same physics?
-   It decides how `stepCar` is packaged.
+1. **The finish line's exact wording** (owner undecided). Proposed: register empty or signed off, every car under
+   10% or on the named list with its reason.
