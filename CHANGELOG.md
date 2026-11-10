@@ -20,6 +20,20 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 Working toward **v1.0 — every number derived, not fitted.**
 
+### The stepped car matches its revs on a shift (build 264)
+
+Phase E, a small step on build 263's `stepCar`. Nothing in the app reads it yet.
+
+- **Rev matching.** With the automatic clutch the engine is brought to the coming gear's speed before the clutch
+  takes up (the blip on a downshift), so a downshift under braking no longer jolts the driven tyres.
+- **Tried and not kept: a lap by a line-following driver.** A pure-pursuit driver holding the lap solver's speeds
+  round the test circuit lapped the WRX STI in 82.3–83.7 s against the solver's 75.3 (+9 to +11%), and slid the
+  rear-drive cars off at the first fast corner, even at 94% of the speeds. Two causes: the circuit's crests and dips
+  load the tyres and the stepped car's road is flat; and with the lap's cornering stiffness the brush tyre peaks at
+  13.7° of slip where a road tyre peaks at 6–8°. `plans/road-to-v1.md` (phase E, step 5) has what comes next.
+
+Tests: 168
+
 ### The car stepped in time: four wheels, a driver's inputs, one step (build 263)
 
 Phase E of `plans/road-to-v1.md`, first build: the base a driving game can stand on. Nothing in the app reads it yet,

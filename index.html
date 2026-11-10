@@ -769,7 +769,7 @@ body.showcase-open{overflow:hidden}
 </div>
 <div class="container">
 <header>
-<h1>PIXEL ENGINE SIM v0.7 build 263</h1>
+<h1>PIXEL ENGINE SIM v0.7 build 264</h1>
 <div class="subtitle" id="subtitle">ENGINE DESIGNER • BUILD IT, THEN DRIVE IT</div>
 </header>
 <div class="build-strip" id="buildStrip">
@@ -12913,7 +12913,11 @@ function stepCar(car,s,u,dt){
     const v=Math.hypot(s.vx,s.vy),delta=steer*car.steerLock,cd=Math.cos(delta),sd=Math.sin(delta);
     // ---- gearbox
     const top=car.ratios.length;
-    if(s.shiftT>0)s.shiftT-=h;
+    if(s.shiftT>0){s.shiftT-=h;
+      // with an automatic clutch the driver matches the revs for the gear coming (a blip going down), so the clutch
+      // takes up without a jolt through the driven tyres
+      if(s.shiftT<=0&&u.clutch==null&&!car.ev&&s.gear>0){let wm=0,nm=0;for(let i=0;i<4;i++)if(drv[i]){wm+=s.w[i];nm++;}
+        s.we=Math.max(car.idle*Math.PI/30,wm/nm*car.ratios[s.gear-1]*car.fd);}}
     if(u.gear!=null){const gq=Math.max(0,Math.min(top,u.gear|0));if(gq!==s.gear){s.gear=gq;s.shiftT=car.shiftTime;}}
     else if(!car.ev&&s.shiftT<=0&&s.gear>0){
       let wdn=0,nn=0;for(let i=0;i<4;i++)if(drv[i]){wdn+=s.w[i];nn++;}
