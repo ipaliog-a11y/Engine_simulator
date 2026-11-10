@@ -20,6 +20,34 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 Working toward **v1.0 — every number derived, not fitted.**
 
+### The car stepped in time: four wheels, a driver's inputs, one step (build 263)
+
+Phase E of `plans/road-to-v1.md`, first build: the base a driving game can stand on. Nothing in the app reads it yet,
+so no number on any screen moves.
+
+- **`stepCar(car, state, inputs, dt)`** (`src/js/drive-model.js`): the car one step later, from the steering wheel,
+  the pedals and the gear. Three freedoms of the body (forward, sideways, yaw), four wheels that each spin on their
+  own, loads that shift under acceleration and cornering through the car's own roll stiffness, the engine with its
+  inertia behind a clutch that slips and locks, the gearbox's shift time, the differential's lock, brakes from the
+  hydraulics, ABS and traction control where fitted, drag and downforce.
+- **One tyre model, derived:** the brush model (Fiala; Pacejka ch. 3), fed with the lap's own inputs (grip with its
+  load sensitivity, the cornering stiffness, the slip peak). Drive, braking and cornering share one slip vector, so
+  combined slip needs no rule of its own.
+- **A car is plain data.** `driveCar()` returns numbers and arrays only, and `stepCar` reads nothing but its
+  arguments: a separate game app can load this one file and a car's JSON (owner's decision 10).
+- **Against the solvers beside it:** 0-100 MX-5 8.21 s (solver 8.49), Golf GTI Mk1 8.11 (8.48), WRX STI 5.52 (5.26),
+  Mustang GT 5.68 (5.12), 911 GT3 3.89 (3.39); a stop from 100 km/h at 0.97–1.02 of the tyres' braking grip
+  (MX-5 37.7 m, GT3 29.5 m); a 40 m skidpad at 0.81–0.93 of their lateral grip.
+- **What the lap could not do, and this does:** lifting mid-corner tightens the line; full power swings a Mustang's
+  tail round and pushes a Civic Type R wide; without ABS the wheels lock and an MX-5 stops in 43.0 m against 37.9.
+- **Speed:** 20 s of driving steps in about 25 ms.
+- **Left open, named in the file:** the turbo's shaft in time (boost is the settled curve's), tyre and brake
+  temperatures, camber and roll steer, bumps and kerbs, a hybrid's controller; all-wheel drive is split evenly; the
+  two powerful rear-drivers launch 11–15% slower than the solver. The lap's own fitted pieces this model will
+  replace (`DIFF_ASYM0`, `KVCAP`, the launch-only slip curve) stay in the register until the lap reads it.
+
+Tests: test168 (new).
+
 ### A corner's unsprung mass is its own parts, weighed (build 262)
 
 Phase D of `plans/road-to-v1.md`: `UNSPRUNG_SHARE` (12% of the corner's mass, every car) is retired.

@@ -82,7 +82,7 @@ hybrid controllers; each fitted number found gets a part or a cited rule.
 
 *Scoreboard run at the end of D.*
 
-**E. Driving-ready values (about 6–8 builds, the largest new piece).** No graphics and no game: the numbers only,
+**E. Driving-ready values (about 6–8 builds, the largest new piece).** *Started, build 263: `src/js/drive-model.js` (`driveCar`, `stepCar`), `tests/test168.mjs`; steps 1, 2, 4 and the first half of 3 are in their first form.* No graphics and no game: the numbers only,
 behind one function a game can call, `stepCar(dt, steer, throttle, brake, clutch, gear)`. Four wheels. The physics
 it needs must load without the page (no DOM, no canvas), so a separate game app can take the same source files.
 1. The tyre as one model: force from slip ratio and slip angle together (combined slip), per wheel, with its load.
