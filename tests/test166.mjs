@@ -9,7 +9,7 @@ import { readFileSync } from 'fs';
 import { fileURLToPath } from 'url';
 import path from 'path';
 const repo = fileURLToPath(new URL('..', import.meta.url));
-const OPEN = 27,   // 27 since build 266: TYRE_CC, named when the stiffness went per compound
+const OPEN = 28,   // 27 since build 266 (TYRE_CC); 28 since build 269: DRIVE_DRIVER, the stepped car's driver, awaiting sign-off as a rule
       AUDIT = 11, RULES = ['RACE_DRIVERS', 'part costs'];
 const reg = JSON.parse(readFileSync(path.join(repo, 'plans/fitted-register.json'), 'utf8'));
 const fails = [];
