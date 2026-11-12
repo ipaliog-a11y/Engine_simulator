@@ -20,6 +20,38 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 Working toward **v1.0 — every number derived, not fitted.**
 
+### Every real car's body is recorded for a 3D model (build 272)
+
+Phase E, step 6 of `plans/road-to-v1.md`. A 3D car needs each preset's length, width, height, overhangs, tracks,
+wheel and tyre size. The length and height lived in the side-profile table with no source per car; the width, the
+rear overhang and the front tyre of a staggered car were nowhere. Nothing in the app reads the new table yet.
+
+- **`CAR_DIMS`** (`src/js/car-dimensions.js`): for each of the 100 real cars, its length, width, height and the
+  tyre on each axle, with the page it was read from. 94 are the car's own page on auto-data.net; the Dino 246, Honda
+  Beat, E-Type, Sierra RS Cosworth, Ariel Atom and Radical come from their English Wikipedia spec box.
+- **`carDims(preset)`** gives one car's whole body as plain data: those figures, the preset's wheelbase and tracks,
+  both overhangs, each tyre's width, rim and diameter.
+- **Overhangs are published for 17 cars.** For the other 83 the split of (length − wheelbase) is still the side
+  profile's reading, and `carDims` says so (`unsure: overhang`).
+- **37 entries carry an unsure figure,** named per car. 26 are tyres: the page does not list the size the preset is
+  fitted with, so the size is built from the fit. The rest are a sibling body's width or height (Alto Works, AE86,
+  190E 2.3-16, GNX, BAC Mono, Trabant), or a page that disagrees with what the app already carries.
+- **Checked** in `test171`: every car has an entry and a source, the overhangs and wheelbase add up to the length,
+  the body is wider than its tracks, each tyre is a real size. The unsure counts are budgets that may only shrink.
+- **Nothing moves:** the fingerprint is identical to build 271.
+- **Found on the way, not changed here** (each would move a picture or a lap, so each needs its own build):
+  - The side profile's length is off for the Ferrari F40 (4.430 m, the page says 4.358), the Huracán
+    STO (4.459, page 4.549), the Model S Plaid (4.970, page 5.021), the Corvette C6 Z06 (4.435, page 4.460) and
+    the Ariel Atom 3.5 (3.520 is the Atom 4's; the 3.5 is 3.410).
+  - The F-150 Raptor's wheelbase in the preset is the plain SuperCrew's 3.683 m; the Raptor's page gives 3.708.
+    The Supra A80's page gives 2.500 m against the preset's 2.550 (2.550 is the figure usually published; the page looks wrong).
+  - The Silverado 2500HD's page (crew cab, standard bed) gives a 4.037 m wheelbase against the preset's 4.080.
+- **Left open:** no width for the Radical SR3 RSX (Wikipedia gives only a range over the SR3s) or the Ram 2500 (its
+  page gives it only with mirrors); no length for the two-seat 300ZX (the page is the 2+2's, so the profile's stays).
+  Mirrors, ground clearance and the roof line are not recorded. The 26 tyre sizes built from the fit want the
+  maker's sheet, and so do the 83 overhangs.
+
+Tests: test171 (new). Tests: 122
 ### The chase view is taken back (build 271)
 
 Build 270 replaced the flat circuit with a pitched camera behind the car. That picture is out again. TRACK and RACE draw the whole circuit as they did before 270. The lap and the race are unchanged.

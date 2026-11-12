@@ -106,6 +106,8 @@ it needs must load without the page (no DOM, no canvas), so a separate game app 
    the lap solver; a skidpad and a lane change give sensible numbers. One headless test.
 6. The body's dimensions every preset needs for 3D later (length, width, height, overhangs, wheel and tyre size)
    recorded with their sources.
+   *Done, build 272:* `src/js/car-dimensions.js` (`CAR_DIMS`, `carDims`), `tests/test171.mjs`. Open: 83 overhang
+   splits and 26 tyre sizes still want the maker's sheet; two cars have no width.
 
 **F. The race's rules (2–4 builds).** Tyre heat, wear and wet grip from the tyre model of E; the tow and dirty air
 from the cars' own aero. Overtaking decisions and weather stay rules, signed off in the register.
