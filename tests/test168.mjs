@@ -72,7 +72,7 @@ const R = await page.evaluate(() => {
   // ---- plain data
   { const car = load('Subaru Impreza'), copy = JSON.parse(JSON.stringify(car)); const run = c => { const s = driveState(c);
       for (let i = 0; i < 800; i++) stepCar(c, s, { throttle: 1, steer: i > 400 ? 0.2 : 0 }, 0.01); return [s.x, s.y, s.psi, s.vx, s.rpm]; };
-    out.same = JSON.stringify(run(car)) === JSON.stringify(run(copy)); out.fields = Object.values(car).every(v => ['number', 'string', 'boolean'].includes(typeof v) || Array.isArray(v));
+    out.same = JSON.stringify(run(car)) === JSON.stringify(run(copy)); const plain = v => v === null || ['number', 'string', 'boolean'].includes(typeof v) || (typeof v === 'object' && Object.values(v).every(plain)); out.fields = plain(car);   // build 273: the turbo's tables are an object of arrays
     const s = driveState(car), t0 = performance.now(); for (let i = 0; i < 2000; i++) stepCar(car, s, { throttle: 0.5 }, 0.01); out.ms = performance.now() - t0; }
   // ---- the road under the car (build 268): coasting in neutral on a 5% fall, and the wheel loads over a crest and in a dip
   { const car = load('Subaru Impreza'), v0 = 30, run = road => { const s = driveState(car); s.vx = v0; s.w = s.w.map(() => v0 / car.r);

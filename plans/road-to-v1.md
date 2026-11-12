@@ -91,6 +91,8 @@ it needs must load without the page (no DOM, no canvas), so a separate game app 
    transient load transfer through the springs, dampers and bars already modelled.
 3. The powertrain in time: the engine, turbo, clutch, gearbox and differential stepped from pedal inputs (the LIVE
    bench and the lap's turbo walk already do most of this), the motor and hybrid controllers the same way.
+   *Build 273:* the turbo's shaft is in `stepCar`, from tables in the car's data (`tests/test172.mjs`). Left: a
+   hybrid's controller.
 4. Brakes, ABS and traction control per wheel, in time.
 5. *Tried at build 264, not kept.* A pure-pursuit driver holding the lap solver's speeds lapped the WRX STI 9-11% off
    the solver, and slid the rear-drivers off at the first fast corner, even at 94% of the speeds. Two causes found:

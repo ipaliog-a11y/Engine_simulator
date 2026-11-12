@@ -20,6 +20,32 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 Working toward **v1.0 — every number derived, not fitted.**
 
+### The stepped car's turbo has a shaft (build 273)
+
+Phase E, step 3 of `plans/road-to-v1.md`. `stepCar` gave a turbo engine its settled boost the moment the pedal went
+down. The bench, the 0-100 and the lap integrate the shaft (`advanceShaft`); the stepped car now does too.
+
+- **`driveCar()` carries the turbo as tables** (`car.turbo`, from `driveTurbo`): the shaft's net power, the pressure
+  the wheel holds and the compressor's efficiency over engine speed, load, shaft speed and boost, with the
+  wastegate's target, the charge temperature and the torque grid. It is still plain data (about 290 kB as JSON for a
+  turbo car); a car without a turbo carries none.
+- **`driveShaft` steps it** with `advanceShaft`'s own equations, reading only those tables. The engine's torque is
+  the settled curve's by what the boost actually there gives against full boost, as the lap has it.
+- **The shaft is fed by the load the engine is under, not by the pedal,** so revving against a slipping clutch
+  does not build boost as full load does.
+- **Against the app's own shaft** (`test172`: WRX STI, Alto Works, GR Yaris; held at half and 0.8 of the redline
+  from a stopped shaft): boost after 3 s the same to two places, time to 90% within 0.01-0.02 s; at 70% load within
+  0.07 s. Floored in fourth from a cruise, the WRX has 53% of its settled pull after 0.05 s and all of it within 3 s.
+- **What moved:** the WRX STI's stepped 0-100 is 5.85 s, was 5.52 (solver 5.26): the solver's driver holds the
+  engine on boost for 1.2 s before leaving, the test's driver leaves from idle. Flying laps on TECH are unchanged to
+  0.1% (Civic Type R +3.5% on the solver, WRX +3.5%). Nothing in the app calls `stepCar`; fingerprint not re-run.
+- **Left open:** right at the boost threshold, where the shaft's net power is near zero, the tables creep up
+  faster than the app's shaft (WRX at 0.3 of the redline: 0.81 bar after 10 s against 0.69); a variable-vane diesel
+  between 60 and 85% load is up to 10% off in boost (Golf TDI, Amarok). Anti-lag and the launch's brake-boost are
+  not in the stepped car. Still to come in step 3: a hybrid's controller.
+
+Tests: test172 (new), test168 (updated: plain data may nest). Tests: 170
+
 ### Every real car's body is recorded for a 3D model (build 272)
 
 Phase E, step 6 of `plans/road-to-v1.md`. A 3D car needs each preset's length, width, height, overhangs, tracks,
