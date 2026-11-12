@@ -22,8 +22,8 @@
 //             slip until the pressure can no longer hold them. With theta = C / (3 mu Fz), the force is
 //             mu Fz (3s - 3s^2 + s^3) up to full sliding at s = 1. Drive, braking and cornering share one slip vector,
 //             so using the grip one way leaves less the other way: combined slip needs no extra rule. Its inputs are
-//             the lap's own: the grip mu(Fz) with its load sensitivity, the cornering stiffness (TYRE_CC, 0.2/deg of
-//             the load, Gillespie), the longitudinal peak at TYRE_SLIP_OPT, braking and traction at TYRE_MU_X of the
+//             the lap's own: the grip mu(Fz) with its load sensitivity, the cornering stiffness (the compound's,
+//             TIRE_TYPE.cc), the longitudinal peak at TYRE_SLIP_OPT, braking and traction at TYRE_MU_X of the
 //             lateral grip, and past the peak the launch model's own falling curve (0.81 in a full slide).
 //             A tyre's side force builds over a rolling distance, the relaxation length (about the tyre's radius;
 //             Pacejka ch. 5: probable).
@@ -50,7 +50,7 @@ function driveCar(){
     name:v.chLabel||'',m:v.mass,Izz:v.mass*a*b,a,b,h:v.cg,tF:v.trackF||v.track,tR:v.trackR||v.track,
     r:v.rTire,Iw:(v.wheelI||2)/4,
     mu:tyreMu(v.FzRef,v.FzRef),muF:tyreMu(v.FzRefF||v.FzRef,v.FzRefF||v.FzRef),FzRef:v.FzRef,FzRefF:v.FzRefF||v.FzRef,
-    loadSens:LOAD_SENS,muX:TYRE_MU_X,cc:TYRE_CC,slipOpt:TYRE_SLIP_OPT,slipC:TYRE_SLIP_C,relax:v.rTire,
+    loadSens:LOAD_SENS,muX:TYRE_MU_X,cc:v.tyreCC||tyreCC(v.tireType),slipOpt:TYRE_SLIP_OPT,slipC:TYRE_SLIP_C,relax:v.rTire,
     cdA:v.cdA,clA:v.clA||0,aeroBal:v.aeroBal==null?0.5:v.aeroBal,crr:v.crr,
     lltdF:v.lltdF==null?v.fWt:v.lltdF,tauLoad:1/(2*Math.PI*ride),
     drive:v.drive,lock:(v.df&&v.df.lock)||0,ratios:(v.ratios||[1]).slice(),fd:v.finalDrive||1,eff:v.driveEff||0.9,

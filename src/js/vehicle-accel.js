@@ -65,7 +65,7 @@ function buildVehicle(){
   // a staggered car's front tyres (build 157): their rated load scales with their width on the same wheel
   vehicle.FzRefF=vehicle.FzRef*((vehicle.tireWidthF>0?vehicle.tireWidthF:vehicle.tireWidth)/vehicle.tireWidth);
   vehicle.camber=susp.camber;
-  vehicle.crr=tt.crr;
+  vehicle.crr=tt.crr;vehicle.tyreCC=tyreCC(vehicle.tireType);
   vehicle.speedRating=document.getElementById('vhRating').value||tt.rating;
   vehicle.ratedKmh=(SPEED_RATING[vehicle.speedRating]||SPEED_RATING.Y).kmh;
   vehicle.brakeTh=brakeThermal(vehicle);   // rotors, material and pads: brake temperature and fade (build 107)

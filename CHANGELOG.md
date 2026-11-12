@@ -20,6 +20,26 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 Working toward **v1.0 — every number derived, not fitted.**
 
+### A tyre's cornering stiffness comes from its compound, from measured tyres (build 266)
+
+Every tyre had one cornering stiffness, 0.2 of its load per degree of slip (a textbook's round figure). The stepped
+car's tyre therefore gave its most grip only at about 14 degrees of slip, and build 264's driver found the car soft
+at the limit.
+
+- **Road tyres (eco, street): 0.28 per degree,** from a measured 205/60R15 91V at 2.2 bar (its Magic Formula 5.2
+  file). Its side force now peaks near 10 degrees; production tyres peak at 6 to 10.
+- **Race slick: 0.54,** from Milliken's measured race tyre (RCVD fig. 2.9: peak 1.08 of the load at 6.0 degrees).
+- **Sport 0.32 and semi-slick 0.42 are not sourced:** set between the two measured tyres by grip. The drag radial
+  stays at 0.2. These are a new entry in the register, `TYRE_CC` (27 open, was 26).
+- **What moved:** only lap times, through cornering drag, which a stiffer tyre has less of. Laps −1.14% to +0.12%,
+  mean −0.35% (BMW M3 E46 75.20 to 74.94 s); race fuel per lap −1.3 to −2.3%. Power, acceleration and top speed
+  are unchanged. Not checked against published lap times (real-car checks are paused).
+- **Left open:** the stiffness per unit load falls as the load rises (the race tyre: 0.59, 0.54, 0.43 at 900, 1350,
+  1800 lbf), and the model holds one number per tyre. The road-tyre file's nominal load was not confirmed (the page
+  refused the download; the two coefficients came from a search extract: probable). The guide's Greek for the
+  cornering-drag line is not updated (Greek is paused). Next for the stepped car: the road's height, then a driver
+  that countersteers.
+
 ### The engine can stall, stop and be started (build 265)
 
 Until now the bench held the engine at its idle speed whatever happened, and STARTER and POWER OFF did nothing on a
