@@ -316,6 +316,10 @@ function drawRace(){
     let cx=px(q),cy=py(q);const hd=Math.atan2(py(M.line[j])-py(M.line[i]),px(M.line[j])-px(M.line[i]));
     if(s.pass>0.5){const o=Math.max(5,2.5*scV);cx+=Math.sin(hd)*o;cy-=Math.cos(hd)*o;}   // alongside
     drawTopCar(ctx,cx,cy,hd,RACE_COLS[c.id],'thr');
+    if(wx>0.12){
+      ctx.fillStyle='rgba(210,222,230,'+(0.35+0.4*wx)+')';
+      for(let k=1;k<=4;k++)ctx.fillRect(cx-Math.cos(hd)*k*4-1,cy-Math.sin(hd)*k*4-1,2,2);
+    }
     ctx.font='6px "Press Start 2P"';ctx.fillStyle=RACE_COLS[c.id];ctx.fillText(String(x.pos),cx+7,cy-6);
     if(raceUI.follow===c.id){ctx.strokeStyle='#fff';ctx.lineWidth=1;ctx.strokeRect(cx-9,cy-9,18,18);}
   }
@@ -325,7 +329,8 @@ function drawRace(){
     const nDrops=Math.round(40+160*wx),ph=t*9;
     for(let k=0;k<nDrops;k++){
       const x0=((k*97.13)%W+ph*37*(1+k%3))%W,y0=topBar+((k*53.7+ph*120*(1+k%2))%(H-topBar-botBar));
-      ctx.moveTo(x0,y0);ctx.lineTo(x0-3,y0+9);
+      const len=6+(k%3)*5;
+      ctx.moveTo(x0,y0);ctx.lineTo(x0-len*0.28,y0+len);
     }
     ctx.stroke();
   }

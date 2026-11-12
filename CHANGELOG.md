@@ -20,6 +20,16 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 Working toward **v1.0 — every number derived, not fitted.**
 
+### The map draws the circuit, not just the ribbon (build 266)
+
+TRACK and RACE drew the lap as one dark stroke on an empty background. The same fitted top-down view now shows the ground around it.
+
+- **Grass** tiles with the map, so it stays put when you pan. A **gravel verge** runs both sides. Where the radius is under 90 m the outside of the corner gets a **green runoff**, and under 70 m a **deeper gravel trap**.
+- The **red and white kerbs** are unchanged, and still the 0.8 m ramp the lap uses. **Sausage blocks** are drawn on the inside of those corners. They are paint only: the car does not ride them.
+- An **armco** follows the +normal side, with a **distance board** every 100 m of the sampled centreline. Tight corners get a **tyre stack** and an **orange flag**. None of these positions are surveyed.
+- The car sprite has a **stripe** and a short **shadow**. On a solved lap, **brake rubber** is drawn where the limit is the brakes. In the wet, the rain streaks vary in length and each car throws a short **spray**.
+- Left open: no night, and no chase camera. The race has dry, damp and wet, and the map stays the one you zoom and pan. A real oblique camera would break that.
+
 ### The engine can stall, stop and be started (build 265)
 
 Until now the bench held the engine at its idle speed whatever happened, and STARTER and POWER OFF did nothing on a
