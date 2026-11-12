@@ -20,6 +20,16 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 Working toward **v1.0 — every number derived, not fitted.**
 
+### The race and the hotlap use the chase view (build 270)
+
+TRACK and RACE showed the whole circuit as a flat ribbon. They now look down the road the way the draft did: a pitched camera behind the car, with the ground, the walls and the weather painted on. The lap and the race are the same numbers as before.
+
+- The camera sits behind the car. Twenty metres ahead covers less of the screen than twenty metres to the side. Scroll still zooms that view; a drag still slides it. In a race with no car selected, the camera sits further back so the cars around the leader stay in frame.
+- Grass, asphalt and gravel are painted in world space, so they stay put when the car moves. Tight corners get a green runoff, a deeper gravel trap, sausage blocks and the red-and-white kerb. An armco, trees, distance boards, tyre stacks and an orange flag dress the outside. None of that is surveyed, and the car does not ride it.
+- The solved lap's limit is still drawn on the racing line, in the same colours. The instruments, the clock and the timing tower are unchanged.
+- Wet, damp, rain and a drying line follow the race weather. Rain, spray and a darker road come with them. A dry hotlap stays dry.
+- Left open: there is no night. The textures are baked into the page so it still opens from a file and a saved picture is not blocked.
+
 ### A driver for the stepped car: round the racing line, with opposite lock (build 269)
 
 Build 264 tried to drive the stepped car round a circuit and the rear-drivers spun at the first fast corner. With
