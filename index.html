@@ -769,7 +769,7 @@ body.showcase-open{overflow:hidden}
 </div>
 <div class="container">
 <header>
-<h1>PIXEL ENGINE SIM v0.7 build 267</h1>
+<h1>PIXEL ENGINE SIM v0.7 build 268</h1>
 <div class="subtitle" id="subtitle">ENGINE DESIGNER • BUILD IT, THEN DRIVE IT</div>
 </header>
 <div class="build-strip" id="buildStrip">
@@ -12917,9 +12917,14 @@ function simulateAccelRun(){
 //   Stall     below the speed it can fire at, the engine stops; a starter or a bump start brings it back.
 //   Brakes    the hydraulics' own force and front share; ABS and traction control as wheel-slip limits when fitted.
 //   Aero      drag and downforce on the square of the speed; rolling resistance by the load.
+//   Road      its height under the car (build 268), given with the inputs: the slope along the car (u.grade, the sine
+//             of the climb) pulls it back by g sin, and the road's curvature in height (u.kv, 1/m, negative over a
+//             crest) presses the tyres by m v^2 kv, as the lap solver's loadAt has it. Past v^2 kv = -g cos the car
+//             is in the air: no load, no tyre force. s.z is the height climbed.
 //
 // NOT YET (named, so nobody rediscovers them): the turbo's shaft in time (boost is the settled curve's), tyre and
-// brake temperatures, camber and roll steer, the road's bumps and kerbs, a hybrid's controller. The lap solver has
+// brake temperatures, camber and roll steer, the road's side slope, bumps and kerbs (one
+// height for the whole car: the front axle meets a crest no sooner than the rear), a hybrid's controller. The lap solver has
 // each of these; they move here in later builds of phase E.
 // ================================================================================================
 const DRIVE_G=9.81, DRIVE_RHO=1.20;
@@ -12948,7 +12953,7 @@ function driveCar(){
 }
 // A car at rest, in neutral for a clutch car until the driver asks for a gear.
 function driveState(car){
-  return {t:0,x:0,y:0,psi:0,vx:0,vy:0,yaw:0,w:[0,0,0,0],we:car.idle*Math.PI/30,gear:1,shiftT:0,
+  return {t:0,x:0,y:0,z:0,psi:0,vx:0,vy:0,yaw:0,w:[0,0,0,0],we:car.idle*Math.PI/30,gear:1,shiftT:0,
     axF:0,ayF:0,al:[0,0,0,0],abs:[1,1,1,1],tcF:1,clF:1,pull:false,firing:true,
     ax:0,ay:0,Fz:[0,0,0,0],kappa:[0,0,0,0],alpha:[0,0,0,0],Fx:[0,0,0,0],Fy:[0,0,0,0],rpm:car.idle,speed:0,delta:0};
 }
@@ -12980,13 +12985,14 @@ function driveEngine(car,thr,rpm){
   return T;
 }
 // Advance s by dt (s) under u = {steer -1..1 (left positive), throttle 0..1, brake 0..1, clutch 0..1 or null for an
-// automatic clutch, gear 1.. or null for automatic shifts}. Returns s, with what happened in it for the instruments.
+// automatic clutch, gear 1.. or null for automatic shifts, grade and kv for the road's height (see Road above)}. Returns s, with what happened in it for the instruments.
 function stepCar(car,s,u,dt){
   const H=0.001,n=Math.max(1,Math.ceil(dt/H)),h=dt/n,g=DRIVE_G,L=car.a+car.b;
   const xw=[car.a,car.a,-car.b,-car.b],yw=[car.tF/2,-car.tF/2,car.tR/2,-car.tR/2];
   const drv=car.drive==='awd'?[1,1,1,1]:car.drive==='fwd'?[1,1,0,0]:[0,0,1,1],nd=drv[0]+drv[1]+drv[2]+drv[3];
   const steer=Math.max(-1,Math.min(1,u.steer||0)),brake=Math.max(0,Math.min(1,u.brake||0));
   let thr=Math.max(0,Math.min(1,u.throttle||0));
+  const sinT=Math.max(-0.7,Math.min(0.7,u.grade||0)),cosT=Math.sqrt(1-sinT*sinT),kv=u.kv||0;
   for(let k=0;k<n;k++){
     const v=Math.hypot(s.vx,s.vy),delta=steer*car.steerLock,cd=Math.cos(delta),sd=Math.sin(delta);
     // ---- gearbox
@@ -13006,7 +13012,8 @@ function stepCar(car,s,u,dt){
     }
     const ratio=s.gear>0?car.ratios[Math.min(top,s.gear)-1]*car.fd:0;
     // ---- loads
-    const down=0.5*DRIVE_RHO*car.clA*v*v,WF=car.m*g*car.b/L+down*car.aeroBal,WR=car.m*g*car.a/L+down*(1-car.aeroBal);
+    const gN=Math.max(0,g*cosT+v*v*kv);                                    // what presses the car on the road, per kg
+    const down=0.5*DRIVE_RHO*car.clA*v*v,WF=car.m*gN*car.b/L+down*car.aeroBal,WR=car.m*gN*car.a/L+down*(1-car.aeroBal);
     const dX=car.m*s.axF*car.h/L,dYF=car.lltdF*car.m*s.ayF*car.h/car.tF,dYR=(1-car.lltdF)*car.m*s.ayF*car.h/car.tR;
     const Fz=s.Fz;
     Fz[0]=Math.max(0,(WF-dX)/2-dYF);Fz[1]=Math.max(0,(WF-dX)/2+dYF);Fz[2]=Math.max(0,(WR+dX)/2-dYR);Fz[3]=Math.max(0,(WR+dX)/2+dYR);
@@ -13081,10 +13088,10 @@ function stepCar(car,s,u,dt){
     }
     // ---- body
     const drag=0.5*DRIVE_RHO*car.cdA*v*s.vx,ax=(FX-drag)/car.m,ay=FY/car.m;
-    s.vx+=h*(ax+s.vy*s.yaw);s.vy+=h*(ay-s.vx*s.yaw);s.yaw+=h*MZ/car.Izz;
+    s.vx+=h*(ax-g*sinT+s.vy*s.yaw);s.vy+=h*(ay-s.vx*s.yaw);s.yaw+=h*MZ/car.Izz;
     if(brake>0&&thr===0&&Math.abs(s.vx)<0.05&&Math.abs(s.vy)<0.05){s.vx=0;s.vy=0;s.yaw=0;}   // held on the brakes
     s.psi+=h*s.yaw;const c=Math.cos(s.psi),sn=Math.sin(s.psi);
-    s.x+=h*(s.vx*c-s.vy*sn);s.y+=h*(s.vx*sn+s.vy*c);
+    s.x+=h*cosT*(s.vx*c-s.vy*sn);s.y+=h*cosT*(s.vx*sn+s.vy*c);s.z+=h*s.vx*sinT;
     const kL=Math.min(1,h/car.tauLoad);s.axF+=(ax-s.axF)*kL;s.ayF+=(ay-s.ayF)*kL;
     s.ax=ax;s.ay=ay;s.delta=delta;s.t+=h;
   }

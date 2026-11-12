@@ -20,6 +20,22 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 Working toward **v1.0 — every number derived, not fitted.**
 
+### The stepped car feels the road's height: climbs, crests and dips (build 268)
+
+The stepped car's road was flat. The circuits are not: build 264's driver slid off where a crest unloads the tyres,
+because the lap solver knew the crest and the stepped car did not.
+
+- **`stepCar` takes the road under the car with the driver's inputs:** `grade` (the sine of the climb) and `kv` (the
+  road's curvature in height, 1/m, negative over a crest), the same two numbers each point of a circuit already has.
+- **A climb** pulls the car back by g sin and presses it by g cos; **a crest or a dip** changes the tyres' load by
+  m v² kv, as the lap solver has it. Past that the car is in the air, with no tyre force. `s.z` is the height climbed.
+- **Checked:** a 10% climb slows a coasting car by 0.99 of g sin (once the wheels' own inertia is counted), and a
+  crest takes exactly m v² kv off the four tyres. The flat road is unchanged, to the digit.
+- **What moved:** nothing in the app: no solver reads it yet. Fingerprint not re-run (only `stepCar` changed).
+- **Left open:** the lap solver caps the crest's effect (`KVCAP`, in the register); the stepped car does not, and
+  the two will differ over sharp crests. One height for the whole car (both axles meet a crest together); no side
+  slope. Next: a driver that countersteers, round a circuit with its grade and crests.
+
 ### A loaded tyre is softer for its load: the cornering stiffness falls as the load rises (build 267)
 
 A tyre's cornering stiffness was one share of its load whatever it carried. Measured tyres give less per unit load

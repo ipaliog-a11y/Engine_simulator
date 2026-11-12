@@ -8,6 +8,8 @@
 //     a front-driver wide; without ABS the wheels lock and the stop is longer;
 //   · the tyre's cornering stiffness per unit load falls with the load as measured tyres' does (build 267): at 2/3
 //     and 4/3 of its nominal load, within 0.07 of Milliken's race tyre (1.09 and 0.80 of the nominal figure);
+//   · the road's height (build 268): a 10% climb slows a coasting car by g sin more than the flat, and a crest takes
+//     m v² kv off the tyres;
 //   · a car is plain data: through JSON and back it drives to the same place, to the last digit;
 //   · stepCar reads only its arguments: nothing of the page or of this app's globals;
 //   · no page errors.
@@ -73,6 +75,10 @@ const R = await page.evaluate(() => {
     out.same = JSON.stringify(run(car)) === JSON.stringify(run(copy)); out.fields = Object.values(car).every(v => ['number', 'string', 'boolean'].includes(typeof v) || Array.isArray(v));
     const s = driveState(car), t0 = performance.now(); for (let i = 0; i < 2000; i++) stepCar(car, s, { throttle: 0.5 }, 0.01); out.ms = performance.now() - t0; }
   { const car = load('Mazda MX-5'), k = x => driveTyre(car, x * car.FzRef, 0, 1e-4, false)[1] / (x * car.FzRef); out.ccLoad = [k(2 / 3) / k(1), k(4 / 3) / k(1)]; }
+  { const car = load('Mazda MX-5'), go = u => { const s = driveState(car); s.vx = 30; s.w = s.w.map(() => 30 / car.r); s.gear = 0;
+      for (let i = 0; i < 10; i++) stepCar(car, s, Object.assign({ gear: 0 }, u), 0.01); return { v: s.vx, Fz: s.Fz.reduce((a, b) => a + b, 0), z: s.z }; };
+    const flat = go({}), hill = go({ grade: 0.1 }), crest = go({ kv: -0.004 });
+    out.road = { hill: (flat.v - hill.v) / 0.0981 * (1 + 4 * car.Iw / (car.r * car.r * car.m)) /* the wheels turn too */, z: hill.z, crest: (flat.Fz - crest.Fz) / (car.m * crest.v * crest.v * 0.004) }; }
   for (const f of [stepCar, driveTyre, driveEngine, driveLerp, driveState]) out.src[f.name] = f.toString();
   return out;
 });
@@ -97,6 +103,8 @@ if (!R.noAbs.lock || R.abs.lock) fails.push('ABS: the wheels lock with it, or do
 if (!(R.noAbs.d > R.abs.d)) fails.push('the stop without ABS is not longer');
 console.log(`cornering stiffness per load at 2/3 and 4/3 of nominal: ${R.ccLoad.map(x => x.toFixed(2)).join(', ')} (measured race tyre 1.09, 0.80)`);
 if (Math.abs(R.ccLoad[0] - 1.09) > 0.06 || Math.abs(R.ccLoad[1] - 0.80) > 0.07) fails.push('the cornering stiffness does not fall with load as measured');
+console.log(`road: a 10% climb takes ${R.road.hill.toFixed(3)} of g sin off a coasting car, climbing ${R.road.z.toFixed(3)} m in 0.1 s at 30 m/s; a crest takes ${R.road.crest.toFixed(3)} of m v² kv off the tyres`);
+if (Math.abs(R.road.hill - 1) > 0.02 || Math.abs(R.road.crest - 1) > 0.01 || Math.abs(R.road.z - 0.3) > 0.01) fails.push('the road\'s height does not act on the car as it should');
 if (!R.same) fails.push('a car through JSON does not drive to the same place');
 if (!R.fields) fails.push('driveCar() holds something that is not plain data');
 for (const [n, src] of Object.entries(R.src)) {
