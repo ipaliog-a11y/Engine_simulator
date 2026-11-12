@@ -20,6 +20,24 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 Working toward **v1.0 — every number derived, not fitted.**
 
+### A tyre's cornering stiffness falls as it is loaded harder (build 267)
+
+Build 266 gave each compound one cornering stiffness per unit load, whatever the load. A real tyre's falls as the
+load rises, which is how load moved across an axle (by a bar, a spring, a high centre of gravity) changes a car's
+balance below the limit.
+
+- **The curve is the measured road tyre's own** (the 205/60R15 Magic Formula file of build 266, its PKY2 2.03):
+  against its value at the reference load, the stiffness per unit load is 1.12 at two thirds of that load and 0.87
+  at four thirds. Milliken's race tyre (RCVD fig. 2.9), with its middle load taken as the reference, gives 1.09 and
+  0.80.
+- **The stepped car** uses it per wheel. **The lap's cornering drag** uses it at the mean wheel load.
+- **What moved:** laps −0.37% to +0.26%, mean −0.03% (BMW M3 E46 74.94 to 74.97 s); race fuel per lap −0.45 to
+  +0.20%. Nothing else. Not checked against published lap times (paused).
+- **Left open:** the reference load is taken as 60% of the tyre's rated load, where a Magic Formula file's nominal
+  load is usually near two thirds (the file's own was not confirmed). The lap ignores the load moved across an
+  axle when it prices cornering drag. `TYRE_CC` stays in the register for the unsourced sport, semi-slick and drag
+  values. Next for the stepped car: the road's height, then a driver that countersteers.
+
 ### A tyre's cornering stiffness comes from its compound, from measured tyres (build 266)
 
 Every tyre had one cornering stiffness, 0.2 of its load per degree of slip (a textbook's round figure). The stepped

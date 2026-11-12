@@ -6,6 +6,8 @@
 //     a stop from 100 km/h at 0.85-1.25 of the tyres' braking grip, a skidpad at 0.80-1.02 of their lateral grip;
 //   · the car does what the lap cannot: lifting mid-corner tightens the line; power spins a rear-driver and pushes
 //     a front-driver wide; without ABS the wheels lock and the stop is longer;
+//   · the tyre's cornering stiffness is its compound's at the reference load and falls with load as the measured
+//     tyre's does (build 267);
 //   · a car is plain data: through JSON and back it drives to the same place, to the last digit;
 //   · stepCar reads only its arguments: nothing of the page or of this app's globals;
 //   · no page errors.
@@ -70,6 +72,9 @@ const R = await page.evaluate(() => {
       for (let i = 0; i < 800; i++) stepCar(c, s, { throttle: 1, steer: i > 400 ? 0.2 : 0 }, 0.01); return [s.x, s.y, s.psi, s.vx, s.rpm]; };
     out.same = JSON.stringify(run(car)) === JSON.stringify(run(copy)); out.fields = Object.values(car).every(v => ['number', 'string', 'boolean'].includes(typeof v) || Array.isArray(v));
     const s = driveState(car), t0 = performance.now(); for (let i = 0; i < 2000; i++) stepCar(car, s, { throttle: 0.5 }, 0.01); out.ms = performance.now() - t0; }
+  // ---- the tyre's stiffness per unit load, at 2/3, 1 and 4/3 of its reference load (build 267)
+  { const car = load('Subaru Impreza'), a = 1e-5; out.cc = [2 / 3, 1, 4 / 3].map(x => driveTyre(car, x * car.FzRef, 0, a, false)[1] / (x * car.FzRef * a));
+    out.ccCar = car.cc; out.ccType = TIRE_TYPE[vehicle.tireType].cc * 180 / Math.PI; }
   for (const f of [stepCar, driveTyre, driveEngine, driveLerp, driveState]) out.src[f.name] = f.toString();
   return out;
 });
@@ -92,6 +97,9 @@ if (!(R.fwd.aF > R.fwd.aR && R.fwd.r > 31)) fails.push('full power did not push 
 console.log(`no ABS: ${R.noAbs.d.toFixed(1)} m, wheels ${R.noAbs.lock ? 'locked' : 'turning'}; ABS ${R.abs.d.toFixed(1)} m, wheels ${R.abs.lock ? 'locked' : 'turning'}`);
 if (!R.noAbs.lock || R.abs.lock) fails.push('ABS: the wheels lock with it, or do not lock without it');
 if (!(R.noAbs.d > R.abs.d)) fails.push('the stop without ABS is not longer');
+console.log(`cornering stiffness per unit load at 2/3, 1, 4/3 of the reference load: ${R.cc.map(c => (c * Math.PI / 180).toFixed(3)).join(', ')} /deg (the compound's ${(R.ccType * Math.PI / 180).toFixed(2)})`);
+if (Math.abs(R.cc[1] / R.ccType - 1) > 0.01) fails.push('at its reference load the tyre does not have its compound\'s cornering stiffness');
+if (Math.abs(R.cc[0] / R.cc[1] - 1.122) > 0.01 || Math.abs(R.cc[2] / R.cc[1] - 0.868) > 0.01) fails.push('the stiffness does not fall with load as the measured tyre\'s does (1.12 and 0.87 at 2/3 and 4/3)');
 if (!R.same) fails.push('a car through JSON does not drive to the same place');
 if (!R.fields) fails.push('driveCar() holds something that is not plain data');
 for (const [n, src] of Object.entries(R.src)) {
