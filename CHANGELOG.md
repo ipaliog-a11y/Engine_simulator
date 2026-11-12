@@ -20,6 +20,10 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 Working toward **v1.0 — every number derived, not fitted.**
 
+### The chase view is taken back (build 271)
+
+Build 270 replaced the flat circuit with a pitched camera behind the car. That picture is out again. TRACK and RACE draw the whole circuit as they did before 270. The lap and the race are unchanged.
+
 ### The race and the hotlap use the chase view (build 270)
 
 TRACK and RACE showed the whole circuit as a flat ribbon. They now look down the road the way the draft did: a pitched camera behind the car, with the ground, the walls and the weather painted on. The lap and the race are the same numbers as before.
