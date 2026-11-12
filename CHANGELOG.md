@@ -20,6 +20,22 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 Working toward **v1.0 — every number derived, not fitted.**
 
+### The stepped car feels the road's grade, crests and dips (build 268)
+
+`stepCar` drove on a flat road. Build 264 found that this was one of the two reasons its driver could not hold the
+lap solver's speeds: the circuits have crests and dips that load and unload the tyres.
+
+- **`stepCar` takes the road under the car**, `road: {sinT, kv}`: the grade along the car and the road's vertical
+  curvature, the same two quantities the lap reads from the circuit. The weight presses with the cosine of the
+  grade and pulls the car back by g sin(theta); a crest or a dip changes the wheel loads by m v² kv.
+- **Past 1 g of crest the wheels carry nothing.** The lap caps this term at 0.6 of the weight (`KVCAP`, in the
+  register); the stepped car needs no cap.
+- **Checked** in `test168`: a 5% fall adds 0.47 m/s² to a coasting car (g × 0.05 is 0.49; the turning wheels'
+  inertia and the extra air drag take the rest); a half-g crest and dip move the wheel loads to 0.51 and 1.49 of their flat-road value.
+- **Nothing else moves:** the fingerprint is identical to build 267 (5212 values).
+- **Left open:** banking, bumps and kerbs; a car in the air keeps its attitude. A caller must supply the road: the
+  driver that follows a circuit and feeds it (with countersteer) is the next build.
+
 ### A tyre's cornering stiffness falls as it is loaded harder (build 267)
 
 Build 266 gave each compound one cornering stiffness per unit load, whatever the load. A real tyre's falls as the
