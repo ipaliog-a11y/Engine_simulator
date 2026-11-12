@@ -20,6 +20,32 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 Working toward **v1.0 — every number derived, not fitted.**
 
+### A driver for the stepped car: round the racing line, with opposite lock (build 269)
+
+Build 264 tried to drive the stepped car round a circuit and the rear-drivers spun at the first fast corner. With
+the tyre's stiffness measured (266, 267) and the road's height under the car (268), this driver holds them.
+
+- **`driveDriver(car, s, line, d)`** returns the wheel and pedals that take the car round a line; **`driveLine(lap)`**
+  turns a solved lap into that line as plain data (position, the solver's speed, the road's height). Both sit beside
+  `stepCar` for a game to use.
+- **The wheel points the front tyres, not the car:** at where the front axle is travelling, plus the slip angle the
+  corner needs. A tail that steps out is met with opposite lock with no extra rule; with the rear tyres past their
+  peak the front's slip is taken off too, so the nose stops pulling in. (The steering law's two terms are Stanley's:
+  Hoffmann et al., 2007.)
+- **The pedals follow the force the plan asks,** so a corner is held on part throttle. In this build's trials a
+  driver correcting the speed alone coasted on the engine's drag at the limit and spun the MX-5; the GT3 also
+  needed the front's slip taken off.
+- **Result, circuit TECH, flying lap against the lap solver:** MX-5 +2.4%, Civic Type R +3.4%, WRX STI +3.5%,
+  911 GT3 +3.6%, Tesla Model 3 +1.8%; never more than 2.8 m off the line or 14 degrees sideways. On MIXED five more
+  (Fiat 500, F40, Viper, 458, Mustang) ran +2.2 to +2.8% in a trial by hand, not in the test. Thrown into a spin on a circle at 0.84 of its
+  grip, the MX-5 is caught with a quarter of opposite lock and is back on line, at 97% of its speed, within 4 s.
+- **What moved:** nothing in the app; two functions were added and no solver calls them. Fingerprint not re-run.
+- **Named in the register:** `DRIVE_DRIVER`, the driver's four settings (28 open, was 27). They are a driver's
+  manner, not the car's physics; proposed to the owner as a rule, like `RACE_DRIVERS`.
+- **Left open:** the 2-4% the driver gives away (it follows the solver's speeds, it does not look for the limit, and
+  the stepped car has no kerbs, bumps or camber gain); up to 2.8 m off the line over crests; a lane change test; a
+  hybrid's controller in `stepCar`. Phase E's step 5 is otherwise met; next is step 6, the body's dimensions.
+
 ### The stepped car feels the road's grade, crests and dips (build 268)
 
 `stepCar` drove on a flat road. Build 264 found that this was one of the two reasons its driver could not hold the
