@@ -20,7 +20,7 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 Working toward **v1.0 — every number derived, not fitted.**
 
-### Every real car's body is recorded for a 3D model (build 269)
+### Every real car's body is recorded for a 3D model (build 272)
 
 Phase E, step 6 of `plans/road-to-v1.md`. A 3D car needs each preset's length, width, height, overhangs, tracks,
 wheel and tyre size. The length and height lived in the side-profile table with no source per car; the width, the
@@ -36,9 +36,9 @@ rear overhang and the front tyre of a staggered car were nowhere. Nothing in the
 - **37 entries carry an unsure figure,** named per car. 26 are tyres: the page does not list the size the preset is
   fitted with, so the size is built from the fit. The rest are a sibling body's width or height (Alto Works, AE86,
   190E 2.3-16, GNX, BAC Mono, Trabant), or a page that disagrees with what the app already carries.
-- **Checked** in `test170`: every car has an entry and a source, the overhangs and wheelbase add up to the length,
+- **Checked** in `test171`: every car has an entry and a source, the overhangs and wheelbase add up to the length,
   the body is wider than its tracks, each tyre is a real size. The unsure counts are budgets that may only shrink.
-- **Nothing moves:** the fingerprint is identical to build 268 (5212 values).
+- **Nothing moves:** the fingerprint is identical to build 271.
 - **Found on the way, not changed here** (each would move a picture or a lap, so each needs its own build):
   - The side profile's length is off for the Ferrari F40 (4.430 m, the page says 4.358), the Huracán
     STO (4.459, page 4.549), the Model S Plaid (4.970, page 5.021), the Corvette C6 Z06 (4.435, page 4.460) and
@@ -51,7 +51,46 @@ rear overhang and the front tyre of a staggered car were nowhere. Nothing in the
   Mirrors, ground clearance and the roof line are not recorded. The 26 tyre sizes built from the fit want the
   maker's sheet, and so do the 83 overhangs.
 
-Tests: test170 (new). Tests: 122
+Tests: test171 (new). Tests: 122
+### The chase view is taken back (build 271)
+
+Build 270 replaced the flat circuit with a pitched camera behind the car. That picture is out again. TRACK and RACE draw the whole circuit as they did before 270. The lap and the race are unchanged.
+
+### The race and the hotlap use the chase view (build 270)
+
+TRACK and RACE showed the whole circuit as a flat ribbon. They now look down the road the way the draft did: a pitched camera behind the car, with the ground, the walls and the weather painted on. The lap and the race are the same numbers as before.
+
+- The camera sits behind the car. Twenty metres ahead covers less of the screen than twenty metres to the side. Scroll still zooms that view; a drag still slides it. In a race with no car selected, the camera sits further back so the cars around the leader stay in frame.
+- Grass, asphalt and gravel are painted in world space, so they stay put when the car moves. Tight corners get a green runoff, a deeper gravel trap, sausage blocks and the red-and-white kerb. An armco, trees, distance boards, tyre stacks and an orange flag dress the outside. None of that is surveyed, and the car does not ride it.
+- The solved lap's limit is still drawn on the racing line, in the same colours. The instruments, the clock and the timing tower are unchanged.
+- Wet, damp, rain and a drying line follow the race weather. Rain, spray and a darker road come with them. A dry hotlap stays dry.
+- Left open: there is no night. The textures are baked into the page so it still opens from a file and a saved picture is not blocked.
+
+### A driver for the stepped car: round the racing line, with opposite lock (build 269)
+
+Build 264 tried to drive the stepped car round a circuit and the rear-drivers spun at the first fast corner. With
+the tyre's stiffness measured (266, 267) and the road's height under the car (268), this driver holds them.
+
+- **`driveDriver(car, s, line, d)`** returns the wheel and pedals that take the car round a line; **`driveLine(lap)`**
+  turns a solved lap into that line as plain data (position, the solver's speed, the road's height). Both sit beside
+  `stepCar` for a game to use.
+- **The wheel points the front tyres, not the car:** at where the front axle is travelling, plus the slip angle the
+  corner needs. A tail that steps out is met with opposite lock with no extra rule; with the rear tyres past their
+  peak the front's slip is taken off too, so the nose stops pulling in. (The steering law's two terms are Stanley's:
+  Hoffmann et al., 2007.)
+- **The pedals follow the force the plan asks,** so a corner is held on part throttle. In this build's trials a
+  driver correcting the speed alone coasted on the engine's drag at the limit and spun the MX-5; the GT3 also
+  needed the front's slip taken off.
+- **Result, circuit TECH, flying lap against the lap solver:** MX-5 +2.4%, Civic Type R +3.4%, WRX STI +3.5%,
+  911 GT3 +3.6%, Tesla Model 3 +1.8%; never more than 2.8 m off the line or 14 degrees sideways. On MIXED five more
+  (Fiat 500, F40, Viper, 458, Mustang) ran +2.2 to +2.8% in a trial by hand, not in the test. Thrown into a spin on a circle at 0.84 of its
+  grip, the MX-5 is caught with a quarter of opposite lock and is back on line, at 97% of its speed, within 4 s.
+- **What moved:** nothing in the app; two functions were added and no solver calls them. Fingerprint not re-run.
+- **Named in the register:** `DRIVE_DRIVER`, the driver's four settings (28 open, was 27). They are a driver's
+  manner, not the car's physics; proposed to the owner as a rule, like `RACE_DRIVERS`.
+- **Left open:** the 2-4% the driver gives away (it follows the solver's speeds, it does not look for the limit, and
+  the stepped car has no kerbs, bumps or camber gain); up to 2.8 m off the line over crests; a lane change test; a
+  hybrid's controller in `stepCar`. Phase E's step 5 is otherwise met; next is step 6, the body's dimensions.
 
 ### The stepped car feels the road's grade, crests and dips (build 268)
 

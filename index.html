@@ -769,7 +769,7 @@ body.showcase-open{overflow:hidden}
 </div>
 <div class="container">
 <header>
-<h1>PIXEL ENGINE SIM v0.7 build 269</h1>
+<h1>PIXEL ENGINE SIM v0.7 build 272</h1>
 <div class="subtitle" id="subtitle">ENGINE DESIGNER • BUILD IT, THEN DRIVE IT</div>
 </header>
 <div class="build-strip" id="buildStrip">
@@ -12889,6 +12889,9 @@ function simulateAccelRun(){
 //   stepCar(car, s, u, dt)     advances state s by dt under inputs u. It reads only its arguments and Math: no page,
 //                              no canvas, no globals of this app. A separate game can load this file and a car's JSON.
 //
+//   driveLine(lap), driveDriver(car, s, line, d)   a lap's racing line as plain data, and a driver that takes the car
+//                              round it with the wheel and the pedals (build 269). See above driveDriver.
+//
 // WHAT IS MODELLED
 //   Body      three freedoms in the plane: forward and sideways speed and yaw. m(vx' - vy r) = sum Fx, m(vy' + vx r) =
 //             sum Fy, Izz r' = sum of the tyre forces' moments (Milliken & Milliken, RCVD ch. 5). Izz = m a b, the yaw
@@ -12975,6 +12978,51 @@ function driveEngine(car,thr,rpm){
   let T=thr*wot-(1-thr)*ov;
   if(!car.ev&&rpm<car.idle)T+=Math.min(0.4*wot+ov,(car.idle-rpm)*0.5);
   return T;
+}
+// A lap's racing line as plain data for the driver below: where it runs, how fast the lap solver takes each point, and
+// the road's height there. lap is what simulateLap() returns.
+function driveLine(lap){return lap.track.line.map((q,i)=>({x:q.x,y:q.y,v:lap.v[i],grade:q.sinT||0,kv:q.kv||0}));}
+// A DRIVER FOR A LINE (build 269): the inputs that take the car round a line of points {x, y, v, grade, kv}. It reads
+// only its arguments (d is its memory: {i} the point it is at; it leaves d.e, how far left of the line the front
+// axle is). What it does is a driver's manner, not the car's physics; its settings are in the register (DRIVE_DRIVER).
+//   Wheel    it points the FRONT TYRES, not the car: at the direction the front axle is travelling, plus the slip
+//            angle it wants from them. That is the path's direction against the axle's travel and a pull back to the
+//            line that fades with speed (the two terms of Stanley's steering law: Hoffmann et al., ACC 2007), plus the
+//            slip the corner just ahead needs (the front's share of m v^2 / R over its cornering stiffness). Never
+//            more than a little past the angle the tyre peaks at: more lock past the peak only scrubs.
+//            Because the reference is where the axle is going, a tail that steps out is met with opposite lock with
+//            no extra rule; and once the rear tyres are past their peak, the front's slip is taken off by as much,
+//            through zero if need be, so the front stops pulling the nose in while the rear recovers.
+//   Pedals   by the force the plan asks of the tyres: the line's own change of speed, a correction for the speed
+//            error, and what the air, the tyres and the slope take. Throttle is that force over what the engine has in
+//            this gear; brake is the rest over what the brakes have. So a steady corner is held on part throttle, not
+//            coasted on the engine's drag. With the rear past its peak the plan is dropped for a neutral pedal.
+function driveDriver(car,s,line,d){
+  const N=line.length,L=car.a+car.b,g=DRIVE_G,wrap=x=>x-2*Math.PI*Math.round(x/(2*Math.PI));
+  const PREVIEW=0.15,PULL=1.5,PAST=1.2,SPEED=1;        // s of road read ahead; 1/s to the line; of the peak slip; 1/s on the speed error
+  const fx=s.x+car.a*Math.cos(s.psi),fy=s.y+car.a*Math.sin(s.psi);
+  let bi=d.i||0,bd=1e18;                                 // the nearest point, looked for ahead of the last one
+  for(let k=0;k<40;k++){const j=((d.i||0)+k)%N,q=line[j],dd=(q.x-fx)*(q.x-fx)+(q.y-fy)*(q.y-fy);if(dd<bd){bd=dd;bi=j;}}
+  d.i=bi;
+  const p0=line[bi],p1=line[(bi+1)%N],hp=Math.atan2(p1.y-p0.y,p1.x-p0.x),ds=Math.hypot(p1.x-p0.x,p1.y-p0.y)||1;
+  const e=-(fx-p0.x)*Math.sin(hp)+(fy-p0.y)*Math.cos(hp);d.e=e;
+  const la=Math.max(1,Math.round(s.vx*PREVIEW/ds)),c=line[(bi+la)%N],c1=line[(bi+la+1)%N],c0=line[(bi+la-1+N)%N];
+  const kap=wrap(Math.atan2(c1.y-c.y,c1.x-c.x)-Math.atan2(c.y-c0.y,c.x-c0.x))/(Math.hypot(c.x-c0.x,c.y-c0.y)||1);
+  // ---- the wheel
+  const vf=Math.atan2(s.vy+car.a*s.yaw,Math.max(1,s.vx));               // where the front axle is going, against the car
+  const pkF=Math.atan(3*car.muF/car.cc),pkR=Math.atan(3*car.mu/car.cc);  // the slip angles the tyres peak at
+  const need=s.vx*s.vx*kap/(g*car.cc);                                  // (m b/L) v^2 kap over the front's C = cc (m g b/L)
+  const aR=(s.alpha[2]+s.alpha[3])/2,over=Math.sign(aR)*Math.max(0,Math.abs(aR)-pkR);
+  const want=wrap(hp-s.psi-vf)+need-Math.atan2(PULL*e,3+s.vx)-over;
+  const delta=vf+Math.max(-PAST*pkF,Math.min(PAST*pkF,want));
+  // ---- the pedals
+  const ease=Math.max(0,Math.min(1,2*(Math.max(Math.abs(s.alpha[2]),Math.abs(s.alpha[3]))/pkR-1)));   // rear past its peak: off the plan by 1.5 x
+  const plan=(p1.v*p1.v-p0.v*p0.v)/(2*ds)+SPEED*(p0.v-s.vx);
+  const F=car.m*plan*(1-ease)+0.5*DRIVE_RHO*car.cdA*s.vx*s.vx+car.crr*car.m*g+car.m*g*p0.grade;
+  const k=s.gear>0?car.ratios[s.gear-1]*car.fd*car.eff/car.r:0,wot=driveEngine(car,1,s.rpm),ov=-driveEngine(car,0,s.rpm);
+  let thr=k>0?(F/k+ov)/Math.max(1,wot+ov):0,brk=0;
+  if(thr<0){brk=Math.min(1,-(F+ov*k)/car.brakeF);thr=0;}
+  return {steer:delta/car.steerLock,throttle:Math.min(1,thr),brake:brk,road:{sinT:p0.grade,kv:p0.kv}};
 }
 // Advance s by dt (s) under u = {steer -1..1 (left positive), throttle 0..1, brake 0..1, clutch 0..1 or null for an
 // automatic clutch, gear 1.. or null for automatic shifts, road {sinT: the grade along the car, positive uphill; kv: the
@@ -17727,7 +17775,7 @@ const CAR_PROFILES={
   'BMW 330e (2020)':{len:4.709,h:1.444,front:0.892,nose:0.38,hood:0.52,ws:0.68,rf:0.58,rr:0.32,bk:0.18,deck:0.54,tail:0.48,belt:0.54},
   'Porsche 918 Spyder (2013)':{len:4.643,h:1.167,front:1.052,nose:0.20,hood:0.34,ws:0.62,rf:0.52,rr:0.40,bk:0.24,deck:0.48,tail:0.36,belt:0.40},
 };
-// The body of every real car, for a 3D model later (build 269, phase E step 6 of plans/road-to-v1.md).
+// The body of every real car, for a 3D model later (build 272, phase E step 6 of plans/road-to-v1.md).
 //
 // len, w, h: overall length, width without mirrors and height, in m. tyF, tyR: the tyre on each axle
 // (width/aspect R rim, in inches); rimF, rimR: the rim's width in inches, where the page pairs one with that tyre.

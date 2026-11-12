@@ -99,12 +99,14 @@ it needs must load without the page (no DOM, no canvas), so a separate game app 
    so the car is soft and draggy at the limit. *Build 266:* the cornering stiffness is per compound (a measured road tyre 0.28/deg, a race tyre 0.54; sport
    and semi set between them, in the register as `TYRE_CC`). *Build 267:* it falls with load, by the measured road tyre's
    own curve. *Build 268:* `stepCar` takes the road's grade and vertical
-   curvature. Next: a driver that follows the circuit, feeds it and countersteers.
+   curvature. *Build 269:* `driveDriver` takes five cars round the line within 4% of the
+   solver, no spins, and catches a slide (`tests/test170.mjs`). Left: a lane change, and the 2-4% (the driver follows
+   the plan, it does not look for the limit).
    The original aim: the stepped car, driven round the solved racing line by a simple driver, laps within a few percent of
    the lap solver; a skidpad and a lane change give sensible numbers. One headless test.
 6. The body's dimensions every preset needs for 3D later (length, width, height, overhangs, wheel and tyre size)
    recorded with their sources.
-   *Done, build 269:* `src/js/car-dimensions.js` (`CAR_DIMS`, `carDims`), `tests/test170.mjs`. Open: 83 overhang
+   *Done, build 272:* `src/js/car-dimensions.js` (`CAR_DIMS`, `carDims`), `tests/test171.mjs`. Open: 83 overhang
    splits and 26 tyre sizes still want the maker's sheet; two cars have no width.
 
 **F. The race's rules (2–4 builds).** Tyre heat, wear and wet grip from the tyre model of E; the tow and dirty air

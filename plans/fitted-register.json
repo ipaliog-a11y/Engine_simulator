@@ -261,6 +261,15 @@
    "retiredBy": "a measured tyre per compound (a Magic Formula file or a flat-track curve)",
    "phase": "E",
    "state": "open"
+  },
+  {
+   "id": "DRIVE_DRIVER",
+   "file": "drive-model.js",
+   "match": "const PREVIEW=0.15,PULL=1.5,PAST=1.2,SPEED=1;",
+   "standsFor": "the stepped car's driver: how far ahead it reads the road, how hard it pulls back to the line and to the plan's speed, how far past the tyre's peak it will steer, and when it gives up the plan in a slide",
+   "retiredBy": "the owner's sign-off as a rule (a driver's manner, like RACE_DRIVERS), or measured driver data",
+   "phase": "E",
+   "state": "open"
   }
  ],
  "audit": [
