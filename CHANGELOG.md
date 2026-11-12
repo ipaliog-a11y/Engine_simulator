@@ -28,7 +28,10 @@ TRACK and RACE showed the whole circuit as a flat ribbon. They now look down the
 - Grass, asphalt and gravel are painted in world space, so they stay put when the car moves. Tight corners get a green runoff, a deeper gravel trap, sausage blocks and the red-and-white kerb. An armco, trees, distance boards, tyre stacks and an orange flag dress the outside. None of that is surveyed, and the car does not ride it.
 - The solved lap's limit is still drawn on the racing line, in the same colours. The instruments, the clock and the timing tower are unchanged.
 - Wet, damp, rain and a drying line follow the race weather. Rain, spray and a darker road come with them. A dry hotlap stays dry.
-- Left open: there is no night. The textures are baked into the page so it still opens from a file and a saved picture is not blocked.
+- The picture is painted on a layer at most 480 pixels wide and copied up unsmoothed, so it keeps the page's chunky pixels and costs the same on a sharp screen. The textures are baked at the size they are drawn (128 px tiles): the page is 2.65 MB, against 2.53 MB before this build.
+- The whole-circuit map is gone from both tabs while a car is on screen: the limit colours are only seen on the road near the car, and the slowest-corner marker and the two-second trail are not drawn. With no car to sit behind, the whole circuit is shown.
+- Picking a car in the timing tower puts the camera behind it at the normal zoom (it used to zoom in 3×, which now filled the view with one car). A drag looks around the car and no longer lets go of it.
+- Left open: there is no night (the scene's night branches are still in the code, unused). The textures are photographic rather than drawn in the palette, and their source is not recorded. `docs/track.png` still shows the old map. The guide's Greek for the zoom paragraph still describes the map (Greek is paused).
 
 ### A tyre's cornering stiffness falls as it is loaded harder (build 267)
 

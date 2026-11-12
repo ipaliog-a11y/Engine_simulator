@@ -1,12 +1,17 @@
 // The race and hotlap picture: an oblique chase over the circuit the lap already solved.
 // The camera, the ground and the car are the draft view. The solver is not touched.
 // Dressing (rail, trees, boards, flags) is drawn, not surveyed, and the car does not ride it.
+// One closure, so the short names in here (T, project, quad, shade…) stay out of the page's one script.
+const { sceneBind, sceneWeather, sceneChase, sceneOverview, scenePan, sceneProject, scenePaint } = (() => {
 let T = null;
 let WX = { key: "dry", wet: 0, rain: 0, cloud: 0.05 };
 let TOD = "day";
 const TEX = {};
 let OCCLUDERS = [];
 const FURN_SIDE = 1;
+let BASE = new DOMMatrix();
+const SCENE_MAX_W = 480;
+let LAYER = null;
 
 function sceneBind(src) {
   if (src._look) { T = src._look; return T; }
@@ -59,11 +64,37 @@ function sceneWeather(kind, wet) {
 function sceneChase(car, W, H, scale, carFrac) {
   return chaseCam(car, W, H, scale, carFrac);
 }
+// Slide the picture by (tx, ty) screen units: the camera moves the other way, along its own axes.
+function scenePan(cam, tx, ty) {
+  const c = Math.cos(cam.roll || 0), sn = Math.sin(cam.roll || 0);
+  const ux = tx * c + ty * sn, uy = -tx * sn + ty * c;   // the lean turned back
+  const a = -ux / cam.scale, b = uy / (cam.scale * cam.pitch);
+  cam.ox += a * cam.lx + b * cam.fx;
+  cam.oy += a * cam.ly + b * cam.fy;
+  return cam;
+}
 function sceneProject(cam, x, y, h) { return project(cam, x, y, h || 0); }
+// The scene is painted on the page's own drawing grid (cam.W x cam.H) and then copied up to the canvas
+// through whatever scale the page draws with. A sharper screen then costs no more to paint, and the
+// picture keeps the page's chunky pixels.
+// The scene is painted on a layer no wider than SCENE_MAX_W and copied up to the canvas, unsmoothed,
+// through whatever scale the page draws with. A larger or sharper screen then costs no more to paint,
+// and the picture keeps the page's chunky pixels. At full size the textured fills kept the page busy
+// enough that a click on the timing tower could miss its row (test72).
 function scenePaint(ctx, cam, opts) {
-  drawWorld(ctx, cam, opts || {});
-  if (cam.scale > 8 && !(opts && opts.blur === false)) drawSpeedBlur(ctx, ctx.canvas);
-  ctx.setTransform(1, 0, 0, 1, 0, 0);
+  const k = Math.min(1, SCENE_MAX_W / cam.W);
+  const W = Math.max(1, Math.round(cam.W * k)), H = Math.max(1, Math.round(cam.H * k));
+  if (!LAYER) LAYER = document.createElement("canvas");
+  if (LAYER.width !== W || LAYER.height !== H) { LAYER.width = W; LAYER.height = H; }
+  const g = LAYER.getContext("2d");
+  BASE = new DOMMatrix([k, 0, 0, k, 0, 0]);
+  g.save();
+  drawWorld(g, cam, opts || {});
+  g.restore();
+  ctx.save();
+  ctx.imageSmoothingEnabled = false;
+  ctx.drawImage(LAYER, 0, 0, cam.W, cam.H);
+  ctx.restore();
 }
 
 function hash(i) {
@@ -86,75 +117,6 @@ function sampleAt(T, s) {
     nx: mix(a.nx, b.nx), ny: mix(a.ny, b.ny),
     tx: Math.cos(hd), ty: Math.sin(hd), hd, w: mix(a.w, b.w), s: ss, curv: mix(a.curv, b.curv)
   };
-}
-
-function makeSeamless(img) {
-  const w = img.naturalWidth, h = img.naturalHeight;
-  const base = document.createElement("canvas");
-  base.width = w; base.height = h;
-  const b = base.getContext("2d");
-  const ox = (w / 2) | 0, oy = (h / 2) | 0;
-  b.drawImage(img, ox, oy, w - ox, h - oy, 0, 0, w - ox, h - oy);
-  b.drawImage(img, 0, oy, ox, h - oy, w - ox, 0, ox, h - oy);
-  b.drawImage(img, ox, 0, w - ox, oy, 0, h - oy, w - ox, oy);
-  b.drawImage(img, 0, 0, ox, oy, w - ox, h - oy, ox, oy);
-  const over = document.createElement("canvas");
-  over.width = w; over.height = h;
-  const o = over.getContext("2d");
-  o.drawImage(img, 0, 0);
-  const id = o.getImageData(0, 0, w, h);
-  const d = id.data;
-  const margin = 0.26;
-  for (let y = 0; y < h; y++) {
-    const vy = Math.min(y / (h * margin), (h - 1 - y) / (h * margin), 1);
-    for (let x = 0; x < w; x++) {
-      const vx = Math.min(x / (w * margin), (w - 1 - x) / (w * margin), 1);
-      let a = Math.min(vx, vy);
-      a = a * a * (3 - 2 * a);
-      d[(y * w + x) * 4 + 3] = (a * 255) | 0;
-    }
-  }
-  o.putImageData(id, 0, 0);
-  b.drawImage(over, 0, 0);
-  return base;
-}
-
-function keyMagenta(img) {
-  const w = img.naturalWidth, h = img.naturalHeight;
-  const c = document.createElement("canvas");
-  c.width = w; c.height = h;
-  const g = c.getContext("2d");
-  g.drawImage(img, 0, 0);
-  const id = g.getImageData(0, 0, w, h);
-  const d = id.data;
-  let minX = w, minY = h, maxX = 0, maxY = 0;
-  for (let y = 0; y < h; y++) {
-    for (let x = 0; x < w; x++) {
-      const i = (y * w + x) * 4;
-      const r = d[i], gv = d[i + 1], b = d[i + 2];
-      const mag = Math.min(r, b) - gv;
-      if (mag > 30 && r > 120 && b > 90) {
-        const k = Math.min(1, (mag - 30) / 90);
-        d[i + 3] = ((1 - k) * 255) | 0;
-        d[i] = (r * (1 - k * 0.65)) | 0;
-        d[i + 2] = (b * (1 - k * 0.65)) | 0;
-      }
-      if (d[i + 3] > 24) {
-        if (x < minX) minX = x;
-        if (y < minY) minY = y;
-        if (x > maxX) maxX = x;
-        if (y > maxY) maxY = y;
-      }
-    }
-  }
-  g.putImageData(id, 0, 0);
-  const pad = 4;
-  minX = Math.max(0, minX - pad); minY = Math.max(0, minY - pad);
-  maxX = Math.min(w - 1, maxX + pad); maxY = Math.min(h - 1, maxY + pad);
-  const out = document.createElement("canvas");
-  out.width = Math.max(1, maxX - minX); out.height = Math.max(1, maxY - minY);
-  out.getContext("2d").drawImage(c, minX, minY, out.width, out.height, 0, 0, out.width, out.height);
-  return out;
 }
 
 function tintSprite(src, rgba) {
@@ -235,7 +197,7 @@ function camFrom(car, W, H, opts) {
   };
 }
 
-function overviewCam(W, H) {
+function sceneOverview(W, H) {
   let minX = 1e9, maxX = -1e9, minY = 1e9, maxY = -1e9;
   for (const p of T.pts) { minX = Math.min(minX, p.x); maxX = Math.max(maxX, p.x); minY = Math.min(minY, p.y); maxY = Math.max(maxY, p.y); }
   const pad = 46;
@@ -246,10 +208,6 @@ function overviewCam(W, H) {
     cx: W / 2, cy: H / 2 + 10,
     scale, pitch: 0.82, lift: scale * 0.42, roll: 0, W, H
   };
-}
-
-function edge(cam, p, side, dist, h = 0) {
-  return project(cam, p.x + p.nx * side * dist, p.y + p.ny * side * dist, h);
 }
 
 function quad(ctx, a, b, c, d) {
@@ -292,21 +250,16 @@ function traceRibbonWorld(ctx, half) {
 function fillGround(ctx, cam, canvas, meters) {
   const reach = Math.hypot(cam.W, cam.H) / Math.max(0.01, cam.scale) + 90;
   ctx.save();
-  ctx.setTransform(worldMatrix(cam));
+  ctx.setTransform(BASE.multiply(worldMatrix(cam)));
   const pat = canvas && scaledPattern(ctx, canvas, meters, 0);
   ctx.fillStyle = pat || "#3d6b34";
   ctx.fillRect(cam.ox - reach, cam.oy - reach, reach * 2, reach * 2);
-  if (canvas) {
-    ctx.globalAlpha = 0.5;
-    ctx.fillStyle = scaledPattern(ctx, canvas, meters * 1.41, 67);
-    ctx.fillRect(cam.ox - reach, cam.oy - reach, reach * 2, reach * 2);
-  }
   ctx.restore();
 }
 
 function fillRibbonWorld(ctx, cam, canvas, meters, half, tint) {
   ctx.save();
-  ctx.setTransform(worldMatrix(cam));
+  ctx.setTransform(BASE.multiply(worldMatrix(cam)));
   const pat = canvas && scaledPattern(ctx, canvas, meters);
   ctx.fillStyle = pat || (meters < 5 ? "#9a7848" : "#2a2c30");
   traceRibbonWorld(ctx, half);
@@ -318,27 +271,6 @@ function fillRibbonWorld(ctx, cam, canvas, meters, half, tint) {
   ctx.restore();
 }
 
-const WX_PRESET = {
-  dry:    { wet: 0,    rain: 0,    cloud: 0.05 },
-  damp:   { wet: 0.28, rain: 0.28, cloud: 0.40 },
-  wet:    { wet: 0.70, rain: 0.06, cloud: 0.50 },
-  rain:   { wet: 0.62, rain: 1,    cloud: 0.80 },
-  drying: { wet: 0.36, rain: 0,    cloud: 0.18 }
-};
-function applyWeather(key) {
-  const p = WX_PRESET[key] || WX_PRESET.dry;
-  WX = Object.assign({ key: WX_PRESET[key] ? key : "dry" }, p);
-}
-function weatherLabel() {
-  const x = WX.wet / 0.7;
-  const pct = Math.round(Math.min(1, Math.max(0, x)) * 100);
-  const air = "22°C";
-  if (WX.key === "rain") return "RAIN  " + pct + "%   " + air;
-  if (WX.key === "drying") return "DRYING  " + pct + "%   " + air;
-  if (x < 0.02) return "DRY   " + air;
-  if (x < 0.5) return "DAMP  " + pct + "%   " + air;
-  return "WET  " + pct + "%   " + air;
-}
 function sunK() { return (TOD === "night" ? 0.2 : 1) * (1 - WX.cloud * 0.62); }
 
 function castShadow(ctx, cam, x, y, rx, ry, ang) {
@@ -376,7 +308,7 @@ function outsideOf(p) {
 function fillOutsideBand(ctx, cam, minCurv, innerOf, outerOf, style) {
   const pts = T.pts, n = pts.length;
   ctx.save();
-  ctx.setTransform(worldMatrix(cam));
+  ctx.setTransform(BASE.multiply(worldMatrix(cam)));
   ctx.beginPath();
   for (let i = 0; i < n; i++) {
     const a = pts[i], b = pts[(i + 1) % n];
@@ -654,7 +586,7 @@ function drawHeadlights(ctx, cam, car) {
 
 function drawWorld(ctx, cam, opts) {
   const W = cam.W, H = cam.H;
-  ctx.setTransform(1, 0, 0, 1, 0, 0);
+  ctx.setTransform(BASE);
   fillGround(ctx, cam, TEX.grass, 7.5);
   if (WX.wet > 0.02 || WX.cloud > 0.15) {
     ctx.fillStyle = `rgba(16, 28, 22, ${WX.cloud * 0.16 + WX.wet * 0.18})`;
@@ -732,7 +664,6 @@ function drawWorld(ctx, cam, opts) {
 
   drawWetRoad(ctx, cam);
   drawStart(ctx, cam);
-  if (opts.line) drawRacingLine(ctx, cam);
   drawDressing(ctx, cam);
   drawSplashes(ctx, cam);
   if (TOD === "night") {
@@ -770,10 +701,10 @@ function drawWorld(ctx, cam, opts) {
 function drawWetRoad(ctx, cam) {
   if (WX.wet < 0.02) return;
   ctx.save();
-  ctx.setTransform(worldMatrix(cam));
+  ctx.setTransform(BASE.multiply(worldMatrix(cam)));
   traceRibbonWorld(ctx, p => p.w / 2 - 0.2);
   ctx.clip();
-  ctx.setTransform(1, 0, 0, 1, 0, 0);
+  ctx.setTransform(BASE);
   ctx.fillStyle = `rgba(10, 20, 34, ${0.1 + WX.wet * 0.45})`;
   ctx.fillRect(0, 0, cam.W, cam.H);
   ctx.globalCompositeOperation = "screen";
@@ -834,7 +765,6 @@ function drawVolumetric(ctx, cam) {
   let dx = ground.sx - sun.sx, dy = ground.sy - sun.sy;
   const mag = Math.hypot(dx, dy) || 1;
   dx /= mag; dy /= mag;
-  const px = -dy, py = dx;
 
   ctx.save();
   ctx.globalCompositeOperation = "screen";
@@ -849,38 +779,6 @@ function drawVolumetric(ctx, cam) {
     ctx.ellipse(q.sx, q.sy, rad, rad * 0.5, 0, 0, Math.PI * 2);
     ctx.fill();
   }
-
-  ctx.save();
-  ctx.beginPath();
-  ctx.rect(0, 0, cam.W, cam.H);
-  for (const t of OCCLUDERS) {
-    const top = project(cam, t.x, t.y, t.h * 0.55);
-    const r = t.r * cam.scale * 1.15;
-    const rad = r * (1.7 + t.shade * 0.7) * 0.46;
-    ctx.moveTo(top.sx + rad, top.sy);
-    ctx.arc(top.sx, top.sy, rad, 0, Math.PI * 2);
-  }
-  ctx.clip("evenodd");
-  ctx.filter = "blur(16px)";
-  ctx.lineCap = "round";
-  const beams = 6;
-  for (let i = 0; i < beams; i++) {
-    const across = (i - (beams - 1) / 2) * cam.W * 0.2;
-    const wobble = (hash(i + 8) - 0.5) * 80;
-    const x0 = sun.sx + px * across + wobble * px;
-    const y0 = sun.sy + py * across + wobble * py;
-    const reach = Math.hypot(cam.W, cam.H) * 1.15;
-    const x1 = x0 + dx * reach;
-    const y1 = y0 + dy * reach;
-    const a = scatter * (0.1 + hash(i + 3) * 0.08);
-    ctx.strokeStyle = `rgba(255, 206, 150, ${a})`;
-    ctx.lineWidth = 34 + hash(i + 6) * 48;
-    ctx.beginPath();
-    ctx.moveTo(x0, y0);
-    ctx.lineTo(x1, y1);
-    ctx.stroke();
-  }
-  ctx.restore();
 
   const wash = ctx.createLinearGradient(sun.sx, sun.sy, ground.sx + dx * cam.W, ground.sy + dy * cam.H);
   wash.addColorStop(0, `rgba(255, 220, 176, ${scatter * 0.22})`);
@@ -1005,21 +903,6 @@ function drawStart(ctx, cam) {
     ctx.fillStyle = c % 2 ? "#f4f4f2" : "#17171b";
     quad(ctx, at(a, u0), at(b, u0), at(b, u1), at(a, u1));
   }
-}
-
-function drawRacingLine(ctx, cam) {
-  ctx.beginPath();
-  const n = T.pts.length;
-  for (let i = 0; i <= n; i++) {
-    const p = T.pts[i % n];
-    const off = Math.max(-1, Math.min(1, p.curv * 18)) * p.w * 0.28;
-    const q = project(cam, p.x + p.nx * off, p.y + p.ny * off);
-    if (i === 0) ctx.moveTo(q.sx, q.sy); else ctx.lineTo(q.sx, q.sy);
-  }
-  ctx.strokeStyle = "rgba(255,214,80,0.55)";
-  ctx.lineWidth = Math.max(1.5, 0.22 * cam.scale);
-  ctx.lineJoin = "round";
-  ctx.stroke();
 }
 
 function drawDressing(ctx, cam) {
@@ -1310,84 +1193,6 @@ function drawCar(ctx, cam, car) {
   ctx.restore();
 }
 
-function carOn(s, lat, extra) {
-  const p = sampleAt(T, s);
-  const off = Math.max(-1, Math.min(1, p.curv * 18)) * p.w * 0.22 + lat;
-  return Object.assign({
-    x: p.x + p.nx * off, y: p.y + p.ny * off, hd: p.hd, s: p.s, curv: p.curv
-  }, extra);
-}
-
-function hud(ctx, W, mode) {
-  ctx.fillStyle = "#12121c";
-  ctx.fillRect(0, 0, W, 46);
-  ctx.fillStyle = "#ffcc00";
-  ctx.font = '15px "Press Start 2P", monospace';
-  ctx.textAlign = "left";
-  ctx.fillText(mode.title, 16, 29);
-  ctx.fillStyle = "#00cc66";
-  ctx.textAlign = "right";
-  ctx.fillText(mode.time, W - 16, 29);
-  ctx.textAlign = "left";
-  if (mode.sub) {
-    ctx.fillStyle = "rgba(8,8,14,0.78)";
-    ctx.fillRect(12, 58, mode.subW || 280, 22);
-    ctx.fillStyle = "#d5d7e2";
-    ctx.font = '11px "Press Start 2P", monospace';
-    ctx.fillText(mode.sub, 20, 74);
-  }
-}
-
-function drawToday(ctx, W, H) {
-  ctx.fillStyle = "#101018";
-  ctx.fillRect(0, 0, W, H);
-  const car = carOn(T.length * 0.37, 0, { col: "#ff4466", brk: true });
-  const cam = camFrom(car, W, H, { look: 18, scale: 11.5, pitch: 1, lift: 0, cy: 0.58 });
-  cam.lift = 0;
-  const pts = T.pts, n = pts.length;
-  ctx.lineCap = "round"; ctx.lineJoin = "round";
-  ctx.strokeStyle = "#23232f";
-  ctx.lineWidth = 10 * cam.scale;
-  ctx.beginPath();
-  for (let i = 0; i <= n; i++) {
-    const q = project(cam, pts[i % n].x, pts[i % n].y);
-    if (i === 0) ctx.moveTo(q.sx, q.sy); else ctx.lineTo(q.sx, q.sy);
-  }
-  ctx.stroke();
-  ctx.setLineDash([5, 7]);
-  ctx.strokeStyle = "#34344a";
-  ctx.lineWidth = 1.5;
-  ctx.stroke();
-  ctx.setLineDash([]);
-  ctx.lineWidth = 5;
-  ctx.beginPath();
-  for (let i = 0; i <= n; i++) {
-    const p = pts[i % n];
-    const off = Math.max(-1, Math.min(1, p.curv * 18)) * p.w * 0.28;
-    const q = project(cam, p.x + p.nx * off, p.y + p.ny * off);
-    const col = Math.abs(p.curv) > 0.04 ? "#ffcc00" : (p.curv < -0.01 ? "#ff5555" : "#55dd66");
-    if (i) { ctx.strokeStyle = col; ctx.lineTo(q.sx, q.sy); ctx.stroke(); ctx.beginPath(); }
-    ctx.moveTo(q.sx, q.sy);
-  }
-  // pixel car
-  const q = project(cam, car.x, car.y);
-  ctx.save();
-  ctx.translate(q.sx, q.sy);
-  ctx.rotate(Math.atan2(project(cam, car.x + Math.cos(car.hd), car.y + Math.sin(car.hd)).sy - q.sy, project(cam, car.x + Math.cos(car.hd), car.y + Math.sin(car.hd)).sx - q.sx));
-  ctx.fillStyle = "rgba(255,60,70,0.35)";
-  ctx.fillRect(-16, -12, 32, 24);
-  ctx.fillStyle = "#111";
-  ctx.fillRect(-15, -8, 6, 5); ctx.fillRect(6, -8, 6, 5); ctx.fillRect(-15, 3, 6, 5); ctx.fillRect(6, 3, 6, 5);
-  ctx.fillStyle = "#ff4466";
-  ctx.fillRect(-14, -6, 26, 12);
-  ctx.fillStyle = "#1a2a3a";
-  ctx.fillRect(-2, -4, 6, 8);
-  ctx.fillStyle = "#fff2a8";
-  ctx.fillRect(10, -5, 3, 3); ctx.fillRect(10, 2, 3, 3);
-  ctx.restore();
-  hud(ctx, W, { title: "TEST TRACK  •  ASHDOWN PARK", time: "1:18.42", sub: "TODAY   FLAT MAP", subW: 250 });
-}
-
 function chaseCam(car, W, H, scale, carFrac) {
   const pitch = 0.78;
   const cyFrac = 0.46;
@@ -1396,24 +1201,6 @@ function chaseCam(car, W, H, scale, carFrac) {
   const lean = Math.max(-0.07, Math.min(0.07, -(car.curv || 0) * 1.35));
   cam.roll = lean;
   return cam;
-}
-
-function drawSpeedBlur(ctx, cv) {
-  const W = cv.width, H = cv.height;
-  const layer = document.createElement("canvas");
-  layer.width = W; layer.height = H;
-  const g = layer.getContext("2d");
-  g.filter = "blur(7px)";
-  g.drawImage(cv, 0, -12);
-  g.filter = "none";
-  g.globalCompositeOperation = "destination-in";
-  const rad = g.createRadialGradient(W * 0.5, H * 0.66, H * 0.1, W * 0.5, H * 0.5, H * 0.74);
-  rad.addColorStop(0, "rgba(0,0,0,0)");
-  rad.addColorStop(0.5, "rgba(0,0,0,0.2)");
-  rad.addColorStop(1, "rgba(0,0,0,0.8)");
-  g.fillStyle = rad;
-  g.fillRect(0, 0, W, H);
-  ctx.drawImage(layer, 0, 0);
 }
 
 function sceneLoadTex() {
@@ -1438,5 +1225,5 @@ function sceneLoadTex() {
   }).catch(() => {});
 }
 sceneLoadTex();
-function sceneTexReady() { return !!(TEX.grass && TEX.trees && TEX.trees.length); }
-
+return { sceneBind, sceneWeather, sceneChase, sceneOverview, scenePan, sceneProject, scenePaint };
+})();

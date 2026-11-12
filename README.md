@@ -224,7 +224,7 @@ assist map over speed and pedal), regeneration, load-point shifting, electric-dr
   named because the detector can't be reliably aligned with the circuit's real corner names) — plus
   **22 real circuits** (Spa, Suzuka, Silverstone, Monza, Brands Hatch and the rest; see *Real
   circuits* below) with measured width and terrain-model elevation. You get a **lap time**, three **sector splits**, average / slowest / fastest speeds
-  and the number of gear changes, plus a top-down pixel map — the track drawn to its real, **varying**
+  and the number of gear changes, plus a view of the lap from above and behind the car — the track drawn to its real, **varying**
   width,
   with an **optimised racing line** through it **coloured by what is limiting the car** — power, traction, cornering grip or braking — and a legend totalling
   how much of the lap each accounts for.
@@ -237,7 +237,7 @@ assist map over speed and pedal), regeneration, load-point shifting, electric-dr
   the **weather** (dry, damp, wet, rain later, drying) and air temperature, tyre warmers and a seed,
   and give **each car its own plan**: automatic stops or a set number, push / normal / fuel save, the
   tyres it starts on, and whether it changes them for rain. RACE opens as **a page of its own**
-  filling the window (◀ SIM goes back, ⛶ goes properly full screen): every car on the map, a
+  filling the window (◀ SIM goes back, ⛶ goes properly full screen): the camera behind the leader (or the car you pick in the tower), a
   **timing tower** (gap to the leader, last and best lap with the race's fastest in purple, tyres,
   stops), and per-car telemetry with **four tyre temperatures and wear**, **fuel in the tank** and
   laps it is good for, and **front and rear brake temperature with fade**. Play it at 1–100×,

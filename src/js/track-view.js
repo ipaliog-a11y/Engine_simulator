@@ -47,7 +47,6 @@ function bindTrackZoom(){
       if(pinch.d>1)trackZoomAt((a.x+b.x)/2,(a.y+b.y)/2,d/pinch.d);
       pinch.d=d;
     }else if(last&&trackView.z>1.0001){
-      if(vizMode==='race')raceUI.follow=-1;   // a drag takes the camera back from the car it was following
       trackView.x+=p.x-last.x;trackView.y+=p.y-last.y;last=p;
     }
   });
@@ -238,27 +237,6 @@ function drawAnalogHud(L,st,W,y0){
   drawSteerWheel(x0+150,ys+16,15,sw.wheel);
   drawBrakeCells(L,st,x0,y0+h-22);
 }
-// The circuit fitted to the canvas, then the view's zoom and pan (shared by TRACK and RACE).
-// ZOOM AND PAN. The fitted map is the base view; the view transform scales it about the map centre and
-// shifts it, so zoom = 1 and pan = 0 is exactly the fitted drawing. Line widths that are drawn to scale
-// (the track ribbon) grow with the zoom, which is the point: zoomed in you can see the racing line using
-// the width of a hairpin.
-function trackMapView(T,W,H,topBar,botBar,Wm){
-  const pad=40;
-  const sx=(Wm-pad*2)/(T.maxX-T.minX),sy=(H-topBar-botBar-pad)/(T.maxY-T.minY);
-  const sc=Math.min(sx,sy);
-  const ox=pad+((Wm-pad*2)-(T.maxX-T.minX)*sc)/2, oy=topBar+((H-topBar-botBar-pad)-(T.maxY-T.minY)*sc)/2;
-  if(trackView.key!==T.label){trackView.key=T.label;trackView.z=1;trackView.x=0;trackView.y=0;}
-  const z=trackView.z, mcx=W/2, mcy=(topBar+H-botBar)/2;
-  trackView.mcx=mcx;trackView.mcy=mcy;
-  const px=q=>mcx+(ox+(q.x-T.minX)*sc-mcx)*z+trackView.x, py=q=>mcy+(oy+(q.y-T.minY)*sc-mcy)*z+trackView.y;
-  return {px,py,scV:sc*z,z};
-}
-// Track surface: the full width of the circuit, drawn from the centreline. Width is to scale, so you can
-// see the racing line using it. The centreline, faint, so the racing line's use of the width reads clearly.
-function drawTrackSurface(T, px, py, scV) {
-  drawTrackScene(ctx, T, px, py, scV);
-}
 function drawTrack(){
   const W=vizW,H=vizH;
   ctx.fillStyle=C.bg;ctx.fillRect(0,0,W,H);
@@ -267,25 +245,9 @@ function drawTrack(){
   const L=lapResult;
   ctx.fillText(tr('TEST TRACK')+' • '+(L?L.track.label:''),12,19);
   if(!L){ctx.fillStyle='#778';ctx.font='8px "Press Start 2P"';ctx.fillText(tr('BUILD AN ENGINE FIRST'),12,60);return;}
-  // Lap time sits below the title bar.
-  // Live clock, with the solved lap beside it and the sector splits as they are crossed.
   const live=L.replay?replayAt(L,lapReplay.t):null;
-  ctx.fillStyle=C.green;ctx.font='14px "Press Start 2P"';ctx.fillText(fmtLap(live?lapReplay.t:L.lap),12,50);
-  ctx.font='7px "Press Start 2P"';ctx.fillStyle='#778';
-  let lx0=14+ctx.measureText(fmtLap(L.lap)).width*2;
-  ctx.fillText(live?tr('LAP')+' '+fmtLap(L.lap):tr('LAP TIME'),lx0,50);
-  if(live){
-    const ends=sectorEnds(L);lx0+=ctx.measureText(tr('LAP')+' '+fmtLap(L.lap)).width+16;
-    for(let k=0;k<3;k++){
-      const done=k<live.sector,cur=k===live.sector;
-      ctx.fillStyle=done?C.yellow:cur?'#00ccff':'#556';
-      const txt='S'+(k+1)+' '+(done?L.sectors[k].toFixed(2):cur?(lapReplay.t-(k?ends[k-1]:0)).toFixed(1):'—');
-      ctx.fillText(txt,lx0,50);lx0+=ctx.measureText(txt).width+12;
-    }
-  }
   const T=L.track,topBar=62,botBar=52;
   if(trackView.key!==T.label){trackView.key=T.label;trackView.z=1;trackView.x=0;trackView.y=0;}
-  trackView.mcx=W/2;trackView.mcy=H/2;
   const z=trackView.z||1;
   sceneBind(T);
   sceneWeather('dry',0);
@@ -295,16 +257,21 @@ function drawTrack(){
     for(const p of T._look.pts){const d=(p.x-live.x)*(p.x-live.x)+(p.y-live.y)*(p.y-live.y);if(d<best){best=d;near=p;}}
     car={x:live.x,y:live.y,hd:live.hd,curv:near.curv,col:carLivery(vehicle),brk:live.brk>0.05,pos:1};
   }
-  const cam=car?sceneChase(car,W,H,14*z,0.70):sceneChase({x:(T.minX+T.maxX)/2,y:(T.minY+T.maxY)/2,hd:Math.PI/2,curv:0},W,H,5,0.5);
-  cam.ox+=-(trackView.x||0)/cam.scale;
-  cam.oy+=(trackView.y||0)/(cam.scale*cam.pitch);
-  scenePaint(ctx,cam,{cars:car?[car]:[],lap:L,blur:!!car});
+  // The zoom scales the picture about the car and the pan slides it, both in screen units, so the point
+  // under the cursor stays put (trackZoomAt). With no car to sit behind, the whole circuit is shown.
+  const frac=0.70;
+  trackView.mcx=W/2;trackView.mcy=car?H*frac:H/2;
+  const cam=car?sceneChase(car,W,H,14*z,frac):sceneOverview(W,H);
+  if(!car)cam.scale*=z;
+  scenePan(cam,trackView.x||0,trackView.y||0);
+  scenePaint(ctx,cam,{cars:car?[car]:[],lap:L});
+  ctx.fillStyle='rgba(13,13,24,0.72)';ctx.fillRect(0,28,W,30);ctx.fillRect(0,H-botBar-6,W,botBar+6);   // the text keeps a dark ground
   drawPixelRect(0,0,W,28,'#12121c');
   ctx.fillStyle=C.yellow;ctx.font='10px "Press Start 2P"';
   ctx.fillText(tr('TEST TRACK')+' • '+L.track.label,12,19);
   ctx.fillStyle=C.green;ctx.font='14px "Press Start 2P"';ctx.fillText(fmtLap(live?lapReplay.t:L.lap),12,50);
   ctx.font='7px "Press Start 2P"';ctx.fillStyle='#778';
-  lx0=14+ctx.measureText(fmtLap(L.lap)).width*2;
+  let lx0=14+ctx.measureText(fmtLap(L.lap)).width*2;
   ctx.fillText(live?tr('LAP')+' '+fmtLap(L.lap):tr('LAP TIME'),lx0,50);
   if(live){
     const ends=sectorEnds(L);lx0+=ctx.measureText(tr('LAP')+' '+fmtLap(L.lap)).width+16;

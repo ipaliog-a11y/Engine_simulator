@@ -220,7 +220,7 @@ function renderRacePanel(force){
   document.getElementById('raceTower').innerHTML='<table class="race-tower"><thead><tr><th>P</th><th>'+tr('CAR')+'</th><th>'+tr('GAP')+'</th><th>'+tr('LAST')+'</th><th>'+tr('BEST')+'</th><th>'+tr('TYRE')+'</th><th>'+tr('PIT')+'</th></tr></thead><tbody>'+S.map(row).join('')+'</tbody></table>';
   document.querySelectorAll('#raceTower tr[data-car]').forEach(tr_=>tr_.addEventListener('click',()=>{
     const id=+tr_.dataset.car;raceUI.follow=raceUI.follow===id?-1:id;
-    if(raceUI.follow<0)trackViewReset();else trackView.z=Math.max(trackView.z,3);   // the camera goes in close on the car
+    trackViewReset();   // the camera goes behind that car, closer than it sits on the pack
     renderRacePanel(true);}));
   // telemetry: every car, in race order
   const tyre=(T,W,th,lbl)=>'<div class="rt-t" style="border-color:'+raceTyreColour(T,th)+'"><b style="color:'+raceTyreColour(T,th)+'">'+Math.round(T)+'°</b><span>'+lbl+' '+Math.round(W*100)+'%</span></div>';
@@ -284,7 +284,6 @@ function drawRace(){
   const lapNow=Math.min(R.cfg.laps,Math.max(1,S[0].laps.length+(S[0].fin?0:1)));
   const T=buildTrack(R.cfg.track);
   if(trackView.key!==T.label){trackView.key=T.label;trackView.z=1;trackView.x=0;trackView.y=0;}
-  trackView.mcx=W/2;trackView.mcy=H/2;
   sceneBind(T);
   sceneWeather(R.cfg.weather,S[0].s.wet);
   const pitN=[],cars=[];
@@ -302,11 +301,14 @@ function drawRace(){
     cars.push(car);
     if(raceUI.follow===x.c.id||(raceUI.follow<0&&!focus))focus=car;
   }
-  const z=trackView.z||1,pack=raceUI.follow<0;
-  const cam=focus?sceneChase(focus,W,H,(pack?9.2:14)*z,pack?0.56:0.68):sceneChase({x:(T.minX+T.maxX)/2,y:(T.minY+T.maxY)/2,hd:Math.PI/2,curv:0},W,H,5,0.5);
-  cam.ox+=-(trackView.x||0)/cam.scale;
-  cam.oy+=(trackView.y||0)/(cam.scale*cam.pitch);
-  scenePaint(ctx,cam,{cars,blur:true});
+  // the same zoom and pan as the TRACK view: about the car the camera sits behind, in screen units
+  const z=trackView.z||1,pack=raceUI.follow<0,frac=pack?0.56:0.68;
+  trackView.mcx=W/2;trackView.mcy=focus?H*frac:H/2;
+  const cam=focus?sceneChase(focus,W,H,(pack?9.2:14)*z,frac):sceneOverview(W,H);
+  if(!focus)cam.scale*=z;
+  scenePan(cam,trackView.x||0,trackView.y||0);
+  scenePaint(ctx,cam,{cars});
+  ctx.fillStyle='rgba(13,13,24,0.72)';ctx.fillRect(0,28,W,topBar-28+2);
   drawPixelRect(0,0,W,28,'#12121c');
   ctx.fillStyle=C.yellow;ctx.font='10px "Press Start 2P"';
   ctx.textAlign='left';
