@@ -20,7 +20,7 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 Working toward **v1.0 — every number derived, not fitted.**
 
-### The race and the hotlap use the chase view (build 266)
+### The race and the hotlap use the chase view (build 269)
 
 TRACK and RACE showed the whole circuit as a flat ribbon. They now look down the road the way the draft did: a pitched camera behind the car, with the ground, the walls and the weather painted on. The lap and the race are the same numbers as before.
 
@@ -30,7 +30,43 @@ TRACK and RACE showed the whole circuit as a flat ribbon. They now look down the
 - Wet, damp, rain and a drying line follow the race weather. Rain, spray and a darker road come with them. A dry hotlap stays dry.
 - Left open: there is no night. The textures are baked into the page so it still opens from a file and a saved picture is not blocked.
 
-### The engine can stall, stop and be started (build 265)
+### A tyre's cornering stiffness falls as it is loaded harder (build 267)
+
+Build 266 gave each compound one cornering stiffness per unit load, whatever the load. A real tyre's falls as the
+load rises, which is how load moved across an axle (by a bar, a spring, a high centre of gravity) changes a car's
+balance below the limit.
+
+- **The curve is the measured road tyre's own** (the 205/60R15 Magic Formula file of build 266, its PKY2 2.03):
+  against its value at the reference load, the stiffness per unit load is 1.12 at two thirds of that load and 0.87
+  at four thirds. Milliken's race tyre (RCVD fig. 2.9), with its middle load taken as the reference, gives 1.09 and
+  0.80.
+- **The stepped car** uses it per wheel. **The lap's cornering drag** uses it at the mean wheel load.
+- **What moved:** laps −0.37% to +0.26%, mean −0.03% (BMW M3 E46 74.94 to 74.97 s); race fuel per lap −0.45 to
+  +0.20%. Nothing else. Not checked against published lap times (paused).
+- **Left open:** the reference load is taken as 60% of the tyre's rated load, where a Magic Formula file's nominal
+  load is usually near two thirds (the file's own was not confirmed). The lap ignores the load moved across an
+  axle when it prices cornering drag. `TYRE_CC` stays in the register for the unsourced sport, semi-slick and drag
+  values. Next for the stepped car: the road's height, then a driver that countersteers.
+
+### A tyre's cornering stiffness comes from its compound, from measured tyres (build 266)
+
+Every tyre had one cornering stiffness, 0.2 of its load per degree of slip (a textbook's round figure). The stepped
+car's tyre therefore gave its most grip only at about 14 degrees of slip, and build 264's driver found the car soft
+at the limit.
+
+- **Road tyres (eco, street): 0.28 per degree,** from a measured 205/60R15 91V at 2.2 bar (its Magic Formula 5.2
+  file). Its side force now peaks near 10 degrees; production tyres peak at 6 to 10.
+- **Race slick: 0.54,** from Milliken's measured race tyre (RCVD fig. 2.9: peak 1.08 of the load at 6.0 degrees).
+- **Sport 0.32 and semi-slick 0.42 are not sourced:** set between the two measured tyres by grip. The drag radial
+  stays at 0.2. These are a new entry in the register, `TYRE_CC` (27 open, was 26).
+- **What moved:** only lap times, through cornering drag, which a stiffer tyre has less of. Laps −1.14% to +0.12%,
+  mean −0.35% (BMW M3 E46 75.20 to 74.94 s); race fuel per lap −1.3 to −2.3%. Power, acceleration and top speed
+  are unchanged. Not checked against published lap times (real-car checks are paused).
+- **Left open:** the stiffness per unit load falls as the load rises (the race tyre: 0.59, 0.54, 0.43 at 900, 1350,
+  1800 lbf), and the model holds one number per tyre. The road-tyre file's nominal load was not confirmed (the page
+  refused the download; the two coefficients came from a search extract: probable). The guide's Greek for the
+  cornering-drag line is not updated (Greek is paused). Next for the stepped car: the road's height, then a driver
+  that countersteers.
 
 ### The engine can stall, stop and be started (build 265)
 

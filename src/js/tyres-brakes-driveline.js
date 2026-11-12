@@ -30,6 +30,7 @@ const SPEED_RATING={
 // ================================================================================================
 // Tyre compound: mu = peak grip coefficient (dry), crr = rolling resistance at 80 km/h, cost,
 // rating = the speed rating such a tyre is typically sold in (an editable default, not a law).
+// cc = the cornering stiffness per unit load, per degree (sources at corneringDrag, below).
 // mu is the tyre on road asphalt at its reference load (tyreMu), the surface skidpads and brake tests
 // are run on. Build 111: the sport, street, semi and slick values had been set nearer test-rig figures
 // (abrasive belt surfaces grip ~15% harder than asphalt), so with build 109's load model the sport-tyre
@@ -45,12 +46,12 @@ const SPEED_RATING={
 // wet track: a treaded road tyre clears water and keeps ~70%, a semi-slick about half, a slick, with no
 // grooves at all, little over a third (it aquaplanes). Fitted to the usual wet-braking and wet-skidpad gaps.
 const TIRE_TYPE={
-  eco:     {label:'ECO/TOURING', mu:0.90,crr:0.010,cost:400, rating:'H', tOpt:55, tWin:40,wear:0.55,wetKeep:0.72},
-  street:  {label:'STREET',      mu:0.95,crr:0.012,cost:600, rating:'V', tOpt:65, tWin:36,wear:0.75,wetKeep:0.70},
-  sport:   {label:'SPORT',       mu:1.00,crr:0.013,cost:1000,rating:'Y', tOpt:78, tWin:32,wear:1.00,wetKeep:0.66},
-  semi:    {label:'SEMI-SLICK',  mu:1.13,crr:0.014,cost:1600,rating:'YY',tOpt:88, tWin:26,wear:1.45,wetKeep:0.52},
-  slick:   {label:'RACE SLICK',  mu:1.30,crr:0.016,cost:2400,rating:'YY',tOpt:98, tWin:22,wear:2.00,wetKeep:0.36},
-  drag:    {label:'DRAG RADIAL', mu:1.70,crr:0.018,cost:2000,rating:'T', tOpt:70, tWin:22,wear:4.00,wetKeep:0.30}
+  eco:     {label:'ECO/TOURING', mu:0.90,cc:0.28,crr:0.010,cost:400, rating:'H', tOpt:55, tWin:40,wear:0.55,wetKeep:0.72},
+  street:  {label:'STREET',      mu:0.95,cc:0.28,crr:0.012,cost:600, rating:'V', tOpt:65, tWin:36,wear:0.75,wetKeep:0.70},
+  sport:   {label:'SPORT',       mu:1.00,cc:0.32,crr:0.013,cost:1000,rating:'Y', tOpt:78, tWin:32,wear:1.00,wetKeep:0.66},
+  semi:    {label:'SEMI-SLICK',  mu:1.13,cc:0.42,crr:0.014,cost:1600,rating:'YY',tOpt:88, tWin:26,wear:1.45,wetKeep:0.52},
+  slick:   {label:'RACE SLICK',  mu:1.30,cc:0.54,crr:0.016,cost:2400,rating:'YY',tOpt:98, tWin:22,wear:2.00,wetKeep:0.36},
+  drag:    {label:'DRAG RADIAL', mu:1.70,cc:0.20,crr:0.018,cost:2000,rating:'T', tOpt:70, tWin:22,wear:4.00,wetKeep:0.30}
 };
 // Aero elements — each adds a downforce coefficient (Cl·A, m²) and a drag penalty (ΔCd). The
 // floor/diffuser is the efficient one (lots of downforce, little drag). Scaled by chassis.aero.
@@ -462,11 +463,29 @@ function tyreSlipMuD(s){const x=clamp(s,-3,3),u=TYRE_SLIP_B*x;
 // the travel by that angle. Below the limit the side force is the cornering stiffness times the angle,
 // Fy = CC Fz alpha, so the drag is Fy alpha = Fy^2 / (CC Fz), and summed over four tyres each carrying
 // its share of the load, (m ay)^2 / (CC N). CC is the cornering coefficient, cornering stiffness per unit
-// load: about 0.2 per degree for a radial tyre (Gillespie, Fundamentals of Vehicle Dynamics, ch. 10).
-// Taken as linear right up to the limit, where a real tyre's slip angle runs further, so this is the
+// load, per compound (TIRE_TYPE.cc, per degree; build 266):
+//   eco, street  0.28  a measured 205/60R15 91V road tyre at 2.2 bar, from its Magic Formula 5.2 file (PKY1 -20.505,
+//                      PKY2 2.0284: K/Fz = PKY1 sin(2 atan(1/PKY2)) = 16.3/rad at its nominal load). Gillespie's
+//                      round figure for a radial (ch. 10), used for every tyre until build 266, was 0.2.
+//   slick        0.54  a race tyre, Milliken & Milliken, RCVD fig. 2.9: the side force peaks at 1.08 of the load at
+//                      6.0 deg (1350 lbf). The brush model slides fully at tan(alpha) = 3 mu / CC, so CC = 30.8/rad.
+//                      The same relation on the road tyre above gives its peak near 10 deg (production tyres: 6-10).
+//   sport, semi  0.32, 0.42  NOT SOURCED: between the two measured tyres by the compound's grip (register: TYRE_CC).
+//   drag         0.20  NOT SOURCED: a soft-walled tyre, left at Gillespie's figure.
+// The stiffness per unit load falls as the load rises (build 267). The Magic Formula's own form for it is
+// K = K0 sin(2 atan(Fz / (PKY2 Fz0))), which per unit load and against its value at the nominal load is
+// (P^2 + 1) / (P^2 + x^2), x = Fz / Fz0, with P = PKY2 = 2.0284 from the road tyre's file above. The nominal
+// load is taken as the tyre's reference load (FzRef, 60% of its rated load; a Magic Formula file's is usually
+// near two thirds: probable). Against the race tyre of RCVD fig. 2.9, with its middle load taken as nominal:
+// 1.12 and 0.87 at 2/3 and 4/3 of it, where the measured peaks give 1.09 and 0.80.
+const TYRE_CC_P2=2.0284*2.0284;
+const tyreCCLoad=x=>(TYRE_CC_P2+1)/(TYRE_CC_P2+x*x);
+// For the lap, each tyre is taken at the mean wheel load N/4. Load moved across an axle lowers the pair's
+// stiffness further, so with the line below this is still the least the drag can be.
+// The drag is taken as linear right up to the limit, where a real tyre's slip angle runs further, so this is the
 // least it can cost.
-const TYRE_CC=0.2*180/Math.PI;   // per radian
-function corneringDrag(m,ay,N){return m*m*ay*ay/(Math.max(1,N)*TYRE_CC);}
+const tyreCC=type=>((TIRE_TYPE[type]||TIRE_TYPE.sport).cc||0.2)*180/Math.PI;   // per radian
+function corneringDrag(m,ay,N){const n=Math.max(1,N);return m*m*ay*ay/(n*(vehicle.tyreCC||tyreCC(vehicle.tireType))*tyreCCLoad(n/(4*vehicle.FzRef)));}
 // The car's lateral grip as a share of its normal load N while cornering at ay (m/s2), dn of N being downforce.
 // Build 157: per axle. Each axle has its own normal load (its weight share, and its share of the downforce by the
 // aero balance), its own share of the lateral load transfer m ay h / t (the roll-stiffness distribution, set by the
