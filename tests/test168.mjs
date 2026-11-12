@@ -8,6 +8,8 @@
 //     a front-driver wide; without ABS the wheels lock and the stop is longer;
 //   · the tyre's cornering stiffness is its compound's at the reference load and falls with load as the measured
 //     tyre's does (build 267);
+//   · the road under it counts (build 268): a grade pulls by g sin(theta), a crest lightens the wheels and a dip
+//     loads them by m v2 kv, and past 1 g of crest they carry nothing;
 //   · a car is plain data: through JSON and back it drives to the same place, to the last digit;
 //   · stepCar reads only its arguments: nothing of the page or of this app's globals;
 //   · no page errors.
@@ -72,6 +74,11 @@ const R = await page.evaluate(() => {
       for (let i = 0; i < 800; i++) stepCar(c, s, { throttle: 1, steer: i > 400 ? 0.2 : 0 }, 0.01); return [s.x, s.y, s.psi, s.vx, s.rpm]; };
     out.same = JSON.stringify(run(car)) === JSON.stringify(run(copy)); out.fields = Object.values(car).every(v => ['number', 'string', 'boolean'].includes(typeof v) || Array.isArray(v));
     const s = driveState(car), t0 = performance.now(); for (let i = 0; i < 2000; i++) stepCar(car, s, { throttle: 0.5 }, 0.01); out.ms = performance.now() - t0; }
+  // ---- the road under the car (build 268): coasting in neutral on a 5% fall, and the wheel loads over a crest and in a dip
+  { const car = load('Subaru Impreza'), v0 = 30, run = road => { const s = driveState(car); s.vx = v0; s.w = s.w.map(() => v0 / car.r);
+      for (let i = 0; i < 100; i++) stepCar(car, s, { gear: 0, clutch: 1, road }, 0.01); return s; };
+    const flat = run(null), fall = run({ sinT: -0.05 }), crest = run({ kv: -0.5 * 9.81 / (v0 * v0) }), dip = run({ kv: 0.5 * 9.81 / (v0 * v0) }), sum = s => s.Fz.reduce((a, b) => a + b, 0);
+    out.road = { want: 9.81 * 0.05 * car.m / (car.m + 4 * car.Iw / (car.r * car.r)), dA: (fall.vx - flat.vx) / 1.0, crest: sum(crest) / sum(flat), dip: sum(dip) / sum(flat), air: sum(run({ kv: -2 * 9.81 / (v0 * v0) })) / sum(flat) }; }
   // ---- the tyre's stiffness per unit load, at 2/3, 1 and 4/3 of its reference load (build 267)
   { const car = load('Subaru Impreza'), a = 1e-5; out.cc = [2 / 3, 1, 4 / 3].map(x => driveTyre(car, x * car.FzRef, 0, a, false)[1] / (x * car.FzRef * a));
     out.ccCar = car.cc; out.ccType = TIRE_TYPE[vehicle.tireType].cc * 180 / Math.PI; }
@@ -100,6 +107,10 @@ if (!(R.noAbs.d > R.abs.d)) fails.push('the stop without ABS is not longer');
 console.log(`cornering stiffness per unit load at 2/3, 1, 4/3 of the reference load: ${R.cc.map(c => (c * Math.PI / 180).toFixed(3)).join(', ')} /deg (the compound's ${(R.ccType * Math.PI / 180).toFixed(2)})`);
 if (Math.abs(R.cc[1] / R.ccType - 1) > 0.01) fails.push('at its reference load the tyre does not have its compound\'s cornering stiffness');
 if (Math.abs(R.cc[0] / R.cc[1] - 1.122) > 0.01 || Math.abs(R.cc[2] / R.cc[1] - 0.868) > 0.01) fails.push('the stiffness does not fall with load as the measured tyre\'s does (1.12 and 0.87 at 2/3 and 4/3)');
+console.log(`road: a 5% fall adds ${R.road.dA.toFixed(3)} m/s2 coasting (g x 0.05 on the car and its turning wheels: ${R.road.want.toFixed(3)}); wheel loads x${R.road.crest.toFixed(2)} over a half-g crest, x${R.road.dip.toFixed(2)} in a half-g dip, x${R.road.air.toFixed(2)} over a 2 g crest`);
+if (Math.abs(R.road.dA - R.road.want) > 0.01) fails.push('a grade does not pull the coasting car by g sin(theta)');
+if (!(R.road.crest > 0.45 && R.road.crest < 0.6 && R.road.dip > 1.4 && R.road.dip < 1.55)) fails.push('a crest or a dip does not move the wheel loads by m v2 kv');
+if (R.road.air > 0.1) fails.push('past 1 g of crest the car still presses on the road');
 if (!R.same) fails.push('a car through JSON does not drive to the same place');
 if (!R.fields) fails.push('driveCar() holds something that is not plain data');
 for (const [n, src] of Object.entries(R.src)) {
