@@ -47,7 +47,6 @@ function bindTrackZoom(){
       if(pinch.d>1)trackZoomAt((a.x+b.x)/2,(a.y+b.y)/2,d/pinch.d);
       pinch.d=d;
     }else if(last&&trackView.z>1.0001){
-      if(vizMode==='race')raceUI.follow=-1;   // a drag takes the camera back from the car it was following
       trackView.x+=p.x-last.x;trackView.y+=p.y-last.y;last=p;
     }
   });
@@ -238,42 +237,6 @@ function drawAnalogHud(L,st,W,y0){
   drawSteerWheel(x0+150,ys+16,15,sw.wheel);
   drawBrakeCells(L,st,x0,y0+h-22);
 }
-// The circuit fitted to the canvas, then the view's zoom and pan (shared by TRACK and RACE).
-// ZOOM AND PAN. The fitted map is the base view; the view transform scales it about the map centre and
-// shifts it, so zoom = 1 and pan = 0 is exactly the fitted drawing. Line widths that are drawn to scale
-// (the track ribbon) grow with the zoom, which is the point: zoomed in you can see the racing line using
-// the width of a hairpin.
-function trackMapView(T,W,H,topBar,botBar,Wm){
-  const pad=40;
-  const sx=(Wm-pad*2)/(T.maxX-T.minX),sy=(H-topBar-botBar-pad)/(T.maxY-T.minY);
-  const sc=Math.min(sx,sy);
-  const ox=pad+((Wm-pad*2)-(T.maxX-T.minX)*sc)/2, oy=topBar+((H-topBar-botBar-pad)-(T.maxY-T.minY)*sc)/2;
-  if(trackView.key!==T.label){trackView.key=T.label;trackView.z=1;trackView.x=0;trackView.y=0;}
-  const z=trackView.z, mcx=W/2, mcy=(topBar+H-botBar)/2;
-  trackView.mcx=mcx;trackView.mcy=mcy;
-  const px=q=>mcx+(ox+(q.x-T.minX)*sc-mcx)*z+trackView.x, py=q=>mcy+(oy+(q.y-T.minY)*sc-mcy)*z+trackView.y;
-  return {px,py,scV:sc*z,z};
-}
-// Track surface: the full width of the circuit, drawn from the centreline. Width is to scale, so you can
-// see the racing line using it. The centreline, faint, so the racing line's use of the width reads clearly.
-function drawTrackSurface(T,px,py,scV){
-  const pts=T.pts,n=pts.length;
-  ctx.lineCap='round';ctx.lineJoin='round';
-  ctx.fillStyle='#23232f';trackRibbon(ctx,T,px,py,scV,3);
-  // the kerbs (build 217), outside the edges where the corners are: red and white blocks, to scale, at least a pixel wide
-  if(T.kerbs){const K=T.kerbs,kw=Math.max(1.5,KERB_W*scV);
-    for(let i=0;i<n;i++){const a=pts[i],b=pts[(i+1)%n];
-      for(const [H,s,w] of [[K.P,1,K.wP],[K.N,-1,K.wN]]){if(!H[i]||!H[(i+1)%n])continue;
-        const hA=(a.hw!=null?a.hw:T.width/2)*scV,hB=(b.hw!=null?b.hw:T.width/2)*scV;
-        ctx.fillStyle=(i>>0)%2?'#e8e8ee':'#d23a3a';ctx.beginPath();
-        ctx.moveTo(px(a)+s*a.nx*hA,py(a)+s*a.ny*hA);ctx.lineTo(px(b)+s*b.nx*hB,py(b)+s*b.ny*hB);
-        ctx.lineTo(px(b)+s*b.nx*(hB+kw*w[(i+1)%n]),py(b)+s*b.ny*(hB+kw*w[(i+1)%n]));ctx.lineTo(px(a)+s*a.nx*(hA+kw*w[i]),py(a)+s*a.ny*(hA+kw*w[i]));
-        ctx.closePath();ctx.fill();}}}
-  ctx.strokeStyle='#34344a';ctx.lineWidth=1;ctx.setLineDash([4,6]);
-  ctx.beginPath();ctx.moveTo(px(pts[0]),py(pts[0]));
-  for(let i=1;i<n;i++)ctx.lineTo(px(pts[i]),py(pts[i]));
-  ctx.closePath();ctx.stroke();ctx.setLineDash([]);
-}
 function drawTrack(){
   const W=vizW,H=vizH;
   ctx.fillStyle=C.bg;ctx.fillRect(0,0,W,H);
@@ -282,9 +245,30 @@ function drawTrack(){
   const L=lapResult;
   ctx.fillText(tr('TEST TRACK')+' • '+(L?L.track.label:''),12,19);
   if(!L){ctx.fillStyle='#778';ctx.font='8px "Press Start 2P"';ctx.fillText(tr('BUILD AN ENGINE FIRST'),12,60);return;}
-  // Lap time sits below the title bar.
-  // Live clock, with the solved lap beside it and the sector splits as they are crossed.
   const live=L.replay?replayAt(L,lapReplay.t):null;
+  const T=L.track,topBar=62,botBar=52;
+  if(trackView.key!==T.label){trackView.key=T.label;trackView.z=1;trackView.x=0;trackView.y=0;}
+  const z=trackView.z||1;
+  sceneBind(T);
+  sceneWeather('dry',0);
+  let car=null;
+  if(live){
+    let near=T._look.pts[0],best=1e18;
+    for(const p of T._look.pts){const d=(p.x-live.x)*(p.x-live.x)+(p.y-live.y)*(p.y-live.y);if(d<best){best=d;near=p;}}
+    car={x:live.x,y:live.y,hd:live.hd,curv:near.curv,col:carLivery(vehicle),brk:live.brk>0.05,pos:1};
+  }
+  // The zoom scales the picture about the car and the pan slides it, both in screen units, so the point
+  // under the cursor stays put (trackZoomAt). With no car to sit behind, the whole circuit is shown.
+  const frac=0.70;
+  trackView.mcx=W/2;trackView.mcy=car?H*frac:H/2;
+  const cam=car?sceneChase(car,W,H,14*z,frac):sceneOverview(W,H);
+  if(!car)cam.scale*=z;
+  scenePan(cam,trackView.x||0,trackView.y||0);
+  scenePaint(ctx,cam,{cars:car?[car]:[],lap:L});
+  ctx.fillStyle='rgba(13,13,24,0.72)';ctx.fillRect(0,28,W,30);ctx.fillRect(0,H-botBar-6,W,botBar+6);   // the text keeps a dark ground
+  drawPixelRect(0,0,W,28,'#12121c');
+  ctx.fillStyle=C.yellow;ctx.font='10px "Press Start 2P"';
+  ctx.fillText(tr('TEST TRACK')+' • '+L.track.label,12,19);
   ctx.fillStyle=C.green;ctx.font='14px "Press Start 2P"';ctx.fillText(fmtLap(live?lapReplay.t:L.lap),12,50);
   ctx.font='7px "Press Start 2P"';ctx.fillStyle='#778';
   let lx0=14+ctx.measureText(fmtLap(L.lap)).width*2;
@@ -298,37 +282,6 @@ function drawTrack(){
       ctx.fillText(txt,lx0,50);lx0+=ctx.measureText(txt).width+12;
     }
   }
-  const T=L.track,topBar=62,botBar=52;
-  // with the instruments up, the map fits the width beside them rather than under them
-  const Wm=live?W-REPLAY_HUD_W-14:W;
-  const {px,py,scV,z}=trackMapView(T,W,H,topBar,botBar,Wm);
-  ctx.save();ctx.beginPath();ctx.rect(0,topBar-8,W,H-topBar-botBar+8);ctx.clip();
-  const line=T.line,n=T.pts.length;
-  drawTrackSurface(T,px,py,scV);
-  // The optimised racing line, coloured per segment by the limiting factor.
-  ctx.lineWidth=Math.min(9,Math.max(2.5,4*scV/1.2));
-  for(let i=0;i<n;i++){
-    const j=(i+1)%n;
-    ctx.strokeStyle=LIMC[L.lim[i]]||'#888';
-    ctx.beginPath();ctx.moveTo(px(line[i]),py(line[i]));ctx.lineTo(px(line[j]),py(line[j]));ctx.stroke();
-  }
-  // Start/finish line + slowest-corner marker.
-  let slow=0;for(let i=1;i<n;i++)if(L.v[i]<L.v[slow])slow=i;
-  ctx.fillStyle='#fff';ctx.fillRect(px(line[0])-4,py(line[0])-4,8,8);
-  ctx.fillStyle='#000';ctx.fillRect(px(line[0])-2,py(line[0])-2,4,4);
-  ctx.fillStyle=C.yellow;ctx.font='7px "Press Start 2P"';
-  ctx.fillText(Math.round(L.v[slow]*3.6)+' km/h',px(line[slow])+8,py(line[slow])+3);
-  ctx.fillStyle='#ff5555';ctx.fillRect(px(line[slow])-3,py(line[slow])-3,6,6);
-  // The car: a trail over the last two seconds, then the car itself in its livery, pointing along the
-  // line, with a green glow on the throttle and a red one (and lit brake lamps) on the brake.
-  if(live){
-    const tt=L.replay.tAt;let k=live.i,steps=0;
-    ctx.strokeStyle='rgba(255,255,255,0.35)';ctx.lineWidth=3;ctx.beginPath();ctx.moveTo(px(live),py(live));
-    while(steps<n&&lapReplay.t-tt[k]<2&&lapReplay.t>=tt[k]){ctx.lineTo(px(line[k]),py(line[k]));k=(k-1+n)%n;steps++;}
-    ctx.stroke();
-    drawTopCar(ctx,px(live),py(live),live.hd,carLivery(vehicle),live.brk>0.05?'brk':live.thr>0.95?'thr':'coast');
-  }
-  ctx.restore();
   if(live)(lapReplay.gauges==='analog'?drawAnalogHud:drawReplayHud)(L,live,W,topBar);
   // how to drive the view, and where it is
   ctx.font='6px "Press Start 2P"';ctx.fillStyle='#556';ctx.textAlign='right';
