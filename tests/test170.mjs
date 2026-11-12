@@ -1,60 +1,80 @@
-// The hotlap and the race use the oblique chase, not a flat map (build 269).
+// A driver for the stepped car: round a circuit's racing line, with opposite lock (build 269).
 //
-// WHY THIS EXISTS. The circuit has to read as the draft: the same metres ahead of the car take less
-// screen than the same metres to the side, because the view is pitched, and the ground around the
-// car is painted. The lap solver is not involved.
-// What must hold:
-//   · twenty metres to the side of the car lands further across the screen than twenty metres ahead;
-//   · painting the chase puts grass in the frame and does not throw;
-//   · painting leaves the canvas's own scale in place, and a pan slides the picture by that much on screen;
+// WHY THIS EXISTS. The lap solver takes a car round a circuit at the limit in one solve; a driving game needs the
+// stepped car to get round the same line from a wheel and two pedals. Build 264 tried and the rear-drivers spun at
+// the first fast corner. driveDriver() is the driver that holds them. What must hold:
+//   · round the racing line with the road's height, a flying lap is within 5% of the lap solver's on five cars of
+//     different kinds (rear, front and all-wheel drive, rear-engined with wings, electric), never more than 4 m off
+//     the line, the car never more than 25 degrees sideways;
+//   · a slide is caught: on a circle near the limit, with the car thrown 0.6 rad/s into a spin, the driver applies
+//     opposite lock and the car is back within 4 degrees of straight in 4 s, still on its circle;
+//   · the driver reads only its arguments, and a line is plain data;
 //   · no page errors.
 import { chromium } from './pw.mjs';
 import { fileURLToPath, pathToFileURL } from 'url';
 import path from 'path';
 const repo = fileURLToPath(new URL('..', import.meta.url));
 const browser = await chromium.launch();
-const page = await browser.newPage({ viewport: { width: 900, height: 600 } });
+const page = await browser.newPage();
 const errors = [], fails = [];
 page.on('pageerror', e => errors.push('pageerror: ' + e.message));
 await page.goto(pathToFileURL(path.join(repo, 'index.html')).href, { waitUntil: 'networkidle' });
-await page.waitForTimeout(400);
+await page.waitForTimeout(300);
+
 const R = await page.evaluate(() => {
-  const src = buildTrack('tech');
-  const look = sceneBind(src);
-  let peak = look.pts[0];
-  for (const p of look.pts) if (Math.abs(p.curv) > Math.abs(peak.curv)) peak = p;
-  const car = { x: peak.x, y: peak.y, hd: peak.hd, curv: peak.curv, col: '#d81f32', brk: true, pos: 1 };
-  const cam = sceneChase(car, 900, 600, 14, 0.70);
-  const here = sceneProject(cam, car.x, car.y);
-  const ahead = sceneProject(cam, car.x + Math.cos(car.hd) * 20, car.y + Math.sin(car.hd) * 20);
-  const side = sceneProject(cam, car.x + Math.cos(car.hd + Math.PI / 2) * 20, car.y + Math.sin(car.hd + Math.PI / 2) * 20);
-  const da = Math.hypot(ahead.sx - here.sx, ahead.sy - here.sy);
-  const ds = Math.hypot(side.sx - here.sx, side.sy - here.sy);
-  const c = document.createElement('canvas');
-  c.width = 900; c.height = 600;
-  const g = c.getContext('2d');
-  sceneWeather('dry', 0);
-  g.setTransform(2, 0, 0, 2, 0, 0);
-  scenePaint(g, cam, { cars: [car] });
-  const keep = g.getTransform().a;
-  g.setTransform(1, 0, 0, 1, 0, 0);
-  scenePan(cam, 30, -12);
-  const slid = sceneProject(cam, car.x, car.y);
-  const d = g.getImageData(0, 0, c.width, c.height).data;
-  let grass = 0, dark = 0;
-  for (let i = 0; i < d.length; i += 32) {
-    const r = d[i], gv = d[i + 1], b = d[i + 2];
-    if (gv > 60 && gv > r + 8 && gv > b - 10) grass++;
-    if (r < 70 && gv < 75 && b < 80) dark++;
+  const out = { cars: [] };
+  const place = (car, line) => { const s = driveState(car); s.x = line[0].x; s.y = line[0].y; s.psi = Math.atan2(line[1].y - line[0].y, line[1].x - line[0].x);
+    s.vx = line[0].v; s.w = s.w.map(() => s.vx / car.r);
+    for (let g = 1; g <= car.ratios.length; g++) { s.gear = g; if (s.vx / car.r * car.ratios[g - 1] * car.fd * 30 / Math.PI < 0.9 * car.redline) break; }
+    s.we = s.vx / car.r * car.ratios[s.gear - 1] * car.fd; return s; };
+  for (const n of ['Mazda MX-5', 'Honda Civic Type R (FK8', 'Subaru Impreza', 'Porsche 911 GT3', 'Tesla Model 3']) {
+    loadVehiclePreset(FACTORY_CARS.find(x => x.name.startsWith(n)));
+    const lap = simulateLap('tech'), line = driveLine(lap), N = line.length, car = driveCar(), s = place(car, line), d = { i: 0 };
+    const o = { name: vehicle.chLabel, solver: lap.lap, lap: 0, e: 0, beta: 0, plain: JSON.stringify(line).length > 0 && line.every(q => Object.values(q).every(Number.isFinite)) };
+    let laps = 0, t1 = 0, prev = 0;
+    while (s.t < 300) {
+      stepCar(car, s, driveDriver(car, s, line, d), 0.01);
+      o.e = Math.max(o.e, Math.abs(d.e)); o.beta = Math.max(o.beta, Math.abs(Math.atan2(s.vy, Math.max(1, s.vx))) * 180 / Math.PI);
+      if (Math.abs(d.e) > 15 || s.vx < 1) { o.off = `left the line at point ${d.i} of ${N}, ${s.t.toFixed(1)} s`; break; }
+      if (d.i < prev - N / 2 && ++laps) { if (laps === 2) { o.lap = s.t - t1; break; } t1 = s.t; }
+      prev = d.i;
+    }
+    out.cars.push(o);
   }
-  return { keep, slide: [slid.sx - here.sx, slid.sy - here.sy], da, ds, grass, dark, pitch: cam.pitch, n: look.pts.length };
+  // ---- a slide, caught: a 60 m circle at 90% of the grip, then thrown into a spin
+  { loadVehiclePreset(VEHICLE_PRESETS.find(x => x.name.startsWith('Mazda MX-5')));
+    const car = driveCar(), Rc = 60, v = Math.sqrt(0.9 * car.mu * 9.81 * Rc), line = [];
+    for (let i = 0; i < 360; i++) { const a = i * Math.PI / 180; line.push({ x: Rc * Math.sin(a), y: Rc * (1 - Math.cos(a)), v, grade: 0, kv: 0 }); }
+    const s = place(car, line), d = { i: 0 };
+    for (let i = 0; i < 600; i++) stepCar(car, s, driveDriver(car, s, line, d), 0.01);
+    const o = { before: Math.atan2(s.vy, s.vx) * 180 / Math.PI, ay: s.ayF / 9.81 / car.mu, peak: 0, lock: 0, e: 0 };
+    s.yaw += 0.6;
+    for (let i = 0; i < 400; i++) { const u = driveDriver(car, s, line, d); stepCar(car, s, u, 0.01);
+      o.peak = Math.max(o.peak, Math.abs(Math.atan2(s.vy, s.vx)) * 180 / Math.PI); o.lock = Math.min(o.lock, u.steer); o.e = Math.max(o.e, Math.abs(d.e)); }
+    o.after = Math.atan2(s.vy, s.vx) * 180 / Math.PI; o.v = s.vx / v;
+    out.slide = o; }
+  out.src = driveDriver.toString();
+  return out;
 });
 await browser.close();
-console.log(`pitch ${R.pitch}; 20 m ahead ${R.da.toFixed(1)} px, aside ${R.ds.toFixed(1)} px; grass ${R.grass}, dark ${R.dark}; ${R.n} pts`);
-if (!(R.pitch < 0.95)) fails.push('the camera is not pitched');
-if (!(R.ds > R.da * 1.15)) fails.push('ahead and aside cover the same screen, so the view is still flat');
-if (R.keep !== 2) fails.push('painting the scene lost the canvas scale the page draws through');
-if (Math.hypot(R.slide[0] - 30, R.slide[1] + 12) > 0.5) fails.push(`a pan of (30, -12) moved the picture by (${R.slide.map(v => v.toFixed(1))})`);
-if (R.grass < 80) fails.push('the ground around the car did not paint');
-if (errors.length) fails.push(errors.join('; '));
-if (fails.length) { console.error(fails.join('\n')); process.exit(1); }
+
+console.log('car                        flying lap / solver       furthest off the line   most sideways');
+for (const c of R.cars) {
+  const e = 100 * (c.lap / c.solver - 1);
+  console.log(`${c.name.slice(0, 26).padEnd(26)} ${c.lap.toFixed(2)} / ${c.solver.toFixed(2)} (${e >= 0 ? '+' : ''}${e.toFixed(1)}%)   ${c.e.toFixed(1)} m   ${c.beta.toFixed(0)} deg ${c.off || ''}`);
+  if (c.off) fails.push(`${c.name}: ${c.off}`);
+  else if (Math.abs(e) > 5) fails.push(`${c.name}: laps ${e.toFixed(1)}% from the solver`);
+  if (c.e > 4) fails.push(`${c.name}: ${c.e.toFixed(1)} m off the line`);
+  if (c.beta > 25) fails.push(`${c.name}: ${c.beta.toFixed(0)} degrees sideways`);
+  if (!c.plain) fails.push(`${c.name}: the line is not plain numbers`);
+}
+const S = R.slide;
+console.log(`slide: at ${S.ay.toFixed(2)} of the grip, ${S.before.toFixed(1)} deg; thrown, it reaches ${S.peak.toFixed(0)} deg, the wheel goes to ${S.lock.toFixed(2)} of opposite lock; 4 s on: ${S.after.toFixed(1)} deg, ${S.e.toFixed(1)} m off at most, ${(100 * S.v).toFixed(0)}% of the speed`);
+if (!(S.peak > Math.abs(S.before) + 4)) fails.push('the throw did not start a slide: the check is empty');
+if (!(S.lock < -0.05)) fails.push('no opposite lock in the slide');
+if (!(Math.abs(S.after - S.before) < 4 && S.e < 4)) fails.push('the slide was not caught');
+const bad = R.src.match(/\b(document|window|canvas|vehicle|engine|state|powertrain|tr)\s*[.(\[]/);
+if (bad) fails.push(`driveDriver reaches outside its arguments: ${bad[0]}`);
+if (errors.length) fails.push(...errors);
+if (fails.length) { console.log('\nFAIL\n' + fails.map(f => '  - ' + f).join('\n')); process.exit(1); }
+console.log('\nPASS');
