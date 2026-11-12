@@ -26,7 +26,7 @@
 //             mu Fz (3s - 3s^2 + s^3) up to full sliding at s = 1. Drive, braking and cornering share one slip vector,
 //             so using the grip one way leaves less the other way: combined slip needs no extra rule. Its inputs are
 //             the lap's own: the grip mu(Fz) with its load sensitivity, the cornering stiffness (the compound's,
-//             TIRE_TYPE.cc, falling with the load: ccLoad), the longitudinal peak at TYRE_SLIP_OPT, braking and traction at TYRE_MU_X of the
+//             TIRE_TYPE.cc, falling with the load as tyreCCLoad has it), the longitudinal peak at TYRE_SLIP_OPT, braking and traction at TYRE_MU_X of the
 //             lateral grip, and past the peak the launch model's own falling curve (0.81 in a full slide).
 //             A tyre's side force builds over a rolling distance, the relaxation length (about the tyre's radius;
 //             Pacejka ch. 5: probable).
@@ -38,14 +38,9 @@
 //   Stall     below the speed it can fire at, the engine stops; a starter or a bump start brings it back.
 //   Brakes    the hydraulics' own force and front share; ABS and traction control as wheel-slip limits when fitted.
 //   Aero      drag and downforce on the square of the speed; rolling resistance by the load.
-//   Road      its height under the car (build 268), given with the inputs: the slope along the car (u.grade, the sine
-//             of the climb) pulls it back by g sin, and the road's curvature in height (u.kv, 1/m, negative over a
-//             crest) presses the tyres by m v^2 kv, as the lap solver's loadAt has it. Past v^2 kv = -g cos the car
-//             is in the air: no load, no tyre force. s.z is the height climbed.
 //
 // NOT YET (named, so nobody rediscovers them): the turbo's shaft in time (boost is the settled curve's), tyre and
-// brake temperatures, camber and roll steer, the road's side slope, bumps and kerbs (one
-// height for the whole car: the front axle meets a crest no sooner than the rear), a hybrid's controller. The lap solver has
+// brake temperatures, camber and roll steer, the road's bumps and kerbs, a hybrid's controller. The lap solver has
 // each of these; they move here in later builds of phase E.
 // ================================================================================================
 const DRIVE_G=9.81, DRIVE_RHO=1.20;
@@ -58,7 +53,7 @@ function driveCar(){
     name:v.chLabel||'',m:v.mass,Izz:v.mass*a*b,a,b,h:v.cg,tF:v.trackF||v.track,tR:v.trackR||v.track,
     r:v.rTire,Iw:(v.wheelI||2)/4,
     mu:tyreMu(v.FzRef,v.FzRef),muF:tyreMu(v.FzRefF||v.FzRef,v.FzRefF||v.FzRef),FzRef:v.FzRef,FzRefF:v.FzRefF||v.FzRef,
-    loadSens:LOAD_SENS,muX:TYRE_MU_X,cc:v.tyreCC||tyreCC(v.tireType),ccLoad:TYRE_CC_LOAD,slipOpt:TYRE_SLIP_OPT,slipC:TYRE_SLIP_C,relax:v.rTire,
+    loadSens:LOAD_SENS,muX:TYRE_MU_X,cc:v.tyreCC||tyreCC(v.tireType),ccP2:TYRE_CC_P2,slipOpt:TYRE_SLIP_OPT,slipC:TYRE_SLIP_C,relax:v.rTire,
     cdA:v.cdA,clA:v.clA||0,aeroBal:v.aeroBal==null?0.5:v.aeroBal,crr:v.crr,
     lltdF:v.lltdF==null?v.fWt:v.lltdF,tauLoad:1/(2*Math.PI*ride),
     drive:v.drive,lock:(v.df&&v.df.lock)||0,ratios:(v.ratios||[1]).slice(),fd:v.finalDrive||1,eff:v.driveEff||0.9,
@@ -74,7 +69,7 @@ function driveCar(){
 }
 // A car at rest, in neutral for a clutch car until the driver asks for a gear.
 function driveState(car){
-  return {t:0,x:0,y:0,z:0,psi:0,vx:0,vy:0,yaw:0,w:[0,0,0,0],we:car.idle*Math.PI/30,gear:1,shiftT:0,
+  return {t:0,x:0,y:0,psi:0,vx:0,vy:0,yaw:0,w:[0,0,0,0],we:car.idle*Math.PI/30,gear:1,shiftT:0,
     axF:0,ayF:0,al:[0,0,0,0],abs:[1,1,1,1],tcF:1,clF:1,pull:false,firing:true,
     ax:0,ay:0,Fz:[0,0,0,0],kappa:[0,0,0,0],alpha:[0,0,0,0],Fx:[0,0,0,0],Fy:[0,0,0,0],rpm:car.idle,speed:0,delta:0};
 }
@@ -88,7 +83,7 @@ function driveLerp(xs,ys,x){
 function driveTyre(car,Fz,kappa,alpha,front){
   if(!(Fz>1))return [0,0,0,0];
   const ref=front?car.FzRefF:car.FzRef,muY=(front?car.muF:car.mu)*Math.pow(Math.max(200,Fz)/ref,-car.loadSens),muX=car.muX*muY;
-  const p2=car.ccLoad*car.ccLoad,xz=Fz/ref,Ca=car.cc*Fz*(p2?(p2+1)/(p2+xz*xz):1),Ck=3*muX*Fz/car.slipOpt;                 // the longitudinal peak sits at slipOpt, as the launch has it
+  const xz=Fz/ref,Ca=car.cc*Fz*(car.ccP2+1)/(car.ccP2+xz*xz),Ck=3*muX*Fz/car.slipOpt;                 // the longitudinal peak sits at slipOpt, as the launch has it
   const sx=Ck*kappa/(3*muX*Fz),sy=Ca*Math.tan(alpha)/(3*muY*Fz),s=Math.hypot(sx,sy);
   if(s<1e-9)return [0,0,0,Ck];
   let f;
@@ -148,17 +143,18 @@ function driveDriver(car,s,line,d){
   const k=s.gear>0?car.ratios[s.gear-1]*car.fd*car.eff/car.r:0,wot=driveEngine(car,1,s.rpm),ov=-driveEngine(car,0,s.rpm);
   let thr=k>0?(F/k+ov)/Math.max(1,wot+ov):0,brk=0;
   if(thr<0){brk=Math.min(1,-(F+ov*k)/car.brakeF);thr=0;}
-  return {steer:delta/car.steerLock,throttle:Math.min(1,thr),brake:brk,grade:p0.grade,kv:p0.kv};
+  return {steer:delta/car.steerLock,throttle:Math.min(1,thr),brake:brk,road:{sinT:p0.grade,kv:p0.kv}};
 }
 // Advance s by dt (s) under u = {steer -1..1 (left positive), throttle 0..1, brake 0..1, clutch 0..1 or null for an
-// automatic clutch, gear 1.. or null for automatic shifts, grade and kv for the road's height (see Road above)}. Returns s, with what happened in it for the instruments.
+// automatic clutch, gear 1.. or null for automatic shifts, road {sinT: the grade along the car, positive uphill; kv: the
+// road's vertical curvature along it, 1/m, negative over a crest} or nothing for a flat road}. Returns s, with what happened in it for the instruments.
 function stepCar(car,s,u,dt){
   const H=0.001,n=Math.max(1,Math.ceil(dt/H)),h=dt/n,g=DRIVE_G,L=car.a+car.b;
   const xw=[car.a,car.a,-car.b,-car.b],yw=[car.tF/2,-car.tF/2,car.tR/2,-car.tR/2];
   const drv=car.drive==='awd'?[1,1,1,1]:car.drive==='fwd'?[1,1,0,0]:[0,0,1,1],nd=drv[0]+drv[1]+drv[2]+drv[3];
   const steer=Math.max(-1,Math.min(1,u.steer||0)),brake=Math.max(0,Math.min(1,u.brake||0));
   let thr=Math.max(0,Math.min(1,u.throttle||0));
-  const sinT=Math.max(-0.7,Math.min(0.7,u.grade||0)),cosT=Math.sqrt(1-sinT*sinT),kv=u.kv||0;
+  const rd=u.road||{},sinT=rd.sinT||0,cosT=Math.sqrt(Math.max(0,1-sinT*sinT)),kv=rd.kv||0;
   for(let k=0;k<n;k++){
     const v=Math.hypot(s.vx,s.vy),delta=steer*car.steerLock,cd=Math.cos(delta),sd=Math.sin(delta);
     // ---- gearbox
@@ -178,8 +174,10 @@ function stepCar(car,s,u,dt){
     }
     const ratio=s.gear>0?car.ratios[Math.min(top,s.gear)-1]*car.fd:0;
     // ---- loads
-    const gN=Math.max(0,g*cosT+v*v*kv);                                    // what presses the car on the road, per kg
-    const down=0.5*DRIVE_RHO*car.clA*v*v,WF=car.m*gN*car.b/L+down*car.aeroBal,WR=car.m*gN*car.a/L+down*(1-car.aeroBal);
+    // the road under the car: on a grade the weight presses with its cosine, and over a crest (kv < 0) or through a
+    // dip (kv > 0) the car's own speed adds v^2 kv, as the lap has it. With nothing left the car is in the air.
+    const gz=Math.max(0,g*cosT+s.vx*s.vx*kv);
+    const down=0.5*DRIVE_RHO*car.clA*v*v,WF=car.m*gz*car.b/L+down*car.aeroBal,WR=car.m*gz*car.a/L+down*(1-car.aeroBal);
     const dX=car.m*s.axF*car.h/L,dYF=car.lltdF*car.m*s.ayF*car.h/car.tF,dYR=(1-car.lltdF)*car.m*s.ayF*car.h/car.tR;
     const Fz=s.Fz;
     Fz[0]=Math.max(0,(WF-dX)/2-dYF);Fz[1]=Math.max(0,(WF-dX)/2+dYF);Fz[2]=Math.max(0,(WR+dX)/2-dYR);Fz[3]=Math.max(0,(WR+dX)/2+dYR);
@@ -253,11 +251,11 @@ function stepCar(car,s,u,dt){
       }
     }
     // ---- body
-    const drag=0.5*DRIVE_RHO*car.cdA*v*s.vx,ax=(FX-drag)/car.m,ay=FY/car.m;
-    s.vx+=h*(ax-g*sinT+s.vy*s.yaw);s.vy+=h*(ay-s.vx*s.yaw);s.yaw+=h*MZ/car.Izz;
+    const drag=0.5*DRIVE_RHO*car.cdA*v*s.vx,ax=(FX-drag)/car.m-g*sinT,ay=FY/car.m;
+    s.vx+=h*(ax+s.vy*s.yaw);s.vy+=h*(ay-s.vx*s.yaw);s.yaw+=h*MZ/car.Izz;
     if(brake>0&&thr===0&&Math.abs(s.vx)<0.05&&Math.abs(s.vy)<0.05){s.vx=0;s.vy=0;s.yaw=0;}   // held on the brakes
     s.psi+=h*s.yaw;const c=Math.cos(s.psi),sn=Math.sin(s.psi);
-    s.x+=h*cosT*(s.vx*c-s.vy*sn);s.y+=h*cosT*(s.vx*sn+s.vy*c);s.z+=h*s.vx*sinT;
+    s.x+=h*(s.vx*c-s.vy*sn);s.y+=h*(s.vx*sn+s.vy*c);
     const kL=Math.min(1,h/car.tauLoad);s.axF+=(ax-s.axF)*kL;s.ayF+=(ay-s.ayF)*kL;
     s.ax=ax;s.ay=ay;s.delta=delta;s.t+=h;
   }

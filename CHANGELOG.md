@@ -35,49 +35,50 @@ the tyre's stiffness measured (266, 267) and the road's height under the car (26
 - **The pedals follow the force the plan asks,** so a corner is held on part throttle. In this build's trials a
   driver correcting the speed alone coasted on the engine's drag at the limit and spun the MX-5; the GT3 also
   needed the front's slip taken off.
-- **Result, circuit TECH, flying lap against the lap solver:** MX-5 +2.7%, Civic Type R +3.4%, WRX STI +3.5%,
-  911 GT3 +3.8%, Tesla Model 3 +1.9%; never more than 3.4 m off the line or 16 degrees sideways. On MIXED five more
-  (Fiat 500, F40, Viper, 458, Mustang) ran +2.2 to +2.8% by hand. Thrown into a spin on a circle at 0.84 of its
+- **Result, circuit TECH, flying lap against the lap solver:** MX-5 +2.4%, Civic Type R +3.4%, WRX STI +3.5%,
+  911 GT3 +3.6%, Tesla Model 3 +1.8%; never more than 2.8 m off the line or 14 degrees sideways. On MIXED five more
+  (Fiat 500, F40, Viper, 458, Mustang) ran +2.2 to +2.8% in a trial by hand, not in the test. Thrown into a spin on a circle at 0.84 of its
   grip, the MX-5 is caught with a quarter of opposite lock and is back on line, at 97% of its speed, within 4 s.
 - **What moved:** nothing in the app; two functions were added and no solver calls them. Fingerprint not re-run.
 - **Named in the register:** `DRIVE_DRIVER`, the driver's four settings (28 open, was 27). They are a driver's
   manner, not the car's physics; proposed to the owner as a rule, like `RACE_DRIVERS`.
 - **Left open:** the 2-4% the driver gives away (it follows the solver's speeds, it does not look for the limit, and
-  the stepped car has no kerbs, bumps or camber gain); up to 3.4 m off the line over crests; a lane change test; a
+  the stepped car has no kerbs, bumps or camber gain); up to 2.8 m off the line over crests; a lane change test; a
   hybrid's controller in `stepCar`. Phase E's step 5 is otherwise met; next is step 6, the body's dimensions.
 
-### The stepped car feels the road's height: climbs, crests and dips (build 268)
+### The stepped car feels the road's grade, crests and dips (build 268)
 
-The stepped car's road was flat. The circuits are not: build 264's driver slid off where a crest unloads the tyres,
-because the lap solver knew the crest and the stepped car did not.
+`stepCar` drove on a flat road. Build 264 found that this was one of the two reasons its driver could not hold the
+lap solver's speeds: the circuits have crests and dips that load and unload the tyres.
 
-- **`stepCar` takes the road under the car with the driver's inputs:** `grade` (the sine of the climb) and `kv` (the
-  road's curvature in height, 1/m, negative over a crest), the same two numbers each point of a circuit already has.
-- **A climb** pulls the car back by g sin and presses it by g cos; **a crest or a dip** changes the tyres' load by
-  m v² kv, as the lap solver has it. Past that the car is in the air, with no tyre force. `s.z` is the height climbed.
-- **Checked:** a 10% climb slows a coasting car by 0.99 of g sin (once the wheels' own inertia is counted), and a
-  crest takes exactly m v² kv off the four tyres. The flat road is unchanged, to the digit.
-- **What moved:** nothing in the app: no solver reads it yet. Fingerprint not re-run (only `stepCar` changed).
-- **Left open:** the lap solver caps the crest's effect (`KVCAP`, in the register); the stepped car does not, and
-  the two will differ over sharp crests. One height for the whole car (both axles meet a crest together); no side
-  slope. Next: a driver that countersteers, round a circuit with its grade and crests.
+- **`stepCar` takes the road under the car**, `road: {sinT, kv}`: the grade along the car and the road's vertical
+  curvature, the same two quantities the lap reads from the circuit. The weight presses with the cosine of the
+  grade and pulls the car back by g sin(theta); a crest or a dip changes the wheel loads by m v² kv.
+- **Past 1 g of crest the wheels carry nothing.** The lap caps this term at 0.6 of the weight (`KVCAP`, in the
+  register); the stepped car needs no cap.
+- **Checked** in `test168`: a 5% fall adds 0.47 m/s² to a coasting car (g × 0.05 is 0.49; the turning wheels'
+  inertia and the extra air drag take the rest); a half-g crest and dip move the wheel loads to 0.51 and 1.49 of their flat-road value.
+- **Nothing else moves:** the fingerprint is identical to build 267 (5212 values).
+- **Left open:** banking, bumps and kerbs; a car in the air keeps its attitude. A caller must supply the road: the
+  driver that follows a circuit and feeds it (with countersteer) is the next build.
 
-### A loaded tyre is softer for its load: the cornering stiffness falls as the load rises (build 267)
+### A tyre's cornering stiffness falls as it is loaded harder (build 267)
 
-A tyre's cornering stiffness was one share of its load whatever it carried. Measured tyres give less per unit load
-the harder they are pressed, so a cornering car's loaded outer tyres give less than its inner tyres lose.
+Build 266 gave each compound one cornering stiffness per unit load, whatever the load. A real tyre's falls as the
+load rises, which is how load moved across an axle (by a bar, a spring, a high centre of gravity) changes a car's
+balance below the limit.
 
-- **The shape is the Magic Formula's own** (Pacejka ch. 4), with the one coefficient the measured road tyre's file
-  gives for it (PKY2 2.03): stiffness per load = the compound's figure x (p² + 1) / (p² + x²), x the load over the
-  tyre's nominal load. Nominal is taken as the load the compound's grip is quoted at, 60% of the rated load (probable).
-- **Checked on Milliken's race tyre** (0.54 at 1350 lbf): 0.61 and 0.47 at 900 and 1800 lbf, measured 0.59 and 0.43.
-- **The stepped car's tyre** uses it per wheel. **The lap's cornering drag** now sums the four tyres with the side
-  load transfer (shared evenly between the axles) in place of four tyres at the mean load.
-- **What moved:** laps −0.18% to +0.22%, mean +0.02% (BMW M3 E46 74.94 to 75.01 s); race fuel per lap −0.2 to
-  +0.5%. Light cars on big tyres gain, heavy cars on small ones lose. Nothing else.
-- **Left open:** one load term for every compound (the race tyre's two points alone give 1.43 and 2.35); the road
-  file's nominal load is still unconfirmed (searched again, not found). `TYRE_CC` stays in the register (27 open).
-  The lap's drag ignores which axle carries the transfer. Next: the road's height, then a driver that countersteers.
+- **The curve is the measured road tyre's own** (the 205/60R15 Magic Formula file of build 266, its PKY2 2.03):
+  against its value at the reference load, the stiffness per unit load is 1.12 at two thirds of that load and 0.87
+  at four thirds. Milliken's race tyre (RCVD fig. 2.9), with its middle load taken as the reference, gives 1.09 and
+  0.80.
+- **The stepped car** uses it per wheel. **The lap's cornering drag** uses it at the mean wheel load.
+- **What moved:** laps −0.37% to +0.26%, mean −0.03% (BMW M3 E46 74.94 to 74.97 s); race fuel per lap −0.45 to
+  +0.20%. Nothing else. Not checked against published lap times (paused).
+- **Left open:** the reference load is taken as 60% of the tyre's rated load, where a Magic Formula file's nominal
+  load is usually near two thirds (the file's own was not confirmed). The lap ignores the load moved across an
+  axle when it prices cornering drag. `TYRE_CC` stays in the register for the unsourced sport, semi-slick and drag
+  values. Next for the stepped car: the road's height, then a driver that countersteers.
 
 ### A tyre's cornering stiffness comes from its compound, from measured tyres (build 266)
 

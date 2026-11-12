@@ -257,8 +257,8 @@
    "id": "TYRE_CC",
    "file": "tyres-brakes-driveline.js",
    "match": "const tyreCC=",
-   "standsFor": "the cornering stiffness of the sport and semi-slick compounds (set between a measured road tyre and a measured race tyre by grip) and of the drag radial (left at 0.2/deg); one load-dependence (PKY2 of the measured road tyre) for every compound",
-   "retiredBy": "a measured tyre per compound (a Magic Formula file or a flat-track curve), with its load dependence",
+   "standsFor": "the cornering stiffness of the sport and semi-slick compounds (set between a measured road tyre and a measured race tyre by grip) and of the drag radial (left at 0.2/deg)",
+   "retiredBy": "a measured tyre per compound (a Magic Formula file or a flat-track curve)",
    "phase": "E",
    "state": "open"
   },

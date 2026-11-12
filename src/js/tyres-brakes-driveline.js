@@ -472,23 +472,20 @@ function tyreSlipMuD(s){const x=clamp(s,-3,3),u=TYRE_SLIP_B*x;
 //                      The same relation on the road tyre above gives its peak near 10 deg (production tyres: 6-10).
 //   sport, semi  0.32, 0.42  NOT SOURCED: between the two measured tyres by the compound's grip (register: TYRE_CC).
 //   drag         0.20  NOT SOURCED: a soft-walled tyre, left at Gillespie's figure.
-// The stiffness per unit load falls as the load rises (build 267), by the Magic Formula's own shape (Pacejka, Tyre and
-// Vehicle Dynamics ch. 4): K = PKY1 Fz0 sin(2 atan(Fz / (PKY2 Fz0))), which is K/Fz = CC (p^2 + 1) / (p^2 + x^2) with
-// x = Fz/Fz0 and p = PKY2, 2.03 on the measured road tyre above. Fz0, the tyre's nominal load, is taken as the load the
-// compound's grip is quoted at (60% of the rated load, FzRef: 3620 N on that 205/60R15 91, where such files usually
-// say 4000: probable). Checked on Milliken's race tyre, CC 0.54 at 1350 lbf: it gives 0.61 and 0.47 at 900 and 1800
-// lbf, measured 0.59 and 0.43. One p for every compound: the race tyre's two points alone give 2.35 and 1.43.
-// In a corner the outer tyres carry more and the inner less (m ay h / t, shared here evenly between the axles), and
-// the pair is softer than two tyres at the mean load: the drag is (m ay)^2 over the four stiffnesses summed.
+// The stiffness per unit load falls as the load rises (build 267). The Magic Formula's own form for it is
+// K = K0 sin(2 atan(Fz / (PKY2 Fz0))), which per unit load and against its value at the nominal load is
+// (P^2 + 1) / (P^2 + x^2), x = Fz / Fz0, with P = PKY2 = 2.0284 from the road tyre's file above. The nominal
+// load is taken as the tyre's reference load (FzRef, 60% of its rated load; a Magic Formula file's is usually
+// near two thirds: probable). Against the race tyre of RCVD fig. 2.9, with its middle load taken as nominal:
+// 1.12 and 0.87 at 2/3 and 4/3 of it, where the measured peaks give 1.09 and 0.80.
+const TYRE_CC_P2=2.0284*2.0284;
+const tyreCCLoad=x=>(TYRE_CC_P2+1)/(TYRE_CC_P2+x*x);
+// For the lap, each tyre is taken at the mean wheel load N/4. Load moved across an axle lowers the pair's
+// stiffness further, so with the line below this is still the least the drag can be.
 // The drag is taken as linear right up to the limit, where a real tyre's slip angle runs further, so this is the
 // least it can cost.
 const tyreCC=type=>((TIRE_TYPE[type]||TIRE_TYPE.sport).cc||0.2)*180/Math.PI;   // per radian
-const TYRE_CC_LOAD=2.0284;
-function corneringDrag(m,ay,N){
-  const cc=vehicle.tyreCC||tyreCC(vehicle.tireType),ref=(vehicle.FzRef+(vehicle.FzRefF||vehicle.FzRef))/2,p2=TYRE_CC_LOAD*TYRE_CC_LOAD;
-  const q=Math.max(1,N)/4,d=Math.min(q,m*Math.abs(ay)*vehicle.cg/(2*(vehicle.track||1.5))),xo=(q+d)/ref,xi=(q-d)/ref;
-  return m*m*ay*ay/(2*cc*(p2+1)*((q+d)/(p2+xo*xo)+(q-d)/(p2+xi*xi)));
-}
+function corneringDrag(m,ay,N){const n=Math.max(1,N);return m*m*ay*ay/(n*(vehicle.tyreCC||tyreCC(vehicle.tireType))*tyreCCLoad(n/(4*vehicle.FzRef)));}
 // The car's lateral grip as a share of its normal load N while cornering at ay (m/s2), dn of N being downforce.
 // Build 157: per axle. Each axle has its own normal load (its weight share, and its share of the downforce by the
 // aero balance), its own share of the lateral load transfer m ay h / t (the roll-stiffness distribution, set by the
