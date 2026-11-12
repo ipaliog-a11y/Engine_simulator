@@ -20,6 +20,36 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 Working toward **v1.0 — every number derived, not fitted.**
 
+### The engine can stall, stop and be started (build 265)
+
+Until now the bench held the engine at its idle speed whatever happened, and STARTER and POWER OFF did nothing on a
+combustion engine.
+
+- **Firing.** An engine burns only with the ignition on and above the speed it can draw and compress a charge at
+  (200 rpm, what a starter is specified to reach; probable). From rest it needs one whole cycle at that speed first.
+- **POWER OFF** cuts the ignition: no fuel, and the engine coasts to rest on its own friction and pumping (a 1.6 from
+  idle in 0.4 s). Switched off, nothing drains the battery.
+- **STARTER** cranks it with a starter motor sized by the engine (0.5 kW a litre petrol, 1 kW a litre diesel: Bosch
+  Automotive Handbook; probable), torque falling in a line to nothing at 300 rpm. A 1.6 cranks at ~216 rpm drawing
+  ~83 A and fires in 0.6 s. A battery under a fifth of its charge cannot crank; a blown engine does not start.
+- **Idle is held by an idle valve,** not a floor: it adds the air that holds the idle speed, up to what a bypass can
+  pass (0.45 bar of manifold pressure; probable). The alternator charges nothing below firing speed.
+- **The stepped car stalls too** (`stepCar`): dump the clutch in fourth at idle and the engine stops; the starter with
+  the clutch down restarts it, and a rolling car bump-starts. The automatic clutch never lets it stall.
+- **A rebuilt engine goes on the bench running;** RESET restarts a stopped one.
+- **MAX POWER holds an engine that peaks at its limiter 1% under it.** Aimed at the limiter itself, it bounced off
+  the fuel cut (a 1.6 between 7012 and 7200 rpm), and since build 260 `test52` caught the low side of the bounce.
+- **Nothing else moves:** the dyno, 0-100, laps and races never run the engine below idle.
+- **Left open:** on LIVE the dyno brake only resists above its hold speed, so load alone cannot stall the engine
+  there; the idle speed itself is still the cam grade's fitted number (next build); cold starts, a flooded engine
+  and the coast-down's compression kick are not modelled.
+
+- **Found on the way, not from this build:** `test145` fails on `main` since before build 259 (the RX-7 wears
+  free-revving; the GR Yaris, Civic Type R FK8 and Hellcat newly wear at full load). It fails the same way at build
+  258, so it predates this work; it needs its own build.
+
+Tests: test169 (new), test162 (updated: the buttons now work). Tests: 52 164 165 168
+
 ### The stepped car matches its revs on a shift (build 264)
 
 Phase E, a small step on build 263's `stepCar`. Nothing in the app reads it yet.

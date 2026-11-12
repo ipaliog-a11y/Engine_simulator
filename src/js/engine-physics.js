@@ -599,9 +599,11 @@ function pumpFrictionMEP(rpm,map,oilFrictionMult){
 }
 // ---- Electrical: alternator, battery and ignition health ----
 function altOutputA(rpm){         // ~35% of rated at idle, full by ~2500 rpm
+  if(rpm<FIRE_RPM||(state.firing===false&&!isHybrid()))return 0;   // a stopped or cranking engine charges nothing (build 265)
   return engine.altMaxA*clamp((rpm-500)/2000,0.35,1);
 }
 function elecDemandA(){           // ECU/pump baseline + accessories + electric fan (when hot)
+  if(state.ignOn===false&&!isHybrid())return 0;   // switched off: nothing draws (build 265)
   return ELEC_BASE_A+state.elecLoad*ELEC_ACC_A+(engine.fan==='electric'&&state.coolant>92?ELEC_FAN_A:0);
 }
 // Parasitic crank torque (Nm) to spin the alternator for the current actually generated —
@@ -952,6 +954,35 @@ function brakeTorque(){
   const over=state.rpm-target;
   return over>0?Math.min(over*engine.brakeGain,engine.loadRefTq*3):0;
 }
+// STALLING AND STARTING (build 265). Until then the bench held the engine at its idle speed whatever was asked of it.
+//   Firing     an engine burns only with the ignition on and while it turns fast enough to draw and compress a
+//              charge: FIRE_RPM, the speed a starter is specified to reach (150-250 rpm; probable), and from rest only
+//              after one whole cycle at that speed. Below it the
+//              burning stops and the engine is only its own friction and pumping, which bring it to rest.
+//   Idle       off the pedal the idle valve lets in the air that holds the idle speed, up to what the valve can pass
+//              (IDLE_VALVE_MAP of manifold pressure: a bypass passes a small share of the throttle's air; probable).
+//              Ask for more than that and the speed falls.
+//   Starter    a series-wound motor on the ring gear: its torque falls in a line from its stall torque to nothing
+//              at its free cranking speed (STARTER_FREE_RPM). Sized as makers size them, by the engine: about 0.5 kW
+//              a litre for petrol and 1 kW a litre for a diesel's compression (Bosch Automotive Handbook, starter
+//              selection; probable), with the peak of a straight torque line at half the free speed, P = T0 w0 / 4.
+//              It draws from the 12 V battery in proportion to its torque, at 60% efficiency, from a 45 Ah battery,
+//              and a battery under a fifth of its charge cannot supply it.
+const FIRE_RPM=200, IDLE_VALVE_MAP=0.45, STARTER_FREE_RPM=300, STARTER_SECONDS=3, STARTER_EFF=0.6, BATTERY_AH=45;
+function starterStallTorque(){
+  const kw=(engine.ci?1.0:0.5)*engine.displacement_L;
+  return 4*kw*1000/(STARTER_FREE_RPM*Math.PI/30);
+}
+function starterTorque(rpm){
+  if(!(state.crank>0))return 0;
+  return starterStallTorque()*Math.max(0,1-rpm/STARTER_FREE_RPM)*clamp(state.batterySOC/0.2,0,1);
+}
+function starterAmps(rpm){
+  const T=starterTorque(rpm),v=11.4+1.6*state.batterySOC;
+  return T>0?T*Math.max(rpm,STARTER_FREE_RPM/2)*Math.PI/30/(STARTER_EFF*v):0;   // at a stall it still draws its half-speed current
+}
+function engineStart(){state.ignOn=true;if(!state.firing)state.crank=STARTER_SECONDS;}
+function engineOff(){state.ignOn=false;state.crank=0;}
 // Integrate the dynamic engine: spool → manifold fill → net torque → RPM via inertia.
 function stepEngine(dt){
   if(isElectric())return stepMotorBench(dt);
@@ -962,14 +993,29 @@ function stepEngine(dt){
     if(state.throttle>0.5&&state.nitrousCharge>0)state.nitrousCharge=Math.max(0,state.nitrousCharge-0.07*dt);
     if(state.nitrousCharge<=0)state.nitrousActive=false;
   }
-  const cut=state.rpm>=engine.redline||overrunFuelCut();
+  if(state.firing==null){state.firing=true;state.ignOn=true;state.crank=0;}   // a state set up before build 265: running
+  if(state.firing&&(!state.ignOn||state.blown||state.rpm<0.8*FIRE_RPM))state.firing=false;
+  else if(!state.firing){
+    // A stopped engine has no charge in it: it must turn one whole cycle above the firing speed (two turns of a
+    // four-stroke, one of a two-stroke or a rotary's shaft) to draw one in and compress it before anything burns.
+    state.turns=state.rpm>=FIRE_RPM&&state.ignOn&&!state.blown?(state.turns||0)+state.rpm/60*dt:0;
+    if(state.turns>=1/(engine.chargesPerRev||0.5)){state.firing=true;state.crank=0;state.turns=0;}
+  }
+  if(state.crank>0){state.crank=Math.max(0,state.crank-dt);state.batterySOC=clamp(state.batterySOC-starterAmps(state.rpm)*dt/(BATTERY_AH*3600),0,1);}
+  const cut=!state.firing||state.rpm>=engine.redline||overrunFuelCut();
   // On a closed throttle with the fuel cut this is the engine braking itself: friction and pumping against the
   // vacuum the plate holds (build 149). A fitted 0.14-0.44 x the reference torque was subtracted on top of it, 2-6
   // times the engine's own figure, and on a turbo engine it scaled with the boosted torque: a 2.0 turbo was
   // braking with ~14 bar, which a closed throttle cannot hold.
   let tq=brakeTorqueRaw(state.rpm,state.map,cut);
   tq-=brakeTorque();
-  const omega=state.rpm*2*Math.PI/60+tq/engine.inertia*dt;
+  tq+=starterTorque(state.rpm);
+  const wIdle=engine.idleRpmEff*2*Math.PI/60;
+  if(state.firing&&state.rpm<=engine.idleRpmEff){      // the idle valve: the air that holds the idle, if it can pass it
+    const able=brakeTorqueRaw(Math.max(state.rpm,FIRE_RPM),Math.max(state.map,IDLE_VALVE_MAP),false)-brakeTorque();
+    tq=Math.max(tq,Math.min(able,(wIdle-state.rpm*2*Math.PI/60)*engine.inertia/0.25));
+  }
+  const omega=Math.max(0,state.rpm*2*Math.PI/60+tq/engine.inertia*dt);
   // The share of this step's firing the engine needed (build 235). Off the limiter a firing step adds a full charge's
   // work, and the clamp below throws away whatever overshoots the redline, so the bench bounced off it burning and
   // cutting in turn and burned about half its full-power fuel to hold a speed that, unloaded, needs only its friction.
@@ -981,7 +1027,7 @@ function stepEngine(dt){
     const tqCut=brakeTorqueRaw(state.rpm,state.map,true)-brakeTorque(),need=(wRed-w0)*engine.inertia/dt;
     state.limFrac=clamp((need-tqCut)/Math.max(1e-9,tq-tqCut),0,1);
   }else if(!cut)state.limFrac=1;
-  state.rpm=clamp(omega*60/(2*Math.PI),engine.idleRpmEff,engine.redline);
+  state.rpm=clamp(omega*60/(2*Math.PI),0,engine.redline);
 }
 // Integrate the battery: charge when the alternator out-supplies demand, drain otherwise.
 // System voltage tracks state of charge; a flat battery weakens the spark (see ignVFactor).
@@ -1173,6 +1219,11 @@ function updateEnginePhysics(){
   // AUTO (ECU MAP) mode: the ECU sets the live mixture from its load×rpm map, so the AFR
   // readout, fuel flow, emissions and wear all reflect the mapped value.
   if(engine.afrMode==='auto')state.afr=mappedAFR(state.rpm,map);
+  if(state.firing===false&&!isHybrid()){      // stopped, coasting down or cranking: nothing burns
+    state.fuelCut=true;state.torque=0;state.powerKW=0;state.powerHP=0;state.bmep=0;state.knockRisk=0;
+    state.fuelFlowLph=0;state.heatFuelLph=0;state.bsfc=999;state.thermalEff=0;
+    computeEmissions();return;
+  }
   state.fuelCut=overrunFuelCut()||state.rpm>=engine.redline;
   const r=calcAtRpm(state.rpm,map);
   state.torque=r.torque;state.powerKW=r.powerKW;state.powerHP=r.powerHP;

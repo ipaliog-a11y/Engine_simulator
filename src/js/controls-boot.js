@@ -23,7 +23,9 @@ function bindControls(){
     // The dyno brake only pushes back ABOVE its target, so the engine settles where brake torque
     // equals engine torque: over = torque / brakeGain. Aim that much low, or every point sits
     // 100-200 rpm past where it was meant to be.
-    const aim=op.rpm-Math.max(0,op.tq||0)/Math.max(1e-6,engine.brakeGain);
+    // A point AT the limiter cannot be held: the limiter is a fuel cut, so the engine bounces off it (a whole step
+    // of cut drops a small engine ~200 rpm). Such a point is held 1% under the limiter instead (build 265).
+    const aim=Math.min(op.rpm,0.99*engine.redline)-Math.max(0,op.tq||0)/Math.max(1e-6,engine.brakeGain);
     applyPreset({throttle:op.throttle,load:loadForRpm(aim),afr:op.lambda*engine.stoichAFR,
                  iat:DYNO_STD.iat,coolant:DYNO_STD.coolant,oil:DYNO_STD.oil});
     const what=kind==='power'?'MAX POWER':kind==='torque'?'PEAK TORQUE':'ECO';
@@ -40,7 +42,7 @@ function bindControls(){
   document.getElementById('btnOptimal').addEventListener('click',()=>applyOperatingPoint('torque'));
   document.getElementById('btnMaxPower').addEventListener('click',()=>applyOperatingPoint('power'));
   document.getElementById('btnEco').addEventListener('click',()=>applyOperatingPoint('eco'));
-  document.getElementById('btnReset').addEventListener('click',()=>{setAutoThermal(false);state.engineHealth=1.0;state.blown=false;state.wearCause='';state.coolant=90;state.oil=100;state.batterySOC=1.0;applyPreset({throttle:0.10,load:0.20,afr:14.7,iat:25,coolant:90,oil:100})});
+  document.getElementById('btnReset').addEventListener('click',()=>{state.firing=true;state.ignOn=true;state.crank=0;setAutoThermal(false);state.engineHealth=1.0;state.blown=false;state.wearCause='';state.coolant=90;state.oil=100;state.batterySOC=1.0;applyPreset({throttle:0.10,load:0.20,afr:14.7,iat:25,coolant:90,oil:100})});
   // Starter / Power Off (build 254): hybrid reuses engOn; ICE start-stop is not modeled yet; EV has no engine.
   document.getElementById('btnStarter').addEventListener('click',()=>{
     if(isElectric()){flash(tr('NO ENGINE — ELECTRIC DRIVE'),'warn');return;}
@@ -49,7 +51,9 @@ function bindControls(){
       if(H.engOn){flash(tr('ENGINE ALREADY ON'));return;}
       H.engOn=true;H.dwell=0;flash(tr('STARTER')+' • '+tr('ENGINE ON'));return;
     }
-    flash(tr('STARTER — not yet (ICE start-stop not modeled)'),'warn');
+    if(state.firing){flash(tr('ENGINE ALREADY ON'));return;}
+    if(state.blown){flash(tr('ENGINE BLOWN — RESET TO REBUILD'),'warn');return;}
+    engineStart();flash(state.batterySOC<0.2?tr('STARTER')+' • '+tr('BATTERY TOO FLAT TO CRANK'):tr('STARTER')+' • '+tr('CRANKING'),state.batterySOC<0.2?'warn':undefined);
   });
   document.getElementById('btnPowerOff').addEventListener('click',()=>{
     if(isElectric()){flash(tr('NO ENGINE — ELECTRIC DRIVE'),'warn');return;}
@@ -58,7 +62,8 @@ function bindControls(){
       if(!H.engOn){flash(tr('ENGINE ALREADY OFF'));return;}
       H.engOn=false;H.dwell=0;flash(tr('POWER OFF')+' • '+tr('ENGINE OFF'));return;
     }
-    flash(tr('POWER OFF — not yet (ICE start-stop not modeled)'),'warn');
+    if(!state.ignOn&&!state.firing){flash(tr('ENGINE ALREADY OFF'));return;}
+    engineOff();flash(tr('POWER OFF')+' • '+tr('ENGINE OFF'));
   });
   document.getElementById('btnAutoThermal').addEventListener('click',()=>setAutoThermal(!autoThermal));
   document.getElementById('btnWear').addEventListener('click',()=>{

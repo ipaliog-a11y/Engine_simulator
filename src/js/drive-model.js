@@ -32,6 +32,7 @@
 //   Drive     the engine's full-load curve by the pedal, its own overrun torque off it, its inertia, a clutch that
 //             slips (capacity 1.5 x peak torque), the gearbox with its shift time, the differential (open: equal
 //             torque; limited-slip: torque moved to the slower wheel by its lock), all-wheel drive split evenly.
+//   Stall     below the speed it can fire at, the engine stops; a starter or a bump start brings it back.
 //   Brakes    the hydraulics' own force and front share; ABS and traction control as wheel-slip limits when fitted.
 //   Aero      drag and downforce on the square of the speed; rolling resistance by the load.
 //
@@ -56,6 +57,7 @@ function driveCar(){
     shiftTime:v.shiftCut||0,ev:!!v.ev,tc:!!v.tc,abs:true,
     rpm:curve.map(p=>p.rpm),tq:curve.map(p=>p.tq),ov:pt.overrunTable(rl),idle:pt.idleRpm()||0,redline:rl,
     Ie:pt.inertia()||0.15,clutchCap:1.5*peak,
+    fireRpm:FIRE_RPM,fireTurns:1/(engine.chargesPerRev||0.5),starterT0:v.ev?0:starterStallTorque(),starterFree:STARTER_FREE_RPM,   // stalling and starting, as on the bench
     // where a driver holds the engine to pull away flat out: at its torque peak, no higher than 60% of the redline
     launchRpm:Math.min(curve.reduce((m,p)=>p.tq>m.tq?p:m,curve[0]).rpm,0.6*rl),
     brakeF:brakeForceCap(v),brakeFront:v.brakeFrontShare,
@@ -65,7 +67,7 @@ function driveCar(){
 // A car at rest, in neutral for a clutch car until the driver asks for a gear.
 function driveState(car){
   return {t:0,x:0,y:0,psi:0,vx:0,vy:0,yaw:0,w:[0,0,0,0],we:car.idle*Math.PI/30,gear:1,shiftT:0,
-    axF:0,ayF:0,al:[0,0,0,0],abs:[1,1,1,1],tcF:1,clF:1,pull:false,
+    axF:0,ayF:0,al:[0,0,0,0],abs:[1,1,1,1],tcF:1,clF:1,pull:false,firing:true,
     ax:0,ay:0,Fz:[0,0,0,0],kappa:[0,0,0,0],alpha:[0,0,0,0],Fx:[0,0,0,0],Fy:[0,0,0,0],rpm:car.idle,speed:0,delta:0};
 }
 function driveLerp(xs,ys,x){
@@ -146,7 +148,12 @@ function stepCar(car,s,u,dt){
     const hold=Math.max(-30,Math.min(8,12*(1-worst/car.slipOpt)));
     const pulling=!car.ev&&u.clutch==null&&s.gear===1&&s.shiftT<=0&&s.we-wd*car.ratios[0]*car.fd>1;   // the clutch is still slipping from rest
     if(car.tc&&!pulling){s.tcF=Math.max(0.05,Math.min(1,s.tcF+hold*h));thr*=s.tcF;}else s.tcF=1;
-    const rpm=s.we*30/Math.PI;let Te=driveEngine(car,s.shiftT>0?0:thr,rpm);   // the driver lifts for a shift
+    const rpm=s.we*30/Math.PI;
+    // An engine turning too slowly to fire stalls: then it is only its own drag, until the starter (u.starter) or
+    // the wheels through the clutch (a bump start) turn it fast enough again.
+    if(!car.ev){if(s.firing&&rpm<0.8*car.fireRpm)s.firing=false;
+      else if(!s.firing){s.turns=rpm>=car.fireRpm?(s.turns||0)+rpm/60*h:0;if(s.turns>=car.fireTurns){s.firing=true;s.turns=0;}}}   // one whole cycle to draw and compress a charge
+    let Te=s.firing||car.ev?driveEngine(car,s.shiftT>0?0:thr,rpm):-(car.ov[0]||0)*Math.tanh(s.we/5)+(u.starter?car.starterT0*Math.max(0,1-rpm/car.starterFree):0);   // the driver lifts for a shift
     let Tw=0;                                                              // torque at the driven wheels, all of them (Nm)
     if(car.ev){Tw=driveEngine(car,thr,Math.abs(wd)*ratio*30/Math.PI)*ratio*car.eff;s.we=Math.abs(wd)*ratio;}
     else{
