@@ -1,10 +1,11 @@
-// The top-down circuit is a place, not a flat ribbon (build 266).
+// The hotlap and the race use the oblique chase, not a flat map (build 266).
 //
-// WHY THIS EXISTS. TRACK and RACE drew the circuit as one dark stroke. The map should show the ground
-// around it, the corner runoff and the rail, without moving the lap.
+// WHY THIS EXISTS. The circuit has to read as the draft: the same metres ahead of the car take less
+// screen than the same metres to the side, because the view is pitched, and the ground around the
+// car is painted. The lap solver is not involved.
 // What must hold:
-//   · drawing Ashdown paints grass, tarmac and a kerb, and does not throw;
-//   · the same draw leaves the car sprite able to paint;
+//   · twenty metres to the side of the car lands further across the screen than twenty metres ahead;
+//   · painting the chase puts grass in the frame and does not throw;
 //   · no page errors.
 import { chromium } from './pw.mjs';
 import { fileURLToPath, pathToFileURL } from 'url';
@@ -15,33 +16,37 @@ const page = await browser.newPage({ viewport: { width: 900, height: 600 } });
 const errors = [], fails = [];
 page.on('pageerror', e => errors.push('pageerror: ' + e.message));
 await page.goto(pathToFileURL(path.join(repo, 'index.html')).href, { waitUntil: 'networkidle' });
-await page.waitForTimeout(200);
+await page.waitForTimeout(400);
 const R = await page.evaluate(() => {
-  const T = buildTrack('tech');
+  const src = buildTrack('tech');
+  const look = sceneBind(src);
+  let peak = look.pts[0];
+  for (const p of look.pts) if (Math.abs(p.curv) > Math.abs(peak.curv)) peak = p;
+  const car = { x: peak.x, y: peak.y, hd: peak.hd, curv: peak.curv, col: '#d81f32', brk: true, pos: 1 };
+  const cam = sceneChase(car, 900, 600, 14, 0.70);
+  const here = sceneProject(cam, car.x, car.y);
+  const ahead = sceneProject(cam, car.x + Math.cos(car.hd) * 20, car.y + Math.sin(car.hd) * 20);
+  const side = sceneProject(cam, car.x + Math.cos(car.hd + Math.PI / 2) * 20, car.y + Math.sin(car.hd + Math.PI / 2) * 20);
+  const da = Math.hypot(ahead.sx - here.sx, ahead.sy - here.sy);
+  const ds = Math.hypot(side.sx - here.sx, side.sy - here.sy);
   const c = document.createElement('canvas');
-  c.width = 720; c.height = 520;
+  c.width = 900; c.height = 600;
   const g = c.getContext('2d');
-  const sc = 0.72;
-  const px = q => 30 + (q.x - T.minX) * sc;
-  const py = q => 30 + (q.y - T.minY) * sc;
-  drawTrackScene(g, T, px, py, sc);
+  sceneWeather('dry', 0);
+  scenePaint(g, cam, { cars: [car], blur: false });
   const d = g.getImageData(0, 0, c.width, c.height).data;
-  let grass = 0, tar = 0, kerb = 0, rail = 0;
-  for (let i = 0; i < d.length; i += 16) {
+  let grass = 0, dark = 0;
+  for (let i = 0; i < d.length; i += 32) {
     const r = d[i], gv = d[i + 1], b = d[i + 2];
-    if (gv > 70 && gv > r + 12 && gv > b) grass++;
-    if (r < 48 && gv < 52 && b < 60 && r > 8) tar++;
-    if (r > 160 && gv < 90 && b < 90) kerb++;
-    if (r > 160 && gv > 160 && b > 165 && Math.abs(r - b) < 20) rail++;
+    if (gv > 60 && gv > r + 8 && gv > b - 10) grass++;
+    if (r < 70 && gv < 75 && b < 80) dark++;
   }
-  drawTopCar(g, 80, 80, 0.4, '#d81f32', 'thr');
-  return { grass, tar, kerb, rail, n: T.pts.length, nx: T.pts[0].nx != null, kerbs: !!T.kerbs };
+  return { da, ds, grass, dark, pitch: cam.pitch, n: look.pts.length };
 });
 await browser.close();
-console.log(`ashdown ${R.n} pts, normals ${R.nx}, kerbs ${R.kerbs}; grass ${R.grass}, tarmac ${R.tar}, kerb ${R.kerb}, rail ${R.rail}`);
-if (!R.nx || !R.kerbs) fails.push('the built circuit has no normals or kerbs to draw from');
-if (R.grass < 200) fails.push('the ground around the circuit did not paint');
-if (R.tar < 30) fails.push('the tarmac did not paint');
-if (R.kerb < 5) fails.push('the corner kerb did not paint');
+console.log(`pitch ${R.pitch}; 20 m ahead ${R.da.toFixed(1)} px, aside ${R.ds.toFixed(1)} px; grass ${R.grass}, dark ${R.dark}; ${R.n} pts`);
+if (!(R.pitch < 0.95)) fails.push('the camera is not pitched');
+if (!(R.ds > R.da * 1.15)) fails.push('ahead and aside cover the same screen, so the view is still flat');
+if (R.grass < 80) fails.push('the ground around the car did not paint');
 if (errors.length) fails.push(errors.join('; '));
 if (fails.length) { console.error(fails.join('\n')); process.exit(1); }

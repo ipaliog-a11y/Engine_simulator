@@ -20,15 +20,17 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 Working toward **v1.0 — every number derived, not fitted.**
 
-### The map draws the circuit, not just the ribbon (build 266)
+### The race and the hotlap use the chase view (build 266)
 
-TRACK and RACE drew the lap as one dark stroke on an empty background. The same fitted top-down view now shows the ground around it.
+TRACK and RACE showed the whole circuit as a flat ribbon. They now look down the road the way the draft did: a pitched camera behind the car, with the ground, the walls and the weather painted on. The lap and the race are the same numbers as before.
 
-- **Grass** tiles with the map, so it stays put when you pan. A **gravel verge** runs both sides. Where the radius is under 90 m the outside of the corner gets a **green runoff**, and under 70 m a **deeper gravel trap**.
-- The **red and white kerbs** are unchanged, and still the 0.8 m ramp the lap uses. **Sausage blocks** are drawn on the inside of those corners. They are paint only: the car does not ride them.
-- An **armco** follows the +normal side, with a **distance board** every 100 m of the sampled centreline. Tight corners get a **tyre stack** and an **orange flag**. None of these positions are surveyed.
-- The car sprite has a **stripe** and a short **shadow**. On a solved lap, **brake rubber** is drawn where the limit is the brakes. In the wet, the rain streaks vary in length and each car throws a short **spray**.
-- Left open: no night, and no chase camera. The race has dry, damp and wet, and the map stays the one you zoom and pan. A real oblique camera would break that.
+- The camera sits behind the car. Twenty metres ahead covers less of the screen than twenty metres to the side. Scroll still zooms that view; a drag still slides it. In a race with no car selected, the camera sits further back so the cars around the leader stay in frame.
+- Grass, asphalt and gravel are painted in world space, so they stay put when the car moves. Tight corners get a green runoff, a deeper gravel trap, sausage blocks and the red-and-white kerb. An armco, trees, distance boards, tyre stacks and an orange flag dress the outside. None of that is surveyed, and the car does not ride it.
+- The solved lap's limit is still drawn on the racing line, in the same colours. The instruments, the clock and the timing tower are unchanged.
+- Wet, damp, rain and a drying line follow the race weather. Rain, spray and a darker road come with them. A dry hotlap stays dry.
+- Left open: there is no night. The textures are baked into the page so it still opens from a file and a saved picture is not blocked.
+
+### The engine can stall, stop and be started (build 265)
 
 ### The engine can stall, stop and be started (build 265)
 
