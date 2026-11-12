@@ -132,7 +132,9 @@ temp is out of range, <b>BATT</b> when the 12&nbsp;V side is low, and on a hybri
 drive mode (and warns when the engine is off). <b>OIL P</b> (oil pressure) and <b>FAULT</b> (codes)
 are placeholders — those systems are not modeled yet, so the lamps stay dim.<br>
 <b>STARTER · POWER OFF</b> — on a hybrid they start and stop the engine (the same <i>engOn</i> the
-drive mode uses). On a plain ICE they flash that start-stop is not modeled yet; on a pure EV they
+drive mode uses). On a combustion engine POWER OFF cuts the ignition: the burning stops and the engine
+coasts down to rest on its own friction. STARTER cranks it on the 12 V battery; it fires after one whole
+cycle at cranking speed and settles at idle. A flat battery cannot crank it. On a pure EV they
 are disabled (there is no engine).
 </div>
 <div class="guide-body" data-gk="opButtons">

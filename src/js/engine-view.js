@@ -124,6 +124,7 @@ function drawEngine(dt){
   if(state.blown)msg=tr('ENGINE FAILURE')+' — '+state.wearCause+' • '+tr('REBUILD WITH BUILD & DYNO');
   else if(state.wearCause)msg=tr('DAMAGE')+': '+state.wearCause+' — '+tr('HEALTH')+' '+Math.round(state.engineHealth*100)+'%';
   else if(state.nitrousActive&&nitrousImep()>0)msg='NITROUS! • '+state.powerHP.toFixed(0)+' HP • '+tr('BOTTLE')+' '+Math.round(state.nitrousCharge*100)+'%';
+  else if(!isHybrid()&&state.firing===false)msg=(state.crank>0?tr('CRANKING'):state.rpm>1?tr('COASTING DOWN'):tr('STOPPED — PRESS STARTER'))+' • '+Math.round(state.rpm)+' RPM';
   else msg=(state.powerHP>5?tr('RUNNING'):tr('IDLE'))+' • '+(Math.round(state.powerHP)||0)+' HP • '+(Math.round(state.torque)||0)+' Nm • '
     +tr('COOL')+' '+Math.round(state.coolant)+'C • '+tr('HEALTH')+' '+Math.round(state.engineHealth*100)+'%';
   if(state.nitrousActive&&nitrousImep()>0)ctx.fillStyle='#ff66cc';

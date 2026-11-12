@@ -1,12 +1,12 @@
 // Dashboard lamps and starter/power stubs (build 254).
 //
 // WHY THIS EXISTS. LIVE/DYNO gained telltale lamps and Starter / Power Off controls. Oil pressure and
-// fault codes are not modeled, so those lamps must stay dim stubs. ICE start-stop is not modeled, so
-// the buttons only flash on a plain engine; a hybrid reuses engOn. What must hold:
+// fault codes are not modeled, so those lamps must stay dim stubs. Since build 265 the buttons stop and start a
+// plain engine (test169 checks the physics); a hybrid reuses engOn. What must hold:
 //   · the lamp row and both buttons show on LIVE and DYNO;
 //   · OIL P and FAULT stay lamp-stub and never take on/warn/danger in normal use;
 //   · COOL goes danger when coolant is forced hot; BATT goes danger when voltage is forced low;
-//   · ICE Starter / Power Off flash and leave rpm unchanged;
+//   · on a running ICE, Starter says it is already on; Power Off cuts the ignition (the engine stops firing);
 //   · on a hybrid, Power Off clears engOn and Starter sets it;
 //   · at phone width the page does not scroll sideways.
 import { chromium } from './pw.mjs';
@@ -65,12 +65,15 @@ const ice = await page.evaluate(() => {
   document.getElementById('btnStarter').click();
   const afterStart = { rpm: state.rpm, status: document.getElementById('status').textContent };
   document.getElementById('btnPowerOff').click();
-  return { rpm0, afterStart, afterOff: { rpm: state.rpm, status: document.getElementById('status').textContent } };
+  stepEngine(0.01);
+  const r = { rpm0, afterStart, afterOff: { firing: state.firing, ign: state.ignOn, status: document.getElementById('status').textContent } };
+  state.firing = true; state.ignOn = true; state.crank = 0; state.rpm = rpm0;      // running again for the checks below
+  return r;
 });
-console.log(`== ICE stubs: rpm ${ice.rpm0} → start "${ice.afterStart.status}" → off "${ice.afterOff.status}" ==`);
-if (ice.afterStart.rpm !== ice.rpm0 || ice.afterOff.rpm !== ice.rpm0) fails.push('ICE starter/power changed rpm');
-if (!/not yet/i.test(ice.afterStart.status)) fails.push('ICE starter did not flash not-yet');
-if (!/not yet/i.test(ice.afterOff.status)) fails.push('ICE power off did not flash not-yet');
+console.log(`== ICE: rpm ${ice.rpm0} → start "${ice.afterStart.status}" → off "${ice.afterOff.status}" ==`);
+if (ice.afterStart.rpm !== ice.rpm0) fails.push('Starter on a running engine changed its rpm');
+if (!/already on/i.test(ice.afterStart.status)) fails.push('Starter on a running engine did not say it is on');
+if (ice.afterOff.firing || ice.afterOff.ign) fails.push('ICE Power Off did not cut the ignition');
 
 const hyb = await page.evaluate(() => {
   loadVehiclePreset(HYB_VEHICLE_PRESETS.find(x => x.name.includes('Ioniq')));
