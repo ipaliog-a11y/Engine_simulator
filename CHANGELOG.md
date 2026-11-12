@@ -31,7 +31,7 @@ lap solver's speeds: the circuits have crests and dips that load and unload the 
 - **Past 1 g of crest the wheels carry nothing.** The lap caps this term at 0.6 of the weight (`KVCAP`, in the
   register); the stepped car needs no cap.
 - **Checked** in `test168`: a 5% fall adds 0.47 m/s² to a coasting car (g × 0.05 is 0.49; the turning wheels'
-  inertia takes the rest); a half-g crest and dip move the wheel loads to 0.51 and 1.49 of their flat-road value.
+  inertia and the extra air drag take the rest); a half-g crest and dip move the wheel loads to 0.51 and 1.49 of their flat-road value.
 - **Nothing else moves:** the fingerprint is identical to build 267 (5212 values).
 - **Left open:** banking, bumps and kerbs; a car in the air keeps its attitude. A caller must supply the road: the
   driver that follows a circuit and feeds it (with countersteer) is the next build.
