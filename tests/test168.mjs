@@ -6,6 +6,8 @@
 //     a stop from 100 km/h at 0.85-1.25 of the tyres' braking grip, a skidpad at 0.80-1.02 of their lateral grip;
 //   · the car does what the lap cannot: lifting mid-corner tightens the line; power spins a rear-driver and pushes
 //     a front-driver wide; without ABS the wheels lock and the stop is longer;
+//   · the tyre's cornering stiffness per unit load falls with the load as measured tyres' does (build 267): at 2/3
+//     and 4/3 of its nominal load, within 0.07 of Milliken's race tyre (1.09 and 0.80 of the nominal figure);
 //   · a car is plain data: through JSON and back it drives to the same place, to the last digit;
 //   · stepCar reads only its arguments: nothing of the page or of this app's globals;
 //   · no page errors.
@@ -70,6 +72,7 @@ const R = await page.evaluate(() => {
       for (let i = 0; i < 800; i++) stepCar(c, s, { throttle: 1, steer: i > 400 ? 0.2 : 0 }, 0.01); return [s.x, s.y, s.psi, s.vx, s.rpm]; };
     out.same = JSON.stringify(run(car)) === JSON.stringify(run(copy)); out.fields = Object.values(car).every(v => ['number', 'string', 'boolean'].includes(typeof v) || Array.isArray(v));
     const s = driveState(car), t0 = performance.now(); for (let i = 0; i < 2000; i++) stepCar(car, s, { throttle: 0.5 }, 0.01); out.ms = performance.now() - t0; }
+  { const car = load('Mazda MX-5'), k = x => driveTyre(car, x * car.FzRef, 0, 1e-4, false)[1] / (x * car.FzRef); out.ccLoad = [k(2 / 3) / k(1), k(4 / 3) / k(1)]; }
   for (const f of [stepCar, driveTyre, driveEngine, driveLerp, driveState]) out.src[f.name] = f.toString();
   return out;
 });
@@ -92,6 +95,8 @@ if (!(R.fwd.aF > R.fwd.aR && R.fwd.r > 31)) fails.push('full power did not push 
 console.log(`no ABS: ${R.noAbs.d.toFixed(1)} m, wheels ${R.noAbs.lock ? 'locked' : 'turning'}; ABS ${R.abs.d.toFixed(1)} m, wheels ${R.abs.lock ? 'locked' : 'turning'}`);
 if (!R.noAbs.lock || R.abs.lock) fails.push('ABS: the wheels lock with it, or do not lock without it');
 if (!(R.noAbs.d > R.abs.d)) fails.push('the stop without ABS is not longer');
+console.log(`cornering stiffness per load at 2/3 and 4/3 of nominal: ${R.ccLoad.map(x => x.toFixed(2)).join(', ')} (measured race tyre 1.09, 0.80)`);
+if (Math.abs(R.ccLoad[0] - 1.09) > 0.06 || Math.abs(R.ccLoad[1] - 0.80) > 0.07) fails.push('the cornering stiffness does not fall with load as measured');
 if (!R.same) fails.push('a car through JSON does not drive to the same place');
 if (!R.fields) fails.push('driveCar() holds something that is not plain data');
 for (const [n, src] of Object.entries(R.src)) {

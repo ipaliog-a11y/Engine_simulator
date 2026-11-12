@@ -20,6 +20,23 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 Working toward **v1.0 — every number derived, not fitted.**
 
+### A loaded tyre is softer for its load: the cornering stiffness falls as the load rises (build 267)
+
+A tyre's cornering stiffness was one share of its load whatever it carried. Measured tyres give less per unit load
+the harder they are pressed, so a cornering car's loaded outer tyres give less than its inner tyres lose.
+
+- **The shape is the Magic Formula's own** (Pacejka ch. 4), with the one coefficient the measured road tyre's file
+  gives for it (PKY2 2.03): stiffness per load = the compound's figure x (p² + 1) / (p² + x²), x the load over the
+  tyre's nominal load. Nominal is taken as the load the compound's grip is quoted at, 60% of the rated load (probable).
+- **Checked on Milliken's race tyre** (0.54 at 1350 lbf): 0.61 and 0.47 at 900 and 1800 lbf, measured 0.59 and 0.43.
+- **The stepped car's tyre** uses it per wheel. **The lap's cornering drag** now sums the four tyres with the side
+  load transfer (shared evenly between the axles) in place of four tyres at the mean load.
+- **What moved:** laps −0.18% to +0.22%, mean +0.02% (BMW M3 E46 74.94 to 75.01 s); race fuel per lap −0.2 to
+  +0.5%. Light cars on big tyres gain, heavy cars on small ones lose. Nothing else.
+- **Left open:** one load term for every compound (the race tyre's two points alone give 1.43 and 2.35); the road
+  file's nominal load is still unconfirmed (searched again, not found). `TYRE_CC` stays in the register (27 open).
+  The lap's drag ignores which axle carries the transfer. Next: the road's height, then a driver that countersteers.
+
 ### A tyre's cornering stiffness comes from its compound, from measured tyres (build 266)
 
 Every tyre had one cornering stiffness, 0.2 of its load per degree of slip (a textbook's round figure). The stepped
