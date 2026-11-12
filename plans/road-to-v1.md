@@ -96,7 +96,8 @@ it needs must load without the page (no DOM, no canvas), so a separate game app 
    the solver, and slid the rear-drivers off at the first fast corner, even at 94% of the speeds. Two causes found:
    the circuit has crests and dips that load the tyres and the stepped car's road is flat; and with the lap's
    cornering stiffness (0.2/deg of the load) the brush tyre peaks at 13.7 deg of slip, where a road tyre peaks at 6-8,
-   so the car is soft and draggy at the limit. Next: a cornering stiffness sourced per compound, the road's height
+   so the car is soft and draggy at the limit. *Build 266:* the cornering stiffness is per compound (a measured road tyre 0.28/deg, a race tyre 0.54; sport
+   and semi set between them, in the register as `TYRE_CC`). Next: the stiffness falling with load, the road's height
    under the car, then a driver that countersteers.
    The original aim: the stepped car, driven round the solved racing line by a simple driver, laps within a few percent of
    the lap solver; a skidpad and a lane change give sensible numbers. One headless test.
