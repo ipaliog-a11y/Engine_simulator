@@ -10,6 +10,9 @@
 //   stepCar(car, s, u, dt)     advances state s by dt under inputs u. It reads only its arguments and Math: no page,
 //                              no canvas, no globals of this app. A separate game can load this file and a car's JSON.
 //
+//   driveLine(lap), driveDriver(car, s, line, d)   a lap's racing line as plain data, and a driver that takes the car
+//                              round it with the wheel and the pedals (build 269). See above driveDriver.
+//
 // WHAT IS MODELLED
 //   Body      three freedoms in the plane: forward and sideways speed and yaw. m(vx' - vy r) = sum Fx, m(vy' + vx r) =
 //             sum Fy, Izz r' = sum of the tyre forces' moments (Milliken & Milliken, RCVD ch. 5). Izz = m a b, the yaw
@@ -97,14 +100,61 @@ function driveEngine(car,thr,rpm){
   if(!car.ev&&rpm<car.idle)T+=Math.min(0.4*wot+ov,(car.idle-rpm)*0.5);
   return T;
 }
+// A lap's racing line as plain data for the driver below: where it runs, how fast the lap solver takes each point, and
+// the road's height there. lap is what simulateLap() returns.
+function driveLine(lap){return lap.track.line.map((q,i)=>({x:q.x,y:q.y,v:lap.v[i],grade:q.sinT||0,kv:q.kv||0}));}
+// A DRIVER FOR A LINE (build 269): the inputs that take the car round a line of points {x, y, v, grade, kv}. It reads
+// only its arguments (d is its memory: {i} the point it is at; it leaves d.e, how far left of the line the front
+// axle is). What it does is a driver's manner, not the car's physics; its settings are in the register (DRIVE_DRIVER).
+//   Wheel    it points the FRONT TYRES, not the car: at the direction the front axle is travelling, plus the slip
+//            angle it wants from them. That is the path's direction against the axle's travel and a pull back to the
+//            line that fades with speed (the two terms of Stanley's steering law: Hoffmann et al., ACC 2007), plus the
+//            slip the corner just ahead needs (the front's share of m v^2 / R over its cornering stiffness). Never
+//            more than a little past the angle the tyre peaks at: more lock past the peak only scrubs.
+//            Because the reference is where the axle is going, a tail that steps out is met with opposite lock with
+//            no extra rule; and once the rear tyres are past their peak, the front's slip is taken off by as much,
+//            through zero if need be, so the front stops pulling the nose in while the rear recovers.
+//   Pedals   by the force the plan asks of the tyres: the line's own change of speed, a correction for the speed
+//            error, and what the air, the tyres and the slope take. Throttle is that force over what the engine has in
+//            this gear; brake is the rest over what the brakes have. So a steady corner is held on part throttle, not
+//            coasted on the engine's drag. With the rear past its peak the plan is dropped for a neutral pedal.
+function driveDriver(car,s,line,d){
+  const N=line.length,L=car.a+car.b,g=DRIVE_G,wrap=x=>x-2*Math.PI*Math.round(x/(2*Math.PI));
+  const PREVIEW=0.15,PULL=1.5,PAST=1.2,SPEED=1;        // s of road read ahead; 1/s to the line; of the peak slip; 1/s on the speed error
+  const fx=s.x+car.a*Math.cos(s.psi),fy=s.y+car.a*Math.sin(s.psi);
+  let bi=d.i||0,bd=1e18;                                 // the nearest point, looked for ahead of the last one
+  for(let k=0;k<40;k++){const j=((d.i||0)+k)%N,q=line[j],dd=(q.x-fx)*(q.x-fx)+(q.y-fy)*(q.y-fy);if(dd<bd){bd=dd;bi=j;}}
+  d.i=bi;
+  const p0=line[bi],p1=line[(bi+1)%N],hp=Math.atan2(p1.y-p0.y,p1.x-p0.x),ds=Math.hypot(p1.x-p0.x,p1.y-p0.y)||1;
+  const e=-(fx-p0.x)*Math.sin(hp)+(fy-p0.y)*Math.cos(hp);d.e=e;
+  const la=Math.max(1,Math.round(s.vx*PREVIEW/ds)),c=line[(bi+la)%N],c1=line[(bi+la+1)%N],c0=line[(bi+la-1+N)%N];
+  const kap=wrap(Math.atan2(c1.y-c.y,c1.x-c.x)-Math.atan2(c.y-c0.y,c.x-c0.x))/(Math.hypot(c.x-c0.x,c.y-c0.y)||1);
+  // ---- the wheel
+  const vf=Math.atan2(s.vy+car.a*s.yaw,Math.max(1,s.vx));               // where the front axle is going, against the car
+  const pkF=Math.atan(3*car.muF/car.cc),pkR=Math.atan(3*car.mu/car.cc);  // the slip angles the tyres peak at
+  const need=s.vx*s.vx*kap/(g*car.cc);                                  // (m b/L) v^2 kap over the front's C = cc (m g b/L)
+  const aR=(s.alpha[2]+s.alpha[3])/2,over=Math.sign(aR)*Math.max(0,Math.abs(aR)-pkR);
+  const want=wrap(hp-s.psi-vf)+need-Math.atan2(PULL*e,3+s.vx)-over;
+  const delta=vf+Math.max(-PAST*pkF,Math.min(PAST*pkF,want));
+  // ---- the pedals
+  const ease=Math.max(0,Math.min(1,2*(Math.max(Math.abs(s.alpha[2]),Math.abs(s.alpha[3]))/pkR-1)));   // rear past its peak: off the plan by 1.5 x
+  const plan=(p1.v*p1.v-p0.v*p0.v)/(2*ds)+SPEED*(p0.v-s.vx);
+  const F=car.m*plan*(1-ease)+0.5*DRIVE_RHO*car.cdA*s.vx*s.vx+car.crr*car.m*g+car.m*g*p0.grade;
+  const k=s.gear>0?car.ratios[s.gear-1]*car.fd*car.eff/car.r:0,wot=driveEngine(car,1,s.rpm),ov=-driveEngine(car,0,s.rpm);
+  let thr=k>0?(F/k+ov)/Math.max(1,wot+ov):0,brk=0;
+  if(thr<0){brk=Math.min(1,-(F+ov*k)/car.brakeF);thr=0;}
+  return {steer:delta/car.steerLock,throttle:Math.min(1,thr),brake:brk,road:{sinT:p0.grade,kv:p0.kv}};
+}
 // Advance s by dt (s) under u = {steer -1..1 (left positive), throttle 0..1, brake 0..1, clutch 0..1 or null for an
-// automatic clutch, gear 1.. or null for automatic shifts}. Returns s, with what happened in it for the instruments.
+// automatic clutch, gear 1.. or null for automatic shifts, road {sinT: the grade along the car, positive uphill; kv: the
+// road's vertical curvature along it, 1/m, negative over a crest} or nothing for a flat road}. Returns s, with what happened in it for the instruments.
 function stepCar(car,s,u,dt){
   const H=0.001,n=Math.max(1,Math.ceil(dt/H)),h=dt/n,g=DRIVE_G,L=car.a+car.b;
   const xw=[car.a,car.a,-car.b,-car.b],yw=[car.tF/2,-car.tF/2,car.tR/2,-car.tR/2];
   const drv=car.drive==='awd'?[1,1,1,1]:car.drive==='fwd'?[1,1,0,0]:[0,0,1,1],nd=drv[0]+drv[1]+drv[2]+drv[3];
   const steer=Math.max(-1,Math.min(1,u.steer||0)),brake=Math.max(0,Math.min(1,u.brake||0));
   let thr=Math.max(0,Math.min(1,u.throttle||0));
+  const rd=u.road||{},sinT=rd.sinT||0,cosT=Math.sqrt(Math.max(0,1-sinT*sinT)),kv=rd.kv||0;
   for(let k=0;k<n;k++){
     const v=Math.hypot(s.vx,s.vy),delta=steer*car.steerLock,cd=Math.cos(delta),sd=Math.sin(delta);
     // ---- gearbox
@@ -124,7 +174,10 @@ function stepCar(car,s,u,dt){
     }
     const ratio=s.gear>0?car.ratios[Math.min(top,s.gear)-1]*car.fd:0;
     // ---- loads
-    const down=0.5*DRIVE_RHO*car.clA*v*v,WF=car.m*g*car.b/L+down*car.aeroBal,WR=car.m*g*car.a/L+down*(1-car.aeroBal);
+    // the road under the car: on a grade the weight presses with its cosine, and over a crest (kv < 0) or through a
+    // dip (kv > 0) the car's own speed adds v^2 kv, as the lap has it. With nothing left the car is in the air.
+    const gz=Math.max(0,g*cosT+s.vx*s.vx*kv);
+    const down=0.5*DRIVE_RHO*car.clA*v*v,WF=car.m*gz*car.b/L+down*car.aeroBal,WR=car.m*gz*car.a/L+down*(1-car.aeroBal);
     const dX=car.m*s.axF*car.h/L,dYF=car.lltdF*car.m*s.ayF*car.h/car.tF,dYR=(1-car.lltdF)*car.m*s.ayF*car.h/car.tR;
     const Fz=s.Fz;
     Fz[0]=Math.max(0,(WF-dX)/2-dYF);Fz[1]=Math.max(0,(WF-dX)/2+dYF);Fz[2]=Math.max(0,(WR+dX)/2-dYR);Fz[3]=Math.max(0,(WR+dX)/2+dYR);
@@ -198,7 +251,7 @@ function stepCar(car,s,u,dt){
       }
     }
     // ---- body
-    const drag=0.5*DRIVE_RHO*car.cdA*v*s.vx,ax=(FX-drag)/car.m,ay=FY/car.m;
+    const drag=0.5*DRIVE_RHO*car.cdA*v*s.vx,ax=(FX-drag)/car.m-g*sinT,ay=FY/car.m;
     s.vx+=h*(ax+s.vy*s.yaw);s.vy+=h*(ay-s.vx*s.yaw);s.yaw+=h*MZ/car.Izz;
     if(brake>0&&thr===0&&Math.abs(s.vx)<0.05&&Math.abs(s.vy)<0.05){s.vx=0;s.vy=0;s.yaw=0;}   // held on the brakes
     s.psi+=h*s.yaw;const c=Math.cos(s.psi),sn=Math.sin(s.psi);

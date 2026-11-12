@@ -98,7 +98,10 @@ it needs must load without the page (no DOM, no canvas), so a separate game app 
    cornering stiffness (0.2/deg of the load) the brush tyre peaks at 13.7 deg of slip, where a road tyre peaks at 6-8,
    so the car is soft and draggy at the limit. *Build 266:* the cornering stiffness is per compound (a measured road tyre 0.28/deg, a race tyre 0.54; sport
    and semi set between them, in the register as `TYRE_CC`). *Build 267:* it falls with load, by the measured road tyre's
-   own curve. Next: the road's height under the car, then a driver that countersteers.
+   own curve. *Build 268:* `stepCar` takes the road's grade and vertical
+   curvature. *Build 269:* `driveDriver` takes five cars round the line within 4% of the
+   solver, no spins, and catches a slide (`tests/test170.mjs`). Left: a lane change, and the 2-4% (the driver follows
+   the plan, it does not look for the limit).
    The original aim: the stepped car, driven round the solved racing line by a simple driver, laps within a few percent of
    the lap solver; a skidpad and a lane change give sensible numbers. One headless test.
 6. The body's dimensions every preset needs for 3D later (length, width, height, overhangs, wheel and tyre size)
