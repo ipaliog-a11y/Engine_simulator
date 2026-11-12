@@ -474,7 +474,6 @@ function topCarSprite(col,state){
   const b=new PixBuf(16,10),hi=shadeHex(col,0.35),lo=shadeHex(col,-0.35);
   b.rect(2,1,3,1,'#1c1c26');b.rect(10,1,3,1,'#1c1c26');b.rect(2,8,3,1,'#1c1c26');b.rect(10,8,3,1,'#1c1c26');   // tyres
   b.rect(1,2,14,6,col);b.rect(1,2,14,1,hi);b.rect(1,7,14,1,lo);
-  b.rect(3,4,8,1,'#f4f1ea');                                       // a stripe that still reads at map size
   b.rect(9,3,2,4,'#1a2a3a');b.rect(4,3,1,4,'#1a2a3a');               // windscreen, rear glass
   b.rect(5,3,4,4,shadeHex(col,0.15));                                 // roof
   b.rect(15,2,1,2,'#fff2a8');b.rect(15,6,1,2,'#fff2a8');              // headlamps
@@ -484,8 +483,6 @@ function topCarSprite(col,state){
 }
 function drawTopCar(g,x,y,heading,col,state){
   const spr=topCarSprite(col,state),s=1.5;
-  g.save();g.translate(x+2,y+2);g.rotate(heading);g.fillStyle='rgba(0,0,0,0.4)';
-  g.fillRect(-spr.width*s/2,-spr.height*s/2,spr.width*s,spr.height*s);g.restore();
   g.save();g.translate(x,y);g.rotate(heading);g.imageSmoothingEnabled=false;
   if(state!=='coast'){g.fillStyle=state==='brk'?'rgba(255,85,85,0.35)':'rgba(0,255,136,0.35)';
     g.fillRect(-spr.width*s/2-2,-spr.height*s/2-2,spr.width*s+4,spr.height*s+4);}
