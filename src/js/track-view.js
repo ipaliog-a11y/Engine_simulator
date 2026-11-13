@@ -5,9 +5,13 @@ const LIMLBL={corner:'CORNERING (grip)',brake:'BRAKING',power:'POWER',traction:'
 // Track map view: zoom (1 = fitted) and pan (canvas units), reset whenever the circuit changes.
 const trackView={key:'',z:1,x:0,y:0,mcx:320,mcy:210};
 const TRACK_ZMAX=16;
+// Below 1 the camera lifts off the car: at TRACK_ZMIN it shows the whole circuit, north up (build 279).
+const TRACK_ZMIN=0.4;
+function trackZoomOut(z){return clamp((1-z)/(1-TRACK_ZMIN),0,1);}
+function trackMapToggle(){const out=trackView.z<1;trackViewReset();if(!out)trackView.z=TRACK_ZMIN;}
 // Zoom by factor f about the canvas point (vx,vy), keeping the map point under it fixed.
 function trackZoomAt(vx,vy,f){
-  const z0=trackView.z, z1=clamp(z0*f,1,TRACK_ZMAX);
+  const z0=trackView.z, z1=clamp(z0*f,TRACK_ZMIN,TRACK_ZMAX);
   if(z1===z0)return;
   // map-space point under the cursor, in base (unzoomed) canvas coordinates
   const bx=trackView.mcx+(vx-trackView.mcx-trackView.x)/z0, by=trackView.mcy+(vy-trackView.mcy-trackView.y)/z0;
@@ -73,7 +77,7 @@ function replayAt(L,t){
   const i=t>=tt[n-1]?n-1:lo,j=(i+1)%n,tEnd=j?tt[j]:L.lap;
   const f=clamp((t-tt[i])/Math.max(1e-6,tEnd-tt[i]),0,1),mix=(a,b)=>a+(b-a)*f;
   const third=L.lineLength/3,sAt=mix(line[i].s,j?line[j].s:L.lineLength);
-  return {i,x:mix(line[i].x,line[j].x),y:mix(line[i].y,line[j].y),
+  return {i,f,x:mix(line[i].x,line[j].x),y:mix(line[i].y,line[j].y),
     hd:Math.atan2(line[j].y-line[i].y,line[j].x-line[i].x),
     v:mix(L.v[i],L.v[j])*3.6,gear:L.gears[i]+1,rpm:mix(R.rpm[i],R.rpm[j]),map:R.map?mix(R.map[i],R.map[j]):1,
     thr:R.thr[i],brk:R.brk[i],gLat:mix(R.gLat[i],R.gLat[j]),gLong:mix(R.gLong[i],R.gLong[j]),
@@ -237,8 +241,29 @@ function drawAnalogHud(L,st,W,y0){
   drawSteerWheel(x0+150,ys+16,15,sw.wheel);
   drawBrakeCells(L,st,x0,y0+h-22);
 }
+// On a phone the page's 640-wide drawing was squeezed into about 360 pixels and the instruments' 6-pixel text
+// came out near 3. There the TRACK view draws on a grid of the screen's own width, taller than wide, so a unit is
+// a pixel again: the instruments keep their size and the map gets the room under them (build 279).
+function trackGrid(){
+  if(trackPage.open||racePage.open)return;
+  const tall=vizMode==='track'&&innerWidth<=600,w=tall?clamp(Math.round(canvas.getBoundingClientRect().width)||360,340,420):640,h=tall?520:420;
+  if(vizW!==w||vizH!==h){vizW=w;vizH=h;sizeCanvas();}
+}
+// Words on as many rows as they need, broken between items.
+function wrapItems(items,x,y,maxW,lh,gap){
+  let cx=x;
+  for(const it of items){
+    const w=ctx.measureText(it.txt).width+(it.col?12:0);
+    if(cx>x&&cx+w>x+maxW){cx=x;y+=lh;}
+    if(it.col){ctx.fillStyle=it.col;ctx.fillRect(cx,y-7,8,8);}
+    ctx.fillStyle=it.fg;ctx.fillText(it.txt,cx+(it.col?12:0),y);
+    cx+=w+gap;
+  }
+  return y;
+}
 function drawTrack(){
-  const W=vizW,H=vizH;
+  trackGrid();
+  const W=vizW,H=vizH,narrow=W<560;
   ctx.fillStyle=C.bg;ctx.fillRect(0,0,W,H);
   drawPixelRect(0,0,W,28,'#12121c');
   ctx.fillStyle=C.yellow;ctx.font='10px "Press Start 2P"';
@@ -246,58 +271,53 @@ function drawTrack(){
   ctx.fillText(tr('TEST TRACK')+' • '+(L?L.track.label:''),12,19);
   if(!L){ctx.fillStyle='#778';ctx.font='8px "Press Start 2P"';ctx.fillText(tr('BUILD AN ENGINE FIRST'),12,60);return;}
   const live=L.replay?replayAt(L,lapReplay.t):null;
-  const T=L.track,topBar=62,botBar=52;
+  const T=L.track,topBar=narrow?74:62,botBar=narrow?58:52;
   if(trackView.key!==T.label){trackView.key=T.label;trackView.z=1;trackView.x=0;trackView.y=0;}
   const z=trackView.z||1;
   sceneBind(T);
   sceneWeather('dry',0);
   let car=null;
   if(live){
-    let near=T._look.pts[0],best=1e18;
-    for(const p of T._look.pts){const d=(p.x-live.x)*(p.x-live.x)+(p.y-live.y)*(p.y-live.y);if(d<best){best=d;near=p;}}
-    car={x:live.x,y:live.y,hd:live.hd,curv:near.curv,col:carLivery(vehicle),brk:live.brk>0.05,pos:1};
+    car=Object.assign(scenePose(T.line,live.i+live.f),{col:carLivery(vehicle),brk:live.brk>0.05,pos:1});   // a smooth place and heading
   }
   // The zoom scales the picture about the car and the pan slides it, both in screen units, so the point
   // under the cursor stays put (trackZoomAt). With no car to sit behind, the whole circuit is shown.
   const frac=0.70;
   trackView.mcx=W/2;trackView.mcy=car?H*frac:H/2;
-  const cam=car?sceneChase(car,W,H,14*z,frac):sceneOverview(W,H);
-  if(!car)cam.scale*=z;
+  let cam=car?sceneChase(car,W,H,14*Math.max(1,z),frac):sceneOverview(W,H);
+  if(!car)cam.scale*=Math.max(1,z);
+  else if(z<1)cam=sceneBlend(cam,sceneOverview(W,H,{t:topBar,b:botBar+6,r:narrow?0:REPLAY_HUD_W+14}),trackZoomOut(z));
   scenePan(cam,trackView.x||0,trackView.y||0);
   scenePaint(ctx,cam,{cars:car?[car]:[],lap:L});
-  ctx.fillStyle='rgba(13,13,24,0.72)';ctx.fillRect(0,28,W,30);ctx.fillRect(0,H-botBar-6,W,botBar+6);   // the text keeps a dark ground
+  ctx.fillStyle='rgba(13,13,24,0.72)';ctx.fillRect(0,28,W,topBar-32);ctx.fillRect(0,H-botBar-6,W,botBar+6);   // the text keeps a dark ground
   drawPixelRect(0,0,W,28,'#12121c');
   ctx.fillStyle=C.yellow;ctx.font='10px "Press Start 2P"';
   ctx.fillText(tr('TEST TRACK')+' • '+L.track.label,12,19);
   ctx.fillStyle=C.green;ctx.font='14px "Press Start 2P"';ctx.fillText(fmtLap(live?lapReplay.t:L.lap),12,50);
   ctx.font='7px "Press Start 2P"';ctx.fillStyle='#778';
-  let lx0=14+ctx.measureText(fmtLap(L.lap)).width*2;
-  ctx.fillText(live?tr('LAP')+' '+fmtLap(L.lap):tr('LAP TIME'),lx0,50);
+  let lx0=narrow?12:14+ctx.measureText(fmtLap(L.lap)).width*2;
+  const ly0=narrow?64:50;   // on a narrow grid the lap and its sectors take a row of their own
+  ctx.fillText(live?tr('LAP')+' '+fmtLap(L.lap):tr('LAP TIME'),lx0,ly0);
   if(live){
     const ends=sectorEnds(L);lx0+=ctx.measureText(tr('LAP')+' '+fmtLap(L.lap)).width+16;
     for(let k=0;k<3;k++){
       const done=k<live.sector,cur=k===live.sector;
       ctx.fillStyle=done?C.yellow:cur?'#00ccff':'#556';
       const txt='S'+(k+1)+' '+(done?L.sectors[k].toFixed(2):cur?(lapReplay.t-(k?ends[k-1]:0)).toFixed(1):'—');
-      ctx.fillText(txt,lx0,50);lx0+=ctx.measureText(txt).width+12;
+      ctx.fillText(txt,lx0,ly0);lx0+=ctx.measureText(txt).width+12;
     }
   }
-  if(live)(lapReplay.gauges==='analog'?drawAnalogHud:drawReplayHud)(L,live,W,topBar);
-  // how to drive the view, and where it is
+  // on a phone the instruments would cover the map: they give way to it
+  if(live&&!(narrow&&trackZoomOut(z)>0.5))(lapReplay.gauges==='analog'?drawAnalogHud:drawReplayHud)(L,live,W,topBar);
+  // how to drive the view, and where it is (a phone has the MAP button, and no room for the line)
   ctx.font='6px "Press Start 2P"';ctx.fillStyle='#556';ctx.textAlign='right';
-  ctx.fillText((z>1.01?tr('ZOOM')+' '+z.toFixed(1)+'×  •  ':'')+tr('scroll or pinch to zoom • drag to pan • double-click to reset'),W-12,H-botBar+4);
+  if(!narrow)ctx.fillText((z>1.01?tr('ZOOM')+' '+z.toFixed(1)+'×  •  ':'')+tr('scroll or pinch to zoom • drag to pan • double-click to reset'),W-12,H-botBar+4);
   ctx.textAlign='left';
   // Legend along the bottom: how much of the lap distance each limit accounts for.
   ctx.font='7px "Press Start 2P"';
-  let lx=14;const ly=H-30;
-  for(const k of ['power','traction','corner','brake']){
-    const pct=Math.round(L.counts[k]/L.lineLength*100);
-    ctx.fillStyle=LIMC[k];ctx.fillRect(lx,ly-6,8,8);
-    ctx.fillStyle='#99a';ctx.fillText(tr(LIMLBL[k])+' '+pct+'%',lx+12,ly+1);
-    lx+=ctx.measureText(tr(LIMLBL[k])+' '+pct+'%').width+30;
-  }
-  ctx.fillStyle='#778';
-  ctx.fillText((T.length/1000).toFixed(2)+' km • '+T.wLabel+' '+tr('wide')+' • '+T.corners+' '+tr('corners')+' • '+Math.round(L.zMax-L.zMin)+'m '+tr('elevation')+' • '+tr('avg')+' '+Math.round(L.avg)+' km/h',14,H-12);
+  const yl=wrapItems(['power','traction','corner','brake'].map(k=>({col:LIMC[k],fg:'#99a',txt:tr(LIMLBL[k])+' '+Math.round(L.counts[k]/L.lineLength*100)+'%'})),14,narrow?H-botBar+8:H-29,W-28,12,narrow?12:18);
+  wrapItems([(T.length/1000).toFixed(2)+' km',T.wLabel+' '+tr('wide'),T.corners+' '+tr('corners'),Math.round(L.zMax-L.zMin)+'m '+tr('elevation'),tr('avg')+' '+Math.round(L.avg)+' km/h']
+    .map((t,k)=>({fg:'#778',txt:(k?'• ':'')+t})),14,narrow?yl+13:H-12,W-28,12,7);
 }
 function renderLap(){
   const head=document.getElementById('lapHead'),grid=document.getElementById('lapGrid'),note=document.getElementById('lapNote');

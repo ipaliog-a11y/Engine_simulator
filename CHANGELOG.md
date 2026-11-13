@@ -20,6 +20,19 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 Working toward **v1.0 — every number derived, not fitted.**
 
+### The track and race picture: a steady car, a shadow under it, the whole circuit, readable on a phone (build 279)
+
+Four faults the owner found in the chase view of TRACK and RACE. Drawing only: no solver number moves.
+
+- **The car jerked in corners.** It was placed on straight pieces between the solver's points, about 5 m apart, so its heading jumped at each point (up to 6.9° in one frame on Riverside GP) and the picture, which turns with the car, jumped with it. The car now follows a smooth curve through the same points (never more than 0.06 m from them): its heading turns 0.8° a frame at most. The camera turns with the road ahead (the chord from 8 m behind to 22 m ahead) and not with the car's nose, so the car is seen to turn in.
+- **In a race, a car moving off the line to pass jumped 2.4 m sideways in one frame.** It now moves over about a second. Race cars also show brake lights when they slow by more than 3 m/s², and the camera leans in corners as it does on TRACK.
+- **The car looked as if it floated,** because its shadow was cast 4 m to one side, as a tree's is. The shadow now lies under the car, a little down-sun.
+- **The whole circuit is back.** Zooming out past 1× lifts the camera off the car until, at 0.4×, the whole circuit is shown north up, fitted to the space the panels leave. A MAP button beside the replay controls (TRACK and RACE) goes there and back. Distance boards are not drawn from that height.
+- **The instruments were too small on a phone:** the 640-wide drawing was squeezed into about 360 pixels, so 6-pixel text came out near 3. On a phone TRACK now draws on a grid of the screen's own width, 520 high, with the lap's figures wrapped under it; the race page's grid follows the screen too (it was held at 560). The instruments give way to the map when zoomed right out.
+- **Left open:** the Greek of the guide's zoom paragraph does not have the new sentence (Greek is paused). On a phone a long race message at the foot of the map can run off the edge. `test42` fails on `main` as well, for three untranslated starter messages.
+
+Tests: test51, test75 (updated); 72, 73.
+
 ### The stepped car's driver is kept as a rule (build 278)
 
 - **`DRIVE_DRIVER` is signed off by the owner as a rule.** Its four settings (how far ahead the driver reads the road, how hard it pulls back to the line and to the plan's speed, how far past the tyre's peak it steers) are a driver's manner, not the car's physics, like `RACE_DRIVERS`. The register has 27 open entries, was 28. No number moves.

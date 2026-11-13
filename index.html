@@ -195,7 +195,7 @@ footer{text-align:center;margin-top:16px;padding:8px;font-size:7px;color:#555;bo
 .garage-btns{display:flex;gap:6px;margin-top:7px}
 .garage-btns button{flex:1;padding:6px 4px;font-size:7px}
 .garage-btns .del{border-color:#663333;color:#cc7777}
-.replay-row{display:flex;gap:6px;align-items:stretch;margin:4px 0 10px}
+.replay-row{display:flex;flex-wrap:wrap;gap:6px;align-items:stretch;margin:4px 0 10px}
 .replay-row button{flex:1;padding:6px 4px}
 .replay-row select{flex:0 0 64px;min-width:0}
 .replay-row #replayGauges{flex:0 0 86px}
@@ -769,7 +769,7 @@ body.showcase-open{overflow:hidden}
 </div>
 <div class="container">
 <header>
-<h1>PIXEL ENGINE SIM v0.7 build 278</h1>
+<h1>PIXEL ENGINE SIM v0.7 build 279</h1>
 <div class="subtitle" id="subtitle">ENGINE DESIGNER • BUILD IT, THEN DRIVE IT</div>
 </header>
 <div class="build-strip" id="buildStrip">
@@ -2926,7 +2926,8 @@ brings it back.
 <div class="guide-body" data-gk="trackZoom">
 <b>Zoom and pan the view.</b> The camera sits behind the car and follows it round the lap. Scroll (or pinch
 on a phone) to move in closer, drag while zoomed to look around the car, and double-click to put the camera
-back. The track is drawn to scale, so you can see where the racing line uses the width.
+back. Zoom out, or press MAP, and the camera lifts to show the whole circuit with north up; MAP again puts it
+back behind the car. The track is drawn to scale, so you can see where the racing line uses the width.
 </div>
 </div>
 <div class="gtier gt-phys"><div class="gtier-h">LV3 · THE PHYSICS</div>
@@ -3759,6 +3760,7 @@ Most other tests check behaviour that is true of real cars: a bigger turbo spool
 <button id="btnTrackFull" class="tp-full" title="Full screen: the lap, the live instruments and these controls, in landscape" aria-label="Full screen">⛶</button>
 <button id="btnReplay" class="toggle on" aria-pressed="true">PAUSE</button>
 <button id="btnReplayRestart">RESTART</button>
+<button id="btnTrackMap" title="The whole circuit from above, and back behind the car">MAP</button>
 <select id="replaySpeed" class="opt-select" aria-label="Replay speed"><option value="1">1×</option><option value="2">2×</option><option value="4">4×</option></select>
 <select id="replayGauges" class="opt-select" aria-label="Gauges"><option value="digital">DIGITAL</option><option value="analog">ANALOG</option></select>
 </div>
@@ -3801,6 +3803,7 @@ Most other tests check behaviour that is true of real cars: a bigger turbo spool
 <div class="replay-row">
 <button id="racePlay" class="toggle on" aria-pressed="true">PAUSE</button>
 <select id="raceSpeed" class="opt-select" aria-label="Replay speed"><option value="1">1×</option><option value="2">2×</option><option value="5" selected>5×</option><option value="10">10×</option><option value="30">30×</option><option value="100">100×</option></select>
+<button id="raceMap" title="The whole circuit from above, and back behind the cars">MAP</button>
 <button id="raceSkip">FINISH</button>
 <button id="raceNew">NEW RACE</button>
 </div>
@@ -19900,7 +19903,7 @@ const SCENE_TEX = {
 // The camera, the ground and the car are the draft view. The solver is not touched.
 // Dressing (rail, trees, boards, flags) is drawn, not surveyed, and the car does not ride it.
 // One closure, so the short names in here (T, project, quad, shade…) stay out of the page's one script.
-const { sceneBind, sceneWeather, sceneChase, sceneOverview, scenePan, sceneProject, scenePaint } = (() => {
+const { sceneBind, sceneWeather, sceneChase, sceneOverview, scenePan, sceneProject, scenePaint, scenePose, sceneBlend } = (() => {
 let T = null;
 let WX = { key: "dry", wet: 0, rain: 0, cloud: 0.05 };
 let TOD = "day";
@@ -19970,6 +19973,41 @@ function scenePan(cam, tx, ty) {
   cam.ox += a * cam.lx + b * cam.fx;
   cam.oy += a * cam.ly + b * cam.fy;
   return cam;
+}
+// Where a car is, pos points along a closed line (a whole number is a point of it). The solver's points are
+// about 5 m apart: joined by straight pieces, the heading jumped at each one and the picture, which turns
+// with the car, jerked. A Catmull-Rom curve through the same points gives a place and a heading that turn
+// smoothly. camHd is the heading of the chord from 8 m behind to 22 m ahead: the camera turns with the road,
+// and the car is seen to turn in before it. Drawing only; the solver's line is not touched.
+function scenePose(line, pos) {
+  const n = line.length, at = q => {
+    const b = Math.floor(q), f = q - b, i = ((b % n) + n) % n;
+    const p0 = line[(i - 1 + n) % n], p1 = line[i], p2 = line[(i + 1) % n], p3 = line[(i + 2) % n];
+    const cr = (a, b, c, d) => 0.5 * (2 * b + (c - a) * f + (2 * a - 5 * b + 4 * c - d) * f * f + (3 * b - a - 3 * c + d) * f * f * f);
+    const dcr = (a, b, c, d) => 0.5 * ((c - a) + 2 * (2 * a - 5 * b + 4 * c - d) * f + 3 * (3 * b - a - 3 * c + d) * f * f);
+    return { x: cr(p0.x, p1.x, p2.x, p3.x), y: cr(p0.y, p1.y, p2.y, p3.y), dx: dcr(p0.x, p1.x, p2.x, p3.x), dy: dcr(p0.y, p1.y, p2.y, p3.y), i, f, p0, p1, p2, p3 };
+  };
+  const c = at(pos), ds = Math.hypot(c.p2.x - c.p1.x, c.p2.y - c.p1.y) || 1;
+  const turn = (a, b, d) => {
+    let t = Math.atan2(d.y - b.y, d.x - b.x) - Math.atan2(b.y - a.y, b.x - a.x);
+    while (t > Math.PI) t -= Math.PI * 2;
+    while (t < -Math.PI) t += Math.PI * 2;
+    return t / ds;
+  };
+  const k1 = turn(c.p0, c.p1, c.p2), k2 = turn(c.p1, c.p2, c.p3);
+  const a = at(pos - 8 / ds), b = at(pos + 22 / ds);
+  return { x: c.x, y: c.y, hd: Math.atan2(c.dy, c.dx), curv: k1 + (k2 - k1) * c.f, camHd: Math.atan2(b.y - a.y, b.x - a.x) };
+}
+// The camera k of the way from a to b: zooming out lifts the chase view into the whole circuit, north up.
+function sceneBlend(a, b, k) {
+  const e = k * k * (3 - 2 * k), mix = (p, q) => p + (q - p) * e;
+  let d = Math.atan2(b.fy, b.fx) - Math.atan2(a.fy, a.fx);
+  while (d > Math.PI) d -= Math.PI * 2;
+  while (d < -Math.PI) d += Math.PI * 2;
+  const hd = Math.atan2(a.fy, a.fx) + d * e, fx = Math.cos(hd), fy = Math.sin(hd);
+  const scale = a.scale * Math.pow(b.scale / a.scale, e);
+  return { ox: mix(a.ox, b.ox), oy: mix(a.oy, b.oy), fx, fy, lx: -fy, ly: fx, cx: mix(a.cx, b.cx), cy: mix(a.cy, b.cy),
+    scale, pitch: mix(a.pitch, b.pitch), lift: mix(a.lift, b.lift), roll: mix(a.roll || 0, b.roll || 0), W: a.W, H: a.H };
 }
 function sceneProject(cam, x, y, h) { return project(cam, x, y, h || 0); }
 // The scene is painted on the page's own drawing grid (cam.W x cam.H) and then copied up to the canvas
@@ -20084,7 +20122,8 @@ function project(cam, x, y, h = 0) {
 
 function camFrom(car, W, H, opts) {
   const look = opts.look, backScale = opts.scale;
-  const fx = Math.cos(car.hd), fy = Math.sin(car.hd);
+  const hd = car.camHd == null ? car.hd : car.camHd;
+  const fx = Math.cos(hd), fy = Math.sin(hd);
   const ox = car.x + fx * look, oy = car.y + fy * look;
   return {
     ox, oy, fx, fy, lx: -fy, ly: fx,
@@ -20095,15 +20134,18 @@ function camFrom(car, W, H, opts) {
   };
 }
 
-function sceneOverview(W, H) {
+// The whole circuit, north up, fitted to the part of the picture the panels leave free (box: l, r, t, b).
+function sceneOverview(W, H, box) {
+  const bx = Object.assign({ l: 0, r: 0, t: 0, b: 0 }, box), fw = W - bx.l - bx.r, fh = H - bx.t - bx.b;
   let minX = 1e9, maxX = -1e9, minY = 1e9, maxY = -1e9;
   for (const p of T.pts) { minX = Math.min(minX, p.x); maxX = Math.max(maxX, p.x); minY = Math.min(minY, p.y); maxY = Math.max(maxY, p.y); }
   const pad = 46;
-  const scale = Math.min((W - 80) / (maxX - minX + pad * 2), (H - 120) / ((maxY - minY + pad * 2) * 0.82));
+  const scale = box ? Math.min((fw - 16) / (maxX - minX + pad * 2), (fh - 16) / ((maxY - minY + pad * 2) * 0.82))
+    : Math.min((W - 80) / (maxX - minX + pad * 2), (H - 120) / ((maxY - minY + pad * 2) * 0.82));
   return {
     ox: (minX + maxX) / 2, oy: (minY + maxY) / 2,
     fx: 0, fy: 1, lx: 1, ly: 0,
-    cx: W / 2, cy: H / 2 + 10,
+    cx: box ? bx.l + fw / 2 : W / 2, cy: box ? bx.t + fh / 2 : H / 2 + 10,
     scale, pitch: 0.82, lift: scale * 0.42, roll: 0, W, H
   };
 }
@@ -20377,6 +20419,7 @@ function cornerList() {
 }
 
 function drawBoard(ctx, cam, o) {
+  if (cam.scale < 2.5) return;   // from high up the boards are larger than the road
   const q = project(cam, o.x, o.y, 1.35);
   const w = Math.max(26, cam.scale * 1.7), h = Math.max(14, cam.scale * 0.95);
   const base = project(cam, o.x, o.y, 0);
@@ -21004,7 +21047,17 @@ function drawCar(ctx, cam, car) {
   const len = Math.max(18, Math.hypot(f.sx - o.sx, f.sy - o.sy));
   const wid = Math.max(10, Math.hypot(s.sx - o.sx, s.sy - o.sy));
   const ang = Math.atan2(f.sy - o.sy, f.sx - o.sx);
-  castShadow(ctx, cam, car.x, car.y, len * 0.5, wid * 0.72, ang);
+  // The shadow lies under the car and a little down-sun of it. It was cast 4 m away, as a tree's is from its
+  // crown, and the car looked as if it floated.
+  const k = sunK(), sh = project(cam, car.x + 0.42 * k, car.y + 0.3 * k, 0);
+  ctx.save();
+  ctx.translate(sh.sx, sh.sy);
+  ctx.rotate(ang);
+  ctx.fillStyle = `rgba(8, 18, 12, ${(0.34 + 0.3 * k) * (1 - WX.wet * 0.22)})`;
+  ctx.beginPath();
+  ctx.roundRect(-len * 0.54, -wid * 0.47, len * 1.08, wid * 0.94, wid * 0.3);
+  ctx.fill();
+  ctx.restore();
   ctx.save();
   ctx.translate(o.sx, o.sy);
   ctx.rotate(ang);
@@ -21123,7 +21176,7 @@ function sceneLoadTex() {
   }).catch(() => {});
 }
 sceneLoadTex();
-return { sceneBind, sceneWeather, sceneChase, sceneOverview, scenePan, sceneProject, scenePaint };
+return { sceneBind, sceneWeather, sceneChase, sceneOverview, scenePan, sceneProject, scenePaint, scenePose, sceneBlend };
 })();
 // ---- TRACK map: the circuit drawn from the same sampled centreline the lap solver used, with
 // the racing line coloured by what is limiting the car at each point. ----
@@ -21132,9 +21185,13 @@ const LIMLBL={corner:'CORNERING (grip)',brake:'BRAKING',power:'POWER',traction:'
 // Track map view: zoom (1 = fitted) and pan (canvas units), reset whenever the circuit changes.
 const trackView={key:'',z:1,x:0,y:0,mcx:320,mcy:210};
 const TRACK_ZMAX=16;
+// Below 1 the camera lifts off the car: at TRACK_ZMIN it shows the whole circuit, north up (build 279).
+const TRACK_ZMIN=0.4;
+function trackZoomOut(z){return clamp((1-z)/(1-TRACK_ZMIN),0,1);}
+function trackMapToggle(){const out=trackView.z<1;trackViewReset();if(!out)trackView.z=TRACK_ZMIN;}
 // Zoom by factor f about the canvas point (vx,vy), keeping the map point under it fixed.
 function trackZoomAt(vx,vy,f){
-  const z0=trackView.z, z1=clamp(z0*f,1,TRACK_ZMAX);
+  const z0=trackView.z, z1=clamp(z0*f,TRACK_ZMIN,TRACK_ZMAX);
   if(z1===z0)return;
   // map-space point under the cursor, in base (unzoomed) canvas coordinates
   const bx=trackView.mcx+(vx-trackView.mcx-trackView.x)/z0, by=trackView.mcy+(vy-trackView.mcy-trackView.y)/z0;
@@ -21200,7 +21257,7 @@ function replayAt(L,t){
   const i=t>=tt[n-1]?n-1:lo,j=(i+1)%n,tEnd=j?tt[j]:L.lap;
   const f=clamp((t-tt[i])/Math.max(1e-6,tEnd-tt[i]),0,1),mix=(a,b)=>a+(b-a)*f;
   const third=L.lineLength/3,sAt=mix(line[i].s,j?line[j].s:L.lineLength);
-  return {i,x:mix(line[i].x,line[j].x),y:mix(line[i].y,line[j].y),
+  return {i,f,x:mix(line[i].x,line[j].x),y:mix(line[i].y,line[j].y),
     hd:Math.atan2(line[j].y-line[i].y,line[j].x-line[i].x),
     v:mix(L.v[i],L.v[j])*3.6,gear:L.gears[i]+1,rpm:mix(R.rpm[i],R.rpm[j]),map:R.map?mix(R.map[i],R.map[j]):1,
     thr:R.thr[i],brk:R.brk[i],gLat:mix(R.gLat[i],R.gLat[j]),gLong:mix(R.gLong[i],R.gLong[j]),
@@ -21364,8 +21421,29 @@ function drawAnalogHud(L,st,W,y0){
   drawSteerWheel(x0+150,ys+16,15,sw.wheel);
   drawBrakeCells(L,st,x0,y0+h-22);
 }
+// On a phone the page's 640-wide drawing was squeezed into about 360 pixels and the instruments' 6-pixel text
+// came out near 3. There the TRACK view draws on a grid of the screen's own width, taller than wide, so a unit is
+// a pixel again: the instruments keep their size and the map gets the room under them (build 279).
+function trackGrid(){
+  if(trackPage.open||racePage.open)return;
+  const tall=vizMode==='track'&&innerWidth<=600,w=tall?clamp(Math.round(canvas.getBoundingClientRect().width)||360,340,420):640,h=tall?520:420;
+  if(vizW!==w||vizH!==h){vizW=w;vizH=h;sizeCanvas();}
+}
+// Words on as many rows as they need, broken between items.
+function wrapItems(items,x,y,maxW,lh,gap){
+  let cx=x;
+  for(const it of items){
+    const w=ctx.measureText(it.txt).width+(it.col?12:0);
+    if(cx>x&&cx+w>x+maxW){cx=x;y+=lh;}
+    if(it.col){ctx.fillStyle=it.col;ctx.fillRect(cx,y-7,8,8);}
+    ctx.fillStyle=it.fg;ctx.fillText(it.txt,cx+(it.col?12:0),y);
+    cx+=w+gap;
+  }
+  return y;
+}
 function drawTrack(){
-  const W=vizW,H=vizH;
+  trackGrid();
+  const W=vizW,H=vizH,narrow=W<560;
   ctx.fillStyle=C.bg;ctx.fillRect(0,0,W,H);
   drawPixelRect(0,0,W,28,'#12121c');
   ctx.fillStyle=C.yellow;ctx.font='10px "Press Start 2P"';
@@ -21373,58 +21451,53 @@ function drawTrack(){
   ctx.fillText(tr('TEST TRACK')+' • '+(L?L.track.label:''),12,19);
   if(!L){ctx.fillStyle='#778';ctx.font='8px "Press Start 2P"';ctx.fillText(tr('BUILD AN ENGINE FIRST'),12,60);return;}
   const live=L.replay?replayAt(L,lapReplay.t):null;
-  const T=L.track,topBar=62,botBar=52;
+  const T=L.track,topBar=narrow?74:62,botBar=narrow?58:52;
   if(trackView.key!==T.label){trackView.key=T.label;trackView.z=1;trackView.x=0;trackView.y=0;}
   const z=trackView.z||1;
   sceneBind(T);
   sceneWeather('dry',0);
   let car=null;
   if(live){
-    let near=T._look.pts[0],best=1e18;
-    for(const p of T._look.pts){const d=(p.x-live.x)*(p.x-live.x)+(p.y-live.y)*(p.y-live.y);if(d<best){best=d;near=p;}}
-    car={x:live.x,y:live.y,hd:live.hd,curv:near.curv,col:carLivery(vehicle),brk:live.brk>0.05,pos:1};
+    car=Object.assign(scenePose(T.line,live.i+live.f),{col:carLivery(vehicle),brk:live.brk>0.05,pos:1});   // a smooth place and heading
   }
   // The zoom scales the picture about the car and the pan slides it, both in screen units, so the point
   // under the cursor stays put (trackZoomAt). With no car to sit behind, the whole circuit is shown.
   const frac=0.70;
   trackView.mcx=W/2;trackView.mcy=car?H*frac:H/2;
-  const cam=car?sceneChase(car,W,H,14*z,frac):sceneOverview(W,H);
-  if(!car)cam.scale*=z;
+  let cam=car?sceneChase(car,W,H,14*Math.max(1,z),frac):sceneOverview(W,H);
+  if(!car)cam.scale*=Math.max(1,z);
+  else if(z<1)cam=sceneBlend(cam,sceneOverview(W,H,{t:topBar,b:botBar+6,r:narrow?0:REPLAY_HUD_W+14}),trackZoomOut(z));
   scenePan(cam,trackView.x||0,trackView.y||0);
   scenePaint(ctx,cam,{cars:car?[car]:[],lap:L});
-  ctx.fillStyle='rgba(13,13,24,0.72)';ctx.fillRect(0,28,W,30);ctx.fillRect(0,H-botBar-6,W,botBar+6);   // the text keeps a dark ground
+  ctx.fillStyle='rgba(13,13,24,0.72)';ctx.fillRect(0,28,W,topBar-32);ctx.fillRect(0,H-botBar-6,W,botBar+6);   // the text keeps a dark ground
   drawPixelRect(0,0,W,28,'#12121c');
   ctx.fillStyle=C.yellow;ctx.font='10px "Press Start 2P"';
   ctx.fillText(tr('TEST TRACK')+' • '+L.track.label,12,19);
   ctx.fillStyle=C.green;ctx.font='14px "Press Start 2P"';ctx.fillText(fmtLap(live?lapReplay.t:L.lap),12,50);
   ctx.font='7px "Press Start 2P"';ctx.fillStyle='#778';
-  let lx0=14+ctx.measureText(fmtLap(L.lap)).width*2;
-  ctx.fillText(live?tr('LAP')+' '+fmtLap(L.lap):tr('LAP TIME'),lx0,50);
+  let lx0=narrow?12:14+ctx.measureText(fmtLap(L.lap)).width*2;
+  const ly0=narrow?64:50;   // on a narrow grid the lap and its sectors take a row of their own
+  ctx.fillText(live?tr('LAP')+' '+fmtLap(L.lap):tr('LAP TIME'),lx0,ly0);
   if(live){
     const ends=sectorEnds(L);lx0+=ctx.measureText(tr('LAP')+' '+fmtLap(L.lap)).width+16;
     for(let k=0;k<3;k++){
       const done=k<live.sector,cur=k===live.sector;
       ctx.fillStyle=done?C.yellow:cur?'#00ccff':'#556';
       const txt='S'+(k+1)+' '+(done?L.sectors[k].toFixed(2):cur?(lapReplay.t-(k?ends[k-1]:0)).toFixed(1):'—');
-      ctx.fillText(txt,lx0,50);lx0+=ctx.measureText(txt).width+12;
+      ctx.fillText(txt,lx0,ly0);lx0+=ctx.measureText(txt).width+12;
     }
   }
-  if(live)(lapReplay.gauges==='analog'?drawAnalogHud:drawReplayHud)(L,live,W,topBar);
-  // how to drive the view, and where it is
+  // on a phone the instruments would cover the map: they give way to it
+  if(live&&!(narrow&&trackZoomOut(z)>0.5))(lapReplay.gauges==='analog'?drawAnalogHud:drawReplayHud)(L,live,W,topBar);
+  // how to drive the view, and where it is (a phone has the MAP button, and no room for the line)
   ctx.font='6px "Press Start 2P"';ctx.fillStyle='#556';ctx.textAlign='right';
-  ctx.fillText((z>1.01?tr('ZOOM')+' '+z.toFixed(1)+'×  •  ':'')+tr('scroll or pinch to zoom • drag to pan • double-click to reset'),W-12,H-botBar+4);
+  if(!narrow)ctx.fillText((z>1.01?tr('ZOOM')+' '+z.toFixed(1)+'×  •  ':'')+tr('scroll or pinch to zoom • drag to pan • double-click to reset'),W-12,H-botBar+4);
   ctx.textAlign='left';
   // Legend along the bottom: how much of the lap distance each limit accounts for.
   ctx.font='7px "Press Start 2P"';
-  let lx=14;const ly=H-30;
-  for(const k of ['power','traction','corner','brake']){
-    const pct=Math.round(L.counts[k]/L.lineLength*100);
-    ctx.fillStyle=LIMC[k];ctx.fillRect(lx,ly-6,8,8);
-    ctx.fillStyle='#99a';ctx.fillText(tr(LIMLBL[k])+' '+pct+'%',lx+12,ly+1);
-    lx+=ctx.measureText(tr(LIMLBL[k])+' '+pct+'%').width+30;
-  }
-  ctx.fillStyle='#778';
-  ctx.fillText((T.length/1000).toFixed(2)+' km • '+T.wLabel+' '+tr('wide')+' • '+T.corners+' '+tr('corners')+' • '+Math.round(L.zMax-L.zMin)+'m '+tr('elevation')+' • '+tr('avg')+' '+Math.round(L.avg)+' km/h',14,H-12);
+  const yl=wrapItems(['power','traction','corner','brake'].map(k=>({col:LIMC[k],fg:'#99a',txt:tr(LIMLBL[k])+' '+Math.round(L.counts[k]/L.lineLength*100)+'%'})),14,narrow?H-botBar+8:H-29,W-28,12,narrow?12:18);
+  wrapItems([(T.length/1000).toFixed(2)+' km',T.wLabel+' '+tr('wide'),T.corners+' '+tr('corners'),Math.round(L.zMax-L.zMin)+'m '+tr('elevation'),tr('avg')+' '+Math.round(L.avg)+' km/h']
+    .map((t,k)=>({fg:'#778',txt:(k?'• ':'')+t})),14,narrow?yl+13:H-12,W-28,12,7);
 }
 function renderLap(){
   const head=document.getElementById('lapHead'),grid=document.getElementById('lapGrid'),note=document.getElementById('lapNote');
@@ -21572,7 +21645,10 @@ function raceSample(R,k,t){
   const A=a*K,B=b*K,M=R.cars[k].M;
   const lerp=o=>d[A+o]+(d[B+o]-d[A+o])*f;
   let pa=d[A],pb=d[B];if(pb<pa-M.n/2)pb+=M.n;   // over the line
-  return {pos:(pa+(pb-pa)*f)%M.n,v:lerp(1),T:[lerp(2),lerp(3),lerp(4),lerp(5)],W:[lerp(6),lerp(7),lerp(8),lerp(9)],
+  // how far into a pass the car is, 0 to 1: the recorded flag averaged over 0.6 s either side
+  const w=0.6/rc.dt,fl=q=>{const u=clamp(q,0,rc.n-1),m=Math.floor(u),o=Math.min(rc.n-1,m+1);return d[m*K+14]+(d[o*K+14]-d[m*K+14])*(u-m);};
+  let passF=0;for(let q=-4;q<=4;q++)passF+=fl(x+q*w/4)/9;
+  return {passF,dv:(d[B+1]-d[A+1])/rc.dt,pos:(pa+(pb-pa)*f)%M.n,v:lerp(1),T:[lerp(2),lerp(3),lerp(4),lerp(5)],W:[lerp(6),lerp(7),lerp(8),lerp(9)],
     fuelL:lerp(10),brk:lerp(11),flag:d[(f<0.5?A:B)+12],sTot:lerp(13),pass:d[A+14],laps:d[(f<0.5?A:B)+15],
     brkR:lerp(16),tyre:d[(f<0.5?A:B)+17],wet:lerp(18),def:d[A+19]>0.5};
 }
@@ -21744,27 +21820,26 @@ function drawRace(){
     const M=x.c.M,s=x.s;
     if(x.dnf&&s.v<0.1&&s.flag===3)continue;
     if(s.flag===1||(x.fin&&s.v<0.1&&t>x.fin.t+0.5)){pitN.push(x);continue;}
-    const i=Math.floor(s.pos)%M.n,j=(i+1)%M.n,f=s.pos-Math.floor(s.pos);
-    const a=M.line[i],b=M.line[j];
-    let xw=a.x+(b.x-a.x)*f,yw=a.y+(b.y-a.y)*f;
-    const hd=Math.atan2(b.y-a.y,b.x-a.x);
-    if(s.pass>0.5){xw+=Math.sin(hd)*2.4;yw-=Math.cos(hd)*2.4;}
-    const car={x:xw,y:yw,hd,curv:0,col:RACE_COLS[x.c.id],brk:false,pos:x.pos};
+    // a smooth place and heading along the line; the car moves off it to pass over about a second, not at once
+    const car=Object.assign(scenePose(M.line,s.pos),{col:RACE_COLS[x.c.id],brk:s.dv<-3,pos:x.pos});
+    const off=2.4*s.passF*s.passF*(3-2*s.passF);
+    car.x+=Math.sin(car.hd)*off;car.y-=Math.cos(car.hd)*off;
     cars.push(car);
     if(raceUI.follow===x.c.id||(raceUI.follow<0&&!focus))focus=car;
   }
   // the same zoom and pan as the TRACK view: about the car the camera sits behind, in screen units
   const z=trackView.z||1,pack=raceUI.follow<0,frac=pack?0.56:0.68;
   trackView.mcx=W/2;trackView.mcy=focus?H*frac:H/2;
-  const cam=focus?sceneChase(focus,W,H,(pack?9.2:14)*z,frac):sceneOverview(W,H);
-  if(!focus)cam.scale*=z;
+  let cam=focus?sceneChase(focus,W,H,(pack?9.2:14)*Math.max(1,z),frac):sceneOverview(W,H);
+  if(!focus)cam.scale*=Math.max(1,z);
+  else if(z<1)cam=sceneBlend(cam,sceneOverview(W,H,{t:topBar,b:botBar,l:!racePage.open||innerWidth<=800?160:0}),trackZoomOut(z));
   scenePan(cam,trackView.x||0,trackView.y||0);
   scenePaint(ctx,cam,{cars});
   ctx.fillStyle='rgba(13,13,24,0.72)';ctx.fillRect(0,28,W,topBar-28+2);
   drawPixelRect(0,0,W,28,'#12121c');
   ctx.fillStyle=C.yellow;ctx.font='10px "Press Start 2P"';
   ctx.textAlign='left';
-  ctx.fillText(tr('RACE')+' • '+TRACKS[R.cfg.track].label,12,19);
+  if(W>=560)ctx.fillText(tr('RACE')+' • '+TRACKS[R.cfg.track].label,12,19);
   ctx.textAlign='right';ctx.font='7px "Press Start 2P"';ctx.fillStyle='#99a';
   const spd=raceUI.speed+'×'+(raceUI.playing?'':' ❚❚');ctx.fillText(spd,W-44,19);
   const sw=ctx.measureText(spd).width+14;
@@ -21806,6 +21881,7 @@ function bindRace(){
     raceUI.playing=!raceUI.playing;g('racePlay').textContent=tr(raceUI.playing?'PAUSE':'PLAY');g('racePlay').classList.toggle('on',raceUI.playing);
   });
   g('raceSpeed').addEventListener('change',e=>{raceUI.speed=+e.target.value||1;});
+  g('raceMap').addEventListener('click',trackMapToggle);
   g('raceSkip').addEventListener('click',()=>{if(raceUI.run){raceUI.t=raceUI.run.t;renderRacePanel(true);}});
   g('raceNew').addEventListener('click',()=>{raceUI.phase='setup';raceUI.run=null;raceUI.follow=-1;renderRaceSetup();});
   g('raceRptPng').addEventListener('click',exportRacePNG);
@@ -21825,9 +21901,9 @@ function sizeRaceStage(){
   if(!racePage.open)return;
   const r=document.getElementById('raceStage').getBoundingClientRect();
   if(!(r.width>0&&r.height>0))return;
-  // the drawing grid follows the stage: about one unit per CSS pixel on a desktop, no narrower than 560
-  // on a phone (below that the pixel font stops being readable)
-  vizW=Math.round(clamp(r.width,560,1100));
+  // the drawing grid follows the stage, one unit per CSS pixel, a phone's included: held at 560 there, the
+  // 6-pixel text came out at 4 (build 279). Under 560 the title is left to the page's own bar.
+  vizW=Math.round(clamp(r.width,340,1100));
   vizH=Math.round(clamp(vizW*r.height/r.width,380,1400));
   sizeCanvas();
 }
@@ -22363,6 +22439,7 @@ function setTab(mode){
   if(mode!=='race'&&racePage.open)closeRacePage();
   if(mode!=='track'&&trackPage.open)closeTrackPage();
   vizMode=mode;
+  if(mode!=='track'&&!racePage.open&&!trackPage.open&&vizW!==640){vizW=640;vizH=420;}   // the phone's TRACK grid is its own
   ['Design','Vehicle','Parts','Garage','Track','Race','Engine','Dyno','Guide','Options'].forEach(m=>
     document.getElementById('tab'+m).classList.toggle('active',mode===m.toLowerCase()));
   // The four sections (build 261): BUILD, TEST, DRIVE, MORE. On a phone the tabs are one strip that slides to the open
@@ -27725,6 +27802,7 @@ function bindControls(){
   rb.addEventListener('click',()=>{lapReplay.playing=!lapReplay.playing;rb.classList.toggle('on',lapReplay.playing);
     rb.setAttribute('aria-pressed',String(lapReplay.playing));rb.textContent=tr(lapReplay.playing?'PAUSE':'PLAY');});
   document.getElementById('btnReplayRestart').addEventListener('click',()=>{lapReplay.t=0;lapReplay.laps=0;});
+  document.getElementById('btnTrackMap').addEventListener('click',trackMapToggle);
   document.getElementById('replaySpeed').addEventListener('change',e=>{lapReplay.speed=+e.target.value||1;});
   const gs=document.getElementById('replayGauges');gs.value=lapReplay.gauges;
   gs.addEventListener('change',e=>{lapReplay.gauges=e.target.value==='analog'?'analog':'digital';

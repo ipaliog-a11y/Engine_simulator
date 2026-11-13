@@ -42,7 +42,8 @@ for (const [w, h, tag] of [[390, 844, 'phone upright'], [844, 390, 'phone sidewa
   await page.waitForTimeout(300);
   const b = await page.evaluate(() => ({ open: trackPage.open, vizW, home: document.querySelector('.viz-panel').contains(canvas),
     row: document.getElementById('trackPanel').contains(document.getElementById('trackReplayRow')) }));
-  if (b.open || !b.home || !b.row || b.vizW !== 640) fails.push(tag + ': ✕ does not put the map and the controls back');
+  // build 279: a phone held upright has the TRACK view on a grid of its own width, so its instruments can be read
+  if (b.open || !b.home || !b.row || (w <= 600 ? !(b.vizW >= 340 && b.vizW <= 420) : b.vizW !== 640)) fails.push(tag + ': ✕ does not put the map and the controls back');
   await page.close();
 }
 console.log('\nERRORS:', errors.length ? errors : 'none');

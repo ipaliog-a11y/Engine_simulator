@@ -120,7 +120,10 @@ function raceSample(R,k,t){
   const A=a*K,B=b*K,M=R.cars[k].M;
   const lerp=o=>d[A+o]+(d[B+o]-d[A+o])*f;
   let pa=d[A],pb=d[B];if(pb<pa-M.n/2)pb+=M.n;   // over the line
-  return {pos:(pa+(pb-pa)*f)%M.n,v:lerp(1),T:[lerp(2),lerp(3),lerp(4),lerp(5)],W:[lerp(6),lerp(7),lerp(8),lerp(9)],
+  // how far into a pass the car is, 0 to 1: the recorded flag averaged over 0.6 s either side
+  const w=0.6/rc.dt,fl=q=>{const u=clamp(q,0,rc.n-1),m=Math.floor(u),o=Math.min(rc.n-1,m+1);return d[m*K+14]+(d[o*K+14]-d[m*K+14])*(u-m);};
+  let passF=0;for(let q=-4;q<=4;q++)passF+=fl(x+q*w/4)/9;
+  return {passF,dv:(d[B+1]-d[A+1])/rc.dt,pos:(pa+(pb-pa)*f)%M.n,v:lerp(1),T:[lerp(2),lerp(3),lerp(4),lerp(5)],W:[lerp(6),lerp(7),lerp(8),lerp(9)],
     fuelL:lerp(10),brk:lerp(11),flag:d[(f<0.5?A:B)+12],sTot:lerp(13),pass:d[A+14],laps:d[(f<0.5?A:B)+15],
     brkR:lerp(16),tyre:d[(f<0.5?A:B)+17],wet:lerp(18),def:d[A+19]>0.5};
 }
@@ -292,27 +295,26 @@ function drawRace(){
     const M=x.c.M,s=x.s;
     if(x.dnf&&s.v<0.1&&s.flag===3)continue;
     if(s.flag===1||(x.fin&&s.v<0.1&&t>x.fin.t+0.5)){pitN.push(x);continue;}
-    const i=Math.floor(s.pos)%M.n,j=(i+1)%M.n,f=s.pos-Math.floor(s.pos);
-    const a=M.line[i],b=M.line[j];
-    let xw=a.x+(b.x-a.x)*f,yw=a.y+(b.y-a.y)*f;
-    const hd=Math.atan2(b.y-a.y,b.x-a.x);
-    if(s.pass>0.5){xw+=Math.sin(hd)*2.4;yw-=Math.cos(hd)*2.4;}
-    const car={x:xw,y:yw,hd,curv:0,col:RACE_COLS[x.c.id],brk:false,pos:x.pos};
+    // a smooth place and heading along the line; the car moves off it to pass over about a second, not at once
+    const car=Object.assign(scenePose(M.line,s.pos),{col:RACE_COLS[x.c.id],brk:s.dv<-3,pos:x.pos});
+    const off=2.4*s.passF*s.passF*(3-2*s.passF);
+    car.x+=Math.sin(car.hd)*off;car.y-=Math.cos(car.hd)*off;
     cars.push(car);
     if(raceUI.follow===x.c.id||(raceUI.follow<0&&!focus))focus=car;
   }
   // the same zoom and pan as the TRACK view: about the car the camera sits behind, in screen units
   const z=trackView.z||1,pack=raceUI.follow<0,frac=pack?0.56:0.68;
   trackView.mcx=W/2;trackView.mcy=focus?H*frac:H/2;
-  const cam=focus?sceneChase(focus,W,H,(pack?9.2:14)*z,frac):sceneOverview(W,H);
-  if(!focus)cam.scale*=z;
+  let cam=focus?sceneChase(focus,W,H,(pack?9.2:14)*Math.max(1,z),frac):sceneOverview(W,H);
+  if(!focus)cam.scale*=Math.max(1,z);
+  else if(z<1)cam=sceneBlend(cam,sceneOverview(W,H,{t:topBar,b:botBar,l:!racePage.open||innerWidth<=800?160:0}),trackZoomOut(z));
   scenePan(cam,trackView.x||0,trackView.y||0);
   scenePaint(ctx,cam,{cars});
   ctx.fillStyle='rgba(13,13,24,0.72)';ctx.fillRect(0,28,W,topBar-28+2);
   drawPixelRect(0,0,W,28,'#12121c');
   ctx.fillStyle=C.yellow;ctx.font='10px "Press Start 2P"';
   ctx.textAlign='left';
-  ctx.fillText(tr('RACE')+' • '+TRACKS[R.cfg.track].label,12,19);
+  if(W>=560)ctx.fillText(tr('RACE')+' • '+TRACKS[R.cfg.track].label,12,19);
   ctx.textAlign='right';ctx.font='7px "Press Start 2P"';ctx.fillStyle='#99a';
   const spd=raceUI.speed+'×'+(raceUI.playing?'':' ❚❚');ctx.fillText(spd,W-44,19);
   const sw=ctx.measureText(spd).width+14;
@@ -354,6 +356,7 @@ function bindRace(){
     raceUI.playing=!raceUI.playing;g('racePlay').textContent=tr(raceUI.playing?'PAUSE':'PLAY');g('racePlay').classList.toggle('on',raceUI.playing);
   });
   g('raceSpeed').addEventListener('change',e=>{raceUI.speed=+e.target.value||1;});
+  g('raceMap').addEventListener('click',trackMapToggle);
   g('raceSkip').addEventListener('click',()=>{if(raceUI.run){raceUI.t=raceUI.run.t;renderRacePanel(true);}});
   g('raceNew').addEventListener('click',()=>{raceUI.phase='setup';raceUI.run=null;raceUI.follow=-1;renderRaceSetup();});
   g('raceRptPng').addEventListener('click',exportRacePNG);
@@ -373,9 +376,9 @@ function sizeRaceStage(){
   if(!racePage.open)return;
   const r=document.getElementById('raceStage').getBoundingClientRect();
   if(!(r.width>0&&r.height>0))return;
-  // the drawing grid follows the stage: about one unit per CSS pixel on a desktop, no narrower than 560
-  // on a phone (below that the pixel font stops being readable)
-  vizW=Math.round(clamp(r.width,560,1100));
+  // the drawing grid follows the stage, one unit per CSS pixel, a phone's included: held at 560 there, the
+  // 6-pixel text came out at 4 (build 279). Under 560 the title is left to the page's own bar.
+  vizW=Math.round(clamp(r.width,340,1100));
   vizH=Math.round(clamp(vizW*r.height/r.width,380,1400));
   sizeCanvas();
 }
