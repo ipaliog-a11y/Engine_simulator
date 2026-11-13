@@ -469,7 +469,7 @@ function headReport(x){
     const pull=wotPull(),valved=!!e.ivDia_mm,pack=VALVE_PACK[e.valves]||VALVE_PACK[4];
     if(!valved)return Object.assign(pull,{valved});
     const T=effIAT(e.mapMax,e.redline)+273.15;
-    return Object.assign(pull,{valved,n:e.ivCount,valveD:e.ivDia_mm,dOverB:e.ivDia_mm/e.bore_mm,packD:pack.dOverB,throat:e.throatRatio,
+    return Object.assign(pull,{valved,n:e.ivCount,valveD:e.ivDia_mm,dOverB:e.ivDia_mm/e.bore_mm,packD:Math.max(pack.dOverB,(e.ivValve_mm||0)/e.bore_mm),throat:e.throatRatio,
       Ci:inletCi(e),z:inletMachZ(e.redline,T),mass:e.valveMass_g,seat:e.springSeat_N,rate:e.springRate,
       atLift:e.springSeat_N+e.springRate*e.ivLift_mm,lift:e.ivLift_mm,floatRpm:e.floatRpm,
       exD:e.evDia_mm,nEx:Math.max(1,(e.valves||4)-e.ivCount),egt:e.egtPeak});
