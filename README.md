@@ -1,4 +1,4 @@
-# PIXEL ENGINE SIM v0.7 build 282
+# PIXEL ENGINE SIM v0.7 build 283
 
 **A lightweight, 8-bit style internal combustion engine *designer* & simulator** inspired by *Automation*.
 
@@ -155,6 +155,8 @@ its media and housing, whose pressure drop at the flow the engine draws is now w
 camshaft (build 249): duration, lift, lobe separation, lobe profile and the VVT phaser's range. The fifth is the
 intercooler (build 255): core face, depth, cooling fins and charge pipe. Since build 256 every core's effectiveness
 comes from its fins and its pressure drop is made up by the compressor.
+The sixth is the cylinder head (build 283): the intake valve's size, the port's throat, and the springs' seat load
+and rate.
 An electric car is heard (build 198): its motor's whine, the inverter's switching and the reduction's gears, each at
 the frequency its build gives it, on the bench and on the lap replay.
 On the LIVE bench (build 190) a hybrid runs with its motor and pack: a HYBRID panel draws the power flowing between
