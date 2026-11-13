@@ -2,7 +2,7 @@
 // The camera, the ground and the car are the draft view. The solver is not touched.
 // Dressing (rail, trees, boards, flags) is drawn, not surveyed, and the car does not ride it.
 // One closure, so the short names in here (T, project, quad, shade…) stay out of the page's one script.
-const { sceneBind, sceneWeather, sceneChase, sceneOverview, scenePan, sceneProject, scenePaint } = (() => {
+const { sceneBind, sceneWeather, sceneChase, sceneOverview, scenePan, sceneProject, scenePaint, scenePose, sceneBlend } = (() => {
 let T = null;
 let WX = { key: "dry", wet: 0, rain: 0, cloud: 0.05 };
 let TOD = "day";
@@ -72,6 +72,41 @@ function scenePan(cam, tx, ty) {
   cam.ox += a * cam.lx + b * cam.fx;
   cam.oy += a * cam.ly + b * cam.fy;
   return cam;
+}
+// Where a car is, pos points along a closed line (a whole number is a point of it). The solver's points are
+// about 5 m apart: joined by straight pieces, the heading jumped at each one and the picture, which turns
+// with the car, jerked. A Catmull-Rom curve through the same points gives a place and a heading that turn
+// smoothly. camHd is the heading of the chord from 8 m behind to 22 m ahead: the camera turns with the road,
+// and the car is seen to turn in before it. Drawing only; the solver's line is not touched.
+function scenePose(line, pos) {
+  const n = line.length, at = q => {
+    const b = Math.floor(q), f = q - b, i = ((b % n) + n) % n;
+    const p0 = line[(i - 1 + n) % n], p1 = line[i], p2 = line[(i + 1) % n], p3 = line[(i + 2) % n];
+    const cr = (a, b, c, d) => 0.5 * (2 * b + (c - a) * f + (2 * a - 5 * b + 4 * c - d) * f * f + (3 * b - a - 3 * c + d) * f * f * f);
+    const dcr = (a, b, c, d) => 0.5 * ((c - a) + 2 * (2 * a - 5 * b + 4 * c - d) * f + 3 * (3 * b - a - 3 * c + d) * f * f);
+    return { x: cr(p0.x, p1.x, p2.x, p3.x), y: cr(p0.y, p1.y, p2.y, p3.y), dx: dcr(p0.x, p1.x, p2.x, p3.x), dy: dcr(p0.y, p1.y, p2.y, p3.y), i, f, p0, p1, p2, p3 };
+  };
+  const c = at(pos), ds = Math.hypot(c.p2.x - c.p1.x, c.p2.y - c.p1.y) || 1;
+  const turn = (a, b, d) => {
+    let t = Math.atan2(d.y - b.y, d.x - b.x) - Math.atan2(b.y - a.y, b.x - a.x);
+    while (t > Math.PI) t -= Math.PI * 2;
+    while (t < -Math.PI) t += Math.PI * 2;
+    return t / ds;
+  };
+  const k1 = turn(c.p0, c.p1, c.p2), k2 = turn(c.p1, c.p2, c.p3);
+  const a = at(pos - 8 / ds), b = at(pos + 22 / ds);
+  return { x: c.x, y: c.y, hd: Math.atan2(c.dy, c.dx), curv: k1 + (k2 - k1) * c.f, camHd: Math.atan2(b.y - a.y, b.x - a.x) };
+}
+// The camera k of the way from a to b: zooming out lifts the chase view into the whole circuit, north up.
+function sceneBlend(a, b, k) {
+  const e = k * k * (3 - 2 * k), mix = (p, q) => p + (q - p) * e;
+  let d = Math.atan2(b.fy, b.fx) - Math.atan2(a.fy, a.fx);
+  while (d > Math.PI) d -= Math.PI * 2;
+  while (d < -Math.PI) d += Math.PI * 2;
+  const hd = Math.atan2(a.fy, a.fx) + d * e, fx = Math.cos(hd), fy = Math.sin(hd);
+  const scale = a.scale * Math.pow(b.scale / a.scale, e);
+  return { ox: mix(a.ox, b.ox), oy: mix(a.oy, b.oy), fx, fy, lx: -fy, ly: fx, cx: mix(a.cx, b.cx), cy: mix(a.cy, b.cy),
+    scale, pitch: mix(a.pitch, b.pitch), lift: mix(a.lift, b.lift), roll: mix(a.roll || 0, b.roll || 0), W: a.W, H: a.H };
 }
 function sceneProject(cam, x, y, h) { return project(cam, x, y, h || 0); }
 // The scene is painted on the page's own drawing grid (cam.W x cam.H) and then copied up to the canvas
@@ -186,7 +221,8 @@ function project(cam, x, y, h = 0) {
 
 function camFrom(car, W, H, opts) {
   const look = opts.look, backScale = opts.scale;
-  const fx = Math.cos(car.hd), fy = Math.sin(car.hd);
+  const hd = car.camHd == null ? car.hd : car.camHd;
+  const fx = Math.cos(hd), fy = Math.sin(hd);
   const ox = car.x + fx * look, oy = car.y + fy * look;
   return {
     ox, oy, fx, fy, lx: -fy, ly: fx,
@@ -197,15 +233,18 @@ function camFrom(car, W, H, opts) {
   };
 }
 
-function sceneOverview(W, H) {
+// The whole circuit, north up, fitted to the part of the picture the panels leave free (box: l, r, t, b).
+function sceneOverview(W, H, box) {
+  const bx = Object.assign({ l: 0, r: 0, t: 0, b: 0 }, box), fw = W - bx.l - bx.r, fh = H - bx.t - bx.b;
   let minX = 1e9, maxX = -1e9, minY = 1e9, maxY = -1e9;
   for (const p of T.pts) { minX = Math.min(minX, p.x); maxX = Math.max(maxX, p.x); minY = Math.min(minY, p.y); maxY = Math.max(maxY, p.y); }
   const pad = 46;
-  const scale = Math.min((W - 80) / (maxX - minX + pad * 2), (H - 120) / ((maxY - minY + pad * 2) * 0.82));
+  const scale = box ? Math.min((fw - 16) / (maxX - minX + pad * 2), (fh - 16) / ((maxY - minY + pad * 2) * 0.82))
+    : Math.min((W - 80) / (maxX - minX + pad * 2), (H - 120) / ((maxY - minY + pad * 2) * 0.82));
   return {
     ox: (minX + maxX) / 2, oy: (minY + maxY) / 2,
     fx: 0, fy: 1, lx: 1, ly: 0,
-    cx: W / 2, cy: H / 2 + 10,
+    cx: box ? bx.l + fw / 2 : W / 2, cy: box ? bx.t + fh / 2 : H / 2 + 10,
     scale, pitch: 0.82, lift: scale * 0.42, roll: 0, W, H
   };
 }
@@ -479,6 +518,7 @@ function cornerList() {
 }
 
 function drawBoard(ctx, cam, o) {
+  if (cam.scale < 2.5) return;   // from high up the boards are larger than the road
   const q = project(cam, o.x, o.y, 1.35);
   const w = Math.max(26, cam.scale * 1.7), h = Math.max(14, cam.scale * 0.95);
   const base = project(cam, o.x, o.y, 0);
@@ -1106,7 +1146,17 @@ function drawCar(ctx, cam, car) {
   const len = Math.max(18, Math.hypot(f.sx - o.sx, f.sy - o.sy));
   const wid = Math.max(10, Math.hypot(s.sx - o.sx, s.sy - o.sy));
   const ang = Math.atan2(f.sy - o.sy, f.sx - o.sx);
-  castShadow(ctx, cam, car.x, car.y, len * 0.5, wid * 0.72, ang);
+  // The shadow lies under the car and a little down-sun of it. It was cast 4 m away, as a tree's is from its
+  // crown, and the car looked as if it floated.
+  const k = sunK(), sh = project(cam, car.x + 0.42 * k, car.y + 0.3 * k, 0);
+  ctx.save();
+  ctx.translate(sh.sx, sh.sy);
+  ctx.rotate(ang);
+  ctx.fillStyle = `rgba(8, 18, 12, ${(0.34 + 0.3 * k) * (1 - WX.wet * 0.22)})`;
+  ctx.beginPath();
+  ctx.roundRect(-len * 0.54, -wid * 0.47, len * 1.08, wid * 0.94, wid * 0.3);
+  ctx.fill();
+  ctx.restore();
   ctx.save();
   ctx.translate(o.sx, o.sy);
   ctx.rotate(ang);
@@ -1225,5 +1275,5 @@ function sceneLoadTex() {
   }).catch(() => {});
 }
 sceneLoadTex();
-return { sceneBind, sceneWeather, sceneChase, sceneOverview, scenePan, sceneProject, scenePaint };
+return { sceneBind, sceneWeather, sceneChase, sceneOverview, scenePan, sceneProject, scenePaint, scenePose, sceneBlend };
 })();
