@@ -111,7 +111,7 @@ const HYB_VEHICLE_PRESETS=[
   // 1674 kg (DIN), all-wheel drive through the front motor, seven-speed PDK; 0-100 km/h 2.6 s, 0-200 7.2 s, 0-300 19.9 s,
   // 345 km/h (Porsche); Nordschleife 6:57 (Weissach package, 2013).
   {cat:'Hybrid',name:'Porsche 918 Spyder (2013)',engine:'Porsche 4.6 V8 + P2 + front motor (918 Spyder)',chassis:'hyper',
-   body:{kg:1674,cd:0.35,area:1.95,wb:2.73,fWt:0.43},fit:{drive:'awd',tire:'semi',tw:325,ta:30,wheel:21,twF:265,brake:'carbon',rotor:410,susp:'race',gears:7,gearbox:'dct',diff:'clsd'},
+   body:{kg:1674,cd:0.35,area:1.95,wb:2.73,fWt:0.43},fit:{drive:'rwd',tire:'semi',tw:325,ta:30,wheel:21,twF:265,brake:'carbon',rotor:410,susp:'race',gears:7,gearbox:'dct',diff:'clsd'},
    real:{t100:2.6,t200:7.2,top:345,limited:false},unsure:['cd','area','fWt','tyres']}
 ];
 // What a player picks from: the combustion tables, then the electric and hybrid ones.

@@ -20,6 +20,36 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 Working toward **v1.0 — every number derived, not fitted.**
 
+### A hybrid's motors, pack and controller in the stepped car (build 273)
+
+Phase E, step 3 of `plans/road-to-v1.md`. `stepCar` drove a hybrid as an engine with the motor's torque added to its
+curve: no pack, no charge, no front motor. A power-split and a series hybrid did not move at all (their shaft was
+taken for a stalled engine): the Prius and the Qashqai e-POWER had not reached 100 km/h after 40 s. Nothing in the app
+reads `stepCar` yet.
+
+- **The hybrid is its own plain data,** `car.hy`: each motor's envelope and losses (the lap's `motorMaxTorque` and
+  `motorLosses`, as tables), the pack's voltage curve, resistance and limits, the HYBRID TUNE's charge window and
+  regeneration. The engine's curve is now the engine's alone.
+- **`driveHybrid` shares the pedal** as the lap does (the engine first, the motor what the engine cannot give) and
+  sustains the charge as the LIVE bench's AUTO does (the engine asked for more or less away from the target). The pack
+  gives no more than its voltage and rate allow at its charge, nothing under the window's low, takes nothing over the
+  high; its charge moves by the current that carries the motors' power and losses. Off the pedal the motor regenerates.
+- **A power-split and a series hybrid** drive through their one reduction, as an electric car does. **A front axle
+  motor** drives the front wheels beside the gearbox's own axle.
+- **0-100 against the solver:** Ioniq 9.38 s (-2%), Prius 11.44 (+1%), Qashqai e-POWER 7.17 (-3%), BMW 330e 5.82 (+2%),
+  918 Spyder 3.17 (+27%; it was 3.87). Over the run the pack falls 0.8 to 8% of its charge; 2 s off the pedal from
+  100 km/h puts back 0.1 to 0.9%.
+- **The 918's gearbox now turns the rear axle** (`fit.drive:'rwd'`), as its own comment and Porsche describe it; the
+  preset said all four, which was the front motor's doing. The car is still all-wheel drive to every solver (its
+  0-100 is unchanged at 2.49 s); only `stepCar` reads the gearbox's axle (`vehicle.driveMech`).
+- **What moved:** no solver result. Fingerprint not re-run. Tests 172 (new), 168, 170, 166, 101, 102, 112, 114, 136, 147.
+- **Left open:** the 918's launch, 27% off the solver (named in `test172`: one clutch fed by the rear tyres' slip
+  against the solver's launch control on all four); the engine switched off for electric driving and the DRIVE MODEs;
+  a power-split's engine speed in time; fuel; motor and pack temperatures; regeneration blended into the brake pedal;
+  an electric car's regeneration and charge in `stepCar`. A saved build with a front motor does not remember the
+  gearbox's axle (it reads as all four). The controller's two charging numbers are the bench's `HYB_BENCH` rule, not
+  yet in the register (phase C's audit).
+
 ### Every real car's body is recorded for a 3D model (build 272)
 
 Phase E, step 6 of `plans/road-to-v1.md`. A 3D car needs each preset's length, width, height, overhangs, tracks,

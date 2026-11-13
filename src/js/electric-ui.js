@@ -83,7 +83,8 @@ function syncElectricSections(){
 // it was when it is taken off.
 function evDriveLock(on){
   const dr=document.getElementById('vhDrive');if(!dr)return;
-  if(on){if(!dr.disabled)dr.dataset.prev=dr.value;dr.value='awd';dr.disabled=true;}
+  if(on){if(!dr.disabled||dr.value!=='awd')dr.dataset.prev=dr.value;   // locked, a preset just loaded wrote its own axle here (build 273)
+    dr.value='awd';dr.disabled=true;}
   else if(dr.disabled){dr.value=dr.dataset.prev||dr.value;dr.disabled=false;}
 }
 
