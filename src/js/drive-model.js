@@ -34,117 +34,166 @@
 //             up or lock.
 //   Drive     the engine's full-load curve by the pedal, its own overrun torque off it, its inertia, a clutch that
 //             slips (capacity 1.5 x peak torque), the gearbox with its shift time, the differential (open: equal
-//             torque; limited-slip: torque moved to the slower wheel by its lock), all-wheel drive split evenly.
+//             torque; limited-slip: torque moved to the slower wheel by its lock), all-wheel drive with its two axles turning together.
 //   Stall     below the speed it can fire at, the engine stops; a starter or a bump start brings it back.
 //   Brakes    the hydraulics' own force and front share; ABS and traction control as wheel-slip limits when fitted.
 //   Aero      drag and downforce on the square of the speed; rolling resistance by the load.
-//   Hybrid    (build 274) the motor, the pack and the controller apart from the engine, the pack's charge stepped in
-//             time. See above driveHybrid.
 //
-// NOT YET (named, so nobody rediscovers them): the turbo's shaft in time (boost is the settled curve's), tyre and
-// brake temperatures, camber and roll steer, the road's bumps and kerbs. The lap solver has
-// each of these; they move here in later builds of phase E.
+//   Turbo     the shaft in time (build 274): its energy rises by the turbine's power less the compressor's and the
+//             bearings', and the boost it has built sets the torque. See driveTurbo.
+//
+//   Electric  a hybrid's or an electric car's pack is a state (build 275): the motor's help and its regeneration by
+//             the charge, the charge by what they draw and return. See driveElectric.
+//
+// NOT YET (named, so nobody rediscovers them): tyre and brake temperatures, camber and roll steer, the road's bumps
+// and kerbs, a hybrid's engine stopping and a power-split's engine speed, the motor's and the pack's heat.
 // ================================================================================================
 const DRIVE_G=9.81, DRIVE_RHO=1.20;
 // The designed car as plain data. Everything stepCar needs, and nothing that is not a number, a string or an array.
 function driveCar(){
   const v=vehicle,pt=powertrain(),L=v.wb,a=L*(1-v.fWt),b=L*v.fWt;
   const curve=pt.torqueCurve(),rl=pt.maxRpm(),peak=curve.reduce((m,p)=>Math.max(m,p.tq),0);
-  // a hybrid (build 274): the engine's curve and overrun are its own (a power-split's or a series hybrid's: what reaches
-  // the motor's shaft with the pack giving nothing), and the motors and the pack go beside them as car.hy
-  const hy=driveHybridData(v,pt,rl),own=hy?hybCurves().eng:curve,direct=!!pt.direct;
   const ride=(SUSPENSION[v.suspension]||SUSPENSION.sport).hz;
-  const car={
+  const grid=pt.hasShaft()?pt.torqueGrid():null,el=driveElectric(pt,curve,rl);
+  return {
+    turbo:grid&&grid.laggy?driveTurbo(pt,grid):null,el,
     name:v.chLabel||'',m:v.mass,Izz:v.mass*a*b,a,b,h:v.cg,tF:v.trackF||v.track,tR:v.trackR||v.track,
     r:v.rTire,Iw:(v.wheelI||2)/4,
     mu:tyreMu(v.FzRef,v.FzRef),muF:tyreMu(v.FzRefF||v.FzRef,v.FzRefF||v.FzRef),FzRef:v.FzRef,FzRefF:v.FzRefF||v.FzRef,
     loadSens:LOAD_SENS,muX:TYRE_MU_X,cc:v.tyreCC||tyreCC(v.tireType),ccP2:TYRE_CC_P2,slipOpt:TYRE_SLIP_OPT,slipC:TYRE_SLIP_C,relax:v.rTire,
     cdA:v.cdA,clA:v.clA||0,aeroBal:v.aeroBal==null?0.5:v.aeroBal,crr:v.crr,
     lltdF:v.lltdF==null?v.fWt:v.lltdF,tauLoad:1/(2*Math.PI*ride),
-    drive:v.driveMech||v.drive,lock:(v.df&&v.df.lock)||0,ratios:(v.ratios||[1]).slice(),fd:v.finalDrive||1,eff:v.driveEff||0.9,
-    shiftTime:v.shiftCut||0,ev:!!v.ev||direct,tc:!!v.tc,abs:true,
-    rpm:own.map(p=>p.rpm),tq:own.map(p=>p.tq),ov:hy&&!direct?COMBUSTION.overrunTable(rl):pt.overrunTable(rl),idle:pt.idleRpm()||0,redline:rl,
+    drive:el&&el.front?'rwd':v.drive,centre:v.drive==='awd'&&!(el&&el.front),lock:(v.df&&v.df.lock)||0,ratios:(v.ratios||[1]).slice(),fd:v.finalDrive||1,eff:v.driveEff||0.9,
+    shiftTime:v.shiftCut||0,ev:!!v.ev||!!pt.direct,tc:!!v.tc,abs:true,
+    rpm:curve.map(p=>p.rpm),tq:curve.map(p=>p.tq),ov:pt.overrunTable(rl),idle:pt.idleRpm()||0,redline:rl,
     Ie:pt.inertia()||0.15,clutchCap:1.5*peak,
     fireRpm:FIRE_RPM,fireTurns:1/(engine.chargesPerRev||0.5),starterT0:v.ev?0:starterStallTorque(),starterFree:STARTER_FREE_RPM,   // stalling and starting, as on the bench
-    // where a driver holds the engine to pull away flat out: at its torque peak, no higher than 60% of the redline
-    launchRpm:Math.min(curve.reduce((m,p)=>p.tq>m.tq?p:m,curve[0]).rpm,0.6*rl),
+    // where the engine is held to pull away flat out: the speed the 0-100 solver found quickest of its five tries,
+    // as a launch control is set (build 276). Until then it was the torque peak, no higher than 60% of the redline,
+    // which left a turbo unlit on the line (the GT-R at 2400 rpm) and a powerful car short of flywheel.
+    launchRpm:(()=>{const A=v.ev||pt.direct?null:simulateAccelRun();return A&&A.launchRpm>0?A.launchRpm:Math.min(curve.reduce((m,p)=>p.tq>m.tq?p:m,curve[0]).rpm,0.6*rl);})(),
     brakeF:brakeForceCap(v),brakeFront:v.brakeFrontShare,
     steerLock:8.5/(v.steerRatio||15)        // 2.7 turns of the hand wheel lock to lock (probable), through the ratio
   };
-  if(hy)car.hy=hy;                          // the one member that is an object: plain data all the way down
-  return car;
-}
-// A HYBRID AS PLAIN DATA (build 274), or null. Each motor is its envelope at the bus (Nm on n, rpm) and its losses (W)
-// at 0, 25, 50, 75 and 100% of that envelope, from motorMaxTorque and motorLosses, the lap's own; tm is the help the
-// HYBRID TUNE lets the main motor give flat out (hybCurves().mot). The pack is its open-circuit voltage every 10% of
-// charge, its resistance, capacity and limits (packBuild). The controller's numbers are the tune's charge window and
-// regeneration, and the LIVE bench's two charging rules (HYB_BENCH.chargeShare, and its 10% band about the target).
-function driveHybridData(v,pt,rl){
-  if(!isHybrid())return null;
-  const e=engine,h=e.hy,c=hybCurves(),t=hybTune(e),V=hybBusV(h),b=h.pack;
-  const tab=(m,ns)=>{const tc=m.cool.tCool,temp={w:tc+20,c:tc+15,r:60},env=ns.map(n=>n>m.nMax?0:motorMaxTorque(m,Math.max(n,1),V,60));
-    return {n:ns,env,loss:[0,0.25,0.5,0.75,1].map(f=>ns.map((n,i)=>motorLosses(m,f*env[i],Math.max(n,1),V,temp).total))};};
-  const M=tab(h.motor,c.eng.map(p=>p.rpm));M.tm=c.mot.slice();
-  let F=null;
-  if(h.front&&v.frontFd>0){const m=h.front.motor,ns=[];for(let k=0;k<=40;k++)ns.push(m.nMax*k/40);
-    F=tab(m,ns);F.tq=ns.map(n=>hybFrontTq(h,n));F.fd=v.frontFd;F.eff=HYB_FRONT_EFF;F.share=h.front.shareF;}
-  const ocv=[];for(let k=0;k<=10;k++)ocv.push(packOcv(b,k/10));
-  return {m:M,front:F,share:h.shareR||1,pack:{ocv,R:b.R,Ah:b.Ah,vMin:b.vMin,iMax:b.iMax,pChg:b.pChargeMax},
-    socLo:t.socLo/100,socT:t.socT/100,socHi:t.socHi/100,soc0:(e.hyPlug?t.socHi:t.socT)/100,   // a plug-in sets off full, as in the race
-    kRegen:(HYB_REGEN[t.regen]||HYB_REGEN.high).k,lps:!!t.lps,chargeShare:HYB_BENCH.chargeShare,band:0.1};
-}
-// A motor's losses (W) at a torque and a speed, from its table.
-function driveLoss(M,T,n){
-  const env=driveLerp(M.n,M.env,n),x=env>0?Math.min(1,Math.abs(T)/env)*4:0,j=Math.min(3,Math.floor(x)),f=x-j;
-  return driveLerp(M.n,M.loss[j],n)*(1-f)+driveLerp(M.n,M.loss[j+1],n)*f;
-}
-// A HYBRID'S CONTROLLER, ONE STEP (build 274): from the pedal p, the engine's speed nE and the main motor's nM (rpm; a
-// P2's motor turns with the gearbox input, a power-split's or a series hybrid's is the shaft), what the engine is asked
-// (s.thrE, its own throttle) and what the motors give (s.Tm Nm at the main motor, s.Tf at the front one), and the pack's
-// charge s.soc after h seconds. on: the main motor is connected (a P2's is not in neutral or through a shift).
-//   The pedal   asks the shaft for p of everything (the engine flat out and the motor's help) less (1 - p) of the
-//               engine's overrun: the engine's own pedal law, with the motor. Right off the pedal the motor regenerates
-//               on top of the overrun, as the lap has it.
-//   The split   decision 13 of plans/hybrid-electric/, the lap's: the engine does all it can and the motor gives only
-//               what the engine cannot. Charge-sustaining as the LIVE bench's AUTO: away from the target charge the
-//               engine is asked for more (the motor charging with it) or less (the motor helping), by chargeShare of
-//               the pack's charging power across a 10% band; without LOAD-POINT SHIFTING only under the low charge.
-//   The pack    gives no more than its cut-off voltage and its rate allow at this charge (packMaxPower's law), nothing
-//               under the window's low, and takes nothing over its high. Its charge moves by the current that carries
-//               the motors' power and losses, P = (Voc - I R) I.
-//   The front   motor gives the same share of its own torque as the main motor of its help; it does not regenerate
-//               (the lap's does not either).
-// Not here (named): the engine switched off for electric driving, the DRIVE MODEs, the fuel, the motors' and the
-// pack's temperatures, a power-split's engine speed (its ring torque is the settled curve's).
-function driveHybrid(car,s,p,nE,nM,nF,on,h){
-  const hy=car.hy,M=hy.m,B=hy.pack,w=Math.max(nM,1)*Math.PI/30;
-  const V0=driveLerp([0,0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9,1],B.ocv,s.soc),Ic=Math.min(B.iMax,(V0-B.vMin)/B.R);
-  const Pmax=s.soc>hy.socLo?Math.max(0,(V0-Ic*B.R)*Ic):0,Pchg=s.soc<hy.socHi?B.pChg:0;
-  const eFull=driveEngine(car,1,nE),eOff=driveEngine(car,0,nE);
-  const help=on?driveLerp(M.n,M.tm,nM):0,chg=on?Math.min(driveLerp(M.n,M.env,nM),Pchg/w)*Math.min(1,nM/500):0;   // regeneration fades out under 500 rpm, as the lap's table has it
-  const Tt=p*(eFull+help)+(1-p)*eOff-(p>0?0:hy.kRegen*chg);
-  let Pc=Math.max(-1,Math.min(1,(hy.socT-s.soc)/hy.band))*hy.chargeShare*B.pChg;
-  if(!hy.lps&&s.soc>=hy.socLo)Pc=Math.min(0,Pc);
-  const TeW=Math.max(eOff,Math.min(eFull,Tt+(p>0?Pc/w:0)));
-  let Tm=Math.max(-chg,Math.min(help,Tt-TeW)),P=Tm*w+(on?driveLoss(M,Tm,nM):0);
-  if(Tm>0&&P>Pmax*hy.share){Tm=Math.max(0,(Pmax*hy.share-driveLoss(M,Tm,nM))/w);P=Tm*w+driveLoss(M,Tm,nM);}   // what is left after the losses it had: never over
-  let Tf=0;const F=hy.front;
-  if(F&&Tm>0&&help>0&&nF<F.n[F.n.length-1]){
-    const wf=Math.max(nF,1)*Math.PI/30;Tf=Tm/help*driveLerp(F.n,F.tq,nF);
-    let Pf=Tf*wf+driveLoss(F,Tf,nF);
-    if(Pf>Pmax*F.share){Tf=Math.max(0,(Pmax*F.share-driveLoss(F,Tf,nF))/wf);Pf=Tf*wf+driveLoss(F,Tf,nF);}
-    P+=Pf;
-  }
-  const Te=Math.max(eOff,Math.min(eFull,Tt-Tm));
-  s.thrE=eFull>eOff?(Te-eOff)/(eFull-eOff):p;s.Tm=Tm;s.Tf=Tf;s.Pb=P;
-  const I=(V0-Math.sqrt(Math.max(0,V0*V0-4*B.R*P)))/(2*B.R);
-  s.soc=Math.max(0,Math.min(1,s.soc-I*h/(B.Ah*3600)));
 }
 // A car at rest, in neutral for a clutch car until the driver asks for a gear.
 function driveState(car){
-  return {t:0,x:0,y:0,psi:0,vx:0,vy:0,yaw:0,w:[0,0,0,0],we:car.idle*Math.PI/30,gear:1,shiftT:0,
-    axF:0,ayF:0,al:[0,0,0,0],abs:[1,1,1,1],tcF:1,clF:1,pull:false,firing:true,soc:car.hy?car.hy.soc0:0,thrE:0,Tm:0,Tf:0,Pb:0,
+  return {soc:car.el?car.el.soc0:0,Pm:0,shE:0,boost:0,t:0,x:0,y:0,psi:0,vx:0,vy:0,yaw:0,w:[0,0,0,0],we:car.idle*Math.PI/30,gear:1,shiftT:0,
+    axF:0,ayF:0,al:[0,0,0,0],abs:[1,1,1,1],tcF:1,clF:1,pull:false,firing:true,
     ax:0,ay:0,Fz:[0,0,0,0],kappa:[0,0,0,0],alpha:[0,0,0,0],Fx:[0,0,0,0],Fy:[0,0,0,0],rpm:car.idle,speed:0,delta:0};
+}
+// THE ELECTRIC SIDE AS PLAIN DATA (build 275): a hybrid's motor and pack, or an electric car's. null without one.
+// The full-load curve the car carries is already the engine's and the motor's together at the pack's rated charge, and
+// its overrun already holds the regeneration (powertrain()). What was missing is the pack as a state, and a controller:
+//   Split    the pedal asks a torque of the shaft (full load by the pedal, the overrun off it). The engine gives all
+//            of it that it can, driving or dragging, and the motor only the rest (the lap's rule, hybridLap): help
+//            past the engine's full load, regeneration past its own drag.
+//   Window   the tune's CHARGE window bounds both. The motor's help is whole down to 10 points of charge above the
+//            window's low and falls to nothing at the low; its regeneration is whole up to 10 points under the high
+//            and nothing at the high, where the pack takes no more. (10 points: the band the bench's controller
+//            works over, hybControl; the window's own half where that is narrower.) An electric car's help is cut by
+//            its battery management's own law (EV_BMS). Regeneration fades to nothing at rest below the table's
+//            first speed.
+//   Shifting with LOAD-POINT SHIFTING on, while driving, the engine works harder or easier than the pedal asks and
+//            the motor takes the difference, to bring the charge to its target: the bench controller's law
+//            (hybControl: half the pack's charging power, over those 10 points). The wheels feel no difference.
+//   Charge   the pack gives the motor's shaft power and its losses (read off the motor on a grid of speed and torque)
+//            and its own I2R at the bus voltage.
+//   Front    a front axle motor (the 918's) drives the front wheels by its own force over road speed; the engine and
+//            the main motor then drive the rear.
+// A power-split's shaft is its traction motor's and its engine's part is the steady eCVT curve's (psCurves): the
+// battery's part of that curve is treated as the motor's here. Its engine's own speed is not stepped.
+function driveElectric(pt,curve,rl){
+  const e=engine,hy=isHybrid()?e.hy:null;if(!hy&&!isElectric())return null;
+  const src=hy||e,m=src.motor,pack=src.pack,V=hy?hybBusV(hy):motorRatedV(e),tc=m.cool.tCool,temp={w:tc+20,c:tc+15,r:60};   // warm, as the lap's energy count has it
+  const tu=hy?hybTune(e):null,c=hy?hybCurves():null,NS=13,NT=5,rpm=[],tmax=[],loss=[];
+  for(let i=0;i<NS;i++){const n=Math.max(1,m.nMax*i/(NS-1)),T=motorMaxTorque(m,n,V,60);rpm.push(n);tmax.push(T);
+    for(let j=0;j<NT;j++)loss.push(motorLosses(m,T*j/(NT-1),n,V,temp).total);}
+  const el={capJ:pack.kWh*3.6e6,V:packOcv(pack,hy?HYB_SOC:0.5),R:pack.R,
+    // the charge window: [low, target, high], the motor's share at the low, and the charge it starts with
+    // the charge it starts with and holds; the window [lo, hi], the bands the help and the regeneration fade over
+    // inside it, and the share of the help left at the low
+    soc0:hy?tu.socT/100:0.5,tg:hy?tu.socT/100:0.5,lo:hy?tu.socLo/100:EV_BMS.limp,hi:hy?tu.socHi/100:1,
+    dn:hy?Math.min(0.1,(tu.socT-tu.socLo)/100):EV_BMS.low-EV_BMS.limp,up:hy?Math.min(0.1,(tu.socHi-tu.socT)/100):0,kLo:hy?0:EV_BMS.lowFloor,
+    lps:hy&&tu.lps?HYB_BENCH.chargeShare*pack.pChargeMax:0,lpsBand:0.1,
+    mrpm:rpm,tmax,loss,
+    crpm:(hy?c.eng:curve).map(q=>q.rpm),mot:hy?c.mot.slice():curve.map(q=>q.tq),regen:hy?hybRegenTable(rl):pt.overrunTable(rl),front:null};
+  if(hy&&hy.front&&vehicle.frontTab){const f=hy.front,v=vehicle,F=v.frontTab.slice(),lf=[];
+    for(let k=0;k<F.length;k++){const n=k*0.5/v.rTire*v.frontFd*30/Math.PI;lf.push(F[k]>0?motorLosses(f.motor,F[k]*v.rTire/(v.frontFd*HYB_FRONT_EFF),Math.max(n,1),V,temp).total:0);}
+    el.front={F,loss:lf,eff:HYB_FRONT_EFF};}                // the force and the motor's losses every 0.5 m/s, at full help
+  return el;
+}
+// The shares the charge allows: [of the motor's help, of its regeneration].
+function driveShares(el,soc){
+  return [soc>=el.lo+el.dn?1:soc>el.lo?el.kLo+(1-el.kLo)*(soc-el.lo)/el.dn:0,el.up>0?Math.max(0,Math.min(1,(el.hi-soc)/el.up)):soc<el.hi?1:0];
+}
+// What the shaft's motor does this step, and the pack with it. thr and rpm are the shaft's; Ff, vf the front motor's
+// force (N) and its wheels' speed. Leaves s.soc and s.Pm (the motors' power at their shafts, W; negative charging).
+function driveCharge(car,s,thr,rpm,Ff,vf,h){
+  const el=car.el,w=Math.max(0,rpm)*Math.PI/30,[k,r]=driveShares(el,s.soc);
+  const motF=driveLerp(el.crpm,el.mot,rpm),wotE=Math.max(0,driveEngine(car,1,rpm,s.boost)-motF),T=driveEngine(car,thr,rpm,s.boost,s.soc);
+  const ix=Math.max(0,Math.min(el.regen.length-1,Math.round((rpm-500)/250))),regF=el.regen[ix]||0,reg=r*regF*Math.min(1,rpm/500);
+  const ovE=car.ev?0:Math.max(0,(car.ov[ix]||0)-regF);                      // the engine's own drag, its throttle shut
+  let Te=Math.max(-ovE,Math.min(wotE,T));
+  if(el.lps&&wotE>0&&thr>0&&w>1)Te=Math.max(0,Math.min(wotE,Te+Math.max(-1,Math.min(1,(el.tg-s.soc)/el.lpsBand))*el.lps/w));
+  const Tm=Math.max(-reg,Math.min(k*motF,T-Te));
+  // the motor's losses at this speed and torque, straight between the grid's points
+  const NT=el.loss.length/el.mrpm.length,[i,fi]=driveAt(el.mrpm,rpm),tmx=el.tmax[i]+(el.tmax[i+1]-el.tmax[i])*fi;
+  const x=Math.min(1,Math.abs(Tm)/Math.max(1e-6,tmx))*(NT-1),j=Math.min(NT-2,Math.floor(x)),fj=x-j,at=(a,b)=>el.loss[a*NT+b];
+  const ls=w>1||Tm!==0?(at(i,j)*(1-fi)+at(i+1,j)*fi)*(1-fj)+(at(i,j+1)*(1-fi)+at(i+1,j+1)*fi)*fj:0;
+  let Pm=Tm*w,P=Pm+ls;
+  if(el.front&&Ff>0){const q=Math.max(0,vf)/0.5,a=Math.min(el.front.F.length-2,Math.floor(q)),full=el.front.F[a]+(el.front.F[a+1]-el.front.F[a])*(q-a);
+    Pm+=Ff*vf;P+=Ff*vf/el.front.eff+(full>0?(el.front.loss[a]+(el.front.loss[a+1]-el.front.loss[a])*(q-a))*Ff/full:0);}   // its losses by its share of the force (copper's would fall faster: probable)
+  const I=P/el.V;
+  s.soc=Math.max(0,Math.min(1,s.soc-(P+I*I*el.R)*h/el.capJ));s.Pm=Pm;
+}
+// THE TURBO AS PLAIN DATA (build 274). The bench, the 0-100 and the lap step one shaft (advanceShaft): its energy
+// E = J w^2 / 2 gains the turbine's power less the compressor's and the bearings', the boost is what the wheel makes at
+// that speed, and on a lift the boost falls only as fast as the engine empties the charge pipes. That needs the whole
+// engine model, which a game does not load. So the same balance is read off the engine once, on a grid of engine speed,
+// shaft speed and throttle: the shaft's net power P (W), the boost the wheel supports bS (bar) and the compressor's
+// efficiency eta. At each point the air is what the engine swallows AT that boost (a fixed point, since a rising
+// boost follows the shaft at once). Beside it: the air swallowed at 1 bar and the charge temperature over engine
+// speed (for the emptying and the fill), and the torque over engine speed and boost (the lap's own grid).
+function driveTurbo(pt,grid){
+  const e=engine,iat0=state.iat;state.iat=20;                 // design conditions, as the 0-100 and the lap pin them
+  const T01=293.15,NR=10,NN=16,TH=[0.08,0.25,0.45,0.65,0.82,1],lo=Math.min(1000,pt.idleRpm()||1000),hi=pt.maxRpm();
+  const rp=[],ns=[],P=[],bS=[],eta=[],air=[],Tch=[],bAv=grid.rpms.map(r=>pt.boostAvail(r));
+  for(let i=0;i<NN;i++)ns.push(e.shaftMax*i/(NN-1));
+  for(let i=0;i<NR;i++){const rpm=lo+(hi-lo)*i/(NR-1),bt=pt.boostTarget(rpm);rp.push(rpm);
+    air.push(airFlowAt(rpm,1));Tch.push(effIAT(1+bt/2,rpm)+273.15);
+    for(const n of ns)for(const th of TH){
+      const T3=exhaustGasT(Math.max(0.3,th),rpm);let b=0,r=null;
+      for(let k=0;k<8;k++){r=shaftNetPower(n,airFlowAt(rpm,1+b)*th,T3,T01,rpm);b=0.5*b+0.5*Math.max(0,Math.min(bt,r.pr-1));}
+      P.push(r.net-shaftLossPower(n));bS.push(b);eta.push(Math.max(0.3,Math.min(0.85,r.eta||0.7)));
+    }}
+  state.iat=iat0;
+  return {J:e.shaftJ,nMax:e.shaftMax,V:e.chargeVol||0,T01,rp,n:ns,th:TH,P,bS,eta,air,Tch,
+    rpm:grid.rpms.slice(),boosts:grid.boosts.slice(),tq:grid.tq.map(r=>r.slice()),bAvail:bAv,
+    flatShift:['dct','sequential','auto'].includes(vehicle.gearbox)};   // a spark-cut shift keeps the throttle open (the lap's rule)
+}
+// Where x sits in a rising list: [index below, share of the way to the next].
+function driveAt(xs,x){const n=xs.length;if(x<=xs[0])return [0,0];if(x>=xs[n-1])return [n-2,1];let i=1;while(xs[i]<x)i++;return [i-1,(x-xs[i-1])/(xs[i]-xs[i-1])];}
+// One step of the shaft: s.shE (J) and s.boost (bar) under the engine's speed and the throttle, as advanceShaft has it.
+function driveShaft(tb,s,rpm,thr,h){
+  const th=Math.max(0.08,Math.min(1,thr)),Emax=0.5*tb.J*Math.pow(tb.nMax*Math.PI/30,2);
+  const n=Math.sqrt(2*s.shE/tb.J)*30/Math.PI,[i,fi]=driveAt(tb.rp,rpm),[j,fj]=driveAt(tb.n,n),[k,fk]=driveAt(tb.th,th);
+  const NN=tb.n.length,NT=tb.th.length,at=(A,a,b,c)=>A[(a*NN+b)*NT+c];
+  const tri=A=>{let v=0;for(let a=0;a<2;a++)for(let b=0;b<2;b++)for(let c=0;c<2;c++)v+=(a?fi:1-fi)*(b?fj:1-fj)*(c?fk:1-fk)*at(A,i+a,j+b,k+c);return v;};
+  const bSh=tri(tb.bS),Tc=tb.Tch[i]+(tb.Tch[i+1]-tb.Tch[i])*fi,air=tb.air[i]+(tb.air[i+1]-tb.air[i])*fi;
+  // falling, the charge pipes empty at the rate the engine swallows them: tau = air held / air swallowed
+  const b=s.boost,b2=bSh>=b?bSh:bSh+(b-bSh)*Math.exp(-h*air*th*287*Tc/Math.max(1e-9,tb.V*1e5));
+  // rising, the air that fills them costs the compressor's work per kg
+  const pr=1+0.5*(b+b2),fill=tb.V*Math.max(0,b2-b)*1e5/(287*Tc)*1005*tb.T01*(Math.pow(pr,0.286)-1)/tri(tb.eta);
+  s.shE=Math.max(0,Math.min(Emax,s.shE+tri(tb.P)*h-fill));s.boost=b2;
+}
+// A car on the line, ready to launch: the engine held at its launch speed with the clutch down, and a turbo spun up
+// for the 1.2 s the 0-100 solver holds it there (its brake-boost). driveState() is the car at rest at idle.
+function driveLaunch(car){
+  const s=driveState(car);if(car.ev)return s;
+  s.we=car.launchRpm*Math.PI/30;s.rpm=car.launchRpm;
+  if(car.turbo)for(let i=0;i<1200;i++)driveShaft(car.turbo,s,car.launchRpm,1,0.001);
+  return s;
 }
 function driveLerp(xs,ys,x){
   const n=xs.length;if(x<=xs[0])return ys[0];if(x>=xs[n-1])return ys[n-1];
@@ -166,8 +215,16 @@ function driveTyre(car,Fz,kappa,alpha,front){
 }
 // The engine's torque at the crank (Nm) for a pedal and a speed: full load by the pedal, its own drag off it,
 // nothing past the limiter, and an idle governor that holds it up.
-function driveEngine(car,thr,rpm){
-  const wot=driveLerp(car.rpm,car.tq,rpm),ov=car.ev?0:car.ov[Math.max(0,Math.min(car.ov.length-1,Math.round((rpm-500)/250)))]||0;
+function driveEngine(car,thr,rpm,boost,soc){
+  let wot;
+  if(car.turbo&&boost!=null){const tb=car.turbo,[i,fi]=driveAt(tb.rpm,rpm),[j,fj]=driveAt(tb.boosts,Math.min(boost,tb.bAvail[i]+(tb.bAvail[i+1]-tb.bAvail[i])*fi));
+    const a=tb.tq[j][i]+(tb.tq[j][i+1]-tb.tq[j][i])*fi,c=tb.tq[j+1][i]+(tb.tq[j+1][i+1]-tb.tq[j+1][i])*fi;wot=a+(c-a)*fj;}
+  else wot=driveLerp(car.rpm,car.tq,rpm);
+  let ov=car.ev&&!car.el?0:car.ov[Math.max(0,Math.min(car.ov.length-1,Math.round((rpm-500)/250)))]||0;
+  if(car.el){                                       // the motor's help and its regeneration, by what the charge allows
+    const el=car.el,[k,r]=soc==null?[1,1]:driveShares(el,soc),reg=el.regen[Math.max(0,Math.min(el.regen.length-1,Math.round((rpm-500)/250)))]||0;
+    wot-=(1-k)*driveLerp(el.crpm,el.mot,rpm);ov=Math.max(0,ov-reg)+r*reg*Math.min(1,rpm/500);
+  }
   if(rpm>=car.redline)return -ov;
   let T=thr*wot-(1-thr)*ov;
   if(!car.ev&&rpm<car.idle)T+=Math.min(0.4*wot+ov,(car.idle-rpm)*0.5);
@@ -178,7 +235,7 @@ function driveEngine(car,thr,rpm){
 function driveLine(lap){return lap.track.line.map((q,i)=>({x:q.x,y:q.y,v:lap.v[i],grade:q.sinT||0,kv:q.kv||0}));}
 // A DRIVER FOR A LINE (build 269): the inputs that take the car round a line of points {x, y, v, grade, kv}. It reads
 // only its arguments (d is its memory: {i} the point it is at; it leaves d.e, how far left of the line the front
-// axle is). What it does is a driver's manner, not the car's physics; its settings are in the register (DRIVE_DRIVER).
+// axle is). What it does is a driver's manner, not the car's physics; its settings are in the register (DRIVE_DRIVER), kept as a rule by the owner's sign-off (build 278).
 //   Wheel    it points the FRONT TYRES, not the car: at the direction the front axle is travelling, plus the slip
 //            angle it wants from them. That is the path's direction against the axle's travel and a pull back to the
 //            line that fades with speed (the two terms of Stanley's steering law: Hoffmann et al., ACC 2007), plus the
@@ -213,7 +270,7 @@ function driveDriver(car,s,line,d){
   const ease=Math.max(0,Math.min(1,2*(Math.max(Math.abs(s.alpha[2]),Math.abs(s.alpha[3]))/pkR-1)));   // rear past its peak: off the plan by 1.5 x
   const plan=(p1.v*p1.v-p0.v*p0.v)/(2*ds)+SPEED*(p0.v-s.vx);
   const F=car.m*plan*(1-ease)+0.5*DRIVE_RHO*car.cdA*s.vx*s.vx+car.crr*car.m*g+car.m*g*p0.grade;
-  const k=s.gear>0?car.ratios[s.gear-1]*car.fd*car.eff/car.r:0,M=car.hy&&s.gear>0?car.hy.m:null,wot=driveEngine(car,1,s.rpm)+(M?driveLerp(M.n,M.tm,s.rpm):0),ov=-driveEngine(car,0,s.rpm);
+  const k=s.gear>0?car.ratios[s.gear-1]*car.fd*car.eff/car.r:0,wot=driveEngine(car,1,s.rpm,s.boost,s.soc),ov=-driveEngine(car,0,s.rpm,s.boost,s.soc);
   let thr=k>0?(F/k+ov)/Math.max(1,wot+ov):0,brk=0;
   if(thr<0){brk=Math.min(1,-(F+ov*k)/car.brakeF);thr=0;}
   return {steer:delta/car.steerLock,throttle:Math.min(1,thr),brake:brk,road:{sinT:p0.grade,kv:p0.kv}};
@@ -270,23 +327,26 @@ function stepCar(car,s,u,dt){
     let wd=0;for(let i=0;i<4;i++)if(drv[i])wd+=s.w[i];wd/=nd;
     // How far the driven tyres are past their peak, as a rate for whoever is holding them there (the ECU's traction
     // control on the throttle, or the driver's clutch foot pulling away): zero at the peak, closing fast beyond it.
-    let worst=0;for(let i=0;i<4;i++)if(drv[i]||(i<2&&car.hy&&car.hy.front))worst=Math.max(worst,s.kappa[i]);
+    let worst=0;for(let i=0;i<4;i++)if(drv[i]||(i<2&&car.el&&car.el.front))worst=Math.max(worst,s.kappa[i]);
     const hold=Math.max(-30,Math.min(8,12*(1-worst/car.slipOpt)));
     const pulling=!car.ev&&u.clutch==null&&s.gear===1&&s.shiftT<=0&&s.we-wd*car.ratios[0]*car.fd>1;   // the clutch is still slipping from rest
     if(car.tc&&!pulling){s.tcF=Math.max(0.05,Math.min(1,s.tcF+hold*h));thr*=s.tcF;}else s.tcF=1;
     const rpm=s.we*30/Math.PI;
-    // a hybrid: the controller shares the pedal between the engine and the motors (driveHybrid)
-    let thrE=thr,Tm=0,Tf=0;const hy=car.hy;
-    if(hy){const nM=Math.abs(wd)*ratio*30/Math.PI,F=hy.front;
-      driveHybrid(car,s,thr,car.ev?nM:rpm,nM,F?Math.abs(s.w[0]+s.w[1])/2*F.fd*30/Math.PI:0,car.ev||(ratio>0&&s.shiftT<=0),h);
-      thrE=s.thrE;Tm=s.Tm;Tf=F?s.Tf*F.fd*F.eff:0;}                           // Tf: now at the front wheels
     // An engine turning too slowly to fire stalls: then it is only its own drag, until the starter (u.starter) or
     // the wheels through the clutch (a bump start) turn it fast enough again.
     if(!car.ev){if(s.firing&&rpm<0.8*car.fireRpm)s.firing=false;
       else if(!s.firing){s.turns=rpm>=car.fireRpm?(s.turns||0)+rpm/60*h:0;if(s.turns>=car.fireTurns){s.firing=true;s.turns=0;}}}   // one whole cycle to draw and compress a charge
-    let Te=s.firing||car.ev?driveEngine(car,s.shiftT>0?0:thrE,rpm):-(car.ov[0]||0)*Math.tanh(s.we/5)+(u.starter?car.starterT0*Math.max(0,1-rpm/car.starterFree):0);   // the driver lifts for a shift
+    // the shaft sees the throttle; through a shift a spark-cut gearbox holds it open and a manual's driver lifts to
+    // 0.35 (both as the lap has them); a stalled engine pumps next to nothing
+    if(car.turbo)driveShaft(car.turbo,s,rpm,!s.firing?0:s.shiftT>0&&!car.turbo.flatShift?Math.min(thr,0.35):thr,h);
+    let Te=s.firing||car.ev?driveEngine(car,s.shiftT>0?0:thr,rpm,s.boost,s.soc):-(car.ov[0]||0)*Math.tanh(s.we/5)+(u.starter?car.starterT0*Math.max(0,1-rpm/car.starterFree):0);   // the driver lifts for a shift
     let Tw=0;                                                              // torque at the driven wheels, all of them (Nm)
-    if(car.ev){Tw=(driveEngine(car,thrE,Math.abs(wd)*ratio*30/Math.PI)+Tm)*ratio*car.eff;s.we=Math.abs(wd)*ratio;}
+    // a front axle motor: its force by the front wheels' speed, by the pedal and by what the charge allows
+    let Ff=0,vf=0;
+    if(car.el&&car.el.front){const F=car.el.front.F;vf=Math.max(0,(s.w[0]+s.w[1])/2*car.r);const q=vf/0.5,a=Math.min(F.length-2,Math.floor(q));
+      Ff=thr*driveShares(car.el,s.soc)[0]*(F[a]+(F[a+1]-F[a])*(q-a));}
+    if(car.ev){const rm=Math.max(0,wd)*ratio*30/Math.PI;Tw=driveEngine(car,thr,rm,null,s.soc)*ratio*car.eff;s.we=Math.abs(wd)*ratio;
+      if(car.el)driveCharge(car,s,thr,rm,Ff,vf,h);}
     else{
       // The clutch. A pedal if the driver gives one; otherwise a driver's two feet pulling away: the left feeds the
       // clutch in no faster than the tyres can take, the right holds the engine at the speed the pedal asks (idle off
@@ -294,7 +354,7 @@ function stepCar(car,s,u,dt){
       const auto=u.clutch==null,slip=s.we-wd*ratio,pedal=Math.max(0,Math.min(1,u.throttle||0));
       let cap=ratio===0||s.shiftT>0?0:car.clutchCap*(auto?1:1-Math.max(0,Math.min(1,u.clutch)));
       if(auto&&cap>0&&slip>1&&(s.gear===1||wd*ratio<car.idle*Math.PI/30)){
-        const wT=(car.idle+(s.gear===1?pedal*(car.launchRpm-car.idle):0))*Math.PI/30,avail=Math.max(0,driveEngine(car,thrE,rpm));
+        const wT=(car.idle+(s.gear===1?pedal*(car.launchRpm-car.idle):0))*Math.PI/30,avail=Math.max(0,driveEngine(car,thr,rpm,s.boost,s.soc));
         if(!s.pull){s.pull=true;s.clF=0.1;}                                   // the bite point, then in
         s.clF=Math.max(0.05,Math.min(1,s.clF+hold*h));
         cap*=s.clF;
@@ -304,17 +364,21 @@ function stepCar(car,s,u,dt){
       // Locked, the clutch passes exactly the torque that keeps the engine and the wheels turning together (the
       // torque that brings their slip to nothing in this step, from each side's own acceleration: Karnopp's stick
       // condition); it slips when that is more than it can hold, and then passes what it can hold.
-      let Id=0,aW=0;for(let i=0;i<4;i++)if(drv[i]){const Iq=car.Iw+h*car.r*dF[i];Id+=Iq;aW-=(Fl[i]*car.r+car.crr*Fz[i]*car.r*Math.tanh(s.w[i]*car.r/0.5)-Tm*ratio*car.eff/nd-(i<2?Tf/2:0))/Iq;}
+      let Id=0,aW=0;for(let i=0;i<4;i++)if(drv[i]){const Iq=car.Iw+h*car.r*dF[i];Id+=Iq;aW-=(Fl[i]*car.r+car.crr*Fz[i]*car.r*Math.tanh(s.w[i]*car.r/0.5))/Iq;}
       aW/=nd;
       let Tcl=(slip/h+Te/car.Ie-ratio*aW)/(1/car.Ie+ratio*ratio*car.eff/Id);
       Tcl=Math.max(-cap,Math.min(cap,Tcl));
       s.we=Math.max(0,s.we+h*(Te-Tcl)/car.Ie);
-      Tw=(Tcl+Tm)*ratio*car.eff;                                           // a P2's motor is on the gearbox's input
+      Tw=Tcl*ratio*car.eff;
+      if(car.el)driveCharge(car,s,s.firing&&s.shiftT<=0?thr:0,rpm,Ff,vf,h);
     }
+    // Regeneration is braking at the driven wheels alone, so the anti-lock system that eases a locking wheel's brake
+    // eases the motor's braking by as much (every electric car cuts regeneration when its ABS works).
+    if(car.el&&car.abs&&Tw<0){let m=1;for(let i=0;i<4;i++)if(drv[i])m=Math.min(m,s.abs[i]);Tw*=m;}
     // ---- wheels
     for(let ax=0;ax<2;ax++){
       const i=ax*2,j=i+1,driven=drv[i];
-      let Ti=(driven?Tw/nd:0)+(ax===0?Tf/2:0),Tj=Ti;
+      let Ti=(driven?Tw/nd:0)+(ax===0?Ff*car.r/2:0),Tj=Ti;
       if(driven&&car.lock>0){const Tc=Math.max(-car.clutchCap*car.fd,Math.min(car.clutchCap*car.fd,car.lock*300*(s.w[i]-s.w[j])));Ti-=Tc;Tj+=Tc;}
       const share=ax===0?car.brakeFront:1-car.brakeFront;
       for(const [q,Tq] of [[i,Ti],[j,Tj]]){
@@ -328,6 +392,13 @@ function stepCar(car,s,u,dt){
         s.w[q]=wq;
       }
     }
+    // All-wheel drive: the centre coupling. The two axles turn together (a locked centre differential, or a clutch
+    // pack closed on the first slip), so the torque goes to the axle that can use it: exactly the torque that
+    // leaves the two axles' mean speeds equal after this step, taken from the faster and given to the slower. It
+    // is open under the brakes, as these systems are, so the anti-lock works on each axle alone.
+    if(car.centre&&nd===4&&brake===0){let inv=0;for(let q=0;q<4;q++)inv+=1/(car.Iw+h*car.r*dF[q]);
+      const Tc=2*((s.w[0]+s.w[1])-(s.w[2]+s.w[3]))/(h*inv);
+      for(let q=0;q<4;q++)s.w[q]+=(q<2?-1:1)*h*Tc/2/(car.Iw+h*car.r*dF[q]);}
     // ---- body
     const drag=0.5*DRIVE_RHO*car.cdA*v*s.vx,ax=(FX-drag)/car.m-g*sinT,ay=FY/car.m;
     s.vx+=h*(ax+s.vy*s.yaw);s.vy+=h*(ay-s.vx*s.yaw);s.yaw+=h*MZ/car.Izz;

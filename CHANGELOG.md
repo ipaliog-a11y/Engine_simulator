@@ -20,35 +20,60 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 Working toward **v1.0 — every number derived, not fitted.**
 
-### A hybrid's motors, pack and controller in the stepped car (build 274)
+### The stepped car's driver is kept as a rule (build 278)
 
-Phase E, step 3 of `plans/road-to-v1.md`. `stepCar` drove a hybrid as an engine with the motor's torque added to its
-curve: no pack, no charge, no front motor. A power-split and a series hybrid did not move at all (their shaft was
-taken for a stalled engine): the Prius and the Qashqai e-POWER had not reached 100 km/h after 40 s. Nothing in the app
-reads `stepCar` yet.
+- **`DRIVE_DRIVER` is signed off by the owner as a rule.** Its four settings (how far ahead the driver reads the road, how hard it pulls back to the line and to the plan's speed, how far past the tyre's peak it steers) are a driver's manner, not the car's physics, like `RACE_DRIVERS`. The register has 27 open entries, was 28. No number moves.
+- The stepped car's lap times against the solver (+1.6 to +3.6%) are this driver's, not the car's limit.
 
-- **The hybrid is its own plain data,** `car.hy`: each motor's envelope and losses (the lap's `motorMaxTorque` and
-  `motorLosses`, as tables), the pack's voltage curve, resistance and limits, the HYBRID TUNE's charge window and
-  regeneration. The engine's curve is now the engine's alone.
-- **`driveHybrid` shares the pedal** as the lap does (the engine first, the motor what the engine cannot give) and
-  sustains the charge as the LIVE bench's AUTO does (the engine asked for more or less away from the target). The pack
-  gives no more than its voltage and rate allow at its charge, nothing under the window's low, takes nothing over the
-  high; its charge moves by the current that carries the motors' power and losses. Off the pedal the motor regenerates.
-- **A power-split and a series hybrid** drive through their one reduction, as an electric car does. **A front axle
-  motor** drives the front wheels beside the gearbox's own axle.
-- **0-100 against the solver:** Ioniq 9.38 s (-2%), Prius 11.44 (+1%), Qashqai e-POWER 7.17 (-3%), BMW 330e 5.82 (+2%),
-  918 Spyder 3.17 (+27%; it was 3.87). Over the run the pack falls 0.8 to 8% of its charge; 2 s off the pedal from
-  100 km/h puts back 0.1 to 0.9%.
-- **The 918's gearbox now turns the rear axle** (`fit.drive:'rwd'`), as its own comment and Porsche describe it; the
-  preset said all four, which was the front motor's doing. The car is still all-wheel drive to every solver (its
-  0-100 is unchanged at 2.49 s); only `stepCar` reads the gearbox's axle (`vehicle.driveMech`).
-- **What moved:** nothing: the fingerprint is identical to `main`'s (5212 values). Tests 173 (new), 168, 170, 166, 101, 102, 112, 114, 136, 147.
-- **Left open:** the 918's launch, 27% off the solver (named in `test173`: one clutch fed by the rear tyres' slip
-  against the solver's launch control on all four); the engine switched off for electric driving and the DRIVE MODEs;
-  a power-split's engine speed in time; fuel; motor and pack temperatures; regeneration blended into the brake pedal;
-  an electric car's regeneration and charge in `stepCar`. A saved build with a front motor does not remember the
-  gearbox's axle (it reads as all four). The controller's two charging numbers are the bench's `HYB_BENCH` rule, not
-  yet in the register (phase C's audit).
+Tests: test166 (updated).
+
+### The stepped car through a lane change; phase E's steps are all in (build 277)
+
+Phase E, step 5 of `plans/road-to-v1.md` asked for a lane change with sensible numbers. A test only; no source changes.
+
+- **The manoeuvre is ISO 3888-2's double lane change** (the "moose test"), with the cones set by each car's own width and overhangs (`CAR_DIMS`, build 272), the throttle released at the entry, in top gear. `driveDriver` takes the car through; the result is the best of twelve smooth lines, as a test driver finds a line over several runs.
+- **Highest entry speed with no cone touched:** MX-5 63 km/h, Civic Type R 70, 911 GT3 75, F-150 Raptor 69, at 0.82 to 0.97 of the tyres' grip and 4 to 9 degrees sideways. Magazines publish 65 to 85 km/h for road cars. Each car touches a cone 8 km/h faster.
+- **Phase E's six steps are now all in their first form** (builds 263–277). What it leaves open, by name: the stepped car has no tyre or brake heat, camber or roll steer, bumps or kerbs; a hybrid's engine does not stop and a power-split's engine speed is not stepped; every all-wheel-drive car has a locked centre; the driver gives away 2–4% of a lap; nothing stops a tall car rolling over (the Raptor's 69 km/h is its tyres' alone); 83 overhangs and 26 tyre sizes in `CAR_DIMS` still want the maker's sheet. `DRIVE_DRIVER` waits for the owner's sign-off as a rule. The lap solver does not read the stepped car yet, so `DIFF_ASYM0`, `KVCAP` and the launch's slip curve stay in the register.
+
+Tests: test173 (new).
+
+### The stepped car launches as the solver does, and all-wheel drive turns its axles together (build 276)
+
+Phase E, step 3 of `plans/road-to-v1.md`: the standing start, which ran 11–25% slower than the 0-100 solver on the powerful cars. Three causes, none of them a number to tune. Nothing in the app reads it yet.
+
+- **All-wheel drive split its torque evenly,** so under acceleration the unloaded front tyres spun first and the rear's grip went unused. The two axles now turn together (a locked centre differential, or a clutch pack closed on the first slip): each step moves exactly the torque that keeps their speeds equal. It is open under the brakes. This is what the solver assumes when it counts the whole weight as driven. GT-R 4.25 s to 3.97, RS3 4.24 to 3.99, before the two points below.
+- **The car started from idle,** and spent a quarter of a second revving before it moved; the solver starts with the engine held at its launch speed. `driveLaunch(car)` gives a car on the line that way, a turbo lit for the solver's 1.2 s. `driveState(car)` is still the car at rest at idle.
+- **The launch speed was the torque peak, capped at 60% of the limiter,** which held a GT-R at 2400 rpm with its turbos unlit. It is now the speed the solver found quickest (`car.launchRpm`), as a launch control is set.
+- **Result, 0-100 against the solver:** MX-5 8.26 s (8.49), Golf GTI Mk1 8.09 (8.48), Mustang GT 5.28 (5.12), 911 GT3 3.61 (3.39), WRX STI 5.44 (5.26); by hand also GT-R 3.26 (3.40), RS3 3.49 (3.81), F40 3.88 (3.79), Civic Type R 6.11 (6.01). `test168`'s tolerance is tightened from 20% to 10%.
+- **Left open:** no preset says what centre differential a car has, so every all-wheel-drive car gets the locked one. `driveCar()` now runs the 0-100 solver once for the launch speed (up to half a second on a turbo car). The Model 3 is 15% quicker than the solver, which takes an open differential's traction loss from `DIFF_ASYM0`, a fitted number the stepped car does not have. The Model 3's lap is at 4.0 m off the line, on the test's limit.
+
+Tests: test168 (updated), test170, test172.
+
+### The stepped car's pack is a state: a hybrid's controller, an electric car's charge (build 275)
+
+Phase E, step 3 of `plans/road-to-v1.md`, its second half. `stepCar` drove a hybrid on the engine's and the motor's torque added up, from a pack that never emptied. Nothing in the app reads it yet.
+
+- **The charge is a state** (`s.soc`), and the car carries its electric side as plain data (`car.el`): the motor's part of the full-load curve, its regeneration, its losses over speed and torque, the pack's energy, voltage and resistance, and the tune's CHARGE window.
+- **The controller, in time.** The engine gives all of the torque the pedal asks that it can and the motor the rest (the lap's rule). The motor's help fades over the last 10 points of charge above the window's low, and its regeneration over the last 10 under the high. With LOAD-POINT SHIFTING on, the engine works harder or easier to bring the charge to its target (the bench controller's law); the wheels feel no difference.
+- **Result:** Ioniq 0-100 9.38 s (solver 9.55), 9.95 from an empty window; Prius 11.30 (11.35), 21.8 empty. A minute at 100 km/h takes the Ioniq from 37% to 51% and holds 60% at 62%. Fifteen seconds flat out takes the Prius from 60% to 49.5%; ten off the pedal give 3.4 points back.
+- **Three faults put right on the way:** a power-split or series hybrid was stepped as a clutch car with no idle and stalled at rest (it is now driven as its traction motor, like an electric car); an electric car did not regenerate off the pedal; the 918's front motor was missing and its engine's torque was spread over four wheels (the front motor now pulls the front wheels, 1200 N each at 54 km/h, and the engine drives the rear).
+- **Regeneration is eased when the anti-lock system works,** as electric cars do: without it the Model 3 ran 4.2 m off the line braking into corners.
+- **An electric car's energy adds up:** over 15 s flat out the Model 3's pack gives 3.20 MJ for 2.58 MJ of motion, air and rolling (20% lost in the motor, the pack and the driveline).
+- **Left open:** a hybrid's engine does not stop (no electric-only driving) and a power-split's engine speed is not stepped (its curve is the steady one); no motor or pack heat; the front motor's losses are scaled by its share of the force; a plug-in starts at its target charge, not full. The 918 reaches 100 km/h in 3.18 s against the solver's 2.49, and the Model 3 in 5.28 against 6.18: the launch, next build.
+
+Tests: test172 (new), test168, test170.
+
+### The stepped car's turbo spins up in time (build 274)
+
+Phase E, step 3 of `plans/road-to-v1.md`. `stepCar` took a turbo engine's settled boost at every instant, so lag cost nothing. Nothing in the app reads it yet.
+
+- **The shaft is a state.** `driveCar()` now carries a turbo as tables read once off the engine (`car.turbo`): the shaft's net power, the boost the wheel supports and the compressor's efficiency over engine speed, shaft speed and throttle, with the torque over engine speed and boost. `stepCar` steps the shaft's energy and the boost from them, the same balance as the bench's `advanceShaft`, with no engine code. A car is still plain data (about 65 kB more for a turbo car).
+- **Against the engine's own shaft** (WRX STI, Civic Type R; flat, a lift, flat, half throttle at 2500, 4000 and 5500 rpm): 90% of the boost at the same time within 3%, and 0.02 bar apart on average.
+- **A standing start** from a cold shaft: WRX STI 5.84 s, lit on the line for 1.2 s (as the solver starts) 5.73; Civic Type R 6.50 and 6.36.
+- **Through a shift** a dual-clutch, sequential or automatic keeps the throttle open and a manual lifts to 0.35, the lap's own two rules.
+- **Left open:** at half throttle high in the revs the tables read up to 0.2 bar off the engine's shaft (Civic, 5500 rpm); the standing start is still 9–25% slower than the solver on the powerful cars (the launch, not the turbo); a hybrid's controller; all-wheel drive split evenly; a lane change.
+
+Tests: test168 (updated: its plain-data check now accepts a part that is an object of plain values), test170.
 
 ### The chase view is back, with what was wrong in it put right (build 273)
 

@@ -1,60 +1,72 @@
-// The hotlap and the race use the oblique chase, not a flat map (build 273).
+// The stepped car's pack is a state: a hybrid's controller and an electric car's charge (build 275).
 //
-// WHY THIS EXISTS. The circuit has to read as the draft: the same metres ahead of the car take less
-// screen than the same metres to the side, because the view is pitched, and the ground around the
-// car is painted. The lap solver is not involved.
-// What must hold:
-//   · twenty metres to the side of the car lands further across the screen than twenty metres ahead;
-//   · painting the chase puts grass in the frame and does not throw;
-//   · painting leaves the canvas's own scale in place, and a pan slides the picture by that much on screen;
+// WHY THIS EXISTS. stepCar() drove a hybrid on its engine's and motor's torque added up, with a pack that never
+// emptied; an electric car did not regenerate; the 918's front motor was missing. What must hold:
+//   · a car carries its electric side as plain data (car.el), and a car without one carries none;
+//   · flat out the charge falls, off the pedal it rises, and it stays between 0 and 1;
+//   · the Ioniq and the Prius reach 100 km/h within 10% of the solver's time from the charge they hold, and slower
+//     from the bottom of their charge window, where the motor's help is gone;
+//   · charge-sustaining: a minute at 100 km/h from near the window's low ends higher, and from the target ends
+//     within 4 points of it;
+//   · energy adds up: what an electric car's pack gives over a full-throttle run is more than the car gained and
+//     lost to the air and the tyres, by losses of 5 to 30%;
+//   · the 918's front motor pulls at the front wheels and its engine drives the rear;
 //   · no page errors.
 import { chromium } from './pw.mjs';
 import { fileURLToPath, pathToFileURL } from 'url';
 import path from 'path';
 const repo = fileURLToPath(new URL('..', import.meta.url));
 const browser = await chromium.launch();
-const page = await browser.newPage({ viewport: { width: 900, height: 600 } });
+const page = await browser.newPage();
 const errors = [], fails = [];
 page.on('pageerror', e => errors.push('pageerror: ' + e.message));
 await page.goto(pathToFileURL(path.join(repo, 'index.html')).href, { waitUntil: 'networkidle' });
-await page.waitForTimeout(400);
+await page.waitForTimeout(300);
+
 const R = await page.evaluate(() => {
-  const src = buildTrack('tech');
-  const look = sceneBind(src);
-  let peak = look.pts[0];
-  for (const p of look.pts) if (Math.abs(p.curv) > Math.abs(peak.curv)) peak = p;
-  const car = { x: peak.x, y: peak.y, hd: peak.hd, curv: peak.curv, col: '#d81f32', brk: true, pos: 1 };
-  const cam = sceneChase(car, 900, 600, 14, 0.70);
-  const here = sceneProject(cam, car.x, car.y);
-  const ahead = sceneProject(cam, car.x + Math.cos(car.hd) * 20, car.y + Math.sin(car.hd) * 20);
-  const side = sceneProject(cam, car.x + Math.cos(car.hd + Math.PI / 2) * 20, car.y + Math.sin(car.hd + Math.PI / 2) * 20);
-  const da = Math.hypot(ahead.sx - here.sx, ahead.sy - here.sy);
-  const ds = Math.hypot(side.sx - here.sx, side.sy - here.sy);
-  const c = document.createElement('canvas');
-  c.width = 900; c.height = 600;
-  const g = c.getContext('2d');
-  sceneWeather('dry', 0);
-  g.setTransform(2, 0, 0, 2, 0, 0);
-  scenePaint(g, cam, { cars: [car] });
-  const keep = g.getTransform().a;
-  g.setTransform(1, 0, 0, 1, 0, 0);
-  scenePan(cam, 30, -12);
-  const slid = sceneProject(cam, car.x, car.y);
-  const d = g.getImageData(0, 0, c.width, c.height).data;
-  let grass = 0, dark = 0;
-  for (let i = 0; i < d.length; i += 32) {
-    const r = d[i], gv = d[i + 1], b = d[i + 2];
-    if (gv > 60 && gv > r + 8 && gv > b - 10) grass++;
-    if (r < 70 && gv < 75 && b < 80) dark++;
+  const out = { cars: [] };
+  const load = n => { loadVehiclePreset(FACTORY_CARS.find(x => x.name.startsWith(n))); return driveCar(); };
+  const plain = v => v === null || ['number', 'string', 'boolean'].includes(typeof v) || (Array.isArray(v) ? v.every(plain) : Object.getPrototypeOf(v) === Object.prototype && Object.values(v).every(plain));
+  const rolling = (car, v) => { const s = driveState(car); s.vx = v; s.w = s.w.map(() => v / car.r);
+    for (let g = car.ratios.length; g >= 1; g--) { s.gear = g; if (v / car.r * car.ratios[g - 1] * car.fd * 30 / Math.PI > 0.35 * car.redline) break; }
+    s.we = v / car.r * car.ratios[s.gear - 1] * car.fd; return s; };
+  const to100 = (car, soc) => { const s = driveState(car); if (soc != null) s.soc = soc; while (s.t < 40 && s.vx < 27.78) stepCar(car, s, { throttle: 1 }, 0.01); return s; };
+  out.none = load('Mazda MX-5').el;
+  for (const n of ['Hyundai Ioniq', 'Toyota Prius', 'Porsche 918', 'Tesla Model 3']) {
+    const car = load(n), el = car.el, o = { name: vehicle.chLabel, plain: plain(car), solver: simulateAccel().t100, win: [el.lo, el.tg, el.hi] };
+    o.t100 = to100(car).t; o.low = to100(car, el.lo).t;
+    // flat out for 15 s, then off the pedal for 10
+    { const s = driveState(car); let lo = 1, hi = 0; const m = car.m, E0 = s.soc * el.capJ; let work = 0;
+      for (let i = 0; i < 1500; i++) { stepCar(car, s, { throttle: 1 }, 0.01); work += (0.5 * 1.2 * car.cdA * s.vx ** 3 + car.crr * m * 9.81 * s.vx) * 0.01; lo = Math.min(lo, s.soc); hi = Math.max(hi, s.soc); }
+      o.flat = s.soc; o.gave = E0 - s.soc * el.capJ; o.got = 0.5 * m * s.vx * s.vx + 4 * 0.5 * car.Iw * (s.vx / car.r) ** 2 + work;
+      for (let i = 0; i < 1000; i++) { stepCar(car, s, { throttle: 0 }, 0.01); lo = Math.min(lo, s.soc); hi = Math.max(hi, s.soc); if (i === 300) o.regenKW = -s.Pm / 1000; }
+      o.lifted = s.soc; o.range = [lo, hi]; }
+    // a minute at 100 km/h, from near the low and from the target
+    o.cruise = [el.lo + 0.02, el.tg].map(s0 => { const s = rolling(car, 27.78); s.soc = s0; let thr = 0.3;
+      for (let i = 0; i < 6000; i++) { thr = Math.max(0, Math.min(1, thr + 0.002 * (27.78 - s.vx))); stepCar(car, s, { throttle: thr }, 0.01); } return [s0, s.soc]; });
+    if (el.front) { const s = rolling(car, 15); s.soc = 0.5; for (let i = 0; i < 50; i++) stepCar(car, s, { throttle: 1 }, 0.01); o.front = (s.Fx[0] + s.Fx[1]) / 2; o.rear = (s.Fx[2] + s.Fx[3]) / 2; o.drive = car.drive; }
+    out.cars.push(o);
   }
-  return { keep, slide: [slid.sx - here.sx, slid.sy - here.sy], da, ds, grass, dark, pitch: cam.pitch, n: look.pts.length };
+  return out;
 });
 await browser.close();
-console.log(`pitch ${R.pitch}; 20 m ahead ${R.da.toFixed(1)} px, aside ${R.ds.toFixed(1)} px; grass ${R.grass}, dark ${R.dark}; ${R.n} pts`);
-if (!(R.pitch < 0.95)) fails.push('the camera is not pitched');
-if (!(R.ds > R.da * 1.15)) fails.push('ahead and aside cover the same screen, so the view is still flat');
-if (R.keep !== 2) fails.push('painting the scene lost the canvas scale the page draws through');
-if (Math.hypot(R.slide[0] - 30, R.slide[1] + 12) > 0.5) fails.push(`a pan of (30, -12) moved the picture by (${R.slide.map(v => v.toFixed(1))})`);
-if (R.grass < 80) fails.push('the ground around the car did not paint');
-if (errors.length) fails.push(errors.join('; '));
-if (fails.length) { console.error(fails.join('\n')); process.exit(1); }
+
+const pc = x => (100 * x).toFixed(1) + '%';
+for (const o of R.cars) {
+  const hyb = o.name.startsWith('Hyundai') || o.name.startsWith('Toyota'), ev = o.name.startsWith('Tesla');
+  console.log(`${o.name.slice(0, 26).padEnd(26)} 0-100 ${o.t100.toFixed(2)} s (solver ${o.solver.toFixed(2)}), from the low ${o.low.toFixed(2)}; 15 s flat ${pc(o.flat)}, 10 s off the pedal ${pc(o.lifted)} (${o.regenKW.toFixed(0)} kW back); a minute at 100 km/h: ${o.cruise.map(q => pc(q[0]) + ' -> ' + pc(q[1])).join(', ')}` + (o.front != null ? `; front wheels ${o.front.toFixed(0)} N each, rear ${o.rear.toFixed(0)} N` : ''));
+  if (!o.plain) fails.push(`${o.name}: the car is not plain data`);
+  if (!(o.flat < o.win[1] && o.lifted > o.flat && o.regenKW > 1)) fails.push(`${o.name}: the charge does not fall flat out and come back off the pedal`);
+  if (!(o.range[0] >= 0 && o.range[1] <= 1)) fails.push(`${o.name}: the charge left 0..1`);
+  if (hyb && Math.abs(o.t100 / o.solver - 1) > 0.10) fails.push(`${o.name}: 0-100 ${o.t100.toFixed(2)} s against the solver's ${o.solver.toFixed(2)}`);
+  if (!ev && !(o.low > o.t100 * 1.03)) fails.push(`${o.name}: with the pack at its low the car is no slower`);
+  if (!ev && !(o.cruise[0][1] > o.cruise[0][0] + 0.01)) fails.push(`${o.name}: a low pack is not charged at a cruise`);
+  if (!ev && !(Math.abs(o.cruise[1][1] - o.cruise[1][0]) <= 0.04)) fails.push(`${o.name}: the charge does not hold its target at a cruise (${pc(o.cruise[1][1])})`);
+  if (ev) { const loss = 1 - o.got / o.gave; console.log(`  the pack gave ${(o.gave / 1e6).toFixed(2)} MJ for ${(o.got / 1e6).toFixed(2)} MJ of motion, air and rolling (${(100 * loss).toFixed(0)}% lost)`);
+    if (!(loss > 0.05 && loss < 0.30)) fails.push(`${o.name}: the pack's energy does not add up (${(100 * loss).toFixed(0)}% lost)`); }
+  if (o.front != null && !(o.front > 200 && o.rear > 200 && o.drive === 'rwd')) fails.push(`${o.name}: the front motor does not pull at the front wheels`);
+}
+if (R.none !== null) fails.push('a car with no motor carries an electric side');
+for (const e of errors) fails.push(e);
+if (fails.length) { console.log('\nFAIL'); for (const f of fails) console.log('  - ' + f); process.exit(1); }
+console.log('\nPASS');
