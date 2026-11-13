@@ -769,7 +769,7 @@ body.showcase-open{overflow:hidden}
 </div>
 <div class="container">
 <header>
-<h1>PIXEL ENGINE SIM v0.7 build 284</h1>
+<h1>PIXEL ENGINE SIM v0.7 build 285</h1>
 <div class="subtitle" id="subtitle">ENGINE DESIGNER • BUILD IT, THEN DRIVE IT</div>
 </header>
 <div class="build-strip" id="buildStrip">
@@ -838,7 +838,7 @@ body.showcase-open{overflow:hidden}
 <div class="field"><label for="edVVT">VARIABLE VALVE TIMING</label><select id="edVVT"><option value="no">NONE</option><option value="yes">VVT</option></select></div>
 <div class="field"><label>CAM OVERLAP</label><span class="val" id="valOverlap">—</span></div>
 <div class="field"><label for="edValveMat">VALVE MATERIAL</label><select id="edValveMat"><option value="steel">STEEL</option><option value="titanium">TITANIUM</option></select></div>
-<div class="field"><label for="edSpring">HEAD &amp; SPRINGS</label><select id="edSpring"><option value="stock">STOCK</option><option value="perf">PERFORMANCE</option><option value="race">RACE</option></select><input type="hidden" id="edSpringRpm" value="0"></div>
+<div class="field"><label for="edSpring">HEAD &amp; SPRINGS</label><select id="edSpring"><option value="stock">STOCK</option><option value="perf">PERFORMANCE</option><option value="race">RACE</option></select><input type="hidden" id="edSpringRpm" value="0"><input type="hidden" id="edValveSpec" value=""></div>
 <div class="field"><label>VALVE FLOAT</label><span class="val" id="valFloat">—</span></div>
 <div class="field"><label for="edEgr">EGR</label><select id="edEgr"><option value="none">NONE</option><option value="cooled">COOLED, OFF AT FULL LOAD</option><option value="cooled-full">COOLED, TO FULL LOAD</option></select></div>
 </div></section>
@@ -4145,8 +4145,11 @@ function deriveValvetrain(){
   const pack=VALVE_PACK[e.valves]||VALVE_PACK[4];
   const cam=camSpec(e);
   e.ivCount=pack.n;
-  e.ivDia_mm=H?H.valveD_mm:pack.dOverB*e.bore_mm;
-  e.evOwn=!!(H&&H.exValveD_mm>0);e.evDia_mm=e.evOwn?H.exValveD_mm:EV_RATIO*e.ivDia_mm;   // a designed head's exhaust valve is its own (build 284)
+  // The valves: a designed head's (builds 283-284), else a real engine's own as its maker made them (build 285:
+  // ENGINE_VALVES, sourced per engine), else the packing rule of the layout and 0.83 of the intake for the exhaust.
+  const own=!H&&e.ivValve_mm>0&&e.evValve_mm>0;
+  e.ivDia_mm=H?H.valveD_mm:own?e.ivValve_mm:pack.dOverB*e.bore_mm;
+  e.evOwn=!!(H&&H.exValveD_mm>0)||own;e.evDia_mm=H&&H.exValveD_mm>0?H.exValveD_mm:own?e.evValve_mm:EV_RATIO*e.ivDia_mm;
   e.throatRatio=H?H.throat:THROAT_RATIO;
   e.ivLift_mm=cam.lift_mm!=null?cam.lift_mm:cam.lOverD*e.ivDia_mm;   // a designed cam's lift is its own (build 249)
   e.valveMass_g=valveMass(e.ivDia_mm,e.valveMat)*1000;
@@ -5383,7 +5386,7 @@ const DEFAULT_ENGINE={
   intakeSys:'efi',airFilter:'perf',
   cam:'stock',vvt:true,valves:4,valveMat:'steel',valveSpring:'stock',runner:'medium',
   fuel:'gasoline',octane:95,injector:'direct',ignitionAdv:22,ignitionType:'coil',timingMode:'auto',afrMode:'auto',
-  radiator:'stock',radHp:0,springRpm:0,fan:'electric',oilCooler:false,thermostat:88,
+  radiator:'stock',radHp:0,springRpm:0,ivValve_mm:0,evValve_mm:0,fan:'electric',oilCooler:false,thermostat:88,
   alternator:'120'
 };
 // Ready-made popular builds (deltas over DEFAULT_ENGINE). Loaded from the DESIGN dropdown.
@@ -5588,6 +5591,21 @@ const PRESETS=[
   {cat:'Diesel',name:'VW 3.0 V6 TDI (Amarok)',real:{hp:224,hpRpm:3000,tq:550,tqRpm:1400},unsure:['boost_bar','compression','bore_mm','stroke_mm','redline','hpRpm'],engine:{type:'diesel',vvt:false,cylinders:6,layout:'v',bore_mm:83,stroke_mm:91.4,compression:16,redline:5000,govRpm:3000,intake:'turbo',boost_bar:1.5,turboSize:'medium',vgt:true,injector:'direct',intercooler:'large',exhaust:'stock',airFilter:'stock',radiator:'large',oilCooler:true,tqLimit:550,taperRpm:1500,taperPct:67}},
   {cat:'American V8',name:'GM LT4 6.2 supercharged (Camaro ZL1)',real:{hp:650,hpRpm:6400,tq:881,tqRpm:3600},unsure:['boost_bar','compression'],engine:{valvetrain:'ohv-roller',cylinders:8,layout:'v',bore_mm:103.25,stroke_mm:92,compression:10,redline:6600,intake:'supercharger',boost_bar:0.65,scType:'roots',intercooler:'large',vvt:true,cam:'sport',injector:'direct',octane:91,exhaust:'sport',airFilter:'perf',radiator:'large',oilCooler:true,taperRpm:4000,taperPct:27}},
 ];
+// A real engine's own valve head diameters, mm (build 285), in place of the packing rule (VALVE_PACK) and of 0.83 of
+// the intake for the exhaust (EV_RATIO). Each with its source; a size known only from aftermarket "standard size"
+// replacement valves is marked (std): the replacement is made to the maker's head, but it is not the maker's sheet.
+// An engine not listed here still takes the rule. Adding an engine moves that engine's numbers only.
+// Held back: GM LS3, 55.0 / 40.4 mm (GM: 2.165 and 1.590 in). The rule gives it 51.6 mm and the engine is already 7.9%
+// over its 430 hp; with its real valves it is 19.3% over. Something else holds the real engine back (its cam and its
+// intake want a review against GM's sheet first), so its valves wait rather than push a car past 10%.
+const ENGINE_VALVES={
+  'BMW S54 (M3 E46)':{iv:35,ev:30.5,src:'BMW ST041 M3 training manual, driveline: valves 35 / 30.5 mm'},
+  'Ford Coyote 5.0 (Mustang GT 2018)':{iv:37.7,ev:32,src:'Ford Performance Coyote Technical Reference, Gen 3: 37.7 / 32 mm'},
+  'Honda F20C (S2000 AP1)':{iv:36,ev:31,src:'s2000.club F20C engine paper: 36 / 31 mm; Ferrea stock-size listings (std)'},
+  'Toyota 2JZ-GTE (Supra A80)':{iv:33.5,ev:29,src:'Manley, Brian Crower and GSC stock-size valves: 33.5 / 29 mm (std)'},
+  'Mitsubishi 4G63T (Lancer Evo IX)':{iv:34,ev:30.5,src:'Ferrea, Brian Crower and GSC stock-size valves: 34 / 30.5 mm (std)'},
+  'Subaru EJ257 (Impreza WRX STI)':{iv:36,ev:32,src:'Brian Crower and GSC stock-size valves: 36 / 32 mm (std)'}
+};
 // Category order for the preset list (the dropdown groups by it; the UI pass will build on this).
 const PRESET_CATS=['Archetypes','Kei & City','Compact Turbo','NA Sports','Turbo Performance','American V8','Supercar','Performance SUV','Track','Rotary','Diesel','Pickup','Two-Stroke'];
 const STD_TUNE={throttle:0.85,load:0.40,elecLoad:0.30,afr:13.2,iat:25,coolant:90,oil:100,autoThermal:false};
@@ -9081,7 +9099,8 @@ function readEngineFromForm(){
     afrMode:g('edAfrMode').value,
     radiator:g('edRadiator').value,
     radHp:Math.max(0,+g('edRadHp').value||0),   // what a STOCK radiator was sized for (build 219)
-    springRpm:Math.max(0,Math.round(+g('edSpringRpm').value||0)),   // the redline the STOCK springs were sized for (build 234)
+    springRpm:Math.max(0,Math.round(+g('edSpringRpm').value||0)),
+    ivValve_mm:0,evValve_mm:0,   // a real engine's own valves (build 285), read below   // the redline the STOCK springs were sized for (build 234)
     fan:g('edFan').value,
     oilCooler:g('edOilCooler').value==='yes',
     thermostat:clamp(Math.round(+g('edThermostat').value||88),71,95),
@@ -9090,6 +9109,10 @@ function readEngineFromForm(){
   Object.assign(e,partsFromForm());   // the factory exhaust and runners, or designed ones (builds 205, 206)
   if(type==='electric')Object.assign(e,readElectricFromForm());   // the motor and battery (build 179)
   else{const hm=g('edHybrid')&&g('edHybrid').value;if(hm&&hm!=='none'){e.hyMode=hm;e.hyDeploy=HYBRID_DEPLOY[g('edHyDeploy').value]?g('edHyDeploy').value:'full';e.hyTune=readHybTuneFromForm();if(g('edHyPlug').value==='yes')e.hyPlug=true;Object.assign(e,readElectricFromForm());}}   // a hybrid system (build 186), its tune (192)
+  // A real engine's own valve sizes travel with the bore and the valve count they were measured on: 'iv/ev@bore x valves'.
+  // Change either on the form and the head is no longer that maker's, so the packing rule sizes the valves again.
+  {const m=/^([\d.]+)\/([\d.]+)@([\d.]+)x(\d)$/.exec(g('edValveSpec').value||'');
+   if(m&&Math.abs(+m[3]-e.bore_mm)<1e-6&&+m[4]===e.valves){e.ivValve_mm=+m[1];e.evValve_mm=+m[2];}}
   return e;
 }
 function applyEngineToForm(e){
@@ -9110,6 +9133,7 @@ function applyEngineToForm(e){
   g('edCam').value=e.cam||'stock';g('edEgr').value=e.egr||'none';g('edVVT').value=e.vvt?'yes':'no';
   g('edValves').value=String(e.valves||4);g('edValvetrain').value=VALVETRAIN[e.valvetrain]?e.valvetrain:valvetrainDefault(e.valves);g('edValveMat').value=e.valveMat||'steel';
   g('edSpring').value=e.valveSpring||'stock';g('edSpringRpm').value=e.springRpm||0;
+  g('edValveSpec').value=e.ivValve_mm>0&&e.evValve_mm>0?e.ivValve_mm+'/'+e.evValve_mm+'@'+e.bore_mm+'x'+(e.valves||4):'';
   g('edFuel').value=e.fuel||'gasoline';
   partsToForm(e);g('edCat').value=e.cat||'stock';g('edOctane').value=e.octane;g('edInjector').value=e.injector;
   g('edIgnAdv').value=e.ignitionAdv;g('edIgnType').value=e.ignitionType;g('edTiming').value=e.timingMode||'fixed';g('edAfrMode').value=e.afrMode||'fixed';
@@ -23142,7 +23166,7 @@ function partFromFactory(key,kind){
   if(kind==='head')return withPart('head',key,e=>{
     const g=VALVE_SPRING[key]||VALVE_SPRING.stock,k=e.springScale||1;
     return normPart({kind:'head',name:tr(g.label),valveD_mm:+(e.ivDia_mm||0.39*e.bore_mm).toFixed(4),throat:THROAT_RATIO,
-      exValveD_mm:+(EV_RATIO*(e.ivDia_mm||0.39*e.bore_mm)).toFixed(4),
+      exValveD_mm:+(e.evDia_mm||EV_RATIO*(e.ivDia_mm||0.39*e.bore_mm)).toFixed(4),
       seat_N:+(g.seat*k).toFixed(3),rate_Nmm:+(g.rate*k).toFixed(4)});
   });
   if(kind==='cam')return withPart('cam',key,e=>{
@@ -26520,6 +26544,8 @@ const FACTORY_ENGINES=PRESETS.concat(EV_ENGINE_PRESETS,HYB_ENGINE_PRESETS), FACT
 for(const p of FACTORY_ENGINES)if(p.real&&p.real.hp>0&&p.engine.radHp==null)p.engine.radHp=p.real.hp;
 // Its springs, likewise, are its maker's, sized for its own redline (build 234; see SPRING_FLOAT_MARGIN).
 for(const p of FACTORY_ENGINES)if(p.real&&p.engine.springRpm==null)p.engine.springRpm=p.engine.redline||DEFAULT_ENGINE.redline;
+// Its valves are its maker's too, where a source gives them (build 285: ENGINE_VALVES, engine-options-presets.js).
+for(const p of FACTORY_ENGINES){const v=ENGINE_VALVES[p.name];if(v&&p.engine.ivValve_mm==null){p.engine.ivValve_mm=v.iv;p.engine.evValve_mm=v.ev;}}
 const FACTORY_ENGINE_CATS=PRESET_CATS.concat(['Electric','Hybrid']), FACTORY_CAR_CATS=VEHICLE_CATS.concat(['Electric','Hybrid']);
 // ====== DESIGN CARDS: a design form as cards with sliders, real-world ticks, help and a live preview (builds 238-239) ======
 // Built for the electric drive (build 238), shared since build 239 by the combustion engine. A form's fields stay in

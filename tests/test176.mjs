@@ -10,6 +10,8 @@
 //   · the preview moves nothing and is the fitted build; the part fits on the ENGINE tab and travels with a build;
 //   · the exhaust valve is the part's own (build 284): a wider one leaves the gas hotter, and a part saved without
 //     one is the head it was;
+//   · a real engine whose valves are sourced (ENGINE_VALVES, build 285) has them; they go when its bore changes and
+//     stay through a save; an engine not listed keeps the packing rule;
 //   · a port-timed engine is told a head of valves changes nothing.
 import { chromium } from './pw.mjs';
 import { fileURLToPath, pathToFileURL } from 'url';
@@ -39,6 +41,12 @@ const r = await page.evaluate(() => {
       o.fac.push({ car: vehicle.body.name, k, hp: a.peakHP, d: maxDiff(a, b), fa: a.floatRpm, fb: b.floatRpm });
     }
   }
+  // 1b. a real engine's own valves (build 285): the sourced sizes, dropped when the bore changes, kept by a save
+  load('BMW M3 (E46'); o.own = { iv: engine.ivDia_mm, ev: engine.evDia_mm };
+  { const b = serializeBuild('t', ''); const bore = document.getElementById('edBore');
+    bore.value = 88; buildEngine(); o.own.rebored = engine.ivDia_mm;
+    applyBuild(JSON.parse(JSON.stringify(b))); o.own.back = [engine.ivDia_mm, engine.evDia_mm]; }
+  load('Golf GTI (Mk7'); o.own.rule = [engine.ivDia_mm / engine.bore_mm, engine.evDia_mm / engine.ivDia_mm];
   // 2. the physics, on the M3
   load('BMW M3 (E46');
   const base = partFromFactory('stock', 'head'), R = x => headReport(Object.assign({}, base, x));
@@ -81,6 +89,11 @@ for (const c of r.fac) {
   if (Math.abs(c.fa - c.fb) > 0.5) fails.push(`${c.car} ${c.k}: the part's springs are not the factory's`);
 }
 const rd = a => a.map(x => Math.round(x)).join(' / ');
+console.log(`== a real engine's own valves: M3 ${r.own.iv} / ${r.own.ev} mm; bored to 88 mm ${r.own.rebored.toFixed(2)} mm; after a save ${r.own.back.join(' / ')}; an unlisted engine ${r.own.rule.map(x => x.toFixed(2)).join(' of the bore, exhaust ')} of the intake ==`);
+if (r.own.iv !== 35 || r.own.ev !== 30.5) fails.push("the M3 does not have BMW's valves (35 / 30.5 mm)");
+if (Math.abs(r.own.rebored - 0.39 * 88) > 1e-9) fails.push('a head on another bore kept the old bore\'s valves');
+if (r.own.back[0] !== 35 || r.own.back[1] !== 30.5) fails.push('a saved build lost its real valves');
+if (Math.abs(r.own.rule[0] - 0.39) > 1e-9 || Math.abs(r.own.rule[1] - 0.83) > 1e-9) fails.push('an engine with no sourced valves no longer takes the rule');
 console.log(`== valve 31/34/37 mm: Mach index ${r.valve.map(v => v.z.toFixed(3)).join(' / ')}, float ${rd(r.valve.map(v => v.f))}, past the packing ${r.valve.map(v => v.big).join('/')} ==`);
 console.log(`== seat 220/290/400 N: float ${rd(r.seat)}; rate 15/25/45 N/mm: float ${rd(r.rate)}; throat 0.78/0.85 on a 30 mm valve: Ci ${r.throat.map(x => x.toFixed(3)).join(' / ')} ==`);
 console.log(`== springs rated +1500 rpm: the part's float ${Math.round(r.hard.fixed)} (as built ${Math.round(r.hard.asBuilt)}) ==`);

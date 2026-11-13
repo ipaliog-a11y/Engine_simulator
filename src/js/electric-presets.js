@@ -122,4 +122,6 @@ const FACTORY_ENGINES=PRESETS.concat(EV_ENGINE_PRESETS,HYB_ENGINE_PRESETS), FACT
 for(const p of FACTORY_ENGINES)if(p.real&&p.real.hp>0&&p.engine.radHp==null)p.engine.radHp=p.real.hp;
 // Its springs, likewise, are its maker's, sized for its own redline (build 234; see SPRING_FLOAT_MARGIN).
 for(const p of FACTORY_ENGINES)if(p.real&&p.engine.springRpm==null)p.engine.springRpm=p.engine.redline||DEFAULT_ENGINE.redline;
+// Its valves are its maker's too, where a source gives them (build 285: ENGINE_VALVES, engine-options-presets.js).
+for(const p of FACTORY_ENGINES){const v=ENGINE_VALVES[p.name];if(v&&p.engine.ivValve_mm==null){p.engine.ivValve_mm=v.iv;p.engine.evValve_mm=v.ev;}}
 const FACTORY_ENGINE_CATS=PRESET_CATS.concat(['Electric','Hybrid']), FACTORY_CAR_CATS=VEHICLE_CATS.concat(['Electric','Hybrid']);

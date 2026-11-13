@@ -484,7 +484,7 @@ function partFromFactory(key,kind){
   if(kind==='head')return withPart('head',key,e=>{
     const g=VALVE_SPRING[key]||VALVE_SPRING.stock,k=e.springScale||1;
     return normPart({kind:'head',name:tr(g.label),valveD_mm:+(e.ivDia_mm||0.39*e.bore_mm).toFixed(4),throat:THROAT_RATIO,
-      exValveD_mm:+(EV_RATIO*(e.ivDia_mm||0.39*e.bore_mm)).toFixed(4),
+      exValveD_mm:+(e.evDia_mm||EV_RATIO*(e.ivDia_mm||0.39*e.bore_mm)).toFixed(4),
       seat_N:+(g.seat*k).toFixed(3),rate_Nmm:+(g.rate*k).toFixed(4)});
   });
   if(kind==='cam')return withPart('cam',key,e=>{

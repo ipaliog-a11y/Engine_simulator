@@ -20,6 +20,18 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 Working toward **v1.0 — every number derived, not fitted.**
 
+### Six real engines get their makers' valves (build 285)
+
+The first batch of retiring the head's fitted numbers the slow way: one sourced engine at a time, so nothing else moves.
+
+- **A real engine can carry its own valve sizes** (`ENGINE_VALVES` in `src/js/engine-options-presets.js`, each with its source), in place of the valve's share of the bore and of 0.83 for the exhaust. They belong to that bore and valve count: change either on the ENGINE tab and the rule sizes the valves again. They travel with a saved build.
+- **Six engines have them:** BMW S54 35 / 30.5 mm (BMW's training manual), Ford Coyote Gen 3 37.7 / 32 (Ford's technical reference), Honda F20C 36 / 31, Toyota 2JZ-GTE 33.5 / 29, Mitsubishi 4G63T 34 / 30.5, Subaru EJ257 36 / 32 (the last four from standard-size replacement valves, marked as such).
+- **What moved, peak power against the published figure:** M3 E46 323 → 329 hp (-5.8% → -4.1%); S2000 207 → 215 (-13.7% → -10.4%); Mustang GT 452 → 477 (-1.7% → +3.7%); WRX STI 276 → 270 (-6.8% → -8.8%); Evo IX 284 → 285 (-0.7% → -0.3%); Supra 310, unchanged. Mean error 5.3% → 5.1%. Torque moves by 1 Nm at most, 0-100 by 0.04 s at most. Every other car is identical.
+- **Held back: the Corvette's LS3.** GM gives 55.0 / 40.4 mm; the rule gives it 51.6. The car is already 7.9% over its 430 hp and its real valves make that 19.3%, past the 10% line. Its cam and intake want a review against GM's sheet first. Noted in the code beside the table.
+- **Left open:** 80 or so engines still take the rule, so `THROAT_RATIO` and `EV_RATIO` stay in the register (27 open). The S2000 is still 10.4% under. In the fingerprint 17 other cars show a changed lap hash with the same lap time: the hashed lap record holds a shared cache of racing lines whose keys include the earlier cars' figures.
+
+Tests: test176 (updated), and every test that names one of the six cars.
+
 ### The head's exhaust valve is its own (build 284)
 
 Phase B, step 2, second build. It does not retire the head's fitted numbers; it finishes the part so that sourced valve sizes have somewhere to go.
