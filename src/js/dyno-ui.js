@@ -393,6 +393,7 @@ function setTab(mode){
   if(mode!=='race'&&racePage.open)closeRacePage();
   if(mode!=='track'&&trackPage.open)closeTrackPage();
   vizMode=mode;
+  if(mode!=='track'&&!racePage.open&&!trackPage.open&&vizW!==640){vizW=640;vizH=420;}   // the phone's TRACK grid is its own
   ['Design','Vehicle','Parts','Garage','Track','Race','Engine','Dyno','Guide','Options'].forEach(m=>
     document.getElementById('tab'+m).classList.toggle('active',mode===m.toLowerCase()));
   // The four sections (build 261): BUILD, TEST, DRIVE, MORE. On a phone the tabs are one strip that slides to the open

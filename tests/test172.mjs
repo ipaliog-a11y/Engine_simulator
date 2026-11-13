@@ -33,7 +33,10 @@ const R = await page.evaluate(() => {
   const to100 = (car, soc) => { const s = driveState(car); if (soc != null) s.soc = soc; while (s.t < 40 && s.vx < 27.78) stepCar(car, s, { throttle: 1 }, 0.01); return s; };
   out.none = load('Mazda MX-5').el;
   for (const n of ['Hyundai Ioniq', 'Toyota Prius', 'Porsche 918', 'Tesla Model 3']) {
-    const car = load(n), el = car.el, o = { name: vehicle.chLabel, plain: plain(car), solver: simulateAccel().t100, win: [el.lo, el.tg, el.hi] };
+    const car = load(n), el = car.el, o = { name: vehicle.chLabel, plain: plain(car), solver: simulateAccel().t100, win: [el.lo, el.tg, el.hi], soc0: el.soc0, plug: !!engine.hyPlug };
+    if (el.ml) { const pk = engine.hy.pack, at = (soc, r) => { const m = driveLerp(el.crpm, el.mot, r), k = driveHelp(el, soc, r, m); return { k, over: k * m * r * Math.PI / 30 + driveLerp(el.crpm, el.ml, r) * k - packMaxPower(pk, soc) * el.share }; };
+      o.pack = [el.lo + 0.02, 0.6].map(soc => [0.3, 0.6, 0.9].map(f => at(soc, f * car.redline))); }
+    if (el.front) { const F = el.front, NT = F.loss.length / F.F.length, k = 80; o.fl = [F.loss[k * NT + 2], F.loss[k * NT + 4]]; }
     o.t100 = to100(car).t; o.low = to100(car, el.lo).t;
     // flat out for 15 s, then off the pedal for 10
     { const s = driveState(car); let lo = 1, hi = 0; const m = car.m, E0 = s.soc * el.capJ; let work = 0;
@@ -56,7 +59,13 @@ for (const o of R.cars) {
   const hyb = o.name.startsWith('Hyundai') || o.name.startsWith('Toyota'), ev = o.name.startsWith('Tesla');
   console.log(`${o.name.slice(0, 26).padEnd(26)} 0-100 ${o.t100.toFixed(2)} s (solver ${o.solver.toFixed(2)}), from the low ${o.low.toFixed(2)}; 15 s flat ${pc(o.flat)}, 10 s off the pedal ${pc(o.lifted)} (${o.regenKW.toFixed(0)} kW back); a minute at 100 km/h: ${o.cruise.map(q => pc(q[0]) + ' -> ' + pc(q[1])).join(', ')}` + (o.front != null ? `; front wheels ${o.front.toFixed(0)} N each, rear ${o.rear.toFixed(0)} N` : ''));
   if (!o.plain) fails.push(`${o.name}: the car is not plain data`);
-  if (!(o.flat < o.win[1] && o.lifted > o.flat && o.regenKW > 1)) fails.push(`${o.name}: the charge does not fall flat out and come back off the pedal`);
+  // build 279: a plug-in sets off full; the help is cut to the pack's own power at the charge; the front motor's own losses
+  if (o.win[1] !== o.win[2] && o.soc0 !== (o.plug ? o.win[2] : o.win[1])) fails.push(`${o.name}: starts at ${pc(o.soc0)}, not ${o.plug ? 'full' : 'at its target'}`);
+  if (o.pack) { const [lo, mid] = o.pack; console.log(`  the pack carries ${lo.map(q => (100 * q.k).toFixed(1)).join(', ')}% of the full help near the low, ${mid.map(q => (100 * q.k).toFixed(1)).join(', ')}% at 60%`);
+    if ([...lo, ...mid].some(q => q.over > 1 || q.k > 1)) fails.push(`${o.name}: the motor's help draws more than packMaxPower at the charge`);
+    if (lo.some((q, i) => q.k > mid[i].k)) fails.push(`${o.name}: a lower charge carries more of the help`); }
+  if (o.fl && !(o.fl[0] > 0 && o.fl[0] < o.fl[1])) fails.push(`${o.name}: the front motor's losses do not follow its torque`);
+  if (!(o.flat < o.soc0 && o.lifted > o.flat && o.regenKW > 1)) fails.push(`${o.name}: the charge does not fall flat out and come back off the pedal`);
   if (!(o.range[0] >= 0 && o.range[1] <= 1)) fails.push(`${o.name}: the charge left 0..1`);
   if (hyb && Math.abs(o.t100 / o.solver - 1) > 0.10) fails.push(`${o.name}: 0-100 ${o.t100.toFixed(2)} s against the solver's ${o.solver.toFixed(2)}`);
   if (!ev && !(o.low > o.t100 * 1.03)) fails.push(`${o.name}: with the pack at its low the car is no slower`);

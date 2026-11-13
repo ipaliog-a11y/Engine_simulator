@@ -3,7 +3,7 @@
 // WHY THIS EXISTS. Builds 238 and 239 put the electric drive and the combustion engine in cards; the VEHICLE tab, about
 // thirty fields in four grids, was still a sheet of bare values. Build 247 moves it into six cards on the same machinery
 // (src/js/design-cards.js, src/js/vehicle-designer.js). What must hold:
-//   · every vehicle field keeps its id and stays a .field with its label, inside the cards; eight cards (CHASSIS NUMBERS since build 250, ECU: DRIVER AIDS since 280), a menu of eight,
+//   · every vehicle field keeps its id and stays a .field with its label, inside the cards; eight cards (CHASSIS NUMBERS since build 250, ECU: DRIVER AIDS since 282), a menu of eight,
 //     and on a wide panel one card shown, which the menu switches;
 //   · the preview is the car's own run: after loading a factory car, its 0-100 and top speed are PERFORMANCE's;
 //   · a slider writes its field and rebuilds the car (the form is live), a tick sets a factory car's value, and the

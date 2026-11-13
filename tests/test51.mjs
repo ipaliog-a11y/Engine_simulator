@@ -121,6 +121,16 @@ const b85 = await page.evaluate(() => {
   const sx = trackView.mcx + (base.x - trackView.mcx) * trackView.z + trackView.x, sy = trackView.mcy + (base.y - trackView.mcy) * trackView.z + trackView.y;
   out.zoom = { z: trackView.z, drift: Math.hypot(sx - vx, sy - vy) };
   trackZoomAt(vx, vy, 0.01); out.zoomFloor = trackView.z;
+  // build 280: at the floor the camera shows the whole circuit, and the car's heading turns smoothly along the lap
+  { const L = lapResult, box = { t: 62, b: 58, r: 198 }, cam = sceneBlend(sceneChase(scenePose(L.track.line, 10), vizW, vizH, 14, 0.7), sceneOverview(vizW, vizH, box), trackZoomOut(trackView.z));
+    out.zoomMin = TRACK_ZMIN;
+    out.mapOutside = L.track.line.filter(p => { const q = sceneProject(cam, p.x, p.y); return q.sx < 0 || q.sx > vizW - box.r || q.sy < box.t || q.sy > vizH - box.b; }).length;
+    const turn = (a, b) => Math.abs(Math.atan2(Math.sin(a - b), Math.cos(a - b))) * 180 / Math.PI;
+    let hd = 0, cam2 = 0, off = 0, p = null;
+    for (let t = 0; t < L.lap; t += 1 / 60) { const r = replayAt(L, t), q = scenePose(L.track.line, r.i + r.f);
+      if (p) { hd = Math.max(hd, turn(q.hd, p.hd)); cam2 = Math.max(cam2, turn(q.camHd, p.camHd)); }
+      off = Math.max(off, Math.hypot(q.x - r.x, q.y - r.y)); p = q; }
+    out.pose = { hd, cam: cam2, off }; }
   trackZoomAt(vx, vy, 100); out.zoomCap = trackView.z;
   trackView.key = 'some other circuit'; drawTrack(); out.resetOnTrackChange = trackView.z;
   setTab('engine');
@@ -137,7 +147,12 @@ if (!b85.dyno.text.includes(b85.dyno.hp + ' hp') || !b85.dyno.text.includes(b85.
   fails.push(`the dyno result does not headline the scorecard's ${b85.dyno.hp} hp / ${b85.dyno.tq} Nm`);
 if (b85.dyno.rows < 8) fails.push(`the run-data table has only ${b85.dyno.rows} rows`);
 if (!(b85.zoom.drift < 1e-6)) fails.push(`zooming moved the point under the cursor by ${b85.zoom.drift}`);
-if (b85.zoomFloor !== 1) fails.push(`zoom went below the fitted view (${b85.zoomFloor})`);
+if (b85.zoomFloor !== b85.zoomMin || !(b85.zoomMin < 1)) fails.push(`zooming out does not stop at the whole-circuit view (${b85.zoomFloor})`);
+if (b85.mapOutside) fails.push(`zoomed right out, ${b85.mapOutside} points of the circuit are off the picture or under a panel`);
+console.log(`car on the lap, per 1/60 s: heading turns ${b85.pose.hd.toFixed(2)}° at most, the camera ${b85.pose.cam.toFixed(2)}°; ${b85.pose.off.toFixed(2)} m off the solver's line at most`);
+// the straight pieces between the solver's points gave steps of 6.9° on this lap
+if (!(b85.pose.hd < 3 && b85.pose.cam < 2)) fails.push(`the car's heading or the camera's still jumps along the lap (${b85.pose.hd.toFixed(1)}°, ${b85.pose.cam.toFixed(1)}°)`);
+if (!(b85.pose.off < 0.3)) fails.push(`the smoothed car leaves the solver's line by ${b85.pose.off.toFixed(2)} m`);
 if (!(b85.zoomCap <= 16)) fails.push(`zoom is not capped (${b85.zoomCap})`);
 if (b85.resetOnTrackChange !== 1) fails.push('changing circuit should reset the map view');
 

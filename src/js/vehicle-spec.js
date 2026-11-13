@@ -123,7 +123,7 @@ function readVehicleFromForm(){
     limitKmh:clamp(Math.round(+g('vhLimitKmh').value||250),80,400),
     // Traction control (build 154): the ECU holds the driven tyres at their best slip. Off, the launch is the driver's.
     tc:g('vhTC').value!=='off',
-    // The driver aids' calibration (build 280), read by the stepped car (DRIVE_AIDS, src/js/drive-model.js): the slip
+    // The driver aids' calibration (build 282), read by the stepped car (DRIVE_AIDS, src/js/drive-model.js): the slip
     // ABS releases at per axle and the traction control's target, as multiples of the tyre's peak slip; how far the
     // rear tyres may slide before the stability control works, as a multiple of the slip angle they peak at.
     aids:{abs:g('vhAbs').value!=='off',absSlip:[clamp(numOr(g('vhAbsF').value,1.3),1,3),clamp(numOr(g('vhAbsR').value,1.3),1,3)],
@@ -168,7 +168,7 @@ function fillSpacingSelect(hasBody,val){
   sel.innerHTML=opts.map(k=>'<option value="'+k+'">'+esc(tr(k==='stock'?'STOCK':k==='custom'?'CUSTOM':GEAR_SPACING[k].label))+'</option>').join('');
   sel.value=opts.includes(val)?val:(hasBody?'stock':'std');
 }
-// The driver aids' fields from a saved calibration, or the defaults: ESP where there is traction control (build 280).
+// The driver aids' fields from a saved calibration, or the defaults: ESP where there is traction control (build 282).
 function applyAidsToForm(a,tc){
   const g=id=>document.getElementById(id),s=a&&a.absSlip||DRIVE_AIDS.absSlip;a=a||{};
   g('vhAbs').value=a.abs===false?'off':'on';g('vhAbsF').value=s[0];g('vhAbsR').value=s[1];g('vhTcSlip').value=a.tcSlip||DRIVE_AIDS.tcSlip;
@@ -183,7 +183,7 @@ function applyVehicleToForm(v){
   g('vhLimiter').value=v.governor>0?'on':'off';g('vhLimitKmh').value=v.governor>0?v.governor:(v.limitKmh||250);
   g('vhTC').value=v.tc===false?'off':'on';   // saves from before build 154 carry none: on
   applyAidsToForm(v.aids,v.tc!==false);
-  g('vhChassis').value=v.chassis||'coupe';g('vhDrive').value=v.drive||'rwd';g('vhGearbox').value=v.gearbox||'manual';g('vhDiff').value=v.diff||'open';
+  g('vhChassis').value=v.chassis||'coupe';g('vhDrive').value=g('vhDrive').dataset.prev=v.drive||'rwd';g('vhGearbox').value=v.gearbox||'manual';g('vhDiff').value=v.diff||'open';
   g('vhGears').value=v.gears||6;g('vhGearing').value=v.gearing!=null?v.gearing:52;
   g('vhTire').value=v.tireType||'sport';g('vhTireW').value=v.tireWidth||235;g('vhTireWF').value=v.tireWidthF||0;g('vhTireA').value=v.tireAspect||40;g('vhWheel').value=v.wheelDia||18;
   g('vhAeroF').value=v.aeroFront||'none';g('vhAeroR').value=v.aeroRear||'none';g('vhAeroFl').value=v.aeroFloor||'none';g('vhWeight').value=v.weightRed||'none';
@@ -207,7 +207,7 @@ function applyChassisFit(key,body){
   const ch=CHASSIS[key];if(!ch||!ch.fit)return null;
   const f=body?body.fit:ch.fit,g=id=>document.getElementById(id);
   g('vhChassis').value=key;   // self-contained: callers may fit a chassis without touching the select
-  g('vhDrive').value=body?f.drive:ch.drive;g('vhGearbox').value=f.gearbox;g('vhDiff').value=f.diff;
+  g('vhDrive').value=g('vhDrive').dataset.prev=body?f.drive:ch.drive;g('vhGearbox').value=f.gearbox;g('vhDiff').value=f.diff;
   g('vhGears').value=f.gears;g('vhGearing').value=f.gearing;
   fillSpacingSelect(!!body,body?'stock':'std');vehRatioSet=null;vehFinalDriveSet=0;
   g('vhTire').value=f.tire;g('vhTireW').value=f.tw;g('vhTireWF').value=f.twF||0;

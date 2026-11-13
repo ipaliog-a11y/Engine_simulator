@@ -142,6 +142,7 @@ function bindControls(){
   rb.addEventListener('click',()=>{lapReplay.playing=!lapReplay.playing;rb.classList.toggle('on',lapReplay.playing);
     rb.setAttribute('aria-pressed',String(lapReplay.playing));rb.textContent=tr(lapReplay.playing?'PAUSE':'PLAY');});
   document.getElementById('btnReplayRestart').addEventListener('click',()=>{lapReplay.t=0;lapReplay.laps=0;});
+  document.getElementById('btnTrackMap').addEventListener('click',trackMapToggle);
   document.getElementById('replaySpeed').addEventListener('change',e=>{lapReplay.speed=+e.target.value||1;});
   const gs=document.getElementById('replayGauges');gs.value=lapReplay.gauges;
   gs.addEventListener('change',e=>{lapReplay.gauges=e.target.value==='analog'?'analog':'digital';

@@ -20,9 +20,9 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 Working toward **v1.0 — every number derived, not fitted.**
 
-### The driver aids as a card: ECU: DRIVER AIDS (build 280)
+### The driver aids as a card: ECU: DRIVER AIDS (build 282)
 
-Phase E, step 4, second pass: the second of two builds. The player can now set what build 279 made tunable, and see what it does.
+Phase E, step 4, second pass: the second of two builds. The player can now set what build 281 made tunable, and see what it does.
 
 - **A new card on the VEHICLE tab, ECU: DRIVER AIDS**, with eight fields: ABS on or off and the slip it releases at, front and rear (1 to 3 x the tyre's peak slip); TRACTION CONTROL (moved here from CHASSIS & DRIVE) and its slip target (0.5 to 3 x); STABILITY CONTROL (ESP), how far the rear may slide before it works (1 to 3 x the slip angle the tyres peak at), and its engine cut. They are saved with the car (`vehicle.aids`). A factory car loads the defaults, with ESP where it has traction control.
 - **The card's picture is the car in a test, from above:** FMVSS 126's sine with dwell at 80 km/h, green as set and red with ESP off, with three figures under it: how far sideways the car went and whether it passed, the stop from 100 km/h (and whether a wheel locked), and the standing start with the most the tyres slipped. Model 3: 12 degrees and a pass, 84 degrees and a spin with ESP off, 17 degrees with 1.5 x the slide allowed; 39.6 m, 44.5 m with a wheel locked without ABS; tyre slip 24%, 42% with the traction control at twice the peak.
@@ -32,7 +32,7 @@ Phase E, step 4, second pass: the second of two builds. The player can now set w
 
 Tests: test175 (new), test157 (eight cards).
 
-### ABS, traction control and stability control as a tune of the stepped car (build 279)
+### ABS, traction control and stability control as a tune of the stepped car (build 281)
 
 Phase E, step 4 of `plans/road-to-v1.md`, second pass: the first of two builds. The driver aids were fixed numbers inside `stepCar`, and there was no stability control. Nothing in the app reads this yet; the card that edits it is the next build.
 
@@ -44,6 +44,43 @@ Phase E, step 4 of `plans/road-to-v1.md`, second pass: the first of two builds. 
 - **Left open:** no preset says whether a car had ABS or ESP. ABS is taken as fitted to all, and ESP wherever traction control is. `espBand` (3 deg/s), `espTau` (0.2 s) and `espVmin` (4 m/s) are a calibration with no published source. A first version that judged a spin by the yaw rate alone braked the rear-drivers on a fifth of a lap, because the stepped car has no roll steer or compliance (named open in build 277) and so turns with less lock than its single-track model expects; the slip angle, which the model knows, is used instead. The MX-5 with ESP fitted by hand passes the rule at 6.5 x but not at 5 x (45% of the peak yaw after 1 s, against 35%).
 
 Tests: test174 (new), test168, test170 (updated).
+### The track and race picture: a steady car, a shadow under it, the whole circuit, readable on a phone (build 280)
+
+Four faults the owner found in the chase view of TRACK and RACE. Drawing only: no solver number moves.
+
+- **The car jerked in corners.** It was placed on straight pieces between the solver's points, about 5 m apart, so its heading jumped at each point (up to 6.9° in one frame on Riverside GP) and the picture, which turns with the car, jumped with it. The car now follows a smooth curve through the same points (never more than 0.06 m from them): its heading turns 0.8° a frame at most. The camera turns with the road ahead (the chord from 8 m behind to 22 m ahead) and not with the car's nose, so the car is seen to turn in.
+- **In a race, a car moving off the line to pass jumped 2.4 m sideways in one frame.** It now moves over about a second. Race cars also show brake lights when they slow by more than 3 m/s², and the camera leans in corners as it does on TRACK.
+- **The car looked as if it floated,** because its shadow was cast 4 m to one side, as a tree's is. The shadow now lies under the car, a little down-sun.
+- **The whole circuit is back.** Zooming out past 1× lifts the camera off the car until, at 0.4×, the whole circuit is shown north up, fitted to the space the panels leave. A MAP button beside the replay controls (TRACK and RACE) goes there and back. Distance boards are not drawn from that height.
+- **The instruments were too small on a phone:** the 640-wide drawing was squeezed into about 360 pixels, so 6-pixel text came out near 3. On a phone TRACK now draws on a grid of the screen's own width, 520 high, with the lap's figures wrapped under it; the race page's grid follows the screen too (it was held at 560). The instruments give way to the map when zoomed right out.
+- **Left open:** the Greek of the guide's zoom paragraph does not have the new sentence (Greek is paused). On a phone a long race message at the foot of the map can run off the edge. `test42` fails on `main` as well, for three untranslated starter messages.
+
+Tests: test51, test75 (updated); 72, 73.
+### The stepped car's pack: a plug-in sets off full, and the pack's own power limit (build 279)
+
+Four follow-ups to build 275's hybrid in `stepCar`, three of them from its own "left open". Nothing in the app reads
+`stepCar` yet.
+
+- **A plug-in starts on a full pack** (the charge window's HIGH), as it does in the race; build 275 started it at its
+  target. The 918 sets off at 95% and is at 85.7% after 15 s flat out.
+- **The motors' help is cut to what the pack can give at its charge**: the lower of its rate and the power at its
+  cut-off voltage (`packMaxPower`'s law), each motor its share. The curve was already cut to that at the rated 60%;
+  lower in the window the cells' voltage is lower. Near the low the 918's pack carries 92% of the motor's full help
+  from mid revs up; the Ioniq's motor never reaches its pack's limit, so nothing changes for it. A power-split's or
+  a series hybrid's help follows the pack's power against the rated one.
+- **The front axle motor's losses are its own**, read at its speed and torque from a table of the motor
+  (`motorLosses`), not the full-help loss scaled by its share of the force.
+- **The gearbox's axle is remembered** (`vehicle.driveMech`): a front-drive hybrid given a front motor keeps its
+  engine on the front wheels in `stepCar`; build 275 sent every such car's engine to the rear. A loaded car now writes
+  its own axle, where it used to give back whatever the page showed before.
+- **The 918's gearbox turns the rear axle** (`fit.drive:'rwd'`), as its comment and Porsche describe it. The front
+  motor still makes the car all-wheel drive to every solver. Taken off, the car is rear-drive (it was all four).
+- **Now:** 0-100 Ioniq 9.35 s (solver 9.55), Prius 11.33 (11.35), 918 3.23 (2.49).
+- **What moved:** nothing: the fingerprint is identical to `main`'s (5212 values).
+- **Left open:** an electric car's pack has no such limit yet (its battery management's law only); a saved build with
+  a front motor does not remember the gearbox's axle (it reads as the rear); the rest of build 275's list.
+
+Tests: test172 (updated: a plug-in's starting charge, the pack's limit, the front motor's losses), test112, test168.
 
 ### The stepped car's driver is kept as a rule (build 278)
 

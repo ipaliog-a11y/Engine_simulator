@@ -30,7 +30,7 @@ const R = await page.evaluate(() => {
   for (const n of ['Mazda MX-5', 'Honda Civic Type R (FK8', 'Subaru Impreza', 'Porsche 911 GT3', 'Tesla Model 3']) {
     loadVehiclePreset(FACTORY_CARS.find(x => x.name.startsWith(n)));
     const lap = simulateLap('tech'), line = driveLine(lap), N = line.length, car = driveCar(), s = place(car, line), d = { i: 0 };
-    car.esp = false;                                  // a hot lap is driven with the stability control off (build 279; with it, test174)
+    car.esp = false;                                  // a hot lap is driven with the stability control off (build 281; with it, test174)
     const o = { name: vehicle.chLabel, solver: lap.lap, lap: 0, e: 0, beta: 0, plain: JSON.stringify(line).length > 0 && line.every(q => Object.values(q).every(Number.isFinite)) };
     let laps = 0, t1 = 0, prev = 0;
     while (s.t < 300) {

@@ -1,6 +1,6 @@
-// The driver aids as a card on the VEHICLE tab (build 280).
+// The driver aids as a card on the VEHICLE tab (build 282).
 //
-// WHY THIS EXISTS. Build 279 made ABS, traction control and stability control a tune of the stepped car; this build
+// WHY THIS EXISTS. Build 281 made ABS, traction control and stability control a tune of the stepped car; this build
 // lets the player set it, and shows what it does. What must hold:
 //   · the card ECU: DRIVER AIDS holds the eight fields, traction control among them; each has its help;
 //   · the fields are the car's (vehicle.aids), a factory car loads the defaults (ESP where it has traction control),

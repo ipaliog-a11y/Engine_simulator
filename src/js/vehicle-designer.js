@@ -233,7 +233,7 @@ function vcdRefresh(){
   st.last=null;VCD.queue(true,true);
 }
 
-// ---- the driver aids' picture (build 280): the stepped car through three tests, as the aids are set ----
+// ---- the driver aids' picture (build 282): the stepped car through three tests, as the aids are set ----
 // Worked out only while the card's picture is on screen, and once per car: driveCar() runs the 0-100 for the launch speed.
 let vcdAidsMemo=null;
 function vcdAids(){
