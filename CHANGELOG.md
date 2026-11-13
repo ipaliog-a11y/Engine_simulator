@@ -20,6 +20,17 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 Working toward **v1.0 — every number derived, not fitted.**
 
+### The head's exhaust valve is its own (build 284)
+
+Phase B, step 2, second build. It does not retire the head's fitted numbers; it finishes the part so that sourced valve sizes have somewhere to go.
+
+- **A designed head sets its exhaust valve** (PARTS → CYLINDER HEAD, EXHAUST VALVE, 12 to 65 mm), where it was always 0.83 of the intake (`EV_RATIO`). It is the bore of the exhaust port, so it sets the heat the gas leaves there (Caton & Heywood's port correlation, already in use): a wider port takes less. The preview shows the valve against the intake and the exhaust gas temperature at peak power.
+- **No factory car moved** (fingerprint identical to `main`, 5212 values). A head saved in build 283 has no exhaust valve written down and takes 0.83 of its intake, so it is the head it was.
+- **Not retired, and why.** `THROAT_RATIO` (0.85), `EV_RATIO` (0.83) and the valve's share of the bore still stand for every factory head. Deleting them needs each real car's own valve sizes from its maker (most are published), or your sign-off to keep them as rules. The register says so; it still holds 27 open entries. The three spring steps stay too: they are the ENGINE tab's choices, sized by the maker's redline.
+- **Left open:** the exhaust valve's size does not change how the cylinder empties (the blowdown and the pumping loop do not read it), and the valves are still not checked against the bore.
+
+Tests: test176 (updated); 166, 120, 159, 73, 51.
+
 ### The cylinder head as a part (build 283)
 
 Phase B, step 2 of `plans/road-to-v1.md`: the first of two builds. It is the work of the old pull request #203 (stamped build 250, never merged), brought onto today's code beside the intercooler part.

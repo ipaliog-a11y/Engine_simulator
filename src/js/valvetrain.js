@@ -134,6 +134,7 @@ function deriveValvetrain(){
   const cam=camSpec(e);
   e.ivCount=pack.n;
   e.ivDia_mm=H?H.valveD_mm:pack.dOverB*e.bore_mm;
+  e.evOwn=!!(H&&H.exValveD_mm>0);e.evDia_mm=e.evOwn?H.exValveD_mm:EV_RATIO*e.ivDia_mm;   // a designed head's exhaust valve is its own (build 284)
   e.throatRatio=H?H.throat:THROAT_RATIO;
   e.ivLift_mm=cam.lift_mm!=null?cam.lift_mm:cam.lOverD*e.ivDia_mm;   // a designed cam's lift is its own (build 249)
   e.valveMass_g=valveMass(e.ivDia_mm,e.valveMat)*1000;
