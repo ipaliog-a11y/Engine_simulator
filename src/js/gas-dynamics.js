@@ -117,7 +117,7 @@ const EV_RATIO=0.83;
 function portLossShare(n,lam,f0){
   const e=engine;
   if(!e.ivDia_mm)return 0;
-  const nEx=Math.max(1,(e.valves||4)-e.ivCount), D=THROAT_RATIO*EV_RATIO*e.ivDia_mm/1000, L=e.bore_mm/1000;
+  const nEx=Math.max(1,(e.valves||4)-e.ivCount), D=(e.throatRatio||THROAT_RATIO)*EV_RATIO*e.ivDia_mm/1000, L=e.bore_mm/1000;
   const st=e.stoichAFR||14.7, afr=st*Math.max(1,lam);
   const rho=(1+(e.intake==='na'?0:(e.boost_bar||0)))*1e5/(287*313);
   const air=rho*(e.dispCyl_L/1000)*refFill(n)*n/60*(e.chargesPerRev||0.5);   // kg/s per cylinder
@@ -316,8 +316,8 @@ function intakeRamGain(rpm,chargeK){
 function intakeCd(){
   const e=engine,D=e.ivDia_mm,ref=Math.PI/4*D*D,N=90;
   let acc=0;
-  for(let k=0;k<N;k++)acc+=valveFlowArea(D,e.ivLift_mm*Math.pow(Math.sin(Math.PI*(k+0.5)/N),2))/ref;
-  return Math.min(0.42,1.5*(e.ivLift_mm/D))/Math.max(1e-6,acc/N);
+  for(let k=0;k<N;k++)acc+=valveFlowArea(D,e.ivLift_mm*Math.pow(Math.sin(Math.PI*(k+0.5)/N),2),e.throatRatio)/ref;
+  return inletCi(e)/Math.max(1e-6,acc/N);
 }
 // Build 122: the charge is HEATED as it is drawn in, by the first law in the cylinder:
 //     d(m cv T) = cp T_in dm_in + cp T dm_out - p dV + h A (T_wall - T) dt
@@ -340,7 +340,7 @@ function intakeFill(rpm,adv,L,Tres,Cd){
   const Tr=Tres>0?Tres:T0;
   let T=Tr,m=p0*V(th0)/(R*Tr),u=0;const m0=m;
   for(let th=th0;th<th1;th+=dth){
-    const Av=Cd*e.ivCount*valveFlowArea(e.ivDia_mm,e.ivLift_mm*Math.pow(Math.sin(Math.PI*(th-thO)/dur),2))*1e-6;
+    const Av=Cd*e.ivCount*valveFlowArea(e.ivDia_mm,e.ivLift_mm*Math.pow(Math.sin(Math.PI*(th-thO)/dur),2),e.throatRatio)*1e-6;
     const Vc=V(th),pc=m*R*T/Vc,k=0.5*rho0*Math.pow(Ar/Math.max(1e-9,Av),2);
     const rhs=p0-pc+rho0*L/dt*u;   // implicit in u: k u|u| + a u = rhs
     u=rhs>=0?(-a+Math.sqrt(a*a+4*k*rhs))/(2*k):(a-Math.sqrt(a*a-4*k*rhs))/(2*k);
@@ -1006,7 +1006,7 @@ function deriveGasDynamics(){
   // Runner bore matches the port behind it, which matches the valve throat it feeds.
   // A designed intake (build 206, parts.js) gives its own runners: length, bore, and a variable one's short length.
   const IP=e.intakePart||null;
-  e.runnerD_mm=IP?IP.runnerD_mm:e.ivDia_mm?Math.sqrt(e.ivCount)*THROAT_RATIO*e.ivDia_mm:0.42*e.bore_mm;
+  e.runnerD_mm=IP?IP.runnerD_mm:e.ivDia_mm?Math.sqrt(e.ivCount)*e.throatRatio*e.ivDia_mm:0.42*e.bore_mm;
   e.runnerA=Math.PI/4*Math.pow(e.runnerD_mm/1000,2);
   const rn=IP?null:(RUNNER[e.runner]||RUNNER.medium);
   e.runnerVariable=IP?!!IP.variable:(e.runner==='variable');

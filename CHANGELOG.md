@@ -20,6 +20,19 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 Working toward **v1.0 — every number derived, not fitted.**
 
+### The cylinder head as a part (build 283)
+
+Phase B, step 2 of `plans/road-to-v1.md`: the first of two builds. It is the work of the old pull request #203 (stamped build 250, never merged), brought onto today's code beside the intercooler part.
+
+- **The PARTS tab designs a cylinder head**: the intake valve's diameter, the port's throat as a share of the valve, and the springs' seat load and rate. The number of valves, the valvetrain and the valve material stay on the ENGINE tab. A head is fitted from the ENGINE tab's VALVE SPRINGS list, now called HEAD & SPRINGS.
+- **It feeds the physics the factory heads always fed.** The valve sets the inlet Mach index and the valve's weight. The throat sets the flow at full lift and the plateau of Taylor's flow coefficient: 0.42 on a 0.85 throat, taken as a discharge coefficient of 0.58 on the throat's own area. The springs set where the valve floats. On the M3 E46: a valve of 31 → 37 mm lowers the Mach index at the redline from 0.66 to 0.46 and brings float from 9190 down to 7640 rpm; a seat load of 220 → 400 N moves float from 7850 to 9260 rpm.
+- **A designed head's springs are hardware.** They stay as designed, where the maker's springs are re-sized for the factory cam and the redline (build 234).
+- **No factory car moved.** A factory head written down as a part gives the same engine (torque within 5e-12 %, float identical). Fingerprint identical to `main`, 5212 values.
+- **A part's preview now starts as a build does.** Since build 260 the exhaust is sized from the engine's filling, and a preview sized it from the filling of the head it replaced: the M3's pipe came out 0.04 mm wider in the preview than once fitted. The cam, intake, filter, exhaust and intercooler previews take the same correction; their tests pass unchanged.
+- **Left open:** a designed valve is not checked against the bore (the preview warns when it is bigger than the factory packing); the springs are not checked for coil bind; spring load adds nothing to friction, because the friction model (Patton, Sandoval) has no spring-load term. The next build retires `THROAT_RATIO`, `EV_RATIO`, the packing ratios and the three spring steps. `test125` fails on `main` as well (the folded LIVE OUTPUT is 21% of its height, not a third).
+
+Tests: test176 (new), test120 (six kinds); 121, 124, 158, 159, 163, 51, 73, 156, 157.
+
 ### The driver aids as a card: ECU: DRIVER AIDS (build 282)
 
 Phase E, step 4, second pass: the second of two builds. The player can now set what build 281 made tunable, and see what it does.

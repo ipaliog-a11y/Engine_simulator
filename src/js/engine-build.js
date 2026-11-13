@@ -170,7 +170,7 @@ function buildEngineCore(prevStoich,quiet){
   // a two-stroke every turn; a rotor fills one of its three chambers every shaft turn (it turns once
   // for three of the shaft). Every air-flow rate below is displacement x rpm x this.
   engine.chargesPerRev=2*Math.PI/engine.strokeDiv;
-  if(engine.ports){engine.cam='stock';delete engine.camPart;engine.vvt=false;}   // 2-stroke / rotary: no poppet valvetrain
+  if(engine.ports){engine.cam='stock';delete engine.camPart;delete engine.headPart;engine.vvt=false;}   // 2-stroke / rotary: no poppet valvetrain
   if(engine.ci)engine.injector='direct';                   // diesel: direct injection
   // Fuel: energy content, stoichiometry, knock rating and charge cooling.
   const fp=FUELS[engine.fuel]||FUELS.gasoline;

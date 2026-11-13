@@ -42,7 +42,7 @@ const ICD_FIELDS={
     trade:'Overlap lets the exhaust pull fresh charge in at high rpm. At low rpm it lets exhaust back in: a rougher idle and more emissions.'},
   edValveMat:{adv:true,what:'What the valves are made of.',
     trade:'Titanium valves are much lighter, so the springs keep them on the cam to a higher rpm before they float. They cost more.'},
-  edSpring:{adv:true,what:'How stiff the valve springs are.',
+  edSpring:{adv:true,what:'How stiff the valve springs are, or a cylinder head of your own from the PARTS tab (its valves, ports and springs).',
     trade:'Stiffer springs keep the valves following the cam to a higher rpm. They cost more.'},
   valFloat:{what:'The rpm where the springs can no longer keep the valves on the cam, as the form stands.',
     trade:'Above it the valves bounce: power falls and the engine can be damaged. Keep it above the redline: lighter valves or stiffer springs raise it.'},
