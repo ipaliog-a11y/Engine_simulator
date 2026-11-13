@@ -20,6 +20,18 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 Working toward **v1.0 — every number derived, not fitted.**
 
+### The stepped car's turbo spins up in time (build 274)
+
+Phase E, step 3 of `plans/road-to-v1.md`. `stepCar` took a turbo engine's settled boost at every instant, so lag cost nothing. Nothing in the app reads it yet.
+
+- **The shaft is a state.** `driveCar()` now carries a turbo as tables read once off the engine (`car.turbo`): the shaft's net power, the boost the wheel supports and the compressor's efficiency over engine speed, shaft speed and throttle, with the torque over engine speed and boost. `stepCar` steps the shaft's energy and the boost from them, the same balance as the bench's `advanceShaft`, with no engine code. A car is still plain data (about 65 kB more for a turbo car).
+- **Against the engine's own shaft** (WRX STI, Civic Type R; flat, a lift, flat, half throttle at 2500, 4000 and 5500 rpm): 90% of the boost at the same time within 3%, and 0.02 bar apart on average.
+- **A standing start** from a cold shaft: WRX STI 5.84 s, lit on the line for 1.2 s (as the solver starts) 5.73; Civic Type R 6.50 and 6.36.
+- **Through a shift** a dual-clutch, sequential or automatic keeps the throttle open and a manual lifts to 0.35, the lap's own two rules.
+- **Left open:** at half throttle high in the revs the tables read up to 0.2 bar off the engine's shaft (Civic, 5500 rpm); the standing start is still 9–25% slower than the solver on the powerful cars (the launch, not the turbo); a hybrid's controller; all-wheel drive split evenly; a lane change.
+
+Tests: test168 (updated: its plain-data check now accepts a part that is an object of plain values), test170.
+
 ### The chase view is back, with what was wrong in it put right (build 273)
 
 Build 270 put a pitched camera behind the car on TRACK and RACE; build 271 took it out. This is that view again, for testing, with the faults found in review fixed. The lap and the race are the same numbers as before.

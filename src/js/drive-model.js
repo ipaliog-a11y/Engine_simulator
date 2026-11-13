@@ -39,9 +39,11 @@
 //   Brakes    the hydraulics' own force and front share; ABS and traction control as wheel-slip limits when fitted.
 //   Aero      drag and downforce on the square of the speed; rolling resistance by the load.
 //
-// NOT YET (named, so nobody rediscovers them): the turbo's shaft in time (boost is the settled curve's), tyre and
-// brake temperatures, camber and roll steer, the road's bumps and kerbs, a hybrid's controller. The lap solver has
-// each of these; they move here in later builds of phase E.
+//   Turbo     the shaft in time (build 274): its energy rises by the turbine's power less the compressor's and the
+//             bearings', and the boost it has built sets the torque. See driveTurbo.
+//
+// NOT YET (named, so nobody rediscovers them): tyre and brake temperatures, camber and roll steer, the road's bumps
+// and kerbs, a hybrid's controller. The lap solver has each of these; they move here in later builds of phase E.
 // ================================================================================================
 const DRIVE_G=9.81, DRIVE_RHO=1.20;
 // The designed car as plain data. Everything stepCar needs, and nothing that is not a number, a string or an array.
@@ -49,7 +51,9 @@ function driveCar(){
   const v=vehicle,pt=powertrain(),L=v.wb,a=L*(1-v.fWt),b=L*v.fWt;
   const curve=pt.torqueCurve(),rl=pt.maxRpm(),peak=curve.reduce((m,p)=>Math.max(m,p.tq),0);
   const ride=(SUSPENSION[v.suspension]||SUSPENSION.sport).hz;
+  const grid=pt.hasShaft()?pt.torqueGrid():null;
   return {
+    turbo:grid&&grid.laggy?driveTurbo(pt,grid):null,
     name:v.chLabel||'',m:v.mass,Izz:v.mass*a*b,a,b,h:v.cg,tF:v.trackF||v.track,tR:v.trackR||v.track,
     r:v.rTire,Iw:(v.wheelI||2)/4,
     mu:tyreMu(v.FzRef,v.FzRef),muF:tyreMu(v.FzRefF||v.FzRef,v.FzRefF||v.FzRef),FzRef:v.FzRef,FzRefF:v.FzRefF||v.FzRef,
@@ -69,9 +73,49 @@ function driveCar(){
 }
 // A car at rest, in neutral for a clutch car until the driver asks for a gear.
 function driveState(car){
-  return {t:0,x:0,y:0,psi:0,vx:0,vy:0,yaw:0,w:[0,0,0,0],we:car.idle*Math.PI/30,gear:1,shiftT:0,
+  return {shE:0,boost:0,t:0,x:0,y:0,psi:0,vx:0,vy:0,yaw:0,w:[0,0,0,0],we:car.idle*Math.PI/30,gear:1,shiftT:0,
     axF:0,ayF:0,al:[0,0,0,0],abs:[1,1,1,1],tcF:1,clF:1,pull:false,firing:true,
     ax:0,ay:0,Fz:[0,0,0,0],kappa:[0,0,0,0],alpha:[0,0,0,0],Fx:[0,0,0,0],Fy:[0,0,0,0],rpm:car.idle,speed:0,delta:0};
+}
+// THE TURBO AS PLAIN DATA (build 274). The bench, the 0-100 and the lap step one shaft (advanceShaft): its energy
+// E = J w^2 / 2 gains the turbine's power less the compressor's and the bearings', the boost is what the wheel makes at
+// that speed, and on a lift the boost falls only as fast as the engine empties the charge pipes. That needs the whole
+// engine model, which a game does not load. So the same balance is read off the engine once, on a grid of engine speed,
+// shaft speed and throttle: the shaft's net power P (W), the boost the wheel supports bS (bar) and the compressor's
+// efficiency eta. At each point the air is what the engine swallows AT that boost (a fixed point, since a rising
+// boost follows the shaft at once). Beside it: the air swallowed at 1 bar and the charge temperature over engine
+// speed (for the emptying and the fill), and the torque over engine speed and boost (the lap's own grid).
+function driveTurbo(pt,grid){
+  const e=engine,iat0=state.iat;state.iat=20;                 // design conditions, as the 0-100 and the lap pin them
+  const T01=293.15,NR=10,NN=16,TH=[0.08,0.25,0.45,0.65,0.82,1],lo=Math.min(1000,pt.idleRpm()||1000),hi=pt.maxRpm();
+  const rp=[],ns=[],P=[],bS=[],eta=[],air=[],Tch=[],bAv=grid.rpms.map(r=>pt.boostAvail(r));
+  for(let i=0;i<NN;i++)ns.push(e.shaftMax*i/(NN-1));
+  for(let i=0;i<NR;i++){const rpm=lo+(hi-lo)*i/(NR-1),bt=pt.boostTarget(rpm);rp.push(rpm);
+    air.push(airFlowAt(rpm,1));Tch.push(effIAT(1+bt/2,rpm)+273.15);
+    for(const n of ns)for(const th of TH){
+      const T3=exhaustGasT(Math.max(0.3,th),rpm);let b=0,r=null;
+      for(let k=0;k<8;k++){r=shaftNetPower(n,airFlowAt(rpm,1+b)*th,T3,T01,rpm);b=0.5*b+0.5*Math.max(0,Math.min(bt,r.pr-1));}
+      P.push(r.net-shaftLossPower(n));bS.push(b);eta.push(Math.max(0.3,Math.min(0.85,r.eta||0.7)));
+    }}
+  state.iat=iat0;
+  return {J:e.shaftJ,nMax:e.shaftMax,V:e.chargeVol||0,T01,rp,n:ns,th:TH,P,bS,eta,air,Tch,
+    rpm:grid.rpms.slice(),boosts:grid.boosts.slice(),tq:grid.tq.map(r=>r.slice()),bAvail:bAv,
+    flatShift:['dct','sequential','auto'].includes(vehicle.gearbox)};   // a spark-cut shift keeps the throttle open (the lap's rule)
+}
+// Where x sits in a rising list: [index below, share of the way to the next].
+function driveAt(xs,x){const n=xs.length;if(x<=xs[0])return [0,0];if(x>=xs[n-1])return [n-2,1];let i=1;while(xs[i]<x)i++;return [i-1,(x-xs[i-1])/(xs[i]-xs[i-1])];}
+// One step of the shaft: s.shE (J) and s.boost (bar) under the engine's speed and the throttle, as advanceShaft has it.
+function driveShaft(tb,s,rpm,thr,h){
+  const th=Math.max(0.08,Math.min(1,thr)),Emax=0.5*tb.J*Math.pow(tb.nMax*Math.PI/30,2);
+  const n=Math.sqrt(2*s.shE/tb.J)*30/Math.PI,[i,fi]=driveAt(tb.rp,rpm),[j,fj]=driveAt(tb.n,n),[k,fk]=driveAt(tb.th,th);
+  const NN=tb.n.length,NT=tb.th.length,at=(A,a,b,c)=>A[(a*NN+b)*NT+c];
+  const tri=A=>{let v=0;for(let a=0;a<2;a++)for(let b=0;b<2;b++)for(let c=0;c<2;c++)v+=(a?fi:1-fi)*(b?fj:1-fj)*(c?fk:1-fk)*at(A,i+a,j+b,k+c);return v;};
+  const bSh=tri(tb.bS),Tc=tb.Tch[i]+(tb.Tch[i+1]-tb.Tch[i])*fi,air=tb.air[i]+(tb.air[i+1]-tb.air[i])*fi;
+  // falling, the charge pipes empty at the rate the engine swallows them: tau = air held / air swallowed
+  const b=s.boost,b2=bSh>=b?bSh:bSh+(b-bSh)*Math.exp(-h*air*th*287*Tc/Math.max(1e-9,tb.V*1e5));
+  // rising, the air that fills them costs the compressor's work per kg
+  const pr=1+0.5*(b+b2),fill=tb.V*Math.max(0,b2-b)*1e5/(287*Tc)*1005*tb.T01*(Math.pow(pr,0.286)-1)/tri(tb.eta);
+  s.shE=Math.max(0,Math.min(Emax,s.shE+tri(tb.P)*h-fill));s.boost=b2;
 }
 function driveLerp(xs,ys,x){
   const n=xs.length;if(x<=xs[0])return ys[0];if(x>=xs[n-1])return ys[n-1];
@@ -93,8 +137,12 @@ function driveTyre(car,Fz,kappa,alpha,front){
 }
 // The engine's torque at the crank (Nm) for a pedal and a speed: full load by the pedal, its own drag off it,
 // nothing past the limiter, and an idle governor that holds it up.
-function driveEngine(car,thr,rpm){
-  const wot=driveLerp(car.rpm,car.tq,rpm),ov=car.ev?0:car.ov[Math.max(0,Math.min(car.ov.length-1,Math.round((rpm-500)/250)))]||0;
+function driveEngine(car,thr,rpm,boost){
+  let wot;
+  if(car.turbo&&boost!=null){const tb=car.turbo,[i,fi]=driveAt(tb.rpm,rpm),[j,fj]=driveAt(tb.boosts,Math.min(boost,tb.bAvail[i]+(tb.bAvail[i+1]-tb.bAvail[i])*fi));
+    const a=tb.tq[j][i]+(tb.tq[j][i+1]-tb.tq[j][i])*fi,c=tb.tq[j+1][i]+(tb.tq[j+1][i+1]-tb.tq[j+1][i])*fi;wot=a+(c-a)*fj;}
+  else wot=driveLerp(car.rpm,car.tq,rpm);
+  const ov=car.ev?0:car.ov[Math.max(0,Math.min(car.ov.length-1,Math.round((rpm-500)/250)))]||0;
   if(rpm>=car.redline)return -ov;
   let T=thr*wot-(1-thr)*ov;
   if(!car.ev&&rpm<car.idle)T+=Math.min(0.4*wot+ov,(car.idle-rpm)*0.5);
@@ -140,7 +188,7 @@ function driveDriver(car,s,line,d){
   const ease=Math.max(0,Math.min(1,2*(Math.max(Math.abs(s.alpha[2]),Math.abs(s.alpha[3]))/pkR-1)));   // rear past its peak: off the plan by 1.5 x
   const plan=(p1.v*p1.v-p0.v*p0.v)/(2*ds)+SPEED*(p0.v-s.vx);
   const F=car.m*plan*(1-ease)+0.5*DRIVE_RHO*car.cdA*s.vx*s.vx+car.crr*car.m*g+car.m*g*p0.grade;
-  const k=s.gear>0?car.ratios[s.gear-1]*car.fd*car.eff/car.r:0,wot=driveEngine(car,1,s.rpm),ov=-driveEngine(car,0,s.rpm);
+  const k=s.gear>0?car.ratios[s.gear-1]*car.fd*car.eff/car.r:0,wot=driveEngine(car,1,s.rpm,s.boost),ov=-driveEngine(car,0,s.rpm,s.boost);
   let thr=k>0?(F/k+ov)/Math.max(1,wot+ov):0,brk=0;
   if(thr<0){brk=Math.min(1,-(F+ov*k)/car.brakeF);thr=0;}
   return {steer:delta/car.steerLock,throttle:Math.min(1,thr),brake:brk,road:{sinT:p0.grade,kv:p0.kv}};
@@ -206,7 +254,10 @@ function stepCar(car,s,u,dt){
     // the wheels through the clutch (a bump start) turn it fast enough again.
     if(!car.ev){if(s.firing&&rpm<0.8*car.fireRpm)s.firing=false;
       else if(!s.firing){s.turns=rpm>=car.fireRpm?(s.turns||0)+rpm/60*h:0;if(s.turns>=car.fireTurns){s.firing=true;s.turns=0;}}}   // one whole cycle to draw and compress a charge
-    let Te=s.firing||car.ev?driveEngine(car,s.shiftT>0?0:thr,rpm):-(car.ov[0]||0)*Math.tanh(s.we/5)+(u.starter?car.starterT0*Math.max(0,1-rpm/car.starterFree):0);   // the driver lifts for a shift
+    // the shaft sees the throttle; through a shift a spark-cut gearbox holds it open and a manual's driver lifts to
+    // 0.35 (both as the lap has them); a stalled engine pumps next to nothing
+    if(car.turbo)driveShaft(car.turbo,s,rpm,!s.firing?0:s.shiftT>0&&!car.turbo.flatShift?Math.min(thr,0.35):thr,h);
+    let Te=s.firing||car.ev?driveEngine(car,s.shiftT>0?0:thr,rpm,s.boost):-(car.ov[0]||0)*Math.tanh(s.we/5)+(u.starter?car.starterT0*Math.max(0,1-rpm/car.starterFree):0);   // the driver lifts for a shift
     let Tw=0;                                                              // torque at the driven wheels, all of them (Nm)
     if(car.ev){Tw=driveEngine(car,thr,Math.abs(wd)*ratio*30/Math.PI)*ratio*car.eff;s.we=Math.abs(wd)*ratio;}
     else{
@@ -216,7 +267,7 @@ function stepCar(car,s,u,dt){
       const auto=u.clutch==null,slip=s.we-wd*ratio,pedal=Math.max(0,Math.min(1,u.throttle||0));
       let cap=ratio===0||s.shiftT>0?0:car.clutchCap*(auto?1:1-Math.max(0,Math.min(1,u.clutch)));
       if(auto&&cap>0&&slip>1&&(s.gear===1||wd*ratio<car.idle*Math.PI/30)){
-        const wT=(car.idle+(s.gear===1?pedal*(car.launchRpm-car.idle):0))*Math.PI/30,avail=Math.max(0,driveEngine(car,thr,rpm));
+        const wT=(car.idle+(s.gear===1?pedal*(car.launchRpm-car.idle):0))*Math.PI/30,avail=Math.max(0,driveEngine(car,thr,rpm,s.boost));
         if(!s.pull){s.pull=true;s.clF=0.1;}                                   // the bite point, then in
         s.clF=Math.max(0.05,Math.min(1,s.clF+hold*h));
         cap*=s.clF;
