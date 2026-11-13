@@ -121,7 +121,7 @@ const b85 = await page.evaluate(() => {
   const sx = trackView.mcx + (base.x - trackView.mcx) * trackView.z + trackView.x, sy = trackView.mcy + (base.y - trackView.mcy) * trackView.z + trackView.y;
   out.zoom = { z: trackView.z, drift: Math.hypot(sx - vx, sy - vy) };
   trackZoomAt(vx, vy, 0.01); out.zoomFloor = trackView.z;
-  // build 279: at the floor the camera shows the whole circuit, and the car's heading turns smoothly along the lap
+  // build 280: at the floor the camera shows the whole circuit, and the car's heading turns smoothly along the lap
   { const L = lapResult, box = { t: 62, b: 58, r: 198 }, cam = sceneBlend(sceneChase(scenePose(L.track.line, 10), vizW, vizH, 14, 0.7), sceneOverview(vizW, vizH, box), trackZoomOut(trackView.z));
     out.zoomMin = TRACK_ZMIN;
     out.mapOutside = L.track.line.filter(p => { const q = sceneProject(cam, p.x, p.y); return q.sx < 0 || q.sx > vizW - box.r || q.sy < box.t || q.sy > vizH - box.b; }).length;

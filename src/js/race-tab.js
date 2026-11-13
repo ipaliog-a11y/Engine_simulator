@@ -377,7 +377,7 @@ function sizeRaceStage(){
   const r=document.getElementById('raceStage').getBoundingClientRect();
   if(!(r.width>0&&r.height>0))return;
   // the drawing grid follows the stage, one unit per CSS pixel, a phone's included: held at 560 there, the
-  // 6-pixel text came out at 4 (build 279). Under 560 the title is left to the page's own bar.
+  // 6-pixel text came out at 4 (build 280). Under 560 the title is left to the page's own bar.
   vizW=Math.round(clamp(r.width,340,1100));
   vizH=Math.round(clamp(vizW*r.height/r.width,380,1400));
   sizeCanvas();

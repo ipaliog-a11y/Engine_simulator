@@ -5,7 +5,7 @@ const LIMLBL={corner:'CORNERING (grip)',brake:'BRAKING',power:'POWER',traction:'
 // Track map view: zoom (1 = fitted) and pan (canvas units), reset whenever the circuit changes.
 const trackView={key:'',z:1,x:0,y:0,mcx:320,mcy:210};
 const TRACK_ZMAX=16;
-// Below 1 the camera lifts off the car: at TRACK_ZMIN it shows the whole circuit, north up (build 279).
+// Below 1 the camera lifts off the car: at TRACK_ZMIN it shows the whole circuit, north up (build 280).
 const TRACK_ZMIN=0.4;
 function trackZoomOut(z){return clamp((1-z)/(1-TRACK_ZMIN),0,1);}
 function trackMapToggle(){const out=trackView.z<1;trackViewReset();if(!out)trackView.z=TRACK_ZMIN;}
@@ -243,7 +243,7 @@ function drawAnalogHud(L,st,W,y0){
 }
 // On a phone the page's 640-wide drawing was squeezed into about 360 pixels and the instruments' 6-pixel text
 // came out near 3. There the TRACK view draws on a grid of the screen's own width, taller than wide, so a unit is
-// a pixel again: the instruments keep their size and the map gets the room under them (build 279).
+// a pixel again: the instruments keep their size and the map gets the room under them (build 280).
 function trackGrid(){
   if(trackPage.open||racePage.open)return;
   const tall=vizMode==='track'&&innerWidth<=600,w=tall?clamp(Math.round(canvas.getBoundingClientRect().width)||360,340,420):640,h=tall?520:420;
