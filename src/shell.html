@@ -40,7 +40,7 @@
 </div>
 <div class="container">
 <header>
-<h1>PIXEL ENGINE SIM v0.7 build 280</h1>
+<h1>PIXEL ENGINE SIM v0.7 build 282</h1>
 <div class="subtitle" id="subtitle">ENGINE DESIGNER • BUILD IT, THEN DRIVE IT</div>
 </header>
 <div class="build-strip" id="buildStrip">
@@ -307,7 +307,6 @@
 </select></div>
 <div class="field"><label for="vhDrive">DRIVETRAIN</label><select id="vhDrive"><option value="fwd">FWD</option><option value="rwd">RWD</option><option value="awd">AWD</option></select></div>
 <div class="field"><label for="vhDiff">DIFFERENTIAL</label><select id="vhDiff"><option value="open">OPEN</option><option value="visc">VISCOUS LSD</option><option value="clsd">CLUTCH-PLATE LSD</option><option value="spool">SPOOL / LOCKED</option></select></div>
-<div class="field"><label for="vhTC">TRACTION CONTROL</label><select id="vhTC"><option value="on">ON</option><option value="off">OFF</option></select></div>
 <div class="field"><label for="vhLimiter">SPEED LIMITER</label><select id="vhLimiter"><option value="off">OFF (REMOVED)</option><option value="on">ON</option></select></div>
 <div class="field"><label for="vhLimitKmh">LIMIT (km/h)</label><input type="number" id="vhLimitKmh" min="80" max="400" step="5" value="250"></div>
 </div></section>
@@ -347,6 +346,16 @@
 <div class="field"><label for="vhBrake">BRAKES</label><select id="vhBrake"><option value="steel">STEEL DISC</option><option value="slotted">SLOTTED/VENTED</option><option value="big">BIG BRAKE KIT</option><option value="carbon">CARBON-CERAMIC</option><option value="hd">HEAVY-DUTY</option></select></div>
 <div class="field"><label for="vhRotor">ROTOR SIZE (mm)</label><input type="number" id="vhRotor" min="200" max="450" step="10" value="330"></div>
 <div class="field"><label for="vhSteer">STEERING RATIO (:1)</label><input type="number" id="vhSteer" min="8" max="22" step="0.5" value="15"></div>
+</div></section>
+<section class="evd-card" id="vcdCard-aids" data-card="aids"><div class="evd-fields">
+<div class="field"><label for="vhAbs">ABS</label><select id="vhAbs"><option value="on">ON</option><option value="off">OFF</option></select></div>
+<div class="field"><label for="vhAbsF">ABS SLIP, FRONT (x peak)</label><input type="number" id="vhAbsF" min="1" max="3" step="0.1" value="1.3"></div>
+<div class="field"><label for="vhAbsR">ABS SLIP, REAR (x peak)</label><input type="number" id="vhAbsR" min="1" max="3" step="0.1" value="1.3"></div>
+<div class="field"><label for="vhTC">TRACTION CONTROL</label><select id="vhTC"><option value="on">ON</option><option value="off">OFF</option></select></div>
+<div class="field"><label for="vhTcSlip">TC SLIP (x peak)</label><input type="number" id="vhTcSlip" min="0.5" max="3" step="0.1" value="1"></div>
+<div class="field"><label for="vhEsp">STABILITY CONTROL (ESP)</label><select id="vhEsp"><option value="on">ON</option><option value="off">OFF</option></select></div>
+<div class="field"><label for="vhEspSlide">ESP SLIDE ALLOWED (x peak)</label><input type="number" id="vhEspSlide" min="1" max="3" step="0.1" value="1"></div>
+<div class="field"><label for="vhEspCut">ESP ENGINE CUT</label><select id="vhEspCut"><option value="on">ON</option><option value="off">OFF</option></select></div>
 </div></section>
 <section class="evd-card" id="vcdCard-susp" data-card="susp"><div class="evd-fields">
 <div class="field"><label for="vhSusp">SUSPENSION</label><select id="vhSusp"><option value="comfort">COMFORT</option><option value="sport">SPORT</option><option value="coilover">COILOVERS</option><option value="race">RACE/ADJUST</option></select></div>

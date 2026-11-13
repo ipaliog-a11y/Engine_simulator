@@ -149,7 +149,7 @@ function bindControls(){
     try{localStorage.setItem('pes.gauges',lapReplay.gauges);}catch(err){}});
   // Vehicle design: recompute performance live on any change. Picking a chassis fits its whole
   // factory spec (drivetrain, gearbox, tyres/wheels, brakes, suspension, aero, weight).
-  ['vhChassis','vhDrive','vhGearbox','vhDiff','vhGears','vhSpacing','vhGearing','vhLimiter','vhLimitKmh','vhTC','vhRating','vhTire','vhTireW','vhTireWF','vhTireA','vhWheel','vhAeroF','vhAeroR','vhAeroFl','vhWeight','vhBrake','vhRotor','vhSusp','vhGeoF','vhGeoR','vhSpringF','vhSpringR','vhBarF','vhBarR','vhDamperF','vhDamperR','vhSteer','vhDims','vhWb','vhTrackF','vhTrackR','vhCg','vhFwt','vhBallast','vhBallastPos','vhBallastH'].forEach(id=>{
+  ['vhChassis','vhDrive','vhGearbox','vhDiff','vhGears','vhSpacing','vhGearing','vhLimiter','vhLimitKmh','vhTC','vhAbs','vhAbsF','vhAbsR','vhTcSlip','vhEsp','vhEspSlide','vhEspCut','vhRating','vhTire','vhTireW','vhTireWF','vhTireA','vhWheel','vhAeroF','vhAeroR','vhAeroFl','vhWeight','vhBrake','vhRotor','vhSusp','vhGeoF','vhGeoR','vhSpringF','vhSpringR','vhBarF','vhBarR','vhDamperF','vhDamperR','vhSteer','vhDims','vhWb','vhTrackF','vhTrackR','vhCg','vhFwt','vhBallast','vhBallastPos','vhBallastH'].forEach(id=>{
     const el=document.getElementById(id);if(!el)return;
     el.addEventListener('input',()=>{
       // a chassis number changed by hand is a designed chassis (build 250); FACTORY puts the factory's back (syncDimsForm)

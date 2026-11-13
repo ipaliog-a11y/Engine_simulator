@@ -1,4 +1,4 @@
-# PIXEL ENGINE SIM v0.7 build 280
+# PIXEL ENGINE SIM v0.7 build 282
 
 **A lightweight, 8-bit style internal combustion engine *designer* & simulator** inspired by *Automation*.
 
@@ -467,7 +467,10 @@ The interface is fully translatable (English / Ελληνικά) and fills the s
 The **VEHICLE** tab drops your engine into a car and computes acceleration & top speed. Since build 247 its parts are
 six cards in the same style (**CHASSIS & DRIVE**, **GEARBOX**, **WHEELS & TYRES**, **AERO & WEIGHT**, **BRAKES &
 STEERING**, **SUSPENSION**; since build 250 a seventh, **CHASSIS NUMBERS**: wheelbase, front and rear track, CG height,
-weight split and ballast, FACTORY or DESIGNED), with the factory cars as the sliders' ticks, a **?** on every input, and a side panel of
+weight split and ballast, FACTORY or DESIGNED; since build 282 an eighth, **ECU: DRIVER AIDS**: ABS and the slip it
+releases at per axle, traction control and its slip target, stability control (ESP), how far the tail may slide before
+it works, and its engine cut, shown on three tests of the stepped car: the sine with dwell, a stop from 100 km/h and a
+standing start. The lap and the 0–100 do not read these settings yet), with the factory cars as the sliders' ticks, a **?** on every input, and a side panel of
 what the car does (0–100, top speed, 400 m, weight, grip, cost, drive force against drag) and what holds it back (the
 tyres' speed rating, the limiter, grip at the launch):
 

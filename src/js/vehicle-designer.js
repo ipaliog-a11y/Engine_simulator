@@ -13,6 +13,7 @@ const VCD_CARDS=[
   {id:'tyres',title:'WHEELS & TYRES',guide:'tyres',viz:'tyre',vizH:150,cap:'To scale: the tyre in section, its tread width and its sidewall (the width times the aspect) around the rim.'},
   {id:'aero',title:'AERO & WEIGHT',guide:'aero'},
   {id:'brakes',title:'BRAKES & STEERING',guide:'brakes'},
+  {id:'aids',title:'ECU: DRIVER AIDS',guide:'traction',viz:'aids',vizH:176,cap:'From above: the sine with dwell at 80 km/h, the test a stability control is approved on. Green is the car as set, red with the ESP off. These settings act in these three tests; the lap and the 0–100 still hold the tyres at their peak.'},
   {id:'susp',title:'SUSPENSION',guide:'suspension'}
 ];
 const VCD_FIELDS={
@@ -24,6 +25,20 @@ const VCD_FIELDS={
     trade:'An open diff lets the lighter-loaded wheel spin; a limited-slip diff sends the torque to the wheel that grips. A spool locks them together: the most traction, the worst in tight corners.'},
   vhTC:{guide:'traction',what:'Whether the ECU holds the driven tyres at their best slip when they would spin.',
     trade:'On, the launch stays at the limit of grip. Off, the launch is the driver\'s, and a powerful car spins its tyres.'},
+  vhAbs:{guide:'brakes',what:'Whether the ECU releases a braked wheel before it locks.',
+    trade:'On, the tyres stay near their best grip and the car still steers. Off, a hard stop locks the wheels and takes longer.'},
+  vhAbsF:{guide:'brakes',what:'How far past the tyre\'s best slip a front wheel may go before ABS releases its brake.',
+    trade:'Close to 1 holds the tyre at its peak: the shortest stop. Higher lets the wheel go deeper into a slide before it is caught.'},
+  vhAbsR:{guide:'brakes',what:'How far past the tyre\'s best slip a rear wheel may go before ABS releases its brake.',
+    trade:'Close to 1 keeps the rear tyres gripping sideways under braking. Higher lets them slide more.'},
+  vhTcSlip:{guide:'traction',what:'The wheel slip the traction control holds, against the slip the tyre grips best at.',
+    trade:'At 1 the tyres are held at their peak. Higher lets them spin more before the throttle is closed: livelier, and slower off the line.'},
+  vhEsp:{guide:'traction',what:'Whether the ECU brakes single wheels to stop a spin or a push.',
+    trade:'On, a slide is caught: the outer front wheel is braked against a spin, the inner rear against a push. It costs one to three percent of a lap.'},
+  vhEspSlide:{guide:'traction',what:'How far the rear tyres may slide before the ESP works, against the slip angle they grip best at.',
+    trade:'At 1 it steps in as the rear lets go. Higher is a sport setting: the tail may step out further before it is caught.'},
+  vhEspCut:{guide:'traction',what:'Whether the ESP also closes the throttle while it works.',
+    trade:'On, the car slows and settles sooner. Off, only the brakes steer it, and the driver keeps the power.'},
   vhLimiter:{guide:'performance',what:'A governor that cuts the drive at a set road speed.',
     trade:'Many fast cars are limited to 250 km/h. It holds the top speed down; it cannot add speed the car does not have.'},
   vhLimitKmh:{guide:'performance',what:'The road speed the limiter holds, when it is on.',
@@ -156,6 +171,7 @@ function vcdSummary(c,r){
     case 'tyres':return o('vhTire')+' · '+g('vhTireW')+'/'+g('vhTireA')+' R'+g('vhWheel')+' · '+g('vhRating').replace('YY','(Y)');
     case 'aero':return [o('vhAeroF'),o('vhAeroR'),o('vhAeroFl')].join(' / ')+' · '+o('vhWeight');
     case 'brakes':return o('vhBrake')+' · '+g('vhRotor')+' mm'+(r&&r.b100?' · 100–0 '+f(r.b100)+' m':'');
+    case 'aids':return 'ABS '+o('vhAbs')+' · TC '+o('vhTC')+' · ESP '+o('vhEsp');
     case 'susp':return o('vhSusp')+' · '+o('vhGeoF')+' / '+o('vhGeoR');
   }
   return '';
@@ -197,7 +213,7 @@ const VCD=new DesignCards({
   warnings:r=>{const w={};
     if(vcdTyresShort(r))w.vhRating=tr('The car reaches {v} km/h, past this rating.').replace('{v}',dcFmt(r.top));
     return w;},
-  drawViz:(dc,r)=>vcdDrawTyre(dc,r),
+  drawViz:(dc,r)=>{vcdDrawTyre(dc,r);vcdDrawAids(dc,r);},
   icons:{
     chassis:(P,C)=>{P(C.steel,[[3,4,7,3],[1,7,12,3]]);P(C.cyan,[[4,5,2,2],[7,5,2,2]]);P(C.fg,[[2,10,3,3],[9,10,3,3]]);},
     dims:(P,C)=>{P(C.fg,[[1,9,3,3],[10,9,3,3]]);P(C.steel,[[2,6,10,2]]);P(C.cyan,[[6,3,2,2]]);P(C.yellow,[[1,13,12,1]]);},
@@ -205,6 +221,7 @@ const VCD=new DesignCards({
     tyres:(P,C)=>{P(C.dim,[[3,1,8,12],[1,3,12,8]]);P(C.well,[[4,4,6,6]]);P(C.fg,[[6,6,2,2]]);},
     aero:(P,C)=>{P(C.fg,[[1,3,12,2]]);P(C.steel,[[3,5,1,6],[10,5,1,6]]);P(C.cyan,[[1,11,12,1]]);},
     brakes:(P,C)=>{P(C.steel,[[2,2,10,10]]);P(C.well,[[5,5,4,4]]);P(C.red,[[9,1,4,5]]);},
+    aids:(P,C)=>{P(C.steel,[[3,3,8,8]]);P(C.well,[[5,5,4,4]]);P(C.green,[[6,6,2,2]]);P(C.yellow,[[1,5,2,1],[1,8,2,1],[11,5,2,1],[11,8,2,1],[5,1,1,2],[8,1,1,2],[5,11,1,2],[8,11,1,2]]);},
     susp:(P,C)=>{P(C.yellow,[[4,1,6,1],[4,3,6,1],[4,5,6,1],[4,7,6,1],[4,9,6,1]]);P(C.steel,[[6,10,2,3],[3,12,8,1]]);}
   }
 });
@@ -214,6 +231,37 @@ function vcdRefresh(){
   const st=VCD.st;if(!document.getElementById('vhDesigner'))return;
   if(!st.ready||st.lang!==currentLang){st.lang=currentLang;VCD.sync('veh');return;}
   st.last=null;VCD.queue(true,true);
+}
+
+// ---- the driver aids' picture (build 282): the stepped car through three tests, as the aids are set ----
+// Worked out only while the card's picture is on screen, and once per car: driveCar() runs the 0-100 for the launch speed.
+let vcdAidsMemo=null;
+function vcdAids(){
+  const V=vehicle,key=JSON.stringify([V.aids,V.tc,V.mass,V.mu,V.cdA,V.drive,V.finalDrive,V.rTire,perf&&perf.t100,perf&&perf.topSpeed]);
+  if(vcdAidsMemo&&vcdAidsMemo.key===key)return vcdAidsMemo;
+  let o={key};
+  try{const car=driveCar(),off=car.esp?Object.assign({},car,{esp:false}):null;
+    o={key,esp:car.esp,stop:driveStop100(car),sprint:driveSprint(car),swd:driveSineDwell(car,6.5),off:off?driveSineDwell(off,6.5):null};}catch(e){}
+  return vcdAidsMemo=o;
+}
+function vcdDrawAids(dc,r){
+  const cv=dc.vizCanvas('aids');if(!cv)return;
+  const C=DC_COLOURS,x=dcCtx(cv),W=cv.width,A=vcdAids(),top=4,ph=96,mid=top+ph/2;
+  x.fillStyle=C.well;x.fillRect(0,top,W,ph);
+  if(!A.swd)return;
+  const all=A.swd.path.concat(A.off?A.off.path:[]),xm=Math.max(...all.map(p=>p[0])),ym=Math.max(4,...all.map(p=>Math.abs(p[1])));
+  const px=p=>6+p[0]/xm*(W-12),py=p=>mid-p[1]/ym*(ph/2-8);
+  x.fillStyle=C.edge2;for(let i=0;i<W;i+=8)x.fillRect(i,Math.round(mid),4,1);            // the lane the car starts in
+  const car=(p,col)=>{x.save();x.translate(Math.round(px(p)),Math.round(py(p)));x.rotate(-p[2]);x.fillStyle=col;x.fillRect(-5,-3,10,6);x.fillStyle=C.well;x.fillRect(1,-2,2,4);x.restore();};
+  const trace=(P,col,every)=>{x.fillStyle=col;for(const p of P)x.fillRect(Math.round(px(p)),Math.round(py(p)),2,2);for(let i=4;i<P.length;i+=every)car(P[i],col);};
+  if(A.off)trace(A.off.path,C.red,9);
+  trace(A.swd.path,C.green,9);
+  x.font='7px "Press Start 2P"';x.textAlign='left';
+  const row=(i,label,val,col)=>{const y=top+ph+16+i*18;x.fillStyle=C.dim;x.fillText(tr(label),4,y);x.fillStyle=col||C.cyan;x.textAlign='right';x.fillText(val,W-4,y);x.textAlign='left';};
+  row(0,'SIDEWAYS',dcFmt(A.swd.beta)+'° '+tr(A.swd.pass?'PASS':'SPIN'),A.swd.pass?C.green:C.red);
+  row(1,'100–0',dcFmt(A.stop.dist,1)+' m'+(A.stop.lock?' '+tr('LOCKED'):''),A.stop.lock?C.red:C.cyan);
+  row(2,'0–100',(A.sprint.t!=null?dcFmt(A.sprint.t,2)+' s':'—')+' · '+tr('SLIP')+' '+dcFmt(Math.min(999,A.sprint.slip*100))+'%',A.sprint.slip>0.3?C.yellow:C.cyan);
+  if(A.off)row(3,'ESP OFF',dcFmt(A.off.beta)+'° '+tr(A.off.pass?'PASS':'SPIN'),A.off.pass?C.dim:C.red);
 }
 
 // ---- the picture: the tyre in section, to scale ----

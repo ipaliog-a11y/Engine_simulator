@@ -37,6 +37,7 @@
 //             torque; limited-slip: torque moved to the slower wheel by its lock), all-wheel drive with its two axles turning together.
 //   Stall     below the speed it can fire at, the engine stops; a starter or a bump start brings it back.
 //   Brakes    the hydraulics' own force and front share; ABS and traction control as wheel-slip limits when fitted.
+//   Aids      the ECU's calibration of ABS, traction control and stability control, as a tune (build 281). See DRIVE_AIDS.
 //   Aero      drag and downforce on the square of the speed; rolling resistance by the load.
 //
 //   Turbo     the shaft in time (build 274): its energy rises by the turbine's power less the compressor's and the
@@ -49,22 +50,53 @@
 // and kerbs, a hybrid's engine stopping and a power-split's engine speed, the motor's and the pack's heat.
 // ================================================================================================
 const DRIVE_G=9.81, DRIVE_RHO=1.20;
+// THE DRIVER AIDS AS A TUNE (build 281). These are a calibration, as the fuel map is: the numbers an engineer sets on
+// the car, and here the player's to change (vehicle.aids overrides any of them). The defaults are the values stepCar
+// used before they had names, and for stability control what the car's own data gives.
+//   ABS       a wheel's brake is released while it slips more than absSlip x the tyre's peak slip [front, rear], at
+//             absRel of its pressure a second, and reapplied at absApp. (Bosch Automotive Handbook, "Antilock braking
+//             system": the controller cycles the pressure to hold the slip about the peak of the friction curve.)
+//   TC        the throttle is closed while the worst driven wheel slips more than tcSlip x the peak, by tcGain a
+//             second for a slip twice the target.
+//   ESP       van Zanten, Erhardt and Pfaff, "VDC, the vehicle dynamics control system of Bosch" (SAE 950759):
+//             the controller holds the car's slip angle and its yaw rate by braking single wheels. A real one must
+//             estimate the slip from its sensors; the model knows it. Against a spin: once the rear tyres slip more
+//             than espBeta (rad; by default the angle they peak at, atan(3 mu / C)), the outer front wheel is braked
+//             for the yaw moment Izz x excess / espTau^2. Against a push: the yaw rate the driver asks for is the
+//             steady turn of the car's own single-track model, v delta / (L (1 + K v^2)), K its understeer gradient
+//             from the tyres' cornering stiffness at the static loads (car.Kus), and never more than the grip can
+//             turn the car, mu g / v; short of it by espBand (rad/s) with the front tyres past their peak, the inner
+//             rear wheel is braked for Izz x shortfall / espTau. With espCut the throttle closes over espTau while
+//             it works. Off below espVmin. espBand, espTau and espVmin are a calibration (probable: no maker
+//             publishes its own).
+// Which cars have what: traction control is the preset's (vehicle.tc). No preset says yet whether a car had ABS or
+// ESP: ABS is taken as fitted, and ESP as fitted where traction control is (it works through the same hardware).
+const DRIVE_AIDS={abs:true,absSlip:[1.3,1.3],absRel:25,absApp:12,tcSlip:1,tcGain:12,
+  esp:null,espBand:3*Math.PI/180,espTau:0.2,espBeta:null,espCut:true,espVmin:4};
+function driveAids(v){const A=Object.assign({},DRIVE_AIDS,v.aids||{});A.absSlip=[].concat(A.absSlip).slice(0,2);if(A.absSlip.length<2)A.absSlip[1]=A.absSlip[0];
+  if(A.tc==null)A.tc=!!v.tc;if(A.esp==null)A.esp=A.tc;return A;}
 // The designed car as plain data. Everything stepCar needs, and nothing that is not a number, a string or an array.
 function driveCar(){
   const v=vehicle,pt=powertrain(),L=v.wb,a=L*(1-v.fWt),b=L*v.fWt;
   const curve=pt.torqueCurve(),rl=pt.maxRpm(),peak=curve.reduce((m,p)=>Math.max(m,p.tq),0);
   const ride=(SUSPENSION[v.suspension]||SUSPENSION.sport).hz;
   const grid=pt.hasShaft()?pt.torqueGrid():null,el=driveElectric(pt,curve,rl);
+  const aids=driveAids(v),cc=v.tyreCC||tyreCC(v.tireType),muR=tyreMu(v.FzRef,v.FzRef);
+  // the axles' cornering stiffness at the static loads (N/rad), for the understeer gradient K = m/L^2 (b/Cf - a/Cr)
+  const Cax=(W,ref)=>2*cc*(W/2)*(TYRE_CC_P2+1)/(TYRE_CC_P2+Math.pow(W/2/ref,2));
+  const Kus=v.mass/(L*L)*(b/Cax(v.mass*DRIVE_G*b/L,v.FzRefF||v.FzRef)-a/Cax(v.mass*DRIVE_G*a/L,v.FzRef));
+  if(aids.espBeta==null)aids.espBeta=(aids.espSlide||1)*Math.atan(3*muR/cc);
   return {
+    aids,esp:!!aids.esp,Kus,pkF:Math.atan(3*tyreMu(v.FzRefF||v.FzRef,v.FzRefF||v.FzRef)/cc),
     turbo:grid&&grid.laggy?driveTurbo(pt,grid):null,el,
     name:v.chLabel||'',m:v.mass,Izz:v.mass*a*b,a,b,h:v.cg,tF:v.trackF||v.track,tR:v.trackR||v.track,
     r:v.rTire,Iw:(v.wheelI||2)/4,
-    mu:tyreMu(v.FzRef,v.FzRef),muF:tyreMu(v.FzRefF||v.FzRef,v.FzRefF||v.FzRef),FzRef:v.FzRef,FzRefF:v.FzRefF||v.FzRef,
-    loadSens:LOAD_SENS,muX:TYRE_MU_X,cc:v.tyreCC||tyreCC(v.tireType),ccP2:TYRE_CC_P2,slipOpt:TYRE_SLIP_OPT,slipC:TYRE_SLIP_C,relax:v.rTire,
+    mu:muR,muF:tyreMu(v.FzRefF||v.FzRef,v.FzRefF||v.FzRef),FzRef:v.FzRef,FzRefF:v.FzRefF||v.FzRef,
+    loadSens:LOAD_SENS,muX:TYRE_MU_X,cc,ccP2:TYRE_CC_P2,slipOpt:TYRE_SLIP_OPT,slipC:TYRE_SLIP_C,relax:v.rTire,
     cdA:v.cdA,clA:v.clA||0,aeroBal:v.aeroBal==null?0.5:v.aeroBal,crr:v.crr,
     lltdF:v.lltdF==null?v.fWt:v.lltdF,tauLoad:1/(2*Math.PI*ride),
     drive:el&&el.front?(v.driveMech==='fwd'?'fwd':'rwd'):v.drive,centre:v.drive==='awd'&&!(el&&el.front),lock:(v.df&&v.df.lock)||0,ratios:(v.ratios||[1]).slice(),fd:v.finalDrive||1,eff:v.driveEff||0.9,
-    shiftTime:v.shiftCut||0,ev:!!v.ev||!!pt.direct,tc:!!v.tc,abs:true,
+    shiftTime:v.shiftCut||0,ev:!!v.ev||!!pt.direct,tc:!!aids.tc,abs:!!aids.abs,
     rpm:curve.map(p=>p.rpm),tq:curve.map(p=>p.tq),ov:pt.overrunTable(rl),idle:pt.idleRpm()||0,redline:rl,
     Ie:pt.inertia()||0.15,clutchCap:1.5*peak,
     fireRpm:FIRE_RPM,fireTurns:1/(engine.chargesPerRev||0.5),starterT0:v.ev?0:starterStallTorque(),starterFree:STARTER_FREE_RPM,   // stalling and starting, as on the bench
@@ -79,7 +111,7 @@ function driveCar(){
 // A car at rest, in neutral for a clutch car until the driver asks for a gear.
 function driveState(car){
   return {soc:car.el?car.el.soc0:0,Pm:0,shE:0,boost:0,t:0,x:0,y:0,psi:0,vx:0,vy:0,yaw:0,w:[0,0,0,0],we:car.idle*Math.PI/30,gear:1,shiftT:0,
-    axF:0,ayF:0,al:[0,0,0,0],abs:[1,1,1,1],tcF:1,clF:1,pull:false,firing:true,
+    axF:0,ayF:0,al:[0,0,0,0],abs:[1,1,1,1],tcF:1,esp:[0,0,0,0],espF:1,clF:1,pull:false,firing:true,
     ax:0,ay:0,Fz:[0,0,0,0],kappa:[0,0,0,0],alpha:[0,0,0,0],Fx:[0,0,0,0],Fy:[0,0,0,0],rpm:car.idle,speed:0,delta:0};
 }
 // THE ELECTRIC SIDE AS PLAIN DATA (build 275): a hybrid's motor and pack, or an electric car's. null without one.
@@ -255,6 +287,43 @@ function driveEngine(car,thr,rpm,boost,soc){
   if(!car.ev&&rpm<car.idle)T+=Math.min(0.4*wot+ov,(car.idle-rpm)*0.5);
   return T;
 }
+// THREE MANOEUVRES THAT SHOW WHAT THE AIDS DO (build 282), each from a car as plain data.
+// A car rolling at vk km/h in the highest gear that keeps the engine at 2000 rpm.
+function driveRolling(car,vk){
+  const v=vk/3.6,s=driveState(car);s.vx=v;s.w=s.w.map(()=>v/car.r);
+  for(let g=car.ratios.length;g>=1;g--){s.gear=g;if(v/car.r*car.ratios[g-1]*car.fd*30/Math.PI>=2000)break;}
+  s.we=v/car.r*car.ratios[s.gear-1]*car.fd;return s;
+}
+// A full stop from 100 km/h: the distance (m) and whether a wheel locked.
+function driveStop100(car){
+  const s=driveRolling(car,100);let lock=false;
+  while(s.vx>0.3&&s.t<15){stepCar(car,s,{steer:0,throttle:0,brake:1},0.005);if(s.vx>3&&s.w.some(w=>w*car.r<0.2*s.vx))lock=true;}
+  return {dist:s.x,lock};
+}
+// A standing start to 100 km/h, flat out: the time (s; null if it never gets there) and the most the driven tyres slipped.
+function driveSprint(car){
+  const s=driveLaunch(car);let slip=0;
+  while(s.vx<100/3.6&&s.t<30){stepCar(car,s,{steer:0,throttle:1,brake:0},0.005);for(let i=0;i<4;i++)slip=Math.max(slip,s.kappa[i]);}
+  return {t:s.vx>=100/3.6?s.t:null,slip};
+}
+// FMVSS 126's sine with dwell, the rule a stability control is approved on (49 CFR 571.126): from 80 km/h off the
+// pedal, one cycle of a 0.7 Hz sine on the wheel with a 0.5 s hold at its second peak, at mult (up to 6.5) times the
+// steering that gives 0.3 g, and no more than 270 degrees at the hand wheel. It passes with the yaw rate under 35% of
+// its peak 1 s after the steering ends and under 20% after 1.75 s, and 1.83 m moved sideways 1.07 s in.
+// Returns those, the most the car went sideways (deg) and its path [[x, y, heading]...] every 0.1 s.
+function driveSineDwell(car,mult){
+  const s=driveRolling(car,80),v=80/3.6,L=car.a+car.b,T=1/0.7,t0=0.5,end=t0+T+0.5;
+  const A=Math.min((mult||6.5)*0.3*DRIVE_G*L*(1+car.Kus*v*v)/(v*v),car.steerLock*4.71/8.5);
+  const st=t=>t<0?0:t<0.75*T?Math.sin(2*Math.PI*0.7*t):t<0.75*T+0.5?-1:t<T+0.5?Math.sin(2*Math.PI*0.7*(t-0.5)):0;
+  let pk=0,y=0,r1=0,r175=0,beta=0,n=0;const path=[];
+  while(s.t<end+2){const t=s.t-t0;stepCar(car,s,{steer:A*st(t)/car.steerLock,throttle:0,brake:0,gear:s.gear},0.005);
+    if(t>0.5*T)pk=Math.max(pk,Math.abs(s.yaw));if(Math.abs(t-1.07)<0.003)y=Math.abs(s.y);
+    if(Math.abs(s.t-end-1)<0.003)r1=Math.abs(s.yaw);if(Math.abs(s.t-end-1.75)<0.003)r175=Math.abs(s.yaw);
+    beta=Math.max(beta,Math.abs(Math.atan2(s.vy,Math.max(1,s.vx)))*180/Math.PI);
+    if(n++%20===0)path.push([s.x,s.y,s.psi]);}
+  r1/=pk||1;r175/=pk||1;
+  return {r1,r175,y,beta,path,pass:r1<=0.35&&r175<=0.20&&y>=1.83};
+}
 // A lap's racing line as plain data for the driver below: where it runs, how fast the lap solver takes each point, and
 // the road's height there. lap is what simulateLap() returns.
 function driveLine(lap){return lap.track.line.map((q,i)=>({x:q.x,y:q.y,v:lap.v[i],grade:q.sinT||0,kv:q.kv||0}));}
@@ -354,8 +423,25 @@ function stepCar(car,s,u,dt){
     // control on the throttle, or the driver's clutch foot pulling away): zero at the peak, closing fast beyond it.
     let worst=0;for(let i=0;i<4;i++)if(drv[i]||(i<2&&car.el&&car.el.front))worst=Math.max(worst,s.kappa[i]);
     const hold=Math.max(-30,Math.min(8,12*(1-worst/car.slipOpt)));
+    const A=car.aids,holdTc=Math.max(-30,Math.min(8,A.tcGain*(1-worst/(car.slipOpt*A.tcSlip))));
     const pulling=!car.ev&&u.clutch==null&&s.gear===1&&s.shiftT<=0&&s.we-wd*car.ratios[0]*car.fd>1;   // the clutch is still slipping from rest
-    if(car.tc&&!pulling){s.tcF=Math.max(0.05,Math.min(1,s.tcF+hold*h));thr*=s.tcF;}else s.tcF=1;
+    if(car.tc&&!pulling){s.tcF=Math.max(0.05,Math.min(1,s.tcF+holdTc*h));thr*=s.tcF;}else s.tcF=1;
+    // ---- stability control: one wheel's brake for the yaw moment the car is short of or has too much of (DRIVE_AIDS)
+    const eT=s.esp;eT[0]=eT[1]=eT[2]=eT[3]=0;
+    if(car.esp){let M=0;
+      if(s.vx>A.espVmin){
+        // the grip is the tyres' own or, where the car is already turning harder (downforce, a banked dip), what it has shown
+        const lim=Math.max(car.mu*gz,Math.abs(s.ayF))/s.vx,ref=Math.max(-lim,Math.min(lim,s.vx*delta/(L*Math.max(0.1,1+car.Kus*s.vx*s.vx))));
+        // too little yaw counts only once the front tyres are past their peak, where more lock does nothing
+        const sg=Math.sign(ref),ex=(ref-s.yaw)*sg-A.espBand,aR=(s.alpha[2]+s.alpha[3])/2,bx=Math.abs(aR)-A.espBeta;
+        if(ex>0&&Math.abs(s.alpha[0]+s.alpha[1])/2>car.pkF)M+=sg*car.Izz*ex/A.espTau;
+        if(bx>0)M-=Math.sign(aR)*car.Izz*bx/(A.espTau*A.espTau);          // the rear sliding out: a moment against it
+      }
+      if(M!==0){const fr=M*s.yaw<0,q=(fr?0:2)+(M>0?0:1);                   // against the yaw: an outer front wheel; with it: an inner rear
+        eT[q]=Math.abs(M)/((fr?car.tF:car.tR)/2)*car.r;}
+      s.espF=Math.max(0,Math.min(1,s.espF+(M!==0?-1:1)*h/A.espTau));
+      if(A.espCut)thr*=s.espF;
+    }else s.espF=1;
     const rpm=s.we*30/Math.PI;
     // An engine turning too slowly to fire stalls: then it is only its own drag, until the starter (u.starter) or
     // the wheels through the clutch (a bump start) turn it fast enough again.
@@ -408,8 +494,8 @@ function stepCar(car,s,u,dt){
       if(driven&&car.lock>0){const Tc=Math.max(-car.clutchCap*car.fd,Math.min(car.clutchCap*car.fd,car.lock*300*(s.w[i]-s.w[j])));Ti-=Tc;Tj+=Tc;}
       const share=ax===0?car.brakeFront:1-car.brakeFront;
       for(const [q,Tq] of [[i,Ti],[j,Tj]]){
-        if(car.abs){const vl=Math.abs(s.vx);s.abs[q]=Math.max(0.05,Math.min(1,s.abs[q]+((s.kappa[q]<-car.slipOpt*1.3&&vl>2)?-25:12)*h));}
-        const Tb=brake*car.brakeF*share/2*car.r*(car.abs?s.abs[q]:1);
+        if(car.abs){const vl=Math.abs(s.vx);s.abs[q]=Math.max(0.05,Math.min(1,s.abs[q]+((s.kappa[q]<-car.slipOpt*car.aids.absSlip[ax]&&vl>2)?-car.aids.absRel:car.aids.absApp)*h));}
+        const cap=car.brakeF*share/2*car.r,Tb=Math.min(cap,brake*cap+s.esp[q])*(car.abs?s.abs[q]:1);   // the pedal's and the stability control's
         const roll=car.crr*Fz[q]*car.r*Math.tanh(s.w[q]*car.r/0.5);
         const Iq=car.Iw+h*car.r*dF[q];                                      // the tyre's own stiffness taken implicitly
         let wq=s.w[q]+h*(Tq-Fl[q]*car.r-roll)/Iq;
