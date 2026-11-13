@@ -220,7 +220,7 @@ function renderRacePanel(force){
   document.getElementById('raceTower').innerHTML='<table class="race-tower"><thead><tr><th>P</th><th>'+tr('CAR')+'</th><th>'+tr('GAP')+'</th><th>'+tr('LAST')+'</th><th>'+tr('BEST')+'</th><th>'+tr('TYRE')+'</th><th>'+tr('PIT')+'</th></tr></thead><tbody>'+S.map(row).join('')+'</tbody></table>';
   document.querySelectorAll('#raceTower tr[data-car]').forEach(tr_=>tr_.addEventListener('click',()=>{
     const id=+tr_.dataset.car;raceUI.follow=raceUI.follow===id?-1:id;
-    if(raceUI.follow<0)trackViewReset();else trackView.z=Math.max(trackView.z,3);   // the camera goes in close on the car
+    trackViewReset();   // the camera goes behind that car, closer than it sits on the pack
     renderRacePanel(true);}));
   // telemetry: every car, in race order
   const tyre=(T,W,th,lbl)=>'<div class="rt-t" style="border-color:'+raceTyreColour(T,th)+'"><b style="color:'+raceTyreColour(T,th)+'">'+Math.round(T)+'°</b><span>'+lbl+' '+Math.round(W*100)+'%</span></div>';
@@ -282,6 +282,37 @@ function drawRace(){
   const t=raceUI.t,S=raceStandings(R,t),topBar=40,botBar=34;
   // the clock and the lap, in the title bar
   const lapNow=Math.min(R.cfg.laps,Math.max(1,S[0].laps.length+(S[0].fin?0:1)));
+  const T=buildTrack(R.cfg.track);
+  if(trackView.key!==T.label){trackView.key=T.label;trackView.z=1;trackView.x=0;trackView.y=0;}
+  sceneBind(T);
+  sceneWeather(R.cfg.weather,S[0].s.wet);
+  const pitN=[],cars=[];
+  let focus=null;
+  for(const x of S){
+    const M=x.c.M,s=x.s;
+    if(x.dnf&&s.v<0.1&&s.flag===3)continue;
+    if(s.flag===1||(x.fin&&s.v<0.1&&t>x.fin.t+0.5)){pitN.push(x);continue;}
+    const i=Math.floor(s.pos)%M.n,j=(i+1)%M.n,f=s.pos-Math.floor(s.pos);
+    const a=M.line[i],b=M.line[j];
+    let xw=a.x+(b.x-a.x)*f,yw=a.y+(b.y-a.y)*f;
+    const hd=Math.atan2(b.y-a.y,b.x-a.x);
+    if(s.pass>0.5){xw+=Math.sin(hd)*2.4;yw-=Math.cos(hd)*2.4;}
+    const car={x:xw,y:yw,hd,curv:0,col:RACE_COLS[x.c.id],brk:false,pos:x.pos};
+    cars.push(car);
+    if(raceUI.follow===x.c.id||(raceUI.follow<0&&!focus))focus=car;
+  }
+  // the same zoom and pan as the TRACK view: about the car the camera sits behind, in screen units
+  const z=trackView.z||1,pack=raceUI.follow<0,frac=pack?0.56:0.68;
+  trackView.mcx=W/2;trackView.mcy=focus?H*frac:H/2;
+  const cam=focus?sceneChase(focus,W,H,(pack?9.2:14)*z,frac):sceneOverview(W,H);
+  if(!focus)cam.scale*=z;
+  scenePan(cam,trackView.x||0,trackView.y||0);
+  scenePaint(ctx,cam,{cars});
+  ctx.fillStyle='rgba(13,13,24,0.72)';ctx.fillRect(0,28,W,topBar-28+2);
+  drawPixelRect(0,0,W,28,'#12121c');
+  ctx.fillStyle=C.yellow;ctx.font='10px "Press Start 2P"';
+  ctx.textAlign='left';
+  ctx.fillText(tr('RACE')+' • '+TRACKS[R.cfg.track].label,12,19);
   ctx.textAlign='right';ctx.font='7px "Press Start 2P"';ctx.fillStyle='#99a';
   const spd=raceUI.speed+'×'+(raceUI.playing?'':' ❚❚');ctx.fillText(spd,W-44,19);
   const sw=ctx.measureText(spd).width+14;
@@ -289,47 +320,6 @@ function drawRace(){
   ctx.textAlign='left';
   ctx.font='6px "Press Start 2P"';ctx.fillStyle='#88aacc';ctx.textAlign='right';
   ctx.fillText(raceWeatherText(S[0].s.wet)+'  '+R.cfg.air+'°C',W-44,topBar-2);ctx.textAlign='left';
-  const T=buildTrack(R.cfg.track);
-  const {px,py,scV}=trackMapView(T,W,H,topBar,botBar,W);
-  // follow a car: pan the view so it stays in the middle
-  if(raceUI.follow>=0){
-    const k=R.cars.findIndex(c=>c.id===raceUI.follow),M=R.cars[k].M,s=raceSample(R,k,t),i=Math.floor(s.pos)%M.n,j=(i+1)%M.n,f=s.pos-Math.floor(s.pos);
-    const q={x:M.line[i].x+(M.line[j].x-M.line[i].x)*f,y:M.line[i].y+(M.line[j].y-M.line[i].y)*f};
-    trackView.x+=trackView.mcx-px(q);trackView.y+=trackView.mcy-py(q);
-  }
-  ctx.save();ctx.beginPath();ctx.rect(0,topBar-8,W,H-topBar-botBar+8);ctx.clip();
-  drawTrackSurface(T,px,py,scV);
-  const wNow=S[0].s.wet,wx=wNow/RACE.wetFull;
-  if(wx>0.02){   // a wet surface: the ribbon darkened and sheened blue
-    ctx.globalAlpha=0.45*wx;ctx.fillStyle='#1d3a66';trackRibbon(ctx,T,px,py,scV,3);ctx.globalAlpha=1;
-  }
-  const p0=T.pts[0];
-  ctx.fillStyle='#fff';ctx.fillRect(px(p0)-4,py(p0)-4,8,8);ctx.fillStyle='#000';ctx.fillRect(px(p0)-2,py(p0)-2,4,4);
-  // the cars, back of the field first so the leader is drawn on top
-  const pitN=[];
-  for(const x of S.slice().reverse()){
-    const k=x.k,c=x.c,M=c.M,s=x.s;
-    if(x.dnf&&s.v<0.1&&s.flag===3){continue;}
-    if(s.flag===1||(x.fin&&s.v<0.1&&t>x.fin.t+0.5)){pitN.push(x);continue;}
-    const i=Math.floor(s.pos)%M.n,j=(i+1)%M.n,f=s.pos-Math.floor(s.pos);
-    const q={x:M.line[i].x+(M.line[j].x-M.line[i].x)*f,y:M.line[i].y+(M.line[j].y-M.line[i].y)*f};
-    let cx=px(q),cy=py(q);const hd=Math.atan2(py(M.line[j])-py(M.line[i]),px(M.line[j])-px(M.line[i]));
-    if(s.pass>0.5){const o=Math.max(5,2.5*scV);cx+=Math.sin(hd)*o;cy-=Math.cos(hd)*o;}   // alongside
-    drawTopCar(ctx,cx,cy,hd,RACE_COLS[c.id],'thr');
-    ctx.font='6px "Press Start 2P"';ctx.fillStyle=RACE_COLS[c.id];ctx.fillText(String(x.pos),cx+7,cy-6);
-    if(raceUI.follow===c.id){ctx.strokeStyle='#fff';ctx.lineWidth=1;ctx.strokeRect(cx-9,cy-9,18,18);}
-  }
-  // rain, falling at the race clock's pace
-  if(wx>0.02){
-    ctx.strokeStyle='rgba(150,180,255,'+(0.25+0.3*wx)+')';ctx.lineWidth=1;ctx.beginPath();
-    const nDrops=Math.round(40+160*wx),ph=t*9;
-    for(let k=0;k<nDrops;k++){
-      const x0=((k*97.13)%W+ph*37*(1+k%3))%W,y0=topBar+((k*53.7+ph*120*(1+k%2))%(H-topBar-botBar));
-      ctx.moveTo(x0,y0);ctx.lineTo(x0-3,y0+9);
-    }
-    ctx.stroke();
-  }
-  ctx.restore();
   // pit lane / finished cars, parked by the line
   ctx.font='6px "Press Start 2P"';
   pitN.forEach((x,n)=>{const bx=W-110,by=topBar+8+n*11;ctx.fillStyle=RACE_COLS[x.c.id];ctx.fillRect(bx,by-5,6,6);

@@ -51,7 +51,7 @@ let vehRev=0;                      // bumped on every rebuild, so lap results ca
 function buildVehicle(){
   vehRev++;
   vehicle=readVehicleFromForm();
-  if(isHybrid()&&engine.hy.front){const dr=document.getElementById('vhDrive');vehicle.driveMech=dr&&dr.disabled&&dr.dataset.prev||vehicle.drive;vehicle.drive='awd';}   // a hybrid's front axle motor drives the front wheels (build 195); driveMech: the axle the gearbox turns (273)
+  if(isHybrid()&&engine.hy.front){const dr=document.getElementById('vhDrive');vehicle.driveMech=dr&&dr.disabled&&dr.dataset.prev||vehicle.drive;vehicle.drive='awd';}   // a hybrid's front axle motor drives the front wheels (build 195); driveMech: the axle the gearbox turns (274)
   const ch=CHASSIS[vehicle.chassis]||CHASSIS.coupe, tt=TIRE_TYPE[vehicle.tireType]||TIRE_TYPE.sport, wr=WEIGHT_RED[vehicle.weightRed]||WEIGHT_RED.none;
   const body=vehicle.body;
   vehicle.chLabel=body?carLabel(body):ch.label;

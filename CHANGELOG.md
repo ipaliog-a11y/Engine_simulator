@@ -20,7 +20,7 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 Working toward **v1.0 — every number derived, not fitted.**
 
-### A hybrid's motors, pack and controller in the stepped car (build 273)
+### A hybrid's motors, pack and controller in the stepped car (build 274)
 
 Phase E, step 3 of `plans/road-to-v1.md`. `stepCar` drove a hybrid as an engine with the motor's torque added to its
 curve: no pack, no charge, no front motor. A power-split and a series hybrid did not move at all (their shaft was
@@ -42,13 +42,23 @@ reads `stepCar` yet.
 - **The 918's gearbox now turns the rear axle** (`fit.drive:'rwd'`), as its own comment and Porsche describe it; the
   preset said all four, which was the front motor's doing. The car is still all-wheel drive to every solver (its
   0-100 is unchanged at 2.49 s); only `stepCar` reads the gearbox's axle (`vehicle.driveMech`).
-- **What moved:** no solver result. Fingerprint not re-run. Tests 172 (new), 168, 170, 166, 101, 102, 112, 114, 136, 147.
-- **Left open:** the 918's launch, 27% off the solver (named in `test172`: one clutch fed by the rear tyres' slip
+- **What moved:** nothing: the fingerprint is identical to `main`'s (5212 values). Tests 173 (new), 168, 170, 166, 101, 102, 112, 114, 136, 147.
+- **Left open:** the 918's launch, 27% off the solver (named in `test173`: one clutch fed by the rear tyres' slip
   against the solver's launch control on all four); the engine switched off for electric driving and the DRIVE MODEs;
   a power-split's engine speed in time; fuel; motor and pack temperatures; regeneration blended into the brake pedal;
   an electric car's regeneration and charge in `stepCar`. A saved build with a front motor does not remember the
   gearbox's axle (it reads as all four). The controller's two charging numbers are the bench's `HYB_BENCH` rule, not
   yet in the register (phase C's audit).
+
+### The chase view is back, with what was wrong in it put right (build 273)
+
+Build 270 put a pitched camera behind the car on TRACK and RACE; build 271 took it out. This is that view again, for testing, with the faults found in review fixed. The lap and the race are the same numbers as before.
+
+- The scene kept wiping the scale the page draws through, so on a sharp screen or a phone it filled a corner and the title, clock and instruments were half size. It now paints a layer at most 480 pixels wide and copies it up unsmoothed: everything sits where it should, and the picture keeps the page's chunky pixels.
+- It was slow enough to fail two tests (62 and 72). The per-frame blur, the blurred light shafts and the second grass pass are gone, and the textures are baked at the size they are drawn (128 px tiles). The view adds about 130 KB to the page; in build 270 it added about 530 KB.
+- A drag slides the picture the way the pointer moves and zoom holds the point under the cursor. Picking a car in the timing tower puts the camera behind it at the normal zoom, and a drag no longer lets go of it. With no car to sit behind, the whole circuit is shown.
+- The whole-circuit map is not drawn while a car is on screen: the limit colours are seen only on the road near the car, and the slowest-corner marker and the two-second trail are gone.
+- Left open: there is no night (its code is in the scene, unused). The textures are photographic rather than drawn in the palette, and their source is not recorded. `docs/track.png` still shows the old map. The guide's Greek for the zoom paragraph still describes the map (Greek is paused).
 
 ### Every real car's body is recorded for a 3D model (build 272)
 

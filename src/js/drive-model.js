@@ -38,7 +38,7 @@
 //   Stall     below the speed it can fire at, the engine stops; a starter or a bump start brings it back.
 //   Brakes    the hydraulics' own force and front share; ABS and traction control as wheel-slip limits when fitted.
 //   Aero      drag and downforce on the square of the speed; rolling resistance by the load.
-//   Hybrid    (build 273) the motor, the pack and the controller apart from the engine, the pack's charge stepped in
+//   Hybrid    (build 274) the motor, the pack and the controller apart from the engine, the pack's charge stepped in
 //             time. See above driveHybrid.
 //
 // NOT YET (named, so nobody rediscovers them): the turbo's shaft in time (boost is the settled curve's), tyre and
@@ -50,7 +50,7 @@ const DRIVE_G=9.81, DRIVE_RHO=1.20;
 function driveCar(){
   const v=vehicle,pt=powertrain(),L=v.wb,a=L*(1-v.fWt),b=L*v.fWt;
   const curve=pt.torqueCurve(),rl=pt.maxRpm(),peak=curve.reduce((m,p)=>Math.max(m,p.tq),0);
-  // a hybrid (build 273): the engine's curve and overrun are its own (a power-split's or a series hybrid's: what reaches
+  // a hybrid (build 274): the engine's curve and overrun are its own (a power-split's or a series hybrid's: what reaches
   // the motor's shaft with the pack giving nothing), and the motors and the pack go beside them as car.hy
   const hy=driveHybridData(v,pt,rl),own=hy?hybCurves().eng:curve,direct=!!pt.direct;
   const ride=(SUSPENSION[v.suspension]||SUSPENSION.sport).hz;
@@ -74,7 +74,7 @@ function driveCar(){
   if(hy)car.hy=hy;                          // the one member that is an object: plain data all the way down
   return car;
 }
-// A HYBRID AS PLAIN DATA (build 273), or null. Each motor is its envelope at the bus (Nm on n, rpm) and its losses (W)
+// A HYBRID AS PLAIN DATA (build 274), or null. Each motor is its envelope at the bus (Nm on n, rpm) and its losses (W)
 // at 0, 25, 50, 75 and 100% of that envelope, from motorMaxTorque and motorLosses, the lap's own; tm is the help the
 // HYBRID TUNE lets the main motor give flat out (hybCurves().mot). The pack is its open-circuit voltage every 10% of
 // charge, its resistance, capacity and limits (packBuild). The controller's numbers are the tune's charge window and
@@ -98,7 +98,7 @@ function driveLoss(M,T,n){
   const env=driveLerp(M.n,M.env,n),x=env>0?Math.min(1,Math.abs(T)/env)*4:0,j=Math.min(3,Math.floor(x)),f=x-j;
   return driveLerp(M.n,M.loss[j],n)*(1-f)+driveLerp(M.n,M.loss[j+1],n)*f;
 }
-// A HYBRID'S CONTROLLER, ONE STEP (build 273): from the pedal p, the engine's speed nE and the main motor's nM (rpm; a
+// A HYBRID'S CONTROLLER, ONE STEP (build 274): from the pedal p, the engine's speed nE and the main motor's nM (rpm; a
 // P2's motor turns with the gearbox input, a power-split's or a series hybrid's is the shaft), what the engine is asked
 // (s.thrE, its own throttle) and what the motors give (s.Tm Nm at the main motor, s.Tf at the front one), and the pack's
 // charge s.soc after h seconds. on: the main motor is connected (a P2's is not in neutral or through a shift).
