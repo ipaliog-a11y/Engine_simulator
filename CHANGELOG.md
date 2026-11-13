@@ -20,6 +20,18 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 Working toward **v1.0 — every number derived, not fitted.**
 
+### The stepped car launches as the solver does, and all-wheel drive turns its axles together (build 276)
+
+Phase E, step 3 of `plans/road-to-v1.md`: the standing start, which ran 11–25% slower than the 0-100 solver on the powerful cars. Three causes, none of them a number to tune. Nothing in the app reads it yet.
+
+- **All-wheel drive split its torque evenly,** so under acceleration the unloaded front tyres spun first and the rear's grip went unused. The two axles now turn together (a locked centre differential, or a clutch pack closed on the first slip): each step moves exactly the torque that keeps their speeds equal. It is open under the brakes. This is what the solver assumes when it counts the whole weight as driven. GT-R 4.25 s to 3.97, RS3 4.24 to 3.99, before the two points below.
+- **The car started from idle,** and spent a quarter of a second revving before it moved; the solver starts with the engine held at its launch speed. `driveLaunch(car)` gives a car on the line that way, a turbo lit for the solver's 1.2 s. `driveState(car)` is still the car at rest at idle.
+- **The launch speed was the torque peak, capped at 60% of the limiter,** which held a GT-R at 2400 rpm with its turbos unlit. It is now the speed the solver found quickest (`car.launchRpm`), as a launch control is set.
+- **Result, 0-100 against the solver:** MX-5 8.26 s (8.49), Golf GTI Mk1 8.09 (8.48), Mustang GT 5.28 (5.12), 911 GT3 3.61 (3.39), WRX STI 5.44 (5.26); by hand also GT-R 3.26 (3.40), RS3 3.49 (3.81), F40 3.88 (3.79), Civic Type R 6.11 (6.01). `test168`'s tolerance is tightened from 20% to 10%.
+- **Left open:** no preset says what centre differential a car has, so every all-wheel-drive car gets the locked one. `driveCar()` now runs the 0-100 solver once for the launch speed (up to half a second on a turbo car). The Model 3 is 15% quicker than the solver, which takes an open differential's traction loss from `DIFF_ASYM0`, a fitted number the stepped car does not have. The Model 3's lap is at 4.0 m off the line, on the test's limit.
+
+Tests: test168 (updated), test170, test172.
+
 ### The stepped car's pack is a state: a hybrid's controller, an electric car's charge (build 275)
 
 Phase E, step 3 of `plans/road-to-v1.md`, its second half. `stepCar` drove a hybrid on the engine's and the motor's torque added up, from a pack that never emptied. Nothing in the app reads it yet.
