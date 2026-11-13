@@ -9,8 +9,8 @@ import { readFileSync } from 'fs';
 import { fileURLToPath } from 'url';
 import path from 'path';
 const repo = fileURLToPath(new URL('..', import.meta.url));
-const OPEN = 28,   // 27 since build 266 (TYRE_CC); 28 since build 269: DRIVE_DRIVER, the stepped car's driver, awaiting sign-off as a rule
-      AUDIT = 11, RULES = ['RACE_DRIVERS', 'part costs'];
+const OPEN = 27,   // 27 since build 278: DRIVE_DRIVER signed off as a rule. Before: 27 since build 266 (TYRE_CC); 28 since build 269: DRIVE_DRIVER, the stepped car's driver, awaiting sign-off as a rule
+      AUDIT = 11, RULES = ['RACE_DRIVERS', 'part costs', 'DRIVE_DRIVER'];   // DRIVE_DRIVER: owner's sign-off, build 278
 const reg = JSON.parse(readFileSync(path.join(repo, 'plans/fitted-register.json'), 'utf8'));
 const fails = [];
 for (const e of reg.entries) {

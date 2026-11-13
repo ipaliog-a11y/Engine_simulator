@@ -82,7 +82,7 @@ hybrid controllers; each fitted number found gets a part or a cited rule.
 
 *Scoreboard run at the end of D.*
 
-**E. Driving-ready values (about 6–8 builds, the largest new piece).** *Started, build 263: `src/js/drive-model.js` (`driveCar`, `stepCar`), `tests/test168.mjs`; steps 1, 2, 4 and the first half of 3 are in their first form.* No graphics and no game: the numbers only,
+**E. Driving-ready values (about 6–8 builds, the largest new piece).** *Done in its first form, builds 263-277: `src/js/drive-model.js` (`driveCar`, `stepCar`, `driveDriver`), `tests/test168.mjs`, `170`-`173`. What it leaves open is listed in the CHANGELOG under build 277.* No graphics and no game: the numbers only,
 behind one function a game can call, `stepCar(dt, steer, throttle, brake, clutch, gear)`. Four wheels. The physics
 it needs must load without the page (no DOM, no canvas), so a separate game app can take the same source files.
 1. The tyre as one model: force from slip ratio and slip angle together (combined slip), per wheel, with its load.
@@ -91,6 +91,11 @@ it needs must load without the page (no DOM, no canvas), so a separate game app 
    transient load transfer through the springs, dampers and bars already modelled.
 3. The powertrain in time: the engine, turbo, clutch, gearbox and differential stepped from pedal inputs (the LIVE
    bench and the lap's turbo walk already do most of this), the motor and hybrid controllers the same way.
+   *Build 274:* the turbo's shaft is stepped, from tables read off the engine (`car.turbo`, `driveShaft`).
+   *Build 275:* the pack's charge is a state and a hybrid's controller runs in time (`car.el`, `driveCharge`,
+   `tests/test172.mjs`). Open: the engine stopping, a power-split's engine speed, heat.
+   *Build 276:* all-wheel drive's axles turn together, and the launch is the solver's (`driveLaunch`): 0-100 within
+   6% on the test's five cars.
 4. Brakes, ABS and traction control per wheel, in time.
 5. *Tried at build 264, not kept.* A pure-pursuit driver holding the lap solver's speeds lapped the WRX STI 9-11% off
    the solver, and slid the rear-drivers off at the first fast corner, even at 94% of the speeds. Two causes found:
@@ -100,8 +105,8 @@ it needs must load without the page (no DOM, no canvas), so a separate game app 
    and semi set between them, in the register as `TYRE_CC`). *Build 267:* it falls with load, by the measured road tyre's
    own curve. *Build 268:* `stepCar` takes the road's grade and vertical
    curvature. *Build 269:* `driveDriver` takes five cars round the line within 4% of the
-   solver, no spins, and catches a slide (`tests/test170.mjs`). Left: a lane change, and the 2-4% (the driver follows
-   the plan, it does not look for the limit).
+   solver, no spins, and catches a slide (`tests/test170.mjs`). *Build 277:* an ISO 3888-2 lane change at 63-75 km/h
+   (`tests/test173.mjs`). Left: the 2-4% (the driver follows the plan, it does not look for the limit).
    The original aim: the stepped car, driven round the solved racing line by a simple driver, laps within a few percent of
    the lap solver; a skidpad and a lane change give sensible numbers. One headless test.
 6. The body's dimensions every preset needs for 3D later (length, width, height, overhangs, wheel and tyre size)

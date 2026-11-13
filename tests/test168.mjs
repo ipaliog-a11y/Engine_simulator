@@ -2,7 +2,7 @@
 //
 // WHY THIS EXISTS. v1.0 has to carry every value a driving game needs. The lap and the 0-100 solve a whole run at the
 // limit; a game needs the car one step later, given the wheel, the pedals and the gear: stepCar(). What must hold:
-//   · it agrees with the solvers it sits beside: 0-100 within 20% of simulateAccel on five cars of different kinds,
+//   · it agrees with the solvers it sits beside: 0-100 within 10% of simulateAccel on five cars of different kinds (20% until build 276),
 //     a stop from 100 km/h at 0.85-1.25 of the tyres' braking grip, a skidpad at 0.80-1.02 of their lateral grip;
 //   · the car does what the lap cannot: lifting mid-corner tightens the line; power spins a rear-driver and pushes
 //     a front-driver wide; without ABS the wheels lock and the stop is longer;
@@ -10,6 +10,9 @@
 //     tyre's does (build 267);
 //   · the road under it counts (build 268): a grade pulls by g sin(theta), a crest lightens the wheels and a dip
 //     loads them by m v2 kv, and past 1 g of crest they carry nothing;
+//   · a turbo's shaft is stepped (build 274): from the car's own tables it reaches 90% of the boost within 6% of
+//     the time the engine's shaft (advanceShaft) takes and stays within 0.06 bar of it on average through a lift
+//     and part throttle; a cold shaft is never quicker off the line; the boost falls after a lift; no turbo, no tables;
 //   · a car is plain data: through JSON and back it drives to the same place, to the last digit;
 //   · stepCar reads only its arguments: nothing of the page or of this app's globals;
 //   · no page errors.
@@ -36,7 +39,7 @@ const R = await page.evaluate(() => {
   for (const n of ['Mazda MX-5', 'Volkswagen Golf GTI', 'Ford Mustang GT', 'Porsche 911 GT3', 'Subaru Impreza']) {
     const car = load(n), A = simulateAccel(), o = { name: vehicle.chLabel, solver: A.t100, mu: car.mu, muX: car.muX, drive: car.drive };
     car.tc = true;                                    // flat pedal, the ECU holding the tyres at their peak
-    let s = driveState(car);
+    let s = driveLaunch(car);                         // on the line as the solver starts: at the launch revs, a turbo lit
     while (s.t < 40 && s.vx * 3.6 < 100) stepCar(car, s, { throttle: 1 }, 0.01);
     o.t100 = s.t;
     while (s.vx * 3.6 < 110 && s.t < 80) stepCar(car, s, { throttle: 1 }, 0.01);
@@ -72,8 +75,24 @@ const R = await page.evaluate(() => {
   // ---- plain data
   { const car = load('Subaru Impreza'), copy = JSON.parse(JSON.stringify(car)); const run = c => { const s = driveState(c);
       for (let i = 0; i < 800; i++) stepCar(c, s, { throttle: 1, steer: i > 400 ? 0.2 : 0 }, 0.01); return [s.x, s.y, s.psi, s.vx, s.rpm]; };
-    out.same = JSON.stringify(run(car)) === JSON.stringify(run(copy)); out.fields = Object.values(car).every(v => ['number', 'string', 'boolean'].includes(typeof v) || Array.isArray(v));
+    out.same = JSON.stringify(run(car)) === JSON.stringify(run(copy)); const plain = v => v === null || ['number', 'string', 'boolean'].includes(typeof v) || (Array.isArray(v) ? v.every(plain) : Object.getPrototypeOf(v) === Object.prototype && Object.values(v).every(plain));
+    out.fields = plain(car);   // since build 274 a part (the turbo) may be an object of its own, of the same plain kinds
     const s = driveState(car), t0 = performance.now(); for (let i = 0; i < 2000; i++) stepCar(car, s, { throttle: 0.5 }, 0.01); out.ms = performance.now() - t0; }
+  // ---- the turbo's shaft (build 274): the car's tables against the engine's own shaft, then a standing start cold and lit
+  { out.turbo = []; out.noTurbo = load('Mazda MX-5').turbo;
+    for (const n of ['Subaru Impreza', 'Honda Civic Type R (FK8']) { const car = load(n), tb = car.turbo, pt = powertrain(), iat = state.iat; state.iat = 20;
+      const o = { name: vehicle.chLabel, t90: [], mean: 0 }; let cnt = 0;
+      for (const rpm of [2500, 4000, 5500]) { let E = 0, b = 0, ta = null, tb9 = null; const s = { shE: 0, boost: 0 }, fin = pt.boostAvail(rpm);
+        for (let k = 0; k < 4900; k++) { const t = k * 0.001, th = t < 2 ? 1 : t < 2.4 ? 0 : t < 3.9 ? 1 : 0.5;   // flat, a lift, flat again, half throttle
+          const r = pt.advanceShaft(E, rpm, b, th, 0.001); E = r.shaftE; b = r.boost; driveShaft(tb, s, rpm, th, 0.001);
+          o.mean += Math.abs(b - s.boost); cnt++; if (ta == null && b > 0.9 * fin) ta = t; if (tb9 == null && s.boost > 0.9 * fin) tb9 = t; }
+        o.t90.push([ta, tb9]); }
+      o.mean /= cnt; state.iat = iat;
+      const go = lit => { const s = driveLaunch(car); if (!lit) { s.shE = 0; s.boost = 0; }   // lit: 1.2 s held on the line, as the solver's start
+        while (s.t < 20 && s.vx < 27.78) stepCar(car, s, { throttle: 1 }, 0.01); return s; };
+      o.cold = go(false).t; const s = go(true); o.lit = s.t; o.flat = s.boost;
+      for (let i = 0; i < 100; i++) stepCar(car, s, { throttle: 0 }, 0.01); o.lifted = s.boost;
+      out.turbo.push(o); } }
   // ---- the road under the car (build 268): coasting in neutral on a 5% fall, and the wheel loads over a crest and in a dip
   { const car = load('Subaru Impreza'), v0 = 30, run = road => { const s = driveState(car); s.vx = v0; s.w = s.w.map(() => v0 / car.r);
       for (let i = 0; i < 100; i++) stepCar(car, s, { gear: 0, clutch: 1, road }, 0.01); return s; };
@@ -91,7 +110,7 @@ console.log('car                        0-100 step / solver    100-0            
 for (const c of R.cars) {
   const e = 100 * (c.t100 / c.solver - 1), b = c.decel / (c.mu * c.muX), k = c.skid / c.mu;
   console.log(`${c.name.slice(0, 26).padEnd(26)} ${c.t100.toFixed(2)} / ${c.solver.toFixed(2)} (${e >= 0 ? '+' : ''}${e.toFixed(0)}%)   ${c.stop.toFixed(1)} m ${c.decel.toFixed(2)} g (${b.toFixed(2)} of grip)   ${c.skid.toFixed(2)} g (${k.toFixed(2)} of grip)`);
-  if (Math.abs(e) > 20) fails.push(`${c.name}: 0-100 ${c.t100.toFixed(2)} s against the solver's ${c.solver.toFixed(2)} (${e.toFixed(0)}%)`);
+  if (Math.abs(e) > 10) fails.push(`${c.name}: 0-100 ${c.t100.toFixed(2)} s against the solver's ${c.solver.toFixed(2)} (${e.toFixed(0)}%)`);
   if (b < 0.85 || b > 1.25) fails.push(`${c.name}: stops at ${b.toFixed(2)} of its braking grip`);
   if (k < 0.80 || k > 1.02) fails.push(`${c.name}: skidpad at ${k.toFixed(2)} of its lateral grip`);
 }
@@ -111,6 +130,14 @@ console.log(`road: a 5% fall adds ${R.road.dA.toFixed(3)} m/s2 coasting (g x 0.0
 if (Math.abs(R.road.dA - R.road.want) > 0.01) fails.push('a grade does not pull the coasting car by g sin(theta)');
 if (!(R.road.crest > 0.45 && R.road.crest < 0.6 && R.road.dip > 1.4 && R.road.dip < 1.55)) fails.push('a crest or a dip does not move the wheel loads by m v2 kv');
 if (R.road.air > 0.1) fails.push('past 1 g of crest the car still presses on the road');
+for (const o of R.turbo) {
+  console.log(`turbo, ${o.name.slice(0, 26)}: 90% of the boost at 2500/4000/5500 rpm in ${o.t90.map(q => q[1].toFixed(2) + ' s (engine ' + q[0].toFixed(2) + ')').join(', ')}; mean ${o.mean.toFixed(3)} bar apart; 0-100 cold ${o.cold.toFixed(2)} s, lit ${o.lit.toFixed(2)}; ${o.flat.toFixed(2)} bar flat, ${o.lifted.toFixed(2)} a second after a lift`);
+  for (const q of o.t90) if (!(Math.abs(q[1] / q[0] - 1) <= 0.06)) fails.push(`${o.name}: the stepped shaft reaches 90% boost in ${q[1]} s, the engine's in ${q[0]}`);
+  if (!(o.mean <= 0.06)) fails.push(`${o.name}: the stepped boost is ${o.mean.toFixed(3)} bar from the engine's on average`);
+  if (!(o.cold >= o.lit)) fails.push(`${o.name}: a cold shaft is quicker off the line than a lit one`);   // at high launch revs it lights at once (WRX STI, 5250 rpm), so it may cost nothing
+  if (!(o.lifted < 0.9 * o.flat)) fails.push(`${o.name}: the boost does not fall after a lift`);
+}
+if (R.noTurbo !== null) fails.push('a car with no turbo carries turbo tables');
 if (!R.same) fails.push('a car through JSON does not drive to the same place');
 if (!R.fields) fails.push('driveCar() holds something that is not plain data');
 for (const [n, src] of Object.entries(R.src)) {
