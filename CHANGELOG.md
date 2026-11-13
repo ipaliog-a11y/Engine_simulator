@@ -20,6 +20,16 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 Working toward **v1.0 — every number derived, not fitted.**
 
+### The stepped car through a lane change; phase E's steps are all in (build 277)
+
+Phase E, step 5 of `plans/road-to-v1.md` asked for a lane change with sensible numbers. A test only; no source changes.
+
+- **The manoeuvre is ISO 3888-2's double lane change** (the "moose test"), with the cones set by each car's own width and overhangs (`CAR_DIMS`, build 272), the throttle released at the entry, in top gear. `driveDriver` takes the car through; the result is the best of twelve smooth lines, as a test driver finds a line over several runs.
+- **Highest entry speed with no cone touched:** MX-5 63 km/h, Civic Type R 70, 911 GT3 75, F-150 Raptor 69, at 0.82 to 0.97 of the tyres' grip and 4 to 9 degrees sideways. Magazines publish 65 to 85 km/h for road cars. Each car touches a cone 8 km/h faster.
+- **Phase E's six steps are now all in their first form** (builds 263–277). What it leaves open, by name: the stepped car has no tyre or brake heat, camber or roll steer, bumps or kerbs; a hybrid's engine does not stop and a power-split's engine speed is not stepped; every all-wheel-drive car has a locked centre; the driver gives away 2–4% of a lap; nothing stops a tall car rolling over (the Raptor's 69 km/h is its tyres' alone); 83 overhangs and 26 tyre sizes in `CAR_DIMS` still want the maker's sheet. `DRIVE_DRIVER` waits for the owner's sign-off as a rule. The lap solver does not read the stepped car yet, so `DIFF_ASYM0`, `KVCAP` and the launch's slip curve stay in the register.
+
+Tests: test173 (new).
+
 ### The stepped car launches as the solver does, and all-wheel drive turns its axles together (build 276)
 
 Phase E, step 3 of `plans/road-to-v1.md`: the standing start, which ran 11–25% slower than the 0-100 solver on the powerful cars. Three causes, none of them a number to tune. Nothing in the app reads it yet.
