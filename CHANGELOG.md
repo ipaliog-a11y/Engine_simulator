@@ -20,6 +20,19 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 Working toward **v1.0 — every number derived, not fitted.**
 
+### ABS, traction control and stability control as a tune of the stepped car (build 279)
+
+Phase E, step 4 of `plans/road-to-v1.md`, second pass: the first of two builds. The driver aids were fixed numbers inside `stepCar`, and there was no stability control. Nothing in the app reads this yet; the card that edits it is the next build.
+
+- **The aids are a calibration the car carries** (`car.aids`; `vehicle.aids` overrides any of `DRIVE_AIDS`). ABS: on or off, the slip it releases at per axle (1.3 x the tyre's peak), how fast it releases and reapplies. Traction control: on or off, its slip target (the peak), how hard it closes the throttle. The defaults are the numbers `stepCar` already used, so a car with no tune brakes and launches as before.
+- **Stability control is new** (after Bosch's VDC, SAE 950759). Against a spin: once the rear tyres slip past `espBeta` (by default the angle they peak at, 8 to 9.6 degrees), the outer front wheel is braked. Against a push: when the car turns less than the wheel asks (the car's own single-track model, capped by its grip) with the front tyres past their peak, the inner rear is braked. The throttle closes while it works (`espCut`).
+- **Checked on the US rule for these systems, FMVSS 126's sine with dwell** (80 km/h, 0.7 Hz): the Model 3 spins with ESP off (53 and 84 degrees sideways) and passes with it on (yaw gone within a second, 10 and 12 degrees). With 1.5 x the slip allowed it slides to 17 degrees and still recovers.
+- **What a setting moves:** Mustang GT from 100 km/h 34.5 m, 39.0 m with no ABS, 37.1 m with ABS released at 3 x the peak slip. Its 0-100: 5.52 s with no traction control, 5.41 at twice the peak slip, 5.28 at the peak.
+- **What ESP costs on a lap** (the stepped car's driver, against ESP off): MX-5 +1.1%, Civic Type R +1.0%, WRX STI +1.5%, 911 GT3 +1.4%, Model 3 +2.8%, with the most sideways moment cut from 12 to 16 degrees to about 11. `test170`'s laps are now driven with ESP off, as a hot lap is, and `test168`'s power-in-a-corner check turns it off with the traction control.
+- **Left open:** no preset says whether a car had ABS or ESP. ABS is taken as fitted to all, and ESP wherever traction control is. `espBand` (3 deg/s), `espTau` (0.2 s) and `espVmin` (4 m/s) are a calibration with no published source. A first version that judged a spin by the yaw rate alone braked the rear-drivers on a fifth of a lap, because the stepped car has no roll steer or compliance (named open in build 277) and so turns with less lock than its single-track model expects; the slip angle, which the model knows, is used instead. The MX-5 with ESP fitted by hand passes the rule at 6.5 x but not at 5 x (45% of the peak yaw after 1 s, against 35%).
+
+Tests: test174 (new), test168, test170 (updated).
+
 ### The stepped car's driver is kept as a rule (build 278)
 
 - **`DRIVE_DRIVER` is signed off by the owner as a rule.** Its four settings (how far ahead the driver reads the road, how hard it pulls back to the line and to the plan's speed, how far past the tyre's peak it steers) are a driver's manner, not the car's physics, like `RACE_DRIVERS`. The register has 27 open entries, was 28. No number moves.

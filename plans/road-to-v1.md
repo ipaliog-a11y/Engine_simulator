@@ -97,6 +97,8 @@ it needs must load without the page (no DOM, no canvas), so a separate game app 
    *Build 276:* all-wheel drive's axles turn together, and the launch is the solver's (`driveLaunch`): 0-100 within
    6% on the test's five cars.
 4. Brakes, ABS and traction control per wheel, in time.
+   *Build 279:* ABS, traction control and stability control are a tune the car carries (`car.aids`, `DRIVE_AIDS`,
+   `tests/test174.mjs`). Next: the card that edits it, with three manoeuvres as its readout.
 5. *Tried at build 264, not kept.* A pure-pursuit driver holding the lap solver's speeds lapped the WRX STI 9-11% off
    the solver, and slid the rear-drivers off at the first fast corner, even at 94% of the speeds. Two causes found:
    the circuit has crests and dips that load the tyres and the stepped car's road is flat; and with the lap's

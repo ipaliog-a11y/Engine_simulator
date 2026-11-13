@@ -60,7 +60,7 @@ const R = await page.evaluate(() => {
     for (let i = 0; i < 60; i++) { stepCar(car, s, { steer: st, throttle: 0 }, 0.01); k1 = Math.max(k1, s.yaw / s.vx); }
     out.lift = { before: k0 * R, after: k1 * R }; }
   // ---- power in a corner, second gear held, no traction control
-  const power = n => { const car = load(n); car.tc = false; const s = driveState(car), R = 30, vt = Math.sqrt(0.6 * car.mu * 9.81 * R);
+  const power = n => { const car = load(n); car.tc = car.esp = false; const s = driveState(car), R = 30, vt = Math.sqrt(0.6 * car.mu * 9.81 * R);
     for (let i = 0; i < 1200; i++) { const u = circle(car, s, R, Math.min(vt, 4 + i * 0.02)); u.gear = s.vx > 6 ? 2 : 1; stepCar(car, s, u, 0.01); }
     const st = circle(car, s, R, vt).steer; let beta = 0, rmax = 0, aF = 0, aR = 0;
     for (let i = 0; i < 300; i++) { stepCar(car, s, { steer: st, throttle: 1, gear: 2 }, 0.01);
