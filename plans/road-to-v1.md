@@ -76,6 +76,21 @@ scoreboard holds (phase H)".
 
 **C. Electric and hybrid audit (2–4 builds).** The same register, applied to the motor, inverter, battery and the
 hybrid controllers; each fitted number found gets a part or a cited rule.
+*Build 284:* `electric.js` read: 15 entries (phase C in the register), 10 files left. In the order they would retire:
+1. The magnets as geometry and the d and q inductances (2): retires `FLUX_KM`, `V_DROP`, `CPSR` and the 0.7 field-weakening
+   current together, and gives an interior-magnet rotor its reluctance torque.
+2. The stator's teeth and yoke from the flux, with the steel's B-H curve: `SPLIT`, `SLOT_SHARE`, `SAT_K`, the iron's 80/20.
+3. Heat paths from correlations: `MOTOR_COOLING`, the friction and windage coefficients, the pack's `PACK_C` and plate.
+4. The cell as a part, from named datasheets: `CHEM`, `PACK_FACTOR`, the 10% for busbars.
+5. Cited or signed off, no new physics: `INVERTER` (named modules), `RETENTION`, `ACTIVE_TO_MOTOR`, `EV_BMS`, the cage's
+   leakage.
+
+Beyond the register (not started, the owner's choice): a fast-charge curve from the charge-voltage and plating limits
+the pack already has; the pack's temperature in the lap, cycle and race (they still read the 25 °C resistance); a
+cell's sag and recovery (one RC pair), which is the 1 s against 10 s power the Prius cells were re-rated for; ageing;
+an inverter junction temperature; wound-rotor, reluctance and axial-flux motors. Readouts the model already computes
+and the bench could show: the loss split (copper, iron, friction, inverter), the pack's current as a C-rate, its sag
+and its heat, an induction motor's slip.
 
 **D. Vehicle parts (about 4 builds).** Wings and brake bias (retires `AERO_FRONT/REAR`); wheels and tyre pressure
 (retires `UNSPRUNG_SHARE`); the differential (`DIFF_ASYM0`).

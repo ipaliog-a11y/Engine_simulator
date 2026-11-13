@@ -18,6 +18,38 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 ## [Unreleased]
 
+### The motor bench shows where the losses go and what the pack is doing (build 285)
+
+No physics changed: the bench only shows numbers the model already worked out.
+- **LOSSES,** one stacked bar under the bench's instruments: copper, cage (an induction motor's), iron, friction and
+  inverter, in kW each. On the default drive flat out at 9200 rpm: copper 5.4, inverter 3.5, iron 0.8, friction 0.2.
+- **PACK:** its current as a C-rate, the volts its resistance drops (sag), and the heat that makes. The same run:
+  4.1C, 47 V, 40 kW. The pack makes four times the heat of the motor and inverter together, which the bench never showed.
+- **SLIP,** induction motors only: the cage's loss as a share of the power crossing the air gap, as a percentage and
+  a frequency, with the magnetising current (1.3%, 6.0 Hz, 122 A at 9200 rpm).
+- `tests/test97.mjs` checks that the split adds up, with the shaft's power, to what the pack gives.
+- **Open:** the pack's temperature is still not stepped on the bench, so its heat is shown but warms nothing. No
+  fingerprint was run: only `electric-ui.js` changed, and it stores readings without changing a result. Greek is paused.
+
+### Phase C begins: the electric drive's fitted numbers are listed (build 284)
+
+No physics changed; `index.html` differs only in its build number.
+- **`electric.js` is audited.** Every number in the motor, inverter and battery model was sorted into derived, cited or
+  fitted. 15 fitted groups are now in `plans/fitted-register.json` under phase C, each with what it stands for and what
+  retires it. The register goes from 27 open entries to 42, and from 11 files awaiting an audit to 10. The open list
+  grows here on purpose: this is the audit finding them, not new fitted numbers.
+- **The largest:** three constants set from one motor, the Tesla Model 3's (`FLUX_KM`, `SAT_K`, `V_DROP`), and used for
+  every motor; the constant-power range (`CPSR`); the stator's fixed proportions; every heat transfer coefficient in
+  `MOTOR_COOLING`; friction and windage; the cell tables in `CHEM`, which are typical figures, not named cells; the
+  low-charge power cut (`EV_BMS`).
+- **Left as they are (cited or textbook):** the copper and aluminium standards, the Steinmetz split from the M270-35A
+  sheet, Dowell's AC resistance, the magnets' grades, the charge-transfer share of a cell's resistance.
+- **Found, not fixed:** the pack's heat capacity is 900 J/kgK in the code and "~1000" in its comment. It is in the
+  register (`PACK.thermal`) for the build that cites it.
+- **`plans/road-to-v1.md`** has the order the 15 would retire in, and what the electric side could grow into after.
+- **Open:** the other 10 files (`electric-car.js`, `electric-cycle.js`, `ev-designer.js`, the hybrid four,
+  `corners-thermal.js`, `friction.js`, `sound.js`).
+
 Working toward **v1.0 — every number derived, not fitted.**
 
 ### The cylinder head as a part (build 283)

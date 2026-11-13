@@ -8,6 +8,8 @@
 //   · the bench: full throttle against the dyno brake settles at a steady speed, draws the pack down, heats the winding;
 //     held at peak torque the winding reaches the controller's 150 C and the torque is cut back;
 //   · the dyno: flat torque to the knee; a drained pack or hot magnets take power off the curve;
+//   · the bench's loss split (copper, cage, iron, friction, inverter) adds up, with the shaft's power, to what the pack
+//     gives, and the pack's sag and heat are its current through its resistance (build 285);
 //   · the operating-point buttons put the bench where they say;
 //   · the car (build 180 drives it: tests/test98.mjs): no gear window, saying why; it enters a race carrying its pack's
 //     energy (build 181); the car carries the motor and battery;
@@ -52,6 +54,8 @@ const r = await page.evaluate(() => {
   const run = (sec, dt = 1 / 60) => { const out = []; for (let t = 0; t < sec; t += dt) { stepThermal(dt); stepEngine(dt); stepElectrical(dt); updatePhysics(); stepWear(dt); out.push(state.rpm); } return out; };
   state.rpm = 0; state.throttle = 1; state.load = 0.5; const soc0 = state.soc, w0 = state.mT.w;
   run(3); const tail = run(1);
+  { const L = state.evLoss, parts = (L.cu || 0) + (L.rcu || 0) + L.fe + L.mech + L.inv; drawMotorView(0);
+    o.read = { parts, total: L.total, pack: state.battKW * 1000, shaft: state.torque * state.rpm * Math.PI / 30, heat: state.battHeat, sag: state.battSag, I2R: state.battI ** 2 * engine.pack.R }; }
   o.bench = { rpm: state.rpm, spread: Math.max(...tail) - Math.min(...tail), kW: state.powerKW, eff: state.thermalEff, soc0, soc: state.soc,
     V: state.systemVoltage, w0, w: state.mT.w, afrSame: state.afr };
   // held at peak torque: high load holds it low, where the current is all torque
@@ -121,6 +125,10 @@ console.log(`== bench: WOT at 50% load settles ${f(H.rpm)} rpm (±${f(H.spread /
   `winding ${f(H.w0)} -> ${f(H.w)} C; held at peak torque 150 s: winding ${f(r.hold.w)} C, torque ${f(r.hold.tqStart)} -> ${f(r.hold.tq)} Nm, "${r.hold.status}" ==`);
 if (!(H.spread < 50)) fails.push(`the bench does not settle (${f(H.spread)} rpm of swing)`);
 if (!(H.eff > 85 && H.eff < 99.5)) fails.push(`the bench's drive efficiency is ${f(H.eff, 1)}%`);
+{ const Q = r.read;   // build 285: the bench's loss split and pack readouts are the model's own, and they add up
+  if (!(Math.abs(Q.parts / Q.total - 1) < 1e-9)) fails.push('the loss split does not add up to the total loss');
+  if (!(Math.abs((Q.shaft + Q.total) / Q.pack - 1) < 0.02)) fails.push(`shaft + losses ${f(Q.shaft + Q.total)} W is not what the pack gives, ${f(Q.pack)} W`);
+  if (!(Q.sag > 0 && Math.abs(Q.heat / Q.I2R - 1) < 1e-6)) fails.push("the pack's sag or heat is not its current through its resistance"); }
 if (!(H.soc < H.soc0)) fails.push('running the bench does not draw the pack down');
 if (!(H.w > H.w0)) fails.push('running the bench does not heat the winding');
 if (!(r.hold.w >= 148 && r.hold.w < 182)) fails.push(`held at peak torque the winding is ${f(r.hold.w)} C, not held by the controller near 150-180`);

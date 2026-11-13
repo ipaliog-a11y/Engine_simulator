@@ -769,7 +769,7 @@ body.showcase-open{overflow:hidden}
 </div>
 <div class="container">
 <header>
-<h1>PIXEL ENGINE SIM v0.7 build 283</h1>
+<h1>PIXEL ENGINE SIM v0.7 build 285</h1>
 <div class="subtitle" id="subtitle">ENGINE DESIGNER • BUILD IT, THEN DRIVE IT</div>
 </header>
 <div class="build-strip" id="buildStrip">
@@ -24442,6 +24442,7 @@ function stepMotorBench(dt){
   const d=packDraw(b,st.soc,Math.max(0,Pb))||{V:b.vMin,I:0,heat:0};
   st.soc=Math.max(0,st.soc-d.I*dt/(b.Ah*3600));
   st.battI=d.I;st.battKW=d.V*d.I/1000;st.systemVoltage=d.V;
+  st.evLoss=L;st.battHeat=d.heat;st.battSag=Voc-d.V;   // for the bench's readouts (build 285): the losses as the model splits them, and the pack's
   motorHeatStep(m,st.mT,L,dt);
   // A rotor has a third of an engine's inertia against the same stiff brake law, so a whole frame in one step overshoots
   // and rings; the speed is stepped in pieces short enough for the brake (a half of its own time constant).
@@ -24700,6 +24701,24 @@ function drawMotorView(dt){
   ctx.fillStyle='#99aabb';ctx.font='7px "Press Start 2P"';
   ctx.fillText(tr('BUS')+' '+st.systemVoltage.toFixed(0)+' V • '+Math.round(st.battI||0)+' A • '+(st.battKW||0).toFixed(0)+' kW '+tr('from the pack'),x0,275);
   ctx.fillText(tr('DRIVE EFF')+' '+st.thermalEff.toFixed(1)+'% • '+tr('derate')+' '+Math.round(motorDerate(engine,st.mT)*100)+'%',x0,292);
+  // Where the losses go (build 285): what motorLosses already computes at this point, as one stacked bar, and what the
+  // pack is doing: its current over its capacity (the C-rate), the volts its resistance drops, and the heat that makes.
+  const L=st.evLoss||{},parts=[['copper',L.cu,'#ffaa44'],['cage',L.rcu,'#ff7755'],['iron',L.fe,'#88aacc'],['friction',L.mech,'#99aa66'],['inverter',L.inv,'#cc88ff']].filter(q=>q[1]>0);
+  const tot=parts.reduce((a,q)=>a+q[1],0);
+  ctx.fillText(tr('LOSSES')+' '+(tot/1000).toFixed(1)+' kW',x0,312);
+  drawPixelRect(x0,316,240,12,'#1a1a28');
+  let lx=x0,tx=x0,ty=342;
+  for(const q of parts){
+    const wd=240*q[1]/Math.max(1,tot);ctx.fillStyle=q[2];ctx.fillRect(lx,316,wd,12);lx+=wd;
+    const t=tr(q[0])+' '+(q[1]/1000).toFixed(1),tw=ctx.measureText(t).width;if(tx+tw>W-6){tx=x0;ty+=14;}ctx.fillText(t,tx,ty);tx+=tw+8;
+  }
+  ctx.fillStyle='#99aabb';
+  ctx.fillText(tr('PACK')+' '+((st.battI||0)/engine.pack.Ah).toFixed(1)+'C • '+tr('sag')+' '+Math.round(st.battSag||0)+' V • '+tr('heat')+' '+((st.battHeat||0)/1000).toFixed(1)+' kW',x0,ty+18);
+  // an induction motor's slip: the cage's loss is the slip's share of the power crossing the air gap
+  if(m.im&&!m.parts&&L.rcu>0&&st.torque>0){
+    const Pm=st.torque*st.rpm*Math.PI/30,slip=L.rcu/(Pm+L.rcu),c=imCurrents(m,st.torque,st.rpm,st.systemVoltage);
+    ctx.fillText(tr('SLIP')+' '+(slip*100).toFixed(1)+'% • '+(m.p*st.rpm/60*slip/(1-slip)).toFixed(1)+' Hz • '+tr('magnetising')+' '+Math.round(c.Im)+' A',x0,ty+32);
+  }
   ctx.fillStyle='#667';ctx.fillText(tr('No cutaway for a motor yet: the bench\'s instruments instead.'),12,H-12);
 }
 
