@@ -20,6 +20,20 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 Working toward **v1.0 — every number derived, not fitted.**
 
+### The stepped car's pack is a state: a hybrid's controller, an electric car's charge (build 275)
+
+Phase E, step 3 of `plans/road-to-v1.md`, its second half. `stepCar` drove a hybrid on the engine's and the motor's torque added up, from a pack that never emptied. Nothing in the app reads it yet.
+
+- **The charge is a state** (`s.soc`), and the car carries its electric side as plain data (`car.el`): the motor's part of the full-load curve, its regeneration, its losses over speed and torque, the pack's energy, voltage and resistance, and the tune's CHARGE window.
+- **The controller, in time.** The engine gives all of the torque the pedal asks that it can and the motor the rest (the lap's rule). The motor's help fades over the last 10 points of charge above the window's low, and its regeneration over the last 10 under the high. With LOAD-POINT SHIFTING on, the engine works harder or easier to bring the charge to its target (the bench controller's law); the wheels feel no difference.
+- **Result:** Ioniq 0-100 9.38 s (solver 9.55), 9.95 from an empty window; Prius 11.30 (11.35), 21.8 empty. A minute at 100 km/h takes the Ioniq from 37% to 51% and holds 60% at 62%. Fifteen seconds flat out takes the Prius from 60% to 49.5%; ten off the pedal give 3.4 points back.
+- **Three faults put right on the way:** a power-split or series hybrid was stepped as a clutch car with no idle and stalled at rest (it is now driven as its traction motor, like an electric car); an electric car did not regenerate off the pedal; the 918's front motor was missing and its engine's torque was spread over four wheels (the front motor now pulls the front wheels, 1200 N each at 54 km/h, and the engine drives the rear).
+- **Regeneration is eased when the anti-lock system works,** as electric cars do: without it the Model 3 ran 4.2 m off the line braking into corners.
+- **An electric car's energy adds up:** over 15 s flat out the Model 3's pack gives 3.20 MJ for 2.58 MJ of motion, air and rolling (20% lost in the motor, the pack and the driveline).
+- **Left open:** a hybrid's engine does not stop (no electric-only driving) and a power-split's engine speed is not stepped (its curve is the steady one); no motor or pack heat; the front motor's losses are scaled by its share of the force; a plug-in starts at its target charge, not full. The 918 reaches 100 km/h in 3.18 s against the solver's 2.49, and the Model 3 in 5.28 against 6.18: the launch, next build.
+
+Tests: test172 (new), test168, test170.
+
 ### The stepped car's turbo spins up in time (build 274)
 
 Phase E, step 3 of `plans/road-to-v1.md`. `stepCar` took a turbo engine's settled boost at every instant, so lag cost nothing. Nothing in the app reads it yet.
