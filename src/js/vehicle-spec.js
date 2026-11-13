@@ -171,7 +171,7 @@ function applyVehicleToForm(v){
   if(v.speedRating&&SPEED_RATING[v.speedRating])g('vhRating').value=v.speedRating;
   g('vhLimiter').value=v.governor>0?'on':'off';g('vhLimitKmh').value=v.governor>0?v.governor:(v.limitKmh||250);
   g('vhTC').value=v.tc===false?'off':'on';   // saves from before build 154 carry none: on
-  g('vhChassis').value=v.chassis||'coupe';g('vhDrive').value=v.drive||'rwd';g('vhGearbox').value=v.gearbox||'manual';g('vhDiff').value=v.diff||'open';
+  g('vhChassis').value=v.chassis||'coupe';g('vhDrive').value=g('vhDrive').dataset.prev=v.drive||'rwd';g('vhGearbox').value=v.gearbox||'manual';g('vhDiff').value=v.diff||'open';
   g('vhGears').value=v.gears||6;g('vhGearing').value=v.gearing!=null?v.gearing:52;
   g('vhTire').value=v.tireType||'sport';g('vhTireW').value=v.tireWidth||235;g('vhTireWF').value=v.tireWidthF||0;g('vhTireA').value=v.tireAspect||40;g('vhWheel').value=v.wheelDia||18;
   g('vhAeroF').value=v.aeroFront||'none';g('vhAeroR').value=v.aeroRear||'none';g('vhAeroFl').value=v.aeroFloor||'none';g('vhWeight').value=v.weightRed||'none';
@@ -195,7 +195,7 @@ function applyChassisFit(key,body){
   const ch=CHASSIS[key];if(!ch||!ch.fit)return null;
   const f=body?body.fit:ch.fit,g=id=>document.getElementById(id);
   g('vhChassis').value=key;   // self-contained: callers may fit a chassis without touching the select
-  g('vhDrive').value=body?f.drive:ch.drive;g('vhGearbox').value=f.gearbox;g('vhDiff').value=f.diff;
+  g('vhDrive').value=g('vhDrive').dataset.prev=body?f.drive:ch.drive;g('vhGearbox').value=f.gearbox;g('vhDiff').value=f.diff;
   g('vhGears').value=f.gears;g('vhGearing').value=f.gearing;
   fillSpacingSelect(!!body,body?'stock':'std');vehRatioSet=null;vehFinalDriveSet=0;
   g('vhTire').value=f.tire;g('vhTireW').value=f.tw;g('vhTireWF').value=f.twF||0;

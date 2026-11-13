@@ -21,7 +21,7 @@ function factoryDims(v){
 // True when every fitted part still matches the chassis' factory spec.
 function isFactoryFit(v){
   const ch=CHASSIS[v.chassis];if(!ch||!ch.fit)return false;const f=v.body?v.body.fit:ch.fit;
-  return v.drive===(v.body?f.drive:ch.drive)&&(v.governor||0)===(f.gov||0)&&(v.tc!==false)===(f.tc!==false)&&v.gears===f.gears&&v.gearing===f.gearing&&v.spacing===(v.body?'stock':'std')&&!(v.finalDriveSet>0)&&v.gearbox===f.gearbox&&v.diff===f.diff&&
+  return (v.driveMech||v.drive)===(v.body?f.drive:ch.drive)&&(v.governor||0)===(f.gov||0)&&(v.tc!==false)===(f.tc!==false)&&v.gears===f.gears&&v.gearing===f.gearing&&v.spacing===(v.body?'stock':'std')&&!(v.finalDriveSet>0)&&v.gearbox===f.gearbox&&v.diff===f.diff&&
     v.tireType===f.tire&&v.tireWidth===f.tw&&(v.tireWidthF||0)===(f.twF||0)&&!stepOf(v.springF)&&!stepOf(v.springR)&&!stepOf(v.barF)&&!stepOf(v.barR)&&!stepOf(v.damperF)&&!stepOf(v.damperR)&&v.tireAspect===f.ta&&v.wheelDia===f.wheel&&
     v.aeroFront===f.aF&&v.aeroRear===f.aR&&v.aeroFloor===f.aFl&&v.weightRed===f.weight&&
     v.brakeType===f.brake&&v.rotor===f.rotor&&v.suspension===f.susp&&geoStock(v)&&!v.dims&&!(v.ballastKg>0);
@@ -51,7 +51,7 @@ let vehRev=0;                      // bumped on every rebuild, so lap results ca
 function buildVehicle(){
   vehRev++;
   vehicle=readVehicleFromForm();
-  if(isHybrid()&&engine.hy.front)vehicle.drive='awd';   // a hybrid's front axle motor drives the front wheels (build 195)
+  if(isHybrid()&&engine.hy.front){const dr=document.getElementById('vhDrive');vehicle.driveMech=dr&&dr.disabled&&dr.dataset.prev||vehicle.drive;vehicle.drive='awd';}   // driveMech: the axle the gearbox turns (279);   // a hybrid's front axle motor drives the front wheels (build 195)
   const ch=CHASSIS[vehicle.chassis]||CHASSIS.coupe, tt=TIRE_TYPE[vehicle.tireType]||TIRE_TYPE.sport, wr=WEIGHT_RED[vehicle.weightRed]||WEIGHT_RED.none;
   const body=vehicle.body;
   vehicle.chLabel=body?carLabel(body):ch.label;

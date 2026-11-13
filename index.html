@@ -769,7 +769,7 @@ body.showcase-open{overflow:hidden}
 </div>
 <div class="container">
 <header>
-<h1>PIXEL ENGINE SIM v0.7 build 278</h1>
+<h1>PIXEL ENGINE SIM v0.7 build 279</h1>
 <div class="subtitle" id="subtitle">ENGINE DESIGNER • BUILD IT, THEN DRIVE IT</div>
 </header>
 <div class="build-strip" id="buildStrip">
@@ -11661,7 +11661,7 @@ function applyVehicleToForm(v){
   if(v.speedRating&&SPEED_RATING[v.speedRating])g('vhRating').value=v.speedRating;
   g('vhLimiter').value=v.governor>0?'on':'off';g('vhLimitKmh').value=v.governor>0?v.governor:(v.limitKmh||250);
   g('vhTC').value=v.tc===false?'off':'on';   // saves from before build 154 carry none: on
-  g('vhChassis').value=v.chassis||'coupe';g('vhDrive').value=v.drive||'rwd';g('vhGearbox').value=v.gearbox||'manual';g('vhDiff').value=v.diff||'open';
+  g('vhChassis').value=v.chassis||'coupe';g('vhDrive').value=g('vhDrive').dataset.prev=v.drive||'rwd';g('vhGearbox').value=v.gearbox||'manual';g('vhDiff').value=v.diff||'open';
   g('vhGears').value=v.gears||6;g('vhGearing').value=v.gearing!=null?v.gearing:52;
   g('vhTire').value=v.tireType||'sport';g('vhTireW').value=v.tireWidth||235;g('vhTireWF').value=v.tireWidthF||0;g('vhTireA').value=v.tireAspect||40;g('vhWheel').value=v.wheelDia||18;
   g('vhAeroF').value=v.aeroFront||'none';g('vhAeroR').value=v.aeroRear||'none';g('vhAeroFl').value=v.aeroFloor||'none';g('vhWeight').value=v.weightRed||'none';
@@ -11685,7 +11685,7 @@ function applyChassisFit(key,body){
   const ch=CHASSIS[key];if(!ch||!ch.fit)return null;
   const f=body?body.fit:ch.fit,g=id=>document.getElementById(id);
   g('vhChassis').value=key;   // self-contained: callers may fit a chassis without touching the select
-  g('vhDrive').value=body?f.drive:ch.drive;g('vhGearbox').value=f.gearbox;g('vhDiff').value=f.diff;
+  g('vhDrive').value=g('vhDrive').dataset.prev=body?f.drive:ch.drive;g('vhGearbox').value=f.gearbox;g('vhDiff').value=f.diff;
   g('vhGears').value=f.gears;g('vhGearing').value=f.gearing;
   fillSpacingSelect(!!body,body?'stock':'std');vehRatioSet=null;vehFinalDriveSet=0;
   g('vhTire').value=f.tire;g('vhTireW').value=f.tw;g('vhTireWF').value=f.twF||0;
@@ -12344,7 +12344,7 @@ function factoryDims(v){
 // True when every fitted part still matches the chassis' factory spec.
 function isFactoryFit(v){
   const ch=CHASSIS[v.chassis];if(!ch||!ch.fit)return false;const f=v.body?v.body.fit:ch.fit;
-  return v.drive===(v.body?f.drive:ch.drive)&&(v.governor||0)===(f.gov||0)&&(v.tc!==false)===(f.tc!==false)&&v.gears===f.gears&&v.gearing===f.gearing&&v.spacing===(v.body?'stock':'std')&&!(v.finalDriveSet>0)&&v.gearbox===f.gearbox&&v.diff===f.diff&&
+  return (v.driveMech||v.drive)===(v.body?f.drive:ch.drive)&&(v.governor||0)===(f.gov||0)&&(v.tc!==false)===(f.tc!==false)&&v.gears===f.gears&&v.gearing===f.gearing&&v.spacing===(v.body?'stock':'std')&&!(v.finalDriveSet>0)&&v.gearbox===f.gearbox&&v.diff===f.diff&&
     v.tireType===f.tire&&v.tireWidth===f.tw&&(v.tireWidthF||0)===(f.twF||0)&&!stepOf(v.springF)&&!stepOf(v.springR)&&!stepOf(v.barF)&&!stepOf(v.barR)&&!stepOf(v.damperF)&&!stepOf(v.damperR)&&v.tireAspect===f.ta&&v.wheelDia===f.wheel&&
     v.aeroFront===f.aF&&v.aeroRear===f.aR&&v.aeroFloor===f.aFl&&v.weightRed===f.weight&&
     v.brakeType===f.brake&&v.rotor===f.rotor&&v.suspension===f.susp&&geoStock(v)&&!v.dims&&!(v.ballastKg>0);
@@ -12374,7 +12374,7 @@ let vehRev=0;                      // bumped on every rebuild, so lap results ca
 function buildVehicle(){
   vehRev++;
   vehicle=readVehicleFromForm();
-  if(isHybrid()&&engine.hy.front)vehicle.drive='awd';   // a hybrid's front axle motor drives the front wheels (build 195)
+  if(isHybrid()&&engine.hy.front){const dr=document.getElementById('vhDrive');vehicle.driveMech=dr&&dr.disabled&&dr.dataset.prev||vehicle.drive;vehicle.drive='awd';}   // driveMech: the axle the gearbox turns (279);   // a hybrid's front axle motor drives the front wheels (build 195)
   const ch=CHASSIS[vehicle.chassis]||CHASSIS.coupe, tt=TIRE_TYPE[vehicle.tireType]||TIRE_TYPE.sport, wr=WEIGHT_RED[vehicle.weightRed]||WEIGHT_RED.none;
   const body=vehicle.body;
   vehicle.chLabel=body?carLabel(body):ch.label;
@@ -12942,7 +12942,7 @@ function driveCar(){
     loadSens:LOAD_SENS,muX:TYRE_MU_X,cc:v.tyreCC||tyreCC(v.tireType),ccP2:TYRE_CC_P2,slipOpt:TYRE_SLIP_OPT,slipC:TYRE_SLIP_C,relax:v.rTire,
     cdA:v.cdA,clA:v.clA||0,aeroBal:v.aeroBal==null?0.5:v.aeroBal,crr:v.crr,
     lltdF:v.lltdF==null?v.fWt:v.lltdF,tauLoad:1/(2*Math.PI*ride),
-    drive:el&&el.front?'rwd':v.drive,centre:v.drive==='awd'&&!(el&&el.front),lock:(v.df&&v.df.lock)||0,ratios:(v.ratios||[1]).slice(),fd:v.finalDrive||1,eff:v.driveEff||0.9,
+    drive:el&&el.front?(v.driveMech==='fwd'?'fwd':'rwd'):v.drive,centre:v.drive==='awd'&&!(el&&el.front),lock:(v.df&&v.df.lock)||0,ratios:(v.ratios||[1]).slice(),fd:v.finalDrive||1,eff:v.driveEff||0.9,
     shiftTime:v.shiftCut||0,ev:!!v.ev||!!pt.direct,tc:!!v.tc,abs:true,
     rpm:curve.map(p=>p.rpm),tq:curve.map(p=>p.tq),ov:pt.overrunTable(rl),idle:pt.idleRpm()||0,redline:rl,
     Ie:pt.inertia()||0.15,clutchCap:1.5*peak,
@@ -12979,7 +12979,11 @@ function driveState(car){
 //   Charge   the pack gives the motor's shaft power and its losses (read off the motor on a grid of speed and torque)
 //            and its own I2R at the bus voltage.
 //   Front    a front axle motor (the 918's) drives the front wheels by its own force over road speed; the engine and
-//            the main motor then drive the rear.
+//            the main motor then drive the rear, or the front too if that is the axle the car's gearbox was set to
+//            before the motor was fitted (vehicle.driveMech, build 279). Its losses are its own, by its torque.
+//   Pack     (build 279, a hybrid's) the motors' help is also cut to what the pack can give at this charge: the
+//            lower of its rate and the power at its cut-off voltage (packMaxPower's law), each motor its share. The
+//            curve is already cut to that at the rated charge; lower in the window the cells' voltage is lower.
 // A power-split's shaft is its traction motor's and its engine's part is the steady eCVT curve's (psCurves): the
 // battery's part of that curve is treated as the motor's here. Its engine's own speed is not stepped.
 function driveElectric(pt,curve,rl){
@@ -12990,22 +12994,42 @@ function driveElectric(pt,curve,rl){
     for(let j=0;j<NT;j++)loss.push(motorLosses(m,T*j/(NT-1),n,V,temp).total);}
   const el={capJ:pack.kWh*3.6e6,V:packOcv(pack,hy?HYB_SOC:0.5),R:pack.R,
     // the charge window: [low, target, high], the motor's share at the low, and the charge it starts with
-    // the charge it starts with and holds; the window [lo, hi], the bands the help and the regeneration fade over
+    // the charge it starts with (a plug-in full, as in the race: build 279) and holds; the window [lo, hi], the bands the help and the regeneration fade over
     // inside it, and the share of the help left at the low
-    soc0:hy?tu.socT/100:0.5,tg:hy?tu.socT/100:0.5,lo:hy?tu.socLo/100:EV_BMS.limp,hi:hy?tu.socHi/100:1,
+    soc0:hy?(e.hyPlug?tu.socHi:tu.socT)/100:0.5,tg:hy?tu.socT/100:0.5,lo:hy?tu.socLo/100:EV_BMS.limp,hi:hy?tu.socHi/100:1,
     dn:hy?Math.min(0.1,(tu.socT-tu.socLo)/100):EV_BMS.low-EV_BMS.limp,up:hy?Math.min(0.1,(tu.socHi-tu.socT)/100):0,kLo:hy?0:EV_BMS.lowFloor,
     lps:hy&&tu.lps?HYB_BENCH.chargeShare*pack.pChargeMax:0,lpsBand:0.1,
     mrpm:rpm,tmax,loss,
     crpm:(hy?c.eng:curve).map(q=>q.rpm),mot:hy?c.mot.slice():curve.map(q=>q.tq),regen:hy?hybRegenTable(rl):pt.overrunTable(rl),front:null};
+  if(hy){                                                 // the pack's own limit at a charge (build 279)
+    const cool={w:tc,c:tc,r:60};                          // as the curve was cut (hybMotorTq)
+    el.ocv=[];for(let k=0;k<=10;k++)el.ocv.push(packOcv(pack,k/10));
+    el.vMin=pack.vMin;el.iMax=pack.iMax;el.share=hy.shareR||1;
+    // what the full help draws: on a P2 the motor's shaft power and losses; a power-split's or a series hybrid's curve
+    // is the pack's power passed through the eCVT, so there the help follows the pack's power against the rated one
+    if(pt.direct)el.pRef=packMaxPower(pack,HYB_SOC);
+    else el.ml=el.crpm.map((n,i)=>motorLosses(m,el.mot[i],Math.max(n,1),V,cool).total);
+  }
   if(hy&&hy.front&&vehicle.frontTab){const f=hy.front,v=vehicle,F=v.frontTab.slice(),lf=[];
-    for(let k=0;k<F.length;k++){const n=k*0.5/v.rTire*v.frontFd*30/Math.PI;lf.push(F[k]>0?motorLosses(f.motor,F[k]*v.rTire/(v.frontFd*HYB_FRONT_EFF),Math.max(n,1),V,temp).total:0);}
-    el.front={F,loss:lf,eff:HYB_FRONT_EFF};}                // the force and the motor's losses every 0.5 m/s, at full help
+    for(let k=0;k<F.length;k++){const n=k*0.5/v.rTire*v.frontFd*30/Math.PI;
+      for(let j=0;j<NT;j++)lf.push(F[k]>0?motorLosses(f.motor,F[k]*j/(NT-1)*v.rTire/(v.frontFd*HYB_FRONT_EFF),Math.max(n,1),V,temp).total:0);}
+    el.front={F,loss:lf,eff:HYB_FRONT_EFF,share:f.shareF};}   // the force at full help every 0.5 m/s, and the motor's losses there at 0, 25 .. 100% of it
   return el;
 }
 // The shares the charge allows: [of the motor's help, of its regeneration].
 function driveShares(el,soc){
   return [soc>=el.lo+el.dn?1:soc>el.lo?el.kLo+(1-el.kLo)*(soc-el.lo)/el.dn:0,el.up>0?Math.max(0,Math.min(1,(el.hi-soc)/el.up)):soc<el.hi?1:0];
 }
+// The share of a motor's full help the pack can carry at this charge (build 279): Pm its shaft power at full help (W),
+// loss its losses there, share its part of the pack.
+function drivePack(el,soc,Pm,loss,share){
+  if(!el.ocv||!(Pm>1))return 1;
+  const x=Math.max(0,Math.min(1,soc))*10,i=Math.min(9,Math.floor(x)),V0=el.ocv[i]+(el.ocv[i+1]-el.ocv[i])*(x-i);
+  const I=Math.min(el.iMax,(V0-el.vMin)/el.R),Pmax=Math.max(0,(V0-I*el.R)*I);
+  return Math.max(0,Math.min(1,el.pRef?Pmax/el.pRef:(Pmax*share-loss)/Pm));
+}
+// The same for the shaft's motor at a speed, mot its full help there (Nm).
+const driveHelp=(el,soc,rpm,mot)=>el.ocv?drivePack(el,soc,mot*rpm*Math.PI/30,el.ml?driveLerp(el.crpm,el.ml,rpm):0,el.share):1;
 // What the shaft's motor does this step, and the pack with it. thr and rpm are the shaft's; Ff, vf the front motor's
 // force (N) and its wheels' speed. Leaves s.soc and s.Pm (the motors' power at their shafts, W; negative charging).
 function driveCharge(car,s,thr,rpm,Ff,vf,h){
@@ -13015,14 +13039,15 @@ function driveCharge(car,s,thr,rpm,Ff,vf,h){
   const ovE=car.ev?0:Math.max(0,(car.ov[ix]||0)-regF);                      // the engine's own drag, its throttle shut
   let Te=Math.max(-ovE,Math.min(wotE,T));
   if(el.lps&&wotE>0&&thr>0&&w>1)Te=Math.max(0,Math.min(wotE,Te+Math.max(-1,Math.min(1,(el.tg-s.soc)/el.lpsBand))*el.lps/w));
-  const Tm=Math.max(-reg,Math.min(k*motF,T-Te));
+  const Tm=Math.max(-reg,Math.min(k*driveHelp(el,s.soc,rpm,motF)*motF,T-Te));
   // the motor's losses at this speed and torque, straight between the grid's points
   const NT=el.loss.length/el.mrpm.length,[i,fi]=driveAt(el.mrpm,rpm),tmx=el.tmax[i]+(el.tmax[i+1]-el.tmax[i])*fi;
   const x=Math.min(1,Math.abs(Tm)/Math.max(1e-6,tmx))*(NT-1),j=Math.min(NT-2,Math.floor(x)),fj=x-j,at=(a,b)=>el.loss[a*NT+b];
   const ls=w>1||Tm!==0?(at(i,j)*(1-fi)+at(i+1,j)*fi)*(1-fj)+(at(i,j+1)*(1-fi)+at(i+1,j+1)*fi)*fj:0;
   let Pm=Tm*w,P=Pm+ls;
   if(el.front&&Ff>0){const q=Math.max(0,vf)/0.5,a=Math.min(el.front.F.length-2,Math.floor(q)),full=el.front.F[a]+(el.front.F[a+1]-el.front.F[a])*(q-a);
-    Pm+=Ff*vf;P+=Ff*vf/el.front.eff+(full>0?(el.front.loss[a]+(el.front.loss[a+1]-el.front.loss[a])*(q-a))*Ff/full:0);}   // its losses by its share of the force (copper's would fall faster: probable)
+    const fx=full>0?Math.min(1,Ff/full)*(NT-1):0,fj2=Math.min(NT-2,Math.floor(fx)),lf=(b,d)=>el.front.loss[b*NT+d],ln=d=>lf(a,d)+(lf(a+1,d)-lf(a,d))*(q-a);
+    Pm+=Ff*vf;P+=Ff*vf/el.front.eff+ln(fj2)+(ln(fj2+1)-ln(fj2))*(fx-fj2);}   // its own losses at this speed and torque (build 279)
   const I=P/el.V;
   s.soc=Math.max(0,Math.min(1,s.soc-(P+I*I*el.R)*h/el.capJ));s.Pm=Pm;
 }
@@ -13102,7 +13127,7 @@ function driveEngine(car,thr,rpm,boost,soc){
   let ov=car.ev&&!car.el?0:car.ov[Math.max(0,Math.min(car.ov.length-1,Math.round((rpm-500)/250)))]||0;
   if(car.el){                                       // the motor's help and its regeneration, by what the charge allows
     const el=car.el,[k,r]=soc==null?[1,1]:driveShares(el,soc),reg=el.regen[Math.max(0,Math.min(el.regen.length-1,Math.round((rpm-500)/250)))]||0;
-    wot-=(1-k)*driveLerp(el.crpm,el.mot,rpm);ov=Math.max(0,ov-reg)+r*reg*Math.min(1,rpm/500);
+    const mot=driveLerp(el.crpm,el.mot,rpm);wot-=(1-k*(soc==null?1:driveHelp(el,soc,rpm,mot)))*mot;ov=Math.max(0,ov-reg)+r*reg*Math.min(1,rpm/500);
   }
   if(rpm>=car.redline)return -ov;
   let T=thr*wot-(1-thr)*ov;
@@ -13223,7 +13248,8 @@ function stepCar(car,s,u,dt){
     // a front axle motor: its force by the front wheels' speed, by the pedal and by what the charge allows
     let Ff=0,vf=0;
     if(car.el&&car.el.front){const F=car.el.front.F;vf=Math.max(0,(s.w[0]+s.w[1])/2*car.r);const q=vf/0.5,a=Math.min(F.length-2,Math.floor(q));
-      Ff=thr*driveShares(car.el,s.soc)[0]*(F[a]+(F[a+1]-F[a])*(q-a));}
+      const full=F[a]+(F[a+1]-F[a])*(q-a),E=car.el.front,NT=E.loss.length/F.length;
+      Ff=thr*driveShares(car.el,s.soc)[0]*drivePack(car.el,s.soc,full*vf/E.eff,E.loss[a*NT+NT-1],E.share)*full;}
     if(car.ev){const rm=Math.max(0,wd)*ratio*30/Math.PI;Tw=driveEngine(car,thr,rm,null,s.soc)*ratio*car.eff;s.we=Math.abs(wd)*ratio;
       if(car.el)driveCharge(car,s,thr,rm,Ff,vf,h);}
     else{
@@ -23968,7 +23994,8 @@ function syncElectricSections(){
 // it was when it is taken off.
 function evDriveLock(on){
   const dr=document.getElementById('vhDrive');if(!dr)return;
-  if(on){if(!dr.disabled)dr.dataset.prev=dr.value;dr.value='awd';dr.disabled=true;}
+  if(on){if(!dr.disabled||dr.value!=='awd')dr.dataset.prev=dr.value;   // locked, a preset just loaded wrote its own axle here (build 279)
+    dr.value='awd';dr.disabled=true;}
   else if(dr.disabled){dr.value=dr.dataset.prev||dr.value;dr.disabled=false;}
 }
 
@@ -26140,7 +26167,8 @@ const HYB_ENGINE_PRESETS=[
   // The Porsche 918 Spyder (2013; build 195, step 3.5b): a plug-in with a motor at each end. The 4.6 V8 (95 x 81 mm, 447 kW
   // at 8700 rpm, 540 Nm at 6700, to 9150), a 115 kW motor between it and the seven-speed PDK, a 95 kW motor driving the
   // front axle through its own reduction (declutched past its top speed), and a 6.8 kWh pack of 312 cells: 652 kW and 1280
-  // Nm together (Porsche). Neither motor's torque, nor the front's reduction, is published.
+  // Nm together (Porsche). Neither motor's torque, nor the front's reduction, is published. Its fit's drive is the
+  // axle the PDK turns, the rear (build 279); the front motor makes the car all-wheel drive.
   {cat:'Hybrid',name:'Porsche 4.6 V8 + P2 + front motor (918 Spyder)',real:{hp:599.4,hpRpm:8700,tq:540,tqRpm:6700,motorKW:115,frontKW:95,sysKW:652,sysNm:1280},
    unsure:['compression','cam','motor torques','front reduction'],engine:{type:'petrol4',radiator:'large',oilCooler:true,cylinders:8,layout:'v',bore_mm:95,stroke_mm:81,compression:13.0,redline:9150,intake:'na',
     injector:'direct',vvt:true,cam:'race',valves:4,valveMat:'titanium',valveSpring:'race',octane:98,airFilter:'perf',exhaust:'race',cat:'stock',intakeSys:'efi',runner:'variable',
@@ -26170,7 +26198,7 @@ const HYB_VEHICLE_PRESETS=[
   // 1674 kg (DIN), all-wheel drive through the front motor, seven-speed PDK; 0-100 km/h 2.6 s, 0-200 7.2 s, 0-300 19.9 s,
   // 345 km/h (Porsche); Nordschleife 6:57 (Weissach package, 2013).
   {cat:'Hybrid',name:'Porsche 918 Spyder (2013)',engine:'Porsche 4.6 V8 + P2 + front motor (918 Spyder)',chassis:'hyper',
-   body:{kg:1674,cd:0.35,area:1.95,wb:2.73,fWt:0.43},fit:{drive:'awd',tire:'semi',tw:325,ta:30,wheel:21,twF:265,brake:'carbon',rotor:410,susp:'race',gears:7,gearbox:'dct',diff:'clsd'},
+   body:{kg:1674,cd:0.35,area:1.95,wb:2.73,fWt:0.43},fit:{drive:'rwd',tire:'semi',tw:325,ta:30,wheel:21,twF:265,brake:'carbon',rotor:410,susp:'race',gears:7,gearbox:'dct',diff:'clsd'},
    real:{t100:2.6,t200:7.2,top:345,limited:false},unsure:['cd','area','fWt','tyres']}
 ];
 // What a player picks from: the combustion tables, then the electric and hybrid ones.
