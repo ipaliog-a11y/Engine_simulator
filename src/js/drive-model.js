@@ -235,7 +235,7 @@ function driveEngine(car,thr,rpm,boost,soc){
 function driveLine(lap){return lap.track.line.map((q,i)=>({x:q.x,y:q.y,v:lap.v[i],grade:q.sinT||0,kv:q.kv||0}));}
 // A DRIVER FOR A LINE (build 269): the inputs that take the car round a line of points {x, y, v, grade, kv}. It reads
 // only its arguments (d is its memory: {i} the point it is at; it leaves d.e, how far left of the line the front
-// axle is). What it does is a driver's manner, not the car's physics; its settings are in the register (DRIVE_DRIVER).
+// axle is). What it does is a driver's manner, not the car's physics; its settings are in the register (DRIVE_DRIVER), kept as a rule by the owner's sign-off (build 278).
 //   Wheel    it points the FRONT TYRES, not the car: at the direction the front axle is travelling, plus the slip
 //            angle it wants from them. That is the path's direction against the axle's travel and a pull back to the
 //            line that fades with speed (the two terms of Stanley's steering law: Hoffmann et al., ACC 2007), plus the

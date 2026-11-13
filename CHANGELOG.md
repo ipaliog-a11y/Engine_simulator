@@ -20,6 +20,13 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 Working toward **v1.0 — every number derived, not fitted.**
 
+### The stepped car's driver is kept as a rule (build 278)
+
+- **`DRIVE_DRIVER` is signed off by the owner as a rule.** Its four settings (how far ahead the driver reads the road, how hard it pulls back to the line and to the plan's speed, how far past the tyre's peak it steers) are a driver's manner, not the car's physics, like `RACE_DRIVERS`. The register has 27 open entries, was 28. No number moves.
+- The stepped car's lap times against the solver (+1.6 to +3.6%) are this driver's, not the car's limit.
+
+Tests: test166 (updated).
+
 ### The stepped car through a lane change; phase E's steps are all in (build 277)
 
 Phase E, step 5 of `plans/road-to-v1.md` asked for a lane change with sensible numbers. A test only; no source changes.
