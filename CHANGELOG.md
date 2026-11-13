@@ -20,6 +20,32 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 Working toward **v1.0 — every number derived, not fitted.**
 
+### The stepped car's pack: a plug-in sets off full, and the pack's own power limit (build 279)
+
+Four follow-ups to build 275's hybrid in `stepCar`, three of them from its own "left open". Nothing in the app reads
+`stepCar` yet.
+
+- **A plug-in starts on a full pack** (the charge window's HIGH), as it does in the race; build 275 started it at its
+  target. The 918 sets off at 95% and is at 85.7% after 15 s flat out.
+- **The motors' help is cut to what the pack can give at its charge**: the lower of its rate and the power at its
+  cut-off voltage (`packMaxPower`'s law), each motor its share. The curve was already cut to that at the rated 60%;
+  lower in the window the cells' voltage is lower. Near the low the 918's pack carries 92% of the motor's full help
+  from mid revs up; the Ioniq's motor never reaches its pack's limit, so nothing changes for it. A power-split's or
+  a series hybrid's help follows the pack's power against the rated one.
+- **The front axle motor's losses are its own**, read at its speed and torque from a table of the motor
+  (`motorLosses`), not the full-help loss scaled by its share of the force.
+- **The gearbox's axle is remembered** (`vehicle.driveMech`): a front-drive hybrid given a front motor keeps its
+  engine on the front wheels in `stepCar`; build 275 sent every such car's engine to the rear. A loaded car now writes
+  its own axle, where it used to give back whatever the page showed before.
+- **The 918's gearbox turns the rear axle** (`fit.drive:'rwd'`), as its comment and Porsche describe it. The front
+  motor still makes the car all-wheel drive to every solver. Taken off, the car is rear-drive (it was all four).
+- **Now:** 0-100 Ioniq 9.35 s (solver 9.55), Prius 11.33 (11.35), 918 3.23 (2.49).
+- **What moved:** nothing: the fingerprint is identical to `main`'s (5212 values).
+- **Left open:** an electric car's pack has no such limit yet (its battery management's law only); a saved build with
+  a front motor does not remember the gearbox's axle (it reads as the rear); the rest of build 275's list.
+
+Tests: test172 (updated: a plug-in's starting charge, the pack's limit, the front motor's losses), test112, test168.
+
 ### The stepped car's driver is kept as a rule (build 278)
 
 - **`DRIVE_DRIVER` is signed off by the owner as a rule.** Its four settings (how far ahead the driver reads the road, how hard it pulls back to the line and to the plan's speed, how far past the tyre's peak it steers) are a driver's manner, not the car's physics, like `RACE_DRIVERS`. The register has 27 open entries, was 28. No number moves.

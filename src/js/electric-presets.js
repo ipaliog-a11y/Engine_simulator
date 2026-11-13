@@ -81,7 +81,8 @@ const HYB_ENGINE_PRESETS=[
   // The Porsche 918 Spyder (2013; build 195, step 3.5b): a plug-in with a motor at each end. The 4.6 V8 (95 x 81 mm, 447 kW
   // at 8700 rpm, 540 Nm at 6700, to 9150), a 115 kW motor between it and the seven-speed PDK, a 95 kW motor driving the
   // front axle through its own reduction (declutched past its top speed), and a 6.8 kWh pack of 312 cells: 652 kW and 1280
-  // Nm together (Porsche). Neither motor's torque, nor the front's reduction, is published.
+  // Nm together (Porsche). Neither motor's torque, nor the front's reduction, is published. Its fit's drive is the
+  // axle the PDK turns, the rear (build 279); the front motor makes the car all-wheel drive.
   {cat:'Hybrid',name:'Porsche 4.6 V8 + P2 + front motor (918 Spyder)',real:{hp:599.4,hpRpm:8700,tq:540,tqRpm:6700,motorKW:115,frontKW:95,sysKW:652,sysNm:1280},
    unsure:['compression','cam','motor torques','front reduction'],engine:{type:'petrol4',radiator:'large',oilCooler:true,cylinders:8,layout:'v',bore_mm:95,stroke_mm:81,compression:13.0,redline:9150,intake:'na',
     injector:'direct',vvt:true,cam:'race',valves:4,valveMat:'titanium',valveSpring:'race',octane:98,airFilter:'perf',exhaust:'race',cat:'stock',intakeSys:'efi',runner:'variable',
@@ -111,7 +112,7 @@ const HYB_VEHICLE_PRESETS=[
   // 1674 kg (DIN), all-wheel drive through the front motor, seven-speed PDK; 0-100 km/h 2.6 s, 0-200 7.2 s, 0-300 19.9 s,
   // 345 km/h (Porsche); Nordschleife 6:57 (Weissach package, 2013).
   {cat:'Hybrid',name:'Porsche 918 Spyder (2013)',engine:'Porsche 4.6 V8 + P2 + front motor (918 Spyder)',chassis:'hyper',
-   body:{kg:1674,cd:0.35,area:1.95,wb:2.73,fWt:0.43},fit:{drive:'awd',tire:'semi',tw:325,ta:30,wheel:21,twF:265,brake:'carbon',rotor:410,susp:'race',gears:7,gearbox:'dct',diff:'clsd'},
+   body:{kg:1674,cd:0.35,area:1.95,wb:2.73,fWt:0.43},fit:{drive:'rwd',tire:'semi',tw:325,ta:30,wheel:21,twF:265,brake:'carbon',rotor:410,susp:'race',gears:7,gearbox:'dct',diff:'clsd'},
    real:{t100:2.6,t200:7.2,top:345,limited:false},unsure:['cd','area','fWt','tyres']}
 ];
 // What a player picks from: the combustion tables, then the electric and hybrid ones.

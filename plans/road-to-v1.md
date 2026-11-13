@@ -96,6 +96,8 @@ it needs must load without the page (no DOM, no canvas), so a separate game app 
    `tests/test172.mjs`). Open: the engine stopping, a power-split's engine speed, heat.
    *Build 276:* all-wheel drive's axles turn together, and the launch is the solver's (`driveLaunch`): 0-100 within
    6% on the test's five cars.
+   *Build 279:* a plug-in sets off full, the help is cut to the pack's own power at its charge, the front motor's
+   losses are its own, and the gearbox's axle is remembered beside a front motor.
 4. Brakes, ABS and traction control per wheel, in time.
 5. *Tried at build 264, not kept.* A pure-pursuit driver holding the lap solver's speeds lapped the WRX STI 9-11% off
    the solver, and slid the rear-drivers off at the first fast corner, even at 94% of the speeds. Two causes found:
