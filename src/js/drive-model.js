@@ -85,7 +85,7 @@ function driveCar(){
   // the axles' cornering stiffness at the static loads (N/rad), for the understeer gradient K = m/L^2 (b/Cf - a/Cr)
   const Cax=(W,ref)=>2*cc*(W/2)*(TYRE_CC_P2+1)/(TYRE_CC_P2+Math.pow(W/2/ref,2));
   const Kus=v.mass/(L*L)*(b/Cax(v.mass*DRIVE_G*b/L,v.FzRefF||v.FzRef)-a/Cax(v.mass*DRIVE_G*a/L,v.FzRef));
-  if(aids.espBeta==null)aids.espBeta=Math.atan(3*muR/cc);
+  if(aids.espBeta==null)aids.espBeta=(aids.espSlide||1)*Math.atan(3*muR/cc);
   return {
     aids,esp:!!aids.esp,Kus,pkF:Math.atan(3*tyreMu(v.FzRefF||v.FzRef,v.FzRefF||v.FzRef)/cc),
     turbo:grid&&grid.laggy?driveTurbo(pt,grid):null,el,
@@ -261,6 +261,43 @@ function driveEngine(car,thr,rpm,boost,soc){
   let T=thr*wot-(1-thr)*ov;
   if(!car.ev&&rpm<car.idle)T+=Math.min(0.4*wot+ov,(car.idle-rpm)*0.5);
   return T;
+}
+// THREE MANOEUVRES THAT SHOW WHAT THE AIDS DO (build 280), each from a car as plain data.
+// A car rolling at vk km/h in the highest gear that keeps the engine at 2000 rpm.
+function driveRolling(car,vk){
+  const v=vk/3.6,s=driveState(car);s.vx=v;s.w=s.w.map(()=>v/car.r);
+  for(let g=car.ratios.length;g>=1;g--){s.gear=g;if(v/car.r*car.ratios[g-1]*car.fd*30/Math.PI>=2000)break;}
+  s.we=v/car.r*car.ratios[s.gear-1]*car.fd;return s;
+}
+// A full stop from 100 km/h: the distance (m) and whether a wheel locked.
+function driveStop100(car){
+  const s=driveRolling(car,100);let lock=false;
+  while(s.vx>0.3&&s.t<15){stepCar(car,s,{steer:0,throttle:0,brake:1},0.005);if(s.vx>3&&s.w.some(w=>w*car.r<0.2*s.vx))lock=true;}
+  return {dist:s.x,lock};
+}
+// A standing start to 100 km/h, flat out: the time (s; null if it never gets there) and the most the driven tyres slipped.
+function driveSprint(car){
+  const s=driveLaunch(car);let slip=0;
+  while(s.vx<100/3.6&&s.t<30){stepCar(car,s,{steer:0,throttle:1,brake:0},0.005);for(let i=0;i<4;i++)slip=Math.max(slip,s.kappa[i]);}
+  return {t:s.vx>=100/3.6?s.t:null,slip};
+}
+// FMVSS 126's sine with dwell, the rule a stability control is approved on (49 CFR 571.126): from 80 km/h off the
+// pedal, one cycle of a 0.7 Hz sine on the wheel with a 0.5 s hold at its second peak, at mult (up to 6.5) times the
+// steering that gives 0.3 g, and no more than 270 degrees at the hand wheel. It passes with the yaw rate under 35% of
+// its peak 1 s after the steering ends and under 20% after 1.75 s, and 1.83 m moved sideways 1.07 s in.
+// Returns those, the most the car went sideways (deg) and its path [[x, y, heading]...] every 0.1 s.
+function driveSineDwell(car,mult){
+  const s=driveRolling(car,80),v=80/3.6,L=car.a+car.b,T=1/0.7,t0=0.5,end=t0+T+0.5;
+  const A=Math.min((mult||6.5)*0.3*DRIVE_G*L*(1+car.Kus*v*v)/(v*v),car.steerLock*4.71/8.5);
+  const st=t=>t<0?0:t<0.75*T?Math.sin(2*Math.PI*0.7*t):t<0.75*T+0.5?-1:t<T+0.5?Math.sin(2*Math.PI*0.7*(t-0.5)):0;
+  let pk=0,y=0,r1=0,r175=0,beta=0,n=0;const path=[];
+  while(s.t<end+2){const t=s.t-t0;stepCar(car,s,{steer:A*st(t)/car.steerLock,throttle:0,brake:0,gear:s.gear},0.005);
+    if(t>0.5*T)pk=Math.max(pk,Math.abs(s.yaw));if(Math.abs(t-1.07)<0.003)y=Math.abs(s.y);
+    if(Math.abs(s.t-end-1)<0.003)r1=Math.abs(s.yaw);if(Math.abs(s.t-end-1.75)<0.003)r175=Math.abs(s.yaw);
+    beta=Math.max(beta,Math.abs(Math.atan2(s.vy,Math.max(1,s.vx)))*180/Math.PI);
+    if(n++%20===0)path.push([s.x,s.y,s.psi]);}
+  r1/=pk||1;r175/=pk||1;
+  return {r1,r175,y,beta,path,pass:r1<=0.35&&r175<=0.20&&y>=1.83};
 }
 // A lap's racing line as plain data for the driver below: where it runs, how fast the lap solver takes each point, and
 // the road's height there. lap is what simulateLap() returns.

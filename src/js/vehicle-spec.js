@@ -123,6 +123,11 @@ function readVehicleFromForm(){
     limitKmh:clamp(Math.round(+g('vhLimitKmh').value||250),80,400),
     // Traction control (build 154): the ECU holds the driven tyres at their best slip. Off, the launch is the driver's.
     tc:g('vhTC').value!=='off',
+    // The driver aids' calibration (build 280), read by the stepped car (DRIVE_AIDS, src/js/drive-model.js): the slip
+    // ABS releases at per axle and the traction control's target, as multiples of the tyre's peak slip; how far the
+    // rear tyres may slide before the stability control works, as a multiple of the slip angle they peak at.
+    aids:{abs:g('vhAbs').value!=='off',absSlip:[clamp(numOr(g('vhAbsF').value,1.3),1,3),clamp(numOr(g('vhAbsR').value,1.3),1,3)],
+      tcSlip:clamp(numOr(g('vhTcSlip').value,1),0.5,3),esp:g('vhEsp').value!=='off',espSlide:clamp(numOr(g('vhEspSlide').value,1),1,3),espCut:g('vhEspCut').value!=='off'},
     // Gear spacing (build 169): CLOSE / STANDARD / WIDE, STOCK (a real car's own box) or CUSTOM. The hand-set ratios
     // and a hand-set final drive (0 = matched to the engine) live beside the form, like the body.
     spacing:g('vhSpacing').value,ratioSet:vehRatioSet?vehRatioSet.slice():null,finalDriveSet:vehFinalDriveSet,
@@ -163,6 +168,12 @@ function fillSpacingSelect(hasBody,val){
   sel.innerHTML=opts.map(k=>'<option value="'+k+'">'+esc(tr(k==='stock'?'STOCK':k==='custom'?'CUSTOM':GEAR_SPACING[k].label))+'</option>').join('');
   sel.value=opts.includes(val)?val:(hasBody?'stock':'std');
 }
+// The driver aids' fields from a saved calibration, or the defaults: ESP where there is traction control (build 280).
+function applyAidsToForm(a,tc){
+  const g=id=>document.getElementById(id),s=a&&a.absSlip||DRIVE_AIDS.absSlip;a=a||{};
+  g('vhAbs').value=a.abs===false?'off':'on';g('vhAbsF').value=s[0];g('vhAbsR').value=s[1];g('vhTcSlip').value=a.tcSlip||DRIVE_AIDS.tcSlip;
+  g('vhEsp').value=(a.esp==null?tc:a.esp)?'on':'off';g('vhEspSlide').value=a.espSlide||1;g('vhEspCut').value=a.espCut===false?'off':'on';
+}
 function applyVehicleToForm(v){
   const g=id=>document.getElementById(id);
   vehBody=v.body||null;
@@ -171,6 +182,7 @@ function applyVehicleToForm(v){
   if(v.speedRating&&SPEED_RATING[v.speedRating])g('vhRating').value=v.speedRating;
   g('vhLimiter').value=v.governor>0?'on':'off';g('vhLimitKmh').value=v.governor>0?v.governor:(v.limitKmh||250);
   g('vhTC').value=v.tc===false?'off':'on';   // saves from before build 154 carry none: on
+  applyAidsToForm(v.aids,v.tc!==false);
   g('vhChassis').value=v.chassis||'coupe';g('vhDrive').value=v.drive||'rwd';g('vhGearbox').value=v.gearbox||'manual';g('vhDiff').value=v.diff||'open';
   g('vhGears').value=v.gears||6;g('vhGearing').value=v.gearing!=null?v.gearing:52;
   g('vhTire').value=v.tireType||'sport';g('vhTireW').value=v.tireWidth||235;g('vhTireWF').value=v.tireWidthF||0;g('vhTireA').value=v.tireAspect||40;g('vhWheel').value=v.wheelDia||18;
@@ -206,6 +218,7 @@ function applyChassisFit(key,body){
   // A governor is factory equipment of a real car; an archetype ships without one.
   g('vhLimiter').value=f.gov>0?'on':'off';if(f.gov>0)g('vhLimitKmh').value=f.gov;
   g('vhTC').value=f.tc===false?'off':'on';   // a real car's traction control is factory equipment (build 154)
+  applyAidsToForm(null,f.tc!==false);
   g('vhAeroF').value=f.aF;g('vhAeroR').value=f.aR;g('vhAeroFl').value=f.aFl;g('vhWeight').value=f.weight;
   g('vhBrake').value=f.brake;g('vhRotor').value=f.rotor;g('vhSusp').value=f.susp;
   {const fg=factoryGeo({chassis:key,body});g('vhGeoF').value=fg.f;g('vhGeoR').value=fg.r;}

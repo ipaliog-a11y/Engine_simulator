@@ -20,6 +20,18 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 Working toward **v1.0 — every number derived, not fitted.**
 
+### The driver aids as a card: ECU: DRIVER AIDS (build 280)
+
+Phase E, step 4, second pass: the second of two builds. The player can now set what build 279 made tunable, and see what it does.
+
+- **A new card on the VEHICLE tab, ECU: DRIVER AIDS**, with eight fields: ABS on or off and the slip it releases at, front and rear (1 to 3 x the tyre's peak slip); TRACTION CONTROL (moved here from CHASSIS & DRIVE) and its slip target (0.5 to 3 x); STABILITY CONTROL (ESP), how far the rear may slide before it works (1 to 3 x the slip angle the tyres peak at), and its engine cut. They are saved with the car (`vehicle.aids`). A factory car loads the defaults, with ESP where it has traction control.
+- **The card's picture is the car in a test, from above:** FMVSS 126's sine with dwell at 80 km/h, green as set and red with ESP off, with three figures under it: how far sideways the car went and whether it passed, the stop from 100 km/h (and whether a wheel locked), and the standing start with the most the tyres slipped. Model 3: 12 degrees and a pass, 84 degrees and a spin with ESP off, 17 degrees with 1.5 x the slide allowed; 39.6 m, 44.5 m with a wheel locked without ABS; tyre slip 24%, 42% with the traction control at twice the peak.
+- **The three tests are functions of the stepped car** (`driveSineDwell`, `driveStop100`, `driveSprint` in `src/js/drive-model.js`), so a game can call them too. They run only while the card's picture is on screen, once per change.
+- **Changed from what was agreed:** the sine with dwell stands in for the ISO lane change and the skidpad. It is the test stability controls are approved on, it needs one run where the lane change needs a search over lines and speeds, and a steady skidpad does not wake any of the three systems.
+- **Left open:** the lap and the 0-100 do not read these settings (they hold the tyre at its peak), and the card says so. The rates (ABS release and reapply, the traction control's gain, the ESP's band and response time) are in `car.aids` but have no fields. There is no SPORT preset for ESP: slide 1.5 with the engine cut off is one. The guide has no page for the card yet (Greek is paused, and a guide block needs its Greek).
+
+Tests: test175 (new), test157 (eight cards).
+
 ### ABS, traction control and stability control as a tune of the stepped car (build 279)
 
 Phase E, step 4 of `plans/road-to-v1.md`, second pass: the first of two builds. The driver aids were fixed numbers inside `stepCar`, and there was no stability control. Nothing in the app reads this yet; the card that edits it is the next build.
