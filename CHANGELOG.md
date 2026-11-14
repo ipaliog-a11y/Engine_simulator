@@ -28,6 +28,8 @@ they are accurate about *what* shipped but not about the day it shipped.
   (the factory curve's own floor), then lowers the boost until it no longer knocks (`knockLimitBoost`, solved per engine
   like the torque limit). Only on its own derived spark table and factory fuel map; FIXED timing or an edited table gets
   no knock control, as before. No preset reaches the furthest retard, so this acts on player builds only.
+- Fingerprint: no preset's peak power, torque or 0–100 moves. The hotter exhaust moves back pressure and residual gas
+  slightly: 673 values by at most 0.13% (Prius cycle fuel 4.459 → 4.453 l/100 km; TwinAir 0–60 mph 9.520 → 9.525 s).
 - Left open: rich mixtures do not cool the exhaust in this model (the release is capped at stoichiometric), so the
   retard floor is not limited by exhaust temperature; doing that would cut boost on presets whose modelled EGT is already
   over 950 °C at best spark. The turbine's shaft balance and the catalyst check still read the exhaust at best-torque
