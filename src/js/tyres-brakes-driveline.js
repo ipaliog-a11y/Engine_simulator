@@ -134,11 +134,33 @@ function brakeForceCap(v){
   // deceleration from 0.15 to 0.8 g, so the front's share of the braking is at least its share of the load while
   // braking at 0.8 g, fWt + 0.8 h/L; makers sit at that line, where the rears do the most they safely can. The front
   // calipers stay the kit's, and the rear's force follows.
+  if(v.brakePart){const q=brakePartPress(v.brakePart),r=q.r*axle(Array(v.brakePart.rearPistons).fill(v.brakePart.rearPistonD_mm),v.brakePart.rearRotor_mm/1000);
+    v.brakeFrontShare=q.f*f/(q.f*f+r);return (q.f*f+r)/v.rTire;}
   const ideal=v.fWt>0&&v.wb>0?v.fWt+R13H_Z*(v.cg||0.5)/v.wb:0;
   const fH=ideal>0?clamp(ideal,0.5,0.85):f/(f+axle(bt.caliper.r,0.9*v.rotor/1000));
   const r=f*(1-fH)/fH;
   v.brakeFrontShare=fH;
   return (f+r)/v.rTire;
+}
+// ---- brake balance as a part (build 312) ----
+// A race pedal box: the pedal pushes a balance bar between two master cylinders, one for each axle. The bar's pivot
+// gives the front cylinder `bar` of the pedal's force and the rear the rest, and each cylinder's bore turns its force
+// into its line's pressure, p = F / (pi/4 d^2). The driver's push stays the one BRAKE_LINE_BAR is quoted at: a 50/50
+// bar on two cylinders of the reference bore gives each line BRAKE_LINE_BAR, as one cylinder does. Reference bore
+// 0.75 in (19.05 mm), the most fitted size in the makers' race ranges (Tilton 78-series, AP Racing CP2623; PROBABLE as
+// "typical"). The front calipers and rotor stay the kit's; the rear caliper (pistons a side) and rotor are the part's.
+// The front share is then the hydraulics' alone, f/(f+r), in place of the R13-H line the factory rear is sized to.
+const BRAKE_MC_REF_MM=19.05;
+function brakePartPress(p){
+  const k=d=>(BRAKE_MC_REF_MM/d)*(BRAKE_MC_REF_MM/d);
+  return {f:2*p.bar_pct/100*k(p.mcF_mm),r:2*(1-p.bar_pct/100)*k(p.mcR_mm)};   // each line's pressure over BRAKE_LINE_BAR
+}
+// The deceleration (g) at which each axle reaches its grip with no ABS, at a fixed front share fH, the tyres' grip mu,
+// the static front share fW and h/L: the front at mu fW/(fH - mu h/L), the rear at mu (1-fW)/(1-fH + mu h/L). The
+// first to arrive locks; past the crossover zc = (fH - fW) L/h the rear locks first (R13-H wants zc >= 0.8).
+function brakeLockOrder(fH,mu,fW,hL){
+  const zF=fH>mu*hL?mu*fW/(fH-mu*hL):Infinity,zR=mu*(1-fW)/(1-fH+mu*hL);
+  return {zF,zR,z:Math.min(zF,zR),first:zF<=zR?'front':'rear',zc:(fH-fW)/hL};
 }
 // ---- brake temperature (build 107; cooling rebuilt in build 110) ----
 // Each rotor is a lump of material heated by the brakes and cooled by the air, and its pads lose grip
