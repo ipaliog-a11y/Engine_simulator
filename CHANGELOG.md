@@ -18,6 +18,18 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 ## [Unreleased]
 
+### A hybrid's engine on the bench is heard at its own throttle (build 295)
+
+Step B of `plans/hybrid-electric/gas-sound-hybrid.md` (the plan arrives with step A, PR #241).
+- **The sound reads the engine's throttle, not the pedal.** In AUTO, HOLD and CHARGE the ECU sets the engine's throttle
+  (`H.thrE`); the sound read the pedal, so an engine charging with the pedal up was heard as on a lift: the turbo's whine
+  unloaded, the overrun's crackle and the blow-off armed. It now reads `H.thrE` through `withEngThr`, as the bench's
+  engine physics already did. On the 330e in CHARGE, pedal up: the sound hears 0.23 (was 0), the whine 4x louder.
+- SPORT and ENGINE are unchanged (the engine's throttle is the pedal). Sound only; the fingerprint is identical.
+- **Left open:** steps C–E (start and stop spin-up, each mode checked, the worklet idle while muted).
+
+Tests: test180 (new); 114, 74.
+
 ### A compound turbo is two stages in series (build 294)
 
 Phase B, step 3 of `plans/road-to-v1.md`: `TURBO_CONFIG`'s last multiple (a compound's 2.30 of one wheel's flow) is retired.

@@ -1063,7 +1063,13 @@ function updateSound(){
   updateMotorSound(Sound.ctx.currentTime);   // the electric drive's voice, beside the engine's (build 198)
   if(!Sound.on)return;
   if(isElectric()||hybBenchEngineOff()&&vizMode!=='track')return muteEngineSound();   // a motor has no engine to hear (its own voice: updateMotorSound); a hybrid's engine may be off (build 190)
-  const t=Sound.ctx.currentTime,src=soundSource(),s=src||state;
+  const src=soundSource();
+  // a hybrid's engine on the bench runs at the ECU's throttle (H.thrE: AUTO, HOLD and CHARGE set it), not the pedal's
+  if(src===state&&isHybrid()&&hybBench&&hybBench.hy===engine.hy)return withEngThr(hybBench,()=>engineSound(src));
+  engineSound(src);
+}
+function engineSound(src){
+  const t=Sound.ctx.currentTime,s=src||state;
   // Rotaries sit bright & smooth, diesels dark & clattery; the note opens up with revs.
   const bright=(440+s.rpm*0.15+engine.cylinders*8)*(engine.type==='rotary'?1.5:engine.ci?0.6:1.0);
   if(Sound.node){
