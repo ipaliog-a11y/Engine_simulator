@@ -1,4 +1,4 @@
-# PIXEL ENGINE SIM v0.7 build 297
+# PIXEL ENGINE SIM v0.7 build 298
 
 **A lightweight, 8-bit style internal combustion engine *designer* & simulator** inspired by *Automation*.
 
@@ -276,7 +276,7 @@ assist map over speed and pedal), regeneration, load-point shifting, electric-dr
     drivers), and the car just passed can take the place straight back. Each car has a driver: balanced,
     aggressive, smooth, rain master or rookie, each with its own aggression, consistency, tyre care and wet skill.
   - **Racecraft is a rule layer.** A faster car is held up until it has a few km/h on a straight or
-    into a braking zone; slipstream, dirty air, blue flags, pit-lane loss, lap-to-lap driver
+    into a braking zone; blue flags, lap-to-lap driver
     variation and the odd mistake are rules, seeded, so the same seed replays the same race.
 
   ![race](docs/race.png)
@@ -929,8 +929,9 @@ documented in the GUIDE at the point where it matters:
   - **Unpublished inputs:** the cars' factory roll balance and their real tyre load sensitivity per axle are not
     published. Every car starts at NEUTRAL roll balance, though a real road car's factory setup understeers a
     little more.
-- **The race's racecraft is rules, not physics.** Overtaking, pit-lane loss and
-  driver error are rules with fitted numbers (the tow and dirty air come from measured wakes since build 295). The cars share one racing line rather than fighting for
+- **The race's racecraft is rules, not physics.** Overtaking and
+  driver error are rules with fitted numbers (the tow and dirty air come from measured wakes since build 295; the
+  pit lane's loss from its length and limit and the car's own speed since build 298). The cars share one racing line rather than fighting for
   space on it, and the tyre model's heat, grip-window, wear and wet-grip constants are fitted to the
   usual published ranges, not derived. When the rain comes and how fast a line dries are rules drawn
   from the seed, not a forecast.

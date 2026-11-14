@@ -18,6 +18,23 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 ## [Unreleased]
 
+### The pit lane costs what its length and limit take from each car (build 298)
+
+Phase F, step 4 of `plans/road-to-v1.md`, the pit lane; `RACE.pitLoss` (one 20 s for every car and circuit) is retired.
+- **The loss is derived** (`racePitLoss`): the lane at its 60 km/h limit, half before the box and half after, against the
+  car's own solved speed over the same stretch, plus braking into the lane at the tyre's grip and the stop and launch at
+  the box from the car's own standing start. A Civic Type R or a 911 GT3 loses 11-19 s (Spa 11-13 s, where the lane's
+  entry half crosses the Bus Stop chicane; the Nordschleife 19 s).
+- **The lane's length** is 400 m, the middle of the published lanes (281-426 m), except where a circuit's own figure is
+  found: Albert Park 281 m, Bahrain 426 m (both probable, secondary sources). No table of every circuit is published,
+  and the figures that are differ by where they measure from (Interlagos: 380 m and 1140 m).
+- The strategy, the wet-tyre call and the race log read the car's own loss. The 60 km/h limit, the crew's 6 s and
+  2.5 L/s stay rules.
+- Open: each real circuit's lane length; the lane's own line (it runs beside the track, not on it).
+- Fingerprint: only the race moves. `tests/test182.mjs` checks the derivation.
+
+Tests: test182 (new); 71, 79, 166, 51, 73.
+
 ### A power-split or series hybrid's engine is heard where the lap runs it (build 297)
 
 - **The lap replay played the wrong engine.** On the TRACK tab a Prius's or an e-POWER's engine sounded on its full-load line whenever the throttle was open, and idled off it, while the lap's fuel had it on its best line at the power it actually gave (the shaft's power less the pack's), and stopped off the power. The sound now reads the same engine power as the fuel (`psEnginePower`, shared), so the two agree: on the Prius's lap the engine runs at 379 of 442 points and is silent at the other 63, at the best line's speed exactly.
