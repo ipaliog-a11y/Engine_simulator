@@ -60,15 +60,15 @@ function hybAssistShare(nf,pedal,t){
 const hybAssistWindow=(e,rpm)=>{const t=hybTune(e);return e.hyDeploy==='above'?(rpm>=t.rpm?1:0):e.hyDeploy==='below'?(rpm<=t.rpm?1:0):1;};
 // A hybrid's motor and pack when HYBRID is first chosen: a pancake motor in the bellhousing (200 mm across, 40 mm long,
 // 12 poles) and a 1.56 kWh pack of hybrid cells, the size of the Ioniq Hybrid's 32 kW / 170 Nm system.
-const HYB_DEFAULT={evMotorType:'pm',evRotorD:200,evStack:40,evPoles:12,evTurns:33,evMagnet:'ndfeb',evRetention:'bridges',evCooling:'jacket',
+const HYB_DEFAULT={evMotorType:'pm',evRotorD:200,evStack:40,evPoles:12,evTurns:30,evMagnet:'ndfeb',evRetention:'bridges',evCooling:'jacket',
   evMaxRpm:8000,evInverter:'igbt',evAmps:400,evRearCount:1,evFront:'none',evChem:'liHEV',evSeries:64,evKWh:1.56,evYear:2016};
 // A power-split's when it is first chosen (build 189): the 4th-generation Prius's MG2 (53 kW and 163 Nm on the 600 V bus,
 // 17,000 rpm) and its 1.31 kWh nickel-metal hydride pack of 168 cells (201.6 V).
-const HYB_DEFAULT_PS={evMotorType:'pm',evRotorD:150,evStack:60,evPoles:8,evTurns:103,evMagnet:'ndfeb',evRetention:'bridges',evCooling:'jacket',
+const HYB_DEFAULT_PS={evMotorType:'pm',evRotorD:150,evStack:60,evPoles:8,evTurns:92,evMagnet:'ndfeb',evRetention:'bridges',evCooling:'jacket',
   evMaxRpm:17000,evInverter:'igbt',evAmps:100,evRearCount:1,evFront:'none',evChem:'nimhHEV',evSeries:168,evKWh:1.31,evYear:2016};
 // A series hybrid's when it is first chosen (build 193): the Nissan Qashqai e-POWER's traction motor (140 kW, 330 Nm) and
 // its 2.1 kWh pack of hybrid cells.
-const HYB_DEFAULT_SERIES={evMotorType:'pm',evRotorD:160,evStack:100,evPoles:8,evTurns:26,evMagnet:'ndfeb',evRetention:'bridges',evCooling:'jacket',
+const HYB_DEFAULT_SERIES={evMotorType:'pm',evRotorD:160,evStack:100,evPoles:8,evTurns:23,evMagnet:'ndfeb',evRetention:'bridges',evCooling:'jacket',
   evMaxRpm:14000,evInverter:'igbt',evAmps:450,evRearCount:1,evFront:'none',evChem:'liHEV',evSeries:96,evKWh:2.1,evYear:2021};
 const HYB_SOC=0.6;   // a charge-sustaining hybrid holds its pack about here, with room above it to take back braking
 const isHybrid=()=>!!engine&&engine.type!=='electric'&&!!engine.hy;
@@ -121,14 +121,15 @@ function hybFrontTq(hy,rpm){
 const HYB_FRONT_EFF=0.97;
 function hybFrontSetup(v){
   const hy=engine.hy,f=hy&&hy.front;if(!f){v.frontFd=0;v.frontTab=null;return;}
+  const nTop=motorTopRpm(f.motor,hybBusV(hy));   // where it has torque to give (build 302: the voltage can end it early)
   // the car's top speed on everything it has: the engine and main motor's peak, and the front motor's
   const c=hybCurves();let P=0,Pf=0;c.eng.forEach((q,i)=>{P=Math.max(P,(q.tq+c.mot[i])*q.rpm*Math.PI/30);});
-  for(let r=200;r<=f.motor.nMax;r+=200)Pf=Math.max(Pf,hybFrontTq(hy,r)*r*Math.PI/30);
+  for(let r=200;r<=nTop;r+=200)Pf=Math.max(Pf,hybFrontTq(hy,r)*r*Math.PI/30);
   const vMax=dragLimitedV((P+Pf)/1000*v.driveEff,v.cdA,v.crr,v.mass);
-  v.frontFdMatched=vMax>1?f.motor.nMax*2*Math.PI*v.rTire/60/vMax:8;
+  v.frontFdMatched=vMax>1?nTop*2*Math.PI*v.rTire/60/vMax:8;
   v.frontFd=f.fd>0?f.fd:v.frontFdMatched;
   // the wheel force every 0.5 m/s, at full deploy (the lap's deploy share scales it)
-  const tab=[];for(let k=0;k<=260;k++){const vv=k*0.5,n=vv/v.rTire*v.frontFd*30/Math.PI;tab.push(n>f.motor.nMax?0:hybFrontTq(hy,n)*v.frontFd*HYB_FRONT_EFF/v.rTire);}
+  const tab=[];for(let k=0;k<=260;k++){const vv=k*0.5,n=vv/v.rTire*v.frontFd*30/Math.PI;tab.push(n>nTop?0:hybFrontTq(hy,n)*v.frontFd*HYB_FRONT_EFF/v.rTire);}
   v.frontTab=tab;
 }
 // The front motor's force at the wheels (N) at a road speed (m/s).

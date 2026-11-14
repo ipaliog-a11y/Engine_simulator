@@ -224,8 +224,8 @@ function evdDrawViz(){
   }
   cv=evdG('evdViz-wind');
   if(evdShown(cv)){
-    const x=evdCtx(cv),W=cv.width,H=cv.height,pad=18,iw=W-pad*2,ih=H-pad*2-8,m=r.m.parts?r.m.parts[0].m:r.m,psi=motorPsi(m,60);
-    const vMax=r.V/Math.sqrt(6)*Math.SQRT2,emf=n=>(m.vDrop||V_DROP)*m.p*psi*n*Math.PI/30,top=vMax*2.2;
+    const x=evdCtx(cv),W=cv.width,H=cv.height,pad=18,iw=W-pad*2,ih=H-pad*2-8;
+    const vMax=r.V/Math.sqrt(6)*Math.SQRT2,emf=n=>vMax*n/Math.max(1,r.knee),top=vMax*2.2;
     const X=n=>pad+n/r.top*iw,Y=v=>pad+ih-Math.min(v,top)/top*ih;
     x.strokeStyle=C.edge;x.lineWidth=1;x.strokeRect(pad+.5,pad+.5,iw,ih);
     x.strokeStyle=C.cyan;x.lineWidth=2;x.beginPath();x.moveTo(X(0),Y(vMax));x.lineTo(X(r.top),Y(vMax));x.stroke();
