@@ -89,6 +89,12 @@ hybrid controllers; each fitted number found gets a part or a cited rule.
 4. The cell as a part, from named datasheets: `CHEM`, `PACK_FACTOR`, the 10% for busbars.
 5. Cited or signed off, no new physics: `INVERTER` (named modules), `RETENTION`, `ACTIVE_TO_MOTOR`, `EV_BMS`, the cage's
    leakage.
+*Build 292 (owner's choice: steps 1 and 2 together):* the magnets are bars in a V and their flux comes from a magnetic
+circuit through M270-35A's curve; `FLUX_KM` retired, the Model 3's back-EMF lands at 41.8 V/krpm against 42. *Build 293:* the
+teeth and yoke sized from that flux at the top of Pyrhonen's Table 6.1 (tooth 2.0 T, yoke 1.5 T); the slot is what is left.
+Left in `MOTOR.statorShape`: the outside diameter (bore over 0.67), which Table 6.2's current densities would set. Next:
+`SAT_K` from the same curve under load, the iron loss on each part's own density (`MOTOR.ironShare`), then the d and q
+inductances (`MOTOR.fieldWeakening`).
 
 Beyond the register (not started, the owner's choice): a fast-charge curve from the charge-voltage and plating limits
 the pack already has; the pack's temperature in the lap, cycle and race (they still read the 25 °C resistance); a
