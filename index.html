@@ -502,6 +502,24 @@ table.hy-map td:focus{outline:2px solid #ffcc00;outline-offset:-2px}
 .showcase{position:fixed;inset:0;z-index:72;background:#0a0a12;display:grid;grid-template-rows:auto auto minmax(0,1fr);overflow:hidden}
 .showcase[hidden]{display:none!important}
 body.showcase-open{overflow:hidden}
+/* GUIDED BUILD (build 308): the showcase's page, holding one question at a time, then the car it gives */
+.guided{grid-template-rows:auto minmax(0,1fr)}
+body.guided-open{overflow:hidden}
+.gb-body{overflow-y:auto;padding:14px 16px 24px;max-width:760px;width:100%;margin:0 auto;box-sizing:border-box}
+.gb-body h3{font-size:10px;line-height:1.6;color:#eee;font-weight:normal;margin:6px 0 12px;overflow-wrap:anywhere}
+.gb-body h3 span{color:#ffcc00}
+.gb-body h4{font-size:8px;color:#ffcc00;font-weight:normal;margin:16px 0 8px}
+.gb-step{font-size:7px;color:#778}
+.gb-opts{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:8px}
+.gb-opt{font-size:8px;line-height:1.6;padding:10px;text-align:left;box-shadow:2px 2px 0 #000;overflow-wrap:anywhere}
+.gb-opt span{display:block;font-size:7px;color:#889;margin-top:4px}
+.gb-opt.on{border-color:#00ff88;color:#00ff88}
+.gb-art{display:block;width:100%;height:auto;aspect-ratio:3/2;object-fit:cover;border:2px solid #333;background:#1b2433}
+.gb-why{font-size:7px;line-height:1.7;color:#aab;margin-bottom:10px}
+.gb-parts{list-style:none;padding:0;margin:0;display:grid;gap:8px;font-size:7px;line-height:1.7;color:#bbc}
+.gb-parts b{color:#00ff88;font-weight:normal}
+.gb-parts i{font-style:normal;color:#667}
+.gb-act{display:grid;margin:8px 0}
 .sc-bar{display:flex;align-items:center;gap:12px;padding:12px 16px;background:linear-gradient(180deg,#1a1a2e 0%,#0a0a12 100%);border-bottom:4px solid #333}
 .sc-bar h2{font-size:12px;color:#ffcc00;text-shadow:2px 2px 0 #000,-1px -1px 0 #aa6600;font-weight:normal;letter-spacing:1px}
 .sc-count{flex:1;font-size:7px;color:#667}
@@ -555,6 +573,16 @@ body.showcase-open{overflow:hidden}
 .lamp.lamp-stub{color:#333;border-color:#222;opacity:0.55}
 .lamp.lamp-stub .lamp-dot{background:#14141a;border-color:#222}
 #livePanel.folded .dash-lamps{margin:2px 0 0}
+/* Check-engine lamp and its code list (build 309) */
+.lamp.lamp-click,.lamp.lamp-click:hover{cursor:pointer}
+.lamp.lamp-blink .lamp-dot{animation:lampBlink 0.5s steps(1) infinite}
+@keyframes lampBlink{50%{background:#1a1a22}}
+.obd-panel{margin:2px 0 4px;padding:6px;border:2px solid #2a2a3a;background:#0a0a10;font-size:7px;line-height:1.6;overflow-wrap:anywhere}
+.obd-panel .obd-h{color:#ffaa00;margin-bottom:4px}
+.obd-panel .obd-code{margin:4px 0;padding-left:6px;border-left:3px solid #555}
+.obd-panel .obd-confirmed{border-left-color:#ff4444}
+.obd-panel .obd-pending{border-left-color:#ffaa00}
+.obd-panel .obd-ff{color:#889}
 #dashPowerRow{margin-top:0;margin-bottom:8px}
 .fold-btn{font-size:9px;line-height:1;padding:2px 7px;min-width:0}
 /* DYNO's MORE menu: the buttons below RESET, dropped down under MORE (a button that opens a panel of buttons, not a select) */
@@ -761,6 +789,7 @@ body.showcase-open{overflow:hidden}
 <button type="button" data-go="guide">OPEN WIKI</button>
 <button type="button" data-go="options">SETTINGS</button>
 <button type="button" data-go="showcase">CAR SHOWCASE</button>
+<button type="button" data-go="guided">GUIDED BUILD</button>
 </nav>
 <p class="title-hint">ARROWS SELECT · ENTER OPENS</p>
 <p class="title-ver" id="titleVer"></p>
@@ -773,9 +802,14 @@ body.showcase-open{overflow:hidden}
 <div class="sc-filters" id="scFilters" role="toolbar" aria-label="Car families"></div>
 <div class="sc-body"><div class="sc-grid" id="scGrid"></div><aside class="sc-detail" id="scDetail" aria-live="polite"></aside></div>
 </div>
+<!-- GUIDED BUILD (build 308): three questions give a complete real car, each part explained -->
+<div id="guided" class="showcase guided" role="dialog" aria-modal="true" aria-labelledby="gbHeading" hidden>
+<div class="sc-bar"><h2 id="gbHeading">GUIDED BUILD</h2><span class="sc-count"></span><button type="button" id="gbClose">BACK</button></div>
+<div class="gb-body" id="gbBody" aria-live="polite"></div>
+</div>
 <div class="container">
 <header>
-<h1>PIXEL ENGINE SIM v0.7 build 308</h1>
+<h1>PIXEL ENGINE SIM v0.7 build 311</h1>
 <div class="subtitle" id="subtitle">ENGINE DESIGNER • BUILD IT, THEN DRIVE IT</div>
 </header>
 <div class="build-strip" id="buildStrip">
@@ -1019,7 +1053,7 @@ This app is that whole workshop in one page. You are the engineer: you choose ev
 </div>
 <div class="gtier gt-game"><div class="gtier-h">LV2 · IN THE GAME</div>
 <div class="guide-body" data-gk="loop">
-<b>1. ENGINE</b> — design an engine in six cards (block, head &amp; valves, air &amp; boost, intake &amp; exhaust, fuel &amp; spark, cooling &amp; electrics), then press <b>BUILD &amp; DYNO</b>. <b>2. DYNO</b> reads the full power/torque curve and a graded scorecard. <b>3. LIVE</b> is a running test bench: you set <b>THROTTLE</b> and <b>LOAD</b> and watch the engine respond in real time. You never set RPM directly — you drive it.<br>Then put it in a car on <b>VEHICLE</b> and take it to a circuit on <b>TRACK</b>. Every number in the app comes out of the same physics, so a change you make on the ENGINE tab shows up in the 0–100, the top speed and the lap time.
+New to cars? <b>GUIDED BUILD</b> on the menu asks three questions and hands you a real car, each part explained. <b>1. ENGINE</b> — design an engine in six cards (block, head &amp; valves, air &amp; boost, intake &amp; exhaust, fuel &amp; spark, cooling &amp; electrics), then press <b>BUILD &amp; DYNO</b>. <b>2. DYNO</b> reads the full power/torque curve and a graded scorecard. <b>3. LIVE</b> is a running test bench: you set <b>THROTTLE</b> and <b>LOAD</b> and watch the engine respond in real time. You never set RPM directly — you drive it.<br>Then put it in a car on <b>VEHICLE</b> and take it to a circuit on <b>TRACK</b>. Every number in the app comes out of the same physics, so a change you make on the ENGINE tab shows up in the 0–100, the top speed and the lap time.
 </div>
 </div>
 <div class="gtier gt-phys"><div class="gtier-h">LV3 · THE PHYSICS</div>
@@ -1131,8 +1165,12 @@ Diesel: full fuel at the smoke limit, λ1.2; leaner is less torque but less fuel
 <b>NITROUS</b> — if fitted, sprays at wide-open throttle from a bottle that depletes.<br>
 <b>Dashboard lamps</b> — under LIVE OUTPUT: <b>COOL</b> and <b>OIL</b> light when coolant or oil
 temp is out of range, <b>BATT</b> when the 12&nbsp;V side is low, and on a hybrid <b>HYB</b> shows the
-drive mode (and warns when the engine is off). <b>OIL P</b> (oil pressure) and <b>FAULT</b> (codes)
-are placeholders — those systems are not modeled yet, so the lamps stay dim.<br>
+drive mode (and warns when the engine is off). <b>OIL P</b> (oil pressure) is a placeholder, not modeled yet.<br>
+<b>FAULT</b> — the check-engine lamp. The ECU stores OBD-II codes: P0324 knock past what retard holds, P0217 overheat,
+P0171 lean under boost, P0300 misfire (weak spark or valve float), P0420 no working catalyst, P0562 low voltage.
+A fault seen once is <i>pending</i> (amber; a real car shows it only to a scan tool); seen again after the next
+STARTER it is <i>confirmed</i> (red). A misfire that would cook the catalyst flashes it at once. Three clean runs put it
+out. Click the lamp for the codes and the freeze frame of each; CLEAR CODES or a rebuild erases them.<br>
 <b>STARTER · POWER OFF</b> — on a hybrid or an electric car they switch the whole car on (READY) and
 off: off, the motor gives no torque, the engine stops, nothing charges and nothing is heard; a hybrid
 comes on with its engine running and the drive mode decides from there. On a combustion engine POWER OFF cuts the ignition: the burning stops and the engine
@@ -3727,6 +3765,26 @@ Most other tests check behaviour that is true of real cars: a bigger turbo spool
 <div class="part-chart"><div class="gw-leg" id="pwLegend"></div><canvas id="pwCanvas" role="img" aria-label="The wing's section at its angle with its downforce and drag, and its lift against the angle"></canvas></div>
 <div class="btn-row part-btns"><button type="button" id="pwSave">SAVE PART</button><button type="button" id="pwSaveFit">SAVE &amp; FIT</button></div>
 </div>
+<div id="partsDiff" hidden>
+<div class="design-section">My differentials</div>
+<div class="part-list" id="pdList"></div>
+<div class="pick-row"><div class="field"><label for="pdFrom">START FROM</label><select id="pdFrom"><option value="clsd">A CLUTCH-PLATE LSD</option></select></div>
+<div class="field"><label>&nbsp;</label><button type="button" id="pdNew">NEW DIFF</button><button type="button" id="pdReset" title="Put the dimensions back to the starting diff, keeping the name">RESET</button></div></div>
+<div class="design-section">Clutch-plate LSD</div>
+<div class="hint">Fitted, it takes the place of the VEHICLE tab's DIFFERENTIAL: the ramps turn the drive into a squeeze on the clutch plates, and their friction holds the two wheels together.</div>
+<div class="design-grid">
+<div class="field"><label for="pdName">NAME</label><input type="text" id="pdName" maxlength="40"></div>
+<div class="field"><label for="pdPreload">PRELOAD (N m)</label><input type="number" id="pdPreload" min="0" max="400" step="5"></div>
+<div class="field"><label for="pdRamp">RAMP ANGLE (°)</label><input type="number" id="pdRamp" min="25" max="90" step="5"></div>
+<div class="field"><label for="pdFaces">FRICTION FACES A SIDE</label><input type="number" id="pdFaces" min="1" max="10" step="1"></div>
+<div class="field"><label for="pdRFace">PLATE MEAN RADIUS (mm)</label><input type="number" id="pdRFace" min="25" max="70" step="1"></div>
+<div class="field"><label for="pdRRamp">RAMP RADIUS (mm)</label><input type="number" id="pdRRamp" min="20" max="60" step="1"></div>
+</div>
+<div class="design-section">On this car</div>
+<div class="part-guide" id="pdGuide"></div>
+<div class="part-chart"><div class="gw-leg" id="pdLegend"></div><canvas id="pdCanvas" role="img" aria-label="The share of the driven axle's grip the diff puts down against the lateral acceleration"></canvas></div>
+<div class="btn-row part-btns"><button type="button" id="pdSave">SAVE PART</button><button type="button" id="pdSaveFit">SAVE &amp; FIT</button></div>
+</div>
 </div>
 
 <!-- GARAGE: every saved car and engine, to look over and load -->
@@ -3776,10 +3834,11 @@ Most other tests check behaviour that is true of real cars: a bigger turbo spool
 <button type="button" class="lamp" id="lampCool" disabled aria-pressed="false" title="Coolant temperature"><span class="lamp-dot"></span><span class="lamp-lbl">COOL</span></button>
 <button type="button" class="lamp" id="lampOil" disabled aria-pressed="false" title="Oil temperature"><span class="lamp-dot"></span><span class="lamp-lbl">OIL</span></button>
 <button type="button" class="lamp lamp-stub" id="lampOilP" disabled aria-pressed="false" title="Oil pressure — not modeled yet" aria-label="Oil pressure, not modeled yet"><span class="lamp-dot"></span><span class="lamp-lbl">OIL P</span></button>
-<button type="button" class="lamp lamp-stub" id="lampFault" disabled aria-pressed="false" title="Fault codes — not modeled yet" aria-label="Fault codes, not modeled yet"><span class="lamp-dot"></span><span class="lamp-lbl">FAULT</span></button>
+<button type="button" class="lamp lamp-click" id="lampFault" aria-pressed="false" aria-expanded="false" aria-controls="obdPanel" title="Check engine — click for the fault codes"><span class="lamp-dot"></span><span class="lamp-lbl">FAULT</span></button>
 <button type="button" class="lamp" id="lampHyb" disabled aria-pressed="false" hidden title="Hybrid drive mode"><span class="lamp-dot"></span><span class="lamp-lbl">HYB</span></button>
 <button type="button" class="lamp" id="lampBatt" disabled aria-pressed="false" title="12 V battery"><span class="lamp-dot"></span><span class="lamp-lbl">BATT</span></button>
 </div>
+<div class="obd-panel" id="obdPanel" hidden></div>
 </div>
 </div>
 <div class="panel" id="hybridPanel" hidden>
@@ -7925,6 +7984,7 @@ function applyLang(lang){
   if(typeof showGuide==='function'&&document.getElementById('guideIndex'))showGuide(guideCur);
   if(typeof renderLap==='function'&&lapResult)renderLap();
   if(typeof renderSuspWin==='function'&&sc.open){buildSuspForm();renderSuspWin();}
+  if(typeof renderGuided==='function'&&guided.open)renderGuided();   // the guided build, if open (build 308)
   if(typeof renderShowcase==='function'&&showcase.open)renderShowcase();   // the car showcase, if open (build 237)   // the suspension calculator, if open (build 218)
   for(const id of ['garageName','engSaveName']){const gn=document.getElementById(id);
     if(gn){if(gn.dataset.enPh===undefined)gn.dataset.enPh=gn.placeholder;gn.placeholder=tr(gn.dataset.enPh);}}
@@ -9191,13 +9251,43 @@ function axleAsym(tqFrac){return DIFF_CAMBER+(DIFF_ASYM0-DIFF_CAMBER)*clamp(tqFr
 // Normalised so that at full axle torque and zero lateral g it returns exactly the quoted
 // straight-line `traction` figure — so a standing start is unchanged, and with it the whole
 // drag-strip diff trade and every saved build.
-function diffTractionAt(df,aLat,cgH,tqFrac){
+// gripTq (optional): the driven axle's grip as a torque at the wheels, N m; a designed diff's preload is read against it.
+function diffTractionAt(df,aLat,cgH,tqFrac,gripTq){
   const asym=axleAsym(tqFrac==null?1:tqFrac);
   const xfer=clamp((aLat/G)*(cgH/1.55),0,0.5-asym);           // lateral transfer, capped at lift
   const openUse=2*Math.max(0,0.5-asym-xfer);
+  if(df.part)return diffPartUse(df,openUse,gripTq);
   const use=df.lock+(1-df.lock)*openUse;
   const useRef=df.lock+(1-df.lock)*2*(0.5-DIFF_ASYM0);        // the reference `traction` is quoted at
   return df.traction*(use/useRef);
+}
+// ---- the differential as a part (build 310) ----
+// A designed clutch-plate (Salisbury, ramp) limited-slip. The carrier drives the cross-shafts, which sit in V-notches
+// in two pressure rings at radius rRamp; the notch's face at the ramp angle theta (from the plane of rotation: 90 deg
+// is a flat face and no lock) turns the drive force T_in/rRamp into an axial force (T_in/rRamp)·cot(theta) that
+// squeezes the two clutch packs, each with `faces` friction faces at a mean radius rFace. The friction torque the two
+// packs carry between the wheels is then dT = T_pre + L·T_in, L = 2·faces·mu·rFace·cot(theta)/rRamp: the ramp's
+// statics (Milliken & Milliken, Race Car Vehicle Dynamics, 1995, the chapter on differentials). Torque bias
+// ratio (1+L)/(1-L). DIFF_MU: plates running in limited-slip oil, 0.08-0.13 quoted (PROBABLE, makers' oil notes).
+const DIFF_MU=0.10;
+function diffPartLock(p){
+  const th=p.ramp_deg*Math.PI/180;
+  return p.ramp_deg>=90?0:Math.min(1,2*p.faces*DIFF_MU*(p.rFace_mm/p.rRamp_mm)*Math.cos(th)/Math.sin(th));
+}
+// The usable share of the axle's grip: the light wheel holds openUse/2 of it, the heavy one at most dT more. With the
+// axle driven at its grip, T_in = use·T_g and T_light = (T_in - dT)/2, so use = (openUse + T_pre/T_g)/(1 - L), at most 1.
+// Open (L 0, no preload) is openUse, as the open diff; a weld (L 1) is 1, as the spool's lock.
+function diffPartUse(df,openUse,gripTq){
+  if(df.lock>=1)return 1;
+  return Math.min(1,(openUse+(gripTq>0?df.preload/gripTq:0))/(1-df.lock));
+}
+// The part as the physics reads it. Its scrub in a corner (`corner`) is the factory table's, read across at its lock:
+// the table's rule until the table is retired (`DIFF_ASYM0` in plans/fitted-register.json).
+function diffSpec(p){
+  const L=diffPartLock(p),keys=['open','visc','clsd','spool'];
+  let corner=1;for(let i=1;i<keys.length;i++){const a=DIFF[keys[i-1]],b=DIFF[keys[i]];if(L<=b.lock){corner=a.corner+(b.corner-a.corner)*(L-a.lock)/(b.lock-a.lock);break;}}
+  return {label:'CLUTCH-PLATE LSD',part:true,lock:L,preload:p.preload_Nm,tbr:L>=1?Infinity:(1+L)/(1-L),corner,cost:DIFF.clsd.cost,
+    traction:Math.min(1,2*(0.5-DIFF_ASYM0)/(1-L))};   // the readout's figure: a standing start, no preload
 }
 // Cornering-only form, kept for the lap solver's readability.
 function lapDiffTraction(df,aLat,cgH){return diffTractionAt(df,aLat,cgH,1);}
@@ -9587,6 +9677,7 @@ function buildEngineCore(prevStoich,quiet){
 
   // Keep the live operating point valid for the new engine.
   state.firing=true;state.ignOn=true;state.crank=0;   // a built engine goes on the bench running (build 265)
+  obdReset();   // a fresh engine: no codes stored (build 309)
   state.rpm=clamp(state.rpm,engine.idleRpmEff,engine.redline);
   state.map=clamp(state.map,0.12,engine.mapMax);
   // Re-range the AFR slider. Diesel is quality-governed: air is unthrottled and power is set
@@ -11359,6 +11450,111 @@ function getDynoData(){
   dynoCache=pts;dynoCacheKey=key;return pts;
 }
 
+// ---- On-board diagnostics: fault codes and the check-engine lamp (build 309) ----
+// The bench's ECU watches signals the simulation already computes and stores SAE J2012 / ISO 15031-6 generic codes, under
+// the OBD-II rules (CARB, 13 CCR 1968.2): a fault seen once is PENDING; seen again on the next drive cycle it is CONFIRMED
+// and lights the MIL. A misfire bad enough to damage the catalyst flashes the MIL at once. The MIL goes out after three
+// drive cycles in a row that ran without the fault; the code stays stored as HISTORY until cleared. The first
+// detection keeps a freeze frame. A drive cycle here is one engine run: from a start (or a build) to the next start.
+// Read-only: nothing here changes a number the engine makes (limp modes are a later build).
+// Each condition reuses a threshold the simulation already has; the hold times are game rules, as are the misfire
+// rates (real ones are set per engine by its maker against emissions and catalyst temperature, 1968.2 (e)(3)).
+const OBD_CODES={
+  P0324:{t:'Knock control system error',      hold:1, why:'Knock is past what the ECU can hold off by retarding the spark (KNOCK_TARGET).'},
+  P0217:{t:'Engine coolant over temperature', hold:2, why:'Coolant is above 112 °C, where the wear model starts charging OVERHEAT.'},
+  P0171:{t:'System too lean (bank 1)',        hold:2, why:'λ above 1.05 under boost: the LEAN/BOOST wear condition.'},
+  P0300:{t:'Random/multiple cylinder misfire detected',hold:1, why:'The spark cannot fire every cycle (weak voltage past the dwell limit), or the valves float.'},
+  P0420:{t:'Catalyst system efficiency below threshold (bank 1)',hold:10, why:'A warm engine with no working catalyst converts almost nothing.'},
+  P0562:{t:'System voltage low',              hold:5, why:'The 12 V side is below 11.6 V while the engine runs.'}
+};
+const OBD_MISFIRE=0.02, OBD_MISFIRE_CAT=0.10;   // misfire share that sets P0300, and that flashes the MIL (game rules)
+const OBD_CLEAN_CYCLES=3, OBD_MIN_RUN=20;       // clean cycles to put the MIL out; seconds a run needs to count as one
+let obd={codes:{},timers:{},cycleSeen:{},runS:0,wasRunning:true,flash:false,open:false};
+function obdReset(){obd.codes={};obd.timers={};obd.cycleSeen={};obd.runS=0;obd.wasRunning=obdRunning();obd.flash=false;}
+function obdRunning(){
+  if(isElectric())return false;
+  if(isHybrid())return !!hybBenchState().engOn;
+  return state.firing!==false&&!state.blown;
+}
+// The share of combustion events lost: spark (ignitionHealth) or a valve past float.
+function obdMisfire(){
+  if(engine.ci)return 0;
+  let m=1-ignitionHealth(state.rpm);
+  if(engine.floatRpm>0&&state.rpm>engine.floatRpm)m=Math.max(m,OBD_MISFIRE);
+  return m;
+}
+// Which conditions are present right now, by code.
+function obdConditions(){
+  const on={};if(!obdRunning()||state.fuelCut)return on;
+  const lam=state.afr/(engine.stoichAFR||14.7);
+  if(!engine.ci&&state.knockRisk>KNOCK_TARGET+0.5)on.P0324=1;
+  if(state.coolant>112)on.P0217=1;
+  if(!engine.ci&&lam>1.05&&state.map>0.9)on.P0171=1;
+  if(obdMisfire()>OBD_MISFIRE)on.P0300=1;
+  if(!engine.ci&&(engine.catConv||0)<0.5&&state.coolant>=70)on.P0420=1;
+  if(!engine.dcdc&&state.systemVoltage<11.6)on.P0562=1;
+  return on;
+}
+// A drive cycle ends: count clean cycles for the lit codes, drop pending ones the cycle did not see again.
+function obdEndCycle(){
+  if(obd.runS>=OBD_MIN_RUN)for(const k in obd.codes){
+    const c=obd.codes[k];if(obd.cycleSeen[k])continue;
+    if(c.status==='pending')delete obd.codes[k];
+    else if(c.status==='confirmed'&&++c.clean>=OBD_CLEAN_CYCLES)c.status='history';
+  }
+  for(const k in obd.codes)obd.codes[k].newCycle=true;
+  obd.cycleSeen={};obd.timers={};obd.runS=0;
+}
+function obdStep(dt){
+  const run=obdRunning();
+  if(run&&!obd.wasRunning)obdEndCycle();   // a start begins the next drive cycle
+  obd.wasRunning=run;
+  if(!run){obd.flash=false;return;}
+  obd.runS+=dt;
+  const on=obdConditions();
+  for(const k in OBD_CODES){
+    obd.timers[k]=on[k]?(obd.timers[k]||0)+dt:0;
+    if(obd.timers[k]<OBD_CODES[k].hold||obd.cycleSeen[k])continue;
+    obd.cycleSeen[k]=true;
+    const c=obd.codes[k];
+    if(!c||c.status==='history')obd.codes[k]={status:'pending',clean:0,newCycle:false,ff:obdFreezeFrame()};
+    else{c.clean=0;if(c.status==='pending'&&c.newCycle)c.status='confirmed';}
+  }
+  obd.flash=obdMisfire()>OBD_MISFIRE_CAT;
+  if(obd.flash&&obd.codes.P0300)obd.codes.P0300.status='confirmed';   // catalyst-damaging misfire: lit at once
+}
+function obdFreezeFrame(){
+  return {rpm:Math.round(state.rpm),load:Math.round(state.load*100),map:+state.map.toFixed(2),
+    coolant:Math.round(state.coolant),lam:+(state.afr/(engine.stoichAFR||14.7)).toFixed(2),
+    boost:+(state.boostActual||0).toFixed(2),volt:+state.systemVoltage.toFixed(1)};
+}
+// 'flash', 'on' (a confirmed code), 'pending' (only a scan tool would see it on a real car), or ''.
+function obdLamp(){
+  const v=Object.values(obd.codes);
+  return obd.flash?'flash':v.some(c=>c.status==='confirmed')?'on':v.some(c=>c.status==='pending')?'pending':'';
+}
+function obdClear(){obd.codes={};obd.timers={};obd.cycleSeen={};obd.flash=false;renderObd();}
+// The lamp row calls this each frame: the open list is redrawn only when a code or its status changes.
+let obdSig='';
+function obdRefresh(){const s=JSON.stringify(Object.entries(obd.codes).map(([k,c])=>k+c.status));if(s!==obdSig){obdSig=s;renderObd();}}
+function toggleObd(){obd.open=!obd.open;renderObd();}
+function renderObd(){
+  const box=document.getElementById('obdPanel'),b=document.getElementById('lampFault');if(!box)return;
+  box.hidden=!obd.open;if(b)b.setAttribute('aria-expanded',String(obd.open));
+  if(!obd.open)return;
+  const keys=Object.keys(obd.codes),st={pending:tr('PENDING'),confirmed:tr('CONFIRMED'),history:tr('HISTORY')};
+  let h='<div class="obd-h">'+esc(tr('FAULT CODES'))+'</div>';
+  if(!keys.length)h+='<div class="obd-none">'+esc(isElectric()?tr('No combustion engine: no OBD codes.'):tr('No codes stored.'))+'</div>';
+  keys.forEach(k=>{
+    const c=obd.codes[k],d=OBD_CODES[k],f=c.ff;
+    h+='<div class="obd-code obd-'+c.status+'"><b>'+k+'</b> '+esc(tr(d.t))+' • '+st[c.status]+'<br>'+esc(tr(d.why))
+      +'<br><span class="obd-ff">'+esc(tr('FREEZE FRAME'))+': '+f.rpm+' rpm • '+tr('load')+' '+f.load+'% • MAP '+f.map+' bar • '
+      +tr('coolant')+' '+f.coolant+' °C • λ '+f.lam+' • '+tr('boost')+' '+f.boost+' bar • '+f.volt+' V</span></div>';
+  });
+  h+='<div class="btn-row"><button type="button" id="btnObdClear">'+esc(tr('CLEAR CODES'))+'</button></div>';
+  box.innerHTML=h;
+  document.getElementById('btnObdClear').addEventListener('click',()=>{obdClear();flash(tr('FAULT CODES CLEARED'));});
+}
 // ====== ELECTRIC DRIVE: the motor, its inverter and the battery, from what they are built of (build 178) ======
 // Step 2.1 of plans/hybrid-electric/: the physics alone. Nothing calls it yet; the ENGINE tab, the dyno and
 // powertrain() take it up in 2.2. Every design field acts through a mechanism (plans/hybrid-electric/motor-design.md),
@@ -13213,7 +13409,7 @@ function factoryDims(v){
 // True when every fitted part still matches the chassis' factory spec.
 function isFactoryFit(v){
   const ch=CHASSIS[v.chassis];if(!ch||!ch.fit)return false;const f=v.body?v.body.fit:ch.fit;
-  return (v.driveMech||v.drive)===(v.body?f.drive:ch.drive)&&(v.governor||0)===(f.gov||0)&&(v.tc!==false)===(f.tc!==false)&&v.gears===f.gears&&v.gearing===f.gearing&&v.spacing===(v.body?'stock':'std')&&!(v.finalDriveSet>0)&&v.gearbox===f.gearbox&&v.diff===f.diff&&
+  return (v.driveMech||v.drive)===(v.body?f.drive:ch.drive)&&(v.governor||0)===(f.gov||0)&&(v.tc!==false)===(f.tc!==false)&&v.gears===f.gears&&v.gearing===f.gearing&&v.spacing===(v.body?'stock':'std')&&!(v.finalDriveSet>0)&&v.gearbox===f.gearbox&&v.diff===f.diff&&!v.diffPart&&
     v.tireType===f.tire&&v.tireWidth===f.tw&&(v.tireWidthF||0)===(f.twF||0)&&!stepOf(v.springF)&&!stepOf(v.springR)&&!stepOf(v.barF)&&!stepOf(v.barR)&&!stepOf(v.damperF)&&!stepOf(v.damperR)&&v.tireAspect===f.ta&&v.wheelDia===f.wheel&&
     v.aeroFront===f.aF&&v.aeroRear===f.aR&&!v.wingPart&&!v.fwingPart&&v.aeroFloor===f.aFl&&v.weightRed===f.weight&&
     v.brakeType===f.brake&&v.rotor===f.rotor&&v.suspension===f.susp&&geoStock(v)&&!v.dims&&!(v.ballastKg>0);
@@ -13234,7 +13430,7 @@ function computeVehicleCost(ch,tt,wr){
      (stepOf(vehicle.damperF)?1:0)*STIFF_STEP_COST.damper+(stepOf(vehicle.damperR)?1:0)*STIFF_STEP_COST.damper;   // dampers: build 216
   c+=Math.max(0,vehicle.rotor-320)*6;
   c+={fwd:0,rwd:800,awd:2500}[vehicle.drive]||0;
-  c+=(vehicle.ev?EV_REDUCTION:vehicle.ecvt?PS_REDUCTION:(GEARBOX[vehicle.gearbox]||GEARBOX.manual)).cost+(DIFF[vehicle.diff]||DIFF.open).cost;
+  c+=(vehicle.ev?EV_REDUCTION:vehicle.ecvt?PS_REDUCTION:(GEARBOX[vehicle.gearbox]||GEARBOX.manual)).cost+(vehicle.diffPart?DIFF.clsd:DIFF[vehicle.diff]||DIFF.open).cost;
   c+=vehicle.ev||vehicle.ecvt?0:Math.max(0,vehicle.gears-5)*400;
   c+=Math.max(0,vehicle.wheelDia-16)*120+Math.max(0,vehicle.tireWidth-205)*4;
   return Math.max(3000,Math.round(c/50)*50);
@@ -13352,7 +13548,7 @@ function buildVehicle(){
    vehicle.warpK=K.F*K.R/S;vehicle.warpC=(K.R*K.R*CF+K.F*K.F*CR)/(S*S);}
   vehicle.drivenAero=vehicle.drive==='awd'?1:vehicle.drive==='rwd'?1-vehicle.aeroBal:vehicle.aeroBal;
   vehicle.cdA=((body?body.cd:ch.cd)+af.cd+ar.cd+al.cd)*vehicle.area+(wing?wing.cdA:0)+(fwing?fwing.cdA:0);  // drag coefficient·area
-  const gb=GEARBOX[vehicle.gearbox]||GEARBOX.manual,df=DIFF[vehicle.diff]||DIFF.open;
+  const gb=GEARBOX[vehicle.gearbox]||GEARBOX.manual,df=vehicle.diffPart?diffSpec(vehicle.diffPart):DIFF[vehicle.diff]||DIFF.open;
   vehicle.gb=gb;vehicle.gbLabel=gb.label;
   vehicle.df=df;vehicle.diffLabel=df.label;vehicle.diffTraction=df.traction;
   vehicle.shiftTime=gb.shift;
@@ -13658,7 +13854,7 @@ function simulateAccelRun(){
     if(!cutNow&&!overRev){
       const Teng=gridTorque(grid,engineRpm,boostNow)*tqMult;
       if(slipping){
-        const want=tyreMuX(drivenN/(vehicle.drive==='awd'?4:2))*diffTractionAt(df,0,vehicle.cg,1)*Math.max(0,drivenN)*r/(totalRatio*eff);
+        const want=tyreMuX(drivenN/(vehicle.drive==='awd'?4:2))*diffTractionAt(df,0,vehicle.cg,1,tyreMuX(drivenN/(vehicle.drive==='awd'?4:2))*Math.max(0,drivenN)*r)*Math.max(0,drivenN)*r/(totalRatio*eff);
         const Tcl=Math.min(tqCap,Math.max(Teng,want));
         slipW=Math.max(rpm*TWO_PI/60,slipW+(Teng-Tcl)/Ie*dt);       // the flywheel pays the difference
         driveF=Tcl*totalRatio*eff/r;
@@ -13669,7 +13865,7 @@ function simulateAccelRun(){
     // diff is governed by the lighter-loaded wheel and throws the rest away, an LSD recovers
     // most of it, a spool all of it. This only bites while the car is traction-limited.
     const tqFrac=(driveF*r)/axleTqMax;                       // how hard the axle is being driven
-    const trac=tyreMuX(drivenN/(vehicle.drive==='awd'?4:2))*diffTractionAt(df,0,vehicle.cg,tqFrac)*Math.max(0,drivenN);
+    const trac=tyreMuX(drivenN/(vehicle.drive==='awd'?4:2))*diffTractionAt(df,0,vehicle.cg,tqFrac,tyreMuX(drivenN/(vehicle.drive==='awd'?4:2))*Math.max(0,drivenN)*r)*Math.max(0,drivenN);
     const drag=0.5*AIR_RHO*vehicle.cdA*v*v,roll=v>0.2?crrAt(vehicle.crr,v)*m*G:0,res=drag+roll;
     // A road-speed governor cuts fuel at its set speed: past it the engine gives only what holds it.
     if(vGov>0&&v>=vGov)driveF=Math.min(driveF,res);
@@ -15214,7 +15410,7 @@ function simulateLapCore(key,opts){
     const g0=gear>=0?inGear(vi,gear):gearAt(vi),bg=boostShare<1?{gear:g0.gear,F:g0.F*boostShare,tqFrac:g0.tqFrac*boostShare}:g0;
     const R=(drag(vi)+rollF(vi)*q.cosT+corneringDrag(m,aLat,N))/m+G*q.sinT;
     const nD=vehicle.drive==='awd'?4:2,sD=vehicle.drive==='fwd'?roadSigma('F',vi):vehicle.drive==='rwd'?roadSigma('R',vi):(roadSigma('F',vi)+roadSigma('R',vi))/2;   // the driven tyres' load swing (build 216)
-    const kk=tyreMuX(N0/nD,vehicle.drive==='fwd'?vehicle.FzRefF:vehicle.FzRef)*roadGrip(sD/Math.max(1,N0/nD))*diffTractionAt(df,aLat,vehicle.cg,bg.tqFrac)*Math.sqrt(Math.max(0,1-uD*uD));
+    const kk=tyreMuX(N0/nD,vehicle.drive==='fwd'?vehicle.FzRefF:vehicle.FzRef)*roadGrip(sD/Math.max(1,N0/nD))*diffTractionAt(df,aLat,vehicle.cg,bg.tqFrac,df.part?tyreMuX(N0/nD,vehicle.drive==='fwd'?vehicle.FzRefF:vehicle.FzRef)*N0*rT:0)*Math.sqrt(Math.max(0,1-uD*uD));
     // On power the drive force also spins up the engine and wheels (vehicleMassEff, build 106): a = (F -
     // m R) / mE. On grip the tyres are slipping, the surplus only spins the wheels, and the car gets the
     // tyre's force over its own mass, with the load transfer following that acceleration:
@@ -23556,8 +23752,8 @@ function drawDyno(){
     dynoPulls.forEach((pl,i)=>{ctx.fillStyle=pl.color;ctx.fillText('— '+pl.label,gX+4+i*132,iy+41);});
   }else{ctx.fillStyle='#667';ctx.fillText(tr('LOG PULL to snapshot & overlay a curve for comparison'),gX+4,iy+41);}
 }
-// Dashboard telltales (build 254): thresholds match the status line / canvas gauge bars. Oil pressure and fault
-// codes are placeholders until those systems are modeled; hybrid mode only for a hybrid; ICE-only lamps hide on EV.
+// Dashboard telltales (build 254): thresholds match the status line / canvas gauge bars. Oil pressure is a
+// placeholder until it is modeled; FAULT is the check-engine lamp of obd.js (build 309); hybrid mode only for a hybrid; ICE-only lamps hide on EV.
 function updateDashLamps(){
   const g=id=>document.getElementById(id),row=g('dashLamps');if(!row)return;
   const ev=isElectric(),hy=isHybrid(),set=(id,cls,lbl,title)=>{
@@ -23575,7 +23771,10 @@ function updateDashLamps(){
     set('lampOil',state.oil>132?'danger':state.oil<55?'warn':'');
     set('lampOilP','');   // stub: never lights
   }
-  set('lampFault','');   // stub: never lights
+  {const L=obdLamp(),n=Object.keys(obd.codes).length;
+    set('lampFault',L==='flash'?'danger lamp-blink':L==='on'?'danger':L==='pending'?'warn':'',null,
+      tr('Check engine')+' • '+(n?n+' '+tr('code(s) stored'):tr('No codes stored'))+' • '+tr('click for the list'));
+    if(obd.open)obdRefresh();}
   const hyEl=g('lampHyb');
   if(hyEl){
     hyEl.hidden=!hy;
@@ -23802,7 +24001,7 @@ const CAM_PROFILE={
 // A head's intake valve 15-75 mm (a 50 cc single's to a big-bore diesel's); its throat 0.75 of the valve (a restrictive
 // production port) to 0.92 (a fully ported race head: the 45 degree seat needs the rest); springs 100-1500 N on the seat
 // and 10-200 N/mm, past the RACE step on the biggest factory valve (sized for a Hellcat's redline, ~1180 N and 130 N/mm).
-const PART_LIMITS={span_mm:[600,2200],height_mm:[30,400],chord_mm:[80,600],angle_deg:[0,25],camber_pct:[0,12],plate_mm:[0,400],valveD_mm:[15,75],exValveD_mm:[12,65],throat:[0.75,0.92],seat_N:[100,1500],rate_Nmm:[10,200],dur:[180,320],lift_mm:[4,16],lsa:[98,130],vvt_deg:[0,60],primD_mm:[25,76],primL_mm:[200,1000],pipes:[1,2],sysD_mm:[30,110],sysL_m:[0.8,4.5],
+const PART_LIMITS={preload_Nm:[0,400],ramp_deg:[25,90],faces:[1,10],rFace_mm:[25,70],rRamp_mm:[20,60],span_mm:[600,2200],height_mm:[30,400],chord_mm:[80,600],angle_deg:[0,25],camber_pct:[0,12],plate_mm:[0,400],valveD_mm:[15,75],exValveD_mm:[12,65],throat:[0.75,0.92],seat_N:[100,1500],rate_Nmm:[10,200],dur:[180,320],lift_mm:[4,16],lsa:[98,130],vvt_deg:[0,60],primD_mm:[25,76],primL_mm:[200,1000],pipes:[1,2],sysD_mm:[30,110],sysL_m:[0.8,4.5],
   runnerL_mm:[40,800],runnerD_mm:[20,80],shortL_mm:[40,400],area_m2:[0.02,3],inletD_mm:[30,160],
   w:[150,900],h:[80,800],d:[30,120],fpi:[8,30],pipe_m:[0.3,5],
   // a turbo's compressor 30-120 mm at the exducer (a kei car's to a big diesel's), its turbine 25-130 mm, a housing
@@ -23961,6 +24160,7 @@ const PART_KINDS=[
   {kind:'turbo',  label:'TURBOCHARGER',ready:true},
   {kind:'wing',   label:'REAR WING',ready:true},
   {kind:'fwing',  label:'FRONT WING',ready:true},
+  {kind:'diff',   label:'DIFFERENTIAL',ready:true},
   {kind:'cat',    label:'CATALYTIC CONVERTER',ready:false}
 ];
 // A designed intake, as the factory class the rest of the app reads: a variable one is VARIABLE, a fixed one the
@@ -24016,7 +24216,10 @@ const PART_DEF={
     label:()=>'REAR WING',newName:'MY WING',factory:['wing']},
   // the front wing (build 306): the same wing low over the road, fitted from FRONT AERO, on the front axle
   fwing:  {on:'vehicle',field:'fwingPart',cls:'aeroFront',select:'vhAeroF',def:'none',valid:k=>!!AERO_FRONT[k],clsOf:()=>'wing',
-    label:()=>'FRONT WING',newName:'MY FRONT WING',factory:['wing']}
+    label:()=>'FRONT WING',newName:'MY FRONT WING',factory:['wing']},
+  // the differential (build 310): a clutch-plate LSD from its ramp and plates, fitted from DIFFERENTIAL
+  diff:   {on:'vehicle',field:'diffPart',cls:'diff',select:'vhDiff',def:'open',valid:k=>!!DIFF[k],clsOf:()=>'clsd',
+    label:()=>'CLUTCH-PLATE LSD',newName:'MY DIFF',factory:['clsd']}
 };
 const partOwner=kind=>PART_DEF[kind].on==='vehicle'?vehicle:engine;
 const partRebuild=kind=>{if(PART_DEF[kind].on==='vehicle'){buildVehicle();updateVehicleSummary();}else buildEngine();};
@@ -24049,6 +24252,8 @@ function normPart(p){
   if(p.kind==='wing'||p.kind==='fwing'){const f=p.kind==='fwing',q={id,kind:p.kind,name:String(p.name||'WING').slice(0,40),span_mm:n(p.span_mm,'span_mm',1500),
     chord_mm:n(p.chord_mm,'chord_mm',250),angle_deg:n(p.angle_deg,'angle_deg',f?6:8),camber_pct:n(p.camber_pct,'camber_pct',6),plate_mm:n(p.plate_mm,'plate_mm',f?100:150)};
     if(f)q.height_mm=n(p.height_mm,'height_mm',100);return q;}
+  if(p.kind==='diff')return {id,kind:'diff',name:String(p.name||'DIFF').slice(0,40),preload_Nm:n(p.preload_Nm,'preload_Nm',60),
+    ramp_deg:n(p.ramp_deg,'ramp_deg',45),faces:Math.round(n(p.faces,'faces',3)),rFace_mm:n(p.rFace_mm,'rFace_mm',40),rRamp_mm:n(p.rRamp_mm,'rRamp_mm',40)};
   if(p.kind==='turbo'){const c=n(p.compD_mm,'compD_mm',71);
     return {id,kind:'turbo',name:String(p.name||'TURBO').slice(0,40),compD_mm:c,
       turbD_mm:n(p.turbD_mm,'turbD_mm',+(TURB_WHEEL*c).toFixed(4)),ar:n(p.ar,'ar',0.64)};}
@@ -24274,6 +24479,9 @@ function partFromFactory(key,kind){
   if(kind==='wing')return normPart({kind,name:tr('REAR WING'),span_mm:Math.round((vehicle&&vehicle.track||1.5)*100)*10,chord_mm:250,angle_deg:8,camber_pct:6,plate_mm:150});
   // the front one as wide as the front track, its quarter chord 100 mm off the road, as a club racer's low front wing
   if(kind==='fwing')return normPart({kind,name:tr('FRONT WING'),span_mm:Math.round((vehicle&&(vehicle.trackF||vehicle.track)||1.5)*100)*10,chord_mm:250,angle_deg:6,camber_pct:6,plate_mm:100,height_mm:100});
+  // a starting point, not a factory part (the factory diffs are a table with no dimensions): a 1.5-way clutch-plate LSD
+  // as sold for a road car, 60 N m of preload, 45 degree ramps, three friction faces a side (PROBABLE, typical units)
+  if(kind==='diff')return normPart({kind,name:tr('CLUTCH-PLATE LSD'),preload_Nm:60,ramp_deg:45,faces:3,rFace_mm:40,rRamp_mm:40});
   // the engine's own turbo (its compressor wheel, if it sets one, and its housing), or a frame as sold
   if(kind==='turbo')return withPart('turbo',key,e=>{
     const tb=turboFrame(e);
@@ -24340,7 +24548,7 @@ function runnerFor(rpm,Dmm){
 }
 
 // ---- the PARTS page ----
-const partsUI={kind:'exhaust',edit:{exhaust:null,intake:null,filter:null,cam:null,head:null,turbo:null,intercooler:null,wing:null,fwing:null},timer:0};
+const partsUI={kind:'exhaust',edit:{exhaust:null,intake:null,filter:null,cam:null,head:null,turbo:null,intercooler:null,wing:null,fwing:null,diff:null},timer:0};
 const pv=id=>document.getElementById(id);
 const fittedPart=kind=>partOwner(kind)&&partOwner(kind)[PART_DEF[kind].field];
 // the ids of each kind's editor
@@ -24378,6 +24586,10 @@ const PART_UI={
     fields:['pwName','pwSpan','pwChord','pwAngle','pwCamber','pwPlate'],
     spec:p=>p.span_mm+' × '+p.chord_mm+' mm · '+p.angle_deg+'° · '+tr('camber')+' '+p.camber_pct+'%'}
 };
+PART_UI.diff={reset:'pdReset',box:'partsDiff',list:'pdList',from:'pdFrom',neu:'pdNew',save:'pdSave',saveFit:'pdSaveFit',guide:'pdGuide',canvas:'pdCanvas',legend:'pdLegend',
+  none:"No differentials designed yet. Start from a clutch-plate LSD below.",
+  fields:['pdName','pdPreload','pdRamp','pdFaces','pdRFace','pdRRamp'],
+  spec:p=>p.preload_Nm+' N m · '+p.ramp_deg+'° · '+p.faces+' '+tr('faces a side')+' · '+tr('lock')+' '+Math.round(diffPartLock(p)*100)+'%'};
 // the front wing shares the rear wing's editor, with its height over the road
 PART_UI.fwing=Object.assign({},PART_UI.wing,{none:"No front wings designed yet. Start from a wing as wide as this car's front track below.",
   fields:PART_UI.wing.fields.concat('pwHeight'),spec:p=>PART_UI.wing.spec(p)+' · '+p.height_mm+' mm '+tr('up')});
@@ -24420,6 +24632,10 @@ function partToEditor(kind,p){
     pv('pwName').value=p.name;pv('pwSpan').value=p.span_mm;pv('pwChord').value=p.chord_mm;pv('pwAngle').value=p.angle_deg;pv('pwCamber').value=p.camber_pct;pv('pwPlate').value=p.plate_mm;
     return;
   }
+  if(kind==='diff'){
+    pv('pdName').value=p.name;pv('pdPreload').value=p.preload_Nm;pv('pdRamp').value=p.ramp_deg;pv('pdFaces').value=p.faces;pv('pdRFace').value=p.rFace_mm;pv('pdRRamp').value=p.rRamp_mm;
+    return;
+  }
   if(kind==='turbo'){
     pv('pbName').value=p.name;pv('pbComp').value=+(+p.compD_mm).toFixed(1);pv('pbTurb').value=+(+p.turbD_mm).toFixed(1);pv('pbAr').value=+(+p.ar).toFixed(3);
     return;
@@ -24454,6 +24670,8 @@ function partFromEditor(kind){
     h:pv('pxH').value,d:pv('pxD').value,fpi:pv('pxFpi').value,pipe_m:pv('pxPipe').value});
   if(kind==='wing'||kind==='fwing')return normPart({kind,id:ed&&ed.id,name:pv('pwName').value.trim()||newName,span_mm:pv('pwSpan').value,
     chord_mm:pv('pwChord').value,angle_deg:pv('pwAngle').value,camber_pct:pv('pwCamber').value,plate_mm:pv('pwPlate').value,height_mm:pv('pwHeight').value});
+  if(kind==='diff')return normPart({kind,id:ed&&ed.id,name:pv('pdName').value.trim()||newName,preload_Nm:pv('pdPreload').value,
+    ramp_deg:pv('pdRamp').value,faces:pv('pdFaces').value,rFace_mm:pv('pdRFace').value,rRamp_mm:pv('pdRRamp').value});
   if(kind==='turbo'){
     // the editor shows the wheels to 0.1 mm and the A/R to 0.001: an unchanged field keeps the part's exact number
     const keep=(id,k,d)=>{const v=pv(id).value;return ed&&ed[k]!=null&&+v===+(+ed[k]).toFixed(d)?ed[k]:v;};
@@ -24481,7 +24699,7 @@ function partAction(a,id){
     partLib=partLib.filter(x=>x.id!==id);persistParts();
     const f=fittedPart(kind);
     if(f&&f.id===id){pv(D.select).value=partOwner(kind)[D.cls];fillPartSelects();partRebuild(kind);
-      flash(tr(kind==='wing'?"PART DELETED: THE CAR HAS THE KIT'S REAR WING":kind==='fwing'?"PART DELETED: THE CAR HAS THE KIT'S FRONT WING":kind==='intake'?'PART DELETED: THE ENGINE HAS ITS FACTORY INTAKE':kind==='intercooler'?'PART DELETED: THE ENGINE HAS ITS FACTORY INTERCOOLER':kind==='cam'?'PART DELETED: THE ENGINE HAS ITS FACTORY CAM':kind==='head'?'PART DELETED: THE ENGINE HAS ITS FACTORY HEAD':kind==='turbo'?'PART DELETED: THE ENGINE HAS ITS FACTORY TURBO':kind==='filter'?'PART DELETED: THE ENGINE HAS ITS FACTORY AIR FILTER':'PART DELETED: THE ENGINE HAS ITS FACTORY EXHAUST'));}
+      flash(tr(kind==='diff'?"PART DELETED: THE CAR HAS THE TABLE'S CLUTCH-PLATE LSD":kind==='wing'?"PART DELETED: THE CAR HAS THE KIT'S REAR WING":kind==='fwing'?"PART DELETED: THE CAR HAS THE KIT'S FRONT WING":kind==='intake'?'PART DELETED: THE ENGINE HAS ITS FACTORY INTAKE':kind==='intercooler'?'PART DELETED: THE ENGINE HAS ITS FACTORY INTERCOOLER':kind==='cam'?'PART DELETED: THE ENGINE HAS ITS FACTORY CAM':kind==='head'?'PART DELETED: THE ENGINE HAS ITS FACTORY HEAD':kind==='turbo'?'PART DELETED: THE ENGINE HAS ITS FACTORY TURBO':kind==='filter'?'PART DELETED: THE ENGINE HAS ITS FACTORY AIR FILTER':'PART DELETED: THE ENGINE HAS ITS FACTORY EXHAUST'));}
     else{fillPartSelects();flash(tr('PART DELETED'));}
     if(partsUI.edit[kind]&&partsUI.edit[kind].id===id)partsUI.edit[kind]=null;
     renderParts();
@@ -24524,6 +24742,7 @@ function previewPart(kind){
   if(kind==='head')return previewHead();
   if(kind==='turbo')return previewTurbo();
   if(kind==='wing'||kind==='fwing')return previewWing(kind);
+  if(kind==='diff')return previewDiff();
   const p=partFromEditor('exhaust'),now=exhaustReport(engine.exhaustPart||engine.exhaust),r=exhaustReport(p);
   partsUI.last={kind,p,now,r};
   const turbo=engine.intake==='turbo',ported=!!engine.ports;
@@ -24691,6 +24910,39 @@ function previewWing(kind){
   pv('pwGuide').innerHTML=lines.map(l=>'<div>'+l+'</div>').join('');
   drawWing(p,r);
 }
+// The diff on this car: its lock and bias, and the share of the driven axle's grip it puts down, straight and cornering,
+// against the factory diff the car has. The axle's grip for the preload: the driven axle's static load at the tyres' grip.
+function diffAxleGripTq(){
+  const V=vehicle,m=V.mass||1200,N=m*G*(V.drive==='awd'?1:V.drive==='fwd'?V.fWt:1-V.fWt),n=V.drive==='awd'?4:2;
+  return tyreMuX(N/n)*N*V.rTire;
+}
+function previewDiff(){
+  const p=partFromEditor('diff'),r=diffSpec(p),V=vehicle,fac=DIFF[V.diff]||DIFF.open,now=V.diffPart?diffSpec(V.diffPart):fac,Tg=diffAxleGripTq();
+  partsUI.last={kind:'diff',p,now,r};
+  const use=(df,g)=>diffTractionAt(df,g*G,V.cg,1,Tg),pc=x=>fmt(Math.min(1.5,x)*100,0)+'%',lines=[];
+  lines.push(tr('Lock from the ramp')+': <b>'+fmt(r.lock*100,0)+'%</b> '+tr('of the drive torque')+' · '+tr('torque bias ratio')+' <b>'+(r.tbr===Infinity?'∞':fmt(r.tbr,1))+'</b>'
+    +' <span class="dim">('+tr('2 × faces × μ × face radius × cot(ramp) ÷ ramp radius; μ')+' '+fmt(DIFF_MU,2)+')</span>');
+  lines.push(tr('Preload')+' '+fmt(p.preload_Nm)+' N m: '+fmt(p.preload_Nm/Math.max(1,Tg)*100,1)+'% '+tr('of the driven axle\'s grip')+' ('+fmt(Tg)+' N m '+tr('at the wheels')+').');
+  lines.push(tr('Puts down, straight')+': <b>'+pc(use(r,0))+'</b> '+tr('of the axle\'s grip')+' · '+tr('at 0.8 g sideways')+': <b>'+pc(use(r,0.8))+'</b>'
+    +' <span class="dim">('+tr('now')+' '+tr(now.label)+': '+pc(use(now,0))+', '+pc(use(now,0.8))+')</span>');
+  lines.push('<span class="dim">'+tr("Its scrub in a corner is the factory table's, read across at its lock; the wheels' loads come from the same load asymmetry as the factory diffs. Both go with the table, in a later build.")+'</span>');
+  pv('pdGuide').innerHTML=lines.map(l=>'<div>'+l+'</div>').join('');
+  drawDiff(p,r);
+}
+// The share of the axle's grip put down against the lateral acceleration: open, the car's diff now, and this one.
+function drawDiff(p,r){
+  const c=pv('pdCanvas');if(!c)return;
+  const w=c.clientWidth||480,h=c.clientHeight||200,dpr=window.devicePixelRatio||1;
+  c.width=Math.round(w*dpr);c.height=Math.round(h*dpr);
+  const g=c.getContext('2d');g.setTransform(dpr,0,0,dpr,0,0);g.clearRect(0,0,w,h);
+  const V=vehicle,Tg=diffAxleGripTq(),now=partsUI.last.now,L=30,R=w-12,T=12,B=h-22,X=a=>L+a/1.2*(R-L),Y=u=>B-u/1.1*(B-T);
+  g.strokeStyle='#223';g.lineWidth=1;g.fillStyle='#667';g.font='8px monospace';
+  for(let a=0;a<=1.2001;a+=0.2){g.beginPath();g.moveTo(X(a),T);g.lineTo(X(a),B);g.stroke();g.fillText(a.toFixed(1)+'g',X(a)-8,h-8);}
+  for(let u=0;u<=1.0001;u+=0.5){g.beginPath();g.moveTo(L,Y(u));g.lineTo(R,Y(u));g.stroke();g.fillText(Math.round(u*100)+'%',2,Y(u)+3);}
+  const line=(df,col)=>{g.strokeStyle=col;g.lineWidth=2;g.beginPath();for(let a=0;a<=1.2001;a+=0.02){const y=Y(Math.min(1.1,diffTractionAt(df,a*G,V.cg,1,Tg)));a?g.lineTo(X(a),y):g.moveTo(X(a),y);}g.stroke();};
+  line(DIFF.open,'#a44');line(now,'#889');line(r,'#6fc');
+  pv('pdLegend').innerHTML='<span style="color:#6fc">━ '+esc(tr('this diff'))+'</span> <span style="color:#889">━ '+esc(tr('now'))+'</span> <span style="color:#a44">━ '+esc(tr('open'))+'</span> <span class="dim">'+esc(tr('share of the axle grip put down, against lateral g'))+'</span>';
+}
 // The wing's section at its angle with its two forces, and its lift against the angle, up to the stall.
 function drawWing(p,r){
   const c=pv('pwCanvas');if(!c)return;
@@ -24724,6 +24976,7 @@ function drawWing(p,r){
 }
 function drawPartCurves(kind,now,r){
   if(kind==='wing'||kind==='fwing')return drawWing(partsUI.last.p,r);
+  if(kind==='diff')return drawDiff(partsUI.last.p,r);
   const U=PART_UI[kind],c=pv(U.canvas);if(!c)return;
   const w=c.clientWidth||480,h=c.clientHeight||200,dpr=window.devicePixelRatio||1;
   c.width=Math.round(w*dpr);c.height=Math.round(h*dpr);
@@ -29165,6 +29418,7 @@ function titleMark(){
 function titleGo(mode){
   closeTitleScreen();
   if(mode==='showcase'){openShowcase('title');return;}   // the car showcase is a page of its own (build 237)
+  if(mode==='guided'){openGuided('title');return;}       // so is the guided build (build 308)
   setTab(mode);
 }
 function openTitleScreen(){
@@ -29359,6 +29613,258 @@ function bindShowcase(){
     e.preventDefault();e.stopPropagation();
   },true);
 }
+// ====== FACTORY CAR PRICES (build 308) ======
+// Written by tools/car-prices.mjs, never by hand: each factory car's build price (engine.cost + vehicle.cost) as the sim
+// prices it with its own engine. The guided build's budget question reads it; tests/test188.mjs checks it is current.
+const CAR_PRICE={
+  "Suzuki Alto Works (HA36S, 2015)":18400,
+  "Toyota Aygo 1.0 (2014)":16200,
+  "Fiat 500 TwinAir 85 (2011)":17800,
+  "Ford Fiesta 1.0 EcoBoost 125 (2013)":22850,
+  "VW Golf GTI (Mk7, 2013)":27600,
+  "Toyota GR Yaris (2020)":41700,
+  "Honda Civic Type R (FK8, 2017)":34650,
+  "Mazda MX-5 1.6 (NA, 1989)":22000,
+  "Toyota Corolla Levin GT-APEX (AE86)":24800,
+  "Honda S2000 (AP1, 2000)":31850,
+  "BMW M3 (E46, 2000)":35900,
+  "Porsche 911 GT3 (991.2, 2017)":72150,
+  "Toyota Supra RZ (A80, 1993)":38300,
+  "Nissan Skyline GT-R V-spec (R34, 1999)":41050,
+  "Subaru Impreza WRX STI (GD, 2004)":41900,
+  "Mitsubishi Lancer Evolution IX (2006)":41000,
+  "Audi RS3 Sportback (8V, 2017)":50650,
+  "Chevrolet Corvette (C6, LS3, 2008)":36050,
+  "Chevrolet Corvette Z06 (C6, 2006)":39400,
+  "Ford Mustang GT (2018)":42050,
+  "Dodge Challenger SRT Hellcat (2015)":48700,
+  "Ferrari F355 Berlinetta (1994)":56500,
+  "Lamborghini Diablo VT (1993)":60350,
+  "McLaren F1 (1994)":95550,
+  "Porsche 911 Turbo (993, 1995)":59500,
+  "Ferrari Enzo (2002)":105600,
+  "Porsche Carrera GT (2004)":98600,
+  "Ford GT (2005)":61900,
+  "Lamborghini Murciélago LP640 (2006)":70650,
+  "Ferrari 458 Italia (2010)":74100,
+  "Lamborghini Huracán LP610-4 (2014)":77400,
+  "McLaren 720S (2017)":76750,
+  "Ferrari 812 Superfast (2017)":68700,
+  "Porsche 911 Turbo S (992, 2020)":77650,
+  "Lamborghini Huracán STO (2021)":80450,
+  "Chevrolet Corvette Z06 (C8, 2023)":71750,
+  "McLaren 750S (2023)":76850,
+  "Mazda RX-7 (FD, 1993)":32550,
+  "Mazda RX-8 (2004)":29850,
+  "VW Golf 2.0 TDI 150 (Mk7, 2013)":29300,
+  "BMW 330d (F30, 2012)":41800,
+  "Chevrolet Silverado 2500HD Duramax (2020)":46100,
+  "BMW X5 M (F85, 2015)":55150,
+  "Porsche Cayenne Turbo (958.2, 2014)":53200,
+  "Lamborghini Urus (2018)":59250,
+  "Jeep Grand Cherokee SRT (WK2, 2014)":49500,
+  "Toyota Land Cruiser 200 VX 4.5 D-4D (2015)":54450,
+  "Radical SR3 RSX 1500 (2015)":87900,
+  "BAC Mono 2.3 (2011)":77200,
+  "Nissan 370Z (Z34, 2009)":32950,
+  "Honda NSX (NA1, 1991)":54550,
+  "Ford F-150 Raptor (2017)":44350,
+  "Nissan GT-R (R35, 2017)":52000,
+  "Alfa Romeo Giulia Quadrifoglio (2017)":44500,
+  "Nissan 300ZX Twin Turbo (Z32, 1990)":36500,
+  "Buick GNX (1987)":39050,
+  "Ferrari Dino 246 GT (1969)":50050,
+  "Ferrari F40 (1987)":94700,
+  "Jaguar E-Type 3.8 FHC (Series 1, 1961)":29200,
+  "Ford Mustang Fastback 289 (1965)":29900,
+  "Porsche 911 Carrera RS 2.7 Sport (1973)":51700,
+  "BMW M3 (E30, 1986)":31100,
+  "Volkswagen Golf GTI (Mk1, 1976)":20000,
+  "Ferrari 365 GTB/4 Daytona (1968)":46900,
+  "Lamborghini Countach LP400 (1974)":56250,
+  "Audi Sport quattro (1984)":39450,
+  "Mercedes-Benz 190E 2.3-16 (1984)":31350,
+  "Peugeot 205 GTI 1.9 (1986)":23100,
+  "Ford Sierra RS Cosworth (1986)":32150,
+  "Lancia Delta HF Integrale Evoluzione (1992)":37800,
+  "Honda Integra Type R (DC2, 1995)":32450,
+  "Lotus Elise (S1, 1996)":23400,
+  "BMW M5 (E39, 2000)":40950,
+  "Trabant 601 S (1988)":12250,
+  "Honda S660 (2015)":21050,
+  "Honda Beat (1991)":20500,
+  "Suzuki Cappuccino (EA11R, 1991)":23050,
+  "Ford Focus RS (Mk3, 2016)":43800,
+  "Renault Mégane R.S. Trophy (2018)":42650,
+  "Suzuki Swift Sport (ZC33S, 2018)":27250,
+  "Honda Civic Type R (EK9, 1997)":28950,
+  "Toyota GR86 (2022)":33800,
+  "Porsche 718 Cayman GT4 (2020)":63150,
+  "BMW M2 Competition (F87, 2018)":42800,
+  "Ariel Atom 3.5 (2013)":34300,
+  "Mazda MX-5 2.0 (ND, 2015)":27200,
+  "Dodge Viper SRT-10 (2008)":45500,
+  "Mercedes-AMG C63 (W204, 2008)":42900,
+  "Ram 2500 HO Cummins (2019)":42450,
+  "Toyota Hilux 2.8 D-4D (2016)":36450,
+  "Volkswagen Amarok 3.0 V6 TDI (2018)":45200,
+  "Chevrolet Camaro ZL1 (2017)":47150,
+  "Tesla Model 3 RWD (2021)":33150,
+  "Tesla Model Y Long Range (2022)":46674,
+  "Tesla Model S Plaid (2021)":76613,
+  "Hyundai Ioniq Hybrid (2016)":35320,
+  "Toyota Prius (2016)":24811,
+  "Nissan Qashqai e-POWER (2022)":31912,
+  "BMW 330e (2020)":37773,
+  "Porsche 918 Spyder (2013)":129133
+};
+// ====== GUIDED BUILD (build 308, phase G) ======
+// For the learner: three questions (what kind of car, what budget, what matters most) give a complete, working car,
+// with each of its parts explained. The car is a real one from FACTORY_CARS, loaded with its own engine exactly as the
+// FACTORY CAR picker loads it, so every part is sourced and nothing here is fitted or computed. After loading, every
+// part stays open on its card (ENGINE and VEHICLE tabs) for the enthusiast.
+//   · kind: the factory car families (FACTORY_CAR_CATS);
+//   · budget: the sim's own build price, engine plus car, read from CAR_PRICE (tools/car-prices.mjs writes it; pricing
+//     a car means working its engine out, about a second each, too slow to do while the player waits);
+//   · what matters: the maker's 0–100, the maker's curb mass, or the price. Missing figures rank last, never estimated.
+// Opened from the title menu (GUIDED BUILD); BACK steps back a question, and from the first returns to the menu.
+const GB_BUDGETS=[20000,30000,45000,60000,80000,Infinity];
+const GB_GOALS={quick:{label:'QUICKEST',why:'the quickest 0–100 its maker published'},
+  light:{label:'LIGHTEST',why:'the lightest, which is the easiest to learn on: less mass to stop and turn'},
+  cheap:{label:'CHEAPEST',why:'the lowest build price'}};
+const guided={open:false,step:0,fam:null,budget:Infinity,goal:'quick',pick:0,from:null};
+const gbPrice=p=>CAR_PRICE[p.name];
+function gbCars(fam){return FACTORY_CARS.map((p,i)=>({p,i})).filter(x=>x.p.cat===fam);}
+// The cars that answer all three questions, best first. If none is within the budget, the cheapest of the family is
+// offered instead, and the result says so.
+function gbMatches(){
+  const all=gbCars(guided.fam),fit=all.filter(x=>gbPrice(x.p)<=guided.budget);
+  const key={quick:x=>(x.p.real&&x.p.real.t100)||Infinity,light:x=>(x.p.body&&x.p.body.kg)||Infinity,cheap:x=>gbPrice(x.p)}[guided.goal];
+  const L=(fit.length?fit:all.slice().sort((a,b)=>gbPrice(a.p)-gbPrice(b.p)).slice(0,1));
+  return {over:!fit.length,list:L.slice().sort((a,b)=>key(a)-key(b)||gbPrice(a.p)-gbPrice(b.p))};
+}
+// What each part is and why a car like this has it, from the car's own fitment. [where to change it, the part, why]
+function gbExplain(p){
+  const ep=FACTORY_ENGINES.find(x=>x.name===p.engine)||{},e=ep.engine||{},v=vehicleFromPreset(p),out=[];
+  const E=(part,why)=>out.push(['ENGINE',part,why]),V=(part,why)=>out.push(['VEHICLE',part,why]);
+  if(e.type==='electric')E(tr('Electric motor'),tr('Full torque from standstill and one gear; the battery is the tank, so range is the price of its weight.'));
+  else{
+    const L=e.cylinders*Math.PI/4*Math.pow(e.bore_mm/10,2)*(e.stroke_mm/10)/1000;
+    const size=e.type==='rotary'?e.cylinders+tr('-ROTOR'):(L.toFixed(1)+' L, '+e.cylinders+tr('-CYL'));
+    const kind={diesel:'Diesel: the heat of compression lights the fuel. Big torque low down and frugal, but it stops revving early.',
+      rotary:'Rotary: spinning rotors in place of pistons. Small, light and eager to rev, but thirsty.',
+      twostroke:'Two-stroke: it fires on every turn. Simple and light, but dirty and thirsty.'}[e.type]||
+      (e.type!=='rotary'&&L<1.3?'A small engine: light and frugal, made for town.':L>4?'A big engine: torque everywhere, but heavy and thirsty.':'A mid-size engine: the usual balance of power, weight and thirst.');
+    E(size,tr(kind));
+    if(e.intake==='turbo')E(tr('TURBO'),tr('Exhaust gas spins a turbine that blows more air in: big power from a small engine, after a short wait for boost (lag).'));
+    else if(e.intake==='supercharger')E(tr('SUPERCHARGER'),tr('A belt-driven compressor gives boost from idle, paid for with some of the engine\'s own power.'));
+    else E(tr('Naturally aspirated'),tr('No turbo: the throttle answers at once, and power comes from litres and revs.'));
+    if(e.hyMode)E(tr('Hybrid'),tr('A motor shares the work with the engine and turns braking back into charge.'));
+  }
+  V(tr({fwd:'FRONT-WHEEL DRIVE',rwd:'REAR-WHEEL DRIVE',awd:'ALL-WHEEL DRIVE'}[v.drive]||String(v.drive).toUpperCase()),
+    tr({fwd:'Light and cheap, with the engine\'s weight over the wheels it drives; it runs out of grip with big power.',
+        rwd:'The front steers and the rear pushes: balanced, and the classic layout for sports cars, but it can slide.',
+        awd:'All four wheels push: the best launch and grip on a wet road, at the cost of weight and price.'}[v.drive]||''));
+  if(v.gearbox&&GEARBOX[v.gearbox]&&!p.cat.match(/Electric/))V(tr(GEARBOX[v.gearbox].label),
+    tr({manual:'You shift, with a clutch: cheap and light, a little slower between gears.',sequential:'A racing box: straight back and forth, quick shifts.',
+        dct:'Two clutches swap gears with almost no gap in the drive.',auto:'A torque converter: smooth and easy, at some cost in speed and fuel.'}[v.gearbox]||''));
+  if(TIRE_TYPE[v.tireType])V(tr(TIRE_TYPE[v.tireType].label)+' '+v.tireWidth+'/'+v.tireAspect+' R'+v.wheelDia,
+    tr({eco:'Hard, low-rolling-resistance rubber: it saves fuel and lasts, but grips least.',street:'An everyday tyre: grip and comfort in balance.',
+        sport:'Softer rubber for more grip, worn sooner.',semi:'Almost a race tyre: big grip once warm, poor in the rain.',
+        slick:'No tread at all: the most grip on a dry track, none to spare in the wet.',drag:'Made to launch in a straight line.'}[v.tireType]||''));
+  if(BRAKE_TYPE[v.brakeType])V(tr(BRAKE_TYPE[v.brakeType].label),
+    tr({steel:'Plain discs: enough for a light car on the road.',slotted:'Vented discs shed heat, so they keep stopping lap after lap.',
+        big:'Bigger discs and calipers for a heavy or fast car.',carbon:'Carbon-ceramic: light and fade-free when hot, very expensive.',
+        hd:'Heavy-duty brakes for a truck\'s weight and towing.'}[v.brakeType]||''));
+  if(SUSPENSION[v.suspension])V(tr(SUSPENSION[v.suspension].label),
+    tr({comfort:'Soft springs ride bumps well; the body leans in corners.',sport:'Firmer springs and dampers: less lean, a harder ride.',
+        coilover:'Adjustable springs and dampers, set for the track.',race:'Stiff and adjustable: for a smooth circuit only.'}[v.suspension]||''));
+  if(p.body&&p.body.kg)V(tr('Mass')+' '+p.body.kg+' kg',tr(p.body.kg<1000?'Light: it accelerates, stops and turns with little effort.':
+    p.body.kg>1700?'Heavy: it needs big power, brakes and tyres to move it quickly.':'A usual weight for its size.'));
+  return out;
+}
+function gbChoice(attr,val,label,sub,on){
+  return '<button type="button" class="gb-opt'+(on?' on':'')+'" data-'+attr+'="'+esc(String(val))+'">'+esc(label)+
+    (sub?'<span>'+esc(sub)+'</span>':'')+'</button>';
+}
+function gbQuestion(n,q,opts){return '<p class="gb-step">'+esc(tr('QUESTION'))+' '+n+' / 3</p><h3>'+esc(tr(q))+'</h3><div class="gb-opts">'+opts+'</div>';}
+function gbResult(){
+  const M=gbMatches(),x=M.list[guided.pick]||M.list[0];if(!x)return '';
+  const p=x.p,url=carArtUrl(p.name),cr=p.real||{},n=M.list.length;
+  const why=tr('Of {n} that fit, this is {why}.').replace('{n}',n+' '+tr(n===1?'car':'cars')).replace('{why}',tr(GB_GOALS[guided.goal].why));
+  return '<div class="gb-res">'+(url?'<img class="gb-art" src="'+esc(url)+'" alt="'+esc(p.name)+'" decoding="async" width="960" height="640">':'')+
+    '<h3 id="gbName"><span>'+esc(carNo(p.name))+'</span> '+esc(p.name)+'</h3>'+
+    '<p class="gb-why">'+esc(M.over?tr('Nothing in this family fits that budget: this is its cheapest.'):why)+'</p>'+
+    '<dl class="sc-figs"><dt>'+esc(tr('BUILD PRICE'))+'</dt><dd>'+fmtCost(gbPrice(p))+'</dd>'+
+    (cr.t100?'<dt>0–100 km/h</dt><dd>'+cr.t100.toFixed(1)+' s</dd>':'')+(p.body&&p.body.kg?'<dt>'+esc(tr('MASS'))+'</dt><dd>'+p.body.kg+' kg</dd>':'')+'</dl>'+
+    '<h4>'+esc(tr('WHY THESE PARTS'))+'</h4><ul class="gb-parts">'+gbExplain(p).map(([tab,part,w])=>
+      '<li><b>'+esc(part)+'</b> <i>'+esc(tr(tab))+'</i><br>'+esc(w)+'</li>').join('')+'</ul>'+
+    '<p class="sc-src">'+esc(tr('Every part stays open on its card: change any of them once the car is built.'))+'</p>'+
+    '<div class="gb-act"><button type="button" id="gbBuild" class="sc-drive">'+esc(tr('BUILD THIS CAR'))+'</button></div>'+
+    (n>1?'<h4>'+esc(tr('OR'))+'</h4><div class="gb-opts">'+M.list.slice(0,4).map((y,k)=>k===guided.pick?'':
+      gbChoice('pick',k,y.p.name,fmtCost(gbPrice(y.p)),false)).join('')+'</div>':'')+'</div>';
+}
+function renderGuided(){
+  const box=document.getElementById('gbBody');if(!box)return;
+  const h=document.getElementById('gbHeading');if(h)h.textContent=tr('GUIDED BUILD');
+  const back=document.getElementById('gbClose');if(back)back.textContent=tr('BACK');
+  let html='';
+  if(guided.step===0){
+    html=gbQuestion(1,'What kind of car?',FACTORY_CAR_CATS.filter(c=>FACTORY_CARS.some(p=>p.cat===c)).map(c=>{
+      const L=gbCars(c).map(x=>gbPrice(x.p));
+      const lo=Math.min(...L),hi=Math.max(...L);
+      return gbChoice('fam',c,tr(c),fmtCost(lo)+(hi>lo?' – '+fmtCost(hi):''),c===guided.fam);}).join(''));
+  }else if(guided.step===1){
+    const L=gbCars(guided.fam).map(x=>gbPrice(x.p)),lo=Math.min(...L),hi=Math.max(...L);
+    // only the budgets that change the answer: those that buy at least one car and not yet all of them
+    const B=GB_BUDGETS.filter(b=>b>=lo&&b<hi);
+    html=gbQuestion(2,'What budget?',B.concat([Infinity]).map(b=>{
+      const n=L.filter(v=>v<=b).length;
+      return gbChoice('budget',b,b===Infinity?tr('NO LIMIT'):tr('UP TO')+' '+fmtCost(b),n+' '+tr(n===1?'car':'cars'),b===guided.budget);}).join(''));
+  }else if(guided.step===2){
+    html=gbQuestion(3,'What matters most?',Object.keys(GB_GOALS).map(k=>gbChoice('goal',k,tr(GB_GOALS[k].label),'',k===guided.goal)).join(''));
+  }else html=gbResult();
+  box.innerHTML=html;
+}
+// each step opens at its top: the result's first control is below the car's picture and parts, so it takes focus unscrolled
+function gbFocus(){const box=document.getElementById('gbBody');if(box)box.scrollTop=0;
+  requestAnimationFrame(()=>{const b=document.querySelector(guided.step===3?'#gbBuild':'#gbBody .gb-opt');if(b)b.focus({preventScroll:true});});}
+function openGuided(from){
+  const el=document.getElementById('guided');if(!el)return;
+  guided.from=from||null;guided.step=0;guided.pick=0;
+  el.hidden=false;guided.open=true;document.body.classList.add('guided-open');el.scrollTop=0;
+  renderGuided();gbFocus();
+}
+function closeGuided(stay){
+  const el=document.getElementById('guided');if(!el||el.hidden)return;
+  el.hidden=true;guided.open=false;document.body.classList.remove('guided-open');
+  if(!stay&&guided.from==='title')openTitleScreen();
+}
+function gbBack(){if(guided.step>0){guided.step--;guided.pick=0;renderGuided();gbFocus();}else closeGuided();}
+// The same load as the FACTORY CAR picker, then the VEHICLE tab, where the car's parts are open on their cards.
+function gbBuild(){
+  const x=gbMatches().list[guided.pick];if(!x)return;
+  closeGuided(true);setTab('vehicle');loadFactoryCarUI(x.i);
+}
+function bindGuided(){
+  const el=document.getElementById('guided');if(!el)return;
+  el.addEventListener('click',e=>{
+    const b=e.target.closest('button');if(!b||!el.contains(b))return;
+    const d=b.dataset;
+    if(b.id==='gbClose')gbBack();
+    else if(b.id==='gbBuild')gbBuild();
+    else if(d.fam!=null){guided.fam=d.fam;guided.budget=Infinity;guided.step=1;}
+    else if(d.budget!=null){guided.budget=+d.budget;guided.step=2;}
+    else if(d.goal!=null){guided.goal=d.goal;guided.pick=0;guided.step=3;}
+    else if(d.pick!=null){guided.pick=+d.pick;}
+    else return;
+    if(guided.open){renderGuided();gbFocus();}
+  });
+  document.addEventListener('keydown',e=>{
+    if(el.hidden||e.key!=='Escape')return;
+    gbBack();e.preventDefault();e.stopPropagation();
+  },true);
+}
 function bindControls(){
   // Throttle & load are fractions (0..1); AFR/temps are direct values.
   document.getElementById('throttle').addEventListener('input',e=>state.throttle=(+e.target.value)/100);
@@ -29400,10 +29906,11 @@ function bindControls(){
     state.afr=p.afr;state.iat=p.iat;state.coolant=p.coolant;state.oil=p.oil;
     dynoCache=null;syncSliders();
   }
+  document.getElementById('lampFault').addEventListener('click',toggleObd);   // the code list (build 309)
   document.getElementById('btnOptimal').addEventListener('click',()=>applyOperatingPoint('torque'));
   document.getElementById('btnMaxPower').addEventListener('click',()=>applyOperatingPoint('power'));
   document.getElementById('btnEco').addEventListener('click',()=>applyOperatingPoint('eco'));
-  document.getElementById('btnReset').addEventListener('click',()=>{state.firing=true;state.ignOn=true;state.crank=0;setAutoThermal(false);state.engineHealth=1.0;state.blown=false;state.wearCause='';state.coolant=90;state.oil=100;state.batterySOC=1.0;applyPreset({throttle:0.10,load:0.20,afr:14.7,iat:25,coolant:90,oil:100})});
+  document.getElementById('btnReset').addEventListener('click',()=>{state.firing=true;state.ignOn=true;state.crank=0;setAutoThermal(false);state.engineHealth=1.0;state.blown=false;state.wearCause='';obdReset();state.coolant=90;state.oil=100;state.batterySOC=1.0;applyPreset({throttle:0.10,load:0.20,afr:14.7,iat:25,coolant:90,oil:100})});
   // Starter / Power Off (build 254). On an electric car or a hybrid they switch the whole car on (READY) and off
   // (build 306): off, nothing drives, charges or is heard; a hybrid comes on with its engine running, then the controller
   // decides.
@@ -29655,6 +30162,7 @@ function loop(now){
   stepElectrical(dt);
   updatePhysics();
   stepWear(dt);
+  obdStep(dt);
   updateSound();
   // Under the title menu or the car showcase nothing of the app is on view, so it is not drawn: the bench keeps running
   // (and sounding) underneath, and the menu's pan has the frame to itself (build 237). The first frame after either
@@ -29668,7 +30176,7 @@ function loop(now){
   updateUI();
   requestAnimationFrame(loop);
 }
-function appCovered(){const c=document.body.classList;return c.contains('title-open')||c.contains('showcase-open');}
+function appCovered(){const c=document.body.classList;return c.contains('title-open')||c.contains('showcase-open')||c.contains('guided-open');}
 bindControls();bindHybridPanel();bindHybMap();applyEngineToForm(Object.assign({},DEFAULT_ENGINE));buildEngine();
 applyVehicleToForm(DEFAULT_VEHICLE);buildVehicle();updateVehicleSummary();
 loadFromHash();   // open a shared build if the URL carries one
@@ -29681,6 +30189,7 @@ bindTrackPage();
 sizeCanvas();updatePhysics();updateUI();requestAnimationFrame(loop);
 bindTitleScreen();
 bindShowcase();
+bindGuided();
 if(titleOnLoad())openTitleScreen();
 
 // Register service worker for offline/installable PWA (no-op on file://).

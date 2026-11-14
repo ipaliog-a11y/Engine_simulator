@@ -18,7 +18,7 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 ## [Unreleased]
 
-### Spark retard heats the exhaust; past its furthest retard the ECU enriches, then lowers the boost (build 308)
+### Spark retard heats the exhaust; past its furthest retard the ECU enriches, then lowers the boost (build 311)
 
 - The work a retarded spark does not do now goes down the exhaust (energy balance in `exhaustHeatFrac`, at the torque
   path's own phasing loss). Before, EGT did not depend on spark at all. On the 2.0 turbo at 4000 rpm, 15° of retard
@@ -34,6 +34,62 @@ they are accurate about *what* shipped but not about the day it shipped.
   retard floor is not limited by exhaust temperature; doing that would cut boost on presets whose modelled EGT is already
   over 950 °C at best spark. The turbine's shaft balance and the catalyst check still read the exhaust at best-torque
   spark. An NA engine past its floor still only knocks (no load cut). The boost limit is solved at the bench's intake air.
+### The differential as a part (build 310)
+
+Phase D of `plans/road-to-v1.md`: the differential, the first of its two builds (the part; the table it stands beside
+goes next).
+
+- **The PARTS tab designs a DIFFERENTIAL**: a clutch-plate (ramp) LSD with its preload, ramp angle, friction faces a
+  side, plate mean radius and ramp radius. Fitted from the VEHICLE tab's DIFFERENTIAL (under MY PARTS), it takes the
+  factory diff's place.
+- **Its lock is the ramp's statics**: the drive through the cross-shafts' V-notches squeezes the plates, so the torque
+  held between the wheels is preload + L × drive, L = 2 × faces × μ × plate radius × cot(ramp) ÷ ramp radius, bias
+  (1+L)/(1−L) (Milliken & Milliken, RCVD). μ 0.10 for plates in LSD oil (PROBABLE). The starting diff (60 N m, 45°,
+  3 faces a side, 40/40 mm) locks 60%, bias 4.0.
+- **What it puts down follows**: the light wheel holds its share, the heavy one at most the locking torque more, so the
+  usable share is (open share + preload ÷ axle grip) ÷ (1 − L), at most 1. With no lock it is the open diff exactly.
+- **No factory car moved**: no preset carries a designed diff (fingerprint below).
+- **Left open:** the wheels' load asymmetry (`DIFF_ASYM0`, `DIFF_CAMBER`), the factory table's traction, scrub and lock,
+  and the stepped car's coupling gain stay fitted; the part's scrub in a corner is the table's, read across at its lock.
+  A coast ramp (1.5- and 2-way) is not modelled: nothing yet reads the lock off the throttle. Next: retire the table.
+- **Found for the next build:** the table's clutch-plate LSD (lock 0.80) keeps 85% of the axle's grip at 1.2 g on the
+  E46 M3, where the starting design (lock 0.60, bias 4) keeps about 15%: the table's lock is far more generous than its
+  ramp could give. Retiring it will move every car with a factory LSD.
+
+Tests: test190 (new).
+### The check-engine lamp: OBD-II fault codes on the bench (build 309)
+
+The FAULT lamp under LIVE OUTPUT was a placeholder since build 254. It is now the check-engine lamp (`src/js/obd.js`).
+
+- **Six generic codes (SAE J2012)**, each set by a condition the simulation already has, at a threshold it already uses:
+  P0324 knock past what the ECU's retard holds (`KNOCK_TARGET`), P0217 coolant over 112 °C (the wear model's OVERHEAT),
+  P0171 λ > 1.05 under boost (its LEAN/BOOST), P0300 misfire (spark lost past the dwell limit on a weak 12 V, or valve
+  float), P0420 a warm engine with no working catalyst, P0562 the 12 V side under 11.6 V.
+- **OBD-II lamp rules (CARB 13 CCR 1968.2)**: seen once, a code is pending (amber); seen again in the next drive cycle (the
+  next STARTER after at least 20 s of running), it is confirmed (red). A misfire over 10% flashes the lamp at once. Three
+  clean cycles put it out and keep the code as history. Each code keeps a freeze frame. Click the lamp for the list;
+  CLEAR CODES, RESET or a rebuild erase it.
+- **Moves no number**: diagnostics only read the state. The fingerprint is identical.
+- **Left open**: the hold times and the misfire rates (2% to set, 10% to flash) are game rules; real ones are set per
+  engine by its maker. No limp mode yet, no codes in races or laps, none for an EV or the hybrid's electric side, and no
+  boost codes (P0234/P0299), which need a boost target the ECU can miss. Greek for the new text is paused.
+
+### A guided build for the learner: three questions give a real car, each part explained (build 308)
+
+Phase G, last build. GUIDED BUILD, the title menu's sixth item, asks what kind of car, what budget and what matters
+most (the quickest, the lightest or the cheapest), and offers the real car that answers them, with up to three others.
+
+- **Each part explained**: the engine's size and type, its induction, the driven wheels, gearbox, tyres, brakes,
+  suspension and mass, each with a line on why a car like this has it and the tab where it can be changed.
+- **BUILD THIS CAR** loads it with its own engine exactly as the FACTORY CAR picker does, on the VEHICLE tab, where every
+  part stays open on its card. No number in the sim moves (it only loads existing presets).
+- **The budget is the sim's own build price** (engine.cost + vehicle.cost), $12,250 (Trabant) to $129,133 (918 Spyder).
+  Pricing a car means working out its engine, about 1 s each, so `tools/car-prices.mjs` writes the list to
+  `src/js/car-prices.js` (the owner's choice over pricing live); `tests/test188.mjs` re-prices all 100 cars and fails
+  if the list is stale. Re-run the tool after any change to a cost or a preset.
+- "Quickest" and "lightest" read the maker's published 0–100 and curb mass; a car without one ranks last.
+- Open: it picks among the real cars rather than composing a car from parts; the new strings have no Greek
+  (translations paused), so `test123` expects GUIDED BUILD in English on the Greek menu.
 
 ### Electric and hybrid sound is quieter and stops with no torque; POWER OFF switches the whole car off (build 307)
 

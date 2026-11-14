@@ -619,13 +619,43 @@ function axleAsym(tqFrac){return DIFF_CAMBER+(DIFF_ASYM0-DIFF_CAMBER)*clamp(tqFr
 // Normalised so that at full axle torque and zero lateral g it returns exactly the quoted
 // straight-line `traction` figure — so a standing start is unchanged, and with it the whole
 // drag-strip diff trade and every saved build.
-function diffTractionAt(df,aLat,cgH,tqFrac){
+// gripTq (optional): the driven axle's grip as a torque at the wheels, N m; a designed diff's preload is read against it.
+function diffTractionAt(df,aLat,cgH,tqFrac,gripTq){
   const asym=axleAsym(tqFrac==null?1:tqFrac);
   const xfer=clamp((aLat/G)*(cgH/1.55),0,0.5-asym);           // lateral transfer, capped at lift
   const openUse=2*Math.max(0,0.5-asym-xfer);
+  if(df.part)return diffPartUse(df,openUse,gripTq);
   const use=df.lock+(1-df.lock)*openUse;
   const useRef=df.lock+(1-df.lock)*2*(0.5-DIFF_ASYM0);        // the reference `traction` is quoted at
   return df.traction*(use/useRef);
+}
+// ---- the differential as a part (build 310) ----
+// A designed clutch-plate (Salisbury, ramp) limited-slip. The carrier drives the cross-shafts, which sit in V-notches
+// in two pressure rings at radius rRamp; the notch's face at the ramp angle theta (from the plane of rotation: 90 deg
+// is a flat face and no lock) turns the drive force T_in/rRamp into an axial force (T_in/rRamp)·cot(theta) that
+// squeezes the two clutch packs, each with `faces` friction faces at a mean radius rFace. The friction torque the two
+// packs carry between the wheels is then dT = T_pre + L·T_in, L = 2·faces·mu·rFace·cot(theta)/rRamp: the ramp's
+// statics (Milliken & Milliken, Race Car Vehicle Dynamics, 1995, the chapter on differentials). Torque bias
+// ratio (1+L)/(1-L). DIFF_MU: plates running in limited-slip oil, 0.08-0.13 quoted (PROBABLE, makers' oil notes).
+const DIFF_MU=0.10;
+function diffPartLock(p){
+  const th=p.ramp_deg*Math.PI/180;
+  return p.ramp_deg>=90?0:Math.min(1,2*p.faces*DIFF_MU*(p.rFace_mm/p.rRamp_mm)*Math.cos(th)/Math.sin(th));
+}
+// The usable share of the axle's grip: the light wheel holds openUse/2 of it, the heavy one at most dT more. With the
+// axle driven at its grip, T_in = use·T_g and T_light = (T_in - dT)/2, so use = (openUse + T_pre/T_g)/(1 - L), at most 1.
+// Open (L 0, no preload) is openUse, as the open diff; a weld (L 1) is 1, as the spool's lock.
+function diffPartUse(df,openUse,gripTq){
+  if(df.lock>=1)return 1;
+  return Math.min(1,(openUse+(gripTq>0?df.preload/gripTq:0))/(1-df.lock));
+}
+// The part as the physics reads it. Its scrub in a corner (`corner`) is the factory table's, read across at its lock:
+// the table's rule until the table is retired (`DIFF_ASYM0` in plans/fitted-register.json).
+function diffSpec(p){
+  const L=diffPartLock(p),keys=['open','visc','clsd','spool'];
+  let corner=1;for(let i=1;i<keys.length;i++){const a=DIFF[keys[i-1]],b=DIFF[keys[i]];if(L<=b.lock){corner=a.corner+(b.corner-a.corner)*(L-a.lock)/(b.lock-a.lock);break;}}
+  return {label:'CLUTCH-PLATE LSD',part:true,lock:L,preload:p.preload_Nm,tbr:L>=1?Infinity:(1+L)/(1-L),corner,cost:DIFF.clsd.cost,
+    traction:Math.min(1,2*(0.5-DIFF_ASYM0)/(1-L))};   // the readout's figure: a standing start, no preload
 }
 // Cornering-only form, kept for the lap solver's readability.
 function lapDiffTraction(df,aLat,cgH){return diffTractionAt(df,aLat,cgH,1);}

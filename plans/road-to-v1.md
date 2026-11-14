@@ -196,6 +196,10 @@ No real-car check per build (decision 3); the race is checked at H.
 **G. For both players (2–3 builds).** A guided build for the learner: a few questions (what kind of car, what
 budget) give a complete, working car with each choice explained, then every part stays open on its card for the
 enthusiast. The guide pages for the new parts.
+*Build 308:* the guided build (`src/js/guided-build.js`, `tests/test188.mjs`): kind, budget and what matters (quickest,
+lightest, cheapest) pick a real car from the factory list, its parts explained, loaded as the FACTORY CAR picker loads it.
+The budget is the sim's build price, listed by `tools/car-prices.mjs` (the owner's choice over pricing live, ~1 s a car).
+Open: it picks among the real cars rather than composing parts; the new strings have no Greek (paused).
 Editable spark and VE tables (owner's decision, November 2026): an rpm × load grid for ignition advance and one for
 volumetric efficiency on the ECU card, beside the fuel map that is already editable. Each opens filled with what the
 model derives (the MBT-tracking, knock-limited timing; the VE from the cam, ports, runners and plenum), so an untouched
