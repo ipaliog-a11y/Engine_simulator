@@ -8,6 +8,10 @@
 //   · the physics: a bigger valve chokes later (lower Mach index) and floats sooner (heavier); a stiffer spring floats
 //     later; a smaller throat lowers the flow coefficient's plateau; a designed spring does not re-size for the redline;
 //   · the preview moves nothing and is the fitted build; the part fits on the ENGINE tab and travels with a build;
+//   · the exhaust valve is the part's own (build 286): a wider one leaves the gas hotter, and a part saved without
+//     one takes 0.83 of its intake;
+//   · a real engine whose valves are sourced (ENGINE_VALVES, build 287) has them; they go when its bore changes and
+//     stay through a save; an engine not listed keeps the packing rule;
 //   · a port-timed engine is told a head of valves changes nothing.
 import { chromium } from './pw.mjs';
 import { fileURLToPath, pathToFileURL } from 'url';
@@ -37,12 +41,20 @@ const r = await page.evaluate(() => {
       o.fac.push({ car: vehicle.body.name, k, hp: a.peakHP, d: maxDiff(a, b), fa: a.floatRpm, fb: b.floatRpm });
     }
   }
+  // 1b. a real engine's own valves (build 287): the sourced sizes, dropped when the bore changes, kept by a save
+  load('BMW M3 (E46'); o.own = { iv: engine.ivDia_mm, ev: engine.evDia_mm };
+  { const b = serializeBuild('t', ''); const bore = document.getElementById('edBore');
+    bore.value = 88; buildEngine(); o.own.rebored = engine.ivDia_mm;
+    applyBuild(JSON.parse(JSON.stringify(b))); o.own.back = [engine.ivDia_mm, engine.evDia_mm]; }
+  load('Golf GTI (Mk7'); o.own.rule = [engine.ivDia_mm / engine.bore_mm, engine.evDia_mm / engine.ivDia_mm];
   // 2. the physics, on the M3
   load('BMW M3 (E46');
   const base = partFromFactory('stock', 'head'), R = x => headReport(Object.assign({}, base, x));
   o.valve = [31, 34, 37].map(d => { const q = R({ valveD_mm: d }); return { z: q.z, f: q.floatRpm, big: q.dOverB > q.packD }; });
   o.seat = [220, 290, 400].map(s => R({ seat_N: s }).floatRpm);
   o.rate = [15, 25, 45].map(k => R({ rate_Nmm: k }).floatRpm);
+  o.ex = [26, 30].map(d => R({ exValveD_mm: d }).egt);   // build 286: the exhaust valve is the part's own
+  { const old = Object.assign({}, base); delete old.exValveD_mm; const d = +(0.83 * base.valveD_mm).toFixed(4); o.exOld = [normPart(old).exValveD_mm, d, headReport(old).egt, R({ exValveD_mm: d }).egt]; }
   o.throat = [0.78, 0.85].map(t => R({ throat: t, valveD_mm: 30 }).Ci);
   // a designed spring is hardware: it does not re-size when the maker's would (springs rated 1500 rpm higher)
   const fixed = withPart('head', base, e => { e.springRpm = e.redline + 1500; deriveValvetrain(); return e.floatRpm; });
@@ -77,6 +89,11 @@ for (const c of r.fac) {
   if (Math.abs(c.fa - c.fb) > 0.5) fails.push(`${c.car} ${c.k}: the part's springs are not the factory's`);
 }
 const rd = a => a.map(x => Math.round(x)).join(' / ');
+console.log(`== a real engine's own valves: M3 ${r.own.iv} / ${r.own.ev} mm; bored to 88 mm ${r.own.rebored.toFixed(2)} mm; after a save ${r.own.back.join(' / ')}; an unlisted engine ${r.own.rule.map(x => x.toFixed(2)).join(' of the bore, exhaust ')} of the intake ==`);
+if (r.own.iv !== 35 || r.own.ev !== 30.5) fails.push("the M3 does not have BMW's valves (35 / 30.5 mm)");
+if (Math.abs(r.own.rebored - 0.39 * 88) > 1e-9) fails.push('a head on another bore kept the old bore\'s valves');
+if (r.own.back[0] !== 35 || r.own.back[1] !== 30.5) fails.push('a saved build lost its real valves');
+if (Math.abs(r.own.rule[0] - 0.39) > 1e-9 || Math.abs(r.own.rule[1] - 0.83) > 1e-9) fails.push('an engine with no sourced valves no longer takes the rule');
 console.log(`== valve 31/34/37 mm: Mach index ${r.valve.map(v => v.z.toFixed(3)).join(' / ')}, float ${rd(r.valve.map(v => v.f))}, past the packing ${r.valve.map(v => v.big).join('/')} ==`);
 console.log(`== seat 220/290/400 N: float ${rd(r.seat)}; rate 15/25/45 N/mm: float ${rd(r.rate)}; throat 0.78/0.85 on a 30 mm valve: Ci ${r.throat.map(x => x.toFixed(3)).join(' / ')} ==`);
 console.log(`== springs rated +1500 rpm: the part's float ${Math.round(r.hard.fixed)} (as built ${Math.round(r.hard.asBuilt)}) ==`);
@@ -84,6 +101,9 @@ if (!(r.valve[0].z > r.valve[1].z && r.valve[1].z > r.valve[2].z)) fails.push('a
 if (!(r.valve[0].f > r.valve[1].f && r.valve[1].f > r.valve[2].f)) fails.push('a bigger valve does not float sooner');
 if (r.valve[0].big || !r.valve[2].big) fails.push('the packing warning is wrong');
 if (!(r.seat[0] < r.seat[1] && r.seat[1] < r.seat[2]) || !(r.rate[0] < r.rate[1] && r.rate[1] < r.rate[2])) fails.push('a stiffer spring does not float later');
+console.log(`== exhaust valve 26/30 mm: gas at peak power ${r.ex.map(x => x.toFixed(1)).join(' / ')} °C; a part saved without one: ${r.exOld[0]} mm (0.83 of its intake: ${r.exOld[1]}) ==`);
+if (!(r.ex[0] < r.ex[1] - 0.5)) fails.push('a wider exhaust port does not leave the gas hotter');
+if (Math.abs(r.exOld[0] - r.exOld[1]) > 1e-3 || Math.abs(r.exOld[2] - r.exOld[3]) > 1e-6) fails.push('a head saved before build 286 does not take 0.83 of its intake for the exhaust');
 if (!(r.throat[0] < r.throat[1] - 0.03)) fails.push('a smaller throat does not lower the flow coefficient');
 if (Math.abs(r.hard.fixed - r.hard.asBuilt) > 1e-6) fails.push('a designed spring re-sized for the redline');
 console.log(`== the preview moves nothing: ${r.still}; fitted: ${JSON.stringify(r.fit)}; travels: ${JSON.stringify(r.travel)} ==`);

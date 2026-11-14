@@ -109,7 +109,7 @@ function wallShareAt(rpm){
 // Heat to the exhaust port, as a share of the heat released. Caton & Heywood (Int. J. Heat Mass
 // Transfer 24, 1981) measured it on a running engine and fitted Nu = 0.0483 Re^0.783, with Re on the
 // mean flow while the valve is open. Port size from the head's own valves: exhaust valve heads 0.83 of
-// the intake (the usual design ratio, Heywood ch. 5), the port bore its throat (THROAT_RATIO), and the
+// the intake (the usual design ratio, Heywood ch. 5; a designed head's own since build 286), the port bore its throat (THROAT_RATIO), and the
 // port one bore long, valve seat to manifold face. The gas is at the temperature the balance before
 // this term gives it; properties are air's (Sutherland viscosity, Pr 0.7), which the products are close
 // to at these temperatures.
@@ -117,7 +117,7 @@ const EV_RATIO=0.83;
 function portLossShare(n,lam,f0){
   const e=engine;
   if(!e.ivDia_mm)return 0;
-  const nEx=Math.max(1,(e.valves||4)-e.ivCount), D=(e.throatRatio||THROAT_RATIO)*EV_RATIO*e.ivDia_mm/1000, L=e.bore_mm/1000;
+  const nEx=Math.max(1,(e.valves||4)-e.ivCount), D=(e.evOwn?(e.throatRatio||THROAT_RATIO)*e.evDia_mm:(e.throatRatio||THROAT_RATIO)*EV_RATIO*e.ivDia_mm)/1000, L=e.bore_mm/1000;
   const st=e.stoichAFR||14.7, afr=st*Math.max(1,lam);
   const rho=(1+(e.intake==='na'?0:(e.boost_bar||0)))*1e5/(287*313);
   const air=rho*(e.dispCyl_L/1000)*refFill(n)*n/60*(e.chargesPerRev||0.5);   // kg/s per cylinder
@@ -685,7 +685,7 @@ function turbineTipFor(pr,flowFrac,T01){
   const e=engine;
   if(!(e.compExd>0)||!(pr>1))return 0;
   const eta=compIslandEff(flowFrac,pr), Uc=Math.sqrt(1005*Math.max(200,T01)*(Math.pow(pr,0.286)-1)/(COMP_SLIP*eta));
-  return TURB_WHEEL*Uc;
+  return e.turbK*Uc;
 }
 function pulseShape(mEx,area,T3,mapBar,prMean){
   const e=engine;
@@ -725,6 +725,7 @@ function turbinePower(mEx,area,T3,mapBar,prMean,Ut){
 }
 function manifoldPR(mAir,mEx,mapBar,T3,area,compEta,flowFrac){
   if(!(area>0))return 1;
+  if(engine.lpExd>0)return compoundManifoldPR(mAir,mEx,mapBar,T3,compEta,flowFrac);
   const pComp=mAir*1005*298*(Math.pow(Math.max(1,mapBar),0.286)-1)/clamp(compEta||0.72,0.30,0.85);
   if(pComp<=0)return 1;
   const Ut=turbineTipFor(Math.max(1,mapBar),flowFrac>0?flowFrac:mAir/Math.max(1e-9,engine.chokeFlow_kgs),298);
@@ -738,6 +739,20 @@ function manifoldPR(mAir,mEx,mapBar,T3,area,compEta,flowFrac){
   let lo=1.0001,hi=full;                              // gate opens: balance at lower manifold pressure
   for(let i=0;i<40;i++){const m=(lo+hi)/2;if(tPower(m)<pComp)lo=m;else hi=m;}
   return hi;
+}
+// A compound's manifold: the gate bypasses the HP turbine until both turbines supply both compressors at the target.
+function compoundManifoldPR(mAir,mEx,mapBar,T3,compEta,flowFrac){
+  const e=engine, pr=Math.max(1,mapBar), pComp=compoundCompPower(mAir,pr,298,compEta);
+  if(pComp<=0)return 1;
+  const s=Math.sqrt(pr), ff=flowFrac>0?flowFrac:mAir/Math.max(1e-9,e.chokeFlow_kgs);
+  const Ut=e.turbK*Math.sqrt(1005*298*(Math.pow(s,0.286)-1)/(COMP_SLIP*compIslandEff(ff,s)));   // the LP turbine's tip
+  const full=compoundTurbine(mEx,mEx,T3,mapBar,Ut);
+  if(full.P<=pComp)return full.p3;                  // gate shut
+  const none=compoundTurbine(mEx,0,T3,mapBar,Ut);
+  if(none.P>=pComp)return none.p3;                  // the LP turbine alone supplies it
+  let lo=0,hi=mEx;
+  for(let i=0;i<30;i++){const m=(lo+hi)/2;if(compoundTurbine(mEx,m,T3,mapBar,Ut).P<pComp)lo=m;else hi=m;}
+  return compoundTurbine(mEx,hi,T3,mapBar,Ut).p3;
 }
 // ---- variable geometry: the throat as a control input instead of a casting decision ----
 // A fixed housing has one throat, and that throat is a compromise nobody is happy with: tight
@@ -775,11 +790,11 @@ const VANE_Z=12, VANE_T=0.0015;                      // vanes, and their thickne
 const VANE_T_LIMIT=1100;                             // K — where nickel-alloy vanes start to creep
 const VANE_BETA_MIN=21, VANE_BETA_MAX=60;            // degrees from tangential — the vane sweep
 const VANE_R2=1.22, VANE_H=0.07;                     // ring radius over wheel tip radius, nozzle height over wheel diameter
-const vanePitchR=exd=>VANE_R2*(TURB_WHEEL*exd/2);    // the vanes' trailing edges, outboard of the wheel
+const vanePitchR=(exd,k)=>VANE_R2*(k*exd/2);         // the vanes' trailing edges, outboard of the turbine wheel (k of the exducer)
 // The ring's throat at vane angle `beta`, m2: h * (2 pi r2 sin(beta) - Z t).
-function vaneThroatArea(exd,betaDeg){
-  const h=VANE_H*TURB_WHEEL*exd;
-  return h*Math.max(0.05*2*Math.PI*vanePitchR(exd),2*Math.PI*vanePitchR(exd)*Math.sin(betaDeg*Math.PI/180)-VANE_Z*VANE_T);
+function vaneThroatArea(exd,betaDeg,k){
+  const h=VANE_H*k*exd;
+  return h*Math.max(0.05*2*Math.PI*vanePitchR(exd,k),2*Math.PI*vanePitchR(exd,k)*Math.sin(betaDeg*Math.PI/180)-VANE_Z*VANE_T);
 }
 // The vanes ARE the boost control: a VGT diesel has no wastegate, because opening the vanes IS
 // the gate. So the schedule is "the WIDEST throat that still supplies the compressor at TARGET
@@ -822,8 +837,14 @@ const compPowerAt=(mA,prTgt,T01,eta)=>
 // and the pressure ratio that produces depends on how efficiently it was done.
 const COMP_SLIP=0.90;      // backswept centrifugal wheel; standard turbomachinery value
 const TIP_LIMIT=520;       // m/s — where a cast aluminium wheel lets go. Sets max shaft speed.
-const J_REF=3.2e-5, D_REF=0.071;   // a measured GT2871R cartridge; scales as D^5 in a similar family
-const wheelInertia=exd=>J_REF*Math.pow(exd/D_REF,5);
+// The shaft's inertia is both its wheels' (build 290; it scaled with the compressor alone). J_REF is a measured GT2871R's
+// whole rotating group: a 71 mm compressor wheel and a 53.9 mm turbine wheel (Garrett 743347-2, the maker's sheet). It is
+// split between them by what each is made of, taking the two as similar in shape, so J ~ rho D^5: cast aluminium
+// 2.71 g/cm3 and Inconel 713C 7.91 (the usual wheel alloys). That puts 41% of it in the turbine. Each wheel then scales
+// as D^5 from its own reference.
+const J_REF=3.2e-5, D_REF=0.071, DT_REF=0.0539, RHO_COMP=2710, RHO_TURB=7910;
+const J_TURB=(RHO_TURB/RHO_COMP)*Math.pow(DT_REF/D_REF,5), J_TURB_SHARE=J_TURB/(1+J_TURB);
+const wheelInertia=(exd,turbD)=>J_REF*((1-J_TURB_SHARE)*Math.pow(exd/D_REF,5)+J_TURB_SHARE*Math.pow(turbD/DT_REF,5));
 const maxShaftRpm=exd=>TIP_LIMIT*60/(Math.PI*exd);
 // Transient shaft losses the pure Pt−Pc balance omitted. Applied only in advanceShaft — not in the
 // steady boost search — so a wastegated frame still holds its target once lit. Both were fitted until
@@ -873,6 +894,14 @@ function shaftNetPower(shaftRpm,mAir,T3,T01,rpm){
   const e=engine;
   if(!e.turbineArea)return 0;
   const units=unitsAt(rpm||0);
+  if(e.lpExd>0){                                     // a compound: shaftRpm is the LP shaft's (compoundStage)
+    const c=compoundPR(shaftRpm,compFlowFrac(rpm||0,mAir),T01);
+    const tgt=1+boostTarget(rpm||0),dp=icDpBar(mAir,Math.min(Math.max(1,c.pr),tgt));
+    const prCap=Math.min(c.pr,tgt+dp),pMan=Math.max(1,prCap-dp);
+    const Pt=compoundTurbine(mAir*1.06,mAir*1.06,T3,pMan,Math.PI*e.turbK*e.lpExd*Math.max(0,shaftRpm)/60).P;
+    const Pc=compoundCompPower(mAir,prCap,T01,c.eta);
+    return{net:Pt-Pc,pr:pMan,prRaw:c.pr-dp,eta:c.eta,Pt,Pc,turbArea:e.turbineArea};
+  }
   const {pr,eta}=compressorPR(e.compExd,shaftRpm,compFlowFrac(rpm||0,mAir),T01);
   // Report the RAW pressure ratio the wheel is producing as well as the wastegated one. The search
   // in steadyBoost asks "can the shaft reach this PR", and if it only ever sees the capped value it
@@ -885,7 +914,7 @@ function shaftNetPower(shaftRpm,mAir,T3,T01,rpm){
   const prCap=Math.min(pr,tgt+dp);
   const pMan=Math.max(1,prCap-dp);   // the intake manifold, which the exhaust pulses are shaped against
   const mEx=mAir*1.06/units, mA=mAir/units;
-  const Ut=Math.PI*TURB_WHEEL*e.compExd*Math.max(0,shaftRpm)/60;   // turbine tip speed
+  const Ut=Math.PI*e.turbK*e.compExd*Math.max(0,shaftRpm)/60;   // turbine tip speed
   // VGT vanes schedule against the BOOST TARGET, not against what the compressor happens to be
   // drawing at this instant. That is both the real control law and the only one that works here:
   // scheduling to the instantaneous draw would balance the shaft at EVERY speed, net would be zero
@@ -904,6 +933,55 @@ function shaftNetPower(shaftRpm,mAir,T3,T01,rpm){
   const Pc=compPowerAt(mA,prCap,T01,eta);
   return{net:Pt-Pc,pr:pMan,prRaw:pr-dp,eta,Pt,Pc,turbArea:area};
 }
+// ---- COMPOUND: two stages in series (build 294) ----
+// A large low-pressure (LP) turbo feeds a small high-pressure (HP) one; the frame the build chose is the HP stage, and
+// the exhaust runs through the HP turbine, then the LP turbine. It was one frame with 2.30 of its flow.
+// SIZING. A two-stage system is matched with the pressure ratio split equally between the stages (Watson & Janota,
+// Turbocharging the Internal Combustion Engine, two-stage turbocharging), s = sqrt(PR) at the build's target, and both
+// wheels choking at the same mass flow. A wheel's choke flow goes as D^2 p0/sqrt(T0) at its inlet, and the HP wheel's
+// inlet is the LP stage's outlet (s, T1), so
+//     D_LP / D_HP = (s / sqrt(T1/T0))^(1/2),   T1/T0 = 1 + (s^0.286 - 1)/eta,  eta the island's peak.
+// The LP turbine and its housing scale with its wheel as a frame's do (A/R is a length, so the throat goes as D^2).
+// THE SHAFTS. The stages are taken to hold that equal split off the design point too, so their speeds are tied: equal
+// Euler work over the inlet temperature, U_HP^2/T1 = U_LP^2/T0. The LP shaft is the state, and the HP shaft rides on it
+// at w_HP/w_LP = (D_LP/D_HP) sqrt(T1/T0), its inertia referred by that ratio squared. The two balances become one
+// (all the turbine power against both compressors), with each stage's own efficiency and tip speed.
+// Open: the split off-design (a real HP stage spools first and the LP lags), the gate (on the HP turbine only; the LP
+// turbine always takes all the flow), the exhaust pulses at the LP turbine (the HP turbine is taken to absorb them),
+// and the vanes (a compound's HP stage runs its housing's throat, without a ring).
+function compoundStage(e){
+  const s=Math.sqrt(1+Math.max(0.05,e.boost_bar||0)), tr=1+(Math.pow(s,0.286)-1)/ISLAND_PEAK;
+  e.lpTr=Math.sqrt(tr);                                       // sqrt(T1/T0) at the design point
+  e.lpExd=e.compExd*Math.sqrt(s/e.lpTr);
+  if(e.vgt){const v=e.vgt;e.vgt=false;setTurbineAR(turboFrame(e).ars[TURBINE_HOUSING[e.housing]??1]);e.vgt=v;}   // no ring
+  e.lpArea=e.turbineArea*Math.pow(e.lpExd/e.compExd,2);
+  const g=compoundRatio(e);
+  e.shaftJ=wheelInertia(e.lpExd,e.turbK*e.lpExd)+wheelInertia(e.compExd,e.turbK*e.compExd)*g*g;
+  e.shaftMax=maxShaftRpm(e.compExd)/g;                        // the HP wheel reaches its tip limit first
+}
+const compoundRatio=e=>(e.lpExd/e.compExd)*e.lpTr;            // w_HP / w_LP
+// The two compressors at LP shaft speed n: the stage ratio s each makes, the total s^2, and the efficiency.
+function compoundPR(n,flowFrac,T01){
+  const e=engine, lp=compressorPR(e.lpExd,n,flowFrac,T01);
+  return{pr:lp.pr*lp.pr,s:lp.pr,eta:lp.eta,T1:T01*(1+(Math.pow(lp.pr,0.286)-1)/lp.eta)};
+}
+// Both compressors' power delivering a total ratio pr: s = sqrt(pr) each, the HP stage from the LP stage's outlet.
+function compoundCompPower(mA,pr,T01,eta){
+  const s=Math.sqrt(Math.max(1,pr)), T1=T01*(1+(Math.pow(s,0.286)-1)/clamp(eta||0.72,0.30,0.85));
+  return compPowerAt(mA,s,T01,eta)+compPowerAt(mA,s,T1,eta);
+}
+// The turbines in series: mHP of the exhaust mEx through the HP throat (the rest bypasses it through the gate), all of it
+// through the LP throat. The LP nozzle sets the pressure between them; the HP nozzle, with that pressure downstream, sets
+// the manifold's (a nozzle's flow scales with its upstream pressure, so the HP stage is the one-bar solve at mHP/pMid,
+// pulses included, scaled back by pMid). UtLP is the LP turbine's tip speed; the HP one's is UtLP x the ratio.
+function compoundTurbine(mEx,mHP,T3,mapBar,UtLP){
+  const e=engine, pMid=turbineManifoldPR(mEx,e.lpArea,T3);
+  let P=0,p3=pMid;   // the HP turbine's tip speed over the LP one's: (D_HP/D_LP) x the shafts' ratio = lpTr
+  if(mHP>0){const h=turbinePower(mHP/pMid,e.turbineArea,T3,mapBar/pMid,0,UtLP*e.lpTr);P=h.P*pMid;p3=h.pr*pMid;}
+  const Tmid=Math.max(300,T3-P/Math.max(1e-6,mEx*CP_EXH));
+  P+=mEx*turbineWorkMean(pMid,Tmid,UtLP);
+  return{P,p3,pMid};
+}
 // Bearing drag — the loss that makes spool take real time. Applied only on the transient path so a
 // wastegated frame still holds its target once lit. (A housing heat-soak hook lived here with its
 // scale set to zero; a term that always evaluates to nothing is not a placeholder, it is dead code
@@ -911,6 +989,7 @@ function shaftNetPower(shaftRpm,mAir,T3,T01,rpm){
 function shaftLossPower(shaftRpm){
   const e=engine, n=Math.max(0,shaftRpm), omega=n*2*Math.PI/60;
   // Petroff journal and thrust bearing friction, ~ w^2 D^3 (see bearingCoeff).
+  if(e.lpExd>0){const g=compoundRatio(e);return (bearingCoeff(e.lpExd)+bearingCoeff(e.compExd)*g*g)*omega*omega;}   // both shafts
   return bearingCoeff(e.compExd||D_REF)*omega*omega;
 }
 // Air the engine swallows at a given speed and boost. Deliberately uses the DESIGN VE amplitude
@@ -932,7 +1011,7 @@ function steadyBoost(rpm){
   // gas cooler is the extra time the walls get per cycle, and exhaustHeatFrac now carries that.
   // Rich of stoich adds nothing (exhaustGasT caps the release), so a petrol engine's mixture is 1.
   const T3=exhaustGasT(1.0,rpm,e.ci?dieselLambdaFloor(rpm):1);
-  const nMax=maxShaftRpm(e.compExd);
+  const nMax=e.shaftMax||maxShaftRpm(e.compExd);
   const canHold=pr=>{
     const mAir=airFlowAt(rpm,pr);
     // Could the shaft, spun to whatever speed this PR needs, still be gaining energy there?
@@ -1025,13 +1104,18 @@ function deriveGasDynamics(){
     // turbine can be, so every existing call site reads the open position by default; `vgtShut`
     // is non-zero only on a VGT and is what tells the rest of the model there is anything to
     // schedule at all.
-    e.compExd=tb.exd;
+    e.compExd=tb.exd;e.turbK=tb.turbK;
     setTurbineAR(tb.ars[TURBINE_HOUSING[e.housing]??1]);   // the housing the build chose for this frame
-    e.turbUnits=(e.turboConfig==='twin'||e.turboConfig==='sequential')?2:1;
-    e.shaftJ=wheelInertia(tb.exd)*(e.turboConfig==='twin'?2:1);   // a sequential secondary is pre-spooled
+    e.turbUnits=(TURBO_CONFIG[e.turboConfig]||TURBO_CONFIG.single).units;
+    // ONE shaft (build 290): each turbo of a pair is its own, with this inertia, its own bearings and its share of the
+    // exhaust, the air and the charge fill, so the pair is stepped as one of them (advanceShaft). It was the pair's two
+    // wheels on one turbo's power, which spooled a twin at half the rate.
+    e.shaftJ=wheelInertia(tb.exd,tb.turbK*tb.exd);
     e.seqStageRpm=0;                                               // set once the engine is built
     e.shaftMax=maxShaftRpm(tb.exd);
-  }else{e.turbineArea=0;e.vgtShut=0;e.turbUnits=1;e.compExd=0;e.shaftJ=0;e.shaftMax=0;}
+    e.lpExd=0;e.lpTr=1;e.lpArea=0;
+    if(e.turboConfig==='compound')compoundStage(e);
+  }else{e.turbineArea=0;e.vgtShut=0;e.turbUnits=1;e.compExd=0;e.turbK=0;e.shaftJ=0;e.shaftMax=0;e.lpExd=0;e.lpTr=1;e.lpArea=0;}
   // Size the system pipe from the engine's own flow at the power peak, not from a fixed number.
   const m3sPeak=(e.dispCyl_L/1000)*(T/320)*e.cylinders*(e.redline*0.9/60*(e.chargesPerRev||0.5));
   // One system per BANK: a V or a boxer has two heads pointing opposite ways and runs two pipes,

@@ -32,8 +32,8 @@
    "id": "THROAT_RATIO",
    "file": "valvetrain.js",
    "match": "const THROAT_RATIO",
-   "standsFor": "port throat over valve head diameter, one value for every head",
-   "retiredBy": "the cylinder head part",
+   "standsFor": "port throat over valve head diameter, one value for every factory head (a designed head sets its own)",
+   "retiredBy": "each real car's own valves and ports, sourced",
    "phase": "B2",
    "state": "open"
   },
@@ -41,8 +41,8 @@
    "id": "EV_RATIO",
    "file": "gas-dynamics.js",
    "match": "const EV_RATIO",
-   "standsFor": "exhaust valve over intake valve diameter, one value for every head",
-   "retiredBy": "the cylinder head part",
+   "standsFor": "exhaust valve over intake valve diameter, one value for every factory head (a designed head sets its own)",
+   "retiredBy": "each real car's own valves and ports, sourced",
    "phase": "B2",
    "state": "open"
   },
@@ -50,17 +50,8 @@
    "id": "TURB_WHEEL",
    "file": "engine-constants-boost.js",
    "match": "const TURB_WHEEL",
-   "standsFor": "turbine wheel as a share of the compressor exducer",
-   "retiredBy": "the turbocharger part",
-   "phase": "B3",
-   "state": "open"
-  },
-  {
-   "id": "TURBO_CONFIG",
-   "file": "engine-constants-boost.js",
-   "match": "const TURBO_CONFIG",
-   "standsFor": "spool, width and flow multipliers for twin, sequential and compound layouts",
-   "retiredBy": "the turbocharger part (each turbo its own wheel and shaft)",
+   "standsFor": "turbine wheel as a share of the compressor exducer, one value for every factory turbo (a designed turbo sets its own, build 288)",
+   "retiredBy": "each real car's own turbine wheel, sourced, or the owner's sign-off as a rule",
    "phase": "B3",
    "state": "open"
   },
@@ -122,8 +113,8 @@
    "id": "AERO_FRONT/REAR",
    "file": "tyres-brakes-driveline.js",
    "match": "const AERO_FRONT",
-   "standsFor": "lift and drag coefficients per front and rear aero kit",
-   "retiredBy": "wing part (span, chord, angle: lifting-line lift and induced drag)",
+   "standsFor": "lift and drag coefficients per front and rear aero kit (a designed rear wing sets its own, build 291)",
+   "retiredBy": "wing part (span, chord, angle: lifting-line lift and induced drag); next, the front wing and splitter, then each real car's kit as a wing",
    "phase": "D",
    "state": "open"
   },
@@ -186,27 +177,36 @@
    "file": "tyres-brakes-driveline.js",
    "match": "wetKeep:",
    "standsFor": "each compound's temperature window, wear rate and wet grip",
-   "retiredBy": "the tyre model of phase E with a compound's measured window",
-   "phase": "F",
-   "state": "open"
+   "retiredBy": "kept: a rule until after v1.0 with TYRE_RACE (owner's decision, build 295); wetKeep goes with phase F's wet grip",
+   "phase": "-",
+   "state": "rule"
   },
   {
    "id": "TYRE_RACE",
    "file": "race.js",
    "match": "const TYRE_RACE",
    "standsFor": "the race tyre's heat, grip-window and wear constants",
-   "retiredBy": "the tyre model of phase E (tread heat balance, wear from sliding energy)",
+   "retiredBy": "kept: a rule until after v1.0 (owner's decision, build 295): the tread's heat needs the share of the patch truly in contact, and the grip and wear read that heat",
+   "phase": "-",
+   "state": "rule"
+  },
+  {
+   "id": "RACE.pitLoss",
+   "file": "race.js",
+   "match": "pitLoss:20",
+   "standsFor": "the time the pit lane costs, as one number for every circuit",
+   "retiredBy": "the lane's length and speed limit, with the slowing and the pull away",
    "phase": "F",
    "state": "open"
   },
   {
-   "id": "RACE tow and dirty air",
+   "id": "RACE racecraft",
    "file": "race.js",
-   "match": "const RACE=",
-   "standsFor": "the tow, dirty air and pit loss as numbers",
-   "retiredBy": "the cars' own drag and downforce in a wake; pit loss from the lane's length and limit",
-   "phase": "F",
-   "state": "open"
+   "match": "defendKmh:3",
+   "standsFor": "the racecraft (follow, close, defend, dive, passKmh, pace, mistake), the spray in the wet, the crew's tyreChange and refuelLps",
+   "retiredBy": "kept: a game rule, not physics (owner's decision, phase F plan, build 295)",
+   "phase": "-",
+   "state": "rule"
   },
   {
    "id": "HYB_RACE.margin",
@@ -227,19 +227,10 @@
    "state": "open"
   },
   {
-   "id": "MOTOR.FLUX_KM",
-   "file": "electric.js",
-   "match": "FLUX_KM=0.85",
-   "standsFor": "the air gap's flux over the magnets' remanence, set from one motor's measured back-EMF (Tesla Model 3, MotorXP) and used for every magnet motor; with it the magnets' mass as 6% of the rotor's volume (2.2x for ferrite)",
-   "retiredBy": "the rotor's magnets as geometry: thickness, pole arc and pocket layout through the magnetic circuit, Bg = Br / (1 + mu_r g'/l_m) times the arc's fundamental",
-   "phase": "C",
-   "state": "open"
-  },
-  {
    "id": "MOTOR.SAT_K",
    "file": "electric.js",
    "match": "SAT_K=0.085",
-   "standsFor": "torque per amp lost to saturation: one measured point (430 Nm at 953 A on the Model 3), scaled with the square of the electric loading",
+   "standsFor": "torque per amp lost to saturation: one measured point (430 Nm at 953 A on the Model 3, with the flux of then; the derived flux since build 293 gives 444 Nm there), scaled with the square of the electric loading",
    "retiredBy": "the lamination steel's B-H curve in the teeth and the yoke",
    "phase": "C",
    "state": "open"
@@ -257,8 +248,8 @@
    "id": "MOTOR.statorShape",
    "file": "electric.js",
    "match": "const SPLIT=0.67;",
-   "standsFor": "the stator's proportions, the same for every motor: bore over outside diameter, the slots' share of the tooth band and its depth, and one flux density (B_CORE 1.5 T) for teeth and yoke",
-   "retiredBy": "teeth and yoke sized from the flux they carry at the steel's flux density; the slot is what is left",
+   "standsFor": "the stator's outside diameter as the bore over 0.67, the same for every motor. Since build 293 the teeth and yoke are sized from the flux (Pyrhonen Table 6.1) and the slot is what is left between them, so a many-pole or small motor gets deep slots and saturated teeth, or a cramped yoke, where a designer would change the diameter",
+   "retiredBy": "the slot's depth from the copper the current needs (Pyrhonen Table 6.2: linear current density and current density), and the outside diameter from the slot and the yoke",
    "phase": "C",
    "state": "open"
   },
@@ -266,7 +257,7 @@
    "id": "MOTOR.ironShare",
    "file": "electric.js",
    "match": "0.8*L.fe",
-   "standsFor": "iron loss taken on all the iron, the rotor's included, at the stator's flux density and frequency, then shared 80% stator, 20% rotor",
+   "standsFor": "iron loss taken on all the iron, the rotor's included, at one flux density (B_CORE 1.5 T) and the frequency, then shared 80% stator, 20% rotor; since build 293 the teeth (2.0 T) and the yoke (1.5 T) have their own densities, which the loss does not yet read",
    "retiredBy": "teeth and yoke each at their own flux density; the rotor's loss from the slot harmonics and the magnets' eddy currents",
    "phase": "C",
    "state": "open"

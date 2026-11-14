@@ -1,4 +1,4 @@
-# PIXEL ENGINE SIM v0.7 build 286
+# PIXEL ENGINE SIM v0.7 build 298
 
 **A lightweight, 8-bit style internal combustion engine *designer* & simulator** inspired by *Automation*.
 
@@ -39,7 +39,8 @@ screamer, 2JZ six, muscle V8, blown V8, V12 supercar…), or configure your own 
   (fixed housing / **variable geometry** — vanes shut to spool, open at the top), **anti-lag**,
   **supercharger type** (roots / twin-screw / centrifugal), **nitrous** (small / big shot),
   exhaust (stock / sport / race) and a **catalytic converter** (none/decat / sport / stock).
-  Twin/sequential/compound turbos spool earlier and flatter; PD superchargers make boost from
+  Twin/sequential turbos spool earlier and flatter, a compound (two stages in series) holds high boost with less
+  back-pressure; PD superchargers make boost from
   idle while centrifugals build it with rpm²; anti-lag keeps the turbo lit (at a wear cost);
   nitrous is a big power adder from a bottle. A cat cleans the exhaust but adds a little
   back-pressure; deleting it frees a few hp at the cost of emissions.
@@ -95,7 +96,7 @@ saps power; a large radiator, electric fan and oil cooler keep it cool.
 
 ### Electric drive (in progress — the plan is in `plans/hybrid-electric/`)
 Pick **ELECTRIC (BATTERY)** as the engine type and the ENGINE tab trades the combustion sections for **MOTOR**
-(rotor diameter and stack, poles, turns per phase, magnet grade and retention, cooling, top speed), **INVERTER**
+(rotor diameter and stack, poles, turns per phase, magnet grade, size and retention, cooling, top speed), **INVERTER**
 (silicon IGBT or SiC, current rating) and **BATTERY** (chemistry, cells in series, capacity, technology year). Since
 build 238 these are seven cards picked from a menu (stacked and folding on a phone), each number with a slider whose
 ticks are the real drives in the presets, a **?** that explains the input, the effect of every change beside it, and a
@@ -157,6 +158,9 @@ intercooler (build 255): core face, depth, cooling fins and charge pipe. Since b
 comes from its fins and its pressure drop is made up by the compressor.
 The sixth is the cylinder head (build 283): the intake valve's size, the port's throat, and the springs' seat load
 and rate.
+The seventh is the turbocharger (build 288): the compressor and turbine wheels and the housing's A/R.
+The eighth, the first part of the car rather than the engine, is the rear wing (build 291): span, chord, angle,
+camber and end plates, by lifting-line theory.
 An electric car is heard (build 198): its motor's whine, the inverter's switching and the reduction's gears, each at
 the frequency its build gives it, on the bench and on the lap replay.
 On the LIVE bench (build 190) a hybrid runs with its motor and pack: a HYBRID panel draws the power flowing between
@@ -265,7 +269,8 @@ assist map over speed and pedal), regeneration, load-point shifting, electric-dr
   - **Brakes carry their heat.** The lap solver's rotor model runs through the whole race, so
     temperatures build lap on lap past a single hot lap's and cool in the pit box. A car whose pads
     fade brakes earlier as they do: its braking zones stretch by how much less it can stop with.
-  - **Racecraft and drivers.** The tow grows as the gap closes, so cars nose to tail pull each other along. A
+  - **Racecraft and drivers.** The tow is the drag a car loses in another's wake, from wind-tunnel measurements,
+    so cars nose to tail pull each other along; dirty air takes away downforce, so it costs a winged car the most. A
     car with a quicker car behind may defend on the inside line (harder to pass, a slower exit), a held-up car may
     try a late-braking move that sticks or runs it wide (its odds are the two cars' grip and brakes and the two
     drivers), and the car just passed can take the place straight back. Each car has a driver: balanced,
@@ -558,8 +563,8 @@ Curve** tab remains a wide-open-throttle steady-state sweep for reading the full
 
   Previously all three columns were flat — 1820 rpm and 0.75 s at *every* boost target, and a
   small frame delivered 2.28 bar at 3000 rpm on a 2.0 L.
-- **Frames have a rated flow (new)** — small 32, medium 55, large 82 lb/min, with config
-  multipliers (twin ×1.85, sequential ×1.55, compound ×2.3). That is the axis a real compressor
+- **Frames have a rated flow (new)** — small 32, medium 55, large 82 lb/min, a twin or
+  sequential pair flows two wheels', a compound its low-pressure wheel's (sized for an equal split of the boost). That is the axis a real compressor
   map is drawn against. The engine's air demand at peak power is computed against it, and past
   the rating the compressor is off its map: efficiency falls, the top end chokes harder, and the
   charge cooks. A 2.0 L asking 2.5 bar of a small frame wants **166 %** of its rated flow, runs
@@ -924,8 +929,8 @@ documented in the GUIDE at the point where it matters:
   - **Unpublished inputs:** the cars' factory roll balance and their real tyre load sensitivity per axle are not
     published. Every car starts at NEUTRAL roll balance, though a real road car's factory setup understeers a
     little more.
-- **The race's racecraft is rules, not physics.** Overtaking, the tow, dirty air, pit-lane loss and
-  driver error are rules with fitted numbers. The cars share one racing line rather than fighting for
+- **The race's racecraft is rules, not physics.** Overtaking, pit-lane loss and
+  driver error are rules with fitted numbers (the tow and dirty air come from measured wakes since build 295). The cars share one racing line rather than fighting for
   space on it, and the tyre model's heat, grip-window, wear and wet-grip constants are fitted to the
   usual published ranges, not derived. When the rain comes and how fast a line dries are rules drawn
   from the seed, not a forecast.

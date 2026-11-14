@@ -36,7 +36,9 @@
 // build (plans/parts-design-space.md).
 // The CYLINDER HEAD (build 283) is the valve and port the valvetrain model reads (deriveValvetrain), and its springs:
 //   intake valve   head diameter, mm, in place of the packing ratio of the head's layout (VALVE_PACK.dOverB); the
-//                  number of valves stays the engine's, and the exhaust valve is 0.83 of the intake (EV_RATIO);
+//                  number of valves stays the engine's;
+//   exhaust valve  head diameter, mm (build 286), in place of 0.83 of the intake (EV_RATIO): the exhaust port's bore,
+//                  so the heat the gas leaves in the port (portLossShare). A part saved without one has 0.83 of its intake;
 //   port throat    as a share of the valve, in place of THROAT_RATIO's 0.85: the flow area at full lift, Taylor's
 //                  plateau of the inlet flow coefficient (inletCi) and the factory runner matched to the port;
 //   springs        seat load (N) and rate (N/mm), in place of the maker's spring sized for the factory cam and the
@@ -45,7 +47,16 @@
 // A factory head written as a part is the engine's own: its valve, 0.85, and the springs it is fitted with, as sized.
 // Not in it: whether the valves physically fit the bore (a designed valve may pass the factory packing; the preview
 // says so), the spring's travel to coil bind, and the springs' load on the cam's friction (the friction model, Patton
-// and Sandoval, has no spring-load term). Retiring THROAT_RATIO, the packing ratios and the three steps is the next build.
+// and Sandoval, has no spring-load term), and the exhaust valve's own flow: the blowdown and the pumping loop do not
+// read its size. A factory head still takes 0.85, 0.83 and the packing ratio (plans/fitted-register.json) until each
+// real car's own valve sizes are sourced.
+// The TURBOCHARGER (build 288) is the wheels and the housing the shaft model reads (deriveGasDynamics, steadyBoost,
+// advanceShaft): the compressor's exducer (its choke flow, map, top speed and the shaft's inertia), the turbine wheel
+// (its tip speed and the radius the housing's throat sits at, in place of TURB_WHEEL's 0.90 of the exducer) and the
+// housing's A/R (the throat, in place of the frame's TIGHT / STOCK / LOOSE step). How many turbos and how they are
+// piped, the VGT, the boost and the wastegate stay on the ENGINE tab. A factory turbo written as a part is the engine's own.
+// The shaft's inertia is both wheels' (build 290), and each turbo of a twin or sequential pair is this part, on its own
+// shaft. A compound's low-pressure stage is sized from this one (compoundStage, build 294).
 // A build carries the full part (engine.exhaustPart, engine.intakePart), so a saved build, a file and a share link work in another
 // browser that never saw the part; loading such a build adds the part to that browser's library.
 
@@ -74,9 +85,12 @@ const CAM_PROFILE={
 // A head's intake valve 15-75 mm (a 50 cc single's to a big-bore diesel's); its throat 0.75 of the valve (a restrictive
 // production port) to 0.92 (a fully ported race head: the 45 degree seat needs the rest); springs 100-1500 N on the seat
 // and 10-200 N/mm, past the RACE step on the biggest factory valve (sized for a Hellcat's redline, ~1180 N and 130 N/mm).
-const PART_LIMITS={valveD_mm:[15,75],throat:[0.75,0.92],seat_N:[100,1500],rate_Nmm:[10,200],dur:[180,320],lift_mm:[4,16],lsa:[98,130],vvt_deg:[0,60],primD_mm:[25,76],primL_mm:[200,1000],pipes:[1,2],sysD_mm:[30,110],sysL_m:[0.8,4.5],
+const PART_LIMITS={span_mm:[600,2200],chord_mm:[80,600],angle_deg:[0,25],camber_pct:[0,12],plate_mm:[0,400],valveD_mm:[15,75],exValveD_mm:[12,65],throat:[0.75,0.92],seat_N:[100,1500],rate_Nmm:[10,200],dur:[180,320],lift_mm:[4,16],lsa:[98,130],vvt_deg:[0,60],primD_mm:[25,76],primL_mm:[200,1000],pipes:[1,2],sysD_mm:[30,110],sysL_m:[0.8,4.5],
   runnerL_mm:[40,800],runnerD_mm:[20,80],shortL_mm:[40,400],area_m2:[0.02,3],inletD_mm:[30,160],
-  w:[150,900],h:[80,800],d:[30,120],fpi:[8,30],pipe_m:[0.3,5]};
+  w:[150,900],h:[80,800],d:[30,120],fpi:[8,30],pipe_m:[0.3,5],
+  // a turbo's compressor 30-120 mm at the exducer (a kei car's to a big diesel's), its turbine 25-130 mm, a housing
+  // A/R of 0.25-1.6 (on this model's convention, setTurbineAR: the frames' housings run 0.35-1.06)
+  compD_mm:[30,120],turbD_mm:[25,130],ar:[0.25,1.6]};
 
 // ---- the air filter (build 210) ----
 // What a filter restricts is its pressure drop at the flow through it, and the charge is that much thinner (computeVE).
@@ -227,6 +241,8 @@ const PART_KINDS=[
   {kind:'cam',    label:'CAMSHAFT',ready:true},
   {kind:'intercooler',label:'INTERCOOLER',ready:true},
   {kind:'head',   label:'CYLINDER HEAD',ready:true},
+  {kind:'turbo',  label:'TURBOCHARGER',ready:true},
+  {kind:'wing',   label:'REAR WING',ready:true},
   {kind:'cat',    label:'CATALYTIC CONVERTER',ready:false}
 ];
 // A designed intake, as the factory class the rest of the app reads: a variable one is VARIABLE, a fixed one the
@@ -249,6 +265,12 @@ function headClass(p){
   for(const k in VALVE_SPRING){const x=Math.abs(Math.log(p.seat_N/VALVE_SPRING[k].seat));if(x<d){d=x;best=k;}}
   return best;
 }
+// A designed turbo, as the frame the rest of the app reads (the sprite, the cost): the one whose wheel is nearest.
+function turboClass(p){
+  let best='medium',d=1e9;
+  for(const k in TURBO){const x=Math.abs(Math.log(p.compD_mm/1000/TURBO[k].exd));if(x<d){d=x;best=k;}}
+  return best;
+}
 // The cam as the physics reads it: the factory cam's, or a designed one's dimensions over its class's fitted grades.
 function camSpec(e){
   const F=CAM[e.cam]||CAM.stock,P=e.camPart;
@@ -268,8 +290,15 @@ const PART_DEF={
   intercooler:{field:'icPart',cls:'intercooler',select:'edIntercooler',def:'large',valid:k=>!!INTERCOOLER[k],clsOf:icClass,
     label:k=>INTERCOOLER[k].label,newName:'MY INTERCOOLER',factory:['small','large'],from:v=>v===true?'large':v===false?'none':v},
   head:   {field:'headPart',   cls:'valveSpring',select:'edSpring',    def:'stock',valid:k=>!!VALVE_SPRING[k],clsOf:headClass,
-    label:k=>VALVE_SPRING[k].label,newName:'MY HEAD',factory:['stock','perf','race']}
+    label:k=>VALVE_SPRING[k].label,newName:'MY HEAD',factory:['stock','perf','race']},
+  turbo:  {field:'turboPart',  cls:'turboSize', select:'edTurboSize', def:'medium',valid:k=>!!TURBO[k],    clsOf:turboClass,
+    label:k=>k.toUpperCase(),newName:'MY TURBO',factory:['small','medium','large']},
+  // a part of the car, not of the engine (on:'vehicle'): fitted from the VEHICLE tab's REAR AERO, drawn and priced as the kit's wing
+  wing:   {on:'vehicle',field:'wingPart',cls:'aeroRear',select:'vhAeroR',def:'none',valid:k=>!!AERO_REAR[k],clsOf:()=>'wing',
+    label:()=>'REAR WING',newName:'MY WING',factory:['wing']}
 };
+const partOwner=kind=>PART_DEF[kind].on==='vehicle'?vehicle:engine;
+const partRebuild=kind=>{if(PART_DEF[kind].on==='vehicle'){buildVehicle();updateVehicleSummary();}else buildEngine();};
 
 let partLib=[];
 function loadParts(){
@@ -294,7 +323,13 @@ function normPart(p){
   if(p.kind==='intercooler')return {id,kind:'intercooler',name:String(p.name||'INTERCOOLER').slice(0,40),
     w:n(p.w,'w',600),h:n(p.h,'h',250),d:n(p.d,'d',75),fpi:n(p.fpi,'fpi',14),pipe_m:n(p.pipe_m,'pipe_m',3)};
   if(p.kind==='head')return {id,kind:'head',name:String(p.name||'HEAD').slice(0,40),valveD_mm:n(p.valveD_mm,'valveD_mm',34),
+    exValveD_mm:n(p.exValveD_mm==null||p.exValveD_mm===''?NaN:p.exValveD_mm,'exValveD_mm',+(EV_RATIO*n(p.valveD_mm,'valveD_mm',34)).toFixed(4)),
     throat:n(p.throat,'throat',THROAT_RATIO),seat_N:n(p.seat_N,'seat_N',250),rate_Nmm:n(p.rate_Nmm,'rate_Nmm',22)};
+  if(p.kind==='wing')return {id,kind:'wing',name:String(p.name||'WING').slice(0,40),span_mm:n(p.span_mm,'span_mm',1500),
+    chord_mm:n(p.chord_mm,'chord_mm',250),angle_deg:n(p.angle_deg,'angle_deg',8),camber_pct:n(p.camber_pct,'camber_pct',6),plate_mm:n(p.plate_mm,'plate_mm',150)};
+  if(p.kind==='turbo'){const c=n(p.compD_mm,'compD_mm',71);
+    return {id,kind:'turbo',name:String(p.name||'TURBO').slice(0,40),compD_mm:c,
+      turbD_mm:n(p.turbD_mm,'turbD_mm',+(TURB_WHEEL*c).toFixed(4)),ar:n(p.ar,'ar',0.64)};}
   if(p.kind==='cam')return {id,kind:'cam',name:String(p.name||'CAM').slice(0,40),dur:n(p.dur,'dur',220),
     lift_mm:n(p.lift_mm,'lift_mm',9),lsa:n(p.lsa,'lsa',114),profile:CAM_PROFILE[p.profile]?p.profile:'gentle',
     vvt_deg:n(p.vvt_deg,'vvt_deg',VVT_AUTHORITY)};
@@ -342,6 +377,7 @@ const fillExhaustSelect=fillPartSelects;
 function partsFromForm(){
   const o={};
   for(const [kind,D] of Object.entries(PART_DEF)){
+    if(D.on)continue;
     const v=document.getElementById(D.select).value;
     const p=v.startsWith('part:')?partById(v.slice(5)):null;
     if(p&&p.kind===kind){const q=normPart(p);o[D.cls]=D.clsOf(q);o[D.field]=q;}
@@ -351,10 +387,25 @@ function partsFromForm(){
 }
 function partsToForm(e){
   for(const D of Object.values(PART_DEF)){
+    if(D.on)continue;
     const s=document.getElementById(D.select);
     if(e[D.field]){const id=ensurePart(e[D.field]);fillPartSelects();s.value='part:'+id;}
     else s.value=(D.from?D.from(e[D.cls]):e[D.cls])||D.def;
   }
+}
+// The same for the car's parts (readVehicleFromForm, applyVehicleToForm): the kit, or the kit's class and the whole part.
+function vehPartsFromForm(){
+  const o={};
+  for(const [kind,D] of Object.entries(PART_DEF)){
+    if(D.on!=='vehicle')continue;
+    const v=document.getElementById(D.select).value,p=v.startsWith('part:')?partById(v.slice(5)):null;
+    if(p&&p.kind===kind){const q=normPart(p);o[D.cls]=D.clsOf(q);o[D.field]=q;}
+    else o[D.cls]=D.valid(v)?v:D.def;
+  }
+  return o;
+}
+function vehPartsToForm(v){
+  for(const D of Object.values(PART_DEF))if(D.on==='vehicle'&&v[D.field]){const id=ensurePart(v[D.field]);document.getElementById(D.select).value='part:'+id;}
 }
 
 // ---- the physics of a part on this engine, without touching the build ----
@@ -384,6 +435,8 @@ function withPart(kind,x,fn){
   const D=PART_DEF[kind],keep=engine,sv=Object.assign({},state),dc=dynoCache,dk=dynoCacheKey,kc=_knockCache;
   engine=Object.assign({},keep,{score:Object.assign({},keep.score),_fmaps:null,_fcyc:null});
   if((kind==='cam'||kind==='head')&&keep.ports)x=D.def;   // a port-timed engine has no cam or valves: the build fits none (buildEngineCore)
+  // a factory frame other than the engine's own is that frame as sold, not resized to the engine's compressor wheel
+  if(kind==='turbo'&&typeof x==='string'&&x!==keep.turboSize)engine.compExd_mm=0;
   if(typeof x==='string'){engine[D.cls]=x;delete engine[D.field];}
   else{engine[D.field]=normPart(Object.assign({},x,{kind}));engine[D.cls]=D.clsOf(engine[D.field]);}
   try{rederiveBreathing();return fn(engine);}
@@ -464,9 +517,21 @@ function headReport(x){
     const pull=wotPull(),valved=!!e.ivDia_mm,pack=VALVE_PACK[e.valves]||VALVE_PACK[4];
     if(!valved)return Object.assign(pull,{valved});
     const T=effIAT(e.mapMax,e.redline)+273.15;
-    return Object.assign(pull,{valved,n:e.ivCount,valveD:e.ivDia_mm,dOverB:e.ivDia_mm/e.bore_mm,packD:pack.dOverB,throat:e.throatRatio,
+    return Object.assign(pull,{valved,n:e.ivCount,valveD:e.ivDia_mm,dOverB:e.ivDia_mm/e.bore_mm,packD:Math.max(pack.dOverB,(e.ivValve_mm||0)/e.bore_mm),throat:e.throatRatio,
       Ci:inletCi(e),z:inletMachZ(e.redline,T),mass:e.valveMass_g,seat:e.springSeat_N,rate:e.springRate,
-      atLift:e.springSeat_N+e.springRate*e.ivLift_mm,lift:e.ivLift_mm,floatRpm:e.floatRpm});
+      atLift:e.springSeat_N+e.springRate*e.ivLift_mm,lift:e.ivLift_mm,floatRpm:e.floatRpm,
+      exD:e.evDia_mm,nEx:Math.max(1,(e.valves||4)-e.ivCount),egt:e.egtPeak});
+  });
+}
+// What the designer reads out for a turbo on this engine: the pull, the wheels, and where full boost arrives.
+function turboReport(x){
+  return withPart('turbo',x,e=>{
+    const pull=wotPull(),o=Object.assign(pull,{turbo:e.intake==='turbo'});
+    if(!o.turbo)return o;
+    const T=e.boostTable||[],full=T.find(p=>p.bar>=0.95*boostTarget(p.rpm)&&boostTarget(p.rpm)>0);
+    return Object.assign(o,{exd:e.compExd*1000,turbD:e.turbK*e.compExd*1000,k:e.turbK,ar:e.turbineAR,vgt:!!e.vgt,
+      throat:e.turbineArea*1e4,cap:e.turboCap,load:e.turboLoad,eff:e.compEff,J:e.shaftJ,nMax:e.shaftMax,units:e.turbUnits||1,
+      fullRpm:full?full.rpm:0,boostPk:boostAvail(pull.peakHPrpm)});
   });
 }
 // A factory part, as this engine has it, written down as a part: the start of a design.
@@ -478,7 +543,16 @@ function partFromFactory(key,kind){
   if(kind==='head')return withPart('head',key,e=>{
     const g=VALVE_SPRING[key]||VALVE_SPRING.stock,k=e.springScale||1;
     return normPart({kind:'head',name:tr(g.label),valveD_mm:+(e.ivDia_mm||0.39*e.bore_mm).toFixed(4),throat:THROAT_RATIO,
+      exValveD_mm:+(e.evDia_mm||EV_RATIO*(e.ivDia_mm||0.39*e.bore_mm)).toFixed(4),
       seat_N:+(g.seat*k).toFixed(3),rate_Nmm:+(g.rate*k).toFixed(4)});
+  });
+  // a starting point, not a factory part: as wide as the car's track, a quarter of a metre deep, at a moderate angle
+  if(kind==='wing')return normPart({kind,name:tr('REAR WING'),span_mm:Math.round((vehicle&&vehicle.track||1.5)*100)*10,chord_mm:250,angle_deg:8,camber_pct:6,plate_mm:150});
+  // the engine's own turbo (its compressor wheel, if it sets one, and its housing), or a frame as sold
+  if(kind==='turbo')return withPart('turbo',key,e=>{
+    const tb=turboFrame(e);
+    return normPart({kind:'turbo',name:tr(key.toUpperCase()),compD_mm:tb.exd*1000,turbD_mm:tb.turbK*tb.exd*1000,
+      ar:tb.ars[TURBINE_HOUSING[e.housing]??1]});
   });
   if(kind==='cam')return withPart('cam',key,e=>{
     const C=CAM[key]||CAM.stock;
@@ -540,9 +614,9 @@ function runnerFor(rpm,Dmm){
 }
 
 // ---- the PARTS page ----
-const partsUI={kind:'exhaust',edit:{exhaust:null,intake:null,filter:null,cam:null,head:null,intercooler:null},timer:0};
+const partsUI={kind:'exhaust',edit:{exhaust:null,intake:null,filter:null,cam:null,head:null,turbo:null,intercooler:null,wing:null},timer:0};
 const pv=id=>document.getElementById(id);
-const fittedPart=kind=>engine&&engine[PART_DEF[kind].field];
+const fittedPart=kind=>partOwner(kind)&&partOwner(kind)[PART_DEF[kind].field];
 // the ids of each kind's editor
 const PART_UI={
   exhaust:{reset:'ptReset',box:'partsExhaust',list:'partList',from:'ptFrom',neu:'ptNew',save:'ptSave',saveFit:'ptSaveFit',guide:'partGuide',canvas:'partCanvas',legend:'partLegend',
@@ -567,15 +641,23 @@ const PART_UI={
     spec:p=>p.w+' × '+p.h+' × '+p.d+' mm · '+p.fpi+' fpi · '+p.pipe_m+' m'},
   head:{reset:'phReset',box:'partsHead',list:'phList',from:'phFrom',neu:'phNew',save:'phSave',saveFit:'phSaveFit',guide:'phGuide',canvas:'phCanvas',legend:'phLegend',
     none:"No cylinder heads designed yet. Start from this engine's head with one of the factory springs below.",
-    fields:['phName','phValve','phThroat','phSeat','phRate'],
-    spec:p=>p.valveD_mm+' mm · '+tr('throat')+' '+p.throat+' · '+Math.round(p.seat_N)+' N, '+(+p.rate_Nmm).toFixed(1)+' N/mm'}
+    fields:['phName','phValve','phExValve','phThroat','phSeat','phRate'],
+    spec:p=>p.valveD_mm+' / '+p.exValveD_mm+' mm · '+tr('throat')+' '+p.throat+' · '+Math.round(p.seat_N)+' N, '+(+p.rate_Nmm).toFixed(1)+' N/mm'},
+  turbo:{reset:'pbReset',box:'partsTurbo',list:'pbList',from:'pbFrom',neu:'pbNew',save:'pbSave',saveFit:'pbSaveFit',guide:'pbGuide',canvas:'pbCanvas',legend:'pbLegend',
+    none:"No turbos designed yet. Start from this engine's turbo or one of the frames below.",
+    fields:['pbName','pbComp','pbTurb','pbAr'],
+    spec:p=>(+p.compD_mm).toFixed(1)+' / '+(+p.turbD_mm).toFixed(1)+' mm · A/R '+(+p.ar).toFixed(2)},
+  wing:{reset:'pwReset',box:'partsWing',list:'pwList',from:'pwFrom',neu:'pwNew',save:'pwSave',saveFit:'pwSaveFit',guide:'pwGuide',canvas:'pwCanvas',legend:'pwLegend',
+    none:"No wings designed yet. Start from a wing as wide as this car's track below.",
+    fields:['pwName','pwSpan','pwChord','pwAngle','pwCamber','pwPlate'],
+    spec:p=>p.span_mm+' × '+p.chord_mm+' mm · '+p.angle_deg+'° · '+tr('camber')+' '+p.camber_pct+'%'}
 };
 function renderParts(){
   const types=pv('partTypes');if(!types)return;
   types.innerHTML=PART_KINDS.map(k=>'<button type="button" data-kind="'+k.kind+'"'+(k.ready?'':' disabled')+(partsUI.kind===k.kind?' class="on"':'')+'>'
     +esc(tr(k.label))+(k.ready?'':'<span class="soon">'+esc(tr('LATER'))+'</span>')+'</button>').join('');
   types.querySelectorAll('button[data-kind]').forEach(b=>b.addEventListener('click',()=>{partsUI.kind=b.dataset.kind;renderParts();}));
-  const noEng=!engine||isElectric();
+  const noEng=!PART_DEF[partsUI.kind].on&&(!engine||isElectric());   // the car's parts need no engine
   pv('partsNoEngine').hidden=!noEng;
   for(const k in PART_UI)pv(PART_UI[k].box).hidden=noEng||partsUI.kind!==k;
   if(noEng)return;
@@ -589,7 +671,7 @@ function renderParts(){
     +'<button type="button" data-a="del" data-id="'+esc(p.id)+'">'+esc(tr('DELETE'))+'</button></div>').join('')
     :'<div class="hint">'+esc(tr(U.none))+'</div>';
   list.querySelectorAll('button[data-a]').forEach(b=>b.addEventListener('click',()=>partAction(b.dataset.a,b.dataset.id)));
-  const start=D.factory.includes(engine[D.cls])?engine[D.cls]:D.def;
+  const own=partOwner(kind),start=D.factory.includes(own[D.cls])?own[D.cls]:D.on?D.factory[0]:D.def;
   if(!ed)pv(U.from).value=start;
   if(!ed)partsUI.edit[kind]=fittedPart(kind)?Object.assign({},fittedPart(kind))
     :Object.assign(partFromFactory(start,kind),{name:tr(D.newName)});
@@ -602,8 +684,16 @@ function partToEditor(kind,p){
     pv('pxName').value=p.name;pv('pxW').value=p.w;pv('pxH').value=p.h;pv('pxD').value=p.d;pv('pxFpi').value=p.fpi;pv('pxPipe').value=p.pipe_m;
     return;
   }
+  if(kind==='wing'){
+    pv('pwName').value=p.name;pv('pwSpan').value=p.span_mm;pv('pwChord').value=p.chord_mm;pv('pwAngle').value=p.angle_deg;pv('pwCamber').value=p.camber_pct;pv('pwPlate').value=p.plate_mm;
+    return;
+  }
+  if(kind==='turbo'){
+    pv('pbName').value=p.name;pv('pbComp').value=+(+p.compD_mm).toFixed(1);pv('pbTurb').value=+(+p.turbD_mm).toFixed(1);pv('pbAr').value=+(+p.ar).toFixed(3);
+    return;
+  }
   if(kind==='head'){
-    pv('phName').value=p.name;pv('phValve').value=p.valveD_mm;pv('phThroat').value=p.throat;pv('phSeat').value=p.seat_N;pv('phRate').value=p.rate_Nmm;
+    pv('phName').value=p.name;pv('phValve').value=p.valveD_mm;pv('phExValve').value=p.exValveD_mm;pv('phThroat').value=p.throat;pv('phSeat').value=p.seat_N;pv('phRate').value=p.rate_Nmm;
     return;
   }
   if(kind==='cam'){
@@ -630,7 +720,15 @@ function partFromEditor(kind){
   const ed=partsUI.edit[kind],newName=tr(PART_DEF[kind].newName);
   if(kind==='intercooler')return normPart({kind,id:ed&&ed.id,name:pv('pxName').value.trim()||newName,w:pv('pxW').value,
     h:pv('pxH').value,d:pv('pxD').value,fpi:pv('pxFpi').value,pipe_m:pv('pxPipe').value});
-  if(kind==='head')return normPart({kind,id:ed&&ed.id,name:pv('phName').value.trim()||newName,valveD_mm:pv('phValve').value,
+  if(kind==='wing')return normPart({kind,id:ed&&ed.id,name:pv('pwName').value.trim()||newName,span_mm:pv('pwSpan').value,
+    chord_mm:pv('pwChord').value,angle_deg:pv('pwAngle').value,camber_pct:pv('pwCamber').value,plate_mm:pv('pwPlate').value});
+  if(kind==='turbo'){
+    // the editor shows the wheels to 0.1 mm and the A/R to 0.001: an unchanged field keeps the part's exact number
+    const keep=(id,k,d)=>{const v=pv(id).value;return ed&&ed[k]!=null&&+v===+(+ed[k]).toFixed(d)?ed[k]:v;};
+    return normPart({kind,id:ed&&ed.id,name:pv('pbName').value.trim()||newName,compD_mm:keep('pbComp','compD_mm',1),
+      turbD_mm:keep('pbTurb','turbD_mm',1),ar:keep('pbAr','ar',3)});
+  }
+  if(kind==='head')return normPart({kind,id:ed&&ed.id,name:pv('phName').value.trim()||newName,valveD_mm:pv('phValve').value,exValveD_mm:pv('phExValve').value,
     throat:pv('phThroat').value,seat_N:pv('phSeat').value,rate_Nmm:pv('phRate').value});
   if(kind==='cam')return normPart({kind,id:ed&&ed.id,name:pv('pcName').value.trim()||newName,dur:pv('pcDur').value,
     lift_mm:pv('pcLift').value,lsa:pv('pcLsa').value,profile:pv('pcProfile').value,vvt_deg:pv('pcVvt').value});
@@ -650,8 +748,8 @@ function partAction(a,id){
   else if(a==='del'){
     partLib=partLib.filter(x=>x.id!==id);persistParts();
     const f=fittedPart(kind);
-    if(f&&f.id===id){pv(D.select).value=engine[D.cls];fillPartSelects();buildEngine();
-      flash(tr(kind==='intake'?'PART DELETED: THE ENGINE HAS ITS FACTORY INTAKE':kind==='intercooler'?'PART DELETED: THE ENGINE HAS ITS FACTORY INTERCOOLER':kind==='cam'?'PART DELETED: THE ENGINE HAS ITS FACTORY CAM':kind==='head'?'PART DELETED: THE ENGINE HAS ITS FACTORY HEAD':kind==='filter'?'PART DELETED: THE ENGINE HAS ITS FACTORY AIR FILTER':'PART DELETED: THE ENGINE HAS ITS FACTORY EXHAUST'));}
+    if(f&&f.id===id){pv(D.select).value=partOwner(kind)[D.cls];fillPartSelects();partRebuild(kind);
+      flash(tr(kind==='wing'?"PART DELETED: THE CAR HAS THE KIT'S REAR WING":kind==='intake'?'PART DELETED: THE ENGINE HAS ITS FACTORY INTAKE':kind==='intercooler'?'PART DELETED: THE ENGINE HAS ITS FACTORY INTERCOOLER':kind==='cam'?'PART DELETED: THE ENGINE HAS ITS FACTORY CAM':kind==='head'?'PART DELETED: THE ENGINE HAS ITS FACTORY HEAD':kind==='turbo'?'PART DELETED: THE ENGINE HAS ITS FACTORY TURBO':kind==='filter'?'PART DELETED: THE ENGINE HAS ITS FACTORY AIR FILTER':'PART DELETED: THE ENGINE HAS ITS FACTORY EXHAUST'));}
     else{fillPartSelects();flash(tr('PART DELETED'));}
     if(partsUI.edit[kind]&&partsUI.edit[kind].id===id)partsUI.edit[kind]=null;
     renderParts();
@@ -664,13 +762,13 @@ function savePart(kind){
   if(!persistParts())return null;
   partsUI.edit[kind]=Object.assign({},p);fillPartSelects();
   // the engine wearing this part takes the new dimensions
-  const f=fittedPart(kind);if(f&&f.id===p.id)buildEngine();
+  const f=fittedPart(kind);if(f&&f.id===p.id){if(PART_DEF[kind].on)pv(PART_DEF[kind].select).value='part:'+p.id;partRebuild(kind);}
   flash(tr('PART SAVED'));renderParts();
   return p;
 }
 function fitPart(id){
   const p=partById(id);
-  fillPartSelects();pv(PART_DEF[p.kind].select).value='part:'+id;buildEngine();
+  fillPartSelects();pv(PART_DEF[p.kind].select).value='part:'+id;partRebuild(p.kind);
   flash(tr('PART FITTED')+': '+p.name);renderParts();
 }
 // RESET: the dimensions back to the factory part chosen in START FROM, keeping the part's name and identity, so a saved
@@ -692,6 +790,8 @@ function previewPart(kind){
   if(kind==='cam')return previewCam();
   if(kind==='intercooler')return previewIc();
   if(kind==='head')return previewHead();
+  if(kind==='turbo')return previewTurbo();
+  if(kind==='wing')return previewWing();
   const p=partFromEditor('exhaust'),now=exhaustReport(engine.exhaustPart||engine.exhaust),r=exhaustReport(p);
   partsUI.last={kind,p,now,r};
   const turbo=engine.intake==='turbo',ported=!!engine.ports;
@@ -801,6 +901,8 @@ function previewHead(){
       +(r.Ci<0.42*Math.pow(r.throat/THROAT_RATIO,2)-1e-9?' '+tr('The lift limits it, not the throat: a bigger port needs a cam that lifts more.'):''));
     lines.push(tr('Inlet Mach index at the redline')+': <b>'+fmt(r.z,2)+'</b> <span class="dim">('+tr('now')+' '+fmt(now.z,2)+'; '
       +tr('filling holds to 0.5 and falls past it')+')</span>');
+    lines.push(tr('Exhaust valves')+': '+r.nEx+' × <b>'+fmt(r.exD,1)+' mm</b> = '+fmt(r.exD/r.valveD,2)+' × '+tr('the intake')
+      +'; '+tr('exhaust gas at peak power')+' <b>'+fmt(r.egt)+' °C</b> <span class="dim">('+tr('now')+' '+fmt(now.egt)+'; '+tr('a wider port takes less heat from the gas')+')</span>');
     lines.push(tr('Springs')+': '+Math.round(r.seat)+' N '+tr('on the seat')+', '+fmt(r.rate,1)+' N/mm, '+Math.round(r.atLift)+' N '+tr('at full lift')
       +' ('+fmt(r.lift,2)+' mm); '+tr('each valve weighs')+' '+fmt(r.mass,0)+' g.');
     const fl=r.floatRpm>engine.redline?'':' <b class="warn">'+tr('below the redline')+'</b>';
@@ -811,7 +913,82 @@ function previewHead(){
   pv('phGuide').innerHTML=lines.map(l=>'<div>'+l+'</div>').join('');
   drawPartCurves('head',now,r);
 }
+function previewTurbo(){
+  const p=partFromEditor('turbo'),now=turboReport(engine.turboPart||engine.turboSize),r=turboReport(p);
+  partsUI.last={kind:'turbo',p,now,r};
+  const lines=[];
+  lines.push(headline('With this turbo',r,now));
+  if(!r.turbo)lines.push(tr('This engine has no turbo: choose TURBO under INDUCTION on the ENGINE tab to fit one.'));
+  else{
+    const k=r.k,odd=k<0.75||k>1.1;
+    lines.push(tr('Compressor')+' <b>'+fmt(r.exd,1)+' mm</b>: '+tr('it chokes at')+' <b>'+fmt(r.cap,0)+' lb/min</b>'
+      +(r.units>1?' ('+r.units+' '+tr('turbos')+')':'')+'; '+tr('the engine asks')+' '+fmt(r.load*100,0)+'% '+tr('of it at peak power, at an efficiency of')+' '+fmt(r.eff*100,0)+'%.');
+    lines.push(tr('Turbine')+' <b>'+fmt(r.turbD,1)+' mm</b> = '+fmt(k,2)+' × '+tr('the compressor')
+      +' <span class="dim">('+tr('the factory frames: 0.90')+')</span>'+(odd?' <b class="warn">'+tr('far from the usual 0.8-1.0: check the pair')+'</b>':''));
+    lines.push(r.vgt?tr('The vanes set the throat on a VGT; the housing A/R is not used.')+' '+tr('Throat, vanes open')+': '+fmt(r.throat,1)+' cm²'
+      :tr('Housing A/R')+' '+fmt(r.ar,2)+': '+tr('throat')+' <b>'+fmt(r.throat,1)+' cm²</b> <span class="dim">('+tr('now')+' '+fmt(now.throat,1)+'; '+tr('a smaller throat spools sooner and chokes the top end')+')</span>');
+    lines.push(tr('95% of the boost from')+' <b>'+(r.fullRpm?Math.round(r.fullRpm/100)*100+' rpm':tr('never'))+'</b> <span class="dim">('+tr('now')+' '
+      +(now.fullRpm?Math.round(now.fullRpm/100)*100:tr('never'))+')</span>; '+tr('boost at peak power')+' '+fmt(r.boostPk,2)+' bar.');
+    lines.push(tr('Shaft inertia')+' '+fmt(r.J*1e7,0)+' g·cm² <span class="dim">('+tr('from the compressor alone')+')</span>; '+tr('the compressor wheel lets go at')+' '+Math.round(r.nMax/1000)+'k rpm.');
+  }
+  lines.push('<span class="dim">'+tr('How many turbos, the VGT, the boost and the wastegate stay on the ENGINE tab.')+'</span>');
+  pv('pbGuide').innerHTML=lines.map(l=>'<div>'+l+'</div>').join('');
+  drawPartCurves('turbo',now,r);
+}
+// What the car's rear aero gives now (the kit's table, scaled by the class, or the fitted wing), and the car without it.
+function rearAeroNow(){
+  const V=vehicle,k=AERO_REAR[V.aeroRear]||AERO_REAR.none,now=V.wing?{clA:V.wing.clA,cdA:V.wing.cdA}:{clA:k.cl*V.aeroK,cdA:k.cd*V.area};
+  return {now,clA0:V.clA-now.clA,cdA0:V.cdA-now.cdA,clF:V.clA*V.aeroBal};
+}
+function previewWing(){
+  const p=partFromEditor('wing'),r=wingAero(p),A=rearAeroNow(),V=vehicle;
+  partsUI.last={kind:'wing',p,now:A.now,r};
+  const q=v=>0.5*AIR_RHO*v*v,v1=100/3.6,v2=200/3.6,clA=A.clA0+r.clA,cdA=A.cdA0+r.cdA,lines=[];
+  lines.push(tr('This wing')+': ClA <b>'+fmt(r.clA,2)+' m²</b> · CdA <b>'+fmt(r.cdA,3)+' m²</b> <span class="dim">('+tr('the rear aero now')+': ClA '+fmt(A.now.clA,2)+', CdA '+fmt(A.now.cdA,3)+')</span>');
+  lines.push(tr('Area')+' '+fmt(r.S,2)+' m², '+tr('aspect ratio')+' '+fmt(r.AR0,1)+(p.plate_mm>0?' <span class="dim">('+tr('with its end plates it works as')+' '+fmt(r.AR,1)+')</span>':'')
+    +'; '+tr('lift coefficient')+' <b>'+fmt(r.CL,2)+'</b> '+tr('of')+' '+fmt(WING_CLMAX,1)+' '+tr('at the stall')+'.'
+    +(r.stalled?' <b class="warn">'+tr('STALLED: past this angle the wing only adds drag. Less angle or less camber.')+'</b>':''));
+  lines.push(tr('Downforce')+' <b>'+fmt(q(v1)*r.clA/G,0)+' kg</b> '+tr('at')+' 100 km/h, <b>'+fmt(q(v2)*r.clA/G,0)+' kg</b> '+tr('at')+' 200; '
+    +tr('drag')+' '+fmt(q(v2)*r.cdA,0)+' N '+tr('at')+' 200 km/h (<b>'+fmt(q(v2)*r.cdA*v2/745.7,1)+' hp</b>): '
+    +fmt(r.cdi/(r.cdi+r.cd0)*100,0)+'% '+tr('of it the price of the lift')+'. '+tr('Lift over drag')+' '+fmt(r.cdA>0?r.clA/r.cdA:0,1)+'.');
+  lines.push(tr('The car with it')+': ClA <b>'+fmt(clA,2)+'</b>, CdA <b>'+fmt(cdA,2)+'</b> <span class="dim">('+tr('now')+' '+fmt(V.clA,2)+', '+fmt(V.cdA,2)+')</span>; '
+    +fmt(clA>0?A.clF/clA*100:50,0)+'% '+tr('of the downforce on the front axle')+' <span class="dim">('+tr('now')+' '+fmt(V.aeroBal*100,0)+'%)</span>.');
+  lines.push('<span class="dim">'+tr('The wing is taken in clean air, at the rear axle: the body ahead of it and its overhang are not modelled.')+'</span>');
+  pv('pwGuide').innerHTML=lines.map(l=>'<div>'+l+'</div>').join('');
+  drawWing(p,r);
+}
+// The wing's section at its angle with its two forces, and its lift against the angle, up to the stall.
+function drawWing(p,r){
+  const c=pv('pwCanvas');if(!c)return;
+  const w=c.clientWidth||480,h=c.clientHeight||200,dpr=window.devicePixelRatio||1;
+  c.width=Math.round(w*dpr);c.height=Math.round(h*dpr);
+  const g=c.getContext('2d');g.setTransform(dpr,0,0,dpr,0,0);g.clearRect(0,0,w,h);
+  // left: the section, nose to the right (the car drives to the right), hollow side down
+  const cx=w*0.24,cy=h*0.42,len=Math.min(w*0.34,150),a=p.angle_deg*Math.PI/180,f=p.camber_pct/100;
+  const P=(x,up)=>{const yc=-4*f*x*(1-x),t=0.6*(0.2969*Math.sqrt(x)-0.126*x-0.3516*x*x+0.2843*x*x*x-0.1036*x*x*x*x)*up;   // a 12% NACA thickness on the camber line
+    const X=(0.5-x)*len,Y=(yc+t)*len;return [cx+X*Math.cos(a)+Y*Math.sin(a),cy+X*Math.sin(a)-Y*Math.cos(a)];};
+  g.fillStyle=r.stalled?'#a44':'#6fc';g.beginPath();
+  for(let i=0;i<=20;i++){const q=P(i/20,1);i?g.lineTo(q[0],q[1]):g.moveTo(q[0],q[1]);}
+  for(let i=20;i>=0;i--){const q=P(i/20,-1);g.lineTo(q[0],q[1]);}
+  g.closePath();g.fill();
+  const arrow=(x0,y0,x1,y1,col)=>{g.strokeStyle=g.fillStyle=col;g.lineWidth=2;g.beginPath();g.moveTo(x0,y0);g.lineTo(x1,y1);g.stroke();
+    const t=Math.atan2(y1-y0,x1-x0);g.beginPath();g.moveTo(x1,y1);g.lineTo(x1-7*Math.cos(t-0.4),y1-7*Math.sin(t-0.4));g.lineTo(x1-7*Math.cos(t+0.4),y1-7*Math.sin(t+0.4));g.closePath();g.fill();};
+  const k=(h*0.42)/WING_CLMAX;
+  if(r.CL>0)arrow(cx,cy+10,cx,cy+10+Math.max(8,r.CL*k),'#fa4');
+  arrow(cx-len/2-6,cy,cx-len/2-6-Math.max(8,(r.cd0+r.cdi)*k*4),cy,'#c66');
+  // right: lift coefficient against angle
+  const L=w*0.56,R=w-12,T=14,B=h-22,aMax=PART_LIMITS.angle_deg[1],X=d=>L+d/aMax*(R-L),Y=cl=>B-cl/(WING_CLMAX*1.15)*(B-T);
+  g.strokeStyle='#223';g.lineWidth=1;g.fillStyle='#667';g.font='8px monospace';
+  for(let d=0;d<=aMax;d+=5){g.beginPath();g.moveTo(X(d),T);g.lineTo(X(d),B);g.stroke();g.fillText(d+'°',X(d)-6,h-8);}
+  g.setLineDash([4,3]);g.strokeStyle='#a44';g.beginPath();g.moveTo(L,Y(WING_CLMAX));g.lineTo(R,Y(WING_CLMAX));g.stroke();g.setLineDash([]);
+  g.strokeStyle='#6fc';g.lineWidth=2;g.beginPath();
+  for(let d=0;d<=aMax;d+=0.5){const cl=wingAero(Object.assign({},p,{angle_deg:d})).CL;d?g.lineTo(X(d),Y(cl)):g.moveTo(X(d),Y(cl));}
+  g.stroke();
+  g.fillStyle='#fa4';g.beginPath();g.arc(X(p.angle_deg),Y(r.CL),4,0,7);g.fill();
+  pv('pwLegend').innerHTML='<span style="color:#fa4">━ '+esc(tr('downforce'))+'</span> <span style="color:#c66">━ '+esc(tr('drag'))+'</span> <span style="color:#6fc">━ '+esc(tr('lift coefficient against angle'))+'</span> <span style="color:#a44">┅ '+esc(tr('stall'))+'</span>';
+}
 function drawPartCurves(kind,now,r){
+  if(kind==='wing')return drawWing(partsUI.last.p,r);
   const U=PART_UI[kind],c=pv(U.canvas);if(!c)return;
   const w=c.clientWidth||480,h=c.clientHeight||200,dpr=window.devicePixelRatio||1;
   c.width=Math.round(w*dpr);c.height=Math.round(h*dpr);
@@ -826,7 +1003,7 @@ function drawPartCurves(kind,now,r){
   line(now.pts,'tq',tqMax,'#4a8',true);line(now.pts,'hp',hpMax,'#c84',true);
   line(r.pts,'tq',tqMax,'#6fc',false);line(r.pts,'hp',hpMax,'#fa4',false);
   g.fillStyle='#fa4';g.fillText('hp',R+4,T+8);g.fillStyle='#6fc';g.fillText('Nm',4,T+8);
-  pv(U.legend).innerHTML='<span style="color:#fa4">━ '+esc(tr(kind==='intake'?'this intake':kind==='filter'?'this filter':kind==='cam'?'this cam':kind==='head'?'this head':kind==='intercooler'?'this intercooler':'this exhaust'))+'</span> <span style="color:#c84">┅ '+esc(tr('now'))+'</span>';
+  pv(U.legend).innerHTML='<span style="color:#fa4">━ '+esc(tr(kind==='intake'?'this intake':kind==='filter'?'this filter':kind==='cam'?'this cam':kind==='head'?'this head':kind==='turbo'?'this turbo':kind==='intercooler'?'this intercooler':'this exhaust'))+'</span> <span style="color:#c84">┅ '+esc(tr('now'))+'</span>';
 }
 function schedulePreview(){clearTimeout(partsUI.timer);partsUI.timer=setTimeout(()=>{if(vizMode==='parts')previewPart(partsUI.kind);},120);}
 function wireParts(){

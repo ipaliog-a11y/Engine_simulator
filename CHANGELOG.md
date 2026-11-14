@@ -18,7 +18,7 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 ## [Unreleased]
 
-### The track and race picture keeps its frame rate when zoomed out (build 286)
+### The track and race picture keeps its frame rate when zoomed out (build 298)
 
 No physics changed; only how the picture is painted (`track-scene.js`).
 - **Why it dropped frames:** zoomed out, the whole circuit is in view, and all of it (about 1000 strokes and 700 fills)
@@ -31,6 +31,176 @@ No physics changed; only how the picture is painted (`track-scene.js`).
   about 85). Part-way zoomed out a frame went from about 70 ms to about 55 ms.
 - **Open:** part-way zoomed out the camera still moves, so nothing can be kept, and it is still the slowest view.
   The times are from a desktop browser slowed down, not a phone. No fingerprint was run: nothing a result reads changed.
+
+### A power-split or series hybrid's engine is heard where the lap runs it (build 297)
+
+- **The lap replay played the wrong engine.** On the TRACK tab a Prius's or an e-POWER's engine sounded on its full-load line whenever the throttle was open, and idled off it, while the lap's fuel had it on its best line at the power it actually gave (the shaft's power less the pack's), and stopped off the power. The sound now reads the same engine power as the fuel (`psEnginePower`, shared), so the two agree: on the Prius's lap the engine runs at 379 of 442 points and is silent at the other 63, at the best line's speed exactly.
+- **Its load moves.** The replay records a 1 bar manifold for a direct drive, so the sound's load was flat. It is now the share of full-load torque the engine makes at that speed (`steadyMapAt`'s law): 0.20-0.94 bar round the lap.
+- Both sound models (SYNTH and GAS) follow it, and the guide's ENGINE SOUND text says so. Nothing the simulators produce moved: the fingerprint is identical, and the lap's fuel is the same to the last bit.
+- Left open, in `plans/hybrid-electric/gas-sound-hybrid.md`: an engine start or stop has no spin-up or run-down (C); a P2's lap has no electric stretches to be silent in, because the lap model has none yet.
+
+### A hybrid's engine on the bench is heard at its own throttle (build 296)
+
+Step B of `plans/hybrid-electric/gas-sound-hybrid.md` (the plan arrives with step A, PR #241).
+- **The sound reads the engine's throttle, not the pedal.** In AUTO, HOLD and CHARGE the ECU sets the engine's throttle
+  (`H.thrE`); the sound read the pedal, so an engine charging with the pedal up was heard as on a lift: the turbo's whine
+  unloaded, the overrun's crackle and the blow-off armed. It now reads `H.thrE` through `withEngThr`, as the bench's
+  engine physics already did. On the 330e in CHARGE, pedal up: the sound hears 0.23 (was 0), the whine 4x louder.
+- SPORT and ENGINE are unchanged (the engine's throttle is the pedal). Sound only; the fingerprint is identical.
+- **Left open:** steps C–E (start and stop spin-up, each mode checked, the worklet idle while muted).
+
+Tests: test180 (new); 114, 74.
+
+### The tow and dirty air come from the cars' own aero (build 295)
+
+Phase F of `plans/road-to-v1.md`, the wake; the plan for the phase is reworked with it.
+- **The tow** is the drag a following car loses, from the PATH platoon tests (Zabat et al. 1995, figure 9: 0.76 of its
+  drag one length back, 0.84 at two, none past ten), turned into speed through the car's own drag and power. At 70 m/s
+  an M3 gains 3.2% 10 m behind (was ~2%), 0.4% at 40 m.
+- **Dirty air** is the downforce lost behind a 2017-21 Formula 1 car (44% at 10 m, 35% at 20 m), turned into corner
+  speed through the car's own downforce: a 911 GT3 loses 1.4% one length back at 50 m/s, a car with no downforce
+  nothing. It was 1.5% for every car.
+- Kept as rules (owner's decision): the racecraft numbers and a 1.5% spray loss in the wet. The tyre's heat, grip window
+  and wear wait until after v1.0: a derived heat model took a Civic's tyre to 329 C, because where the slip heat goes
+  needs the share of the patch truly touching the road, which no source gives.
+- Open: the pit lane's loss (next build); the car ahead's own saving within a length; the wake in braking. The downforce
+  figures are a single-seater's, as no closed car's are published.
+- Fingerprint: only the race moves; laps of the four-car race -0.3% to +0.2%. `tests/test79.mjs` checks the tow and
+  that a winged car loses more in dirty air.
+### A compound turbo is two stages in series (build 294)
+
+Phase B, step 3 of `plans/road-to-v1.md`: `TURBO_CONFIG`'s last multiple (a compound's 2.30 of one wheel's flow) is retired.
+- **The frame is the high-pressure stage, fed by a low-pressure turbo** sized for it: the two split the target's pressure
+  ratio equally and choke at the same mass flow (Watson & Janota), so the LP wheel is (s / sqrt(T1/T0))^(1/2) of the
+  frame's, s = sqrt(PR). The choke flow is the LP wheel's; its turbine and housing scale with it.
+- **The exhaust runs through both turbines**: the LP nozzle sets the pressure between them, the HP nozzle (pulses
+  included) the manifold's; the gate bypasses the HP turbine. The shafts are tied by the equal split, so the inertia is
+  both cartridges' (the HP one referred to the LP shaft) and so are the bearings.
+- **What it does** (Golf GTI's frame at 2.5 bar): 318 hp against the single's 245, exhaust 4.2 bar at 5500 rpm against 7.2,
+  full boost from 1720 rpm against 1500. At 1 bar the compound is worse (189 hp against 211): two turbines in the way.
+- **Left open:** the stages hold the equal split off the design point too (a real LP stage lags its HP one); the LP turbine
+  has no gate and sees no pulses; a compound runs its housing, not a vane ring. `TURB_WHEEL` per real car is next.
+- No preset is a compound; the fingerprint is identical.
+
+Tests: test179 (new), test166 (updated); 177, 168, 172, 51, 73.
+
+### The motor's stator is drawn from the flux it carries (build 293)
+
+Phase C, step 2 of `plans/road-to-v1.md`, first part: the stator's slots stop being a fixed share of the stator.
+- **The teeth and yoke are sized from the magnets' flux.** Each tooth is as wide as carries the air gap's peak field at 2.0 T, and the yoke is as deep as carries half a pole's flux at 1.5 T. The slot is what is left between the bore and the yoke. The densities are the top of the permitted ranges in Pyrhönen, *Design of Rotating Electrical Machines* (2nd ed.), Table 6.1: salient-pole synchronous, the column the book pairs magnet motors with. An induction motor takes the asynchronous column (2.1 T and 1.7 T). `SLOT_SHARE` and `TOOTH_BAND` are gone. A saturated tooth's field allows for the flux that runs down the slot beside it (apparent against real tooth flux density, Pyrhönen 3.5).
+- **Against the Model 3's teardown:** the tooth comes out 4.24 mm wide (about 4.4 measured off MotorXP's drawing). The phase resistance is 3.86 mΩ (measured 4.75; it was 3.08). The back-EMF is 43.5 V/krpm, 3.6% over the measured 42, where build 292 had 41.8. The yoke is about 4 mm deeper than the real one (21.1 against 17.7 mm), because the Model 3 runs its yoke above the table's range, at about 1.85 T.
+- **Presets re-matched to their published torque,** by what they were matched with before, since neither is published. The Teslas' inverter currents: Model 3 1000 → 950 A (422 Nm, Tesla 420), Model Y rear 720 → 700 A (324 Nm, Tesla 326). The hybrids' turns: Ioniq 28 → 33 (170 Nm, Hyundai 170), Prius 95 → 103 (163, Toyota 163), Qashqai 24 → 26 (326, Nissan 330), 330e 46 → 55 (263, BMW 265). The pancake hybrid motors lost the most flux: their deep slots put a long saturated tooth in the magnets' circuit.
+- **What moved, against `main`** (147 values, electric and hybrid cars only): 0-100 within 0.05 s (Prius 11.35 → 11.30 s, Toyota 10.6); WLTP: Model 3 119.6 → 119.7 Wh/km, Plaid 166.3 → 165.7, the hybrids 0.3-1.1% less fuel. Bigger, on the scorecard: the peak hold, because the winding has less copper and heats faster: Model 3 52 → 19 s, Model Y 114 → 72 s, Plaid 19 → 12 s. Continuous power: Model 3 291 → 266 kW, Plaid 808 → 745 kW. The 2012 Leaf's efficiency peak moves to 97.4% at 7000 rpm, inside ORNL's 5000-9000 rpm island, and its knee to 2805 rpm (Nissan 2730).
+- **Not done, and why.** `SAT_K` was not set again on the Model 3's 430 Nm: that would tune a constant to a test, and it cost the induction motors efficiency. So the Model 3 makes 444 Nm at 953 A, and `test96` allows 5% (was 3%). The outside diameter is still the bore over 0.67 (`MOTOR.statorShape`, narrowed). With it, a 4-pole magnet rotor needs a yoke that leaves its slots shallow, about 7 mm on a 156 mm rotor: a designer would grow the stator instead. Table 6.2's current densities would set that, in a later build. The iron loss still uses one density, 1.5 T, not the teeth's 2.0 and the yoke's 1.5 (`MOTOR.ironShare`): reading them would take most of the iron's heat into a rotor that the 80/20 split keeps cool. The register stays at 41 open entries.
+- **Tests:** `test136` re-locked (old → new in its header). `test146`'s locked resistance 3.083 → 3.860 mΩ. `test96`: back-EMF and torque within 5%, and the peak hold asks a water jacket to last at least as long as air, not longer: the winding reaches 180 °C in about 25 s, before its heat gets through the core to the coolant. `test100` compares the induction motor with a 6-pole magnet motor of the same size, as magnet motors are built, not a 4-pole one (see above). `test117` floors tightened. `test149` expected the phone's results bar at the screen's bottom edge, which has not been true since build 261 put the section bar there. It now checks that the bar sits on the section bar. It floats 7 px above it, because the CSS reserves 58 px for a bar that measures 51 (left as found).
+
+### The motor's magnets are real bars, and their flux is worked out (build 292)
+
+Phase C, step 1 of `plans/road-to-v1.md`, done together with the start of step 2 (the steel's magnetisation curve), as the owner chose.
+- **The air gap's flux is derived.** `FLUX_KM` (0.85 of the magnets' remanence, set from the Model 3's measured back-EMF) is gone. Each pole is now a V of two magnet bars. Their flux runs through a magnetic circuit: the magnet as a straight line (recoil permeability 1.05 for NdFeB, 1.1 for ferrite), the air gap with Carter's factor, saturated steel bridges, and the stator's teeth and yoke on M270-35A's typical magnetisation curve (EN 10106 grade table), with the yoke integrated along its sinusoidal flux.
+- **Checked against the measurement it used to be set from:** the Model 3's back-EMF comes out at 41.8 V/krpm (measured 42, MotorXP) and its torque at 953 A at 426 Nm (430). Its magnets are MotorXP's teardown sizes: 33 × 6.5 mm bars, two a pole, in 21.5 mm segments down the stack.
+- **New on MAGNETS & TOP SPEED (advanced):** MAGNET THICKNESS (mm) and MAGNET WIDTH (% of the pole), defaulting to the Model 3's 6.5 mm and 84%. The magnets' mass comes from these sizes, where it was 6% of the rotor's volume (2.2× for ferrite): the Model 3's is 2.5 kg, and ferrite is now its own density (4900 kg/m³).
+- **What moved** (fingerprint, 142 values, electric and hybrid cars only; no combustion car moved): Model 3 424 → 422 Nm, 119.6 → 119.0 Wh/km, motor 56.1 → 55.2 kg; Model Y 541 → 538 Nm, 0-100 4.55 → 4.56 s; Plaid 1408 → 1428 Nm, 166.3 → 165.0 Wh/km. The hybrids' 0-100 times are 0.005-0.05 s quicker (Prius 11.35 → 11.30 s, Toyota 10.6), and on the WLTP cycle they burn 0.6-0.9% less (Prius 4.33 → 4.29 L/100 km, Qashqai 5.80 → 5.77; `test117`'s floors tightened to match). At the same turns the hybrids' motors gained 3-6% torque. The three whose torque is published were re-matched by their turns, which are not published: Prius MG2 100 → 95 turns (164 Nm, Toyota 163), Qashqai 26 → 24 (330, Nissan 330), 330e 48 → 46 (263, BMW 265). Ioniq 166 → 171 Nm (Hyundai 170). A ferrite rotor of the default size gives 14% less flux than before.
+- **Left open, and why.** The bridges' widths (1 mm, and 2 mm at the V's root) and the slot opening (2 mm) are usual sizes, marked PROBABLE: the teardown's drawing is too coarse to read them. The stator's proportions are still fixed (`MOTOR.statorShape`): they give the Model 3 a yoke about 3 mm thinner than its own, so its yoke reads 2.0 T against about 1.9. That is step 2's next build, which sizes the teeth and yoke from the flux. `SAT_K`, `V_DROP` and `CPSR` stay. The iron loss still uses one flux density, not the teeth's and yoke's own. A magnet is never checked for demagnetisation. The guide's Greek for the motor's physics page is now stale (Greek is paused).
+- **Tests:** 96, 97, 100-114, 117, 119, 136-140, 142, 146, 147, 149, 150, 152, 157, 159, 162, 164, 166, 172, 176, 51, 73 run. `test136` and `test139` re-locked, with old and new numbers in their headers. `test136`'s tail motor has 55 turns, not 40: its thin yoke now saturates, which pushed its knee past a sixth of its top speed. `test96` checks the Leaf's ~97% island at 5000-9000 rpm, not where the single best point falls: the map is flat there, and the best now lies at 3000 rpm by 0.01 point. `test166` holds 41 open entries. `test149` fails on `main` as well (the phone's results bar sits 58 px off the bottom).
+
+### The rear wing as a part (build 291)
+
+Phase D of `plans/road-to-v1.md` begins: the first part of the car rather than the engine.
+
+- **The PARTS tab designs a rear wing**: span, chord, angle, camber and end-plate height. Fitted from the VEHICLE
+  tab's REAR AERO (under MY PARTS), it takes the kit's place, and fits any car, electric ones included.
+- **Its numbers are derived, not fitted.** Lifting-line theory (Anderson): lift slope 2π/(1 + 2/AR); camber as
+  2f/c of angle (thin aerofoil); induced drag CL²/(πAR). End plates raise the working AR by 1 + 1.9 h/b (Hoerner &
+  Borst). Profile drag is turbulent skin friction on both faces with a 12% section's form factor (Hoerner), at
+  180 km/h. Lift is held at 1.5 past the stall (NACA 4412, Abbott & von Doenhoff; probable at a car wing's Reynolds
+  number), and the preview flags it. Downforce lands on the rear axle.
+- **What it gives:** a 1.52 × 0.25 m wing at 8°, 6% camber, 150 mm plates, on the M3 E46: ClA 0.49, CdA 0.033, about
+  23 kg of downforce at 100 km/h and 92 kg at 200; 86% of its drag is induced. The kit wing it replaces is
+  ClA 0.75, CdA 0.035 × the frontal area, scaled by the class.
+- **No factory car moved**: fingerprint identical to `main`, 5212 values.
+- **Left open:** the wing is in clean air (the body ahead of it, its overhang behind the axle and what it does to the
+  body's own lift are not modelled); `AERO_FRONT/REAR` stay in the register until the front wing and splitter are
+  parts and each kit car's wing is written as one. Brake bias is the next half of this step. `test64` and `test125`
+  fail on `main` as well.
+
+Tests: test178 (new), test120 (updated); 121, 124, 159, 163, 177, 122, 73, 51.
+
+### Each turbo of a pair is its own, and the shaft's inertia is both wheels' (build 290)
+
+Phase B, step 3 of `plans/road-to-v1.md`, the second build: `TURBO_CONFIG`'s twin and sequential multiples are retired.
+- **A twin or sequential pair is two turbos**, each its own wheel, turbine and shaft. The pair chokes at two wheels' flow
+  (it was 1.85 and 1.55 of one), and each shaft carries its own bearings and half of the charge fill. A twin's two wheels
+  were spun by one turbo's power, so it spooled at half the rate. The spool and width multiples, read only by the
+  logistic fallback, are gone; the cost sheet's "50% boost @" now reads the solved boost.
+- **The shaft's inertia is both wheels'** (it scaled with the compressor alone). The measured GT2871R group (3.2e-5 kg m²;
+  71 mm compressor, 53.9 mm turbine, Garrett 743347-2) is split by material, aluminium 2.71 against Inconel 713C 7.91
+  g/cm³, with the wheels taken as alike in shape: 41% is the turbine. A factory turbo's 0.90 turbine wheel makes its
+  shaft about 1.5x heavier than before; a designed turbo's bigger turbine wheel now costs transient.
+- **What moved** (fingerprint, 1312 of 5212 values, all turbo cars): peak power on twins and sequentials, RX-7 172 → 181 hp,
+  993 Turbo 416 → 425, 750S 701 → 713, Supra 310 → 313, others ±2 hp. 0-100 from -0.68 s (RX-7, 6.91 → 6.24) to +0.05 s
+  (13B archetype); most within ±0.03 s. Laps within -0.30 s (RX-7) to +0.03 s.
+- **Left open:** a compound is still one frame with 2.30 of its flow (its two stages want designing apart), so
+  `TURBO_CONFIG` stays in the register for it. The inertia split assumes the wheels alike in shape; a turbine wheel's
+  heavier hub would put more in it.
+
+- **test168** read the boost one second after a lift; the heavier shaft holds the target about 0.4 s longer (the STI:
+  0.63 bar at 1 s, 0.33 at 2 s, against 0.50 and 0.18 before), so it now reads at two seconds. `test40` and `test64` fail
+  on `main` as well.
+
+Tests: test177, test168 (updated); 172, 176, 120, 166, 73, 51, 23, 28, 40, 41, 48, 54, 57, 58, 64, 69, 81, 82, 88.
+
+### The stepped car's hybrid engine stops and starts (build 289)
+
+Phase E, step 3, from build 277's "left open": a P2 hybrid in `stepCar` ran its engine all the time.
+- **A P2's engine now stops** (Ioniq, 330e, 918): its clutch opens and the motor drives the gearbox alone, taking all of
+  the torque the pedal asks, with no engine drag off the pedal. It starts again when the pedal asks more than the
+  motor's share, past EV UP TO, or with the charge 10 points under its target. The rule is the LIVE bench's AUTO
+  controller (`HYB_BENCH`: 35% of what the motor and pack give, or the tune's EV POWER; a plug-in with charge to spare,
+  all of it; stops at 0.7 of that; 2 s between a start and a stop), so no new number.
+- **What it does:** the Ioniq at a steady 50 km/h from 60% runs electric 57% of the time and ends at 61.8% (the engine
+  charges while it runs); from 37% the engine never stops and the charge climbs to 45.5%. Flat out it never stops, so
+  the 0-100s are unchanged (Ioniq 9.35 s, 918 3.23 s). At rest off the pedal it is off.
+- **Left open:** starting is instant and costs the pack nothing (the motor turning the engine up is not stepped); the
+  pedal's demand is taken at idle speed from rest, where the bench takes the shaft's (nothing); a power-split's engine
+  still runs at its steady curve's speed. Only `drive-model.js` changed and the fingerprint does not record `stepCar`, so no
+  recorded number can move; it was not run.
+
+Tests: test172 (updated); 168, 169, 170, 173, 174, 175.
+
+### The turbocharger as a part (build 288)
+
+Phase B, step 3 of `plans/road-to-v1.md`: the first of two builds. It does not retire a fitted number yet; it gives the turbo's wheels and housing somewhere to go.
+
+- **The PARTS tab designs a turbocharger**: the compressor's exducer, the turbine wheel and the housing's A/R. Fitted from the ENGINE tab's TURBO SIZE list, it takes the place of the frame's wheel, the COMPRESSOR WHEEL field, TURB_WHEEL's 0.90 and the TIGHT / STOCK / LOOSE housing. How many turbos, the VGT, the boost and the wastegate stay on the ENGINE tab.
+- **It feeds the shaft model what the frames fed it.** The compressor sets the choke flow, the map, the speed the wheel lets go at and the inertia; the turbine wheel sets its tip speed and the radius the throat sits at; the A/R sets the throat. On the Golf GTI Mk7: a 0.45 → 0.9 housing opens the throat from 4.1 to 9.5 cm² and brings 95% boost from 1700 to 2150 rpm; a 50 → 70 mm compressor chokes at 28 → 54 lb/min. On a VGT the vanes set the throat and the A/R does nothing.
+- **No factory car moved.** A factory turbo written down as a part gives the same engine (Golf, Supra's sequential pair with its own 58 mm wheel, GT-R twin, a VGT diesel, each frame: torque within 1e-14 of itself). Fingerprint identical to `main`, 5212 values.
+- **Left open:** the shaft's inertia still scales with the compressor alone, so a bigger turbine wheel costs nothing in transient, and in the steady solve its faster tip brings boost sooner (40 → 56 mm on the Golf: 1700 → 1500 rpm). Twin, sequential and compound layouts keep `TURBO_CONFIG`'s choke multiples (1.85, 1.55, 2.30 of one wheel); each turbo its own wheel and shaft is the next build. Found on the way, on `main` as well: a part's preview of an engine with an ECU torque limit differs from the build by up to 4 Nm on the plateau (Golf GTI, any kind of part).
+
+Tests: test177 (new); 176, 120, 166, 73, 51.
+
+### Five real engines get their makers' valves (build 287)
+
+The first batch of retiring the head's fitted numbers the slow way: one sourced engine at a time, so nothing else moves.
+
+- **A real engine can carry its own valve sizes** (`ENGINE_VALVES` in `src/js/engine-options-presets.js`, each with its source), in place of the valve's share of the bore and of 0.83 for the exhaust. They belong to that bore and valve count: change either on the ENGINE tab and the rule sizes the valves again. They travel with a saved build.
+- **Five engines have them:** BMW S54 35 / 30.5 mm (BMW's training manual), Honda F20C 36 / 31, Toyota 2JZ-GTE 33.5 / 29, Mitsubishi 4G63T 34 / 30.5, Subaru EJ257 36 / 32 (the last four from standard-size replacement valves, marked as such).
+- **What moved, peak power against the published figure:** M3 E46 323 → 329 hp (-5.8% → -4.1%); S2000 207 → 215 (-13.7% → -10.4%); WRX STI 276 → 270 (-6.8% → -8.8%); Evo IX 284 → 285 (-0.7% → -0.3%); Supra 310, unchanged. Mean error 6.0% → 5.3%. Torque moves by 1 Nm at most, 0-100 by 0.04 s at most. Every other car is identical.
+- **Held back, two engines whose real valves make the car worse.** The Corvette's LS3 (GM: 55.0 / 40.4 mm; the rule gives 51.6) is already 7.9% over its 430 hp and would be 19.3% over. The Mustang's Coyote (Ford: 37.7 / 32 mm) would go from 452 to 477 hp against 460 and still be gaining power at its 7500 rpm limiter, where the real engine peaks at 7000 (`test60` caught it). Both want their cam and intake reviewed against the maker's sheet first. Their sizes are in the code beside the table.
+- **Left open:** 80 or so engines still take the rule, so `THROAT_RATIO` and `EV_RATIO` stay in the register. The S2000 is still 10.4% under. In the fingerprint, cars that follow a changed car show a changed lap hash with the same lap time: the hashed lap record holds a shared cache of racing lines whose keys include the earlier cars' figures. `test42`, `test61`, `test92` and `test125` fail on `main` as well.
+
+Tests: test176 (updated), and every test that names one of the cars (60 run).
+
+### The head's exhaust valve is its own (build 286)
+
+Phase B, step 2, second build. It does not retire the head's fitted numbers; it finishes the part so that sourced valve sizes have somewhere to go.
+
+- **A designed head sets its exhaust valve** (PARTS → CYLINDER HEAD, EXHAUST VALVE, 12 to 65 mm), where it was always 0.83 of the intake (`EV_RATIO`). It is the bore of the exhaust port, so it sets the heat the gas leaves there (Caton & Heywood's port correlation, already in use): a wider port takes less. The preview shows the valve against the intake and the exhaust gas temperature at peak power.
+- **No factory car moved** (fingerprint identical to `main`, 5212 values). A head saved in build 283 has no exhaust valve written down and takes 0.83 of its intake, so it is the head it was.
+- **Not retired, and why.** `THROAT_RATIO` (0.85), `EV_RATIO` (0.83) and the valve's share of the bore still stand for every factory head. Deleting them needs each real car's own valve sizes from its maker (most are published), or your sign-off to keep them as rules. The register says so. The three spring steps stay too: they are the ENGINE tab's choices, sized by the maker's redline.
+- **Left open:** the exhaust valve's size does not change how the cylinder empties (the blowdown and the pumping loop do not read it), and the valves are still not checked against the bore.
+
+Tests: test176 (updated); 166, 120, 159, 73, 51.
 
 ### The motor bench shows where the losses go and what the pack is doing (build 285)
 

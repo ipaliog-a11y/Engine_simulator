@@ -40,7 +40,7 @@
 </div>
 <div class="container">
 <header>
-<h1>PIXEL ENGINE SIM v0.7 build 286</h1>
+<h1>PIXEL ENGINE SIM v0.7 build 298</h1>
 <div class="subtitle" id="subtitle">ENGINE DESIGNER • BUILD IT, THEN DRIVE IT</div>
 </header>
 <div class="build-strip" id="buildStrip">
@@ -109,7 +109,7 @@
 <div class="field"><label for="edVVT">VARIABLE VALVE TIMING</label><select id="edVVT"><option value="no">NONE</option><option value="yes">VVT</option></select></div>
 <div class="field"><label>CAM OVERLAP</label><span class="val" id="valOverlap">—</span></div>
 <div class="field"><label for="edValveMat">VALVE MATERIAL</label><select id="edValveMat"><option value="steel">STEEL</option><option value="titanium">TITANIUM</option></select></div>
-<div class="field"><label for="edSpring">HEAD &amp; SPRINGS</label><select id="edSpring"><option value="stock">STOCK</option><option value="perf">PERFORMANCE</option><option value="race">RACE</option></select><input type="hidden" id="edSpringRpm" value="0"></div>
+<div class="field"><label for="edSpring">HEAD &amp; SPRINGS</label><select id="edSpring"><option value="stock">STOCK</option><option value="perf">PERFORMANCE</option><option value="race">RACE</option></select><input type="hidden" id="edSpringRpm" value="0"><input type="hidden" id="edValveSpec" value=""></div>
 <div class="field"><label>VALVE FLOAT</label><span class="val" id="valFloat">—</span></div>
 <div class="field"><label for="edEgr">EGR</label><select id="edEgr"><option value="none">NONE</option><option value="cooled">COOLED, OFF AT FULL LOAD</option><option value="cooled-full">COOLED, TO FULL LOAD</option></select></div>
 </div></section>
@@ -211,6 +211,8 @@
 </div></section>
 <section class="evd-card" id="evdCard-mag" data-card="mag"><div class="evd-fields">
 <div class="field"><label for="evMagnet">MAGNETS</label><select id="evMagnet"><option value="ferrite">FERRITE</option><option value="ndfeb">NdFeB (SH)</option><option value="ndfebDy">NdFeB + Dy (UH)</option></select></div>
+<div class="field"><label for="evMagT">MAGNET THICKNESS (mm)</label><input type="number" id="evMagT" min="2" max="15" step="0.5" value="6.5"></div>
+<div class="field"><label for="evMagW">MAGNET WIDTH (% of pole)</label><input type="number" id="evMagW" min="40" max="100" step="1" value="84"></div>
 <div class="field"><label for="evRetention">MAGNET RETENTION</label><select id="evRetention"><option value="bridges">IRON BRIDGES</option><option value="sleeve">CARBON SLEEVE</option></select></div>
 <div class="field"><label for="evMaxRpm">MAX SPEED (rpm)</label><input type="number" id="evMaxRpm" min="4000" max="25000" step="100" value="18000"></div>
 </div></section>
@@ -389,7 +391,7 @@
 <!-- PARTS: design a part, save it, fit it on the ENGINE tab (build 205) -->
 <div class="design-panel parts-panel" id="partsPanel">
 <h3>PART DESIGNER</h3>
-<div class="hint">Pick a type of part, set its dimensions and save it. Saved parts are kept in this browser and appear in the ENGINE tab's choices; a saved build carries its parts with it.</div>
+<div class="hint">Pick a type of part, set its dimensions and save it. Saved parts are kept in this browser and appear in the ENGINE tab's choices (a wing's in the VEHICLE tab's); a saved build carries its parts with it.</div>
 <div class="design-section">Type of part</div>
 <div class="part-types" id="partTypes"></div>
 <div class="hint" id="partsNoEngine" hidden>An electric drive has no exhaust, intake, air filter, cam or cylinder head. Build a combustion engine on the ENGINE tab to design parts for it.</div>
@@ -505,6 +507,7 @@
 <div class="design-grid">
 <div class="field"><label for="phName">NAME</label><input type="text" id="phName" maxlength="40"></div>
 <div class="field"><label for="phValve">INTAKE VALVE (mm)</label><input type="number" id="phValve" min="15" max="75" step="0.5"></div>
+<div class="field"><label for="phExValve">EXHAUST VALVE (mm)</label><input type="number" id="phExValve" min="12" max="65" step="0.5"></div>
 <div class="field"><label for="phThroat">PORT THROAT (× VALVE)</label><input type="number" id="phThroat" min="0.75" max="0.92" step="0.01"></div>
 <div class="field"><label for="phSeat">SPRING SEAT LOAD (N)</label><input type="number" id="phSeat" min="100" max="1500" step="10"></div>
 <div class="field"><label for="phRate">SPRING RATE (N/mm)</label><input type="number" id="phRate" min="10" max="200" step="1"></div>
@@ -513,6 +516,44 @@
 <div class="part-guide" id="phGuide"></div>
 <div class="part-chart"><div class="gw-leg" id="phLegend"></div><canvas id="phCanvas" role="img" aria-label="Power and torque with this cylinder head against the engine as it is"></canvas></div>
 <div class="btn-row part-btns"><button type="button" id="phSave">SAVE PART</button><button type="button" id="phSaveFit">SAVE &amp; FIT</button></div>
+</div>
+<div id="partsTurbo" hidden>
+<div class="design-section">My turbochargers</div>
+<div class="part-list" id="pbList"></div>
+<div class="pick-row"><div class="field"><label for="pbFrom">START FROM</label><select id="pbFrom"><option value="small">SMALL</option><option value="medium">MEDIUM</option><option value="large">LARGE</option></select></div>
+<div class="field"><label>&nbsp;</label><button type="button" id="pbNew">NEW TURBO</button><button type="button" id="pbReset" title="Put the dimensions back to the factory part chosen above, keeping the name">RESET</button></div></div>
+<div class="design-section">Turbocharger</div>
+<div class="hint">Fitted, it sets the compressor wheel and the turbine A/R in place of the ENGINE tab's. How many turbos, the VGT and the boost stay there.</div>
+<div class="design-grid">
+<div class="field"><label for="pbName">NAME</label><input type="text" id="pbName" maxlength="40"></div>
+<div class="field"><label for="pbComp">COMPRESSOR EXDUCER (mm)</label><input type="number" id="pbComp" min="30" max="120" step="0.5"></div>
+<div class="field"><label for="pbTurb">TURBINE WHEEL (mm)</label><input type="number" id="pbTurb" min="25" max="130" step="0.5"></div>
+<div class="field"><label for="pbAr">HOUSING A/R</label><input type="number" id="pbAr" min="0.25" max="1.6" step="0.01"></div>
+</div>
+<div class="design-section">On this engine</div>
+<div class="part-guide" id="pbGuide"></div>
+<div class="part-chart"><div class="gw-leg" id="pbLegend"></div><canvas id="pbCanvas" role="img" aria-label="Power and torque with this turbocharger against the engine as it is"></canvas></div>
+<div class="btn-row part-btns"><button type="button" id="pbSave">SAVE PART</button><button type="button" id="pbSaveFit">SAVE &amp; FIT</button></div>
+</div>
+<div id="partsWing" hidden>
+<div class="design-section">My wings</div>
+<div class="part-list" id="pwList"></div>
+<div class="pick-row"><div class="field"><label for="pwFrom">START FROM</label><select id="pwFrom"><option value="wing">A WING AS WIDE AS THE TRACK</option></select></div>
+<div class="field"><label>&nbsp;</label><button type="button" id="pwNew">NEW WING</button><button type="button" id="pwReset" title="Put the dimensions back to the starting wing, keeping the name">RESET</button></div></div>
+<div class="design-section">Rear wing</div>
+<div class="hint">Fitted, it takes the place of the VEHICLE tab's REAR AERO kit: its downforce and drag come from these dimensions.</div>
+<div class="design-grid">
+<div class="field"><label for="pwName">NAME</label><input type="text" id="pwName" maxlength="40"></div>
+<div class="field"><label for="pwSpan">SPAN (mm)</label><input type="number" id="pwSpan" min="600" max="2200" step="10"></div>
+<div class="field"><label for="pwChord">CHORD (mm)</label><input type="number" id="pwChord" min="80" max="600" step="5"></div>
+<div class="field"><label for="pwAngle">ANGLE (°)</label><input type="number" id="pwAngle" min="0" max="25" step="0.5"></div>
+<div class="field"><label for="pwCamber">CAMBER (% of chord)</label><input type="number" id="pwCamber" min="0" max="12" step="0.5"></div>
+<div class="field"><label for="pwPlate">END PLATE HEIGHT (mm)</label><input type="number" id="pwPlate" min="0" max="400" step="10"></div>
+</div>
+<div class="design-section">On this car</div>
+<div class="part-guide" id="pwGuide"></div>
+<div class="part-chart"><div class="gw-leg" id="pwLegend"></div><canvas id="pwCanvas" role="img" aria-label="The wing's section at its angle with its downforce and drag, and its lift against the angle"></canvas></div>
+<div class="btn-row part-btns"><button type="button" id="pwSave">SAVE PART</button><button type="button" id="pwSaveFit">SAVE &amp; FIT</button></div>
 </div>
 </div>
 

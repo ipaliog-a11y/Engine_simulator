@@ -45,7 +45,8 @@ function readEngineFromForm(){
     afrMode:g('edAfrMode').value,
     radiator:g('edRadiator').value,
     radHp:Math.max(0,+g('edRadHp').value||0),   // what a STOCK radiator was sized for (build 219)
-    springRpm:Math.max(0,Math.round(+g('edSpringRpm').value||0)),   // the redline the STOCK springs were sized for (build 234)
+    springRpm:Math.max(0,Math.round(+g('edSpringRpm').value||0)),
+    ivValve_mm:0,evValve_mm:0,   // a real engine's own valves (build 287), read below   // the redline the STOCK springs were sized for (build 234)
     fan:g('edFan').value,
     oilCooler:g('edOilCooler').value==='yes',
     thermostat:clamp(Math.round(+g('edThermostat').value||88),71,95),
@@ -54,6 +55,10 @@ function readEngineFromForm(){
   Object.assign(e,partsFromForm());   // the factory exhaust and runners, or designed ones (builds 205, 206)
   if(type==='electric')Object.assign(e,readElectricFromForm());   // the motor and battery (build 179)
   else{const hm=g('edHybrid')&&g('edHybrid').value;if(hm&&hm!=='none'){e.hyMode=hm;e.hyDeploy=HYBRID_DEPLOY[g('edHyDeploy').value]?g('edHyDeploy').value:'full';e.hyTune=readHybTuneFromForm();if(g('edHyPlug').value==='yes')e.hyPlug=true;Object.assign(e,readElectricFromForm());}}   // a hybrid system (build 186), its tune (192)
+  // A real engine's own valve sizes travel with the bore and the valve count they were measured on: 'iv/ev@bore x valves'.
+  // Change either on the form and the head is no longer that maker's, so the packing rule sizes the valves again.
+  {const m=/^([\d.]+)\/([\d.]+)@([\d.]+)x(\d)$/.exec(g('edValveSpec').value||'');
+   if(m&&Math.abs(+m[3]-e.bore_mm)<1e-6&&+m[4]===e.valves){e.ivValve_mm=+m[1];e.evValve_mm=+m[2];}}
   return e;
 }
 function applyEngineToForm(e){
@@ -74,6 +79,7 @@ function applyEngineToForm(e){
   g('edCam').value=e.cam||'stock';g('edEgr').value=e.egr||'none';g('edVVT').value=e.vvt?'yes':'no';
   g('edValves').value=String(e.valves||4);g('edValvetrain').value=VALVETRAIN[e.valvetrain]?e.valvetrain:valvetrainDefault(e.valves);g('edValveMat').value=e.valveMat||'steel';
   g('edSpring').value=e.valveSpring||'stock';g('edSpringRpm').value=e.springRpm||0;
+  g('edValveSpec').value=e.ivValve_mm>0&&e.evValve_mm>0?e.ivValve_mm+'/'+e.evValve_mm+'@'+e.bore_mm+'x'+(e.valves||4):'';
   g('edFuel').value=e.fuel||'gasoline';
   partsToForm(e);g('edCat').value=e.cat||'stock';g('edOctane').value=e.octane;g('edInjector').value=e.injector;
   g('edIgnAdv').value=e.ignitionAdv;g('edIgnType').value=e.ignitionType;g('edTiming').value=e.timingMode||'fixed';g('edAfrMode').value=e.afrMode||'fixed';
@@ -362,8 +368,7 @@ function deriveCharge(){
   const duct=0.72*turboFrame(engine).exd;
   const G=icGeom(engine);   // a factory core as sized for this engine (build 256)
   engine.chargeVol=(P?P.pipe_m:ic.pipe)*Math.PI/4*duct*duct+(G?icCoreL(G):0)/1000;
-  // Turbo spool characteristics scaled to redline, then modified by the turbo config
-  // (twin/sequential/compound), anti-lag (keeps it spooled) and intercooler volume (lag).
+  // The logistic fallback's spool point, scaled to redline and moved by anti-lag; the layout's flow is its turbos' wheels.
   const tb=turboFrame(engine), cfg=TURBO_CONFIG[engine.turboConfig]||TURBO_CONFIG.single;
   const als=engine.antilag?0.62:1.0;
   // ---- How hard is this engine leaning on that frame? ----
@@ -376,7 +381,8 @@ function deriveCharge(){
   const rhoRef=PR*1e5/(287*(273+40));
   const kgs=rhoRef*(engine.displacement_L/1000)*perRev*(engine.redline*0.85/60)*refFill(engine.redline*0.85);
   engine.turboFlow=kgs*132.28;                            // kg/s → lb/min
-  engine.turboCap=compChokeFlow(tb.exd)*cfg.flow;         // derived from the wheel, not tabulated
+  // derived from the wheels, not tabulated: each turbo's own, or a compound's LP wheel, which the HP one is matched to
+  engine.turboCap=compChokeFlow(engine.lpExd>0?engine.lpExd:tb.exd)*cfg.units;
   engine.turboLoad=engine.intake==='turbo'?engine.turboFlow/engine.turboCap:0;   // 1.0 = at rating
   // Compressor efficiency, as a position on the frame's own map rather than a formula in PR.
   // A compressor has an efficiency ISLAND: it peaks near a particular fraction of its choke flow
@@ -400,10 +406,10 @@ function deriveCharge(){
     ? Math.pow(shaft(PR)/shaft(TURBO_PR_REF),SPOOL_PR_EXP)*(1+0.25*Math.max(0,engine.turboLoad-1))
     : 1;
   engine.spoolPRMul=prMul;
-  engine.spool50=tb.spool50*cfg.spool*als*prMul*engine.redline;
-  engine.spoolWidth=tb.width*cfg.width*engine.redline;
+  engine.spool50=tb.spool50*als*prMul*engine.redline;
+  engine.spoolWidth=tb.width*engine.redline;
   // Past its rated flow the compressor runs out of map and the top end chokes off in earnest.
   // The hard airflow ceiling this frame can pass, in kg/s. Derived from the same inducer choke as
   // the flow rating, so the rating and the limit cannot disagree.
-  engine.chokeFlow_kgs=engine.intake==='turbo'?compChokeFlow(tb.exd)*cfg.flow/132.28:0;
+  engine.chokeFlow_kgs=engine.intake==='turbo'?engine.turboCap/132.28:0;
 }

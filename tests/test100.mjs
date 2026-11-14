@@ -38,7 +38,10 @@ const r = await page.evaluate(() => {
   o.s60 = { slots: m.slots, bars: m.Qr, R: m.R20 * 1000, A, Pk: Pk / 1000, knee: motorBaseW(m, V, m.psi20) * 30 / Math.PI, nMax: m.nMax,
     joule: P225 / (P225 + L.cu + L.rcu), ImR: m.ImR };
   // 2. against a magnet motor of the same size and current
-  const pm = motorBuild(Object.assign({}, geo, { type: 'pm', magnet: 'ndfeb', retention: 'bridges', invAmps: A }));
+  // 6 poles, as magnet traction motors are built (the Model 3's): since build 293 the yoke carries the magnets' flux at
+  // 1.5 T, and a 4-pole magnet rotor of this size needs a yoke that leaves the slots ~7 mm deep in the stator the model
+  // gives it (MOTOR.statorShape in plans/fitted-register.json).
+  const pm = motorBuild(Object.assign({}, geo, { type: 'pm', poles: 6, magnet: 'ndfeb', retention: 'bridges', invAmps: A }));
   const best = x => { let b = 0; for (let n = 1000; n <= 14000; n += 500) { const Tm = motorMaxTorque(x, n, V, 60); for (let T = 10; T <= Tm; T += 10) b = Math.max(b, motorEfficiency(x, T, n, V, hot)); } return b; };
   const peakHot = x => { const n = 4000, T = motorMaxTorque(x, n, V, 60), t = { w: 65, c: 65, r: 65 }; for (let k = 0; k < 60; k++) motorHeatStep(x, t, motorLosses(x, T, n, V, t), 0.5); return t; };
   o.vs = { bestIM: best(m), bestPM: best(pm), coastIM: motorLosses(m, 0, 8000, V, hot), coastPM: motorLosses(pm, 0, 8000, V, hot).total,
@@ -76,7 +79,7 @@ if (Math.abs(S.joule - 0.934) > 0.03) fails.push(`copper-only efficiency ${f(S.j
 if (Math.abs(S.ImR / S.A - 0.08) > 0.06) fails.push('the magnetising current is not a small share of the peak');
 
 const X = r.vs;
-console.log(`== against a magnet motor of the same size: best efficiency ${f(X.bestIM * 100)}% vs ${f(X.bestPM * 100)}%; ` +
+console.log(`== against a 6-pole magnet motor of the same size: best efficiency ${f(X.bestIM * 100)}% vs ${f(X.bestPM * 100)}%; ` +
   `coasting at 8000 rpm ${f(X.coastIM.total, 0)} W (iron ${f(X.coastIM.fe, 0)}) vs ${f(X.coastPM, 0)} W; $${X.costIM} vs $${X.costPM}; ` +
   `rotor after 30 s at peak ${f(X.rotorIM, 0)} C vs ${f(X.rotorPM, 0)} C ==`);
 if (!(X.bestIM < X.bestPM - 0.005)) fails.push('the induction motor is as efficient as a magnet motor at its best');
