@@ -72,6 +72,8 @@ scoreboard holds (phase H)".
    multiples, and the shaft's inertia from both wheels.
    *Build 290:* a twin or sequential pair is two turbos on their own shafts; the inertia is both wheels'. Open: a
    compound's two stages (2.30), `TURB_WHEEL` per real car.
+   *Build 291:* a compound is two stages in series, its low-pressure wheel sized for an equal split of the target
+   (`compoundStage`); `TURBO_CONFIG` retired. Open: `TURB_WHEEL` per real car; the split held off-design.
 4. Water-to-air and twin intercoolers, per car from published specs.
 5. Plenum, throttle and flywheel (2): retires `MAP_K`.
 6. Catalytic converter: find what the double count hides, then the part (2).

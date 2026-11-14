@@ -18,6 +18,23 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 ## [Unreleased]
 
+### A compound turbo is two stages in series (build 291)
+
+Phase B, step 3 of `plans/road-to-v1.md`: `TURBO_CONFIG`'s last multiple (a compound's 2.30 of one wheel's flow) is retired.
+- **The frame is the high-pressure stage, fed by a low-pressure turbo** sized for it: the two split the target's pressure
+  ratio equally and choke at the same mass flow (Watson & Janota), so the LP wheel is (s / sqrt(T1/T0))^(1/2) of the
+  frame's, s = sqrt(PR). The choke flow is the LP wheel's; its turbine and housing scale with it.
+- **The exhaust runs through both turbines**: the LP nozzle sets the pressure between them, the HP nozzle (pulses
+  included) the manifold's; the gate bypasses the HP turbine. The shafts are tied by the equal split, so the inertia is
+  both cartridges' (the HP one referred to the LP shaft) and so are the bearings.
+- **What it does** (Golf GTI's frame at 2.5 bar): 318 hp against the single's 245, exhaust 4.2 bar at 5500 rpm against 7.2,
+  full boost from 1720 rpm against 1500. At 1 bar the compound is worse (189 hp against 211): two turbines in the way.
+- **Left open:** the stages hold the equal split off the design point too (a real LP stage lags its HP one); the LP turbine
+  has no gate and sees no pulses; a compound runs its housing, not a vane ring. `TURB_WHEEL` per real car is next.
+- No preset is a compound; the fingerprint is identical.
+
+Tests: test178 (new), test166 (updated); 177, 168, 172, 51, 73.
+
 ### Each turbo of a pair is its own, and the shaft's inertia is both wheels' (build 290)
 
 Phase B, step 3 of `plans/road-to-v1.md`, the second build: `TURBO_CONFIG`'s twin and sequential multiples are retired.

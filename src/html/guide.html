@@ -842,7 +842,7 @@ A designed head's springs are fixed, where the maker's are sized for the factory
 The preview runs the whole build on a copy of the engine, at the scoring conditions, and puts everything back afterwards, so the curve of a fitted part is its preview exactly.
 </div>
 <div class="guide-limit" data-gk="partsLimit">
-Limit: a designed head's valves are not checked against the bore (the preview says when one is bigger than the factory packing), its springs are not checked for coil bind, their load does not add to the cam's friction, and the exhaust valve's size does not change how the cylinder empties. A compound layout's flow is still a multiple of one wheel's, and its two stages are not designed apart. A designed cam's exhaust lobe is taken as the same as its intake lobe, and its idle and the airflow estimates still take the fitted grade of the factory cam nearest in duration and separation. The silencer changes only the sound; its own back-pressure is not modelled. The intake plenum is taken as holding steady pressure, so its volume and the throttle are not part of the design. Oiled cotton's permeability is its makers' claim; paper's is measured. An intercooler's cooling air is the same 11 m/s at any car speed. The catalytic converter cannot be designed yet.
+Limit: a designed head's valves are not checked against the bore (the preview says when one is bigger than the factory packing), its springs are not checked for coil bind, their load does not add to the cam's friction, and the exhaust valve's size does not change how the cylinder empties. A compound's two stages hold an equal share of the boost at every speed (a real low-pressure stage lags its high-pressure one), and only its high-pressure turbine has a gate. A designed cam's exhaust lobe is taken as the same as its intake lobe, and its idle and the airflow estimates still take the fitted grade of the factory cam nearest in duration and separation. The silencer changes only the sound; its own back-pressure is not modelled. The intake plenum is taken as holding steady pressure, so its volume and the throttle are not part of the design. Oiled cotton's permeability is its makers' claim; paper's is measured. An intercooler's cooling air is the same 11 m/s at any car speed. The catalytic converter cannot be designed yet.
 </div>
 </div>
 <div class="guide-see">See also: <a data-gp="airpath">The air path</a> · <a data-gp="header">Exhaust headers &amp; scavenging</a> · <a data-gp="waves">Intake runner waves</a> · <a data-gp="backpressure">Back-pressure &amp; residuals</a> · <a data-gp="induction">Induction &amp; throttle</a></div>
@@ -904,7 +904,7 @@ Every compressor comes with a <b>map</b>, the chart turbo shops match engines wi
 <div class="gtier gt-game"><div class="gtier-h">LV2 · IN THE GAME</div>
 <div class="guide-body" data-gk="ratedFlow">
 Each frame also has a <b>rated flow</b> — small 32, medium 55, large 82 lb/min. A twin or sequential pair
-flows two wheels' worth (each turbo its own wheel), and a compound ×2.3. That is the axis a real
+flows two wheels' worth (each turbo its own wheel); a compound flows its larger low-pressure wheel's, sized to split the boost evenly with the frame's. That is the axis a real
 compressor map is drawn against. Ask an engine to move more air than its turbo is rated for and
 you are off the map: compressor efficiency falls away, the top end chokes off, and — the one that
 really bites — the charge arrives <b>hot</b>. Squeezing air heats it by

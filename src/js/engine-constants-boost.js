@@ -183,13 +183,13 @@ const SPOOL_PR_EXP=1.45;
 // Turbo layouts (build 290): how many turbos, each its own wheel, turbine and shaft, so the pair's choke flow is two
 // wheels' and each turbine takes its share of the exhaust. A sequential pair runs its primary alone until the pair is
 // needed (unitsAt). Twin and sequential carried flow multiples of one wheel (1.85, 1.55) and spool and width multiples
-// for the logistic fallback; retired. A COMPOUND is two stages in series, a large wheel feeding a small one, and is
-// still one frame with 2.30 of its flow (plans/fitted-register.json) until the part designs both stages.
+// for the logistic fallback; retired. A COMPOUND is two stages in series, a large wheel feeding the frame's, each sized
+// and stepped in compoundStage (build 291; it was one frame with 2.30 of its flow).
 const TURBO_CONFIG={
-  single:    {label:'SINGLE',     units:1,flow:1},
-  twin:      {label:'TWIN',       units:2,flow:2},
-  sequential:{label:'SEQUENTIAL', units:2,flow:2},
-  compound:  {label:'COMPOUND',   units:1,flow:2.30}
+  single:    {label:'SINGLE',     units:1},
+  twin:      {label:'TWIN',       units:2},
+  sequential:{label:'SEQUENTIAL', units:2},
+  compound:  {label:'COMPOUND',   units:1}
 };
 // Supercharger types: boost fraction vs rpm = clamp(lo + (hi-lo)*(rpm/redline)^exp). Roots &
 // twin-screw are positive-displacement (near-full boost from low rpm); centrifugal is a
