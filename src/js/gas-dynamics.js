@@ -685,7 +685,7 @@ function turbineTipFor(pr,flowFrac,T01){
   const e=engine;
   if(!(e.compExd>0)||!(pr>1))return 0;
   const eta=compIslandEff(flowFrac,pr), Uc=Math.sqrt(1005*Math.max(200,T01)*(Math.pow(pr,0.286)-1)/(COMP_SLIP*eta));
-  return TURB_WHEEL*Uc;
+  return e.turbK*Uc;
 }
 function pulseShape(mEx,area,T3,mapBar,prMean){
   const e=engine;
@@ -775,11 +775,11 @@ const VANE_Z=12, VANE_T=0.0015;                      // vanes, and their thickne
 const VANE_T_LIMIT=1100;                             // K — where nickel-alloy vanes start to creep
 const VANE_BETA_MIN=21, VANE_BETA_MAX=60;            // degrees from tangential — the vane sweep
 const VANE_R2=1.22, VANE_H=0.07;                     // ring radius over wheel tip radius, nozzle height over wheel diameter
-const vanePitchR=exd=>VANE_R2*(TURB_WHEEL*exd/2);    // the vanes' trailing edges, outboard of the wheel
+const vanePitchR=(exd,k)=>VANE_R2*(k*exd/2);         // the vanes' trailing edges, outboard of the turbine wheel (k of the exducer)
 // The ring's throat at vane angle `beta`, m2: h * (2 pi r2 sin(beta) - Z t).
-function vaneThroatArea(exd,betaDeg){
-  const h=VANE_H*TURB_WHEEL*exd;
-  return h*Math.max(0.05*2*Math.PI*vanePitchR(exd),2*Math.PI*vanePitchR(exd)*Math.sin(betaDeg*Math.PI/180)-VANE_Z*VANE_T);
+function vaneThroatArea(exd,betaDeg,k){
+  const h=VANE_H*k*exd;
+  return h*Math.max(0.05*2*Math.PI*vanePitchR(exd,k),2*Math.PI*vanePitchR(exd,k)*Math.sin(betaDeg*Math.PI/180)-VANE_Z*VANE_T);
 }
 // The vanes ARE the boost control: a VGT diesel has no wastegate, because opening the vanes IS
 // the gate. So the schedule is "the WIDEST throat that still supplies the compressor at TARGET
@@ -885,7 +885,7 @@ function shaftNetPower(shaftRpm,mAir,T3,T01,rpm){
   const prCap=Math.min(pr,tgt+dp);
   const pMan=Math.max(1,prCap-dp);   // the intake manifold, which the exhaust pulses are shaped against
   const mEx=mAir*1.06/units, mA=mAir/units;
-  const Ut=Math.PI*TURB_WHEEL*e.compExd*Math.max(0,shaftRpm)/60;   // turbine tip speed
+  const Ut=Math.PI*e.turbK*e.compExd*Math.max(0,shaftRpm)/60;   // turbine tip speed
   // VGT vanes schedule against the BOOST TARGET, not against what the compressor happens to be
   // drawing at this instant. That is both the real control law and the only one that works here:
   // scheduling to the instantaneous draw would balance the shaft at EVERY speed, net would be zero
@@ -1025,13 +1025,13 @@ function deriveGasDynamics(){
     // turbine can be, so every existing call site reads the open position by default; `vgtShut`
     // is non-zero only on a VGT and is what tells the rest of the model there is anything to
     // schedule at all.
-    e.compExd=tb.exd;
+    e.compExd=tb.exd;e.turbK=tb.turbK;
     setTurbineAR(tb.ars[TURBINE_HOUSING[e.housing]??1]);   // the housing the build chose for this frame
     e.turbUnits=(e.turboConfig==='twin'||e.turboConfig==='sequential')?2:1;
     e.shaftJ=wheelInertia(tb.exd)*(e.turboConfig==='twin'?2:1);   // a sequential secondary is pre-spooled
     e.seqStageRpm=0;                                               // set once the engine is built
     e.shaftMax=maxShaftRpm(tb.exd);
-  }else{e.turbineArea=0;e.vgtShut=0;e.turbUnits=1;e.compExd=0;e.shaftJ=0;e.shaftMax=0;}
+  }else{e.turbineArea=0;e.vgtShut=0;e.turbUnits=1;e.compExd=0;e.turbK=0;e.shaftJ=0;e.shaftMax=0;}
   // Size the system pipe from the engine's own flow at the power peak, not from a fixed number.
   const m3sPeak=(e.dispCyl_L/1000)*(T/320)*e.cylinders*(e.redline*0.9/60*(e.chargesPerRev||0.5));
   // One system per BANK: a V or a boxer has two heads pointing opposite ways and runs two pipes,
