@@ -218,15 +218,6 @@
    "state": "open"
   },
   {
-   "id": "MOTOR.statorShape",
-   "file": "electric.js",
-   "match": "const SPLIT=0.67;",
-   "standsFor": "the stator's outside diameter as the bore over 0.67, the same for every motor. Since build 293 the teeth and yoke are sized from the flux (Pyrhonen Table 6.1) and the slot is what is left between them, so a many-pole or small motor gets deep slots and saturated teeth, or a cramped yoke, where a designer would change the diameter",
-   "retiredBy": "the slot's depth from the copper the current needs (Pyrhonen Table 6.2: linear current density and current density), and the outside diameter from the slot and the yoke",
-   "phase": "C",
-   "state": "open"
-  },
-  {
    "id": "MOTOR.mech",
    "file": "electric.js",
    "match": "0.15*w+5e-8*w*w*w",

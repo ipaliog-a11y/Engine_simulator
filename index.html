@@ -810,7 +810,7 @@ body.guided-open{overflow:hidden}
 </div>
 <div class="container">
 <header>
-<h1>PIXEL ENGINE SIM v0.7 build 313</h1>
+<h1>PIXEL ENGINE SIM v0.7 build 314</h1>
 <div class="subtitle" id="subtitle">ENGINE DESIGNER • BUILD IT, THEN DRIVE IT</div>
 </header>
 <div class="build-strip" id="buildStrip">
@@ -977,6 +977,7 @@ body.guided-open{overflow:hidden}
 <section class="evd-card" id="evdCard-size" data-card="size"><div class="evd-fields">
 <div class="field"><label for="evMotorType">MOTOR TYPE</label><select id="evMotorType"><option value="pm">PERMANENT MAGNET</option><option value="im">INDUCTION (COPPER CAGE)</option></select></div>
 <div class="field"><label for="evRotorD">ROTOR DIAMETER (mm)</label><input type="number" id="evRotorD" min="80" max="260" step="1" value="150"></div>
+<div class="field"><label for="evStatorOD">STATOR DIAMETER (mm)</label><input type="number" id="evStatorOD" min="100" max="400" step="1" value="225"></div>
 <div class="field"><label for="evStack">STACK LENGTH (mm)</label><input type="number" id="evStack" min="40" max="250" step="1" value="134"></div>
 <div class="field"><label for="evPoles">POLES</label><select id="evPoles"><option value="4">4</option><option value="6">6</option><option value="8">8</option><option value="10">10</option><option value="12">12</option></select></div>
 </div></section>
@@ -1005,6 +1006,7 @@ body.guided-open{overflow:hidden}
 <div class="field" data-ev-only><label for="evRearCount">REAR MOTORS</label><select id="evRearCount"><option value="1">1</option><option value="2">2 (ONE PER WHEEL)</option></select></div>
 <div class="field"><label for="evFront">FRONT MOTOR</label><select id="evFront"><option value="none">NONE</option><option value="pm">PERMANENT MAGNET</option><option value="im">INDUCTION (COPPER CAGE)</option></select></div>
 <div class="field"><label for="evFrontD">FRONT ROTOR DIAMETER (mm)</label><input type="number" id="evFrontD" min="80" max="260" step="1" value="130"></div>
+<div class="field"><label for="evFrontOD">FRONT STATOR DIAMETER (mm)</label><input type="number" id="evFrontOD" min="100" max="400" step="1" value="196"></div>
 <div class="field"><label for="evFrontStack">FRONT STACK LENGTH (mm)</label><input type="number" id="evFrontStack" min="40" max="250" step="1" value="110"></div>
 <div class="field"><label for="evFrontPoles">FRONT POLES</label><select id="evFrontPoles"><option value="4">4</option><option value="6">6</option><option value="8">8</option></select></div>
 <div class="field"><label for="evFrontTurns">FRONT TURNS PER PHASE</label><input type="number" id="evFrontTurns" min="4" max="60" step="1" value="12"></div>
@@ -2321,6 +2323,7 @@ Torque grows with the rotor's volume and with the current. Spinning makes the mo
 • <b>PERMANENT MAGNET</b>: the most torque per amp and the best efficiency. Its magnets cost money, lose strength when hot, and drag a little (iron loss) even when it gives no torque.<br>
 • <b>INDUCTION (COPPER CAGE)</b>: no magnets. It buys its field with current, so it makes less torque per amp, and its rotor heats up. With no torque asked it has no field and no drag, which is why Tesla puts one on the front axle of the Model 3 and Model Y.<br>
 <b>ROTOR DIAMETER</b> (80–260 mm). Torque grows with the diameter squared. A bigger rotor is heavier, has more inertia and reaches its surface-speed limit at lower rpm.<br>
+<b>STATOR DIAMETER</b> (100–400 mm, advanced). The teeth and the yoke take what the flux needs; the slots get the rest. A wider stator holds more copper, so less resistance and heat, for more mass. The card shows the copper's current density at full current: liquid cooling holds about 10–30 A/mm² for good.<br>
 <b>STACK LENGTH</b> (40–250 mm). Torque grows in proportion to the length, with no effect on the speed limits.<br>
 <b>POLES</b> (4–12). More poles mean shorter end windings and a thinner, lighter core. They also raise the electrical frequency for a given speed: more iron loss, and a lower top speed from the inverter's frequency limit.<br>
 <b>TURNS PER PHASE</b> (4–120). More turns give more torque per amp but more back-EMF, so the knee comes at lower rpm and there is less power at speed. Fewer turns move the knee up and need more current for the same torque. Match the turns to the battery's voltage.<br>
@@ -7460,7 +7463,7 @@ const I18N={
   "Cells in series set the voltage; cells in parallel share the current.":{el:"Τα στοιχεία σε σειρά ορίζουν την τάση· τα παράλληλα μοιράζονται το ρεύμα."},
   "How the rotor gets its magnetic field.":{el:"Πώς αποκτά ο δρομέας το μαγνητικό του πεδίο."},
   "Magnets give the most torque per amp and the best efficiency, but cost money and weaken when hot. An induction rotor, a copper cage, buys its field with current: less torque per amp and a hotter rotor, but no magnets, and no drag when it gives no torque.":{el:"Οι μαγνήτες δίνουν τη μεγαλύτερη ροπή ανά αμπέρ και την καλύτερη απόδοση, αλλά κοστίζουν και εξασθενούν όταν ζεσταθούν. Ένας δρομέας επαγωγής, ένα χάλκινο κλουβί, πληρώνει το πεδίο του με ρεύμα: λιγότερη ροπή ανά αμπέρ και θερμότερος δρομέας, αλλά χωρίς μαγνήτες και χωρίς αντίσταση όταν δεν δίνει ροπή."},
-  "The diameter of the rotor. The stator around it is about 1.5 times as wide.":{el:"Η διάμετρος του δρομέα. Ο στάτης γύρω του είναι περίπου 1,5 φορές πλατύτερος."},
+  "The diameter of the rotor, inside the stator.":{el:"Η διάμετρος του δρομέα, μέσα στον στάτη."},
   "Torque grows with the diameter squared. A wider rotor is heavier, has more inertia, and its rim reaches the speed its magnets can stand at a lower rpm.":{el:"Η ροπή αυξάνεται με το τετράγωνο της διαμέτρου. Ένας φαρδύτερος δρομέας είναι βαρύτερος, έχει μεγαλύτερη αδράνεια, και η περιφέρειά του φτάνει την ταχύτητα που αντέχουν οι μαγνήτες σε χαμηλότερες στροφές."},
   "How long the rotor and the stator are, along the shaft.":{el:"Πόσο μακριοί είναι ο δρομέας και ο στάτης, κατά μήκος του άξονα."},
   "Torque grows in proportion to the length, with no effect on the speed limits. It adds mass, and the back-EMF grows with it, so the knee comes at a lower rpm.":{el:"Η ροπή αυξάνεται αναλογικά με το μήκος, χωρίς επίδραση στα όρια στροφών. Προσθέτει μάζα, και η αντιηλεκτρεγερτική δύναμη μεγαλώνει μαζί του, οπότε το γόνατο έρχεται σε χαμηλότερες στροφές."},
@@ -11668,7 +11671,11 @@ function renderObd(){
 // 2013): 80 kW held at 7000 rpm with the stator settling near 135 C, peak motor efficiency above 97%.
 const RHO_CU=1.72e-8, ALPHA_CU=0.00393, RHO_FE=7650, RHO_CU_M=8960;
 const KW_WIND=0.93;        // winding factor: distributed, q = 2-3 slots per pole per phase, short-pitched
-const SPLIT=0.67;          // bore over stator outside diameter (Model 3 0.672, Leaf 0.66; 0.6-0.7 for traction motors)
+// The stator's outside diameter is a part (build 314, s.statorOD in mm): a maker's or a teardown's figure, as the rotor's
+// is. The teeth and yoke are sized from the flux (below) and the slot is what is left between them, so a small OD gives
+// a shallow slot and more resistance. Only a design that names none (saved before build 314) is filled as the bore over
+// 0.67, the rule every motor used until then (Model 3 0.672, Leaf 0.66).
+const OD_FILL=0.67;
 const GAP=0.0007;          // air gap (m): 0.7 mm, the Model 3's
 const FILL=0.40;           // copper fills 40% of a slot (stranded)
 // The teeth and the yoke are sized from the flux they carry (build 293): a tooth as wide as puts the air gap's peak field
@@ -12018,7 +12025,7 @@ function motorBuild(s){
   const lam=laminationOf(s.lamination);
   const wire=WIRE[s.wire]||WIRE.round, cond=CONDUCTOR[s.conductor]||CONDUCTOR.copper;
   const D=s.rotorD/1000, L=s.stackL/1000, poles=s.poles, p=poles/2, N=s.turns, Lfe=0.95*L;
-  const Ds=D+2*(im?IM_GAP:GAP), OD=Ds/SPLIT, h=(OD-Ds)/2;
+  const Ds=D+2*(im?IM_GAP:GAP), OD=Math.max(s.statorOD>0?s.statorOD/1000:Ds/OD_FILL,Ds+0.01), h=(OD-Ds)/2;   // 5 mm a side at least
   const slots=3*poles*(poles<=6?3:2)*(im&&poles===4?5/3:1);       // q = 3 slots per pole per phase up to 6 poles, then 2;
                                                                     // a 4-pole induction motor runs q = 5 (the Model S's 60)
   // flux: the air gap's fundamental from the magnets' circuit (an induction motor: its design flux density), per pole,
@@ -12068,7 +12075,7 @@ function motorBuild(s){
   const Imax=s.invAmps;
   const cost=Math.round(mCu*cond.cost+(mFeS+mFeR)*(3+lam.premium)+mMag*mag.cost+ret.cost+cool.cost+Imax*inv.costA+400+(im?mCage*11+150:0));
   const m={s,im,mag,ret,cool,inv,lam,wire,cond,barH,barEta,D,L,Lfe,Ds,OD,poles,p,N,slots,Bg,circ,magT,magW,wt,hSlot,hy,psi20,R20,mlt,Acu,mCu,mFeS,mFeR,mMag,mRotor,J,mass,
-          strand:dStrand,cuLayers,
+          strand:dStrand,cuLayers,Jpk:6*N*s.invAmps/Acu,   // the slot copper's current density at full current (A/m²)
           nTip,nFreq,nMax,Imax,cost,Qr,Rr20,mCage,ImR,vDrop,
           // thermal network (W/K, J/K): winding -> core through the slot liner (0.2 W/mK, 0.4 mm over the slot walls),
           // core -> coolant through the housing, rotor -> core across the gap (h ~ 100), and the direct paths
@@ -25930,8 +25937,8 @@ function initGuide(){
 // The car does not drive on it yet. A single-speed reduction, regenerative braking and the motor's heat over a lap
 // are step 2.3; until then the VEHICLE, TRACK and RACE tabs say so instead of running an electric car through a
 // combustion gearbox. New words are English for now (decision 11): tr() shows the English where Greek is missing.
-const EV_DEFAULT={evMotorType:'pm',evRotorD:150,evStack:134,evPoles:6,evTurns:12,evMagnet:'ndfeb',evMagT:6.5,evMagW:84,evRetention:'bridges',evCooling:'jacket',evLamination:0.35,evWire:'round',evConductor:'copper',evRegen:'high',
-  evMaxRpm:18000,evInverter:'igbt',evAmps:950,evRearCount:1,evFront:'none',evFrontD:130,evFrontStack:110,evFrontPoles:4,evFrontTurns:12,evFrontAmps:700,evFrontFd:0,evChem:'nca',evSeries:96,evKWh:75,evYear:2020};
+const EV_DEFAULT={evMotorType:'pm',evRotorD:150,evStatorOD:225,evStack:134,evPoles:6,evTurns:12,evMagnet:'ndfeb',evMagT:6.5,evMagW:84,evRetention:'bridges',evCooling:'jacket',evLamination:0.35,evWire:'round',evConductor:'copper',evRegen:'high',
+  evMaxRpm:18000,evInverter:'igbt',evAmps:950,evRearCount:1,evFront:'none',evFrontD:130,evFrontOD:196,evFrontStack:110,evFrontPoles:4,evFrontTurns:12,evFrontAmps:700,evFrontFd:0,evChem:'nca',evSeries:96,evKWh:75,evYear:2020};
 // The race spends energy, not fuel (step 2.4): until then an electric car drives the 0-100 and the lap but does not race.
 // One reduction is all an electric car has: GEARING on the VEHICLE tab sets it (build 180).
 const EV_GEAR_NOTE='An electric car has one fixed reduction: set it with GEARING on the VEHICLE tab.';
@@ -25951,17 +25958,19 @@ const rotorWord=m=>m.im?'ROTOR':'MAGNETS';
 // ---- the design form ----
 function readElectricFromForm(){
   const g=id=>document.getElementById(id),num=(id,lo,hi)=>clamp(+g(id).value||EV_DEFAULT[id],lo,hi);
-  return {evMotorType:g('evMotorType').value==='im'?'im':'pm',evRotorD:num('evRotorD',80,260),evStack:num('evStack',40,250),evPoles:+g('evPoles').value||6,
+  return {evMotorType:g('evMotorType').value==='im'?'im':'pm',evRotorD:num('evRotorD',80,260),evStatorOD:num('evStatorOD',100,400),evStack:num('evStack',40,250),evPoles:+g('evPoles').value||6,
     evTurns:Math.round(num('evTurns',4,120)),evMagnet:g('evMagnet').value,evMagT:num('evMagT',2,15),evMagW:Math.round(num('evMagW',40,100)),evRetention:g('evRetention').value,
     evCooling:g('evCooling').value,evLamination:+g('evLamination').value===0.2?0.2:0.35,evWire:g('evWire').value==='hairpin'?'hairpin':'round',evConductor:g('evConductor').value==='aluminium'?'aluminium':'copper',
     evRegen:EV_REGEN[g('evRegen').value]?g('evRegen').value:'high',evMaxRpm:Math.round(num('evMaxRpm',4000,25000)),evInverter:g('evInverter').value,
     evAmps:Math.round(num('evAmps',100,1600)),evRearCount:g('evRearCount').value==='2'?2:1,
-    evFront:['pm','im'].includes(g('evFront').value)?g('evFront').value:'none',evFrontFd:Math.max(0,+g('evFrontFd').value||0),evFrontD:num('evFrontD',80,260),evFrontStack:num('evFrontStack',40,250),
+    evFront:['pm','im'].includes(g('evFront').value)?g('evFront').value:'none',evFrontFd:Math.max(0,+g('evFrontFd').value||0),evFrontD:num('evFrontD',80,260),evFrontOD:num('evFrontOD',100,400),evFrontStack:num('evFrontStack',40,250),
     evFrontPoles:+g('evFrontPoles').value||4,evFrontTurns:Math.round(num('evFrontTurns',4,60)),evFrontAmps:Math.round(num('evFrontAmps',100,1600)),evChem:g('evChem').value,evSeries:Math.round(num('evSeries',20,400)),
     evKWh:num('evKWh',0.5,200),evYear:Math.round(num('evYear',1990,2026))};
 }
 function applyElectricToForm(e){
-  for(const k in EV_DEFAULT){const el=document.getElementById(k);if(el)el.value=String(e&&e[k]!=null?e[k]:EV_DEFAULT[k]);}
+  // a design saved before build 314 names no stator: fill it as motorBuild does, from its own rotor
+  const fill={evStatorOD:e&&e.evRotorD?Math.round((e.evRotorD+1.4)/OD_FILL):null,evFrontOD:e&&e.evFrontD?Math.round((e.evFrontD+1.4)/OD_FILL):null};
+  for(const k in EV_DEFAULT){const el=document.getElementById(k);if(el)el.value=String(e&&e[k]!=null?e[k]:fill[k]||EV_DEFAULT[k]);}
 }
 // Combustion sections are everything from the Bottom End grid down to the summary that is not marked data-ev; they are
 // tagged once, then the panel's .ev class shows one set or the other (styles in app.css). Called from syncDesignEnable.
@@ -25994,7 +26003,7 @@ function syncElectricSections(){
   if(ev||hy){
     // a front motor (build 183; a hybrid's front axle motor, build 195): its fields, and the car is all-wheel drive
     const front=document.getElementById('evFront').value!=='none';
-    ['evFrontD','evFrontStack','evFrontPoles','evFrontTurns','evFrontAmps','evFrontFd'].forEach(id=>{const el=document.getElementById(id);if(el)el.disabled=!front;});
+    ['evFrontD','evFrontOD','evFrontStack','evFrontPoles','evFrontTurns','evFrontAmps','evFrontFd'].forEach(id=>{const el=document.getElementById(id);if(el)el.disabled=!front;});
     evDriveLock(front);
   }else evDriveLock(false);
   if(typeof evdSync==='function')evdSync(ev,hy);   // the drive's cards follow the form (build 238)
@@ -26013,11 +26022,11 @@ function evDriveLock(on){
 // The motor, or the set of motors, an electric build's fields describe (build 179; more than one motor, build 183). Its own
 // function since build 238, so the ENGINE tab's cards preview exactly the drive BUILD makes.
 function evMotorOf(e){
-  const rear=motorBuild({type:e.evMotorType,rotorD:e.evRotorD,stackL:e.evStack,poles:e.evPoles,turns:e.evTurns,magnet:e.evMagnet,magT:e.evMagT,magW:e.evMagW/100,
+  const rear=motorBuild({type:e.evMotorType,rotorD:e.evRotorD,statorOD:e.evStatorOD,stackL:e.evStack,poles:e.evPoles,turns:e.evTurns,magnet:e.evMagnet,magT:e.evMagT,magW:e.evMagW/100,
     retention:e.evRetention,cooling:e.evCooling,lamination:e.evLamination,wire:e.evWire,conductor:e.evConductor,inverter:e.evInverter,invAmps:e.evAmps,maxRpm:e.evMaxRpm});
   // more than one motor (build 183): the rear group, and a front motor sharing the magnet grade, cooling and inverter
   const parts=[{m:rear,n:e.evRearCount===2?2:1}];
-  if(e.evFront==='pm'||e.evFront==='im')parts.push({m:motorBuild({type:e.evFront,rotorD:e.evFrontD,stackL:e.evFrontStack,poles:e.evFrontPoles,
+  if(e.evFront==='pm'||e.evFront==='im')parts.push({m:motorBuild({type:e.evFront,rotorD:e.evFrontD,statorOD:e.evFrontOD,stackL:e.evFrontStack,poles:e.evFrontPoles,
     turns:e.evFrontTurns,magnet:e.evMagnet,magT:e.evMagT,magW:e.evMagW/100,retention:e.evRetention,cooling:e.evCooling,lamination:e.evLamination,wire:e.evWire,conductor:e.evConductor,inverter:e.evInverter,invAmps:e.evFrontAmps,maxRpm:e.evMaxRpm}),n:1});
   return parts.length===1&&parts[0].n===1?rear:motorSet(parts);
 }
@@ -26958,22 +26967,22 @@ function hybAssistShare(nf,pedal,t){
 const hybAssistWindow=(e,rpm)=>{const t=hybTune(e);return e.hyDeploy==='above'?(rpm>=t.rpm?1:0):e.hyDeploy==='below'?(rpm<=t.rpm?1:0):1;};
 // A hybrid's motor and pack when HYBRID is first chosen: a pancake motor in the bellhousing (200 mm across, 40 mm long,
 // 12 poles) and a 1.56 kWh pack of hybrid cells, the size of the Ioniq Hybrid's 32 kW / 170 Nm system.
-const HYB_DEFAULT={evMotorType:'pm',evRotorD:200,evStack:40,evPoles:12,evTurns:30,evMagnet:'ndfeb',evRetention:'bridges',evCooling:'jacket',
+const HYB_DEFAULT={evMotorType:'pm',evRotorD:200,evStatorOD:301,evStack:40,evPoles:12,evTurns:30,evMagnet:'ndfeb',evRetention:'bridges',evCooling:'jacket',
   evMaxRpm:8000,evInverter:'igbt',evAmps:400,evRearCount:1,evFront:'none',evChem:'liHEV',evSeries:64,evKWh:1.56,evYear:2016};
 // A power-split's when it is first chosen (build 189): the 4th-generation Prius's MG2 (53 kW and 163 Nm on the 600 V bus,
 // 17,000 rpm) and its 1.31 kWh nickel-metal hydride pack of 168 cells (201.6 V).
-const HYB_DEFAULT_PS={evMotorType:'pm',evRotorD:150,evStack:60,evPoles:8,evTurns:92,evMagnet:'ndfeb',evRetention:'bridges',evCooling:'jacket',
+const HYB_DEFAULT_PS={evMotorType:'pm',evRotorD:150,evStatorOD:226,evStack:60,evPoles:8,evTurns:92,evMagnet:'ndfeb',evRetention:'bridges',evCooling:'jacket',
   evMaxRpm:17000,evInverter:'igbt',evAmps:100,evRearCount:1,evFront:'none',evChem:'nimhHEV',evSeries:168,evKWh:1.31,evYear:2016};
 // A series hybrid's when it is first chosen (build 193): the Nissan Qashqai e-POWER's traction motor (140 kW, 330 Nm) and
 // its 2.1 kWh pack of hybrid cells.
-const HYB_DEFAULT_SERIES={evMotorType:'pm',evRotorD:160,evStack:100,evPoles:8,evTurns:23,evMagnet:'ndfeb',evRetention:'bridges',evCooling:'jacket',
+const HYB_DEFAULT_SERIES={evMotorType:'pm',evRotorD:160,evStatorOD:241,evStack:100,evPoles:8,evTurns:23,evMagnet:'ndfeb',evRetention:'bridges',evCooling:'jacket',
   evMaxRpm:14000,evInverter:'igbt',evAmps:450,evRearCount:1,evFront:'none',evChem:'liHEV',evSeries:96,evKWh:2.1,evYear:2021};
 const HYB_SOC=0.6;   // a charge-sustaining hybrid holds its pack about here, with room above it to take back braking
 const isHybrid=()=>!!engine&&engine.type!=='electric'&&!!engine.hy;
 // Build the hybrid system of a combustion engine from its form fields (the electric drive's), or none.
 function buildHybrid(e){
   if(!e.hyMode||e.hyMode==='none'){delete e.hy;return null;}
-  const motor=motorBuild({type:e.evMotorType,rotorD:e.evRotorD,stackL:e.evStack,poles:e.evPoles,turns:e.evTurns,magnet:e.evMagnet,magT:e.evMagT,magW:e.evMagW/100,
+  const motor=motorBuild({type:e.evMotorType,rotorD:e.evRotorD,statorOD:e.evStatorOD,stackL:e.evStack,poles:e.evPoles,turns:e.evTurns,magnet:e.evMagnet,magT:e.evMagT,magW:e.evMagW/100,
     retention:e.evRetention,cooling:e.evCooling,lamination:e.evLamination,wire:e.evWire,conductor:e.evConductor,inverter:e.evInverter,invAmps:e.evAmps,maxRpm:e.evMaxRpm});
   const pack=packBuild({chem:e.evChem,series:e.evSeries,kWh:e.evKWh,year:e.evYear});
   e.hy={mode:e.hyMode,motor,pack,mass:Math.round(motor.mass+pack.mass),cost:motor.cost+pack.cost};
@@ -26986,7 +26995,7 @@ function buildHybrid(e){
   // a front axle motor (build 195): the electric car's FRONT MOTOR fields, on its own fixed reduction to the front wheels,
   // the car all-wheel drive; it shares the pack with the main motor in proportion to their peak powers
   if(e.evFront==='pm'||e.evFront==='im'){
-    const fm=motorBuild({type:e.evFront,rotorD:e.evFrontD,stackL:e.evFrontStack,poles:e.evFrontPoles,turns:e.evFrontTurns,magnet:e.evMagnet,magT:e.evMagT,magW:e.evMagW/100,
+    const fm=motorBuild({type:e.evFront,rotorD:e.evFrontD,statorOD:e.evFrontOD,stackL:e.evFrontStack,poles:e.evFrontPoles,turns:e.evFrontTurns,magnet:e.evMagnet,magT:e.evMagT,magW:e.evMagW/100,
       retention:e.evRetention,cooling:e.evCooling,lamination:e.evLamination,wire:e.evWire,conductor:e.evConductor,inverter:e.evInverter,invAmps:e.evFrontAmps,maxRpm:e.evMaxRpm});
     const V=hybBusV(e.hy),pk=m=>{let P=0;for(let r=200;r<=m.nMax;r+=200)P=Math.max(P,motorMaxTorque(m,r,V,60)*r*Math.PI/30);return P;};
     const Pr=pk(motor),Pf=pk(fm);
@@ -28147,17 +28156,20 @@ function hybridCycleLine(v){
 // size reach 20,000 rpm), each sized to its rated 295 kW with the turns for the ~1,420 Nm the three are credited with
 // together. The Plaid's rear has no differential: a motor per wheel gives each its own torque, which the model's
 // nearest diff is the clutch-plate LSD (full traction off the line).
+// The stator's outside diameter (build 314): the Model 3's 225 mm is MotorXP's teardown, and the Model Y and the Plaid's
+// magnet motors are taken to share its lamination (PROBABLE). The others are unpublished and carry the bore over 0.67 they
+// had until then (PROBABLE): the Model Y's front induction motor 210, and the hybrids' motors 226-301 (HYB_ENGINE_PRESETS).
 const EV_ENGINE_PRESETS=[
-  {cat:'Electric',name:'Tesla Model 3 RWD drive (2021, LFP)',engine:{type:'electric',evMotorType:'pm',evRotorD:150,evStack:134,evPoles:6,evTurns:12,
+  {cat:'Electric',name:'Tesla Model 3 RWD drive (2021, LFP)',engine:{type:'electric',evMotorType:'pm',evRotorD:150,evStatorOD:225,evStack:134,evPoles:6,evTurns:12,
     evMagnet:'ndfeb',evRetention:'bridges',evCooling:'spray',evMaxRpm:18000,evInverter:'sic',evAmps:850,evRearCount:1,evFront:'none',
     evChem:'lfp',evSeries:106,evKWh:60,evYear:2021}},
-  {cat:'Electric',name:'Tesla Model Y Long Range drive (2022, dual motor)',engine:{type:'electric',evMotorType:'pm',evRotorD:150,evStack:134,evPoles:6,evTurns:12,
+  {cat:'Electric',name:'Tesla Model Y Long Range drive (2022, dual motor)',engine:{type:'electric',evMotorType:'pm',evRotorD:150,evStatorOD:225,evStack:134,evPoles:6,evTurns:12,
     evMagnet:'ndfeb',evRetention:'bridges',evCooling:'spray',evMaxRpm:18000,evInverter:'sic',evAmps:640,evRearCount:1,
-    evFront:'im',evFrontD:140,evFrontStack:110,evFrontPoles:4,evFrontTurns:20,evFrontAmps:520,
+    evFront:'im',evFrontD:140,evFrontOD:210,evFrontStack:110,evFrontPoles:4,evFrontTurns:20,evFrontAmps:520,
     evChem:'nca',evSeries:96,evKWh:78,evYear:2022}},
-  {cat:'Electric',name:'Tesla Model S Plaid drive (2021, three motors)',engine:{type:'electric',evMotorType:'pm',evRotorD:150,evStack:134,evPoles:6,evTurns:16,
+  {cat:'Electric',name:'Tesla Model S Plaid drive (2021, three motors)',engine:{type:'electric',evMotorType:'pm',evRotorD:150,evStatorOD:225,evStack:134,evPoles:6,evTurns:16,
     evMagnet:'ndfebDy',evRetention:'sleeve',evCooling:'spray',evMaxRpm:20000,evInverter:'sic',evAmps:900,evRearCount:2,
-    evFront:'pm',evFrontD:150,evFrontStack:134,evFrontPoles:6,evFrontTurns:16,evFrontAmps:900,
+    evFront:'pm',evFrontD:150,evFrontOD:225,evFrontStack:134,evFrontPoles:6,evFrontTurns:16,evFrontAmps:900,
     evChem:'ncaP',evSeries:110,evKWh:100,evYear:2021}}
 ];
 // real: the maker's 0-100 (s) and top speed (km/h, governed on all three). fit.fd is the published reduction (the owner's
@@ -28184,36 +28196,36 @@ const EV_VEHICLE_PRESETS=[
 // cam yet) makes ~116 hp, not 104 (tests/test103.mjs checks the car both as built and matched to the published power).
 const HYB_ENGINE_PRESETS=[
   {cat:'Hybrid',name:'Hyundai Kappa 1.6 GDi + P2 (Ioniq Hybrid)',real:{hp:103.6,hpRpm:5700,tq:147,tqRpm:4000,motorKW:32,motorNm:170,sysKW:104,sysNm:265},
-   unsure:['redline','cam'],engine:{type:'petrol4',radiator:'large',oilCooler:true,cylinders:4,bore_mm:72,stroke_mm:97,compression:13,redline:6250,intake:'na',injector:'direct',vvt:true,
+   unsure:['stator','redline','cam'],engine:{type:'petrol4',radiator:'large',oilCooler:true,cylinders:4,bore_mm:72,stroke_mm:97,compression:13,redline:6250,intake:'na',injector:'direct',vvt:true,
     egr:'cooled',cam:'stock',valves:4,octane:95,airFilter:'stock',exhaust:'stock',cat:'stock',intakeSys:'efi',hyMode:'p2',hyDeploy:'eco',
-    evMotorType:'pm',evRotorD:200,evStack:40,evPoles:12,evTurns:30,evMagnet:'ndfeb',evRetention:'bridges',evCooling:'jacket',evMaxRpm:8000,
+    evMotorType:'pm',evRotorD:200,evStatorOD:301,evStack:40,evPoles:12,evTurns:30,evMagnet:'ndfeb',evRetention:'bridges',evCooling:'jacket',evMaxRpm:8000,
     evInverter:'igbt',evAmps:400,evRearCount:1,evFront:'none',evChem:'liHEV',evSeries:64,evKWh:1.56,evYear:2016}},
   // The Toyota Prius, 4th generation (2016; build 189, step 3.3): the 2ZR-FXE, a 1.8 port-injected Atkinson-cycle four
   // (80.5 x 88.3 mm, 13.0:1, 72 kW at 5200 rpm, 142 Nm at 3600), in the P610 power-split transaxle (src/js/power-split.js)
   // with a 53 kW / 163 Nm MG2 and a 1.31 kWh NiMH pack of 28 modules (201.6 V): 90 kW together (Toyota GB's
   // technical specification).
   {cat:'Hybrid',name:'Toyota 2ZR-FXE 1.8 + power-split (Prius)',real:{hp:96.6,hpRpm:5200,tq:142,tqRpm:3600,motorKW:53,motorNm:163,sysKW:90},
-   unsure:['valvetrain','redline'],engine:{valvetrain:'dohc-roller',type:'petrol4',radiator:'large',oilCooler:true,cylinders:4,bore_mm:80.5,stroke_mm:88.3,compression:13,redline:5500,intake:'na',injector:'port',vvt:true,
+   unsure:['stator','valvetrain','redline'],engine:{valvetrain:'dohc-roller',type:'petrol4',radiator:'large',oilCooler:true,cylinders:4,bore_mm:80.5,stroke_mm:88.3,compression:13,redline:5500,intake:'na',injector:'port',vvt:true,
     egr:'cooled-full',cam:'atkinson',valves:4,octane:95,airFilter:'stock',exhaust:'stock',cat:'stock',intakeSys:'efi',hyMode:'ps',hyDeploy:'full',
-    evMotorType:'pm',evRotorD:150,evStack:60,evPoles:8,evTurns:92,evMagnet:'ndfeb',evRetention:'bridges',evCooling:'jacket',evMaxRpm:17000,
+    evMotorType:'pm',evRotorD:150,evStatorOD:226,evStack:60,evPoles:8,evTurns:92,evMagnet:'ndfeb',evRetention:'bridges',evCooling:'jacket',evMaxRpm:17000,
     evInverter:'igbt',evAmps:100,evRearCount:1,evFront:'none',evChem:'nimhHEV',evSeries:168,evKWh:1.31,evYear:2016}},
   // The Nissan Qashqai e-POWER (2022; build 193, step 3.4): a series hybrid. The KR15DDT, a 1.5 turbo three (84 x 90.1 mm,
   // variable compression 8-14:1, the model's fixed 12:1 between them), 116 kW (158 PS), drives a generator only; a 140 kW /
   // 330 Nm motor drives the front wheels through one reduction, with a 2.1 kWh pack (Nissan; UK press release).
   {cat:'Hybrid',name:'Nissan KR15DDT 1.5 VC-T + series (Qashqai e-POWER)',real:{hp:155.6,hpRpm:5000,tq:250,tqRpm:2400,motorKW:140,motorNm:330},
-   unsure:['redline','compression','boost'],engine:{type:'petrol4',radiator:'large',oilCooler:true,cylinders:3,bore_mm:84,stroke_mm:90.1,compression:12,redline:5600,intake:'turbo',boost_bar:0.4,turboSize:'small',
+   unsure:['stator','redline','compression','boost'],engine:{type:'petrol4',radiator:'large',oilCooler:true,cylinders:3,bore_mm:84,stroke_mm:90.1,compression:12,redline:5600,intake:'turbo',boost_bar:0.4,turboSize:'small',
     injector:'direct',vvt:true,cam:'stock',valves:4,octane:95,airFilter:'stock',exhaust:'stock',cat:'stock',intakeSys:'efi',hyMode:'series',hyDeploy:'full',
-    evMotorType:'pm',evRotorD:160,evStack:100,evPoles:8,evTurns:23,evMagnet:'ndfeb',evRetention:'bridges',evCooling:'jacket',evMaxRpm:14000,
+    evMotorType:'pm',evRotorD:160,evStatorOD:241,evStack:100,evPoles:8,evTurns:23,evMagnet:'ndfeb',evRetention:'bridges',evCooling:'jacket',evMaxRpm:14000,
     evInverter:'igbt',evAmps:450,evRearCount:1,evFront:'none',evChem:'liHEV',evSeries:96,evKWh:2.1,evYear:2021}},
   // The BMW 330e (G20, 2020; build 194, step 3.5a): a plug-in P2. The B48, a 2.0 turbo four (82 x 94.6 mm, 10.2:1, 135 kW,
   // 300 Nm), with an 80 kW / 265 Nm motor in its eight-speed automatic's bellhousing (XtraBoost: the motor's full 80 kW,
   // 215 kW together), and a 12 kWh pack under the rear seat. The tune holds the charge between 12% and 95% (~10 kWh
   // usable, BMW's net figure ~10.4) and sustains it at 15%.
   {cat:'Hybrid',name:'BMW B48 2.0 turbo + P2 plug-in (330e)',real:{hp:181.5,hpRpm:5000,tq:300,tqRpm:1350,motorKW:80,motorNm:265,sysKW:215},
-   unsure:['redline','boost','pack'],engine:{valvetrain:'dohc-roller',type:'petrol4',radiator:'large',oilCooler:true,cylinders:4,bore_mm:82,stroke_mm:94.6,compression:10.2,redline:6500,intake:'turbo',boost_bar:0.4,turboSize:'small',
+   unsure:['stator','redline','boost','pack'],engine:{valvetrain:'dohc-roller',type:'petrol4',radiator:'large',oilCooler:true,cylinders:4,bore_mm:82,stroke_mm:94.6,compression:10.2,redline:6500,intake:'turbo',boost_bar:0.4,turboSize:'small',
     injector:'direct',vvt:true,cam:'stock',valves:4,octane:95,airFilter:'stock',exhaust:'stock',cat:'stock',intakeSys:'efi',hyMode:'p2',hyDeploy:'full',hyPlug:true,
     hyTune:{rpm:4000,map:Array(20).fill(100),regen:'high',lps:true,evKmh:0,evKw:0,socLo:12,socT:15,socHi:95},
-    evMotorType:'pm',evRotorD:200,evStack:60,evPoles:12,evTurns:50,evMagnet:'ndfeb',evRetention:'bridges',evCooling:'jacket',evMaxRpm:7500,
+    evMotorType:'pm',evRotorD:200,evStatorOD:301,evStack:60,evPoles:12,evTurns:50,evMagnet:'ndfeb',evRetention:'bridges',evCooling:'jacket',evMaxRpm:7500,
     evInverter:'igbt',evAmps:250,evRearCount:1,evFront:'none',evChem:'ncaP',evSeries:96,evKWh:12,evYear:2020}},
   // The Porsche 918 Spyder (2013; build 195, step 3.5b): a plug-in with a motor at each end. The 4.6 V8 (95 x 81 mm, 447 kW
   // at 8700 rpm, 540 Nm at 6700, to 9150), a 115 kW motor between it and the seven-speed PDK, a 95 kW motor driving the
@@ -28221,11 +28233,11 @@ const HYB_ENGINE_PRESETS=[
   // Nm together (Porsche). Neither motor's torque, nor the front's reduction, is published. Its fit's drive is the
   // axle the PDK turns, the rear (build 279); the front motor makes the car all-wheel drive.
   {cat:'Hybrid',name:'Porsche 4.6 V8 + P2 + front motor (918 Spyder)',real:{hp:599.4,hpRpm:8700,tq:540,tqRpm:6700,motorKW:115,frontKW:95,sysKW:652,sysNm:1280},
-   unsure:['compression','cam','motor torques','front reduction'],engine:{type:'petrol4',radiator:'large',oilCooler:true,cylinders:8,layout:'v',bore_mm:95,stroke_mm:81,compression:13.0,redline:9150,intake:'na',
+   unsure:['stator','compression','cam','motor torques','front reduction'],engine:{type:'petrol4',radiator:'large',oilCooler:true,cylinders:8,layout:'v',bore_mm:95,stroke_mm:81,compression:13.0,redline:9150,intake:'na',
     injector:'direct',vvt:true,cam:'race',valves:4,valveMat:'titanium',valveSpring:'race',octane:98,airFilter:'perf',exhaust:'race',cat:'stock',intakeSys:'efi',runner:'variable',
     hyMode:'p2',hyDeploy:'full',hyPlug:true,hyTune:{rpm:4000,map:Array(20).fill(100),regen:'high',lps:true,evKmh:0,evKw:0,socLo:15,socT:20,socHi:95},
-    evMotorType:'pm',evRotorD:150,evStack:80,evPoles:8,evTurns:30,evMagnet:'ndfeb',evRetention:'bridges',evCooling:'jacket',evMaxRpm:16000,
-    evInverter:'igbt',evAmps:350,evRearCount:1,evFront:'pm',evFrontD:150,evFrontStack:100,evFrontPoles:8,evFrontTurns:30,evFrontAmps:250,evFrontFd:0,
+    evMotorType:'pm',evRotorD:150,evStatorOD:226,evStack:80,evPoles:8,evTurns:30,evMagnet:'ndfeb',evRetention:'bridges',evCooling:'jacket',evMaxRpm:16000,
+    evInverter:'igbt',evAmps:350,evRearCount:1,evFront:'pm',evFrontD:150,evFrontOD:226,evFrontStack:100,evFrontPoles:8,evFrontTurns:30,evFrontAmps:250,evFrontFd:0,
     evChem:'liHEV',evSeries:104,evKWh:6.8,evYear:2013}}
 ];
 const HYB_VEHICLE_PRESETS=[
@@ -28680,8 +28692,10 @@ const EVD_FRONT_HELP={what:"The front motor's own size, winding and current, as 
 const EVD_FIELDS={
   evMotorType:{what:'How the rotor gets its magnetic field.',
     trade:'Magnets give the most torque per amp and the best efficiency, but cost money and weaken when hot. An induction rotor, a copper cage, buys its field with current: less torque per amp and a hotter rotor, but no magnets, and no drag when it gives no torque.'},
-  evRotorD:{what:'The diameter of the rotor. The stator around it is about 1.5 times as wide.',
+  evRotorD:{what:'The diameter of the rotor, inside the stator.',
     trade:"Torque grows with the diameter squared. A wider rotor is heavier, has more inertia, and its rim reaches the speed its magnets can stand at a lower rpm."},
+  evStatorOD:{adv:true,what:"The stator's outside diameter: the teeth, the slots and the yoke behind them.",
+    trade:"The teeth and yoke take what the flux needs; the slots get the rest. A wider stator holds more copper: less resistance and heat, but more mass and cost. A cramped one runs its copper at a high current density (shown on the card); liquid cooling holds about 10-30 A/mm² for good (Hendershot & Miller)."},
   evStack:{what:'How long the rotor and the stator are, along the shaft.',
     trade:'Torque grows in proportion to the length, with no effect on the speed limits. It adds mass, and the back-EMF grows with it, so the knee comes at a lower rpm.'},
   evPoles:{what:'How many magnetic poles go round the rotor.',
@@ -28715,7 +28729,7 @@ const EVD_FIELDS={
   evRearCount:{what:'One rear motor, or one for each rear wheel.',trade:'Two motors give twice the torque, and add their mass and cost. They share the battery.'},
   evFront:{what:'A motor on the front axle, which makes the car all-wheel drive.',
     trade:'A magnet motor adds the most. An induction motor has no drag when it gives no torque, so at a cruise the controller lets it idle, as Tesla does.'},
-  evFrontD:EVD_FRONT_HELP,evFrontStack:EVD_FRONT_HELP,evFrontPoles:EVD_FRONT_HELP,evFrontTurns:EVD_FRONT_HELP,evFrontAmps:EVD_FRONT_HELP,
+  evFrontD:EVD_FRONT_HELP,evFrontOD:EVD_FRONT_HELP,evFrontStack:EVD_FRONT_HELP,evFrontPoles:EVD_FRONT_HELP,evFrontTurns:EVD_FRONT_HELP,evFrontAmps:EVD_FRONT_HELP,
   evFrontFd:{what:"The front motor's own reduction gear. 0 lets the game match it to the main motor.",
     trade:'A higher ratio multiplies the front torque at the wheels, and the front motor reaches its top speed at a lower road speed.'},
   evChem:{what:'What the cells are made of.',
@@ -28759,7 +28773,7 @@ function evdCompute(){
       const T=hybMotorTq(hy,r),Tm=motorMaxTorque(m,r,V,60),w=r*Math.PI/30;
       pts.push({r,T,Tm});pk=Math.max(pk,T*w/1000);tq=Math.max(tq,T);pkM=Math.max(pkM,Tm*w/1000);
     }
-    return {hybrid,m,pack:hy.pack,V,pb,pts,pk,tq,pkM,top:m.nMax,mass:m.mass,packMass:hy.pack.mass,cost:m.cost+hy.pack.cost,
+    return {hybrid,m,J:m.Jpk/1e6,pack:hy.pack,V,pb,pts,pk,tq,pkM,top:m.nMax,mass:m.mass,packMass:hy.pack.mass,cost:m.cost+hy.pack.cost,
       knee:motorBaseW(m,V,motorPsi(m,60))*30/Math.PI,nTip:m.nTip,nFreq:m.nFreq,poles:m.poles,vTip:m.ret.vTip,maxRpm:e.evMaxRpm};
   }
   const m=evMotorOf(e),pack=packBuild({chem:e.evChem,series:e.evSeries,kWh:e.evKWh,year:e.evYear});
@@ -28771,7 +28785,7 @@ function evdCompute(){
     pts.push({r,T,Tm});if(T*w>pk*1000)pk=T*w/1000;if(T>tq+0.5)tq=T;pkM=Math.max(pkM,Tm*w/1000);
   }
   const parts=m.parts?m.parts.map(q=>q.m):[m];
-  return {hybrid,d,m,pack,V,pb:packMaxPower(pack,0.5)/1000,pts,pk,tq,pkM,top:m.nMax,mass:m.mass,packMass:pack.mass,cost:m.cost+pack.cost,
+  return {hybrid,d,m,J:parts[0].Jpk/1e6,pack,V,pb:packMaxPower(pack,0.5)/1000,pts,pk,tq,pkM,top:m.nMax,mass:m.mass,packMass:pack.mass,cost:m.cost+pack.cost,
     knee:motorBaseW(m,V,motorPsi(m,60))*30/Math.PI,nTip:Math.min(...parts.map(q=>q.nTip)),nFreq:Math.min(...parts.map(q=>q.nFreq)),
     poles:m.poles,vTip:m.ret.vTip,maxRpm:e.evMaxRpm};
 }
@@ -28784,7 +28798,7 @@ function evdComputeSlow(r){
 function evdSummary(c,r){
   const g=id=>evdG(id).value,km=x=>evdFmt(x);
   switch(c){
-    case 'size':return evdOptText('evMotorType')+' · Ø'+g('evRotorD')+' × '+g('evStack')+' mm · '+g('evPoles')+' '+tr('poles')+(r?' · '+km(r.mass)+' kg':'');
+    case 'size':return evdOptText('evMotorType')+' · Ø'+g('evRotorD')+'/'+g('evStatorOD')+' × '+g('evStack')+' mm · '+g('evPoles')+' '+tr('poles')+(r?' · '+km(r.mass)+' kg · '+evdFmt(r.J,1)+' A/mm²':'');
     case 'wind':return g('evTurns')+' '+tr('turns')+' · '+evdOptText('evWire')+(r&&r.knee<r.top?' · '+tr('knee')+' '+km(Math.round(r.knee/100)*100)+' rpm':'');
     case 'mag':return (evdG('evMagnet').disabled?'':evdOptText('evMagnet')+' · ')+tr('top')+' '+(r?km(Math.round(r.top/100)*100):g('evMaxRpm'))+' rpm';
     case 'cool':return evdOptText('evCooling')+' · '+evdOptText('evLamination');
