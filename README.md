@@ -1,4 +1,4 @@
-# PIXEL ENGINE SIM v0.7 build 291
+# PIXEL ENGINE SIM v0.7 build 294
 
 **A lightweight, 8-bit style internal combustion engine *designer* & simulator** inspired by *Automation*.
 
@@ -96,7 +96,7 @@ saps power; a large radiator, electric fan and oil cooler keep it cool.
 
 ### Electric drive (in progress — the plan is in `plans/hybrid-electric/`)
 Pick **ELECTRIC (BATTERY)** as the engine type and the ENGINE tab trades the combustion sections for **MOTOR**
-(rotor diameter and stack, poles, turns per phase, magnet grade and retention, cooling, top speed), **INVERTER**
+(rotor diameter and stack, poles, turns per phase, magnet grade, size and retention, cooling, top speed), **INVERTER**
 (silicon IGBT or SiC, current rating) and **BATTERY** (chemistry, cells in series, capacity, technology year). Since
 build 238 these are seven cards picked from a menu (stacked and folding on a phone), each number with a slider whose
 ticks are the real drives in the presets, a **?** that explains the input, the effect of every change beside it, and a
@@ -159,6 +159,8 @@ comes from its fins and its pressure drop is made up by the compressor.
 The sixth is the cylinder head (build 283): the intake valve's size, the port's throat, and the springs' seat load
 and rate.
 The seventh is the turbocharger (build 288): the compressor and turbine wheels and the housing's A/R.
+The eighth, the first part of the car rather than the engine, is the rear wing (build 291): span, chord, angle,
+camber and end plates, by lifting-line theory.
 An electric car is heard (build 198): its motor's whine, the inverter's switching and the reduction's gears, each at
 the frequency its build gives it, on the bench and on the lap replay.
 On the LIVE bench (build 190) a hybrid runs with its motor and pack: a HYBRID panel draws the power flowing between

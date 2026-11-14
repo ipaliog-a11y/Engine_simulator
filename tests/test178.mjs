@@ -1,62 +1,100 @@
-// A compound turbo as two stages in series (build 291).
+// The rear wing as a part (build 291).
 //
-// WHY THIS EXISTS. A compound was one frame with 2.30 of its flow (TURBO_CONFIG, plans/fitted-register.json). It is now
-// a low-pressure turbo feeding the frame the build chose (compoundStage). What must hold:
-//   · the LP wheel is matched to an equal pressure split of the target: D_LP/D_HP = (s/sqrt(T1/T0))^(1/2), s = sqrt(PR);
-//     the choke flow is that wheel's, with no multiple;
-//   · the shafts: the HP one is tied at (D_LP/D_HP) sqrt(T1/T0) of the LP one, so the HP wheel meets its tip limit at the
-//     state's top speed, and the inertia is both cartridges' (heavier than the frame's own);
-//   · on the Golf GTI's frame at 2.5 bar, the compound makes more power than the single and pushes against less
-//     exhaust pressure at 5500 rpm; it comes on boost later;
-//   · a compound with a VGT runs the housing (no ring) without error; a single, twin and sequential have no LP stage.
+// WHY THIS EXISTS. A rear wing was a kit with a fitted lift and drag (AERO_REAR). The PARTS page now designs one: span,
+// chord, angle, camber and end plates, by lifting-line theory (wingAero). What must hold:
+//   · the theory's own numbers: a flat wing of aspect ratio 6 has a lift slope of 2 pi / (1 + 2/6) per radian, and its
+//     induced drag is CL^2 / (pi AR);
+//   · the physics: more angle, span or camber gives more downforce; end plates give more lift for less induced drag;
+//     past the stall the lift is held and the wing is flagged;
+//   · the preview moves nothing; SAVE & FIT puts exactly the wing's ClA and CdA on the car, on the rear axle; a kit
+//     car is as it was once the wing is deleted;
+//   · it works on an electric car, and travels with a build.
 import { chromium } from './pw.mjs';
 import { fileURLToPath, pathToFileURL } from 'url';
 import path from 'path';
 const repo = fileURLToPath(new URL('..', import.meta.url));
 const browser = await chromium.launch();
-const page = await browser.newPage();
+const page = await browser.newPage({ viewport: { width: 1280, height: 900 } });
 const errors = [];
+page.on('console', m => { if (m.type() === 'error' && !/ERR_FILE_NOT_FOUND/.test(m.text())) errors.push('console: ' + m.text()); });
 page.on('pageerror', e => errors.push('pageerror: ' + e.message));
+await page.addInitScript(() => { try { localStorage.removeItem('pes.parts'); } catch (e) {} });
 await page.goto(pathToFileURL(path.join(repo, 'index.html')).href, { waitUntil: 'networkidle' });
-await page.waitForTimeout(300);
+await page.waitForTimeout(400);
 const fails = [];
 
 const r = await page.evaluate(() => {
-  const run = (cfg, bar, x = {}) => {
-    loadVehiclePreset(FACTORY_CARS.find(p => p.name.includes('Golf GTI (Mk7')));
-    applyEngineToForm(Object.assign({}, engine, { turboConfig: cfg, boost_bar: bar }, x)); buildEngine();
-    const e = engine, q = turboReport(e.turboSize);
-    return { cfg, bar, exd: e.compExd, lp: e.lpExd, tr: e.lpTr, cap: e.turboCap, one: compChokeFlow(e.compExd), lpCap: e.lpExd ? compChokeFlow(e.lpExd) : 0,
-      J: e.shaftJ, J1: wheelInertia(e.compExd, e.turbK * e.compExd), nMax: e.shaftMax, hpMax: maxShaftRpm(e.compExd),
-      g: e.lpExd ? compoundRatio(e) : 0, vgtShut: e.vgtShut, hp: q.peakHP, full: q.fullRpm, bp: backPressureBar(5500, 1100) };
-  };
-  return { s1: run('single', 2.5), c1: run('compound', 2.5), c0: run('compound', 1.0), cv: run('compound', 2.0, { vgt: true }),
-    tw: run('twin', 1.0), sq: run('sequential', 1.0), cfgs: Object.values(TURBO_CONFIG).map(c => Object.keys(c).join()) };
+  const o = {};
+  const load = n => loadVehiclePreset(FACTORY_CARS.find(p => p.name.includes(n)));
+  const W = x => wingAero(normPart(Object.assign({ kind: 'wing', span_mm: 1500, chord_mm: 250, angle_deg: 6, camber_pct: 0, plate_mm: 0 }, x)));
+  // 1. the theory
+  const flat = W({}); o.flat = { AR: flat.AR, slope: flat.slope, CL: flat.CL, cdi: flat.cdi };
+  // 2. the physics
+  o.angle = [2, 6, 10].map(a => W({ angle_deg: a }).clA);
+  o.span = [1200, 1500, 1800].map(s => W({ span_mm: s }).clA);
+  o.camber = [0, 4, 8].map(c => W({ camber_pct: c }).clA);
+  o.plate = [0, 200].map(h => { const q = W({ plate_mm: h }); return { cl: q.CL, cdi: q.cdi / (q.CL * q.CL) }; });
+  const st = W({ angle_deg: 25, camber_pct: 12 }); o.stall = { CL: st.CL, flag: st.stalled, max: WING_CLMAX };
+  // 3. the preview moves nothing; the fit is the wing
+  load('BMW M3 (E46');
+  const snap = () => JSON.stringify([vehicle.clA, vehicle.cdA, vehicle.aeroBal, vehicle.cost, perf.t100, perf.topSpeed, simulateLap('mixed').time]);
+  const before = snap(), kit = { clA: vehicle.clA, cdA: vehicle.cdA, rear: vehicle.aeroRear, clF: vehicle.clA * vehicle.aeroBal };
+  const k = AERO_REAR[vehicle.aeroRear] || AERO_REAR.none, base = { clA: vehicle.clA - k.cl * vehicle.aeroK, cdA: vehicle.cdA - k.cd * vehicle.area };
+  partsUI.kind = 'wing'; setTab('parts'); previewPart('wing');
+  o.start = partFromEditor('wing'); o.track = vehicle.track;
+  o.still = before === snap();
+  const q = Object.assign({}, partFromFactory('wing', 'wing'), { name: 'TEST WING', span_mm: 1600, chord_mm: 300, angle_deg: 10, camber_pct: 8, plate_mm: 200 });
+  const A = wingAero(normPart(q));
+  partsUI.edit.wing = Object.assign({}, q); partToEditor('wing', partsUI.edit.wing);
+  document.getElementById('pwSaveFit').click();
+  o.fit = { part: !!vehicle.wingPart, cls: vehicle.aeroRear, form: document.getElementById('vhAeroR').value === 'part:' + (vehicle.wingPart && vehicle.wingPart.id),
+    dCl: vehicle.clA - (base.clA + A.clA), dCd: vehicle.cdA - (base.cdA + A.cdA), dF: vehicle.clA * vehicle.aeroBal - kit.clF, clA: A.clA, cdA: A.cdA,
+    stock: isFactoryFit(readVehicleFromForm()) };
+  o.guide = document.getElementById('pwGuide').innerText;
+  // 4. it travels with a build
+  const saved = serializeBuild('t', '');
+  const id = vehicle.wingPart.id;
+  partAction('del', id);
+  o.del = { part: !!vehicle.wingPart, rear: vehicle.aeroRear, lib: partLib.length };
+  load('BMW M3 (E46'); o.back = before === snap();
+  applyBuild(saved);
+  o.travel = { lib: partLib.length, name: vehicle.wingPart && vehicle.wingPart.name, clA: vehicle.clA - (base.clA + A.clA) };
+  // 5. an electric car
+  load('Model 3'); o.ev = { electric: isElectric() };
+  fitPart(partLib[0].id); setTab('parts');
+  o.ev.part = !!vehicle.wingPart; o.ev.hidden = document.getElementById('partsWing').hidden; o.ev.clA = vehicle.clA;
+  return o;
 });
 await browser.close();
 
-const near = (a, b, t = 1e-9) => Math.abs(a - b) <= t * Math.max(1, Math.abs(b));
-for (const c of [r.c0, r.c1]) {
-  const s = Math.sqrt(1 + c.bar), tr = Math.sqrt(1 + (Math.pow(s, 0.286) - 1) / 0.78), want = c.exd * Math.sqrt(s / tr);
-  console.log(`== compound @ ${c.bar} bar: HP ${(c.exd * 1000).toFixed(1)} mm, LP ${(c.lp * 1000).toFixed(1)} mm (matched ${(want * 1000).toFixed(1)}), choke ${c.cap.toFixed(1)} lb/min (one HP wheel ${c.one.toFixed(1)}), J ${(c.J * 1e5).toFixed(2)} x1e-5 (frame ${(c.J1 * 1e5).toFixed(2)}), shafts ${c.g.toFixed(3)} ==`);
-  if (!near(c.lp, want)) fails.push(`${c.bar} bar: the LP wheel is not matched to an equal split`);
-  if (!near(c.cap, c.lpCap)) fails.push(`${c.bar} bar: the choke flow is not the LP wheel's`);
-  if (!near(c.g, (c.lp / c.exd) * tr)) fails.push(`${c.bar} bar: the shafts are not tied by the equal split`);
-  if (!near(c.nMax * c.g, c.hpMax)) fails.push(`${c.bar} bar: the HP wheel does not meet its tip limit at the top speed`);
-  if (!(c.J > c.J1)) fails.push(`${c.bar} bar: the two cartridges are not heavier than one`);
-}
-if (!(r.c1.lp > r.c0.lp)) fails.push('a higher target does not take a bigger LP wheel');
-const row = c => `${c.cfg.padEnd(9)} ${c.hp} hp, full boost from ${Math.round(c.full)} rpm, exhaust ${c.bp.toFixed(2)} bar at 5500`;
-console.log(`== Golf GTI frame @ 2.5 bar:\n   ${row(r.s1)}\n   ${row(r.c1)} ==`);
-if (!(r.c1.hp > r.s1.hp)) fails.push('at 2.5 bar the compound does not make more power than the single');
-if (!(r.c1.bp < r.s1.bp)) fails.push('at 2.5 bar the compound does not ease the exhaust pressure');
-if (!(r.c1.full > r.s1.full)) fails.push('the compound does not come on boost later');
-console.log(`== compound + VGT: vanes ${r.cv.vgtShut}, ${r.cv.hp} hp; twin LP ${r.tw.lp}, sequential LP ${r.sq.lp}; layouts carry ${[...new Set(r.cfgs)].join(' | ')} ==`);
-if (r.cv.vgtShut !== 0 || !(r.cv.hp > 0)) fails.push('a compound with a VGT does not run its housing');
-if (r.tw.lp || r.sq.lp || r.s1.lp) fails.push('a single, twin or sequential has an LP stage');
-if (r.cfgs.some(k => /flow/.test(k))) fails.push('TURBO_CONFIG still carries a flow multiple');
+const near = (a, b, e = 1e-12) => Math.abs(a - b) <= e;
+console.log(`== a flat wing, AR ${r.flat.AR}: slope ${r.flat.slope.toFixed(4)} /rad, CL ${r.flat.CL.toFixed(4)} at 6°, induced ${r.flat.cdi.toFixed(5)} ==`);
+if (!near(r.flat.AR, 6) || !near(r.flat.slope, 2 * Math.PI / (1 + 2 / 6)) || !near(r.flat.CL, r.flat.slope * 6 * Math.PI / 180) || !near(r.flat.cdi, r.flat.CL ** 2 / (Math.PI * 6)))
+  fails.push('the wing is not the lifting line');
+const up = a => a[0] < a[1] && a[1] < a[2], f2 = a => a.map(x => x.toFixed(3)).join(' / ');
+console.log(`== ClA, angle 2/6/10°: ${f2(r.angle)}; span 1.2/1.5/1.8 m: ${f2(r.span)}; camber 0/4/8%: ${f2(r.camber)} ==`);
+if (!up(r.angle)) fails.push('more angle does not give more downforce');
+if (!up(r.span)) fails.push('more span does not give more downforce');
+if (!up(r.camber)) fails.push('more camber does not give more downforce');
+console.log(`== end plates 0 / 200 mm: CL ${r.plate.map(p => p.cl.toFixed(3)).join(' / ')}, induced drag per CL² ${r.plate.map(p => p.cdi.toFixed(4)).join(' / ')} ==`);
+if (!(r.plate[1].cl > r.plate[0].cl && r.plate[1].cdi < r.plate[0].cdi)) fails.push('end plates do not help');
+if (r.stall.CL !== r.stall.max || !r.stall.flag) fails.push('a wing past its stall is not held and flagged');
+console.log(`== starts from ${r.start.span_mm} mm on a ${r.track} m track; the preview moves nothing: ${r.still} ==`);
+if (!r.still) fails.push('opening the wing designer and previewing changed the car');
+if (r.start.span_mm !== Math.round(r.track * 100) * 10) fails.push("the starting wing is not as wide as the car's track");
+console.log(`== fitted: ${JSON.stringify(r.fit)} ==`);
+if (!r.fit.part || r.fit.cls !== 'wing' || !r.fit.form || !near(r.fit.dCl, 0) || !near(r.fit.dCd, 0) || !near(r.fit.dF, 0) || r.fit.stock)
+  fails.push('SAVE & FIT does not put the wing as previewed on the car, on its rear axle');
+if (!/Downforce/.test(r.guide) || !/kg/.test(r.guide)) fails.push("the wing designer's readout is not shown");
+console.log(`== deleted: ${JSON.stringify(r.del)}; the factory car again: ${r.back}; travels: ${JSON.stringify(r.travel)} ==`);
+if (r.del.part || r.del.rear !== 'wing' || r.del.lib !== 0) fails.push('deleting the fitted wing does not leave the kit wing');
+if (!r.back) fails.push('the factory car is not as it was after the wing came off');
+if (r.travel.lib !== 1 || r.travel.name !== 'TEST WING' || !near(r.travel.clA, 0)) fails.push('a saved build does not carry its wing');
+console.log(`== electric: ${JSON.stringify(r.ev)} ==`);
+if (!r.ev.electric) fails.push('the Model 3 is not electric any more: pick another');
+if (!r.ev.part || r.ev.hidden || !(r.ev.clA > 0)) fails.push('an electric car cannot design and wear a wing');
 
 if (errors.length) console.log('ERRORS:\n  ' + errors.join('\n  '));
 if (fails.length) console.log('\nFAIL:\n  ' + fails.join('\n  '));
-else console.log('\nOK: a compound is two matched stages in series, with no flow multiple.');
+else console.log('\nOK: a designed rear wing is the lifting line, lands on the rear axle as previewed, and saves, fits and comes off cleanly.');
 process.exit(fails.length || errors.length ? 1 : 0);

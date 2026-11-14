@@ -17,6 +17,20 @@
 // hold 54 → 52 s, 108.36 → 108.06 Nm at 18000 rpm; Model Y peak 358 → 357 kW, hold 116 → 114 s,
 // 189.83 → 189.32 Nm; Plaid peak 804 → 803 kW, continuous 817 → 804 kW, 382.34 → 380.65 Nm at 20000 rpm.
 // Torque at 1000 rpm, the Wh/km inside the lock's tolerance, the 0-100 and the tail did not.
+// Build 292 (plans/road-to-v1.md, phase C step 1: the magnets as geometry, through a magnetic circuit with the steel's
+// curve) re-locked every block: Model 3 424 → 422 Nm, knee 6671 → 6714, 119.53 → 119.04 Wh/km, motor 56.09 → 55.16 kg;
+// Model Y 541 → 538 Nm, 0-100 4.55 → 4.56 s; Plaid 1408 → 1428 Nm, knee 6109 → 6020; the hybrids' motors 3-6% more
+// torque at the same turns, so the three whose torque is published were re-matched to it (turns are not published):
+// Prius 100 → 95 turns, 163.4 → 164.0 Nm; Qashqai 26 → 24, 335 → 330.4 Nm; 330e 48 → 46, 264.8 → 263.2 Nm. Ioniq
+// 166 → 171 Nm (170 published), 918 227 → 238 and 210 → 221 (unpublished). The tail
+// motor's thin yoke now saturates, which raised its knee to 7049 rpm, past a sixth of its 40000: it has 55 turns, not 40,
+// to put the knee back near 5100 rpm.
+// Build 293 (the teeth and yoke sized from the flux, Pyrhonen Table 6.1) re-locked them again. The Teslas' inverter
+// currents were re-matched to their published torque (Model 3 1000 → 950 A, Model Y rear 720 → 700 A): Model 3 knee
+// 6714 → 6437, continuous 291 → 266 kW, hold 52 → 19 s (its winding has less copper, so it heats faster);
+// Model Y hold 114 → 72 s; Plaid 1428 → 1441 Nm, continuous 808 → 745 kW, hold 19 → 12 s. The hybrids' turns
+// re-matched to their published torque (Ioniq 33, Prius 103, Qashqai 26, 330e 55); the 918's motors 238 → 221 and
+// 221 → 204 Nm. The tail motor's knee 5126 → 3422 rpm.
 import { chromium } from './pw.mjs';
 import { fileURLToPath, pathToFileURL } from 'url';
 import path from 'path';
@@ -33,36 +47,36 @@ const fails = [];
 // Locked at build 224. See plans/hybrid-electric/drivetrain.md for which stage may change which block.
 const CARS = {
   'Model 3': {
-    peakKW: 205, peakTQ: 424, knee: 6671, contKW: 288, holdS: 52, best: 0.9768, kWkg: 3.7, redline: 18000,
-    motors: 1, massM: 56.09, massP: 440.12, R: 0.066236, Vnom: 340.84, p50: 209737, p10: 202273,
-    whkm: 119.53, wall: 140.63, regen: 49.64, range: 451.8, fd: 9.03, drive: 'rwd',
-    t100: 6.185, t60: 5.925, top: 225, cg: 0.52,
-    pts: { 1000: 424.46, 6671: 289.05, 13342: 146.72, 18000: 108.06 }
+    peakKW: 205, peakTQ: 422, knee: 6437, contKW: 266, holdS: 19, best: 0.9744, kWkg: 3.7, redline: 18000,
+    motors: 1, massM: 55.18, massP: 440.12, R: 0.066236, Vnom: 340.84, p50: 209737, p10: 202273,
+    whkm: 119.72, wall: 140.85, regen: 49.59, range: 451.1, fd: 9.03, drive: 'rwd',
+    t100: 6.19, t60: 5.93, top: 225, cg: 0.52,
+    pts: { 1000: 422.08, 6437: 297.84, 12874: 151.67, 18000: 107.95 }
   },
   'Model Y': {
-    peakKW: 357, peakTQ: 541, knee: 6859, contKW: 288, holdS: 114, best: 0.9788, kWkg: 3.6, redline: 18000,
-    motors: 2, massM: 99.24, massP: 424.84, R: 0.05256, Vnom: 352.93, p50: 377316, p10: 294578,
-    whkm: 141.33, wall: 166.27, regen: 56.44, range: 496.7, fd: 9.03, drive: 'awd',
-    t100: 4.55, t60: 4.375, top: 217, cg: 0.66,
-    pts: { 1000: 540.52, 6859: 492.32, 13718: 249.23, 18000: 189.32 }
+    peakKW: 358, peakTQ: 544, knee: 6619, contKW: 281, holdS: 72, best: 0.9767, kWkg: 3.6, redline: 18000,
+    motors: 2, massM: 98.3, massP: 424.84, R: 0.05256, Vnom: 352.93, p50: 377316, p10: 294578,
+    whkm: 141.39, wall: 166.34, regen: 56.39, range: 496.5, fd: 9.03, drive: 'awd',
+    t100: 4.52, t60: 4.35, top: 217, cg: 0.66,
+    pts: { 1000: 543.83, 6619: 508.98, 13238: 258.05, 18000: 189.52 }
   },
   Plaid: {
-    peakKW: 803, peakTQ: 1408, knee: 6109, contKW: 804, holdS: 19, best: 0.9752, kWkg: 4.8, redline: 20000,
-    motors: 3, massM: 168.27, massP: 625.78, R: 0.029359, Vnom: 404.4, p50: 824184, p10: 692384,
-    whkm: 166.27, wall: 195.61, regen: 59.69, range: 541.3, fd: 7.56, drive: 'awd',
+    peakKW: 802, peakTQ: 1441, knee: 5966, contKW: 745, holdS: 12, best: 0.9746, kWkg: 4.8, redline: 20000,
+    motors: 3, massM: 165.38, massP: 625.78, R: 0.029359, Vnom: 404.4, p50: 824184, p10: 692384,
+    whkm: 165.7, wall: 194.95, regen: 59.59, range: 543.1, fd: 7.56, drive: 'awd',
     t100: 2.525, t60: 2.435, top: 322, cg: 0.52,
-    pts: { 1000: 1407.64, 6109: 1218.13, 12218: 628.36, 20000: 380.65 }
+    pts: { 1000: 1441.23, 5966: 1241.42, 11932: 641.69, 20000: 380.4 }
   }
 };
 const HYB = {
-  'Ioniq': { mode: 'p2', tq: 166, kW: 87.9, packKW: 32.33, packR: 0.27024, front: 0 },
-  'Prius': { mode: 'ps', tq: 163.4, kW: 53.27, packKW: 29.91, packR: 0.27166, front: 0 },
-  'Qashqai': { mode: 'series', tq: 335, kW: 143.31, packKW: 43.52, packR: 0.45169, front: 0 },
-  '330e': { mode: 'p2', tq: 264.8, kW: 81.39, packKW: 101.51, packR: 0.18635, front: 0 },
-  '918': { mode: 'p2', tq: 227.1, kW: 121.6, packKW: 140.92, packR: 0.16371, front: 210.4 }
+  'Ioniq': { mode: 'p2', tq: 169.55, kW: 86.26, packKW: 32.33, packR: 0.27024, front: 0 },
+  'Prius': { mode: 'ps', tq: 162.77, kW: 53.04, packKW: 29.91, packR: 0.27166, front: 0 },
+  'Qashqai': { mode: 'series', tq: 326.29, kW: 143.31, packKW: 43.52, packR: 0.45169, front: 0 },
+  '330e': { mode: 'p2', tq: 263.39, kW: 79.97, packKW: 101.51, packR: 0.18635, front: 0 },
+  '918': { mode: 'p2', tq: 220.59, kW: 121.6, packKW: 140.92, packR: 0.16371, front: 204.39 }
 };
 // A sleeve, 4-pole, SiC motor that revs past 4× its knee. Power is flat, then falls as CPSR / (speed/knee).
-const TAIL = { knee: 5108, nMax: 40000, p1: 60247, p2: 60247, p4: 60247, p5: 48198, p6: 40165 };
+const TAIL = { knee: 3422, nMax: 40000, p1: 54714, p2: 54714, p4: 54714, p5: 43771, p6: 36476 };
 
 const r = await page.evaluate(() => {
   const cars = [];
@@ -99,7 +113,7 @@ const r = await page.evaluate(() => {
       front: h.front ? motorMaxTorque(h.front.motor, 1500, V, 60) : 0
     });
   }
-  const m = motorBuild({ rotorD: 100, stackL: 80, poles: 4, turns: 40, magnet: 'ndfeb', retention: 'sleeve', cooling: 'jacket', inverter: 'sic', invAmps: 200, maxRpm: 40000 });
+  const m = motorBuild({ rotorD: 100, stackL: 80, poles: 4, turns: 55, magnet: 'ndfeb', retention: 'sleeve', cooling: 'jacket', inverter: 'sic', invAmps: 200, maxRpm: 40000 });
   const V = 350, psi = motorPsi(m, 60), knee = motorBaseW(m, V, psi) * 30 / Math.PI;
   const P = n => motorMaxTorque(m, n, V, 60) * n * Math.PI / 30;
   // stage 6 (build 236) put WINDING and CONDUCTOR on the form, defaulting to today's round copper

@@ -933,7 +933,7 @@ function shaftNetPower(shaftRpm,mAir,T3,T01,rpm){
   const Pc=compPowerAt(mA,prCap,T01,eta);
   return{net:Pt-Pc,pr:pMan,prRaw:pr-dp,eta,Pt,Pc,turbArea:area};
 }
-// ---- COMPOUND: two stages in series (build 291) ----
+// ---- COMPOUND: two stages in series (build 294) ----
 // A large low-pressure (LP) turbo feeds a small high-pressure (HP) one; the frame the build chose is the HP stage, and
 // the exhaust runs through the HP turbine, then the LP turbine. It was one frame with 2.30 of its flow.
 // SIZING. A two-stage system is matched with the pressure ratio split equally between the stages (Watson & Janota,
