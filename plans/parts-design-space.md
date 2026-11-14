@@ -23,7 +23,7 @@ Each new part is two builds:
 | 3 | **Chassis numbers** (build 250) | CG height, wheelbase, track, weight split, ballast | load transfer, roll, diff traction | class-median CG/track on real cars (sourced per car) |
 | 4 | **Intercooler** (build 255) | core face, depth, fins, pipe length | effectiveness (NTU), charge volume, **pressure drop (new)** | `INTERCOOLER.eff` |
 | 5 | **Turbocharger** (build 288) | compressor and turbine wheels, A/R | compressor map, back-pressure, spool | `TURB_WHEEL`, `TURBO_CONFIG` multipliers |
-| 6 | Wings, brake bias | span, chord, angle; front share | lift and induced drag; lock-up order | `AERO_FRONT/REAR` tables |
+| 6 | Wings (rear wing: build 291), brake bias | span, chord, angle; front share | lift and induced drag; lock-up order | `AERO_FRONT/REAR` tables |
 | 7 | Plenum & throttle, flywheel, wheels, tyre pressure | volume, bore, mass, material, pressure | Helmholtz, `MAP_K`, inertia, unsprung mass, contact patch | `MAP_K`, `UNSPRUNG_SHARE` |
 | 8 | Catalytic converter, rods & pistons | cells, brick; rod length, forging | back-pressure; stress limit (new model) | `catRampTop` (counts the cat twice); needs the owner |
 

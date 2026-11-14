@@ -32,7 +32,7 @@ const BEFORE = { 'Toyota Prius (2016)': 5.12, 'Hyundai Ioniq Hybrid (2016)': 5.0
 // CHANGELOG, until a modern ring factor is sourced. Build 202's map is still in these figures; from build 243 they are
 // the floor, so anything that makes the hybrids burn more fails here.
 // Build 245 took the hybrids' alternator off (a DC-DC converter from the pack), and the floors are tightened to it.
-// Builds 291-292 (the magnets' flux and the stator derived, the motors' turns re-matched) tightened the Prius 4.33 -> 4.29,
+// Builds 292-293 (the magnets' flux and the stator derived, the motors' turns re-matched) tightened the Prius 4.33 -> 4.29,
 // the Ioniq 4.83 -> 4.80 and the Qashqai 5.80 -> 5.76.
 const KNOWN_GAP_243 = { 'Toyota Prius (2016)': 4.29, 'Hyundai Ioniq Hybrid (2016)': 4.80, 'Nissan Qashqai e-POWER (2022)': 5.76 };
 const REAL = { 'Toyota Prius (2016)': 4.14, 'Hyundai Ioniq Hybrid (2016)': 4.4, 'Nissan Qashqai e-POWER (2022)': 5.3 };

@@ -7,7 +7,7 @@
 // What is matched, as the combustion cars are matched (tests/test41.mjs): mass, drag, frontal area, tyres, the
 // reduction and the governed top speed, the pack (chemistry, cells in series, capacity, year) and each motor's
 // torque or power, set from the published figures: the Model 3 RWD's 420 Nm, the Model Y's 326 Nm rear and 219 Nm front,
-// the Plaid's 295 kW a motor (the inverter's current is what matches a torque: build 292, with the stator sized from the
+// the Plaid's 295 kW a motor (the inverter's current is what matches a torque: build 293, with the stator sized from the
 // flux, took the Model 3's from 1000 to 950 A and the Model Y rear's from 720 to 700). What is derived and checked against the published figures
 // (tests/test101.mjs): the 0-100 and the top speed. The rear magnet motor is the Model 3's as MotorXP measured it
 // (src/js/electric.js); the front induction unit of the Model 3 and Model Y is sized to its published 219 Nm and
@@ -45,7 +45,7 @@ const EV_VEHICLE_PRESETS=[
 // (Kappa, 72 x 97 mm, 13:1, 105 PS at 5700 rpm, 147 Nm) with a 32 kW / 170 Nm P2 motor between its clutch and its
 // six-speed DCT, and a 1.56 kWh, 240 V lithium-polymer pack: 104 kW and 265 Nm together. The motor is sized to those
 // figures (src/js/hybrid.js, HYB_DEFAULT; the motors' turns are not published: each is the count that gives the published
-// torque, re-matched in build 291 when the magnets' flux became derived, and in build 292 when the teeth and yoke were sized from
+// torque, re-matched in build 292 when the magnets' flux became derived, and in build 293 when the teeth and yoke were sized from
 // it: the Ioniq's 28 -> 33, the Prius's MG2 100 -> 95 -> 103, the Qashqai's 26 -> 24 -> 26, the 330e's 48 -> 46 -> 55);
 // the engine is its geometry, which on the model's cams (none is an Atkinson
 // cam yet) makes ~116 hp, not 104 (tests/test103.mjs checks the car both as built and matched to the published power).

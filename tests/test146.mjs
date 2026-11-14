@@ -52,7 +52,7 @@ console.log(`== hybrid motor: ${r.hybrid.wire}, ${r.hybrid.cond}; Greek: ${r.el.
 // the default is today's motor
 if (r.none.R !== r.rc.R || r.none.cost !== r.rc.cost || r.none.mass !== r.rc.mass) fails.push('ROUND COPPER is not the motor with no winding chosen');
 if (!(r.rc.R > 0.5 * 4.75 && r.rc.R < 1.5 * 4.75)) fails.push(`the default's DC resistance ${f(r.rc.R, 3)} mOhm left test96's band around 4.75`);
-// 3.083 until build 292, when the slots became what the teeth and yoke, sized from the flux, leave (measured: 4.75).
+// 3.083 until build 293, when the slots became what the teeth and yoke, sized from the flux, leave (measured: 4.75).
 if (Math.abs(r.rc.R - 3.860) > 0.001) fails.push(`the default's DC resistance ${f(r.rc.R, 4)} mOhm is not the 3.860 it was`);
 const bad = r.factory.filter(x => !x.ok); if (bad.length) fails.push('factory motors not on round copper: ' + bad.map(x => x.n).join(', '));
 // hairpin

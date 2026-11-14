@@ -20,11 +20,11 @@
 // rotor 149.9 mm, 3 pole pairs, 12 series turns per phase (2 turns, 3 paths), 4.75 mOhm per phase, a single V of two
 // 33 x 6.5 mm NdFeB magnets a pole (segments 21.5 mm long down the stack), 42 V peak line-to-line per 1000 rpm, 430 Nm
 // at 953 A rms needing 94.6 V rms per phase.
-// The air gap's flux comes from the magnets through a magnetic circuit (build 291, magnetCircuit below). Two constants
+// The air gap's flux comes from the magnets through a magnetic circuit (build 292, magnetCircuit below). Two constants
 // are still set from that one motor, not derived, and used for every motor (plans/fitted-register.json):
 //   SAT_K     how much torque per amp is lost to saturation at that electric loading (430 Nm, not the 470 the
-//             flux alone gave until build 291): 8.5%, scaled with the square of the loading. It is not set again as
-//             the flux under it becomes derived: the Model 3 makes 444 Nm at 953 A since build 292;
+//             flux alone gave until build 292): 8.5%, scaled with the square of the loading. It is not set again as
+//             the flux under it becomes derived: the Model 3 makes 444 Nm at 953 A since build 293;
 //   V_DROP    the terminal voltage over the back-EMF at full current (the inductive and resistive drop): 1.29.
 // Everything else here is either geometry, a material's datasheet figure, or a textbook rule, named where it is used.
 // tests/test96.mjs checks the model against the Model 3's measured back-EMF and resistance and its published power, and
@@ -36,7 +36,7 @@ const KW_WIND=0.93;        // winding factor: distributed, q = 2-3 slots per pol
 const SPLIT=0.67;          // bore over stator outside diameter (Model 3 0.672, Leaf 0.66; 0.6-0.7 for traction motors)
 const GAP=0.0007;          // air gap (m): 0.7 mm, the Model 3's
 const FILL=0.40;           // copper fills 40% of a slot (stranded)
-// The teeth and the yoke are sized from the flux they carry (build 292): a tooth as wide as puts the air gap's peak field
+// The teeth and the yoke are sized from the flux they carry (build 293): a tooth as wide as puts the air gap's peak field
 // at the tooth's design density, the yoke as deep as carries half a pole's flux at the yoke's; the slot is what is left
 // between the bore and the yoke. Design densities from Pyrhonen, Pyrhonen & Hrabovcova, Design of Rotating Electrical
 // Machines (2nd ed., 2014), Table 6.1, "Permitted flux densities of the magnetic circuit": the top of each range, as a
@@ -84,14 +84,14 @@ const EV_REGEN={off:{label:'OFF',k:0},low:{label:'LOW',k:0.5},high:{label:'HIGH'
 const laminationOf=mm=>Math.abs(+mm-0.2)<0.02?LAMINATION['0.20']:LAMINATION['0.35'];
 // Magnets: remanence at 20 C (T), its temperature coefficient (/K), the highest temperature before the coercivity
 // gives way and the loss is permanent (C), and the price ($/kg). SH and UH grades: Hcj >= 20 kOe and 25 kOe.
-// Build 291: the recoil permeability (mur: sintered NdFeB 1.05, sintered ferrite 1.1, the makers' usual figures) and the
+// Build 292: the recoil permeability (mur: sintered NdFeB 1.05, sintered ferrite 1.1, the makers' usual figures) and the
 // density (kg/m3: NdFeB 7500-7600, ferrite 4800-5000).
 const MAGNET={
   ferrite:{label:'FERRITE',Br:0.42,alpha:-0.0020,Tmax:250,cost:6,mur:1.1,rho:4900},
   ndfeb:  {label:'NdFeB (SH)',Br:1.28,alpha:-0.0012,Tmax:150,cost:60,mur:1.05,rho:7500},
   ndfebDy:{label:'NdFeB + Dy (UH)',Br:1.23,alpha:-0.0011,Tmax:180,cost:95,mur:1.05,rho:7500}
 };
-// ---- the magnets as geometry (build 291) ----
+// ---- the magnets as geometry (build 292) ----
 // A pole is a V of two magnet bars buried under the rotor's surface, as the Model 3's (MotorXP's teardown). The design
 // sets the bar's thickness (magT, mm, along its magnetisation) and the two bars' width together as a share of the pole
 // pitch (magW); the pole's face spans that share. Defaults are the Model 3's: 6.5 mm, and 2 x 33 mm on its 78.5 mm pitch.
@@ -214,12 +214,12 @@ function motorBuild(s){
   const slots=3*poles*(poles<=6?3:2)*(im&&poles===4?5/3:1);       // q = 3 slots per pole per phase up to 6 poles, then 2;
                                                                     // a 4-pole induction motor runs q = 5 (the Model S's 60)
   // flux: the air gap's fundamental from the magnets' circuit (an induction motor: its design flux density), per pole,
-  // linked by the winding. The magnets' bars, from the design's thickness and width (build 291).
+  // linked by the winding. The magnets' bars, from the design's thickness and width (build 292).
   const tau=Math.PI*D/poles, magT=(s.magT>0?s.magT:MAG_T)/1000, magW=s.magW>0?s.magW:MAG_W;
   const ts=Math.PI*Ds/slots;
   const circ=im?null:magnetCircuit({Br:mag.Br,mur:mag.mur,magT,magW,tau,L,Lfe,gap:GAP,ts,h,OD,poles});
   const Bg=im?IM_BG:circ.B1, phiPole=2/Math.PI*Bg*tau*Lfe;
-  // the teeth and yoke (build 292): from the magnets' circuit, or an induction motor's sinusoidal field at its design flux
+  // the teeth and yoke (build 293): from the magnets' circuit, or an induction motor's sinusoidal field at its design flux
   const st=im?statorFrom(IM_BG,phiPole/0.95,ts,h,Lfe,IM_B_TOOTH,IM_B_YOKE):circ.st, wt=st.wt, hSlot=st.hSlot, hy=st.hy;
   const psi20=KW_WIND*N*phiPole;                                    // peak flux linkage per phase at 20 C (V s)
   // copper: the band between the bore and the yoke less the teeth, at the fill; a turn runs the stack twice and round two
@@ -239,7 +239,7 @@ function motorBuild(s){
   const mCu=cond.dens*Acu*mlt/2;
   const mFeS=RHO_FE*(Math.PI/4*(OD*OD-Ds*Ds)-slotA)*Lfe;
   const Dsh=0.47*D;
-  const vMag=im?0:magW*Math.PI*D*magT*MAG_AX*L, mMag=im?0:mag.rho*vMag;   // the bars, all the poles round (build 291)
+  const vMag=im?0:magW*Math.PI*D*magT*MAG_AX*L, mMag=im?0:mag.rho*vMag;   // the bars, all the poles round (build 292)
   // the induction motor's cage, its resistance referred to the stator, and the magnetising current at full field
   let Qr=0,Rr20=0,mCage=0,ImR=0;
   if(im){

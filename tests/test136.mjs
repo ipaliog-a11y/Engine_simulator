@@ -17,7 +17,7 @@
 // hold 54 → 52 s, 108.36 → 108.06 Nm at 18000 rpm; Model Y peak 358 → 357 kW, hold 116 → 114 s,
 // 189.83 → 189.32 Nm; Plaid peak 804 → 803 kW, continuous 817 → 804 kW, 382.34 → 380.65 Nm at 20000 rpm.
 // Torque at 1000 rpm, the Wh/km inside the lock's tolerance, the 0-100 and the tail did not.
-// Build 291 (plans/road-to-v1.md, phase C step 1: the magnets as geometry, through a magnetic circuit with the steel's
+// Build 292 (plans/road-to-v1.md, phase C step 1: the magnets as geometry, through a magnetic circuit with the steel's
 // curve) re-locked every block: Model 3 424 → 422 Nm, knee 6671 → 6714, 119.53 → 119.04 Wh/km, motor 56.09 → 55.16 kg;
 // Model Y 541 → 538 Nm, 0-100 4.55 → 4.56 s; Plaid 1408 → 1428 Nm, knee 6109 → 6020; the hybrids' motors 3-6% more
 // torque at the same turns, so the three whose torque is published were re-matched to it (turns are not published):
@@ -25,7 +25,7 @@
 // 166 → 171 Nm (170 published), 918 227 → 238 and 210 → 221 (unpublished). The tail
 // motor's thin yoke now saturates, which raised its knee to 7049 rpm, past a sixth of its 40000: it has 55 turns, not 40,
 // to put the knee back near 5100 rpm.
-// Build 292 (the teeth and yoke sized from the flux, Pyrhonen Table 6.1) re-locked them again. The Teslas' inverter
+// Build 293 (the teeth and yoke sized from the flux, Pyrhonen Table 6.1) re-locked them again. The Teslas' inverter
 // currents were re-matched to their published torque (Model 3 1000 → 950 A, Model Y rear 720 → 700 A): Model 3 knee
 // 6714 → 6437, continuous 291 → 266 kW, hold 52 → 19 s (its winding has less copper, so it heats faster);
 // Model Y hold 114 → 72 s; Plaid 1428 → 1441 Nm, continuous 808 → 745 kW, hold 19 → 12 s. The hybrids' turns
