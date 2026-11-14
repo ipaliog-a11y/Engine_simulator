@@ -18,7 +18,7 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 ## [Unreleased]
 
-### Tyre pressure as a part (build 312)
+### Tyre pressure as a part (build 313)
 
 Phase D of `plans/road-to-v1.md`: the tyre's pressure, the first of its two builds (the part; `TYRE_KZ` goes next).
 
@@ -34,7 +34,32 @@ Phase D of `plans/road-to-v1.md`: the tyre's pressure, the first of its two buil
 - **Left open:** grip and the tyre's rated load (`tyreRatedKg`) do not read the pressure; the contact patch's size and
   the carcass's own stiffness with no air (Rhyne's constant) are not modelled. Next: retire `TYRE_KZ`'s one pressure.
 
-Tests: test192 (new); test120 lists the new kind.
+Tests: test193 (new); test120 lists the new kind.
+### Brake balance as a part (build 312)
+
+Phase D of `plans/road-to-v1.md`: brake bias, the last of the wings-and-bias step.
+
+- **The PARTS tab designs a BRAKE BALANCE**: a balance bar (share of the pedal to the front), the front and rear master
+  cylinder bores, and the rear caliper (pistons a side, their diameter) and rotor. Fitted from the VEHICLE tab's new
+  BRAKE BALANCE select, it replaces the rear brakes each car has sized to the R13-H line; the front calipers and rotor
+  stay the brake kit's.
+- **Each line's pressure is the bar over its bore**: p = 2 × bar share × (19.05 / bore)² × 100 bar, so a 50/50 bar on
+  two 0.75 in cylinders is the single cylinder's 100 bar (0.75 in the common race size: PROBABLE). The front share is
+  then the hydraulics' own, f / (f + r). Starting from the car's own brakes gives its current share (E46 M3: 66.58%).
+- **The lock order shows**: with no ABS the front reaches its grip at μ fW / (fH − μ h/L) and the rear at
+  μ (1 − fW) / (1 + μ h/L − fH); the preview says which locks first, warns below R13-H's 0.8 g, and draws the classic
+  front-against-rear braking diagram.
+- **What it moves**: the share and the brake force feed the lap's per-axle braking, the rotors' heat split and the
+  driving model. With ABS and brakes stronger than the tyres (the M3's 1.67 g against ~1.2 g of grip) each axle is held
+  at its grip, so the lap does not move; with brakes short of grip it does (at 1.0 g of capacity, 30% front costs the
+  M3 0.26 s on Mixed). The pedal box adds $800 (race catalogues, $500–900: PROBABLE).
+- **No factory car moved**: fingerprint identical (5208 values).
+- **Left open:** the straight 100–0 stop still pools the four tyres' grip (it does not read the share); a proportioning
+  valve (the road car's knee-point valve) is not modelled; the driver's pedal force is the fixed 100 bar push. There is
+  no fitted table to retire after this part: the factory rear is sized by one rule (R13-H) for every car.
+
+Tests: test192 (new), test120 (the part kinds).
+
 ### Spark retard heats the exhaust; past its furthest retard the ECU enriches, then lowers the boost (build 311)
 
 - The work a retarded spark does not do now goes down the exhaust (energy balance in `exhaustHeatFrac`, at the torque

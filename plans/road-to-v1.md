@@ -115,6 +115,8 @@ and its heat, an induction motor's slip.
 factory car moved. Next: the front wing and splitter the same way, then each kit car's wing written as one, and brake bias.
 *Build 306:* the front wing, the same wing with the ground's span effect from its height (Wieselsberger); no factory car
 moved. Open: the splitter, the chord-wise ground effect (Zerihan & Zhang), each kit car's wing, brake bias.
+*Build 312:* brake balance as a part (balance bar, two master cylinders, rear caliper and rotor; `tests/test192.mjs`); no
+factory car moved. The factory rear stays sized to the R13-H line (a rule, not a fit), so there is no table to retire.
 
 *Scoreboard run at the end of D.*
 
@@ -225,6 +227,17 @@ the Greek decision; a career layer.
 An electric drivetrain with four motors, one in each wheel hub: each wheel's torque its own, the unsprung mass the
 hub motors add, and torque vectoring explored (yaw moment from the left-right split, in place of braking a wheel),
 on the four-wheel `stepCar`.
+A guided build that sets values (owner's request, November 2026; build 308 only picks a real car). Three builds:
+1. A walk-through over the existing design cards: the matched car is the start, then a short ordered list of the
+   decisions that matter (cylinders and layout, bore and stroke, compression and fuel, redline and valvetrain, air
+   and boost; then mass, gearing, tyres), one field per step with its slider, ticks, help and limits, the rest under
+   ADVANCED. UI only: fingerprint identical. The owner picks the list of steps.
+2. Goal hints, derived: at each step build one value below and one above (`icdCompute`, ~50–150 ms each) and say
+   which way helps the chosen goal and which limit it meets (knock, valve float). A direction, never a fitted
+   "best value". 0–100 and price (~1 s) update at the end of a step, not while a slider moves.
+3. A finish screen: the build against the car it started from (power, torque, 0–100, price, reliability), and the
+   limit it sits on.
+Open: the coupled fields (`ICD_DEPS`: boost with fuel, timing, intercooler) must be followed; branches for rotary and EV.
 
 ## Method
 

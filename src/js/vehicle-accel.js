@@ -24,7 +24,7 @@ function isFactoryFit(v){
   return (v.driveMech||v.drive)===(v.body?f.drive:ch.drive)&&(v.governor||0)===(f.gov||0)&&(v.tc!==false)===(f.tc!==false)&&v.gears===f.gears&&v.gearing===f.gearing&&v.spacing===(v.body?'stock':'std')&&!(v.finalDriveSet>0)&&v.gearbox===f.gearbox&&v.diff===f.diff&&!v.diffPart&&!v.tyrePart&&
     v.tireType===f.tire&&v.tireWidth===f.tw&&(v.tireWidthF||0)===(f.twF||0)&&!stepOf(v.springF)&&!stepOf(v.springR)&&!stepOf(v.barF)&&!stepOf(v.barR)&&!stepOf(v.damperF)&&!stepOf(v.damperR)&&v.tireAspect===f.ta&&v.wheelDia===f.wheel&&
     v.aeroFront===f.aF&&v.aeroRear===f.aR&&!v.wingPart&&!v.fwingPart&&v.aeroFloor===f.aFl&&v.weightRed===f.weight&&
-    v.brakeType===f.brake&&v.rotor===f.rotor&&v.suspension===f.susp&&geoStock(v)&&!v.dims&&!(v.ballastKg>0);
+    v.brakeType===f.brake&&v.rotor===f.rotor&&!v.brakePart&&v.suspension===f.susp&&geoStock(v)&&!v.dims&&!(v.ballastKg>0);
 }
 // Both axles on the factory's geometry (build 173); a save from before carries none, which is the factory's.
 function geoStock(v){const fg=factoryGeo(v);return (v.suspFront||fg.f)===fg.f&&(v.suspRear||fg.r)===fg.r;}
@@ -41,6 +41,7 @@ function computeVehicleCost(ch,tt,wr){
      (stepOf(vehicle.barF)?1:0)*STIFF_STEP_COST.bar+(stepOf(vehicle.barR)?1:0)*STIFF_STEP_COST.bar+
      (stepOf(vehicle.damperF)?1:0)*STIFF_STEP_COST.damper+(stepOf(vehicle.damperR)?1:0)*STIFF_STEP_COST.damper;   // dampers: build 216
   c+=Math.max(0,vehicle.rotor-320)*6;
+  if(vehicle.brakePart)c+=800;   // a pedal box with a balance bar and two master cylinders (~$500-900 in race catalogues; PROBABLE)
   c+={fwd:0,rwd:800,awd:2500}[vehicle.drive]||0;
   c+=(vehicle.ev?EV_REDUCTION:vehicle.ecvt?PS_REDUCTION:(GEARBOX[vehicle.gearbox]||GEARBOX.manual)).cost+(vehicle.diffPart?DIFF.clsd:DIFF[vehicle.diff]||DIFF.open).cost;
   c+=vehicle.ev||vehicle.ecvt?0:Math.max(0,vehicle.gears-5)*400;
@@ -110,7 +111,7 @@ function buildVehicle(){
   if(D)vehicle.fWt=D.fWt;  // a designed split is the car's own, as built with this engine
   // the ballast at its place along the car (its front axle's share) and its height: the mass-weighted mean of the two
   if(bk>0){vehicle.fWt=(vehicle.fWt*m0+bk*vehicle.ballastPos)/vehicle.mass;vehicle.cg=(vehicle.cg*m0+bk*vehicle.ballastH)/vehicle.mass;}
-  if(vehicle.tyrePart)vehicle.crr*=tyrePressCrr(vehicle);   // the designed pressures, the axles by their load (build 312)
+  if(vehicle.tyrePart)vehicle.crr*=tyrePressCrr(vehicle);   // the designed pressures, the axles by their load (build 313)
   syncDimsForm();
   // Brakes: the deceleration the hydraulics can command (m/s2, before fade). After the weight split, the wheelbase and
   // the centre of gravity, which size the rear brakes (build 203; until then this ran before them).

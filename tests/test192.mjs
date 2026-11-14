@@ -1,12 +1,13 @@
-// Tyre pressure as a part (build 312).
+// Brake balance as a part (build 312).
 //
-// WHY THIS EXISTS. Every car's tyres stood for one inflation pressure (TYRE_KZ, the compounds' Crr, RACE_TREAD's
-// kPa). The PARTS page now sets a cold pressure front and rear. What must hold:
-//   · fitted at the reference pressure (TYRE_P_REF) it moves nothing: stiffness, rolling resistance, 0-100;
-//   · the stiffness goes in proportion to the pressure; the Crr as pressure^-0.4 (SAE J2452), the axles by load;
-//   · the hot pressure is the cold one at constant volume; more pressure aquaplanes later in the race;
-//   · SAVE & FIT puts it on the car (not a factory fit), a factory car loaded after has none, and it travels with a build;
-//   · no factory car carries one.
+// WHY THIS EXISTS. Each car's rear brakes were sized to the R13-H line (front locks first up to 0.8 g), with no way to
+// change it. The PARTS page now designs a balance bar, two master cylinders and the rear caliper and rotor. What must hold:
+//   · the hydraulics: each line's pressure is 2 x its bar share x (19.05 / bore)^2 of BRAKE_LINE_BAR, and the front
+//     share is f / (f + r) from the pistons and rotors; more bar, a smaller front bore or a smaller rear piston move it forward;
+//   · the car's own brakes written as the part give the share it has now;
+//   · the lock order: no-ABS lock points mu fW/(fH - mu h/L) and mu (1-fW)/(1-fH + mu h/L), the first one locks;
+//   · the preview moves nothing; SAVE & FIT puts it on the car (its share and brake force, and the cost); deleting it puts the
+//     R13-H rear back; it travels with a build; no factory car carries one.
 import { chromium } from './pw.mjs';
 import { fileURLToPath, pathToFileURL } from 'url';
 import path from 'path';
@@ -22,47 +23,57 @@ await page.waitForTimeout(400);
 const fails = [];
 
 const r = await page.evaluate(() => {
-  const o = {}, preset = () => loadVehiclePreset(FACTORY_CARS.find(p => p.name.includes('BMW M3 (E46')));
-  preset();
-  const snap = () => [vehicle.crr, quarterCar(vehicle, 'F').kt, quarterCar(vehicle, 'R').kt, perf.t100];
-  o.before = snap(); o.ref = TYRE_P_REF; o.fWt = vehicle.fWt;
-  const fit = (f, rr, name) => { const q = Object.assign(partFromFactory('ref', 'tyre'), { name, front_kPa: f, rear_kPa: rr });
-    partsUI.kind = 'tyre'; partsUI.edit.tyre = Object.assign({}, q); partToEditor('tyre', q); document.getElementById('pySaveFit').click(); };
-  partsUI.kind = 'tyre'; setTab('parts'); previewPart('tyre');
-  o.shown = !document.getElementById('partsTyre').hidden; o.guide = document.getElementById('pyGuide').innerText;
-  fit(TYRE_P_REF, TYRE_P_REF, 'REF'); o.atRef = snap();
-  fit(300, 200, 'TEST PRESSURES');
-  o.fit = { part: !!vehicle.tyrePart, form: document.getElementById('vhTyreP').value === 'part:' + vehicle.tyrePart.id, stock: isFactoryFit(readVehicleFromForm()) };
-  o.after = snap();
-  o.hot = tyreHotKPa(230, 80);
-  const ty = raceCompound('sport'); o.wet = [0, 150, 300].map(k => raceWetKeep(ty, RACE.wetFull, 90 / 3.6, 12, k));
+  const o = {};
+  loadVehiclePreset(FACTORY_CARS.find(p => p.name.includes('BMW M3 (E46')));
+  const snap = () => JSON.stringify([vehicle.brakeFrontShare, vehicle.brakeDecelCap, vehicle.cost, simulateLap('mixed').lap]);
+  const before = snap(), fH0 = vehicle.brakeFrontShare, cost0 = vehicle.cost;
+  const base = partFromFactory('r13h', 'brake');
+  const share = x => { const t = Object.assign({}, vehicle, { brakePart: normPart(Object.assign({}, base, x)) }); brakeForceCap(t); return t.brakeFrontShare; };
+  o.factory = { fH0, part: share({}) };
+  o.press = brakePartPress(normPart(Object.assign({}, base, { bar_pct: 60, mcF_mm: 22, mcR_mm: 17 })));
+  o.bar = [40, 50, 60].map(b => share({ bar_pct: b }));
+  o.mcF = [22, 19.05, 16].map(d => share({ mcF_mm: d }));
+  o.pist = [50, 40, 30].map(d => share({ rearPistonD_mm: d }));
+  o.lockF = brakeLockOrder(0.75, 1, 0.5, 0.2); o.lockR = brakeLockOrder(0.55, 1, 0.5, 0.2);
+  o.presets = FACTORY_CARS.filter(c => c.fit && c.fit.brakePart).length;
+  partsUI.kind = 'brake'; setTab('parts'); previewPart('brake');
+  o.still = before === snap(); o.shown = !document.getElementById('partsBrake').hidden; o.guide = document.getElementById('pkGuide').innerText;
+  const q = Object.assign({}, base, { name: 'TEST BAL', bar_pct: 45 });
+  partsUI.edit.brake = Object.assign({}, q); partToEditor('brake', partsUI.edit.brake);
+  document.getElementById('pkSaveFit').click();
+  const tq = Object.assign({}, vehicle, { brakePart: normPart(Object.assign({}, base, { bar_pct: 45 })) });
+  o.fit = { part: !!vehicle.brakePart, fH: vehicle.brakeFrontShare, want: share({ bar_pct: 45 }), cap: vehicle.brakeDecelCap, capWant: brakeForceCap(tq) / vehicle.mass,
+    form: document.getElementById('vhBrakeBal').value === 'part:' + (vehicle.brakePart && vehicle.brakePart.id), stock: isFactoryFit(readVehicleFromForm()), cost: vehicle.cost - cost0 };
   const saved = serializeBuild('t', '');
-  preset(); o.cleared = !vehicle.tyrePart && JSON.stringify(snap()) === JSON.stringify(o.before);
-  applyBuild(saved); o.travel = vehicle.tyrePart && vehicle.tyrePart.name;
-  o.presets = FACTORY_CARS.filter(c => c.fit && c.fit.tyrePart).length;
+  partAction('del', vehicle.brakePart.id);
+  o.del = { part: !!vehicle.brakePart, fH: vehicle.brakeFrontShare, fH0 };
+  loadVehiclePreset(FACTORY_CARS.find(p => p.name.includes('BMW M3 (E46'))); o.del.back = before === snap();
+  applyBuild(saved);
+  o.travel = { name: vehicle.brakePart && vehicle.brakePart.name, fH: vehicle.brakeFrontShare };
   return o;
 });
 await browser.close();
 
-const near = (a, b, e = 1e-9) => Math.abs(a - b) <= e * Math.max(1, Math.abs(b));
-console.log(`== before ${r.before.map(x => +x.toPrecision(5)).join(' / ')}; at ${r.ref} kPa ${r.atRef.map(x => +x.toPrecision(5)).join(' / ')} ==`);
-if (!r.before.every((x, i) => near(x, r.atRef[i]))) fails.push('the reference pressure, fitted, moves the car');
-const crrWant = r.before[0] * (r.fWt * Math.pow(300 / r.ref, -0.4) + (1 - r.fWt) * Math.pow(200 / r.ref, -0.4));
-console.log(`== 300/200 kPa: Crr ${r.after[0].toFixed(5)} (want ${crrWant.toFixed(5)}), kt ${(r.after[1] / 1e3).toFixed(1)} / ${(r.after[2] / 1e3).toFixed(1)} kN/m, 0-100 ${r.after[3].toFixed(3)} s ==`);
-if (!near(r.after[0], crrWant)) fails.push('the rolling resistance does not follow pressure^-0.4');
-if (!near(r.after[1], r.before[1] * 300 / r.ref) || !near(r.after[2], r.before[2] * 200 / r.ref)) fails.push('the stiffness is not in proportion to the pressure');
-const hot = (230 + 101.3) * (273.15 + 80) / 293.15 - 101.3;
-console.log(`== 230 kPa cold at 80 °C: ${r.hot.toFixed(1)} kPa hot; wet keep at 90 km/h, compound's/150/300 kPa: ${r.wet.map(x => x.toFixed(3)).join(' / ')} ==`);
-if (!near(r.hot, hot)) fails.push('the hot pressure is not the cold one at constant volume');
-if (!(r.wet[2] > r.wet[1])) fails.push('more pressure does not aquaplane later');
-console.log(`== editor shown ${r.shown}; fitted ${JSON.stringify(r.fit)}; preset after clears it ${r.cleared}; travels ${r.travel} ==`);
-if (!r.shown || !/aquaplanes at/.test(r.guide)) fails.push("the pressure editor's preview is not shown");
-if (!r.fit.part || !r.fit.form || r.fit.stock) fails.push('SAVE & FIT does not put the pressures on the car');
-if (!r.cleared) fails.push('a factory car loaded after keeps the pressures');
-if (r.travel !== 'TEST PRESSURES') fails.push('a saved build does not carry its pressures');
-if (r.presets) fails.push(r.presets + ' factory cars carry designed pressures');
+const near = (a, b, e = 1e-9) => Math.abs(a - b) <= e, f3 = a => a.map(x => x.toFixed(4)).join(' / ');
+console.log(`== the car's own brakes as the part: share ${r.factory.part.toFixed(5)} (now ${r.factory.fH0.toFixed(5)}) ==`);
+if (!near(r.factory.part, r.factory.fH0, 2e-4)) fails.push("the car's own brakes written as the part do not give the share it has");
+const k = d => (19.05 / d) ** 2;
+console.log(`== 60% bar, 22/17 mm bores: front ${r.press.f.toFixed(4)}, rear ${r.press.r.toFixed(4)} of the line pressure ==`);
+if (!near(r.press.f, 1.2 * k(22)) || !near(r.press.r, 0.8 * k(17))) fails.push('the line pressures are not the bar over each bore');
+const up = a => a.every((x, i) => i === 0 || x > a[i - 1]);
+console.log(`== front share: bar 40/50/60% ${f3(r.bar)}; front bore 22/19.05/16 ${f3(r.mcF)}; rear piston 50/40/30 ${f3(r.pist)} ==`);
+if (!up(r.bar) || !up(r.mcF) || !up(r.pist)) fails.push('the share does not follow the bar, the bores and the pistons');
+console.log(`== lock order: 75% ${JSON.stringify(r.lockF)}; 55% ${JSON.stringify(r.lockR)} ==`);
+if (r.lockF.first !== 'front' || r.lockR.first !== 'rear' || !near(r.lockF.zF, 0.5 / 0.55) || !near(r.lockR.zR, 0.5 / 0.65) || !near(r.lockF.zc, 1.25)) fails.push('the lock order is not the axles\' grip at a fixed share');
+if (r.presets) fails.push(r.presets + ' factory cars carry a designed brake balance');
+console.log(`== preview moves nothing: ${r.still}, shown ${r.shown}; fitted ${JSON.stringify(r.fit)} ==`);
+if (!r.still || !r.shown || !/Front share/.test(r.guide)) fails.push("the brake designer's preview is not shown, or moved the car");
+if (!r.fit.part || !near(r.fit.fH, r.fit.want) || !r.fit.form || r.fit.stock || r.fit.cost !== 800 || !near(r.fit.cap, r.fit.capWant)) fails.push('SAVE & FIT does not put the balance on the car');
+console.log(`== deleted ${JSON.stringify(r.del)}; travels ${JSON.stringify(r.travel)} ==`);
+if (r.del.part || !near(r.del.fH, r.del.fH0) || !r.del.back) fails.push('deleting the fitted balance does not put the R13-H rear back');
+if (r.travel.name !== 'TEST BAL' || !near(r.travel.fH, r.fit.want)) fails.push('a saved build does not carry its brake balance');
 
 if (errors.length) console.log('ERRORS:\n  ' + errors.join('\n  '));
 if (fails.length) console.log('\nFAIL:\n  ' + fails.join('\n  '));
-else console.log('\nOK: tyre pressures set stiffness, rolling resistance and the aquaplaning speed, and change nothing at the reference.');
+else console.log('\nOK: a designed brake balance sets the front share from its hydraulics, shows which axle locks first, and fits, saves and comes off cleanly.');
 process.exit(fails.length || errors.length ? 1 : 0);

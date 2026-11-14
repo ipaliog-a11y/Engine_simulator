@@ -131,7 +131,7 @@ function raceFilmMm(x,width){
 // Horne's own balance of the water's dynamic pressure against the tyre's (NASA TN D-2056, 1963:
 // Vp = 6.35 sqrt(p kPa) km/h), on the share of the patch the film floods: its depth over itself and the
 // grooves' volume (void x depth), so a slick is all exposed and a full wet barely (the owner's choice, build 303).
-// coldKPa (build 312): a designed pressure's lower axle, hot at the compound's working temperature, in place of tr.kPa.
+// coldKPa (build 313): a designed pressure's lower axle, hot at the compound's working temperature, in place of tr.kPa.
 function raceWetKeep(ty,w,v,width,coldKPa){
   const x=clamp(w/RACE.wetFull,0,1);if(x<=0)return 1;
   const W=RACE_WATER,tr=RACE_TREAD[ty.key]||RACE_TREAD.sport,d=raceFilmMm(x,width);
