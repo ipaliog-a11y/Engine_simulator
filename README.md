@@ -1,4 +1,4 @@
-# PIXEL ENGINE SIM v0.7 build 312
+# PIXEL ENGINE SIM v0.7 build 313
 
 **A lightweight, 8-bit style internal combustion engine *designer* & simulator** inspired by *Automation*.
 
@@ -170,6 +170,8 @@ The eighth, the first part of the car rather than the engine, is the rear wing (
 camber and end plates, by lifting-line theory. The ninth is the front wing (build 306): the same wing, with its height
 over the road. The tenth is the differential (build 310): a clutch-plate LSD from its preload, ramp angle and plates.
 The eleventh is brake balance (build 312): a balance bar, two master cylinders and the rear caliper and rotor.
+The twelfth is tyre pressure (build 313): cold pressures front and rear, which set the tyres' stiffness, rolling
+resistance and aquaplaning speed.
 An electric car is heard (build 198): its motor's whine, the inverter's switching and the reduction's gears, each at
 the frequency its build gives it, on the bench and on the lap replay.
 On the LIVE bench (build 190) a hybrid runs with its motor and pack: a HYBRID panel draws the power flowing between

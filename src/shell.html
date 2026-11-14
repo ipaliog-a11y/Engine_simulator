@@ -46,7 +46,7 @@
 </div>
 <div class="container">
 <header>
-<h1>PIXEL ENGINE SIM v0.7 build 312</h1>
+<h1>PIXEL ENGINE SIM v0.7 build 313</h1>
 <div class="subtitle" id="subtitle">ENGINE DESIGNER • BUILD IT, THEN DRIVE IT</div>
 </header>
 <div class="build-strip" id="buildStrip">
@@ -349,6 +349,7 @@
 <div class="field"><label for="vhTireW">TYRE WIDTH (mm)</label><input type="number" id="vhTireW" min="135" max="355" step="5" value="235"></div>
 <div class="field"><label for="vhTireA">TYRE ASPECT (%)</label><input type="number" id="vhTireA" min="25" max="80" step="5" value="40"></div>
 <div class="field"><label for="vhTireWF">FRONT WIDTH (mm, 0 = same)</label><input type="number" id="vhTireWF" min="0" max="355" step="5" value="0"></div>
+<div class="field"><label for="vhTyreP">TYRE PRESSURE</label><select id="vhTyreP"><option value="ref">REFERENCE (230 kPa)</option></select></div>
 </div></section>
 <section class="evd-card" id="vcdCard-aero" data-card="aero"><div class="evd-fields">
 <div class="field"><label for="vhAeroF">FRONT AERO</label><select id="vhAeroF"><option value="none">NONE</option><option value="splitter">SPLITTER</option><option value="wing">FRONT WING</option></select></div>
@@ -609,6 +610,22 @@
 <div class="part-guide" id="pkGuide"></div>
 <div class="part-chart"><div class="gw-leg" id="pkLegend"></div><canvas id="pkCanvas" role="img" aria-label="Front against rear braking force: the ideal curve and this balance's line, to where an axle locks"></canvas></div>
 <div class="btn-row part-btns"><button type="button" id="pkSave">SAVE PART</button><button type="button" id="pkSaveFit">SAVE &amp; FIT</button></div>
+<div id="partsTyre" hidden>
+<div class="design-section">My tyre pressures</div>
+<div class="part-list" id="pyList"></div>
+<div class="pick-row"><div class="field"><label for="pyFrom">START FROM</label><select id="pyFrom"><option value="ref">THE REFERENCE PRESSURE</option></select></div>
+<div class="field"><label>&nbsp;</label><button type="button" id="pyNew">NEW PRESSURES</button><button type="button" id="pyReset" title="Put the pressures back to the reference, keeping the name">RESET</button></div></div>
+<div class="design-section">Cold pressures</div>
+<div class="hint">Set cold, at 20 °C; the air warms to the compound's working temperature. Fitted from the VEHICLE tab's TYRE PRESSURE, they set the tyres' stiffness, their rolling resistance and the speed they aquaplane at.</div>
+<div class="design-grid">
+<div class="field"><label for="pyName">NAME</label><input type="text" id="pyName" maxlength="40"></div>
+<div class="field"><label for="pyFront">FRONT (kPa)</label><input type="number" id="pyFront" min="80" max="350" step="5"></div>
+<div class="field"><label for="pyRear">REAR (kPa)</label><input type="number" id="pyRear" min="80" max="350" step="5"></div>
+</div>
+<div class="design-section">On this car</div>
+<div class="part-guide" id="pyGuide"></div>
+<div class="part-chart"><div class="gw-leg" id="pyLegend"></div><canvas id="pyCanvas" role="img" aria-label="The aquaplaning speed and the tyre's stiffness against the cold pressure"></canvas></div>
+<div class="btn-row part-btns"><button type="button" id="pySave">SAVE PART</button><button type="button" id="pySaveFit">SAVE &amp; FIT</button></div>
 </div>
 </div>
 
