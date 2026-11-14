@@ -221,7 +221,7 @@ function stepMotorBench(dt){
   const Voc=packOcv(b,st.soc),Vdc=Math.max(b.vMin,Voc-(st.battI||0)*b.R);
   // the pedal asks for a fixed share of the drive at its best (driveRefTorque); the controller draws whatever current that
   // takes, so a partial pedal holds its torque as the pack's voltage falls, until the drive as it is now cannot give it
-  const Treq=st.soc>0.005?st.throttle*driveRefTorque(e,st.rpm):0,Tmax=st.soc>0.005?driveMaxTorque(e,st.rpm,Vdc,st.mT,st.soc):0,T=Math.min(Treq,Tmax);
+  const on=st.ignOn!==false,Treq=on&&st.soc>0.005?st.throttle*driveRefTorque(e,st.rpm):0,Tmax=on&&st.soc>0.005?driveMaxTorque(e,st.rpm,Vdc,st.mT,st.soc):0,T=Math.min(Treq,Tmax);
   // what holds the torque under the pedal's request, for the LIVE panel (build 196): limp mode, the battery management at a
   // low charge, the controller's heat, or the pack's voltage and current
   st.evAsked=Treq;

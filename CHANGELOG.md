@@ -18,6 +18,17 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 ## [Unreleased]
 
+### Electric and hybrid sound is quieter and stops with no torque; POWER OFF switches the whole car off (build 307)
+
+- The motor's voice was too loud and shrill, and whined even at zero throttle: the inverter's PWM tone (10–16 kHz) played
+  whenever a magnet motor was fitted, standing still included. It now grows with the current and stops with no torque
+  asked, as an inverter blocks its pulses then. A magnet motor standing with no torque is silent (was a steady whine).
+- The stator-mode boost around 2.4 kHz is at most 2× (was 4×), the PWM level 0.03 (was 0.05), a magnet motor's slotting
+  with no torque 12% of full (was 35%), and the overall level 0.20 (was 0.35). These levels are chosen by ear, as before.
+- POWER OFF / STARTER on an electric car or a hybrid now switch the whole car off and on (READY). Off: the motor gives no
+  torque, a hybrid's engine stops and the controller cannot restart it, nothing charges or draws, nothing is heard. Before,
+  they were disabled on an EV, and on a hybrid only stopped the engine (which AUTO could start again). Guide updated.
+- Tests: test114 (silent at no torque, no PWM tone, not heard when off), test162 (EV and hybrid power off and on).
 ### The front wing as a part (build 306)
 
 Phase D of `plans/road-to-v1.md`: the front wing, the same way as build 291's rear wing.

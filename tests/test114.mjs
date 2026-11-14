@@ -9,7 +9,9 @@
 //     leaves it nothing (a cruise), heard when the rear runs short;
 //   · in the live page: SOUND ON on an electric car starts the motor's voice and keeps the engine's muted; it follows the
 //     bench (speed, torque); on a hybrid it plays the bench's motor; on another tab, or with SOUND OFF, it is silent;
-//     on the TRACK tab's replay it plays the lap; nothing throws.
+//     on the TRACK tab's replay it plays the lap; nothing throws;
+//   · (build 306) with no torque asked the inverter's whine stops: a magnet motor standing still is silent, and turning
+//     with no torque it has no PWM tone; switched off (POWER OFF) the bench's drive is not heard.
 import { chromium } from './pw.mjs';
 import { fileURLToPath, pathToFileURL } from 'url';
 import path from 'path';
@@ -50,6 +52,8 @@ const r = await page.evaluate(async () => {
   o.peaks = { ripple: stand(x, 6 * fe), slot: stand(x, c3.groups[0].slotOrder * rpm / 60), mesh1: stand(x, z[0] * rpm / 60), mesh2: stand(x, z[2] * rpm / (60 * z[1] / z[0])),
     pwmUp: stand(x, 16000 + 2 * fe), pwmDn: stand(x, 16000 - 2 * fe), finite: finite(x) };
   o.load = power(x, 6 * fe) - power(xLo, 6 * fe);
+  const x0 = await render(c3, 0, [0, 0], 0), xc0 = await render(c3, rpm, [0, 0], 0.43);
+  o.idle = { rms: Math.sqrt(x0.reduce((a, v) => a + v * v, 0) / x0.length), pwm: power(xc0, 16000 - 2 * fe) - power(x, 16000 - 2 * fe) };
   // the Model Y: the induction front motor at a cruise (the controller leaves it nothing) and flat out
   loadVehiclePreset(EV_VEHICLE_PRESETS.find(p => /Model Y/.test(p.name))); setTab('design');
   const cy = motorSoundConfig(engine), F = cy.groups[1], fSlot = F.slotOrder * rpm / 60;
@@ -71,6 +75,7 @@ const r = await page.evaluate(async () => {
   o.live.engineLevel = Sound.node ? Sound.node.parameters.get('level').value : null;
   await new Promise(res => setTimeout(res, 300));
   o.live.levelAfter = Sound.motor ? Sound.motor.parameters.get('level').value : null;
+  state.ignOn = false; o.live.offState = motorSoundState(Sound.motorCfg); state.ignOn = true;
   setTab('garage'); o.live.otherTab = motorSoundState(Sound.motorCfg);
   setTab('dyno'); setSound(false); updateSound(); await new Promise(res => setTimeout(res, 400));
   o.live.offLevel = Sound.motor ? Sound.motor.parameters.get('level').value : null;
@@ -90,6 +95,10 @@ const r = await page.evaluate(async () => {
 const f = (x, d = 1) => (+x).toFixed(d);
 
 const C = r.c3, P = r.peaks;
+console.log(`== no torque: standing rms ${r.idle.rms.toExponential(1)}, turning PWM tone ${f(r.idle.pwm)} dB against half torque; switched off: ${JSON.stringify(r.live.offState)} ==`);
+if (!(r.idle.rms < 1e-4)) fails.push('a magnet motor standing still with no torque is heard (the inverter whine)');
+if (!(r.idle.pwm < -20)) fails.push('the inverter\'s PWM tone plays with no torque asked');
+if (r.live.offState !== null) fails.push('the bench\'s drive is heard with the car switched off');
 console.log(`== Model 3 drive: ${C.groups.map(g => `${g.p * 2}-pole, slotting order ${g.slot}, ${g.fsw / 1000} kHz, ${f(g.Tpk, 0)} Nm`).join(' + ')}; gears ${C.gears.join('/')} (reduction ${f(C.fd, 2)}); knee ${C.knee} rpm ==`);
 console.log(`== at 3000 rpm, half torque, each tone over its neighbours: 6 fe ${f(P.ripple)} dB, slotting ${f(P.slot)}, mesh 1 ${f(P.mesh1)}, mesh 2 ${f(P.mesh2)}, ` +
   `inverter ${f(P.pwmDn)} / ${f(P.pwmUp)} dB; the ripple ${f(r.load)} dB louder at half torque than at a tenth ==`);

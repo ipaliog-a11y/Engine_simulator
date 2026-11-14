@@ -83,6 +83,8 @@ function hybControl(H,dt){
   const deplete=e.hyPlug&&(mode==='auto')&&H.soc>tu.socT/100+0.02;
   const Pev=deplete?Math.min(Pmax,motorMaxTorque(hy.motor,Math.max(n,1000),hybBusV(hy),60)*Math.max(n,1000)*Math.PI/30):tu.evKw>0?tu.evKw*1000:B.evShare*Math.min(Pmax,motorMaxTorque(hy.motor,Math.max(n,1000),hybBusV(hy),60)*Math.max(n,1000)*Math.PI/30);
   let on=H.engOn;
+  // the car switched off (POWER OFF, build 306): no engine, no motor, no charging
+  if(state.ignOn===false){H.engOn=false;H.dwell=0;H.thrE=0;H.TeWant=null;H.TmWant=0;return {Pmax,Pchg};}
   if(mode==='ev'){on=H.soc<lo;if(on&&!H.lowFlash){H.lowFlash=1;flash(tr('PACK LOW • ENGINE STARTED'),'warn');}if(!on)H.lowFlash=0;}
   else if(mode==='auto'||mode==='hold'){
     const low=H.soc<socT-0.1;
@@ -132,7 +134,7 @@ function hybControl(H,dt){
 }
 // One bench step for a hybrid, in place of stepEngine.
 function stepHybridBench(dt){
-  const e=engine,hy=e.hy,H=hybBenchState(),B=HYB_BENCH,ps=hy.mode!=='p2',m=hy.motor,pack=hy.pack;
+  const e=engine,hy=e.hy,H=hybBenchState(),B=state.ignOn===false?{...HYB_BENCH,auxW:0}:HYB_BENCH,ps=hy.mode!=='p2',m=hy.motor,pack=hy.pack;
   const lim=hybControl(H,dt);
   // the engine's air path and torque at its own throttle; off, it coasts to a stop with its manifold at the air
   if(H.engOn){
