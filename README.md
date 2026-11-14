@@ -1,4 +1,4 @@
-# PIXEL ENGINE SIM v0.7 build 290
+# PIXEL ENGINE SIM v0.7 build 291
 
 **A lightweight, 8-bit style internal combustion engine *designer* & simulator** inspired by *Automation*.
 
@@ -266,7 +266,8 @@ assist map over speed and pedal), regeneration, load-point shifting, electric-dr
   - **Brakes carry their heat.** The lap solver's rotor model runs through the whole race, so
     temperatures build lap on lap past a single hot lap's and cool in the pit box. A car whose pads
     fade brakes earlier as they do: its braking zones stretch by how much less it can stop with.
-  - **Racecraft and drivers.** The tow grows as the gap closes, so cars nose to tail pull each other along. A
+  - **Racecraft and drivers.** The tow is the drag a car loses in another's wake, from wind-tunnel measurements,
+    so cars nose to tail pull each other along; dirty air takes away downforce, so it costs a winged car the most. A
     car with a quicker car behind may defend on the inside line (harder to pass, a slower exit), a held-up car may
     try a late-braking move that sticks or runs it wide (its odds are the two cars' grip and brakes and the two
     drivers), and the car just passed can take the place straight back. Each car has a driver: balanced,
@@ -925,8 +926,8 @@ documented in the GUIDE at the point where it matters:
   - **Unpublished inputs:** the cars' factory roll balance and their real tyre load sensitivity per axle are not
     published. Every car starts at NEUTRAL roll balance, though a real road car's factory setup understeers a
     little more.
-- **The race's racecraft is rules, not physics.** Overtaking, the tow, dirty air, pit-lane loss and
-  driver error are rules with fitted numbers. The cars share one racing line rather than fighting for
+- **The race's racecraft is rules, not physics.** Overtaking, pit-lane loss and
+  driver error are rules with fitted numbers (the tow and dirty air come from measured wakes since build 291). The cars share one racing line rather than fighting for
   space on it, and the tyre model's heat, grip-window, wear and wet-grip constants are fitted to the
   usual published ranges, not derived. When the rain comes and how fast a line dries are rules drawn
   from the seed, not a forecast.

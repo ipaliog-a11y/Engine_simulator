@@ -153,18 +153,15 @@ identical fingerprint):
    surface layer, and how much of that the road takes back depends on the share of the patch truly in contact,
    which no handbook gives. One lump cannot hold it: it needs a surface and a bulk, and that share. `TYRE_RACE`'s
    heat constants (`slip`, `roll`, `H0`, `H1`, `hTrack`, `cp`) go into the register as a rule, signed off.
-2. **Grip and wear from the rubber.** Grip against temperature from the compound's glass transition through the WLF
-   shift (Williams, Landel, Ferry 1955; Grosch 1963), so `tOpt` and `tWin` follow from a compound's Tg and the sliding
-   speed (retires `cold`, `hot`, `gMin`). Wear as abrasion from the friction energy (Schallamach; Grosch 1997's
-   abradability), against a tread depth per compound (retires `wearK`, `wearHot`, `wear`). The wear cliff
-   (`wLin`, `wCliff`, `wKnee`) is graining and blistering, which this model does not have: it stays a rule, signed off,
-   unless a cited model is found while building it. A compound's Tg is seldom published: on the `unsure` list.
+2. **Grip and wear from the rubber: with the heat, after v1.0** (owner's decision, November 2026). Both read the
+   tread's temperature, which is now a rule, and their inputs are not published: a compound's Tg (racing at -10 to
+   -15 C and road at -40 C for Persson; a measured pair the other way, -26 and -22) and an abrasion rate per joule.
 3. **Wet grip.** The water film's depth from the rain rate and the road's texture and drainage (Gallaway 1979, in mm,
    in place of `RACE.wetFull`), the tread's grooves clearing it, and grip falling towards the hydroplaning speed
    (Horne and Dreher, NASA TN D-2056, from the tyre's pressure) (retires `wetKeep`, `hWet`). The tyre's pressure is a
    phase D part not built yet: until then each compound carries its maker's usual pressure, cited, and D's part
    replaces it. The rain's arrival and amount stay a weather rule.
-4. **The wake and the pit lane.** Behind a car, its follower's drag and downforce fall with the gap in car lengths, from
+4. **The wake and the pit lane.** *Build 291: the wake (`RACE_WAKE`, `raceWake`, `tests/test79.mjs`). Next: the pit lane.* Behind a car, its follower's drag and downforce fall with the gap in car lengths, from
    measured data (Zabat et al. 1995, PATH platoon tests; for downforce, published wind-tunnel and CFD wake figures).
    The speed then comes from the car's own balance: on a straight its power against its reduced drag, in a corner its
    grip at its reduced downforce. A road car barely feels dirty air and a winged car does (retires `slipGap`,
