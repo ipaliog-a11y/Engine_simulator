@@ -534,7 +534,12 @@ function motorOpSolve(m,T,rpm,Vdc,tMag){
     let a=0,b=I;for(let k=0;k<16;k++){const i=(a+b)/2;if(Math.abs(dqFast(m,-i*s,sg*i*c,tMag).T)<aT)a=i;else b=i;}
     return b;};
   const ok=g=>{const i=onT(g);return i<Infinity&&vAt(-i*Math.sin(g),sg*i*Math.cos(g))<=V;};
+  // the far end: the angle where full current just gives the torque (past it the current cannot)
   let ga=o.g,gb=Math.PI/2*0.995;
+  if(Math.abs(dqFast(m,-I*Math.sin(gb),sg*I*Math.cos(gb),tMag).T)<aT){
+    let a=o.g,b=gb;for(let k=0;k<16;k++){const g=(a+b)/2;if(Math.abs(dqFast(m,-I*Math.sin(g),sg*I*Math.cos(g),tMag).T)>=aT)a=g;else b=g;}
+    gb=a;
+  }
   if(!ok(gb)){
     // past what the motor can give at this speed: full current, at the angle of least voltage
     let best=gb,bv=Infinity;for(let k=0;k<=16;k++){const g=o.g+(gb-o.g)*k/16,v=vAt(-I*Math.sin(g),sg*I*Math.cos(g));if(v<bv){bv=v;best=g;}}
