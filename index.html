@@ -774,7 +774,7 @@ body.showcase-open{overflow:hidden}
 </div>
 <div class="container">
 <header>
-<h1>PIXEL ENGINE SIM v0.7 build 305</h1>
+<h1>PIXEL ENGINE SIM v0.7 build 306</h1>
 <div class="subtitle" id="subtitle">ENGINE DESIGNER • BUILD IT, THEN DRIVE IT</div>
 </header>
 <div class="build-strip" id="buildStrip">
@@ -1132,11 +1132,11 @@ Diesel: full fuel at the smoke limit, λ1.2; leaner is less torque but less fuel
 temp is out of range, <b>BATT</b> when the 12&nbsp;V side is low, and on a hybrid <b>HYB</b> shows the
 drive mode (and warns when the engine is off). <b>OIL P</b> (oil pressure) and <b>FAULT</b> (codes)
 are placeholders — those systems are not modeled yet, so the lamps stay dim.<br>
-<b>STARTER · POWER OFF</b> — on a hybrid they start and stop the engine (the same <i>engOn</i> the
-drive mode uses). On a combustion engine POWER OFF cuts the ignition: the burning stops and the engine
+<b>STARTER · POWER OFF</b> — on a hybrid or an electric car they switch the whole car on (READY) and
+off: off, the motor gives no torque, the engine stops, nothing charges and nothing is heard; a hybrid
+comes on with its engine running and the drive mode decides from there. On a combustion engine POWER OFF cuts the ignition: the burning stops and the engine
 coasts down to rest on its own friction. STARTER cranks it on the 12 V battery; it fires after one whole
-cycle at cranking speed and settles at idle. A flat battery cannot crank it. On a pure EV they
-are disabled (there is no engine).
+cycle at cranking speed and settles at idle. A flat battery cannot crank it.
 </div>
 <div class="guide-body" data-gk="opButtons">
 <b>PEAK TORQUE · MAX POWER · ECO</b> — three buttons that put the engine you built on a real
@@ -17023,12 +17023,14 @@ const SOUND_IR={rate:44100,mild:'0r36gXeBd4F3gXeBdoF3gXeBd4GCgc+K/FcYfod+iX6Jfoh
 // A motor, its inverter and its reduction, each voice at the frequency the drive's build gives it; only the levels are
 // chosen (by ear). Per motor group: torque ripple at 6 fe (fe = p n/60), louder with the current; slotting at
 // LCM(slots, poles) n/60 for a magnet motor, there whenever the magnets spin, or an induction rotor's bars (Qr n/60),
-// silent with no torque (no field); both swell through the stator's first bending mode (an assumed 2.4 kHz, Q 3). The
-// inverter's PWM sidebands at fc +/- 2 fe, weighted by J2(pi m/2) for the modulation depth m, and at 2 fc +/- fe, quieter
-// the higher fc (ripple is V/(L fc)). The reduction's two meshes (tooth counts assumed: motorSoundConfig) with the
+// silent with no torque (no field); both swell through the stator's first bending mode (an assumed 2.4 kHz, Q 3, at most
+// twice as loud: build 306, four times was a shrill peak where the ear is keenest). The inverter's PWM sidebands at
+// fc +/- 2 fe, weighted by J2(pi m/2) for the modulation depth m, and at 2 fc +/- fe, quieter the higher fc (ripple is
+// V/(L fc)); since build 306 they grow with the current (the force is ripple times the stator's field) and stop with no
+// torque asked, as an inverter blocks its pulses then (until then a magnet motor whined at 10-16 kHz even standing). The reduction's two meshes (tooth counts assumed: motorSoundConfig) with the
 // load, and windage with the speed squared. A tone fades over the last 3 kHz below the Nyquist frequency.
 const SOUND_MOTOR_SRC=`
-const MOTOR_MODE={hz:2400,q:3},MOTOR_LEVEL={ripple:0.10,slot:0.07,pwm:0.05,gear:0.08,wind:0.02};
+const MOTOR_MODE={hz:2400,q:3},MOTOR_LEVEL={ripple:0.10,slot:0.07,pwm:0.03,gear:0.08,wind:0.02};
 class MotorSound extends AudioWorkletProcessor{
   static get parameterDescriptors(){return[
     {name:'rpm',defaultValue:0,minValue:0,maxValue:40000,automationRate:'k-rate'},
@@ -17039,7 +17041,7 @@ class MotorSound extends AudioWorkletProcessor{
   constructor(){super();this.cfg=null;this.rnd=1;this.w1=0;this.w2=0;this.port.onmessage=e=>this.configure(e.data);}
   configure(c){this.cfg=c;this.ph=c.groups.map(()=>new Float64Array(7));this.gph=new Float64Array(3);}
   static j2(x){let s=0,t=(x/2)*(x/2)/2;for(let k=0;k<12;k++){s+=t;t*=-((x/2)*(x/2))/((k+1)*(k+3));}return s;}
-  static mode(f){const x=f/MOTOR_MODE.hz;return 1+3/Math.sqrt(1+MOTOR_MODE.q*MOTOR_MODE.q*(x-1/x)*(x-1/x));}
+  static mode(f){const x=f/MOTOR_MODE.hz;return 1+1/Math.sqrt(1+MOTOR_MODE.q*MOTOR_MODE.q*(x-1/x)*(x-1/x));}
   tone(ph,k,f,a){const top=sampleRate/2-500;if(a<=0||f<=20||f>=top)return 0;ph[k]=(ph[k]+f/sampleRate)%1;
     return a*Math.min(1,(top-f)/3000)*MotorSound.mode(f)*Math.sin(2*Math.PI*ph[k]);}
   noise(){let r=this.rnd;r^=r<<13;r^=r>>>17;r^=r<<5;this.rnd=r>>>0;return this.rnd/4294967296*2-1;}
@@ -17052,10 +17054,10 @@ class MotorSound extends AudioWorkletProcessor{
       let y=0;
       for(let g=0;g<c.groups.length;g++){
         const G=c.groups[g],ph=this.ph[g],T=tqs[g]||0,tl=T/Math.max(1,G.Tpk),amp=Math.sqrt(G.n),fe=G.p*n/60;
-        const slotA=amp*V.slot*(G.im?tl:0.35+0.65*tl)*Math.min(1,sp*4);
+        const slotA=amp*V.slot*(G.im?tl:0.12+0.88*tl)*Math.min(1,sp*4);
         y+=this.tone(ph,0,6*fe,amp*V.ripple*tl)+this.tone(ph,1,G.slotOrder*n/60,slotA)+this.tone(ph,2,2*G.slotOrder*n/60,0.4*slotA);
-        if(T>0.5||!G.im){
-          const a=amp*V.pwm*(10000/G.fsw),j=0.15+6*Math.abs(MotorSound.j2(Math.PI*m/2));
+        if(T>0.5){
+          const a=amp*V.pwm*(10000/G.fsw)*Math.min(1,0.2+tl),j=0.15+6*Math.abs(MotorSound.j2(Math.PI*m/2));
           y+=this.tone(ph,3,G.fsw+2*fe,a*j)+this.tone(ph,4,G.fsw-2*fe,a*j)+this.tone(ph,5,2*G.fsw+fe,a*0.5*m)+this.tone(ph,6,2*G.fsw-fe,a*0.5*m);
         }
       }
@@ -17425,7 +17427,8 @@ function soundConfig(e){
     bovTau:3*(e.chargeVol||0.003)/(0.6*Math.PI/4*bovBore(e)**2*(e.turbUnits||1)*340)};
 }
 // ---- the electric drive's voice (build 198): what the motor-sound worklet needs, and what it plays ----
-const MOTOR_SOUND_LEVEL=0.35, MOTOR_PINIONS=[19,23];
+const MOTOR_SOUND_LEVEL=0.2,   // was 0.35 until build 306: louder than the engines
+      MOTOR_PINIONS=[19,23];
 // The reduction's two stages: the pinions assumed (19 and 23 teeth, tooth counts are not published), the wheels the pair
 // closest to the car's ratio with the first within 15% of the square-root split (9.025 for Tesla's 9.03).
 function motorGearStages(fd){
@@ -17466,6 +17469,7 @@ function motorSoundState(c){
   if(!c)return null;
   const e=engine;
   if(soundSource()===state){   // where the engine's sound is heard from the bench
+    if(state.ignOn===false)return null;   // the car switched off (POWER OFF): no current, nothing to hear (build 306)
     if(isElectric())return {rpm:state.rpm,T:state.blown?0:state.torque};
     if(e.hy&&typeof hybBench!=='undefined'&&hybBench)return {rpm:hybBench.n,T:hybBench.Tm||0};
     return null;
@@ -23472,10 +23476,10 @@ function updateDashLamps(){
   // 12 V side: ICE/hybrid systemVoltage; EV uses the bus readout but keep BATT as pack-low warn
   if(ev)set('lampBatt',state.soc<0.2?'danger':state.soc<0.35?'warn':'');
   else set('lampBatt',state.systemVoltage<11.6?'danger':state.batterySOC<0.35?'warn':'');
-  // Starter / Power Off: EV has no combustion engine to start
-  const st=g('btnStarter'),po=g('btnPowerOff');
-  if(st){st.disabled=ev;st.title=ev?tr('NO ENGINE — ELECTRIC DRIVE'):tr('Start the engine');}
-  if(po){po.disabled=ev;po.title=ev?tr('NO ENGINE — ELECTRIC DRIVE'):tr('Switch the engine off');}
+  // Starter / Power Off: on an electric car or a hybrid they switch the whole car on (READY) and off (build 306)
+  const st=g('btnStarter'),po=g('btnPowerOff'),car=ev||hy;
+  if(st){st.disabled=false;st.title=car?tr('Switch the car on (READY)'):tr('Start the engine');}
+  if(po){po.disabled=false;po.title=car?tr('Switch the whole car off'):tr('Switch the engine off');}
 }
 function updateUI(){
   updateHybridPanel();   // build 190: shown for a hybrid, hidden otherwise
@@ -25556,7 +25560,7 @@ function stepMotorBench(dt){
   const Voc=packOcv(b,st.soc),Vdc=Math.max(b.vMin,Voc-(st.battI||0)*b.R);
   // the pedal asks for a fixed share of the drive at its best (driveRefTorque); the controller draws whatever current that
   // takes, so a partial pedal holds its torque as the pack's voltage falls, until the drive as it is now cannot give it
-  const Treq=st.soc>0.005?st.throttle*driveRefTorque(e,st.rpm):0,Tmax=st.soc>0.005?driveMaxTorque(e,st.rpm,Vdc,st.mT,st.soc):0,T=Math.min(Treq,Tmax);
+  const on=st.ignOn!==false,Treq=on&&st.soc>0.005?st.throttle*driveRefTorque(e,st.rpm):0,Tmax=on&&st.soc>0.005?driveMaxTorque(e,st.rpm,Vdc,st.mT,st.soc):0,T=Math.min(Treq,Tmax);
   // what holds the torque under the pedal's request, for the LIVE panel (build 196): limp mode, the battery management at a
   // low charge, the controller's heat, or the pack's voltage and current
   st.evAsked=Treq;
@@ -26891,6 +26895,8 @@ function hybControl(H,dt){
   const deplete=e.hyPlug&&(mode==='auto')&&H.soc>tu.socT/100+0.02;
   const Pev=deplete?Math.min(Pmax,motorMaxTorque(hy.motor,Math.max(n,1000),hybBusV(hy),60)*Math.max(n,1000)*Math.PI/30):tu.evKw>0?tu.evKw*1000:B.evShare*Math.min(Pmax,motorMaxTorque(hy.motor,Math.max(n,1000),hybBusV(hy),60)*Math.max(n,1000)*Math.PI/30);
   let on=H.engOn;
+  // the car switched off (POWER OFF, build 306): no engine, no motor, no charging
+  if(state.ignOn===false){H.engOn=false;H.dwell=0;H.thrE=0;H.TeWant=null;H.TmWant=0;return {Pmax,Pchg};}
   if(mode==='ev'){on=H.soc<lo;if(on&&!H.lowFlash){H.lowFlash=1;flash(tr('PACK LOW • ENGINE STARTED'),'warn');}if(!on)H.lowFlash=0;}
   else if(mode==='auto'||mode==='hold'){
     const low=H.soc<socT-0.1;
@@ -26940,7 +26946,7 @@ function hybControl(H,dt){
 }
 // One bench step for a hybrid, in place of stepEngine.
 function stepHybridBench(dt){
-  const e=engine,hy=e.hy,H=hybBenchState(),B=HYB_BENCH,ps=hy.mode!=='p2',m=hy.motor,pack=hy.pack;
+  const e=engine,hy=e.hy,H=hybBenchState(),B=state.ignOn===false?{...HYB_BENCH,auxW:0}:HYB_BENCH,ps=hy.mode!=='p2',m=hy.motor,pack=hy.pack;
   const lim=hybControl(H,dt);
   // the engine's air path and torque at its own throttle; off, it coasts to a stop with its manifold at the air
   if(H.engOn){
@@ -29266,24 +29272,26 @@ function bindControls(){
   document.getElementById('btnMaxPower').addEventListener('click',()=>applyOperatingPoint('power'));
   document.getElementById('btnEco').addEventListener('click',()=>applyOperatingPoint('eco'));
   document.getElementById('btnReset').addEventListener('click',()=>{state.firing=true;state.ignOn=true;state.crank=0;setAutoThermal(false);state.engineHealth=1.0;state.blown=false;state.wearCause='';state.coolant=90;state.oil=100;state.batterySOC=1.0;applyPreset({throttle:0.10,load:0.20,afr:14.7,iat:25,coolant:90,oil:100})});
-  // Starter / Power Off (build 254): hybrid reuses engOn; ICE start-stop is not modeled yet; EV has no engine.
+  // Starter / Power Off (build 254). On an electric car or a hybrid they switch the whole car on (READY) and off
+  // (build 306): off, nothing drives, charges or is heard; a hybrid comes on with its engine running, then the controller
+  // decides.
   document.getElementById('btnStarter').addEventListener('click',()=>{
-    if(isElectric()){flash(tr('NO ENGINE — ELECTRIC DRIVE'),'warn');return;}
-    if(isHybrid()){
-      const H=hybBenchState();
-      if(H.engOn){flash(tr('ENGINE ALREADY ON'));return;}
-      H.engOn=true;H.dwell=0;flash(tr('STARTER')+' • '+tr('ENGINE ON'));return;
+    if(isElectric()||isHybrid()){
+      if(state.ignOn!==false){flash(tr('ALREADY ON • READY'));return;}
+      state.ignOn=true;
+      if(isHybrid()){const H=hybBenchState();H.engOn=true;H.dwell=0;}
+      flash(tr('READY'));return;
     }
     if(state.firing){flash(tr('ENGINE ALREADY ON'));return;}
     if(state.blown){flash(tr('ENGINE BLOWN — RESET TO REBUILD'),'warn');return;}
     engineStart();flash(state.batterySOC<0.2?tr('STARTER')+' • '+tr('BATTERY TOO FLAT TO CRANK'):tr('STARTER')+' • '+tr('CRANKING'),state.batterySOC<0.2?'warn':undefined);
   });
   document.getElementById('btnPowerOff').addEventListener('click',()=>{
-    if(isElectric()){flash(tr('NO ENGINE — ELECTRIC DRIVE'),'warn');return;}
-    if(isHybrid()){
-      const H=hybBenchState();
-      if(!H.engOn){flash(tr('ENGINE ALREADY OFF'));return;}
-      H.engOn=false;H.dwell=0;flash(tr('POWER OFF')+' • '+tr('ENGINE OFF'));return;
+    if(isElectric()||isHybrid()){
+      if(state.ignOn===false){flash(tr('CAR ALREADY OFF'));return;}
+      state.ignOn=false;
+      if(isHybrid()){const H=hybBenchState();H.engOn=false;H.dwell=0;}
+      flash(tr('POWER OFF')+' • '+tr('CAR OFF'));return;
     }
     if(!state.ignOn&&!state.firing){flash(tr('ENGINE ALREADY OFF'));return;}
     engineOff();flash(tr('POWER OFF')+' • '+tr('ENGINE OFF'));

@@ -442,12 +442,14 @@ const SOUND_IR={rate:44100,mild:'0r36gXeBd4F3gXeBdoF3gXeBd4GCgc+K/FcYfod+iX6Jfoh
 // A motor, its inverter and its reduction, each voice at the frequency the drive's build gives it; only the levels are
 // chosen (by ear). Per motor group: torque ripple at 6 fe (fe = p n/60), louder with the current; slotting at
 // LCM(slots, poles) n/60 for a magnet motor, there whenever the magnets spin, or an induction rotor's bars (Qr n/60),
-// silent with no torque (no field); both swell through the stator's first bending mode (an assumed 2.4 kHz, Q 3). The
-// inverter's PWM sidebands at fc +/- 2 fe, weighted by J2(pi m/2) for the modulation depth m, and at 2 fc +/- fe, quieter
-// the higher fc (ripple is V/(L fc)). The reduction's two meshes (tooth counts assumed: motorSoundConfig) with the
+// silent with no torque (no field); both swell through the stator's first bending mode (an assumed 2.4 kHz, Q 3, at most
+// twice as loud: build 306, four times was a shrill peak where the ear is keenest). The inverter's PWM sidebands at
+// fc +/- 2 fe, weighted by J2(pi m/2) for the modulation depth m, and at 2 fc +/- fe, quieter the higher fc (ripple is
+// V/(L fc)); since build 306 they grow with the current (the force is ripple times the stator's field) and stop with no
+// torque asked, as an inverter blocks its pulses then (until then a magnet motor whined at 10-16 kHz even standing). The reduction's two meshes (tooth counts assumed: motorSoundConfig) with the
 // load, and windage with the speed squared. A tone fades over the last 3 kHz below the Nyquist frequency.
 const SOUND_MOTOR_SRC=`
-const MOTOR_MODE={hz:2400,q:3},MOTOR_LEVEL={ripple:0.10,slot:0.07,pwm:0.05,gear:0.08,wind:0.02};
+const MOTOR_MODE={hz:2400,q:3},MOTOR_LEVEL={ripple:0.10,slot:0.07,pwm:0.03,gear:0.08,wind:0.02};
 class MotorSound extends AudioWorkletProcessor{
   static get parameterDescriptors(){return[
     {name:'rpm',defaultValue:0,minValue:0,maxValue:40000,automationRate:'k-rate'},
@@ -458,7 +460,7 @@ class MotorSound extends AudioWorkletProcessor{
   constructor(){super();this.cfg=null;this.rnd=1;this.w1=0;this.w2=0;this.port.onmessage=e=>this.configure(e.data);}
   configure(c){this.cfg=c;this.ph=c.groups.map(()=>new Float64Array(7));this.gph=new Float64Array(3);}
   static j2(x){let s=0,t=(x/2)*(x/2)/2;for(let k=0;k<12;k++){s+=t;t*=-((x/2)*(x/2))/((k+1)*(k+3));}return s;}
-  static mode(f){const x=f/MOTOR_MODE.hz;return 1+3/Math.sqrt(1+MOTOR_MODE.q*MOTOR_MODE.q*(x-1/x)*(x-1/x));}
+  static mode(f){const x=f/MOTOR_MODE.hz;return 1+1/Math.sqrt(1+MOTOR_MODE.q*MOTOR_MODE.q*(x-1/x)*(x-1/x));}
   tone(ph,k,f,a){const top=sampleRate/2-500;if(a<=0||f<=20||f>=top)return 0;ph[k]=(ph[k]+f/sampleRate)%1;
     return a*Math.min(1,(top-f)/3000)*MotorSound.mode(f)*Math.sin(2*Math.PI*ph[k]);}
   noise(){let r=this.rnd;r^=r<<13;r^=r>>>17;r^=r<<5;this.rnd=r>>>0;return this.rnd/4294967296*2-1;}
@@ -471,10 +473,10 @@ class MotorSound extends AudioWorkletProcessor{
       let y=0;
       for(let g=0;g<c.groups.length;g++){
         const G=c.groups[g],ph=this.ph[g],T=tqs[g]||0,tl=T/Math.max(1,G.Tpk),amp=Math.sqrt(G.n),fe=G.p*n/60;
-        const slotA=amp*V.slot*(G.im?tl:0.35+0.65*tl)*Math.min(1,sp*4);
+        const slotA=amp*V.slot*(G.im?tl:0.12+0.88*tl)*Math.min(1,sp*4);
         y+=this.tone(ph,0,6*fe,amp*V.ripple*tl)+this.tone(ph,1,G.slotOrder*n/60,slotA)+this.tone(ph,2,2*G.slotOrder*n/60,0.4*slotA);
-        if(T>0.5||!G.im){
-          const a=amp*V.pwm*(10000/G.fsw),j=0.15+6*Math.abs(MotorSound.j2(Math.PI*m/2));
+        if(T>0.5){
+          const a=amp*V.pwm*(10000/G.fsw)*Math.min(1,0.2+tl),j=0.15+6*Math.abs(MotorSound.j2(Math.PI*m/2));
           y+=this.tone(ph,3,G.fsw+2*fe,a*j)+this.tone(ph,4,G.fsw-2*fe,a*j)+this.tone(ph,5,2*G.fsw+fe,a*0.5*m)+this.tone(ph,6,2*G.fsw-fe,a*0.5*m);
         }
       }
@@ -844,7 +846,8 @@ function soundConfig(e){
     bovTau:3*(e.chargeVol||0.003)/(0.6*Math.PI/4*bovBore(e)**2*(e.turbUnits||1)*340)};
 }
 // ---- the electric drive's voice (build 198): what the motor-sound worklet needs, and what it plays ----
-const MOTOR_SOUND_LEVEL=0.35, MOTOR_PINIONS=[19,23];
+const MOTOR_SOUND_LEVEL=0.2,   // was 0.35 until build 306: louder than the engines
+      MOTOR_PINIONS=[19,23];
 // The reduction's two stages: the pinions assumed (19 and 23 teeth, tooth counts are not published), the wheels the pair
 // closest to the car's ratio with the first within 15% of the square-root split (9.025 for Tesla's 9.03).
 function motorGearStages(fd){
@@ -885,6 +888,7 @@ function motorSoundState(c){
   if(!c)return null;
   const e=engine;
   if(soundSource()===state){   // where the engine's sound is heard from the bench
+    if(state.ignOn===false)return null;   // the car switched off (POWER OFF): no current, nothing to hear (build 306)
     if(isElectric())return {rpm:state.rpm,T:state.blown?0:state.torque};
     if(e.hy&&typeof hybBench!=='undefined'&&hybBench)return {rpm:hybBench.n,T:hybBench.Tm||0};
     return null;
