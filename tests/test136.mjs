@@ -5,11 +5,12 @@
 //   · the three Teslas: peak power and torque, the knee, the continuous reading, the hold, the best
 //     efficiency, the pack's resistance and power, the WLTP Wh/km, the 0-100, the top speed, the centre
 //     of gravity, and a torque sample at 1000 rpm, at the knee, at twice the knee and at the redline;
-//   · the shape above the knee, on a motor that can actually rev past 4× its knee: power flat through 4×,
-//     then 4/5 at 5× and 4/6 at 6× (the rectangle motorMaxTorque imposes, CPSR = 4);
+//   · the shape above the knee, on a motor that can actually rev past 4× its knee. Until build 294 a rectangle
+//     (flat to 4×, then 4/5 and 4/6, CPSR = 4); since then the d and q axes under the inverter's voltage and current
+//     (no CPSR for a magnet motor): power rises past the knee as the current turns to the d-axis, then falls;
 //   · the five factory hybrids' motors, which share this drive;
 //   · LAMINATIONS defaults to 0.35 mm (stage 1), REGENERATION to HIGH (stage 2), and WINDING and CONDUCTOR to
-//     ROUND and COPPER (stage 6). A second gear is not on the form yet. CPSR is 4 (3 for an induction motor).
+//     ROUND and COPPER (stage 6). A second gear is not on the form yet. An induction motor's CPSR is 3.
 // A later stage edits a locked value only when drivetrain.md names that stage for that block, in the same
 // commit as the physics, with the old number and the new one in the CHANGELOG. A stage marked "still"
 // does not edit the numbers. Stage 4 (AC copper) moved the continuous power and the hold, and the Model Y
@@ -75,7 +76,7 @@ const HYB = {
   '330e': { mode: 'p2', tq: 263.39, kW: 79.97, packKW: 101.51, packR: 0.18635, front: 0 },
   '918': { mode: 'p2', tq: 220.59, kW: 121.6, packKW: 140.92, packR: 0.16371, front: 204.39 }
 };
-// A sleeve, 4-pole, SiC motor that revs past 4× its knee. Power is flat, then falls as CPSR / (speed/knee).
+// A sleeve, 4-pole, SiC motor that revs past 4× its knee (build 294: from the d and q axes, no rectangle).
 const TAIL = { knee: 3422, nMax: 40000, p1: 54714, p2: 54714, p4: 54714, p5: 43771, p6: 36476 };
 
 const r = await page.evaluate(() => {
@@ -120,7 +121,7 @@ const r = await page.evaluate(() => {
   const absent = ['evGear2'].filter(id => document.getElementById(id));
   const wireEl = document.getElementById('evWire'), condEl = document.getElementById('evConductor');
   const lamEl = document.getElementById('evLamination'), regenEl = document.getElementById('evRegen');
-  return { cars, hy, tail: { knee, nMax: m.nMax, p1: P(knee), p2: P(2 * knee), p4: P(4 * knee), p5: P(5 * knee), p6: P(6 * knee) }, absent, wire: wireEl ? wireEl.value : null, cond: condEl ? condEl.value : null, lam: lamEl ? lamEl.value : null, regen: regenEl ? regenEl.value : null, cpsr: CPSR, im: IM_CPSR };
+  return { cars, hy, tail: { knee, nMax: m.nMax, p1: P(knee), p2: P(2 * knee), p4: P(4 * knee), p5: P(5 * knee), p6: P(6 * knee) }, absent, wire: wireEl ? wireEl.value : null, cond: condEl ? condEl.value : null, lam: lamEl ? lamEl.value : null, regen: regenEl ? regenEl.value : null, cpsr: typeof CPSR === 'undefined' ? null : CPSR, im: IM_CPSR };
 });
 
 const f = (x, d = 2) => (+x).toFixed(d);
@@ -176,8 +177,7 @@ near(tail.p2, TAIL.p2, 0.002, 2, 'tail power at 2×');
 near(tail.p4, TAIL.p4, 0.002, 2, 'tail power at 4×');
 near(tail.p5, TAIL.p5, 0.002, 2, 'tail power at 5×');
 near(tail.p6, TAIL.p6, 0.002, 2, 'tail power at 6×');
-if (Math.abs(tail.p5 / tail.p1 - 0.8) > 0.005) fails.push(`at 5× the knee power is ${f(tail.p5 / tail.p1)} of the knee, not 4/5`);
-if (Math.abs(tail.p6 / tail.p1 - 4 / 6) > 0.005) fails.push(`at 6× the knee power is ${f(tail.p6 / tail.p1)} of the knee, not 4/6`);
+if (!(tail.p2 >= tail.p1 && tail.p6 < tail.p4)) fails.push('past the knee the power does not hold, then fall');
 
 for (const [key, want] of Object.entries(HYB)) {
   const h = r.hy.find(x => x.name.includes(key));
@@ -197,7 +197,7 @@ if (r.lam !== '0.35') fails.push('LAMINATIONS is not on the form at 0.35 mm');
 if (r.wire !== 'round' || r.cond !== 'copper') fails.push(`WINDING and CONDUCTOR are not on the form at ROUND and COPPER (${r.wire}, ${r.cond})`);
 if (r.regen !== 'high') fails.push('REGENERATION is not on the form at HIGH');
 if (r.absent.length) fails.push('a later field is already on the form: ' + r.absent.join(', '));
-exact(r.cpsr, 4, 'magnet CPSR');
+exact(r.cpsr, null, 'magnet CPSR retired');
 exact(r.im, 3, 'induction CPSR');
 
 if (errors.length) console.log('ERRORS:\n  ' + errors.join('\n  '));

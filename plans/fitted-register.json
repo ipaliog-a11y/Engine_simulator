@@ -227,38 +227,11 @@
    "state": "open"
   },
   {
-   "id": "MOTOR.SAT_K",
-   "file": "electric.js",
-   "match": "SAT_K=0.085",
-   "standsFor": "torque per amp lost to saturation: one measured point (430 Nm at 953 A on the Model 3, with the flux of then; the derived flux since build 293 gives 444 Nm there), scaled with the square of the electric loading",
-   "retiredBy": "the lamination steel's B-H curve in the teeth and the yoke",
-   "phase": "C",
-   "state": "open"
-  },
-  {
-   "id": "MOTOR.fieldWeakening",
-   "file": "electric.js",
-   "match": "V_DROP=1.29",
-   "standsFor": "the terminal voltage over the back-EMF at full current (one motor), the constant-power range (CPSR 4, IM_CPSR 3) with 1/w^2 beyond it, the field-weakening current as 0.7 of the inverter's, and the flux floor 0.4 in the iron loss",
-   "retiredBy": "the d and q inductances from the geometry, and the inverter's current and voltage limits solved on them at each speed",
-   "phase": "C",
-   "state": "open"
-  },
-  {
    "id": "MOTOR.statorShape",
    "file": "electric.js",
    "match": "const SPLIT=0.67;",
    "standsFor": "the stator's outside diameter as the bore over 0.67, the same for every motor. Since build 293 the teeth and yoke are sized from the flux (Pyrhonen Table 6.1) and the slot is what is left between them, so a many-pole or small motor gets deep slots and saturated teeth, or a cramped yoke, where a designer would change the diameter",
    "retiredBy": "the slot's depth from the copper the current needs (Pyrhonen Table 6.2: linear current density and current density), and the outside diameter from the slot and the yoke",
-   "phase": "C",
-   "state": "open"
-  },
-  {
-   "id": "MOTOR.ironShare",
-   "file": "electric.js",
-   "match": "0.8*L.fe",
-   "standsFor": "iron loss taken on all the iron, the rotor's included, at one flux density (B_CORE 1.5 T) and the frequency, then shared 80% stator, 20% rotor; since build 293 the teeth (2.0 T) and the yoke (1.5 T) have their own densities, which the loss does not yet read",
-   "retiredBy": "teeth and yoke each at their own flux density; the rotor's loss from the slot harmonics and the magnets' eddy currents",
    "phase": "C",
    "state": "open"
   },
@@ -311,7 +284,7 @@
    "id": "IM.leakage",
    "file": "electric.js",
    "match": "const IM_SIGMA=0.08",
-   "standsFor": "an induction motor's leakage (IM_SIGMA), resistive drop (IM_R_DROP), Carter and saturation factor (IM_KCS), constant-power range (IM_CPSR) and the cage's proportions (IM_HR, IM_RING)",
+   "standsFor": "an induction motor's leakage (IM_SIGMA), resistive drop (IM_R_DROP), Carter and saturation factor (IM_KCS), constant-power range (IM_CPSR) the cage's proportions (IM_HR, IM_RING), and its torque per amp lost to saturation (IM_SAT_K: the Model 3's point of before build 294, 8.5% at 145.7 kA/m, scaled with the loading's square; a magnet motor's is solved since build 294)",
    "retiredBy": "slot and end-ring leakage from the stator's and the cage's geometry (Pyrhonen ch. 4), the breakdown torque from it; the cage's bars as design fields",
    "phase": "C",
    "state": "open"

@@ -11043,18 +11043,16 @@ function getDynoData(){
 // rotor 149.9 mm, 3 pole pairs, 12 series turns per phase (2 turns, 3 paths), 4.75 mOhm per phase, a single V of two
 // 33 x 6.5 mm NdFeB magnets a pole (segments 21.5 mm long down the stack), 42 V peak line-to-line per 1000 rpm, 430 Nm
 // at 953 A rms needing 94.6 V rms per phase.
-// The air gap's flux comes from the magnets through a magnetic circuit (build 292, magnetCircuit below). Two constants
-// are still set from that one motor, not derived, and used for every motor (plans/fitted-register.json):
-//   SAT_K     how much torque per amp is lost to saturation at that electric loading (430 Nm, not the 470 the
-//             flux alone gave until build 292): 8.5%, scaled with the square of the loading. It is not set again as
-//             the flux under it becomes derived: the Model 3 makes 444 Nm at 953 A since build 293;
-//   V_DROP    the terminal voltage over the back-EMF at full current (the inductive and resistive drop): 1.29.
-// Everything else here is either geometry, a material's datasheet figure, or a textbook rule, named where it is used.
+// The air gap's flux comes from the magnets through a magnetic circuit (build 292, magnetCircuit below). Since build 294
+// the same circuit is solved under load, slice by slice round a pole (dqSolve): the stator's current adds its MMF, the
+// teeth saturate on the steel's curve, and what comes out is the torque, the d and q flux linkages and the iron's flux
+// densities. Saturation (SAT_K), the voltage drop (V_DROP), the constant-power range (CPSR) and the field-weakening
+// current are no longer constants: they are what that solution gives under the inverter's current and voltage.
+// Everything here is either geometry, a material's datasheet figure, or a textbook rule, named where it is used.
 // tests/test96.mjs checks the model against the Model 3's measured back-EMF and resistance and its published power, and
 // the 2012 Nissan Leaf as measured by ORNL (Burress, Benchmarking State-of-the-Art Technologies,
 // 2013): 80 kW held at 7000 rpm with the stator settling near 135 C, peak motor efficiency above 97%.
 const RHO_CU=1.72e-8, ALPHA_CU=0.00393, RHO_FE=7650, RHO_CU_M=8960;
-const SAT_K=0.085, SAT_A_REF=145.7e3, V_DROP=1.29;
 const KW_WIND=0.93;        // winding factor: distributed, q = 2-3 slots per pole per phase, short-pitched
 const SPLIT=0.67;          // bore over stator outside diameter (Model 3 0.672, Leaf 0.66; 0.6-0.7 for traction motors)
 const GAP=0.0007;          // air gap (m): 0.7 mm, the Model 3's
@@ -11089,7 +11087,6 @@ const WIRE={round:{label:'ROUND (STRANDED)',fill:FILL,layers:0},hairpin:{label:'
 // capacity per kilogram is kept; its lower thermal conductivity in the slot is not modelled (the liner dominates).
 const CONDUCTOR={copper:{label:'COPPER',rho:RHO_CU,alpha:ALPHA_CU,dens:RHO_CU_M,cp:385,cost:11},
   aluminium:{label:'ALUMINIUM',rho:2.8264e-8,alpha:0.00403,dens:2703,cp:897,cost:3.3}};
-const B_CORE=1.5;          // the flux density the iron loss is taken at, all the iron (T): a usual design point for silicon steel
 // Non-oriented silicon steel, 0.35 mm (M270-35A class): about 2.7 W/kg at 1.5 T 50 Hz and 19 W/kg at 1.0 T 400 Hz.
 // Split into hysteresis (∝ f B²) and eddy (∝ (t f B)²), solved from those two points; a thinner sheet cuts only the eddy.
 const FE_KH=0.0206, FE_KE=6.71e-5, FE_T_REF=0.35;
@@ -11142,6 +11139,13 @@ function steelH(B){   // A/m for a flux density B (T)
   const a=(FE_JS-FE_J[4])*FE_H[4],d=FE_JS-B;   // B = Js - a/H + mu0 H
   return (-d+Math.sqrt(d*d+4*MU0*a))/(2*MU0);
 }
+// The pole piece over the V carries the q-axis flux across the pole, through the iron between the rotor's surface and
+// the bars: deepest at the V's root, down to the surface bridge (1 mm, as above) at the face's edges. The V's bars lean
+// V_PHI to the rotor's surface: the Model 3's open V, ~140 deg between the bars, read off MotorXP's section (PROBABLE).
+const V_PHI=20*Math.PI/180, POLE_EDGE=0.001;
+// The end windings' leakage: Pyrhonen 2014, 4.3.3, L_w = (4m/Q) q N^2 mu0 l_w lambda_w, with lambda_w ~0.3 for a
+// double-layer winding (the book's range is 0.2-0.5; PROBABLE).
+const LAMBDA_W=0.3;
 // The air gap's flux from the magnets (T): the flat-topped field over the pole's face, its fundamental, and the flux
 // densities it puts in the stator's teeth and yoke. Per pole, round one loop: the magnet's thickness, the gap (with
 // Carter's factor), a tooth's length and half the yoke between two poles' centres. The magnet is a straight line,
@@ -11164,10 +11168,141 @@ function magnetCircuit(g){
 // A saturated tooth's field (A/m) for its apparent flux density Ba, the slot pitch's flux put through the tooth alone:
 // part of it goes down the slot beside it, Ba = B + mu0 H k with k the slot's width over the tooth's (Pyrhonen 2014,
 // section 3.5, the apparent and real tooth flux density). Solved for the real B by bisection.
-function toothH(Ba,k){
+function toothB(Ba,k){
   let lo=0,hi=Ba;
   for(let i=0;i<40;i++){const b=(lo+hi)/2;if(b+MU0*steelH(b)*k<Ba)lo=b;else hi=b;}
-  return steelH((lo+hi)/2);
+  return (lo+hi)/2;
+}
+const toothH=(Ba,k)=>steelH(toothB(Ba,k));
+// ---- the circuit under load: the d and q axes (build 294) ----
+// One pole, electrical angle th from the d-axis (-90 to 90 deg), in DQ_SLICES slices. Each slice is a loop: the rotor's
+// surface, the gap (Carter's factor), a tooth (the steel's curve, toothH) and the stator's yoke. The rotor's potential is
+// the pole piece's under the pole's face, one equipotential iron (it carries the q-axis flux across freely, which is
+// where an interior-magnet rotor's saliency comes from), and the hub's, zero, between the poles. The stator's current
+// adds its MMF, Fd cos th + Fq sin th per pole, with F = 3 sqrt2 kw N I / (pi p) for I amps rms (Pyrhonen 2014, 2.13).
+// The pole piece's potential is what makes the face's flux equal what the magnets give at that MMF (their line,
+// B = Br + mu0 mur H, less the saturated bridges), and the yoke's potential follows its own flux, the gap's flux added up
+// from the pole's edge, on the same curve. Out come the gap field's fundamentals on each axis, so the flux linkages, the
+// torque T = 3/2 p (psi_d i_q - psi_q i_d), and the peak flux densities in the teeth, the yoke and the gap.
+const DQ_SLICES=36, DQ_N=13, DQ_KBR=0.8;
+function dqSetup(m){
+  const st=m.circ.st,ts=Math.PI*m.Ds/m.slots,kT=ts/(0.95*st.wt),gp=m.circ.kc*GAP,NB=150,BM=3.2,FB=new Float64Array(NB+1);
+  for(let i=0;i<=NB;i++){const B=i*BM/NB;FB[i]=B*gp/MU0+toothH(B*kT,kT-1)*st.hSlot;}
+  const n=DQ_SLICES,tau=Math.PI*m.D/m.poles,cos=[],sin=[],face=[],dep=[],half=Math.min(1,m.magW)*tau/2;
+  for(let i=0;i<n;i++){const th=-Math.PI/2+(i+0.5)*Math.PI/n,x=th/Math.PI*tau;cos.push(Math.cos(th));sin.push(Math.sin(th));
+    face.push(Math.abs(x)<half);dep.push(POLE_EDGE+Math.max(0,half-Math.abs(x))*Math.tan(V_PHI));}
+  const Am=Math.min(1,m.magW)*tau*MAG_AX*m.L;
+  // Pyrhonen 2014, 4.2: a slot's leakage inductance, (4m/Q) mu0 l N^2 lambda, lambda = h/(3b) for a slot full of copper
+  const slotW=Math.PI*(m.Ds+st.hSlot)/m.slots-st.wt,q=m.slots/(3*m.poles),lw=m.mlt/2-m.L;
+  const Ls=12/m.slots*MU0*m.N*m.N*(m.L*st.hSlot/(3*Math.max(1e-4,slotW))+q*lw*LAMBDA_W);
+  return {FB,NB,BM,kT,gp,hSlot:st.hSlot,cos,sin,face,wL:m.L*tau/n,dy:Math.PI*(m.OD-st.hy)/m.poles/n,hy:st.hy,Lfe:m.Lfe,
+    Am,leak:FE_JS*BRIDGE_W*m.Lfe,magT:m.magT,mur:m.mag.mur,Br:m.mag.Br,fPerA:3*Math.SQRT2*KW_WIND*m.N/(Math.PI*m.p),
+    psiPerB:KW_WIND*m.N*2/Math.PI*tau*m.Lfe,Ls,dep,dx:tau/n,B:new Float64Array(n),Uy:new Float64Array(n),Hy:new Float64Array(n)};
+}
+function dqBinv(c,F){   // a slice's gap field (T) for the MMF across its gap and tooth (A)
+  const a=Math.abs(F),FB=c.FB;let B;
+  if(a>=FB[c.NB])B=c.BM+(a-FB[c.NB])*(c.BM/c.NB)/(FB[c.NB]-FB[c.NB-1]);
+  else{let lo=0,hi=c.NB;while(hi-lo>1){const k=(lo+hi)>>1;if(FB[k]<=a)lo=k;else hi=k;}B=(lo+(a-FB[lo])/(FB[hi]-FB[lo]))*c.BM/c.NB;}
+  return F<0?-B:B;
+}
+function dqSolve(c,Fd,Fq,kBr){
+  const n=DQ_SLICES,B=c.B,Uy=c.Uy,Hy=c.Hy,Br=kBr*c.Br,Um=Br*c.magT/(MU0*c.mur),X=Um+Math.abs(Fd)+Math.abs(Fq);
+  Uy.fill(0);let Ur=0,dU=0,ByMax=0;
+  // the pole piece as two halves, each one potential: the trailing half dU/2 above the pole's, the leading half below
+  const gapF=(i,U,d)=>(c.face[i]?U+(c.sin[i]<0?d/2:-d/2):0)+Fd*c.cos[i]+Fq*c.sin[i]-Uy[i];
+  for(let it=0;it<6;it++){
+    let lo=-X,hi=Um;
+    for(let k=0;k<32;k++){
+      const U=(lo+hi)/2;let ph=0;
+      for(let i=0;i<n;i++)if(c.face[i])ph+=dqBinv(c,gapF(i,U,dU));
+      if(c.Am*(Br-MU0*c.mur*U/c.magT)-c.leak>ph*c.wL)lo=U;else hi=U;
+    }
+    Ur=(lo+hi)/2;
+    // dU: the drop the crossing flux takes between the halves' middles (the face's flux less the magnets' even share,
+    // added up from the trailing edge); more dU lets less flux cross, so the two meet once (bisection)
+    let a=-X,b=X;
+    for(let k=0;k<24;k++){
+      const d=(a+b)/2;let Pf=0,nf=0;
+      for(let i=0;i<n;i++)if(c.face[i]){B[i]=dqBinv(c,gapF(i,Ur,d));Pf+=B[i];nf++;}
+      const Bm=Pf/Math.max(1,nf);let pl=0,drop=0,j=0;
+      for(let i=0;i<n;i++){if(!c.face[i])continue;
+        const ph=-(pl+(B[i]-Bm)*c.wL/2),Bl=ph/(c.dep[i]*c.Lfe);pl+=(B[i]-Bm)*c.wL;
+        if(j>=nf/4&&j<3*nf/4)drop+=(Bl<0?-1:1)*steelH(Math.abs(Bl))*c.dx;j++;}
+      if(drop>d)a=d;else b=d;
+    }
+    dU=(a+b)/2;let P=0;
+    for(let i=0;i<n;i++){B[i]=dqBinv(c,gapF(i,Ur,dU));P+=B[i];}
+    let phi=-P*c.wL/2,sH=0;ByMax=0;
+    for(let i=0;i<n;i++){const By=(phi+B[i]*c.wL/2)/(c.hy*c.Lfe),a=Math.abs(By);Hy[i]=(By<0?-1:1)*steelH(a);sH+=Hy[i];
+      if(a>ByMax)ByMax=a;phi+=B[i]*c.wL;}
+    let acc=0;for(let i=0;i<n;i++){Uy[i]=(0.5*sH-acc-Hy[i]/2)*c.dy;acc+=Hy[i];}
+  }
+  let b1d=0,b1q=0,bMax=0,b2=0;
+  for(let i=0;i<n;i++){b1d+=B[i]*c.cos[i];b1q+=B[i]*c.sin[i];const a=Math.abs(B[i]);if(a>bMax)bMax=a;b2+=B[i]*B[i];}
+  return {b1d:2*b1d/n,b1q:2*b1q/n,Bt:toothB(bMax*c.kT,c.kT-1),By:ByMax,Bg2:b2/n};
+}
+// The tables a motor is run from, built on first use: the solution over a grid of d and q currents (Id from -Imax to 0,
+// Iq from 0 to Imax, mirrored for regeneration), at the magnets' full remanence and at DQ_KBR of it, read between them
+// for the magnets' temperature; and the most torque per amp (MTPA) at each current.
+const DQ_KEYS=['T','pd','pq','Bt','By','Bg2'];
+function dqTables(m){
+  if(m.dq)return m.dq;
+  const c=m.dqc,N=DQ_N,I=m.Imax,p=m.p,lev=[];
+  for(const kBr of [1,DQ_KBR]){
+    const g={};for(const k of DQ_KEYS)g[k]=new Float64Array(N*N);
+    for(let a=0;a<N;a++)for(let b=0;b<N;b++){
+      const Id=-I*(N-1-a)/(N-1),Iq=I*b/(N-1),r=dqSolve(c,c.fPerA*Id,c.fPerA*Iq,kBr),j=a*N+b;
+      g.pd[j]=c.psiPerB*r.b1d;g.pq[j]=c.psiPerB*r.b1q;g.T[j]=1.5*p*Math.SQRT2*(g.pd[j]*Iq-g.pq[j]*Id);
+      g.Bt[j]=r.Bt;g.By[j]=r.By;g.Bg2[j]=r.Bg2;
+    }
+    lev.push(g);
+  }
+  m.dq={lev,cache:new Map(),ops:new Map()};
+  for(const g of lev){g.mtpa=[];for(let k=0;k<N;k++)g.mtpa.push(dqMtpaAt(m,g,I*k/(N-1)));}
+  return m.dq;
+}
+function dqGrid(m,g,Id,Iq,out){   // bilinear on one level; Iq < 0 by the mirror (psi_q and the torque change sign)
+  const N=DQ_N,I=m.Imax,sq=Iq<0?-1:1,x=Math.min(N-1,Math.max(0,(Id/I+1)*(N-1))),y=Math.min(N-1,Math.max(0,Math.abs(Iq)/I*(N-1)));
+  const a=Math.min(N-2,Math.floor(x)),b=Math.min(N-2,Math.floor(y)),u=x-a,v=y-b,j=a*N+b;
+  for(const k of DQ_KEYS){const t=g[k];out[k]=(t[j]*(1-u)+t[j+N]*u)*(1-v)+(t[j+1]*(1-u)+t[j+N+1]*u)*v;}
+  if(sq<0){out.T=-out.T;out.pq=-out.pq;}
+  return out;
+}
+const dqW=(m,tMag)=>(1-(1+m.mag.alpha*(tMag-20)))/(1-DQ_KBR);
+function dqAt(m,Id,Iq,tMag){
+  const L=(m.dq||dqTables(m)).lev,w=dqW(m,tMag),A=dqGrid(m,L[0],Id,Iq,{}),B=dqGrid(m,L[1],Id,Iq,{});
+  for(const k of DQ_KEYS)A[k]+=w*(B[k]-A[k]);
+  return A;
+}
+// The torque and the two linkages only, without allocating: the inner loops' lookup.
+const DQ_O={T:0,pd:0,pq:0};
+function dqFast(m,Id,Iq,tMag){
+  const L=(m.dq||dqTables(m)).lev,w=dqW(m,tMag),N=DQ_N,I=m.Imax;
+  const x=Math.min(N-1,Math.max(0,(Id/I+1)*(N-1))),y=Math.min(N-1,Math.max(0,Math.abs(Iq)/I*(N-1)));
+  const a=Math.min(N-2,Math.floor(x)),b=Math.min(N-2,Math.floor(y)),u=x-a,v=y-b,j=a*N+b;
+  const k00=(1-u)*(1-v),k10=u*(1-v),k01=(1-u)*v,k11=u*v,g0=L[0],g1=L[1];
+  const f=t=>t[j]*k00+t[j+N]*k10+t[j+1]*k01+t[j+N+1]*k11;
+  let T=f(g0.T),pd=f(g0.pd),pq=f(g0.pq);T+=w*(f(g1.T)-T);pd+=w*(f(g1.pd)-pd);pq+=w*(f(g1.pq)-pq);
+  if(Iq<0){T=-T;pq=-pq;}
+  DQ_O.T=T;DQ_O.pd=pd;DQ_O.pq=pq;return DQ_O;
+}
+function dqMtpaAt(m,g,I){   // the current's angle from the q-axis that gives the most torque (golden section, 0-80 deg)
+  if(!(I>0))return {g:0,T:0};
+  const o={},T=gm=>dqGrid(m,g,-I*Math.sin(gm),I*Math.cos(gm),o).T,r=0.618034;
+  let a=0,b=80*Math.PI/180;
+  for(let k=0;k<30;k++){const x1=b-r*(b-a),x2=a+r*(b-a);if(T(x1)<T(x2))a=x1;else b=x2;}
+  const gm=(a+b)/2;return {g:gm,T:T(gm)};
+}
+function dqMtpa(m,I,tMag){   // MTPA at a current, read between the levels
+  const L=(m.dq||dqTables(m)).lev,w=dqW(m,tMag),N=DQ_N,x=Math.min(N-1,Math.max(0,I/m.Imax*(N-1))),a=Math.min(N-2,Math.floor(x)),u=x-a;
+  const at=g=>({g:g.mtpa[a].g+u*(g.mtpa[a+1].g-g.mtpa[a].g),T:g.mtpa[a].T+u*(g.mtpa[a+1].T-g.mtpa[a].T)});
+  const A=at(L[0]),B=at(L[1]);return {g:A.g+w*(B.g-A.g),T:A.T+w*(B.T-A.T)};
+}
+// The phase voltage's peak (V) at a point: v_d = R i_d - we psi_q, v_q = R i_q + we psi_d, the slot leakage added to the
+// gap's linkage. The inverter gives at most Vdc/sqrt3 (space-vector modulation).
+function dqVolt(m,q,Id,Iq,we,R){
+  const id=Math.SQRT2*Id,iq=Math.SQRT2*Iq,pd=q.pd+m.dqc.Ls*id,pq=q.pq+m.dqc.Ls*iq;
+  return Math.hypot(R*id-we*pq,R*iq+we*pd);
 }
 // The tooth and yoke for a peak gap field Bpk (T) and a pole's flux phi (Wb), at the design densities; neither may take
 // more than 80% of the slot pitch or of the radial band, so an over-fluxed design saturates rather than losing its slots.
@@ -11218,8 +11353,7 @@ const ACTIVE_TO_MOTOR=1.6;   // housing, shaft, bearings and end caps over the a
 const IM_BG=0.8, IM_GAP=0.0005, IM_KCS=2.0, IM_CPSR=3, IM_HR=0.12, IM_RING=0.08;
 // The voltage at full current: the leakage flux of the stator and the rotor rides on the torque current, sigma Lm Iq,
 // with the total leakage factor sigma ~0.08 for a traction design (0.05-0.1); against the magnetising flux Lm Im it
-// adds in quadrature, so the drop over the back-EMF is sqrt(1 + (sigma Iq / Im)^2), times ~5% resistive. A magnet
-// machine's V_DROP (1.29, measured) holds its inductive drop the same way.
+// adds in quadrature, so the drop over the back-EMF is sqrt(1 + (sigma Iq / Im)^2), times ~5% resistive.
 const IM_SIGMA=0.08, IM_R_DROP=1.05;
 const IM_ROTOR={label:'COPPER CAGE',Br:0,alpha:0,Tmax:200,cost:0};
 const MOTOR_TYPE={pm:{label:'PERMANENT MAGNET'},im:{label:'INDUCTION (COPPER CAGE)'}};
@@ -11273,7 +11407,7 @@ function motorBuild(s){
     mCage=RHO_CU_M*(Abars*L+2*Math.PI*ringD*ringA);
     ImR=IM_BG*IM_GAP*IM_KCS*p/(MU0*(3*Math.SQRT2/Math.PI)*KW_WIND*N);
   }
-  const vDrop=im?IM_R_DROP*Math.sqrt(1+(IM_SIGMA*Math.sqrt(Math.max(0,s.invAmps**2-ImR*ImR))/Math.max(1,ImR))**2):V_DROP;
+  const vDrop=im?IM_R_DROP*Math.sqrt(1+(IM_SIGMA*Math.sqrt(Math.max(0,s.invAmps**2-ImR*ImR))/Math.max(1,ImR))**2):null;
   const mFeR=RHO_FE*Math.PI/4*(D*D-Dsh*Dsh)*Lfe-RHO_FE*vMag-(im?RHO_FE*mCage/RHO_CU_M*0.9:0);
   const mRotor=mFeR+mMag+mCage, J=0.5*mRotor*((D/2)**2+(Dsh/2)**2)*(s.retention==='sleeve'&&!im?1.03:1);
   const mass=(mCu+mFeS+mRotor)*ACTIVE_TO_MOTOR;
@@ -11282,9 +11416,9 @@ function motorBuild(s){
   const nMax=Math.min(s.maxRpm||20000,nTip,nFreq);
   const Imax=s.invAmps;
   const cost=Math.round(mCu*cond.cost+(mFeS+mFeR)*(3+lam.premium)+mMag*mag.cost+ret.cost+cool.cost+Imax*inv.costA+400+(im?mCage*11+150:0));
-  return {s,im,mag,ret,cool,inv,lam,wire,cond,barH,barEta,D,L,Lfe,Ds,OD,poles,p,N,slots,Bg,circ,magT,magW,wt,hSlot,hy,psi20,R20,mlt,Acu,mCu,mFeS,mFeR,mMag,mRotor,J,mass,
+  const m={s,im,mag,ret,cool,inv,lam,wire,cond,barH,barEta,D,L,Lfe,Ds,OD,poles,p,N,slots,Bg,circ,magT,magW,wt,hSlot,hy,psi20,R20,mlt,Acu,mCu,mFeS,mFeR,mMag,mRotor,J,mass,
           strand:dStrand,cuLayers,
-          nTip,nFreq,nMax,Imax,cost,Qr,Rr20,mCage,ImR,vDrop,cpsr:im?IM_CPSR:CPSR,
+          nTip,nFreq,nMax,Imax,cost,Qr,Rr20,mCage,ImR,vDrop,
           // thermal network (W/K, J/K): winding -> core through the slot liner (0.2 W/mK, 0.4 mm over the slot walls),
           // core -> coolant through the housing, rotor -> core across the gap (h ~ 100), and the direct paths
           Gwc:0.2*(2*hSlot*L*slots)/0.0004,
@@ -11292,7 +11426,11 @@ function motorBuild(s){
           // (spray reaches the end windings, ~50 mm out each side; slot cooling also runs along every slot wall)
           Gwk:cool.wind*(Math.PI*(Ds+hSlot)*2*0.05+(cool.inSlot?2*hSlot*L*slots:0)),
           Grc:100*Math.PI*D*L+cool.rotor*Math.PI*Dsh*L,
-          Cw:cond.cp*mCu, Cc:460*mFeS+900*0.5*mFeS, Cr:460*mRotor};
+          Cw:cond.cp*mCu, Cc:460*mFeS+900*0.5*mFeS, Cr:460*mRotor,
+          mTeeth:RHO_FE*slots*wt*hSlot*Lfe, ts, gap:im?IM_GAP:GAP};
+  // a magnet motor's flux linkage at no current is the loaded circuit's at zero current (build 294)
+  if(!im){m.dqc=dqSetup(m);m.psi20=m.dqc.psiPerB*dqSolve(m.dqc,0,0,1).b1d;}
+  return m;
 }
 // Flux linkage and resistance at temperature: the magnets lose remanence as they warm, the copper gains resistance.
 const motorPsi=(m,tMag)=>m.psi20*(1+m.mag.alpha*(tMag-20));   // an induction motor's alpha is 0: its flux is the field's
@@ -11318,30 +11456,64 @@ function copperAC(m,rpm,tW){
   const layers=m.cuLayers>1?m.cuLayers:1;
   return M+((layers*layers-1)/3)*D;
 }
-// Torque per amp falls with saturation as the electric loading (A/m of bore) rises.
-const motorLoading=(m,I)=>6*m.N*I/(Math.PI*m.D);
-const motorTorqueAtI=(m,I,psi)=>1.5*m.p*psi*Math.SQRT2*I*(1-SAT_K*(motorLoading(m,I)/SAT_A_REF)**2);
-// The knee (mechanical rad/s): where the back-EMF, with the drop at full current, meets the inverter's most phase voltage
-// (space-vector modulation: Vdc/sqrt(6) rms).
-const motorBaseW=(m,Vdc,psi)=>Vdc/Math.sqrt(6)*Math.SQRT2/((m.vDrop||V_DROP)*m.p*psi);
-// Constant power from the knee to CPSR times it (an interior-magnet machine's field-weakening range; the Leaf holds its
-// 80 kW from 2730 to 9800 rpm, 3.6x), then falling as 1/w.
-const CPSR=4;
-// The most torque at a shaft speed (Nm), for the bus voltage and the magnets' temperature.
+// The torque at a current (A rms), at the best angle (MTPA), with the magnets where psi = motorPsi(m, t) puts them.
+const tMagOf=(m,psi)=>m.mag.alpha?20+(psi/m.psi20-1)/m.mag.alpha:60;
+function motorTorqueAtI(m,I,psi){
+  if(m.im)return imTorque(m,I);
+  return dqMtpa(m,Math.min(I,m.Imax),tMagOf(m,psi)).T;
+}
+// The knee (mechanical rad/s). A magnet motor: where the MTPA point at full current meets the inverter's voltage, solved
+// on v_d and v_q (a quadratic in the speed). An induction motor: its back-EMF with the drop at full current.
+function motorBaseW(m,Vdc,psi){
+  if(m.im)return Vdc/Math.sqrt(6)*Math.SQRT2/(m.vDrop*m.p*psi);
+  const tMag=tMagOf(m,psi),o=dqMtpa(m,m.Imax,tMag),Id=-m.Imax*Math.sin(o.g),Iq=m.Imax*Math.cos(o.g),q=dqAt(m,Id,Iq,tMag);
+  const R=motorR(m,tMag),id=Math.SQRT2*Id,iq=Math.SQRT2*Iq,pd=q.pd+m.dqc.Ls*id,pq=q.pq+m.dqc.Ls*iq,V=Vdc/Math.sqrt(3);
+  const A=pd*pd+pq*pq,B=2*(R*iq*pd-R*id*pq),C=R*R*(id*id+iq*iq)-V*V;
+  return Math.max(0,(-B+Math.sqrt(Math.max(0,B*B-4*A*C)))/(2*A))/m.p;
+}
+// The most torque at a shaft speed (Nm), for the bus voltage and the magnets' temperature. A magnet motor: the MTPA
+// point at full current while the voltage allows it; above the knee, the best of the current's angles with the most
+// current each allows under the voltage (field weakening, then the most torque per volt), so the constant-power range
+// and the fall beyond it are the motor's own. An induction motor keeps its constant power to IM_CPSR times its knee.
 function motorMaxTorque(m,rpm,Vdc,tMag=60){
   if(m.parts)return m.parts.reduce((a,q)=>a+q.n*motorMaxTorque(q.m,rpm,Vdc,tMag),0);
   if(rpm>m.nMax)return 0;
-  const psi=motorPsi(m,tMag),wb=motorBaseW(m,Vdc,psi),w=Math.max(1e-6,rpm*Math.PI/30);
-  const Tpk=m.im?imTorque(m,m.Imax):motorTorqueAtI(m,m.Imax,psi);
-  if(w<=wb)return Tpk;
-  const C=m.cpsr||CPSR;
-  if(w<=C*wb)return Tpk*wb/w;
-  return Tpk*C*wb*wb/(w*w);
+  if(m.im){
+    const wb=motorBaseW(m,Vdc,m.psi20),w=Math.max(1e-6,rpm*Math.PI/30),Tpk=imTorque(m,m.Imax);
+    if(w<=wb)return Tpk;
+    return w<=IM_CPSR*wb?Tpk*wb/w:Tpk*IM_CPSR*wb*wb/(w*w);
+  }
+  const dq=dqTables(m),key=Math.round(rpm)+'|'+Math.round(Vdc*10)+'|'+Math.round(tMag);
+  let T=dq.cache.get(key);if(T!==undefined)return T;
+  const we=m.p*rpm*Math.PI/30,R=motorR(m,tMag),V=Vdc/Math.sqrt(3),I=m.Imax,o=dqMtpa(m,I,tMag);
+  const pt=(g,i)=>{const Id=-i*Math.sin(g),Iq=i*Math.cos(g),q=dqFast(m,Id,Iq,tMag);return {T:q.T,V:dqVolt(m,q,Id,Iq,we,R)};};
+  if(pt(o.g,I).V<=V)T=o.T;
+  else{
+    // at an angle: the most current the voltage allows (sampled down from full, then bisected)
+    const best=g=>{if(pt(g,I).V<=V)return pt(g,I).T;
+      let hi=I,lo=-1;for(let k=1;k<=12;k++){const i=I*(1-k/12);if(pt(g,i).V<=V&&i>0){lo=i;break;}hi=i;}
+      if(lo<0)return 0;
+      for(let k=0;k<14;k++){const i=(lo+hi)/2;if(pt(g,i).V<=V)lo=i;else hi=i;}
+      return pt(g,lo).T;};
+    const g0=o.g,g1=Math.PI/2,n=24;let bi=0,bT=-1;
+    for(let k=0;k<=n;k++){const t=best(g0+(g1-g0)*k/n);if(t>bT){bT=t;bi=k;}}
+    const st=(g1-g0)/n;
+    for(let k=-4;k<=4;k++){const g=g0+st*(bi+k/4);if(g<g0||g>g1)continue;const t=best(g);if(t>bT)bT=t;}
+    T=Math.max(0,bT);
+  }
+  if(dq.cache.size>5000)dq.cache.clear();
+  dq.cache.set(key,T);
+  return T;
 }
 // An induction motor's torque at full field from a total current: what the magnetising current leaves for the torque.
+// Torque per amp falls as the electric loading (A/m of bore) rises: the leakage paths saturate. A magnet motor's is
+// solved (dqSolve, build 294); an induction motor's is still the one point the Model 3 gave before then (8.5% at
+// 145.7 kA/m, scaled with the loading's square), in its own register entry (MOTOR.imCage).
+const IM_SAT_K=0.085, IM_SAT_A=145.7e3;
+const imSat=(m,I)=>1-IM_SAT_K*(6*m.N*I/(Math.PI*m.D)/IM_SAT_A)**2;
 function imTorque(m,I){
   const Iq=Math.sqrt(Math.max(0,I*I-m.ImR*m.ImR));
-  return 1.5*m.p*m.psi20*Math.SQRT2*Iq*(1-SAT_K*(motorLoading(m,I)/SAT_A_REF)**2);
+  return 1.5*m.p*m.psi20*Math.SQRT2*Iq*imSat(m,I);
 }
 // Its currents at an operating point: the field's share (1 at full field) and the magnetising and torque currents. Above
 // the knee the field is weakened as wb/w; below the rated torque current the controller lowers the field until Im = Iq.
@@ -11350,31 +11522,79 @@ function imCurrents(m,T,rpm,Vdc){
   if(!(Math.abs(T)>0))return {fl:0,Im:0,Iq:0,I:0};   // no torque asked: no field
   let fl=w>wb?wb/w:1,Im=m.ImR*fl,Iq=Math.abs(T)/(k*m.psi20*fl);
   if(Iq<Im){Im=Iq=Math.sqrt(Math.abs(T)*m.ImR/(k*m.psi20));fl=Im/m.ImR;}
-  for(let j=0;j<3;j++){const sat=1-SAT_K*(motorLoading(m,Math.hypot(Im,Iq))/SAT_A_REF)**2;Iq=Math.abs(T)/(k*m.psi20*fl*sat);}
+  for(let j=0;j<3;j++)Iq=Math.abs(T)/(k*m.psi20*fl*imSat(m,Math.hypot(Im,Iq)));
   return {fl,Im,Iq,I:Math.min(m.Imax,Math.hypot(Im,Iq))};
 }
-// The current a torque needs (A rms): solved on the saturating torque law, plus the field-weakening current above the knee.
+// A magnet motor's operating point for a torque (Nm, negative regenerating): the least current that gives it within the
+// voltage. MTPA while the voltage allows; above that, the current is turned towards the negative d-axis just as far as
+// the voltage needs. Past what the motor can give: full current at the angle with the lowest voltage.
+function motorOp(m,T,rpm,Vdc,tMag){
+  const dq=m.dq||dqTables(m),key=Math.round(T*4)+'|'+Math.round(rpm/5)+'|'+Math.round(Vdc)+'|'+Math.round(tMag);
+  let r=dq.ops.get(key);if(r)return r;
+  r=motorOpSolve(m,T,rpm,Vdc,tMag);
+  if(dq.ops.size>20000)dq.ops.clear();
+  dq.ops.set(key,r);return r;
+}
+function motorOpSolve(m,T,rpm,Vdc,tMag){
+  const we=m.p*Math.max(0,rpm)*Math.PI/30,R=motorR(m,tMag),V=Vdc/Math.sqrt(3),I=m.Imax,sg=T<0?-1:1,aT=Math.abs(T);
+  const at=(Id,Iq)=>{const q=dqAt(m,Id,Iq,tMag);q.Id=Id;q.Iq=Iq;q.I=Math.hypot(Id,Iq);q.V=dqVolt(m,q,Id,Iq,we,R);return q;};
+  const vAt=(Id,Iq)=>dqVolt(m,dqFast(m,Id,Iq,tMag),Id,Iq,we,R);
+  if(!(aT>1e-9)){
+    if(vAt(0,0)<=V)return at(0,0);
+    if(vAt(-I,0)>V)return at(-I,0);
+    let lo=0,hi=I;for(let k=0;k<16;k++){const i=(lo+hi)/2;if(vAt(-i,0)<=V)hi=i;else lo=i;}
+    return at(-hi,0);
+  }
+  // MTPA: the current whose best torque is the one asked
+  const full=dqMtpa(m,I,tMag).T;
+  let lo=0,hi=I;
+  for(let k=0;k<20;k++){const i=(lo+hi)/2;if(dqMtpa(m,i,tMag).T<aT)lo=i;else hi=i;}
+  const o=dqMtpa(m,hi,tMag);
+  if(full>=aT&&vAt(-hi*Math.sin(o.g),sg*hi*Math.cos(o.g))<=V)return at(-hi*Math.sin(o.g),sg*hi*Math.cos(o.g));
+  // at an angle g, the current that gives the torque (Infinity past full current); along it the voltage falls as g
+  // turns towards the negative d-axis, so the least current within the voltage is found by bisection on g
+  const onT=g=>{const s=Math.sin(g),c=Math.cos(g);if(Math.abs(dqFast(m,-I*s,sg*I*c,tMag).T)<aT)return Infinity;
+    let a=0,b=I;for(let k=0;k<16;k++){const i=(a+b)/2;if(Math.abs(dqFast(m,-i*s,sg*i*c,tMag).T)<aT)a=i;else b=i;}
+    return b;};
+  const ok=g=>{const i=onT(g);return i<Infinity&&vAt(-i*Math.sin(g),sg*i*Math.cos(g))<=V;};
+  let ga=o.g,gb=Math.PI/2*0.995;
+  if(!ok(gb)){
+    // past what the motor can give at this speed: full current, at the angle of least voltage
+    let best=gb,bv=Infinity;for(let k=0;k<=16;k++){const g=o.g+(gb-o.g)*k/16,v=vAt(-I*Math.sin(g),sg*I*Math.cos(g));if(v<bv){bv=v;best=g;}}
+    return at(-I*Math.sin(best),sg*I*Math.cos(best));
+  }
+  for(let k=0;k<14;k++){const g=(ga+gb)/2;if(ok(g))gb=g;else ga=g;}
+  const i=onT(gb);return at(-i*Math.sin(gb),sg*i*Math.cos(gb));
+}
+// The current a torque needs (A rms).
 function motorCurrent(m,T,rpm,Vdc,psi){
-  let I=Math.abs(T)/(1.5*m.p*psi*Math.SQRT2);
-  for(let k=0;k<3;k++)I=Math.abs(T)/(1.5*m.p*psi*Math.SQRT2*(1-SAT_K*(motorLoading(m,I)/SAT_A_REF)**2));
-  const wb=motorBaseW(m,Vdc,psi),w=rpm*Math.PI/30;
-  const Id=w>wb?0.7*m.Imax*(1-wb/w):0;
-  return Math.min(m.Imax,Math.hypot(I,Id));
+  return m.im?imCurrents(m,T,rpm,Vdc).I:motorOp(m,T,rpm,Vdc,tMagOf(m,psi)).I;
+}
+// Iron loss (W/kg) at a frequency and peak flux density: Steinmetz's two terms on M270-35A's points, eddies by the
+// lamination's thickness squared.
+const feLoss=(m,f,B)=>{const t=(m.s.lamination||0.35)/FE_T_REF;return (FE_KH*f+FE_KE*t*t*f*f)*B*B;};
+// The rotor's iron sees no fundamental: its loss is the stator's slot ripple sweeping its surface at the slot-passing
+// frequency (slots x rev/s). The ripple's amplitude is beta Bg, with Carter's beta for the slot opening over the gap,
+// beta = (1 - u)^2 / (2 (1 + u^2)), u = b0/(2g) + sqrt(1 + (b0/(2g))^2) (Pyrhonen 2014, 3.1.2), and it dies into the
+// iron as exp(-2 pi y / slot pitch): the loss is a skin of a quarter of the slot pitch over 2 pi, the rotor's surface
+// round. Measured on the mean of the gap field's square. The magnets' own eddy currents are not counted (left open).
+function rotorIronLoss(m,rpm,Bg2){
+  const x=SLOT_OPEN/(2*m.gap),u=x+Math.sqrt(1+x*x),beta=(1-u)**2/(2*(1+u*u));
+  return feLoss(m,m.slots*rpm/60,1)*beta*beta*Bg2*RHO_FE*m.D*m.L*m.ts/4;
 }
 // Losses at an operating point (W): torque T (Nm, negative when regenerating), speed (rpm), bus voltage, and the node
-// temperatures {w,r}. Copper and inverter follow the current; iron follows frequency and the flux left after weakening.
+// temperatures {w,r}. Copper and inverter follow the current; the stator's iron, its teeth and its yoke each at their own
+// peak flux density at the point (build 294), so weakening the field lowers it; the rotor's, the slot ripple's.
 function motorLosses(m,T,rpm,Vdc,temp){
   if(m.parts)return motorSetLosses(m,T,rpm,Vdc,temp);
   if(m.im)return imLosses(m,T,rpm,Vdc,temp);
-  const psi=motorPsi(m,temp.r),I=motorCurrent(m,T,rpm,Vdc,psi),w=rpm*Math.PI/30;
+  const q=motorOp(m,T,rpm,Vdc,temp.r),I=q.I,w=rpm*Math.PI/30;
   const cu=3*I*I*motorR(m,temp.w)*copperAC(m,rpm,temp.w);
-  const f=m.p*rpm/60,wb=motorBaseW(m,Vdc,psi),flux=w>wb?Math.max(0.4,wb/w):1,B=B_CORE*flux;
-  const t=(m.s.lamination||0.35)/FE_T_REF;
-  const fe=(FE_KH*f*B*B+FE_KE*t*t*f*f*B*B)*(m.mFeS+m.mFeR);
+  const f=m.p*rpm/60,feS=feLoss(m,f,q.Bt)*m.mTeeth+feLoss(m,f,q.By)*(m.mFeS-m.mTeeth),feR=rotorIronLoss(m,rpm,q.Bg2);
   const mech=0.15*w+5e-8*w*w*w*(m.D/0.15)**4*(m.L/0.134);
   const inv=m.inv,rS=inv.r*1000/m.Imax;
   const invL=3*(0.9*inv.v0*I+rS*I*I)+3*(Math.SQRT2/Math.PI)*inv.tSw*inv.fSw*Vdc*I;
-  return {cu,fe,mech,inv:invL,I,total:cu+fe+mech+invL};
+  return {cu,fe:feS+feR,feS,feR,mech,inv:invL,I,total:cu+feS+feR+mech+invL};
 }
 // ---- more than one motor (build 183, step 2.5b) ----
 // A car with a motor on each axle (a Model Y: a magnet motor at the rear, an induction motor at the front), or two on
@@ -11401,7 +11621,7 @@ function motorSet(parts){
 // the capacity, whichever loses least; the rest is the rear's. Each group's motors share theirs equally.
 function motorSetLosses(set,T,rpm,Vdc,temp){
   const P=set.parts,at=(q,t)=>{const L=motorLosses(q.m,t/q.n,rpm,Vdc,temp);return L;};
-  const add=(x,L,n)=>{for(const k of ['cu','rcu','fe','mech','inv','I','total'])x[k]=(x[k]||0)+n*(L[k]||0);return x;};
+  const add=(x,L,n)=>{for(const k of ['cu','rcu','fe','feS','feR','mech','inv','I','total'])x[k]=(x[k]||0)+n*(L[k]||0);return x;};
   if(P.length===1){const L=at(P[0],T);return add({},L,P[0].n);}
   const r=P[0],f=P[1],mR=r.n*motorMaxTorque(r.m,rpm,Vdc,temp.r),mF=f.n*motorMaxTorque(f.m,rpm,Vdc,temp.r),aT=Math.abs(T),sg=Math.sign(T)||1;
   const shares=[0,0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9,1,mF/Math.max(1e-9,mR+mF)];
@@ -11419,35 +11639,38 @@ function motorSetLosses(set,T,rpm,Vdc,temp){
 function imLosses(m,T,rpm,Vdc,temp){
   const c=imCurrents(m,T,rpm,Vdc),I=c.I,w=rpm*Math.PI/30;
   const cu=3*I*I*motorR(m,temp.w)*copperAC(m,rpm,temp.w),rcu=3*c.Iq*c.Iq*m.Rr20*(1+ALPHA_CU*(temp.r-20));
-  const f=m.p*rpm/60,B=B_CORE*c.fl,t=(m.s.lamination||0.35)/FE_T_REF;
-  const fe=(FE_KH*f*B*B+FE_KE*t*t*f*f*B*B)*(m.mFeS+m.mFeR);
+  // the teeth and the yoke at the densities they were sized to (build 293), scaled by the field; the rotor's, the ripple's
+  const f=m.p*rpm/60,fl=c.fl,Bt=m.wt?IM_BG*m.ts/(0.95*m.wt)*fl:0,By=IM_BG*fl*2/Math.PI*Math.PI*m.D/m.poles/(0.95*2*m.hy);
+  const feS=feLoss(m,f,Bt)*m.mTeeth+feLoss(m,f,By)*(m.mFeS-m.mTeeth),feR=rotorIronLoss(m,rpm,IM_BG*IM_BG*fl*fl/2),fe=feS+feR;
   const mech=0.15*w+5e-8*w*w*w*(m.D/0.15)**4*(m.L/0.134);
   const inv=m.inv,rS=inv.r*1000/m.Imax;
   const invL=I>0?3*(0.9*inv.v0*I+rS*I*I)+3*(Math.SQRT2/Math.PI)*inv.tSw*inv.fSw*Vdc*I:0;
-  return {cu,rcu,fe,mech,inv:invL,I,total:cu+rcu+fe+mech+invL};
+  return {cu,rcu,fe,feS,feR,mech,inv:invL,I,total:cu+rcu+fe+mech+invL};
 }
 // Efficiency of the drive (motor and inverter) at a point, motoring: shaft power over battery power.
 function motorEfficiency(m,T,rpm,Vdc,temp={w:90,r:70}){
   const P=T*rpm*Math.PI/30;if(!(P>0))return 0;
   return P/(P+motorLosses(m,T,rpm,Vdc,temp).total);
 }
-// Heat: advance the winding, core and rotor temperatures over dt (s) with these losses. 80% of the iron loss is the
-// stator's, 20% the rotor's (with the magnets' own eddy currents); friction and windage go to the core; an induction
-// motor's cage loss (rcu) is the rotor's.
+// Heat: advance the winding, core and rotor temperatures over dt (s) with these losses. The stator's iron loss goes to
+// the core, the rotor's to the rotor (build 294); friction and windage go to the core; an induction motor's cage loss
+// (rcu) is the rotor's.
+const feSplit=L=>L.feS!==undefined?[L.feS,L.feR]:[0.8*L.fe,0.2*L.fe];
 function motorHeatStep(m,temp,L,dt){
   const tc=m.cool.tCool,ns=Math.max(1,Math.ceil(dt/0.5)),h=dt/ns;   // explicit steps well inside the fastest node's time constant
   for(let k=0;k<ns;k++){
     const qWC=m.Gwc*(temp.w-temp.c),qWK=m.Gwk*(temp.w-tc),qCK=m.Gcc*(temp.c-tc),qRC=m.Grc*(temp.r-temp.c);
     temp.w+=(L.cu-qWC-qWK)/m.Cw*h;
-    temp.c+=(0.8*L.fe+L.mech+qWC+qRC-qCK)/m.Cc*h;
-    temp.r+=(0.2*L.fe+(L.rcu||0)-qRC)/m.Cr*h;
+    const [fS,fR]=feSplit(L);
+    temp.c+=(fS+L.mech+qWC+qRC-qCK)/m.Cc*h;
+    temp.r+=(fR+(L.rcu||0)-qRC)/m.Cr*h;
   }
   return temp;
 }
 // The steady temperatures a held operating point settles at (C): the same network with the capacities let go.
 // In steady state the winding sheds its copper loss to the core (a share a = Gwc/(Gwc+Gwk)) and straight to the
 // coolant (the rest), the rotor its iron share across the gap, and the core all it receives to the coolant:
-//   Tc = tc + (fe + mech + a cu) / (Gcc + a Gwk),  Tw = (cu + Gwc Tc + Gwk tc)/(Gwc + Gwk),  Tr = Tc + 0.2 fe / Grc
+//   Tc = tc + (fe + mech + a cu) / (Gcc + a Gwk),  Tw = (cu + Gwc Tc + Gwk tc)/(Gwc + Gwk),  Tr = Tc + feR / Grc
 // The losses depend on the temperatures (resistance, flux), so it is iterated to a fixed point. The copper's resistance
 // rises with its temperature, so the copper loss feeds itself: where that gain reaches one there is no steady state at
 // all (thermal runaway), and the point cannot be held however long it is waited for. That returns Infinity.
@@ -11457,7 +11680,7 @@ function motorSteadyTemps(m,T,rpm,Vdc){
   for(let k=0;k<60;k++){
     const L=motorLosses(m,T,rpm,Vdc,temp);
     const rc=L.rcu||0,Tc=tc+(L.fe+L.mech+a*L.cu+rc)/(m.Gcc+a*m.Gwk);
-    const next={w:(L.cu+m.Gwc*Tc+m.Gwk*tc)/(m.Gwc+m.Gwk),c:Tc,r:Tc+(0.2*L.fe+rc)/m.Grc};
+    const next={w:(L.cu+m.Gwc*Tc+m.Gwk*tc)/(m.Gwc+m.Gwk),c:Tc,r:Tc+(feSplit(L)[1]+rc)/m.Grc};
     if(!(next.w<1000)||!(next.r<2000))return {w:Infinity,c:Infinity,r:Infinity};
     if(Math.abs(next.w-temp.w)<1e-3){temp=next;break;}
     temp=next;
@@ -27509,8 +27732,8 @@ function evdDrawViz(){
   }
   cv=evdG('evdViz-wind');
   if(evdShown(cv)){
-    const x=evdCtx(cv),W=cv.width,H=cv.height,pad=18,iw=W-pad*2,ih=H-pad*2-8,m=r.m.parts?r.m.parts[0].m:r.m,psi=motorPsi(m,60);
-    const vMax=r.V/Math.sqrt(6)*Math.SQRT2,emf=n=>(m.vDrop||V_DROP)*m.p*psi*n*Math.PI/30,top=vMax*2.2;
+    const x=evdCtx(cv),W=cv.width,H=cv.height,pad=18,iw=W-pad*2,ih=H-pad*2-8;
+    const vMax=r.V/Math.sqrt(6)*Math.SQRT2,emf=n=>vMax*n/Math.max(1,r.knee),top=vMax*2.2;
     const X=n=>pad+n/r.top*iw,Y=v=>pad+ih-Math.min(v,top)/top*ih;
     x.strokeStyle=C.edge;x.lineWidth=1;x.strokeRect(pad+.5,pad+.5,iw,ih);
     x.strokeStyle=C.cyan;x.lineWidth=2;x.beginPath();x.moveTo(X(0),Y(vMax));x.lineTo(X(r.top),Y(vMax));x.stroke();
