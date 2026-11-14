@@ -180,14 +180,16 @@ const TURBO_PR_REF=2.0;   // frames are characterised at 1.0 bar of boost
 // How strongly the spool point follows shaft speed. Calibrated (not guessed) so a small frame
 // keeps its early-spooling character at low boost and clearly gives it up at high boost.
 const SPOOL_PR_EXP=1.45;
-// Turbo configuration: multipliers on the base (size) spool point / width / top-end choke /
-// response / rated flow. Twin spools earlier & flows better; sequential spools very early and
-// stays flat; compound stages two compressors, so it makes big low-end and flows the most.
+// Turbo layouts (build 290): how many turbos, each its own wheel, turbine and shaft, so the pair's choke flow is two
+// wheels' and each turbine takes its share of the exhaust. A sequential pair runs its primary alone until the pair is
+// needed (unitsAt). Twin and sequential carried flow multiples of one wheel (1.85, 1.55) and spool and width multiples
+// for the logistic fallback; retired. A COMPOUND is two stages in series, a large wheel feeding a small one, and is
+// still one frame with 2.30 of its flow (plans/fitted-register.json) until the part designs both stages.
 const TURBO_CONFIG={
-  single:    {label:'SINGLE',     spool:1.00,width:1.00,flow:1.00},
-  twin:      {label:'TWIN',       spool:0.82,width:1.10,flow:1.85},
-  sequential:{label:'SEQUENTIAL', spool:0.60,width:1.55,flow:1.55},
-  compound:  {label:'COMPOUND',   spool:0.68,width:1.35,flow:2.30}
+  single:    {label:'SINGLE',     units:1,flow:1},
+  twin:      {label:'TWIN',       units:2,flow:2},
+  sequential:{label:'SEQUENTIAL', units:2,flow:2},
+  compound:  {label:'COMPOUND',   units:1,flow:2.30}
 };
 // Supercharger types: boost fraction vs rpm = clamp(lo + (hi-lo)*(rpm/redline)^exp). Roots &
 // twin-screw are positive-displacement (near-full boost from low rpm); centrifugal is a

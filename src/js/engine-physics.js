@@ -27,6 +27,14 @@ function boostAvail(rpm){
   }
   return 0;
 }
+// Where the solved boost first reaches half the setting (build 290; the readout showed the logistic fallback's point).
+function boostHalfRpm(){
+  const tb=engine.boostTable,h=engine.boost_bar/2;
+  if(!tb||!tb.length||!(h>0))return engine.spool50;
+  if(tb[0].bar>=h)return tb[0].rpm;
+  for(let i=1;i<tb.length;i++)if(tb[i].bar>=h){const a=tb[i-1],b=tb[i];return a.rpm+(b.rpm-a.rpm)*(h-a.bar)/(b.bar-a.bar);}
+  return engine.redline;
+}
 // Extra IMEP (bar) from an active nitrous shot (WOT only, while the bottle has charge).
 function nitrousImep(){return state.nitrousActive&&state.nitrousCharge>0&&state.throttle>0.5?engine.nitrousBar:0;}
 // Wide-open-throttle manifold pressure at an RPM (used for the dyno sweep).
@@ -907,7 +915,8 @@ function advanceShaft(shaftE,rpm,boostNow,throttle,dt,hMax=0.002){
     }
     const dB=Math.max(0,b2-b);
     const pr=1+0.5*(b+b2), dm=V*dB*1e5/(287*(effIAT(pr,rpm)+273.15));
-    const fill=dm*1005*T01*(Math.pow(pr,0.286)-1)/clamp(r.eta||0.7,0.3,0.85);
+    // one shaft's share of it: the active turbos fill the volume together (build 290)
+    const fill=dm*1005*T01*(Math.pow(pr,0.286)-1)/clamp(r.eta||0.7,0.3,0.85)/unitsAt(rpm);
     E=clamp(E+(r.net-loss)*h-fill,0,Emax);
     b=b2;
   }
