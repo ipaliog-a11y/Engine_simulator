@@ -573,6 +573,16 @@ body.guided-open{overflow:hidden}
 .lamp.lamp-stub{color:#333;border-color:#222;opacity:0.55}
 .lamp.lamp-stub .lamp-dot{background:#14141a;border-color:#222}
 #livePanel.folded .dash-lamps{margin:2px 0 0}
+/* Check-engine lamp and its code list (build 309) */
+.lamp.lamp-click,.lamp.lamp-click:hover{cursor:pointer}
+.lamp.lamp-blink .lamp-dot{animation:lampBlink 0.5s steps(1) infinite}
+@keyframes lampBlink{50%{background:#1a1a22}}
+.obd-panel{margin:2px 0 4px;padding:6px;border:2px solid #2a2a3a;background:#0a0a10;font-size:7px;line-height:1.6;overflow-wrap:anywhere}
+.obd-panel .obd-h{color:#ffaa00;margin-bottom:4px}
+.obd-panel .obd-code{margin:4px 0;padding-left:6px;border-left:3px solid #555}
+.obd-panel .obd-confirmed{border-left-color:#ff4444}
+.obd-panel .obd-pending{border-left-color:#ffaa00}
+.obd-panel .obd-ff{color:#889}
 #dashPowerRow{margin-top:0;margin-bottom:8px}
 .fold-btn{font-size:9px;line-height:1;padding:2px 7px;min-width:0}
 /* DYNO's MORE menu: the buttons below RESET, dropped down under MORE (a button that opens a panel of buttons, not a select) */
@@ -799,7 +809,7 @@ body.guided-open{overflow:hidden}
 </div>
 <div class="container">
 <header>
-<h1>PIXEL ENGINE SIM v0.7 build 308</h1>
+<h1>PIXEL ENGINE SIM v0.7 build 309</h1>
 <div class="subtitle" id="subtitle">ENGINE DESIGNER • BUILD IT, THEN DRIVE IT</div>
 </header>
 <div class="build-strip" id="buildStrip">
@@ -1155,8 +1165,12 @@ Diesel: full fuel at the smoke limit, λ1.2; leaner is less torque but less fuel
 <b>NITROUS</b> — if fitted, sprays at wide-open throttle from a bottle that depletes.<br>
 <b>Dashboard lamps</b> — under LIVE OUTPUT: <b>COOL</b> and <b>OIL</b> light when coolant or oil
 temp is out of range, <b>BATT</b> when the 12&nbsp;V side is low, and on a hybrid <b>HYB</b> shows the
-drive mode (and warns when the engine is off). <b>OIL P</b> (oil pressure) and <b>FAULT</b> (codes)
-are placeholders — those systems are not modeled yet, so the lamps stay dim.<br>
+drive mode (and warns when the engine is off). <b>OIL P</b> (oil pressure) is a placeholder, not modeled yet.<br>
+<b>FAULT</b> — the check-engine lamp. The ECU stores OBD-II codes: P0324 knock past what retard holds, P0217 overheat,
+P0171 lean under boost, P0300 misfire (weak spark or valve float), P0420 no working catalyst, P0562 low voltage.
+A fault seen once is <i>pending</i> (amber; a real car shows it only to a scan tool); seen again after the next
+STARTER it is <i>confirmed</i> (red). A misfire that would cook the catalyst flashes it at once. Three clean runs put it
+out. Click the lamp for the codes and the freeze frame of each; CLEAR CODES or a rebuild erases them.<br>
 <b>STARTER · POWER OFF</b> — on a hybrid or an electric car they switch the whole car on (READY) and
 off: off, the motor gives no torque, the engine stops, nothing charges and nothing is heard; a hybrid
 comes on with its engine running and the drive mode decides from there. On a combustion engine POWER OFF cuts the ignition: the burning stops and the engine
@@ -3800,10 +3814,11 @@ Most other tests check behaviour that is true of real cars: a bigger turbo spool
 <button type="button" class="lamp" id="lampCool" disabled aria-pressed="false" title="Coolant temperature"><span class="lamp-dot"></span><span class="lamp-lbl">COOL</span></button>
 <button type="button" class="lamp" id="lampOil" disabled aria-pressed="false" title="Oil temperature"><span class="lamp-dot"></span><span class="lamp-lbl">OIL</span></button>
 <button type="button" class="lamp lamp-stub" id="lampOilP" disabled aria-pressed="false" title="Oil pressure — not modeled yet" aria-label="Oil pressure, not modeled yet"><span class="lamp-dot"></span><span class="lamp-lbl">OIL P</span></button>
-<button type="button" class="lamp lamp-stub" id="lampFault" disabled aria-pressed="false" title="Fault codes — not modeled yet" aria-label="Fault codes, not modeled yet"><span class="lamp-dot"></span><span class="lamp-lbl">FAULT</span></button>
+<button type="button" class="lamp lamp-click" id="lampFault" aria-pressed="false" aria-expanded="false" aria-controls="obdPanel" title="Check engine — click for the fault codes"><span class="lamp-dot"></span><span class="lamp-lbl">FAULT</span></button>
 <button type="button" class="lamp" id="lampHyb" disabled aria-pressed="false" hidden title="Hybrid drive mode"><span class="lamp-dot"></span><span class="lamp-lbl">HYB</span></button>
 <button type="button" class="lamp" id="lampBatt" disabled aria-pressed="false" title="12 V battery"><span class="lamp-dot"></span><span class="lamp-lbl">BATT</span></button>
 </div>
+<div class="obd-panel" id="obdPanel" hidden></div>
 </div>
 </div>
 <div class="panel" id="hybridPanel" hidden>
@@ -9574,6 +9589,7 @@ function buildEngineCore(prevStoich,quiet){
 
   // Keep the live operating point valid for the new engine.
   state.firing=true;state.ignOn=true;state.crank=0;   // a built engine goes on the bench running (build 265)
+  obdReset();   // a fresh engine: no codes stored (build 309)
   state.rpm=clamp(state.rpm,engine.idleRpmEff,engine.redline);
   state.map=clamp(state.map,0.12,engine.mapMax);
   // Re-range the AFR slider. Diesel is quality-governed: air is unthrottled and power is set
@@ -11285,6 +11301,111 @@ function getDynoData(){
   dynoCache=pts;dynoCacheKey=key;return pts;
 }
 
+// ---- On-board diagnostics: fault codes and the check-engine lamp (build 309) ----
+// The bench's ECU watches signals the simulation already computes and stores SAE J2012 / ISO 15031-6 generic codes, under
+// the OBD-II rules (CARB, 13 CCR 1968.2): a fault seen once is PENDING; seen again on the next drive cycle it is CONFIRMED
+// and lights the MIL. A misfire bad enough to damage the catalyst flashes the MIL at once. The MIL goes out after three
+// drive cycles in a row that ran without the fault; the code stays stored as HISTORY until cleared. The first
+// detection keeps a freeze frame. A drive cycle here is one engine run: from a start (or a build) to the next start.
+// Read-only: nothing here changes a number the engine makes (limp modes are a later build).
+// Each condition reuses a threshold the simulation already has; the hold times are game rules, as are the misfire
+// rates (real ones are set per engine by its maker against emissions and catalyst temperature, 1968.2 (e)(3)).
+const OBD_CODES={
+  P0324:{t:'Knock control system error',      hold:1, why:'Knock is past what the ECU can hold off by retarding the spark (KNOCK_TARGET).'},
+  P0217:{t:'Engine coolant over temperature', hold:2, why:'Coolant is above 112 °C, where the wear model starts charging OVERHEAT.'},
+  P0171:{t:'System too lean (bank 1)',        hold:2, why:'λ above 1.05 under boost: the LEAN/BOOST wear condition.'},
+  P0300:{t:'Random/multiple cylinder misfire detected',hold:1, why:'The spark cannot fire every cycle (weak voltage past the dwell limit), or the valves float.'},
+  P0420:{t:'Catalyst system efficiency below threshold (bank 1)',hold:10, why:'A warm engine with no working catalyst converts almost nothing.'},
+  P0562:{t:'System voltage low',              hold:5, why:'The 12 V side is below 11.6 V while the engine runs.'}
+};
+const OBD_MISFIRE=0.02, OBD_MISFIRE_CAT=0.10;   // misfire share that sets P0300, and that flashes the MIL (game rules)
+const OBD_CLEAN_CYCLES=3, OBD_MIN_RUN=20;       // clean cycles to put the MIL out; seconds a run needs to count as one
+let obd={codes:{},timers:{},cycleSeen:{},runS:0,wasRunning:true,flash:false,open:false};
+function obdReset(){obd.codes={};obd.timers={};obd.cycleSeen={};obd.runS=0;obd.wasRunning=obdRunning();obd.flash=false;}
+function obdRunning(){
+  if(isElectric())return false;
+  if(isHybrid())return !!hybBenchState().engOn;
+  return state.firing!==false&&!state.blown;
+}
+// The share of combustion events lost: spark (ignitionHealth) or a valve past float.
+function obdMisfire(){
+  if(engine.ci)return 0;
+  let m=1-ignitionHealth(state.rpm);
+  if(engine.floatRpm>0&&state.rpm>engine.floatRpm)m=Math.max(m,OBD_MISFIRE);
+  return m;
+}
+// Which conditions are present right now, by code.
+function obdConditions(){
+  const on={};if(!obdRunning()||state.fuelCut)return on;
+  const lam=state.afr/(engine.stoichAFR||14.7);
+  if(!engine.ci&&state.knockRisk>KNOCK_TARGET+0.5)on.P0324=1;
+  if(state.coolant>112)on.P0217=1;
+  if(!engine.ci&&lam>1.05&&state.map>0.9)on.P0171=1;
+  if(obdMisfire()>OBD_MISFIRE)on.P0300=1;
+  if(!engine.ci&&(engine.catConv||0)<0.5&&state.coolant>=70)on.P0420=1;
+  if(!engine.dcdc&&state.systemVoltage<11.6)on.P0562=1;
+  return on;
+}
+// A drive cycle ends: count clean cycles for the lit codes, drop pending ones the cycle did not see again.
+function obdEndCycle(){
+  if(obd.runS>=OBD_MIN_RUN)for(const k in obd.codes){
+    const c=obd.codes[k];if(obd.cycleSeen[k])continue;
+    if(c.status==='pending')delete obd.codes[k];
+    else if(c.status==='confirmed'&&++c.clean>=OBD_CLEAN_CYCLES)c.status='history';
+  }
+  for(const k in obd.codes)obd.codes[k].newCycle=true;
+  obd.cycleSeen={};obd.timers={};obd.runS=0;
+}
+function obdStep(dt){
+  const run=obdRunning();
+  if(run&&!obd.wasRunning)obdEndCycle();   // a start begins the next drive cycle
+  obd.wasRunning=run;
+  if(!run){obd.flash=false;return;}
+  obd.runS+=dt;
+  const on=obdConditions();
+  for(const k in OBD_CODES){
+    obd.timers[k]=on[k]?(obd.timers[k]||0)+dt:0;
+    if(obd.timers[k]<OBD_CODES[k].hold||obd.cycleSeen[k])continue;
+    obd.cycleSeen[k]=true;
+    const c=obd.codes[k];
+    if(!c||c.status==='history')obd.codes[k]={status:'pending',clean:0,newCycle:false,ff:obdFreezeFrame()};
+    else{c.clean=0;if(c.status==='pending'&&c.newCycle)c.status='confirmed';}
+  }
+  obd.flash=obdMisfire()>OBD_MISFIRE_CAT;
+  if(obd.flash&&obd.codes.P0300)obd.codes.P0300.status='confirmed';   // catalyst-damaging misfire: lit at once
+}
+function obdFreezeFrame(){
+  return {rpm:Math.round(state.rpm),load:Math.round(state.load*100),map:+state.map.toFixed(2),
+    coolant:Math.round(state.coolant),lam:+(state.afr/(engine.stoichAFR||14.7)).toFixed(2),
+    boost:+(state.boostActual||0).toFixed(2),volt:+state.systemVoltage.toFixed(1)};
+}
+// 'flash', 'on' (a confirmed code), 'pending' (only a scan tool would see it on a real car), or ''.
+function obdLamp(){
+  const v=Object.values(obd.codes);
+  return obd.flash?'flash':v.some(c=>c.status==='confirmed')?'on':v.some(c=>c.status==='pending')?'pending':'';
+}
+function obdClear(){obd.codes={};obd.timers={};obd.cycleSeen={};obd.flash=false;renderObd();}
+// The lamp row calls this each frame: the open list is redrawn only when a code or its status changes.
+let obdSig='';
+function obdRefresh(){const s=JSON.stringify(Object.entries(obd.codes).map(([k,c])=>k+c.status));if(s!==obdSig){obdSig=s;renderObd();}}
+function toggleObd(){obd.open=!obd.open;renderObd();}
+function renderObd(){
+  const box=document.getElementById('obdPanel'),b=document.getElementById('lampFault');if(!box)return;
+  box.hidden=!obd.open;if(b)b.setAttribute('aria-expanded',String(obd.open));
+  if(!obd.open)return;
+  const keys=Object.keys(obd.codes),st={pending:tr('PENDING'),confirmed:tr('CONFIRMED'),history:tr('HISTORY')};
+  let h='<div class="obd-h">'+esc(tr('FAULT CODES'))+'</div>';
+  if(!keys.length)h+='<div class="obd-none">'+esc(isElectric()?tr('No combustion engine: no OBD codes.'):tr('No codes stored.'))+'</div>';
+  keys.forEach(k=>{
+    const c=obd.codes[k],d=OBD_CODES[k],f=c.ff;
+    h+='<div class="obd-code obd-'+c.status+'"><b>'+k+'</b> '+esc(tr(d.t))+' • '+st[c.status]+'<br>'+esc(tr(d.why))
+      +'<br><span class="obd-ff">'+esc(tr('FREEZE FRAME'))+': '+f.rpm+' rpm • '+tr('load')+' '+f.load+'% • MAP '+f.map+' bar • '
+      +tr('coolant')+' '+f.coolant+' °C • λ '+f.lam+' • '+tr('boost')+' '+f.boost+' bar • '+f.volt+' V</span></div>';
+  });
+  h+='<div class="btn-row"><button type="button" id="btnObdClear">'+esc(tr('CLEAR CODES'))+'</button></div>';
+  box.innerHTML=h;
+  document.getElementById('btnObdClear').addEventListener('click',()=>{obdClear();flash(tr('FAULT CODES CLEARED'));});
+}
 // ====== ELECTRIC DRIVE: the motor, its inverter and the battery, from what they are built of (build 178) ======
 // Step 2.1 of plans/hybrid-electric/: the physics alone. Nothing calls it yet; the ENGINE tab, the dyno and
 // powertrain() take it up in 2.2. Every design field acts through a mechanism (plans/hybrid-electric/motor-design.md),
@@ -23482,8 +23603,8 @@ function drawDyno(){
     dynoPulls.forEach((pl,i)=>{ctx.fillStyle=pl.color;ctx.fillText('— '+pl.label,gX+4+i*132,iy+41);});
   }else{ctx.fillStyle='#667';ctx.fillText(tr('LOG PULL to snapshot & overlay a curve for comparison'),gX+4,iy+41);}
 }
-// Dashboard telltales (build 254): thresholds match the status line / canvas gauge bars. Oil pressure and fault
-// codes are placeholders until those systems are modeled; hybrid mode only for a hybrid; ICE-only lamps hide on EV.
+// Dashboard telltales (build 254): thresholds match the status line / canvas gauge bars. Oil pressure is a
+// placeholder until it is modeled; FAULT is the check-engine lamp of obd.js (build 309); hybrid mode only for a hybrid; ICE-only lamps hide on EV.
 function updateDashLamps(){
   const g=id=>document.getElementById(id),row=g('dashLamps');if(!row)return;
   const ev=isElectric(),hy=isHybrid(),set=(id,cls,lbl,title)=>{
@@ -23501,7 +23622,10 @@ function updateDashLamps(){
     set('lampOil',state.oil>132?'danger':state.oil<55?'warn':'');
     set('lampOilP','');   // stub: never lights
   }
-  set('lampFault','');   // stub: never lights
+  {const L=obdLamp(),n=Object.keys(obd.codes).length;
+    set('lampFault',L==='flash'?'danger lamp-blink':L==='on'?'danger':L==='pending'?'warn':'',null,
+      tr('Check engine')+' • '+(n?n+' '+tr('code(s) stored'):tr('No codes stored'))+' • '+tr('click for the list'));
+    if(obd.open)obdRefresh();}
   const hyEl=g('lampHyb');
   if(hyEl){
     hyEl.hidden=!hy;
@@ -29577,10 +29701,11 @@ function bindControls(){
     state.afr=p.afr;state.iat=p.iat;state.coolant=p.coolant;state.oil=p.oil;
     dynoCache=null;syncSliders();
   }
+  document.getElementById('lampFault').addEventListener('click',toggleObd);   // the code list (build 309)
   document.getElementById('btnOptimal').addEventListener('click',()=>applyOperatingPoint('torque'));
   document.getElementById('btnMaxPower').addEventListener('click',()=>applyOperatingPoint('power'));
   document.getElementById('btnEco').addEventListener('click',()=>applyOperatingPoint('eco'));
-  document.getElementById('btnReset').addEventListener('click',()=>{state.firing=true;state.ignOn=true;state.crank=0;setAutoThermal(false);state.engineHealth=1.0;state.blown=false;state.wearCause='';state.coolant=90;state.oil=100;state.batterySOC=1.0;applyPreset({throttle:0.10,load:0.20,afr:14.7,iat:25,coolant:90,oil:100})});
+  document.getElementById('btnReset').addEventListener('click',()=>{state.firing=true;state.ignOn=true;state.crank=0;setAutoThermal(false);state.engineHealth=1.0;state.blown=false;state.wearCause='';obdReset();state.coolant=90;state.oil=100;state.batterySOC=1.0;applyPreset({throttle:0.10,load:0.20,afr:14.7,iat:25,coolant:90,oil:100})});
   // Starter / Power Off (build 254). On an electric car or a hybrid they switch the whole car on (READY) and off
   // (build 306): off, nothing drives, charges or is heard; a hybrid comes on with its engine running, then the controller
   // decides.
@@ -29832,6 +29957,7 @@ function loop(now){
   stepElectrical(dt);
   updatePhysics();
   stepWear(dt);
+  obdStep(dt);
   updateSound();
   // Under the title menu or the car showcase nothing of the app is on view, so it is not drawn: the bench keeps running
   // (and sounding) underneath, and the menu's pan has the frame to itself (build 237). The first frame after either

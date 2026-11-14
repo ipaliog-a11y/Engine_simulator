@@ -18,6 +18,23 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 ## [Unreleased]
 
+### The check-engine lamp: OBD-II fault codes on the bench (build 309)
+
+The FAULT lamp under LIVE OUTPUT was a placeholder since build 254. It is now the check-engine lamp (`src/js/obd.js`).
+
+- **Six generic codes (SAE J2012)**, each set by a condition the simulation already has, at a threshold it already uses:
+  P0324 knock past what the ECU's retard holds (`KNOCK_TARGET`), P0217 coolant over 112 °C (the wear model's OVERHEAT),
+  P0171 λ > 1.05 under boost (its LEAN/BOOST), P0300 misfire (spark lost past the dwell limit on a weak 12 V, or valve
+  float), P0420 a warm engine with no working catalyst, P0562 the 12 V side under 11.6 V.
+- **OBD-II lamp rules (CARB 13 CCR 1968.2)**: seen once, a code is pending (amber); seen again in the next drive cycle (the
+  next STARTER after at least 20 s of running), it is confirmed (red). A misfire over 10% flashes the lamp at once. Three
+  clean cycles put it out and keep the code as history. Each code keeps a freeze frame. Click the lamp for the list;
+  CLEAR CODES, RESET or a rebuild erase it.
+- **Moves no number**: diagnostics only read the state. The fingerprint is identical.
+- **Left open**: the hold times and the misfire rates (2% to set, 10% to flash) are game rules; real ones are set per
+  engine by its maker. No limp mode yet, no codes in races or laps, none for an EV or the hybrid's electric side, and no
+  boost codes (P0234/P0299), which need a boost target the ECU can miss. Greek for the new text is paused.
+
 ### A guided build for the learner: three questions give a real car, each part explained (build 308)
 
 Phase G, last build. GUIDED BUILD, the title menu's sixth item, asks what kind of car, what budget and what matters

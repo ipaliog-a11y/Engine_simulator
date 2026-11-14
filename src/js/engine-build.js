@@ -308,6 +308,7 @@ function buildEngineCore(prevStoich,quiet){
 
   // Keep the live operating point valid for the new engine.
   state.firing=true;state.ignOn=true;state.crank=0;   // a built engine goes on the bench running (build 265)
+  obdReset();   // a fresh engine: no codes stored (build 309)
   state.rpm=clamp(state.rpm,engine.idleRpmEff,engine.redline);
   state.map=clamp(state.map,0.12,engine.mapMax);
   // Re-range the AFR slider. Diesel is quality-governed: air is unthrottled and power is set

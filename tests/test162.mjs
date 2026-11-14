@@ -1,10 +1,10 @@
 // Dashboard lamps and starter/power stubs (build 254).
 //
-// WHY THIS EXISTS. LIVE/DYNO gained telltale lamps and Starter / Power Off controls. Oil pressure and
-// fault codes are not modeled, so those lamps must stay dim stubs. Since build 265 the buttons stop and start a
+// WHY THIS EXISTS. LIVE/DYNO gained telltale lamps and Starter / Power Off controls. Oil pressure is not
+// modeled, so its lamp must stay a dim stub; FAULT is the check-engine lamp since build 309 (test189). Since build 265 the buttons stop and start a
 // plain engine (test169 checks the physics); a hybrid reuses engOn. What must hold:
 //   · the lamp row and both buttons show on LIVE and DYNO;
-//   · OIL P and FAULT stay lamp-stub and never take on/warn/danger in normal use;
+//   · OIL P stays lamp-stub and FAULT stays dark: neither takes on/warn/danger in normal use;
 //   · COOL goes danger when coolant is forced hot; BATT goes danger when voltage is forced low;
 //   · on a running ICE, Starter says it is already on; Power Off cuts the ignition (the engine stops firing);
 //   · on a hybrid, Power Off clears engOn and Starter sets it; since build 306 on a hybrid or an EV they switch the whole
@@ -46,7 +46,7 @@ const stubs = await page.evaluate(() => {
 });
 console.log(`== stubs: oilP="${stubs.oilP}" fault="${stubs.fault}" ==`);
 if (!/\blamp-stub\b/.test(stubs.oilP) || /\b(on|warn|danger)\b/.test(stubs.oilP)) fails.push('OIL P is not a dim stub');
-if (!/\blamp-stub\b/.test(stubs.fault) || /\b(on|warn|danger)\b/.test(stubs.fault)) fails.push('FAULT is not a dim stub');
+if (/\b(on|warn|danger)\b/.test(stubs.fault)) fails.push('FAULT is lit on a healthy engine');
 
 const lit = await page.evaluate(() => {
   state.coolant = 120; state.oil = 100; state.systemVoltage = 10.8; state.batterySOC = 0.2;

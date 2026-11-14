@@ -39,10 +39,11 @@ function bindControls(){
     state.afr=p.afr;state.iat=p.iat;state.coolant=p.coolant;state.oil=p.oil;
     dynoCache=null;syncSliders();
   }
+  document.getElementById('lampFault').addEventListener('click',toggleObd);   // the code list (build 309)
   document.getElementById('btnOptimal').addEventListener('click',()=>applyOperatingPoint('torque'));
   document.getElementById('btnMaxPower').addEventListener('click',()=>applyOperatingPoint('power'));
   document.getElementById('btnEco').addEventListener('click',()=>applyOperatingPoint('eco'));
-  document.getElementById('btnReset').addEventListener('click',()=>{state.firing=true;state.ignOn=true;state.crank=0;setAutoThermal(false);state.engineHealth=1.0;state.blown=false;state.wearCause='';state.coolant=90;state.oil=100;state.batterySOC=1.0;applyPreset({throttle:0.10,load:0.20,afr:14.7,iat:25,coolant:90,oil:100})});
+  document.getElementById('btnReset').addEventListener('click',()=>{state.firing=true;state.ignOn=true;state.crank=0;setAutoThermal(false);state.engineHealth=1.0;state.blown=false;state.wearCause='';obdReset();state.coolant=90;state.oil=100;state.batterySOC=1.0;applyPreset({throttle:0.10,load:0.20,afr:14.7,iat:25,coolant:90,oil:100})});
   // Starter / Power Off (build 254). On an electric car or a hybrid they switch the whole car on (READY) and off
   // (build 306): off, nothing drives, charges or is heard; a hybrid comes on with its engine running, then the controller
   // decides.
@@ -294,6 +295,7 @@ function loop(now){
   stepElectrical(dt);
   updatePhysics();
   stepWear(dt);
+  obdStep(dt);
   updateSound();
   // Under the title menu or the car showcase nothing of the app is on view, so it is not drawn: the bench keeps running
   // (and sounding) underneath, and the menu's pan has the frame to itself (build 237). The first frame after either
