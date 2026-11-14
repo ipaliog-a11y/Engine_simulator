@@ -769,7 +769,7 @@ body.showcase-open{overflow:hidden}
 </div>
 <div class="container">
 <header>
-<h1>PIXEL ENGINE SIM v0.7 build 288</h1>
+<h1>PIXEL ENGINE SIM v0.7 build 289</h1>
 <div class="subtitle" id="subtitle">ENGINE DESIGNER • BUILD IT, THEN DRIVE IT</div>
 </header>
 <div class="build-strip" id="buildStrip">
@@ -2282,7 +2282,7 @@ Torque grows with the rotor's volume and with the current. Spinning makes the mo
 </div>
 <div class="gtier gt-phys"><div class="gtier-h">LV3 · THE PHYSICS</div>
 <div class="guide-body" data-gk="evmotorPhys">
-Torque is the flux linkage times the current: <span class="geq">T = 3/2 · p · ψ · I,  ψ = k<sub>w</sub> · N · (2/π) · B<sub>g</sub> · τ<sub>p</sub> · L</span> Here p is the pole pairs, N the turns per phase, k<sub>w</sub> = 0.93 the winding factor, τ<sub>p</sub> the pole pitch (πD/poles) and L the stack. For a magnet motor B<sub>g</sub> comes from the magnets' circuit. Each pole is a V of two bars, MAGNET THICKNESS l<sub>m</sub> thick and MAGNET WIDTH wide. Round one loop, the magnet's MMF is spent on the air gap and on the stator's teeth and yoke: <span class="geq">B<sub>m</sub> = B<sub>r</sub> + μ<sub>0</sub>μ<sub>r</sub>H<sub>m</sub>,  −H<sub>m</sub>l<sub>m</sub> = B<sub>g</sub>g'/μ<sub>0</sub> + H<sub>tooth</sub>l<sub>tooth</sub> + ∫H<sub>yoke</sub>dl</span> The steel follows M270-35A's magnetisation curve, so a thicker magnet gains less once the teeth and yoke saturate. The steel bridges that hold the bars in carry some flux round them, saturated, and the flat-topped field's fundamental is what the winding sees. The Model 3's magnets give 0.84 of their remanence (1.28 T for SH NdFeB, 0.42 T for ferrite); measured, 0.85. An induction motor runs 0.8 T and pays for it with a magnetising current, which takes its share of the inverter's amps.<br>
+Torque is the flux linkage times the current: <span class="geq">T = 3/2 · p · ψ · I,  ψ = k<sub>w</sub> · N · (2/π) · B<sub>g</sub> · τ<sub>p</sub> · L</span> Here p is the pole pairs, N the turns per phase, k<sub>w</sub> = 0.93 the winding factor, τ<sub>p</sub> the pole pitch (πD/poles) and L the stack. For a magnet motor B<sub>g</sub> comes from the magnets' circuit. Each pole is a V of two bars, MAGNET THICKNESS l<sub>m</sub> thick and MAGNET WIDTH wide. Round one loop, the magnet's MMF is spent on the air gap and on the stator's teeth and yoke: <span class="geq">B<sub>m</sub> = B<sub>r</sub> + μ<sub>0</sub>μ<sub>r</sub>H<sub>m</sub>,  −H<sub>m</sub>l<sub>m</sub> = B<sub>g</sub>g'/μ<sub>0</sub> + H<sub>tooth</sub>l<sub>tooth</sub> + ∫H<sub>yoke</sub>dl</span> The steel follows M270-35A's magnetisation curve, so a thicker magnet gains less once the teeth and yoke saturate. The steel bridges that hold the bars in carry some flux round them, saturated, and the flat-topped field's fundamental is what the winding sees. The stator is drawn from that flux: each tooth as wide as carries the gap's field at 2.0 T, the yoke as deep as carries half a pole's flux at 1.5 T (the top of Pyrhönen's permitted ranges), and the slots, and so the copper, are what is left between them. More flux means wider teeth, a deeper yoke and less copper. The Model 3's magnets give 0.88 of their remanence (1.28 T for SH NdFeB, 0.42 T for ferrite); measured, 0.85. An induction motor runs 0.8 T and pays for it with a magnetising current, which takes its share of the inverter's amps.<br>
 The knee is where the back-EMF ω·ψ, with the winding's voltage drop on top (×1.29 at full current), meets the battery's voltage. Above it the power holds to about 4× the knee speed for a magnet motor and 3× for an induction motor.<br>
 <b>Losses.</b> Copper resistance comes from the slot area (40% copper fill with 1 mm round strands, or 70% with four hairpin bars) and rises 0.393% per kelvin (aluminium: 1.64 times the resistivity, 0.403% per kelvin). At stall that is the whole copper loss. Spinning, the slot leakage adds eddy currents in the strands, so the copper loss rises with the electrical frequency (Dowell). Iron loss is Steinmetz's law on silicon steel: hysteresis follows frequency and flux, and the eddy term also follows the square of the sheet thickness (0.35 mm, or 0.20 mm when LAMINATIONS says so).<br>
 <b>Top speed.</b> The lowest of three: MAX SPEED; the rotor surface speed v/(πD); and the inverter's output frequency, 1.2 kHz for IGBTs and 2 kHz for SiC, divided by the pole pairs.<br>
@@ -10960,7 +10960,8 @@ function getDynoData(){
 // The air gap's flux comes from the magnets through a magnetic circuit (build 288, magnetCircuit below). Two constants
 // are still set from that one motor, not derived, and used for every motor (plans/fitted-register.json):
 //   SAT_K     how much torque per amp is lost to saturation at that electric loading (430 Nm, not the 470 the
-//             flux alone gives): 8.5%, scaled with the square of the loading;
+//             flux alone gave until build 288): 8.5%, scaled with the square of the loading. It is not set again as
+//             the flux under it becomes derived: the Model 3 makes 444 Nm at 953 A since build 289;
 //   V_DROP    the terminal voltage over the back-EMF at full current (the inductive and resistive drop): 1.29.
 // Everything else here is either geometry, a material's datasheet figure, or a textbook rule, named where it is used.
 // tests/test96.mjs checks the model against the Model 3's measured back-EMF and resistance and its published power, and
@@ -10971,7 +10972,17 @@ const SAT_K=0.085, SAT_A_REF=145.7e3, V_DROP=1.29;
 const KW_WIND=0.93;        // winding factor: distributed, q = 2-3 slots per pole per phase, short-pitched
 const SPLIT=0.67;          // bore over stator outside diameter (Model 3 0.672, Leaf 0.66; 0.6-0.7 for traction motors)
 const GAP=0.0007;          // air gap (m): 0.7 mm, the Model 3's
-const SLOT_SHARE=0.5, TOOTH_BAND=0.6, FILL=0.40;   // slots are half the band the teeth occupy, 60% of the radial depth; copper fills 40% of a slot (stranded)
+const FILL=0.40;           // copper fills 40% of a slot (stranded)
+// The teeth and the yoke are sized from the flux they carry (build 289): a tooth as wide as puts the air gap's peak field
+// at the tooth's design density, the yoke as deep as carries half a pole's flux at the yoke's; the slot is what is left
+// between the bore and the yoke. Design densities from Pyrhonen, Pyrhonen & Hrabovcova, Design of Rotating Electrical
+// Machines (2nd ed., 2014), Table 6.1, "Permitted flux densities of the magnetic circuit": the top of each range, as a
+// traction motor is built denser than the standard machines the table is for. A magnet motor takes the salient-pole
+// synchronous column (the book groups PMSMs with it in Table 6.2): tooth, apparent maximum, 1.6-2.0 T; stator yoke
+// 1.0-1.5 T. An induction motor takes the asynchronous one: tooth 1.4-2.1 T, yoke 1.4-1.7 T. The Model 3 runs its yoke
+// above that, ~1.85 T with no current (its teardown's 17.7 mm yoke through magnetCircuit), so its yoke comes out ~4 mm
+// deeper here than it is.
+const B_TOOTH=2.0, B_YOKE=1.5, IM_B_TOOTH=2.1, IM_B_YOKE=1.7;
 // Round magnet wire, 1.0 mm. That is a usual stranded size for this fill, not a strand measured on the Model 3
 // (that motor is a hairpin, which is a later choice). A build may pass s.strand (m) to try another.
 const STRAND=0.001;
@@ -10992,7 +11003,7 @@ const WIRE={round:{label:'ROUND (STRANDED)',fill:FILL,layers:0},hairpin:{label:'
 // capacity per kilogram is kept; its lower thermal conductivity in the slot is not modelled (the liner dominates).
 const CONDUCTOR={copper:{label:'COPPER',rho:RHO_CU,alpha:ALPHA_CU,dens:RHO_CU_M,cp:385,cost:11},
   aluminium:{label:'ALUMINIUM',rho:2.8264e-8,alpha:0.00403,dens:2703,cp:897,cost:3.3}};
-const B_CORE=1.5;          // peak flux density in the teeth and yoke at full flux (T), a usual design point for silicon steel
+const B_CORE=1.5;          // the flux density the iron loss is taken at, all the iron (T): a usual design point for silicon steel
 // Non-oriented silicon steel, 0.35 mm (M270-35A class): about 2.7 W/kg at 1.5 T 50 Hz and 19 W/kg at 1.0 T 400 Hz.
 // Split into hysteresis (∝ f B²) and eddy (∝ (t f B)²), solved from those two points; a thinner sheet cuts only the eddy.
 const FE_KH=0.0206, FE_KE=6.71e-5, FE_T_REF=0.35;
@@ -11052,16 +11063,31 @@ function steelH(B){   // A/m for a flux density B (T)
 // the steel's curve, the yoke's flux rising as a sine from a pole's centre to the gap between poles (integrated along
 // it). The rotor's own iron is wide and left out. Solved by bisection: the gap's flux falls as the iron takes MMF.
 function magnetCircuit(g){
-  const {Br,mur,magT,magW,tau,L,Lfe,gap,ts,wt,hSlot,hy,tauY}=g;
+  const {Br,mur,magT,magW,tau,L,Lfe,gap,ts,h,OD,poles}=g;
   const r=SLOT_OPEN/gap,kc=ts/(ts-r*r/(5+r)*gap),gp=kc*gap;
   const alpha=Math.min(1,magW),Am=magW*tau*MAG_AX*L,Ag=alpha*tau*L,leak=FE_JS*BRIDGE_W*Lfe;
-  const yokeF=By=>{let F=0;for(let i=0;i<12;i++)F+=steelH(By*Math.sin(Math.PI*(i+0.5)/24));return F*tauY/2/12;};
-  const at=Bg=>{const Bt=Bg*ts/(0.95*wt),By=Bg*Ag/(2*hy*Lfe);return {Bt,By,F:Bg*gp/MU0+steelH(Bt)*hSlot+yokeF(By)};};
+  const yokeF=(By,tauY)=>{let F=0;for(let i=0;i<12;i++)F+=steelH(By*Math.sin(Math.PI*(i+0.5)/24));return F*tauY/2/12;};
+  const at=Bg=>{const st=statorFrom(Bg,Bg*Ag,ts,h,Lfe,B_TOOTH,B_YOKE),Bt=Bg*ts/(0.95*st.wt),By=Bg*Ag/(2*st.hy*Lfe);
+    return {Bt,By,st,F:Bg*gp/MU0+toothH(Bt,ts/(0.95*st.wt)-1)*st.hSlot+yokeF(By,Math.PI*(OD-st.hy)/poles)};};
   let lo=0,hi=Br*Am/Ag;
   for(let k=0;k<40;k++){const Bg=(lo+hi)/2,Hm=-at(Bg).F/magT;
     if((Am*(Br+MU0*mur*Hm)-leak)/Ag>Bg)lo=Bg;else hi=Bg;}
   const Bg=Math.max(0,(lo+hi)/2),x=at(Bg);
-  return {Bflat:Bg,B1:4/Math.PI*Bg*Math.sin(alpha*Math.PI/2),Bt:x.Bt,By:x.By,kc};
+  return {Bflat:Bg,B1:4/Math.PI*Bg*Math.sin(alpha*Math.PI/2),Bt:x.Bt,By:x.By,kc,st:x.st};
+}
+// A saturated tooth's field (A/m) for its apparent flux density Ba, the slot pitch's flux put through the tooth alone:
+// part of it goes down the slot beside it, Ba = B + mu0 H k with k the slot's width over the tooth's (Pyrhonen 2014,
+// section 3.5, the apparent and real tooth flux density). Solved for the real B by bisection.
+function toothH(Ba,k){
+  let lo=0,hi=Ba;
+  for(let i=0;i<40;i++){const b=(lo+hi)/2;if(b+MU0*steelH(b)*k<Ba)lo=b;else hi=b;}
+  return steelH((lo+hi)/2);
+}
+// The tooth and yoke for a peak gap field Bpk (T) and a pole's flux phi (Wb), at the design densities; neither may take
+// more than 80% of the slot pitch or of the radial band, so an over-fluxed design saturates rather than losing its slots.
+function statorFrom(Bpk,phi,ts,h,Lfe,bT,bY){
+  const wt=Math.min(0.8*ts,Bpk*ts/(0.95*bT)), hy=Math.min(0.8*h,phi/(2*Lfe*bY));
+  return {wt,hy,hSlot:h-hy};
 }
 // How the rotor holds its magnets in, which sets the surface speed it survives (m/s): steel bridges in the lamination
 // (the Model 3 runs ~140 m/s), or a carbon-fibre sleeve wound over it (the Model S Plaid's, the route to ~20,000 rpm
@@ -11121,31 +11147,34 @@ function motorBuild(s){
   const lam=laminationOf(s.lamination);
   const wire=WIRE[s.wire]||WIRE.round, cond=CONDUCTOR[s.conductor]||CONDUCTOR.copper;
   const D=s.rotorD/1000, L=s.stackL/1000, poles=s.poles, p=poles/2, N=s.turns, Lfe=0.95*L;
-  const Ds=D+2*(im?IM_GAP:GAP), OD=Ds/SPLIT, h=(OD-Ds)/2, hSlot=TOOTH_BAND*h;
+  const Ds=D+2*(im?IM_GAP:GAP), OD=Ds/SPLIT, h=(OD-Ds)/2;
   const slots=3*poles*(poles<=6?3:2)*(im&&poles===4?5/3:1);       // q = 3 slots per pole per phase up to 6 poles, then 2;
                                                                     // a 4-pole induction motor runs q = 5 (the Model S's 60)
   // flux: the air gap's fundamental from the magnets' circuit (an induction motor: its design flux density), per pole,
   // linked by the winding. The magnets' bars, from the design's thickness and width (build 288).
   const tau=Math.PI*D/poles, magT=(s.magT>0?s.magT:MAG_T)/1000, magW=s.magW>0?s.magW:MAG_W;
-  const circ=im?null:magnetCircuit({Br:mag.Br,mur:mag.mur,magT,magW,tau,L,Lfe,gap:GAP,ts:Math.PI*Ds/slots,
-    wt:(1-SLOT_SHARE)*Math.PI*(Ds+hSlot)/slots,hSlot,hy:h-hSlot,tauY:Math.PI*(OD-(h-hSlot))/poles});
+  const ts=Math.PI*Ds/slots;
+  const circ=im?null:magnetCircuit({Br:mag.Br,mur:mag.mur,magT,magW,tau,L,Lfe,gap:GAP,ts,h,OD,poles});
   const Bg=im?IM_BG:circ.B1, phiPole=2/Math.PI*Bg*tau*Lfe;
+  // the teeth and yoke (build 289): from the magnets' circuit, or an induction motor's sinusoidal field at its design flux
+  const st=im?statorFrom(IM_BG,phiPole/0.95,ts,h,Lfe,IM_B_TOOTH,IM_B_YOKE):circ.st, wt=st.wt, hSlot=st.hSlot, hy=st.hy;
   const psi20=KW_WIND*N*phiPole;                                    // peak flux linkage per phase at 20 C (V s)
-  // copper: the slots' share of the tooth band, at the fill; a turn runs the stack twice and round two end turns
-  const band=Math.PI/4*((Ds+2*hSlot)**2-Ds*Ds), Acu=SLOT_SHARE*band*wire.fill;
+  // copper: the band between the bore and the yoke less the teeth, at the fill; a turn runs the stack twice and round two
+  // end turns
+  const band=Math.PI/4*((Ds+2*hSlot)**2-Ds*Ds), slotA=band-slots*wt*hSlot, Acu=slotA*wire.fill;
   const pitch=Math.PI*(Ds+hSlot)/poles*5/6, endTurn=Math.PI/2*pitch;
   const mlt=2*L+2*endTurn;
   const R20=6*cond.rho*N*N*mlt/Acu;                                   // per phase: independent of the parallel paths
   // how the slot copper is stranded, for the AC loss: strands across the slot width, and the radial layers Dowell counts
   const dStrand=s.strand>0?s.strand:STRAND;
-  const slotW=SLOT_SHARE*Math.PI*(Ds+hSlot)/slots;
+  const slotW=Math.PI*(Ds+hSlot)/slots-wt;
   const nStrand=(Acu/slots)/(Math.PI*dStrand*dStrand/4);
   const cuLayers=wire.layers||Math.max(1,nStrand/Math.max(1,slotW/dStrand));
   // a hairpin bar: the slot's copper height shared by its layers, the width the fill leaves (porosity sqrt(fill) each way)
   const barH=wire.layers?hSlot*Math.sqrt(wire.fill)/wire.layers:0, barEta=Math.sqrt(wire.fill);
   // masses (kg) and the rotor's inertia
   const mCu=cond.dens*Acu*mlt/2;
-  const mFeS=RHO_FE*(Math.PI/4*(OD*OD-Ds*Ds)-SLOT_SHARE*band)*Lfe;
+  const mFeS=RHO_FE*(Math.PI/4*(OD*OD-Ds*Ds)-slotA)*Lfe;
   const Dsh=0.47*D;
   const vMag=im?0:magW*Math.PI*D*magT*MAG_AX*L, mMag=im?0:mag.rho*vMag;   // the bars, all the poles round (build 288)
   // the induction motor's cage, its resistance referred to the stator, and the magnetising current at full field
@@ -11167,7 +11196,7 @@ function motorBuild(s){
   const nMax=Math.min(s.maxRpm||20000,nTip,nFreq);
   const Imax=s.invAmps;
   const cost=Math.round(mCu*cond.cost+(mFeS+mFeR)*(3+lam.premium)+mMag*mag.cost+ret.cost+cool.cost+Imax*inv.costA+400+(im?mCage*11+150:0));
-  return {s,im,mag,ret,cool,inv,lam,wire,cond,barH,barEta,D,L,Lfe,Ds,OD,poles,p,N,slots,Bg,circ,magT,magW,psi20,R20,mlt,Acu,mCu,mFeS,mFeR,mMag,mRotor,J,mass,
+  return {s,im,mag,ret,cool,inv,lam,wire,cond,barH,barEta,D,L,Lfe,Ds,OD,poles,p,N,slots,Bg,circ,magT,magW,wt,hSlot,hy,psi20,R20,mlt,Acu,mCu,mFeS,mFeR,mMag,mRotor,J,mass,
           strand:dStrand,cuLayers,
           nTip,nFreq,nMax,Imax,cost,Qr,Rr20,mCage,ImR,vDrop,cpsr:im?IM_CPSR:CPSR,
           // thermal network (W/K, J/K): winding -> core through the slot liner (0.2 W/mK, 0.4 mm over the slot walls),
@@ -25339,15 +25368,15 @@ function hybAssistShare(nf,pedal,t){
 const hybAssistWindow=(e,rpm)=>{const t=hybTune(e);return e.hyDeploy==='above'?(rpm>=t.rpm?1:0):e.hyDeploy==='below'?(rpm<=t.rpm?1:0):1;};
 // A hybrid's motor and pack when HYBRID is first chosen: a pancake motor in the bellhousing (200 mm across, 40 mm long,
 // 12 poles) and a 1.56 kWh pack of hybrid cells, the size of the Ioniq Hybrid's 32 kW / 170 Nm system.
-const HYB_DEFAULT={evMotorType:'pm',evRotorD:200,evStack:40,evPoles:12,evTurns:28,evMagnet:'ndfeb',evRetention:'bridges',evCooling:'jacket',
+const HYB_DEFAULT={evMotorType:'pm',evRotorD:200,evStack:40,evPoles:12,evTurns:33,evMagnet:'ndfeb',evRetention:'bridges',evCooling:'jacket',
   evMaxRpm:8000,evInverter:'igbt',evAmps:400,evRearCount:1,evFront:'none',evChem:'liHEV',evSeries:64,evKWh:1.56,evYear:2016};
 // A power-split's when it is first chosen (build 189): the 4th-generation Prius's MG2 (53 kW and 163 Nm on the 600 V bus,
 // 17,000 rpm) and its 1.31 kWh nickel-metal hydride pack of 168 cells (201.6 V).
-const HYB_DEFAULT_PS={evMotorType:'pm',evRotorD:150,evStack:60,evPoles:8,evTurns:95,evMagnet:'ndfeb',evRetention:'bridges',evCooling:'jacket',
+const HYB_DEFAULT_PS={evMotorType:'pm',evRotorD:150,evStack:60,evPoles:8,evTurns:103,evMagnet:'ndfeb',evRetention:'bridges',evCooling:'jacket',
   evMaxRpm:17000,evInverter:'igbt',evAmps:100,evRearCount:1,evFront:'none',evChem:'nimhHEV',evSeries:168,evKWh:1.31,evYear:2016};
 // A series hybrid's when it is first chosen (build 193): the Nissan Qashqai e-POWER's traction motor (140 kW, 330 Nm) and
 // its 2.1 kWh pack of hybrid cells.
-const HYB_DEFAULT_SERIES={evMotorType:'pm',evRotorD:160,evStack:100,evPoles:8,evTurns:24,evMagnet:'ndfeb',evRetention:'bridges',evCooling:'jacket',
+const HYB_DEFAULT_SERIES={evMotorType:'pm',evRotorD:160,evStack:100,evPoles:8,evTurns:26,evMagnet:'ndfeb',evRetention:'bridges',evCooling:'jacket',
   evMaxRpm:14000,evInverter:'igbt',evAmps:450,evRearCount:1,evFront:'none',evChem:'liHEV',evSeries:96,evKWh:2.1,evYear:2021};
 const HYB_SOC=0.6;   // a charge-sustaining hybrid holds its pack about here, with room above it to take back braking
 const isHybrid=()=>!!engine&&engine.type!=='electric'&&!!engine.hy;
@@ -26504,7 +26533,8 @@ function hybridCycleLine(v){
 // What is matched, as the combustion cars are matched (tests/test41.mjs): mass, drag, frontal area, tyres, the
 // reduction and the governed top speed, the pack (chemistry, cells in series, capacity, year) and each motor's
 // torque or power, set from the published figures: the Model 3 RWD's 420 Nm, the Model Y's 326 Nm rear and 219 Nm front,
-// the Plaid's 295 kW a motor. What is derived and checked against the published figures
+// the Plaid's 295 kW a motor (the inverter's current is what matches a torque: build 289, with the stator sized from the
+// flux, took the Model 3's from 1000 to 950 A and the Model Y rear's from 720 to 700). What is derived and checked against the published figures
 // (tests/test101.mjs): the 0-100 and the top speed. The rear magnet motor is the Model 3's as MotorXP measured it
 // (src/js/electric.js); the front induction unit of the Model 3 and Model Y is sized to its published 219 Nm and
 // 137 kW at 6380 rpm on 320 V; the Plaid's three are carbon-sleeved magnet motors (the sleeve is what lets a rotor this
@@ -26513,10 +26543,10 @@ function hybridCycleLine(v){
 // nearest diff is the clutch-plate LSD (full traction off the line).
 const EV_ENGINE_PRESETS=[
   {cat:'Electric',name:'Tesla Model 3 RWD drive (2021, LFP)',engine:{type:'electric',evMotorType:'pm',evRotorD:150,evStack:134,evPoles:6,evTurns:12,
-    evMagnet:'ndfeb',evRetention:'bridges',evCooling:'spray',evMaxRpm:18000,evInverter:'sic',evAmps:1000,evRearCount:1,evFront:'none',
+    evMagnet:'ndfeb',evRetention:'bridges',evCooling:'spray',evMaxRpm:18000,evInverter:'sic',evAmps:950,evRearCount:1,evFront:'none',
     evChem:'lfp',evSeries:106,evKWh:60,evYear:2021}},
   {cat:'Electric',name:'Tesla Model Y Long Range drive (2022, dual motor)',engine:{type:'electric',evMotorType:'pm',evRotorD:150,evStack:134,evPoles:6,evTurns:12,
-    evMagnet:'ndfeb',evRetention:'bridges',evCooling:'spray',evMaxRpm:18000,evInverter:'sic',evAmps:720,evRearCount:1,
+    evMagnet:'ndfeb',evRetention:'bridges',evCooling:'spray',evMaxRpm:18000,evInverter:'sic',evAmps:700,evRearCount:1,
     evFront:'im',evFrontD:140,evFrontStack:110,evFrontPoles:4,evFrontTurns:20,evFrontAmps:520,
     evChem:'nca',evSeries:96,evKWh:78,evYear:2022}},
   {cat:'Electric',name:'Tesla Model S Plaid drive (2021, three motors)',engine:{type:'electric',evMotorType:'pm',evRotorD:150,evStack:134,evPoles:6,evTurns:16,
@@ -26541,14 +26571,15 @@ const EV_VEHICLE_PRESETS=[
 // (Kappa, 72 x 97 mm, 13:1, 105 PS at 5700 rpm, 147 Nm) with a 32 kW / 170 Nm P2 motor between its clutch and its
 // six-speed DCT, and a 1.56 kWh, 240 V lithium-polymer pack: 104 kW and 265 Nm together. The motor is sized to those
 // figures (src/js/hybrid.js, HYB_DEFAULT; the motors' turns are not published: each is the count that gives the published
-// torque, re-matched in build 288 when the magnets' flux became derived: the Prius's MG2 100 -> 95, the Qashqai's 26 -> 24,
-// the 330e's 48 -> 46); the engine is its geometry, which on the model's cams (none is an Atkinson
+// torque, re-matched in build 288 when the magnets' flux became derived, and in build 289 when the teeth and yoke were sized from
+// it: the Ioniq's 28 -> 33, the Prius's MG2 100 -> 95 -> 103, the Qashqai's 26 -> 24 -> 26, the 330e's 48 -> 46 -> 55);
+// the engine is its geometry, which on the model's cams (none is an Atkinson
 // cam yet) makes ~116 hp, not 104 (tests/test103.mjs checks the car both as built and matched to the published power).
 const HYB_ENGINE_PRESETS=[
   {cat:'Hybrid',name:'Hyundai Kappa 1.6 GDi + P2 (Ioniq Hybrid)',real:{hp:103.6,hpRpm:5700,tq:147,tqRpm:4000,motorKW:32,motorNm:170,sysKW:104,sysNm:265},
    unsure:['redline','cam'],engine:{type:'petrol4',radiator:'large',oilCooler:true,cylinders:4,bore_mm:72,stroke_mm:97,compression:13,redline:6250,intake:'na',injector:'direct',vvt:true,
     egr:'cooled',cam:'stock',valves:4,octane:95,airFilter:'stock',exhaust:'stock',cat:'stock',intakeSys:'efi',hyMode:'p2',hyDeploy:'eco',
-    evMotorType:'pm',evRotorD:200,evStack:40,evPoles:12,evTurns:28,evMagnet:'ndfeb',evRetention:'bridges',evCooling:'jacket',evMaxRpm:8000,
+    evMotorType:'pm',evRotorD:200,evStack:40,evPoles:12,evTurns:33,evMagnet:'ndfeb',evRetention:'bridges',evCooling:'jacket',evMaxRpm:8000,
     evInverter:'igbt',evAmps:400,evRearCount:1,evFront:'none',evChem:'liHEV',evSeries:64,evKWh:1.56,evYear:2016}},
   // The Toyota Prius, 4th generation (2016; build 189, step 3.3): the 2ZR-FXE, a 1.8 port-injected Atkinson-cycle four
   // (80.5 x 88.3 mm, 13.0:1, 72 kW at 5200 rpm, 142 Nm at 3600), in the P610 power-split transaxle (src/js/power-split.js)
@@ -26557,7 +26588,7 @@ const HYB_ENGINE_PRESETS=[
   {cat:'Hybrid',name:'Toyota 2ZR-FXE 1.8 + power-split (Prius)',real:{hp:96.6,hpRpm:5200,tq:142,tqRpm:3600,motorKW:53,motorNm:163,sysKW:90},
    unsure:['valvetrain','redline'],engine:{valvetrain:'dohc-roller',type:'petrol4',radiator:'large',oilCooler:true,cylinders:4,bore_mm:80.5,stroke_mm:88.3,compression:13,redline:5500,intake:'na',injector:'port',vvt:true,
     egr:'cooled-full',cam:'atkinson',valves:4,octane:95,airFilter:'stock',exhaust:'stock',cat:'stock',intakeSys:'efi',hyMode:'ps',hyDeploy:'full',
-    evMotorType:'pm',evRotorD:150,evStack:60,evPoles:8,evTurns:95,evMagnet:'ndfeb',evRetention:'bridges',evCooling:'jacket',evMaxRpm:17000,
+    evMotorType:'pm',evRotorD:150,evStack:60,evPoles:8,evTurns:103,evMagnet:'ndfeb',evRetention:'bridges',evCooling:'jacket',evMaxRpm:17000,
     evInverter:'igbt',evAmps:100,evRearCount:1,evFront:'none',evChem:'nimhHEV',evSeries:168,evKWh:1.31,evYear:2016}},
   // The Nissan Qashqai e-POWER (2022; build 193, step 3.4): a series hybrid. The KR15DDT, a 1.5 turbo three (84 x 90.1 mm,
   // variable compression 8-14:1, the model's fixed 12:1 between them), 116 kW (158 PS), drives a generator only; a 140 kW /
@@ -26565,7 +26596,7 @@ const HYB_ENGINE_PRESETS=[
   {cat:'Hybrid',name:'Nissan KR15DDT 1.5 VC-T + series (Qashqai e-POWER)',real:{hp:155.6,hpRpm:5000,tq:250,tqRpm:2400,motorKW:140,motorNm:330},
    unsure:['redline','compression','boost'],engine:{type:'petrol4',radiator:'large',oilCooler:true,cylinders:3,bore_mm:84,stroke_mm:90.1,compression:12,redline:5600,intake:'turbo',boost_bar:0.4,turboSize:'small',
     injector:'direct',vvt:true,cam:'stock',valves:4,octane:95,airFilter:'stock',exhaust:'stock',cat:'stock',intakeSys:'efi',hyMode:'series',hyDeploy:'full',
-    evMotorType:'pm',evRotorD:160,evStack:100,evPoles:8,evTurns:24,evMagnet:'ndfeb',evRetention:'bridges',evCooling:'jacket',evMaxRpm:14000,
+    evMotorType:'pm',evRotorD:160,evStack:100,evPoles:8,evTurns:26,evMagnet:'ndfeb',evRetention:'bridges',evCooling:'jacket',evMaxRpm:14000,
     evInverter:'igbt',evAmps:450,evRearCount:1,evFront:'none',evChem:'liHEV',evSeries:96,evKWh:2.1,evYear:2021}},
   // The BMW 330e (G20, 2020; build 194, step 3.5a): a plug-in P2. The B48, a 2.0 turbo four (82 x 94.6 mm, 10.2:1, 135 kW,
   // 300 Nm), with an 80 kW / 265 Nm motor in its eight-speed automatic's bellhousing (XtraBoost: the motor's full 80 kW,
@@ -26575,7 +26606,7 @@ const HYB_ENGINE_PRESETS=[
    unsure:['redline','boost','pack'],engine:{valvetrain:'dohc-roller',type:'petrol4',radiator:'large',oilCooler:true,cylinders:4,bore_mm:82,stroke_mm:94.6,compression:10.2,redline:6500,intake:'turbo',boost_bar:0.4,turboSize:'small',
     injector:'direct',vvt:true,cam:'stock',valves:4,octane:95,airFilter:'stock',exhaust:'stock',cat:'stock',intakeSys:'efi',hyMode:'p2',hyDeploy:'full',hyPlug:true,
     hyTune:{rpm:4000,map:Array(20).fill(100),regen:'high',lps:true,evKmh:0,evKw:0,socLo:12,socT:15,socHi:95},
-    evMotorType:'pm',evRotorD:200,evStack:60,evPoles:12,evTurns:46,evMagnet:'ndfeb',evRetention:'bridges',evCooling:'jacket',evMaxRpm:7500,
+    evMotorType:'pm',evRotorD:200,evStack:60,evPoles:12,evTurns:55,evMagnet:'ndfeb',evRetention:'bridges',evCooling:'jacket',evMaxRpm:7500,
     evInverter:'igbt',evAmps:250,evRearCount:1,evFront:'none',evChem:'ncaP',evSeries:96,evKWh:12,evYear:2020}},
   // The Porsche 918 Spyder (2013; build 195, step 3.5b): a plug-in with a motor at each end. The 4.6 V8 (95 x 81 mm, 447 kW
   // at 8700 rpm, 540 Nm at 6700, to 9150), a 115 kW motor between it and the seven-speed PDK, a 95 kW motor driving the

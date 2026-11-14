@@ -7,7 +7,8 @@
 // What is matched, as the combustion cars are matched (tests/test41.mjs): mass, drag, frontal area, tyres, the
 // reduction and the governed top speed, the pack (chemistry, cells in series, capacity, year) and each motor's
 // torque or power, set from the published figures: the Model 3 RWD's 420 Nm, the Model Y's 326 Nm rear and 219 Nm front,
-// the Plaid's 295 kW a motor. What is derived and checked against the published figures
+// the Plaid's 295 kW a motor (the inverter's current is what matches a torque: build 289, with the stator sized from the
+// flux, took the Model 3's from 1000 to 950 A and the Model Y rear's from 720 to 700). What is derived and checked against the published figures
 // (tests/test101.mjs): the 0-100 and the top speed. The rear magnet motor is the Model 3's as MotorXP measured it
 // (src/js/electric.js); the front induction unit of the Model 3 and Model Y is sized to its published 219 Nm and
 // 137 kW at 6380 rpm on 320 V; the Plaid's three are carbon-sleeved magnet motors (the sleeve is what lets a rotor this
@@ -16,10 +17,10 @@
 // nearest diff is the clutch-plate LSD (full traction off the line).
 const EV_ENGINE_PRESETS=[
   {cat:'Electric',name:'Tesla Model 3 RWD drive (2021, LFP)',engine:{type:'electric',evMotorType:'pm',evRotorD:150,evStack:134,evPoles:6,evTurns:12,
-    evMagnet:'ndfeb',evRetention:'bridges',evCooling:'spray',evMaxRpm:18000,evInverter:'sic',evAmps:1000,evRearCount:1,evFront:'none',
+    evMagnet:'ndfeb',evRetention:'bridges',evCooling:'spray',evMaxRpm:18000,evInverter:'sic',evAmps:950,evRearCount:1,evFront:'none',
     evChem:'lfp',evSeries:106,evKWh:60,evYear:2021}},
   {cat:'Electric',name:'Tesla Model Y Long Range drive (2022, dual motor)',engine:{type:'electric',evMotorType:'pm',evRotorD:150,evStack:134,evPoles:6,evTurns:12,
-    evMagnet:'ndfeb',evRetention:'bridges',evCooling:'spray',evMaxRpm:18000,evInverter:'sic',evAmps:720,evRearCount:1,
+    evMagnet:'ndfeb',evRetention:'bridges',evCooling:'spray',evMaxRpm:18000,evInverter:'sic',evAmps:700,evRearCount:1,
     evFront:'im',evFrontD:140,evFrontStack:110,evFrontPoles:4,evFrontTurns:20,evFrontAmps:520,
     evChem:'nca',evSeries:96,evKWh:78,evYear:2022}},
   {cat:'Electric',name:'Tesla Model S Plaid drive (2021, three motors)',engine:{type:'electric',evMotorType:'pm',evRotorD:150,evStack:134,evPoles:6,evTurns:16,
@@ -44,14 +45,15 @@ const EV_VEHICLE_PRESETS=[
 // (Kappa, 72 x 97 mm, 13:1, 105 PS at 5700 rpm, 147 Nm) with a 32 kW / 170 Nm P2 motor between its clutch and its
 // six-speed DCT, and a 1.56 kWh, 240 V lithium-polymer pack: 104 kW and 265 Nm together. The motor is sized to those
 // figures (src/js/hybrid.js, HYB_DEFAULT; the motors' turns are not published: each is the count that gives the published
-// torque, re-matched in build 288 when the magnets' flux became derived: the Prius's MG2 100 -> 95, the Qashqai's 26 -> 24,
-// the 330e's 48 -> 46); the engine is its geometry, which on the model's cams (none is an Atkinson
+// torque, re-matched in build 288 when the magnets' flux became derived, and in build 289 when the teeth and yoke were sized from
+// it: the Ioniq's 28 -> 33, the Prius's MG2 100 -> 95 -> 103, the Qashqai's 26 -> 24 -> 26, the 330e's 48 -> 46 -> 55);
+// the engine is its geometry, which on the model's cams (none is an Atkinson
 // cam yet) makes ~116 hp, not 104 (tests/test103.mjs checks the car both as built and matched to the published power).
 const HYB_ENGINE_PRESETS=[
   {cat:'Hybrid',name:'Hyundai Kappa 1.6 GDi + P2 (Ioniq Hybrid)',real:{hp:103.6,hpRpm:5700,tq:147,tqRpm:4000,motorKW:32,motorNm:170,sysKW:104,sysNm:265},
    unsure:['redline','cam'],engine:{type:'petrol4',radiator:'large',oilCooler:true,cylinders:4,bore_mm:72,stroke_mm:97,compression:13,redline:6250,intake:'na',injector:'direct',vvt:true,
     egr:'cooled',cam:'stock',valves:4,octane:95,airFilter:'stock',exhaust:'stock',cat:'stock',intakeSys:'efi',hyMode:'p2',hyDeploy:'eco',
-    evMotorType:'pm',evRotorD:200,evStack:40,evPoles:12,evTurns:28,evMagnet:'ndfeb',evRetention:'bridges',evCooling:'jacket',evMaxRpm:8000,
+    evMotorType:'pm',evRotorD:200,evStack:40,evPoles:12,evTurns:33,evMagnet:'ndfeb',evRetention:'bridges',evCooling:'jacket',evMaxRpm:8000,
     evInverter:'igbt',evAmps:400,evRearCount:1,evFront:'none',evChem:'liHEV',evSeries:64,evKWh:1.56,evYear:2016}},
   // The Toyota Prius, 4th generation (2016; build 189, step 3.3): the 2ZR-FXE, a 1.8 port-injected Atkinson-cycle four
   // (80.5 x 88.3 mm, 13.0:1, 72 kW at 5200 rpm, 142 Nm at 3600), in the P610 power-split transaxle (src/js/power-split.js)
@@ -60,7 +62,7 @@ const HYB_ENGINE_PRESETS=[
   {cat:'Hybrid',name:'Toyota 2ZR-FXE 1.8 + power-split (Prius)',real:{hp:96.6,hpRpm:5200,tq:142,tqRpm:3600,motorKW:53,motorNm:163,sysKW:90},
    unsure:['valvetrain','redline'],engine:{valvetrain:'dohc-roller',type:'petrol4',radiator:'large',oilCooler:true,cylinders:4,bore_mm:80.5,stroke_mm:88.3,compression:13,redline:5500,intake:'na',injector:'port',vvt:true,
     egr:'cooled-full',cam:'atkinson',valves:4,octane:95,airFilter:'stock',exhaust:'stock',cat:'stock',intakeSys:'efi',hyMode:'ps',hyDeploy:'full',
-    evMotorType:'pm',evRotorD:150,evStack:60,evPoles:8,evTurns:95,evMagnet:'ndfeb',evRetention:'bridges',evCooling:'jacket',evMaxRpm:17000,
+    evMotorType:'pm',evRotorD:150,evStack:60,evPoles:8,evTurns:103,evMagnet:'ndfeb',evRetention:'bridges',evCooling:'jacket',evMaxRpm:17000,
     evInverter:'igbt',evAmps:100,evRearCount:1,evFront:'none',evChem:'nimhHEV',evSeries:168,evKWh:1.31,evYear:2016}},
   // The Nissan Qashqai e-POWER (2022; build 193, step 3.4): a series hybrid. The KR15DDT, a 1.5 turbo three (84 x 90.1 mm,
   // variable compression 8-14:1, the model's fixed 12:1 between them), 116 kW (158 PS), drives a generator only; a 140 kW /
@@ -68,7 +70,7 @@ const HYB_ENGINE_PRESETS=[
   {cat:'Hybrid',name:'Nissan KR15DDT 1.5 VC-T + series (Qashqai e-POWER)',real:{hp:155.6,hpRpm:5000,tq:250,tqRpm:2400,motorKW:140,motorNm:330},
    unsure:['redline','compression','boost'],engine:{type:'petrol4',radiator:'large',oilCooler:true,cylinders:3,bore_mm:84,stroke_mm:90.1,compression:12,redline:5600,intake:'turbo',boost_bar:0.4,turboSize:'small',
     injector:'direct',vvt:true,cam:'stock',valves:4,octane:95,airFilter:'stock',exhaust:'stock',cat:'stock',intakeSys:'efi',hyMode:'series',hyDeploy:'full',
-    evMotorType:'pm',evRotorD:160,evStack:100,evPoles:8,evTurns:24,evMagnet:'ndfeb',evRetention:'bridges',evCooling:'jacket',evMaxRpm:14000,
+    evMotorType:'pm',evRotorD:160,evStack:100,evPoles:8,evTurns:26,evMagnet:'ndfeb',evRetention:'bridges',evCooling:'jacket',evMaxRpm:14000,
     evInverter:'igbt',evAmps:450,evRearCount:1,evFront:'none',evChem:'liHEV',evSeries:96,evKWh:2.1,evYear:2021}},
   // The BMW 330e (G20, 2020; build 194, step 3.5a): a plug-in P2. The B48, a 2.0 turbo four (82 x 94.6 mm, 10.2:1, 135 kW,
   // 300 Nm), with an 80 kW / 265 Nm motor in its eight-speed automatic's bellhousing (XtraBoost: the motor's full 80 kW,
@@ -78,7 +80,7 @@ const HYB_ENGINE_PRESETS=[
    unsure:['redline','boost','pack'],engine:{valvetrain:'dohc-roller',type:'petrol4',radiator:'large',oilCooler:true,cylinders:4,bore_mm:82,stroke_mm:94.6,compression:10.2,redline:6500,intake:'turbo',boost_bar:0.4,turboSize:'small',
     injector:'direct',vvt:true,cam:'stock',valves:4,octane:95,airFilter:'stock',exhaust:'stock',cat:'stock',intakeSys:'efi',hyMode:'p2',hyDeploy:'full',hyPlug:true,
     hyTune:{rpm:4000,map:Array(20).fill(100),regen:'high',lps:true,evKmh:0,evKw:0,socLo:12,socT:15,socHi:95},
-    evMotorType:'pm',evRotorD:200,evStack:60,evPoles:12,evTurns:46,evMagnet:'ndfeb',evRetention:'bridges',evCooling:'jacket',evMaxRpm:7500,
+    evMotorType:'pm',evRotorD:200,evStack:60,evPoles:12,evTurns:55,evMagnet:'ndfeb',evRetention:'bridges',evCooling:'jacket',evMaxRpm:7500,
     evInverter:'igbt',evAmps:250,evRearCount:1,evFront:'none',evChem:'ncaP',evSeries:96,evKWh:12,evYear:2020}},
   // The Porsche 918 Spyder (2013; build 195, step 3.5b): a plug-in with a motor at each end. The 4.6 V8 (95 x 81 mm, 447 kW
   // at 8700 rpm, 540 Nm at 6700, to 9150), a 115 kW motor between it and the seven-speed PDK, a 95 kW motor driving the

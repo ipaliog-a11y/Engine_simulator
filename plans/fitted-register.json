@@ -230,7 +230,7 @@
    "id": "MOTOR.SAT_K",
    "file": "electric.js",
    "match": "SAT_K=0.085",
-   "standsFor": "torque per amp lost to saturation: one measured point (430 Nm at 953 A on the Model 3), scaled with the square of the electric loading",
+   "standsFor": "torque per amp lost to saturation: one measured point (430 Nm at 953 A on the Model 3, with the flux of then; the derived flux since build 289 gives 444 Nm there), scaled with the square of the electric loading",
    "retiredBy": "the lamination steel's B-H curve in the teeth and the yoke",
    "phase": "C",
    "state": "open"
@@ -248,8 +248,8 @@
    "id": "MOTOR.statorShape",
    "file": "electric.js",
    "match": "const SPLIT=0.67;",
-   "standsFor": "the stator's proportions, the same for every motor: bore over outside diameter, the slots' share of the tooth band and its depth, and one flux density (B_CORE 1.5 T) for teeth and yoke",
-   "retiredBy": "teeth and yoke sized from the flux they carry at the steel's flux density; the slot is what is left",
+   "standsFor": "the stator's outside diameter as the bore over 0.67, the same for every motor. Since build 289 the teeth and yoke are sized from the flux (Pyrhonen Table 6.1) and the slot is what is left between them, so a many-pole or small motor gets deep slots and saturated teeth, or a cramped yoke, where a designer would change the diameter",
+   "retiredBy": "the slot's depth from the copper the current needs (Pyrhonen Table 6.2: linear current density and current density), and the outside diameter from the slot and the yoke",
    "phase": "C",
    "state": "open"
   },
@@ -257,7 +257,7 @@
    "id": "MOTOR.ironShare",
    "file": "electric.js",
    "match": "0.8*L.fe",
-   "standsFor": "iron loss taken on all the iron, the rotor's included, at the stator's flux density and frequency, then shared 80% stator, 20% rotor",
+   "standsFor": "iron loss taken on all the iron, the rotor's included, at one flux density (B_CORE 1.5 T) and the frequency, then shared 80% stator, 20% rotor; since build 289 the teeth (2.0 T) and the yoke (1.5 T) have their own densities, which the loss does not yet read",
    "retiredBy": "teeth and yoke each at their own flux density; the rotor's loss from the slot harmonics and the magnets' eddy currents",
    "phase": "C",
    "state": "open"

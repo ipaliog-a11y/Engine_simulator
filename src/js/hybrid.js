@@ -60,15 +60,15 @@ function hybAssistShare(nf,pedal,t){
 const hybAssistWindow=(e,rpm)=>{const t=hybTune(e);return e.hyDeploy==='above'?(rpm>=t.rpm?1:0):e.hyDeploy==='below'?(rpm<=t.rpm?1:0):1;};
 // A hybrid's motor and pack when HYBRID is first chosen: a pancake motor in the bellhousing (200 mm across, 40 mm long,
 // 12 poles) and a 1.56 kWh pack of hybrid cells, the size of the Ioniq Hybrid's 32 kW / 170 Nm system.
-const HYB_DEFAULT={evMotorType:'pm',evRotorD:200,evStack:40,evPoles:12,evTurns:28,evMagnet:'ndfeb',evRetention:'bridges',evCooling:'jacket',
+const HYB_DEFAULT={evMotorType:'pm',evRotorD:200,evStack:40,evPoles:12,evTurns:33,evMagnet:'ndfeb',evRetention:'bridges',evCooling:'jacket',
   evMaxRpm:8000,evInverter:'igbt',evAmps:400,evRearCount:1,evFront:'none',evChem:'liHEV',evSeries:64,evKWh:1.56,evYear:2016};
 // A power-split's when it is first chosen (build 189): the 4th-generation Prius's MG2 (53 kW and 163 Nm on the 600 V bus,
 // 17,000 rpm) and its 1.31 kWh nickel-metal hydride pack of 168 cells (201.6 V).
-const HYB_DEFAULT_PS={evMotorType:'pm',evRotorD:150,evStack:60,evPoles:8,evTurns:95,evMagnet:'ndfeb',evRetention:'bridges',evCooling:'jacket',
+const HYB_DEFAULT_PS={evMotorType:'pm',evRotorD:150,evStack:60,evPoles:8,evTurns:103,evMagnet:'ndfeb',evRetention:'bridges',evCooling:'jacket',
   evMaxRpm:17000,evInverter:'igbt',evAmps:100,evRearCount:1,evFront:'none',evChem:'nimhHEV',evSeries:168,evKWh:1.31,evYear:2016};
 // A series hybrid's when it is first chosen (build 193): the Nissan Qashqai e-POWER's traction motor (140 kW, 330 Nm) and
 // its 2.1 kWh pack of hybrid cells.
-const HYB_DEFAULT_SERIES={evMotorType:'pm',evRotorD:160,evStack:100,evPoles:8,evTurns:24,evMagnet:'ndfeb',evRetention:'bridges',evCooling:'jacket',
+const HYB_DEFAULT_SERIES={evMotorType:'pm',evRotorD:160,evStack:100,evPoles:8,evTurns:26,evMagnet:'ndfeb',evRetention:'bridges',evCooling:'jacket',
   evMaxRpm:14000,evInverter:'igbt',evAmps:450,evRearCount:1,evFront:'none',evChem:'liHEV',evSeries:96,evKWh:2.1,evYear:2021};
 const HYB_SOC=0.6;   // a charge-sustaining hybrid holds its pack about here, with room above it to take back braking
 const isHybrid=()=>!!engine&&engine.type!=='electric'&&!!engine.hy;
