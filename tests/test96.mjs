@@ -1,10 +1,10 @@
 // The electric drive's physics (build 178, step 2.1 of plans/hybrid-electric/).
 //
 // WHY THIS EXISTS. The motor, inverter and battery are derived from what they are built of: the rotor's size, the turns,
-// the magnets, the cooling, the inverter's devices, the cells. Since build 294 no constant is set on a motor (until then two were, on the
+// the magnets, the cooling, the inverter's devices, the cells. Since build 300 no constant is set on a motor (until then two were, on the
 // Tesla Model 3 rear motor, MotorXP 2020), so the model is checked here against what did NOT set it. What must hold:
 //   · the Model 3: its back-EMF, from its magnets' size through the magnetic circuit (build 292), within 5% of the
-//     measured 42 V/krpm; the torque at 953 A no further over 430 than the known gap (GAP_KNOWN, since build 294; SAT_K was set there until then); and its phase resistance, from the slot copper
+//     measured 42 V/krpm; the torque at 953 A no further over 430 than the known gap (GAP_KNOWN, since build 300; SAT_K was set there until then); and its phase resistance, from the slot copper
 //     alone, near the measured 4.75 mOhm;
 //   · the 2012 Nissan Leaf (ORNL, Burress 2013), with only its geometry and the turns that put its knee where Nissan
 //     says (80 kW from 2730 rpm on 375 V): it makes its 280 Nm and 80 kW, holds 80 kW at 7000 rpm with the stator
@@ -79,7 +79,7 @@ const r = await page.evaluate(() => {
   return o;
 });
 const f = (x, d = 1) => (+x).toFixed(d);
-// Known gaps since build 294, when saturation and field weakening stopped being constants set on the Model 3 (SAT_K,
+// Known gaps since build 300, when saturation and field weakening stopped being constants set on the Model 3 (SAT_K,
 // V_DROP, CPSR) and became the magnetic circuit solved under load. Each may only shrink:
 //   m3Torque   the Model 3 makes 481 Nm at 953 A against MotorXP's 430 (+12%): the rotor's iron round the magnets (the
 //              pole piece carries the q-axis flux, solved; the hub and the q-axis ribs are taken as ideal) and the V's
@@ -98,7 +98,7 @@ console.log(`== Model 3 rear motor: ${f(r.m3.emf)} V/krpm back-EMF (measured 42)
 // 2% while a constant was set from it; 5% since build 293, when it became a prediction from the magnets and the stator.
 if (Math.abs(r.m3.emf / 42 - 1) > 0.05) fails.push(`the Model 3's back-EMF is ${f(r.m3.emf)} V/krpm, not within 5% of the measured 42`);
 // 3% while the flux was set from the Model 3; 5% since build 293, when the flux under SAT_K became derived (444 Nm).
-// Build 294 retired SAT_K: the circuit is solved under load, and the miss is a named gap (GAP_KNOWN), which may only shrink.
+// Build 300 retired SAT_K: the circuit is solved under load, and the miss is a named gap (GAP_KNOWN), which may only shrink.
 if (r.m3.tq < 430 * 0.95 || r.m3.tq > GAP_KNOWN.m3Torque) fails.push(`the Model 3 makes ${f(r.m3.tq, 0)} Nm at 953 A against 430: past the known gap's ${GAP_KNOWN.m3Torque}`);
 // Known gap: the slot-copper estimate gives less resistance than measured (the leads, the strand insulation and the
 // real slot shape are not modelled). Held to within half either way, so a change that breaks it is seen.

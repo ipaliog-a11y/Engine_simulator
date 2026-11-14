@@ -18,10 +18,10 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 ## [Unreleased]
 
-### The motor's saturation, field weakening and iron loss come from its circuit under load (build 294)
+### The motor's saturation, field weakening and iron loss come from its circuit under load (build 300)
 
 Phase C, steps 1 and 2 finished together (the owner's choice): `SAT_K`, `V_DROP`, `CPSR`, the 0.7 field-weakening
-current and the iron's 80/20 split were constants set on the Model 3. They are gone (`plans/fitted-register.json`: 41 → 38 open).
+current and the iron's 80/20 split were constants set on the Model 3. They are gone (`plans/fitted-register.json`: 37 → 34 open).
 
 - **The circuit under load.** Build 292's magnetic circuit is now solved slice by slice round a pole, with the stator's
   current in it: the gap and a tooth on M270-35A's curve, the yoke on its own flux, the magnets' line, and the pole piece
@@ -48,12 +48,94 @@ current and the iron's 80/20 split were constants set on the Model 3. They are g
   (the packs cap them in the car). The Leaf's best between 5000 and 9000 rpm is 95.4% (ORNL >97%). The Prius burns
   4.29 → 4.46 L/100 km (Toyota 4.14): its MG2 runs far past its knee at speed, where the derived weakening takes more
   current and the teeth keep their peak flux. Each is a cap in `test96`, `test117` and `test119` that may only shrink.
-- **Tests:** `test179` (new); `test96`, `test98` (the default motor's winding peaks 151 °C on the short lap, cut 0.8%),
-  `test112`, `test117`, `test119`, `test136` and `test139` re-locked in the open; `test166` 41 → 38. The guide's motor
+- **Tests:** `test183` (new); `test96`, `test98` (the default motor's winding peaks 151 °C on the short lap, cut 0.8%),
+  `test112`, `test117`, `test119`, `test136` and `test139` re-locked in the open; `test166` 37 → 34. The guide's motor
   physics page describes the solved circuit (its Greek is stale; Greek is paused). `test145` fails on `main` too.
 - **Left for the owner to decide (beyond the register):** a fast-charge curve; the pack's temperature in the lap, cycle
   and race; a cell's sag and recovery; ageing; an inverter junction temperature; wound-rotor, reluctance and axial-flux
   motors; and bench readouts the model already computes (loss split, C-rate, sag, an induction motor's slip).
+### The pit lane costs what its length and limit take from each car (build 299)
+
+Phase F, step 4 of `plans/road-to-v1.md`, the pit lane; `RACE.pitLoss` (one 20 s for every car and circuit) is retired.
+- **The loss is derived** (`racePitLoss`): the lane at its 60 km/h limit, half before the box and half after, against the
+  car's own solved speed over the same stretch, plus braking into the lane at the tyre's grip and the stop and launch at
+  the box from the car's own standing start. A Civic Type R or a 911 GT3 loses 11-19 s (Spa 11-13 s, where the lane's
+  entry half crosses the Bus Stop chicane; the Nordschleife 19 s).
+- **The lane's length** is 400 m, the middle of the published lanes (281-426 m), except where a circuit's own figure is
+  found: Albert Park 281 m, Bahrain 426 m (both probable, secondary sources). No table of every circuit is published,
+  and the figures that are differ by where they measure from (Interlagos: 380 m and 1140 m).
+- The strategy, the wet-tyre call and the race log read the car's own loss. The 60 km/h limit, the crew's 6 s and
+  2.5 L/s stay rules.
+- Open: each real circuit's lane length; the lane's own line (it runs beside the track, not on it).
+- Fingerprint: only the race moves. `tests/test182.mjs` checks the derivation.
+
+Tests: test182 (new); 71, 79, 166, 51, 73.
+
+### The track and race picture keeps its frame rate when zoomed out (build 298)
+
+No physics changed; only how the picture is painted (`track-scene.js`).
+- **Why it dropped frames:** zoomed out, the whole circuit is in view, and all of it (about 1000 strokes and 700 fills)
+  was painted again every frame, though only the cars move.
+- **The still part is kept.** When the camera does not move (fully zoomed out, or paused), the ground, road and
+  scenery are painted once and copied; only the cars and the weather are drawn each frame. On an emulated phone
+  (4x slower CPU) a frame fully zoomed out went from about 66 ms to about 28 ms, the same as zoomed in.
+- **Less detail where it is under a pixel.** Below 3 px per metre the rail posts, the trees' glow and trunk and the
+  single tyres of a stack are not drawn. The lap's coloured line is one stroke per run of a colour (442 strokes to
+  about 85). Part-way zoomed out a frame went from about 70 ms to about 55 ms.
+- **Open:** part-way zoomed out the camera still moves, so nothing can be kept, and it is still the slowest view.
+  The times are from a desktop browser slowed down, not a phone. No fingerprint was run: nothing a result reads changed.
+
+### A power-split or series hybrid's engine is heard where the lap runs it (build 297)
+
+- **The lap replay played the wrong engine.** On the TRACK tab a Prius's or an e-POWER's engine sounded on its full-load line whenever the throttle was open, and idled off it, while the lap's fuel had it on its best line at the power it actually gave (the shaft's power less the pack's), and stopped off the power. The sound now reads the same engine power as the fuel (`psEnginePower`, shared), so the two agree: on the Prius's lap the engine runs at 379 of 442 points and is silent at the other 63, at the best line's speed exactly.
+- **Its load moves.** The replay records a 1 bar manifold for a direct drive, so the sound's load was flat. It is now the share of full-load torque the engine makes at that speed (`steadyMapAt`'s law): 0.20-0.94 bar round the lap.
+- Both sound models (SYNTH and GAS) follow it, and the guide's ENGINE SOUND text says so. Nothing the simulators produce moved: the fingerprint is identical, and the lap's fuel is the same to the last bit.
+- Left open, in `plans/hybrid-electric/gas-sound-hybrid.md`: an engine start or stop has no spin-up or run-down (C); a P2's lap has no electric stretches to be silent in, because the lap model has none yet.
+
+### A hybrid's engine on the bench is heard at its own throttle (build 296)
+
+Step B of `plans/hybrid-electric/gas-sound-hybrid.md` (the plan arrives with step A, PR #241).
+- **The sound reads the engine's throttle, not the pedal.** In AUTO, HOLD and CHARGE the ECU sets the engine's throttle
+  (`H.thrE`); the sound read the pedal, so an engine charging with the pedal up was heard as on a lift: the turbo's whine
+  unloaded, the overrun's crackle and the blow-off armed. It now reads `H.thrE` through `withEngThr`, as the bench's
+  engine physics already did. On the 330e in CHARGE, pedal up: the sound hears 0.23 (was 0), the whine 4x louder.
+- SPORT and ENGINE are unchanged (the engine's throttle is the pedal). Sound only; the fingerprint is identical.
+- **Left open:** steps C–E (start and stop spin-up, each mode checked, the worklet idle while muted).
+
+Tests: test180 (new); 114, 74.
+
+### The tow and dirty air come from the cars' own aero (build 295)
+
+Phase F of `plans/road-to-v1.md`, the wake; the plan for the phase is reworked with it.
+- **The tow** is the drag a following car loses, from the PATH platoon tests (Zabat et al. 1995, figure 9: 0.76 of its
+  drag one length back, 0.84 at two, none past ten), turned into speed through the car's own drag and power. At 70 m/s
+  an M3 gains 3.2% 10 m behind (was ~2%), 0.4% at 40 m.
+- **Dirty air** is the downforce lost behind a 2017-21 Formula 1 car (44% at 10 m, 35% at 20 m), turned into corner
+  speed through the car's own downforce: a 911 GT3 loses 1.4% one length back at 50 m/s, a car with no downforce
+  nothing. It was 1.5% for every car.
+- Kept as rules (owner's decision): the racecraft numbers and a 1.5% spray loss in the wet. The tyre's heat, grip window
+  and wear wait until after v1.0: a derived heat model took a Civic's tyre to 329 C, because where the slip heat goes
+  needs the share of the patch truly touching the road, which no source gives.
+- Open: the pit lane's loss (next build); the car ahead's own saving within a length; the wake in braking. The downforce
+  figures are a single-seater's, as no closed car's are published.
+- Fingerprint: only the race moves; laps of the four-car race -0.3% to +0.2%. `tests/test79.mjs` checks the tow and
+  that a winged car loses more in dirty air.
+### A compound turbo is two stages in series (build 294)
+
+Phase B, step 3 of `plans/road-to-v1.md`: `TURBO_CONFIG`'s last multiple (a compound's 2.30 of one wheel's flow) is retired.
+- **The frame is the high-pressure stage, fed by a low-pressure turbo** sized for it: the two split the target's pressure
+  ratio equally and choke at the same mass flow (Watson & Janota), so the LP wheel is (s / sqrt(T1/T0))^(1/2) of the
+  frame's, s = sqrt(PR). The choke flow is the LP wheel's; its turbine and housing scale with it.
+- **The exhaust runs through both turbines**: the LP nozzle sets the pressure between them, the HP nozzle (pulses
+  included) the manifold's; the gate bypasses the HP turbine. The shafts are tied by the equal split, so the inertia is
+  both cartridges' (the HP one referred to the LP shaft) and so are the bearings.
+- **What it does** (Golf GTI's frame at 2.5 bar): 318 hp against the single's 245, exhaust 4.2 bar at 5500 rpm against 7.2,
+  full boost from 1720 rpm against 1500. At 1 bar the compound is worse (189 hp against 211): two turbines in the way.
+- **Left open:** the stages hold the equal split off the design point too (a real LP stage lags its HP one); the LP turbine
+  has no gate and sees no pulses; a compound runs its housing, not a vane ring. `TURB_WHEEL` per real car is next.
+- No preset is a compound; the fingerprint is identical.
+
+Tests: test179 (new), test166 (updated); 177, 168, 172, 51, 73.
 
 ### The motor's stator is drawn from the flux it carries (build 293)
 

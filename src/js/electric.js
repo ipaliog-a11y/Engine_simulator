@@ -20,7 +20,7 @@
 // rotor 149.9 mm, 3 pole pairs, 12 series turns per phase (2 turns, 3 paths), 4.75 mOhm per phase, a single V of two
 // 33 x 6.5 mm NdFeB magnets a pole (segments 21.5 mm long down the stack), 42 V peak line-to-line per 1000 rpm, 430 Nm
 // at 953 A rms needing 94.6 V rms per phase.
-// The air gap's flux comes from the magnets through a magnetic circuit (build 292, magnetCircuit below). Since build 294
+// The air gap's flux comes from the magnets through a magnetic circuit (build 292, magnetCircuit below). Since build 300
 // the same circuit is solved under load, slice by slice round a pole (dqSolve): the stator's current adds its MMF, the
 // teeth saturate on the steel's curve, and what comes out is the torque, the d and q flux linkages and the iron's flux
 // densities. Saturation (SAT_K), the voltage drop (V_DROP), the constant-power range (CPSR) and the field-weakening
@@ -151,7 +151,7 @@ function toothB(Ba,k){
   return (lo+hi)/2;
 }
 const toothH=(Ba,k)=>steelH(toothB(Ba,k));
-// ---- the circuit under load: the d and q axes (build 294) ----
+// ---- the circuit under load: the d and q axes (build 300) ----
 // One pole, electrical angle th from the d-axis (-90 to 90 deg), in DQ_SLICES slices. Each slice is a loop: the rotor's
 // surface, the gap (Carter's factor), a tooth (the steel's curve, toothH) and the stator's yoke. The rotor's potential is
 // the pole piece's under the pole's face, one equipotential iron (it carries the q-axis flux across freely, which is
@@ -442,7 +442,7 @@ function motorBuild(s){
           Grc:100*Math.PI*D*L+cool.rotor*Math.PI*Dsh*L,
           Cw:cond.cp*mCu, Cc:460*mFeS+900*0.5*mFeS, Cr:460*mRotor,
           mTeeth:RHO_FE*slots*wt*hSlot*Lfe, ts, gap:im?IM_GAP:GAP};
-  // a magnet motor's flux linkage at no current is the loaded circuit's at zero current (build 294)
+  // a magnet motor's flux linkage at no current is the loaded circuit's at zero current (build 300)
   if(!im){m.dqc=dqSetup(m);m.psi20=m.dqc.psiPerB*dqSolve(m.dqc,0,0,1).b1d;}
   return m;
 }
@@ -522,14 +522,14 @@ function motorMaxTorque(m,rpm,Vdc,tMag=60){
   return T;
 }
 // The motor's own top speed (rpm) on a bus: its ceiling (rotor, inverter frequency), or lower, where the voltage leaves
-// it no torque (a magnet motor whose field the inverter's current cannot weaken enough; build 294).
+// it no torque (a magnet motor whose field the inverter's current cannot weaken enough; build 300).
 function motorTopRpm(m,Vdc){
   for(let r=m.nMax;r>100;r-=100)if(motorMaxTorque(m,r,Vdc,60)>0)return r;
   return 100;
 }
 // An induction motor's torque at full field from a total current: what the magnetising current leaves for the torque.
 // Torque per amp falls as the electric loading (A/m of bore) rises: the leakage paths saturate. A magnet motor's is
-// solved (dqSolve, build 294); an induction motor's is still the one point the Model 3 gave before then (8.5% at
+// solved (dqSolve, build 300); an induction motor's is still the one point the Model 3 gave before then (8.5% at
 // 145.7 kA/m, scaled with the loading's square), in its own register entry (MOTOR.imCage).
 const IM_SAT_K=0.085, IM_SAT_A=145.7e3;
 const imSat=(m,I)=>1-IM_SAT_K*(6*m.N*I/(Math.PI*m.D)/IM_SAT_A)**2;
@@ -612,7 +612,7 @@ function rotorIronLoss(m,rpm,Bg2){
 }
 // Losses at an operating point (W): torque T (Nm, negative when regenerating), speed (rpm), bus voltage, and the node
 // temperatures {w,r}. Copper and inverter follow the current; the stator's iron, its teeth and its yoke each at their own
-// peak flux density at the point (build 294), so weakening the field lowers it; the rotor's, the slot ripple's.
+// peak flux density at the point (build 300), so weakening the field lowers it; the rotor's, the slot ripple's.
 function motorLosses(m,T,rpm,Vdc,temp){
   if(m.parts)return motorSetLosses(m,T,rpm,Vdc,temp);
   if(m.im)return imLosses(m,T,rpm,Vdc,temp);
@@ -681,7 +681,7 @@ function motorEfficiency(m,T,rpm,Vdc,temp={w:90,r:70}){
   return P/(P+motorLosses(m,T,rpm,Vdc,temp).total);
 }
 // Heat: advance the winding, core and rotor temperatures over dt (s) with these losses. The stator's iron loss goes to
-// the core, the rotor's to the rotor (build 294); friction and windage go to the core; an induction motor's cage loss
+// the core, the rotor's to the rotor (build 300); friction and windage go to the core; an induction motor's cage loss
 // (rcu) is the rotor's.
 const feSplit=L=>L.feS!==undefined?[L.feS,L.feR]:[0.8*L.fe,0.2*L.fe];
 function motorHeatStep(m,temp,L,dt){

@@ -381,7 +381,8 @@ function deriveCharge(){
   const rhoRef=PR*1e5/(287*(273+40));
   const kgs=rhoRef*(engine.displacement_L/1000)*perRev*(engine.redline*0.85/60)*refFill(engine.redline*0.85);
   engine.turboFlow=kgs*132.28;                            // kg/s → lb/min
-  engine.turboCap=compChokeFlow(tb.exd)*cfg.flow;         // derived from the wheel, not tabulated
+  // derived from the wheels, not tabulated: each turbo's own, or a compound's LP wheel, which the HP one is matched to
+  engine.turboCap=compChokeFlow(engine.lpExd>0?engine.lpExd:tb.exd)*cfg.units;
   engine.turboLoad=engine.intake==='turbo'?engine.turboFlow/engine.turboCap:0;   // 1.0 = at rating
   // Compressor efficiency, as a position on the frame's own map rather than a formula in PR.
   // A compressor has an efficiency ISLAND: it peaks near a particular fraction of its choke flow
@@ -410,5 +411,5 @@ function deriveCharge(){
   // Past its rated flow the compressor runs out of map and the top end chokes off in earnest.
   // The hard airflow ceiling this frame can pass, in kg/s. Derived from the same inducer choke as
   // the flow rating, so the rating and the limit cannot disagree.
-  engine.chokeFlow_kgs=engine.intake==='turbo'?compChokeFlow(tb.exd)*cfg.flow/132.28:0;
+  engine.chokeFlow_kgs=engine.intake==='turbo'?engine.turboCap/132.28:0;
 }

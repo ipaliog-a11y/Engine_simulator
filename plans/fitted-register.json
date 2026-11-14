@@ -56,15 +56,6 @@
    "state": "open"
   },
   {
-   "id": "TURBO_CONFIG",
-   "file": "engine-constants-boost.js",
-   "match": "const TURBO_CONFIG",
-   "standsFor": "a compound layout's choke flow as a multiple of one wheel's (2.30); twin and sequential are two wheels on their own shafts since build 290",
-   "retiredBy": "the turbocharger part designing a compound's two stages",
-   "phase": "B3",
-   "state": "open"
-  },
-  {
    "id": "SC_TYPE",
    "file": "engine-constants-boost.js",
    "match": "const SC_TYPE",
@@ -186,27 +177,27 @@
    "file": "tyres-brakes-driveline.js",
    "match": "wetKeep:",
    "standsFor": "each compound's temperature window, wear rate and wet grip",
-   "retiredBy": "the tyre model of phase E with a compound's measured window",
-   "phase": "F",
-   "state": "open"
+   "retiredBy": "kept: a rule until after v1.0 with TYRE_RACE (owner's decision, build 295); wetKeep goes with phase F's wet grip",
+   "phase": "-",
+   "state": "rule"
   },
   {
    "id": "TYRE_RACE",
    "file": "race.js",
    "match": "const TYRE_RACE",
    "standsFor": "the race tyre's heat, grip-window and wear constants",
-   "retiredBy": "the tyre model of phase E (tread heat balance, wear from sliding energy)",
-   "phase": "F",
-   "state": "open"
+   "retiredBy": "kept: a rule until after v1.0 (owner's decision, build 295): the tread's heat needs the share of the patch truly in contact, and the grip and wear read that heat",
+   "phase": "-",
+   "state": "rule"
   },
   {
-   "id": "RACE tow and dirty air",
+   "id": "RACE racecraft",
    "file": "race.js",
-   "match": "const RACE=",
-   "standsFor": "the tow, dirty air and pit loss as numbers",
-   "retiredBy": "the cars' own drag and downforce in a wake; pit loss from the lane's length and limit",
-   "phase": "F",
-   "state": "open"
+   "match": "defendKmh:3",
+   "standsFor": "the racecraft (follow, close, defend, dive, passKmh, pace, mistake), the spray in the wet, the crew's tyreChange and refuelLps",
+   "retiredBy": "kept: a game rule, not physics (owner's decision, phase F plan, build 295)",
+   "phase": "-",
+   "state": "rule"
   },
   {
    "id": "HYB_RACE.margin",
@@ -284,7 +275,7 @@
    "id": "IM.leakage",
    "file": "electric.js",
    "match": "const IM_SIGMA=0.08",
-   "standsFor": "an induction motor's leakage (IM_SIGMA), resistive drop (IM_R_DROP), Carter and saturation factor (IM_KCS), constant-power range (IM_CPSR) the cage's proportions (IM_HR, IM_RING), and its torque per amp lost to saturation (IM_SAT_K: the Model 3's point of before build 294, 8.5% at 145.7 kA/m, scaled with the loading's square; a magnet motor's is solved since build 294)",
+   "standsFor": "an induction motor's leakage (IM_SIGMA), resistive drop (IM_R_DROP), Carter and saturation factor (IM_KCS), constant-power range (IM_CPSR) the cage's proportions (IM_HR, IM_RING), and its torque per amp lost to saturation (IM_SAT_K: the Model 3's point of before build 300, 8.5% at 145.7 kA/m, scaled with the loading's square; a magnet motor's is solved since build 300)",
    "retiredBy": "slot and end-ring leakage from the stator's and the cage's geometry (Pyrhonen ch. 4), the breakdown torque from it; the cage's bars as design fields",
    "phase": "C",
    "state": "open"
