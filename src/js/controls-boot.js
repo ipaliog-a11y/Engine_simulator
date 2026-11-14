@@ -243,6 +243,10 @@ function bindControls(){
   if(fmLean)fmLean.addEventListener('click',()=>adjustFmCell(fmStep()));    // leaner = higher λ
   if(fmRich)fmRich.addEventListener('click',()=>adjustFmCell(-fmStep()));   // richer = lower λ
   if(fmReset)fmReset.addEventListener('click',resetFuelMap);
+  // The spark table (build 304): the same, a degree a nudge.
+  const skBox=document.getElementById('sparkMapBox');
+  if(skBox)skBox.addEventListener('click',e=>{const td=e.target.closest('td.fm-cell');if(td)selectSkCell(+td.dataset.c,+td.dataset.r);});
+  for(const [id,f] of [['skRetard',()=>adjustSkCell(-1)],['skAdvance',()=>adjustSkCell(1)],['skReset',resetSparkMap]]){const b=document.getElementById(id);if(b)b.addEventListener('click',f);}
   // Populate & wire the preset dropdown
   enginePicker=wireFamilyPicker('edFamily','edPreset',FACTORY_ENGINE_CATS,FACTORY_ENGINES,p=>p.cat||'Archetypes','— choose a build —',i=>{
     const p=FACTORY_ENGINES[i];

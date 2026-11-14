@@ -18,6 +18,23 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 ## [Unreleased]
 
+### The ECU's spark map is editable (build 304)
+
+Phase G, first build. With the ignition on AUTO, a load × rpm grid of spark advance now sits beside the fuel map, on the
+same breakpoints.
+
+- **It opens filled with what the model derives**: best-torque advance, or the knock limit where the end gas will not
+  survive it. While no cell is edited the engine reads that derivation directly, so an untouched table moves no number
+  (fingerprint identical to build 303, 5208 values).
+- **An edited cell is the advance the engine runs**, interpolated between cells, with no knock control. The physics
+  answers it: on the default engine at 4500 rpm and full load, 10° of retard drops torque from 166.9 to 156.0 Nm, and
+  advancing it to 42° from the derived 26.5° raises the knock index to 49 against its limit of 40. Knocking cells are shown in red.
+- RESET MAP returns the derived table exactly. A hand-tuned table is saved with the build, and a build loaded without
+  one runs the derived table. Diesels show no spark map.
+- Decided with the owner for the next build: the VE table will be the ECU's *estimate* of VE, used only to meter fuel,
+  alongside the existing fuel map (the λ target). The burned λ will be the target λ × true VE ÷ table VE.
+- Open: the new interface strings have no Greek (translations paused).
+
 ### Wet grip comes from the water film and the tread (build 303)
 
 Phase F, step 3: `wetKeep`, a share of dry grip fitted per compound, is gone. The owner chose Horne's hydroplaning speed

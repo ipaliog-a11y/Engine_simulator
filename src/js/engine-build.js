@@ -157,7 +157,7 @@ function buildEngine(){
   renderChallenge();
   // In AUTO (ECU MAP) mode the ECU sets the mixture, so the manual AFR slider is read-only.
   const afrSlider=document.getElementById('afr');if(afrSlider)afrSlider.disabled=(engine.afrMode==='auto');
-  manageFuelMap();renderFuelMap();
+  manageFuelMap();renderFuelMap();manageSparkMap();renderSparkMap();
   if(document.getElementById('vhChassis')){buildVehicle();updateVehicleSummary();}   // refresh vehicle performance for the new engine
 }
 // The engine itself, from the form: everything BUILD works out, without the screens it then refreshes (build 239).
