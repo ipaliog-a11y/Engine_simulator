@@ -248,16 +248,18 @@ const PRESETS=[
   {cat:'Diesel',name:'VW 3.0 V6 TDI (Amarok)',real:{hp:224,hpRpm:3000,tq:550,tqRpm:1400},unsure:['boost_bar','compression','bore_mm','stroke_mm','redline','hpRpm'],engine:{type:'diesel',vvt:false,cylinders:6,layout:'v',bore_mm:83,stroke_mm:91.4,compression:16,redline:5000,govRpm:3000,intake:'turbo',boost_bar:1.5,turboSize:'medium',vgt:true,injector:'direct',intercooler:'large',exhaust:'stock',airFilter:'stock',radiator:'large',oilCooler:true,tqLimit:550,taperRpm:1500,taperPct:67}},
   {cat:'American V8',name:'GM LT4 6.2 supercharged (Camaro ZL1)',real:{hp:650,hpRpm:6400,tq:881,tqRpm:3600},unsure:['boost_bar','compression'],engine:{valvetrain:'ohv-roller',cylinders:8,layout:'v',bore_mm:103.25,stroke_mm:92,compression:10,redline:6600,intake:'supercharger',boost_bar:0.65,scType:'roots',intercooler:'large',vvt:true,cam:'sport',injector:'direct',octane:91,exhaust:'sport',airFilter:'perf',radiator:'large',oilCooler:true,taperRpm:4000,taperPct:27}},
 ];
-// A real engine's own valve head diameters, mm (build 285), in place of the packing rule (VALVE_PACK) and of 0.83 of
+// A real engine's own valve head diameters, mm (build 287), in place of the packing rule (VALVE_PACK) and of 0.83 of
 // the intake for the exhaust (EV_RATIO). Each with its source; a size known only from aftermarket "standard size"
 // replacement valves is marked (std): the replacement is made to the maker's head, but it is not the maker's sheet.
 // An engine not listed here still takes the rule. Adding an engine moves that engine's numbers only.
 // Held back: GM LS3, 55.0 / 40.4 mm (GM: 2.165 and 1.590 in). The rule gives it 51.6 mm and the engine is already 7.9%
 // over its 430 hp; with its real valves it is 19.3% over. Something else holds the real engine back (its cam and its
 // intake want a review against GM's sheet first), so its valves wait rather than push a car past 10%.
+// Held back: Ford Coyote Gen 3, 37.7 / 32 mm (Ford Performance Coyote Technical Reference). The rule gives it 36.3 mm;
+// with its real valves it goes from 452 to 477 hp (460 published) and its power is still rising at the 7500 rpm limiter,
+// where the real engine peaks at 7000 (test60's 'limiter' anomaly). Its cam and intake want the same review.
 const ENGINE_VALVES={
   'BMW S54 (M3 E46)':{iv:35,ev:30.5,src:'BMW ST041 M3 training manual, driveline: valves 35 / 30.5 mm'},
-  'Ford Coyote 5.0 (Mustang GT 2018)':{iv:37.7,ev:32,src:'Ford Performance Coyote Technical Reference, Gen 3: 37.7 / 32 mm'},
   'Honda F20C (S2000 AP1)':{iv:36,ev:31,src:'s2000.club F20C engine paper: 36 / 31 mm; Ferrea stock-size listings (std)'},
   'Toyota 2JZ-GTE (Supra A80)':{iv:33.5,ev:29,src:'Manley, Brian Crower and GSC stock-size valves: 33.5 / 29 mm (std)'},
   'Mitsubishi 4G63T (Lancer Evo IX)':{iv:34,ev:30.5,src:'Ferrea, Brian Crower and GSC stock-size valves: 34 / 30.5 mm (std)'},

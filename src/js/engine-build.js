@@ -46,7 +46,7 @@ function readEngineFromForm(){
     radiator:g('edRadiator').value,
     radHp:Math.max(0,+g('edRadHp').value||0),   // what a STOCK radiator was sized for (build 219)
     springRpm:Math.max(0,Math.round(+g('edSpringRpm').value||0)),
-    ivValve_mm:0,evValve_mm:0,   // a real engine's own valves (build 285), read below   // the redline the STOCK springs were sized for (build 234)
+    ivValve_mm:0,evValve_mm:0,   // a real engine's own valves (build 287), read below   // the redline the STOCK springs were sized for (build 234)
     fan:g('edFan').value,
     oilCooler:g('edOilCooler').value==='yes',
     thermostat:clamp(Math.round(+g('edThermostat').value||88),71,95),

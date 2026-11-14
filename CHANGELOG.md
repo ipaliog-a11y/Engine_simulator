@@ -18,6 +18,29 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 ## [Unreleased]
 
+### Five real engines get their makers' valves (build 287)
+
+The first batch of retiring the head's fitted numbers the slow way: one sourced engine at a time, so nothing else moves.
+
+- **A real engine can carry its own valve sizes** (`ENGINE_VALVES` in `src/js/engine-options-presets.js`, each with its source), in place of the valve's share of the bore and of 0.83 for the exhaust. They belong to that bore and valve count: change either on the ENGINE tab and the rule sizes the valves again. They travel with a saved build.
+- **Five engines have them:** BMW S54 35 / 30.5 mm (BMW's training manual), Honda F20C 36 / 31, Toyota 2JZ-GTE 33.5 / 29, Mitsubishi 4G63T 34 / 30.5, Subaru EJ257 36 / 32 (the last four from standard-size replacement valves, marked as such).
+- **What moved, peak power against the published figure:** M3 E46 323 → 329 hp (-5.8% → -4.1%); S2000 207 → 215 (-13.7% → -10.4%); WRX STI 276 → 270 (-6.8% → -8.8%); Evo IX 284 → 285 (-0.7% → -0.3%); Supra 310, unchanged. Mean error 6.0% → 5.3%. Torque moves by 1 Nm at most, 0-100 by 0.04 s at most. Every other car is identical.
+- **Held back, two engines whose real valves make the car worse.** The Corvette's LS3 (GM: 55.0 / 40.4 mm; the rule gives 51.6) is already 7.9% over its 430 hp and would be 19.3% over. The Mustang's Coyote (Ford: 37.7 / 32 mm) would go from 452 to 477 hp against 460 and still be gaining power at its 7500 rpm limiter, where the real engine peaks at 7000 (`test60` caught it). Both want their cam and intake reviewed against the maker's sheet first. Their sizes are in the code beside the table.
+- **Left open:** 80 or so engines still take the rule, so `THROAT_RATIO` and `EV_RATIO` stay in the register. The S2000 is still 10.4% under. In the fingerprint, cars that follow a changed car show a changed lap hash with the same lap time: the hashed lap record holds a shared cache of racing lines whose keys include the earlier cars' figures. `test42`, `test61`, `test92` and `test125` fail on `main` as well.
+
+Tests: test176 (updated), and every test that names one of the cars (60 run).
+
+### The head's exhaust valve is its own (build 286)
+
+Phase B, step 2, second build. It does not retire the head's fitted numbers; it finishes the part so that sourced valve sizes have somewhere to go.
+
+- **A designed head sets its exhaust valve** (PARTS → CYLINDER HEAD, EXHAUST VALVE, 12 to 65 mm), where it was always 0.83 of the intake (`EV_RATIO`). It is the bore of the exhaust port, so it sets the heat the gas leaves there (Caton & Heywood's port correlation, already in use): a wider port takes less. The preview shows the valve against the intake and the exhaust gas temperature at peak power.
+- **No factory car moved** (fingerprint identical to `main`, 5212 values). A head saved in build 283 has no exhaust valve written down and takes 0.83 of its intake, so it is the head it was.
+- **Not retired, and why.** `THROAT_RATIO` (0.85), `EV_RATIO` (0.83) and the valve's share of the bore still stand for every factory head. Deleting them needs each real car's own valve sizes from its maker (most are published), or your sign-off to keep them as rules. The register says so. The three spring steps stay too: they are the ENGINE tab's choices, sized by the maker's redline.
+- **Left open:** the exhaust valve's size does not change how the cylinder empties (the blowdown and the pumping loop do not read it), and the valves are still not checked against the bore.
+
+Tests: test176 (updated); 166, 120, 159, 73, 51.
+
 ### The motor bench shows where the losses go and what the pack is doing (build 285)
 
 No physics changed: the bench only shows numbers the model already worked out.
@@ -51,29 +74,6 @@ No physics changed; `index.html` differs only in its build number.
   `corners-thermal.js`, `friction.js`, `sound.js`).
 
 Working toward **v1.0 — every number derived, not fitted.**
-
-### Six real engines get their makers' valves (build 285)
-
-The first batch of retiring the head's fitted numbers the slow way: one sourced engine at a time, so nothing else moves.
-
-- **A real engine can carry its own valve sizes** (`ENGINE_VALVES` in `src/js/engine-options-presets.js`, each with its source), in place of the valve's share of the bore and of 0.83 for the exhaust. They belong to that bore and valve count: change either on the ENGINE tab and the rule sizes the valves again. They travel with a saved build.
-- **Six engines have them:** BMW S54 35 / 30.5 mm (BMW's training manual), Ford Coyote Gen 3 37.7 / 32 (Ford's technical reference), Honda F20C 36 / 31, Toyota 2JZ-GTE 33.5 / 29, Mitsubishi 4G63T 34 / 30.5, Subaru EJ257 36 / 32 (the last four from standard-size replacement valves, marked as such).
-- **What moved, peak power against the published figure:** M3 E46 323 → 329 hp (-5.8% → -4.1%); S2000 207 → 215 (-13.7% → -10.4%); Mustang GT 452 → 477 (-1.7% → +3.7%); WRX STI 276 → 270 (-6.8% → -8.8%); Evo IX 284 → 285 (-0.7% → -0.3%); Supra 310, unchanged. Mean error 5.3% → 5.1%. Torque moves by 1 Nm at most, 0-100 by 0.04 s at most. Every other car is identical.
-- **Held back: the Corvette's LS3.** GM gives 55.0 / 40.4 mm; the rule gives it 51.6. The car is already 7.9% over its 430 hp and its real valves make that 19.3%, past the 10% line. Its cam and intake want a review against GM's sheet first. Noted in the code beside the table.
-- **Left open:** 80 or so engines still take the rule, so `THROAT_RATIO` and `EV_RATIO` stay in the register (27 open). The S2000 is still 10.4% under. In the fingerprint 17 other cars show a changed lap hash with the same lap time: the hashed lap record holds a shared cache of racing lines whose keys include the earlier cars' figures.
-
-Tests: test176 (updated), and every test that names one of the six cars.
-
-### The head's exhaust valve is its own (build 284)
-
-Phase B, step 2, second build. It does not retire the head's fitted numbers; it finishes the part so that sourced valve sizes have somewhere to go.
-
-- **A designed head sets its exhaust valve** (PARTS → CYLINDER HEAD, EXHAUST VALVE, 12 to 65 mm), where it was always 0.83 of the intake (`EV_RATIO`). It is the bore of the exhaust port, so it sets the heat the gas leaves there (Caton & Heywood's port correlation, already in use): a wider port takes less. The preview shows the valve against the intake and the exhaust gas temperature at peak power.
-- **No factory car moved** (fingerprint identical to `main`, 5212 values). A head saved in build 283 has no exhaust valve written down and takes 0.83 of its intake, so it is the head it was.
-- **Not retired, and why.** `THROAT_RATIO` (0.85), `EV_RATIO` (0.83) and the valve's share of the bore still stand for every factory head. Deleting them needs each real car's own valve sizes from its maker (most are published), or your sign-off to keep them as rules. The register says so; it still holds 27 open entries. The three spring steps stay too: they are the ENGINE tab's choices, sized by the maker's redline.
-- **Left open:** the exhaust valve's size does not change how the cylinder empties (the blowdown and the pumping loop do not read it), and the valves are still not checked against the bore.
-
-Tests: test176 (updated); 166, 120, 159, 73, 51.
 
 ### The cylinder head as a part (build 283)
 

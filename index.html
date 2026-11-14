@@ -769,7 +769,7 @@ body.showcase-open{overflow:hidden}
 </div>
 <div class="container">
 <header>
-<h1>PIXEL ENGINE SIM v0.7 build 285</h1>
+<h1>PIXEL ENGINE SIM v0.7 build 287</h1>
 <div class="subtitle" id="subtitle">ENGINE DESIGNER • BUILD IT, THEN DRIVE IT</div>
 </header>
 <div class="build-strip" id="buildStrip">
@@ -4145,7 +4145,7 @@ function deriveValvetrain(){
   const pack=VALVE_PACK[e.valves]||VALVE_PACK[4];
   const cam=camSpec(e);
   e.ivCount=pack.n;
-  // The valves: a designed head's (builds 283-284), else a real engine's own as its maker made them (build 285:
+  // The valves: a designed head's (builds 283 and 286), else a real engine's own as its maker made them (build 287:
   // ENGINE_VALVES, sourced per engine), else the packing rule of the layout and 0.83 of the intake for the exhaust.
   const own=!H&&e.ivValve_mm>0&&e.evValve_mm>0;
   e.ivDia_mm=H?H.valveD_mm:own?e.ivValve_mm:pack.dOverB*e.bore_mm;
@@ -4356,7 +4356,7 @@ function wallShareAt(rpm){
 // Heat to the exhaust port, as a share of the heat released. Caton & Heywood (Int. J. Heat Mass
 // Transfer 24, 1981) measured it on a running engine and fitted Nu = 0.0483 Re^0.783, with Re on the
 // mean flow while the valve is open. Port size from the head's own valves: exhaust valve heads 0.83 of
-// the intake (the usual design ratio, Heywood ch. 5; a designed head's own since build 284), the port bore its throat (THROAT_RATIO), and the
+// the intake (the usual design ratio, Heywood ch. 5; a designed head's own since build 286), the port bore its throat (THROAT_RATIO), and the
 // port one bore long, valve seat to manifold face. The gas is at the temperature the balance before
 // this term gives it; properties are air's (Sutherland viscosity, Pr 0.7), which the products are close
 // to at these temperatures.
@@ -5591,16 +5591,18 @@ const PRESETS=[
   {cat:'Diesel',name:'VW 3.0 V6 TDI (Amarok)',real:{hp:224,hpRpm:3000,tq:550,tqRpm:1400},unsure:['boost_bar','compression','bore_mm','stroke_mm','redline','hpRpm'],engine:{type:'diesel',vvt:false,cylinders:6,layout:'v',bore_mm:83,stroke_mm:91.4,compression:16,redline:5000,govRpm:3000,intake:'turbo',boost_bar:1.5,turboSize:'medium',vgt:true,injector:'direct',intercooler:'large',exhaust:'stock',airFilter:'stock',radiator:'large',oilCooler:true,tqLimit:550,taperRpm:1500,taperPct:67}},
   {cat:'American V8',name:'GM LT4 6.2 supercharged (Camaro ZL1)',real:{hp:650,hpRpm:6400,tq:881,tqRpm:3600},unsure:['boost_bar','compression'],engine:{valvetrain:'ohv-roller',cylinders:8,layout:'v',bore_mm:103.25,stroke_mm:92,compression:10,redline:6600,intake:'supercharger',boost_bar:0.65,scType:'roots',intercooler:'large',vvt:true,cam:'sport',injector:'direct',octane:91,exhaust:'sport',airFilter:'perf',radiator:'large',oilCooler:true,taperRpm:4000,taperPct:27}},
 ];
-// A real engine's own valve head diameters, mm (build 285), in place of the packing rule (VALVE_PACK) and of 0.83 of
+// A real engine's own valve head diameters, mm (build 287), in place of the packing rule (VALVE_PACK) and of 0.83 of
 // the intake for the exhaust (EV_RATIO). Each with its source; a size known only from aftermarket "standard size"
 // replacement valves is marked (std): the replacement is made to the maker's head, but it is not the maker's sheet.
 // An engine not listed here still takes the rule. Adding an engine moves that engine's numbers only.
 // Held back: GM LS3, 55.0 / 40.4 mm (GM: 2.165 and 1.590 in). The rule gives it 51.6 mm and the engine is already 7.9%
 // over its 430 hp; with its real valves it is 19.3% over. Something else holds the real engine back (its cam and its
 // intake want a review against GM's sheet first), so its valves wait rather than push a car past 10%.
+// Held back: Ford Coyote Gen 3, 37.7 / 32 mm (Ford Performance Coyote Technical Reference). The rule gives it 36.3 mm;
+// with its real valves it goes from 452 to 477 hp (460 published) and its power is still rising at the 7500 rpm limiter,
+// where the real engine peaks at 7000 (test60's 'limiter' anomaly). Its cam and intake want the same review.
 const ENGINE_VALVES={
   'BMW S54 (M3 E46)':{iv:35,ev:30.5,src:'BMW ST041 M3 training manual, driveline: valves 35 / 30.5 mm'},
-  'Ford Coyote 5.0 (Mustang GT 2018)':{iv:37.7,ev:32,src:'Ford Performance Coyote Technical Reference, Gen 3: 37.7 / 32 mm'},
   'Honda F20C (S2000 AP1)':{iv:36,ev:31,src:'s2000.club F20C engine paper: 36 / 31 mm; Ferrea stock-size listings (std)'},
   'Toyota 2JZ-GTE (Supra A80)':{iv:33.5,ev:29,src:'Manley, Brian Crower and GSC stock-size valves: 33.5 / 29 mm (std)'},
   'Mitsubishi 4G63T (Lancer Evo IX)':{iv:34,ev:30.5,src:'Ferrea, Brian Crower and GSC stock-size valves: 34 / 30.5 mm (std)'},
@@ -9100,7 +9102,7 @@ function readEngineFromForm(){
     radiator:g('edRadiator').value,
     radHp:Math.max(0,+g('edRadHp').value||0),   // what a STOCK radiator was sized for (build 219)
     springRpm:Math.max(0,Math.round(+g('edSpringRpm').value||0)),
-    ivValve_mm:0,evValve_mm:0,   // a real engine's own valves (build 285), read below   // the redline the STOCK springs were sized for (build 234)
+    ivValve_mm:0,evValve_mm:0,   // a real engine's own valves (build 287), read below   // the redline the STOCK springs were sized for (build 234)
     fan:g('edFan').value,
     oilCooler:g('edOilCooler').value==='yes',
     thermostat:clamp(Math.round(+g('edThermostat').value||88),71,95),
@@ -22719,7 +22721,7 @@ function setTab(mode){
 // The CYLINDER HEAD (build 283) is the valve and port the valvetrain model reads (deriveValvetrain), and its springs:
 //   intake valve   head diameter, mm, in place of the packing ratio of the head's layout (VALVE_PACK.dOverB); the
 //                  number of valves stays the engine's;
-//   exhaust valve  head diameter, mm (build 284), in place of 0.83 of the intake (EV_RATIO): the exhaust port's bore,
+//   exhaust valve  head diameter, mm (build 286), in place of 0.83 of the intake (EV_RATIO): the exhaust port's bore,
 //                  so the heat the gas leaves in the port (portLossShare). A part saved without one has 0.83 of its intake;
 //   port throat    as a share of the valve, in place of THROAT_RATIO's 0.85: the flow area at full lift, Taylor's
 //                  plateau of the inlet flow coefficient (inletCi) and the factory runner matched to the port;
@@ -26563,7 +26565,7 @@ const FACTORY_ENGINES=PRESETS.concat(EV_ENGINE_PRESETS,HYB_ENGINE_PRESETS), FACT
 for(const p of FACTORY_ENGINES)if(p.real&&p.real.hp>0&&p.engine.radHp==null)p.engine.radHp=p.real.hp;
 // Its springs, likewise, are its maker's, sized for its own redline (build 234; see SPRING_FLOAT_MARGIN).
 for(const p of FACTORY_ENGINES)if(p.real&&p.engine.springRpm==null)p.engine.springRpm=p.engine.redline||DEFAULT_ENGINE.redline;
-// Its valves are its maker's too, where a source gives them (build 285: ENGINE_VALVES, engine-options-presets.js).
+// Its valves are its maker's too, where a source gives them (build 287: ENGINE_VALVES, engine-options-presets.js).
 for(const p of FACTORY_ENGINES){const v=ENGINE_VALVES[p.name];if(v&&p.engine.ivValve_mm==null){p.engine.ivValve_mm=v.iv;p.engine.evValve_mm=v.ev;}}
 const FACTORY_ENGINE_CATS=PRESET_CATS.concat(['Electric','Hybrid']), FACTORY_CAR_CATS=VEHICLE_CATS.concat(['Electric','Hybrid']);
 // ====== DESIGN CARDS: a design form as cards with sliders, real-world ticks, help and a live preview (builds 238-239) ======

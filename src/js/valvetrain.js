@@ -133,7 +133,7 @@ function deriveValvetrain(){
   const pack=VALVE_PACK[e.valves]||VALVE_PACK[4];
   const cam=camSpec(e);
   e.ivCount=pack.n;
-  // The valves: a designed head's (builds 283-284), else a real engine's own as its maker made them (build 285:
+  // The valves: a designed head's (builds 283 and 286), else a real engine's own as its maker made them (build 287:
   // ENGINE_VALVES, sourced per engine), else the packing rule of the layout and 0.83 of the intake for the exhaust.
   const own=!H&&e.ivValve_mm>0&&e.evValve_mm>0;
   e.ivDia_mm=H?H.valveD_mm:own?e.ivValve_mm:pack.dOverB*e.bore_mm;

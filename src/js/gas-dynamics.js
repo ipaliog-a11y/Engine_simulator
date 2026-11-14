@@ -109,7 +109,7 @@ function wallShareAt(rpm){
 // Heat to the exhaust port, as a share of the heat released. Caton & Heywood (Int. J. Heat Mass
 // Transfer 24, 1981) measured it on a running engine and fitted Nu = 0.0483 Re^0.783, with Re on the
 // mean flow while the valve is open. Port size from the head's own valves: exhaust valve heads 0.83 of
-// the intake (the usual design ratio, Heywood ch. 5; a designed head's own since build 284), the port bore its throat (THROAT_RATIO), and the
+// the intake (the usual design ratio, Heywood ch. 5; a designed head's own since build 286), the port bore its throat (THROAT_RATIO), and the
 // port one bore long, valve seat to manifold face. The gas is at the temperature the balance before
 // this term gives it; properties are air's (Sutherland viscosity, Pr 0.7), which the products are close
 // to at these temperatures.

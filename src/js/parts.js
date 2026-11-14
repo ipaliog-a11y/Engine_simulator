@@ -37,7 +37,7 @@
 // The CYLINDER HEAD (build 283) is the valve and port the valvetrain model reads (deriveValvetrain), and its springs:
 //   intake valve   head diameter, mm, in place of the packing ratio of the head's layout (VALVE_PACK.dOverB); the
 //                  number of valves stays the engine's;
-//   exhaust valve  head diameter, mm (build 284), in place of 0.83 of the intake (EV_RATIO): the exhaust port's bore,
+//   exhaust valve  head diameter, mm (build 286), in place of 0.83 of the intake (EV_RATIO): the exhaust port's bore,
 //                  so the heat the gas leaves in the port (portLossShare). A part saved without one has 0.83 of its intake;
 //   port throat    as a share of the valve, in place of THROAT_RATIO's 0.85: the flow area at full lift, Taylor's
 //                  plateau of the inlet flow coefficient (inletCi) and the factory runner matched to the port;
