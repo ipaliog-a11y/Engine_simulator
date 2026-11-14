@@ -139,7 +139,7 @@ function updateDesignSummary(){
   const icTxt=engine.intercooler==='none'?' ('+tr('no IC')+')':' ('+(engine.intercooler==='large'?'LG':'SM')+' IC)';
   if(engine.intake==='na')induction=tr('Naturally aspirated');
   else if(engine.intake==='turbo'){
-    induction=tr(TURBO_CONFIG[engine.turboConfig].label)+' '+tr('TURBO')+' ('+tr(engine.turboSize.toUpperCase())+', A/R '+(engine.turbineAR||0).toFixed(2)+')'+(engine.vgt?' VGT':'')+(engine.antilag?' +ALS':'')+' @ '+engine.boost_bar.toFixed(2)+' bar'+icTxt+', '+tr('50% boost @')+' '+Math.round(engine.spool50)+' rpm';
+    induction=tr(TURBO_CONFIG[engine.turboConfig].label)+' '+tr('TURBO')+' ('+tr(engine.turboSize.toUpperCase())+', A/R '+(engine.turbineAR||0).toFixed(2)+')'+(engine.vgt?' VGT':'')+(engine.antilag?' +ALS':'')+' @ '+engine.boost_bar.toFixed(2)+' bar'+icTxt+', '+tr('50% boost @')+' '+Math.round(boostHalfRpm())+' rpm';
     // Say plainly when the engine is asking the frame for more air than it is rated to move —
     // otherwise the power just quietly stops arriving and there is nothing to learn from.
     induction+='<br>'+tr('Compressor')+' '+Math.round(engine.turboFlow)+' '+tr('of')+' '+Math.round(engine.turboCap)+' '+tr('lb/min rated')+' ('+

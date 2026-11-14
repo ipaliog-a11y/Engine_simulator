@@ -18,7 +18,7 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 ## [Unreleased]
 
-### The rear wing as a part (build 290)
+### The rear wing as a part (build 291)
 
 Phase D of `plans/road-to-v1.md` begins: the first part of the car rather than the engine.
 
@@ -39,6 +39,30 @@ Phase D of `plans/road-to-v1.md` begins: the first part of the car rather than t
   fail on `main` as well.
 
 Tests: test178 (new), test120 (updated); 121, 124, 159, 163, 177, 122, 73, 51.
+
+### Each turbo of a pair is its own, and the shaft's inertia is both wheels' (build 290)
+
+Phase B, step 3 of `plans/road-to-v1.md`, the second build: `TURBO_CONFIG`'s twin and sequential multiples are retired.
+- **A twin or sequential pair is two turbos**, each its own wheel, turbine and shaft. The pair chokes at two wheels' flow
+  (it was 1.85 and 1.55 of one), and each shaft carries its own bearings and half of the charge fill. A twin's two wheels
+  were spun by one turbo's power, so it spooled at half the rate. The spool and width multiples, read only by the
+  logistic fallback, are gone; the cost sheet's "50% boost @" now reads the solved boost.
+- **The shaft's inertia is both wheels'** (it scaled with the compressor alone). The measured GT2871R group (3.2e-5 kg m²;
+  71 mm compressor, 53.9 mm turbine, Garrett 743347-2) is split by material, aluminium 2.71 against Inconel 713C 7.91
+  g/cm³, with the wheels taken as alike in shape: 41% is the turbine. A factory turbo's 0.90 turbine wheel makes its
+  shaft about 1.5x heavier than before; a designed turbo's bigger turbine wheel now costs transient.
+- **What moved** (fingerprint, 1312 of 5212 values, all turbo cars): peak power on twins and sequentials, RX-7 172 → 181 hp,
+  993 Turbo 416 → 425, 750S 701 → 713, Supra 310 → 313, others ±2 hp. 0-100 from -0.68 s (RX-7, 6.91 → 6.24) to +0.05 s
+  (13B archetype); most within ±0.03 s. Laps within -0.30 s (RX-7) to +0.03 s.
+- **Left open:** a compound is still one frame with 2.30 of its flow (its two stages want designing apart), so
+  `TURBO_CONFIG` stays in the register for it. The inertia split assumes the wheels alike in shape; a turbine wheel's
+  heavier hub would put more in it.
+
+- **test168** read the boost one second after a lift; the heavier shaft holds the target about 0.4 s longer (the STI:
+  0.63 bar at 1 s, 0.33 at 2 s, against 0.50 and 0.18 before), so it now reads at two seconds. `test40` and `test64` fail
+  on `main` as well.
+
+Tests: test177, test168 (updated); 172, 176, 120, 166, 73, 51, 23, 28, 40, 41, 48, 54, 57, 58, 64, 69, 81, 82, 88.
 
 ### The stepped car's hybrid engine stops and starts (build 289)
 

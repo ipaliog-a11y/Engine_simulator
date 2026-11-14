@@ -91,7 +91,8 @@ const R = await page.evaluate(() => {
       const go = lit => { const s = driveLaunch(car); if (!lit) { s.shE = 0; s.boost = 0; }   // lit: 1.2 s held on the line, as the solver's start
         while (s.t < 20 && s.vx < 27.78) stepCar(car, s, { throttle: 1 }, 0.01); return s; };
       o.cold = go(false).t; const s = go(true); o.lit = s.t; o.flat = s.boost;
-      for (let i = 0; i < 100; i++) stepCar(car, s, { throttle: 0 }, 0.01); o.lifted = s.boost;
+      // two seconds (build 290: the shaft's inertia is both wheels', and the heavier shaft holds the target ~0.4 s longer)
+      for (let i = 0; i < 200; i++) stepCar(car, s, { throttle: 0 }, 0.01); o.lifted = s.boost;
       out.turbo.push(o); } }
   // ---- the road under the car (build 268): coasting in neutral on a 5% fall, and the wheel loads over a crest and in a dip
   { const car = load('Subaru Impreza'), v0 = 30, run = road => { const s = driveState(car); s.vx = v0; s.w = s.w.map(() => v0 / car.r);
@@ -131,7 +132,7 @@ if (Math.abs(R.road.dA - R.road.want) > 0.01) fails.push('a grade does not pull 
 if (!(R.road.crest > 0.45 && R.road.crest < 0.6 && R.road.dip > 1.4 && R.road.dip < 1.55)) fails.push('a crest or a dip does not move the wheel loads by m v2 kv');
 if (R.road.air > 0.1) fails.push('past 1 g of crest the car still presses on the road');
 for (const o of R.turbo) {
-  console.log(`turbo, ${o.name.slice(0, 26)}: 90% of the boost at 2500/4000/5500 rpm in ${o.t90.map(q => q[1].toFixed(2) + ' s (engine ' + q[0].toFixed(2) + ')').join(', ')}; mean ${o.mean.toFixed(3)} bar apart; 0-100 cold ${o.cold.toFixed(2)} s, lit ${o.lit.toFixed(2)}; ${o.flat.toFixed(2)} bar flat, ${o.lifted.toFixed(2)} a second after a lift`);
+  console.log(`turbo, ${o.name.slice(0, 26)}: 90% of the boost at 2500/4000/5500 rpm in ${o.t90.map(q => q[1].toFixed(2) + ' s (engine ' + q[0].toFixed(2) + ')').join(', ')}; mean ${o.mean.toFixed(3)} bar apart; 0-100 cold ${o.cold.toFixed(2)} s, lit ${o.lit.toFixed(2)}; ${o.flat.toFixed(2)} bar flat, ${o.lifted.toFixed(2)} two seconds after a lift`);
   for (const q of o.t90) if (!(Math.abs(q[1] / q[0] - 1) <= 0.06)) fails.push(`${o.name}: the stepped shaft reaches 90% boost in ${q[1]} s, the engine's in ${q[0]}`);
   if (!(o.mean <= 0.06)) fails.push(`${o.name}: the stepped boost is ${o.mean.toFixed(3)} bar from the engine's on average`);
   if (!(o.cold >= o.lit)) fails.push(`${o.name}: a cold shaft is quicker off the line than a lit one`);   // at high launch revs it lights at once (WRX STI, 5250 rpm), so it may cost nothing

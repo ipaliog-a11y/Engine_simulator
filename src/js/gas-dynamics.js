@@ -822,8 +822,14 @@ const compPowerAt=(mA,prTgt,T01,eta)=>
 // and the pressure ratio that produces depends on how efficiently it was done.
 const COMP_SLIP=0.90;      // backswept centrifugal wheel; standard turbomachinery value
 const TIP_LIMIT=520;       // m/s — where a cast aluminium wheel lets go. Sets max shaft speed.
-const J_REF=3.2e-5, D_REF=0.071;   // a measured GT2871R cartridge; scales as D^5 in a similar family
-const wheelInertia=exd=>J_REF*Math.pow(exd/D_REF,5);
+// The shaft's inertia is both its wheels' (build 290; it scaled with the compressor alone). J_REF is a measured GT2871R's
+// whole rotating group: a 71 mm compressor wheel and a 53.9 mm turbine wheel (Garrett 743347-2, the maker's sheet). It is
+// split between them by what each is made of, taking the two as similar in shape, so J ~ rho D^5: cast aluminium
+// 2.71 g/cm3 and Inconel 713C 7.91 (the usual wheel alloys). That puts 41% of it in the turbine. Each wheel then scales
+// as D^5 from its own reference.
+const J_REF=3.2e-5, D_REF=0.071, DT_REF=0.0539, RHO_COMP=2710, RHO_TURB=7910;
+const J_TURB=(RHO_TURB/RHO_COMP)*Math.pow(DT_REF/D_REF,5), J_TURB_SHARE=J_TURB/(1+J_TURB);
+const wheelInertia=(exd,turbD)=>J_REF*((1-J_TURB_SHARE)*Math.pow(exd/D_REF,5)+J_TURB_SHARE*Math.pow(turbD/DT_REF,5));
 const maxShaftRpm=exd=>TIP_LIMIT*60/(Math.PI*exd);
 // Transient shaft losses the pure Pt−Pc balance omitted. Applied only in advanceShaft — not in the
 // steady boost search — so a wastegated frame still holds its target once lit. Both were fitted until
@@ -1027,8 +1033,11 @@ function deriveGasDynamics(){
     // schedule at all.
     e.compExd=tb.exd;e.turbK=tb.turbK;
     setTurbineAR(tb.ars[TURBINE_HOUSING[e.housing]??1]);   // the housing the build chose for this frame
-    e.turbUnits=(e.turboConfig==='twin'||e.turboConfig==='sequential')?2:1;
-    e.shaftJ=wheelInertia(tb.exd)*(e.turboConfig==='twin'?2:1);   // a sequential secondary is pre-spooled
+    e.turbUnits=(TURBO_CONFIG[e.turboConfig]||TURBO_CONFIG.single).units;
+    // ONE shaft (build 290): each turbo of a pair is its own, with this inertia, its own bearings and its share of the
+    // exhaust, the air and the charge fill, so the pair is stepped as one of them (advanceShaft). It was the pair's two
+    // wheels on one turbo's power, which spooled a twin at half the rate.
+    e.shaftJ=wheelInertia(tb.exd,tb.turbK*tb.exd);
     e.seqStageRpm=0;                                               // set once the engine is built
     e.shaftMax=maxShaftRpm(tb.exd);
   }else{e.turbineArea=0;e.vgtShut=0;e.turbUnits=1;e.compExd=0;e.turbK=0;e.shaftJ=0;e.shaftMax=0;}

@@ -55,8 +55,8 @@
 // (its tip speed and the radius the housing's throat sits at, in place of TURB_WHEEL's 0.90 of the exducer) and the
 // housing's A/R (the throat, in place of the frame's TIGHT / STOCK / LOOSE step). How many turbos and how they are
 // piped, the VGT, the boost and the wastegate stay on the ENGINE tab. A factory turbo written as a part is the engine's own.
-// Not in it: the shaft's inertia still scales with the compressor alone, and twin, sequential and compound layouts keep
-// TURBO_CONFIG's flow multiplier (the next build).
+// The shaft's inertia is both wheels' (build 290), and each turbo of a twin or sequential pair is this part, on its own
+// shaft. A compound still keeps TURBO_CONFIG's flow multiple of one wheel.
 // A build carries the full part (engine.exhaustPart, engine.intakePart), so a saved build, a file and a share link work in another
 // browser that never saw the part; loading such a build adds the part to that browser's library.
 

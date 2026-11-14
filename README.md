@@ -1,4 +1,4 @@
-# PIXEL ENGINE SIM v0.7 build 290
+# PIXEL ENGINE SIM v0.7 build 291
 
 **A lightweight, 8-bit style internal combustion engine *designer* & simulator** inspired by *Automation*.
 
@@ -158,7 +158,7 @@ comes from its fins and its pressure drop is made up by the compressor.
 The sixth is the cylinder head (build 283): the intake valve's size, the port's throat, and the springs' seat load
 and rate.
 The seventh is the turbocharger (build 288): the compressor and turbine wheels and the housing's A/R.
-The eighth, the first part of the car rather than the engine, is the rear wing (build 290): span, chord, angle,
+The eighth, the first part of the car rather than the engine, is the rear wing (build 291): span, chord, angle,
 camber and end plates, by lifting-line theory.
 An electric car is heard (build 198): its motor's whine, the inverter's switching and the reduction's gears, each at
 the frequency its build gives it, on the bench and on the lap replay.

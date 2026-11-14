@@ -60,7 +60,7 @@ const AERO_REAR ={none:{cl:0,cd:0},lip:{cl:0.20,cd:0.008},wing:{cl:0.75,cd:0.035
 // front = the share of a floor's downforce on the front axle: a flat undertray works the whole floor and
 // acts near mid-wheelbase; a diffuser's suction peaks at its throat, ahead of the rear axle.
 const AERO_FLOOR={none:{cl:0,cd:0},undertray:{cl:0.35,cd:0.006,front:0.5},diffuser:{cl:0.80,cd:0.014,front:0.35}};
-// A rear wing as a part (build 290): its span, chord, angle, camber and end plates, by Prandtl's lifting line for an
+// A rear wing as a part (build 291): its span, chord, angle, camber and end plates, by Prandtl's lifting line for an
 // untwisted wing of elliptic loading (Anderson, Fundamentals of Aerodynamics, ch. 4 and 5):
 //   lift slope a = a0 / (1 + a0 / (pi AR)), with a0 = 2 pi per radian for a thin section;
 //   zero-lift angle -2 f/c for a parabolic camber line of height f (thin-aerofoil theory);

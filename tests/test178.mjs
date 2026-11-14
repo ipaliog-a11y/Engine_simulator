@@ -1,4 +1,4 @@
-// The rear wing as a part (build 290).
+// The rear wing as a part (build 291).
 //
 // WHY THIS EXISTS. A rear wing was a kit with a fitted lift and drag (AERO_REAR). The PARTS page now designs one: span,
 // chord, angle, camber and end plates, by lifting-line theory (wingAero). What must hold:
