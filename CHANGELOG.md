@@ -18,7 +18,7 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 ## [Unreleased]
 
-### The motor's saturation, field weakening and iron loss come from its circuit under load (build 301)
+### The motor's saturation, field weakening and iron loss come from its circuit under load (build 302)
 
 Phase C, steps 1 and 2 finished together (the owner's choice): `SAT_K`, `V_DROP`, `CPSR`, the 0.7 field-weakening
 current and the iron's 80/20 split were constants set on the Model 3. They are gone (`plans/fitted-register.json`: 37 → 34 open).
@@ -48,12 +48,27 @@ current and the iron's 80/20 split were constants set on the Model 3. They are g
   (the packs cap them in the car). The Leaf's best between 5000 and 9000 rpm is 95.4% (ORNL >97%). The Prius burns
   4.29 → 4.46 L/100 km (Toyota 4.14): its MG2 runs far past its knee at speed, where the derived weakening takes more
   current and the teeth keep their peak flux. Each is a cap in `test96`, `test117` and `test119` that may only shrink.
-- **Tests:** `test183` (new); `test96`, `test98` (the default motor's winding peaks 151 °C on the short lap, cut 0.8%),
+- **Tests:** `test184` (new); `test96`, `test98` (the default motor's winding peaks 151 °C on the short lap, cut 0.8%),
   `test112`, `test117`, `test119`, `test136` and `test139` re-locked in the open; `test166` 37 → 34. The guide's motor
   physics page describes the solved circuit (its Greek is stale; Greek is paused). `test145` fails on `main` too.
 - **Left for the owner to decide (beyond the register):** a fast-charge curve; the pack's temperature in the lap, cycle
   and race; a cell's sag and recovery; ageing; an inverter junction temperature; wound-rotor, reluctance and axial-flux
   motors; and bench readouts the model already computes (loss split, C-rate, sag, an induction motor's slip).
+### The help shows a value at its lowest and highest real example (build 301)
+
+Redoes #206 (build 251) on today's code; #206 was too far behind to merge.
+- Press **?** on BORE, STROKE or COMPRESSION and the help draws the cylinder twice to one scale, at the lowest and the
+  highest value a factory engine uses (the slider's first and last ticks), with both power curves on one pair of axes.
+  REDLINE shows the curves alone, since its cylinder would look the same.
+- On the VEHICLE tab, WHEEL DIA, TYRE WIDTH and TYRE ASPECT draw the tyre's section at both ends of the real range, to
+  scale, with its diameter and sidewall.
+- Nothing is drawn by hand: each side is the form's own preview with only that field changed, and the form, the live
+  engine and the state are put back afterwards (`plans/designer-diagrams-in-code.md`; the icon brief, not yet started,
+  is `plans/designer-art-brief.md`).
+- Left open: a rotary has no cylinder to draw, so its fields show no comparison. Tyre width and aspect change only the
+  drawing, not the car (their grip effect needs the car rebuilt). Front tyre width is left out: the section drawn is
+  the rear tyre's.
+
 ### Diagnosis notes vs faults — factory cars are not all lumpy (build 300)
 
 Redoes #201 (build 249) on today's `main`. Build 248's diagnosis marked most factory cars "NOT RUNNING SMOOTH" because race-cam lope and a peaky band were warnings, and because `engine.lumpiness` folds diesel clatter into the same number the sound uses.

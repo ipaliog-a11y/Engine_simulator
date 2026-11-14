@@ -34,7 +34,7 @@ const BEFORE = { 'Toyota Prius (2016)': 5.12, 'Hyundai Ioniq Hybrid (2016)': 5.0
 // Build 245 took the hybrids' alternator off (a DC-DC converter from the pack), and the floors are tightened to it.
 // Builds 292-293 (the magnets' flux and the stator derived, the motors' turns re-matched) tightened the Prius 4.33 -> 4.29,
 // the Ioniq 4.83 -> 4.80 and the Qashqai 5.80 -> 5.76.
-// Build 301 (the motor's circuit solved under load: saturation, field weakening, iron per part) tightened the Ioniq
+// Build 302 (the motor's circuit solved under load: saturation, field weakening, iron per part) tightened the Ioniq
 // 4.80 -> 4.75 and the Qashqai 5.76 -> 5.66, and RAISED the Prius 4.29 -> 4.46, in the open: its MG2 spins to ~13,000
 // rpm at speed, far past its knee, and the derived field weakening takes more current (its d-axis inductance from the
 // magnets' circuit) and leaves the teeth's peak flux high, where the old rule cut the flux with the speed. Named in the
