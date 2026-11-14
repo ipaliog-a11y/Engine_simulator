@@ -14,17 +14,17 @@
 //   - tyre heat: slip work and rolling hysteresis in, air, water and track out, per tyre, from the loads
 //   - brake heat: the lap solver's own rotor model (brakeHeatStep), run through the whole race (build 141)
 //   - tyre grip from temperature, wear and water, wear rates, tank sizes: fitted (commented where they sit)
-//   - traffic, overtaking, slipstream, dirty air, mistakes, pit loss, the weather's timing: rules
+//   - the pit lane's loss: its length and limit against the car's own speed, braking and launch (build 299)
+//   - traffic, overtaking, mistakes, the crew's service, the weather's timing: rules
 const RACE={
   dt:0.05,            // s, the race clock's step
   air:22,             // C, the default air temperature: the tyres' and rotors' start, and what cools them
   warmers:70,         // C, the tyres' start temperature from blankets
   gridGap:8,          // m between grid slots
   poleOffset:2,       // m behind the line the pole car starts
-  pitLoss:20,         // s, the time the pit lane costs against driving past it, at its speed limit
   refuelLps:2.5,      // L/s through a pit-lane rig
   tyreChange:6,       // s to change four tyres (alongside refuelling)
-  pitExitKmh:60,      // km/h, the pit lane's speed limit, where the car rejoins
+  pitExitKmh:60,      // km/h, the pit lane's speed limit, a sporting rule: 60 is common in GT and endurance racing, F1's is 80
   follow:12,          // m: closer than this, the car behind is in the way of the car ahead
   close:6,            // m: how close a car that cannot pass sits
   defendKmh:3,        // km/h more pace a car needs to pass a car that has moved over to defend
@@ -228,7 +228,7 @@ function raceCarModel(entry,key,opts){
     const frNom=prof[top+1].fr;
     let fpl=0;for(let i=0;i<n;i++){const j=(i+1)%n;fpl+=frNom[i]*line[i].ds3/Math.max(2,(nom.v[i]+nom.v[j])/2);}
     if(EV)fpl=EV.ev.epl[0]*1000;   // an electric car's: at full power
-    return {name:entry.name,key,n,line:line.map(q=>({x:q.x,y:q.y})),cum,L3:cum[n],kap,sinT,lim,prof,grips,
+    const M={name:entry.name,key,n,line:line.map(q=>({x:q.x,y:q.y})),cum,L3:cum[n],kap,sinT,lim,prof,grips,
       vRest:Float32Array.from(rest.v),vNom,vApex,tF:Float32Array.from(nom.replay.tF),fadeProf:Float32Array.from(nom.replay.fade),
       ebProf:Float32Array.from(nom.replay.eb||[]),frProf:Float32Array.from(nom.replay.frB||[]),
       brakeOnset:nom.brakeOnset,brakeTh:vehicle.brakeTh,
@@ -244,7 +244,37 @@ function raceCarModel(entry,key,opts){
       // the body's length: the maker's (CAR_DIMS), or for a build of the player's a road car's ~0.6 wheelbase share (probable)
       len:(CAR_DIMS[entry.name]&&CAR_DIMS[entry.name].len)||vehicle.wb/0.6,
       ...(EV?{ev:EV.ev,unit:'kWh'}:{}),...(HY?{hy:HY}:{})};
+    M.pit=racePitLoss(M,RACE_PIT_LANE[key]||RACE_PIT_LANE.other,G*vehicle.mu);
+    M.pitLoss=M.pit.loss;
+    return M;
   });
+}
+// The pit lane (build 299), in metres from entry to exit. No table of every circuit's lane is published, and the figures
+// that are differ by where they measure from (Interlagos is quoted at 380 m and at 1140 m), so a circuit has its own
+// length only where one is found; probable, from secondary sources: Bahrain 426 m (a technical preview quoted by
+// f1starttimer.blog), Albert Park 281 m (formula1math.substack.com). Every other circuit, drawn or real, takes 400 m,
+// the middle of the published lanes (281-426 m, Miami's 375 m among them).
+const RACE_PIT_LANE={sakhir:426,melbourne:281,other:400};
+// What the lane costs a car against driving past it, from its own solved lap (vNom), launch (vRest) and grip (aB, m/s^2),
+// for a lane of length Lp with its box at the line, half the lane before it and half after. The race stops the car at
+// the line and rejoins it there at the limit, launching on vRest, so the time it sits is everything that leaves out:
+//   entry: braking from the line's speed to the limit, (v1 - vl)^2 / (2 aB v1) more than holding v1, then Lp/2 at the
+//          limit in place of the solved lap's time over the same stretch;
+//   box:   stopping from the limit, vl / (2 aB), and setting off to it, the launch's time to vl less its distance at vl;
+//   exit:  Lp/2 at the limit in place of the race's own pull-away from vl over the same metres.
+function racePitLoss(M,Lp,aB){
+  const vl=RACE.pitExitKmh/3.6,n=M.n,L3=M.L3,half=Lp/2;
+  const vAt=(V,s)=>{s=((s%L3)+L3)%L3;let lo=0,hi=n;while(hi-lo>1){const m=(lo+hi)>>1;if(M.cum[m]<=s)lo=m;else hi=m;}
+    const j=(lo+1)%n,f=(s-M.cum[lo])/Math.max(1e-6,M.cum[lo+1]-M.cum[lo]);return V[lo]+(V[j]-V[lo])*f;};
+  const ds=1;
+  let tTrack=0;for(let s=-half;s<0;s+=ds)tTrack+=ds/Math.max(1,vAt(M.vNom,s+ds/2));
+  const v1=Math.max(vl,vAt(M.vNom,-half)),brake=(v1-vl)**2/(2*aB*v1);
+  // the launch: where vRest first reaches the limit, and the time to it
+  let d0=0,tUp=0;for(let i=0;i<n-1&&M.vRest[i]<vl;i++){d0=M.cum[i+1];tUp+=(M.cum[i+1]-M.cum[i])/Math.max(0.5,(M.vRest[i]+Math.min(vl,M.vRest[i+1]))/2);}
+  const box=vl/(2*aB)+tUp-d0/vl;
+  let tOut=0;for(let s=0;s<half;s+=ds)tOut+=ds/Math.max(vl,Math.min(raceLaunchV(M,d0+s+ds/2),vAt(M.vNom,s+ds/2)));
+  const entry=brake+half/vl-tTrack,exit=half/vl-tOut;
+  return {Lp,loss:entry+box+exit,entry,box,exit};
 }
 // Speed (m/s) and fuel flow (g/s) the car's limit gives at line point i, for grip g and tank share ff. A plug-in hybrid
 // (build 196) at share x of its depleting laps: straight between its sustaining grid and its depleting one.
@@ -316,7 +346,7 @@ function raceLapAtGrip(M,g){
 // laps left, against what the stop costs.
 function raceTyreCallPays(M,cur,next,w,left){
   const gc=raceTyreScore(M,cur,w),gn=raceTyreScore(M,raceCompound(next),w);
-  return gn>gc&&(raceLapAtGrip(M,gc)-raceLapAtGrip(M,gn))*left>RACE.pitLoss+RACE.tyreChange;
+  return gn>gc&&(raceLapAtGrip(M,gc)-raceLapAtGrip(M,gn))*left>M.pitLoss+RACE.tyreChange;
 }
 // A solo run of the car on its own pace, no traffic and no driver error, for the strategy: how many laps a
 // set of tyres lasts to the wear limit, with the lap time at each age, in the conditions at the start.
@@ -365,7 +395,7 @@ function racePlan(M,cfg,cc){
     for(let s=sMin;s<=sMin+2&&s<N;s++){
       const stints=stintsOf(s);
       if(!ev&&stints.some(x=>x*fpl>M.tankKg*0.97))continue;
-      let est=s*(RACE.pitLoss+RACE.tyreChange);
+      let est=s*(M.pitLoss+RACE.tyreChange);
       for(const L of stints)for(let a=0;a<L;a++)est+=lapAt(a);
       if(!best||est<best.est)best={s,stints,est};
     }
@@ -685,10 +715,10 @@ function raceCross(R,c){
     const nx=c.plan.stops.find(l=>l>c.lapsDone),stint=Math.min(left,(nx!=null?nx:cfg.laps)-c.lapsDone);
     const want=Math.min(M.tankKg,(stint+1)*fpl),add=M.ev?0:Math.max(0,want-c.fuelKg);   // no charging in the pit lane
     const service=Math.max(RACE.tyreChange,add/M.fuelRho/RACE.refuelLps);
-    c.state='pit';c.pit={t:RACE.pitLoss+service,fuelKg:add,service,tyre};c.v=0;c.stopsDone++;c.passing=-1;c.wantFor=0;
+    c.state='pit';c.pit={t:M.pitLoss+service,fuelKg:add,service,tyre};c.v=0;c.stopsDone++;c.passing=-1;c.wantFor=0;
     if(c.laps.length)c.laps[c.laps.length-1].pit=true;
     c.stints.push({tyre,from:c.lapsDone+1});
-    raceEvent(R,c,'pit',{fuelL:add/M.fuelRho,service,tyre,why:weather?'weather':planned?'plan':'need'});
+    raceEvent(R,c,'pit',{fuelL:add/M.fuelRho,service,lane:M.pitLoss,tyre,why:weather?'weather':planned?'plan':'need'});
   }
 }
 // Run the race to the flag (or for a slice of wall time when budgetMs is given, so a page can keep

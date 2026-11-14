@@ -191,15 +191,6 @@
    "state": "rule"
   },
   {
-   "id": "RACE.pitLoss",
-   "file": "race.js",
-   "match": "pitLoss:20",
-   "standsFor": "the time the pit lane costs, as one number for every circuit",
-   "retiredBy": "the lane's length and speed limit, with the slowing and the pull away",
-   "phase": "F",
-   "state": "open"
-  },
-  {
    "id": "RACE racecraft",
    "file": "race.js",
    "match": "defendKmh:3",
