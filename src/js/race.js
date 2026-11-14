@@ -131,10 +131,11 @@ function raceFilmMm(x,width){
 // Horne's own balance of the water's dynamic pressure against the tyre's (NASA TN D-2056, 1963:
 // Vp = 6.35 sqrt(p kPa) km/h), on the share of the patch the film floods: its depth over itself and the
 // grooves' volume (void x depth), so a slick is all exposed and a full wet barely (the owner's choice, build 303).
-function raceWetKeep(ty,w,v,width){
+// coldKPa (build 312): a designed pressure's lower axle, hot at the compound's working temperature, in place of tr.kPa.
+function raceWetKeep(ty,w,v,width,coldKPa){
   const x=clamp(w/RACE.wetFull,0,1);if(x<=0)return 1;
   const W=RACE_WATER,tr=RACE_TREAD[ty.key]||RACE_TREAD.sport,d=raceFilmMm(x,width);
-  const exposed=d>0?d/(d+tr.void*tr.mm):0, vp=6.35*Math.sqrt(tr.kPa)/3.6;
+  const exposed=d>0?d/(d+tr.void*tr.mm):0, vp=6.35*Math.sqrt(coldKPa>0?tyreHotKPa(coldKPa,ty.tOpt||60):tr.kPa)/3.6;
   const lift=Math.min(1,(v/vp)*(v/vp)*exposed);
   return (1-x*(1-W.keep0))*(1-(1-W.floor)*lift);
 }
@@ -147,7 +148,7 @@ function raceWetLap(M,ty,w){
   let g=1;
   for(let it=0;it<4;it++){
     const s=Math.sqrt(g);let tw=0,gw=0;
-    for(let i=0;i<M.n;i++){const v=Math.max(2,M.vNom[i]*s),dt=(M.cum[i+1]-M.cum[i])/v;tw+=dt;gw+=dt*raceWetKeep(ty,w,v,M.width);}
+    for(let i=0;i<M.n;i++){const v=Math.max(2,M.vNom[i]*s),dt=(M.cum[i+1]-M.cum[i])/v;tw+=dt;gw+=dt*raceWetKeep(ty,w,v,M.width,M.tyreCold);}
     g=gw/tw;
   }
   return C[key]=g;
@@ -195,7 +196,7 @@ function raceTyreStep(M,ty,T,W,v,ay,ax,dt,env){
   for(let k=0;k<4;k++)N[k]=Math.max(50,N[k]);
   const Nsum=N[0]+N[1]+N[2]+N[3], Fy=m*Math.abs(ay), Fx=m*ax+drag;
   const A=M.tyreArea, Gair=A*(TYRE_RACE.H0+TYRE_RACE.H1*Math.pow(Math.max(0,v),0.8)+TYRE_RACE.hWet*w), Gtrk=A*TYRE_RACE.hTrack;
-  const muNow=ty.mu*raceWetKeep(ty,w,v,M.width);
+  const muNow=ty.mu*raceWetKeep(ty,w,v,M.width,M.tyreCold);
   const dryWear=1+ty.dryWear*Math.max(0,0.3-w/RACE.wetFull)/0.3;   // a rain tyre on a drying line
   let Pslip=0;
   for(let k=0;k<4;k++){
@@ -285,7 +286,7 @@ function raceCarModel(entry,key,opts){
       lapNom:nom.lap,qual,fuelPerLapKg:fpl/1000,
       tankL,tankKg,fuelRho:fuel.density,fuelLabel:fuel.label,
       mass:vehicle.mass,fWt:vehicle.fWt,cg:vehicle.cg,wb:vehicle.wb,track:vehicle.track,drive:vehicle.drive,
-      clA:vehicle.clA,cdA:vehicle.cdA,aeroBal:vehicle.aeroBal,crr:vehicle.crr,muRef:vehicle.muRef,mu0:tt.mu,
+      clA:vehicle.clA,cdA:vehicle.cdA,aeroBal:vehicle.aeroBal,crr:vehicle.crr,muRef:vehicle.muRef,tyreCold:vehicle.tyrePart?Math.min(vehicle.tyrePart.front_kPa,vehicle.tyrePart.rear_kPa):undefined,mu0:tt.mu,
       brakeF:vehicle.brakeFrontShare||0.7,
       tyre:raceCompound(vehicle.tireType),
       tyreArea:0.25+vehicle.tireWidth/1000,tyreC:TYRE_RACE.cp*vehicle.tireWidth/225,

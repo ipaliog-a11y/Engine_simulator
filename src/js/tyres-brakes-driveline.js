@@ -287,6 +287,22 @@ function rollStiffness(v){
 // Rhyne's relation, Tire Sci. Tech. 33(3), 2005, at one inflation pressure). Together they give the 10-12 Hz wheel hop
 // a road car has.
 const TYRE_KZ=250e3, TYRE_KZ_REF=Math.sqrt(0.205*0.632), DAMPER_STEP=1.3, ISO_N0=0.1;
+// ---- tyre pressure as a part (build 312) ----
+// A designed pair of cold pressures (front, rear). Unfitted, every car keeps the reference above. Fitted:
+//   stiffness   the pressure term of Rhyne's relation, linear in the inflation pressure: kt x p/TYRE_P_REF. Its
+//               constant (the carcass's own stiffness with no air) is left out.
+//   rolling     SAE J2452's form, Crr ~ p^alpha, alpha -0.4 for passenger radials (Grover, SAE 980251, 1998; PROBABLE).
+//   hot         the air at constant volume: p_hot + atm = (p_cold + atm)(273 + T_tyre)/(273 + 20), the cold set at 20 C.
+// TYRE_P_REF: the cold placard pressure TYRE_KZ and the compounds' Crr stand for, ~230 kPa on a 205/55R16 (PROBABLE,
+// door placards of mid-size cars).
+const TYRE_P_REF=230, TYRE_P_ALPHA=-0.4, P_ATM_KPA=101.3;
+const tyreColdKPa=(v,front)=>v&&v.tyrePart?v.tyrePart[front?'front_kPa':'rear_kPa']:null;
+const tyreHotKPa=(cold,tC)=>(cold+P_ATM_KPA)*(273.15+tC)/293.15-P_ATM_KPA;
+// The compounds' Crr scaled by the pressure, the two axles weighted by their load; 1 without the part.
+function tyrePressCrr(v){
+  if(!v||!v.tyrePart)return 1;const f=v.fWt||0.5,a=TYRE_P_ALPHA;
+  return f*Math.pow(v.tyrePart.front_kPa/TYRE_P_REF,a)+(1-f)*Math.pow(v.tyrePart.rear_kPa/TYRE_P_REF,a);
+}
 // A CORNER'S UNSPRUNG MASS, FROM ITS PARTS (build 262): what moves with the wheel over a bump.
 //   tyre and wheel   the masses roadWheelInertia already weighs, at this axle's own tyre width;
 //   rotor            the brake model's own disc (brakeThermal: its ring, vanes and hat; a carbon-ceramic one is light);
@@ -319,7 +335,8 @@ function quarterCar(v,ax){
   // the damper is the kit's, matched to the kit's springs: a stiffer spring on the same damper is damped less
   const cs=2*kit.zeta*Math.sqrt(k0*ms)*Math.pow(DAMPER_STEP,(front?v.damperF:v.damperR)||0);
   const tw=((front&&v.tireWidthF)||v.tireWidth||225)/1000,od=2*(v.rTire||0.32);
-  return {ms,mu,ks,cs,kt:TYRE_KZ*Math.sqrt(tw*od)/TYRE_KZ_REF};
+  const p=tyreColdKPa(v,front);
+  return {ms,mu,ks,cs,kt:TYRE_KZ*Math.sqrt(tw*od)/TYRE_KZ_REF*(p?p/TYRE_P_REF:1)};
 }
 // The quarter car's response to the road at frequency f (Hz), for a road movement of 1 m: the tyre's load swing (N)
 // and the body's acceleration (m/s2), as squared magnitudes.

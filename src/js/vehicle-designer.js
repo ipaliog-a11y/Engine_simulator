@@ -81,6 +81,8 @@ const VCD_FIELDS={
     trade:'A lower sidewall flexes less: sharper steering, a harder ride. With the wheel it sets the rolling radius.'},
   vhTireWF:{adv:true,guide:'tyres',what:'The front tyres\' width, when they differ from the rears. 0 is the same as the rears.',
     trade:'Narrower fronts on a rear-drive car move the balance toward understeer and save drag; the rears carry the drive.'},
+  vhTyreP:{adv:true,guide:'tyres',what:'The tyres\' cold pressures: the reference, or a pair you set on the PARTS tab.',
+    trade:'Higher stiffens the tyre and lowers its rolling resistance, and it aquaplanes later; lower softens the ride over bumps.'},
   vhAeroF:{what:'What the front of the car carries to make downforce.',
     trade:'A splitter or a front wing presses the front tyres down at speed, for more grip in fast corners and a little more drag.'},
   vhAeroR:{what:'What the rear of the car carries to make downforce.',

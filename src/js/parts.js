@@ -85,7 +85,8 @@ const CAM_PROFILE={
 // A head's intake valve 15-75 mm (a 50 cc single's to a big-bore diesel's); its throat 0.75 of the valve (a restrictive
 // production port) to 0.92 (a fully ported race head: the 45 degree seat needs the rest); springs 100-1500 N on the seat
 // and 10-200 N/mm, past the RACE step on the biggest factory valve (sized for a Hellcat's redline, ~1180 N and 130 N/mm).
-const PART_LIMITS={preload_Nm:[0,400],ramp_deg:[25,90],faces:[1,10],rFace_mm:[25,70],rRamp_mm:[20,60],span_mm:[600,2200],height_mm:[30,400],chord_mm:[80,600],angle_deg:[0,25],camber_pct:[0,12],plate_mm:[0,400],valveD_mm:[15,75],exValveD_mm:[12,65],throat:[0.75,0.92],seat_N:[100,1500],rate_Nmm:[10,200],dur:[180,320],lift_mm:[4,16],lsa:[98,130],vvt_deg:[0,60],primD_mm:[25,76],primL_mm:[200,1000],pipes:[1,2],sysD_mm:[30,110],sysL_m:[0.8,4.5],
+// tyre pressures 80-350 kPa cold: a drag radial's ~12 psi to a van's 3.5 bar (makers' load tables)
+const PART_LIMITS={front_kPa:[80,350],rear_kPa:[80,350],preload_Nm:[0,400],ramp_deg:[25,90],faces:[1,10],rFace_mm:[25,70],rRamp_mm:[20,60],span_mm:[600,2200],height_mm:[30,400],chord_mm:[80,600],angle_deg:[0,25],camber_pct:[0,12],plate_mm:[0,400],valveD_mm:[15,75],exValveD_mm:[12,65],throat:[0.75,0.92],seat_N:[100,1500],rate_Nmm:[10,200],dur:[180,320],lift_mm:[4,16],lsa:[98,130],vvt_deg:[0,60],primD_mm:[25,76],primL_mm:[200,1000],pipes:[1,2],sysD_mm:[30,110],sysL_m:[0.8,4.5],
   runnerL_mm:[40,800],runnerD_mm:[20,80],shortL_mm:[40,400],area_m2:[0.02,3],inletD_mm:[30,160],
   w:[150,900],h:[80,800],d:[30,120],fpi:[8,30],pipe_m:[0.3,5],
   // a turbo's compressor 30-120 mm at the exducer (a kei car's to a big diesel's), its turbine 25-130 mm, a housing
@@ -245,6 +246,7 @@ const PART_KINDS=[
   {kind:'wing',   label:'REAR WING',ready:true},
   {kind:'fwing',  label:'FRONT WING',ready:true},
   {kind:'diff',   label:'DIFFERENTIAL',ready:true},
+  {kind:'tyre',   label:'TYRE PRESSURE',ready:true},
   {kind:'cat',    label:'CATALYTIC CONVERTER',ready:false}
 ];
 // A designed intake, as the factory class the rest of the app reads: a variable one is VARIABLE, a fixed one the
@@ -303,7 +305,10 @@ const PART_DEF={
     label:()=>'FRONT WING',newName:'MY FRONT WING',factory:['wing']},
   // the differential (build 310): a clutch-plate LSD from its ramp and plates, fitted from DIFFERENTIAL
   diff:   {on:'vehicle',field:'diffPart',cls:'diff',select:'vhDiff',def:'open',valid:k=>!!DIFF[k],clsOf:()=>'clsd',
-    label:()=>'CLUTCH-PLATE LSD',newName:'MY DIFF',factory:['clsd']}
+    label:()=>'CLUTCH-PLATE LSD',newName:'MY DIFF',factory:['clsd']},
+  // the tyre pressures (build 312): cold front and rear, fitted from TYRE PRESSURE; unfitted, the reference TYRE_P_REF
+  tyre:   {on:'vehicle',field:'tyrePart',cls:'tyrePress',select:'vhTyreP',def:'ref',valid:k=>k==='ref',clsOf:()=>'ref',
+    label:()=>'TYRE PRESSURE',newName:'MY PRESSURES',factory:['ref']}
 };
 const partOwner=kind=>PART_DEF[kind].on==='vehicle'?vehicle:engine;
 const partRebuild=kind=>{if(PART_DEF[kind].on==='vehicle'){buildVehicle();updateVehicleSummary();}else buildEngine();};
@@ -336,6 +341,7 @@ function normPart(p){
   if(p.kind==='wing'||p.kind==='fwing'){const f=p.kind==='fwing',q={id,kind:p.kind,name:String(p.name||'WING').slice(0,40),span_mm:n(p.span_mm,'span_mm',1500),
     chord_mm:n(p.chord_mm,'chord_mm',250),angle_deg:n(p.angle_deg,'angle_deg',f?6:8),camber_pct:n(p.camber_pct,'camber_pct',6),plate_mm:n(p.plate_mm,'plate_mm',f?100:150)};
     if(f)q.height_mm=n(p.height_mm,'height_mm',100);return q;}
+  if(p.kind==='tyre')return {id,kind:'tyre',name:String(p.name||'PRESSURES').slice(0,40),front_kPa:n(p.front_kPa,'front_kPa',TYRE_P_REF),rear_kPa:n(p.rear_kPa,'rear_kPa',TYRE_P_REF)};
   if(p.kind==='diff')return {id,kind:'diff',name:String(p.name||'DIFF').slice(0,40),preload_Nm:n(p.preload_Nm,'preload_Nm',60),
     ramp_deg:n(p.ramp_deg,'ramp_deg',45),faces:Math.round(n(p.faces,'faces',3)),rFace_mm:n(p.rFace_mm,'rFace_mm',40),rRamp_mm:n(p.rRamp_mm,'rRamp_mm',40)};
   if(p.kind==='turbo'){const c=n(p.compD_mm,'compD_mm',71);
@@ -565,6 +571,8 @@ function partFromFactory(key,kind){
   if(kind==='fwing')return normPart({kind,name:tr('FRONT WING'),span_mm:Math.round((vehicle&&(vehicle.trackF||vehicle.track)||1.5)*100)*10,chord_mm:250,angle_deg:6,camber_pct:6,plate_mm:100,height_mm:100});
   // a starting point, not a factory part (the factory diffs are a table with no dimensions): a 1.5-way clutch-plate LSD
   // as sold for a road car, 60 N m of preload, 45 degree ramps, three friction faces a side (PROBABLE, typical units)
+  // the pressure every unfitted car stands for: fitted as it starts, it moves nothing
+  if(kind==='tyre')return normPart({kind,name:tr('TYRE PRESSURE'),front_kPa:TYRE_P_REF,rear_kPa:TYRE_P_REF});
   if(kind==='diff')return normPart({kind,name:tr('CLUTCH-PLATE LSD'),preload_Nm:60,ramp_deg:45,faces:3,rFace_mm:40,rRamp_mm:40});
   // the engine's own turbo (its compressor wheel, if it sets one, and its housing), or a frame as sold
   if(kind==='turbo')return withPart('turbo',key,e=>{
@@ -632,7 +640,7 @@ function runnerFor(rpm,Dmm){
 }
 
 // ---- the PARTS page ----
-const partsUI={kind:'exhaust',edit:{exhaust:null,intake:null,filter:null,cam:null,head:null,turbo:null,intercooler:null,wing:null,fwing:null,diff:null},timer:0};
+const partsUI={kind:'exhaust',edit:{exhaust:null,intake:null,filter:null,cam:null,head:null,turbo:null,intercooler:null,wing:null,fwing:null,diff:null,tyre:null},timer:0};
 const pv=id=>document.getElementById(id);
 const fittedPart=kind=>partOwner(kind)&&partOwner(kind)[PART_DEF[kind].field];
 // the ids of each kind's editor
@@ -674,6 +682,10 @@ PART_UI.diff={reset:'pdReset',box:'partsDiff',list:'pdList',from:'pdFrom',neu:'p
   none:"No differentials designed yet. Start from a clutch-plate LSD below.",
   fields:['pdName','pdPreload','pdRamp','pdFaces','pdRFace','pdRRamp'],
   spec:p=>p.preload_Nm+' N m · '+p.ramp_deg+'° · '+p.faces+' '+tr('faces a side')+' · '+tr('lock')+' '+Math.round(diffPartLock(p)*100)+'%'};
+PART_UI.tyre={reset:'pyReset',box:'partsTyre',list:'pyList',from:'pyFrom',neu:'pyNew',save:'pySave',saveFit:'pySaveFit',guide:'pyGuide',canvas:'pyCanvas',legend:'pyLegend',
+  none:"No tyre pressures set yet. Start from the reference pressure below.",
+  fields:['pyName','pyFront','pyRear'],
+  spec:p=>tr('front')+' '+p.front_kPa+' · '+tr('rear')+' '+p.rear_kPa+' kPa '+tr('cold')};
 // the front wing shares the rear wing's editor, with its height over the road
 PART_UI.fwing=Object.assign({},PART_UI.wing,{none:"No front wings designed yet. Start from a wing as wide as this car's front track below.",
   fields:PART_UI.wing.fields.concat('pwHeight'),spec:p=>PART_UI.wing.spec(p)+' · '+p.height_mm+' mm '+tr('up')});
@@ -716,6 +728,7 @@ function partToEditor(kind,p){
     pv('pwName').value=p.name;pv('pwSpan').value=p.span_mm;pv('pwChord').value=p.chord_mm;pv('pwAngle').value=p.angle_deg;pv('pwCamber').value=p.camber_pct;pv('pwPlate').value=p.plate_mm;
     return;
   }
+  if(kind==='tyre'){pv('pyName').value=p.name;pv('pyFront').value=p.front_kPa;pv('pyRear').value=p.rear_kPa;return;}
   if(kind==='diff'){
     pv('pdName').value=p.name;pv('pdPreload').value=p.preload_Nm;pv('pdRamp').value=p.ramp_deg;pv('pdFaces').value=p.faces;pv('pdRFace').value=p.rFace_mm;pv('pdRRamp').value=p.rRamp_mm;
     return;
@@ -754,6 +767,7 @@ function partFromEditor(kind){
     h:pv('pxH').value,d:pv('pxD').value,fpi:pv('pxFpi').value,pipe_m:pv('pxPipe').value});
   if(kind==='wing'||kind==='fwing')return normPart({kind,id:ed&&ed.id,name:pv('pwName').value.trim()||newName,span_mm:pv('pwSpan').value,
     chord_mm:pv('pwChord').value,angle_deg:pv('pwAngle').value,camber_pct:pv('pwCamber').value,plate_mm:pv('pwPlate').value,height_mm:pv('pwHeight').value});
+  if(kind==='tyre')return normPart({kind,id:ed&&ed.id,name:pv('pyName').value.trim()||newName,front_kPa:pv('pyFront').value,rear_kPa:pv('pyRear').value});
   if(kind==='diff')return normPart({kind,id:ed&&ed.id,name:pv('pdName').value.trim()||newName,preload_Nm:pv('pdPreload').value,
     ramp_deg:pv('pdRamp').value,faces:pv('pdFaces').value,rFace_mm:pv('pdRFace').value,rRamp_mm:pv('pdRRamp').value});
   if(kind==='turbo'){
@@ -783,7 +797,7 @@ function partAction(a,id){
     partLib=partLib.filter(x=>x.id!==id);persistParts();
     const f=fittedPart(kind);
     if(f&&f.id===id){pv(D.select).value=partOwner(kind)[D.cls];fillPartSelects();partRebuild(kind);
-      flash(tr(kind==='diff'?"PART DELETED: THE CAR HAS THE TABLE'S CLUTCH-PLATE LSD":kind==='wing'?"PART DELETED: THE CAR HAS THE KIT'S REAR WING":kind==='fwing'?"PART DELETED: THE CAR HAS THE KIT'S FRONT WING":kind==='intake'?'PART DELETED: THE ENGINE HAS ITS FACTORY INTAKE':kind==='intercooler'?'PART DELETED: THE ENGINE HAS ITS FACTORY INTERCOOLER':kind==='cam'?'PART DELETED: THE ENGINE HAS ITS FACTORY CAM':kind==='head'?'PART DELETED: THE ENGINE HAS ITS FACTORY HEAD':kind==='turbo'?'PART DELETED: THE ENGINE HAS ITS FACTORY TURBO':kind==='filter'?'PART DELETED: THE ENGINE HAS ITS FACTORY AIR FILTER':'PART DELETED: THE ENGINE HAS ITS FACTORY EXHAUST'));}
+      flash(tr(kind==='tyre'?'PART DELETED: THE CAR HAS THE REFERENCE TYRE PRESSURE':kind==='diff'?"PART DELETED: THE CAR HAS THE TABLE'S CLUTCH-PLATE LSD":kind==='wing'?"PART DELETED: THE CAR HAS THE KIT'S REAR WING":kind==='fwing'?"PART DELETED: THE CAR HAS THE KIT'S FRONT WING":kind==='intake'?'PART DELETED: THE ENGINE HAS ITS FACTORY INTAKE':kind==='intercooler'?'PART DELETED: THE ENGINE HAS ITS FACTORY INTERCOOLER':kind==='cam'?'PART DELETED: THE ENGINE HAS ITS FACTORY CAM':kind==='head'?'PART DELETED: THE ENGINE HAS ITS FACTORY HEAD':kind==='turbo'?'PART DELETED: THE ENGINE HAS ITS FACTORY TURBO':kind==='filter'?'PART DELETED: THE ENGINE HAS ITS FACTORY AIR FILTER':'PART DELETED: THE ENGINE HAS ITS FACTORY EXHAUST'));}
     else{fillPartSelects();flash(tr('PART DELETED'));}
     if(partsUI.edit[kind]&&partsUI.edit[kind].id===id)partsUI.edit[kind]=null;
     renderParts();
@@ -827,6 +841,7 @@ function previewPart(kind){
   if(kind==='turbo')return previewTurbo();
   if(kind==='wing'||kind==='fwing')return previewWing(kind);
   if(kind==='diff')return previewDiff();
+  if(kind==='tyre')return previewTyre();
   const p=partFromEditor('exhaust'),now=exhaustReport(engine.exhaustPart||engine.exhaust),r=exhaustReport(p);
   partsUI.last={kind,p,now,r};
   const turbo=engine.intake==='turbo',ported=!!engine.ports;
@@ -1027,6 +1042,40 @@ function drawDiff(p,r){
   line(DIFF.open,'#a44');line(now,'#889');line(r,'#6fc');
   pv('pdLegend').innerHTML='<span style="color:#6fc">━ '+esc(tr('this diff'))+'</span> <span style="color:#889">━ '+esc(tr('now'))+'</span> <span style="color:#a44">━ '+esc(tr('open'))+'</span> <span class="dim">'+esc(tr('share of the axle grip put down, against lateral g'))+'</span>';
 }
+// The pressures on this car, per axle: hot at the compound's working temperature, the tyre's vertical stiffness and the
+// wheel hop it gives, the rolling resistance, and Horne's aquaplaning speed; against the car as it is now.
+function tyreAxleReport(v,cold,front){
+  const tt=TIRE_TYPE[v.tireType]||TIRE_TYPE.sport,q=quarterCar(Object.assign({},v,{tyrePart:{front_kPa:cold,rear_kPa:cold}}),front?'F':'R'),hot=tyreHotKPa(cold,tt.tOpt);
+  return {hot,kt:q.kt,hop:Math.sqrt((q.ks+q.kt)/q.mu)/(2*Math.PI),crr:tt.crr*Math.pow(cold/TYRE_P_REF,TYRE_P_ALPHA),vp:6.35*Math.sqrt(hot)};
+}
+function previewTyre(){
+  const p=partFromEditor('tyre'),V=vehicle,lines=[],nowP=V.tyrePart||{front_kPa:TYRE_P_REF,rear_kPa:TYRE_P_REF};
+  partsUI.last={kind:'tyre',p};
+  for(const [ax,front] of [['FRONT',true],['REAR',false]]){
+    const c=p[front?'front_kPa':'rear_kPa'],r=tyreAxleReport(V,c,front),n=tyreAxleReport(V,nowP[front?'front_kPa':'rear_kPa'],front);
+    lines.push('<b>'+tr(ax)+'</b> '+fmt(c)+' kPa '+tr('cold')+' → '+fmt(r.hot)+' '+tr('hot')+' · '+tr('stiffness')+' <b>'+fmt(r.kt/1000)+'</b> kN/m · '+tr('wheel hop')+' '+fmt(r.hop,1)+' Hz · Crr '+fmt(r.crr,4)
+      +' · '+tr('aquaplanes at')+' <b>'+fmt(r.vp)+'</b> km/h <span class="dim">('+tr('now')+' '+fmt(n.kt/1000)+' kN/m, '+fmt(n.vp)+' km/h)</span>');
+  }
+  lines.push('<span class="dim">'+tr("Stiffness in proportion to the pressure (Rhyne); rolling resistance as pressure to the -0.4 (SAE J2452); aquaplaning from the hot pressure (Horne, NASA TN D-2056). The grip and the tyre's rated load do not read the pressure yet.")+'</span>');
+  pv('pyGuide').innerHTML=lines.map(l=>'<div>'+l+'</div>').join('');
+  drawTyre(p);
+}
+// The aquaplaning speed and the tyre's stiffness against the cold pressure, with this part's two axles marked.
+function drawTyre(p){
+  const c=pv('pyCanvas');if(!c)return;
+  const w=c.clientWidth||480,h=c.clientHeight||200,dpr=window.devicePixelRatio||1;
+  c.width=Math.round(w*dpr);c.height=Math.round(h*dpr);
+  const g=c.getContext('2d');g.setTransform(dpr,0,0,dpr,0,0);g.clearRect(0,0,w,h);
+  const V=vehicle,[p0,p1]=PART_LIMITS.front_kPa,L=34,R=w-12,T=12,B=h-22,X=k=>L+(k-p0)/(p1-p0)*(R-L),Y=u=>B-u*(B-T);
+  const rep=(k,f)=>tyreAxleReport(V,k,f),vMax=rep(p1,true).vp*1.05,kMax=Math.max(rep(p1,true).kt,rep(p1,false).kt)*1.05;
+  g.strokeStyle='#223';g.lineWidth=1;g.fillStyle='#667';g.font='8px monospace';
+  for(let k=100;k<=p1;k+=50){g.beginPath();g.moveTo(X(k),T);g.lineTo(X(k),B);g.stroke();g.fillText(k,X(k)-8,h-8);}
+  for(let u=0;u<=1.0001;u+=0.5){g.beginPath();g.moveTo(L,Y(u));g.lineTo(R,Y(u));g.stroke();g.fillText(Math.round(u*vMax),2,Y(u)+3);}
+  const line=(fn,col)=>{g.strokeStyle=col;g.lineWidth=2;g.beginPath();for(let k=p0;k<=p1;k+=5){const y=Y(fn(k));k>p0?g.lineTo(X(k),y):g.moveTo(X(k),y);}g.stroke();};
+  line(k=>rep(k,true).vp/vMax,'#6fc');line(k=>rep(k,true).kt/kMax,'#889');
+  for(const [k,f,col] of [[p.front_kPa,true,'#fc6'],[p.rear_kPa,false,'#f86']]){g.fillStyle=col;g.fillRect(X(k)-3,Y(rep(k,f).vp/vMax)-3,6,6);}
+  pv('pyLegend').innerHTML='<span style="color:#6fc">━ '+esc(tr('aquaplaning km/h'))+'</span> <span style="color:#889">━ '+esc(tr('front stiffness'))+'</span> <span style="color:#fc6">■ '+esc(tr('front'))+'</span> <span style="color:#f86">■ '+esc(tr('rear'))+'</span> <span class="dim">'+esc(tr('against the cold pressure, kPa'))+'</span>';
+}
 // The wing's section at its angle with its two forces, and its lift against the angle, up to the stall.
 function drawWing(p,r){
   const c=pv('pwCanvas');if(!c)return;
@@ -1061,6 +1110,7 @@ function drawWing(p,r){
 function drawPartCurves(kind,now,r){
   if(kind==='wing'||kind==='fwing')return drawWing(partsUI.last.p,r);
   if(kind==='diff')return drawDiff(partsUI.last.p,r);
+  if(kind==='tyre')return drawTyre(partsUI.last.p);
   const U=PART_UI[kind],c=pv(U.canvas);if(!c)return;
   const w=c.clientWidth||480,h=c.clientHeight||200,dpr=window.devicePixelRatio||1;
   c.width=Math.round(w*dpr);c.height=Math.round(h*dpr);

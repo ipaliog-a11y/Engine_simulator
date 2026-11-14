@@ -18,6 +18,23 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 ## [Unreleased]
 
+### Tyre pressure as a part (build 312)
+
+Phase D of `plans/road-to-v1.md`: the tyre's pressure, the first of its two builds (the part; `TYRE_KZ` goes next).
+
+- **The PARTS tab sets TYRE PRESSURE**: cold pressures front and rear (80-350 kPa), fitted from the VEHICLE tab's new
+  TYRE PRESSURE choice. Unfitted, every car stands for 230 kPa cold (`TYRE_P_REF`, a mid-size car's placard; PROBABLE).
+- **What it sets**: the tyre's vertical stiffness in proportion to the pressure (the pressure term of Rhyne's relation,
+  2005), so the wheel hop and the road's load swing; the rolling resistance as pressure^-0.4 (SAE J2452's form, Grover
+  1998; PROBABLE), the axles by their load; in the race, the aquaplaning speed (Horne) from the lower axle's pressure,
+  hot at the compound's working temperature (constant-volume gas law), in place of the compound's listed pressure.
+  E46 M3 at 300/200 kPa: stiffness 268 -> 349 kN/m front, 285 -> 248 rear; Crr 0.0130 -> 0.0127; 0-100 5.600 -> 5.595 s.
+- **No factory car moved**: fitted at 230/230 it changes nothing, and no preset carries one (fingerprint identical,
+  5208 values).
+- **Left open:** grip and the tyre's rated load (`tyreRatedKg`) do not read the pressure; the contact patch's size and
+  the carcass's own stiffness with no air (Rhyne's constant) are not modelled. Next: retire `TYRE_KZ`'s one pressure.
+
+Tests: test192 (new); test120 lists the new kind.
 ### Spark retard heats the exhaust; past its furthest retard the ECU enriches, then lowers the boost (build 311)
 
 - The work a retarded spark does not do now goes down the exhaust (energy balance in `exhaustHeatFrac`, at the torque

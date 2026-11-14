@@ -21,7 +21,7 @@ function factoryDims(v){
 // True when every fitted part still matches the chassis' factory spec.
 function isFactoryFit(v){
   const ch=CHASSIS[v.chassis];if(!ch||!ch.fit)return false;const f=v.body?v.body.fit:ch.fit;
-  return (v.driveMech||v.drive)===(v.body?f.drive:ch.drive)&&(v.governor||0)===(f.gov||0)&&(v.tc!==false)===(f.tc!==false)&&v.gears===f.gears&&v.gearing===f.gearing&&v.spacing===(v.body?'stock':'std')&&!(v.finalDriveSet>0)&&v.gearbox===f.gearbox&&v.diff===f.diff&&!v.diffPart&&
+  return (v.driveMech||v.drive)===(v.body?f.drive:ch.drive)&&(v.governor||0)===(f.gov||0)&&(v.tc!==false)===(f.tc!==false)&&v.gears===f.gears&&v.gearing===f.gearing&&v.spacing===(v.body?'stock':'std')&&!(v.finalDriveSet>0)&&v.gearbox===f.gearbox&&v.diff===f.diff&&!v.diffPart&&!v.tyrePart&&
     v.tireType===f.tire&&v.tireWidth===f.tw&&(v.tireWidthF||0)===(f.twF||0)&&!stepOf(v.springF)&&!stepOf(v.springR)&&!stepOf(v.barF)&&!stepOf(v.barR)&&!stepOf(v.damperF)&&!stepOf(v.damperR)&&v.tireAspect===f.ta&&v.wheelDia===f.wheel&&
     v.aeroFront===f.aF&&v.aeroRear===f.aR&&!v.wingPart&&!v.fwingPart&&v.aeroFloor===f.aFl&&v.weightRed===f.weight&&
     v.brakeType===f.brake&&v.rotor===f.rotor&&v.suspension===f.susp&&geoStock(v)&&!v.dims&&!(v.ballastKg>0);
@@ -110,6 +110,7 @@ function buildVehicle(){
   if(D)vehicle.fWt=D.fWt;  // a designed split is the car's own, as built with this engine
   // the ballast at its place along the car (its front axle's share) and its height: the mass-weighted mean of the two
   if(bk>0){vehicle.fWt=(vehicle.fWt*m0+bk*vehicle.ballastPos)/vehicle.mass;vehicle.cg=(vehicle.cg*m0+bk*vehicle.ballastH)/vehicle.mass;}
+  if(vehicle.tyrePart)vehicle.crr*=tyrePressCrr(vehicle);   // the designed pressures, the axles by their load (build 312)
   syncDimsForm();
   // Brakes: the deceleration the hydraulics can command (m/s2, before fade). After the weight split, the wheelbase and
   // the centre of gravity, which size the rear brakes (build 203; until then this ran before them).
