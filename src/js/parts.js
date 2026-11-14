@@ -423,6 +423,7 @@ function vehPartsToForm(v){
 // Everything buildEngine derives from the exhaust and the runners, from deriveGasDynamics on; nothing before it reads them.
 function rederiveBreathing(){
   const e=engine;
+  e.knockLimTable=null;       // the knock limit on boost is re-solved below, on the new breathing (build 307)
   e.fillTable=null;           // as a build starts: the exhaust is sized before the filling is tabulated (build 283)
   deriveCam();deriveFriction();   // the cam's valvetrain and grade (build 249); the same as built for any other part
   deriveFilter();
@@ -437,6 +438,7 @@ function rederiveBreathing(){
   e.tqLimTable=null;if(e.tqLimit>0){buildTorqueLimit();buildBoostTable(26);}
   e.govPhi0=null;
   e.wotRich=wotNeedsEnrichment();
+  if(buildKnockLimit())buildBoostTable(26);
   {const p=peakEgts();e.peakEgt=p.probe;e.peakEgtGas=p.gas;}
 }
 // Run fn on a copy of the engine with another part of a kind: a designed one, or a factory key. The build, the live

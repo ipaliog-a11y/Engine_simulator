@@ -588,7 +588,7 @@ The ignition system also has to recharge its coil between sparks. An old <b>dist
 <div class="gtier gt-phys"><div class="gtier-h">LV3 · THE PHYSICS</div>
 <div class="guide-body" data-gk="ignitionPhys">
 The best timing, <b>MBT</b> (minimum advance for best torque), puts the 50% burn point (CA50) about <b>8° after top centre</b>. The model knows how much work any other phasing gives from the cycle itself: the Wiebe burn (see <a data-gp="combustion">Combustion &amp; the burn</a>) is placed at the CA50 the spark gives, and each bit of heat is worth the expansion still ahead of it. Every degree of advance moves CA50 by a degree.<br>
-On AUTO the ECU runs MBT where the end gas survives it, and otherwise the most advance at which it just survives: the <b>knock limit</b>, never more than 37° of retard past best phasing. That search uses the same end-gas chemistry as <a data-gp="knock">Compression &amp; knock</a>.
+On AUTO the ECU runs MBT where the end gas survives it, and otherwise the most advance at which it just survives: the <b>knock limit</b>, never more than 37° of retard past best phasing. That search uses the same end-gas chemistry as <a data-gp="knock">Compression &amp; knock</a>. Where the end gas still knocks at that furthest retard, the ECU does what a production one does next: it enriches the mixture, down to λ 0.78 (only on its own fuel map, and only where the map leaves room), then lowers the boost until it no longer knocks. The work a retarded spark does not do goes down the exhaust, so a retarded engine runs a hotter exhaust.
 </div>
 <div class="guide-limit" data-gk="ignitionLimit">
 Limit: the MBT advance itself is a simple rule, 18° + 14° × (rpm/redline) − 6° per bar of boost, clamped to 8–40°.

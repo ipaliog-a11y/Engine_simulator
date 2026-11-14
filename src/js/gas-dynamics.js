@@ -47,7 +47,7 @@ const densFromP=dp=>Math.pow(Math.max(0.05,1+dp),1/GAMMA_AIR)-1;
 // hot, and a high-compression engine sends less heat down the pipe because it extracted more work.
 // rpm and lambda are optional. Without rpm there is no late-burn heat (see burnPhasing); without
 // lambda the mixture is the one a calibrated engine runs at this load.
-function exhaustGasT(load,rpm,lambda){
+function exhaustGasT(load,rpm,lambda,retard){
   const e=engine;
   // Mixture at this load, not the live slider: full load runs rich for power and exhaust-temperature
   // control (lambda ~0.88), light load sits at stoich. A diesel is quality-governed and always lean,
@@ -60,7 +60,7 @@ function exhaustGasT(load,rpm,lambda){
   // at one assumed mixture per load.
   const afr=Math.max(6,(e.stoichAFR||14.7)*Math.max(1,lam));
   // The gas heated is the air AND the fuel burned in it (afr + 1); it was the air alone until build 101.
-  const dT=(e.fuelLHV||44)*1e6/((afr+1)*CP_EXH)*exhaustHeatFrac(rpm,lam)*clamp(load,0.35,1.1);
+  const dT=(e.fuelLHV||44)*1e6/((afr+1)*CP_EXH)*exhaustHeatFrac(rpm,lam,retard)*clamp(load,0.35,1.1);
   return 300+dT;
 }
 // Share of the fuel's heat (the heat RELEASED: rich of stoich it is capped, see exhaustGasT) that
@@ -76,7 +76,12 @@ function exhaustGasT(load,rpm,lambda){
 //
 // Ported engines keep the old rule for now: a rotary's and a two-stroke's work still rests on a fitted
 // type factor, so a balance against it would only move the fit into the exhaust.
-function exhaustHeatFrac(rpm,lam){
+// retard (build 307): degrees of spark behind best-torque spark. The work the late burn does not do
+// (sparkPhaseFactor, the torque path's own) leaves through the port, so the gross work is charged at
+// that phasing. The wall share is left at best-torque phasing: a later burn runs cooler and loses less
+// to the walls, so the exhaust gains at least this much (Heywood, Internal Combustion Engine
+// Fundamentals, on spark timing: exhaust temperature rises as the spark is retarded).
+function exhaustHeatFrac(rpm,lam,retard){
   const e=engine;
   if(e.ports||!e.wallTab){
     const eta=clamp(0.36*(e.crFactor||1),0.20,0.46);
@@ -86,7 +91,8 @@ function exhaustHeatFrac(rpm,lam){
     return f;
   }
   const n=rpm>0?rpm:e.wallRefRpm, l=lam>0?lam:(e.ci?SMOKE_LAMBDA_CI:1);
-  const f0=1-grossEtaReleased(n,l)-wallShareAt(n)-(e.ci?COMB_INEFF_CI:COMB_INEFF_SI);
+  const ph=!e.ci&&retard>0?sparkPhaseFactor(retard):1;
+  const f0=1-grossEtaReleased(n,l)*ph-wallShareAt(n)-(e.ci?COMB_INEFF_CI:COMB_INEFF_SI);
   return clamp(f0-portLossShare(n,l,f0),0.05,0.80);
 }
 // Gross indicated work per unit of heat released, at speed n and mixture lam: what the torque path
@@ -202,9 +208,10 @@ const wallWorkShare=(e,rpm,map)=>wallTrace(e,rpm,map).k;
 // Every steady-state reader goes through this, and so do the tests. Until build 88 the tests called
 // exhaustGasT(1.0) — no rpm, an assumed mixture — which stopped being the number the engine used as
 // soon as EGT gained its rpm terms, so they validated a temperature nothing ran at.
-function egtAt(rpm,map,lambda){
+// retard (build 307): the spark's degrees behind best-torque spark; left out, the spark the ECU runs here.
+function egtAt(rpm,map,lambda,retard){
   const lam=lambda>0?lambda:curAFR(rpm,map)/engine.stoichAFR;
-  return exhaustGasT(clamp(map/Math.max(0.4,engine.mapMax),0.3,1.1),rpm,lam);
+  return exhaustGasT(clamp(map/Math.max(0.4,engine.mapMax),0.3,1.1),rpm,lam,retard!=null?retard:sparkRetardAt(rpm,map));
 }
 // The full-load mixture this hardware runs at: the factory ECU map where there is one (a turbo
 // petrol enriches under boost precisely to hold this temperature down), the best-power mixture

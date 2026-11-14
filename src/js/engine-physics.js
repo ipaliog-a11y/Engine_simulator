@@ -23,7 +23,7 @@ function boostAvail(rpm){
   }
   if(engine.intake==='supercharger'){
     const sc=SC_TYPE[engine.scType]||SC_TYPE.roots;
-    return Math.min(engine.boost_bar*boostTaperFrac(rpm)*clamp(sc.lo+(sc.hi-sc.lo)*Math.pow(rpm/engine.redline,sc.exp),0,1),tqLimitBoost(rpm));   // the bypass valve holds the taper and the torque limit
+    return Math.min(engine.boost_bar*boostTaperFrac(rpm)*clamp(sc.lo+(sc.hi-sc.lo)*Math.pow(rpm/engine.redline,sc.exp),0,1),tqLimitBoost(rpm),knockLimitBoost(rpm));   // the bypass valve holds the taper, the torque limit and the knock limit
   }
   return 0;
 }
@@ -182,7 +182,7 @@ function baseFuelLambda(rpm,map){
 const CAT_T_LIMIT=950+273.15;
 function wotNeedsEnrichment(){
   if(engine.ci||!engine.canAutoAFR||engine.ports)return true;
-  for(let r=Math.max(1000,engine.idleRpmEff||800);r<=engine.redline;r+=250)if(egtAt(r,wotMapAt(r),1.0)>CAT_T_LIMIT)return true;
+  for(let r=Math.max(1000,engine.idleRpmEff||800);r<=engine.redline;r+=250)if(egtAt(r,wotMapAt(r),1.0,0)>CAT_T_LIMIT)return true;   // at best-torque spark: the mixture it decides sets the knock limit
   return false;
 }
 function mappedAFR(rpm,map){
@@ -197,7 +197,8 @@ function mappedAFR(rpm,map){
     const lam=(fuelMap[r0][c0]*(1-tc)+fuelMap[r0][c1]*tc)*(1-trr)+(fuelMap[r1][c0]*(1-tc)+fuelMap[r1][c1]*tc)*trr;
     return st*lam;
   }
-  return st*baseFuelLambda(rpm,map);
+  if(_lamTrial!=null)return st*_lamTrial;   // the knock control trying a mixture (knockEnrichLambda)
+  return st*knockEnrichLambda(rpm,map,baseFuelLambda(rpm,map));
 }
 // The AFR actually run at an operating point: the ECU map (AUTO) or the fixed slider (MANUAL).
 // The mixture actually burned. A diesel's injection system will not fuel past its full-load floor
@@ -409,7 +410,13 @@ function burnCycle(){
   return engine.type==='rotary'?{vol:wankelVol,burn:ROTARY_BURN_DEG,ca50:ROTARY_CA50,bdc:-270}
                                :{vol:pistonVol,burn:SI_BURN_DEG,ca50:SI_CA50,bdc:-180};
 }
-function endGasIntegral(rpm,map,ca50){
+// retard: the spark's degrees behind best-torque spark. The exhaust (residual and back pressure) is read at it, a later
+// burn sending a hotter exhaust (build 307).
+function endGasIntegral(rpm,map,ca50,retard){
+  const prevR=_retardNow;_retardNow=Math.max(0,retard||0);
+  try{return endGasIntegralAt(rpm,map,ca50);}finally{_retardNow=prevR;}
+}
+function endGasIntegralAt(rpm,map,ca50){
   const e=engine,cr=Math.max(1.5,e.compression),R=287,g=1.30,cv=R/(g-1),k=(1.35-1)/1.35;
   const st=e.stoichAFR||14.7,lam=curAFR(rpm,map)/st,q=(e.fuelLHV||44)*1e6/(Math.max(1,lam)*st);
   const Tf=effIAT(map,rpm)+273.15-(e.injector==='direct'?(HFG[e.fuel]||350e3)/(lam*st)/1005:0);
@@ -523,7 +530,7 @@ function knockAt(rpm,map,adv){
   const key=Math.round(rpm/10)+'|'+map.toFixed(3)+'|'+adv.toFixed(2)+'|'+effIAT(map,rpm).toFixed(1)+'|'+lam.toFixed(3)+'|'+e.effOctane+'|'+e.ignitionType;
   let I=_knockCache.m.get(key);
   if(I==null){
-    I=endGasIntegral(rpm,map,knockCa50(rpm,map,adv));
+    I=endGasIntegral(rpm,map,knockCa50(rpm,map,adv),mbtAdvance(rpm,map)-adv);
     if(_knockCache.m.size>20000)_knockCache.m.clear();
     _knockCache.m.set(key,I);
   }
@@ -551,12 +558,42 @@ function activeAdvance(rpm,map){
     // As far back as an ECU will go: a piston's burn phased ~45 deg after TDC, where it turns unstable and the
     // exhaust too hot to go further, the same distance past best-torque phasing on a rotary (build 131; it stopped
     // at a fitted 6 deg BTDC, which at full load under ~2000 rpm left the end gas knocking at any spark).
-    let lo=Math.min(mbt,knockCa50(rpm,map,0)-(burnCycle().ca50+CA50_RETARD)),hi=mbt;
+    let lo=knockFloorAdv(rpm,map),hi=mbt;
     if(knockAt(rpm,map,lo)>KNOCK_TARGET)adv=lo;            // knocks even fully retarded: the floor
     else{for(let i=0;i<9;i++){const m=(lo+hi)/2;if(knockAt(rpm,map,m)>KNOCK_TARGET)hi=m;else lo=m;}adv=lo;}   // to ~0.06 deg
   }
   _knockCache.m.set(key,adv);
   return adv;
+}
+// The furthest an ECU retards: the burn phased CA50_RETARD past best-torque phasing.
+function knockFloorAdv(rpm,map){return Math.min(mbtAdvance(rpm,map),knockCa50(rpm,map,0)-(burnCycle().ca50+CA50_RETARD));}
+// ---- When the retard runs out (build 307) ----
+// An ECU whose end gas still knocks at its furthest retard does what production calibrations do next: it enriches,
+// then it lowers the boost. Richer cools the end gas (the measured ~3 deg of knock-limited spark per 0.1 of lambda
+// knockCa50 carries, and a direct injector's extra evaporation), down to LAMBDA_KNOCK_MIN, the richest any factory
+// curve here runs (baseFuelLambda's own floor; a rich misfire limit sits near 0.7). It takes the leanest mixture
+// that clears the knock at the retard floor. Then the boost (knockLimitBoost, src/js/engine-constants-boost.js).
+// Only an ECU in charge of both: AUTO timing on its derived table, AUTO mixture on the factory fuel map. A hand-edited
+// fuel or spark table is the player's, as with the knock correction off.
+const LAMBDA_KNOCK_MIN=0.78;
+let _lamTrial=null;
+function ecuFuelsKnock(){
+  const e=engine;
+  return !e.ci&&!e.ports&&e.timingMode==='auto'&&!sparkMapCustom&&e.canAutoAFR&&e.afrMode==='auto'&&!fuelMapCustom;
+}
+function knockEnrichLambda(rpm,map,base){
+  if(!ecuFuelsKnock()||!(base>LAMBDA_KNOCK_MIN))return base;
+  if(!_knockCache||_knockCache.score!==engine.score)_knockCache={score:engine.score,m:new Map()};
+  const key='L|'+Math.round(rpm/10)+'|'+map.toFixed(3)+'|'+effIAT(map,rpm).toFixed(1)+'|'+base.toFixed(4)+'|'+engine.effOctane+'|'+engine.ignitionType+'|'+nitrousImep();
+  const hit=_knockCache.m.get(key);if(hit!=null)return hit;
+  const over=(l,floor)=>{_lamTrial=l;try{return knockAt(rpm,map,floor?knockFloorAdv(rpm,map):mbtAdvance(rpm,map))>KNOCK_TARGET;}finally{_lamTrial=null;}};
+  let lam=base;
+  if(over(base,false)&&over(base,true)){
+    if(over(LAMBDA_KNOCK_MIN,true))lam=LAMBDA_KNOCK_MIN;
+    else{let lo=LAMBDA_KNOCK_MIN,hi=base;for(let i=0;i<8;i++){const m=(lo+hi)/2;if(over(m,true))hi=m;else lo=m;}lam=hi;}   // to ~0.001
+  }
+  _knockCache.m.set(key,lam);
+  return lam;
 }
 // ---- The ECU's spark table (build 304) ----
 // An rpm x load grid of spark advance on the fuel map's breakpoints, shown when the ignition is AUTO. Untouched, it is
@@ -693,9 +730,32 @@ function computeKnockRisk(rpm,map){return knockAt(rpm,map,activeAdvance(rpm,map)
 // gives, against best-torque phasing (wiebePhasingEff), replacing a fitted 1 - 0.004 x (degrees off MBT)^2.
 function sparkTimingFactor(rpm,map){
   if(engine.ports)return clamp(1-0.004*Math.pow(activeAdvance(rpm,map)-mbtAdvance(rpm,map),2),0.72,1.0);   // as in build 122
-  const off=mbtAdvance(rpm,map)-activeAdvance(rpm,map),cr=engine.compression,x50=wiebeX50(),cyc=burnCycle();
-  const eff=c=>wiebePhasingEff(cyc.burn,c-x50*cyc.burn,cr,cyc.vol);
-  return clamp(eff(cyc.ca50+off)/eff(cyc.ca50),0.3,1);
+  return sparkPhaseFactor(mbtAdvance(rpm,map)-activeAdvance(rpm,map));
+}
+// The gross work at `off` degrees of spark behind best-torque spark, over the work at it. Shared by the torque and by the
+// exhaust (exhaustHeatFrac), which takes the rest. Remembered per engine (compression and burn), as the solves repeat it.
+let _phCache=null;
+function sparkPhaseFactor(off){
+  const cr=engine.compression,x50=wiebeX50(),cyc=burnCycle(),k=cr+'|'+cyc.burn+'|'+x50;
+  if(!_phCache||_phCache.k!==k)_phCache={k,m:new Map()};
+  let f=_phCache.m.get(off);
+  if(f==null){
+    const eff=c=>wiebePhasingEff(cyc.burn,c-x50*cyc.burn,cr,cyc.vol);
+    f=clamp(eff(cyc.ca50+off)/eff(cyc.ca50),0.3,1);
+    if(_phCache.m.size>20000)_phCache.m.clear();
+    _phCache.m.set(off,f);
+  }
+  return f;
+}
+// The spark's degrees behind best-torque spark at an operating point, for the exhaust (build 307). While the knock
+// control is solving the spark, the exhaust is read at the spark it is trying (_retardNow), which also stops the
+// solve from asking for itself.
+let _retardNow=null;
+function sparkRetardAt(rpm,map){
+  if(_retardNow!=null)return _retardNow;
+  if(engine.ci||engine.ports)return 0;
+  _retardNow=0;
+  try{return Math.max(0,mbtAdvance(rpm,map)-activeAdvance(rpm,map));}finally{_retardNow=null;}
 }
 // The pumping loop: PMEP = p_exhaust - p_intake, both absolute. Charged in two halves, because
 // only one of them is honestly derived here.

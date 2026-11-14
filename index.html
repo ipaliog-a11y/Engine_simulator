@@ -809,7 +809,7 @@ body.guided-open{overflow:hidden}
 </div>
 <div class="container">
 <header>
-<h1>PIXEL ENGINE SIM v0.7 build 310</h1>
+<h1>PIXEL ENGINE SIM v0.7 build 311</h1>
 <div class="subtitle" id="subtitle">ENGINE DESIGNER • BUILD IT, THEN DRIVE IT</div>
 </header>
 <div class="build-strip" id="buildStrip">
@@ -1624,7 +1624,7 @@ The ignition system also has to recharge its coil between sparks. An old <b>dist
 <div class="gtier gt-phys"><div class="gtier-h">LV3 · THE PHYSICS</div>
 <div class="guide-body" data-gk="ignitionPhys">
 The best timing, <b>MBT</b> (minimum advance for best torque), puts the 50% burn point (CA50) about <b>8° after top centre</b>. The model knows how much work any other phasing gives from the cycle itself: the Wiebe burn (see <a data-gp="combustion">Combustion &amp; the burn</a>) is placed at the CA50 the spark gives, and each bit of heat is worth the expansion still ahead of it. Every degree of advance moves CA50 by a degree.<br>
-On AUTO the ECU runs MBT where the end gas survives it, and otherwise the most advance at which it just survives: the <b>knock limit</b>, never more than 37° of retard past best phasing. That search uses the same end-gas chemistry as <a data-gp="knock">Compression &amp; knock</a>.
+On AUTO the ECU runs MBT where the end gas survives it, and otherwise the most advance at which it just survives: the <b>knock limit</b>, never more than 37° of retard past best phasing. That search uses the same end-gas chemistry as <a data-gp="knock">Compression &amp; knock</a>. Where the end gas still knocks at that furthest retard, the ECU does what a production one does next: it enriches the mixture, down to λ 0.78 (only on its own fuel map, and only where the map leaves room), then lowers the boost until it no longer knocks. The work a retarded spark does not do goes down the exhaust, so a retarded engine runs a hotter exhaust.
 </div>
 <div class="guide-limit" data-gk="ignitionLimit">
 Limit: the MBT advance itself is a simple rule, 18° + 14° × (rpm/redline) − 6° per bar of boost, clamped to 8–40°.
@@ -4419,7 +4419,7 @@ const densFromP=dp=>Math.pow(Math.max(0.05,1+dp),1/GAMMA_AIR)-1;
 // hot, and a high-compression engine sends less heat down the pipe because it extracted more work.
 // rpm and lambda are optional. Without rpm there is no late-burn heat (see burnPhasing); without
 // lambda the mixture is the one a calibrated engine runs at this load.
-function exhaustGasT(load,rpm,lambda){
+function exhaustGasT(load,rpm,lambda,retard){
   const e=engine;
   // Mixture at this load, not the live slider: full load runs rich for power and exhaust-temperature
   // control (lambda ~0.88), light load sits at stoich. A diesel is quality-governed and always lean,
@@ -4432,7 +4432,7 @@ function exhaustGasT(load,rpm,lambda){
   // at one assumed mixture per load.
   const afr=Math.max(6,(e.stoichAFR||14.7)*Math.max(1,lam));
   // The gas heated is the air AND the fuel burned in it (afr + 1); it was the air alone until build 101.
-  const dT=(e.fuelLHV||44)*1e6/((afr+1)*CP_EXH)*exhaustHeatFrac(rpm,lam)*clamp(load,0.35,1.1);
+  const dT=(e.fuelLHV||44)*1e6/((afr+1)*CP_EXH)*exhaustHeatFrac(rpm,lam,retard)*clamp(load,0.35,1.1);
   return 300+dT;
 }
 // Share of the fuel's heat (the heat RELEASED: rich of stoich it is capped, see exhaustGasT) that
@@ -4448,7 +4448,12 @@ function exhaustGasT(load,rpm,lambda){
 //
 // Ported engines keep the old rule for now: a rotary's and a two-stroke's work still rests on a fitted
 // type factor, so a balance against it would only move the fit into the exhaust.
-function exhaustHeatFrac(rpm,lam){
+// retard (build 307): degrees of spark behind best-torque spark. The work the late burn does not do
+// (sparkPhaseFactor, the torque path's own) leaves through the port, so the gross work is charged at
+// that phasing. The wall share is left at best-torque phasing: a later burn runs cooler and loses less
+// to the walls, so the exhaust gains at least this much (Heywood, Internal Combustion Engine
+// Fundamentals, on spark timing: exhaust temperature rises as the spark is retarded).
+function exhaustHeatFrac(rpm,lam,retard){
   const e=engine;
   if(e.ports||!e.wallTab){
     const eta=clamp(0.36*(e.crFactor||1),0.20,0.46);
@@ -4458,7 +4463,8 @@ function exhaustHeatFrac(rpm,lam){
     return f;
   }
   const n=rpm>0?rpm:e.wallRefRpm, l=lam>0?lam:(e.ci?SMOKE_LAMBDA_CI:1);
-  const f0=1-grossEtaReleased(n,l)-wallShareAt(n)-(e.ci?COMB_INEFF_CI:COMB_INEFF_SI);
+  const ph=!e.ci&&retard>0?sparkPhaseFactor(retard):1;
+  const f0=1-grossEtaReleased(n,l)*ph-wallShareAt(n)-(e.ci?COMB_INEFF_CI:COMB_INEFF_SI);
   return clamp(f0-portLossShare(n,l,f0),0.05,0.80);
 }
 // Gross indicated work per unit of heat released, at speed n and mixture lam: what the torque path
@@ -4574,9 +4580,10 @@ const wallWorkShare=(e,rpm,map)=>wallTrace(e,rpm,map).k;
 // Every steady-state reader goes through this, and so do the tests. Until build 88 the tests called
 // exhaustGasT(1.0) — no rpm, an assumed mixture — which stopped being the number the engine used as
 // soon as EGT gained its rpm terms, so they validated a temperature nothing ran at.
-function egtAt(rpm,map,lambda){
+// retard (build 307): the spark's degrees behind best-torque spark; left out, the spark the ECU runs here.
+function egtAt(rpm,map,lambda,retard){
   const lam=lambda>0?lambda:curAFR(rpm,map)/engine.stoichAFR;
-  return exhaustGasT(clamp(map/Math.max(0.4,engine.mapMax),0.3,1.1),rpm,lam);
+  return exhaustGasT(clamp(map/Math.max(0.4,engine.mapMax),0.3,1.1),rpm,lam,retard!=null?retard:sparkRetardAt(rpm,map));
 }
 // The full-load mixture this hardware runs at: the factory ECU map where there is one (a turbo
 // petrol enriches under boost precisely to hold this temperature down), the best-power mixture
@@ -8085,7 +8092,7 @@ function boostTaperFrac(rpm){
 // A diesel ECU sets its boost from the fuel it injects (Bosch, Diesel-Engine Management): as the governor takes the fuel
 // (build 172) the boost target goes with it, to none at the governed maximum, where the engine runs unloaded.
 const govBoostFrac=rpm=>{const e=engine,g0=e.govRpm||0;return e.ci&&g0>0&&g0<e.redline&&rpm>g0?1-clamp((rpm-g0)/(e.redline-g0),0,1):1;};
-const boostTarget=rpm=>Math.min(engine.maxBoost*boostTaperFrac(rpm)*govBoostFrac(rpm),tqLimitBoost(rpm));
+const boostTarget=rpm=>Math.min(engine.maxBoost*boostTaperFrac(rpm)*govBoostFrac(rpm),tqLimitBoost(rpm),knockLimitBoost(rpm));
 // The ECU's torque limit (build 138). A torque-based ECU holds the engine to a calibrated torque (for the gearbox,
 // the driveline, the clutch) by asking for less boost where the engine would make more: the flat torque plateaus
 // makers quote ("350 Nm from 1500 to 4400 rpm") are this, not the engine's own curve. ECU TORQUE LIMIT (Nm, 0 =
@@ -8121,6 +8128,37 @@ function buildTorqueLimit(){
   }
   e.afrMode=savedAfrMode;Object.assign(state,sv);
   e.tqLimTable=tb;
+}
+// The knock limit on boost (build 307): where the end gas knocks at the ECU's furthest retard and richest mixture
+// (activeAdvance, knockEnrichLambda), the ECU lowers the boost until it does not, as a production one pulls its boost
+// target on knock. Solved once per engine, at the bench's intake air, like the torque limit. Only with AUTO timing on
+// its derived table: a hand-set spark has no knock control to ask for less.
+function knockLimitBoost(rpm){
+  const tb=engine.knockLimTable;
+  if(!tb)return Infinity;
+  if(rpm<=tb[0].rpm)return tb[0].bar;
+  for(let i=1;i<tb.length;i++)if(rpm<=tb[i].rpm){const a=tb[i-1],b=tb[i];return a.bar+(b.bar-a.bar)*(rpm-a.rpm)/(b.rpm-a.rpm);}
+  return tb[tb.length-1].bar;
+}
+function buildKnockLimit(){
+  const e=engine;e.knockLimTable=null;
+  if(e.ci||e.ports||e.intake==='na'||!(e.maxBoost>0)||e.timingMode!=='auto'||sparkMapCustom)return false;
+  _knockCache={score:e.score,m:new Map()};   // the engine built before shares the score object until it is rescored
+  const over=(r,b)=>{const m=1+b;return knockAt(r,m,activeAdvance(r,m))>KNOCK_TARGET;};
+  const tb=[];let any=false;
+  for(let r=1000;r<=e.redline+199;r+=200){
+    const rr=Math.min(r,e.redline),b0=boostAvail(rr);
+    let bar=e.maxBoost;
+    if(b0>0&&over(rr,b0)){
+      any=true;let lo=0,hi=b0;
+      if(over(rr,0))hi=0;
+      else for(let i=0;i<12;i++){const m=(lo+hi)/2;if(over(rr,m))hi=m;else lo=m;}
+      bar=lo;
+    }
+    tb.push({rpm:rr,bar});
+  }
+  e.knockLimTable=any?tb:null;
+  return any;
 }
 // The frame an engine runs (build 131): the size class, or the maker's own compressor wheel where it is known
 // (COMPRESSOR WHEEL, mm at the exducer), with its housings scaled with it (a geometrically similar volute: A/R is
@@ -9662,6 +9700,7 @@ function buildEngineCore(prevStoich,quiet){
   if(engine.tqLimit>0){buildTorqueLimit();buildBoostTable(26);}   // the ECU's torque limit lowers the target: re-solve the shaft
   engine.govPhi0=null;   // the governor's share, against the finished engine (it was taken mid-build, on a half-set one)
   engine.wotRich=wotNeedsEnrichment();   // the ECU's full-load enrichment, where the exhaust needs it (build 202); before peakEgts, which reads it
+  if(buildKnockLimit())buildBoostTable(26);   // knock past the furthest retard and richest mixture lowers the boost (build 307)
   {const p=peakEgts();engine.peakEgt=p.probe;engine.peakEgtGas=p.gas;}   // needs the boost table (wotMapAt) and the burn table
 
   buildRev++;dynoCache=null;
@@ -9975,7 +10014,7 @@ function boostAvail(rpm){
   }
   if(engine.intake==='supercharger'){
     const sc=SC_TYPE[engine.scType]||SC_TYPE.roots;
-    return Math.min(engine.boost_bar*boostTaperFrac(rpm)*clamp(sc.lo+(sc.hi-sc.lo)*Math.pow(rpm/engine.redline,sc.exp),0,1),tqLimitBoost(rpm));   // the bypass valve holds the taper and the torque limit
+    return Math.min(engine.boost_bar*boostTaperFrac(rpm)*clamp(sc.lo+(sc.hi-sc.lo)*Math.pow(rpm/engine.redline,sc.exp),0,1),tqLimitBoost(rpm),knockLimitBoost(rpm));   // the bypass valve holds the taper, the torque limit and the knock limit
   }
   return 0;
 }
@@ -10134,7 +10173,7 @@ function baseFuelLambda(rpm,map){
 const CAT_T_LIMIT=950+273.15;
 function wotNeedsEnrichment(){
   if(engine.ci||!engine.canAutoAFR||engine.ports)return true;
-  for(let r=Math.max(1000,engine.idleRpmEff||800);r<=engine.redline;r+=250)if(egtAt(r,wotMapAt(r),1.0)>CAT_T_LIMIT)return true;
+  for(let r=Math.max(1000,engine.idleRpmEff||800);r<=engine.redline;r+=250)if(egtAt(r,wotMapAt(r),1.0,0)>CAT_T_LIMIT)return true;   // at best-torque spark: the mixture it decides sets the knock limit
   return false;
 }
 function mappedAFR(rpm,map){
@@ -10149,7 +10188,8 @@ function mappedAFR(rpm,map){
     const lam=(fuelMap[r0][c0]*(1-tc)+fuelMap[r0][c1]*tc)*(1-trr)+(fuelMap[r1][c0]*(1-tc)+fuelMap[r1][c1]*tc)*trr;
     return st*lam;
   }
-  return st*baseFuelLambda(rpm,map);
+  if(_lamTrial!=null)return st*_lamTrial;   // the knock control trying a mixture (knockEnrichLambda)
+  return st*knockEnrichLambda(rpm,map,baseFuelLambda(rpm,map));
 }
 // The AFR actually run at an operating point: the ECU map (AUTO) or the fixed slider (MANUAL).
 // The mixture actually burned. A diesel's injection system will not fuel past its full-load floor
@@ -10361,7 +10401,13 @@ function burnCycle(){
   return engine.type==='rotary'?{vol:wankelVol,burn:ROTARY_BURN_DEG,ca50:ROTARY_CA50,bdc:-270}
                                :{vol:pistonVol,burn:SI_BURN_DEG,ca50:SI_CA50,bdc:-180};
 }
-function endGasIntegral(rpm,map,ca50){
+// retard: the spark's degrees behind best-torque spark. The exhaust (residual and back pressure) is read at it, a later
+// burn sending a hotter exhaust (build 307).
+function endGasIntegral(rpm,map,ca50,retard){
+  const prevR=_retardNow;_retardNow=Math.max(0,retard||0);
+  try{return endGasIntegralAt(rpm,map,ca50);}finally{_retardNow=prevR;}
+}
+function endGasIntegralAt(rpm,map,ca50){
   const e=engine,cr=Math.max(1.5,e.compression),R=287,g=1.30,cv=R/(g-1),k=(1.35-1)/1.35;
   const st=e.stoichAFR||14.7,lam=curAFR(rpm,map)/st,q=(e.fuelLHV||44)*1e6/(Math.max(1,lam)*st);
   const Tf=effIAT(map,rpm)+273.15-(e.injector==='direct'?(HFG[e.fuel]||350e3)/(lam*st)/1005:0);
@@ -10475,7 +10521,7 @@ function knockAt(rpm,map,adv){
   const key=Math.round(rpm/10)+'|'+map.toFixed(3)+'|'+adv.toFixed(2)+'|'+effIAT(map,rpm).toFixed(1)+'|'+lam.toFixed(3)+'|'+e.effOctane+'|'+e.ignitionType;
   let I=_knockCache.m.get(key);
   if(I==null){
-    I=endGasIntegral(rpm,map,knockCa50(rpm,map,adv));
+    I=endGasIntegral(rpm,map,knockCa50(rpm,map,adv),mbtAdvance(rpm,map)-adv);
     if(_knockCache.m.size>20000)_knockCache.m.clear();
     _knockCache.m.set(key,I);
   }
@@ -10503,12 +10549,42 @@ function activeAdvance(rpm,map){
     // As far back as an ECU will go: a piston's burn phased ~45 deg after TDC, where it turns unstable and the
     // exhaust too hot to go further, the same distance past best-torque phasing on a rotary (build 131; it stopped
     // at a fitted 6 deg BTDC, which at full load under ~2000 rpm left the end gas knocking at any spark).
-    let lo=Math.min(mbt,knockCa50(rpm,map,0)-(burnCycle().ca50+CA50_RETARD)),hi=mbt;
+    let lo=knockFloorAdv(rpm,map),hi=mbt;
     if(knockAt(rpm,map,lo)>KNOCK_TARGET)adv=lo;            // knocks even fully retarded: the floor
     else{for(let i=0;i<9;i++){const m=(lo+hi)/2;if(knockAt(rpm,map,m)>KNOCK_TARGET)hi=m;else lo=m;}adv=lo;}   // to ~0.06 deg
   }
   _knockCache.m.set(key,adv);
   return adv;
+}
+// The furthest an ECU retards: the burn phased CA50_RETARD past best-torque phasing.
+function knockFloorAdv(rpm,map){return Math.min(mbtAdvance(rpm,map),knockCa50(rpm,map,0)-(burnCycle().ca50+CA50_RETARD));}
+// ---- When the retard runs out (build 307) ----
+// An ECU whose end gas still knocks at its furthest retard does what production calibrations do next: it enriches,
+// then it lowers the boost. Richer cools the end gas (the measured ~3 deg of knock-limited spark per 0.1 of lambda
+// knockCa50 carries, and a direct injector's extra evaporation), down to LAMBDA_KNOCK_MIN, the richest any factory
+// curve here runs (baseFuelLambda's own floor; a rich misfire limit sits near 0.7). It takes the leanest mixture
+// that clears the knock at the retard floor. Then the boost (knockLimitBoost, src/js/engine-constants-boost.js).
+// Only an ECU in charge of both: AUTO timing on its derived table, AUTO mixture on the factory fuel map. A hand-edited
+// fuel or spark table is the player's, as with the knock correction off.
+const LAMBDA_KNOCK_MIN=0.78;
+let _lamTrial=null;
+function ecuFuelsKnock(){
+  const e=engine;
+  return !e.ci&&!e.ports&&e.timingMode==='auto'&&!sparkMapCustom&&e.canAutoAFR&&e.afrMode==='auto'&&!fuelMapCustom;
+}
+function knockEnrichLambda(rpm,map,base){
+  if(!ecuFuelsKnock()||!(base>LAMBDA_KNOCK_MIN))return base;
+  if(!_knockCache||_knockCache.score!==engine.score)_knockCache={score:engine.score,m:new Map()};
+  const key='L|'+Math.round(rpm/10)+'|'+map.toFixed(3)+'|'+effIAT(map,rpm).toFixed(1)+'|'+base.toFixed(4)+'|'+engine.effOctane+'|'+engine.ignitionType+'|'+nitrousImep();
+  const hit=_knockCache.m.get(key);if(hit!=null)return hit;
+  const over=(l,floor)=>{_lamTrial=l;try{return knockAt(rpm,map,floor?knockFloorAdv(rpm,map):mbtAdvance(rpm,map))>KNOCK_TARGET;}finally{_lamTrial=null;}};
+  let lam=base;
+  if(over(base,false)&&over(base,true)){
+    if(over(LAMBDA_KNOCK_MIN,true))lam=LAMBDA_KNOCK_MIN;
+    else{let lo=LAMBDA_KNOCK_MIN,hi=base;for(let i=0;i<8;i++){const m=(lo+hi)/2;if(over(m,true))hi=m;else lo=m;}lam=hi;}   // to ~0.001
+  }
+  _knockCache.m.set(key,lam);
+  return lam;
 }
 // ---- The ECU's spark table (build 304) ----
 // An rpm x load grid of spark advance on the fuel map's breakpoints, shown when the ignition is AUTO. Untouched, it is
@@ -10645,9 +10721,32 @@ function computeKnockRisk(rpm,map){return knockAt(rpm,map,activeAdvance(rpm,map)
 // gives, against best-torque phasing (wiebePhasingEff), replacing a fitted 1 - 0.004 x (degrees off MBT)^2.
 function sparkTimingFactor(rpm,map){
   if(engine.ports)return clamp(1-0.004*Math.pow(activeAdvance(rpm,map)-mbtAdvance(rpm,map),2),0.72,1.0);   // as in build 122
-  const off=mbtAdvance(rpm,map)-activeAdvance(rpm,map),cr=engine.compression,x50=wiebeX50(),cyc=burnCycle();
-  const eff=c=>wiebePhasingEff(cyc.burn,c-x50*cyc.burn,cr,cyc.vol);
-  return clamp(eff(cyc.ca50+off)/eff(cyc.ca50),0.3,1);
+  return sparkPhaseFactor(mbtAdvance(rpm,map)-activeAdvance(rpm,map));
+}
+// The gross work at `off` degrees of spark behind best-torque spark, over the work at it. Shared by the torque and by the
+// exhaust (exhaustHeatFrac), which takes the rest. Remembered per engine (compression and burn), as the solves repeat it.
+let _phCache=null;
+function sparkPhaseFactor(off){
+  const cr=engine.compression,x50=wiebeX50(),cyc=burnCycle(),k=cr+'|'+cyc.burn+'|'+x50;
+  if(!_phCache||_phCache.k!==k)_phCache={k,m:new Map()};
+  let f=_phCache.m.get(off);
+  if(f==null){
+    const eff=c=>wiebePhasingEff(cyc.burn,c-x50*cyc.burn,cr,cyc.vol);
+    f=clamp(eff(cyc.ca50+off)/eff(cyc.ca50),0.3,1);
+    if(_phCache.m.size>20000)_phCache.m.clear();
+    _phCache.m.set(off,f);
+  }
+  return f;
+}
+// The spark's degrees behind best-torque spark at an operating point, for the exhaust (build 307). While the knock
+// control is solving the spark, the exhaust is read at the spark it is trying (_retardNow), which also stops the
+// solve from asking for itself.
+let _retardNow=null;
+function sparkRetardAt(rpm,map){
+  if(_retardNow!=null)return _retardNow;
+  if(engine.ci||engine.ports)return 0;
+  _retardNow=0;
+  try{return Math.max(0,mbtAdvance(rpm,map)-activeAdvance(rpm,map));}finally{_retardNow=null;}
 }
 // The pumping loop: PMEP = p_exhaust - p_intake, both absolute. Charged in two halves, because
 // only one of them is honestly derived here.
@@ -24240,6 +24339,7 @@ function vehPartsToForm(v){
 // Everything buildEngine derives from the exhaust and the runners, from deriveGasDynamics on; nothing before it reads them.
 function rederiveBreathing(){
   const e=engine;
+  e.knockLimTable=null;       // the knock limit on boost is re-solved below, on the new breathing (build 307)
   e.fillTable=null;           // as a build starts: the exhaust is sized before the filling is tabulated (build 283)
   deriveCam();deriveFriction();   // the cam's valvetrain and grade (build 249); the same as built for any other part
   deriveFilter();
@@ -24254,6 +24354,7 @@ function rederiveBreathing(){
   e.tqLimTable=null;if(e.tqLimit>0){buildTorqueLimit();buildBoostTable(26);}
   e.govPhi0=null;
   e.wotRich=wotNeedsEnrichment();
+  if(buildKnockLimit())buildBoostTable(26);
   {const p=peakEgts();e.peakEgt=p.probe;e.peakEgtGas=p.gas;}
 }
 // Run fn on a copy of the engine with another part of a kind: a designed one, or a factory key. The build, the live

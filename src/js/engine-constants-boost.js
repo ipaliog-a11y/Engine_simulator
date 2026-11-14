@@ -81,7 +81,7 @@ function boostTaperFrac(rpm){
 // A diesel ECU sets its boost from the fuel it injects (Bosch, Diesel-Engine Management): as the governor takes the fuel
 // (build 172) the boost target goes with it, to none at the governed maximum, where the engine runs unloaded.
 const govBoostFrac=rpm=>{const e=engine,g0=e.govRpm||0;return e.ci&&g0>0&&g0<e.redline&&rpm>g0?1-clamp((rpm-g0)/(e.redline-g0),0,1):1;};
-const boostTarget=rpm=>Math.min(engine.maxBoost*boostTaperFrac(rpm)*govBoostFrac(rpm),tqLimitBoost(rpm));
+const boostTarget=rpm=>Math.min(engine.maxBoost*boostTaperFrac(rpm)*govBoostFrac(rpm),tqLimitBoost(rpm),knockLimitBoost(rpm));
 // The ECU's torque limit (build 138). A torque-based ECU holds the engine to a calibrated torque (for the gearbox,
 // the driveline, the clutch) by asking for less boost where the engine would make more: the flat torque plateaus
 // makers quote ("350 Nm from 1500 to 4400 rpm") are this, not the engine's own curve. ECU TORQUE LIMIT (Nm, 0 =
@@ -117,6 +117,37 @@ function buildTorqueLimit(){
   }
   e.afrMode=savedAfrMode;Object.assign(state,sv);
   e.tqLimTable=tb;
+}
+// The knock limit on boost (build 307): where the end gas knocks at the ECU's furthest retard and richest mixture
+// (activeAdvance, knockEnrichLambda), the ECU lowers the boost until it does not, as a production one pulls its boost
+// target on knock. Solved once per engine, at the bench's intake air, like the torque limit. Only with AUTO timing on
+// its derived table: a hand-set spark has no knock control to ask for less.
+function knockLimitBoost(rpm){
+  const tb=engine.knockLimTable;
+  if(!tb)return Infinity;
+  if(rpm<=tb[0].rpm)return tb[0].bar;
+  for(let i=1;i<tb.length;i++)if(rpm<=tb[i].rpm){const a=tb[i-1],b=tb[i];return a.bar+(b.bar-a.bar)*(rpm-a.rpm)/(b.rpm-a.rpm);}
+  return tb[tb.length-1].bar;
+}
+function buildKnockLimit(){
+  const e=engine;e.knockLimTable=null;
+  if(e.ci||e.ports||e.intake==='na'||!(e.maxBoost>0)||e.timingMode!=='auto'||sparkMapCustom)return false;
+  _knockCache={score:e.score,m:new Map()};   // the engine built before shares the score object until it is rescored
+  const over=(r,b)=>{const m=1+b;return knockAt(r,m,activeAdvance(r,m))>KNOCK_TARGET;};
+  const tb=[];let any=false;
+  for(let r=1000;r<=e.redline+199;r+=200){
+    const rr=Math.min(r,e.redline),b0=boostAvail(rr);
+    let bar=e.maxBoost;
+    if(b0>0&&over(rr,b0)){
+      any=true;let lo=0,hi=b0;
+      if(over(rr,0))hi=0;
+      else for(let i=0;i<12;i++){const m=(lo+hi)/2;if(over(rr,m))hi=m;else lo=m;}
+      bar=lo;
+    }
+    tb.push({rpm:rr,bar});
+  }
+  e.knockLimTable=any?tb:null;
+  return any;
 }
 // The frame an engine runs (build 131): the size class, or the maker's own compressor wheel where it is known
 // (COMPRESSOR WHEEL, mm at the exducer), with its housings scaled with it (a geometrically similar volute: A/R is
