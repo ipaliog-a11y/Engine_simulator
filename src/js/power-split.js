@@ -122,7 +122,7 @@ function psOol(){
     }
     if(b){P.push(Pi);ne.push(b.rpm);gs.push(b.f);}
   }
-  e._ool={score:e.score,P,ne,gs,Pmax:P.length?P[P.length-1]:Pmax,tqAt};   // tqAt: the full-load torque, for the sound (build 296)
+  e._ool={score:e.score,P,ne,gs,Pmax:P.length?P[P.length-1]:Pmax,tqAt};   // tqAt: the full-load torque, for the sound (build 297)
   return e._ool;
 }
 // The best line's engine speed and fuel (g/s) for an engine power (W).
@@ -151,7 +151,7 @@ function psDriveline(v){
 const PS_GEAR_NOTE='A power-split hybrid has no gears: one reduction from its traction motor, set with GEARING on the VEHICLE tab.';
 const PS_REDUCTION={label:'eCVT (POWER-SPLIT)',shift:0,powershift:true,eff:1,stall:0,mult:1,cost:900};
 // The engine's power at a replay point (W): the shaft's power less what the pack gave, over the eCVT's path efficiency at
-// that speed; 0 off the power, where the engine stops. The lap's fuel and its sound both read it (build 296).
+// that speed; 0 off the power, where the engine stops. The lap's fuel and its sound both read it (build 297).
 function psEnginePower(L,i,c){
   const R=L.replay,R0=c.eng,rpm=R.rpm[i],Ps=R.pwr[i]-(L.hy?Math.max(0,L.hy.pm[i]):0);
   if(!(Ps>0))return 0;
@@ -167,7 +167,7 @@ function psFuelRate(){
     for(let i=0;i<n;i++){const Pe=psEnginePower(L,i,c);out[i]=Pe>0?psOolAt(Pe).gs:0;}
     return out;};
 }
-// What the engine does at a replay point, for the sound (build 296): null where the fuel has it stopped; else on the best
+// What the engine does at a replay point, for the sound (build 297): null where the fuel has it stopped; else on the best
 // line at its power, as the fuel burns it, and its manifold the share of full-load torque it makes there (steadyMapAt's law).
 function psEngineSoundAt(L,i){
   const Pe=psEnginePower(L,i,hybCurves());if(!(Pe>0))return null;

@@ -769,7 +769,7 @@ body.showcase-open{overflow:hidden}
 </div>
 <div class="container">
 <header>
-<h1>PIXEL ENGINE SIM v0.7 build 296</h1>
+<h1>PIXEL ENGINE SIM v0.7 build 297</h1>
 <div class="subtitle" id="subtitle">ENGINE DESIGNER • BUILD IT, THEN DRIVE IT</div>
 </header>
 <div class="build-strip" id="buildStrip">
@@ -16878,7 +16878,7 @@ function trackSoundState(st){
   // would find it already gone by the time the throttle shut on it.
   const R=lapResult&&lapResult.replay,e=engine;
   // a power-split's or a series hybrid's replay runs at MG2's speed: the engine is where the lap's fuel has it, on its best
-  // line at the power it gives, and stopped off the power (build 296; until then on the full-load line, idling off it)
+  // line at the power it gives, and stopped off the power (build 297; until then on the full-load line, idling off it)
   if(isDirectHybrid()&&R&&st.i!=null){
     const g=psEngineSoundAt(lapResult,st.i);if(!g)return {off:true,rpm:0,map:1,throttle:0,afr:e.stoichAFR||14.7,fuelCut:true,blown:false};
     st=Object.assign({},st,{rpm:g.rpm,thr:g.thr,map:g.map});
@@ -17143,8 +17143,14 @@ function updateSound(){
   updateMotorSound(Sound.ctx.currentTime);   // the electric drive's voice, beside the engine's (build 198)
   if(!Sound.on)return;
   if(isElectric()||hybBenchEngineOff()&&vizMode!=='track')return muteEngineSound();   // a motor has no engine to hear (its own voice: updateMotorSound); a hybrid's engine may be off (build 190)
-  const t=Sound.ctx.currentTime,src=soundSource(),s=src||state;
-  if(src&&src.off)return muteEngineSound();   // a hybrid's engine stopped on the lap replay (build 296)
+  const src=soundSource();
+  if(src&&src.off)return muteEngineSound();   // a hybrid's engine stopped on the lap replay (build 297)
+  // a hybrid's engine on the bench runs at the ECU's throttle (H.thrE: AUTO, HOLD and CHARGE set it), not the pedal's
+  if(src===state&&isHybrid()&&hybBench&&hybBench.hy===engine.hy)return withEngThr(hybBench,()=>engineSound(src));
+  engineSound(src);
+}
+function engineSound(src){
+  const t=Sound.ctx.currentTime,s=src||state;
   // Rotaries sit bright & smooth, diesels dark & clattery; the note opens up with revs.
   const bright=(440+s.rpm*0.15+engine.cylinders*8)*(engine.type==='rotary'?1.5:engine.ci?0.6:1.0);
   if(Sound.node){
@@ -26114,7 +26120,7 @@ function psOol(){
     }
     if(b){P.push(Pi);ne.push(b.rpm);gs.push(b.f);}
   }
-  e._ool={score:e.score,P,ne,gs,Pmax:P.length?P[P.length-1]:Pmax,tqAt};   // tqAt: the full-load torque, for the sound (build 296)
+  e._ool={score:e.score,P,ne,gs,Pmax:P.length?P[P.length-1]:Pmax,tqAt};   // tqAt: the full-load torque, for the sound (build 297)
   return e._ool;
 }
 // The best line's engine speed and fuel (g/s) for an engine power (W).
@@ -26143,7 +26149,7 @@ function psDriveline(v){
 const PS_GEAR_NOTE='A power-split hybrid has no gears: one reduction from its traction motor, set with GEARING on the VEHICLE tab.';
 const PS_REDUCTION={label:'eCVT (POWER-SPLIT)',shift:0,powershift:true,eff:1,stall:0,mult:1,cost:900};
 // The engine's power at a replay point (W): the shaft's power less what the pack gave, over the eCVT's path efficiency at
-// that speed; 0 off the power, where the engine stops. The lap's fuel and its sound both read it (build 296).
+// that speed; 0 off the power, where the engine stops. The lap's fuel and its sound both read it (build 297).
 function psEnginePower(L,i,c){
   const R=L.replay,R0=c.eng,rpm=R.rpm[i],Ps=R.pwr[i]-(L.hy?Math.max(0,L.hy.pm[i]):0);
   if(!(Ps>0))return 0;
@@ -26159,7 +26165,7 @@ function psFuelRate(){
     for(let i=0;i<n;i++){const Pe=psEnginePower(L,i,c);out[i]=Pe>0?psOolAt(Pe).gs:0;}
     return out;};
 }
-// What the engine does at a replay point, for the sound (build 296): null where the fuel has it stopped; else on the best
+// What the engine does at a replay point, for the sound (build 297): null where the fuel has it stopped; else on the best
 // line at its power, as the fuel burns it, and its manifold the share of full-load torque it makes there (steadyMapAt's law).
 function psEngineSoundAt(L,i){
   const Pe=psEnginePower(L,i,hybCurves());if(!(Pe>0))return null;

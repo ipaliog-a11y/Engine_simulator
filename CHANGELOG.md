@@ -18,12 +18,24 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 ## [Unreleased]
 
-### A power-split or series hybrid's engine is heard where the lap runs it (build 296)
+### A power-split or series hybrid's engine is heard where the lap runs it (build 297)
 
 - **The lap replay played the wrong engine.** On the TRACK tab a Prius's or an e-POWER's engine sounded on its full-load line whenever the throttle was open, and idled off it, while the lap's fuel had it on its best line at the power it actually gave (the shaft's power less the pack's), and stopped off the power. The sound now reads the same engine power as the fuel (`psEnginePower`, shared), so the two agree: on the Prius's lap the engine runs at 379 of 442 points and is silent at the other 63, at the best line's speed exactly.
 - **Its load moves.** The replay records a 1 bar manifold for a direct drive, so the sound's load was flat. It is now the share of full-load torque the engine makes at that speed (`steadyMapAt`'s law): 0.20-0.94 bar round the lap.
 - Both sound models (SYNTH and GAS) follow it, and the guide's ENGINE SOUND text says so. Nothing the simulators produce moved: the fingerprint is identical, and the lap's fuel is the same to the last bit.
-- Left open, in `plans/hybrid-electric/gas-sound-hybrid.md`: on the bench the sound reads the pedal, not the engine's own throttle, so a charging engine can crackle with the pedal up (build B); an engine start or stop has no spin-up or run-down (C); a P2's lap has no electric stretches to be silent in, because the lap model has none yet.
+- Left open, in `plans/hybrid-electric/gas-sound-hybrid.md`: an engine start or stop has no spin-up or run-down (C); a P2's lap has no electric stretches to be silent in, because the lap model has none yet.
+
+### A hybrid's engine on the bench is heard at its own throttle (build 296)
+
+Step B of `plans/hybrid-electric/gas-sound-hybrid.md` (the plan arrives with step A, PR #241).
+- **The sound reads the engine's throttle, not the pedal.** In AUTO, HOLD and CHARGE the ECU sets the engine's throttle
+  (`H.thrE`); the sound read the pedal, so an engine charging with the pedal up was heard as on a lift: the turbo's whine
+  unloaded, the overrun's crackle and the blow-off armed. It now reads `H.thrE` through `withEngThr`, as the bench's
+  engine physics already did. On the 330e in CHARGE, pedal up: the sound hears 0.23 (was 0), the whine 4x louder.
+- SPORT and ENGINE are unchanged (the engine's throttle is the pedal). Sound only; the fingerprint is identical.
+- **Left open:** steps C–E (start and stop spin-up, each mode checked, the worklet idle while muted).
+
+Tests: test180 (new); 114, 74.
 
 ### The tow and dirty air come from the cars' own aero (build 295)
 
