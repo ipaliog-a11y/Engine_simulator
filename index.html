@@ -769,7 +769,7 @@ body.showcase-open{overflow:hidden}
 </div>
 <div class="container">
 <header>
-<h1>PIXEL ENGINE SIM v0.7 build 291</h1>
+<h1>PIXEL ENGINE SIM v0.7 build 294</h1>
 <div class="subtitle" id="subtitle">ENGINE DESIGNER • BUILD IT, THEN DRIVE IT</div>
 </header>
 <div class="build-strip" id="buildStrip">
@@ -940,6 +940,8 @@ body.showcase-open{overflow:hidden}
 </div></section>
 <section class="evd-card" id="evdCard-mag" data-card="mag"><div class="evd-fields">
 <div class="field"><label for="evMagnet">MAGNETS</label><select id="evMagnet"><option value="ferrite">FERRITE</option><option value="ndfeb">NdFeB (SH)</option><option value="ndfebDy">NdFeB + Dy (UH)</option></select></div>
+<div class="field"><label for="evMagT">MAGNET THICKNESS (mm)</label><input type="number" id="evMagT" min="2" max="15" step="0.5" value="6.5"></div>
+<div class="field"><label for="evMagW">MAGNET WIDTH (% of pole)</label><input type="number" id="evMagW" min="40" max="100" step="1" value="84"></div>
 <div class="field"><label for="evRetention">MAGNET RETENTION</label><select id="evRetention"><option value="bridges">IRON BRIDGES</option><option value="sleeve">CARBON SLEEVE</option></select></div>
 <div class="field"><label for="evMaxRpm">MAX SPEED (rpm)</label><input type="number" id="evMaxRpm" min="4000" max="25000" step="100" value="18000"></div>
 </div></section>
@@ -1805,7 +1807,7 @@ Much of an engine's breathing is bought in. Aftermarket makers sell exhausts, in
 </div>
 <div class="gtier gt-game"><div class="gtier-h">LV2 · IN THE GAME</div>
 <div class="guide-body" data-gk="parts">
-<b>Pick a kind.</b> The PARTS tab works on the engine you built. Choose EXHAUST, INTAKE MANIFOLD, AIR FILTER, CAMSHAFT, CYLINDER HEAD, TURBOCHARGER or INTERCOOLER at the top; the catalytic converter comes later. An electric drive has none of them.<br>
+<b>Pick a kind.</b> The PARTS tab works on the engine you built. Choose EXHAUST, INTAKE MANIFOLD, AIR FILTER, CAMSHAFT, CYLINDER HEAD, TURBOCHARGER, INTERCOOLER or REAR WING at the top; the catalytic converter comes later. An electric drive has none of the engine's; a rear wing fits any car, and is fitted from the VEHICLE tab's REAR AERO.<br>
 <b>Start from a factory part.</b> Your own parts of that kind are listed first, with EDIT, FIT and DELETE. To begin a new one, take one of this engine's factory parts as the starting point, name it, and change its dimensions: for an exhaust the header's construction, the primaries' bore and length, one or two pipes, their bore and length, and the silencer; for an intake the runners' length and bore, and a variable manifold's short length; for a filter the media, its area, the housing and its inlet; for a cylinder head the intake and exhaust valves, the port's throat and the springs' seat load and rate; for a turbocharger the compressor and turbine wheels and the housing's A/R; for an intercooler the core's width, height and depth, its cooling fins and the charge pipe's length.<br>
 <b>Let the designer help.</b> <b>CUT</b> sets the exhaust primaries' length, or the intake runners', for the rpm you type. <b>SIZE FOR 75 m/s</b> picks the exhaust pipe's bore, <b>MATCH THE PORTS</b> the runners' bore, <b>SIZE FOR 0.25 m/s</b> the filter's area. The lines under the form say what the part does and what real ones measure.<br>
 <b>Read the preview.</b> The chart lays the pull with this part (solid) over the engine as it is now (dashed), and the headline gives peak power and torque and the change. Nothing on the engine moves until you fit the part.<br>
@@ -1825,6 +1827,7 @@ taken off the charge as <i>VE × (1 − Δp/p<sub>0</sub>)</i>. A new factory fi
 · The <b>cylinder head</b> gives the valvetrain its intake valve, port and springs. The intake valve's size sets the inlet Mach index (the bore's area over the valves', times the piston's speed) and the valve's weight; the throat sets the flow at full lift and the plateau of Taylor's flow coefficient, 0.42 on a throat 0.85 of the valve, a discharge coefficient of 0.58 on the throat's own area; the exhaust valve sets the bore of the exhaust port, and so the heat the gas leaves in it (a wider port takes less); the seat load and rate are what holds the valve on the cam:
 <span class="geq">m·a<sub>nose</sub> ≤ F<sub>seat</sub> + k·L</span>
 A designed head's springs are fixed, where the maker's are sized for the factory cam and the redline.<br>
+· The <b>rear wing</b> is a lifting line: its span over its chord is its aspect ratio, which end plates raise; the lift slope is 2π/(1 + 2/AR) per radian, its camber adds as if it were 2f/c of extra angle, and the lift is held at 1.5 past the stall, where the preview warns. Its drag is skin friction on both faces and the induced drag CL²/(πAR), the price of the lift. Its downforce lands on the rear axle.<br>
 · The <b>turbocharger</b> gives the shaft model its wheels and housing. The compressor's exducer sets its choke flow, its map and the speed it lets go at; the turbine wheel sets its tip speed and the radius the housing's throat sits at; the shaft's inertia is both wheels', the turbine's in a nickel alloy three times as dense as the compressor's aluminium; the A/R sets the throat (A/R times that radius), which a smaller housing narrows: it spools sooner and chokes the top end. On a VGT the vanes set the throat and the A/R is not used. A twin or sequential layout is two of these, each on its own shaft. How many turbos and how they are piped, the boost and the wastegate stay on the ENGINE tab.<br>
 · The <b>intercooler</b> gives the charge path its volume to fill (the pipe plus the core's charge side, which slows spool). Its effectiveness and its pressure drop, which the compressor makes up, come from its fins on both sides (<a data-gp="intercooler">Intercooler</a>).<br>
 The preview runs the whole build on a copy of the engine, at the scoring conditions, and puts everything back afterwards, so the curve of a fitted part is its preview exactly.
@@ -2281,12 +2284,12 @@ Torque grows with the rotor's volume and with the current. Spinning makes the mo
 </div>
 <div class="gtier gt-phys"><div class="gtier-h">LV3 · THE PHYSICS</div>
 <div class="guide-body" data-gk="evmotorPhys">
-Torque is the flux linkage times the current: <span class="geq">T = 3/2 · p · ψ · I,  ψ = k<sub>w</sub> · N · (2/π) · B<sub>g</sub> · τ<sub>p</sub> · L</span> Here p is the pole pairs, N the turns per phase, k<sub>w</sub> = 0.93 the winding factor, τ<sub>p</sub> the pole pitch (πD/poles) and L the stack. The air-gap flux B<sub>g</sub> is 0.85 times the magnets' remanence for a magnet motor (1.28 T for SH NdFeB, 0.42 T for ferrite). An induction motor runs 0.8 T and pays for it with a magnetising current, which takes its share of the inverter's amps.<br>
+Torque is the flux linkage times the current: <span class="geq">T = 3/2 · p · ψ · I,  ψ = k<sub>w</sub> · N · (2/π) · B<sub>g</sub> · τ<sub>p</sub> · L</span> Here p is the pole pairs, N the turns per phase, k<sub>w</sub> = 0.93 the winding factor, τ<sub>p</sub> the pole pitch (πD/poles) and L the stack. For a magnet motor B<sub>g</sub> comes from the magnets' circuit. Each pole is a V of two bars, MAGNET THICKNESS l<sub>m</sub> thick and MAGNET WIDTH wide. Round one loop, the magnet's MMF is spent on the air gap and on the stator's teeth and yoke: <span class="geq">B<sub>m</sub> = B<sub>r</sub> + μ<sub>0</sub>μ<sub>r</sub>H<sub>m</sub>,  −H<sub>m</sub>l<sub>m</sub> = B<sub>g</sub>g'/μ<sub>0</sub> + H<sub>tooth</sub>l<sub>tooth</sub> + ∫H<sub>yoke</sub>dl</span> The steel follows M270-35A's magnetisation curve, so a thicker magnet gains less once the teeth and yoke saturate. The steel bridges that hold the bars in carry some flux round them, saturated, and the flat-topped field's fundamental is what the winding sees. The stator is drawn from that flux: each tooth as wide as carries the gap's field at 2.0 T, the yoke as deep as carries half a pole's flux at 1.5 T (the top of Pyrhönen's permitted ranges), and the slots, and so the copper, are what is left between them. More flux means wider teeth, a deeper yoke and less copper. The Model 3's magnets give 0.88 of their remanence (1.28 T for SH NdFeB, 0.42 T for ferrite); measured, 0.85. An induction motor runs 0.8 T and pays for it with a magnetising current, which takes its share of the inverter's amps.<br>
 The knee is where the back-EMF ω·ψ, with the winding's voltage drop on top (×1.29 at full current), meets the battery's voltage. Above it the power holds to about 4× the knee speed for a magnet motor and 3× for an induction motor.<br>
 <b>Losses.</b> Copper resistance comes from the slot area (40% copper fill with 1 mm round strands, or 70% with four hairpin bars) and rises 0.393% per kelvin (aluminium: 1.64 times the resistivity, 0.403% per kelvin). At stall that is the whole copper loss. Spinning, the slot leakage adds eddy currents in the strands, so the copper loss rises with the electrical frequency (Dowell). Iron loss is Steinmetz's law on silicon steel: hysteresis follows frequency and flux, and the eddy term also follows the square of the sheet thickness (0.35 mm, or 0.20 mm when LAMINATIONS says so).<br>
 <b>Top speed.</b> The lowest of three: MAX SPEED; the rotor surface speed v/(πD); and the inverter's output frequency, 1.2 kHz for IGBTs and 2 kHz for SiC, divided by the pole pairs.<br>
 <b>Heat.</b> Three lumped nodes (winding, stator core, rotor) and the coolant.<br>
-<b>Calibration.</b> Three constants come from one measured motor, the Tesla Model 3 rear (MotorXP, 2020). The 2012 Nissan Leaf as ORNL measured it is the check.
+<b>Calibration.</b> Two constants come from one measured motor, the Tesla Model 3 rear (MotorXP, 2020): the saturation under load and the voltage drop. Its back-EMF comes from its magnets' size. The 2012 Nissan Leaf as ORNL measured it is the check.
 </div>
 </div>
 <div class="guide-see">See also: <a data-gp="evdrive">The electric drive</a> · <a data-gp="evmotors">More motors</a> · <a data-gp="inverter">The inverter</a></div>
@@ -2719,6 +2722,7 @@ Fit a front <b>splitter</b> or <b>wing</b>, a rear <b>lip</b> or <b>wing</b>, an
 <tr><td>front splitter</td><td>0.25</td><td>0.010</td></tr><tr><td>front wing</td><td>0.60</td><td>0.028</td></tr>
 <tr><td>rear lip</td><td>0.20</td><td>0.008</td></tr><tr><td>rear wing</td><td>0.75</td><td>0.035</td></tr>
 <tr><td>undertray</td><td>0.35</td><td>0.006</td></tr><tr><td>diffuser</td><td>0.80</td><td>0.014</td></tr></table></div>
+A rear wing designed on the PARTS tab takes the kit's place, with the downforce and drag its dimensions give.
 </div>
 </div>
 <div class="gtier gt-phys"><div class="gtier-h">LV3 · THE PHYSICS</div>
@@ -3536,7 +3540,7 @@ Most other tests check behaviour that is true of real cars: a bigger turbo spool
 <!-- PARTS: design a part, save it, fit it on the ENGINE tab (build 205) -->
 <div class="design-panel parts-panel" id="partsPanel">
 <h3>PART DESIGNER</h3>
-<div class="hint">Pick a type of part, set its dimensions and save it. Saved parts are kept in this browser and appear in the ENGINE tab's choices; a saved build carries its parts with it.</div>
+<div class="hint">Pick a type of part, set its dimensions and save it. Saved parts are kept in this browser and appear in the ENGINE tab's choices (a wing's in the VEHICLE tab's); a saved build carries its parts with it.</div>
 <div class="design-section">Type of part</div>
 <div class="part-types" id="partTypes"></div>
 <div class="hint" id="partsNoEngine" hidden>An electric drive has no exhaust, intake, air filter, cam or cylinder head. Build a combustion engine on the ENGINE tab to design parts for it.</div>
@@ -3679,6 +3683,26 @@ Most other tests check behaviour that is true of real cars: a bigger turbo spool
 <div class="part-guide" id="pbGuide"></div>
 <div class="part-chart"><div class="gw-leg" id="pbLegend"></div><canvas id="pbCanvas" role="img" aria-label="Power and torque with this turbocharger against the engine as it is"></canvas></div>
 <div class="btn-row part-btns"><button type="button" id="pbSave">SAVE PART</button><button type="button" id="pbSaveFit">SAVE &amp; FIT</button></div>
+</div>
+<div id="partsWing" hidden>
+<div class="design-section">My wings</div>
+<div class="part-list" id="pwList"></div>
+<div class="pick-row"><div class="field"><label for="pwFrom">START FROM</label><select id="pwFrom"><option value="wing">A WING AS WIDE AS THE TRACK</option></select></div>
+<div class="field"><label>&nbsp;</label><button type="button" id="pwNew">NEW WING</button><button type="button" id="pwReset" title="Put the dimensions back to the starting wing, keeping the name">RESET</button></div></div>
+<div class="design-section">Rear wing</div>
+<div class="hint">Fitted, it takes the place of the VEHICLE tab's REAR AERO kit: its downforce and drag come from these dimensions.</div>
+<div class="design-grid">
+<div class="field"><label for="pwName">NAME</label><input type="text" id="pwName" maxlength="40"></div>
+<div class="field"><label for="pwSpan">SPAN (mm)</label><input type="number" id="pwSpan" min="600" max="2200" step="10"></div>
+<div class="field"><label for="pwChord">CHORD (mm)</label><input type="number" id="pwChord" min="80" max="600" step="5"></div>
+<div class="field"><label for="pwAngle">ANGLE (°)</label><input type="number" id="pwAngle" min="0" max="25" step="0.5"></div>
+<div class="field"><label for="pwCamber">CAMBER (% of chord)</label><input type="number" id="pwCamber" min="0" max="12" step="0.5"></div>
+<div class="field"><label for="pwPlate">END PLATE HEIGHT (mm)</label><input type="number" id="pwPlate" min="0" max="400" step="10"></div>
+</div>
+<div class="design-section">On this car</div>
+<div class="part-guide" id="pwGuide"></div>
+<div class="part-chart"><div class="gw-leg" id="pwLegend"></div><canvas id="pwCanvas" role="img" aria-label="The wing's section at its angle with its downforce and drag, and its lift against the angle"></canvas></div>
+<div class="btn-row part-btns"><button type="button" id="pwSave">SAVE PART</button><button type="button" id="pwSaveFit">SAVE &amp; FIT</button></div>
 </div>
 </div>
 
@@ -8472,6 +8496,29 @@ const AERO_REAR ={none:{cl:0,cd:0},lip:{cl:0.20,cd:0.008},wing:{cl:0.75,cd:0.035
 // front = the share of a floor's downforce on the front axle: a flat undertray works the whole floor and
 // acts near mid-wheelbase; a diffuser's suction peaks at its throat, ahead of the rear axle.
 const AERO_FLOOR={none:{cl:0,cd:0},undertray:{cl:0.35,cd:0.006,front:0.5},diffuser:{cl:0.80,cd:0.014,front:0.35}};
+// A rear wing as a part (build 291): its span, chord, angle, camber and end plates, by Prandtl's lifting line for an
+// untwisted wing of elliptic loading (Anderson, Fundamentals of Aerodynamics, ch. 4 and 5):
+//   lift slope a = a0 / (1 + a0 / (pi AR)), with a0 = 2 pi per radian for a thin section;
+//   zero-lift angle -2 f/c for a parabolic camber line of height f (thin-aerofoil theory);
+//   induced drag CL^2 / (pi AR).
+// End plates raise the aspect ratio the wing works at: AR (1 + 1.9 h/b) (Hoerner & Borst, Fluid-Dynamic Lift, ch. 3).
+// Profile drag is turbulent skin friction on both faces, Cf = 0.074 Re^-0.2 (Prandtl; Schlichting, Boundary-Layer
+// Theory), times a section's form factor 1 + 2 t/c + 60 (t/c)^4 (Hoerner, Fluid-Dynamic Drag, ch. 6); the plates add
+// their own skin. The model's ClA and CdA do not change with speed, so the Reynolds number is taken at WING_V.
+// Not modelled: the body's flow the wing sits in (it is taken in clean air), what it does to the body's own lift and
+// drag, its overhang behind the axle, and the fall of lift past the stall (the lift is held at WING_CLMAX there).
+const WING_A0=2*Math.PI;
+const WING_CLMAX=1.5;   // a single cambered element's stall: NACA 4412, about 1.5 at Re 3e6 (Abbott & von Doenhoff, Theory of Wing Sections; probable at a car wing's lower Re)
+const WING_TC=0.12;     // the section's thickness over its chord: the 12% of the common NACA 4412 / 6412 family, taken for every wing
+const WING_V=50;        // m/s (180 km/h): where the skin friction's Reynolds number is taken
+const AIR_NU=1.5e-5;    // m2/s, air's kinematic viscosity at 20 C
+function wingAero(p){
+  const b=p.span_mm/1000,c=p.chord_mm/1000,h=p.plate_mm/1000,S=b*c,AR0=b/c,AR=AR0*(1+1.9*h/b);
+  const a=WING_A0/(1+WING_A0/(Math.PI*AR)),want=a*(p.angle_deg*Math.PI/180+2*p.camber_pct/100),CL=clamp(want,0,WING_CLMAX);
+  const Cf=0.074*Math.pow(WING_V*c/AIR_NU,-0.2),cd0=2*Cf*(1+2*WING_TC+60*Math.pow(WING_TC,4)),cdi=CL*CL/(Math.PI*AR);
+  const plates=4*Cf*h*c;   // two plates, two faces each, a chord long
+  return {S,AR0,AR,slope:a,CL,want,stalled:want>WING_CLMAX,cd0,cdi,clA:CL*S,cdA:(cd0+cdi)*S+plates};
+}
 const AERO_COST={none:0,splitter:600,wing:1800,lip:400,undertray:900,diffuser:2200};
 // Weight reduction stages: kg removed and cost.
 const WEIGHT_RED={none:{kg:0,cost:0},street:{kg:45,cost:1200},sport:{kg:95,cost:3500},race:{kg:170,cost:9000}};
@@ -10991,25 +11038,37 @@ function getDynoData(){
 //   the battery cells in series and parallel: open-circuit voltage by state of charge, internal resistance, the
 //               discharge limit, mass and cost, the chemistry's figures by the year (decision 9).
 //
-// Three constants are measured, not derived, and all from one motor: the Tesla Model 3 rear motor (2018 Long Range)
-// as taken apart and measured by MotorXP (Performance Analysis of the Tesla Model 3 Electric Motor, June 2020):
-// 54 slots, bore 151.3 mm, stack 134 mm, rotor 149.9 mm, 3 pole pairs, 12 series turns per phase (2 turns, 3 paths),
-// 4.75 mOhm per phase, 42 V peak line-to-line per 1000 rpm, 430 Nm at 953 A rms needing 94.6 V rms per phase.
-//   FLUX_KM   the air gap's fundamental flux over the magnets' remanence, which the rotor's magnet pockets set and
-//             this model does not draw: 0.85 gives the measured back-EMF with SH-grade NdFeB (Br 1.28 T);
+// The motor measured here is the Tesla Model 3 rear motor (2018 Long Range), as taken apart and measured by MotorXP
+// (Performance Analysis of the Tesla Model 3 Electric Motor, June 2020): 54 slots, stator 225 / 151.3 mm, stack 134 mm,
+// rotor 149.9 mm, 3 pole pairs, 12 series turns per phase (2 turns, 3 paths), 4.75 mOhm per phase, a single V of two
+// 33 x 6.5 mm NdFeB magnets a pole (segments 21.5 mm long down the stack), 42 V peak line-to-line per 1000 rpm, 430 Nm
+// at 953 A rms needing 94.6 V rms per phase.
+// The air gap's flux comes from the magnets through a magnetic circuit (build 292, magnetCircuit below). Two constants
+// are still set from that one motor, not derived, and used for every motor (plans/fitted-register.json):
 //   SAT_K     how much torque per amp is lost to saturation at that electric loading (430 Nm, not the 470 the
-//             flux alone gives): 8.5%, scaled with the square of the loading;
+//             flux alone gave until build 292): 8.5%, scaled with the square of the loading. It is not set again as
+//             the flux under it becomes derived: the Model 3 makes 444 Nm at 953 A since build 293;
 //   V_DROP    the terminal voltage over the back-EMF at full current (the inductive and resistive drop): 1.29.
 // Everything else here is either geometry, a material's datasheet figure, or a textbook rule, named where it is used.
-// tests/test96.mjs checks the model against what was NOT used to set it: the Model 3's measured resistance and
-// published power, and the 2012 Nissan Leaf as measured by ORNL (Burress, Benchmarking State-of-the-Art Technologies,
+// tests/test96.mjs checks the model against the Model 3's measured back-EMF and resistance and its published power, and
+// the 2012 Nissan Leaf as measured by ORNL (Burress, Benchmarking State-of-the-Art Technologies,
 // 2013): 80 kW held at 7000 rpm with the stator settling near 135 C, peak motor efficiency above 97%.
-const RHO_CU=1.72e-8, ALPHA_CU=0.00393, RHO_FE=7650, RHO_CU_M=8960, RHO_MAG=7500;
-const FLUX_KM=0.85, SAT_K=0.085, SAT_A_REF=145.7e3, V_DROP=1.29;
+const RHO_CU=1.72e-8, ALPHA_CU=0.00393, RHO_FE=7650, RHO_CU_M=8960;
+const SAT_K=0.085, SAT_A_REF=145.7e3, V_DROP=1.29;
 const KW_WIND=0.93;        // winding factor: distributed, q = 2-3 slots per pole per phase, short-pitched
 const SPLIT=0.67;          // bore over stator outside diameter (Model 3 0.672, Leaf 0.66; 0.6-0.7 for traction motors)
 const GAP=0.0007;          // air gap (m): 0.7 mm, the Model 3's
-const SLOT_SHARE=0.5, TOOTH_BAND=0.6, FILL=0.40;   // slots are half the band the teeth occupy, 60% of the radial depth; copper fills 40% of a slot (stranded)
+const FILL=0.40;           // copper fills 40% of a slot (stranded)
+// The teeth and the yoke are sized from the flux they carry (build 293): a tooth as wide as puts the air gap's peak field
+// at the tooth's design density, the yoke as deep as carries half a pole's flux at the yoke's; the slot is what is left
+// between the bore and the yoke. Design densities from Pyrhonen, Pyrhonen & Hrabovcova, Design of Rotating Electrical
+// Machines (2nd ed., 2014), Table 6.1, "Permitted flux densities of the magnetic circuit": the top of each range, as a
+// traction motor is built denser than the standard machines the table is for. A magnet motor takes the salient-pole
+// synchronous column (the book groups PMSMs with it in Table 6.2): tooth, apparent maximum, 1.6-2.0 T; stator yoke
+// 1.0-1.5 T. An induction motor takes the asynchronous one: tooth 1.4-2.1 T, yoke 1.4-1.7 T. The Model 3 runs its yoke
+// above that, ~1.85 T with no current (its teardown's 17.7 mm yoke through magnetCircuit), so its yoke comes out ~4 mm
+// deeper here than it is.
+const B_TOOTH=2.0, B_YOKE=1.5, IM_B_TOOTH=2.1, IM_B_YOKE=1.7;
 // Round magnet wire, 1.0 mm. That is a usual stranded size for this fill, not a strand measured on the Model 3
 // (that motor is a hairpin, which is a later choice). A build may pass s.strand (m) to try another.
 const STRAND=0.001;
@@ -11030,7 +11089,7 @@ const WIRE={round:{label:'ROUND (STRANDED)',fill:FILL,layers:0},hairpin:{label:'
 // capacity per kilogram is kept; its lower thermal conductivity in the slot is not modelled (the liner dominates).
 const CONDUCTOR={copper:{label:'COPPER',rho:RHO_CU,alpha:ALPHA_CU,dens:RHO_CU_M,cp:385,cost:11},
   aluminium:{label:'ALUMINIUM',rho:2.8264e-8,alpha:0.00403,dens:2703,cp:897,cost:3.3}};
-const B_CORE=1.5;          // peak flux density in the teeth and yoke at full flux (T), a usual design point for silicon steel
+const B_CORE=1.5;          // the flux density the iron loss is taken at, all the iron (T): a usual design point for silicon steel
 // Non-oriented silicon steel, 0.35 mm (M270-35A class): about 2.7 W/kg at 1.5 T 50 Hz and 19 W/kg at 1.0 T 400 Hz.
 // Split into hysteresis (∝ f B²) and eddy (∝ (t f B)²), solved from those two points; a thinner sheet cuts only the eddy.
 const FE_KH=0.0206, FE_KE=6.71e-5, FE_T_REF=0.35;
@@ -11048,11 +11107,74 @@ const EV_REGEN={off:{label:'OFF',k:0},low:{label:'LOW',k:0.5},high:{label:'HIGH'
 const laminationOf=mm=>Math.abs(+mm-0.2)<0.02?LAMINATION['0.20']:LAMINATION['0.35'];
 // Magnets: remanence at 20 C (T), its temperature coefficient (/K), the highest temperature before the coercivity
 // gives way and the loss is permanent (C), and the price ($/kg). SH and UH grades: Hcj >= 20 kOe and 25 kOe.
+// Build 292: the recoil permeability (mur: sintered NdFeB 1.05, sintered ferrite 1.1, the makers' usual figures) and the
+// density (kg/m3: NdFeB 7500-7600, ferrite 4800-5000).
 const MAGNET={
-  ferrite:{label:'FERRITE',Br:0.42,alpha:-0.0020,Tmax:250,cost:6},
-  ndfeb:  {label:'NdFeB (SH)',Br:1.28,alpha:-0.0012,Tmax:150,cost:60},
-  ndfebDy:{label:'NdFeB + Dy (UH)',Br:1.23,alpha:-0.0011,Tmax:180,cost:95}
+  ferrite:{label:'FERRITE',Br:0.42,alpha:-0.0020,Tmax:250,cost:6,mur:1.1,rho:4900},
+  ndfeb:  {label:'NdFeB (SH)',Br:1.28,alpha:-0.0012,Tmax:150,cost:60,mur:1.05,rho:7500},
+  ndfebDy:{label:'NdFeB + Dy (UH)',Br:1.23,alpha:-0.0011,Tmax:180,cost:95,mur:1.05,rho:7500}
 };
+// ---- the magnets as geometry (build 292) ----
+// A pole is a V of two magnet bars buried under the rotor's surface, as the Model 3's (MotorXP's teardown). The design
+// sets the bar's thickness (magT, mm, along its magnetisation) and the two bars' width together as a share of the pole
+// pitch (magW); the pole's face spans that share. Defaults are the Model 3's: 6.5 mm, and 2 x 33 mm on its 78.5 mm pitch.
+const MAG_T=6.5, MAG_W=0.84;
+// Six 21.5 mm segments fill 129 of the 134 mm stack.
+const MAG_AX=129/134;
+// The steel bridges that hold the bars in carry flux round the magnet's ends without crossing the gap, saturated: two at
+// the rotor's surface and the rib at the V's root, each the full stack long. The Model 3's are too thin to read off the
+// teardown's drawing: 1 mm each at the surface and 2 mm for the rib are usual sizes (PROBABLE). A carbon sleeve keeps them.
+const BRIDGE_W=0.004;
+// The stator's slot opening, for Carter's factor on the gap: 2 mm, a usual semi-closed slot (PROBABLE; not readable on
+// the drawing either).
+const SLOT_OPEN=0.002;
+// The core steel's magnetisation curve: M270-35A's typical polarisation, 1.54 / 1.65 / 1.77 T at 2500 / 5000 / 10000 A/m,
+// and its relative permeability 700 at 1.5 T (EN 10106 grade tables, typical values: UCLouvain ELEC2311, "Non-oriented
+// fully processed steels"; Tata Steel's M250-35A sheet gives 1.53 / 1.64 / 1.76). Above 10 kA/m it approaches 3% silicon
+// iron's saturation polarisation, ~2.03 T, as Js - a/H (the law of approach to saturation; Js PROBABLE). B = J + mu0 H.
+const FE_JS=2.03, FE_H=[0,1705,2500,5000,10000], FE_J=[0,1.5,1.54,1.65,1.77];
+const MU0=4e-7*Math.PI;
+function steelH(B){   // A/m for a flux density B (T)
+  for(let i=1;i<FE_H.length;i++){
+    const B1=FE_J[i]+MU0*FE_H[i];
+    if(B<=B1){const B0=FE_J[i-1]+MU0*FE_H[i-1];return FE_H[i-1]+(B-B0)/(B1-B0)*(FE_H[i]-FE_H[i-1]);}
+  }
+  const a=(FE_JS-FE_J[4])*FE_H[4],d=FE_JS-B;   // B = Js - a/H + mu0 H
+  return (-d+Math.sqrt(d*d+4*MU0*a))/(2*MU0);
+}
+// The air gap's flux from the magnets (T): the flat-topped field over the pole's face, its fundamental, and the flux
+// densities it puts in the stator's teeth and yoke. Per pole, round one loop: the magnet's thickness, the gap (with
+// Carter's factor), a tooth's length and half the yoke between two poles' centres. The magnet is a straight line,
+// B = Br + mu0 mur H; the bridges take Js times their width before any flux reaches the gap; the teeth and yoke follow
+// the steel's curve, the yoke's flux rising as a sine from a pole's centre to the gap between poles (integrated along
+// it). The rotor's own iron is wide and left out. Solved by bisection: the gap's flux falls as the iron takes MMF.
+function magnetCircuit(g){
+  const {Br,mur,magT,magW,tau,L,Lfe,gap,ts,h,OD,poles}=g;
+  const r=SLOT_OPEN/gap,kc=ts/(ts-r*r/(5+r)*gap),gp=kc*gap;
+  const alpha=Math.min(1,magW),Am=magW*tau*MAG_AX*L,Ag=alpha*tau*L,leak=FE_JS*BRIDGE_W*Lfe;
+  const yokeF=(By,tauY)=>{let F=0;for(let i=0;i<12;i++)F+=steelH(By*Math.sin(Math.PI*(i+0.5)/24));return F*tauY/2/12;};
+  const at=Bg=>{const st=statorFrom(Bg,Bg*Ag,ts,h,Lfe,B_TOOTH,B_YOKE),Bt=Bg*ts/(0.95*st.wt),By=Bg*Ag/(2*st.hy*Lfe);
+    return {Bt,By,st,F:Bg*gp/MU0+toothH(Bt,ts/(0.95*st.wt)-1)*st.hSlot+yokeF(By,Math.PI*(OD-st.hy)/poles)};};
+  let lo=0,hi=Br*Am/Ag;
+  for(let k=0;k<40;k++){const Bg=(lo+hi)/2,Hm=-at(Bg).F/magT;
+    if((Am*(Br+MU0*mur*Hm)-leak)/Ag>Bg)lo=Bg;else hi=Bg;}
+  const Bg=Math.max(0,(lo+hi)/2),x=at(Bg);
+  return {Bflat:Bg,B1:4/Math.PI*Bg*Math.sin(alpha*Math.PI/2),Bt:x.Bt,By:x.By,kc,st:x.st};
+}
+// A saturated tooth's field (A/m) for its apparent flux density Ba, the slot pitch's flux put through the tooth alone:
+// part of it goes down the slot beside it, Ba = B + mu0 H k with k the slot's width over the tooth's (Pyrhonen 2014,
+// section 3.5, the apparent and real tooth flux density). Solved for the real B by bisection.
+function toothH(Ba,k){
+  let lo=0,hi=Ba;
+  for(let i=0;i<40;i++){const b=(lo+hi)/2;if(b+MU0*steelH(b)*k<Ba)lo=b;else hi=b;}
+  return steelH((lo+hi)/2);
+}
+// The tooth and yoke for a peak gap field Bpk (T) and a pole's flux phi (Wb), at the design densities; neither may take
+// more than 80% of the slot pitch or of the radial band, so an over-fluxed design saturates rather than losing its slots.
+function statorFrom(Bpk,phi,ts,h,Lfe,bT,bY){
+  const wt=Math.min(0.8*ts,Bpk*ts/(0.95*bT)), hy=Math.min(0.8*h,phi/(2*Lfe*bY));
+  return {wt,hy,hSlot:h-hy};
+}
 // How the rotor holds its magnets in, which sets the surface speed it survives (m/s): steel bridges in the lamination
 // (the Model 3 runs ~140 m/s), or a carbon-fibre sleeve wound over it (the Model S Plaid's, the route to ~20,000 rpm
 // on a large rotor).
@@ -11093,7 +11215,7 @@ const ACTIVE_TO_MOTOR=1.6;   // housing, shaft, bearings and end caps over the a
 // aluminium cage would be ~1.7x the resistance), Qr bars (~1.23x the stator slots, 74 against 60 in the Model S), end
 // rings of the same depth IM_RING wide; the bar resistance referred to the stator by the textbook transformation
 // (Pyrhonen, Design of Rotating Electrical Machines, 7.2): R2' = 4 m (kw N)^2 / Qr (R_bar + R_ring / (2 sin^2(pi p/Qr))).
-const IM_BG=0.8, IM_GAP=0.0005, IM_KCS=2.0, IM_CPSR=3, IM_HR=0.12, IM_RING=0.08, MU0=4e-7*Math.PI;
+const IM_BG=0.8, IM_GAP=0.0005, IM_KCS=2.0, IM_CPSR=3, IM_HR=0.12, IM_RING=0.08;
 // The voltage at full current: the leakage flux of the stator and the rotor rides on the torque current, sigma Lm Iq,
 // with the total leakage factor sigma ~0.08 for a traction design (0.05-0.1); against the magnetising flux Lm Im it
 // adds in quadrature, so the drop over the back-EMF is sqrt(1 + (sigma Iq / Im)^2), times ~5% resistive. A magnet
@@ -11111,30 +11233,36 @@ function motorBuild(s){
   const lam=laminationOf(s.lamination);
   const wire=WIRE[s.wire]||WIRE.round, cond=CONDUCTOR[s.conductor]||CONDUCTOR.copper;
   const D=s.rotorD/1000, L=s.stackL/1000, poles=s.poles, p=poles/2, N=s.turns, Lfe=0.95*L;
-  const Ds=D+2*(im?IM_GAP:GAP), OD=Ds/SPLIT, h=(OD-Ds)/2, hSlot=TOOTH_BAND*h;
+  const Ds=D+2*(im?IM_GAP:GAP), OD=Ds/SPLIT, h=(OD-Ds)/2;
   const slots=3*poles*(poles<=6?3:2)*(im&&poles===4?5/3:1);       // q = 3 slots per pole per phase up to 6 poles, then 2;
                                                                     // a 4-pole induction motor runs q = 5 (the Model S's 60)
-  // flux: the air gap's fundamental from the magnets (an induction motor: its design flux density), per pole, linked by
-  // the winding
-  const Bg=im?IM_BG:FLUX_KM*mag.Br, tau=Math.PI*D/poles, phiPole=2/Math.PI*Bg*tau*Lfe;
+  // flux: the air gap's fundamental from the magnets' circuit (an induction motor: its design flux density), per pole,
+  // linked by the winding. The magnets' bars, from the design's thickness and width (build 292).
+  const tau=Math.PI*D/poles, magT=(s.magT>0?s.magT:MAG_T)/1000, magW=s.magW>0?s.magW:MAG_W;
+  const ts=Math.PI*Ds/slots;
+  const circ=im?null:magnetCircuit({Br:mag.Br,mur:mag.mur,magT,magW,tau,L,Lfe,gap:GAP,ts,h,OD,poles});
+  const Bg=im?IM_BG:circ.B1, phiPole=2/Math.PI*Bg*tau*Lfe;
+  // the teeth and yoke (build 293): from the magnets' circuit, or an induction motor's sinusoidal field at its design flux
+  const st=im?statorFrom(IM_BG,phiPole/0.95,ts,h,Lfe,IM_B_TOOTH,IM_B_YOKE):circ.st, wt=st.wt, hSlot=st.hSlot, hy=st.hy;
   const psi20=KW_WIND*N*phiPole;                                    // peak flux linkage per phase at 20 C (V s)
-  // copper: the slots' share of the tooth band, at the fill; a turn runs the stack twice and round two end turns
-  const band=Math.PI/4*((Ds+2*hSlot)**2-Ds*Ds), Acu=SLOT_SHARE*band*wire.fill;
+  // copper: the band between the bore and the yoke less the teeth, at the fill; a turn runs the stack twice and round two
+  // end turns
+  const band=Math.PI/4*((Ds+2*hSlot)**2-Ds*Ds), slotA=band-slots*wt*hSlot, Acu=slotA*wire.fill;
   const pitch=Math.PI*(Ds+hSlot)/poles*5/6, endTurn=Math.PI/2*pitch;
   const mlt=2*L+2*endTurn;
   const R20=6*cond.rho*N*N*mlt/Acu;                                   // per phase: independent of the parallel paths
   // how the slot copper is stranded, for the AC loss: strands across the slot width, and the radial layers Dowell counts
   const dStrand=s.strand>0?s.strand:STRAND;
-  const slotW=SLOT_SHARE*Math.PI*(Ds+hSlot)/slots;
+  const slotW=Math.PI*(Ds+hSlot)/slots-wt;
   const nStrand=(Acu/slots)/(Math.PI*dStrand*dStrand/4);
   const cuLayers=wire.layers||Math.max(1,nStrand/Math.max(1,slotW/dStrand));
   // a hairpin bar: the slot's copper height shared by its layers, the width the fill leaves (porosity sqrt(fill) each way)
   const barH=wire.layers?hSlot*Math.sqrt(wire.fill)/wire.layers:0, barEta=Math.sqrt(wire.fill);
   // masses (kg) and the rotor's inertia
   const mCu=cond.dens*Acu*mlt/2;
-  const mFeS=RHO_FE*(Math.PI/4*(OD*OD-Ds*Ds)-SLOT_SHARE*band)*Lfe;
-  const Dsh=0.47*D, rotorVol=Math.PI/4*D*D*L;
-  const mMag=im?0:RHO_MAG*0.06*rotorVol*(mag.Br<1?2.2:1);         // ferrite needs ~2x the volume for less flux
+  const mFeS=RHO_FE*(Math.PI/4*(OD*OD-Ds*Ds)-slotA)*Lfe;
+  const Dsh=0.47*D;
+  const vMag=im?0:magW*Math.PI*D*magT*MAG_AX*L, mMag=im?0:mag.rho*vMag;   // the bars, all the poles round (build 292)
   // the induction motor's cage, its resistance referred to the stator, and the magnetising current at full field
   let Qr=0,Rr20=0,mCage=0,ImR=0;
   if(im){
@@ -11146,7 +11274,7 @@ function motorBuild(s){
     ImR=IM_BG*IM_GAP*IM_KCS*p/(MU0*(3*Math.SQRT2/Math.PI)*KW_WIND*N);
   }
   const vDrop=im?IM_R_DROP*Math.sqrt(1+(IM_SIGMA*Math.sqrt(Math.max(0,s.invAmps**2-ImR*ImR))/Math.max(1,ImR))**2):V_DROP;
-  const mFeR=RHO_FE*Math.PI/4*(D*D-Dsh*Dsh)*Lfe-mMag*0.5-(im?RHO_FE*mCage/RHO_CU_M*0.9:0);
+  const mFeR=RHO_FE*Math.PI/4*(D*D-Dsh*Dsh)*Lfe-RHO_FE*vMag-(im?RHO_FE*mCage/RHO_CU_M*0.9:0);
   const mRotor=mFeR+mMag+mCage, J=0.5*mRotor*((D/2)**2+(Dsh/2)**2)*(s.retention==='sleeve'&&!im?1.03:1);
   const mass=(mCu+mFeS+mRotor)*ACTIVE_TO_MOTOR;
   // speed ceilings: the rotor surface, the inverter's output frequency (1.2 kHz IGBT, 2 kHz SiC)
@@ -11154,7 +11282,7 @@ function motorBuild(s){
   const nMax=Math.min(s.maxRpm||20000,nTip,nFreq);
   const Imax=s.invAmps;
   const cost=Math.round(mCu*cond.cost+(mFeS+mFeR)*(3+lam.premium)+mMag*mag.cost+ret.cost+cool.cost+Imax*inv.costA+400+(im?mCage*11+150:0));
-  return {s,im,mag,ret,cool,inv,lam,wire,cond,barH,barEta,D,L,Lfe,Ds,OD,poles,p,N,slots,Bg,psi20,R20,mlt,Acu,mCu,mFeS,mFeR,mMag,mRotor,J,mass,
+  return {s,im,mag,ret,cool,inv,lam,wire,cond,barH,barEta,D,L,Lfe,Ds,OD,poles,p,N,slots,Bg,circ,magT,magW,wt,hSlot,hy,psi20,R20,mlt,Acu,mCu,mFeS,mFeR,mMag,mRotor,J,mass,
           strand:dStrand,cuLayers,
           nTip,nFreq,nMax,Imax,cost,Qr,Rr20,mCage,ImR,vDrop,cpsr:im?IM_CPSR:CPSR,
           // thermal network (W/K, J/K): winding -> core through the slot liner (0.2 W/mK, 0.4 mm over the slot walls),
@@ -11713,7 +11841,7 @@ function readVehicleFromForm(){
     // the front tyres' width when narrower or wider than the rears (0 = the same), and the roll balance (build 157)
     tireWidthF:+g('vhTireWF').value>0?clamp(Math.round(+g('vhTireWF').value),135,355):0,
     tireAspect:clamp(Math.round(+g('vhTireA').value||40),25,80),wheelDia:clamp(Math.round(+g('vhWheel').value||18),13,22),
-    aeroFront:g('vhAeroF').value,aeroRear:g('vhAeroR').value,aeroFloor:g('vhAeroFl').value,weightRed:g('vhWeight').value,
+    aeroFront:g('vhAeroF').value,...vehPartsFromForm(),aeroFloor:g('vhAeroFl').value,weightRed:g('vhWeight').value,
     brakeType:g('vhBrake').value,rotor:clamp(Math.round(+g('vhRotor').value||330),200,450),suspension:g('vhSusp').value,
     // each axle's geometry (build 173)
     suspFront:g('vhGeoF').value,suspRear:g('vhGeoR').value,
@@ -11792,7 +11920,7 @@ function applyVehicleToForm(v){
   g('vhChassis').value=v.chassis||'coupe';g('vhDrive').value=g('vhDrive').dataset.prev=v.drive||'rwd';g('vhGearbox').value=v.gearbox||'manual';g('vhDiff').value=v.diff||'open';
   g('vhGears').value=v.gears||6;g('vhGearing').value=v.gearing!=null?v.gearing:52;
   g('vhTire').value=v.tireType||'sport';g('vhTireW').value=v.tireWidth||235;g('vhTireWF').value=v.tireWidthF||0;g('vhTireA').value=v.tireAspect||40;g('vhWheel').value=v.wheelDia||18;
-  g('vhAeroF').value=v.aeroFront||'none';g('vhAeroR').value=v.aeroRear||'none';g('vhAeroFl').value=v.aeroFloor||'none';g('vhWeight').value=v.weightRed||'none';
+  g('vhAeroF').value=v.aeroFront||'none';g('vhAeroR').value=v.aeroRear||'none';vehPartsToForm(v);g('vhAeroFl').value=v.aeroFloor||'none';g('vhWeight').value=v.weightRed||'none';
   g('vhBrake').value=v.brakeType||'slotted';g('vhRotor').value=v.rotor||330;g('vhSusp').value=v.suspension||'sport';
   {const fg=factoryGeo(v);g('vhGeoF').value=SUSP_GEO[v.suspFront]?v.suspFront:fg.f;g('vhGeoR').value=SUSP_GEO[v.suspRear]?v.suspRear:fg.r;}   // saves from before build 173 carry none
   // saves from before build 174 carry ROLL BALANCE (arbBal), the front bar against the rear: it becomes the front bar
@@ -12475,7 +12603,7 @@ function isFactoryFit(v){
   const ch=CHASSIS[v.chassis];if(!ch||!ch.fit)return false;const f=v.body?v.body.fit:ch.fit;
   return (v.driveMech||v.drive)===(v.body?f.drive:ch.drive)&&(v.governor||0)===(f.gov||0)&&(v.tc!==false)===(f.tc!==false)&&v.gears===f.gears&&v.gearing===f.gearing&&v.spacing===(v.body?'stock':'std')&&!(v.finalDriveSet>0)&&v.gearbox===f.gearbox&&v.diff===f.diff&&
     v.tireType===f.tire&&v.tireWidth===f.tw&&(v.tireWidthF||0)===(f.twF||0)&&!stepOf(v.springF)&&!stepOf(v.springR)&&!stepOf(v.barF)&&!stepOf(v.barR)&&!stepOf(v.damperF)&&!stepOf(v.damperR)&&v.tireAspect===f.ta&&v.wheelDia===f.wheel&&
-    v.aeroFront===f.aF&&v.aeroRear===f.aR&&v.aeroFloor===f.aFl&&v.weightRed===f.weight&&
+    v.aeroFront===f.aF&&v.aeroRear===f.aR&&!v.wingPart&&v.aeroFloor===f.aFl&&v.weightRed===f.weight&&
     v.brakeType===f.brake&&v.rotor===f.rotor&&v.suspension===f.susp&&geoStock(v)&&!v.dims&&!(v.ballastKg>0);
 }
 // Both axles on the factory's geometry (build 173); a save from before carries none, which is the factory's.
@@ -12566,12 +12694,15 @@ function buildVehicle(){
   // Brakes: the deceleration the hydraulics can command (m/s2, before fade). After the weight split, the wheelbase and
   // the centre of gravity, which size the rear brakes (build 203; until then this ran before them).
   vehicle.brakeDecelCap=brakeForceCap(vehicle)/vehicle.mass;
-  const af=AERO_FRONT[vehicle.aeroFront]||AERO_FRONT.none, ar=AERO_REAR[vehicle.aeroRear]||AERO_REAR.none, al=AERO_FLOOR[vehicle.aeroFloor]||AERO_FLOOR.none;
+  // a designed rear wing (build 291, wingAero) takes the place of the REAR AERO kit: its own ClA and CdA, in m2, not scaled by the class
+  const wing=vehicle.wingPart?wingAero(vehicle.wingPart):null;vehicle.wing=wing;
+  const af=AERO_FRONT[vehicle.aeroFront]||AERO_FRONT.none, ar=wing?AERO_REAR.none:AERO_REAR[vehicle.aeroRear]||AERO_REAR.none, al=AERO_FLOOR[vehicle.aeroFloor]||AERO_FLOOR.none;
   // The class's aero factor scales the parts to the car (a prototype's wing works a bigger, faster body than a hatch's).
   // A real car whose class factor is not its own carries one in its body (build 201: the Radical SR3, a club racer on the
   // TRACK PROTOTYPE class, which is sized for an LMP car).
   const aeroK=body&&body.aero>0?body.aero:ch.aero;
-  vehicle.clA=(af.cl+ar.cl+al.cl)*aeroK;                              // downforce coefficient·area
+  vehicle.aeroK=aeroK;
+  vehicle.clA=(af.cl+ar.cl+al.cl)*aeroK+(wing?wing.clA:0);                              // downforce coefficient·area
   // Where that downforce lands (build 105). It was split 50/50 whatever was fitted, so a rear wing helped
   // a front-driver's traction as much as a rear-driver's. Front parts load the front axle, rear parts the
   // rear, and the floor at its centre of pressure (AERO_FLOOR.front).
@@ -12606,7 +12737,7 @@ function buildVehicle(){
    const CF=quarterCar(vehicle,'F').cs*tF*tF/2,CR=quarterCar(vehicle,'R').cs*tR*tR/2,S=K.F+K.R;
    vehicle.warpK=K.F*K.R/S;vehicle.warpC=(K.R*K.R*CF+K.F*K.F*CR)/(S*S);}
   vehicle.drivenAero=vehicle.drive==='awd'?1:vehicle.drive==='rwd'?1-vehicle.aeroBal:vehicle.aeroBal;
-  vehicle.cdA=((body?body.cd:ch.cd)+af.cd+ar.cd+al.cd)*vehicle.area;  // drag coefficient·area
+  vehicle.cdA=((body?body.cd:ch.cd)+af.cd+ar.cd+al.cd)*vehicle.area+(wing?wing.cdA:0);  // drag coefficient·area
   const gb=GEARBOX[vehicle.gearbox]||GEARBOX.manual,df=DIFF[vehicle.diff]||DIFF.open;
   vehicle.gb=gb;vehicle.gbLabel=gb.label;
   vehicle.df=df;vehicle.diffLabel=df.label;vehicle.diffTraction=df.traction;
@@ -14981,7 +15112,7 @@ const RACE={
   defendKmh:3,        // km/h more pace a car needs to pass a car that has moved over to defend
   defendCost:0.99,    // the defender's speed through the next corner, off the line it would have taken
   diveGap:10,         // m: close enough to try a late-braking move into a braking zone
-  spray:0.985,        // speed within a second behind a car on a wet track: its spray, a rule (build 291)
+  spray:0.985,        // speed within a second behind a car on a wet track: its spray, a rule (build 294)
   passKmh:4,          // km/h of pace advantage needed to pass on a 12 m wide circuit (narrower = more)
   pace:0.006,         // up to 0.6% off the car's limit, drawn per lap: no driver is on it every lap
   mistake:0.012,      // chance per lap of a mistake on a healthy car
@@ -14990,7 +15121,7 @@ const RACE={
   rainRamp:240,       // s from the first drops to a wet track
   recDt:0.25          // s between recorded samples
 };
-// The wake (build 291). drag: a following car's drag over its drag alone, against the gap from the car ahead's rear to
+// The wake (build 294). drag: a following car's drag over its drag alone, against the gap from the car ahead's rear to
 // its front in the car ahead's lengths: Zabat, Stabile, Farascaroli and Browand, "The aerodynamic performance of
 // platoons", California PATH UCB-ITS-PRR-95-35 (1995), figure 9, two 1/8-scale vans, read off the graph; past 3
 // lengths straight to none at 10, where the report puts the last measurable saving. df: the downforce a following car
@@ -22872,7 +23003,7 @@ const CAM_PROFILE={
 // A head's intake valve 15-75 mm (a 50 cc single's to a big-bore diesel's); its throat 0.75 of the valve (a restrictive
 // production port) to 0.92 (a fully ported race head: the 45 degree seat needs the rest); springs 100-1500 N on the seat
 // and 10-200 N/mm, past the RACE step on the biggest factory valve (sized for a Hellcat's redline, ~1180 N and 130 N/mm).
-const PART_LIMITS={valveD_mm:[15,75],exValveD_mm:[12,65],throat:[0.75,0.92],seat_N:[100,1500],rate_Nmm:[10,200],dur:[180,320],lift_mm:[4,16],lsa:[98,130],vvt_deg:[0,60],primD_mm:[25,76],primL_mm:[200,1000],pipes:[1,2],sysD_mm:[30,110],sysL_m:[0.8,4.5],
+const PART_LIMITS={span_mm:[600,2200],chord_mm:[80,600],angle_deg:[0,25],camber_pct:[0,12],plate_mm:[0,400],valveD_mm:[15,75],exValveD_mm:[12,65],throat:[0.75,0.92],seat_N:[100,1500],rate_Nmm:[10,200],dur:[180,320],lift_mm:[4,16],lsa:[98,130],vvt_deg:[0,60],primD_mm:[25,76],primL_mm:[200,1000],pipes:[1,2],sysD_mm:[30,110],sysL_m:[0.8,4.5],
   runnerL_mm:[40,800],runnerD_mm:[20,80],shortL_mm:[40,400],area_m2:[0.02,3],inletD_mm:[30,160],
   w:[150,900],h:[80,800],d:[30,120],fpi:[8,30],pipe_m:[0.3,5],
   // a turbo's compressor 30-120 mm at the exducer (a kei car's to a big diesel's), its turbine 25-130 mm, a housing
@@ -23029,6 +23160,7 @@ const PART_KINDS=[
   {kind:'intercooler',label:'INTERCOOLER',ready:true},
   {kind:'head',   label:'CYLINDER HEAD',ready:true},
   {kind:'turbo',  label:'TURBOCHARGER',ready:true},
+  {kind:'wing',   label:'REAR WING',ready:true},
   {kind:'cat',    label:'CATALYTIC CONVERTER',ready:false}
 ];
 // A designed intake, as the factory class the rest of the app reads: a variable one is VARIABLE, a fixed one the
@@ -23078,8 +23210,13 @@ const PART_DEF={
   head:   {field:'headPart',   cls:'valveSpring',select:'edSpring',    def:'stock',valid:k=>!!VALVE_SPRING[k],clsOf:headClass,
     label:k=>VALVE_SPRING[k].label,newName:'MY HEAD',factory:['stock','perf','race']},
   turbo:  {field:'turboPart',  cls:'turboSize', select:'edTurboSize', def:'medium',valid:k=>!!TURBO[k],    clsOf:turboClass,
-    label:k=>k.toUpperCase(),newName:'MY TURBO',factory:['small','medium','large']}
+    label:k=>k.toUpperCase(),newName:'MY TURBO',factory:['small','medium','large']},
+  // a part of the car, not of the engine (on:'vehicle'): fitted from the VEHICLE tab's REAR AERO, drawn and priced as the kit's wing
+  wing:   {on:'vehicle',field:'wingPart',cls:'aeroRear',select:'vhAeroR',def:'none',valid:k=>!!AERO_REAR[k],clsOf:()=>'wing',
+    label:()=>'REAR WING',newName:'MY WING',factory:['wing']}
 };
+const partOwner=kind=>PART_DEF[kind].on==='vehicle'?vehicle:engine;
+const partRebuild=kind=>{if(PART_DEF[kind].on==='vehicle'){buildVehicle();updateVehicleSummary();}else buildEngine();};
 
 let partLib=[];
 function loadParts(){
@@ -23106,6 +23243,8 @@ function normPart(p){
   if(p.kind==='head')return {id,kind:'head',name:String(p.name||'HEAD').slice(0,40),valveD_mm:n(p.valveD_mm,'valveD_mm',34),
     exValveD_mm:n(p.exValveD_mm==null||p.exValveD_mm===''?NaN:p.exValveD_mm,'exValveD_mm',+(EV_RATIO*n(p.valveD_mm,'valveD_mm',34)).toFixed(4)),
     throat:n(p.throat,'throat',THROAT_RATIO),seat_N:n(p.seat_N,'seat_N',250),rate_Nmm:n(p.rate_Nmm,'rate_Nmm',22)};
+  if(p.kind==='wing')return {id,kind:'wing',name:String(p.name||'WING').slice(0,40),span_mm:n(p.span_mm,'span_mm',1500),
+    chord_mm:n(p.chord_mm,'chord_mm',250),angle_deg:n(p.angle_deg,'angle_deg',8),camber_pct:n(p.camber_pct,'camber_pct',6),plate_mm:n(p.plate_mm,'plate_mm',150)};
   if(p.kind==='turbo'){const c=n(p.compD_mm,'compD_mm',71);
     return {id,kind:'turbo',name:String(p.name||'TURBO').slice(0,40),compD_mm:c,
       turbD_mm:n(p.turbD_mm,'turbD_mm',+(TURB_WHEEL*c).toFixed(4)),ar:n(p.ar,'ar',0.64)};}
@@ -23156,6 +23295,7 @@ const fillExhaustSelect=fillPartSelects;
 function partsFromForm(){
   const o={};
   for(const [kind,D] of Object.entries(PART_DEF)){
+    if(D.on)continue;
     const v=document.getElementById(D.select).value;
     const p=v.startsWith('part:')?partById(v.slice(5)):null;
     if(p&&p.kind===kind){const q=normPart(p);o[D.cls]=D.clsOf(q);o[D.field]=q;}
@@ -23165,10 +23305,25 @@ function partsFromForm(){
 }
 function partsToForm(e){
   for(const D of Object.values(PART_DEF)){
+    if(D.on)continue;
     const s=document.getElementById(D.select);
     if(e[D.field]){const id=ensurePart(e[D.field]);fillPartSelects();s.value='part:'+id;}
     else s.value=(D.from?D.from(e[D.cls]):e[D.cls])||D.def;
   }
+}
+// The same for the car's parts (readVehicleFromForm, applyVehicleToForm): the kit, or the kit's class and the whole part.
+function vehPartsFromForm(){
+  const o={};
+  for(const [kind,D] of Object.entries(PART_DEF)){
+    if(D.on!=='vehicle')continue;
+    const v=document.getElementById(D.select).value,p=v.startsWith('part:')?partById(v.slice(5)):null;
+    if(p&&p.kind===kind){const q=normPart(p);o[D.cls]=D.clsOf(q);o[D.field]=q;}
+    else o[D.cls]=D.valid(v)?v:D.def;
+  }
+  return o;
+}
+function vehPartsToForm(v){
+  for(const D of Object.values(PART_DEF))if(D.on==='vehicle'&&v[D.field]){const id=ensurePart(v[D.field]);document.getElementById(D.select).value='part:'+id;}
 }
 
 // ---- the physics of a part on this engine, without touching the build ----
@@ -23309,6 +23464,8 @@ function partFromFactory(key,kind){
       exValveD_mm:+(e.evDia_mm||EV_RATIO*(e.ivDia_mm||0.39*e.bore_mm)).toFixed(4),
       seat_N:+(g.seat*k).toFixed(3),rate_Nmm:+(g.rate*k).toFixed(4)});
   });
+  // a starting point, not a factory part: as wide as the car's track, a quarter of a metre deep, at a moderate angle
+  if(kind==='wing')return normPart({kind,name:tr('REAR WING'),span_mm:Math.round((vehicle&&vehicle.track||1.5)*100)*10,chord_mm:250,angle_deg:8,camber_pct:6,plate_mm:150});
   // the engine's own turbo (its compressor wheel, if it sets one, and its housing), or a frame as sold
   if(kind==='turbo')return withPart('turbo',key,e=>{
     const tb=turboFrame(e);
@@ -23375,9 +23532,9 @@ function runnerFor(rpm,Dmm){
 }
 
 // ---- the PARTS page ----
-const partsUI={kind:'exhaust',edit:{exhaust:null,intake:null,filter:null,cam:null,head:null,turbo:null,intercooler:null},timer:0};
+const partsUI={kind:'exhaust',edit:{exhaust:null,intake:null,filter:null,cam:null,head:null,turbo:null,intercooler:null,wing:null},timer:0};
 const pv=id=>document.getElementById(id);
-const fittedPart=kind=>engine&&engine[PART_DEF[kind].field];
+const fittedPart=kind=>partOwner(kind)&&partOwner(kind)[PART_DEF[kind].field];
 // the ids of each kind's editor
 const PART_UI={
   exhaust:{reset:'ptReset',box:'partsExhaust',list:'partList',from:'ptFrom',neu:'ptNew',save:'ptSave',saveFit:'ptSaveFit',guide:'partGuide',canvas:'partCanvas',legend:'partLegend',
@@ -23407,14 +23564,18 @@ const PART_UI={
   turbo:{reset:'pbReset',box:'partsTurbo',list:'pbList',from:'pbFrom',neu:'pbNew',save:'pbSave',saveFit:'pbSaveFit',guide:'pbGuide',canvas:'pbCanvas',legend:'pbLegend',
     none:"No turbos designed yet. Start from this engine's turbo or one of the frames below.",
     fields:['pbName','pbComp','pbTurb','pbAr'],
-    spec:p=>(+p.compD_mm).toFixed(1)+' / '+(+p.turbD_mm).toFixed(1)+' mm · A/R '+(+p.ar).toFixed(2)}
+    spec:p=>(+p.compD_mm).toFixed(1)+' / '+(+p.turbD_mm).toFixed(1)+' mm · A/R '+(+p.ar).toFixed(2)},
+  wing:{reset:'pwReset',box:'partsWing',list:'pwList',from:'pwFrom',neu:'pwNew',save:'pwSave',saveFit:'pwSaveFit',guide:'pwGuide',canvas:'pwCanvas',legend:'pwLegend',
+    none:"No wings designed yet. Start from a wing as wide as this car's track below.",
+    fields:['pwName','pwSpan','pwChord','pwAngle','pwCamber','pwPlate'],
+    spec:p=>p.span_mm+' × '+p.chord_mm+' mm · '+p.angle_deg+'° · '+tr('camber')+' '+p.camber_pct+'%'}
 };
 function renderParts(){
   const types=pv('partTypes');if(!types)return;
   types.innerHTML=PART_KINDS.map(k=>'<button type="button" data-kind="'+k.kind+'"'+(k.ready?'':' disabled')+(partsUI.kind===k.kind?' class="on"':'')+'>'
     +esc(tr(k.label))+(k.ready?'':'<span class="soon">'+esc(tr('LATER'))+'</span>')+'</button>').join('');
   types.querySelectorAll('button[data-kind]').forEach(b=>b.addEventListener('click',()=>{partsUI.kind=b.dataset.kind;renderParts();}));
-  const noEng=!engine||isElectric();
+  const noEng=!PART_DEF[partsUI.kind].on&&(!engine||isElectric());   // the car's parts need no engine
   pv('partsNoEngine').hidden=!noEng;
   for(const k in PART_UI)pv(PART_UI[k].box).hidden=noEng||partsUI.kind!==k;
   if(noEng)return;
@@ -23428,7 +23589,7 @@ function renderParts(){
     +'<button type="button" data-a="del" data-id="'+esc(p.id)+'">'+esc(tr('DELETE'))+'</button></div>').join('')
     :'<div class="hint">'+esc(tr(U.none))+'</div>';
   list.querySelectorAll('button[data-a]').forEach(b=>b.addEventListener('click',()=>partAction(b.dataset.a,b.dataset.id)));
-  const start=D.factory.includes(engine[D.cls])?engine[D.cls]:D.def;
+  const own=partOwner(kind),start=D.factory.includes(own[D.cls])?own[D.cls]:D.on?D.factory[0]:D.def;
   if(!ed)pv(U.from).value=start;
   if(!ed)partsUI.edit[kind]=fittedPart(kind)?Object.assign({},fittedPart(kind))
     :Object.assign(partFromFactory(start,kind),{name:tr(D.newName)});
@@ -23439,6 +23600,10 @@ function partToEditor(kind,p){
   const peak=Math.round((engine.score&&engine.score.peakHPrpm||engine.redline*0.9)/100)*100;
   if(kind==='intercooler'){
     pv('pxName').value=p.name;pv('pxW').value=p.w;pv('pxH').value=p.h;pv('pxD').value=p.d;pv('pxFpi').value=p.fpi;pv('pxPipe').value=p.pipe_m;
+    return;
+  }
+  if(kind==='wing'){
+    pv('pwName').value=p.name;pv('pwSpan').value=p.span_mm;pv('pwChord').value=p.chord_mm;pv('pwAngle').value=p.angle_deg;pv('pwCamber').value=p.camber_pct;pv('pwPlate').value=p.plate_mm;
     return;
   }
   if(kind==='turbo'){
@@ -23473,6 +23638,8 @@ function partFromEditor(kind){
   const ed=partsUI.edit[kind],newName=tr(PART_DEF[kind].newName);
   if(kind==='intercooler')return normPart({kind,id:ed&&ed.id,name:pv('pxName').value.trim()||newName,w:pv('pxW').value,
     h:pv('pxH').value,d:pv('pxD').value,fpi:pv('pxFpi').value,pipe_m:pv('pxPipe').value});
+  if(kind==='wing')return normPart({kind,id:ed&&ed.id,name:pv('pwName').value.trim()||newName,span_mm:pv('pwSpan').value,
+    chord_mm:pv('pwChord').value,angle_deg:pv('pwAngle').value,camber_pct:pv('pwCamber').value,plate_mm:pv('pwPlate').value});
   if(kind==='turbo'){
     // the editor shows the wheels to 0.1 mm and the A/R to 0.001: an unchanged field keeps the part's exact number
     const keep=(id,k,d)=>{const v=pv(id).value;return ed&&ed[k]!=null&&+v===+(+ed[k]).toFixed(d)?ed[k]:v;};
@@ -23499,8 +23666,8 @@ function partAction(a,id){
   else if(a==='del'){
     partLib=partLib.filter(x=>x.id!==id);persistParts();
     const f=fittedPart(kind);
-    if(f&&f.id===id){pv(D.select).value=engine[D.cls];fillPartSelects();buildEngine();
-      flash(tr(kind==='intake'?'PART DELETED: THE ENGINE HAS ITS FACTORY INTAKE':kind==='intercooler'?'PART DELETED: THE ENGINE HAS ITS FACTORY INTERCOOLER':kind==='cam'?'PART DELETED: THE ENGINE HAS ITS FACTORY CAM':kind==='head'?'PART DELETED: THE ENGINE HAS ITS FACTORY HEAD':kind==='turbo'?'PART DELETED: THE ENGINE HAS ITS FACTORY TURBO':kind==='filter'?'PART DELETED: THE ENGINE HAS ITS FACTORY AIR FILTER':'PART DELETED: THE ENGINE HAS ITS FACTORY EXHAUST'));}
+    if(f&&f.id===id){pv(D.select).value=partOwner(kind)[D.cls];fillPartSelects();partRebuild(kind);
+      flash(tr(kind==='wing'?"PART DELETED: THE CAR HAS THE KIT'S REAR WING":kind==='intake'?'PART DELETED: THE ENGINE HAS ITS FACTORY INTAKE':kind==='intercooler'?'PART DELETED: THE ENGINE HAS ITS FACTORY INTERCOOLER':kind==='cam'?'PART DELETED: THE ENGINE HAS ITS FACTORY CAM':kind==='head'?'PART DELETED: THE ENGINE HAS ITS FACTORY HEAD':kind==='turbo'?'PART DELETED: THE ENGINE HAS ITS FACTORY TURBO':kind==='filter'?'PART DELETED: THE ENGINE HAS ITS FACTORY AIR FILTER':'PART DELETED: THE ENGINE HAS ITS FACTORY EXHAUST'));}
     else{fillPartSelects();flash(tr('PART DELETED'));}
     if(partsUI.edit[kind]&&partsUI.edit[kind].id===id)partsUI.edit[kind]=null;
     renderParts();
@@ -23513,13 +23680,13 @@ function savePart(kind){
   if(!persistParts())return null;
   partsUI.edit[kind]=Object.assign({},p);fillPartSelects();
   // the engine wearing this part takes the new dimensions
-  const f=fittedPart(kind);if(f&&f.id===p.id)buildEngine();
+  const f=fittedPart(kind);if(f&&f.id===p.id){if(PART_DEF[kind].on)pv(PART_DEF[kind].select).value='part:'+p.id;partRebuild(kind);}
   flash(tr('PART SAVED'));renderParts();
   return p;
 }
 function fitPart(id){
   const p=partById(id);
-  fillPartSelects();pv(PART_DEF[p.kind].select).value='part:'+id;buildEngine();
+  fillPartSelects();pv(PART_DEF[p.kind].select).value='part:'+id;partRebuild(p.kind);
   flash(tr('PART FITTED')+': '+p.name);renderParts();
 }
 // RESET: the dimensions back to the factory part chosen in START FROM, keeping the part's name and identity, so a saved
@@ -23542,6 +23709,7 @@ function previewPart(kind){
   if(kind==='intercooler')return previewIc();
   if(kind==='head')return previewHead();
   if(kind==='turbo')return previewTurbo();
+  if(kind==='wing')return previewWing();
   const p=partFromEditor('exhaust'),now=exhaustReport(engine.exhaustPart||engine.exhaust),r=exhaustReport(p);
   partsUI.last={kind,p,now,r};
   const turbo=engine.intake==='turbo',ported=!!engine.ports;
@@ -23685,7 +23853,60 @@ function previewTurbo(){
   pv('pbGuide').innerHTML=lines.map(l=>'<div>'+l+'</div>').join('');
   drawPartCurves('turbo',now,r);
 }
+// What the car's rear aero gives now (the kit's table, scaled by the class, or the fitted wing), and the car without it.
+function rearAeroNow(){
+  const V=vehicle,k=AERO_REAR[V.aeroRear]||AERO_REAR.none,now=V.wing?{clA:V.wing.clA,cdA:V.wing.cdA}:{clA:k.cl*V.aeroK,cdA:k.cd*V.area};
+  return {now,clA0:V.clA-now.clA,cdA0:V.cdA-now.cdA,clF:V.clA*V.aeroBal};
+}
+function previewWing(){
+  const p=partFromEditor('wing'),r=wingAero(p),A=rearAeroNow(),V=vehicle;
+  partsUI.last={kind:'wing',p,now:A.now,r};
+  const q=v=>0.5*AIR_RHO*v*v,v1=100/3.6,v2=200/3.6,clA=A.clA0+r.clA,cdA=A.cdA0+r.cdA,lines=[];
+  lines.push(tr('This wing')+': ClA <b>'+fmt(r.clA,2)+' m²</b> · CdA <b>'+fmt(r.cdA,3)+' m²</b> <span class="dim">('+tr('the rear aero now')+': ClA '+fmt(A.now.clA,2)+', CdA '+fmt(A.now.cdA,3)+')</span>');
+  lines.push(tr('Area')+' '+fmt(r.S,2)+' m², '+tr('aspect ratio')+' '+fmt(r.AR0,1)+(p.plate_mm>0?' <span class="dim">('+tr('with its end plates it works as')+' '+fmt(r.AR,1)+')</span>':'')
+    +'; '+tr('lift coefficient')+' <b>'+fmt(r.CL,2)+'</b> '+tr('of')+' '+fmt(WING_CLMAX,1)+' '+tr('at the stall')+'.'
+    +(r.stalled?' <b class="warn">'+tr('STALLED: past this angle the wing only adds drag. Less angle or less camber.')+'</b>':''));
+  lines.push(tr('Downforce')+' <b>'+fmt(q(v1)*r.clA/G,0)+' kg</b> '+tr('at')+' 100 km/h, <b>'+fmt(q(v2)*r.clA/G,0)+' kg</b> '+tr('at')+' 200; '
+    +tr('drag')+' '+fmt(q(v2)*r.cdA,0)+' N '+tr('at')+' 200 km/h (<b>'+fmt(q(v2)*r.cdA*v2/745.7,1)+' hp</b>): '
+    +fmt(r.cdi/(r.cdi+r.cd0)*100,0)+'% '+tr('of it the price of the lift')+'. '+tr('Lift over drag')+' '+fmt(r.cdA>0?r.clA/r.cdA:0,1)+'.');
+  lines.push(tr('The car with it')+': ClA <b>'+fmt(clA,2)+'</b>, CdA <b>'+fmt(cdA,2)+'</b> <span class="dim">('+tr('now')+' '+fmt(V.clA,2)+', '+fmt(V.cdA,2)+')</span>; '
+    +fmt(clA>0?A.clF/clA*100:50,0)+'% '+tr('of the downforce on the front axle')+' <span class="dim">('+tr('now')+' '+fmt(V.aeroBal*100,0)+'%)</span>.');
+  lines.push('<span class="dim">'+tr('The wing is taken in clean air, at the rear axle: the body ahead of it and its overhang are not modelled.')+'</span>');
+  pv('pwGuide').innerHTML=lines.map(l=>'<div>'+l+'</div>').join('');
+  drawWing(p,r);
+}
+// The wing's section at its angle with its two forces, and its lift against the angle, up to the stall.
+function drawWing(p,r){
+  const c=pv('pwCanvas');if(!c)return;
+  const w=c.clientWidth||480,h=c.clientHeight||200,dpr=window.devicePixelRatio||1;
+  c.width=Math.round(w*dpr);c.height=Math.round(h*dpr);
+  const g=c.getContext('2d');g.setTransform(dpr,0,0,dpr,0,0);g.clearRect(0,0,w,h);
+  // left: the section, nose to the right (the car drives to the right), hollow side down
+  const cx=w*0.24,cy=h*0.42,len=Math.min(w*0.34,150),a=p.angle_deg*Math.PI/180,f=p.camber_pct/100;
+  const P=(x,up)=>{const yc=-4*f*x*(1-x),t=0.6*(0.2969*Math.sqrt(x)-0.126*x-0.3516*x*x+0.2843*x*x*x-0.1036*x*x*x*x)*up;   // a 12% NACA thickness on the camber line
+    const X=(0.5-x)*len,Y=(yc+t)*len;return [cx+X*Math.cos(a)+Y*Math.sin(a),cy+X*Math.sin(a)-Y*Math.cos(a)];};
+  g.fillStyle=r.stalled?'#a44':'#6fc';g.beginPath();
+  for(let i=0;i<=20;i++){const q=P(i/20,1);i?g.lineTo(q[0],q[1]):g.moveTo(q[0],q[1]);}
+  for(let i=20;i>=0;i--){const q=P(i/20,-1);g.lineTo(q[0],q[1]);}
+  g.closePath();g.fill();
+  const arrow=(x0,y0,x1,y1,col)=>{g.strokeStyle=g.fillStyle=col;g.lineWidth=2;g.beginPath();g.moveTo(x0,y0);g.lineTo(x1,y1);g.stroke();
+    const t=Math.atan2(y1-y0,x1-x0);g.beginPath();g.moveTo(x1,y1);g.lineTo(x1-7*Math.cos(t-0.4),y1-7*Math.sin(t-0.4));g.lineTo(x1-7*Math.cos(t+0.4),y1-7*Math.sin(t+0.4));g.closePath();g.fill();};
+  const k=(h*0.42)/WING_CLMAX;
+  if(r.CL>0)arrow(cx,cy+10,cx,cy+10+Math.max(8,r.CL*k),'#fa4');
+  arrow(cx-len/2-6,cy,cx-len/2-6-Math.max(8,(r.cd0+r.cdi)*k*4),cy,'#c66');
+  // right: lift coefficient against angle
+  const L=w*0.56,R=w-12,T=14,B=h-22,aMax=PART_LIMITS.angle_deg[1],X=d=>L+d/aMax*(R-L),Y=cl=>B-cl/(WING_CLMAX*1.15)*(B-T);
+  g.strokeStyle='#223';g.lineWidth=1;g.fillStyle='#667';g.font='8px monospace';
+  for(let d=0;d<=aMax;d+=5){g.beginPath();g.moveTo(X(d),T);g.lineTo(X(d),B);g.stroke();g.fillText(d+'°',X(d)-6,h-8);}
+  g.setLineDash([4,3]);g.strokeStyle='#a44';g.beginPath();g.moveTo(L,Y(WING_CLMAX));g.lineTo(R,Y(WING_CLMAX));g.stroke();g.setLineDash([]);
+  g.strokeStyle='#6fc';g.lineWidth=2;g.beginPath();
+  for(let d=0;d<=aMax;d+=0.5){const cl=wingAero(Object.assign({},p,{angle_deg:d})).CL;d?g.lineTo(X(d),Y(cl)):g.moveTo(X(d),Y(cl));}
+  g.stroke();
+  g.fillStyle='#fa4';g.beginPath();g.arc(X(p.angle_deg),Y(r.CL),4,0,7);g.fill();
+  pv('pwLegend').innerHTML='<span style="color:#fa4">━ '+esc(tr('downforce'))+'</span> <span style="color:#c66">━ '+esc(tr('drag'))+'</span> <span style="color:#6fc">━ '+esc(tr('lift coefficient against angle'))+'</span> <span style="color:#a44">┅ '+esc(tr('stall'))+'</span>';
+}
 function drawPartCurves(kind,now,r){
+  if(kind==='wing')return drawWing(partsUI.last.p,r);
   const U=PART_UI[kind],c=pv(U.canvas);if(!c)return;
   const w=c.clientWidth||480,h=c.clientHeight||200,dpr=window.devicePixelRatio||1;
   c.width=Math.round(w*dpr);c.height=Math.round(h*dpr);
@@ -24438,7 +24659,7 @@ function initGuide(){
 // The car does not drive on it yet. A single-speed reduction, regenerative braking and the motor's heat over a lap
 // are step 2.3; until then the VEHICLE, TRACK and RACE tabs say so instead of running an electric car through a
 // combustion gearbox. New words are English for now (decision 11): tr() shows the English where Greek is missing.
-const EV_DEFAULT={evMotorType:'pm',evRotorD:150,evStack:134,evPoles:6,evTurns:12,evMagnet:'ndfeb',evRetention:'bridges',evCooling:'jacket',evLamination:0.35,evWire:'round',evConductor:'copper',evRegen:'high',
+const EV_DEFAULT={evMotorType:'pm',evRotorD:150,evStack:134,evPoles:6,evTurns:12,evMagnet:'ndfeb',evMagT:6.5,evMagW:84,evRetention:'bridges',evCooling:'jacket',evLamination:0.35,evWire:'round',evConductor:'copper',evRegen:'high',
   evMaxRpm:18000,evInverter:'igbt',evAmps:950,evRearCount:1,evFront:'none',evFrontD:130,evFrontStack:110,evFrontPoles:4,evFrontTurns:12,evFrontAmps:700,evFrontFd:0,evChem:'nca',evSeries:96,evKWh:75,evYear:2020};
 // The race spends energy, not fuel (step 2.4): until then an electric car drives the 0-100 and the lap but does not race.
 // One reduction is all an electric car has: GEARING on the VEHICLE tab sets it (build 180).
@@ -24460,7 +24681,7 @@ const rotorWord=m=>m.im?'ROTOR':'MAGNETS';
 function readElectricFromForm(){
   const g=id=>document.getElementById(id),num=(id,lo,hi)=>clamp(+g(id).value||EV_DEFAULT[id],lo,hi);
   return {evMotorType:g('evMotorType').value==='im'?'im':'pm',evRotorD:num('evRotorD',80,260),evStack:num('evStack',40,250),evPoles:+g('evPoles').value||6,
-    evTurns:Math.round(num('evTurns',4,120)),evMagnet:g('evMagnet').value,evRetention:g('evRetention').value,
+    evTurns:Math.round(num('evTurns',4,120)),evMagnet:g('evMagnet').value,evMagT:num('evMagT',2,15),evMagW:Math.round(num('evMagW',40,100)),evRetention:g('evRetention').value,
     evCooling:g('evCooling').value,evLamination:+g('evLamination').value===0.2?0.2:0.35,evWire:g('evWire').value==='hairpin'?'hairpin':'round',evConductor:g('evConductor').value==='aluminium'?'aluminium':'copper',
     evRegen:EV_REGEN[g('evRegen').value]?g('evRegen').value:'high',evMaxRpm:Math.round(num('evMaxRpm',4000,25000)),evInverter:g('evInverter').value,
     evAmps:Math.round(num('evAmps',100,1600)),evRearCount:g('evRearCount').value==='2'?2:1,
@@ -24497,7 +24718,7 @@ function syncElectricSections(){
     if(!chemAvailable(chem.value,year))chem.value=['nca','ncaP','liHEV','lfp','nimhHEV','nimh','lead'].find(c=>chemAvailable(c,year));
     // an induction motor has no magnets to grade or to hold in (build 182): its rotor is a copper cage
     const im=document.getElementById('evMotorType').value==='im';
-    document.getElementById('evMagnet').disabled=im;document.getElementById('evRetention').disabled=im;
+    ['evMagnet','evMagT','evMagW','evRetention'].forEach(id=>{const el=document.getElementById(id);if(el)el.disabled=im;});
   }
   if(ev||hy){
     // a front motor (build 183; a hybrid's front axle motor, build 195): its fields, and the car is all-wheel drive
@@ -24521,12 +24742,12 @@ function evDriveLock(on){
 // The motor, or the set of motors, an electric build's fields describe (build 179; more than one motor, build 183). Its own
 // function since build 238, so the ENGINE tab's cards preview exactly the drive BUILD makes.
 function evMotorOf(e){
-  const rear=motorBuild({type:e.evMotorType,rotorD:e.evRotorD,stackL:e.evStack,poles:e.evPoles,turns:e.evTurns,magnet:e.evMagnet,
+  const rear=motorBuild({type:e.evMotorType,rotorD:e.evRotorD,stackL:e.evStack,poles:e.evPoles,turns:e.evTurns,magnet:e.evMagnet,magT:e.evMagT,magW:e.evMagW/100,
     retention:e.evRetention,cooling:e.evCooling,lamination:e.evLamination,wire:e.evWire,conductor:e.evConductor,inverter:e.evInverter,invAmps:e.evAmps,maxRpm:e.evMaxRpm});
   // more than one motor (build 183): the rear group, and a front motor sharing the magnet grade, cooling and inverter
   const parts=[{m:rear,n:e.evRearCount===2?2:1}];
   if(e.evFront==='pm'||e.evFront==='im')parts.push({m:motorBuild({type:e.evFront,rotorD:e.evFrontD,stackL:e.evFrontStack,poles:e.evFrontPoles,
-    turns:e.evFrontTurns,magnet:e.evMagnet,retention:e.evRetention,cooling:e.evCooling,lamination:e.evLamination,wire:e.evWire,conductor:e.evConductor,inverter:e.evInverter,invAmps:e.evFrontAmps,maxRpm:e.evMaxRpm}),n:1});
+    turns:e.evFrontTurns,magnet:e.evMagnet,magT:e.evMagT,magW:e.evMagW/100,retention:e.evRetention,cooling:e.evCooling,lamination:e.evLamination,wire:e.evWire,conductor:e.evConductor,inverter:e.evInverter,invAmps:e.evFrontAmps,maxRpm:e.evMaxRpm}),n:1});
   return parts.length===1&&parts[0].n===1?rear:motorSet(parts);
 }
 // ---- the build ----
@@ -25466,11 +25687,11 @@ function hybAssistShare(nf,pedal,t){
 const hybAssistWindow=(e,rpm)=>{const t=hybTune(e);return e.hyDeploy==='above'?(rpm>=t.rpm?1:0):e.hyDeploy==='below'?(rpm<=t.rpm?1:0):1;};
 // A hybrid's motor and pack when HYBRID is first chosen: a pancake motor in the bellhousing (200 mm across, 40 mm long,
 // 12 poles) and a 1.56 kWh pack of hybrid cells, the size of the Ioniq Hybrid's 32 kW / 170 Nm system.
-const HYB_DEFAULT={evMotorType:'pm',evRotorD:200,evStack:40,evPoles:12,evTurns:28,evMagnet:'ndfeb',evRetention:'bridges',evCooling:'jacket',
+const HYB_DEFAULT={evMotorType:'pm',evRotorD:200,evStack:40,evPoles:12,evTurns:33,evMagnet:'ndfeb',evRetention:'bridges',evCooling:'jacket',
   evMaxRpm:8000,evInverter:'igbt',evAmps:400,evRearCount:1,evFront:'none',evChem:'liHEV',evSeries:64,evKWh:1.56,evYear:2016};
 // A power-split's when it is first chosen (build 189): the 4th-generation Prius's MG2 (53 kW and 163 Nm on the 600 V bus,
 // 17,000 rpm) and its 1.31 kWh nickel-metal hydride pack of 168 cells (201.6 V).
-const HYB_DEFAULT_PS={evMotorType:'pm',evRotorD:150,evStack:60,evPoles:8,evTurns:100,evMagnet:'ndfeb',evRetention:'bridges',evCooling:'jacket',
+const HYB_DEFAULT_PS={evMotorType:'pm',evRotorD:150,evStack:60,evPoles:8,evTurns:103,evMagnet:'ndfeb',evRetention:'bridges',evCooling:'jacket',
   evMaxRpm:17000,evInverter:'igbt',evAmps:100,evRearCount:1,evFront:'none',evChem:'nimhHEV',evSeries:168,evKWh:1.31,evYear:2016};
 // A series hybrid's when it is first chosen (build 193): the Nissan Qashqai e-POWER's traction motor (140 kW, 330 Nm) and
 // its 2.1 kWh pack of hybrid cells.
@@ -25481,7 +25702,7 @@ const isHybrid=()=>!!engine&&engine.type!=='electric'&&!!engine.hy;
 // Build the hybrid system of a combustion engine from its form fields (the electric drive's), or none.
 function buildHybrid(e){
   if(!e.hyMode||e.hyMode==='none'){delete e.hy;return null;}
-  const motor=motorBuild({type:e.evMotorType,rotorD:e.evRotorD,stackL:e.evStack,poles:e.evPoles,turns:e.evTurns,magnet:e.evMagnet,
+  const motor=motorBuild({type:e.evMotorType,rotorD:e.evRotorD,stackL:e.evStack,poles:e.evPoles,turns:e.evTurns,magnet:e.evMagnet,magT:e.evMagT,magW:e.evMagW/100,
     retention:e.evRetention,cooling:e.evCooling,lamination:e.evLamination,wire:e.evWire,conductor:e.evConductor,inverter:e.evInverter,invAmps:e.evAmps,maxRpm:e.evMaxRpm});
   const pack=packBuild({chem:e.evChem,series:e.evSeries,kWh:e.evKWh,year:e.evYear});
   e.hy={mode:e.hyMode,motor,pack,mass:Math.round(motor.mass+pack.mass),cost:motor.cost+pack.cost};
@@ -25494,7 +25715,7 @@ function buildHybrid(e){
   // a front axle motor (build 195): the electric car's FRONT MOTOR fields, on its own fixed reduction to the front wheels,
   // the car all-wheel drive; it shares the pack with the main motor in proportion to their peak powers
   if(e.evFront==='pm'||e.evFront==='im'){
-    const fm=motorBuild({type:e.evFront,rotorD:e.evFrontD,stackL:e.evFrontStack,poles:e.evFrontPoles,turns:e.evFrontTurns,magnet:e.evMagnet,
+    const fm=motorBuild({type:e.evFront,rotorD:e.evFrontD,stackL:e.evFrontStack,poles:e.evFrontPoles,turns:e.evFrontTurns,magnet:e.evMagnet,magT:e.evMagT,magW:e.evMagW/100,
       retention:e.evRetention,cooling:e.evCooling,lamination:e.evLamination,wire:e.evWire,conductor:e.evConductor,inverter:e.evInverter,invAmps:e.evFrontAmps,maxRpm:e.evMaxRpm});
     const V=hybBusV(e.hy),pk=m=>{let P=0;for(let r=200;r<=m.nMax;r+=200)P=Math.max(P,motorMaxTorque(m,r,V,60)*r*Math.PI/30);return P;};
     const Pr=pk(motor),Pf=pk(fm);
@@ -26631,7 +26852,8 @@ function hybridCycleLine(v){
 // What is matched, as the combustion cars are matched (tests/test41.mjs): mass, drag, frontal area, tyres, the
 // reduction and the governed top speed, the pack (chemistry, cells in series, capacity, year) and each motor's
 // torque or power, set from the published figures: the Model 3 RWD's 420 Nm, the Model Y's 326 Nm rear and 219 Nm front,
-// the Plaid's 295 kW a motor. What is derived and checked against the published figures
+// the Plaid's 295 kW a motor (the inverter's current is what matches a torque: build 293, with the stator sized from the
+// flux, took the Model 3's from 1000 to 950 A and the Model Y rear's from 720 to 700). What is derived and checked against the published figures
 // (tests/test101.mjs): the 0-100 and the top speed. The rear magnet motor is the Model 3's as MotorXP measured it
 // (src/js/electric.js); the front induction unit of the Model 3 and Model Y is sized to its published 219 Nm and
 // 137 kW at 6380 rpm on 320 V; the Plaid's three are carbon-sleeved magnet motors (the sleeve is what lets a rotor this
@@ -26640,10 +26862,10 @@ function hybridCycleLine(v){
 // nearest diff is the clutch-plate LSD (full traction off the line).
 const EV_ENGINE_PRESETS=[
   {cat:'Electric',name:'Tesla Model 3 RWD drive (2021, LFP)',engine:{type:'electric',evMotorType:'pm',evRotorD:150,evStack:134,evPoles:6,evTurns:12,
-    evMagnet:'ndfeb',evRetention:'bridges',evCooling:'spray',evMaxRpm:18000,evInverter:'sic',evAmps:1000,evRearCount:1,evFront:'none',
+    evMagnet:'ndfeb',evRetention:'bridges',evCooling:'spray',evMaxRpm:18000,evInverter:'sic',evAmps:950,evRearCount:1,evFront:'none',
     evChem:'lfp',evSeries:106,evKWh:60,evYear:2021}},
   {cat:'Electric',name:'Tesla Model Y Long Range drive (2022, dual motor)',engine:{type:'electric',evMotorType:'pm',evRotorD:150,evStack:134,evPoles:6,evTurns:12,
-    evMagnet:'ndfeb',evRetention:'bridges',evCooling:'spray',evMaxRpm:18000,evInverter:'sic',evAmps:720,evRearCount:1,
+    evMagnet:'ndfeb',evRetention:'bridges',evCooling:'spray',evMaxRpm:18000,evInverter:'sic',evAmps:700,evRearCount:1,
     evFront:'im',evFrontD:140,evFrontStack:110,evFrontPoles:4,evFrontTurns:20,evFrontAmps:520,
     evChem:'nca',evSeries:96,evKWh:78,evYear:2022}},
   {cat:'Electric',name:'Tesla Model S Plaid drive (2021, three motors)',engine:{type:'electric',evMotorType:'pm',evRotorD:150,evStack:134,evPoles:6,evTurns:16,
@@ -26667,13 +26889,16 @@ const EV_VEHICLE_PRESETS=[
 // Hybrids (build 186, step 3 of the plan; decision 14). The Hyundai Ioniq Hybrid (2016): a 1.6 GDi Atkinson-cycle four
 // (Kappa, 72 x 97 mm, 13:1, 105 PS at 5700 rpm, 147 Nm) with a 32 kW / 170 Nm P2 motor between its clutch and its
 // six-speed DCT, and a 1.56 kWh, 240 V lithium-polymer pack: 104 kW and 265 Nm together. The motor is sized to those
-// figures (src/js/hybrid.js, HYB_DEFAULT); the engine is its geometry, which on the model's cams (none is an Atkinson
+// figures (src/js/hybrid.js, HYB_DEFAULT; the motors' turns are not published: each is the count that gives the published
+// torque, re-matched in build 292 when the magnets' flux became derived, and in build 293 when the teeth and yoke were sized from
+// it: the Ioniq's 28 -> 33, the Prius's MG2 100 -> 95 -> 103, the Qashqai's 26 -> 24 -> 26, the 330e's 48 -> 46 -> 55);
+// the engine is its geometry, which on the model's cams (none is an Atkinson
 // cam yet) makes ~116 hp, not 104 (tests/test103.mjs checks the car both as built and matched to the published power).
 const HYB_ENGINE_PRESETS=[
   {cat:'Hybrid',name:'Hyundai Kappa 1.6 GDi + P2 (Ioniq Hybrid)',real:{hp:103.6,hpRpm:5700,tq:147,tqRpm:4000,motorKW:32,motorNm:170,sysKW:104,sysNm:265},
    unsure:['redline','cam'],engine:{type:'petrol4',radiator:'large',oilCooler:true,cylinders:4,bore_mm:72,stroke_mm:97,compression:13,redline:6250,intake:'na',injector:'direct',vvt:true,
     egr:'cooled',cam:'stock',valves:4,octane:95,airFilter:'stock',exhaust:'stock',cat:'stock',intakeSys:'efi',hyMode:'p2',hyDeploy:'eco',
-    evMotorType:'pm',evRotorD:200,evStack:40,evPoles:12,evTurns:28,evMagnet:'ndfeb',evRetention:'bridges',evCooling:'jacket',evMaxRpm:8000,
+    evMotorType:'pm',evRotorD:200,evStack:40,evPoles:12,evTurns:33,evMagnet:'ndfeb',evRetention:'bridges',evCooling:'jacket',evMaxRpm:8000,
     evInverter:'igbt',evAmps:400,evRearCount:1,evFront:'none',evChem:'liHEV',evSeries:64,evKWh:1.56,evYear:2016}},
   // The Toyota Prius, 4th generation (2016; build 189, step 3.3): the 2ZR-FXE, a 1.8 port-injected Atkinson-cycle four
   // (80.5 x 88.3 mm, 13.0:1, 72 kW at 5200 rpm, 142 Nm at 3600), in the P610 power-split transaxle (src/js/power-split.js)
@@ -26682,7 +26907,7 @@ const HYB_ENGINE_PRESETS=[
   {cat:'Hybrid',name:'Toyota 2ZR-FXE 1.8 + power-split (Prius)',real:{hp:96.6,hpRpm:5200,tq:142,tqRpm:3600,motorKW:53,motorNm:163,sysKW:90},
    unsure:['valvetrain','redline'],engine:{valvetrain:'dohc-roller',type:'petrol4',radiator:'large',oilCooler:true,cylinders:4,bore_mm:80.5,stroke_mm:88.3,compression:13,redline:5500,intake:'na',injector:'port',vvt:true,
     egr:'cooled-full',cam:'atkinson',valves:4,octane:95,airFilter:'stock',exhaust:'stock',cat:'stock',intakeSys:'efi',hyMode:'ps',hyDeploy:'full',
-    evMotorType:'pm',evRotorD:150,evStack:60,evPoles:8,evTurns:100,evMagnet:'ndfeb',evRetention:'bridges',evCooling:'jacket',evMaxRpm:17000,
+    evMotorType:'pm',evRotorD:150,evStack:60,evPoles:8,evTurns:103,evMagnet:'ndfeb',evRetention:'bridges',evCooling:'jacket',evMaxRpm:17000,
     evInverter:'igbt',evAmps:100,evRearCount:1,evFront:'none',evChem:'nimhHEV',evSeries:168,evKWh:1.31,evYear:2016}},
   // The Nissan Qashqai e-POWER (2022; build 193, step 3.4): a series hybrid. The KR15DDT, a 1.5 turbo three (84 x 90.1 mm,
   // variable compression 8-14:1, the model's fixed 12:1 between them), 116 kW (158 PS), drives a generator only; a 140 kW /
@@ -26700,7 +26925,7 @@ const HYB_ENGINE_PRESETS=[
    unsure:['redline','boost','pack'],engine:{valvetrain:'dohc-roller',type:'petrol4',radiator:'large',oilCooler:true,cylinders:4,bore_mm:82,stroke_mm:94.6,compression:10.2,redline:6500,intake:'turbo',boost_bar:0.4,turboSize:'small',
     injector:'direct',vvt:true,cam:'stock',valves:4,octane:95,airFilter:'stock',exhaust:'stock',cat:'stock',intakeSys:'efi',hyMode:'p2',hyDeploy:'full',hyPlug:true,
     hyTune:{rpm:4000,map:Array(20).fill(100),regen:'high',lps:true,evKmh:0,evKw:0,socLo:12,socT:15,socHi:95},
-    evMotorType:'pm',evRotorD:200,evStack:60,evPoles:12,evTurns:48,evMagnet:'ndfeb',evRetention:'bridges',evCooling:'jacket',evMaxRpm:7500,
+    evMotorType:'pm',evRotorD:200,evStack:60,evPoles:12,evTurns:55,evMagnet:'ndfeb',evRetention:'bridges',evCooling:'jacket',evMaxRpm:7500,
     evInverter:'igbt',evAmps:250,evRearCount:1,evFront:'none',evChem:'ncaP',evSeries:96,evKWh:12,evYear:2020}},
   // The Porsche 918 Spyder (2013; build 195, step 3.5b): a plug-in with a motor at each end. The 4.6 V8 (95 x 81 mm, 447 kW
   // at 8700 rpm, 540 Nm at 6700, to 9150), a 115 kW motor between it and the seven-speed PDK, a 95 kW motor driving the
@@ -27123,6 +27348,10 @@ const EVD_FIELDS={
     trade:'Aluminium has about 60% more resistance than copper, but weighs a third as much and costs less: a lighter, cheaper motor that makes more heat.'},
   evMagnet:{what:"What the rotor's magnets are made of.",
     trade:'Ferrite is cheap and stands 250 °C, but it is a third as strong. NdFeB is the strong standard, good to 150 °C. Dysprosium raises that to 180 °C, for a little less strength and a higher price.'},
+  evMagT:{adv:true,what:"How thick each magnet bar is, in the direction it is magnetised.",
+    trade:'A thicker bar pushes more flux across the air gap, until the stator\'s steel saturates. It adds magnet mass and cost.'},
+  evMagW:{adv:true,what:"How wide the two bars of each pole are together, as a share of the pole's width.",
+    trade:'Wider magnets cover more of the pole: more flux and torque per amp, more magnet to pay for.'},
   evRetention:{adv:true,what:'What holds the magnets in against the spin.',
     trade:'Iron bridges in the steel let the rim reach 150 m/s. A carbon-fibre sleeve allows 220 m/s, so a much higher top speed, for about $450.'},
   evMaxRpm:{adv:true,what:'The speed the bearings, the balance and the gearing are built for.',

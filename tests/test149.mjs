@@ -189,14 +189,18 @@ const ph = await phone.evaluate(async () => {
   const openPanels = [...document.querySelectorAll('#evdSide .evd-panel')].filter(p => getComputedStyle(p).display !== 'none').length;
   mini.click();
   return { sw: document.documentElement.scrollWidth, first, second, inline: !!inline && !inline.hidden && inline.innerText.length > 40,
-    fixed: cs.position, bottom: Math.round(innerHeight - r.bottom), mini: mini.innerText.replace(/\s+/g, ' '), closedPanels, openPanels };
+    fixed: cs.position, bottom: Math.round(innerHeight - r.bottom),
+    // since build 261 a phone has its section bar (.viz-groups) along the bottom, and the results sit just above it
+    navTop: (() => { const g = document.querySelector('.viz-groups'); return g && getComputedStyle(g).position === 'fixed' ? Math.round(innerHeight - g.getBoundingClientRect().top) : 0; })(), mini: mini.innerText.replace(/\s+/g, ' '), closedPanels, openPanels };
 });
 console.log(`== phone: width ${ph.sw}; open ${ph.first.join(',')} then ${ph.second.join(',')}; help under the field ${ph.inline}; ` +
   `bar ${ph.fixed} ${ph.bottom}px from the bottom "${ph.mini}"; panels ${ph.closedPanels} closed, ${ph.openPanels} open ==`);
 if (ph.sw > 400) fails.push('a phone scrolls sideways: ' + ph.sw + ' px');
 if (ph.first.join() !== 'size' || ph.second.join() !== 'batt') fails.push('the cards should fold one at a time: ' + ph.first + ' then ' + ph.second);
 if (!ph.inline) fails.push('on a phone the help should open under the field');
-if (ph.fixed !== 'fixed' || ph.bottom > 2 || !/kW/.test(ph.mini)) fails.push('on a phone the results should be a bar at the bottom');
+// The CSS reserves 58 px for the section bar (app.css, build 261); it measures ~51 px here, so up to 8 px of gap is the
+// reservation, not a fault. Below the section bar's top the results would be hidden behind it.
+if (ph.fixed !== 'fixed' || ph.bottom < ph.navTop - 2 || ph.bottom > ph.navTop + 8 || !/kW/.test(ph.mini)) fails.push(`on a phone the results should be a bar at the bottom, on the section bar (${ph.bottom} px up, the section bar ${ph.navTop} px)`);
 if (ph.closedPanels !== 0 || ph.openPanels < 2) fails.push('the bar should open the results and close again');
 await browser.close();
 

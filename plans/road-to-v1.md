@@ -89,6 +89,12 @@ hybrid controllers; each fitted number found gets a part or a cited rule.
 4. The cell as a part, from named datasheets: `CHEM`, `PACK_FACTOR`, the 10% for busbars.
 5. Cited or signed off, no new physics: `INVERTER` (named modules), `RETENTION`, `ACTIVE_TO_MOTOR`, `EV_BMS`, the cage's
    leakage.
+*Build 292 (owner's choice: steps 1 and 2 together):* the magnets are bars in a V and their flux comes from a magnetic
+circuit through M270-35A's curve; `FLUX_KM` retired, the Model 3's back-EMF lands at 41.8 V/krpm against 42. *Build 293:* the
+teeth and yoke sized from that flux at the top of Pyrhonen's Table 6.1 (tooth 2.0 T, yoke 1.5 T); the slot is what is left.
+Left in `MOTOR.statorShape`: the outside diameter (bore over 0.67), which Table 6.2's current densities would set. Next:
+`SAT_K` from the same curve under load, the iron loss on each part's own density (`MOTOR.ironShare`), then the d and q
+inductances (`MOTOR.fieldWeakening`).
 
 Beyond the register (not started, the owner's choice): a fast-charge curve from the charge-voltage and plating limits
 the pack already has; the pack's temperature in the lap, cycle and race (they still read the 25 °C resistance); a
@@ -99,6 +105,8 @@ and its heat, an induction motor's slip.
 
 **D. Vehicle parts (about 4 builds).** Wings and brake bias (retires `AERO_FRONT/REAR`); wheels and tyre pressure
 (retires `UNSPRUNG_SHARE`); the differential (`DIFF_ASYM0`).
+*Build 291:* the rear wing as a part (span, chord, angle, camber, end plates; lifting line; `tests/test178.mjs`); no
+factory car moved. Next: the front wing and splitter the same way, then each kit car's wing written as one, and brake bias.
 
 *Scoreboard run at the end of D.*
 
@@ -146,7 +154,7 @@ from the cars' own aero. Overtaking decisions and weather stay rules, signed off
 (`TYRE_RACE` in `race.js`; `tOpt`, `tWin`, `wear`, `wetKeep` in `TIRE_TYPE`) and the tow and dirty air as speed
 multipliers (`RACE.slip*`, `RACE.dirty`). Three builds (2-4), each moving only the race (the lap, 0-100 and dyno must keep an
 identical fingerprint):
-1. **The tread's heat: a rule until after v1.0** (owner's decision, November 2026). Tried at build 291, not kept:
+1. **The tread's heat: a rule until after v1.0** (owner's decision, November 2026). Tried at build 294, not kept:
    the slip work from `driveTyre` with convection, conduction and the tread's own heat capacity took the Civic's
    hottest tyre in `test71` from 92 C to 329 C and wore a set out in 4 laps. The slip work is right (it matches the
    cornering drag); what cannot be derived is where its heat goes. Rubber's grip is mostly hysteresis in a thin
@@ -161,7 +169,7 @@ identical fingerprint):
    (Horne and Dreher, NASA TN D-2056, from the tyre's pressure) (retires `wetKeep`, `hWet`). The tyre's pressure is a
    phase D part not built yet: until then each compound carries its maker's usual pressure, cited, and D's part
    replaces it. The rain's arrival and amount stay a weather rule.
-4. **The wake and the pit lane.** *Build 291: the wake (`RACE_WAKE`, `raceWake`, `tests/test79.mjs`). Next: the pit lane.* Behind a car, its follower's drag and downforce fall with the gap in car lengths, from
+4. **The wake and the pit lane.** *Build 294: the wake (`RACE_WAKE`, `raceWake`, `tests/test79.mjs`). Next: the pit lane.* Behind a car, its follower's drag and downforce fall with the gap in car lengths, from
    measured data (Zabat et al. 1995, PATH platoon tests; for downforce, published wind-tunnel and CFD wake figures).
    The speed then comes from the car's own balance: on a straight its power against its reduced drag, in a corner its
    grip at its reduced downforce. A road car barely feels dirty air and a winged car does (retires `slipGap`,

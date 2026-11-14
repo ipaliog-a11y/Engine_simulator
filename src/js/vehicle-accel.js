@@ -23,7 +23,7 @@ function isFactoryFit(v){
   const ch=CHASSIS[v.chassis];if(!ch||!ch.fit)return false;const f=v.body?v.body.fit:ch.fit;
   return (v.driveMech||v.drive)===(v.body?f.drive:ch.drive)&&(v.governor||0)===(f.gov||0)&&(v.tc!==false)===(f.tc!==false)&&v.gears===f.gears&&v.gearing===f.gearing&&v.spacing===(v.body?'stock':'std')&&!(v.finalDriveSet>0)&&v.gearbox===f.gearbox&&v.diff===f.diff&&
     v.tireType===f.tire&&v.tireWidth===f.tw&&(v.tireWidthF||0)===(f.twF||0)&&!stepOf(v.springF)&&!stepOf(v.springR)&&!stepOf(v.barF)&&!stepOf(v.barR)&&!stepOf(v.damperF)&&!stepOf(v.damperR)&&v.tireAspect===f.ta&&v.wheelDia===f.wheel&&
-    v.aeroFront===f.aF&&v.aeroRear===f.aR&&v.aeroFloor===f.aFl&&v.weightRed===f.weight&&
+    v.aeroFront===f.aF&&v.aeroRear===f.aR&&!v.wingPart&&v.aeroFloor===f.aFl&&v.weightRed===f.weight&&
     v.brakeType===f.brake&&v.rotor===f.rotor&&v.suspension===f.susp&&geoStock(v)&&!v.dims&&!(v.ballastKg>0);
 }
 // Both axles on the factory's geometry (build 173); a save from before carries none, which is the factory's.
@@ -114,12 +114,15 @@ function buildVehicle(){
   // Brakes: the deceleration the hydraulics can command (m/s2, before fade). After the weight split, the wheelbase and
   // the centre of gravity, which size the rear brakes (build 203; until then this ran before them).
   vehicle.brakeDecelCap=brakeForceCap(vehicle)/vehicle.mass;
-  const af=AERO_FRONT[vehicle.aeroFront]||AERO_FRONT.none, ar=AERO_REAR[vehicle.aeroRear]||AERO_REAR.none, al=AERO_FLOOR[vehicle.aeroFloor]||AERO_FLOOR.none;
+  // a designed rear wing (build 291, wingAero) takes the place of the REAR AERO kit: its own ClA and CdA, in m2, not scaled by the class
+  const wing=vehicle.wingPart?wingAero(vehicle.wingPart):null;vehicle.wing=wing;
+  const af=AERO_FRONT[vehicle.aeroFront]||AERO_FRONT.none, ar=wing?AERO_REAR.none:AERO_REAR[vehicle.aeroRear]||AERO_REAR.none, al=AERO_FLOOR[vehicle.aeroFloor]||AERO_FLOOR.none;
   // The class's aero factor scales the parts to the car (a prototype's wing works a bigger, faster body than a hatch's).
   // A real car whose class factor is not its own carries one in its body (build 201: the Radical SR3, a club racer on the
   // TRACK PROTOTYPE class, which is sized for an LMP car).
   const aeroK=body&&body.aero>0?body.aero:ch.aero;
-  vehicle.clA=(af.cl+ar.cl+al.cl)*aeroK;                              // downforce coefficient·area
+  vehicle.aeroK=aeroK;
+  vehicle.clA=(af.cl+ar.cl+al.cl)*aeroK+(wing?wing.clA:0);                              // downforce coefficient·area
   // Where that downforce lands (build 105). It was split 50/50 whatever was fitted, so a rear wing helped
   // a front-driver's traction as much as a rear-driver's. Front parts load the front axle, rear parts the
   // rear, and the floor at its centre of pressure (AERO_FLOOR.front).
@@ -154,7 +157,7 @@ function buildVehicle(){
    const CF=quarterCar(vehicle,'F').cs*tF*tF/2,CR=quarterCar(vehicle,'R').cs*tR*tR/2,S=K.F+K.R;
    vehicle.warpK=K.F*K.R/S;vehicle.warpC=(K.R*K.R*CF+K.F*K.F*CR)/(S*S);}
   vehicle.drivenAero=vehicle.drive==='awd'?1:vehicle.drive==='rwd'?1-vehicle.aeroBal:vehicle.aeroBal;
-  vehicle.cdA=((body?body.cd:ch.cd)+af.cd+ar.cd+al.cd)*vehicle.area;  // drag coefficient·area
+  vehicle.cdA=((body?body.cd:ch.cd)+af.cd+ar.cd+al.cd)*vehicle.area+(wing?wing.cdA:0);  // drag coefficient·area
   const gb=GEARBOX[vehicle.gearbox]||GEARBOX.manual,df=DIFF[vehicle.diff]||DIFF.open;
   vehicle.gb=gb;vehicle.gbLabel=gb.label;
   vehicle.df=df;vehicle.diffLabel=df.label;vehicle.diffTraction=df.traction;

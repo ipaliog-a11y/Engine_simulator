@@ -30,7 +30,7 @@ const RACE={
   defendKmh:3,        // km/h more pace a car needs to pass a car that has moved over to defend
   defendCost:0.99,    // the defender's speed through the next corner, off the line it would have taken
   diveGap:10,         // m: close enough to try a late-braking move into a braking zone
-  spray:0.985,        // speed within a second behind a car on a wet track: its spray, a rule (build 291)
+  spray:0.985,        // speed within a second behind a car on a wet track: its spray, a rule (build 294)
   passKmh:4,          // km/h of pace advantage needed to pass on a 12 m wide circuit (narrower = more)
   pace:0.006,         // up to 0.6% off the car's limit, drawn per lap: no driver is on it every lap
   mistake:0.012,      // chance per lap of a mistake on a healthy car
@@ -39,7 +39,7 @@ const RACE={
   rainRamp:240,       // s from the first drops to a wet track
   recDt:0.25          // s between recorded samples
 };
-// The wake (build 291). drag: a following car's drag over its drag alone, against the gap from the car ahead's rear to
+// The wake (build 294). drag: a following car's drag over its drag alone, against the gap from the car ahead's rear to
 // its front in the car ahead's lengths: Zabat, Stabile, Farascaroli and Browand, "The aerodynamic performance of
 // platoons", California PATH UCB-ITS-PRR-95-35 (1995), figure 9, two 1/8-scale vans, read off the graph; past 3
 // lengths straight to none at 10, where the report puts the last measurable saving. df: the downforce a following car

@@ -8,7 +8,7 @@
 // The car does not drive on it yet. A single-speed reduction, regenerative braking and the motor's heat over a lap
 // are step 2.3; until then the VEHICLE, TRACK and RACE tabs say so instead of running an electric car through a
 // combustion gearbox. New words are English for now (decision 11): tr() shows the English where Greek is missing.
-const EV_DEFAULT={evMotorType:'pm',evRotorD:150,evStack:134,evPoles:6,evTurns:12,evMagnet:'ndfeb',evRetention:'bridges',evCooling:'jacket',evLamination:0.35,evWire:'round',evConductor:'copper',evRegen:'high',
+const EV_DEFAULT={evMotorType:'pm',evRotorD:150,evStack:134,evPoles:6,evTurns:12,evMagnet:'ndfeb',evMagT:6.5,evMagW:84,evRetention:'bridges',evCooling:'jacket',evLamination:0.35,evWire:'round',evConductor:'copper',evRegen:'high',
   evMaxRpm:18000,evInverter:'igbt',evAmps:950,evRearCount:1,evFront:'none',evFrontD:130,evFrontStack:110,evFrontPoles:4,evFrontTurns:12,evFrontAmps:700,evFrontFd:0,evChem:'nca',evSeries:96,evKWh:75,evYear:2020};
 // The race spends energy, not fuel (step 2.4): until then an electric car drives the 0-100 and the lap but does not race.
 // One reduction is all an electric car has: GEARING on the VEHICLE tab sets it (build 180).
@@ -30,7 +30,7 @@ const rotorWord=m=>m.im?'ROTOR':'MAGNETS';
 function readElectricFromForm(){
   const g=id=>document.getElementById(id),num=(id,lo,hi)=>clamp(+g(id).value||EV_DEFAULT[id],lo,hi);
   return {evMotorType:g('evMotorType').value==='im'?'im':'pm',evRotorD:num('evRotorD',80,260),evStack:num('evStack',40,250),evPoles:+g('evPoles').value||6,
-    evTurns:Math.round(num('evTurns',4,120)),evMagnet:g('evMagnet').value,evRetention:g('evRetention').value,
+    evTurns:Math.round(num('evTurns',4,120)),evMagnet:g('evMagnet').value,evMagT:num('evMagT',2,15),evMagW:Math.round(num('evMagW',40,100)),evRetention:g('evRetention').value,
     evCooling:g('evCooling').value,evLamination:+g('evLamination').value===0.2?0.2:0.35,evWire:g('evWire').value==='hairpin'?'hairpin':'round',evConductor:g('evConductor').value==='aluminium'?'aluminium':'copper',
     evRegen:EV_REGEN[g('evRegen').value]?g('evRegen').value:'high',evMaxRpm:Math.round(num('evMaxRpm',4000,25000)),evInverter:g('evInverter').value,
     evAmps:Math.round(num('evAmps',100,1600)),evRearCount:g('evRearCount').value==='2'?2:1,
@@ -67,7 +67,7 @@ function syncElectricSections(){
     if(!chemAvailable(chem.value,year))chem.value=['nca','ncaP','liHEV','lfp','nimhHEV','nimh','lead'].find(c=>chemAvailable(c,year));
     // an induction motor has no magnets to grade or to hold in (build 182): its rotor is a copper cage
     const im=document.getElementById('evMotorType').value==='im';
-    document.getElementById('evMagnet').disabled=im;document.getElementById('evRetention').disabled=im;
+    ['evMagnet','evMagT','evMagW','evRetention'].forEach(id=>{const el=document.getElementById(id);if(el)el.disabled=im;});
   }
   if(ev||hy){
     // a front motor (build 183; a hybrid's front axle motor, build 195): its fields, and the car is all-wheel drive
@@ -91,12 +91,12 @@ function evDriveLock(on){
 // The motor, or the set of motors, an electric build's fields describe (build 179; more than one motor, build 183). Its own
 // function since build 238, so the ENGINE tab's cards preview exactly the drive BUILD makes.
 function evMotorOf(e){
-  const rear=motorBuild({type:e.evMotorType,rotorD:e.evRotorD,stackL:e.evStack,poles:e.evPoles,turns:e.evTurns,magnet:e.evMagnet,
+  const rear=motorBuild({type:e.evMotorType,rotorD:e.evRotorD,stackL:e.evStack,poles:e.evPoles,turns:e.evTurns,magnet:e.evMagnet,magT:e.evMagT,magW:e.evMagW/100,
     retention:e.evRetention,cooling:e.evCooling,lamination:e.evLamination,wire:e.evWire,conductor:e.evConductor,inverter:e.evInverter,invAmps:e.evAmps,maxRpm:e.evMaxRpm});
   // more than one motor (build 183): the rear group, and a front motor sharing the magnet grade, cooling and inverter
   const parts=[{m:rear,n:e.evRearCount===2?2:1}];
   if(e.evFront==='pm'||e.evFront==='im')parts.push({m:motorBuild({type:e.evFront,rotorD:e.evFrontD,stackL:e.evFrontStack,poles:e.evFrontPoles,
-    turns:e.evFrontTurns,magnet:e.evMagnet,retention:e.evRetention,cooling:e.evCooling,lamination:e.evLamination,wire:e.evWire,conductor:e.evConductor,inverter:e.evInverter,invAmps:e.evFrontAmps,maxRpm:e.evMaxRpm}),n:1});
+    turns:e.evFrontTurns,magnet:e.evMagnet,magT:e.evMagT,magW:e.evMagW/100,retention:e.evRetention,cooling:e.evCooling,lamination:e.evLamination,wire:e.evWire,conductor:e.evConductor,inverter:e.evInverter,invAmps:e.evFrontAmps,maxRpm:e.evMaxRpm}),n:1});
   return parts.length===1&&parts[0].n===1?rear:motorSet(parts);
 }
 // ---- the build ----
