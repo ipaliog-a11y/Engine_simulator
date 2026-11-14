@@ -142,6 +142,38 @@ it needs must load without the page (no DOM, no canvas), so a separate game app 
 
 **F. The race's rules (2–4 builds).** Tyre heat, wear and wet grip from the tyre model of E; the tow and dirty air
 from the cars' own aero. Overtaking decisions and weather stay rules, signed off in the register.
+*Planned at build 290.* Today the race steps each tyre's tread temperature and wear with its own constants
+(`TYRE_RACE` in `race.js`; `tOpt`, `tWin`, `wear`, `wetKeep` in `TIRE_TYPE`) and the tow and dirty air as speed
+multipliers (`RACE.slip*`, `RACE.dirty`). Four builds, each moving only the race (the lap, 0-100 and dyno must keep an
+identical fingerprint):
+1. **The tread's heat.** The slip power from `driveTyre`: per wheel, the slip angle and ratio that make the force it
+   carries, then force times sliding speed (retires `TYRE_RACE.slip`, `roll`). Cooling by forced convection over the
+   tyre (Churchill-Bernstein for a cylinder, the tyre's own diameter and width; retires `H0`, `H1`) and conduction into
+   the road through the contact patch (`hTrack`). The heat capacity from the tread's rubber: width, diameter, tread
+   depth, density and specific heat (retires `cp`). Sources: Pacejka, *Tire and Vehicle Dynamics*; Farroni et al.'s
+   thermal tyre model (TRT).
+2. **Grip and wear from the rubber.** Grip against temperature from the compound's glass transition through the WLF
+   shift (Williams, Landel, Ferry 1955; Grosch 1963), so `tOpt` and `tWin` follow from a compound's Tg and the sliding
+   speed (retires `cold`, `hot`, `gMin`). Wear as abrasion from the friction energy (Schallamach; Grosch 1997's
+   abradability), against a tread depth per compound (retires `wearK`, `wearHot`, `wear`). The wear cliff
+   (`wLin`, `wCliff`, `wKnee`) is graining and blistering, which this model does not have: it stays a rule, signed off,
+   unless a cited model is found while building it. A compound's Tg is seldom published: on the `unsure` list.
+3. **Wet grip.** The water film's depth from the rain rate and the road's texture and drainage (Gallaway 1979, in mm,
+   in place of `RACE.wetFull`), the tread's grooves clearing it, and grip falling towards the hydroplaning speed
+   (Horne and Dreher, NASA TN D-2056, from the tyre's pressure) (retires `wetKeep`, `hWet`). The tyre's pressure is a
+   phase D part not built yet: until then each compound carries its maker's usual pressure, cited, and D's part
+   replaces it. The rain's arrival and amount stay a weather rule.
+4. **The wake and the pit lane.** Behind a car, its follower's drag and downforce fall with the gap in car lengths, from
+   measured data (Zabat et al. 1995, PATH platoon tests; for downforce, published wind-tunnel and CFD wake figures).
+   The speed then comes from the car's own balance: on a straight its power against its reduced drag, in a corner its
+   grip at its reduced downforce. A road car barely feels dirty air and a winged car does (retires `slipGap`,
+   `slipDrag`, `slipK`, `dirty`). The pit loss from the lane's length and limit, with the slowing and the pull away
+   (retires `pitLoss`; each circuit gets a pit-lane length, cited for a real one, from its main straight for a
+   drawn one). The racecraft numbers (`follow`, `close`, `defend*`, `dive*`, `passKmh`, `pace`, `mistake`), the crew's
+   `tyreChange` and `refuelLps`, and the drivers go into the register as rules.
+Checks: `tests/test71.mjs` and `79` cover the race; each build adds one test that its numbers come from the parts
+(a wider tyre heats slower, a slick's window sits above a road tyre's, a winged car loses more behind another).
+No real-car check per build (decision 3); the race is checked at H.
 
 **G. For both players (2–3 builds).** A guided build for the learner: a few questions (what kind of car, what
 budget) give a complete, working car with each choice explained, then every part stays open on its card for the
