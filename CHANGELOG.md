@@ -18,6 +18,26 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 ## [Unreleased]
 
+### The motor's stator diameter as a part (build 314)
+
+Phase C of `plans/road-to-v1.md`: `MOTOR.statorShape` retired (`plans/fitted-register.json`: 34 → 33 open).
+
+- **STATOR DIAMETER** (advanced, ROTOR & STATOR card; the front motor has its own). Until now every stator was the
+  bore over 0.67. The teeth and yoke still take what the flux needs (build 293); the slot gets what is left, so a
+  wider stator holds more copper: Model 3 rotor at 210 / 225 / 260 mm gives 9.7 / 4.0 / 1.5 mOhm and 47 / 55 / 75 kg.
+  The card shows the copper's current density at full current (Model 3 33 A/mm², the Ioniq's 10).
+- **Why not Pyrhönen's Table 6.2, as the plan said:** its densities (4-6.5 A/mm², 35-65 kA/m) are continuous ratings
+  for industrial machines; the presets run 10-40 A/mm² at peak, so the table would have made every motor several
+  times too big. The owner chose the diameter as a part instead.
+- **Presets:** the Model 3 takes MotorXP's 225 mm (was 226); the Model Y and Plaid magnet motors share it (PROBABLE).
+  The others are unpublished and keep the old rule's value, rounded (Model Y front 210, hybrids 226-301; `unsure`).
+  Everything moved by 0.2% or less (fingerprint, electric and hybrid cars: Plaid 1065 → 1064 hp, Prius cycle
+  4.45 → 4.46 L/100 km).
+- **Left open:** a design saved before this build is filled with the bore over 0.67 (`OD_FILL`), in the build
+  and the form. The hybrids' real stator diameters want sources. The guide shows liquid cooling's
+  10-30 A/mm² (Hendershot & Miller) but nothing enforces it. Heat is limited by the thermal model.
+
+Tests: test194 (new); test166 (open count), test149 (one help line changed, its Greek updated).
 ### Tyre pressure as a part (build 313)
 
 Phase D of `plans/road-to-v1.md`: the tyre's pressure, the first of its two builds (the part; `TYRE_KZ` goes next).

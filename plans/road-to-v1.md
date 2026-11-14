@@ -101,6 +101,8 @@ under the inverter's voltage and current, and the iron loss per part (teeth, yok
 `V_DROP`, `CPSR`, the 0.7 and the 80/20 retired (an induction motor keeps its saturation point, in `IM.leakage`).
 Named gaps: the Model 3 +12% torque at 953 A; past the knee the power rises (Leaf 113 kW, hybrids' motors 20-40% over
 their ratings); the Prius 4.29 -> 4.46 L/100 km. Next: `MOTOR.statorShape`, then the heat paths (step 3).
+*Build 314 (owner's choice):* the stator's outside diameter is a part, each preset its own (Model 3 225 mm, teardown);
+`MOTOR.statorShape` retired. Table 6.2's continuous densities were too low for traction peaks. Next: the heat paths (step 3).
 
 Beyond the register (not started; the owner decides when, November 2026): a fast-charge curve from the charge-voltage and plating limits
 the pack already has; the pack's temperature in the lap, cycle and race (they still read the 25 °C resistance); a

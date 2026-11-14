@@ -29,8 +29,10 @@ const EVD_FRONT_HELP={what:"The front motor's own size, winding and current, as 
 const EVD_FIELDS={
   evMotorType:{what:'How the rotor gets its magnetic field.',
     trade:'Magnets give the most torque per amp and the best efficiency, but cost money and weaken when hot. An induction rotor, a copper cage, buys its field with current: less torque per amp and a hotter rotor, but no magnets, and no drag when it gives no torque.'},
-  evRotorD:{what:'The diameter of the rotor. The stator around it is about 1.5 times as wide.',
+  evRotorD:{what:'The diameter of the rotor, inside the stator.',
     trade:"Torque grows with the diameter squared. A wider rotor is heavier, has more inertia, and its rim reaches the speed its magnets can stand at a lower rpm."},
+  evStatorOD:{adv:true,what:"The stator's outside diameter: the teeth, the slots and the yoke behind them.",
+    trade:"The teeth and yoke take what the flux needs; the slots get the rest. A wider stator holds more copper: less resistance and heat, but more mass and cost. A cramped one runs its copper at a high current density (shown on the card); liquid cooling holds about 10-30 A/mm² for good (Hendershot & Miller)."},
   evStack:{what:'How long the rotor and the stator are, along the shaft.',
     trade:'Torque grows in proportion to the length, with no effect on the speed limits. It adds mass, and the back-EMF grows with it, so the knee comes at a lower rpm.'},
   evPoles:{what:'How many magnetic poles go round the rotor.',
@@ -64,7 +66,7 @@ const EVD_FIELDS={
   evRearCount:{what:'One rear motor, or one for each rear wheel.',trade:'Two motors give twice the torque, and add their mass and cost. They share the battery.'},
   evFront:{what:'A motor on the front axle, which makes the car all-wheel drive.',
     trade:'A magnet motor adds the most. An induction motor has no drag when it gives no torque, so at a cruise the controller lets it idle, as Tesla does.'},
-  evFrontD:EVD_FRONT_HELP,evFrontStack:EVD_FRONT_HELP,evFrontPoles:EVD_FRONT_HELP,evFrontTurns:EVD_FRONT_HELP,evFrontAmps:EVD_FRONT_HELP,
+  evFrontD:EVD_FRONT_HELP,evFrontOD:EVD_FRONT_HELP,evFrontStack:EVD_FRONT_HELP,evFrontPoles:EVD_FRONT_HELP,evFrontTurns:EVD_FRONT_HELP,evFrontAmps:EVD_FRONT_HELP,
   evFrontFd:{what:"The front motor's own reduction gear. 0 lets the game match it to the main motor.",
     trade:'A higher ratio multiplies the front torque at the wheels, and the front motor reaches its top speed at a lower road speed.'},
   evChem:{what:'What the cells are made of.',
@@ -108,7 +110,7 @@ function evdCompute(){
       const T=hybMotorTq(hy,r),Tm=motorMaxTorque(m,r,V,60),w=r*Math.PI/30;
       pts.push({r,T,Tm});pk=Math.max(pk,T*w/1000);tq=Math.max(tq,T);pkM=Math.max(pkM,Tm*w/1000);
     }
-    return {hybrid,m,pack:hy.pack,V,pb,pts,pk,tq,pkM,top:m.nMax,mass:m.mass,packMass:hy.pack.mass,cost:m.cost+hy.pack.cost,
+    return {hybrid,m,J:m.Jpk/1e6,pack:hy.pack,V,pb,pts,pk,tq,pkM,top:m.nMax,mass:m.mass,packMass:hy.pack.mass,cost:m.cost+hy.pack.cost,
       knee:motorBaseW(m,V,motorPsi(m,60))*30/Math.PI,nTip:m.nTip,nFreq:m.nFreq,poles:m.poles,vTip:m.ret.vTip,maxRpm:e.evMaxRpm};
   }
   const m=evMotorOf(e),pack=packBuild({chem:e.evChem,series:e.evSeries,kWh:e.evKWh,year:e.evYear});
@@ -120,7 +122,7 @@ function evdCompute(){
     pts.push({r,T,Tm});if(T*w>pk*1000)pk=T*w/1000;if(T>tq+0.5)tq=T;pkM=Math.max(pkM,Tm*w/1000);
   }
   const parts=m.parts?m.parts.map(q=>q.m):[m];
-  return {hybrid,d,m,pack,V,pb:packMaxPower(pack,0.5)/1000,pts,pk,tq,pkM,top:m.nMax,mass:m.mass,packMass:pack.mass,cost:m.cost+pack.cost,
+  return {hybrid,d,m,J:parts[0].Jpk/1e6,pack,V,pb:packMaxPower(pack,0.5)/1000,pts,pk,tq,pkM,top:m.nMax,mass:m.mass,packMass:pack.mass,cost:m.cost+pack.cost,
     knee:motorBaseW(m,V,motorPsi(m,60))*30/Math.PI,nTip:Math.min(...parts.map(q=>q.nTip)),nFreq:Math.min(...parts.map(q=>q.nFreq)),
     poles:m.poles,vTip:m.ret.vTip,maxRpm:e.evMaxRpm};
 }
@@ -133,7 +135,7 @@ function evdComputeSlow(r){
 function evdSummary(c,r){
   const g=id=>evdG(id).value,km=x=>evdFmt(x);
   switch(c){
-    case 'size':return evdOptText('evMotorType')+' · Ø'+g('evRotorD')+' × '+g('evStack')+' mm · '+g('evPoles')+' '+tr('poles')+(r?' · '+km(r.mass)+' kg':'');
+    case 'size':return evdOptText('evMotorType')+' · Ø'+g('evRotorD')+'/'+g('evStatorOD')+' × '+g('evStack')+' mm · '+g('evPoles')+' '+tr('poles')+(r?' · '+km(r.mass)+' kg · '+evdFmt(r.J,1)+' A/mm²':'');
     case 'wind':return g('evTurns')+' '+tr('turns')+' · '+evdOptText('evWire')+(r&&r.knee<r.top?' · '+tr('knee')+' '+km(Math.round(r.knee/100)*100)+' rpm':'');
     case 'mag':return (evdG('evMagnet').disabled?'':evdOptText('evMagnet')+' · ')+tr('top')+' '+(r?km(Math.round(r.top/100)*100):g('evMaxRpm'))+' rpm';
     case 'cool':return evdOptText('evCooling')+' · '+evdOptText('evLamination');

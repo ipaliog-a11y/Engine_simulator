@@ -40,7 +40,7 @@ const r = await page.evaluate(() => {
   // 2. against a magnet motor of the same size and current
   // 6 poles, as magnet traction motors are built (the Model 3's): since build 293 the yoke carries the magnets' flux at
   // 1.5 T, and a 4-pole magnet rotor of this size needs a yoke that leaves the slots ~7 mm deep in the stator the model
-  // gives it (MOTOR.statorShape in plans/fitted-register.json).
+  // gives it (the bore over 0.67 the presets held until build 314).
   const pm = motorBuild(Object.assign({}, geo, { type: 'pm', poles: 6, magnet: 'ndfeb', retention: 'bridges', invAmps: A }));
   const best = x => { let b = 0; for (let n = 1000; n <= 14000; n += 500) { const Tm = motorMaxTorque(x, n, V, 60); for (let T = 10; T <= Tm; T += 10) b = Math.max(b, motorEfficiency(x, T, n, V, hot)); } return b; };
   const peakHot = x => { const n = 4000, T = motorMaxTorque(x, n, V, 60), t = { w: 65, c: 65, r: 65 }; for (let k = 0; k < 60; k++) motorHeatStep(x, t, motorLosses(x, T, n, V, t), 0.5); return t; };

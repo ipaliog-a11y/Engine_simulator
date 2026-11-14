@@ -31,7 +31,11 @@
 // 2013): 80 kW held at 7000 rpm with the stator settling near 135 C, peak motor efficiency above 97%.
 const RHO_CU=1.72e-8, ALPHA_CU=0.00393, RHO_FE=7650, RHO_CU_M=8960;
 const KW_WIND=0.93;        // winding factor: distributed, q = 2-3 slots per pole per phase, short-pitched
-const SPLIT=0.67;          // bore over stator outside diameter (Model 3 0.672, Leaf 0.66; 0.6-0.7 for traction motors)
+// The stator's outside diameter is a part (build 314, s.statorOD in mm): a maker's or a teardown's figure, as the rotor's
+// is. The teeth and yoke are sized from the flux (below) and the slot is what is left between them, so a small OD gives
+// a shallow slot and more resistance. Only a design that names none (saved before build 314) is filled as the bore over
+// 0.67, the rule every motor used until then (Model 3 0.672, Leaf 0.66).
+const OD_FILL=0.67;
 const GAP=0.0007;          // air gap (m): 0.7 mm, the Model 3's
 const FILL=0.40;           // copper fills 40% of a slot (stranded)
 // The teeth and the yoke are sized from the flux they carry (build 293): a tooth as wide as puts the air gap's peak field
@@ -381,7 +385,7 @@ function motorBuild(s){
   const lam=laminationOf(s.lamination);
   const wire=WIRE[s.wire]||WIRE.round, cond=CONDUCTOR[s.conductor]||CONDUCTOR.copper;
   const D=s.rotorD/1000, L=s.stackL/1000, poles=s.poles, p=poles/2, N=s.turns, Lfe=0.95*L;
-  const Ds=D+2*(im?IM_GAP:GAP), OD=Ds/SPLIT, h=(OD-Ds)/2;
+  const Ds=D+2*(im?IM_GAP:GAP), OD=Math.max(s.statorOD>0?s.statorOD/1000:Ds/OD_FILL,Ds+0.01), h=(OD-Ds)/2;   // 5 mm a side at least
   const slots=3*poles*(poles<=6?3:2)*(im&&poles===4?5/3:1);       // q = 3 slots per pole per phase up to 6 poles, then 2;
                                                                     // a 4-pole induction motor runs q = 5 (the Model S's 60)
   // flux: the air gap's fundamental from the magnets' circuit (an induction motor: its design flux density), per pole,
@@ -431,7 +435,7 @@ function motorBuild(s){
   const Imax=s.invAmps;
   const cost=Math.round(mCu*cond.cost+(mFeS+mFeR)*(3+lam.premium)+mMag*mag.cost+ret.cost+cool.cost+Imax*inv.costA+400+(im?mCage*11+150:0));
   const m={s,im,mag,ret,cool,inv,lam,wire,cond,barH,barEta,D,L,Lfe,Ds,OD,poles,p,N,slots,Bg,circ,magT,magW,wt,hSlot,hy,psi20,R20,mlt,Acu,mCu,mFeS,mFeR,mMag,mRotor,J,mass,
-          strand:dStrand,cuLayers,
+          strand:dStrand,cuLayers,Jpk:6*N*s.invAmps/Acu,   // the slot copper's current density at full current (A/m²)
           nTip,nFreq,nMax,Imax,cost,Qr,Rr20,mCage,ImR,vDrop,
           // thermal network (W/K, J/K): winding -> core through the slot liner (0.2 W/mK, 0.4 mm over the slot walls),
           // core -> coolant through the housing, rotor -> core across the gap (h ~ 100), and the direct paths
