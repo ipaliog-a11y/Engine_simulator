@@ -121,7 +121,7 @@ function hybFrontTq(hy,rpm){
 const HYB_FRONT_EFF=0.97;
 function hybFrontSetup(v){
   const hy=engine.hy,f=hy&&hy.front;if(!f){v.frontFd=0;v.frontTab=null;return;}
-  const nTop=motorTopRpm(f.motor,hybBusV(hy));   // where it has torque to give (build 300: the voltage can end it early)
+  const nTop=motorTopRpm(f.motor,hybBusV(hy));   // where it has torque to give (build 301: the voltage can end it early)
   // the car's top speed on everything it has: the engine and main motor's peak, and the front motor's
   const c=hybCurves();let P=0,Pf=0;c.eng.forEach((q,i)=>{P=Math.max(P,(q.tq+c.mot[i])*q.rpm*Math.PI/30);});
   for(let r=200;r<=nTop;r+=200)Pf=Math.max(Pf,hybFrontTq(hy,r)*r*Math.PI/30);

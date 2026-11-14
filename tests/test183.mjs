@@ -1,6 +1,6 @@
-// The magnet motor's circuit solved under load (build 300, phase C of plans/road-to-v1.md).
+// The magnet motor's circuit solved under load (build 301, phase C of plans/road-to-v1.md).
 //
-// WHY THIS EXISTS. Until build 300 three things about a magnet motor were constants set on the Model 3: how much torque
+// WHY THIS EXISTS. Until build 301 three things about a magnet motor were constants set on the Model 3: how much torque
 // per amp saturation takes (SAT_K), the voltage drop at full current (V_DROP) and the constant-power range (CPSR, with
 // the field-weakening current as 0.7 of the inverter's); and its iron loss was all the iron at 1.5 T, shared 80/20. Now
 // the magnets' circuit is solved slice by slice round a pole with the stator's current in it. What must hold:

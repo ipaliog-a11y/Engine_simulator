@@ -18,7 +18,7 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 ## [Unreleased]
 
-### The motor's saturation, field weakening and iron loss come from its circuit under load (build 300)
+### The motor's saturation, field weakening and iron loss come from its circuit under load (build 301)
 
 Phase C, steps 1 and 2 finished together (the owner's choice): `SAT_K`, `V_DROP`, `CPSR`, the 0.7 field-weakening
 current and the iron's 80/20 split were constants set on the Model 3. They are gone (`plans/fitted-register.json`: 37 → 34 open).
@@ -54,6 +54,14 @@ current and the iron's 80/20 split were constants set on the Model 3. They are g
 - **Left for the owner to decide (beyond the register):** a fast-charge curve; the pack's temperature in the lap, cycle
   and race; a cell's sag and recovery; ageing; an inverter junction temperature; wound-rotor, reluctance and axial-flux
   motors; and bench readouts the model already computes (loss split, C-rate, sag, an induction motor's slip).
+### Diagnosis notes vs faults — factory cars are not all lumpy (build 300)
+
+Redoes #201 (build 249) on today's `main`. Build 248's diagnosis marked most factory cars "NOT RUNNING SMOOTH" because race-cam lope and a peaky band were warnings, and because `engine.lumpiness` folds diesel clatter into the same number the sound uses.
+
+- **Faults** (valve float, knock past the ECU, damage) still mark it not smooth. **Warnings** are an unfair cell (cold oil, overheat, as-tuned under best-power, low voltage). **Notes** cover design character: race-cam lope, a clearly peaky band (< 25% of redline, was 35%), weak low-end (< 40, was 55), piston speed, cooling, petrol VGT, emissions, reliability, an EV's short peak hold.
+- **Lope is cam overlap only** (≥ 50°). Diesels are no longer flagged as lumpy idle. A GT3 that lopes shows DIAGNOSIS — NOTES, not NOT RUNNING SMOOTH.
+- test158 now sweeps the 100 factory cars: 0 not smooth, 0 diesels with lope, 25 race-cam notes. Nothing the simulators produce moved; this only reads them.
+
 ### The pit lane costs what its length and limit take from each car (build 299)
 
 Phase F, step 4 of `plans/road-to-v1.md`, the pit lane; `RACE.pitLoss` (one 20 s for every car and circuit) is retired.

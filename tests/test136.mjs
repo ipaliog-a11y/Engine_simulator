@@ -5,7 +5,7 @@
 //   · the three Teslas: peak power and torque, the knee, the continuous reading, the hold, the best
 //     efficiency, the pack's resistance and power, the WLTP Wh/km, the 0-100, the top speed, the centre
 //     of gravity, and a torque sample at 1000 rpm, at the knee, at twice the knee and at the redline;
-//   · the shape above the knee, on a motor that can actually rev past 4× its knee. Until build 300 a rectangle
+//   · the shape above the knee, on a motor that can actually rev past 4× its knee. Until build 301 a rectangle
 //     (flat to 4×, then 4/5 and 4/6, CPSR = 4); since then the d and q axes under the inverter's voltage and current
 //     (no CPSR for a magnet motor): power rises past the knee as the current turns to the d-axis, then falls;
 //   · the five factory hybrids' motors, which share this drive;
@@ -32,7 +32,7 @@
 // Model Y hold 114 → 72 s; Plaid 1428 → 1441 Nm, continuous 808 → 745 kW, hold 19 → 12 s. The hybrids' turns
 // re-matched to their published torque (Ioniq 33, Prius 103, Qashqai 26, 330e 55); the 918's motors 238 → 221 and
 // 221 → 204 Nm. The tail motor's knee 5126 → 3422 rpm.
-// Build 300 (saturation, field weakening and the iron loss from the circuit solved under load; SAT_K, V_DROP and CPSR
+// Build 301 (saturation, field weakening and the iron loss from the circuit solved under load; SAT_K, V_DROP and CPSR
 // retired) re-locked every block. The Teslas' currents re-matched (Model 3 950 → 850 A, 424 Nm; Model Y rear 700 → 640 A)
 // and the hybrids' turns (Ioniq 33 → 30, Prius 103 → 92, Qashqai 26 → 23, 330e 55 → 50). Model 3 knee 6437 → 6627,
 // continuous 266 → 259 kW, hold 19 → 37 s, 119.72 → 117.56 Wh/km; Model Y 544 → 549 Nm, 141.39 → 139.63 Wh/km; Plaid
@@ -84,7 +84,7 @@ const HYB = {
   '330e': { mode: 'p2', tq: 262.94, kW: 108.09, packKW: 101.51, packR: 0.18635, front: 0 },
   '918': { mode: 'p2', tq: 247.55, kW: 160.09, packKW: 140.92, packR: 0.16371, front: 221.6 }
 };
-// A sleeve, 4-pole, SiC motor that revs past 4× its knee (build 300: from the d and q axes, no rectangle).
+// A sleeve, 4-pole, SiC motor that revs past 4× its knee (build 301: from the d and q axes, no rectangle).
 const TAIL = { knee: 1784, nMax: 40000, p1: 30616, p2: 34085, p4: 33995, p5: 33421, p6: 32899 };
 
 const r = await page.evaluate(() => {

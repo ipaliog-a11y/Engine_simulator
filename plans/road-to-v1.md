@@ -95,7 +95,7 @@ hybrid controllers; each fitted number found gets a part or a cited rule.
 circuit through M270-35A's curve; `FLUX_KM` retired, the Model 3's back-EMF lands at 41.8 V/krpm against 42. *Build 293:* the
 teeth and yoke sized from that flux at the top of Pyrhonen's Table 6.1 (tooth 2.0 T, yoke 1.5 T); the slot is what is left.
 Left in `MOTOR.statorShape`: the outside diameter (bore over 0.67), which Table 6.2's current densities would set.
-*Build 300 (owner's choice: the three together):* the circuit solved under load, slice by slice round a pole with the
+*Build 301 (owner's choice: the three together):* the circuit solved under load, slice by slice round a pole with the
 pole piece carrying the q-axis flux (the V's angle PROBABLE): saturation, the d and q linkages, MTPA and field weakening
 under the inverter's voltage and current, and the iron loss per part (teeth, yoke, the rotor's slot ripple). `SAT_K`,
 `V_DROP`, `CPSR`, the 0.7 and the 80/20 retired (an induction motor keeps its saturation point, in `IM.leakage`).

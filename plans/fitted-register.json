@@ -275,7 +275,7 @@
    "id": "IM.leakage",
    "file": "electric.js",
    "match": "const IM_SIGMA=0.08",
-   "standsFor": "an induction motor's leakage (IM_SIGMA), resistive drop (IM_R_DROP), Carter and saturation factor (IM_KCS), constant-power range (IM_CPSR) the cage's proportions (IM_HR, IM_RING), and its torque per amp lost to saturation (IM_SAT_K: the Model 3's point of before build 300, 8.5% at 145.7 kA/m, scaled with the loading's square; a magnet motor's is solved since build 300)",
+   "standsFor": "an induction motor's leakage (IM_SIGMA), resistive drop (IM_R_DROP), Carter and saturation factor (IM_KCS), constant-power range (IM_CPSR) the cage's proportions (IM_HR, IM_RING), and its torque per amp lost to saturation (IM_SAT_K: the Model 3's point of before build 301, 8.5% at 145.7 kA/m, scaled with the loading's square; a magnet motor's is solved since build 301)",
    "retiredBy": "slot and end-ring leakage from the stator's and the cage's geometry (Pyrhonen ch. 4), the breakdown torque from it; the cage's bars as design fields",
    "phase": "C",
    "state": "open"
