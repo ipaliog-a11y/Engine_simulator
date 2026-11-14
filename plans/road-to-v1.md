@@ -147,19 +147,22 @@ enthusiast. The guide pages for the new parts.
 Editable spark and VE tables (owner's decision, November 2026): an rpm × load grid for ignition advance and one for
 volumetric efficiency on the ECU card, beside the fuel map that is already editable. Each opens filled with what the
 model derives (the MBT-tracking, knock-limited timing; the VE from the cam, ports, runners and plenum), so an untouched
-table changes no number. An edited cell overrides the derived value, and the physics still answers it: advance past
-the knock limit knocks, and a VE cell above what the parts can breathe is capped or flagged rather than taken as free
-air. RESET returns the derived table.
+table changes no number. RESET returns the derived table.
+- Spark: an edited cell is the advance the engine runs, and the physics answers it (too little loses torque, past the
+  knock limit it knocks).
+- VE, as in a real ECU (owner's choice): the table is the ECU's *estimate* of VE, used only to meter fuel. The engine's
+  real VE stays derived from its parts and is never edited. A wrong cell gives a lean or rich mixture, with the power,
+  exhaust temperature and knock that follow. No fitted number enters. Decide with it how the table and the existing
+  fuel map relate (one built from the other, or merged).
 
 **H. The v1.0 gate (1–2 builds).** Full-suite run; the scoreboard against the real cars (power, torque, 0–100, top
 speed, lap, consumption): every car under 10% on each, or named with its reason (unsourced part, missing physics); guide and README pass.
 A check for irrational builds: sweep the inputs a player can set (bore, stroke, rpm limit, boost, compression,
-timing and VE cells, cam, gearing, tyre, mass, motor and pack sizes) to find the values and combinations that give
+spark cells, cam, gearing, tyre, mass, motor and pack sizes) to find the values and combinations that give
 absurd results (power with no air to make it, a piston speed or BMEP no material holds, a pack that cannot supply its
 motor). For each, decide whether to restrict it: a fixed limit, or a dynamic one that follows from the rest of the
-build (the rpm limit from piston speed and the valve springs, boost from the compressor map and knock, the VE cells
-from what the parts can flow). Each limit cited, as the physics rules ask; a limit the physics already enforces
-(knock, a failure) stays a consequence, not a lock. The owner tags the release.
+build (the rpm limit from piston speed and the valve springs, boost from the compressor map and knock). Each limit cited, as the physics rules ask; a limit the physics already enforces
+(knock, a failure, a lean mixture) stays a consequence, not a lock. The owner tags the release.
 
 **After v1.0.** 3D 8-bit cars from the profile images and the recorded dimensions; the driving game on `stepCar`;
 the Greek decision; a career layer.
