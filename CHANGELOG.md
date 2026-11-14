@@ -18,13 +18,44 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 ## [Unreleased]
 
-### Diagnosis notes vs faults — factory cars are not all lumpy (build 299)
+### Diagnosis notes vs faults — factory cars are not all lumpy (build 300)
 
 Redoes #201 (build 249) on today's `main`. Build 248's diagnosis marked most factory cars "NOT RUNNING SMOOTH" because race-cam lope and a peaky band were warnings, and because `engine.lumpiness` folds diesel clatter into the same number the sound uses.
 
 - **Faults** (valve float, knock past the ECU, damage) still mark it not smooth. **Warnings** are an unfair cell (cold oil, overheat, as-tuned under best-power, low voltage). **Notes** cover design character: race-cam lope, a clearly peaky band (< 25% of redline, was 35%), weak low-end (< 40, was 55), piston speed, cooling, petrol VGT, emissions, reliability, an EV's short peak hold.
 - **Lope is cam overlap only** (≥ 50°). Diesels are no longer flagged as lumpy idle. A GT3 that lopes shows DIAGNOSIS — NOTES, not NOT RUNNING SMOOTH.
 - test158 now sweeps the 100 factory cars: 0 not smooth, 0 diesels with lope, 25 race-cam notes. Nothing the simulators produce moved; this only reads them.
+
+### The pit lane costs what its length and limit take from each car (build 299)
+
+Phase F, step 4 of `plans/road-to-v1.md`, the pit lane; `RACE.pitLoss` (one 20 s for every car and circuit) is retired.
+- **The loss is derived** (`racePitLoss`): the lane at its 60 km/h limit, half before the box and half after, against the
+  car's own solved speed over the same stretch, plus braking into the lane at the tyre's grip and the stop and launch at
+  the box from the car's own standing start. A Civic Type R or a 911 GT3 loses 11-19 s (Spa 11-13 s, where the lane's
+  entry half crosses the Bus Stop chicane; the Nordschleife 19 s).
+- **The lane's length** is 400 m, the middle of the published lanes (281-426 m), except where a circuit's own figure is
+  found: Albert Park 281 m, Bahrain 426 m (both probable, secondary sources). No table of every circuit is published,
+  and the figures that are differ by where they measure from (Interlagos: 380 m and 1140 m).
+- The strategy, the wet-tyre call and the race log read the car's own loss. The 60 km/h limit, the crew's 6 s and
+  2.5 L/s stay rules.
+- Open: each real circuit's lane length; the lane's own line (it runs beside the track, not on it).
+- Fingerprint: only the race moves. `tests/test182.mjs` checks the derivation.
+
+Tests: test182 (new); 71, 79, 166, 51, 73.
+
+### The track and race picture keeps its frame rate when zoomed out (build 298)
+
+No physics changed; only how the picture is painted (`track-scene.js`).
+- **Why it dropped frames:** zoomed out, the whole circuit is in view, and all of it (about 1000 strokes and 700 fills)
+  was painted again every frame, though only the cars move.
+- **The still part is kept.** When the camera does not move (fully zoomed out, or paused), the ground, road and
+  scenery are painted once and copied; only the cars and the weather are drawn each frame. On an emulated phone
+  (4x slower CPU) a frame fully zoomed out went from about 66 ms to about 28 ms, the same as zoomed in.
+- **Less detail where it is under a pixel.** Below 3 px per metre the rail posts, the trees' glow and trunk and the
+  single tyres of a stack are not drawn. The lap's coloured line is one stroke per run of a colour (442 strokes to
+  about 85). Part-way zoomed out a frame went from about 70 ms to about 55 ms.
+- **Open:** part-way zoomed out the camera still moves, so nothing can be kept, and it is still the slowest view.
+  The times are from a desktop browser slowed down, not a phone. No fingerprint was run: nothing a result reads changed.
 
 ### A power-split or series hybrid's engine is heard where the lap runs it (build 297)
 
