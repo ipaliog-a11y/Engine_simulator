@@ -33,7 +33,7 @@ named fit (a known gap, not to be tuned).
 |---|---|---|
 | **A** (build 297) | Power-split and series on the track: per replay point, the engine's power as the fuel has it (`psEnginePower`, shared with `psFuelRate`), its speed on the best line (`psOolAt`), its manifold from its share of full-load torque at that speed (`steadyMapAt`'s law). Off the power it stops, and the sound mutes. | The fuel model's relations: sound and fuel agree by construction |
 | **B** (build 296) | The bench's sound reads the engine's throttle (`withEngThr`), so crackle, blow-off and lope follow `H.thrE` | The controller's output |
-| **C** | Start and stop: the motor (P2) or MG1 spins the engine up unfuelled over `t = J dw / T_motor`, then fuel on; a stop cuts the fuel and runs down to 0. The gas worklet is reset, not left at its old speed. | Engine and motor inertia, the motor's torque |
+| **C** (build 298) | Start and stop: the motor (P2) or MG1 spins the engine up unfuelled over `t = J dw / T_motor`, then fuel on; a stop cuts the fuel and runs down to 0. The gas worklet is reset, not left at its old speed. Done with MG1 (or the generator) also braking the engine to rest at its full torque; a P2's coasts on its friction. | Engine and motor inertia, the motor's torque |
 | **D** | Each bench mode checked: EV the motor only; CHARGE and HOLD the engine at the controller's speed whatever the road; SPORT and ENGINE on the pedal. Guide and README text for the sound. | Falls out of A-C |
 | **E** | Skip the gas worklet while muted; pass the engine to `gasReference` and `calibrateGas` | Refactor: fingerprint identical |
 | later | P2 electric stretches on the track (EV UP TO, EV POWER) | Needs the lap solver to record engine-off points first |

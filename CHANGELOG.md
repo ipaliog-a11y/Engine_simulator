@@ -18,6 +18,16 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 ## [Unreleased]
 
+### A hybrid's engine is spun up before it fires, and runs down when it stops (build 298)
+
+Step C of `plans/hybrid-electric/gas-sound-hybrid.md`, on the bench (DYNO tab).
+- **Starting**, the engine is turned unfuelled until it fires: J dw/dt = Tc + Tf, with Tf its own motoring loss (`brakeTorqueRaw`, fuel cut) and Tc a power-split's MG1 or a series hybrid's generator at its full torque (reaching the crank as T/ks, its rotor adding J/ks²), or what a P2's motor is not giving the shaft. It fires at idle (a P2 at the shaft's speed, where its clutch closes). It was at idle at once, fuelled. Prius: 0.17 s to fire; 330e: 0.07 s.
+- **Stopping**, the fuel is cut and the engine runs down instead of falling at a flat 4000 rpm/s: a P2's coasts on its friction (330e: 0.80 s from idle), a power-split's or series hybrid's MG1 brakes it at the same full torque (Prius: 0.15 s; on friction alone a Qashqai e-POWER's took ~5 s from 4000 rpm). The sound is heard, on a fuel cut, until it is at rest (it muted at half idle).
+- **The sound's speed returns to 0 when the engine is muted**, so a restart on the lap replay rises from rest instead of sweeping down from its last speed.
+- Left open: the crank's ~1 kJ is not drawn from the pack, nor the stop's returned; MG2's cancelling of MG1's reaction on the ring is not modelled; the lap replay has no spin-up or run-down (its engine still starts and stops between points). Bench and sound only: the fingerprint is identical.
+
+Tests: test182 (new); 110, 180, 181, 107.
+
 ### A power-split or series hybrid's engine is heard where the lap runs it (build 297)
 
 - **The lap replay played the wrong engine.** On the TRACK tab a Prius's or an e-POWER's engine sounded on its full-load line whenever the throttle was open, and idled off it, while the lap's fuel had it on its best line at the power it actually gave (the shaft's power less the pack's), and stopped off the power. The sound now reads the same engine power as the fuel (`psEnginePower`, shared), so the two agree: on the Prius's lap the engine runs at 379 of 442 points and is silent at the other 63, at the best line's speed exactly.
