@@ -18,6 +18,23 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 ## [Unreleased]
 
+### A guided build for the learner: three questions give a real car, each part explained (build 306)
+
+Phase G, last build. GUIDED BUILD, the title menu's sixth item, asks what kind of car, what budget and what matters
+most (the quickest, the lightest or the cheapest), and offers the real car that answers them, with up to three others.
+
+- **Each part explained**: the engine's size and type, its induction, the driven wheels, gearbox, tyres, brakes,
+  suspension and mass, each with a line on why a car like this has it and the tab where it can be changed.
+- **BUILD THIS CAR** loads it with its own engine exactly as the FACTORY CAR picker does, on the VEHICLE tab, where every
+  part stays open on its card. No number in the sim moves (it only loads existing presets).
+- **The budget is the sim's own build price** (engine.cost + vehicle.cost), $12,250 (Trabant) to $129,133 (918 Spyder).
+  Pricing a car means working out its engine, about 1 s each, so `tools/car-prices.mjs` writes the list to
+  `src/js/car-prices.js` (the owner's choice over pricing live); `tests/test188.mjs` re-prices all 100 cars and fails
+  if the list is stale. Re-run the tool after any change to a cost or a preset.
+- "Quickest" and "lightest" read the maker's published 0–100 and curb mass; a car without one ranks last.
+- Open: it picks among the real cars rather than composing a car from parts; the new strings have no Greek
+  (translations paused), so `test123` expects GUIDED BUILD in English on the Greek menu.
+
 ### The ECU's VE table is editable: its estimate of the air, used only to meter fuel (build 305)
 
 Phase G, second build. With the fuel map on AUTO, a load × rpm grid of volumetric efficiency now sits under the spark map,

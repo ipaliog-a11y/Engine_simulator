@@ -305,7 +305,7 @@ function loop(now){
   updateUI();
   requestAnimationFrame(loop);
 }
-function appCovered(){const c=document.body.classList;return c.contains('title-open')||c.contains('showcase-open');}
+function appCovered(){const c=document.body.classList;return c.contains('title-open')||c.contains('showcase-open')||c.contains('guided-open');}
 bindControls();bindHybridPanel();bindHybMap();applyEngineToForm(Object.assign({},DEFAULT_ENGINE));buildEngine();
 applyVehicleToForm(DEFAULT_VEHICLE);buildVehicle();updateVehicleSummary();
 loadFromHash();   // open a shared build if the URL carries one
@@ -318,6 +318,7 @@ bindTrackPage();
 sizeCanvas();updatePhysics();updateUI();requestAnimationFrame(loop);
 bindTitleScreen();
 bindShowcase();
+bindGuided();
 if(titleOnLoad())openTitleScreen();
 
 // Register service worker for offline/installable PWA (no-op on file://).

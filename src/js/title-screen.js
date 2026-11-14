@@ -137,6 +137,7 @@ function titleMark(){
 function titleGo(mode){
   closeTitleScreen();
   if(mode==='showcase'){openShowcase('title');return;}   // the car showcase is a page of its own (build 237)
+  if(mode==='guided'){openGuided('title');return;}       // so is the guided build (build 306)
   setTab(mode);
 }
 function openTitleScreen(){

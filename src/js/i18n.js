@@ -2100,6 +2100,7 @@ function applyLang(lang){
   if(typeof showGuide==='function'&&document.getElementById('guideIndex'))showGuide(guideCur);
   if(typeof renderLap==='function'&&lapResult)renderLap();
   if(typeof renderSuspWin==='function'&&sc.open){buildSuspForm();renderSuspWin();}
+  if(typeof renderGuided==='function'&&guided.open)renderGuided();   // the guided build, if open (build 306)
   if(typeof renderShowcase==='function'&&showcase.open)renderShowcase();   // the car showcase, if open (build 237)   // the suspension calculator, if open (build 218)
   for(const id of ['garageName','engSaveName']){const gn=document.getElementById(id);
     if(gn){if(gn.dataset.enPh===undefined)gn.dataset.enPh=gn.placeholder;gn.placeholder=tr(gn.dataset.enPh);}}
