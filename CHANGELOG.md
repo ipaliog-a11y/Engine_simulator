@@ -18,6 +18,21 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 ## [Unreleased]
 
+### The help shows a value at its lowest and highest real example (build 300)
+
+Redoes #206 (build 251) on today's code; #206 was too far behind to merge.
+- Press **?** on BORE, STROKE or COMPRESSION and the help draws the cylinder twice to one scale, at the lowest and the
+  highest value a factory engine uses (the slider's first and last ticks), with both power curves on one pair of axes.
+  REDLINE shows the curves alone, since its cylinder would look the same.
+- On the VEHICLE tab, WHEEL DIA, TYRE WIDTH and TYRE ASPECT draw the tyre's section at both ends of the real range, to
+  scale, with its diameter and sidewall.
+- Nothing is drawn by hand: each side is the form's own preview with only that field changed, and the form, the live
+  engine and the state are put back afterwards (`plans/designer-diagrams-in-code.md`; the icon brief, not yet started,
+  is `plans/designer-art-brief.md`).
+- Left open: a rotary has no cylinder to draw, so its fields show no comparison. Tyre width and aspect change only the
+  drawing, not the car (their grip effect needs the car rebuilt). Front tyre width is left out: the section drawn is
+  the rear tyre's.
+
 ### A power-split or series hybrid's engine is heard where the lap runs it (build 297)
 
 - **The lap replay played the wrong engine.** On the TRACK tab a Prius's or an e-POWER's engine sounded on its full-load line whenever the throttle was open, and idled off it, while the lap's fuel had it on its best line at the power it actually gave (the shaft's power less the pack's), and stopped off the power. The sound now reads the same engine power as the fuel (`psEnginePower`, shared), so the two agree: on the Prius's lap the engine runs at 379 of 442 points and is silent at the other 63, at the best line's speed exactly.

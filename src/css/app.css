@@ -651,6 +651,8 @@ body.showcase-open{overflow:hidden}
 .evd-help ul{margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:3px}
 .evd-help li{padding-left:8px;border-left:2px solid #3a3a55;color:#889;font-size:6px}
 .evd-help li.on{border-color:#00ff88;color:#e0e0e0}
+.evd-help canvas.evd-cmp{width:100%;max-width:232px;background:#12121c;border:2px solid #26263a;image-rendering:pixelated}
+.evd-cmpt{display:flex;flex-direction:column;gap:3px;font-size:6px;color:#cdd}.evd-cmpt i{font-style:normal}
 .evd-help li span{color:#00ff88;margin-right:6px}
 .evd-help .empty{color:#889}
 .evd-guide{align-self:flex-start;font-family:inherit;font-size:7px;background:#12121c;color:#ffcc00;border:2px solid #3a3a55;padding:5px 8px;cursor:pointer;margin-top:4px}

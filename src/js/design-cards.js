@@ -266,6 +266,10 @@ class DesignCards{
       if(real.length)h+='<b>'+tr(this.cfg.realHead)+'</b><ul>'+real.map(t=>'<li class="'+(+ctl.value===t.v?'on':'')+'"><span>'+dcFmt(t.v,t.v%1?2:0)+'</span>'+
         t.names.slice(0,5).join(', ')+(t.names.length>5?' +'+(t.names.length-5):'')+'</li>').join('')+'</ul>';
     }
+    const cm=this.cmpSpec(id);
+    if(cm)h+='<b>'+tr('LOW AGAINST HIGH')+'</b><span>'+tr('The lowest and the highest real example, with everything else as you set it.')+'</span>'+
+      (cm.pic?'<canvas class="evd-cmp" data-cmp="pic" width="232" height="'+(cm.h||150)+'"></canvas>':'')+
+      (cm.curve?'<canvas class="evd-cmp" data-cmp="curve" width="232" height="110"></canvas>':'')+'<div class="evd-cmpt" data-cmp="txt"></div>';
     const card=this.cfg.cards.find(c=>c.id===(f&&f.closest('.evd-card').dataset.card));
     const guide=spec.guide||(card&&card.guide);
     if(guide)h+='<button type="button" class="evd-guide" data-gp="'+guide+'">'+tr('GUIDE')+' ▸</button>';
@@ -282,6 +286,60 @@ class DesignCards{
     this.q('.evd-inhelp').forEach(x=>{const on=!!id&&x.dataset.f===id&&this.narrow();x.hidden=!on;x.innerHTML=on?box.innerHTML:'';});
     this.q('.evd-guide').forEach(b=>b.addEventListener('click',()=>{const t=document.getElementById('tabGuide');if(t)t.click();if(typeof showGuide==='function')showGuide(b.dataset.gp);}));
     if(!quiet&&id&&this.narrow()){const f=this.field(id);if(f)f.scrollIntoView({block:'nearest'});}
+    if(id&&this.cmpSpec(id)){clearTimeout(st.cmpT);st.cmpT=setTimeout(()=>{if(st.help===id)this.drawCompare(id);},0);}
+  }
+
+  // ---- low against high (build 300): a number at its lowest and highest real example, drawn and worked out by the
+  // form's own code (cfg.compare.at), never by hand. The rest of the form is as set, and is put back. ----
+  // cfg.compare: {fields:{id:{pic,curve,h,u,dp}}, ok(id) (the form can show it now), at(id,v,res) (the result with the
+  // field at v; the field's box holds v meanwhile), draw(ctx,id,res,vals,W,H) (both pictures, at one scale), text(id,v,r)}.
+  cmpSpec(id){
+    const c=this.cfg.compare,s=c&&c.fields[id];
+    if(!s||(c.ok&&!c.ok(id))||!this.cmpValues(id))return null;
+    return s;
+  }
+  // the lowest and the highest real example; with fewer than two, the box's own range
+  cmpValues(id){
+    const ctl=document.getElementById(id);if(!ctl||ctl.type!=='number')return null;
+    const t=this.cfg.ticks(id);let lo=+ctl.min,hi=+ctl.max;
+    if(t.length>=2){lo=t[0].v;hi=t[t.length-1].v;}
+    return lo<hi?[lo,hi]:null;
+  }
+  // the results at both values, kept until another input changes (this one's own value does not enter them)
+  cmpRun(id){
+    const ctl=document.getElementById(id),vals=this.cmpValues(id);if(!vals)return null;
+    const sig=id+'|'+this.q('input,select').filter(e=>e!==ctl&&e.type!=='range').map(e=>e.value).join('|');
+    if(this.st.cmp&&this.st.cmp.sig===sig)return this.st.cmp;
+    const keep=ctl.value,res=[];
+    try{for(const v of vals){ctl.value=v;let r=null;try{r=this.cfg.compare.at(id,v,this.st.res);}catch(e){r=null;}res.push(r);}}
+    finally{ctl.value=keep;}
+    if(res.some(r=>!r))return null;
+    return this.st.cmp={sig,id,vals,res};
+  }
+  drawCompare(id){
+    const s=this.cmpSpec(id),run=s&&this.cmpRun(id);if(!run)return;
+    const C=DC_COLOURS,boxes=[this.el('Help')].concat(this.q('.evd-inhelp').filter(x=>!x.hidden));
+    const txt=run.vals.map((v,i)=>'<span><i style="color:'+(i?C.green:C.cyan)+'">■</i> '+tr(i?'HIGH':'LOW')+' '+dcFmt(v,s.dp||0)+(s.u||'')+': '+
+      this.cfg.compare.text(id,v,run.res[i])+'</span>').join('');
+    for(const b of boxes){if(!b)continue;
+      const pic=b.querySelector('canvas[data-cmp=pic]'),cur=b.querySelector('canvas[data-cmp=curve]'),t=b.querySelector('[data-cmp=txt]');
+      if(pic){const x=dcCtx(pic);this.cfg.compare.draw(x,id,run.res,run.vals,pic.width,pic.height);}
+      if(cur)this.cmpCurve(cur,run);
+      if(t)t.innerHTML=txt;
+    }
+  }
+  // the form's curve (its first line, a) at both values, on one pair of axes: LOW in cyan, HIGH in green
+  cmpCurve(cv,run){
+    const C=DC_COLOURS,x=dcCtx(cv),W=cv.width,H=cv.height,pl=30,pr=8,pt=8,pb=16,iw=W-pl-pr,ih=H-pt-pb;
+    const cs=run.res.map(r=>this.cfg.curve(r)),xs=cs[0].xStep||2000,ys=cs[0].yStep||50,xLab=cs[0].xLab||(v=>dcFmt(v/1000)+'k');
+    const xMax=Math.ceil(Math.max(...cs.map(c=>c.xMax))/xs)*xs,yMax=Math.max(ys,Math.ceil(Math.max(...cs.map(c=>Math.max(...c.pts.map(q=>q.a))))/ys)*ys);
+    const X=v=>pl+v/xMax*iw,Y=v=>pt+ih-v/yMax*ih;
+    x.font='7px "Press Start 2P"';x.strokeStyle=C.edge;x.lineWidth=1;
+    for(let i=0;i<=2;i++){const y=Math.round(pt+ih*i/2)+.5;x.beginPath();x.moveTo(pl,y);x.lineTo(W-pr,y);x.stroke();
+      x.textAlign='right';x.fillStyle=C.dim;x.fillText(dcFmt(yMax*(1-i/2)),pl-3,y+3);}
+    x.textAlign='center';for(let k=0;k<=2;k++)x.fillText(xLab(xMax*k/2),X(xMax*k/2),H-4);
+    x.textAlign='right';x.fillText(tr(this.cfg.legend[0][1]),W-pr,pt+7);
+    cs.forEach((c,i)=>{x.strokeStyle=i?C.green:C.cyan;x.lineWidth=2;x.beginPath();c.pts.forEach((q,j)=>{j?x.lineTo(X(q.x),Y(q.a)):x.moveTo(X(q.x),Y(q.a));});x.stroke();});
   }
 
   // ---- pictures ----
