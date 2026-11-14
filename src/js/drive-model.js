@@ -250,17 +250,17 @@ function driveCharge(car,s,thr,rpm,Ff,vf,h,Toff){
 function driveTurbo(pt,grid){
   const e=engine,iat0=state.iat;state.iat=20;                 // design conditions, as the 0-100 and the lap pin them
   const T01=293.15,NR=10,NN=16,TH=[0.08,0.25,0.45,0.65,0.82,1],lo=Math.min(1000,pt.idleRpm()||1000),hi=pt.maxRpm();
-  const rp=[],ns=[],P=[],bS=[],eta=[],air=[],Tch=[],bAv=grid.rpms.map(r=>pt.boostAvail(r));
+  const rp=[],ns=[],u=[],P=[],bS=[],eta=[],air=[],Tch=[],bAv=grid.rpms.map(r=>pt.boostAvail(r));
   for(let i=0;i<NN;i++)ns.push(e.shaftMax*i/(NN-1));
   for(let i=0;i<NR;i++){const rpm=lo+(hi-lo)*i/(NR-1),bt=pt.boostTarget(rpm);rp.push(rpm);
-    air.push(airFlowAt(rpm,1));Tch.push(effIAT(1+bt/2,rpm)+273.15);
+    air.push(airFlowAt(rpm,1));u.push(unitsAt(rpm));Tch.push(effIAT(1+bt/2,rpm)+273.15);
     for(const n of ns)for(const th of TH){
       const T3=exhaustGasT(Math.max(0.3,th),rpm);let b=0,r=null;
       for(let k=0;k<8;k++){r=shaftNetPower(n,airFlowAt(rpm,1+b)*th,T3,T01,rpm);b=0.5*b+0.5*Math.max(0,Math.min(bt,r.pr-1));}
       P.push(r.net-shaftLossPower(n));bS.push(b);eta.push(Math.max(0.3,Math.min(0.85,r.eta||0.7)));
     }}
   state.iat=iat0;
-  return {J:e.shaftJ,nMax:e.shaftMax,V:e.chargeVol||0,T01,rp,n:ns,th:TH,P,bS,eta,air,Tch,
+  return {J:e.shaftJ,nMax:e.shaftMax,V:e.chargeVol||0,T01,rp,u,n:ns,th:TH,P,bS,eta,air,Tch,
     rpm:grid.rpms.slice(),boosts:grid.boosts.slice(),tq:grid.tq.map(r=>r.slice()),bAvail:bAv,
     flatShift:['dct','sequential','auto'].includes(vehicle.gearbox)};   // a spark-cut shift keeps the throttle open (the lap's rule)
 }
@@ -275,8 +275,8 @@ function driveShaft(tb,s,rpm,thr,h){
   const bSh=tri(tb.bS),Tc=tb.Tch[i]+(tb.Tch[i+1]-tb.Tch[i])*fi,air=tb.air[i]+(tb.air[i+1]-tb.air[i])*fi;
   // falling, the charge pipes empty at the rate the engine swallows them: tau = air held / air swallowed
   const b=s.boost,b2=bSh>=b?bSh:bSh+(b-bSh)*Math.exp(-h*air*th*287*Tc/Math.max(1e-9,tb.V*1e5));
-  // rising, the air that fills them costs the compressor's work per kg
-  const pr=1+0.5*(b+b2),fill=tb.V*Math.max(0,b2-b)*1e5/(287*Tc)*1005*tb.T01*(Math.pow(pr,0.286)-1)/tri(tb.eta);
+  // rising, the air that fills them costs the compressor's work per kg, shared by the turbos running (build 290)
+  const pr=1+0.5*(b+b2),fill=tb.V*Math.max(0,b2-b)*1e5/(287*Tc)*1005*tb.T01*(Math.pow(pr,0.286)-1)/tri(tb.eta)/tb.u[fi<0.5?i:i+1];
   s.shE=Math.max(0,Math.min(Emax,s.shE+tri(tb.P)*h-fill));s.boost=b2;
 }
 // A car on the line, ready to launch: the engine held at its launch speed with the clutch down, and a turbo spun up

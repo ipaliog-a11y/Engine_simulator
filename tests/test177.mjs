@@ -1,4 +1,4 @@
-// The turbocharger as a part (build 288).
+// The turbocharger as a part (build 288); its shaft's inertia from both wheels, a pair two of them (build 290).
 //
 // WHY THIS EXISTS. The shaft model always read three things from a turbo the player could only pick as a frame: the
 // compressor wheel, the turbine wheel (TURB_WHEEL, 0.90 of the compressor) and the housing's A/R (a TIGHT / STOCK /
@@ -8,7 +8,9 @@
 //   · the physics: a bigger compressor chokes later; a bigger turbine wheel or a looser housing opens the throat; a looser one
 //     brings full boost later (a bigger turbine wheel is only checked for its throat); on a VGT the housing's A/R does nothing;
 //   · the preview moves nothing; SAVE & FIT fits the turbo as previewed; it travels with a build;
-//   · an engine without a turbo is told the part changes nothing.
+//   · an engine without a turbo is told the part changes nothing;
+//   · (build 290) a bigger turbine wheel makes the shaft heavier; a twin's choke flow is two wheels' and each of its
+//     shafts is one turbo's, both wheels' inertia, the same as a single turbo of that frame.
 import { chromium } from './pw.mjs';
 import { fileURLToPath, pathToFileURL } from 'url';
 import path from 'path';
@@ -45,6 +47,10 @@ const r = await page.evaluate(() => {
   o.ar = [0.45, 0.65, 0.9].map(ar => { const q = R({ ar }); return { t: q.throat, f: q.fullRpm }; });
   o.tw = [40, 48, 56].map(t => { const q = R({ turbD_mm: t }); return { t: q.throat, f: q.fullRpm }; });
   o.twk = [40, 48, 56].map(t => R({ turbD_mm: t }).fullRpm);
+  o.tj = [40, 48, 56].map(t => R({ turbD_mm: t }).J);
+  load('GT-R (R35');
+  o.twin = { cfg: engine.turboConfig, units: engine.turbUnits, cap: engine.turboCap, one: compChokeFlow(engine.compExd),
+    J: engine.shaftJ, J1: wheelInertia(engine.compExd, engine.turbK * engine.compExd) };
   // 3. the preview moves nothing, and is the build (on an engine with no ECU torque limit: a preview of a torque-limited
   // engine, any part's, differs from the build by up to 4 Nm on the plateau, on main as well)
   load('Supra RZ (A80'); o.tqLimit = engine.tqLimit;
@@ -83,7 +89,14 @@ if (!(r.comp[0] < r.comp[1] && r.comp[1] < r.comp[2])) fails.push('a bigger comp
 const show = a => a.map(x => `${x.t.toFixed(1)} cm² from ${Math.round(x.f)}`).join(' / ');
 console.log(`== A/R 0.45/0.65/0.9: ${show(r.ar)} ==\n== turbine 40/48/56 mm: ${show(r.tw)} ==`);
 // a bigger turbine wheel is only checked for its throat: in the steady solve its faster tip takes more work from the gas
-// and it comes on sooner; its inertia, which would slow it, is not yet its own (the shaft's scales with the compressor)
+// and it comes on sooner; its inertia (build 290) slows only the transient, which this test does not step
+console.log(`== turbine 40/48/56 mm: shaft inertia ${r.tj.map(j => (j * 1e5).toFixed(2)).join(' / ')} x1e-5 kg m² ==`);
+if (!(r.tj[0] < r.tj[1] && r.tj[1] < r.tj[2])) fails.push('a bigger turbine wheel does not make the shaft heavier');
+const t = r.twin;
+console.log(`== GT-R ${t.cfg}: ${t.units} turbos, choke ${t.cap.toFixed(1)} lb/min (one wheel ${t.one.toFixed(1)}), shaft J ${(t.J * 1e5).toFixed(3)} (one cartridge ${(t.J1 * 1e5).toFixed(3)}) ==`);
+if (t.cfg !== 'twin' || t.units !== 2) fails.push('the GT-R is not a twin any more: pick another');
+if (Math.abs(t.cap - 2 * t.one) > 1e-9) fails.push("a twin's choke flow is not two wheels'");
+if (Math.abs(t.J - t.J1) > 1e-15) fails.push("a twin's shaft is not one turbo's, both wheels");
 for (const [what, a] of [['a looser housing', r.ar], ['a bigger turbine wheel', r.tw]])
   if (!(a[0].t < a[1].t && a[1].t < a[2].t)) fails.push(`${what} does not open the throat`);
 if (!(r.ar[0].f <= r.ar[1].f && r.ar[1].f <= r.ar[2].f && r.ar[0].f < r.ar[2].f)) fails.push('a looser housing does not bring full boost later');

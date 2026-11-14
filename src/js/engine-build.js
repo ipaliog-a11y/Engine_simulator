@@ -368,8 +368,7 @@ function deriveCharge(){
   const duct=0.72*turboFrame(engine).exd;
   const G=icGeom(engine);   // a factory core as sized for this engine (build 256)
   engine.chargeVol=(P?P.pipe_m:ic.pipe)*Math.PI/4*duct*duct+(G?icCoreL(G):0)/1000;
-  // Turbo spool characteristics scaled to redline, then modified by the turbo config
-  // (twin/sequential/compound), anti-lag (keeps it spooled) and intercooler volume (lag).
+  // The logistic fallback's spool point, scaled to redline and moved by anti-lag; the layout's flow is its turbos' wheels.
   const tb=turboFrame(engine), cfg=TURBO_CONFIG[engine.turboConfig]||TURBO_CONFIG.single;
   const als=engine.antilag?0.62:1.0;
   // ---- How hard is this engine leaning on that frame? ----
@@ -406,8 +405,8 @@ function deriveCharge(){
     ? Math.pow(shaft(PR)/shaft(TURBO_PR_REF),SPOOL_PR_EXP)*(1+0.25*Math.max(0,engine.turboLoad-1))
     : 1;
   engine.spoolPRMul=prMul;
-  engine.spool50=tb.spool50*cfg.spool*als*prMul*engine.redline;
-  engine.spoolWidth=tb.width*cfg.width*engine.redline;
+  engine.spool50=tb.spool50*als*prMul*engine.redline;
+  engine.spoolWidth=tb.width*engine.redline;
   // Past its rated flow the compressor runs out of map and the top end chokes off in earnest.
   // The hard airflow ceiling this frame can pass, in kg/s. Derived from the same inducer choke as
   // the flow rating, so the rating and the limit cannot disagree.

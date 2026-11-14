@@ -59,8 +59,8 @@
    "id": "TURBO_CONFIG",
    "file": "engine-constants-boost.js",
    "match": "const TURBO_CONFIG",
-   "standsFor": "a twin, sequential or compound layout's choke flow as a multiple of one wheel's (1.85, 1.55, 2.30); its spool and width only reach the logistic fallback used before the boost table is solved",
-   "retiredBy": "the turbocharger part (each turbo its own wheel and shaft)",
+   "standsFor": "a compound layout's choke flow as a multiple of one wheel's (2.30); twin and sequential are two wheels on their own shafts since build 290",
+   "retiredBy": "the turbocharger part designing a compound's two stages",
    "phase": "B3",
    "state": "open"
   },
