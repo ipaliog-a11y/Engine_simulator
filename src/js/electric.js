@@ -95,7 +95,7 @@ const MAGNET={
 // A pole is a V of two magnet bars buried under the rotor's surface, as the Model 3's (MotorXP's teardown). The design
 // sets the bar's thickness (magT, mm, along its magnetisation) and the two bars' width together as a share of the pole
 // pitch (magW); the pole's face spans that share. Defaults are the Model 3's: 6.5 mm, and 2 x 33 mm on its 78.5 mm pitch.
-const MAG_T=6.5, MAG_W=0.84;
+const MAG_T=6.5, MAG_W=0.84, V_ANGLE=typeof VANG!=='undefined'?VANG:140;
 // Six 21.5 mm segments fill 129 of the 134 mm stack.
 const MAG_AX=129/134;
 // The steel bridges that hold the bars in carry flux round the magnet's ends without crossing the gap, saturated: two at
@@ -154,7 +154,7 @@ function magnetCircuit(g){
 // current is the magnet circuit's (the back-EMF does not move).
 const DQ_N=12, DQ_PTS=36, DQ_BETA=60;
 function dqTable(g,kw,N,p,Imax,psi20,Lsl){
-  const {Br,mur,magT,magW,tau,L,Lfe,ts,OD,poles,st,kc}=g, gp=kc*GAP;
+  const {vAng,Br,mur,magT,magW,tau,L,Lfe,ts,OD,poles,st,kc}=g, gp=kc*GAP;
   const kT=ts/(0.95*st.wt)-1, tauY=Math.PI*(OD-st.hy)/poles, alpha=Math.min(1,magW);
   const Am=magW*tau*MAG_AX*L, leak=FE_JS*BRIDGE_W*Lfe;
   const NB=200,bg=[],fg=[];                           // gap and tooth MMF against the gap's flux density, then inverted
@@ -164,15 +164,27 @@ function dqTable(g,kw,N,p,Imax,psi20,Lsl){
   const slope=(bg[NB]-bg[NB-1])/(fg[NB]-fg[NB-1]);
   const Bof=F=>{const a=Math.abs(F),x=a/dF,i=Math.floor(x);
     const b=i>=NF?bg[NB]+(a-fg[NB])*slope:binv[i]+(x-i)*(binv[i+1]-binv[i]);return F<0?-b:b;};
-  const yF=[];for(let j=0;j<=300;j++){let F=0;for(let i=0;i<12;i++)F+=steelH(0.01*j*Math.sin(Math.PI*(i+0.5)/24));yF.push(F*tauY/2/12);}
-  const yokeF=By=>{const x=Math.min(299.999,Math.abs(By)*100),i=Math.floor(x);return Math.sign(By)*(yF[i]+(x-i)*(yF[i+1]-yF[i]));};
+  const HT=[];for(let j=0;j<=700;j++)HT.push(steelH(j*0.005));   // the steel's curve, tabulated to 3.5 T
+  const Hof=B=>{const a=Math.abs(B),x=a*200;if(x>=700)return Math.sign(B)*steelH(a);const i=Math.floor(x);return Math.sign(B)*(HT[i]+(x-i)*(HT[i+1]-HT[i]));};
   const th=[],face=[];for(let i=0;i<DQ_PTS;i++){const t=Math.PI*((i+0.5)/DQ_PTS-0.5);th.push(t);face.push(Math.abs(t)<alpha*Math.PI/2);}
   const nFace=face.filter(x=>x).length, Ag=nFace/DQ_PTS*tau*L, hi0=Br*magT/(MU0*mur);
-  const co=th.map(Math.cos),si=th.map(Math.sin);
-  const solve=(Fd,Fq)=>{let lo=-hi0,hi=hi0+Math.abs(Fd)+Math.abs(Fq),d=0,q=0,Fy=0;
-    for(let k=0;k<30;k++){const U=(lo+hi)/2;let sum=0;d=0;q=0;   // the yoke's drop carried from the step before
-      for(let i=0;i<DQ_PTS;i++){const b=Bof((face[i]?U-Fy:0)+Fd*co[i]+Fq*si[i]);if(face[i])sum+=b;d+=b*co[i];q+=b*si[i];}
-      const mean=sum/nFace;Fy=yokeF(mean*Ag/(2*st.hy*Lfe));
+  const co=th.map(Math.cos),si=th.map(Math.sin),dA=tau*L/DQ_PTS,dY=tauY/DQ_PTS,Ay=st.hy*Lfe;
+  // the pole piece's neck: the q axis's flux crosses the pole's centre line between the surface and the V's root
+  const neck=(BRIDGE_W/4+magW*tau/2*Math.cos(vAng/2))*Lfe, lNeck=alpha*tau/2;
+  // The stator's yoke round the pitch: its flux at each point is the gap's flux gathered from the half-period before
+  // (antiperiodic: a pole on, every flux and potential is reversed), and its magnetic potential the steel's field along
+  // it. Each point's loop runs rotor, gap, tooth, and the yoke's potential there.
+  const Us=new Float64Array(DQ_PTS),B=new Float64Array(DQ_PTS);
+  const solve=(Fd,Fq)=>{let lo=-hi0,hi=hi0+Math.abs(Fd)+Math.abs(Fq),d=0,q=0,Fn=0;Us.fill(0);
+    for(let k=0;k<30;k++){const U=(lo+hi)/2;let mean=0;
+      for(let j=0;j<6;j++){let sum=0,dif=0,tot=0;d=0;q=0;
+        for(let i=0;i<DQ_PTS;i++){const sg=th[i]>0?1:-1,b=Bof((face[i]?U-sg*Fn:0)+Fd*co[i]+Fq*si[i]-Us[i]);
+          B[i]=b;tot+=b;if(face[i]){sum+=b;dif+=sg*b;}d+=b*co[i];q+=b*si[i];}
+        mean=sum/nFace;
+        let phi=-tot*dA/2,u=0;const du=[];   // the yoke's flux and potential from the pitch's start; the potential falls along the flux
+        for(let i=0;i<DQ_PTS;i++){phi+=B[i]*dA/2;const h=-Hof(phi/Ay)*dY;phi+=B[i]*dA/2;du.push(u+h/2);u+=h;}
+        for(let i=0;i<DQ_PTS;i++)Us[i]=0.5*Us[i]+0.5*(du[i]-u/2);
+        const Bn=dif/2*dA/neck;Fn=0.5*Fn+0.25*Hof(Bn)*lNeck;}
       if(Am*(Br-MU0*mur*U/magT)-leak>mean*Ag)lo=U;else hi=U;}
     return [d,q];};
   const F1=3*Math.SQRT2*kw*N/(Math.PI*p), k0=psi20/solve(0,0)[0], pd=[], pq=[];
@@ -280,7 +292,7 @@ function motorBuild(s){
   // linked by the winding. The magnets' bars, from the design's thickness and width (build 292).
   const tau=Math.PI*D/poles, magT=(s.magT>0?s.magT:MAG_T)/1000, magW=s.magW>0?s.magW:MAG_W;
   const ts=Math.PI*Ds/slots;
-  const mg={Br:mag.Br,mur:mag.mur,magT,magW,tau,L,Lfe,gap:GAP,ts,h,OD,poles}, circ=im?null:magnetCircuit(mg);
+  const mg={vAng:(s.vAngle>0?s.vAngle:V_ANGLE)*Math.PI/180,Br:mag.Br,mur:mag.mur,magT,magW,tau,L,Lfe,gap:GAP,ts,h,OD,poles}, circ=im?null:magnetCircuit(mg);
   const Bg=im?IM_BG:circ.B1, phiPole=2/Math.PI*Bg*tau*Lfe;
   // the teeth and yoke (build 293): from the magnets' circuit, or an induction motor's sinusoidal field at its design flux
   const st=im?statorFrom(IM_BG,phiPole/0.95,ts,h,Lfe,IM_B_TOOTH,IM_B_YOKE):circ.st, wt=st.wt, hSlot=st.hSlot, hy=st.hy;
