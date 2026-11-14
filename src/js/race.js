@@ -27,14 +27,10 @@ const RACE={
   pitExitKmh:60,      // km/h, the pit lane's speed limit, where the car rejoins
   follow:12,          // m: closer than this, the car behind is in the way of the car ahead
   close:6,            // m: how close a car that cannot pass sits
-  slipGap:60,         // m: within this behind on a straight, the tow (build 147: it grows as the gap closes)
-  slipDrag:0.45,      // the share of its drag a car loses right behind another; e^(-gap/25) of it at a gap (~30% at 10 m)
-  slipK:0.07,         // speed gained per unit of drag lost, at 70 m/s (on the straight the car is part power-, part
-                      //   drag-limited, so less than the top-speed v ~ drag^-1/3): ~2% at 10 m, ~0.6% at 40 m
   defendKmh:3,        // km/h more pace a car needs to pass a car that has moved over to defend
   defendCost:0.99,    // the defender's speed through the next corner, off the line it would have taken
   diveGap:10,         // m: close enough to try a late-braking move into a braking zone
-  dirty:0.985,        // speed through a corner within a second behind: a few % less downforce/grip, v ~ sqrt(mu)
+  spray:0.985,        // speed within a second behind a car on a wet track: its spray, a rule (build 295)
   passKmh:4,          // km/h of pace advantage needed to pass on a 12 m wide circuit (narrower = more)
   pace:0.006,         // up to 0.6% off the car's limit, drawn per lap: no driver is on it every lap
   mistake:0.012,      // chance per lap of a mistake on a healthy car
@@ -43,6 +39,30 @@ const RACE={
   rainRamp:240,       // s from the first drops to a wet track
   recDt:0.25          // s between recorded samples
 };
+// The wake (build 295). drag: a following car's drag over its drag alone, against the gap from the car ahead's rear to
+// its front in the car ahead's lengths: Zabat, Stabile, Farascaroli and Browand, "The aerodynamic performance of
+// platoons", California PATH UCB-ITS-PRR-95-35 (1995), figure 9, two 1/8-scale vans, read off the graph; past 3
+// lengths straight to none at 10, where the report puts the last measurable saving. df: the downforce a following car
+// loses, 44% at 10 m and 35% at 20 m behind a 5.6 m Formula 1 car of 2017-21 (F1's figures, quoted by Red Bull
+// Racing for its 2022 rules), as 1 - A e^(-x/X) through both. A single-seater's wings are the wake's worst case; no
+// closed car's figures are published. Not modelled: the car ahead's own saving inside a length, the wake in braking.
+const RACE_WAKE=(()=>{
+  const drag=[[0,0.71],[0.15,0.76],[0.25,0.765],[0.35,0.71],[0.5,0.69],[0.75,0.72],[1,0.76],[1.5,0.80],[2,0.84],[2.5,0.85],[3,0.865],[10,1]];
+  const x1=10/5.6,l1=0.44,x2=20/5.6,l2=0.35,X=(x2-x1)/Math.log(l1/l2);
+  return {drag,dfA:l1*Math.exp(x1/X),dfX:X};
+})();
+function raceWakeDrag(x){const D=RACE_WAKE.drag;x=Math.max(0,x);if(x>=D[D.length-1][0])return 1;let k=1;while(D[k][0]<x)k++;
+  const [a,ra]=D[k-1],[b,rb]=D[k];return ra+(rb-ra)*(x-a)/(b-a);}
+const raceWakeDf=x=>RACE_WAKE.dfA*Math.exp(-Math.max(0,x)/RACE_WAKE.dfX);
+// A car's target speed behind another, gap x in the car ahead's lengths. On a power-limited stretch: the drag saved,
+// as a share of the drive force (power over speed), moves the speed by a third of it, as v^3 ~ P/CdA does at the top
+// speed. In a corner: m v^2 k = mu (m g + q ClA v^2) solved with the downforce cut, v' = v / sqrt(1 + loss q ClA v^2/(m g)).
+function raceWake(M,v,lim,x){
+  const q=0.5*AIR_RHO*v*v;
+  if(lim==='power'){const D=q*M.cdA,F=Math.max(D,M.hp*745.7*M.eff/Math.max(5,v));return 1+(1-raceWakeDrag(x))*D/(3*F);}
+  if(lim==='corner')return 1/Math.sqrt(1+raceWakeDf(x)*q*(M.clA||0)/((M.massNow||M.mass)*G));
+  return 1;
+}
 // Drivers (build 147): four traits, 0-1, 0.5 the average driver the race had before. aggr = how readily they attack,
 // defend and dive (and how hard on the tyres and how error-prone that is); cons = how close to the limit every lap
 // is, and how rarely they make a mistake; care = how gently they work the tyres; wet = their pace in the rain.
@@ -220,7 +240,9 @@ function raceCarModel(entry,key,opts){
       brakeF:vehicle.brakeFrontShare||0.7,
       tyre:raceCompound(vehicle.tireType),
       tyreArea:0.25+vehicle.tireWidth/1000,tyreC:TYRE_RACE.cp*vehicle.tireWidth/225,
-      chassis:vehicle.chassis,chLabel:vehicle.chLabel,hp:pt.rating().peakHP,
+      chassis:vehicle.chassis,chLabel:vehicle.chLabel,hp:pt.rating().peakHP,eff:vehicle.driveEff||0.9,
+      // the body's length: the maker's (CAR_DIMS), or for a build of the player's a road car's ~0.6 wheelbase share (probable)
+      len:(CAR_DIMS[entry.name]&&CAR_DIMS[entry.name].len)||vehicle.wb/0.6,
       ...(EV?{ev:EV.ev,unit:'kWh'}:{}),...(HY?{hy:HY}:{})};
   });
 }
@@ -486,13 +508,11 @@ function raceStepOnce(R){
     if(c.defendT>0&&lim==='corner')vt*=RACE.defendCost;   // on the inside line, the exit is slower
     const ah=c._ahead;
     if(ah){
-      // the tow: the drag behind a car falls away with the gap, and the closer the more speed it gives; in the wet
-      // the spray is no tow worth taking
-      if(c._gap<RACE.slipGap&&lim==='power'&&c.v>28&&w<0.3){
-        const d=RACE.slipDrag*Math.exp(-c._gap/25);
-        vt*=1+RACE.slipK*d*Math.min(1.4,(c.v/70)*(c.v/70));
-      }
-      else if(c._gap<Math.max(10,c.v)&&(lim==='corner'||w>0.2))vt*=RACE.dirty;
+      // the tow and the dirty air, from the two cars' lengths and this car's own drag, power and downforce; in the
+      // wet, the spray (a rule)
+      const x=(c._gap-(c.M.len+ah.M.len)/2)/ah.M.len;
+      if(w>0.2){if(c._gap<Math.max(10,c.v))vt*=RACE.spray;}
+      else vt*=raceWake(c.M,c.v,lim,x);
     }
     c._vt=vt;c._lim=lim;
   }

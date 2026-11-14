@@ -18,6 +18,22 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 ## [Unreleased]
 
+### The tow and dirty air come from the cars' own aero (build 295)
+
+Phase F of `plans/road-to-v1.md`, the wake; the plan for the phase is reworked with it.
+- **The tow** is the drag a following car loses, from the PATH platoon tests (Zabat et al. 1995, figure 9: 0.76 of its
+  drag one length back, 0.84 at two, none past ten), turned into speed through the car's own drag and power. At 70 m/s
+  an M3 gains 3.2% 10 m behind (was ~2%), 0.4% at 40 m.
+- **Dirty air** is the downforce lost behind a 2017-21 Formula 1 car (44% at 10 m, 35% at 20 m), turned into corner
+  speed through the car's own downforce: a 911 GT3 loses 1.4% one length back at 50 m/s, a car with no downforce
+  nothing. It was 1.5% for every car.
+- Kept as rules (owner's decision): the racecraft numbers and a 1.5% spray loss in the wet. The tyre's heat, grip window
+  and wear wait until after v1.0: a derived heat model took a Civic's tyre to 329 C, because where the slip heat goes
+  needs the share of the patch truly touching the road, which no source gives.
+- Open: the pit lane's loss (next build); the car ahead's own saving within a length; the wake in braking. The downforce
+  figures are a single-seater's, as no closed car's are published.
+- Fingerprint: only the race moves; laps of the four-car race -0.3% to +0.2%. `tests/test79.mjs` checks the tow and
+  that a winged car loses more in dirty air.
 ### A compound turbo is two stages in series (build 294)
 
 Phase B, step 3 of `plans/road-to-v1.md`: `TURBO_CONFIG`'s last multiple (a compound's 2.30 of one wheel's flow) is retired.

@@ -769,7 +769,7 @@ body.showcase-open{overflow:hidden}
 </div>
 <div class="container">
 <header>
-<h1>PIXEL ENGINE SIM v0.7 build 294</h1>
+<h1>PIXEL ENGINE SIM v0.7 build 295</h1>
 <div class="subtitle" id="subtitle">ENGINE DESIGNER • BUILD IT, THEN DRIVE IT</div>
 </header>
 <div class="build-strip" id="buildStrip">
@@ -3111,9 +3111,9 @@ and refuels for each next one. On <b>NO PITS</b> it starts full and runs on one 
 that cannot make the distance runs dry and retires.<br>
 <b>Traffic.</b> A car that catches another is held up behind it until it has a few km/h more speed on a
 straight or into a braking zone (more on a narrow circuit), and then goes by. The <b>tow</b> grows the closer
-it runs: about 2% more speed 10 m behind on a straight, under 1% at 40 m, so a line of cars nose to tail pulls
-itself along and a lone leader gets caught. Within a second behind through a corner a car loses a little grip
-in the dirty air. Lapped cars are shown the blue flag and let the leaders through.<br>
+it runs: the car ahead takes up to a third of its drag, so 10 m behind it is about 3% faster on a straight and
+under 1% at 40 m, and a line of cars nose to tail pulls itself along. Through a corner the wake takes away
+downforce, so a winged car loses grip behind another and a road car with almost none barely notices. Lapped cars are shown the blue flag and let the leaders through.<br>
 <b>Racecraft.</b> A car with a quicker car close behind may <b>defend</b>: it moves to the inside line, so the
 car behind needs a few km/h more to get by, but its own exit from the next corner is slower, and a car that
 defends lap after lap loses time to the cars further back. A car held up into a braking zone may try a
@@ -3153,7 +3153,7 @@ The speed runs from 1× to 100×, and the bar under the controls scrubs through 
 <b>The report.</b> <b>REPORT PNG</b> / <b>PDF</b> saves the race on one sheet: the classification with each
 car's stints, a lap chart, every car's lap times with the wet shaded in behind, the stints by compound,
 and the key moments: passes, stops, mistakes, the rain.<br>
-<span style="color:#c86">What is a rule and not physics: overtaking, the tow, dirty air, the pit
+<span style="color:#c86">What is a rule and not physics: overtaking, the pit
 lane's time loss, driver error, and when the rain comes. The cars also share one racing line and do not
 fight for space on it; a pass is drawn alongside. The wet-grip, tyre-window and wear figures are fitted.</span>
 </div>
@@ -3168,7 +3168,7 @@ slip work (rising with <i>u</i>, the share of the tyre's grip in use) and rollin
 <b>Brakes</b> run the lap solver's rotor model (heat in from the braking power, convection and radiation out, the vanes pumping air) every step of the race, so their temperature carries from lap to lap; where the rotors fade, a braking zone runs to its apex as <i>v² = v<sub>apex</sub>² + (fade now / fade on the solved lap) · (v² − v<sub>apex</sub>²)</i>.
 </div>
 <div class="guide-limit" data-gk="raceLimit">
-Rules, not physics: the pit lane costs 20 s plus refuelling at 2.5 L/s and 6 s for tyres; the tow is 0.45 · e<sup>−gap/25 m</sup> of the drag, worth ~2% at 10 m, dirty air −1.5% within a second through a corner; defending costs 1% through the next corner; a late-braking move sticks with 0.4 + 2 · (grip difference) + 1.5 · (fade difference) + 0.3 · (aggression difference) − 0.15 against a defending car; a pass needs about 4 km/h more on a 12 m wide circuit (more on a narrower one); each lap is drawn up to 0.6% off the limit with a 1.2% chance of a mistake, more on tired tyres, faded brakes, in the wet and when pushing. When the rain comes and how fast a line dries are drawn from the seed. Cars share one racing line. The tyre temperature, window, wear and wet-grip constants are fitted to published ranges. Fuel is a flat-out driver's: over a lap at the limit the engines run at a lap-average BSFC of 265–325 g/kWh (25–31% efficient), on full throttle half the lap, and burn 19 L/100 km (an MX-5) to 71 (a Hellcat) at Spa. Owners report about the same for mid-size cars (an E46 M3 or a Civic Type R ~35 L/100 km on track) and 20–40% less for big-power cars, because they drive below the limit.
+Rules, not physics: the pit lane costs 20 s plus refuelling at 2.5 L/s and 6 s for tyres; in the wet a car within a second behind loses 1.5% in the spray; defending costs 1% through the next corner; a late-braking move sticks with 0.4 + 2 · (grip difference) + 1.5 · (fade difference) + 0.3 · (aggression difference) − 0.15 against a defending car; a pass needs about 4 km/h more on a 12 m wide circuit (more on a narrower one); each lap is drawn up to 0.6% off the limit with a 1.2% chance of a mistake, more on tired tyres, faded brakes, in the wet and when pushing. When the rain comes and how fast a line dries are drawn from the seed. Cars share one racing line. The tyre temperature, window, wear and wet-grip constants are fitted to published ranges. Physics, not rules: the tow is the drag a following car loses in the wake, measured on model vans in a wind tunnel (Zabat et al. 1995), turned into speed through the car's own power; dirty air is the downforce lost behind a 2017-21 Formula 1 car (44% at 10 m, 35% at 20 m), turned into corner speed through the car's own downforce. Fuel is a flat-out driver's: over a lap at the limit the engines run at a lap-average BSFC of 265–325 g/kWh (25–31% efficient), on full throttle half the lap, and burn 19 L/100 km (an MX-5) to 71 (a Hellcat) at Spa. Owners report about the same for mid-size cars (an E46 M3 or a Civic Type R ~35 L/100 km on track) and 20–40% less for big-power cars, because they drive below the limit.
 </div>
 </div>
 <div class="guide-see">See also: <a data-gp="tyres">Tyres &amp; grip</a> · <a data-gp="lapsolve">Solving a lap</a> · <a data-gp="brakes">Brakes &amp; fade</a> · <a data-gp="fuels">Fuels &amp; octane</a></div>
@@ -3330,7 +3330,7 @@ This is a physics model, and like every model it leaves things out. These are th
 · <b>Emissions are trend correlations</b>, not chemistry (<a data-gp="emissions">Emissions &amp; the catalyst</a>). <b>Wear rates are game rules</b> (<a data-gp="wear">Wear &amp; reliability</a>). The <b>scorecard's weights</b> are design choices (<a data-gp="scorecard">The scorecard</a>).<br>
 · <b>No vibration or balance</b> is modelled (<a data-gp="firing">Crank &amp; firing order</a>).<br>
 · <b>The lap is quasi-steady</b>: the car is always exactly at the speed grip, power and brakes allow, turning in takes no time (no yaw inertia). Each axle's grip is its own, so a car understeers or oversteers (build 157), but only as a limit: it never slides or spins, the driver never makes a mistake, and the line is the best one near minimum curvature (<a data-gp="trackline">The racing line</a>).<br>
-· <b>A lap is a single hot lap</b>: no tyre wear, no fuel burn, no traffic. A <a data-gp="race">The race</a> adds all three, but its traffic, overtaking, tow, dirty air, pit losses and driver errors are rules, and its tyre temperature and wear constants are fitted.<br>
+· <b>A lap is a single hot lap</b>: no tyre wear, no fuel burn, no traffic. A <a data-gp="race">The race</a> adds all three, but its traffic, overtaking, pit losses and driver errors are rules, and its tyre temperature and wear constants are fitted.<br>
 · <b>Dampers act only through the road's bumps</b>: the tyres' load swing costs grip by load sensitivity and wheel hop; the tyre's lag, the body at turn-in and an aero car's ride height are not modelled, and each circuit's roughness is an estimate by its kind (<a data-gp="dampers">Dampers &amp; the road</a>).<br>
 · <b>Kerbs are placed by the corner's shape</b>, not from the circuit, and are ramps without their ribs (<a data-gp="kerbs">Kerbs</a>).<br>
 · <b>Imported circuits have modelled width</b>, because a GPX file carries none (<a data-gp="gpx">Importing a circuit</a>).<br>
@@ -15185,14 +15185,10 @@ const RACE={
   pitExitKmh:60,      // km/h, the pit lane's speed limit, where the car rejoins
   follow:12,          // m: closer than this, the car behind is in the way of the car ahead
   close:6,            // m: how close a car that cannot pass sits
-  slipGap:60,         // m: within this behind on a straight, the tow (build 147: it grows as the gap closes)
-  slipDrag:0.45,      // the share of its drag a car loses right behind another; e^(-gap/25) of it at a gap (~30% at 10 m)
-  slipK:0.07,         // speed gained per unit of drag lost, at 70 m/s (on the straight the car is part power-, part
-                      //   drag-limited, so less than the top-speed v ~ drag^-1/3): ~2% at 10 m, ~0.6% at 40 m
   defendKmh:3,        // km/h more pace a car needs to pass a car that has moved over to defend
   defendCost:0.99,    // the defender's speed through the next corner, off the line it would have taken
   diveGap:10,         // m: close enough to try a late-braking move into a braking zone
-  dirty:0.985,        // speed through a corner within a second behind: a few % less downforce/grip, v ~ sqrt(mu)
+  spray:0.985,        // speed within a second behind a car on a wet track: its spray, a rule (build 295)
   passKmh:4,          // km/h of pace advantage needed to pass on a 12 m wide circuit (narrower = more)
   pace:0.006,         // up to 0.6% off the car's limit, drawn per lap: no driver is on it every lap
   mistake:0.012,      // chance per lap of a mistake on a healthy car
@@ -15201,6 +15197,30 @@ const RACE={
   rainRamp:240,       // s from the first drops to a wet track
   recDt:0.25          // s between recorded samples
 };
+// The wake (build 295). drag: a following car's drag over its drag alone, against the gap from the car ahead's rear to
+// its front in the car ahead's lengths: Zabat, Stabile, Farascaroli and Browand, "The aerodynamic performance of
+// platoons", California PATH UCB-ITS-PRR-95-35 (1995), figure 9, two 1/8-scale vans, read off the graph; past 3
+// lengths straight to none at 10, where the report puts the last measurable saving. df: the downforce a following car
+// loses, 44% at 10 m and 35% at 20 m behind a 5.6 m Formula 1 car of 2017-21 (F1's figures, quoted by Red Bull
+// Racing for its 2022 rules), as 1 - A e^(-x/X) through both. A single-seater's wings are the wake's worst case; no
+// closed car's figures are published. Not modelled: the car ahead's own saving inside a length, the wake in braking.
+const RACE_WAKE=(()=>{
+  const drag=[[0,0.71],[0.15,0.76],[0.25,0.765],[0.35,0.71],[0.5,0.69],[0.75,0.72],[1,0.76],[1.5,0.80],[2,0.84],[2.5,0.85],[3,0.865],[10,1]];
+  const x1=10/5.6,l1=0.44,x2=20/5.6,l2=0.35,X=(x2-x1)/Math.log(l1/l2);
+  return {drag,dfA:l1*Math.exp(x1/X),dfX:X};
+})();
+function raceWakeDrag(x){const D=RACE_WAKE.drag;x=Math.max(0,x);if(x>=D[D.length-1][0])return 1;let k=1;while(D[k][0]<x)k++;
+  const [a,ra]=D[k-1],[b,rb]=D[k];return ra+(rb-ra)*(x-a)/(b-a);}
+const raceWakeDf=x=>RACE_WAKE.dfA*Math.exp(-Math.max(0,x)/RACE_WAKE.dfX);
+// A car's target speed behind another, gap x in the car ahead's lengths. On a power-limited stretch: the drag saved,
+// as a share of the drive force (power over speed), moves the speed by a third of it, as v^3 ~ P/CdA does at the top
+// speed. In a corner: m v^2 k = mu (m g + q ClA v^2) solved with the downforce cut, v' = v / sqrt(1 + loss q ClA v^2/(m g)).
+function raceWake(M,v,lim,x){
+  const q=0.5*AIR_RHO*v*v;
+  if(lim==='power'){const D=q*M.cdA,F=Math.max(D,M.hp*745.7*M.eff/Math.max(5,v));return 1+(1-raceWakeDrag(x))*D/(3*F);}
+  if(lim==='corner')return 1/Math.sqrt(1+raceWakeDf(x)*q*(M.clA||0)/((M.massNow||M.mass)*G));
+  return 1;
+}
 // Drivers (build 147): four traits, 0-1, 0.5 the average driver the race had before. aggr = how readily they attack,
 // defend and dive (and how hard on the tyres and how error-prone that is); cons = how close to the limit every lap
 // is, and how rarely they make a mistake; care = how gently they work the tyres; wet = their pace in the rain.
@@ -15378,7 +15398,9 @@ function raceCarModel(entry,key,opts){
       brakeF:vehicle.brakeFrontShare||0.7,
       tyre:raceCompound(vehicle.tireType),
       tyreArea:0.25+vehicle.tireWidth/1000,tyreC:TYRE_RACE.cp*vehicle.tireWidth/225,
-      chassis:vehicle.chassis,chLabel:vehicle.chLabel,hp:pt.rating().peakHP,
+      chassis:vehicle.chassis,chLabel:vehicle.chLabel,hp:pt.rating().peakHP,eff:vehicle.driveEff||0.9,
+      // the body's length: the maker's (CAR_DIMS), or for a build of the player's a road car's ~0.6 wheelbase share (probable)
+      len:(CAR_DIMS[entry.name]&&CAR_DIMS[entry.name].len)||vehicle.wb/0.6,
       ...(EV?{ev:EV.ev,unit:'kWh'}:{}),...(HY?{hy:HY}:{})};
   });
 }
@@ -15644,13 +15666,11 @@ function raceStepOnce(R){
     if(c.defendT>0&&lim==='corner')vt*=RACE.defendCost;   // on the inside line, the exit is slower
     const ah=c._ahead;
     if(ah){
-      // the tow: the drag behind a car falls away with the gap, and the closer the more speed it gives; in the wet
-      // the spray is no tow worth taking
-      if(c._gap<RACE.slipGap&&lim==='power'&&c.v>28&&w<0.3){
-        const d=RACE.slipDrag*Math.exp(-c._gap/25);
-        vt*=1+RACE.slipK*d*Math.min(1.4,(c.v/70)*(c.v/70));
-      }
-      else if(c._gap<Math.max(10,c.v)&&(lim==='corner'||w>0.2))vt*=RACE.dirty;
+      // the tow and the dirty air, from the two cars' lengths and this car's own drag, power and downforce; in the
+      // wet, the spray (a rule)
+      const x=(c._gap-(c.M.len+ah.M.len)/2)/ah.M.len;
+      if(w>0.2){if(c._gap<Math.max(10,c.v))vt*=RACE.spray;}
+      else vt*=raceWake(c.M,c.v,lim,x);
     }
     c._vt=vt;c._lim=lim;
   }
