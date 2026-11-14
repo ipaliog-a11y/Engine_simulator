@@ -108,6 +108,7 @@ footer{text-align:center;margin-top:16px;padding:8px;font-size:7px;color:#555;bo
    many to a row as fit and stay put on the left; the phone layout below keeps two to a row. */
 .design-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,220px));gap:9px 12px;justify-content:start}
 .field{display:flex;flex-direction:column;gap:4px;min-width:0}
+.field[hidden]{display:none}
 .pick-row{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,280px));gap:9px 12px;justify-content:start;margin-bottom:6px}
 /* GEAR RATIOS window (build 170): the ratios, the final drive and two graphs of what they do, over the vehicle tab. */
 .gw-back{position:fixed;inset:0;z-index:80;background:rgba(5,5,10,.84);display:flex;align-items:flex-start;justify-content:center;overflow-y:auto;padding:16px}
