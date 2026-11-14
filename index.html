@@ -769,7 +769,7 @@ body.showcase-open{overflow:hidden}
 </div>
 <div class="container">
 <header>
-<h1>PIXEL ENGINE SIM v0.7 build 297</h1>
+<h1>PIXEL ENGINE SIM v0.7 build 298</h1>
 <div class="subtitle" id="subtitle">ENGINE DESIGNER • BUILD IT, THEN DRIVE IT</div>
 </header>
 <div class="build-strip" id="buildStrip">
@@ -20433,6 +20433,12 @@ const FURN_SIDE = 1;
 let BASE = new DOMMatrix();
 const SCENE_MAX_W = 480;
 let LAYER = null;
+// What does not move when the camera is still: the ground, the road and everything beside it. STILL holds it
+// once painted, under STILL_KEY (the camera, the weather, the circuit). Seen from high up the whole circuit is
+// in the picture, about 1000 strokes and 700 fills, and a phone dropped frames painting it again each frame.
+let STILL = null, STILL_KEY = "", STILL_OK = false, TEX_VER = 0;
+// Below this scale (px per metre) a rail post or a tree's glow is under a pixel, and is not drawn.
+const FINE_SCALE = 3;
 
 function sceneBind(src) {
   if (src._look) { T = src._look; return T; }
@@ -20544,8 +20550,30 @@ function scenePaint(ctx, cam, opts) {
   if (LAYER.width !== W || LAYER.height !== H) { LAYER.width = W; LAYER.height = H; }
   const g = LAYER.getContext("2d");
   BASE = new DOMMatrix([k, 0, 0, k, 0, 0]);
+  opts = opts || {};
+  const key = [T.label, T.pts.length, W, H, cam.ox, cam.oy, cam.fx, cam.fy, cam.cx, cam.cy, cam.scale, cam.pitch, cam.lift, cam.roll || 0,
+    TOD, WX.key, WX.wet, WX.rain, WX.cloud, TEX_VER, opts.lap ? opts.lap.track.label + opts.lap.time : ""].join("|");
   g.save();
-  drawWorld(g, cam, opts || {});
+  if (key !== STILL_KEY) {
+    // the camera moved: paint it all, and keep nothing
+    STILL_KEY = key; STILL_OK = false;
+    drawStill(g, cam, opts);
+  } else {
+    if (!STILL) STILL = document.createElement("canvas");
+    if (!STILL_OK) {
+      if (STILL.width !== W || STILL.height !== H) { STILL.width = W; STILL.height = H; }
+      const s = STILL.getContext("2d");
+      s.save();
+      drawStill(s, cam, opts);
+      s.restore();
+      STILL_OK = true;
+    }
+    g.setTransform(1, 0, 0, 1, 0, 0);
+    g.globalCompositeOperation = "copy";
+    g.drawImage(STILL, 0, 0);
+    g.globalCompositeOperation = "source-over";
+  }
+  drawMoving(g, cam, opts);
   g.restore();
   ctx.save();
   ctx.imageSmoothingEnabled = false;
@@ -20837,7 +20865,7 @@ function drawMarbles(ctx, cam) {
   ctx.restore();
 }
 
-function drawSkids(ctx, cam, cars) {
+function drawSkids(ctx, cam) {
   const pts = T.pts, n = pts.length;
   ctx.save();
   ctx.lineCap = "round";
@@ -20858,6 +20886,13 @@ function drawSkids(ctx, cam, cars) {
     }
     ctx.stroke();
   }
+  ctx.restore();
+}
+
+function drawCarSkids(ctx, cam, cars) {
+  ctx.save();
+  ctx.lineCap = "round";
+  ctx.lineJoin = "round";
   if (cars) {
     ctx.strokeStyle = "rgba(6,6,8,0.72)";
     ctx.lineWidth = Math.max(2.5, cam.scale * 0.24);
@@ -20906,7 +20941,7 @@ function drawArmco(ctx, cam) {
   rail(0.34);
   ctx.strokeStyle = "#5e646c";
   ctx.lineWidth = Math.max(2, cam.scale * 0.12);
-  for (let s = 0; s < T.length; s += 7.5) {
+  if (cam.scale >= FINE_SCALE) for (let s = 0; s < T.length; s += 7.5) {
     const p = sampleAt(T, s);
     if (!sceneNear(cam, p.x, p.y)) continue;
     const d = p.w / 2 + 3.6;
@@ -20990,6 +21025,14 @@ function drawMarshal(ctx, cam, o) {
 
 function drawTireWall(ctx, cam, o) {
   const p = o.p;
+  if (cam.scale < FINE_SCALE) {   // from high up, the stack as one mark
+    const q = project(cam, o.x, o.y, 0.4);
+    ctx.fillStyle = "#181818";
+    ctx.beginPath();
+    ctx.ellipse(q.sx, q.sy, Math.max(3, cam.scale * 1.9), 2, Math.atan2(-(p.tx * cam.fx + p.ty * cam.fy) * cam.pitch, p.tx * cam.lx + p.ty * cam.ly), 0, 7);
+    ctx.fill();
+    return;
+  }
   for (let row = 0; row < 2; row++) {
     for (let k = 0; k < 5; k++) {
       const q = project(cam, o.x + p.tx * (k - 2) * 0.72, o.y + p.ty * (k - 2) * 0.72, 0.28 + row * 0.48);
@@ -21045,7 +21088,8 @@ function drawHeadlights(ctx, cam, car) {
   ctx.restore();
 }
 
-function drawWorld(ctx, cam, opts) {
+// The part of the picture that depends only on the camera, the weather and the circuit.
+function drawStill(ctx, cam, opts) {
   const W = cam.W, H = cam.H;
   ctx.setTransform(BASE);
   fillGround(ctx, cam, TEX.grass, 7.5);
@@ -21107,7 +21151,7 @@ function drawWorld(ctx, cam, opts) {
 
   drawRubber(ctx, cam);
   drawMarbles(ctx, cam);
-  drawSkids(ctx, cam, opts.cars);
+  drawSkids(ctx, cam);
 
   ctx.lineCap = "butt";
   ctx.lineJoin = "round";
@@ -21130,23 +21174,17 @@ function drawWorld(ctx, cam, opts) {
   if (TOD === "night") {
     ctx.fillStyle = "rgba(4, 8, 18, 0.62)";
     ctx.fillRect(0, 0, cam.W, cam.H);
-    if (opts.cars) for (const car of opts.cars) drawHeadlights(ctx, cam, car);
   }
-  if (opts.lap && opts.lap.lim && typeof LIMC !== "undefined") {
-    const L = opts.lap, line = L.track.line, m = line.length;
-    ctx.lineJoin = "round";
-    ctx.lineCap = "round";
-    ctx.lineWidth = Math.max(2, cam.scale * 0.2);
-    for (let i = 0; i < m; i++) {
-      const j = (i + 1) % m;
-      if (!sceneNear(cam, line[i].x, line[i].y)) continue;
-      const A = project(cam, line[i].x, line[i].y), B = project(cam, line[j].x, line[j].y);
-      ctx.strokeStyle = LIMC[L.lim[i]] || "#888";
-      ctx.beginPath();
-      ctx.moveTo(A.sx, A.sy);
-      ctx.lineTo(B.sx, B.sy);
-      ctx.stroke();
-    }
+  if (TOD !== "night") drawLimits(ctx, cam, opts);
+}
+
+// The cars and what they leave, and the air over them.
+function drawMoving(ctx, cam, opts) {
+  ctx.setTransform(BASE);
+  drawCarSkids(ctx, cam, opts.cars);
+  if (TOD === "night") {
+    if (opts.cars) for (const car of opts.cars) drawHeadlights(ctx, cam, car);
+    drawLimits(ctx, cam, opts);
   }
   if (opts.cars) {
     const cars = opts.cars.map(car => ({ car, sy: project(cam, car.x, car.y, 0).sy }));
@@ -21157,6 +21195,31 @@ function drawWorld(ctx, cam, opts) {
     }
   }
   drawAtmosphere(ctx, cam);
+}
+
+function drawLimits(ctx, cam, opts) {
+  if (opts.lap && opts.lap.lim && typeof LIMC !== "undefined") {
+    const L = opts.lap, line = L.track.line, m = line.length;
+    ctx.lineJoin = "round";
+    ctx.lineCap = "round";
+    ctx.lineWidth = Math.max(2, cam.scale * 0.2);
+    // one stroke for each run of one colour, not one for each piece of the line
+    let open = null;
+    for (let i = 0; i < m; i++) {
+      const j = (i + 1) % m, col = LIMC[L.lim[i]] || "#888";
+      if (!sceneNear(cam, line[i].x, line[i].y)) { if (open) ctx.stroke(); open = null; continue; }
+      if (open !== col) {
+        if (open) ctx.stroke();
+        const A = project(cam, line[i].x, line[i].y);
+        ctx.strokeStyle = open = col;
+        ctx.beginPath();
+        ctx.moveTo(A.sx, A.sy);
+      }
+      const B = project(cam, line[j].x, line[j].y);
+      ctx.lineTo(B.sx, B.sy);
+    }
+    if (open) ctx.stroke();
+  }
 }
 
 function drawWetRoad(ctx, cam) {
@@ -21229,7 +21292,7 @@ function drawVolumetric(ctx, cam) {
 
   ctx.save();
   ctx.globalCompositeOperation = "screen";
-  for (const t of OCCLUDERS) {
+  if (cam.scale >= FINE_SCALE) for (const t of OCCLUDERS) {
     const q = project(cam, t.x - 2.4, t.y - 1.7, 0);
     const rad = t.r * cam.scale * 2.4;
     const g = ctx.createRadialGradient(q.sx, q.sy, rad * 0.05, q.sx, q.sy, rad);
@@ -21507,10 +21570,18 @@ function drawWall(ctx, cam, w) {
 function drawTree(ctx, cam, t) {
   const base = project(cam, t.x, t.y, 0);
   const top = project(cam, t.x, t.y, t.h * 0.55);
-  const r = t.r * cam.scale * 1.15;
-  castShadow(ctx, cam, t.x, t.y, r * 0.95, r * 0.62, 0);
-  ctx.strokeStyle = "#5c3d28"; ctx.lineWidth = Math.max(2, cam.scale * 0.16);
-  ctx.beginPath(); ctx.moveTo(base.sx, base.sy); ctx.lineTo(top.sx, top.sy + r * 0.25); ctx.stroke();
+  const r = t.r * cam.scale * 1.15, far = cam.scale < FINE_SCALE;
+  if (far) {   // from high up: one shadow and the crown
+    const k = sunK(), q = project(cam, t.x + 3.2 * k, t.y + 2.3 * k, 0);
+    ctx.fillStyle = `rgba(8, 22, 14, ${(0.32 + 0.28 * k) * (1 - WX.wet * 0.22)})`;
+    ctx.beginPath();
+    ctx.ellipse(q.sx, q.sy, r * 1.1, r * 0.7, 0, 0, Math.PI * 2);
+    ctx.fill();
+  } else {
+    castShadow(ctx, cam, t.x, t.y, r * 0.95, r * 0.62, 0);
+    ctx.strokeStyle = "#5c3d28"; ctx.lineWidth = Math.max(2, cam.scale * 0.16);
+    ctx.beginPath(); ctx.moveTo(base.sx, base.sy); ctx.lineTo(top.sx, top.sy + r * 0.25); ctx.stroke();
+  }
   const spr = TEX.trees && TEX.trees[Math.floor(t.shade * TEX.trees.length) % TEX.trees.length];
   const dw = r * (1.7 + t.shade * 0.7), dh = spr ? dw * (spr.height / spr.width) : dw * 1.3;
   if (spr) ctx.drawImage(spr, top.sx - dw / 2, top.sy - dh * 0.42, dw, dh);
@@ -21520,6 +21591,7 @@ function drawTree(ctx, cam, t) {
     ctx.ellipse(top.sx, top.sy, dw * 0.45, dh * 0.55, 0, 0, Math.PI * 2);
     ctx.fill();
   }
+  if (far) return;
   ctx.save();
   ctx.globalCompositeOperation = "multiply";
   ctx.fillStyle = "rgba(70, 110, 58, 0.35)";
@@ -21687,6 +21759,7 @@ function sceneLoadTex() {
     TEX.asphalt = asphalt;
     TEX.gravel = gravel;
     TEX.concrete = concrete;
+    TEX_VER++;
     TEX.trees = [
       treeImg,
       tintSprite(treeImg, "rgba(20,70,20,0.28)"),
