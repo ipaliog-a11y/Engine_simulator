@@ -18,6 +18,21 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 ## [Unreleased]
 
+### The help shows a value at its lowest and highest real example (build 301)
+
+Redoes #206 (build 251) on today's code; #206 was too far behind to merge.
+- Press **?** on BORE, STROKE or COMPRESSION and the help draws the cylinder twice to one scale, at the lowest and the
+  highest value a factory engine uses (the slider's first and last ticks), with both power curves on one pair of axes.
+  REDLINE shows the curves alone, since its cylinder would look the same.
+- On the VEHICLE tab, WHEEL DIA, TYRE WIDTH and TYRE ASPECT draw the tyre's section at both ends of the real range, to
+  scale, with its diameter and sidewall.
+- Nothing is drawn by hand: each side is the form's own preview with only that field changed, and the form, the live
+  engine and the state are put back afterwards (`plans/designer-diagrams-in-code.md`; the icon brief, not yet started,
+  is `plans/designer-art-brief.md`).
+- Left open: a rotary has no cylinder to draw, so its fields show no comparison. Tyre width and aspect change only the
+  drawing, not the car (their grip effect needs the car rebuilt). Front tyre width is left out: the section drawn is
+  the rear tyre's.
+
 ### Diagnosis notes vs faults — factory cars are not all lumpy (build 300)
 
 Redoes #201 (build 249) on today's `main`. Build 248's diagnosis marked most factory cars "NOT RUNNING SMOOTH" because race-cam lope and a peaky band were warnings, and because `engine.lumpiness` folds diesel clatter into the same number the sound uses.
