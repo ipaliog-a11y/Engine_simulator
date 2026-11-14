@@ -18,6 +18,26 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 ## [Unreleased]
 
+### The ECU's VE table is editable: its estimate of the air, used only to meter fuel (build 305)
+
+Phase G, second build. With the fuel map on AUTO, a load × rpm grid of volumetric efficiency now sits under the spark map,
+on the same breakpoints. As the owner decided, it is the ECU's *estimate*: the engine's real VE stays derived from its
+cam, ports, runners and plenum and is never edited.
+
+- **Fuel is metered by it.** The ECU injects (estimated air) ÷ (target AFR), the engine burns its real air, so the
+  burned AFR = target AFR × real VE ÷ table VE. The fuel map stays the target. Power, exhaust temperature, knock, fuel
+  flow and emissions all follow from the existing mixture models; no new constant.
+- **Untouched, it moves no number**: it opens filled with the derived VE and the engine reads no table (fingerprint
+  identical to build 304). On the default engine at 4543 rpm, +0.1 bar (real VE 97%, target AFR 12.6, 166.9 Nm): a cell
+  at 82% burns AFR 14.9 and makes 160.5 Nm; at 112%, AFR 10.9 and 143.6 Nm. Cells more than 5% off target are red.
+- Once a table is edited the engine reads it interpolated, so between breakpoints it carries the table's own error, as
+  a real ECU's does: at most 1.4% off target on the default engine (6800 rpm, 0.4 bar).
+- RESET MAP returns the derived table exactly; a hand-tuned table is saved with the build; diesels (quantity-metered)
+  and MANUAL mixture show none.
+- Open: the real VE's exhaust-scavenging term reads the exhaust temperature at the *target* mixture, not the burned
+  one (the loop is closed once); no closed-loop λ trim corrects a wrong cell at part load, as a narrowband O₂ sensor
+  would; the new interface strings have no Greek (translations paused).
+
 ### The ECU's spark map is editable (build 304)
 
 Phase G, first build. With the ignition on AUTO, a load × rpm grid of spark advance now sits beside the fuel map, on the

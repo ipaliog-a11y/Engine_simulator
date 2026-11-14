@@ -221,8 +221,8 @@ function raceTyreStep(M,ty,T,W,v,ay,ax,dt,env){
 function withBuild(rec,fn){
   const saved=serializeBuild((engine&&engine.name)||'engine',''), name=engine.name;
   const ld={engine:loaded.engine,car:loaded.car}, tk=trackKey;
-  try{fuelMapCustom=false;sparkMapCustom=false;applyBuild(rec);if(rec.name)engine.name=rec.name;return fn();}
-  finally{fuelMapCustom=false;sparkMapCustom=false;applyBuild(saved);engine.name=name;loaded.engine=ld.engine;loaded.car=ld.car;trackKey=tk;updateBuildStrip();}
+  try{fuelMapCustom=false;sparkMapCustom=false;veMapCustom=false;applyBuild(rec);if(rec.name)engine.name=rec.name;return fn();}
+  finally{fuelMapCustom=false;sparkMapCustom=false;veMapCustom=false;applyBuild(saved);engine.name=name;loaded.engine=ld.engine;loaded.car=ld.car;trackKey=tk;updateBuildStrip();}
 }
 // The loaded car at another mass and grip, for one solve: what depends on the mass (the brakes' deceleration,
 // the headline mu) moves with it; the tyres' mu is scaled about the compound's.

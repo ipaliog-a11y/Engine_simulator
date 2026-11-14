@@ -427,7 +427,7 @@ table.fuelmap td.knk{box-shadow:inset 0 0 0 2px #ff3030;color:#ff9a9a;font-weigh
 table.fuelmap td.live{box-shadow:inset 0 0 0 2px #fff;font-weight:bold}
 .fuelmap-note{font-size:6.5px;color:#778;margin-top:4px;line-height:1.5}
 .fuelmap-edit{display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:8px}
-.fuelmap-edit #fmSelInfo,.fuelmap-edit #skSelInfo{font-size:7px;color:#9bd;flex:1 1 auto;min-width:90px}
+.fuelmap-edit #fmSelInfo,.fuelmap-edit #skSelInfo,.fuelmap-edit #veSelInfo{font-size:7px;color:#9bd;flex:1 1 auto;min-width:90px}
 .fuelmap-edit .fm-btns{display:flex;gap:4px}
 .fuelmap-edit button{font-family:inherit;font-size:6.5px;color:#fff;background:#1a2030;border:1px solid #33405a;padding:4px 6px;cursor:pointer}
 .fuelmap-edit button:hover{background:#26304a}

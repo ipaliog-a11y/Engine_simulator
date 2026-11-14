@@ -203,7 +203,7 @@ function mappedAFR(rpm,map){
 // The mixture actually burned. A diesel's injection system will not fuel past its full-load floor
 // (smoke, turbine temperature), whatever the map or the slider asks for.
 function curAFR(rpm,map){
-  const afr=engine.afrMode==='auto'?mappedAFR(rpm,map):state.afr;
+  const afr=engine.afrMode==='auto'?veMeteredAFR(rpm,map,mappedAFR(rpm,map)):state.afr;
   return engine.ci?Math.max(afr,engine.stoichAFR*dieselLambdaFloor(rpm)):afr;
 }
 // ---- Fuel-map visualiser: a load×RPM grid of the target AFR (shown when the mixture is AUTO) ----
@@ -279,7 +279,7 @@ function renderFuelMap(){
 }
 function updateFuelMapMarker(){
   const c=clamp(Math.round((state.rpm-1000)/(engine.redline-1000)*(FM_COLS-1)),0,FM_COLS-1);
-  for(const id of ['fuelMapBox','sparkMapBox']){   // the spark table shares the fuel map's breakpoints (build 304)
+  for(const id of ['fuelMapBox','sparkMapBox','veMapBox']){   // the spark and VE tables share the fuel map's breakpoints (builds 304-305)
     const box=document.getElementById(id);
     if(!box||box.style.display==='none'||!box.firstChild)continue;
     const r=Math.round(fmRowOf(state.rpm,state.map));
@@ -615,6 +615,75 @@ function renderSparkMap(){
   if(info){
     if(skSel){const rpm=fmRpmAt(skSel.c),mp=fmMapAt(skSel.r),adv=activeAdvance(rpm,mp);
       info.textContent=rpm+'rpm • '+(mp>1.001?'+'+(mp-1).toFixed(1):mp.toFixed(1))+'bar → '+adv.toFixed(0)+'° • '+tr('best torque')+' '+mbtAdvance(rpm,mp).toFixed(0)+'°';
+    }else info.textContent=tr('Tap a cell to select');
+  }
+  updateFuelMapMarker();
+}
+// ---- The ECU's VE table (build 305) ----
+// A speed-density ECU meters fuel from the air it estimates: MAP and intake temperature it measures, the volumetric
+// efficiency it reads from a table. Here that table is only the ECU's estimate. The engine's real VE stays computeVE's,
+// derived from its cam, ports, runners and plenum, and is never edited. Fuel injected = estimated air / target AFR, air
+// burned = real air, so the burned AFR = target AFR x real VE / table VE: a cell set too low runs lean, too high rich,
+// and the torque, exhaust temperature and knock follow from the mixture models already there. Untouched, the table is
+// computeVE at each breakpoint and the engine reads no table at all, so it moves no number. Diesels meter fuel by
+// quantity, not by an air estimate, and show no table. (The owner's choice, November 2026; plans/road-to-v1.md, G.)
+const VE_TMIN=0.20,VE_TMAX=1.60;   // editable bounds of the table's VE: past these no real engine breathes
+// computeVE sets boostNow, and reads the exhaust's temperature (its scavenging), which reads the mixture: inside it the
+// mixture is the target's, so the loop closes once (open: the real VE at the burned mixture's exhaust temperature).
+let _veIn=false;
+const veTrue=(rpm,map)=>{const b=engine.boostNow;_veIn=true;try{return computeVE(rpm,map);}finally{_veIn=false;engine.boostNow=b;}};
+function veTableAt(rpm,map){
+  const fc=clamp((rpm-1000)/Math.max(1,engine.redline-1000)*(FM_COLS-1),0,FM_COLS-1),fr=fmRowOf(rpm,map);
+  const c0=Math.floor(fc),c1=Math.min(c0+1,FM_COLS-1),tc=fc-c0,r0=Math.floor(fr),r1=Math.min(r0+1,FM_ROWS-1),t=fr-r0,g=veMap;
+  return (g[r0][c0]*(1-tc)+g[r0][c1]*tc)*(1-t)+(g[r1][c0]*(1-tc)+g[r1][c1]*tc)*t;
+}
+function veMeteredAFR(rpm,map,afr){
+  if(!veMapCustom||!veMap||engine.ci||_veIn)return afr;
+  return afr*veTrue(rpm,map)/Math.max(0.05,veTableAt(rpm,map));
+}
+function generateVeMap(){
+  const g=[];for(let r=0;r<FM_ROWS;r++){const row=[];for(let c=0;c<FM_COLS;c++)row.push(+veTrue(fmRpmAt(c),fmMapAt(r)).toFixed(3));g.push(row);}
+  return g;
+}
+function manageVeMap(){
+  const key=engine.mapMax.toFixed(2)+'|'+engine.redline;
+  const ok=Array.isArray(veMap)&&veMap.length===FM_ROWS&&veMap[0]&&veMap[0].length===FM_COLS;
+  if(engine.ci||!ok||!veMapCustom||veMapKey!==key){veMap=null;veMapCustom=false;veMapKey=key;veSel=null;}
+}
+function selectVeCell(c,r){veSel={c:clamp(c,0,FM_COLS-1),r:clamp(r,0,FM_ROWS-1)};renderVeMap();}
+function adjustVeCell(delta){   // delta in points of VE (%)
+  if(!veSel)return;
+  if(!veMapCustom||!veMap){veMap=generateVeMap();veMapCustom=true;}
+  veMap[veSel.r][veSel.c]=clamp(Math.round(veMap[veSel.r][veSel.c]*100+delta)/100,VE_TMIN,VE_TMAX);
+  dynoCache=null;renderVeMap();
+}
+function resetVeMap(){veMap=null;veMapCustom=false;veSel=null;dynoCache=null;renderVeMap();flash(tr('VE TABLE RESET TO DERIVED'));}
+function renderVeMap(){
+  const box=document.getElementById('veMapBox'),hdr=document.getElementById('veMapHdr'),ed=document.getElementById('veMapEdit');
+  if(!box||!hdr)return;
+  const show=!engine.ci&&engine.afrMode==='auto';
+  box.style.display=show?'block':'none';hdr.style.display=show?'':'none';if(ed)ed.style.display=show?'flex':'none';
+  if(!show){box.innerHTML='';return;}
+  const g=veMapCustom&&veMap?veMap:generateVeMap();
+  let h='<table class="fuelmap"><tr><th>MAP\\RPM</th>';
+  for(let c=0;c<FM_COLS;c++)h+='<th>'+(fmRpmAt(c)/1000).toFixed(1)+'k</th>';
+  h+='</tr>';
+  for(let r=FM_ROWS-1;r>=0;r--){
+    const mp=fmMapAt(r);
+    h+='<tr><th>'+(mp>1.001?'+'+(mp-1).toFixed(1):mp.toFixed(1))+'</th>';
+    for(let c=0;c<FM_COLS;c++){
+      const v=g[r][c],off=veMapCustom?veTrue(fmRpmAt(c),mp)/v:1;   // burned AFR / target AFR at the breakpoint
+      const hue=Math.round(lerp(210,40,clamp((v-0.5)/0.7,0,1))),sel=veSel&&veSel.c===c&&veSel.r===r?' sel':'';
+      h+='<td class="fm-cell'+sel+(Math.abs(off-1)>0.05?' knk':'')+'" data-c="'+c+'" data-r="'+r+'" style="background:hsl('+hue+',55%,36%)">'+Math.round(v*100)+'</td>';
+    }
+    h+='</tr>';
+  }
+  h+='</table><div class="fuelmap-note">'+tr('Rows = load (MAP bar) · Columns = RPM · cell = the VE the ECU assumes, %. It meters fuel by it; the engine breathes what its parts give. Red = mixture more than 5% off target. Tap a cell to tune it.')+(veMapCustom?' <b style="color:#ffcc00">'+tr('CUSTOM MAP')+'</b>':'')+'</div>';
+  box.innerHTML=h;
+  const info=document.getElementById('veSelInfo');
+  if(info){
+    if(veSel){const rpm=fmRpmAt(veSel.c),mp=fmMapAt(veSel.r),tgt=mappedAFR(rpm,mp);
+      info.textContent=rpm+'rpm • '+(mp>1.001?'+'+(mp-1).toFixed(1):mp.toFixed(1))+'bar → '+tr('table')+' '+Math.round(g[veSel.r][veSel.c]*100)+'% • '+tr('engine')+' '+Math.round(veTrue(rpm,mp)*100)+'% • AFR '+veMeteredAFR(rpm,mp,tgt).toFixed(1)+' ('+tr('target')+' '+tgt.toFixed(1)+')';
     }else info.textContent=tr('Tap a cell to select');
   }
   updateFuelMapMarker();
@@ -1291,7 +1360,7 @@ function updateEnginePhysics(){
   const map=liveMap();
   // AUTO (ECU MAP) mode: the ECU sets the live mixture from its load×rpm map, so the AFR
   // readout, fuel flow, emissions and wear all reflect the mapped value.
-  if(engine.afrMode==='auto')state.afr=mappedAFR(state.rpm,map);
+  if(engine.afrMode==='auto')state.afr=veMeteredAFR(state.rpm,map,mappedAFR(state.rpm,map));
   if(state.firing===false&&!isHybrid()){      // stopped, coasting down or cranking: nothing burns
     state.fuelCut=true;state.torque=0;state.powerKW=0;state.powerHP=0;state.bmep=0;state.knockRisk=0;
     state.fuelFlowLph=0;state.heatFuelLph=0;state.bsfc=999;state.thermalEff=0;

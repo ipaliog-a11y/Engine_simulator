@@ -247,6 +247,10 @@ function bindControls(){
   const skBox=document.getElementById('sparkMapBox');
   if(skBox)skBox.addEventListener('click',e=>{const td=e.target.closest('td.fm-cell');if(td)selectSkCell(+td.dataset.c,+td.dataset.r);});
   for(const [id,f] of [['skRetard',()=>adjustSkCell(-1)],['skAdvance',()=>adjustSkCell(1)],['skReset',resetSparkMap]]){const b=document.getElementById(id);if(b)b.addEventListener('click',f);}
+  // The VE table (build 305): a point of VE a nudge.
+  const veBox=document.getElementById('veMapBox');
+  if(veBox)veBox.addEventListener('click',e=>{const td=e.target.closest('td.fm-cell');if(td)selectVeCell(+td.dataset.c,+td.dataset.r);});
+  for(const [id,f] of [['veDown',()=>adjustVeCell(-1)],['veUp',()=>adjustVeCell(1)],['veReset',resetVeMap]]){const b=document.getElementById(id);if(b)b.addEventListener('click',f);}
   // Populate & wire the preset dropdown
   enginePicker=wireFamilyPicker('edFamily','edPreset',FACTORY_ENGINE_CATS,FACTORY_ENGINES,p=>p.cat||'Archetypes','— choose a build —',i=>{
     const p=FACTORY_ENGINES[i];
