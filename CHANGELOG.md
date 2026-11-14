@@ -18,6 +18,20 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 ## [Unreleased]
 
+### The track and race picture keeps its frame rate when zoomed out (build 286)
+
+No physics changed; only how the picture is painted (`track-scene.js`).
+- **Why it dropped frames:** zoomed out, the whole circuit is in view, and all of it (about 1000 strokes and 700 fills)
+  was painted again every frame, though only the cars move.
+- **The still part is kept.** When the camera does not move (fully zoomed out, or paused), the ground, road and
+  scenery are painted once and copied; only the cars and the weather are drawn each frame. On an emulated phone
+  (4x slower CPU) a frame fully zoomed out went from about 66 ms to about 28 ms, the same as zoomed in.
+- **Less detail where it is under a pixel.** Below 3 px per metre the rail posts, the trees' glow and trunk and the
+  single tyres of a stack are not drawn. The lap's coloured line is one stroke per run of a colour (442 strokes to
+  about 85). Part-way zoomed out a frame went from about 70 ms to about 55 ms.
+- **Open:** part-way zoomed out the camera still moves, so nothing can be kept, and it is still the slowest view.
+  The times are from a desktop browser slowed down, not a phone. No fingerprint was run: nothing a result reads changed.
+
 ### The motor bench shows where the losses go and what the pack is doing (build 285)
 
 No physics changed: the bench only shows numbers the model already worked out.
