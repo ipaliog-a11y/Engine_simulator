@@ -40,7 +40,7 @@
 </div>
 <div class="container">
 <header>
-<h1>PIXEL ENGINE SIM v0.7 build 307</h1>
+<h1>PIXEL ENGINE SIM v0.7 build 308</h1>
 <div class="subtitle" id="subtitle">ENGINE DESIGNER • BUILD IT, THEN DRIVE IT</div>
 </header>
 <div class="build-strip" id="buildStrip">
@@ -561,6 +561,26 @@
 <div class="part-guide" id="pwGuide"></div>
 <div class="part-chart"><div class="gw-leg" id="pwLegend"></div><canvas id="pwCanvas" role="img" aria-label="The wing's section at its angle with its downforce and drag, and its lift against the angle"></canvas></div>
 <div class="btn-row part-btns"><button type="button" id="pwSave">SAVE PART</button><button type="button" id="pwSaveFit">SAVE &amp; FIT</button></div>
+</div>
+<div id="partsDiff" hidden>
+<div class="design-section">My differentials</div>
+<div class="part-list" id="pdList"></div>
+<div class="pick-row"><div class="field"><label for="pdFrom">START FROM</label><select id="pdFrom"><option value="clsd">A CLUTCH-PLATE LSD</option></select></div>
+<div class="field"><label>&nbsp;</label><button type="button" id="pdNew">NEW DIFF</button><button type="button" id="pdReset" title="Put the dimensions back to the starting diff, keeping the name">RESET</button></div></div>
+<div class="design-section">Clutch-plate LSD</div>
+<div class="hint">Fitted, it takes the place of the VEHICLE tab's DIFFERENTIAL: the ramps turn the drive into a squeeze on the clutch plates, and their friction holds the two wheels together.</div>
+<div class="design-grid">
+<div class="field"><label for="pdName">NAME</label><input type="text" id="pdName" maxlength="40"></div>
+<div class="field"><label for="pdPreload">PRELOAD (N m)</label><input type="number" id="pdPreload" min="0" max="400" step="5"></div>
+<div class="field"><label for="pdRamp">RAMP ANGLE (°)</label><input type="number" id="pdRamp" min="25" max="90" step="5"></div>
+<div class="field"><label for="pdFaces">FRICTION FACES A SIDE</label><input type="number" id="pdFaces" min="1" max="10" step="1"></div>
+<div class="field"><label for="pdRFace">PLATE MEAN RADIUS (mm)</label><input type="number" id="pdRFace" min="25" max="70" step="1"></div>
+<div class="field"><label for="pdRRamp">RAMP RADIUS (mm)</label><input type="number" id="pdRRamp" min="20" max="60" step="1"></div>
+</div>
+<div class="design-section">On this car</div>
+<div class="part-guide" id="pdGuide"></div>
+<div class="part-chart"><div class="gw-leg" id="pdLegend"></div><canvas id="pdCanvas" role="img" aria-label="The share of the driven axle's grip the diff puts down against the lateral acceleration"></canvas></div>
+<div class="btn-row part-btns"><button type="button" id="pdSave">SAVE PART</button><button type="button" id="pdSaveFit">SAVE &amp; FIT</button></div>
 </div>
 </div>
 

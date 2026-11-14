@@ -495,7 +495,7 @@ function simulateLapCore(key,opts){
     const g0=gear>=0?inGear(vi,gear):gearAt(vi),bg=boostShare<1?{gear:g0.gear,F:g0.F*boostShare,tqFrac:g0.tqFrac*boostShare}:g0;
     const R=(drag(vi)+rollF(vi)*q.cosT+corneringDrag(m,aLat,N))/m+G*q.sinT;
     const nD=vehicle.drive==='awd'?4:2,sD=vehicle.drive==='fwd'?roadSigma('F',vi):vehicle.drive==='rwd'?roadSigma('R',vi):(roadSigma('F',vi)+roadSigma('R',vi))/2;   // the driven tyres' load swing (build 216)
-    const kk=tyreMuX(N0/nD,vehicle.drive==='fwd'?vehicle.FzRefF:vehicle.FzRef)*roadGrip(sD/Math.max(1,N0/nD))*diffTractionAt(df,aLat,vehicle.cg,bg.tqFrac)*Math.sqrt(Math.max(0,1-uD*uD));
+    const kk=tyreMuX(N0/nD,vehicle.drive==='fwd'?vehicle.FzRefF:vehicle.FzRef)*roadGrip(sD/Math.max(1,N0/nD))*diffTractionAt(df,aLat,vehicle.cg,bg.tqFrac,df.part?tyreMuX(N0/nD,vehicle.drive==='fwd'?vehicle.FzRefF:vehicle.FzRef)*N0*rT:0)*Math.sqrt(Math.max(0,1-uD*uD));
     // On power the drive force also spins up the engine and wheels (vehicleMassEff, build 106): a = (F -
     // m R) / mE. On grip the tyres are slipping, the surplus only spins the wheels, and the car gets the
     // tyre's force over its own mass, with the load transfer following that acceleration:
