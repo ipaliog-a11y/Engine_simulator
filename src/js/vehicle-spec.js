@@ -107,7 +107,7 @@ function readVehicleFromForm(){
     // the front tyres' width when narrower or wider than the rears (0 = the same), and the roll balance (build 157)
     tireWidthF:+g('vhTireWF').value>0?clamp(Math.round(+g('vhTireWF').value),135,355):0,
     tireAspect:clamp(Math.round(+g('vhTireA').value||40),25,80),wheelDia:clamp(Math.round(+g('vhWheel').value||18),13,22),
-    aeroFront:g('vhAeroF').value,aeroRear:g('vhAeroR').value,aeroFloor:g('vhAeroFl').value,weightRed:g('vhWeight').value,
+    aeroFront:g('vhAeroF').value,...vehPartsFromForm(),aeroFloor:g('vhAeroFl').value,weightRed:g('vhWeight').value,
     brakeType:g('vhBrake').value,rotor:clamp(Math.round(+g('vhRotor').value||330),200,450),suspension:g('vhSusp').value,
     // each axle's geometry (build 173)
     suspFront:g('vhGeoF').value,suspRear:g('vhGeoR').value,
@@ -186,7 +186,7 @@ function applyVehicleToForm(v){
   g('vhChassis').value=v.chassis||'coupe';g('vhDrive').value=g('vhDrive').dataset.prev=v.drive||'rwd';g('vhGearbox').value=v.gearbox||'manual';g('vhDiff').value=v.diff||'open';
   g('vhGears').value=v.gears||6;g('vhGearing').value=v.gearing!=null?v.gearing:52;
   g('vhTire').value=v.tireType||'sport';g('vhTireW').value=v.tireWidth||235;g('vhTireWF').value=v.tireWidthF||0;g('vhTireA').value=v.tireAspect||40;g('vhWheel').value=v.wheelDia||18;
-  g('vhAeroF').value=v.aeroFront||'none';g('vhAeroR').value=v.aeroRear||'none';g('vhAeroFl').value=v.aeroFloor||'none';g('vhWeight').value=v.weightRed||'none';
+  g('vhAeroF').value=v.aeroFront||'none';g('vhAeroR').value=v.aeroRear||'none';vehPartsToForm(v);g('vhAeroFl').value=v.aeroFloor||'none';g('vhWeight').value=v.weightRed||'none';
   g('vhBrake').value=v.brakeType||'slotted';g('vhRotor').value=v.rotor||330;g('vhSusp').value=v.suspension||'sport';
   {const fg=factoryGeo(v);g('vhGeoF').value=SUSP_GEO[v.suspFront]?v.suspFront:fg.f;g('vhGeoR').value=SUSP_GEO[v.suspRear]?v.suspRear:fg.r;}   // saves from before build 173 carry none
   // saves from before build 174 carry ROLL BALANCE (arbBal), the front bar against the rear: it becomes the front bar

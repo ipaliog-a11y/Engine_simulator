@@ -60,6 +60,29 @@ const AERO_REAR ={none:{cl:0,cd:0},lip:{cl:0.20,cd:0.008},wing:{cl:0.75,cd:0.035
 // front = the share of a floor's downforce on the front axle: a flat undertray works the whole floor and
 // acts near mid-wheelbase; a diffuser's suction peaks at its throat, ahead of the rear axle.
 const AERO_FLOOR={none:{cl:0,cd:0},undertray:{cl:0.35,cd:0.006,front:0.5},diffuser:{cl:0.80,cd:0.014,front:0.35}};
+// A rear wing as a part (build 290): its span, chord, angle, camber and end plates, by Prandtl's lifting line for an
+// untwisted wing of elliptic loading (Anderson, Fundamentals of Aerodynamics, ch. 4 and 5):
+//   lift slope a = a0 / (1 + a0 / (pi AR)), with a0 = 2 pi per radian for a thin section;
+//   zero-lift angle -2 f/c for a parabolic camber line of height f (thin-aerofoil theory);
+//   induced drag CL^2 / (pi AR).
+// End plates raise the aspect ratio the wing works at: AR (1 + 1.9 h/b) (Hoerner & Borst, Fluid-Dynamic Lift, ch. 3).
+// Profile drag is turbulent skin friction on both faces, Cf = 0.074 Re^-0.2 (Prandtl; Schlichting, Boundary-Layer
+// Theory), times a section's form factor 1 + 2 t/c + 60 (t/c)^4 (Hoerner, Fluid-Dynamic Drag, ch. 6); the plates add
+// their own skin. The model's ClA and CdA do not change with speed, so the Reynolds number is taken at WING_V.
+// Not modelled: the body's flow the wing sits in (it is taken in clean air), what it does to the body's own lift and
+// drag, its overhang behind the axle, and the fall of lift past the stall (the lift is held at WING_CLMAX there).
+const WING_A0=2*Math.PI;
+const WING_CLMAX=1.5;   // a single cambered element's stall: NACA 4412, about 1.5 at Re 3e6 (Abbott & von Doenhoff, Theory of Wing Sections; probable at a car wing's lower Re)
+const WING_TC=0.12;     // the section's thickness over its chord: the 12% of the common NACA 4412 / 6412 family, taken for every wing
+const WING_V=50;        // m/s (180 km/h): where the skin friction's Reynolds number is taken
+const AIR_NU=1.5e-5;    // m2/s, air's kinematic viscosity at 20 C
+function wingAero(p){
+  const b=p.span_mm/1000,c=p.chord_mm/1000,h=p.plate_mm/1000,S=b*c,AR0=b/c,AR=AR0*(1+1.9*h/b);
+  const a=WING_A0/(1+WING_A0/(Math.PI*AR)),want=a*(p.angle_deg*Math.PI/180+2*p.camber_pct/100),CL=clamp(want,0,WING_CLMAX);
+  const Cf=0.074*Math.pow(WING_V*c/AIR_NU,-0.2),cd0=2*Cf*(1+2*WING_TC+60*Math.pow(WING_TC,4)),cdi=CL*CL/(Math.PI*AR);
+  const plates=4*Cf*h*c;   // two plates, two faces each, a chord long
+  return {S,AR0,AR,slope:a,CL,want,stalled:want>WING_CLMAX,cd0,cdi,clA:CL*S,cdA:(cd0+cdi)*S+plates};
+}
 const AERO_COST={none:0,splitter:600,wing:1800,lip:400,undertray:900,diffuser:2200};
 // Weight reduction stages: kg removed and cost.
 const WEIGHT_RED={none:{kg:0,cost:0},street:{kg:45,cost:1200},sport:{kg:95,cost:3500},race:{kg:170,cost:9000}};

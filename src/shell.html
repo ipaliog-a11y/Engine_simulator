@@ -40,7 +40,7 @@
 </div>
 <div class="container">
 <header>
-<h1>PIXEL ENGINE SIM v0.7 build 289</h1>
+<h1>PIXEL ENGINE SIM v0.7 build 290</h1>
 <div class="subtitle" id="subtitle">ENGINE DESIGNER • BUILD IT, THEN DRIVE IT</div>
 </header>
 <div class="build-strip" id="buildStrip">
@@ -389,7 +389,7 @@
 <!-- PARTS: design a part, save it, fit it on the ENGINE tab (build 205) -->
 <div class="design-panel parts-panel" id="partsPanel">
 <h3>PART DESIGNER</h3>
-<div class="hint">Pick a type of part, set its dimensions and save it. Saved parts are kept in this browser and appear in the ENGINE tab's choices; a saved build carries its parts with it.</div>
+<div class="hint">Pick a type of part, set its dimensions and save it. Saved parts are kept in this browser and appear in the ENGINE tab's choices (a wing's in the VEHICLE tab's); a saved build carries its parts with it.</div>
 <div class="design-section">Type of part</div>
 <div class="part-types" id="partTypes"></div>
 <div class="hint" id="partsNoEngine" hidden>An electric drive has no exhaust, intake, air filter, cam or cylinder head. Build a combustion engine on the ENGINE tab to design parts for it.</div>
@@ -532,6 +532,26 @@
 <div class="part-guide" id="pbGuide"></div>
 <div class="part-chart"><div class="gw-leg" id="pbLegend"></div><canvas id="pbCanvas" role="img" aria-label="Power and torque with this turbocharger against the engine as it is"></canvas></div>
 <div class="btn-row part-btns"><button type="button" id="pbSave">SAVE PART</button><button type="button" id="pbSaveFit">SAVE &amp; FIT</button></div>
+</div>
+<div id="partsWing" hidden>
+<div class="design-section">My wings</div>
+<div class="part-list" id="pwList"></div>
+<div class="pick-row"><div class="field"><label for="pwFrom">START FROM</label><select id="pwFrom"><option value="wing">A WING AS WIDE AS THE TRACK</option></select></div>
+<div class="field"><label>&nbsp;</label><button type="button" id="pwNew">NEW WING</button><button type="button" id="pwReset" title="Put the dimensions back to the starting wing, keeping the name">RESET</button></div></div>
+<div class="design-section">Rear wing</div>
+<div class="hint">Fitted, it takes the place of the VEHICLE tab's REAR AERO kit: its downforce and drag come from these dimensions.</div>
+<div class="design-grid">
+<div class="field"><label for="pwName">NAME</label><input type="text" id="pwName" maxlength="40"></div>
+<div class="field"><label for="pwSpan">SPAN (mm)</label><input type="number" id="pwSpan" min="600" max="2200" step="10"></div>
+<div class="field"><label for="pwChord">CHORD (mm)</label><input type="number" id="pwChord" min="80" max="600" step="5"></div>
+<div class="field"><label for="pwAngle">ANGLE (°)</label><input type="number" id="pwAngle" min="0" max="25" step="0.5"></div>
+<div class="field"><label for="pwCamber">CAMBER (% of chord)</label><input type="number" id="pwCamber" min="0" max="12" step="0.5"></div>
+<div class="field"><label for="pwPlate">END PLATE HEIGHT (mm)</label><input type="number" id="pwPlate" min="0" max="400" step="10"></div>
+</div>
+<div class="design-section">On this car</div>
+<div class="part-guide" id="pwGuide"></div>
+<div class="part-chart"><div class="gw-leg" id="pwLegend"></div><canvas id="pwCanvas" role="img" aria-label="The wing's section at its angle with its downforce and drag, and its lift against the angle"></canvas></div>
+<div class="btn-row part-btns"><button type="button" id="pwSave">SAVE PART</button><button type="button" id="pwSaveFit">SAVE &amp; FIT</button></div>
 </div>
 </div>
 

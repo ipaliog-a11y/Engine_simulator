@@ -18,6 +18,28 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 ## [Unreleased]
 
+### The rear wing as a part (build 290)
+
+Phase D of `plans/road-to-v1.md` begins: the first part of the car rather than the engine.
+
+- **The PARTS tab designs a rear wing**: span, chord, angle, camber and end-plate height. Fitted from the VEHICLE
+  tab's REAR AERO (under MY PARTS), it takes the kit's place, and fits any car, electric ones included.
+- **Its numbers are derived, not fitted.** Lifting-line theory (Anderson): lift slope 2π/(1 + 2/AR); camber as
+  2f/c of angle (thin aerofoil); induced drag CL²/(πAR). End plates raise the working AR by 1 + 1.9 h/b (Hoerner &
+  Borst). Profile drag is turbulent skin friction on both faces with a 12% section's form factor (Hoerner), at
+  180 km/h. Lift is held at 1.5 past the stall (NACA 4412, Abbott & von Doenhoff; probable at a car wing's Reynolds
+  number), and the preview flags it. Downforce lands on the rear axle.
+- **What it gives:** a 1.52 × 0.25 m wing at 8°, 6% camber, 150 mm plates, on the M3 E46: ClA 0.49, CdA 0.033, about
+  23 kg of downforce at 100 km/h and 92 kg at 200; 86% of its drag is induced. The kit wing it replaces is
+  ClA 0.75, CdA 0.035 × the frontal area, scaled by the class.
+- **No factory car moved**: fingerprint identical to `main`, 5212 values.
+- **Left open:** the wing is in clean air (the body ahead of it, its overhang behind the axle and what it does to the
+  body's own lift are not modelled); `AERO_FRONT/REAR` stay in the register until the front wing and splitter are
+  parts and each kit car's wing is written as one. Brake bias is the next half of this step. `test64` and `test125`
+  fail on `main` as well.
+
+Tests: test178 (new), test120 (updated); 121, 124, 159, 163, 177, 122, 73, 51.
+
 ### The stepped car's hybrid engine stops and starts (build 289)
 
 Phase E, step 3, from build 277's "left open": a P2 hybrid in `stepCar` ran its engine all the time.
