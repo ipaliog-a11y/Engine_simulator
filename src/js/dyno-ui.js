@@ -287,7 +287,7 @@ function drawDyno(){
   }else{ctx.fillStyle='#667';ctx.fillText(tr('LOG PULL to snapshot & overlay a curve for comparison'),gX+4,iy+41);}
 }
 // Dashboard telltales (build 254): thresholds match the status line / canvas gauge bars. Oil pressure is a
-// placeholder until it is modeled; FAULT is the check-engine lamp of obd.js (build 307); hybrid mode only for a hybrid; ICE-only lamps hide on EV.
+// placeholder until it is modeled; FAULT is the check-engine lamp of obd.js (build 309); hybrid mode only for a hybrid; ICE-only lamps hide on EV.
 function updateDashLamps(){
   const g=id=>document.getElementById(id),row=g('dashLamps');if(!row)return;
   const ev=isElectric(),hy=isHybrid(),set=(id,cls,lbl,title)=>{
@@ -320,10 +320,10 @@ function updateDashLamps(){
   // 12 V side: ICE/hybrid systemVoltage; EV uses the bus readout but keep BATT as pack-low warn
   if(ev)set('lampBatt',state.soc<0.2?'danger':state.soc<0.35?'warn':'');
   else set('lampBatt',state.systemVoltage<11.6?'danger':state.batterySOC<0.35?'warn':'');
-  // Starter / Power Off: EV has no combustion engine to start
-  const st=g('btnStarter'),po=g('btnPowerOff');
-  if(st){st.disabled=ev;st.title=ev?tr('NO ENGINE — ELECTRIC DRIVE'):tr('Start the engine');}
-  if(po){po.disabled=ev;po.title=ev?tr('NO ENGINE — ELECTRIC DRIVE'):tr('Switch the engine off');}
+  // Starter / Power Off: on an electric car or a hybrid they switch the whole car on (READY) and off (build 306)
+  const st=g('btnStarter'),po=g('btnPowerOff'),car=ev||hy;
+  if(st){st.disabled=false;st.title=car?tr('Switch the car on (READY)'):tr('Start the engine');}
+  if(po){po.disabled=false;po.title=car?tr('Switch the whole car off'):tr('Switch the engine off');}
 }
 function updateUI(){
   updateHybridPanel();   // build 190: shown for a hybrid, hidden otherwise

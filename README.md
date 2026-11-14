@@ -1,4 +1,4 @@
-# PIXEL ENGINE SIM v0.7 build 307
+# PIXEL ENGINE SIM v0.7 build 309
 
 **A lightweight, 8-bit style internal combustion engine *designer* & simulator** inspired by *Automation*.
 
@@ -449,6 +449,10 @@ assist map over speed and pedal), regeneration, load-point shifting, electric-dr
   picture and number, in number order, filtered by family. Pick one to see it large with the figures its maker
   published (power, torque, mass, 0–100, top speed, driven wheels), and **DRIVE THIS CAR** loads it with its
   own engine and opens the VEHICLE tab. The figures are the presets' own; the sim's come from the physics.
+  **GUIDED BUILD** (build 308), the sixth item, is for the learner: three questions (what kind of car, what budget,
+  what matters most: the quickest, the lightest or the cheapest) give a real car, each of its parts explained, and
+  **BUILD THIS CAR** loads it on the VEHICLE tab with every part open on its card. The budget is the sim's own build
+  price, engine plus car, listed per car by `tools/car-prices.mjs` (`tests/test188.mjs` keeps it current).
 
   A generic chassis, or a copy, shows the picture of its **body class** (build 222): one unbranded car for
   each of the 14 classes, in `assets/cars/generic/`.

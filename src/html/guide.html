@@ -17,7 +17,7 @@ This app is that whole workshop in one page. You are the engineer: you choose ev
 </div>
 <div class="gtier gt-game"><div class="gtier-h">LV2 · IN THE GAME</div>
 <div class="guide-body" data-gk="loop">
-<b>1. ENGINE</b> — design an engine in six cards (block, head &amp; valves, air &amp; boost, intake &amp; exhaust, fuel &amp; spark, cooling &amp; electrics), then press <b>BUILD &amp; DYNO</b>. <b>2. DYNO</b> reads the full power/torque curve and a graded scorecard. <b>3. LIVE</b> is a running test bench: you set <b>THROTTLE</b> and <b>LOAD</b> and watch the engine respond in real time. You never set RPM directly — you drive it.<br>Then put it in a car on <b>VEHICLE</b> and take it to a circuit on <b>TRACK</b>. Every number in the app comes out of the same physics, so a change you make on the ENGINE tab shows up in the 0–100, the top speed and the lap time.
+New to cars? <b>GUIDED BUILD</b> on the menu asks three questions and hands you a real car, each part explained. <b>1. ENGINE</b> — design an engine in six cards (block, head &amp; valves, air &amp; boost, intake &amp; exhaust, fuel &amp; spark, cooling &amp; electrics), then press <b>BUILD &amp; DYNO</b>. <b>2. DYNO</b> reads the full power/torque curve and a graded scorecard. <b>3. LIVE</b> is a running test bench: you set <b>THROTTLE</b> and <b>LOAD</b> and watch the engine respond in real time. You never set RPM directly — you drive it.<br>Then put it in a car on <b>VEHICLE</b> and take it to a circuit on <b>TRACK</b>. Every number in the app comes out of the same physics, so a change you make on the ENGINE tab shows up in the 0–100, the top speed and the lap time.
 </div>
 </div>
 <div class="gtier gt-phys"><div class="gtier-h">LV3 · THE PHYSICS</div>
@@ -135,11 +135,11 @@ P0171 lean under boost, P0300 misfire (weak spark or valve float), P0420 no work
 A fault seen once is <i>pending</i> (amber; a real car shows it only to a scan tool); seen again after the next
 STARTER it is <i>confirmed</i> (red). A misfire that would cook the catalyst flashes it at once. Three clean runs put it
 out. Click the lamp for the codes and the freeze frame of each; CLEAR CODES or a rebuild erases them.<br>
-<b>STARTER · POWER OFF</b> — on a hybrid they start and stop the engine (the same <i>engOn</i> the
-drive mode uses). On a combustion engine POWER OFF cuts the ignition: the burning stops and the engine
+<b>STARTER · POWER OFF</b> — on a hybrid or an electric car they switch the whole car on (READY) and
+off: off, the motor gives no torque, the engine stops, nothing charges and nothing is heard; a hybrid
+comes on with its engine running and the drive mode decides from there. On a combustion engine POWER OFF cuts the ignition: the burning stops and the engine
 coasts down to rest on its own friction. STARTER cranks it on the 12 V battery; it fires after one whole
-cycle at cranking speed and settles at idle. A flat battery cannot crank it. On a pure EV they
-are disabled (there is no engine).
+cycle at cranking speed and settles at idle. A flat battery cannot crank it.
 </div>
 <div class="guide-body" data-gk="opButtons">
 <b>PEAK TORQUE · MAX POWER · ECO</b> — three buttons that put the engine you built on a real

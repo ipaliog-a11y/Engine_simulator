@@ -1,4 +1,4 @@
-// ---- On-board diagnostics: fault codes and the check-engine lamp (build 307) ----
+// ---- On-board diagnostics: fault codes and the check-engine lamp (build 309) ----
 // The bench's ECU watches signals the simulation already computes and stores SAE J2012 / ISO 15031-6 generic codes, under
 // the OBD-II rules (CARB, 13 CCR 1968.2): a fault seen once is PENDING; seen again on the next drive cycle it is CONFIRMED
 // and lights the MIL. A misfire bad enough to damage the catalyst flashes the MIL at once. The MIL goes out after three
