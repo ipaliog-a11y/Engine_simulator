@@ -802,18 +802,24 @@ function trackSoundState(st){
   // The throttle is recorded per point and held, the manifold interpolated toward the next; the boost the
   // compressor is making (upstream, in the charge pipe) is taken at the throttle's own point, or a lift
   // would find it already gone by the time the throttle shut on it.
-  const R=lapResult&&lapResult.replay,e=engine,thr=st.thr||0;
-  const boost=Math.max(0,(R&&R.map&&st.i!=null?R.map[st.i]:st.map||1)-1);
+  const R=lapResult&&lapResult.replay,e=engine;
+  // a power-split's or a series hybrid's replay runs at MG2's speed: the engine is where the lap's fuel has it, on its best
+  // line at the power it gives, and stopped off the power (build 294; until then on the full-load line, idling off it)
+  if(isDirectHybrid()&&R&&st.i!=null){
+    const g=psEngineSoundAt(lapResult,st.i);if(!g)return {off:true,rpm:0,map:1,throttle:0,afr:e.stoichAFR||14.7,fuelCut:true,blown:false};
+    st=Object.assign({},st,{rpm:g.rpm,thr:g.thr,map:g.map});
+  }
+  const thr=st.thr||0;
+  const boost=Math.max(0,(isDirectHybrid()?st.map:R&&R.map&&st.i!=null?R.map[st.i]:st.map||1)-1);
   let shaftE=0;
   if(e.intake==='turbo'&&e.shaftJ){
     const n=(e.shaftMax||0)*Math.sqrt(clamp(boost/Math.max(0.05,e.maxBoost||e.boost_bar||1),0,1)),w=n*2*Math.PI/60;
     shaftE=0.5*e.shaftJ*w*w;
   }
   const lam=e.ci?SMOKE_LAMBDA_CI+(2.25-SMOKE_LAMBDA_CI)*(1-thr):thr>0.9?0.88:1;
-  // a power-split's replay runs at MG2's speed: the engine is where the eCVT holds it on power, idling off it (build 189)
-  if(isDirectHybrid())st=Object.assign({},st,{rpm:thr>0.02?psEngineRpmAt(st.rpm):e.idleRpmEff});
   return {rpm:st.rpm,map:st.map||1,throttle:thr,afr:lam*(e.stoichAFR||14.7),boostActual:boost,shaftE,
-    fuelCut:(e.canDFCO&&thr<0.03&&st.rpm>e.idleRpmEff+150)||st.rpm>=e.redline,coolant:90,knockRisk:0,blown:false};
+    fuelCut:(!isDirectHybrid()&&e.canDFCO&&thr<0.03&&st.rpm>e.idleRpmEff+150)||st.rpm>=e.redline,
+    coolant:90,knockRisk:0,blown:false};   // a direct hybrid's running engine is fuelled
 }
 // Where the sound comes from: the dyno runs the live engine on its brake, the track tab plays the lap
 // back (and is quiet while the replay is paused), and every other tab is quiet.
@@ -1064,6 +1070,7 @@ function updateSound(){
   if(!Sound.on)return;
   if(isElectric()||hybBenchEngineOff()&&vizMode!=='track')return muteEngineSound();   // a motor has no engine to hear (its own voice: updateMotorSound); a hybrid's engine may be off (build 190)
   const t=Sound.ctx.currentTime,src=soundSource(),s=src||state;
+  if(src&&src.off)return muteEngineSound();   // a hybrid's engine stopped on the lap replay (build 294)
   // Rotaries sit bright & smooth, diesels dark & clattery; the note opens up with revs.
   const bright=(440+s.rpm*0.15+engine.cylinders*8)*(engine.type==='rotary'?1.5:engine.ci?0.6:1.0);
   if(Sound.node){

@@ -109,7 +109,7 @@ function psCurves(){
 // warm temperature. A power-split's controller holds the engine on it. Cached per build.
 function psOol(){
   const e=engine;
-  if(e._ool&&e._ool.score===e.score)return e._ool;
+  if(e._ool&&e._ool.score===e.score&&e._ool.tqAt)return e._ool;
   const curve=buildTorqueCurve(),r0=Math.max(1000,e.idleRpmEff||800),r1=e.redline,NP=48,NR=36,P=[],ne=[],gs=[];
   let Pmax=0;for(const q of curve)Pmax=Math.max(Pmax,q.tq*q.rpm*Math.PI/30);
   const tqAt=rpm=>{if(rpm<=curve[0].rpm)return curve[0].tq;for(let i=1;i<curve.length;i++)if(rpm<=curve[i].rpm)return curve[i-1].tq+(curve[i].tq-curve[i-1].tq)*(rpm-curve[i-1].rpm)/(curve[i].rpm-curve[i-1].rpm);return 0;};
@@ -122,7 +122,7 @@ function psOol(){
     }
     if(b){P.push(Pi);ne.push(b.rpm);gs.push(b.f);}
   }
-  e._ool={score:e.score,P,ne,gs,Pmax:P.length?P[P.length-1]:Pmax};
+  e._ool={score:e.score,P,ne,gs,Pmax:P.length?P[P.length-1]:Pmax,tqAt};   // tqAt: the full-load torque, for the sound (build 294)
   return e._ool;
 }
 // The best line's engine speed and fuel (g/s) for an engine power (W).
@@ -150,17 +150,29 @@ function psDriveline(v){
 }
 const PS_GEAR_NOTE='A power-split hybrid has no gears: one reduction from its traction motor, set with GEARING on the VEHICLE tab.';
 const PS_REDUCTION={label:'eCVT (POWER-SPLIT)',shift:0,powershift:true,eff:1,stall:0,mult:1,cost:900};
-// The lap's and the race's fuel: per point, the engine's share of the shaft power (the replay's power less what the pack
-// gave) over the eCVT's path efficiency at that speed, burnt on the best line. Off the power the engine stops.
+// The engine's power at a replay point (W): the shaft's power less what the pack gave, over the eCVT's path efficiency at
+// that speed; 0 off the power, where the engine stops. The lap's fuel and its sound both read it (build 294).
+function psEnginePower(L,i,c){
+  const R=L.replay,R0=c.eng,rpm=R.rpm[i],Ps=R.pwr[i]-(L.hy?Math.max(0,L.hy.pm[i]):0);
+  if(!(Ps>0))return 0;
+  let eta=c.eta[c.eta.length-1];
+  if(rpm<=R0[0].rpm)eta=c.eta[0];
+  else for(let k=1;k<R0.length;k++)if(rpm<=R0[k].rpm){eta=c.eta[k-1]+(c.eta[k]-c.eta[k-1])*(rpm-R0[k-1].rpm)/(R0[k].rpm-R0[k-1].rpm);break;}
+  return Ps/eta;
+}
+// The lap's and the race's fuel: per point, the engine's power (psEnginePower) burnt on the best line.
 function psFuelRate(){
-  const c=hybCurves(),R0=c.eng;
-  const etaAt=rpm=>{if(rpm<=R0[0].rpm)return c.eta[0];for(let i=1;i<R0.length;i++)if(rpm<=R0[i].rpm)return c.eta[i-1]+(c.eta[i]-c.eta[i-1])*(rpm-R0[i-1].rpm)/(R0[i].rpm-R0[i-1].rpm);return c.eta[c.eta.length-1];};
-  return L=>{const R=L.replay,n=R.rpm.length,out=new Float32Array(n);
-    for(let i=0;i<n;i++){
-      const Ps=R.pwr[i]-(L.hy?Math.max(0,L.hy.pm[i]):0);
-      out[i]=Ps>0?psOolAt(Ps/etaAt(R.rpm[i])).gs:0;
-    }
+  const c=hybCurves();
+  return L=>{const n=L.replay.rpm.length,out=new Float32Array(n);
+    for(let i=0;i<n;i++){const Pe=psEnginePower(L,i,c);out[i]=Pe>0?psOolAt(Pe).gs:0;}
     return out;};
+}
+// What the engine does at a replay point, for the sound (build 294): null where the fuel has it stopped; else on the best
+// line at its power, as the fuel burns it, and its manifold the share of full-load torque it makes there (steadyMapAt's law).
+function psEngineSoundAt(L,i){
+  const Pe=psEnginePower(L,i,hybCurves());if(!(Pe>0))return null;
+  const ne=psOolAt(Pe).ne,Te=Pe/(Math.max(ne,1)*Math.PI/30),thr=clamp(Te/Math.max(1,psOol().tqAt(ne)),0,1);
+  return {rpm:ne,thr,map:steadyMapAt(ne,thr)};
 }
 // The driveline line of the VEHICLE summary.
 function psDrivelineLine(v){
@@ -168,7 +180,7 @@ function psDrivelineLine(v){
   return '<br>'+tr('eCVT (POWER-SPLIT)')+' • '+tr('Reduction')+' <b>'+v.finalDrive.toFixed(2)+':1</b> ('+tr('matched')+' '+v.reductionMatched.toFixed(2)+':1) • MG1 '+
     Math.round(motorMaxTorque(hy.mg1,100,PS.busV,60))+' Nm • MG2 '+Math.round(motorMaxTorque(hy.motor,100,PS.busV,60))+' Nm';
 }
-// The engine's speed at full throttle for an MG2 speed (rpm), off the curves: what the replay's sound plays.
+// The engine's speed at full throttle for an MG2 speed (rpm), off the curves: the bench's SPORT mode holds it there.
 function psEngineRpmAt(n2){
   const c=hybCurves(),R=c.eng;
   if(n2<=R[0].rpm)return c.ne[0];

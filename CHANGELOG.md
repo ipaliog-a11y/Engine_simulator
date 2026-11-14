@@ -18,6 +18,13 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 ## [Unreleased]
 
+### A power-split or series hybrid's engine is heard where the lap runs it (build 294)
+
+- **The lap replay played the wrong engine.** On the TRACK tab a Prius's or an e-POWER's engine sounded on its full-load line whenever the throttle was open, and idled off it, while the lap's fuel had it on its best line at the power it actually gave (the shaft's power less the pack's), and stopped off the power. The sound now reads the same engine power as the fuel (`psEnginePower`, shared), so the two agree: on the Prius's lap the engine runs at 379 of 442 points and is silent at the other 63, at the best line's speed exactly.
+- **Its load moves.** The replay records a 1 bar manifold for a direct drive, so the sound's load was flat. It is now the share of full-load torque the engine makes at that speed (`steadyMapAt`'s law): 0.20-0.94 bar round the lap.
+- Both sound models (SYNTH and GAS) follow it, and the guide's ENGINE SOUND text says so. Nothing the simulators produce moved: the fingerprint is identical, and the lap's fuel is the same to the last bit.
+- Left open, in `plans/hybrid-electric/gas-sound-hybrid.md`: on the bench the sound reads the pedal, not the engine's own throttle, so a charging engine can crackle with the pedal up (build B); an engine start or stop has no spin-up or run-down (C); a P2's lap has no electric stretches to be silent in, because the lap model has none yet.
+
 ### The motor's stator is drawn from the flux it carries (build 293)
 
 Phase C, step 2 of `plans/road-to-v1.md`, first part: the stator's slots stop being a fixed share of the stator.
