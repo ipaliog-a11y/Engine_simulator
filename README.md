@@ -1,4 +1,4 @@
-# PIXEL ENGINE SIM v0.7 build 287
+# PIXEL ENGINE SIM v0.7 build 288
 
 **A lightweight, 8-bit style internal combustion engine *designer* & simulator** inspired by *Automation*.
 
@@ -95,7 +95,7 @@ saps power; a large radiator, electric fan and oil cooler keep it cool.
 
 ### Electric drive (in progress — the plan is in `plans/hybrid-electric/`)
 Pick **ELECTRIC (BATTERY)** as the engine type and the ENGINE tab trades the combustion sections for **MOTOR**
-(rotor diameter and stack, poles, turns per phase, magnet grade and retention, cooling, top speed), **INVERTER**
+(rotor diameter and stack, poles, turns per phase, magnet grade, size and retention, cooling, top speed), **INVERTER**
 (silicon IGBT or SiC, current rating) and **BATTERY** (chemistry, cells in series, capacity, technology year). Since
 build 238 these are seven cards picked from a menu (stacked and folding on a phone), each number with a slider whose
 ticks are the real drives in the presets, a **?** that explains the input, the effect of every change beside it, and a

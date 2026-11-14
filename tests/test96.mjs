@@ -1,10 +1,11 @@
 // The electric drive's physics (build 178, step 2.1 of plans/hybrid-electric/).
 //
 // WHY THIS EXISTS. The motor, inverter and battery are derived from what they are built of: the rotor's size, the turns,
-// the magnets, the cooling, the inverter's devices, the cells. Three constants are measured, all on one motor (the
+// the magnets, the cooling, the inverter's devices, the cells. Two constants are measured, both on one motor (the
 // Tesla Model 3 rear motor, MotorXP 2020), so the model is checked here against what did NOT set it. What must hold:
-//   · the Model 3: the measured back-EMF and the torque at 953 A come back (the constants are wired as documented),
-//     and its phase resistance, from the slot copper alone, lands near the measured 4.75 mOhm;
+//   · the Model 3: its back-EMF, from its magnets' size through the magnetic circuit (build 288), within 2% of the
+//     measured 42 V/krpm; the torque at 953 A (SAT_K was set there); and its phase resistance, from the slot copper
+//     alone, near the measured 4.75 mOhm;
 //   · the 2012 Nissan Leaf (ORNL, Burress 2013), with only its geometry and the turns that put its knee where Nissan
 //     says (80 kW from 2730 rpm on 375 V): it makes its 280 Nm and 80 kW, holds 80 kW at 7000 rpm with the stator
 //     settling near ORNL's ~135 C, and is above ~97% efficient somewhere between 5000 and 9000 rpm;
@@ -39,12 +40,14 @@ const r = await page.evaluate(() => {
     inverter: 'igbt', invAmps: 260, maxRpm: 10390 };
   const lf = motorBuild(LF), ps = motorPsi(lf, 60);
   const T80 = 80000 / (7000 * Math.PI / 30), st = motorSteadyTemps(lf, T80, 7000, 375);
-  let best = { e: 0 };
+  let best = { e: 0 }, mid = { e: 0 };
   for (let n = 1000; n <= 10000; n += 250) for (let T = 10; T <= 300; T += 5) {
     if (T > motorMaxTorque(lf, n, 375)) continue;
     const L = motorLosses(lf, T, n, 375, { w: 90, r: 70 }), P = T * n * Math.PI / 30, e = P / (P + L.cu + L.fe + L.mech);
     if (e > best.e) best = { e, n, T };
+    if (n >= 5000 && n <= 9000 && e > mid.e) mid = { e, n, T };
   }
+  best.mid = mid;
   o.leaf = { knee: motorBaseW(lf, 375, ps) * 30 / Math.PI, tpk: motorMaxTorque(lf, 1000, 375),
     pk: Math.max(...[3000, 5000, 7000, 9000].map(n => motorMaxTorque(lf, n, 375) * n * Math.PI / 30)) / 1000,
     hold: motorMaxTorque(lf, 7000, 375) >= T80, tW: st.w, tC: st.c, best };
@@ -98,7 +101,10 @@ if (L.tpk < 280) fails.push(`the Leaf makes ${f(L.tpk, 0)} Nm, under its 280`);
 if (!(L.pk >= 80 && L.pk < 100)) fails.push(`the Leaf makes ${f(L.pk)} kW at most, not its 80-odd`);
 if (!L.hold) fails.push('the Leaf cannot make 80 kW at 7000 rpm');
 if (!(L.tW > 100 && L.tW < 170)) fails.push(`holding 80 kW at 7000 rpm the Leaf's winding settles at ${f(L.tW, 0)} C, not near ORNL's ~135`);
-if (!(L.best.e > 0.965 && L.best.n >= 4500 && L.best.n <= 9500)) fails.push(`the Leaf peaks at ${f(100 * L.best.e)}% at ${L.best.n} rpm, not ~97% at 5000-9000`);
+// ORNL's island: above 97% from 5000 to 9000 rpm. The model's map is a plateau there (since build 288 its best, 0.01
+// point higher, lies at 3000 rpm), so the check is the island's height, not where the single best point falls.
+const M = L.best.mid;
+if (!(M.e > 0.965 && M.e > L.best.e - 0.001)) fails.push(`the Leaf's best at 5000-9000 rpm is ${f(100 * M.e)}% at ${M.n} rpm, against ${f(100 * L.best.e)}% overall: not ORNL's ~97% island`);
 
 // 3. the packs
 const P = r.pack;

@@ -64,18 +64,18 @@ const HYB_DEFAULT={evMotorType:'pm',evRotorD:200,evStack:40,evPoles:12,evTurns:2
   evMaxRpm:8000,evInverter:'igbt',evAmps:400,evRearCount:1,evFront:'none',evChem:'liHEV',evSeries:64,evKWh:1.56,evYear:2016};
 // A power-split's when it is first chosen (build 189): the 4th-generation Prius's MG2 (53 kW and 163 Nm on the 600 V bus,
 // 17,000 rpm) and its 1.31 kWh nickel-metal hydride pack of 168 cells (201.6 V).
-const HYB_DEFAULT_PS={evMotorType:'pm',evRotorD:150,evStack:60,evPoles:8,evTurns:100,evMagnet:'ndfeb',evRetention:'bridges',evCooling:'jacket',
+const HYB_DEFAULT_PS={evMotorType:'pm',evRotorD:150,evStack:60,evPoles:8,evTurns:95,evMagnet:'ndfeb',evRetention:'bridges',evCooling:'jacket',
   evMaxRpm:17000,evInverter:'igbt',evAmps:100,evRearCount:1,evFront:'none',evChem:'nimhHEV',evSeries:168,evKWh:1.31,evYear:2016};
 // A series hybrid's when it is first chosen (build 193): the Nissan Qashqai e-POWER's traction motor (140 kW, 330 Nm) and
 // its 2.1 kWh pack of hybrid cells.
-const HYB_DEFAULT_SERIES={evMotorType:'pm',evRotorD:160,evStack:100,evPoles:8,evTurns:26,evMagnet:'ndfeb',evRetention:'bridges',evCooling:'jacket',
+const HYB_DEFAULT_SERIES={evMotorType:'pm',evRotorD:160,evStack:100,evPoles:8,evTurns:24,evMagnet:'ndfeb',evRetention:'bridges',evCooling:'jacket',
   evMaxRpm:14000,evInverter:'igbt',evAmps:450,evRearCount:1,evFront:'none',evChem:'liHEV',evSeries:96,evKWh:2.1,evYear:2021};
 const HYB_SOC=0.6;   // a charge-sustaining hybrid holds its pack about here, with room above it to take back braking
 const isHybrid=()=>!!engine&&engine.type!=='electric'&&!!engine.hy;
 // Build the hybrid system of a combustion engine from its form fields (the electric drive's), or none.
 function buildHybrid(e){
   if(!e.hyMode||e.hyMode==='none'){delete e.hy;return null;}
-  const motor=motorBuild({type:e.evMotorType,rotorD:e.evRotorD,stackL:e.evStack,poles:e.evPoles,turns:e.evTurns,magnet:e.evMagnet,
+  const motor=motorBuild({type:e.evMotorType,rotorD:e.evRotorD,stackL:e.evStack,poles:e.evPoles,turns:e.evTurns,magnet:e.evMagnet,magT:e.evMagT,magW:e.evMagW/100,
     retention:e.evRetention,cooling:e.evCooling,lamination:e.evLamination,wire:e.evWire,conductor:e.evConductor,inverter:e.evInverter,invAmps:e.evAmps,maxRpm:e.evMaxRpm});
   const pack=packBuild({chem:e.evChem,series:e.evSeries,kWh:e.evKWh,year:e.evYear});
   e.hy={mode:e.hyMode,motor,pack,mass:Math.round(motor.mass+pack.mass),cost:motor.cost+pack.cost};
@@ -88,7 +88,7 @@ function buildHybrid(e){
   // a front axle motor (build 195): the electric car's FRONT MOTOR fields, on its own fixed reduction to the front wheels,
   // the car all-wheel drive; it shares the pack with the main motor in proportion to their peak powers
   if(e.evFront==='pm'||e.evFront==='im'){
-    const fm=motorBuild({type:e.evFront,rotorD:e.evFrontD,stackL:e.evFrontStack,poles:e.evFrontPoles,turns:e.evFrontTurns,magnet:e.evMagnet,
+    const fm=motorBuild({type:e.evFront,rotorD:e.evFrontD,stackL:e.evFrontStack,poles:e.evFrontPoles,turns:e.evFrontTurns,magnet:e.evMagnet,magT:e.evMagT,magW:e.evMagW/100,
       retention:e.evRetention,cooling:e.evCooling,lamination:e.evLamination,wire:e.evWire,conductor:e.evConductor,inverter:e.evInverter,invAmps:e.evFrontAmps,maxRpm:e.evMaxRpm});
     const V=hybBusV(e.hy),pk=m=>{let P=0;for(let r=200;r<=m.nMax;r+=200)P=Math.max(P,motorMaxTorque(m,r,V,60)*r*Math.PI/30);return P;};
     const Pr=pk(motor),Pf=pk(fm);

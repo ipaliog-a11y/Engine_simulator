@@ -43,7 +43,9 @@ const EV_VEHICLE_PRESETS=[
 // Hybrids (build 186, step 3 of the plan; decision 14). The Hyundai Ioniq Hybrid (2016): a 1.6 GDi Atkinson-cycle four
 // (Kappa, 72 x 97 mm, 13:1, 105 PS at 5700 rpm, 147 Nm) with a 32 kW / 170 Nm P2 motor between its clutch and its
 // six-speed DCT, and a 1.56 kWh, 240 V lithium-polymer pack: 104 kW and 265 Nm together. The motor is sized to those
-// figures (src/js/hybrid.js, HYB_DEFAULT); the engine is its geometry, which on the model's cams (none is an Atkinson
+// figures (src/js/hybrid.js, HYB_DEFAULT; the motors' turns are not published: each is the count that gives the published
+// torque, re-matched in build 288 when the magnets' flux became derived: the Prius's MG2 100 -> 95, the Qashqai's 26 -> 24,
+// the 330e's 48 -> 46); the engine is its geometry, which on the model's cams (none is an Atkinson
 // cam yet) makes ~116 hp, not 104 (tests/test103.mjs checks the car both as built and matched to the published power).
 const HYB_ENGINE_PRESETS=[
   {cat:'Hybrid',name:'Hyundai Kappa 1.6 GDi + P2 (Ioniq Hybrid)',real:{hp:103.6,hpRpm:5700,tq:147,tqRpm:4000,motorKW:32,motorNm:170,sysKW:104,sysNm:265},
@@ -58,7 +60,7 @@ const HYB_ENGINE_PRESETS=[
   {cat:'Hybrid',name:'Toyota 2ZR-FXE 1.8 + power-split (Prius)',real:{hp:96.6,hpRpm:5200,tq:142,tqRpm:3600,motorKW:53,motorNm:163,sysKW:90},
    unsure:['valvetrain','redline'],engine:{valvetrain:'dohc-roller',type:'petrol4',radiator:'large',oilCooler:true,cylinders:4,bore_mm:80.5,stroke_mm:88.3,compression:13,redline:5500,intake:'na',injector:'port',vvt:true,
     egr:'cooled-full',cam:'atkinson',valves:4,octane:95,airFilter:'stock',exhaust:'stock',cat:'stock',intakeSys:'efi',hyMode:'ps',hyDeploy:'full',
-    evMotorType:'pm',evRotorD:150,evStack:60,evPoles:8,evTurns:100,evMagnet:'ndfeb',evRetention:'bridges',evCooling:'jacket',evMaxRpm:17000,
+    evMotorType:'pm',evRotorD:150,evStack:60,evPoles:8,evTurns:95,evMagnet:'ndfeb',evRetention:'bridges',evCooling:'jacket',evMaxRpm:17000,
     evInverter:'igbt',evAmps:100,evRearCount:1,evFront:'none',evChem:'nimhHEV',evSeries:168,evKWh:1.31,evYear:2016}},
   // The Nissan Qashqai e-POWER (2022; build 193, step 3.4): a series hybrid. The KR15DDT, a 1.5 turbo three (84 x 90.1 mm,
   // variable compression 8-14:1, the model's fixed 12:1 between them), 116 kW (158 PS), drives a generator only; a 140 kW /
@@ -66,7 +68,7 @@ const HYB_ENGINE_PRESETS=[
   {cat:'Hybrid',name:'Nissan KR15DDT 1.5 VC-T + series (Qashqai e-POWER)',real:{hp:155.6,hpRpm:5000,tq:250,tqRpm:2400,motorKW:140,motorNm:330},
    unsure:['redline','compression','boost'],engine:{type:'petrol4',radiator:'large',oilCooler:true,cylinders:3,bore_mm:84,stroke_mm:90.1,compression:12,redline:5600,intake:'turbo',boost_bar:0.4,turboSize:'small',
     injector:'direct',vvt:true,cam:'stock',valves:4,octane:95,airFilter:'stock',exhaust:'stock',cat:'stock',intakeSys:'efi',hyMode:'series',hyDeploy:'full',
-    evMotorType:'pm',evRotorD:160,evStack:100,evPoles:8,evTurns:26,evMagnet:'ndfeb',evRetention:'bridges',evCooling:'jacket',evMaxRpm:14000,
+    evMotorType:'pm',evRotorD:160,evStack:100,evPoles:8,evTurns:24,evMagnet:'ndfeb',evRetention:'bridges',evCooling:'jacket',evMaxRpm:14000,
     evInverter:'igbt',evAmps:450,evRearCount:1,evFront:'none',evChem:'liHEV',evSeries:96,evKWh:2.1,evYear:2021}},
   // The BMW 330e (G20, 2020; build 194, step 3.5a): a plug-in P2. The B48, a 2.0 turbo four (82 x 94.6 mm, 10.2:1, 135 kW,
   // 300 Nm), with an 80 kW / 265 Nm motor in its eight-speed automatic's bellhousing (XtraBoost: the motor's full 80 kW,
@@ -76,7 +78,7 @@ const HYB_ENGINE_PRESETS=[
    unsure:['redline','boost','pack'],engine:{valvetrain:'dohc-roller',type:'petrol4',radiator:'large',oilCooler:true,cylinders:4,bore_mm:82,stroke_mm:94.6,compression:10.2,redline:6500,intake:'turbo',boost_bar:0.4,turboSize:'small',
     injector:'direct',vvt:true,cam:'stock',valves:4,octane:95,airFilter:'stock',exhaust:'stock',cat:'stock',intakeSys:'efi',hyMode:'p2',hyDeploy:'full',hyPlug:true,
     hyTune:{rpm:4000,map:Array(20).fill(100),regen:'high',lps:true,evKmh:0,evKw:0,socLo:12,socT:15,socHi:95},
-    evMotorType:'pm',evRotorD:200,evStack:60,evPoles:12,evTurns:48,evMagnet:'ndfeb',evRetention:'bridges',evCooling:'jacket',evMaxRpm:7500,
+    evMotorType:'pm',evRotorD:200,evStack:60,evPoles:12,evTurns:46,evMagnet:'ndfeb',evRetention:'bridges',evCooling:'jacket',evMaxRpm:7500,
     evInverter:'igbt',evAmps:250,evRearCount:1,evFront:'none',evChem:'ncaP',evSeries:96,evKWh:12,evYear:2020}},
   // The Porsche 918 Spyder (2013; build 195, step 3.5b): a plug-in with a motor at each end. The 4.6 V8 (95 x 81 mm, 447 kW
   // at 8700 rpm, 540 Nm at 6700, to 9150), a 115 kW motor between it and the seven-speed PDK, a 95 kW motor driving the

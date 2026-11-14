@@ -15,21 +15,22 @@
 //   the battery cells in series and parallel: open-circuit voltage by state of charge, internal resistance, the
 //               discharge limit, mass and cost, the chemistry's figures by the year (decision 9).
 //
-// Three constants are measured, not derived, and all from one motor: the Tesla Model 3 rear motor (2018 Long Range)
-// as taken apart and measured by MotorXP (Performance Analysis of the Tesla Model 3 Electric Motor, June 2020):
-// 54 slots, bore 151.3 mm, stack 134 mm, rotor 149.9 mm, 3 pole pairs, 12 series turns per phase (2 turns, 3 paths),
-// 4.75 mOhm per phase, 42 V peak line-to-line per 1000 rpm, 430 Nm at 953 A rms needing 94.6 V rms per phase.
-//   FLUX_KM   the air gap's fundamental flux over the magnets' remanence, which the rotor's magnet pockets set and
-//             this model does not draw: 0.85 gives the measured back-EMF with SH-grade NdFeB (Br 1.28 T);
+// The motor measured here is the Tesla Model 3 rear motor (2018 Long Range), as taken apart and measured by MotorXP
+// (Performance Analysis of the Tesla Model 3 Electric Motor, June 2020): 54 slots, stator 225 / 151.3 mm, stack 134 mm,
+// rotor 149.9 mm, 3 pole pairs, 12 series turns per phase (2 turns, 3 paths), 4.75 mOhm per phase, a single V of two
+// 33 x 6.5 mm NdFeB magnets a pole (segments 21.5 mm long down the stack), 42 V peak line-to-line per 1000 rpm, 430 Nm
+// at 953 A rms needing 94.6 V rms per phase.
+// The air gap's flux comes from the magnets through a magnetic circuit (build 288, magnetCircuit below). Two constants
+// are still set from that one motor, not derived, and used for every motor (plans/fitted-register.json):
 //   SAT_K     how much torque per amp is lost to saturation at that electric loading (430 Nm, not the 470 the
 //             flux alone gives): 8.5%, scaled with the square of the loading;
 //   V_DROP    the terminal voltage over the back-EMF at full current (the inductive and resistive drop): 1.29.
 // Everything else here is either geometry, a material's datasheet figure, or a textbook rule, named where it is used.
-// tests/test96.mjs checks the model against what was NOT used to set it: the Model 3's measured resistance and
-// published power, and the 2012 Nissan Leaf as measured by ORNL (Burress, Benchmarking State-of-the-Art Technologies,
+// tests/test96.mjs checks the model against the Model 3's measured back-EMF and resistance and its published power, and
+// the 2012 Nissan Leaf as measured by ORNL (Burress, Benchmarking State-of-the-Art Technologies,
 // 2013): 80 kW held at 7000 rpm with the stator settling near 135 C, peak motor efficiency above 97%.
-const RHO_CU=1.72e-8, ALPHA_CU=0.00393, RHO_FE=7650, RHO_CU_M=8960, RHO_MAG=7500;
-const FLUX_KM=0.85, SAT_K=0.085, SAT_A_REF=145.7e3, V_DROP=1.29;
+const RHO_CU=1.72e-8, ALPHA_CU=0.00393, RHO_FE=7650, RHO_CU_M=8960;
+const SAT_K=0.085, SAT_A_REF=145.7e3, V_DROP=1.29;
 const KW_WIND=0.93;        // winding factor: distributed, q = 2-3 slots per pole per phase, short-pitched
 const SPLIT=0.67;          // bore over stator outside diameter (Model 3 0.672, Leaf 0.66; 0.6-0.7 for traction motors)
 const GAP=0.0007;          // air gap (m): 0.7 mm, the Model 3's
@@ -72,11 +73,59 @@ const EV_REGEN={off:{label:'OFF',k:0},low:{label:'LOW',k:0.5},high:{label:'HIGH'
 const laminationOf=mm=>Math.abs(+mm-0.2)<0.02?LAMINATION['0.20']:LAMINATION['0.35'];
 // Magnets: remanence at 20 C (T), its temperature coefficient (/K), the highest temperature before the coercivity
 // gives way and the loss is permanent (C), and the price ($/kg). SH and UH grades: Hcj >= 20 kOe and 25 kOe.
+// Build 288: the recoil permeability (mur: sintered NdFeB 1.05, sintered ferrite 1.1, the makers' usual figures) and the
+// density (kg/m3: NdFeB 7500-7600, ferrite 4800-5000).
 const MAGNET={
-  ferrite:{label:'FERRITE',Br:0.42,alpha:-0.0020,Tmax:250,cost:6},
-  ndfeb:  {label:'NdFeB (SH)',Br:1.28,alpha:-0.0012,Tmax:150,cost:60},
-  ndfebDy:{label:'NdFeB + Dy (UH)',Br:1.23,alpha:-0.0011,Tmax:180,cost:95}
+  ferrite:{label:'FERRITE',Br:0.42,alpha:-0.0020,Tmax:250,cost:6,mur:1.1,rho:4900},
+  ndfeb:  {label:'NdFeB (SH)',Br:1.28,alpha:-0.0012,Tmax:150,cost:60,mur:1.05,rho:7500},
+  ndfebDy:{label:'NdFeB + Dy (UH)',Br:1.23,alpha:-0.0011,Tmax:180,cost:95,mur:1.05,rho:7500}
 };
+// ---- the magnets as geometry (build 288) ----
+// A pole is a V of two magnet bars buried under the rotor's surface, as the Model 3's (MotorXP's teardown). The design
+// sets the bar's thickness (magT, mm, along its magnetisation) and the two bars' width together as a share of the pole
+// pitch (magW); the pole's face spans that share. Defaults are the Model 3's: 6.5 mm, and 2 x 33 mm on its 78.5 mm pitch.
+const MAG_T=6.5, MAG_W=0.84;
+// Six 21.5 mm segments fill 129 of the 134 mm stack.
+const MAG_AX=129/134;
+// The steel bridges that hold the bars in carry flux round the magnet's ends without crossing the gap, saturated: two at
+// the rotor's surface and the rib at the V's root, each the full stack long. The Model 3's are too thin to read off the
+// teardown's drawing: 1 mm each at the surface and 2 mm for the rib are usual sizes (PROBABLE). A carbon sleeve keeps them.
+const BRIDGE_W=0.004;
+// The stator's slot opening, for Carter's factor on the gap: 2 mm, a usual semi-closed slot (PROBABLE; not readable on
+// the drawing either).
+const SLOT_OPEN=0.002;
+// The core steel's magnetisation curve: M270-35A's typical polarisation, 1.54 / 1.65 / 1.77 T at 2500 / 5000 / 10000 A/m,
+// and its relative permeability 700 at 1.5 T (EN 10106 grade tables, typical values: UCLouvain ELEC2311, "Non-oriented
+// fully processed steels"; Tata Steel's M250-35A sheet gives 1.53 / 1.64 / 1.76). Above 10 kA/m it approaches 3% silicon
+// iron's saturation polarisation, ~2.03 T, as Js - a/H (the law of approach to saturation; Js PROBABLE). B = J + mu0 H.
+const FE_JS=2.03, FE_H=[0,1705,2500,5000,10000], FE_J=[0,1.5,1.54,1.65,1.77];
+const MU0=4e-7*Math.PI;
+function steelH(B){   // A/m for a flux density B (T)
+  for(let i=1;i<FE_H.length;i++){
+    const B1=FE_J[i]+MU0*FE_H[i];
+    if(B<=B1){const B0=FE_J[i-1]+MU0*FE_H[i-1];return FE_H[i-1]+(B-B0)/(B1-B0)*(FE_H[i]-FE_H[i-1]);}
+  }
+  const a=(FE_JS-FE_J[4])*FE_H[4],d=FE_JS-B;   // B = Js - a/H + mu0 H
+  return (-d+Math.sqrt(d*d+4*MU0*a))/(2*MU0);
+}
+// The air gap's flux from the magnets (T): the flat-topped field over the pole's face, its fundamental, and the flux
+// densities it puts in the stator's teeth and yoke. Per pole, round one loop: the magnet's thickness, the gap (with
+// Carter's factor), a tooth's length and half the yoke between two poles' centres. The magnet is a straight line,
+// B = Br + mu0 mur H; the bridges take Js times their width before any flux reaches the gap; the teeth and yoke follow
+// the steel's curve, the yoke's flux rising as a sine from a pole's centre to the gap between poles (integrated along
+// it). The rotor's own iron is wide and left out. Solved by bisection: the gap's flux falls as the iron takes MMF.
+function magnetCircuit(g){
+  const {Br,mur,magT,magW,tau,L,Lfe,gap,ts,wt,hSlot,hy,tauY}=g;
+  const r=SLOT_OPEN/gap,kc=ts/(ts-r*r/(5+r)*gap),gp=kc*gap;
+  const alpha=Math.min(1,magW),Am=magW*tau*MAG_AX*L,Ag=alpha*tau*L,leak=FE_JS*BRIDGE_W*Lfe;
+  const yokeF=By=>{let F=0;for(let i=0;i<12;i++)F+=steelH(By*Math.sin(Math.PI*(i+0.5)/24));return F*tauY/2/12;};
+  const at=Bg=>{const Bt=Bg*ts/(0.95*wt),By=Bg*Ag/(2*hy*Lfe);return {Bt,By,F:Bg*gp/MU0+steelH(Bt)*hSlot+yokeF(By)};};
+  let lo=0,hi=Br*Am/Ag;
+  for(let k=0;k<40;k++){const Bg=(lo+hi)/2,Hm=-at(Bg).F/magT;
+    if((Am*(Br+MU0*mur*Hm)-leak)/Ag>Bg)lo=Bg;else hi=Bg;}
+  const Bg=Math.max(0,(lo+hi)/2),x=at(Bg);
+  return {Bflat:Bg,B1:4/Math.PI*Bg*Math.sin(alpha*Math.PI/2),Bt:x.Bt,By:x.By,kc};
+}
 // How the rotor holds its magnets in, which sets the surface speed it survives (m/s): steel bridges in the lamination
 // (the Model 3 runs ~140 m/s), or a carbon-fibre sleeve wound over it (the Model S Plaid's, the route to ~20,000 rpm
 // on a large rotor).
@@ -117,7 +166,7 @@ const ACTIVE_TO_MOTOR=1.6;   // housing, shaft, bearings and end caps over the a
 // aluminium cage would be ~1.7x the resistance), Qr bars (~1.23x the stator slots, 74 against 60 in the Model S), end
 // rings of the same depth IM_RING wide; the bar resistance referred to the stator by the textbook transformation
 // (Pyrhonen, Design of Rotating Electrical Machines, 7.2): R2' = 4 m (kw N)^2 / Qr (R_bar + R_ring / (2 sin^2(pi p/Qr))).
-const IM_BG=0.8, IM_GAP=0.0005, IM_KCS=2.0, IM_CPSR=3, IM_HR=0.12, IM_RING=0.08, MU0=4e-7*Math.PI;
+const IM_BG=0.8, IM_GAP=0.0005, IM_KCS=2.0, IM_CPSR=3, IM_HR=0.12, IM_RING=0.08;
 // The voltage at full current: the leakage flux of the stator and the rotor rides on the torque current, sigma Lm Iq,
 // with the total leakage factor sigma ~0.08 for a traction design (0.05-0.1); against the magnetising flux Lm Im it
 // adds in quadrature, so the drop over the back-EMF is sqrt(1 + (sigma Iq / Im)^2), times ~5% resistive. A magnet
@@ -138,9 +187,12 @@ function motorBuild(s){
   const Ds=D+2*(im?IM_GAP:GAP), OD=Ds/SPLIT, h=(OD-Ds)/2, hSlot=TOOTH_BAND*h;
   const slots=3*poles*(poles<=6?3:2)*(im&&poles===4?5/3:1);       // q = 3 slots per pole per phase up to 6 poles, then 2;
                                                                     // a 4-pole induction motor runs q = 5 (the Model S's 60)
-  // flux: the air gap's fundamental from the magnets (an induction motor: its design flux density), per pole, linked by
-  // the winding
-  const Bg=im?IM_BG:FLUX_KM*mag.Br, tau=Math.PI*D/poles, phiPole=2/Math.PI*Bg*tau*Lfe;
+  // flux: the air gap's fundamental from the magnets' circuit (an induction motor: its design flux density), per pole,
+  // linked by the winding. The magnets' bars, from the design's thickness and width (build 288).
+  const tau=Math.PI*D/poles, magT=(s.magT>0?s.magT:MAG_T)/1000, magW=s.magW>0?s.magW:MAG_W;
+  const circ=im?null:magnetCircuit({Br:mag.Br,mur:mag.mur,magT,magW,tau,L,Lfe,gap:GAP,ts:Math.PI*Ds/slots,
+    wt:(1-SLOT_SHARE)*Math.PI*(Ds+hSlot)/slots,hSlot,hy:h-hSlot,tauY:Math.PI*(OD-(h-hSlot))/poles});
+  const Bg=im?IM_BG:circ.B1, phiPole=2/Math.PI*Bg*tau*Lfe;
   const psi20=KW_WIND*N*phiPole;                                    // peak flux linkage per phase at 20 C (V s)
   // copper: the slots' share of the tooth band, at the fill; a turn runs the stack twice and round two end turns
   const band=Math.PI/4*((Ds+2*hSlot)**2-Ds*Ds), Acu=SLOT_SHARE*band*wire.fill;
@@ -157,8 +209,8 @@ function motorBuild(s){
   // masses (kg) and the rotor's inertia
   const mCu=cond.dens*Acu*mlt/2;
   const mFeS=RHO_FE*(Math.PI/4*(OD*OD-Ds*Ds)-SLOT_SHARE*band)*Lfe;
-  const Dsh=0.47*D, rotorVol=Math.PI/4*D*D*L;
-  const mMag=im?0:RHO_MAG*0.06*rotorVol*(mag.Br<1?2.2:1);         // ferrite needs ~2x the volume for less flux
+  const Dsh=0.47*D;
+  const vMag=im?0:magW*Math.PI*D*magT*MAG_AX*L, mMag=im?0:mag.rho*vMag;   // the bars, all the poles round (build 288)
   // the induction motor's cage, its resistance referred to the stator, and the magnetising current at full field
   let Qr=0,Rr20=0,mCage=0,ImR=0;
   if(im){
@@ -170,7 +222,7 @@ function motorBuild(s){
     ImR=IM_BG*IM_GAP*IM_KCS*p/(MU0*(3*Math.SQRT2/Math.PI)*KW_WIND*N);
   }
   const vDrop=im?IM_R_DROP*Math.sqrt(1+(IM_SIGMA*Math.sqrt(Math.max(0,s.invAmps**2-ImR*ImR))/Math.max(1,ImR))**2):V_DROP;
-  const mFeR=RHO_FE*Math.PI/4*(D*D-Dsh*Dsh)*Lfe-mMag*0.5-(im?RHO_FE*mCage/RHO_CU_M*0.9:0);
+  const mFeR=RHO_FE*Math.PI/4*(D*D-Dsh*Dsh)*Lfe-RHO_FE*vMag-(im?RHO_FE*mCage/RHO_CU_M*0.9:0);
   const mRotor=mFeR+mMag+mCage, J=0.5*mRotor*((D/2)**2+(Dsh/2)**2)*(s.retention==='sleeve'&&!im?1.03:1);
   const mass=(mCu+mFeS+mRotor)*ACTIVE_TO_MOTOR;
   // speed ceilings: the rotor surface, the inverter's output frequency (1.2 kHz IGBT, 2 kHz SiC)
@@ -178,7 +230,7 @@ function motorBuild(s){
   const nMax=Math.min(s.maxRpm||20000,nTip,nFreq);
   const Imax=s.invAmps;
   const cost=Math.round(mCu*cond.cost+(mFeS+mFeR)*(3+lam.premium)+mMag*mag.cost+ret.cost+cool.cost+Imax*inv.costA+400+(im?mCage*11+150:0));
-  return {s,im,mag,ret,cool,inv,lam,wire,cond,barH,barEta,D,L,Lfe,Ds,OD,poles,p,N,slots,Bg,psi20,R20,mlt,Acu,mCu,mFeS,mFeR,mMag,mRotor,J,mass,
+  return {s,im,mag,ret,cool,inv,lam,wire,cond,barH,barEta,D,L,Lfe,Ds,OD,poles,p,N,slots,Bg,circ,magT,magW,psi20,R20,mlt,Acu,mCu,mFeS,mFeR,mMag,mRotor,J,mass,
           strand:dStrand,cuLayers,
           nTip,nFreq,nMax,Imax,cost,Qr,Rr20,mCage,ImR,vDrop,cpsr:im?IM_CPSR:CPSR,
           // thermal network (W/K, J/K): winding -> core through the slot liner (0.2 W/mK, 0.4 mm over the slot walls),

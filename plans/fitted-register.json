@@ -227,15 +227,6 @@
    "state": "open"
   },
   {
-   "id": "MOTOR.FLUX_KM",
-   "file": "electric.js",
-   "match": "FLUX_KM=0.85",
-   "standsFor": "the air gap's flux over the magnets' remanence, set from one motor's measured back-EMF (Tesla Model 3, MotorXP) and used for every magnet motor; with it the magnets' mass as 6% of the rotor's volume (2.2x for ferrite)",
-   "retiredBy": "the rotor's magnets as geometry: thickness, pole arc and pocket layout through the magnetic circuit, Bg = Br / (1 + mu_r g'/l_m) times the arc's fundamental",
-   "phase": "C",
-   "state": "open"
-  },
-  {
    "id": "MOTOR.SAT_K",
    "file": "electric.js",
    "match": "SAT_K=0.085",
