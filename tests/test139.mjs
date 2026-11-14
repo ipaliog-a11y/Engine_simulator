@@ -52,7 +52,8 @@ if (!(r.pm10 < r.p0 && r.p0 < r.p25)) fails.push('colder does not give less powe
 if (!(r.cm10 <= r.c0 && r.c0 <= r.c25)) fails.push('colder accepts more charge');
 if (r.leadCold !== r.leadR || r.leadPc !== r.leadP) fails.push('a lead-acid pack changed with temperature');
 if (!(r.p40 > r.p25 && r.der25 === 1 && r.der55 === 0.5)) fails.push('the 50 °C cut moved, or a warm pack below it did not give more');
-if (Math.abs(r.wh - 141.33) > 0.3) fails.push(`WLTP ${f(r.wh, 2)} Wh/km is not the locked warm 141.33`);
+// 141.33 until build 294, whose motor (the circuit solved under load) and re-matched rear current gave 139.63.
+if (Math.abs(r.wh - 139.63) > 0.3) fails.push(`WLTP ${f(r.wh, 2)} Wh/km is not the locked warm 139.63`);
 
 if (errors.length) console.log('ERRORS:\n  ' + errors.join('\n  '));
 if (fails.length || errors.length) {

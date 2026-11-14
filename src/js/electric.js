@@ -187,9 +187,9 @@ function dqSolve(c,Fd,Fq,kBr){
   Uy.fill(0);let Ur=0,dU=0,ByMax=0;
   // the pole piece as two halves, each one potential: the trailing half dU/2 above the pole's, the leading half below
   const gapF=(i,U,d)=>(c.face[i]?U+(c.sin[i]<0?d/2:-d/2):0)+Fd*c.cos[i]+Fq*c.sin[i]-Uy[i];
-  for(let it=0;it<6;it++){
+  for(let it=0;it<4;it++){
     let lo=-X,hi=Um;
-    for(let k=0;k<32;k++){
+    for(let k=0;k<26;k++){
       const U=(lo+hi)/2;let ph=0;
       for(let i=0;i<n;i++)if(c.face[i])ph+=dqBinv(c,gapF(i,U,dU));
       if(c.Am*(Br-MU0*c.mur*U/c.magT)-c.leak>ph*c.wL)lo=U;else hi=U;
@@ -198,7 +198,7 @@ function dqSolve(c,Fd,Fq,kBr){
     // dU: the drop the crossing flux takes between the halves' middles (the face's flux less the magnets' even share,
     // added up from the trailing edge); more dU lets less flux cross, so the two meet once (bisection)
     let a=-X,b=X;
-    for(let k=0;k<24;k++){
+    for(let k=0;k<20;k++){
       const d=(a+b)/2;let Pf=0,nf=0;
       for(let i=0;i<n;i++)if(c.face[i]){B[i]=dqBinv(c,gapF(i,Ur,d));Pf+=B[i];nf++;}
       const Bm=Pf/Math.max(1,nf);let pl=0,drop=0,j=0;
@@ -222,8 +222,18 @@ function dqSolve(c,Fd,Fq,kBr){
 // Iq from 0 to Imax, mirrored for regeneration), at the magnets' full remanence and at DQ_KBR of it, read between them
 // for the magnets' temperature; and the most torque per amp (MTPA) at each current.
 const DQ_KEYS=['T','pd','pq','Bt','By','Bg2'];
+const DQ_MEMO=new Map();
+// A cache by exact numbers, nested maps (no keys built as strings: the lap and the previews ask thousands of times).
+function memoGet(root,a,b,c,d){let x=root.get(a);if(!x)return undefined;x=x.get(b);if(!x)return undefined;
+  if(d===undefined)return x.get(c);x=x.get(c);return x?x.get(d):undefined;}
+function memoSet(root,a,b,c,d,v){
+  if(root.n>20000){root.clear();root.n=0;}root.n=(root.n||0)+1;
+  let x=root.get(a);if(!x)root.set(a,x=new Map());let y=x.get(b);if(!y)x.set(b,y=new Map());
+  if(d===undefined){y.set(c,v);return;}let z=y.get(c);if(!z)y.set(c,z=new Map());z.set(d,v);}   // the tables by design: the same design is not solved twice (a preview, then the build)
 function dqTables(m){
   if(m.dq)return m.dq;
+  const mk=JSON.stringify(m.s);
+  if(DQ_MEMO.has(mk)){m.dq=DQ_MEMO.get(mk);return m.dq;}
   const c=m.dqc,N=DQ_N,I=m.Imax,p=m.p,lev=[];
   for(const kBr of [1,DQ_KBR]){
     const g={};for(const k of DQ_KEYS)g[k]=new Float64Array(N*N);
@@ -236,6 +246,8 @@ function dqTables(m){
   }
   m.dq={lev,cache:new Map(),ops:new Map()};
   for(const g of lev){g.mtpa=[];for(let k=0;k<N;k++)g.mtpa.push(dqMtpaAt(m,g,I*k/(N-1)));}
+  if(DQ_MEMO.size>40)DQ_MEMO.clear();
+  DQ_MEMO.set(mk,m.dq);
   return m.dq;
 }
 function dqGrid(m,g,Id,Iq,out){   // bilinear on one level; Iq < 0 by the mirror (psi_q and the torque change sign)
@@ -246,10 +258,15 @@ function dqGrid(m,g,Id,Iq,out){   // bilinear on one level; Iq < 0 by the mirror
   return out;
 }
 const dqW=(m,tMag)=>(1-(1+m.mag.alpha*(tMag-20)))/(1-DQ_KBR);
-function dqAt(m,Id,Iq,tMag){
-  const L=(m.dq||dqTables(m)).lev,w=dqW(m,tMag),A=dqGrid(m,L[0],Id,Iq,{}),B=dqGrid(m,L[1],Id,Iq,{});
-  for(const k of DQ_KEYS)A[k]+=w*(B[k]-A[k]);
-  return A;
+function dqAt(m,Id,Iq,tMag){   // every quantity at a point, read between the grid's cells and the two remanence levels
+  const L=(m.dq||dqTables(m)).lev,w=dqW(m,tMag),N=DQ_N,I=m.Imax;
+  const x=Math.min(N-1,Math.max(0,(Id/I+1)*(N-1))),y=Math.min(N-1,Math.max(0,Math.abs(Iq)/I*(N-1)));
+  const a=Math.min(N-2,Math.floor(x)),b=Math.min(N-2,Math.floor(y)),u=x-a,v=y-b,j=a*N+b,j1=j+N,j2=j+1,j3=j+N+1;
+  const k00=(1-u)*(1-v),k10=u*(1-v),k01=(1-u)*v,k11=u*v,g0=L[0],g1=L[1];
+  const f=(t0,t1)=>{const p=t0[j]*k00+t0[j1]*k10+t0[j2]*k01+t0[j3]*k11;return p+w*(t1[j]*k00+t1[j1]*k10+t1[j2]*k01+t1[j3]*k11-p);};
+  const o={T:f(g0.T,g1.T),pd:f(g0.pd,g1.pd),pq:f(g0.pq,g1.pq),Bt:f(g0.Bt,g1.Bt),By:f(g0.By,g1.By),Bg2:f(g0.Bg2,g1.Bg2)};
+  if(Iq<0){o.T=-o.T;o.pq=-o.pq;}
+  return o;
 }
 // The torque and the two linkages only, without allocating: the inner loops' lookup.
 const DQ_O={T:0,pd:0,pq:0};
@@ -257,9 +274,10 @@ function dqFast(m,Id,Iq,tMag){
   const L=(m.dq||dqTables(m)).lev,w=dqW(m,tMag),N=DQ_N,I=m.Imax;
   const x=Math.min(N-1,Math.max(0,(Id/I+1)*(N-1))),y=Math.min(N-1,Math.max(0,Math.abs(Iq)/I*(N-1)));
   const a=Math.min(N-2,Math.floor(x)),b=Math.min(N-2,Math.floor(y)),u=x-a,v=y-b,j=a*N+b;
-  const k00=(1-u)*(1-v),k10=u*(1-v),k01=(1-u)*v,k11=u*v,g0=L[0],g1=L[1];
-  const f=t=>t[j]*k00+t[j+N]*k10+t[j+1]*k01+t[j+N+1]*k11;
-  let T=f(g0.T),pd=f(g0.pd),pq=f(g0.pq);T+=w*(f(g1.T)-T);pd+=w*(f(g1.pd)-pd);pq+=w*(f(g1.pq)-pq);
+  const k00=(1-u)*(1-v),k10=u*(1-v),k01=(1-u)*v,k11=u*v,g0=L[0],g1=L[1],j1=j+N,j2=j+1,j3=j+N+1;
+  let t=g0.T,T=t[j]*k00+t[j1]*k10+t[j2]*k01+t[j3]*k11;t=g1.T;T+=w*(t[j]*k00+t[j1]*k10+t[j2]*k01+t[j3]*k11-T);
+  t=g0.pd;let pd=t[j]*k00+t[j1]*k10+t[j2]*k01+t[j3]*k11;t=g1.pd;pd+=w*(t[j]*k00+t[j1]*k10+t[j2]*k01+t[j3]*k11-pd);
+  t=g0.pq;let pq=t[j]*k00+t[j1]*k10+t[j2]*k01+t[j3]*k11;t=g1.pq;pq+=w*(t[j]*k00+t[j1]*k10+t[j2]*k01+t[j3]*k11-pq);
   if(Iq<0){T=-T;pq=-pq;}
   DQ_O.T=T;DQ_O.pd=pd;DQ_O.pq=pq;return DQ_O;
 }
@@ -272,8 +290,27 @@ function dqMtpaAt(m,g,I){   // the current's angle from the q-axis that gives th
 }
 function dqMtpa(m,I,tMag){   // MTPA at a current, read between the levels
   const L=(m.dq||dqTables(m)).lev,w=dqW(m,tMag),N=DQ_N,x=Math.min(N-1,Math.max(0,I/m.Imax*(N-1))),a=Math.min(N-2,Math.floor(x)),u=x-a;
-  const at=g=>({g:g.mtpa[a].g+u*(g.mtpa[a+1].g-g.mtpa[a].g),T:g.mtpa[a].T+u*(g.mtpa[a+1].T-g.mtpa[a].T)});
-  const A=at(L[0]),B=at(L[1]);return {g:A.g+w*(B.g-A.g),T:A.T+w*(B.T-A.T)};
+  const P=L[0].mtpa,Q=L[1].mtpa,gA=P[a].g+u*(P[a+1].g-P[a].g),tA=P[a].T+u*(P[a+1].T-P[a].T);
+  const gB=Q[a].g+u*(Q[a+1].g-Q[a].g),tB=Q[a].T+u*(Q[a+1].T-Q[a].T);
+  return {g:gA+w*(gB-gA),T:tA+w*(tB-tA)};
+}
+// A root of f between a and b, f(a) and f(b) of opposite signs (the Illinois method: a secant kept inside the bracket).
+// Returns the end on the side of b's sign (feasible when wantB), to within tol in the angle, or a point where |f| < ftol.
+function dqRoot(f,a,b,fa,fb,tol,wantB,ftol=0){
+  let side=0;
+  for(let k=0;k<8&&Math.abs(b-a)>tol;k++){
+    const c=(a*fb-b*fa)/(fb-fa),fc=f(c);if(Math.abs(fc)<ftol)return c;
+    if((fc>0)===(fb>0)){b=c;fb=fc;if(side===1)fa/=2;side=1;}else{a=c;fa=fc;if(side===-1)fb/=2;side=-1;}
+  }
+  return wantB?b:(Math.abs(fa)<Math.abs(fb)?a:b);
+}
+// Its inverse: the current whose MTPA torque is T (the table is straight between its levels, so this is exact).
+function dqMtpaInv(m,T,tMag){
+  const L=(m.dq||dqTables(m)).lev,w=dqW(m,tMag),N=DQ_N,A=L[0].mtpa,B=L[1].mtpa;
+  let prev=0;
+  for(let k=1;k<N;k++){const t=A[k].T+w*(B[k].T-A[k].T);
+    if(t>=T){return m.Imax*(k-1+(T-prev)/Math.max(1e-12,t-prev))/(N-1);}prev=t;}
+  return Infinity;
 }
 // The phase voltage's peak (V) at a point: v_d = R i_d - we psi_q, v_q = R i_q + we psi_d, the slot leakage added to the
 // gap's linkage. The inverter gives at most Vdc/sqrt3 (space-vector modulation).
@@ -460,8 +497,8 @@ function motorMaxTorque(m,rpm,Vdc,tMag=60){
     if(w<=wb)return Tpk;
     return w<=IM_CPSR*wb?Tpk*wb/w:Tpk*IM_CPSR*wb*wb/(w*w);
   }
-  const dq=dqTables(m),key=Math.round(rpm)+'|'+Math.round(Vdc*10)+'|'+Math.round(tMag);
-  let T=dq.cache.get(key);if(T!==undefined)return T;
+  const dq=m.dq||dqTables(m);   // cached by the exact numbers: a cached answer is the same answer
+  let T=memoGet(dq.cache,Vdc,tMag,rpm);if(T!==undefined)return T;
   const we=m.p*rpm*Math.PI/30,R=motorR(m,tMag),V=Vdc/Math.sqrt(3),I=m.Imax,o=dqMtpa(m,I,tMag);
   const pt=(g,i)=>{const Id=-i*Math.sin(g),Iq=i*Math.cos(g),q=dqFast(m,Id,Iq,tMag);return {T:q.T,V:dqVolt(m,q,Id,Iq,we,R)};};
   if(pt(o.g,I).V<=V)T=o.T;
@@ -478,9 +515,14 @@ function motorMaxTorque(m,rpm,Vdc,tMag=60){
     for(let k=-4;k<=4;k++){const g=g0+st*(bi+k/4);if(g<g0||g>g1)continue;const t=best(g);if(t>bT)bT=t;}
     T=Math.max(0,bT);
   }
-  if(dq.cache.size>5000)dq.cache.clear();
-  dq.cache.set(key,T);
+  memoSet(dq.cache,Vdc,tMag,rpm,undefined,T);
   return T;
+}
+// The motor's own top speed (rpm) on a bus: its ceiling (rotor, inverter frequency), or lower, where the voltage leaves
+// it no torque (a magnet motor whose field the inverter's current cannot weaken enough; build 294).
+function motorTopRpm(m,Vdc){
+  for(let r=m.nMax;r>100;r-=100)if(motorMaxTorque(m,r,Vdc,60)>0)return r;
+  return 100;
 }
 // An induction motor's torque at full field from a total current: what the magnetising current leaves for the torque.
 // Torque per amp falls as the electric loading (A/m of bore) rises: the leakage paths saturate. A magnet motor's is
@@ -506,15 +548,15 @@ function imCurrents(m,T,rpm,Vdc){
 // voltage. MTPA while the voltage allows; above that, the current is turned towards the negative d-axis just as far as
 // the voltage needs. Past what the motor can give: full current at the angle with the lowest voltage.
 function motorOp(m,T,rpm,Vdc,tMag){
-  const dq=m.dq||dqTables(m),key=Math.round(T*4)+'|'+Math.round(rpm/5)+'|'+Math.round(Vdc)+'|'+Math.round(tMag);
-  let r=dq.ops.get(key);if(r)return r;
+  const dq=m.dq||dqTables(m);
+  let r=memoGet(dq.ops,Vdc,tMag,rpm,T);if(r)return r;
   r=motorOpSolve(m,T,rpm,Vdc,tMag);
-  if(dq.ops.size>20000)dq.ops.clear();
-  dq.ops.set(key,r);return r;
+  memoSet(dq.ops,Vdc,tMag,rpm,T,r);return r;
 }
 function motorOpSolve(m,T,rpm,Vdc,tMag){
   const we=m.p*Math.max(0,rpm)*Math.PI/30,R=motorR(m,tMag),V=Vdc/Math.sqrt(3),I=m.Imax,sg=T<0?-1:1,aT=Math.abs(T);
-  const at=(Id,Iq)=>{const q=dqAt(m,Id,Iq,tMag);q.Id=Id;q.Iq=Iq;q.I=Math.hypot(Id,Iq);q.V=dqVolt(m,q,Id,Iq,we,R);return q;};
+  const at=(Id,Iq)=>{const q=dqAt(m,Id,Iq,tMag);
+    return {T:q.T,pd:q.pd,pq:q.pq,Bt:q.Bt,By:q.By,Bg2:q.Bg2,Id,Iq,I:Math.hypot(Id,Iq),V:dqVolt(m,q,Id,Iq,we,R)};};
   const vAt=(Id,Iq)=>dqVolt(m,dqFast(m,Id,Iq,tMag),Id,Iq,we,R);
   if(!(aT>1e-9)){
     if(vAt(0,0)<=V)return at(0,0);
@@ -523,29 +565,30 @@ function motorOpSolve(m,T,rpm,Vdc,tMag){
     return at(-hi,0);
   }
   // MTPA: the current whose best torque is the one asked
-  const full=dqMtpa(m,I,tMag).T;
-  let lo=0,hi=I;
-  for(let k=0;k<20;k++){const i=(lo+hi)/2;if(dqMtpa(m,i,tMag).T<aT)lo=i;else hi=i;}
+  const iM=dqMtpaInv(m,aT,tMag),full=iM<=I,hi=Math.min(I,iM);
   const o=dqMtpa(m,hi,tMag);
-  if(full>=aT&&vAt(-hi*Math.sin(o.g),sg*hi*Math.cos(o.g))<=V)return at(-hi*Math.sin(o.g),sg*hi*Math.cos(o.g));
+  if(full){const q=at(-hi*Math.sin(o.g),sg*hi*Math.cos(o.g));if(q.V<=V)return q;}
   // at an angle g, the current that gives the torque (Infinity past full current); along it the voltage falls as g
   // turns towards the negative d-axis, so the least current within the voltage is found by bisection on g
-  const onT=g=>{const s=Math.sin(g),c=Math.cos(g);if(Math.abs(dqFast(m,-I*s,sg*I*c,tMag).T)<aT)return Infinity;
-    let a=0,b=I;for(let k=0;k<16;k++){const i=(a+b)/2;if(Math.abs(dqFast(m,-i*s,sg*i*c,tMag).T)<aT)a=i;else b=i;}
-    return b;};
+  // (secant from the straight line through the origin and full current: the torque is near linear in the current there)
+  const onT=g=>{const s=Math.sin(g),c=Math.cos(g),tf=Math.abs(dqFast(m,-I*s,sg*I*c,tMag).T);if(tf<aT)return Infinity;
+    let i0=I,t0=tf,i1=I*aT/tf;
+    for(let k=0;k<3;k++){const t1=Math.abs(dqFast(m,-i1*s,sg*i1*c,tMag).T);if(Math.abs(t1-aT)<1e-4*aT)break;
+      const i2=Math.abs(t1-t0)>1e-12?i1+(aT-t1)*(i1-i0)/(t1-t0):i1;i0=i1;t0=t1;i1=Math.min(I,Math.max(0,i2));}
+    return i1;};
   const ok=g=>{const i=onT(g);return i<Infinity&&vAt(-i*Math.sin(g),sg*i*Math.cos(g))<=V;};
   // the far end: the angle where full current just gives the torque (past it the current cannot)
+  const Tf=g=>Math.abs(dqFast(m,-I*Math.sin(g),sg*I*Math.cos(g),tMag).T)-aT;
   let ga=o.g,gb=Math.PI/2*0.995;
-  if(Math.abs(dqFast(m,-I*Math.sin(gb),sg*I*Math.cos(gb),tMag).T)<aT){
-    let a=o.g,b=gb;for(let k=0;k<16;k++){const g=(a+b)/2;if(Math.abs(dqFast(m,-I*Math.sin(g),sg*I*Math.cos(g),tMag).T)>=aT)a=g;else b=g;}
-    gb=a;
-  }
-  if(!ok(gb)){
+  {const fb=Tf(gb);if(fb<0)gb=dqRoot(Tf,gb,o.g,fb,Tf(o.g),1e-3,true);}   // the end where full current still gives it
+  const vg=g=>{const i=onT(g);return i<Infinity?vAt(-i*Math.sin(g),sg*i*Math.cos(g))-V:1e9;};
+  const vb=vg(gb);
+  if(vb>0){
     // past what the motor can give at this speed: full current, at the angle of least voltage
     let best=gb,bv=Infinity;for(let k=0;k<=16;k++){const g=o.g+(gb-o.g)*k/16,v=vAt(-I*Math.sin(g),sg*I*Math.cos(g));if(v<bv){bv=v;best=g;}}
     return at(-I*Math.sin(best),sg*I*Math.cos(best));
   }
-  for(let k=0;k<14;k++){const g=(ga+gb)/2;if(ok(g))gb=g;else ga=g;}
+  gb=dqRoot(vg,ga,gb,vg(ga),vb,1e-3,true,1e-3*V);   // to within 0.1% of the voltage
   const i=onT(gb);return at(-i*Math.sin(gb),sg*i*Math.cos(gb));
 }
 // The current a torque needs (A rms).

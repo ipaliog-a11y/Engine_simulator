@@ -121,14 +121,15 @@ function hybFrontTq(hy,rpm){
 const HYB_FRONT_EFF=0.97;
 function hybFrontSetup(v){
   const hy=engine.hy,f=hy&&hy.front;if(!f){v.frontFd=0;v.frontTab=null;return;}
+  const nTop=motorTopRpm(f.motor,hybBusV(hy));   // where it has torque to give (build 294: the voltage can end it early)
   // the car's top speed on everything it has: the engine and main motor's peak, and the front motor's
   const c=hybCurves();let P=0,Pf=0;c.eng.forEach((q,i)=>{P=Math.max(P,(q.tq+c.mot[i])*q.rpm*Math.PI/30);});
-  for(let r=200;r<=f.motor.nMax;r+=200)Pf=Math.max(Pf,hybFrontTq(hy,r)*r*Math.PI/30);
+  for(let r=200;r<=nTop;r+=200)Pf=Math.max(Pf,hybFrontTq(hy,r)*r*Math.PI/30);
   const vMax=dragLimitedV((P+Pf)/1000*v.driveEff,v.cdA,v.crr,v.mass);
-  v.frontFdMatched=vMax>1?f.motor.nMax*2*Math.PI*v.rTire/60/vMax:8;
+  v.frontFdMatched=vMax>1?nTop*2*Math.PI*v.rTire/60/vMax:8;
   v.frontFd=f.fd>0?f.fd:v.frontFdMatched;
   // the wheel force every 0.5 m/s, at full deploy (the lap's deploy share scales it)
-  const tab=[];for(let k=0;k<=260;k++){const vv=k*0.5,n=vv/v.rTire*v.frontFd*30/Math.PI;tab.push(n>f.motor.nMax?0:hybFrontTq(hy,n)*v.frontFd*HYB_FRONT_EFF/v.rTire);}
+  const tab=[];for(let k=0;k<=260;k++){const vv=k*0.5,n=vv/v.rTire*v.frontFd*30/Math.PI;tab.push(n>nTop?0:hybFrontTq(hy,n)*v.frontFd*HYB_FRONT_EFF/v.rTire);}
   v.frontTab=tab;
 }
 // The front motor's force at the wheels (N) at a road speed (m/s).

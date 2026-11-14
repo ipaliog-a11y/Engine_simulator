@@ -32,6 +32,14 @@
 // Model Y hold 114 → 72 s; Plaid 1428 → 1441 Nm, continuous 808 → 745 kW, hold 19 → 12 s. The hybrids' turns
 // re-matched to their published torque (Ioniq 33, Prius 103, Qashqai 26, 330e 55); the 918's motors 238 → 221 and
 // 221 → 204 Nm. The tail motor's knee 5126 → 3422 rpm.
+// Build 294 (saturation, field weakening and the iron loss from the circuit solved under load; SAT_K, V_DROP and CPSR
+// retired) re-locked every block. The Teslas' currents re-matched (Model 3 950 → 850 A, 424 Nm; Model Y rear 700 → 640 A)
+// and the hybrids' turns (Ioniq 33 → 30, Prius 103 → 92, Qashqai 26 → 23, 330e 55 → 50). Model 3 knee 6437 → 6627,
+// continuous 266 → 259 kW, hold 19 → 37 s, 119.72 → 117.56 Wh/km; Model Y 544 → 549 Nm, 141.39 → 139.63 Wh/km; Plaid
+// 1441 → 1519 Nm, 802 → 794 kW, 165.7 → 160.22 Wh/km. Past the knee a magnet motor's power now rises as its current
+// turns to the d-axis: the hybrids' motors' peaks 86 → 114 kW (Ioniq), 53 → 69 (Prius), 143 → 194 (Qashqai), 80 → 107
+// (330e) against their published 32, 53, 140 and 80 (a named gap in the CHANGELOG; the pack caps them in the car).
+// The tail motor's knee 3422 → 1784 rpm.
 import { chromium } from './pw.mjs';
 import { fileURLToPath, pathToFileURL } from 'url';
 import path from 'path';
@@ -48,36 +56,36 @@ const fails = [];
 // Locked at build 224. See plans/hybrid-electric/drivetrain.md for which stage may change which block.
 const CARS = {
   'Model 3': {
-    peakKW: 205, peakTQ: 422, knee: 6437, contKW: 266, holdS: 19, best: 0.9744, kWkg: 3.7, redline: 18000,
+    peakKW: 204, peakTQ: 424, knee: 6627, contKW: 259, holdS: 37, best: 0.9765, kWkg: 3.7, redline: 18000,
     motors: 1, massM: 55.18, massP: 440.12, R: 0.066236, Vnom: 340.84, p50: 209737, p10: 202273,
-    whkm: 119.72, wall: 140.85, regen: 49.59, range: 451.1, fd: 9.03, drive: 'rwd',
-    t100: 6.19, t60: 5.93, top: 225, cg: 0.52,
-    pts: { 1000: 422.08, 6437: 297.84, 12874: 151.67, 18000: 107.95 }
+    whkm: 117.56, wall: 138.31, regen: 49.59, range: 459.3, fd: 9.03, drive: 'rwd',
+    t100: 6.18, t60: 5.92, top: 225, cg: 0.52,
+    pts: { 1000: 424.09, 6627: 291.59, 13254: 145.44, 18000: 105.79 }
   },
   'Model Y': {
-    peakKW: 358, peakTQ: 544, knee: 6619, contKW: 281, holdS: 72, best: 0.9767, kWkg: 3.6, redline: 18000,
+    peakKW: 360, peakTQ: 549, knee: 7140, contKW: 316, holdS: 95, best: 0.9745, kWkg: 3.7, redline: 18000,
     motors: 2, massM: 98.3, massP: 424.84, R: 0.05256, Vnom: 352.93, p50: 377316, p10: 294578,
-    whkm: 141.39, wall: 166.34, regen: 56.39, range: 496.5, fd: 9.03, drive: 'awd',
-    t100: 4.52, t60: 4.35, top: 217, cg: 0.66,
-    pts: { 1000: 543.83, 6619: 508.98, 13238: 258.05, 18000: 189.52 }
+    whkm: 139.63, wall: 164.27, regen: 56.39, range: 502.8, fd: 9.03, drive: 'awd',
+    t100: 4.48, t60: 4.31, top: 217, cg: 0.66,
+    pts: { 1000: 548.77, 7140: 476.04, 14280: 239.73, 18000: 186.9 }
   },
   Plaid: {
-    peakKW: 802, peakTQ: 1441, knee: 5966, contKW: 745, holdS: 12, best: 0.9746, kWkg: 4.8, redline: 20000,
+    peakKW: 794, peakTQ: 1519, knee: 5591, contKW: 708, holdS: 12, best: 0.978, kWkg: 4.8, redline: 20000,
     motors: 3, massM: 165.38, massP: 625.78, R: 0.029359, Vnom: 404.4, p50: 824184, p10: 692384,
-    whkm: 165.7, wall: 194.95, regen: 59.59, range: 543.1, fd: 7.56, drive: 'awd',
+    whkm: 160.22, wall: 188.49, regen: 59.59, range: 561.7, fd: 7.56, drive: 'awd',
     t100: 2.525, t60: 2.435, top: 322, cg: 0.52,
-    pts: { 1000: 1441.23, 5966: 1241.42, 11932: 641.69, 20000: 380.4 }
+    pts: { 1000: 1518.53, 5591: 1327.24, 11182: 668.35, 20000: 352.48 }
   }
 };
 const HYB = {
-  'Ioniq': { mode: 'p2', tq: 169.55, kW: 86.26, packKW: 32.33, packR: 0.27024, front: 0 },
-  'Prius': { mode: 'ps', tq: 162.77, kW: 53.04, packKW: 29.91, packR: 0.27166, front: 0 },
-  'Qashqai': { mode: 'series', tq: 326.29, kW: 143.31, packKW: 43.52, packR: 0.45169, front: 0 },
-  '330e': { mode: 'p2', tq: 263.39, kW: 79.97, packKW: 101.51, packR: 0.18635, front: 0 },
-  '918': { mode: 'p2', tq: 220.59, kW: 121.6, packKW: 140.92, packR: 0.16371, front: 204.39 }
+  'Ioniq': { mode: 'p2', tq: 168.5, kW: 113.68, packKW: 32.33, packR: 0.27024, front: 0 },
+  'Prius': { mode: 'ps', tq: 163.05, kW: 69.01, packKW: 29.91, packR: 0.27166, front: 0 },
+  'Qashqai': { mode: 'series', tq: 325.17, kW: 194.14, packKW: 43.52, packR: 0.45169, front: 0 },
+  '330e': { mode: 'p2', tq: 262.94, kW: 106.8, packKW: 101.51, packR: 0.18635, front: 0 },
+  '918': { mode: 'p2', tq: 247.55, kW: 160.06, packKW: 140.92, packR: 0.16371, front: 221.6 }
 };
 // A sleeve, 4-pole, SiC motor that revs past 4× its knee (build 294: from the d and q axes, no rectangle).
-const TAIL = { knee: 3422, nMax: 40000, p1: 54714, p2: 54714, p4: 54714, p5: 43771, p6: 36476 };
+const TAIL = { knee: 1784, nMax: 40000, p1: 30616, p2: 34085, p4: 32740, p5: 30865, p6: 30752 };
 
 const r = await page.evaluate(() => {
   const cars = [];

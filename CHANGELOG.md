@@ -18,6 +18,43 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 ## [Unreleased]
 
+### The motor's saturation, field weakening and iron loss come from its circuit under load (build 294)
+
+Phase C, steps 1 and 2 finished together (the owner's choice): `SAT_K`, `V_DROP`, `CPSR`, the 0.7 field-weakening
+current and the iron's 80/20 split were constants set on the Model 3. They are gone (`plans/fitted-register.json`: 41 → 38 open).
+
+- **The circuit under load.** Build 292's magnetic circuit is now solved slice by slice round a pole, with the stator's
+  current in it: the gap and a tooth on M270-35A's curve, the yoke on its own flux, the magnets' line, and the pole piece
+  over the V carrying the q-axis flux across (its depth from the V's angle, 20° to the surface, read off MotorXP's
+  section: PROBABLE). Out come the torque, ψd and ψq, and the teeth's, yoke's and gap's flux. Slot leakage and
+  end-winding leakage (Pyrhönen 4.3, λw 0.3, PROBABLE) add to the voltage.
+- **What follows from it:** saturation (torque per amp falls 5% from a quarter to full current on the Model 3);
+  reluctance torque (the best angle leans 29° to −d, 461 Nm against 398 on the q-axis at 953 A); the knee where full
+  current meets Vdc/√3; field weakening to the voltage above it, and the power past it is the motor's own.
+- **Iron per part:** the teeth and the yoke each at their own peak flux at the point, and the rotor's loss from the
+  slot ripple sweeping its surface (Carter's β, Pyrhönen 3.1.2), heating the rotor, not the core.
+- **An induction motor** keeps its saturation point (`IM_SAT_K`, moved into its own `IM.leakage` entry) and its 3× range:
+  its cage cancels the torque current in the main path, so the slice model does not apply.
+- **Re-matched (unpublished values, as builds 292-293 did):** Model 3 950 → 850 A (422 Nm, Tesla 420), Model Y rear
+  700 → 640 A (328, 326); turns Ioniq 33 → 30 (168 Nm, 170), Prius MG2 103 → 92 (163, 163), Qashqai 26 → 23 (325,
+  330), 330e 55 → 50 (263, 265).
+- **What moved:** WLTP Model 3 119.7 → 117.6 Wh/km, Model Y 141.4 → 139.6, Plaid 165.7 → 160.2; Ioniq 4.80 → 4.74 L/100 km,
+  Qashqai 5.76 → 5.65; 0-100 Model Y 4.52 → 4.48 s. Model 3 peak hold 19 → 37 s, continuous 266 → 259 kW. Plaid
+  1441 → 1519 Nm (unpublished, not re-matched). The 918's front motor now stops pulling where its voltage runs out
+  (14,000 rpm), so its declutch speed and matched reduction follow its own top speed (`motorTopRpm`).
+- **Named gaps, left open:** the Model 3 makes 481 Nm at its measured 953 A against MotorXP's 430 (+12%; it was 444):
+  the rotor's hub and ribs taken as ideal iron and the V's angle are the likeliest causes. Past the knee the power
+  rises: the Leaf peaks at 113 kW (80 rated), the hybrids' motors at 114 / 69 / 194 / 107 kW against 32 / 53 / 140 / 80
+  (the packs cap them in the car). The Leaf's best between 5000 and 9000 rpm is 95.4% (ORNL >97%). The Prius burns
+  4.29 → 4.44 L/100 km (Toyota 4.14): its MG2 runs far past its knee at speed, where the derived weakening takes more
+  current and the teeth keep their peak flux. Each is a cap in `test96`, `test117` and `test119` that may only shrink.
+- **Tests:** `test179` (new); `test96`, `test98` (the default motor's winding peaks 151 °C on the short lap, cut 0.8%),
+  `test112`, `test117`, `test119`, `test136` and `test139` re-locked in the open; `test166` 41 → 38. The guide's motor
+  physics page describes the solved circuit (its Greek is stale; Greek is paused). `test145` fails on `main` too.
+- **Left for the owner to decide (beyond the register):** a fast-charge curve; the pack's temperature in the lap, cycle
+  and race; a cell's sag and recovery; ageing; an inverter junction temperature; wound-rotor, reluctance and axial-flux
+  motors; and bench readouts the model already computes (loss split, C-rate, sag, an induction motor's slip).
+
 ### The motor's stator is drawn from the flux it carries (build 293)
 
 Phase C, step 2 of `plans/road-to-v1.md`, first part: the stator's slots stop being a fixed share of the stator.

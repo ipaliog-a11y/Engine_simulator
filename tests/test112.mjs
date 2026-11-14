@@ -32,7 +32,8 @@ const r = await page.evaluate(() => {
     shareSum: hy.shareR + f.shareF, packKW: packMaxPower(hy.pack, HYB_SOC) / 1000, nMax: f.motor.nMax, rTire: vehicle.rTire, frontRow: vis('evFrontFd'), rearCountHidden: !vis('evRearCount') };
   function vis(id) { const el = g(id), fl = el && el.closest('.field'); return !!fl && getComputedStyle(fl).display !== 'none'; }
   // the declutch speed, and the force either side of it
-  const vDecl = f.motor.nMax * 2 * Math.PI * vehicle.rTire / 60 / vehicle.frontFd;
+  const vDecl = motorTopRpm(f.motor, hybBusV(engine.hy)) * 2 * Math.PI   // build 294: its own top speed, which the voltage can set below nMax
+     * vehicle.rTire / 60 / vehicle.frontFd;
   o.decl = { v: vDecl * 3.6, below: hybFrontF(vDecl * 0.98), above: hybFrontF(vDecl * 1.02), at20: hybFrontF(20 / 3.6) };
   // the pack shared: the main motor with and without its partner, and what both draw flat out never past the pack
   const V = hybBusV(hy); let peakR = 0, peakF = 0;
