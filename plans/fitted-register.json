@@ -56,15 +56,6 @@
    "state": "open"
   },
   {
-   "id": "TURBO_CONFIG",
-   "file": "engine-constants-boost.js",
-   "match": "const TURBO_CONFIG",
-   "standsFor": "a compound layout's choke flow as a multiple of one wheel's (2.30); twin and sequential are two wheels on their own shafts since build 290",
-   "retiredBy": "the turbocharger part designing a compound's two stages",
-   "phase": "B3",
-   "state": "open"
-  },
-  {
    "id": "SC_TYPE",
    "file": "engine-constants-boost.js",
    "match": "const SC_TYPE",
@@ -186,27 +177,36 @@
    "file": "tyres-brakes-driveline.js",
    "match": "wetKeep:",
    "standsFor": "each compound's temperature window, wear rate and wet grip",
-   "retiredBy": "the tyre model of phase E with a compound's measured window",
-   "phase": "F",
-   "state": "open"
+   "retiredBy": "kept: a rule until after v1.0 with TYRE_RACE (owner's decision, build 295); wetKeep goes with phase F's wet grip",
+   "phase": "-",
+   "state": "rule"
   },
   {
    "id": "TYRE_RACE",
    "file": "race.js",
    "match": "const TYRE_RACE",
    "standsFor": "the race tyre's heat, grip-window and wear constants",
-   "retiredBy": "the tyre model of phase E (tread heat balance, wear from sliding energy)",
+   "retiredBy": "kept: a rule until after v1.0 (owner's decision, build 295): the tread's heat needs the share of the patch truly in contact, and the grip and wear read that heat",
+   "phase": "-",
+   "state": "rule"
+  },
+  {
+   "id": "RACE.pitLoss",
+   "file": "race.js",
+   "match": "pitLoss:20",
+   "standsFor": "the time the pit lane costs, as one number for every circuit",
+   "retiredBy": "the lane's length and speed limit, with the slowing and the pull away",
    "phase": "F",
    "state": "open"
   },
   {
-   "id": "RACE tow and dirty air",
+   "id": "RACE racecraft",
    "file": "race.js",
-   "match": "const RACE=",
-   "standsFor": "the tow, dirty air and pit loss as numbers",
-   "retiredBy": "the cars' own drag and downforce in a wake; pit loss from the lane's length and limit",
-   "phase": "F",
-   "state": "open"
+   "match": "defendKmh:3",
+   "standsFor": "the racecraft (follow, close, defend, dive, passKmh, pace, mistake), the spray in the wet, the crew's tyreChange and refuelLps",
+   "retiredBy": "kept: a game rule, not physics (owner's decision, phase F plan, build 295)",
+   "phase": "-",
+   "state": "rule"
   },
   {
    "id": "HYB_RACE.margin",

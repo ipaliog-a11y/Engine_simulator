@@ -18,12 +18,45 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 ## [Unreleased]
 
-### A power-split or series hybrid's engine is heard where the lap runs it (build 294)
+### A power-split or series hybrid's engine is heard where the lap runs it (build 296)
 
 - **The lap replay played the wrong engine.** On the TRACK tab a Prius's or an e-POWER's engine sounded on its full-load line whenever the throttle was open, and idled off it, while the lap's fuel had it on its best line at the power it actually gave (the shaft's power less the pack's), and stopped off the power. The sound now reads the same engine power as the fuel (`psEnginePower`, shared), so the two agree: on the Prius's lap the engine runs at 379 of 442 points and is silent at the other 63, at the best line's speed exactly.
 - **Its load moves.** The replay records a 1 bar manifold for a direct drive, so the sound's load was flat. It is now the share of full-load torque the engine makes at that speed (`steadyMapAt`'s law): 0.20-0.94 bar round the lap.
 - Both sound models (SYNTH and GAS) follow it, and the guide's ENGINE SOUND text says so. Nothing the simulators produce moved: the fingerprint is identical, and the lap's fuel is the same to the last bit.
 - Left open, in `plans/hybrid-electric/gas-sound-hybrid.md`: on the bench the sound reads the pedal, not the engine's own throttle, so a charging engine can crackle with the pedal up (build B); an engine start or stop has no spin-up or run-down (C); a P2's lap has no electric stretches to be silent in, because the lap model has none yet.
+
+### The tow and dirty air come from the cars' own aero (build 295)
+
+Phase F of `plans/road-to-v1.md`, the wake; the plan for the phase is reworked with it.
+- **The tow** is the drag a following car loses, from the PATH platoon tests (Zabat et al. 1995, figure 9: 0.76 of its
+  drag one length back, 0.84 at two, none past ten), turned into speed through the car's own drag and power. At 70 m/s
+  an M3 gains 3.2% 10 m behind (was ~2%), 0.4% at 40 m.
+- **Dirty air** is the downforce lost behind a 2017-21 Formula 1 car (44% at 10 m, 35% at 20 m), turned into corner
+  speed through the car's own downforce: a 911 GT3 loses 1.4% one length back at 50 m/s, a car with no downforce
+  nothing. It was 1.5% for every car.
+- Kept as rules (owner's decision): the racecraft numbers and a 1.5% spray loss in the wet. The tyre's heat, grip window
+  and wear wait until after v1.0: a derived heat model took a Civic's tyre to 329 C, because where the slip heat goes
+  needs the share of the patch truly touching the road, which no source gives.
+- Open: the pit lane's loss (next build); the car ahead's own saving within a length; the wake in braking. The downforce
+  figures are a single-seater's, as no closed car's are published.
+- Fingerprint: only the race moves; laps of the four-car race -0.3% to +0.2%. `tests/test79.mjs` checks the tow and
+  that a winged car loses more in dirty air.
+### A compound turbo is two stages in series (build 294)
+
+Phase B, step 3 of `plans/road-to-v1.md`: `TURBO_CONFIG`'s last multiple (a compound's 2.30 of one wheel's flow) is retired.
+- **The frame is the high-pressure stage, fed by a low-pressure turbo** sized for it: the two split the target's pressure
+  ratio equally and choke at the same mass flow (Watson & Janota), so the LP wheel is (s / sqrt(T1/T0))^(1/2) of the
+  frame's, s = sqrt(PR). The choke flow is the LP wheel's; its turbine and housing scale with it.
+- **The exhaust runs through both turbines**: the LP nozzle sets the pressure between them, the HP nozzle (pulses
+  included) the manifold's; the gate bypasses the HP turbine. The shafts are tied by the equal split, so the inertia is
+  both cartridges' (the HP one referred to the LP shaft) and so are the bearings.
+- **What it does** (Golf GTI's frame at 2.5 bar): 318 hp against the single's 245, exhaust 4.2 bar at 5500 rpm against 7.2,
+  full boost from 1720 rpm against 1500. At 1 bar the compound is worse (189 hp against 211): two turbines in the way.
+- **Left open:** the stages hold the equal split off the design point too (a real LP stage lags its HP one); the LP turbine
+  has no gate and sees no pulses; a compound runs its housing, not a vane ring. `TURB_WHEEL` per real car is next.
+- No preset is a compound; the fingerprint is identical.
+
+Tests: test179 (new), test166 (updated); 177, 168, 172, 51, 73.
 
 ### The motor's stator is drawn from the flux it carries (build 293)
 

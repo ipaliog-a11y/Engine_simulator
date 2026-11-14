@@ -1,6 +1,8 @@
 // Racecraft and drivers (build 147): the tow grows as the gap closes, a car ahead defends against a car with the
 // pace to pass it, a held-up car tries a late-braking move that sticks or runs it wide, and each car has a driver
 // whose traits (aggression, consistency, tyre care, wet skill) change how it races.
+// Build 295: the tow and the dirty air come from measured wakes and the car's own drag, power and downforce, so a
+// winged car loses more behind another than a road car does.
 import { chromium } from './pw.mjs';
 import { fileURLToPath, pathToFileURL } from 'url';
 import path from 'path';
@@ -20,11 +22,15 @@ const r = await page.evaluate(() => {
     return { name: v.name, build: { engine: Object.assign({}, ep.engine), tune: Object.assign({}, STD_TUNE), vehicle: vehicleFromPreset(v), name: v.name } };
   };
   const out = {};
-  // 1. the tow by distance
-  out.tow = [5, 10, 20, 40, 60].map(g => RACE.slipK * RACE.slipDrag * Math.exp(-g / 25));
   // 2. a close field, three driver mixes over twelve seeds (build 152: over three, the few dives that stuck made the
   // share below a coin flip; across 48 seeds it is 42-63% from changes that move the pace by under 0.03 s a lap)
   const ms = ['M3 (E46', 'Golf GTI', 'Civic Type R', 'GR Yaris'].map(n => raceCarModel(rec(n), 'spa'));
+  // 1. the tow by the gap behind a car of the same length (build 295: from the car's own drag and power)
+  { const M = Object.assign({}, ms[0], { massNow: ms[0].mass });
+    out.tow = [5, 10, 20, 40, 60].map(g => raceWake(M, 70, 'power', g / M.len) - 1);
+    // the dirty air: a corner at 50 m/s one length behind, a road car against a winged one (from its own ClA)
+    const G3 = raceCarModel(rec('911 GT3'), 'spa'); G3.massNow = G3.mass;
+    out.dirty = { road: 1 - raceWake(M, 50, 'corner', 1), winged: 1 - raceWake(G3, 50, 'corner', 1), clRoad: M.clA, clWing: G3.clA }; }
   const field = (drv, seed) => { const R = raceInit(ms, { track: 'spa', laps: 6, seed, grid: 'reverse', cars: ms.map(() => ({ driver: drv })) }); raceRun(R); return R; };
   const tally = drv => { const t = { dives: 0, ok: 0, wide: 0, defend: 0, pass: 0, okThenPass: 0 };
     for (const sd of [3, 7, 11, 13, 17, 19, 23, 29, 31, 37, 41, 43]) { const R = field(drv, sd);
@@ -61,8 +67,10 @@ const r = await page.evaluate(() => {
   return out;
 });
 
-console.log('== the tow: speed gained at 70 m/s by the gap ==');
+console.log('== the tow: speed gained at 70 m/s by the gap (rear to front) ==');
 console.log('  ' + [5, 10, 20, 40, 60].map((g, k) => `${g} m ${(r.tow[k] * 100).toFixed(2)}%`).join(' · '));
+console.log(`  dirty air one length back at 50 m/s: road car (ClA ${r.dirty.clRoad.toFixed(2)}) ${(r.dirty.road * 100).toFixed(2)}% · winged (ClA ${r.dirty.clWing.toFixed(2)}) ${(r.dirty.winged * 100).toFixed(2)}% slower`);
+if (!(r.dirty.winged > 2 * r.dirty.road && r.dirty.winged > 0.005)) fails.push('a winged car does not lose more in dirty air than a road car');
 for (let k = 1; k < r.tow.length; k++) if (!(r.tow[k] < r.tow[k - 1])) fails.push('the tow does not fall away with the gap');
 if (!(r.tow[1] > 0.012 && r.tow[1] < 0.035)) fails.push(`the tow at 10 m is ${(r.tow[1] * 100).toFixed(1)}%, not the 1-3% a real one is worth`);
 if (!(r.tow[4] < 0.005)) fails.push('the tow is still worth something 60 m back');

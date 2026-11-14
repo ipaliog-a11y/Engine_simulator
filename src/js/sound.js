@@ -804,7 +804,7 @@ function trackSoundState(st){
   // would find it already gone by the time the throttle shut on it.
   const R=lapResult&&lapResult.replay,e=engine;
   // a power-split's or a series hybrid's replay runs at MG2's speed: the engine is where the lap's fuel has it, on its best
-  // line at the power it gives, and stopped off the power (build 294; until then on the full-load line, idling off it)
+  // line at the power it gives, and stopped off the power (build 296; until then on the full-load line, idling off it)
   if(isDirectHybrid()&&R&&st.i!=null){
     const g=psEngineSoundAt(lapResult,st.i);if(!g)return {off:true,rpm:0,map:1,throttle:0,afr:e.stoichAFR||14.7,fuelCut:true,blown:false};
     st=Object.assign({},st,{rpm:g.rpm,thr:g.thr,map:g.map});
@@ -1070,7 +1070,7 @@ function updateSound(){
   if(!Sound.on)return;
   if(isElectric()||hybBenchEngineOff()&&vizMode!=='track')return muteEngineSound();   // a motor has no engine to hear (its own voice: updateMotorSound); a hybrid's engine may be off (build 190)
   const t=Sound.ctx.currentTime,src=soundSource(),s=src||state;
-  if(src&&src.off)return muteEngineSound();   // a hybrid's engine stopped on the lap replay (build 294)
+  if(src&&src.off)return muteEngineSound();   // a hybrid's engine stopped on the lap replay (build 296)
   // Rotaries sit bright & smooth, diesels dark & clattery; the note opens up with revs.
   const bright=(440+s.rpm*0.15+engine.cylinders*8)*(engine.type==='rotary'?1.5:engine.ci?0.6:1.0);
   if(Sound.node){
