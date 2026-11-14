@@ -4,6 +4,8 @@
 
 **What comes next** is [drivetrain.md](drivetrain.md): the stages after v0.7, and the lock in `tests/test136.mjs` that stops a stage from moving a number it did not mean to.
 
+**The sound** of a hybrid by its drive mode: [gas-sound-hybrid.md](gas-sound-hybrid.md) (review at build 293, builds A-E).
+
 Should hybrid and electric cars become a new game built from this one, or live in this one? This
 document answers that, lists what would have to change, and gives an order to build it in.
 

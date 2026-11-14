@@ -769,7 +769,7 @@ body.showcase-open{overflow:hidden}
 </div>
 <div class="container">
 <header>
-<h1>PIXEL ENGINE SIM v0.7 build 296</h1>
+<h1>PIXEL ENGINE SIM v0.7 build 297</h1>
 <div class="subtitle" id="subtitle">ENGINE DESIGNER • BUILD IT, THEN DRIVE IT</div>
 </header>
 <div class="build-strip" id="buildStrip">
@@ -3297,7 +3297,7 @@ An engine's sound is mostly its <b>exhaust pulses</b>: every time a cylinder's e
 </div>
 <div class="gtier gt-game"><div class="gtier-h">LV2 · IN THE GAME</div>
 <div class="guide-body" data-gk="options">
-<b>ENGINE SOUND</b> — two models, picked under ENGINE SOUND MODEL. <b>SYNTH</b>, the default, is described here. <b>GAS</b> simulates the gas instead, the way Ange Yaghi's engine-sim does: every cylinder, its intake and exhaust runners and each bank's collector are volumes of gas with pressure, temperature and flow between them, and the sound is the pressure in the exhaust runners, run through a recording of a real exhaust. It is heavier on the processor. A two-stroke gets its own model, with piston ports and a crankcase that pumps the charge; a rotary gets three chambers to a rotor breathing through ports the rotor uncovers. Either is heard on the DYNO tab, following the engine controls, and on the TRACK tab, following the car round the lap replay (silent while the replay is paused). It is built from the firing pulses: every cylinder fires at its place in the firing order and its pulse goes down its own bank's exhaust, left and right for a V or a boxer. That is where a cross-plane V8's burble comes from, and why an inline six sounds smooth. Then the pulses run the exhaust you fitted: the header rings at its own length (a race header cut for high revs is shorter and sings higher; a cast manifold barely rings), the system behind it drones, and the silencer, the cat and a turbo, if there is one, quieten it. Load is in the pulses themselves: each one is as hard as the charge it burned, so flat out is louder and raspier than a cruise, and a fuel cut leaves only a hollow whoosh. A wild cam makes the idle lope, an idle thing that fades as the throttle opens. Lift off a carburetted engine after a pull and it crackles while the pipe is hot (carburettors cannot cut the fuel, so the thin overrun charge misfires and lights in the exhaust); an injected one stays quiet, and anti-lag pops on purpose. Around the exhaust you also hear the rest of the car: a turbo whines at its compressor's blade-pass pitch as the shaft spools, and hisses through its blow-off valve when you lift (longer from a big intercooler); a supercharger whirrs with the crank, mostly once its boost comes in (off boost a Roots or a screw blower's bypass is open), and a centrifugal whistles with its impeller speed; a turbo's whine and blow-off are as big as its compressor, so a small one only hisses; anti-lag bangs and crackles on every lift; the intake roars at its runner's tuned pitch, loudest through open stacks; and a chamber that knocks rings at about 6 kHz, which is a diesel's rattle on every stroke (worst cold) and a petrol engine's warning when it is past its knock limit.<br><b>WEAR &amp; DAMAGE</b> — with wear on, detonation, overheating, running lean under boost and over-revving damage the engine and can blow it; with it off the engine is invincible, which is the way to experiment.<br><b>LANGUAGE</b> — English or Greek.
+<b>ENGINE SOUND</b> — two models, picked under ENGINE SOUND MODEL. <b>SYNTH</b>, the default, is described here. <b>GAS</b> simulates the gas instead, the way Ange Yaghi's engine-sim does: every cylinder, its intake and exhaust runners and each bank's collector are volumes of gas with pressure, temperature and flow between them, and the sound is the pressure in the exhaust runners, run through a recording of a real exhaust. It is heavier on the processor. A two-stroke gets its own model, with piston ports and a crankcase that pumps the charge; a rotary gets three chambers to a rotor breathing through ports the rotor uncovers. Either is heard on the DYNO tab, following the engine controls, and on the TRACK tab, following the car round the lap replay (silent while the replay is paused); a power-split or series hybrid's engine is heard only where the lap burns fuel, at the speed and load its best line runs it, and stops off the power. It is built from the firing pulses: every cylinder fires at its place in the firing order and its pulse goes down its own bank's exhaust, left and right for a V or a boxer. That is where a cross-plane V8's burble comes from, and why an inline six sounds smooth. Then the pulses run the exhaust you fitted: the header rings at its own length (a race header cut for high revs is shorter and sings higher; a cast manifold barely rings), the system behind it drones, and the silencer, the cat and a turbo, if there is one, quieten it. Load is in the pulses themselves: each one is as hard as the charge it burned, so flat out is louder and raspier than a cruise, and a fuel cut leaves only a hollow whoosh. A wild cam makes the idle lope, an idle thing that fades as the throttle opens. Lift off a carburetted engine after a pull and it crackles while the pipe is hot (carburettors cannot cut the fuel, so the thin overrun charge misfires and lights in the exhaust); an injected one stays quiet, and anti-lag pops on purpose. Around the exhaust you also hear the rest of the car: a turbo whines at its compressor's blade-pass pitch as the shaft spools, and hisses through its blow-off valve when you lift (longer from a big intercooler); a supercharger whirrs with the crank, mostly once its boost comes in (off boost a Roots or a screw blower's bypass is open), and a centrifugal whistles with its impeller speed; a turbo's whine and blow-off are as big as its compressor, so a small one only hisses; anti-lag bangs and crackles on every lift; the intake roars at its runner's tuned pitch, loudest through open stacks; and a chamber that knocks rings at about 6 kHz, which is a diesel's rattle on every stroke (worst cold) and a petrol engine's warning when it is past its knock limit.<br><b>WEAR &amp; DAMAGE</b> — with wear on, detonation, overheating, running lean under boost and over-revving damage the engine and can blow it; with it off the engine is invincible, which is the way to experiment.<br><b>LANGUAGE</b> — English or Greek.
 </div>
 <div class="guide-body" data-gk="tip">
 Tip: turn WEAR off in OPTIONS to
@@ -16876,18 +16876,24 @@ function trackSoundState(st){
   // The throttle is recorded per point and held, the manifold interpolated toward the next; the boost the
   // compressor is making (upstream, in the charge pipe) is taken at the throttle's own point, or a lift
   // would find it already gone by the time the throttle shut on it.
-  const R=lapResult&&lapResult.replay,e=engine,thr=st.thr||0;
-  const boost=Math.max(0,(R&&R.map&&st.i!=null?R.map[st.i]:st.map||1)-1);
+  const R=lapResult&&lapResult.replay,e=engine;
+  // a power-split's or a series hybrid's replay runs at MG2's speed: the engine is where the lap's fuel has it, on its best
+  // line at the power it gives, and stopped off the power (build 297; until then on the full-load line, idling off it)
+  if(isDirectHybrid()&&R&&st.i!=null){
+    const g=psEngineSoundAt(lapResult,st.i);if(!g)return {off:true,rpm:0,map:1,throttle:0,afr:e.stoichAFR||14.7,fuelCut:true,blown:false};
+    st=Object.assign({},st,{rpm:g.rpm,thr:g.thr,map:g.map});
+  }
+  const thr=st.thr||0;
+  const boost=Math.max(0,(isDirectHybrid()?st.map:R&&R.map&&st.i!=null?R.map[st.i]:st.map||1)-1);
   let shaftE=0;
   if(e.intake==='turbo'&&e.shaftJ){
     const n=(e.shaftMax||0)*Math.sqrt(clamp(boost/Math.max(0.05,e.maxBoost||e.boost_bar||1),0,1)),w=n*2*Math.PI/60;
     shaftE=0.5*e.shaftJ*w*w;
   }
   const lam=e.ci?SMOKE_LAMBDA_CI+(2.25-SMOKE_LAMBDA_CI)*(1-thr):thr>0.9?0.88:1;
-  // a power-split's replay runs at MG2's speed: the engine is where the eCVT holds it on power, idling off it (build 189)
-  if(isDirectHybrid())st=Object.assign({},st,{rpm:thr>0.02?psEngineRpmAt(st.rpm):e.idleRpmEff});
   return {rpm:st.rpm,map:st.map||1,throttle:thr,afr:lam*(e.stoichAFR||14.7),boostActual:boost,shaftE,
-    fuelCut:(e.canDFCO&&thr<0.03&&st.rpm>e.idleRpmEff+150)||st.rpm>=e.redline,coolant:90,knockRisk:0,blown:false};
+    fuelCut:(!isDirectHybrid()&&e.canDFCO&&thr<0.03&&st.rpm>e.idleRpmEff+150)||st.rpm>=e.redline,
+    coolant:90,knockRisk:0,blown:false};   // a direct hybrid's running engine is fuelled
 }
 // Where the sound comes from: the dyno runs the live engine on its brake, the track tab plays the lap
 // back (and is quiet while the replay is paused), and every other tab is quiet.
@@ -17138,6 +17144,7 @@ function updateSound(){
   if(!Sound.on)return;
   if(isElectric()||hybBenchEngineOff()&&vizMode!=='track')return muteEngineSound();   // a motor has no engine to hear (its own voice: updateMotorSound); a hybrid's engine may be off (build 190)
   const src=soundSource();
+  if(src&&src.off)return muteEngineSound();   // a hybrid's engine stopped on the lap replay (build 297)
   // a hybrid's engine on the bench runs at the ECU's throttle (H.thrE: AUTO, HOLD and CHARGE set it), not the pedal's
   if(src===state&&isHybrid()&&hybBench&&hybBench.hy===engine.hy)return withEngThr(hybBench,()=>engineSound(src));
   engineSound(src);
@@ -26100,7 +26107,7 @@ function psCurves(){
 // warm temperature. A power-split's controller holds the engine on it. Cached per build.
 function psOol(){
   const e=engine;
-  if(e._ool&&e._ool.score===e.score)return e._ool;
+  if(e._ool&&e._ool.score===e.score&&e._ool.tqAt)return e._ool;
   const curve=buildTorqueCurve(),r0=Math.max(1000,e.idleRpmEff||800),r1=e.redline,NP=48,NR=36,P=[],ne=[],gs=[];
   let Pmax=0;for(const q of curve)Pmax=Math.max(Pmax,q.tq*q.rpm*Math.PI/30);
   const tqAt=rpm=>{if(rpm<=curve[0].rpm)return curve[0].tq;for(let i=1;i<curve.length;i++)if(rpm<=curve[i].rpm)return curve[i-1].tq+(curve[i].tq-curve[i-1].tq)*(rpm-curve[i-1].rpm)/(curve[i].rpm-curve[i-1].rpm);return 0;};
@@ -26113,7 +26120,7 @@ function psOol(){
     }
     if(b){P.push(Pi);ne.push(b.rpm);gs.push(b.f);}
   }
-  e._ool={score:e.score,P,ne,gs,Pmax:P.length?P[P.length-1]:Pmax};
+  e._ool={score:e.score,P,ne,gs,Pmax:P.length?P[P.length-1]:Pmax,tqAt};   // tqAt: the full-load torque, for the sound (build 297)
   return e._ool;
 }
 // The best line's engine speed and fuel (g/s) for an engine power (W).
@@ -26141,17 +26148,29 @@ function psDriveline(v){
 }
 const PS_GEAR_NOTE='A power-split hybrid has no gears: one reduction from its traction motor, set with GEARING on the VEHICLE tab.';
 const PS_REDUCTION={label:'eCVT (POWER-SPLIT)',shift:0,powershift:true,eff:1,stall:0,mult:1,cost:900};
-// The lap's and the race's fuel: per point, the engine's share of the shaft power (the replay's power less what the pack
-// gave) over the eCVT's path efficiency at that speed, burnt on the best line. Off the power the engine stops.
+// The engine's power at a replay point (W): the shaft's power less what the pack gave, over the eCVT's path efficiency at
+// that speed; 0 off the power, where the engine stops. The lap's fuel and its sound both read it (build 297).
+function psEnginePower(L,i,c){
+  const R=L.replay,R0=c.eng,rpm=R.rpm[i],Ps=R.pwr[i]-(L.hy?Math.max(0,L.hy.pm[i]):0);
+  if(!(Ps>0))return 0;
+  let eta=c.eta[c.eta.length-1];
+  if(rpm<=R0[0].rpm)eta=c.eta[0];
+  else for(let k=1;k<R0.length;k++)if(rpm<=R0[k].rpm){eta=c.eta[k-1]+(c.eta[k]-c.eta[k-1])*(rpm-R0[k-1].rpm)/(R0[k].rpm-R0[k-1].rpm);break;}
+  return Ps/eta;
+}
+// The lap's and the race's fuel: per point, the engine's power (psEnginePower) burnt on the best line.
 function psFuelRate(){
-  const c=hybCurves(),R0=c.eng;
-  const etaAt=rpm=>{if(rpm<=R0[0].rpm)return c.eta[0];for(let i=1;i<R0.length;i++)if(rpm<=R0[i].rpm)return c.eta[i-1]+(c.eta[i]-c.eta[i-1])*(rpm-R0[i-1].rpm)/(R0[i].rpm-R0[i-1].rpm);return c.eta[c.eta.length-1];};
-  return L=>{const R=L.replay,n=R.rpm.length,out=new Float32Array(n);
-    for(let i=0;i<n;i++){
-      const Ps=R.pwr[i]-(L.hy?Math.max(0,L.hy.pm[i]):0);
-      out[i]=Ps>0?psOolAt(Ps/etaAt(R.rpm[i])).gs:0;
-    }
+  const c=hybCurves();
+  return L=>{const n=L.replay.rpm.length,out=new Float32Array(n);
+    for(let i=0;i<n;i++){const Pe=psEnginePower(L,i,c);out[i]=Pe>0?psOolAt(Pe).gs:0;}
     return out;};
+}
+// What the engine does at a replay point, for the sound (build 297): null where the fuel has it stopped; else on the best
+// line at its power, as the fuel burns it, and its manifold the share of full-load torque it makes there (steadyMapAt's law).
+function psEngineSoundAt(L,i){
+  const Pe=psEnginePower(L,i,hybCurves());if(!(Pe>0))return null;
+  const ne=psOolAt(Pe).ne,Te=Pe/(Math.max(ne,1)*Math.PI/30),thr=clamp(Te/Math.max(1,psOol().tqAt(ne)),0,1);
+  return {rpm:ne,thr,map:steadyMapAt(ne,thr)};
 }
 // The driveline line of the VEHICLE summary.
 function psDrivelineLine(v){
@@ -26159,7 +26178,7 @@ function psDrivelineLine(v){
   return '<br>'+tr('eCVT (POWER-SPLIT)')+' • '+tr('Reduction')+' <b>'+v.finalDrive.toFixed(2)+':1</b> ('+tr('matched')+' '+v.reductionMatched.toFixed(2)+':1) • MG1 '+
     Math.round(motorMaxTorque(hy.mg1,100,PS.busV,60))+' Nm • MG2 '+Math.round(motorMaxTorque(hy.motor,100,PS.busV,60))+' Nm';
 }
-// The engine's speed at full throttle for an MG2 speed (rpm), off the curves: what the replay's sound plays.
+// The engine's speed at full throttle for an MG2 speed (rpm), off the curves: the bench's SPORT mode holds it there.
 function psEngineRpmAt(n2){
   const c=hybCurves(),R=c.eng;
   if(n2<=R[0].rpm)return c.ne[0];
