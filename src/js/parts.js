@@ -85,7 +85,7 @@ const CAM_PROFILE={
 // A head's intake valve 15-75 mm (a 50 cc single's to a big-bore diesel's); its throat 0.75 of the valve (a restrictive
 // production port) to 0.92 (a fully ported race head: the 45 degree seat needs the rest); springs 100-1500 N on the seat
 // and 10-200 N/mm, past the RACE step on the biggest factory valve (sized for a Hellcat's redline, ~1180 N and 130 N/mm).
-const PART_LIMITS={span_mm:[600,2200],height_mm:[30,400],chord_mm:[80,600],angle_deg:[0,25],camber_pct:[0,12],plate_mm:[0,400],valveD_mm:[15,75],exValveD_mm:[12,65],throat:[0.75,0.92],seat_N:[100,1500],rate_Nmm:[10,200],dur:[180,320],lift_mm:[4,16],lsa:[98,130],vvt_deg:[0,60],primD_mm:[25,76],primL_mm:[200,1000],pipes:[1,2],sysD_mm:[30,110],sysL_m:[0.8,4.5],
+const PART_LIMITS={preload_Nm:[0,400],ramp_deg:[25,90],faces:[1,10],rFace_mm:[25,70],rRamp_mm:[20,60],span_mm:[600,2200],height_mm:[30,400],chord_mm:[80,600],angle_deg:[0,25],camber_pct:[0,12],plate_mm:[0,400],valveD_mm:[15,75],exValveD_mm:[12,65],throat:[0.75,0.92],seat_N:[100,1500],rate_Nmm:[10,200],dur:[180,320],lift_mm:[4,16],lsa:[98,130],vvt_deg:[0,60],primD_mm:[25,76],primL_mm:[200,1000],pipes:[1,2],sysD_mm:[30,110],sysL_m:[0.8,4.5],
   runnerL_mm:[40,800],runnerD_mm:[20,80],shortL_mm:[40,400],area_m2:[0.02,3],inletD_mm:[30,160],
   w:[150,900],h:[80,800],d:[30,120],fpi:[8,30],pipe_m:[0.3,5],
   // a turbo's compressor 30-120 mm at the exducer (a kei car's to a big diesel's), its turbine 25-130 mm, a housing
@@ -244,6 +244,7 @@ const PART_KINDS=[
   {kind:'turbo',  label:'TURBOCHARGER',ready:true},
   {kind:'wing',   label:'REAR WING',ready:true},
   {kind:'fwing',  label:'FRONT WING',ready:true},
+  {kind:'diff',   label:'DIFFERENTIAL',ready:true},
   {kind:'cat',    label:'CATALYTIC CONVERTER',ready:false}
 ];
 // A designed intake, as the factory class the rest of the app reads: a variable one is VARIABLE, a fixed one the
@@ -299,7 +300,10 @@ const PART_DEF={
     label:()=>'REAR WING',newName:'MY WING',factory:['wing']},
   // the front wing (build 306): the same wing low over the road, fitted from FRONT AERO, on the front axle
   fwing:  {on:'vehicle',field:'fwingPart',cls:'aeroFront',select:'vhAeroF',def:'none',valid:k=>!!AERO_FRONT[k],clsOf:()=>'wing',
-    label:()=>'FRONT WING',newName:'MY FRONT WING',factory:['wing']}
+    label:()=>'FRONT WING',newName:'MY FRONT WING',factory:['wing']},
+  // the differential (build 310): a clutch-plate LSD from its ramp and plates, fitted from DIFFERENTIAL
+  diff:   {on:'vehicle',field:'diffPart',cls:'diff',select:'vhDiff',def:'open',valid:k=>!!DIFF[k],clsOf:()=>'clsd',
+    label:()=>'CLUTCH-PLATE LSD',newName:'MY DIFF',factory:['clsd']}
 };
 const partOwner=kind=>PART_DEF[kind].on==='vehicle'?vehicle:engine;
 const partRebuild=kind=>{if(PART_DEF[kind].on==='vehicle'){buildVehicle();updateVehicleSummary();}else buildEngine();};
@@ -332,6 +336,8 @@ function normPart(p){
   if(p.kind==='wing'||p.kind==='fwing'){const f=p.kind==='fwing',q={id,kind:p.kind,name:String(p.name||'WING').slice(0,40),span_mm:n(p.span_mm,'span_mm',1500),
     chord_mm:n(p.chord_mm,'chord_mm',250),angle_deg:n(p.angle_deg,'angle_deg',f?6:8),camber_pct:n(p.camber_pct,'camber_pct',6),plate_mm:n(p.plate_mm,'plate_mm',f?100:150)};
     if(f)q.height_mm=n(p.height_mm,'height_mm',100);return q;}
+  if(p.kind==='diff')return {id,kind:'diff',name:String(p.name||'DIFF').slice(0,40),preload_Nm:n(p.preload_Nm,'preload_Nm',60),
+    ramp_deg:n(p.ramp_deg,'ramp_deg',45),faces:Math.round(n(p.faces,'faces',3)),rFace_mm:n(p.rFace_mm,'rFace_mm',40),rRamp_mm:n(p.rRamp_mm,'rRamp_mm',40)};
   if(p.kind==='turbo'){const c=n(p.compD_mm,'compD_mm',71);
     return {id,kind:'turbo',name:String(p.name||'TURBO').slice(0,40),compD_mm:c,
       turbD_mm:n(p.turbD_mm,'turbD_mm',+(TURB_WHEEL*c).toFixed(4)),ar:n(p.ar,'ar',0.64)};}
@@ -555,6 +561,9 @@ function partFromFactory(key,kind){
   if(kind==='wing')return normPart({kind,name:tr('REAR WING'),span_mm:Math.round((vehicle&&vehicle.track||1.5)*100)*10,chord_mm:250,angle_deg:8,camber_pct:6,plate_mm:150});
   // the front one as wide as the front track, its quarter chord 100 mm off the road, as a club racer's low front wing
   if(kind==='fwing')return normPart({kind,name:tr('FRONT WING'),span_mm:Math.round((vehicle&&(vehicle.trackF||vehicle.track)||1.5)*100)*10,chord_mm:250,angle_deg:6,camber_pct:6,plate_mm:100,height_mm:100});
+  // a starting point, not a factory part (the factory diffs are a table with no dimensions): a 1.5-way clutch-plate LSD
+  // as sold for a road car, 60 N m of preload, 45 degree ramps, three friction faces a side (PROBABLE, typical units)
+  if(kind==='diff')return normPart({kind,name:tr('CLUTCH-PLATE LSD'),preload_Nm:60,ramp_deg:45,faces:3,rFace_mm:40,rRamp_mm:40});
   // the engine's own turbo (its compressor wheel, if it sets one, and its housing), or a frame as sold
   if(kind==='turbo')return withPart('turbo',key,e=>{
     const tb=turboFrame(e);
@@ -621,7 +630,7 @@ function runnerFor(rpm,Dmm){
 }
 
 // ---- the PARTS page ----
-const partsUI={kind:'exhaust',edit:{exhaust:null,intake:null,filter:null,cam:null,head:null,turbo:null,intercooler:null,wing:null,fwing:null},timer:0};
+const partsUI={kind:'exhaust',edit:{exhaust:null,intake:null,filter:null,cam:null,head:null,turbo:null,intercooler:null,wing:null,fwing:null,diff:null},timer:0};
 const pv=id=>document.getElementById(id);
 const fittedPart=kind=>partOwner(kind)&&partOwner(kind)[PART_DEF[kind].field];
 // the ids of each kind's editor
@@ -659,6 +668,10 @@ const PART_UI={
     fields:['pwName','pwSpan','pwChord','pwAngle','pwCamber','pwPlate'],
     spec:p=>p.span_mm+' × '+p.chord_mm+' mm · '+p.angle_deg+'° · '+tr('camber')+' '+p.camber_pct+'%'}
 };
+PART_UI.diff={reset:'pdReset',box:'partsDiff',list:'pdList',from:'pdFrom',neu:'pdNew',save:'pdSave',saveFit:'pdSaveFit',guide:'pdGuide',canvas:'pdCanvas',legend:'pdLegend',
+  none:"No differentials designed yet. Start from a clutch-plate LSD below.",
+  fields:['pdName','pdPreload','pdRamp','pdFaces','pdRFace','pdRRamp'],
+  spec:p=>p.preload_Nm+' N m · '+p.ramp_deg+'° · '+p.faces+' '+tr('faces a side')+' · '+tr('lock')+' '+Math.round(diffPartLock(p)*100)+'%'};
 // the front wing shares the rear wing's editor, with its height over the road
 PART_UI.fwing=Object.assign({},PART_UI.wing,{none:"No front wings designed yet. Start from a wing as wide as this car's front track below.",
   fields:PART_UI.wing.fields.concat('pwHeight'),spec:p=>PART_UI.wing.spec(p)+' · '+p.height_mm+' mm '+tr('up')});
@@ -701,6 +714,10 @@ function partToEditor(kind,p){
     pv('pwName').value=p.name;pv('pwSpan').value=p.span_mm;pv('pwChord').value=p.chord_mm;pv('pwAngle').value=p.angle_deg;pv('pwCamber').value=p.camber_pct;pv('pwPlate').value=p.plate_mm;
     return;
   }
+  if(kind==='diff'){
+    pv('pdName').value=p.name;pv('pdPreload').value=p.preload_Nm;pv('pdRamp').value=p.ramp_deg;pv('pdFaces').value=p.faces;pv('pdRFace').value=p.rFace_mm;pv('pdRRamp').value=p.rRamp_mm;
+    return;
+  }
   if(kind==='turbo'){
     pv('pbName').value=p.name;pv('pbComp').value=+(+p.compD_mm).toFixed(1);pv('pbTurb').value=+(+p.turbD_mm).toFixed(1);pv('pbAr').value=+(+p.ar).toFixed(3);
     return;
@@ -735,6 +752,8 @@ function partFromEditor(kind){
     h:pv('pxH').value,d:pv('pxD').value,fpi:pv('pxFpi').value,pipe_m:pv('pxPipe').value});
   if(kind==='wing'||kind==='fwing')return normPart({kind,id:ed&&ed.id,name:pv('pwName').value.trim()||newName,span_mm:pv('pwSpan').value,
     chord_mm:pv('pwChord').value,angle_deg:pv('pwAngle').value,camber_pct:pv('pwCamber').value,plate_mm:pv('pwPlate').value,height_mm:pv('pwHeight').value});
+  if(kind==='diff')return normPart({kind,id:ed&&ed.id,name:pv('pdName').value.trim()||newName,preload_Nm:pv('pdPreload').value,
+    ramp_deg:pv('pdRamp').value,faces:pv('pdFaces').value,rFace_mm:pv('pdRFace').value,rRamp_mm:pv('pdRRamp').value});
   if(kind==='turbo'){
     // the editor shows the wheels to 0.1 mm and the A/R to 0.001: an unchanged field keeps the part's exact number
     const keep=(id,k,d)=>{const v=pv(id).value;return ed&&ed[k]!=null&&+v===+(+ed[k]).toFixed(d)?ed[k]:v;};
@@ -762,7 +781,7 @@ function partAction(a,id){
     partLib=partLib.filter(x=>x.id!==id);persistParts();
     const f=fittedPart(kind);
     if(f&&f.id===id){pv(D.select).value=partOwner(kind)[D.cls];fillPartSelects();partRebuild(kind);
-      flash(tr(kind==='wing'?"PART DELETED: THE CAR HAS THE KIT'S REAR WING":kind==='fwing'?"PART DELETED: THE CAR HAS THE KIT'S FRONT WING":kind==='intake'?'PART DELETED: THE ENGINE HAS ITS FACTORY INTAKE':kind==='intercooler'?'PART DELETED: THE ENGINE HAS ITS FACTORY INTERCOOLER':kind==='cam'?'PART DELETED: THE ENGINE HAS ITS FACTORY CAM':kind==='head'?'PART DELETED: THE ENGINE HAS ITS FACTORY HEAD':kind==='turbo'?'PART DELETED: THE ENGINE HAS ITS FACTORY TURBO':kind==='filter'?'PART DELETED: THE ENGINE HAS ITS FACTORY AIR FILTER':'PART DELETED: THE ENGINE HAS ITS FACTORY EXHAUST'));}
+      flash(tr(kind==='diff'?"PART DELETED: THE CAR HAS THE TABLE'S CLUTCH-PLATE LSD":kind==='wing'?"PART DELETED: THE CAR HAS THE KIT'S REAR WING":kind==='fwing'?"PART DELETED: THE CAR HAS THE KIT'S FRONT WING":kind==='intake'?'PART DELETED: THE ENGINE HAS ITS FACTORY INTAKE':kind==='intercooler'?'PART DELETED: THE ENGINE HAS ITS FACTORY INTERCOOLER':kind==='cam'?'PART DELETED: THE ENGINE HAS ITS FACTORY CAM':kind==='head'?'PART DELETED: THE ENGINE HAS ITS FACTORY HEAD':kind==='turbo'?'PART DELETED: THE ENGINE HAS ITS FACTORY TURBO':kind==='filter'?'PART DELETED: THE ENGINE HAS ITS FACTORY AIR FILTER':'PART DELETED: THE ENGINE HAS ITS FACTORY EXHAUST'));}
     else{fillPartSelects();flash(tr('PART DELETED'));}
     if(partsUI.edit[kind]&&partsUI.edit[kind].id===id)partsUI.edit[kind]=null;
     renderParts();
@@ -805,6 +824,7 @@ function previewPart(kind){
   if(kind==='head')return previewHead();
   if(kind==='turbo')return previewTurbo();
   if(kind==='wing'||kind==='fwing')return previewWing(kind);
+  if(kind==='diff')return previewDiff();
   const p=partFromEditor('exhaust'),now=exhaustReport(engine.exhaustPart||engine.exhaust),r=exhaustReport(p);
   partsUI.last={kind,p,now,r};
   const turbo=engine.intake==='turbo',ported=!!engine.ports;
@@ -972,6 +992,39 @@ function previewWing(kind){
   pv('pwGuide').innerHTML=lines.map(l=>'<div>'+l+'</div>').join('');
   drawWing(p,r);
 }
+// The diff on this car: its lock and bias, and the share of the driven axle's grip it puts down, straight and cornering,
+// against the factory diff the car has. The axle's grip for the preload: the driven axle's static load at the tyres' grip.
+function diffAxleGripTq(){
+  const V=vehicle,m=V.mass||1200,N=m*G*(V.drive==='awd'?1:V.drive==='fwd'?V.fWt:1-V.fWt),n=V.drive==='awd'?4:2;
+  return tyreMuX(N/n)*N*V.rTire;
+}
+function previewDiff(){
+  const p=partFromEditor('diff'),r=diffSpec(p),V=vehicle,fac=DIFF[V.diff]||DIFF.open,now=V.diffPart?diffSpec(V.diffPart):fac,Tg=diffAxleGripTq();
+  partsUI.last={kind:'diff',p,now,r};
+  const use=(df,g)=>diffTractionAt(df,g*G,V.cg,1,Tg),pc=x=>fmt(Math.min(1.5,x)*100,0)+'%',lines=[];
+  lines.push(tr('Lock from the ramp')+': <b>'+fmt(r.lock*100,0)+'%</b> '+tr('of the drive torque')+' · '+tr('torque bias ratio')+' <b>'+(r.tbr===Infinity?'∞':fmt(r.tbr,1))+'</b>'
+    +' <span class="dim">('+tr('2 × faces × μ × face radius × cot(ramp) ÷ ramp radius; μ')+' '+fmt(DIFF_MU,2)+')</span>');
+  lines.push(tr('Preload')+' '+fmt(p.preload_Nm)+' N m: '+fmt(p.preload_Nm/Math.max(1,Tg)*100,1)+'% '+tr('of the driven axle\'s grip')+' ('+fmt(Tg)+' N m '+tr('at the wheels')+').');
+  lines.push(tr('Puts down, straight')+': <b>'+pc(use(r,0))+'</b> '+tr('of the axle\'s grip')+' · '+tr('at 0.8 g sideways')+': <b>'+pc(use(r,0.8))+'</b>'
+    +' <span class="dim">('+tr('now')+' '+tr(now.label)+': '+pc(use(now,0))+', '+pc(use(now,0.8))+')</span>');
+  lines.push('<span class="dim">'+tr("Its scrub in a corner is the factory table's, read across at its lock; the wheels' loads come from the same load asymmetry as the factory diffs. Both go with the table, in a later build.")+'</span>');
+  pv('pdGuide').innerHTML=lines.map(l=>'<div>'+l+'</div>').join('');
+  drawDiff(p,r);
+}
+// The share of the axle's grip put down against the lateral acceleration: open, the car's diff now, and this one.
+function drawDiff(p,r){
+  const c=pv('pdCanvas');if(!c)return;
+  const w=c.clientWidth||480,h=c.clientHeight||200,dpr=window.devicePixelRatio||1;
+  c.width=Math.round(w*dpr);c.height=Math.round(h*dpr);
+  const g=c.getContext('2d');g.setTransform(dpr,0,0,dpr,0,0);g.clearRect(0,0,w,h);
+  const V=vehicle,Tg=diffAxleGripTq(),now=partsUI.last.now,L=30,R=w-12,T=12,B=h-22,X=a=>L+a/1.2*(R-L),Y=u=>B-u/1.1*(B-T);
+  g.strokeStyle='#223';g.lineWidth=1;g.fillStyle='#667';g.font='8px monospace';
+  for(let a=0;a<=1.2001;a+=0.2){g.beginPath();g.moveTo(X(a),T);g.lineTo(X(a),B);g.stroke();g.fillText(a.toFixed(1)+'g',X(a)-8,h-8);}
+  for(let u=0;u<=1.0001;u+=0.5){g.beginPath();g.moveTo(L,Y(u));g.lineTo(R,Y(u));g.stroke();g.fillText(Math.round(u*100)+'%',2,Y(u)+3);}
+  const line=(df,col)=>{g.strokeStyle=col;g.lineWidth=2;g.beginPath();for(let a=0;a<=1.2001;a+=0.02){const y=Y(Math.min(1.1,diffTractionAt(df,a*G,V.cg,1,Tg)));a?g.lineTo(X(a),y):g.moveTo(X(a),y);}g.stroke();};
+  line(DIFF.open,'#a44');line(now,'#889');line(r,'#6fc');
+  pv('pdLegend').innerHTML='<span style="color:#6fc">━ '+esc(tr('this diff'))+'</span> <span style="color:#889">━ '+esc(tr('now'))+'</span> <span style="color:#a44">━ '+esc(tr('open'))+'</span> <span class="dim">'+esc(tr('share of the axle grip put down, against lateral g'))+'</span>';
+}
 // The wing's section at its angle with its two forces, and its lift against the angle, up to the stall.
 function drawWing(p,r){
   const c=pv('pwCanvas');if(!c)return;
@@ -1005,6 +1058,7 @@ function drawWing(p,r){
 }
 function drawPartCurves(kind,now,r){
   if(kind==='wing'||kind==='fwing')return drawWing(partsUI.last.p,r);
+  if(kind==='diff')return drawDiff(partsUI.last.p,r);
   const U=PART_UI[kind],c=pv(U.canvas);if(!c)return;
   const w=c.clientWidth||480,h=c.clientHeight||200,dpr=window.devicePixelRatio||1;
   c.width=Math.round(w*dpr);c.height=Math.round(h*dpr);

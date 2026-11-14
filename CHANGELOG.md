@@ -18,6 +18,29 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 ## [Unreleased]
 
+### The differential as a part (build 310)
+
+Phase D of `plans/road-to-v1.md`: the differential, the first of its two builds (the part; the table it stands beside
+goes next).
+
+- **The PARTS tab designs a DIFFERENTIAL**: a clutch-plate (ramp) LSD with its preload, ramp angle, friction faces a
+  side, plate mean radius and ramp radius. Fitted from the VEHICLE tab's DIFFERENTIAL (under MY PARTS), it takes the
+  factory diff's place.
+- **Its lock is the ramp's statics**: the drive through the cross-shafts' V-notches squeezes the plates, so the torque
+  held between the wheels is preload + L × drive, L = 2 × faces × μ × plate radius × cot(ramp) ÷ ramp radius, bias
+  (1+L)/(1−L) (Milliken & Milliken, RCVD). μ 0.10 for plates in LSD oil (PROBABLE). The starting diff (60 N m, 45°,
+  3 faces a side, 40/40 mm) locks 60%, bias 4.0.
+- **What it puts down follows**: the light wheel holds its share, the heavy one at most the locking torque more, so the
+  usable share is (open share + preload ÷ axle grip) ÷ (1 − L), at most 1. With no lock it is the open diff exactly.
+- **No factory car moved**: no preset carries a designed diff (fingerprint below).
+- **Left open:** the wheels' load asymmetry (`DIFF_ASYM0`, `DIFF_CAMBER`), the factory table's traction, scrub and lock,
+  and the stepped car's coupling gain stay fitted; the part's scrub in a corner is the table's, read across at its lock.
+  A coast ramp (1.5- and 2-way) is not modelled: nothing yet reads the lock off the throttle. Next: retire the table.
+- **Found for the next build:** the table's clutch-plate LSD (lock 0.80) keeps 85% of the axle's grip at 1.2 g on the
+  E46 M3, where the starting design (lock 0.60, bias 4) keeps about 15%: the table's lock is far more generous than its
+  ramp could give. Retiring it will move every car with a factory LSD.
+
+Tests: test190 (new).
 ### The check-engine lamp: OBD-II fault codes on the bench (build 309)
 
 The FAULT lamp under LIVE OUTPUT was a placeholder since build 254. It is now the check-engine lamp (`src/js/obd.js`).

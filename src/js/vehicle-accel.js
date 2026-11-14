@@ -21,7 +21,7 @@ function factoryDims(v){
 // True when every fitted part still matches the chassis' factory spec.
 function isFactoryFit(v){
   const ch=CHASSIS[v.chassis];if(!ch||!ch.fit)return false;const f=v.body?v.body.fit:ch.fit;
-  return (v.driveMech||v.drive)===(v.body?f.drive:ch.drive)&&(v.governor||0)===(f.gov||0)&&(v.tc!==false)===(f.tc!==false)&&v.gears===f.gears&&v.gearing===f.gearing&&v.spacing===(v.body?'stock':'std')&&!(v.finalDriveSet>0)&&v.gearbox===f.gearbox&&v.diff===f.diff&&
+  return (v.driveMech||v.drive)===(v.body?f.drive:ch.drive)&&(v.governor||0)===(f.gov||0)&&(v.tc!==false)===(f.tc!==false)&&v.gears===f.gears&&v.gearing===f.gearing&&v.spacing===(v.body?'stock':'std')&&!(v.finalDriveSet>0)&&v.gearbox===f.gearbox&&v.diff===f.diff&&!v.diffPart&&
     v.tireType===f.tire&&v.tireWidth===f.tw&&(v.tireWidthF||0)===(f.twF||0)&&!stepOf(v.springF)&&!stepOf(v.springR)&&!stepOf(v.barF)&&!stepOf(v.barR)&&!stepOf(v.damperF)&&!stepOf(v.damperR)&&v.tireAspect===f.ta&&v.wheelDia===f.wheel&&
     v.aeroFront===f.aF&&v.aeroRear===f.aR&&!v.wingPart&&!v.fwingPart&&v.aeroFloor===f.aFl&&v.weightRed===f.weight&&
     v.brakeType===f.brake&&v.rotor===f.rotor&&v.suspension===f.susp&&geoStock(v)&&!v.dims&&!(v.ballastKg>0);
@@ -42,7 +42,7 @@ function computeVehicleCost(ch,tt,wr){
      (stepOf(vehicle.damperF)?1:0)*STIFF_STEP_COST.damper+(stepOf(vehicle.damperR)?1:0)*STIFF_STEP_COST.damper;   // dampers: build 216
   c+=Math.max(0,vehicle.rotor-320)*6;
   c+={fwd:0,rwd:800,awd:2500}[vehicle.drive]||0;
-  c+=(vehicle.ev?EV_REDUCTION:vehicle.ecvt?PS_REDUCTION:(GEARBOX[vehicle.gearbox]||GEARBOX.manual)).cost+(DIFF[vehicle.diff]||DIFF.open).cost;
+  c+=(vehicle.ev?EV_REDUCTION:vehicle.ecvt?PS_REDUCTION:(GEARBOX[vehicle.gearbox]||GEARBOX.manual)).cost+(vehicle.diffPart?DIFF.clsd:DIFF[vehicle.diff]||DIFF.open).cost;
   c+=vehicle.ev||vehicle.ecvt?0:Math.max(0,vehicle.gears-5)*400;
   c+=Math.max(0,vehicle.wheelDia-16)*120+Math.max(0,vehicle.tireWidth-205)*4;
   return Math.max(3000,Math.round(c/50)*50);
@@ -160,7 +160,7 @@ function buildVehicle(){
    vehicle.warpK=K.F*K.R/S;vehicle.warpC=(K.R*K.R*CF+K.F*K.F*CR)/(S*S);}
   vehicle.drivenAero=vehicle.drive==='awd'?1:vehicle.drive==='rwd'?1-vehicle.aeroBal:vehicle.aeroBal;
   vehicle.cdA=((body?body.cd:ch.cd)+af.cd+ar.cd+al.cd)*vehicle.area+(wing?wing.cdA:0)+(fwing?fwing.cdA:0);  // drag coefficient·area
-  const gb=GEARBOX[vehicle.gearbox]||GEARBOX.manual,df=DIFF[vehicle.diff]||DIFF.open;
+  const gb=GEARBOX[vehicle.gearbox]||GEARBOX.manual,df=vehicle.diffPart?diffSpec(vehicle.diffPart):DIFF[vehicle.diff]||DIFF.open;
   vehicle.gb=gb;vehicle.gbLabel=gb.label;
   vehicle.df=df;vehicle.diffLabel=df.label;vehicle.diffTraction=df.traction;
   vehicle.shiftTime=gb.shift;
@@ -466,7 +466,7 @@ function simulateAccelRun(){
     if(!cutNow&&!overRev){
       const Teng=gridTorque(grid,engineRpm,boostNow)*tqMult;
       if(slipping){
-        const want=tyreMuX(drivenN/(vehicle.drive==='awd'?4:2))*diffTractionAt(df,0,vehicle.cg,1)*Math.max(0,drivenN)*r/(totalRatio*eff);
+        const want=tyreMuX(drivenN/(vehicle.drive==='awd'?4:2))*diffTractionAt(df,0,vehicle.cg,1,tyreMuX(drivenN/(vehicle.drive==='awd'?4:2))*Math.max(0,drivenN)*r)*Math.max(0,drivenN)*r/(totalRatio*eff);
         const Tcl=Math.min(tqCap,Math.max(Teng,want));
         slipW=Math.max(rpm*TWO_PI/60,slipW+(Teng-Tcl)/Ie*dt);       // the flywheel pays the difference
         driveF=Tcl*totalRatio*eff/r;
@@ -477,7 +477,7 @@ function simulateAccelRun(){
     // diff is governed by the lighter-loaded wheel and throws the rest away, an LSD recovers
     // most of it, a spool all of it. This only bites while the car is traction-limited.
     const tqFrac=(driveF*r)/axleTqMax;                       // how hard the axle is being driven
-    const trac=tyreMuX(drivenN/(vehicle.drive==='awd'?4:2))*diffTractionAt(df,0,vehicle.cg,tqFrac)*Math.max(0,drivenN);
+    const trac=tyreMuX(drivenN/(vehicle.drive==='awd'?4:2))*diffTractionAt(df,0,vehicle.cg,tqFrac,tyreMuX(drivenN/(vehicle.drive==='awd'?4:2))*Math.max(0,drivenN)*r)*Math.max(0,drivenN);
     const drag=0.5*AIR_RHO*vehicle.cdA*v*v,roll=v>0.2?crrAt(vehicle.crr,v)*m*G:0,res=drag+roll;
     // A road-speed governor cuts fuel at its set speed: past it the engine gives only what holds it.
     if(vGov>0&&v>=vGov)driveF=Math.min(driveF,res);
