@@ -1,4 +1,4 @@
-// WHY THIS EXISTS (build 306): the guided build gives a learner a complete real car from three questions. What must hold:
+// WHY THIS EXISTS (build 308): the guided build gives a learner a complete real car from three questions. What must hold:
 //   · GUIDED BUILD on the title menu opens it; kind, budget and what matters lead to a car with its parts explained;
 //   · the car offered is within the budget, of the kind asked, and the best of them by what matters (maker's 0–100);
 //   · BUILD THIS CAR loads that car on the VEHICLE tab, and its build price there is the one the list showed;

@@ -1,4 +1,4 @@
-// ====== FACTORY CAR PRICES (build 306) ======
+// ====== FACTORY CAR PRICES (build 308) ======
 // Written by tools/car-prices.mjs, never by hand: each factory car's build price (engine.cost + vehicle.cost) as the sim
 // prices it with its own engine. The guided build's budget question reads it; tests/test188.mjs checks it is current.
 const CAR_PRICE={

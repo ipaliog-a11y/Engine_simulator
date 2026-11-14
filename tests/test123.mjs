@@ -59,7 +59,7 @@ await gk.addInitScript(() => { try { localStorage.setItem('pes.lang', 'el'); } c
 await gk.goto(url, { waitUntil: 'networkidle' });
 await gk.waitForTimeout(200);
 const greek = await gk.$$eval('#titleScreen .title-menu button, #btnMenu', bs => bs.map(b => b.textContent.trim()));
-const greekWant = ['ΦΤΙΑΞΕ ΚΙΝΗΤΗΡΑ', 'ΦΤΙΑΞΕ ΟΧΗΜΑ', 'ΑΝΟΙΞΕ ΟΔΗΓΟ', 'ΡΥΘΜΙΣΕΙΣ', 'ΕΚΘΕΣΗ ΑΥΤΟΚΙΝΗΤΩΝ', 'GUIDED BUILD', 'ΜΕΝΟΥ'];   // GUIDED BUILD (306): Greek paused
+const greekWant = ['ΦΤΙΑΞΕ ΚΙΝΗΤΗΡΑ', 'ΦΤΙΑΞΕ ΟΧΗΜΑ', 'ΑΝΟΙΞΕ ΟΔΗΓΟ', 'ΡΥΘΜΙΣΕΙΣ', 'ΕΚΘΕΣΗ ΑΥΤΟΚΙΝΗΤΩΝ', 'GUIDED BUILD', 'ΜΕΝΟΥ'];   // GUIDED BUILD (308): Greek paused
 if (greek.join('|') !== greekWant.join('|')) fails.push('Greek menu: ' + greek.join(' | '));
 await gk.close();
 

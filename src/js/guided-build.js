@@ -1,4 +1,4 @@
-// ====== GUIDED BUILD (build 306, phase G) ======
+// ====== GUIDED BUILD (build 308, phase G) ======
 // For the learner: three questions (what kind of car, what budget, what matters most) give a complete, working car,
 // with each of its parts explained. The car is a real one from FACTORY_CARS, loaded with its own engine exactly as the
 // FACTORY CAR picker loads it, so every part is sourced and nothing here is fitted or computed. After loading, every

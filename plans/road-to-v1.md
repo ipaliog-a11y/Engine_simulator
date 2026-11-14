@@ -113,6 +113,8 @@ and its heat, an induction motor's slip.
 (retires `UNSPRUNG_SHARE`); the differential (`DIFF_ASYM0`).
 *Build 291:* the rear wing as a part (span, chord, angle, camber, end plates; lifting line; `tests/test178.mjs`); no
 factory car moved. Next: the front wing and splitter the same way, then each kit car's wing written as one, and brake bias.
+*Build 306:* the front wing, the same wing with the ground's span effect from its height (Wieselsberger); no factory car
+moved. Open: the splitter, the chord-wise ground effect (Zerihan & Zhang), each kit car's wing, brake bias.
 
 *Scoreboard run at the end of D.*
 
@@ -194,7 +196,7 @@ No real-car check per build (decision 3); the race is checked at H.
 **G. For both players (2–3 builds).** A guided build for the learner: a few questions (what kind of car, what
 budget) give a complete, working car with each choice explained, then every part stays open on its card for the
 enthusiast. The guide pages for the new parts.
-*Build 306:* the guided build (`src/js/guided-build.js`, `tests/test188.mjs`): kind, budget and what matters (quickest,
+*Build 308:* the guided build (`src/js/guided-build.js`, `tests/test188.mjs`): kind, budget and what matters (quickest,
 lightest, cheapest) pick a real car from the factory list, its parts explained, loaded as the FACTORY CAR picker loads it.
 The budget is the sim's build price, listed by `tools/car-prices.mjs` (the owner's choice over pricing live, ~1 s a car).
 Open: it picks among the real cars rather than composing parts; the new strings have no Greek (paused).

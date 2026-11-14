@@ -1,4 +1,4 @@
-// The build price of every factory car, as the sim prices it (build 306), for the guided build's budget question.
+// The build price of every factory car, as the sim prices it (build 308), for the guided build's budget question.
 //
 //   node tools/car-prices.mjs           writes src/js/car-prices.js (then run node tools/build.mjs)
 //   node tools/car-prices.mjs --check   fails if src/js/car-prices.js is not what the sim prices today
@@ -43,7 +43,7 @@ if (isMain) {
     console.log(`CAR_PRICE matches the sim for all ${rows.length} cars`);
   } else {
     const body = rows.map(([n, v]) => '  ' + JSON.stringify(n) + ':' + v).join(',\n');
-    fs.writeFileSync(OUT, '// ====== FACTORY CAR PRICES (build 306) ======\n' +
+    fs.writeFileSync(OUT, '// ====== FACTORY CAR PRICES (build 308) ======\n' +
       '// Written by tools/car-prices.mjs, never by hand: each factory car\'s build price (engine.cost + vehicle.cost) as the sim\n' +
       '// prices it with its own engine. The guided build\'s budget question reads it; tests/test188.mjs checks it is current.\n' +
       'const CAR_PRICE={\n' + body + '\n};\n');

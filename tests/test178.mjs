@@ -9,6 +9,10 @@
 //   · the preview moves nothing; SAVE & FIT puts exactly the wing's ClA and CdA on the car, on the rear axle; a kit
 //     car is as it was once the wing is deleted;
 //   · it works on an electric car, and travels with a build.
+// The front wing (build 306) is the same wing low over the road:
+//   · the ground's span effect (Wieselsberger): the wing works at AR / phi, phi = (16 h/b)^2 / (1 + (16 h/b)^2), so
+//     lower gives more downforce for less induced drag, and high above the road it is the free wing;
+//   · SAVE & FIT puts its ClA and CdA on the car in place of the FRONT AERO kit, on the front axle; the rear's kit stays.
 import { chromium } from './pw.mjs';
 import { fileURLToPath, pathToFileURL } from 'url';
 import path from 'path';
@@ -63,6 +67,19 @@ const r = await page.evaluate(() => {
   load('Model 3'); o.ev = { electric: isElectric() };
   fitPart(partLib[0].id); setTab('parts');
   o.ev.part = !!vehicle.wingPart; o.ev.hidden = document.getElementById('partsWing').hidden; o.ev.clA = vehicle.clA;
+  // 6. the front wing
+  const F = x => wingAero(normPart(Object.assign({ kind: 'fwing', span_mm: 1500, chord_mm: 250, angle_deg: 6, camber_pct: 0, plate_mm: 0 }, x)));
+  const g = F({ height_mm: 100 }); o.fw = { AR: g.AR, ge: g.ge, h: [60, 120, 400].map(h => { const q = F({ height_mm: h }); return { cl: q.CL, cdi: q.cdi / (q.CL * q.CL) }; }), free: W({}).CL };
+  load('BMW M3 (E46');
+  const k2 = AERO_FRONT[vehicle.aeroFront] || AERO_FRONT.none, base2 = { clA: vehicle.clA - k2.cl * vehicle.aeroK, cdA: vehicle.cdA - k2.cd * vehicle.area, clF: vehicle.clA * vehicle.aeroBal - k2.cl * vehicle.aeroK }, rear = vehicle.aeroRear;
+  partsUI.kind = 'fwing'; setTab('parts'); previewPart('fwing');
+  o.fw.start = partFromEditor('fwing'); o.fw.heightShown = !document.getElementById('pwHeightF').hidden && !document.getElementById('partsWing').hidden;
+  const qf = Object.assign({}, partFromFactory('wing', 'fwing'), { name: 'TEST FRONT', angle_deg: 8, height_mm: 80 }), B = wingAero(normPart(qf));
+  partsUI.edit.fwing = Object.assign({}, qf); partToEditor('fwing', partsUI.edit.fwing);
+  document.getElementById('pwSaveFit').click();
+  o.fw.fit = { part: !!vehicle.fwingPart && !vehicle.wingPart, cls: vehicle.aeroFront, rear: vehicle.aeroRear === rear,
+    dCl: vehicle.clA - (base2.clA + B.clA), dCd: vehicle.cdA - (base2.cdA + B.cdA), dF: vehicle.clA * vehicle.aeroBal - (base2.clF + B.clA) };
+  partsUI.kind = 'wing'; renderParts(); o.fw.rearHides = document.getElementById('pwHeightF').hidden;
   return o;
 });
 await browser.close();
@@ -94,7 +111,17 @@ console.log(`== electric: ${JSON.stringify(r.ev)} ==`);
 if (!r.ev.electric) fails.push('the Model 3 is not electric any more: pick another');
 if (!r.ev.part || r.ev.hidden || !(r.ev.clA > 0)) fails.push('an electric car cannot design and wear a wing');
 
+const fw = r.fw, phi = x => (16 * x) ** 2 / (1 + (16 * x) ** 2);
+console.log(`== front wing at 100 mm: phi ${fw.ge.toFixed(4)}, AR ${fw.AR.toFixed(3)}; CL at 60/120/400 mm ${fw.h.map(x => x.cl.toFixed(3)).join(' / ')} (free ${fw.free.toFixed(3)}) ==`);
+if (!near(fw.ge, phi(0.1 / 1.5)) || !near(fw.AR, 6 / phi(0.1 / 1.5))) fails.push("the front wing's ground effect is not Wieselsberger's");
+if (!(fw.h[0].cl > fw.h[1].cl && fw.h[1].cl > fw.h[2].cl && fw.h[2].cl > fw.free && fw.h[0].cdi < fw.h[2].cdi) || fw.h[2].cl - fw.free > 0.02 * fw.free)
+  fails.push('a front wing nearer the road does not give more lift for less induced drag, or high up it is not the free wing');
+console.log(`== front wing: starts ${fw.start.span_mm} mm at ${fw.start.height_mm} mm; height shown ${fw.heightShown}, hidden for the rear ${fw.rearHides}; fitted ${JSON.stringify(fw.fit)} ==`);
+if (fw.start.kind !== 'fwing' || !fw.heightShown || !fw.rearHides) fails.push("the wing editor does not show the front wing's height (and only the front's)");
+if (!fw.fit.part || fw.fit.cls !== 'wing' || !fw.fit.rear || !near(fw.fit.dCl, 0) || !near(fw.fit.dCd, 0) || !near(fw.fit.dF, 0))
+  fails.push('SAVE & FIT does not put the front wing as previewed on the car, on its front axle, in place of the front kit only');
+
 if (errors.length) console.log('ERRORS:\n  ' + errors.join('\n  '));
 if (fails.length) console.log('\nFAIL:\n  ' + fails.join('\n  '));
-else console.log('\nOK: a designed rear wing is the lifting line, lands on the rear axle as previewed, and saves, fits and comes off cleanly.');
+else console.log("\nOK: a designed rear or front wing is the lifting line (the front one with the ground's span effect), lands on its axle as previewed, and saves, fits and comes off cleanly.");
 process.exit(fails.length || errors.length ? 1 : 0);

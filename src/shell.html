@@ -39,14 +39,14 @@
 <div class="sc-filters" id="scFilters" role="toolbar" aria-label="Car families"></div>
 <div class="sc-body"><div class="sc-grid" id="scGrid"></div><aside class="sc-detail" id="scDetail" aria-live="polite"></aside></div>
 </div>
-<!-- GUIDED BUILD (build 306): three questions give a complete real car, each part explained -->
+<!-- GUIDED BUILD (build 308): three questions give a complete real car, each part explained -->
 <div id="guided" class="showcase guided" role="dialog" aria-modal="true" aria-labelledby="gbHeading" hidden>
 <div class="sc-bar"><h2 id="gbHeading">GUIDED BUILD</h2><span class="sc-count"></span><button type="button" id="gbClose">BACK</button></div>
 <div class="gb-body" id="gbBody" aria-live="polite"></div>
 </div>
 <div class="container">
 <header>
-<h1>PIXEL ENGINE SIM v0.7 build 306</h1>
+<h1>PIXEL ENGINE SIM v0.7 build 308</h1>
 <div class="subtitle" id="subtitle">ENGINE DESIGNER • BUILD IT, THEN DRIVE IT</div>
 </header>
 <div class="build-strip" id="buildStrip">
@@ -403,7 +403,7 @@
 <!-- PARTS: design a part, save it, fit it on the ENGINE tab (build 205) -->
 <div class="design-panel parts-panel" id="partsPanel">
 <h3>PART DESIGNER</h3>
-<div class="hint">Pick a type of part, set its dimensions and save it. Saved parts are kept in this browser and appear in the ENGINE tab's choices (a wing's in the VEHICLE tab's); a saved build carries its parts with it.</div>
+<div class="hint">Pick a type of part, set its dimensions and save it. Saved parts are kept in this browser and appear in the ENGINE tab's choices (a wing's in the VEHICLE tab's FRONT or REAR AERO); a saved build carries its parts with it.</div>
 <div class="design-section">Type of part</div>
 <div class="part-types" id="partTypes"></div>
 <div class="hint" id="partsNoEngine" hidden>An electric drive has no exhaust, intake, air filter, cam or cylinder head. Build a combustion engine on the ENGINE tab to design parts for it.</div>
@@ -552,8 +552,8 @@
 <div class="part-list" id="pwList"></div>
 <div class="pick-row"><div class="field"><label for="pwFrom">START FROM</label><select id="pwFrom"><option value="wing">A WING AS WIDE AS THE TRACK</option></select></div>
 <div class="field"><label>&nbsp;</label><button type="button" id="pwNew">NEW WING</button><button type="button" id="pwReset" title="Put the dimensions back to the starting wing, keeping the name">RESET</button></div></div>
-<div class="design-section">Rear wing</div>
-<div class="hint">Fitted, it takes the place of the VEHICLE tab's REAR AERO kit: its downforce and drag come from these dimensions.</div>
+<div class="design-section" id="pwHead">Rear wing</div>
+<div class="hint" id="pwHint">Fitted, it takes the place of the VEHICLE tab's REAR AERO kit: its downforce and drag come from these dimensions.</div>
 <div class="design-grid">
 <div class="field"><label for="pwName">NAME</label><input type="text" id="pwName" maxlength="40"></div>
 <div class="field"><label for="pwSpan">SPAN (mm)</label><input type="number" id="pwSpan" min="600" max="2200" step="10"></div>
@@ -561,6 +561,7 @@
 <div class="field"><label for="pwAngle">ANGLE (°)</label><input type="number" id="pwAngle" min="0" max="25" step="0.5"></div>
 <div class="field"><label for="pwCamber">CAMBER (% of chord)</label><input type="number" id="pwCamber" min="0" max="12" step="0.5"></div>
 <div class="field"><label for="pwPlate">END PLATE HEIGHT (mm)</label><input type="number" id="pwPlate" min="0" max="400" step="10"></div>
+<div class="field" id="pwHeightF" hidden><label for="pwHeight">HEIGHT OVER THE ROAD (mm)</label><input type="number" id="pwHeight" min="30" max="400" step="5"></div>
 </div>
 <div class="design-section">On this car</div>
 <div class="part-guide" id="pwGuide"></div>

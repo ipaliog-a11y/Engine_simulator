@@ -7,7 +7,8 @@
 //   · OIL P and FAULT stay lamp-stub and never take on/warn/danger in normal use;
 //   · COOL goes danger when coolant is forced hot; BATT goes danger when voltage is forced low;
 //   · on a running ICE, Starter says it is already on; Power Off cuts the ignition (the engine stops firing);
-//   · on a hybrid, Power Off clears engOn and Starter sets it;
+//   · on a hybrid, Power Off clears engOn and Starter sets it; since build 306 on a hybrid or an EV they switch the whole
+//     car off and on (READY): off, the motor gives no torque at full pedal and a hybrid's engine stays off;
 //   · at phone width the page does not scroll sideways.
 import { chromium } from './pw.mjs';
 import { fileURLToPath, pathToFileURL } from 'url';
@@ -92,6 +93,26 @@ console.log(`== hybrid: lamp shown=${hyb.before.hybVis} cls=${hyb.before.hybCls}
 if (!hyb.before.hybVis) fails.push('hybrid lamp stays hidden on a hybrid');
 if (hyb.afterOff.on) fails.push('hybrid Power Off did not clear engOn');
 if (!hyb.afterStart.on) fails.push('hybrid Starter did not set engOn');
+const car = await page.evaluate(() => {
+  const o = {};
+  for (const [k, list, re] of [['ev', EV_VEHICLE_PRESETS, /Model 3/], ['hyb', HYB_VEHICLE_PRESETS, /Ioniq/]]) {
+    loadVehiclePreset(list.find(x => re.test(x.name))); setTab('engine'); state.throttle = 1;
+    document.getElementById('btnPowerOff').click(); updateUI();
+    for (let i = 0; i < 60; i++) stepEngine(1 / 60);
+    const H = k === 'hyb' ? hybBenchState() : null;
+    o[k] = { dis: document.getElementById('btnPowerOff').disabled, ign: state.ignOn, T: k === 'ev' ? state.torque : H.Tm, eng: H && H.engOn };
+    document.getElementById('btnStarter').click();
+    for (let i = 0; i < 60; i++) stepEngine(1 / 60);
+    o[k].Ton = k === 'ev' ? state.torque : H.Tshaft; o[k].ignOn = state.ignOn;
+  }
+  state.throttle = 0.2; return o;
+});
+console.log(`== car power: ${JSON.stringify(car)} ==`);
+for (const k of ['ev', 'hyb']) {
+  const c = car[k];
+  if (c.dis || c.ign !== false || Math.abs(c.T) > 0.01 || c.eng) fails.push(k + ': Power Off does not switch the whole car off');
+  if (!c.ignOn || !(c.Ton > 1)) fails.push(k + ': Starter does not switch the car back on');
+}
 
 await page.setViewportSize({ width: 390, height: 844 });
 await page.evaluate(() => setTab('engine'));

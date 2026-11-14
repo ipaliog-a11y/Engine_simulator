@@ -1,4 +1,4 @@
-# PIXEL ENGINE SIM v0.7 build 306
+# PIXEL ENGINE SIM v0.7 build 308
 
 **A lightweight, 8-bit style internal combustion engine *designer* & simulator** inspired by *Automation*.
 
@@ -166,7 +166,8 @@ The sixth is the cylinder head (build 283): the intake valve's size, the port's 
 and rate.
 The seventh is the turbocharger (build 288): the compressor and turbine wheels and the housing's A/R.
 The eighth, the first part of the car rather than the engine, is the rear wing (build 291): span, chord, angle,
-camber and end plates, by lifting-line theory.
+camber and end plates, by lifting-line theory. The ninth is the front wing (build 306): the same wing, with its height
+over the road.
 An electric car is heard (build 198): its motor's whine, the inverter's switching and the reduction's gears, each at
 the frequency its build gives it, on the bench and on the lap replay.
 On the LIVE bench (build 190) a hybrid runs with its motor and pack: a HYBRID panel draws the power flowing between
@@ -448,7 +449,7 @@ assist map over speed and pedal), regeneration, load-point shifting, electric-dr
   picture and number, in number order, filtered by family. Pick one to see it large with the figures its maker
   published (power, torque, mass, 0–100, top speed, driven wheels), and **DRIVE THIS CAR** loads it with its
   own engine and opens the VEHICLE tab. The figures are the presets' own; the sim's come from the physics.
-  **GUIDED BUILD** (build 306), the sixth item, is for the learner: three questions (what kind of car, what budget,
+  **GUIDED BUILD** (build 308), the sixth item, is for the learner: three questions (what kind of car, what budget,
   what matters most: the quickest, the lightest or the cheapest) give a real car, each of its parts explained, and
   **BUILD THIS CAR** loads it on the VEHICLE tab with every part open on its card. The budget is the sim's own build
   price, engine plus car, listed per car by `tools/car-prices.mjs` (`tests/test188.mjs` keeps it current).

@@ -317,10 +317,10 @@ function updateDashLamps(){
   // 12 V side: ICE/hybrid systemVoltage; EV uses the bus readout but keep BATT as pack-low warn
   if(ev)set('lampBatt',state.soc<0.2?'danger':state.soc<0.35?'warn':'');
   else set('lampBatt',state.systemVoltage<11.6?'danger':state.batterySOC<0.35?'warn':'');
-  // Starter / Power Off: EV has no combustion engine to start
-  const st=g('btnStarter'),po=g('btnPowerOff');
-  if(st){st.disabled=ev;st.title=ev?tr('NO ENGINE — ELECTRIC DRIVE'):tr('Start the engine');}
-  if(po){po.disabled=ev;po.title=ev?tr('NO ENGINE — ELECTRIC DRIVE'):tr('Switch the engine off');}
+  // Starter / Power Off: on an electric car or a hybrid they switch the whole car on (READY) and off (build 306)
+  const st=g('btnStarter'),po=g('btnPowerOff'),car=ev||hy;
+  if(st){st.disabled=false;st.title=car?tr('Switch the car on (READY)'):tr('Start the engine');}
+  if(po){po.disabled=false;po.title=car?tr('Switch the whole car off'):tr('Switch the engine off');}
 }
 function updateUI(){
   updateHybridPanel();   // build 190: shown for a hybrid, hidden otherwise
