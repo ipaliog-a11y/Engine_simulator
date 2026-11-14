@@ -178,7 +178,7 @@ const raceEventText=(R,e)=>{
   const nm=id=>{const c=R.cars.find(x=>x.id===id);return c?c.M.name:'?';};
   switch(e.type){
     case 'pass':return nm(e.car)+' '+tr('passes')+' '+nm(e.on);
-    case 'pit':return nm(e.car)+' '+tr('pits')+' — '+(e.fuelL>0?e.fuelL.toFixed(1)+' L, ':'')+tr(raceCompound(e.tyre).label)+', '+(RACE.pitLoss+e.service).toFixed(1)+' s';
+    case 'pit':return nm(e.car)+' '+tr('pits')+' — '+(e.fuelL>0?e.fuelL.toFixed(1)+' L, ':'')+tr(raceCompound(e.tyre).label)+', '+(e.lane+e.service).toFixed(1)+' s';
     case 'rain':return tr('Rain is falling');
     case 'dry':return tr('The track is dry');
     case 'pitout':return nm(e.car)+' '+tr('rejoins');
