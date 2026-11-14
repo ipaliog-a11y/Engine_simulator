@@ -18,6 +18,21 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 ## [Unreleased]
 
+### Spark retard heats the exhaust; past its furthest retard the ECU enriches, then lowers the boost (build 308)
+
+- The work a retarded spark does not do now goes down the exhaust (energy balance in `exhaustHeatFrac`, at the torque
+  path's own phasing loss). Before, EGT did not depend on spark at all. On the 2.0 turbo at 4000 rpm, 15° of retard
+  takes EGT from 1051 to 1133 °C; the TwinAir at 1500 rpm (16.5° knock retard) runs 974 °C, was 887 °C. The exhaust the
+  knock model reads (residual gas, back pressure) is read at the spark being tried.
+- An AUTO ECU whose end gas still knocks at its furthest retard (burn centred ~45° ATDC) now enriches, to λ 0.78 at most
+  (the factory curve's own floor), then lowers the boost until it no longer knocks (`knockLimitBoost`, solved per engine
+  like the torque limit). Only on its own derived spark table and factory fuel map; FIXED timing or an edited table gets
+  no knock control, as before. No preset reaches the furthest retard, so this acts on player builds only.
+- Left open: rich mixtures do not cool the exhaust in this model (the release is capped at stoichiometric), so the
+  retard floor is not limited by exhaust temperature; doing that would cut boost on presets whose modelled EGT is already
+  over 950 °C at best spark. The turbine's shaft balance and the catalyst check still read the exhaust at best-torque
+  spark. An NA engine past its floor still only knocks (no load cut). The boost limit is solved at the bench's intake air.
+
 ### Electric and hybrid sound is quieter and stops with no torque; POWER OFF switches the whole car off (build 307)
 
 - The motor's voice was too loud and shrill, and whined even at zero throttle: the inverter's PWM tone (10–16 kHz) played

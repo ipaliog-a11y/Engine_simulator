@@ -330,6 +330,7 @@ function buildEngineCore(prevStoich,quiet){
   if(engine.tqLimit>0){buildTorqueLimit();buildBoostTable(26);}   // the ECU's torque limit lowers the target: re-solve the shaft
   engine.govPhi0=null;   // the governor's share, against the finished engine (it was taken mid-build, on a half-set one)
   engine.wotRich=wotNeedsEnrichment();   // the ECU's full-load enrichment, where the exhaust needs it (build 202); before peakEgts, which reads it
+  if(buildKnockLimit())buildBoostTable(26);   // knock past the furthest retard and richest mixture lowers the boost (build 307)
   {const p=peakEgts();engine.peakEgt=p.probe;engine.peakEgtGas=p.gas;}   // needs the boost table (wotMapAt) and the burn table
 
   buildRev++;dynoCache=null;
