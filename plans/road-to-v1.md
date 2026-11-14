@@ -99,6 +99,8 @@ and its heat, an induction motor's slip.
 
 **D. Vehicle parts (about 4 builds).** Wings and brake bias (retires `AERO_FRONT/REAR`); wheels and tyre pressure
 (retires `UNSPRUNG_SHARE`); the differential (`DIFF_ASYM0`).
+*Build 291:* the rear wing as a part (span, chord, angle, camber, end plates; lifting line; `tests/test178.mjs`); no
+factory car moved. Next: the front wing and splitter the same way, then each kit car's wing written as one, and brake bias.
 
 *Scoreboard run at the end of D.*
 

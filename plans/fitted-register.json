@@ -122,8 +122,8 @@
    "id": "AERO_FRONT/REAR",
    "file": "tyres-brakes-driveline.js",
    "match": "const AERO_FRONT",
-   "standsFor": "lift and drag coefficients per front and rear aero kit",
-   "retiredBy": "wing part (span, chord, angle: lifting-line lift and induced drag)",
+   "standsFor": "lift and drag coefficients per front and rear aero kit (a designed rear wing sets its own, build 291)",
+   "retiredBy": "wing part (span, chord, angle: lifting-line lift and induced drag); next, the front wing and splitter, then each real car's kit as a wing",
    "phase": "D",
    "state": "open"
   },
