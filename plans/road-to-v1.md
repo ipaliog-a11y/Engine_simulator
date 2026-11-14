@@ -72,6 +72,8 @@ scoreboard holds (phase H)".
    multiples, and the shaft's inertia from both wheels.
    *Build 290:* a twin or sequential pair is two turbos on their own shafts; the inertia is both wheels'. Open: a
    compound's two stages (2.30), `TURB_WHEEL` per real car.
+   *Build 294:* a compound is two stages in series, its low-pressure wheel sized for an equal split of the target
+   (`compoundStage`); `TURBO_CONFIG` retired. Open: `TURB_WHEEL` per real car; the split held off-design.
 4. Water-to-air and twin intercoolers, per car from published specs.
 5. Plenum, throttle and flywheel (2): retires `MAP_K`.
 6. Catalytic converter: find what the double count hides, then the part (2).
@@ -154,7 +156,7 @@ from the cars' own aero. Overtaking decisions and weather stay rules, signed off
 (`TYRE_RACE` in `race.js`; `tOpt`, `tWin`, `wear`, `wetKeep` in `TIRE_TYPE`) and the tow and dirty air as speed
 multipliers (`RACE.slip*`, `RACE.dirty`). Three builds (2-4), each moving only the race (the lap, 0-100 and dyno must keep an
 identical fingerprint):
-1. **The tread's heat: a rule until after v1.0** (owner's decision, November 2026). Tried at build 294, not kept:
+1. **The tread's heat: a rule until after v1.0** (owner's decision, November 2026). Tried at build 295, not kept:
    the slip work from `driveTyre` with convection, conduction and the tread's own heat capacity took the Civic's
    hottest tyre in `test71` from 92 C to 329 C and wore a set out in 4 laps. The slip work is right (it matches the
    cornering drag); what cannot be derived is where its heat goes. Rubber's grip is mostly hysteresis in a thin
@@ -169,7 +171,7 @@ identical fingerprint):
    (Horne and Dreher, NASA TN D-2056, from the tyre's pressure) (retires `wetKeep`, `hWet`). The tyre's pressure is a
    phase D part not built yet: until then each compound carries its maker's usual pressure, cited, and D's part
    replaces it. The rain's arrival and amount stay a weather rule.
-4. **The wake and the pit lane.** *Build 294: the wake (`RACE_WAKE`, `raceWake`, `tests/test79.mjs`). Next: the pit lane.* Behind a car, its follower's drag and downforce fall with the gap in car lengths, from
+4. **The wake and the pit lane.** *Build 295: the wake (`RACE_WAKE`, `raceWake`, `tests/test79.mjs`). Next: the pit lane.* Behind a car, its follower's drag and downforce fall with the gap in car lengths, from
    measured data (Zabat et al. 1995, PATH platoon tests; for downforce, published wind-tunnel and CFD wake figures).
    The speed then comes from the car's own balance: on a straight its power against its reduced drag, in a corner its
    grip at its reduced downforce. A road car barely feels dirty air and a winged car does (retires `slipGap`,

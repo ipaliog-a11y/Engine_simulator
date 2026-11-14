@@ -1,4 +1,4 @@
-# PIXEL ENGINE SIM v0.7 build 294
+# PIXEL ENGINE SIM v0.7 build 295
 
 **A lightweight, 8-bit style internal combustion engine *designer* & simulator** inspired by *Automation*.
 
@@ -39,7 +39,8 @@ screamer, 2JZ six, muscle V8, blown V8, V12 supercar…), or configure your own 
   (fixed housing / **variable geometry** — vanes shut to spool, open at the top), **anti-lag**,
   **supercharger type** (roots / twin-screw / centrifugal), **nitrous** (small / big shot),
   exhaust (stock / sport / race) and a **catalytic converter** (none/decat / sport / stock).
-  Twin/sequential/compound turbos spool earlier and flatter; PD superchargers make boost from
+  Twin/sequential turbos spool earlier and flatter, a compound (two stages in series) holds high boost with less
+  back-pressure; PD superchargers make boost from
   idle while centrifugals build it with rpm²; anti-lag keeps the turbo lit (at a wear cost);
   nitrous is a big power adder from a bottle. A cat cleans the exhaust but adds a little
   back-pressure; deleting it frees a few hp at the cost of emissions.
@@ -562,8 +563,8 @@ Curve** tab remains a wide-open-throttle steady-state sweep for reading the full
 
   Previously all three columns were flat — 1820 rpm and 0.75 s at *every* boost target, and a
   small frame delivered 2.28 bar at 3000 rpm on a 2.0 L.
-- **Frames have a rated flow (new)** — small 32, medium 55, large 82 lb/min, with config
-  multipliers (twin ×1.85, sequential ×1.55, compound ×2.3). That is the axis a real compressor
+- **Frames have a rated flow (new)** — small 32, medium 55, large 82 lb/min, a twin or
+  sequential pair flows two wheels', a compound its low-pressure wheel's (sized for an equal split of the boost). That is the axis a real compressor
   map is drawn against. The engine's air demand at peak power is computed against it, and past
   the rating the compressor is off its map: efficiency falls, the top end chokes harder, and the
   charge cooks. A 2.0 L asking 2.5 bar of a small frame wants **166 %** of its rated flow, runs
@@ -929,7 +930,7 @@ documented in the GUIDE at the point where it matters:
     published. Every car starts at NEUTRAL roll balance, though a real road car's factory setup understeers a
     little more.
 - **The race's racecraft is rules, not physics.** Overtaking, pit-lane loss and
-  driver error are rules with fitted numbers (the tow and dirty air come from measured wakes since build 294). The cars share one racing line rather than fighting for
+  driver error are rules with fitted numbers (the tow and dirty air come from measured wakes since build 295). The cars share one racing line rather than fighting for
   space on it, and the tyre model's heat, grip-window, wear and wet-grip constants are fitted to the
   usual published ranges, not derived. When the rain comes and how fast a line dries are rules drawn
   from the seed, not a forecast.

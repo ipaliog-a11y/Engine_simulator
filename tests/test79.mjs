@@ -1,7 +1,7 @@
 // Racecraft and drivers (build 147): the tow grows as the gap closes, a car ahead defends against a car with the
 // pace to pass it, a held-up car tries a late-braking move that sticks or runs it wide, and each car has a driver
 // whose traits (aggression, consistency, tyre care, wet skill) change how it races.
-// Build 294: the tow and the dirty air come from measured wakes and the car's own drag, power and downforce, so a
+// Build 295: the tow and the dirty air come from measured wakes and the car's own drag, power and downforce, so a
 // winged car loses more behind another than a road car does.
 import { chromium } from './pw.mjs';
 import { fileURLToPath, pathToFileURL } from 'url';
@@ -25,7 +25,7 @@ const r = await page.evaluate(() => {
   // 2. a close field, three driver mixes over twelve seeds (build 152: over three, the few dives that stuck made the
   // share below a coin flip; across 48 seeds it is 42-63% from changes that move the pace by under 0.03 s a lap)
   const ms = ['M3 (E46', 'Golf GTI', 'Civic Type R', 'GR Yaris'].map(n => raceCarModel(rec(n), 'spa'));
-  // 1. the tow by the gap behind a car of the same length (build 294: from the car's own drag and power)
+  // 1. the tow by the gap behind a car of the same length (build 295: from the car's own drag and power)
   { const M = Object.assign({}, ms[0], { massNow: ms[0].mass });
     out.tow = [5, 10, 20, 40, 60].map(g => raceWake(M, 70, 'power', g / M.len) - 1);
     // the dirty air: a corner at 50 m/s one length behind, a road car against a winged one (from its own ClA)
