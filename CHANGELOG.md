@@ -18,7 +18,7 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 ## [Unreleased]
 
-### The help shows a value at its lowest and highest real example (build 300)
+### The help shows a value at its lowest and highest real example (build 301)
 
 Redoes #206 (build 251) on today's code; #206 was too far behind to merge.
 - Press **?** on BORE, STROKE or COMPRESSION and the help draws the cylinder twice to one scale, at the lowest and the
@@ -32,6 +32,14 @@ Redoes #206 (build 251) on today's code; #206 was too far behind to merge.
 - Left open: a rotary has no cylinder to draw, so its fields show no comparison. Tyre width and aspect change only the
   drawing, not the car (their grip effect needs the car rebuilt). Front tyre width is left out: the section drawn is
   the rear tyre's.
+
+### Diagnosis notes vs faults — factory cars are not all lumpy (build 300)
+
+Redoes #201 (build 249) on today's `main`. Build 248's diagnosis marked most factory cars "NOT RUNNING SMOOTH" because race-cam lope and a peaky band were warnings, and because `engine.lumpiness` folds diesel clatter into the same number the sound uses.
+
+- **Faults** (valve float, knock past the ECU, damage) still mark it not smooth. **Warnings** are an unfair cell (cold oil, overheat, as-tuned under best-power, low voltage). **Notes** cover design character: race-cam lope, a clearly peaky band (< 25% of redline, was 35%), weak low-end (< 40, was 55), piston speed, cooling, petrol VGT, emissions, reliability, an EV's short peak hold.
+- **Lope is cam overlap only** (≥ 50°). Diesels are no longer flagged as lumpy idle. A GT3 that lopes shows DIAGNOSIS — NOTES, not NOT RUNNING SMOOTH.
+- test158 now sweeps the 100 factory cars: 0 not smooth, 0 diesels with lope, 25 race-cam notes. Nothing the simulators produce moved; this only reads them.
 
 ### The pit lane costs what its length and limit take from each car (build 299)
 

@@ -4,7 +4,8 @@
 // smoothly. diagnoseEngine() reads the same limits WHAT HOLDS IT BACK and the scorecard already use, and the result
 // sheet shows them. What must hold:
 //   · diagnoseEngine() returns findings with sev / id / title / detail / suggest after a build;
-//   · a factory mild engine is smooth (no err, no float/knock/lope);
+//   · a factory mild engine is smooth (no err/warn, no float/knock);
+//   · factory cars are not mass-flagged "not smooth"; race-cam lope is a note, diesels are not lumpy;
 //   · valve float before the redline and knock past the ECU each produce an err finding with a suggestion;
 //   · a lean/cold as-tuned pull that sits under best-power is named as a tune finding;
 //   · the DYNO result sheet renders #dynoDiag; an electric drive also gets a diagnosis block;
@@ -39,14 +40,31 @@ const d0 = await page.evaluate(() => {
 });
 console.log(`== mild ${mild.name}: smooth=${d0.smooth} ok=${d0.ok} findings=[${d0.ids}] grade ${d0.grade} ==`);
 if (!d0.shape && d0.n) fails.push('a finding is missing sev/id/title/detail/suggest');
+if (!d0.smooth || !d0.ok) fails.push('a mild factory engine should be smooth');
 if (d0.ids.some(id => id === 'float' || id === 'knock' || id === 'lope' || id === 'blown'))
   fails.push('a mild factory engine should not report float/knock/lope/blown: ' + d0.ids.join(','));
 
+// 1b. factory cars: most stay smooth; diesels are not "lumpy"; race overlap is a note
+const fleet = await page.evaluate(() => {
+  let rough = 0, dieselLope = 0, raceNote = 0, n = 0;
+  for (let i = 0; i < FACTORY_CARS.length; i++) {
+    loadFactoryCarUI(i); n++;
+    const d = diagnoseEngine();
+    if (!d.smooth) rough++;
+    if (engine.ci && d.findings.some(f => f.id === 'lope')) dieselLope++;
+    if ((engine.overlap || 0) >= 50 && d.findings.some(f => f.id === 'lope' && f.sev === 'info')) raceNote++;
+  }
+  return { n, rough, dieselLope, raceNote };
+});
+console.log(`== fleet: ${fleet.n} cars, not-smooth ${fleet.rough}, diesel-lope ${fleet.dieselLope}, race-cam notes ${fleet.raceNote} ==`);
+if (fleet.rough > 5) fails.push('too many factory cars marked not-smooth: ' + fleet.rough);
+if (fleet.dieselLope) fails.push('a diesel was flagged as cam lope');
+if (!fleet.raceNote) fails.push('no race-cam factory car produced a lope note');
+
 // 2. valve float: redline above the valvetrain
 const float = await page.evaluate(() => {
-  document.getElementById('edRedline').value = 9500;
-  document.getElementById('edSpring').value = 'stock';
-  document.getElementById('edCam').value = 'race';
+  // Petrol redMax is 9500; stock springs + race cam float below that on DEFAULT_ENGINE.
+  applyEngineToForm(Object.assign({}, DEFAULT_ENGINE, { cam: 'race', valveSpring: 'stock', redline: 9500 }));
   buildEngine();
   const d = diagnoseEngine();
   return { float: engine.floatRpm, redline: engine.redline, ids: d.findings.map(f => f.id),
