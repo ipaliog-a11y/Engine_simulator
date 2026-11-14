@@ -117,7 +117,7 @@ console.log(`== the silencer's sound gain: chambered / straight-through / none $
 if (!(r.sound[0] < r.sound[1] && r.sound[1] < r.sound[2])) fails.push('the sound does not read the part\'s silencer');
 if (r.del.part || r.del.exh !== 'race' || r.del.lib !== 1) fails.push('deleting the fitted part does not put its factory exhaust back');
 console.log(`== page: ${r.page.types.map(([k, d]) => k + (d ? ' (later)' : '')).join(', ')}; editor ${r.page.editor}; ${r.page.lit} pixels drawn; electric: note ${r.ev.note}, editor ${r.ev.editor}; Greek: ${r.el.tab} · ${r.el.h} · ${r.el.guide} ==`);
-// the kinds as built since: the cam (build 249), the intercooler (build 255), the head (build 283), the turbo (build 288), the diff (build 308)
+// the kinds as built since: the cam (build 249), the intercooler (build 255), the head (build 283), the turbo (build 288), the diff (build 310)
 // the rear wing (build 291) and the front wing (build 306), then the one for later
 if (r.page.types.map(t => t[0]).join() !== 'exhaust,intake,filter,cam,intercooler,head,turbo,wing,fwing,diff,cat' || r.page.types.slice(0, 10).some(t => t[1]) || !r.page.types[10][1]) fails.push('the part types are not the ten that are built and one for later');
 if (!r.page.editor || r.page.lit < 3000) fails.push('the exhaust editor and its chart are not shown');

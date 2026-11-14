@@ -18,7 +18,7 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 ## [Unreleased]
 
-### The differential as a part (build 308)
+### The differential as a part (build 310)
 
 Phase D of `plans/road-to-v1.md`: the differential, the first of its two builds (the part; the table it stands beside
 goes next).
@@ -40,7 +40,40 @@ goes next).
   E46 M3, where the starting design (lock 0.60, bias 4) keeps about 15%: the table's lock is far more generous than its
   ramp could give. Retiring it will move every car with a factory LSD.
 
-Tests: test188 (new).
+Tests: test190 (new).
+### The check-engine lamp: OBD-II fault codes on the bench (build 309)
+
+The FAULT lamp under LIVE OUTPUT was a placeholder since build 254. It is now the check-engine lamp (`src/js/obd.js`).
+
+- **Six generic codes (SAE J2012)**, each set by a condition the simulation already has, at a threshold it already uses:
+  P0324 knock past what the ECU's retard holds (`KNOCK_TARGET`), P0217 coolant over 112 °C (the wear model's OVERHEAT),
+  P0171 λ > 1.05 under boost (its LEAN/BOOST), P0300 misfire (spark lost past the dwell limit on a weak 12 V, or valve
+  float), P0420 a warm engine with no working catalyst, P0562 the 12 V side under 11.6 V.
+- **OBD-II lamp rules (CARB 13 CCR 1968.2)**: seen once, a code is pending (amber); seen again in the next drive cycle (the
+  next STARTER after at least 20 s of running), it is confirmed (red). A misfire over 10% flashes the lamp at once. Three
+  clean cycles put it out and keep the code as history. Each code keeps a freeze frame. Click the lamp for the list;
+  CLEAR CODES, RESET or a rebuild erase it.
+- **Moves no number**: diagnostics only read the state. The fingerprint is identical.
+- **Left open**: the hold times and the misfire rates (2% to set, 10% to flash) are game rules; real ones are set per
+  engine by its maker. No limp mode yet, no codes in races or laps, none for an EV or the hybrid's electric side, and no
+  boost codes (P0234/P0299), which need a boost target the ECU can miss. Greek for the new text is paused.
+
+### A guided build for the learner: three questions give a real car, each part explained (build 308)
+
+Phase G, last build. GUIDED BUILD, the title menu's sixth item, asks what kind of car, what budget and what matters
+most (the quickest, the lightest or the cheapest), and offers the real car that answers them, with up to three others.
+
+- **Each part explained**: the engine's size and type, its induction, the driven wheels, gearbox, tyres, brakes,
+  suspension and mass, each with a line on why a car like this has it and the tab where it can be changed.
+- **BUILD THIS CAR** loads it with its own engine exactly as the FACTORY CAR picker does, on the VEHICLE tab, where every
+  part stays open on its card. No number in the sim moves (it only loads existing presets).
+- **The budget is the sim's own build price** (engine.cost + vehicle.cost), $12,250 (Trabant) to $129,133 (918 Spyder).
+  Pricing a car means working out its engine, about 1 s each, so `tools/car-prices.mjs` writes the list to
+  `src/js/car-prices.js` (the owner's choice over pricing live); `tests/test188.mjs` re-prices all 100 cars and fails
+  if the list is stale. Re-run the tool after any change to a cost or a preset.
+- "Quickest" and "lightest" read the maker's published 0–100 and curb mass; a car without one ranks last.
+- Open: it picks among the real cars rather than composing a car from parts; the new strings have no Greek
+  (translations paused), so `test123` expects GUIDED BUILD in English on the Greek menu.
 
 ### Electric and hybrid sound is quieter and stops with no torque; POWER OFF switches the whole car off (build 307)
 

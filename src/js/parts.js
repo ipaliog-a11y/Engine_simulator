@@ -301,7 +301,7 @@ const PART_DEF={
   // the front wing (build 306): the same wing low over the road, fitted from FRONT AERO, on the front axle
   fwing:  {on:'vehicle',field:'fwingPart',cls:'aeroFront',select:'vhAeroF',def:'none',valid:k=>!!AERO_FRONT[k],clsOf:()=>'wing',
     label:()=>'FRONT WING',newName:'MY FRONT WING',factory:['wing']},
-  // the differential (build 308): a clutch-plate LSD from its ramp and plates, fitted from DIFFERENTIAL
+  // the differential (build 310): a clutch-plate LSD from its ramp and plates, fitted from DIFFERENTIAL
   diff:   {on:'vehicle',field:'diffPart',cls:'diff',select:'vhDiff',def:'open',valid:k=>!!DIFF[k],clsOf:()=>'clsd',
     label:()=>'CLUTCH-PLATE LSD',newName:'MY DIFF',factory:['clsd']}
 };

@@ -629,7 +629,7 @@ function diffTractionAt(df,aLat,cgH,tqFrac,gripTq){
   const useRef=df.lock+(1-df.lock)*2*(0.5-DIFF_ASYM0);        // the reference `traction` is quoted at
   return df.traction*(use/useRef);
 }
-// ---- the differential as a part (build 308) ----
+// ---- the differential as a part (build 310) ----
 // A designed clutch-plate (Salisbury, ramp) limited-slip. The carrier drives the cross-shafts, which sit in V-notches
 // in two pressure rings at radius rRamp; the notch's face at the ramp angle theta (from the plane of rotation: 90 deg
 // is a flat face and no lock) turns the drive force T_in/rRamp into an axial force (T_in/rRamp)·cot(theta) that
