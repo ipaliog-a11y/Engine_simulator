@@ -94,13 +94,64 @@ const RACE_TANK_L={kei:30,hatch:50,roadster:45,coupe:60,sedan:62,muscle:70,rally
 // The pace grid: grip scale × tank share. A race that can be wet also solves the lower grip levels.
 const RACE_GRIP=[0.72,0.80,0.88,0.94,1.00], RACE_GRIP_WET=[0.42,0.52,0.62,0.72,0.80,0.88,0.94,1.00], RACE_FUEL=[0,0.5,1];
 // Rain tyres, for the race only (build 141): a grooved tread that clears water, on a softer, cooler-running
-// compound. mu is on a dry road, wetKeep the share of it kept on a fully wet one (the compounds in TIRE_TYPE
-// carry theirs). heat scales the slip work into the tread: a wet compound is soft and overheats on a dry
-// line, and dryWear is how much faster it wears there. Fitted, like the rest of the tyre figures.
+// compound. mu is on a dry road; heat scales the slip work into the tread: a wet compound is soft and overheats
+// on a dry line, and dryWear is how much faster it wears there. Fitted, like the rest of the tyre figures.
 const RACE_RAIN_TYRES={
-  inter:{label:'INTERMEDIATE',mu:0.98,crr:0.014,tOpt:60,tWin:30,wear:1.6,wetKeep:0.74,heat:1.3,dryWear:3},
-  wet:  {label:'FULL WET',    mu:0.90,crr:0.015,tOpt:50,tWin:30,wear:2.2,wetKeep:0.82,heat:1.6,dryWear:5}
+  inter:{label:'INTERMEDIATE',mu:0.98,crr:0.014,tOpt:60,tWin:30,wear:1.6,heat:1.3,dryWear:3},
+  wet:  {label:'FULL WET',    mu:0.90,crr:0.015,tOpt:50,tWin:30,wear:2.2,heat:1.6,dryWear:5}
 };
+// ---- wet grip (build 303; retires wetKeep) ----
+// The water on the track: Gallaway's film depth over the macrotexture (Gallaway et al., "Pavement and geometric
+// design criteria for minimizing hydroplaning", FHWA-RD-79-31, 1979; as quoted by Han et al., PLoS One 16(7)
+// e0252767, 2021): WD = 0.00338 TXD^0.11 L^0.43 I^0.59 S^-0.42 - TXD, in inches, L in ft, I in in/h, S in ft/ft
+// (the units are PROBABLE: the quote gives none, and these give a sensible film). L is the drainage path: one
+// cross fall over the circuit's width. txd: a circuit's mean texture depth, 0.6 mm (PROBABLE). slope: a 2% cross
+// fall (PROBABLE, a common circuit figure). rainMmH: a properly wet race's rain, 10 mm/h, past the 7.6 mm/h that
+// meteorology calls heavy (a weather rule, like its timing).
+// keep0: the grip a wet road leaves at low speed, the adhesion lost and the hysteresis kept: Wong, Theory of
+// Ground Vehicles, Table 1.3, asphalt peak 0.8-0.9 dry and 0.5-0.7 wet, 0.6/0.85.
+// floor: what is left fully afloat, the water's drag: 15.8% of the low-speed wet friction (Fwa et al., quoted in
+// Sinha et al.'s review of hydroplaning, Virginia Tech).
+const RACE_WATER={rainMmH:10,txd:0.6,slope:0.02,keep0:0.71,floor:0.158};
+// Each compound's tread when new (mm), the grooves' share of the patch (void), and its usual hot pressure (kPa).
+// All PROBABLE, from makers' listings: a road tyre 8 mm and about 30% void at 230-240 kPa; a semi-slick ~5.5 mm
+// (7/32 in) with few grooves; a slick none, at ~170 kPa hot; a drag radial ~4 mm at ~110 kPa (16 psi); a race
+// intermediate and full wet 5 and 7 mm with wide channels, at a slick's pressure.
+const RACE_TREAD={eco:{mm:8,void:0.32,kPa:230},street:{mm:8,void:0.30,kPa:230},sport:{mm:7,void:0.28,kPa:240},
+  semi:{mm:5.5,void:0.12,kPa:210},slick:{mm:0,void:0,kPa:170},drag:{mm:4,void:0.15,kPa:110},
+  inter:{mm:5,void:0.25,kPa:170},wet:{mm:7,void:0.35,kPa:170}};
+// The film (mm) on a track of this width when the rain is at share x of a properly wet race's.
+function raceFilmMm(x,width){
+  if(x<=0)return 0;
+  const W=RACE_WATER,t=W.txd/25.4,L=Math.max(3,width||12)/0.3048,I=W.rainMmH*x/25.4;
+  return Math.max(0,25.4*(0.00338*Math.pow(t,0.11)*Math.pow(L,0.43)*Math.pow(I,0.59)*Math.pow(W.slope,-0.42)-t));
+}
+// What the water leaves a compound at speed v (m/s), as a share of its dry grip. The adhesion goes with the
+// wetness (keep0 on a properly wet track). Then the water under the patch lifts the share (v/Vp)^2 of the load,
+// Horne's own balance of the water's dynamic pressure against the tyre's (NASA TN D-2056, 1963:
+// Vp = 6.35 sqrt(p kPa) km/h), on the share of the patch the film floods: its depth over itself and the
+// grooves' volume (void x depth), so a slick is all exposed and a full wet barely (the owner's choice, build 303).
+function raceWetKeep(ty,w,v,width){
+  const x=clamp(w/RACE.wetFull,0,1);if(x<=0)return 1;
+  const W=RACE_WATER,tr=RACE_TREAD[ty.key]||RACE_TREAD.sport,d=raceFilmMm(x,width);
+  const exposed=d>0?d/(d+tr.void*tr.mm):0, vp=6.35*Math.sqrt(tr.kPa)/3.6;
+  const lift=Math.min(1,(v/vp)*(v/vp)*exposed);
+  return (1-x*(1-W.keep0))*(1-(1-W.floor)*lift);
+}
+// The same over a lap: the share averaged by time along the car's own dry lap, its speeds scaled by the root of
+// the grip they settle at (a corner's speed goes with the root of its grip). Cached per compound and wetness.
+function raceWetLap(M,ty,w){
+  if(!(w>0))return 1;
+  const key=ty.key+'|'+Math.round(w*200),C=M.wetC||(M.wetC={});
+  if(C[key]!=null)return C[key];
+  let g=1;
+  for(let it=0;it<4;it++){
+    const s=Math.sqrt(g);let tw=0,gw=0;
+    for(let i=0;i<M.n;i++){const v=Math.max(2,M.vNom[i]*s),dt=(M.cum[i+1]-M.cum[i])/v;tw+=dt;gw+=dt*raceWetKeep(ty,w,v,M.width);}
+    g=gw/tw;
+  }
+  return C[key]=g;
+}
 // Tyres (fitted, build 137; water and the track, build 141). One lump per tyre, the tread and the rubber
 // under it that warms with it:
 //   heat in  = slip work (force × speed × the share that is sliding, which rises with how much of the grip
@@ -124,14 +175,12 @@ function tyreTempGrip(T,th){
   return clamp(1-(x<0?TYRE_RACE.cold:TYRE_RACE.hot)*x*x,TYRE_RACE.gMin,1);
 }
 function tyreWearGrip(w){const k=Math.max(0,w-TYRE_RACE.wKnee);return clamp(1-TYRE_RACE.wLin*w-TYRE_RACE.wCliff*k*k,0.6,1);}
-// What the surface leaves a compound: all of it dry, its wetKeep on a fully wet track (RACE.wetFull).
-const raceWetGrip=(ty,w)=>1-clamp(w/RACE.wetFull,0,1.2)*(1-ty.wetKeep);
 // The grip the car has, as a share of its own tyres at their best on a dry track: the compound against the
 // car's own, the water, and the four tyres' temperature and wear weighted by the load they carry.
 function raceGrip(M,ty,T,W,w){
   const f=M.fWt/2,r=(1-M.fWt)/2;let g=0;
   for(let k=0;k<4;k++)g+=(k<2?f:r)*tyreTempGrip(T[k],ty)*tyreWearGrip(W[k]);
-  return g*(ty.mu/M.mu0)*raceWetGrip(ty,w||0);
+  return g*(ty.mu/M.mu0)*raceWetLap(M,ty,w||0);
 }
 // The four tyres over one step: speed v (m/s), lateral acceleration ay (m/s2, + = turning right, so the
 // left tyres are outside), longitudinal ax (m/s2), on compound ty; env = {air, track, w}. T and W are
@@ -146,7 +195,7 @@ function raceTyreStep(M,ty,T,W,v,ay,ax,dt,env){
   for(let k=0;k<4;k++)N[k]=Math.max(50,N[k]);
   const Nsum=N[0]+N[1]+N[2]+N[3], Fy=m*Math.abs(ay), Fx=m*ax+drag;
   const A=M.tyreArea, Gair=A*(TYRE_RACE.H0+TYRE_RACE.H1*Math.pow(Math.max(0,v),0.8)+TYRE_RACE.hWet*w), Gtrk=A*TYRE_RACE.hTrack;
-  const muNow=ty.mu*raceWetGrip(ty,w);
+  const muNow=ty.mu*raceWetKeep(ty,w,v,M.width);
   const dryWear=1+ty.dryWear*Math.max(0,0.3-w/RACE.wetFull)/0.3;   // a rain tyre on a drying line
   let Pslip=0;
   for(let k=0;k<4;k++){
@@ -240,6 +289,7 @@ function raceCarModel(entry,key,opts){
       brakeF:vehicle.brakeFrontShare||0.7,
       tyre:raceCompound(vehicle.tireType),
       tyreArea:0.25+vehicle.tireWidth/1000,tyreC:TYRE_RACE.cp*vehicle.tireWidth/225,
+      width:T.width||12,
       chassis:vehicle.chassis,chLabel:vehicle.chLabel,hp:pt.rating().peakHP,eff:vehicle.driveEff||0.9,
       // the body's length: the maker's (CAR_DIMS), or for a build of the player's a road car's ~0.6 wheelbase share (probable)
       len:(CAR_DIMS[entry.name]&&CAR_DIMS[entry.name].len)||vehicle.wb/0.6,
@@ -325,7 +375,7 @@ const raceTrackTemp=(air,w)=>air+14*(1-clamp(w/0.25,0,1));
 // marked down for the heat and wear it is about to take.
 function raceTyreScore(M,ty,w){
   const x=clamp(w/RACE.wetFull,0,1);
-  let g=Math.min(1,ty.mu/M.mu0)*raceWetGrip(ty,w);
+  let g=Math.min(1,ty.mu/M.mu0)*raceWetLap(M,ty,w);
   if(ty.rain)g*=1-0.12*Math.max(0,0.3-x)/0.3;
   return g;
 }

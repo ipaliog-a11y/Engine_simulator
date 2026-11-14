@@ -175,9 +175,9 @@
   {
    "id": "TIRE_TYPE windows",
    "file": "tyres-brakes-driveline.js",
-   "match": "wetKeep:",
-   "standsFor": "each compound's temperature window, wear rate and wet grip",
-   "retiredBy": "kept: a rule until after v1.0 with TYRE_RACE (owner's decision, build 295); wetKeep goes with phase F's wet grip",
+   "match": "tWin:40,wear:0.55",
+   "standsFor": "each compound's temperature window and wear rate",
+   "retiredBy": "kept: a rule until after v1.0 with TYRE_RACE (owner's decision, build 295); wetKeep retired by the wet grip from the tread (build 303)",
    "phase": "-",
    "state": "rule"
   },
