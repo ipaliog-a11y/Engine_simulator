@@ -3,8 +3,8 @@
 // WHY THIS EXISTS. The motor, inverter and battery are derived from what they are built of: the rotor's size, the turns,
 // the magnets, the cooling, the inverter's devices, the cells. Two constants are measured, both on one motor (the
 // Tesla Model 3 rear motor, MotorXP 2020), so the model is checked here against what did NOT set it. What must hold:
-//   · the Model 3: its back-EMF, from its magnets' size through the magnetic circuit (build 288), within 5% of the
-//     measured 42 V/krpm; the torque at 953 A within 5% (SAT_K was set there, on the flux of before build 289); and its phase resistance, from the slot copper
+//   · the Model 3: its back-EMF, from its magnets' size through the magnetic circuit (build 291), within 5% of the
+//     measured 42 V/krpm; the torque at 953 A within 5% (SAT_K was set there, on the flux of before build 292); and its phase resistance, from the slot copper
 //     alone, near the measured 4.75 mOhm;
 //   · the 2012 Nissan Leaf (ORNL, Burress 2013), with only its geometry and the turns that put its knee where Nissan
 //     says (80 kW from 2730 rpm on 375 V): it makes its 280 Nm and 80 kW, holds 80 kW at 7000 rpm with the stator
@@ -84,9 +84,9 @@ const f = (x, d = 1) => (+x).toFixed(d);
 console.log(`== Model 3 rear motor: ${f(r.m3.emf)} V/krpm back-EMF (measured 42), ${f(r.m3.tq, 0)} Nm at 953 A (430), ` +
   `phase resistance ${f(r.m3.R, 2)} mOhm from the slot copper (measured 4.75), ${f(r.m3.mass, 0)} kg, J ${f(r.m3.J, 3)} kg m2, ` +
   `max ${f(r.m3.nMax, 0)} rpm ==`);
-// 2% while a constant was set from it; 5% since build 289, when it became a prediction from the magnets and the stator.
+// 2% while a constant was set from it; 5% since build 292, when it became a prediction from the magnets and the stator.
 if (Math.abs(r.m3.emf / 42 - 1) > 0.05) fails.push(`the Model 3's back-EMF is ${f(r.m3.emf)} V/krpm, not within 5% of the measured 42`);
-// 3% while the flux was set from the Model 3; 5% since build 289, when the flux under SAT_K became derived (444 Nm).
+// 3% while the flux was set from the Model 3; 5% since build 292, when the flux under SAT_K became derived (444 Nm).
 if (Math.abs(r.m3.tq / 430 - 1) > 0.05) fails.push(`the Model 3 makes ${f(r.m3.tq, 0)} Nm at 953 A, not within 5% of 430`);
 // Known gap: the slot-copper estimate gives less resistance than measured (the leads, the strand insulation and the
 // real slot shape are not modelled). Held to within half either way, so a change that breaks it is seen.
@@ -103,7 +103,7 @@ if (L.tpk < 280) fails.push(`the Leaf makes ${f(L.tpk, 0)} Nm, under its 280`);
 if (!(L.pk >= 80 && L.pk < 100)) fails.push(`the Leaf makes ${f(L.pk)} kW at most, not its 80-odd`);
 if (!L.hold) fails.push('the Leaf cannot make 80 kW at 7000 rpm');
 if (!(L.tW > 100 && L.tW < 170)) fails.push(`holding 80 kW at 7000 rpm the Leaf's winding settles at ${f(L.tW, 0)} C, not near ORNL's ~135`);
-// ORNL's island: above 97% from 5000 to 9000 rpm. The model's map is a plateau there (since build 288 its best, 0.01
+// ORNL's island: above 97% from 5000 to 9000 rpm. The model's map is a plateau there (since build 291 its best, 0.01
 // point higher, lies at 3000 rpm), so the check is the island's height, not where the single best point falls.
 const M = L.best.mid;
 if (!(M.e > 0.965 && M.e > L.best.e - 0.001)) fails.push(`the Leaf's best at 5000-9000 rpm is ${f(100 * M.e)}% at ${M.n} rpm, against ${f(100 * L.best.e)}% overall: not ORNL's ~97% island`);
@@ -138,7 +138,7 @@ if (!(r.volt[1] > 1.9 * r.volt[0])) fails.push('doubling the voltage does not do
 const tw = r.cool.map(c => c.tW), cc = r.cool.map(c => c.cost);
 if (!(tw[0] > tw[1] && tw[1] > tw[2] && tw[2] > tw[3])) fails.push('better cooling does not hold a cooler winding: ' + tw.map(x => f(x, 0)).join(' > '));
 if (!(cc[0] < cc[1] && cc[1] < cc[2] && cc[2] < cc[3])) fails.push('better cooling is not dearer');
-// Since build 289 the winding (its slots sized from the flux) reaches 180 C in ~25 s at 430 Nm, before its heat gets
+// Since build 292 the winding (its slots sized from the flux) reaches 180 C in ~25 s at 430 Nm, before its heat gets
 // through the core to a jacket: jacket and air hold the peak alike, and only cooling on the copper (slot) holds it longer.
 if (!(r.peakHold.slot > r.peakHold.jacket && r.peakHold.jacket >= r.peakHold.air)) fails.push('better cooling does not hold the peak longer');
 const C = r.costs;

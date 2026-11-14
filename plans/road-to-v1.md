@@ -67,6 +67,11 @@ scoreboard holds (phase H)".
 2. Cylinder head and springs (2): retires `THROAT_RATIO` and the spring steps.
 3. Turbocharger (2): wheels, A/R, wastegate; retires `TURB_WHEEL` and `TURBO_CONFIG` multipliers. The largest named
    gaps live here (RS3 and EcoBoost low-rpm torque).
+   *Build 288:* the part (compressor and turbine wheels, housing A/R; `tests/test177.mjs`); no factory car moved. Next:
+   each turbo of a twin, sequential or compound layout its own wheel and shaft in place of `TURBO_CONFIG`'s flow
+   multiples, and the shaft's inertia from both wheels.
+   *Build 290:* a twin or sequential pair is two turbos on their own shafts; the inertia is both wheels'. Open: a
+   compound's two stages (2.30), `TURB_WHEEL` per real car.
 4. Water-to-air and twin intercoolers, per car from published specs.
 5. Plenum, throttle and flywheel (2): retires `MAP_K`.
 6. Catalytic converter: find what the double count hides, then the part (2).
@@ -84,8 +89,8 @@ hybrid controllers; each fitted number found gets a part or a cited rule.
 4. The cell as a part, from named datasheets: `CHEM`, `PACK_FACTOR`, the 10% for busbars.
 5. Cited or signed off, no new physics: `INVERTER` (named modules), `RETENTION`, `ACTIVE_TO_MOTOR`, `EV_BMS`, the cage's
    leakage.
-*Build 288 (owner's choice: steps 1 and 2 together):* the magnets are bars in a V and their flux comes from a magnetic
-circuit through M270-35A's curve; `FLUX_KM` retired, the Model 3's back-EMF lands at 41.8 V/krpm against 42. *Build 289:* the
+*Build 291 (owner's choice: steps 1 and 2 together):* the magnets are bars in a V and their flux comes from a magnetic
+circuit through M270-35A's curve; `FLUX_KM` retired, the Model 3's back-EMF lands at 41.8 V/krpm against 42. *Build 292:* the
 teeth and yoke sized from that flux at the top of Pyrhonen's Table 6.1 (tooth 2.0 T, yoke 1.5 T); the slot is what is left.
 Left in `MOTOR.statorShape`: the outside diameter (bore over 0.67), which Table 6.2's current densities would set. Next:
 `SAT_K` from the same curve under load, the iron loss on each part's own density (`MOTOR.ironShare`), then the d and q
@@ -114,7 +119,8 @@ it needs must load without the page (no DOM, no canvas), so a separate game app 
    bench and the lap's turbo walk already do most of this), the motor and hybrid controllers the same way.
    *Build 274:* the turbo's shaft is stepped, from tables read off the engine (`car.turbo`, `driveShaft`).
    *Build 275:* the pack's charge is a state and a hybrid's controller runs in time (`car.el`, `driveCharge`,
-   `tests/test172.mjs`). Open: the engine stopping, a power-split's engine speed, heat.
+   `tests/test172.mjs`). Open: a power-split's engine speed, heat.
+   *Build 289:* a P2's engine stops and starts, by the LIVE bench's AUTO rule (`driveStartStop`).
    *Build 276:* all-wheel drive's axles turn together, and the launch is the solver's (`driveLaunch`): 0-100 within
    6% on the test's five cars.
    *Build 279:* a plug-in sets off full, the help is cut to the pack's own power at its charge, the front motor's
@@ -146,13 +152,31 @@ from the cars' own aero. Overtaking decisions and weather stay rules, signed off
 **G. For both players (2–3 builds).** A guided build for the learner: a few questions (what kind of car, what
 budget) give a complete, working car with each choice explained, then every part stays open on its card for the
 enthusiast. The guide pages for the new parts.
+Editable spark and VE tables (owner's decision, November 2026): an rpm × load grid for ignition advance and one for
+volumetric efficiency on the ECU card, beside the fuel map that is already editable. Each opens filled with what the
+model derives (the MBT-tracking, knock-limited timing; the VE from the cam, ports, runners and plenum), so an untouched
+table changes no number. RESET returns the derived table.
+- Spark: an edited cell is the advance the engine runs, and the physics answers it (too little loses torque, past the
+  knock limit it knocks).
+- VE, as in a real ECU (owner's choice): the table is the ECU's *estimate* of VE, used only to meter fuel. The engine's
+  real VE stays derived from its parts and is never edited. A wrong cell gives a lean or rich mixture, with the power,
+  exhaust temperature and knock that follow. No fitted number enters. Decide with it how the table and the existing
+  fuel map relate (one built from the other, or merged).
 
 **H. The v1.0 gate (1–2 builds).** Full-suite run; the scoreboard against the real cars (power, torque, 0–100, top
-speed, lap, consumption): every car under 10% on each, or named with its reason (unsourced part, missing physics); guide and README pass. The owner
-tags the release.
+speed, lap, consumption): every car under 10% on each, or named with its reason (unsourced part, missing physics); guide and README pass.
+A check for irrational builds: sweep the inputs a player can set (bore, stroke, rpm limit, boost, compression,
+spark cells, cam, gearing, tyre, mass, motor and pack sizes) to find the values and combinations that give
+absurd results (power with no air to make it, a piston speed or BMEP no material holds, a pack that cannot supply its
+motor). For each, decide whether to restrict it: a fixed limit, or a dynamic one that follows from the rest of the
+build (the rpm limit from piston speed and the valve springs, boost from the compressor map and knock). Each limit cited, as the physics rules ask; a limit the physics already enforces
+(knock, a failure, a lean mixture) stays a consequence, not a lock. The owner tags the release.
 
 **After v1.0.** 3D 8-bit cars from the profile images and the recorded dimensions; the driving game on `stepCar`;
-the Greek decision; editable spark and VE tables; a career layer.
+the Greek decision; a career layer.
+An electric drivetrain with four motors, one in each wheel hub: each wheel's torque its own, the unsprung mass the
+hub motors add, and torque vectoring explored (yaw moment from the left-right split, in place of braking a wheel),
+on the four-wheel `stepCar`.
 
 ## Method
 

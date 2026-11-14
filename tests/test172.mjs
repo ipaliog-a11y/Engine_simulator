@@ -11,6 +11,9 @@
 //   · energy adds up: what an electric car's pack gives over a full-throttle run is more than the car gained and
 //     lost to the air and the tyres, by losses of 5 to 30%;
 //   · the 918's front motor pulls at the front wheels and its engine drives the rear;
+//   · (build 288) a P2's engine stops: at a steady 50 km/h from the target charge it is off a third of the time or
+//     more and the charge holds within 4 points; nearer the window's low it runs more and the charge rises; flat out it never stops; at rest off the
+//     pedal it is off;
 //   · no page errors.
 import { chromium } from './pw.mjs';
 import { fileURLToPath, pathToFileURL } from 'url';
@@ -47,6 +50,11 @@ const R = await page.evaluate(() => {
     // a minute at 100 km/h, from near the low and from the target
     o.cruise = [el.lo + 0.02, el.tg].map(s0 => { const s = rolling(car, 27.78); s.soc = s0; let thr = 0.3;
       for (let i = 0; i < 6000; i++) { thr = Math.max(0, Math.min(1, thr + 0.002 * (27.78 - s.vx))); stepCar(car, s, { throttle: thr }, 0.01); } return [s0, s.soc]; });
+    if (el.stop) o.stop = [el.tg, el.lo + 0.02].map(s0 => { const s = rolling(car, 50 / 3.6); s.soc = s0; let thr = 0.3, off = 0;
+      for (let i = 0; i < 3000; i++) { thr = Math.max(0, Math.min(1, thr + 0.002 * (50 / 3.6 - s.vx))); stepCar(car, s, { throttle: thr }, 0.01); if (!s.eng) off++; }
+      return { s0, soc: s.soc, off: off / 3000 }; }).concat((() => { const s = driveState(car); let off = 0;
+      for (let i = 0; i < 600; i++) { stepCar(car, s, { throttle: 1 }, 0.01); if (!s.eng) off++; }
+      for (let i = 0; i < 1500; i++) stepCar(car, s, { throttle: 0, brake: 0.5 }, 0.01); return { flatOff: off, rest: s.eng, v: s.speed }; })());
     if (el.front) { const s = rolling(car, 15); s.soc = 0.5; for (let i = 0; i < 50; i++) stepCar(car, s, { throttle: 1 }, 0.01); o.front = (s.Fx[0] + s.Fx[1]) / 2; o.rear = (s.Fx[2] + s.Fx[3]) / 2; o.drive = car.drive; }
     out.cars.push(o);
   }
@@ -73,6 +81,11 @@ for (const o of R.cars) {
   if (!ev && !(Math.abs(o.cruise[1][1] - o.cruise[1][0]) <= 0.04)) fails.push(`${o.name}: the charge does not hold its target at a cruise (${pc(o.cruise[1][1])})`);
   if (ev) { const loss = 1 - o.got / o.gave; console.log(`  the pack gave ${(o.gave / 1e6).toFixed(2)} MJ for ${(o.got / 1e6).toFixed(2)} MJ of motion, air and rolling (${(100 * loss).toFixed(0)}% lost)`);
     if (!(loss > 0.05 && loss < 0.30)) fails.push(`${o.name}: the pack's energy does not add up (${(100 * loss).toFixed(0)}% lost)`); }
+  if (o.stop) { const [t, l, f] = o.stop; console.log(`  50 km/h for 30 s: from ${pc(t.s0)} the engine is off ${pc(t.off)} of it, charge -> ${pc(t.soc)}; from ${pc(l.s0)} off ${pc(l.off)}, -> ${pc(l.soc)}; flat out off ${f.flatOff} steps; stopped, engine ${f.rest ? 'on' : 'off'}`);
+    if (!(t.off > 0.33 && Math.abs(t.soc - t.s0) <= 0.04)) fails.push(`${o.name}: at a light cruise from its target the engine does not stop, or the charge drifts`);
+    if (!(l.off < t.off && l.soc > l.s0)) fails.push(`${o.name}: from the low the engine does not run and charge`);
+    if (f.flatOff > 0) fails.push(`${o.name}: flat out the engine stops`);
+    if (f.rest || f.v > 0.1) fails.push(`${o.name}: standing off the pedal the engine runs`); }
   if (o.front != null && !(o.front > 200 && o.rear > 200 && o.drive === 'rwd')) fails.push(`${o.name}: the front motor does not pull at the front wheels`);
 }
 if (R.none !== null) fails.push('a car with no motor carries an electric side');
