@@ -1,4 +1,4 @@
-# PIXEL ENGINE SIM v0.7 build 303
+# PIXEL ENGINE SIM v0.7 build 304
 
 **A lightweight, 8-bit style internal combustion engine *designer* & simulator** inspired by *Automation*.
 
@@ -69,7 +69,9 @@ screamer, 2JZ six, muscle V8, blown V8, V12 supercar…), or configure your own 
 - **Fuel & spark** — fuel type (pump gas / race gas / E85 / methanol), fuel octane (RON,
   pump gas only), injector type (port / direct), ignition type (distributor / wasted spark /
   coil-on-plug), **ignition control** (*Fixed* — a locked advance you dial in — or *Auto*, an
-  ECU that tracks MBT timing and retards just enough to stay off knock), and the **fuel mixture**:
+  ECU that tracks MBT timing and retards just enough to stay off knock; its **spark map**, a load×RPM
+  grid of that advance, is editable: an edited cell is the advance the engine runs, with no knock
+  control, so too little loses torque and too much knocks), and the **fuel mixture**:
   *Manual* (one AFR you set everywhere) or *Auto*, a **3D ECU fuel map** that targets near-stoich
   at light load and enriches under load & boost for power/EGT — just like a real fuel map (the
   default on fuel-injected builds; a live **load×RPM heat-grid** shows the target AFR in every

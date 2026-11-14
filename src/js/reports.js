@@ -26,7 +26,7 @@ function reportSpecRows(){
     ['Valvetrain',e.ports?'Port induction (no poppet valves)':(e.cam+' cam'+(e.vvt?' + VVT':''))],
     ['Fuel',(FUELS[e.fuel]||{label:e.fuel}).label+(e.fuel==='gasoline'?' — '+e.octane+' RON':'')],
     ['Injection',e.injector==='direct'?'Direct injection':'Port injection'],
-    ['Ignition',e.ci?'Compression ignition':(e.timingMode==='auto'?'ECU mapped, knock-limited':e.ignitionAdv+'° BTDC fixed')+' — '+e.ignitionType],
+    ['Ignition',e.ci?'Compression ignition':(e.timingMode==='auto'?(sparkMapCustom?'ECU spark map, hand-tuned':'ECU mapped, knock-limited'):e.ignitionAdv+'° BTDC fixed')+' — '+e.ignitionType],
     ['Mixture',e.afrMode==='auto'?'ECU fuel map (load × rpm)'+(fuelMapCustom?', hand-tuned':''):'Fixed '+state.afr.toFixed(1)+' : 1'],
     ['Exhaust',(e.exhaustPart?e.exhaustPart.name+' ('+EXHAUST_BUILD[e.exhaustPart.build].label.toLowerCase()+')':e.exhaust)+(e.cat&&e.cat!=='none'?', '+e.cat+' catalyst':', no catalyst')],
     ['Cooling',e.radiator+' radiator, '+e.fan+' fan'+(e.oilCooler?', oil cooler':'')+', '+e.thermostat+'°C stat'],

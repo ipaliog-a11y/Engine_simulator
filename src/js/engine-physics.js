@@ -278,12 +278,14 @@ function renderFuelMap(){
   updateFuelMapMarker();
 }
 function updateFuelMapMarker(){
-  const box=document.getElementById('fuelMapBox');
-  if(!box||engine.afrMode!=='auto'||box.style.display==='none')return;
   const c=clamp(Math.round((state.rpm-1000)/(engine.redline-1000)*(FM_COLS-1)),0,FM_COLS-1);
-  const r=Math.round(fmRowOf(state.rpm,state.map));
-  const prev=box.querySelector('td.live');if(prev)prev.classList.remove('live');
-  const cell=box.querySelector('td[data-c="'+c+'"][data-r="'+r+'"]');if(cell)cell.classList.add('live');
+  for(const id of ['fuelMapBox','sparkMapBox']){   // the spark table shares the fuel map's breakpoints (build 304)
+    const box=document.getElementById(id);
+    if(!box||box.style.display==='none'||!box.firstChild)continue;
+    const r=Math.round(fmRowOf(state.rpm,state.map));
+    const prev=box.querySelector('td.live');if(prev)prev.classList.remove('live');
+    const cell=box.querySelector('td[data-c="'+c+'"][data-r="'+r+'"]');if(cell)cell.classList.add('live');
+  }
 }
 // MIXTURE -> TORQUE, from the fuel-air cycle rather than a fitted bell.
 // This was a Gaussian 0.19 wide in lambda, centred on 0.86. It got best power right and nothing else:
@@ -535,6 +537,7 @@ function activeAdvance(rpm,map){
   const mbt=mbtAdvance(rpm,map);
   if(engine.ci)return mbt;   // diesel: no spark timing (injection-timed); treat as on-MBT
   if(engine.timingMode!=='auto')return engine.ignitionAdv;
+  if(sparkMapCustom&&sparkMap)return sparkTableAt(rpm,map);   // a hand-edited table: the advance it holds, knock or not
   if(engine.ports){                                      // the ported engines' score, as in build 122
     const k0=knockAt(rpm,map,mbt);
     return k0<=KNOCK_TARGET?mbt:clamp(mbt-(k0-KNOCK_TARGET)/2.5,6,mbt);
@@ -554,6 +557,67 @@ function activeAdvance(rpm,map){
   }
   _knockCache.m.set(key,adv);
   return adv;
+}
+// ---- The ECU's spark table (build 304) ----
+// An rpm x load grid of spark advance on the fuel map's breakpoints, shown when the ignition is AUTO. Untouched, it is
+// what activeAdvance derives (best-torque spark, or the knock limit where the end gas will not survive it) and the
+// engine reads that directly, so an untouched table moves no number. Once a cell is edited the engine runs the table,
+// interpolated, with no knock control: too little advance loses torque (sparkTimingFactor), past the knock limit the
+// end gas knocks (knockAt), as on a real ECU with its knock sensor's correction turned off.
+const SK_MIN=-10,SK_MAX=60;   // editable bounds, deg BTDC: past these no real table goes
+function sparkTableAt(rpm,map){
+  const fc=clamp((rpm-1000)/Math.max(1,engine.redline-1000)*(FM_COLS-1),0,FM_COLS-1),fr=fmRowOf(rpm,map);
+  const c0=Math.floor(fc),c1=Math.min(c0+1,FM_COLS-1),tc=fc-c0,r0=Math.floor(fr),r1=Math.min(r0+1,FM_ROWS-1),t=fr-r0,g=sparkMap;
+  return (g[r0][c0]*(1-tc)+g[r0][c1]*tc)*(1-t)+(g[r1][c0]*(1-tc)+g[r1][c1]*tc)*t;
+}
+// The derived table: activeAdvance at each breakpoint, read with the table itself switched off.
+function generateSparkMap(){
+  const was=sparkMapCustom;sparkMapCustom=false;
+  try{const g=[];for(let r=0;r<FM_ROWS;r++){const row=[];for(let c=0;c<FM_COLS;c++)row.push(+activeAdvance(fmRpmAt(c),fmMapAt(r)).toFixed(1));g.push(row);}return g;}
+  finally{sparkMapCustom=was;}
+}
+// A hand-edited table survives a rebuild unless the grid's breakpoints move (boost range or redline), as the fuel map does.
+function manageSparkMap(){
+  const key=engine.mapMax.toFixed(2)+'|'+engine.redline;
+  const ok=Array.isArray(sparkMap)&&sparkMap.length===FM_ROWS&&sparkMap[0]&&sparkMap[0].length===FM_COLS;
+  if(engine.ci||!ok||!sparkMapCustom||sparkMapKey!==key){sparkMap=null;sparkMapCustom=false;sparkMapKey=key;skSel=null;}
+}
+function selectSkCell(c,r){skSel={c:clamp(c,0,FM_COLS-1),r:clamp(r,0,FM_ROWS-1)};renderSparkMap();}
+function adjustSkCell(delta){
+  if(!skSel)return;
+  if(!sparkMapCustom||!sparkMap){sparkMap=generateSparkMap();sparkMapCustom=true;}
+  sparkMap[skSel.r][skSel.c]=clamp(Math.round(sparkMap[skSel.r][skSel.c]+delta),SK_MIN,SK_MAX);
+  dynoCache=null;renderSparkMap();
+}
+function resetSparkMap(){sparkMap=null;sparkMapCustom=false;skSel=null;dynoCache=null;renderSparkMap();flash(tr('SPARK MAP RESET TO DERIVED'));}
+function renderSparkMap(){
+  const box=document.getElementById('sparkMapBox'),hdr=document.getElementById('sparkMapHdr'),ed=document.getElementById('sparkMapEdit');
+  if(!box||!hdr)return;
+  const show=!engine.ci&&engine.timingMode==='auto';
+  box.style.display=show?'block':'none';hdr.style.display=show?'':'none';if(ed)ed.style.display=show?'flex':'none';
+  if(!show){box.innerHTML='';return;}
+  let h='<table class="fuelmap"><tr><th>MAP\\RPM</th>';
+  for(let c=0;c<FM_COLS;c++){const rp=fmRpmAt(c);h+='<th>'+(rp/1000).toFixed(1)+'k</th>';}
+  h+='</tr>';
+  for(let r=FM_ROWS-1;r>=0;r--){
+    const mp=fmMapAt(r);
+    h+='<tr><th>'+(mp>1.001?'+'+(mp-1).toFixed(1):mp.toFixed(1))+'</th>';
+    for(let c=0;c<FM_COLS;c++){
+      const rpm=fmRpmAt(c),adv=activeAdvance(rpm,mp),kn=knockAt(rpm,mp,adv)>KNOCK_TARGET+0.5;
+      const hue=Math.round(lerp(210,40,clamp(adv/45,0,1))),sel=skSel&&skSel.c===c&&skSel.r===r?' sel':'';
+      h+='<td class="fm-cell'+sel+(kn?' knk':'')+'" data-c="'+c+'" data-r="'+r+'" style="background:hsl('+hue+',55%,36%)">'+Math.round(adv)+'</td>';
+    }
+    h+='</tr>';
+  }
+  h+='</table><div class="fuelmap-note">'+tr('Rows = load (MAP bar) · Columns = RPM · cell = spark advance, ° BTDC. Red = knocks. Tap a cell to tune it.')+(sparkMapCustom?' <b style="color:#ffcc00">'+tr('CUSTOM MAP')+'</b>':'')+'</div>';
+  box.innerHTML=h;
+  const info=document.getElementById('skSelInfo');
+  if(info){
+    if(skSel){const rpm=fmRpmAt(skSel.c),mp=fmMapAt(skSel.r),adv=activeAdvance(rpm,mp);
+      info.textContent=rpm+'rpm • '+(mp>1.001?'+'+(mp-1).toFixed(1):mp.toFixed(1))+'bar → '+adv.toFixed(0)+'° • '+tr('best torque')+' '+mbtAdvance(rpm,mp).toFixed(0)+'°';
+    }else info.textContent=tr('Tap a cell to select');
+  }
+  updateFuelMapMarker();
 }
 function computeKnockRisk(rpm,map){return knockAt(rpm,map,activeAdvance(rpm,map));}
 // What a spark advance costs in work (build 131): the cycle efficiency of the Wiebe burn at the phasing it

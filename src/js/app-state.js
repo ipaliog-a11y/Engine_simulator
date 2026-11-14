@@ -12,6 +12,7 @@ let trackKey='mixed';    // selected circuit
 // Editable ECU fuel map: a λ grid (rows=load, cols=rpm). null → use the factory curve. Custom
 // edits persist across rebuilds while the map-relevant engine params (below) are unchanged.
 let fuelMap=null,fuelMapCustom=false,fuelMapKey='',fmSel=null;
+let sparkMap=null,sparkMapCustom=false,sparkMapKey='',skSel=null;   // the editable spark table (build 304)
 
 let engine=Object.assign({},DEFAULT_ENGINE);
 let buildRev=0;   // bumped each build so the dyno cache invalidates

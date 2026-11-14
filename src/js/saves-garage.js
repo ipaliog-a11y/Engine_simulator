@@ -9,15 +9,20 @@ function serializeBuild(name,note){
     tune:{throttle:state.throttle,load:state.load,elecLoad:state.elecLoad,afr:state.afr,iat:state.iat,coolant:state.coolant,oil:state.oil,autoThermal}};
   // Only persist the fuel map when it's a hand-tuned custom grid (factory maps regenerate).
   if(fuelMapCustom&&Array.isArray(fuelMap))b.fuelMap=fuelMap.map(row=>row.map(v=>+v.toFixed(3)));
+  if(sparkMapCustom&&Array.isArray(sparkMap))b.sparkMap=sparkMap.map(row=>row.map(v=>+v.toFixed(1)));
   return b;
 }
 function applyBuild(s){
   if(!s||!s.engine)throw new Error('not an engine build');
   applyEngineToForm(Object.assign({},DEFAULT_ENGINE,s.engine));
+  sparkMapCustom=false;   // a build brings its own spark table, or runs the derived one
   buildEngine();
   // Restore a saved custom fuel map (buildEngine regenerated the factory grid); dims must match.
   if(Array.isArray(s.fuelMap)&&s.fuelMap.length===FM_ROWS&&s.fuelMap.every(r=>Array.isArray(r)&&r.length===FM_COLS)){
     fuelMap=s.fuelMap.map(r=>r.map(Number));fuelMapCustom=true;fmSel=null;dynoCache=null;renderFuelMap();
+  }
+  if(Array.isArray(s.sparkMap)&&s.sparkMap.length===FM_ROWS&&s.sparkMap.every(r=>Array.isArray(r)&&r.length===FM_COLS)){
+    sparkMap=s.sparkMap.map(r=>r.map(Number));sparkMapCustom=true;skSel=null;dynoCache=null;renderSparkMap();
   }
   applyVehicleToForm(Object.assign({},DEFAULT_VEHICLE,s.vehicle||{}));
   buildVehicle();updateVehicleSummary();
