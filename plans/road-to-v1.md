@@ -144,14 +144,15 @@ it needs must load without the page (no DOM, no canvas), so a separate game app 
 from the cars' own aero. Overtaking decisions and weather stay rules, signed off in the register.
 *Planned at build 290.* Today the race steps each tyre's tread temperature and wear with its own constants
 (`TYRE_RACE` in `race.js`; `tOpt`, `tWin`, `wear`, `wetKeep` in `TIRE_TYPE`) and the tow and dirty air as speed
-multipliers (`RACE.slip*`, `RACE.dirty`). Four builds, each moving only the race (the lap, 0-100 and dyno must keep an
+multipliers (`RACE.slip*`, `RACE.dirty`). Three builds (2-4), each moving only the race (the lap, 0-100 and dyno must keep an
 identical fingerprint):
-1. **The tread's heat.** The slip power from `driveTyre`: per wheel, the slip angle and ratio that make the force it
-   carries, then force times sliding speed (retires `TYRE_RACE.slip`, `roll`). Cooling by forced convection over the
-   tyre (Churchill-Bernstein for a cylinder, the tyre's own diameter and width; retires `H0`, `H1`) and conduction into
-   the road through the contact patch (`hTrack`). The heat capacity from the tread's rubber: width, diameter, tread
-   depth, density and specific heat (retires `cp`). Sources: Pacejka, *Tire and Vehicle Dynamics*; Farroni et al.'s
-   thermal tyre model (TRT).
+1. **The tread's heat: a rule until after v1.0** (owner's decision, November 2026). Tried at build 291, not kept:
+   the slip work from `driveTyre` with convection, conduction and the tread's own heat capacity took the Civic's
+   hottest tyre in `test71` from 92 C to 329 C and wore a set out in 4 laps. The slip work is right (it matches the
+   cornering drag); what cannot be derived is where its heat goes. Rubber's grip is mostly hysteresis in a thin
+   surface layer, and how much of that the road takes back depends on the share of the patch truly in contact,
+   which no handbook gives. One lump cannot hold it: it needs a surface and a bulk, and that share. `TYRE_RACE`'s
+   heat constants (`slip`, `roll`, `H0`, `H1`, `hTrack`, `cp`) go into the register as a rule, signed off.
 2. **Grip and wear from the rubber.** Grip against temperature from the compound's glass transition through the WLF
    shift (Williams, Landel, Ferry 1955; Grosch 1963), so `tOpt` and `tWin` follow from a compound's Tg and the sliding
    speed (retires `cold`, `hot`, `gMin`). Wear as abrasion from the friction energy (Schallamach; Grosch 1997's
@@ -172,7 +173,7 @@ identical fingerprint):
    drawn one). The racecraft numbers (`follow`, `close`, `defend*`, `dive*`, `passKmh`, `pace`, `mistake`), the crew's
    `tyreChange` and `refuelLps`, and the drivers go into the register as rules.
 Checks: `tests/test71.mjs` and `79` cover the race; each build adds one test that its numbers come from the parts
-(a wider tyre heats slower, a slick's window sits above a road tyre's, a winged car loses more behind another).
+(a slick's window sits above a road tyre's, a winged car loses more behind another).
 No real-car check per build (decision 3); the race is checked at H.
 
 **G. For both players (2–3 builds).** A guided build for the learner: a few questions (what kind of car, what
@@ -198,7 +199,7 @@ motor). For each, decide whether to restrict it: a fixed limit, or a dynamic one
 build (the rpm limit from piston speed and the valve springs, boost from the compressor map and knock). Each limit cited, as the physics rules ask; a limit the physics already enforces
 (knock, a failure, a lean mixture) stays a consequence, not a lock. The owner tags the release.
 
-**After v1.0.** 3D 8-bit cars from the profile images and the recorded dimensions; the driving game on `stepCar`;
+**After v1.0.** The tyre's heat as a surface and a bulk (phase F, build 1); 3D 8-bit cars from the profile images and the recorded dimensions; the driving game on `stepCar`;
 the Greek decision; a career layer.
 An electric drivetrain with four motors, one in each wheel hub: each wheel's torque its own, the unsprung mass the
 hub motors add, and torque vectoring explored (yaw moment from the left-right split, in place of braking a wheel),
