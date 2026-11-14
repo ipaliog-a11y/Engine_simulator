@@ -286,8 +286,8 @@ function drawDyno(){
     dynoPulls.forEach((pl,i)=>{ctx.fillStyle=pl.color;ctx.fillText('— '+pl.label,gX+4+i*132,iy+41);});
   }else{ctx.fillStyle='#667';ctx.fillText(tr('LOG PULL to snapshot & overlay a curve for comparison'),gX+4,iy+41);}
 }
-// Dashboard telltales (build 254): thresholds match the status line / canvas gauge bars. Oil pressure and fault
-// codes are placeholders until those systems are modeled; hybrid mode only for a hybrid; ICE-only lamps hide on EV.
+// Dashboard telltales (build 254): thresholds match the status line / canvas gauge bars. Oil pressure is a
+// placeholder until it is modeled; FAULT is the check-engine lamp of obd.js (build 307); hybrid mode only for a hybrid; ICE-only lamps hide on EV.
 function updateDashLamps(){
   const g=id=>document.getElementById(id),row=g('dashLamps');if(!row)return;
   const ev=isElectric(),hy=isHybrid(),set=(id,cls,lbl,title)=>{
@@ -305,7 +305,10 @@ function updateDashLamps(){
     set('lampOil',state.oil>132?'danger':state.oil<55?'warn':'');
     set('lampOilP','');   // stub: never lights
   }
-  set('lampFault','');   // stub: never lights
+  {const L=obdLamp(),n=Object.keys(obd.codes).length;
+    set('lampFault',L==='flash'?'danger lamp-blink':L==='on'?'danger':L==='pending'?'warn':'',null,
+      tr('Check engine')+' • '+(n?n+' '+tr('code(s) stored'):tr('No codes stored'))+' • '+tr('click for the list'));
+    if(obd.open)obdRefresh();}
   const hyEl=g('lampHyb');
   if(hyEl){
     hyEl.hidden=!hy;

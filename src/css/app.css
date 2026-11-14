@@ -543,6 +543,16 @@ body.showcase-open{overflow:hidden}
 .lamp.lamp-stub{color:#333;border-color:#222;opacity:0.55}
 .lamp.lamp-stub .lamp-dot{background:#14141a;border-color:#222}
 #livePanel.folded .dash-lamps{margin:2px 0 0}
+/* Check-engine lamp and its code list (build 307) */
+.lamp.lamp-click,.lamp.lamp-click:hover{cursor:pointer}
+.lamp.lamp-blink .lamp-dot{animation:lampBlink 0.5s steps(1) infinite}
+@keyframes lampBlink{50%{background:#1a1a22}}
+.obd-panel{margin:2px 0 4px;padding:6px;border:2px solid #2a2a3a;background:#0a0a10;font-size:7px;line-height:1.6;overflow-wrap:anywhere}
+.obd-panel .obd-h{color:#ffaa00;margin-bottom:4px}
+.obd-panel .obd-code{margin:4px 0;padding-left:6px;border-left:3px solid #555}
+.obd-panel .obd-confirmed{border-left-color:#ff4444}
+.obd-panel .obd-pending{border-left-color:#ffaa00}
+.obd-panel .obd-ff{color:#889}
 #dashPowerRow{margin-top:0;margin-bottom:8px}
 .fold-btn{font-size:9px;line-height:1;padding:2px 7px;min-width:0}
 /* DYNO's MORE menu: the buttons below RESET, dropped down under MORE (a button that opens a panel of buttons, not a select) */
