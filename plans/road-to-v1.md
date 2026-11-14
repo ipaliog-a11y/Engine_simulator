@@ -115,6 +115,8 @@ and its heat, an induction motor's slip.
 factory car moved. Next: the front wing and splitter the same way, then each kit car's wing written as one, and brake bias.
 *Build 306:* the front wing, the same wing with the ground's span effect from its height (Wieselsberger); no factory car
 moved. Open: the splitter, the chord-wise ground effect (Zerihan & Zhang), each kit car's wing, brake bias.
+*Build 312:* brake balance as a part (balance bar, two master cylinders, rear caliper and rotor; `tests/test192.mjs`); no
+factory car moved. The factory rear stays sized to the R13-H line (a rule, not a fit), so there is no table to retire.
 
 *Scoreboard run at the end of D.*
 

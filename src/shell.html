@@ -46,7 +46,7 @@
 </div>
 <div class="container">
 <header>
-<h1>PIXEL ENGINE SIM v0.7 build 311</h1>
+<h1>PIXEL ENGINE SIM v0.7 build 312</h1>
 <div class="subtitle" id="subtitle">ENGINE DESIGNER • BUILD IT, THEN DRIVE IT</div>
 </header>
 <div class="build-strip" id="buildStrip">
@@ -359,6 +359,7 @@
 <section class="evd-card" id="vcdCard-brakes" data-card="brakes"><div class="evd-fields">
 <div class="field"><label for="vhBrake">BRAKES</label><select id="vhBrake"><option value="steel">STEEL DISC</option><option value="slotted">SLOTTED/VENTED</option><option value="big">BIG BRAKE KIT</option><option value="carbon">CARBON-CERAMIC</option><option value="hd">HEAVY-DUTY</option></select></div>
 <div class="field"><label for="vhRotor">ROTOR SIZE (mm)</label><input type="number" id="vhRotor" min="200" max="450" step="10" value="330"></div>
+<div class="field"><label for="vhBrakeBal">BRAKE BALANCE</label><select id="vhBrakeBal"><option value="r13h">FACTORY (R13-H)</option></select></div>
 <div class="field"><label for="vhSteer">STEERING RATIO (:1)</label><input type="number" id="vhSteer" min="8" max="22" step="0.5" value="15"></div>
 </div></section>
 <section class="evd-card" id="vcdCard-aids" data-card="aids"><div class="evd-fields">
@@ -587,6 +588,27 @@
 <div class="part-guide" id="pdGuide"></div>
 <div class="part-chart"><div class="gw-leg" id="pdLegend"></div><canvas id="pdCanvas" role="img" aria-label="The share of the driven axle's grip the diff puts down against the lateral acceleration"></canvas></div>
 <div class="btn-row part-btns"><button type="button" id="pdSave">SAVE PART</button><button type="button" id="pdSaveFit">SAVE &amp; FIT</button></div>
+</div>
+<div id="partsBrake" hidden>
+<div class="design-section">My brake balances</div>
+<div class="part-list" id="pkList"></div>
+<div class="pick-row"><div class="field"><label for="pkFrom">START FROM</label><select id="pkFrom"><option value="r13h">THIS CAR'S BRAKES</option></select></div>
+<div class="field"><label>&nbsp;</label><button type="button" id="pkNew">NEW BALANCE</button><button type="button" id="pkReset" title="Put the dimensions back to this car's own brakes, keeping the name">RESET</button></div></div>
+<div class="design-section">Balance bar and rear brakes</div>
+<div class="hint">Fitted, it takes the place of the rear brakes the maker sizes to the R13-H line: the bar splits the pedal between two master cylinders, one for each axle. The front calipers and rotor stay the VEHICLE tab's.</div>
+<div class="design-grid">
+<div class="field"><label for="pkName">NAME</label><input type="text" id="pkName" maxlength="40"></div>
+<div class="field"><label for="pkBar">BAR TO THE FRONT (%)</label><input type="number" id="pkBar" min="30" max="70" step="1"></div>
+<div class="field"><label for="pkMcF">FRONT CYLINDER BORE (mm)</label><input type="number" id="pkMcF" min="14" max="28" step="0.01"></div>
+<div class="field"><label for="pkMcR">REAR CYLINDER BORE (mm)</label><input type="number" id="pkMcR" min="14" max="28" step="0.01"></div>
+<div class="field"><label for="pkPistons">REAR PISTONS A SIDE</label><input type="number" id="pkPistons" min="1" max="3" step="1"></div>
+<div class="field"><label for="pkPistonD">REAR PISTON (mm)</label><input type="number" id="pkPistonD" min="25" max="60" step="0.01"></div>
+<div class="field"><label for="pkRotorR">REAR ROTOR (mm)</label><input type="number" id="pkRotorR" min="200" max="450" step="1"></div>
+</div>
+<div class="design-section">On this car</div>
+<div class="part-guide" id="pkGuide"></div>
+<div class="part-chart"><div class="gw-leg" id="pkLegend"></div><canvas id="pkCanvas" role="img" aria-label="Front against rear braking force: the ideal curve and this balance's line, to where an axle locks"></canvas></div>
+<div class="btn-row part-btns"><button type="button" id="pkSave">SAVE PART</button><button type="button" id="pkSaveFit">SAVE &amp; FIT</button></div>
 </div>
 </div>
 

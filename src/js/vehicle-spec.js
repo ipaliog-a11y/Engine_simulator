@@ -186,7 +186,7 @@ function applyVehicleToForm(v){
   g('vhChassis').value=v.chassis||'coupe';g('vhDrive').value=g('vhDrive').dataset.prev=v.drive||'rwd';g('vhGearbox').value=v.gearbox||'manual';g('vhDiff').value=v.diff||'open';
   g('vhGears').value=v.gears||6;g('vhGearing').value=v.gearing!=null?v.gearing:52;
   g('vhTire').value=v.tireType||'sport';g('vhTireW').value=v.tireWidth||235;g('vhTireWF').value=v.tireWidthF||0;g('vhTireA').value=v.tireAspect||40;g('vhWheel').value=v.wheelDia||18;
-  g('vhAeroF').value=v.aeroFront||'none';g('vhAeroR').value=v.aeroRear||'none';vehPartsToForm(v);g('vhAeroFl').value=v.aeroFloor||'none';g('vhWeight').value=v.weightRed||'none';
+  g('vhAeroF').value=v.aeroFront||'none';g('vhAeroR').value=v.aeroRear||'none';g('vhBrakeBal').value='r13h';vehPartsToForm(v);g('vhAeroFl').value=v.aeroFloor||'none';g('vhWeight').value=v.weightRed||'none';
   g('vhBrake').value=v.brakeType||'slotted';g('vhRotor').value=v.rotor||330;g('vhSusp').value=v.suspension||'sport';
   {const fg=factoryGeo(v);g('vhGeoF').value=SUSP_GEO[v.suspFront]?v.suspFront:fg.f;g('vhGeoR').value=SUSP_GEO[v.suspRear]?v.suspRear:fg.r;}   // saves from before build 173 carry none
   // saves from before build 174 carry ROLL BALANCE (arbBal), the front bar against the rear: it becomes the front bar
@@ -220,7 +220,7 @@ function applyChassisFit(key,body){
   g('vhTC').value=f.tc===false?'off':'on';   // a real car's traction control is factory equipment (build 154)
   applyAidsToForm(null,f.tc!==false);
   g('vhAeroF').value=f.aF;g('vhAeroR').value=f.aR;g('vhAeroFl').value=f.aFl;g('vhWeight').value=f.weight;
-  g('vhBrake').value=f.brake;g('vhRotor').value=f.rotor;g('vhSusp').value=f.susp;
+  g('vhBrake').value=f.brake;g('vhRotor').value=f.rotor;g('vhBrakeBal').value='r13h';g('vhSusp').value=f.susp;
   {const fg=factoryGeo({chassis:key,body});g('vhGeoF').value=fg.f;g('vhGeoR').value=fg.r;}
   g('vhDims').value='factory';g('vhBallast').value=0;   // the factory's chassis numbers, without ballast (build 250)
   updateGearingLabel();

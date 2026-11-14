@@ -93,6 +93,8 @@ const VCD_FIELDS={
     trade:'Bigger and better-cooled brakes hold their temperature lap after lap before they fade. Carbon-ceramics are light and fade the least, and cost the most.'},
   vhRotor:{what:'The brake disc\'s diameter, in mm.',
     trade:'A bigger disc has more leverage and more mass to soak up heat, so it fades later, for more unsprung mass. It must fit inside the wheel.'},
+  vhBrakeBal:{adv:true,what:'How the braking is shared between the front and rear axles.',
+    trade:'The factory rear brakes are sized so the front locks first up to 0.8 g, as the law asks. Design your own balance in the PARTS tab: more to the rear stops shorter, until the rear locks first and the car spins.'},
   vhSteer:{adv:true,what:'How many degrees the steering wheel turns for one degree at the road wheels.',
     trade:'A quicker (lower) ratio needs less steering-wheel angle: sharper, and more nervous. Only the live-timing wheel reads it; the lap does not.'},
   vhSusp:{what:'The suspension kit: its springs, dampers and anti-roll bars together.',
