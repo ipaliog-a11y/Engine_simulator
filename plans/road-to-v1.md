@@ -175,6 +175,9 @@ identical fingerprint):
    (Horne and Dreher, NASA TN D-2056, from the tyre's pressure) (retires `wetKeep`, `hWet`). The tyre's pressure is a
    phase D part not built yet: until then each compound carries its maker's usual pressure, cited, and D's part
    replaces it. The rain's arrival and amount stay a weather rule.
+   *Build 303:* done with Horne's speed and the grooves' volume (the owner's choice over Gallaway's speed equation);
+   `RACE_WATER`, `RACE_TREAD`, `raceWetKeep`, `tests/test185.mjs`. Open: a rain compound's own wet grip; the sources
+   for tread, void and pressure.
 4. **The wake and the pit lane.** *Build 295: the wake (`RACE_WAKE`, `raceWake`, `tests/test79.mjs`). Build 299: the pit lane (`racePitLoss`,
    `RACE_PIT_LANE`; 400 m where no circuit's own length is found). Open: each real circuit's lane length.* Behind a car, its follower's drag and downforce fall with the gap in car lengths, from
    measured data (Zabat et al. 1995, PATH platoon tests; for downforce, published wind-tunnel and CFD wake figures).

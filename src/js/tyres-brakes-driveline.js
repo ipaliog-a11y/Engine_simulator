@@ -42,16 +42,14 @@ const SPEED_RATING={
 // tread temperature (C) it grips best at, tWin how far either side it keeps most of that, wear the relative
 // rate the tread goes for the same slip work. A softer, grippier compound works hotter in a narrower window
 // and wears faster. These are fitted to the usual published ranges (a road tyre ~40-80 C, a semi 80-100,
-// a slick 90-110), not derived. wetKeep (build 141) is the share of its dry grip a compound keeps on a
-// wet track: a treaded road tyre clears water and keeps ~70%, a semi-slick about half, a slick, with no
-// grooves at all, little over a third (it aquaplanes). Fitted to the usual wet-braking and wet-skidpad gaps.
+// a slick 90-110), not derived. Wet grip comes from each compound's tread and pressure (RACE_TREAD, race.js).
 const TIRE_TYPE={
-  eco:     {label:'ECO/TOURING', mu:0.90,cc:0.28,crr:0.010,cost:400, rating:'H', tOpt:55, tWin:40,wear:0.55,wetKeep:0.72},
-  street:  {label:'STREET',      mu:0.95,cc:0.28,crr:0.012,cost:600, rating:'V', tOpt:65, tWin:36,wear:0.75,wetKeep:0.70},
-  sport:   {label:'SPORT',       mu:1.00,cc:0.32,crr:0.013,cost:1000,rating:'Y', tOpt:78, tWin:32,wear:1.00,wetKeep:0.66},
-  semi:    {label:'SEMI-SLICK',  mu:1.13,cc:0.42,crr:0.014,cost:1600,rating:'YY',tOpt:88, tWin:26,wear:1.45,wetKeep:0.52},
-  slick:   {label:'RACE SLICK',  mu:1.30,cc:0.54,crr:0.016,cost:2400,rating:'YY',tOpt:98, tWin:22,wear:2.00,wetKeep:0.36},
-  drag:    {label:'DRAG RADIAL', mu:1.70,cc:0.20,crr:0.018,cost:2000,rating:'T', tOpt:70, tWin:22,wear:4.00,wetKeep:0.30}
+  eco:     {label:'ECO/TOURING', mu:0.90,cc:0.28,crr:0.010,cost:400, rating:'H', tOpt:55, tWin:40,wear:0.55},
+  street:  {label:'STREET',      mu:0.95,cc:0.28,crr:0.012,cost:600, rating:'V', tOpt:65, tWin:36,wear:0.75},
+  sport:   {label:'SPORT',       mu:1.00,cc:0.32,crr:0.013,cost:1000,rating:'Y', tOpt:78, tWin:32,wear:1.00},
+  semi:    {label:'SEMI-SLICK',  mu:1.13,cc:0.42,crr:0.014,cost:1600,rating:'YY',tOpt:88, tWin:26,wear:1.45},
+  slick:   {label:'RACE SLICK',  mu:1.30,cc:0.54,crr:0.016,cost:2400,rating:'YY',tOpt:98, tWin:22,wear:2.00},
+  drag:    {label:'DRAG RADIAL', mu:1.70,cc:0.20,crr:0.018,cost:2000,rating:'T', tOpt:70, tWin:22,wear:4.00}
 };
 // Aero elements — each adds a downforce coefficient (Cl·A, m²) and a drag penalty (ΔCd). The
 // floor/diffuser is the efficient one (lots of downforce, little drag). Scaled by chassis.aero.

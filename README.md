@@ -1,4 +1,4 @@
-# PIXEL ENGINE SIM v0.7 build 302
+# PIXEL ENGINE SIM v0.7 build 303
 
 **A lightweight, 8-bit style internal combustion engine *designer* & simulator** inspired by *Automation*.
 
@@ -261,11 +261,14 @@ assist map over speed and pedal), regeneration, load-point shifting, electric-dr
   - **Fuel is power × BSFC.** The flow at every point is the power the lap spends there times the
     engine's own BSFC at that rpm and boost, so a thirsty engine pits sooner and a car gets lighter
     and quicker as the tank empties. Tanks are per body class.
-  - **Weather.** A wet track takes grip by compound: a treaded road tyre keeps ~70% of it, a
-    slick ~36%. Two race-only rain tyres, **intermediates** and **full wets**, keep more. A car
+  - **Weather.** The rain lays a water film (Gallaway's depth, from the rain, the track's width and
+    texture). The water takes ~30% of any tyre's grip, and at speed it lifts the tyre by Horne's
+    balance of its pressure, on the share of the patch its grooves cannot clear: a slick floats from
+    ~80 km/h, a treaded road tyre keeps ~60% at 150. Two race-only rain tyres, **intermediates** and
+    **full wets**, clear more water. A car
     changes compound when the time its own solved laps say it would win back, over the laps left,
     beats a pit stop, so a late shower can leave a car out on the wrong tyres on purpose. Water and a
-    cool wet surface take heat out of the tyres; a sunny track adds it. Wet laps run 9–22% slower,
+    cool wet surface take heat out of the tyres; a sunny track adds it. Wet laps run ~20–30% slower,
     the grippiest dry compounds losing most.
   - **Brakes carry their heat.** The lap solver's rotor model runs through the whole race, so
     temperatures build lap on lap past a single hot lap's and cool in the pit box. A car whose pads

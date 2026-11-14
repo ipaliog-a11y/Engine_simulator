@@ -183,7 +183,7 @@ const w = await page.evaluate(() => {
   const med = a => { const b = a.slice().sort((x, y) => x - y); return b[Math.floor(b.length / 2)]; };
   const pace = R => R.cars.map(c => ({ name: c.M.name, tyre: c.M.tyre.key, lap: med(c.laps.filter(l => l.n > 1 && !l.pit).map(l => l.t)), stints: c.stints.map(s => s.tyre) }));
   const dry = run({ weather: 'dry' }), wet = run({ weather: 'wet' });
-  out.dry = pace(dry); out.wet = pace(wet);
+  out.dry = pace(dry); out.wet = pace(wet); out.best = ms.map(M => raceBestCompound(M, RACE.wetFull));
   const dry2 = run({ weather: 'drying', laps: 14 });
   out.drying = dry2.cars.map(c => ({ name: c.M.name, own: c.M.tyre.key, stints: c.stints.map(s => s.tyre + '@' + s.from) }));
   const rain = run({ weather: 'rain', laps: 14 });
@@ -220,7 +220,9 @@ for (let k = 0; k < w.dry.length; k++) console.log(`  ${w.dry[k].name}: dry ${w.
 for (let k = 0; k < w.dry.length; k++) {
   if (!(w.wet[k].lap > w.dry[k].lap * 1.04)) fails.push(`${w.dry[k].name} is not clearly slower in the wet`);
   if (w.dry[k].stints.some(t => t === 'inter' || t === 'wet')) fails.push(`${w.dry[k].name} used rain tyres on a dry track`);
-  if (!['inter', 'wet'].includes(w.wet[k].stints[0])) fails.push(`${w.dry[k].name} started a wet race on ${w.wet[k].stints[0]}`);
+  // build 303: wet grip from the tread and the water; a road car's own tyres can out-grip a rain tyre over its lap,
+  // so each car starts on the compound its own lap reads best (a slick car calling rain tyres: test185)
+  if (w.wet[k].stints[0] !== w.best[k]) fails.push(`${w.dry[k].name} started a wet race on ${w.wet[k].stints[0]}, its best is ${w.best[k]}`);
 }
 const loss = w.dry.map((d, k) => w.wet[k].lap / d.lap);
 if (!(loss[0] > loss[2])) fails.push('the GT3 on semi-slicks does not lose more in the wet than the MX-5 on eco tyres');
@@ -232,7 +234,7 @@ for (const d of w.drying) {
   if (d.stints.length > 3) fails.push(`${d.name} changed tyres more than twice on a drying track`);
   for (let k = 1; k < d.stints.length; k++) if (dryness(d.stints[k]) < dryness(d.stints[k - 1])) fails.push(`${d.name} went to a wetter tyre on a drying track`);
 }
-if (!w.drying.some(d => d.stints.length > 1 && d.stints[d.stints.length - 1].startsWith(d.own))) fails.push('nobody went back to slicks/road tyres on a drying track');
+if (w.drying.some(d => !d.stints[0].startsWith(d.own)) && !w.drying.some(d => d.stints.length > 1 && d.stints[d.stints.length - 1].startsWith(d.own))) fails.push('nobody went back to slicks/road tyres on a drying track');
 console.log(`  rain at ${w.rain.tRain && w.rain.tRain.toFixed(0)} s: ${w.rain.stints.join(' · ')}`);
 if (w.rain.tRain == null) fails.push('a rain-later race never rained');
 if (w.rain.early) fails.push('a car changed to rain tyres before the rain came');

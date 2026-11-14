@@ -18,6 +18,26 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 ## [Unreleased]
 
+### Wet grip comes from the water film and the tread (build 303)
+
+Phase F, step 3: `wetKeep`, a share of dry grip fitted per compound, is gone. The owner chose Horne's hydroplaning speed
+with the tread's grooves over Gallaway's speed equation, which barely reads the tread (to the power 0.06).
+
+- **The water.** The film's depth comes from Gallaway et al. (FHWA-RD-79-31, 1979): the rain, the circuit's width as the
+  drainage path, a 0.6 mm texture and a 2% cross fall (both PROBABLE). A properly wet race's 10 mm/h (a weather rule)
+  gives 0.22 mm on a 12 m track. A damp track's water stays in the texture.
+- **The grip.** A wet road leaves 0.71 of dry grip at low speed (Wong, Table 1.3: 0.5–0.7 wet against 0.8–0.9 dry).
+  Faster, the water lifts (v/Vp)² of the load (Horne, NASA TN D-2056: Vp = 6.35√p km/h), on the share of the patch
+  its grooves cannot clear (film over film plus groove volume). Afloat, 15.8% is left (Fwa). Each compound's tread
+  depth, void and pressure are in `RACE_TREAD` (PROBABLE, from makers' listings).
+- **What moved (the race only; the lap, 0–100 and dyno are untouched).** Over a Spa lap, a share of dry grip: sport
+  0.66 → 0.65, semi 0.52 → 0.53, slick 0.36 → 0.29, full wet 0.82 → 0.61–0.64. A road car's own tyres now about match a
+  full wet, so the Civic, MX-5 and GT3 (on semis) start a wet race on their own tyres; a slick car still calls wets.
+  `test71`'s wet start is now "the compound its own lap reads best", and a wet lap on the short circuit is 19–32% slower
+  (was 9–22%).
+- Open: a rain tyre's compound has no wet advantage of its own (only its grooves); the lap's grip is averaged over
+  the dry lap's speeds, not re-solved; the tread depths, voids, pressures, texture and cross fall want sources.
+
 ### The motor's saturation, field weakening and iron loss come from its circuit under load (build 302)
 
 Phase C, steps 1 and 2 finished together (the owner's choice): `SAT_K`, `V_DROP`, `CPSR`, the 0.7 field-weakening
