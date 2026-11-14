@@ -111,7 +111,8 @@ it needs must load without the page (no DOM, no canvas), so a separate game app 
    bench and the lap's turbo walk already do most of this), the motor and hybrid controllers the same way.
    *Build 274:* the turbo's shaft is stepped, from tables read off the engine (`car.turbo`, `driveShaft`).
    *Build 275:* the pack's charge is a state and a hybrid's controller runs in time (`car.el`, `driveCharge`,
-   `tests/test172.mjs`). Open: the engine stopping, a power-split's engine speed, heat.
+   `tests/test172.mjs`). Open: a power-split's engine speed, heat.
+   *Build 289:* a P2's engine stops and starts, by the LIVE bench's AUTO rule (`driveStartStop`).
    *Build 276:* all-wheel drive's axles turn together, and the launch is the solver's (`driveLaunch`): 0-100 within
    6% on the test's five cars.
    *Build 279:* a plug-in sets off full, the help is cut to the pack's own power at its charge, the front motor's

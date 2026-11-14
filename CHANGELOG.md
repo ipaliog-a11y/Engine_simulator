@@ -18,6 +18,24 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 ## [Unreleased]
 
+### The stepped car's hybrid engine stops and starts (build 289)
+
+Phase E, step 3, from build 277's "left open": a P2 hybrid in `stepCar` ran its engine all the time.
+- **A P2's engine now stops** (Ioniq, 330e, 918): its clutch opens and the motor drives the gearbox alone, taking all of
+  the torque the pedal asks, with no engine drag off the pedal. It starts again when the pedal asks more than the
+  motor's share, past EV UP TO, or with the charge 10 points under its target. The rule is the LIVE bench's AUTO
+  controller (`HYB_BENCH`: 35% of what the motor and pack give, or the tune's EV POWER; a plug-in with charge to spare,
+  all of it; stops at 0.7 of that; 2 s between a start and a stop), so no new number.
+- **What it does:** the Ioniq at a steady 50 km/h from 60% runs electric 57% of the time and ends at 61.8% (the engine
+  charges while it runs); from 37% the engine never stops and the charge climbs to 45.5%. Flat out it never stops, so
+  the 0-100s are unchanged (Ioniq 9.35 s, 918 3.23 s). At rest off the pedal it is off.
+- **Left open:** starting is instant and costs the pack nothing (the motor turning the engine up is not stepped); the
+  pedal's demand is taken at idle speed from rest, where the bench takes the shaft's (nothing); a power-split's engine
+  still runs at its steady curve's speed. Only `drive-model.js` changed and the fingerprint does not record `stepCar`, so no
+  recorded number can move; it was not run.
+
+Tests: test172 (updated); 168, 169, 170, 173, 174, 175.
+
 ### The turbocharger as a part (build 288)
 
 Phase B, step 3 of `plans/road-to-v1.md`: the first of two builds. It does not retire a fitted number yet; it gives the turbo's wheels and housing somewhere to go.
