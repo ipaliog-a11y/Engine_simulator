@@ -18,6 +18,14 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 ## [Unreleased]
 
+### Diagnosis notes vs faults — factory cars are not all lumpy (build 299)
+
+Redoes #201 (build 249) on today's `main`. Build 248's diagnosis marked most factory cars "NOT RUNNING SMOOTH" because race-cam lope and a peaky band were warnings, and because `engine.lumpiness` folds diesel clatter into the same number the sound uses.
+
+- **Faults** (valve float, knock past the ECU, damage) still mark it not smooth. **Warnings** are an unfair cell (cold oil, overheat, as-tuned under best-power, low voltage). **Notes** cover design character: race-cam lope, a clearly peaky band (< 25% of redline, was 35%), weak low-end (< 40, was 55), piston speed, cooling, petrol VGT, emissions, reliability, an EV's short peak hold.
+- **Lope is cam overlap only** (≥ 50°). Diesels are no longer flagged as lumpy idle. A GT3 that lopes shows DIAGNOSIS — NOTES, not NOT RUNNING SMOOTH.
+- test158 now sweeps the 100 factory cars: 0 not smooth, 0 diesels with lope, 25 race-cam notes. Nothing the simulators produce moved; this only reads them.
+
 ### A power-split or series hybrid's engine is heard where the lap runs it (build 297)
 
 - **The lap replay played the wrong engine.** On the TRACK tab a Prius's or an e-POWER's engine sounded on its full-load line whenever the throttle was open, and idled off it, while the lap's fuel had it on its best line at the power it actually gave (the shaft's power less the pack's), and stopped off the power. The sound now reads the same engine power as the fuel (`psEnginePower`, shared), so the two agree: on the Prius's lap the engine runs at 379 of 442 points and is silent at the other 63, at the best line's speed exactly.
