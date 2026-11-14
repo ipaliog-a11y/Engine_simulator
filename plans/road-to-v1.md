@@ -113,6 +113,8 @@ and its heat, an induction motor's slip.
 (retires `UNSPRUNG_SHARE`); the differential (`DIFF_ASYM0`).
 *Build 291:* the rear wing as a part (span, chord, angle, camber, end plates; lifting line; `tests/test178.mjs`); no
 factory car moved. Next: the front wing and splitter the same way, then each kit car's wing written as one, and brake bias.
+*Build 306:* the front wing, the same wing with the ground's span effect from its height (Wieselsberger); no factory car
+moved. Open: the splitter, the chord-wise ground effect (Zerihan & Zhang), each kit car's wing, brake bias.
 
 *Scoreboard run at the end of D.*
 

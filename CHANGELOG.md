@@ -18,7 +18,7 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 ## [Unreleased]
 
-### Electric and hybrid sound is quieter and stops with no torque; POWER OFF switches the whole car off (build 306)
+### Electric and hybrid sound is quieter and stops with no torque; POWER OFF switches the whole car off (build 307)
 
 - The motor's voice was too loud and shrill, and whined even at zero throttle: the inverter's PWM tone (10–16 kHz) played
   whenever a magnet motor was fitted, standing still included. It now grows with the current and stops with no torque
@@ -29,6 +29,24 @@ they are accurate about *what* shipped but not about the day it shipped.
   torque, a hybrid's engine stops and the controller cannot restart it, nothing charges or draws, nothing is heard. Before,
   they were disabled on an EV, and on a hybrid only stopped the engine (which AUTO could start again). Guide updated.
 - Tests: test114 (silent at no torque, no PWM tone, not heard when off), test162 (EV and hybrid power off and on).
+### The front wing as a part (build 306)
+
+Phase D of `plans/road-to-v1.md`: the front wing, the same way as build 291's rear wing.
+
+- **The PARTS tab designs a FRONT WING**: span, chord, angle, camber, end plates and its height over the road, in the
+  rear wing's editor. Fitted from the VEHICLE tab's FRONT AERO (under MY PARTS), it takes the kit's place, on the
+  front axle; the rear's kit or wing stays.
+- **The road under it is derived**: its induced drag is the free wing's times φ = (16h/b)²/(1 + (16h/b)²)
+  (Wieselsberger 1921; McCormick, ch. 9), so it works at AR/φ. The starting wing (1.51 × 0.25 m, 6°, 6% camber,
+  100 mm plates) at 100 mm works as AR 12.9 against 6.8 in free air: ClA 0.41 → 0.46, CdA 0.026 → 0.019, 87 kg of
+  downforce at 200 km/h. At 400 mm it is within 2% of the free wing.
+- **No factory car moved**: no preset carries a designed wing (fingerprint below).
+- **Left open:** the chord-wise ground effect, the venturi under a wing within a tenth of its chord of the road that
+  adds suction and then stalls it (Zerihan & Zhang 2000), is not modelled, so a very low wing reads short; the
+  bumper's flow is not either. The splitter stays a kit (`AERO_FRONT`), as do the kit cars' wings, until written as
+  parts; brake bias is next.
+
+Tests: test178 (front wing added), test120 (part kinds).
 
 ### The ECU's VE table is editable: its estimate of the air, used only to meter fuel (build 305)
 

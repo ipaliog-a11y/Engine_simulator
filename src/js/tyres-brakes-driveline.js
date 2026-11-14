@@ -74,12 +74,19 @@ const WING_CLMAX=1.5;   // a single cambered element's stall: NACA 4412, about 1
 const WING_TC=0.12;     // the section's thickness over its chord: the 12% of the common NACA 4412 / 6412 family, taken for every wing
 const WING_V=50;        // m/s (180 km/h): where the skin friction's Reynolds number is taken
 const AIR_NU=1.5e-5;    // m2/s, air's kinematic viscosity at 20 C
+// A front wing (build 306) is the same wing low over the road, height_mm to its quarter chord. The ground takes away part
+// of its downwash, as a mirror image of its trailing vortices does: the induced drag is that of a free wing times
+// phi = (16 h/b)^2 / (1 + (16 h/b)^2), so the wing works at an aspect ratio AR/phi (Wieselsberger 1921; McCormick,
+// Aerodynamics, Aeronautics and Flight Mechanics, ch. 9). Only this span effect is modelled: the venturi under a wing
+// within a tenth of its chord of the road, which adds more suction and then stalls it (Zerihan & Zhang, J. Aircraft 37,
+// 2000), is not; nor the bumper's flow it sits in.
+function wingGround(b,hg){if(!(hg>0))return 1;const x=Math.pow(16*hg/b,2);return x/(1+x);}
 function wingAero(p){
-  const b=p.span_mm/1000,c=p.chord_mm/1000,h=p.plate_mm/1000,S=b*c,AR0=b/c,AR=AR0*(1+1.9*h/b);
+  const b=p.span_mm/1000,c=p.chord_mm/1000,h=p.plate_mm/1000,S=b*c,AR0=b/c,ge=wingGround(b,(p.height_mm||0)/1000),AR=AR0*(1+1.9*h/b)/ge;
   const a=WING_A0/(1+WING_A0/(Math.PI*AR)),want=a*(p.angle_deg*Math.PI/180+2*p.camber_pct/100),CL=clamp(want,0,WING_CLMAX);
   const Cf=0.074*Math.pow(WING_V*c/AIR_NU,-0.2),cd0=2*Cf*(1+2*WING_TC+60*Math.pow(WING_TC,4)),cdi=CL*CL/(Math.PI*AR);
   const plates=4*Cf*h*c;   // two plates, two faces each, a chord long
-  return {S,AR0,AR,slope:a,CL,want,stalled:want>WING_CLMAX,cd0,cdi,clA:CL*S,cdA:(cd0+cdi)*S+plates};
+  return {S,AR0,AR,ge,slope:a,CL,want,stalled:want>WING_CLMAX,cd0,cdi,clA:CL*S,cdA:(cd0+cdi)*S+plates};
 }
 const AERO_COST={none:0,splitter:600,wing:1800,lip:400,undertray:900,diffuser:2200};
 // Weight reduction stages: kg removed and cost.
