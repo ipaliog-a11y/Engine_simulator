@@ -1,4 +1,4 @@
-# PIXEL ENGINE SIM v0.7 build 298
+# PIXEL ENGINE SIM v0.7 build 299
 
 **A lightweight, 8-bit style internal combustion engine *designer* & simulator** inspired by *Automation*.
 
@@ -931,7 +931,7 @@ documented in the GUIDE at the point where it matters:
     little more.
 - **The race's racecraft is rules, not physics.** Overtaking and
   driver error are rules with fitted numbers (the tow and dirty air come from measured wakes since build 295; the
-  pit lane's loss from its length and limit and the car's own speed since build 298). The cars share one racing line rather than fighting for
+  pit lane's loss from its length and limit and the car's own speed since build 299). The cars share one racing line rather than fighting for
   space on it, and the tyre model's heat, grip-window, wear and wet-grip constants are fitted to the
   usual published ranges, not derived. When the rain comes and how fast a line dries are rules drawn
   from the seed, not a forecast.

@@ -1,4 +1,4 @@
-// WHY THIS EXISTS (build 298): the pit lane's cost is derived per car and circuit, no longer one 20 s for all.
+// WHY THIS EXISTS (build 299): the pit lane's cost is derived per car and circuit, no longer one 20 s for all.
 //   - every car's loss comes from the lane's length, its limit, and the car's own speed, braking and launch;
 //   - a longer lane costs more; a circuit with its own published length uses it (Albert Park 281 m), others 400 m;
 //   - the loss sits in a sane range (5-30 s at a 60 km/h limit) and is split into entry, box and exit;

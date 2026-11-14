@@ -14,7 +14,7 @@
 //   - tyre heat: slip work and rolling hysteresis in, air, water and track out, per tyre, from the loads
 //   - brake heat: the lap solver's own rotor model (brakeHeatStep), run through the whole race (build 141)
 //   - tyre grip from temperature, wear and water, wear rates, tank sizes: fitted (commented where they sit)
-//   - the pit lane's loss: its length and limit against the car's own speed, braking and launch (build 298)
+//   - the pit lane's loss: its length and limit against the car's own speed, braking and launch (build 299)
 //   - traffic, overtaking, mistakes, the crew's service, the weather's timing: rules
 const RACE={
   dt:0.05,            // s, the race clock's step
@@ -249,7 +249,7 @@ function raceCarModel(entry,key,opts){
     return M;
   });
 }
-// The pit lane (build 298), in metres from entry to exit. No table of every circuit's lane is published, and the figures
+// The pit lane (build 299), in metres from entry to exit. No table of every circuit's lane is published, and the figures
 // that are differ by where they measure from (Interlagos is quoted at 380 m and at 1140 m), so a circuit has its own
 // length only where one is found; probable, from secondary sources: Bahrain 426 m (a technical preview quoted by
 // f1starttimer.blog), Albert Park 281 m (formula1math.substack.com). Every other circuit, drawn or real, takes 400 m,
