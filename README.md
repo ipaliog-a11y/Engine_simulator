@@ -1,4 +1,4 @@
-# PIXEL ENGINE SIM v0.7 build 304
+# PIXEL ENGINE SIM v0.7 build 305
 
 **A lightweight, 8-bit style internal combustion engine *designer* & simulator** inspired by *Automation*.
 
@@ -76,7 +76,10 @@ screamer, 2JZ six, muscle V8, blown V8, V12 supercar…), or configure your own 
   at light load and enriches under load & boost for power/EGT — just like a real fuel map (the
   default on fuel-injected builds; a live **load×RPM heat-grid** shows the target AFR in every
   cell with a marker on the current operating point, and the map is **editable** — tap a cell and
-  nudge it richer/leaner to hand-tune the mixture, or reset to the factory grid). Carbs/mechanical
+  nudge it richer/leaner to hand-tune the mixture, or reset to the factory grid). Beside it, the
+  **VE table** is the ECU's *estimate* of volumetric efficiency, which it meters fuel by: the engine
+  still breathes what its parts give, so a cell set too low runs lean and too high runs rich, with
+  the power, exhaust heat and knock that follow. Carbs/mechanical
   injection stay manual. Each
   fuel has its own energy density, stoich AFR, knock rating and charge-cooling — alcohols resist
   knock and cool the charge (more power headroom) but burn far more fuel.
@@ -896,7 +899,7 @@ node tools/stamp.mjs --check    # verify it is consistent and ahead of origin/ma
    supercharger types (roots/screw/centrifugal), anti-lag, nitrous, an **editable 3D ECU fuel
    map** (tap a load×rpm cell, − LEAN / + RICH, RESET MAP), and pressure-ratio-aware spool with
    compressor flow limits. *Ignition is covered by the Auto (MBT-tracking, knock-limited) timing
-   model rather than a hand-editable spark map — see below.*
+   model, and (builds 304–305) by editable spark and VE tables.*
 3. ~~**(E) Emissions & sound**~~ ✅ — engine-out CO / HC / NOx vs mixture & combustion
    temperature, a **catalytic converter** with a stoich-window three-way conversion model, a live
    analyser readout, an emissions score, and a character-driven **lope/burble** on the note.

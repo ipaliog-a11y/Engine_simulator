@@ -13,6 +13,7 @@ let trackKey='mixed';    // selected circuit
 // edits persist across rebuilds while the map-relevant engine params (below) are unchanged.
 let fuelMap=null,fuelMapCustom=false,fuelMapKey='',fmSel=null;
 let sparkMap=null,sparkMapCustom=false,sparkMapKey='',skSel=null;   // the editable spark table (build 304)
+let veMap=null,veMapCustom=false,veMapKey='',veSel=null;   // the ECU's VE estimate (build 305)
 
 let engine=Object.assign({},DEFAULT_ENGINE);
 let buildRev=0;   // bumped each build so the dyno cache invalidates

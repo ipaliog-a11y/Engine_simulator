@@ -10,12 +10,13 @@ function serializeBuild(name,note){
   // Only persist the fuel map when it's a hand-tuned custom grid (factory maps regenerate).
   if(fuelMapCustom&&Array.isArray(fuelMap))b.fuelMap=fuelMap.map(row=>row.map(v=>+v.toFixed(3)));
   if(sparkMapCustom&&Array.isArray(sparkMap))b.sparkMap=sparkMap.map(row=>row.map(v=>+v.toFixed(1)));
+  if(veMapCustom&&Array.isArray(veMap))b.veMap=veMap.map(row=>row.map(v=>+v.toFixed(3)));
   return b;
 }
 function applyBuild(s){
   if(!s||!s.engine)throw new Error('not an engine build');
   applyEngineToForm(Object.assign({},DEFAULT_ENGINE,s.engine));
-  sparkMapCustom=false;   // a build brings its own spark table, or runs the derived one
+  sparkMapCustom=false;veMapCustom=false;   // a build brings its own spark and VE tables, or runs the derived ones
   buildEngine();
   // Restore a saved custom fuel map (buildEngine regenerated the factory grid); dims must match.
   if(Array.isArray(s.fuelMap)&&s.fuelMap.length===FM_ROWS&&s.fuelMap.every(r=>Array.isArray(r)&&r.length===FM_COLS)){
@@ -23,6 +24,9 @@ function applyBuild(s){
   }
   if(Array.isArray(s.sparkMap)&&s.sparkMap.length===FM_ROWS&&s.sparkMap.every(r=>Array.isArray(r)&&r.length===FM_COLS)){
     sparkMap=s.sparkMap.map(r=>r.map(Number));sparkMapCustom=true;skSel=null;dynoCache=null;renderSparkMap();
+  }
+  if(Array.isArray(s.veMap)&&s.veMap.length===FM_ROWS&&s.veMap.every(r=>Array.isArray(r)&&r.length===FM_COLS)){
+    veMap=s.veMap.map(r=>r.map(Number));veMapCustom=true;veSel=null;dynoCache=null;renderVeMap();
   }
   applyVehicleToForm(Object.assign({},DEFAULT_VEHICLE,s.vehicle||{}));
   buildVehicle();updateVehicleSummary();
