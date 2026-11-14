@@ -227,6 +227,141 @@
    "state": "open"
   },
   {
+   "id": "MOTOR.FLUX_KM",
+   "file": "electric.js",
+   "match": "FLUX_KM=0.85",
+   "standsFor": "the air gap's flux over the magnets' remanence, set from one motor's measured back-EMF (Tesla Model 3, MotorXP) and used for every magnet motor; with it the magnets' mass as 6% of the rotor's volume (2.2x for ferrite)",
+   "retiredBy": "the rotor's magnets as geometry: thickness, pole arc and pocket layout through the magnetic circuit, Bg = Br / (1 + mu_r g'/l_m) times the arc's fundamental",
+   "phase": "C",
+   "state": "open"
+  },
+  {
+   "id": "MOTOR.SAT_K",
+   "file": "electric.js",
+   "match": "SAT_K=0.085",
+   "standsFor": "torque per amp lost to saturation: one measured point (430 Nm at 953 A on the Model 3), scaled with the square of the electric loading",
+   "retiredBy": "the lamination steel's B-H curve in the teeth and the yoke",
+   "phase": "C",
+   "state": "open"
+  },
+  {
+   "id": "MOTOR.fieldWeakening",
+   "file": "electric.js",
+   "match": "V_DROP=1.29",
+   "standsFor": "the terminal voltage over the back-EMF at full current (one motor), the constant-power range (CPSR 4, IM_CPSR 3) with 1/w^2 beyond it, the field-weakening current as 0.7 of the inverter's, and the flux floor 0.4 in the iron loss",
+   "retiredBy": "the d and q inductances from the geometry, and the inverter's current and voltage limits solved on them at each speed",
+   "phase": "C",
+   "state": "open"
+  },
+  {
+   "id": "MOTOR.statorShape",
+   "file": "electric.js",
+   "match": "const SPLIT=0.67;",
+   "standsFor": "the stator's proportions, the same for every motor: bore over outside diameter, the slots' share of the tooth band and its depth, and one flux density (B_CORE 1.5 T) for teeth and yoke",
+   "retiredBy": "teeth and yoke sized from the flux they carry at the steel's flux density; the slot is what is left",
+   "phase": "C",
+   "state": "open"
+  },
+  {
+   "id": "MOTOR.ironShare",
+   "file": "electric.js",
+   "match": "0.8*L.fe",
+   "standsFor": "iron loss taken on all the iron, the rotor's included, at the stator's flux density and frequency, then shared 80% stator, 20% rotor",
+   "retiredBy": "teeth and yoke each at their own flux density; the rotor's loss from the slot harmonics and the magnets' eddy currents",
+   "phase": "C",
+   "state": "open"
+  },
+  {
+   "id": "MOTOR.mech",
+   "file": "electric.js",
+   "match": "0.15*w+5e-8*w*w*w",
+   "standsFor": "bearing friction and windage as two coefficients with no source",
+   "retiredBy": "bearing friction from the maker's model on the rotor's weight and the bearing's size; windage from the air gap's Taylor-Couette drag",
+   "phase": "C",
+   "state": "open"
+  },
+  {
+   "id": "MOTOR_COOLING",
+   "file": "electric.js",
+   "match": "const MOTOR_COOLING",
+   "standsFor": "the heat transfer coefficients of each cooling type (60 to 2500 W/m2K), the air gap's 100, the housing's contact resistance, the slot liner, the 50 mm the spray reaches, and the coolant temperatures",
+   "retiredBy": "channel-flow correlations on a jacket's passages and flow, the air gap's Taylor-Couette Nusselt number, cited measurements for oil spray and slot cooling",
+   "phase": "C",
+   "state": "open"
+  },
+  {
+   "id": "RETENTION.vTip",
+   "file": "electric.js",
+   "match": "const RETENTION",
+   "standsFor": "the rotor surface speed each retention survives (150 and 220 m/s), and the sleeve's 3% on inertia",
+   "retiredBy": "the bridges' stress from the magnets' centrifugal load against the steel's yield; the sleeve's hoop stress against the carbon's strength",
+   "phase": "C",
+   "state": "open"
+  },
+  {
+   "id": "INVERTER",
+   "file": "electric.js",
+   "match": "const INVERTER",
+   "standsFor": "each device's knee, resistance and switching energy from an unnamed module (SiC 'about a fifth'), and the output frequency ceilings 1200 and 2000 Hz",
+   "retiredBy": "named modules' datasheets; the ceiling as the switching frequency over the pulses a cycle needs",
+   "phase": "C",
+   "state": "open"
+  },
+  {
+   "id": "ACTIVE_TO_MOTOR",
+   "file": "electric.js",
+   "match": "const ACTIVE_TO_MOTOR=1.6",
+   "standsFor": "housing, shaft, bearings and end caps as 1.6 times the active mass; the shaft as 0.47 of the rotor's diameter",
+   "retiredBy": "the housing as a shell round the stator and its cooling, the shaft from the torque; or teardown masses, cited (ORNL's Leaf)",
+   "phase": "C",
+   "state": "open"
+  },
+  {
+   "id": "IM.leakage",
+   "file": "electric.js",
+   "match": "const IM_SIGMA=0.08",
+   "standsFor": "an induction motor's leakage (IM_SIGMA), resistive drop (IM_R_DROP), Carter and saturation factor (IM_KCS), constant-power range (IM_CPSR) and the cage's proportions (IM_HR, IM_RING)",
+   "retiredBy": "slot and end-ring leakage from the stator's and the cage's geometry (Pyrhonen ch. 4), the breakdown torque from it; the cage's bars as design fields",
+   "phase": "C",
+   "state": "open"
+  },
+  {
+   "id": "CHEM.cells",
+   "file": "electric.js",
+   "match": "const CHEM={",
+   "standsFor": "each chemistry's open-circuit curve, resistance per amp-hour, discharge and charge rates and specific energy by year: typical figures, not named cells; one activation energy for every lithium chemistry",
+   "retiredBy": "the cell as a part: named cells from their datasheets and measured open-circuit curves; power against energy from the electrode's thickness",
+   "phase": "C",
+   "state": "open"
+  },
+  {
+   "id": "PACK.overheads",
+   "file": "electric.js",
+   "match": "const PACK_FACTOR=",
+   "standsFor": "cell mass over pack mass by year, and 10% on the resistance for busbars, contactors and fuse",
+   "retiredBy": "pack teardown figures, cited; busbar and contactor resistance from the pack's layout",
+   "phase": "C",
+   "state": "open"
+  },
+  {
+   "id": "PACK.thermal",
+   "file": "electric.js",
+   "match": "const PACK_C=900",
+   "standsFor": "the pack's heat capacity (the comment says ~1000 J/kgK, the code 900), 2 W/K per kWh to coolant at 30 C, and the power cut from 50 to 60 C",
+   "retiredBy": "a cited cell heat capacity; the cooling plate from its area and coolant flow; the cut from the cell maker's rating",
+   "phase": "C",
+   "state": "open"
+  },
+  {
+   "id": "EV_BMS",
+   "file": "electric.js",
+   "match": "const EV_BMS=",
+   "standsFor": "the shape of the power cut at a low charge: from 15%, to 30% at 2%, then a tenth of rated power",
+   "retiredBy": "the cells' voltage limit under load, which already falls with charge; or a cited car's behaviour; or the owner's sign-off as a controller's rule",
+   "phase": "C",
+   "state": "open"
+  },
+  {
    "id": "RACE_DRIVERS",
    "file": "race.js",
    "match": "const RACE_DRIVERS",
@@ -273,7 +408,6 @@
   }
  ],
  "audit": [
-  "electric.js",
   "electric-car.js",
   "electric-cycle.js",
   "ev-designer.js",
