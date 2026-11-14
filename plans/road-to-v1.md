@@ -67,6 +67,9 @@ scoreboard holds (phase H)".
 2. Cylinder head and springs (2): retires `THROAT_RATIO` and the spring steps.
 3. Turbocharger (2): wheels, A/R, wastegate; retires `TURB_WHEEL` and `TURBO_CONFIG` multipliers. The largest named
    gaps live here (RS3 and EcoBoost low-rpm torque).
+   *Build 288:* the part (compressor and turbine wheels, housing A/R; `tests/test177.mjs`); no factory car moved. Next:
+   each turbo of a twin, sequential or compound layout its own wheel and shaft in place of `TURBO_CONFIG`'s flow
+   multiples, and the shaft's inertia from both wheels.
 4. Water-to-air and twin intercoolers, per car from published specs.
 5. Plenum, throttle and flywheel (2): retires `MAP_K`.
 6. Catalytic converter: find what the double count hides, then the part (2).
@@ -109,7 +112,7 @@ it needs must load without the page (no DOM, no canvas), so a separate game app 
    *Build 274:* the turbo's shaft is stepped, from tables read off the engine (`car.turbo`, `driveShaft`).
    *Build 275:* the pack's charge is a state and a hybrid's controller runs in time (`car.el`, `driveCharge`,
    `tests/test172.mjs`). Open: a power-split's engine speed, heat.
-   *Build 288:* a P2's engine stops and starts, by the LIVE bench's AUTO rule (`driveStartStop`).
+   *Build 289:* a P2's engine stops and starts, by the LIVE bench's AUTO rule (`driveStartStop`).
    *Build 276:* all-wheel drive's axles turn together, and the launch is the solver's (`driveLaunch`): 0-100 within
    6% on the test's five cars.
    *Build 279:* a plug-in sets off full, the help is cut to the pack's own power at its charge, the front motor's

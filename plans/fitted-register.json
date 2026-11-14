@@ -50,8 +50,8 @@
    "id": "TURB_WHEEL",
    "file": "engine-constants-boost.js",
    "match": "const TURB_WHEEL",
-   "standsFor": "turbine wheel as a share of the compressor exducer",
-   "retiredBy": "the turbocharger part",
+   "standsFor": "turbine wheel as a share of the compressor exducer, one value for every factory turbo (a designed turbo sets its own, build 288)",
+   "retiredBy": "each real car's own turbine wheel, sourced, or the owner's sign-off as a rule",
    "phase": "B3",
    "state": "open"
   },
@@ -59,7 +59,7 @@
    "id": "TURBO_CONFIG",
    "file": "engine-constants-boost.js",
    "match": "const TURBO_CONFIG",
-   "standsFor": "spool, width and flow multipliers for twin, sequential and compound layouts",
+   "standsFor": "a twin, sequential or compound layout's choke flow as a multiple of one wheel's (1.85, 1.55, 2.30); its spool and width only reach the logistic fallback used before the boost table is solved",
    "retiredBy": "the turbocharger part (each turbo its own wheel and shaft)",
    "phase": "B3",
    "state": "open"

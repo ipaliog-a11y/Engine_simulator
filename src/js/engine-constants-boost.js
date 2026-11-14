@@ -51,7 +51,7 @@ const TURBO={
   large: {exd:0.086,ars:[0.63,0.86,1.06],spool50:0.54,width:0.10}
 };
 const AR_INCH=0.0254;          // A/R is quoted in inches
-const TURB_WHEEL=0.90;         // turbine wheel as a fraction of the compressor exducer
+const TURB_WHEEL=0.90;         // turbine wheel as a fraction of the compressor exducer, every factory turbo (a designed turbo sets its own)
 // Turbine throat for a housing A/R. A/R is the volute throat area over the radius to its centroid,
 // so A_throat = (A/R) x R. A vane ring sets its own throat (vaneThroatArea, build 168).
 function setTurbineAR(ar){
@@ -59,13 +59,13 @@ function setTurbineAR(ar){
   // R is the radius to the centroid of the throat section (build 133; it was the wheel's radius, which made every
   // throat 1.5-1.8x too small). The section sits just outside the wheel tip, a circle of area A = k R, so
   // R = r_tip + sqrt(k R / pi): a quadratic in sqrt(R).
-  const rt=TURB_WHEEL*exd/2, k=ar*AR_INCH;
+  const rt=e.turbK*exd/2, k=ar*AR_INCH;
   const sq=(Math.sqrt(k/Math.PI)+Math.sqrt(k/Math.PI+4*rt))/2;
   const a0=k*sq*sq;
   e.turbineAR=ar;
   // a VGT's throat is its vane ring's, not the volute's (build 168): the housing A/R does not size it
-  e.turbineArea=e.vgt?vaneThroatArea(exd,VANE_BETA_MAX):a0;
-  e.vgtShut=e.vgt?vaneThroatArea(exd,VANE_BETA_MIN):0;
+  e.turbineArea=e.vgt?vaneThroatArea(exd,VANE_BETA_MAX,e.turbK):a0;
+  e.vgtShut=e.vgt?vaneThroatArea(exd,VANE_BETA_MIN,e.turbK):0;
 }
 // The boost the ECU asks for at an rpm (build 131). Real ECUs pull boost back toward the limiter, where the
 // rods and bearings carry the highest inertia and gas loads together, the turbine runs hottest and fastest and
@@ -121,11 +121,14 @@ function buildTorqueLimit(){
 // The frame an engine runs (build 131): the size class, or the maker's own compressor wheel where it is known
 // (COMPRESSOR WHEEL, mm at the exducer), with its housings scaled with it (a geometrically similar volute: A/R is
 // a length).
+// turbK: the turbine wheel over the compressor exducer. A designed turbo (build 288, parts.js: engine.turboPart) brings its
+// own compressor and turbine wheels and its one housing A/R, in place of the frame's wheel, TURB_WHEEL and the housing step.
 function turboFrame(e){
-  const tb=TURBO[e.turboSize]||TURBO.medium;
-  if(!(e.compExd_mm>0))return tb;
+  const tb=TURBO[e.turboSize]||TURBO.medium,P=e.turboPart;
+  if(P){const exd=P.compD_mm/1000;return Object.assign({},tb,{exd,turbK:P.turbD_mm/P.compD_mm,ars:[P.ar,P.ar,P.ar]});}
+  if(!(e.compExd_mm>0))return Object.assign({},tb,{turbK:TURB_WHEEL});
   const exd=e.compExd_mm/1000,k=exd/tb.exd;
-  return Object.assign({},tb,{exd,ars:tb.ars.map(a=>a*k)});
+  return Object.assign({},tb,{exd,turbK:TURB_WHEEL,ars:tb.ars.map(a=>a*k)});
 }
 // Steady wide-open-throttle boost against rpm, sampled once per engine: solving the shaft balance
 // costs a few thousand iterations, and boostAvail is called for every rpm of every curve build.
