@@ -152,6 +152,36 @@ it needs must load without the page (no DOM, no canvas), so a separate game app 
 
 **F. The race's rules (2–4 builds).** Tyre heat, wear and wet grip from the tyre model of E; the tow and dirty air
 from the cars' own aero. Overtaking decisions and weather stay rules, signed off in the register.
+*Planned at build 290.* Today the race steps each tyre's tread temperature and wear with its own constants
+(`TYRE_RACE` in `race.js`; `tOpt`, `tWin`, `wear`, `wetKeep` in `TIRE_TYPE`) and the tow and dirty air as speed
+multipliers (`RACE.slip*`, `RACE.dirty`). Three builds (2-4), each moving only the race (the lap, 0-100 and dyno must keep an
+identical fingerprint):
+1. **The tread's heat: a rule until after v1.0** (owner's decision, November 2026). Tried at build 295, not kept:
+   the slip work from `driveTyre` with convection, conduction and the tread's own heat capacity took the Civic's
+   hottest tyre in `test71` from 92 C to 329 C and wore a set out in 4 laps. The slip work is right (it matches the
+   cornering drag); what cannot be derived is where its heat goes. Rubber's grip is mostly hysteresis in a thin
+   surface layer, and how much of that the road takes back depends on the share of the patch truly in contact,
+   which no handbook gives. One lump cannot hold it: it needs a surface and a bulk, and that share. `TYRE_RACE`'s
+   heat constants (`slip`, `roll`, `H0`, `H1`, `hTrack`, `cp`) go into the register as a rule, signed off.
+2. **Grip and wear from the rubber: with the heat, after v1.0** (owner's decision, November 2026). Both read the
+   tread's temperature, which is now a rule, and their inputs are not published: a compound's Tg (racing at -10 to
+   -15 C and road at -40 C for Persson; a measured pair the other way, -26 and -22) and an abrasion rate per joule.
+3. **Wet grip.** The water film's depth from the rain rate and the road's texture and drainage (Gallaway 1979, in mm,
+   in place of `RACE.wetFull`), the tread's grooves clearing it, and grip falling towards the hydroplaning speed
+   (Horne and Dreher, NASA TN D-2056, from the tyre's pressure) (retires `wetKeep`, `hWet`). The tyre's pressure is a
+   phase D part not built yet: until then each compound carries its maker's usual pressure, cited, and D's part
+   replaces it. The rain's arrival and amount stay a weather rule.
+4. **The wake and the pit lane.** *Build 295: the wake (`RACE_WAKE`, `raceWake`, `tests/test79.mjs`). Next: the pit lane.* Behind a car, its follower's drag and downforce fall with the gap in car lengths, from
+   measured data (Zabat et al. 1995, PATH platoon tests; for downforce, published wind-tunnel and CFD wake figures).
+   The speed then comes from the car's own balance: on a straight its power against its reduced drag, in a corner its
+   grip at its reduced downforce. A road car barely feels dirty air and a winged car does (retires `slipGap`,
+   `slipDrag`, `slipK`, `dirty`). The pit loss from the lane's length and limit, with the slowing and the pull away
+   (retires `pitLoss`; each circuit gets a pit-lane length, cited for a real one, from its main straight for a
+   drawn one). The racecraft numbers (`follow`, `close`, `defend*`, `dive*`, `passKmh`, `pace`, `mistake`), the crew's
+   `tyreChange` and `refuelLps`, and the drivers go into the register as rules.
+Checks: `tests/test71.mjs` and `79` cover the race; each build adds one test that its numbers come from the parts
+(a slick's window sits above a road tyre's, a winged car loses more behind another).
+No real-car check per build (decision 3); the race is checked at H.
 
 **G. For both players (2–3 builds).** A guided build for the learner: a few questions (what kind of car, what
 budget) give a complete, working car with each choice explained, then every part stays open on its card for the
@@ -176,7 +206,7 @@ motor). For each, decide whether to restrict it: a fixed limit, or a dynamic one
 build (the rpm limit from piston speed and the valve springs, boost from the compressor map and knock). Each limit cited, as the physics rules ask; a limit the physics already enforces
 (knock, a failure, a lean mixture) stays a consequence, not a lock. The owner tags the release.
 
-**After v1.0.** 3D 8-bit cars from the profile images and the recorded dimensions; the driving game on `stepCar`;
+**After v1.0.** The tyre's heat as a surface and a bulk (phase F, build 1); 3D 8-bit cars from the profile images and the recorded dimensions; the driving game on `stepCar`;
 the Greek decision; a career layer.
 An electric drivetrain with four motors, one in each wheel hub: each wheel's torque its own, the unsprung mass the
 hub motors add, and torque vectoring explored (yaw moment from the left-right split, in place of braking a wheel),
