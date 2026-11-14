@@ -18,6 +18,17 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 ## [Unreleased]
 
+### The turbocharger as a part (build 288)
+
+Phase B, step 3 of `plans/road-to-v1.md`: the first of two builds. It does not retire a fitted number yet; it gives the turbo's wheels and housing somewhere to go.
+
+- **The PARTS tab designs a turbocharger**: the compressor's exducer, the turbine wheel and the housing's A/R. Fitted from the ENGINE tab's TURBO SIZE list, it takes the place of the frame's wheel, the COMPRESSOR WHEEL field, TURB_WHEEL's 0.90 and the TIGHT / STOCK / LOOSE housing. How many turbos, the VGT, the boost and the wastegate stay on the ENGINE tab.
+- **It feeds the shaft model what the frames fed it.** The compressor sets the choke flow, the map, the speed the wheel lets go at and the inertia; the turbine wheel sets its tip speed and the radius the throat sits at; the A/R sets the throat. On the Golf GTI Mk7: a 0.45 → 0.9 housing opens the throat from 4.1 to 9.5 cm² and brings 95% boost from 1700 to 2150 rpm; a 50 → 70 mm compressor chokes at 28 → 54 lb/min. On a VGT the vanes set the throat and the A/R does nothing.
+- **No factory car moved.** A factory turbo written down as a part gives the same engine (Golf, Supra's sequential pair with its own 58 mm wheel, GT-R twin, a VGT diesel, each frame: torque within 1e-14 of itself). Fingerprint identical to `main`, 5212 values.
+- **Left open:** the shaft's inertia still scales with the compressor alone, so a bigger turbine wheel costs nothing in transient, and in the steady solve its faster tip brings boost sooner (40 → 56 mm on the Golf: 1700 → 1500 rpm). Twin, sequential and compound layouts keep `TURBO_CONFIG`'s choke multiples (1.85, 1.55, 2.30 of one wheel); each turbo its own wheel and shaft is the next build. Found on the way, on `main` as well: a part's preview of an engine with an ECU torque limit differs from the build by up to 4 Nm on the plateau (Golf GTI, any kind of part).
+
+Tests: test177 (new); 176, 120, 166, 73, 51.
+
 ### Five real engines get their makers' valves (build 287)
 
 The first batch of retiring the head's fitted numbers the slow way: one sourced engine at a time, so nothing else moves.

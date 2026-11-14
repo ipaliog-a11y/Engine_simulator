@@ -769,7 +769,7 @@ body.showcase-open{overflow:hidden}
 </div>
 <div class="container">
 <header>
-<h1>PIXEL ENGINE SIM v0.7 build 287</h1>
+<h1>PIXEL ENGINE SIM v0.7 build 288</h1>
 <div class="subtitle" id="subtitle">ENGINE DESIGNER • BUILD IT, THEN DRIVE IT</div>
 </header>
 <div class="build-strip" id="buildStrip">
@@ -1805,8 +1805,8 @@ Much of an engine's breathing is bought in. Aftermarket makers sell exhausts, in
 </div>
 <div class="gtier gt-game"><div class="gtier-h">LV2 · IN THE GAME</div>
 <div class="guide-body" data-gk="parts">
-<b>Pick a kind.</b> The PARTS tab works on the engine you built. Choose EXHAUST, INTAKE MANIFOLD, AIR FILTER, CAMSHAFT, CYLINDER HEAD or INTERCOOLER at the top; the catalytic converter comes later. An electric drive has none of them.<br>
-<b>Start from a factory part.</b> Your own parts of that kind are listed first, with EDIT, FIT and DELETE. To begin a new one, take one of this engine's factory parts as the starting point, name it, and change its dimensions: for an exhaust the header's construction, the primaries' bore and length, one or two pipes, their bore and length, and the silencer; for an intake the runners' length and bore, and a variable manifold's short length; for a filter the media, its area, the housing and its inlet; for a cylinder head the intake and exhaust valves, the port's throat and the springs' seat load and rate; for an intercooler the core's width, height and depth, its cooling fins and the charge pipe's length.<br>
+<b>Pick a kind.</b> The PARTS tab works on the engine you built. Choose EXHAUST, INTAKE MANIFOLD, AIR FILTER, CAMSHAFT, CYLINDER HEAD, TURBOCHARGER or INTERCOOLER at the top; the catalytic converter comes later. An electric drive has none of them.<br>
+<b>Start from a factory part.</b> Your own parts of that kind are listed first, with EDIT, FIT and DELETE. To begin a new one, take one of this engine's factory parts as the starting point, name it, and change its dimensions: for an exhaust the header's construction, the primaries' bore and length, one or two pipes, their bore and length, and the silencer; for an intake the runners' length and bore, and a variable manifold's short length; for a filter the media, its area, the housing and its inlet; for a cylinder head the intake and exhaust valves, the port's throat and the springs' seat load and rate; for a turbocharger the compressor and turbine wheels and the housing's A/R; for an intercooler the core's width, height and depth, its cooling fins and the charge pipe's length.<br>
 <b>Let the designer help.</b> <b>CUT</b> sets the exhaust primaries' length, or the intake runners', for the rpm you type. <b>SIZE FOR 75 m/s</b> picks the exhaust pipe's bore, <b>MATCH THE PORTS</b> the runners' bore, <b>SIZE FOR 0.25 m/s</b> the filter's area. The lines under the form say what the part does and what real ones measure.<br>
 <b>Read the preview.</b> The chart lays the pull with this part (solid) over the engine as it is now (dashed), and the headline gives peak power and torque and the change. Nothing on the engine moves until you fit the part.<br>
 <b>Save and fit.</b> <b>SAVE PART</b> keeps it in your library (up to 40 parts, in this browser); <b>SAVE &amp; FIT</b> also puts it on the engine. A saved part appears on the ENGINE tab under <b>MY PARTS</b> in the Exhaust, Runner, Air filter, Cam, Head &amp; springs and Intercooler lists, so any engine can wear it. Where the app needs a factory class (the price, the drawing, the sound), a part counts as the one it is nearest to, an exhaust by its construction.<br>
@@ -1825,11 +1825,12 @@ taken off the charge as <i>VE × (1 − Δp/p<sub>0</sub>)</i>. A new factory fi
 · The <b>cylinder head</b> gives the valvetrain its intake valve, port and springs. The intake valve's size sets the inlet Mach index (the bore's area over the valves', times the piston's speed) and the valve's weight; the throat sets the flow at full lift and the plateau of Taylor's flow coefficient, 0.42 on a throat 0.85 of the valve, a discharge coefficient of 0.58 on the throat's own area; the exhaust valve sets the bore of the exhaust port, and so the heat the gas leaves in it (a wider port takes less); the seat load and rate are what holds the valve on the cam:
 <span class="geq">m·a<sub>nose</sub> ≤ F<sub>seat</sub> + k·L</span>
 A designed head's springs are fixed, where the maker's are sized for the factory cam and the redline.<br>
+· The <b>turbocharger</b> gives the shaft model its wheels and housing. The compressor's exducer sets its choke flow, its map, the speed it lets go at and the shaft's inertia; the turbine wheel sets its tip speed and the radius the housing's throat sits at; the A/R sets the throat (A/R times that radius), which a smaller housing narrows: it spools sooner and chokes the top end. On a VGT the vanes set the throat and the A/R is not used. How many turbos and how they are piped, the boost and the wastegate stay on the ENGINE tab.<br>
 · The <b>intercooler</b> gives the charge path its volume to fill (the pipe plus the core's charge side, which slows spool). Its effectiveness and its pressure drop, which the compressor makes up, come from its fins on both sides (<a data-gp="intercooler">Intercooler</a>).<br>
 The preview runs the whole build on a copy of the engine, at the scoring conditions, and puts everything back afterwards, so the curve of a fitted part is its preview exactly.
 </div>
 <div class="guide-limit" data-gk="partsLimit">
-Limit: a designed head's valves are not checked against the bore (the preview says when one is bigger than the factory packing), its springs are not checked for coil bind, their load does not add to the cam's friction, and the exhaust valve's size does not change how the cylinder empties. A designed cam's exhaust lobe is taken as the same as its intake lobe, and its idle and the airflow estimates still take the fitted grade of the factory cam nearest in duration and separation. The silencer changes only the sound; its own back-pressure is not modelled. The intake plenum is taken as holding steady pressure, so its volume and the throttle are not part of the design. Oiled cotton's permeability is its makers' claim; paper's is measured. An intercooler's cooling air is the same 11 m/s at any car speed. The catalytic converter cannot be designed yet.
+Limit: a designed head's valves are not checked against the bore (the preview says when one is bigger than the factory packing), its springs are not checked for coil bind, their load does not add to the cam's friction, and the exhaust valve's size does not change how the cylinder empties. A designed turbo's shaft inertia scales with its compressor alone, and a twin, sequential or compound layout's flow is still a multiple of one wheel's. A designed cam's exhaust lobe is taken as the same as its intake lobe, and its idle and the airflow estimates still take the fitted grade of the factory cam nearest in duration and separation. The silencer changes only the sound; its own back-pressure is not modelled. The intake plenum is taken as holding steady pressure, so its volume and the throttle are not part of the design. Oiled cotton's permeability is its makers' claim; paper's is measured. An intercooler's cooling air is the same 11 m/s at any car speed. The catalytic converter cannot be designed yet.
 </div>
 </div>
 <div class="guide-see">See also: <a data-gp="airpath">The air path</a> · <a data-gp="header">Exhaust headers &amp; scavenging</a> · <a data-gp="waves">Intake runner waves</a> · <a data-gp="backpressure">Back-pressure &amp; residuals</a> · <a data-gp="induction">Induction &amp; throttle</a></div>
@@ -3661,6 +3662,24 @@ Most other tests check behaviour that is true of real cars: a bigger turbo spool
 <div class="part-chart"><div class="gw-leg" id="phLegend"></div><canvas id="phCanvas" role="img" aria-label="Power and torque with this cylinder head against the engine as it is"></canvas></div>
 <div class="btn-row part-btns"><button type="button" id="phSave">SAVE PART</button><button type="button" id="phSaveFit">SAVE &amp; FIT</button></div>
 </div>
+<div id="partsTurbo" hidden>
+<div class="design-section">My turbochargers</div>
+<div class="part-list" id="pbList"></div>
+<div class="pick-row"><div class="field"><label for="pbFrom">START FROM</label><select id="pbFrom"><option value="small">SMALL</option><option value="medium">MEDIUM</option><option value="large">LARGE</option></select></div>
+<div class="field"><label>&nbsp;</label><button type="button" id="pbNew">NEW TURBO</button><button type="button" id="pbReset" title="Put the dimensions back to the factory part chosen above, keeping the name">RESET</button></div></div>
+<div class="design-section">Turbocharger</div>
+<div class="hint">Fitted, it sets the compressor wheel and the turbine A/R in place of the ENGINE tab's. How many turbos, the VGT and the boost stay there.</div>
+<div class="design-grid">
+<div class="field"><label for="pbName">NAME</label><input type="text" id="pbName" maxlength="40"></div>
+<div class="field"><label for="pbComp">COMPRESSOR EXDUCER (mm)</label><input type="number" id="pbComp" min="30" max="120" step="0.5"></div>
+<div class="field"><label for="pbTurb">TURBINE WHEEL (mm)</label><input type="number" id="pbTurb" min="25" max="130" step="0.5"></div>
+<div class="field"><label for="pbAr">HOUSING A/R</label><input type="number" id="pbAr" min="0.25" max="1.6" step="0.01"></div>
+</div>
+<div class="design-section">On this engine</div>
+<div class="part-guide" id="pbGuide"></div>
+<div class="part-chart"><div class="gw-leg" id="pbLegend"></div><canvas id="pbCanvas" role="img" aria-label="Power and torque with this turbocharger against the engine as it is"></canvas></div>
+<div class="btn-row part-btns"><button type="button" id="pbSave">SAVE PART</button><button type="button" id="pbSaveFit">SAVE &amp; FIT</button></div>
+</div>
 </div>
 
 <!-- GARAGE: every saved car and engine, to look over and load -->
@@ -4932,7 +4951,7 @@ function turbineTipFor(pr,flowFrac,T01){
   const e=engine;
   if(!(e.compExd>0)||!(pr>1))return 0;
   const eta=compIslandEff(flowFrac,pr), Uc=Math.sqrt(1005*Math.max(200,T01)*(Math.pow(pr,0.286)-1)/(COMP_SLIP*eta));
-  return TURB_WHEEL*Uc;
+  return e.turbK*Uc;
 }
 function pulseShape(mEx,area,T3,mapBar,prMean){
   const e=engine;
@@ -5022,11 +5041,11 @@ const VANE_Z=12, VANE_T=0.0015;                      // vanes, and their thickne
 const VANE_T_LIMIT=1100;                             // K — where nickel-alloy vanes start to creep
 const VANE_BETA_MIN=21, VANE_BETA_MAX=60;            // degrees from tangential — the vane sweep
 const VANE_R2=1.22, VANE_H=0.07;                     // ring radius over wheel tip radius, nozzle height over wheel diameter
-const vanePitchR=exd=>VANE_R2*(TURB_WHEEL*exd/2);    // the vanes' trailing edges, outboard of the wheel
+const vanePitchR=(exd,k)=>VANE_R2*(k*exd/2);         // the vanes' trailing edges, outboard of the turbine wheel (k of the exducer)
 // The ring's throat at vane angle `beta`, m2: h * (2 pi r2 sin(beta) - Z t).
-function vaneThroatArea(exd,betaDeg){
-  const h=VANE_H*TURB_WHEEL*exd;
-  return h*Math.max(0.05*2*Math.PI*vanePitchR(exd),2*Math.PI*vanePitchR(exd)*Math.sin(betaDeg*Math.PI/180)-VANE_Z*VANE_T);
+function vaneThroatArea(exd,betaDeg,k){
+  const h=VANE_H*k*exd;
+  return h*Math.max(0.05*2*Math.PI*vanePitchR(exd,k),2*Math.PI*vanePitchR(exd,k)*Math.sin(betaDeg*Math.PI/180)-VANE_Z*VANE_T);
 }
 // The vanes ARE the boost control: a VGT diesel has no wastegate, because opening the vanes IS
 // the gate. So the schedule is "the WIDEST throat that still supplies the compressor at TARGET
@@ -5132,7 +5151,7 @@ function shaftNetPower(shaftRpm,mAir,T3,T01,rpm){
   const prCap=Math.min(pr,tgt+dp);
   const pMan=Math.max(1,prCap-dp);   // the intake manifold, which the exhaust pulses are shaped against
   const mEx=mAir*1.06/units, mA=mAir/units;
-  const Ut=Math.PI*TURB_WHEEL*e.compExd*Math.max(0,shaftRpm)/60;   // turbine tip speed
+  const Ut=Math.PI*e.turbK*e.compExd*Math.max(0,shaftRpm)/60;   // turbine tip speed
   // VGT vanes schedule against the BOOST TARGET, not against what the compressor happens to be
   // drawing at this instant. That is both the real control law and the only one that works here:
   // scheduling to the instantaneous draw would balance the shaft at EVERY speed, net would be zero
@@ -5272,13 +5291,13 @@ function deriveGasDynamics(){
     // turbine can be, so every existing call site reads the open position by default; `vgtShut`
     // is non-zero only on a VGT and is what tells the rest of the model there is anything to
     // schedule at all.
-    e.compExd=tb.exd;
+    e.compExd=tb.exd;e.turbK=tb.turbK;
     setTurbineAR(tb.ars[TURBINE_HOUSING[e.housing]??1]);   // the housing the build chose for this frame
     e.turbUnits=(e.turboConfig==='twin'||e.turboConfig==='sequential')?2:1;
     e.shaftJ=wheelInertia(tb.exd)*(e.turboConfig==='twin'?2:1);   // a sequential secondary is pre-spooled
     e.seqStageRpm=0;                                               // set once the engine is built
     e.shaftMax=maxShaftRpm(tb.exd);
-  }else{e.turbineArea=0;e.vgtShut=0;e.turbUnits=1;e.compExd=0;e.shaftJ=0;e.shaftMax=0;}
+  }else{e.turbineArea=0;e.vgtShut=0;e.turbUnits=1;e.compExd=0;e.turbK=0;e.shaftJ=0;e.shaftMax=0;}
   // Size the system pipe from the engine's own flow at the power peak, not from a fixed number.
   const m3sPeak=(e.dispCyl_L/1000)*(T/320)*e.cylinders*(e.redline*0.9/60*(e.chargesPerRev||0.5));
   // One system per BANK: a V or a boxer has two heads pointing opposite ways and runs two pipes,
@@ -7845,7 +7864,7 @@ const TURBO={
   large: {exd:0.086,ars:[0.63,0.86,1.06],spool50:0.54,width:0.10}
 };
 const AR_INCH=0.0254;          // A/R is quoted in inches
-const TURB_WHEEL=0.90;         // turbine wheel as a fraction of the compressor exducer
+const TURB_WHEEL=0.90;         // turbine wheel as a fraction of the compressor exducer, every factory turbo (a designed turbo sets its own)
 // Turbine throat for a housing A/R. A/R is the volute throat area over the radius to its centroid,
 // so A_throat = (A/R) x R. A vane ring sets its own throat (vaneThroatArea, build 168).
 function setTurbineAR(ar){
@@ -7853,13 +7872,13 @@ function setTurbineAR(ar){
   // R is the radius to the centroid of the throat section (build 133; it was the wheel's radius, which made every
   // throat 1.5-1.8x too small). The section sits just outside the wheel tip, a circle of area A = k R, so
   // R = r_tip + sqrt(k R / pi): a quadratic in sqrt(R).
-  const rt=TURB_WHEEL*exd/2, k=ar*AR_INCH;
+  const rt=e.turbK*exd/2, k=ar*AR_INCH;
   const sq=(Math.sqrt(k/Math.PI)+Math.sqrt(k/Math.PI+4*rt))/2;
   const a0=k*sq*sq;
   e.turbineAR=ar;
   // a VGT's throat is its vane ring's, not the volute's (build 168): the housing A/R does not size it
-  e.turbineArea=e.vgt?vaneThroatArea(exd,VANE_BETA_MAX):a0;
-  e.vgtShut=e.vgt?vaneThroatArea(exd,VANE_BETA_MIN):0;
+  e.turbineArea=e.vgt?vaneThroatArea(exd,VANE_BETA_MAX,e.turbK):a0;
+  e.vgtShut=e.vgt?vaneThroatArea(exd,VANE_BETA_MIN,e.turbK):0;
 }
 // The boost the ECU asks for at an rpm (build 131). Real ECUs pull boost back toward the limiter, where the
 // rods and bearings carry the highest inertia and gas loads together, the turbine runs hottest and fastest and
@@ -7915,11 +7934,14 @@ function buildTorqueLimit(){
 // The frame an engine runs (build 131): the size class, or the maker's own compressor wheel where it is known
 // (COMPRESSOR WHEEL, mm at the exducer), with its housings scaled with it (a geometrically similar volute: A/R is
 // a length).
+// turbK: the turbine wheel over the compressor exducer. A designed turbo (build 288, parts.js: engine.turboPart) brings its
+// own compressor and turbine wheels and its one housing A/R, in place of the frame's wheel, TURB_WHEEL and the housing step.
 function turboFrame(e){
-  const tb=TURBO[e.turboSize]||TURBO.medium;
-  if(!(e.compExd_mm>0))return tb;
+  const tb=TURBO[e.turboSize]||TURBO.medium,P=e.turboPart;
+  if(P){const exd=P.compD_mm/1000;return Object.assign({},tb,{exd,turbK:P.turbD_mm/P.compD_mm,ars:[P.ar,P.ar,P.ar]});}
+  if(!(e.compExd_mm>0))return Object.assign({},tb,{turbK:TURB_WHEEL});
   const exd=e.compExd_mm/1000,k=exd/tb.exd;
-  return Object.assign({},tb,{exd,ars:tb.ars.map(a=>a*k)});
+  return Object.assign({},tb,{exd,turbK:TURB_WHEEL,ars:tb.ars.map(a=>a*k)});
 }
 // Steady wide-open-throttle boost against rpm, sampled once per engine: solving the shaft balance
 // costs a few thousand iterations, and boostAvail is called for every rpm of every curve build.
@@ -22734,6 +22756,13 @@ function setTab(mode){
 // and Sandoval, has no spring-load term), and the exhaust valve's own flow: the blowdown and the pumping loop do not
 // read its size. A factory head still takes 0.85, 0.83 and the packing ratio (plans/fitted-register.json) until each
 // real car's own valve sizes are sourced.
+// The TURBOCHARGER (build 288) is the wheels and the housing the shaft model reads (deriveGasDynamics, steadyBoost,
+// advanceShaft): the compressor's exducer (its choke flow, map, top speed and the shaft's inertia), the turbine wheel
+// (its tip speed and the radius the housing's throat sits at, in place of TURB_WHEEL's 0.90 of the exducer) and the
+// housing's A/R (the throat, in place of the frame's TIGHT / STOCK / LOOSE step). How many turbos and how they are
+// piped, the VGT, the boost and the wastegate stay on the ENGINE tab. A factory turbo written as a part is the engine's own.
+// Not in it: the shaft's inertia still scales with the compressor alone, and twin, sequential and compound layouts keep
+// TURBO_CONFIG's flow multiplier (the next build).
 // A build carries the full part (engine.exhaustPart, engine.intakePart), so a saved build, a file and a share link work in another
 // browser that never saw the part; loading such a build adds the part to that browser's library.
 
@@ -22764,7 +22793,10 @@ const CAM_PROFILE={
 // and 10-200 N/mm, past the RACE step on the biggest factory valve (sized for a Hellcat's redline, ~1180 N and 130 N/mm).
 const PART_LIMITS={valveD_mm:[15,75],exValveD_mm:[12,65],throat:[0.75,0.92],seat_N:[100,1500],rate_Nmm:[10,200],dur:[180,320],lift_mm:[4,16],lsa:[98,130],vvt_deg:[0,60],primD_mm:[25,76],primL_mm:[200,1000],pipes:[1,2],sysD_mm:[30,110],sysL_m:[0.8,4.5],
   runnerL_mm:[40,800],runnerD_mm:[20,80],shortL_mm:[40,400],area_m2:[0.02,3],inletD_mm:[30,160],
-  w:[150,900],h:[80,800],d:[30,120],fpi:[8,30],pipe_m:[0.3,5]};
+  w:[150,900],h:[80,800],d:[30,120],fpi:[8,30],pipe_m:[0.3,5],
+  // a turbo's compressor 30-120 mm at the exducer (a kei car's to a big diesel's), its turbine 25-130 mm, a housing
+  // A/R of 0.25-1.6 (on this model's convention, setTurbineAR: the frames' housings run 0.35-1.06)
+  compD_mm:[30,120],turbD_mm:[25,130],ar:[0.25,1.6]};
 
 // ---- the air filter (build 210) ----
 // What a filter restricts is its pressure drop at the flow through it, and the charge is that much thinner (computeVE).
@@ -22915,6 +22947,7 @@ const PART_KINDS=[
   {kind:'cam',    label:'CAMSHAFT',ready:true},
   {kind:'intercooler',label:'INTERCOOLER',ready:true},
   {kind:'head',   label:'CYLINDER HEAD',ready:true},
+  {kind:'turbo',  label:'TURBOCHARGER',ready:true},
   {kind:'cat',    label:'CATALYTIC CONVERTER',ready:false}
 ];
 // A designed intake, as the factory class the rest of the app reads: a variable one is VARIABLE, a fixed one the
@@ -22937,6 +22970,12 @@ function headClass(p){
   for(const k in VALVE_SPRING){const x=Math.abs(Math.log(p.seat_N/VALVE_SPRING[k].seat));if(x<d){d=x;best=k;}}
   return best;
 }
+// A designed turbo, as the frame the rest of the app reads (the sprite, the cost): the one whose wheel is nearest.
+function turboClass(p){
+  let best='medium',d=1e9;
+  for(const k in TURBO){const x=Math.abs(Math.log(p.compD_mm/1000/TURBO[k].exd));if(x<d){d=x;best=k;}}
+  return best;
+}
 // The cam as the physics reads it: the factory cam's, or a designed one's dimensions over its class's fitted grades.
 function camSpec(e){
   const F=CAM[e.cam]||CAM.stock,P=e.camPart;
@@ -22956,7 +22995,9 @@ const PART_DEF={
   intercooler:{field:'icPart',cls:'intercooler',select:'edIntercooler',def:'large',valid:k=>!!INTERCOOLER[k],clsOf:icClass,
     label:k=>INTERCOOLER[k].label,newName:'MY INTERCOOLER',factory:['small','large'],from:v=>v===true?'large':v===false?'none':v},
   head:   {field:'headPart',   cls:'valveSpring',select:'edSpring',    def:'stock',valid:k=>!!VALVE_SPRING[k],clsOf:headClass,
-    label:k=>VALVE_SPRING[k].label,newName:'MY HEAD',factory:['stock','perf','race']}
+    label:k=>VALVE_SPRING[k].label,newName:'MY HEAD',factory:['stock','perf','race']},
+  turbo:  {field:'turboPart',  cls:'turboSize', select:'edTurboSize', def:'medium',valid:k=>!!TURBO[k],    clsOf:turboClass,
+    label:k=>k.toUpperCase(),newName:'MY TURBO',factory:['small','medium','large']}
 };
 
 let partLib=[];
@@ -22984,6 +23025,9 @@ function normPart(p){
   if(p.kind==='head')return {id,kind:'head',name:String(p.name||'HEAD').slice(0,40),valveD_mm:n(p.valveD_mm,'valveD_mm',34),
     exValveD_mm:n(p.exValveD_mm==null||p.exValveD_mm===''?NaN:p.exValveD_mm,'exValveD_mm',+(EV_RATIO*n(p.valveD_mm,'valveD_mm',34)).toFixed(4)),
     throat:n(p.throat,'throat',THROAT_RATIO),seat_N:n(p.seat_N,'seat_N',250),rate_Nmm:n(p.rate_Nmm,'rate_Nmm',22)};
+  if(p.kind==='turbo'){const c=n(p.compD_mm,'compD_mm',71);
+    return {id,kind:'turbo',name:String(p.name||'TURBO').slice(0,40),compD_mm:c,
+      turbD_mm:n(p.turbD_mm,'turbD_mm',+(TURB_WHEEL*c).toFixed(4)),ar:n(p.ar,'ar',0.64)};}
   if(p.kind==='cam')return {id,kind:'cam',name:String(p.name||'CAM').slice(0,40),dur:n(p.dur,'dur',220),
     lift_mm:n(p.lift_mm,'lift_mm',9),lsa:n(p.lsa,'lsa',114),profile:CAM_PROFILE[p.profile]?p.profile:'gentle',
     vvt_deg:n(p.vvt_deg,'vvt_deg',VVT_AUTHORITY)};
@@ -23073,6 +23117,8 @@ function withPart(kind,x,fn){
   const D=PART_DEF[kind],keep=engine,sv=Object.assign({},state),dc=dynoCache,dk=dynoCacheKey,kc=_knockCache;
   engine=Object.assign({},keep,{score:Object.assign({},keep.score),_fmaps:null,_fcyc:null});
   if((kind==='cam'||kind==='head')&&keep.ports)x=D.def;   // a port-timed engine has no cam or valves: the build fits none (buildEngineCore)
+  // a factory frame other than the engine's own is that frame as sold, not resized to the engine's compressor wheel
+  if(kind==='turbo'&&typeof x==='string'&&x!==keep.turboSize)engine.compExd_mm=0;
   if(typeof x==='string'){engine[D.cls]=x;delete engine[D.field];}
   else{engine[D.field]=normPart(Object.assign({},x,{kind}));engine[D.cls]=D.clsOf(engine[D.field]);}
   try{rederiveBreathing();return fn(engine);}
@@ -23159,6 +23205,17 @@ function headReport(x){
       exD:e.evDia_mm,nEx:Math.max(1,(e.valves||4)-e.ivCount),egt:e.egtPeak});
   });
 }
+// What the designer reads out for a turbo on this engine: the pull, the wheels, and where full boost arrives.
+function turboReport(x){
+  return withPart('turbo',x,e=>{
+    const pull=wotPull(),o=Object.assign(pull,{turbo:e.intake==='turbo'});
+    if(!o.turbo)return o;
+    const T=e.boostTable||[],full=T.find(p=>p.bar>=0.95*boostTarget(p.rpm)&&boostTarget(p.rpm)>0);
+    return Object.assign(o,{exd:e.compExd*1000,turbD:e.turbK*e.compExd*1000,k:e.turbK,ar:e.turbineAR,vgt:!!e.vgt,
+      throat:e.turbineArea*1e4,cap:e.turboCap,load:e.turboLoad,eff:e.compEff,J:e.shaftJ,nMax:e.shaftMax,units:e.turbUnits||1,
+      fullRpm:full?full.rpm:0,boostPk:boostAvail(pull.peakHPrpm)});
+  });
+}
 // A factory part, as this engine has it, written down as a part: the start of a design.
 function partFromFactory(key,kind){
   kind=kind||'exhaust';
@@ -23170,6 +23227,12 @@ function partFromFactory(key,kind){
     return normPart({kind:'head',name:tr(g.label),valveD_mm:+(e.ivDia_mm||0.39*e.bore_mm).toFixed(4),throat:THROAT_RATIO,
       exValveD_mm:+(e.evDia_mm||EV_RATIO*(e.ivDia_mm||0.39*e.bore_mm)).toFixed(4),
       seat_N:+(g.seat*k).toFixed(3),rate_Nmm:+(g.rate*k).toFixed(4)});
+  });
+  // the engine's own turbo (its compressor wheel, if it sets one, and its housing), or a frame as sold
+  if(kind==='turbo')return withPart('turbo',key,e=>{
+    const tb=turboFrame(e);
+    return normPart({kind:'turbo',name:tr(key.toUpperCase()),compD_mm:tb.exd*1000,turbD_mm:tb.turbK*tb.exd*1000,
+      ar:tb.ars[TURBINE_HOUSING[e.housing]??1]});
   });
   if(kind==='cam')return withPart('cam',key,e=>{
     const C=CAM[key]||CAM.stock;
@@ -23231,7 +23294,7 @@ function runnerFor(rpm,Dmm){
 }
 
 // ---- the PARTS page ----
-const partsUI={kind:'exhaust',edit:{exhaust:null,intake:null,filter:null,cam:null,head:null,intercooler:null},timer:0};
+const partsUI={kind:'exhaust',edit:{exhaust:null,intake:null,filter:null,cam:null,head:null,turbo:null,intercooler:null},timer:0};
 const pv=id=>document.getElementById(id);
 const fittedPart=kind=>engine&&engine[PART_DEF[kind].field];
 // the ids of each kind's editor
@@ -23259,7 +23322,11 @@ const PART_UI={
   head:{reset:'phReset',box:'partsHead',list:'phList',from:'phFrom',neu:'phNew',save:'phSave',saveFit:'phSaveFit',guide:'phGuide',canvas:'phCanvas',legend:'phLegend',
     none:"No cylinder heads designed yet. Start from this engine's head with one of the factory springs below.",
     fields:['phName','phValve','phExValve','phThroat','phSeat','phRate'],
-    spec:p=>p.valveD_mm+' / '+p.exValveD_mm+' mm · '+tr('throat')+' '+p.throat+' · '+Math.round(p.seat_N)+' N, '+(+p.rate_Nmm).toFixed(1)+' N/mm'}
+    spec:p=>p.valveD_mm+' / '+p.exValveD_mm+' mm · '+tr('throat')+' '+p.throat+' · '+Math.round(p.seat_N)+' N, '+(+p.rate_Nmm).toFixed(1)+' N/mm'},
+  turbo:{reset:'pbReset',box:'partsTurbo',list:'pbList',from:'pbFrom',neu:'pbNew',save:'pbSave',saveFit:'pbSaveFit',guide:'pbGuide',canvas:'pbCanvas',legend:'pbLegend',
+    none:"No turbos designed yet. Start from this engine's turbo or one of the frames below.",
+    fields:['pbName','pbComp','pbTurb','pbAr'],
+    spec:p=>(+p.compD_mm).toFixed(1)+' / '+(+p.turbD_mm).toFixed(1)+' mm · A/R '+(+p.ar).toFixed(2)}
 };
 function renderParts(){
   const types=pv('partTypes');if(!types)return;
@@ -23293,6 +23360,10 @@ function partToEditor(kind,p){
     pv('pxName').value=p.name;pv('pxW').value=p.w;pv('pxH').value=p.h;pv('pxD').value=p.d;pv('pxFpi').value=p.fpi;pv('pxPipe').value=p.pipe_m;
     return;
   }
+  if(kind==='turbo'){
+    pv('pbName').value=p.name;pv('pbComp').value=+(+p.compD_mm).toFixed(1);pv('pbTurb').value=+(+p.turbD_mm).toFixed(1);pv('pbAr').value=+(+p.ar).toFixed(3);
+    return;
+  }
   if(kind==='head'){
     pv('phName').value=p.name;pv('phValve').value=p.valveD_mm;pv('phExValve').value=p.exValveD_mm;pv('phThroat').value=p.throat;pv('phSeat').value=p.seat_N;pv('phRate').value=p.rate_Nmm;
     return;
@@ -23321,6 +23392,12 @@ function partFromEditor(kind){
   const ed=partsUI.edit[kind],newName=tr(PART_DEF[kind].newName);
   if(kind==='intercooler')return normPart({kind,id:ed&&ed.id,name:pv('pxName').value.trim()||newName,w:pv('pxW').value,
     h:pv('pxH').value,d:pv('pxD').value,fpi:pv('pxFpi').value,pipe_m:pv('pxPipe').value});
+  if(kind==='turbo'){
+    // the editor shows the wheels to 0.1 mm and the A/R to 0.001: an unchanged field keeps the part's exact number
+    const keep=(id,k,d)=>{const v=pv(id).value;return ed&&ed[k]!=null&&+v===+(+ed[k]).toFixed(d)?ed[k]:v;};
+    return normPart({kind,id:ed&&ed.id,name:pv('pbName').value.trim()||newName,compD_mm:keep('pbComp','compD_mm',1),
+      turbD_mm:keep('pbTurb','turbD_mm',1),ar:keep('pbAr','ar',3)});
+  }
   if(kind==='head')return normPart({kind,id:ed&&ed.id,name:pv('phName').value.trim()||newName,valveD_mm:pv('phValve').value,exValveD_mm:pv('phExValve').value,
     throat:pv('phThroat').value,seat_N:pv('phSeat').value,rate_Nmm:pv('phRate').value});
   if(kind==='cam')return normPart({kind,id:ed&&ed.id,name:pv('pcName').value.trim()||newName,dur:pv('pcDur').value,
@@ -23342,7 +23419,7 @@ function partAction(a,id){
     partLib=partLib.filter(x=>x.id!==id);persistParts();
     const f=fittedPart(kind);
     if(f&&f.id===id){pv(D.select).value=engine[D.cls];fillPartSelects();buildEngine();
-      flash(tr(kind==='intake'?'PART DELETED: THE ENGINE HAS ITS FACTORY INTAKE':kind==='intercooler'?'PART DELETED: THE ENGINE HAS ITS FACTORY INTERCOOLER':kind==='cam'?'PART DELETED: THE ENGINE HAS ITS FACTORY CAM':kind==='head'?'PART DELETED: THE ENGINE HAS ITS FACTORY HEAD':kind==='filter'?'PART DELETED: THE ENGINE HAS ITS FACTORY AIR FILTER':'PART DELETED: THE ENGINE HAS ITS FACTORY EXHAUST'));}
+      flash(tr(kind==='intake'?'PART DELETED: THE ENGINE HAS ITS FACTORY INTAKE':kind==='intercooler'?'PART DELETED: THE ENGINE HAS ITS FACTORY INTERCOOLER':kind==='cam'?'PART DELETED: THE ENGINE HAS ITS FACTORY CAM':kind==='head'?'PART DELETED: THE ENGINE HAS ITS FACTORY HEAD':kind==='turbo'?'PART DELETED: THE ENGINE HAS ITS FACTORY TURBO':kind==='filter'?'PART DELETED: THE ENGINE HAS ITS FACTORY AIR FILTER':'PART DELETED: THE ENGINE HAS ITS FACTORY EXHAUST'));}
     else{fillPartSelects();flash(tr('PART DELETED'));}
     if(partsUI.edit[kind]&&partsUI.edit[kind].id===id)partsUI.edit[kind]=null;
     renderParts();
@@ -23383,6 +23460,7 @@ function previewPart(kind){
   if(kind==='cam')return previewCam();
   if(kind==='intercooler')return previewIc();
   if(kind==='head')return previewHead();
+  if(kind==='turbo')return previewTurbo();
   const p=partFromEditor('exhaust'),now=exhaustReport(engine.exhaustPart||engine.exhaust),r=exhaustReport(p);
   partsUI.last={kind,p,now,r};
   const turbo=engine.intake==='turbo',ported=!!engine.ports;
@@ -23504,6 +23582,28 @@ function previewHead(){
   pv('phGuide').innerHTML=lines.map(l=>'<div>'+l+'</div>').join('');
   drawPartCurves('head',now,r);
 }
+function previewTurbo(){
+  const p=partFromEditor('turbo'),now=turboReport(engine.turboPart||engine.turboSize),r=turboReport(p);
+  partsUI.last={kind:'turbo',p,now,r};
+  const lines=[];
+  lines.push(headline('With this turbo',r,now));
+  if(!r.turbo)lines.push(tr('This engine has no turbo: choose TURBO under INDUCTION on the ENGINE tab to fit one.'));
+  else{
+    const k=r.k,odd=k<0.75||k>1.1;
+    lines.push(tr('Compressor')+' <b>'+fmt(r.exd,1)+' mm</b>: '+tr('it chokes at')+' <b>'+fmt(r.cap,0)+' lb/min</b>'
+      +(r.units>1?' ('+r.units+' '+tr('turbos')+')':'')+'; '+tr('the engine asks')+' '+fmt(r.load*100,0)+'% '+tr('of it at peak power, at an efficiency of')+' '+fmt(r.eff*100,0)+'%.');
+    lines.push(tr('Turbine')+' <b>'+fmt(r.turbD,1)+' mm</b> = '+fmt(k,2)+' × '+tr('the compressor')
+      +' <span class="dim">('+tr('the factory frames: 0.90')+')</span>'+(odd?' <b class="warn">'+tr('far from the usual 0.8-1.0: check the pair')+'</b>':''));
+    lines.push(r.vgt?tr('The vanes set the throat on a VGT; the housing A/R is not used.')+' '+tr('Throat, vanes open')+': '+fmt(r.throat,1)+' cm²'
+      :tr('Housing A/R')+' '+fmt(r.ar,2)+': '+tr('throat')+' <b>'+fmt(r.throat,1)+' cm²</b> <span class="dim">('+tr('now')+' '+fmt(now.throat,1)+'; '+tr('a smaller throat spools sooner and chokes the top end')+')</span>');
+    lines.push(tr('95% of the boost from')+' <b>'+(r.fullRpm?Math.round(r.fullRpm/100)*100+' rpm':tr('never'))+'</b> <span class="dim">('+tr('now')+' '
+      +(now.fullRpm?Math.round(now.fullRpm/100)*100:tr('never'))+')</span>; '+tr('boost at peak power')+' '+fmt(r.boostPk,2)+' bar.');
+    lines.push(tr('Shaft inertia')+' '+fmt(r.J*1e7,0)+' g·cm² <span class="dim">('+tr('from the compressor alone')+')</span>; '+tr('the compressor wheel lets go at')+' '+Math.round(r.nMax/1000)+'k rpm.');
+  }
+  lines.push('<span class="dim">'+tr('How many turbos, the VGT, the boost and the wastegate stay on the ENGINE tab.')+'</span>');
+  pv('pbGuide').innerHTML=lines.map(l=>'<div>'+l+'</div>').join('');
+  drawPartCurves('turbo',now,r);
+}
 function drawPartCurves(kind,now,r){
   const U=PART_UI[kind],c=pv(U.canvas);if(!c)return;
   const w=c.clientWidth||480,h=c.clientHeight||200,dpr=window.devicePixelRatio||1;
@@ -23519,7 +23619,7 @@ function drawPartCurves(kind,now,r){
   line(now.pts,'tq',tqMax,'#4a8',true);line(now.pts,'hp',hpMax,'#c84',true);
   line(r.pts,'tq',tqMax,'#6fc',false);line(r.pts,'hp',hpMax,'#fa4',false);
   g.fillStyle='#fa4';g.fillText('hp',R+4,T+8);g.fillStyle='#6fc';g.fillText('Nm',4,T+8);
-  pv(U.legend).innerHTML='<span style="color:#fa4">━ '+esc(tr(kind==='intake'?'this intake':kind==='filter'?'this filter':kind==='cam'?'this cam':kind==='head'?'this head':kind==='intercooler'?'this intercooler':'this exhaust'))+'</span> <span style="color:#c84">┅ '+esc(tr('now'))+'</span>';
+  pv(U.legend).innerHTML='<span style="color:#fa4">━ '+esc(tr(kind==='intake'?'this intake':kind==='filter'?'this filter':kind==='cam'?'this cam':kind==='head'?'this head':kind==='turbo'?'this turbo':kind==='intercooler'?'this intercooler':'this exhaust'))+'</span> <span style="color:#c84">┅ '+esc(tr('now'))+'</span>';
 }
 function schedulePreview(){clearTimeout(partsUI.timer);partsUI.timer=setTimeout(()=>{if(vizMode==='parts')previewPart(partsUI.kind);},120);}
 function wireParts(){

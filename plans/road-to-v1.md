@@ -67,6 +67,9 @@ scoreboard holds (phase H)".
 2. Cylinder head and springs (2): retires `THROAT_RATIO` and the spring steps.
 3. Turbocharger (2): wheels, A/R, wastegate; retires `TURB_WHEEL` and `TURBO_CONFIG` multipliers. The largest named
    gaps live here (RS3 and EcoBoost low-rpm torque).
+   *Build 288:* the part (compressor and turbine wheels, housing A/R; `tests/test177.mjs`); no factory car moved. Next:
+   each turbo of a twin, sequential or compound layout its own wheel and shaft in place of `TURBO_CONFIG`'s flow
+   multiples, and the shaft's inertia from both wheels.
 4. Water-to-air and twin intercoolers, per car from published specs.
 5. Plenum, throttle and flywheel (2): retires `MAP_K`.
 6. Catalytic converter: find what the double count hides, then the part (2).
