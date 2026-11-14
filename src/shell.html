@@ -40,7 +40,7 @@
 </div>
 <div class="container">
 <header>
-<h1>PIXEL ENGINE SIM v0.7 build 285</h1>
+<h1>PIXEL ENGINE SIM v0.7 build 287</h1>
 <div class="subtitle" id="subtitle">ENGINE DESIGNER • BUILD IT, THEN DRIVE IT</div>
 </header>
 <div class="build-strip" id="buildStrip">
@@ -109,7 +109,7 @@
 <div class="field"><label for="edVVT">VARIABLE VALVE TIMING</label><select id="edVVT"><option value="no">NONE</option><option value="yes">VVT</option></select></div>
 <div class="field"><label>CAM OVERLAP</label><span class="val" id="valOverlap">—</span></div>
 <div class="field"><label for="edValveMat">VALVE MATERIAL</label><select id="edValveMat"><option value="steel">STEEL</option><option value="titanium">TITANIUM</option></select></div>
-<div class="field"><label for="edSpring">HEAD &amp; SPRINGS</label><select id="edSpring"><option value="stock">STOCK</option><option value="perf">PERFORMANCE</option><option value="race">RACE</option></select><input type="hidden" id="edSpringRpm" value="0"></div>
+<div class="field"><label for="edSpring">HEAD &amp; SPRINGS</label><select id="edSpring"><option value="stock">STOCK</option><option value="perf">PERFORMANCE</option><option value="race">RACE</option></select><input type="hidden" id="edSpringRpm" value="0"><input type="hidden" id="edValveSpec" value=""></div>
 <div class="field"><label>VALVE FLOAT</label><span class="val" id="valFloat">—</span></div>
 <div class="field"><label for="edEgr">EGR</label><select id="edEgr"><option value="none">NONE</option><option value="cooled">COOLED, OFF AT FULL LOAD</option><option value="cooled-full">COOLED, TO FULL LOAD</option></select></div>
 </div></section>
@@ -505,6 +505,7 @@
 <div class="design-grid">
 <div class="field"><label for="phName">NAME</label><input type="text" id="phName" maxlength="40"></div>
 <div class="field"><label for="phValve">INTAKE VALVE (mm)</label><input type="number" id="phValve" min="15" max="75" step="0.5"></div>
+<div class="field"><label for="phExValve">EXHAUST VALVE (mm)</label><input type="number" id="phExValve" min="12" max="65" step="0.5"></div>
 <div class="field"><label for="phThroat">PORT THROAT (× VALVE)</label><input type="number" id="phThroat" min="0.75" max="0.92" step="0.01"></div>
 <div class="field"><label for="phSeat">SPRING SEAT LOAD (N)</label><input type="number" id="phSeat" min="100" max="1500" step="10"></div>
 <div class="field"><label for="phRate">SPRING RATE (N/mm)</label><input type="number" id="phRate" min="10" max="200" step="1"></div>

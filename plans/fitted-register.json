@@ -32,8 +32,8 @@
    "id": "THROAT_RATIO",
    "file": "valvetrain.js",
    "match": "const THROAT_RATIO",
-   "standsFor": "port throat over valve head diameter, one value for every head",
-   "retiredBy": "the cylinder head part",
+   "standsFor": "port throat over valve head diameter, one value for every factory head (a designed head sets its own)",
+   "retiredBy": "each real car's own valves and ports, sourced",
    "phase": "B2",
    "state": "open"
   },
@@ -41,8 +41,8 @@
    "id": "EV_RATIO",
    "file": "gas-dynamics.js",
    "match": "const EV_RATIO",
-   "standsFor": "exhaust valve over intake valve diameter, one value for every head",
-   "retiredBy": "the cylinder head part",
+   "standsFor": "exhaust valve over intake valve diameter, one value for every factory head (a designed head sets its own)",
+   "retiredBy": "each real car's own valves and ports, sourced",
    "phase": "B2",
    "state": "open"
   },

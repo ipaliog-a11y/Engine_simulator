@@ -45,7 +45,8 @@ function readEngineFromForm(){
     afrMode:g('edAfrMode').value,
     radiator:g('edRadiator').value,
     radHp:Math.max(0,+g('edRadHp').value||0),   // what a STOCK radiator was sized for (build 219)
-    springRpm:Math.max(0,Math.round(+g('edSpringRpm').value||0)),   // the redline the STOCK springs were sized for (build 234)
+    springRpm:Math.max(0,Math.round(+g('edSpringRpm').value||0)),
+    ivValve_mm:0,evValve_mm:0,   // a real engine's own valves (build 287), read below   // the redline the STOCK springs were sized for (build 234)
     fan:g('edFan').value,
     oilCooler:g('edOilCooler').value==='yes',
     thermostat:clamp(Math.round(+g('edThermostat').value||88),71,95),
@@ -54,6 +55,10 @@ function readEngineFromForm(){
   Object.assign(e,partsFromForm());   // the factory exhaust and runners, or designed ones (builds 205, 206)
   if(type==='electric')Object.assign(e,readElectricFromForm());   // the motor and battery (build 179)
   else{const hm=g('edHybrid')&&g('edHybrid').value;if(hm&&hm!=='none'){e.hyMode=hm;e.hyDeploy=HYBRID_DEPLOY[g('edHyDeploy').value]?g('edHyDeploy').value:'full';e.hyTune=readHybTuneFromForm();if(g('edHyPlug').value==='yes')e.hyPlug=true;Object.assign(e,readElectricFromForm());}}   // a hybrid system (build 186), its tune (192)
+  // A real engine's own valve sizes travel with the bore and the valve count they were measured on: 'iv/ev@bore x valves'.
+  // Change either on the form and the head is no longer that maker's, so the packing rule sizes the valves again.
+  {const m=/^([\d.]+)\/([\d.]+)@([\d.]+)x(\d)$/.exec(g('edValveSpec').value||'');
+   if(m&&Math.abs(+m[3]-e.bore_mm)<1e-6&&+m[4]===e.valves){e.ivValve_mm=+m[1];e.evValve_mm=+m[2];}}
   return e;
 }
 function applyEngineToForm(e){
@@ -74,6 +79,7 @@ function applyEngineToForm(e){
   g('edCam').value=e.cam||'stock';g('edEgr').value=e.egr||'none';g('edVVT').value=e.vvt?'yes':'no';
   g('edValves').value=String(e.valves||4);g('edValvetrain').value=VALVETRAIN[e.valvetrain]?e.valvetrain:valvetrainDefault(e.valves);g('edValveMat').value=e.valveMat||'steel';
   g('edSpring').value=e.valveSpring||'stock';g('edSpringRpm').value=e.springRpm||0;
+  g('edValveSpec').value=e.ivValve_mm>0&&e.evValve_mm>0?e.ivValve_mm+'/'+e.evValve_mm+'@'+e.bore_mm+'x'+(e.valves||4):'';
   g('edFuel').value=e.fuel||'gasoline';
   partsToForm(e);g('edCat').value=e.cat||'stock';g('edOctane').value=e.octane;g('edInjector').value=e.injector;
   g('edIgnAdv').value=e.ignitionAdv;g('edIgnType').value=e.ignitionType;g('edTiming').value=e.timingMode||'fixed';g('edAfrMode').value=e.afrMode||'fixed';

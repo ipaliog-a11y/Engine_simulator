@@ -109,7 +109,7 @@ function wallShareAt(rpm){
 // Heat to the exhaust port, as a share of the heat released. Caton & Heywood (Int. J. Heat Mass
 // Transfer 24, 1981) measured it on a running engine and fitted Nu = 0.0483 Re^0.783, with Re on the
 // mean flow while the valve is open. Port size from the head's own valves: exhaust valve heads 0.83 of
-// the intake (the usual design ratio, Heywood ch. 5), the port bore its throat (THROAT_RATIO), and the
+// the intake (the usual design ratio, Heywood ch. 5; a designed head's own since build 286), the port bore its throat (THROAT_RATIO), and the
 // port one bore long, valve seat to manifold face. The gas is at the temperature the balance before
 // this term gives it; properties are air's (Sutherland viscosity, Pr 0.7), which the products are close
 // to at these temperatures.
@@ -117,7 +117,7 @@ const EV_RATIO=0.83;
 function portLossShare(n,lam,f0){
   const e=engine;
   if(!e.ivDia_mm)return 0;
-  const nEx=Math.max(1,(e.valves||4)-e.ivCount), D=(e.throatRatio||THROAT_RATIO)*EV_RATIO*e.ivDia_mm/1000, L=e.bore_mm/1000;
+  const nEx=Math.max(1,(e.valves||4)-e.ivCount), D=(e.evOwn?(e.throatRatio||THROAT_RATIO)*e.evDia_mm:(e.throatRatio||THROAT_RATIO)*EV_RATIO*e.ivDia_mm)/1000, L=e.bore_mm/1000;
   const st=e.stoichAFR||14.7, afr=st*Math.max(1,lam);
   const rho=(1+(e.intake==='na'?0:(e.boost_bar||0)))*1e5/(287*313);
   const air=rho*(e.dispCyl_L/1000)*refFill(n)*n/60*(e.chargesPerRev||0.5);   // kg/s per cylinder
