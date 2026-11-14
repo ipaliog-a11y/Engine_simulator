@@ -507,13 +507,16 @@ function motorMaxTorque(m,rpm,Vdc,tMag=60){
     const best=g=>{if(pt(g,I).V<=V)return pt(g,I).T;
       let hi=I,lo=-1;for(let k=1;k<=12;k++){const i=I*(1-k/12);if(pt(g,i).V<=V&&i>0){lo=i;break;}hi=i;}
       if(lo<0)return 0;
-      for(let k=0;k<14;k++){const i=(lo+hi)/2;if(pt(g,i).V<=V)lo=i;else hi=i;}
+      for(let k=0;k<22;k++){const i=(lo+hi)/2;if(pt(g,i).V<=V)lo=i;else hi=i;}
       return pt(g,lo).T;};
-    const g0=o.g,g1=Math.PI/2,n=24;let bi=0,bT=-1;
-    for(let k=0;k<=n;k++){const t=best(g0+(g1-g0)*k/n);if(t>bT){bT=t;bi=k;}}
-    const st=(g1-g0)/n;
-    for(let k=-4;k<=4;k++){const g=g0+st*(bi+k/4);if(g<g0||g>g1)continue;const t=best(g);if(t>bT)bT=t;}
-    T=Math.max(0,bT);
+    // the best angle: a sweep finds its neighbourhood (where the voltage allows no current the torque is flat at zero),
+    // then a golden section within a step either side, so the answer moves smoothly with the speed and the voltage
+    const g0=o.g,g1=Math.PI/2,n=24,st=(g1-g0)/n;let bi=0,bT=-1;
+    for(let k=0;k<=n;k++){const t=best(g0+st*k);if(t>bT){bT=t;bi=k;}}
+    let a=g0+st*Math.max(0,bi-1),b=g0+st*Math.min(n,bi+1);const r=0.618034;
+    let x1=b-r*(b-a),x2=a+r*(b-a),f1=best(x1),f2=best(x2);
+    for(let k=0;k<20;k++){if(f1<f2){a=x1;x1=x2;f1=f2;x2=a+r*(b-a);f2=best(x2);}else{b=x2;x2=x1;f2=f1;x1=b-r*(b-a);f1=best(x1);}}
+    T=Math.max(0,f1,f2,bT);
   }
   memoSet(dq.cache,Vdc,tMag,rpm,undefined,T);
   return T;

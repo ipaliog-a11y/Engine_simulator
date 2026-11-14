@@ -62,8 +62,8 @@ const f = (x, d = 2) => (+x).toFixed(d), pct = (a, b) => (a / b - 1) * 100;
 // for) charges the 2ZR-FXE more: 96 -> 89 hp, and the Prius's cycle 4.21 -> 4.51 L/100 km. A known gap, named in the
 // CHANGELOG, until a modern ring factor is sourced; build 243's figures are the floor, so nothing may make them worse.
 // Build 245 took its alternator off (a DC-DC converter from the pack): the floors are tightened to it.
-// Build 294 raised the Prius 4.33 -> 4.45 in the open (its MG2's field weakening, derived; see test117 and the CHANGELOG).
-const KNOWN_GAP_243 = { hp: 90, prius: 4.45 };
+// Build 294 raised the Prius 4.33 -> 4.46 in the open (its MG2's field weakening, derived; see test117 and the CHANGELOG).
+const KNOWN_GAP_243 = { hp: 90, prius: 4.46 };
 console.log(`== the ECU's EGR at 3000 rpm, 20/40/50/70/90/100% load: ${r.sched.map(x => f(x * 100, 0) + '%').join(' / ')}; the Kappa's at 70% and full load ${f(r.kappa.mid * 100, 0)}% / ${f(r.kappa.full * 100, 0)}% ==`);
 const [s20, s40, s50, s70, s90, s100] = r.sched;
 if (s20 !== 0) fails.push('EGR at light load, where the burn cannot take it');

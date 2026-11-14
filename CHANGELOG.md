@@ -44,9 +44,9 @@ current and the iron's 80/20 split were constants set on the Model 3. They are g
   (14,000 rpm), so its declutch speed and matched reduction follow its own top speed (`motorTopRpm`).
 - **Named gaps, left open:** the Model 3 makes 481 Nm at its measured 953 A against MotorXP's 430 (+12%; it was 444):
   the rotor's hub and ribs taken as ideal iron and the V's angle are the likeliest causes. Past the knee the power
-  rises: the Leaf peaks at 113 kW (80 rated), the hybrids' motors at 114 / 69 / 194 / 107 kW against 32 / 53 / 140 / 80
+  rises: the Leaf peaks at 113 kW (80 rated), the hybrids' motors at 114 / 70 / 195 / 108 kW against 32 / 53 / 140 / 80
   (the packs cap them in the car). The Leaf's best between 5000 and 9000 rpm is 95.4% (ORNL >97%). The Prius burns
-  4.29 → 4.44 L/100 km (Toyota 4.14): its MG2 runs far past its knee at speed, where the derived weakening takes more
+  4.29 → 4.46 L/100 km (Toyota 4.14): its MG2 runs far past its knee at speed, where the derived weakening takes more
   current and the teeth keep their peak flux. Each is a cap in `test96`, `test117` and `test119` that may only shrink.
 - **Tests:** `test179` (new); `test96`, `test98` (the default motor's winding peaks 151 °C on the short lap, cut 0.8%),
   `test112`, `test117`, `test119`, `test136` and `test139` re-locked in the open; `test166` 41 → 38. The guide's motor

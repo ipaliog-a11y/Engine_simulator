@@ -37,7 +37,7 @@
 // and the hybrids' turns (Ioniq 33 → 30, Prius 103 → 92, Qashqai 26 → 23, 330e 55 → 50). Model 3 knee 6437 → 6627,
 // continuous 266 → 259 kW, hold 19 → 37 s, 119.72 → 117.56 Wh/km; Model Y 544 → 549 Nm, 141.39 → 139.63 Wh/km; Plaid
 // 1441 → 1519 Nm, 802 → 794 kW, 165.7 → 160.22 Wh/km. Past the knee a magnet motor's power now rises as its current
-// turns to the d-axis: the hybrids' motors' peaks 86 → 114 kW (Ioniq), 53 → 69 (Prius), 143 → 194 (Qashqai), 80 → 107
+// turns to the d-axis: the hybrids' motors' peaks 86 → 114 kW (Ioniq), 53 → 70 (Prius), 143 → 195 (Qashqai), 80 → 108
 // (330e) against their published 32, 53, 140 and 80 (a named gap in the CHANGELOG; the pack caps them in the car).
 // The tail motor's knee 3422 → 1784 rpm.
 import { chromium } from './pw.mjs';
@@ -67,7 +67,7 @@ const CARS = {
     motors: 2, massM: 98.3, massP: 424.84, R: 0.05256, Vnom: 352.93, p50: 377316, p10: 294578,
     whkm: 139.63, wall: 164.27, regen: 56.39, range: 502.8, fd: 9.03, drive: 'awd',
     t100: 4.48, t60: 4.31, top: 217, cg: 0.66,
-    pts: { 1000: 548.77, 7140: 476.04, 14280: 239.73, 18000: 186.9 }
+    pts: { 1000: 548.77, 7140: 476.04, 14280: 239.73, 18000: 189.18 }
   },
   Plaid: {
     peakKW: 794, peakTQ: 1519, knee: 5591, contKW: 708, holdS: 12, best: 0.978, kWkg: 4.8, redline: 20000,
@@ -78,14 +78,14 @@ const CARS = {
   }
 };
 const HYB = {
-  'Ioniq': { mode: 'p2', tq: 168.5, kW: 113.68, packKW: 32.33, packR: 0.27024, front: 0 },
-  'Prius': { mode: 'ps', tq: 163.05, kW: 69.01, packKW: 29.91, packR: 0.27166, front: 0 },
-  'Qashqai': { mode: 'series', tq: 325.17, kW: 194.14, packKW: 43.52, packR: 0.45169, front: 0 },
-  '330e': { mode: 'p2', tq: 262.94, kW: 106.8, packKW: 101.51, packR: 0.18635, front: 0 },
-  '918': { mode: 'p2', tq: 247.55, kW: 160.06, packKW: 140.92, packR: 0.16371, front: 221.6 }
+  'Ioniq': { mode: 'p2', tq: 168.5, kW: 114.36, packKW: 32.33, packR: 0.27024, front: 0 },
+  'Prius': { mode: 'ps', tq: 163.05, kW: 69.67, packKW: 29.91, packR: 0.27166, front: 0 },
+  'Qashqai': { mode: 'series', tq: 325.17, kW: 194.8, packKW: 43.52, packR: 0.45169, front: 0 },
+  '330e': { mode: 'p2', tq: 262.94, kW: 108.09, packKW: 101.51, packR: 0.18635, front: 0 },
+  '918': { mode: 'p2', tq: 247.55, kW: 160.09, packKW: 140.92, packR: 0.16371, front: 221.6 }
 };
 // A sleeve, 4-pole, SiC motor that revs past 4× its knee (build 294: from the d and q axes, no rectangle).
-const TAIL = { knee: 1784, nMax: 40000, p1: 30616, p2: 34085, p4: 32740, p5: 30865, p6: 30752 };
+const TAIL = { knee: 1784, nMax: 40000, p1: 30616, p2: 34085, p4: 33995, p5: 33421, p6: 32899 };
 
 const r = await page.evaluate(() => {
   const cars = [];
