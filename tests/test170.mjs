@@ -63,7 +63,9 @@ await browser.close();
 // differentials were honest); build 319 closed it by holding the anti-lock at the peak slip (absSlip 1, Bosch).
 // Build 326 (phase G4) opened one: with camber thrust the FK8 strays 4.05 m (3.9 m before); the driver takes the lap's
 // speeds and doesn't judge the car's own grip. Closes with that driver.
-const OFF_KNOWN = { 'Honda Civic Type R (FK8, 2017)': 4.1 };
+// Build 328 (phase G5, the owner's ruling) widened it: with roll and compliance steer the FK8 strays 4.3 m and the GT3
+// 5.0 m (4.0 and 3.9 before); the GT3's loaded rears toe out of the turn by the fleet's oversteer compliance. Same cure.
+const OFF_KNOWN = { 'Honda Civic Type R (FK8, 2017)': 4.4, 'Porsche 911 GT3 (991.2, 2017)': 5.1 };
 console.log('car                        flying lap / solver       furthest off the line   most sideways');
 for (const c of R.cars) {
   const e = 100 * (c.lap / c.solver - 1);

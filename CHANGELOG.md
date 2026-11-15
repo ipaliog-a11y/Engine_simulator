@@ -18,6 +18,18 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 ## [Unreleased]
 
+### Roll steer and compliance steer in the stepped car (build 328)
+
+Phase G5 of `plans/driving-sim.md`. Nothing in the app reads `stepCar` yet; the lap, 0–100, dyno and race fingerprint is identical (5208 values).
+
+- **Each wheel now steers a little** by the body's roll and by its own side force (`s.toe`). The figures are the middles of the measured ranges in "Summary of typical vehicle parameter measurements" (ResearchGate 329552571), the same for every car: roll steer front 0.05, rear 0.035 deg/deg (understeer); compliance steer front 0.19 deg/kN (understeer), rear −0.10 deg/kN (oversteer). `vehicle.rollSteerF/R` and `compSteerF/R` override them.
+- **ISO 4138, constant radius (40 m), Civic Type R:** understeer 1.63 deg/g with no front compliance, 2.42 at the default, 3.31 at twice it; `car.Kus` (now including the toe) rises by the same steps. The summary's fleet measures 0.7–8.2 deg/g.
+- **The test driver** steers for the front wheels' own angle on the road, adding back the toe it reads from the state.
+- **`test170`'s known gaps grow, on the owner's ruling:** the FK8 strays 4.3 m off the line (4.0 before) and the 911 GT3 5.0 m (3.9). The driver takes the lap's speeds and doesn't judge the car's own grip; the gap closes with that driver. Lap times move under 0.3%.
+- **Left open:** ESP still judges a spin by the rear slip angle. Judged by the yaw rate alone, it braked the MX-5 on 30% of a hot lap (31% without the toe) and the Mustang on 26% (28%), the MX-5's lap 93.0 s against 83.1 s; the likely cause is the reference's phase lead in transients (Bosch's own reference has a lag). No figures by suspension type were found published; aligning-torque compliance steer (front 0.4–1.6 deg/100 Nm in the same summary) and bump steer are not modelled.
+
+Tests: test203 (new), test170 (updated); 168, 173, 174, 175, 190, 196–199, 201.
+
 ### The bench holds its speed at any frame rate (build 327)
 
 - **What was wrong.** On LIVE and DYNO the RPM jumped constantly on a slow screen. The dyno brake pulls `brakeGain` Nm
