@@ -34,7 +34,7 @@
 //             up or lock.
 //   Drive     the engine's full-load curve by the pedal, its own overrun torque off it, its inertia, a clutch that
 //             slips (capacity 1.5 x peak torque), the gearbox with its shift time, the differential (open: equal
-//             torque; limited-slip: torque moved to the slower wheel by its lock), all-wheel drive with its two axles turning together.
+//             torque; limited-slip: friction plates, a viscous coupling or a spool, each by its own law: diffCoupling), all-wheel drive with its two axles turning together.
 //   Stall     below the speed it can fire at, the engine stops; a starter or a bump start brings it back.
 //   Brakes    the hydraulics' own force and front share; ABS and traction control as wheel-slip limits when fitted.
 //   Aids      the ECU's calibration of ABS, traction control and stability control, as a tune (build 281). See DRIVE_AIDS.
@@ -95,7 +95,7 @@ function driveCar(){
     loadSens:LOAD_SENS,muX:TYRE_MU_X,cc,ccP2:TYRE_CC_P2,slipOpt:TYRE_SLIP_OPT,slipC:TYRE_SLIP_C,relax:v.rTire,
     cdA:v.cdA,clA:v.clA||0,aeroBal:v.aeroBal==null?0.5:v.aeroBal,crr:v.crr,
     lltdF:v.lltdF==null?v.fWt:v.lltdF,tauLoad:1/(2*Math.PI*ride),
-    drive:el&&el.front?(v.driveMech==='fwd'?'fwd':'rwd'):v.drive,centre:v.drive==='awd'&&!(el&&el.front),lock:(v.df&&v.df.lock)||0,ratios:(v.ratios||[1]).slice(),fd:v.finalDrive||1,eff:v.driveEff||0.9,
+    drive:el&&el.front?(v.driveMech==='fwd'?'fwd':'rwd'):v.drive,centre:v.drive==='awd'&&!(el&&el.front),diff:diffCoupling(v.df),ratios:(v.ratios||[1]).slice(),fd:v.finalDrive||1,eff:v.driveEff||0.9,
     shiftTime:v.shiftCut||0,ev:!!v.ev||!!pt.direct,tc:!!aids.tc,abs:!!aids.abs,
     rpm:curve.map(p=>p.rpm),tq:curve.map(p=>p.tq),ov:pt.overrunTable(rl),idle:pt.idleRpm()||0,redline:rl,
     Ie:pt.inertia()||0.15,clutchCap:1.5*peak,
@@ -533,7 +533,6 @@ function stepCar(car,s,u,dt){
     for(let ax=0;ax<2;ax++){
       const i=ax*2,j=i+1,driven=drv[i];
       let Ti=(driven?Tw/nd:0)+(ax===0?Ff*car.r/2:0),Tj=Ti;
-      if(driven&&car.lock>0){const Tc=Math.max(-car.clutchCap*car.fd,Math.min(car.clutchCap*car.fd,car.lock*300*(s.w[i]-s.w[j])));Ti-=Tc;Tj+=Tc;}
       const share=ax===0?car.brakeFront:1-car.brakeFront;
       for(const [q,Tq] of [[i,Ti],[j,Tj]]){
         if(car.abs){const vl=Math.abs(s.vx);s.abs[q]=Math.max(0.05,Math.min(1,s.abs[q]+((s.kappa[q]<-car.slipOpt*car.aids.absSlip[ax]&&vl>2)?-car.aids.absRel:car.aids.absApp)*h));}
@@ -546,6 +545,17 @@ function stepCar(car,s,u,dt){
         s.w[q]=wq;
       }
     }
+    // The axle's differential (build 317), after the wheels have moved, as the centre coupling below: the torque that
+    // would bring the two wheels to one speed in this step (Karnopp's stick condition), taken from the faster wheel and
+    // given to the slower. A spool always passes it; a friction pack passes it up to its capacity, preload + lock x the
+    // axle's input torque (the ramp's statics, the same on drive and coast: a 2-way), and slides at that; a viscous
+    // coupling passes c x dw, taken implicitly so that any c is stable. See diffCoupling.
+    if(car.diff.type!=='open')for(let ax=0;ax<2;ax++){const i=ax*2,j=i+1;if(!drv[i])continue;
+      const Ii=car.Iw+h*car.r*dF[i],Ij=car.Iw+h*car.r*dF[j],dw=s.w[i]-s.w[j],k=h*(1/Ii+1/Ij),D=car.diff;
+      let Tc=dw/k;
+      if(D.type==='fric'){const cap=D.pre+D.L*Math.abs(Tw)*2/nd;Tc=Math.max(-cap,Math.min(cap,Tc));}
+      else if(D.type==='visc')Tc=D.c*dw/(1+D.c*k);
+      s.w[i]-=h*Tc/Ii;s.w[j]+=h*Tc/Ij;}
     // All-wheel drive: the centre coupling. The two axles turn together (a locked centre differential, or a clutch
     // pack closed on the first slip), so the torque goes to the axle that can use it: exactly the torque that
     // leaves the two axles' mean speeds equal after this step, taken from the faster and given to the slower. It

@@ -696,6 +696,28 @@ function diffSpec(p){
   return {label:'CLUTCH-PLATE LSD',part:true,lock:L,preload:p.preload_Nm,tbr:L>=1?Infinity:(1+L)/(1-L),corner,cost:DIFF.clsd.cost,
     traction:Math.min(1,2*(0.5-DIFF_ASYM0)/(1-L))};   // the readout's figure: a standing start, no preload
 }
+// The factory clutch-plate LSD in the stepped car (build 317): a road car's, by its locking ratio, (T_fast - T_slow)
+// over the input torque, which is the ramp's lock L. Porsche quotes 37% on overrun for the manual 911 GT3 (991.2; press
+// kit, engine and transmission); owners' notes on older GT3s give 28-40% (PROBABLE). Taken the same on drive and coast.
+// Preload 60 N m: the PARTS page's road starting point (PROBABLE).
+const DIFF_CLSD_ROAD={pre:60,L:0.37};
+// A viscous coupling (build 317): interleaved plates shearing a silicone fluid. A Newtonian film between two annuli
+// carries T = pi·mu·dw·(rO^4 - rI^4)/(2·gap), and 2·pairs - 1 films act in parallel, so the coupling is a rate c (N m
+// per rad/s). Fluid 60,000 cSt dimethyl silicone and 24 plate pairs: the working example of US patent 5,597,369
+// (transfer case with a viscous coupling). Gap 0.3 mm (0.2-0.5 quoted for these units) and plates 70-110 mm across:
+// PROBABLE. c = 110 N m s. Left out: the fluid thins under shear (PDMS above ~100 1/s), heats, and "humps" (the plates
+// touch and lock) on a long slip, so at large dw the real coupling carries less, then suddenly more.
+const DIFF_VCU={nu:0.06,rho:975,rO:0.055,rI:0.035,gap:0.3e-3,pairs:24};
+function diffVcuRate(p){return (2*p.pairs-1)*Math.PI*p.nu*p.rho*(Math.pow(p.rO,4)-Math.pow(p.rI,4))/(2*p.gap);}
+// How the stepped car couples an axle's two wheels: open (none), a friction pack (Coulomb: it holds the wheels together
+// up to preload + lock·|input torque|, then slips at that), a viscous coupling (c·dw), or a spool (always together).
+function diffCoupling(df){
+  if(!df||df===DIFF.open||!(df.lock>0))return {type:'open'};
+  if(df.lock>=1)return {type:'spool'};
+  if(df.part)return {type:'fric',pre:df.preload,L:df.lock};
+  if(df===DIFF.visc)return {type:'visc',c:diffVcuRate(DIFF_VCU)};
+  return {type:'fric',pre:DIFF_CLSD_ROAD.pre,L:DIFF_CLSD_ROAD.L};
+}
 // Cornering-only form, kept for the lap solver's readability.
 function lapDiffTraction(df,aLat,cgH){return diffTractionAt(df,aLat,cgH,1);}
 // Share of the ENGINE's weight on the front axle, from where it sits: a front-engined car carries it
