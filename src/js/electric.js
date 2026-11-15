@@ -333,13 +333,14 @@ function statorFrom(Bpk,phi,ts,h,Lfe,bT,bY){
 // on a large rotor).
 const RETENTION={bridges:{label:'IRON BRIDGES',vTip:150,cost:0},sleeve:{label:'CARBON SLEEVE',vTip:220,cost:450}};
 // Cooling: the heat path from the stator to the coolant. h is the coolant side (W/m²K) over the stator's outside, with
-// the stator-housing contact 2e-4 m²K/W in series; spray and slot cooling also take heat straight off the copper
-// (wind, W/m²K over the end windings or the slot walls) and the rotor (rotor, over its bore). Coolant temperature (C).
+// the stator-housing contact in series (CONTACT_GAP); a jacket's is derived (jacketG). Spray and slot cooling keep the
+// jacket and also take heat straight off the copper (wind, W/m²K over the end windings or the slot walls) and the rotor
+// (rotor, over its bore). Coolant temperature (C). Air's h, and spray and slot's wind and rotor, are still typical (open).
 const MOTOR_COOLING={
   air:   {label:'AIR (FINNED)',h:60,  wind:0,   rotor:0,  tCool:40,cost:0},
-  jacket:{label:'WATER JACKET',h:1200,wind:0,   rotor:0,  tCool:65,cost:120},
-  spray: {label:'OIL SPRAY',   h:1200,wind:900, rotor:400,tCool:70,cost:350},
-  slot:  {label:'DIRECT SLOT', h:1200,wind:2500,rotor:400,tCool:70,cost:900,inSlot:true}
+  jacket:{label:'WATER JACKET',jacket:true,wind:0,rotor:0,tCool:65,cost:120},
+  spray: {label:'OIL SPRAY',   jacket:true,wind:900, rotor:400,tCool:70,cost:350},
+  slot:  {label:'DIRECT SLOT', jacket:true,wind:2500,rotor:400,tCool:70,cost:900,inSlot:true}
 };
 // Inverters: silicon IGBTs (a 0.8 V conduction knee plus a resistance, switching at 10 kHz) or silicon-carbide MOSFETs
 // (no knee, run at 16 kHz). tSw is the switching energy per event over the volts and amps switched (s): an 820 A
@@ -349,6 +350,39 @@ const INVERTER={
   igbt:{label:'SILICON IGBT',v0:0.8,r:0.0009,tSw:0.23e-6,fSw:10e3,costA:6},
   sic: {label:'SiC MOSFET',  v0:0,  r:0.0016,tSw:0.05e-6,fSw:16e3,costA:11}
 };
+// The water jacket (build 315): a helical channel cast in the aluminium housing round the stack, carrying 50/50
+// water-glycol at 65 C (ASHRAE Handbook Fundamentals 2017 ch. 31: rho 1050 kg/m3, cp 3500 J/kgK, k 0.40 W/mK,
+// mu 1.4 mPa s). The film from Gnielinski (Int. Chem. Eng. 16, 1976; 3000 < Re < 5e6), laminar Nu 4.36 below Re 2300
+// (Incropera ch. 8), linear between. Channel 10 x 6 mm, ribs 3 mm, wall 4 mm of cast aluminium (150 W/mK), 8 L/min:
+// PROBABLE, a typical traction jacket (no maker publishes theirs). The ribs count as fins, efficiency tanh(mL)/mL.
+const JACKET={w:0.010,d:0.006,rib:0.003,wall:0.004,kAl:150,flow:8/60000,rho:1050,cp:3500,k:0.40,mu:1.4e-3};
+// Laminations shrunk into a housing touch it imperfectly: Staton, Boglietti & Cavagnino (IEEE Trans. Energy Conv. 20,
+// 2005, Table III) measured an equivalent air film of 0.01 mm under a cast aluminium housing. Air at 350 K: k 0.030 W/mK,
+// nu 2.09e-5 m²/s (Incropera Table A.4).
+const CONTACT_GAP=1e-5, K_AIR=0.030, NU_AIR=2.09e-5, R_CONTACT=CONTACT_GAP/K_AIR;
+function jacketFilm(J){
+  const A=J.w*J.d,Dh=2*A/(J.w+J.d),Re=J.rho*(J.flow/A)*Dh/J.mu,Pr=J.mu*J.cp/J.k;
+  const gn=r=>{const f=(0.79*Math.log(r)-1.64)**-2;return f/8*(r-1000)*Pr/(1+12.7*Math.sqrt(f/8)*(Pr**(2/3)-1));};
+  const Nu=Re<=2300?4.36:Re>=3000?gn(Re):4.36+(gn(3000)-4.36)*(Re-2300)/700;
+  return {Re,Nu,h:Nu*J.k/Dh};
+}
+// The core to the coolant (W/K) over the stack: the contact, the housing's wall, the channel's film on its finned wall.
+function jacketG(OD,L){
+  const J=JACKET,h=jacketFilm(J).h,mL=Math.sqrt(2*h/(J.kAl*J.rib))*J.d,eta=Math.tanh(mL)/mL;
+  const Do=OD+2*J.wall,wet=Math.PI*Do*L*(J.w+2*J.d*eta)/(J.w+J.rib);
+  return 1/(R_CONTACT/(Math.PI*OD*L)+Math.log(Do/OD)/(2*Math.PI*J.kAl*L)+1/(h*wet));
+}
+// The air gap (build 315): Taylor-Couette flow between the turning rotor and the stator. Becker & Kaye (J. Heat
+// Transfer 84, 1962) measured Nu = h 2g/k against Ta = w² rm g³/nu²: 2 below 1700 (conduction), 0.128 Ta^0.367 to 1e4,
+// 0.409 Ta^0.241 above. The rotor's own bore adds what spray puts on it (GrcR). W/K at a speed (rpm).
+function gapH(D,g,rpm){
+  const w=(rpm||0)*Math.PI/30,Ta=w*w*(D+g)/2*g**3/NU_AIR**2;
+  return (Ta<1700?2:Ta<1e4?0.128*Ta**0.367:0.409*Ta**0.241)*K_AIR/(2*g);
+}
+function motorGrc(m,rpm){
+  if(m.parts)return m.parts.reduce((x,q)=>x+q.n*motorGrc(q.m,rpm),0);
+  return gapH(m.D,m.gap,rpm)*Math.PI*m.D*m.L+m.GrcR;
+}
 const ACTIVE_TO_MOTOR=1.6;   // housing, shaft, bearings and end caps over the active copper, iron and magnets
 // ---- the induction motor (build 182, step 2.5a) ----
 // No magnets: the stator's own current magnetises the rotor (the d-axis, Im), and the torque current (Iq) induces the
@@ -438,12 +472,12 @@ function motorBuild(s){
           strand:dStrand,cuLayers,Jpk:6*N*s.invAmps/Acu,   // the slot copper's current density at full current (A/m²)
           nTip,nFreq,nMax,Imax,cost,Qr,Rr20,mCage,ImR,vDrop,
           // thermal network (W/K, J/K): winding -> core through the slot liner (0.2 W/mK, 0.4 mm over the slot walls),
-          // core -> coolant through the housing, rotor -> core across the gap (h ~ 100), and the direct paths
+          // core -> coolant through the housing, rotor -> core across the gap (motorGrc, with the speed), and the direct paths
           Gwc:0.2*(2*hSlot*L*slots)/0.0004,
-          Gcc:Math.PI*OD*L/(1/cool.h+2e-4),
+          Gcc:cool.jacket?jacketG(OD,L):Math.PI*OD*L/(1/cool.h+R_CONTACT),
           // (spray reaches the end windings, ~50 mm out each side; slot cooling also runs along every slot wall)
           Gwk:cool.wind*(Math.PI*(Ds+hSlot)*2*0.05+(cool.inSlot?2*hSlot*L*slots:0)),
-          Grc:100*Math.PI*D*L+cool.rotor*Math.PI*Dsh*L,
+          GrcR:cool.rotor*Math.PI*Dsh*L,
           Cw:cond.cp*mCu, Cc:460*mFeS+900*0.5*mFeS, Cr:460*mRotor,
           mTeeth:RHO_FE*slots*wt*hSlot*Lfe, ts, gap:im?IM_GAP:GAP};
   // a magnet motor's flux linkage at no current is the loaded circuit's at zero current (build 302)
@@ -617,9 +651,12 @@ function rotorIronLoss(m,rpm,Bg2){
 // Losses at an operating point (W): torque T (Nm, negative when regenerating), speed (rpm), bus voltage, and the node
 // temperatures {w,r}. Copper and inverter follow the current; the stator's iron, its teeth and its yoke each at their own
 // peak flux density at the point (build 302), so weakening the field lowers it; the rotor's, the slot ripple's.
+// The speed rides along (L.rpm) for the air gap's heat path.
 function motorLosses(m,T,rpm,Vdc,temp){
-  if(m.parts)return motorSetLosses(m,T,rpm,Vdc,temp);
-  if(m.im)return imLosses(m,T,rpm,Vdc,temp);
+  const L=m.parts?motorSetLosses(m,T,rpm,Vdc,temp):m.im?imLosses(m,T,rpm,Vdc,temp):pmLosses(m,T,rpm,Vdc,temp);
+  L.rpm=rpm;return L;
+}
+function pmLosses(m,T,rpm,Vdc,temp){
   const q=motorOp(m,T,rpm,Vdc,temp.r),I=q.I,w=rpm*Math.PI/30;
   const cu=3*I*I*motorR(m,temp.w)*copperAC(m,rpm,temp.w);
   const f=m.p*rpm/60,feS=feLoss(m,f,q.Bt)*m.mTeeth+feLoss(m,f,q.By)*(m.mFeS-m.mTeeth),feR=rotorIronLoss(m,rpm,q.Bg2);
@@ -647,7 +684,7 @@ function motorSet(parts){
   return Object.assign({},a,{parts,count:parts.reduce((x,q)=>x+q.n,0),
     mag:Object.assign({},a.mag,{Tmax}),nMax:Math.min(...parts.map(q=>q.m.nMax)),
     J:sum('J'),mass:sum('mass'),cost:sum('cost'),mCu:sum('mCu'),mMag:sum('mMag'),mCage:sum('mCage'),mFeS:sum('mFeS'),mFeR:sum('mFeR'),
-    Gwc:sum('Gwc'),Gcc:sum('Gcc'),Gwk:sum('Gwk'),Grc:sum('Grc'),Cw:sum('Cw'),Cc:sum('Cc'),Cr:sum('Cr')});
+    Gwc:sum('Gwc'),Gcc:sum('Gcc'),Gwk:sum('Gwk'),Cw:sum('Cw'),Cc:sum('Cc'),Cr:sum('Cr')});
 }
 // The split: the front group's share of the torque from nothing to all it can give, in tenths and at its share of
 // the capacity, whichever loses least; the rest is the rear's. Each group's motors share theirs equally.
@@ -689,9 +726,9 @@ function motorEfficiency(m,T,rpm,Vdc,temp={w:90,r:70}){
 // (rcu) is the rotor's.
 const feSplit=L=>L.feS!==undefined?[L.feS,L.feR]:[0.8*L.fe,0.2*L.fe];
 function motorHeatStep(m,temp,L,dt){
-  const tc=m.cool.tCool,ns=Math.max(1,Math.ceil(dt/0.5)),h=dt/ns;   // explicit steps well inside the fastest node's time constant
+  const tc=m.cool.tCool,ns=Math.max(1,Math.ceil(dt/0.5)),h=dt/ns,Grc=motorGrc(m,L.rpm);   // explicit steps well inside the fastest node's time constant
   for(let k=0;k<ns;k++){
-    const qWC=m.Gwc*(temp.w-temp.c),qWK=m.Gwk*(temp.w-tc),qCK=m.Gcc*(temp.c-tc),qRC=m.Grc*(temp.r-temp.c);
+    const qWC=m.Gwc*(temp.w-temp.c),qWK=m.Gwk*(temp.w-tc),qCK=m.Gcc*(temp.c-tc),qRC=Grc*(temp.r-temp.c);
     temp.w+=(L.cu-qWC-qWK)/m.Cw*h;
     const [fS,fR]=feSplit(L);
     temp.c+=(fS+L.mech+qWC+qRC-qCK)/m.Cc*h;
@@ -707,12 +744,12 @@ function motorHeatStep(m,temp,L,dt){
 // rises with its temperature, so the copper loss feeds itself: where that gain reaches one there is no steady state at
 // all (thermal runaway), and the point cannot be held however long it is waited for. That returns Infinity.
 function motorSteadyTemps(m,T,rpm,Vdc){
-  const tc=m.cool.tCool,a=m.Gwc/(m.Gwc+m.Gwk);
+  const tc=m.cool.tCool,a=m.Gwc/(m.Gwc+m.Gwk),Grc=motorGrc(m,rpm);
   let temp={w:tc,c:tc,r:tc};
   for(let k=0;k<60;k++){
     const L=motorLosses(m,T,rpm,Vdc,temp);
     const rc=L.rcu||0,Tc=tc+(L.fe+L.mech+a*L.cu+rc)/(m.Gcc+a*m.Gwk);
-    const next={w:(L.cu+m.Gwc*Tc+m.Gwk*tc)/(m.Gwc+m.Gwk),c:Tc,r:Tc+(feSplit(L)[1]+rc)/m.Grc};
+    const next={w:(L.cu+m.Gwc*Tc+m.Gwk*tc)/(m.Gwc+m.Gwk),c:Tc,r:Tc+(feSplit(L)[1]+rc)/Grc};
     if(!(next.w<1000)||!(next.r<2000))return {w:Infinity,c:Infinity,r:Infinity};
     if(Math.abs(next.w-temp.w)<1e-3){temp=next;break;}
     temp=next;

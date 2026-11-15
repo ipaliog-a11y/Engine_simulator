@@ -18,6 +18,23 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 ## [Unreleased]
 
+### The motor's cooling from heat-transfer correlations (build 315)
+
+Phase C step 3 of `plans/road-to-v1.md`, the motor's cooling first (owner's choice). `MOTOR_COOLING` narrowed, still open.
+
+- **Water jacket:** was 1200 W/m²K over the stator. Now a helical channel in the housing (10 × 6 mm, 3 mm ribs, 8 L/min
+  of 50/50 glycol at 65 °C; size and flow PROBABLE): Gnielinski gives Re 12,500 and a 6,400 W/m²K film, the ribs act as fins.
+- **Stator-housing contact:** was 2e-4 m²K/W. Now 0.01 mm of air (3.3e-4), measured under a cast aluminium housing
+  (Staton, Boglietti & Cavagnino, IEEE TEC 2005). It now dominates: the core-to-coolant path is 2.2× the old one.
+- **Air gap:** was 100 W/m²K. Now Becker & Kaye's Taylor-Couette Nusselt number with the speed: 43 W/m²K at rest,
+  ~125 at 10,000 rpm on the Model 3's gap.
+- **Spray and slot** keep the jacket (all three shared the 1200 before), so better cooling still runs cooler (test96).
+- **What moved:** no lap time, 0-100, cycle or dyno. The fingerprint moves only the three Teslas' drive score and lap
+  hash (the motor's temperatures along the lap). Continuous power: Model 3 253 → 282 kW, Model Y 314 → 336, Plaid 699 → 750, Prius 49 → 61, Qashqai 144 → 180,
+  Ioniq 69 → 114, 330e 98 → 107, 918 103 → 132. Peak hold: Qashqai 148 → 278 s, Prius 105 → 125 s, Model Y 82 → 102 s.
+- **Open:** oil spray's and slot cooling's coefficients (no measured source found yet), air cooling's fins, the coolant
+  temperatures, the jacket's channel per real motor; `MOTOR.mech` and `PACK.thermal` are the next builds.
+
 ### The motor's stator diameter as a part (build 314)
 
 Phase C of `plans/road-to-v1.md`: `MOTOR.statorShape` retired (`plans/fitted-register.json`: 34 → 33 open).

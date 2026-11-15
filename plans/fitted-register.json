@@ -230,8 +230,8 @@
    "id": "MOTOR_COOLING",
    "file": "electric.js",
    "match": "const MOTOR_COOLING",
-   "standsFor": "the heat transfer coefficients of each cooling type (60 to 2500 W/m2K), the air gap's 100, the housing's contact resistance, the slot liner, the 50 mm the spray reaches, and the coolant temperatures",
-   "retiredBy": "channel-flow correlations on a jacket's passages and flow, the air gap's Taylor-Couette Nusselt number, cited measurements for oil spray and slot cooling",
+   "standsFor": "air cooling's 60 W/m2K, the oil's 900 and 2500 on the copper and 400 on the rotor's bore, the slot liner, the 50 mm the spray reaches, and the coolant temperatures (build 315: the jacket from Gnielinski on a PROBABLE channel and flow, the contact from Staton et al., the air gap from Becker & Kaye)",
+   "retiredBy": "cited measurements for oil spray and slot cooling; finned convection for air; the jacket's channel and flow from a teardown",
    "phase": "C",
    "state": "open"
   },
