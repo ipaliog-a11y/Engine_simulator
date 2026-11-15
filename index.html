@@ -810,7 +810,7 @@ body.guided-open{overflow:hidden}
 </div>
 <div class="container">
 <header>
-<h1>PIXEL ENGINE SIM v0.7 build 321</h1>
+<h1>PIXEL ENGINE SIM v0.7 build 322</h1>
 <div class="subtitle" id="subtitle">ENGINE DESIGNER • BUILD IT, THEN DRIVE IT</div>
 </header>
 <div class="build-strip" id="buildStrip">
@@ -9752,7 +9752,10 @@ function buildEngineCore(prevStoich,quiet){
   // Catalytic converter: conversion efficiency, and its brick as a porous plug in the exhaust (backPressureBar). It is
   // ALSO still taken off the charge as a fitted ramp to the redline (up to 5% for a stock cat), which counts it twice.
   // Taking that out (build 244 tried) lifts nearly every factory engine 5-6%, so it has been holding down an error
-  // elsewhere; it is left for the audit of fitted parts, named, rather than removed blind.
+  // elsewhere. Build 322 found it: without the ramp torque lands (-2.1 -> +0.5% mean) and only the top end runs high,
+  // so it stands in for a loss growing with flow; ~14 kPa more back-pressure at the peak puts it back (signed power
+  // -1.4 -> +0.9%). The silencer's back-pressure is not modelled (parts.js), so the ramp goes with the cat part and
+  // the silencer's loss together, in one build.
   const catp=CAT[engine.cat]||CAT.stock;
   engine.catConv=catp.conv;engine.catRestrict=catp.restrict;
   engine.catRampTop=catp.restrict;
