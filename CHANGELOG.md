@@ -18,6 +18,47 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 ## [Unreleased]
 
+### The catalyst and silencer, derived, read below a measured exhaust: held (build 324)
+
+Phase B, step 6, second build: an investigation only. No physics ships; the code is build 322's, so the fingerprint is
+unchanged. `catRampTop` stays open.
+
+Built and measured, then held with the owner's agreement:
+- **The cat as a brick**: 400 cpsi / 6.5 mil cordierite, its volume equal to the displacement (Concawe's test cars carry
+  ~1–1.9×; patents US 11377993 and family prefer ≥1; unsure), 150 mm long; laminar flow in square cells (Shah & London,
+  Darcy fRe 56.9, Hagenbach 1.43), channel entry and exit, and the cones. At the power peak it drops 7–10 kPa
+  (NA) where the fitted plug gave 22–32 kPa.
+- **The silencer as an equivalent pipe loss** (Watanabe et al., Honda R&D Technical Review 13-1): a chambered box as two
+  Borda–Carnot expansions and contractions, 3 velocity heads (1–5 kPa); straight-through, its tube's friction; none, 0.
+- **With `catRampTop` removed**, against the 98 real engines: power −1.4 → +4.9% signed, abs 6.7 → 9.0%, within 10%
+  82 → 67; torque −2.5 → +0.6%. With Munjal, Vijayasree & Chaitanya's measured ~16 heads for one perforated cross-flow
+  element as the chambered silencer: +4.1%, 70 within 10%.
+- **It fails a measured figure.** A stock system reads 4–8 psi (0.28–0.55 bar) at full throttle (test46's source);
+  the derived system gives 0.197 bar (today 0.334). Five real engines would peak at the limiter (test60) and a
+  wastegated turbo's exhaust would sit below its boost (test58).
+
+So the textbook element losses read too low on real systems: the loss the ramp stands in for is not found at those
+values. Left open: measured back-pressure of factory silencers and whole systems (for example Neihguk, Munjal et al.,
+SAE 2017, a production muffler measured on a vehicle across flow and temperature), and the gas temperature at the
+silencer, which the model takes at the port.
+
+What a search for measured silencer data found (none of it a primary measurement of a factory silencer):
+- **The share points at the silencer, not the cat.** A ScienceDirect topic page (not verified: it refuses automated
+  reads) gives modern car mufflers ~16 kPa, the cat ~30% of a system's loss, and muffler plus resonator 50–60% after a
+  turbo. On a stock system of 28–55 kPa that is 8–16 kPa for the cat (derived: 7–10, about right) and 14–33 kPa for the
+  silencer (derived: 1–5). In this model's velocity heads (1.2–1.8 kPa) the silencer would be ~10–20 heads, not 3.
+- **Measured per-element losses span 1 to 16 heads by design**: under 1 for a three-pass double-reversal muffler
+  (Munjal & Krishna, SAE 2013-26-0106), ~16 for one perforated cross-flow element at 7% porosity (Munjal, Vijayasree &
+  Chaitanya, IJEMS 20, 2013; the head's reference pipe not confirmed).
+- **The source that would settle it** is Neihguk, Munjal, Ram & Prasad, SAE Int. J. Veh. Dyn. 1(2), 2017: a production
+  2.2 L muffler's back-pressure measured on the vehicle across flow and temperature. It is behind SAE's paywall.
+- The 4–8 psi band test46 holds is itself a repair site's figure (AA1Car), and a trade article gives ~6 psi as the
+  full-throttle limit; neither has data behind it.
+
+Also found: the factory exhaust classes map a road car's `race` header
+to no silencer (the map in `parts.js`), which is wrong for road-legal cars once the silencer carries a loss. test49
+fails on `main` too (NaN vane blockage); unrelated to this build.
+
 ### The steering torque at the hand wheel in the stepped car (build 323)
 
 - Phase G2 of `plans/driving-sim.md`. `stepCar` now gives `s.steerTorque` (Nm): each front tyre's side force acting
