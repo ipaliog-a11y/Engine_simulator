@@ -6,27 +6,27 @@
    "file": "fuels-engine-types.js",
    "match": "ampMul:",
    "standsFor": "a cam grade's airflow bonus; since build 260 only on rotary and two-stroke engines (a valved engine's estimates read its own integrated filling)",
-   "retiredBy": "ports as geometry",
+   "retiredBy": "kept: a rule until after v1.0 (owner's decision, build 319: phase B simplified); after v1.0: ports as geometry",
    "phase": "B7",
-   "state": "open"
+   "state": "rule"
   },
   {
    "id": "CAM.loWiden",
    "file": "fuels-engine-types.js",
    "match": "loWiden:",
    "standsFor": "how a hotter cam narrows the low side of the VE bell; the bell is only on rotary and two-stroke engines",
-   "retiredBy": "ports as geometry",
+   "retiredBy": "kept: a rule until after v1.0 (owner's decision, build 319: phase B simplified); after v1.0: ports as geometry",
    "phase": "B7",
-   "state": "open"
+   "state": "rule"
   },
   {
    "id": "CAM.idleRpm",
    "file": "fuels-engine-types.js",
    "match": "idleRpm:",
    "standsFor": "idle speed added per cam grade",
-   "retiredBy": "idle from overlap and residuals. Tried in build 260: Fox, Cheng & Heywood's residual correlation (SAE 931025) with a 30% dilution limit gave 1400 rpm on SPORT and no stable idle on RACE, because the model idles at 0.15 bar of manifold pressure (real 0.3-0.4) and the correlation is outside its range past ~40 deg of overlap. Needs combustion that weakens with dilution first.",
+   "retiredBy": "kept: a rule until after v1.0 (owner's decision, build 319: phase B simplified); after v1.0: idle from overlap and residuals. Tried in build 260: Fox, Cheng & Heywood's residual correlation (SAE 931025) with a 30% dilution limit gave 1400 rpm on SPORT and no stable idle on RACE, because the model idles at 0.15 bar of manifold pressure (real 0.3-0.4) and the correlation is outside its range past ~40 deg of overlap. Needs combustion that weakens with dilution first.",
    "phase": "B1",
-   "state": "open"
+   "state": "rule"
   },
   {
    "id": "THROAT_RATIO",
@@ -51,36 +51,36 @@
    "file": "engine-constants-boost.js",
    "match": "const TURB_WHEEL",
    "standsFor": "turbine wheel as a share of the compressor exducer, one value for every factory turbo (a designed turbo sets its own, build 288)",
-   "retiredBy": "each real car's own turbine wheel, sourced, or the owner's sign-off as a rule",
+   "retiredBy": "kept: a rule until after v1.0 (owner's decision, build 319: phase B simplified); after v1.0: each real car's own turbine wheel, sourced, or the owner's sign-off as a rule",
    "phase": "B3",
-   "state": "open"
+   "state": "rule"
   },
   {
    "id": "SC_TYPE",
    "file": "engine-constants-boost.js",
    "match": "const SC_TYPE",
    "standsFor": "a supercharger's boost against rpm and its drive load as curves",
-   "retiredBy": "a supercharger part (displacement, pulley ratio, adiabatic efficiency)",
+   "retiredBy": "kept: a rule until after v1.0 (owner's decision, build 319: phase B simplified); after v1.0: a supercharger part (displacement, pulley ratio, adiabatic efficiency)",
    "phase": "B3",
-   "state": "open"
+   "state": "rule"
   },
   {
    "id": "VANE_R2/VANE_H",
    "file": "gas-dynamics.js",
    "match": "const VANE_R2",
    "standsFor": "a VGT ring's radius and nozzle height as shares of the wheel",
-   "retiredBy": "the turbocharger part",
+   "retiredBy": "kept: a rule until after v1.0 (owner's decision, build 319: phase B simplified); after v1.0: the turbocharger part",
    "phase": "B3",
-   "state": "open"
+   "state": "rule"
   },
   {
    "id": "plenum volume",
    "file": "engine-constants-boost.js",
    "match": "function mapRateK",
    "standsFor": "the plenum taken as the engine's displacement, for every engine",
-   "retiredBy": "the plenum as a dimension of the intake part",
+   "retiredBy": "kept: a rule until after v1.0 (owner's decision, build 319: phase B simplified); after v1.0: the plenum as a dimension of the intake part",
    "phase": "B5",
-   "state": "open"
+   "state": "rule"
   },
   {
    "id": "catRampTop",
@@ -96,18 +96,18 @@
    "file": "engine-physics.js",
    "match": "engine.veBell",
    "standsFor": "the VE bell of rotary and two-stroke engines",
-   "retiredBy": "ports as geometry (timing and area), integrated like the poppet engines' intake stroke",
+   "retiredBy": "kept: a rule until after v1.0 (owner's decision, build 319: phase B simplified); after v1.0: ports as geometry (timing and area), integrated like the poppet engines' intake stroke",
    "phase": "B7",
-   "state": "open"
+   "state": "rule"
   },
   {
    "id": "typeImep",
    "file": "engine-build.js",
    "match": "engine.typeImep",
    "standsFor": "work per charge of a rotary and a two-stroke as a factor (0.70 / 0.60)",
-   "retiredBy": "the ported engines' own cycle (trapping, short-circuiting, the slow rotary burn)",
+   "retiredBy": "kept: a rule until after v1.0 (owner's decision, build 319: phase B simplified); after v1.0: the ported engines' own cycle (trapping, short-circuiting, the slow rotary burn)",
    "phase": "B7",
-   "state": "open"
+   "state": "rule"
   },
   {
    "id": "AERO_FRONT/REAR",
@@ -330,9 +330,9 @@
    "file": "engine-options-presets.js",
    "match": "const INTAKE_SYS",
    "standsFor": "each induction system's fuel-metering efficiency and the idle speed it adds",
-   "retiredBy": "mixture spread between cylinders from the system's layout; idle with the cam's (CAM.idleRpm)",
+   "retiredBy": "kept: a rule until after v1.0 (owner's decision, build 319: phase B simplified); after v1.0: mixture spread between cylinders from the system's layout; idle with the cam's (CAM.idleRpm)",
    "phase": "B5",
-   "state": "open"
+   "state": "rule"
   },
   {
    "id": "TYRE_CC",
