@@ -1189,6 +1189,15 @@ function engineOff(){state.ignOn=false;state.crank=0;}
 function stepEngine(dt){
   if(isElectric())return stepMotorBench(dt);
   if(isHybrid())return stepHybridBench(dt);   // the motor, the pack and the controller with the engine (build 190)
+  // The dyno brake is a stiff spring on the speed: brakeGain Nm per rpm over the hold target, against the engine's
+  // inertia. One explicit step of h takes brakeGain*(30/pi)/inertia*h of the overshoot out; past 2 the speed is thrown
+  // further each step than it was, and the RPM jumps for good. At 60 frames a second that figure is 1.1-2.0, so the
+  // bench was steady only there: at 30 frames an RS3 swung 660 rpm, an MX-5 1700 (build 324). Steps no longer than
+  // inertia/(brakeGain*30/pi) take the overshoot out exactly once, at any frame rate.
+  const hMax=engine.inertia/Math.max(1e-9,engine.brakeGain*30/Math.PI),n=Math.min(40,Math.max(1,Math.ceil(dt/hMax-1e-9)));
+  for(let i=0;i<n;i++)stepEngineOnce(dt/n);
+}
+function stepEngineOnce(dt){
   stepBoost(dt);
   state.map+=(mapTarget()-state.map)*(1-Math.exp(-mapRateK(state.rpm)*dt));
   if(state.nitrousActive){   // deplete the bottle while spraying at WOT (~14 s per fill)
