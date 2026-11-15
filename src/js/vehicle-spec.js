@@ -126,7 +126,7 @@ function readVehicleFromForm(){
     // The driver aids' calibration (build 282), read by the stepped car (DRIVE_AIDS, src/js/drive-model.js): the slip
     // ABS releases at per axle and the traction control's target, as multiples of the tyre's peak slip; how far the
     // rear tyres may slide before the stability control works, as a multiple of the slip angle they peak at.
-    aids:{abs:g('vhAbs').value!=='off',absSlip:[clamp(numOr(g('vhAbsF').value,1.3),1,3),clamp(numOr(g('vhAbsR').value,1.3),1,3)],
+    aids:{abs:g('vhAbs').value!=='off',absSlip:[clamp(numOr(g('vhAbsF').value,DRIVE_AIDS.absSlip[0]),1,3),clamp(numOr(g('vhAbsR').value,DRIVE_AIDS.absSlip[1]),1,3)],
       tcSlip:clamp(numOr(g('vhTcSlip').value,1),0.5,3),esp:g('vhEsp').value!=='off',espSlide:clamp(numOr(g('vhEspSlide').value,1),1,3),espCut:g('vhEspCut').value!=='off'},
     // Gear spacing (build 169): CLOSE / STANDARD / WIDE, STOCK (a real car's own box) or CUSTOM. The hand-set ratios
     // and a hand-set final drive (0 = matched to the engine) live beside the form, like the body.

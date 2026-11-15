@@ -56,6 +56,7 @@ const DRIVE_G=9.81, DRIVE_RHO=1.20;
 //   ABS       a wheel's brake is released while it slips more than absSlip x the tyre's peak slip [front, rear], at
 //             absRel of its pressure a second, and reapplied at absApp. (Bosch Automotive Handbook, "Antilock braking
 //             system": the controller cycles the pressure to hold the slip about the peak of the friction curve.)
+//             So absSlip is 1, the peak itself (build 319; it was 1.3, unsourced, from build 264).
 //   TC        the throttle is closed while the worst driven wheel slips more than tcSlip x the peak, by tcGain a
 //             second for a slip twice the target.
 //   ESP       van Zanten, Erhardt and Pfaff, "VDC, the vehicle dynamics control system of Bosch" (SAE 950759):
@@ -71,7 +72,7 @@ const DRIVE_G=9.81, DRIVE_RHO=1.20;
 //             publishes its own).
 // Which cars have what: traction control is the preset's (vehicle.tc). No preset says yet whether a car had ABS or
 // ESP: ABS is taken as fitted, and ESP as fitted where traction control is (it works through the same hardware).
-const DRIVE_AIDS={abs:true,absSlip:[1.3,1.3],absRel:25,absApp:12,tcSlip:1,tcGain:12,
+const DRIVE_AIDS={abs:true,absSlip:[1,1],absRel:25,absApp:12,tcSlip:1,tcGain:12,
   esp:null,espBand:3*Math.PI/180,espTau:0.2,espBeta:null,espCut:true,espVmin:4};
 function driveAids(v){const A=Object.assign({},DRIVE_AIDS,v.aids||{});A.absSlip=[].concat(A.absSlip).slice(0,2);if(A.absSlip.length<2)A.absSlip[1]=A.absSlip[0];
   if(A.tc==null)A.tc=!!v.tc;if(A.esp==null)A.esp=A.tc;return A;}
