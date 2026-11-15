@@ -18,6 +18,16 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 ## [Unreleased]
 
+### Five more real engines get their own valves (build 330)
+
+Phase B, step 2 (`plans/road-to-v1.md`), done the way build 287 did it: one sourced engine at a time, so only that engine's cars move.
+
+- **Added to `ENGINE_VALVES`** (intake / exhaust, mm): Chrysler 6.4 Hemi 54.36 / 41.91 (Dodge Garage's Gen III HEMI reference, 2.14 / 1.65 in); BMW S14 37 / 32; Honda B18C 33 / 28; Nissan RB26DETT 34.6 / 30.15; Honda K20C1 35 / 29. The last four are standard-size replacement valves (TRW, SuperTech, Ferrea, Brian Crower, Manley, GSC, Skunk2), marked (std).
+- **Peak power against the published figure, rule → own valves:** Grand Cherokee SRT 483 → 510 hp (+2.8% → +8.5%, 470 published); Integra Type R 179 → 182 (−10.5% → −9.0%); M3 E30 213, Skyline R34 388, Civic FK8 303: unchanged (their real valves are within 0.6–1.5 mm of the rule's). Mean error of the five 13.2% → 14.0%, worse, all from the Hemi; the rule had happened to sit closer.
+- **Held back, their sizes in the code beside the table:** GM LS7 (GM: 2.20 / 1.61 in) would go from +8.3% to +15.6% over its 505 hp, the LS3's pattern (build 287): its cam and intake want a review first. GM LT4 (GM parts: 2.13 / 1.59 in): its preset gives no valve count, so it runs as a four-valve head; that wants fixing first, apart from this build.
+- **`test176`** now checks that every listed engine reaches the engine of that name with its sizes, so a misspelt key cannot leave it on the rule unnoticed.
+- **Left open:** `THROAT_RATIO` (0.85) cannot be retired by sourcing. No maker publishes a factory port's throat diameter for any of the 93 real engines; only aftermarket flow-bench figures for ported heads exist. It stays open in the register, and wants the owner's sign-off as a rule (Heywood ch. 5: throats at 0.8–0.9 of the valve). `EV_RATIO` and the packing rule stay for the ~80 engines still without sourced valves, including the LS3, LS7, LT4 and Coyote held back.
+
 ### Lift-off and braking in a turn, checked (build 329)
 
 Phase G8 of `plans/driving-sim.md`: a test only (`test204`), no physics changed; the lap, 0–100, dyno and race fingerprint is identical.
