@@ -41,7 +41,7 @@
 //   Aero      drag and downforce on the square of the speed; rolling resistance by the load.
 //   Steering  the torque the front tyres put on the hand wheel, s.steerTorque (phase G2): see DRIVE_CASTER.
 //   Camber    each wheel's lean on the road, from its static camber and the body's roll less what the linkage recovers,
-//             s.camber (phase G4): the tyre's grip by it, as the lap has it, and its camber thrust. See driveCamber.
+//             s.camber (phase G4), and its camber thrust. See THE CAMBER.
 //
 //   Turbo     the shaft in time (build 274): its energy rises by the turbine's power less the compressor's and the
 //             bearings', and the boost it has built sets the torque. See driveTurbo.
@@ -149,8 +149,8 @@ function driveCar(){
     steerLock:8.5/(v.steerRatio||15),       // 2.7 turns of the hand wheel lock to lock (probable), through the ratio
     // the steering's feel (build 323, phase G2): the front tyres' vertical rate for their contact length, and the caster trail
     steerRatio:v.steerRatio||15,ktF:quarterCar(v,'F').kt,ktR:quarterCar(v,'R').kt,casterTrail:v.rTire*Math.tan((v.caster==null?DRIVE_CASTER:v.caster)*Math.PI/180),
-    // the camber (phase G4): static (rad) and the share of the roll recovered, each axle; see DRIVE_CAMBER
-    camber:DRIVE_CAMBER,camF:(v.camberF!=null?v.camberF:v.camber||0)*Math.PI/180,camR:(v.camberR!=null?v.camberR:v.camber||0)*Math.PI/180,
+    // the camber (phase G4): static (rad) and the share of the roll recovered, each axle; see THE CAMBER
+    camF:(v.camberF!=null?v.camberF:v.camber||0)*Math.PI/180,camR:(v.camberR!=null?v.camberR:v.camber||0)*Math.PI/180,
     recF:v.camRecF!=null?v.camRecF:CAMBER_RECOVERY,recR:v.camRecR!=null?v.camRecR:CAMBER_RECOVERY
   };
 }
@@ -341,11 +341,7 @@ function driveLerp(xs,ys,x){
 // THE CAMBER (phase G4). Each wheel leans on the road by its static camber (vehicle.camberF/R, the kit's alignment;
 // 0 on a solid axle) and by the body's roll less the share its linkage recovers (vehicle.camRecF/R: (t/2)/fvsa by
 // the axle's type, SUSP_GEO, Milliken & Milliken RCVD ch. 17). These are the lap's own inputs (latCamberF).
-// gam is the lean to the left (rad), top of the wheel towards +y. Two effects, both in driveTyre:
-//   grip   the lap's law: the lateral grip falls by CAMBER_LOSS a degree either side of CAMBER_BEST, the camber taken
-//          into the turn (negative when the wheel leans towards the force it makes), both wheels of an axle by the lean of
-//          its more loaded one, as latCamberF has it. (Each wheel by its own lean, the inside one too, cost 2-8% of the
-//          skidpad grip against the lap's, and the test driver, who takes the lap's speeds, left the line: test170.)
+// gam is the lean to the left (rad), top of the wheel towards +y, s.camber.
 //   thrust a leaning tyre pushes towards its lean. In the brush model the tread base of a cambered wheel runs on a curve
 //          of curvature sin(gam)/R through the contact patch, so the tread on a straight track deflects by
 //          (a^2-x^2) sin(gam)/(2R): Fy = (2/3) c_p a^3 gam / R, against the cornering stiffness 2 c_p a^2. So the camber
@@ -354,19 +350,20 @@ function driveLerp(xs,ys,x){
 //          and like the slip it builds over the relaxation length as the wheel rolls (none at rest).
 //          The brush model has no carcass, and no measured camber stiffness for a radial road tyre was found to set it
 //          against: PROBABLE. About 0.11 of C on a road tyre (a 0.1 m, R 0.31 m).
-// Left out, named: camber by heave and pitch (no heave state), and the camber's own aligning moment.
-const DRIVE_CAMBER={loss:CAMBER_LOSS,best:CAMBER_BEST*Math.PI/180};
+// Left out, named: the grip by camber. The lap's law (latCamberF: CAMBER_LOSS a degree off CAMBER_BEST, by the axle's
+// outside wheel) cost the stepped car 1-6% of its skidpad grip, and the test driver, who takes the lap's speeds, then
+// left the line by up to 7.8 m and slid the Model 3 to 31 degrees (test170); it waits for a driver that judges the
+// car's own grip. Also camber by heave and pitch (no heave state), and the camber's own aligning moment.
 // A wheel's contact half length (m): the tyre as a circle of radius r pressed flat by Fz/kt (see DRIVE_CASTER).
 function drivePatch(r,kt,Fz){if(!(kt>0))return 0;const d=Math.min(r,Math.max(0,Fz)/kt);return Math.sqrt(Math.max(0,2*r*d-d*d));}
-// One tyre: the force along and across the wheel (N) for a load Fz, a slip ratio and a slip angle (rad); with gam (the
-// lean to the left, rad, that sets its grip) and tg (the camber's equivalent slip, tan, as relaxed), its camber as well (DRIVE_CAMBER).
+// One tyre: the force along and across the wheel (N) for a load Fz, a slip ratio and a slip angle (rad), and tg, its
+// camber's equivalent slip (tan, as relaxed: see THE CAMBER).
 // Returns [Fl, Ft, s, dFl/dkappa]: s is the share of the grip in use (1 = sliding all over the contact patch).
-function driveTyre(car,Fz,kappa,alpha,front,gam,tg){
+function driveTyre(car,Fz,kappa,alpha,front,tg){
   if(!(Fz>1))return [0,0,0,0];
-  const ref=front?car.FzRefF:car.FzRef,mu0=(front?car.muF:car.mu)*Math.pow(Math.max(200,Fz)/ref,-car.loadSens),muX=car.muX*mu0;
+  const ref=front?car.FzRefF:car.FzRef,muY=(front?car.muF:car.mu)*Math.pow(Math.max(200,Fz)/ref,-car.loadSens),muX=car.muX*muY;
   const xz=Fz/ref,Ca=car.cc*Fz*(car.ccP2+1)/(car.ccP2+xz*xz),Ck=3*muX*Fz/car.slipOpt;                 // the longitudinal peak sits at slipOpt, as the launch has it
-  let ty=Math.tan(alpha),muY=mu0;
-  if(gam!=null){ty+=tg||0;const C=car.camber;muY*=1-C.loss*Math.abs(-gam*(Math.sign(ty)||1)-C.best)*180/Math.PI;}
+  const ty=Math.tan(alpha)+(tg||0);
   const sx=Ck*kappa/(3*muX*Fz),sy=Ca*ty/(3*muY*Fz),s=Math.hypot(sx,sy);
   if(s<1e-9)return [0,0,0,Ck];
   let f;
@@ -521,12 +518,11 @@ function stepCar(car,s,u,dt){
       const kap=(s.w[i]*car.r-vl)/den,alp=-Math.atan2(vt,Math.max(Math.abs(vl),0.5));
       s.al[i]+=(alp-s.al[i])*Math.min(1,Math.abs(vl)*h/car.relax);          // the side force builds over the relaxation length
       // the wheel's lean to the left: static camber, its top towards the car's middle, and the roll less what is recovered
-      const ah=drivePatch(car.r,front?car.ktF:car.ktR,Fz[i]),lean=j=>(j%2?-1:1)*(front?car.camF:car.camR)-s.roll*(1-(front?car.recF:car.recR));
-      let gam=null;
-      if(car.camber){gam=lean(i);if(!s.cg){s.cg=[0,0,0,0];s.camber=[0,0,0,0];}s.camber[i]=gam;
-        s.cg[i]+=(ah/(3*car.r)*Math.sin(gam)-s.cg[i])*Math.min(1,Math.abs(vl)*h/car.relax);}   // its thrust builds as the slip does
-      const o=Fz[i^1]>Fz[i]?i^1:i;   // the axle's more loaded wheel sets its grip by camber
-      const T=driveTyre(car,Fz[i],kap,s.al[i],front,gam==null?null:lean(o),gam!=null?s.cg[i]:0);
+      const ah=drivePatch(car.r,front?car.ktF:car.ktR,Fz[i]);let tg=0;
+      if(car.camF!=null){const gam=(i%2?-1:1)*(front?car.camF:car.camR)-s.roll*(1-(front?car.recF:car.recR));
+        if(!s.cg){s.cg=[0,0,0,0];s.camber=[0,0,0,0];}s.camber[i]=gam;
+        tg=s.cg[i]+=(ah/(3*car.r)*Math.sin(gam)-s.cg[i])*Math.min(1,Math.abs(vl)*h/car.relax);}   // its thrust builds as the slip does
+      const T=driveTyre(car,Fz[i],kap,s.al[i],front,tg);
       Fl[i]=T[0];dF[i]=T[3]*car.r/den;s.kappa[i]=kap;s.alpha[i]=s.al[i];
       const fx=front?T[0]*cd-T[1]*sd:T[0],fy=front?T[0]*sd+T[1]*cd:T[1];
       s.Fx[i]=fx;s.Fy[i]=fy;FX+=fx;FY+=fy;MZ+=xw[i]*fy-yw[i]*fx;
