@@ -18,6 +18,23 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 ## [Unreleased]
 
+### The steering torque at the hand wheel in the stepped car (build 323)
+
+- Phase G2 of `plans/driving-sim.md`. `stepCar` now gives `s.steerTorque` (Nm): each front tyre's side force acting
+  behind the steering axis, Mz = −Fy·(t + n), through the steering ratio. Nothing else reads it yet, so the
+  fingerprint is identical.
+- The pneumatic trail t is the brush model's own closed form (Pacejka ch. 3), using the same model the tyre forces
+  already use: a/3 at no slip and nothing in a full slide. So the torque peaks well before the side force does, and the steering
+  goes light at the limit. The contact half-length a comes from the tyre's deflection under load, using the quarter car's
+  existing tyre rate (≈0.10 m and t ≈ 33 mm at 4 kN on a 205/55R16; probable).
+- Caster trail n = r·tan(caster). No preset has a caster angle from an alignment sheet yet, so every car takes 5°
+  (road cars run 3–7°, Reimpell; probable). A preset can set `caster` in degrees once one is found.
+- On an 80 km/h steer ramp, the unassisted torque peaks at 15 Nm (GR Yaris), 17 Nm (Civic FK8) and 8 Nm (MX-5 NA),
+  at about half the steer where the front side force peaks (test199).
+- Left open: power assistance (this is the column load before assist), steering friction, the scrub-radius moment of
+  the drive force, and torque steer from unequal driveshafts. No preset gives shaft angles or a scrub radius, so torque
+  steer is not modelled.
+
 ### What the catalyst's double count was hiding: the silencer (build 322)
 
 Phase B, step 6, first of two builds: the investigation. No physics changes; the fingerprint is identical to build 321's.
