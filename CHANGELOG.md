@@ -18,6 +18,40 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 ## [Unreleased]
 
+### What the catalyst's double count was hiding: the silencer (build 320)
+
+Phase B, step 6, first of two builds: the investigation. No physics changes; the fingerprint is identical to build 319's.
+
+The stock catalyst is counted twice: once as a plug in the exhaust back-pressure, and again as `catRampTop`, a fitted
+loss of up to 5% of the charge ramped to the redline. Removing the ramp alone (build 244 tried it) lifts nearly every
+engine 5–6%. Measured now against 93 real engines' rated power and torque:
+
+| | Today | Ramp removed | Ramp removed, +~14 kPa back-pressure (diagnostic only) |
+|---|---|---|---|
+| Power, mean signed error | −1.4% | +3.6% | +0.9% |
+| Power, mean absolute error | 6.7% | 8.1% | 6.8% |
+| Within 10% | 77 | 66 | 77 |
+| Torque, mean signed error | −2.1% | +0.5% | −0.8% |
+
+- **What it hides is a loss that grows with flow.** Without the ramp, torque lands (naturally aspirated −5.1 → −1.5%)
+  and only peak power runs high, so the ramp has been standing in for a missing top-end loss, while costing the
+  midrange torque it should not.
+- **That loss is the silencer.** `parts.js` already says its back-pressure is not modelled: the exhaust after the
+  collector is pipe friction and the cat, ~2–9 kPa on a naturally aspirated engine besides the cat. Doubling the cat's
+  plug (mean 15 → 29 kPa at the power peak) as a stand-in for a silencer brings the errors back, as above. That run is
+  a diagnosis, not a fix, and is not shipped.
+- **The cat's own plug is fitted too, and likely too high.** It is 17.5 velocity heads at the tailpipe speed for a
+  stock cat (`restrict × 350`). A 400 cpsi, 6.5 mil brick of 118 mm × 150 mm on a 2.0 L engine at its peak, as laminar
+  flow in square channels (Shah and London), drops about 5–7 kPa; the model gives ~22 kPa.
+
+Left open, for the second build, which needs all three together:
+- the cat as a part (cell density, wall, brick volume and length), its drop from laminar channel flow plus entry and
+  exit losses, replacing `restrict × 350`;
+- the silencer's back-pressure as an equivalent pipe loss per silencer type (Watanabe et al., Honda R&D Technical
+  Review 13-1, 2001, model a silencer that way to ±2% of engine output), with a sourced loss coefficient;
+- then `catRampTop` retired. The brick's size per engine still needs a source (one example: Concawe report 20/6's
+  0.875 L engine carries 0.65 + 1.03 dm³ of catalyst).
+
 ### Phase B simplified: 10 of its fitted numbers kept as rules until after v1.0 (build 319)
 
 Owner's decision: of phase B (`plans/road-to-v1.md`, the combustion-engine parts), only two steps stay as builds.

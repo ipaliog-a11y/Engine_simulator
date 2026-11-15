@@ -76,7 +76,8 @@ scoreboard holds (phase H)".
    (`compoundStage`); `TURBO_CONFIG` retired. Open: `TURB_WHEEL` per real car; the split held off-design.
 4. Water-to-air and twin intercoolers, per car from published specs.
 5. Plenum, throttle and flywheel (2): retires `MAP_K`.
-6. Catalytic converter: find what the double count hides, then the part (2).
+6. Catalytic converter: find what the double count hides, then the part (2). *Build 320:* it hides the silencer's
+   back-pressure (see the CHANGELOG); the second build is the cat brick and the silencer together.
 7. Rotary and two-stroke breathing: ports as geometry, in place of the VE bell and type factors.
 
 *Build 319 (owner's decision: simplify phase B):* only B2 (each real car's valves and ports) and B6 (the catalytic
