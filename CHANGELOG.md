@@ -18,6 +18,19 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 ## [Unreleased]
 
+### A factory exhaust's silencer, chosen apart from its header (build 325)
+
+- **New field `engine.silencer`** (ENGINE tab, SILENCER, under EXHAUST): chambered, straight-through or none. Until now a
+  factory exhaust's class set both its header and its silencer, so every preset with an equal-length header
+  (`exhaust:'race'`) had a straight pipe, though each is a road car that passed drive-by noise rules.
+- **23 real presets with `exhaust:'race'`** (S2000, M3 E46, GT3/GT4, F355, F40, McLaren F1, Enzo, Carrera GT, Murciélago,
+  458, Huracán, 812, Viper, LT6, Integra/Civic Type R, Atom, BAC Mono, Radical, RD350LC, 918) now carry a straight-through
+  silencer. No source in the presets says which kind, so each marks `silencer` unsure. The archetypes are unchanged.
+- **AS THE HEADER** (the field unset) keeps the old mapping (stock → chambered, sport → straight-through, race → none), so
+  older saved builds and share links load and sound as before. A designed exhaust part keeps its own silencer.
+- The silencer still changes the sound only. Its back-pressure stays unmodelled (phase B6, waiting for measured data).
+  The fingerprint is identical: it records no sound numbers.
+
 ### The catalyst and silencer, derived, read below a measured exhaust: held (build 324)
 
 Phase B, step 6, second build: an investigation only. No physics ships; the code is build 322's, so the fingerprint is
