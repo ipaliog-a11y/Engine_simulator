@@ -40,7 +40,22 @@ Built and measured, then held with the owner's agreement:
 So the textbook element losses read too low on real systems: the loss the ramp stands in for is not found at those
 values. Left open: measured back-pressure of factory silencers and whole systems (for example Neihguk, Munjal et al.,
 SAE 2017, a production muffler measured on a vehicle across flow and temperature), and the gas temperature at the
-silencer, which the model takes at the port. Also found: the factory exhaust classes map a road car's `race` header
+silencer, which the model takes at the port.
+
+What a search for measured silencer data found (none of it a primary measurement of a factory silencer):
+- **The share points at the silencer, not the cat.** A ScienceDirect topic page (not verified: it refuses automated
+  reads) gives modern car mufflers ~16 kPa, the cat ~30% of a system's loss, and muffler plus resonator 50–60% after a
+  turbo. On a stock system of 28–55 kPa that is 8–16 kPa for the cat (derived: 7–10, about right) and 14–33 kPa for the
+  silencer (derived: 1–5). In this model's velocity heads (1.2–1.8 kPa) the silencer would be ~10–20 heads, not 3.
+- **Measured per-element losses span 1 to 16 heads by design**: under 1 for a three-pass double-reversal muffler
+  (Munjal & Krishna, SAE 2013-26-0106), ~16 for one perforated cross-flow element at 7% porosity (Munjal, Vijayasree &
+  Chaitanya, IJEMS 20, 2013; the head's reference pipe not confirmed).
+- **The source that would settle it** is Neihguk, Munjal, Ram & Prasad, SAE Int. J. Veh. Dyn. 1(2), 2017: a production
+  2.2 L muffler's back-pressure measured on the vehicle across flow and temperature. It is behind SAE's paywall.
+- The 4–8 psi band test46 holds is itself a repair site's figure (AA1Car), and a trade article gives ~6 psi as the
+  full-throttle limit; neither has data behind it.
+
+Also found: the factory exhaust classes map a road car's `race` header
 to no silencer (the map in `parts.js`), which is wrong for road-legal cars once the silencer carries a loss. test49
 fails on `main` too (NaN vane blockage); unrelated to this build.
 
