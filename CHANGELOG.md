@@ -18,7 +18,7 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 ## [Unreleased]
 
-### The bench holds its speed at any frame rate (build 326)
+### The bench holds its speed at any frame rate (build 327)
 
 - **What was wrong.** On LIVE and DYNO the RPM jumped constantly on a slow screen. The dyno brake pulls `brakeGain` Nm
   per rpm over its hold target, and the bench took one explicit step per frame. That step is stable only while
@@ -26,13 +26,31 @@ they are accurate about *what* shipped but not about the day it shipped.
   At 30 frames the RS3 swung 660 rpm and the MX-5 1700; at 20 frames 1790 and 3260. At 60 frames all were steady, which
   is why no test saw it.
 - **The fix.** `stepEngine` now splits a frame into steps no longer than `inertia/(brakeGain·30/π)`, which take the
-  overshoot out exactly once. The RS3 holds 4710.1 rpm and the MX-5 4813.6 rpm at 60, 30 and 20 frames (`test201`).
+  overshoot out exactly once. The RS3 holds 4710.1 rpm and the MX-5 4813.6 rpm at 60, 30 and 20 frames (`test202`).
 - **Why DIAGNOSIS and the fault codes showed nothing.** It was the bench's arithmetic, not the engine: both read the
   engine's physics, which was sound.
 - **Moved.** No dyno, lap or race figure: the fingerprint does not step the bench. A transient on the bench at 60 frames
   now rings less on engines whose figure was above 1 (all of them, 1.1-2.0).
 - **Left open.** The electric and hybrid benches (`stepMotorBench`, `stepHybridBench`) take their own steps and were not
   checked for the same fault.
+### Camber and camber thrust in the stepped car (build 326)
+
+- Phase G4 of `plans/driving-sim.md`, on the suspension types the lap already uses (owner's ruling on decision 3).
+  `stepCar`'s tyres stood upright. Each wheel now leans by its static camber plus the body's roll, less what its
+  suspension type recovers (`SUSP_GEO`), shown as `s.camber`. On a skidpad the outside front's camber matches the
+  lap's figure within 2% (M3 1.25°, Civic FK8 0.52° against 0.51°, MX-5 0.99°).
+- A leaning tyre pushes towards its lean. The stiffness comes from the brush model's own geometry: the cornering
+  stiffness × a/(3R), a being the contact half-length that G2 already uses. That is 0.027 of the load per degree on
+  a road tyre. It builds over the relaxation length, so a car at rest gets none. Marked probable: the brush model has
+  no carcass, and I found no measured camber stiffness for a radial road tyre to check it against.
+- **Left open, named:** the grip by camber. The lap's rule (`latCamberF`), applied in the stepped car, cost 1–6% of
+  the skidpad grip. The test driver, who drives at the lap's speeds, then strayed up to 7.8 m from the line, and the
+  Model 3 reached 31° sideways (`test170`). It waits for a driver that judges the car's own grip. Also left open:
+  camber from heave and pitch, and camber's own aligning moment.
+- **Known gap opened, in the open:** with the thrust, the Civic FK8 strays 4.05 m from the line in `test170` (3.9 m
+  on `main`, limit 4 m). It is added to `OFF_KNOWN` at 4.1 m, as build 318 did for the same car.
+- G3 is closed as done: build 317 delivered it (`driveBody`, `test196`).
+
 ### A factory exhaust's silencer, chosen apart from its header (build 325)
 
 - **New field `engine.silencer`** (ENGINE tab, SILENCER, under EXHAUST): chambered, straight-through or none. Until now a

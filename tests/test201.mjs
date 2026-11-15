@@ -1,43 +1,56 @@
-// The bench holds its speed at any frame rate (build 326).
+// Camber and camber thrust in the stepped car (phase G4).
 //
-// WHY THIS EXISTS. The dyno brake pulls brakeGain Nm per rpm over its hold target, and the bench took one explicit step
-// per frame. Below ~32-59 frames a second (by engine) that step overshot by more than it corrected and the RPM jumped
-// for good: at 30 frames an RS3 swung 660 rpm, an MX-5 1700. It must hold that:
-//   · at 60, 30 and 20 frames a second the settled speed swings by under 2 rpm;
-//   · the settled speed is the same at every frame rate, within 2 rpm.
+// WHY THIS EXISTS. stepCar's tyres stood upright whatever the body did. Each wheel now leans by its static camber and
+// the body's roll less what its linkage recovers, and pushes towards its lean by the brush model's camber thrust (THE
+// CAMBER in drive-model.js). The grip by camber is left out, a named gap. What must hold:
+//   · steady on a skidpad, the outside front leans as the lap says: camberF + rollGrad ay/g (1 - camRecF), within 2%;
+//   · a cambered tyre at no slip pushes towards its lean by C a/(3R) per radian, within 2%;
+//   · pulling away straight from rest, the static camber's thrusts cancel: the car keeps its line within 1 cm and 0.05 deg.
 import { chromium } from './pw.mjs';
 import { fileURLToPath, pathToFileURL } from 'url';
 import path from 'path';
 const repo = fileURLToPath(new URL('..', import.meta.url));
 const browser = await chromium.launch();
-const page = await browser.newPage({ viewport: { width: 1200, height: 900 } });
+const page = await browser.newPage();
 const errors = [];
-page.on('console', m => { if (m.type() === 'error' && !/ERR_FILE_NOT_FOUND/.test(m.text())) errors.push('console: ' + m.text()); });
 page.on('pageerror', e => errors.push('pageerror: ' + e.message));
 await page.goto(pathToFileURL(path.join(repo, 'index.html')).href, { waitUntil: 'networkidle' });
-await page.waitForTimeout(400);
 const fails = [];
 
-const r = await page.evaluate(() => ['Audi RS3', 'MX-5 1.6'].map(nm => {
-  const p = VEHICLE_PRESETS.find(x => x.name.includes(nm)); loadVehiclePreset(p);
-  const row = { car: p.name, runs: [] };
-  for (const fps of [60, 30, 20]) {
-    state.throttle = 0.85; state.load = 0.4; state.rpm = 4000; state.firing = true; state.ignOn = true;
-    const a = []; for (let i = 0; i < fps * 15; i++) { stepEngine(1 / fps); updatePhysics(); if (i > fps * 12) a.push(state.rpm); }
-    row.runs.push({ fps, lo: Math.min(...a), hi: Math.max(...a) });
+const R = await page.evaluate(() => {
+  const out = { cars: [] };
+  for (const n of ['BMW M3 (E46', 'Honda Civic Type R (FK8', 'Mazda MX-5']) {
+    loadVehiclePreset(FACTORY_CARS.find(x => x.name.startsWith(n)));
+    const car = driveCar(), s = driveRolling(car, 80);
+    for (let t = 0; t < 5; t += 0.01) stepCar(car, s, { steer: 0.08, throttle: 0.35, brake: 0 }, 0.01);
+    const o = s.ay > 0 ? 1 : 0;   // the outside front: the right one in a left turn
+    out.cars.push({ name: n, cam: (o ? -1 : 1) * s.camber[o] * 180 / Math.PI,
+      want: vehicle.camberF + vehicle.rollGrad * Math.abs(s.ay) / 9.81 * (1 - vehicle.camRecF) });
   }
-  return row;
-}));
-for (const c of r) {
-  console.log(`== ${c.car}: ` + c.runs.map(x => `${x.fps} fps ${x.lo.toFixed(1)}-${x.hi.toFixed(1)} rpm`).join(' • ') + ' ==');
-  for (const x of c.runs) {
-    if (!(x.hi - x.lo < 2)) fails.push(`${c.car}: the speed swings ${(x.hi - x.lo).toFixed(0)} rpm at ${x.fps} frames a second`);
-    if (!(Math.abs(x.hi - c.runs[0].hi) < 2)) fails.push(`${c.car}: settles at ${x.hi.toFixed(0)} rpm at ${x.fps} fps, ${c.runs[0].hi.toFixed(0)} at 60`);
-  }
-}
+  // camber thrust at no slip
+  { const car = driveCar(), Fz = car.FzRefF, ah = drivePatch(car.r, car.ktF, Fz), g = Math.PI / 180;
+    const xz = Fz / car.FzRefF, Ca = car.cc * Fz * (car.ccP2 + 1) / (car.ccP2 + xz * xz);
+    out.thrust = { got: driveTyre(car, Fz, 0, 0, true, ah / (3 * car.r) * Math.sin(g))[1], want: Ca * ah / (3 * car.r) * Math.sin(g), perDeg: Ca * ah / (3 * car.r) * g / Fz }; }
+  // pulling away straight from rest, with race camber
+  { const car = Object.assign(driveCar(), { camF: -2.5 * Math.PI / 180, camR: -2.5 * Math.PI / 180 }), s = driveState(car);
+    for (let t = 0; t < 8; t += 0.01) stepCar(car, s, { steer: 0, throttle: 0.6, brake: 0 }, 0.01);
+    out.straight = { y: s.y, psi: s.psi * 180 / Math.PI, v: s.vx * 3.6 }; }
+  return out;
+});
 
-await browser.close();
+const near = (a, b, t) => Math.abs(a / b - 1) <= t;
+for (const o of R.cars) {
+  console.log(`${o.name.padEnd(24)} outside front camber ${o.cam.toFixed(3)} deg (lap ${o.want.toFixed(3)})`);
+  if (!near(o.cam, o.want, 0.02)) fails.push(`${o.name}: outside front camber off the lap's`);
+}
+const T = R.thrust;
+console.log(`camber thrust at 1 deg: ${T.got.toFixed(1)} N (want ${T.want.toFixed(1)}), ${T.perDeg.toFixed(4)} of the load per degree`);
+if (!(T.got > 0 && near(T.got, T.want, 0.02))) fails.push('camber thrust not C a/(3R), or not towards the lean');
+const S = R.straight;
+console.log(`pulling away at -2.5 deg camber: ${S.v.toFixed(0)} km/h after 8 s, ${(S.y * 100).toFixed(2)} cm aside, heading ${S.psi.toFixed(3)} deg`);
+if (!(S.v > 30 && Math.abs(S.y) < 0.01 && Math.abs(S.psi) < 0.05)) fails.push('the static camber pushes the car off a straight line');
 if (errors.length) console.log('ERRORS:\n  ' + errors.join('\n  '));
 if (fails.length) console.log('\nFAIL:\n  ' + fails.join('\n  '));
-else console.log('\nOK: the bench holds its speed at 60, 30 and 20 frames a second.');
+else console.log('\nOK: the wheels lean as the lap says, push towards their lean, and cancel on a straight.');
+await browser.close();
 process.exit(fails.length || errors.length ? 1 : 0);
