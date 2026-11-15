@@ -34,7 +34,7 @@
 //             up or lock.
 //   Drive     the engine's full-load curve by the pedal, its own overrun torque off it, its inertia, a clutch that
 //             slips (capacity 1.5 x peak torque), the gearbox with its shift time, the differential (open: equal
-//             torque; limited-slip: friction plates, a viscous coupling or a spool, each by its own law: diffCoupling), all-wheel drive with its two axles turning together.
+//             torque; limited-slip: friction plates, a viscous coupling or a spool, each by its own law: diffCoupling), all-wheel drive by its centre coupling (a clutch closed on slip, an open, Torsen or viscous centre: centreCoupling).
 //   Stall     below the speed it can fire at, the engine stops; a starter or a bump start brings it back.
 //   Brakes    the hydraulics' own force and front share; ABS and traction control as wheel-slip limits when fitted.
 //   Aids      the ECU's calibration of ABS, traction control and stability control, as a tune (build 281). See DRIVE_AIDS.
@@ -118,7 +118,7 @@ function driveCar(){
     cdA:v.cdA,clA:v.clA||0,aeroBal:v.aeroBal==null?0.5:v.aeroBal,crr:v.crr,
     lltdF:v.lltdF==null?v.fWt:v.lltdF,tauLoad:1/(2*Math.PI*ride),
     ...driveBody(v,a,b),
-    drive:el&&el.front?(v.driveMech==='fwd'?'fwd':'rwd'):v.drive,centre:v.drive==='awd'&&!(el&&el.front),diff:diffCoupling(v.df),ratios:(v.ratios||[1]).slice(),fd:v.finalDrive||1,eff:v.driveEff||0.9,
+    drive:el&&el.front?(v.driveMech==='fwd'?'fwd':'rwd'):v.drive,centre:v.drive==='awd'&&!(el&&el.front)?centreCoupling(v):null,diff:diffCoupling(v.df),ratios:(v.ratios||[1]).slice(),fd:v.finalDrive||1,eff:v.driveEff||0.9,
     shiftTime:v.shiftCut||0,ev:!!v.ev||!!pt.direct,tc:!!aids.tc,abs:!!aids.abs,
     rpm:curve.map(p=>p.rpm),tq:curve.map(p=>p.tq),ov:pt.overrunTable(rl),idle:pt.idleRpm()||0,redline:rl,
     Ie:pt.inertia()||0.15,clutchCap:1.5*peak,
@@ -434,6 +434,9 @@ function stepCar(car,s,u,dt){
   const H=0.001,n=Math.max(1,Math.ceil(dt/H)),h=dt/n,g=DRIVE_G,L=car.a+car.b;
   const xw=[car.a,car.a,-car.b,-car.b],yw=[car.tF/2,-car.tF/2,car.tR/2,-car.tR/2];
   const drv=car.drive==='awd'?[1,1,1,1]:car.drive==='fwd'?[1,1,0,0]:[0,0,1,1],nd=drv[0]+drv[1]+drv[2]+drv[3];
+  // the share of the drive torque each wheel gets: equal, unless a centre differential splits it unequally (build 320)
+  const CD=nd===4&&car.centre&&car.centre.type!=='lock'?car.centre:null,sg=CD?[CD.f/2,CD.f/2,(1-CD.f)/2,(1-CD.f)/2]:null;
+  const wMean=()=>{let a=0;if(sg){for(let i=0;i<4;i++)a+=sg[i]*s.w[i];return a;}for(let i=0;i<4;i++)if(drv[i])a+=s.w[i];return a/nd;};
   const steer=Math.max(-1,Math.min(1,u.steer||0)),brake=Math.max(0,Math.min(1,u.brake||0));
   let thr=Math.max(0,Math.min(1,u.throttle||0));
   const rd=u.road||{},sinT=rd.sinT||0,cosT=Math.sqrt(Math.max(0,1-sinT*sinT)),kv=rd.kv||0;
@@ -444,12 +447,10 @@ function stepCar(car,s,u,dt){
     if(s.shiftT>0){s.shiftT-=h;
       // with an automatic clutch the driver matches the revs for the gear coming (a blip going down), so the clutch
       // takes up without a jolt through the driven tyres
-      if(s.shiftT<=0&&u.clutch==null&&!car.ev&&s.gear>0){let wm=0,nm=0;for(let i=0;i<4;i++)if(drv[i]){wm+=s.w[i];nm++;}
-        s.we=Math.max(car.idle*Math.PI/30,wm/nm*car.ratios[s.gear-1]*car.fd);}}
+      if(s.shiftT<=0&&u.clutch==null&&!car.ev&&s.gear>0)s.we=Math.max(car.idle*Math.PI/30,wMean()*car.ratios[s.gear-1]*car.fd);}
     if(u.gear!=null){const gq=Math.max(0,Math.min(top,u.gear|0));if(gq!==s.gear){s.gear=gq;s.shiftT=car.shiftTime;}}
     else if(!car.ev&&s.shiftT<=0&&s.gear>0){
-      let wdn=0,nn=0;for(let i=0;i<4;i++)if(drv[i]){wdn+=s.w[i];nn++;}
-      const rpmNow=wdn/nn*car.ratios[s.gear-1]*car.fd*30/Math.PI;      // the speed the wheels give the engine in this gear
+      const rpmNow=wMean()*car.ratios[s.gear-1]*car.fd*30/Math.PI;      // the speed the wheels give the engine in this gear
       if(rpmNow>0.97*car.redline&&s.gear<top){s.gear++;s.shiftT=car.shiftTime;}
       else if(s.gear>1&&rpmNow<0.42*car.redline&&rpmNow*car.ratios[s.gear-2]/car.ratios[s.gear-1]<0.85*car.redline&&thr<0.99){s.gear--;s.shiftT=car.shiftTime;}
       else if(s.gear>1&&rpmNow<Math.max(car.idle*1.15,0.22*car.redline)){s.gear--;s.shiftT=car.shiftTime;}
@@ -479,7 +480,7 @@ function stepCar(car,s,u,dt){
       s.Fx[i]=fx;s.Fy[i]=fy;FX+=fx;FY+=fy;MZ+=xw[i]*fy-yw[i]*fx;
     }
     // ---- engine, clutch, driveline
-    let wd=0;for(let i=0;i<4;i++)if(drv[i])wd+=s.w[i];wd/=nd;
+    const wd=wMean();
     // How far the driven tyres are past their peak, as a rate for whoever is holding them there (the ECU's traction
     // control on the throttle, or the driver's clutch foot pulling away): zero at the peak, closing fast beyond it.
     let worst=0;for(let i=0;i<4;i++)if(drv[i]||(i<2&&car.el&&car.el.front))worst=Math.max(worst,s.kappa[i]);
@@ -546,6 +547,9 @@ function stepCar(car,s,u,dt){
       // condition); it slips when that is more than it can hold, and then passes what it can hold.
       let Id=0,aW=0;for(let i=0;i<4;i++)if(drv[i]){const Iq=car.Iw+h*car.r*dF[i];Id+=Iq;aW-=(Fl[i]*car.r+car.crr*Fz[i]*car.r*Math.tanh(s.w[i]*car.r/0.5))/Iq;}
       aW/=nd;
+      // under an unequal split, the carrier turns at the shares' weighted mean of the wheels, sum sg w (Willis), and
+      // each wheel takes its share of the torque, so the driveline's own inertia is 1 / sum(sg^2 / I)
+      if(sg){aW=0;let iI=0;for(let i=0;i<4;i++){const Iq=car.Iw+h*car.r*dF[i];aW-=sg[i]*(Fl[i]*car.r+car.crr*Fz[i]*car.r*Math.tanh(s.w[i]*car.r/0.5))/Iq;iI+=sg[i]*sg[i]/Iq;}Id=1/iI;}
       let Tcl=(slip/h+Te/car.Ie-ratio*aW)/(1/car.Ie+ratio*ratio*car.eff/Id);
       Tcl=Math.max(-cap,Math.min(cap,Tcl));
       s.we=Math.max(0,s.we+h*(Te-Tcl)/car.Ie);
@@ -558,7 +562,7 @@ function stepCar(car,s,u,dt){
     // ---- wheels
     for(let ax=0;ax<2;ax++){
       const i=ax*2,j=i+1,driven=drv[i];
-      let Ti=(driven?Tw/nd:0)+(ax===0?Ff*car.r/2:0),Tj=Ti;
+      let Ti=(driven?(sg?Tw*sg[i]:Tw/nd):0)+(ax===0?Ff*car.r/2:0),Tj=Ti;
       const share=ax===0?car.brakeFront:1-car.brakeFront;
       for(const [q,Tq] of [[i,Ti],[j,Tj]]){
         if(car.abs){const vl=Math.abs(s.vx);s.abs[q]=Math.max(0.05,Math.min(1,s.abs[q]+((s.kappa[q]<-car.slipOpt*car.aids.absSlip[ax]&&vl>2)?-car.aids.absRel:car.aids.absApp)*h));}
@@ -579,15 +583,20 @@ function stepCar(car,s,u,dt){
     if(car.diff.type!=='open')for(let ax=0;ax<2;ax++){const i=ax*2,j=i+1;if(!drv[i])continue;
       const Ii=car.Iw+h*car.r*dF[i],Ij=car.Iw+h*car.r*dF[j],dw=s.w[i]-s.w[j],k=h*(1/Ii+1/Ij),D=car.diff;
       let Tc=dw/k;
-      if(D.type==='fric'){const cap=D.pre+D.L*Math.abs(Tw)*2/nd;Tc=Math.max(-cap,Math.min(cap,Tc));}
+      if(D.type==='fric'){const cap=D.pre+D.L*Math.abs(Tw)*(sg?sg[i]+sg[j]:2/nd);Tc=Math.max(-cap,Math.min(cap,Tc));}
       else if(D.type==='visc')Tc=D.c*dw/(1+D.c*k);
       s.w[i]-=h*Tc/Ii;s.w[j]+=h*Tc/Ij;}
-    // All-wheel drive: the centre coupling. The two axles turn together (a locked centre differential, or a clutch
-    // pack closed on the first slip), so the torque goes to the axle that can use it: exactly the torque that
-    // leaves the two axles' mean speeds equal after this step, taken from the faster and given to the slower. It
-    // is open under the brakes, as these systems are, so the anti-lock works on each axle alone.
-    if(car.centre&&nd===4&&brake===0){let inv=0;for(let q=0;q<4;q++)inv+=1/(car.Iw+h*car.r*dF[q]);
-      const Tc=2*((s.w[0]+s.w[1])-(s.w[2]+s.w[3]))/(h*inv);
+    // All-wheel drive: the centre coupling (build 320, by type: centreCoupling). 'lock', an electronically controlled
+    // clutch: the two axles turn together, the clutch closed on the first slip (no maker publishes its control map, so
+    // this is PROBABLE), the torque going to the axle that can use it; open under the brakes, as these systems are, so
+    // the anti-lock works on each axle alone. The others are mechanical and work on the brakes too: an open centre
+    // passes nothing between the axles beyond its split; a Torsen holds them up to lock x the input torque; a viscous
+    // coupling passes c x the difference of the axles' mean speeds. Each as the axle's differential above: Karnopp's
+    // stick torque, the one that leaves the two axles' mean speeds equal after this step, taken from the faster.
+    if(car.centre&&nd===4&&(CD||brake===0)&&(!CD||CD.type!=='open')){let inv=0;for(let q=0;q<4;q++)inv+=1/(car.Iw+h*car.r*dF[q]);
+      let Tc=2*((s.w[0]+s.w[1])-(s.w[2]+s.w[3]))/(h*inv);
+      if(CD&&CD.type==='fric'){const cap=(CD.pre||0)+CD.L*Math.abs(Tw);Tc=Math.max(-cap,Math.min(cap,Tc));}
+      else if(CD&&CD.type==='visc'){const k=h*inv/4;Tc=CD.c*(Tc*k)/(1+CD.c*k);}
       for(let q=0;q<4;q++)s.w[q]+=(q<2?-1:1)*h*Tc/2/(car.Iw+h*car.r*dF[q]);}
     // ---- body
     const drag=0.5*DRIVE_RHO*car.cdA*v*s.vx,ax=(FX-drag)/car.m-g*sinT,ay=FY/car.m;

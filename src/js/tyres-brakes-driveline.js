@@ -718,6 +718,39 @@ function diffCoupling(df){
   if(df===DIFF.visc)return {type:'visc',c:diffVcuRate(DIFF_VCU)};
   return {type:'fric',pre:DIFF_CLSD_ROAD.pre,L:DIFF_CLSD_ROAD.L};
 }
+// THE CENTRE COUPLING of an all-wheel-drive car in the stepped car (build 320), by preset. f is the front axle's share
+// of the drive torque where a differential splits it; type as diffCoupling's, plus 'lock': an electronically controlled
+// multi-plate clutch, closed on the first slip (the stepped car's rule since build 264; no maker publishes the control,
+// so PROBABLE), which a car with no entry also gets.
+// Torsen (T-3, planetary): lock 0.25, from a Torsen T-3 technical sheet's "20 to 30%" locking (PROBABLE).
+// Viscous: the coupling of the axle's own (DIFF_VCU, PROBABLE: no maker publishes its plates) on the propshaft, so
+// c x fd^2 at the wheels.
+const CENTRE_TORSEN_L=0.25;
+const CENTRE_DIFF={
+  // Torsen T-3 centre, 40:60: Toyota technical FAQ (toyota-club.net, "Toyota all-wheel drive. Torsen AWD")
+  'Toyota Land Cruiser 200 VX 4.5 D-4D (2015)':{type:'fric',f:0.40,L:CENTRE_TORSEN_L},
+  // Torsen centre, 40:60: Volkswagen Australia, 4MOTION
+  'Volkswagen Amarok 3.0 V6 TDI (2018)':{type:'fric',f:0.40,L:CENTRE_TORSEN_L},
+  // Torsen centre, 40:60: Lamborghini's launch figures (carsales; Autocar)
+  'Lamborghini Urus (2018)':{type:'fric',f:0.40,L:CENTRE_TORSEN_L},
+  // epicyclic centre, 47:53, with a Ferguson viscous coupling: Hagerty buyer's guide; evo
+  'Lancia Delta HF Integrale Evoluzione (1992)':{type:'visc',f:0.47,vcu:true},
+  // open centre, 50:50, locked only by the driver's knob: Audi media, quattro driveline
+  'Audi Sport quattro (1984)':{type:'open',f:0.50},
+  // rear driven, a viscous coupling to the front, no centre differential (PROBABLE)
+  'Porsche 911 Turbo (993, 1995)':{type:'visc',f:0,vcu:true},
+  'Lamborghini Diablo VT (1993)':{type:'visc',f:0,vcu:true},
+  'Lamborghini Murciélago LP640 (2006)':{type:'visc',f:0,vcu:true}
+  // the rest ('lock'): Haldex (RS3, Huracán), xDrive (X5 M), PTM (Cayenne, 992 Turbo S), ATTESA E-TS (R34, R35),
+  // ACD (Evo IX), DCCD in its automatic mode (Impreza STI), GR-FOUR (GR Yaris), Quadra-Trac (Grand Cherokee SRT),
+  // the Raptor's 4A, the Focus RS's twin rear clutches: all electronically controlled clutches (PROBABLE).
+};
+function centreCoupling(v){
+  const e=CENTRE_DIFF[v&&v.body&&v.body.name];
+  if(!e)return {type:'lock',f:0.5};
+  const o=Object.assign({},e);if(o.vcu){o.c=diffVcuRate(DIFF_VCU)*Math.pow(v.finalDrive||1,2);delete o.vcu;}
+  return o;
+}
 // Cornering-only form, kept for the lap solver's readability.
 function lapDiffTraction(df,aLat,cgH){return diffTractionAt(df,aLat,cgH,1);}
 // Share of the ENGINE's weight on the front axle, from where it sits: a front-engined car carries it
