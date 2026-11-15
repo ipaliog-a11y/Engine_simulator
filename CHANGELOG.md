@@ -18,6 +18,23 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 ## [Unreleased]
 
+### The anti-lock holds a wheel at the tyre's peak slip (build 319)
+
+- **What changed.** ABS now releases a wheel's brake once its slip passes 1.0 × the tyre's peak slip (`absSlip`), not 1.3. The 1.3 had no source (build 264). The code's own citation, the Bosch Automotive Handbook, says the controller holds slip about the peak of the friction curve. This is the default on the DRIVER AIDS card too; a player can still set 1–3.
+- **Closes build 318's known gap in test170.** The light inside wheel no longer runs past its peak on trail-braking:
+
+  | car | off the line, before → after | limit |
+  |---|---|---|
+  | Civic FK8 | 4.1 → 3.9 m | 4 m |
+  | 911 GT3 | 4.3 → 3.6 m | 4 m |
+
+  `OFF_KNOWN` is now empty. Lap times move by 0.1 s or less.
+- **Other moves.** Mustang GT stop from 100 km/h: 34.6 → 34.0 m. Fingerprint identical: the lap solver doesn't use the aids.
+- **Opened in test174.** With its ESP loosened to 1.5 × espBeta, the Model 3 no longer recovers in the sine with dwell at 6.5 ×: yaw is 0.89 of its peak 1 s after the steering ends, against 0.16 before. The factory ESP still passes FMVSS 126 at 5 × and 6.5 ×.
+  - Why: lifted off, the inner rear wheel slips under regeneration, and the ABS, which eases the regen, now holds that wheel at its peak slip and uses up the rear's side grip.
+  - Real electric cars cut regeneration when the ABS acts; the model only scales it. That needs a source, so it's left for its own build.
+  - Until then, the check asks only that the loosened ESP lets the car slide further.
+
 ### The stepped car's axle differentials, each by its own law (build 318)
 
 - **What changed.** `stepCar` coupled an axle's two wheels with a fitted `lock × 300 × Δω`. Each type now has its own law (`diffCoupling`), applied per driven axle after the wheels move:

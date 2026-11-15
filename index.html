@@ -810,7 +810,7 @@ body.guided-open{overflow:hidden}
 </div>
 <div class="container">
 <header>
-<h1>PIXEL ENGINE SIM v0.7 build 318</h1>
+<h1>PIXEL ENGINE SIM v0.7 build 319</h1>
 <div class="subtitle" id="subtitle">ENGINE DESIGNER • BUILD IT, THEN DRIVE IT</div>
 </header>
 <div class="build-strip" id="buildStrip">
@@ -3567,8 +3567,8 @@ Most other tests check behaviour that is true of real cars: a bigger turbo spool
 </div></section>
 <section class="evd-card" id="vcdCard-aids" data-card="aids"><div class="evd-fields">
 <div class="field"><label for="vhAbs">ABS</label><select id="vhAbs"><option value="on">ON</option><option value="off">OFF</option></select></div>
-<div class="field"><label for="vhAbsF">ABS SLIP, FRONT (x peak)</label><input type="number" id="vhAbsF" min="1" max="3" step="0.1" value="1.3"></div>
-<div class="field"><label for="vhAbsR">ABS SLIP, REAR (x peak)</label><input type="number" id="vhAbsR" min="1" max="3" step="0.1" value="1.3"></div>
+<div class="field"><label for="vhAbsF">ABS SLIP, FRONT (x peak)</label><input type="number" id="vhAbsF" min="1" max="3" step="0.1" value="1"></div>
+<div class="field"><label for="vhAbsR">ABS SLIP, REAR (x peak)</label><input type="number" id="vhAbsR" min="1" max="3" step="0.1" value="1"></div>
 <div class="field"><label for="vhTC">TRACTION CONTROL</label><select id="vhTC"><option value="on">ON</option><option value="off">OFF</option></select></div>
 <div class="field"><label for="vhTcSlip">TC SLIP (x peak)</label><input type="number" id="vhTcSlip" min="0.5" max="3" step="0.1" value="1"></div>
 <div class="field"><label for="vhEsp">STABILITY CONTROL (ESP)</label><select id="vhEsp"><option value="on">ON</option><option value="off">OFF</option></select></div>
@@ -12814,7 +12814,7 @@ function readVehicleFromForm(){
     // The driver aids' calibration (build 282), read by the stepped car (DRIVE_AIDS, src/js/drive-model.js): the slip
     // ABS releases at per axle and the traction control's target, as multiples of the tyre's peak slip; how far the
     // rear tyres may slide before the stability control works, as a multiple of the slip angle they peak at.
-    aids:{abs:g('vhAbs').value!=='off',absSlip:[clamp(numOr(g('vhAbsF').value,1.3),1,3),clamp(numOr(g('vhAbsR').value,1.3),1,3)],
+    aids:{abs:g('vhAbs').value!=='off',absSlip:[clamp(numOr(g('vhAbsF').value,DRIVE_AIDS.absSlip[0]),1,3),clamp(numOr(g('vhAbsR').value,DRIVE_AIDS.absSlip[1]),1,3)],
       tcSlip:clamp(numOr(g('vhTcSlip').value,1),0.5,3),esp:g('vhEsp').value!=='off',espSlide:clamp(numOr(g('vhEspSlide').value,1),1,3),espCut:g('vhEspCut').value!=='off'},
     // Gear spacing (build 169): CLOSE / STANDARD / WIDE, STOCK (a real car's own box) or CUSTOM. The hand-set ratios
     // and a hand-set final drive (0 = matched to the engine) live beside the form, like the body.
@@ -14153,6 +14153,7 @@ const DRIVE_G=9.81, DRIVE_RHO=1.20;
 //   ABS       a wheel's brake is released while it slips more than absSlip x the tyre's peak slip [front, rear], at
 //             absRel of its pressure a second, and reapplied at absApp. (Bosch Automotive Handbook, "Antilock braking
 //             system": the controller cycles the pressure to hold the slip about the peak of the friction curve.)
+//             So absSlip is 1, the peak itself (build 319; it was 1.3, unsourced, from build 264).
 //   TC        the throttle is closed while the worst driven wheel slips more than tcSlip x the peak, by tcGain a
 //             second for a slip twice the target.
 //   ESP       van Zanten, Erhardt and Pfaff, "VDC, the vehicle dynamics control system of Bosch" (SAE 950759):
@@ -14168,7 +14169,7 @@ const DRIVE_G=9.81, DRIVE_RHO=1.20;
 //             publishes its own).
 // Which cars have what: traction control is the preset's (vehicle.tc). No preset says yet whether a car had ABS or
 // ESP: ABS is taken as fitted, and ESP as fitted where traction control is (it works through the same hardware).
-const DRIVE_AIDS={abs:true,absSlip:[1.3,1.3],absRel:25,absApp:12,tcSlip:1,tcGain:12,
+const DRIVE_AIDS={abs:true,absSlip:[1,1],absRel:25,absApp:12,tcSlip:1,tcGain:12,
   esp:null,espBand:3*Math.PI/180,espTau:0.2,espBeta:null,espCut:true,espVmin:4};
 function driveAids(v){const A=Object.assign({},DRIVE_AIDS,v.aids||{});A.absSlip=[].concat(A.absSlip).slice(0,2);if(A.absSlip.length<2)A.absSlip[1]=A.absSlip[0];
   if(A.tc==null)A.tc=!!v.tc;if(A.esp==null)A.esp=A.tc;return A;}
