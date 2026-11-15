@@ -204,108 +204,108 @@
    "file": "hybrid-race.js",
    "match": "const HYB_RACE",
    "standsFor": "a hybrid's safety margin on its lap energy",
-   "retiredBy": "phase C audit",
+   "retiredBy": "kept: a rule until after v1.0 (owner's decision, build 316: phase C simplified); after v1.0: phase C audit",
    "phase": "C",
-   "state": "open"
+   "state": "rule"
   },
   {
    "id": "EV_RACE",
    "file": "electric-race.js",
    "match": "const EV_RACE",
    "standsFor": "an electric car's race energy management constants",
-   "retiredBy": "phase C audit",
+   "retiredBy": "kept: a rule until after v1.0 (owner's decision, build 316: phase C simplified); after v1.0: phase C audit",
    "phase": "C",
-   "state": "open"
+   "state": "rule"
   },
   {
    "id": "MOTOR.mech",
    "file": "electric.js",
    "match": "0.15*w+5e-8*w*w*w",
    "standsFor": "bearing friction and windage as two coefficients with no source",
-   "retiredBy": "bearing friction from the maker's model on the rotor's weight and the bearing's size; windage from the air gap's Taylor-Couette drag",
+   "retiredBy": "kept: a rule until after v1.0 (owner's decision, build 316: phase C simplified); after v1.0: bearing friction from the maker's model on the rotor's weight and the bearing's size; windage from the air gap's Taylor-Couette drag",
    "phase": "C",
-   "state": "open"
+   "state": "rule"
   },
   {
    "id": "MOTOR_COOLING",
    "file": "electric.js",
    "match": "const MOTOR_COOLING",
    "standsFor": "air cooling's 60 W/m2K, the oil's 900 and 2500 on the copper and 400 on the rotor's bore, the slot liner, the 50 mm the spray reaches, and the coolant temperatures (build 315: the jacket from Gnielinski on a PROBABLE channel and flow, the contact from Staton et al., the air gap from Becker & Kaye)",
-   "retiredBy": "cited measurements for oil spray and slot cooling; finned convection for air; the jacket's channel and flow from a teardown",
+   "retiredBy": "kept: a rule until after v1.0 (owner's decision, build 316: phase C simplified); after v1.0: cited measurements for oil spray and slot cooling; finned convection for air; the jacket's channel and flow from a teardown",
    "phase": "C",
-   "state": "open"
+   "state": "rule"
   },
   {
    "id": "RETENTION.vTip",
    "file": "electric.js",
    "match": "const RETENTION",
    "standsFor": "the rotor surface speed each retention survives (150 and 220 m/s), and the sleeve's 3% on inertia",
-   "retiredBy": "the bridges' stress from the magnets' centrifugal load against the steel's yield; the sleeve's hoop stress against the carbon's strength",
+   "retiredBy": "kept: a rule until after v1.0 (owner's decision, build 316: phase C simplified); after v1.0: the bridges' stress from the magnets' centrifugal load against the steel's yield; the sleeve's hoop stress against the carbon's strength",
    "phase": "C",
-   "state": "open"
+   "state": "rule"
   },
   {
    "id": "INVERTER",
    "file": "electric.js",
    "match": "const INVERTER",
    "standsFor": "each device's knee, resistance and switching energy from an unnamed module (SiC 'about a fifth'), and the output frequency ceilings 1200 and 2000 Hz",
-   "retiredBy": "named modules' datasheets; the ceiling as the switching frequency over the pulses a cycle needs",
+   "retiredBy": "kept: a rule until after v1.0 (owner's decision, build 316: phase C simplified); after v1.0: named modules' datasheets; the ceiling as the switching frequency over the pulses a cycle needs",
    "phase": "C",
-   "state": "open"
+   "state": "rule"
   },
   {
    "id": "ACTIVE_TO_MOTOR",
    "file": "electric.js",
    "match": "const ACTIVE_TO_MOTOR=1.6",
    "standsFor": "housing, shaft, bearings and end caps as 1.6 times the active mass; the shaft as 0.47 of the rotor's diameter",
-   "retiredBy": "the housing as a shell round the stator and its cooling, the shaft from the torque; or teardown masses, cited (ORNL's Leaf)",
+   "retiredBy": "kept: a rule until after v1.0 (owner's decision, build 316: phase C simplified); after v1.0: the housing as a shell round the stator and its cooling, the shaft from the torque; or teardown masses, cited (ORNL's Leaf)",
    "phase": "C",
-   "state": "open"
+   "state": "rule"
   },
   {
    "id": "IM.leakage",
    "file": "electric.js",
    "match": "const IM_SIGMA=0.08",
    "standsFor": "an induction motor's leakage (IM_SIGMA), resistive drop (IM_R_DROP), Carter and saturation factor (IM_KCS), constant-power range (IM_CPSR) the cage's proportions (IM_HR, IM_RING), and its torque per amp lost to saturation (IM_SAT_K: the Model 3's point of before build 302, 8.5% at 145.7 kA/m, scaled with the loading's square; a magnet motor's is solved since build 302)",
-   "retiredBy": "slot and end-ring leakage from the stator's and the cage's geometry (Pyrhonen ch. 4), the breakdown torque from it; the cage's bars as design fields",
+   "retiredBy": "kept: a rule until after v1.0 (owner's decision, build 316: phase C simplified); after v1.0: slot and end-ring leakage from the stator's and the cage's geometry (Pyrhonen ch. 4), the breakdown torque from it; the cage's bars as design fields",
    "phase": "C",
-   "state": "open"
+   "state": "rule"
   },
   {
    "id": "CHEM.cells",
    "file": "electric.js",
    "match": "const CHEM={",
    "standsFor": "each chemistry's open-circuit curve, resistance per amp-hour, discharge and charge rates and specific energy by year: typical figures, not named cells; one activation energy for every lithium chemistry",
-   "retiredBy": "the cell as a part: named cells from their datasheets and measured open-circuit curves; power against energy from the electrode's thickness",
+   "retiredBy": "kept: a rule until after v1.0 (owner's decision, build 316: phase C simplified); after v1.0: the cell as a part: named cells from their datasheets and measured open-circuit curves; power against energy from the electrode's thickness",
    "phase": "C",
-   "state": "open"
+   "state": "rule"
   },
   {
    "id": "PACK.overheads",
    "file": "electric.js",
    "match": "const PACK_FACTOR=",
    "standsFor": "cell mass over pack mass by year, and 10% on the resistance for busbars, contactors and fuse",
-   "retiredBy": "pack teardown figures, cited; busbar and contactor resistance from the pack's layout",
+   "retiredBy": "kept: a rule until after v1.0 (owner's decision, build 316: phase C simplified); after v1.0: pack teardown figures, cited; busbar and contactor resistance from the pack's layout",
    "phase": "C",
-   "state": "open"
+   "state": "rule"
   },
   {
    "id": "PACK.thermal",
    "file": "electric.js",
    "match": "const PACK_C=900",
    "standsFor": "the pack's heat capacity (the comment says ~1000 J/kgK, the code 900), 2 W/K per kWh to coolant at 30 C, and the power cut from 50 to 60 C",
-   "retiredBy": "a cited cell heat capacity; the cooling plate from its area and coolant flow; the cut from the cell maker's rating",
+   "retiredBy": "kept: a rule until after v1.0 (owner's decision, build 316: phase C simplified); after v1.0: a cited cell heat capacity; the cooling plate from its area and coolant flow; the cut from the cell maker's rating",
    "phase": "C",
-   "state": "open"
+   "state": "rule"
   },
   {
    "id": "EV_BMS",
    "file": "electric.js",
    "match": "const EV_BMS=",
    "standsFor": "the shape of the power cut at a low charge: from 15%, to 30% at 2%, then a tenth of rated power",
-   "retiredBy": "the cells' voltage limit under load, which already falls with charge; or a cited car's behaviour; or the owner's sign-off as a controller's rule",
+   "retiredBy": "kept: a rule until after v1.0 (owner's decision, build 316: phase C simplified); after v1.0: the cells' voltage limit under load, which already falls with charge; or a cited car's behaviour; or the owner's sign-off as a controller's rule",
    "phase": "C",
-   "state": "open"
+   "state": "rule"
   },
   {
    "id": "RACE_DRIVERS",
