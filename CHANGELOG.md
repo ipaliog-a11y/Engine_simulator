@@ -18,6 +18,27 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 ## [Unreleased]
 
+### The stepped car's all-wheel drive by each car's own centre coupling (build 321)
+
+- **What changed.** All-wheel-drive cars locked their two axles together off the brakes. Each sourced preset now has its own centre coupling (`CENTRE_DIFF`, `centreCoupling`):
+
+  | centre | cars | source |
+  |---|---|---|
+  | Torsen T-3, 40:60, lock 0.25 | Land Cruiser 200, Amarok V6, Urus | Toyota technical FAQ; VW Australia; Lamborghini's launch figures. Lock from a Torsen T-3 sheet's "20–30%" (probable) |
+  | epicyclic 47:53 with a viscous coupling | Delta Integrale Evo | Hagerty; evo |
+  | open, 50:50 | Sport quattro | Audi media; its driver's lock isn't modelled |
+  | rear-driven, a viscous coupling to the front | 993 Turbo, Diablo VT, Murciélago | probable |
+
+- **Every other all-wheel-drive car** keeps the rule it had: an electronically controlled clutch, closed on the first slip and open under the brakes. That covers Haldex, xDrive, PTM, ATTESA, ACD, DCCD in auto, GR-FOUR, Quadra-Trac, the Raptor's 4A and the Focus RS. No maker publishes these clutches' control maps, so this is marked probable.
+- **The mechanical centres also work under the brakes.** Under an unequal split, the engine sees the split-weighted mean of the wheel speeds (Willis) and each wheel takes its share of the torque.
+- **The viscous rate** reuses the axle coupling's 110 N m s on the propshaft, so it is c × final drive² at the wheels. Probable: no maker publishes the plates.
+- **The new test (test198)** checks each preset's type. On a GR Yaris launch, the axles part by 0.00 km/h locked, 0.04 with a Torsen, 0.33 with a viscous coupling and 5.7 open.
+- **Other moves.** 0–100 km/h in the stepped car: Diablo VT 4.61 → 5.13 s, 993 Turbo 4.24 → 4.37 s, Sport quattro 4.49 → 4.58 s. The others are within 0.02 s. Fingerprint identical.
+- **Left open:**
+  - the centre coupling's own torque capacity, and any electronic map;
+  - the Sport quattro's and Land Cruiser's driver locks;
+  - the Land Cruiser 200 and the Amarok take 15 s and over 20 s to 100 km/h in the stepped car, the same as before this build. Not looked into.
+
 ### The anti-lock holds a wheel at the tyre's peak slip (build 320)
 
 - **What changed.** ABS now releases a wheel's brake once its slip passes 1.0 × the tyre's peak slip (`absSlip`), not 1.3. The 1.3 had no source (build 264). The code's own citation, the Bosch Automotive Handbook, says the controller holds slip about the peak of the friction curve. This is the default on the DRIVER AIDS card too; a player can still set 1–3.
