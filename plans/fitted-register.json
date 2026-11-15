@@ -87,7 +87,7 @@
    "file": "engine-physics.js",
    "match": "engine.catRampTop",
    "standsFor": "a catalyst's VE loss ramped to the redline, on top of its back-pressure (counted twice)",
-   "retiredBy": "the catalytic converter part (cells, brick: laminar channel flow) together with the silencer's back-pressure, which build 320 found the ramp stands in for; neither alone",
+   "retiredBy": "the catalytic converter part (cells, brick: laminar channel flow) together with the silencer's back-pressure, which build 322 found the ramp stands in for; neither alone",
    "phase": "B6",
    "state": "open"
   },

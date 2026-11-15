@@ -18,9 +18,9 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 ## [Unreleased]
 
-### What the catalyst's double count was hiding: the silencer (build 320)
+### What the catalyst's double count was hiding: the silencer (build 322)
 
-Phase B, step 6, first of two builds: the investigation. No physics changes; the fingerprint is identical to build 319's.
+Phase B, step 6, first of two builds: the investigation. No physics changes; the fingerprint is identical to build 321's.
 
 The stock catalyst is counted twice: once as a plug in the exhaust back-pressure, and again as `catRampTop`, a fitted
 loss of up to 5% of the charge ramped to the redline. Removing the ramp alone (build 244 tried it) lifts nearly every
@@ -52,6 +52,43 @@ Left open, for the second build, which needs all three together:
 - then `catRampTop` retired. The brick's size per engine still needs a source (one example: Concawe report 20/6's
   0.875 L engine carries 0.65 + 1.03 dm³ of catalyst).
 
+### The stepped car's all-wheel drive by each car's own centre coupling (build 321)
+
+- **What changed.** All-wheel-drive cars locked their two axles together off the brakes. Each sourced preset now has its own centre coupling (`CENTRE_DIFF`, `centreCoupling`):
+
+  | centre | cars | source |
+  |---|---|---|
+  | Torsen T-3, 40:60, lock 0.25 | Land Cruiser 200, Amarok V6, Urus | Toyota technical FAQ; VW Australia; Lamborghini's launch figures. Lock from a Torsen T-3 sheet's "20–30%" (probable) |
+  | epicyclic 47:53 with a viscous coupling | Delta Integrale Evo | Hagerty; evo |
+  | open, 50:50 | Sport quattro | Audi media; its driver's lock isn't modelled |
+  | rear-driven, a viscous coupling to the front | 993 Turbo, Diablo VT, Murciélago | probable |
+
+- **Every other all-wheel-drive car** keeps the rule it had: an electronically controlled clutch, closed on the first slip and open under the brakes. That covers Haldex, xDrive, PTM, ATTESA, ACD, DCCD in auto, GR-FOUR, Quadra-Trac, the Raptor's 4A and the Focus RS. No maker publishes these clutches' control maps, so this is marked probable.
+- **The mechanical centres also work under the brakes.** Under an unequal split, the engine sees the split-weighted mean of the wheel speeds (Willis) and each wheel takes its share of the torque.
+- **The viscous rate** reuses the axle coupling's 110 N m s on the propshaft, so it is c × final drive² at the wheels. Probable: no maker publishes the plates.
+- **The new test (test198)** checks each preset's type. On a GR Yaris launch, the axles part by 0.00 km/h locked, 0.04 with a Torsen, 0.33 with a viscous coupling and 5.7 open.
+- **Other moves.** 0–100 km/h in the stepped car: Diablo VT 4.61 → 5.13 s, 993 Turbo 4.24 → 4.37 s, Sport quattro 4.49 → 4.58 s. The others are within 0.02 s. Fingerprint identical.
+- **Left open:**
+  - the centre coupling's own torque capacity, and any electronic map;
+  - the Sport quattro's and Land Cruiser's driver locks;
+  - the Land Cruiser 200 and the Amarok take 15 s and over 20 s to 100 km/h in the stepped car, the same as before this build. Not looked into.
+
+### The anti-lock holds a wheel at the tyre's peak slip (build 320)
+
+- **What changed.** ABS now releases a wheel's brake once its slip passes 1.0 × the tyre's peak slip (`absSlip`), not 1.3. The 1.3 had no source (build 264). The code's own citation, the Bosch Automotive Handbook, says the controller holds slip about the peak of the friction curve. This is the default on the DRIVER AIDS card too; a player can still set 1–3.
+- **Closes build 318's known gap in test170.** The light inside wheel no longer runs past its peak on trail-braking:
+
+  | car | off the line, before → after | limit |
+  |---|---|---|
+  | Civic FK8 | 4.1 → 3.9 m | 4 m |
+  | 911 GT3 | 4.3 → 3.6 m | 4 m |
+
+  `OFF_KNOWN` is now empty. Lap times move by 0.1 s or less.
+- **Other moves.** Mustang GT stop from 100 km/h: 34.6 → 34.0 m. Fingerprint identical: the lap solver doesn't use the aids.
+- **Opened in test174.** With its ESP loosened to 1.5 × espBeta, the Model 3 no longer recovers in the sine with dwell at 6.5 ×: yaw is 0.89 of its peak 1 s after the steering ends, against 0.16 before. The factory ESP still passes FMVSS 126 at 5 × and 6.5 ×.
+  - Why: lifted off, the inner rear wheel slips under regeneration, and the ABS, which eases the regen, now holds that wheel at its peak slip and uses up the rear's side grip.
+  - Real electric cars cut regeneration when the ABS acts; the model only scales it. That needs a source, so it's left for its own build.
+  - Until then, the check asks only that the loosened ESP lets the car slide further.
 ### Phase B simplified: 10 of its fitted numbers kept as rules until after v1.0 (build 319)
 
 Owner's decision: of phase B (`plans/road-to-v1.md`, the combustion-engine parts), only two steps stay as builds.

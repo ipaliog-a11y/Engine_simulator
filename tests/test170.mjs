@@ -59,12 +59,9 @@ const R = await page.evaluate(() => {
 });
 await browser.close();
 
-// KNOWN GAPS (build 318), which may only shrink: with the axle differentials by type (diffCoupling), a clutch-plate
-// LSD no longer holds the two wheels together under the brakes (the brakes act at the wheels, not through the ramps),
-// and on trail-braking the lightly loaded inside wheel runs to the anti-lock's limit, 1.3 x the peak slip (absSlip, not
-// sourced), and the tail steps out. Easing the brake by slip or yaw rate in the driver made it worse; absSlip 1.0 (Bosch:
-// held about the peak) brings both under 4 m, left for its own build. The figure is each car's distance at build 318.
-const OFF_KNOWN = { 'Honda Civic Type R (FK8, 2017)': 4.2, 'Porsche 911 GT3 (991.2, 2017)': 4.4 };
+// KNOWN GAPS, which may only shrink. Build 318 opened one (the FK8 and the GT3 strayed 4.1 and 4.3 m once the
+// differentials were honest); build 319 closed it by holding the anti-lock at the peak slip (absSlip 1, Bosch).
+const OFF_KNOWN = {};
 console.log('car                        flying lap / solver       furthest off the line   most sideways');
 for (const c of R.cars) {
   const e = 100 * (c.lap / c.solver - 1);
