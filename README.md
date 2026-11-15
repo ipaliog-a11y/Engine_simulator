@@ -1,4 +1,4 @@
-# PIXEL ENGINE SIM v0.7 build 324
+# PIXEL ENGINE SIM v0.7 build 325
 
 **A lightweight, 8-bit style internal combustion engine *designer* & simulator** inspired by *Automation*.
 
@@ -389,7 +389,8 @@ assist map over speed and pedal), regeneration, load-point shifting, electric-dr
   bank evenly and sounds smooth. The pulses then run the **exhaust the build has**: the primary rings
   at its quarter wave (c/4L, the same header length the breathing model tunes), as sharply as its
   path-length spread allows (a cast log manifold barely rings, a jig-cut race header rings hard), the
-  system behind the collector drones at its half wave, and the silencer, the cat and a turbine take the
+  system behind the collector drones at its half wave, and the silencer (chosen apart from the header:
+  a road car's race header still ends in a road silencer), the cat and a turbine take the
   top off and the level down. Diesels add a combustion knock, 2-strokes ring, rotaries are
   short and bright. **Load is in the pulses**: each is as hard as the charge it burned (manifold
   pressure × how much fuel the air carried), and a harder pulse is also raspier, so flat out sounds

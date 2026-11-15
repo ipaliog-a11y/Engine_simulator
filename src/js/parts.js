@@ -380,7 +380,11 @@ function ensurePart(p){
 }
 // The class the rest of the app reads (sprites, drawings, cost tables): a designed exhaust is drawn as its construction.
 const exhaustClass=e=>e.exhaustPart?EXHAUST_BUILD[e.exhaustPart.build].cls:e.exhaust;
-const silencerKey=e=>e.exhaustPart?EXHAUST_SILENCER[e.exhaustPart.silencer].cls:e.exhaust;
+// A factory engine's silencer is its own (engine.silencer, build 325): an equal-length header on a road car still ends in
+// a road silencer. Without the field (an older build, or AS THE HEADER) it follows the header's class, as it always did.
+const FACTORY_SILENCER={stock:'chambered',sport:'absorptive',race:'straight'};
+const factorySilencer=e=>EXHAUST_SILENCER[e.silencer]?e.silencer:(FACTORY_SILENCER[e.exhaust]||'chambered');
+const silencerKey=e=>EXHAUST_SILENCER[e.exhaustPart?e.exhaustPart.silencer:factorySilencer(e)].cls;
 const exhaustName=e=>e.exhaustPart?e.exhaustPart.name:(EXHAUST[e.exhaust]||EXHAUST.stock).label;
 
 // The engine form's choices: the factory parts, then the library's of that kind under MY PARTS. A part is 'part:<id>'.
@@ -613,7 +617,7 @@ function partFromFactory(key,kind){
   return withExhaust(key,e=>normPart({name:tr(EXHAUST[key].label),build:{stock:'cast',sport:'tubular',race:'equal'}[key],
     primD_mm:+(e.primD*1000).toFixed(2),primL_mm:Math.round((e.intake==='turbo'?(EXHAUST[key].fixedL||0.55):e.primL)*1000),
     pipes:e.sysPipes,sysD_mm:+(e.sysD*1000).toFixed(2),sysL_m:e.sysL,
-    silencer:{stock:'chambered',sport:'absorptive',race:'straight'}[key]}));
+    silencer:EXHAUST_SILENCER[e.silencer]?e.silencer:FACTORY_SILENCER[key]}));
 }
 // The primary a fabricator cuts for a speed: the tuning relation solved for length at the lowest order that can be
 // routed (350-900 mm), as deriveGasDynamics cuts a factory header.

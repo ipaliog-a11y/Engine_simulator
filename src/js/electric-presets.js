@@ -92,9 +92,9 @@ const HYB_ENGINE_PRESETS=[
   // front axle through its own reduction (declutched past its top speed), and a 6.8 kWh pack of 312 cells: 652 kW and 1280
   // Nm together (Porsche). Neither motor's torque, nor the front's reduction, is published. Its fit's drive is the
   // axle the PDK turns, the rear (build 279); the front motor makes the car all-wheel drive.
-  {cat:'Hybrid',name:'Porsche 4.6 V8 + P2 + front motor (918 Spyder)',real:{hp:599.4,hpRpm:8700,tq:540,tqRpm:6700,motorKW:115,frontKW:95,sysKW:652,sysNm:1280},
+  {cat:'Hybrid',name:'Porsche 4.6 V8 + P2 + front motor (918 Spyder)',real:{hp:599.4,hpRpm:8700,tq:540,tqRpm:6700,motorKW:115,frontKW:95,sysKW:652,sysNm:1280},unsure:['silencer'],
    unsure:['stator','compression','cam','motor torques','front reduction'],engine:{type:'petrol4',radiator:'large',oilCooler:true,cylinders:8,layout:'v',bore_mm:95,stroke_mm:81,compression:13.0,redline:9150,intake:'na',
-    injector:'direct',vvt:true,cam:'race',valves:4,valveMat:'titanium',valveSpring:'race',octane:98,airFilter:'perf',exhaust:'race',cat:'stock',intakeSys:'efi',runner:'variable',
+    injector:'direct',vvt:true,cam:'race',valves:4,valveMat:'titanium',valveSpring:'race',octane:98,airFilter:'perf',exhaust:'race',silencer:'absorptive',cat:'stock',intakeSys:'efi',runner:'variable',
     hyMode:'p2',hyDeploy:'full',hyPlug:true,hyTune:{rpm:4000,map:Array(20).fill(100),regen:'high',lps:true,evKmh:0,evKw:0,socLo:15,socT:20,socHi:95},
     evMotorType:'pm',evRotorD:150,evStatorOD:226,evStack:80,evPoles:8,evTurns:30,evMagnet:'ndfeb',evRetention:'bridges',evCooling:'jacket',evMaxRpm:16000,
     evInverter:'igbt',evAmps:350,evRearCount:1,evFront:'pm',evFrontD:150,evFrontOD:226,evFrontStack:100,evFrontPoles:8,evFrontTurns:30,evFrontAmps:250,evFrontFd:0,
