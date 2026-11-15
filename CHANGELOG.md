@@ -18,6 +18,15 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 ## [Unreleased]
 
+### Lift-off and braking in a turn, checked (build 329)
+
+Phase G8 of `plans/driving-sim.md`: a test only (`test204`), no physics changed; the lap, 0–100, dyno and race fingerprint is identical.
+
+- **ISO 9816 (throttle off in a turn, 40 m, 4 m/s²) and ISO 7975 (braking in a turn, 100 m, 5 m/s², brakes for 3 and 5 m/s²)** on five cars, steering and gear held, read 1 s after. The conditions are the standards' commonly quoted ones (probable: the texts are paywalled).
+- **Lift-off, path curvature after/before:** MX-5 ×1.051 (tightens), Civic FK8 ×1.009 and Golf GTI ×1.029 (keep the line), WRX STI ×1.017, **Mustang GT ×0.990 (runs wide)**.
+- **Braking:** every car tightens: at 3 m/s² from ×1.25 (Mustang) to ×2.89 (MX-5), at 5 m/s² from ×1.68 (FK8) to ×3.81 (MX-5).
+- **New named gap, `LIFT_KNOWN` in `test204`, for the owner to approve:** the Mustang GT. Its friction diff is modelled 2-way (`diffCoupling`: the same locking on the coast as on drive), so engine braking holds its rear wheels to one speed and the line opens. With an open diff it tightens (×1.058). A 1.5-way or 1-way ramp would lock less on the coast; no ramp angles are published for it. The 911 GT3 (not in the five) does the same: ×0.947, ×1.041 open.
+
 ### Roll steer and compliance steer in the stepped car (build 328)
 
 Phase G5 of `plans/driving-sim.md`. Nothing in the app reads `stepCar` yet; the lap, 0–100, dyno and race fingerprint is identical (5208 values).
