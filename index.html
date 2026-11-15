@@ -9372,6 +9372,28 @@ function diffSpec(p){
   return {label:'CLUTCH-PLATE LSD',part:true,lock:L,preload:p.preload_Nm,tbr:L>=1?Infinity:(1+L)/(1-L),corner,cost:DIFF.clsd.cost,
     traction:Math.min(1,2*(0.5-DIFF_ASYM0)/(1-L))};   // the readout's figure: a standing start, no preload
 }
+// The factory clutch-plate LSD in the stepped car (build 318): a road car's, by its locking ratio, (T_fast - T_slow)
+// over the input torque, which is the ramp's lock L. Porsche quotes 37% on overrun for the manual 911 GT3 (991.2; press
+// kit, engine and transmission); owners' notes on older GT3s give 28-40% (PROBABLE). Taken the same on drive and coast.
+// Preload 60 N m: the PARTS page's road starting point (PROBABLE).
+const DIFF_CLSD_ROAD={pre:60,L:0.37};
+// A viscous coupling (build 318): interleaved plates shearing a silicone fluid. A Newtonian film between two annuli
+// carries T = pi·mu·dw·(rO^4 - rI^4)/(2·gap), and 2·pairs - 1 films act in parallel, so the coupling is a rate c (N m
+// per rad/s). Fluid 60,000 cSt dimethyl silicone and 24 plate pairs: the working example of US patent 5,597,369
+// (transfer case with a viscous coupling). Gap 0.3 mm (0.2-0.5 quoted for these units) and plates 70-110 mm across:
+// PROBABLE. c = 110 N m s. Left out: the fluid thins under shear (PDMS above ~100 1/s), heats, and "humps" (the plates
+// touch and lock) on a long slip, so at large dw the real coupling carries less, then suddenly more.
+const DIFF_VCU={nu:0.06,rho:975,rO:0.055,rI:0.035,gap:0.3e-3,pairs:24};
+function diffVcuRate(p){return (2*p.pairs-1)*Math.PI*p.nu*p.rho*(Math.pow(p.rO,4)-Math.pow(p.rI,4))/(2*p.gap);}
+// How the stepped car couples an axle's two wheels: open (none), a friction pack (Coulomb: it holds the wheels together
+// up to preload + lock·|input torque|, then slips at that), a viscous coupling (c·dw), or a spool (always together).
+function diffCoupling(df){
+  if(!df||df===DIFF.open||!(df.lock>0))return {type:'open'};
+  if(df.lock>=1)return {type:'spool'};
+  if(df.part)return {type:'fric',pre:df.preload,L:df.lock};
+  if(df===DIFF.visc)return {type:'visc',c:diffVcuRate(DIFF_VCU)};
+  return {type:'fric',pre:DIFF_CLSD_ROAD.pre,L:DIFF_CLSD_ROAD.L};
+}
 // Cornering-only form, kept for the lap solver's readability.
 function lapDiffTraction(df,aLat,cgH){return diffTractionAt(df,aLat,cgH,1);}
 // Share of the ENGINE's weight on the front axle, from where it sits: a front-engined car carries it
@@ -14109,7 +14131,7 @@ function simulateAccelRun(){
 //             up or lock.
 //   Drive     the engine's full-load curve by the pedal, its own overrun torque off it, its inertia, a clutch that
 //             slips (capacity 1.5 x peak torque), the gearbox with its shift time, the differential (open: equal
-//             torque; limited-slip: torque moved to the slower wheel by its lock), all-wheel drive with its two axles turning together.
+//             torque; limited-slip: friction plates, a viscous coupling or a spool, each by its own law: diffCoupling), all-wheel drive with its two axles turning together.
 //   Stall     below the speed it can fire at, the engine stops; a starter or a bump start brings it back.
 //   Brakes    the hydraulics' own force and front share; ABS and traction control as wheel-slip limits when fitted.
 //   Aids      the ECU's calibration of ABS, traction control and stability control, as a tune (build 281). See DRIVE_AIDS.
@@ -14192,7 +14214,7 @@ function driveCar(){
     cdA:v.cdA,clA:v.clA||0,aeroBal:v.aeroBal==null?0.5:v.aeroBal,crr:v.crr,
     lltdF:v.lltdF==null?v.fWt:v.lltdF,tauLoad:1/(2*Math.PI*ride),
     ...driveBody(v,a,b),
-    drive:el&&el.front?(v.driveMech==='fwd'?'fwd':'rwd'):v.drive,centre:v.drive==='awd'&&!(el&&el.front),lock:(v.df&&v.df.lock)||0,ratios:(v.ratios||[1]).slice(),fd:v.finalDrive||1,eff:v.driveEff||0.9,
+    drive:el&&el.front?(v.driveMech==='fwd'?'fwd':'rwd'):v.drive,centre:v.drive==='awd'&&!(el&&el.front),diff:diffCoupling(v.df),ratios:(v.ratios||[1]).slice(),fd:v.finalDrive||1,eff:v.driveEff||0.9,
     shiftTime:v.shiftCut||0,ev:!!v.ev||!!pt.direct,tc:!!aids.tc,abs:!!aids.abs,
     rpm:curve.map(p=>p.rpm),tq:curve.map(p=>p.tq),ov:pt.overrunTable(rl),idle:pt.idleRpm()||0,redline:rl,
     Ie:pt.inertia()||0.15,clutchCap:1.5*peak,
@@ -14633,7 +14655,6 @@ function stepCar(car,s,u,dt){
     for(let ax=0;ax<2;ax++){
       const i=ax*2,j=i+1,driven=drv[i];
       let Ti=(driven?Tw/nd:0)+(ax===0?Ff*car.r/2:0),Tj=Ti;
-      if(driven&&car.lock>0){const Tc=Math.max(-car.clutchCap*car.fd,Math.min(car.clutchCap*car.fd,car.lock*300*(s.w[i]-s.w[j])));Ti-=Tc;Tj+=Tc;}
       const share=ax===0?car.brakeFront:1-car.brakeFront;
       for(const [q,Tq] of [[i,Ti],[j,Tj]]){
         if(car.abs){const vl=Math.abs(s.vx);s.abs[q]=Math.max(0.05,Math.min(1,s.abs[q]+((s.kappa[q]<-car.slipOpt*car.aids.absSlip[ax]&&vl>2)?-car.aids.absRel:car.aids.absApp)*h));}
@@ -14646,6 +14667,17 @@ function stepCar(car,s,u,dt){
         s.w[q]=wq;
       }
     }
+    // The axle's differential (build 318), after the wheels have moved, as the centre coupling below: the torque that
+    // would bring the two wheels to one speed in this step (Karnopp's stick condition), taken from the faster wheel and
+    // given to the slower. A spool always passes it; a friction pack passes it up to its capacity, preload + lock x the
+    // axle's input torque (the ramp's statics, the same on drive and coast: a 2-way), and slides at that; a viscous
+    // coupling passes c x dw, taken implicitly so that any c is stable. See diffCoupling.
+    if(car.diff.type!=='open')for(let ax=0;ax<2;ax++){const i=ax*2,j=i+1;if(!drv[i])continue;
+      const Ii=car.Iw+h*car.r*dF[i],Ij=car.Iw+h*car.r*dF[j],dw=s.w[i]-s.w[j],k=h*(1/Ii+1/Ij),D=car.diff;
+      let Tc=dw/k;
+      if(D.type==='fric'){const cap=D.pre+D.L*Math.abs(Tw)*2/nd;Tc=Math.max(-cap,Math.min(cap,Tc));}
+      else if(D.type==='visc')Tc=D.c*dw/(1+D.c*k);
+      s.w[i]-=h*Tc/Ii;s.w[j]+=h*Tc/Ij;}
     // All-wheel drive: the centre coupling. The two axles turn together (a locked centre differential, or a clutch
     // pack closed on the first slip), so the torque goes to the axle that can use it: exactly the torque that
     // leaves the two axles' mean speeds equal after this step, taken from the faster and given to the slower. It
