@@ -103,6 +103,10 @@ Named gaps: the Model 3 +12% torque at 953 A; past the knee the power rises (Lea
 their ratings); the Prius 4.29 -> 4.46 L/100 km. Next: `MOTOR.statorShape`, then the heat paths (step 3).
 *Build 314 (owner's choice):* the stator's outside diameter is a part, each preset its own (Model 3 225 mm, teardown);
 `MOTOR.statorShape` retired. Table 6.2's continuous densities were too low for traction peaks. Next: the heat paths (step 3).
+*Build 315 (owner's choice: the motor's cooling first):* the jacket's film from Gnielinski on a helical channel (PROBABLE
+size and flow), the stator-housing contact from Staton et al. (0.01 mm of air), the air gap from Becker & Kaye with the
+speed; spray and slot keep the jacket. Laps unchanged; continuous power +7 to +67%. Open: oil spray and slot measured,
+air's fins, `MOTOR.mech`, `PACK.thermal`.
 
 Beyond the register (not started; the owner decides when, November 2026): a fast-charge curve from the charge-voltage and plating limits
 the pack already has; the pack's temperature in the lap, cycle and race (they still read the 25 °C resistance); a
