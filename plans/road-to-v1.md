@@ -232,6 +232,8 @@ motor). For each, decide whether to restrict it: a fixed limit, or a dynamic one
 build (the rpm limit from piston speed and the valve springs, boost from the compressor map and knock). Each limit cited, as the physics rules ask; a limit the physics already enforces
 (knock, a failure, a lean mixture) stays a consequence, not a lock. The owner tags the release.
 
+**Driving simulation:** `plans/driving-sim.md` (phase G, the handling, is v1.0 work; owner, November 2026).
+
 **After v1.0.** Phase C's 12 rules and its 10 unread files (build 316); The tyre's heat as a surface and a bulk (phase F, build 1); 3D 8-bit cars from the profile images and the recorded dimensions; the driving game on `stepCar`;
 the Greek decision; a career layer.
 An electric drivetrain with four motors, one in each wheel hub: each wheel's torque its own, the unsprung mass the
