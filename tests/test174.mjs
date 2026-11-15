@@ -9,8 +9,8 @@
 //     the peak;
 //   · ESP, against a spin: FMVSS 126's sine with dwell (0.7 Hz, a 0.5 s dwell, from 80 km/h, at 5 and 6.5 times the
 //     steering that gives 0.3 g). The rule: 1 s after the steering ends the yaw rate is under 35% of its peak, 1.75 s
-//     after under 20%, and the car has moved 1.83 m sideways 1.07 s in. The Model 3 spins with ESP off and passes
-//     with it on; a wider espBeta lets it slide further;
+//     after under 20%, and the car has moved 1.83 m sideways 1.07 s in. The Model 3 spins with ESP off at 6.5 x (since build
+//     318, when the body began to roll, it recovers at 5 x) and passes with it on at both; a wider espBeta lets it slide further;
 //   · ESP, against a push: full power on a circle, a front-driver's front tyres slip less and it runs less wide with it on;
 //   · on a straight launch and a straight stop ESP does nothing;
 //   · no page errors.
@@ -80,7 +80,7 @@ const pass = o => o.r1 <= 0.35 && o.r175 <= 0.20 && o.y >= 1.83;
 for (const [k, a] of [['off', R.swd.off], ['on', R.swd.on]]) console.log(`sine with dwell, Model 3, ESP ${k}: ` + a.map((o, i) => `${[5, 6.5][i]} x: yaw ${f2(o.r1)} / ${f2(o.r175)} of its peak after 1 / 1.75 s, ${f2(o.y)} m across, ${o.beta.toFixed(0)} deg sideways`).join('; '));
 console.log(`  with 1.5 x the slip allowed: ${R.swd.wide.beta.toFixed(0)} deg sideways`);
 if (!R.swd.fitted) fails.push('the Model 3 has no ESP');
-if (R.swd.off.some(pass)) fails.push('the Model 3 passes the sine with dwell with ESP off: the manoeuvre shows nothing');
+if (pass(R.swd.off[1])) fails.push('the Model 3 passes the sine with dwell at 6.5 x with ESP off: the manoeuvre shows nothing');   // since build 317 (the body rolls) it recovers at 5 x
 if (!R.swd.on.every(pass)) fails.push('the Model 3 fails FMVSS 126 with ESP on');
 if (!(R.swd.wide.beta > R.swd.on[1].beta + 1 && pass(R.swd.wide))) fails.push('a wider espBeta does not let the car slide further and still recover');
 console.log(`push, Civic Type R, full power on a 30 m circle: ESP off ${f1(R.push.off.r)} m out, front tyres at ${f1(R.push.off.aF)} deg, ${R.push.off.v.toFixed(0)} km/h; ESP on ${f1(R.push.on.r)} m, ${f1(R.push.on.aF)} deg, ${R.push.on.v.toFixed(0)} km/h (inner rear brake to ${R.push.on.esp.toFixed(0)} Nm)`);

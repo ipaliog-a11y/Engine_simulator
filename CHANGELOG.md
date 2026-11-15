@@ -18,6 +18,25 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 ## [Unreleased]
 
+### The body rolls and pitches in the stepped car (build 317)
+
+- Phase G3 of `plans/driving-sim.md`. `stepCar` moved the weight with a first-order lag at the ride frequency, so the
+  car didn't lean or dive. Roll and pitch are now two damped states (`driveBody`), on the stiffness and dampers the
+  lap already derives (`rollStiffness`, `quarterCar`). Whatever goes through the roll centres arrives at once, and the
+  rest goes through the springs and dampers as the body moves.
+- Steady, it gives the lap's own figures: roll gradient within 0.5% (M3 E46 4.52 deg/g, Civic FK8 4.34 against 4.32,
+  MX-5 4.92), the front share of the transfer equal to `lltdF`, and pitch in braking equal to m·ax·h/Kp. On a step of
+  the wheel the body now overshoots: 5-16% past its steady roll, and 14-31% with the roll damping halved.
+- New inputs, both marked probable: roll inertia from NHTSA's measured inertias (Heydinger et al., SAE 1999-01-1336:
+  roll radius of gyration 0.39 of the track), and pitch inertia m·a·b (dynamic index 1, Gillespie ch. 5).
+- **Test changed, in the open:** with ESP off, the Model 3 now recovers from FMVSS 126's sine with dwell at 5× (10°
+  sideways; on `main` it spun, 53°). It still spins at 6.5× (82°). With roll, the rear's load transfer builds through the
+  body at 1.6 Hz instead of a lag. `test174` now asks for the spin at 6.5×.
+- Left open: anti-dive and anti-squat (all pitch goes through the springs, so it is large: about 2° at 0.5 g), the
+  weight's own roll moment as the body leans (left out by the lap's `rollGrad` too), and the tyres' vertical give.
+- G1 (the differentials as parts) waits for this. Its honest road-car LSD frees the wheels under the brakes, and the
+  test driver then loses the line on trail-braking (`test170`).
+
 ### Phase C simplified: its last 12 fitted numbers kept as rules until after v1.0 (build 316)
 
 Owner's decision: close phase C of `plans/road-to-v1.md` (the electric and hybrid audit) now, without the 7-10 builds it had left.
