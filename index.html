@@ -14190,6 +14190,7 @@ function simulateAccelRun(){
 //   Steering  the torque the front tyres put on the hand wheel, s.steerTorque (phase G2): see DRIVE_CASTER.
 //   Camber    each wheel's lean on the road, from its static camber and the body's roll less what the linkage recovers,
 //             s.camber (phase G4), and its camber thrust. See THE CAMBER.
+//   Toe       each wheel steers a little by the body's roll and by its own side force, s.toe (phase G5). See THE TOE.
 //
 //   Turbo     the shaft in time (build 274): its energy rises by the turbine's power less the compressor's and the
 //             bearings', and the boost it has built sets the torque. See driveTurbo.
@@ -14197,7 +14198,7 @@ function simulateAccelRun(){
 //   Electric  a hybrid's or an electric car's pack is a state (build 275): the motor's help and its regeneration by
 //             the charge, the charge by what they draw and return. See driveElectric.
 //
-// NOT YET (named, so nobody rediscovers them): tyre and brake temperatures, roll steer, the road's bumps
+// NOT YET (named, so nobody rediscovers them): tyre and brake temperatures, the road's bumps
 // and kerbs, a power-split's engine speed, the motor's and the pack's heat.
 // ================================================================================================
 const DRIVE_G=9.81, DRIVE_RHO=1.20;
@@ -14214,9 +14215,10 @@ const DRIVE_G=9.81, DRIVE_RHO=1.20;
 //             the controller holds the car's slip angle and its yaw rate by braking single wheels. A real one must
 //             estimate the slip from its sensors; the model knows it. Against a spin: once the rear tyres slip more
 //             than espBeta (rad; by default the angle they peak at, atan(3 mu / C)), the outer front wheel is braked
-//             for the yaw moment Izz x excess / espTau^2. Against a push: the yaw rate the driver asks for is the
+//             for the yaw moment Izz x excess / espTau^2. (Judged by the yaw rate instead, it brakes a hot lap's
+//             rear-drivers on 26-30% of it, with the toe of phase G5 or without: build 328. Left on the slip angle.) Against a push: the yaw rate the driver asks for is the
 //             steady turn of the car's own single-track model, v delta / (L (1 + K v^2)), K its understeer gradient
-//             from the tyres' cornering stiffness at the static loads (car.Kus), and never more than the grip can
+//             from the tyres' cornering stiffness at the static loads and the toe's steady share (car.Kus, THE TOE), and never more than the grip can
 //             turn the car, mu g / v; short of it by espBand (rad/s) with the front tyres past their peak, the inner
 //             rear wheel is braked for Izz x shortfall / espTau. With espCut the throttle closes over espTau while
 //             it works. Off below espVmin. espBand, espTau and espVmin are a calibration (probable: no maker
@@ -14274,8 +14276,12 @@ function driveCar(){
   const Cax=(W,ref)=>2*cc*(W/2)*(TYRE_CC_P2+1)/(TYRE_CC_P2+Math.pow(W/2/ref,2));
   const Kus=v.mass/(L*L)*(b/Cax(v.mass*DRIVE_G*b/L,v.FzRefF||v.FzRef)-a/Cax(v.mass*DRIVE_G*a/L,v.FzRef));
   if(aids.espBeta==null)aids.espBeta=(aids.espSlide||1)*Math.atan(3*muR/cc);
+  const body=driveBody(v,a,b),toe=driveToe(v);
+  // the toe's steady share of the understeer gradient (THE TOE), to the same K: roll steer by the roll per ay, and
+  // compliance steer by each wheel's share of the side force, m (b, a) / (2 L) per unit ay
+  const Ktoe=((toe.rsF+toe.rsR)*v.mass*body.rollArm/body.rollK+(toe.csF*b+toe.csR*a)*v.mass/(2*L))/L;
   return {
-    aids,esp:!!aids.esp,Kus,pkF:Math.atan(3*tyreMu(v.FzRefF||v.FzRef,v.FzRefF||v.FzRef)/cc),
+    aids,esp:!!aids.esp,Kus:Kus+Ktoe,...toe,pkF:Math.atan(3*tyreMu(v.FzRefF||v.FzRef,v.FzRefF||v.FzRef)/cc),
     turbo:grid&&grid.laggy?driveTurbo(pt,grid):null,el,
     name:v.chLabel||'',m:v.mass,Izz:v.mass*a*b,a,b,h:v.cg,tF:v.trackF||v.track,tR:v.trackR||v.track,
     r:v.rTire,Iw:(v.wheelI||2)/4,
@@ -14283,7 +14289,7 @@ function driveCar(){
     loadSens:LOAD_SENS,muX:TYRE_MU_X,cc,ccP2:TYRE_CC_P2,slipOpt:TYRE_SLIP_OPT,slipC:TYRE_SLIP_C,relax:v.rTire,
     cdA:v.cdA,clA:v.clA||0,aeroBal:v.aeroBal==null?0.5:v.aeroBal,crr:v.crr,
     lltdF:v.lltdF==null?v.fWt:v.lltdF,tauLoad:1/(2*Math.PI*ride),
-    ...driveBody(v,a,b),
+    ...body,
     drive:el&&el.front?(v.driveMech==='fwd'?'fwd':'rwd'):v.drive,centre:v.drive==='awd'&&!(el&&el.front)?centreCoupling(v):null,diff:diffCoupling(v.df),ratios:(v.ratios||[1]).slice(),fd:v.finalDrive||1,eff:v.driveEff||0.9,
     shiftTime:v.shiftCut||0,ev:!!v.ev||!!pt.direct,tc:!!aids.tc,abs:!!aids.abs,
     rpm:curve.map(p=>p.rpm),tq:curve.map(p=>p.tq),ov:pt.overrunTable(rl),idle:pt.idleRpm()||0,redline:rl,
@@ -14306,7 +14312,7 @@ function driveCar(){
 function driveState(car){
   return {soc:car.el?car.el.soc0:0,eng:true,engT:0,Pm:0,shE:0,boost:0,t:0,x:0,y:0,psi:0,vx:0,vy:0,yaw:0,w:[0,0,0,0],we:car.idle*Math.PI/30,gear:1,shiftT:0,
     axF:0,ayF:0,roll:0,rollV:0,pitch:0,pitchV:0,al:[0,0,0,0],abs:[1,1,1,1],tcF:1,esp:[0,0,0,0],espF:1,clF:1,pull:false,firing:true,
-    ax:0,ay:0,Fz:[0,0,0,0],kappa:[0,0,0,0],alpha:[0,0,0,0],Fx:[0,0,0,0],Fy:[0,0,0,0],camber:[0,0,0,0],cg:[0,0,0,0],rpm:car.idle,speed:0,delta:0,steerTorque:0};
+    ax:0,ay:0,Fz:[0,0,0,0],kappa:[0,0,0,0],alpha:[0,0,0,0],Fx:[0,0,0,0],Fy:[0,0,0,0],camber:[0,0,0,0],cg:[0,0,0,0],toe:[0,0,0,0],Fyw:[0,0,0,0],rpm:car.idle,speed:0,delta:0,steerTorque:0};
 }
 // THE ELECTRIC SIDE AS PLAIN DATA (build 275): a hybrid's motor and pack, or an electric car's. null without one.
 // The full-load curve the car carries is already the engine's and the motor's together at the pack's rated charge, and
@@ -14502,6 +14508,20 @@ function driveLerp(xs,ys,x){
 // outside wheel) cost the stepped car 1-6% of its skidpad grip, and the test driver, who takes the lap's speeds, then
 // left the line by up to 7.8 m and slid the Model 3 to 31 degrees (test170); it waits for a driver that judges the
 // car's own grip. Also camber by heave and pitch (no heave state), and the camber's own aligning moment.
+// THE TOE (phase G5). Each wheel steers by the body's roll (roll steer) and by its own side force (lateral force
+// compliance steer: the bushes give). Both in the understeer sense positive: a front wheel steers out of the turn, a
+// rear one into it. The figures are a fleet's, not each suspension type's: no figure by type was found published. Each is
+// the middle of the measured range in "Summary of typical vehicle parameter measurements" (ResearchGate 329552571; its
+// sign convention is the one used here):
+//   roll steer         front 0.2 us to 0.1 os deg/deg: 0.05; rear 0.13 us to 0.06 os: 0.035
+//   compliance steer   front 0.60 us to 0.22 os deg/kN: 0.19; rear 0.02 us to 0.22 os: -0.10 (oversteer)
+// The same summary's understeer gradients, 0.7-8.2 deg/g, are what they add to. vehicle.rollSteerF/R (deg/deg) and
+// compSteerF/R (deg/kN) override them. The side force is the wheel's own of the step before, so its toe lags a step.
+// Left out, named: the aligning-torque compliance steer (front 0.4-1.6 deg/100 Nm us in the same summary), bump steer
+// in heave, and a figure per suspension type.
+const DRIVE_TOE={rollSteerF:0.05,rollSteerR:0.035,compSteerF:0.19,compSteerR:-0.10};
+function driveToe(v){const k=n=>v[n]!=null?v[n]:DRIVE_TOE[n],kN=Math.PI/180/1000;
+  return {rsF:k('rollSteerF'),rsR:k('rollSteerR'),csF:k('compSteerF')*kN,csR:k('compSteerR')*kN};}
 // A wheel's contact half length (m): the tyre as a circle of radius r pressed flat by Fz/kt (see DRIVE_CASTER).
 function drivePatch(r,kt,Fz){if(!(kt>0))return 0;const d=Math.min(r,Math.max(0,Fz)/kt);return Math.sqrt(Math.max(0,2*r*d-d*d));}
 // One tyre: the force along and across the wheel (N) for a load Fz, a slip ratio and a slip angle (rad), and tg, its
@@ -14608,7 +14628,8 @@ function driveDriver(car,s,line,d){
   const need=s.vx*s.vx*kap/(g*car.cc);                                  // (m b/L) v^2 kap over the front's C = cc (m g b/L)
   const aR=(s.alpha[2]+s.alpha[3])/2,over=Math.sign(aR)*Math.max(0,Math.abs(aR)-pkR);
   const want=wrap(hp-s.psi-vf)+need-Math.atan2(PULL*e,3+s.vx)-over;
-  const delta=vf+Math.max(-PAST*pkF,Math.min(PAST*pkF,want));
+  // the angle wanted is the front wheels' own on the road: the roll and the side force toe them out of it (THE TOE)
+  const toeF=s.toe?(s.toe[0]+s.toe[1])/2:0,delta=vf-toeF+Math.max(-PAST*pkF,Math.min(PAST*pkF,want));
   // ---- the pedals
   const ease=Math.max(0,Math.min(1,2*(Math.max(Math.abs(s.alpha[2]),Math.abs(s.alpha[3]))/pkR-1)));   // rear past its peak: off the plan by 1.5 x
   const plan=(p1.v*p1.v-p0.v*p0.v)/(2*ds)+SPEED*(p0.v-s.vx);
@@ -14632,7 +14653,7 @@ function stepCar(car,s,u,dt){
   let thr=Math.max(0,Math.min(1,u.throttle||0));
   const rd=u.road||{},sinT=rd.sinT||0,cosT=Math.sqrt(Math.max(0,1-sinT*sinT)),kv=rd.kv||0;
   for(let k=0;k<n;k++){
-    const v=Math.hypot(s.vx,s.vy),delta=steer*car.steerLock,cd=Math.cos(delta),sd=Math.sin(delta);
+    const v=Math.hypot(s.vx,s.vy),delta=steer*car.steerLock;
     // ---- gearbox
     const top=car.ratios.length;
     if(s.shiftT>0){s.shiftT-=h;
@@ -14660,9 +14681,13 @@ function stepCar(car,s,u,dt){
     Fz[0]=Math.max(0,(WF-dX)/2-dYF);Fz[1]=Math.max(0,(WF-dX)/2+dYF);Fz[2]=Math.max(0,(WR+dX)/2-dYR);Fz[3]=Math.max(0,(WR+dX)/2+dYR);
     // ---- tyres
     let FX=0,FY=0,MZ=0,MK=0;const dF=[0,0,0,0],Fl=[0,0,0,0];
+    if(!s.toe){s.toe=[0,0,0,0];s.Fyw=[0,0,0,0];}
     for(let i=0;i<4;i++){
       const front=i<2,vxw=s.vx-s.yaw*yw[i],vyw=s.vy+s.yaw*xw[i];
-      const vl=front?vxw*cd+vyw*sd:vxw,vt=front?-vxw*sd+vyw*cd:vyw,den=Math.max(Math.abs(vl),3);
+      // the toe (THE TOE): out of the turn at the front, into it at the rear, for understeer figures
+      const tq=car.rsF==null?0:front?-car.rsF*s.roll-car.csF*s.Fyw[i]:car.rsR*s.roll+car.csR*s.Fyw[i];s.toe[i]=tq;
+      const dw=(front?delta:0)+tq,cw=Math.cos(dw),sw=Math.sin(dw);
+      const vl=vxw*cw+vyw*sw,vt=-vxw*sw+vyw*cw,den=Math.max(Math.abs(vl),3);
       const kap=(s.w[i]*car.r-vl)/den,alp=-Math.atan2(vt,Math.max(Math.abs(vl),0.5));
       s.al[i]+=(alp-s.al[i])*Math.min(1,Math.abs(vl)*h/car.relax);          // the side force builds over the relaxation length
       // the wheel's lean to the left: static camber, its top towards the car's middle, and the roll less what is recovered
@@ -14671,8 +14696,8 @@ function stepCar(car,s,u,dt){
         if(!s.cg){s.cg=[0,0,0,0];s.camber=[0,0,0,0];}s.camber[i]=gam;
         tg=s.cg[i]+=(ah/(3*car.r)*Math.sin(gam)-s.cg[i])*Math.min(1,Math.abs(vl)*h/car.relax);}   // its thrust builds as the slip does
       const T=driveTyre(car,Fz[i],kap,s.al[i],front,tg);
-      Fl[i]=T[0];dF[i]=T[3]*car.r/den;s.kappa[i]=kap;s.alpha[i]=s.al[i];
-      const fx=front?T[0]*cd-T[1]*sd:T[0],fy=front?T[0]*sd+T[1]*cd:T[1];
+      Fl[i]=T[0];dF[i]=T[3]*car.r/den;s.kappa[i]=kap;s.alpha[i]=s.al[i];s.Fyw[i]=T[1];
+      const fx=T[0]*cw-T[1]*sw,fy=T[0]*sw+T[1]*cw;
       s.Fx[i]=fx;s.Fy[i]=fy;FX+=fx;FY+=fy;MZ+=xw[i]*fy-yw[i]*fx;
       if(front&&car.ktF){const q=T[2];   // the steering torque: see DRIVE_CASTER
         MK-=T[1]*((q<1?ah*(1-q)*(1-q)*(1-q)/(3-3*q+q*q):0)+car.casterTrail);}
