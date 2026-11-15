@@ -52,6 +52,7 @@ function readEngineFromForm(){
     thermostat:clamp(Math.round(+g('edThermostat').value||88),71,95),
     alternator:g('edAlternator').value
   };
+  {const sv=g('edSilencer').value;if(EXHAUST_SILENCER[sv])e.silencer=sv;}   // a factory exhaust's own silencer (build 325); '' = as the header
   Object.assign(e,partsFromForm());   // the factory exhaust and runners, or designed ones (builds 205, 206)
   if(type==='electric')Object.assign(e,readElectricFromForm());   // the motor and battery (build 179)
   else{const hm=g('edHybrid')&&g('edHybrid').value;if(hm&&hm!=='none'){e.hyMode=hm;e.hyDeploy=HYBRID_DEPLOY[g('edHyDeploy').value]?g('edHyDeploy').value:'full';e.hyTune=readHybTuneFromForm();if(g('edHyPlug').value==='yes')e.hyPlug=true;Object.assign(e,readElectricFromForm());}}   // a hybrid system (build 186), its tune (192)
@@ -81,7 +82,7 @@ function applyEngineToForm(e){
   g('edSpring').value=e.valveSpring||'stock';g('edSpringRpm').value=e.springRpm||0;
   g('edValveSpec').value=e.ivValve_mm>0&&e.evValve_mm>0?e.ivValve_mm+'/'+e.evValve_mm+'@'+e.bore_mm+'x'+(e.valves||4):'';
   g('edFuel').value=e.fuel||'gasoline';
-  partsToForm(e);g('edCat').value=e.cat||'stock';g('edOctane').value=e.octane;g('edInjector').value=e.injector;
+  partsToForm(e);g('edSilencer').value=EXHAUST_SILENCER[e.silencer]?e.silencer:'';g('edCat').value=e.cat||'stock';g('edOctane').value=e.octane;g('edInjector').value=e.injector;
   g('edIgnAdv').value=e.ignitionAdv;g('edIgnType').value=e.ignitionType;g('edTiming').value=e.timingMode||'fixed';g('edAfrMode').value=e.afrMode||'fixed';
   g('edRadiator').value=e.radiator||'stock';g('edRadHp').value=e.radHp||0;g('edFan').value=e.fan||'electric';
   g('edOilCooler').value=e.oilCooler?'yes':'no';g('edThermostat').value=e.thermostat||88;
@@ -125,6 +126,7 @@ function syncDesignEnable(){
   g('edAntilag').disabled=!turbo;
   g('edScType').disabled=intake!=='supercharger';
   // No poppet valvetrain on 2-stroke / rotary.
+  g('edSilencer').disabled=g('edExhaust').value.startsWith('part:');   // a designed exhaust carries its own silencer
   g('edCam').disabled=tp.ports;g('edEgr').disabled=tp.ports||tp.ci;   // the spark engines' cooled EGR (build 204)
   g('edVVT').disabled=tp.ports;
   ['edValves','edValvetrain','edValveMat','edSpring'].forEach(id=>{g(id).disabled=tp.ports;});

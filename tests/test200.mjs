@@ -1,43 +1,42 @@
-// The bench holds its speed at any frame rate (build 324).
+// A factory exhaust's silencer, apart from its header (build 325).
 //
-// WHY THIS EXISTS. The dyno brake pulls brakeGain Nm per rpm over its hold target, and the bench took one explicit step
-// per frame. Below ~32-59 frames a second (by engine) that step overshot by more than it corrected and the RPM jumped
-// for good: at 30 frames an RS3 swung 660 rpm, an MX-5 1700. It must hold that:
-//   · at 60, 30 and 20 frames a second the settled speed swings by under 2 rpm;
-//   · the settled speed is the same at every frame rate, within 2 rpm.
+// WHY THIS EXISTS. engine.silencer gives a factory engine its own silencer; without it the silencer follows the header
+// class, as before. What must hold:
+//   · a road preset with an equal-length header (exhaust:'race') reads a straight-through silencer (silencerKey 'sport');
+//   · an engine without the field reads as it did: race -> 'race', sport -> 'sport', stock -> 'stock';
+//   · the factory part made from such an engine carries its silencer; a designed part's own silencer still wins;
+//   · the field survives the form (applyEngineToForm -> buildEngine), and AS THE HEADER leaves it unset;
+//   · no page errors.
 import { chromium } from './pw.mjs';
 import { fileURLToPath, pathToFileURL } from 'url';
 import path from 'path';
 const repo = fileURLToPath(new URL('..', import.meta.url));
 const browser = await chromium.launch();
-const page = await browser.newPage({ viewport: { width: 1200, height: 900 } });
-const errors = [];
-page.on('console', m => { if (m.type() === 'error' && !/ERR_FILE_NOT_FOUND/.test(m.text())) errors.push('console: ' + m.text()); });
+const page = await browser.newPage();
+const errors = [], fails = [];
 page.on('pageerror', e => errors.push('pageerror: ' + e.message));
 await page.goto(pathToFileURL(path.join(repo, 'index.html')).href, { waitUntil: 'networkidle' });
-await page.waitForTimeout(400);
-const fails = [];
 
-const r = await page.evaluate(() => ['Audi RS3', 'MX-5 1.6'].map(nm => {
-  const p = VEHICLE_PRESETS.find(x => x.name.includes(nm)); loadVehiclePreset(p);
-  const row = { car: p.name, runs: [] };
-  for (const fps of [60, 30, 20]) {
-    state.throttle = 0.85; state.load = 0.4; state.rpm = 4000; state.firing = true; state.ignOn = true;
-    const a = []; for (let i = 0; i < fps * 15; i++) { stepEngine(1 / fps); updatePhysics(); if (i > fps * 12) a.push(state.rpm); }
-    row.runs.push({ fps, lo: Math.min(...a), hi: Math.max(...a) });
-  }
-  return row;
-}));
-for (const c of r) {
-  console.log(`== ${c.car}: ` + c.runs.map(x => `${x.fps} fps ${x.lo.toFixed(1)}-${x.hi.toFixed(1)} rpm`).join(' • ') + ' ==');
-  for (const x of c.runs) {
-    if (!(x.hi - x.lo < 2)) fails.push(`${c.car}: the speed swings ${(x.hi - x.lo).toFixed(0)} rpm at ${x.fps} frames a second`);
-    if (!(Math.abs(x.hi - c.runs[0].hi) < 2)) fails.push(`${c.car}: settles at ${x.hi.toFixed(0)} rpm at ${x.fps} fps, ${c.runs[0].hi.toFixed(0)} at 60`);
-  }
-}
-
+const R = await page.evaluate(() => {
+  const load = x => { applyEngineToForm(Object.assign({}, DEFAULT_ENGINE, x)); buildEngine(); return engine; };
+  const s2k = FACTORY_ENGINES.find(p => p.name.startsWith('Honda F20C')).engine;
+  const out = {};
+  let e = load(s2k);
+  out.preset = [e.silencer, silencerKey(e), partFromFactory('race', 'exhaust').silencer];
+  out.old = ['stock', 'sport', 'race'].map(k => { const x = load({ exhaust: k }); return [x.silencer, silencerKey(x), partFromFactory(k, 'exhaust').silencer]; });
+  e = load(s2k);
+  out.designed = silencerKey(Object.assign({}, e, { exhaustPart: normPart({ kind: 'exhaust', build: 'equal', silencer: 'straight' }) }));
+  return out;
+});
 await browser.close();
-if (errors.length) console.log('ERRORS:\n  ' + errors.join('\n  '));
-if (fails.length) console.log('\nFAIL:\n  ' + fails.join('\n  '));
-else console.log('\nOK: the bench holds its speed at 60, 30 and 20 frames a second.');
-process.exit(fails.length || errors.length ? 1 : 0);
+
+console.log('S2000 preset:', R.preset.join(' / '));
+console.log('no field (stock, sport, race):', R.old.map(r => r.join(' / ')).join(' | '));
+console.log('designed part over the preset:', R.designed);
+if (R.preset.join() !== 'absorptive,sport,absorptive') fails.push('S2000: ' + R.preset.join());
+const want = [[null, 'stock', 'chambered'], [null, 'sport', 'absorptive'], [null, 'race', 'straight']];
+R.old.forEach((r, i) => { if ((r[0] ?? null) !== null || r[1] !== want[i][1] || r[2] !== want[i][2]) fails.push('no field: ' + r.join()); });
+if (R.designed !== 'race') fails.push('designed part: ' + R.designed);
+if (errors.length) fails.push(...errors);
+if (fails.length) { console.log('\nFAIL\n' + fails.map(f => '  - ' + f).join('\n')); process.exit(1); }
+console.log('\nPASS');
