@@ -18,6 +18,30 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 ## [Unreleased]
 
+### The stepped car's axle differentials, each by its own law (build 318)
+
+- **What changed.** `stepCar` coupled an axle's two wheels with a fitted `lock × 300 × Δω`. Each type now has its own law (`diffCoupling`), applied per driven axle after the wheels move:
+  - open: no coupling;
+  - clutch-plate LSD: a friction pack, holding up to preload + lock × axle input torque, the same on drive and coast;
+  - viscous coupling: c × Δω, taken implicitly;
+  - spool: always together.
+- **Factory clutch-plate LSD:** preload 60 N m (probable), lock 0.37, from Porsche's published 37% overrun locking ratio for the manual 911 GT3 (991.2). A designed diff uses its own preload and lock.
+- **Viscous rate** c = 110 N m s, from silicone shear: US 5,597,369's 24 plate pairs and 60,000 cSt fluid; the gap and plate radii are probable. Fluid thinning, heating and the hump are left out.
+- **The new test (test197):** Civic FK8, full throttle in third on a 40 m circle at 70 km/h. Inside front wheel: open 203 km/h, viscous 84, clutch-plate 79, spool 79 (the spool's two wheels are equal).
+- **Fingerprint:** identical. Only `stepCar` changed.
+- **Known gap, in test170.** The test driver now runs wider:
+
+  | car | off the line, before → after | limit |
+  |---|---|---|
+  | Civic FK8 | 2.8 → 4.1 m | 4 m |
+  | 911 GT3 | 1.9 → 4.3 m | 4 m |
+
+  - Why: an honest LSD lets the two wheels part under the brakes, because outboard brakes don't act through the ramps. On trail-braking, the light inside wheel runs to the anti-lock's limit (1.3 × peak slip, unsourced), and the tail steps out.
+  - What didn't fix it: driver rules that ease the brake by slip, yaw rate or the friction circle, and rear select-low ABS.
+  - What does: `absSlip` 1.0 (Bosch: slip held about the peak) brings both cars under 4 m. That is left for its own build.
+  - Until then, test170 allows each of the two cars its build-318 distance (`OFF_KNOWN`).
+- **Left open:** the four-wheel-drive centre diff, which needs each preset's type sourced. The FK8's real diff is a helical (gear-type) LSD; it gets the clutch-plate figures for now.
+
 ### The body rolls and pitches in the stepped car (build 317)
 
 - Phase G3 of `plans/driving-sim.md`. `stepCar` moved the weight with a first-order lag at the ride frequency, so the
