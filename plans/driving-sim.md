@@ -81,7 +81,7 @@ Builds G1–G5 change only `stepCar`, so the lap, 0–100, dyno and race fingerp
 2. The wake: a following car's drag and downforce cut by the distance to the car in front, from the race's tow and
    dirty-air rules, now applied per axle.
 
-**J. One model for the numbers (decision first)**
+**J. One model for the numbers (after the graphics engine; decision 4)**
 
 The lap solver stays the headline number (it is fast and needs no driver). The stepped lap with `driveDriver`
 (within 4% today) becomes a second figure, "DRIVEN LAP". The gap between the two then shows how drivable a car is.
@@ -99,15 +99,20 @@ A twitchy car loses more to the driver than a stable one does.
 
 ## Order and size
 
-G1 → G2 → G3 → G4 → G5 → G8 → G6 → G7 (about 9 builds) gives the handling. G1 and G2 are small, and on their own
-they are enough to drive it. H′ and I follow phase F. J is one build. K comes after v1.0.
+G1 → G2 → G3 → G4 → G5 → G8 → G6 → G7 (about 9 builds) gives the handling, before v1.0. G1 and G2 are small, and on
+their own they are enough to drive it. H′ and I follow phase F. J waits for the graphics engine. K comes after v1.0.
 
-## Owner's decisions needed
+**v0.8:** proposed once G1–G5 and G8 are in. The car then has its real diffs, steering torque, roll, camber and
+compliance, all checked by the ISO manoeuvres. The owner tags it.
 
-1. **Before or after v1.0?** Road-to-v1 point 6 says v1.0 "simulates every value a playable driving game needs".
-   Read that way, G and J are v1.0 work; read narrowly, only G1–G2 are.
-2. **G3 and G6 make the stepped car stiffer to integrate.** Allow substeps under 1 ms for it (the cost per car
-   rises in proportion)?
-3. **Suspension geometry for G4–G5** isn't in any preset. Use the per-type values from Reimpell, marked probable,
-   or ask for a maker's figure per car?
-4. **J:** show a DRIVEN LAP beside the solved lap, or keep it test-only?
+## Owner's decisions (November 2026)
+
+1. **G is v1.0 work.** v1.0 is not urgent; v0.8 is released when a phase makes sense of it (above).
+2. **Smaller physics steps are allowed.** G3 and G6 may substep below 1 ms; the cost per car rises in proportion.
+3. **Suspension geometry for G4–G5:** use what can be found for each preset (maker's sheets, then service manuals,
+   then the per-type values from Reimpell). Where nothing is published, a preset's geometry may be set to match the
+   car's published output (skidpad g, lane-change speed, understeer gradient). Each such value is listed in the
+   preset's `unsure` list and in `plans/fitted-register.json` as fitted to that car. The model itself stays derived:
+   no constant inside `stepCar` is tuned.
+4. **J: the DRIVEN LAP will be shown,** but only after the graphics engine is built. The present 2D track view can't
+   show this level of detail. Until then it stays in the tests.
