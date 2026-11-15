@@ -18,6 +18,18 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 ## [Unreleased]
 
+### Phase C simplified: its last 12 fitted numbers kept as rules until after v1.0 (build 316)
+
+Owner's decision: close phase C of `plans/road-to-v1.md` (the electric and hybrid audit) now, without the 7-10 builds it had left.
+
+- **Signed off as rules** (`plans/fitted-register.json`: 33 → 21 open): the motor's friction and windage (`MOTOR.mech`),
+  the rest of `MOTOR_COOLING` (oil spray, slot, air fins, coolant temperatures), the pack's heat (`PACK.thermal`),
+  the cells (`CHEM.cells`), the pack's overheads, `INVERTER`, `RETENTION.vTip`, `ACTIVE_TO_MOTOR`, `EV_BMS`,
+  `IM.leakage`, and the EV and hybrid race controllers (`EV_RACE`, `HYB_RACE.margin`).
+- **Nothing moves:** no code changed; each entry keeps the part that would retire it, now marked "after v1.0".
+- **Left open:** the 10 files never read for fitted numbers (the register's `audit`: electric-car, hybrid,
+  power-split, friction, sound and others) also wait until after v1.0, so v1.0's finish line does not cover them yet.
+
 ### The motor's cooling from heat-transfer correlations (build 315)
 
 Phase C step 3 of `plans/road-to-v1.md`, the motor's cooling first (owner's choice). `MOTOR_COOLING` narrowed, still open.

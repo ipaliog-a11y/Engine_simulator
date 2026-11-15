@@ -107,6 +107,10 @@ their ratings); the Prius 4.29 -> 4.46 L/100 km. Next: `MOTOR.statorShape`, then
 size and flow), the stator-housing contact from Staton et al. (0.01 mm of air), the air gap from Becker & Kaye with the
 speed; spray and slot keep the jacket. Laps unchanged; continuous power +7 to +67%. Open: oil spray and slot measured,
 air's fins, `MOTOR.mech`, `PACK.thermal`.
+*Build 316 (owner's decision: simplify, phase C closed):* the 12 entries left (`MOTOR.mech`, `MOTOR_COOLING`'s rest,
+`PACK.thermal`, `CHEM.cells`, `PACK.overheads`, `INVERTER`, `RETENTION.vTip`, `ACTIVE_TO_MOTOR`, `EV_BMS`, `IM.leakage`,
+`EV_RACE`, `HYB_RACE.margin`) are kept as rules until after v1.0, each with its plan in the register; step 3's rest, 4
+and 5 move there. The 10 files never read for fitted numbers (the register's `audit`) wait until after v1.0 too.
 
 Beyond the register (not started; the owner decides when, November 2026): a fast-charge curve from the charge-voltage and plating limits
 the pack already has; the pack's temperature in the lap, cycle and race (they still read the 25 °C resistance); a
@@ -228,7 +232,7 @@ motor). For each, decide whether to restrict it: a fixed limit, or a dynamic one
 build (the rpm limit from piston speed and the valve springs, boost from the compressor map and knock). Each limit cited, as the physics rules ask; a limit the physics already enforces
 (knock, a failure, a lean mixture) stays a consequence, not a lock. The owner tags the release.
 
-**After v1.0.** The tyre's heat as a surface and a bulk (phase F, build 1); 3D 8-bit cars from the profile images and the recorded dimensions; the driving game on `stepCar`;
+**After v1.0.** Phase C's 12 rules and its 10 unread files (build 316); The tyre's heat as a surface and a bulk (phase F, build 1); 3D 8-bit cars from the profile images and the recorded dimensions; the driving game on `stepCar`;
 the Greek decision; a career layer.
 An electric drivetrain with four motors, one in each wheel hub: each wheel's torque its own, the unsprung mass the
 hub motors add, and torque vectoring explored (yaw moment from the left-right split, in place of braking a wheel),
