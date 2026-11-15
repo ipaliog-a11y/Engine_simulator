@@ -39,6 +39,7 @@
 //   Brakes    the hydraulics' own force and front share; ABS and traction control as wheel-slip limits when fitted.
 //   Aids      the ECU's calibration of ABS, traction control and stability control, as a tune (build 281). See DRIVE_AIDS.
 //   Aero      drag and downforce on the square of the speed; rolling resistance by the load.
+//   Steering  the torque the front tyres put on the hand wheel, s.steerTorque (phase G2): see DRIVE_CASTER.
 //
 //   Turbo     the shaft in time (build 274): its energy rises by the turbine's power less the compressor's and the
 //             bearings', and the boost it has built sets the torque. See driveTurbo.
@@ -98,6 +99,21 @@ function driveBody(v,a,b){
     rcGF:fw*zF,rcGR:(1-fw)*zR,
     pitchI:v.mass*a*b,pitchK:2*(qF.ks*a*a+qR.ks*b*b),pitchC:2*(qF.cs*a*a+qR.cs*b*b)};
 }
+// THE STEERING TORQUE (phase G2). Each front tyre's side force acts behind the steering axis, so it turns the wheel
+// back: Mz = -Fy (t + n) about the axis, and the hand wheel feels the two fronts' sum through the steering ratio.
+//   t   the pneumatic trail, closed form from the same brush model driveTyre uses (Pacejka, Tyre and Vehicle
+//       Dynamics, ch. 3, parabolic pressure): t = a (1-s)^3 / (3 - 3s + s^2), a/3 at no slip and 0 in a full slide,
+//       s being driveTyre's share of the grip in use. So Fy t peaks at s = 1/4, well before Fy does at s = 1: the
+//       steering goes light at the limit. a is half the contact length: the tyre as a circle of radius r pressed
+//       flat by its deflection Fz/kt (kt the quarter car's tyre rate), a = sqrt(2 r d - d^2) (geometry; the real
+//       patch's ends round off, so PROBABLE). At 4 kN on a 205/55R16 that is a = 0.10 m, t = 33 mm.
+//   n   the caster trail, r tan(caster), the steering axis through the wheel's centre (no caster offset). vehicle.caster
+//       (degrees) from a maker's alignment sheet where a preset has one; none does yet, so every car takes DRIVE_CASTER:
+//       road cars run about 3-7 degrees (Reimpell et al., The Automotive Chassis, ch. 3: PROBABLE as one value).
+//   Left out, named: the power assistance (s.steerTorque is the column's load before any assist), the steering's
+//   friction, the drive force's moment on the scrub radius and the torque steer of unequal driveshafts (no preset
+//   gives scrub radius or shaft angles), and the moment of Fx on the tread's sideways deflection.
+const DRIVE_CASTER=5;
 function driveCar(){
   const v=vehicle,pt=powertrain(),L=v.wb,a=L*(1-v.fWt),b=L*v.fWt;
   const curve=pt.torqueCurve(),rl=pt.maxRpm(),peak=curve.reduce((m,p)=>Math.max(m,p.tq),0);
@@ -128,14 +144,16 @@ function driveCar(){
     // which left a turbo unlit on the line (the GT-R at 2400 rpm) and a powerful car short of flywheel.
     launchRpm:(()=>{const A=v.ev||pt.direct?null:simulateAccelRun();return A&&A.launchRpm>0?A.launchRpm:Math.min(curve.reduce((m,p)=>p.tq>m.tq?p:m,curve[0]).rpm,0.6*rl);})(),
     brakeF:brakeForceCap(v),brakeFront:v.brakeFrontShare,
-    steerLock:8.5/(v.steerRatio||15)        // 2.7 turns of the hand wheel lock to lock (probable), through the ratio
+    steerLock:8.5/(v.steerRatio||15),       // 2.7 turns of the hand wheel lock to lock (probable), through the ratio
+    // the steering's feel (build 323, phase G2): the front tyres' vertical rate for their contact length, and the caster trail
+    steerRatio:v.steerRatio||15,ktF:quarterCar(v,'F').kt,casterTrail:v.rTire*Math.tan((v.caster==null?DRIVE_CASTER:v.caster)*Math.PI/180)
   };
 }
 // A car at rest, in neutral for a clutch car until the driver asks for a gear.
 function driveState(car){
   return {soc:car.el?car.el.soc0:0,eng:true,engT:0,Pm:0,shE:0,boost:0,t:0,x:0,y:0,psi:0,vx:0,vy:0,yaw:0,w:[0,0,0,0],we:car.idle*Math.PI/30,gear:1,shiftT:0,
     axF:0,ayF:0,roll:0,rollV:0,pitch:0,pitchV:0,al:[0,0,0,0],abs:[1,1,1,1],tcF:1,esp:[0,0,0,0],espF:1,clF:1,pull:false,firing:true,
-    ax:0,ay:0,Fz:[0,0,0,0],kappa:[0,0,0,0],alpha:[0,0,0,0],Fx:[0,0,0,0],Fy:[0,0,0,0],rpm:car.idle,speed:0,delta:0};
+    ax:0,ay:0,Fz:[0,0,0,0],kappa:[0,0,0,0],alpha:[0,0,0,0],Fx:[0,0,0,0],Fy:[0,0,0,0],rpm:car.idle,speed:0,delta:0,steerTorque:0};
 }
 // THE ELECTRIC SIDE AS PLAIN DATA (build 275): a hybrid's motor and pack, or an electric car's. null without one.
 // The full-load curve the car carries is already the engine's and the motor's together at the pack's rated charge, and
@@ -468,7 +486,7 @@ function stepCar(car,s,u,dt){
     const Fz=s.Fz;
     Fz[0]=Math.max(0,(WF-dX)/2-dYF);Fz[1]=Math.max(0,(WF-dX)/2+dYF);Fz[2]=Math.max(0,(WR+dX)/2-dYR);Fz[3]=Math.max(0,(WR+dX)/2+dYR);
     // ---- tyres
-    let FX=0,FY=0,MZ=0;const dF=[0,0,0,0],Fl=[0,0,0,0];
+    let FX=0,FY=0,MZ=0,MK=0;const dF=[0,0,0,0],Fl=[0,0,0,0];
     for(let i=0;i<4;i++){
       const front=i<2,vxw=s.vx-s.yaw*yw[i],vyw=s.vy+s.yaw*xw[i];
       const vl=front?vxw*cd+vyw*sd:vxw,vt=front?-vxw*sd+vyw*cd:vyw,den=Math.max(Math.abs(vl),3);
@@ -478,7 +496,10 @@ function stepCar(car,s,u,dt){
       Fl[i]=T[0];dF[i]=T[3]*car.r/den;s.kappa[i]=kap;s.alpha[i]=s.al[i];
       const fx=front?T[0]*cd-T[1]*sd:T[0],fy=front?T[0]*sd+T[1]*cd:T[1];
       s.Fx[i]=fx;s.Fy[i]=fy;FX+=fx;FY+=fy;MZ+=xw[i]*fy-yw[i]*fx;
+      if(front&&car.ktF){const d=Math.min(car.r,Fz[i]/car.ktF),al=Math.sqrt(Math.max(0,2*car.r*d-d*d)),q=T[2];   // the steering torque: see DRIVE_CASTER
+        MK-=T[1]*((q<1?al*(1-q)*(1-q)*(1-q)/(3-3*q+q*q):0)+car.casterTrail);}
     }
+    s.steerTorque=MK/car.steerRatio;
     // ---- engine, clutch, driveline
     const wd=wMean();
     // How far the driven tyres are past their peak, as a rate for whoever is holding them there (the ECU's traction
