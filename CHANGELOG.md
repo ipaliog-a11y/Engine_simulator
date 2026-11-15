@@ -18,7 +18,7 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 ## [Unreleased]
 
-### Camber and camber thrust in the stepped car (build 325)
+### Camber and camber thrust in the stepped car (build 326)
 
 - Phase G4 of `plans/driving-sim.md`, on the suspension types the lap already uses (owner's ruling on decision 3).
   `stepCar`'s tyres stood upright. Each wheel now leans by its static camber plus the body's roll, less what its
@@ -35,6 +35,19 @@ they are accurate about *what* shipped but not about the day it shipped.
 - **Known gap opened, in the open:** with the thrust, the Civic FK8 strays 4.05 m from the line in `test170` (3.9 m
   on `main`, limit 4 m). It is added to `OFF_KNOWN` at 4.1 m, as build 318 did for the same car.
 - G3 is closed as done: build 317 delivered it (`driveBody`, `test196`).
+
+### A factory exhaust's silencer, chosen apart from its header (build 325)
+
+- **New field `engine.silencer`** (ENGINE tab, SILENCER, under EXHAUST): chambered, straight-through or none. Until now a
+  factory exhaust's class set both its header and its silencer, so every preset with an equal-length header
+  (`exhaust:'race'`) had a straight pipe, though each is a road car that passed drive-by noise rules.
+- **23 real presets with `exhaust:'race'`** (S2000, M3 E46, GT3/GT4, F355, F40, McLaren F1, Enzo, Carrera GT, Murciélago,
+  458, Huracán, 812, Viper, LT6, Integra/Civic Type R, Atom, BAC Mono, Radical, RD350LC, 918) now carry a straight-through
+  silencer. No source in the presets says which kind, so each marks `silencer` unsure. The archetypes are unchanged.
+- **AS THE HEADER** (the field unset) keeps the old mapping (stock → chambered, sport → straight-through, race → none), so
+  older saved builds and share links load and sound as before. A designed exhaust part keeps its own silencer.
+- The silencer still changes the sound only. Its back-pressure stays unmodelled (phase B6, waiting for measured data).
+  The fingerprint is identical: it records no sound numbers.
 
 ### The catalyst and silencer, derived, read below a measured exhaust: held (build 324)
 

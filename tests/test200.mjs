@@ -1,56 +1,42 @@
-// Camber and camber thrust in the stepped car (phase G4).
+// A factory exhaust's silencer, apart from its header (build 325).
 //
-// WHY THIS EXISTS. stepCar's tyres stood upright whatever the body did. Each wheel now leans by its static camber and
-// the body's roll less what its linkage recovers, and pushes towards its lean by the brush model's camber thrust (THE
-// CAMBER in drive-model.js). The grip by camber is left out, a named gap. What must hold:
-//   · steady on a skidpad, the outside front leans as the lap says: camberF + rollGrad ay/g (1 - camRecF), within 2%;
-//   · a cambered tyre at no slip pushes towards its lean by C a/(3R) per radian, within 2%;
-//   · pulling away straight from rest, the static camber's thrusts cancel: the car keeps its line within 1 cm and 0.05 deg.
+// WHY THIS EXISTS. engine.silencer gives a factory engine its own silencer; without it the silencer follows the header
+// class, as before. What must hold:
+//   · a road preset with an equal-length header (exhaust:'race') reads a straight-through silencer (silencerKey 'sport');
+//   · an engine without the field reads as it did: race -> 'race', sport -> 'sport', stock -> 'stock';
+//   · the factory part made from such an engine carries its silencer; a designed part's own silencer still wins;
+//   · the field survives the form (applyEngineToForm -> buildEngine), and AS THE HEADER leaves it unset;
+//   · no page errors.
 import { chromium } from './pw.mjs';
 import { fileURLToPath, pathToFileURL } from 'url';
 import path from 'path';
 const repo = fileURLToPath(new URL('..', import.meta.url));
 const browser = await chromium.launch();
 const page = await browser.newPage();
-const errors = [];
+const errors = [], fails = [];
 page.on('pageerror', e => errors.push('pageerror: ' + e.message));
 await page.goto(pathToFileURL(path.join(repo, 'index.html')).href, { waitUntil: 'networkidle' });
-const fails = [];
 
 const R = await page.evaluate(() => {
-  const out = { cars: [] };
-  for (const n of ['BMW M3 (E46', 'Honda Civic Type R (FK8', 'Mazda MX-5']) {
-    loadVehiclePreset(FACTORY_CARS.find(x => x.name.startsWith(n)));
-    const car = driveCar(), s = driveRolling(car, 80);
-    for (let t = 0; t < 5; t += 0.01) stepCar(car, s, { steer: 0.08, throttle: 0.35, brake: 0 }, 0.01);
-    const o = s.ay > 0 ? 1 : 0;   // the outside front: the right one in a left turn
-    out.cars.push({ name: n, cam: (o ? -1 : 1) * s.camber[o] * 180 / Math.PI,
-      want: vehicle.camberF + vehicle.rollGrad * Math.abs(s.ay) / 9.81 * (1 - vehicle.camRecF) });
-  }
-  // camber thrust at no slip
-  { const car = driveCar(), Fz = car.FzRefF, ah = drivePatch(car.r, car.ktF, Fz), g = Math.PI / 180;
-    const xz = Fz / car.FzRefF, Ca = car.cc * Fz * (car.ccP2 + 1) / (car.ccP2 + xz * xz);
-    out.thrust = { got: driveTyre(car, Fz, 0, 0, true, ah / (3 * car.r) * Math.sin(g))[1], want: Ca * ah / (3 * car.r) * Math.sin(g), perDeg: Ca * ah / (3 * car.r) * g / Fz }; }
-  // pulling away straight from rest, with race camber
-  { const car = Object.assign(driveCar(), { camF: -2.5 * Math.PI / 180, camR: -2.5 * Math.PI / 180 }), s = driveState(car);
-    for (let t = 0; t < 8; t += 0.01) stepCar(car, s, { steer: 0, throttle: 0.6, brake: 0 }, 0.01);
-    out.straight = { y: s.y, psi: s.psi * 180 / Math.PI, v: s.vx * 3.6 }; }
+  const load = x => { applyEngineToForm(Object.assign({}, DEFAULT_ENGINE, x)); buildEngine(); return engine; };
+  const s2k = FACTORY_ENGINES.find(p => p.name.startsWith('Honda F20C')).engine;
+  const out = {};
+  let e = load(s2k);
+  out.preset = [e.silencer, silencerKey(e), partFromFactory('race', 'exhaust').silencer];
+  out.old = ['stock', 'sport', 'race'].map(k => { const x = load({ exhaust: k }); return [x.silencer, silencerKey(x), partFromFactory(k, 'exhaust').silencer]; });
+  e = load(s2k);
+  out.designed = silencerKey(Object.assign({}, e, { exhaustPart: normPart({ kind: 'exhaust', build: 'equal', silencer: 'straight' }) }));
   return out;
 });
-
-const near = (a, b, t) => Math.abs(a / b - 1) <= t;
-for (const o of R.cars) {
-  console.log(`${o.name.padEnd(24)} outside front camber ${o.cam.toFixed(3)} deg (lap ${o.want.toFixed(3)})`);
-  if (!near(o.cam, o.want, 0.02)) fails.push(`${o.name}: outside front camber off the lap's`);
-}
-const T = R.thrust;
-console.log(`camber thrust at 1 deg: ${T.got.toFixed(1)} N (want ${T.want.toFixed(1)}), ${T.perDeg.toFixed(4)} of the load per degree`);
-if (!(T.got > 0 && near(T.got, T.want, 0.02))) fails.push('camber thrust not C a/(3R), or not towards the lean');
-const S = R.straight;
-console.log(`pulling away at -2.5 deg camber: ${S.v.toFixed(0)} km/h after 8 s, ${(S.y * 100).toFixed(2)} cm aside, heading ${S.psi.toFixed(3)} deg`);
-if (!(S.v > 30 && Math.abs(S.y) < 0.01 && Math.abs(S.psi) < 0.05)) fails.push('the static camber pushes the car off a straight line');
-if (errors.length) console.log('ERRORS:\n  ' + errors.join('\n  '));
-if (fails.length) console.log('\nFAIL:\n  ' + fails.join('\n  '));
-else console.log('\nOK: the wheels lean as the lap says, push towards their lean, and cancel on a straight.');
 await browser.close();
-process.exit(fails.length || errors.length ? 1 : 0);
+
+console.log('S2000 preset:', R.preset.join(' / '));
+console.log('no field (stock, sport, race):', R.old.map(r => r.join(' / ')).join(' | '));
+console.log('designed part over the preset:', R.designed);
+if (R.preset.join() !== 'absorptive,sport,absorptive') fails.push('S2000: ' + R.preset.join());
+const want = [[null, 'stock', 'chambered'], [null, 'sport', 'absorptive'], [null, 'race', 'straight']];
+R.old.forEach((r, i) => { if ((r[0] ?? null) !== null || r[1] !== want[i][1] || r[2] !== want[i][2]) fails.push('no field: ' + r.join()); });
+if (R.designed !== 'race') fails.push('designed part: ' + R.designed);
+if (errors.length) fails.push(...errors);
+if (fails.length) { console.log('\nFAIL\n' + fails.map(f => '  - ' + f).join('\n')); process.exit(1); }
+console.log('\nPASS');

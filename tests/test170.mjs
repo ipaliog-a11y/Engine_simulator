@@ -61,7 +61,7 @@ await browser.close();
 
 // KNOWN GAPS, which may only shrink. Build 318 opened one (the FK8 and the GT3 strayed 4.1 and 4.3 m once the
 // differentials were honest); build 319 closed it by holding the anti-lock at the peak slip (absSlip 1, Bosch).
-// Build 325 (phase G4) opened one: with camber thrust the FK8 strays 4.05 m (3.9 m before); the driver takes the lap's
+// Build 326 (phase G4) opened one: with camber thrust the FK8 strays 4.05 m (3.9 m before); the driver takes the lap's
 // speeds and doesn't judge the car's own grip. Closes with that driver.
 const OFF_KNOWN = { 'Honda Civic Type R (FK8, 2017)': 4.1 };
 console.log('car                        flying lap / solver       furthest off the line   most sideways');

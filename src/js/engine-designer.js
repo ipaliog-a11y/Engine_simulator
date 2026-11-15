@@ -90,6 +90,8 @@ const ICD_FIELDS={
     trade:'A tuned header pulls exhaust out of the cylinders with its pressure waves at the rpm it is tuned for: more power there, for more cost. The PARTS tab designs your own.'},
   valScav:{guide:'header',what:"The header's primary length, and how much its pulses scavenge the cylinders.",
     trade:'Tune it with EXHAUST.'},
+  edSilencer:{guide:'header',what:'The silencer at the end of the exhaust. AS THE HEADER takes the one that goes with the EXHAUST choice: chambered on a stock cast manifold, straight-through on a sport header, none on a race header.',
+    trade:'It changes the sound only for now; its own back-pressure is not modelled yet.'},
   edCat:{guide:'emissions',what:'The catalytic converter.',
     trade:'A catalyst cleans the exhaust, for some back-pressure. Without one the engine breathes a little better and its emissions are dirty.'},
   edFuel:{guide:'fuels',what:'What the engine burns.',
@@ -122,10 +124,10 @@ const ICD_KEY={edCyl:'cylinders',edLayout:'layout',edBore:'bore_mm',edStroke:'st
   edValves:'valves',edValvetrain:'valvetrain',edCam:'cam',edVVT:'vvt',edValveMat:'valveMat',edSpring:'valveSpring',edEgr:'egr',edIntake:'intake',edBoost:'boost_bar',
   edIntercooler:'intercooler',edTurboSize:'turboSize',edTurboConfig:'turboConfig',edCompWheel:'compExd_mm',edHousing:'housing',edVGT:'vgt',
   edAntilag:'antilag',edScType:'scType',edTaperRpm:'taperRpm',edTaperPct:'taperPct',edTqLimit:'tqLimit',edGovRpm:'govRpm',edNitrous:'nitrous',
-  edIntakeSys:'intakeSys',edAirFilter:'airFilter',edRunner:'runner',edExhaust:'exhaust',edCat:'cat',edFuel:'fuel',edOctane:'octane',
+  edIntakeSys:'intakeSys',edAirFilter:'airFilter',edRunner:'runner',edExhaust:'exhaust',edSilencer:'silencer',edCat:'cat',edFuel:'fuel',edOctane:'octane',
   edInjector:'injector',edIgnType:'ignitionType',edTiming:'timingMode',edIgnAdv:'ignitionAdv',edAfrMode:'afrMode',edRadiator:'radiator',
   edFan:'fan',edOilCooler:'oilCooler',edThermostat:'thermostat',edAlternator:'alternator'};
-const ICD_DEPS=['edIntake','edFuel','edTiming','edIntakeSys','edVGT'];   // their change enables or disables other fields
+const ICD_DEPS=['edIntake','edFuel','edTiming','edIntakeSys','edVGT','edExhaust'];   // their change enables or disables other fields
 
 // The factory combustion engines behind the ticks, by their own name ("GM LS3"), or their car's where the name is only
 // a description ("3.0 Turbo I6 (2JZ)" -> "2JZ") or a hybrid's ("Toyota 2ZR-FXE 1.8 + power-split (Prius)" -> "Prius").
@@ -178,7 +180,7 @@ function icdSummary(c,r){
     case 'head':return r&&r.ports?tr('no poppet valves'):o('edValves')+' · '+o('edCam')+(g('edVVT')==='yes'?' · VVT':'')+(r&&r.float?' · '+tr('float')+' '+f(Math.round(r.float/100)*100)+' rpm':'');
     case 'air':return o('edIntake')+(g('edIntake')==='na'?'':' · '+(+g('edBoost')).toFixed(2)+' bar · '+(g('edIntake')==='turbo'?o('edTurboSize')+' '+o('edTurboConfig'):o('edScType')))+
       (g('edNitrous')!=='none'?' · N2O':'');
-    case 'flow':return o('edIntakeSys')+' · '+o('edRunner')+' · '+o('edExhaust')+' · '+o('edCat');
+    case 'flow':return o('edIntakeSys')+' · '+o('edRunner')+' · '+o('edExhaust')+' · '+o('edSilencer')+' · '+o('edCat');
     case 'fuel':return o('edFuel')+(document.getElementById('edOctane').disabled?'':' · '+g('edOctane')+' RON')+' · '+o('edTiming');
     case 'cool':return o('edRadiator')+' · '+o('edFan')+' · '+(document.getElementById('edAlternator').disabled?tr('12 V: DC-DC from the pack'):o('edAlternator'));
   }

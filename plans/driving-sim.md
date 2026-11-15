@@ -49,7 +49,7 @@ Builds G1–G5 change only `stepCar`, so the lap, 0–100, dyno and race fingerp
    damping already derived for `lltdF` and the ride frequency (`susp-window.js`). The first-order load-transfer lag
    goes away; the transfer follows from the body's angles. *Test:* roll gradient (deg/g) and pitch in braking against
    the model's own static values; a step-steer (ISO 7401) shows overshoot that grows with damping set lower.
-4. **Camber and camber thrust.** *Build 325: the camber and its thrust, on the existing types; the grip by camber is
+4. **Camber and camber thrust.** *Build 326: the camber and its thrust, on the existing types; the grip by camber is
    left open until the test driver judges the car's own grip.* Static camber plus camber gain with roll from the suspension type (strut, double
    wishbone, multi-link: geometry from Reimpell, *The Automotive Chassis*), and camber stiffness in the brush tyre
    (Pacejka ch. 3). *Test:* the outside front's camber on a skidpad; more negative static camber raises front grip.
