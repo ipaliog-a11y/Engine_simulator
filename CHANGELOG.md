@@ -18,6 +18,15 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 ## [Unreleased]
 
+### Phase B simplified: 10 of its fitted numbers kept as rules until after v1.0 (build 319)
+
+Owner's decision: of phase B (`plans/road-to-v1.md`, the combustion-engine parts), only two steps stay as builds.
+
+- **Still to build:** B2, each real car's own valves and ports (`THROAT_RATIO`, `EV_RATIO`); B6, the catalytic converter, whose loss is counted twice today (`catRampTop`). These two are the next builds.
+- **Signed off as rules** (`plans/fitted-register.json`: 21 → 11 open): B1's idle per cam grade (`CAM.idleRpm`; build 260's attempt failed), B3's `TURB_WHEEL`, `SC_TYPE` and the vane ring (`VANE_R2/VANE_H`), B5's plenum volume and `INTAKE_SYS`, and B7's rotary and two-stroke breathing (`CAM.ampMul`, `CAM.loWiden`, `veBell`, `typeImep`). Each keeps the part that would retire it, now marked "after v1.0".
+- **B4** (water-to-air and twin intercoolers per car) also waits until after v1.0.
+- **Nothing moves:** no code changed; `tests/test166.mjs` now holds 11 open entries and the 10 new rules.
+
 ### The stepped car's axle differentials, each by its own law (build 318)
 
 - **What changed.** `stepCar` coupled an axle's two wheels with a fitted `lock × 300 × Δω`. Each type now has its own law (`diffCoupling`), applied per driven axle after the wheels move:

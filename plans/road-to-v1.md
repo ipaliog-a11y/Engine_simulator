@@ -79,6 +79,11 @@ scoreboard holds (phase H)".
 6. Catalytic converter: find what the double count hides, then the part (2).
 7. Rotary and two-stroke breathing: ports as geometry, in place of the VE bell and type factors.
 
+*Build 319 (owner's decision: simplify phase B):* only B2 (each real car's valves and ports) and B6 (the catalytic
+converter's double count) stay as builds. The other 10 entries (B1's idle, B3's `TURB_WHEEL`, `SC_TYPE` and vane ring,
+B5's plenum and `INTAKE_SYS`, B7's four) are kept as rules until after v1.0, each with its part in the register; B4
+(water-to-air and twin intercoolers per car) also waits until after v1.0.
+
 *Scoreboard run at the end of B.*
 
 **C. Electric and hybrid audit (2–4 builds).** The same register, applied to the motor, inverter, battery and the
@@ -234,7 +239,7 @@ build (the rpm limit from piston speed and the valve springs, boost from the com
 
 **Driving simulation:** `plans/driving-sim.md` (phase G, the handling, is v1.0 work; owner, November 2026).
 
-**After v1.0.** Phase C's 12 rules and its 10 unread files (build 316); The tyre's heat as a surface and a bulk (phase F, build 1); 3D 8-bit cars from the profile images and the recorded dimensions; the driving game on `stepCar`;
+**After v1.0.** Phase C's 12 rules and its 10 unread files (build 316); phase B's 10 rules and B4 (build 319); The tyre's heat as a surface and a bulk (phase F, build 1); 3D 8-bit cars from the profile images and the recorded dimensions; the driving game on `stepCar`;
 the Greek decision; a career layer.
 An electric drivetrain with four motors, one in each wheel hub: each wheel's torque its own, the unsprung mass the
 hub motors add, and torque vectoring explored (yaw moment from the left-right split, in place of braking a wheel),
