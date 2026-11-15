@@ -18,6 +18,21 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 ## [Unreleased]
 
+### The bench holds its speed at any frame rate (build 327)
+
+- **What was wrong.** On LIVE and DYNO the RPM jumped constantly on a slow screen. The dyno brake pulls `brakeGain` Nm
+  per rpm over its hold target, and the bench took one explicit step per frame. That step is stable only while
+  `brakeGain·(30/π)/inertia·dt` stays under 2: above ~32 frames a second for a Corvette, 40 for the RS3, 59 for an MX-5.
+  At 30 frames the RS3 swung 660 rpm and the MX-5 1700; at 20 frames 1790 and 3260. At 60 frames all were steady, which
+  is why no test saw it.
+- **The fix.** `stepEngine` now splits a frame into steps no longer than `inertia/(brakeGain·30/π)`, which take the
+  overshoot out exactly once. The RS3 holds 4710.1 rpm and the MX-5 4813.6 rpm at 60, 30 and 20 frames (`test202`).
+- **Why DIAGNOSIS and the fault codes showed nothing.** It was the bench's arithmetic, not the engine: both read the
+  engine's physics, which was sound.
+- **Moved.** No dyno, lap or race figure: the fingerprint does not step the bench. A transient on the bench at 60 frames
+  now rings less on engines whose figure was above 1 (all of them, 1.1-2.0).
+- **Left open.** The electric and hybrid benches (`stepMotorBench`, `stepHybridBench`) take their own steps and were not
+  checked for the same fault.
 ### Camber and camber thrust in the stepped car (build 326)
 
 - Phase G4 of `plans/driving-sim.md`, on the suspension types the lap already uses (owner's ruling on decision 3).
