@@ -45,11 +45,12 @@ Builds G1–G5 change only `stepCar`, so the lap, 0–100, dyno and race fingerp
    probable). Output `s.steerTorque` at the hand wheel through the rack ratio. *Test:* the torque peaks before the
    side force does (the "goes light" signal), and an FWD car on power torque-steers with unequal driveshaft angles
    (only where the preset says so).
-3. **Roll and pitch as states.** Two more degrees of freedom: the sprung mass on the roll and pitch stiffness and
+3. **Roll and pitch as states.** *Done in build 317 (`driveBody`, `test196`).* Two more degrees of freedom: the sprung mass on the roll and pitch stiffness and
    damping already derived for `lltdF` and the ride frequency (`susp-window.js`). The first-order load-transfer lag
    goes away; the transfer follows from the body's angles. *Test:* roll gradient (deg/g) and pitch in braking against
    the model's own static values; a step-steer (ISO 7401) shows overshoot that grows with damping set lower.
-4. **Camber and camber thrust.** Static camber plus camber gain with roll from the suspension type (strut, double
+4. **Camber and camber thrust.** *Build 325: the camber and its thrust, on the existing types; the grip by camber is
+   left open until the test driver judges the car's own grip.* Static camber plus camber gain with roll from the suspension type (strut, double
    wishbone, multi-link: geometry from Reimpell, *The Automotive Chassis*), and camber stiffness in the brush tyre
    (Pacejka ch. 3). *Test:* the outside front's camber on a skidpad; more negative static camber raises front grip.
 5. **Roll steer and compliance steer.** Toe change per degree of roll and per kN of side force, by suspension type
