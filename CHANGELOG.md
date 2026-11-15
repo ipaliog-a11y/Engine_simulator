@@ -18,6 +18,23 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 ## [Unreleased]
 
+### A voxel Ferrari F40 in the track view, as a prototype (build 324)
+
+- New `src/js/voxel-car.js`. Open the page with `?voxel` (or set `localStorage['pes.voxel']='1'`), pick the Ferrari F40,
+  and the TEST TRACK replay draws it as 17 stacked layers of 0.07 m voxels (63 x 29 a layer) instead of the flat shape.
+  Zoom in (scroll or pinch) to see it. Off by default, so nothing else changes.
+- Generated, not modelled: the side silhouette is the one the VEHICLE picture already draws (CAR_PROFILES), length, width
+  and height are `carDims`'s, the ride height `carGeometry`'s. Colours are sampled once from the F40's own picture
+  (`assets/cars/`); the boxes are in the code.
+- The wheels are separate parts with `carDims`'s tyre sizes, at the rear overhang and one wheelbase on, on the published
+  tracks. The tread turns with the distance driven and the fronts steer by the path's curvature (tan δ = wheelbase x
+  curvature).
+- Left open: the plan view is a reading (a rounded rectangle, a glasshouse narrowing to 72% at the roof), not a
+  measurement; the F40's wing is only as tall as its profile's deck; the chase camera looks down steeply, so the
+  sides and wheels show little; other cars get the same shape in their class colour, no picture colours yet;
+  open-wheelers stay flat; the race tab's rivals and night lighting are not done. Drawing only: the fingerprint
+  cannot move.
+
 ### The steering torque at the hand wheel in the stepped car (build 323)
 
 - Phase G2 of `plans/driving-sim.md`. `stepCar` now gives `s.steerTorque` (Nm): each front tyre's side force acting

@@ -83,7 +83,7 @@ function replayAt(L,t){
     thr:R.thr[i],brk:R.brk[i],gLat:mix(R.gLat[i],R.gLat[j]),gLong:mix(R.gLong[i],R.gLong[j]),
     tF:R.tF?mix(R.tF[i],R.tF[j]):null,tR:R.tR?mix(R.tR[i],R.tR[j]):null,fade:R.fade?R.fade[i]:1,
     steer:R.steer?mix(R.steer[i],R.steer[j])*180/Math.PI:0,pwr:R.pwr?mix(R.pwr[i],R.pwr[j]):0,
-    sector:Math.min(2,Math.floor(sAt/third))};
+    sector:Math.min(2,Math.floor(sAt/third)),s:sAt};
 }
 // The clock at which each sector ends, from the same recording (equal thirds of the line, as L.sectors).
 function sectorEnds(L){
@@ -278,7 +278,7 @@ function drawTrack(){
   sceneWeather('dry',0);
   let car=null;
   if(live){
-    car=Object.assign(scenePose(T.line,live.i+live.f),{col:carLivery(vehicle),brk:live.brk>0.05,pos:1});   // a smooth place and heading
+    car=Object.assign(scenePose(T.line,live.i+live.f),{col:carLivery(vehicle),brk:live.brk>0.05,pos:1,s:live.s,vox:voxelCarFor(vehicle)});   // a smooth place and heading
   }
   // The zoom scales the picture about the car and the pan slides it, both in screen units, so the point
   // under the cursor stays put (trackZoomAt). With no car to sit behind, the whole circuit is shown.

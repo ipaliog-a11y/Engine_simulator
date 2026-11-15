@@ -1229,6 +1229,7 @@ function drawCar(ctx, cam, car) {
   ctx.roundRect(-len * 0.54, -wid * 0.47, len * 1.08, wid * 0.94, wid * 0.3);
   ctx.fill();
   ctx.restore();
+  if (car.vox) { drawVoxelCar(ctx, cam, car); return; }
   ctx.save();
   ctx.translate(o.sx, o.sy);
   ctx.rotate(ang);
@@ -1312,6 +1313,59 @@ function drawCar(ctx, cam, car) {
   ctx.textAlign = "center";
   ctx.textBaseline = "middle";
   ctx.fillText(String(car.pos || 1), -len * 0.16, wid * 0.02);
+  ctx.restore();
+}
+
+// The voxel prototype (voxel-car.js): its layers stacked from the ground up, each one VOX_M higher on the screen,
+// on the wheels. A layer is drawn as often as it is pixels thick, so a close camera shows no gaps between layers.
+function drawVoxelCar(ctx, cam, car) {
+  const M = car.vox, fx = Math.cos(car.hd), fy = Math.sin(car.hd);
+  const O = project(cam, car.x, car.y, 0), at = (a, b, z) => project(cam, car.x + fx * a - fy * b, car.y + fy * a + fx * b, z);
+  const F = at(1, 0, 0), Lf = at(0, 1, 0), Hz = at(0, 0, 1);
+  const Fx = F.sx - O.sx, Fy = F.sy - O.sy, Lx = Lf.sx - O.sx, Ly = Lf.sy - O.sy, Hx = Hz.sx - O.sx, Hy = Hz.sy - O.sy;
+  const base = ctx.getTransform();
+  // place local metres (a forward of the body's middle, b to the left, z up) with axes turned by d
+  const put = (a, b, z, d, k) => {
+    const c = Math.cos(d), s = Math.sin(d);
+    ctx.setTransform(base);
+    ctx.transform((c * Fx + s * Lx) * k, (c * Fy + s * Ly) * k, (s * Fx - c * Lx) * k, (s * Fy - c * Ly) * k,
+      O.sx + a * Fx + b * Lx + z * Hx, O.sy + a * Fy + b * Ly + z * Hy);
+  };
+  ctx.save();
+  ctx.imageSmoothingEnabled = false;
+  // the wheels first: the body over them hides what it should. A tyre is a disc on edge, so each layer is the
+  // chord at its height; the tread's grooves move round with the distance driven, and the fronts steer by
+  // the path's own curvature (tan steer = wheelbase x curvature, the kinematic angle).
+  const thick = Math.max(1, Math.ceil(Math.hypot(Hx, Hy) * VOX_M));
+  const steer = Math.atan(M.wb * (car.curv || 0));
+  for (const q of M.wheels) {
+    const ph = (car.s || 0) / q.r, d = q.front ? steer : 0, a0 = q.x - M.len / 2;
+    for (const side of [1, -1]) {
+      const b0 = side * q.t / 2;
+      for (let z = 0; z < 2 * q.r; z += VOX_M / thick) {
+        const hl = Math.sqrt(Math.max(0, q.r * q.r - (z - q.r) * (z - q.r)));
+        put(a0, b0, z, d, 1);
+        ctx.fillStyle = M.col.tyre; ctx.fillRect(-hl, -q.tw / 2, hl * 2, q.tw);
+        if (Math.abs(z - q.r) < q.rim) { const rl = Math.sqrt(q.rim * q.rim - (z - q.r) * (z - q.r)); ctx.fillStyle = M.col.rim; ctx.fillRect(-rl, side > 0 ? -q.tw / 2 - 0.01 : q.tw / 2 - 0.03, rl * 2, 0.04); }
+      }
+      ctx.fillStyle = "#0a0a0e";
+      for (let g = 0; g < 16; g++) {
+        const t = ph + g * Math.PI / 8, gz = q.r - q.r * Math.cos(t);
+        if (gz < q.r * 0.9) continue;
+        put(a0, b0, gz, d, 1);
+        ctx.fillRect(-q.r * Math.sin(t) - 0.015, -q.tw / 2, 0.03, q.tw);
+      }
+    }
+  }
+  // the body, a slice at a time
+  for (let k = 0; k < M.layers.length; k++) {
+    const cv = M.layers[k];
+    if (!cv) continue;
+    for (let m = 0; m < thick; m++) {
+      put(-M.len / 2, M.w / 2, (k + m / thick) * VOX_M, 0, VOX_M);
+      ctx.drawImage(cv, 0, 0);
+    }
+  }
   ctx.restore();
 }
 
