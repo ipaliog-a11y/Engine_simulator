@@ -109,10 +109,9 @@ compliance, all checked by the ISO manoeuvres. The owner tags it.
 
 1. **G is v1.0 work.** v1.0 is not urgent; v0.8 is released when a phase makes sense of it (above).
 2. **Smaller physics steps are allowed.** G3 and G6 may substep below 1 ms; the cost per car rises in proportion.
-3. **Suspension geometry for G4–G5:** use what can be found for each preset (maker's sheets, then service manuals,
-   then the per-type values from Reimpell). Where nothing is published, a preset's geometry may be set to match the
-   car's published output (skidpad g, lane-change speed, understeer gradient). Each such value is listed in the
-   preset's `unsure` list and in `plans/fitted-register.json` as fitted to that car. The model itself stays derived:
-   no constant inside `stepCar` is tuned.
+3. **Suspension geometry for G4–G5: open, to be revisited before G4.** Until then, G1–G3 need no geometry. One
+   option discussed: use what can be found per preset (maker's sheets, service manuals, then Reimpell's per-type
+   values), and where nothing is published, set it to match the car's published output, registered as fitted. That
+   option conflicts with `AGENTS.md` section 3, so it needs the owner's ruling first.
 4. **J: the DRIVEN LAP will be shown,** but only after the graphics engine is built. The present 2D track view can't
    show this level of detail. Until then it stays in the tests.
