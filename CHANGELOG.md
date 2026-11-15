@@ -18,6 +18,24 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 ## [Unreleased]
 
+### Camber and camber thrust in the stepped car (build 326)
+
+- Phase G4 of `plans/driving-sim.md`, on the suspension types the lap already uses (owner's ruling on decision 3).
+  `stepCar`'s tyres stood upright. Each wheel now leans by its static camber plus the body's roll, less what its
+  suspension type recovers (`SUSP_GEO`), shown as `s.camber`. On a skidpad the outside front's camber matches the
+  lap's figure within 2% (M3 1.25°, Civic FK8 0.52° against 0.51°, MX-5 0.99°).
+- A leaning tyre pushes towards its lean. The stiffness comes from the brush model's own geometry: the cornering
+  stiffness × a/(3R), a being the contact half-length that G2 already uses. That is 0.027 of the load per degree on
+  a road tyre. It builds over the relaxation length, so a car at rest gets none. Marked probable: the brush model has
+  no carcass, and I found no measured camber stiffness for a radial road tyre to check it against.
+- **Left open, named:** the grip by camber. The lap's rule (`latCamberF`), applied in the stepped car, cost 1–6% of
+  the skidpad grip. The test driver, who drives at the lap's speeds, then strayed up to 7.8 m from the line, and the
+  Model 3 reached 31° sideways (`test170`). It waits for a driver that judges the car's own grip. Also left open:
+  camber from heave and pitch, and camber's own aligning moment.
+- **Known gap opened, in the open:** with the thrust, the Civic FK8 strays 4.05 m from the line in `test170` (3.9 m
+  on `main`, limit 4 m). It is added to `OFF_KNOWN` at 4.1 m, as build 318 did for the same car.
+- G3 is closed as done: build 317 delivered it (`driveBody`, `test196`).
+
 ### A factory exhaust's silencer, chosen apart from its header (build 325)
 
 - **New field `engine.silencer`** (ENGINE tab, SILENCER, under EXHAUST): chambered, straight-through or none. Until now a
