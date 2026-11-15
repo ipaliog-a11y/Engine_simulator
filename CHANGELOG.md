@@ -18,7 +18,7 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 ## [Unreleased]
 
-### The anti-lock holds a wheel at the tyre's peak slip (build 319)
+### The anti-lock holds a wheel at the tyre's peak slip (build 320)
 
 - **What changed.** ABS now releases a wheel's brake once its slip passes 1.0 × the tyre's peak slip (`absSlip`), not 1.3. The 1.3 had no source (build 264). The code's own citation, the Bosch Automotive Handbook, says the controller holds slip about the peak of the friction curve. This is the default on the DRIVER AIDS card too; a player can still set 1–3.
 - **Closes build 318's known gap in test170.** The light inside wheel no longer runs past its peak on trail-braking:
@@ -34,6 +34,14 @@ they are accurate about *what* shipped but not about the day it shipped.
   - Why: lifted off, the inner rear wheel slips under regeneration, and the ABS, which eases the regen, now holds that wheel at its peak slip and uses up the rear's side grip.
   - Real electric cars cut regeneration when the ABS acts; the model only scales it. That needs a source, so it's left for its own build.
   - Until then, the check asks only that the loosened ESP lets the car slide further.
+### Phase B simplified: 10 of its fitted numbers kept as rules until after v1.0 (build 319)
+
+Owner's decision: of phase B (`plans/road-to-v1.md`, the combustion-engine parts), only two steps stay as builds.
+
+- **Still to build:** B2, each real car's own valves and ports (`THROAT_RATIO`, `EV_RATIO`); B6, the catalytic converter, whose loss is counted twice today (`catRampTop`). These two are the next builds.
+- **Signed off as rules** (`plans/fitted-register.json`: 21 → 11 open): B1's idle per cam grade (`CAM.idleRpm`; build 260's attempt failed), B3's `TURB_WHEEL`, `SC_TYPE` and the vane ring (`VANE_R2/VANE_H`), B5's plenum volume and `INTAKE_SYS`, and B7's rotary and two-stroke breathing (`CAM.ampMul`, `CAM.loWiden`, `veBell`, `typeImep`). Each keeps the part that would retire it, now marked "after v1.0".
+- **B4** (water-to-air and twin intercoolers per car) also waits until after v1.0.
+- **Nothing moves:** no code changed; `tests/test166.mjs` now holds 11 open entries and the 10 new rules.
 
 ### The stepped car's axle differentials, each by its own law (build 318)
 
