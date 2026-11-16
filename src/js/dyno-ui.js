@@ -425,9 +425,10 @@ function setTab(mode){
   document.getElementById('partsPanel').classList.toggle('active',mode==='parts');
   if(mode==='parts')renderParts();
   document.getElementById('guidePanel').classList.toggle('active',mode==='guide');
-  // The right column holds the engine's live readout and controls (LIVE, DYNO), the car's figures (VEHICLE) and the
-  // lap's and race's panels. The other tabs have nothing to put there, so their page takes the whole width.
+  // The right column holds the engine's live readout and controls (LIVE, DYNO) and the lap's and race's panels. The other tabs have nothing to put there, so their page takes the whole width.
   document.querySelector('.main').classList.toggle('wide',['guide','design','parts','garage','options'].includes(mode));
+  // VEHICLE has its own figures beside the car, so it takes the whole width too; its PERFORMANCE panel sits below.
+  document.querySelector('.main').classList.toggle('stack',mode==='vehicle');
   if(mode==='guide'&&typeof startGuideArt==='function')requestAnimationFrame(startGuideArt);   // after the panel has a size
   // On the track map a touch drag pans the map; everywhere else it must still scroll the page.
   canvas.style.touchAction=mode==='track'||mode==='race'?'none':'';
