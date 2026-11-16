@@ -812,7 +812,7 @@ body.guided-open{overflow:hidden}
 </div>
 <div class="container">
 <header>
-<h1>PIXEL ENGINE SIM v0.7 build 345</h1>
+<h1>PIXEL ENGINE SIM v0.7 build 346</h1>
 <div class="subtitle" id="subtitle">ENGINE DESIGNER • BUILD IT, THEN DRIVE IT</div>
 </header>
 <div class="build-strip" id="buildStrip">
@@ -2445,7 +2445,7 @@ Each chemistry is a table of open-circuit voltage against charge, a cut-off volt
 <b>Limits.</b> The most current is the C-rate times the Ah (NCA 6C, power cells 10C, hybrid cells 25C). The most power is reached either at that current or at the cut-off voltage, whichever comes first. The charge rate under braking is the lithium-plating limit: about 1C for NCA, 1.5C for LFP.<br>
 <b>Mass.</b> The cells' mass is kWh over Wh/kg at the year, divided by the cells' share of the pack (0.62–0.68, or 0.82 cell-to-pack).<br>
 <b>Heat.</b> The pack is one lumped node: I²R heat in, a liquid cooling plate taking about 2 W/K per kWh to 30 °C coolant. Its management cuts power from 50 °C. That cut is separate from the resistance.<br>
-<b>Cold.</b> The resistance above is at 25 °C. A graphite-anode lithium pack's rises when it is colder, with the 68 kJ/mol of the lithium charge transfer at the graphite (Jow, Xue and Zhang, 2011). That energy applies only to the charge-transfer part of the resistance, about 7% of it at 25 °C. The ohmic rest (electrolyte, collectors, busbars) barely moves: on commercial 18650s the ohmic resistance holds from 25 to −20 °C while the whole impedance rises tenfold (Nagasubramanian, 2001). So a Model Y gives 377 kW warm, 245 kW at 0 °C and 122 kW at −10 °C. Lead-acid and NiMH stay at the 25 °C resistance until a cited energy exists for them. The lap, the cycle and the race still use 25 °C.
+<b>Cold.</b> The resistance above is at 25 °C. A graphite-anode lithium pack's rises when it is colder, with the 68 kJ/mol of the lithium charge transfer at the graphite (Jow, Xue and Zhang, 2011). That energy applies only to the charge-transfer part of the resistance, about 7% of it at 25 °C. The ohmic rest (electrolyte, collectors, busbars) barely moves: on commercial 18650s the ohmic resistance holds from 25 to −20 °C while the whole impedance rises tenfold (Nagasubramanian, 2001). So a Model Y gives 377 kW warm, 245 kW at 0 °C and 122 kW at −10 °C. Lead-acid and NiMH stay at the 25 °C resistance until a cited energy exists for them. The lap and the race read the resistance at the pack's own temperature as it heats; the WLTP cycle at the 23 °C the test is run at. The lap's torque curve still reads 25 °C.
 </div>
 </div>
 <div class="guide-see">See also: <a data-gp="evdrive">The electric drive</a> · <a data-gp="inverter">The inverter</a> · <a data-gp="hybrid">Hybrids</a></div>
@@ -12650,7 +12650,8 @@ function packBuild(s){
 // 0.108. The paper's own impedance spectra would pin it. It is the low-frequency impedance, not a 10 s pulse
 // resistance, and the 18650s are of the 2000 era; it is used for every graphite-anode lithium chemistry here.
 // Lead-acid and NiMH have no cited energy here, so they stay at 25 °C. The 50 °C power cut (packDerate) is the cells'
-// own limit and is not this curve. The lap, the cycle and the race still call the 25 °C resistance.
+// own limit and is not this curve. Since build 346 the lap, the race and the WLTP cycle read it at their pack's temperature
+// (packDraw's tC); the bench and the lap's torque curve still read 25 °C.
 const PACK_T_REF=25, R_GAS=8.314462618;
 const R_CT_SHARE=(10-1)/(Math.exp(68000/R_GAS*(1/(273.15-20)-1/(273.15+PACK_T_REF)))-1);   // ≈ 0.07, from the tenfold rise to −20 °C
 function packR(b,tC){
@@ -12667,12 +12668,13 @@ function packOcv(b,soc){
 }
 // Drawing P watts (negative: charging) at a state of charge: the terminal voltage, the current and the heat in the cells.
 // The current solves P = (Voc - I R) I; null if the pack cannot give that much (past the cut-off or the rate).
-function packDraw(b,soc,P){
-  const V0=packOcv(b,soc),disc=V0*V0-4*b.R*P;
+// tC: the cells' temperature (°C), for the resistance (packR); omitted, the 25 °C one.
+function packDraw(b,soc,P,tC){
+  const R=packR(b,tC),V0=packOcv(b,soc),disc=V0*V0-4*R*P;
   if(disc<0)return null;
-  const I=(V0-Math.sqrt(disc))/(2*b.R),V=V0-I*b.R;
+  const I=(V0-Math.sqrt(disc))/(2*R),V=V0-I*R;
   if(P>0&&(V<b.vMin||I>b.iMax))return null;
-  return {V,I,heat:I*I*b.R};
+  return {V,I,heat:I*I*R};
 }
 // The pack's temperature (build 180): one lumped node, the cells' heat capacity (~1000 J/kgK) over the pack's mass, a
 // liquid cooling plate taking ~2 W/K per kWh to coolant at 30 C. The battery management system cuts the power it allows
@@ -12711,8 +12713,8 @@ function evBmsShare(soc){
   const B=EV_BMS;
   return soc>=B.low?1:soc>=B.limp?B.lowFloor+(1-B.lowFloor)*(soc-B.limp)/(B.low-B.limp):0;
 }
-function evBmsPower(b,soc){
-  const P=packMaxPower(b,soc),limp=Math.min(P,EV_BMS.limpShare*packMaxPower(b,0.5));
+function evBmsPower(b,soc,tC){
+  const P=packMaxPower(b,soc,tC),limp=Math.min(P,EV_BMS.limpShare*packMaxPower(b,0.5));
   return soc<EV_BMS.limp?limp:Math.max(limp,P*evBmsShare(soc));   // the cut never takes it below the limp power
 }
 // ====== POWERTRAIN: what drives the wheels, as the vehicle, the lap and the race see it (build 177) ======
@@ -27011,7 +27013,7 @@ function evLapHeat(e,prof){
     const rpm=prof.rpm[i],T=prof.tq[i]*now,dt=prof.dt[i],w=rpm*Math.PI/30;
     const L=motorLosses(m,Math.abs(T),rpm,V,t);
     const P=T*w+L.total;                         // battery power: drawing (+), or taking back (-) less the losses
-    const d=packDraw(b,0.5,P)||{heat:0,I:0};
+    const d=packDraw(b,0.5,P,tb.b)||{heat:0,I:0};   // at the pack's temperature (build 346)
     motorHeatStep(m,t,L,dt);packHeatStep(b,tb,d.heat,dt);
     if(lap===1){share[i]=motorDerate(e,t)*packDerate(tb.b);tW[i]=t.w;tR[i]=t.r;tB[i]=tb.b;
       if(P>0)driveJ+=P*dt;else regenJ-=P*dt;}
@@ -27145,7 +27147,7 @@ function evRaceManage(M,c,left,mode){
 // controller (the winding's and the magnets') allow less. The controller cuts the current, so the torque; taken here as
 // the same share of the power.
 function evRaceFFNow(M,c){
-  const X=M.ev,want=evRaceCap(c.evFF),bms=evBmsPower(X.pack,evRaceSoc(M,c.fuelKg))*packDerate(c.evT.b)/X.pRef;   // low charge: build 196
+  const X=M.ev,want=evRaceCap(c.evFF),bms=evBmsPower(X.pack,evRaceSoc(M,c.fuelKg),c.evT.b)*packDerate(c.evT.b)/X.pRef;   // low charge: build 196
   const cap=Math.min(want,bms,motorDerate(X,c.evT));
   if(cap<want-0.01)c.evCut=true;
   return evRaceFF(cap);
@@ -27165,7 +27167,7 @@ function evRaceTqAt(M,i,f,g,ff){
 // pace the car is going: r).
 function evRaceHeatStep(M,c,r,dt,save){
   const X=M.ev,t=c.evT,P=c._fr*3600*r*r*save;
-  const d=packDraw(X.pack,evRaceSoc(M,c.fuelKg),P);
+  const d=packDraw(X.pack,evRaceSoc(M,c.fuelKg),P,t.b);   // at the pack's temperature (build 346)
   packHeatStep(X.pack,t,d?d.heat:0,dt);
   const rpm=clamp(c.v*X.k,1,X.rl),T=c._tq*r;
   motorHeatStep(X.motor,t,motorLosses(X.motor,Math.abs(T),rpm,X.V,t),dt);
@@ -27318,7 +27320,9 @@ const WLTC_3B=[
 723,691,659,627,597,570,546,522,497,468,435,399,364,332,305,283,263,244,225,205,182,155,123,87,52,0,0,0,0,0,
 0
 ];
-const EV_CYCLE={massAdd:100,auxW:250,chargeEff:0.85,soc:0.8,temp:{w:70,c:65,r:60}};
+// tPack: the cells' temperature (°C), the 23 °C the car is soaked at and the test cell is held to (UNECE GTR 15, Annex 6).
+// Held, not stepped: the cycle's tens of watts of cell heat warm ~400 kg of cells by well under a degree in 30 minutes.
+const EV_CYCLE={massAdd:100,auxW:250,chargeEff:0.85,soc:0.8,tPack:23,temp:{w:70,c:65,r:60}};
 // Drive the cycle with the car as built. Returns the pack energy per km (Wh/km), at the socket, how much regeneration
 // took back, the drive's own losses, and the range on the pack's usable energy. Cached per build.
 function evCycle(e,v){
@@ -27336,7 +27340,7 @@ function evCycle(e,v){
     if(F>0)T=F*r/(fd*eff);
     else if(F<0&&rpm>=500)T=-Math.min(-F*r*eff/fd,regen[Math.min(regen.length-1,Math.floor((rpm-500)/250))]);   // the rest is the friction brakes'
     const L=T||rpm>0?motorLosses(e.motor,T,Math.max(rpm,1),V,temp).total:0;
-    const P=T*w+L,d=packDraw(e.pack,C.soc,P),Pb=P+(d?d.heat:0)+C.auxW;
+    const P=T*w+L,d=packDraw(e.pack,C.soc,P,C.tPack),Pb=P+(d?d.heat:0)+C.auxW;
     E+=Pb;lost+=L;if(T<0)back-=T*w;
   }
   const km=x/1000,whkm=E/3600/km,usable=e.pack.kWh*(EV_RACE.socStart-EV_RACE.socFloor);

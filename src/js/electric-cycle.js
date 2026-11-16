@@ -75,7 +75,9 @@ const WLTC_3B=[
 723,691,659,627,597,570,546,522,497,468,435,399,364,332,305,283,263,244,225,205,182,155,123,87,52,0,0,0,0,0,
 0
 ];
-const EV_CYCLE={massAdd:100,auxW:250,chargeEff:0.85,soc:0.8,temp:{w:70,c:65,r:60}};
+// tPack: the cells' temperature (°C), the 23 °C the car is soaked at and the test cell is held to (UNECE GTR 15, Annex 6).
+// Held, not stepped: the cycle's tens of watts of cell heat warm ~400 kg of cells by well under a degree in 30 minutes.
+const EV_CYCLE={massAdd:100,auxW:250,chargeEff:0.85,soc:0.8,tPack:23,temp:{w:70,c:65,r:60}};
 // Drive the cycle with the car as built. Returns the pack energy per km (Wh/km), at the socket, how much regeneration
 // took back, the drive's own losses, and the range on the pack's usable energy. Cached per build.
 function evCycle(e,v){
@@ -93,7 +95,7 @@ function evCycle(e,v){
     if(F>0)T=F*r/(fd*eff);
     else if(F<0&&rpm>=500)T=-Math.min(-F*r*eff/fd,regen[Math.min(regen.length-1,Math.floor((rpm-500)/250))]);   // the rest is the friction brakes'
     const L=T||rpm>0?motorLosses(e.motor,T,Math.max(rpm,1),V,temp).total:0;
-    const P=T*w+L,d=packDraw(e.pack,C.soc,P),Pb=P+(d?d.heat:0)+C.auxW;
+    const P=T*w+L,d=packDraw(e.pack,C.soc,P,C.tPack),Pb=P+(d?d.heat:0)+C.auxW;
     E+=Pb;lost+=L;if(T<0)back-=T*w;
   }
   const km=x/1000,whkm=E/3600/km,usable=e.pack.kWh*(EV_RACE.socStart-EV_RACE.socFloor);
