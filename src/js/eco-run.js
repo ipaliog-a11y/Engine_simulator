@@ -1,9 +1,9 @@
-// ====== ECONOMY CHALLENGE: min fuel on an open road at a target time (build 341) ======
+// ====== ECONOMY CHALLENGE: open road at a target time (build 341, EV energy build 342) ======
 // Standing start, open centreline, no racing-line optimiser. Min-time first; target =
 // timeFactor × that car's Tmin (eco-rally style: use the allotted time, do not rush). A speed
-// cap on the open solve hits the target; fuel from engineFuelAt (warm oil), same map as WLTP.
-// Named gap: speed cap is not optimal lift-coast DP. (A pure "finish by T" limit would pick
-// flat-out here: hard braking is fuel-cut, so slower paced profiles often burn more.)
+// cap on the open solve hits the target. ICE: fuel from engineFuelAt (warm oil). EV: pack energy
+// from motorLosses + packDraw + regen, same stack as evCycle / the lap (grade included here).
+// Named gap: speed cap is not optimal lift-coast DP.
 function ecoMinTime(line,speedCap){
   const pt=powertrain(),frontF=vv=>pt.frontForce?pt.frontForce(vv):0;
   if(!pt.ready()||!vehicle.mass)return null;
@@ -125,10 +125,31 @@ function ecoFuelKg(line,v){
 function ecoTimeOf(line,v){
   let t=0;for(let i=0;i<line.length-1;i++)t+=line[i].ds3/Math.max(2,(v[i]+v[i+1])/2);return t;
 }
+// Pack energy (J drawn, net after regen) along a speed profile. Same rules as evCycle: test mass +100 kg,
+// 250 W aux, regen table, packDraw heat. Grade is on the open road.
+function ecoEnergyJ(line,v){
+  if(!isElectric()||!engine.motor||!engine.pack)return null;
+  const e=engine,C=EV_CYCLE,m=vehicle.mass+C.massAdd,r=vehicle.rTire,fd=vehicle.finalDrive,eff=vehicle.driveEff;
+  const V=motorRatedV(e),temp=Object.assign({},C.temp),regen=evRegenTable(e,e.redline);
+  const meff=m+(vehicle.wheelI||0)/(r*r)+e.motor.J*(fd/r)**2;
+  let E=0,back=0;
+  for(let i=0;i<line.length-1;i++){
+    const ds=line[i].ds3,v0=v[i],v1=v[i+1],vm=Math.max(0.5,(v0+v1)/2),dt=ds/vm;
+    const a=(v1*v1-v0*v0)/(2*Math.max(0.05,ds));
+    const F=meff*a+0.5*AIR_RHO*vehicle.cdA*vm*vm+crrAt(vehicle.crr,vm)*m*G*line[i].cosT+m*G*line[i].sinT;
+    const rpm=vm/r*fd*60/(2*Math.PI),w=rpm*Math.PI/30;
+    let T=0;
+    if(F>0)T=F*r/(fd*eff);
+    else if(F<0&&rpm>=500)T=-Math.min(-F*r*eff/fd,regen[Math.min(regen.length-1,Math.floor((rpm-500)/250))]);
+    const L=T||rpm>0?motorLosses(e.motor,T,Math.max(rpm,1),V,temp).total:0;
+    const P=T*w+L,d=packDraw(e.pack,C.soc,P),Pb=P+(d?d.heat:0)+C.auxW;
+    E+=Pb*dt;if(T<0)back-=T*w*dt;
+  }
+  return{E,regenJ:back};
+}
 // Eco strategy: speed-cap the open min-time solve so finish time hits the target (not early).
 function simulateEconomyChallenge(roadKey){
   const road=buildRoad(roadKey||'alpine');if(!road)return null;
-  if(isElectric())return{ok:false,reason:'electric',road};
   const pt=powertrain();if(!pt.ready()||!vehicle.mass)return null;
   const line=road.line,mt=ecoMinTime(line);if(!mt)return null;
   const factor=road.timeFactor||1.25,target=mt.t*factor;
@@ -137,12 +158,15 @@ function simulateEconomyChallenge(roadKey){
     const mid=(lo+hi)/2,tryMt=ecoMinTime(line,mid);if(!tryMt){lo=mid;continue;}
     if(tryMt.t>target)lo=mid;else{hi=mid;best=tryMt;}
   }
-  // Nudge onto the target from below: last lo still overshot, hi/best is under — prefer closest under.
-  const v=best.v,time=best.t,kg=ecoFuelKg(line,v),fp=FUELS[engine.fuel]||FUELS.gasoline;
-  const L=kg/fp.density,km=road.length/1000;
-  const kgMin=ecoFuelKg(line,mt.v),Lmin=kgMin/fp.density;
-  return{
-    ok:true,road,time,limit:target,target,tMin:mt.t,pace:time/mt.t,fuelL:L,fuelKg:kg,l100:L/km*100,
-    fuelLMin:Lmin,v,vMin:mt.v,lengthKm:km,factor
-  };
+  const v=best.v,time=best.t,km=road.length/1000;
+  const base={ok:true,ev:isElectric(),road,time,limit:target,target,tMin:mt.t,pace:time/mt.t,v,vMin:mt.v,lengthKm:km,factor};
+  if(isElectric()){
+    const en=ecoEnergyJ(line,v),enMin=ecoEnergyJ(line,mt.v);
+    if(!en)return{ok:false,reason:'electric',road};
+    const kWh=en.E/3.6e6,whkm=en.E/3600/km,kWhMin=enMin?enMin.E/3.6e6:null;
+    return Object.assign(base,{kWh,whkm,regenKWh:en.regenJ/3.6e6,kWhMin});
+  }
+  const kg=ecoFuelKg(line,v),fp=FUELS[engine.fuel]||FUELS.gasoline;
+  const L=kg/fp.density,kgMin=ecoFuelKg(line,mt.v),Lmin=kgMin/fp.density;
+  return Object.assign(base,{fuelL:L,fuelKg:kg,l100:L/km*100,fuelLMin:Lmin});
 }

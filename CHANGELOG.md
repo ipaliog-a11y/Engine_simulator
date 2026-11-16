@@ -18,6 +18,13 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 ## [Unreleased]
 
+### Challenges economy: electric Wh/km and kWh (build 342)
+
+- Mountain Economy accepts EVs: pack energy along the open-road profile (`motorLosses`, `packDraw`, regen), same stack as
+  WLTP `evCycle`, with grade. Score is **kWh** and **Wh/km** (plus regen kWh). ICE litres path unchanged.
+- UI shows one target time (not time and target together — the speed-cap solve matches them). Head and grid switch units by powertrain.
+- Left open: hybrids on this challenge; lift-coast DP.
+
 ### Challenges page: mountain economy run (build 341)
 
 - New Drive tab **CHALLENGES** (not TRACK): registry of solved vehicle tests. First kind is Mountain Economy on an
@@ -25,8 +32,8 @@ they are accurate about *what* shipped but not about the day it shipped.
   (eco-rally: use the allotted time); score is litres / L/100 km. Fuel from the same `engineFuelAt` map as WLTP (warm oil).
 - Open-path geometry (`catmullOpen` / `buildRoad`) is separate from closed circuits. A speed cap hits the target —
   named gap: not yet optimal lift-coast DP. (A pure “finish by T” limit would pick flat-out: hard braking is fuel-cut.)
-  Electric cars are declined on this challenge for now. ENGINE career challenges are unchanged.
-- Left open: skill / moose / skid-pad kinds, multi-car ranking, DP eco, open GPX, hybrid/EV energy.
+  ENGINE career challenges are unchanged.
+- Left open: skill / moose / skid-pad kinds, multi-car ranking, DP eco, open GPX, hybrid energy (EV done in 342).
 
 ### A plan for the guided build that sets values (build 340)
 
