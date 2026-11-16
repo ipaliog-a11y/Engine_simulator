@@ -27,6 +27,8 @@ they are accurate about *what* shipped but not about the day it shipped.
 - With 100 kW drawn from a Model Y, the cells make 4.58 kW of heat at 25 °C, 4.30 kW at 45 °C and 8.85 kW at 0 °C. Its WLTP
   figure is 139.7 Wh/km at 23 °C, and a cycle run at 0 °C costs 141.3 Wh/km. A warm pack heats less, so the lap and the
   race reach the 50 °C cut a little later.
+- Fingerprint against `main`: only the three Teslas' WLTP figures move, by +0.01 to +0.03% (Model Y 139.64 → 139.67 Wh/km),
+  because 23 °C is a little colder than 25 °C. No lap, race, power or 0-100 figure moves: the factory packs stay below 50 °C.
 - Electric work now has an order, written in `plans/road-to-v1.md`. The bench readouts were already done in build 285; this
   build is the first item. Next is a cell's sag and recovery as one RC pair.
 - Left open: the lap's torque curve (`driveTorqueRated`), the race's pace-grid energy price and the motor bench still read
