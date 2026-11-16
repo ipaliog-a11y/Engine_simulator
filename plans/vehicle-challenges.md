@@ -33,11 +33,16 @@ Real roads: OSRM centreline + ASTER elevation; width modelled (as Nordschleife).
 - UI shows the target once (time ≈ target by construction). Hover the route (build 344) for distance, speed and incline at that point.
 - **Named gap:** speed cap is not optimal lift-coast DP. A pure max-time limit would pick flat-out here (DFCO on brakes). Hybrids still use the ICE fuel path on this challenge.
 
+## Moose run (shipped)
+
+- Registry id `moose`, kind `moose`. Solver in `src/js/moose-run.js` (ISO 3888-2, from `test173`).
+- Score: max clear entry speed (km/h). UI: score grid + top-down cones + frontal force/roll replay from sampled `stepCar` state.
+- Named gap: frontal diagram is a replay of the solved line, not a player-steered run.
+
 ## Follow-ups
 
 1. Skill / agility track.
-2. Moose avoidance (ISO 3888-2 style).
-3. Skid-pad challenge.
-4. Multi-car ranking on a challenge.
-5. Distance DP for economy; hybrid energy on economy roads.
-6. Open GPX import for user roads (do not reuse closed `gpxToTrack` blindly).
+2. Skid-pad challenge.
+3. Multi-car ranking on a challenge.
+4. Distance DP for economy; hybrid energy on economy roads.
+5. Open GPX import for user roads (do not reuse closed `gpxToTrack` blindly).

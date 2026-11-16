@@ -812,7 +812,7 @@ body.guided-open{overflow:hidden}
 </div>
 <div class="container">
 <header>
-<h1>PIXEL ENGINE SIM v0.7 build 344</h1>
+<h1>PIXEL ENGINE SIM v0.7 build 345</h1>
 <div class="subtitle" id="subtitle">ENGINE DESIGNER • BUILD IT, THEN DRIVE IT</div>
 </header>
 <div class="build-strip" id="buildStrip">
@@ -24382,7 +24382,7 @@ function updateUI(){
   else{status.textContent=tr('IDLE / LOW LOAD')+' • '+Math.round(state.rpm)+' RPM';status.className='status-bar'}
   if(vizMode==='design')legend.innerHTML=tr('Bore/stroke set displacement. Octane+compression+boost+ignition feed the knock model.')+'<br>'+tr('Cooling (radiator/fan/oil cooler/thermostat) sets running temps in AUTO THERMAL mode.');
   else if(vizMode==='engine')legend.innerHTML=tr('THROTTLE makes power; LOAD (dyno brake) sets the hold RPM — more load = lower RPM, zero = free-rev to limiter.')+'<br>'+tr('Lift off at speed → engine braking + fuel cut. Detonation/overheat/lean-boost/valve float wear the engine.');
-  else if(vizMode==='challenges')legend.innerHTML=tr('Solved vehicle tests: economy, and later skill, moose avoid, skid pad.')+'<br>'+tr('Green start, red finish. Line colour is pace versus flat-out. Hover the route for speed and incline. Pace sets the target time.');
+  else if(vizMode==='challenges')legend.innerHTML=tr('Solved vehicle tests: economy, moose avoid; later skill, skid pad.')+'<br>'+tr('Economy: green start, red finish; line colour is pace versus flat-out; hover for speed and incline; pace sets the target time.')+' '+tr('Moose: ISO 3888-2 cones, frontal forces and body roll.');
   else legend.innerHTML=tr('Dyno shows full power & torque curves to redline.')+'<br>'+tr('Green line = current RPM. Peaks marked with dots.');
   updateDashLamps();
 }
@@ -28907,9 +28907,85 @@ function simulateEconomyChallenge(roadKey,factorOpt){
   const L=kg/fp.density,kgMin=ecoFuelKg(line,mt.v),Lmin=kgMin/fp.density;
   return Object.assign(base,{fuelL:L,fuelKg:kg,l100:L/km*100,fuelLMin:Lmin});
 }
-// ====== VEHICLE RUN CHALLENGES (build 341; real roads build 343) ======
+// ====== MOOSE AVOIDANCE (ISO 3888-2) ======
+// Solved double lane change for the CHALLENGES tab. Cone geometry and search match tests/test173.mjs
+// (build 277): throttle released at entry, top gear, best of smooth quintic lines, binary-search max
+// entry speed with no cone touched. Width and overhangs from CAR_DIMS when the body is a known car;
+// otherwise track + tyre width and a share of wheelbase for overhangs.
+function mooseDims(){
+  const name=(vehicle&&vehicle.body&&vehicle.body.name)||(vehicle&&vehicle.chLabel)||'';
+  const p=typeof FACTORY_CARS!=='undefined'?FACTORY_CARS.find(x=>x.name===name):null;
+  const D=p?carDims(p):null;
+  if(D&&D.w)return{w:D.w,ovF:D.ovF,ovR:D.ovR,name:D.name,src:'dims'};
+  const track=(vehicle.trackF&&vehicle.trackR)?(vehicle.trackF+vehicle.trackR)/2:(vehicle.track||1.55);
+  const tw=(vehicle.tireWidth||225)/1000;
+  const w=track+tw,wb=vehicle.wb||2.5;
+  return{w,ovF:0.35*wb,ovR:0.35*wb,name:name||'build',src:'estimate'};
+}
+function mooseGates(w){
+  const w1=1.1*w+0.25,w2=w+1;
+  return{w1,w2,y2:w1/2+1+w2/2,y3:(3-w1)/2};
+}
+function mooseLine(G,v,shape){
+  const [A0,A1,B0,B1]=shape,line=[];
+  const sm=(x,x0,x1,y0,y1)=>{const u=Math.max(0,Math.min(1,(x-x0)/(x1-x0)));return y0+(y1-y0)*(u*u*u*(10-15*u+6*u*u));};
+  for(let x=-60;x<=140;x+=0.5)line.push({x,y:x<=(A1+B0)/2?sm(x,A0,A1,0,G.y2):sm(x,B0,B1,G.y2,G.y3),v,grade:0,kv:0});
+  return line;
+}
+function mooseConeHit(car,s,D,G){
+  const b=D.w,c=Math.cos(s.psi),sn=Math.sin(s.psi);
+  for(const [dx,dy] of [[car.a+D.ovF,b/2],[car.a+D.ovF,-b/2],[-car.b-D.ovR,b/2],[-car.b-D.ovR,-b/2]]){
+    const X=s.x+dx*c-dy*sn,Y=s.y+dx*sn+dy*c;
+    if((X>=0&&X<=12&&Math.abs(Y)>G.w1/2)||(X>=25.5&&X<=36.5&&Math.abs(Y-G.y2)>G.w2/2)||(X>=49&&X<=61&&Math.abs(Y-G.y3)>1.5))return true;
+  }
+  return false;
+}
+// One pass at entry speed vk (km/h). Returns {ok,ay,beta,line} (and optional samples for a later replay).
+function mooseRun(car,D,vk,shape,sample){
+  const G=mooseGates(D.w),v=vk/3.6,line=mooseLine(G,v,shape);
+  const s=driveState(car),d={i:0};
+  s.x=-60;s.vx=v;s.w=s.w.map(()=>v/car.r);
+  for(let g=car.ratios.length;g>=1;g--){s.gear=g;if(v/car.r*car.ratios[g-1]*car.fd*30/Math.PI>=2000)break;}
+  s.we=v/car.r*car.ratios[s.gear-1]*car.fd;
+  const o={ok:true,ay:0,beta:0,line,samples:sample?[]:null};
+  let nextT=0;
+  while(s.x<70&&s.t<20){
+    const u=driveDriver(car,s,line,d);u.gear=s.gear;
+    if(s.x+car.a+D.ovF>0){u.throttle=0;u.brake=0;}
+    stepCar(car,s,u,0.005);
+    o.ay=Math.max(o.ay,Math.abs(s.ayF)/9.81);
+    o.beta=Math.max(o.beta,Math.abs(Math.atan2(s.vy,Math.max(1,s.vx)))*180/Math.PI);
+    if(mooseConeHit(car,s,D,G))o.ok=false;
+    if(sample&&s.t>=nextT){
+      o.samples.push({t:s.t,x:s.x,y:s.y,psi:s.psi,v:s.speed,roll:s.roll,zu:s.zu.slice(),Fz:s.Fz.slice(),Fy:s.Fy.slice(),camber:s.camber.slice(),ay:s.ayF/9.81});
+      nextT=s.t+0.02;
+    }
+  }
+  return o;
+}
+function simulateMooseChallenge(){
+  const pt=powertrain();if(!pt.ready()||!vehicle.mass)return null;
+  const car=driveCar(),D=mooseDims();if(!(D.w>0))return{ok:false,reason:'width'};
+  const G=mooseGates(D.w);
+  let best=0,shape=null,bestRun=null;
+  for(const A0 of [9,10,11])for(const A1 of [25,28])for(const B0 of [34,36]){
+    const sh=[A0,A1,B0,50];
+    if(!mooseRun(car,D,Math.max(40,best+1),sh).ok)continue;
+    let lo=Math.max(40,best+1),hi=120;
+    while(hi-lo>1){const m=(lo+hi)>>1;if(mooseRun(car,D,m,sh).ok)lo=m;else hi=m;}
+    if(lo>best){best=lo;shape=sh;}
+  }
+  if(!shape)return{ok:false,reason:'no-clear',challenge:'moose',dims:D,cones:G};
+  bestRun=mooseRun(car,D,best,shape,true);
+  return{
+    ok:true,kind:'moose',speedKmh:best,shape,peakAy:bestRun.ay,peakBeta:bestRun.beta,
+    dims:D,cones:G,line:bestRun.line,samples:bestRun.samples||[],
+    mu:car.mu,trackW:D.w
+  };
+}
+// ====== VEHICLE RUN CHALLENGES (build 341; real roads 343; moose 345) ======
 // Dynamic tests on the CHALLENGES tab — not the ENGINE career/scorecard list in challenges.js.
-// Each entry has a kind; only economy ships here. Later: skill, moose, skidpad.
+// Economy + moose ship here. Later: skill, skidpad.
 const RUN_CHALLENGES=[
   {id:'economy',kind:'economy',name:'Mountain Economy',
     desc:'Open mountain road. Finish inside the time limit; burn as little fuel as you can.',
@@ -28928,11 +29004,13 @@ const RUN_CHALLENGES=[
     road:'highland'},
   {id:'economy-targa',kind:'economy',name:'Targa Economy',
     desc:'Targa Florio Piccolo open stage. Finish inside the time limit; burn as little fuel as you can.',
-    road:'targa'}
+    road:'targa'},
+  {id:'moose',kind:'moose',name:'Moose Avoidance',
+    desc:'ISO 3888-2 double lane change. Highest entry speed with no cone touched.'}
 ];
 let activeRunChallenge='economy';
 let chalResult=null;
-// Pace = target / min-time (eco-rally). UI: 125%, 150%, 200%.
+// Pace = target / min-time (eco-rally). UI: 125%, 150%, 200%. Unused by moose.
 let chalPaceFactor=1.25;
 const CHAL_PACE_OPTS=[1.25,1.5,2];
 function runChallengeById(id){
@@ -28942,15 +29020,20 @@ function solveRunChallenge(id){
   const ch=runChallengeById(id||activeRunChallenge);
   if(!ch)return null;
   if(ch.kind==='economy')return simulateEconomyChallenge(ch.road,chalPaceFactor);
+  if(ch.kind==='moose')return simulateMooseChallenge();
   return{ok:false,reason:'unimplemented',challenge:ch};
 }
-// ====== CHALLENGES tab UI (build 341; EV 342; pace + route hover 344) ======
+// ====== CHALLENGES tab UI (build 341; EV 342; pace + hover 344; moose 345) ======
 const chalHover={i:-1,map:null};
+let chalMooseT0=0;
 function refreshChallenge(){
   // Do not call buildVehicle here: it hooks back into refreshChallenge (same pattern as refreshLap).
   const ch=runChallengeById(activeRunChallenge);
   chalResult=solveRunChallenge(ch.id);
   chalHover.i=-1;
+  chalMooseT0=(typeof performance!=='undefined'?performance.now():Date.now());
+  const pace=document.getElementById('chalPace');
+  if(pace){const row=pace.closest('.field');if(row)row.style.display=ch.kind==='moose'?'none':'';}
   renderChallenge();
 }
 function renderChallenge(){
@@ -28960,13 +29043,24 @@ function renderChallenge(){
   const R=chalResult;
   if(!R){head.textContent='—';grid.innerHTML='';note.textContent=tr('Build a car first.');return;}
   if(!R.ok){head.textContent='—';grid.innerHTML='';note.textContent=tr('This challenge is not ready yet.');return;}
+  const cell=(k,v)=>'<div class="perf-cell"><div class="k">'+tr(k)+'</div><div class="v">'+v+'</div></div>';
+  if(R.kind==='moose'){
+    head.innerHTML=tr(ch.name)+' · <b>'+R.speedKmh+' km/h</b> · '+tr('CLEAR');
+    grid.innerHTML=cell('ENTRY',R.speedKmh+' km/h')+
+      cell('PEAK ay',R.peakAy.toFixed(2)+' g')+
+      cell('PEAK β',R.peakBeta.toFixed(1)+'°')+
+      cell('WIDTH',R.trackW.toFixed(2)+' m')+
+      cell('LANE 1',R.cones.w1.toFixed(2)+' m')+
+      cell('OFFSET',R.cones.w2.toFixed(2)+' m');
+    note.textContent=tr(ch.desc)+' '+tr('Throttle released at entry, top gear. Score is the highest entry speed that touches no cone (ISO 3888-2).');
+    return;
+  }
   const onTarget=Math.abs(R.time-R.target)<=Math.max(1,0.01*R.target);
   const score=R.ev
     ?('<b>'+R.kWh.toFixed(2)+' kWh</b> · '+Math.round(R.whkm)+' Wh/km')
     :('<b>'+R.fuelL.toFixed(2)+' L</b> · '+R.l100.toFixed(1)+' L/100 km');
   // Time ≈ target by construction; show the target once, not both.
   head.innerHTML=tr(ch.name)+' · '+score+' · '+(onTarget?tr('ON TARGET'):tr('OFF TARGET'))+' '+R.target.toFixed(0)+' s';
-  const cell=(k,v)=>'<div class="perf-cell"><div class="k">'+tr(k)+'</div><div class="v">'+v+'</div></div>';
   let cells='';
   if(R.ev){
     cells+=cell('ENERGY',R.kWh.toFixed(2)+' kWh')+
@@ -29017,8 +29111,97 @@ function chalHoverInfo(i){
     z:q.z||0
   };
 }
+function mooseSampleAt(R,t){
+  const S=R.samples;if(!S||!S.length)return null;
+  const t0=S[0].t,t1=S[S.length-1].t,span=Math.max(0.05,t1-t0);
+  const u=((t-t0)%span+span)%span+t0;
+  let i=0;while(i<S.length-1&&S[i+1].t<u)i++;
+  return S[i];
+}
+function drawMooseTopDown(g,R,x0,y0,w,h){
+  const G=R.cones,line=R.line;if(!line||!line.length)return;
+  let minX=1e9,maxX=-1e9,minY=1e9,maxY=-1e9;
+  for(const q of line){minX=Math.min(minX,q.x);maxX=Math.max(maxX,q.x);minY=Math.min(minY,q.y-2);maxY=Math.max(maxY,q.y+2);}
+  minY=Math.min(minY,-G.w1/2-1);maxY=Math.max(maxY,G.y2+G.w2/2+1,G.y3+2);
+  const pad=10,dx=maxX-minX||1,dy=maxY-minY||1;
+  const sc=Math.min((w-2*pad)/dx,(h-2*pad)/dy);
+  const MX=x=>x0+pad+(x-minX)*sc,MY=y=>y0+h-pad-(y-minY)*sc;
+  const lane=(xA,xB,yc,hw,col)=>{
+    g.strokeStyle=col;g.lineWidth=1;g.setLineDash([3,3]);
+    g.beginPath();g.moveTo(MX(xA),MY(yc-hw));g.lineTo(MX(xB),MY(yc-hw));g.stroke();
+    g.beginPath();g.moveTo(MX(xA),MY(yc+hw));g.lineTo(MX(xB),MY(yc+hw));g.stroke();
+    g.setLineDash([]);
+    g.fillStyle='#ffcc00';
+    for(const yy of [yc-hw,yc+hw]){g.beginPath();g.arc(MX(xA),MY(yy),2.5,0,Math.PI*2);g.fill();g.beginPath();g.arc(MX(xB),MY(yy),2.5,0,Math.PI*2);g.fill();}
+  };
+  lane(0,12,0,G.w1/2,'#445566');
+  lane(25.5,36.5,G.y2,G.w2/2,'#445566');
+  lane(49,61,G.y3,1.5,'#445566');
+  g.strokeStyle='#4aa3ff';g.lineWidth=2;g.beginPath();
+  for(let i=0;i<line.length;i++){const X=MX(line[i].x),Y=MY(line[i].y);if(i)g.lineTo(X,Y);else g.moveTo(X,Y);}
+  g.stroke();
+  const now=((typeof performance!=='undefined'?performance.now():Date.now())-chalMooseT0)/1000;
+  const s=mooseSampleAt(R,now);
+  if(s){g.fillStyle='#55dd66';g.beginPath();g.arc(MX(s.x),MY(s.y),4,0,Math.PI*2);g.fill();}
+  g.fillStyle='#9ab';g.font='7px "Press Start 2P"';
+  g.fillText(tr('ISO 3888-2')+' · '+R.speedKmh+' km/h',x0+8,y0+12);
+}
+function drawMooseFrontal(g,R,x0,y0,w,h){
+  const now=((typeof performance!=='undefined'?performance.now():Date.now())-chalMooseT0)/1000;
+  const s=mooseSampleAt(R,now);if(!s)return;
+  const cx=x0+w/2,ground=y0+h*0.82,track=Math.min(w*0.55,h*0.9);
+  const roll=s.roll||0,c=Math.cos(roll),sn=Math.sin(roll);
+  const Fz=s.Fz||[0,0,0,0],Fy=s.Fy||[0,0,0,0],zu=s.zu||[0,0,0,0];
+  // Front axle wheels: 0 left, 1 right (drive-model order).
+  const zL=zu[0]||0,zR=zu[1]||0;
+  const FzL=Fz[0]||0,FzR=Fz[1]||0,FyL=Fy[0]||0,FyR=Fy[1]||0;
+  const FzSum=Math.max(1,FzL+FzR+Fz[2]+Fz[3]);
+  const bodyW=track*0.72,bodyH=h*0.28;
+  const bodyY=ground-bodyH-18+((zL+zR)/2)*40;
+  // road
+  g.fillStyle='#1a2030';g.fillRect(x0,ground,w,h*0.18);
+  g.strokeStyle='#2a3344';g.beginPath();g.moveTo(x0+8,ground);g.lineTo(x0+w-8,ground);g.stroke();
+  const rot=(px,py)=>{const dx=px-cx,dy=py-bodyY-bodyH/2;return[cx+dx*c-dy*sn,bodyY+bodyH/2+dx*sn+dy*c];};
+  // body
+  const corners=[[-bodyW/2,-bodyH/2],[bodyW/2,-bodyH/2],[bodyW/2,bodyH/2],[-bodyW/2,bodyH/2]].map(([px,py])=>rot(cx+px,bodyY+bodyH/2+py));
+  g.fillStyle='#c44';g.beginPath();g.moveTo(corners[0][0],corners[0][1]);
+  for(let i=1;i<4;i++)g.lineTo(corners[i][0],corners[i][1]);g.closePath();g.fill();
+  g.strokeStyle='#ffcc00';g.lineWidth=1;g.stroke();
+  // wheels + load / Fy
+  const drawWheel=(side,FzW,FyW,zW)=>{
+    const tx=cx+side*track/2,ty=ground-8+zW*40;
+    const [wx,wy]=rot(tx,ty-12);
+    g.fillStyle='#222';g.fillRect(wx-7,wy,14,18);
+    g.strokeStyle='#888';g.strokeRect(wx-7,wy,14,18);
+    const loadH=Math.max(2,Math.min(40,40*(FzW/(FzSum/2))));
+    g.fillStyle=FzW>FzSum*0.3?'#55dd66':'#ffcc00';
+    g.fillRect(wx+(side>0?10:-14),wy+18-loadH,4,loadH);
+    const fyPix=Math.max(-30,Math.min(30,FyW/800));
+    g.strokeStyle='#4aa3ff';g.lineWidth=2;
+    g.beginPath();g.moveTo(wx,wy+9);g.lineTo(wx+fyPix,wy+9);g.stroke();
+  };
+  drawWheel(-1,FzL,FyL,zL);drawWheel(1,FzR,FyR,zR);
+  // stats
+  g.fillStyle='#e0e0e0';g.font='8px "Press Start 2P"';
+  const lines=[
+    Math.round((s.v||0)*3.6)+' km/h',
+    'ay '+(s.ay||0).toFixed(2)+' g',
+    'roll '+(roll*180/Math.PI).toFixed(1)+'°',
+    'Fz L/R '+Math.round(FzL)+'/'+Math.round(FzR)+' N'
+  ];
+  for(let i=0;i<lines.length;i++)g.fillText(lines[i],x0+10,y0+16+i*14);
+}
+function drawMooseChallenge(g,R){
+  chalHover.map=null;
+  g.fillStyle='#0a0e14';g.fillRect(0,0,vizW,vizH);
+  const strip=Math.min(120,Math.floor(vizH*0.32));
+  drawMooseTopDown(g,R,0,0,vizW,strip);
+  g.strokeStyle='#2a3344';g.beginPath();g.moveTo(0,strip);g.lineTo(vizW,strip);g.stroke();
+  drawMooseFrontal(g,R,0,strip,vizW,vizH-strip);
+}
 function drawChallenge(){
   const R=chalResult,g=ctx;g.fillStyle='#0a0e14';g.fillRect(0,0,vizW,vizH);
+  if(R&&R.kind==='moose'&&R.ok){drawMooseChallenge(g,R);return;}
   if(!R||!R.road){g.fillStyle='#556';g.font='10px "Press Start 2P"';g.fillText(tr('CHALLENGES'),16,28);chalHover.map=null;return;}
   const map=chalMapProject(R),p=map.p,n=p.length,MX=map.MX,MY=map.MY,T=map.T;
   chalHover.map=map;

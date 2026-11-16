@@ -18,6 +18,13 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 ## [Unreleased]
 
+### Challenges: moose avoidance (build 345)
+
+- New CHALLENGES kind **Moose Avoidance** (ISO 3888-2): highest entry speed with no cone touched, same cone geometry and search as `test173`, via `stepCar`.
+- Score grid: entry km/h, peak ay, peak β, lane widths. Canvas: top-down cones plus a frontal replay (body roll, wheel travel, Fz bars, Fy arrows, speed/ay/roll).
+- Pace control hides on this kind. Frontal samples are recorded on the winning run only.
+- Left open: skill track, skid-pad, multi-car ranking.
+
 ### Challenges: pace select and route hover (build 344)
 
 - Pace control on CHALLENGES: **125% / 150% / 200%** of the car’s min-time (`chalPaceFactor`). Hover the open-road ribbon for distance, speed and incline at that point.
