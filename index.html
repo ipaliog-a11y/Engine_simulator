@@ -810,7 +810,7 @@ body.guided-open{overflow:hidden}
 </div>
 <div class="container">
 <header>
-<h1>PIXEL ENGINE SIM v0.7 build 330</h1>
+<h1>PIXEL ENGINE SIM v0.7 build 331</h1>
 <div class="subtitle" id="subtitle">ENGINE DESIGNER • BUILD IT, THEN DRIVE IT</div>
 </header>
 <div class="build-strip" id="buildStrip">
@@ -14178,7 +14178,7 @@ function simulateAccelRun(){
 //   Loads     each wheel's share of the weight, the downforce by its balance, and the transfer under acceleration
 //             (m ax h / L) and cornering (m ay h / t, shared between the axles by the car's own roll stiffness and
 //             roll centres, vehicle.lltdF). The transfer follows the body as it rolls and pitches on its springs and
-//             dampers (build 317: driveBody), not at once.
+//             dampers (build 317: driveBody), not at once. Since phase G6 each load is the tyre's own deflection (THE WHEELS).
 //   Tyre      the brush model (Fiala 1954; Pacejka, Tyre and Vehicle Dynamics ch. 3): tread elements that deflect with
 //             slip until the pressure can no longer hold them. With theta = C / (3 mu Fz), the force is
 //             mu Fz (3s - 3s^2 + s^3) up to full sliding at s = 1. Drive, braking and cornering share one slip vector,
@@ -14208,8 +14208,9 @@ function simulateAccelRun(){
 //   Electric  a hybrid's or an electric car's pack is a state (build 275): the motor's help and its regeneration by
 //             the charge, the charge by what they draw and return. See driveElectric.
 //
-// NOT YET (named, so nobody rediscovers them): tyre and brake temperatures, the road's bumps
-// and kerbs, a power-split's engine speed, the motor's and the pack's heat.
+//   Wheels up and down  each wheel on its tyre and its spring, the tyre's load its own deflection (phase G6). See THE WHEELS.
+// NOT YET (named, so nobody rediscovers them): tyre and brake temperatures, the road as a surface (its height is an
+// input, u.road.z), a power-split's engine speed, the motor's and the pack's heat.
 // ================================================================================================
 const DRIVE_G=9.81, DRIVE_RHO=1.20;
 // THE DRIVER AIDS AS A TUNE (build 281). These are a calibration, as the fuel map is: the numbers an engineer sets on
@@ -14247,19 +14248,38 @@ function driveAids(v){const A=Object.assign({},DRIVE_AIDS,v.aids||{});A.absSlip=
 //          and dampers (by its own c t^2 / 2). Steady, this is the lap's lltdF and rollGrad exactly. Ixx about the roll
 //          axis: m (kx^2 + arm^2), kx 0.39 of the mean track (NHTSA's measured inertias, Heydinger et al., SAE
 //          1999-01-1336: sedans' roll radius of gyration ~0.6 m on a 1.55 m track; PROBABLE).
-//   pitch  Iyy theta'' = m ax h - Kp theta - Cp theta', Kp = 2 (ksF a^2 + ksR b^2), Cp likewise from the dampers (each
-//          corner's wheel rate and damping: quarterCar). The transfer is (Kp theta + Cp theta') / L, which is
-//          m ax h / L when steady. Iyy = m a b: a dynamic index of 1 in pitch (Gillespie, Fundamentals of Vehicle
-//          Dynamics, ch. 5: road cars 0.8-1.2). No anti-dive or anti-squat yet, so all of it goes through the springs.
+//   pitch  Iyy theta'' = m ax h less the four corners' forces at their arms (each corner's wheel rate and damping:
+//          quarterCar; since phase G6 through each wheel's own travel, THE WHEELS). The transfer is m ax h / L when
+//          steady. Iyy = m a b: a dynamic index of 1 in pitch (Gillespie, Fundamentals of Vehicle Dynamics, ch. 5:
+//          road cars 0.8-1.2). No anti-dive or anti-squat yet, so all of it goes through the springs.
 //   Left out: the weight's own roll moment as the body leans (m g arm phi, a few per cent: the lap's rollGrad leaves
-//   it out too), the tyres' vertical give, and the unsprung masses' share.
+//   it out too), and the unsprung masses' share of the transfer (it is counted with the body's).
+// THE WHEELS (phase G6). Each wheel moves up and down on its own, between its tyre and its spring: a quarter car at
+// each corner (quarterCar: the unsprung mass from its parts, the wheel rate, the damper, the tyre's vertical rate),
+// under a body that heaves as well as rolls and pitches (the sprung mass, the car's less its four wheels').
+//   tyre    its load is its own deflection: Fz = the corner's load at rest + kt (road - wheel), never less than 0 (it
+//           has left the road). The road's height under each wheel is u.road.z, four of them (m; flat without).
+//   wheel   mu z'' = the tyre's change - the spring's, the bar's and the damper's - what the links carry through the
+//           roll centre (m ay z / t, at once, as before). The spring works on the axle's mean travel and the roll
+//           stiffness (springs and bar, the lap's own rollK by rollKF) on the difference of its two wheels, so one
+//           wheel over a bump loads the other through the bar.
+//   body    heave, roll and pitch by the four corners' forces, the downforce at its balance, and the road's crests
+//           and dips (v^2 kv) through the springs. So pitchK is now the springs on the tyres with the body free to
+//           heave, L^2 / (1/kF + 1/kR), k = 2 ks kt / (ks + kt) an axle; the body's roll includes the tyres' give.
+//   The wheel hop is sqrt((ks + kt) / mu), 10-15 Hz: at the 1 ms step that is 0.06-0.1 rad a step, and the damper is
+//   taken implicitly in the wheel's own speed, so no smaller step is needed (test205 halves the step: the same).
+//   s.zu, s.heave (m, up), s.rr (each axle's roll on its springs, which the camber's recovery and the roll steer go by).
+//   Left out, named: bump stops and the droop limit (the springs are linear without end), the tyre's own damping,
+//   the dampers' bound and rebound apart, anti-dive and anti-squat, jacking, camber and toe by heave and pitch.
 function driveBody(v,a,b){
   const qF=quarterCar(v,'F'),qR=quarterCar(v,'R'),tF=v.trackF||v.track,tR=v.trackR||v.track,fw=v.fWt;
   const zF=v.rcF||0,zR=v.rcR||0,zAx=fw*zF+(1-fw)*zR,arm=Math.max(0,v.cg-zAx),kx=0.39*(tF+tR)/2;
   const K=v.rollK||(()=>{const k=rollStiffness(v);return k.F+k.R;})(),KF=v.rollKF==null?0.5:v.rollKF;
-  return {rollI:v.mass*(kx*kx+arm*arm),rollArm:arm,rollK:K,rollKF:KF,rollCF:qF.cs*tF*tF/2,rollCR:qR.cs*tR*tR/2,
+  const kz=q=>2*q.ks*q.kt/(q.ks+q.kt),L=a+b;      // an axle's vertical rate, its springs on its tyres
+  return {rollI:v.mass*(kx*kx+arm*arm),rollArm:arm,rollK:K,rollKF:KF,KaF:K*KF,KaR:K*(1-KF),
     rcGF:fw*zF,rcGR:(1-fw)*zR,
-    pitchI:v.mass*a*b,pitchK:2*(qF.ks*a*a+qR.ks*b*b),pitchC:2*(qF.cs*a*a+qR.cs*b*b)};
+    ksF:qF.ks,ksR:qR.ks,cdF:qF.cs,cdR:qR.cs,unsF:qF.mu,unsR:qR.mu,mS:v.mass-2*(qF.mu+qR.mu),
+    pitchI:v.mass*a*b,pitchK:L*L/(1/kz(qF)+1/kz(qR))};
 }
 // THE STEERING TORQUE (phase G2). Each front tyre's side force acts behind the steering axis, so it turns the wheel
 // back: Mz = -Fy (t + n) about the axis, and the hand wheel feels the two fronts' sum through the steering ratio.
@@ -14321,7 +14341,7 @@ function driveCar(){
 // A car at rest, in neutral for a clutch car until the driver asks for a gear.
 function driveState(car){
   return {soc:car.el?car.el.soc0:0,eng:true,engT:0,Pm:0,shE:0,boost:0,t:0,x:0,y:0,psi:0,vx:0,vy:0,yaw:0,w:[0,0,0,0],we:car.idle*Math.PI/30,gear:1,shiftT:0,
-    axF:0,ayF:0,roll:0,rollV:0,pitch:0,pitchV:0,al:[0,0,0,0],abs:[1,1,1,1],tcF:1,esp:[0,0,0,0],espF:1,clF:1,pull:false,firing:true,
+    axF:0,ayF:0,roll:0,rollV:0,pitch:0,pitchV:0,zu:[0,0,0,0],zuV:[0,0,0,0],heave:0,heaveV:0,rr:[0,0],al:[0,0,0,0],abs:[1,1,1,1],tcF:1,esp:[0,0,0,0],espF:1,clF:1,pull:false,firing:true,
     ax:0,ay:0,Fz:[0,0,0,0],kappa:[0,0,0,0],alpha:[0,0,0,0],Fx:[0,0,0,0],Fy:[0,0,0,0],camber:[0,0,0,0],cg:[0,0,0,0],toe:[0,0,0,0],Fyw:[0,0,0,0],rpm:car.idle,speed:0,delta:0,steerTorque:0};
 }
 // THE ELECTRIC SIDE AS PLAIN DATA (build 275): a hybrid's motor and pack, or an electric car's. null without one.
@@ -14661,7 +14681,7 @@ function stepCar(car,s,u,dt){
   const wMean=()=>{let a=0;if(sg){for(let i=0;i<4;i++)a+=sg[i]*s.w[i];return a;}for(let i=0;i<4;i++)if(drv[i])a+=s.w[i];return a/nd;};
   const steer=Math.max(-1,Math.min(1,u.steer||0)),brake=Math.max(0,Math.min(1,u.brake||0));
   let thr=Math.max(0,Math.min(1,u.throttle||0));
-  const rd=u.road||{},sinT=rd.sinT||0,cosT=Math.sqrt(Math.max(0,1-sinT*sinT)),kv=rd.kv||0;
+  const rd=u.road||{},sinT=rd.sinT||0,cosT=Math.sqrt(Math.max(0,1-sinT*sinT)),kv=rd.kv||0,zr=rd.z,W0F=car.m*g*car.b/L/2,W0R=car.m*g*car.a/L/2;
   for(let k=0;k<n;k++){
     const v=Math.hypot(s.vx,s.vy),delta=steer*car.steerLock;
     // ---- gearbox
@@ -14682,27 +14702,25 @@ function stepCar(car,s,u,dt){
     // the road under the car: on a grade the weight presses with its cosine, and over a crest (kv < 0) or through a
     // dip (kv > 0) the car's own speed adds v^2 kv, as the lap has it. With nothing left the car is in the air.
     const gz=Math.max(0,g*cosT+s.vx*s.vx*kv);
-    const down=0.5*DRIVE_RHO*car.clA*v*v,WF=car.m*gz*car.b/L+down*car.aeroBal,WR=car.m*gz*car.a/L+down*(1-car.aeroBal);
-    // the transfer from the body's own angles (driveBody): through the roll centres at once, the rest through the
-    // springs and dampers as the body rolls and pitches
-    const Mel=car.rollK*s.roll,dYF=(car.m*s.ay*car.rcGF+car.rollKF*Mel+car.rollCF*s.rollV)/car.tF,
-      dYR=(car.m*s.ay*car.rcGR+(1-car.rollKF)*Mel+car.rollCR*s.rollV)/car.tR,dX=(car.pitchK*s.pitch+car.pitchC*s.pitchV)/L;
+    const down=0.5*DRIVE_RHO*car.clA*v*v;
+    // each tyre's load is its own deflection, between the road and its wheel (THE WHEELS)
+    if(!s.zu){s.zu=[0,0,0,0];s.zuV=[0,0,0,0];s.heave=0;s.heaveV=0;s.rr=[0,0];}
     const Fz=s.Fz;
-    Fz[0]=Math.max(0,(WF-dX)/2-dYF);Fz[1]=Math.max(0,(WF-dX)/2+dYF);Fz[2]=Math.max(0,(WR+dX)/2-dYR);Fz[3]=Math.max(0,(WR+dX)/2+dYR);
+    for(let i=0;i<4;i++)Fz[i]=Math.max(0,(i<2?W0F:W0R)+(i<2?car.ktF:car.ktR)*((zr?zr[i]||0:0)-s.zu[i]));
     // ---- tyres
     let FX=0,FY=0,MZ=0,MK=0;const dF=[0,0,0,0],Fl=[0,0,0,0];
     if(!s.toe){s.toe=[0,0,0,0];s.Fyw=[0,0,0,0];}
     for(let i=0;i<4;i++){
       const front=i<2,vxw=s.vx-s.yaw*yw[i],vyw=s.vy+s.yaw*xw[i];
       // the toe (THE TOE): out of the turn at the front, into it at the rear, for understeer figures
-      const tq=car.rsF==null?0:front?-car.rsF*s.roll-car.csF*s.Fyw[i]:car.rsR*s.roll+car.csR*s.Fyw[i];s.toe[i]=tq;
+      const tq=car.rsF==null?0:front?-car.rsF*s.rr[0]-car.csF*s.Fyw[i]:car.rsR*s.rr[1]+car.csR*s.Fyw[i];s.toe[i]=tq;
       const dw=(front?delta:0)+tq,cw=Math.cos(dw),sw=Math.sin(dw);
       const vl=vxw*cw+vyw*sw,vt=-vxw*sw+vyw*cw,den=Math.max(Math.abs(vl),3);
       const kap=(s.w[i]*car.r-vl)/den,alp=-Math.atan2(vt,Math.max(Math.abs(vl),0.5));
       s.al[i]+=(alp-s.al[i])*Math.min(1,Math.abs(vl)*h/car.relax);          // the side force builds over the relaxation length
       // the wheel's lean to the left: static camber, its top towards the car's middle, and the roll less what is recovered
       const ah=drivePatch(car.r,front?car.ktF:car.ktR,Fz[i]);let tg=0;
-      if(car.camF!=null){const gam=(i%2?-1:1)*(front?car.camF:car.camR)-s.roll*(1-(front?car.recF:car.recR));
+      if(car.camF!=null){const gam=(i%2?-1:1)*(front?car.camF:car.camR)-s.roll+(front?car.recF*s.rr[0]:car.recR*s.rr[1]);
         if(!s.cg){s.cg=[0,0,0,0];s.camber=[0,0,0,0];}s.camber[i]=gam;
         tg=s.cg[i]+=(ah/(3*car.r)*Math.sin(gam)-s.cg[i])*Math.min(1,Math.abs(vl)*h/car.relax);}   // its thrust builds as the slip does
       const T=driveTyre(car,Fz[i],kap,s.al[i],front,tg);
@@ -14839,8 +14857,19 @@ function stepCar(car,s,u,dt){
     s.psi+=h*s.yaw;const c=Math.cos(s.psi),sn=Math.sin(s.psi);
     s.x+=h*(s.vx*c-s.vy*sn);s.y+=h*(s.vx*sn+s.vy*c);
     const kL=Math.min(1,h/car.tauLoad);s.axF+=(ax-s.axF)*kL;s.ayF+=(ay-s.ayF)*kL;
-    s.rollV+=h*(car.m*ay*car.rollArm-car.rollK*s.roll-(car.rollCF+car.rollCR)*s.rollV)/car.rollI;s.roll+=h*s.rollV;
-    s.pitchV+=h*(car.m*ax*car.h-car.pitchK*s.pitch-car.pitchC*s.pitchV)/car.pitchI;s.pitch+=h*s.pitchV;
+    // the wheels, and the body on them (THE WHEELS). c: a corner's travel, compressed positive.
+    const dg=gz-g;let SS=0,MP=0,MR=0;
+    for(let q=0;q<2;q++){const i=q*2,j=i+1,f=q===0,t=f?car.tF:car.tR,ks=f?car.ksF:car.ksR,cs=f?car.cdF:car.cdR,mu=f?car.unsF:car.unsR,W0=f?W0F:W0R;
+      const zb=s.heave+s.pitch*xw[i],zbV=s.heaveV+s.pitchV*xw[i],rl=s.roll*t/2,rlV=s.rollV*t/2;
+      const cL=s.zu[i]-zb-rl,cR=s.zu[j]-zb+rl,e=ks*(cL+cR)/2,pr=(cR-cL)/t,bar=(f?car.KaF:car.KaR)*pr/t,D=car.m*ay*(f?car.rcGF:car.rcGR)/t;
+      // the damper taken implicitly in the wheel's own speed
+      const kd=1+h*cs/mu,vL=(s.zuV[i]+h*(Fz[i]-W0-e+bar+D+cs*(zbV+rlV)-mu*dg)/mu)/kd,vR=(s.zuV[j]+h*(Fz[j]-W0-e-bar-D+cs*(zbV-rlV)-mu*dg)/mu)/kd;
+      const SL=e-bar+cs*(vL-zbV-rlV),SR=e+bar+cs*(vR-zbV+rlV);              // what each corner's spring, bar and damper carry
+      SS+=SL+SR;MP+=xw[i]*(SL+SR);MR+=(SR-SL)*t/2;s.rr[q]=pr;
+      s.zuV[i]=vL;s.zuV[j]=vR;s.zu[i]+=h*vL;s.zu[j]+=h*vR;}
+    s.heaveV+=h*(SS-car.mS*dg-down)/car.mS;s.heave+=h*s.heaveV;
+    s.rollV+=h*(car.m*ay*car.rollArm-MR)/car.rollI;s.roll+=h*s.rollV;
+    s.pitchV+=h*(car.m*ax*car.h+MP-down*(car.aeroBal*car.a-(1-car.aeroBal)*car.b))/car.pitchI;s.pitch+=h*s.pitchV;
     s.ax=ax;s.ay=ay;s.delta=delta;s.t+=h;
   }
   s.rpm=s.we*30/Math.PI;s.speed=Math.hypot(s.vx,s.vy);

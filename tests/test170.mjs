@@ -65,7 +65,9 @@ await browser.close();
 // speeds and doesn't judge the car's own grip. Closes with that driver.
 // Build 328 (phase G5, the owner's ruling) widened it: with roll and compliance steer the FK8 strays 4.3 m and the GT3
 // 5.0 m (4.0 and 3.9 before); the GT3's loaded rears toe out of the turn by the fleet's oversteer compliance. Same cure.
-const OFF_KNOWN = { 'Honda Civic Type R (FK8, 2017)': 4.4, 'Porsche 911 GT3 (991.2, 2017)': 5.1 };
+// Build 331 (phase G6): with each wheel on its own tyre and spring the FK8 strays 4.5 m (4.3 before) and the GT3 4.7 m
+// (5.0 before): one widened by 0.2 m, for the owner to approve, the other narrowed by 0.3 m. Same cure.
+const OFF_KNOWN = { 'Honda Civic Type R (FK8, 2017)': 4.6, 'Porsche 911 GT3 (991.2, 2017)': 4.8 };
 console.log('car                        flying lap / solver       furthest off the line   most sideways');
 for (const c of R.cars) {
   const e = 100 * (c.lap / c.solver - 1);

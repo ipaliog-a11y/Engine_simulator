@@ -18,6 +18,21 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 ## [Unreleased]
 
+### Each wheel moves up and down on its own in the stepped car (build 331)
+
+Phase G, step 6 (`plans/driving-sim.md`). Only `stepCar` changes; the lap, 0–100, dyno and race do not read it.
+
+- **Each corner is a quarter car.** The wheel sits between its tyre and its spring, with the unsprung mass already weighed from its parts, the wheel rate, the damper and the tyre's vertical rate (`quarterCar`, build 216/262). The tyre's load is now its own deflection, and it is zero once the wheel has left the road. The body heaves as well as rolls and pitches, and the anti-roll bar passes one wheel's bump to the other.
+- **The road's height under each wheel is an input** (`u.road.z`, four heights). The surface itself (kerbs, roughness, grip) is G7.
+- **`test205`**, on the M3 E46, Civic FK8 and MX-5: the road falling 60 mm under one front wheel leaves it off the road for 44–47 ms, the time a quarter car worked out apart from `stepCar` gives (45–47 ms); the wheel hop is 11.4–13.5 Hz (quarter car 11.6–13.8); the four loads add up to the weight.
+- **No smaller step is needed.** At 0.5 ms the time off the road is the same within 0.5 ms, so the plan's second build (substeps) is dropped.
+- **What moved, and the tests updated for it, in the open:**
+  - The body now rolls on its tyres as well as its springs: 5.0–5.5 deg/g to the road, against the lap's 4.3–4.9 on the springs alone, which `test196` still holds within 2%. The outside front's camber follows (M3 1.39° against the lap's 0.98°); `test201` now expects the tyres' share.
+  - Pitch stiffness is the springs on the tyres with the body free to heave, no longer the springs about a fixed centre.
+  - **Sine with dwell, Model 3, ESP off, 6.5×:** it spun on `main` (yaw 0.82 of its peak 1 s after) and now recovers (0.18), at the same 15° sideways. `test174` asked that it fail there; it now asks that ESP on leaves it less sideways (12° against 15°) and with less yaw (0.14 against 0.18).
+  - **Known gap `OFF_KNOWN` (`test170`), for the owner to approve:** the Civic FK8 strays 4.5 m from the line (4.3 m on `main`), so its cap goes from 4.4 to 4.6 m. The 911 GT3 improves from 5.0 to 4.7 m and its cap comes down from 5.1 to 4.8 m. Flying laps move by under 0.1 s.
+- **Left open:** bump stops and the droop limit (the springs are linear without end), the tyre's own damping, bound and rebound damping apart, anti-dive and anti-squat, jacking, and camber and toe by heave and pitch. The ESP's understeer reference and the roll steer's share in it still use the roll on the springs alone.
+
 ### Five more real engines get their own valves (build 330)
 
 Phase B, step 2 (`plans/road-to-v1.md`), done the way build 287 did it: one sourced engine at a time, so only that engine's cars move.

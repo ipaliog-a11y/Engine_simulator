@@ -3,7 +3,9 @@
 // WHY THIS EXISTS. stepCar's tyres stood upright whatever the body did. Each wheel now leans by its static camber and
 // the body's roll less what its linkage recovers, and pushes towards its lean by the brush model's camber thrust (THE
 // CAMBER in drive-model.js). The grip by camber is left out, a named gap. What must hold:
-//   · steady on a skidpad, the outside front leans as the lap says: camberF + rollGrad ay/g (1 - camRecF), within 2%;
+//   · steady on a skidpad, the outside front leans by camberF + the body's roll less camRecF of its roll on the springs,
+//     within 2% (build 331: the body's roll less the axle's tilt on its tyres, the load difference over kt t), and by
+//     more than the lap's camberF + rollGrad ay/g (1 - camRecF), which has no tyre give;
 //   · a cambered tyre at no slip pushes towards its lean by C a/(3R) per radian, within 2%;
 //   · pulling away straight from rest, the static camber's thrusts cancel: the car keeps its line within 1 cm and 0.05 deg.
 import { chromium } from './pw.mjs';
@@ -25,7 +27,11 @@ const R = await page.evaluate(() => {
     for (let t = 0; t < 5; t += 0.01) stepCar(car, s, { steer: 0.08, throttle: 0.35, brake: 0 }, 0.01);
     const o = s.ay > 0 ? 1 : 0;   // the outside front: the right one in a left turn
     out.cars.push({ name: n, cam: (o ? -1 : 1) * s.camber[o] * 180 / Math.PI,
-      want: vehicle.camberF + vehicle.rollGrad * Math.abs(s.ay) / 9.81 * (1 - vehicle.camRecF) });
+      // build 331: the tyres give too. The axle tilts by its load difference over the tyres' rate and the track, the
+      // body rolls on top of that, and the linkage recovers its share of the roll on the springs only.
+      want: (() => { const tilt = Math.abs(s.Fz[1] - s.Fz[0]) / (car.ktF * car.tF), roll = Math.abs(s.roll);
+        return vehicle.camberF + (roll - vehicle.camRecF * (roll - tilt)) * 180 / Math.PI; })(),
+      lap: vehicle.camberF + vehicle.rollGrad * Math.abs(s.ay) / 9.81 * (1 - vehicle.camRecF) });
   }
   // camber thrust at no slip
   { const car = driveCar(), Fz = car.FzRefF, ah = drivePatch(car.r, car.ktF, Fz), g = Math.PI / 180;
@@ -40,8 +46,9 @@ const R = await page.evaluate(() => {
 
 const near = (a, b, t) => Math.abs(a / b - 1) <= t;
 for (const o of R.cars) {
-  console.log(`${o.name.padEnd(24)} outside front camber ${o.cam.toFixed(3)} deg (lap ${o.want.toFixed(3)})`);
-  if (!near(o.cam, o.want, 0.02)) fails.push(`${o.name}: outside front camber off the lap's`);
+  console.log(`${o.name.padEnd(24)} outside front camber ${o.cam.toFixed(3)} deg (want ${o.want.toFixed(3)}, the lap's ${o.lap.toFixed(3)})`);
+  if (!near(o.cam, o.want, 0.02)) fails.push(`${o.name}: outside front camber off its roll and tilt`);
+  if (!(o.cam > o.lap && o.cam < o.lap + 0.6)) fails.push(`${o.name}: outside front camber is not the lap's plus the tyres' give`);
 }
 const T = R.thrust;
 console.log(`camber thrust at 1 deg: ${T.got.toFixed(1)} N (want ${T.want.toFixed(1)}), ${T.perDeg.toFixed(4)} of the load per degree`);
