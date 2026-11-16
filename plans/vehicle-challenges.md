@@ -10,11 +10,18 @@ road or course and its own score. The sim solves; nobody drives yet.
 
 ## Registry
 
-`RUN_CHALLENGES` in `src/js/run-challenges.js`. First entry:
+`RUN_CHALLENGES` in `src/js/run-challenges.js`. Economy entries (build 343 adds five real open roads; Alpine Pass stays):
 
 | id | kind | score | course |
 |---|---|---|---|
 | economy | economy | litres or kWh / Wh/km at a target time | Alpine Pass (`ROADS.alpine`) |
+| economy-dragon | economy | same | Tail of the Dragon US 129 (`ROADS.dragon`, ~18 km) |
+| economy-bigsur | economy | same | Big Sur CA-1 mid-coast (`ROADS.bigsur`, ~38 km) |
+| economy-napoleon | economy | same | Route Napoléon Digne→Grasse (`ROADS.napoleon`, ~116 km) |
+| economy-highland | economy | same | A85 Oban→Lochearnhead (`ROADS.highland`, ~92 km) |
+| economy-targa | economy | same | Targa Piccolo open stage (`ROADS.targa`, ~60 km) |
+
+Real roads: OSRM centreline + ASTER elevation; width modelled (as Nordschleife). Paths stay open (no wrap).
 
 ## Economy run (shipped)
 
@@ -32,4 +39,5 @@ road or course and its own score. The sim solves; nobody drives yet.
 2. Moose avoidance (ISO 3888-2 style).
 3. Skid-pad challenge.
 4. Multi-car ranking on a challenge.
-5. Distance DP for economy; open GPX; hybrid energy on economy roads.
+5. Distance DP for economy; hybrid energy on economy roads.
+6. Open GPX import for user roads (do not reuse closed `gpxToTrack` blindly).
