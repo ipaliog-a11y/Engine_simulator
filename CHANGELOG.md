@@ -18,6 +18,15 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 ## [Unreleased]
 
+### The surface under each wheel of the stepped car (build 334)
+
+Phase G, step 7 (`plans/driving-sim.md`). Only the stepped car changes, and only when a surface is given to it: the lap, 0–100, dyno and race do not read it, and `stepCar` without one does exactly what it did.
+
+- **Kerbs and bumps are the lap's own.** `driveSurface(lap, gd, wet)` turns a circuit into plain data and `driveRoadAt` gives the height and grip under each wheel from where the car is: the 5 cm FIA kerbs of build 217 outside the track's edge, and ISO 8608's road at the roughness the lap already takes for the circuit (build 216), as 48 waves over the standard's band (0.011–2.83 cycle/m). A rear wheel meets what the front wheel of its side met.
+- **Grip by surface, as a share of the tyre's own on dry asphalt** (`DRIVE_SURFACE`): wet asphalt 0.77, gravel 0.54 (Noon, *Engineering Analysis of Vehicular Accidents*, 1994: 0.50 and 0.35 against dry asphalt's 0.65, locked-wheel stops); dry grass 0.57 and wet grass 0.34 (Cenek, Jamieson & McLarin, Opus Central Laboratories NZ: a car locked from 40 km/h on rye-grass, 0.37 dry and 0.22 wet). Beyond a kerb, or the edge where there is none, it is grass.
+- **`test206`**, on the M3 E46: the bumps' RMS height is 3.83 mm against the spectrum's 3.81; onto a kerb, the left front's load jumps 6696 N (tyre rate × height: 6697) and the rear's follows 96 ms later (wheelbase over speed: 95); a locked stop from 40 km/h takes 1.75× as far on dry grass and 2.94× on wet (measured shares: 1.76 and 2.95); with the left wheels on grass the car turns towards the asphalt. A lap of `tech` driven on its surface takes 77.85 s against 77.61 s smooth.
+- **Probable, and marked so:** that the measured share holds for any tyre. The M3 stops from 40 km/h in 6.4 m on asphalt and 11.1 m on grass; Cenek's car, on its own tyres, took 17 m on grass.
+- **Left open:** rolling resistance on grass and gravel (so a car coasting on grass does not slow more), a painted kerb's grip and its ribs, the bumps of grass, aquaplaning, a gravel trap (no circuit here has its run-off drawn: everything off the track is grass). The stability control still takes dry asphalt for its limit. Nothing in the interface shows the surface yet; it waits for the driving view.
 ### Each wheel moves up and down on its own in the stepped car (build 333)
 
 Phase G, step 6 (`plans/driving-sim.md`). Only `stepCar` changes; the lap, 0–100, dyno and race do not read it.
