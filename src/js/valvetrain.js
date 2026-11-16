@@ -26,7 +26,8 @@ const VALVE_SPRING={
 const STEM_D=7,STEM_L=105;    // mm — a valve stem is sized by deck height and guide wear, not by
                               // how big its head is, so it does NOT scale with valve diameter.
 const VALVE_EFF_MASS=1.40;    // valve + retainer + collets + ~1/3 of the spring
-const THROAT_RATIO=0.85;      // throat diameter as a fraction of valve head diameter
+const THROAT_RATIO=0.85;      // throat diameter as a fraction of valve head diameter. A rule (owner's sign-off, build 332):
+                              // no maker publishes a port throat; Heywood ch. 5 gives 0.8-0.9 (plans/fitted-register.json)
 // Mass of one poppet valve (kg) from its own geometry: a head disc that scales with diameter, on a
 // stem that does not. Scaling the stem too — the obvious mistake — makes a 52 mm valve weigh 227 g
 // when a real one weighs 152, and then predicts a big V8 floating at 3800 rpm.
