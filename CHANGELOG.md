@@ -18,6 +18,11 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 ## [Unreleased]
 
+### Test 40 follows the compound turbo and the charge-heating floor (build 338)
+- Test only; no simulator number moves. Two assertions were stale after builds 291 and 294.
+- Charge heating: at 2.5 bar the medium frame is also just over its rating (load 1.04), so small and medium both sit on the compressor-efficiency floor (387 C). The small frame is now compared with the large one (201 C).
+- Flow: a compound is two stages in series, so its rating (73.9 lb/min) is the larger LP wheel's: above a single (55.7), below a twin pair (111.3). The test said it must beat the pair.
+
 ### A factory engine holds its rated power, and the lambda sensor reads (build 337)
 
 Two changes the owner asked for together, so one build carries both.
