@@ -18,6 +18,16 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 ## [Unreleased]
 
+### Challenges page: mountain economy run (build 341)
+
+- New Drive tab **CHALLENGES** (not TRACK): registry of solved vehicle tests. First kind is Mountain Economy on an
+  open Alpine Pass road (~17 km, turns, climb, crest, descent). Target time is 1.25× the car’s own min-time
+  (eco-rally: use the allotted time); score is litres / L/100 km. Fuel from the same `engineFuelAt` map as WLTP (warm oil).
+- Open-path geometry (`catmullOpen` / `buildRoad`) is separate from closed circuits. A speed cap hits the target —
+  named gap: not yet optimal lift-coast DP. (A pure “finish by T” limit would pick flat-out: hard braking is fuel-cut.)
+  Electric cars are declined on this challenge for now. ENGINE career challenges are unchanged.
+- Left open: skill / moose / skid-pad kinds, multi-car ranking, DP eco, open GPX, hybrid/EV energy.
+
 ### A plan for the guided build that sets values (build 340)
 
 - `plans/guided-build.md` proposes the walk-through over the design cards: the ordered steps for piston NA, turbo,
