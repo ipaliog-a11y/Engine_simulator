@@ -84,6 +84,8 @@ scoreboard holds (phase H)".
 converter's double count) stay as builds. The other 10 entries (B1's idle, B3's `TURB_WHEEL`, `SC_TYPE` and vane ring,
 B5's plenum and `INTAKE_SYS`, B7's four) are kept as rules until after v1.0, each with its part in the register; B4
 (water-to-air and twin intercoolers per car) also waits until after v1.0.
+*Build 330:* B2's second batch of sourced valves (5 engines, 10 of 93 now); LS7 and LT4 held back. `THROAT_RATIO`
+cannot be sourced (no maker publishes a port throat); it needs the owner's sign-off as a rule.
 
 *Scoreboard run at the end of B.*
 

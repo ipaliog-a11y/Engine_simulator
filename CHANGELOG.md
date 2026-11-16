@@ -18,6 +18,26 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 ## [Unreleased]
 
+### Five more real engines get their own valves (build 330)
+
+Phase B, step 2 (`plans/road-to-v1.md`), done the way build 287 did it: one sourced engine at a time, so only that engine's cars move.
+
+- **Added to `ENGINE_VALVES`** (intake / exhaust, mm): Chrysler 6.4 Hemi 54.36 / 41.91 (Dodge Garage's Gen III HEMI reference, 2.14 / 1.65 in); BMW S14 37 / 32; Honda B18C 33 / 28; Nissan RB26DETT 34.6 / 30.15; Honda K20C1 35 / 29. The last four are standard-size replacement valves (TRW, SuperTech, Ferrea, Brian Crower, Manley, GSC, Skunk2), marked (std).
+- **What moved (fingerprint, 5 cars; the others only change their lap hash, the shared racing-line cache build 287 named):**
+
+  | car | hp, rule → own (published) | 0–100 | tech lap |
+  |---|---|---|---|
+  | Jeep Grand Cherokee SRT | 474 → 510 (470): +0.9% → +8.5% | 4.73 → 4.64 s | 72.71 → 72.50 s |
+  | Honda Integra Type R | 178 → 182 (200): −11.0% → −9.0% | 6.68 → 6.69 s | 75.77 → 75.72 s |
+  | Honda Civic Type R FK8 | 300 → 303 (316): −5.1% → −4.1% | 6.01 → 6.00 s | 76.25 → 76.25 s |
+  | BMW M3 E30 | 212 → 213 (197): +7.4% → +8.0% | 5.99 → 6.00 s | 75.09 → 75.10 s |
+  | Nissan Skyline R34 | 386 → 388 (276): +39.9% → +40.6% | 4.63 → 4.63 s | 73.45 → 73.44 s |
+
+  Peak power moved +0.5% to +7.6%. Mean error of the five 12.9% → 14.0%, worse, almost all from the Hemi, where the rule had happened to sit closer. The R34's 276 hp is Japan's gentlemen's-agreement figure; its gap is not the valves'.
+- **Held back, their sizes in the code beside the table:** GM LS7 (GM: 2.20 / 1.61 in) would go from +8.3% to +15.6% over its 505 hp, the LS3's pattern (build 287): its cam and intake want a review first. GM LT4 (GM parts: 2.13 / 1.59 in): its preset gives no valve count, so it runs as a four-valve head; that wants fixing first, apart from this build.
+- **`test176`** now checks that every listed engine reaches the engine of that name with its sizes, so a misspelt key cannot leave it on the rule unnoticed.
+- **Left open:** `THROAT_RATIO` (0.85) cannot be retired by sourcing. No maker publishes a factory port's throat diameter for any of the 93 real engines; only aftermarket flow-bench figures for ported heads exist. It stays open in the register, and wants the owner's sign-off as a rule (Heywood ch. 5: throats at 0.8–0.9 of the valve). `EV_RATIO` and the packing rule stay for the ~80 engines still without sourced valves, including the LS3, LS7, LT4 and Coyote held back.
+
 ### Lift-off and braking in a turn, checked (build 329)
 
 Phase G8 of `plans/driving-sim.md`: a test only (`test204`), no physics changed; the lap, 0–100, dyno and race fingerprint is identical.
