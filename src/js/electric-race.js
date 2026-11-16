@@ -120,7 +120,7 @@ function evRaceTqAt(M,i,f,g,ff){
 // pace the car is going: r).
 function evRaceHeatStep(M,c,r,dt,save){
   const X=M.ev,t=c.evT,P=c._fr*3600*r*r*save;
-  const d=packDraw(X.pack,evRaceSoc(M,c.fuelKg),P,t.b);   // at the pack's temperature (build 340)
+  const d=packDraw(X.pack,evRaceSoc(M,c.fuelKg),P,t.b);   // at the pack's temperature (build 346)
   packHeatStep(X.pack,t,d?d.heat:0,dt);
   const rpm=clamp(c.v*X.k,1,X.rl),T=c._tq*r;
   motorHeatStep(X.motor,t,motorLosses(X.motor,Math.abs(T),rpm,X.V,t),dt);

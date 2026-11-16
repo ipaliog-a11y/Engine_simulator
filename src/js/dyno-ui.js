@@ -393,6 +393,7 @@ function updateUI(){
   else{status.textContent=tr('IDLE / LOW LOAD')+' • '+Math.round(state.rpm)+' RPM';status.className='status-bar'}
   if(vizMode==='design')legend.innerHTML=tr('Bore/stroke set displacement. Octane+compression+boost+ignition feed the knock model.')+'<br>'+tr('Cooling (radiator/fan/oil cooler/thermostat) sets running temps in AUTO THERMAL mode.');
   else if(vizMode==='engine')legend.innerHTML=tr('THROTTLE makes power; LOAD (dyno brake) sets the hold RPM — more load = lower RPM, zero = free-rev to limiter.')+'<br>'+tr('Lift off at speed → engine braking + fuel cut. Detonation/overheat/lean-boost/valve float wear the engine.');
+  else if(vizMode==='challenges')legend.innerHTML=tr('Solved vehicle tests: economy, moose avoid; later skill, skid pad.')+'<br>'+tr('Economy: green start, red finish; line colour is pace versus flat-out; hover for speed and incline; pace sets the target time.')+' '+tr('Moose: ISO 3888-2 cones, frontal forces and body roll.');
   else legend.innerHTML=tr('Dyno shows full power & torque curves to redline.')+'<br>'+tr('Green line = current RPM. Peaks marked with dots.');
   updateDashLamps();
 }
@@ -404,11 +405,12 @@ function setTab(mode){
   if(mode!=='track'&&trackPage.open)closeTrackPage();
   vizMode=mode;
   if(mode!=='track'&&!racePage.open&&!trackPage.open&&vizW!==640){vizW=640;vizH=420;}   // the phone's TRACK grid is its own
-  ['Design','Vehicle','Parts','Garage','Track','Race','Engine','Dyno','Guide','Options'].forEach(m=>
+  ['Design','Vehicle','Parts','Garage','Track','Race','Challenges','Engine','Dyno','Guide','Options'].forEach(m=>
     document.getElementById('tab'+m).classList.toggle('active',mode===m.toLowerCase()));
   // The four sections (build 261): BUILD, TEST, DRIVE, MORE. On a phone the tabs are one strip that slides to the open
   // section, over a bar of the four at the foot of the screen; a section opens on the tab last used in it.
-  const grp=document.getElementById('tab'+(mode==='design'?'Design':mode==='engine'?'Engine':mode[0].toUpperCase()+mode.slice(1))).dataset.g;
+  const tabId=mode==='design'?'Design':mode==='engine'?'Engine':mode==='challenges'?'Challenges':mode[0].toUpperCase()+mode.slice(1);
+  const grp=document.getElementById('tab'+tabId).dataset.g;
   tabOfGroup[grp]=mode;
   document.querySelectorAll('.viz-tabs button').forEach(b=>b.classList.toggle('ing',b.dataset.g===grp));
   document.querySelectorAll('#vizGroups button').forEach(b=>b.classList.toggle('active',b.dataset.g===grp));
@@ -442,10 +444,12 @@ function setTab(mode){
   document.getElementById('vehiclePanel').style.display=(mode==='vehicle')?'':'none';
   document.getElementById('trackPanel').style.display=(mode==='track')?'':'none';
   document.getElementById('racePanel').style.display=(mode==='race')?'':'none';
+  document.getElementById('chalPanel').style.display=(mode==='challenges')?'':'none';
   // the engine's live readout belongs to the running engine: the LIVE and DYNO tabs only
   document.getElementById('livePanel').style.display=(mode==='engine'||mode==='dyno')?'':'none';
   if(mode==='vehicle'){buildVehicle();updateVehicleSummary();}
   if(mode==='track'){buildVehicle();refreshLap();}
+  if(mode==='challenges'){buildVehicle();refreshChallenge();}
   if(mode==='race'){const ts=document.getElementById('raceTrk');fillTrackSelect(ts,ts.value||trackKey);raceFillAdd();openRacePage(prevMode);renderRaceSetup();renderRacePanel(true);}
   updateUI();
 }

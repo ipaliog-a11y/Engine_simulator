@@ -10,7 +10,7 @@
 //     limit binds (the Model 3 at −10 °C), not where the plating limit does, which does not vary with temperature yet;
 //   · but a Model Y keeps more than half its power at 0 °C (1.8× the resistance), and about a third at −10 °C;
 //   · lead-acid and NiMH still do not change;
-//   · since build 340 the cells' heat follows their temperature (packDraw's tC): less warm, more cold, the same at 25 °C,
+//   · since build 346 the cells' heat follows their temperature (packDraw's tC): less warm, more cold, the same at 25 °C,
 //     and the WLTP cycle reads its 23 °C soak, so a cold cycle (0 °C) costs more energy.
 import { chromium } from './pw.mjs';
 import { fileURLToPath, pathToFileURL } from 'url';

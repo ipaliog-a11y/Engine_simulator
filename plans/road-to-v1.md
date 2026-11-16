@@ -125,7 +125,7 @@ and 5 move there. The 10 files never read for fitted numbers (the register's `au
 Beyond the register (started November 2026, owner's decision; one build each, in this order):
 0. *Done in build 285:* the bench readouts the model already computes: the loss split (copper, cage, iron, friction,
    inverter), the pack's current as a C-rate, its sag and its heat, an induction motor's slip.
-1. *Build 340:* the pack's temperature in the lap, the race and the WLTP cycle (packR at the pack's own temperature, not
+1. *Build 346:* the pack's temperature in the lap, the race and the WLTP cycle (packR at the pack's own temperature, not
    25 °C). Open: the lap's torque curve and the race's pace-grid price still read 25 °C.
 2. A cell's sag and recovery: one RC pair, the 1 s against 10 s power the Prius cells were re-rated for.
 3. A fast-charge curve from the charge-voltage and plating limits the pack already has.
@@ -266,6 +266,10 @@ A guided build that sets values (owner's request, November 2026; build 308 only 
 3. A finish screen: the build against the car it started from (power, torque, 0–100, price, reliability), and the
    limit it sits on.
 Open: the coupled fields (`ICD_DEPS`: boost with fuel, timing, intercooler) must be followed; branches for rotary and EV.
+**Plan:** `plans/guided-build.md` (build 340): the steps per powertrain, coupled fields, hints, finish screen and the
+owner's questions.
+**Challenges page** (build 341–342): Drive tab for solved vehicle tests. First kind is an open-road economy run
+(target time; ICE litres, EV kWh / Wh/km). Later: skill track, moose avoid, skid pad. Plan: `plans/vehicle-challenges.md`.
 
 ## Method
 
