@@ -1,4 +1,4 @@
-// The page's columns, put back (build 338).
+// The page's columns, put back (build 339).
 //
 // WHY THIS EXISTS. Build 312 left the PARTS brake block unclosed. The browser then nested the right column inside the
 // left panel and put the footer in the right column, so every tab showed an empty column on the right. What must hold:

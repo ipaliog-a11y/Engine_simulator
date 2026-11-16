@@ -18,7 +18,7 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 ## [Unreleased]
 
-### The right column is back where it belongs, and the footer moves to OPTIONS > ABOUT (build 338)
+### The right column is back where it belongs, and the footer moves to OPTIONS > ABOUT (build 339)
 
 - Since build 312 the PARTS page's brake block was missing its closing tag. The browser then nested the right column
   inside the left panel and dropped the footer into the right column, so every tab showed an empty column on the right
@@ -30,6 +30,11 @@ they are accurate about *what* shipped but not about the day it shipped.
   physics approach, offline use, the licence and a link to the source.
 - Left open: `test125` already failed on `main` (folded LIVE OUTPUT is about 20% of its height, not the third it expects).
   It is unrelated to this change.
+
+### Test 40 follows the compound turbo and the charge-heating floor (build 338)
+- Test only; no simulator number moves. Two assertions were stale after builds 291 and 294.
+- Charge heating: at 2.5 bar the medium frame is also just over its rating (load 1.04), so small and medium both sit on the compressor-efficiency floor (387 C). The small frame is now compared with the large one (201 C).
+- Flow: a compound is two stages in series, so its rating (73.9 lb/min) is the larger LP wheel's: above a single (55.7), below a twin pair (111.3). The test said it must beat the pair.
 
 ### A factory engine holds its rated power, and the lambda sensor reads (build 337)
 
