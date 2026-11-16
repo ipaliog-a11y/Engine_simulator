@@ -18,6 +18,15 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 ## [Unreleased]
 
+### The LS7 takes its real valves (build 335)
+
+Phase B, step 2, on the owner's ruling: build 330 held the LS7 back because its real valves push it past 10% over its published power.
+
+- **`ENGINE_VALVES`:** GM LS7, 55.88 / 40.89 mm (GM, via Corvette Action Center: titanium intake 2.20 in, sodium exhaust 1.61 in), in place of the packing rule's 52.4 mm.
+- **What moved (fingerprint):** the Corvette Z06 (C6) only: 536 → 584 hp against 505 published (+6.1% → +15.6%); 0–100 4.46 → 4.47 s (traction-limited); tech lap 71.81 → 71.79 s. Other cars change only their lap hash (the shared racing-line cache, build 287).
+- **`test145` fails on `main` as well**, with the same 25 failures before and after (12 engines newly wear at full load, past `FULL_LOAD_KNOWN`; 13 run no hotter at full load than free-revving); the LS7's coolant at full load goes 114 → 116 °C.
+- **Named gap:** the valves are GM's, so the excess lies elsewhere, most likely the cam or the intake (the LS3, held back in build 287, shows the same pattern). The LS3, LT4 and Coyote stay on the rule.
+
 ### The surface under each wheel of the stepped car (build 334)
 
 Phase G, step 7 (`plans/driving-sim.md`). Only the stepped car changes, and only when a surface is given to it: the lap, 0–100, dyno and race do not read it, and `stepCar` without one does exactly what it did.
