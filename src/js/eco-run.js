@@ -148,11 +148,12 @@ function ecoEnergyJ(line,v){
   return{E,regenJ:back};
 }
 // Eco strategy: speed-cap the open min-time solve so finish time hits the target (not early).
-function simulateEconomyChallenge(roadKey){
+// factorOpt (build 344): UI pace 1.25 / 1.5 / 2.0; else the road's timeFactor.
+function simulateEconomyChallenge(roadKey,factorOpt){
   const road=buildRoad(roadKey||'alpine');if(!road)return null;
   const pt=powertrain();if(!pt.ready()||!vehicle.mass)return null;
   const line=road.line,mt=ecoMinTime(line);if(!mt)return null;
-  const factor=road.timeFactor||1.25,target=mt.t*factor;
+  const factor=factorOpt>0?factorOpt:(road.timeFactor||1.25),target=mt.t*factor;
   let lo=15/3.6,hi=Math.max(...mt.v)+1,best=mt;
   for(let k=0;k<18;k++){
     const mid=(lo+hi)/2,tryMt=ecoMinTime(line,mid);if(!tryMt){lo=mid;continue;}

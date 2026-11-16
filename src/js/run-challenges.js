@@ -23,12 +23,15 @@ const RUN_CHALLENGES=[
 ];
 let activeRunChallenge='economy';
 let chalResult=null;
+// Pace = target / min-time (eco-rally). UI: 125%, 150%, 200%.
+let chalPaceFactor=1.25;
+const CHAL_PACE_OPTS=[1.25,1.5,2];
 function runChallengeById(id){
   return RUN_CHALLENGES.find(c=>c.id===id)||RUN_CHALLENGES[0];
 }
 function solveRunChallenge(id){
   const ch=runChallengeById(id||activeRunChallenge);
   if(!ch)return null;
-  if(ch.kind==='economy')return simulateEconomyChallenge(ch.road);
+  if(ch.kind==='economy')return simulateEconomyChallenge(ch.road,chalPaceFactor);
   return{ok:false,reason:'unimplemented',challenge:ch};
 }

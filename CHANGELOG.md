@@ -18,6 +18,11 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 ## [Unreleased]
 
+### Challenges: pace select and route hover (build 344)
+
+- Pace control on CHALLENGES: **125% / 150% / 200%** of the car’s min-time (`chalPaceFactor`). Hover the open-road ribbon for distance, speed and incline at that point.
+- Left open: hybrid economy path; lift-coast DP.
+
 ### Challenges: five real open roads (build 343)
 
 - Five open `ROADS` from OSM routing (OSRM) + ASTER elevation: Tail of the Dragon (~18.9 km vs 18 km published), Big Sur mid-coast (~37.5 vs 38.1 km cut; full highway 114.6 km), Route Napoléon Digne→Grasse (~110 vs 116 km stage; full 314 km), Highland A85 Oban→Lochearnhead (~90.5 vs 91.6 km), Targa Piccolo open Cerda→Buonfornello (~57.6 vs 60 km of 72 km). Alpine Pass kept. Width modelled. Matching economy entries in `RUN_CHALLENGES`.
