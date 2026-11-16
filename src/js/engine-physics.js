@@ -1195,7 +1195,12 @@ function stepEngine(dt){
   // bench was steady only there: at 30 frames an RS3 swung 660 rpm, an MX-5 1700 (build 327). Steps no longer than
   // inertia/(brakeGain*30/pi) take the overshoot out exactly once, at any frame rate.
   const hMax=engine.inertia/Math.max(1e-9,engine.brakeGain*30/Math.PI),n=Math.min(40,Math.max(1,Math.ceil(dt/hMax-1e-9)));
-  for(let i=0;i<n;i++)stepEngineOnce(dt/n);
+  // The frame's burned share is the mean over its steps (build 336). Read at the frame's end alone, an even count of
+  // steps on the limiter ends every frame on the same half of the burn-and-cut pair: always at the redline, where the
+  // fuel reads as cut, so a free-revving engine made no heat at all.
+  let b=0;
+  for(let i=0;i<n;i++){stepEngineOnce(dt/n);b+=state.burnShare;}
+  state.burnFrac=b/n;
 }
 function stepEngineOnce(dt){
   stepBoost(dt);
@@ -1238,6 +1243,7 @@ function stepEngineOnce(dt){
     const tqCut=brakeTorqueRaw(state.rpm,state.map,true)-brakeTorque(),need=(wRed-w0)*engine.inertia/dt;
     state.limFrac=clamp((need-tqCut)/Math.max(1e-9,tq-tqCut),0,1);
   }else if(!cut)state.limFrac=1;
+  state.burnShare=cut?0:state.limFrac;
   state.rpm=clamp(omega*60/(2*Math.PI),0,engine.redline);
 }
 // Integrate the battery: charge when the alternator out-supplies demand, drain otherwise.
@@ -1425,6 +1431,12 @@ function updatePhysics(){
   if(isHybrid())return hybUpdatePhysics(updateEnginePhysics);   // at the engine's own throttle, or off (build 190)
   updateEnginePhysics();
 }
+// The fuel metered at the live speed and manifold pressure, kg/s (state.ve must be current).
+function meteredFuelKgS(map){
+  const T_k=effIAT(map,state.rpm)+273.15,MAP_pa=map*1e5,Vd=engine.displacement_L/1000;
+  const airMass_kg_s=(MAP_pa*Vd*(state.rpm/60)*engine.chargesPerRev*state.ve)/(287*T_k)*(1-egrRate(state.rpm,map));
+  return (airMass_kg_s/curAFR(state.rpm,map))/engine.meteringEff*engine.typeBsfc;
+}
 function updateEnginePhysics(){
   const map=liveMap();
   // AUTO (ECU MAP) mode: the ECU sets the live mixture from its load×rpm map, so the AFR
@@ -1441,19 +1453,19 @@ function updateEnginePhysics(){
   state.bmep=r.bmep;state.ve=r.ve;state.knockRisk=r.knock;
 
   if(state.fuelCut){   // overrun / limiter fuel cut → no fuel burned, engine braking
-    state.fuelFlowLph=0;state.heatFuelLph=0;state.bsfc=999;state.thermalEff=0;
+    state.fuelFlowLph=0;state.bsfc=999;state.thermalEff=0;
+    // at the redline the frame may still have burned on the way there: the cooling system sees that share (build 336)
+    state.heatFuelLph=state.rpm>=engine.redline&&state.burnFrac>0&&!overrunFuelCut()?meteredFuelKgS(map)*3600/engine.fuelDensity*state.burnFrac:0;
     if(state.rpm<engine.redline){state.torque=Math.min(0,brakeTorqueRaw(state.rpm,map,true));state.powerKW=state.torque*state.rpm*2*Math.PI/60/1000;state.powerHP=state.powerKW/0.7457;}
     computeEmissions();   // zeros the analyser (fuelCut)
     return;
   }
-  const T_k=effIAT(map,state.rpm)+273.15,MAP_pa=map*1e5,Vd=engine.displacement_L/1000;
-  const airMass_kg_s=(MAP_pa*Vd*(state.rpm/60)*engine.chargesPerRev*state.ve)/(287*T_k)*(1-egrRate(state.rpm,map));
   // Imprecise metering (carbs / mechanical injection) wastes fuel; the cycle's thirst factor
   // (typeBsfc) captures combustion/scavenging losses — a 2-stroke short-circuits fresh charge
   // out the exhaust (>1, thirsty). A diesel is 1: its torque is computed from this same fuel.
-  const meteredFuel=(airMass_kg_s/curAFR(state.rpm,map))/engine.meteringEff*engine.typeBsfc;
+  const meteredFuel=meteredFuelKgS(map);
   state.fuelFlowLph=(meteredFuel*3600)/engine.fuelDensity;
-  state.heatFuelLph=state.fuelFlowLph*(state.limFrac!=null?state.limFrac:1);   // what was burned, on the limiter too (build 235)
+  state.heatFuelLph=state.fuelFlowLph*(state.burnFrac!=null?state.burnFrac:1);   // what was burned, on the limiter too (build 235)
   const fuelPower=meteredFuel*engine.fuelLHV*1e6/1000;
   state.thermalEff=fuelPower>0.1?clamp((state.powerKW/fuelPower)*100,0,46):0;
   state.bsfc=state.powerKW>0.5?(meteredFuel*3600*1000)/state.powerKW:999;

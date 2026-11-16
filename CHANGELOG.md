@@ -18,6 +18,23 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 ## [Unreleased]
 
+### A free-revving engine makes its heat again on a slow screen (build 336)
+
+- **What was wrong.** Since build 327 the bench splits a slow frame into several steps. On the limiter the steps burn
+  and cut in turn, and the cooling model read only the frame's last one. With an even count every frame ended at the
+  redline, where the fuel reads as cut, so a free-revving engine made no heat at all: the oil sat at 96 C and the coolant
+  at the thermostat (4A-GE at 20 frames a second). `test145` failed on `main` for it (13 engines "no hotter at full load").
+- **The fix.** `stepEngine` keeps the mean burned share of the frame's steps (`state.burnFrac`), and the fuel the cooling
+  system sees is the metered fuel times that share, at the redline too. The 4A-GE free-revving is back to 102.2 C of oil
+  (102.0 before build 327). At 60 frames, where a frame is one step, the average is what it was.
+- **Known gap, 11 engines wider.** `test145` steps at 20 frames a second, where the brake was unstable before build 327
+  and bounced engines between the limiter and the load, so they read cool. Held steady, 11 more engines pass 132 C of oil
+  at sustained peak power (GR Yaris, S2000, M3 E46, GT3 991.2, RS3, Hellcat, F355, 330d, Cummins 6.7, Sport quattro,
+  C63). Build 324 at 60 frames already wore the five checked (GR Yaris, M3, Hellcat, 330d, C63). They join
+  `FULL_LOAD_KNOWN` (15 to 26): it is the same gap, the lumped model's fitted temperature rises.
+- **Moved.** No dyno, lap or race figure: none of them steps the bench.
+- **Left open.** Deriving a factory cooling system's design point, which would empty that list.
+
 ### The LS7 takes its real valves (build 335)
 
 Phase B, step 2, on the owner's ruling: build 330 held the LS7 back because its real valves push it past 10% over its published power.
