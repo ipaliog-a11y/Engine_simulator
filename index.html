@@ -810,7 +810,7 @@ body.guided-open{overflow:hidden}
 </div>
 <div class="container">
 <header>
-<h1>PIXEL ENGINE SIM v0.7 build 333</h1>
+<h1>PIXEL ENGINE SIM v0.7 build 334</h1>
 <div class="subtitle" id="subtitle">ENGINE DESIGNER • BUILD IT, THEN DRIVE IT</div>
 </header>
 <div class="build-strip" id="buildStrip">
@@ -14210,8 +14210,8 @@ function simulateAccelRun(){
 //             the charge, the charge by what they draw and return. See driveElectric.
 //
 //   Wheels up and down  each wheel on its tyre and its spring, the tyre's load its own deflection (phase G6). See THE WHEELS.
-// NOT YET (named, so nobody rediscovers them): tyre and brake temperatures, the road as a surface (its height is an
-// input, u.road.z), a power-split's engine speed, the motor's and the pack's heat.
+// NOT YET (named, so nobody rediscovers them): tyre and brake temperatures, a power-split's engine speed, the motor's
+// and the pack's heat.
 // ================================================================================================
 const DRIVE_G=9.81, DRIVE_RHO=1.20;
 // THE DRIVER AIDS AS A TUNE (build 281). These are a calibration, as the fuel map is: the numbers an engineer sets on
@@ -14555,12 +14555,12 @@ function driveToe(v){const k=n=>v[n]!=null?v[n]:DRIVE_TOE[n],kN=Math.PI/180/1000
   return {rsF:k('rollSteerF'),rsR:k('rollSteerR'),csF:k('compSteerF')*kN,csR:k('compSteerR')*kN};}
 // A wheel's contact half length (m): the tyre as a circle of radius r pressed flat by Fz/kt (see DRIVE_CASTER).
 function drivePatch(r,kt,Fz){if(!(kt>0))return 0;const d=Math.min(r,Math.max(0,Fz)/kt);return Math.sqrt(Math.max(0,2*r*d-d*d));}
-// One tyre: the force along and across the wheel (N) for a load Fz, a slip ratio and a slip angle (rad), and tg, its
-// camber's equivalent slip (tan, as relaxed: see THE CAMBER).
+// One tyre: the force along and across the wheel (N) for a load Fz, a slip ratio and a slip angle (rad), tg, its
+// camber's equivalent slip (tan, as relaxed: see THE CAMBER), and gq, the grip of what it stands on (THE SURFACE; 1 without).
 // Returns [Fl, Ft, s, dFl/dkappa]: s is the share of the grip in use (1 = sliding all over the contact patch).
-function driveTyre(car,Fz,kappa,alpha,front,tg){
+function driveTyre(car,Fz,kappa,alpha,front,tg,gq){
   if(!(Fz>1))return [0,0,0,0];
-  const ref=front?car.FzRefF:car.FzRef,muY=(front?car.muF:car.mu)*Math.pow(Math.max(200,Fz)/ref,-car.loadSens),muX=car.muX*muY;
+  const ref=front?car.FzRefF:car.FzRef,muY=(gq==null?1:gq)*(front?car.muF:car.mu)*Math.pow(Math.max(200,Fz)/ref,-car.loadSens),muX=car.muX*muY;
   const xz=Fz/ref,Ca=car.cc*Fz*(car.ccP2+1)/(car.ccP2+xz*xz),Ck=3*muX*Fz/car.slipOpt;                 // the longitudinal peak sits at slipOpt, as the launch has it
   const ty=Math.tan(alpha)+(tg||0);
   const sx=Ck*kappa/(3*muX*Fz),sy=Ca*ty/(3*muY*Fz),s=Math.hypot(sx,sy);
@@ -14627,6 +14627,46 @@ function driveSineDwell(car,mult){
 // A lap's racing line as plain data for the driver below: where it runs, how fast the lap solver takes each point, and
 // the road's height there. lap is what simulateLap() returns.
 function driveLine(lap){return lap.track.line.map((q,i)=>({x:q.x,y:q.y,v:lap.v[i],grade:q.sinT||0,kv:q.kv||0}));}
+// THE SURFACE (phase G7): what is under each wheel, from where the wheel is on the circuit.
+//   grip    as a share of the tyre's own on dry asphalt: the surface's friction over dry asphalt's, both from one table
+//           of locked-wheel stops (Noon, Engineering Analysis of Vehicular Accidents, CRC 1994, as quoted by Cenek,
+//           Jamieson & McLarin, "Frictional characteristics of roadside grass types", Opus Central Laboratories NZ):
+//           dry asphaltic concrete 0.65, wet 0.50, gravel and dirt road 0.35, wet grassy field 0.20. Grass, dry and
+//           wet, is Cenek's own: a car locked from 40 km/h on rye-grass, 0.36-0.38 dry (0.37) and 0.21-0.24 wet (0.22);
+//           white clover gave 0.21 and 0.17. That the share holds for any tyre, and at the tyre's peak as when locked,
+//           is PROBABLE: no measurement of it was found.
+//   kerbs   the lap's own (kerbZones, build 217: the FIA's 5 cm Vallelunga and Melbourne ramps, 0.8 m wide), outside
+//           the track's edge; beyond a kerb, or the edge where there is none, grass at the height the kerb left it.
+//   bumps   ISO 8608's road, Gd(n) = Gd(n0) (n/n0)^-2 over the standard's own band, 0.011-2.83 cycle/m, at the Gd(n0)
+//           the lap takes for the circuit (TRACK_ROAD), as a sum of 48 waves of fixed phases (a wave's amplitude is the
+//           root of 2 Gd dn). One profile under the left wheels and one under the right, so a rear wheel meets what
+//           the front met a wheelbase earlier.
+// OPEN: the rolling resistance of grass and gravel (Bosch's handbook has figures; not read here), a painted kerb's
+// grip and its ribs, the bumps of grass, how alike the left and right profiles are at long waves (apart here), a
+// tyre's stiffness on soft ground, and aquaplaning. The stability control still takes dry asphalt for its limit.
+const DRIVE_SURFACE={asphalt:1,wet:0.50/0.65,gravel:0.35/0.65,grass:0.37/0.65,grassWet:0.22/0.65};
+// A lap's circuit as plain data: its centreline, edges and kerbs, gd its road's Gd(n0) (m3; 0 is smooth), wet or dry.
+function driveSurface(lap,gd,wet){const T=lap.track,c=T.pts,K=T.kerbs,n=c.length,arc=[0],W=[];
+  for(let i=1;i<n;i++)arc.push(arc[i-1]+Math.hypot(c[i].x-c[i-1].x,c[i].y-c[i-1].y));
+  if(gd>0)for(let k=0;k<48;k++){const lo=0.011*Math.pow(2.83/0.011,k/48),hi=0.011*Math.pow(2.83/0.011,(k+1)/48),nk=Math.sqrt(lo*hi);
+    const ph=q=>{const x=Math.sin(12.9898*(k+1)+78.233*q)*43758.5453;return 2*Math.PI*(x-Math.floor(x));};   // fixed, so a lap repeats
+    W.push([2*Math.PI*nk,Math.sqrt(2*gd*0.01/(nk*nk)*(hi-lo)),ph(1),ph(2)]);}
+  return {x:c.map(q=>q.x),y:c.map(q=>q.y),nx:c.map(q=>q.nx),ny:c.map(q=>q.ny),hw:c.map(q=>q.hw!=null?q.hw:T.width/2),arc,
+    P:K?Array.from(K.P):null,N:K?Array.from(K.N):null,kw:KERB_W,waves:W,road:wet?DRIVE_SURFACE.wet:1,off:wet?DRIVE_SURFACE.grassWet:DRIVE_SURFACE.grass};}
+// The road under the four wheels of a car at s: {z, grip} for u.road. It reads only its arguments; m is its memory ({i},
+// the centreline point the car is at).
+function driveRoadAt(S,car,s,m){const n=S.x.length,z=[0,0,0,0],grip=[1,1,1,1],c=Math.cos(s.psi),sn=Math.sin(s.psi);
+  const d2=i=>(s.x-S.x[i])*(s.x-S.x[i])+(s.y-S.y[i])*(s.y-S.y[i]);
+  if(m.i==null){m.i=0;for(let i=1;i<n;i++)if(d2(i)<d2(m.i))m.i=i;}
+  for(let k=0;k<n&&d2((m.i+1)%n)<d2(m.i);k++)m.i=(m.i+1)%n;
+  for(let k=0;k<n&&d2((m.i-1+n)%n)<d2(m.i);k++)m.i=(m.i-1+n)%n;
+  for(let q=0;q<4;q++){const xw=q<2?car.a:-car.b,yw=(q%2?-1:1)*(q<2?car.tF:car.tR)/2,px=s.x+xw*c-yw*sn,py=s.y+xw*sn+yw*c;
+    let i=m.i;const al=j=>(px-S.x[j])*S.ny[j]-(py-S.y[j])*S.nx[j];                       // how far past point j, along the track
+    for(let k=0;k<4&&al(i)<0;k++)i=(i-1+n)%n;for(let k=0;k<4&&al((i+1)%n)>=0;k++)i=(i+1)%n;
+    const y=(px-S.x[i])*S.nx[i]+(py-S.y[i])*S.ny[i],out=Math.abs(y)-S.hw[i],H=out>0&&S.P?(y>0?S.P:S.N)[i]:0,a=S.arc[i]+al(i);
+    for(const w of S.waves)z[q]+=w[1]*Math.cos(w[0]*a+w[2+q%2]);
+    if(out>0){z[q]+=H*Math.min(1,out/S.kw);grip[q]=H&&out<=S.kw?S.road:S.off;}else grip[q]=S.road;}
+  return {z,grip};}
 // A DRIVER FOR A LINE (build 269): the inputs that take the car round a line of points {x, y, v, grade, kv}. It reads
 // only its arguments (d is its memory: {i} the point it is at; it leaves d.e, how far left of the line the front
 // axle is). What it does is a driver's manner, not the car's physics; its settings are in the register (DRIVE_DRIVER), kept as a rule by the owner's sign-off (build 278).
@@ -14672,7 +14712,8 @@ function driveDriver(car,s,line,d){
 }
 // Advance s by dt (s) under u = {steer -1..1 (left positive), throttle 0..1, brake 0..1, clutch 0..1 or null for an
 // automatic clutch, gear 1.. or null for automatic shifts, road {sinT: the grade along the car, positive uphill; kv: the
-// road's vertical curvature along it, 1/m, negative over a crest} or nothing for a flat road}. Returns s, with what happened in it for the instruments.
+// road's vertical curvature along it, 1/m, negative over a crest; z and grip: the height (m) and the grip under each
+// wheel, four of each, as driveRoadAt gives them} or nothing for a flat road}. Returns s, with what happened in it for the instruments.
 function stepCar(car,s,u,dt){
   const H=0.001,n=Math.max(1,Math.ceil(dt/H)),h=dt/n,g=DRIVE_G,L=car.a+car.b;
   const xw=[car.a,car.a,-car.b,-car.b],yw=[car.tF/2,-car.tF/2,car.tR/2,-car.tR/2];
@@ -14682,7 +14723,7 @@ function stepCar(car,s,u,dt){
   const wMean=()=>{let a=0;if(sg){for(let i=0;i<4;i++)a+=sg[i]*s.w[i];return a;}for(let i=0;i<4;i++)if(drv[i])a+=s.w[i];return a/nd;};
   const steer=Math.max(-1,Math.min(1,u.steer||0)),brake=Math.max(0,Math.min(1,u.brake||0));
   let thr=Math.max(0,Math.min(1,u.throttle||0));
-  const rd=u.road||{},sinT=rd.sinT||0,cosT=Math.sqrt(Math.max(0,1-sinT*sinT)),kv=rd.kv||0,zr=rd.z,W0F=car.m*g*car.b/L/2,W0R=car.m*g*car.a/L/2;
+  const rd=u.road||{},sinT=rd.sinT||0,cosT=Math.sqrt(Math.max(0,1-sinT*sinT)),kv=rd.kv||0,zr=rd.z,gr=rd.grip,W0F=car.m*g*car.b/L/2,W0R=car.m*g*car.a/L/2;
   for(let k=0;k<n;k++){
     const v=Math.hypot(s.vx,s.vy),delta=steer*car.steerLock;
     // ---- gearbox
@@ -14724,7 +14765,7 @@ function stepCar(car,s,u,dt){
       if(car.camF!=null){const gam=(i%2?-1:1)*(front?car.camF:car.camR)-s.roll+(front?car.recF*s.rr[0]:car.recR*s.rr[1]);
         if(!s.cg){s.cg=[0,0,0,0];s.camber=[0,0,0,0];}s.camber[i]=gam;
         tg=s.cg[i]+=(ah/(3*car.r)*Math.sin(gam)-s.cg[i])*Math.min(1,Math.abs(vl)*h/car.relax);}   // its thrust builds as the slip does
-      const T=driveTyre(car,Fz[i],kap,s.al[i],front,tg);
+      const T=driveTyre(car,Fz[i],kap,s.al[i],front,tg,gr?gr[i]:1);
       Fl[i]=T[0];dF[i]=T[3]*car.r/den;s.kappa[i]=kap;s.alpha[i]=s.al[i];s.Fyw[i]=T[1];
       const fx=T[0]*cw-T[1]*sw,fy=T[0]*sw+T[1]*cw;
       s.Fx[i]=fx;s.Fy[i]=fy;FX+=fx;FY+=fy;MZ+=xw[i]*fy-yw[i]*fx;

@@ -61,7 +61,7 @@ Builds G1–G5 change only `stepCar`, so the lap, 0–100, dyno and race fingerp
    damper, and the tyre's vertical stiffness. The tyre's load becomes the tyre's own deflection. Two builds: the
    corner, then substeps if the wheel-hop frequency (~12–15 Hz) needs a step under 1 ms. *Test:* a single bump
    unloads one wheel for the time the quarter-car predicts.
-7. **The surface.** The road as a height field along and across the line: kerbs from FIA circuit drawings, roughness
+7. **The surface.** *Build 334 (`test206`): kerbs and bumps from the lap's own, grip for wet asphalt, gravel and grass; rolling resistance off the road is left open.* The road as a height field along and across the line: kerbs from FIA circuit drawings, roughness
    from ISO 8608 classes A–C. Grip per surface (dry, wet, grass, gravel) from published friction measurements (source to
    be found). *Test:* two wheels on a kerb change their loads; the car slows on grass as the friction measurements say.
 8. **Lift-off and trail-brake checks.** A test only: ISO 9816 (throttle off in a turn) and ISO 7975 (braking in a
