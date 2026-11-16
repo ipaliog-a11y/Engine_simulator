@@ -3,7 +3,7 @@
 // WHY THIS EXISTS. stepCar moved the weight with a first-order lag at the ride frequency, so the car didn't lean or
 // dive and a step of the wheel couldn't overshoot. Roll and pitch are now states (driveBody). What must hold:
 //   · steady in a corner, the body rolls on its springs by the lap's own roll gradient (vehicle.rollGrad), within 2%,
-//     on three cars, and by more than that to the road, the tyres giving too (build 331);
+//     on three cars, and by more than that to the road, the tyres giving too (build 333);
 //   · steady, the front axle carries the lap's lltdF share of the lateral transfer, within 2%;
 //   · steady under the brakes, it pitches by m ax h / Kp, within 2%, and dives past it on the way (it is damped, not lagged);
 //   · a step of the wheel (ISO 7401) rolls the body past its steady angle, and further with the roll damping halved.
@@ -26,7 +26,7 @@ const R = await page.evaluate(() => {
     // steady corner
     let s = driveRolling(car, 80);
     for (let t = 0; t < 5; t += 0.01) stepCar(car, s, { steer: 0.08, throttle: 0.35, brake: 0 }, 0.01);
-    // the roll on the springs (build 331: the body's own roll now includes the tyres' give, s.rr is each axle's on its springs)
+    // the roll on the springs (build 333: the body's own roll now includes the tyres' give, s.rr is each axle's on its springs)
     o.grad = (car.KaF * s.rr[0] + car.KaR * s.rr[1]) / car.rollK * 180 / Math.PI / (s.ay / 9.81); o.body = s.roll * 180 / Math.PI / (s.ay / 9.81);
     o.front = (s.Fz[1] - s.Fz[0]) * car.tF / 2 / ((s.Fz[1] - s.Fz[0]) * car.tF / 2 + (s.Fz[3] - s.Fz[2]) * car.tR / 2);
     // steady braking

@@ -4,7 +4,7 @@
 // the body's roll less what its linkage recovers, and pushes towards its lean by the brush model's camber thrust (THE
 // CAMBER in drive-model.js). The grip by camber is left out, a named gap. What must hold:
 //   · steady on a skidpad, the outside front leans by camberF + the body's roll less camRecF of its roll on the springs,
-//     within 2% (build 331: the body's roll less the axle's tilt on its tyres, the load difference over kt t), and by
+//     within 2% (build 333: the body's roll less the axle's tilt on its tyres, the load difference over kt t), and by
 //     more than the lap's camberF + rollGrad ay/g (1 - camRecF), which has no tyre give;
 //   · a cambered tyre at no slip pushes towards its lean by C a/(3R) per radian, within 2%;
 //   · pulling away straight from rest, the static camber's thrusts cancel: the car keeps its line within 1 cm and 0.05 deg.
@@ -27,7 +27,7 @@ const R = await page.evaluate(() => {
     for (let t = 0; t < 5; t += 0.01) stepCar(car, s, { steer: 0.08, throttle: 0.35, brake: 0 }, 0.01);
     const o = s.ay > 0 ? 1 : 0;   // the outside front: the right one in a left turn
     out.cars.push({ name: n, cam: (o ? -1 : 1) * s.camber[o] * 180 / Math.PI,
-      // build 331: the tyres give too. The axle tilts by its load difference over the tyres' rate and the track, the
+      // build 333: the tyres give too. The axle tilts by its load difference over the tyres' rate and the track, the
       // body rolls on top of that, and the linkage recovers its share of the roll on the springs only.
       want: (() => { const tilt = Math.abs(s.Fz[1] - s.Fz[0]) / (car.ktF * car.tF), roll = Math.abs(s.roll);
         return vehicle.camberF + (roll - vehicle.camRecF * (roll - tilt)) * 180 / Math.PI; })(),

@@ -1,4 +1,4 @@
-// Each wheel moves up and down on its own in the stepped car (build 331, phase G6).
+// Each wheel moves up and down on its own in the stepped car (build 333, phase G6).
 //
 // WHY THIS EXISTS. stepCar gave each tyre its share of the weight and the transfer; a wheel had no motion of its own,
 // so a bump could not unload one. Each wheel is now a quarter car and the tyre's load is its own deflection. What must hold:

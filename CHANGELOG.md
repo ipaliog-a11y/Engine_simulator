@@ -18,7 +18,7 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 ## [Unreleased]
 
-### Each wheel moves up and down on its own in the stepped car (build 331)
+### Each wheel moves up and down on its own in the stepped car (build 333)
 
 Phase G, step 6 (`plans/driving-sim.md`). Only `stepCar` changes; the lap, 0–100, dyno and race do not read it.
 
@@ -32,6 +32,13 @@ Phase G, step 6 (`plans/driving-sim.md`). Only `stepCar` changes; the lap, 0–1
   - **Sine with dwell, Model 3, ESP off, 6.5×:** it spun on `main` (yaw 0.82 of its peak 1 s after) and now recovers (0.18), at the same 15° sideways. `test174` asked that it fail there; it now asks that ESP on leaves it less sideways (12° against 15°) and with less yaw (0.14 against 0.18).
   - **Known gap `OFF_KNOWN` (`test170`), for the owner to approve:** the Civic FK8 strays 4.5 m from the line (4.3 m on `main`), so its cap goes from 4.4 to 4.6 m. The 911 GT3 improves from 5.0 to 4.7 m and its cap comes down from 5.1 to 4.8 m. Flying laps move by under 0.1 s.
 - **Left open:** bump stops and the droop limit (the springs are linear without end), the tyre's own damping, bound and rebound damping apart, anti-dive and anti-squat, jacking, and camber and toe by heave and pitch. The ESP's understeer reference and the roll steer's share in it still use the roll on the springs alone.
+### The port throat kept as a rule (build 332)
+
+Owner's decision, phase B, step 2. No physics changed: only the register, its test and a code comment.
+
+- **`THROAT_RATIO` (0.85) is signed off as a rule.** No maker publishes a factory port's throat diameter, so it cannot be sourced the way the valves were (builds 287, 330, 331). Heywood (ch. 5) puts intake throats at 0.8–0.9 of the valve, and the flow coefficient's 0.42 plateau (Taylor) is taken on this same 0.85.
+- **After v1.0:** the throat from the valve and its seat (the valve less twice the seat width and overhang, on a 45° seat), per engine where a factory service manual gives the seat width.
+- **Register:** 11 → 10 open (`tests/test166.mjs`). B2's `EV_RATIO` stays open while real engines still lack sourced valves.
 
 ### Five more real engines get their own valves (build 330)
 

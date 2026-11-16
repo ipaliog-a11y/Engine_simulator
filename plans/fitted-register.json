@@ -33,9 +33,9 @@
    "file": "valvetrain.js",
    "match": "const THROAT_RATIO",
    "standsFor": "port throat over valve head diameter, one value for every factory head (a designed head sets its own)",
-   "retiredBy": "each real car's own valves and ports, sourced",
+   "retiredBy": "kept: a rule (owner's decision, build 332): no maker publishes a factory port throat; Heywood ch. 5 puts intake throats at 0.8-0.9 of the valve, and the flow coefficient's 0.42 plateau (Taylor) is taken on this 0.85. After v1.0: the throat from the valve and its seat (valve less twice the seat width and overhang), per engine where a service manual gives the seat width",
    "phase": "B2",
-   "state": "open"
+   "state": "rule"
   },
   {
    "id": "EV_RATIO",
