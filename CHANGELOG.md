@@ -18,6 +18,13 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 ## [Unreleased]
 
+### The owner's decisions before v0.8, written into the plans (build 340)
+- Docs only; no simulator number moves.
+- v0.8 is reached at build 338 (handling phase G done). The known gaps of builds 329 (Mustang GT, `test204`) and 333 (FK8, `test170`) are approved.
+- Before v1.0: the LS7, LS3, LT4 and Coyote's excess over their published power, and water-to-air intercoolers. The real-car scoreboard runs at the v1.0 gate.
+- Suspension geometry stays by type for v1.0; a car takes its own only where it is published, never fitted.
+- The app is to be renamed Pixel Powertrain, with a piston icon; the rename is its own build.
+
 ### The right column is back where it belongs, and the footer moves to OPTIONS > ABOUT (build 339)
 
 - Since build 312 the PARTS page's brake block was missing its closing tag. The browser then nested the right column
