@@ -103,6 +103,15 @@ function bindControls(){
   document.getElementById('tabVehicle').addEventListener('click',()=>setTab('vehicle'));
   document.getElementById('tabTrack').addEventListener('click',()=>setTab('track'));
   document.getElementById('tabRace').addEventListener('click',()=>setTab('race'));
+  document.getElementById('tabChallenges').addEventListener('click',()=>setTab('challenges'));
+  const chalSel=document.getElementById('chalSel');
+  if(chalSel){
+    RUN_CHALLENGES.forEach(c=>{const o=document.createElement('option');o.value=c.id;o.textContent=tr(c.name);chalSel.appendChild(o);});
+    chalSel.value=activeRunChallenge;
+    chalSel.addEventListener('change',e=>{activeRunChallenge=e.target.value;refreshChallenge();});
+  }
+  const btnChal=document.getElementById('btnChalSolve');
+  if(btnChal)btnChal.addEventListener('click',()=>refreshChallenge());
   loadImportedTracks();
   const trkSel=document.getElementById('trkSel');
   if(trkSel){refreshTrackList();trkSel.addEventListener('change',e=>{trackKey=e.target.value;refreshLap();});}
@@ -304,6 +313,7 @@ function loop(now){
   if(vizMode==='engine')drawEngine(dt);
   else if(vizMode==='dyno'){drawDyno();renderDynoResult(false);}
   else if(vizMode==='track'){stepReplay(dt);drawTrack();}
+  else if(vizMode==='challenges')drawChallenge();
   else if(vizMode==='race'){stepRaceView(dt);drawRace();}
   else stepPreviews(dt);
   updateUI();

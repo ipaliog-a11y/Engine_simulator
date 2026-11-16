@@ -812,7 +812,7 @@ body.guided-open{overflow:hidden}
 </div>
 <div class="container">
 <header>
-<h1>PIXEL ENGINE SIM v0.7 build 340</h1>
+<h1>PIXEL ENGINE SIM v0.7 build 341</h1>
 <div class="subtitle" id="subtitle">ENGINE DESIGNER • BUILD IT, THEN DRIVE IT</div>
 </header>
 <div class="build-strip" id="buildStrip">
@@ -835,6 +835,7 @@ body.guided-open{overflow:hidden}
 <button id="tabGarage" data-g="build">GARAGE</button>
 <button id="tabTrack" data-g="drive">TRACK</button>
 <button id="tabRace" data-g="drive">RACE</button>
+<button id="tabChallenges" data-g="drive">CHALLENGES</button>
 <button id="tabEngine" data-g="test" class="active ing">LIVE</button>
 <button id="tabDyno" data-g="test" class="ing">DYNO</button>
 <button id="tabGuide" data-g="more">GUIDE</button>
@@ -3986,6 +3987,14 @@ Most other tests check behaviour that is true of real cars: a bigger turbo spool
 <button id="btnImportGpx" title="Load a circuit from a GPX trace">IMPORT GPX TRACK</button>
 </div>
 <input type="file" id="gpxInput" accept=".gpx,application/gpx+xml,text/xml" style="display:none">
+</div>
+<div class="panel" id="chalPanel" style="display:none">
+<h2>Challenges</h2>
+<div class="field"><label for="chalSel">CHALLENGE</label><select id="chalSel"></select></div>
+<div class="perf-head" id="chalHead">—</div>
+<div class="perf-grid" id="chalGrid"></div>
+<div class="perf-note" id="chalNote"></div>
+<div class="build-row"><button id="btnChalSolve" title="Solve the selected challenge for the current car">SOLVE</button></div>
 </div>
 <div class="panel" id="racePanel" style="display:none">
 <h2>Race</h2>
@@ -13893,6 +13902,7 @@ function buildVehicle(){
   }
   // The lap solver is heavier than the straight-line runs, so only re-run it while it's on screen.
   if(typeof vizMode!=='undefined'&&vizMode==='track'&&typeof refreshLap==='function')refreshLap();
+  if(typeof vizMode!=='undefined'&&vizMode==='challenges'&&typeof refreshChallenge==='function')refreshChallenge();
   if(typeof updateBuildStrip==='function')updateBuildStrip();
 }
 // Braking run from v0 (m/s) to a stop: decel is the lesser of tyre grip (μ·(weight+downforce))
@@ -24365,6 +24375,7 @@ function updateUI(){
   else{status.textContent=tr('IDLE / LOW LOAD')+' • '+Math.round(state.rpm)+' RPM';status.className='status-bar'}
   if(vizMode==='design')legend.innerHTML=tr('Bore/stroke set displacement. Octane+compression+boost+ignition feed the knock model.')+'<br>'+tr('Cooling (radiator/fan/oil cooler/thermostat) sets running temps in AUTO THERMAL mode.');
   else if(vizMode==='engine')legend.innerHTML=tr('THROTTLE makes power; LOAD (dyno brake) sets the hold RPM — more load = lower RPM, zero = free-rev to limiter.')+'<br>'+tr('Lift off at speed → engine braking + fuel cut. Detonation/overheat/lean-boost/valve float wear the engine.');
+  else if(vizMode==='challenges')legend.innerHTML=tr('Solved vehicle tests: economy, and later skill, moose avoid, skid pad.')+'<br>'+tr('Green start, red finish. Line colour is pace versus flat-out.');
   else legend.innerHTML=tr('Dyno shows full power & torque curves to redline.')+'<br>'+tr('Green line = current RPM. Peaks marked with dots.');
   updateDashLamps();
 }
@@ -24376,11 +24387,12 @@ function setTab(mode){
   if(mode!=='track'&&trackPage.open)closeTrackPage();
   vizMode=mode;
   if(mode!=='track'&&!racePage.open&&!trackPage.open&&vizW!==640){vizW=640;vizH=420;}   // the phone's TRACK grid is its own
-  ['Design','Vehicle','Parts','Garage','Track','Race','Engine','Dyno','Guide','Options'].forEach(m=>
+  ['Design','Vehicle','Parts','Garage','Track','Race','Challenges','Engine','Dyno','Guide','Options'].forEach(m=>
     document.getElementById('tab'+m).classList.toggle('active',mode===m.toLowerCase()));
   // The four sections (build 261): BUILD, TEST, DRIVE, MORE. On a phone the tabs are one strip that slides to the open
   // section, over a bar of the four at the foot of the screen; a section opens on the tab last used in it.
-  const grp=document.getElementById('tab'+(mode==='design'?'Design':mode==='engine'?'Engine':mode[0].toUpperCase()+mode.slice(1))).dataset.g;
+  const tabId=mode==='design'?'Design':mode==='engine'?'Engine':mode==='challenges'?'Challenges':mode[0].toUpperCase()+mode.slice(1);
+  const grp=document.getElementById('tab'+tabId).dataset.g;
   tabOfGroup[grp]=mode;
   document.querySelectorAll('.viz-tabs button').forEach(b=>b.classList.toggle('ing',b.dataset.g===grp));
   document.querySelectorAll('#vizGroups button').forEach(b=>b.classList.toggle('active',b.dataset.g===grp));
@@ -24414,10 +24426,12 @@ function setTab(mode){
   document.getElementById('vehiclePanel').style.display=(mode==='vehicle')?'':'none';
   document.getElementById('trackPanel').style.display=(mode==='track')?'':'none';
   document.getElementById('racePanel').style.display=(mode==='race')?'':'none';
+  document.getElementById('chalPanel').style.display=(mode==='challenges')?'':'none';
   // the engine's live readout belongs to the running engine: the LIVE and DYNO tabs only
   document.getElementById('livePanel').style.display=(mode==='engine'||mode==='dyno')?'':'none';
   if(mode==='vehicle'){buildVehicle();updateVehicleSummary();}
   if(mode==='track'){buildVehicle();refreshLap();}
+  if(mode==='challenges'){buildVehicle();refreshChallenge();}
   if(mode==='race'){const ts=document.getElementById('raceTrk');fillTrackSelect(ts,ts.value||trackKey);raceFillAdd();openRacePage(prevMode);renderRaceSetup();renderRacePanel(true);}
   updateUI();
 }
@@ -28561,6 +28575,354 @@ function hybridCycleLine(v){
   hybCycleTimer=setTimeout(()=>{if(!isHybrid())return;const el=document.getElementById('hybCycle');const c=hybridCycle(vehicle);if(el)el.innerHTML=txt(c);},50);
   return '<br><span id="hybCycle">'+tr('WLTP cycle')+' …</span>';
 }
+// ====== OPEN ROADS: point-to-point paths for vehicle challenges (build 341) ======
+// Closed TRACKS loop; these do not. Centripetal Catmull-Rom with reflected end ghosts, then the same
+// ds / radius / grade / kv fields the lap solver uses — open indexing, no wrap.
+const ROADS={
+  // ~12 km mountain pass: valley, switchback climb, crest, descent, valley straight, finish rise.
+  // Authored control points (metres). timeFactor: finish within this × the car's own min-time.
+  alpine:{label:'ALPINE PASS',width:8,timeFactor:1.25,open:true,
+    blurb:'A mountain road: switchbacks, a crest, a long descent and a valley straight. Finish inside the time limit; burn as little fuel as you can.',
+    pts:(()=>{
+      const p=[];
+      const add=(x,y,z)=>p.push({x,y,z});
+      // Valley approach east, gentle climb
+      for(let i=0;i<=8;i++)add(i*250,20*Math.sin(i*0.4),180+i*4);
+      // Switchbacks climbing north (~350 m rise)
+      let x=2000,y=0,z=212;
+      const hair=[
+        [600,400,40],[200,700,55],[-500,300,50],[200,600,45],[-450,280,48],[250,550,42],
+        [-400,250,40],[300,500,38],[-350,220,36],[400,450,35]
+      ];
+      for(const [dx,dy,dz] of hair){
+        const steps=6;
+        for(let s=1;s<=steps;s++){
+          const t=s/steps;
+          add(x+dx*t+40*Math.sin(t*Math.PI)*Math.sign(dy||1),y+dy*t,z+dz*t);
+        }
+        x+=dx;y+=dy;z+=dz;
+      }
+      // Crest ridge west then long descent south-east
+      for(let i=1;i<=6;i++)add(x-i*180,y+80+i*30,z+8-i*2);
+      x-=6*180;y+=80+6*30;z+=8-12;
+      for(let i=1;i<=14;i++)add(x+i*220,y-i*180,z-i*22);
+      x+=14*220;y-=14*180;z-=14*22;
+      // Valley straight
+      for(let i=1;i<=10;i++)add(x+i*280,y+30*Math.sin(i*0.5),z+i*1.5);
+      x+=10*280;y+=0;z+=15;
+      // Finish climb
+      for(let i=1;i<=8;i++)add(x+i*150,y+i*120,z+i*18);
+      return p;
+    })()}
+};
+const roadCache={};
+// Open centripetal Catmull-Rom through control points, resampled at `step` metres along the curve.
+function catmullOpen(cp,step){
+  const n=cp.length,dense=[];
+  if(n<2)return cp.slice();
+  const ghost=(a,b)=>({x:2*a.x-b.x,y:2*a.y-b.y,z:2*(a.z||0)-(b.z||0)});
+  const pts=[ghost(cp[0],cp[1]),...cp,ghost(cp[n-1],cp[n-2])];
+  const lerp=(a,b,ta,tb,t)=>{const w=(tb-ta)>1e-9?(t-ta)/(tb-ta):0;return {x:a.x+(b.x-a.x)*w,y:a.y+(b.y-a.y)*w,z:(a.z||0)+((b.z||0)-(a.z||0))*w};};
+  const kn=(a,b)=>Math.max(1e-6,Math.sqrt(Math.hypot(b.x-a.x,b.y-a.y)));
+  for(let i=0;i<n-1;i++){
+    const p0=pts[i],p1=pts[i+1],p2=pts[i+2],p3=pts[i+3];
+    const t0=0,t1=t0+kn(p0,p1),t2=t1+kn(p1,p2),t3=t2+kn(p2,p3);
+    const steps=Math.max(4,Math.ceil(Math.hypot(p2.x-p1.x,p2.y-p1.y)/step*4));
+    for(let j=0;j<steps;j++){
+      const t=t1+(t2-t1)*j/steps;
+      const A1=lerp(p0,p1,t0,t1,t),A2=lerp(p1,p2,t1,t2,t),A3=lerp(p2,p3,t2,t3,t);
+      const B1=lerp(A1,A2,t0,t2,t),B2=lerp(A2,A3,t1,t3,t);
+      dense.push(lerp(B1,B2,t1,t2,t));
+    }
+  }
+  dense.push({x:cp[n-1].x,y:cp[n-1].y,z:cp[n-1].z||0});
+  let total=0;const cum=[0];
+  for(let i=0;i<dense.length-1;i++){total+=Math.hypot(dense[i+1].x-dense[i].x,dense[i+1].y-dense[i].y);cum.push(total);}
+  const N=Math.max(8,Math.round(total/step)),out=[];
+  let k=0;
+  for(let j=0;j<N;j++){
+    const want=j*total/Math.max(1,N-1);
+    while(k<cum.length-2&&cum[k+1]<want)k++;
+    const a=dense[k],b=dense[Math.min(dense.length-1,k+1)],seg=cum[k+1]-cum[k],w=seg>1e-9?(want-cum[k])/seg:0;
+    out.push({x:a.x+(b.x-a.x)*w,y:a.y+(b.y-a.y)*w,z:(a.z||0)+((b.z||0)-(a.z||0))*w});
+  }
+  return out;
+}
+function buildRoad(key){
+  if(roadCache[key])return roadCache[key];
+  const def=ROADS[key];if(!def)return null;
+  const p=catmullOpen(def.pts,5),n=p.length;
+  for(let i=0;i<n-1;i++)p[i].ds=Math.hypot(p[i+1].x-p[i].x,p[i+1].y-p[i].y);
+  p[n-1].ds=p[n-2]?p[n-2].ds:5;
+  let s=0;for(let i=0;i<n;i++){p[i].s=s;s+=i<n-1?p[i].ds:0;}
+  const idx=(i)=>clamp(i,0,n-1);
+  for(let i=0;i<n;i++){
+    const a=p[idx(i-3)],b=p[i],c=p[idx(i+3)];
+    const ab=Math.hypot(b.x-a.x,b.y-a.y),bc=Math.hypot(c.x-b.x,c.y-b.y),ca=Math.hypot(a.x-c.x,a.y-c.y);
+    const area=Math.abs((b.x-a.x)*(c.y-a.y)-(c.x-a.x)*(b.y-a.y))/2;
+    const k=(ab*bc*ca)>1e-6?4*area/(ab*bc*ca):0;
+    p[i].r=k>1e-5?1/k:1e6;
+  }
+  for(let i=0;i<n;i++){
+    const q=p[Math.min(n-1,i+1)],dz=(q.z||0)-(p[i].z||0);
+    p[i].dz=i<n-1?dz:0;
+    p[i].grade=p[i].ds>1e-6&&i<n-1?dz/p[i].ds:0;
+    const gg=p[i].grade;
+    p[i].sinT=gg/Math.sqrt(1+gg*gg);
+    p[i].cosT=1/Math.sqrt(1+gg*gg);
+    p[i].ds3=i<n-1?Math.hypot(p[i].ds,dz):0;
+  }
+  for(let i=0;i<n;i++){
+    const a2=p[idx(i-3)],b2=p[idx(i+3)];
+    let span=0;for(let k=-3;k<3;k++)span+=p[idx(i+k)].ds||0;
+    const dg=(b2.grade-a2.grade)/Math.max(1e-6,span),gg=p[i].grade;
+    p[i].kv=dg/Math.pow(1+gg*gg,1.5);
+  }
+  const W0=def.width||8;
+  for(let i=0;i<n;i++){
+    p[i].w=W0;p[i].hw=W0/2;
+    const a=p[idx(i-1)],b=p[idx(i+1)];
+    let tx=b.x-a.x,ty=b.y-a.y;const L=Math.hypot(tx,ty)||1;
+    p[i].nx=-ty/L;p[i].ny=tx/L;
+  }
+  const xs=p.map(q=>q.x),ys=p.map(q=>q.y);
+  const length=p[n-1].s;
+  // Corner count without wrap (detectCorners is closed-loop).
+  let corners=0;const COR=typeof CORNER_R==='number'?CORNER_R:80;
+  for(let i=4;i<n-4;i++){
+    let isMin=true;for(let d=-4;d<=4;d++)if(p[i+d].r<p[i].r-1e-9){isMin=false;break;}
+    if(isMin&&p[i].r<COR)corners++;
+  }
+  const T={key,label:def.label,blurb:def.blurb,open:true,timeFactor:def.timeFactor||1.25,
+    pts:p,line:p,length,corners,width:W0,wMin:W0,wMax:W0,wLabel:Math.round(W0)+' m',
+    minX:Math.min(...xs),maxX:Math.max(...xs),minY:Math.min(...ys),maxY:Math.max(...ys)};
+  roadCache[key]=T;return T;
+}
+// ====== ECONOMY CHALLENGE: min fuel on an open road at a target time (build 341) ======
+// Standing start, open centreline, no racing-line optimiser. Min-time first; target =
+// timeFactor × that car's Tmin (eco-rally style: use the allotted time, do not rush). A speed
+// cap on the open solve hits the target; fuel from engineFuelAt (warm oil), same map as WLTP.
+// Named gap: speed cap is not optimal lift-coast DP. (A pure "finish by T" limit would pick
+// flat-out here: hard braking is fuel-cut, so slower paced profiles often burn more.)
+function ecoMinTime(line,speedCap){
+  const pt=powertrain(),frontF=vv=>pt.frontForce?pt.frontForce(vv):0;
+  if(!pt.ready()||!vehicle.mass)return null;
+  const p=line,n=p.length;
+  const curve=pt.torqueCurve();
+  const tqAt=rpm=>{if(rpm<=curve[0].rpm)return curve[0].tq;for(let i=1;i<curve.length;i++){if(rpm<=curve[i].rpm){const a=curve[i-1],b=curve[i];return a.tq+(b.tq-a.tq)*(rpm-a.rpm)/(b.rpm-a.rpm);}}return curve[curve.length-1].tq;};
+  const m=vehicle.mass,rT=vehicle.rTire,fd=vehicle.finalDrive,eff=vehicle.driveEff,ratios=vehicle.ratios;
+  const idle=pt.idleRpm(),rl=pt.maxRpm(),TWO_PI=Math.PI*2;
+  const df=vehicle.df||DIFF.open,dCorner=df.corner!=null?df.corner:1;
+  const muLatAt=(N,ay,vv,q)=>latBalance(N,ay,down(vv),0,vv,q).mu*dCorner;
+  const axleTqMax=Math.max(1,curve.reduce((a,q)=>Math.max(a,q.tq),0)*ratios[0]*fd*(vehicle.gb&&vehicle.gb.mult||1));
+  const down=v=>0.5*AIR_RHO*vehicle.clA*v*v;
+  const KVCAP=0.6*m*G;
+  const loadAt=(q,vv)=>Math.max(m*G*0.15,m*G*q.cosT+down(vv)+clamp(m*vv*vv*q.kv,-KVCAP,KVCAP));
+  const drag=v=>0.5*AIR_RHO*vehicle.cdA*v*v;
+  const rollF=v=>crrAt(vehicle.crr,v)*m*G;
+  const VMAX0=vehicle.governor>0?Math.min(140,vehicle.governor/3.6):140;
+  const VMAX=speedCap>0?Math.min(VMAX0,speedCap):VMAX0;
+  function gearAt(v){
+    let bi=ratios.length-1,bf=-1,bq=0;
+    for(let i=0;i<ratios.length;i++){
+      const tot=ratios[i]*fd,rpm=v*tot/rT*60/TWO_PI;
+      if(rpm>rl)continue;
+      const f=tqAt(clamp(rpm,idle,rl))*tot*eff/rT+frontF(v);
+      if(f>bf){bf=f;bi=i;bq=tqAt(clamp(rpm,idle,rl))*tot;}
+    }
+    return{gear:bi,F:Math.max(0,bf),tqFrac:bq/axleTqMax};
+  }
+  function ceilAt(q){
+    let vv=0,muLat=vehicle.mu*dCorner;
+    for(let outer=0;outer<3;outer++){
+      for(let it=0;it<2;it++){
+        const kvTerm=it===0?-m*q.kv*muLat:0;
+        const extra=it===0?0:clamp(m*vv*vv*q.kv,-KVCAP,KVCAP)*muLat;
+        const denom=m/q.r-0.5*AIR_RHO*vehicle.clA*muLat+kvTerm;
+        const num=muLat*m*G*q.cosT+extra;
+        vv=denom>1e-6?Math.min(VMAX,Math.sqrt(Math.max(0,num/denom))):VMAX;
+      }
+      muLat=muLatAt(loadAt(q,vv),vv*vv/q.r,vv,q);
+    }
+    return vv;
+  }
+  const hL=vehicle.cg/Math.max(0.5,vehicle.wb),sgn=vehicle.drive==='rwd'?1:vehicle.drive==='fwd'?-1:0;
+  const fWt=vehicle.fWt||0.55;
+  function brakeCap(q,vi0,vNext){
+    let vi=Math.min(vi0,vNext);
+    for(let it=0;it<3;it++){
+      const N=loadAt(q,vi),ay=vi*vi/q.r;
+      const B=latBalance(N,ay,down(vi),0,vi,q);
+      const u=clamp(ay/Math.max(0.1,B.mu*dCorner*N/m),0,1);
+      const aTyre=B.mu*dCorner*Math.sqrt(Math.max(0,1-u*u))*G*q.cosT;
+      const aBrake=Math.min(vehicle.brakeDecelCap||12,aTyre)+(drag(vi)+corneringDrag(m,ay,N))/m+G*q.sinT;
+      const cap=Math.sqrt(Math.max(0,vNext*vNext+2*Math.max(0.1,aBrake)*q.ds3));
+      const nv=Math.min(vi0,cap);if(Math.abs(nv-vi)<1e-4)break;vi=nv;
+    }
+    return vi;
+  }
+  function accCap(q,vi){
+    const N=loadAt(q,vi),dn=down(vi);
+    const N0=(N-dn)*vehicle.drivenWt+dn*vehicle.drivenAero;
+    const aLat=vi*vi/q.r;
+    const B=latBalance(N,aLat,dn,0,vi,q);
+    const uFa=clamp(m*aLat*fWt/Math.max(1,B.capF*dCorner),0,1),uRa=clamp(m*aLat*(1-fWt)/Math.max(1,B.capR*dCorner),0,1);
+    const uD=vehicle.drive==='fwd'?uFa:vehicle.drive==='rwd'?uRa:Math.max(uFa,uRa);
+    const bg=gearAt(vi);
+    const R=(drag(vi)+rollF(vi)*q.cosT+corneringDrag(m,aLat,N))/m+G*q.sinT;
+    const nD=vehicle.drive==='awd'?4:2;
+    const kk=tyreMuX(N0/nD,vehicle.drive==='fwd'?vehicle.FzRefF:vehicle.FzRef)*diffTractionAt(df,aLat,vehicle.cg,bg.tqFrac,0)*Math.sqrt(Math.max(0,1-uD*uD));
+    const mE=vehicleMassEff(ratios[bg.gear]*fd);
+    const aGrip=(kk*N0-m*R)/(m*Math.max(0.2,1-sgn*kk*hL)),aPow=(bg.F-m*R)/mE;
+    return Math.sqrt(Math.max(1,vi*vi+2*Math.min(aPow,aGrip)*q.ds3));
+  }
+  const vC=new Array(n);for(let i=0;i<n;i++)vC[i]=ceilAt(p[i]);
+  const v=vC.slice();
+  for(let pass=0;pass<2;pass++)for(let i=n-2;i>=0;i--){
+    const cap=brakeCap(p[i],v[i],v[i+1]);if(cap<v[i])v[i]=cap;
+  }
+  v[0]=Math.min(v[0],0.5);
+  for(let pass=0;pass<2;pass++)for(let i=0;i<n-1;i++){
+    const cap=accCap(p[i],v[i]);if(cap<v[i+1])v[i+1]=cap;
+  }
+  let t=0;for(let i=0;i<n-1;i++)t+=p[i].ds3/Math.max(2,(v[i]+v[i+1])/2);
+  return{v,vC,t};
+}
+// Fuel (kg) along a speed profile on an open line. Warm oil; economy gear pick as WLTP.
+function ecoFuelKg(line,v){
+  if(isElectric())return null;
+  const p=line,n=p.length,m=vehicle.mass+FUEL_CYCLE.massAdd,r=vehicle.rTire,fd=vehicle.finalDrive,eff=vehicle.driveEff;
+  const e=engine,C=FUEL_CYCLE,M=engineFuelMap(95),fp=FUELS[e.fuel]||FUELS.gasoline;
+  const curve=powertrain().torqueCurve();
+  const Tmax=rpm=>{if(rpm<=curve[0].rpm)return curve[0].tq;for(let i=1;i<curve.length;i++)if(rpm<=curve[i].rpm)return curve[i-1].tq+(curve[i].tq-curve[i-1].tq)*(rpm-curve[i-1].rpm)/(curve[i].rpm-curve[i-1].rpm);return 0;};
+  const rpmMin=Math.max(e.idleRpmEff*C.idleMargin,e.ci?C.minRpmCI:C.minRpm);
+  const oilT=95;let fuel=0;
+  for(let i=0;i<n-1;i++){
+    const ds=p[i].ds3,v0=v[i],v1=v[i+1],vm=Math.max(0.5,(v0+v1)/2),dt=ds/vm;
+    const a=(v1*v1-v0*v0)/(2*Math.max(0.05,ds));
+    const meff=m+(vehicle.wheelI||0)/(r*r)+(e.inertia||0.15)*(vehicle.ratios[0]*fd/r)**2;
+    const F=meff*a+0.5*AIR_RHO*vehicle.cdA*vm*vm+crrAt(vehicle.crr,vm)*m*G*p[i].cosT+m*G*p[i].sinT;
+    let best=null;
+    for(let g=0;g<vehicle.ratios.length;g++){
+      const tot=vehicle.ratios[g]*fd,rpm=vm/r*tot*60/(2*Math.PI);
+      if(rpm>e.redline)continue;
+      if(rpm<rpmMin&&g>0)continue;
+      const rpmE=Math.max(rpm,rpmMin),w=rpmE*Math.PI/30;
+      let gs;
+      if(F<=0)gs=rpmE>C.cutRpm?0:M.idleGs;
+      else{
+        const T=F*vm/eff/w+C.auxW/w;
+        if(T>C.reserve*Tmax(rpmE))continue;
+        gs=engineFuelAt(rpmE,T,oilT);if(!isFinite(gs))continue;
+      }
+      if(!best||gs<best)best=gs;
+    }
+    if(best==null)best=engineFuelAt(rpmMin,Tmax(rpmMin)*C.reserve,oilT)||M.idleGs*3;
+    fuel+=best*dt;
+  }
+  return fuel/1000;
+}
+function ecoTimeOf(line,v){
+  let t=0;for(let i=0;i<line.length-1;i++)t+=line[i].ds3/Math.max(2,(v[i]+v[i+1])/2);return t;
+}
+// Eco strategy: speed-cap the open min-time solve so finish time hits the target (not early).
+function simulateEconomyChallenge(roadKey){
+  const road=buildRoad(roadKey||'alpine');if(!road)return null;
+  if(isElectric())return{ok:false,reason:'electric',road};
+  const pt=powertrain();if(!pt.ready()||!vehicle.mass)return null;
+  const line=road.line,mt=ecoMinTime(line);if(!mt)return null;
+  const factor=road.timeFactor||1.25,target=mt.t*factor;
+  let lo=15/3.6,hi=Math.max(...mt.v)+1,best=mt;
+  for(let k=0;k<18;k++){
+    const mid=(lo+hi)/2,tryMt=ecoMinTime(line,mid);if(!tryMt){lo=mid;continue;}
+    if(tryMt.t>target)lo=mid;else{hi=mid;best=tryMt;}
+  }
+  // Nudge onto the target from below: last lo still overshot, hi/best is under — prefer closest under.
+  const v=best.v,time=best.t,kg=ecoFuelKg(line,v),fp=FUELS[engine.fuel]||FUELS.gasoline;
+  const L=kg/fp.density,km=road.length/1000;
+  const kgMin=ecoFuelKg(line,mt.v),Lmin=kgMin/fp.density;
+  return{
+    ok:true,road,time,limit:target,target,tMin:mt.t,pace:time/mt.t,fuelL:L,fuelKg:kg,l100:L/km*100,
+    fuelLMin:Lmin,v,vMin:mt.v,lengthKm:km,factor
+  };
+}
+// ====== VEHICLE RUN CHALLENGES (build 341) ======
+// Dynamic tests on the CHALLENGES tab — not the ENGINE career/scorecard list in challenges.js.
+// Each entry has a kind; only economy ships here. Later: skill, moose, skidpad.
+const RUN_CHALLENGES=[
+  {id:'economy',kind:'economy',name:'Mountain Economy',
+    desc:'Open mountain road. Finish inside the time limit; burn as little fuel as you can.',
+    road:'alpine'}
+];
+let activeRunChallenge='economy';
+let chalResult=null;
+function runChallengeById(id){
+  return RUN_CHALLENGES.find(c=>c.id===id)||RUN_CHALLENGES[0];
+}
+function solveRunChallenge(id){
+  const ch=runChallengeById(id||activeRunChallenge);
+  if(!ch)return null;
+  if(ch.kind==='economy')return simulateEconomyChallenge(ch.road);
+  return{ok:false,reason:'unimplemented',challenge:ch};
+}
+// ====== CHALLENGES tab UI (build 341) ======
+function refreshChallenge(){
+  // Do not call buildVehicle here: it hooks back into refreshChallenge (same pattern as refreshLap).
+  const ch=runChallengeById(activeRunChallenge);
+  chalResult=solveRunChallenge(ch.id);
+  renderChallenge();
+}
+function renderChallenge(){
+  const head=document.getElementById('chalHead'),grid=document.getElementById('chalGrid'),note=document.getElementById('chalNote');
+  if(!head)return;
+  const ch=runChallengeById(activeRunChallenge);
+  const R=chalResult;
+  if(!R){head.textContent='—';grid.innerHTML='';note.textContent=tr('Build a car first.');return;}
+  if(R.ok===false&&R.reason==='electric'){
+    head.textContent=tr(ch.name)+' — '+tr('engine cars only for now');
+    grid.innerHTML='';
+    note.textContent=tr('The economy challenge burns fuel from the engine map. An electric car has no litres yet on this page.');
+    return;
+  }
+  if(!R.ok){head.textContent='—';grid.innerHTML='';note.textContent=tr('This challenge is not ready yet.');return;}
+  const onTarget=Math.abs(R.time-R.target)<=Math.max(1,0.01*R.target);
+  head.innerHTML=tr(ch.name)+' · <b>'+R.fuelL.toFixed(2)+' L</b> · '+R.l100.toFixed(1)+' L/100 km · '+
+    (onTarget?tr('ON TARGET'):tr('OFF TARGET'))+' '+R.time.toFixed(0)+' / '+R.target.toFixed(0)+' s';
+  const cell=(k,v)=>'<div class="perf-cell"><div class="k">'+tr(k)+'</div><div class="v">'+v+'</div></div>';
+  grid.innerHTML=
+    cell('FUEL',R.fuelL.toFixed(2)+' L')+
+    cell('L/100 km',R.l100.toFixed(1))+
+    cell('TIME',R.time.toFixed(1)+' s')+
+    cell('TARGET',R.target.toFixed(1)+' s')+
+    cell('MIN TIME',R.tMin.toFixed(1)+' s')+
+    cell('PACE',(R.pace*100).toFixed(0)+' %')+
+    cell('DISTANCE',R.lengthKm.toFixed(1)+' km')+
+    cell('FLAT-OUT FUEL',R.fuelLMin.toFixed(2)+' L');
+  note.textContent=tr(R.road.blurb)+' '+tr('Target time is')+' '+(R.factor*100).toFixed(0)+'% '+tr('of this car\'s min-time (eco-rally). A speed cap hits the target; not yet an optimal lift-coast plan.');
+}
+function drawChallenge(){
+  const R=chalResult,g=ctx;g.fillStyle='#0a0e14';g.fillRect(0,0,vizW,vizH);
+  if(!R||!R.road){g.fillStyle='#556';g.font='10px "Press Start 2P"';g.fillText(tr('CHALLENGES'),16,28);return;}
+  const T=R.road,p=T.pts,n=p.length;
+  const pad=28,dx=T.maxX-T.minX||1,dy=T.maxY-T.minY||1;
+  const sc=Math.min((vizW-2*pad)/dx,(vizH-2*pad)/dy);
+  const MX=q=>pad+(q.x-T.minX)*sc,MY=q=>vizH-pad-(q.y-T.minY)*sc;
+  // Open ribbon (not a closed fill)
+  g.strokeStyle='#2a3344';g.lineWidth=Math.max(3,T.width*sc);g.lineJoin='round';g.lineCap='round';
+  g.beginPath();for(let i=0;i<n;i++){const X=MX(p[i]),Y=MY(p[i]);if(i)g.lineTo(X,Y);else g.moveTo(X,Y);}g.stroke();
+  if(R.v&&R.v.length===n){
+    g.lineWidth=Math.max(2,T.width*sc*0.45);
+    for(let i=0;i<n-1;i++){
+      const u=R.v[i]/Math.max(1,R.vMin?R.vMin[i]:R.v[i]);
+      g.strokeStyle=u>0.92?'#55dd66':u>0.7?'#ffcc00':'#4aa3ff';
+      g.beginPath();g.moveTo(MX(p[i]),MY(p[i]));g.lineTo(MX(p[i+1]),MY(p[i+1]));g.stroke();
+    }
+  }
+  g.fillStyle='#8f8';g.beginPath();g.arc(MX(p[0]),MY(p[0]),4,0,Math.PI*2);g.fill();
+  g.fillStyle='#f88';g.beginPath();g.arc(MX(p[n-1]),MY(p[n-1]),4,0,Math.PI*2);g.fill();
+  g.fillStyle='#9ab';g.font='8px "Press Start 2P"';
+  g.fillText(tr(T.label)+' · '+(T.length/1000).toFixed(1)+' km · '+T.corners+' '+tr('corners'),10,18);
+}
 // ====== ELECTRIC PRESETS: the three Teslas (build 183, step 2.5b of plans/hybrid-electric/) ======
 // Decision 10: the Model 3 RWD (one motor), the Model Y Long Range (two: a magnet motor at the rear, an induction motor
 // at the front) and the Model S Plaid (three: two at the rear, one per wheel, and one at the front), as factory engines
@@ -30611,6 +30973,15 @@ function bindControls(){
   document.getElementById('tabVehicle').addEventListener('click',()=>setTab('vehicle'));
   document.getElementById('tabTrack').addEventListener('click',()=>setTab('track'));
   document.getElementById('tabRace').addEventListener('click',()=>setTab('race'));
+  document.getElementById('tabChallenges').addEventListener('click',()=>setTab('challenges'));
+  const chalSel=document.getElementById('chalSel');
+  if(chalSel){
+    RUN_CHALLENGES.forEach(c=>{const o=document.createElement('option');o.value=c.id;o.textContent=tr(c.name);chalSel.appendChild(o);});
+    chalSel.value=activeRunChallenge;
+    chalSel.addEventListener('change',e=>{activeRunChallenge=e.target.value;refreshChallenge();});
+  }
+  const btnChal=document.getElementById('btnChalSolve');
+  if(btnChal)btnChal.addEventListener('click',()=>refreshChallenge());
   loadImportedTracks();
   const trkSel=document.getElementById('trkSel');
   if(trkSel){refreshTrackList();trkSel.addEventListener('change',e=>{trackKey=e.target.value;refreshLap();});}
@@ -30812,6 +31183,7 @@ function loop(now){
   if(vizMode==='engine')drawEngine(dt);
   else if(vizMode==='dyno'){drawDyno();renderDynoResult(false);}
   else if(vizMode==='track'){stepReplay(dt);drawTrack();}
+  else if(vizMode==='challenges')drawChallenge();
   else if(vizMode==='race'){stepRaceView(dt);drawRace();}
   else stepPreviews(dt);
   updateUI();
