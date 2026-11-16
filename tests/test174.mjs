@@ -9,8 +9,9 @@
 //     the peak;
 //   · ESP, against a spin: FMVSS 126's sine with dwell (0.7 Hz, a 0.5 s dwell, from 80 km/h, at 5 and 6.5 times the
 //     steering that gives 0.3 g). The rule: 1 s after the steering ends the yaw rate is under 35% of its peak, 1.75 s
-//     after under 20%, and the car has moved 1.83 m sideways 1.07 s in. The Model 3 spins with ESP off at 6.5 x (since build
-//     318, when the body began to roll, it recovers at 5 x) and passes with it on at both; a wider espBeta lets it slide further (since build 319 it need not recover: see below);
+//     after under 20%, and the car has moved 1.83 m sideways 1.07 s in. With ESP off the Model 3 spun at 6.5 x until build 333;
+//     with each wheel on its own tyre and spring it recovers there too, so what is asked now is that ESP on leaves it less
+//     sideways and with less yaw 1 s after than ESP off. It passes with it on at both; a wider espBeta lets it slide further (since build 319 it need not recover: see below);
 //   · ESP, against a push: full power on a circle, a front-driver's front tyres slip less and it runs less wide with it on;
 //   · on a straight launch and a straight stop ESP does nothing;
 //   · no page errors.
@@ -80,7 +81,7 @@ const pass = o => o.r1 <= 0.35 && o.r175 <= 0.20 && o.y >= 1.83;
 for (const [k, a] of [['off', R.swd.off], ['on', R.swd.on]]) console.log(`sine with dwell, Model 3, ESP ${k}: ` + a.map((o, i) => `${[5, 6.5][i]} x: yaw ${f2(o.r1)} / ${f2(o.r175)} of its peak after 1 / 1.75 s, ${f2(o.y)} m across, ${o.beta.toFixed(0)} deg sideways`).join('; '));
 console.log(`  with 1.5 x the slip allowed: ${R.swd.wide.beta.toFixed(0)} deg sideways, yaw ${f2(R.swd.wide.r1)} / ${f2(R.swd.wide.r175)} of its peak after 1 / 1.75 s`);
 if (!R.swd.fitted) fails.push('the Model 3 has no ESP');
-if (pass(R.swd.off[1])) fails.push('the Model 3 passes the sine with dwell at 6.5 x with ESP off: the manoeuvre shows nothing');   // since build 317 (the body rolls) it recovers at 5 x
+if (!(R.swd.on[1].beta < R.swd.off[1].beta - 1 && R.swd.on[1].r1 < R.swd.off[1].r1)) fails.push('at 6.5 x ESP does not leave the Model 3 less sideways and with less yaw than without it: the manoeuvre shows nothing');
 if (!R.swd.on.every(pass)) fails.push('the Model 3 fails FMVSS 126 with ESP on');
 // Build 319 (absSlip 1): with the ESP loosened, the Model 3 no longer recovers (yaw 0.89 of its peak 1 s on; 0.16 at
 // absSlip 1.3). Lifted off, its inner rear wheel slips under regeneration, and the ABS, which eases the regen, now holds
