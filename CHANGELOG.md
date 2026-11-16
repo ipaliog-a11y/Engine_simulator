@@ -18,6 +18,18 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 ## [Unreleased]
 
+### A factory engine holds its rated power, and the lambda sensor reads (build 337)
+
+Two changes the owner asked for together, so one build carries both.
+
+- **Cooling: a design point in place of the fitted rises.** The coolant's rise (34 °C) and the oil's (8 + 30 °C over it) were fitted, and put a factory engine at its own rated power past both wear lines. Now the radiator rejects heat in proportion to the coolant's rise over the air through it (the IAT slider), and a factory one holds the coolant at 112 °C at rated power in 49 °C air (120 °F, the ambient radiators are designed for: Toromont/Caterpillar). The thermostat throttles it below that, fully open 10 °C above its temperature (Stant: 15–20 °F). The oil sits 9 °C over the coolant at rated power: its 121 °C continuous limit (MIL-L-2104, US Army report ADA282838) at the same design point.
+- **Oil wear starts at 151 °C, was 132 °C.** ASTM's Sequence IIIH test holds the sump at 151 °C for 90 hours and the engine finishes; 132 °C had no source. The OIL lamp is amber above 121 °C and red above 151 °C, and the oil slider reaches 170 °C.
+- **Result (`test145`, 93 real engines, 120 s at peak power, 25 °C air):** none takes wear, was 26. Oil 96 °C median, 105 °C highest; the LS7's coolant 95 °C (was 116). `FULL_LOAD_KNOWN` is empty, and the test now also fails if an engine passes 121 °C of oil at its own rated power. A hotter day, a smaller radiator or more power than the radiator was sized for still run hotter.
+- **Lambda sensor on the LIVE panel.** An engine with a catalyst and an ECU has one. Port injection: narrowband, shown as its Nernst voltage (derived from the exhaust's oxygen: 956 mV at λ 0.9, 450 at 1, 52 at 1.1) with RICH or LEAN. Direct injection and diesels: wideband, shown as λ (0.65 to air, Bosch LSU). No catalyst, or a carburettor: NO SENSOR. Of the factory engines 51 are narrowband, 41 wideband, 16 have none.
+- **Fault when the tune is wrong.** A narrowband ECU can only hold λ 1, so a mixture set more than 3% off it at part load on a warm engine (the AFR slider, a hand-edited fuel map) stores P0171 (lean) or the new P0172 (rich), and the tile turns amber. A wideband engine may run lean; its fault is the mixture missing the map's target by 3% (a wrong VE table). No factory engine on its own map stores either (`test207`).
+- **Moved.** Bench temperatures and wear only; no dyno, lap or race figure reads them. The fingerprint was not run.
+- **Left open, and probable.** The 112 °C top-tank limit is the model's own OVERHEAT line, not a maker's figure, and the oil's 9 °C is the gap between two limits, not a measured rise. Still fitted: airflow from engine rpm (no dyno fan setting), the oil cooler's 0.6, the wear rates. The 3% is a game rule (a real ECU sets these codes when its fuel trim runs out, past 20–25%), and "direct injection means wideband" is a rule, not a per-engine fact: a designer choice of sensor would be its own build. No closed-loop trim: the sensor reports the mixture, it does not correct it. Greek is paused: the new strings and the changed guide lines are English only.
+
 ### A free-revving engine makes its heat again on a slow screen (build 336)
 
 - **What was wrong.** Since build 327 the bench splits a slow frame into several steps. On the limiter the steps burn

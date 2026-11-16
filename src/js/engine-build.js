@@ -254,6 +254,11 @@ function buildEngineCore(prevStoich,quiet){
   const catp=CAT[engine.cat]||CAT.stock;
   engine.catConv=catp.conv;engine.catRestrict=catp.restrict;
   engine.catRampTop=catp.restrict;
+  // The lambda sensor ahead of the catalyst (build 337): an engine with a catalyst and an ECU has one. An engine that
+  // runs lean of stoichiometric needs a wideband one: a diesel, and a direct-injection petrol (probable: stratified
+  // lean running is what DI was introduced for, and DI engines carry wideband sensors). Port injection holds lambda 1
+  // for its three-way catalyst and a switching (narrowband) sensor is enough. No catalyst, or a carburettor: none.
+  engine.lambdaSensor=engine.cat==='none'?'none':engine.ci?'wide':!engine.canAutoAFR?'none':engine.injector==='direct'?'wide':'narrow';
   deriveFilter();   // the air filter's restriction, from its media and housing (build 210)
   deriveCarb();     // a carburettor's venturi, sized to the engine (build 244)
   engine.meteringEff=sys.metering;            // AFR precision → thermal efficiency

@@ -1280,7 +1280,7 @@ function stepWear(dt){
   const add=(a,label)=>{if(a>0){w+=a;if(a>worst){worst=a;cause=label;}}};
   add(state.knockRisk>55?(state.knockRisk-55)/45*0.060:0,'DETONATION');          // knock is the big killer
   add(state.coolant>112?(state.coolant-112)/18*0.030:0,'OVERHEAT');
-  add(state.oil>132?(state.oil-132)/22*0.025:0,'OIL TEMP');
+  add(state.oil>OIL_WEAR_C?(state.oil-OIL_WEAR_C)/22*0.025:0,'OIL TEMP');   // the line is sourced (corners-thermal.js); the rate is a game rule
   if(engine.floatRpm>0&&state.rpm>engine.floatRpm)add(0.004+0.1*(state.rpm/engine.floatRpm-1),'VALVE FLOAT');
   if(!engine.ci)add(Math.max(0,lam-1.05)*Math.max(0,state.map-0.9)*0.14,'LEAN/BOOST');  // burnt pistons (diesels run lean by design)
   // Diesel soot wear: emission index g PM / kg fuel. ~2.5 g/kg is where smoke is obvious near

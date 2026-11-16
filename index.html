@@ -810,7 +810,7 @@ body.guided-open{overflow:hidden}
 </div>
 <div class="container">
 <header>
-<h1>PIXEL ENGINE SIM v0.7 build 336</h1>
+<h1>PIXEL ENGINE SIM v0.7 build 337</h1>
 <div class="subtitle" id="subtitle">ENGINE DESIGNER • BUILD IT, THEN DRIVE IT</div>
 </header>
 <div class="build-strip" id="buildStrip">
@@ -1687,7 +1687,7 @@ The wall heat comes from <b>Woschni's</b> correlation integrated over a traced c
 EGT is shown two ways in the model: the mass-averaged temperature the turbine works on, and what a thermocouple in the pipe would read (closer to the time average, a little cooler, because the hottest gas passes quickest).
 </div>
 <div class="guide-limit" data-gk="heatLimit">
-Limit: the coolant and oil temperatures come from a lumped model, not from heat flows through the block: a heat load (the fuel burned, against the fuel the engine burns at the power its radiator was sized for at 29% brake efficiency) against a cooling capacity, with first-order lags. Its temperature rises are fitted, and at sustained full rated power they still take the oil past 132 °C on most engines without an oil cooler.
+Limit: the coolant and oil temperatures come from a lumped model, not from heat flows through the block: a heat load (the fuel burned, against the fuel the engine burns at the power its radiator was sized for at 29% brake efficiency) against a cooling capacity, with first-order lags. A factory radiator is sized to hold the coolant at 112 °C at rated power in 49 °C air, and the oil 9 °C above it (its 121 °C continuous limit); the rpm-based airflow and the oil cooler's effect are still fitted.
 </div>
 </div>
 <div class="guide-see">See also: <a data-gp="combustion">Combustion &amp; the burn</a> · <a data-gp="friction">Friction, oil &amp; pumping</a> · <a data-gp="wear">Wear &amp; reliability</a></div>
@@ -2230,7 +2230,7 @@ Health falls each second by the sum of the damage rates that apply:
 <div class="gtab-wrap"><table class="gtab"><tr><th>cause</th><th>when</th><th>rate (per s)</th></tr>
 <tr><td>detonation</td><td>knock score above 55</td><td>up to 0.060</td></tr>
 <tr><td>overheat</td><td>coolant above 112 °C</td><td>up to 0.030</td></tr>
-<tr><td>oil temperature</td><td>oil above 132 °C</td><td>up to 0.025</td></tr>
+<tr><td>oil temperature</td><td>oil above 151 °C</td><td>up to 0.025</td></tr>
 <tr><td>valve float</td><td>above the valve-float rpm (a redline set past it)</td><td>0.004 + 0.1 × the share past float</td></tr>
 <tr><td>lean under boost</td><td>λ above 1.05 with MAP above 0.9 (petrol)</td><td>0.14 × excess λ × excess MAP</td></tr>
 <tr><td>nitrous / anti-lag / cold oil</td><td>while active</td><td>0.011 / 0.004 / 0.004</td></tr></table></div>
@@ -2253,7 +2253,7 @@ A <b>three-way catalytic converter</b> cleans all three at once, but only in a n
 </div>
 <div class="gtier gt-game"><div class="gtier-h">LV2 · IN THE GAME</div>
 <div class="guide-body" data-gk="emissionsGame">
-The LIVE panel's <b>EMISSIONS</b> analyser shows CLEAN / OK / DIRTY plus tailpipe <b>CO₂</b>, <b>CO</b>, <b>HC</b>, <b>NOx</b> and (diesel) <b>PM</b> in g/s from the design, the tune and the live operating point. Each species tile turns <b>amber</b> then <b>red</b> as that pollutant (g per kg of fuel) climbs the same scale the emit score uses; CO₂ uses g/kWh when you are making power. Choose the <b>CATALYTIC CONV.</b>: stock (97% conversion), sport (85%) or none. The scorecard's <b>emit</b> score still rates a stoich cruise and part load.
+The LIVE panel's <b>EMISSIONS</b> analyser shows CLEAN / OK / DIRTY plus tailpipe <b>CO₂</b>, <b>CO</b>, <b>HC</b>, <b>NOx</b> and (diesel) <b>PM</b> in g/s from the design, the tune and the live operating point. Each species tile turns <b>amber</b> then <b>red</b> as that pollutant (g per kg of fuel) climbs the same scale the emit score uses; CO₂ uses g/kWh when you are making power. Choose the <b>CATALYTIC CONV.</b>: stock (97% conversion), sport (85%) or none. The scorecard's <b>emit</b> score still rates a stoich cruise and part load. An engine with a catalyst and an ECU has a <b>LAMBDA SENSOR</b> tile: port injection carries a narrowband sensor, which reads about 900 mV rich and under 100 mV lean and can only hold λ 1; direct injection and diesels carry a wideband one, which reads λ itself. Tune a narrowband engine off λ 1 at part load and the FAULT lamp stores P0171 (lean) or P0172 (rich).
 </div>
 </div>
 <div class="gtier gt-phys"><div class="gtier-h">LV3 · THE PHYSICS</div>
@@ -3860,6 +3860,7 @@ Most other tests check behaviour that is true of real cars: a bigger turbo spool
 </div>
 <div class="gauge-row">
 <div class="stat" id="statHealth"><span class="label">ENGINE HEALTH</span><div class="value">100</div><span class="unit">%</span></div>
+<div class="stat" id="statLambda" title="Lambda sensor, ahead of the catalytic converter"><span class="label">LAMBDA SENSOR</span><div class="value">—</div><span class="unit"></span></div>
 <div class="stat" id="statAmps" style="display:none"><span class="label">PACK CURRENT</span><div class="value">0</div><span class="unit">A</span></div>
 <div class="stat" id="statLimit" style="display:none"><span class="label">POWER LIMIT</span><div class="value">NONE</div><span class="unit"></span></div>
 </div>
@@ -3912,7 +3913,7 @@ Most other tests check behaviour that is true of real cars: a bigger turbo spool
 <div class="control-group"><label for="afr"><span class="ctl-lbl">AIR-FUEL RATIO</span> <span class="val" id="valAFR">14.7</span></label><input type="range" id="afr" min="10.0" max="18.0" step="0.1" value="14.7" aria-label="Air-fuel ratio"></div>
 <div class="control-group"><label for="iat"><span class="ctl-lbl">INTAKE AIR TEMP</span> <span class="val" id="valIAT">25</span> °C</label><input type="range" id="iat" min="-10" max="60" step="1" value="25" aria-label="Intake air temperature in Celsius"></div>
 <div class="control-group"><label for="coolant"><span class="ctl-lbl">COOLANT TEMP</span> <span class="val" id="valCool">90</span> °C</label><input type="range" id="coolant" min="40" max="130" step="1" value="90" aria-label="Coolant temperature in Celsius"></div>
-<div class="control-group"><label for="oil"><span class="ctl-lbl">OIL TEMP</span> <span class="val" id="valOil">100</span> °C</label><input type="range" id="oil" min="40" max="150" step="1" value="100" aria-label="Oil temperature in Celsius"></div>
+<div class="control-group"><label for="oil"><span class="ctl-lbl">OIL TEMP</span> <span class="val" id="valOil">100</span> °C</label><input type="range" id="oil" min="40" max="170" step="1" value="100" aria-label="Oil temperature in Celsius"></div>
 <div class="btn-row">
 <button id="btnOptimal" title="Wide open throttle, held at this engine's peak-torque rpm">PEAK TORQUE</button>
 <button id="btnMaxPower" title="Wide open throttle, held at this engine's peak-power rpm">MAX POWER</button>
@@ -9777,6 +9778,11 @@ function buildEngineCore(prevStoich,quiet){
   const catp=CAT[engine.cat]||CAT.stock;
   engine.catConv=catp.conv;engine.catRestrict=catp.restrict;
   engine.catRampTop=catp.restrict;
+  // The lambda sensor ahead of the catalyst (build 337): an engine with a catalyst and an ECU has one. An engine that
+  // runs lean of stoichiometric needs a wideband one: a diesel, and a direct-injection petrol (probable: stratified
+  // lean running is what DI was introduced for, and DI engines carry wideband sensors). Port injection holds lambda 1
+  // for its three-way catalyst and a switching (narrowband) sensor is enough. No catalyst, or a carburettor: none.
+  engine.lambdaSensor=engine.cat==='none'?'none':engine.ci?'wide':!engine.canAutoAFR?'none':engine.injector==='direct'?'wide':'narrow';
   deriveFilter();   // the air filter's restriction, from its media and housing (build 210)
   deriveCarb();     // a carburettor's venturi, sized to the engine (build 244)
   engine.meteringEff=sys.metering;            // AFR precision → thermal efficiency
@@ -11430,7 +11436,7 @@ function stepWear(dt){
   const add=(a,label)=>{if(a>0){w+=a;if(a>worst){worst=a;cause=label;}}};
   add(state.knockRisk>55?(state.knockRisk-55)/45*0.060:0,'DETONATION');          // knock is the big killer
   add(state.coolant>112?(state.coolant-112)/18*0.030:0,'OVERHEAT');
-  add(state.oil>132?(state.oil-132)/22*0.025:0,'OIL TEMP');
+  add(state.oil>OIL_WEAR_C?(state.oil-OIL_WEAR_C)/22*0.025:0,'OIL TEMP');   // the line is sourced (corners-thermal.js); the rate is a game rule
   if(engine.floatRpm>0&&state.rpm>engine.floatRpm)add(0.004+0.1*(state.rpm/engine.floatRpm-1),'VALVE FLOAT');
   if(!engine.ci)add(Math.max(0,lam-1.05)*Math.max(0,state.map-0.9)*0.14,'LEAN/BOOST');  // burnt pistons (diesels run lean by design)
   // Diesel soot wear: emission index g PM / kg fuel. ~2.5 g/kg is where smoke is obvious near
@@ -11642,7 +11648,8 @@ function getDynoData(){
 const OBD_CODES={
   P0324:{t:'Knock control system error',      hold:1, why:'Knock is past what the ECU can hold off by retarding the spark (KNOCK_TARGET).'},
   P0217:{t:'Engine coolant over temperature', hold:2, why:'Coolant is above 112 °C, where the wear model starts charging OVERHEAT.'},
-  P0171:{t:'System too lean (bank 1)',        hold:2, why:'λ above 1.05 under boost: the LEAN/BOOST wear condition.'},
+  P0171:{t:'System too lean (bank 1)',        hold:2, why:'λ above 1.05 under boost (the LEAN/BOOST wear condition), or the lambda sensor reads leaner than the ECU can hold.'},
+  P0172:{t:'System too rich (bank 1)',        hold:2, why:'The lambda sensor reads richer than the ECU can hold at part load.'},
   P0300:{t:'Random/multiple cylinder misfire detected',hold:1, why:'The spark cannot fire every cycle (weak voltage past the dwell limit), or the valves float.'},
   P0420:{t:'Catalyst system efficiency below threshold (bank 1)',hold:10, why:'A warm engine with no working catalyst converts almost nothing.'},
   P0562:{t:'System voltage low',              hold:5, why:'The 12 V side is below 11.6 V while the engine runs.'}
@@ -11670,10 +11677,64 @@ function obdConditions(){
   if(!engine.ci&&state.knockRisk>KNOCK_TARGET+0.5)on.P0324=1;
   if(state.coolant>112)on.P0217=1;
   if(!engine.ci&&lam>1.05&&state.map>0.9)on.P0171=1;
+  {const t=lambdaTrimFault(lam);if(t)on[t>0?'P0171':'P0172']=1;}
   if(obdMisfire()>OBD_MISFIRE)on.P0300=1;
   if(!engine.ci&&(engine.catConv||0)<0.5&&state.coolant>=70)on.P0420=1;
   if(!engine.dcdc&&state.systemVoltage<11.6)on.P0562=1;
   return on;
+}
+// ---- The lambda sensor (build 337) ----
+// Narrowband (zirconia switching sensor, Bosch LSF): a Nernst cell between the exhaust and the air,
+//   E = (R T / 4F) ln(pO2 air / pO2 exhaust),
+// with its platinum electrode bringing the gas to equilibrium. Lean, the exhaust's O2 is the excess air's. Rich, there
+// is none free and it is what CO + 1/2 O2 = CO2 leaves at the element's temperature, from the CO2/CO the water-gas
+// balance gives (pipeProducts): Kp from dG = -282.4 + 0.0868 T kJ/mol (JANAF; -195.6 at 1000 K). So it reads ~0.9 V
+// rich and under 0.1 V lean, with a step at lambda 1, and can only say which side the mixture is on. At lambda 1
+// itself the cell is at 450 mV by convention (the set-point Bosch's controllers hold); LAMBDA_P_STOICH is that pO2.
+// LAMBDA_T: the heated element, ~700 C (probable: Bosch quotes 650-780 C for the LSU).
+// Wideband (Bosch LSU): a pump cell holds that Nernst cell at 450 mV and the pump current gives lambda itself, from
+// 0.65 to air (Bosch Motorsport, LSU ADV data sheet).
+const LAMBDA_T=973,LAMBDA_NERNST=8.314*LAMBDA_T/(4*96485),LAMBDA_P_STOICH=0.21*Math.exp(-0.45/LAMBDA_NERNST),LAMBDA_WIDE_MIN=0.65;
+function lambdaSensorMv(lam){
+  const y=engine.fuelHC!=null?engine.fuelHC:1.87,z=engine.fuelOC!=null?engine.fuelOC:0,aS=1+y/4-z/2;
+  let p;
+  if(lam>=1)p=LAMBDA_P_STOICH+aS*(lam-1)/(1+y/2+aS*(lam-1)+AIR_N2_PER_O2*aS*lam);
+  else{
+    const pr=pipeProducts(y,z,lam,1),co2=pr.co2/MW_CO2,co=pr.co/MW_CO,Kp=Math.exp((282400-86.8*LAMBDA_T)/(8.314*LAMBDA_T));
+    p=co>1e-12?Math.min(LAMBDA_P_STOICH,Math.pow(co2/co/Kp,2)):LAMBDA_P_STOICH;
+  }
+  return 1000*LAMBDA_NERNST*Math.log(0.21/Math.max(1e-40,p));
+}
+// What the sensor says of the tune: +1 too lean, -1 too rich, 0 fine or not judged. Judged only where the ECU runs
+// closed loop: warm (70 C, as P0420) and below the band the factory map enriches in (85% of the full-load pressure,
+// baseFuelLambda). A narrowband sensor can only hold lambda 1, so a mixture set anywhere else there (the AFR slider, a
+// hand-edited fuel map) is a fault. A wideband one holds whatever the map asks, lean included, so its fault is the
+// mixture missing the map's target (a wrong VE table). LAMBDA_TRIM, 3%, is a game rule, set above the factory map's own
+// 1.02 at light load; a real ECU sets these codes when its fuel trim runs out, typically past 20-25%.
+const LAMBDA_TRIM=0.03;
+function lambdaTrimFault(lam){
+  const s=engine.lambdaSensor;
+  if(engine.ci||!s||s==='none'||state.coolant<70||state.map>=0.85*Math.max(1,wotMapAt(state.rpm)))return 0;
+  const auto=engine.afrMode==='auto',target=auto?mappedAFR(state.rpm,state.map)/engine.stoichAFR:1;
+  const stuck=s==='narrow'&&(!auto||fuelMapCustom)?lam-1:0;   // commanded off lambda 1 where only lambda 1 can be held
+  const miss=auto?lam/target-1:0;                              // measured against commanded
+  const e=Math.abs(stuck)>Math.abs(miss)?stuck:miss;
+  return e>LAMBDA_TRIM?1:e<-LAMBDA_TRIM?-1:0;
+}
+// The LIVE tile: millivolts and the side for a narrowband sensor, lambda for a wideband one.
+function updateLambdaTile(){
+  const el=document.getElementById('statLambda');if(!el)return;
+  const s=engine.lambdaSensor||'none',V=el.querySelector('.value'),U=el.querySelector('.unit');
+  const run=obdRunning(),lam=state.fuelCut||!run?99:state.afr/(engine.stoichAFR||14.7);
+  let cls='';
+  if(s==='none'){V.textContent='—';U.textContent=tr('NO SENSOR');}
+  else if(!run){V.textContent='—';U.textContent=tr(s==='wide'?'WIDEBAND':'NARROWBAND');}
+  else{
+    if(s==='wide'){V.textContent=lam>9?tr('AIR'):Math.max(LAMBDA_WIDE_MIN,lam).toFixed(2);U.textContent='λ • '+tr('WIDEBAND');}
+    else{const mv=lambdaSensorMv(lam);V.textContent=Math.round(mv);U.textContent='mV • '+tr(mv>455?'RICH':mv<445?'LEAN':'STOICH');}
+    if(!state.fuelCut&&lambdaTrimFault(lam))cls=' warning';
+  }
+  el.className='stat'+cls;
 }
 // A drive cycle ends: count clean cycles for the lit codes, drop pending ones the cycle did not see again.
 function obdEndCycle(){
@@ -17274,6 +17335,21 @@ function coolingEffectiveness(){
 }
 // A road spark engine's brake efficiency at rated power: 25-30% (Heywood, Table 12.1); BSFC ~280 g/kWh on petrol.
 const HEAT_REF_EFF=0.29;
+// The cooling system's design point (build 337). The two temperature rises here were fitted (34 C of coolant, 8 + 30 C
+// of oil over it) and put a factory engine at its own rated power past both wear lines, where a real one holds rated
+// power for hundreds of hours. Now a radiator rejects heat in proportion to the coolant's rise over the air through it,
+// and a factory one is sized so that at rated power on a hot day the coolant is at its limit:
+//   RAD_DESIGN_AMB    49 C (120 F): the ambient radiators are designed for (Toromont/Caterpillar, "Radiator Design
+//                     Considerations"; SAE J819 calls the margin air-to-boil).
+//   COOLANT_LIMIT_C   112 C: the top-tank limit, taken as the line where the wear model starts charging OVERHEAT.
+//                     Probable: an engine maker's own figure differs by engine.
+//   THERMOSTAT_SPAN   10 C: a wax thermostat is fully open 15-20 F above its opening temperature (Stant).
+//   OIL_CONT_C        121 C (250 F): the sump's continuous limit (MIL-L-2104 oils, US Army BRDEC report ADA282838;
+//                     135 C for 15 minutes). The oil's rise over the coolant at the design point is the gap between
+//                     the two limits. Probable: one sourced limit, not a measured rise.
+//   OIL_WEAR_C        151 C: ASTM D8111 (Sequence IIIH) holds the sump there for 90 hours at 3900 rpm and the engine
+//                     finishes; SAE J300 rates an oil's film at 150 C. Wear starts past it (was 132 C, unsourced).
+const RAD_DESIGN_AMB=49,COOLANT_LIMIT_C=112,THERMOSTAT_SPAN=10,OIL_CONT_C=121,OIL_WEAR_C=151;
 function stepThermal(dt){
   if(isElectric())return;   // the motor's heat is stepped with its losses (stepMotorBench)
   if(!autoThermal)return;
@@ -17291,11 +17367,15 @@ function stepThermal(dt){
   const designFuelKW=Math.max(260,engine.radHp||0)*0.7457/HEAT_REF_EFF;
   const loadFrac=clamp(fuelKW/designFuelKW,0,1.6);
   const cooling=coolingEffectiveness();
-  // Heat load raises temps; cooling capacity divides that rise back down.
-  let heat=loadFrac*34+(state.knockRisk>60?6:0);
-  let coolantTarget=clamp(engine.thermostat+heat/cooling,engine.thermostat,140);
-  let oilDelta=(8+loadFrac*30)*(engine.oilCooler?0.6:1.0);
-  let oilTarget=clamp(state.coolant+oilDelta,40,150);
+  // The coolant's rise over the air with the thermostat fully open (the knock term is a game rule, as before).
+  const amb=state.iat,rise=(COOLANT_LIMIT_C-RAD_DESIGN_AMB)*loadFrac/cooling+(state.knockRisk>60?6:0);
+  // Below that the thermostat throttles the radiator: open by x/THERMOSTAT_SPAN at x above its temperature, it passes
+  // that share of the heat, so x (x + thermostat - ambient) = span * rise.
+  const D=engine.thermostat-amb,x=(-D+Math.sqrt(D*D+4*THERMOSTAT_SPAN*rise))/2;
+  let coolantTarget=clamp(D>0&&x<THERMOSTAT_SPAN?engine.thermostat+x:amb+rise,engine.thermostat,140);
+  // The oil cooler's 0.6 is still fitted.
+  let oilDelta=(OIL_CONT_C-COOLANT_LIMIT_C)*loadFrac*(engine.oilCooler?0.6:1.0);
+  let oilTarget=clamp(state.coolant+oilDelta,40,170);
   state.coolant+=(coolantTarget-state.coolant)*(1-Math.exp(-0.08*dt));
   state.oil+=(oilTarget-state.oil)*(1-Math.exp(-0.05*dt));
   dynoCache=null;
@@ -24185,7 +24265,7 @@ function updateDashLamps(){
   ['lampCool','lampOil','lampOilP'].forEach(id=>{const el=g(id);if(el)el.hidden=ev;});
   if(!ev){
     set('lampCool',state.coolant>115?'danger':state.coolant>108?'warn':'');
-    set('lampOil',state.oil>132?'danger':state.oil<55?'warn':'');
+    set('lampOil',state.oil>OIL_WEAR_C?'danger':state.oil<55||state.oil>OIL_CONT_C?'warn':'');
     set('lampOilP','');   // stub: never lights
   }
   {const L=obdLamp(),n=Object.keys(obd.codes).length;
@@ -24236,6 +24316,7 @@ function updateUI(){
   const hp=Math.round(state.engineHealth*100),healthEl=document.getElementById('statHealth');
   healthEl.querySelector('.value').textContent=state.blown?tr('DEAD'):hp;
   healthEl.className='stat'+(state.blown||hp<30?' danger':(hp<70?' warning':''));
+  updateLambdaTile();
   // Exhaust analyser (build 257): CLEAN / OK / DIRTY from emRating; rates in g/s.
   // Per-species tone (build 258): same g/kg (and CO2 g/kWh) thresholds the rating uses.
   const emEl=document.getElementById('statEmit');
@@ -26630,6 +26711,7 @@ function setLiveLabels(ev){
     L.textContent=ev?tr(EV_TILES[id][0]):tr(L.dataset.ice);U.textContent=ev?EV_TILES[id][1]:U.dataset.ice;
   }
   EV_ONLY_TILES.forEach(id=>{const el=document.getElementById(id);if(el)el.style.display=ev?'':'none';});
+  {const el=document.getElementById('statLambda');if(el)el.style.display=ev?'none':'';}   // no exhaust, no lambda sensor
   const em=document.getElementById('liveEmRows');if(em)em.hidden=!!ev;   // no exhaust analyser on a pure EV (build 257)
   const sg=document.getElementById('evSocGroup');if(sg)sg.hidden=!ev;   // the pack's charge, set by hand (build 198)
   // what a motor has no use for leaves the panel: mixture, intake air, the engine's coolant and oil, the alternator's
