@@ -18,6 +18,20 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 ## [Unreleased]
 
+### The pack's resistance follows its temperature in the lap, the race and the WLTP cycle (build 340)
+
+- Until now the lap, the race and the WLTP cycle all used the pack's resistance at 25 °C, even though they track the pack's
+  temperature. Now the cells' I²R heat uses `packR` at the pack's own temperature: in the lap and the race as the pack
+  heats from its 30 °C coolant, and in the cycle at the 23 °C the car is soaked at and tested at (UNECE GTR 15, Annex 6).
+  The race's power limit at low charge (`evBmsPower`) reads the same temperature.
+- With 100 kW drawn from a Model Y, the cells make 4.58 kW of heat at 25 °C, 4.30 kW at 45 °C and 8.85 kW at 0 °C. Its WLTP
+  figure is 139.7 Wh/km at 23 °C, and a cycle run at 0 °C costs 141.3 Wh/km. A warm pack heats less, so the lap and the
+  race reach the 50 °C cut a little later.
+- Electric work now has an order, written in `plans/road-to-v1.md`. The bench readouts were already done in build 285; this
+  build is the first item. Next is a cell's sag and recovery as one RC pair.
+- Left open: the lap's torque curve (`driveTorqueRated`), the race's pace-grid energy price and the motor bench still read
+  25 °C. `test136` already fails on `main` (motor locks from build 224), which is unrelated.
+
 ### The right column is back where it belongs, and the footer moves to OPTIONS > ABOUT (build 339)
 
 - Since build 312 the PARTS page's brake block was missing its closing tag. The browser then nested the right column

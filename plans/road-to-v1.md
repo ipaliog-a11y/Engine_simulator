@@ -122,12 +122,18 @@ air's fins, `MOTOR.mech`, `PACK.thermal`.
 `EV_RACE`, `HYB_RACE.margin`) are kept as rules until after v1.0, each with its plan in the register; step 3's rest, 4
 and 5 move there. The 10 files never read for fitted numbers (the register's `audit`) wait until after v1.0 too.
 
-Beyond the register (not started; the owner decides when, November 2026): a fast-charge curve from the charge-voltage and plating limits
-the pack already has; the pack's temperature in the lap, cycle and race (they still read the 25 °C resistance); a
-cell's sag and recovery (one RC pair), which is the 1 s against 10 s power the Prius cells were re-rated for; ageing;
-an inverter junction temperature; wound-rotor, reluctance and axial-flux motors. Readouts the model already computes
-and the bench could show: the loss split (copper, iron, friction, inverter), the pack's current as a C-rate, its sag
-and its heat, an induction motor's slip.
+Beyond the register (started November 2026, owner's decision; one build each, in this order):
+0. *Done in build 285:* the bench readouts the model already computes: the loss split (copper, cage, iron, friction,
+   inverter), the pack's current as a C-rate, its sag and its heat, an induction motor's slip.
+1. *Build 340:* the pack's temperature in the lap, the race and the WLTP cycle (packR at the pack's own temperature, not
+   25 °C). Open: the lap's torque curve and the race's pace-grid price still read 25 °C.
+2. A cell's sag and recovery: one RC pair, the 1 s against 10 s power the Prius cells were re-rated for.
+3. A fast-charge curve from the charge-voltage and plating limits the pack already has.
+4. An inverter junction temperature (its losses are already computed; a thermal node and a limit).
+5. Ageing: capacity fade and resistance rise with cycles and temperature.
+6. Wound-rotor (field-excited) motor.
+7. Reluctance motor.
+8. Axial-flux motor.
 
 **D. Vehicle parts (about 4 builds).** Wings and brake bias (retires `AERO_FRONT/REAR`); wheels and tyre pressure
 (retires `UNSPRUNG_SHARE`); the differential (`DIFF_ASYM0`).

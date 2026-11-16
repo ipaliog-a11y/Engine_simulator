@@ -100,7 +100,7 @@ function evRaceManage(M,c,left,mode){
 // controller (the winding's and the magnets') allow less. The controller cuts the current, so the torque; taken here as
 // the same share of the power.
 function evRaceFFNow(M,c){
-  const X=M.ev,want=evRaceCap(c.evFF),bms=evBmsPower(X.pack,evRaceSoc(M,c.fuelKg))*packDerate(c.evT.b)/X.pRef;   // low charge: build 196
+  const X=M.ev,want=evRaceCap(c.evFF),bms=evBmsPower(X.pack,evRaceSoc(M,c.fuelKg),c.evT.b)*packDerate(c.evT.b)/X.pRef;   // low charge: build 196
   const cap=Math.min(want,bms,motorDerate(X,c.evT));
   if(cap<want-0.01)c.evCut=true;
   return evRaceFF(cap);
@@ -120,7 +120,7 @@ function evRaceTqAt(M,i,f,g,ff){
 // pace the car is going: r).
 function evRaceHeatStep(M,c,r,dt,save){
   const X=M.ev,t=c.evT,P=c._fr*3600*r*r*save;
-  const d=packDraw(X.pack,evRaceSoc(M,c.fuelKg),P);
+  const d=packDraw(X.pack,evRaceSoc(M,c.fuelKg),P,t.b);   // at the pack's temperature (build 340)
   packHeatStep(X.pack,t,d?d.heat:0,dt);
   const rpm=clamp(c.v*X.k,1,X.rl),T=c._tq*r;
   motorHeatStep(X.motor,t,motorLosses(X.motor,Math.abs(T),rpm,X.V,t),dt);

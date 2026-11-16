@@ -9,7 +9,9 @@
 //   · colder still gives less, −10 °C less than 0 °C, and never takes back more; it takes back less where the voltage
 //     limit binds (the Model 3 at −10 °C), not where the plating limit does, which does not vary with temperature yet;
 //   · but a Model Y keeps more than half its power at 0 °C (1.8× the resistance), and about a third at −10 °C;
-//   · lead-acid and NiMH still do not change.
+//   · lead-acid and NiMH still do not change;
+//   · since build 340 the cells' heat follows their temperature (packDraw's tC): less warm, more cold, the same at 25 °C,
+//     and the WLTP cycle reads its 23 °C soak, so a cold cycle (0 °C) costs more energy.
 import { chromium } from './pw.mjs';
 import { fileURLToPath, pathToFileURL } from 'url';
 import path from 'path';
@@ -31,7 +33,8 @@ const r = await page.evaluate(() => {
   return { m3c, share: R_CT_SHARE, R: b.R, r20: packR(b, -20) / b.R, r0: packR(b, 0) / b.R, r10: packR(b, -10) / b.R, R25: packR(b, 25),
     p25: packMaxPower(b, 0.5, 25), p: packMaxPower(b, 0.5), p0: packMaxPower(b, 0.5, 0), p10: packMaxPower(b, 0.5, -10),
     c25: packChargePower(b, 0.5, 25), c0: packChargePower(b, 0.5, 0), c10: packChargePower(b, 0.5, -10),
-    lead: packR(lead, -10) / lead.R, nimh: packR(nimh, -10) / nimh.R };
+    lead: packR(lead, -10) / lead.R, nimh: packR(nimh, -10) / nimh.R,
+    h: [45, 25, 0].map(t => packDraw(b, 0.5, 100e3, t).heat), h0: packDraw(b, 0.5, 100e3).heat, cyc: [0, 23].map(t => { EV_CYCLE.tPack = t; engine._cycle = null; return evCycle(engine, vehicle).whkm; }) };
 });
 const f = (x, d = 2) => (+x).toFixed(d), kW = x => Math.round(x / 1000);
 console.log(`== charge-transfer share ${f(r.share, 4)} · resistance ×${f(r.r0)} at 0 °C, ×${f(r.r10)} at −10 °C, ×${f(r.r20)} at −20 °C ==`);
@@ -48,6 +51,9 @@ if (!(r.c10 <= r.c0 && r.c0 <= r.c25)) fails.push('a colder Model Y takes back m
 if (!(r.m3c[2] < r.m3c[0] && r.m3c[1] <= r.m3c[0])) fails.push('at −10 °C the Model 3 does not take back less, where its voltage limit binds');
 if (!(r.p0 > 0.5 * r.p25)) fails.push(`at 0 °C the Model Y keeps only ${f(r.p0 / r.p25 * 100, 0)}% of its power`);
 if (!(r.p10 > 0.25 * r.p25 && r.p10 < 0.5 * r.p25)) fails.push(`at −10 °C the Model Y keeps ${f(r.p10 / r.p25 * 100, 0)}%, outside a quarter to a half`);
+if (!(r.h[0] < r.h[1] && r.h[1] < r.h[2]) || r.h[1] !== r.h0) fails.push(`cell heat at 45 / 25 / 0 °C ${r.h.map(x => f(x, 0))} W does not follow the resistance`);
+if (!(r.cyc[0] > r.cyc[1])) fails.push(`the WLTP cycle at 0 °C (${f(r.cyc[0], 1)} Wh/km) costs no more than at its 23 °C soak (${f(r.cyc[1], 1)})`);
+console.log(`== 100 kW drawn: cell heat ${r.h.map(x => f(x, 0)).join(' / ')} W at 45 / 25 / 0 °C · WLTP ${f(r.cyc[1], 1)} Wh/km at 23 °C, ${f(r.cyc[0], 1)} at 0 °C ==`);
 if (r.lead !== 1 || r.nimh !== 1) fails.push('lead-acid or NiMH changed with temperature');
 if (errors.length) fails.push(...errors);
 console.log(fails.length ? '\nFAIL:\n  ' + fails.join('\n  ') : '\nPASS');
