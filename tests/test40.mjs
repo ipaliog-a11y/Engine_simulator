@@ -126,7 +126,9 @@ if (!(t100(lowBoost[0]) < t100(lowBoost[1])))
 // high boost: it should NOT be — the small frame is out of its map
 if (!(at(2.5, 'small').load > 1)) fails.push('a 2.0 L at 2.5 bar does not over-flow the small frame');
 if (!(at(2.5, 'medium').hp > at(2.5, 'small').hp)) fails.push('at 2.5 bar the medium frame should out-power the small one');
-if (!(at(2.5, 'small').iat > at(2.5, 'medium').iat + 5)) fails.push('over-flowing the small frame should cook the charge');
+// At 2.5 bar the medium frame is itself just over its rating (load 1.04), so both sit on the compressor-efficiency floor
+// and read the same; the frame that is comfortably in its map (large) is the one to compare against.
+if (!(at(2.5, 'small').iat > at(2.5, 'large').iat + 5)) fails.push('over-flowing the small frame should cook the charge');
 // Measured against the frame that CAN feed the engine. (It compared the small frame's top-end falloff from
 // its own peak; since build 116, when the overlap stopped reading the boost as reverse flow, the over-flowed
 // frame chokes the engine at every speed, so its own peak collapses with its top and the ratio says nothing.)
@@ -163,7 +165,9 @@ const caps = await page.evaluate(() => {
 console.log(`\nrated flow (lb/min): small ${caps.small} · medium ${caps.medium} · large ${caps.large}`);
 console.log(`  configs on a medium frame: single ${caps.single} · twin ${caps.twin} · sequential ${caps.sequential} · compound ${caps.compound}`);
 if (!(caps.small < caps.medium && caps.medium < caps.large)) fails.push('frame flow ratings are not ordered by size');
-if (!(caps.twin > caps.single && caps.compound > caps.twin)) fails.push('multi-turbo configs do not flow more than a single');
+// A compound is two stages in SERIES (build 291), so it does not add flow the way a pair does: its rating is the
+// larger LP wheel's, which is above one medium frame but below two of them.
+if (!(caps.twin > caps.single && caps.compound > caps.single && caps.compound < caps.twin)) fails.push('twin should flow more than a single, and a compound (series) more than a single but less than a pair');
 
 // ---------------------------------------------------------------- 4. the intercooler earns its keep
 const ic = await page.evaluate(() => ['none', 'small', 'large'].map(v => {
