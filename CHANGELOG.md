@@ -18,6 +18,14 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 ## [Unreleased]
 
+### The port throat kept as a rule (build 332)
+
+Owner's decision, phase B, step 2. No physics changed: only the register, its test and a code comment.
+
+- **`THROAT_RATIO` (0.85) is signed off as a rule.** No maker publishes a factory port's throat diameter, so it cannot be sourced the way the valves were (builds 287, 330, 331). Heywood (ch. 5) puts intake throats at 0.8–0.9 of the valve, and the flow coefficient's 0.42 plateau (Taylor) is taken on this same 0.85.
+- **After v1.0:** the throat from the valve and its seat (the valve less twice the seat width and overhang, on a 45° seat), per engine where a factory service manual gives the seat width.
+- **Register:** 11 → 10 open (`tests/test166.mjs`). B2's `EV_RATIO` stays open while real engines still lack sourced valves.
+
 ### Five more real engines get their own valves (build 330)
 
 Phase B, step 2 (`plans/road-to-v1.md`), done the way build 287 did it: one sourced engine at a time, so only that engine's cars move.
