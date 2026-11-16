@@ -2068,11 +2068,12 @@ function applyLang(lang){
     if(el.dataset.enHtml===undefined)el.dataset.enHtml=el.innerHTML;
     el.innerHTML=(currentLang==='el'&&GUIDE_I18N[k])?GUIDE_I18N[k].el:el.dataset.enHtml;
   });
-  // Preset placeholder, language selector, footer, vehicle placeholder
+  // Preset placeholder, language selector, OPTIONS > ABOUT line, vehicle placeholder
   const pp=document.getElementById('edPreset');if(pp&&pp.options[0])pp.options[0].textContent=tr('— choose a build —');
   const rpb=document.getElementById('btnReplay');if(rpb&&typeof lapReplay!=='undefined')rpb.textContent=tr(lapReplay.playing?'PAUSE':'PLAY');
   const lg=document.getElementById('edLang');if(lg)lg.value=currentLang;
-  const foot=document.querySelector('footer');
+  {const av=document.getElementById('aboutVer'),h=document.querySelector('header h1');if(av&&h)av.textContent=h.textContent;}
+  const foot=document.getElementById('aboutText');
   if(foot){if(foot.dataset.en===undefined)foot.dataset.en=foot.innerHTML;
     foot.innerHTML=currentLang==='el'
       ?'PIXEL ENGINE SIM • Σχεδιαστής κινητήρα • Επεκτάσιμος ανά υποσύστημα<br>Φυσική απλοποιημένη για μάθηση & διασκέδαση • Εμπνευσμένο από το Automation'

@@ -46,7 +46,7 @@
 </div>
 <div class="container">
 <header>
-<h1>PIXEL ENGINE SIM v0.7 build 337</h1>
+<h1>PIXEL ENGINE SIM v0.7 build 338</h1>
 <div class="subtitle" id="subtitle">ENGINE DESIGNER • BUILD IT, THEN DRIVE IT</div>
 </header>
 <div class="build-strip" id="buildStrip">
@@ -293,6 +293,12 @@
 <div class="design-section">Language</div>
 <div class="opt-row"><div><b>LANGUAGE PACK</b><div class="opt-note">Switch the interface language (chrome, guide &amp; readouts).</div></div>
 <select id="edLang" class="opt-select"><option value="en">ENGLISH</option><option value="el">ΕΛΛΗΝΙΚΑ</option></select></div>
+
+<div class="design-section">About</div>
+<div class="opt-row"><div><b id="aboutVer">PIXEL ENGINE SIM</b><div class="opt-note" id="aboutText">PIXEL ENGINE SIM • Configurable engine designer • Expandable per subsystem<br>Physics simplified for education &amp; fun • Inspired by Automation</div></div></div>
+<div class="opt-row"><div><b>PHYSICS</b><div class="opt-note">The engine, the car, the lap and the race are computed from physical relations and sourced inputs (makers' spec sheets, standards, papers, measured data), not fitted to the answer. Where a model cannot reach a real figure yet, the gap is left open and named.</div></div></div>
+<div class="opt-row"><div><b>RUNS OFFLINE</b><div class="opt-note">One page with no server and no install: it opens from a file, and saves to this browser's storage.</div></div></div>
+<div class="opt-row"><div><b>SOURCE &amp; LICENCE</b><div class="opt-note">MIT licence. Source code, notes and change log: <a href="https://github.com/ipaliog-a11y/Engine_simulator" target="_blank" rel="noopener">github.com/ipaliog-a11y/Engine_simulator</a></div></div></div>
 </div>
 
 <!-- VEHICLE: drop the engine into a car and read its acceleration & top speed -->
@@ -613,6 +619,7 @@
 <div class="part-guide" id="pkGuide"></div>
 <div class="part-chart"><div class="gw-leg" id="pkLegend"></div><canvas id="pkCanvas" role="img" aria-label="Front against rear braking force: the ideal curve and this balance's line, to where an axle locks"></canvas></div>
 <div class="btn-row part-btns"><button type="button" id="pkSave">SAVE PART</button><button type="button" id="pkSaveFit">SAVE &amp; FIT</button></div>
+</div>
 <div id="partsTyre" hidden>
 <div class="design-section">My tyre pressures</div>
 <div class="part-list" id="pyList"></div>
@@ -834,7 +841,6 @@
 <div class="race-top"><button id="raceBack" title="Back to the sim">◀ SIM</button><b class="race-title">RACE</b><span id="raceTopInfo"></span><button id="raceFs" title="Full screen" aria-label="Full screen">⛶</button></div>
 <div class="race-body"><div class="race-stage" id="raceStage"></div><aside class="race-side" id="raceSide"></aside></div>
 </div>
-<footer>PIXEL ENGINE SIM • Configurable engine designer • Expandable per subsystem<br>Physics simplified for education &amp; fun • Inspired by Automation</footer>
 </div>
 <div class="gw-back" id="gearWin" hidden>
 <div class="gw" role="dialog" aria-modal="true" aria-labelledby="gwTitle">

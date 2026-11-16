@@ -84,7 +84,6 @@ input[type=range]:disabled::-moz-range-thumb{background:#666}
 .status-bar{margin-top:10px;padding:6px;background:#0a0a10;border:2px solid #333;font-size:8px;color:#00ff88;min-height:28px}
 .status-bar.warn{color:#ffaa00}
 .status-bar.err{color:#ff4444}
-footer{text-align:center;margin-top:16px;padding:8px;font-size:7px;color:#555;border-top:2px solid #222}
 .legend{font-size:7px;color:#666;margin-top:6px;line-height:1.4}
 .readout{font-size:9px;color:#00ff88;background:#0a0a10;border:2px solid #333;padding:6px;margin:2px 0 10px;text-align:center;letter-spacing:1px}
 /* ---- Engine Design tab ---- */
@@ -330,6 +329,8 @@ body.race-open{overflow:hidden}
    pixel font was a wall nobody read. It gets the whole width while open (.main.wide). */
 .main.wide{grid-template-columns:minmax(0,1fr)}   /* minmax: a wide wiki table scrolls in its box, not the page */
 .main.wide .side-panel{display:none}
+.main.stack{grid-template-columns:minmax(0,1fr)}
+.main.stack .side-panel{grid-column:1;grid-row:auto}
 .guide-body{font-size:16px;color:#b8c4d0;line-height:1.85;margin-bottom:16px}
 .guide-title{font-size:18px;color:#ffcc00;margin:4px 0 18px;line-height:1.5}
 .guide-nav{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin:4px 0 16px}
@@ -382,6 +383,7 @@ canvas.gart{display:block;width:100%;max-width:640px;height:auto;image-rendering
 }
 .opt-row{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:8px 0;border-bottom:2px solid #17172a}
 .opt-row>div{flex:1}
+.opt-note a{color:#5ad}
 .opt-row b{font-size:8px;color:#e0e0e0}
 .opt-note{font-size:7px;color:#778;line-height:1.5;margin-top:4px}
 .opt-row button,.opt-select{flex:0 0 auto;min-width:96px}
