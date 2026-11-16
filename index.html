@@ -810,7 +810,7 @@ body.guided-open{overflow:hidden}
 </div>
 <div class="container">
 <header>
-<h1>PIXEL ENGINE SIM v0.7 build 330</h1>
+<h1>PIXEL ENGINE SIM v0.7 build 331</h1>
 <div class="subtitle" id="subtitle">ENGINE DESIGNER • BUILD IT, THEN DRIVE IT</div>
 </header>
 <div class="build-strip" id="buildStrip">
@@ -5865,8 +5865,6 @@ const PRESETS=[
 // Held back: Ford Coyote Gen 3, 37.7 / 32 mm (Ford Performance Coyote Technical Reference). The rule gives it 36.3 mm;
 // with its real valves it goes from 452 to 477 hp (460 published) and its power is still rising at the 7500 rpm limiter,
 // where the real engine peaks at 7000 (test60's 'limiter' anomaly). Its cam and intake want the same review.
-// Held back (build 330): GM LS7, 55.88 / 40.89 mm (GM, via Corvette Action Center: 2.20 / 1.61 in). The rule gives
-// 52.4 mm; its real valves take it from 8.3% to 15.6% over its 505 hp, the LS3's pattern: cam and intake first.
 // Held back (build 330): GM LT4, 54.1 / 40.39 mm (GM parts 12650770 / 12678746: 2.13 / 1.59 in). Its preset gives no
 // valve count, so it runs as four valves a cylinder; one intake valve of 54 mm needs the preset's head fixed first.
 const ENGINE_VALVES={
@@ -5880,7 +5878,10 @@ const ENGINE_VALVES={
   'BMW S14B23 (M3 E30)':{iv:37,ev:32,src:'TRW OEM and SuperTech standard-size valves: 37 / 32 mm (std)'},
   'Honda B18C spec R (Integra Type R DC2)':{iv:33,ev:28,src:'Brian Crower and Ferrea stock-size valves, B16A/B18C incl. Integra Type R: 33 / 28 mm (std)'},
   'Nissan RB26DETT (Skyline GT-R R34)':{iv:34.6,ev:30.15,src:'Ferrea, Manley and GSC stock-size valves: 34.6 / 30.15 mm; Tomei +1 mm kit 35.65 / 31.15 (std)'},
-  'Honda K20C1 (Civic Type R FK8)':{iv:35,ev:29,src:'Ferrea and Skunk2 stock-size valves: 35 / 29 mm (std)'}
+  'Honda K20C1 (Civic Type R FK8)':{iv:35,ev:29,src:'Ferrea and Skunk2 stock-size valves: 35 / 29 mm (std)'},
+  // Build 331 (owner's ruling): the LS7 takes its real valves although it lands 15.6% over its 505 hp; the gap is its
+  // cam or intake, not the valves (named in the CHANGELOG).
+  'GM LS7 (Corvette Z06 C6)':{iv:55.88,ev:40.89,src:'GM via Corvette Action Center, LS7 engine p.13: titanium intake 2.20 in, sodium exhaust 1.61 in'}
 };
 // Category order for the preset list (the dropdown groups by it; the UI pass will build on this).
 const PRESET_CATS=['Archetypes','Kei & City','Compact Turbo','NA Sports','Turbo Performance','American V8','Supercar','Performance SUV','Track','Rotary','Diesel','Pickup','Two-Stroke'];

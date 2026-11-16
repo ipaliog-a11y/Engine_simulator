@@ -18,6 +18,14 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 ## [Unreleased]
 
+### The LS7 takes its real valves (build 331)
+
+Phase B, step 2, on the owner's ruling: build 330 held the LS7 back because its real valves push it past 10% over its published power.
+
+- **`ENGINE_VALVES`:** GM LS7, 55.88 / 40.89 mm (GM, via Corvette Action Center: titanium intake 2.20 in, sodium exhaust 1.61 in), in place of the packing rule's 52.4 mm.
+- **What moved:** the Corvette Z06 (C6) only, peak power +8.3% → +15.6% over its 505 hp on the engine bench.
+- **Named gap:** the valves are GM's, so the excess lies elsewhere, most likely the cam or the intake (the LS3, held back in build 287, shows the same pattern). The LS3, LT4 and Coyote stay on the rule.
+
 ### Five more real engines get their own valves (build 330)
 
 Phase B, step 2 (`plans/road-to-v1.md`), done the way build 287 did it: one sourced engine at a time, so only that engine's cars move.
