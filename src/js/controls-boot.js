@@ -110,6 +110,15 @@ function bindControls(){
     chalSel.value=activeRunChallenge;
     chalSel.addEventListener('change',e=>{activeRunChallenge=e.target.value;refreshChallenge();});
   }
+  const chalPace=document.getElementById('chalPace');
+  if(chalPace){
+    chalPace.value=String(chalPaceFactor);
+    chalPace.addEventListener('change',e=>{
+      const f=+e.target.value;
+      if(CHAL_PACE_OPTS.includes(f)){chalPaceFactor=f;refreshChallenge();}
+    });
+  }
+  if(typeof bindChallengeHover==='function')bindChallengeHover();
   const btnChal=document.getElementById('btnChalSolve');
   if(btnChal)btnChal.addEventListener('click',()=>refreshChallenge());
   loadImportedTracks();

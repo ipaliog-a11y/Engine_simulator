@@ -27,11 +27,11 @@ Real roads: OSRM centreline + ASTER elevation; width modelled (as Nordschleife).
 
 - Open path: `catmullOpen` / `buildRoad` in `src/js/eco-roads.js` (no wrap).
 - Min-time on the centreline from rest (`ecoMinTime`).
-- Target = `timeFactor` × that car’s min-time (Alpine: 1.25), eco-rally style.
+- Target = pace × that car’s min-time. UI pace (build 344): 125% / 150% / 200% (`chalPaceFactor`); road `timeFactor` is the default when unset.
 - Binary-search a speed cap on the open min-time solve so finish time hits the target.
 - ICE: fuel from `engineFuelAt` (warm oil). EV (build 342): pack kWh / Wh/km via `motorLosses` + `packDraw` + regen (`ecoEnergyJ`).
-- UI shows the target once (time ≈ target by construction).
-- **Named gap:** speed cap is not optimal lift-coast DP. A pure max-time limit would pick flat-out here (DFCO on brakes).
+- UI shows the target once (time ≈ target by construction). Hover the route (build 344) for distance, speed and incline at that point.
+- **Named gap:** speed cap is not optimal lift-coast DP. A pure max-time limit would pick flat-out here (DFCO on brakes). Hybrids still use the ICE fuel path on this challenge.
 
 ## Follow-ups
 
