@@ -18,13 +18,22 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 ## [Unreleased]
 
-### The LS7 takes its real valves (build 331)
+### The LS7 takes its real valves (build 333)
 
 Phase B, step 2, on the owner's ruling: build 330 held the LS7 back because its real valves push it past 10% over its published power.
 
 - **`ENGINE_VALVES`:** GM LS7, 55.88 / 40.89 mm (GM, via Corvette Action Center: titanium intake 2.20 in, sodium exhaust 1.61 in), in place of the packing rule's 52.4 mm.
-- **What moved:** the Corvette Z06 (C6) only, peak power +8.3% → +15.6% over its 505 hp on the engine bench.
+- **What moved (fingerprint):** the Corvette Z06 (C6) only: 536 → 584 hp against 505 published (+6.1% → +15.6%); 0–100 4.46 → 4.47 s (traction-limited); tech lap 71.81 → 71.79 s. Other cars change only their lap hash (the shared racing-line cache, build 287).
+- **`test145` fails on `main` as well**, with the same 25 failures before and after (12 engines newly wear at full load, past `FULL_LOAD_KNOWN`; 13 run no hotter at full load than free-revving); the LS7's coolant at full load goes 114 → 116 °C.
 - **Named gap:** the valves are GM's, so the excess lies elsewhere, most likely the cam or the intake (the LS3, held back in build 287, shows the same pattern). The LS3, LT4 and Coyote stay on the rule.
+
+### The port throat kept as a rule (build 332)
+
+Owner's decision, phase B, step 2. No physics changed: only the register, its test and a code comment.
+
+- **`THROAT_RATIO` (0.85) is signed off as a rule.** No maker publishes a factory port's throat diameter, so it cannot be sourced the way the valves were (builds 287, 330, 331). Heywood (ch. 5) puts intake throats at 0.8–0.9 of the valve, and the flow coefficient's 0.42 plateau (Taylor) is taken on this same 0.85.
+- **After v1.0:** the throat from the valve and its seat (the valve less twice the seat width and overhang, on a 45° seat), per engine where a factory service manual gives the seat width.
+- **Register:** 11 → 10 open (`tests/test166.mjs`). B2's `EV_RATIO` stays open while real engines still lack sourced valves.
 
 ### Five more real engines get their own valves (build 330)
 
