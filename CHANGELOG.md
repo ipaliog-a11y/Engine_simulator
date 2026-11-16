@@ -18,6 +18,13 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 ## [Unreleased]
 
+### A plan for the guided build that sets values (build 340)
+
+- `plans/guided-build.md` proposes the walk-through over the design cards: the ordered steps for piston NA, turbo,
+  diesel, rotary, EV and hybrid cars, the field, limits and help for each, how the coupled fields are handled, what a
+  goal hint computes and what it costs, the finish screen, and three builds with their tests.
+- It ends with seven questions for the owner, each with a recommendation. No code changes; `plans/road-to-v1.md` links to it.
+
 ### The right column is back where it belongs, and the footer moves to OPTIONS > ABOUT (build 339)
 
 - Since build 312 the PARTS page's brake block was missing its closing tag. The browser then nested the right column

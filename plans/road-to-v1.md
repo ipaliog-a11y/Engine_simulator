@@ -260,6 +260,8 @@ A guided build that sets values (owner's request, November 2026; build 308 only 
 3. A finish screen: the build against the car it started from (power, torque, 0–100, price, reliability), and the
    limit it sits on.
 Open: the coupled fields (`ICD_DEPS`: boost with fuel, timing, intercooler) must be followed; branches for rotary and EV.
+**Plan:** `plans/guided-build.md` (build 340): the steps per powertrain, coupled fields, hints, finish screen and the
+owner's questions.
 
 ## Method
 
