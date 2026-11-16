@@ -157,6 +157,21 @@ function coolingEffectiveness(){
 }
 // A road spark engine's brake efficiency at rated power: 25-30% (Heywood, Table 12.1); BSFC ~280 g/kWh on petrol.
 const HEAT_REF_EFF=0.29;
+// The cooling system's design point (build 337). The two temperature rises here were fitted (34 C of coolant, 8 + 30 C
+// of oil over it) and put a factory engine at its own rated power past both wear lines, where a real one holds rated
+// power for hundreds of hours. Now a radiator rejects heat in proportion to the coolant's rise over the air through it,
+// and a factory one is sized so that at rated power on a hot day the coolant is at its limit:
+//   RAD_DESIGN_AMB    49 C (120 F): the ambient radiators are designed for (Toromont/Caterpillar, "Radiator Design
+//                     Considerations"; SAE J819 calls the margin air-to-boil).
+//   COOLANT_LIMIT_C   112 C: the top-tank limit, taken as the line where the wear model starts charging OVERHEAT.
+//                     Probable: an engine maker's own figure differs by engine.
+//   THERMOSTAT_SPAN   10 C: a wax thermostat is fully open 15-20 F above its opening temperature (Stant).
+//   OIL_CONT_C        121 C (250 F): the sump's continuous limit (MIL-L-2104 oils, US Army BRDEC report ADA282838;
+//                     135 C for 15 minutes). The oil's rise over the coolant at the design point is the gap between
+//                     the two limits. Probable: one sourced limit, not a measured rise.
+//   OIL_WEAR_C        151 C: ASTM D8111 (Sequence IIIH) holds the sump there for 90 hours at 3900 rpm and the engine
+//                     finishes; SAE J300 rates an oil's film at 150 C. Wear starts past it (was 132 C, unsourced).
+const RAD_DESIGN_AMB=49,COOLANT_LIMIT_C=112,THERMOSTAT_SPAN=10,OIL_CONT_C=121,OIL_WEAR_C=151;
 function stepThermal(dt){
   if(isElectric())return;   // the motor's heat is stepped with its losses (stepMotorBench)
   if(!autoThermal)return;
@@ -174,11 +189,15 @@ function stepThermal(dt){
   const designFuelKW=Math.max(260,engine.radHp||0)*0.7457/HEAT_REF_EFF;
   const loadFrac=clamp(fuelKW/designFuelKW,0,1.6);
   const cooling=coolingEffectiveness();
-  // Heat load raises temps; cooling capacity divides that rise back down.
-  let heat=loadFrac*34+(state.knockRisk>60?6:0);
-  let coolantTarget=clamp(engine.thermostat+heat/cooling,engine.thermostat,140);
-  let oilDelta=(8+loadFrac*30)*(engine.oilCooler?0.6:1.0);
-  let oilTarget=clamp(state.coolant+oilDelta,40,150);
+  // The coolant's rise over the air with the thermostat fully open (the knock term is a game rule, as before).
+  const amb=state.iat,rise=(COOLANT_LIMIT_C-RAD_DESIGN_AMB)*loadFrac/cooling+(state.knockRisk>60?6:0);
+  // Below that the thermostat throttles the radiator: open by x/THERMOSTAT_SPAN at x above its temperature, it passes
+  // that share of the heat, so x (x + thermostat - ambient) = span * rise.
+  const D=engine.thermostat-amb,x=(-D+Math.sqrt(D*D+4*THERMOSTAT_SPAN*rise))/2;
+  let coolantTarget=clamp(D>0&&x<THERMOSTAT_SPAN?engine.thermostat+x:amb+rise,engine.thermostat,140);
+  // The oil cooler's 0.6 is still fitted.
+  let oilDelta=(OIL_CONT_C-COOLANT_LIMIT_C)*loadFrac*(engine.oilCooler?0.6:1.0);
+  let oilTarget=clamp(state.coolant+oilDelta,40,170);
   state.coolant+=(coolantTarget-state.coolant)*(1-Math.exp(-0.08*dt));
   state.oil+=(oilTarget-state.oil)*(1-Math.exp(-0.05*dt));
   dynoCache=null;

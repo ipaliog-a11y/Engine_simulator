@@ -1,4 +1,4 @@
-# PIXEL ENGINE SIM v0.7 build 336
+# PIXEL ENGINE SIM v0.7 build 337
 
 **A lightweight, 8-bit style internal combustion engine *designer* & simulator** inspired by *Automation*.
 
@@ -526,7 +526,7 @@ Source: GitHub Actions**, and it deploys to
 | Air-Fuel Ratio   | rescales/fuel | ~λ0.86 peak power, ~λ1.05 peak efficiency (range set by fuel) |
 | Intake Air Temp  | -10 – 60 °C   | Colder = denser charge = more power |
 | Coolant Temp     | 40 – 130 °C   | Optimal ~90 °C (auto in Auto Thermal) |
-| Oil Temp         | 40 – 150 °C   | Optimal ~100 °C (auto in Auto Thermal) |
+| Oil Temp         | 40 – 170 °C   | Optimal ~100 °C (auto in Auto Thermal) |
 
 RPM and MAP are now **outputs** (shown live under the sliders), not inputs. The **Dyno
 Curve** tab remains a wide-open-throttle steady-state sweep for reading the full curve.

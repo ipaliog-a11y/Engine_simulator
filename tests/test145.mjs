@@ -8,8 +8,8 @@
 //   · full load at the rpm of peak power heats each engine more than free-revving does (the oil at the end of the run);
 //   · a radiator sized for less power runs hotter at full load (the generic 260 hp part against an LS7's own, SMALL
 //     against LARGE);
-//   · full load at peak power for 120 s: the engines that still take wear are a named list that may only shrink
-//     (FULL_LOAD_KNOWN; the lumped model's fitted temperature rises, named in the CHANGELOG);
+//   · full load at peak power for 120 s: no factory engine takes wear (FULL_LOAD_KNOWN, a list that could only shrink,
+//     has been empty since build 337: the cooling system's design point), and none passes the oil's 121 C continuous limit;
 //   · the guide says where the heat comes from, in English and Greek.
 import { chromium } from './pw.mjs';
 import { fileURLToPath, pathToFileURL } from 'url';
@@ -24,26 +24,9 @@ await page.goto(pathToFileURL(path.join(repo, 'index.html')).href, { waitUntil: 
 await page.waitForTimeout(400);
 const fails = [];
 
-// Build 235: the lumped thermal model's temperature rises (34 C of coolant at full heat over the cooling capacity, 8 +
-// 30 C of oil over the coolant) are fitted, and at sustained full rated power they put the oil past 132 C on engines
-// with no oil cooler. A factory cooling system is sized to hold its engine's rated power; deriving that design point
-// is its own change.
-const FULL_LOAD_KNOWN = new Set([
-  'VW EA888 2.0 TSI (Golf GTI Mk7)', 'Toyota 2JZ-GTE (Supra A80)', 'Subaru EJ257 (Impreza WRX STI)',
-  'Mitsubishi 4G63T (Lancer Evo IX)', 'GM LS3 (Corvette C6)', 'GM LS7 (Corvette Z06 C6)', 'Ford Coyote 5.0 (Mustang GT 2018)',
-  'Lamborghini 6.5 V12 (Murciélago LP640)', 'Ferrari F136 FB V8 (458 Italia)', 'Lamborghini 5.2 V10 (Huracán LP610-4)',
-  'Lamborghini 5.2 V10 (Huracán STO)', 'Mazda 13B-REW (RX-7 FD)', 'Buick LC2 turbo V6 (GNX)', 'Jaguar XK 3.8 I6 (E-Type S1)',
-  // build 244: the Daytona's carburettors now fade at the top (their venturi drop), so its power peaks below the limiter
-  // and "full load at peak power" holds it hard for the first time, where its peak used to sit near the limiter on almost
-  // no dyno load. The same fitted temperature rises put its oil at 149 C; named in the CHANGELOG.
-  'Ferrari Colombo 4.4 V12 (365 GTB/4)',
-  // build 336: not new heat. This test steps at 20 frames a second, where until build 327 the dyno brake was unstable and
-  // threw these engines onto the limiter and off the load in turn, so they read cool. Held steady (as the page always
-  // held them at 60 frames) the same fitted rises put their oil past 132 C; named in the CHANGELOG.
-  'Toyota G16E-GTS (GR Yaris)', 'Honda F20C (S2000 AP1)', 'BMW S54 (M3 E46)', 'Porsche 4.0 flat-six (911 GT3 991.2)',
-  'Audi 2.5 TFSI (RS3 8V)', 'Dodge 6.2 Hellcat (Challenger SRT)', 'Ferrari F129B V8 (F355)', 'BMW N57 3.0d (330d F30)',
-  'Cummins 6.7 (Ram HD 2019 HO)', 'Audi 2.1 20V turbo I5 (Sport quattro)', 'Mercedes-AMG M156 6.2 V8 (C63 W204)',
-]);
+// Build 337: empty. The cooling system now has a design point (rated power in 49 C air holds the coolant at 112 C and
+// the oil at its 121 C continuous limit), and oil wear starts at 151 C, so no factory engine wears at its own rated power.
+const FULL_LOAD_KNOWN = new Set([]);
 
 const r = await page.evaluate(() => {
   const dt = 0.05;
@@ -92,6 +75,10 @@ console.log(`== full load at peak power 120 s: ${fullWorn.length} take wear (kno
 fullWorn.forEach(x => { if (!FULL_LOAD_KNOWN.has(x.n)) fails.push(`${x.n} newly wears at full load (${x.full.causes.join(', ')}, oil ${f(x.full.oil)} C)`); });
 for (const n of FULL_LOAD_KNOWN) { if (!r.all.some(x => x.n === n)) fails.push(`FULL_LOAD_KNOWN names ${n}, which is not a preset`);
   else if (!fullWorn.some(x => x.n === n)) console.log(`   RESOLVED: ${n} no longer wears at full load — remove it from FULL_LOAD_KNOWN`); }
+const hotOil = r.all.filter(x => x.full.oil > 121.5 && x.full.oilEnd > 121.5);
+const fo = r.all.map(x => x.full.oilEnd).sort((a, b) => a - b);
+console.log(`== oil after 120 s at peak power: median ${f(fo[fo.length >> 1])} C, highest ${f(fo[fo.length - 1])} C ==`);
+hotOil.forEach(x => fails.push(`${x.n}: oil ${f(x.full.oilEnd)} C at its own rated power, past the 121 C continuous limit`));
 console.log(`== LS7 coolant at full load: own radiator ${f(r.own)} C, generic 260 hp ${f(r.generic)} C; SMALL ${f(r.small)}, LARGE ${f(r.large)} ==`);
 if (!(r.generic > r.own)) fails.push('a radiator sized for less power does not run hotter');
 if (!(r.small > r.large)) fails.push('a SMALL radiator does not run hotter than a LARGE one');

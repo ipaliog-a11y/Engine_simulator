@@ -647,7 +647,7 @@ The wall heat comes from <b>Woschni's</b> correlation integrated over a traced c
 EGT is shown two ways in the model: the mass-averaged temperature the turbine works on, and what a thermocouple in the pipe would read (closer to the time average, a little cooler, because the hottest gas passes quickest).
 </div>
 <div class="guide-limit" data-gk="heatLimit">
-Limit: the coolant and oil temperatures come from a lumped model, not from heat flows through the block: a heat load (the fuel burned, against the fuel the engine burns at the power its radiator was sized for at 29% brake efficiency) against a cooling capacity, with first-order lags. Its temperature rises are fitted, and at sustained full rated power they still take the oil past 132 °C on most engines without an oil cooler.
+Limit: the coolant and oil temperatures come from a lumped model, not from heat flows through the block: a heat load (the fuel burned, against the fuel the engine burns at the power its radiator was sized for at 29% brake efficiency) against a cooling capacity, with first-order lags. A factory radiator is sized to hold the coolant at 112 °C at rated power in 49 °C air, and the oil 9 °C above it (its 121 °C continuous limit); the rpm-based airflow and the oil cooler's effect are still fitted.
 </div>
 </div>
 <div class="guide-see">See also: <a data-gp="combustion">Combustion &amp; the burn</a> · <a data-gp="friction">Friction, oil &amp; pumping</a> · <a data-gp="wear">Wear &amp; reliability</a></div>
@@ -1190,7 +1190,7 @@ Health falls each second by the sum of the damage rates that apply:
 <div class="gtab-wrap"><table class="gtab"><tr><th>cause</th><th>when</th><th>rate (per s)</th></tr>
 <tr><td>detonation</td><td>knock score above 55</td><td>up to 0.060</td></tr>
 <tr><td>overheat</td><td>coolant above 112 °C</td><td>up to 0.030</td></tr>
-<tr><td>oil temperature</td><td>oil above 132 °C</td><td>up to 0.025</td></tr>
+<tr><td>oil temperature</td><td>oil above 151 °C</td><td>up to 0.025</td></tr>
 <tr><td>valve float</td><td>above the valve-float rpm (a redline set past it)</td><td>0.004 + 0.1 × the share past float</td></tr>
 <tr><td>lean under boost</td><td>λ above 1.05 with MAP above 0.9 (petrol)</td><td>0.14 × excess λ × excess MAP</td></tr>
 <tr><td>nitrous / anti-lag / cold oil</td><td>while active</td><td>0.011 / 0.004 / 0.004</td></tr></table></div>
@@ -1213,7 +1213,7 @@ A <b>three-way catalytic converter</b> cleans all three at once, but only in a n
 </div>
 <div class="gtier gt-game"><div class="gtier-h">LV2 · IN THE GAME</div>
 <div class="guide-body" data-gk="emissionsGame">
-The LIVE panel's <b>EMISSIONS</b> analyser shows CLEAN / OK / DIRTY plus tailpipe <b>CO₂</b>, <b>CO</b>, <b>HC</b>, <b>NOx</b> and (diesel) <b>PM</b> in g/s from the design, the tune and the live operating point. Each species tile turns <b>amber</b> then <b>red</b> as that pollutant (g per kg of fuel) climbs the same scale the emit score uses; CO₂ uses g/kWh when you are making power. Choose the <b>CATALYTIC CONV.</b>: stock (97% conversion), sport (85%) or none. The scorecard's <b>emit</b> score still rates a stoich cruise and part load.
+The LIVE panel's <b>EMISSIONS</b> analyser shows CLEAN / OK / DIRTY plus tailpipe <b>CO₂</b>, <b>CO</b>, <b>HC</b>, <b>NOx</b> and (diesel) <b>PM</b> in g/s from the design, the tune and the live operating point. Each species tile turns <b>amber</b> then <b>red</b> as that pollutant (g per kg of fuel) climbs the same scale the emit score uses; CO₂ uses g/kWh when you are making power. Choose the <b>CATALYTIC CONV.</b>: stock (97% conversion), sport (85%) or none. The scorecard's <b>emit</b> score still rates a stoich cruise and part load. An engine with a catalyst and an ECU has a <b>LAMBDA SENSOR</b> tile: port injection carries a narrowband sensor, which reads about 900 mV rich and under 100 mV lean and can only hold λ 1; direct injection and diesels carry a wideband one, which reads λ itself. Tune a narrowband engine off λ 1 at part load and the FAULT lamp stores P0171 (lean) or P0172 (rich).
 </div>
 </div>
 <div class="gtier gt-phys"><div class="gtier-h">LV3 · THE PHYSICS</div>

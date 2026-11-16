@@ -302,7 +302,7 @@ function updateDashLamps(){
   ['lampCool','lampOil','lampOilP'].forEach(id=>{const el=g(id);if(el)el.hidden=ev;});
   if(!ev){
     set('lampCool',state.coolant>115?'danger':state.coolant>108?'warn':'');
-    set('lampOil',state.oil>132?'danger':state.oil<55?'warn':'');
+    set('lampOil',state.oil>OIL_WEAR_C?'danger':state.oil<55||state.oil>OIL_CONT_C?'warn':'');
     set('lampOilP','');   // stub: never lights
   }
   {const L=obdLamp(),n=Object.keys(obd.codes).length;
@@ -353,6 +353,7 @@ function updateUI(){
   const hp=Math.round(state.engineHealth*100),healthEl=document.getElementById('statHealth');
   healthEl.querySelector('.value').textContent=state.blown?tr('DEAD'):hp;
   healthEl.className='stat'+(state.blown||hp<30?' danger':(hp<70?' warning':''));
+  updateLambdaTile();
   // Exhaust analyser (build 257): CLEAN / OK / DIRTY from emRating; rates in g/s.
   // Per-species tone (build 258): same g/kg (and CO2 g/kWh) thresholds the rating uses.
   const emEl=document.getElementById('statEmit');
