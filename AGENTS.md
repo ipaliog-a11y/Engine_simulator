@@ -4,7 +4,7 @@ This file is for any coding agent working on this repository, Cursor's included.
 here has followed, so that work started in one tool can be picked up in another without conflicts. **Read it whole
 before your first change**, and follow it unless the repository owner tells you otherwise in the task itself.
 
-Pixel Engine Sim is one HTML page (`index.html`) that simulates an engine, a car, a lap and a race from physics. The
+Pixel Powertrain (formerly Pixel Engine Sim) is one HTML page (`index.html`) that simulates an engine, a car, a lap and a race from physics. The
 goal for v1.0 is **every number derived, not fitted**. That goal decides most of the rules below.
 
 ## 0. Owner decisions in force (override the sections below until the owner lifts them)

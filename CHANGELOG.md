@@ -1,6 +1,6 @@
 # Changelog
 
-All notable changes to Pixel Engine Sim.
+All notable changes to Pixel Powertrain.
 
 Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions are `MAJOR.MINOR`, and every commit carries a unique **build number** — a counter in the
@@ -17,6 +17,17 @@ they are accurate about *what* shipped but not about the day it shipped.
 ---
 
 ## [Unreleased]
+
+### The app is renamed Pixel Powertrain, with a split-piston icon (build 347)
+
+- The owner's decision (plans/road-to-v1.md, decision 19): the name is now **Pixel Powertrain** in the page title, the
+  title screen, the header and version line, OPTIONS > ABOUT, the PNG reports, the share text, the web manifest, README
+  and LICENSE. Past CHANGELOG entries and the GitHub repository keep the old name.
+- New icon, the owner's draft B: a split piston, fuel half with a flame and electric half in cyan with a spark.
+  `favicon.svg` is replaced and `assets/icon-192.png` / `icon-512.png` are redrawn from it (pixelated scaling). The
+  service worker's cache name moves to v5 so installed copies pick the new icons up.
+- Unchanged on purpose: the `pes.` storage keys and the save and share formats, so existing saves and links still load.
+  `tools/stamp.mjs` reads either name on the version line, so it still finds the number on older `main` builds.
 
 <<<<<<< HEAD
 ### The pack's resistance follows its temperature in the lap, the race and the WLTP cycle (build 346)

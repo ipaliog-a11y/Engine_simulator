@@ -1,6 +1,6 @@
 {
-  "name": "Pixel Engine Sim",
-  "short_name": "EngineSim",
+  "name": "Pixel Powertrain",
+  "short_name": "Powertrain",
   "description": "An 8-bit style, physics-based 2-cylinder 4-stroke engine simulator.",
   "start_url": "./index.html",
   "scope": "./",

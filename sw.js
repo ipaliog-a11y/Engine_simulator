@@ -1,5 +1,5 @@
-/* Pixel Engine Sim — offline-first service worker. */
-const CACHE = 'pixel-engine-sim-v4';
+/* Pixel Powertrain — offline-first service worker. */
+const CACHE = 'pixel-engine-sim-v5';
 const ASSETS = [
   './',
   './index.html',

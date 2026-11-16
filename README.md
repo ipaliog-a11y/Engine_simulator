@@ -1,4 +1,4 @@
-# PIXEL ENGINE SIM v0.7 build 346
+# PIXEL POWERTRAIN v0.7 build 347
 
 **A lightweight, 8-bit style internal combustion engine *designer* & simulator** inspired by *Automation*.
 
@@ -1025,4 +1025,4 @@ MIT – free to use, modify, and share. Credit appreciated but not required. See
 
 ---
 
-**PIXEL ENGINE SIM** – Built for tinkerers who love engines and pixel art.
+**PIXEL POWERTRAIN** – Built for tinkerers who love engines and pixel art.
