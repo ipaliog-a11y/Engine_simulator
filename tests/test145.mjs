@@ -37,7 +37,7 @@ const FULL_LOAD_KNOWN = new Set([
   // and "full load at peak power" holds it hard for the first time, where its peak used to sit near the limiter on almost
   // no dyno load. The same fitted temperature rises put its oil at 149 C; named in the CHANGELOG.
   'Ferrari Colombo 4.4 V12 (365 GTB/4)',
-  // build 335: not new heat. This test steps at 20 frames a second, where until build 327 the dyno brake was unstable and
+  // build 336: not new heat. This test steps at 20 frames a second, where until build 327 the dyno brake was unstable and
   // threw these engines onto the limiter and off the load in turn, so they read cool. Held steady (as the page always
   // held them at 60 frames) the same fitted rises put their oil past 132 C; named in the CHANGELOG.
   'Toyota G16E-GTS (GR Yaris)', 'Honda F20C (S2000 AP1)', 'BMW S54 (M3 E46)', 'Porsche 4.0 flat-six (911 GT3 991.2)',

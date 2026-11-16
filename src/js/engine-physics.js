@@ -1195,7 +1195,7 @@ function stepEngine(dt){
   // bench was steady only there: at 30 frames an RS3 swung 660 rpm, an MX-5 1700 (build 327). Steps no longer than
   // inertia/(brakeGain*30/pi) take the overshoot out exactly once, at any frame rate.
   const hMax=engine.inertia/Math.max(1e-9,engine.brakeGain*30/Math.PI),n=Math.min(40,Math.max(1,Math.ceil(dt/hMax-1e-9)));
-  // The frame's burned share is the mean over its steps (build 335). Read at the frame's end alone, an even count of
+  // The frame's burned share is the mean over its steps (build 336). Read at the frame's end alone, an even count of
   // steps on the limiter ends every frame on the same half of the burn-and-cut pair: always at the redline, where the
   // fuel reads as cut, so a free-revving engine made no heat at all.
   let b=0;
@@ -1454,7 +1454,7 @@ function updateEnginePhysics(){
 
   if(state.fuelCut){   // overrun / limiter fuel cut → no fuel burned, engine braking
     state.fuelFlowLph=0;state.bsfc=999;state.thermalEff=0;
-    // at the redline the frame may still have burned on the way there: the cooling system sees that share (build 335)
+    // at the redline the frame may still have burned on the way there: the cooling system sees that share (build 336)
     state.heatFuelLph=state.rpm>=engine.redline&&state.burnFrac>0&&!overrunFuelCut()?meteredFuelKgS(map)*3600/engine.fuelDensity*state.burnFrac:0;
     if(state.rpm<engine.redline){state.torque=Math.min(0,brakeTorqueRaw(state.rpm,map,true));state.powerKW=state.torque*state.rpm*2*Math.PI/60/1000;state.powerHP=state.powerKW/0.7457;}
     computeEmissions();   // zeros the analyser (fuelCut)
