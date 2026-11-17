@@ -18,6 +18,16 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 ## [Unreleased]
 
+### Moose run: tap the diagram to see the car from above, with its yaw axis, understeer and oversteer (build 357)
+
+- A tap on the moose run's lower diagram switches between the front axle and the car seen from above, nose up, to true
+  scale and angles: the yaw axis z through the CG with the yaw rate r, the pivot (the point on the centre line with no
+  sideways velocity, x = −vy/r), each tyre's direction of travel and side force, the body slip angle β and the steer δ.
+- Balance from the slip angles (Gillespie ch. 6): UNDERSTEER when αF > αR, OVERSTEER when αF < αR, NEUTRAL inside a
+  0.5° display band, TRANSITION while front and rear slip opposite ways (swinging between lanes, where neither term
+  applies). Two arcs ahead compare the car's path (r/V) with neutral steer (δ/L).
+- Display only: the replay samples now also carry yaw rate, body velocity, steer and slip angles. No score moves.
+
 ### Moose replay: slow motion, a longer run-up and run-out (build 356)
 
 - REPLAY on the moose run: 1×, 0.5× or 0.25× of real time (changing it restarts the replay).
