@@ -18,7 +18,7 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 ## [Unreleased]
 
-### The app is renamed Pixel Powertrain, with a split-piston icon (build 347)
+### The app is renamed Pixel Powertrain, with a split-piston icon (build 348)
 
 - The owner's decision (plans/road-to-v1.md, decision 19): the name is now **Pixel Powertrain** in the page title, the
   title screen, the header and version line, OPTIONS > ABOUT, the PNG reports, the share text, the web manifest, README
@@ -29,7 +29,12 @@ they are accurate about *what* shipped but not about the day it shipped.
 - Unchanged on purpose: the `pes.` storage keys and the save and share formats, so existing saves and links still load.
   `tools/stamp.mjs` reads either name on the version line, so it still finds the number on older `main` builds.
 
-<<<<<<< HEAD
+### Moose: EVs coast through the exit (build 347)
+
+- After entry, throttle=0 on an EV is full regen. Model Y / 3 / Plaid scrubbed to a stop before the exit (~x 40–55) and still scored clear because exit cones were never reached.
+- EV “throttle released” is now a coast (pedal that zeros motor torque). A clear run must also pass x ≥ 61 (exit gate).
+- Also clears leftover CHANGELOG conflict markers from the 345/346 merge on main.
+
 ### The pack's resistance follows its temperature in the lap, the race and the WLTP cycle (build 346)
 
 - Until now the lap, the race and the WLTP cycle all used the pack's resistance at 25 °C, even though they track the pack's
@@ -45,7 +50,7 @@ they are accurate about *what* shipped but not about the day it shipped.
   build is the first item. Next is a cell's sag and recovery as one RC pair.
 - Left open: the lap's torque curve (`driveTorqueRated`), the race's pace-grid energy price and the motor bench still read
   25 °C. `test136` already fails on `main` (motor locks from build 224), which is unrelated.
-=======
+
 ### Challenges: moose avoidance (build 345)
 
 - New CHALLENGES kind **Moose Avoidance** (ISO 3888-2): highest entry speed with no cone touched, same cone geometry and search as `test173`, via `stepCar`.
@@ -86,7 +91,6 @@ they are accurate about *what* shipped but not about the day it shipped.
   diesel, rotary, EV and hybrid cars, the field, limits and help for each, how the coupled fields are handled, what a
   goal hint computes and what it costs, the finish screen, and three builds with their tests.
 - It ends with seven questions for the owner, each with a recommendation. No code changes; `plans/road-to-v1.md` links to it.
->>>>>>> origin/main
 
 ### The right column is back where it belongs, and the footer moves to OPTIONS > ABOUT (build 339)
 
