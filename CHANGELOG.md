@@ -18,6 +18,23 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 ## [Unreleased]
 
+### Moose test: the driver turns in sooner and uses the lanes' width (build 353)
+
+- The moose driver tried twelve lines through the lanes' centres and bisected each line's speed. A Model 3 cleared
+  only 56 km/h, at 0.63 g against its own skidpad grip of 0.80 g; Teknikens Värld cleared it at 72. The lines finished
+  the move as the nose reached lane 2, the car lagged them by about 1 m, and its rear swung into lane 2's far cone.
+- Now the driver picks from 48 plans: move across by x 20–28 m, use 0, 1/2 or 0.85 of each lane's spare width on
+  the side that shortens the move, and track at the lap driver's gain (1.5/s) or a tighter one (2.5/s). The speed is
+  raised 1 km/h at a time, as in the real test, until three speeds in a row clear with no plan (bisection assumed the
+  clear speed rises smoothly with the plan; it doesn't).
+- Best clear speed before → after: Model 3 56 → 71 (TV 72), Model Y 55 → 71, MX-5 NA 63 → 68, 911 GT3 67 → 79,
+  Civic Type R 71 → 74, F-150 Raptor 65 → 72. Peak ay is now the car's skidpad grip (Model 3 0.81 g).
+- Left open: the last 1 km/h on the Model 3 comes from its tyres. The `eco` tyre gives 0.80 g on the skidpad, while
+  Car and Driver measured 0.86 g.
+- A Land Cruiser with its CG raised to 1.1 m still rolls in 44 of 48 plans at 72 km/h, but the driver now finds a
+  line that only clips a cone. So test214 checks the rollover at 77 km/h (km77's speed), where every plan rolls.
+- A solve takes about 2 s instead of 1.
+
 ### Challenges: eco driver, fixed-time stages, moose failure modes and labelled diagram (build 352)
 
 - **Eco driver** on the economy runs. From eco-driving research: accelerate at the engine's min-BSFC gear and torque

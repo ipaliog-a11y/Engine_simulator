@@ -525,7 +525,7 @@ function driveRoadAt(S,car,s,m){const n=S.x.length,z=[0,0,0,0],grip=[1,1,1,1],c=
 //            coasted on the engine's drag. With the rear past its peak the plan is dropped for a neutral pedal.
 function driveDriver(car,s,line,d){
   const N=line.length,L=car.a+car.b,g=DRIVE_G,wrap=x=>x-2*Math.PI*Math.round(x/(2*Math.PI));
-  const PREVIEW=0.15,PULL=1.5,PAST=1.2,SPEED=1;        // s of road read ahead; 1/s to the line; of the peak slip; 1/s on the speed error
+  const PREVIEW=0.15,PULL=d.pull||1.5,PAST=1.2,SPEED=1;  // s of road read ahead; 1/s to the line (d.pull: the moose driver's, build 353); of the peak slip; 1/s on the speed error
   const fx=s.x+car.a*Math.cos(s.psi),fy=s.y+car.a*Math.sin(s.psi);
   let bi=d.i||0,bd=1e18;                                 // the nearest point, looked for ahead of the last one
   for(let k=0;k<40;k++){const j=((d.i||0)+k)%N,q=line[j],dd=(q.x-fx)*(q.x-fx)+(q.y-fy)*(q.y-fy);if(dd<bd){bd=dd;bi=j;}}
