@@ -1,4 +1,4 @@
-# PIXEL POWERTRAIN v0.7 build 351
+# PIXEL POWERTRAIN v0.7 build 352
 
 **A lightweight, 8-bit style internal combustion engine *designer* & simulator** inspired by *Automation*.
 
@@ -296,6 +296,28 @@ assist map over speed and pedal), regeneration, load-point shifting, electric-dr
   ![race](docs/race.png)
 
   ![race report](docs/race-report.png)
+
+- **Challenges (new)** — a **CHALLENGES** tab of solved runs on real open roads (Alpine Pass, Tail of
+  the Dragon, Big Sur, Route Napoléon, the A85 in the Highlands, the Targa Florio's Piccolo circuit, from
+  OpenStreetMap routing and ASTER elevation) and one cone course. Nobody drives: the sim solves each run.
+  - **Economy** — finish at a target time (125, 150 or 200% of the car's own fastest time) on the least fuel
+    (litres, L/100 km) or pack energy (kWh, Wh/km, regen recovered). An **eco driver** does it: an engine car
+    accelerates at its engine's best-BSFC point, shifts up early and slows on engine braking in fuel cut; an
+    EV accelerates at its motor's most efficient torque and slows on regen where it can. A speed cap and a
+    blend toward the car's full grip and power (shown as ECO BLEND) make the time; the cheapest is kept.
+  - **Fixed-time stage** — the same set time for every car on each road (a Golf GTI Mk7's best plus 2%).
+    The car's fastest run from a standing start either makes it or is a **DNF**.
+  - **Moose avoidance** — the ISO 3888-2 double lane change, at the **best clear speed** (raised until a cone
+    falls, as the standard does) or at a magazine's fixed entry speed: **72 km/h** (Teknikens Värld's pass mark)
+    or **77 km/h** (km77's reference). A run ends **CLEAR**, **CONE**, **SPIN** (turned past 90°) or **ROLLOVER**
+    (two wheels up, then the car tips past its outer tyres as a rigid body; it can only start when the sideways
+    acceleration beats g·t/2h, the static stability factor). A two-wheel lift that lands again is flagged. The
+    replay, seen from behind the front axle, shows weight, the axle's side (inertial) force, each tyre's load and
+    side force in kN, the body's true roll, a lifted wheel in red and the tipped car. The stock cars clear 55–68
+    km/h, about 10 km/h below the magazines' typical 68–84, so at 72 and 77 they all fail by a cone (a known gap).
+  - Hover the road for distance, speed and gradient at that point. Known gaps: the economy plan is a
+    search over a cap and a blend, not an optimal plan; a hybrid uses the engine-car path; regen strength
+    is the regen table's and has not yet been checked against measured EVs.
 
 - **Animated engine cutaway** — the LIVE tab is a section through the engine you
   just designed, and everything on it moves because the simulation moved it:

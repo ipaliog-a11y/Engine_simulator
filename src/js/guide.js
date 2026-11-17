@@ -506,6 +506,14 @@ const GUIDE_ART={
     const gap=((0.4+0.3*Math.sin(t/3))).toFixed(1);
     P.txt(116,12,'P1',GP.r,0.6);P.txt(116,22,'+'+gap,GP.c,0.6);P.txt(116,32,'LAP '+(1+Math.floor(t*0.2)%9),GP.y,0.6);
     const tt=Math.round(70+20*Math.sin(t*0.7));for(let k=0;k<4;k++)P.r(116+k*9,52,7,6,tt>85?GP.y:GP.g);P.txt(116,60,'TYRES '+tt+'C',GP.dim,0.45);}},
+  challenge:{anim:1,draw(P,t){
+    // a winding open road with a stopwatch, and a cone gate with a car swerving through it
+    let px=null,py=null;for(let i=0;i<=60;i++){const x=6+i*1.5,y=40+Math.round(14*Math.sin(i/9)+5*Math.sin(i/4));if(px!=null){P.line(px,py,x,y,GP.road);P.line(px,py-1,x,y-1,GP.road);}px=x;py=y;}
+    const u=gaFrac(t*0.15),ci=Math.round(u*60),cx=6+ci*1.5,cy=40+Math.round(14*Math.sin(ci/9)+5*Math.sin(ci/4));P.r(cx-1,cy-2,3,3,GP.y);
+    P.box(78,6,22,22,GP.steel);P.line(89,17,89,10,GP.white);P.line(89,17,89+Math.round(6*Math.cos(t*2)),17+Math.round(6*Math.sin(t*2)),GP.r);P.txt(76,30,'SET TIME',GP.dim,0.4);
+    for(const [x,y] of [[110,20],[110,34],[128,12],[128,26],[146,20],[146,34]])P.r(x,y,2,3,GP.o);
+    const v=gaFrac(t*0.3),X=104+Math.round(v*50),Y=27-Math.round(7*Math.sin(Math.min(1,v*1.6)*Math.PI));P.r(X-2,Y-1,5,3,GP.c);
+    P.txt(108,44,'ISO 3888-2',GP.dim,0.45);P.txt(8,62,'L/100 KM',GP.g,0.5);P.txt(60,62,'DNF?',GP.r,0.5);P.txt(108,56,'MOOSE',GP.c,0.5);}},
   // --- options & reference ---
   speaker:{anim:1,draw(P,t){
     P.r(8,20,12,32,GP.steelD);P.line(20,20,36,8,GP.steel);P.line(20,52,36,64,GP.steel);P.r(36,8,2,57,GP.steel);
