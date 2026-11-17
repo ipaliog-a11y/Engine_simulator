@@ -137,7 +137,7 @@ function simulateMooseChallenge(speedOpt){
   const pack=(R,extra)=>Object.assign({
     ok:true,kind:'moose',speedKmh:R.vk,shape:R.shape,peakAy:R.ay,peakBeta:R.beta,
     dims:D,cones:G,line:R.line,samples:R.samples||[],
-    mu:car.mu,trackW:D.w,
+    mu:car.mu,trackW:D.w,body:{f:car.a+D.ovF,r:car.b+D.ovR},   // CG to front and rear bumper (top-down view)
     // for the frontal diagram's scale (build 352): track, CG height and tyre radius in metres
     track:(car.tF+car.tR)/2,cgH:car.h,rT:car.r,
     outcome:R.outcome,coneX:R.coneX,coneY:R.coneY,lift2:R.lift2,liftSide:R.liftSide,tipMax:R.tipMax,

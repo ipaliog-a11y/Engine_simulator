@@ -6,6 +6,7 @@ function refreshChallenge(){
   const ch=runChallengeById(activeRunChallenge);
   chalResult=solveRunChallenge(ch.id);
   chalHover.i=-1;
+  const key=chalResult&&chalResult.road?chalResult.road.label:'';if(key!==chalView.key){chalView.key=key;chalViewReset();}
   chalMooseT0=(typeof performance!=='undefined'?performance.now():Date.now());
   const pace=document.getElementById('chalPace');
   if(pace){const row=pace.closest('.field');if(row)row.style.display=ch.kind==='economy'?'':'none';}
@@ -80,15 +81,26 @@ function renderChallenge(){
     tr(R.ev?'Eco driver: accelerates at the motor\'s most efficient torque and slows on regen where it can.':'Eco driver: accelerates at the engine\'s best-BSFC point, shifts up early, and slows on engine braking in fuel cut.')+' '+
     tr('ECO BLEND is how far it had to move toward the car\'s full grip and power to make the time (0% pure eco). Not yet an optimal plan.');
 }
+// Route map zoom (1 = fitted, up to CHAL_ZMAX) and pan in canvas units; reset when the route changes (build 354).
+const chalView={key:'',z:1,x:0,y:0};
+const CHAL_ZMAX=20;
 function chalMapProject(R){
   const T=R.road,p=T.pts,pad=28,dx=T.maxX-T.minX||1,dy=T.maxY-T.minY||1;
-  const sc=Math.min((vizW-2*pad)/dx,(vizH-2*pad)/dy);
+  const sc0=Math.min((vizW-2*pad)/dx,(vizH-2*pad)/dy),V=chalView,z=V.z,cx=vizW/2,cy=vizH/2;
   return{
-    pad,sc,T,p,
-    MX:q=>pad+(q.x-T.minX)*sc,
-    MY:q=>vizH-pad-(q.y-T.minY)*sc
+    pad,sc:sc0*z,T,p,
+    MX:q=>cx+(pad+(q.x-T.minX)*sc0-cx)*z+V.x,
+    MY:q=>cy+(vizH-pad-(q.y-T.minY)*sc0-cy)*z+V.y
   };
 }
+// Zoom by f about the canvas point (vx,vy), keeping the map point under it fixed.
+function chalZoomAt(vx,vy,f){
+  const V=chalView,z0=V.z,z1=Math.max(1,Math.min(CHAL_ZMAX,z0*f));if(z1===z0)return;
+  const cx=vizW/2,cy=vizH/2,bx=cx+(vx-cx-V.x)/z0,by=cy+(vy-cy-V.y)/z0;
+  V.z=z1;V.x=vx-cx-(bx-cx)*z1;V.y=vy-cy-(by-cy)*z1;
+  if(z1<=1.0001){V.x=0;V.y=0;}
+}
+function chalViewReset(){chalView.z=1;chalView.x=0;chalView.y=0;}
 // Nearest centreline index under a viz-space point, or -1 if farther than hitPx.
 function chalHoverAt(mx,my,hitPx){
   const R=chalResult;if(!R||!R.road)return-1;
@@ -122,12 +134,14 @@ function mooseSampleAt(R,t){
 const MOOSE_OUT_COL={CLEAR:'#55dd66',CONE:'#ffcc00',SPIN:'#ff8833',ROLLOVER:'#ff4444'};
 function drawMooseTopDown(g,R,x0,y0,w,h){
   const G=R.cones,line=R.line;if(!line||!line.length)return;
-  let minX=1e9,maxX=-1e9,minY=1e9,maxY=-1e9;
-  for(const q of line){minX=Math.min(minX,q.x);maxX=Math.max(maxX,q.x);minY=Math.min(minY,q.y-2);maxY=Math.max(maxY,q.y+2);}
+  // the course (cones 0-61 m) with a little run-in and run-out, so the car's width reads at scale (build 354)
+  let minX=-15,maxX=75,minY=1e9,maxY=-1e9;
+  for(const q of line){minY=Math.min(minY,q.y-2);maxY=Math.max(maxY,q.y+2);}
   minY=Math.min(minY,-G.w1/2-1);maxY=Math.max(maxY,G.y2+G.w2/2+1,G.y3+2);
   const pad=10,dx=maxX-minX||1,dy=maxY-minY||1;
   const sc=Math.min((w-2*pad)/dx,(h-2*pad)/dy);
   const MX=x=>x0+pad+(x-minX)*sc,MY=y=>y0+h-pad-(y-minY)*sc;
+  g.save();g.beginPath();g.rect(x0,y0,w,h);g.clip();
   const lane=(xA,xB,yc,hw,col)=>{
     g.strokeStyle=col;g.lineWidth=1;g.setLineDash([3,3]);
     g.beginPath();g.moveTo(MX(xA),MY(yc-hw));g.lineTo(MX(xB),MY(yc-hw));g.stroke();
@@ -136,19 +150,31 @@ function drawMooseTopDown(g,R,x0,y0,w,h){
     g.fillStyle='#ffcc00';
     for(const yy of [yc-hw,yc+hw]){g.beginPath();g.arc(MX(xA),MY(yy),2.5,0,Math.PI*2);g.fill();g.beginPath();g.arc(MX(xB),MY(yy),2.5,0,Math.PI*2);g.fill();}
   };
+  // the lanes between the cones, as road (build 354)
+  g.fillStyle='#1c2330';
+  for(const [xA,xB,yc,hw] of [[0,12,0,G.w1/2],[25.5,36.5,G.y2,G.w2/2],[49,61,G.y3,1.5]])g.fillRect(MX(xA),MY(yc+hw),(xB-xA)*sc,2*hw*sc);
   lane(0,12,0,G.w1/2,'#445566');
   lane(25.5,36.5,G.y2,G.w2/2,'#445566');
   lane(49,61,G.y3,1.5,'#445566');
   g.strokeStyle='#4aa3ff';g.lineWidth=2;g.beginPath();
   for(let i=0;i<line.length;i++){const X=MX(line[i].x),Y=MY(line[i].y);if(i)g.lineTo(X,Y);else g.moveTo(X,Y);}
   g.stroke();
+  // the road the car's body sweeps: its full width along the path it drove (build 354)
+  const S=R.samples||[],bw=(R.trackW||1.8)*sc;
+  if(S.length>1){g.strokeStyle='rgba(85,221,102,0.22)';g.lineWidth=Math.max(2,bw);g.lineCap='butt';g.lineJoin='round';
+    g.beginPath();for(let i=0;i<S.length;i++){const X=MX(S[i].x),Y=MY(S[i].y);if(i)g.lineTo(X,Y);else g.moveTo(X,Y);}g.stroke();}
   const now=((typeof performance!=='undefined'?performance.now():Date.now())-chalMooseT0)/1000;
   const s=mooseSampleAt(R,now);
-  if(s){g.fillStyle='#55dd66';g.beginPath();g.arc(MX(s.x),MY(s.y),4,0,Math.PI*2);g.fill();}
+  if(s){   // the car at true size: width × (CG to front bumper + CG to rear bumper), turned by its heading
+    const B=R.body||{f:2,r:2.3},c=Math.cos(s.psi||0),sn=Math.sin(s.psi||0),hw=(R.trackW||1.8)/2;
+    g.fillStyle='#55dd66';g.beginPath();
+    [[B.f,hw],[B.f,-hw],[-B.r,-hw],[-B.r,hw]].forEach(([dx,dy],k)=>{const X=MX(s.x+dx*c-dy*sn),Y=MY(s.y+dx*sn+dy*c);if(k)g.lineTo(X,Y);else g.moveTo(X,Y);});
+    g.closePath();g.fill();}
   if(R.coneX!=null){const X=MX(R.coneX),Y=MY(R.coneY);g.strokeStyle='#ff4444';g.lineWidth=2;   // where a cone was first touched
     g.beginPath();g.moveTo(X-5,Y-5);g.lineTo(X+5,Y+5);g.moveTo(X+5,Y-5);g.lineTo(X-5,Y+5);g.stroke();}
+  g.restore();
   g.fillStyle='#9ab';g.font='7px "Press Start 2P"';
-  g.fillText(tr('ISO 3888-2')+' · '+R.speedKmh+' km/h',x0+8,y0+12);
+  g.fillText(tr('ISO 3888-2')+' · '+R.speedKmh+' km/h · '+tr('car width')+' '+(R.trackW||0).toFixed(2)+' m · '+tr('lanes')+' '+G.w1.toFixed(2)+' / '+G.w2.toFixed(2)+' / 3.00 m',x0+8,y0+12);
 }
 // Arrow helpers for the moose frontal free-body sketch (owner diagram: yellow body, blue wheels, red springs, cyan forces).
 function mooseArrow(g,x1,y1,x2,y2,col,lw){
@@ -286,6 +312,7 @@ function drawMooseChallenge(g,R){
 }
 function drawChallenge(){
   const R=chalResult,g=ctx;g.fillStyle='#0a0e14';g.fillRect(0,0,vizW,vizH);
+  const ta=R&&R.road?'none':'';if(canvas.style.touchAction!==ta)canvas.style.touchAction=ta;   // a touch drag pans the route map
   if(R&&R.kind==='moose'&&R.ok){drawMooseChallenge(g,R);return;}
   if(!R||!R.road){g.fillStyle='#556';g.font='10px "Press Start 2P"';g.fillText(tr('CHALLENGES'),16,28);chalHover.map=null;return;}
   const map=chalMapProject(R),p=map.p,n=p.length,MX=map.MX,MY=map.MY,T=map.T;
@@ -332,10 +359,29 @@ function bindChallengeHover(){
     const r=canvas.getBoundingClientRect();
     return{x:(e.clientX-r.left)*vizW/r.width,y:(e.clientY-r.top)*vizH/r.height};
   };
+  const active=()=>vizMode==='challenges'&&!!chalResult&&!!chalResult.road;
+  // Route maps zoom and scroll like the track map (build 354): wheel or pinch zooms, one pointer drags, double-click resets.
+  canvas.addEventListener('wheel',e=>{if(!active())return;e.preventDefault();const p=toViz(e);chalZoomAt(p.x,p.y,Math.exp(-e.deltaY*0.0015));},{passive:false});
+  canvas.addEventListener('dblclick',()=>{if(active())chalViewReset();});
+  const ptrs=new Map();let last=null,pinch=null;
+  canvas.addEventListener('pointerdown',e=>{
+    if(!active())return;
+    canvas.setPointerCapture(e.pointerId);ptrs.set(e.pointerId,toViz(e));
+    if(ptrs.size===1)last=toViz(e);
+    if(ptrs.size===2){const [a,b]=[...ptrs.values()];pinch={d:Math.hypot(a.x-b.x,a.y-b.y)};}
+  });
   canvas.addEventListener('pointermove',e=>{
-    if(vizMode!=='challenges'||!chalResult||!chalResult.road)return;
-    const p=toViz(e),i=chalHoverAt(p.x,p.y);
+    if(!active())return;
+    const p=toViz(e);
+    if(ptrs.has(e.pointerId)){
+      ptrs.set(e.pointerId,p);
+      if(ptrs.size>=2&&pinch){const [a,b]=[...ptrs.values()],d=Math.hypot(a.x-b.x,a.y-b.y);if(pinch.d>1)chalZoomAt((a.x+b.x)/2,(a.y+b.y)/2,d/pinch.d);pinch.d=d;}
+      else if(last&&chalView.z>1.0001){chalView.x+=p.x-last.x;chalView.y+=p.y-last.y;last=p;}
+    }
+    const i=chalHoverAt(p.x,p.y);
     if(i!==chalHover.i)chalHover.i=i;
   });
+  const up=e=>{ptrs.delete(e.pointerId);if(ptrs.size<2)pinch=null;last=ptrs.size===1?[...ptrs.values()][0]:null;};
+  canvas.addEventListener('pointerup',up);canvas.addEventListener('pointercancel',up);
   canvas.addEventListener('pointerleave',()=>{if(chalHover.i>=0)chalHover.i=-1;});
 }
