@@ -38,7 +38,7 @@ Each new part is two builds:
 
 ## Parked (owner's decision, after build 256)
 
-- **Water-to-air intercoolers** (and twin cores per car): not to be started until the owner lifts it. The cars that
+- **Water-to-air intercoolers** (and twin cores per car): to be done before v1.0 (owner, November 2026; timing open). The cars that
   really use them (Ford GT, Hellcat, ZL1, 720S/750S, GT-R) stay on one air-to-air core sized by build 256's rule, and
   stay among its largest movers. When it resumes: per-car core type and count from published specs, a coolant loop
   (pump flow, front heat exchanger) feeding the same eps-NTU law, then the fingerprint and error report as usual.
