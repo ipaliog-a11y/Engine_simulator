@@ -18,6 +18,11 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 ## [Unreleased]
 
+### Challenges: route maps zoom and scroll; the moose view shows the car's width on the road (build 354)
+
+- Route maps (economy and stage challenges) now zoom with the mouse wheel or a pinch, scroll by dragging, and return to the fitted map on a double-click, like the track map. Hover still reads the point under the cursor at any zoom.
+- Moose test, top-down strip: it now frames the course (−15 to 75 m) instead of 200 m, fills the three cone lanes as road, and draws the band the car's body sweeps (its full width along the path it drove) with the car as a true-size rectangle turned by its heading. The header gives the car's width and the three lane widths. No physics changed.
+
 ### Moose test: the driver turns in sooner and uses the lanes' width (build 353)
 
 - The moose driver tried twelve lines through the lanes' centres and bisected each line's speed. A Model 3 cleared

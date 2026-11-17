@@ -1,4 +1,4 @@
-# PIXEL POWERTRAIN v0.7 build 353
+# PIXEL POWERTRAIN v0.7 build 354
 
 **A lightweight, 8-bit style internal combustion engine *designer* & simulator** inspired by *Automation*.
 
@@ -313,9 +313,11 @@ assist map over speed and pedal), regeneration, load-point shifting, electric-dr
     (two wheels up, then the car tips past its outer tyres as a rigid body; it can only start when the sideways
     acceleration beats g·t/2h, the static stability factor). A two-wheel lift that lands again is flagged. The
     replay, seen from behind the front axle, shows weight, the axle's side (inertial) force, each tyre's load and
-    side force in kN, the body's true roll, a lifted wheel in red and the tipped car. The stock cars clear 55–68
+    side force in kN, the body's true roll, a lifted wheel in red and the tipped car; above it, a top-down strip
+    shows the cone lanes as road and the band the car's full width sweeps through them. The stock cars clear 55–68
     km/h, about 10 km/h below the magazines' typical 68–84, so at 72 and 77 they all fail by a cone (a known gap).
-  - Hover the road for distance, speed and gradient at that point. Known gaps: the economy plan is a
+  - Hover the road for distance, speed and gradient at that point; wheel or pinch to zoom, drag to scroll,
+    double-click to reset. Known gaps: the economy plan is a
     search over a cap and a blend, not an optimal plan; a hybrid uses the engine-car path; regen strength
     is the regen table's and has not yet been checked against measured EVs.
 
