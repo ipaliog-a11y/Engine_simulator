@@ -18,6 +18,11 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 ## [Unreleased]
 
+### Moose frontal diagram matches the free-body sketch (build 351)
+
+- Challenges moose canvas redrawn as the owner’s front-view sketch: yellow body outline (rolls), blue wheel rectangles, red springs, cyan arrows for roll, CG lateral force (ay), Fz under each tyre and Fy at the contact patch. Live values still drive the motion.
+- Left open: labels on each arrow; rear-axle view toggle.
+
 ### The app is renamed Pixel Powertrain, with a split-piston icon (build 350)
 
 - The owner's decision (plans/road-to-v1.md, decision 19): the name is now **Pixel Powertrain** in the page title, the
