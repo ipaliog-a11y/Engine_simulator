@@ -36,10 +36,10 @@ const EV_ENGINE_PRESETS=[
 // manuals: 9.03 the Model 3 and Y, 7.56 on all three of the Plaid's units, each of its motors rated 295 kW).
 const EV_VEHICLE_PRESETS=[
   {cat:'Electric',name:'Tesla Model 3 RWD (2021)',engine:'Tesla Model 3 RWD drive (2021, LFP)',chassis:'sedan',
-   body:{kg:1701,cd:0.23,area:2.22,wb:2.875,fWt:0.47},fit:{drive:'rwd',tire:'eco',tw:235,ta:45,wheel:18,brake:'steel',rotor:320,susp:'comfort',diff:'open',fd:9.03},
+   body:{kg:1701,cd:0.23,area:2.22,wb:2.875,fWt:0.47},fit:{drive:'rwd',tire:'premium',tw:235,ta:45,wheel:18,brake:'steel',rotor:320,susp:'comfort',diff:'open',fd:9.03},
    real:{t100:6.1,top:225,limited:true},unsure:['fWt']},
   {cat:'Electric',name:'Tesla Model Y Long Range (2022)',engine:'Tesla Model Y Long Range drive (2022, dual motor)',chassis:'suv',
-   body:{kg:1979,cd:0.23,area:2.56,wb:2.89,fWt:0.49},fit:{drive:'awd',tire:'eco',tw:255,ta:45,wheel:19,brake:'steel',rotor:335,susp:'comfort',diff:'open',fd:9.03},
+   body:{kg:1979,cd:0.23,area:2.56,wb:2.89,fWt:0.49},fit:{drive:'awd',tire:'premium',tw:255,ta:45,wheel:19,brake:'steel',rotor:335,susp:'comfort',diff:'open',fd:9.03},
    real:{t100:5.0,top:217,limited:true},unsure:['area','fWt']},
   {cat:'Electric',name:'Tesla Model S Plaid (2021)',engine:'Tesla Model S Plaid drive (2021, three motors)',chassis:'sedan',
    body:{kg:2162,cd:0.208,area:2.34,wb:2.96,fWt:0.48},fit:{drive:'awd',tire:'sport',tw:295,twF:265,ta:30,wheel:21,brake:'big',rotor:380,susp:'sport',diff:'clsd',fd:7.56},
@@ -111,7 +111,7 @@ const HYB_VEHICLE_PRESETS=[
    real:{t100:10.6,top:180,limited:true},unsure:['area','fWt']},
   // 1612 kg, Cd 0.32; 0-100 km/h 7.9 s and 170 km/h governed (Nissan UK); its reduction is not published, so it is matched.
   {cat:'Hybrid',name:'Nissan Qashqai e-POWER (2022)',engine:'Nissan KR15DDT 1.5 VC-T + series (Qashqai e-POWER)',chassis:'hatch',
-   body:{kg:1612,cd:0.32,area:2.50,wb:2.67,fWt:0.60},fit:{drive:'fwd',tire:'eco',tw:235,ta:55,wheel:18,brake:'steel',rotor:320,susp:'comfort',diff:'open'},
+   body:{kg:1612,cd:0.32,area:2.50,wb:2.67,fWt:0.60},fit:{drive:'fwd',tire:'premium',tw:235,ta:55,wheel:18,brake:'steel',rotor:320,susp:'comfort',diff:'open'},
    real:{t100:7.9,top:170,limited:true},unsure:['area','fWt','tyres']},
   // 1740 kg (EU, without driver), rear-drive, 8-speed automatic; 0-100 km/h 5.9 s with XtraBoost, 230 km/h governed; WLTP
   // electric range 59-66 km and 1.6-1.9 L/100 km weighted (BMW, by trim).

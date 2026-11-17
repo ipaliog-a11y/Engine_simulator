@@ -18,6 +18,20 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 ## [Unreleased]
 
+### Premium touring tyres for the Teslas and the Qashqai; the Raptor on street (build 354)
+
+- New tyre class, PREMIUM TOURING: street's grip (μ 0.95), eco's rolling resistance (0.010), W-rated. Eco is now
+  kept for slow, light, non-performance cars. The Model 3, Model Y and Qashqai e-POWER move to it: their factory
+  tyres (Michelin Primacy 4; Continental ProContact RX / Hankook Ventus S1 evo3 ev; probable, from parts listings)
+  grip like street tyres but roll like eco ones. Plain `street` raised the Teslas' Wh/km 9% past Tesla's figures and
+  the Qashqai's WLTP fuel past its record. The F-150 Raptor moves to street.
+- What that moved: Model 3 skidpad 0.80 → 0.86 g (Car and Driver 0.86), moose 71 → 73 km/h (TV 72), 0-100
+  6.18 → 5.90 s (Tesla 6.1); Model Y moose 71 → 72; Qashqai 0-100 7.27 → 7.21 s (Nissan 7.9); Tech lap −1.7 to
+  −2.2% on all four. Wh/km and WLTP are unchanged.
+- Left open: the Raptor's skidpad was already high on eco (0.88 g against Car and Driver's ~0.72 on its BFGoodrich
+  KO2s) and is 0.96 g on street. An all-terrain class is what it needs.
+- test136 fails on `main` as well (locked motor figures); that is not this build.
+
 ### Moose test: the driver turns in sooner and uses the lanes' width (build 353)
 
 - The moose driver tried twelve lines through the lanes' centres and bisected each line's speed. A Model 3 cleared
