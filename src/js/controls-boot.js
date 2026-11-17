@@ -117,6 +117,10 @@ function bindControls(){
   const chalMs=document.getElementById('chalMooseSpeed');
   if(chalMs){chalMs.value=String(chalMooseSpeed);
     chalMs.addEventListener('change',e=>{const f=+e.target.value;if(MOOSE_SPEEDS.includes(f)){chalMooseSpeed=f;refreshChallenge();}});}
+  const chalMr=document.getElementById('chalMooseRate');
+  if(chalMr){chalMr.value=String(chalMooseRate);
+    chalMr.addEventListener('change',e=>{const f=+e.target.value;if(CHAL_MOOSE_RATES.includes(f)){chalMooseRate=f;
+      chalMooseT0=(typeof performance!=='undefined'?performance.now():Date.now());}});}
   const chalPace=document.getElementById('chalPace');
   if(chalPace){
     chalPace.value=String(chalPaceFactor);

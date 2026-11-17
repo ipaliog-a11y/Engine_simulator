@@ -18,6 +18,16 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 ## [Unreleased]
 
+### Moose replay: slow motion, a longer run-up and run-out (build 356)
+
+- REPLAY on the moose run: 1×, 0.5× or 0.25× of real time (changing it restarts the replay).
+- The replay starts 25 m before the first cones (was 10 m) and runs on to 100 m, 20 m past where the run is judged
+  (70 m), so the car is seen settling after the exit. The score is unchanged: nothing after 70 m is judged
+  (MX-5 still 68 km/h, test214).
+- Fix: since build 353 the moose run's wheels started at rest instead of rolling at road speed (a merge left
+  `s.w=…` inside a comment). Now set again, as before build 353.
+- This is the replay work from the branch left unmerged after build 352, carried onto current `main`.
+
 ### Challenges: route maps zoom and scroll; the moose view shows the car's width on the road (build 355)
 
 - Route maps (economy and stage challenges) now zoom with the mouse wheel or a pinch, scroll by dragging, and return to the fitted map on a double-click, like the track map. Hover still reads the point under the cursor at any zoom.

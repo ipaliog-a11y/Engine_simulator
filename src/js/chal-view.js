@@ -1,6 +1,9 @@
 // ====== CHALLENGES tab UI (build 341; EV 342; pace + hover 344; moose 345) ======
 const chalHover={i:-1,map:null};
 let chalMooseT0=0;
+// Replay speed (build 353): 1, 0.5 or 0.25 of real time. Changing it restarts the replay from its first frame.
+let chalMooseRate=1;const CHAL_MOOSE_RATES=[1,0.5,0.25];
+function chalMooseNow(){return((typeof performance!=='undefined'?performance.now():Date.now())-chalMooseT0)/1000*chalMooseRate;}
 function refreshChallenge(){
   // Do not call buildVehicle here: it hooks back into refreshChallenge (same pattern as refreshLap).
   const ch=runChallengeById(activeRunChallenge);
@@ -10,8 +13,8 @@ function refreshChallenge(){
   chalMooseT0=(typeof performance!=='undefined'?performance.now():Date.now());
   const pace=document.getElementById('chalPace');
   if(pace){const row=pace.closest('.field');if(row)row.style.display=ch.kind==='economy'?'':'none';}
-  const msel=document.getElementById('chalMooseSpeed');
-  if(msel){const row=msel.closest('.field');if(row)row.style.display=ch.kind==='moose'?'':'none';}
+  for(const id of ['chalMooseSpeed','chalMooseRate']){const el=document.getElementById(id);
+    if(el){const row=el.closest('.field');if(row)row.style.display=ch.kind==='moose'?'':'none';}}
   renderChallenge();
 }
 function renderChallenge(){
@@ -163,7 +166,7 @@ function drawMooseTopDown(g,R,x0,y0,w,h){
   const S=R.samples||[],bw=(R.trackW||1.8)*sc;
   if(S.length>1){g.strokeStyle='rgba(85,221,102,0.22)';g.lineWidth=Math.max(2,bw);g.lineCap='butt';g.lineJoin='round';
     g.beginPath();for(let i=0;i<S.length;i++){const X=MX(S[i].x),Y=MY(S[i].y);if(i)g.lineTo(X,Y);else g.moveTo(X,Y);}g.stroke();}
-  const now=((typeof performance!=='undefined'?performance.now():Date.now())-chalMooseT0)/1000;
+  const now=chalMooseNow();
   const s=mooseSampleAt(R,now);
   if(s){   // the car at true size: width × (CG to front bumper + CG to rear bumper), turned by its heading
     const B=R.body||{f:2,r:2.3},c=Math.cos(s.psi||0),sn=Math.sin(s.psi||0),hw=(R.trackW||1.8)/2;
@@ -206,7 +209,7 @@ function mooseLabel(g,txt,x,y,col,align){
   g.fillStyle='rgba(10,14,20,0.85)';g.fillRect(X-2,y-8,w+4,10);g.fillStyle=col;g.fillText(txt,X,y);
 }
 function drawMooseFrontal(g,R,x0,y0,w,h){
-  const now=((typeof performance!=='undefined'?performance.now():Date.now())-chalMooseT0)/1000;
+  const now=chalMooseNow();
   const s=mooseSampleAt(R,now);if(!s)return;
   const COL={body:'#ffcc00',glass:'#1d3550',wheel:'#4aa3ff',tyre:'#151a22',spring:'#ff4444',arm:'#8899aa',
     fz:'#66ddff',fy:'#55dd66',w:'#ffffff',in:'#ff9944',road:'#3a4454',ink:'#e0e0e0',dim:'#9ab'};
