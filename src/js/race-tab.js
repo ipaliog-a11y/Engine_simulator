@@ -192,7 +192,7 @@ const raceEventText=(R,e)=>{
   }
 };
 // The compound a car is on at a recorded moment, and how a compound is shown: a letter in its colour.
-const RACE_TYRE_LOOK={eco:['E','#99ccaa'],street:['T','#cccccc'],sport:['S','#ffcc00'],semi:['M','#ff8833'],slick:['R','#ff4444'],drag:['D','#cc66ff'],inter:['I','#33dd66'],wet:['W','#3399ff']};
+const RACE_TYRE_LOOK={eco:['E','#99ccaa'],street:['T','#cccccc'],premium:['P','#aaccdd'],sport:['S','#ffcc00'],semi:['M','#ff8833'],slick:['R','#ff4444'],drag:['D','#cc66ff'],inter:['I','#33dd66'],wet:['W','#3399ff']};
 function raceSampleTyre(c,s){return s.tyre===1?raceCompound('inter'):s.tyre===2?raceCompound('wet'):c.M.tyre;}
 function raceTyreBadge(ty){const L=RACE_TYRE_LOOK[ty.key]||['?','#888'];return '<b class="race-ty" style="color:'+L[1]+';border-color:'+L[1]+'" title="'+esc(tr(ty.label))+'">'+L[0]+'</b>';}
 function raceWeatherText(w){

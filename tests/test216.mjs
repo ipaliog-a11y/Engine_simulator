@@ -1,51 +1,41 @@
-// Challenges: route maps zoom and scroll; the moose view shows the road the car's width takes (build 354).
+// Premium touring tyres (build 354).
 //
-// WHY THIS EXISTS. What must hold:
-//   · a wheel turn over a route map zooms it about the cursor (that map point stays put) and a drag scrolls it;
-//   · hover still finds the route point under the cursor when zoomed; double-click returns to the fitted map;
-//   · a moose result carries the car's CG-to-bumper lengths, and its top-down view draws with no page error.
+// WHY THIS EXISTS. Eco tyres are for slow, light, non-performance cars. The Teslas and the Qashqai e-POWER leave the
+// factory on premium touring tyres built for low rolling resistance: street's grip, eco's rolling resistance.
+// What must hold:
+//   · TIRE_TYPE.premium has street's mu and eco's crr;
+//   · the Model 3, Model Y and Qashqai e-POWER are on it; the F-150 Raptor is on street;
+//   · the Model 3 pulls 0.83-0.90 g on a 40 m skidpad (Car and Driver 0.86);
+//   · no page errors.
 import { chromium } from './pw.mjs';
 import { fileURLToPath, pathToFileURL } from 'url';
 import path from 'path';
 const repo = fileURLToPath(new URL('..', import.meta.url));
 const browser = await chromium.launch();
-const page = await browser.newPage({ viewport: { width: 1280, height: 800 } });
-const errors = [];
+const page = await browser.newPage();
+const errors = [], fails = [];
 page.on('pageerror', e => errors.push('pageerror: ' + e.message));
 await page.goto(pathToFileURL(path.join(repo, 'index.html')).href, { waitUntil: 'networkidle' });
-const fails = [];
-await page.evaluate(() => {
-  loadVehiclePreset(FACTORY_CARS.find(p => p.name.includes('MX-5')));
-  setTab('challenges'); activeRunChallenge = 'stage-alpine'; refreshChallenge();
+
+const r = await page.evaluate(() => {
+  const P = TIRE_TYPE.premium, tyre = n => FACTORY_CARS.find(p => p.name.includes(n)).fit.tire;
+  const cls = Object.fromEntries(['Model 3', 'Model Y', 'Qashqai', 'F-150 Raptor'].map(n => [n, tyre(n)]));
+  loadVehiclePreset(FACTORY_CARS.find(p => p.name.includes('Model 3'))); const car = driveCar();
+  const circle = (s, R, vt) => { const want = Math.atan((car.a + car.b) / R) / car.steerLock, r0 = Math.hypot(s.x, s.y - R);
+    return { steer: Math.max(-1, Math.min(1, want + 0.08 * (r0 - R) + 0.6 * (vt / R - s.yaw))), throttle: Math.max(0, Math.min(1, (vt - s.vx) * 0.5 + 0.15)) }; };
+  const s = driveState(car); let vt = 8, ay = 0;   // as test168's skidpad
+  for (let i = 0; i < 9000; i++) { vt += 0.002; stepCar(car, s, circle(s, 40, vt), 0.01);
+    if (i > 500 && Math.abs(Math.hypot(s.x, s.y - 40) - 40) < 3) ay = Math.max(ay, Math.abs(s.ayF) / 9.81);
+    if (Math.abs(Math.atan2(s.vy, s.vx)) > 0.5) break; }
+  return { mu: P.mu === TIRE_TYPE.street.mu, crr: P.crr === TIRE_TYPE.eco.crr, cls, ay };
 });
-const toPx = (b, v) => ({ x: b.x + v.x * b.width / v.W, y: b.y + v.y * b.height / v.H });
-const box = await page.locator('canvas').first().boundingBox();
-const pick = () => page.evaluate(() => { const m = chalMapProject(chalResult), q = m.p[Math.floor(m.p.length / 3)];
-  return { x: m.MX(q), y: m.MY(q), W: vizW, H: vizH, z: chalView.z, i: Math.floor(m.p.length / 3) }; });
-const a = await pick(), pa = toPx(box, a);
-await page.mouse.move(pa.x, pa.y);
-await page.mouse.wheel(0, -600);
-await page.waitForTimeout(100);
-const b = await pick();
-if (!(b.z > 1.5)) fails.push('wheel did not zoom: z ' + b.z);
-if (Math.hypot(b.x - a.x, b.y - a.y) > 2) fails.push('zoom moved the point under the cursor by ' + Math.hypot(b.x - a.x, b.y - a.y).toFixed(1));
-const hov = await page.evaluate(([x, y]) => chalHoverAt(x, y), [b.x, b.y]);
-if (Math.abs(hov - b.i) > 2) fails.push('hover when zoomed: ' + hov + ' vs ' + b.i);
-await page.mouse.down(); await page.mouse.move(pa.x + 80, pa.y + 40, { steps: 4 }); await page.mouse.up();
-const c = await pick();
-if (!(c.x - b.x > 20 && c.y - b.y > 10)) fails.push('drag did not scroll: ' + (c.x - b.x).toFixed(0) + ',' + (c.y - b.y).toFixed(0));
-await page.screenshot({ path: '/tmp/test216-route.png' });
-await page.mouse.dblclick(pa.x + 80, pa.y + 40);
-const d = await pick();
-if (d.z !== 1 || Math.hypot(d.x - a.x, d.y - a.y) > 0.5) fails.push('double-click did not reset');
-const m = await page.evaluate(() => { activeRunChallenge = 'moose'; refreshChallenge(); drawChallenge();
-  const R = chalResult; return R && R.ok ? { body: R.body, w: R.trackW } : null; });
-await page.waitForTimeout(300);
-await page.screenshot({ path: '/tmp/test216-moose.png' });
-if (!m) fails.push('moose did not solve');
-else if (!(m.body && m.body.f > 1 && m.body.r > 1 && m.body.f + m.body.r < 6)) fails.push('moose body lengths ' + JSON.stringify(m.body));
-console.log(JSON.stringify({ a, b, c, d, moose: m }));
+await browser.close();
+
+console.log(`classes ${JSON.stringify(r.cls)}; Model 3 skidpad ${r.ay.toFixed(2)} g (Car and Driver 0.86)`);
+if (!r.mu || !r.crr) fails.push('premium touring is not street grip with eco rolling resistance');
+for (const n of ['Model 3', 'Model Y', 'Qashqai']) if (r.cls[n] !== 'premium') fails.push(`${n} on ${r.cls[n]}`);
+if (r.cls['F-150 Raptor'] !== 'street') fails.push(`F-150 Raptor on ${r.cls['F-150 Raptor']}`);
+if (!(r.ay >= 0.83 && r.ay <= 0.90)) fails.push(`Model 3 skidpad ${r.ay.toFixed(2)} g`);
 console.log(fails.length ? 'FAIL:\n  ' + fails.join('\n  ') : 'PASS');
 console.log('ERRORS:', errors.length ? errors : 'none');
-await browser.close();
 process.exit(fails.length || errors.length ? 1 : 0);

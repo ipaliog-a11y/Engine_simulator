@@ -3,7 +3,7 @@
 // WHY THIS EXISTS. Until build 353 the moose driver tried twelve lines through the lanes' centres and bisected the
 // speed: a Model 3 cleared 56 km/h at 0.63 g, under its own skidpad grip (0.80 g); Teknikens Värld cleared it at 72.
 // What must hold:
-//   · the Model 3 clears 68 km/h or more (Teknikens Värld 72; the rest is its eco tyres' grip, not the driver);
+//   · the Model 3 clears 68 km/h or more (Teknikens Värld 72);
 //   · at its best speed the car works its tyres: peak ay at least 0.85 of mu;
 //   · one step up, no plan clears (the search stops where the driver does);
 //   · no page errors.
