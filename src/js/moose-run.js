@@ -62,7 +62,8 @@ const MOOSE_RANK={CLEAR:0,CONE:1,SPIN:2,ROLLOVER:3};
 function mooseRun(car,D,vk,shape,sample,quick){
   const G=mooseGates(D.w),v=vk/3.6,line=mooseLine(G,v,shape);
   const s=driveState(car),d={i:0,pull:shape[6]};
-  s.x=-25;s.y=line[0].y;s.vx=v;   // 25 m of straight before the cones (60 until build 353: the same, only slower)s.w=s.w.map(()=>v/car.r);
+  s.x=-25;s.y=line[0].y;s.vx=v;s.w=s.w.map(()=>v/car.r);   // 25 m of straight before the cones (60 until build 353)
+  // wheels start rolling at road speed: from build 353 to 355 this sat inside the comment above, so they started at 0
   for(let g=car.ratios.length;g>=1;g--){s.gear=g;if(v/car.r*car.ratios[g-1]*car.fd*30/Math.PI>=2000)break;}
   s.we=v/car.r*car.ratios[s.gear-1]*car.fd;
   const o={ok:true,ay:0,beta:0,line,samples:sample?[]:null,maxX:s.x,cone:false,coneX:null,coneY:null,spin:false,rolled:false,
@@ -70,29 +71,33 @@ function mooseRun(car,D,vk,shape,sample,quick){
   const h=car.h,tH=(car.tF+car.tR)/4,Io=car.rollI+car.m*(h*h+tH*tH),gG=9.81;
   const tip={phi:0,phiV:0,side:0};
   let nextT=0;const dt=0.005;
-  while(s.x<70&&s.t<20){
+  // Judged to x = 70 m, as before. A replay (build 353) runs on to 100 m so the car is seen settling after the exit;
+  // nothing after 70 m changes the score.
+  const xEnd=sample?100:70;
+  while(s.x<xEnd&&s.t<(sample?25:20)){
+    const judge=s.x<70;
     const u=driveDriver(car,s,line,d);u.gear=s.gear;
     mooseCoastPedals(car,s,u,D);
     stepCar(car,s,u,dt);
     o.maxX=Math.max(o.maxX,s.x);
-    o.ay=Math.max(o.ay,Math.abs(s.ayF)/gG);
+    if(judge){o.ay=Math.max(o.ay,Math.abs(s.ayF)/gG);
     o.beta=Math.max(o.beta,Math.abs(Math.atan2(s.vy,Math.max(1,s.vx)))*180/Math.PI);
-    if(mooseConeHit(car,s,D,G)){o.ok=false;if(!o.cone){o.cone=true;o.coneX=s.x;o.coneY=s.y;}}
+    if(mooseConeHit(car,s,D,G)){o.ok=false;if(!o.cone){o.cone=true;o.coneX=s.x;o.coneY=s.y;}}}
     // two-wheel lift and the rigid tip about the outer tyres. +ay is to the left: a left turn loads the right (outer)
     // side and lifts the left wheels, so the outward acceleration is −side·ay with side −1 for the left wheels up
     const leftUp=s.Fz[0]<=0&&s.Fz[2]<=0,rightUp=s.Fz[1]<=0&&s.Fz[3]<=0;
-    if(leftUp||rightUp){o.lift2+=dt;o.liftSide=leftUp?-1:1;}
+    if(judge&&(leftUp||rightUp)){o.lift2+=dt;o.liftSide=leftUp?-1:1;}
     if(tip.phi<=0&&(leftUp||rightUp)){tip.side=leftUp?-1:1;tip.phi=1e-6;tip.phiV=Math.abs(s.rollV||0);}
     if(tip.phi>0){
       const aOut=Math.max(0,-tip.side*s.ayF),c=Math.cos(tip.phi),sn=Math.sin(tip.phi);
       const z=tH*sn+h*c,dd=tH*c-h*sn;
       tip.phiV+=dt*car.m*(aOut*z-gG*dd)/Io;tip.phi+=dt*tip.phiV;
       if(tip.phi<=0){tip.phi=0;tip.phiV=0;}
-      o.tipMax=Math.max(o.tipMax,tip.phi);
-      if(tH*Math.cos(tip.phi)-h*Math.sin(tip.phi)<=0){o.rolled=true;o.ok=false;}
+      if(judge){o.tipMax=Math.max(o.tipMax,tip.phi);
+        if(tH*Math.cos(tip.phi)-h*Math.sin(tip.phi)<=0){o.rolled=true;o.ok=false;}}
     }
-    if(Math.abs(s.psi)>Math.PI/2){o.spin=true;o.ok=false;}
-    if(sample&&s.t>=nextT&&s.x>=-10){   // replay from 10 m before the first cones (build 352)
+    if(judge&&Math.abs(s.psi)>Math.PI/2){o.spin=true;o.ok=false;}
+    if(sample&&s.t>=nextT&&s.x>=-25){   // replay from 25 m before the first cones (10 m in build 352)
       o.samples.push({t:s.t,x:s.x,y:s.y,psi:s.psi,v:s.speed,roll:s.roll,zu:s.zu.slice(),Fz:s.Fz.slice(),Fy:s.Fy.slice(),camber:s.camber.slice(),ay:s.ayF/gG,
         tip:tip.phi*tip.side,cone:o.cone});
       nextT=s.t+0.02;
