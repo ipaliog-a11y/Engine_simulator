@@ -106,7 +106,11 @@ function bindControls(){
   document.getElementById('tabChallenges').addEventListener('click',()=>setTab('challenges'));
   const chalSel=document.getElementById('chalSel');
   if(chalSel){
-    RUN_CHALLENGES.forEach(c=>{const o=document.createElement('option');o.value=c.id;o.textContent=tr(c.name);chalSel.appendChild(o);});
+    // One group per kind (build 352: the list grew past a dozen).
+    const KIND={economy:'ECONOMY',stage:'FIXED-TIME STAGE',moose:'MOOSE TEST'},groups={};
+    RUN_CHALLENGES.forEach(c=>{
+      let gp=groups[c.kind];if(!gp){gp=groups[c.kind]=document.createElement('optgroup');gp.label=tr(KIND[c.kind]||c.kind);chalSel.appendChild(gp);}
+      const o=document.createElement('option');o.value=c.id;o.textContent=tr(c.name);gp.appendChild(o);});
     chalSel.value=activeRunChallenge;
     chalSel.addEventListener('change',e=>{activeRunChallenge=e.target.value;refreshChallenge();});
   }

@@ -59,7 +59,7 @@ function mooseRun(car,D,vk,shape,sample){
     o.ay=Math.max(o.ay,Math.abs(s.ayF)/9.81);
     o.beta=Math.max(o.beta,Math.abs(Math.atan2(s.vy,Math.max(1,s.vx)))*180/Math.PI);
     if(mooseConeHit(car,s,D,G))o.ok=false;
-    if(sample&&s.t>=nextT){
+    if(sample&&s.t>=nextT&&s.x>=-10){   // replay from 10 m before the first cones (build 352)
       o.samples.push({t:s.t,x:s.x,y:s.y,psi:s.psi,v:s.speed,roll:s.roll,zu:s.zu.slice(),Fz:s.Fz.slice(),Fy:s.Fy.slice(),camber:s.camber.slice(),ay:s.ayF/9.81});
       nextT=s.t+0.02;
     }
@@ -84,6 +84,8 @@ function simulateMooseChallenge(){
   return{
     ok:true,kind:'moose',speedKmh:best,shape,peakAy:bestRun.ay,peakBeta:bestRun.beta,
     dims:D,cones:G,line:bestRun.line,samples:bestRun.samples||[],
-    mu:car.mu,trackW:D.w
+    mu:car.mu,trackW:D.w,
+    // for the frontal diagram's scale (build 352): track, CG height and tyre radius in metres
+    track:(vehicle.trackF||vehicle.track||D.w-0.2),cgH:vehicle.cg||0.5,rT:vehicle.rTire||0.3
   };
 }

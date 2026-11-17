@@ -8,7 +8,7 @@ function refreshChallenge(){
   chalHover.i=-1;
   chalMooseT0=(typeof performance!=='undefined'?performance.now():Date.now());
   const pace=document.getElementById('chalPace');
-  if(pace){const row=pace.closest('.field');if(row)row.style.display=ch.kind==='moose'?'none':'';}
+  if(pace){const row=pace.closest('.field');if(row)row.style.display=ch.kind==='economy'?'':'none';}
   renderChallenge();
 }
 function renderChallenge(){
@@ -30,6 +30,19 @@ function renderChallenge(){
     note.textContent=tr(ch.desc)+' '+tr('Throttle released at entry, top gear. Score is the highest entry speed that touches no cone (ISO 3888-2).');
     return;
   }
+  if(R.kind==='stage'){
+    const mg=(R.margin>=0?'+':'−')+Math.abs(R.margin).toFixed(1)+' s';
+    head.innerHTML=tr(ch.name)+' · <b>'+(R.dnf?tr('DNF'):R.time.toFixed(1)+' s')+'</b> · '+mg+' '+tr('vs')+' '+R.target+' s';
+    grid.innerHTML=cell('RESULT',R.dnf?tr('DNF'):tr('FINISHED'))+
+      cell('BEST TIME',R.time.toFixed(1)+' s')+
+      cell('SET TIME',R.target+' s')+
+      cell('MARGIN',mg)+
+      cell('AVG SPEED',R.avgKmh.toFixed(1)+' km/h')+
+      cell('TOP SPEED',Math.round(R.vTop)+' km/h')+
+      cell('DISTANCE',R.lengthKm.toFixed(1)+' km');
+    note.textContent=tr(R.road.blurb)+' '+tr('One set time for every car. The run is the car\'s min-time from a standing start; slower than the set time is a DNF.');
+    return;
+  }
   const onTarget=Math.abs(R.time-R.target)<=Math.max(1,0.01*R.target);
   const score=R.ev
     ?('<b>'+R.kWh.toFixed(2)+' kWh</b> · '+Math.round(R.whkm)+' Wh/km')
@@ -47,12 +60,17 @@ function renderChallenge(){
       cell('L/100 km',R.l100.toFixed(1))+
       cell('FLAT-OUT FUEL',R.fuelLMin.toFixed(2)+' L');
   }
+  if(!R.ev&&R.rpmDrive)cells+=cell('AVG RPM ON POWER',String(Math.round(R.rpmDrive)))+cell('TOP GEAR',String(R.topGear));
+  cells+=cell('PEAK ACCEL',R.aUp.toFixed(1)+' m/s²')+cell('PEAK DECEL',R.aDn.toFixed(1)+' m/s²')+
+    cell('ECO BLEND',(R.ecoBlend*100).toFixed(0)+' %');
   cells+=cell('TARGET',R.target.toFixed(1)+' s')+
     cell('MIN TIME',R.tMin.toFixed(1)+' s')+
     cell('PACE',(R.pace*100).toFixed(0)+' %')+
     cell('DISTANCE',R.lengthKm.toFixed(1)+' km');
   grid.innerHTML=cells;
-  note.textContent=tr(R.road.blurb)+' '+tr('Target time is')+' '+(R.factor*100).toFixed(0)+'% '+tr('of this car\'s min-time (eco-rally). A speed cap hits the target; not yet an optimal lift-coast plan.');
+  note.textContent=tr(R.road.blurb)+' '+tr('Target time is')+' '+(R.factor*100).toFixed(0)+'% '+tr('of this car\'s min-time (eco-rally).')+' '+
+    tr(R.ev?'Eco driver: accelerates at the motor\'s most efficient torque and slows on regen where it can.':'Eco driver: accelerates at the engine\'s best-BSFC point, shifts up early, and slows on engine braking in fuel cut.')+' '+
+    tr('ECO BLEND is how far it had to move toward the car\'s full grip and power to make the time (0% pure eco). Not yet an optimal plan.');
 }
 function chalMapProject(R){
   const T=R.road,p=T.pts,pad=28,dx=T.maxX-T.minX||1,dy=T.maxY-T.minY||1;
@@ -134,83 +152,108 @@ function mooseSpring(g,x1,y1,x2,y2,col){
   for(let i=1;i<n;i++){const t=i/n,s=(i%2?1:-1)*amp;g.lineTo(x1+dx*t+px*s,y1+dy*t+py*s);}
   g.lineTo(x2,y2);g.stroke();
 }
-// Frontal free-body: body outline rolls; wheels move with travel; springs; Fz up, Fy at contact, ay at CG, roll arc.
+// Front axle free-body (build 352; the owner's sketch of build 351, redrawn to scale with every force labelled).
+// Seen from behind, so the car's left is on the left. Sample sign convention (stepCar): +y, +ay and +Fy point left;
+// +roll lowers the right side; camber is the wheel's tilt, + top to the left. Index 0 is front left, 1 front right.
+// Every arrow is a force on the front axle and the body it carries, all on one scale (px per kN):
+//   W   the axle's weight, Fz(L)+Fz(R) at rest, down through the CG;
+//   m·ay the axle's inertial (d'Alembert) force, outward from the turn: −(Fy(L)+Fy(R)) = m_front · ay at the front
+//        axle. In the quick yaw of a lane change this differs from ay at the CG (yaw acceleration × CG-to-axle), so
+//        the readout gives both;
+//   Fz  each tyre's ground reaction, up at its contact patch;
+//   Fy  each tyre's side force, along the ground at its contact patch, toward the turn.
+// Roll and camber are drawn at their true angles (a soft car rolls 4–6° here, plain to see).
+const MOOSE_ANG_X=1;
+function mooseLabel(g,txt,x,y,col,align){
+  g.font='7px "Press Start 2P"';const w=g.measureText(txt).width,X=align==='r'?x-w:align==='c'?x-w/2:x;
+  g.fillStyle='rgba(10,14,20,0.85)';g.fillRect(X-2,y-8,w+4,10);g.fillStyle=col;g.fillText(txt,X,y);
+}
 function drawMooseFrontal(g,R,x0,y0,w,h){
   const now=((typeof performance!=='undefined'?performance.now():Date.now())-chalMooseT0)/1000;
   const s=mooseSampleAt(R,now);if(!s)return;
-  const COL={body:'#ffcc00',wheel:'#4aa3ff',spring:'#ff4444',force:'#66ddff',road:'#2a3344',ink:'#e0e0e0',dim:'#9ab'};
-  const cx=x0+w/2,ground=y0+h*0.88,track=Math.min(w*0.58,h*1.05);
-  const roll=s.roll||0,c=Math.cos(roll),sn=Math.sin(roll);
-  const Fz=s.Fz||[0,0,0,0],Fy=s.Fy||[0,0,0,0],zu=s.zu||[0,0,0,0];
-  const zL=zu[0]||0,zR=zu[1]||0,FzL=Fz[0]||0,FzR=Fz[1]||0,FyL=Fy[0]||0,FyR=Fy[1]||0;
-  const FzSum=Math.max(1,FzL+FzR+(Fz[2]||0)+(Fz[3]||0)),ay=s.ay||0;
-  const bodyW=track*0.55,bodyH=h*0.34,heave=((zL+zR)/2)*36;
-  const pivY=ground-bodyH*0.55+heave;
-  const rot=(px,py)=>{const dx=px-cx,dy=py-pivY;return[cx+dx*c-dy*sn,pivY+dx*sn+dy*c];};
-  // road
-  g.strokeStyle=COL.road;g.lineWidth=2;g.beginPath();g.moveTo(x0+12,ground);g.lineTo(x0+w-12,ground);g.stroke();
-  // wheel centres (not rolled with body — contact stays near the ground; travel moves them vertically)
-  const wh=Math.max(22,bodyH*0.55),ww=Math.max(10,track*0.07);
-  const wheel=(side,zW)=>{
-    const wx=cx+side*(track/2),wy=ground-wh/2+zW*36;
-    return{wx,wy,top:wy-wh/2,bot:wy+wh/2,side};
-  };
-  const wL=wheel(-1,zL),wR=wheel(1,zR);
-  // body silhouette (roof + cabin), outline only — matches the owner's sketch
-  const roof=bodyH*0.38,cab=bodyH*0.62,half=bodyW/2;
-  const bodyPts=[[-half*0.72,-bodyH/2],[-half*0.45,-bodyH/2-roof*0.15],[half*0.45,-bodyH/2-roof*0.15],[half*0.72,-bodyH/2],
-    [half,bodyH/2],[-half,bodyH/2]].map(([px,py])=>rot(cx+px,pivY+py));
-  g.strokeStyle=COL.body;g.lineWidth=2.5;g.lineJoin='round';g.beginPath();
-  g.moveTo(bodyPts[0][0],bodyPts[0][1]);for(let i=1;i<bodyPts.length;i++)g.lineTo(bodyPts[i][0],bodyPts[i][1]);
-  g.closePath();g.stroke();
-  // body bottom corners (spring mounts) and CG
-  const mountL=rot(cx-half*0.85,pivY+cab*0.15),mountR=rot(cx+half*0.85,pivY+cab*0.15);
-  const cg=rot(cx,pivY-bodyH*0.05);
-  // red springs body → wheels
-  mooseSpring(g,mountL[0],mountL[1],wL.wx+ww*0.2,wL.top+4,COL.spring);
-  mooseSpring(g,mountR[0],mountR[1],wR.wx-ww*0.2,wR.top+4,COL.spring);
-  // blue wheels
-  for(const W of [wL,wR]){
-    g.strokeStyle=COL.wheel;g.lineWidth=2.5;g.strokeRect(W.wx-ww/2,W.top,ww,wh);
+  const COL={body:'#ffcc00',glass:'#1d3550',wheel:'#4aa3ff',tyre:'#151a22',spring:'#ff4444',arm:'#8899aa',
+    fz:'#66ddff',fy:'#55dd66',w:'#ffffff',in:'#ff9944',road:'#3a4454',ink:'#e0e0e0',dim:'#9ab'};
+  const kN=f=>(f/1000).toFixed(2)+' kN';
+  const Fz=s.Fz||[0,0,0,0],Fy=s.Fy||[0,0,0,0],cam=s.camber||[0,0,0,0];
+  const FzL=Fz[0]||0,FzR=Fz[1]||0,FyL=Fy[0]||0,FyR=Fy[1]||0;
+  const S0=R.samples[0]||s,Wf=(S0.Fz[0]||0)+(S0.Fz[1]||0);   // axle weight: the loads at rest, before the first steer
+  const Fin=-(FyL+FyR),roll=s.roll||0;
+  // scale: px per metre from the overall width and height; px per N so the weight arrow is 70% of the CG height
+  const trackM=R.track||1.5,widthM=R.trackW||trackM+0.2,heightM=1.35,rM=R.rT||0.3,cgM=R.cgH||0.5;
+  const ground=y0+h*0.66;
+  const k=Math.min((w*0.62)/widthM,(ground-y0-26)/heightM);
+  const cx=x0+w/2,fs=(cgM*k*0.95)/Math.max(1,Wf);
+  // road and hatching
+  g.strokeStyle=COL.road;g.lineWidth=2;g.beginPath();g.moveTo(x0+8,ground);g.lineTo(x0+w-8,ground);g.stroke();
+  g.lineWidth=1;for(let X=x0+12;X<x0+w-8;X+=10){g.beginPath();g.moveTo(X,ground);g.lineTo(X-6,ground+6);g.stroke();}
+  // body: rolls about the roll centre, taken at ground level + 0.1 m (a typical strut front; drawn, not solved)
+  const rc=[cx,ground-0.1*k],ang=roll*MOOSE_ANG_X,c=Math.cos(ang),sn=Math.sin(ang);
+  const B=(xm,ym)=>{const dx=xm*k,dy=-ym*k;return[rc[0]+dx*c-dy*sn,rc[1]+dx*sn+dy*c];};
+  const hw=widthM/2;
+  const poly=(pts,fill,stroke,lw)=>{g.beginPath();pts.forEach((q,i)=>{const P=B(q[0],q[1]);if(i)g.lineTo(P[0],P[1]);else g.moveTo(P[0],P[1]);});g.closePath();
+    if(fill){g.fillStyle=fill;g.fill();}if(stroke){g.strokeStyle=stroke;g.lineWidth=lw||2;g.lineJoin='round';g.stroke();}};
+  // lower body (sills to shoulders), greenhouse, bumper; heights in metres above the roll centre's base
+  poly([[-hw*0.97,0.22],[hw*0.97,0.22],[hw,0.55],[hw*0.92,0.78],[-hw*0.92,0.78],[-hw,0.55]],'rgba(255,204,0,0.10)',COL.body,2.5);
+  poly([[-hw*0.80,0.78],[hw*0.80,0.78],[hw*0.60,1.22],[-hw*0.60,1.22]],COL.glass,COL.body,2.5);
+  poly([[-hw*0.55,1.22],[hw*0.55,1.22],[hw*0.5,1.26],[-hw*0.5,1.26]],null,COL.body,2);
+  for(const sd of [-1,1])poly([[sd*hw*0.80,0.86],[sd*hw*1.06,0.86],[sd*hw*1.06,0.94],[sd*hw*0.84,0.94]],null,COL.body,1.5);   // mirrors
+  poly([[-0.26,0.40],[0.26,0.40],[0.26,0.52],[-0.26,0.52]],null,COL.dim,1.5);   // number plate
+  // wheels on the ground (travel is millimetres: not drawn), tilted by camber about the contact patch
+  const tw=Math.max(8,0.21*k),th=2*rM*k;
+  const wheel=(side,gam)=>{const xc=cx+side*trackM/2*k,a=-gam*MOOSE_ANG_X;   // + camber tilts the top left (screen −x)
+    const P=(dx,dy)=>[xc+dx*Math.cos(a)-dy*Math.sin(a),ground+dx*Math.sin(a)+dy*Math.cos(a)];
+    return{xc,P,hub:P(0,-th/2),top:P(0,-th*0.85)};};
+  const WL=wheel(-1,cam[0]||0),WR=wheel(1,cam[1]||0);
+  // suspension: lower arm hub → body, strut (spring) from the arm to the tower
+  for(const [W,sd] of [[WL,-1],[WR,1]]){
+    const inner=B(sd*hw*0.35,0.22),tower=B(sd*hw*0.62,0.70);
+    g.strokeStyle=COL.arm;g.lineWidth=2;g.beginPath();g.moveTo(W.hub[0],W.hub[1]);g.lineTo(inner[0],inner[1]);g.stroke();
+    mooseSpring(g,W.top[0],W.top[1],tower[0],tower[1],COL.spring);
   }
-  // cyan forces: Fz up under each wheel (length ∝ load), Fy at contact (sign = body-frame lateral)
-  const fzScale=Math.min(48,h*0.18)/Math.max(FzL,FzR,FzSum*0.35);
-  const fyScale=Math.min(40,w*0.06)/800;
-  for(const [W,FzW,FyW] of [[wL,FzL,FyL],[wR,FzR,FyR]]){
-    const fzLen=Math.max(8,FzW*fzScale);
-    mooseArrow(g,W.wx,ground+2,W.wx,ground+2-fzLen,COL.force,2);
-    const fyLen=Math.max(6,Math.min(42,Math.abs(FyW)*fyScale))*(FyW>=0?1:-1);
-    // sketch: contact force into/along the turn — draw from outer edge toward the arrow tip
-    mooseArrow(g,W.wx-Math.sign(fyLen||1)*ww*0.8,W.bot-2,W.wx-Math.sign(fyLen||1)*ww*0.8+fyLen,W.bot-2,COL.force,2);
+  for(const W of [WL,WR]){
+    const q=[W.P(-tw/2,0),W.P(tw/2,0),W.P(tw/2,-th),W.P(-tw/2,-th)];
+    g.beginPath();q.forEach((P,i)=>i?g.lineTo(P[0],P[1]):g.moveTo(P[0],P[1]));g.closePath();
+    g.fillStyle=COL.tyre;g.fill();g.strokeStyle=COL.wheel;g.lineWidth=2.5;g.stroke();
+    g.fillStyle=COL.wheel;g.beginPath();g.arc(W.hub[0],W.hub[1],Math.max(2,tw*0.25),0,Math.PI*2);g.fill();
   }
-  // suspension geometry cues (body corner → wheel centre)
-  g.strokeStyle=COL.force;g.lineWidth=1.5;g.setLineDash([4,3]);
-  g.beginPath();g.moveTo(mountL[0],mountL[1]);g.lineTo(wL.wx,wL.wy);g.stroke();
-  g.beginPath();g.moveTo(mountR[0],mountR[1]);g.lineTo(wR.wx,wR.wy);g.stroke();
-  g.setLineDash([]);
-  // lateral force at CG (ay)
-  const ayLen=Math.max(8,Math.min(50,Math.abs(ay)*55))*(ay>=0?1:-1);
-  g.beginPath();g.arc(cg[0],cg[1],4,0,Math.PI*2);g.fillStyle=COL.force;g.fill();
-  mooseArrow(g,cg[0],cg[1],cg[0]+ayLen,cg[1],COL.force,2);
-  // roll arc above the body (direction of roll rate / angle)
-  const arcR=bodyW*0.42,sense=roll>=0?1:-1;
-  g.strokeStyle=COL.force;g.lineWidth=2;g.beginPath();
-  g.arc(cg[0],cg[1]-bodyH*0.15,arcR,sense>0?-1.1:-0.2,sense>0?-0.2:1.1,sense<=0);
-  g.stroke();
-  const a0=sense>0?-0.2:1.1,ax=cg[0]+arcR*Math.cos(a0),ayp=cg[1]-bodyH*0.15+arcR*Math.sin(a0);
-  const tx=-Math.sin(a0)*sense,ty=Math.cos(a0)*sense;
-  mooseArrow(g,ax-tx*8,ayp-ty*8,ax+tx*2,ayp+ty*2,COL.force,2);
-  // stats
+  // CG (checkered disc)
+  const cg=B(0,cgM-0.1);
+  g.fillStyle='#fff';g.beginPath();g.arc(cg[0],cg[1],5,0,Math.PI*2);g.fill();
+  g.fillStyle='#0a0e14';g.beginPath();g.moveTo(cg[0],cg[1]);g.arc(cg[0],cg[1],5,0,Math.PI/2);g.closePath();g.fill();
+  g.beginPath();g.moveTo(cg[0],cg[1]);g.arc(cg[0],cg[1],5,Math.PI,Math.PI*1.5);g.closePath();g.fill();
+  // forces
+  const L=f=>Math.max(4,Math.abs(f)*fs);
+  mooseArrow(g,cg[0],cg[1],cg[0],cg[1]+L(Wf),COL.w,2);
+  mooseLabel(g,'W '+kN(Wf),cg[0]+6,cg[1]+L(Wf)-2,COL.w);
+  if(Math.abs(Fin)>100){const d=Math.sign(-Fin);   // Fin is + to the left (screen −x)
+    mooseArrow(g,cg[0],cg[1],cg[0]+d*L(Fin),cg[1],COL.in,2.5);
+    mooseLabel(g,'m·ay(front) '+kN(Math.abs(Fin)),cg[0]+d*(L(Fin)+4),cg[1]-6,COL.in,d>0?'l':'r');}
+  for(const [W,fz,fy,sd] of [[WL,FzL,FyL,-1],[WR,FzR,FyR,1]]){
+    const x=W.xc;
+    mooseArrow(g,x,ground+L(fz),x,ground+1,COL.fz,2.5);
+    mooseLabel(g,'Fz '+kN(fz),x,ground+L(fz)+12,COL.fz,'c');   // below its arrow; Fy's label sits higher, beside it
+    if(Math.abs(fy)>100){const d=-Math.sign(fy),yy=ground+4;
+      mooseArrow(g,x,yy,x+d*L(fy),yy,COL.fy,2.5);
+      mooseLabel(g,'Fy '+kN(Math.abs(fy)),x+d*L(fy)+(d>0?4:-4),ground+14,COL.fy,d>0?'l':'r');}
+  }
+  // roll arc about the roll centre, with the true angle
+  const rollDeg=roll*180/Math.PI;
+  if(Math.abs(rollDeg)>0.05){
+    const a0=-Math.PI/2,a1=a0+ang;
+    const rr=1.0*k;
+    g.strokeStyle=COL.body;g.lineWidth=1;g.setLineDash([3,3]);g.beginPath();g.moveTo(rc[0],rc[1]);g.lineTo(rc[0],rc[1]-rr);g.stroke();g.setLineDash([]);
+    g.lineWidth=2;g.beginPath();g.arc(rc[0],rc[1],rr,a0,a1,ang<0);g.stroke();
+    mooseLabel(g,'roll '+Math.abs(rollDeg).toFixed(1)+'°',rc[0]+(ang>0?8:-8),rc[1]-rr-4,COL.body,ang>0?'l':'r');
+  }
+  // readout
   g.fillStyle=COL.ink;g.font='8px "Press Start 2P"';
-  const lines=[
-    Math.round((s.v||0)*3.6)+' km/h',
-    'ay '+ay.toFixed(2)+' g',
-    'roll '+(roll*180/Math.PI).toFixed(1)+'°',
-    'Fz L/R '+Math.round(FzL)+'/'+Math.round(FzR)+' N'
-  ];
-  for(let i=0;i<lines.length;i++)g.fillText(lines[i],x0+10,y0+16+i*14);
+  const ay=s.ay||0,ayF=Wf>0?Fin/Wf:0;   // the front axle's lateral acceleration in g: ΣFy / (W_front / g)
+  const lines=[Math.round((s.v||0)*3.6)+' km/h','ay CG '+Math.abs(ay).toFixed(2)+' g','ay front '+Math.abs(ayF).toFixed(2)+' g','t '+(s.t||0).toFixed(2)+' s'];
+  for(let i=0;i<lines.length;i++)g.fillText(lines[i],x0+10,y0+16+i*13);
   g.fillStyle=COL.dim;g.font='7px "Press Start 2P"';
-  g.fillText(tr('yellow body · blue wheels · red springs · cyan forces'),x0+10,y0+h-10);
+  g.fillText(tr('Front axle, seen from behind. Forces to one scale; true roll and camber.'),x0+10,y0+h-20);
+  const leg=[[COL.w,'W'],[COL.in,'m·ay(front)'],[COL.fz,'Fz'],[COL.fy,'Fy'],[COL.spring,tr('spring')]];
+  let lx=x0+10;for(const [col,t] of leg){g.fillStyle=col;g.fillRect(lx,y0+h-14,8,6);g.fillStyle=COL.dim;g.fillText(t,lx+11,y0+h-8);lx+=g.measureText(t).width+24;}
 }
 function drawMooseChallenge(g,R){
   chalHover.map=null;
@@ -239,7 +282,7 @@ function drawChallenge(){
   g.fillStyle='#8f8';g.beginPath();g.arc(MX(p[0]),MY(p[0]),4,0,Math.PI*2);g.fill();
   g.fillStyle='#f88';g.beginPath();g.arc(MX(p[n-1]),MY(p[n-1]),4,0,Math.PI*2);g.fill();
   g.fillStyle='#9ab';g.font='8px "Press Start 2P"';
-  g.fillText(tr(T.label)+' · '+(T.length/1000).toFixed(1)+' km · '+T.corners+' '+tr('corners')+' · '+(R.factor*100).toFixed(0)+'%',10,18);
+  g.fillText(tr(T.label)+' · '+(T.length/1000).toFixed(1)+' km · '+T.corners+' '+tr('corners')+' · '+(R.kind==='stage'?R.target+' s':(R.factor*100).toFixed(0)+'%'),10,18);
   const hi=chalHover.i,info=chalHoverInfo(hi);
   if(info){
     const X=MX(p[hi]),Y=MY(p[hi]);
