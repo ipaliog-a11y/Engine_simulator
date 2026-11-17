@@ -18,6 +18,16 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 ## [Unreleased]
 
+### A hybrid's engine is spun up before it fires, and runs down when it stops (build 349)
+
+Step C of `plans/hybrid-electric/gas-sound-hybrid.md`, on the bench (DYNO tab). Replaces the stale build 298 PR (#244), ported to today's main.
+- **Starting**, the engine is turned unfuelled until it fires: J dw/dt = Tc + Tf, Tf its motoring loss (`brakeTorqueRaw`, fuel cut), Tc a power-split's MG1 or a series hybrid's generator at full torque (at the crank T/ks, its rotor adding J/ks²), or what a P2's motor is not giving the shaft. It fires at idle (a P2 at the shaft's speed). It was at idle at once, fuelled.
+- **Stopping**, the fuel is cut and the engine runs down instead of falling at a flat 4000 rpm/s: a P2's coasts on its friction, a power-split's or series hybrid's MG1 brakes it at full torque. The sound is heard until it is at rest (it muted at half idle).
+- **The sound's speed returns to 0 when the engine is muted**, so a restart rises from rest.
+- Left open: the crank's ~1 kJ is not drawn from the pack nor the stop's returned; MG2's cancelling of MG1's reaction on the ring is not modelled; the lap replay has no spin-up or run-down. Bench and sound only.
+
+<<<<<<< HEAD
+
 ### The owner's decisions before v0.8, written into the plans (build 348)
 - Docs only; no simulator number moves.
 - v0.8 is reached at build 338 (handling phase G done). The known gaps of builds 329 (Mustang GT, `test204`) and 333 (FK8, `test170`) are approved.
