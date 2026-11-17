@@ -23,20 +23,20 @@ import { execSync } from 'child_process';
 const VERSION = '0.7';
 const ROOT = fileURLToPath(new URL('..', import.meta.url));
 const check = process.argv.includes('--check');
-const STAMP_RE = /PIXEL ENGINE SIM v[\d.]+ build (\d+)/;
+const STAMP_RE = /PIXEL (?:ENGINE SIM|POWERTRAIN) v[\d.]+ build (\d+)/;
 
 // The stamp lives in the page's header, which is in src/shell.html; index.html is that joined
 // (tools/build.mjs), so both are stamped alike and stay byte-identical to a fresh build.
 const files = [
-  { name: 'src/shell.html', re: /PIXEL ENGINE SIM v[\d.]+ build \d+/g },
-  { name: 'index.html', re: /PIXEL ENGINE SIM v[\d.]+ build \d+/g },
-  { name: 'README.md',  re: /^# PIXEL ENGINE SIM v[\d.]+ build \d+/m },
+  { name: 'src/shell.html', re: /PIXEL (?:ENGINE SIM|POWERTRAIN) v[\d.]+ build \d+/g },
+  { name: 'index.html', re: /PIXEL (?:ENGINE SIM|POWERTRAIN) v[\d.]+ build \d+/g },
+  { name: 'README.md',  re: /^# PIXEL (?:ENGINE SIM|POWERTRAIN) v[\d.]+ build \d+/m },
 ];
 
 const read = name => {
   const src = readFileSync(path.join(ROOT, name), 'utf8');
   const m = src.match(STAMP_RE);
-  if (!m) { console.error(`  ${name}: no "PIXEL ENGINE SIM v… build N" stamp found`); process.exit(1); }
+  if (!m) { console.error(`  ${name}: no "PIXEL POWERTRAIN v… build N" stamp found`); process.exit(1); }
   return { src, build: +m[1] };
 };
 
@@ -71,7 +71,7 @@ if (check) {
   console.log(`\nOK: build ${current[0].build} is consistent and ahead of the merged history.`);
 } else {
   const next = Math.max(current[0].build, mainBuild ?? 0) + 1;
-  const stamp = `PIXEL ENGINE SIM v${VERSION} build ${next}`;
+  const stamp = `PIXEL POWERTRAIN v${VERSION} build ${next}`;
   current.forEach(f => {
     writeFileSync(path.join(ROOT, f.name), f.src.replace(f.re, f.name === 'README.md' ? '# ' + stamp : stamp));
     console.log(`  ${f.name.padEnd(14)} -> v${VERSION} build ${next}`);

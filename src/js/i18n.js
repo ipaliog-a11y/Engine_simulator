@@ -2076,7 +2076,7 @@ function applyLang(lang){
   const foot=document.getElementById('aboutText');
   if(foot){if(foot.dataset.en===undefined)foot.dataset.en=foot.innerHTML;
     foot.innerHTML=currentLang==='el'
-      ?'PIXEL ENGINE SIM • Σχεδιαστής κινητήρα • Επεκτάσιμος ανά υποσύστημα<br>Φυσική απλοποιημένη για μάθηση & διασκέδαση • Εμπνευσμένο από το Automation'
+      ?'PIXEL POWERTRAIN • Σχεδιαστής κινητήρα • Επεκτάσιμος ανά υποσύστημα<br>Φυσική απλοποιημένη για μάθηση & διασκέδαση • Εμπνευσμένο από το Automation'
       :foot.dataset.en;}
   const veh=document.querySelector('#vehiclePanel .vehicle-soon');
   if(veh){if(veh.dataset.en===undefined)veh.dataset.en=veh.innerHTML;

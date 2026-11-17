@@ -7,7 +7,7 @@ function shareBuild(){
   const code=encodeBuild(serializeBuild(name,''));
   const url=location.origin+location.pathname+'#b='+code;
   try{location.hash='b='+code;}catch(e){}
-  if(navigator.share){navigator.share({title:'Pixel Engine Sim — '+name,url:url}).catch(()=>{});}
+  if(navigator.share){navigator.share({title:'Pixel Powertrain — '+name,url:url}).catch(()=>{});}
   if(navigator.clipboard&&navigator.clipboard.writeText){
     navigator.clipboard.writeText(url).then(()=>flash(tr('SHARE LINK COPIED TO CLIPBOARD')),()=>flash(tr('SHARE LINK IN ADDRESS BAR')));
   }else flash(tr('SHARE LINK IN ADDRESS BAR'));

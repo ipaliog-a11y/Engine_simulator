@@ -1,6 +1,6 @@
 # Changelog
 
-All notable changes to Pixel Engine Sim.
+All notable changes to Pixel Powertrain.
 
 Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions are `MAJOR.MINOR`, and every commit carries a unique **build number** — a counter in the
@@ -18,6 +18,17 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 ## [Unreleased]
 
+### The app is renamed Pixel Powertrain, with a split-piston icon (build 350)
+
+- The owner's decision (plans/road-to-v1.md, decision 19): the name is now **Pixel Powertrain** in the page title, the
+  title screen, the header and version line, OPTIONS > ABOUT, the PNG reports, the share text, the web manifest, README
+  and LICENSE. Past CHANGELOG entries and the GitHub repository keep the old name.
+- New icon, the owner's draft B: a split piston, fuel half with a flame and electric half in cyan with a spark.
+  `favicon.svg` is replaced and `assets/icon-192.png` / `icon-512.png` are redrawn from it (pixelated scaling). The
+  service worker's cache name moves to v5 so installed copies pick the new icons up.
+- Unchanged on purpose: the `pes.` storage keys and the save and share formats, so existing saves and links still load.
+  `tools/stamp.mjs` reads either name on the version line, so it still finds the number on older `main` builds.
+
 ### A hybrid's engine is spun up before it fires, and runs down when it stops (build 349)
 
 Step C of `plans/hybrid-electric/gas-sound-hybrid.md`, on the bench (DYNO tab). Replaces the stale build 298 PR (#244), ported to today's main.
@@ -25,8 +36,6 @@ Step C of `plans/hybrid-electric/gas-sound-hybrid.md`, on the bench (DYNO tab). 
 - **Stopping**, the fuel is cut and the engine runs down instead of falling at a flat 4000 rpm/s: a P2's coasts on its friction, a power-split's or series hybrid's MG1 brakes it at full torque. The sound is heard until it is at rest (it muted at half idle).
 - **The sound's speed returns to 0 when the engine is muted**, so a restart rises from rest.
 - Left open: the crank's ~1 kJ is not drawn from the pack nor the stop's returned; MG2's cancelling of MG1's reaction on the ring is not modelled; the lap replay has no spin-up or run-down. Bench and sound only.
-
-<<<<<<< HEAD
 
 ### The owner's decisions before v0.8, written into the plans (build 348)
 - Docs only; no simulator number moves.
@@ -4592,7 +4601,6 @@ peaks to ~800 C; temperature paint at VIR read 460-550 C; a Cayman on R-compound
   keeps its blocks and falls back to English, and nothing scrolls sideways at phone width (it caught wide tables
   doing exactly that: the wide column is now `minmax(0, 1fr)`).
 
-
 ### The ECU's torque limit as a tune point (build 138)
 
 - **ECU TORQUE LIMIT (Nm, 0 = off)**, a new input on boosted engines. A torque-based ECU holds the engine to a
@@ -6365,7 +6373,6 @@ trapping — the next conversion. `test44` records this as a budget of 2 that ca
 **Still fitted, marked for removal:** `CAM{peakShift, ampMul, loWiden, lowLoss, scav}` still shapes
 the base VE bell curve. When wave tuning and trapping are derived, the powerband position will
 emerge from cam duration instead of being asserted by `peakShift`.
-
 
 ---
 
