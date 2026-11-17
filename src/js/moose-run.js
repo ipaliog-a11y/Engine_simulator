@@ -99,6 +99,7 @@ function mooseRun(car,D,vk,shape,sample,quick){
     if(judge&&Math.abs(s.psi)>Math.PI/2){o.spin=true;o.ok=false;}
     if(sample&&s.t>=nextT&&s.x>=-25){   // replay from 25 m before the first cones (10 m in build 352)
       o.samples.push({t:s.t,x:s.x,y:s.y,psi:s.psi,v:s.speed,roll:s.roll,zu:s.zu.slice(),Fz:s.Fz.slice(),Fy:s.Fy.slice(),camber:s.camber.slice(),ay:s.ayF/gG,
+        yaw:s.yaw,vx:s.vx,vy:s.vy,delta:s.delta||0,alpha:s.alpha.slice(),   // for the view from above (build 357)
         tip:tip.phi*tip.side,cone:o.cone});
       nextT=s.t+0.02;
     }
@@ -145,6 +146,7 @@ function simulateMooseChallenge(speedOpt){
     mu:car.mu,trackW:D.w,body:{f:car.a+D.ovF,r:car.b+D.ovR},   // CG to front and rear bumper (top-down view)
     // for the frontal diagram's scale (build 352): track, CG height and tyre radius in metres
     track:(car.tF+car.tR)/2,cgH:car.h,rT:car.r,
+    a:car.a,b:car.b,tF:car.tF,tR:car.tR,   // CG to each axle and the tracks, for the view from above (build 357)
     outcome:R.outcome,coneX:R.coneX,coneY:R.coneY,lift2:R.lift2,liftSide:R.liftSide,tipMax:R.tipMax,
     ssf:(car.tF+car.tR)/4/car.h
   },extra);
