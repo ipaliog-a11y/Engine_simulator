@@ -18,12 +18,75 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 ## [Unreleased]
 
-### The owner's decisions before v0.8, written into the plans (build 340)
+### The owner's decisions before v0.8, written into the plans (build 348)
 - Docs only; no simulator number moves.
 - v0.8 is reached at build 338 (handling phase G done). The known gaps of builds 329 (Mustang GT, `test204`) and 333 (FK8, `test170`) are approved.
 - Before v1.0: the LS7, LS3, LT4 and Coyote's excess over their published power, and water-to-air intercoolers. The real-car scoreboard runs at the v1.0 gate.
 - Suspension geometry stays by type for v1.0; a car takes its own only where it is published, never fitted.
 - The app is to be renamed Pixel Powertrain, with a piston icon; the rename is its own build.
+
+### Moose: EVs coast through the exit (build 347)
+
+- After entry, throttle=0 on an EV is full regen. Model Y / 3 / Plaid scrubbed to a stop before the exit (~x 40–55) and still scored clear because exit cones were never reached.
+- EV “throttle released” is now a coast (pedal that zeros motor torque). A clear run must also pass x ≥ 61 (exit gate).
+- Also clears leftover CHANGELOG conflict markers from the 345/346 merge on main.
+
+### The pack's resistance follows its temperature in the lap, the race and the WLTP cycle (build 346)
+
+- Until now the lap, the race and the WLTP cycle all used the pack's resistance at 25 °C, even though they track the pack's
+  temperature. Now the cells' I²R heat uses `packR` at the pack's own temperature: in the lap and the race as the pack
+  heats from its 30 °C coolant, and in the cycle at the 23 °C the car is soaked at and tested at (UNECE GTR 15, Annex 6).
+  The race's power limit at low charge (`evBmsPower`) reads the same temperature.
+- With 100 kW drawn from a Model Y, the cells make 4.58 kW of heat at 25 °C, 4.30 kW at 45 °C and 8.85 kW at 0 °C. Its WLTP
+  figure is 139.7 Wh/km at 23 °C, and a cycle run at 0 °C costs 141.3 Wh/km. A warm pack heats less, so the lap and the
+  race reach the 50 °C cut a little later.
+- Fingerprint against `main`: only the three Teslas' WLTP figures move, by +0.01 to +0.03% (Model Y 139.64 → 139.67 Wh/km),
+  because 23 °C is a little colder than 25 °C. No lap, race, power or 0-100 figure moves: the factory packs stay below 50 °C.
+- Electric work now has an order, written in `plans/road-to-v1.md`. The bench readouts were already done in build 285; this
+  build is the first item. Next is a cell's sag and recovery as one RC pair.
+- Left open: the lap's torque curve (`driveTorqueRated`), the race's pace-grid energy price and the motor bench still read
+  25 °C. `test136` already fails on `main` (motor locks from build 224), which is unrelated.
+
+### Challenges: moose avoidance (build 345)
+
+- New CHALLENGES kind **Moose Avoidance** (ISO 3888-2): highest entry speed with no cone touched, same cone geometry and search as `test173`, via `stepCar`.
+- Score grid: entry km/h, peak ay, peak β, lane widths. Canvas: top-down cones plus a frontal replay (body roll, wheel travel, Fz bars, Fy arrows, speed/ay/roll).
+- Pace control hides on this kind. Frontal samples are recorded on the winning run only.
+- Left open: skill track, skid-pad, multi-car ranking.
+
+### Challenges: pace select and route hover (build 344)
+
+- Pace control on CHALLENGES: **125% / 150% / 200%** of the car’s min-time (`chalPaceFactor`). Hover the open-road ribbon for distance, speed and incline at that point.
+- Left open: hybrid economy path; lift-coast DP.
+
+### Challenges: five real open roads (build 343)
+
+- Five open `ROADS` from OSM routing (OSRM) + ASTER elevation: Tail of the Dragon (~18.9 km vs 18 km published), Big Sur mid-coast (~37.5 vs 38.1 km cut; full highway 114.6 km), Route Napoléon Digne→Grasse (~110 vs 116 km stage; full 314 km), Highland A85 Oban→Lochearnhead (~90.5 vs 91.6 km), Targa Piccolo open Cerda→Buonfornello (~57.6 vs 60 km of 72 km). Alpine Pass kept. Width modelled. Matching economy entries in `RUN_CHALLENGES`.
+- Left open: speed-cap economy (not lift-coast DP); width not surveyed.
+
+### Challenges economy: electric Wh/km and kWh (build 342)
+
+- Mountain Economy accepts EVs: pack energy along the open-road profile (`motorLosses`, `packDraw`, regen), same stack as
+  WLTP `evCycle`, with grade. Score is **kWh** and **Wh/km** (plus regen kWh). ICE litres path unchanged.
+- UI shows one target time (not time and target together — the speed-cap solve matches them). Head and grid switch units by powertrain.
+- Left open: hybrids on this challenge; lift-coast DP.
+
+### Challenges page: mountain economy run (build 341)
+
+- New Drive tab **CHALLENGES** (not TRACK): registry of solved vehicle tests. First kind is Mountain Economy on an
+  open Alpine Pass road (~17 km, turns, climb, crest, descent). Target time is 1.25× the car’s own min-time
+  (eco-rally: use the allotted time); score is litres / L/100 km. Fuel from the same `engineFuelAt` map as WLTP (warm oil).
+- Open-path geometry (`catmullOpen` / `buildRoad`) is separate from closed circuits. A speed cap hits the target —
+  named gap: not yet optimal lift-coast DP. (A pure “finish by T” limit would pick flat-out: hard braking is fuel-cut.)
+  ENGINE career challenges are unchanged.
+- Left open: skill / moose / skid-pad kinds, multi-car ranking, DP eco, open GPX, hybrid energy (EV done in 342).
+
+### A plan for the guided build that sets values (build 340)
+
+- `plans/guided-build.md` proposes the walk-through over the design cards: the ordered steps for piston NA, turbo,
+  diesel, rotary, EV and hybrid cars, the field, limits and help for each, how the coupled fields are handled, what a
+  goal hint computes and what it costs, the finish screen, and three builds with their tests.
+- It ends with seven questions for the owner, each with a recommendation. No code changes; `plans/road-to-v1.md` links to it.
 
 ### The right column is back where it belongs, and the footer moves to OPTIONS > ABOUT (build 339)
 

@@ -214,6 +214,7 @@ function buildVehicle(){
   }
   // The lap solver is heavier than the straight-line runs, so only re-run it while it's on screen.
   if(typeof vizMode!=='undefined'&&vizMode==='track'&&typeof refreshLap==='function')refreshLap();
+  if(typeof vizMode!=='undefined'&&vizMode==='challenges'&&typeof refreshChallenge==='function')refreshChallenge();
   if(typeof updateBuildStrip==='function')updateBuildStrip();
 }
 // Braking run from v0 (m/s) to a stop: decel is the lesser of tyre grip (μ·(weight+downforce))

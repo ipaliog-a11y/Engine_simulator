@@ -827,7 +827,8 @@ function packBuild(s){
 // 0.108. The paper's own impedance spectra would pin it. It is the low-frequency impedance, not a 10 s pulse
 // resistance, and the 18650s are of the 2000 era; it is used for every graphite-anode lithium chemistry here.
 // Lead-acid and NiMH have no cited energy here, so they stay at 25 °C. The 50 °C power cut (packDerate) is the cells'
-// own limit and is not this curve. The lap, the cycle and the race still call the 25 °C resistance.
+// own limit and is not this curve. Since build 346 the lap, the race and the WLTP cycle read it at their pack's temperature
+// (packDraw's tC); the bench and the lap's torque curve still read 25 °C.
 const PACK_T_REF=25, R_GAS=8.314462618;
 const R_CT_SHARE=(10-1)/(Math.exp(68000/R_GAS*(1/(273.15-20)-1/(273.15+PACK_T_REF)))-1);   // ≈ 0.07, from the tenfold rise to −20 °C
 function packR(b,tC){
@@ -844,12 +845,13 @@ function packOcv(b,soc){
 }
 // Drawing P watts (negative: charging) at a state of charge: the terminal voltage, the current and the heat in the cells.
 // The current solves P = (Voc - I R) I; null if the pack cannot give that much (past the cut-off or the rate).
-function packDraw(b,soc,P){
-  const V0=packOcv(b,soc),disc=V0*V0-4*b.R*P;
+// tC: the cells' temperature (°C), for the resistance (packR); omitted, the 25 °C one.
+function packDraw(b,soc,P,tC){
+  const R=packR(b,tC),V0=packOcv(b,soc),disc=V0*V0-4*R*P;
   if(disc<0)return null;
-  const I=(V0-Math.sqrt(disc))/(2*b.R),V=V0-I*b.R;
+  const I=(V0-Math.sqrt(disc))/(2*R),V=V0-I*R;
   if(P>0&&(V<b.vMin||I>b.iMax))return null;
-  return {V,I,heat:I*I*b.R};
+  return {V,I,heat:I*I*R};
 }
 // The pack's temperature (build 180): one lumped node, the cells' heat capacity (~1000 J/kgK) over the pack's mass, a
 // liquid cooling plate taking ~2 W/K per kWh to coolant at 30 C. The battery management system cuts the power it allows
@@ -888,7 +890,7 @@ function evBmsShare(soc){
   const B=EV_BMS;
   return soc>=B.low?1:soc>=B.limp?B.lowFloor+(1-B.lowFloor)*(soc-B.limp)/(B.low-B.limp):0;
 }
-function evBmsPower(b,soc){
-  const P=packMaxPower(b,soc),limp=Math.min(P,EV_BMS.limpShare*packMaxPower(b,0.5));
+function evBmsPower(b,soc,tC){
+  const P=packMaxPower(b,soc,tC),limp=Math.min(P,EV_BMS.limpShare*packMaxPower(b,0.5));
   return soc<EV_BMS.limp?limp:Math.max(limp,P*evBmsShare(soc));   // the cut never takes it below the limp power
 }

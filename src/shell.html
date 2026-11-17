@@ -46,7 +46,7 @@
 </div>
 <div class="container">
 <header>
-<h1>PIXEL ENGINE SIM v0.7 build 340</h1>
+<h1>PIXEL ENGINE SIM v0.7 build 348</h1>
 <div class="subtitle" id="subtitle">ENGINE DESIGNER • BUILD IT, THEN DRIVE IT</div>
 </header>
 <div class="build-strip" id="buildStrip">
@@ -69,6 +69,7 @@
 <button id="tabGarage" data-g="build">GARAGE</button>
 <button id="tabTrack" data-g="drive">TRACK</button>
 <button id="tabRace" data-g="drive">RACE</button>
+<button id="tabChallenges" data-g="drive">CHALLENGES</button>
 <button id="tabEngine" data-g="test" class="active ing">LIVE</button>
 <button id="tabDyno" data-g="test" class="ing">DYNO</button>
 <button id="tabGuide" data-g="more">GUIDE</button>
@@ -785,6 +786,21 @@
 </div>
 <input type="file" id="gpxInput" accept=".gpx,application/gpx+xml,text/xml" style="display:none">
 </div>
+<div class="panel" id="chalPanel" style="display:none">
+<h2>Challenges</h2>
+<div class="pick-row">
+<div class="field"><label for="chalSel">CHALLENGE</label><select id="chalSel"></select></div>
+<div class="field"><label for="chalPace">PACE</label><select id="chalPace" title="Target time as a multiple of this car's min-time">
+<option value="1.25">125%</option>
+<option value="1.5">150%</option>
+<option value="2">200%</option>
+</select></div>
+</div>
+<div class="perf-head" id="chalHead">—</div>
+<div class="perf-grid" id="chalGrid"></div>
+<div class="perf-note" id="chalNote"></div>
+<div class="build-row"><button id="btnChalSolve" title="Solve the selected challenge for the current car">SOLVE</button></div>
+</div>
 <div class="panel" id="racePanel" style="display:none">
 <h2>Race</h2>
 <div id="raceSetup">
@@ -949,6 +965,11 @@
 <!-- @include js/hybrid-bench.js -->
 <!-- @include js/hybrid-views.js -->
 <!-- @include js/fuel-cycle.js -->
+<!-- @include js/eco-roads.js -->
+<!-- @include js/eco-run.js -->
+<!-- @include js/moose-run.js -->
+<!-- @include js/run-challenges.js -->
+<!-- @include js/chal-view.js -->
 <!-- @include js/electric-presets.js -->
 <!-- @include js/design-cards.js -->
 <!-- @include js/ev-designer.js -->
