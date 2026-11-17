@@ -7,7 +7,7 @@
 //   · stages: the Golf GTI Mk7 (the reference) finishes every stage; an NA MX-5 is a DNF on Alpine; the head says DNF;
 //   · the moose result carries the diagram's scale (track, CG height, tyre radius) and the canvas draws without error;
 //   · moose failure modes: a fixed entry speed (72, 77) gives an outcome; BEST says how it fails one step up; a Land
-//     Cruiser with its CG raised to 1.1 m (t/2h 0.74) rolls over at 72 km/h, tipping to atan(t/2h), while the stock one
+//     Cruiser with its CG raised to 1.1 m (t/2h 0.74) rolls over at 77 km/h (72 until build 353), tipping to atan(t/2h), while the stock one
 //     (t/2h 1.09) does not.
 import { chromium } from './pw.mjs';
 import path from 'node:path';
@@ -38,8 +38,8 @@ const r = await page.evaluate(async () => {
   out.moose = { ok: m.ok, track: m.track, cgH: m.cgH, rT: m.rT, x0: m.samples[0].x };
   out.mooseFail = { failBy: m.failBy, failAt: m.failAt, best: m.speedKmh };
   const f72 = simulateMooseChallenge(72); out.m72 = { outcome: f72.outcome, v: f72.speedKmh };
-  load('Land Cruiser'); const lcS = simulateMooseChallenge(72);
-  vehicle.cg = 1.1; const lcH = simulateMooseChallenge(72);
+  load('Land Cruiser'); const lcS = simulateMooseChallenge(77);   // 77 since build 353: at 72 the better driver finds a line that only clips a cone
+  vehicle.cg = 1.1; const lcH = simulateMooseChallenge(77);
   out.lc = { stock: lcS.outcome, high: lcH.outcome, tip: lcH.tipMax, ssf: lcH.ssf, tH: lcH.track / 2, h: lcH.cgH };
   load('Model 3 RWD'); out.m3 = pair('dragon');
   load('Golf GTI (Mk7'); out.golf = RUN_CHALLENGES.filter(c => c.kind === 'stage').map(c => { const R = solveRunChallenge(c.id); return { id: c.id, dnf: R.dnf, margin: R.margin }; });
@@ -64,8 +64,8 @@ if (!/DNF/.test(r.head)) fails.push('stage head lacks DNF: ' + r.head);
 if (!(r.moose.ok && r.moose.track > 1 && r.moose.cgH > 0.2 && r.moose.rT > 0.2)) fails.push('moose diagram scale missing');
 if (!(r.mooseFail.failBy && r.mooseFail.failBy !== 'CLEAR' && r.mooseFail.failAt === r.mooseFail.best + 1)) fails.push('BEST should say how it fails one step up: ' + JSON.stringify(r.mooseFail));
 if (!(r.m72.v === 72 && ['CLEAR', 'CONE', 'SPIN', 'ROLLOVER'].includes(r.m72.outcome))) fails.push('fixed 72 km/h run: ' + JSON.stringify(r.m72));
-if (r.lc.stock === 'ROLLOVER') fails.push('stock Land Cruiser rolls over at 72 km/h');
-if (r.lc.high !== 'ROLLOVER') fails.push('Land Cruiser with a 1.1 m CG should roll over at 72 km/h, got ' + r.lc.high);
+if (r.lc.stock === 'ROLLOVER') fails.push('stock Land Cruiser rolls over at 77 km/h');
+if (r.lc.high !== 'ROLLOVER') fails.push('Land Cruiser with a 1.1 m CG should roll over at 77 km/h, got ' + r.lc.high);
 else if (!(Math.abs(r.lc.tip - Math.atan(r.lc.tH / r.lc.h)) < 0.03)) fails.push('rollover tip ' + r.lc.tip + ' rad, want atan(t/2h) ' + Math.atan(r.lc.tH / r.lc.h));
 if (!(r.moose.x0 >= -10.5)) fails.push('moose replay starts before the cones: x ' + r.moose.x0);
 
