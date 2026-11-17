@@ -8,7 +8,9 @@
 //   · the moose result carries the diagram's scale (track, CG height, tyre radius) and the canvas draws without error;
 //   · moose failure modes: a fixed entry speed (72, 77) gives an outcome; BEST says how it fails one step up; a Land
 //     Cruiser with its CG raised to 1.1 m (t/2h 0.74) rolls over at 72 km/h, tipping to atan(t/2h), while the stock one
-//     (t/2h 1.09) does not.
+//     (t/2h 1.09) does not;
+//   · the replay (build 353) runs from 25 m before the cones to 100 m, 20 m past the judged end, without changing the
+//     score (MX-5 still 63 km/h); REPLAY offers 1, 0.5 and 0.25 and 0.25 plays a quarter as fast.
 import { chromium } from './pw.mjs';
 import path from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
@@ -35,7 +37,7 @@ const r = await page.evaluate(async () => {
   out.mx5Stage = solveRunChallenge('stage-alpine');
   out.mx5Stage = { dnf: out.mx5Stage.dnf, margin: out.mx5Stage.margin };
   const m = simulateMooseChallenge();
-  out.moose = { ok: m.ok, track: m.track, cgH: m.cgH, rT: m.rT, x0: m.samples[0].x };
+  out.moose = { ok: m.ok, track: m.track, cgH: m.cgH, rT: m.rT, x0: m.samples[0].x, x1: m.samples[m.samples.length - 1].x, best: m.speedKmh };
   out.mooseFail = { failBy: m.failBy, failAt: m.failAt, best: m.speedKmh };
   const f72 = simulateMooseChallenge(72); out.m72 = { outcome: f72.outcome, v: f72.speedKmh };
   load('Land Cruiser'); const lcS = simulateMooseChallenge(72);
@@ -50,6 +52,12 @@ const r = await page.evaluate(async () => {
   out.head = document.getElementById('chalHead').textContent;
   sel.value = 'moose'; sel.dispatchEvent(new Event('change'));
   await new Promise(z => setTimeout(z, 300));
+  const rs = document.getElementById('chalMooseRate');
+  out.rates = rs ? [...rs.options].map(o => +o.value) : [];
+  rs.value = '0.25'; rs.dispatchEvent(new Event('change'));
+  const t0 = performance.now(); await new Promise(z => setTimeout(z, 400));
+  out.rateRatio = chalMooseNow() / ((performance.now() - t0) / 1000);
+  out.rateShown = rs.closest('.field').style.display !== 'none';
   return out;
 });
 console.log(JSON.stringify(r, null, 2));
@@ -67,7 +75,12 @@ if (!(r.m72.v === 72 && ['CLEAR', 'CONE', 'SPIN', 'ROLLOVER'].includes(r.m72.out
 if (r.lc.stock === 'ROLLOVER') fails.push('stock Land Cruiser rolls over at 72 km/h');
 if (r.lc.high !== 'ROLLOVER') fails.push('Land Cruiser with a 1.1 m CG should roll over at 72 km/h, got ' + r.lc.high);
 else if (!(Math.abs(r.lc.tip - Math.atan(r.lc.tH / r.lc.h)) < 0.03)) fails.push('rollover tip ' + r.lc.tip + ' rad, want atan(t/2h) ' + Math.atan(r.lc.tH / r.lc.h));
-if (!(r.moose.x0 >= -10.5)) fails.push('moose replay starts before the cones: x ' + r.moose.x0);
+if (!(r.moose.x0 >= -25.5 && r.moose.x0 < -20)) fails.push('moose replay should start ~25 m before the cones: x ' + r.moose.x0);
+if (!(r.moose.x1 >= 95)) fails.push('moose replay should run on to ~100 m: last x ' + r.moose.x1);
+if (r.moose.best !== 63) fails.push('MX-5 best clear speed moved: ' + r.moose.best + ' (the replay must not change the score)');
+if (JSON.stringify(r.rates) !== '[1,0.5,0.25]') fails.push('REPLAY options ' + JSON.stringify(r.rates));
+if (!r.rateShown) fails.push('REPLAY hidden on the moose run');
+if (!(r.rateRatio > 0.2 && r.rateRatio < 0.3)) fails.push('0.25x replay runs at ' + r.rateRatio.toFixed(2) + ' of real time');
 
 console.log(fails.length ? 'FAIL:\n  ' + fails.join('\n  ') : 'PASS');
 console.log('ERRORS:', errors.length ? errors : 'none');

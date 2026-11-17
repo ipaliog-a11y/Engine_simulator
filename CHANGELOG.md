@@ -18,6 +18,13 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 ## [Unreleased]
 
+### Moose replay: slow motion, a longer run-up and run-out (build 353)
+
+- REPLAY on the moose run: 1×, 0.5× or 0.25× of real time (changing it restarts the replay).
+- The replay starts 25 m before the first cones (was 10 m) and runs on to 100 m, 20 m past where the run is judged
+  (70 m), so the car is seen settling after the exit. The score is unchanged: nothing after 70 m is judged
+  (MX-5 still 63 km/h, test214).
+
 ### Challenges: eco driver, fixed-time stages, moose failure modes and labelled diagram (build 352)
 
 - **Eco driver** on the economy runs. From eco-driving research: accelerate at the engine's min-BSFC gear and torque

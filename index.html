@@ -812,7 +812,7 @@ body.guided-open{overflow:hidden}
 </div>
 <div class="container">
 <header>
-<h1>PIXEL POWERTRAIN v0.7 build 352</h1>
+<h1>PIXEL POWERTRAIN v0.7 build 353</h1>
 <div class="subtitle" id="subtitle">ENGINE DESIGNER • BUILD IT, THEN DRIVE IT</div>
 </header>
 <div class="build-strip" id="buildStrip">
@@ -3255,7 +3255,7 @@ Rules, not physics: refuelling at 2.5 L/s and 6 s for tyres; in the wet a car wi
 The <b>CHALLENGES</b> tab (DRIVE) runs the car on its own. Pick a challenge and the result appears; hover the road for distance, speed and gradient.<br>
 <b>Economy</b>: the target time is the PACE (125, 150 or 200%) times the car's own fastest time on that road. The score is litres and L/100 km, or kWh and Wh/km for an EV, with the regen it recovered. The grid also shows the peak acceleration and braking, the mean engine speed on power, the top gear used, and ECO BLEND (below).<br>
 <b>Fixed-time stage</b>: one set time per road for every car. The car's fastest run from a standing start is shown against it; slower is a <b>DNF</b>.<br>
-<b>Moose avoidance</b>: ENTRY picks BEST CLEAR (the speed is raised until a cone falls, as ISO 3888-2 does; the grid also says how it fails one step up) or a magazine's fixed speed, 72 km/h (Teknikens Värld's pass mark) or 77 km/h (km77's). The result is CLEAR, CONE, SPIN or ROLLOVER, with a warning for a two-wheel lift, its time and the largest tip. The lower view is the front axle seen from behind, with each force labelled in kN on one scale: <b>W</b> the axle's weight, <b>m·ay(front)</b> its sideways inertial force, <b>Fz</b> each tyre's load and <b>Fy</b> each tyre's side force. Roll and camber are drawn at their true angles.
+<b>Moose avoidance</b>: ENTRY picks BEST CLEAR (the speed is raised until a cone falls, as ISO 3888-2 does; the grid also says how it fails one step up) or a magazine's fixed speed, 72 km/h (Teknikens Värld's pass mark) or 77 km/h (km77's). The result is CLEAR, CONE, SPIN or ROLLOVER, with a warning for a two-wheel lift, its time and the largest tip. REPLAY slows the replay to 0.5× or 0.25×; it starts 25 m before the cones and runs on 20 m past the judged end (nothing after that changes the score). The lower view is the front axle seen from behind, with each force labelled in kN on one scale: <b>W</b> the axle's weight, <b>m·ay(front)</b> its sideways inertial force, <b>Fz</b> each tyre's load and <b>Fy</b> each tyre's side force. Roll and camber are drawn at their true angles.
 </div>
 </div>
 <div class="gtier gt-phys"><div class="gtier-h">LV3 · THE PHYSICS</div>
@@ -4030,6 +4030,11 @@ Most other tests check behaviour that is true of real cars: a bigger turbo spool
 <option value="0">BEST CLEAR</option>
 <option value="72">72 km/h (TEKNIKENS VÄRLD)</option>
 <option value="77">77 km/h (KM77)</option>
+</select></div>
+<div class="field" style="display:none"><label for="chalMooseRate">REPLAY</label><select id="chalMooseRate" title="Replay speed">
+<option value="1">1×</option>
+<option value="0.5">0.5×</option>
+<option value="0.25">0.25×</option>
 </select></div>
 </div>
 <div class="perf-head" id="chalHead">—</div>
@@ -29144,29 +29149,33 @@ function mooseRun(car,D,vk,shape,sample){
   const h=car.h,tH=(car.tF+car.tR)/4,Io=car.rollI+car.m*(h*h+tH*tH),gG=9.81;
   const tip={phi:0,phiV:0,side:0};
   let nextT=0;const dt=0.005;
-  while(s.x<70&&s.t<20){
+  // Judged to x = 70 m, as before. A replay (build 353) runs on to 100 m so the car is seen settling after the exit;
+  // nothing after 70 m changes the score.
+  const xEnd=sample?100:70;
+  while(s.x<xEnd&&s.t<(sample?25:20)){
+    const judge=s.x<70;
     const u=driveDriver(car,s,line,d);u.gear=s.gear;
     mooseCoastPedals(car,s,u,D);
     stepCar(car,s,u,dt);
     o.maxX=Math.max(o.maxX,s.x);
-    o.ay=Math.max(o.ay,Math.abs(s.ayF)/gG);
+    if(judge){o.ay=Math.max(o.ay,Math.abs(s.ayF)/gG);
     o.beta=Math.max(o.beta,Math.abs(Math.atan2(s.vy,Math.max(1,s.vx)))*180/Math.PI);
-    if(mooseConeHit(car,s,D,G)){o.ok=false;if(!o.cone){o.cone=true;o.coneX=s.x;o.coneY=s.y;}}
+    if(mooseConeHit(car,s,D,G)){o.ok=false;if(!o.cone){o.cone=true;o.coneX=s.x;o.coneY=s.y;}}}
     // two-wheel lift and the rigid tip about the outer tyres. +ay is to the left: a left turn loads the right (outer)
     // side and lifts the left wheels, so the outward acceleration is −side·ay with side −1 for the left wheels up
     const leftUp=s.Fz[0]<=0&&s.Fz[2]<=0,rightUp=s.Fz[1]<=0&&s.Fz[3]<=0;
-    if(leftUp||rightUp){o.lift2+=dt;o.liftSide=leftUp?-1:1;}
+    if(judge&&(leftUp||rightUp)){o.lift2+=dt;o.liftSide=leftUp?-1:1;}
     if(tip.phi<=0&&(leftUp||rightUp)){tip.side=leftUp?-1:1;tip.phi=1e-6;tip.phiV=Math.abs(s.rollV||0);}
     if(tip.phi>0){
       const aOut=Math.max(0,-tip.side*s.ayF),c=Math.cos(tip.phi),sn=Math.sin(tip.phi);
       const z=tH*sn+h*c,dd=tH*c-h*sn;
       tip.phiV+=dt*car.m*(aOut*z-gG*dd)/Io;tip.phi+=dt*tip.phiV;
       if(tip.phi<=0){tip.phi=0;tip.phiV=0;}
-      o.tipMax=Math.max(o.tipMax,tip.phi);
-      if(tH*Math.cos(tip.phi)-h*Math.sin(tip.phi)<=0){o.rolled=true;o.ok=false;}
+      if(judge){o.tipMax=Math.max(o.tipMax,tip.phi);
+        if(tH*Math.cos(tip.phi)-h*Math.sin(tip.phi)<=0){o.rolled=true;o.ok=false;}}
     }
-    if(Math.abs(s.psi)>Math.PI/2){o.spin=true;o.ok=false;}
-    if(sample&&s.t>=nextT&&s.x>=-10){   // replay from 10 m before the first cones (build 352)
+    if(judge&&Math.abs(s.psi)>Math.PI/2){o.spin=true;o.ok=false;}
+    if(sample&&s.t>=nextT&&s.x>=-25){   // replay from 25 m before the first cones (10 m in build 352)
       o.samples.push({t:s.t,x:s.x,y:s.y,psi:s.psi,v:s.speed,roll:s.roll,zu:s.zu.slice(),Fz:s.Fz.slice(),Fy:s.Fy.slice(),camber:s.camber.slice(),ay:s.ayF/gG,
         tip:tip.phi*tip.side,cone:o.cone});
       nextT=s.t+0.02;
@@ -29282,6 +29291,9 @@ function solveRunChallenge(id){
 // ====== CHALLENGES tab UI (build 341; EV 342; pace + hover 344; moose 345) ======
 const chalHover={i:-1,map:null};
 let chalMooseT0=0;
+// Replay speed (build 353): 1, 0.5 or 0.25 of real time. Changing it restarts the replay from its first frame.
+let chalMooseRate=1;const CHAL_MOOSE_RATES=[1,0.5,0.25];
+function chalMooseNow(){return((typeof performance!=='undefined'?performance.now():Date.now())-chalMooseT0)/1000*chalMooseRate;}
 function refreshChallenge(){
   // Do not call buildVehicle here: it hooks back into refreshChallenge (same pattern as refreshLap).
   const ch=runChallengeById(activeRunChallenge);
@@ -29290,8 +29302,8 @@ function refreshChallenge(){
   chalMooseT0=(typeof performance!=='undefined'?performance.now():Date.now());
   const pace=document.getElementById('chalPace');
   if(pace){const row=pace.closest('.field');if(row)row.style.display=ch.kind==='economy'?'':'none';}
-  const msel=document.getElementById('chalMooseSpeed');
-  if(msel){const row=msel.closest('.field');if(row)row.style.display=ch.kind==='moose'?'':'none';}
+  for(const id of ['chalMooseSpeed','chalMooseRate']){const el=document.getElementById(id);
+    if(el){const row=el.closest('.field');if(row)row.style.display=ch.kind==='moose'?'':'none';}}
   renderChallenge();
 }
 function renderChallenge(){
@@ -29423,7 +29435,7 @@ function drawMooseTopDown(g,R,x0,y0,w,h){
   g.strokeStyle='#4aa3ff';g.lineWidth=2;g.beginPath();
   for(let i=0;i<line.length;i++){const X=MX(line[i].x),Y=MY(line[i].y);if(i)g.lineTo(X,Y);else g.moveTo(X,Y);}
   g.stroke();
-  const now=((typeof performance!=='undefined'?performance.now():Date.now())-chalMooseT0)/1000;
+  const now=chalMooseNow();
   const s=mooseSampleAt(R,now);
   if(s){g.fillStyle='#55dd66';g.beginPath();g.arc(MX(s.x),MY(s.y),4,0,Math.PI*2);g.fill();}
   if(R.coneX!=null){const X=MX(R.coneX),Y=MY(R.coneY);g.strokeStyle='#ff4444';g.lineWidth=2;   // where a cone was first touched
@@ -29461,7 +29473,7 @@ function mooseLabel(g,txt,x,y,col,align){
   g.fillStyle='rgba(10,14,20,0.85)';g.fillRect(X-2,y-8,w+4,10);g.fillStyle=col;g.fillText(txt,X,y);
 }
 function drawMooseFrontal(g,R,x0,y0,w,h){
-  const now=((typeof performance!=='undefined'?performance.now():Date.now())-chalMooseT0)/1000;
+  const now=chalMooseNow();
   const s=mooseSampleAt(R,now);if(!s)return;
   const COL={body:'#ffcc00',glass:'#1d3550',wheel:'#4aa3ff',tyre:'#151a22',spring:'#ff4444',arm:'#8899aa',
     fz:'#66ddff',fy:'#55dd66',w:'#ffffff',in:'#ff9944',road:'#3a4454',ink:'#e0e0e0',dim:'#9ab'};
@@ -31684,6 +31696,10 @@ function bindControls(){
   const chalMs=document.getElementById('chalMooseSpeed');
   if(chalMs){chalMs.value=String(chalMooseSpeed);
     chalMs.addEventListener('change',e=>{const f=+e.target.value;if(MOOSE_SPEEDS.includes(f)){chalMooseSpeed=f;refreshChallenge();}});}
+  const chalMr=document.getElementById('chalMooseRate');
+  if(chalMr){chalMr.value=String(chalMooseRate);
+    chalMr.addEventListener('change',e=>{const f=+e.target.value;if(CHAL_MOOSE_RATES.includes(f)){chalMooseRate=f;
+      chalMooseT0=(typeof performance!=='undefined'?performance.now():Date.now());}});}
   const chalPace=document.getElementById('chalPace');
   if(chalPace){
     chalPace.value=String(chalPaceFactor);
