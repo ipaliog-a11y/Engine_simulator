@@ -1,6 +1,6 @@
 // ====== MOOSE AVOIDANCE (ISO 3888-2) ======
-// Solved double lane change for the CHALLENGES tab. Cone geometry and search match tests/test173.mjs
-// (build 277): throttle released at entry, top gear, best of smooth quintic lines, binary-search max
+// Solved double lane change for the CHALLENGES tab. Cone geometry and search began as tests/test173.mjs
+// (build 277): throttle released 2 m in, top gear, best of arc lines (build TBD), binary-search max
 // entry speed with no cone touched. Width and overhangs from CAR_DIMS when the body is a known car;
 // otherwise track + tyre width and a share of wheelbase for overhangs.
 function mooseDims(){
@@ -13,29 +13,51 @@ function mooseDims(){
   const w=track+tw,wb=vehicle.wb||2.5;
   return{w,ovF:0.35*wb,ovR:0.35*wb,name:name||'build',src:'estimate'};
 }
+// ISO 3888-2:2011 Table 1 and Figure 3 (build TBD): lane 1 is 1.1·w + 0.25 wide, lane 3 w + 1 and set 1 m beyond
+// lane 1's edge, lane 5 1.3·w + 0.25 but not less than 3 m, with its right edge in line with lane 1's. Each lane is
+// five cones a side, evenly spaced over its length (a–e, f–j, k–o), and "the track limits shall be tangential to
+// the base circles of the cones" (4.2), whose base is Ø185 mm (Figure 2): the cone centres stand 92.5 mm outside.
+const MOOSE_CONE_R=0.0925;
 function mooseGates(w){
-  const w1=1.1*w+0.25,w2=w+1;
-  return{w1,w2,y2:w1/2+1+w2/2,y3:(3-w1)/2};
+  const w1=1.1*w+0.25,w2=w+1,w5=Math.max(3,1.3*w+0.25);
+  const G={w,w1,w2,w5,y2:w1/2+1+w2/2,y3:-w1/2+w5/2,list:[]};
+  for(const [x0,len,yc,lw] of [[0,12,0,w1],[25.5,11,G.y2,w2],[49,12,G.y3,w5]])
+    for(let k=0;k<5;k++){const x=x0+len*k/4;G.list.push([x,yc+lw/2+MOOSE_CONE_R],[x,yc-lw/2-MOOSE_CONE_R]);}
+  return G;
 }
+// The driver's line (build TBD): two lane changes, each an arc and a counter-arc of equal and constant curvature,
+// the shape that moves the car across with the least peak lateral acceleration (4·Δy/L² against 5.77·Δy/L² for the
+// quintic smoothstep used before, which minimises jerk instead: a test driver asks the tyres for a steady force, not a
+// smooth one). The minimum-time solutions of this manoeuvre are bang-bang in the same way (Hendrikx, Meijlink and
+// Kriens, "Application of optimal control theory to inverse simulation of car handling", Vehicle System Dynamics 26,
+// 1996). k is the share of lane 1's (and lane 5's) spare width the car keeps to the outer side of, m the share of
+// lane 3's it holds away from (+) or towards (−) lane 1: a driver uses the room the cones leave.
 function mooseLine(G,v,shape){
-  const [A0,A1,B0,B1]=shape,line=[];
-  const sm=(x,x0,x1,y0,y1)=>{const u=Math.max(0,Math.min(1,(x-x0)/(x1-x0)));return y0+(y1-y0)*(u*u*u*(10-15*u+6*u*u));};
-  for(let x=-60;x<=140;x+=0.5)line.push({x,y:x<=(A1+B0)/2?sm(x,A0,A1,0,G.y2):sm(x,B0,B1,G.y2,G.y3),v,grade:0,kv:0});
+  const [A0,A1,B0,B1,k,m]=shape,line=[];
+  const ya=-k*(G.w1-G.w)/2,yb=G.y2+m*(G.w2-G.w)/2,yc=G.y3-k*(G.w5-G.w)/2;
+  const arc=(x,x0,x1,y0,y1)=>{const u=Math.max(0,Math.min(1,(x-x0)/(x1-x0)));return y0+(y1-y0)*(u<0.5?2*u*u:1-2*(1-u)*(1-u));};
+  for(let x=-60;x<=140;x+=0.5)line.push({x,y:x<=(A1+B0)/2?arc(x,A0,A1,ya,yb):arc(x,B0,B1,yb,yc),v,grade:0,kv:0});
   return line;
 }
+// A cone is displaced when the body's plan rectangle (overall width, without mirrors, and its overhangs) reaches its
+// base circle; between cones the body may pass over the limit line (build TBD: before, the four corners were held
+// inside a continuous wall, which missed a cone touching the body's side between its corners).
 function mooseConeHit(car,s,D,G){
-  const b=D.w,c=Math.cos(s.psi),sn=Math.sin(s.psi);
-  for(const [dx,dy] of [[car.a+D.ovF,b/2],[car.a+D.ovF,-b/2],[-car.b-D.ovR,b/2],[-car.b-D.ovR,-b/2]]){
-    const X=s.x+dx*c-dy*sn,Y=s.y+dx*sn+dy*c;
-    if((X>=0&&X<=12&&Math.abs(Y)>G.w1/2)||(X>=25.5&&X<=36.5&&Math.abs(Y-G.y2)>G.w2/2)||(X>=49&&X<=61&&Math.abs(Y-G.y3)>1.5))return true;
+  const c=Math.cos(s.psi),sn=Math.sin(s.psi),xf=car.a+D.ovF,xr=-car.b-D.ovR,hw=D.w/2,R2=MOOSE_CONE_R*MOOSE_CONE_R;
+  for(const [X,Y] of G.list){
+    const dx=X-s.x,dy=Y-s.y,lx=dx*c+dy*sn,ly=-dx*sn+dy*c;
+    const qx=Math.max(xr,Math.min(xf,lx)),qy=Math.max(-hw,Math.min(hw,ly));
+    if((lx-qx)*(lx-qx)+(ly-qy)*(ly-qy)<R2)return true;
   }
   return false;
 }
 // After entry: ICE lifts (engine braking). EV throttle=0 is full regen — far stronger than ICE overrun — so
 // Model Y / 3 / Plaid stopped before the exit (~x 40–55) and still scored clear (exit cones never reached).
 // Coast = thr that zeros motor torque: T = thr·wot − (1−thr)·ov = 0.
+// ISO 3888-2:2002 Annex A.2.2 b): "At 2 m after entering section 1, release the throttle" (build TBD; was at the
+// first cones).
 function mooseCoastPedals(car,s,u,D){
-  if(s.x+car.a+D.ovF<=0)return;
+  if(s.x+car.a+D.ovF<=2)return;
   u.brake=0;
   if(!car.ev){u.throttle=0;return;}
   const T0=driveEngine(car,0,s.rpm,null,s.soc),T1=driveEngine(car,1,s.rpm,null,s.soc);
@@ -108,7 +130,8 @@ function mooseBestAt(car,D,vk,sample){
   }
   return sample?Object.assign(mooseRun(car,D,vk,bs,true),{shape:bs}):Object.assign(best,{shape:bs});
 }
-const MOOSE_SHAPES=[];for(const A0 of [9,10,11])for(const A1 of [25,28])for(const B0 of [34,36])MOOSE_SHAPES.push([A0,A1,B0,50]);
+const MOOSE_SHAPES=[];for(const A0 of [8,10])for(const A1 of [28,31])for(const B0 of [31,34])for(const B1 of [52,56])for(const k of [0.5,0.8])
+  if(B0>=A1)MOOSE_SHAPES.push([A0,A1,B0,B1,k,0]);
 // Entry speeds (build 352). ISO 3888-2 sets none: the speed is raised step by step until a cone falls (best clear
 // speed, mode 0). Two fixed speeds from the magazines that run it: Teknikens Värld's pass mark, 72 km/h (70 in older
 // reports; Toyota RAV4 2019 failed at 68), and km77's reference entry speed, 77 km/h (Nissan Ariya and Peugeot e-2008
@@ -140,7 +163,10 @@ function simulateMooseChallenge(speedOpt){
     if(lo>best){best=lo;shape=sh;}
   }
   if(!shape)return{ok:false,reason:'no-clear',challenge:'moose',dims:D,cones:G};
+  // how it fails one step up. Clearing is not monotonic in speed on every line, so if another line clears one step up,
+  // that is the best speed (the driver keeps trying) (build TBD)
+  let F=mooseBestAt(car,D,best+1,false);
+  while(F.outcome==='CLEAR'&&best<120){best++;shape=F.shape;F=mooseBestAt(car,D,best+1,false);}
   const R=mooseRun(car,D,best,shape,true);R.vk=best;R.shape=shape;
-  const F=mooseBestAt(car,D,best+1,false);   // how it fails one step up
   return pack(R,{mode:'best',failAt:best+1,failBy:F.outcome});
 }

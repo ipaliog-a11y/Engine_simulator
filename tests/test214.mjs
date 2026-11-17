@@ -6,6 +6,8 @@
 //     MX-5 at Alpine Pass and the Model 3 on the Dragon; it still finishes on the target;
 //   · stages: the Golf GTI Mk7 (the reference) finishes every stage; an NA MX-5 is a DNF on Alpine; the head says DNF;
 //   · the moose result carries the diagram's scale (track, CG height, tyre radius) and the canvas draws without error;
+//   · ISO 3888-2 layout (build TBD): five cones a side per lane, evenly spaced; lane 5 is 1.3·w + 0.25, at least 3 m,
+//     its right edge in line with lane 1's;
 //   · moose failure modes: a fixed entry speed (72, 77) gives an outcome; BEST says how it fails one step up; a Land
 //     Cruiser with its CG raised to 1.1 m (t/2h 0.74) rolls over at 72 km/h, tipping to atan(t/2h), while the stock one
 //     (t/2h 1.09) does not.
@@ -35,6 +37,7 @@ const r = await page.evaluate(async () => {
   out.mx5Stage = solveRunChallenge('stage-alpine');
   out.mx5Stage = { dnf: out.mx5Stage.dnf, margin: out.mx5Stage.margin };
   const m = simulateMooseChallenge();
+  { const G = mooseGates(1.8), W = mooseGates(2.2); out.iso = { n: G.list.length, w5: G.w5, w5W: W.w5, edge: G.y3 - G.w5 / 2 + G.w1 / 2, x: [...new Set(G.list.map(c => +c[0].toFixed(3)))] }; }
   out.moose = { ok: m.ok, track: m.track, cgH: m.cgH, rT: m.rT, x0: m.samples[0].x };
   out.mooseFail = { failBy: m.failBy, failAt: m.failAt, best: m.speedKmh };
   const f72 = simulateMooseChallenge(72); out.m72 = { outcome: f72.outcome, v: f72.speedKmh };
@@ -67,6 +70,8 @@ if (!(r.m72.v === 72 && ['CLEAR', 'CONE', 'SPIN', 'ROLLOVER'].includes(r.m72.out
 if (r.lc.stock === 'ROLLOVER') fails.push('stock Land Cruiser rolls over at 72 km/h');
 if (r.lc.high !== 'ROLLOVER') fails.push('Land Cruiser with a 1.1 m CG should roll over at 72 km/h, got ' + r.lc.high);
 else if (!(Math.abs(r.lc.tip - Math.atan(r.lc.tH / r.lc.h)) < 0.03)) fails.push('rollover tip ' + r.lc.tip + ' rad, want atan(t/2h) ' + Math.atan(r.lc.tH / r.lc.h));
+if (!(r.iso.n === 30 && r.iso.w5 === 3 && Math.abs(r.iso.w5W - 3.11) < 1e-9 && Math.abs(r.iso.edge) < 1e-9 &&
+  r.iso.x.join() === '0,3,6,9,12,25.5,28.25,31,33.75,36.5,49,52,55,58,61')) fails.push('ISO 3888-2 cones (5 a side per lane, lane 5 max(3, 1.3w+0.25)): ' + JSON.stringify(r.iso));
 if (!(r.moose.x0 >= -10.5)) fails.push('moose replay starts before the cones: x ' + r.moose.x0);
 
 console.log(fails.length ? 'FAIL:\n  ' + fails.join('\n  ') : 'PASS');

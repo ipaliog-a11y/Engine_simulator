@@ -124,7 +124,7 @@ function drawMooseTopDown(g,R,x0,y0,w,h){
   const G=R.cones,line=R.line;if(!line||!line.length)return;
   let minX=1e9,maxX=-1e9,minY=1e9,maxY=-1e9;
   for(const q of line){minX=Math.min(minX,q.x);maxX=Math.max(maxX,q.x);minY=Math.min(minY,q.y-2);maxY=Math.max(maxY,q.y+2);}
-  minY=Math.min(minY,-G.w1/2-1);maxY=Math.max(maxY,G.y2+G.w2/2+1,G.y3+2);
+  minY=Math.min(minY,-G.w1/2-1);maxY=Math.max(maxY,G.y2+G.w2/2+1,G.y3+(G.w5||3)/2+0.5);
   const pad=10,dx=maxX-minX||1,dy=maxY-minY||1;
   const sc=Math.min((w-2*pad)/dx,(h-2*pad)/dy);
   const MX=x=>x0+pad+(x-minX)*sc,MY=y=>y0+h-pad-(y-minY)*sc;
@@ -133,12 +133,12 @@ function drawMooseTopDown(g,R,x0,y0,w,h){
     g.beginPath();g.moveTo(MX(xA),MY(yc-hw));g.lineTo(MX(xB),MY(yc-hw));g.stroke();
     g.beginPath();g.moveTo(MX(xA),MY(yc+hw));g.lineTo(MX(xB),MY(yc+hw));g.stroke();
     g.setLineDash([]);
-    g.fillStyle='#ffcc00';
-    for(const yy of [yc-hw,yc+hw]){g.beginPath();g.arc(MX(xA),MY(yy),2.5,0,Math.PI*2);g.fill();g.beginPath();g.arc(MX(xB),MY(yy),2.5,0,Math.PI*2);g.fill();}
   };
   lane(0,12,0,G.w1/2,'#445566');
   lane(25.5,36.5,G.y2,G.w2/2,'#445566');
-  lane(49,61,G.y3,1.5,'#445566');
+  lane(49,61,G.y3,(G.w5||3)/2,'#445566');
+  g.fillStyle='#ffcc00';   // ISO 3888-2 Figure 3: five cones a side per lane
+  for(const [cx,cy] of G.list||[]){g.beginPath();g.arc(MX(cx),MY(cy),2.5,0,Math.PI*2);g.fill();}
   g.strokeStyle='#4aa3ff';g.lineWidth=2;g.beginPath();
   for(let i=0;i<line.length;i++){const X=MX(line[i].x),Y=MY(line[i].y);if(i)g.lineTo(X,Y);else g.moveTo(X,Y);}
   g.stroke();

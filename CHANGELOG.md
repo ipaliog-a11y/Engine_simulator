@@ -18,6 +18,28 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 ## [Unreleased]
 
+### Moose test: ISO 3888-2 cones, throttle point and arc lines; the speed gap named (build TBD)
+
+- **What was looked for.** Stock cars clear the moose test at 55–68 km/h against 68–84 in magazine tests. At their
+  clear speed the tyres reach only 0.62–0.95 g against a grip of 0.9–1.13, so the cars are not grip-limited.
+- **Fixed against the standard** (ISO 3888-2:2011 Table 1, Figures 2–3; 2002 Annex A.2.2):
+  - cones are five a side per lane, Ø185 mm bases tangent to the track limit; a cone falls when the body's plan
+    outline reaches one. Before, a continuous wall checked only the body's four corners, which missed a cone touching
+    the body's side;
+  - lane 5 is 1.3·w + 0.25 but not under 3 m (was always 3 m; wider only for cars over 2.12 m);
+  - the throttle is released 2 m into section 1 (was at the first cones).
+- **The driver's line** is now an arc and an equal counter-arc per lane change (peak lateral acceleration 4·Δy/L²,
+  against 5.77·Δy/L² for the quintic used before), starting on the outer side of lane 1; 32 lines instead of 12. The
+  best-speed search also checks one step up on every line, so BEST no longer reports "fails by CLEAR".
+- **Clear speeds**, before → after: MX-5 NA 63 → 62, Golf GTI Mk7 68 → 66, 911 GT3 67 → 67, X5 M 64 → 64, Land
+  Cruiser 200 56 → 56, Model Y 55 → 54. All still fail at 72 and 77 km/h, now at lane 3's first inside cone.
+- **Left open: the driver.** A rigid car held to 0.8 g fits the ISO cones at 75 km/h (Golf), and 72.5 km/h at 0.75 g
+  (Model Y), so the cones and the grip do not cause the gap. The path-following driver does: it reads the line 0.15 s
+  ahead and arrives late through the car's yaw lag. Reading further ahead makes it worse (it cuts the cones). Closing
+  this needs a driver that plans its steering from the car's yaw response, a change to `driveDriver`, which the laps
+  share, so a build of its own.
+- Fingerprint identical (it records no moose run, and the shared driver is unchanged).
+
 ### Challenges: eco driver, fixed-time stages, moose failure modes and labelled diagram (build 352)
 
 - **Eco driver** on the economy runs. From eco-driving research: accelerate at the engine's min-BSFC gear and torque
