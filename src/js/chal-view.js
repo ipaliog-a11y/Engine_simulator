@@ -121,50 +121,96 @@ function drawMooseTopDown(g,R,x0,y0,w,h){
   g.fillStyle='#9ab';g.font='7px "Press Start 2P"';
   g.fillText(tr('ISO 3888-2')+' · '+R.speedKmh+' km/h',x0+8,y0+12);
 }
+// Arrow helpers for the moose frontal free-body sketch (owner diagram: yellow body, blue wheels, red springs, cyan forces).
+function mooseArrow(g,x1,y1,x2,y2,col,lw){
+  const dx=x2-x1,dy=y2-y1,L=Math.hypot(dx,dy)||1,ux=dx/L,uy=dy/L,ah=Math.min(10,L*0.35);
+  g.strokeStyle=col;g.fillStyle=col;g.lineWidth=lw||2;g.lineCap='round';
+  g.beginPath();g.moveTo(x1,y1);g.lineTo(x2,y2);g.stroke();
+  g.beginPath();g.moveTo(x2,y2);g.lineTo(x2-ah*ux+ah*0.45*uy,y2-ah*uy-ah*0.45*ux);g.lineTo(x2-ah*ux-ah*0.45*uy,y2-ah*uy+ah*0.45*ux);g.closePath();g.fill();
+}
+function mooseSpring(g,x1,y1,x2,y2,col){
+  const n=6,dx=x2-x1,dy=y2-y1,L=Math.hypot(dx,dy)||1,ux=dx/L,uy=dy/L,px=-uy,py=ux,amp=5;
+  g.strokeStyle=col;g.lineWidth=2;g.lineCap='round';g.beginPath();g.moveTo(x1,y1);
+  for(let i=1;i<n;i++){const t=i/n,s=(i%2?1:-1)*amp;g.lineTo(x1+dx*t+px*s,y1+dy*t+py*s);}
+  g.lineTo(x2,y2);g.stroke();
+}
+// Frontal free-body: body outline rolls; wheels move with travel; springs; Fz up, Fy at contact, ay at CG, roll arc.
 function drawMooseFrontal(g,R,x0,y0,w,h){
   const now=((typeof performance!=='undefined'?performance.now():Date.now())-chalMooseT0)/1000;
   const s=mooseSampleAt(R,now);if(!s)return;
-  const cx=x0+w/2,ground=y0+h*0.82,track=Math.min(w*0.55,h*0.9);
+  const COL={body:'#ffcc00',wheel:'#4aa3ff',spring:'#ff4444',force:'#66ddff',road:'#2a3344',ink:'#e0e0e0',dim:'#9ab'};
+  const cx=x0+w/2,ground=y0+h*0.88,track=Math.min(w*0.58,h*1.05);
   const roll=s.roll||0,c=Math.cos(roll),sn=Math.sin(roll);
   const Fz=s.Fz||[0,0,0,0],Fy=s.Fy||[0,0,0,0],zu=s.zu||[0,0,0,0];
-  // Front axle wheels: 0 left, 1 right (drive-model order).
-  const zL=zu[0]||0,zR=zu[1]||0;
-  const FzL=Fz[0]||0,FzR=Fz[1]||0,FyL=Fy[0]||0,FyR=Fy[1]||0;
-  const FzSum=Math.max(1,FzL+FzR+Fz[2]+Fz[3]);
-  const bodyW=track*0.72,bodyH=h*0.28;
-  const bodyY=ground-bodyH-18+((zL+zR)/2)*40;
+  const zL=zu[0]||0,zR=zu[1]||0,FzL=Fz[0]||0,FzR=Fz[1]||0,FyL=Fy[0]||0,FyR=Fy[1]||0;
+  const FzSum=Math.max(1,FzL+FzR+(Fz[2]||0)+(Fz[3]||0)),ay=s.ay||0;
+  const bodyW=track*0.55,bodyH=h*0.34,heave=((zL+zR)/2)*36;
+  const pivY=ground-bodyH*0.55+heave;
+  const rot=(px,py)=>{const dx=px-cx,dy=py-pivY;return[cx+dx*c-dy*sn,pivY+dx*sn+dy*c];};
   // road
-  g.fillStyle='#1a2030';g.fillRect(x0,ground,w,h*0.18);
-  g.strokeStyle='#2a3344';g.beginPath();g.moveTo(x0+8,ground);g.lineTo(x0+w-8,ground);g.stroke();
-  const rot=(px,py)=>{const dx=px-cx,dy=py-bodyY-bodyH/2;return[cx+dx*c-dy*sn,bodyY+bodyH/2+dx*sn+dy*c];};
-  // body
-  const corners=[[-bodyW/2,-bodyH/2],[bodyW/2,-bodyH/2],[bodyW/2,bodyH/2],[-bodyW/2,bodyH/2]].map(([px,py])=>rot(cx+px,bodyY+bodyH/2+py));
-  g.fillStyle='#c44';g.beginPath();g.moveTo(corners[0][0],corners[0][1]);
-  for(let i=1;i<4;i++)g.lineTo(corners[i][0],corners[i][1]);g.closePath();g.fill();
-  g.strokeStyle='#ffcc00';g.lineWidth=1;g.stroke();
-  // wheels + load / Fy
-  const drawWheel=(side,FzW,FyW,zW)=>{
-    const tx=cx+side*track/2,ty=ground-8+zW*40;
-    const [wx,wy]=rot(tx,ty-12);
-    g.fillStyle='#222';g.fillRect(wx-7,wy,14,18);
-    g.strokeStyle='#888';g.strokeRect(wx-7,wy,14,18);
-    const loadH=Math.max(2,Math.min(40,40*(FzW/(FzSum/2))));
-    g.fillStyle=FzW>FzSum*0.3?'#55dd66':'#ffcc00';
-    g.fillRect(wx+(side>0?10:-14),wy+18-loadH,4,loadH);
-    const fyPix=Math.max(-30,Math.min(30,FyW/800));
-    g.strokeStyle='#4aa3ff';g.lineWidth=2;
-    g.beginPath();g.moveTo(wx,wy+9);g.lineTo(wx+fyPix,wy+9);g.stroke();
+  g.strokeStyle=COL.road;g.lineWidth=2;g.beginPath();g.moveTo(x0+12,ground);g.lineTo(x0+w-12,ground);g.stroke();
+  // wheel centres (not rolled with body — contact stays near the ground; travel moves them vertically)
+  const wh=Math.max(22,bodyH*0.55),ww=Math.max(10,track*0.07);
+  const wheel=(side,zW)=>{
+    const wx=cx+side*(track/2),wy=ground-wh/2+zW*36;
+    return{wx,wy,top:wy-wh/2,bot:wy+wh/2,side};
   };
-  drawWheel(-1,FzL,FyL,zL);drawWheel(1,FzR,FyR,zR);
+  const wL=wheel(-1,zL),wR=wheel(1,zR);
+  // body silhouette (roof + cabin), outline only — matches the owner's sketch
+  const roof=bodyH*0.38,cab=bodyH*0.62,half=bodyW/2;
+  const bodyPts=[[-half*0.72,-bodyH/2],[-half*0.45,-bodyH/2-roof*0.15],[half*0.45,-bodyH/2-roof*0.15],[half*0.72,-bodyH/2],
+    [half,bodyH/2],[-half,bodyH/2]].map(([px,py])=>rot(cx+px,pivY+py));
+  g.strokeStyle=COL.body;g.lineWidth=2.5;g.lineJoin='round';g.beginPath();
+  g.moveTo(bodyPts[0][0],bodyPts[0][1]);for(let i=1;i<bodyPts.length;i++)g.lineTo(bodyPts[i][0],bodyPts[i][1]);
+  g.closePath();g.stroke();
+  // body bottom corners (spring mounts) and CG
+  const mountL=rot(cx-half*0.85,pivY+cab*0.15),mountR=rot(cx+half*0.85,pivY+cab*0.15);
+  const cg=rot(cx,pivY-bodyH*0.05);
+  // red springs body → wheels
+  mooseSpring(g,mountL[0],mountL[1],wL.wx+ww*0.2,wL.top+4,COL.spring);
+  mooseSpring(g,mountR[0],mountR[1],wR.wx-ww*0.2,wR.top+4,COL.spring);
+  // blue wheels
+  for(const W of [wL,wR]){
+    g.strokeStyle=COL.wheel;g.lineWidth=2.5;g.strokeRect(W.wx-ww/2,W.top,ww,wh);
+  }
+  // cyan forces: Fz up under each wheel (length ∝ load), Fy at contact (sign = body-frame lateral)
+  const fzScale=Math.min(48,h*0.18)/Math.max(FzL,FzR,FzSum*0.35);
+  const fyScale=Math.min(40,w*0.06)/800;
+  for(const [W,FzW,FyW] of [[wL,FzL,FyL],[wR,FzR,FyR]]){
+    const fzLen=Math.max(8,FzW*fzScale);
+    mooseArrow(g,W.wx,ground+2,W.wx,ground+2-fzLen,COL.force,2);
+    const fyLen=Math.max(6,Math.min(42,Math.abs(FyW)*fyScale))*(FyW>=0?1:-1);
+    // sketch: contact force into/along the turn — draw from outer edge toward the arrow tip
+    mooseArrow(g,W.wx-Math.sign(fyLen||1)*ww*0.8,W.bot-2,W.wx-Math.sign(fyLen||1)*ww*0.8+fyLen,W.bot-2,COL.force,2);
+  }
+  // suspension geometry cues (body corner → wheel centre)
+  g.strokeStyle=COL.force;g.lineWidth=1.5;g.setLineDash([4,3]);
+  g.beginPath();g.moveTo(mountL[0],mountL[1]);g.lineTo(wL.wx,wL.wy);g.stroke();
+  g.beginPath();g.moveTo(mountR[0],mountR[1]);g.lineTo(wR.wx,wR.wy);g.stroke();
+  g.setLineDash([]);
+  // lateral force at CG (ay)
+  const ayLen=Math.max(8,Math.min(50,Math.abs(ay)*55))*(ay>=0?1:-1);
+  g.beginPath();g.arc(cg[0],cg[1],4,0,Math.PI*2);g.fillStyle=COL.force;g.fill();
+  mooseArrow(g,cg[0],cg[1],cg[0]+ayLen,cg[1],COL.force,2);
+  // roll arc above the body (direction of roll rate / angle)
+  const arcR=bodyW*0.42,sense=roll>=0?1:-1;
+  g.strokeStyle=COL.force;g.lineWidth=2;g.beginPath();
+  g.arc(cg[0],cg[1]-bodyH*0.15,arcR,sense>0?-1.1:-0.2,sense>0?-0.2:1.1,sense<=0);
+  g.stroke();
+  const a0=sense>0?-0.2:1.1,ax=cg[0]+arcR*Math.cos(a0),ayp=cg[1]-bodyH*0.15+arcR*Math.sin(a0);
+  const tx=-Math.sin(a0)*sense,ty=Math.cos(a0)*sense;
+  mooseArrow(g,ax-tx*8,ayp-ty*8,ax+tx*2,ayp+ty*2,COL.force,2);
   // stats
-  g.fillStyle='#e0e0e0';g.font='8px "Press Start 2P"';
+  g.fillStyle=COL.ink;g.font='8px "Press Start 2P"';
   const lines=[
     Math.round((s.v||0)*3.6)+' km/h',
-    'ay '+(s.ay||0).toFixed(2)+' g',
+    'ay '+ay.toFixed(2)+' g',
     'roll '+(roll*180/Math.PI).toFixed(1)+'°',
     'Fz L/R '+Math.round(FzL)+'/'+Math.round(FzR)+' N'
   ];
   for(let i=0;i<lines.length;i++)g.fillText(lines[i],x0+10,y0+16+i*14);
+  g.fillStyle=COL.dim;g.font='7px "Press Start 2P"';
+  g.fillText(tr('yellow body · blue wheels · red springs · cyan forces'),x0+10,y0+h-10);
 }
 function drawMooseChallenge(g,R){
   chalHover.map=null;
