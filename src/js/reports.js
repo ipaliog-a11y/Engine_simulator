@@ -264,7 +264,7 @@ function canvasToPDF(cv,fn){
 // (position by lap), every car's lap times with the track's wetness behind them, and each car's stints by
 // compound. Drawn from the race record, so it is the race as it was run, not as the replay stands.
 const RACE_RPT_COLS=['#d62246','#1d6fb8','#c98a00','#1a7f37','#e06c00','#7b3fbf','#444455','#d64a9b'];
-const RACE_RPT_TYRE={eco:'#7fb89a',street:'#9a9aa8',sport:'#d9a400',semi:'#e06c00',slick:'#c1121f',drag:'#7b3fbf',inter:'#1a9f47',wet:'#1d6fb8'};
+const RACE_RPT_TYRE={eco:'#7fb89a',street:'#9a9aa8',premium:'#8fb3c4',sport:'#d9a400',semi:'#e06c00',slick:'#c1121f',drag:'#7b3fbf',inter:'#1a9f47',wet:'#1d6fb8'};
 function raceReportCanvas(R,scale){
   scale=scale||2;
   const W=RPT.W,H=RPT.H,cfg=R.cfg;

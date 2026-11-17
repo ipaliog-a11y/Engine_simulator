@@ -18,7 +18,7 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 ## [Unreleased]
 
-### Moose test: the driver turns in sooner and uses the lanes' width (build 353)
+### Moose test: the driver turns in sooner and uses the lanes' width; premium touring tyres (build 353)
 
 - The moose driver tried twelve lines through the lanes' centres and bisected each line's speed. A Model 3 cleared
   only 56 km/h, at 0.63 g against its own skidpad grip of 0.80 g; Teknikens Värld cleared it at 72. The lines finished
@@ -29,8 +29,17 @@ they are accurate about *what* shipped but not about the day it shipped.
   clear speed rises smoothly with the plan; it doesn't).
 - Best clear speed before → after: Model 3 56 → 71 (TV 72), Model Y 55 → 71, MX-5 NA 63 → 68, 911 GT3 67 → 79,
   Civic Type R 71 → 74, F-150 Raptor 65 → 72. Peak ay is now the car's skidpad grip (Model 3 0.81 g).
-- Left open: the last 1 km/h on the Model 3 comes from its tyres. The `eco` tyre gives 0.80 g on the skidpad, while
-  Car and Driver measured 0.86 g.
+- New tyre class, PREMIUM TOURING: street's grip (μ 0.95), eco's rolling resistance (0.010), W-rated. Eco is now
+  kept for slow, light, non-performance cars. The Model 3, Model Y and Qashqai e-POWER move to it: their factory
+  tyres (Michelin Primacy 4; Continental ProContact RX / Hankook Ventus S1 evo3 ev; probable, from parts listings)
+  grip like street tyres but roll like eco ones. Plain `street` raised the Teslas' Wh/km 9% past Tesla's figures and
+  the Qashqai's WLTP fuel past its record. The F-150 Raptor moves to street.
+- What that moved: Model 3 skidpad 0.80 → 0.86 g (Car and Driver 0.86), moose 71 → 73 km/h (TV 72), 0-100
+  6.18 → 5.90 s (Tesla 6.1); Model Y moose 71 → 72; Qashqai 0-100 7.27 → 7.21 s (Nissan 7.9); Tech lap −1.7 to
+  −2.2% on all four. Wh/km and WLTP are unchanged.
+- Left open: the Raptor's skidpad was already high on eco (0.88 g against Car and Driver's ~0.72 on its BFGoodrich
+  KO2s) and is 0.96 g on street. An all-terrain class is what it needs.
+- test136 fails on `main` as well (locked motor figures); that is not this build.
 - A Land Cruiser with its CG raised to 1.1 m still rolls in 44 of 48 plans at 72 km/h, but the driver now finds a
   line that only clips a cone. So test214 checks the rollover at 77 km/h (km77's speed), where every plan rolls.
 - A solve takes about 2 s instead of 1.

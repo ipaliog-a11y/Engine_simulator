@@ -49,7 +49,7 @@ function gbExplain(p){
     tr({manual:'You shift, with a clutch: cheap and light, a little slower between gears.',sequential:'A racing box: straight back and forth, quick shifts.',
         dct:'Two clutches swap gears with almost no gap in the drive.',auto:'A torque converter: smooth and easy, at some cost in speed and fuel.'}[v.gearbox]||''));
   if(TIRE_TYPE[v.tireType])V(tr(TIRE_TYPE[v.tireType].label)+' '+v.tireWidth+'/'+v.tireAspect+' R'+v.wheelDia,
-    tr({eco:'Hard, low-rolling-resistance rubber: it saves fuel and lasts, but grips least.',street:'An everyday tyre: grip and comfort in balance.',
+    tr({eco:'Hard, low-rolling-resistance rubber: it saves fuel and lasts, but grips least.',street:'An everyday tyre: grip and comfort in balance.',premium:'A quality touring tyre: everyday grip, yet it rolls as easily as an eco tyre.',
         sport:'Softer rubber for more grip, worn sooner.',semi:'Almost a race tyre: big grip once warm, poor in the rain.',
         slick:'No tread at all: the most grip on a dry track, none to spare in the wet.',drag:'Made to launch in a straight line.'}[v.tireType]||''));
   if(BRAKE_TYPE[v.brakeType])V(tr(BRAKE_TYPE[v.brakeType].label),
