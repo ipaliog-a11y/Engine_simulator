@@ -45,6 +45,10 @@ const SPEED_RATING={
 // a slick 90-110), not derived. Wet grip comes from each compound's tread and pressure (RACE_TREAD, race.js).
 const TIRE_TYPE={
   eco:     {label:'ECO/TOURING', mu:0.90,cc:0.28,crr:0.010,cost:400, rating:'H', tOpt:55, tWin:40,wear:0.55},
+  // premium (build 353): a premium touring tyre built for low rolling resistance, the kind EVs leave the factory on
+  // (Tesla Model 3: Michelin Primacy 4; Model Y: Continental ProContact RX / Hankook Ventus S1 evo3 ev: probable,
+  // from parts listings). Grip as street, rolling resistance as eco; the race window and wear sit between the two.
+  premium: {label:'PREMIUM TOURING',mu:0.95,cc:0.28,crr:0.010,cost:800, rating:'W', tOpt:60, tWin:38,wear:0.65},
   street:  {label:'STREET',      mu:0.95,cc:0.28,crr:0.012,cost:600, rating:'V', tOpt:65, tWin:36,wear:0.75},
   sport:   {label:'SPORT',       mu:1.00,cc:0.32,crr:0.013,cost:1000,rating:'Y', tOpt:78, tWin:32,wear:1.00},
   semi:    {label:'SEMI-SLICK',  mu:1.13,cc:0.42,crr:0.014,cost:1600,rating:'YY',tOpt:88, tWin:26,wear:1.45},

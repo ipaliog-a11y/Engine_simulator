@@ -117,7 +117,7 @@ const RACE_WATER={rainMmH:10,txd:0.6,slope:0.02,keep0:0.71,floor:0.158};
 // All PROBABLE, from makers' listings: a road tyre 8 mm and about 30% void at 230-240 kPa; a semi-slick ~5.5 mm
 // (7/32 in) with few grooves; a slick none, at ~170 kPa hot; a drag radial ~4 mm at ~110 kPa (16 psi); a race
 // intermediate and full wet 5 and 7 mm with wide channels, at a slick's pressure.
-const RACE_TREAD={eco:{mm:8,void:0.32,kPa:230},street:{mm:8,void:0.30,kPa:230},sport:{mm:7,void:0.28,kPa:240},
+const RACE_TREAD={eco:{mm:8,void:0.32,kPa:230},street:{mm:8,void:0.30,kPa:230},premium:{mm:8,void:0.30,kPa:230},sport:{mm:7,void:0.28,kPa:240},
   semi:{mm:5.5,void:0.12,kPa:210},slick:{mm:0,void:0,kPa:170},drag:{mm:4,void:0.15,kPa:110},
   inter:{mm:5,void:0.25,kPa:170},wet:{mm:7,void:0.35,kPa:170}};
 // The film (mm) on a track of this width when the rain is at share x of a properly wet race's.
