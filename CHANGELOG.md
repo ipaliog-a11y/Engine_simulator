@@ -18,7 +18,7 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 ## [Unreleased]
 
-### A hybrid's engine is spun up before it fires, and runs down when it stops (build 347)
+### A hybrid's engine is spun up before it fires, and runs down when it stops (build 348)
 
 Step C of `plans/hybrid-electric/gas-sound-hybrid.md`, on the bench (DYNO tab). Replaces the stale build 298 PR (#244), ported to today's main.
 - **Starting**, the engine is turned unfuelled until it fires: J dw/dt = Tc + Tf, Tf its motoring loss (`brakeTorqueRaw`, fuel cut), Tc a power-split's MG1 or a series hybrid's generator at full torque (at the crank T/ks, its rotor adding J/ks²), or what a P2's motor is not giving the shaft. It fires at idle (a P2 at the shaft's speed). It was at idle at once, fuelled.
@@ -27,6 +27,13 @@ Step C of `plans/hybrid-electric/gas-sound-hybrid.md`, on the bench (DYNO tab). 
 - Left open: the crank's ~1 kJ is not drawn from the pack nor the stop's returned; MG2's cancelling of MG1's reaction on the ring is not modelled; the lap replay has no spin-up or run-down. Bench and sound only.
 
 <<<<<<< HEAD
+
+### Moose: EVs coast through the exit (build 347)
+
+- After entry, throttle=0 on an EV is full regen. Model Y / 3 / Plaid scrubbed to a stop before the exit (~x 40–55) and still scored clear because exit cones were never reached.
+- EV “throttle released” is now a coast (pedal that zeros motor torque). A clear run must also pass x ≥ 61 (exit gate).
+- Also clears leftover CHANGELOG conflict markers from the 345/346 merge on main.
+
 ### The pack's resistance follows its temperature in the lap, the race and the WLTP cycle (build 346)
 
 - Until now the lap, the race and the WLTP cycle all used the pack's resistance at 25 °C, even though they track the pack's
@@ -42,7 +49,7 @@ Step C of `plans/hybrid-electric/gas-sound-hybrid.md`, on the bench (DYNO tab). 
   build is the first item. Next is a cell's sag and recovery as one RC pair.
 - Left open: the lap's torque curve (`driveTorqueRated`), the race's pace-grid energy price and the motor bench still read
   25 °C. `test136` already fails on `main` (motor locks from build 224), which is unrelated.
-=======
+
 ### Challenges: moose avoidance (build 345)
 
 - New CHALLENGES kind **Moose Avoidance** (ISO 3888-2): highest entry speed with no cone touched, same cone geometry and search as `test173`, via `stepCar`.
@@ -83,7 +90,6 @@ Step C of `plans/hybrid-electric/gas-sound-hybrid.md`, on the bench (DYNO tab). 
   diesel, rotary, EV and hybrid cars, the field, limits and help for each, how the coupled fields are handled, what a
   goal hint computes and what it costs, the finish screen, and three builds with their tests.
 - It ends with seven questions for the owner, each with a recommendation. No code changes; `plans/road-to-v1.md` links to it.
->>>>>>> origin/main
 
 ### The right column is back where it belongs, and the footer moves to OPTIONS > ABOUT (build 339)
 

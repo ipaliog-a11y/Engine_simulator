@@ -21,7 +21,7 @@ function muteEngineSound(){
   if(Sound.node)Sound.node.parameters.get('level').setTargetAtTime(0,t,0.08);
   if(Sound.gain)Sound.gain.gain.setTargetAtTime(0,t,0.08);
   if(Sound.gasGain)Sound.gasGain.gain.setTargetAtTime(0,t,0.08);
-  // a stopped engine is at rest: a restart rises from 0, not from the speed it last had (build 347)
+  // a stopped engine is at rest: a restart rises from 0, not from the speed it last had (build 348)
   if(Sound.node)Sound.node.parameters.get('rpm').setTargetAtTime(0,t,0.08);
   if(Sound.gas)Sound.gas.parameters.get('rpm').setTargetAtTime(0,t,0.08);
 }

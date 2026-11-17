@@ -812,7 +812,7 @@ body.guided-open{overflow:hidden}
 </div>
 <div class="container">
 <header>
-<h1>PIXEL ENGINE SIM v0.7 build 347</h1>
+<h1>PIXEL ENGINE SIM v0.7 build 348</h1>
 <div class="subtitle" id="subtitle">ENGINE DESIGNER • BUILD IT, THEN DRIVE IT</div>
 </header>
 <div class="build-strip" id="buildStrip">
@@ -26395,7 +26395,7 @@ function muteEngineSound(){
   if(Sound.node)Sound.node.parameters.get('level').setTargetAtTime(0,t,0.08);
   if(Sound.gain)Sound.gain.gain.setTargetAtTime(0,t,0.08);
   if(Sound.gasGain)Sound.gasGain.gain.setTargetAtTime(0,t,0.08);
-  // a stopped engine is at rest: a restart rises from 0, not from the speed it last had (build 347)
+  // a stopped engine is at rest: a restart rises from 0, not from the speed it last had (build 348)
   if(Sound.node)Sound.node.parameters.get('rpm').setTargetAtTime(0,t,0.08);
   if(Sound.gas)Sound.gas.parameters.get('rpm').setTargetAtTime(0,t,0.08);
 }
@@ -27991,7 +27991,7 @@ function hybControl(H,dt){
 function stepHybridBench(dt){
   const e=engine,hy=e.hy,H=hybBenchState(),B=state.ignOn===false?{...HYB_BENCH,auxW:0}:HYB_BENCH,ps=hy.mode!=='p2',m=hy.motor,pack=hy.pack;
   const lim=hybControl(H,dt);
-  // fuel on once the engine has been spun up to where it fires (hybSpin); asked to stop, the fuel is cut (build 347)
+  // fuel on once the engine has been spun up to where it fires (hybSpin); asked to stop, the fuel is cut (build 348)
   if(!H.engOn)H.fired=false;else if(!H.fired&&state.rpm>=hybFireRpm(H)-1)H.fired=true;
   const run=H.engOn&&H.fired;
   // the engine's air path and torque at its own throttle; off, it coasts to a stop with its manifold at the air
@@ -28048,15 +28048,15 @@ function stepHybridBench(dt){
 // The engine's live figures for a hybrid: as the combustion bench's at the engine's own throttle, or nothing when it is off.
 function hybUpdatePhysics(run){
   const H=hybBenchState();
-  if(!H.engOn||!H.fired){   // stopped, cranking or running down: no fuel (build 347)
+  if(!H.engOn||!H.fired){   // stopped, cranking or running down: no fuel (build 348)
     state.torque=0;state.powerKW=0;state.powerHP=0;state.fuelFlowLph=0;state.bsfc=999;state.thermalEff=0;state.knockRisk=0;state.fuelCut=true;
     if(typeof zeroEmissions==='function')zeroEmissions();   // no pipe emissions with the engine off (build 257)
     return;
   }
   withEngThr(H,run);
 }
-const hybBenchEngineOff=()=>isHybrid()&&hybBench&&hybBench.hy===engine.hy&&!hybBench.engOn&&state.rpm<1;   // at rest (build 347: was half idle)
-// Start and stop (build 347, step C of plans/hybrid-electric/gas-sound-hybrid.md). Unfuelled, the engine turns on
+const hybBenchEngineOff=()=>isHybrid()&&hybBench&&hybBench.hy===engine.hy&&!hybBench.engOn&&state.rpm<1;   // at rest (build 348: was half idle)
+// Start and stop (build 348, step C of plans/hybrid-electric/gas-sound-hybrid.md). Unfuelled, the engine turns on
 // J dw/dt = Tc + Tf: Tf its own motoring loss (brakeTorqueRaw with the fuel cut: rubbing, pumping, the alternator), Tc
 // what spins it. A power-split's MG1 or a series hybrid's generator gives its full torque, reaching the crank as T/ks
 // and adding its rotor's J/ks^2 (it turns at 1/ks of the engine's speed, hybGear); a P2's motor gives through its clutch
@@ -28969,19 +28969,31 @@ function mooseConeHit(car,s,D,G){
   }
   return false;
 }
+// After entry: ICE lifts (engine braking). EV throttle=0 is full regen — far stronger than ICE overrun — so
+// Model Y / 3 / Plaid stopped before the exit (~x 40–55) and still scored clear (exit cones never reached).
+// Coast = thr that zeros motor torque: T = thr·wot − (1−thr)·ov = 0.
+function mooseCoastPedals(car,s,u,D){
+  if(s.x+car.a+D.ovF<=0)return;
+  u.brake=0;
+  if(!car.ev){u.throttle=0;return;}
+  const T0=driveEngine(car,0,s.rpm,null,s.soc),T1=driveEngine(car,1,s.rpm,null,s.soc);
+  u.throttle=T1>T0?Math.max(0,Math.min(1,-T0/(T1-T0))):0;
+}
 // One pass at entry speed vk (km/h). Returns {ok,ay,beta,line} (and optional samples for a later replay).
+// ok requires clearing the exit gate (x past 61) with no cone touch — not merely surviving the first two lanes.
 function mooseRun(car,D,vk,shape,sample){
   const G=mooseGates(D.w),v=vk/3.6,line=mooseLine(G,v,shape);
   const s=driveState(car),d={i:0};
   s.x=-60;s.vx=v;s.w=s.w.map(()=>v/car.r);
   for(let g=car.ratios.length;g>=1;g--){s.gear=g;if(v/car.r*car.ratios[g-1]*car.fd*30/Math.PI>=2000)break;}
   s.we=v/car.r*car.ratios[s.gear-1]*car.fd;
-  const o={ok:true,ay:0,beta:0,line,samples:sample?[]:null};
+  const o={ok:true,ay:0,beta:0,line,samples:sample?[]:null,maxX:s.x};
   let nextT=0;
   while(s.x<70&&s.t<20){
     const u=driveDriver(car,s,line,d);u.gear=s.gear;
-    if(s.x+car.a+D.ovF>0){u.throttle=0;u.brake=0;}
+    mooseCoastPedals(car,s,u,D);
     stepCar(car,s,u,0.005);
+    o.maxX=Math.max(o.maxX,s.x);
     o.ay=Math.max(o.ay,Math.abs(s.ayF)/9.81);
     o.beta=Math.max(o.beta,Math.abs(Math.atan2(s.vy,Math.max(1,s.vx)))*180/Math.PI);
     if(mooseConeHit(car,s,D,G))o.ok=false;
@@ -28990,6 +29002,7 @@ function mooseRun(car,D,vk,shape,sample){
       nextT=s.t+0.02;
     }
   }
+  if(!(o.maxX>=61))o.ok=false;   // must pass the exit cones (49–61 m)
   return o;
 }
 function simulateMooseChallenge(){
