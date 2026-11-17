@@ -36,6 +36,13 @@ revised with the owner's answers (see *Owner's decisions*). The order of the pha
 | 11 | How the work runs | **Through the phases without stopping**, except for a major decision. Builds stack on one branch. |
 | 12 | Screens | **Phone and desktop alike**; nothing that stops it becoming a mobile app later (touch first, no hover-only controls, layout from the width). |
 | 13 | Interface | **Declutter freely.** Fewer on-screen explanations, more pictures: a part is shown, not described. Long text belongs in the guide. |
+| 14 | v0.8 | **Released at build 338** (handling phase G done); the owner tags it. |
+| 15 | Known gaps of builds 329 and 333 | **Approved:** the Mustang GT in `LIFT_KNOWN` (`test204`), the FK8's 4.6 m cap in `OFF_KNOWN` (`test170`). |
+| 16 | LS7, LS3, LT4, Coyote over 10% on real valves | **Chase before v1.0** (the cam or the intake, not the valves). |
+| 17 | Water-to-air intercoolers | **Before v1.0** (lifts the park after build 256; timing open). |
+| 18 | Phase D's real-car scoreboard | **At the v1.0 gate (H)**, not now. |
+| 19 | Name | **Pixel Powertrain**, with a piston icon (draft chosen separately). |
+| 20 | Suspension geometry | By type for v1.0; a car's own only where published; never fitted (`plans/driving-sim.md`, decision 3). |
 
 ## Where it stands
 

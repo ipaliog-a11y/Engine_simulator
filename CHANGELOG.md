@@ -18,7 +18,7 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 ## [Unreleased]
 
-### The app is renamed Pixel Powertrain, with a split-piston icon (build 348)
+### The app is renamed Pixel Powertrain, with a split-piston icon (build 350)
 
 - The owner's decision (plans/road-to-v1.md, decision 19): the name is now **Pixel Powertrain** in the page title, the
   title screen, the header and version line, OPTIONS > ABOUT, the PNG reports, the share text, the web manifest, README
@@ -28,6 +28,21 @@ they are accurate about *what* shipped but not about the day it shipped.
   service worker's cache name moves to v5 so installed copies pick the new icons up.
 - Unchanged on purpose: the `pes.` storage keys and the save and share formats, so existing saves and links still load.
   `tools/stamp.mjs` reads either name on the version line, so it still finds the number on older `main` builds.
+
+### A hybrid's engine is spun up before it fires, and runs down when it stops (build 349)
+
+Step C of `plans/hybrid-electric/gas-sound-hybrid.md`, on the bench (DYNO tab). Replaces the stale build 298 PR (#244), ported to today's main.
+- **Starting**, the engine is turned unfuelled until it fires: J dw/dt = Tc + Tf, Tf its motoring loss (`brakeTorqueRaw`, fuel cut), Tc a power-split's MG1 or a series hybrid's generator at full torque (at the crank T/ks, its rotor adding J/ks²), or what a P2's motor is not giving the shaft. It fires at idle (a P2 at the shaft's speed). It was at idle at once, fuelled.
+- **Stopping**, the fuel is cut and the engine runs down instead of falling at a flat 4000 rpm/s: a P2's coasts on its friction, a power-split's or series hybrid's MG1 brakes it at full torque. The sound is heard until it is at rest (it muted at half idle).
+- **The sound's speed returns to 0 when the engine is muted**, so a restart rises from rest.
+- Left open: the crank's ~1 kJ is not drawn from the pack nor the stop's returned; MG2's cancelling of MG1's reaction on the ring is not modelled; the lap replay has no spin-up or run-down. Bench and sound only.
+
+### The owner's decisions before v0.8, written into the plans (build 348)
+- Docs only; no simulator number moves.
+- v0.8 is reached at build 338 (handling phase G done). The known gaps of builds 329 (Mustang GT, `test204`) and 333 (FK8, `test170`) are approved.
+- Before v1.0: the LS7, LS3, LT4 and Coyote's excess over their published power, and water-to-air intercoolers. The real-car scoreboard runs at the v1.0 gate.
+- Suspension geometry stays by type for v1.0; a car takes its own only where it is published, never fitted.
+- The app is to be renamed Pixel Powertrain, with a piston icon; the rename is its own build.
 
 ### Moose: EVs coast through the exit (build 347)
 
@@ -4586,7 +4601,6 @@ peaks to ~800 C; temperature paint at VIR read 460-550 C; a Cayman on R-compound
   keeps its blocks and falls back to English, and nothing scrolls sideways at phone width (it caught wide tables
   doing exactly that: the wide column is now `minmax(0, 1fr)`).
 
-
 ### The ECU's torque limit as a tune point (build 138)
 
 - **ECU TORQUE LIMIT (Nm, 0 = off)**, a new input on boosted engines. A torque-based ECU holds the engine to a
@@ -6359,7 +6373,6 @@ trapping — the next conversion. `test44` records this as a budget of 2 that ca
 **Still fitted, marked for removal:** `CAM{peakShift, ampMul, loWiden, lowLoss, scav}` still shapes
 the base VE bell curve. When wave tuning and trapping are derived, the powerband position will
 emerge from cam duration instead of being asserted by `peakShift`.
-
 
 ---
 
