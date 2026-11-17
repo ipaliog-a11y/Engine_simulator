@@ -55,7 +55,7 @@ Real roads: OSRM centreline + ASTER elevation; width modelled (as Nordschleife).
 - Named gap: frontal diagram is a replay of the solved line, not a player-steered run.
 - Build 352: entry speed BEST / 72 (Teknikens Värld) / 77 (km77); outcome CLEAR / CONE / SPIN / ROLLOVER (rigid tip about
   the outer tyres after a two-wheel lift); two-wheel lift flagged.
-- **Known gap:** clear speeds 54–67 km/h vs 68–84 in magazine tests. Checked (build TBD): cone layout, lane 5,
+- **Known gap:** clear speeds 54–67 km/h vs 68–84 in magazine tests. Checked (build 353): cone layout, lane 5,
   throttle point fixed to ISO 3888-2; lines now arc/counter-arc. Not the cones or grip: a rigid body at |ay| ≤ 0.8 g
   fits the cones at 75 km/h (Golf), 72.5 at 0.75 g (Model Y). The cause is `driveDriver`: 0.15 s preview, late into
   lane 3 by the yaw lag; a longer preview cuts cones. Needs a yaw-aware (planning) driver; the magazines' full load

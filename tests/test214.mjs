@@ -6,11 +6,12 @@
 //     MX-5 at Alpine Pass and the Model 3 on the Dragon; it still finishes on the target;
 //   · stages: the Golf GTI Mk7 (the reference) finishes every stage; an NA MX-5 is a DNF on Alpine; the head says DNF;
 //   · the moose result carries the diagram's scale (track, CG height, tyre radius) and the canvas draws without error;
-//   · ISO 3888-2 layout (build TBD): five cones a side per lane, evenly spaced; lane 5 is 1.3·w + 0.25, at least 3 m,
+//   · ISO 3888-2 layout (build 353): five cones a side per lane, evenly spaced; lane 5 is 1.3·w + 0.25, at least 3 m,
 //     its right edge in line with lane 1's;
 //   · moose failure modes: a fixed entry speed (72, 77) gives an outcome; BEST says how it fails one step up; a Land
 //     Cruiser with its CG raised to 1.1 m (t/2h 0.74) rolls over at 72 km/h, tipping to atan(t/2h), while the stock one
-//     (t/2h 1.09) does not.
+//     (t/2h 1.09) does not. From build 353 the driver's best of 32 lines may only touch a cone, so the roll is checked
+//     on one line it rolls on, and the best outcome only has to be a failure.
 import { chromium } from './pw.mjs';
 import path from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
@@ -43,7 +44,8 @@ const r = await page.evaluate(async () => {
   const f72 = simulateMooseChallenge(72); out.m72 = { outcome: f72.outcome, v: f72.speedKmh };
   load('Land Cruiser'); const lcS = simulateMooseChallenge(72);
   vehicle.cg = 1.1; const lcH = simulateMooseChallenge(72);
-  out.lc = { stock: lcS.outcome, high: lcH.outcome, tip: lcH.tipMax, ssf: lcH.ssf, tH: lcH.track / 2, h: lcH.cgH };
+  const lcR = mooseRun(driveCar(), mooseDims(), 72, MOOSE_SHAPES[0]);   // a line it rolls on (build 353: the best of 32 lines may only touch a cone)
+  out.lc = { stock: lcS.outcome, high: lcH.outcome, rolled: lcR.outcome, tip: lcR.tipMax, ssf: lcH.ssf, tH: lcH.track / 2, h: lcH.cgH };
   load('Model 3 RWD'); out.m3 = pair('dragon');
   load('Golf GTI (Mk7'); out.golf = RUN_CHALLENGES.filter(c => c.kind === 'stage').map(c => { const R = solveRunChallenge(c.id); return { id: c.id, dnf: R.dnf, margin: R.margin }; });
   load('MX-5');
@@ -68,7 +70,8 @@ if (!(r.moose.ok && r.moose.track > 1 && r.moose.cgH > 0.2 && r.moose.rT > 0.2))
 if (!(r.mooseFail.failBy && r.mooseFail.failBy !== 'CLEAR' && r.mooseFail.failAt === r.mooseFail.best + 1)) fails.push('BEST should say how it fails one step up: ' + JSON.stringify(r.mooseFail));
 if (!(r.m72.v === 72 && ['CLEAR', 'CONE', 'SPIN', 'ROLLOVER'].includes(r.m72.outcome))) fails.push('fixed 72 km/h run: ' + JSON.stringify(r.m72));
 if (r.lc.stock === 'ROLLOVER') fails.push('stock Land Cruiser rolls over at 72 km/h');
-if (r.lc.high !== 'ROLLOVER') fails.push('Land Cruiser with a 1.1 m CG should roll over at 72 km/h, got ' + r.lc.high);
+if (r.lc.high === 'CLEAR') fails.push('Land Cruiser with a 1.1 m CG should fail at 72 km/h');
+if (r.lc.rolled !== 'ROLLOVER') fails.push('Land Cruiser with a 1.1 m CG should roll over at 72 km/h on its first line, got ' + r.lc.rolled);
 else if (!(Math.abs(r.lc.tip - Math.atan(r.lc.tH / r.lc.h)) < 0.03)) fails.push('rollover tip ' + r.lc.tip + ' rad, want atan(t/2h) ' + Math.atan(r.lc.tH / r.lc.h));
 if (!(r.iso.n === 30 && r.iso.w5 === 3 && Math.abs(r.iso.w5W - 3.11) < 1e-9 && Math.abs(r.iso.edge) < 1e-9 &&
   r.iso.x.join() === '0,3,6,9,12,25.5,28.25,31,33.75,36.5,49,52,55,58,61')) fails.push('ISO 3888-2 cones (5 a side per lane, lane 5 max(3, 1.3w+0.25)): ' + JSON.stringify(r.iso));

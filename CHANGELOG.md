@@ -18,7 +18,7 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 ## [Unreleased]
 
-### Moose test: ISO 3888-2 cones, throttle point and arc lines; the speed gap named (build TBD)
+### Moose test: ISO 3888-2 cones, throttle point and arc lines; the speed gap named (build 353)
 
 - **What was looked for.** Stock cars clear the moose test at 55–68 km/h against 68–84 in magazine tests. At their
   clear speed the tyres reach only 0.62–0.95 g against a grip of 0.9–1.13, so the cars are not grip-limited.
@@ -38,6 +38,10 @@ they are accurate about *what* shipped but not about the day it shipped.
   ahead and arrives late through the car's yaw lag. Reading further ahead makes it worse (it cuts the cones). Closing
   this needs a driver that plans its steering from the car's yaw response, a change to `driveDriver`, which the laps
   share, so a build of its own.
+- Tests changed in the open: test212's floor on Model Y's clear speed goes 55 → 50 (it now clears at 54, by the
+  stricter cone rule); test214's raised-CG Land Cruiser still rolls over at 72 km/h on 24 of its 32 lines, but the
+  best line only touches a cone, so the roll and its tip angle are checked on a line it rolls on. test214 also checks
+  the ISO cone layout.
 - Fingerprint identical (it records no moose run, and the shared driver is unchanged).
 
 ### Challenges: eco driver, fixed-time stages, moose failure modes and labelled diagram (build 352)

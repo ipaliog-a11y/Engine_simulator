@@ -1,6 +1,6 @@
 // ====== MOOSE AVOIDANCE (ISO 3888-2) ======
 // Solved double lane change for the CHALLENGES tab. Cone geometry and search began as tests/test173.mjs
-// (build 277): throttle released 2 m in, top gear, best of arc lines (build TBD), binary-search max
+// (build 277): throttle released 2 m in, top gear, best of arc lines (build 353), binary-search max
 // entry speed with no cone touched. Width and overhangs from CAR_DIMS when the body is a known car;
 // otherwise track + tyre width and a share of wheelbase for overhangs.
 function mooseDims(){
@@ -13,7 +13,7 @@ function mooseDims(){
   const w=track+tw,wb=vehicle.wb||2.5;
   return{w,ovF:0.35*wb,ovR:0.35*wb,name:name||'build',src:'estimate'};
 }
-// ISO 3888-2:2011 Table 1 and Figure 3 (build TBD): lane 1 is 1.1·w + 0.25 wide, lane 3 w + 1 and set 1 m beyond
+// ISO 3888-2:2011 Table 1 and Figure 3 (build 353): lane 1 is 1.1·w + 0.25 wide, lane 3 w + 1 and set 1 m beyond
 // lane 1's edge, lane 5 1.3·w + 0.25 but not less than 3 m, with its right edge in line with lane 1's. Each lane is
 // five cones a side, evenly spaced over its length (a–e, f–j, k–o), and "the track limits shall be tangential to
 // the base circles of the cones" (4.2), whose base is Ø185 mm (Figure 2): the cone centres stand 92.5 mm outside.
@@ -25,7 +25,7 @@ function mooseGates(w){
     for(let k=0;k<5;k++){const x=x0+len*k/4;G.list.push([x,yc+lw/2+MOOSE_CONE_R],[x,yc-lw/2-MOOSE_CONE_R]);}
   return G;
 }
-// The driver's line (build TBD): two lane changes, each an arc and a counter-arc of equal and constant curvature,
+// The driver's line (build 353): two lane changes, each an arc and a counter-arc of equal and constant curvature,
 // the shape that moves the car across with the least peak lateral acceleration (4·Δy/L² against 5.77·Δy/L² for the
 // quintic smoothstep used before, which minimises jerk instead: a test driver asks the tyres for a steady force, not a
 // smooth one). The minimum-time solutions of this manoeuvre are bang-bang in the same way (Hendrikx, Meijlink and
@@ -40,7 +40,7 @@ function mooseLine(G,v,shape){
   return line;
 }
 // A cone is displaced when the body's plan rectangle (overall width, without mirrors, and its overhangs) reaches its
-// base circle; between cones the body may pass over the limit line (build TBD: before, the four corners were held
+// base circle; between cones the body may pass over the limit line (build 353: before, the four corners were held
 // inside a continuous wall, which missed a cone touching the body's side between its corners).
 function mooseConeHit(car,s,D,G){
   const c=Math.cos(s.psi),sn=Math.sin(s.psi),xf=car.a+D.ovF,xr=-car.b-D.ovR,hw=D.w/2,R2=MOOSE_CONE_R*MOOSE_CONE_R;
@@ -54,7 +54,7 @@ function mooseConeHit(car,s,D,G){
 // After entry: ICE lifts (engine braking). EV throttle=0 is full regen — far stronger than ICE overrun — so
 // Model Y / 3 / Plaid stopped before the exit (~x 40–55) and still scored clear (exit cones never reached).
 // Coast = thr that zeros motor torque: T = thr·wot − (1−thr)·ov = 0.
-// ISO 3888-2:2002 Annex A.2.2 b): "At 2 m after entering section 1, release the throttle" (build TBD; was at the
+// ISO 3888-2:2002 Annex A.2.2 b): "At 2 m after entering section 1, release the throttle" (build 353; was at the
 // first cones).
 function mooseCoastPedals(car,s,u,D){
   if(s.x+car.a+D.ovF<=2)return;
@@ -164,7 +164,7 @@ function simulateMooseChallenge(speedOpt){
   }
   if(!shape)return{ok:false,reason:'no-clear',challenge:'moose',dims:D,cones:G};
   // how it fails one step up. Clearing is not monotonic in speed on every line, so if another line clears one step up,
-  // that is the best speed (the driver keeps trying) (build TBD)
+  // that is the best speed (the driver keeps trying) (build 353)
   let F=mooseBestAt(car,D,best+1,false);
   while(F.outcome==='CLEAR'&&best<120){best++;shape=F.shape;F=mooseBestAt(car,D,best+1,false);}
   const R=mooseRun(car,D,best,shape,true);R.vk=best;R.shape=shape;
