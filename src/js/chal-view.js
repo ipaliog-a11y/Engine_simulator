@@ -9,6 +9,8 @@ function refreshChallenge(){
   chalMooseT0=(typeof performance!=='undefined'?performance.now():Date.now());
   const pace=document.getElementById('chalPace');
   if(pace){const row=pace.closest('.field');if(row)row.style.display=ch.kind==='economy'?'':'none';}
+  const msel=document.getElementById('chalMooseSpeed');
+  if(msel){const row=msel.closest('.field');if(row)row.style.display=ch.kind==='moose'?'':'none';}
   renderChallenge();
 }
 function renderChallenge(){
@@ -20,14 +22,20 @@ function renderChallenge(){
   if(!R.ok){head.textContent='—';grid.innerHTML='';note.textContent=tr('This challenge is not ready yet.');return;}
   const cell=(k,v)=>'<div class="perf-cell"><div class="k">'+tr(k)+'</div><div class="v">'+v+'</div></div>';
   if(R.kind==='moose'){
-    head.innerHTML=tr(ch.name)+' · <b>'+R.speedKmh+' km/h</b> · '+tr('CLEAR');
-    grid.innerHTML=cell('ENTRY',R.speedKmh+' km/h')+
+    const col=MOOSE_OUT_COL[R.outcome]||'#e0e0e0',warn=R.lift2>0?' · '+tr('2-WHEEL LIFT'):'';
+    head.innerHTML=tr(ch.name)+' · <b>'+R.speedKmh+' km/h</b> · <span style="color:'+col+'">'+tr(R.outcome)+'</span>'+warn;
+    grid.innerHTML=cell('ENTRY',R.speedKmh+' km/h'+(R.mode==='best'?' ('+tr('BEST')+')':''))+
+      cell('RESULT','<span style="color:'+col+'">'+tr(R.outcome)+'</span>')+
+      (R.mode==='best'&&R.failBy&&R.failBy!=='CLEAR'?cell('FAILS AT',R.failAt+' km/h: '+tr(R.failBy)):'')+
       cell('PEAK ay',R.peakAy.toFixed(2)+' g')+
       cell('PEAK β',R.peakBeta.toFixed(1)+'°')+
       cell('WIDTH',R.trackW.toFixed(2)+' m')+
       cell('LANE 1',R.cones.w1.toFixed(2)+' m')+
-      cell('OFFSET',R.cones.w2.toFixed(2)+' m');
-    note.textContent=tr(ch.desc)+' '+tr('Throttle released at entry, top gear. Score is the highest entry speed that touches no cone (ISO 3888-2).');
+      cell('OFFSET',R.cones.w2.toFixed(2)+' m')+
+      cell('2-WHEEL LIFT',R.lift2>0?R.lift2.toFixed(2)+' s':tr('none'))+
+      cell('MAX TIP',(R.tipMax*180/Math.PI).toFixed(1)+'°')+
+      cell('STABILITY t/2h',R.ssf.toFixed(2));
+    note.textContent=tr(ch.desc)+' '+tr('Throttle released at entry, top gear; the best of 12 lines. BEST CLEAR raises the speed until a cone falls (ISO 3888-2); 72 and 77 km/h are the entry speeds Teknikens Värld and km77 judge by. A car fails by a CONE, a SPIN (turned past 90°) or a ROLLOVER (two wheels up and tipped past its outer tyres).');
     return;
   }
   if(R.kind==='stage'){
@@ -111,6 +119,7 @@ function mooseSampleAt(R,t){
   let i=0;while(i<S.length-1&&S[i+1].t<u)i++;
   return S[i];
 }
+const MOOSE_OUT_COL={CLEAR:'#55dd66',CONE:'#ffcc00',SPIN:'#ff8833',ROLLOVER:'#ff4444'};
 function drawMooseTopDown(g,R,x0,y0,w,h){
   const G=R.cones,line=R.line;if(!line||!line.length)return;
   let minX=1e9,maxX=-1e9,minY=1e9,maxY=-1e9;
@@ -136,6 +145,8 @@ function drawMooseTopDown(g,R,x0,y0,w,h){
   const now=((typeof performance!=='undefined'?performance.now():Date.now())-chalMooseT0)/1000;
   const s=mooseSampleAt(R,now);
   if(s){g.fillStyle='#55dd66';g.beginPath();g.arc(MX(s.x),MY(s.y),4,0,Math.PI*2);g.fill();}
+  if(R.coneX!=null){const X=MX(R.coneX),Y=MY(R.coneY);g.strokeStyle='#ff4444';g.lineWidth=2;   // where a cone was first touched
+    g.beginPath();g.moveTo(X-5,Y-5);g.lineTo(X+5,Y+5);g.moveTo(X+5,Y-5);g.lineTo(X-5,Y+5);g.stroke();}
   g.fillStyle='#9ab';g.font='7px "Press Start 2P"';
   g.fillText(tr('ISO 3888-2')+' · '+R.speedKmh+' km/h',x0+8,y0+12);
 }
@@ -163,7 +174,7 @@ function mooseSpring(g,x1,y1,x2,y2,col){
 //   Fz  each tyre's ground reaction, up at its contact patch;
 //   Fy  each tyre's side force, along the ground at its contact patch, toward the turn.
 // Roll and camber are drawn at their true angles (a soft car rolls 4–6° here, plain to see).
-const MOOSE_ANG_X=1;
+const MOOSE_ANG_X=1;   // (fixed-speed runs and failure modes: build 352)
 function mooseLabel(g,txt,x,y,col,align){
   g.font='7px "Press Start 2P"';const w=g.measureText(txt).width,X=align==='r'?x-w:align==='c'?x-w/2:x;
   g.fillStyle='rgba(10,14,20,0.85)';g.fillRect(X-2,y-8,w+4,10);g.fillStyle=col;g.fillText(txt,X,y);
@@ -186,6 +197,9 @@ function drawMooseFrontal(g,R,x0,y0,w,h){
   // road and hatching
   g.strokeStyle=COL.road;g.lineWidth=2;g.beginPath();g.moveTo(x0+8,ground);g.lineTo(x0+w-8,ground);g.stroke();
   g.lineWidth=1;for(let X=x0+12;X<x0+w-8;X+=10){g.beginPath();g.moveTo(X,ground);g.lineTo(X-6,ground+6);g.stroke();}
+  // a two-wheel lift (build 352): the whole axle tips about the outer tyre's contact, by the rigid tip angle
+  const tipA=s.tip||0;
+  if(tipA){const px=cx+Math.sign(tipA)*-(trackM/2)*k;g.save();g.translate(px,ground);g.rotate(-tipA);g.translate(-px,-ground);}
   // body: rolls about the roll centre, taken at ground level + 0.1 m (a typical strut front; drawn, not solved)
   const rc=[cx,ground-0.1*k],ang=roll*MOOSE_ANG_X,c=Math.cos(ang),sn=Math.sin(ang);
   const B=(xm,ym)=>{const dx=xm*k,dy=-ym*k;return[rc[0]+dx*c-dy*sn,rc[1]+dx*sn+dy*c];};
@@ -213,7 +227,7 @@ function drawMooseFrontal(g,R,x0,y0,w,h){
   for(const W of [WL,WR]){
     const q=[W.P(-tw/2,0),W.P(tw/2,0),W.P(tw/2,-th),W.P(-tw/2,-th)];
     g.beginPath();q.forEach((P,i)=>i?g.lineTo(P[0],P[1]):g.moveTo(P[0],P[1]));g.closePath();
-    g.fillStyle=COL.tyre;g.fill();g.strokeStyle=COL.wheel;g.lineWidth=2.5;g.stroke();
+    g.fillStyle=COL.tyre;g.fill();g.strokeStyle=(W===WL?FzL:FzR)<=0?'#ff4444':COL.wheel;g.lineWidth=2.5;g.stroke();
     g.fillStyle=COL.wheel;g.beginPath();g.arc(W.hub[0],W.hub[1],Math.max(2,tw*0.25),0,Math.PI*2);g.fill();
   }
   // CG (checkered disc)
@@ -245,6 +259,13 @@ function drawMooseFrontal(g,R,x0,y0,w,h){
     g.lineWidth=2;g.beginPath();g.arc(rc[0],rc[1],rr,a0,a1,ang<0);g.stroke();
     mooseLabel(g,'roll '+Math.abs(rollDeg).toFixed(1)+'°',rc[0]+(ang>0?8:-8),rc[1]-rr-4,COL.body,ang>0?'l':'r');
   }
+  if(tipA)g.restore();
+  // outcome of the run, top right
+  g.font='10px "Press Start 2P"';const oc=tr(R.outcome||'CLEAR'),ow=g.measureText(oc).width;
+  g.fillStyle=MOOSE_OUT_COL[R.outcome]||COL.ink;g.fillText(oc,x0+w-ow-12,y0+18);
+  g.font='7px "Press Start 2P"';let ry=y0+32;
+  for(const [on,t2,c2] of [[s.cone,tr('cone hit'),COL.dim],[tipA,tr('two wheels up')+' · '+tr('tip')+' '+(Math.abs(tipA)*180/Math.PI).toFixed(0)+'°','#ff4444']])
+    if(on){g.fillStyle=c2;g.fillText(t2,x0+w-g.measureText(t2).width-12,ry);ry+=12;}
   // readout
   g.fillStyle=COL.ink;g.font='8px "Press Start 2P"';
   const ay=s.ay||0,ayF=Wf>0?Fin/Wf:0;   // the front axle's lateral acceleration in g: ΣFy / (W_front / g)

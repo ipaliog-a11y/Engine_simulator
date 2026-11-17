@@ -53,6 +53,10 @@ Real roads: OSRM centreline + ASTER elevation; width modelled (as Nordschleife).
 - Registry id `moose`, kind `moose`. Solver in `src/js/moose-run.js` (ISO 3888-2, from `test173`).
 - Score: max clear entry speed (km/h). UI: score grid + top-down cones + frontal force/roll replay from sampled `stepCar` state.
 - Named gap: frontal diagram is a replay of the solved line, not a player-steered run.
+- Build 352: entry speed BEST / 72 (Teknikens Värld) / 77 (km77); outcome CLEAR / CONE / SPIN / ROLLOVER (rigid tip about
+  the outer tyres after a two-wheel lift); two-wheel lift flagged.
+- **Known gap:** clear speeds 55–68 km/h vs 68–84 in magazine tests: look at the driver model's line and steering
+  rate, the tyres' peak grip and the 40 kg-per-person load the magazines add.
 - Build 352: the frontal view is the front axle seen from behind, to scale, every force labelled in kN on one scale.
 
 ## Follow-ups

@@ -41,51 +41,106 @@ function mooseCoastPedals(car,s,u,D){
   const T0=driveEngine(car,0,s.rpm,null,s.soc),T1=driveEngine(car,1,s.rpm,null,s.soc);
   u.throttle=T1>T0?Math.max(0,Math.min(1,-T0/(T1-T0))):0;
 }
-// One pass at entry speed vk (km/h). Returns {ok,ay,beta,line} (and optional samples for a later replay).
+// One pass at entry speed vk (km/h). Returns {ok,ay,beta,line,outcome,...} (and optional samples for a later replay).
 // ok requires clearing the exit gate (x past 61) with no cone touch — not merely surviving the first two lanes.
+// Failure modes (build 352), worst first:
+//   ROLLOVER  both wheels on one side off the ground (Fz = 0) and the car then tips past its outer tyres. Once a side
+//             is up the springs no longer hold the roll, so the whole car is taken as one rigid body pivoting on its
+//             outer contact patches: I_o·φ'' = m·(a_out·z − g·d), z = (t/2)·sinφ + h·cosφ the CG's height and
+//             d = (t/2)·cosφ − h·sinφ its distance inside the pivot, I_o = I_roll + m·(h² + (t/2)²), starting at the
+//             body's roll rate. It tips over when d ≤ 0, φ = atan(t / 2h); from rest it starts only if a_out > g·t/2h
+//             (the static stability factor, NHTSA). The vehicle model itself does not carry the tip: this is a check
+//             on top of it, so the tyres still see the lifted side's loads as 0.
+//   SPIN      the car turns more than 90° from the course (pointing sideways: control is gone, not a judgement call).
+//   CONE      a corner of the body passes outside a lane.
+//   CLEAR     none of these. A 2-WHEEL LIFT that lands again is reported as a warning, not a failure.
+const MOOSE_RANK={CLEAR:0,CONE:1,SPIN:2,ROLLOVER:3};
 function mooseRun(car,D,vk,shape,sample){
   const G=mooseGates(D.w),v=vk/3.6,line=mooseLine(G,v,shape);
   const s=driveState(car),d={i:0};
   s.x=-60;s.vx=v;s.w=s.w.map(()=>v/car.r);
   for(let g=car.ratios.length;g>=1;g--){s.gear=g;if(v/car.r*car.ratios[g-1]*car.fd*30/Math.PI>=2000)break;}
   s.we=v/car.r*car.ratios[s.gear-1]*car.fd;
-  const o={ok:true,ay:0,beta:0,line,samples:sample?[]:null,maxX:s.x};
-  let nextT=0;
+  const o={ok:true,ay:0,beta:0,line,samples:sample?[]:null,maxX:s.x,cone:false,coneX:null,coneY:null,spin:false,rolled:false,
+    lift2:0,liftSide:0,tipMax:0};
+  const h=car.h,tH=(car.tF+car.tR)/4,Io=car.rollI+car.m*(h*h+tH*tH),gG=9.81;
+  const tip={phi:0,phiV:0,side:0};
+  let nextT=0;const dt=0.005;
   while(s.x<70&&s.t<20){
     const u=driveDriver(car,s,line,d);u.gear=s.gear;
     mooseCoastPedals(car,s,u,D);
-    stepCar(car,s,u,0.005);
+    stepCar(car,s,u,dt);
     o.maxX=Math.max(o.maxX,s.x);
-    o.ay=Math.max(o.ay,Math.abs(s.ayF)/9.81);
+    o.ay=Math.max(o.ay,Math.abs(s.ayF)/gG);
     o.beta=Math.max(o.beta,Math.abs(Math.atan2(s.vy,Math.max(1,s.vx)))*180/Math.PI);
-    if(mooseConeHit(car,s,D,G))o.ok=false;
+    if(mooseConeHit(car,s,D,G)){o.ok=false;if(!o.cone){o.cone=true;o.coneX=s.x;o.coneY=s.y;}}
+    // two-wheel lift and the rigid tip about the outer tyres. +ay is to the left: a left turn loads the right (outer)
+    // side and lifts the left wheels, so the outward acceleration is −side·ay with side −1 for the left wheels up
+    const leftUp=s.Fz[0]<=0&&s.Fz[2]<=0,rightUp=s.Fz[1]<=0&&s.Fz[3]<=0;
+    if(leftUp||rightUp){o.lift2+=dt;o.liftSide=leftUp?-1:1;}
+    if(tip.phi<=0&&(leftUp||rightUp)){tip.side=leftUp?-1:1;tip.phi=1e-6;tip.phiV=Math.abs(s.rollV||0);}
+    if(tip.phi>0){
+      const aOut=Math.max(0,-tip.side*s.ayF),c=Math.cos(tip.phi),sn=Math.sin(tip.phi);
+      const z=tH*sn+h*c,dd=tH*c-h*sn;
+      tip.phiV+=dt*car.m*(aOut*z-gG*dd)/Io;tip.phi+=dt*tip.phiV;
+      if(tip.phi<=0){tip.phi=0;tip.phiV=0;}
+      o.tipMax=Math.max(o.tipMax,tip.phi);
+      if(tH*Math.cos(tip.phi)-h*Math.sin(tip.phi)<=0){o.rolled=true;o.ok=false;}
+    }
+    if(Math.abs(s.psi)>Math.PI/2){o.spin=true;o.ok=false;}
     if(sample&&s.t>=nextT&&s.x>=-10){   // replay from 10 m before the first cones (build 352)
-      o.samples.push({t:s.t,x:s.x,y:s.y,psi:s.psi,v:s.speed,roll:s.roll,zu:s.zu.slice(),Fz:s.Fz.slice(),Fy:s.Fy.slice(),camber:s.camber.slice(),ay:s.ayF/9.81});
+      o.samples.push({t:s.t,x:s.x,y:s.y,psi:s.psi,v:s.speed,roll:s.roll,zu:s.zu.slice(),Fz:s.Fz.slice(),Fy:s.Fy.slice(),camber:s.camber.slice(),ay:s.ayF/gG,
+        tip:tip.phi*tip.side,cone:o.cone});
       nextT=s.t+0.02;
     }
+    if(o.rolled||o.spin)break;
   }
   if(!(o.maxX>=61))o.ok=false;   // must pass the exit cones (49–61 m)
+  o.outcome=o.rolled?'ROLLOVER':o.spin?'SPIN':!o.ok?'CONE':'CLEAR';
   return o;
 }
-function simulateMooseChallenge(){
+// The driver's best of the twelve lines at one entry speed: the mildest outcome, then the least sideways.
+function mooseBestAt(car,D,vk,sample){
+  let best=null,bs=null;
+  for(const sh of MOOSE_SHAPES){
+    const r=mooseRun(car,D,vk,sh);
+    if(!best||MOOSE_RANK[r.outcome]<MOOSE_RANK[best.outcome]||(r.outcome===best.outcome&&r.beta<best.beta)){best=r;bs=sh;}
+  }
+  return sample?Object.assign(mooseRun(car,D,vk,bs,true),{shape:bs}):Object.assign(best,{shape:bs});
+}
+const MOOSE_SHAPES=[];for(const A0 of [9,10,11])for(const A1 of [25,28])for(const B0 of [34,36])MOOSE_SHAPES.push([A0,A1,B0,50]);
+// Entry speeds (build 352). ISO 3888-2 sets none: the speed is raised step by step until a cone falls (best clear
+// speed, mode 0). Two fixed speeds from the magazines that run it: Teknikens Värld's pass mark, 72 km/h (70 in older
+// reports; Toyota RAV4 2019 failed at 68), and km77's reference entry speed, 77 km/h (Nissan Ariya and Peugeot e-2008
+// cleared it; a Dacia Sandero reached 73).
+const MOOSE_SPEEDS=[0,72,77];
+let chalMooseSpeed=0;
+function simulateMooseChallenge(speedOpt){
   const pt=powertrain();if(!pt.ready()||!vehicle.mass)return null;
   const car=driveCar(),D=mooseDims();if(!(D.w>0))return{ok:false,reason:'width'};
-  const G=mooseGates(D.w);
-  let best=0,shape=null,bestRun=null;
-  for(const A0 of [9,10,11])for(const A1 of [25,28])for(const B0 of [34,36]){
-    const sh=[A0,A1,B0,50];
+  const G=mooseGates(D.w),mode=speedOpt==null?chalMooseSpeed:speedOpt;
+  const pack=(R,extra)=>Object.assign({
+    ok:true,kind:'moose',speedKmh:R.vk,shape:R.shape,peakAy:R.ay,peakBeta:R.beta,
+    dims:D,cones:G,line:R.line,samples:R.samples||[],
+    mu:car.mu,trackW:D.w,
+    // for the frontal diagram's scale (build 352): track, CG height and tyre radius in metres
+    track:(car.tF+car.tR)/2,cgH:car.h,rT:car.r,
+    outcome:R.outcome,coneX:R.coneX,coneY:R.coneY,lift2:R.lift2,liftSide:R.liftSide,tipMax:R.tipMax,
+    ssf:(car.tF+car.tR)/4/car.h
+  },extra);
+  if(mode>0){
+    const R=mooseBestAt(car,D,mode,true);R.vk=mode;
+    return pack(R,{mode:'fixed'});
+  }
+  let best=0,shape=null;
+  for(const sh of MOOSE_SHAPES){
     if(!mooseRun(car,D,Math.max(40,best+1),sh).ok)continue;
     let lo=Math.max(40,best+1),hi=120;
     while(hi-lo>1){const m=(lo+hi)>>1;if(mooseRun(car,D,m,sh).ok)lo=m;else hi=m;}
     if(lo>best){best=lo;shape=sh;}
   }
   if(!shape)return{ok:false,reason:'no-clear',challenge:'moose',dims:D,cones:G};
-  bestRun=mooseRun(car,D,best,shape,true);
-  return{
-    ok:true,kind:'moose',speedKmh:best,shape,peakAy:bestRun.ay,peakBeta:bestRun.beta,
-    dims:D,cones:G,line:bestRun.line,samples:bestRun.samples||[],
-    mu:car.mu,trackW:D.w,
-    // for the frontal diagram's scale (build 352): track, CG height and tyre radius in metres
-    track:(vehicle.trackF||vehicle.track||D.w-0.2),cgH:vehicle.cg||0.5,rT:vehicle.rTire||0.3
-  };
+  const R=mooseRun(car,D,best,shape,true);R.vk=best;R.shape=shape;
+  const F=mooseBestAt(car,D,best+1,false);   // how it fails one step up
+  return pack(R,{mode:'best',failAt:best+1,failBy:F.outcome});
 }

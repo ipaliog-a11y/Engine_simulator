@@ -307,9 +307,14 @@ assist map over speed and pedal), regeneration, load-point shifting, electric-dr
     blend toward the car's full grip and power (shown as ECO BLEND) make the time; the cheapest is kept.
   - **Fixed-time stage** — the same set time for every car on each road (a Golf GTI Mk7's best plus 2%).
     The car's fastest run from a standing start either makes it or is a **DNF**.
-  - **Moose avoidance** — the ISO 3888-2 double lane change: the highest entry speed with no cone touched,
-    with a replay seen from behind of the front axle: weight, the axle's side (inertial) force, each tyre's
-    load and side force in kN, and the body's true roll.
+  - **Moose avoidance** — the ISO 3888-2 double lane change, at the **best clear speed** (raised until a cone
+    falls, as the standard does) or at a magazine's fixed entry speed: **72 km/h** (Teknikens Värld's pass mark)
+    or **77 km/h** (km77's reference). A run ends **CLEAR**, **CONE**, **SPIN** (turned past 90°) or **ROLLOVER**
+    (two wheels up, then the car tips past its outer tyres as a rigid body; it can only start when the sideways
+    acceleration beats g·t/2h, the static stability factor). A two-wheel lift that lands again is flagged. The
+    replay, seen from behind the front axle, shows weight, the axle's side (inertial) force, each tyre's load and
+    side force in kN, the body's true roll, a lifted wheel in red and the tipped car. The stock cars clear 55–68
+    km/h, about 10 km/h below the magazines' typical 68–84, so at 72 and 77 they all fail by a cone (a known gap).
   - Hover the road for distance, speed and gradient at that point. Known gaps: the economy plan is a
     search over a cap and a blend, not an optimal plan; a hybrid uses the engine-car path; regen strength
     is the regen table's and has not yet been checked against measured EVs.

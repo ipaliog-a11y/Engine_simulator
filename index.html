@@ -3255,7 +3255,7 @@ Rules, not physics: refuelling at 2.5 L/s and 6 s for tyres; in the wet a car wi
 The <b>CHALLENGES</b> tab (DRIVE) runs the car on its own. Pick a challenge and the result appears; hover the road for distance, speed and gradient.<br>
 <b>Economy</b>: the target time is the PACE (125, 150 or 200%) times the car's own fastest time on that road. The score is litres and L/100 km, or kWh and Wh/km for an EV, with the regen it recovered. The grid also shows the peak acceleration and braking, the mean engine speed on power, the top gear used, and ECO BLEND (below).<br>
 <b>Fixed-time stage</b>: one set time per road for every car. The car's fastest run from a standing start is shown against it; slower is a <b>DNF</b>.<br>
-<b>Moose avoidance</b>: the highest clear entry speed, with a replay. The lower view is the front axle seen from behind, with each force labelled in kN on one scale: <b>W</b> the axle's weight, <b>m·ay(front)</b> its sideways inertial force, <b>Fz</b> each tyre's load and <b>Fy</b> each tyre's side force. Roll and camber are drawn at their true angles.
+<b>Moose avoidance</b>: ENTRY picks BEST CLEAR (the speed is raised until a cone falls, as ISO 3888-2 does; the grid also says how it fails one step up) or a magazine's fixed speed, 72 km/h (Teknikens Värld's pass mark) or 77 km/h (km77's). The result is CLEAR, CONE, SPIN or ROLLOVER, with a warning for a two-wheel lift, its time and the largest tip. The lower view is the front axle seen from behind, with each force labelled in kN on one scale: <b>W</b> the axle's weight, <b>m·ay(front)</b> its sideways inertial force, <b>Fz</b> each tyre's load and <b>Fy</b> each tyre's side force. Roll and camber are drawn at their true angles.
 </div>
 </div>
 <div class="gtier gt-phys"><div class="gtier-h">LV3 · THE PHYSICS</div>
@@ -3263,10 +3263,10 @@ The <b>CHALLENGES</b> tab (DRIVE) runs the car on its own. Pick a challenge and 
 <b>Fastest time</b> on an open road is the lap solver's method without the wrap: corner ceilings from the tyres' grip, a braking pass backwards and a drive pass forwards from rest, with grade and crests.<br>
 <b>The eco driver</b> limits both passes. Drive: at each speed, the gear and torque with the lowest BSFC on the engine's own fuel map (the "pulse" of pulse-and-glide, Li et al. 2011), so the shift speed comes out of the map; for an EV the motor torque with the highest <i>T·ω / (T·ω + losses)</i>. Slowing: lift, with engine braking in fuel cut in the gear that brakes most (no fuel), or the regen table on an EV, plus drag, rolling resistance and grade. A blend <i>s</i> adds <i>s</i> × 30 m/s² of drive and <i>s</i> × 12 m/s² of brake back toward the car's own limits. For each blend (0, 5, 20, 100%), a speed cap is searched so the finish lands on the target, and the run that burns least is kept.<br>
 <b>Fuel</b> is read off the fuel map at each step in the gear that burns least for the force needed; <b>EV energy</b> is motor losses, pack heat and 250 W of auxiliaries, less regen.<br>
-<b>Moose</b>: the full vehicle model (stepCar) follows the smoothest of 12 cone lines with the throttle released; the entry speed is bisected for a clear run.
+<b>Moose</b>: the full vehicle model (stepCar) follows the best of 12 cone lines with the throttle released; the entry speed is bisected for a clear run. <b>Rollover</b>: once both wheels on one side carry no load, the car is taken as one rigid body pivoting on its outer tyres, <i>I<sub>o</sub>·φ'' = m·(a·z − g·d)</i>, with <i>z</i> the CG's height and <i>d</i> its distance inside the pivot; it starts at the body's roll rate and has rolled over when <i>d</i> reaches 0, at <i>φ = atan(t/2h)</i>. From rest it can only start when <i>a &gt; g·t/2h</i>, the static stability factor (NHTSA): a sports car ~1.5, a tall SUV ~1.1. <b>Spin</b>: the car turned more than 90° from the course.
 </div>
 <div class="guide-limit" data-gk="chalLimit">
-The economy run is a search over a cap and four blends, not an optimal control plan; it does not pulse-and-glide on the flat. Hybrids use the engine-car fuel path. The regen table's strength has not been checked against measured EVs (a field study reports about 2.5 m/s² on regen alone on mainstream EVs; some of the game's EVs reach more). Stage set times are authored from a reference car, not physics. The moose run is solved, not driven.
+The economy run is a search over a cap and four blends, not an optimal control plan; it does not pulse-and-glide on the flat. Hybrids use the engine-car fuel path. The regen table's strength has not been checked against measured EVs (a field study reports about 2.5 m/s² on regen alone on mainstream EVs; some of the game's EVs reach more). Stage set times are authored from a reference car, not physics. The moose run is solved, not driven. The rigid tip is a check on top of the vehicle model, which does not carry it (its tyres simply see the lifted side's load as 0), and kerb-trip rollovers are not modelled. The stock cars clear 55–68 km/h, about 10 km/h below what magazines report (68–84), so at 72 and 77 km/h they all fail by a cone.
 </div>
 </div>
 <div class="guide-see">See also: <a data-gp="lapsolve">Solving a lap</a> · <a data-gp="elevation">Elevation, crests &amp; compressions</a> · <a data-gp="fuels">Fuels &amp; octane</a></div>
@@ -4025,6 +4025,11 @@ Most other tests check behaviour that is true of real cars: a bigger turbo spool
 <option value="1.25">125%</option>
 <option value="1.5">150%</option>
 <option value="2">200%</option>
+</select></div>
+<div class="field" style="display:none"><label for="chalMooseSpeed">ENTRY</label><select id="chalMooseSpeed" title="Best clear speed (ISO 3888-2 steps), or a magazine's fixed entry speed">
+<option value="0">BEST CLEAR</option>
+<option value="72">72 km/h (TEKNIKENS VÄRLD)</option>
+<option value="77">77 km/h (KM77)</option>
 </select></div>
 </div>
 <div class="perf-head" id="chalHead">—</div>
@@ -29114,53 +29119,108 @@ function mooseCoastPedals(car,s,u,D){
   const T0=driveEngine(car,0,s.rpm,null,s.soc),T1=driveEngine(car,1,s.rpm,null,s.soc);
   u.throttle=T1>T0?Math.max(0,Math.min(1,-T0/(T1-T0))):0;
 }
-// One pass at entry speed vk (km/h). Returns {ok,ay,beta,line} (and optional samples for a later replay).
+// One pass at entry speed vk (km/h). Returns {ok,ay,beta,line,outcome,...} (and optional samples for a later replay).
 // ok requires clearing the exit gate (x past 61) with no cone touch — not merely surviving the first two lanes.
+// Failure modes (build 352), worst first:
+//   ROLLOVER  both wheels on one side off the ground (Fz = 0) and the car then tips past its outer tyres. Once a side
+//             is up the springs no longer hold the roll, so the whole car is taken as one rigid body pivoting on its
+//             outer contact patches: I_o·φ'' = m·(a_out·z − g·d), z = (t/2)·sinφ + h·cosφ the CG's height and
+//             d = (t/2)·cosφ − h·sinφ its distance inside the pivot, I_o = I_roll + m·(h² + (t/2)²), starting at the
+//             body's roll rate. It tips over when d ≤ 0, φ = atan(t / 2h); from rest it starts only if a_out > g·t/2h
+//             (the static stability factor, NHTSA). The vehicle model itself does not carry the tip: this is a check
+//             on top of it, so the tyres still see the lifted side's loads as 0.
+//   SPIN      the car turns more than 90° from the course (pointing sideways: control is gone, not a judgement call).
+//   CONE      a corner of the body passes outside a lane.
+//   CLEAR     none of these. A 2-WHEEL LIFT that lands again is reported as a warning, not a failure.
+const MOOSE_RANK={CLEAR:0,CONE:1,SPIN:2,ROLLOVER:3};
 function mooseRun(car,D,vk,shape,sample){
   const G=mooseGates(D.w),v=vk/3.6,line=mooseLine(G,v,shape);
   const s=driveState(car),d={i:0};
   s.x=-60;s.vx=v;s.w=s.w.map(()=>v/car.r);
   for(let g=car.ratios.length;g>=1;g--){s.gear=g;if(v/car.r*car.ratios[g-1]*car.fd*30/Math.PI>=2000)break;}
   s.we=v/car.r*car.ratios[s.gear-1]*car.fd;
-  const o={ok:true,ay:0,beta:0,line,samples:sample?[]:null,maxX:s.x};
-  let nextT=0;
+  const o={ok:true,ay:0,beta:0,line,samples:sample?[]:null,maxX:s.x,cone:false,coneX:null,coneY:null,spin:false,rolled:false,
+    lift2:0,liftSide:0,tipMax:0};
+  const h=car.h,tH=(car.tF+car.tR)/4,Io=car.rollI+car.m*(h*h+tH*tH),gG=9.81;
+  const tip={phi:0,phiV:0,side:0};
+  let nextT=0;const dt=0.005;
   while(s.x<70&&s.t<20){
     const u=driveDriver(car,s,line,d);u.gear=s.gear;
     mooseCoastPedals(car,s,u,D);
-    stepCar(car,s,u,0.005);
+    stepCar(car,s,u,dt);
     o.maxX=Math.max(o.maxX,s.x);
-    o.ay=Math.max(o.ay,Math.abs(s.ayF)/9.81);
+    o.ay=Math.max(o.ay,Math.abs(s.ayF)/gG);
     o.beta=Math.max(o.beta,Math.abs(Math.atan2(s.vy,Math.max(1,s.vx)))*180/Math.PI);
-    if(mooseConeHit(car,s,D,G))o.ok=false;
+    if(mooseConeHit(car,s,D,G)){o.ok=false;if(!o.cone){o.cone=true;o.coneX=s.x;o.coneY=s.y;}}
+    // two-wheel lift and the rigid tip about the outer tyres. +ay is to the left: a left turn loads the right (outer)
+    // side and lifts the left wheels, so the outward acceleration is −side·ay with side −1 for the left wheels up
+    const leftUp=s.Fz[0]<=0&&s.Fz[2]<=0,rightUp=s.Fz[1]<=0&&s.Fz[3]<=0;
+    if(leftUp||rightUp){o.lift2+=dt;o.liftSide=leftUp?-1:1;}
+    if(tip.phi<=0&&(leftUp||rightUp)){tip.side=leftUp?-1:1;tip.phi=1e-6;tip.phiV=Math.abs(s.rollV||0);}
+    if(tip.phi>0){
+      const aOut=Math.max(0,-tip.side*s.ayF),c=Math.cos(tip.phi),sn=Math.sin(tip.phi);
+      const z=tH*sn+h*c,dd=tH*c-h*sn;
+      tip.phiV+=dt*car.m*(aOut*z-gG*dd)/Io;tip.phi+=dt*tip.phiV;
+      if(tip.phi<=0){tip.phi=0;tip.phiV=0;}
+      o.tipMax=Math.max(o.tipMax,tip.phi);
+      if(tH*Math.cos(tip.phi)-h*Math.sin(tip.phi)<=0){o.rolled=true;o.ok=false;}
+    }
+    if(Math.abs(s.psi)>Math.PI/2){o.spin=true;o.ok=false;}
     if(sample&&s.t>=nextT&&s.x>=-10){   // replay from 10 m before the first cones (build 352)
-      o.samples.push({t:s.t,x:s.x,y:s.y,psi:s.psi,v:s.speed,roll:s.roll,zu:s.zu.slice(),Fz:s.Fz.slice(),Fy:s.Fy.slice(),camber:s.camber.slice(),ay:s.ayF/9.81});
+      o.samples.push({t:s.t,x:s.x,y:s.y,psi:s.psi,v:s.speed,roll:s.roll,zu:s.zu.slice(),Fz:s.Fz.slice(),Fy:s.Fy.slice(),camber:s.camber.slice(),ay:s.ayF/gG,
+        tip:tip.phi*tip.side,cone:o.cone});
       nextT=s.t+0.02;
     }
+    if(o.rolled||o.spin)break;
   }
   if(!(o.maxX>=61))o.ok=false;   // must pass the exit cones (49–61 m)
+  o.outcome=o.rolled?'ROLLOVER':o.spin?'SPIN':!o.ok?'CONE':'CLEAR';
   return o;
 }
-function simulateMooseChallenge(){
+// The driver's best of the twelve lines at one entry speed: the mildest outcome, then the least sideways.
+function mooseBestAt(car,D,vk,sample){
+  let best=null,bs=null;
+  for(const sh of MOOSE_SHAPES){
+    const r=mooseRun(car,D,vk,sh);
+    if(!best||MOOSE_RANK[r.outcome]<MOOSE_RANK[best.outcome]||(r.outcome===best.outcome&&r.beta<best.beta)){best=r;bs=sh;}
+  }
+  return sample?Object.assign(mooseRun(car,D,vk,bs,true),{shape:bs}):Object.assign(best,{shape:bs});
+}
+const MOOSE_SHAPES=[];for(const A0 of [9,10,11])for(const A1 of [25,28])for(const B0 of [34,36])MOOSE_SHAPES.push([A0,A1,B0,50]);
+// Entry speeds (build 352). ISO 3888-2 sets none: the speed is raised step by step until a cone falls (best clear
+// speed, mode 0). Two fixed speeds from the magazines that run it: Teknikens Värld's pass mark, 72 km/h (70 in older
+// reports; Toyota RAV4 2019 failed at 68), and km77's reference entry speed, 77 km/h (Nissan Ariya and Peugeot e-2008
+// cleared it; a Dacia Sandero reached 73).
+const MOOSE_SPEEDS=[0,72,77];
+let chalMooseSpeed=0;
+function simulateMooseChallenge(speedOpt){
   const pt=powertrain();if(!pt.ready()||!vehicle.mass)return null;
   const car=driveCar(),D=mooseDims();if(!(D.w>0))return{ok:false,reason:'width'};
-  const G=mooseGates(D.w);
-  let best=0,shape=null,bestRun=null;
-  for(const A0 of [9,10,11])for(const A1 of [25,28])for(const B0 of [34,36]){
-    const sh=[A0,A1,B0,50];
+  const G=mooseGates(D.w),mode=speedOpt==null?chalMooseSpeed:speedOpt;
+  const pack=(R,extra)=>Object.assign({
+    ok:true,kind:'moose',speedKmh:R.vk,shape:R.shape,peakAy:R.ay,peakBeta:R.beta,
+    dims:D,cones:G,line:R.line,samples:R.samples||[],
+    mu:car.mu,trackW:D.w,
+    // for the frontal diagram's scale (build 352): track, CG height and tyre radius in metres
+    track:(car.tF+car.tR)/2,cgH:car.h,rT:car.r,
+    outcome:R.outcome,coneX:R.coneX,coneY:R.coneY,lift2:R.lift2,liftSide:R.liftSide,tipMax:R.tipMax,
+    ssf:(car.tF+car.tR)/4/car.h
+  },extra);
+  if(mode>0){
+    const R=mooseBestAt(car,D,mode,true);R.vk=mode;
+    return pack(R,{mode:'fixed'});
+  }
+  let best=0,shape=null;
+  for(const sh of MOOSE_SHAPES){
     if(!mooseRun(car,D,Math.max(40,best+1),sh).ok)continue;
     let lo=Math.max(40,best+1),hi=120;
     while(hi-lo>1){const m=(lo+hi)>>1;if(mooseRun(car,D,m,sh).ok)lo=m;else hi=m;}
     if(lo>best){best=lo;shape=sh;}
   }
   if(!shape)return{ok:false,reason:'no-clear',challenge:'moose',dims:D,cones:G};
-  bestRun=mooseRun(car,D,best,shape,true);
-  return{
-    ok:true,kind:'moose',speedKmh:best,shape,peakAy:bestRun.ay,peakBeta:bestRun.beta,
-    dims:D,cones:G,line:bestRun.line,samples:bestRun.samples||[],
-    mu:car.mu,trackW:D.w,
-    // for the frontal diagram's scale (build 352): track, CG height and tyre radius in metres
-    track:(vehicle.trackF||vehicle.track||D.w-0.2),cgH:vehicle.cg||0.5,rT:vehicle.rTire||0.3
-  };
+  const R=mooseRun(car,D,best,shape,true);R.vk=best;R.shape=shape;
+  const F=mooseBestAt(car,D,best+1,false);   // how it fails one step up
+  return pack(R,{mode:'best',failAt:best+1,failBy:F.outcome});
 }
 // ====== VEHICLE RUN CHALLENGES (build 341; real roads 343; moose 345) ======
 // Dynamic tests on the CHALLENGES tab — not the ENGINE career/scorecard list in challenges.js.
@@ -29230,6 +29290,8 @@ function refreshChallenge(){
   chalMooseT0=(typeof performance!=='undefined'?performance.now():Date.now());
   const pace=document.getElementById('chalPace');
   if(pace){const row=pace.closest('.field');if(row)row.style.display=ch.kind==='economy'?'':'none';}
+  const msel=document.getElementById('chalMooseSpeed');
+  if(msel){const row=msel.closest('.field');if(row)row.style.display=ch.kind==='moose'?'':'none';}
   renderChallenge();
 }
 function renderChallenge(){
@@ -29241,14 +29303,20 @@ function renderChallenge(){
   if(!R.ok){head.textContent='—';grid.innerHTML='';note.textContent=tr('This challenge is not ready yet.');return;}
   const cell=(k,v)=>'<div class="perf-cell"><div class="k">'+tr(k)+'</div><div class="v">'+v+'</div></div>';
   if(R.kind==='moose'){
-    head.innerHTML=tr(ch.name)+' · <b>'+R.speedKmh+' km/h</b> · '+tr('CLEAR');
-    grid.innerHTML=cell('ENTRY',R.speedKmh+' km/h')+
+    const col=MOOSE_OUT_COL[R.outcome]||'#e0e0e0',warn=R.lift2>0?' · '+tr('2-WHEEL LIFT'):'';
+    head.innerHTML=tr(ch.name)+' · <b>'+R.speedKmh+' km/h</b> · <span style="color:'+col+'">'+tr(R.outcome)+'</span>'+warn;
+    grid.innerHTML=cell('ENTRY',R.speedKmh+' km/h'+(R.mode==='best'?' ('+tr('BEST')+')':''))+
+      cell('RESULT','<span style="color:'+col+'">'+tr(R.outcome)+'</span>')+
+      (R.mode==='best'&&R.failBy&&R.failBy!=='CLEAR'?cell('FAILS AT',R.failAt+' km/h: '+tr(R.failBy)):'')+
       cell('PEAK ay',R.peakAy.toFixed(2)+' g')+
       cell('PEAK β',R.peakBeta.toFixed(1)+'°')+
       cell('WIDTH',R.trackW.toFixed(2)+' m')+
       cell('LANE 1',R.cones.w1.toFixed(2)+' m')+
-      cell('OFFSET',R.cones.w2.toFixed(2)+' m');
-    note.textContent=tr(ch.desc)+' '+tr('Throttle released at entry, top gear. Score is the highest entry speed that touches no cone (ISO 3888-2).');
+      cell('OFFSET',R.cones.w2.toFixed(2)+' m')+
+      cell('2-WHEEL LIFT',R.lift2>0?R.lift2.toFixed(2)+' s':tr('none'))+
+      cell('MAX TIP',(R.tipMax*180/Math.PI).toFixed(1)+'°')+
+      cell('STABILITY t/2h',R.ssf.toFixed(2));
+    note.textContent=tr(ch.desc)+' '+tr('Throttle released at entry, top gear; the best of 12 lines. BEST CLEAR raises the speed until a cone falls (ISO 3888-2); 72 and 77 km/h are the entry speeds Teknikens Värld and km77 judge by. A car fails by a CONE, a SPIN (turned past 90°) or a ROLLOVER (two wheels up and tipped past its outer tyres).');
     return;
   }
   if(R.kind==='stage'){
@@ -29332,6 +29400,7 @@ function mooseSampleAt(R,t){
   let i=0;while(i<S.length-1&&S[i+1].t<u)i++;
   return S[i];
 }
+const MOOSE_OUT_COL={CLEAR:'#55dd66',CONE:'#ffcc00',SPIN:'#ff8833',ROLLOVER:'#ff4444'};
 function drawMooseTopDown(g,R,x0,y0,w,h){
   const G=R.cones,line=R.line;if(!line||!line.length)return;
   let minX=1e9,maxX=-1e9,minY=1e9,maxY=-1e9;
@@ -29357,6 +29426,8 @@ function drawMooseTopDown(g,R,x0,y0,w,h){
   const now=((typeof performance!=='undefined'?performance.now():Date.now())-chalMooseT0)/1000;
   const s=mooseSampleAt(R,now);
   if(s){g.fillStyle='#55dd66';g.beginPath();g.arc(MX(s.x),MY(s.y),4,0,Math.PI*2);g.fill();}
+  if(R.coneX!=null){const X=MX(R.coneX),Y=MY(R.coneY);g.strokeStyle='#ff4444';g.lineWidth=2;   // where a cone was first touched
+    g.beginPath();g.moveTo(X-5,Y-5);g.lineTo(X+5,Y+5);g.moveTo(X+5,Y-5);g.lineTo(X-5,Y+5);g.stroke();}
   g.fillStyle='#9ab';g.font='7px "Press Start 2P"';
   g.fillText(tr('ISO 3888-2')+' · '+R.speedKmh+' km/h',x0+8,y0+12);
 }
@@ -29384,7 +29455,7 @@ function mooseSpring(g,x1,y1,x2,y2,col){
 //   Fz  each tyre's ground reaction, up at its contact patch;
 //   Fy  each tyre's side force, along the ground at its contact patch, toward the turn.
 // Roll and camber are drawn at their true angles (a soft car rolls 4–6° here, plain to see).
-const MOOSE_ANG_X=1;
+const MOOSE_ANG_X=1;   // (fixed-speed runs and failure modes: build 352)
 function mooseLabel(g,txt,x,y,col,align){
   g.font='7px "Press Start 2P"';const w=g.measureText(txt).width,X=align==='r'?x-w:align==='c'?x-w/2:x;
   g.fillStyle='rgba(10,14,20,0.85)';g.fillRect(X-2,y-8,w+4,10);g.fillStyle=col;g.fillText(txt,X,y);
@@ -29407,6 +29478,9 @@ function drawMooseFrontal(g,R,x0,y0,w,h){
   // road and hatching
   g.strokeStyle=COL.road;g.lineWidth=2;g.beginPath();g.moveTo(x0+8,ground);g.lineTo(x0+w-8,ground);g.stroke();
   g.lineWidth=1;for(let X=x0+12;X<x0+w-8;X+=10){g.beginPath();g.moveTo(X,ground);g.lineTo(X-6,ground+6);g.stroke();}
+  // a two-wheel lift (build 352): the whole axle tips about the outer tyre's contact, by the rigid tip angle
+  const tipA=s.tip||0;
+  if(tipA){const px=cx+Math.sign(tipA)*-(trackM/2)*k;g.save();g.translate(px,ground);g.rotate(-tipA);g.translate(-px,-ground);}
   // body: rolls about the roll centre, taken at ground level + 0.1 m (a typical strut front; drawn, not solved)
   const rc=[cx,ground-0.1*k],ang=roll*MOOSE_ANG_X,c=Math.cos(ang),sn=Math.sin(ang);
   const B=(xm,ym)=>{const dx=xm*k,dy=-ym*k;return[rc[0]+dx*c-dy*sn,rc[1]+dx*sn+dy*c];};
@@ -29434,7 +29508,7 @@ function drawMooseFrontal(g,R,x0,y0,w,h){
   for(const W of [WL,WR]){
     const q=[W.P(-tw/2,0),W.P(tw/2,0),W.P(tw/2,-th),W.P(-tw/2,-th)];
     g.beginPath();q.forEach((P,i)=>i?g.lineTo(P[0],P[1]):g.moveTo(P[0],P[1]));g.closePath();
-    g.fillStyle=COL.tyre;g.fill();g.strokeStyle=COL.wheel;g.lineWidth=2.5;g.stroke();
+    g.fillStyle=COL.tyre;g.fill();g.strokeStyle=(W===WL?FzL:FzR)<=0?'#ff4444':COL.wheel;g.lineWidth=2.5;g.stroke();
     g.fillStyle=COL.wheel;g.beginPath();g.arc(W.hub[0],W.hub[1],Math.max(2,tw*0.25),0,Math.PI*2);g.fill();
   }
   // CG (checkered disc)
@@ -29466,6 +29540,13 @@ function drawMooseFrontal(g,R,x0,y0,w,h){
     g.lineWidth=2;g.beginPath();g.arc(rc[0],rc[1],rr,a0,a1,ang<0);g.stroke();
     mooseLabel(g,'roll '+Math.abs(rollDeg).toFixed(1)+'°',rc[0]+(ang>0?8:-8),rc[1]-rr-4,COL.body,ang>0?'l':'r');
   }
+  if(tipA)g.restore();
+  // outcome of the run, top right
+  g.font='10px "Press Start 2P"';const oc=tr(R.outcome||'CLEAR'),ow=g.measureText(oc).width;
+  g.fillStyle=MOOSE_OUT_COL[R.outcome]||COL.ink;g.fillText(oc,x0+w-ow-12,y0+18);
+  g.font='7px "Press Start 2P"';let ry=y0+32;
+  for(const [on,t2,c2] of [[s.cone,tr('cone hit'),COL.dim],[tipA,tr('two wheels up')+' · '+tr('tip')+' '+(Math.abs(tipA)*180/Math.PI).toFixed(0)+'°','#ff4444']])
+    if(on){g.fillStyle=c2;g.fillText(t2,x0+w-g.measureText(t2).width-12,ry);ry+=12;}
   // readout
   g.fillStyle=COL.ink;g.font='8px "Press Start 2P"';
   const ay=s.ay||0,ayF=Wf>0?Fin/Wf:0;   // the front axle's lateral acceleration in g: ΣFy / (W_front / g)
@@ -31600,6 +31681,9 @@ function bindControls(){
     chalSel.value=activeRunChallenge;
     chalSel.addEventListener('change',e=>{activeRunChallenge=e.target.value;refreshChallenge();});
   }
+  const chalMs=document.getElementById('chalMooseSpeed');
+  if(chalMs){chalMs.value=String(chalMooseSpeed);
+    chalMs.addEventListener('change',e=>{const f=+e.target.value;if(MOOSE_SPEEDS.includes(f)){chalMooseSpeed=f;refreshChallenge();}});}
   const chalPace=document.getElementById('chalPace');
   if(chalPace){
     chalPace.value=String(chalPaceFactor);

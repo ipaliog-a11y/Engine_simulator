@@ -18,7 +18,7 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 ## [Unreleased]
 
-### Challenges: eco driver, fixed-time stages, labelled moose diagram (build 352)
+### Challenges: eco driver, fixed-time stages, moose failure modes and labelled diagram (build 352)
 
 - **Eco driver** on the economy runs. From eco-driving research: accelerate at the engine's min-BSFC gear and torque
   (pulse-and-glide, Li et al. ACC 2011), shift up early (Saerens, via Linköping MSc), slow on fuel-cut engine braking;
@@ -30,6 +30,14 @@ they are accurate about *what* shipped but not about the day it shipped.
   to 5 s); slower is a **DNF**. The challenge list is grouped by kind.
 - **Moose diagram** redrawn: the front axle from behind, to scale, true roll and camber; every arrow labelled in kN on
   one scale (W, m·ay(front) = −ΣFy, Fz and Fy per tyre). The replay starts 10 m before the cones.
+- **Moose failure modes and fixed speeds.** ENTRY: best clear (ISO 3888-2 raises the speed until a cone falls), or
+  72 km/h (Teknikens Värld's pass mark) or 77 km/h (km77's reference). Outcome CLEAR / CONE / SPIN (turned past 90°) /
+  ROLLOVER: after a two-wheel lift the car tips as a rigid body about its outer tyres from the body's roll rate, and
+  rolls when the CG passes over them (atan(t/2h)). Stock cars: no rollover or spin; the X5 M lifts two wheels at
+  110 km/h. A Land Cruiser with its CG raised to 1.1 m (t/2h 0.74) rolls at 72 km/h. Best mode also says how it fails
+  one step up.
+- **Known gap:** stock cars clear 55–68 km/h, ~10 km/h under the magazines' typical 68–84 km/h, so at 72/77 every one
+  fails by a cone. Not tuned; the driver line, steering rate and tyre peak grip are the suspects.
 - **Docs**: README section, guide page *Challenges* (LV1–3 with picture), plan updated.
 - Left open: regen strength vs measured EVs (research reminder in `plans/vehicle-challenges.md`; the Model 3 reaches
   ~6–7 m/s² total slowing vs ~2.5 m/s² regen in a field study); a true optimal plan (pulse-and-glide on the flat);

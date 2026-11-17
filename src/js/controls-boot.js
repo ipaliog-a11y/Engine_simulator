@@ -114,6 +114,9 @@ function bindControls(){
     chalSel.value=activeRunChallenge;
     chalSel.addEventListener('change',e=>{activeRunChallenge=e.target.value;refreshChallenge();});
   }
+  const chalMs=document.getElementById('chalMooseSpeed');
+  if(chalMs){chalMs.value=String(chalMooseSpeed);
+    chalMs.addEventListener('change',e=>{const f=+e.target.value;if(MOOSE_SPEEDS.includes(f)){chalMooseSpeed=f;refreshChallenge();}});}
   const chalPace=document.getElementById('chalPace');
   if(chalPace){
     chalPace.value=String(chalPaceFactor);
