@@ -18,7 +18,7 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 ## [Unreleased]
 
-### A hybrid's engine is spun up before it fires, and runs down when it stops (build 348)
+### A hybrid's engine is spun up before it fires, and runs down when it stops (build 349)
 
 Step C of `plans/hybrid-electric/gas-sound-hybrid.md`, on the bench (DYNO tab). Replaces the stale build 298 PR (#244), ported to today's main.
 - **Starting**, the engine is turned unfuelled until it fires: J dw/dt = Tc + Tf, Tf its motoring loss (`brakeTorqueRaw`, fuel cut), Tc a power-split's MG1 or a series hybrid's generator at full torque (at the crank T/ks, its rotor adding J/ks²), or what a P2's motor is not giving the shaft. It fires at idle (a P2 at the shaft's speed). It was at idle at once, fuelled.
@@ -27,6 +27,13 @@ Step C of `plans/hybrid-electric/gas-sound-hybrid.md`, on the bench (DYNO tab). 
 - Left open: the crank's ~1 kJ is not drawn from the pack nor the stop's returned; MG2's cancelling of MG1's reaction on the ring is not modelled; the lap replay has no spin-up or run-down. Bench and sound only.
 
 <<<<<<< HEAD
+
+### The owner's decisions before v0.8, written into the plans (build 348)
+- Docs only; no simulator number moves.
+- v0.8 is reached at build 338 (handling phase G done). The known gaps of builds 329 (Mustang GT, `test204`) and 333 (FK8, `test170`) are approved.
+- Before v1.0: the LS7, LS3, LT4 and Coyote's excess over their published power, and water-to-air intercoolers. The real-car scoreboard runs at the v1.0 gate.
+- Suspension geometry stays by type for v1.0; a car takes its own only where it is published, never fitted.
+- The app is to be renamed Pixel Powertrain, with a piston icon; the rename is its own build.
 
 ### Moose: EVs coast through the exit (build 347)
 

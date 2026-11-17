@@ -136,7 +136,7 @@ function hybControl(H,dt){
 function stepHybridBench(dt){
   const e=engine,hy=e.hy,H=hybBenchState(),B=state.ignOn===false?{...HYB_BENCH,auxW:0}:HYB_BENCH,ps=hy.mode!=='p2',m=hy.motor,pack=hy.pack;
   const lim=hybControl(H,dt);
-  // fuel on once the engine has been spun up to where it fires (hybSpin); asked to stop, the fuel is cut (build 348)
+  // fuel on once the engine has been spun up to where it fires (hybSpin); asked to stop, the fuel is cut (build 349)
   if(!H.engOn)H.fired=false;else if(!H.fired&&state.rpm>=hybFireRpm(H)-1)H.fired=true;
   const run=H.engOn&&H.fired;
   // the engine's air path and torque at its own throttle; off, it coasts to a stop with its manifold at the air
@@ -193,15 +193,15 @@ function stepHybridBench(dt){
 // The engine's live figures for a hybrid: as the combustion bench's at the engine's own throttle, or nothing when it is off.
 function hybUpdatePhysics(run){
   const H=hybBenchState();
-  if(!H.engOn||!H.fired){   // stopped, cranking or running down: no fuel (build 348)
+  if(!H.engOn||!H.fired){   // stopped, cranking or running down: no fuel (build 349)
     state.torque=0;state.powerKW=0;state.powerHP=0;state.fuelFlowLph=0;state.bsfc=999;state.thermalEff=0;state.knockRisk=0;state.fuelCut=true;
     if(typeof zeroEmissions==='function')zeroEmissions();   // no pipe emissions with the engine off (build 257)
     return;
   }
   withEngThr(H,run);
 }
-const hybBenchEngineOff=()=>isHybrid()&&hybBench&&hybBench.hy===engine.hy&&!hybBench.engOn&&state.rpm<1;   // at rest (build 348: was half idle)
-// Start and stop (build 348, step C of plans/hybrid-electric/gas-sound-hybrid.md). Unfuelled, the engine turns on
+const hybBenchEngineOff=()=>isHybrid()&&hybBench&&hybBench.hy===engine.hy&&!hybBench.engOn&&state.rpm<1;   // at rest (build 349: was half idle)
+// Start and stop (build 349, step C of plans/hybrid-electric/gas-sound-hybrid.md). Unfuelled, the engine turns on
 // J dw/dt = Tc + Tf: Tf its own motoring loss (brakeTorqueRaw with the fuel cut: rubbing, pumping, the alternator), Tc
 // what spins it. A power-split's MG1 or a series hybrid's generator gives its full torque, reaching the crank as T/ks
 // and adding its rotor's J/ks^2 (it turns at 1/ks of the engine's speed, hybGear); a P2's motor gives through its clutch

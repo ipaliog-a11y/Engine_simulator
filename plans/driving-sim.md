@@ -103,16 +103,15 @@ A twitchy car loses more to the driver than a stable one does.
 G1 → G2 → G3 → G4 → G5 → G8 → G6 → G7 (about 9 builds) gives the handling, before v1.0. G1 and G2 are small, and on
 their own they are enough to drive it. H′ and I follow phase F. J waits for the graphics engine. K comes after v1.0.
 
-**v0.8:** proposed once G1–G5 and G8 are in. The car then has its real diffs, steering torque, roll, camber and
+**v0.8:** reached at build 338 (G1–G8 all in); the owner tags it. Proposed once G1–G5 and G8 are in. The car then has its real diffs, steering torque, roll, camber and
 compliance, all checked by the ISO manoeuvres. The owner tags it.
 
 ## Owner's decisions (November 2026)
 
 1. **G is v1.0 work.** v1.0 is not urgent; v0.8 is released when a phase makes sense of it (above).
 2. **Smaller physics steps are allowed.** G3 and G6 may substep below 1 ms; the cost per car rises in proportion.
-3. **Suspension geometry for G4–G5: open, to be revisited before G4.** Until then, G1–G3 need no geometry. One
-   option discussed: use what can be found per preset (maker's sheets, service manuals, then Reimpell's per-type
-   values), and where nothing is published, set it to match the car's published output, registered as fitted. That
-   option conflicts with `AGENTS.md` section 3, so it needs the owner's ruling first.
+3. **Suspension geometry: decided (November 2026, after build 338).** For v1.0 the values stay by suspension type
+   (Reimpell; builds 326, 328). A car takes its own geometry only where its maker or service manual publishes it,
+   sourced in batches apart from physics builds. Geometry is never set to match a car's published output.
 4. **J: the DRIVEN LAP will be shown,** but only after the graphics engine is built. The present 2D track view can't
    show this level of detail. Until then it stays in the tests.
