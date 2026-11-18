@@ -7,7 +7,7 @@
 //   · (build 359) the course is continuous: no gap over 1 m between line points;
 //   · a FWD car (Civic Type R) finishes NO_SLIDE (handbrake not modelled — power-over alone does not initiate);
 //   · outcomes are only CLEAR / FADE / NO_SLIDE / STALL / OFF / SPIN;
-//   · (build 359) each METHOD runs its own initiation on the MX-5 (power, kick, flick), a fixed ENTRY is the
+//   · (build 360) each METHOD runs its own initiation on the MX-5 (power, kick, flick), a fixed ENTRY is the
 //     entry speed, FWD with FLICK runs a flick plan, and the i button shows and hides the explanation;
 //   · the Challenges UI lists S-Route Powerslide and shows the outcome without page errors.
 import { chromium } from './pw.mjs';

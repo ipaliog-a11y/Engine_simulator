@@ -815,7 +815,7 @@ body.guided-open{overflow:hidden}
 </div>
 <div class="container">
 <header>
-<h1>PIXEL POWERTRAIN v0.7 build 359</h1>
+<h1>PIXEL POWERTRAIN v0.7 build 360</h1>
 <div class="subtitle" id="subtitle">ENGINE DESIGNER • BUILD IT, THEN DRIVE IT</div>
 </header>
 <div class="build-strip" id="buildStrip">
@@ -29289,7 +29289,7 @@ const DRIFT_INITS=[{init:'power',kick:0},{init:'kick',kick:10},{init:'kick',kick
 const DRIFT_PLANS=[];
 for(const betaT of[0.20,0.24,0.28])for(const v of[9,10,11,12])for(const I of DRIFT_INITS)for(const R of[18,20,22])
   DRIFT_PLANS.push({v,betaT,kick:I.kick,init:I.init,R,gear:2,pull:2.2,initThr:0.8});
-// Driver settings (build 359, Challenges UI): entry speed in km/h (0 = the search's best) and initiation method.
+// Driver settings (build 360, Challenges UI): entry speed in km/h (0 = the search's best) and initiation method.
 let chalDriftEntry=0,chalDriftMethod='auto';
 const DRIFT_ENTRY_OPTS=[0,30,35,40,45,50],DRIFT_METHODS=['auto','power','kick','flick'];
 function driftSCourse(R,halfW,mid){
@@ -29313,7 +29313,7 @@ function driftDriver(car,s,C,d,plan){
   const base=driveDriver(car,s,C.line,d);
   const z=C.zones[Math.max(0,Math.min(C.zones.length-1,d.i||0))]||'exit';d.zone=z;
   const drifting=z==='c1'||z==='c2';
-  // Flick (pendulum turn, build 359): lift and steer away from the corner, then sharply into it, so the body's
+  // Flick (pendulum turn, build 360): lift and steer away from the corner, then sharply into it, so the body's
   // roll rebound loads the outside front and unloads the rear as the car turns in. Each phase lasts half the body's
   // natural period, π·tauLoad (tauLoad = 1/(2π·ride frequency)), so the rebound comes back in phase with turn-in.
   // Steer in each phase: the line's own plus the front tyres' peak slip angle (car.pkF).
