@@ -105,7 +105,7 @@ function driftRun(car,plan,sample,D){
   const tMax=3*len/plan.v;let slowT=0;   // three times the course at entry speed, or 2 s near standstill: STALL
   const pkR=Math.atan(3*car.mu/car.cc),pl=Object.assign({},plan,{gripOnly});
   const o={ok:false,past1:0,past2:0,beta1:0,beta2:0,ctr1:0,ctr2:0,peakBeta:0,off:false,spin:false,eMax:0,fin:false,
-    line:C.line,zones:C.zones,halfW:C.halfW,R:C.R,samples:sample?[]:null,maxI:0};
+    line:C.line,zones:C.zones,halfW:C.halfW,R:C.R,samples:sample?[]:null,maxI:0,pkR};
   let nextT=0;const dt=0.01;
   while(s.t<tMax){
     const u=driftDriver(car,s,C,d,pl);
@@ -177,6 +177,6 @@ function simulateDriftChallenge(){
     past1:R.past1,past2:R.past2,ctr1:R.ctr1,ctr2:R.ctr2,eMax:R.eMax,
     halfW:R.halfW,line:R.line,zones:R.zones,samples:R.samples||[],plan:R.plan,
     trackW:D.w,body:{f:car.a+D.ovF,r:car.b+D.ovR},
-    slide1:R.slide1,slide2:R.slide2
+    slide1:R.slide1,slide2:R.slide2,pkR:R.pkR
   };
 }
