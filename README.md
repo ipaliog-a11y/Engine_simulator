@@ -1,4 +1,4 @@
-# PIXEL POWERTRAIN v0.7 build 358
+# PIXEL POWERTRAIN v0.7 build 359
 
 **A lightweight, 8-bit style internal combustion engine *designer* & simulator** inspired by *Automation*.
 
@@ -317,6 +317,11 @@ assist map over speed and pedal), regeneration, load-point shifting, electric-dr
     shows the cone lanes as road and the band the car's full width sweeps through them. REPLAY plays it at 1×, 0.5× or
     0.25×, from 25 m before the cones to 20 m past the end of the course. The stock cars clear 55–68
     km/h, about 10 km/h below the magazines' typical 68–84, so at 72 and 77 they all fail by a cone (a known gap).
+  - **S-Route Powerslide** — straight, left 90°, short straight, right 90°, straight on a 24 m pad, ESP and TC off.
+    The driver holds body slip with throttle and countersteer (power-over, a clutch kick if needed). A run ends
+    **CLEAR** (a sustained slide in both corners), **FADE** (one), **NO_SLIDE** (neither: a FWD car without a
+    handbrake), **STALL**, **OFF** (a corner of the body over the edge) or **SPIN**. Handbrake and loose surfaces
+    are not modelled.
   - Hover the road for distance, speed and gradient at that point; wheel or pinch to zoom, drag to scroll,
     double-click to reset. Known gaps: the economy plan is a
     search over a cap and a blend, not an optimal plan; a hybrid uses the engine-car path; regen strength

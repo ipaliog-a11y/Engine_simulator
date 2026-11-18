@@ -57,7 +57,7 @@ function renderChallenge(){
       cell('TARGET β',(R.betaT*180/Math.PI).toFixed(0)+'°')+
       cell('RADIUS',R.radius+' m')+
       cell('DRIVE',tr((R.drive||'').toUpperCase()));
-    note.textContent=tr(ch.desc)+' '+tr('ESP and traction control off. RWD initiates by power-over (and a clutch kick if needed); the driver holds body slip with throttle and countersteer, then links the second corner. CLEAR needs a sustained slide in both. Failures: NO_SLIDE (never past the rear peak — typical FWD without a handbrake), FADE (only one corner), OFF the road, or SPIN. Handbrake and loose surfaces are not modelled yet.');
+    note.textContent=tr(ch.desc)+' '+tr('ESP and traction control off. RWD initiates by power-over (and a clutch kick if needed); the driver holds body slip with throttle and countersteer, then links the second corner. CLEAR needs a sustained slide in both. Failures: NO_SLIDE (never past the rear peak — typical FWD without a handbrake), FADE (only one corner), STALL (stopped or never reached the exit), OFF (any corner of the body over the edge, swept at its slip angle), or SPIN. Handbrake and loose surfaces are not modelled yet.');
     return;
   }
   if(R.kind==='stage'){
@@ -153,7 +153,7 @@ function mooseSampleAt(R,t){
   return S[i];
 }
 const MOOSE_OUT_COL={CLEAR:'#55dd66',CONE:'#ffcc00',SPIN:'#ff8833',ROLLOVER:'#ff4444'};
-const DRIFT_OUT_COL={CLEAR:'#55dd66',FADE:'#ffcc00',NO_SLIDE:'#4aa3ff',OFF:'#ff8833',SPIN:'#ff4444'};
+const DRIFT_OUT_COL={CLEAR:'#55dd66',FADE:'#ffcc00',NO_SLIDE:'#4aa3ff',STALL:'#b088ff',OFF:'#ff8833',SPIN:'#ff4444'};
 function driftSampleAt(R,t){
   const S=R.samples;if(!S||!S.length)return null;
   const t0=S[0].t,t1=S[S.length-1].t,span=Math.max(0.05,t1-t0);
