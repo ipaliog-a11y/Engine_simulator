@@ -59,10 +59,19 @@ Real roads: OSRM centreline + ASTER elevation; width modelled (as Nordschleife).
   rate, the tyres' peak grip and the 40 kg-per-person load the magazines add.
 - Build 352: the frontal view is the front axle seen from behind, to scale, every force labelled in kN on one scale.
 
+## S-route powerslide (build 358)
+
+- Registry id `drift-s`, kind `drift`. Solver in `src/js/drift-run.js`. Research: `plans/drift-challenge.md`.
+- Course: point-to-point S (approach straight, left 90°, short mid, right 90°, exit). Road half-width 12 m.
+- Driver: `driveDriver` for the path; in corners, throttle holds a target body slip β (power-over / clutch kick).
+  ESP and TC off. FWD stays on the grip path (no handbrake yet) → **NO_SLIDE**.
+- Outcomes: CLEAR / FADE / NO_SLIDE / OFF / SPIN. Score grid + top-down replay.
+- Named gaps: handbrake, loose surface, FWD/AWD techniques, style points beyond CLEAR + β.
+
 ## Follow-ups
 
-1. Skill / agility track.
-2. Skid-pad challenge.
-3. Multi-car ranking on a challenge.
-4. Distance DP for economy (pulse-and-glide on the flat); hybrid energy on economy roads.
-5. Open GPX import for user roads (do not reuse closed `gpxToTrack` blindly).
+1. Skid-pad challenge.
+2. Multi-car ranking on a challenge.
+3. Distance DP for economy (pulse-and-glide on the flat); hybrid energy on economy roads.
+4. Open GPX import for user roads (do not reuse closed `gpxToTrack` blindly).
+5. Drift: handbrake initiation; tighter road once the hold is stronger.

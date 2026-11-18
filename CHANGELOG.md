@@ -18,6 +18,16 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 ## [Unreleased]
 
+### S-route powerslide challenge (build 358)
+
+- New Challenges entry **S-Route Powerslide**: point-to-point S (straight, left 90°, short straight, right 90°,
+  straight) on a 24 m-wide pad. The stepped car runs with ESP and TC off; the driver follows a drift line and holds
+  body slip with throttle and countersteer (power-over, clutch kick if needed). Sources: Hindiyeh 2013, Velenis AVEC
+  2010 — see `plans/drift-challenge.md`.
+- Outcomes: **CLEAR** (sustained slide in both corners), **FADE** (only one), **NO_SLIDE** (finished without the rear
+  past its peak — typical FWD without a handbrake), **OFF**, **SPIN**. Top-down replay with β readout.
+- Checked: MX-5 and Mustang CLEAR; Civic Type R NO_SLIDE. Left open: handbrake, loose surfaces, FWD/AWD techniques.
+
 ### Moose run: tap the diagram to see the car from above, with its yaw axis, understeer and oversteer (build 357)
 
 - A tap on the moose run's lower diagram switches between the front axle and the car seen from above, nose up, to true

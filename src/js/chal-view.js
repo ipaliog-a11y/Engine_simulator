@@ -13,8 +13,10 @@ function refreshChallenge(){
   chalMooseT0=(typeof performance!=='undefined'?performance.now():Date.now());
   const pace=document.getElementById('chalPace');
   if(pace){const row=pace.closest('.field');if(row)row.style.display=ch.kind==='economy'?'':'none';}
-  for(const id of ['chalMooseSpeed','chalMooseRate']){const el=document.getElementById(id);
-    if(el){const row=el.closest('.field');if(row)row.style.display=ch.kind==='moose'?'':'none';}}
+  const ms=document.getElementById('chalMooseSpeed');
+  if(ms){const row=ms.closest('.field');if(row)row.style.display=ch.kind==='moose'?'':'none';}
+  const mr=document.getElementById('chalMooseRate');
+  if(mr){const row=mr.closest('.field');if(row)row.style.display=(ch.kind==='moose'||ch.kind==='drift')?'':'none';}
   renderChallenge();
 }
 function renderChallenge(){
@@ -40,6 +42,22 @@ function renderChallenge(){
       cell('MAX TIP',(R.tipMax*180/Math.PI).toFixed(1)+'°')+
       cell('STABILITY t/2h',R.ssf.toFixed(2));
     note.textContent=tr(ch.desc)+' '+tr('Throttle released at entry, top gear; the best of 12 lines. BEST CLEAR raises the speed until a cone falls (ISO 3888-2); 72 and 77 km/h are the entry speeds Teknikens Värld and km77 judge by. A car fails by a CONE, a SPIN (turned past 90°) or a ROLLOVER (two wheels up and tipped past its outer tyres).');
+    return;
+  }
+  if(R.kind==='drift'){
+    const col=DRIFT_OUT_COL[R.outcome]||'#e0e0e0';
+    head.innerHTML=tr(ch.name)+' · <b>'+R.speedKmh+' km/h</b> · <span style="color:'+col+'">'+tr(R.outcome)+'</span>';
+    grid.innerHTML=cell('RESULT','<span style="color:'+col+'">'+tr(R.outcome)+'</span>')+
+      cell('ENTRY',R.speedKmh+' km/h')+
+      cell('PEAK β',R.peakBeta.toFixed(1)+'°')+
+      cell('CORNER 1 β',R.beta1.toFixed(1)+'°')+
+      cell('CORNER 2 β',R.beta2.toFixed(1)+'°')+
+      cell('SLIDE 1',R.past1.toFixed(2)+' s')+
+      cell('SLIDE 2',R.past2.toFixed(2)+' s')+
+      cell('TARGET β',(R.betaT*180/Math.PI).toFixed(0)+'°')+
+      cell('RADIUS',R.radius+' m')+
+      cell('DRIVE',tr((R.drive||'').toUpperCase()));
+    note.textContent=tr(ch.desc)+' '+tr('ESP and traction control off. RWD initiates by power-over (and a clutch kick if needed); the driver holds body slip with throttle and countersteer, then links the second corner. CLEAR needs a sustained slide in both. Failures: NO_SLIDE (never past the rear peak — typical FWD without a handbrake), FADE (only one corner), OFF the road, or SPIN. Handbrake and loose surfaces are not modelled yet.');
     return;
   }
   if(R.kind==='stage'){
@@ -135,6 +153,52 @@ function mooseSampleAt(R,t){
   return S[i];
 }
 const MOOSE_OUT_COL={CLEAR:'#55dd66',CONE:'#ffcc00',SPIN:'#ff8833',ROLLOVER:'#ff4444'};
+const DRIFT_OUT_COL={CLEAR:'#55dd66',FADE:'#ffcc00',NO_SLIDE:'#4aa3ff',OFF:'#ff8833',SPIN:'#ff4444'};
+function driftSampleAt(R,t){
+  const S=R.samples;if(!S||!S.length)return null;
+  const t0=S[0].t,t1=S[S.length-1].t,span=Math.max(0.05,t1-t0);
+  const u=((t-t0)%span+span)%span+t0;
+  let i=0;while(i<S.length-1&&S[i+1].t<u)i++;
+  return S[i];
+}
+function drawDriftChallenge(g,R){
+  chalHover.map=null;
+  g.fillStyle='#0a0e14';g.fillRect(0,0,vizW,vizH);
+  const line=R.line;if(!line||!line.length)return;
+  let minX=1e9,maxX=-1e9,minY=1e9,maxY=-1e9;
+  for(const q of line){minX=Math.min(minX,q.x);maxX=Math.max(maxX,q.x);minY=Math.min(minY,q.y);maxY=Math.max(maxY,q.y);}
+  const hw=R.halfW||DRIFT_HALF_W;minX-=hw+2;maxX+=hw+2;minY-=hw+2;maxY+=hw+2;
+  const pad=14,dx=maxX-minX||1,dy=maxY-minY||1;
+  const sc=Math.min((vizW-2*pad)/dx,(vizH-2*pad)/dy);
+  const MX=x=>pad+(x-minX)*sc,MY=y=>vizH-pad-(y-minY)*sc;
+  // road band
+  g.strokeStyle='#1c2330';g.lineWidth=Math.max(4,2*hw*sc);g.lineJoin='round';g.lineCap='round';
+  g.beginPath();for(let i=0;i<line.length;i++){const X=MX(line[i].x),Y=MY(line[i].y);if(i)g.lineTo(X,Y);else g.moveTo(X,Y);}g.stroke();
+  g.strokeStyle='#445566';g.lineWidth=1;g.setLineDash([4,4]);
+  g.beginPath();for(let i=0;i<line.length;i++){const X=MX(line[i].x),Y=MY(line[i].y);if(i)g.lineTo(X,Y);else g.moveTo(X,Y);}g.stroke();g.setLineDash([]);
+  // path coloured by zone
+  const zcol={approach:'#4aa3ff',c1:'#ffcc00',mid:'#8899aa',c2:'#ffcc00',exit:'#4aa3ff'};
+  g.lineWidth=2;
+  for(let i=0;i<line.length-1;i++){
+    g.strokeStyle=zcol[(R.zones&&R.zones[i])||'approach']||'#4aa3ff';
+    g.beginPath();g.moveTo(MX(line[i].x),MY(line[i].y));g.lineTo(MX(line[i+1].x),MY(line[i+1].y));g.stroke();
+  }
+  const S=R.samples||[];
+  if(S.length>1){g.strokeStyle='rgba(85,221,102,0.25)';g.lineWidth=Math.max(2,(R.trackW||1.8)*sc);
+    g.beginPath();for(let i=0;i<S.length;i++){const X=MX(S[i].x),Y=MY(S[i].y);if(i)g.lineTo(X,Y);else g.moveTo(X,Y);}g.stroke();}
+  const s=driftSampleAt(R,chalMooseNow());
+  if(s){
+    const B=R.body||{f:2,r:2.3},c=Math.cos(s.psi||0),sn=Math.sin(s.psi||0),tw=(R.trackW||1.8)/2;
+    g.fillStyle=DRIFT_OUT_COL[R.outcome]||'#55dd66';g.beginPath();
+    [[B.f,tw],[B.f,-tw],[-B.r,-tw],[-B.r,tw]].forEach(([dx,dy],k)=>{const X=MX(s.x+dx*c-dy*sn),Y=MY(s.y+dx*sn+dy*c);if(k)g.lineTo(X,Y);else g.moveTo(X,Y);});
+    g.closePath();g.fill();
+    g.fillStyle='#e0e0e0';g.font='8px "Press Start 2P"';
+    const bdeg=(Math.abs(s.beta||0)*180/Math.PI).toFixed(0);
+    g.fillText('β '+bdeg+'° · '+(s.zone||''),10,20);
+  }
+  g.fillStyle='#9ab';g.font='7px "Press Start 2P"';
+  g.fillText(tr('S-ROUTE')+' · R '+R.radius+' m · ±'+hw+' m',10,vizH-10);
+}
 function drawMooseTopDown(g,R,x0,y0,w,h){
   const G=R.cones,line=R.line;if(!line||!line.length)return;
   // the course (cones 0-61 m) with a little run-in and run-out, so the car's width reads at scale (build 354)
@@ -409,6 +473,7 @@ function drawChallenge(){
   const R=chalResult,g=ctx;g.fillStyle='#0a0e14';g.fillRect(0,0,vizW,vizH);
   const ta=R&&R.road?'none':'';if(canvas.style.touchAction!==ta)canvas.style.touchAction=ta;   // a touch drag pans the route map
   if(R&&R.kind==='moose'&&R.ok){drawMooseChallenge(g,R);return;}
+  if(R&&R.kind==='drift'&&R.ok){drawDriftChallenge(g,R);return;}
   if(!R||!R.road){g.fillStyle='#556';g.font='10px "Press Start 2P"';g.fillText(tr('CHALLENGES'),16,28);chalHover.map=null;return;}
   const map=chalMapProject(R),p=map.p,n=p.length,MX=map.MX,MY=map.MY,T=map.T;
   chalHover.map=map;
