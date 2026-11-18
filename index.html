@@ -413,6 +413,9 @@ canvas.gart{display:block;width:100%;max-width:640px;height:auto;image-rendering
 .perf-cell.wide{grid-column:1/3}
 .perf-cell.hero .v{color:#ffcc00}
 .perf-note{font-size:7px;color:#778;line-height:1.6;margin-top:8px}
+.info-i{font-size:8px;width:18px;height:18px;padding:0;margin-left:6px;line-height:14px;vertical-align:middle;border-width:2px;box-shadow:2px 2px 0 #000;text-transform:none}
+.info-i.on{color:#ffcc00;border-color:#ffcc00}
+.info-pop{margin:0 0 8px;padding:6px 8px;border:2px solid #334}
 .vehicleSummaryWrap b{color:#ffcc00}
 /* ---- Career / challenge card ---- */
 .challenge-card{background:#0a0a10;border:2px solid #33334a;padding:9px;margin-bottom:6px;font-size:8px;line-height:1.6}
@@ -812,7 +815,7 @@ body.guided-open{overflow:hidden}
 </div>
 <div class="container">
 <header>
-<h1>PIXEL POWERTRAIN v0.7 build 359</h1>
+<h1>PIXEL POWERTRAIN v0.7 build 360</h1>
 <div class="subtitle" id="subtitle">ENGINE DESIGNER • BUILD IT, THEN DRIVE IT</div>
 </header>
 <div class="build-strip" id="buildStrip">
@@ -3256,7 +3259,7 @@ The <b>CHALLENGES</b> tab (DRIVE) runs the car on its own. Pick a challenge and 
 <b>Economy</b>: the target time is the PACE (125, 150 or 200%) times the car's own fastest time on that road. The score is litres and L/100 km, or kWh and Wh/km for an EV, with the regen it recovered. The grid also shows the peak acceleration and braking, the mean engine speed on power, the top gear used, and ECO BLEND (below).<br>
 <b>Fixed-time stage</b>: one set time per road for every car. The car's fastest run from a standing start is shown against it; slower is a <b>DNF</b>.<br>
 <b>Moose avoidance</b>: ENTRY picks BEST CLEAR (the speed is raised until a cone falls, as ISO 3888-2 does; the grid also says how it fails one step up) or a magazine's fixed speed, 72 km/h (Teknikens Värld's pass mark) or 77 km/h (km77's). The result is CLEAR, CONE, SPIN or ROLLOVER, with a warning for a two-wheel lift, its time and the largest tip. REPLAY slows the replay to 0.5× or 0.25×; it starts 25 m before the cones and runs on 20 m past the judged end (nothing after that changes the score). The lower view is the front axle seen from behind, with each force labelled in kN on one scale: <b>W</b> the axle's weight, <b>m·ay(front)</b> its sideways inertial force, <b>Fz</b> each tyre's load and <b>Fy</b> each tyre's side force. Roll and camber are drawn at their true angles. Tap that view to see the car <b>from above</b>, nose up, to true scale: the yaw axis <b>z</b> through the CG with the yaw rate <b>r</b> round it, the <b>pivot</b> (the point on the centre line with no sideways velocity, −vy/r), each tyre's direction of travel and side force, and the path the car takes beside the one the same steer gives at neutral steer (δ/L). The balance is read from the slip angles: <b>UNDERSTEER</b> when the front tyres slip more than the rear (αF &gt; αR), <b>OVERSTEER</b> when less, <b>TRANSITION</b> while front and rear slip opposite ways as the car is swung from one lane to the next.<br>
-<b>S-Route Powerslide</b>: ESP and TC off; the best of the plans (entry speed, target body slip β, clutch kick, radius). The result is <b>CLEAR</b> (a slide in both corners: the rear past its peak for 0.25 s, β over 8°, and countersteer or a long slide), <b>FADE</b> (one corner), <b>NO_SLIDE</b> (neither; a FWD car without a handbrake), <b>STALL</b> (stopped or never reached the exit), <b>OFF</b> (any corner of the body, swept at its slip angle, over the edge) or <b>SPIN</b>. The grid gives each corner's peak β and slide time.
+<b>S-Route Powerslide</b>: ESP and TC off; the best of the plans (entry speed, target body slip β, initiation, radius). <b>METHOD</b> picks the initiation: POWER-OVER, CLUTCH KICK or FLICK (lift and steer away, then sharply in, each for half the body's natural period so its rebound helps turn-in); AUTO tries all three. <b>ENTRY</b> fixes the speed or picks BEST. The <b>i</b> button beside CHALLENGES explains the selected challenge. The result is <b>CLEAR</b> (a slide in both corners: the rear past its peak for 0.25 s, β over 8°, and countersteer or a long slide), <b>FADE</b> (one corner), <b>NO_SLIDE</b> (neither; a FWD car without a handbrake), <b>STALL</b> (stopped or never reached the exit), <b>OFF</b> (any corner of the body, swept at its slip angle, over the edge) or <b>SPIN</b>. The grid gives each corner's peak β and slide time.
 </div>
 </div>
 <div class="gtier gt-phys"><div class="gtier-h">LV3 · THE PHYSICS</div>
@@ -4019,7 +4022,8 @@ Most other tests check behaviour that is true of real cars: a bigger turbo spool
 <input type="file" id="gpxInput" accept=".gpx,application/gpx+xml,text/xml" style="display:none">
 </div>
 <div class="panel" id="chalPanel" style="display:none">
-<h2>Challenges</h2>
+<h2>Challenges <button type="button" class="info-i" id="chalInfoBtn" title="About this challenge" aria-expanded="false" aria-controls="chalNote">i</button></h2>
+<div class="perf-note info-pop" id="chalNote" hidden></div>
 <div class="pick-row">
 <div class="field"><label for="chalSel">CHALLENGE</label><select id="chalSel"></select></div>
 <div class="field"><label for="chalPace">PACE</label><select id="chalPace" title="Target time as a multiple of this car's min-time">
@@ -4032,6 +4036,20 @@ Most other tests check behaviour that is true of real cars: a bigger turbo spool
 <option value="72">72 km/h (TEKNIKENS VÄRLD)</option>
 <option value="77">77 km/h (KM77)</option>
 </select></div>
+<div class="field" style="display:none"><label for="chalDriftEntry">ENTRY</label><select id="chalDriftEntry" title="Entry speed: the best of the search, or fixed">
+<option value="0">BEST</option>
+<option value="30">30 km/h</option>
+<option value="35">35 km/h</option>
+<option value="40">40 km/h</option>
+<option value="45">45 km/h</option>
+<option value="50">50 km/h</option>
+</select></div>
+<div class="field" style="display:none"><label for="chalDriftMethod">METHOD</label><select id="chalDriftMethod" title="How the driver starts the slide">
+<option value="auto">AUTO</option>
+<option value="power">POWER-OVER</option>
+<option value="kick">CLUTCH KICK</option>
+<option value="flick">FLICK</option>
+</select></div>
 <div class="field" style="display:none"><label for="chalMooseRate">REPLAY</label><select id="chalMooseRate" title="Replay speed">
 <option value="1">1×</option>
 <option value="0.5">0.5×</option>
@@ -4040,7 +4058,6 @@ Most other tests check behaviour that is true of real cars: a bigger turbo spool
 </div>
 <div class="perf-head" id="chalHead">—</div>
 <div class="perf-grid" id="chalGrid"></div>
-<div class="perf-note" id="chalNote"></div>
 <div class="build-row"><button id="btnChalSolve" title="Solve the selected challenge for the current car">SOLVE</button></div>
 </div>
 <div class="panel" id="racePanel" style="display:none">
@@ -29266,11 +29283,15 @@ function simulateMooseChallenge(speedOpt){
 const DRIFT_RANK={CLEAR:0,FADE:1,NO_SLIDE:2,STALL:3,OFF:4,SPIN:5};
 const DRIFT_HALF_W=12;   // half road width (m): a drift-pad lane, not a single carriageway
 const DRIFT_MID=34;      // short straight between the two corners (m)
-// Plans: entry speed v (m/s), target |β| (rad), clutch-kick steps, corner radius R (m). Mild β first — Velenis's
-// expert data was ~32° on dirt; dry asphalt here holds ~12–30° with power-over / clutch kick.
+// Plans: entry speed v (m/s), target |β| (rad), initiation (power-over, clutch kick of 10 or 20 steps, or a flick),
+// corner radius R (m). Mild β first — Velenis's expert data was ~32° on dirt; dry asphalt here holds ~12–30°.
+const DRIFT_INITS=[{init:'power',kick:0},{init:'kick',kick:10},{init:'kick',kick:20},{init:'flick',kick:0}];
 const DRIFT_PLANS=[];
-for(const betaT of[0.20,0.24,0.28])for(const v of[9,10,11,12])for(const kick of[0,10,20])for(const R of[18,20,22])
-  DRIFT_PLANS.push({v,betaT,kick,R,gear:2,pull:2.2,initThr:0.8});
+for(const betaT of[0.20,0.24,0.28])for(const v of[9,10,11,12])for(const I of DRIFT_INITS)for(const R of[18,20,22])
+  DRIFT_PLANS.push({v,betaT,kick:I.kick,init:I.init,R,gear:2,pull:2.2,initThr:0.8});
+// Driver settings (build 360, Challenges UI): entry speed in km/h (0 = the search's best) and initiation method.
+let chalDriftEntry=0,chalDriftMethod='auto';
+const DRIFT_ENTRY_OPTS=[0,30,35,40,45,50],DRIFT_METHODS=['auto','power','kick','flick'];
 function driftSCourse(R,halfW,mid){
   const line=[],zones=[],ds=0.5;
   const add=(x,y,z)=>{line.push({x,y,v:10,grade:0,kv:0});zones.push(z);};
@@ -29284,7 +29305,7 @@ function driftSCourse(R,halfW,mid){
   for(let a=Math.PI;a>=Math.PI/2-1e-9;a-=ds/R)add(2*R+R*Math.cos(a),y2+R*Math.sin(a),'c2');
   const xE=2*R,yE=y2+R;
   for(let x=xE+ds;x<=xE+60;x+=ds)add(x,yE,'exit');
-  return{line,zones,halfW,R,mid,xE,yE};
+  return{line,zones,halfW,R,mid,xE,yE,ds,i1:zones.indexOf('c1'),i2:zones.indexOf('c2')};
 }
 // Path from driveDriver; in the corners, throttle holds a target β (Velenis: steering + drive torque). FWD stays
 // on the grip path (handbrake not modelled — named gap): NO_SLIDE is the honest result for power-over.
@@ -29292,9 +29313,25 @@ function driftDriver(car,s,C,d,plan){
   const base=driveDriver(car,s,C.line,d);
   const z=C.zones[Math.max(0,Math.min(C.zones.length-1,d.i||0))]||'exit';d.zone=z;
   const drifting=z==='c1'||z==='c2';
+  // Flick (pendulum turn, build 360): lift and steer away from the corner, then sharply into it, so the body's
+  // roll rebound loads the outside front and unloads the rear as the car turns in. Each phase lasts half the body's
+  // natural period, π·tauLoad (tauLoad = 1/(2π·ride frequency)), so the rebound comes back in phase with turn-in.
+  // Steer in each phase: the line's own plus the front tyres' peak slip angle (car.pkF).
+  if(plan.init==='flick'&&(z==='approach'||z==='mid')){
+    const next=z==='approach'?C.i1:C.i2,dir=z==='approach'?1:-1;
+    const tTo=(next-(d.i||0))*C.ds/Math.max(1,s.vx),tF=Math.PI*(car.tauLoad||0.1);
+    if(tTo<2*tF){
+      const away=tTo>tF,pk=(car.pkF||0.1)/car.steerLock;
+      base.steer=Math.max(-1,Math.min(1,base.steer+(away?-dir:dir)*pk));
+      base.throttle=away||car.drive==='fwd'?0:1;base.brake=0;d.flicked=true;return base;
+    }
+  }
   if(!drifting){if(z==='mid')base.throttle=Math.min(base.throttle||0,0.1);return base;}
   if(plan.gripOnly){base.throttle=Math.min(base.throttle||0,0.45);return base;}
   const beta=Math.atan2(s.vy,Math.max(0.5,s.vx));
+  // A FWD car after a flick: power pulls the nose straight, so it is the brake on the slide; lifting keeps it rotating.
+  if(car.drive==='fwd'){const dirF=z==='c1'?1:-1,over=Math.abs(beta)>plan.betaT;
+    return{steer:Math.max(-1,Math.min(1,base.steer-(over?0.12*dirF:0))),throttle:over?0.6:0,brake:0,gear:s.gear};}
   const pkR=Math.atan(3*car.mu/car.cc),aR=(s.alpha[2]+s.alpha[3])/2;
   // dir: +1 left corner, −1 right (steer is left-positive). A left drift has β<0 (velocity right of the nose).
   const dir=z==='c1'?1:-1,absB=Math.abs(beta),absT=plan.betaT;
@@ -29325,7 +29362,7 @@ function driftCornerOk(past,beta,ctr){
 function driftReach(D,dh){const c=Math.abs(Math.cos(dh)),sn=Math.abs(Math.sin(dh));return D.w/2*c+Math.max(D.f,D.r)*sn;}
 function driftRun(car,plan,sample,D){
   D=D||{w:(car.tF+car.tR)/2+0.3,f:1.35*car.a,r:1.35*car.b};
-  const gripOnly=!!plan.gripOnly||car.drive==='fwd';
+  const gripOnly=!!plan.gripOnly||(car.drive==='fwd'&&plan.init!=='flick');
   const C=driftSCourse(plan.R,plan.halfW||DRIFT_HALF_W,plan.mid||DRIFT_MID);
   for(const p of C.line)p.v=plan.v;
   const s=driveState(car),L0=C.line[0];
@@ -29370,10 +29407,19 @@ function driftRun(car,plan,sample,D){
   o.ok=o.outcome==='CLEAR';o.plan=pl;o.slide1=s1;o.slide2=s2;
   return o;
 }
-// FWD ignores betaT and kick (grip path), so it searches only the 12 distinct (v,R) plans (build 359).
-function driftBest(car,sample,D){
+// The plans for the driver settings: a fixed entry speed replaces the searched ones; a method keeps its own plans.
+// FWD: no kick, and one target β (the grip path ignores it; it only sets when a flicked FWD lifts) — 24 plans.
+function driftPlans(car,entryKmh,method){
+  let P=DRIFT_PLANS;
+  if(car.drive==='fwd'&&method==='kick')method='power';   // no kick on a FWD grip path
+  if(method&&method!=='auto')P=P.filter(p=>p.init===method);
+  if(entryKmh>0)P=P.filter(p=>p.v===DRIFT_PLANS[0].v).map(p=>Object.assign({},p,{v:entryKmh/3.6}));
+  if(car.drive==='fwd')P=P.filter(p=>(p.init==='flick'||p.init==='power')&&p.betaT===DRIFT_PLANS[0].betaT);
+  return P;
+}
+function driftBest(car,sample,D,entryKmh,method){
   let best=null;
-  const plans=car.drive==='fwd'?DRIFT_PLANS.filter(p=>p.betaT===DRIFT_PLANS[0].betaT&&p.kick===0):DRIFT_PLANS;
+  const plans=driftPlans(car,entryKmh,method);
   for(const pl of plans){
     const r=driftRun(car,pl,false,D);
     const better=!best||DRIFT_RANK[r.outcome]<DRIFT_RANK[best.outcome]
@@ -29381,7 +29427,7 @@ function driftBest(car,sample,D){
       ||(r.outcome===best.outcome&&r.maxI===best.maxI&&(r.past1+r.past2)>(best.past1+best.past2));
     if(better)best=Object.assign(r,{plan:pl});
     if(r.outcome==='CLEAR'){best=Object.assign(r,{plan:pl});break;}
-    if(car.drive==='fwd'&&r.outcome==='NO_SLIDE'&&r.fin){best=Object.assign(r,{plan:pl});break;}
+    if(car.drive==='fwd'&&pl.init!=='flick'&&r.outcome==='NO_SLIDE'&&r.fin&&(method==='power'||method==='kick')){best=Object.assign(r,{plan:pl});break;}
   }
   if(!best)return null;
   return sample?Object.assign(driftRun(car,best.plan,true,D),{plan:best.plan}):best;
@@ -29391,10 +29437,11 @@ function simulateDriftChallenge(){
   const car=driveCar();
   car.esp=false;car.tc=false;if(car.aids){car.aids.esp=false;car.aids.tc=false;}
   const D=typeof mooseDims==='function'?mooseDims():{w:(car.tF+car.tR)/2+0.3,ovF:0.35*(car.a+car.b),ovR:0.35*(car.a+car.b)};
-  const R=driftBest(car,true,{w:D.w,f:car.a+D.ovF,r:car.b+D.ovR});if(!R)return{ok:false,reason:'no-run',kind:'drift'};
+  const R=driftBest(car,true,{w:D.w,f:car.a+D.ovF,r:car.b+D.ovR},chalDriftEntry,chalDriftMethod);if(!R)return{ok:false,reason:'no-run',kind:'drift'};
   return{
     ok:true,kind:'drift',outcome:R.outcome,drive:car.drive,
-    speedKmh:Math.round(R.plan.v*3.6),betaT:R.plan.betaT,kick:R.plan.kick|0,radius:R.plan.R,
+    speedKmh:Math.round(R.plan.v*3.6),betaT:R.plan.betaT,kick:R.plan.kick|0,radius:R.plan.R,init:R.plan.init,
+    entryMode:chalDriftEntry>0?'fixed':'best',method:chalDriftMethod,
     peakBeta:R.peakBeta*180/Math.PI,beta1:R.beta1*180/Math.PI,beta2:R.beta2*180/Math.PI,
     past1:R.past1,past2:R.past2,ctr1:R.ctr1,ctr2:R.ctr2,eMax:R.eMax,
     halfW:R.halfW,line:R.line,zones:R.zones,samples:R.samples||[],plan:R.plan,
@@ -29479,6 +29526,8 @@ function refreshChallenge(){
   if(pace){const row=pace.closest('.field');if(row)row.style.display=ch.kind==='economy'?'':'none';}
   const ms=document.getElementById('chalMooseSpeed');
   if(ms){const row=ms.closest('.field');if(row)row.style.display=ch.kind==='moose'?'':'none';}
+  for(const id of['chalDriftEntry','chalDriftMethod']){const el=document.getElementById(id);
+    if(el){const row=el.closest('.field');if(row)row.style.display=ch.kind==='drift'?'':'none';}}
   const mr=document.getElementById('chalMooseRate');
   if(mr){const row=mr.closest('.field');if(row)row.style.display=(ch.kind==='moose'||ch.kind==='drift')?'':'none';}
   renderChallenge();
@@ -29488,8 +29537,8 @@ function renderChallenge(){
   if(!head)return;
   const ch=runChallengeById(activeRunChallenge);
   const R=chalResult;
-  if(!R){head.textContent='—';grid.innerHTML='';note.textContent=tr('Build a car first.');return;}
-  if(!R.ok){head.textContent='—';grid.innerHTML='';note.textContent=tr('This challenge is not ready yet.');return;}
+  if(!R){head.textContent=tr('Build a car first.');grid.innerHTML='';note.textContent=tr(ch.desc);return;}
+  if(!R.ok){head.textContent=tr('This challenge is not ready yet.');grid.innerHTML='';note.textContent=tr(ch.desc);return;}
   const cell=(k,v)=>'<div class="perf-cell"><div class="k">'+tr(k)+'</div><div class="v">'+v+'</div></div>';
   if(R.kind==='moose'){
     const col=MOOSE_OUT_COL[R.outcome]||'#e0e0e0',warn=R.lift2>0?' · '+tr('2-WHEEL LIFT'):'';
@@ -29512,7 +29561,8 @@ function renderChallenge(){
     const col=DRIFT_OUT_COL[R.outcome]||'#e0e0e0';
     head.innerHTML=tr(ch.name)+' · <b>'+R.speedKmh+' km/h</b> · <span style="color:'+col+'">'+tr(R.outcome)+'</span>';
     grid.innerHTML=cell('RESULT','<span style="color:'+col+'">'+tr(R.outcome)+'</span>')+
-      cell('ENTRY',R.speedKmh+' km/h')+
+      cell('ENTRY',R.speedKmh+' km/h'+(R.entryMode==='best'?' ('+tr('BEST')+')':''))+
+      cell('METHOD',tr(({power:'POWER-OVER',kick:'CLUTCH KICK',flick:'FLICK'})[R.init]||'—')+(R.method==='auto'?' ('+tr('AUTO')+')':''))+
       cell('PEAK β',R.peakBeta.toFixed(1)+'°')+
       cell('CORNER 1 β',R.beta1.toFixed(1)+'°')+
       cell('CORNER 2 β',R.beta2.toFixed(1)+'°')+
@@ -29521,7 +29571,7 @@ function renderChallenge(){
       cell('TARGET β',(R.betaT*180/Math.PI).toFixed(0)+'°')+
       cell('RADIUS',R.radius+' m')+
       cell('DRIVE',tr((R.drive||'').toUpperCase()));
-    note.textContent=tr(ch.desc)+' '+tr('ESP and traction control off. RWD initiates by power-over (and a clutch kick if needed); the driver holds body slip with throttle and countersteer, then links the second corner. CLEAR needs a sustained slide in both. Failures: NO_SLIDE (never past the rear peak — typical FWD without a handbrake), FADE (only one corner), STALL (stopped or never reached the exit), OFF (any corner of the body over the edge, swept at its slip angle), or SPIN. Handbrake and loose surfaces are not modelled yet.');
+    note.textContent=tr(ch.desc)+' '+tr('ESP and traction control off. METHOD picks how the slide starts: POWER-OVER (throttle), CLUTCH KICK (clutch down, the engine revs itself, then the clutch is dropped) or FLICK (lift and steer away, then sharply in, each for half the body’s natural period, so its rebound helps turn-in; FWD lifts to rotate). AUTO tries them in that order. ENTRY fixes the speed, or BEST searches 32–43 km/h. The driver holds body slip with throttle and countersteer, then links the second corner. CLEAR needs a sustained slide in both. Failures: NO_SLIDE (never past the rear peak — typical FWD without a handbrake), FADE (only one corner), STALL (stopped or never reached the exit), OFF (any corner of the body over the edge, swept at its slip angle), or SPIN. Handbrake and loose surfaces are not modelled yet.');
     return;
   }
   if(R.kind==='stage'){
@@ -32077,6 +32127,14 @@ function bindControls(){
   const chalMs=document.getElementById('chalMooseSpeed');
   if(chalMs){chalMs.value=String(chalMooseSpeed);
     chalMs.addEventListener('change',e=>{const f=+e.target.value;if(MOOSE_SPEEDS.includes(f)){chalMooseSpeed=f;refreshChallenge();}});}
+  const chalDe=document.getElementById('chalDriftEntry'),chalDm=document.getElementById('chalDriftMethod');
+  if(chalDe){chalDe.value=String(chalDriftEntry);
+    chalDe.addEventListener('change',e=>{const f=+e.target.value;if(DRIFT_ENTRY_OPTS.includes(f)){chalDriftEntry=f;refreshChallenge();}});}
+  if(chalDm){chalDm.value=chalDriftMethod;
+    chalDm.addEventListener('change',e=>{if(DRIFT_METHODS.includes(e.target.value)){chalDriftMethod=e.target.value;refreshChallenge();}});}
+  const chalInfo=document.getElementById('chalInfoBtn');
+  if(chalInfo)chalInfo.addEventListener('click',()=>{const n=document.getElementById('chalNote');if(!n)return;
+    n.hidden=!n.hidden;chalInfo.setAttribute('aria-expanded',String(!n.hidden));chalInfo.classList.toggle('on',!n.hidden);});
   const chalMr=document.getElementById('chalMooseRate');
   if(chalMr){chalMr.value=String(chalMooseRate);
     chalMr.addEventListener('change',e=>{const f=+e.target.value;if(CHAL_MOOSE_RATES.includes(f)){chalMooseRate=f;

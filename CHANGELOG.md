@@ -18,6 +18,16 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 ## [Unreleased]
 
+### Powerslide driver settings and a challenge info button (build 360)
+
+- The explanation under each challenge result moved into an **i** button beside the Challenges heading.
+- Powerslide gets **ENTRY** (BEST, or 30–50 km/h) and **METHOD** (AUTO, POWER-OVER, CLUTCH KICK, **FLICK**). The flick
+  lifts and steers away, then sharply in, each phase lasting half the body's natural period (π·tauLoad) so the roll
+  rebound arrives at turn-in; steer is the line's plus the front peak slip angle. FWD may flick (it lifts to rotate,
+  power to straighten).
+- At 40 km/h the MX-5 CLEARs with each method; the Civic Type R stays NO_SLIDE with each, flick included. Worst
+  search: Civic on AUTO, 24 plans, about 2.7 s.
+
 ### Powerslide course and driver fixed (build 359)
 
 - **The S-course had two gaps.** The straights after each corner were drawn at x = 0 and from x = 2R, so at R = 20 m the

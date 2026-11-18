@@ -7,6 +7,8 @@
 //   · (build 359) the course is continuous: no gap over 1 m between line points;
 //   · a FWD car (Civic Type R) finishes NO_SLIDE (handbrake not modelled — power-over alone does not initiate);
 //   · outcomes are only CLEAR / FADE / NO_SLIDE / STALL / OFF / SPIN;
+//   · (build 360) each METHOD runs its own initiation on the MX-5 (power, kick, flick), a fixed ENTRY is the
+//     entry speed, FWD with FLICK runs a flick plan, and the i button shows and hides the explanation;
 //   · the Challenges UI lists S-Route Powerslide and shows the outcome without page errors.
 import { chromium } from './pw.mjs';
 import path from 'node:path';
@@ -32,10 +34,18 @@ const r = await page.evaluate(() => {
   load('Civic Type R (FK8');
   const ci = simulateDriftChallenge();
   out.civic = { outcome: ci.outcome, drive: ci.drive, past1: ci.past1, past2: ci.past2, fin: ci.samples && ci.samples.length > 10 };
+  out.methods = {};
+  load('MX-5');
+  for (const m of ['power', 'kick', 'flick']) { chalDriftMethod = m; chalDriftEntry = 40; const R = simulateDriftChallenge(); out.methods[m] = { init: R.init, kmh: R.speedKmh, out: R.outcome }; }
+  load('Civic Type R (FK8'); chalDriftMethod = 'flick'; chalDriftEntry = 40; out.civicFlick = simulateDriftChallenge().init;
+  chalDriftMethod = 'auto'; chalDriftEntry = 0; load('MX-5');
   setTab('challenges');
   const sel = document.getElementById('chalSel');
   sel.value = 'drift-s'; sel.dispatchEvent(new Event('change'));
   out.head = document.getElementById('chalHead').textContent;
+  const nb = document.getElementById('chalNote'), ib = document.getElementById('chalInfoBtn');
+  out.info = [nb.hidden, (ib.click(), nb.hidden), nb.textContent.includes('FLICK'), (ib.click(), nb.hidden)];
+  out.driftFields = ['chalDriftEntry', 'chalDriftMethod'].every(id => document.getElementById(id).closest('.field').style.display !== 'none');
   out.has = !!RUN_CHALLENGES.find(c => c.id === 'drift-s');
   out.rateShown = (() => { const el = document.getElementById('chalMooseRate'); return el && el.closest('.field').style.display !== 'none'; })();
   return out;
@@ -59,6 +69,11 @@ if (r.civic.outcome !== 'NO_SLIDE') fails.push('Civic expected NO_SLIDE, got ' +
 if (!(r.mx5.n > 20)) fails.push('MX-5 replay samples missing');
 if (!/POWERSLIDE|CLEAR|NO_SLIDE|FADE|OFF|SPIN/i.test(r.head || '')) fails.push('UI head missing outcome: ' + r.head);
 if (!r.rateShown) fails.push('replay rate hidden on drift');
+console.log('methods', r.methods, 'civic flick', r.civicFlick, 'info', r.info);
+for (const m of ['power', 'kick', 'flick']) { const x = r.methods[m]; if (x.init !== m || x.kmh !== 40 || !OK.has(x.out)) fails.push('method ' + m + ': ' + JSON.stringify(x)); }
+if (r.civicFlick !== 'flick') fails.push('Civic FLICK ran ' + r.civicFlick);
+if (r.info.join() !== 'true,false,true,true') fails.push('i button: ' + r.info.join());
+if (!r.driftFields) fails.push('drift ENTRY/METHOD hidden');
 for (const e of errors) fails.push(e);
 
 if (fails.length) { console.error('FAIL', fails); process.exit(1); }
