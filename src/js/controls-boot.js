@@ -117,6 +117,14 @@ function bindControls(){
   const chalMs=document.getElementById('chalMooseSpeed');
   if(chalMs){chalMs.value=String(chalMooseSpeed);
     chalMs.addEventListener('change',e=>{const f=+e.target.value;if(MOOSE_SPEEDS.includes(f)){chalMooseSpeed=f;refreshChallenge();}});}
+  const chalDe=document.getElementById('chalDriftEntry'),chalDm=document.getElementById('chalDriftMethod');
+  if(chalDe){chalDe.value=String(chalDriftEntry);
+    chalDe.addEventListener('change',e=>{const f=+e.target.value;if(DRIFT_ENTRY_OPTS.includes(f)){chalDriftEntry=f;refreshChallenge();}});}
+  if(chalDm){chalDm.value=chalDriftMethod;
+    chalDm.addEventListener('change',e=>{if(DRIFT_METHODS.includes(e.target.value)){chalDriftMethod=e.target.value;refreshChallenge();}});}
+  const chalInfo=document.getElementById('chalInfoBtn');
+  if(chalInfo)chalInfo.addEventListener('click',()=>{const n=document.getElementById('chalNote');if(!n)return;
+    n.hidden=!n.hidden;chalInfo.setAttribute('aria-expanded',String(!n.hidden));chalInfo.classList.toggle('on',!n.hidden);});
   const chalMr=document.getElementById('chalMooseRate');
   if(chalMr){chalMr.value=String(chalMooseRate);
     chalMr.addEventListener('change',e=>{const f=+e.target.value;if(CHAL_MOOSE_RATES.includes(f)){chalMooseRate=f;

@@ -401,6 +401,9 @@ canvas.gart{display:block;width:100%;max-width:640px;height:auto;image-rendering
 .perf-cell.wide{grid-column:1/3}
 .perf-cell.hero .v{color:#ffcc00}
 .perf-note{font-size:7px;color:#778;line-height:1.6;margin-top:8px}
+.info-i{font-size:8px;width:18px;height:18px;padding:0;margin-left:6px;line-height:14px;vertical-align:middle;border-width:2px;box-shadow:2px 2px 0 #000;text-transform:none}
+.info-i.on{color:#ffcc00;border-color:#ffcc00}
+.info-pop{margin:0 0 8px;padding:6px 8px;border:2px solid #334}
 .vehicleSummaryWrap b{color:#ffcc00}
 /* ---- Career / challenge card ---- */
 .challenge-card{background:#0a0a10;border:2px solid #33334a;padding:9px;margin-bottom:6px;font-size:8px;line-height:1.6}

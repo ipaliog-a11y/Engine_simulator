@@ -13,11 +13,15 @@
 const DRIFT_RANK={CLEAR:0,FADE:1,NO_SLIDE:2,STALL:3,OFF:4,SPIN:5};
 const DRIFT_HALF_W=12;   // half road width (m): a drift-pad lane, not a single carriageway
 const DRIFT_MID=34;      // short straight between the two corners (m)
-// Plans: entry speed v (m/s), target |β| (rad), clutch-kick steps, corner radius R (m). Mild β first — Velenis's
-// expert data was ~32° on dirt; dry asphalt here holds ~12–30° with power-over / clutch kick.
+// Plans: entry speed v (m/s), target |β| (rad), initiation (power-over, clutch kick of 10 or 20 steps, or a flick),
+// corner radius R (m). Mild β first — Velenis's expert data was ~32° on dirt; dry asphalt here holds ~12–30°.
+const DRIFT_INITS=[{init:'power',kick:0},{init:'kick',kick:10},{init:'kick',kick:20},{init:'flick',kick:0}];
 const DRIFT_PLANS=[];
-for(const betaT of[0.20,0.24,0.28])for(const v of[9,10,11,12])for(const kick of[0,10,20])for(const R of[18,20,22])
-  DRIFT_PLANS.push({v,betaT,kick,R,gear:2,pull:2.2,initThr:0.8});
+for(const betaT of[0.20,0.24,0.28])for(const v of[9,10,11,12])for(const I of DRIFT_INITS)for(const R of[18,20,22])
+  DRIFT_PLANS.push({v,betaT,kick:I.kick,init:I.init,R,gear:2,pull:2.2,initThr:0.8});
+// Driver settings (build 359, Challenges UI): entry speed in km/h (0 = the search's best) and initiation method.
+let chalDriftEntry=0,chalDriftMethod='auto';
+const DRIFT_ENTRY_OPTS=[0,30,35,40,45,50],DRIFT_METHODS=['auto','power','kick','flick'];
 function driftSCourse(R,halfW,mid){
   const line=[],zones=[],ds=0.5;
   const add=(x,y,z)=>{line.push({x,y,v:10,grade:0,kv:0});zones.push(z);};
@@ -31,7 +35,7 @@ function driftSCourse(R,halfW,mid){
   for(let a=Math.PI;a>=Math.PI/2-1e-9;a-=ds/R)add(2*R+R*Math.cos(a),y2+R*Math.sin(a),'c2');
   const xE=2*R,yE=y2+R;
   for(let x=xE+ds;x<=xE+60;x+=ds)add(x,yE,'exit');
-  return{line,zones,halfW,R,mid,xE,yE};
+  return{line,zones,halfW,R,mid,xE,yE,ds,i1:zones.indexOf('c1'),i2:zones.indexOf('c2')};
 }
 // Path from driveDriver; in the corners, throttle holds a target β (Velenis: steering + drive torque). FWD stays
 // on the grip path (handbrake not modelled — named gap): NO_SLIDE is the honest result for power-over.
@@ -39,9 +43,25 @@ function driftDriver(car,s,C,d,plan){
   const base=driveDriver(car,s,C.line,d);
   const z=C.zones[Math.max(0,Math.min(C.zones.length-1,d.i||0))]||'exit';d.zone=z;
   const drifting=z==='c1'||z==='c2';
+  // Flick (pendulum turn, build 359): lift and steer away from the corner, then sharply into it, so the body's
+  // roll rebound loads the outside front and unloads the rear as the car turns in. Each phase lasts half the body's
+  // natural period, π·tauLoad (tauLoad = 1/(2π·ride frequency)), so the rebound comes back in phase with turn-in.
+  // Steer in each phase: the line's own plus the front tyres' peak slip angle (car.pkF).
+  if(plan.init==='flick'&&(z==='approach'||z==='mid')){
+    const next=z==='approach'?C.i1:C.i2,dir=z==='approach'?1:-1;
+    const tTo=(next-(d.i||0))*C.ds/Math.max(1,s.vx),tF=Math.PI*(car.tauLoad||0.1);
+    if(tTo<2*tF){
+      const away=tTo>tF,pk=(car.pkF||0.1)/car.steerLock;
+      base.steer=Math.max(-1,Math.min(1,base.steer+(away?-dir:dir)*pk));
+      base.throttle=away||car.drive==='fwd'?0:1;base.brake=0;d.flicked=true;return base;
+    }
+  }
   if(!drifting){if(z==='mid')base.throttle=Math.min(base.throttle||0,0.1);return base;}
   if(plan.gripOnly){base.throttle=Math.min(base.throttle||0,0.45);return base;}
   const beta=Math.atan2(s.vy,Math.max(0.5,s.vx));
+  // A FWD car after a flick: power pulls the nose straight, so it is the brake on the slide; lifting keeps it rotating.
+  if(car.drive==='fwd'){const dirF=z==='c1'?1:-1,over=Math.abs(beta)>plan.betaT;
+    return{steer:Math.max(-1,Math.min(1,base.steer-(over?0.12*dirF:0))),throttle:over?0.6:0,brake:0,gear:s.gear};}
   const pkR=Math.atan(3*car.mu/car.cc),aR=(s.alpha[2]+s.alpha[3])/2;
   // dir: +1 left corner, −1 right (steer is left-positive). A left drift has β<0 (velocity right of the nose).
   const dir=z==='c1'?1:-1,absB=Math.abs(beta),absT=plan.betaT;
@@ -72,7 +92,7 @@ function driftCornerOk(past,beta,ctr){
 function driftReach(D,dh){const c=Math.abs(Math.cos(dh)),sn=Math.abs(Math.sin(dh));return D.w/2*c+Math.max(D.f,D.r)*sn;}
 function driftRun(car,plan,sample,D){
   D=D||{w:(car.tF+car.tR)/2+0.3,f:1.35*car.a,r:1.35*car.b};
-  const gripOnly=!!plan.gripOnly||car.drive==='fwd';
+  const gripOnly=!!plan.gripOnly||(car.drive==='fwd'&&plan.init!=='flick');
   const C=driftSCourse(plan.R,plan.halfW||DRIFT_HALF_W,plan.mid||DRIFT_MID);
   for(const p of C.line)p.v=plan.v;
   const s=driveState(car),L0=C.line[0];
@@ -117,10 +137,19 @@ function driftRun(car,plan,sample,D){
   o.ok=o.outcome==='CLEAR';o.plan=pl;o.slide1=s1;o.slide2=s2;
   return o;
 }
-// FWD ignores betaT and kick (grip path), so it searches only the 12 distinct (v,R) plans (build 359).
-function driftBest(car,sample,D){
+// The plans for the driver settings: a fixed entry speed replaces the searched ones; a method keeps its own plans.
+// FWD: no kick, and one target β (the grip path ignores it; it only sets when a flicked FWD lifts) — 24 plans.
+function driftPlans(car,entryKmh,method){
+  let P=DRIFT_PLANS;
+  if(car.drive==='fwd'&&method==='kick')method='power';   // no kick on a FWD grip path
+  if(method&&method!=='auto')P=P.filter(p=>p.init===method);
+  if(entryKmh>0)P=P.filter(p=>p.v===DRIFT_PLANS[0].v).map(p=>Object.assign({},p,{v:entryKmh/3.6}));
+  if(car.drive==='fwd')P=P.filter(p=>(p.init==='flick'||p.init==='power')&&p.betaT===DRIFT_PLANS[0].betaT);
+  return P;
+}
+function driftBest(car,sample,D,entryKmh,method){
   let best=null;
-  const plans=car.drive==='fwd'?DRIFT_PLANS.filter(p=>p.betaT===DRIFT_PLANS[0].betaT&&p.kick===0):DRIFT_PLANS;
+  const plans=driftPlans(car,entryKmh,method);
   for(const pl of plans){
     const r=driftRun(car,pl,false,D);
     const better=!best||DRIFT_RANK[r.outcome]<DRIFT_RANK[best.outcome]
@@ -128,7 +157,7 @@ function driftBest(car,sample,D){
       ||(r.outcome===best.outcome&&r.maxI===best.maxI&&(r.past1+r.past2)>(best.past1+best.past2));
     if(better)best=Object.assign(r,{plan:pl});
     if(r.outcome==='CLEAR'){best=Object.assign(r,{plan:pl});break;}
-    if(car.drive==='fwd'&&r.outcome==='NO_SLIDE'&&r.fin){best=Object.assign(r,{plan:pl});break;}
+    if(car.drive==='fwd'&&pl.init!=='flick'&&r.outcome==='NO_SLIDE'&&r.fin&&(method==='power'||method==='kick')){best=Object.assign(r,{plan:pl});break;}
   }
   if(!best)return null;
   return sample?Object.assign(driftRun(car,best.plan,true,D),{plan:best.plan}):best;
@@ -138,10 +167,11 @@ function simulateDriftChallenge(){
   const car=driveCar();
   car.esp=false;car.tc=false;if(car.aids){car.aids.esp=false;car.aids.tc=false;}
   const D=typeof mooseDims==='function'?mooseDims():{w:(car.tF+car.tR)/2+0.3,ovF:0.35*(car.a+car.b),ovR:0.35*(car.a+car.b)};
-  const R=driftBest(car,true,{w:D.w,f:car.a+D.ovF,r:car.b+D.ovR});if(!R)return{ok:false,reason:'no-run',kind:'drift'};
+  const R=driftBest(car,true,{w:D.w,f:car.a+D.ovF,r:car.b+D.ovR},chalDriftEntry,chalDriftMethod);if(!R)return{ok:false,reason:'no-run',kind:'drift'};
   return{
     ok:true,kind:'drift',outcome:R.outcome,drive:car.drive,
-    speedKmh:Math.round(R.plan.v*3.6),betaT:R.plan.betaT,kick:R.plan.kick|0,radius:R.plan.R,
+    speedKmh:Math.round(R.plan.v*3.6),betaT:R.plan.betaT,kick:R.plan.kick|0,radius:R.plan.R,init:R.plan.init,
+    entryMode:chalDriftEntry>0?'fixed':'best',method:chalDriftMethod,
     peakBeta:R.peakBeta*180/Math.PI,beta1:R.beta1*180/Math.PI,beta2:R.beta2*180/Math.PI,
     past1:R.past1,past2:R.past2,ctr1:R.ctr1,ctr2:R.ctr2,eMax:R.eMax,
     halfW:R.halfW,line:R.line,zones:R.zones,samples:R.samples||[],plan:R.plan,

@@ -15,6 +15,8 @@ function refreshChallenge(){
   if(pace){const row=pace.closest('.field');if(row)row.style.display=ch.kind==='economy'?'':'none';}
   const ms=document.getElementById('chalMooseSpeed');
   if(ms){const row=ms.closest('.field');if(row)row.style.display=ch.kind==='moose'?'':'none';}
+  for(const id of['chalDriftEntry','chalDriftMethod']){const el=document.getElementById(id);
+    if(el){const row=el.closest('.field');if(row)row.style.display=ch.kind==='drift'?'':'none';}}
   const mr=document.getElementById('chalMooseRate');
   if(mr){const row=mr.closest('.field');if(row)row.style.display=(ch.kind==='moose'||ch.kind==='drift')?'':'none';}
   renderChallenge();
@@ -24,8 +26,8 @@ function renderChallenge(){
   if(!head)return;
   const ch=runChallengeById(activeRunChallenge);
   const R=chalResult;
-  if(!R){head.textContent='—';grid.innerHTML='';note.textContent=tr('Build a car first.');return;}
-  if(!R.ok){head.textContent='—';grid.innerHTML='';note.textContent=tr('This challenge is not ready yet.');return;}
+  if(!R){head.textContent=tr('Build a car first.');grid.innerHTML='';note.textContent=tr(ch.desc);return;}
+  if(!R.ok){head.textContent=tr('This challenge is not ready yet.');grid.innerHTML='';note.textContent=tr(ch.desc);return;}
   const cell=(k,v)=>'<div class="perf-cell"><div class="k">'+tr(k)+'</div><div class="v">'+v+'</div></div>';
   if(R.kind==='moose'){
     const col=MOOSE_OUT_COL[R.outcome]||'#e0e0e0',warn=R.lift2>0?' · '+tr('2-WHEEL LIFT'):'';
@@ -48,7 +50,8 @@ function renderChallenge(){
     const col=DRIFT_OUT_COL[R.outcome]||'#e0e0e0';
     head.innerHTML=tr(ch.name)+' · <b>'+R.speedKmh+' km/h</b> · <span style="color:'+col+'">'+tr(R.outcome)+'</span>';
     grid.innerHTML=cell('RESULT','<span style="color:'+col+'">'+tr(R.outcome)+'</span>')+
-      cell('ENTRY',R.speedKmh+' km/h')+
+      cell('ENTRY',R.speedKmh+' km/h'+(R.entryMode==='best'?' ('+tr('BEST')+')':''))+
+      cell('METHOD',tr(({power:'POWER-OVER',kick:'CLUTCH KICK',flick:'FLICK'})[R.init]||'—')+(R.method==='auto'?' ('+tr('AUTO')+')':''))+
       cell('PEAK β',R.peakBeta.toFixed(1)+'°')+
       cell('CORNER 1 β',R.beta1.toFixed(1)+'°')+
       cell('CORNER 2 β',R.beta2.toFixed(1)+'°')+
@@ -57,7 +60,7 @@ function renderChallenge(){
       cell('TARGET β',(R.betaT*180/Math.PI).toFixed(0)+'°')+
       cell('RADIUS',R.radius+' m')+
       cell('DRIVE',tr((R.drive||'').toUpperCase()));
-    note.textContent=tr(ch.desc)+' '+tr('ESP and traction control off. RWD initiates by power-over (and a clutch kick if needed); the driver holds body slip with throttle and countersteer, then links the second corner. CLEAR needs a sustained slide in both. Failures: NO_SLIDE (never past the rear peak — typical FWD without a handbrake), FADE (only one corner), STALL (stopped or never reached the exit), OFF (any corner of the body over the edge, swept at its slip angle), or SPIN. Handbrake and loose surfaces are not modelled yet.');
+    note.textContent=tr(ch.desc)+' '+tr('ESP and traction control off. METHOD picks how the slide starts: POWER-OVER (throttle), CLUTCH KICK (clutch down, the engine revs itself, then the clutch is dropped) or FLICK (lift and steer away, then sharply in, each for half the body’s natural period, so its rebound helps turn-in; FWD lifts to rotate). AUTO tries them in that order. ENTRY fixes the speed, or BEST searches 32–43 km/h. The driver holds body slip with throttle and countersteer, then links the second corner. CLEAR needs a sustained slide in both. Failures: NO_SLIDE (never past the rear peak — typical FWD without a handbrake), FADE (only one corner), STALL (stopped or never reached the exit), OFF (any corner of the body over the edge, swept at its slip angle), or SPIN. Handbrake and loose surfaces are not modelled yet.');
     return;
   }
   if(R.kind==='stage'){
