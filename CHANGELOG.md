@@ -18,6 +18,13 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 ## [Unreleased]
 
+### Dashboard on the S-route powerslide (build 361)
+
+- The S-route replay now has the track view's analog dashboard in its lower-right corner: rev counter with gear,
+  speedometer, throttle and brake bars, g-meter and steering wheel, all read from the replayed run.
+- Left out on purpose: the power strip and the brake/tyre temperature cells, which the drift run does not model.
+- Replay samples now also record rpm, gear, brake and the body's accelerations; no numbers move.
+
 ### Powerslide driver settings and a challenge info button (build 360)
 
 - The explanation under each challenge result moved into an **i** button beside the Challenges heading.

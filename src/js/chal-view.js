@@ -201,6 +201,30 @@ function drawDriftChallenge(g,R){
   }
   g.fillStyle='#9ab';g.font='7px "Press Start 2P"';
   g.fillText(tr('S-ROUTE')+' · R '+R.radius+' m · ±'+hw+' m',10,vizH-10);
+  if(s&&s.rpm!=null)drawDriftHud(s);
+}
+// Dashboard in the lower right (build 361): the track view's dials, pedals, g-meter and wheel, read from the
+// replayed sample. No power strip or brake temperatures: the run does not model them.
+function drawDriftHud(s){
+  const w=REPLAY_HUD_W,h=208,x0=vizW-w-10,y0=vizH-h-10,PS='"Press Start 2P"';
+  ctx.fillStyle='rgba(10,10,18,0.86)';ctx.fillRect(x0,y0,w,h);
+  ctx.strokeStyle='#33334a';ctx.lineWidth=2;ctx.strokeRect(x0,y0,w,h);
+  const rl=Math.max(1000,engine.redline),rMax=Math.ceil(rl/1000+0.5)*1000,v=(s.v||0)*3.6;
+  drawDial(x0+47,y0+47,40,0,rMax,s.rpm,1000,'x1000',rl,x=>String(x/1000));
+  ctx.fillStyle=C.yellow;ctx.font='8px '+PS;ctx.textAlign='center';ctx.fillText(String(s.gear),x0+47,y0+79);
+  const top=Math.max(160,(perf&&perf.topSpeed)||160),vMax=Math.ceil(top*1.1/20)*20,vs=niceStep(vMax,7);
+  drawDial(x0+137,y0+47,40,0,Math.ceil(vMax/vs)*vs,v,vs,'km/h',null,x=>String(x));
+  ctx.fillStyle=C.green;ctx.font='7px '+PS;ctx.fillText(String(Math.round(v)),x0+137,y0+80);
+  ctx.textAlign='left';
+  const yb=y0+126,pedal=(xx,val,col,lbl)=>{ctx.fillStyle='#1d1d2b';ctx.fillRect(xx,yb-26,10,52);
+    const hh=52*clamp(val,0,1);ctx.fillStyle=col;ctx.fillRect(xx,yb+26-hh,10,hh);
+    ctx.fillStyle='#778';ctx.font='5px '+PS;ctx.fillText(lbl,xx-1,yb+34);};
+  pedal(x0+40,s.thr||0,'#00ff88','T');pedal(x0+56,s.brk||0,'#ff5555','B');
+  drawGMeter({gLat:-(s.ay||0)/DRIVE_G,gLong:(s.ax||0)/DRIVE_G},x0+148,yb,26,yb+36);
+  const sw=steerText({steer:-(s.delta||0)*180/Math.PI}),ys=y0+172;   // drift steer is left-positive; the wheel reads R positive
+  ctx.fillStyle=C.yellow;ctx.font='6px '+PS;ctx.fillText(sw.txt,x0+60,ys+12);
+  ctx.fillStyle='#667';ctx.font='5px '+PS;ctx.fillText(sw.road,x0+60,ys+24);
+  drawSteerWheel(x0+150,ys+16,15,sw.wheel);
 }
 function drawMooseTopDown(g,R,x0,y0,w,h){
   const G=R.cones,line=R.line;if(!line||!line.length)return;
