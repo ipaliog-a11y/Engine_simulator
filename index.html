@@ -812,7 +812,7 @@ body.guided-open{overflow:hidden}
 </div>
 <div class="container">
 <header>
-<h1>PIXEL POWERTRAIN v0.7 build 357</h1>
+<h1>PIXEL POWERTRAIN v0.7 build 358</h1>
 <div class="subtitle" id="subtitle">ENGINE DESIGNER • BUILD IT, THEN DRIVE IT</div>
 </header>
 <div class="build-strip" id="buildStrip">
@@ -24427,7 +24427,7 @@ function updateUI(){
   else{status.textContent=tr('IDLE / LOW LOAD')+' • '+Math.round(state.rpm)+' RPM';status.className='status-bar'}
   if(vizMode==='design')legend.innerHTML=tr('Bore/stroke set displacement. Octane+compression+boost+ignition feed the knock model.')+'<br>'+tr('Cooling (radiator/fan/oil cooler/thermostat) sets running temps in AUTO THERMAL mode.');
   else if(vizMode==='engine')legend.innerHTML=tr('THROTTLE makes power; LOAD (dyno brake) sets the hold RPM — more load = lower RPM, zero = free-rev to limiter.')+'<br>'+tr('Lift off at speed → engine braking + fuel cut. Detonation/overheat/lean-boost/valve float wear the engine.');
-  else if(vizMode==='challenges')legend.innerHTML=tr('Solved vehicle tests: economy, moose avoid; later skill, skid pad.')+'<br>'+tr('Economy: green start, red finish; line colour is pace versus flat-out; hover for speed and incline; pace sets the target time.')+' '+tr('Wheel or pinch to zoom, drag to scroll, double-click to reset.')+' '+tr('Moose: ISO 3888-2 cones, frontal forces and body roll.');
+  else if(vizMode==='challenges')legend.innerHTML=tr('Solved vehicle tests: economy, moose avoid, S-route powerslide; later skid pad.')+'<br>'+tr('Economy: green start, red finish; line colour is pace versus flat-out; hover for speed and incline; pace sets the target time.')+' '+tr('Wheel or pinch to zoom, drag to scroll, double-click to reset.')+' '+tr('Moose: ISO 3888-2 cones, frontal forces and body roll.')+' '+tr('Powerslide: S-route with linked drifts; CLEAR needs both corners.');
   else legend.innerHTML=tr('Dyno shows full power & torque curves to redline.')+'<br>'+tr('Green line = current RPM. Peaks marked with dots.');
   updateDashLamps();
 }
@@ -29250,9 +29250,142 @@ function simulateMooseChallenge(speedOpt){
   const F=mooseBestAt(car,D,best+1,false);   // how it fails one step up
   return pack(R,{mode:'best',failAt:best+1,failBy:F.outcome});
 }
+// ====== S-ROUTE POWERSLIDE (build 358) ======
+// Point-to-point S: straight → left 90° → short straight → right 90° → straight. The driver aims a drift line
+// (sustain the slide), not the minimum-time racing line. Physics: stepCar with ESP/TC off. Methods and failure
+// modes: plans/drift-challenge.md (Hindiyeh 2013; Velenis AVEC 2010).
+//
+// Outcomes (worst first): SPIN, OFF, NO_SLIDE, FADE, CLEAR.
+//   CLEAR     both corners: rear past its peak for ≥0.25 s, body slip β > 8°, and countersteer (or a long slide)
+//   FADE      only one corner qualified (initiated then lost the other, or never linked)
+//   NO_SLIDE  finished on the road with neither corner past the rear peak (typical FWD on power-over)
+//   OFF       left the road half-width, or never reached the exit
+//   SPIN      heading > ~0.7π from the path, or β > ~77°
+const DRIFT_RANK={CLEAR:0,FADE:1,NO_SLIDE:2,OFF:3,SPIN:4};
+const DRIFT_HALF_W=12;   // half road width (m): a drift-pad lane, not a single carriageway
+const DRIFT_MID=34;      // short straight between the two corners (m)
+// Plans: entry speed v (m/s), target |β| (rad), clutch-kick steps, corner radius R (m). Mild β first — Velenis's
+// expert data was ~32° on dirt; dry asphalt here holds ~12–30° with power-over / clutch kick.
+const DRIFT_PLANS=[];
+for(const betaT of[0.20,0.24,0.28])for(const v of[9,10,11,12])for(const kick of[0,10,20])for(const R of[18,20,22])
+  DRIFT_PLANS.push({v,betaT,kick,R,gear:2,pull:2.2,initThr:0.8});
+function driftSCourse(R,halfW,mid){
+  const line=[],zones=[],ds=0.5;
+  const add=(x,y,z)=>{line.push({x,y,v:10,grade:0,kv:0});zones.push(z);};
+  for(let x=-50;x<0;x+=ds)add(x,0,'approach');
+  for(let a=-Math.PI/2+ds/R;a<=0+1e-9;a+=ds/R)add(R*Math.cos(a),R+R*Math.sin(a),'c1');
+  const y1=2*R;
+  for(let y=y1+ds;y<y1+mid;y+=ds)add(0,y,'mid');
+  const y2=y1+mid;
+  for(let a=Math.PI-ds/R;a>=Math.PI/2-1e-9;a-=ds/R)add(R+R*Math.cos(a),y2+R*Math.sin(a),'c2');
+  const xE=2*R,yE=y2+R;
+  for(let x=xE+ds;x<=xE+60;x+=ds)add(x,yE,'exit');
+  return{line,zones,halfW,R,mid,xE,yE};
+}
+// Path from driveDriver; in the corners, throttle holds a target β (Velenis: steering + drive torque). FWD stays
+// on the grip path (handbrake not modelled — named gap): NO_SLIDE is the honest result for power-over.
+function driftDriver(car,s,C,d,plan){
+  const base=driveDriver(car,s,C.line,d);
+  const z=C.zones[Math.max(0,Math.min(C.zones.length-1,d.i||0))]||'exit';d.zone=z;
+  const drifting=z==='c1'||z==='c2';
+  if(!drifting){if(z==='mid')base.throttle=Math.min(base.throttle||0,0.1);return base;}
+  if(plan.gripOnly){base.throttle=Math.min(base.throttle||0,0.45);return base;}
+  const beta=Math.atan2(s.vy,Math.max(0.5,s.vx));
+  const pkR=Math.atan(3*car.mu/car.cc),aR=(s.alpha[2]+s.alpha[3])/2;
+  const sign=z==='c1'?1:-1,bT=plan.betaT*sign,absB=Math.abs(beta),absT=Math.abs(bT);
+  let thr;
+  if(absB>absT+0.06)thr=Math.max(0,0.25-3*(absB-absT));
+  else if(absB>absT)thr=0.3;
+  else thr=Math.min(1,0.5+2*(absT-absB));
+  const pastKey=z==='c1'?'seen1':'seen2';
+  if(Math.abs(aR)>pkR)d[pastKey]=true;
+  if(!d[pastKey]&&absB<0.65*absT)thr=Math.max(thr,plan.initThr||0.85);
+  let clutch=null;
+  if(!d[pastKey]&&d.kick>0&&absB<0.55*absT){clutch=1;thr=1;s.we=0.88*car.redline*Math.PI/30;d.kick--;}
+  let st=base.steer;
+  if(absB>absT)st-=0.12*Math.sign(beta);else st+=0.06*Math.sign(bT-beta);
+  const u={steer:Math.max(-1,Math.min(1,st)),throttle:Math.max(0,Math.min(1,thr)),brake:0,gear:s.gear};
+  if(clutch!=null)u.clutch=clutch;
+  return u;
+}
+function driftCornerOk(past,beta,ctr){
+  return past>=0.25&&beta>8*Math.PI/180&&(ctr>=0.08||past>=0.6);
+}
+function driftRun(car,plan,sample){
+  const gripOnly=!!plan.gripOnly||car.drive==='fwd';
+  const C=driftSCourse(plan.R,plan.halfW||DRIFT_HALF_W,plan.mid||DRIFT_MID);
+  for(const p of C.line)p.v=plan.v;
+  const s=driveState(car),L0=C.line[0];
+  s.x=L0.x;s.y=L0.y;s.psi=Math.atan2(C.line[1].y-L0.y,C.line[1].x-L0.x);
+  s.vx=plan.v;s.w=s.w.map(()=>plan.v/car.r);
+  s.gear=plan.gear||2;s.we=plan.v/car.r*car.ratios[s.gear-1]*car.fd;
+  const d={i:0,kick:gripOnly?0:(plan.kick|0),pull:plan.pull||2.2,seen1:false,seen2:false};
+  const pkR=Math.atan(3*car.mu/car.cc),pl=Object.assign({},plan,{gripOnly});
+  const o={ok:false,past1:0,past2:0,beta1:0,beta2:0,ctr1:0,ctr2:0,peakBeta:0,off:false,spin:false,eMax:0,fin:false,
+    line:C.line,zones:C.zones,halfW:C.halfW,R:C.R,samples:sample?[]:null,maxI:0};
+  let nextT=0;const dt=0.01;
+  while(s.t<60){
+    const u=driftDriver(car,s,C,d,pl);
+    stepCar(car,s,u,dt);
+    const beta=Math.atan2(s.vy,Math.max(0.5,s.vx)),aR=(s.alpha[2]+s.alpha[3])/2;
+    o.peakBeta=Math.max(o.peakBeta,Math.abs(beta));
+    o.eMax=Math.max(o.eMax,Math.abs(d.e||0));o.maxI=Math.max(o.maxI,d.i||0);
+    const halfBody=(car.tF+car.tR)/4+0.2;
+    if(Math.abs(d.e||0)+halfBody>C.halfW)o.off=true;
+    const p0=C.line[d.i],p1=C.line[Math.min(C.line.length-1,d.i+1)];
+    const hp=Math.atan2(p1.y-p0.y,p1.x-p0.x);
+    let dh=s.psi-hp;while(dh>Math.PI)dh-=2*Math.PI;while(dh<-Math.PI)dh+=2*Math.PI;
+    if(Math.abs(dh)>0.7*Math.PI||Math.abs(beta)>1.35)o.spin=true;
+    if(d.zone==='c1'){o.beta1=Math.max(o.beta1,Math.abs(beta));if(Math.abs(aR)>pkR)o.past1+=dt;
+      if(u.steer*s.yaw<0&&Math.abs(beta)>8*Math.PI/180)o.ctr1+=dt;}
+    if(d.zone==='c2'){o.beta2=Math.max(o.beta2,Math.abs(beta));if(Math.abs(aR)>pkR)o.past2+=dt;
+      if(u.steer*s.yaw<0&&Math.abs(beta)>8*Math.PI/180)o.ctr2+=dt;}
+    if(sample&&s.t>=nextT){
+      o.samples.push({t:s.t,x:s.x,y:s.y,psi:s.psi,v:s.speed,beta,yaw:s.yaw,delta:s.delta||0,
+        thr:u.throttle,steer:u.steer,zone:d.zone,alpha:s.alpha.slice()});
+      nextT=s.t+0.04;
+    }
+    if(o.spin||o.off)break;
+    if(d.i>=C.line.length-3&&s.t>3){o.fin=true;break;}
+  }
+  const s1=driftCornerOk(o.past1,o.beta1,o.ctr1),s2=driftCornerOk(o.past2,o.beta2,o.ctr2);
+  o.outcome=o.spin?'SPIN':o.off||!o.fin?'OFF':(!s1&&!s2)?'NO_SLIDE':(!s1||!s2)?'FADE':'CLEAR';
+  o.ok=o.outcome==='CLEAR';o.plan=pl;o.slide1=s1;o.slide2=s2;
+  return o;
+}
+function driftBest(car,sample){
+  let best=null;
+  for(const pl of DRIFT_PLANS){
+    const r=driftRun(car,pl,false);
+    const better=!best||DRIFT_RANK[r.outcome]<DRIFT_RANK[best.outcome]
+      ||(r.outcome===best.outcome&&r.maxI>best.maxI)
+      ||(r.outcome===best.outcome&&r.maxI===best.maxI&&(r.past1+r.past2)>(best.past1+best.past2));
+    if(better)best=Object.assign(r,{plan:pl});
+    if(r.outcome==='CLEAR'){best=Object.assign(r,{plan:pl});break;}
+    if(car.drive==='fwd'&&r.outcome==='NO_SLIDE'&&r.fin){best=Object.assign(r,{plan:pl});break;}
+  }
+  if(!best)return null;
+  return sample?Object.assign(driftRun(car,best.plan,true),{plan:best.plan}):best;
+}
+function simulateDriftChallenge(){
+  const pt=powertrain();if(!pt.ready()||!vehicle.mass)return null;
+  const car=driveCar();
+  car.esp=false;car.tc=false;if(car.aids){car.aids.esp=false;car.aids.tc=false;}
+  const D=typeof mooseDims==='function'?mooseDims():{w:(car.tF+car.tR)/2+0.3,ovF:0.35*(car.a+car.b),ovR:0.35*(car.a+car.b)};
+  const R=driftBest(car,true);if(!R)return{ok:false,reason:'no-run',kind:'drift'};
+  return{
+    ok:true,kind:'drift',outcome:R.outcome,drive:car.drive,
+    speedKmh:Math.round(R.plan.v*3.6),betaT:R.plan.betaT,kick:R.plan.kick|0,radius:R.plan.R,
+    peakBeta:R.peakBeta*180/Math.PI,beta1:R.beta1*180/Math.PI,beta2:R.beta2*180/Math.PI,
+    past1:R.past1,past2:R.past2,ctr1:R.ctr1,ctr2:R.ctr2,eMax:R.eMax,
+    halfW:R.halfW,line:R.line,zones:R.zones,samples:R.samples||[],plan:R.plan,
+    trackW:D.w,body:{f:car.a+D.ovF,r:car.b+D.ovR},
+    slide1:R.slide1,slide2:R.slide2
+  };
+}
 // ====== VEHICLE RUN CHALLENGES (build 341; real roads 343; moose 345) ======
 // Dynamic tests on the CHALLENGES tab — not the ENGINE career/scorecard list in challenges.js.
-// Economy, fixed-time stages (build 352) and moose ship here. Later: skill, skidpad.
+// Economy, fixed-time stages (build 352), moose (345) and S-route powerslide (358). Later: skidpad.
 const RUN_CHALLENGES=[
   {id:'economy',kind:'economy',name:'Mountain Economy',
     desc:'Open mountain road. Finish inside the time limit; burn as little fuel as you can.',
@@ -29289,7 +29422,9 @@ const RUN_CHALLENGES=[
   {id:'stage-targa',kind:'stage',name:'Targa Stage',road:'targa',target:1970,
     desc:'Targa Florio Piccolo against the clock. Make the set time or DNF.'},
   {id:'moose',kind:'moose',name:'Moose Avoidance',
-    desc:'ISO 3888-2 double lane change. Highest entry speed with no cone touched.'}
+    desc:'ISO 3888-2 double lane change. Highest entry speed with no cone touched.'},
+  {id:'drift-s',kind:'drift',name:'S-Route Powerslide',
+    desc:'Point-to-point S: two linked corners. Hold a controlled powerslide through both, or fail honestly.'}
 ];
 let activeRunChallenge='economy';
 let chalResult=null;
@@ -29305,6 +29440,7 @@ function solveRunChallenge(id){
   if(ch.kind==='economy')return simulateEconomyChallenge(ch.road,chalPaceFactor);
   if(ch.kind==='stage')return simulateStageChallenge(ch.road,ch.target);
   if(ch.kind==='moose')return simulateMooseChallenge();
+  if(ch.kind==='drift')return simulateDriftChallenge();
   return{ok:false,reason:'unimplemented',challenge:ch};
 }
 // ====== CHALLENGES tab UI (build 341; EV 342; pace + hover 344; moose 345) ======
@@ -29322,8 +29458,10 @@ function refreshChallenge(){
   chalMooseT0=(typeof performance!=='undefined'?performance.now():Date.now());
   const pace=document.getElementById('chalPace');
   if(pace){const row=pace.closest('.field');if(row)row.style.display=ch.kind==='economy'?'':'none';}
-  for(const id of ['chalMooseSpeed','chalMooseRate']){const el=document.getElementById(id);
-    if(el){const row=el.closest('.field');if(row)row.style.display=ch.kind==='moose'?'':'none';}}
+  const ms=document.getElementById('chalMooseSpeed');
+  if(ms){const row=ms.closest('.field');if(row)row.style.display=ch.kind==='moose'?'':'none';}
+  const mr=document.getElementById('chalMooseRate');
+  if(mr){const row=mr.closest('.field');if(row)row.style.display=(ch.kind==='moose'||ch.kind==='drift')?'':'none';}
   renderChallenge();
 }
 function renderChallenge(){
@@ -29349,6 +29487,22 @@ function renderChallenge(){
       cell('MAX TIP',(R.tipMax*180/Math.PI).toFixed(1)+'°')+
       cell('STABILITY t/2h',R.ssf.toFixed(2));
     note.textContent=tr(ch.desc)+' '+tr('Throttle released at entry, top gear; the best of 12 lines. BEST CLEAR raises the speed until a cone falls (ISO 3888-2); 72 and 77 km/h are the entry speeds Teknikens Värld and km77 judge by. A car fails by a CONE, a SPIN (turned past 90°) or a ROLLOVER (two wheels up and tipped past its outer tyres).');
+    return;
+  }
+  if(R.kind==='drift'){
+    const col=DRIFT_OUT_COL[R.outcome]||'#e0e0e0';
+    head.innerHTML=tr(ch.name)+' · <b>'+R.speedKmh+' km/h</b> · <span style="color:'+col+'">'+tr(R.outcome)+'</span>';
+    grid.innerHTML=cell('RESULT','<span style="color:'+col+'">'+tr(R.outcome)+'</span>')+
+      cell('ENTRY',R.speedKmh+' km/h')+
+      cell('PEAK β',R.peakBeta.toFixed(1)+'°')+
+      cell('CORNER 1 β',R.beta1.toFixed(1)+'°')+
+      cell('CORNER 2 β',R.beta2.toFixed(1)+'°')+
+      cell('SLIDE 1',R.past1.toFixed(2)+' s')+
+      cell('SLIDE 2',R.past2.toFixed(2)+' s')+
+      cell('TARGET β',(R.betaT*180/Math.PI).toFixed(0)+'°')+
+      cell('RADIUS',R.radius+' m')+
+      cell('DRIVE',tr((R.drive||'').toUpperCase()));
+    note.textContent=tr(ch.desc)+' '+tr('ESP and traction control off. RWD initiates by power-over (and a clutch kick if needed); the driver holds body slip with throttle and countersteer, then links the second corner. CLEAR needs a sustained slide in both. Failures: NO_SLIDE (never past the rear peak — typical FWD without a handbrake), FADE (only one corner), OFF the road, or SPIN. Handbrake and loose surfaces are not modelled yet.');
     return;
   }
   if(R.kind==='stage'){
@@ -29444,6 +29598,52 @@ function mooseSampleAt(R,t){
   return S[i];
 }
 const MOOSE_OUT_COL={CLEAR:'#55dd66',CONE:'#ffcc00',SPIN:'#ff8833',ROLLOVER:'#ff4444'};
+const DRIFT_OUT_COL={CLEAR:'#55dd66',FADE:'#ffcc00',NO_SLIDE:'#4aa3ff',OFF:'#ff8833',SPIN:'#ff4444'};
+function driftSampleAt(R,t){
+  const S=R.samples;if(!S||!S.length)return null;
+  const t0=S[0].t,t1=S[S.length-1].t,span=Math.max(0.05,t1-t0);
+  const u=((t-t0)%span+span)%span+t0;
+  let i=0;while(i<S.length-1&&S[i+1].t<u)i++;
+  return S[i];
+}
+function drawDriftChallenge(g,R){
+  chalHover.map=null;
+  g.fillStyle='#0a0e14';g.fillRect(0,0,vizW,vizH);
+  const line=R.line;if(!line||!line.length)return;
+  let minX=1e9,maxX=-1e9,minY=1e9,maxY=-1e9;
+  for(const q of line){minX=Math.min(minX,q.x);maxX=Math.max(maxX,q.x);minY=Math.min(minY,q.y);maxY=Math.max(maxY,q.y);}
+  const hw=R.halfW||DRIFT_HALF_W;minX-=hw+2;maxX+=hw+2;minY-=hw+2;maxY+=hw+2;
+  const pad=14,dx=maxX-minX||1,dy=maxY-minY||1;
+  const sc=Math.min((vizW-2*pad)/dx,(vizH-2*pad)/dy);
+  const MX=x=>pad+(x-minX)*sc,MY=y=>vizH-pad-(y-minY)*sc;
+  // road band
+  g.strokeStyle='#1c2330';g.lineWidth=Math.max(4,2*hw*sc);g.lineJoin='round';g.lineCap='round';
+  g.beginPath();for(let i=0;i<line.length;i++){const X=MX(line[i].x),Y=MY(line[i].y);if(i)g.lineTo(X,Y);else g.moveTo(X,Y);}g.stroke();
+  g.strokeStyle='#445566';g.lineWidth=1;g.setLineDash([4,4]);
+  g.beginPath();for(let i=0;i<line.length;i++){const X=MX(line[i].x),Y=MY(line[i].y);if(i)g.lineTo(X,Y);else g.moveTo(X,Y);}g.stroke();g.setLineDash([]);
+  // path coloured by zone
+  const zcol={approach:'#4aa3ff',c1:'#ffcc00',mid:'#8899aa',c2:'#ffcc00',exit:'#4aa3ff'};
+  g.lineWidth=2;
+  for(let i=0;i<line.length-1;i++){
+    g.strokeStyle=zcol[(R.zones&&R.zones[i])||'approach']||'#4aa3ff';
+    g.beginPath();g.moveTo(MX(line[i].x),MY(line[i].y));g.lineTo(MX(line[i+1].x),MY(line[i+1].y));g.stroke();
+  }
+  const S=R.samples||[];
+  if(S.length>1){g.strokeStyle='rgba(85,221,102,0.25)';g.lineWidth=Math.max(2,(R.trackW||1.8)*sc);
+    g.beginPath();for(let i=0;i<S.length;i++){const X=MX(S[i].x),Y=MY(S[i].y);if(i)g.lineTo(X,Y);else g.moveTo(X,Y);}g.stroke();}
+  const s=driftSampleAt(R,chalMooseNow());
+  if(s){
+    const B=R.body||{f:2,r:2.3},c=Math.cos(s.psi||0),sn=Math.sin(s.psi||0),tw=(R.trackW||1.8)/2;
+    g.fillStyle=DRIFT_OUT_COL[R.outcome]||'#55dd66';g.beginPath();
+    [[B.f,tw],[B.f,-tw],[-B.r,-tw],[-B.r,tw]].forEach(([dx,dy],k)=>{const X=MX(s.x+dx*c-dy*sn),Y=MY(s.y+dx*sn+dy*c);if(k)g.lineTo(X,Y);else g.moveTo(X,Y);});
+    g.closePath();g.fill();
+    g.fillStyle='#e0e0e0';g.font='8px "Press Start 2P"';
+    const bdeg=(Math.abs(s.beta||0)*180/Math.PI).toFixed(0);
+    g.fillText('β '+bdeg+'° · '+(s.zone||''),10,20);
+  }
+  g.fillStyle='#9ab';g.font='7px "Press Start 2P"';
+  g.fillText(tr('S-ROUTE')+' · R '+R.radius+' m · ±'+hw+' m',10,vizH-10);
+}
 function drawMooseTopDown(g,R,x0,y0,w,h){
   const G=R.cones,line=R.line;if(!line||!line.length)return;
   // the course (cones 0-61 m) with a little run-in and run-out, so the car's width reads at scale (build 354)
@@ -29718,6 +29918,7 @@ function drawChallenge(){
   const R=chalResult,g=ctx;g.fillStyle='#0a0e14';g.fillRect(0,0,vizW,vizH);
   const ta=R&&R.road?'none':'';if(canvas.style.touchAction!==ta)canvas.style.touchAction=ta;   // a touch drag pans the route map
   if(R&&R.kind==='moose'&&R.ok){drawMooseChallenge(g,R);return;}
+  if(R&&R.kind==='drift'&&R.ok){drawDriftChallenge(g,R);return;}
   if(!R||!R.road){g.fillStyle='#556';g.font='10px "Press Start 2P"';g.fillText(tr('CHALLENGES'),16,28);chalHover.map=null;return;}
   const map=chalMapProject(R),p=map.p,n=p.length,MX=map.MX,MY=map.MY,T=map.T;
   chalHover.map=map;
@@ -31847,7 +32048,7 @@ function bindControls(){
   const chalSel=document.getElementById('chalSel');
   if(chalSel){
     // One group per kind (build 352: the list grew past a dozen).
-    const KIND={economy:'ECONOMY',stage:'FIXED-TIME STAGE',moose:'MOOSE TEST'},groups={};
+    const KIND={economy:'ECONOMY',stage:'FIXED-TIME STAGE',moose:'MOOSE TEST',drift:'POWERSLIDE'},groups={};
     RUN_CHALLENGES.forEach(c=>{
       let gp=groups[c.kind];if(!gp){gp=groups[c.kind]=document.createElement('optgroup');gp.label=tr(KIND[c.kind]||c.kind);chalSel.appendChild(gp);}
       const o=document.createElement('option');o.value=c.id;o.textContent=tr(c.name);gp.appendChild(o);});

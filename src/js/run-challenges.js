@@ -1,6 +1,6 @@
 // ====== VEHICLE RUN CHALLENGES (build 341; real roads 343; moose 345) ======
 // Dynamic tests on the CHALLENGES tab — not the ENGINE career/scorecard list in challenges.js.
-// Economy, fixed-time stages (build 352) and moose ship here. Later: skill, skidpad.
+// Economy, fixed-time stages (build 352), moose (345) and S-route powerslide (358). Later: skidpad.
 const RUN_CHALLENGES=[
   {id:'economy',kind:'economy',name:'Mountain Economy',
     desc:'Open mountain road. Finish inside the time limit; burn as little fuel as you can.',
@@ -37,7 +37,9 @@ const RUN_CHALLENGES=[
   {id:'stage-targa',kind:'stage',name:'Targa Stage',road:'targa',target:1970,
     desc:'Targa Florio Piccolo against the clock. Make the set time or DNF.'},
   {id:'moose',kind:'moose',name:'Moose Avoidance',
-    desc:'ISO 3888-2 double lane change. Highest entry speed with no cone touched.'}
+    desc:'ISO 3888-2 double lane change. Highest entry speed with no cone touched.'},
+  {id:'drift-s',kind:'drift',name:'S-Route Powerslide',
+    desc:'Point-to-point S: two linked corners. Hold a controlled powerslide through both, or fail honestly.'}
 ];
 let activeRunChallenge='economy';
 let chalResult=null;
@@ -53,5 +55,6 @@ function solveRunChallenge(id){
   if(ch.kind==='economy')return simulateEconomyChallenge(ch.road,chalPaceFactor);
   if(ch.kind==='stage')return simulateStageChallenge(ch.road,ch.target);
   if(ch.kind==='moose')return simulateMooseChallenge();
+  if(ch.kind==='drift')return simulateDriftChallenge();
   return{ok:false,reason:'unimplemented',challenge:ch};
 }
