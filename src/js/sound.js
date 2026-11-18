@@ -828,7 +828,42 @@ function trackSoundState(st){
 function soundSource(){
   if(vizMode==='dyno')return state;
   if(vizMode==='track'&&lapResult&&lapResult.replay&&lapReplay.playing)return trackSoundState(replayAt(lapResult,lapReplay.t));
+  const d=driftSoundSample();   // the powerslide replay (build 362): its recorded revs and throttle, on the steady manifold
+  if(d&&d.rpm!=null)return trackSoundState({rpm:d.rpm,thr:d.thr||0,map:steadyMapAt(d.rpm,d.thr||0)});
   return null;
+}
+function driftSoundSample(){
+  const R=typeof chalResult!=='undefined'?chalResult:null;
+  return vizMode==='challenges'&&R&&R.kind==='drift'&&R.ok?driftSampleAt(R,chalMooseNow()):null;
+}
+// ---- tyre screech on the powerslide replay (build 362) ----
+// A tyre squeals while its contact patch slides: past the slip angle of peak force (the run's own pkR, the same
+// test that counts the slide), and louder the faster the rubber slides over the road (v sin alpha). Squeal is a
+// narrow band near 1 kHz from the tread's stick-slip (probable: tyre-squeal studies put it at ~0.5-1.5 kHz),
+// drawn here as noise through two resonant band-passes that rise a little with the sliding speed.
+const SCREECH_LEVEL=0.12,SCREECH_F=[950,1900],SCREECH_REF_MS=6;   // full voice at 6 m/s of sliding (unsure)
+function initScreech(){
+  const c=Sound.ctx,n=c.sampleRate*2,buf=c.createBuffer(1,n,c.sampleRate),d=buf.getChannelData(0);
+  for(let i=0;i<n;i++)d[i]=Math.random()*2-1;
+  const src=c.createBufferSource();src.buffer=buf;src.loop=true;
+  Sound.screechGain=c.createGain();Sound.screechGain.gain.value=0;Sound.screechBp=[];
+  for(const f of SCREECH_F){const bp=c.createBiquadFilter();bp.type='bandpass';bp.frequency.value=f;bp.Q.value=12;
+    src.connect(bp);bp.connect(Sound.screechGain);Sound.screechBp.push(bp);}
+  Sound.screechGain.connect(c.destination);src.start();
+}
+function driftSlide(R,s){
+  if(!s||!s.alpha)return 0;
+  const pk=R.pkR||0.12,a=[Math.max(Math.abs(s.alpha[0]),Math.abs(s.alpha[1])),Math.max(Math.abs(s.alpha[2]),Math.abs(s.alpha[3]))];
+  let v=0;for(const al of a)if(al>pk)v=Math.max(v,(s.v||0)*Math.sin(al));
+  return v;   // m/s of sliding at the worse axle, 0 while every tyre grips
+}
+function updateScreech(t){
+  const s=Sound.on?driftSoundSample():null,vs=s?driftSlide(chalResult,s):0;
+  if(!vs&&!Sound.screechGain)return;
+  if(!Sound.screechGain)initScreech();
+  const k=clamp(vs/SCREECH_REF_MS,0,1);
+  Sound.screechGain.gain.setTargetAtTime(SCREECH_LEVEL*k,t,0.03);
+  Sound.screechBp.forEach((bp,i)=>bp.frequency.setTargetAtTime(SCREECH_F[i]*(1+0.15*k),t,0.05));
 }
 // What the worklet needs from a build: when in the cycle each cylinder fires, and into which bank.
 // Banks split as the LIVE bank draws them: cylinders 1..ceil(n/2) are bank A.
@@ -1071,6 +1106,7 @@ function initToneSound(){
 function updateSound(){
   if(!Sound.ctx)return;
   updateMotorSound(Sound.ctx.currentTime);   // the electric drive's voice, beside the engine's (build 198)
+  updateScreech(Sound.ctx.currentTime);
   if(!Sound.on)return;
   if(isElectric()||hybBenchEngineOff()&&vizMode!=='track')return muteEngineSound();   // a motor has no engine to hear (its own voice: updateMotorSound); a hybrid's engine may be off (build 190)
   const src=soundSource();
@@ -1160,7 +1196,8 @@ function setSound(on){
   if(on){initSound();if(Sound.ctx&&Sound.ctx.state==='suspended')Sound.ctx.resume();}
   else if(Sound.node){Sound.node.parameters.get('level').setTargetAtTime(0,Sound.ctx.currentTime,0.05);
     if(Sound.gas)Sound.gas.parameters.get('level').setTargetAtTime(0,Sound.ctx.currentTime,0.05);
-    if(Sound.motor)Sound.motor.parameters.get('level').setTargetAtTime(0,Sound.ctx.currentTime,0.05);}
+    if(Sound.motor)Sound.motor.parameters.get('level').setTargetAtTime(0,Sound.ctx.currentTime,0.05);
+    if(Sound.screechGain)Sound.screechGain.gain.setTargetAtTime(0,Sound.ctx.currentTime,0.05);}
   else if(Sound.gain)Sound.gain.gain.setTargetAtTime(0,Sound.ctx.currentTime,0.05);
   const btn=document.getElementById('btnSound');
   btn.classList.toggle('on',on);btn.setAttribute('aria-pressed',on);btn.textContent=tr(on?'SOUND ON':'SOUND OFF');

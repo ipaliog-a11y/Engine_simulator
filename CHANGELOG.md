@@ -18,6 +18,16 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 ## [Unreleased]
 
+### Sound on the S-route powerslide, with tyre screech (build 362)
+
+- The powerslide replay now plays the engine (with SOUND ON): its recorded revs and throttle, on the engine's steady
+  manifold pressure, through the same synth as the lap replay.
+- New tyre screech for the length of the slide: on while either axle is past the slip angle of peak force (the same
+  test the run uses to count the slide), louder with sliding speed (v sin α, full at 6 m/s). It is noise through two
+  resonant band-passes near 1 and 2 kHz; the ~1 kHz squeal band is a probable figure, not measured here. On the
+  MX-5 it sounds for 102 of 437 replay samples, and never on the approach.
+- Left open: no screech on the track replay or the moose test yet; the Greek for the OPTIONS sound note is not updated.
+
 ### Dashboard on the S-route powerslide (build 361)
 
 - The S-route replay now has the track view's analog dashboard in its lower-right corner: rev counter with gear,

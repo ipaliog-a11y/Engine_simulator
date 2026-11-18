@@ -815,7 +815,7 @@ body.guided-open{overflow:hidden}
 </div>
 <div class="container">
 <header>
-<h1>PIXEL POWERTRAIN v0.7 build 361</h1>
+<h1>PIXEL POWERTRAIN v0.7 build 362</h1>
 <div class="subtitle" id="subtitle">ENGINE DESIGNER • BUILD IT, THEN DRIVE IT</div>
 </header>
 <div class="build-strip" id="buildStrip">
@@ -3517,7 +3517,7 @@ Most other tests check behaviour that is true of real cars: a bigger turbo spool
 <div class="hint">Simulator preferences. These don't change the engine build.</div>
 
 <div class="design-section">Audio</div>
-<div class="opt-row"><div><b>ENGINE SOUND</b><div class="opt-note">Synthesised from the firing pulses (firing order, one exhaust per bank; lumpy idle from wild cams). Plays on the DYNO tab, and on the TRACK tab with the lap replay.</div></div>
+<div class="opt-row"><div><b>ENGINE SOUND</b><div class="opt-note">Synthesised from the firing pulses (firing order, one exhaust per bank; lumpy idle from wild cams). Plays on the DYNO tab, on the TRACK tab with the lap replay, and on the S-route powerslide replay, with tyre screech while the tyres slide.</div></div>
 <button id="btnSound" class="toggle" aria-pressed="false">SOUND OFF</button></div>
 <div class="opt-row"><div><b>ENGINE SOUND MODEL</b><div class="opt-note">SYNTH: firing pulses through modelled pipes (light). GAS: the cylinders, runners and exhaust simulated as gas, after engine-sim by Ange Yaghi, with a recorded exhaust (heavier; a V12 uses about half a CPU core). Four-strokes, two-strokes and rotaries all have their own gas model.</div></div>
 <select id="edSoundModel" class="opt-select"><option value="synth">SYNTH</option><option value="gas">GAS</option></select></div>
@@ -6443,7 +6443,7 @@ const I18N={
   'ENGINE SOUND':{el:'ΗΧΟΣ ΚΙΝΗΤΗΡΑ'},
   'ENGINE SOUND MODEL':{el:'ΜΟΝΤΕΛΟ ΗΧΟΥ'},
   'SYNTH: firing pulses through modelled pipes (light). GAS: the cylinders, runners and exhaust simulated as gas, after engine-sim by Ange Yaghi, with a recorded exhaust (heavier; a V12 uses about half a CPU core). Four-strokes, two-strokes and rotaries all have their own gas model.':{el:'SYNTH: παλμοί ανάφλεξης μέσα από μοντελοποιημένους σωλήνες (ελαφρύ). GAS: οι κύλινδροι, οι αγωγοί και η εξάτμιση προσομοιώνονται ως αέριο, κατά το engine-sim του Ange Yaghi, με ηχογραφημένη εξάτμιση (βαρύτερο· ένας V12 θέλει περίπου μισό πυρήνα CPU). Οι τετράχρονοι, οι δίχρονοι και οι περιστροφικοί έχουν ο καθένας το δικό του μοντέλο αερίου.'},
-  'Synthesised from the firing pulses (firing order, one exhaust per bank; lumpy idle from wild cams). Plays on the DYNO tab, and on the TRACK tab with the lap replay.':{el:'Συντίθεται από τους παλμούς ανάφλεξης (σειρά ανάφλεξης, μία εξάτμιση ανά σειρά κυλίνδρων· ανώμαλο ρελαντί με άγρια εκκεντροφόρο). Ακούγεται στην καρτέλα ΔΥΝΑΜΟ και στην καρτέλα ΠΙΣΤΑ με την αναπαραγωγή του γύρου.'},
+  'Synthesised from the firing pulses (firing order, one exhaust per bank; lumpy idle from wild cams). Plays on the DYNO tab, on the TRACK tab with the lap replay, and on the S-route powerslide replay, with tyre screech while the tyres slide.':{el:'Συντίθεται από τους παλμούς ανάφλεξης (σειρά ανάφλεξης, μία εξάτμιση ανά σειρά κυλίνδρων· ανώμαλο ρελαντί με άγρια εκκεντροφόρο). Ακούγεται στην καρτέλα ΔΥΝΑΜΟ και στην καρτέλα ΠΙΣΤΑ με την αναπαραγωγή του γύρου.'},
   'Simulation':{el:'Προσομοίωση'},
   'WEAR & DAMAGE':{el:'ΦΘΟΡΑ & ΖΗΜΙΑ'},
   'On: detonation/overheat/lean-boost/valve float damage the engine. Off: invincible, for free experimentation.':{el:'Ενεργό: πειράκι/υπερθέρμανση/φτωχό-boost/πλεύση βαλβίδων κάνουν ζημιά. Ανενεργό: άφθαρτος, για ελεύθερο πειραματισμό.'},
@@ -18302,7 +18302,42 @@ function trackSoundState(st){
 function soundSource(){
   if(vizMode==='dyno')return state;
   if(vizMode==='track'&&lapResult&&lapResult.replay&&lapReplay.playing)return trackSoundState(replayAt(lapResult,lapReplay.t));
+  const d=driftSoundSample();   // the powerslide replay (build 362): its recorded revs and throttle, on the steady manifold
+  if(d&&d.rpm!=null)return trackSoundState({rpm:d.rpm,thr:d.thr||0,map:steadyMapAt(d.rpm,d.thr||0)});
   return null;
+}
+function driftSoundSample(){
+  const R=typeof chalResult!=='undefined'?chalResult:null;
+  return vizMode==='challenges'&&R&&R.kind==='drift'&&R.ok?driftSampleAt(R,chalMooseNow()):null;
+}
+// ---- tyre screech on the powerslide replay (build 362) ----
+// A tyre squeals while its contact patch slides: past the slip angle of peak force (the run's own pkR, the same
+// test that counts the slide), and louder the faster the rubber slides over the road (v sin alpha). Squeal is a
+// narrow band near 1 kHz from the tread's stick-slip (probable: tyre-squeal studies put it at ~0.5-1.5 kHz),
+// drawn here as noise through two resonant band-passes that rise a little with the sliding speed.
+const SCREECH_LEVEL=0.12,SCREECH_F=[950,1900],SCREECH_REF_MS=6;   // full voice at 6 m/s of sliding (unsure)
+function initScreech(){
+  const c=Sound.ctx,n=c.sampleRate*2,buf=c.createBuffer(1,n,c.sampleRate),d=buf.getChannelData(0);
+  for(let i=0;i<n;i++)d[i]=Math.random()*2-1;
+  const src=c.createBufferSource();src.buffer=buf;src.loop=true;
+  Sound.screechGain=c.createGain();Sound.screechGain.gain.value=0;Sound.screechBp=[];
+  for(const f of SCREECH_F){const bp=c.createBiquadFilter();bp.type='bandpass';bp.frequency.value=f;bp.Q.value=12;
+    src.connect(bp);bp.connect(Sound.screechGain);Sound.screechBp.push(bp);}
+  Sound.screechGain.connect(c.destination);src.start();
+}
+function driftSlide(R,s){
+  if(!s||!s.alpha)return 0;
+  const pk=R.pkR||0.12,a=[Math.max(Math.abs(s.alpha[0]),Math.abs(s.alpha[1])),Math.max(Math.abs(s.alpha[2]),Math.abs(s.alpha[3]))];
+  let v=0;for(const al of a)if(al>pk)v=Math.max(v,(s.v||0)*Math.sin(al));
+  return v;   // m/s of sliding at the worse axle, 0 while every tyre grips
+}
+function updateScreech(t){
+  const s=Sound.on?driftSoundSample():null,vs=s?driftSlide(chalResult,s):0;
+  if(!vs&&!Sound.screechGain)return;
+  if(!Sound.screechGain)initScreech();
+  const k=clamp(vs/SCREECH_REF_MS,0,1);
+  Sound.screechGain.gain.setTargetAtTime(SCREECH_LEVEL*k,t,0.03);
+  Sound.screechBp.forEach((bp,i)=>bp.frequency.setTargetAtTime(SCREECH_F[i]*(1+0.15*k),t,0.05));
 }
 // What the worklet needs from a build: when in the cycle each cylinder fires, and into which bank.
 // Banks split as the LIVE bank draws them: cylinders 1..ceil(n/2) are bank A.
@@ -18545,6 +18580,7 @@ function initToneSound(){
 function updateSound(){
   if(!Sound.ctx)return;
   updateMotorSound(Sound.ctx.currentTime);   // the electric drive's voice, beside the engine's (build 198)
+  updateScreech(Sound.ctx.currentTime);
   if(!Sound.on)return;
   if(isElectric()||hybBenchEngineOff()&&vizMode!=='track')return muteEngineSound();   // a motor has no engine to hear (its own voice: updateMotorSound); a hybrid's engine may be off (build 190)
   const src=soundSource();
@@ -18634,7 +18670,8 @@ function setSound(on){
   if(on){initSound();if(Sound.ctx&&Sound.ctx.state==='suspended')Sound.ctx.resume();}
   else if(Sound.node){Sound.node.parameters.get('level').setTargetAtTime(0,Sound.ctx.currentTime,0.05);
     if(Sound.gas)Sound.gas.parameters.get('level').setTargetAtTime(0,Sound.ctx.currentTime,0.05);
-    if(Sound.motor)Sound.motor.parameters.get('level').setTargetAtTime(0,Sound.ctx.currentTime,0.05);}
+    if(Sound.motor)Sound.motor.parameters.get('level').setTargetAtTime(0,Sound.ctx.currentTime,0.05);
+    if(Sound.screechGain)Sound.screechGain.gain.setTargetAtTime(0,Sound.ctx.currentTime,0.05);}
   else if(Sound.gain)Sound.gain.gain.setTargetAtTime(0,Sound.ctx.currentTime,0.05);
   const btn=document.getElementById('btnSound');
   btn.classList.toggle('on',on);btn.setAttribute('aria-pressed',on);btn.textContent=tr(on?'SOUND ON':'SOUND OFF');
@@ -29375,7 +29412,7 @@ function driftRun(car,plan,sample,D){
   const tMax=3*len/plan.v;let slowT=0;   // three times the course at entry speed, or 2 s near standstill: STALL
   const pkR=Math.atan(3*car.mu/car.cc),pl=Object.assign({},plan,{gripOnly});
   const o={ok:false,past1:0,past2:0,beta1:0,beta2:0,ctr1:0,ctr2:0,peakBeta:0,off:false,spin:false,eMax:0,fin:false,
-    line:C.line,zones:C.zones,halfW:C.halfW,R:C.R,samples:sample?[]:null,maxI:0};
+    line:C.line,zones:C.zones,halfW:C.halfW,R:C.R,samples:sample?[]:null,maxI:0,pkR};
   let nextT=0;const dt=0.01;
   while(s.t<tMax){
     const u=driftDriver(car,s,C,d,pl);
@@ -29447,7 +29484,7 @@ function simulateDriftChallenge(){
     past1:R.past1,past2:R.past2,ctr1:R.ctr1,ctr2:R.ctr2,eMax:R.eMax,
     halfW:R.halfW,line:R.line,zones:R.zones,samples:R.samples||[],plan:R.plan,
     trackW:D.w,body:{f:car.a+D.ovF,r:car.b+D.ovR},
-    slide1:R.slide1,slide2:R.slide2
+    slide1:R.slide1,slide2:R.slide2,pkR:R.pkR
   };
 }
 // ====== VEHICLE RUN CHALLENGES (build 341; real roads 343; moose 345) ======

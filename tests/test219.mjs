@@ -10,6 +10,7 @@
 //   · (build 360) each METHOD runs its own initiation on the MX-5 (power, kick, flick), a fixed ENTRY is the
 //     entry speed, FWD with FLICK runs a flick plan, and the i button shows and hides the explanation;
 //   · (build 361) replay samples carry rpm, gear, brake and accelerations for the lower-right dashboard;
+//   · (build 362) the replay is heard: soundSource gives its revs, and the screech is on only while a tyre slides;
 //   · the Challenges UI lists S-Route Powerslide and shows the outcome without page errors.
 import { chromium } from './pw.mjs';
 import path from 'node:path';
@@ -48,6 +49,10 @@ const r = await page.evaluate(() => {
   const nb = document.getElementById('chalNote'), ib = document.getElementById('chalInfoBtn');
   out.info = [nb.hidden, (ib.click(), nb.hidden), nb.textContent.includes('FLICK'), (ib.click(), nb.hidden)];
   out.driftFields = ['chalDriftEntry', 'chalDriftMethod'].every(id => document.getElementById(id).closest('.field').style.display !== 'none');
+  const S = chalResult.samples, sl = S.map(q => driftSlide(chalResult, q));
+  const src = soundSource();
+  out.snd = { rpm: src && src.rpm, grip0: sl[0], slid: sl.filter(v => v > 0).length, n: S.length,
+    inC: S.filter((q, i) => sl[i] > 0 && (q.zone === 'c1' || q.zone === 'c2')).length };
   out.has = !!RUN_CHALLENGES.find(c => c.id === 'drift-s');
   out.rateShown = (() => { const el = document.getElementById('chalMooseRate'); return el && el.closest('.field').style.display !== 'none'; })();
   return out;
@@ -77,6 +82,9 @@ for (const m of ['power', 'kick', 'flick']) { const x = r.methods[m]; if (x.init
 if (r.civicFlick !== 'flick') fails.push('Civic FLICK ran ' + r.civicFlick);
 if (r.info.join() !== 'true,false,true,true') fails.push('i button: ' + r.info.join());
 if (!r.driftFields) fails.push('drift ENTRY/METHOD hidden');
+console.log('sound', r.snd);
+if (!(r.snd.rpm > 0)) fails.push('no engine sound source on the drift replay');
+if (r.snd.grip0 !== 0 || !(r.snd.slid > 5) || r.snd.slid >= r.snd.n || !(r.snd.inC > 0)) fails.push('screech not tied to the slide: ' + JSON.stringify(r.snd));
 for (const e of errors) fails.push(e);
 
 if (fails.length) { console.error('FAIL', fails); process.exit(1); }

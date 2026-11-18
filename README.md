@@ -1,4 +1,4 @@
-# PIXEL POWERTRAIN v0.7 build 361
+# PIXEL POWERTRAIN v0.7 build 362
 
 **A lightweight, 8-bit style internal combustion engine *designer* & simulator** inspired by *Automation*.
 
@@ -414,7 +414,8 @@ assist map over speed and pedal), regeneration, load-point shifting, electric-dr
   transfers; **rotaries** on three chambers per rotor breathing through the ports the rotor uncovers.
 - **Engine sound** — plays on the **DYNO** tab from the engine controls, and on the **TRACK** tab
   from the lap replay (its recorded rpm, throttle and boost, so shifts, lifts and blow-offs are heard
-  as the car goes round); other tabs are quiet. Synthesised from the **firing pulses** in an AudioWorklet: every cylinder
+  as the car goes round), and on the **S-route powerslide** replay (its revs and throttle, with a
+  tyre screech while a tyre slides past its peak slip angle); other tabs are quiet. Synthesised from the **firing pulses** in an AudioWorklet: every cylinder
   fires at its slot in the real firing order and its pulse goes down its own bank's exhaust
   (one pipe for an inline engine, left and right for a V or a boxer), so engines with the same
   firing rate no longer sound alike. A cross-plane V8 fires each bank unevenly
