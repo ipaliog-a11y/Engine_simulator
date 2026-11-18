@@ -787,7 +787,8 @@
 <input type="file" id="gpxInput" accept=".gpx,application/gpx+xml,text/xml" style="display:none">
 </div>
 <div class="panel" id="chalPanel" style="display:none">
-<h2>Challenges</h2>
+<h2>Challenges <button type="button" class="info-i" id="chalInfoBtn" title="About this challenge" aria-expanded="false" aria-controls="chalNote">i</button></h2>
+<div class="perf-note info-pop" id="chalNote" hidden></div>
 <div class="pick-row">
 <div class="field"><label for="chalSel">CHALLENGE</label><select id="chalSel"></select></div>
 <div class="field"><label for="chalPace">PACE</label><select id="chalPace" title="Target time as a multiple of this car's min-time">
@@ -800,6 +801,20 @@
 <option value="72">72 km/h (TEKNIKENS VÄRLD)</option>
 <option value="77">77 km/h (KM77)</option>
 </select></div>
+<div class="field" style="display:none"><label for="chalDriftEntry">ENTRY</label><select id="chalDriftEntry" title="Entry speed: the best of the search, or fixed">
+<option value="0">BEST</option>
+<option value="30">30 km/h</option>
+<option value="35">35 km/h</option>
+<option value="40">40 km/h</option>
+<option value="45">45 km/h</option>
+<option value="50">50 km/h</option>
+</select></div>
+<div class="field" style="display:none"><label for="chalDriftMethod">METHOD</label><select id="chalDriftMethod" title="How the driver starts the slide">
+<option value="auto">AUTO</option>
+<option value="power">POWER-OVER</option>
+<option value="kick">CLUTCH KICK</option>
+<option value="flick">FLICK</option>
+</select></div>
 <div class="field" style="display:none"><label for="chalMooseRate">REPLAY</label><select id="chalMooseRate" title="Replay speed">
 <option value="1">1×</option>
 <option value="0.5">0.5×</option>
@@ -808,7 +823,6 @@
 </div>
 <div class="perf-head" id="chalHead">—</div>
 <div class="perf-grid" id="chalGrid"></div>
-<div class="perf-note" id="chalNote"></div>
 <div class="build-row"><button id="btnChalSolve" title="Solve the selected challenge for the current car">SOLVE</button></div>
 </div>
 <div class="panel" id="racePanel" style="display:none">
