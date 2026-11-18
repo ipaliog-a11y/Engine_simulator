@@ -3,9 +3,10 @@
 // WHY THIS EXISTS. A controlled powerslide needs yaw, combined slip and a driver that holds body slip — not the
 // grip-limit lap solver. Build 358 adds an S-route challenge (straight, left, short straight, right, straight)
 // and named failure modes. What must hold:
-//   · an RWD car (MX-5 or Mustang) finishes CLEAR: both corners past the rear peak with body slip;
+//   · both RWD cars (MX-5 and Mustang) finish CLEAR: both corners past the rear peak with body slip;
+//   · (build 359) the course is continuous: no gap over 1 m between line points;
 //   · a FWD car (Civic Type R) finishes NO_SLIDE (handbrake not modelled — power-over alone does not initiate);
-//   · outcomes are only CLEAR / FADE / NO_SLIDE / OFF / SPIN;
+//   · outcomes are only CLEAR / FADE / NO_SLIDE / STALL / OFF / SPIN;
 //   · the Challenges UI lists S-Route Powerslide and shows the outcome without page errors.
 import { chromium } from './pw.mjs';
 import path from 'node:path';
@@ -20,6 +21,8 @@ await page.goto(pathToFileURL(path.join(repo, 'index.html')).href, { waitUntil: 
 const r = await page.evaluate(() => {
   const load = n => loadVehiclePreset(FACTORY_CARS.find(p => p.name.includes(n) || p.name.startsWith(n)));
   const out = { outcomes: DRIFT_RANK ? Object.keys(DRIFT_RANK) : null };
+  const L = driftSCourse(20, 12, 34).line;
+  out.gap = Math.max(...L.slice(1).map((p, k) => Math.hypot(p.x - L[k].x, p.y - L[k].y)));
   load('MX-5');
   const mx = simulateDriftChallenge();
   out.mx5 = { ok: mx.ok, outcome: mx.outcome, drive: mx.drive, b1: mx.beta1, b2: mx.beta2, past1: mx.past1, past2: mx.past2, n: mx.samples && mx.samples.length };
@@ -39,15 +42,18 @@ const r = await page.evaluate(() => {
 });
 await browser.close();
 
-const OK = new Set(['CLEAR', 'FADE', 'NO_SLIDE', 'OFF', 'SPIN']);
+const OK = new Set(['CLEAR', 'FADE', 'NO_SLIDE', 'STALL', 'OFF', 'SPIN']);
 console.log('MX-5', r.mx5);
 console.log('Mustang', r.mustang);
 console.log('Civic', r.civic);
+console.log('max line gap', r.gap, 'm');
 console.log('UI', r.head, 'rate', r.rateShown);
 
 if (!r.has) fails.push('drift-s missing from RUN_CHALLENGES');
 if (!r.mx5 || !OK.has(r.mx5.outcome)) fails.push('MX-5 bad outcome');
-if (r.mx5.outcome !== 'CLEAR' && r.mustang.outcome !== 'CLEAR') fails.push('no RWD CLEAR (MX-5 ' + r.mx5.outcome + ', Mustang ' + r.mustang.outcome + ')');
+if (r.mx5.outcome !== 'CLEAR' || r.mustang.outcome !== 'CLEAR') fails.push('RWD not both CLEAR (MX-5 ' + r.mx5.outcome + ', Mustang ' + r.mustang.outcome + ')');
+if (!(r.gap < 1)) fails.push('course gap ' + r.gap + ' m');
+for (const k of OK) if (!r.outcomes.includes(k)) fails.push('DRIFT_RANK missing ' + k);
 if (r.civic.drive !== 'fwd') fails.push('Civic not FWD');
 if (r.civic.outcome !== 'NO_SLIDE') fails.push('Civic expected NO_SLIDE, got ' + r.civic.outcome);
 if (!(r.mx5.n > 20)) fails.push('MX-5 replay samples missing');

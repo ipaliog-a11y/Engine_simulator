@@ -18,6 +18,22 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 ## [Unreleased]
 
+### Powerslide course and driver fixed (build 359)
+
+- **The S-course had two gaps.** The straights after each corner were drawn at x = 0 and from x = 2R, so at R = 20 m the
+  line jumped 28.9 m and 20.9 m; the car drove across them still scored as "in the corner". Now continuous (largest
+  step 0.5 m), and the slide, β and countersteer scores count only the corners.
+- **Countersteer had the wrong sign**: past the target slip it steered further into the slide. It now steers out.
+- **The clutch kick no longer sets engine speed by hand** (it had reset the engine to 88% of redline every step, energy
+  from nowhere). With the pedal down the engine revs itself through `stepCar`, then the clutch is dumped. Each corner
+  has its own kick budget.
+- **OFF now uses the body's swept corners** (length and width turned by the heading error, from the CG), not the front
+  axle ± half track. A run that stays on the road but stops or times out is now **STALL**, not OFF.
+- **The search is lighter**: a run times out at 3× the course at entry speed (was 60 s), and FWD searches its 12
+  distinct plans, not 108. Worst case for the MX-5, all 108 plans: 3.6 s.
+- Result: MX-5 and Mustang CLEAR (β 13.7/14.2° and 16.7/16.5°), Civic Type R NO_SLIDE. test219 now requires both RWD
+  cars CLEAR and a continuous course. README and the Challenges guide page now describe the challenge.
+
 ### S-route powerslide challenge (build 358)
 
 - New Challenges entry **S-Route Powerslide**: point-to-point S (straight, left 90°, short straight, right 90°,
