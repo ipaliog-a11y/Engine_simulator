@@ -126,7 +126,8 @@ function driftRun(car,plan,sample,D){
       if(u.steer*s.yaw<0&&Math.abs(beta)>8*Math.PI/180)o.ctr2+=dt;}
     if(sample&&s.t>=nextT){
       o.samples.push({t:s.t,x:s.x,y:s.y,psi:s.psi,v:s.speed,beta,yaw:s.yaw,delta:s.delta||0,
-        thr:u.throttle,steer:u.steer,zone:d.zone,alpha:s.alpha.slice()});
+        thr:u.throttle,steer:u.steer,zone:d.zone,alpha:s.alpha.slice(),
+        brk:u.brake||0,gear:s.gear,rpm:(s.we||0)*30/Math.PI,ax:s.ax||0,ay:s.ay||0});   // for the dashboard (build 361)
       nextT=s.t+0.04;
     }
     if(o.spin||o.off)break;

@@ -9,6 +9,7 @@
 //   · outcomes are only CLEAR / FADE / NO_SLIDE / STALL / OFF / SPIN;
 //   · (build 360) each METHOD runs its own initiation on the MX-5 (power, kick, flick), a fixed ENTRY is the
 //     entry speed, FWD with FLICK runs a flick plan, and the i button shows and hides the explanation;
+//   · (build 361) replay samples carry rpm, gear, brake and accelerations for the lower-right dashboard;
 //   · the Challenges UI lists S-Route Powerslide and shows the outcome without page errors.
 import { chromium } from './pw.mjs';
 import path from 'node:path';
@@ -27,7 +28,8 @@ const r = await page.evaluate(() => {
   out.gap = Math.max(...L.slice(1).map((p, k) => Math.hypot(p.x - L[k].x, p.y - L[k].y)));
   load('MX-5');
   const mx = simulateDriftChallenge();
-  out.mx5 = { ok: mx.ok, outcome: mx.outcome, drive: mx.drive, b1: mx.beta1, b2: mx.beta2, past1: mx.past1, past2: mx.past2, n: mx.samples && mx.samples.length };
+  out.mx5 = { ok: mx.ok, outcome: mx.outcome, drive: mx.drive, b1: mx.beta1, b2: mx.beta2, past1: mx.past1, past2: mx.past2, n: mx.samples && mx.samples.length,
+    dash: mx.samples.every(q => q.rpm > 0 && q.gear >= 1 && q.brk >= 0 && isFinite(q.ax) && isFinite(q.ay)) };
   load('Mustang GT');
   const mu = simulateDriftChallenge();
   out.mustang = { outcome: mu.outcome, drive: mu.drive, b1: mu.beta1, b2: mu.beta2 };
@@ -66,6 +68,7 @@ if (!(r.gap < 1)) fails.push('course gap ' + r.gap + ' m');
 for (const k of OK) if (!r.outcomes.includes(k)) fails.push('DRIFT_RANK missing ' + k);
 if (r.civic.drive !== 'fwd') fails.push('Civic not FWD');
 if (r.civic.outcome !== 'NO_SLIDE') fails.push('Civic expected NO_SLIDE, got ' + r.civic.outcome);
+if (!r.mx5.dash) fails.push('replay samples lack dashboard fields');
 if (!(r.mx5.n > 20)) fails.push('MX-5 replay samples missing');
 if (!/POWERSLIDE|CLEAR|NO_SLIDE|FADE|OFF|SPIN/i.test(r.head || '')) fails.push('UI head missing outcome: ' + r.head);
 if (!r.rateShown) fails.push('replay rate hidden on drift');
