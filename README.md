@@ -1,4 +1,4 @@
-# PIXEL POWERTRAIN v0.8 build 394
+# PIXEL POWERTRAIN v0.8 build 400
 
 **A lightweight, 8-bit style internal combustion engine *designer* & simulator** inspired by *Automation*.
 
@@ -183,14 +183,14 @@ assist map over speed and pedal), regeneration, load-point shifting, electric-dr
 ### Simulation & live tuning
 - **Live outputs**: Power (HP), Torque (Nm), BMEP, Volumetric Efficiency, Thermal
   Efficiency, BSFC, Fuel Flow, Knock Risk, Engine Health.
-- **Ten tabs** — **ENGINE** (build the engine), **VEHICLE** (drop it in a car & read its
+- **Twelve tabs in four sections** — BUILD, TEST, DRIVE and MORE. **ENGINE** (build the engine), **VEHICLE** (drop it in a car & read its
   performance), **PARTS** (design a part and fit it), **GARAGE** (the saved builds), **TRACK** (lap it round a circuit), **RACE** (race
   it against other builds), **CHAMP** (seasons by class with points and standings), **CHALLENGES**, **LIVE** (the engine running: cutaway, the
   whole bank firing in its real order, and the controls), **DYNO** (power/torque curve,
   scorecard, a static result sheet with run data, and a diagnosis of what keeps the engine from running smoothly), **GUIDE** (a wiki: 60 pages in 9 sections, each climbing from real life to the game to the physics, with 8-bit pictures drawn in code, search and cross-links) and **OPTIONS** (sound,
   wear and **language**). The right column is context-aware: runtime Engine Controls while
   driving/on the dyno, the live **Performance** panel on VEHICLE, the **Lap Time** panel on
-  TRACK and the race's setup, timing tower and telemetry on RACE.
+  TRACK and the race's setup, timing tower and telemetry on RACE. LIVE and DYNO carry an ECU laptop: a scope, the fuel, spark and VE tables, the fault list, and the difference from a logged pull. The track instruments include an eight-light shift bar and a brake-temperature mark once a rotor passes 450 °C.
 - **Vehicle & performance (new)** — pick a **chassis** (13 archetypes, each with its own weight,
   size, drivetrain and grip) and it arrives on its **factory spec**: the tyres, wheels, brakes,
   suspension, aero and gearbox that car would really wear, so a kei car turns up on skinny eco
@@ -330,6 +330,10 @@ assist map over speed and pedal), regeneration, load-point shifting, electric-dr
     or viscous coupling sends torque forward as the rear slips. Loose surfaces are not modelled.
   - **Skid Pad** — a 200 ft (61 m) circle. The speed is raised until the car leaves a 1 m lane; the score is the
     magazines' steady lateral g from the fastest held lap's time, with how it fails 1 km/h faster (WIDE, TIGHT, SPIN).
+  - **Spiral Skid Pad** — one turn from a 12 m bend out to that same radius. The target speed rises with the
+    bend's radius of curvature; the score is the exit speed. TIGHT is toward the centre, WIDE the outside.
+  - **Figure 8** — a lemniscate, one loop each way, tightest bend half the skid pad's radius, the crossing straight.
+    The score is the highest speed held through both loops.
   - **RANK CARS** runs several cars (this build, garage builds, factory cars) through the selected challenge
     with the same settings, one car at a time with a progress bar and CANCEL, and lists them passes first,
     then by the challenge's own score (economy by tank or pack energy in MJ, so engine cars and EVs share a scale).

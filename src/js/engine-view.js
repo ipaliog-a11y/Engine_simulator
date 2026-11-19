@@ -57,6 +57,11 @@ function valveLift(deg,open,close){
   if(d>span)return 0;
   return Math.sin(Math.PI*d/span);
 }
+// Blackbody-ish ramp for the manifold, from dull red at 500 C to yellow-white at 1100 C.
+function egtColour(k){
+  const t=clamp(((k-273)-500)/600,0,1);
+  return 'rgb('+Math.round(80+175*Math.min(1,t*1.4))+','+Math.round(20+180*Math.max(0,t-0.3))+','+Math.round(24+90*Math.max(0,t-0.7))+')';
+}
 function drawEngine(dt){
   if(isElectric())return drawMotorView(dt);
   const W=vizW,H=vizH;
@@ -113,8 +118,21 @@ function drawEngine(dt){
   const rf=clamp(rpm/rl,0,1);
   ctx.fillStyle=rf>0.92?C.red:C.green;ctx.fillRect(px(tbX),py(tbY),tbW*rf*S,tbH*S);
 
+  const still=!!(window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches);
+  const twist=still?0:clamp((state.torque||0)/Math.max(1,e.loadRefTq||1),-1,1)*0.04;
+  const lope=still?0:Math.sin(crankAngle*2)*clamp((e.overlap||0)/90,0,1)*0.02;
+  ctx.save();
+  ctx.translate(px(280),py(200));ctx.rotate(twist+lope);ctx.translate(-px(280),-py(200));
   if(rotary)drawRotaryCutaway(px,py,S,F,LW,dt,m);
   else drawPistonCutaway(px,py,S,F,LW,deg,nCyl,rodRatio,bsr,two,m);
+  if(vizBovT>0){ctx.fillStyle='#d8e4ee';ctx.fillRect(px(150),py(78),(6+vizBovT*10)*S,4*S);}
+  if(state.nitrousActive){ctx.fillStyle='#4488ff';ctx.fillRect(px(48),py(96),5*S,12*S);}
+  if(state.blown||(e.ci&&(state.emPM||0)>0.002)){ctx.fillStyle='#1a1a1a';ctx.fillRect(px(520),py(210),10*S,8*S);}
+  ctx.restore();
+  if(state.knockRisk>40||(typeof obdMisfire==='function'&&obdMisfire()>0.02)){
+    ctx.fillStyle=still?'rgba(255,40,40,0.35)':'rgba(255,40,40,'+(0.2+0.25*Math.abs(Math.sin((performance.now())/90)))+')';
+    ctx.fillRect(px(100),py(86),28*S,14*S);
+  }
 
   // ---------- status strip ----------
   ctx.fillStyle='#12121c';ctx.fillRect(px(0),py(398),640*S,24*S);
@@ -406,8 +424,8 @@ function drawSupercharger(px,py,S,F,LW,m,portYc,crank){
 }
 function drawExhaustSide(px,py,S,F,LW,m,portYc,exX){
   const e=engine;
-  const exHot=clamp(state.powerHP/Math.max(60,engine.score?engine.score.peakHP:200),0,1);
-  const gasCol=state.blown?'#444':`rgb(${Math.round(120+120*exHot)},${Math.round(60+30*exHot)},40)`;
+  const egtK0=egtAt(state.rpm,m);
+  const gasCol=state.blown?'#444':(state.powerHP>1?egtColour(egtK0):'#5a4038');
   const egtK=egtAt(state.rpm,m),egt=Math.round(state.powerHP>1?egtK-273:state.coolant);
   ctx.fillStyle=C.exhaust;ctx.font=F(6.5);
   if(e.intake==='turbo'){
@@ -1008,8 +1026,7 @@ function drawRotaryCutaway(px,py,S,F,LW,dt,m){
   ctx.strokeStyle=C.intake;ctx.lineWidth=LW(8);
   ctx.beginPath();ctx.moveTo(px(inX),py(portYc));ctx.lineTo(px(inX),py(topW+4));ctx.stroke();
   drawExhaustSide(px,py,S,F,LW,m,portYc,exX);
-  const exHot=clamp(state.powerHP/Math.max(60,engine.score?engine.score.peakHP:200),0,1);
-  ctx.strokeStyle=state.blown?'#444':`rgb(${Math.round(120+120*exHot)},${Math.round(60+30*exHot)},40)`;
+  ctx.strokeStyle=state.blown?'#444':(state.powerHP>1?egtColour(egtAt(state.rpm,m)):'#5a4038');
   ctx.lineWidth=LW(7);
   ctx.beginPath();ctx.moveTo(px(exX),py(portYc));ctx.lineTo(px(exX),py(topW+4));ctx.stroke();
   // where each phase happens — fixed in the housing, unlike a piston engine

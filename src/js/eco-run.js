@@ -3,7 +3,7 @@
 // timeFactor × that car's Tmin (eco-rally style: use the allotted time, do not rush). A speed
 // cap on the open solve hits the target. ICE: fuel from engineFuelAt (warm oil). EV: pack energy
 // from motorLosses + packDraw + regen, same stack as evCycle / the lap (grade included here).
-// Hybrid (build 383): hybridCycle on the road's profile (ecoHybrid below). Distance DP (build 394, ecoDP) for ICE and EV.
+// Hybrid (build 383): hybridCycle on the road's profile (ecoHybrid below). Distance DP (build 400, ecoDP) for ICE and EV.
 // eco (build 352): {tab:ecoDriverTable(), s} limits the drive and the slowing to the eco driver's (below); s in [0,1]
 // blends both limits back toward the car's own when the eco driver alone cannot make the target.
 function ecoMinTime(line,speedCap,eco){
@@ -154,11 +154,11 @@ function ecoDriverTable(){
   }
   return{drive,lift,shift,mEff,ev:false};
 }
-// The engine's fuel rule on the economy road (build 394; ecoFuelKg and the distance DP both use it). Warm oil; the gear
+// The engine's fuel rule on the economy road (build 400; ecoFuelKg and the distance DP both use it). Warm oil; the gear
 // with least fuel, as WLTP. Overrun: fuel cut needs a gear whose engine braking is no more than the slowing asked for
-// (the brakes add the rest); a gentler glide is in neutral at idle fuel (until build 394 every glide was free and
+// (the brakes add the rest); a gentler glide is in neutral at idle fuel (until build 400 every glide was free and
 // drag-free). Past the 90% torque reserve in every gear the engine runs at full load in the gear that costs least,
-// and a demand past the fuel map's full load is charged pro rata at that point's BSFC. Until build 394 such a point
+// and a demand past the fuel map's full load is charged pro rata at that point's BSFC. Until build 400 such a point
 // fell through to 3 × idle fuel (the map has no fuel past its own full load), which the eco blends leaned on.
 function ecoFuelRule(){
   const e=engine,C=FUEL_CYCLE,M=engineFuelMap(95),r=vehicle.rTire,fd=vehicle.finalDrive,eff=vehicle.driveEff,ratios=vehicle.ratios;
@@ -251,7 +251,7 @@ function ecoHybrid(line,v){
   }
   return hybridCycle(vehicle,{segs});
 }
-// ---- Distance DP (build 394) ----
+// ---- Distance DP (build 400) ----
 // The eco driver above follows fixed rules (best-BSFC drive, lift, a speed cap). This finds the speed profile itself:
 // a dynamic programme over distance in stages of ~50 m (state: speed on a 0.5 m/s grid, from rest; within a stage v²
 // is linear, i.e. constant acceleration), minimising fuel (ICE, g) or pack energy (EV, J) plus λ × time, with λ
@@ -382,7 +382,7 @@ function simulateEconomyChallenge(roadKey,factorOpt){
     return best;
   };
   const hyb=isHybrid(),cost=r=>isElectric()?(ecoEnergyJ(line,r.v)||{E:Infinity}).E:hyb?ecoHybrid(line,r.v).kg:ecoFuelKg(line,r.v);
-  // Engine cars and EVs: the distance DP (build 394). On the 190 runs measured at Alpine and the Dragon it beat the eco
+  // Engine cars and EVs: the distance DP (build 400). On the 190 runs measured at Alpine and the Dragon it beat the eco
   // driver every time, by 9-32%, so the eco driver's blends run only when the DP finds no plan for the target (each
   // blend costs ~11 capped solves; running both pushed long roads past 4 s). Hybrids keep the blends.
   let best=null,s=1,bestC=Infinity,dpMs=null,dpUsed=false;

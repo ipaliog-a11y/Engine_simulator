@@ -1,6 +1,6 @@
-# Economy roads before → after build 394 (distance DP + honest fuel)
+# Economy roads before → after build 400 (distance DP + honest fuel)
 
-Every factory car on the six economy roads at 125% pace, `simulateEconomyChallenge`; before is main at build 393. Hybrids are unchanged.
+Every factory car on the six economy roads at 125% pace, `simulateEconomyChallenge`; before is main at build 393 (the economy path is unchanged on main since). Hybrids are unchanged.
 
 | Car | Unit | Alpine | Dragon | Big Sur | Napoléon | Highland | Targa |
 |---|---|---|---|---|---|---|---|

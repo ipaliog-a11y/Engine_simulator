@@ -16,29 +16,33 @@
    which at the same pixel size renders far smaller than this font and was unreadable. */
 @font-face{font-family:'Press Start 2P';font-style:normal;font-weight:400;font-display:swap;src:url(assets/PressStart2P-greek.woff2) format('woff2');unicode-range:U+0370-0377,U+037A-037F,U+0384-038A,U+038C,U+038E-03A1,U+03A3-03FF}
 *{box-sizing:border-box;margin:0;padding:0;image-rendering:pixelated;-webkit-font-smoothing:none}
-body{background:#0a0a12;color:#e0e0e0;font-family:'Press Start 2P',monospace;font-size:10px;line-height:1.6;overflow-x:hidden;min-height:100vh}
+body{background:#0a0a12;color:#e0e0e0;font-family:'Press Start 2P',monospace;font-size:10px;line-height:1.6;overflow-x:hidden;min-height:100vh;--mode-accent:#00ff88;--mode-surface:#04140c;--mode-border:#00aa66}
+body[data-group="build"]{--mode-accent:#ffcc00;--mode-surface:#1a1404;--mode-border:#aa8800}
+body[data-group="test"]{--mode-accent:#00ff88;--mode-surface:#04140c;--mode-border:#00aa66}
+body[data-group="drive"]{--mode-accent:#00ccff;--mode-surface:#04141c;--mode-border:#0088aa}
+body[data-group="more"]{--mode-accent:#c8c8d8;--mode-surface:#14141c;--mode-border:#666}
 /* 1100px was letterboxing a dense instrument panel: on a 1440 screen it wasted 340px and on a
    2560 one, 1460. Nothing here wants to be narrow — the tabs are tables, charts and maps. */
 .container{max-width:min(1600px,96vw);margin:0 auto;padding:8px}
-header{text-align:center;padding:12px 8px;border-bottom:4px solid #333;background:linear-gradient(180deg,#1a1a2e 0%,#0a0a12 100%);margin-bottom:12px}
+header{text-align:center;padding:12px 8px;border-bottom:4px solid var(--mode-border);background:linear-gradient(180deg,#1a1a2e 0%,#0a0a12 100%);margin-bottom:12px}
 header h1{font-size:14px;color:#ffcc00;text-shadow:2px 2px 0 #000,-1px -1px 0 #aa6600;letter-spacing:1px}
 header .subtitle{font-size:8px;color:#888;margin-top:6px}
 /* align-items:start matters more than it looks. Grid rows stretch every column to the height of
    the tallest, and the right column (ENGINE CONTROLS) is far taller than the canvas — so the left
    panel was padding itself out with 400px of empty background under the dyno chart and the track
    map. It read as a layout bug because it was one. */
-.main{display:grid;grid-template-columns:1fr 340px;gap:12px;align-items:start}
-@media(max-width:800px){.main{grid-template-columns:1fr}}
-/* Portrait (phones & tablets held upright): stack to one column and use the full width so the
-   sim fills the screen instead of sitting in a narrow strip. Font & controls scale up too. */
-@media(orientation:portrait){
+.main{display:grid;grid-template-columns:minmax(0,1fr) 340px;gap:12px;align-items:start}
+@media(min-width:1400px){.main{grid-template-columns:minmax(0,1fr) minmax(340px,400px)}}
+@media(max-width:900px),(max-height:520px){.main{grid-template-columns:1fr}}
+/* A short or narrow window, including a phone on its side: one column, larger type, no inner form scroll. */
+@media(max-width:900px),(max-height:520px){
   .container{max-width:100%;padding:10px}
   .main{grid-template-columns:1fr;gap:14px}
   body{font-size:12px}
   header h1{font-size:18px}
   header .subtitle{font-size:10px}
   .viz-tabs button{font-size:10px;padding:12px 4px}
-  .design-panel{max-height:none}          /* let the form flow with the page, no inner scrollbar */
+  .design-panel{max-height:none}
   .panel h2{font-size:11px}
   .stat{min-width:28%;flex:1}
   .stat .value{font-size:16px}
@@ -49,7 +53,7 @@ header .subtitle{font-size:8px;color:#888;margin-top:6px}
   .field input,.field select{font-size:10px;padding:9px}
 }
 /* Tall, roomy portrait (tablets): scale the type up a touch more for legibility. */
-@media(orientation:portrait) and (min-width:700px){
+@media(min-width:700px) and (max-width:900px) and (min-height:700px){
   body{font-size:14px}
   .viz-tabs button{font-size:12px}
   .design-section{font-size:11px}
@@ -101,7 +105,7 @@ input[type=range]:disabled::-moz-range-thumb{background:#666}
 /* ---- Engine Design tab ---- */
 /* Was a flat 600px, so the design form scrolled inside a box inside a viewport that had room to
    spare, and the last row was always cut in half. Tie it to the window instead. */
-.design-panel{display:none;padding:12px;background:#0d0d18;max-height:calc(100vh - 230px);overflow-y:auto}
+.design-panel{display:none;padding:12px;background:#0d0d18}
 .design-panel.active{display:block}
 /* ELECTRIC (build 179): the motor, inverter and battery sections show only for an electric build, the combustion ones only for an engine */
 #designPanel:not(.ev):not(.hy) [data-ev]{display:none!important}
@@ -161,9 +165,13 @@ input[type=range]:disabled::-moz-range-thumb{background:#666}
 .build-strip button{font-size:8px;padding:4px 8px;box-shadow:none;border:2px solid #33334a;background:#151522;color:#00ff88;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .build-strip button:hover{border-color:#ffcc00;color:#ffcc00}
 .build-strip .k{color:#667}
-/* Phones: two to a row (this has to follow the rules above to win over them). Eight tabs do not fit
-   one row on a phone and pushed the whole panel wider than the screen; they wrap to two rows of four. */
-@media(orientation:portrait){
+.file-wrap{position:relative;display:inline-flex}
+.file-pop{position:absolute;top:calc(100% + 6px);left:0;z-index:40;display:flex;flex-direction:column;gap:6px;min-width:160px;padding:8px;background:#0a0a12;border:3px solid var(--mode-accent)}
+.file-pop[hidden]{display:none}
+.file-pop button{width:100%}
+.mode-chips{font-size:8px;color:var(--mode-accent);letter-spacing:0}
+/* A narrow window keeps two fields to a row. The open mode's tabs stay one strip. */
+@media(max-width:900px),(max-height:520px){
   .viz-tabs{flex-wrap:wrap}
   .viz-tabs button{flex:1 0 25%;border-bottom:2px solid #333}
   .design-grid,.pick-row{grid-template-columns:repeat(2,minmax(0,1fr))}
@@ -314,7 +322,7 @@ body.race-open{overflow:hidden}
 .dyno-result{padding:14px 18px 18px;background:#0d0d18;border:4px solid #444;grid-column:1}
 /* The side column spans both rows, so the result panel sits directly under the chart instead of
    below the (taller) control column. One-column layouts are unaffected. */
-@media(min-width:801px) and (orientation:landscape){.side-panel{grid-column:2;grid-row:1 / span 2}}
+@media(min-width:901px) and (min-height:521px){.side-panel{grid-column:2;grid-row:1 / span 2}}
 .dyno-result h4{font-size:12px;color:#ffcc00;margin:0 0 12px}
 .dr-cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:10px;margin-bottom:12px}
 .dr-card{background:#12121c;border:2px solid #2a2a3e;padding:10px 12px}
@@ -764,34 +772,71 @@ body.guided-open{overflow:hidden}
   #designPanel.hy #evDesigner .evd-mini{display:none}
 }
 
-/* ---- The four sections (build 261). Desktop: the ten tabs in one row, a gap between sections. Phone (portrait): a bar
-   of the four at the foot of the screen, as an app has, and the tabs as one strip that slides to the open section. ---- */
-.viz-groups{display:none}
-.viz-tabs button[data-g="drive"]:nth-child(5),.viz-tabs button[data-g="test"]:nth-child(7),.viz-tabs button[data-g="more"]:nth-child(9){border-left:4px solid #0a0a12}
-@media(orientation:portrait){
+/* ---- BUILD, TEST, DRIVE, MORE. The mode bar sits under the build strip on a tall screen and at the foot of a phone
+   (portrait or landscape). Only the open mode's tabs are shown; the rest stay in the page so a script can still open them. ---- */
+.mode-room{height:36px;margin:0 0 8px;border:3px solid #333;background:#0a0a10 center/cover no-repeat;image-rendering:auto}
+body[data-group="build"] .mode-room{background-image:url(assets/landing/workshop-pickup.webp)}
+body[data-group="build"][data-pt="ev"] .mode-room{background-image:url(assets/landing/service-bay-ev.webp)}
+body[data-group="test"] .mode-room{background-image:url(assets/landing/garage-f355.webp)}
+body[data-group="drive"] .mode-room{background-image:url(assets/landing/pit-f355.webp)}
+body[data-group="more"] .mode-room{display:none}
+.vh-view{display:flex;gap:6px;margin:0 0 8px}
+.vh-view button.on{border-color:#ffcc00;color:#ffcc00}
+.viz-groups{display:flex;margin:0 0 10px;background:#0a0a12;border:3px solid #333}
+.viz-groups button{flex:1;display:flex;flex-direction:row;align-items:center;justify-content:center;gap:8px;padding:10px 6px;font-size:9px;background:#12121c;color:#889;border:none;border-right:2px solid #26263a;box-shadow:none;cursor:pointer}
+.viz-groups button[data-g="more"]{flex:0.72}
+.viz-groups button:last-child{border-right:none}
+.viz-groups svg{width:16px;height:16px;fill:currentColor}
+.viz-groups button.active{background:var(--mode-surface);color:var(--mode-accent);box-shadow:inset 0 -3px 0 var(--mode-accent)}
+.viz-tabs button:not(.ing){display:none}
+.viz-tabs button.active{background:var(--mode-surface);color:var(--mode-accent);border-bottom:3px solid var(--mode-accent);margin-bottom:-3px}
+.viz-panel>#engineCanvas{display:block;width:min(100%,calc(min(62vh,560px)*640/420));max-height:min(62vh,560px);height:auto;margin-inline:auto}
+#modeCurtain{position:fixed;inset:0;z-index:45;pointer-events:none;opacity:0;background:repeating-linear-gradient(0deg,var(--mode-accent) 0 4px,transparent 4px 8px)}
+#modeCurtain.go{animation:modeCurtain 180ms steps(4) forwards}
+@keyframes modeCurtain{0%{opacity:.4;clip-path:inset(0 0 100% 0)}100%{opacity:0;clip-path:inset(0)}}
+@media(prefers-reduced-motion:reduce){#modeCurtain.go{animation:none}}
+.ecu{margin-top:8px;background:#101018;border:4px solid #3a3a4a}
+.ecu-bezel{padding:8px}
+.ecu-top,.ecu-keys{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-bottom:6px}
+.ecu-top b{color:var(--mode-accent);font-weight:normal}
+.ecu-led{display:inline-flex;gap:4px;align-items:center;font-size:7px;color:#667}
+.ecu-led i{width:8px;height:8px;background:#222;border:1px solid #444}
+.ecu-led.on{color:#00ff88}.ecu-led.on i{background:#00ff88}
+.ecu-led#ecuLedKnock.on{color:#ffaa00}.ecu-led#ecuLedKnock.on i{background:#ffaa00}
+.ecu-led#ecuLedMil.on{color:#ff4444}.ecu-led#ecuLedMil.on i{background:#ff4444}
+.ecu-keys button.on{border-color:var(--mode-accent);color:var(--mode-accent)}
+#ecuScope{width:100%;height:auto;background:#04140c;border:2px solid #143}
+.ecu-read,.ecu-find{font-size:8px;line-height:1.6;color:#c8c8d8}
+[data-ecu-hide]{display:none!important}
+#btnEcu{position:fixed;right:8px;bottom:calc(66px + env(safe-area-inset-bottom,0px));z-index:32}
+@media(max-width:900px),(max-height:520px){
+  #ecuComputer.open{position:fixed;left:0;right:0;bottom:calc(58px + env(safe-area-inset-bottom,0px));z-index:31;max-height:58vh;overflow:auto;margin:0}
+}
+@media(pointer:coarse){
+  .viz-tabs button,.viz-groups button,.build-strip button,.build-row button,.btn-row button,.field input,.field select{min-height:40px}
+}
+@media(max-width:900px),(max-height:520px){
   header{padding:6px 8px;margin-bottom:8px;border-bottom-width:2px}
-  header h1{font-size:9px;letter-spacing:0}
+  header h1{font-size:11px;letter-spacing:0}
   header .subtitle{font-size:7px;margin-top:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
   .build-strip{margin:0 0 8px;padding:5px 8px;gap:4px 8px;font-size:8px}
   .build-strip button{font-size:8px;padding:6px 8px}
+  .mode-chips{display:none}
   .viz-tabs{flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none;scroll-behavior:smooth;position:sticky;top:0;z-index:20}
   .viz-tabs::-webkit-scrollbar{display:none}
-  .viz-panel{min-width:0}   /* a grid item grows to its content's width unless told otherwise: the strip must scroll, not push */
-  .viz-tabs button{flex:0 0 25%;border-left:none!important}
-  .viz-tabs button:not(.ing){opacity:.55}
+  .viz-panel{min-width:0}
+  .viz-tabs button.ing{flex:1 1 0;min-width:0;border-left:none;overflow:hidden;text-overflow:ellipsis}
   body{padding-bottom:calc(58px + env(safe-area-inset-bottom,0px))}
   .evd-side{max-height:calc(75vh - 58px)}
   body:has(#designPanel.active.ev),body:has(#designPanel.active.hy),body:has(#vehiclePanelTab.active),body:has(#designPanel.active .evd-side){padding-bottom:calc(122px + env(safe-area-inset-bottom,0px))}
-  .viz-groups{display:flex;position:fixed;left:0;right:0;bottom:0;z-index:25;background:#0a0a12;border-top:3px solid #333;padding-bottom:env(safe-area-inset-bottom,0px)}
-  .viz-groups button{flex:1;display:flex;flex-direction:column;align-items:center;gap:5px;padding:8px 2px 7px;font-size:8px;background:#12121c;color:#778;border:none;border-right:2px solid #26263a;box-shadow:none}
-  .viz-groups button:last-child{border-right:none}
-  .viz-groups svg{width:20px;height:20px;fill:currentColor}
-  .viz-groups button.active{background:#004422;color:#00ff88}
-  .track-page,.race-page,.evd-side{bottom:calc(58px + env(safe-area-inset-bottom,0px))}   /* the full pages stop above the bar */
+  .viz-groups{position:fixed;left:0;right:0;bottom:0;z-index:25;margin:0;border:none;border-top:3px solid #333;padding-bottom:env(safe-area-inset-bottom,0px)}
+  .viz-groups button{flex-direction:column;gap:5px;padding:8px 2px 7px;font-size:8px}
+  .viz-groups svg{width:20px;height:20px}
+  .track-page,.race-page,.evd-side{bottom:calc(58px + env(safe-area-inset-bottom,0px))}
 }
 </style>
 </head>
-<body>
+<body data-group="test">
 <div id="titleScreen" class="title-screen" role="dialog" aria-modal="true" aria-labelledby="titleHeading" hidden>
 <div class="title-dock">
 <div class="title-brand">
@@ -824,12 +869,23 @@ body.guided-open{overflow:hidden}
 </div>
 <div class="container">
 <header>
-<h1>PIXEL POWERTRAIN v0.8 build 394</h1>
+<h1>PIXEL POWERTRAIN v0.8 build 400</h1>
 <div class="subtitle" id="subtitle">ENGINE DESIGNER • BUILD IT, THEN DRIVE IT</div>
 </header>
 <div class="build-strip" id="buildStrip">
 <span class="k" id="bsEngineK">ENGINE</span><button id="bsEngine" title="Go to the engine">—</button>
 <span class="k" id="bsCarK">CAR</span><button id="bsCar" title="Go to the car">—</button>
+<span class="file-wrap"><button id="btnFile" type="button" aria-haspopup="true" aria-expanded="false" aria-controls="filePop">FILE</button>
+<span id="filePop" class="file-pop" hidden>
+<button id="btnSave">SAVE</button>
+<button id="btnLoad">LOAD</button>
+<button id="btnExport">SAVE FILE</button>
+<button id="btnImport">OPEN FILE</button>
+<button id="btnShare">SHARE</button>
+</span></span>
+<button id="btnStripGuide" type="button">GUIDE</button>
+<button id="btnStripOptions" type="button">OPTIONS</button>
+<span id="modeChips" class="mode-chips"></span>
 <button id="btnMenu" type="button">MENU</button>
 </div>
 <nav class="viz-groups" id="vizGroups" aria-label="Sections">
@@ -838,6 +894,7 @@ body.guided-open{overflow:hidden}
 <button type="button" data-g="drive"><svg viewBox="0 0 8 8" shape-rendering="crispEdges" aria-hidden="true"><path d="M0 0h1v1h-1zM2 0h1v1h-1zM4 0h1v1h-1zM1 1h1v1h-1zM3 1h1v1h-1zM5 1h1v1h-1zM0 2h1v1h-1zM2 2h1v1h-1zM4 2h1v1h-1zM1 3h1v1h-1zM3 3h1v1h-1zM5 3h1v1h-1zM0 4h1v1h-1zM0 5h1v1h-1zM0 6h1v1h-1zM0 7h1v1h-1z"/></svg><span>DRIVE</span></button>
 <button type="button" data-g="more"><svg viewBox="0 0 8 8" shape-rendering="crispEdges" aria-hidden="true"><path d="M1 1h1v1h-1zM2 1h1v1h-1zM5 1h1v1h-1zM6 1h1v1h-1zM0 2h1v1h-1zM3 2h1v1h-1zM4 2h1v1h-1zM7 2h1v1h-1zM0 3h1v1h-1zM3 3h1v1h-1zM4 3h1v1h-1zM7 3h1v1h-1zM0 4h1v1h-1zM3 4h1v1h-1zM4 4h1v1h-1zM7 4h1v1h-1zM0 5h1v1h-1zM3 5h1v1h-1zM4 5h1v1h-1zM7 5h1v1h-1zM1 6h1v1h-1zM2 6h1v1h-1zM5 6h1v1h-1zM6 6h1v1h-1z"/></svg><span>MORE</span></button>
 </nav>
+<div class="mode-room" id="modeRoom" aria-hidden="true"></div>
 <div class="main">
 <div class="viz-panel">
 <div class="viz-tabs">
@@ -845,16 +902,52 @@ body.guided-open{overflow:hidden}
 <button id="tabVehicle" data-g="build">VEHICLE</button>
 <button id="tabParts" data-g="build">PARTS</button>
 <button id="tabGarage" data-g="build">GARAGE</button>
+<button id="tabEngine" data-g="test" class="active ing">LIVE</button>
+<button id="tabDyno" data-g="test" class="ing">DYNO</button>
 <button id="tabTrack" data-g="drive">TRACK</button>
 <button id="tabRace" data-g="drive">RACE</button>
 <button id="tabChamp" data-g="drive">CHAMP</button>
 <button id="tabChallenges" data-g="drive">CHALLENGES</button>
-<button id="tabEngine" data-g="test" class="active ing">LIVE</button>
-<button id="tabDyno" data-g="test" class="ing">DYNO</button>
 <button id="tabGuide" data-g="more">GUIDE</button>
 <button id="tabOptions" data-g="more">OPTIONS</button>
 </div>
 <canvas id="engineCanvas" width="640" height="420" role="img" aria-label="Engine test-bench schematic with live values"></canvas>
+<section id="ecuComputer" class="ecu" hidden>
+<div class="ecu-bezel">
+<div class="ecu-top"><b>ECU</b>
+<span class="ecu-led" id="ecuLedLink"><i></i>LINK</span>
+<span class="ecu-led" id="ecuLedLoop"><i></i>CLSD LOOP</span>
+<span class="ecu-led" id="ecuLedKnock"><i></i>KNOCK</span>
+<span class="ecu-led" id="ecuLedEgt"><i></i>EGT ENRICH</span>
+<span class="ecu-led" id="ecuLedMil"><i></i>MIL</span>
+</div>
+<div class="ecu-keys">
+<button type="button" data-ecu="scope">F1 SCOPE</button>
+<button type="button" data-ecu="maps">F2 MAPS</button>
+<button type="button" data-ecu="diag">F3 OBD</button>
+<button type="button" data-ecu="delta">F4 DELTA</button>
+</div>
+<div class="ecu-screen" data-ecu-screen="scope"><canvas id="ecuScope" width="480" height="140"></canvas><button type="button" id="ecuFreeze">FREEZE</button></div>
+<div class="ecu-screen" data-ecu-screen="maps" hidden>
+<div class="ecu-keys">
+<button type="button" data-ecu-map="fuel">FUEL</button>
+<button type="button" data-ecu-map="spark">SPARK</button>
+<button type="button" data-ecu-map="ve">VE</button>
+</div>
+<div id="ecuMapHost"></div>
+<div class="ecu-keys">
+<button type="button" id="ecuN5">−5</button>
+<button type="button" id="ecuN1">−1</button>
+<button type="button" id="ecuP1">+1</button>
+<button type="button" id="ecuP5">+5</button>
+<button type="button" id="ecuHold">HOLD CELL</button>
+</div>
+</div>
+<div class="ecu-screen" data-ecu-screen="diag" hidden><div id="ecuDiag"></div></div>
+<div class="ecu-screen" data-ecu-screen="delta" hidden><div id="ecuDelta" class="ecu-read"></div></div>
+</div>
+</section>
+<button type="button" id="btnEcu" hidden>ECU</button>
 <div class="design-panel" id="designPanel">
 <h3>ENGINE DESIGN</h3>
 <canvas id="enginePreview" class="pix-preview eng" role="img" aria-label="Pixel-art view of the engine as configured"></canvas>
@@ -942,6 +1035,7 @@ body.guided-open{overflow:hidden}
 <div class="field"><label for="edTiming">IGNITION CONTROL</label><select id="edTiming"><option value="fixed">FIXED (LOCKED)</option><option value="auto">AUTO (ECU / KNOCK-LIMITED)</option></select></div>
 <div class="field"><label for="edIgnAdv">IGNITION ADV (° BTDC)</label><input type="number" id="edIgnAdv" min="5" max="40" step="1" value="22"></div>
 <div class="field"><label for="edAfrMode">FUEL MIXTURE</label><select id="edAfrMode"><option value="fixed">MANUAL (FIXED AFR)</option><option value="auto">AUTO (ECU MAP)</option></select></div>
+<button type="button" id="btnOpenEcu" class="ice-only">OPEN ECU MAPS</button>
 </div></section>
 <section class="evd-card" id="icdCard-cool" data-card="cool"><div class="evd-fields">
 <div class="field"><label for="edRadiator">RADIATOR</label><select id="edRadiator"><option value="small">SMALL</option><option value="stock">STOCK</option><option value="large">LARGE</option></select><input type="hidden" id="edRadHp" value="0"></div>
@@ -954,6 +1048,7 @@ body.guided-open{overflow:hidden}
 <aside class="evd-side" id="icdSide"></aside>
 </div>
 
+<div id="ecuMapHome">
 <div class="design-section" id="fuelMapHdr">ECU Fuel Map (target AFR)</div>
 <div class="fuelmap-wrap" id="fuelMapBox"></div>
 <div class="fuelmap-edit" id="fuelMapEdit" style="display:none"><span id="fmSelInfo"></span><span class="fm-btns"><button type="button" id="fmLean">− LEAN</button><button type="button" id="fmRich">+ RICH</button><button type="button" id="fmReset">RESET MAP</button></span></div>
@@ -963,6 +1058,7 @@ body.guided-open{overflow:hidden}
 <div class="design-section" id="veMapHdr">ECU VE Table (the ECU's estimate, %)</div>
 <div class="fuelmap-wrap" id="veMapBox"></div>
 <div class="fuelmap-edit" id="veMapEdit" style="display:none"><span id="veSelInfo"></span><span class="fm-btns"><button type="button" id="veDown">− VE</button><button type="button" id="veUp">+ VE</button><button type="button" id="veReset">RESET MAP</button></span></div>
+</div>
 
 <div class="design-section">Hybrid</div>
 <div class="design-grid">
@@ -1229,7 +1325,7 @@ Cut a real engine in half and you can watch the parts that make it work: the pis
 </div>
 <div class="gtier gt-game"><div class="gtier-h">LV2 · IN THE GAME</div>
 <div class="guide-body" data-gk="live">
-<b>The LIVE tab is a cutaway</b> of the engine you just designed. Everything on it moves
+<b>The LIVE tab is a cutaway</b> of the engine you just designed. The manifold colour follows the exhaust temperature, and the ECU laptop under the picture is where the fuel map is tuned while the engine runs. Everything on it moves
 because the simulation moved it. It is deliberately <b>not</b> drawn in real time: a crank at
 5000&nbsp;rpm turns 83 times a <i>second</i>, which at 60&nbsp;fps is a strobe rather than a
 picture — you could not watch a valve open. So the cycle runs at a pace you can read, between
@@ -3276,12 +3372,12 @@ Each round calls <i>simulateRace</i> with the season's seed offset by the round 
 </div>
 <div class="guide-see">See also: <a data-gp="race">The race</a> · <a data-gp="challenges">Challenges</a></div>
 </section>
-<section class="guide-page" id="gp-challenges" data-cat="track" data-title="Challenges" data-tags="challenges economy eco driving fuel kwh regen stage fixed time dnf moose elk test iso 3888 lane change skid pad skidpad lateral g" hidden>
+<section class="guide-page" id="gp-challenges" data-cat="track" data-title="Challenges" data-tags="challenges economy eco driving fuel kwh regen stage fixed time dnf moose elk test iso 3888 lane change skid pad skidpad lateral g spiral figure 8 lemniscate" hidden>
 <h4 class="guide-title">Challenges</h4>
 <div class="gtier gt-real"><div class="gtier-h">LV1 · REAL LIFE</div>
-<canvas class="gart" data-art="challenge"></canvas><div class="gart-cap">Three ways to test a whole car on a road: how little it burns at a set pace, whether it beats a set time, and how fast it can swerve round a moose.</div>
+<canvas class="gart" data-art="challenge"></canvas><div class="gart-cap">Solved tests of a whole car: economy and a set time on a road, a moose swerve, a skid pad, a spiral that opens, and a figure 8.</div>
 <div class="guide-body" data-gk="chalReal">
-<b>Eco-rallies</b> give each car a time to keep and score the fuel it burns. Good eco drivers do not creep: they accelerate firmly at low engine speed, change up early, look far ahead and lift off long before a corner so the brakes are hardly needed, because braking turns fuel already burnt into heat. In an electric car the motor slows the car as a generator (<b>regen</b>) and puts part of that energy back in the pack, so the trick is to slow within what regen can take. <b>Rally stages</b> are run against the clock, point to point; a car that cannot make the time is out. The <b>moose test</b> (ISO 3888-2) is a sudden double lane change between cones: the highest entry speed with no cone touched. A <b>powerslide</b> links two drifts through an S: the rear tyres past their grip peak, the car held at an angle by throttle and opposite lock.
+<b>Eco-rallies</b> give each car a time to keep and score the fuel it burns. Good eco drivers do not creep: they accelerate firmly at low engine speed, change up early, look far ahead and lift off long before a corner so the brakes are hardly needed, because braking turns fuel already burnt into heat. In an electric car the motor slows the car as a generator (<b>regen</b>) and puts part of that energy back in the pack, so the trick is to slow within what regen can take. <b>Rally stages</b> are run against the clock, point to point; a car that cannot make the time is out. The <b>moose test</b> (ISO 3888-2) is a sudden double lane change between cones: the highest entry speed with no cone touched. A <b>powerslide</b> links two drifts through an S: the rear tyres past their grip peak, the car held at an angle by throttle and opposite lock. A <b>spiral skid pad</b> starts on a tight bend and asks the car to go faster as the bend opens. A <b>figure 8</b> is one loop each way, so the weight has to cross from one side to the other.
 </div>
 </div>
 <div class="gtier gt-game"><div class="gtier-h">LV2 · IN THE GAME</div>
@@ -3291,8 +3387,10 @@ The <b>CHALLENGES</b> tab (DRIVE) runs the car on its own. Pick a challenge and 
 <b>Fixed-time stage</b>: one set time per road for every car. The car's fastest run from a standing start is shown against it; slower is a <b>DNF</b>.<br>
 <b>Moose avoidance</b>: ENTRY picks BEST CLEAR (the speed is raised until a cone falls, as ISO 3888-2 does; the grid also says how it fails one step up) or a magazine's fixed speed, 72 km/h (Teknikens Värld's pass mark) or 77 km/h (km77's). The result is CLEAR, CONE, SPIN or ROLLOVER, with a warning for a two-wheel lift, its time and the largest tip. REPLAY slows the replay to 0.5× or 0.25×; it starts 25 m before the cones and runs on 20 m past the judged end (nothing after that changes the score). The lower view is the front axle seen from behind, with each force labelled in kN on one scale: <b>W</b> the axle's weight, <b>m·ay(front)</b> its sideways inertial force, <b>Fz</b> each tyre's load and <b>Fy</b> each tyre's side force. Roll and camber are drawn at their true angles. Tap that view to see the car <b>from above</b>, nose up, to true scale: the yaw axis <b>z</b> through the CG with the yaw rate <b>r</b> round it, the <b>pivot</b> (the point on the centre line with no sideways velocity, −vy/r), each tyre's direction of travel and side force, and the path the car takes beside the one the same steer gives at neutral steer (δ/L). The balance is read from the slip angles: <b>UNDERSTEER</b> when the front tyres slip more than the rear (αF &gt; αR), <b>OVERSTEER</b> when less, <b>TRANSITION</b> while front and rear slip opposite ways as the car is swung from one lane to the next.<br>
 <b>S-Route Powerslide</b>: ESP and TC off; the best of the plans (entry speed, target body slip β, initiation, radius). <b>METHOD</b> picks the initiation: POWER-OVER, CLUTCH KICK, FLICK (lift and steer away, then sharply in, each for half the body's natural period so its rebound helps turn-in) or HANDBRAKE (the lever locks the rear wheels, outside the ABS; RWD and FWD only); AUTO tries them all, the handbrake last. <b>ENTRY</b> fixes the speed or picks BEST. The <b>i</b> button beside CHALLENGES explains the selected challenge. The result is <b>CLEAR</b> (a slide in both corners: the rear past its peak for 0.25 s, β over 8°, and countersteer or a long slide), <b>FADE</b> (one corner), <b>NO_SLIDE</b> (neither; a FWD car on power-over, or an AWD car whose centre coupling sends the torque forward as the rear slips), <b>STALL</b> (stopped or never reached the exit), <b>OFF</b> (any corner of the body, swept at its slip angle, over the edge) or <b>SPIN</b>. The grid gives each corner's peak β and slide time.<br>
-<b>Skid Pad</b>: a 200 ft (61 m) circle, as Motor Trend and Road &amp; Track use. The speed is raised until the car can no longer stay within 1 m of the line; the score is the magazines' figure, <i>v²/(g·R)</i> from the fastest held lap's time, with the body's own mean lateral acceleration beside it and how it fails 1 km/h faster: <b>WIDE</b> (understeer), <b>TIGHT</b> (the tail steps out) or <b>SPIN</b>.
-<b>RANK CARS</b>: add cars (this build, the garage's or factory cars) and press RANK; each runs the selected challenge with the settings above, one car at a time (CANCEL stops before the next). The table puts passes first, then sorts by the challenge's own score: least energy for economy (fuel as litres × density × heating value, an EV's pack kWh, both in MJ, so engine cars and EVs share one scale), shortest time for a stage, highest clear speed for the moose test, largest peak β for the powerslide, highest steady g for the skid pad.
+<b>Skid Pad</b>: a 200 ft (61 m) circle, as Motor Trend and Road &amp; Track use. The speed is raised until the car can no longer stay within 1 m of the line; the score is the magazines' figure, <i>v²/(g·R)</i> from the fastest held lap's time, with the body's own mean lateral acceleration beside it and how it fails 1 km/h faster: <b>WIDE</b> (understeer), <b>TIGHT</b> (the tail steps out) or <b>SPIN</b>.<br>
+<b>Spiral Skid Pad</b>: one turn from 12 m out to that same radius. The target speed is sqrt(lateral g times the local radius of curvature), so it climbs as the bend opens; the score is the exit speed. <b>TIGHT</b> is toward the centre, <b>WIDE</b> the outside.<br>
+<b>Figure 8</b>: a lemniscate, one loop each way, tightest bend half the skid pad's radius, the crossing straight. The score is the highest speed held for the whole figure. <b>BEND g</b> is that speed as <i>v²/(g·ρ)</i> at the tight bend; <b>MEAN ay</b> is lower, because the crossing asks nothing sideways. <b>TIGHT</b> is left of the line, <b>WIDE</b> is right.<br>
+<b>RANK CARS</b>: add cars (this build, the garage's or factory cars) and press RANK; each runs the selected challenge with the settings above, one car at a time (CANCEL stops before the next). The table puts passes first, then sorts by the challenge's own score: least energy for economy (fuel as litres × density × heating value, an EV's pack kWh, both in MJ, so engine cars and EVs share one scale), shortest time for a stage, highest clear speed for the moose test, largest peak β for the powerslide, highest steady g for the skid pad, highest exit speed for the spiral, highest held speed for the figure 8.
 </div>
 </div>
 <div class="gtier gt-phys"><div class="gtier-h">LV3 · THE PHYSICS</div>
@@ -3301,10 +3399,11 @@ The <b>CHALLENGES</b> tab (DRIVE) runs the car on its own. Pick a challenge and 
 <b>The eco driver</b> limits both passes. Drive: at each speed, the gear and torque with the lowest BSFC on the engine's own fuel map (the "pulse" of pulse-and-glide, Li et al. 2011), so the shift speed comes out of the map; for an EV the motor torque with the highest <i>T·ω / (T·ω + losses)</i>. Slowing: lift, with engine braking in fuel cut in the gear that brakes most (no fuel), or the regen table on an EV, plus drag, rolling resistance and grade. A blend <i>s</i> adds <i>s</i> × 30 m/s² of drive and <i>s</i> × 12 m/s² of brake back toward the car's own limits. For each blend (0, 5, 20, 100%), a speed cap is searched so the finish lands on the target, and the run that burns least is kept.<br>
 <b>Distance DP</b> (engine cars and EVs): the road is cut into ~50 m stages and the speed at each stage's end is chosen on a 0.5 m/s grid by dynamic programming, minimising fuel (or pack energy) + λ × time, with λ searched until the finish time meets the target. It is free to pulse and glide, coast in neutral, lift before a climb's crest or a corner, or brake (up to 4 m/s²), under the fastest run's speeds. If it finds no plan for the target, the eco driver below drives instead (hybrids always use the eco driver).<br>
 <b>Fuel</b> is read off the fuel map at each step in the gear that burns least for the force needed; past the map's full load it is charged pro rata at full-load BSFC; a glide gentler than the weakest engine braking is in neutral at idle fuel; <b>EV energy</b> is motor losses, pack heat and 250 W of auxiliaries, less regen.<br>
-<b>Moose</b>: the full vehicle model (stepCar) follows the best of 48 driver plans (when to turn in, how much of each lane's spare width to use, how tightly to track) with the throttle released; as in a real test the entry speed is raised 1 km/h at a time until no plan clears. <b>Rollover</b>: once both wheels on one side carry no load, the car is taken as one rigid body pivoting on its outer tyres, <i>I<sub>o</sub>·φ'' = m·(a·z − g·d)</i>, with <i>z</i> the CG's height and <i>d</i> its distance inside the pivot; it starts at the body's roll rate and has rolled over when <i>d</i> reaches 0, at <i>φ = atan(t/2h)</i>. From rest it can only start when <i>a &gt; g·t/2h</i>, the static stability factor (NHTSA): a sports car ~1.5, a tall SUV ~1.1. <b>Spin</b>: the car turned more than 90° from the course.
+<b>Moose</b>: the full vehicle model (stepCar) follows the best of 48 driver plans (when to turn in, how much of each lane's spare width to use, how tightly to track) with the throttle released; as in a real test the entry speed is raised 1 km/h at a time until no plan clears. <b>Rollover</b>: once both wheels on one side carry no load, the car is taken as one rigid body pivoting on its outer tyres, <i>I<sub>o</sub>·φ'' = m·(a·z − g·d)</i>, with <i>z</i> the CG's height and <i>d</i> its distance inside the pivot; it starts at the body's roll rate and has rolled over when <i>d</i> reaches 0, at <i>φ = atan(t/2h)</i>. From rest it can only start when <i>a &gt; g·t/2h</i>, the static stability factor (NHTSA): a sports car ~1.5, a tall SUV ~1.1. <b>Spin</b>: the car turned more than 90° from the course.<br>
+<b>Spiral</b>: an Archimedean spiral r = 12 m + bθ for one turn, out to the skid pad's radius. Its radius of curvature is ρ = (r² + b²)^(3/2) / (r² + 2b²), and the line's speed is sqrt(ay·ρ); ay is searched. <b>Figure 8</b>: Bernoulli's lemniscate, curvature 0 where it crosses and ρ = a/3 at the two outer bends, with a chosen so that bend is half the skid pad's radius. The speed is constant, and searched.
 </div>
 <div class="guide-limit" data-gk="chalLimit">
-The economy run's DP works on 50 m stages and a 0.5 m/s grid, so it cannot plan anything finer, and it is not run for hybrids (they keep the eco driver's plan). A hybrid runs its WLTC energy manager on the road (charge-sustaining); where a climb asks more than its motors allow at speed, the engine is charged for it anyway. The regen table's strength has not been checked against measured EVs (a field study reports about 2.5 m/s² on regen alone on mainstream EVs; some of the game's EVs reach more). Stage set times are authored from a reference car, not physics. The moose run is solved, not driven. The rigid tip is a check on top of the vehicle model, which does not carry it (its tyres simply see the lifted side's load as 0), and kerb-trip rollovers are not modelled. The stock cars clear 55–68 km/h, about 10 km/h below what magazines report (68–84), so at 72 and 77 km/h they all fail by a cone.
+The economy run's DP works on 50 m stages and a 0.5 m/s grid, so it cannot plan anything finer, and it is not run for hybrids (they keep the eco driver's plan). A hybrid runs its WLTC energy manager on the road (charge-sustaining); where a climb asks more than its motors allow at speed, the engine is charged for it anyway. The regen table's strength has not been checked against measured EVs (a field study reports about 2.5 m/s² on regen alone on mainstream EVs; some of the game's EVs reach more). Stage set times are authored from a reference car, not physics. The moose run is solved, not driven. The rigid tip is a check on top of the vehicle model, which does not carry it (its tyres simply see the lifted side's load as 0), and kerb-trip rollovers are not modelled. The stock cars clear 55–68 km/h, about 10 km/h below what magazines report (68–84), so at 72 and 77 km/h they all fail by a cone. The spiral and the figure 8 use the skid pad's driver and its 1 m lane. That driver's speed loop sits a little under a rising target, so the spiral's exit g is under the g it was asked. The figure 8 crosses on the lemniscate's straight node, not on two circles with a step change in steer.
 </div>
 </div>
 <div class="guide-see">See also: <a data-gp="lapsolve">Solving a lap</a> · <a data-gp="elevation">Elevation, crests &amp; compressions</a> · <a data-gp="fuels">Fuels &amp; octane</a></div>
@@ -3574,7 +3673,9 @@ Most other tests check behaviour that is true of real cars: a bigger turbo spool
 <!-- VEHICLE: drop the engine into a car and read its acceleration & top speed -->
 <div class="design-panel vehicle-panel" id="vehiclePanelTab">
 <h3>VEHICLE DESIGN</h3>
+<div class="vh-view"><button type="button" id="btnVhPhoto" class="on">SHOWROOM</button><button type="button" id="btnVhBay">BAY</button></div>
 <figure class="car-showroom" id="vhShowroom" hidden><img id="vhArt" alt="" decoding="async"><figcaption id="vhArtCap"></figcaption></figure>
+<canvas id="vhBay" class="pix-preview" hidden role="img" aria-label="The car on the workshop lift"></canvas>
 <div class="hint">Pick a chassis and it arrives on its factory spec — matching tyres, wheels, brakes, suspension and aero. Swap any part from there; your current engine is dropped in and the performance is computed live.</div>
 
 <div class="pick-row">
@@ -4006,18 +4107,12 @@ Most other tests check behaviour that is true of real cars: a bigger turbo spool
 </div>
 <div class="btn-row">
 <button id="btnLogPull">LOG PULL</button>
+<button id="btnDynoSweep" type="button">RUN PULL</button>
 <button id="btnClearPulls">CLR PULLS</button>
 </div>
 <div class="btn-row">
 <button id="btnReportPng" title="Save the dyno report as an image">REPORT PNG</button>
 <button id="btnReportPdf" title="Save the dyno report as a PDF">REPORT PDF</button>
-</div>
-<div class="btn-row" style="border-top:2px solid #26263a;padding-top:8px">
-<button id="btnSave">SAVE</button>
-<button id="btnLoad">LOAD</button>
-<button id="btnExport">SAVE FILE</button>
-<button id="btnImport">OPEN FILE</button>
-<button id="btnShare">SHARE</button>
 </div>
 </div>
 </div>
@@ -8203,7 +8298,7 @@ function applyLang(lang){
   currentLang=(lang==='el')?'el':'en';
   try{localStorage.setItem('pes.lang',currentLang);}catch(e){}
   document.documentElement.lang=currentLang;
-  const sel='.viz-tabs button, .design-panel h3, .design-section, .guide-title, .gtier-h, .hint, .panel h2, .stat .label, .opt-note, .opt-row>div>b, .ctl-lbl, .field>label, .build-row button, #btnGearRatios, #btnGG, #btnSusp, #controlsPanel .btn-row button, .fuelmap-edit button, .garage-row button, #partsPanel button[id], #livePanel h2>span, #btnMore, #btnReplayRestart, .gart-cap, #btnMenu, .title-brand p, .title-menu button, .title-hint, #btnCopyFrom';
+  const sel='.viz-tabs button, .viz-groups button span, .design-panel h3, .design-section, .guide-title, .gtier-h, .hint, .panel h2, .stat .label, .opt-note, .opt-row>div>b, .ctl-lbl, .field>label, .build-row button, #btnGearRatios, #btnGG, #btnSusp, #controlsPanel .btn-row button, #filePop button, #btnFile, #btnStripGuide, #btnStripOptions, .fuelmap-edit button, .garage-row button, #partsPanel button[id], #livePanel h2>span, #btnMore, #btnReplayRestart, .gart-cap, #btnMenu, .title-brand p, .title-menu button, .title-hint, #btnCopyFrom';
   document.querySelectorAll(sel).forEach(el=>{
     if(el.children.length>0)return;                       // skip nodes with child elements
     if(el.dataset.en===undefined)el.dataset.en=el.textContent.trim();
@@ -18725,6 +18820,7 @@ function screechSlide(){
   if(vizMode!=='challenges'||!R||!R.ok)return 0;
   if(R.kind==='drift')return driftSlide(R,driftSampleAt(R,chalMooseNow()));
   if(R.kind==='moose')return driftSlide({pkR:screechPeak(R.mu,R)},mooseSampleAt(R,chalMooseNow()));
+  if(R.kind==='spiral'||R.kind==='fig8')return driftSlide({pkR:screechPeak(R.mu,R)},driftSampleAt(R,chalMooseNow()));
   return 0;
 }
 function updateScreech(t){
@@ -20777,12 +20873,21 @@ function fitPixCanvas(cv,gw,gh){
   return {g,k,ox:Math.floor((bw-gw*k)/2),oy:0,bw,bh};
 }
 // The backdrop both previews share: the app's navy, a dot grid like a workshop floor.
-function pixBackdrop(g,bw,bh,k,ox,floorY){
+// A lamp and a prop in the corner, one colour per development card, so the bay reads at a glance.
+const BAY_LAMP={block:'#ffcc00',head:'#00ccff',air:'#ff8800',flow:'#ff4444',fuel:'#00ff88',cool:'#4488ff',ev:'#ff6600',
+  chassis:'#ffcc00',dims:'#00ccff',gearbox:'#ff8800',tyres:'#00ff88',aero:'#66ddff',brakes:'#ff4444',susp:'#aa88ff',aids:'#ffaa00',cell:'#00ff88',pit:'#ff4444'};
+function pixBackdrop(g,bw,bh,k,ox,floorY,bay){
   g.fillStyle='#0a0a10';g.fillRect(0,0,bw,bh);
   g.fillStyle='#161624';
   for(let y=4;y*k<bh;y+=8)for(let x=4;ox+x*k<bw;x+=8)g.fillRect(ox+x*k,y*k,k,k);
   if(floorY!=null){g.fillStyle='#12121c';g.fillRect(0,floorY*k,bw,bh-floorY*k);
     g.fillStyle='#26263a';g.fillRect(0,floorY*k,bw,k);}
+  if(!bay)return;
+  const card=String(bay).split(':').pop();
+  const lamp=BAY_LAMP[card]||'#ffcc00';
+  g.fillStyle='#2a2a38';g.fillRect(ox+2*k,2*k,14*k,10*k);
+  g.fillStyle=lamp;g.fillRect(ox+4*k,4*k,4*k,4*k);
+  g.fillStyle='#3a3a4a';g.fillRect(ox+2*k,(floorY!=null?floorY-8:70)*k,8*k,6*k);
 }
 
 // The name on the left, the figures on the right; a long name is cut short rather than run into them.
@@ -21154,7 +21259,8 @@ function paintEngine(cv,e,opts){
   const gh=opts.caption?ENG_GH+12:ENG_GH;
   const F=fitPixCanvas(cv,ENG_GW,gh);if(!F)return false;
   const {g,k,ox,bw,bh}=F;
-  pixBackdrop(g,bw,bh,k,ox,null);
+  pixBackdrop(g,bw,bh,k,ox,null,opts.bay||null);
+  if(cv)cv.dataset.bay=opts.bay||'';
   const buf=new PixBuf(ENG_GW,ENG_GH);
   drawEngineSprite(buf,e,opts.t||0);
   g.drawImage(buf.canvas(),ox,0,ENG_GW*k,ENG_GH*k);
@@ -21171,11 +21277,25 @@ const previewStill=!!(window.matchMedia&&matchMedia('(prefers-reduced-motion: re
 function renderEnginePreview(){
   const cv=document.getElementById('enginePreview');if(!cv)return;
   const e=readEngineFromForm();
-  paintEngine(cv,e,{t:previewT,caption:true,title:engineCaption(e),sub:tr(e.type==='electric'?'ELECTRIC':(ENGINE_TYPE[e.type]||ENGINE_TYPE.petrol4).label)});
+  const card=(typeof ICD!=='undefined'&&ICD.st&&ICD.st.card)||'block';
+  const pt=e.type==='electric'?'ev':'ice';
+  paintEngine(cv,e,{t:previewT,bay:pt+':'+card,caption:true,title:engineCaption(e),sub:tr(e.type==='electric'?'ELECTRIC':(ENGINE_TYPE[e.type]||ENGINE_TYPE.petrol4).label)});
+}
+function paintVehicleBay(){
+  const cv=document.getElementById('vhBay');if(!cv||cv.hidden)return;
+  const card=(typeof VCD!=='undefined'&&VCD.st&&VCD.st.card)||'chassis';
+  const F=fitPixCanvas(cv,CAR_GW,CAR_GH);if(!F)return;
+  const {g,k,ox,bw,bh}=F;
+  pixBackdrop(g,bw,bh,k,ox,CAR_GY,'car:'+card);
+  const buf=new PixBuf(CAR_GW,CAR_GH);
+  if(typeof vehicle!=='undefined'&&vehicle)drawCarSprite(buf,vehicle,engine,previewT);
+  g.drawImage(buf.canvas(),ox,0,CAR_GW*k,CAR_GH*k);
+  cv.dataset.bay='car:'+card;
 }
 function stepPreviews(dt){
   if(!previewStill)previewT+=dt;
   if(vizMode==='design')renderEnginePreview();
+  if(vizMode==='vehicle')paintVehicleBay();
 }
 // ---- top-down car for the track map ----
 // 14 x 8 cells, built once per livery and pedal state and then rotated: a car you can see turning,
@@ -21192,6 +21312,12 @@ function topCarSprite(col,state){
   b.rect(0,2,1,2,state==='brk'?'#ff2222':'#882222');b.rect(0,6,1,2,state==='brk'?'#ff2222':'#882222');
   b.outline('#000000');
   const cv=b.canvas();topCarCache[key]=cv;return cv;
+}
+{const photo=document.getElementById('btnVhPhoto'),bayBtn=document.getElementById('btnVhBay'),cv=document.getElementById('vhBay'),fig=document.getElementById('vhShowroom');
+  if(photo&&bayBtn&&cv){
+    photo.addEventListener('click',()=>{cv.hidden=true;photo.classList.add('on');bayBtn.classList.remove('on');if(typeof syncCarArt==='function')syncCarArt();});
+    bayBtn.addEventListener('click',()=>{cv.hidden=false;bayBtn.classList.add('on');photo.classList.remove('on');if(fig)fig.hidden=true;paintVehicleBay();});
+  }
 }
 function drawTopCar(g,x,y,heading,col,state){
   const spr=topCarSprite(col,state),s=1.5;
@@ -21260,6 +21386,11 @@ function valveLift(deg,open,close){
   if(d>span)return 0;
   return Math.sin(Math.PI*d/span);
 }
+// Blackbody-ish ramp for the manifold, from dull red at 500 C to yellow-white at 1100 C.
+function egtColour(k){
+  const t=clamp(((k-273)-500)/600,0,1);
+  return 'rgb('+Math.round(80+175*Math.min(1,t*1.4))+','+Math.round(20+180*Math.max(0,t-0.3))+','+Math.round(24+90*Math.max(0,t-0.7))+')';
+}
 function drawEngine(dt){
   if(isElectric())return drawMotorView(dt);
   const W=vizW,H=vizH;
@@ -21316,8 +21447,21 @@ function drawEngine(dt){
   const rf=clamp(rpm/rl,0,1);
   ctx.fillStyle=rf>0.92?C.red:C.green;ctx.fillRect(px(tbX),py(tbY),tbW*rf*S,tbH*S);
 
+  const still=!!(window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches);
+  const twist=still?0:clamp((state.torque||0)/Math.max(1,e.loadRefTq||1),-1,1)*0.04;
+  const lope=still?0:Math.sin(crankAngle*2)*clamp((e.overlap||0)/90,0,1)*0.02;
+  ctx.save();
+  ctx.translate(px(280),py(200));ctx.rotate(twist+lope);ctx.translate(-px(280),-py(200));
   if(rotary)drawRotaryCutaway(px,py,S,F,LW,dt,m);
   else drawPistonCutaway(px,py,S,F,LW,deg,nCyl,rodRatio,bsr,two,m);
+  if(vizBovT>0){ctx.fillStyle='#d8e4ee';ctx.fillRect(px(150),py(78),(6+vizBovT*10)*S,4*S);}
+  if(state.nitrousActive){ctx.fillStyle='#4488ff';ctx.fillRect(px(48),py(96),5*S,12*S);}
+  if(state.blown||(e.ci&&(state.emPM||0)>0.002)){ctx.fillStyle='#1a1a1a';ctx.fillRect(px(520),py(210),10*S,8*S);}
+  ctx.restore();
+  if(state.knockRisk>40||(typeof obdMisfire==='function'&&obdMisfire()>0.02)){
+    ctx.fillStyle=still?'rgba(255,40,40,0.35)':'rgba(255,40,40,'+(0.2+0.25*Math.abs(Math.sin((performance.now())/90)))+')';
+    ctx.fillRect(px(100),py(86),28*S,14*S);
+  }
 
   // ---------- status strip ----------
   ctx.fillStyle='#12121c';ctx.fillRect(px(0),py(398),640*S,24*S);
@@ -21609,8 +21753,8 @@ function drawSupercharger(px,py,S,F,LW,m,portYc,crank){
 }
 function drawExhaustSide(px,py,S,F,LW,m,portYc,exX){
   const e=engine;
-  const exHot=clamp(state.powerHP/Math.max(60,engine.score?engine.score.peakHP:200),0,1);
-  const gasCol=state.blown?'#444':`rgb(${Math.round(120+120*exHot)},${Math.round(60+30*exHot)},40)`;
+  const egtK0=egtAt(state.rpm,m);
+  const gasCol=state.blown?'#444':(state.powerHP>1?egtColour(egtK0):'#5a4038');
   const egtK=egtAt(state.rpm,m),egt=Math.round(state.powerHP>1?egtK-273:state.coolant);
   ctx.fillStyle=C.exhaust;ctx.font=F(6.5);
   if(e.intake==='turbo'){
@@ -22211,8 +22355,7 @@ function drawRotaryCutaway(px,py,S,F,LW,dt,m){
   ctx.strokeStyle=C.intake;ctx.lineWidth=LW(8);
   ctx.beginPath();ctx.moveTo(px(inX),py(portYc));ctx.lineTo(px(inX),py(topW+4));ctx.stroke();
   drawExhaustSide(px,py,S,F,LW,m,portYc,exX);
-  const exHot=clamp(state.powerHP/Math.max(60,engine.score?engine.score.peakHP:200),0,1);
-  ctx.strokeStyle=state.blown?'#444':`rgb(${Math.round(120+120*exHot)},${Math.round(60+30*exHot)},40)`;
+  ctx.strokeStyle=state.blown?'#444':(state.powerHP>1?egtColour(egtAt(state.rpm,m)):'#5a4038');
   ctx.lineWidth=LW(7);
   ctx.beginPath();ctx.moveTo(px(exX),py(portYc));ctx.lineTo(px(exX),py(topW+4));ctx.stroke();
   // where each phase happens — fixed in the housing, unlike a piston engine
@@ -23753,6 +23896,15 @@ function powerReadout(st,L){
   const hp=st.pwr/1000/0.7457,peak=Math.max(1,L&&L.pwrPeak?L.pwrPeak/745.7:(engine.score?engine.score.peakHP:1));
   return {hp,kW:st.pwr/1000,frac:clamp(hp/peak,0,1)};
 }
+function drawShiftLights(x,y,rpm,redline){
+  const still=!!(window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches);
+  const f=clamp((rpm||0)/Math.max(1,redline||1),0,1);
+  for(let i=0;i<8;i++){
+    const on=f>(i+1)/9;
+    ctx.fillStyle=!on?'#1a1a22':i>=6?(still||Math.floor(performance.now()/120)%2?'#ff4444':'#00e8ff'):i>=4?'#ffcc00':'#00ff88';
+    ctx.fillRect(x+i*12,y,10,6);
+  }
+}
 function drawReplayHud(L,st,W,y0){
   const w=REPLAY_HUD_W,h=232,x0=W-w-10,PS='"Press Start 2P"';
   ctx.fillStyle='rgba(10,10,18,0.86)';ctx.fillRect(x0,y0,w,h);
@@ -23765,6 +23917,8 @@ function drawReplayHud(L,st,W,y0){
   const rf=clamp(st.rpm/Math.max(1,engine.redline),0,1);
   ctx.fillStyle='#1d1d2b';ctx.fillRect(x0+10,y0+54,96,6);
   ctx.fillStyle=rf>0.92?'#ff5555':rf>0.8?C.yellow:'#00ccff';ctx.fillRect(x0+10,y0+54,96*rf,6);
+  drawShiftLights(x0+10,y0+64,st.rpm,engine.redline);
+  if((st.tF||0)>450||(st.tR||0)>450){ctx.fillStyle='#ff4422';ctx.fillRect(x0+120,y0+64,8,8);}
   // pedals
   const bar=(lbl,val,col,yy)=>{ctx.fillStyle='#778';ctx.font='6px '+PS;ctx.fillText(lbl,x0+10,yy+6);
     ctx.fillStyle='#1d1d2b';ctx.fillRect(x0+40,yy,66,7);ctx.fillStyle=col;ctx.fillRect(x0+40,yy,66*clamp(val,0,1),7);};
@@ -25383,9 +25537,11 @@ function updateDashLamps(){
   if(po){po.disabled=false;po.title=car?tr('Switch the whole car off'):tr('Switch the engine off');}
 }
 function updateUI(){
+  if(typeof ecuTick==='function')ecuTick();
   updateHybridPanel();   // build 190: shown for a hybrid, hidden otherwise
+  if(engine)document.body.dataset.pt=isElectric()?'ev':isHybrid()?'hy':'ice';
   if(isElectric()){updateMotorUI();updateDashLamps();return;}
-  if(vizMode==='design')updateFuelMapMarker();
+  if(vizMode==='design'||(typeof ecuMapsOn==='function'&&ecuMapsOn()))updateFuelMapMarker();
   document.getElementById('valThrottle').textContent=Math.round(state.throttle*100);
   document.getElementById('valLoad').textContent=Math.round(state.load*100);
   document.getElementById('valElec').textContent=Math.round(state.elecLoad*100);
@@ -25450,9 +25606,18 @@ function updateUI(){
   else{status.textContent=tr('IDLE / LOW LOAD')+' • '+Math.round(state.rpm)+' RPM';status.className='status-bar'}
   if(vizMode==='design')legend.innerHTML=tr('Bore/stroke set displacement. Octane+compression+boost+ignition feed the knock model.')+'<br>'+tr('Cooling (radiator/fan/oil cooler/thermostat) sets running temps in AUTO THERMAL mode.');
   else if(vizMode==='engine')legend.innerHTML=tr('THROTTLE makes power; LOAD (dyno brake) sets the hold RPM — more load = lower RPM, zero = free-rev to limiter.')+'<br>'+tr('Lift off at speed → engine braking + fuel cut. Detonation/overheat/lean-boost/valve float wear the engine.');
-  else if(vizMode==='challenges')legend.innerHTML=tr('Solved vehicle tests: economy, moose avoid, S-route powerslide, skid pad.')+'<br>'+tr('Economy: green start, red finish; line colour is pace versus flat-out; hover for speed and incline; pace sets the target time.')+' '+tr('Wheel or pinch to zoom, drag to scroll, double-click to reset.')+' '+tr('Moose: ISO 3888-2 cones, frontal forces and body roll.')+' '+tr('Powerslide: S-route with linked drifts; CLEAR needs both corners.')+' '+tr('Skid pad: 61 m circle; steady lateral g from the lap time.');
+  else if(vizMode==='challenges')legend.innerHTML=tr('Solved vehicle tests: economy, moose avoid, S-route powerslide, skid pad, spiral, figure 8.')+'<br>'+tr('Economy: green start, red finish; line colour is pace versus flat-out; hover for speed and incline; pace sets the target time.')+' '+tr('Wheel or pinch to zoom, drag to scroll, double-click to reset.')+' '+tr('Moose: ISO 3888-2 cones, frontal forces and body roll.')+' '+tr('Powerslide: S-route with linked drifts; CLEAR needs both corners.')+' '+tr('Skid pad: 61 m circle; steady lateral g from the lap time.')+' '+tr('Spiral: from a 12 m bend out to that circle, speed rising as it opens.')+' '+tr('Figure 8: both directions, tightest bend half that radius.');
   else legend.innerHTML=tr('Dyno shows full power & torque curves to redline.')+'<br>'+tr('Green line = current RPM. Peaks marked with dots.');
   updateDashLamps();
+  const chips=document.getElementById('modeChips');
+  if(chips&&engine){
+    const bits=[];
+    if(engine.displacement_L)bits.push(engine.displacement_L.toFixed(1)+'L');
+    if(engine.score&&engine.score.peakHP)bits.push(Math.round(engine.score.peakHP)+' HP');
+    if(typeof obdLamp==='function'&&obdLamp())bits.push(tr('MIL'));
+    chips.textContent=bits.join(' · ');
+  }
+  if(engine)document.body.dataset.pt=isElectric()?'ev':isHybrid()?'hy':'ice';
 }
 
 const tabOfGroup={build:'design',test:'engine',drive:'track',more:'guide'};
@@ -25469,6 +25634,11 @@ function setTab(mode){
   const tabId=mode==='design'?'Design':mode==='engine'?'Engine':mode==='challenges'?'Challenges':mode==='champ'?'Champ':mode[0].toUpperCase()+mode.slice(1);
   const grp=document.getElementById('tab'+tabId).dataset.g;
   tabOfGroup[grp]=mode;
+  if(document.body.dataset.group!==grp){
+    document.body.dataset.group=grp;
+    const curtain=document.getElementById('modeCurtain');
+    if(curtain){curtain.classList.remove('go');void curtain.offsetWidth;curtain.classList.add('go');}
+  }
   document.querySelectorAll('.viz-tabs button').forEach(b=>b.classList.toggle('ing',b.dataset.g===grp));
   document.querySelectorAll('#vizGroups button').forEach(b=>b.classList.toggle('active',b.dataset.g===grp));
   {const strip=document.querySelector('.viz-tabs'),first=strip.querySelector('.ing');if(first&&strip.scrollWidth>strip.clientWidth)strip.scrollLeft=first.offsetLeft-strip.offsetLeft;}
@@ -25510,6 +25680,7 @@ function setTab(mode){
   if(mode==='challenges'){buildVehicle();refreshChallenge();raceFillAdd('chalRankAddSel');}
   if(mode==='champ'){refreshChamp();}
   if(mode==='race'){const ts=document.getElementById('raceTrk');fillTrackSelect(ts,ts.value||trackKey);raceFillAdd();openRacePage(prevMode);renderRaceSetup();renderRacePanel(true);}
+  if(typeof ecuSync==='function')ecuSync();
   updateUI();
 }
 
@@ -29896,7 +30067,7 @@ function buildRoad(key){
 // timeFactor × that car's Tmin (eco-rally style: use the allotted time, do not rush). A speed
 // cap on the open solve hits the target. ICE: fuel from engineFuelAt (warm oil). EV: pack energy
 // from motorLosses + packDraw + regen, same stack as evCycle / the lap (grade included here).
-// Hybrid (build 383): hybridCycle on the road's profile (ecoHybrid below). Distance DP (build 394, ecoDP) for ICE and EV.
+// Hybrid (build 383): hybridCycle on the road's profile (ecoHybrid below). Distance DP (build 400, ecoDP) for ICE and EV.
 // eco (build 352): {tab:ecoDriverTable(), s} limits the drive and the slowing to the eco driver's (below); s in [0,1]
 // blends both limits back toward the car's own when the eco driver alone cannot make the target.
 function ecoMinTime(line,speedCap,eco){
@@ -30047,11 +30218,11 @@ function ecoDriverTable(){
   }
   return{drive,lift,shift,mEff,ev:false};
 }
-// The engine's fuel rule on the economy road (build 394; ecoFuelKg and the distance DP both use it). Warm oil; the gear
+// The engine's fuel rule on the economy road (build 400; ecoFuelKg and the distance DP both use it). Warm oil; the gear
 // with least fuel, as WLTP. Overrun: fuel cut needs a gear whose engine braking is no more than the slowing asked for
-// (the brakes add the rest); a gentler glide is in neutral at idle fuel (until build 394 every glide was free and
+// (the brakes add the rest); a gentler glide is in neutral at idle fuel (until build 400 every glide was free and
 // drag-free). Past the 90% torque reserve in every gear the engine runs at full load in the gear that costs least,
-// and a demand past the fuel map's full load is charged pro rata at that point's BSFC. Until build 394 such a point
+// and a demand past the fuel map's full load is charged pro rata at that point's BSFC. Until build 400 such a point
 // fell through to 3 × idle fuel (the map has no fuel past its own full load), which the eco blends leaned on.
 function ecoFuelRule(){
   const e=engine,C=FUEL_CYCLE,M=engineFuelMap(95),r=vehicle.rTire,fd=vehicle.finalDrive,eff=vehicle.driveEff,ratios=vehicle.ratios;
@@ -30144,7 +30315,7 @@ function ecoHybrid(line,v){
   }
   return hybridCycle(vehicle,{segs});
 }
-// ---- Distance DP (build 394) ----
+// ---- Distance DP (build 400) ----
 // The eco driver above follows fixed rules (best-BSFC drive, lift, a speed cap). This finds the speed profile itself:
 // a dynamic programme over distance in stages of ~50 m (state: speed on a 0.5 m/s grid, from rest; within a stage v²
 // is linear, i.e. constant acceleration), minimising fuel (ICE, g) or pack energy (EV, J) plus λ × time, with λ
@@ -30275,7 +30446,7 @@ function simulateEconomyChallenge(roadKey,factorOpt){
     return best;
   };
   const hyb=isHybrid(),cost=r=>isElectric()?(ecoEnergyJ(line,r.v)||{E:Infinity}).E:hyb?ecoHybrid(line,r.v).kg:ecoFuelKg(line,r.v);
-  // Engine cars and EVs: the distance DP (build 394). On the 190 runs measured at Alpine and the Dragon it beat the eco
+  // Engine cars and EVs: the distance DP (build 400). On the 190 runs measured at Alpine and the Dragon it beat the eco
   // driver every time, by 9-32%, so the eco driver's blends run only when the DP finds no plan for the target (each
   // blend costs ~11 capped solves; running both pushed long roads past 4 s). Hybrids keep the blends.
   let best=null,s=1,bestC=Infinity,dpMs=null,dpUsed=false;
@@ -30772,9 +30943,175 @@ function simulateSkidpadChallenge(){
     betaMax:R.betaMax*180/Math.PI,steerDeg:R.steer*180/Math.PI,eMin:R.eMin,eMax:R.eMax,failBy:F.outcome,
     radius:SKID_R,tol:SKID_TOL,samples:R.samples,trackW:D.w,body:{f:car.a+D.ovF,r:car.b+D.ovR},drive:car.drive};
 }
+// ====== SPIRAL SKID PAD AND FIGURE 8 (build 399) ======
+// Two courses for the same stepped car and driver as the skid pad (skidpad-run.js). The lane is that pad's
+// SKID_TOL (1 m either side of the line: this game's lane, not a standard). Outcomes use its words:
+//   SPIN   body slip β over 25°, or the nose more than 90° off the line
+//   WIDE   the CG more than SKID_TOL to the right of the line (on the spiral, the outside)
+//   TIGHT  more than SKID_TOL to the left (on the spiral, toward the centre)
+//   SLOW   still in the lane, but the course not finished in time
+//   HOLD   none of these
+// driveDriver's speed loop is proportional, so the car sits a little under a rising target. ESC stays as the car is set.
+//
+// SPIRAL. An Archimedean spiral r = r0 + b θ (the circle is the case b = 0), one turn, counter-clockwise.
+// The outer radius is the skid pad's own (SKID_R, a 200 ft circle). The inner radius is 12 m: a 2.9 m wheelbase
+// (the grand-tourer chassis) at the model's steering lock, δ = 8.5/steerRatio from 2.7 turns lock to lock
+// (driveCar, probable), has an Ackermann radius L/tan δ ≈ 4.6 m, and 12 m asks L/ρ ≈ 0.25 rad of road wheel,
+// under half that lock, so the stop is not what ends the run. The local radius of curvature is
+// ρ = (r² + b²)^(3/2) / (r² + 2 b²). The line's speed is sqrt(ay · ρ): the same lateral demand all the way,
+// and a faster bend as it opens. ay is searched. A short lead-in at the inner curvature lets the tyres and
+// the roll settle before the spiral is judged.
+//
+// FIGURE 8. Bernoulli's lemniscate, (x² + y²)² = 2 c² (x² − y²), in the form
+// x = a cos t / (1 + sin² t), y = a sin t cos t / (1 + sin² t). Curvature is 0 at the crossing and
+// tightest at the two outer vertices, where ρ = a/3. a is chosen so that bend is half the skid pad's
+// radius (SKID_R/2): one loop each way, the crossing straight, the highest constant speed that stays in the lane.
+const SPIRAL_R0=12,SPIRAL_TURNS=1;
+const FIG8_RHO=SKID_R/2,FIG8_A=3*FIG8_RHO;
+let spiralGeom=null,fig8Geom=null;
+function arcLead(p,dist){
+  const ds=0.5;let X=p.x,Y=p.y,P=p.psi+Math.PI,K=-p.kap,raw=[[X,Y]],n=Math.ceil(dist/ds);
+  for(let i=0;i<n;i++){P+=K*ds;X+=Math.cos(P)*ds;Y+=Math.sin(P)*ds;raw.push([X,Y]);}
+  raw.reverse();const line=[];
+  for(let i=0;i<raw.length-1;i++){const a=raw[i],b=raw[i+1];
+    line.push({x:a[0],y:a[1],v:p.v,grade:0,kv:0,psi:Math.atan2(b[1]-a[1],b[0]-a[0]),kap:p.kap});}
+  return line;
+}
+function spiralGeomBuild(){
+  const r0=SPIRAL_R0,r1=SKID_R,Th=SPIRAL_TURNS*2*Math.PI,b=(r1-r0)/Th,th0=-Math.PI/2,ds=0.5;
+  const rho=r=>{const r2=r*r,b2=b*b;return Math.pow(r2+b2,1.5)/(r2+2*b2);};
+  const at=th=>{const r=r0+b*th,ph=th0+th,dx=b*Math.cos(ph)-r*Math.sin(ph),dy=b*Math.sin(ph)+r*Math.cos(ph),rc=rho(r);
+    return {x:r*Math.cos(ph),y:r*Math.sin(ph),v:Math.sqrt(rc),grade:0,kv:0,psi:Math.atan2(dy,dx),kap:1/rc};};
+  const course=[];let th=0;
+  while(th<Th){course.push(at(th));th+=ds/Math.hypot(r0+b*th,b);}
+  course.push(at(Th));
+  const ext=[];let thE=Th,e=0;
+  while(e<30){const r=r0+b*thE;thE+=ds/Math.hypot(r,b);e+=ds;ext.push(at(thE));}
+  const lead=arcLead(course[0],20),course0=lead.length,end=lead.length+course.length;
+  return {line:lead.concat(course,ext),course0,end,rho0:rho(r0),rho1:rho(r1),b};
+}
+function fig8Point(a,t){
+  const s=Math.sin(t),c=Math.cos(t),d=1+s*s;
+  return {x:a*c/d,y:a*s*c/d};
+}
+function fig8Frame(a,t){
+  const dt=1e-4,p=fig8Point(a,t),p1=fig8Point(a,t+dt),m=fig8Point(a,t-dt);
+  const xp=(p1.x-m.x)/(2*dt),yp=(p1.y-m.y)/(2*dt),xpp=(p1.x-2*p.x+m.x)/(dt*dt),ypp=(p1.y-2*p.y+m.y)/(dt*dt);
+  const sp=Math.hypot(xp,yp)||1e-9;
+  return {x:p.x,y:p.y,v:1,grade:0,kv:0,psi:Math.atan2(yp,xp),kap:(xp*ypp-yp*xpp)/(sp*sp*sp),sp};
+}
+function fig8GeomBuild(){
+  const a=FIG8_A,ds=0.5,pts=[];
+  for(let t=-Math.PI;t<Math.PI-1e-4;){const f=fig8Frame(a,t);pts.push(f);t+=ds/f.sp;}
+  const leadN=Math.round(pts.length*0.28),lead=pts.slice(pts.length-leadN),ext=pts.slice(0,70);
+  const course0=lead.length,end=lead.length+pts.length;
+  return {line:lead.concat(pts,ext),course0,end,rho:FIG8_RHO,a};
+}
+function courseScaled(G,k){
+  return {line:G.line.map(p=>({x:p.x,y:p.y,v:p.v*k,grade:0,kv:0,psi:p.psi,kap:p.kap})),course0:G.course0,end:G.end};
+}
+function coursePlace(car,s,p){
+  s.x=p.x;s.y=p.y;s.psi=p.psi;s.vx=p.v;s.vy=0;s.yaw=p.v*(p.kap||0);
+  s.w=s.w.map(()=>p.v/Math.max(0.2,car.r));
+  const ratios=car.ratios.length?car.ratios:[1];s.gear=1;
+  for(let k=ratios.length;k>=1;k--){s.gear=k;if(p.v/car.r*ratios[k-1]*car.fd*30/Math.PI>=2500)break;}
+  s.we=Math.max((car.idle||0)*Math.PI/30,p.v/car.r*ratios[s.gear-1]*car.fd);
+}
+// Follow `line`: a lead-in, the judged course [course0, end), then a tail so the driver's lookahead,
+// which wraps, never lands back on the start.
+function courseRun(car,line,course0,end,sample){
+  const tol=SKID_TOL,N=line.length,s=driveState(car),d={i:0},p0=line[0];
+  coursePlace(car,s,p0);
+  const o={eMin:0,eMax:0,betaMax:0,ayMean:0,vMean:0,vEntry:0,vExit:0,lapT:0,steer:0,samples:sample?[]:null};
+  const dt=0.005,vRef=Math.max(4,line[course0].v),tMax=(end*0.5)/vRef*2.2+6;
+  let ayS=0,vS=0,stS=0,n=0,enS=0,enN=0,exS=0,exN=0,nextT=0,spin=false,done=false;
+  const span=Math.max(1,end-course0),entryTo=course0+Math.max(3,Math.round(span*0.08)),exitFrom=end-Math.max(3,Math.round(span*0.1));
+  while(s.t<tMax){
+    const u=driveDriver(car,s,line,d);stepCar(car,s,u,dt);
+    const i=Math.min(N-2,d.i||0),pA=line[i],pB=line[i+1],hp=Math.atan2(pB.y-pA.y,pB.x-pA.x);
+    const e=-(s.x-pA.x)*Math.sin(hp)+(s.y-pA.y)*Math.cos(hp);
+    let dh=s.psi-hp;dh-=2*Math.PI*Math.round(dh/(2*Math.PI));
+    const beta=Math.atan2(s.vy,Math.max(0.5,s.vx));
+    if(Math.abs(beta)>25*Math.PI/180||Math.abs(dh)>Math.PI/2)spin=true;
+    const judged=i>=course0&&i<end;
+    if(judged){
+      o.eMax=Math.max(o.eMax,e);o.eMin=Math.min(o.eMin,e);o.betaMax=Math.max(o.betaMax,Math.abs(beta));
+      ayS+=Math.abs(s.ayF);vS+=s.speed;stS+=Math.abs(s.delta||0);n++;
+      if(i<entryTo){enS+=s.speed;enN++;}
+      if(i>=exitFrom){exS+=s.speed;exN++;}
+      if(sample&&s.t>=nextT){
+        o.samples.push({t:s.t,x:s.x,y:s.y,psi:s.psi,v:s.speed,beta,yaw:s.yaw,delta:s.delta||0,thr:u.throttle,brk:u.brake||0,
+          gear:s.gear,rpm:s.rpm,ax:s.ax||0,ay:s.ay||0,e,alpha:s.alpha.slice()});
+        nextT=s.t+0.04;
+      }
+    }
+    if(i>=end){done=true;o.lapT=s.t;break;}
+    if(spin)break;
+    if(!sample&&judged&&(o.eMin<-tol||o.eMax>tol))break;
+    if(s.t>3&&s.speed<0.8)break;
+  }
+  o.ayMean=n?ayS/n/DRIVE_G:0;o.vMean=n?vS/n:0;o.steer=n?stS/n:0;
+  o.vEntry=enN?enS/enN:o.vMean;o.vExit=exN?exS/exN:o.vMean;
+  o.outcome=spin?'SPIN':o.eMin<-tol?'WIDE':o.eMax>tol?'TIGHT':!done?'SLOW':'HOLD';
+  o.ok=o.outcome==='HOLD';
+  return o;
+}
+function coursePack(car,R,line,course0,end){
+  const D=typeof mooseDims==='function'?mooseDims():{w:(car.tF+car.tR)/2+0.3,ovF:0.35*(car.a+car.b),ovR:0.35*(car.a+car.b)};
+  R.samples=R.samples||[];
+  R.line=line.slice(course0,end);
+  R.trackW=D.w;R.body={f:car.a+D.ovF,r:car.b+D.ovR};R.drive=car.drive;R.mu=car.mu;R.tol=SKID_TOL;
+  R.betaMax*=180/Math.PI;R.steerDeg=R.steer*180/Math.PI;
+  R.entryKmh=R.vEntry*3.6;R.exitKmh=R.vExit*3.6;R.speedKmh=R.vMean*3.6;
+  return R;
+}
+function spiralBest(car){
+  if(!spiralGeom)spiralGeom=spiralGeomBuild();
+  const g0=(car.mu||0.9)*DRIVE_G,run=ay=>courseRun(car,courseScaled(spiralGeom,Math.sqrt(Math.max(0.2,ay))).line,spiralGeom.course0,spiralGeom.end,false);
+  let lo=0.45*g0,hi=1.05*g0;
+  while(lo>1.2&&!run(lo).ok)lo*=0.82;
+  if(!(lo>1.2))return null;
+  while(run(hi).ok&&hi<1.7*g0)hi*=1.08;
+  while(hi-lo>0.04){const m=(lo+hi)/2;if(run(m).ok)lo=m;else hi=m;}
+  return lo;
+}
+function simulateSpiralChallenge(){
+  const pt=powertrain();if(!pt.ready()||!vehicle.mass)return null;
+  if(!spiralGeom)spiralGeom=spiralGeomBuild();
+  const car=driveCar(),ay=spiralBest(car);
+  if(!ay)return {ok:false,reason:'no-hold',kind:'spiral'};
+  const G=spiralGeom,Sc=courseScaled(G,Math.sqrt(ay)),R=courseRun(car,Sc.line,G.course0,G.end,true);
+  const v1=Math.sqrt(ay*G.rho1),ayFail=Math.pow(v1+1/3.6,2)/G.rho1,F=courseRun(car,courseScaled(G,Math.sqrt(ayFail)).line,G.course0,G.end,false);
+  coursePack(car,R,Sc.line,G.course0,G.end);
+  R.ok=R.outcome==='HOLD';R.kind='spiral';R.failBy=F.outcome;R.gExit=R.vExit*R.vExit/(DRIVE_G*G.rho1);
+  R.r0=SPIRAL_R0;R.r1=SKID_R;R.rho1=G.rho1;R.ayTarget=ay/DRIVE_G;
+  return R;
+}
+function fig8Best(car){
+  if(!fig8Geom)fig8Geom=fig8GeomBuild();
+  const v0=Math.sqrt((car.mu||0.9)*DRIVE_G*FIG8_RHO),run=v=>courseRun(car,courseScaled(fig8Geom,v).line,fig8Geom.course0,fig8Geom.end,false);
+  let lo=0.5*v0,hi=1.05*v0;
+  while(lo>3&&!run(lo).ok)lo*=0.82;
+  if(!(lo>3))return null;
+  while(run(hi).ok&&hi<50)hi*=1.08;
+  while(hi-lo>0.06){const m=(lo+hi)/2;if(run(m).ok)lo=m;else hi=m;}
+  return lo;
+}
+function simulateFig8Challenge(){
+  const pt=powertrain();if(!pt.ready()||!vehicle.mass)return null;
+  if(!fig8Geom)fig8Geom=fig8GeomBuild();
+  const car=driveCar(),v=fig8Best(car);
+  if(!v)return {ok:false,reason:'no-hold',kind:'fig8'};
+  const G=fig8Geom,Sc=courseScaled(G,v),R=courseRun(car,Sc.line,G.course0,G.end,true);
+  const F=courseRun(car,courseScaled(G,v+1/3.6).line,G.course0,G.end,false);
+  coursePack(car,R,Sc.line,G.course0,G.end);
+  R.ok=R.outcome==='HOLD';R.kind='fig8';R.failBy=F.outcome;R.gLap=R.vMean*R.vMean/(DRIVE_G*G.rho);R.rho=G.rho;R.a=G.a;
+  return R;
+}
 // ====== VEHICLE RUN CHALLENGES (build 341; real roads 343; moose 345) ======
 // Dynamic tests on the CHALLENGES tab — not the ENGINE career/scorecard list in challenges.js.
-// Economy, fixed-time stages (build 352), moose (345), S-route powerslide (358) and skid pad (368).
+// Economy, fixed-time stages (build 352), moose (345), S-route powerslide (358), skid pad (368),
+// spiral pad and figure 8 (course-pads.js).
 const RUN_CHALLENGES=[
   {id:'economy',kind:'economy',name:'Mountain Economy',
     desc:'Open mountain road. Finish inside the time limit; burn as little fuel as you can.',
@@ -30815,7 +31152,11 @@ const RUN_CHALLENGES=[
   {id:'drift-s',kind:'drift',name:'S-Route Powerslide',
     desc:'Point-to-point S: two linked corners. Hold a controlled powerslide through both, or fail honestly.'},
   {id:'skidpad',kind:'skidpad',name:'Skid Pad',
-    desc:'A 200 ft (61 m) circle. Highest speed the car holds on it, as steady lateral g.'}
+    desc:'A 200 ft (61 m) circle. Highest speed the car holds on it, as steady lateral g.'},
+  {id:'spiral',kind:'spiral',name:'Spiral Skid Pad',
+    desc:'One turn out from a 12 m bend to the skid pad radius. The speed target rises as the bend opens.'},
+  {id:'fig8',kind:'fig8',name:'Figure 8',
+    desc:'A lemniscate, one loop each way. Highest speed held through both, tightest bend half the skid pad.'}
 ];
 let activeRunChallenge='economy';
 let chalResult=null;
@@ -30833,6 +31174,8 @@ function solveRunChallenge(id){
   if(ch.kind==='moose')return simulateMooseChallenge();
   if(ch.kind==='drift')return simulateDriftChallenge();
   if(ch.kind==='skidpad')return simulateSkidpadChallenge();
+  if(ch.kind==='spiral')return simulateSpiralChallenge();
+  if(ch.kind==='fig8')return simulateFig8Challenge();
   return{ok:false,reason:'unimplemented',challenge:ch};
 }
 // Each challenge's own score, for the ranking (build 370, src/js/chal-rank.js). Keyed by kind; an entry may carry its
@@ -30851,6 +31194,10 @@ const RUN_CHALLENGE_SCORES={
   moose:R=>({v:R.speedKmh,higher:true,pass:R.outcome==='CLEAR',text:R.speedKmh+' km/h · '+tr(R.outcome)}),
   // Skid pad (build 368): the magazines' figure v²/(g·R) from the held lap; HOLD passes.
   skidpad:R=>({v:R.gLap,higher:true,pass:R.outcome==='HOLD',text:R.gLap.toFixed(2)+' g · '+tr(R.outcome)}),
+  // Spiral: the speed it actually carries at the outer bend (the target climbs with the radius). Figure 8: the
+  // speed held through both loops. HOLD passes either.
+  spiral:R=>({v:R.exitKmh,higher:true,pass:R.outcome==='HOLD',text:R.exitKmh.toFixed(0)+' km/h · '+R.gExit.toFixed(2)+' g'}),
+  fig8:R=>({v:R.speedKmh,higher:true,pass:R.outcome==='HOLD',text:R.speedKmh.toFixed(0)+' km/h · '+R.gLap.toFixed(2)+' g'}),
   drift:R=>({v:R.peakBeta,higher:true,pass:R.outcome==='CLEAR',text:R.peakBeta.toFixed(1)+'° · '+tr(R.outcome)})
 };
 function runChallengeScore(ch,R){
@@ -30879,7 +31226,7 @@ function refreshChallenge(){
   for(const id of['chalDriftEntry','chalDriftMethod']){const el=document.getElementById(id);
     if(el){const row=el.closest('.field');if(row)row.style.display=ch.kind==='drift'?'':'none';}}
   const mr=document.getElementById('chalMooseRate');
-  if(mr){const row=mr.closest('.field');if(row)row.style.display=(ch.kind==='moose'||ch.kind==='drift'||ch.kind==='skidpad')?'':'none';}
+  if(mr){const row=mr.closest('.field');if(row)row.style.display=(ch.kind==='moose'||ch.kind==='drift'||ch.kind==='skidpad'||ch.kind==='spiral'||ch.kind==='fig8')?'':'none';}
   renderChallenge();
 }
 function renderChallenge(){
@@ -30939,6 +31286,27 @@ function renderChallenge(){
       cell('DIAMETER',(2*R.radius).toFixed(1)+' m')+
       cell('DRIVE',tr((R.drive||'').toUpperCase()));
     note.textContent=tr(ch.desc)+' '+tr('A 200 ft circle, as Motor Trend and Road & Track use (Car and Driver: 300 ft). The driver holds the circle while the speed is raised; the best is the fastest lap that stays within 1 m of the line with no spin. LATERAL g is the magazines\' figure from that lap\'s time, v²/(g·R); MEAN ay is the body\'s own. One step faster it runs WIDE (understeer), TIGHT (the tail steps out) or SPINs.');
+    return;
+  }
+  if(R.kind==='spiral'||R.kind==='fig8'){
+    const col=SKID_OUT_COL[R.outcome]||'#e0e0e0',sp=R.kind==='spiral';
+    head.innerHTML=sp
+      ?tr(ch.name)+' · <b>'+R.exitKmh.toFixed(0)+' km/h</b> · '+R.gExit.toFixed(2)+' g'
+      :tr(ch.name)+' · <b>'+R.speedKmh.toFixed(0)+' km/h</b>';
+    grid.innerHTML=(sp
+      ?cell('EXIT',R.exitKmh.toFixed(0)+' km/h')+cell('ENTRY',R.entryKmh.toFixed(0)+' km/h')+cell('LATERAL g',R.gExit.toFixed(2)+' g')
+      :cell('SPEED',R.speedKmh.toFixed(0)+' km/h')+cell('BEND g',R.gLap.toFixed(2)+' g')+cell('TIME',R.lapT.toFixed(1)+' s'))+
+      cell('RESULT','<span style="color:'+col+'">'+tr(R.outcome)+'</span>')+
+      cell('FAILS AT','+1 km/h: '+tr(R.failBy))+
+      cell('MEAN ay',R.ayMean.toFixed(2)+' g')+
+      cell('PEAK β',R.betaMax.toFixed(1)+'°')+
+      cell('STEER',R.steerDeg.toFixed(1)+'°')+
+      cell('OFF LINE',Math.max(-R.eMin,R.eMax).toFixed(2)+' m')+
+      (sp?cell('INNER',R.r0.toFixed(0)+' m')+cell('OUTER',R.r1.toFixed(1)+' m'):cell('BEND',R.rho.toFixed(1)+' m'))+
+      cell('DRIVE',tr((R.drive||'').toUpperCase()));
+    note.textContent=tr(ch.desc)+' '+(sp
+      ?tr('An Archimedean spiral, one turn, counter-clockwise. The line speed is sqrt(lateral g times the local radius of curvature), so it climbs as the bend opens, from 12 m out to the skid pad radius. The best g that stays within 1 m is kept. TIGHT is toward the centre, WIDE is the outside. One step faster, 1 km/h at the exit, is how it fails.')
+      :tr('Bernoulli lemniscate: curvature is zero at the crossing and tightest at the two outer bends, at half the skid pad radius. The best constant speed that stays within 1 m for a full figure is kept. TIGHT is left of the line, WIDE is right. One step faster is how it fails.'));
     return;
   }
   if(R.kind==='stage'){
@@ -31129,6 +31497,45 @@ function drawSkidpadChallenge(g,R){
   }
   g.fillStyle='#9ab';g.font='7px "Press Start 2P"';
   g.fillText(tr('SKID PAD')+' · '+(2*Rr).toFixed(1)+' m '+tr('circle')+' · ±'+tol+' m',10,vizH-10);
+  if(s&&s.rpm!=null)drawDriftHud(s);
+}
+// Spiral and figure 8: the judged line from above, the 1 m lane, the car replaying the run.
+function drawCourseChallenge(g,R){
+  chalHover.map=null;
+  g.fillStyle='#0a0e14';g.fillRect(0,0,vizW,vizH);
+  const line=R.line||[],tol=R.tol||1;
+  if(!line.length)return;
+  let minX=1e9,maxX=-1e9,minY=1e9,maxY=-1e9;
+  for(const q of line){minX=Math.min(minX,q.x);maxX=Math.max(maxX,q.x);minY=Math.min(minY,q.y);maxY=Math.max(maxY,q.y);}
+  const m=tol+4;minX-=m;maxX+=m;minY-=m;maxY+=m;
+  const pad=16,sc=Math.min((vizW-2*pad)/(maxX-minX||1),(vizH-2*pad)/(maxY-minY||1));
+  const MX=x=>pad+(x-minX)*sc,MY=y=>vizH-pad-(y-minY)*sc;
+  g.strokeStyle='#1c2330';g.lineWidth=Math.max(3,2*tol*sc);g.lineJoin='round';g.lineCap='round';
+  g.beginPath();for(let i=0;i<line.length;i++){const X=MX(line[i].x),Y=MY(line[i].y);if(i)g.lineTo(X,Y);else g.moveTo(X,Y);}g.stroke();
+  g.strokeStyle='#ffcc00';g.lineWidth=1;g.setLineDash([4,4]);
+  g.beginPath();for(let i=0;i<line.length;i++){const X=MX(line[i].x),Y=MY(line[i].y);if(i)g.lineTo(X,Y);else g.moveTo(X,Y);}g.stroke();g.setLineDash([]);
+  const vs=line.map(q=>q.v),lo=Math.min(...vs),hi=Math.max(...vs);
+  if(hi-lo>0.4){g.lineWidth=Math.max(2,(R.trackW||1.6)*sc*0.35);
+    for(let i=0;i<line.length-1;i++){const u=(line[i].v-lo)/(hi-lo);
+      g.strokeStyle=u<0.5?'#4aa3ff':'#55dd66';
+      g.beginPath();g.moveTo(MX(line[i].x),MY(line[i].y));g.lineTo(MX(line[i+1].x),MY(line[i+1].y));g.stroke();}}
+  const S=R.samples||[];
+  if(S.length>1){g.strokeStyle='rgba(85,221,102,0.35)';g.lineWidth=Math.max(2,(R.trackW||1.8)*sc);
+    g.beginPath();for(let i=0;i<S.length;i++){const X=MX(S[i].x),Y=MY(S[i].y);if(i)g.lineTo(X,Y);else g.moveTo(X,Y);}g.stroke();}
+  const s=driftSampleAt(R,chalMooseNow());
+  if(s){
+    const B=R.body||{f:2,r:2.3},c=Math.cos(s.psi||0),sn=Math.sin(s.psi||0),tw=(R.trackW||1.8)/2;
+    g.fillStyle=SKID_OUT_COL[R.outcome]||'#55dd66';g.beginPath();
+    [[B.f,tw],[B.f,-tw],[-B.r,-tw],[-B.r,tw]].forEach(([dx,dy],k)=>{const X=MX(s.x+dx*c-dy*sn),Y=MY(s.y+dx*sn+dy*c);if(k)g.lineTo(X,Y);else g.moveTo(X,Y);});
+    g.closePath();g.fill();
+    g.fillStyle='#e0e0e0';g.font='8px "Press Start 2P"';
+    g.fillText(Math.round((s.v||0)*3.6)+' km/h · '+(Math.abs(s.ay||0)/DRIVE_G).toFixed(2)+' g',10,20);
+  }
+  g.fillStyle='#9ab';g.font='7px "Press Start 2P"';
+  const cap=R.kind==='spiral'
+    ?(tr('SPIRAL')+' · '+R.r0.toFixed(0)+'→'+R.r1.toFixed(1)+' m · '+R.entryKmh.toFixed(0)+'→'+R.exitKmh.toFixed(0)+' km/h · ±'+tol+' m')
+    :(tr('FIGURE 8')+' · '+R.rho.toFixed(1)+' m '+tr('bends')+' · '+R.speedKmh.toFixed(0)+' km/h · ±'+tol+' m');
+  g.fillText(cap,10,vizH-10);
   if(s&&s.rpm!=null)drawDriftHud(s);
 }
 function drawMooseTopDown(g,R,x0,y0,w,h){
@@ -31407,6 +31814,7 @@ function drawChallenge(){
   if(R&&R.kind==='moose'&&R.ok){drawMooseChallenge(g,R);return;}
   if(R&&R.kind==='drift'&&R.ok){drawDriftChallenge(g,R);return;}
   if(R&&R.kind==='skidpad'&&R.ok){drawSkidpadChallenge(g,R);return;}
+  if(R&&(R.kind==='spiral'||R.kind==='fig8')&&R.ok){drawCourseChallenge(g,R);return;}
   if(!R||!R.road){g.fillStyle='#556';g.font='10px "Press Start 2P"';g.fillText(tr('CHALLENGES'),16,28);chalHover.map=null;return;}
   const map=chalMapProject(R),p=map.p,n=p.length,MX=map.MX,MY=map.MY,T=map.T;
   chalHover.map=map;
@@ -33525,6 +33933,171 @@ function bindGuided(){
     gbBack();e.preventDefault();e.stopPropagation();
   },true);
 }
+// The bench laptop: a scope, the fuel/spark/VE tables, the fault list and a pull or lap delta.
+// It reads the running state. It does not change the engine model.
+const ECU_N=600;
+const ecu={screen:'scope',map:'fuel',freeze:false,buf:[]};
+function ecuNarrow(){return matchMedia('(max-width: 900px), (max-height: 520px)').matches;}
+function ecuWants(){return ['engine','dyno','track','challenges'].includes(vizMode);}
+function ecuMapsOn(){const el=document.getElementById('ecuComputer');return !!(el&&!el.hidden&&ecu.screen==='maps');}
+function ecuSync(){
+  const el=document.getElementById('ecuComputer'),btn=document.getElementById('btnEcu');
+  const want=ecuWants(),narrow=ecuNarrow();
+  if(btn)btn.hidden=!(want&&narrow);
+  if(!el)return;
+  el.hidden=!(want&&(!narrow||el.classList.contains('open')));
+  ecuPlaceMaps();
+  if(ecu.screen==='diag'&&!el.hidden)ecuRenderDiag();
+  if(ecu.screen==='delta'&&!el.hidden)ecuRenderDelta();
+}
+function ecuScreen(name){
+  ecu.screen=name;
+  document.querySelectorAll('[data-ecu-screen]').forEach(s=>s.hidden=s.dataset.ecuScreen!==name);
+  document.querySelectorAll('[data-ecu]').forEach(b=>b.classList.toggle('on',b.dataset.ecu===name));
+  ecuSync();
+}
+function ecuPlaceMaps(){
+  const home=document.getElementById('ecuMapHome'),host=document.getElementById('ecuMapHost');
+  const el=document.getElementById('ecuComputer');
+  if(!home||!host||!el)return;
+  const docked=!el.hidden&&ecu.screen==='maps';
+  const to=docked?host:home,from=docked?home:host;
+  while(from.firstChild)to.appendChild(from.firstChild);
+  ['fuel','spark','ve'].forEach(k=>{
+    ['MapHdr','MapBox','MapEdit'].forEach(suf=>{
+      const n=document.getElementById(k+'Map'+suf.slice(3));
+      if(!n)return;
+      if(!docked||k===ecu.map)delete n.dataset.ecuHide;else n.dataset.ecuHide='1';
+    });
+  });
+}
+function ecuSel(){return ecu.map==='spark'?skSel:ecu.map==='ve'?veSel:fmSel;}
+function ecuNudge(steps){
+  if(!ecuSel()){flash(tr('Tap a cell to select'));return;}
+  if(ecu.map==='fuel')adjustFmCell((engine.ci?0.08:0.02)*steps);
+  else if(ecu.map==='spark')adjustSkCell(steps);
+  else adjustVeCell(steps);
+}
+function ecuHold(){
+  const sel=ecuSel();
+  if(!sel||!engine){flash(tr('Tap a cell to select'));return;}
+  const rpm=fmRpmAt(sel.c),aim=Math.min(rpm,0.99*engine.redline);
+  state.load=loadForRpm(aim);
+  state.throttle=clamp(fmMapAtRC(sel.r,sel.c)/Math.max(0.4,engine.mapMax||1),0.08,1);
+  if(typeof syncSliders==='function')syncSliders();
+  if(vizMode!=='engine')setTab('engine');
+  flash(tr('HOLD CELL')+' • '+Math.round(rpm)+' rpm');
+}
+function ecuSample(){
+  if(ecu.freeze||!engine)return;
+  const ev=typeof isElectric==='function'&&isElectric();
+  const row=ev
+    ?[state.systemVoltage||0,state.battI||0,state.mT?state.mT.w:0,(state.soc||0)*100]
+    :[state.rpm||0,state.map||1,(engine.stoichAFR?state.afr/engine.stoichAFR:1),state.knockRisk||0];
+  ecu.buf.push(row);
+  if(ecu.buf.length>ECU_N)ecu.buf.shift();
+}
+function ecuDrawScope(){
+  const c=document.getElementById('ecuScope');if(!c||ecu.buf.length<2)return;
+  const g=c.getContext('2d'),w=c.width,h=c.height,still=matchMedia('(prefers-reduced-motion: reduce)').matches;
+  g.fillStyle='#04140c';g.fillRect(0,0,w,h);
+  const cols=['#00ff88','#ffcc00','#00ccff','#ff6666'];
+  const src=still?[ecu.buf[ecu.buf.length-1]]:ecu.buf;
+  for(let ch=0;ch<4;ch++){
+    let lo=Infinity,hi=-Infinity;
+    ecu.buf.forEach(row=>{lo=Math.min(lo,row[ch]);hi=Math.max(hi,row[ch]);});
+    if(!(hi>lo)){lo-=1;hi+=1;}
+    g.strokeStyle=cols[ch];g.beginPath();
+    src.forEach((row,i)=>{
+      const x=src.length<2?w/2:i/(src.length-1)*(w-8)+4;
+      const y=h-8-(row[ch]-lo)/(hi-lo)*(h-16);
+      if(i)g.lineTo(x,y);else g.moveTo(x,y);
+    });
+    if(src.length<2){g.lineTo(w-4,h/2);g.moveTo(4,h/2);}
+    g.stroke();
+  }
+}
+function ecuLeds(){
+  const set=(id,on)=>{const n=document.getElementById(id);if(n)n.classList.toggle('on',!!on);};
+  if(!engine)return;
+  set('ecuLedLink',state.firing||state.ignOn);
+  set('ecuLedLoop',engine.afrMode==='auto'&&state.coolant>70);
+  set('ecuLedKnock',state.knockRisk>40);
+  let base=state.afr;
+  try{base=mappedAFR(state.rpm,state.map);}catch(e){}
+  set('ecuLedEgt',engine.intake==='turbo'&&state.afr<base-0.2);
+  const mil=typeof obdLamp==='function'?obdLamp():'';
+  set('ecuLedMil',mil==='on'||mil==='flash');
+}
+function ecuRenderDiag(){
+  const box=document.getElementById('ecuDiag');if(!box)return;
+  const d=typeof diagnoseEngine==='function'?diagnoseEngine():{findings:[]};
+  let h='';
+  (d.findings||[]).forEach(f=>{h+='<p class="ecu-find"><b>'+f.title+'</b><br>'+f.detail+'</p>';});
+  const keys=typeof obd!=='undefined'&&obd.codes?Object.keys(obd.codes):[];
+  if(!keys.length)h+='<p>'+tr('No codes stored.')+'</p>';
+  keys.forEach(k=>{h+='<p class="ecu-find"><b>'+k+'</b> <button type="button" data-ff="'+k+'">'+tr('REPRODUCE FREEZE FRAME')+'</button></p>';});
+  box.innerHTML=h;
+}
+function ecuReproduce(k){
+  const f=obd.codes[k]&&obd.codes[k].ff;if(!f||!engine)return;
+  state.load=loadForRpm(Math.min(f.rpm,0.99*engine.redline));
+  state.coolant=f.coolant;
+  if(engine.afrMode!=='auto')state.afr=f.lam*(engine.stoichAFR||14.7);
+  state.throttle=clamp((f.map||1)/Math.max(0.4,engine.mapMax||1),0.08,1);
+  if(typeof syncSliders==='function')syncSliders();
+  if(vizMode!=='engine'&&vizMode!=='dyno')setTab('engine');
+  flash(tr('FREEZE FRAME')+' • '+k);
+}
+function ecuRenderDelta(){
+  const box=document.getElementById('ecuDelta');if(!box)return;
+  if((vizMode==='track'||vizMode==='challenges')&&lapResult&&typeof replayAt==='function'){
+    const s=replayAt(lapResult,(typeof lapReplay!=='undefined'&&lapReplay.t)||0);
+    box.textContent=Math.round(s.v)+' km/h • '+Math.round(s.rpm)+' rpm • G'+s.gear+' • '+s.gLat.toFixed(2)+' g';
+    return;
+  }
+  const pull=dynoPulls&&dynoPulls[0];
+  if(!pull){box.textContent=tr('Log a pull to compare.');return;}
+  const pts=pull.pts,rpm=state.rpm;let i=0;while(i<pts.length-1&&pts[i+1].rpm<rpm)i++;
+  const a=pts[i],b=pts[Math.min(pts.length-1,i+1)],f=b.rpm===a.rpm?0:(rpm-a.rpm)/(b.rpm-a.rpm);
+  const hp=a.powerHP+(b.powerHP-a.powerHP)*f,tq=a.torque+(b.torque-a.torque)*f;
+  box.textContent='dHP '+(state.powerHP-hp).toFixed(1)+' • dNm '+(state.torque-tq).toFixed(1);
+}
+function ecuTick(){
+  const el=document.getElementById('ecuComputer');
+  if(!el||el.hidden)return;
+  ecuSample();ecuLeds();
+  if(ecu.screen==='scope')ecuDrawScope();
+  if(ecu.screen==='maps'&&typeof updateFuelMapMarker==='function')updateFuelMapMarker();
+}
+function bindEcu(){
+  const el=document.getElementById('ecuComputer');if(!el)return;
+  el.addEventListener('click',e=>{
+    const scr=e.target.closest('[data-ecu]');if(scr){ecuScreen(scr.dataset.ecu);return;}
+    const mp=e.target.closest('[data-ecu-map]');if(mp){ecu.map=mp.dataset.ecuMap;ecuPlaceMaps();return;}
+    const ff=e.target.closest('[data-ff]');if(ff)ecuReproduce(ff.dataset.ff);
+  });
+  document.getElementById('ecuFreeze').addEventListener('click',()=>{ecu.freeze=!ecu.freeze;document.getElementById('ecuFreeze').classList.toggle('on',ecu.freeze);});
+  document.getElementById('ecuN5').addEventListener('click',()=>ecuNudge(-5));
+  document.getElementById('ecuN1').addEventListener('click',()=>ecuNudge(-1));
+  document.getElementById('ecuP1').addEventListener('click',()=>ecuNudge(1));
+  document.getElementById('ecuP5').addEventListener('click',()=>ecuNudge(5));
+  document.getElementById('ecuHold').addEventListener('click',ecuHold);
+  const open=document.getElementById('btnOpenEcu');
+  if(open)open.addEventListener('click',()=>{setTab('engine');ecuScreen('maps');});
+  const tog=document.getElementById('btnEcu');
+  if(tog)tog.addEventListener('click',()=>{el.classList.toggle('open');ecuSync();});
+  document.addEventListener('keydown',e=>{
+    if(!ecuMapsOn()||e.target.closest('input,select,textarea'))return;
+    const sel=ecuSel();if(!sel)return;
+    const move={ArrowLeft:[-1,0],ArrowRight:[1,0],ArrowUp:[0,1],ArrowDown:[0,-1]}[e.key];
+    if(!move)return;
+    e.preventDefault();
+    const c=sel.c+move[0],r=sel.r+move[1];
+    if(ecu.map==='spark')selectSkCell(c,r);else if(ecu.map==='ve')selectVeCell(c,r);else selectFmCell(c,r);
+  });
+  ecuScreen('scope');
+}
 function bindControls(){
   // Throttle & load are fractions (0..1); AFR/temps are direct values.
   document.getElementById('throttle').addEventListener('input',e=>state.throttle=(+e.target.value)/100);
@@ -33617,6 +34190,7 @@ function bindControls(){
   document.getElementById('btnImport').addEventListener('click',openFileDialog);
   document.getElementById('btnShare').addEventListener('click',shareBuild);
   document.getElementById('btnLogPull').addEventListener('click',logPull);
+  document.getElementById('btnDynoSweep').addEventListener('click',startDynoSweep);
   document.getElementById('btnClearPulls').addEventListener('click',clearPulls);
   document.getElementById('btnReportPng').addEventListener('click',exportDynoPNG);
   document.getElementById('btnReportPdf').addEventListener('click',exportDynoPDF);
@@ -33635,7 +34209,7 @@ function bindControls(){
   const chalSel=document.getElementById('chalSel');
   if(chalSel){
     // One group per kind (build 352: the list grew past a dozen).
-    const KIND={economy:'ECONOMY',stage:'FIXED-TIME STAGE',moose:'MOOSE TEST',drift:'POWERSLIDE',skidpad:'SKID PAD'},groups={};
+    const KIND={economy:'ECONOMY',stage:'FIXED-TIME STAGE',moose:'MOOSE TEST',drift:'POWERSLIDE',skidpad:'SKID PAD',spiral:'SPIRAL PAD',fig8:'FIGURE 8'},groups={};
     RUN_CHALLENGES.forEach(c=>{
       let gp=groups[c.kind];if(!gp){gp=groups[c.kind]=document.createElement('optgroup');gp.label=tr(KIND[c.kind]||c.kind);chalSel.appendChild(gp);}
       const o=document.createElement('option');o.value=c.id;o.textContent=tr(c.name);gp.appendChild(o);});
@@ -33697,6 +34271,14 @@ function bindControls(){
     menu.addEventListener('click',e=>{if(e.target.closest('button'))setTimeout(()=>setMoreMenu(false),0);});
     document.addEventListener('click',e=>{if(menu.classList.contains('open')&&!e.target.closest('.more-wrap'))setMoreMenu(false);});
     document.addEventListener('keydown',e=>{if(e.key==='Escape'&&menu.classList.contains('open')){setMoreMenu(false);more.focus();}});}
+  {const fb=document.getElementById('btnFile'),pop=document.getElementById('filePop');
+    const set=o=>{pop.hidden=!o;fb.setAttribute('aria-expanded',String(!!o));};
+    fb.addEventListener('click',e=>{e.stopPropagation();set(pop.hidden);});
+    pop.addEventListener('click',e=>{if(e.target.closest('button'))setTimeout(()=>set(false),0);});
+    document.addEventListener('click',e=>{if(!pop.hidden&&!e.target.closest('.file-wrap'))set(false);});
+    document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!pop.hidden){set(false);fb.focus();}});}
+  document.getElementById('btnStripGuide').addEventListener('click',()=>setTab('guide'));
+  document.getElementById('btnStripOptions').addEventListener('click',()=>setTab('options'));
   // the dyno's rpm table, behind its button (the result box is re-rendered, so the click is caught on the box)
   document.getElementById('dynoResult').addEventListener('click',e=>{if(e.target.closest('#btnDynoTable'))toggleDynoTable();});
   // LIVE OUTPUT folds to its first row of gauges, a third of its height; the choice is kept in this browser
@@ -33845,6 +34427,13 @@ function bindControls(){
   document.getElementById('btnBuild').addEventListener('click',()=>{buildEngine();flash(isElectric()?tr('DRIVE BUILT')+' • '+engine.score.peakKW+' kW':tr('ENGINE BUILT')+' • '+engine.displacement_L.toFixed(engine.displacement_L<1?2:1)+'L');setTab('dyno')});
   document.getElementById('btnDesignReset').addEventListener('click',()=>{applyEngineToForm(Object.assign({},DEFAULT_ENGINE));buildEngine();flash(tr('DESIGN RESET TO DEFAULTS'))});
 }
+let dynoSweep=null;
+function startDynoSweep(){
+  if(vizMode!=='dyno')setTab('dyno');
+  state.throttle=1;dynoSweep={t:0,dur:5};
+  syncSliders();
+  flash(tr('RUN PULL'));
+}
 function syncSliders(){
   document.getElementById('throttle').value=Math.round(state.throttle*100);
   document.getElementById('load').value=Math.round(state.load*100);
@@ -33862,6 +34451,14 @@ function loop(now){
   updatePhysics();
   stepWear(dt);
   obdStep(dt);
+  if(dynoSweep&&engine){
+    dynoSweep.t+=dt;
+    const f=clamp(dynoSweep.t/dynoSweep.dur,0,1);
+    state.throttle=1;
+    state.load=loadForRpm(lerp(engine.idleRpmEff||800,engine.redline*0.99,f));
+    if(f>=1)dynoSweep=null;
+    syncSliders();
+  }
   updateSound();
   // Under the title menu or the car showcase nothing of the app is on view, so it is not drawn: the bench keeps running
   // (and sounding) underneath, and the menu's pan has the frame to itself (build 237). The first frame after either
@@ -33877,7 +34474,7 @@ function loop(now){
   requestAnimationFrame(loop);
 }
 function appCovered(){const c=document.body.classList;return c.contains('title-open')||c.contains('showcase-open')||c.contains('guided-open');}
-bindControls();bindHybridPanel();bindHybMap();applyEngineToForm(Object.assign({},DEFAULT_ENGINE));buildEngine();
+bindControls();bindEcu();bindHybridPanel();bindHybMap();applyEngineToForm(Object.assign({},DEFAULT_ENGINE));buildEngine();
 applyVehicleToForm(DEFAULT_VEHICLE);buildVehicle();updateVehicleSummary();
 loadFromHash();   // open a shared build if the URL carries one
 applyLang(currentLang);   // localise the UI (persisted choice)
@@ -33898,5 +34495,6 @@ if('serviceWorker' in navigator && location.protocol.startsWith('http')){
   window.addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{}));
 }
 </script>
+<div id="modeCurtain" aria-hidden="true"></div>
 </body>
 </html>
