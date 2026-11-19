@@ -66,10 +66,13 @@ const DRIVE_G=9.81, DRIVE_RHO=1.20;
 //             second for a slip twice the target.
 //   ESP       van Zanten, Erhardt and Pfaff, "VDC, the vehicle dynamics control system of Bosch" (SAE 950759):
 //             the controller holds the car's slip angle and its yaw rate by braking single wheels. A real one must
-//             estimate the slip from its sensors; the model knows it. Against a spin: once the rear tyres slip more
-//             than espBeta (rad; by default the angle they peak at, atan(3 mu / C)), the outer front wheel is braked
-//             for the yaw moment Izz x excess / espTau^2. (Judged by the yaw rate instead, it brakes a hot lap's
-//             rear-drivers on 26-30% of it, with the toe of phase G5 or without: build 328. Left on the slip angle.) Against a push: the yaw rate the driver asks for is the
+//             estimate the slip from its sensors; the model knows it. Against a spin (build 380; van Zanten, "Bosch ESP
+//             systems: 5 years of experience", SAE 2000-01-1633): the yaw rate against the reference below, lagged
+//             as the car itself would follow it, by the single-track model's equivalent delay B/C - m v a/(Cr L)
+//             (Abe, Vehicle Handling Dynamics, ch. 3). Past it by espBand, the outer front wheel is braked for
+//             Izz x excess / espTau, while the rear tyres slip more than espBeta (rad; by default the angle they
+//             peak at, atan(3 mu / C)). (Without that gate, build 328 braked a hot lap's rear-drivers on 26-30% of
+//             it; with it, 2-6%, against 4-12% on the slip angle alone.) An electric car's regeneration is cut while it works (MSR). Against a push: the yaw rate the driver asks for is the
 //             steady turn of the car's own single-track model, v delta / (L (1 + K v^2)), K its understeer gradient
 //             from the tyres' cornering stiffness at the static loads and the toe's steady share (car.Kus, THE TOE), and never more than the grip can
 //             turn the car, mu g / v; short of it by espBand (rad/s) with the front tyres past their peak, the inner
@@ -194,7 +197,7 @@ function driveCar(){
   const aids=driveAids(v),cc=v.tyreCC||tyreCC(v.tireType),muR=tyreMu(v.FzRef,v.FzRef);
   // the axles' cornering stiffness at the static loads (N/rad), for the understeer gradient K = m/L^2 (b/Cf - a/Cr)
   const Cax=(W,ref)=>2*cc*(W/2)*(TYRE_CC_P2+1)/(TYRE_CC_P2+Math.pow(W/2/ref,2));
-  const Kus=v.mass/(L*L)*(b/Cax(v.mass*DRIVE_G*b/L,v.FzRefF||v.FzRef)-a/Cax(v.mass*DRIVE_G*a/L,v.FzRef));
+  const CaF=Cax(v.mass*DRIVE_G*b/L,v.FzRefF||v.FzRef),CaR=Cax(v.mass*DRIVE_G*a/L,v.FzRef),Kus=v.mass/(L*L)*(b/CaF-a/CaR);
   if(aids.espBeta==null)aids.espBeta=(aids.espSlide||1)*Math.atan(3*muR/cc);
   const body=driveBody(v,a,b),toe=driveToe(v);
   // the toe's steady share of the understeer gradient (THE TOE), to the same K: roll steer by each axle's roll on its
@@ -202,7 +205,7 @@ function driveCar(){
   // wheel's share of the side force, m (b, a) / (2 L) per unit ay
   const Ktoe=(toe.rsF*body.rrAyF+toe.rsR*body.rrAyR+(toe.csF*b+toe.csR*a)*v.mass/(2*L))/L;
   return {
-    aids,esp:!!aids.esp,Kus:Kus+Ktoe,...toe,pkF:Math.atan(3*tyreMu(v.FzRefF||v.FzRef,v.FzRefF||v.FzRef)/cc),
+    aids,esp:!!aids.esp,Kus:Kus+Ktoe,CaF,CaR,...toe,pkF:Math.atan(3*tyreMu(v.FzRefF||v.FzRef,v.FzRefF||v.FzRef)/cc),
     turbo:grid&&grid.laggy?driveTurbo(pt,grid):null,el,
     name:v.chLabel||'',m:v.mass,Izz:v.mass*a*b,a,b,h:v.cg,tF:v.trackF||v.track,tR:v.trackR||v.track,
     r:v.rTire,Iw:(v.wheelI||2)/4,
@@ -232,7 +235,7 @@ function driveCar(){
 // A car at rest, in neutral for a clutch car until the driver asks for a gear.
 function driveState(car){
   return {soc:car.el?car.el.soc0:0,eng:true,engT:0,Pm:0,shE:0,boost:0,t:0,x:0,y:0,psi:0,vx:0,vy:0,yaw:0,w:[0,0,0,0],we:car.idle*Math.PI/30,gear:1,shiftT:0,
-    axF:0,ayF:0,roll:0,rollV:0,pitch:0,pitchV:0,zu:[0,0,0,0],zuV:[0,0,0,0],heave:0,heaveV:0,rr:[0,0],al:[0,0,0,0],abs:[1,1,1,1],tcF:1,esp:[0,0,0,0],espF:1,clF:1,pull:false,firing:true,
+    axF:0,ayF:0,roll:0,rollV:0,pitch:0,pitchV:0,zu:[0,0,0,0],zuV:[0,0,0,0],heave:0,heaveV:0,rr:[0,0],al:[0,0,0,0],abs:[1,1,1,1],tcF:1,esp:[0,0,0,0],yawRef:0,espOver:false,espF:1,clF:1,pull:false,firing:true,
     ax:0,ay:0,Fz:[0,0,0,0],kappa:[0,0,0,0],alpha:[0,0,0,0],Fx:[0,0,0,0],Fy:[0,0,0,0],camber:[0,0,0,0],cg:[0,0,0,0],toe:[0,0,0,0],Fyw:[0,0,0,0],rpm:car.idle,speed:0,delta:0,steerTorque:0,handTorque:0};
 }
 // THE ELECTRIC SIDE AS PLAIN DATA (build 275): a hybrid's motor and pack, or an electric car's. null without one.
@@ -506,12 +509,13 @@ function driveSprint(car){
 }
 // FMVSS 126's sine with dwell, the rule a stability control is approved on (49 CFR 571.126): from 80 km/h off the
 // pedal, one cycle of a 0.7 Hz sine on the wheel with a 0.5 s hold at its second peak, at mult (up to 6.5) times the
-// steering that gives 0.3 g, and no more than 270 degrees at the hand wheel. It passes with the yaw rate under 35% of
+// steering that gives 0.3 g, and no more than 270 degrees at the hand wheel. With no mult, the final run (S7.9.4: the
+// greater of 6.5 x and 270 degrees). It passes with the yaw rate under 35% of
 // its peak 1 s after the steering ends and under 20% after 1.75 s, and 1.83 m moved sideways 1.07 s in.
 // Returns those, the most the car went sideways (deg) and its path [[x, y, heading]...] every 0.1 s.
 function driveSineDwell(car,mult){
   const s=driveRolling(car,80),v=80/3.6,L=car.a+car.b,T=1/0.7,t0=0.5,end=t0+T+0.5;
-  const A=Math.min((mult||6.5)*0.3*DRIVE_G*L*(1+car.Kus*v*v)/(v*v),car.steerLock*4.71/8.5);
+  const A6=0.3*DRIVE_G*L*(1+car.Kus*v*v)/(v*v),A270=car.steerLock*4.71/8.5,A=mult?Math.min(mult*A6,A270):Math.max(6.5*A6,A270);
   const st=t=>t<0?0:t<0.75*T?Math.sin(2*Math.PI*0.7*t):t<0.75*T+0.5?-1:t<T+0.5?Math.sin(2*Math.PI*0.7*(t-0.5)):0;
   let pk=0,y=0,r1=0,r175=0,beta=0,n=0;const path=[];
   while(s.t<end+2){const t=s.t-t0;stepCar(car,s,{steer:A*st(t)/car.steerLock,throttle:0,brake:0,gear:s.gear},0.005);
@@ -692,10 +696,19 @@ function stepCar(car,s,u,dt){
         // the grip is the tyres' own or, where the car is already turning harder (downforce, a banked dip), what it has shown
         const lim=Math.max(car.mu*gz,Math.abs(s.ayF))/s.vx,ref=Math.max(-lim,Math.min(lim,s.vx*delta/(L*Math.max(0.1,1+car.Kus*s.vx*s.vx))));
         // too little yaw counts only once the front tyres are past their peak, where more lock does nothing
-        const sg=Math.sign(ref),ex=(ref-s.yaw)*sg-A.espBand,aR=(s.alpha[2]+s.alpha[3])/2,bx=Math.abs(aR)-A.espBeta;
+        const sg=Math.sign(ref),ex=(ref-s.yaw)*sg-A.espBand;
         if(ex>0&&Math.abs(s.alpha[0]+s.alpha[1])/2>car.pkF)M+=sg*car.Izz*ex/A.espTau;
-        if(bx>0)M-=Math.sign(aR)*car.Izz*bx/(A.espTau*A.espTau);          // the rear sliding out: a moment against it
-      }
+        // too much yaw: more than the reference as the car itself would follow it, lagged by the single-track model's
+        // equivalent delay, tau = B/C - m v a/(Cr L) (Abe, Vehicle Handling Dynamics, ch. 3)
+        const v=s.vx,Cf=car.CaF,Cr=car.CaR,B=car.m*(car.a*car.a*Cf+car.b*car.b*Cr)+car.Izz*(Cf+Cr),
+          C=Cf*Cr*L*L/v*Math.max(0.1,1+car.Kus*v*v),tau=Math.max(h,B/C-car.m*v*car.a/(Cr*L));
+        s.yawRef+=(ref-s.yawRef)*Math.min(1,h/tau);
+        const sy=Math.sign(s.yaw),ox=(s.yaw-s.yawRef)*sy-A.espBand;
+        // the car turning faster than asked: a moment against it, once the rear tyres are past their peak (espBeta),
+        // where they hold no more
+        s.espOver=ox>0&&Math.abs(s.alpha[2]+s.alpha[3])/2>A.espBeta;
+        if(s.espOver)M-=sy*car.Izz*ox/A.espTau;
+      }else{s.yawRef=s.yaw;s.espOver=false;}
       if(M!==0){const fr=M*s.yaw<0,q=(fr?0:2)+(M>0?0:1);                   // against the yaw: an outer front wheel; with it: an inner rear
         eT[q]=Math.abs(M)/((fr?car.tF:car.tR)/2)*car.r;}
       s.espF=Math.max(0,Math.min(1,s.espF+(M!==0?-1:1)*h/A.espTau));
@@ -756,6 +769,9 @@ function stepCar(car,s,u,dt){
     // Regeneration is braking at the driven wheels alone, so the anti-lock system that eases a locking wheel's brake
     // eases the motor's braking by as much (every electric car cuts regeneration when its ABS works).
     if(car.el&&car.abs&&Tw<0){let m=1;for(let i=0;i<4;i++)if(drv[i])m=Math.min(m,s.abs[i]);Tw*=m;}
+    // and the stability control cuts it while it catches a spin (Bosch's drag-torque control, MSR: Bosch Automotive
+    // Handbook, "Electronic stability program"), so the driven rear tyres keep their side grip
+    if(car.el&&car.esp&&s.espOver&&Tw<0)Tw=0;
     // ---- wheels
     const Tbd=[0,0,0,0];                                                   // each wheel's torque reacting on the body (THE LINKS)
     for(let ax=0;ax<2;ax++){

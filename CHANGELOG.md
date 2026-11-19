@@ -18,6 +18,23 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 ## [Unreleased]
 
+### The stability control judges a spin by the yaw rate (build 380)
+
+- Plan small-physics step 5. `stepCar`'s ESP now compares the yaw rate with the steady single-track reference, lagged
+  by the model's equivalent delay B/C − m v a/(Cr L) (Abe, *Vehicle Handling Dynamics*, ch. 3; van Zanten, SAE
+  2000-01-1633), and brakes the outer front wheel for Izz × excess / espTau while the rear tyres are past their peak
+  slip angle (espBeta). Before, it braked by how far the rear slip angle was past espBeta.
+- An electric car's regeneration is cut while the ESP catches a spin (Bosch's drag-torque control, MSR). The regen
+  braking the lifted-off rear held the Model 3 sliding after the steering ended.
+- FMVSS 126 at the final run (270° of hand wheel), Model 3: yaw 0.10 / 0.01 of its peak at 1 / 1.75 s, 3.10 m across
+  (limits 0.35 / 0.20 / 1.83 m; was 0.46 at 1 s). `test174` now asserts all three there.
+- Share of a hot lap ('tech') with ESP braking a wheel: MX-5 2.0% (3.6% before), 911 GT3 4.6% (8.9%), Model 3 4.7%
+  (11.8%), Civic Type R 5.8% (7.7%). Yaw alone with the lag, without the rear-past-peak gate, gave 23–35%.
+- `test175` failed on `main`: the card's sine with dwell ran at 6.5×, where the Model 3 no longer spins with ESP off
+  (since build 354's tyres). The card now runs the final run (`driveSineDwell` with no multiple), where ESP off spins
+  and ESP on passes.
+- Fingerprint identical (stepCar only). Left open: the limit reading the surface (step 7); MSR for engine cars.
+
 ### AWD power-over on the S-route powerslide (build 379)
 
 - AWD cars take the RWD power-over path. Whether the rear slides depends on the centre coupling `stepCar` already models.

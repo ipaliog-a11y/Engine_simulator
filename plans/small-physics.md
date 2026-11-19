@@ -46,6 +46,11 @@ reporting its range. Sourcing is batched apart from physics.
 5. **ESP judges a spin by yaw rate**, with a lagged reference (van Zanten, Bosch, SAE 2000-01-1633), in place of
    the rear slip angle. The previous try (yaw alone, no lag) braked the MX-5 on 30% of a hot lap. Its limit reads the
    surface (needs 7).
+   *Build 380:* done. The yaw rate against the reference lagged by the single-track model's equivalent delay (Abe);
+   it brakes while the rear is past its peak; an EV's regen is cut while it works (MSR). Model 3 at FMVSS 126's final
+   run: yaw 0.10 / 0.01 of peak at 1 / 1.75 s, 3.10 m (was 0.46). Hot lap with ESP on: MX-5 2.0% of it (3.6% before),
+   911 GT3 4.6% (8.9%). Left open: the limit reading the surface
+   (7); MSR for engine cars.
 6. **Grip by camber** (`latCamberF` in the stepped car). Blocked on a driver who judges the car's own grip
    (`DRIVE_DRIVER` is a rule). Try after 5. If `test170` still strays past `OFF_KNOWN`, it stays named.
 
