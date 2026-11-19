@@ -18,6 +18,12 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 ## [Unreleased]
 
+### The bench shows heat, knock and a pull (build 392)
+
+- The exhaust manifold colour follows the gas temperature already computed for that rpm and load: dull at low power, towards yellow as it climbs from 500 C to 1100 C.
+- The cutaway leans with torque and rocks a little with cam overlap. A knock or misfire warning flashes. A blow-off puff, a nitrous plume and soot are drawn from the same flags the sim already sets. Reduced motion holds the warning still and skips the lean.
+- RUN PULL on the dyno opens the throttle and walks the brake from idle to redline. The power curve itself is unchanged.
+
 ### Each section and each card has its own bay (build 391)
 
 - BUILD shows the workshop, an electric build shows the service bay, TEST shows the garage and DRIVE shows the pit, as a strip under the section bar.

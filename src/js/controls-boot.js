@@ -90,6 +90,7 @@ function bindControls(){
   document.getElementById('btnImport').addEventListener('click',openFileDialog);
   document.getElementById('btnShare').addEventListener('click',shareBuild);
   document.getElementById('btnLogPull').addEventListener('click',logPull);
+  document.getElementById('btnDynoSweep').addEventListener('click',startDynoSweep);
   document.getElementById('btnClearPulls').addEventListener('click',clearPulls);
   document.getElementById('btnReportPng').addEventListener('click',exportDynoPNG);
   document.getElementById('btnReportPdf').addEventListener('click',exportDynoPDF);
@@ -326,6 +327,13 @@ function bindControls(){
   document.getElementById('btnBuild').addEventListener('click',()=>{buildEngine();flash(isElectric()?tr('DRIVE BUILT')+' • '+engine.score.peakKW+' kW':tr('ENGINE BUILT')+' • '+engine.displacement_L.toFixed(engine.displacement_L<1?2:1)+'L');setTab('dyno')});
   document.getElementById('btnDesignReset').addEventListener('click',()=>{applyEngineToForm(Object.assign({},DEFAULT_ENGINE));buildEngine();flash(tr('DESIGN RESET TO DEFAULTS'))});
 }
+let dynoSweep=null;
+function startDynoSweep(){
+  if(vizMode!=='dyno')setTab('dyno');
+  state.throttle=1;dynoSweep={t:0,dur:5};
+  syncSliders();
+  flash(tr('RUN PULL'));
+}
 function syncSliders(){
   document.getElementById('throttle').value=Math.round(state.throttle*100);
   document.getElementById('load').value=Math.round(state.load*100);
@@ -343,6 +351,14 @@ function loop(now){
   updatePhysics();
   stepWear(dt);
   obdStep(dt);
+  if(dynoSweep&&engine){
+    dynoSweep.t+=dt;
+    const f=clamp(dynoSweep.t/dynoSweep.dur,0,1);
+    state.throttle=1;
+    state.load=loadForRpm(lerp(engine.idleRpmEff||800,engine.redline*0.99,f));
+    if(f>=1)dynoSweep=null;
+    syncSliders();
+  }
   updateSound();
   // Under the title menu or the car showcase nothing of the app is on view, so it is not drawn: the bench keeps running
   // (and sounding) underneath, and the menu's pan has the frame to itself (build 237). The first frame after either
