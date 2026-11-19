@@ -18,6 +18,43 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 ## [Unreleased]
 
+### Off the track: gravel and grass roll against the car, bends get gravel traps, the ESP reads the surface (build 384)
+
+- The stepped car's wheels on soft ground now roll against it (`DRIVE_SOIL`, `driveRollF`). Gravel: Bekker's sinkage of
+  a rigid wheel (Wong, *Theory of Ground Vehicles*, ch. 2), with Wong's dry sand (Table 2.3) as a stand-in for trap
+  gravel (PROBABLE: no Bekker values for gravel were found). An M3's wheel sinks 86 mm and rolls against 0.27 of its
+  load, against 0.30 measured for car tyres on sand (Wong, Table 1.1). Grass: 0.08 (Wong, medium-hard soil).
+- `driveSurface` puts gravel where the circuit's picture draws a trap: outside a bend sharper than 33 m radius,
+  3.15–8.4 m past the edge (`SCENE_TRAP`, with the picture's curvature now shared as `sceneCurv`). The grip there is
+  gravel's (0.35/0.65), as before.
+- The ESP's yaw limit and the slip angles it judges "past the peak" now scale with the grip under the wheels. On wet
+  grass, a sine with dwell at 6.5× from 60 km/h: the Model 3 with ESP yaws at 6% of its peak 1 s after (on build 383:
+  89%, so the ESP did nothing). With ESP off: 98%.
+- Nothing in the app drives the stepped car on a surface yet, so the fingerprint is identical. In test206's driven lap
+  of 'tech' on its surface, the lap went from 77.86 to 77.90 s (4.8 s with a wheel on grass).
+- Left open: a painted kerb's grip and ribs, the picture's narrow gravel verge along the edge (grass here), wet ground's
+  own rolling resistance, and a tyre's stiffness on soft ground.
+
+### Hybrids on the economy roads run their own energy manager (build 383)
+
+- A hybrid on an economy challenge was priced as a plain engine (`ecoFuelKg`). Now `ecoHybrid` (`eco-run.js`) runs the
+  WLTC's charge-sustaining ECMS (`hybridCycle`, `fuel-cycle.js`) on the road's speed profile with its grade: electric
+  only, engine with load-point shifting, regen within the motor's and pack's limits (the `hybRegenTable` rule). It
+  starts warm at the tune's target charge and ends where it started (within 0.5% of the pack), or is charge-corrected
+  as on WLTC. The result shows fuel, pack energy out and back in, engine-off time and time over the hybrid's limits.
+- Alpine Pass at 125%, before → after (L/100 km): Ioniq 6.03 → 9.50, Prius 3.13 → 8.08, Qashqai e-POWER 2.31 → 10.77,
+  330e 5.17 → 15.42, 918 Spyder 14.37 → 25.43. The old figures were low: where a climb needed more than the engine alone
+  gives, the engine path fell back to "full load at 1100 rpm" fuel and charged the rest of the power to nobody.
+- Engine cars and EVs do not move; the fingerprint is identical (5208 values; WLTC hybrid cycles included: the road path
+  is behind a `prof` argument, and its 10 rpm × 1 Nm memo is off on WLTC).
+- Open: the speed profile is still the engine's eco driver, not hybrid-aware. Where a climb asks more than MG1/MG2
+  (power-split, at speed) or engine + motor allow, the engine is charged for the power on its best line anyway
+  (`limitShare`: Prius 36%, e-POWER 37%, 330e 15%, 918 12%, Ioniq 7% of the run). Plug-ins run charge-sustaining.
+  WLTC itself still uses the old flat-out fallback on its hardest steps (most on the Prius), left so WLTC does not move.
+- Against owner reports: at 200% pace (63 km/h) the Prius and Ioniq read 6.4 L/100 km on Alpine Pass; Prius owners
+  report 4.5–4.8 for whole mountain trips at the limits and 5.6 on a near-all-uphill stretch. Alpine is one-way and
+  climbing, so no descent pays it back; not a like-for-like figure.
+
 ### A handbrake for the stepped car and the drift challenge (build 382)
 
 - `stepCar` takes `u.handbrake` (0–1): brake torque on the rear wheels only, which the ABS does not ease (a lever on the
