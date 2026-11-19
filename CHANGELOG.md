@@ -18,7 +18,7 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 ## [Unreleased]
 
-### Ten more measured real circuits (build 385)
+### Ten more measured real circuits (build 386)
 
 - **+10 real circuits** (22 → 32): Moscow Raceway, Oschersleben and the Norisring from the remaining TUM
   CSVs (OSM bbox or circuit relation for geo; DEM heights as before); Daytona road course, Lime Rock,
@@ -26,6 +26,15 @@ they are accurate about *what* shipped but not about the day it shipped.
   (width = distance to left + right edge; already WGS84, no rigid fit).
 - Importer: OSM `type=circuit` relations; atlas `.surface.geojson` path. `test65` covers all 32.
 - Left open: Sebring / Watkins Glen / Long Beach (atlas seen-both edge coverage too low).
+
+### Vehicle-profile-art skill for factory showroom pictures (build 385)
+
+- New Cursor skill at `.cursor/skills/vehicle-profile-art/`: when a new factory car needs its
+  960×640 pixel-art side view, build the coastal-road prompt (S2000 style reference), generate,
+  post-process to PNG+WebP, and wire `CAR_ART` + both manifests.
+- Scripts: `build-prompt.mjs`, `postprocess.mjs` (classic 1152×864 crop or centre 3:2, nearest-neighbour
+  to 960×640), `validate-art.mjs`. Pairs with `import-vehicle` (that skill now points here for art).
+- `test234` checks the skill files and runs the three scripts against a temp frame and the S2000.
 
 ### Rich mixtures cool the exhaust; the ECU enriches to hold the turbine at 950 °C (build 384)
 

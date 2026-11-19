@@ -1,6 +1,6 @@
 # Real-circuit candidates (beyond the 22)
 
-Imported in build 385 (Tier A ready + Norisring relation path + Tier B adapter_needed).
+Imported in build 386 (Tier A ready + Norisring relation path + Tier B adapter_needed).
 Sebring / Watkins Glen / Long Beach stay on hold. `candidates.json` is the checklist this
 session used; `node research/tracks-candidates/validate.mjs` still checks its shape.
 
