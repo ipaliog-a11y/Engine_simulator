@@ -18,25 +18,25 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 ## [Unreleased]
 
-### The lap instruments show the shift and the brakes (build 393)
+### The lap instruments show the shift and the brakes (build 396)
 
 - The track replay draws eight shift lights over the rev counter: green, then amber, then red and cyan at the last two as the engine nears the redline. Reduced motion keeps the last two red.
 - A rotor hotter than 450 C, which the lap already records, lights a mark beside those lights.
 - The guide's LIVE page and the README now describe the four sections and the ECU laptop.
 
-### The bench shows heat, knock and a pull (build 392)
+### The bench shows heat, knock and a pull (build 395)
 
 - The exhaust manifold colour follows the gas temperature already computed for that rpm and load: dull at low power, towards yellow as it climbs from 500 C to 1100 C.
 - The cutaway leans with torque and rocks a little with cam overlap. A knock or misfire warning flashes. A blow-off puff, a nitrous plume and soot are drawn from the same flags the sim already sets. Reduced motion holds the warning still and skips the lean.
 - RUN PULL on the dyno opens the throttle and walks the brake from idle to redline. The power curve itself is unchanged.
 
-### Each section and each card has its own bay (build 391)
+### Each section and each card has its own bay (build 394)
 
 - BUILD shows the workshop, an electric build shows the service bay, TEST shows the garage and DRIVE shows the pit, as a strip under the section bar.
 - The engine preview's corner lamp follows the open card: block, head, air, flow, fuel, cooling, or the high-voltage bay.
 - VEHICLE can show the showroom photo or the car on a lift. The lift's lamp follows the open vehicle card.
 
-### An ECU laptop on the bench (build 390)
+### An ECU laptop on the bench (build 393)
 
 - LIVE and DYNO now carry a tuning laptop. F1 is a rolling scope (rpm, manifold pressure, lambda and knock on an engine; pack voltage, current, winding temperature and charge on an electric drive). FREEZE holds the trace.
 - F2 puts the fuel, spark and VE tables on the bench. The running cell stays outlined. −5, −1, +1 and +5 step the selected cell, and HOLD CELL sets the dyno brake from that cell's rpm. OPEN ECU MAPS on the fuel card comes straight here. On BUILD the tables stay where they were.
@@ -44,13 +44,49 @@ they are accurate about *what* shipped but not about the day it shipped.
 - F4 shows the live torque and power against the logged pull, or the speed, rpm and lateral g of a recorded lap.
 - On a phone the laptop is a drawer opened with ECU, so the throttle and the brake stay on screen.
 
-### BUILD, TEST and DRIVE stay apart on a phone and a wide screen (build 389)
+### BUILD, TEST and DRIVE stay apart on a phone and a wide screen (build 392)
 
 - The tab bar followed BUILD, then DRIVE, then TEST. It now follows the work: BUILD (engine, vehicle, parts, garage), TEST (live, dyno), DRIVE (track, race, championship, challenges), then GUIDE and OPTIONS.
 - The four-section bar is on every screen. On a tall window it sits under the engine and car strip. On a short or narrow window, including a phone turned sideways, it stays fixed at the bottom with one row of that section's tabs.
 - SAVE, LOAD, SAVE FILE, OPEN FILE and SHARE moved to FILE on that strip. DYNO's MORE menu keeps the bench controls.
 - The engine form scrolls with the page. On a wide monitor the cutaway stops at 560px tall so the bench controls stay on screen.
 - A short pixel curtain marks a change of section. It stays still when the system asks for reduced motion.
+
+### Fifty more title-screen rooms (build 391)
+
+- The menu still opens on the original four workshops, then cycles through **50 new pixel-art rooms** (54 in all). Each one is a different car in a different place: coastal boathouse, desert station, snow shed, night alley, barn, harbour, rooftop, forest service park, hangar, and the rest in `assets/landing/README.md`.
+- Same isometric style as the first four, 1920×1072 WebP. About 11 MB together.
+- Only the room on view, the next room, and during the fade the room before, keep a decoded picture. The others stay unloaded.
+- Left open: a few signs still carry a word the generator invented. Automatic cleanup also marked bodywork, so they were left. They are not maker logos. The original four still have their logos mosaicked by hand.
+
+### Off the track: gravel and grass roll against the car, bends get gravel traps, the ESP reads the surface (build 390)
+
+- The stepped car's wheels on soft ground now roll against it (`DRIVE_SOIL`, `driveRollF`). Gravel: Bekker's sinkage of
+  a rigid wheel (Wong, *Theory of Ground Vehicles*, ch. 2), with Wong's dry sand (Table 2.3) as a stand-in for trap
+  gravel (PROBABLE: no Bekker values for gravel were found). An M3's wheel sinks 86 mm and rolls against 0.27 of its
+  load, against 0.30 measured for car tyres on sand (Wong, Table 1.1). Grass: 0.08 (Wong, medium-hard soil).
+- `driveSurface` puts gravel where the circuit's picture draws a trap: outside a bend sharper than 33 m radius,
+  3.15–8.4 m past the edge (`SCENE_TRAP`, with the picture's curvature now shared as `sceneCurv`). The grip there is
+  gravel's (0.35/0.65), as before.
+- The ESP's yaw limit and the slip angles it judges "past the peak" now scale with the grip under the wheels. On wet
+  grass, a sine with dwell at 6.5× from 60 km/h: the Model 3 with ESP yaws at 6% of its peak 1 s after (on build 389:
+  89%, so the ESP did nothing). With ESP off: 98%.
+- Nothing in the app drives the stepped car on a surface yet, so the fingerprint is identical. In test206's driven lap
+  of 'tech' on its surface, the lap went from 77.86 to 77.90 s (4.8 s with a wheel on grass).
+- Left open: a painted kerb's grip and ribs, the picture's narrow gravel verge along the edge (grass here), wet ground's
+  own rolling resistance, and a tyre's stiffness on soft ground.
+### The VE table's mixture is read at its own exhaust, to convergence (build 389)
+
+Step 14 of `plans/small-physics.md`.
+- With a hand-tuned VE table the burned mixture is target × real VE / table VE, and the real VE's scavenging and
+  residual terms read the exhaust temperature, which reads the mixture. Build 305 read that VE at the *target's*
+  exhaust (one pass). Now `veMeteredAFR` iterates from the target until a step moves λ by under 1e-6 (`VE_LOOP_TOL`),
+  and `computeVE` reads the burned λ inside the loop; `veLoopLast` keeps the iteration count.
+- Default build, 4543 rpm / 1.1 bar: table 15 points low, 3 iterations, AFR 14.9313 → 14.9301; 15 points high,
+  3 iterations. The engine's VE now equals the one its mixture was metered at (to 1e-5).
+- Fingerprint identical (5208 values): an untouched table burns the target, so no preset moves; mean error against
+  published power unchanged. `test187` updated.
+- Left open: inside the loop the spark retard behind the exhaust temperature still reads the target mixture's knock.
 
 ### Real circuits stop sticking on an old service-worker cache (build 388)
 
@@ -59,6 +95,7 @@ they are accurate about *what* shipped but not about the day it shipped.
 - Cache bumped to `v6` (activate drops the stale store). That file is network-first like the
   page; fonts and icons stay cache-first. `test237` locks it.
 - Immediate workaround without this build: hard-refresh the Pages site, or clear site data for it.
+
 
 ### Championship seasons on top of RACE (build 387)
 
@@ -118,6 +155,7 @@ Step 13 of `plans/small-physics.md`, build 311's follow-up, on the owner's decis
   ~1100 °C, R34 ~1030 °C); lowering their boost waits until EGT's load factor (map/mapMax) is replaced by a derived one,
   since it, not the mixture, would do the cooling. Also open: the turbine's shaft balance still reads λ 1; rich products'
   higher cp is not counted (errs warm).
+
 ### Hybrids on the economy roads run their own energy manager (build 383)
 
 - A hybrid on an economy challenge was priced as a plain engine (`ecoFuelKg`). Now `ecoHybrid` (`eco-run.js`) runs the

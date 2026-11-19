@@ -1,70 +1,65 @@
-// Workshop bays follow the open card.
+// The ECU laptop on the bench (LIVE and DYNO).
 //
-// WHY THIS EXISTS. The engine preview was a dot grid, the same in every section. What must hold:
-//   · BUILD shows the workshop, TEST the garage and DRIVE the pit;
-//   · switching an engine card changes the bay key and the preview is not empty;
-//   · the vehicle BAY draws a car, and a phone width does too;
+// WHY THIS EXISTS. The fuel, spark and VE tables lived only on the ENGINE tab, and a fault's freeze
+// frame could not be put back on the brake. What must hold:
+//   · on LIVE the laptop is on the page and its scope draws a trace;
+//   · the live cell is marked, and HOLD CELL sets the brake from that cell's rpm;
+//   · REPRODUCE FREEZE FRAME puts the stored coolant on the bench slider;
 //   · no page errors.
 import { chromium } from './pw.mjs';
 import { fileURLToPath, pathToFileURL } from 'url';
 import path from 'path';
 const repo = fileURLToPath(new URL('..', import.meta.url));
 const browser = await chromium.launch();
-const fails = [], errors = [];
-const page = await browser.newPage({ viewport: { width: 1280, height: 800 } });
+const page = await browser.newPage({ viewport: { width: 1280, height: 900 } });
+const errors = [];
 page.on('pageerror', e => errors.push('pageerror: ' + e.message));
 await page.goto(pathToFileURL(path.join(repo, 'index.html')).href, { waitUntil: 'networkidle' });
-await page.evaluate(() => { const t = document.getElementById('titleScreen'); if (t) t.hidden = true; });
-await page.waitForTimeout(300);
+await page.evaluate(() => { const t = document.getElementById('titleScreen'); if (t) t.hidden = true; setTab('engine'); });
+await page.waitForTimeout(600);
+const fails = [];
 
-const room = async () => page.evaluate(() => getComputedStyle(document.getElementById('modeRoom')).backgroundImage);
-await page.evaluate(() => setTab('design'));
-const buildRoom = await room();
-await page.evaluate(() => setTab('engine'));
-const testRoom = await room();
-await page.evaluate(() => setTab('track'));
-const driveRoom = await room();
-console.log(buildRoom, testRoom, driveRoom);
-if (!/workshop-pickup/.test(buildRoom)) fails.push('BUILD has no workshop');
-if (!/garage-f355/.test(testRoom)) fails.push('TEST has no garage');
-if (!/pit-f355/.test(driveRoom)) fails.push('DRIVE has no pit');
-
-await page.evaluate(() => setTab('design'));
-await page.waitForTimeout(250);
-await page.click('#icdRb-head');
-await page.waitForTimeout(250);
-const head = await page.evaluate(() => {
-  const cv = document.getElementById('enginePreview');
-  const pix = cv.getContext('2d').getImageData(0, 0, cv.width, cv.height).data;
-  let ink = 0; for (let i = 0; i < pix.length; i += 16) if (pix[i] + pix[i + 1] + pix[i + 2] > 30) ink++;
-  return { bay: cv.dataset.bay, ink };
+const scope = await page.evaluate(() => {
+  const c = document.getElementById('ecuScope'), g = c.getContext('2d'), pix = g.getImageData(0, 0, c.width, c.height).data;
+  let ink = 0;
+  for (let i = 0; i < pix.length; i += 16) if (pix[i] > 20 || pix[i + 1] > 40) ink++;
+  return { shown: !document.getElementById('ecuComputer').hidden, ink };
 });
-console.log('head bay', head);
-if (head.bay !== 'ice:head') fails.push('head card bay is ' + head.bay);
-if (head.ink < 20) fails.push('engine preview is empty');
-await page.click('#icdRb-air');
-await page.waitForTimeout(200);
-const air = await page.evaluate(() => document.getElementById('enginePreview').dataset.bay);
-if (air !== 'ice:air') fails.push('air card bay is ' + air);
+console.log('scope', scope);
+if (!scope.shown) fails.push('the laptop is hidden on LIVE');
+if (scope.ink < 8) fails.push('the scope has no trace');
 
-await page.evaluate(() => setTab('vehicle'));
-await page.click('#btnVhBay');
-await page.waitForTimeout(250);
-const car = await page.evaluate(() => document.getElementById('vhBay').dataset.bay);
-console.log('car bay', car);
-if (!/^car:/.test(car || '')) fails.push('vehicle bay is ' + car);
-
-await page.setViewportSize({ width: 390, height: 800 });
-await page.waitForTimeout(300);
-const phone = await page.evaluate(() => {
-  const cv = document.getElementById('enginePreview');
-  return { bay: cv.dataset.bay, w: cv.width };
+await page.evaluate(() => {
+  document.getElementById('edAfrMode').value = 'auto';
+  document.getElementById('edAfrMode').dispatchEvent(new Event('change'));
+  buildEngine();
+  ecuScreen('maps');
 });
-await page.evaluate(() => setTab('design'));
 await page.waitForTimeout(300);
-const phoneBay = await page.evaluate(() => document.getElementById('enginePreview').dataset.bay);
-console.log('phone', phoneBay);
-if (!phoneBay) fails.push('phone preview has no bay');
+const hold = await page.evaluate(() => {
+  const cell = document.querySelector('#fuelMapBox td.fm-cell');
+  if (!cell) return { noCell: true };
+  cell.click();
+  document.getElementById('ecuHold').click();
+  const rpm = fmRpmAt(fmSel.c);
+  const want = Math.round(loadForRpm(Math.min(rpm, 0.99 * engine.redline)) * 100);
+  return { live: !!document.querySelector('#fuelMapBox td.live'), load: +document.getElementById('load').value, want, rpm };
+});
+console.log('hold', hold);
+if (hold.noCell) fails.push('no fuel cell to select');
+else {
+  if (!hold.live) fails.push('no live cell on the fuel map');
+  if (Math.abs(hold.load - hold.want) > 1) fails.push(`HOLD CELL set load ${hold.load}, wanted ${hold.want}`);
+}
+
+const ff = await page.evaluate(() => {
+  obd.codes.P0217 = { status: 'confirmed', clean: 0, newCycle: false, ff: { rpm: 3200, load: 40, map: 1.1, coolant: 112, lam: 1, boost: 0, volt: 13.4 } };
+  ecuScreen('diag');
+  document.querySelector('[data-ff="P0217"]').click();
+  return +document.getElementById('coolant').value;
+});
+console.log('freeze coolant', ff);
+if (ff !== 112) fails.push('freeze frame did not set the coolant to 112');
 
 await browser.close();
 if (errors.length) fails.push(...errors);
