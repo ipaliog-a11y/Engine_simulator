@@ -431,7 +431,9 @@ function driveLerp(xs,ys,x){
 // Left out, named: the grip by camber. The lap's law (latCamberF: CAMBER_LOSS a degree off CAMBER_BEST, by the axle's
 // outside wheel) cost the stepped car 1-6% of its skidpad grip, and the test driver, who takes the lap's speeds, then
 // left the line by up to 7.8 m and slid the Model 3 to 31 degrees (test170); it waits for a driver that judges the
-// car's own grip, and the camber's own aligning moment.
+// car's own grip, and the camber's own aligning moment. Tried again with the yaw-rate ESP (small-physics step 6): by
+// each wheel's own lean the 911 GT3 left the line (15 m, 68 deg); by each axle's outside wheel, as the lap has it,
+// 11.8 m and 41 deg, the Model 3 9.5 m and 38 deg, the Civic 7.9 m, against OFF_KNOWN's 4.8 m. Named until after v1.0.
 //   heave  (small-physics step 3) each wheel's own travel on the body moves its camber too, not only the axle's roll: the same
 //          swing arm, 1/fvsa a metre of travel (2 rec / t), the top inwards in bump, so heave and pitch camber the
 //          wheels as well (Reimpell, The Automotive Chassis, ch. 3, camber change over travel: PROBABLE as the roll's

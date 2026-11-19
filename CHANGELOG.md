@@ -18,6 +18,11 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 ## [Unreleased]
 
+### Grip by camber in the stepped car: tried, left named until after v1.0 (build 381)
+
+- Small-physics step 6 tried the lap's camber law (`latCamberF`) in the stepped car, now that the stability control judges by yaw rate. It still takes `test170`'s test driver past `OFF_KNOWN`: by each axle's outside wheel, as the lap has it, the 911 GT3 runs 11.8 m off the line and 41° sideways, the Model 3 9.5 m and 38°, the Civic 7.9 m, the WRX 6.6 m (caps 4–4.8 m); by each wheel's own lean the GT3 leaves the line.
+- By the owner's decision it is not shipped and `OFF_KNOWN` is not widened: the gap is named in `drive-model.js` (THE CAMBER) and in the plan, until after v1.0. It waits on a driver that judges the car's own grip. No numbers move.
+
 ### The stability control judges a spin by the yaw rate (build 380)
 
 - Plan small-physics step 5. `stepCar`'s ESP now compares the yaw rate with the steady single-track reference, lagged
