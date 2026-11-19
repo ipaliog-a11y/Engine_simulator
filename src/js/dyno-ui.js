@@ -326,9 +326,10 @@ function updateDashLamps(){
   if(po){po.disabled=false;po.title=car?tr('Switch the whole car off'):tr('Switch the engine off');}
 }
 function updateUI(){
+  if(typeof ecuTick==='function')ecuTick();
   updateHybridPanel();   // build 190: shown for a hybrid, hidden otherwise
   if(isElectric()){updateMotorUI();updateDashLamps();return;}
-  if(vizMode==='design')updateFuelMapMarker();
+  if(vizMode==='design'||(typeof ecuMapsOn==='function'&&ecuMapsOn()))updateFuelMapMarker();
   document.getElementById('valThrottle').textContent=Math.round(state.throttle*100);
   document.getElementById('valLoad').textContent=Math.round(state.load*100);
   document.getElementById('valElec').textContent=Math.round(state.elecLoad*100);
@@ -466,6 +467,7 @@ function setTab(mode){
   if(mode==='challenges'){buildVehicle();refreshChallenge();raceFillAdd('chalRankAddSel');}
   if(mode==='champ'){refreshChamp();}
   if(mode==='race'){const ts=document.getElementById('raceTrk');fillTrackSelect(ts,ts.value||trackKey);raceFillAdd();openRacePage(prevMode);renderRaceSetup();renderRacePanel(true);}
+  if(typeof ecuSync==='function')ecuSync();
   updateUI();
 }
 

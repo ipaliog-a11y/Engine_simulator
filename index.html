@@ -787,6 +787,23 @@ body.guided-open{overflow:hidden}
 #modeCurtain.go{animation:modeCurtain 180ms steps(4) forwards}
 @keyframes modeCurtain{0%{opacity:.4;clip-path:inset(0 0 100% 0)}100%{opacity:0;clip-path:inset(0)}}
 @media(prefers-reduced-motion:reduce){#modeCurtain.go{animation:none}}
+.ecu{margin-top:8px;background:#101018;border:4px solid #3a3a4a}
+.ecu-bezel{padding:8px}
+.ecu-top,.ecu-keys{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-bottom:6px}
+.ecu-top b{color:var(--mode-accent);font-weight:normal}
+.ecu-led{display:inline-flex;gap:4px;align-items:center;font-size:7px;color:#667}
+.ecu-led i{width:8px;height:8px;background:#222;border:1px solid #444}
+.ecu-led.on{color:#00ff88}.ecu-led.on i{background:#00ff88}
+.ecu-led#ecuLedKnock.on{color:#ffaa00}.ecu-led#ecuLedKnock.on i{background:#ffaa00}
+.ecu-led#ecuLedMil.on{color:#ff4444}.ecu-led#ecuLedMil.on i{background:#ff4444}
+.ecu-keys button.on{border-color:var(--mode-accent);color:var(--mode-accent)}
+#ecuScope{width:100%;height:auto;background:#04140c;border:2px solid #143}
+.ecu-read,.ecu-find{font-size:8px;line-height:1.6;color:#c8c8d8}
+[data-ecu-hide]{display:none!important}
+#btnEcu{position:fixed;right:8px;bottom:calc(66px + env(safe-area-inset-bottom,0px));z-index:32}
+@media(max-width:900px),(max-height:520px){
+  #ecuComputer.open{position:fixed;left:0;right:0;bottom:calc(58px + env(safe-area-inset-bottom,0px));z-index:31;max-height:58vh;overflow:auto;margin:0}
+}
 @media(pointer:coarse){
   .viz-tabs button,.viz-groups button,.build-strip button,.build-row button,.btn-row button,.field input,.field select{min-height:40px}
 }
@@ -844,7 +861,7 @@ body.guided-open{overflow:hidden}
 </div>
 <div class="container">
 <header>
-<h1>PIXEL POWERTRAIN v0.8 build 394</h1>
+<h1>PIXEL POWERTRAIN v0.8 build 395</h1>
 <div class="subtitle" id="subtitle">ENGINE DESIGNER • BUILD IT, THEN DRIVE IT</div>
 </header>
 <div class="build-strip" id="buildStrip">
@@ -886,6 +903,42 @@ body.guided-open{overflow:hidden}
 <button id="tabOptions" data-g="more">OPTIONS</button>
 </div>
 <canvas id="engineCanvas" width="640" height="420" role="img" aria-label="Engine test-bench schematic with live values"></canvas>
+<section id="ecuComputer" class="ecu" hidden>
+<div class="ecu-bezel">
+<div class="ecu-top"><b>ECU</b>
+<span class="ecu-led" id="ecuLedLink"><i></i>LINK</span>
+<span class="ecu-led" id="ecuLedLoop"><i></i>CLSD LOOP</span>
+<span class="ecu-led" id="ecuLedKnock"><i></i>KNOCK</span>
+<span class="ecu-led" id="ecuLedEgt"><i></i>EGT ENRICH</span>
+<span class="ecu-led" id="ecuLedMil"><i></i>MIL</span>
+</div>
+<div class="ecu-keys">
+<button type="button" data-ecu="scope">F1 SCOPE</button>
+<button type="button" data-ecu="maps">F2 MAPS</button>
+<button type="button" data-ecu="diag">F3 OBD</button>
+<button type="button" data-ecu="delta">F4 DELTA</button>
+</div>
+<div class="ecu-screen" data-ecu-screen="scope"><canvas id="ecuScope" width="480" height="140"></canvas><button type="button" id="ecuFreeze">FREEZE</button></div>
+<div class="ecu-screen" data-ecu-screen="maps" hidden>
+<div class="ecu-keys">
+<button type="button" data-ecu-map="fuel">FUEL</button>
+<button type="button" data-ecu-map="spark">SPARK</button>
+<button type="button" data-ecu-map="ve">VE</button>
+</div>
+<div id="ecuMapHost"></div>
+<div class="ecu-keys">
+<button type="button" id="ecuN5">−5</button>
+<button type="button" id="ecuN1">−1</button>
+<button type="button" id="ecuP1">+1</button>
+<button type="button" id="ecuP5">+5</button>
+<button type="button" id="ecuHold">HOLD CELL</button>
+</div>
+</div>
+<div class="ecu-screen" data-ecu-screen="diag" hidden><div id="ecuDiag"></div></div>
+<div class="ecu-screen" data-ecu-screen="delta" hidden><div id="ecuDelta" class="ecu-read"></div></div>
+</div>
+</section>
+<button type="button" id="btnEcu" hidden>ECU</button>
 <div class="design-panel" id="designPanel">
 <h3>ENGINE DESIGN</h3>
 <canvas id="enginePreview" class="pix-preview eng" role="img" aria-label="Pixel-art view of the engine as configured"></canvas>
@@ -973,6 +1026,7 @@ body.guided-open{overflow:hidden}
 <div class="field"><label for="edTiming">IGNITION CONTROL</label><select id="edTiming"><option value="fixed">FIXED (LOCKED)</option><option value="auto">AUTO (ECU / KNOCK-LIMITED)</option></select></div>
 <div class="field"><label for="edIgnAdv">IGNITION ADV (° BTDC)</label><input type="number" id="edIgnAdv" min="5" max="40" step="1" value="22"></div>
 <div class="field"><label for="edAfrMode">FUEL MIXTURE</label><select id="edAfrMode"><option value="fixed">MANUAL (FIXED AFR)</option><option value="auto">AUTO (ECU MAP)</option></select></div>
+<button type="button" id="btnOpenEcu" class="ice-only">OPEN ECU MAPS</button>
 </div></section>
 <section class="evd-card" id="icdCard-cool" data-card="cool"><div class="evd-fields">
 <div class="field"><label for="edRadiator">RADIATOR</label><select id="edRadiator"><option value="small">SMALL</option><option value="stock">STOCK</option><option value="large">LARGE</option></select><input type="hidden" id="edRadHp" value="0"></div>
@@ -985,6 +1039,7 @@ body.guided-open{overflow:hidden}
 <aside class="evd-side" id="icdSide"></aside>
 </div>
 
+<div id="ecuMapHome">
 <div class="design-section" id="fuelMapHdr">ECU Fuel Map (target AFR)</div>
 <div class="fuelmap-wrap" id="fuelMapBox"></div>
 <div class="fuelmap-edit" id="fuelMapEdit" style="display:none"><span id="fmSelInfo"></span><span class="fm-btns"><button type="button" id="fmLean">− LEAN</button><button type="button" id="fmRich">+ RICH</button><button type="button" id="fmReset">RESET MAP</button></span></div>
@@ -994,6 +1049,7 @@ body.guided-open{overflow:hidden}
 <div class="design-section" id="veMapHdr">ECU VE Table (the ECU's estimate, %)</div>
 <div class="fuelmap-wrap" id="veMapBox"></div>
 <div class="fuelmap-edit" id="veMapEdit" style="display:none"><span id="veSelInfo"></span><span class="fm-btns"><button type="button" id="veDown">− VE</button><button type="button" id="veUp">+ VE</button><button type="button" id="veReset">RESET MAP</button></span></div>
+</div>
 
 <div class="design-section">Hybrid</div>
 <div class="design-grid">
@@ -25406,9 +25462,10 @@ function updateDashLamps(){
   if(po){po.disabled=false;po.title=car?tr('Switch the whole car off'):tr('Switch the engine off');}
 }
 function updateUI(){
+  if(typeof ecuTick==='function')ecuTick();
   updateHybridPanel();   // build 190: shown for a hybrid, hidden otherwise
   if(isElectric()){updateMotorUI();updateDashLamps();return;}
-  if(vizMode==='design')updateFuelMapMarker();
+  if(vizMode==='design'||(typeof ecuMapsOn==='function'&&ecuMapsOn()))updateFuelMapMarker();
   document.getElementById('valThrottle').textContent=Math.round(state.throttle*100);
   document.getElementById('valLoad').textContent=Math.round(state.load*100);
   document.getElementById('valElec').textContent=Math.round(state.elecLoad*100);
@@ -25546,6 +25603,7 @@ function setTab(mode){
   if(mode==='challenges'){buildVehicle();refreshChallenge();raceFillAdd('chalRankAddSel');}
   if(mode==='champ'){refreshChamp();}
   if(mode==='race'){const ts=document.getElementById('raceTrk');fillTrackSelect(ts,ts.value||trackKey);raceFillAdd();openRacePage(prevMode);renderRaceSetup();renderRacePanel(true);}
+  if(typeof ecuSync==='function')ecuSync();
   updateUI();
 }
 
@@ -33426,6 +33484,171 @@ function bindGuided(){
     gbBack();e.preventDefault();e.stopPropagation();
   },true);
 }
+// The bench laptop: a scope, the fuel/spark/VE tables, the fault list and a pull or lap delta.
+// It reads the running state. It does not change the engine model.
+const ECU_N=600;
+const ecu={screen:'scope',map:'fuel',freeze:false,buf:[]};
+function ecuNarrow(){return matchMedia('(max-width: 900px), (max-height: 520px)').matches;}
+function ecuWants(){return ['engine','dyno','track','challenges'].includes(vizMode);}
+function ecuMapsOn(){const el=document.getElementById('ecuComputer');return !!(el&&!el.hidden&&ecu.screen==='maps');}
+function ecuSync(){
+  const el=document.getElementById('ecuComputer'),btn=document.getElementById('btnEcu');
+  const want=ecuWants(),narrow=ecuNarrow();
+  if(btn)btn.hidden=!(want&&narrow);
+  if(!el)return;
+  el.hidden=!(want&&(!narrow||el.classList.contains('open')));
+  ecuPlaceMaps();
+  if(ecu.screen==='diag'&&!el.hidden)ecuRenderDiag();
+  if(ecu.screen==='delta'&&!el.hidden)ecuRenderDelta();
+}
+function ecuScreen(name){
+  ecu.screen=name;
+  document.querySelectorAll('[data-ecu-screen]').forEach(s=>s.hidden=s.dataset.ecuScreen!==name);
+  document.querySelectorAll('[data-ecu]').forEach(b=>b.classList.toggle('on',b.dataset.ecu===name));
+  ecuSync();
+}
+function ecuPlaceMaps(){
+  const home=document.getElementById('ecuMapHome'),host=document.getElementById('ecuMapHost');
+  const el=document.getElementById('ecuComputer');
+  if(!home||!host||!el)return;
+  const docked=!el.hidden&&ecu.screen==='maps';
+  const to=docked?host:home,from=docked?home:host;
+  while(from.firstChild)to.appendChild(from.firstChild);
+  ['fuel','spark','ve'].forEach(k=>{
+    ['MapHdr','MapBox','MapEdit'].forEach(suf=>{
+      const n=document.getElementById(k+'Map'+suf.slice(3));
+      if(!n)return;
+      if(!docked||k===ecu.map)delete n.dataset.ecuHide;else n.dataset.ecuHide='1';
+    });
+  });
+}
+function ecuSel(){return ecu.map==='spark'?skSel:ecu.map==='ve'?veSel:fmSel;}
+function ecuNudge(steps){
+  if(!ecuSel()){flash(tr('Tap a cell to select'));return;}
+  if(ecu.map==='fuel')adjustFmCell((engine.ci?0.08:0.02)*steps);
+  else if(ecu.map==='spark')adjustSkCell(steps);
+  else adjustVeCell(steps);
+}
+function ecuHold(){
+  const sel=ecuSel();
+  if(!sel||!engine){flash(tr('Tap a cell to select'));return;}
+  const rpm=fmRpmAt(sel.c),aim=Math.min(rpm,0.99*engine.redline);
+  state.load=loadForRpm(aim);
+  state.throttle=clamp(fmMapAtRC(sel.r,sel.c)/Math.max(0.4,engine.mapMax||1),0.08,1);
+  if(typeof syncSliders==='function')syncSliders();
+  if(vizMode!=='engine')setTab('engine');
+  flash(tr('HOLD CELL')+' • '+Math.round(rpm)+' rpm');
+}
+function ecuSample(){
+  if(ecu.freeze||!engine)return;
+  const ev=typeof isElectric==='function'&&isElectric();
+  const row=ev
+    ?[state.systemVoltage||0,state.battI||0,state.mT?state.mT.w:0,(state.soc||0)*100]
+    :[state.rpm||0,state.map||1,(engine.stoichAFR?state.afr/engine.stoichAFR:1),state.knockRisk||0];
+  ecu.buf.push(row);
+  if(ecu.buf.length>ECU_N)ecu.buf.shift();
+}
+function ecuDrawScope(){
+  const c=document.getElementById('ecuScope');if(!c||ecu.buf.length<2)return;
+  const g=c.getContext('2d'),w=c.width,h=c.height,still=matchMedia('(prefers-reduced-motion: reduce)').matches;
+  g.fillStyle='#04140c';g.fillRect(0,0,w,h);
+  const cols=['#00ff88','#ffcc00','#00ccff','#ff6666'];
+  const src=still?[ecu.buf[ecu.buf.length-1]]:ecu.buf;
+  for(let ch=0;ch<4;ch++){
+    let lo=Infinity,hi=-Infinity;
+    ecu.buf.forEach(row=>{lo=Math.min(lo,row[ch]);hi=Math.max(hi,row[ch]);});
+    if(!(hi>lo)){lo-=1;hi+=1;}
+    g.strokeStyle=cols[ch];g.beginPath();
+    src.forEach((row,i)=>{
+      const x=src.length<2?w/2:i/(src.length-1)*(w-8)+4;
+      const y=h-8-(row[ch]-lo)/(hi-lo)*(h-16);
+      if(i)g.lineTo(x,y);else g.moveTo(x,y);
+    });
+    if(src.length<2){g.lineTo(w-4,h/2);g.moveTo(4,h/2);}
+    g.stroke();
+  }
+}
+function ecuLeds(){
+  const set=(id,on)=>{const n=document.getElementById(id);if(n)n.classList.toggle('on',!!on);};
+  if(!engine)return;
+  set('ecuLedLink',state.firing||state.ignOn);
+  set('ecuLedLoop',engine.afrMode==='auto'&&state.coolant>70);
+  set('ecuLedKnock',state.knockRisk>40);
+  let base=state.afr;
+  try{base=mappedAFR(state.rpm,state.map);}catch(e){}
+  set('ecuLedEgt',engine.intake==='turbo'&&state.afr<base-0.2);
+  const mil=typeof obdLamp==='function'?obdLamp():'';
+  set('ecuLedMil',mil==='on'||mil==='flash');
+}
+function ecuRenderDiag(){
+  const box=document.getElementById('ecuDiag');if(!box)return;
+  const d=typeof diagnoseEngine==='function'?diagnoseEngine():{findings:[]};
+  let h='';
+  (d.findings||[]).forEach(f=>{h+='<p class="ecu-find"><b>'+f.title+'</b><br>'+f.detail+'</p>';});
+  const keys=typeof obd!=='undefined'&&obd.codes?Object.keys(obd.codes):[];
+  if(!keys.length)h+='<p>'+tr('No codes stored.')+'</p>';
+  keys.forEach(k=>{h+='<p class="ecu-find"><b>'+k+'</b> <button type="button" data-ff="'+k+'">'+tr('REPRODUCE FREEZE FRAME')+'</button></p>';});
+  box.innerHTML=h;
+}
+function ecuReproduce(k){
+  const f=obd.codes[k]&&obd.codes[k].ff;if(!f||!engine)return;
+  state.load=loadForRpm(Math.min(f.rpm,0.99*engine.redline));
+  state.coolant=f.coolant;
+  if(engine.afrMode!=='auto')state.afr=f.lam*(engine.stoichAFR||14.7);
+  state.throttle=clamp((f.map||1)/Math.max(0.4,engine.mapMax||1),0.08,1);
+  if(typeof syncSliders==='function')syncSliders();
+  if(vizMode!=='engine'&&vizMode!=='dyno')setTab('engine');
+  flash(tr('FREEZE FRAME')+' • '+k);
+}
+function ecuRenderDelta(){
+  const box=document.getElementById('ecuDelta');if(!box)return;
+  if((vizMode==='track'||vizMode==='challenges')&&lapResult&&typeof replayAt==='function'){
+    const s=replayAt(lapResult,(typeof lapReplay!=='undefined'&&lapReplay.t)||0);
+    box.textContent=Math.round(s.v)+' km/h • '+Math.round(s.rpm)+' rpm • G'+s.gear+' • '+s.gLat.toFixed(2)+' g';
+    return;
+  }
+  const pull=dynoPulls&&dynoPulls[0];
+  if(!pull){box.textContent=tr('Log a pull to compare.');return;}
+  const pts=pull.pts,rpm=state.rpm;let i=0;while(i<pts.length-1&&pts[i+1].rpm<rpm)i++;
+  const a=pts[i],b=pts[Math.min(pts.length-1,i+1)],f=b.rpm===a.rpm?0:(rpm-a.rpm)/(b.rpm-a.rpm);
+  const hp=a.powerHP+(b.powerHP-a.powerHP)*f,tq=a.torque+(b.torque-a.torque)*f;
+  box.textContent='dHP '+(state.powerHP-hp).toFixed(1)+' • dNm '+(state.torque-tq).toFixed(1);
+}
+function ecuTick(){
+  const el=document.getElementById('ecuComputer');
+  if(!el||el.hidden)return;
+  ecuSample();ecuLeds();
+  if(ecu.screen==='scope')ecuDrawScope();
+  if(ecu.screen==='maps'&&typeof updateFuelMapMarker==='function')updateFuelMapMarker();
+}
+function bindEcu(){
+  const el=document.getElementById('ecuComputer');if(!el)return;
+  el.addEventListener('click',e=>{
+    const scr=e.target.closest('[data-ecu]');if(scr){ecuScreen(scr.dataset.ecu);return;}
+    const mp=e.target.closest('[data-ecu-map]');if(mp){ecu.map=mp.dataset.ecuMap;ecuPlaceMaps();return;}
+    const ff=e.target.closest('[data-ff]');if(ff)ecuReproduce(ff.dataset.ff);
+  });
+  document.getElementById('ecuFreeze').addEventListener('click',()=>{ecu.freeze=!ecu.freeze;document.getElementById('ecuFreeze').classList.toggle('on',ecu.freeze);});
+  document.getElementById('ecuN5').addEventListener('click',()=>ecuNudge(-5));
+  document.getElementById('ecuN1').addEventListener('click',()=>ecuNudge(-1));
+  document.getElementById('ecuP1').addEventListener('click',()=>ecuNudge(1));
+  document.getElementById('ecuP5').addEventListener('click',()=>ecuNudge(5));
+  document.getElementById('ecuHold').addEventListener('click',ecuHold);
+  const open=document.getElementById('btnOpenEcu');
+  if(open)open.addEventListener('click',()=>{setTab('engine');ecuScreen('maps');});
+  const tog=document.getElementById('btnEcu');
+  if(tog)tog.addEventListener('click',()=>{el.classList.toggle('open');ecuSync();});
+  document.addEventListener('keydown',e=>{
+    if(!ecuMapsOn()||e.target.closest('input,select,textarea'))return;
+    const sel=ecuSel();if(!sel)return;
+    const move={ArrowLeft:[-1,0],ArrowRight:[1,0],ArrowUp:[0,1],ArrowDown:[0,-1]}[e.key];
+    if(!move)return;
+    e.preventDefault();
+    const c=sel.c+move[0],r=sel.r+move[1];
+    if(ecu.map==='spark')selectSkCell(c,r);else if(ecu.map==='ve')selectVeCell(c,r);else selectFmCell(c,r);
+  });
+  ecuScreen('scope');
+}
 function bindControls(){
   // Throttle & load are fractions (0..1); AFR/temps are direct values.
   document.getElementById('throttle').addEventListener('input',e=>state.throttle=(+e.target.value)/100);
@@ -33786,7 +34009,7 @@ function loop(now){
   requestAnimationFrame(loop);
 }
 function appCovered(){const c=document.body.classList;return c.contains('title-open')||c.contains('showcase-open')||c.contains('guided-open');}
-bindControls();bindHybridPanel();bindHybMap();applyEngineToForm(Object.assign({},DEFAULT_ENGINE));buildEngine();
+bindControls();bindEcu();bindHybridPanel();bindHybMap();applyEngineToForm(Object.assign({},DEFAULT_ENGINE));buildEngine();
 applyVehicleToForm(DEFAULT_VEHICLE);buildVehicle();updateVehicleSummary();
 loadFromHash();   // open a shared build if the URL carries one
 applyLang(currentLang);   // localise the UI (persisted choice)
