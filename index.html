@@ -487,7 +487,7 @@ table.hy-map td:focus{outline:2px solid #ffcc00;outline-offset:-2px}
 .title-screen[hidden]{display:none!important}
 .title-stage{grid-row:1;position:relative;min-height:0;background:#1b2433;overflow:hidden}
 .title-dock{grid-row:2;padding:14px 16px 16px;background:linear-gradient(180deg,#1a1a2e 0%,#0a0a12 100%);border-top:4px solid #333}
-/* the four rooms, stacked (build 237): the one on view fades in over the one before; each walks by its own transform */
+/* the rooms, stacked (build 237): the one on view fades in over the one before; each walks by its own transform */
 .title-room{position:absolute;display:block;max-width:none;user-select:none;pointer-events:none;opacity:0;will-change:transform,opacity;backface-visibility:hidden}
 .title-room.on{opacity:1;transition:opacity .7s linear}
 @media(prefers-reduced-motion:reduce){.title-room.on{transition:none}}
@@ -869,7 +869,7 @@ body[data-group="more"] .mode-room{display:none}
 </div>
 <div class="container">
 <header>
-<h1>PIXEL POWERTRAIN v0.8 build 391</h1>
+<h1>PIXEL POWERTRAIN v0.8 build 394</h1>
 <div class="subtitle" id="subtitle">ENGINE DESIGNER • BUILD IT, THEN DRIVE IT</div>
 </header>
 <div class="build-strip" id="buildStrip">
@@ -10561,7 +10561,7 @@ function computeVE(rpm,map){
   // These four lines replace EXHAUST{topGain,lowLoss} and CAM{scav,lowLoss} — four fitted numbers
   // for two physical effects. Both waves swing both ways, so a badly matched pipe COSTS VE here.
   if(engine.primL){
-    const chargeK=effIAT(map,rpm)+273.15, Tex=egtAt(rpm,map);
+    const chargeK=effIAT(map,rpm)+273.15, Tex=egtAt(rpm,map,_veLam);   // _veLam: the burned mixture, inside the VE loop
     // The intake stroke, integrated (build 121, intakeFill): the late-IVC loss, the column's momentum and
     // the runner's tuning in one. Until build 121 the geometric trapping loss and a ram wave that could
     // only repay it.
@@ -11156,10 +11156,14 @@ function renderSparkMap(){
 // computeVE at each breakpoint and the engine reads no table at all, so it moves no number. Diesels meter fuel by
 // quantity, not by an air estimate, and show no table. (The owner's choice, November 2026; plans/road-to-v1.md, G.)
 const VE_TMIN=0.20,VE_TMAX=1.60;   // editable bounds of the table's VE: past these no real engine breathes
-// computeVE sets boostNow, and reads the exhaust's temperature (its scavenging), which reads the mixture: inside it the
-// mixture is the target's, so the loop closes once (open: the real VE at the burned mixture's exhaust temperature).
-let _veIn=false;
-const veTrue=(rpm,map)=>{const b=engine.boostNow;_veIn=true;try{return computeVE(rpm,map);}finally{_veIn=false;engine.boostNow=b;}};
+// computeVE sets boostNow, and its scavenging and residual terms read the exhaust's temperature, which reads the mixture.
+// Build 305 read it at the target's, so the loop closed once. Now (build 389, plans/small-physics.md 14) the mixture is the
+// one burned: lambda_b = target x VE(T_ex(lambda_b)) / table VE, iterated from the target until a step moves lambda by
+// less than VE_LOOP_TOL. A leaner mixture runs a hotter exhaust, which scavenges and leaves residual differently, so the
+// real VE (and the mixture) moves by ~0.1-1%; the loop contracts fast (2-4 iterations: veLoopLast holds the count).
+let _veIn=false,_veLam=null,veLoopLast=null;
+const VE_LOOP_TOL=1e-6,VE_LOOP_MAX=30;
+const veTrue=(rpm,map,lam)=>{const b=engine.boostNow,l=_veLam;_veIn=true;_veLam=lam>0?lam:null;try{return computeVE(rpm,map);}finally{_veIn=false;_veLam=l;engine.boostNow=b;}};
 function veTableAt(rpm,map){
   const fc=clamp((rpm-1000)/Math.max(1,engine.redline-1000)*(FM_COLS-1),0,FM_COLS-1),fr=fmRowOf(rpm,map);
   const c0=Math.floor(fc),c1=Math.min(c0+1,FM_COLS-1),tc=fc-c0,r0=Math.floor(fr),r1=Math.min(r0+1,FM_ROWS-1),t=fr-r0,g=veMap;
@@ -11167,7 +11171,11 @@ function veTableAt(rpm,map){
 }
 function veMeteredAFR(rpm,map,afr){
   if(!veMapCustom||!veMap||engine.ci||_veIn)return afr;
-  return afr*veTrue(rpm,map)/Math.max(0.05,veTableAt(rpm,map));
+  const st=engine.stoichAFR,k=afr/st/Math.max(0.05,veTableAt(rpm,map));
+  let lam=afr/st,d=Infinity,n=0;
+  while(n<VE_LOOP_MAX&&d>=VE_LOOP_TOL){const nx=k*veTrue(rpm,map,lam);d=Math.abs(nx-lam);lam=nx;n++;}
+  veLoopLast={iters:n,dLam:d,converged:d<VE_LOOP_TOL};
+  return lam*st;
 }
 function generateVeMap(){
   const g=[];for(let r=0;r<FM_ROWS;r++){const row=[];for(let c=0;c<FM_COLS;c++)row.push(+veTrue(fmRpmAt(c),fmMapAt(r)).toFixed(3));g.push(row);}
@@ -14669,6 +14677,7 @@ const DRIVE_G=9.81, DRIVE_RHO=1.20;
 //             rear wheel is braked for Izz x shortfall / espTau. With espCut the throttle closes over espTau while
 //             it works. Off below espVmin. espBand, espTau and espVmin are a calibration (probable: no maker
 //             publishes its own).
+//             Its grip, and the angles the tyres peak at, are those of what the wheels stand on (THE SURFACE, THE SOIL).
 // Which cars have what: traction control is the preset's (vehicle.tc). No preset says yet whether a car had ABS or
 // ESP: ABS is taken as fitted, and ESP as fitted where traction control is (it works through the same hardware).
 const DRIVE_AIDS={abs:true,absSlip:[1,1],absRel:25,absApp:12,tcSlip:1,tcGain:12,
@@ -14798,7 +14807,7 @@ function driveCar(){
     aids,esp:!!aids.esp,Kus:Kus+Ktoe,CaF,CaR,...toe,pkF:Math.atan(3*tyreMu(v.FzRefF||v.FzRef,v.FzRefF||v.FzRef)/cc),
     turbo:grid&&grid.laggy?driveTurbo(pt,grid):null,el,
     name:v.chLabel||'',m:v.mass,Izz:v.mass*a*b,a,b,h:v.cg,tF:v.trackF||v.track,tR:v.trackR||v.track,
-    r:v.rTire,Iw:(v.wheelI||2)/4,
+    r:v.rTire,tw:(v.tireWidth||225)/1000,Iw:(v.wheelI||2)/4,
     mu:muR,muF:tyreMu(v.FzRefF||v.FzRef,v.FzRefF||v.FzRef),FzRef:v.FzRef,FzRefF:v.FzRefF||v.FzRef,
     loadSens:LOAD_SENS,muX:TYRE_MU_X,cc,ccP2:TYRE_CC_P2,slipOpt:TYRE_SLIP_OPT,slipC:TYRE_SLIP_C,relax:v.rTire,
     cdA:v.cdA,clA:v.clA||0,aeroBal:v.aeroBal==null?0.5:v.aeroBal,crr:v.crr,
@@ -15136,25 +15145,46 @@ function driveLine(lap){return lap.track.line.map((q,i)=>({x:q.x,y:q.y,v:lap.v[i
 //           is PROBABLE: no measurement of it was found.
 //   kerbs   the lap's own (kerbZones, build 217: the FIA's 5 cm Vallelunga and Melbourne ramps, 0.8 m wide), outside
 //           the track's edge; beyond a kerb, or the edge where there is none, grass at the height the kerb left it.
+//   traps   gravel where the circuit's picture draws a trap (SCENE_TRAP: outside a bend, 3.15-8.4 m past the edge),
+//           wet or dry alike (a trap drains; PROBABLE).
+//   rolling a wheel on grass or gravel rolls against the ground as well as its own tyre (DRIVE_SOIL).
 //   bumps   ISO 8608's road, Gd(n) = Gd(n0) (n/n0)^-2 over the standard's own band, 0.011-2.83 cycle/m, at the Gd(n0)
 //           the lap takes for the circuit (TRACK_ROAD), as a sum of 48 waves of fixed phases (a wave's amplitude is the
 //           root of 2 Gd dn). One profile under the left wheels and one under the right, so a rear wheel meets what
 //           the front met a wheelbase earlier.
-// OPEN: the rolling resistance of grass and gravel (Bosch's handbook has figures; not read here), a painted kerb's
-// grip and its ribs, the bumps of grass, how alike the left and right profiles are at long waves (apart here), a
-// tyre's stiffness on soft ground, and aquaplaning. The stability control still takes dry asphalt for its limit.
+// OPEN: a painted kerb's grip and its ribs, the bumps of grass, the narrow gravel verge the picture draws along the
+// edge (grass here), how alike the left and right profiles are at long waves (apart here), a tyre's stiffness on soft
+// ground, wet ground's own rolling resistance, and aquaplaning.
 const DRIVE_SURFACE={asphalt:1,wet:0.50/0.65,gravel:0.35/0.65,grass:0.37/0.65,grassWet:0.22/0.65};
+// THE SOIL (small-physics step 7): the rolling resistance of the ground a wheel stands on, in place of the tyre's own
+// (car.crr) on a hard road.
+//   gravel  Bekker's sinkage of a rigid wheel (Wong, Theory of Ground Vehicles, ch. 2): the pressure under it
+//           p = (kc/b + kphi) z^n sinks it by z0 = [3 W / ((3-n)(kc + b kphi) sqrt D)]^(2/(2n+1)), and the work of
+//           pressing the rut gives Rc = (kc + b kphi) z0^(n+1) / (n+1); b the tyre's width, D its diameter. A tyre
+//           counts as rigid while its inflation holds more than the ground under it (here ~115 kPa against ~220).
+//           The ground is Wong's dry sand (Table 2.3, Land Locomotion Lab: n 1.1, kc 0.99 kN/m^(n+1), kphi
+//           1528.43 kN/m^(n+2)), as a trap's loose rounded gravel: PROBABLE, no Bekker values for gravel were found.
+//           A car's wheel (4 kN, 225 mm, 0.63 m) gives 0.29 of its load, against 0.30 measured for car tyres on sand
+//           (Wong, Table 1.1).
+//   grass   a circuit's verge as firm ground: car tyres on medium-hard soil, 0.08 of the load (Wong, Table 1.1;
+//           Bosch's handbook gives a field 0.1-0.35). PROBABLE that a mown verge is medium-hard.
+const DRIVE_SOIL={gravel:{n:1.1,kc:0.99e3,kphi:1528.43e3},grass:{f:0.08}};
+// A wheel's rolling resistance (N) under load Fz on soil (null: the road).
+function driveRollF(car,Fz,soil){if(!soil)return car.crr*Fz;if(soil.f!=null)return soil.f*Fz;if(!(Fz>0))return 0;
+  const b=car.tw||0.225,D=2*car.r,k=soil.kc+b*soil.kphi,n=soil.n;
+  const z0=Math.pow(3*Fz/((3-n)*k*Math.sqrt(D)),2/(2*n+1));return k*Math.pow(z0,n+1)/(n+1);}
 // A lap's circuit as plain data: its centreline, edges and kerbs, gd its road's Gd(n0) (m3; 0 is smooth), wet or dry.
-function driveSurface(lap,gd,wet){const T=lap.track,c=T.pts,K=T.kerbs,n=c.length,arc=[0],W=[];
+function driveSurface(lap,gd,wet){const T=lap.track,c=T.pts,K=T.kerbs,n=c.length,arc=[0],W=[],cv=sceneCurv(c);
   for(let i=1;i<n;i++)arc.push(arc[i-1]+Math.hypot(c[i].x-c[i-1].x,c[i].y-c[i-1].y));
   if(gd>0)for(let k=0;k<48;k++){const lo=0.011*Math.pow(2.83/0.011,k/48),hi=0.011*Math.pow(2.83/0.011,(k+1)/48),nk=Math.sqrt(lo*hi);
     const ph=q=>{const x=Math.sin(12.9898*(k+1)+78.233*q)*43758.5453;return 2*Math.PI*(x-Math.floor(x));};   // fixed, so a lap repeats
     W.push([2*Math.PI*nk,Math.sqrt(2*gd*0.01/(nk*nk)*(hi-lo)),ph(1),ph(2)]);}
   return {x:c.map(q=>q.x),y:c.map(q=>q.y),nx:c.map(q=>q.nx),ny:c.map(q=>q.ny),hw:c.map(q=>q.hw!=null?q.hw:T.width/2),arc,
-    P:K?Array.from(K.P):null,N:K?Array.from(K.N):null,kw:KERB_W,waves:W,road:wet?DRIVE_SURFACE.wet:1,off:wet?DRIVE_SURFACE.grassWet:DRIVE_SURFACE.grass};}
-// The road under the four wheels of a car at s: {z, grip} for u.road. It reads only its arguments; m is its memory ({i},
+    P:K?Array.from(K.P):null,N:K?Array.from(K.N):null,kw:KERB_W,waves:W,road:wet?DRIVE_SURFACE.wet:1,off:wet?DRIVE_SURFACE.grassWet:DRIVE_SURFACE.grass,
+    trap:cv.map(k=>Math.abs(k)<SCENE_TRAP.curv?0:k>=0?-1:1),trapIn:SCENE_TRAP.in,trapOut:SCENE_TRAP.out,gravel:DRIVE_SURFACE.gravel};}
+// The road under the four wheels of a car at s: {z, grip, soil} for u.road (soil: DRIVE_SOIL's, or null on the road). It reads only its arguments; m is its memory ({i},
 // the centreline point the car is at).
-function driveRoadAt(S,car,s,m){const n=S.x.length,z=[0,0,0,0],grip=[1,1,1,1],c=Math.cos(s.psi),sn=Math.sin(s.psi);
+function driveRoadAt(S,car,s,m){const n=S.x.length,z=[0,0,0,0],grip=[1,1,1,1],soil=[null,null,null,null],c=Math.cos(s.psi),sn=Math.sin(s.psi);
   const d2=i=>(s.x-S.x[i])*(s.x-S.x[i])+(s.y-S.y[i])*(s.y-S.y[i]);
   if(m.i==null){m.i=0;for(let i=1;i<n;i++)if(d2(i)<d2(m.i))m.i=i;}
   for(let k=0;k<n&&d2((m.i+1)%n)<d2(m.i);k++)m.i=(m.i+1)%n;
@@ -15164,8 +15194,12 @@ function driveRoadAt(S,car,s,m){const n=S.x.length,z=[0,0,0,0],grip=[1,1,1,1],c=
     for(let k=0;k<4&&al(i)<0;k++)i=(i-1+n)%n;for(let k=0;k<4&&al((i+1)%n)>=0;k++)i=(i+1)%n;
     const y=(px-S.x[i])*S.nx[i]+(py-S.y[i])*S.ny[i],out=Math.abs(y)-S.hw[i],H=out>0&&S.P?(y>0?S.P:S.N)[i]:0,a=S.arc[i]+al(i);
     for(const w of S.waves)z[q]+=w[1]*Math.cos(w[0]*a+w[2+q%2]);
-    if(out>0){z[q]+=H*Math.min(1,out/S.kw);grip[q]=H&&out<=S.kw?S.road:S.off;}else grip[q]=S.road;}
-  return {z,grip};}
+    if(out>0){z[q]+=H*Math.min(1,out/S.kw);
+      if(H&&out<=S.kw)grip[q]=S.road;
+      else if(S.trap&&S.trap[i]===Math.sign(y)&&out>=S.trapIn&&out<=S.trapOut){grip[q]=S.gravel;soil[q]=DRIVE_SOIL.gravel;}
+      else{grip[q]=S.off;soil[q]=DRIVE_SOIL.grass;}}
+    else grip[q]=S.road;}
+  return {z,grip,soil};}
 // A DRIVER FOR A LINE (build 269): the inputs that take the car round a line of points {x, y, v, grade, kv}. It reads
 // only its arguments (d is its memory: {i} the point it is at; it leaves d.e, how far left of the line the front
 // axle is). What it does is a driver's manner, not the car's physics; its settings are in the register (DRIVE_DRIVER), kept as a rule by the owner's sign-off (build 278).
@@ -15222,7 +15256,7 @@ function stepCar(car,s,u,dt){
   const wMean=()=>{let a=0;if(sg){for(let i=0;i<4;i++)a+=sg[i]*s.w[i];return a;}for(let i=0;i<4;i++)if(drv[i])a+=s.w[i];return a/nd;};
   const steer=Math.max(-1,Math.min(1,u.steer||0)),brake=Math.max(0,Math.min(1,u.brake||0)),hb=Math.max(0,Math.min(1,u.handbrake||0));
   let thr=Math.max(0,Math.min(1,u.throttle||0));
-  const rd=u.road||{},sinT=rd.sinT||0,cosT=Math.sqrt(Math.max(0,1-sinT*sinT)),kv=rd.kv||0,zr=rd.z,gr=rd.grip,W0F=car.m*g*car.b/L/2,W0R=car.m*g*car.a/L/2;
+  const rd=u.road||{},sinT=rd.sinT||0,cosT=Math.sqrt(Math.max(0,1-sinT*sinT)),kv=rd.kv||0,zr=rd.z,gr=rd.grip,sl=rd.soil,W0F=car.m*g*car.b/L/2,W0R=car.m*g*car.a/L/2;
   const sRate=(steer*car.steerLock-(s.delta||0))/dt;   // the hand wheel's rate this call, for the friction (DRIVE_ASSIST)
   for(let k=0;k<n;k++){
     const v=Math.hypot(s.vx,s.vy),delta=steer*car.steerLock;
@@ -15290,11 +15324,13 @@ function stepCar(car,s,u,dt){
     const eT=s.esp;eT[0]=eT[1]=eT[2]=eT[3]=0;
     if(car.esp){let M=0;
       if(s.vx>A.espVmin){
-        // the grip is the tyres' own or, where the car is already turning harder (downforce, a banked dip), what it has shown
-        const lim=Math.max(car.mu*gz,Math.abs(s.ayF))/s.vx,ref=Math.max(-lim,Math.min(lim,s.vx*delta/(L*Math.max(0.1,1+car.Kus*s.vx*s.vx))));
+        // the grip is the tyres' own on what is under them or, where the car is already turning harder (downforce, a
+        // banked dip), what it has shown. On a lower grip the brush tyre peaks at a smaller angle, tan by the grip.
+        const gF=gr?(gr[0]+gr[1])/2:1,gB=gr?(gr[2]+gr[3])/2:1,pkF=gF<1?Math.atan(gF*Math.tan(car.pkF)):car.pkF,pkB=gB<1?Math.atan(gB*Math.tan(A.espBeta)):A.espBeta;
+        const lim=Math.max(car.mu*gz*(gF+gB)/2,Math.abs(s.ayF))/s.vx,ref=Math.max(-lim,Math.min(lim,s.vx*delta/(L*Math.max(0.1,1+car.Kus*s.vx*s.vx))));
         // too little yaw counts only once the front tyres are past their peak, where more lock does nothing
         const sg=Math.sign(ref),ex=(ref-s.yaw)*sg-A.espBand;
-        if(ex>0&&Math.abs(s.alpha[0]+s.alpha[1])/2>car.pkF)M+=sg*car.Izz*ex/A.espTau;
+        if(ex>0&&Math.abs(s.alpha[0]+s.alpha[1])/2>pkF)M+=sg*car.Izz*ex/A.espTau;
         // too much yaw: more than the reference as the car itself would follow it, lagged by the single-track model's
         // equivalent delay, tau = B/C - m v a/(Cr L) (Abe, Vehicle Handling Dynamics, ch. 3)
         const v=s.vx,Cf=car.CaF,Cr=car.CaR,B=car.m*(car.a*car.a*Cf+car.b*car.b*Cr)+car.Izz*(Cf+Cr),
@@ -15303,7 +15339,7 @@ function stepCar(car,s,u,dt){
         const sy=Math.sign(s.yaw),ox=(s.yaw-s.yawRef)*sy-A.espBand;
         // the car turning faster than asked: a moment against it, once the rear tyres are past their peak (espBeta),
         // where they hold no more
-        s.espOver=ox>0&&Math.abs(s.alpha[2]+s.alpha[3])/2>A.espBeta;
+        s.espOver=ox>0&&Math.abs(s.alpha[2]+s.alpha[3])/2>pkB;
         if(s.espOver)M-=sy*car.Izz*ox/A.espTau;
       }else{s.yawRef=s.yaw;s.espOver=false;}
       if(M!==0){const fr=M*s.yaw<0,q=(fr?0:2)+(M>0?0:1);                   // against the yaw: an outer front wheel; with it: an inner rear
@@ -15352,11 +15388,11 @@ function stepCar(car,s,u,dt){
       // Locked, the clutch passes exactly the torque that keeps the engine and the wheels turning together (the
       // torque that brings their slip to nothing in this step, from each side's own acceleration: Karnopp's stick
       // condition); it slips when that is more than it can hold, and then passes what it can hold.
-      let Id=0,aW=0;for(let i=0;i<4;i++)if(drv[i]){const Iq=car.Iw+h*car.r*dF[i];Id+=Iq;aW-=(Fl[i]*car.r+car.crr*Fz[i]*car.r*Math.tanh(s.w[i]*car.r/0.5))/Iq;}
+      let Id=0,aW=0;for(let i=0;i<4;i++)if(drv[i]){const Iq=car.Iw+h*car.r*dF[i];Id+=Iq;aW-=(Fl[i]*car.r+driveRollF(car,Fz[i],sl&&sl[i])*car.r*Math.tanh(s.w[i]*car.r/0.5))/Iq;}
       aW/=nd;
       // under an unequal split, the carrier turns at the shares' weighted mean of the wheels, sum sg w (Willis), and
       // each wheel takes its share of the torque, so the driveline's own inertia is 1 / sum(sg^2 / I)
-      if(sg){aW=0;let iI=0;for(let i=0;i<4;i++){const Iq=car.Iw+h*car.r*dF[i];aW-=sg[i]*(Fl[i]*car.r+car.crr*Fz[i]*car.r*Math.tanh(s.w[i]*car.r/0.5))/Iq;iI+=sg[i]*sg[i]/Iq;}Id=1/iI;}
+      if(sg){aW=0;let iI=0;for(let i=0;i<4;i++){const Iq=car.Iw+h*car.r*dF[i];aW-=sg[i]*(Fl[i]*car.r+driveRollF(car,Fz[i],sl&&sl[i])*car.r*Math.tanh(s.w[i]*car.r/0.5))/Iq;iI+=sg[i]*sg[i]/Iq;}Id=1/iI;}
       let Tcl=(slip/h+Te/car.Ie-ratio*aW)/(1/car.Ie+ratio*ratio*car.eff/Id);
       Tcl=Math.max(-cap,Math.min(cap,Tcl));
       s.we=Math.max(0,s.we+h*(Te-Tcl)/car.Ie);
@@ -15380,7 +15416,7 @@ function stepCar(car,s,u,dt){
         if(car.abs){const vl=Math.abs(s.vx);s.abs[q]=Math.max(0.05,Math.min(1,s.abs[q]+((s.kappa[q]<-car.slipOpt*car.aids.absSlip[ax]&&vl>2)?-car.aids.absRel:car.aids.absApp)*h));}
         const cap=car.brakeF*share/2*car.r;let Tb=Math.min(cap,brake*cap+s.esp[q])*(car.abs?s.abs[q]:1);   // the pedal's and the stability control's
         if(hb>0&&ax===1)Tb+=hb*car.hbCap/2*car.r;                         // the lever's, which the ABS does not ease
-        const roll=car.crr*Fz[q]*car.r*Math.tanh(s.w[q]*car.r/0.5);
+        const roll=driveRollF(car,Fz[q],sl&&sl[q])*car.r*Math.tanh(s.w[q]*car.r/0.5);
         const Iq=car.Iw+h*car.r*dF[q];                                      // the tyre's own stiffness taken implicitly
         let wq=s.w[q]+h*(Tq-Fl[q]*car.r-roll)/Iq;
         if(ax===0?car.inbF:car.inbR)Tbd[q]-=Math.sign(wq)*Tb;
@@ -22353,7 +22389,7 @@ const SCENE_TEX = {
 // The camera, the ground and the car are the draft view. The solver is not touched.
 // Dressing (rail, trees, boards, flags) is drawn, not surveyed, and the car does not ride it.
 // One closure, so the short names in here (T, project, quad, shade…) stay out of the page's one script.
-const { sceneBind, sceneWeather, sceneChase, sceneOverview, scenePan, sceneProject, scenePaint, scenePose, sceneBlend } = (() => {
+const { sceneBind, sceneWeather, sceneChase, sceneOverview, scenePan, sceneProject, scenePaint, scenePose, sceneBlend, sceneCurv, SCENE_TRAP } = (() => {
 let T = null;
 let WX = { key: "dry", wet: 0, rain: 0, cloud: 0.05 };
 let TOD = "day";
@@ -22376,7 +22412,7 @@ function sceneBind(src) {
     x: p.x, y: p.y, s: p.s || 0, ds: p.ds || 1,
     nx: p.nx || 0, ny: p.ny || 1, w: p.w || src.width || 10
   }));
-  const n = pts.length;
+  const n = pts.length, cv = sceneCurv(pts);
   for (let i = 0; i < n; i++) {
     const q = pts[(i + 1) % n];
     const ds = Math.hypot(q.x - pts[i].x, q.y - pts[i].y) || 1;
@@ -22384,22 +22420,36 @@ function sceneBind(src) {
     pts[i].tx = (q.x - pts[i].x) / ds;
     pts[i].ty = (q.y - pts[i].y) / ds;
     pts[i].hd = Math.atan2(pts[i].ty, pts[i].tx);
-  }
-  for (let i = 0; i < n; i++) {
-    const a = pts[(i - 1 + n) % n], b = pts[i];
-    let d = b.hd - a.hd;
-    while (d > Math.PI) d -= Math.PI * 2;
-    while (d < -Math.PI) d += Math.PI * 2;
-    b.curv = d / Math.max(0.5, b.ds);
-  }
-  for (let k = 0; k < 4; k++) {
-    const prev = pts.map(p => p.curv);
-    for (let i = 0; i < n; i++) pts[i].curv = (prev[(i - 1 + n) % n] + prev[i] * 2 + prev[(i + 1) % n]) / 4;
+    pts[i].curv = cv[i];
   }
   T = { label: src.label, pts, length: src.length || pts[n - 1].s + pts[n - 1].ds, wind: 1 };
   src._look = T;
   return T;
 }
+
+// The centreline's turning per metre at each point (closed loop), smoothed four times: what decides where the scene
+// draws a bend's gravel trap (SCENE_TRAP), and where the stepped car finds one (driveSurface).
+function sceneCurv(pts) {
+  const n = pts.length, hd = [], ds = [], cv = [];
+  for (let i = 0; i < n; i++) {
+    const q = pts[(i + 1) % n];
+    ds[i] = Math.hypot(q.x - pts[i].x, q.y - pts[i].y) || 1;
+    hd[i] = Math.atan2((q.y - pts[i].y) / ds[i], (q.x - pts[i].x) / ds[i]);
+  }
+  for (let i = 0; i < n; i++) {
+    let d = hd[i] - hd[(i - 1 + n) % n];
+    while (d > Math.PI) d -= Math.PI * 2;
+    while (d < -Math.PI) d += Math.PI * 2;
+    cv[i] = d / Math.max(0.5, ds[i]);
+  }
+  for (let k = 0; k < 4; k++) {
+    const prev = cv.slice();
+    for (let i = 0; i < n; i++) cv[i] = (prev[(i - 1 + n) % n] + prev[i] * 2 + prev[(i + 1) % n]) / 4;
+  }
+  return cv;
+}
+// A bend's gravel trap: on the outside of a bend that turns more than curv (1/m), from in to out metres past the edge.
+const SCENE_TRAP = { curv: 0.03, in: 3.15, out: 8.4 };
 
 function sceneNear(cam, x, y) {
   const dx = x - cam.ox, dy = y - cam.oy;
@@ -23039,7 +23089,7 @@ function drawStill(ctx, cam, opts) {
   ctx.restore();
 
   fillRibbonWorld(ctx, cam, TEX.gravel, 4.2, gravelHalf, "rgba(90,60,30,0.12)");
-  fillOutsideBand(ctx, cam, 0.03, p => p.w / 2 + 3.15, p => p.w / 2 + 8.4, {
+  fillOutsideBand(ctx, cam, SCENE_TRAP.curv, p => p.w / 2 + SCENE_TRAP.in, p => p.w / 2 + SCENE_TRAP.out, {
     pattern: TEX.gravel, meters: 4.2, tint: "rgba(36, 22, 12, 0.38)"
   });
   fillOutsideBand(ctx, cam, 0.028, p => p.w / 2 + 1.05, p => p.w / 2 + 2.7, { color: "#1a7340" });
@@ -23699,7 +23749,7 @@ function sceneLoadTex() {
   }).catch(() => {});
 }
 sceneLoadTex();
-return { sceneBind, sceneWeather, sceneChase, sceneOverview, scenePan, sceneProject, scenePaint, scenePose, sceneBlend };
+return { sceneBind, sceneWeather, sceneChase, sceneOverview, scenePan, sceneProject, scenePaint, scenePose, sceneBlend, sceneCurv, SCENE_TRAP };
 })();
 // ---- TRACK map: the circuit drawn from the same sampled centreline the lap solver used, with
 // the racing line coloured by what is limiting the car at each point. ----
@@ -32869,28 +32919,34 @@ function vcdDrawTyre(dc,r){
 }
 // ====== TITLE SCREEN ======
 // The sim used to open on the live bench, which is the right place once you are building and the wrong
-// place the first time you arrive. This is the front door: four ways in, over four workshops, and the car
+// place the first time you arrive. This is the front door: four ways in, over a run of workshops, and the car
 // showcase (build 237, src/js/showcase.js).
 //
-// Four rooms cycle behind the menu, five seconds each, with a slow left-to-right pan: a pickup on the hoist
-// in a back-street workshop, an F355 on stands with its wheels off, an electric car's service bay with its
-// drive unit on a dolly, and the F355 in a race pit (build 230). They are pictures the owner generated
-// (assets/landing/README.md), with the makers' and sponsors' logos pixelated out; until build 229 they were
-// drafts drawn in code. Each is shown as an <img>, not drawn on a canvas, so the page can open from file://
-// without tainting anything, and smoothly scaled: they are detailed pictures, not a cell grid.
+// Rooms cycle behind the menu, five seconds each, with a slow left-to-right pan. The first four are the
+// original workshops (build 230): a pickup on the hoist, an F355 on stands, an electric car's service bay,
+// and the F355 in a race pit. Fifty more (assets/landing/README.md) are other cars and places in that same
+// pixel style. Each is an <img>, not a canvas, so the page can open from file:// without tainting anything.
+// Only the room on view, the next one, and — while a fade is running — the room before keep a picture
+// decoded. The rest stay unloaded, so the long run does not sit in memory all at once.
 //
 // The automated tests drive the bench directly and never ask for this screen, so it stays down when the
 // browser reports itself as automated. ?title=1 forces it (the test for this screen) and ?title=0
 // suppresses it. A shared build in the hash opens on the bench too: the link is the destination.
-const TITLE_ROOMS=['workshop-pickup','garage-f355','service-bay-ev','pit-f355'].map(n=>'assets/landing/'+n+'.webp');
+const TITLE_ROOMS=['workshop-pickup','garage-f355','service-bay-ev','pit-f355',
+  'bay-miata','desert-mustang','snow-rally','alley-coupe','barn-roadster','harbour-suv','rooftop-hatch','forest-rally','hangar-supercar','underground-wedge',
+  'vineyard-berlinetta','foundry-coupe','autumn-hatch','mews-tourer','outback-pickup','ice-quattro','canyon-coupe','museum-wedge','diner-muscle','chalet-coupe',
+  'street-kei','scrap-coupe','wind-tunnel','dyno-cell','alignment-bay','primer-booth','battery-lab','atom-shed','quarry-suv','beach-convertible',
+  'station-wagon','lighthouse-coupe','observatory-night','campus-hoist','helipad-supercar','market-rain','salt-flat','castle-courtyard','container-port','volcano-overlook',
+  'greenhouse-city','tunnel-taxi','firehouse-classic','orchard-pickup','paddy-kei','lantern-street','ship-deck','old-town-sedan','aurora-ev','canyon-camp'
+].map(n=>'assets/landing/'+n+'.webp');
 // Each picture is shown 12% past covering the stage, so it always has room to pan. A room holds five seconds; the next
 // fades in over it for the last FADE_MS of its walk (build 237).
 const SCENE_MS=5000, FADE_MS=700, TITLE_ZOOM=1.12;
-let titleRAF=0,titleSel=0,titleT0=0,titleShown=-1,titleStageKey='',titleSeek=false;
+let titleRAF=0,titleSel=0,titleT0=0,titleShown=-1,titleStageKey='',titleSeek=false,titleBusy=false;
 // The smooth pan (build 237). Until then the menu moved one <img> by its `left`, rounded to a whole picture pixel and
 // then to a whole screen pixel, 20 times a second, and swapped its src at each room (a fresh decode of a 1920 px
 // picture, and a jump cut back to the start of the pan). Now:
-//   · all four rooms are their own <img>, stacked, each decoded once before it is first shown;
+//   · one <img> per room, stacked; its picture is decoded just before the room is shown, and dropped once it has faded;
 //   · each room's walk is a Web Animation of its transform, so the browser runs it on the compositor every frame,
 //     at sub-pixel positions, whatever the main thread is doing;
 //   · a room walks for SCENE_MS + FADE_MS at one speed, so it is still moving while the next one fades in over it;
@@ -32899,7 +32955,7 @@ let titleRAF=0,titleSel=0,titleT0=0,titleShown=-1,titleStageKey='',titleSeek=fal
 // The script still keeps the clock, so titleAdvance() can put any moment of the carousel on the stage for a test.
 const titleRooms=[];   // {im, anim, key, ready}
 const titleReduced=()=>!!(window.matchMedia&&window.matchMedia('(prefers-reduced-motion: reduce)').matches);
-// The pictures load once, the first time the menu opens; a room not decoded yet stays out of the rotation's view and
+// The picture slots are created the first time the menu opens. A room with no picture yet stays out of view and
 // leaves the stage its plain colour.
 function titlePreload(){
   const stage=document.querySelector('#titleScreen .title-stage');
@@ -32907,9 +32963,23 @@ function titlePreload(){
   TITLE_ROOMS.forEach((src,i)=>{
     const im=document.createElement('img'),R={im,anim:null,key:'',ready:false};
     im.className='title-room';im.alt='';im.setAttribute('aria-hidden','true');im.decoding='async';im.draggable=false;im.dataset.room=i;
-    const ready=()=>{if(R.ready)return;R.ready=true;if(i===titleShown)titleShown=-1;paintTitle();};
-    im.addEventListener('load',()=>{if(im.decode)im.decode().then(ready,ready);else ready();});
-    im.src=src;stage.appendChild(im);titleRooms.push(R);
+    const ready=()=>{if(im.getAttribute('src')!==src||R.ready)return;R.ready=true;if(i===titleShown)titleShown=-1;paintTitle();};
+    im.addEventListener('load',()=>{if(im.getAttribute('src')!==src)return;if(im.decode)im.decode().then(ready,ready);else ready();});
+    stage.appendChild(im);titleRooms.push(R);
+  });
+}
+// Keep the visible room, the one about to fade in, and (only during the fade) the one underneath.
+// Clearing src drops the decoded bitmap. A load that finishes after the room was dropped is ignored above.
+function titleMount(idx,fading){
+  const n=TITLE_ROOMS.length,keep=new Set([idx,(idx+1)%n]);
+  if(fading)keep.add((idx+n-1)%n);
+  titleRooms.forEach((R,k)=>{
+    const want=keep.has(k)?TITLE_ROOMS[k]:'';
+    if((R.im.getAttribute('src')||'')===want)return;
+    R.ready=false;
+    if(R.anim){R.anim.cancel();R.anim=null;R.key='';}
+    if(want)R.im.src=want;
+    else{R.im.removeAttribute('src');R.im.classList.remove('on');}
   });
 }
 // The geometry of one frame, in the picture's own pixels: how wide the view onto it is, and how far the pan has walked.
@@ -32973,11 +33043,14 @@ function titleRoomAt(i,t){
 // Called on every animation frame while the menu is up, but it only does work when a room starts (or a picture has just
 // become ready, or the stage changed size): the walking itself is the browser's.
 function paintTitle(){
-  if(!titleRooms.length)return;
+  if(titleBusy||!titleRooms.length)return;
+  titleBusy=true;
+  try{
   const now=titleNow();
   if(!titleT0)titleT0=now;
   const st=titleSceneState(now),n=TITLE_ROOMS.length,prev=(st.idx+n-1)%n;
   const fading=!titleReduced()&&st.elapsed>=SCENE_MS&&st.local<FADE_MS;   // the room before is still under this one
+  titleMount(st.idx,fading);
   // a stage of another size (or motion preference): the rooms on view are laid out again and rejoin their walk
   const G0=titleGeom(st.idx,0),sk=[G0.bw,G0.bh,titleReduced()].join('|');
   if(sk!==titleStageKey){titleStageKey=sk;titleShown=-1;titleSeek=true;}
@@ -32997,6 +33070,7 @@ function paintTitle(){
     if(R.im.classList.contains('on')!==on)R.im.classList.toggle('on',on);
     if(R.im.style.zIndex!==z)R.im.style.zIndex=z;
   });
+  }finally{titleBusy=false;}
 }
 
 function titleButtons(){return [...document.querySelectorAll('#titleScreen .title-menu button')];}
