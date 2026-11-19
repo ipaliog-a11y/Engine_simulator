@@ -13,7 +13,7 @@ const VCD_CARDS=[
   {id:'tyres',title:'WHEELS & TYRES',guide:'tyres',viz:'tyre',vizH:150,cap:'To scale: the tyre in section, its tread width and its sidewall (the width times the aspect) around the rim.'},
   {id:'aero',title:'AERO & WEIGHT',guide:'aero'},
   {id:'brakes',title:'BRAKES & STEERING',guide:'brakes'},
-  {id:'aids',title:'ECU: DRIVER AIDS',guide:'traction',viz:'aids',vizH:176,cap:'From above: the sine with dwell at 80 km/h, the test a stability control is approved on. Green is the car as set, red with the ESP off. These settings act in these three tests; the lap and the 0–100 still hold the tyres at their peak.'},
+  {id:'aids',title:'ECU: DRIVER AIDS',guide:'traction',viz:'aids',vizH:176,cap:'From above: the sine with dwell at 80 km/h at its final run (270° of hand wheel), the test a stability control is approved on. Green is the car as set, red with the ESP off. These settings act in these three tests; the lap and the 0–100 still hold the tyres at their peak.'},
   {id:'susp',title:'SUSPENSION',guide:'suspension'}
 ];
 const VCD_FIELDS={
@@ -248,7 +248,7 @@ function vcdAids(){
   if(vcdAidsMemo&&vcdAidsMemo.key===key)return vcdAidsMemo;
   let o={key};
   try{const car=driveCar(),off=car.esp?Object.assign({},car,{esp:false}):null;
-    o={key,esp:car.esp,stop:driveStop100(car),sprint:driveSprint(car),swd:driveSineDwell(car,6.5),off:off?driveSineDwell(off,6.5):null};}catch(e){}
+    o={key,esp:car.esp,stop:driveStop100(car),sprint:driveSprint(car),swd:driveSineDwell(car),off:off?driveSineDwell(off):null};}catch(e){}
   return vcdAidsMemo=o;
 }
 function vcdDrawAids(dc,r){

@@ -71,6 +71,17 @@ First CLEAR wins (FWD stops at NO_SLIDE).
 - Handbrake; loose surface μ map; smoke/tyre heat; player inputs; FWD/AWD techniques; scoring style
   points beyond CLEAR + β.
 
+## Follow-ups
+
+- **AWD power-over — done (build 379).** AWD takes the RWD path; whether the rear slides is up to the centre coupling
+  `stepCar` already models (`centreCoupling`). The result and the DRIVE cell name the coupling and split. A single-speed
+  car was put in gear 2, which it lacks, and STALLed: fixed (Model Y now CLEAR, Model 3 RWD CLEAR). The viscous,
+  rear-driven cars (993 Turbo, Diablo VT, Murciélago) stay NO_SLIDE: the coupling sends torque forward as the rear slips.
+  Left open: the Plaid goes OFF (too much power for R 18–22 m at the searched speeds); the Qashqai e-POWER (FWD) STALLs.
+- **Next: handbrake.** Needs `u.handbrake` in `stepCar` (rear-only torque the ABS does not ease, with a sourced lever-brake
+  capacity), then `'handbrake'` in `DRIFT_INITS` / `DRIFT_METHODS` for RWD and FWD (Velenis CDC 2011). Waits for the
+  stability-control build in `drive-model.js` to merge.
+
 ## Sources
 
 1. Hindiyeh, *Dynamics and Control of Drifting in Automobiles*, Stanford PhD, 2013.

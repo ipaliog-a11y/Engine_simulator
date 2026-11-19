@@ -821,7 +821,7 @@ body.guided-open{overflow:hidden}
 </div>
 <div class="container">
 <header>
-<h1>PIXEL POWERTRAIN v0.8 build 378</h1>
+<h1>PIXEL POWERTRAIN v0.8 build 381</h1>
 <div class="subtitle" id="subtitle">ENGINE DESIGNER • BUILD IT, THEN DRIVE IT</div>
 </header>
 <div class="build-strip" id="buildStrip">
@@ -3265,7 +3265,7 @@ The <b>CHALLENGES</b> tab (DRIVE) runs the car on its own. Pick a challenge and 
 <b>Economy</b>: the target time is the PACE (125, 150 or 200%) times the car's own fastest time on that road. The score is litres and L/100 km, or kWh and Wh/km for an EV, with the regen it recovered. The grid also shows the peak acceleration and braking, the mean engine speed on power, the top gear used, and ECO BLEND (below).<br>
 <b>Fixed-time stage</b>: one set time per road for every car. The car's fastest run from a standing start is shown against it; slower is a <b>DNF</b>.<br>
 <b>Moose avoidance</b>: ENTRY picks BEST CLEAR (the speed is raised until a cone falls, as ISO 3888-2 does; the grid also says how it fails one step up) or a magazine's fixed speed, 72 km/h (Teknikens Värld's pass mark) or 77 km/h (km77's). The result is CLEAR, CONE, SPIN or ROLLOVER, with a warning for a two-wheel lift, its time and the largest tip. REPLAY slows the replay to 0.5× or 0.25×; it starts 25 m before the cones and runs on 20 m past the judged end (nothing after that changes the score). The lower view is the front axle seen from behind, with each force labelled in kN on one scale: <b>W</b> the axle's weight, <b>m·ay(front)</b> its sideways inertial force, <b>Fz</b> each tyre's load and <b>Fy</b> each tyre's side force. Roll and camber are drawn at their true angles. Tap that view to see the car <b>from above</b>, nose up, to true scale: the yaw axis <b>z</b> through the CG with the yaw rate <b>r</b> round it, the <b>pivot</b> (the point on the centre line with no sideways velocity, −vy/r), each tyre's direction of travel and side force, and the path the car takes beside the one the same steer gives at neutral steer (δ/L). The balance is read from the slip angles: <b>UNDERSTEER</b> when the front tyres slip more than the rear (αF &gt; αR), <b>OVERSTEER</b> when less, <b>TRANSITION</b> while front and rear slip opposite ways as the car is swung from one lane to the next.<br>
-<b>S-Route Powerslide</b>: ESP and TC off; the best of the plans (entry speed, target body slip β, initiation, radius). <b>METHOD</b> picks the initiation: POWER-OVER, CLUTCH KICK or FLICK (lift and steer away, then sharply in, each for half the body's natural period so its rebound helps turn-in); AUTO tries all three. <b>ENTRY</b> fixes the speed or picks BEST. The <b>i</b> button beside CHALLENGES explains the selected challenge. The result is <b>CLEAR</b> (a slide in both corners: the rear past its peak for 0.25 s, β over 8°, and countersteer or a long slide), <b>FADE</b> (one corner), <b>NO_SLIDE</b> (neither; a FWD car without a handbrake), <b>STALL</b> (stopped or never reached the exit), <b>OFF</b> (any corner of the body, swept at its slip angle, over the edge) or <b>SPIN</b>. The grid gives each corner's peak β and slide time.<br>
+<b>S-Route Powerslide</b>: ESP and TC off; the best of the plans (entry speed, target body slip β, initiation, radius). <b>METHOD</b> picks the initiation: POWER-OVER, CLUTCH KICK or FLICK (lift and steer away, then sharply in, each for half the body's natural period so its rebound helps turn-in); AUTO tries all three. <b>ENTRY</b> fixes the speed or picks BEST. The <b>i</b> button beside CHALLENGES explains the selected challenge. The result is <b>CLEAR</b> (a slide in both corners: the rear past its peak for 0.25 s, β over 8°, and countersteer or a long slide), <b>FADE</b> (one corner), <b>NO_SLIDE</b> (neither; a FWD car without a handbrake, or an AWD car whose centre coupling sends the torque forward as the rear slips), <b>STALL</b> (stopped or never reached the exit), <b>OFF</b> (any corner of the body, swept at its slip angle, over the edge) or <b>SPIN</b>. The grid gives each corner's peak β and slide time.<br>
 <b>Skid Pad</b>: a 200 ft (61 m) circle, as Motor Trend and Road &amp; Track use. The speed is raised until the car can no longer stay within 1 m of the line; the score is the magazines' figure, <i>v²/(g·R)</i> from the fastest held lap's time, with the body's own mean lateral acceleration beside it and how it fails 1 km/h faster: <b>WIDE</b> (understeer), <b>TIGHT</b> (the tail steps out) or <b>SPIN</b>.
 <b>RANK CARS</b>: add cars (this build, the garage's or factory cars) and press RANK; each runs the selected challenge with the settings above, one car at a time (CANCEL stops before the next). The table puts passes first, then sorts by the challenge's own score: least energy for economy (fuel as litres × density × heating value, an EV's pack kWh, both in MJ, so engine cars and EVs share one scale), shortest time for a stage, highest clear speed for the moose test, largest peak β for the powerslide, highest steady g for the skid pad.
 </div>
@@ -14533,10 +14533,13 @@ const DRIVE_G=9.81, DRIVE_RHO=1.20;
 //             second for a slip twice the target.
 //   ESP       van Zanten, Erhardt and Pfaff, "VDC, the vehicle dynamics control system of Bosch" (SAE 950759):
 //             the controller holds the car's slip angle and its yaw rate by braking single wheels. A real one must
-//             estimate the slip from its sensors; the model knows it. Against a spin: once the rear tyres slip more
-//             than espBeta (rad; by default the angle they peak at, atan(3 mu / C)), the outer front wheel is braked
-//             for the yaw moment Izz x excess / espTau^2. (Judged by the yaw rate instead, it brakes a hot lap's
-//             rear-drivers on 26-30% of it, with the toe of phase G5 or without: build 328. Left on the slip angle.) Against a push: the yaw rate the driver asks for is the
+//             estimate the slip from its sensors; the model knows it. Against a spin (build 380; van Zanten, "Bosch ESP
+//             systems: 5 years of experience", SAE 2000-01-1633): the yaw rate against the reference below, lagged
+//             as the car itself would follow it, by the single-track model's equivalent delay B/C - m v a/(Cr L)
+//             (Abe, Vehicle Handling Dynamics, ch. 3). Past it by espBand, the outer front wheel is braked for
+//             Izz x excess / espTau, while the rear tyres slip more than espBeta (rad; by default the angle they
+//             peak at, atan(3 mu / C)). (Without that gate, build 328 braked a hot lap's rear-drivers on 26-30% of
+//             it; with it, 2-6%, against 4-12% on the slip angle alone.) An electric car's regeneration is cut while it works (MSR). Against a push: the yaw rate the driver asks for is the
 //             steady turn of the car's own single-track model, v delta / (L (1 + K v^2)), K its understeer gradient
 //             from the tyres' cornering stiffness at the static loads and the toe's steady share (car.Kus, THE TOE), and never more than the grip can
 //             turn the car, mu g / v; short of it by espBand (rad/s) with the front tyres past their peak, the inner
@@ -14661,7 +14664,7 @@ function driveCar(){
   const aids=driveAids(v),cc=v.tyreCC||tyreCC(v.tireType),muR=tyreMu(v.FzRef,v.FzRef);
   // the axles' cornering stiffness at the static loads (N/rad), for the understeer gradient K = m/L^2 (b/Cf - a/Cr)
   const Cax=(W,ref)=>2*cc*(W/2)*(TYRE_CC_P2+1)/(TYRE_CC_P2+Math.pow(W/2/ref,2));
-  const Kus=v.mass/(L*L)*(b/Cax(v.mass*DRIVE_G*b/L,v.FzRefF||v.FzRef)-a/Cax(v.mass*DRIVE_G*a/L,v.FzRef));
+  const CaF=Cax(v.mass*DRIVE_G*b/L,v.FzRefF||v.FzRef),CaR=Cax(v.mass*DRIVE_G*a/L,v.FzRef),Kus=v.mass/(L*L)*(b/CaF-a/CaR);
   if(aids.espBeta==null)aids.espBeta=(aids.espSlide||1)*Math.atan(3*muR/cc);
   const body=driveBody(v,a,b),toe=driveToe(v);
   // the toe's steady share of the understeer gradient (THE TOE), to the same K: roll steer by each axle's roll on its
@@ -14669,7 +14672,7 @@ function driveCar(){
   // wheel's share of the side force, m (b, a) / (2 L) per unit ay
   const Ktoe=(toe.rsF*body.rrAyF+toe.rsR*body.rrAyR+(toe.csF*b+toe.csR*a)*v.mass/(2*L))/L;
   return {
-    aids,esp:!!aids.esp,Kus:Kus+Ktoe,...toe,pkF:Math.atan(3*tyreMu(v.FzRefF||v.FzRef,v.FzRefF||v.FzRef)/cc),
+    aids,esp:!!aids.esp,Kus:Kus+Ktoe,CaF,CaR,...toe,pkF:Math.atan(3*tyreMu(v.FzRefF||v.FzRef,v.FzRefF||v.FzRef)/cc),
     turbo:grid&&grid.laggy?driveTurbo(pt,grid):null,el,
     name:v.chLabel||'',m:v.mass,Izz:v.mass*a*b,a,b,h:v.cg,tF:v.trackF||v.track,tR:v.trackR||v.track,
     r:v.rTire,Iw:(v.wheelI||2)/4,
@@ -14699,7 +14702,7 @@ function driveCar(){
 // A car at rest, in neutral for a clutch car until the driver asks for a gear.
 function driveState(car){
   return {soc:car.el?car.el.soc0:0,eng:true,engT:0,Pm:0,shE:0,boost:0,t:0,x:0,y:0,psi:0,vx:0,vy:0,yaw:0,w:[0,0,0,0],we:car.idle*Math.PI/30,gear:1,shiftT:0,
-    axF:0,ayF:0,roll:0,rollV:0,pitch:0,pitchV:0,zu:[0,0,0,0],zuV:[0,0,0,0],heave:0,heaveV:0,rr:[0,0],al:[0,0,0,0],abs:[1,1,1,1],tcF:1,esp:[0,0,0,0],espF:1,clF:1,pull:false,firing:true,
+    axF:0,ayF:0,roll:0,rollV:0,pitch:0,pitchV:0,zu:[0,0,0,0],zuV:[0,0,0,0],heave:0,heaveV:0,rr:[0,0],al:[0,0,0,0],abs:[1,1,1,1],tcF:1,esp:[0,0,0,0],yawRef:0,espOver:false,espF:1,clF:1,pull:false,firing:true,
     ax:0,ay:0,Fz:[0,0,0,0],kappa:[0,0,0,0],alpha:[0,0,0,0],Fx:[0,0,0,0],Fy:[0,0,0,0],camber:[0,0,0,0],cg:[0,0,0,0],toe:[0,0,0,0],Fyw:[0,0,0,0],rpm:car.idle,speed:0,delta:0,steerTorque:0,handTorque:0};
 }
 // THE ELECTRIC SIDE AS PLAIN DATA (build 275): a hybrid's motor and pack, or an electric car's. null without one.
@@ -14895,7 +14898,9 @@ function driveLerp(xs,ys,x){
 // Left out, named: the grip by camber. The lap's law (latCamberF: CAMBER_LOSS a degree off CAMBER_BEST, by the axle's
 // outside wheel) cost the stepped car 1-6% of its skidpad grip, and the test driver, who takes the lap's speeds, then
 // left the line by up to 7.8 m and slid the Model 3 to 31 degrees (test170); it waits for a driver that judges the
-// car's own grip, and the camber's own aligning moment.
+// car's own grip, and the camber's own aligning moment. Tried again with the yaw-rate ESP (small-physics step 6): by
+// each wheel's own lean the 911 GT3 left the line (15 m, 68 deg); by each axle's outside wheel, as the lap has it,
+// 11.8 m and 41 deg, the Model 3 9.5 m and 38 deg, the Civic 7.9 m, against OFF_KNOWN's 4.8 m. Named until after v1.0.
 //   heave  (small-physics step 3) each wheel's own travel on the body moves its camber too, not only the axle's roll: the same
 //          swing arm, 1/fvsa a metre of travel (2 rec / t), the top inwards in bump, so heave and pitch camber the
 //          wheels as well (Reimpell, The Automotive Chassis, ch. 3, camber change over travel: PROBABLE as the roll's
@@ -14973,12 +14978,13 @@ function driveSprint(car){
 }
 // FMVSS 126's sine with dwell, the rule a stability control is approved on (49 CFR 571.126): from 80 km/h off the
 // pedal, one cycle of a 0.7 Hz sine on the wheel with a 0.5 s hold at its second peak, at mult (up to 6.5) times the
-// steering that gives 0.3 g, and no more than 270 degrees at the hand wheel. It passes with the yaw rate under 35% of
+// steering that gives 0.3 g, and no more than 270 degrees at the hand wheel. With no mult, the final run (S7.9.4: the
+// greater of 6.5 x and 270 degrees). It passes with the yaw rate under 35% of
 // its peak 1 s after the steering ends and under 20% after 1.75 s, and 1.83 m moved sideways 1.07 s in.
 // Returns those, the most the car went sideways (deg) and its path [[x, y, heading]...] every 0.1 s.
 function driveSineDwell(car,mult){
   const s=driveRolling(car,80),v=80/3.6,L=car.a+car.b,T=1/0.7,t0=0.5,end=t0+T+0.5;
-  const A=Math.min((mult||6.5)*0.3*DRIVE_G*L*(1+car.Kus*v*v)/(v*v),car.steerLock*4.71/8.5);
+  const A6=0.3*DRIVE_G*L*(1+car.Kus*v*v)/(v*v),A270=car.steerLock*4.71/8.5,A=mult?Math.min(mult*A6,A270):Math.max(6.5*A6,A270);
   const st=t=>t<0?0:t<0.75*T?Math.sin(2*Math.PI*0.7*t):t<0.75*T+0.5?-1:t<T+0.5?Math.sin(2*Math.PI*0.7*(t-0.5)):0;
   let pk=0,y=0,r1=0,r175=0,beta=0,n=0;const path=[];
   while(s.t<end+2){const t=s.t-t0;stepCar(car,s,{steer:A*st(t)/car.steerLock,throttle:0,brake:0,gear:s.gear},0.005);
@@ -15159,10 +15165,19 @@ function stepCar(car,s,u,dt){
         // the grip is the tyres' own or, where the car is already turning harder (downforce, a banked dip), what it has shown
         const lim=Math.max(car.mu*gz,Math.abs(s.ayF))/s.vx,ref=Math.max(-lim,Math.min(lim,s.vx*delta/(L*Math.max(0.1,1+car.Kus*s.vx*s.vx))));
         // too little yaw counts only once the front tyres are past their peak, where more lock does nothing
-        const sg=Math.sign(ref),ex=(ref-s.yaw)*sg-A.espBand,aR=(s.alpha[2]+s.alpha[3])/2,bx=Math.abs(aR)-A.espBeta;
+        const sg=Math.sign(ref),ex=(ref-s.yaw)*sg-A.espBand;
         if(ex>0&&Math.abs(s.alpha[0]+s.alpha[1])/2>car.pkF)M+=sg*car.Izz*ex/A.espTau;
-        if(bx>0)M-=Math.sign(aR)*car.Izz*bx/(A.espTau*A.espTau);          // the rear sliding out: a moment against it
-      }
+        // too much yaw: more than the reference as the car itself would follow it, lagged by the single-track model's
+        // equivalent delay, tau = B/C - m v a/(Cr L) (Abe, Vehicle Handling Dynamics, ch. 3)
+        const v=s.vx,Cf=car.CaF,Cr=car.CaR,B=car.m*(car.a*car.a*Cf+car.b*car.b*Cr)+car.Izz*(Cf+Cr),
+          C=Cf*Cr*L*L/v*Math.max(0.1,1+car.Kus*v*v),tau=Math.max(h,B/C-car.m*v*car.a/(Cr*L));
+        s.yawRef+=(ref-s.yawRef)*Math.min(1,h/tau);
+        const sy=Math.sign(s.yaw),ox=(s.yaw-s.yawRef)*sy-A.espBand;
+        // the car turning faster than asked: a moment against it, once the rear tyres are past their peak (espBeta),
+        // where they hold no more
+        s.espOver=ox>0&&Math.abs(s.alpha[2]+s.alpha[3])/2>A.espBeta;
+        if(s.espOver)M-=sy*car.Izz*ox/A.espTau;
+      }else{s.yawRef=s.yaw;s.espOver=false;}
       if(M!==0){const fr=M*s.yaw<0,q=(fr?0:2)+(M>0?0:1);                   // against the yaw: an outer front wheel; with it: an inner rear
         eT[q]=Math.abs(M)/((fr?car.tF:car.tR)/2)*car.r;}
       s.espF=Math.max(0,Math.min(1,s.espF+(M!==0?-1:1)*h/A.espTau));
@@ -15223,6 +15238,9 @@ function stepCar(car,s,u,dt){
     // Regeneration is braking at the driven wheels alone, so the anti-lock system that eases a locking wheel's brake
     // eases the motor's braking by as much (every electric car cuts regeneration when its ABS works).
     if(car.el&&car.abs&&Tw<0){let m=1;for(let i=0;i<4;i++)if(drv[i])m=Math.min(m,s.abs[i]);Tw*=m;}
+    // and the stability control cuts it while it catches a spin (Bosch's drag-torque control, MSR: Bosch Automotive
+    // Handbook, "Electronic stability program"), so the driven rear tyres keep their side grip
+    if(car.el&&car.esp&&s.espOver&&Tw<0)Tw=0;
     // ---- wheels
     const Tbd=[0,0,0,0];                                                   // each wheel's torque reacting on the body (THE LINKS)
     for(let ax=0;ax<2;ax++){
@@ -29631,6 +29649,9 @@ function driftSCourse(R,halfW,mid){
 }
 // Path from driveDriver; in the corners, throttle holds a target β (Velenis: steering + drive torque). FWD stays
 // on the grip path (handbrake not modelled — named gap): NO_SLIDE is the honest result for power-over.
+// AWD (build 379) takes the RWD path: power-over works as far as the centre coupling lets the rear axle turn faster than the
+// front. stepCar models the coupling (centreCoupling, build 320): a clutch closed on the first slip or a viscous coupling
+// sends torque forward as the rear slips, so a car like the 993 Turbo (viscous, rear driven) gets NO_SLIDE honestly.
 function driftDriver(car,s,C,d,plan){
   const base=driveDriver(car,s,C.line,d);
   const z=C.zones[Math.max(0,Math.min(C.zones.length-1,d.i||0))]||'exit';d.zone=z;
@@ -29690,7 +29711,8 @@ function driftRun(car,plan,sample,D){
   const s=driveState(car),L0=C.line[0];
   s.x=L0.x;s.y=L0.y;s.psi=Math.atan2(C.line[1].y-L0.y,C.line[1].x-L0.x);
   s.vx=plan.v;s.w=s.w.map(()=>plan.v/car.r);
-  s.gear=plan.gear||2;s.we=plan.v/car.r*car.ratios[s.gear-1]*car.fd;
+  // A single-speed car (an EV) has no second gear: until build 379 it was put in gear 2 and never drove (STALL).
+  s.gear=Math.min(plan.gear||2,car.ratios.length);s.we=plan.v/car.r*car.ratios[s.gear-1]*car.fd;
   const k0=gripOnly?0:(plan.kick|0);
   const d={i:0,kick1:k0,kick2:k0,pull:plan.pull||2.2,seen1:false,seen2:false};
   let len=0;for(let k=1;k<C.line.length;k++)len+=Math.hypot(C.line[k].x-C.line[k-1].x,C.line[k].y-C.line[k-1].y);
@@ -29769,7 +29791,8 @@ function simulateDriftChallenge(){
     past1:R.past1,past2:R.past2,ctr1:R.ctr1,ctr2:R.ctr2,eMax:R.eMax,
     halfW:R.halfW,line:R.line,zones:R.zones,samples:R.samples||[],plan:R.plan,
     trackW:D.w,body:{f:car.a+D.ovF,r:car.b+D.ovR},
-    slide1:R.slide1,slide2:R.slide2,pkR:R.pkR
+    slide1:R.slide1,slide2:R.slide2,pkR:R.pkR,
+    centre:car.drive==='awd'&&car.centre?{type:car.centre.type,f:car.centre.f}:null   // AWD power-over is as far as this lets the rear slip (build 379)
   };
 }
 // ====== SKID PAD (build 368) ======
@@ -30003,8 +30026,8 @@ function renderChallenge(){
       cell('SLIDE 2',R.past2.toFixed(2)+' s')+
       cell('TARGET β',(R.betaT*180/Math.PI).toFixed(0)+'°')+
       cell('RADIUS',R.radius+' m')+
-      cell('DRIVE',tr((R.drive||'').toUpperCase()));
-    note.textContent=tr(ch.desc)+' '+tr('ESP and traction control off. METHOD picks how the slide starts: POWER-OVER (throttle), CLUTCH KICK (clutch down, the engine revs itself, then the clutch is dropped) or FLICK (lift and steer away, then sharply in, each for half the body’s natural period, so its rebound helps turn-in; FWD lifts to rotate). AUTO tries them in that order. ENTRY fixes the speed, or BEST searches 32–43 km/h. The driver holds body slip with throttle and countersteer, then links the second corner. CLEAR needs a sustained slide in both. Failures: NO_SLIDE (never past the rear peak — typical FWD without a handbrake), FADE (only one corner), STALL (stopped or never reached the exit), OFF (any corner of the body over the edge, swept at its slip angle), or SPIN. Handbrake and loose surfaces are not modelled yet.');
+      cell('DRIVE',tr((R.drive||'').toUpperCase())+(R.centre?' · '+tr(({lock:'CLUTCH',fric:'TORSEN',visc:'VISCOUS',open:'OPEN'})[R.centre.type]||'')+' '+Math.round(100*R.centre.f)+':'+Math.round(100*(1-R.centre.f)):''));
+    note.textContent=tr(ch.desc)+' '+tr('ESP and traction control off. METHOD picks how the slide starts: POWER-OVER (throttle), CLUTCH KICK (clutch down, the engine revs itself, then the clutch is dropped) or FLICK (lift and steer away, then sharply in, each for half the body’s natural period, so its rebound helps turn-in; FWD lifts to rotate). AUTO tries them in that order. ENTRY fixes the speed, or BEST searches 32–43 km/h. The driver holds body slip with throttle and countersteer, then links the second corner. CLEAR needs a sustained slide in both. Failures: NO_SLIDE (never past the rear peak — typical FWD without a handbrake), FADE (only one corner), STALL (stopped or never reached the exit), OFF (any corner of the body over the edge, swept at its slip angle), or SPIN. AWD powers over as far as its centre coupling lets the rear spin faster than the front: a clutch or viscous coupling sends torque forward as the rear slips (DRIVE shows the coupling and its front:rear split). Handbrake and loose surfaces are not modelled yet.');
     return;
   }
   if(R.kind==='skidpad'){
@@ -31704,7 +31727,7 @@ const VCD_CARDS=[
   {id:'tyres',title:'WHEELS & TYRES',guide:'tyres',viz:'tyre',vizH:150,cap:'To scale: the tyre in section, its tread width and its sidewall (the width times the aspect) around the rim.'},
   {id:'aero',title:'AERO & WEIGHT',guide:'aero'},
   {id:'brakes',title:'BRAKES & STEERING',guide:'brakes'},
-  {id:'aids',title:'ECU: DRIVER AIDS',guide:'traction',viz:'aids',vizH:176,cap:'From above: the sine with dwell at 80 km/h, the test a stability control is approved on. Green is the car as set, red with the ESP off. These settings act in these three tests; the lap and the 0–100 still hold the tyres at their peak.'},
+  {id:'aids',title:'ECU: DRIVER AIDS',guide:'traction',viz:'aids',vizH:176,cap:'From above: the sine with dwell at 80 km/h at its final run (270° of hand wheel), the test a stability control is approved on. Green is the car as set, red with the ESP off. These settings act in these three tests; the lap and the 0–100 still hold the tyres at their peak.'},
   {id:'susp',title:'SUSPENSION',guide:'suspension'}
 ];
 const VCD_FIELDS={
@@ -31939,7 +31962,7 @@ function vcdAids(){
   if(vcdAidsMemo&&vcdAidsMemo.key===key)return vcdAidsMemo;
   let o={key};
   try{const car=driveCar(),off=car.esp?Object.assign({},car,{esp:false}):null;
-    o={key,esp:car.esp,stop:driveStop100(car),sprint:driveSprint(car),swd:driveSineDwell(car,6.5),off:off?driveSineDwell(off,6.5):null};}catch(e){}
+    o={key,esp:car.esp,stop:driveStop100(car),sprint:driveSprint(car),swd:driveSineDwell(car),off:off?driveSineDwell(off):null};}catch(e){}
   return vcdAidsMemo=o;
 }
 function vcdDrawAids(dc,r){

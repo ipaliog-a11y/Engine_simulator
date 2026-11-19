@@ -41,6 +41,39 @@ Step 13 of `plans/small-physics.md`, build 311's follow-up, on the owner's decis
   ~1100 °C, R34 ~1030 °C); lowering their boost waits until EGT's load factor (map/mapMax) is replaced by a derived one,
   since it, not the mixture, would do the cooling. Also open: the turbine's shaft balance still reads λ 1; rich products'
   higher cp is not counted (errs warm).
+### Grip by camber in the stepped car: tried, left named until after v1.0 (build 381)
+
+- Small-physics step 6 tried the lap's camber law (`latCamberF`) in the stepped car, now that the stability control judges by yaw rate. It still takes `test170`'s test driver past `OFF_KNOWN`: by each axle's outside wheel, as the lap has it, the 911 GT3 runs 11.8 m off the line and 41° sideways, the Model 3 9.5 m and 38°, the Civic 7.9 m, the WRX 6.6 m (caps 4–4.8 m); by each wheel's own lean the GT3 leaves the line.
+- By the owner's decision it is not shipped and `OFF_KNOWN` is not widened: the gap is named in `drive-model.js` (THE CAMBER) and in the plan, until after v1.0. It waits on a driver that judges the car's own grip. No numbers move.
+
+### The stability control judges a spin by the yaw rate (build 380)
+
+- Plan small-physics step 5. `stepCar`'s ESP now compares the yaw rate with the steady single-track reference, lagged
+  by the model's equivalent delay B/C − m v a/(Cr L) (Abe, *Vehicle Handling Dynamics*, ch. 3; van Zanten, SAE
+  2000-01-1633), and brakes the outer front wheel for Izz × excess / espTau while the rear tyres are past their peak
+  slip angle (espBeta). Before, it braked by how far the rear slip angle was past espBeta.
+- An electric car's regeneration is cut while the ESP catches a spin (Bosch's drag-torque control, MSR). The regen
+  braking the lifted-off rear held the Model 3 sliding after the steering ended.
+- FMVSS 126 at the final run (270° of hand wheel), Model 3: yaw 0.10 / 0.01 of its peak at 1 / 1.75 s, 3.10 m across
+  (limits 0.35 / 0.20 / 1.83 m; was 0.46 at 1 s). `test174` now asserts all three there.
+- Share of a hot lap ('tech') with ESP braking a wheel: MX-5 2.0% (3.6% before), 911 GT3 4.6% (8.9%), Model 3 4.7%
+  (11.8%), Civic Type R 5.8% (7.7%). Yaw alone with the lag, without the rear-past-peak gate, gave 23–35%.
+- `test175` failed on `main`: the card's sine with dwell ran at 6.5×, where the Model 3 no longer spins with ESP off
+  (since build 354's tyres). The card now runs the final run (`driveSineDwell` with no multiple), where ESP off spins
+  and ESP on passes.
+- Fingerprint identical (stepCar only). Left open: the limit reading the surface (step 7); MSR for engine cars.
+
+### AWD power-over on the S-route powerslide (build 379)
+
+- AWD cars take the RWD power-over path. Whether the rear slides depends on the centre coupling `stepCar` already models.
+  The result and the DRIVE cell now show the coupling and its front:rear split (e.g. AWD · CLUTCH 50:50). The info note,
+  guide and README say why a coupling can stop power-over.
+- Fixed: a single-speed car (an EV) was put in gear 2, which it lacks, and never drove (STALL, β 0°). Now the Model Y
+  CLEARs (β 10°/10°) and the Model 3 RWD CLEARs (15°/13°).
+- The viscous, rear-driven cars (993 Turbo, Diablo VT, Murciélago) stay NO_SLIDE: the coupling sends torque forward as
+  the rear slips.
+- Left open: the Model S Plaid goes OFF; the Qashqai e-POWER (FWD) STALLs; the handbrake waits for a `stepCar` input
+  (next, after the stability-control build). Fingerprint identical; drift results are not in it.
 
 ### A sourced regen cap per maker (build 378)
 

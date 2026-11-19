@@ -46,8 +46,17 @@ reporting its range. Sourcing is batched apart from physics.
 5. **ESP judges a spin by yaw rate**, with a lagged reference (van Zanten, Bosch, SAE 2000-01-1633), in place of
    the rear slip angle. The previous try (yaw alone, no lag) braked the MX-5 on 30% of a hot lap. Its limit reads the
    surface (needs 7).
+   *Build 380:* done. The yaw rate against the reference lagged by the single-track model's equivalent delay (Abe);
+   it brakes while the rear is past its peak; an EV's regen is cut while it works (MSR). Model 3 at FMVSS 126's final
+   run: yaw 0.10 / 0.01 of peak at 1 / 1.75 s, 3.10 m (was 0.46). Hot lap with ESP on: MX-5 2.0% of it (3.6% before),
+   911 GT3 4.6% (8.9%). Left open: the limit reading the surface
+   (7); MSR for engine cars.
 6. **Grip by camber** (`latCamberF` in the stepped car). Blocked on a driver who judges the car's own grip
    (`DRIVE_DRIVER` is a rule). Try after 5. If `test170` still strays past `OFF_KNOWN`, it stays named.
+   *Build 381:* tried, not shipped: named until after v1.0 (owner). With the yaw-rate ESP, the lap's law by each axle's
+   outside wheel still takes `test170` past `OFF_KNOWN` (911 GT3 11.8 m and 41 deg, Model 3 9.5 m and 38 deg, Civic
+   7.9 m, WRX 6.6 m; caps 4–4.8 m); by each wheel's own lean the GT3 leaves the line. It waits on a driver that judges
+   the car's own grip.
 
 ## 3. Surfaces
 
@@ -107,5 +116,5 @@ reporting its range. Sourcing is batched apart from physics.
 ## Open questions for the owner
 
 1. Step 13: may the exhaust temperature lower boost on presets that run hot today?
-2. Step 6: if grip by camber can't be kept inside `OFF_KNOWN`, does it stay named until after v1.0?
+2. ~~Step 6: if grip by camber can't be kept inside `OFF_KNOWN`, does it stay named until after v1.0?~~ Yes (owner); it does.
 3. Does step 0 come first, or alongside step 1?
