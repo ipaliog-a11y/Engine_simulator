@@ -18,6 +18,12 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 ## [Unreleased]
 
+### The lap instruments show the shift and the brakes (build 393)
+
+- The track replay draws eight shift lights over the rev counter: green, then amber, then red and cyan at the last two as the engine nears the redline. Reduced motion keeps the last two red.
+- A rotor hotter than 450 C, which the lap already records, lights a mark beside those lights.
+- The guide's LIVE page and the README now describe the four sections and the ECU laptop.
+
 ### The bench shows heat, knock and a pull (build 392)
 
 - The exhaust manifold colour follows the gas temperature already computed for that rpm and load: dull at low power, towards yellow as it climbs from 500 C to 1100 C.
