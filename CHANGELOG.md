@@ -18,6 +18,15 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 ## [Unreleased]
 
+### Import-vehicle skill for researching real-car presets (build 364)
+
+- New Cursor skill at `.cursor/skills/import-vehicle/`: when asked to import a real car (e.g. Ferrari F50),
+  research sourced body/engine numbers, write presets, run accuracy bands (±25% power, ±35% matched 0–100 and top),
+  fix honest input errors only, and report unachievable gaps with suggested actions.
+- Includes schema/checklist/gap-report references, a JSON template, `validate-research.mjs`, and
+  `check-accuracy.mjs`. Derive-do-not-fit is hard-coded; physics constants are never tuned to pass.
+- `test220` checks the skill files and runs both scripts against the existing Ferrari F40.
+
 ### v0.8, and the leftovers to v1.0 grouped (build 363)
 
 - The title reads v0.8, reached at build 338 (handling phase G); the owner tags it.
