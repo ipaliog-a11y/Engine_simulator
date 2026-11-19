@@ -90,8 +90,8 @@ reporting its range. Sourcing is batched apart from physics.
 13. **Rich mixtures cool the exhaust.** The excess fuel's evaporation and the unburned share (Heywood ch. 4 and 14)
     end the cap at stoichiometric. *Owner's decision first:* letting the retard floor read the exhaust temperature
     then cuts boost on the presets whose modelled exhaust is already over 950 °C at best spark.
-    *Build 376:* done; rich cools ~45 K from λ 1 to 0.78, the ECU enriches then cuts boost at 950 °C (R34 −15%,
-    993 Turbo −12%, 720S/750S −6% peak power). Open: the shaft balance reads λ 1; no manifold cooling to the turbine.
+    *Build 382:* rich cools ~45 K from λ 1 to 0.78; the ECU enriches (no boost cut) to hold 950 °C at the turbine
+    inlet. Open: the boost cut, until EGT's load factor is derived; the shaft balance reads λ 1.
 14. **The scavenging term reads the burned mixture**, not the target, with the loop closed to convergence.
 15. **A compound's split off its design point.** The low-pressure stage lags the high-pressure one, from each stage's
     own map. No preset is a compound, so the fingerprint is identical.

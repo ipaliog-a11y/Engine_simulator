@@ -124,7 +124,9 @@ for (const r of eng) {
   // still on the old hand-set exhaust share, by ~6%: Renesis 897 -> 842, the two-stroke 814 -> 764.
   // Floors moved with that, for the reason stated; deriving the ported engines' work (the queued
   // rotary/two-stroke efficiency item) is what replaces their rule.
-  const KNOWN_LOW = { '1.3 Rotary NA (Renesis)': 840, '500cc 2-Stroke Twin': 760 };
+  // Build 382 (owner's decision): rich mixtures now cool the exhaust (the extra fuel's mass and evaporation, exhaustGasT),
+  // real physics; these engines already read too cool, a missing heat term. Floors lowered to the new values, rounded down.
+  const KNOWN_LOW = { '1.3 Rotary NA (Renesis)': 830, '500cc 2-Stroke Twin': 750 };
   // build 101: the 2JZ archetype reads 1001 C as a probe at the turbine inlet. The manifold run from the
   // port to the turbine (its length is derived, build 91) loses heat this model does not count yet,
   // worth some tens of kelvin; held at a ceiling until it does.
