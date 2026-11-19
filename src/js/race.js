@@ -573,7 +573,7 @@ function raceStepOnce(R){
     let i=c.i,f=c.f,ahead=c.v*dt/2;
     while(ahead>0){const L=M.cum[i+1]-M.cum[i],rem=(1-f)*L;if(ahead<rem){f+=ahead/L;ahead=0;}else{ahead-=rem;i=(i+1)%M.n;f=0;}}
     const P=racePaceAt(M,i,f,g,ff,c.hyX),lim=M.lim[i];
-    if(M.ev)c._tq=evRaceTqAt(M,i,f,clamp(g,M.grips[0],1),ff);
+    if(M.ev){const gc=clamp(g,M.grips[0],1);c._tq=evRaceTqAt(M,i,f,gc,ff);c._fh=evRaceTqAt(M,i,f,gc,ff,'fh');}
     let vLim=P.v;
     // the brakes as they are now against the brakes the lap was solved with: a braking zone to the speed
     // it brakes down to, v^2 = apex^2 + (fade now / fade solved) (v^2 - apex^2)
