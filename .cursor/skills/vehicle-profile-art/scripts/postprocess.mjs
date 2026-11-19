@@ -15,13 +15,15 @@ const CLASSIC = { w: 1152, h: 864, cw: 1080, ch: 720, x: 36, y: 90 };
 
 const args = process.argv.slice(2);
 if (args.length < 1 || args[0].startsWith('--')) {
-  console.error('Usage: node postprocess.mjs <input> --slug <slug> [--webp-quality 82] [--in-place] [--dry-run]');
+  console.error('Usage: node postprocess.mjs <input> --slug <slug> [--staging <dir>] [--webp-quality 82] [--in-place] [--dry-run]');
   process.exit(2);
 }
 
 const input = path.resolve(args[0]);
 const slugIdx = args.indexOf('--slug');
 const slug = slugIdx >= 0 ? args[slugIdx + 1] : '';
+const stagingIdx = args.indexOf('--staging');
+const staging = stagingIdx >= 0 ? path.resolve(args[stagingIdx + 1]) : null;
 const qIdx = args.indexOf('--webp-quality');
 const quality = qIdx >= 0 ? Number(args[qIdx + 1]) : 82;
 const dry = args.includes('--dry-run');
@@ -62,8 +64,9 @@ if (near(w, CLASSIC.w) && near(h, CLASSIC.h)) {
   postProcess = `centre-crop to 3:2 from ${w}x${h}, nearest-neighbour resize to ${OUT_W}x${OUT_H}`;
 }
 
-const pngOut = path.join(repo, 'assets/car-profiles', slug + '.png');
-const webpOut = path.join(repo, 'assets/cars', slug + '.webp');
+const root = staging || repo;
+const pngOut = path.join(root, staging ? 'car-profiles' : 'assets/car-profiles', slug + '.png');
+const webpOut = path.join(root, staging ? 'cars' : 'assets/cars', slug + '.webp');
 
 if (!inPlace && !dry) {
   if (fs.existsSync(pngOut) || fs.existsSync(webpOut)) {
