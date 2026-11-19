@@ -824,7 +824,7 @@ body.guided-open{overflow:hidden}
 </div>
 <div class="container">
 <header>
-<h1>PIXEL POWERTRAIN v0.8 build 386</h1>
+<h1>PIXEL POWERTRAIN v0.8 build 387</h1>
 <div class="subtitle" id="subtitle">ENGINE DESIGNER • BUILD IT, THEN DRIVE IT</div>
 </header>
 <div class="build-strip" id="buildStrip">
@@ -3120,7 +3120,7 @@ Every built-in circuit carries its terrain, and imported GPX tracks bring their 
 <div class="guide-body" data-gk="elevationPhys">
 On a slope θ with vertical curvature κ<sub>v</sub> (positive in a dip), the load on the tyres and the force along the road are
 <span class="geq">N = m (g cos θ + v² κ<sub>v</sub>) + L(v) &nbsp;&nbsp; F<sub>slope</sub> = − m g sin θ</span>
-so a crest (κ<sub>v</sub> &lt; 0) takes load off exactly where speed is highest. On the test circuits a dip is worth about a third more corner speed than the same corner on a brow. The 22 real circuits carry measured width and terrain elevation.
+so a crest (κ<sub>v</sub> &lt; 0) takes load off exactly where speed is highest. On the test circuits a dip is worth about a third more corner speed than the same corner on a brow. The 32 real circuits carry measured width and terrain elevation.
 </div>
 </div>
 <div class="guide-see">See also: <a data-gp="lapsolve">Solving a lap</a> · <a data-gp="gpx">Importing a circuit</a></div>
@@ -9306,7 +9306,7 @@ function roadSigma(ax,v){return ROAD.gd>0&&v>0?(ax==='F'?vehicle.roughF:vehicle.
 // A's middle (8e-6 m3); a circuit run on public or park roads, or one whose bumps its drivers complain of, class A's
 // middle (16e-6); the Nordschleife, a public toll road from 1927, the A/B boundary (32e-6).
 const TRACK_ROAD={smooth:8e-6,bumpy:16e-6,road:32e-6};
-const TRACK_ROAD_OF={nord:'road',tech:'bumpy',cota:'bumpy',interlagos:'bumpy',mexico:'bumpy',montreal:'bumpy',melbourne:'bumpy',sochi:'bumpy',brands:'bumpy'};
+const TRACK_ROAD_OF={nord:'road',tech:'bumpy',cota:'bumpy',interlagos:'bumpy',mexico:'bumpy',montreal:'bumpy',melbourne:'bumpy',sochi:'bumpy',brands:'bumpy',oschersleben:'bumpy',norisring:'bumpy',lime_rock:'bumpy',laguna:'bumpy',road_atlanta:'bumpy',vir:'bumpy',lemans:'bumpy'};
 function trackRoad(key){const T=TRACKS[key];return T&&T.road?T.road:TRACK_ROAD_OF[key]||(T&&T.imported?'bumpy':'smooth');}   // an imported trace: unknown, so the middle
 // Suspension geometry, each axle its own (build 173). Two things separate the types in a corner:
 //   camber recovery — the share of the body roll the linkage claws back at the loaded outside wheel. An independent

@@ -18,7 +18,7 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 ## [Unreleased]
 
-### Championship seasons on top of RACE (build 386)
+### Championship seasons on top of RACE (build 387)
 
 Post-v1.0 game layer from `plans/championship.md`: classes, calendars, points, teams, light economy, VSC and endurance hooks.
 - **CHAMP tab**: series (Pixel GT, Hot Hatch Cup, Sports Trophy, EV Series, Enduro Cup, Open Weekend), round-by-round or instant season, career unlocks, standings and history in `pes.champ.*`.
@@ -26,7 +26,23 @@ Post-v1.0 game layer from `plans/championship.md`: classes, calendars, points, t
 - **Points** Top-8 table with optional fastest-lap point; constructor table when a team is entered; multi-class standings on Open Weekend.
 - **Economy** (selected cups): entry fee and finish prizes in credits; tyre-set counters per entrant.
 - **Race hooks**: virtual safety car after enough mistakes, blue-flag ignore time penalty, timed races with minimum pit stops (Enduro Cup).
-- `test235` checks eligibility, points, seeds, persistence and a short championship round. Physics fingerprint of a lone race is unchanged when VSC/duration are off.
+- `test236` checks eligibility, points, seeds, persistence and a short championship round. Physics fingerprint of a lone race is unchanged when VSC/duration are off.
+
+### Next 100 factory cars shortlisted (research batch 2)
+
+- `research/vehicles-batch-2/`: locked shortlist of 100 nameplates across existing picker categories (no new category, no `src/` presets yet).
+- `queue.json` + `validate.mjs` + `tests/test235.mjs`: 100 unique ids/names, chassis/cat checks, no collision with current `FACTORY_CARS`.
+- Wave-1 stubs under `research/vehicles/<id>/NOTES.md` for the first ten high-data combustion targets (R32 GT-R, Silvia S15, Golf R, i30 N, Alpine A110, GT350, Macan Turbo, Stelvio QF, FC RX-7, Escort Cosworth).
+- Full `vehicle.json` research and factory presets stay for later sessions (same gate as batch 1).
+
+### Ten more measured real circuits (build 386)
+
+- **+10 real circuits** (22 → 32): Moscow Raceway, Oschersleben and the Norisring from the remaining TUM
+  CSVs (OSM bbox or circuit relation for geo; DEM heights as before); Daytona road course, Lime Rock,
+  Laguna Seca, VIR, Indianapolis road course, Le Mans and Road Atlanta from track-atlas measured edges
+  (width = distance to left + right edge; already WGS84, no rigid fit).
+- Importer: OSM `type=circuit` relations; atlas `.surface.geojson` path. `test65` covers all 32.
+- Left open: Sebring / Watkins Glen / Long Beach (atlas seen-both edge coverage too low).
 
 ### Vehicle-profile-art skill for factory showroom pictures (build 385)
 

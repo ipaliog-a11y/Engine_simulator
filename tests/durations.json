@@ -37,7 +37,7 @@
   "test62.mjs": 71513,
   "test63.mjs": 116936,
   "test64.mjs": 5471,
-  "test65.mjs": 26601,
+  "test65.mjs": 37000,
   "test66.mjs": 15579,
   "test67.mjs": 10829,
   "test68.mjs": 8039,
@@ -207,5 +207,6 @@
   "test231.mjs": 12000,
   "test233.mjs": 9000,
   "test234.mjs": 5000,
-  "test235.mjs": 90000
+  "test235.mjs": 500,
+  "test236.mjs": 90000
 }
