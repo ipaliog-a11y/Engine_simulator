@@ -28,6 +28,8 @@ they are accurate about *what* shipped but not about the day it shipped.
 - `plans/road-to-v1.md` gets a grouped list of everything left before v1.0 (decisions 21–24).
 - `test166` had failed on `main` since build 353: the moose driver's change moved `DRIVE_DRIVER`'s text. Its match is
   repointed; no number moves.
+- `plans/small-physics.md`: the smaller physics leftovers planned in about 16 builds, starting with a green
+  baseline (`test136`'s Model 3 motor figures are off their locks on `main`).
 - Left open: the finish line's wording (owner still deciding).
 
 ### Sound on the S-route powerslide, with tyre screech (build 362)

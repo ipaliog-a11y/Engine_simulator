@@ -311,6 +311,7 @@ The register: 6 open (`EV_RATIO`, `catRampTop`, and phase D's four), 33 rules.
    the register (RC sag, fast charge, inverter temperature, ageing, three motor types) is optional.
 6. **Engine details**: a compound's split off its design point; rich mixtures cooling the exhaust; the scavenging
    term reading the target mixture.
+   *Groups 4–6 are planned build by build in `plans/small-physics.md` (about 16 builds).*
 7. **Data**: 83 overhang splits, 26 tyre sizes, two widths (`NO_WIDTH_KNOWN`), each real circuit's pit-lane length.
 8. **Known gaps to rule on or close**: `ACC_KNOWN` (Supra A80, WRX STI), `RATING_KNOWN` (Dino 246), `GAP_KNOWN`
    (Model 3 torque, Leaf), `AT_LIMITER_KNOWN`, the moose run ~10 km/h under the magazines. Approved: `OFF_KNOWN`,
