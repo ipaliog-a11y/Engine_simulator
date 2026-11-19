@@ -3,7 +3,8 @@
 // WHY THIS EXISTS. The menu's pan stuttered. It moved one <img> by its `left`, rounded to whole pixels twice, 20 times a
 // second; it swapped the picture's src at each room (a fresh decode and a jump cut); and the whole bench was drawn
 // under the menu on every frame. What must hold:
-//   · four rooms, each its own <img>, whose src never changes once set: no picture is swapped or decoded again;
+//   · 54 rooms, each its own <img>; a picture stays put for the whole hold, and only the visible room, the next,
+//     and during a fade the room before, are decoded;
 //   · the room on view walks by a running Web Animation of its transform, so it moves on (almost) every frame, in one
 //     direction, by sub-pixel steps of an even size, not by whole-pixel jumps every third frame;
 //   · for the first FADE_MS of a room, the room before is still on, under it, and still walking; after that only the
@@ -25,14 +26,12 @@ const watch = p => {
 const page = await browser.newPage({ viewport: { width: 1280, height: 800 } });
 watch(page);
 await page.goto(url, { waitUntil: 'networkidle' });
-await page.waitForFunction(() => titleRooms.length === 4 && titleRooms.every(R => R.ready), null, { timeout: 8000 }).catch(() => {});
-const ready = await page.evaluate(() => titleRooms.filter(R => R.ready).length);
-if (ready !== 4) fails.push(`${ready} of 4 rooms decoded`);
-
-// 1. four rooms, src set once
-const srcs0 = await page.evaluate(() => [...document.querySelectorAll('#titleScreen .title-room')].map(i => i.getAttribute('src')));
-console.log('== rooms: ' + srcs0.length + ' <img>: ' + srcs0.map(s => s.split('/').pop()).join(', ') + ' ==');
-if (srcs0.length !== 4) fails.push('expected 4 room pictures, got ' + srcs0.length);
+await page.waitForFunction(() => titleRooms.length === TITLE_ROOMS.length && titleRoomEl() && titleRoomEl().naturalWidth > 0, null, { timeout: 8000 }).catch(() => {});
+const ready = await page.evaluate(() => ({ n: titleRooms.length, shown: !!(titleRoomEl() && titleRoomEl().naturalWidth), loaded: titleRooms.filter(R => R.im.getAttribute('src')).length }));
+console.log('== rooms: ' + ready.n + ' slots, ' + ready.loaded + ' decoded, on view ' + ready.shown + ' ==');
+if (ready.n !== 54) fails.push('expected 54 room slots, got ' + ready.n);
+if (!ready.shown) fails.push('the room on view has no picture');
+if (ready.loaded < 1 || ready.loaded > 3) fails.push('expected at most 3 rooms decoded, got ' + ready.loaded);
 
 // 2. frame by frame: the room on view moves every frame, one way, in even sub-pixel steps
 await page.evaluate(() => titleAdvance(1000));
@@ -68,32 +67,57 @@ const fade = await page.evaluate(async () => {
 });
 console.log(`== fade: at 5.2 s room ${fade.idx}; on ${fade.on.join(',')}; z ${fade.z.join(',')}; the room before moved ${fade.prevMoved.toFixed(1)} px; ` +
   `after the fade on ${fade.after.join(',')} ==`);
-if (fade.idx !== 1 || !fade.on[0] || !fade.on[1] || fade.on[2] || fade.on[3]) fails.push('during the fade, rooms 0 and 1 should both be on: ' + fade.on.join(','));
+const only = (arr, ix) => arr.every((v, i) => v === ix.includes(i));
+if (fade.idx !== 1 || !only(fade.on, [0, 1])) fails.push('during the fade, rooms 0 and 1 should both be on: ' + fade.on.map(v => v ? 1 : 0).join(''));
 if (!(fade.z[1] > fade.z[0])) fails.push('the incoming room is not on top: z ' + fade.z.join(','));
 if (!(fade.prevMoved < -0.5)) fails.push('the outgoing room stopped walking during the fade (' + fade.prevMoved.toFixed(2) + ' px)');
-if (fade.after.join() !== 'false,true,false,false') fails.push('after the fade only room 1 should be on: ' + fade.after.join(','));
+if (!only(fade.after, [1])) fails.push('after the fade only room 1 should be on: ' + fade.after.map(v => v ? 1 : 0).join(''));
 
-// 4. covered at every point of the walk, its fade-out's end included
-const cover = await page.evaluate(() => {
-  const s = document.querySelector('#titleScreen .title-stage').getBoundingClientRect(), bad = [];
-  for (let k = 0; k < 4; k++) {
-    const R = titleRooms[k];
-    for (const t of [0, 2500, SCENE_MS, SCENE_MS + FADE_MS]) {
-      titleRoomAt(k, t); R.anim.pause();
-      const b = R.im.getBoundingClientRect();
-      if (!(b.left <= s.left + 1 && b.right >= s.right - 1 && b.top <= s.top + 1 && b.bottom >= s.bottom - 1)) bad.push(k + '@' + t);
-    }
+// 4. covered across the walk, the end of a fade included, for the first rooms and one late one
+const timing = await page.evaluate(() => ({ scene: SCENE_MS, fade: FADE_MS, n: TITLE_ROOMS.length }));
+const cover = [];
+for (const k of [0, 1, 4, timing.n - 1]) {
+  for (const t of [0, 2500, timing.scene - 50]) {
+    await page.evaluate(({ k, t, scene }) => titleAdvance(k * scene + t), { k, t, scene: timing.scene });
+    await page.waitForFunction(k => {
+      const i = titleRooms[k] && titleRooms[k].im;
+      return i && i.complete && i.naturalWidth > 0 && i.classList.contains('on');
+    }, k, { timeout: 8000 }).catch(() => {});
+    const ok = await page.evaluate(k => {
+      const i = titleRooms[k].im, b = i.getBoundingClientRect(), s = i.parentElement.getBoundingClientRect();
+      return !!(i.naturalWidth && b.left <= s.left + 1 && b.right >= s.right - 1 && b.top <= s.top + 1 && b.bottom >= s.bottom - 1);
+    }, k);
+    if (!ok) cover.push(k + '@' + t);
   }
-  titleAdvance(0);
-  return bad;
-});
-console.log('== stage covered at 0, 2.5 s, 5 s and 5.7 s of every walk: ' + (cover.length ? 'NO ' + cover.join(' ') : 'yes') + ' ==');
+  await page.evaluate(({ k, scene, fade }) => titleAdvance((k + 1) * scene + fade - 40), { k, scene: timing.scene, fade: timing.fade });
+  await page.waitForFunction(k => {
+    const i = titleRooms[k] && titleRooms[k].im;
+    return i && i.complete && i.naturalWidth > 0 && i.classList.contains('on');
+  }, k, { timeout: 8000 }).catch(() => {});
+  const okEnd = await page.evaluate(k => {
+    const i = titleRooms[k].im, b = i.getBoundingClientRect(), s = i.parentElement.getBoundingClientRect();
+    return !!(i.classList.contains('on') && i.naturalWidth && b.left <= s.left + 1 && b.right >= s.right - 1 && b.top <= s.top + 1 && b.bottom >= s.bottom - 1);
+  }, k);
+  if (!okEnd) cover.push(k + '@fade-end');
+}
+console.log('== stage covered on sampled rooms: ' + (cover.length ? 'NO ' + cover.join(' ') : 'yes') + ' ==');
 if (cover.length) fails.push('the walk uncovers the stage at ' + cover.join(', '));
 
-// 5. still the same four pictures after a full cycle
-await page.evaluate(() => { for (const t of [5100, 10100, 15100, 20100]) titleAdvance(t); });
-const srcs1 = await page.evaluate(() => [...document.querySelectorAll('#titleScreen .title-room')].map(i => i.getAttribute('src')));
-if (srcs1.join() !== srcs0.join()) fails.push('a room picture was swapped during the cycle');
+// 5. a room keeps its own picture for the hold, then the next room brings its own
+const stable = await page.evaluate(() => {
+  titleAdvance(1500);
+  const a = titleRoomEl().getAttribute('src');
+  titleAdvance(3500);
+  const b = titleRoomEl().getAttribute('src');
+  titleAdvance(5100);
+  const c = titleRoomEl().getAttribute('src');
+  const loaded = titleRooms.filter(R => R.im.getAttribute('src')).length;
+  return { sameHold: a === b && a === TITLE_ROOMS[0], advanced: c === TITLE_ROOMS[1], loaded };
+});
+console.log('== picture held ' + stable.sameHold + ', advanced ' + stable.advanced + ', decoded ' + stable.loaded + ' ==');
+if (!stable.sameHold) fails.push('the picture changed during a room\'s hold');
+if (!stable.advanced) fails.push('the next room did not take its own picture');
+if (stable.loaded < 1 || stable.loaded > 3) fails.push('decoded room window grew past 3 during the fade, got ' + stable.loaded);
 
 // 6. the bench is not drawn under the menu
 const drawn = await page.evaluate(async () => {
@@ -116,7 +140,7 @@ await page.close();
 const calm = await browser.newPage({ viewport: { width: 1280, height: 800 }, reducedMotion: 'reduce' });
 watch(calm);
 await calm.goto(url, { waitUntil: 'networkidle' });
-await calm.waitForFunction(() => titleRooms.length === 4 && titleRooms.every(R => R.ready), null, { timeout: 8000 }).catch(() => {});
+await calm.waitForFunction(() => titleRooms.length === TITLE_ROOMS.length && titleRoomEl() && titleRoomEl().naturalWidth > 0, null, { timeout: 8000 }).catch(() => {});
 const rm = await calm.evaluate(async () => {
   titleAdvance(500); const el = titleRoomEl(), x0 = el.getBoundingClientRect().left;
   await new Promise(r => setTimeout(r, 400));
