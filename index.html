@@ -869,7 +869,7 @@ body[data-group="more"] .mode-room{display:none}
 </div>
 <div class="container">
 <header>
-<h1>PIXEL POWERTRAIN v0.8 build 399</h1>
+<h1>PIXEL POWERTRAIN v0.8 build 400</h1>
 <div class="subtitle" id="subtitle">ENGINE DESIGNER • BUILD IT, THEN DRIVE IT</div>
 </header>
 <div class="build-strip" id="buildStrip">
@@ -3383,7 +3383,7 @@ Each round calls <i>simulateRace</i> with the season's seed offset by the round 
 <div class="gtier gt-game"><div class="gtier-h">LV2 · IN THE GAME</div>
 <div class="guide-body" data-gk="chal">
 The <b>CHALLENGES</b> tab (DRIVE) runs the car on its own. Pick a challenge and the result appears; hover the road for distance, speed and gradient.<br>
-<b>Economy</b>: the target time is the PACE (125, 150 or 200%) times the car's own fastest time on that road. The score is litres and L/100 km, or kWh and Wh/km for an EV, with the regen it recovered. The grid also shows the peak acceleration and braking, the mean engine speed on power, the top gear used, and ECO BLEND (below).<br>
+<b>Economy</b>: the target time is the PACE (125, 150 or 200%) times the car's own fastest time on that road. The score is litres and L/100 km, or kWh and Wh/km for an EV, with the regen it recovered. The grid also shows the peak acceleration and braking, the mean engine speed on power, the top gear used, and ECO BLEND or ECO DRIVER DP (below).<br>
 <b>Fixed-time stage</b>: one set time per road for every car. The car's fastest run from a standing start is shown against it; slower is a <b>DNF</b>.<br>
 <b>Moose avoidance</b>: ENTRY picks BEST CLEAR (the speed is raised until a cone falls, as ISO 3888-2 does; the grid also says how it fails one step up) or a magazine's fixed speed, 72 km/h (Teknikens Värld's pass mark) or 77 km/h (km77's). The result is CLEAR, CONE, SPIN or ROLLOVER, with a warning for a two-wheel lift, its time and the largest tip. REPLAY slows the replay to 0.5× or 0.25×; it starts 25 m before the cones and runs on 20 m past the judged end (nothing after that changes the score). The lower view is the front axle seen from behind, with each force labelled in kN on one scale: <b>W</b> the axle's weight, <b>m·ay(front)</b> its sideways inertial force, <b>Fz</b> each tyre's load and <b>Fy</b> each tyre's side force. Roll and camber are drawn at their true angles. Tap that view to see the car <b>from above</b>, nose up, to true scale: the yaw axis <b>z</b> through the CG with the yaw rate <b>r</b> round it, the <b>pivot</b> (the point on the centre line with no sideways velocity, −vy/r), each tyre's direction of travel and side force, and the path the car takes beside the one the same steer gives at neutral steer (δ/L). The balance is read from the slip angles: <b>UNDERSTEER</b> when the front tyres slip more than the rear (αF &gt; αR), <b>OVERSTEER</b> when less, <b>TRANSITION</b> while front and rear slip opposite ways as the car is swung from one lane to the next.<br>
 <b>S-Route Powerslide</b>: ESP and TC off; the best of the plans (entry speed, target body slip β, initiation, radius). <b>METHOD</b> picks the initiation: POWER-OVER, CLUTCH KICK, FLICK (lift and steer away, then sharply in, each for half the body's natural period so its rebound helps turn-in) or HANDBRAKE (the lever locks the rear wheels, outside the ABS; RWD and FWD only); AUTO tries them all, the handbrake last. <b>ENTRY</b> fixes the speed or picks BEST. The <b>i</b> button beside CHALLENGES explains the selected challenge. The result is <b>CLEAR</b> (a slide in both corners: the rear past its peak for 0.25 s, β over 8°, and countersteer or a long slide), <b>FADE</b> (one corner), <b>NO_SLIDE</b> (neither; a FWD car on power-over, or an AWD car whose centre coupling sends the torque forward as the rear slips), <b>STALL</b> (stopped or never reached the exit), <b>OFF</b> (any corner of the body, swept at its slip angle, over the edge) or <b>SPIN</b>. The grid gives each corner's peak β and slide time.<br>
@@ -3397,12 +3397,13 @@ The <b>CHALLENGES</b> tab (DRIVE) runs the car on its own. Pick a challenge and 
 <div class="guide-body" data-gk="chalPhys">
 <b>Fastest time</b> on an open road is the lap solver's method without the wrap: corner ceilings from the tyres' grip, a braking pass backwards and a drive pass forwards from rest, with grade and crests.<br>
 <b>The eco driver</b> limits both passes. Drive: at each speed, the gear and torque with the lowest BSFC on the engine's own fuel map (the "pulse" of pulse-and-glide, Li et al. 2011), so the shift speed comes out of the map; for an EV the motor torque with the highest <i>T·ω / (T·ω + losses)</i>. Slowing: lift, with engine braking in fuel cut in the gear that brakes most (no fuel), or the regen table on an EV, plus drag, rolling resistance and grade. A blend <i>s</i> adds <i>s</i> × 30 m/s² of drive and <i>s</i> × 12 m/s² of brake back toward the car's own limits. For each blend (0, 5, 20, 100%), a speed cap is searched so the finish lands on the target, and the run that burns least is kept.<br>
-<b>Fuel</b> is read off the fuel map at each step in the gear that burns least for the force needed; <b>EV energy</b> is motor losses, pack heat and 250 W of auxiliaries, less regen.<br>
+<b>Distance DP</b> (engine cars and EVs): the road is cut into ~50 m stages and the speed at each stage's end is chosen on a 0.5 m/s grid by dynamic programming, minimising fuel (or pack energy) + λ × time, with λ searched until the finish time meets the target. It is free to pulse and glide, coast in neutral, lift before a climb's crest or a corner, or brake (up to 4 m/s²), under the fastest run's speeds. If it finds no plan for the target, the eco driver below drives instead (hybrids always use the eco driver).<br>
+<b>Fuel</b> is read off the fuel map at each step in the gear that burns least for the force needed; past the map's full load it is charged pro rata at full-load BSFC; a glide gentler than the weakest engine braking is in neutral at idle fuel; <b>EV energy</b> is motor losses, pack heat and 250 W of auxiliaries, less regen.<br>
 <b>Moose</b>: the full vehicle model (stepCar) follows the best of 48 driver plans (when to turn in, how much of each lane's spare width to use, how tightly to track) with the throttle released; as in a real test the entry speed is raised 1 km/h at a time until no plan clears. <b>Rollover</b>: once both wheels on one side carry no load, the car is taken as one rigid body pivoting on its outer tyres, <i>I<sub>o</sub>·φ'' = m·(a·z − g·d)</i>, with <i>z</i> the CG's height and <i>d</i> its distance inside the pivot; it starts at the body's roll rate and has rolled over when <i>d</i> reaches 0, at <i>φ = atan(t/2h)</i>. From rest it can only start when <i>a &gt; g·t/2h</i>, the static stability factor (NHTSA): a sports car ~1.5, a tall SUV ~1.1. <b>Spin</b>: the car turned more than 90° from the course.<br>
 <b>Spiral</b>: an Archimedean spiral r = 12 m + bθ for one turn, out to the skid pad's radius. Its radius of curvature is ρ = (r² + b²)^(3/2) / (r² + 2b²), and the line's speed is sqrt(ay·ρ); ay is searched. <b>Figure 8</b>: Bernoulli's lemniscate, curvature 0 where it crosses and ρ = a/3 at the two outer bends, with a chosen so that bend is half the skid pad's radius. The speed is constant, and searched.
 </div>
 <div class="guide-limit" data-gk="chalLimit">
-The economy run is a search over a cap and four blends, not an optimal control plan; it does not pulse-and-glide on the flat. A hybrid runs its WLTC energy manager on the road (charge-sustaining); where a climb asks more than its motors allow at speed, the engine is charged for it anyway. The regen table's strength has not been checked against measured EVs (a field study reports about 2.5 m/s² on regen alone on mainstream EVs; some of the game's EVs reach more). Stage set times are authored from a reference car, not physics. The moose run is solved, not driven. The rigid tip is a check on top of the vehicle model, which does not carry it (its tyres simply see the lifted side's load as 0), and kerb-trip rollovers are not modelled. The stock cars clear 55–68 km/h, about 10 km/h below what magazines report (68–84), so at 72 and 77 km/h they all fail by a cone. The spiral and the figure 8 use the skid pad's driver and its 1 m lane. That driver's speed loop sits a little under a rising target, so the spiral's exit g is under the g it was asked. The figure 8 crosses on the lemniscate's straight node, not on two circles with a step change in steer.
+The economy run's DP works on 50 m stages and a 0.5 m/s grid, so it cannot plan anything finer, and it is not run for hybrids (they keep the eco driver's plan). A hybrid runs its WLTC energy manager on the road (charge-sustaining); where a climb asks more than its motors allow at speed, the engine is charged for it anyway. The regen table's strength has not been checked against measured EVs (a field study reports about 2.5 m/s² on regen alone on mainstream EVs; some of the game's EVs reach more). Stage set times are authored from a reference car, not physics. The moose run is solved, not driven. The rigid tip is a check on top of the vehicle model, which does not carry it (its tyres simply see the lifted side's load as 0), and kerb-trip rollovers are not modelled. The stock cars clear 55–68 km/h, about 10 km/h below what magazines report (68–84), so at 72 and 77 km/h they all fail by a cone. The spiral and the figure 8 use the skid pad's driver and its 1 m lane. That driver's speed loop sits a little under a rising target, so the spiral's exit g is under the g it was asked. The figure 8 crosses on the lemniscate's straight node, not on two circles with a step change in steer.
 </div>
 </div>
 <div class="guide-see">See also: <a data-gp="lapsolve">Solving a lap</a> · <a data-gp="elevation">Elevation, crests &amp; compressions</a> · <a data-gp="fuels">Fuels &amp; octane</a></div>
@@ -30066,7 +30067,7 @@ function buildRoad(key){
 // timeFactor × that car's Tmin (eco-rally style: use the allotted time, do not rush). A speed
 // cap on the open solve hits the target. ICE: fuel from engineFuelAt (warm oil). EV: pack energy
 // from motorLosses + packDraw + regen, same stack as evCycle / the lap (grade included here).
-// Hybrid (build 383): hybridCycle on the road's profile (ecoHybrid below). Named gap: speed cap is not optimal lift-coast DP.
+// Hybrid (build 383): hybridCycle on the road's profile (ecoHybrid below). Distance DP (build 400, ecoDP) for ICE and EV.
 // eco (build 352): {tab:ecoDriverTable(), s} limits the drive and the slowing to the eco driver's (below); s in [0,1]
 // blends both limits back toward the car's own when the eco driver alone cannot make the target.
 function ecoMinTime(line,speedCap,eco){
@@ -30217,39 +30218,58 @@ function ecoDriverTable(){
   }
   return{drive,lift,shift,mEff,ev:false};
 }
-// Fuel (kg) along a speed profile on an open line. Warm oil; economy gear pick as WLTP.
-// stats (build 352), if given, gets the time-weighted mean engine speed while driving (rpm) and the top gear used.
-function ecoFuelKg(line,v,stats){
-  if(isElectric())return null;
-  const p=line,n=p.length,m=vehicle.mass+FUEL_CYCLE.massAdd,r=vehicle.rTire,fd=vehicle.finalDrive,eff=vehicle.driveEff;
-  const e=engine,C=FUEL_CYCLE,M=engineFuelMap(95),fp=FUELS[e.fuel]||FUELS.gasoline;
+// The engine's fuel rule on the economy road (build 400; ecoFuelKg and the distance DP both use it). Warm oil; the gear
+// with least fuel, as WLTP. Overrun: fuel cut needs a gear whose engine braking is no more than the slowing asked for
+// (the brakes add the rest); a gentler glide is in neutral at idle fuel (until build 400 every glide was free and
+// drag-free). Past the 90% torque reserve in every gear the engine runs at full load in the gear that costs least,
+// and a demand past the fuel map's full load is charged pro rata at that point's BSFC. Until build 400 such a point
+// fell through to 3 × idle fuel (the map has no fuel past its own full load), which the eco blends leaned on.
+function ecoFuelRule(){
+  const e=engine,C=FUEL_CYCLE,M=engineFuelMap(95),r=vehicle.rTire,fd=vehicle.finalDrive,eff=vehicle.driveEff,ratios=vehicle.ratios;
   const curve=powertrain().torqueCurve();
   const Tmax=rpm=>{if(rpm<=curve[0].rpm)return curve[0].tq;for(let i=1;i<curve.length;i++)if(rpm<=curve[i].rpm)return curve[i-1].tq+(curve[i].tq-curve[i-1].tq)*(rpm-curve[i-1].rpm)/(curve[i].rpm-curve[i-1].rpm);return 0;};
   const rpmMin=Math.max(e.idleRpmEff*C.idleMargin,e.ci?C.minRpmCI:C.minRpm);
-  const oilT=95;let fuel=0,rpmT=0,tDrive=0,topG=0;
+  const ov=COMBUSTION.overrunTable(Math.max(e.redline,powertrain().maxRpm())),ovAt=rpm=>ov[clamp(Math.round((rpm-500)/250),0,ov.length-1)]||0;
+  // The map's own full load at an engine speed (its top finite torque on both rows engineFuelAtMap blends).
+  const tops=M.tq.map((tr,i)=>tr.reduce((a,t,j)=>isFinite(M.fg[i][j])?Math.max(a,t):a,0));
+  const topAt=rpm=>{const R=M.rpms,x=clamp((rpm-R[0])/(R[R.length-1]-R[0]),0,1)*(R.length-1),i=Math.min(R.length-2,Math.floor(x));return Math.min(tops[i],tops[i+1]);};
+  const gearsAt=vm=>{const out=[];for(let g=0;g<ratios.length;g++){
+    const tot=ratios[g]*fd,rpm=vm/r*tot*60/(2*Math.PI);
+    if(rpm>e.redline)continue;
+    if(rpm<rpmMin&&g>0)continue;
+    const rpmE=Math.max(rpm,rpmMin);out.push({g,tot,rpm,rpmE,w:rpmE*Math.PI/30,Tm:Tmax(rpmE)});}return out;};
+  // {gs (g/s), rpm, g (1-based)} at mean speed vm (m/s) and wheel force F (N); gs is null if no gear can turn at vm.
+  const at=(vm,F,gears)=>{
+    gears=gears||gearsAt(vm);
+    let gs=null,rpm=0,g=0;
+    for(const q of gears){
+      let x;
+      if(F<=0)x=q.rpmE>C.cutRpm&&ovAt(q.rpm)*q.tot/r<=-F?0:M.idleGs;
+      else{const T=F*vm/eff/q.w+C.auxW/q.w;if(T>C.reserve*q.Tm)continue;x=engineFuelAtMap(M,q.rpmE,T);if(!isFinite(x))continue;}
+      if(gs==null||x<gs){gs=x;rpm=q.rpmE;g=q.g+1;}
+    }
+    if(gs==null&&F>0)for(const q of gears){
+      const T=F*vm/eff/q.w+C.auxW/q.w,Tt=Math.min(T,q.Tm,topAt(q.rpmE)*0.999),x=Tt>0?engineFuelAtMap(M,q.rpmE,Tt)*T/Tt:NaN;
+      if(isFinite(x)&&(gs==null||x<gs)){gs=x;rpm=q.rpmE;g=q.g+1;}
+    }
+    return{gs,rpm,g};
+  };
+  return{at,gearsAt,ovF:q=>ovAt(q.rpm)*q.tot/r,M,C};
+}
+// Fuel (kg) along a speed profile on an open line (ecoFuelRule at each step).
+// stats (build 352), if given, gets the time-weighted mean engine speed while driving (rpm) and the top gear used.
+function ecoFuelKg(line,v,stats){
+  if(isElectric())return null;
+  const p=line,n=p.length,m=vehicle.mass+FUEL_CYCLE.massAdd,r=vehicle.rTire,fd=vehicle.finalDrive,e=engine;
+  const X=ecoFuelRule(),meff=m+(vehicle.wheelI||0)/(r*r)+(e.inertia||0.15)*(vehicle.ratios[0]*fd/r)**2;
+  let fuel=0,rpmT=0,tDrive=0,topG=0;
   for(let i=0;i<n-1;i++){
     const ds=p[i].ds3,v0=v[i],v1=v[i+1],vm=Math.max(0.5,(v0+v1)/2),dt=ds/vm;
     const a=(v1*v1-v0*v0)/(2*Math.max(0.05,ds));
-    const meff=m+(vehicle.wheelI||0)/(r*r)+(e.inertia||0.15)*(vehicle.ratios[0]*fd/r)**2;
     const F=meff*a+0.5*AIR_RHO*vehicle.cdA*vm*vm+crrAt(vehicle.crr,vm)*m*G*p[i].cosT+m*G*p[i].sinT;
-    let best=null,bestRpm=0,bestG=0;
-    for(let g=0;g<vehicle.ratios.length;g++){
-      const tot=vehicle.ratios[g]*fd,rpm=vm/r*tot*60/(2*Math.PI);
-      if(rpm>e.redline)continue;
-      if(rpm<rpmMin&&g>0)continue;
-      const rpmE=Math.max(rpm,rpmMin),w=rpmE*Math.PI/30;
-      let gs;
-      if(F<=0)gs=rpmE>C.cutRpm?0:M.idleGs;
-      else{
-        const T=F*vm/eff/w+C.auxW/w;
-        if(T>C.reserve*Tmax(rpmE))continue;
-        gs=engineFuelAt(rpmE,T,oilT);if(!isFinite(gs))continue;
-      }
-      if(!best||gs<best){best=gs;bestRpm=rpmE;bestG=g+1;}
-    }
-    if(best==null)best=engineFuelAt(rpmMin,Tmax(rpmMin)*C.reserve,oilT)||M.idleGs*3;
-    fuel+=best*dt;
-    if(F>0&&bestRpm){rpmT+=bestRpm*dt;tDrive+=dt;topG=Math.max(topG,bestG);}
+    const q=X.at(vm,F),gs=q.gs!=null?q.gs:X.M.idleGs*3;
+    fuel+=gs*dt;
+    if(F>0&&q.rpm){rpmT+=q.rpm*dt;tDrive+=dt;topG=Math.max(topG,q.g);}
   }
   if(stats){stats.rpm=tDrive>0?rpmT/tDrive:0;stats.topGear=topG;}
   return fuel/1000;
@@ -30295,6 +30315,116 @@ function ecoHybrid(line,v){
   }
   return hybridCycle(vehicle,{segs});
 }
+// ---- Distance DP (build 400) ----
+// The eco driver above follows fixed rules (best-BSFC drive, lift, a speed cap). This finds the speed profile itself:
+// a dynamic programme over distance in stages of ~50 m (state: speed on a 0.5 m/s grid, from rest; within a stage v²
+// is linear, i.e. constant acceleration), minimising fuel (ICE, g) or pack energy (EV, J) plus λ × time, with λ
+// bisected so the finish time meets the target (the Lagrangian form of "least fuel in a set time"). Its cost is the
+// pricing below (ecoFuelKg's gear pick and overrun rule, ecoEnergyJ's motor and pack), tabulated over speed × wheel
+// force, so it can choose pulse-and-glide (best-BSFC pulse, neutral glide at idle) and lift-coast before climbs and
+// corners where they pay. Speeds stay under the min-time profile (corner and braking limits), drive force under the
+// full-load force (the reserve ecoFuelKg allows), braking under ECO_DP.aBrake. The profile is then priced by the
+// same functions as the eco driver. Hybrids are not solved here (named open).
+// Pulse-and-glide as optimal control under a time constraint: Li, Li, Wang & Peng, ACC 2011 (cited above).
+const ECO_DP={on:true,stage:50,dv:0.5,aBrake:4,nF:48,iters:10};
+function ecoCostTable(nS,dv){
+  const hv=dv/2,nJ=2*nS+1,nF=ECO_DP.nF,r=vehicle.rTire,fd=vehicle.finalDrive,eff=vehicle.driveEff,ratios=vehicle.ratios;
+  const tab=new Float64Array(nJ*nF),Fmax=new Float64Array(nJ),Fmin=new Float64Array(nJ),glide=new Float64Array(nJ),idle=new Float64Array(nJ);
+  const curve=powertrain().torqueCurve();
+  const Tmax=rpm=>{if(rpm<=curve[0].rpm)return curve[0].tq;for(let i=1;i<curve.length;i++)if(rpm<=curve[i].rpm)return curve[i-1].tq+(curve[i].tq-curve[i-1].tq)*(rpm-curve[i-1].rpm)/(curve[i].rpm-curve[i-1].rpm);return 0;};
+  const e=engine;
+  if(isElectric()){   // pack power (W) as ecoEnergyJ: motor, regen up to its table, pack heat, 250 W aux
+    const C=EV_CYCLE,m=vehicle.mass+C.massAdd,V=motorRatedV(e),temp=Object.assign({},C.temp),regen=evRegenTable(e,e.redline);
+    const meff=m+(vehicle.wheelI||0)/(r*r)+e.motor.J*(fd/r)**2;
+    for(let j=1;j<nJ;j++){
+      const vm=j*hv,rpm=vm/r*fd*60/(2*Math.PI),w=rpm*Math.PI/30;
+      const Treg=rpm>=500?regen[Math.min(regen.length-1,Math.floor((rpm-500)/250))]:0;
+      Fmax[j]=rpm>e.redline?-1:Tmax(rpm)*fd*eff/r;Fmin[j]=-Treg*fd/(r*eff)-1;
+      for(let q=0;q<nF;q++){
+        const F=Fmin[j]+(Math.max(0,Fmax[j])-Fmin[j])*q/(nF-1);
+        const T=F>0?F*r/(fd*eff):F<0&&rpm>=500?-Math.min(-F*r*eff/fd,Treg):0;
+        const P=T*w+(T||rpm>0?motorLosses(e.motor,T,Math.max(rpm,1),V,temp).total:0),d=packDraw(e.pack,C.soc,P);
+        tab[j*nF+q]=P+(d?d.heat:0)+C.auxW;
+      }
+    }
+    return{tab,Fmax,Fmin,glide,idle,nF,m,meff,ev:true};
+  }
+  const X=ecoFuelRule(),C=X.C,m=vehicle.mass+C.massAdd;
+  const meff=m+(vehicle.wheelI||0)/(r*r)+(e.inertia||0.15)*(ratios[0]*fd/r)**2;
+  for(let j=1;j<nJ;j++){
+    const vm=j*hv,gears=X.gearsAt(vm);let fx=-1;
+    for(const q of gears)fx=Math.max(fx,(q.Tm*q.w-C.auxW)*eff/vm);   // full load (the reserve is priced, not a wall)
+    Fmax[j]=gears.length?fx:-1;
+    for(let q=0;q<nF;q++){const z=X.at(vm,Math.max(0,fx)*q/(nF-1),gears);tab[j*nF+q]=z.gs!=null?z.gs:X.M.idleGs*3;}
+    // F ≤ 0: a step function of F (fuel cut past the weakest engine braking, else idle): sampled exactly in rate()
+    let gl=Infinity;for(const q of gears)if(q.rpmE>C.cutRpm)gl=Math.min(gl,X.ovF(q));
+    glide[j]=gl;idle[j]=X.M.idleGs;
+  }
+  return{tab,Fmax,Fmin,glide,idle,nF,m,meff,ev:false};
+}
+// env: the min-time profile (upper bound at each point). Returns {v,t,ms} or null if no λ makes the target.
+function ecoDP(line,env,target){
+  const t0=performance.now(),n=line.length,dv=ECO_DP.dv;
+  const K=Math.max(1,Math.round(ECO_DP.stage/Math.max(1,line[0].ds3||5)));
+  const B=[0];for(let i=K;i<n-1-K/2;i+=K)B.push(i);B.push(n-1);
+  const S=B.length-1;
+  let vTop=0;for(const x of env)vTop=Math.max(vTop,x);
+  const nS=Math.ceil(vTop/dv)+1,T=ecoCostTable(nS,dv),nF=T.nF,m=T.m,meff=T.meff;
+  const nJ=2*nS+1,aero=new Float64Array(nJ),roll=new Float64Array(nJ);
+  for(let j=0;j<nJ;j++){const vm=j*dv/2;aero[j]=0.5*AIR_RHO*vehicle.cdA*vm*vm;roll[j]=crrAt(vehicle.crr,vm)*m*G;}
+  const rate=(j,F)=>{
+    if(!T.ev&&F<=0)return -F>=T.glide[j]?0:T.idle[j];
+    const lo=T.Fmin[j],x=(Math.max(F,lo)-lo)/Math.max(1e-9,T.Fmax[j]-lo)*(nF-1),q=Math.min(nF-2,Math.floor(x)),f=x-q,o=j*nF+q;
+    return T.tab[o]*(1-f)+T.tab[o+1]*f;
+  };
+  const L=new Float64Array(S),gr=new Float64Array(S),cosA=new Float64Array(S),cap=new Int32Array(S+1);
+  for(let s=0;s<S;s++){let l=0,si=0,co=0;for(let i=B[s];i<B[s+1];i++){const d=line[i].ds3;l+=d;si+=d*line[i].sinT;co+=d*line[i].cosT;}
+    L[s]=Math.max(0.1,l);gr[s]=m*G*si/L[s];cosA[s]=co/L[s];}
+  for(let b=0;b<=S;b++)cap[b]=Math.max(0,Math.min(nS-1,Math.floor(env[B[b]]/dv+1e-9)));   // between nodes: clamped below
+  cap[0]=0;
+  const pred=new Int16Array(S*nS),aB=ECO_DP.aBrake;
+  let cost=new Float64Array(nS),nc=new Float64Array(nS);
+  const solve=lam=>{
+    cost.fill(Infinity);cost[0]=0;
+    for(let s=0;s<S;s++){
+      nc.fill(Infinity);const l=L[s],cA=cosA[s],g=gr[s],c1=cap[s+1],po=s*nS;
+      for(let i=0;i<=cap[s];i++){
+        const ci=cost[i];if(ci===Infinity)continue;
+        const vi=i*dv,kLo=Math.ceil(Math.sqrt(Math.max(0,vi*vi-2*aB*l))/dv-1e-9);
+        for(let k=Math.max(kLo,i===0?1:0);k<=c1;k++){
+          const j=i+k,vm=j*dv/2,vk=k*dv,F=meff*(vk*vk-vi*vi)/(2*l)+aero[j]+roll[j]*cA+g;
+          if(F>T.Fmax[j])break;
+          const c=ci+(rate(j,F)+lam)*l/vm;
+          if(c<nc[k]){nc[k]=c;pred[po+k]=i;}
+        }
+      }
+      const tmp=cost;cost=nc;nc=tmp;
+    }
+    let kb=-1,cb=Infinity;for(let k=0;k<nS;k++)if(cost[k]<cb){cb=cost[k];kb=k;}
+    if(kb<0)return null;
+    const node=new Int32Array(S+1);node[S]=kb;for(let s=S-1;s>=0;s--)node[s]=pred[s*nS+node[s+1]];
+    const v=new Array(n);
+    for(let s=0;s<S;s++){const a2=(node[s]*dv)**2,b2=(node[s+1]*dv)**2;let x=0;
+      for(let i=B[s];i<B[s+1];i++){v[i]=Math.min(env[i],Math.sqrt(a2+(b2-a2)*x/L[s]));x+=line[i].ds3;}}
+    v[n-1]=Math.min(env[n-1],node[S]*dv);v[0]=env[0];   // the standing start as ecoMinTime has it (≤ 0.5 m/s)
+    return{v,t:ecoTimeOf(line,v)};
+  };
+  // λ scale: the cost rate of a 20 m/s cruise on the flat; bisect log λ over 10⁻² … 10² of it.
+  const j0=Math.min(nJ-1,80),r0=Math.max(1e-6,rate(j0,aero[j0]+roll[j0]));
+  let lo=Math.log(r0*1e-2),hi=Math.log(r0*1e2),best=solve(Math.exp(hi));
+  if(!best||best.t>target)return null;
+  let slow=null;
+  for(let it=0;it<ECO_DP.iters;it++){const mid=(lo+hi)/2,r=solve(Math.exp(mid));if(r&&r.t<=target){hi=mid;best=r;}else{lo=mid;if(r)slow=r;}}
+  // The time jumps between neighbouring λ (a discrete plan); mix the last plan too slow and the first in time,
+  // speed by speed, and bisect the mix so the finish lands on the target rather than up to ~4% early.
+  if(slow&&best.t<target*0.999){
+    let a=0,b=1;
+    for(let it=0;it<12;it++){const c=(a+b)/2,v=best.v.map((x,i)=>x*(1-c)+slow.v[i]*c),t=ecoTimeOf(line,v);
+      if(t<=target){a=c;best={v,t};}else b=c;}
+  }
+  best.ms=performance.now()-t0;best.stages=S;best.states=nS;
+  return best;
+}
 // Eco strategy (build 352): the eco driver (ecoDriverTable) on the open solve, then a speed cap so the finish time hits
 // the target (not early). If the eco driver alone is too slow for the target, its limits are blended back toward the
 // car's own (s) until it makes it. factorOpt (build 344): UI pace 1.25 / 1.5 / 2.0; else the road's timeFactor.
@@ -30316,14 +30446,20 @@ function simulateEconomyChallenge(roadKey,factorOpt){
     return best;
   };
   const hyb=isHybrid(),cost=r=>isElectric()?(ecoEnergyJ(line,r.v)||{E:Infinity}).E:hyb?ecoHybrid(line,r.v).kg:ecoFuelKg(line,r.v);
-  let best=null,s=1,bestC=Infinity;
-  for(const sk of ECO_BLENDS){const r=solveAt(sk);if(!r)continue;const c=cost(r);if(c<bestC){bestC=c;best=r;s=sk;}}
-  if(!best){best=solveAt(1)||mt;s=1;}
+  // Engine cars and EVs: the distance DP (build 400). On the 190 runs measured at Alpine and the Dragon it beat the eco
+  // driver every time, by 9-32%, so the eco driver's blends run only when the DP finds no plan for the target (each
+  // blend costs ~11 capped solves; running both pushed long roads past 4 s). Hybrids keep the blends.
+  let best=null,s=1,bestC=Infinity,dpMs=null,dpUsed=false;
+  if(ECO_DP.on&&!hyb){const d=ecoDP(line,mt.v,target);if(d){dpMs=d.ms;best=d;dpUsed=true;s=0;}}
+  if(!best){
+    for(const sk of ECO_BLENDS){const r=solveAt(sk);if(!r)continue;const c=cost(r);if(c<bestC){bestC=c;best=r;s=sk;}}
+    if(!best){best=solveAt(1)||mt;s=1;}
+  }
   const v=best.v,time=best.t;
   // Peak acceleration and deceleration of the eco profile (m/s²), shown so the driving style can be read off the result.
   let aUp=0,aDn=0;for(let i=0;i<line.length-1;i++){const a=(v[i+1]*v[i+1]-v[i]*v[i])/(2*Math.max(0.05,line[i].ds3));if(a>aUp)aUp=a;if(-a>aDn)aDn=-a;}
   const base={ok:true,ev:isElectric(),road,time,limit:target,target,tMin:mt.t,pace:time/mt.t,v,vMin:mt.v,lengthKm:km,factor,
-    ecoBlend:s,aUp,aDn,vTop:Math.max(...v)*3.6};
+    ecoBlend:s,ecoDP:dpUsed,dpMs,aUp,aDn,vTop:Math.max(...v)*3.6};
   if(isElectric()){
     const en=ecoEnergyJ(line,v),enMin=ecoEnergyJ(line,mt.v);
     if(!en)return{ok:false,reason:'electric',road};
@@ -31207,7 +31343,7 @@ function renderChallenge(){
     cell('PACK IN',R.packInKWh.toFixed(2)+' kWh')+(R.limitShare>0.005?cell('OVER HYBRID LIMITS',Math.round(R.limitShare*100)+' %'):'');
   if(!R.ev&&R.rpmDrive)cells+=cell('AVG RPM ON POWER',String(Math.round(R.rpmDrive)))+cell('TOP GEAR',String(R.topGear));
   cells+=cell('PEAK ACCEL',R.aUp.toFixed(1)+' m/s²')+cell('PEAK DECEL',R.aDn.toFixed(1)+' m/s²')+
-    cell('ECO BLEND',(R.ecoBlend*100).toFixed(0)+' %');
+    (R.ecoDP?cell('ECO DRIVER','DP'):cell('ECO BLEND',(R.ecoBlend*100).toFixed(0)+' %'));
   cells+=cell('TARGET',R.target.toFixed(1)+' s')+
     cell('MIN TIME',R.tMin.toFixed(1)+' s')+
     cell('PACE',(R.pace*100).toFixed(0)+' %')+
