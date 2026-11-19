@@ -22,7 +22,7 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 Step 12b of `plans/small-physics.md`, the owner's decision on build 366's finding.
 - **The rule:** `EV_REGEN_RULES` (`src/js/electric.js`) caps `evRegenTable` after the motor and pack limits, which stay:
-  a deceleration and a regen kW limit per maker, matched on the drive's name. Tesla 0.21 g lift-off (SAE 2020-01-0883),
+  a deceleration and a regen kW limit per maker, named by the drive's `evMaker` (a hidden field, set on the factory drives). Tesla 0.21 g lift-off (SAE 2020-01-0883),
   77 kW (Model 3, InsideEVs: probable; the Model Y takes it, probable) and 90 kW (Plaid, evkx.net: probable); Hyundai
   E-GMP 0.4 g blended; VW MEB 0.3 g; no source: 0.3 g and the pack's limit. Friction brakes do the rest. LOW halves it
   (Tesla Low −0.11 g, same source).
