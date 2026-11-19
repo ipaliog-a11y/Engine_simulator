@@ -91,13 +91,15 @@ function evPackGain(e,rpm,tB){
 // The torque grid the runs read (gridTorque): one row, no boost axis.
 function evGrid(e){const c=evCurve(e);return {rpms:c.map(p=>p.rpm),boosts:[0],tq:[c.map(p=>p.tq)],laggy:false};}
 // Regeneration as overrun torque (Nm, positive), on the engine's 500-rpm-up table: the motor's torque at that speed,
-// capped by the power the pack takes back. Below ~500 rpm a real car fades it out to stop smoothly; the table's floor
-// does the same.
-function evRegenTable(e,rl){
-  const out=[],V=motorRatedV(e),Pc=e.pack.pChargeMax,k=(EV_REGEN[e.evRegen]||EV_REGEN.high).k;
+// capped by the power the pack takes back, then by the maker's calibration (evRegenRule: a deceleration on car v, and a
+// regen kW limit). Below ~500 rpm a real car fades it out to stop smoothly; the table's floor does the same.
+function evRegenTable(e,rl,v=typeof vehicle!=='undefined'?vehicle:null){
+  const out=[],V=motorRatedV(e),R=evRegenRule(e),Pc=Math.min(e.pack.pChargeMax,R.kW?R.kW*1000:Infinity),k=(EV_REGEN[e.evRegen]||EV_REGEN.high).k;
+  // the torque that slows car v (test mass and inertias) by g: the eco run's F = T·fd/(r·eff), turned round
+  const Tg=v&&v.rTire&&v.finalDrive?R.g*G*(v.mass+(v.wheelI||0)/(v.rTire*v.rTire)+e.motor.J*(v.finalDrive/v.rTire)**2)*v.rTire*(v.driveEff||1)/v.finalDrive:Infinity;
   for(let r=500;r<=rl+250;r+=250){
     const w=Math.min(r,rl)*Math.PI/30,T=motorMaxTorque(e.motor,Math.min(r,rl),V,60);
-    out.push(k*Math.max(0,Math.min(T,Pc/Math.max(1,w))));
+    out.push(k*Math.max(0,Math.min(T,Pc/Math.max(1,w),Tg)));
   }
   return out;
 }
@@ -142,7 +144,7 @@ function syncEvVehicleForm(ev){
 // The vehicle summary's driveline line for an electric car, in place of the ratios.
 function evDrivelineLine(v){
   return '<br>'+tr('Reduction')+' <b>'+v.finalDrive.toFixed(2)+':1</b> ('+tr('matched')+' '+v.reductionMatched.toFixed(2)+':1) • '+
-    tr('regeneration up to')+' <b>'+Math.round(engine.pack.pChargeMax/1000*(EV_REGEN[engine.evRegen]||EV_REGEN.high).k)+' kW</b> • '+tr('motor and pack')+' '+powertrain().mass()+' kg';
+    tr('regeneration up to')+' <b>'+Math.round(Math.min(engine.pack.pChargeMax/1000,evRegenRule(engine).kW||Infinity)*(EV_REGEN[engine.evRegen]||EV_REGEN.high).k)+' kW</b> • '+tr('motor and pack')+' '+powertrain().mass()+' kg';
 }
 // The TRACK panel's cells for an electric car: the motor's hottest and how much of the lap it was cut back, the pack's
 // hottest, and the energy the lap drew and took back.
