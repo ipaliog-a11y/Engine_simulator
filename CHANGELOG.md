@@ -18,19 +18,19 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 ## [Unreleased]
 
-### The bench shows heat, knock and a pull (build 395)
+### The bench shows heat, knock and a pull (build 397)
 
 - The exhaust manifold colour follows the gas temperature already computed for that rpm and load: dull at low power, towards yellow as it climbs from 500 C to 1100 C.
 - The cutaway leans with torque and rocks a little with cam overlap. A knock or misfire warning flashes. A blow-off puff, a nitrous plume and soot are drawn from the same flags the sim already sets. Reduced motion holds the warning still and skips the lean.
 - RUN PULL on the dyno opens the throttle and walks the brake from idle to redline. The power curve itself is unchanged.
 
-### Each section and each card has its own bay (build 394)
+### Each section and each card has its own bay (build 396)
 
 - BUILD shows the workshop, an electric build shows the service bay, TEST shows the garage and DRIVE shows the pit, as a strip under the section bar.
 - The engine preview's corner lamp follows the open card: block, head, air, flow, fuel, cooling, or the high-voltage bay.
 - VEHICLE can show the showroom photo or the car on a lift. The lift's lamp follows the open vehicle card.
 
-### An ECU laptop on the bench (build 393)
+### An ECU laptop on the bench (build 395)
 
 - LIVE and DYNO now carry a tuning laptop. F1 is a rolling scope (rpm, manifold pressure, lambda and knock on an engine; pack voltage, current, winding temperature and charge on an electric drive). FREEZE holds the trace.
 - F2 puts the fuel, spark and VE tables on the bench. The running cell stays outlined. −5, −1, +1 and +5 step the selected cell, and HOLD CELL sets the dyno brake from that cell's rpm. OPEN ECU MAPS on the fuel card comes straight here. On BUILD the tables stay where they were.
@@ -38,13 +38,17 @@ they are accurate about *what* shipped but not about the day it shipped.
 - F4 shows the live torque and power against the logged pull, or the speed, rpm and lateral g of a recorded lap.
 - On a phone the laptop is a drawer opened with ECU, so the throttle and the brake stay on screen.
 
-### BUILD, TEST and DRIVE stay apart on a phone and a wide screen (build 392)
+### BUILD, TEST and DRIVE stay apart on a phone and a wide screen (build 394)
 
 - The tab bar followed BUILD, then DRIVE, then TEST. It now follows the work: BUILD (engine, vehicle, parts, garage), TEST (live, dyno), DRIVE (track, race, championship, challenges), then GUIDE and OPTIONS.
 - The four-section bar is on every screen. On a tall window it sits under the engine and car strip. On a short or narrow window, including a phone turned sideways, it stays fixed at the bottom with one row of that section's tabs.
 - SAVE, LOAD, SAVE FILE, OPEN FILE and SHARE moved to FILE on that strip. DYNO's MORE menu keeps the bench controls.
 - The engine form scrolls with the page. On a wide monitor the cutaway stops at 560px tall so the bench controls stay on screen.
 - A short pixel curtain marks a change of section. It stays still when the system asks for reduced motion.
+
+### The extra title-menu page is gone (build 393)
+
+- The page added in the previous build, its pictures, its menu item and its test are removed.
 
 ### Fifty more title-screen rooms (build 391)
 
