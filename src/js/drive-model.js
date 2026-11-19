@@ -93,7 +93,7 @@ function driveAids(v){const A=Object.assign({},DRIVE_AIDS,v.aids||{});A.absSlip=
 //   pitch  Iyy theta'' = m ax h less the four corners' forces at their arms (each corner's wheel rate and damping:
 //          quarterCar; since phase G6 through each wheel's own travel, THE WHEELS). The transfer is m ax h / L when
 //          steady. Iyy = m a b: a dynamic index of 1 in pitch (Gillespie, Fundamentals of Vehicle Dynamics, ch. 5:
-//          road cars 0.8-1.2). Since build 367 the links carry the anti-dive and anti-squat share (THE LINKS).
+//          road cars 0.8-1.2). Since build 368 the links carry the anti-dive and anti-squat share (THE LINKS).
 //   Left out: the weight's own roll moment as the body leans (m g arm phi, a few per cent: the lap's rollGrad leaves
 //   it out too), and the unsprung masses' share of the transfer (it is counted with the body's).
 // THE WHEELS (phase G6). Each wheel moves up and down on its own, between its tyre and its spring: a quarter car at
@@ -120,7 +120,7 @@ function driveAids(v){const A=Object.assign({},DRIVE_AIDS,v.aids||{});A.absSlip=
 //   damper (build 364) bound and rebound apart: rebound DAMPER_RB times bound (passenger dampers ~3:1, Dixon, The
 //          Shock Absorber Handbook, 2007, ch. 1: PROBABLE), their mean the kit's cs, so the lap's quarter car, which
 //          meets a road wave with that mean (the describing function, as the suspension calculator), is unchanged.
-//   links  (build 367) anti-dive, anti-squat and anti-lift: each tyre's longitudinal force Fl reaches the body through
+//   links  (build 368) anti-dive, anti-squat and anti-lift: each tyre's longitudinal force Fl reaches the body through
 //          its side-view swing arm (SUSP_GEO svF/svR: [e, d]) with a vertical part J = (Fl e - Tb)/d, Tb the torque on
 //          the wheel that reacts on the body (drive through half-shafts on an independent axle, inboard brakes; a live
 //          axle's and outboard brakes' react on the upright), lifting the body at the front and pulling it down at the

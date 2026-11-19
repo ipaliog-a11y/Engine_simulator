@@ -18,7 +18,7 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 ## [Unreleased]
 
-### Anti-dive and anti-squat in the stepped car (build 367)
+### Anti-dive and anti-squat in the stepped car (build 368)
 
 Step 2 of `plans/small-physics.md`. Only `stepCar` changes; the fingerprint is identical.
 
@@ -27,6 +27,14 @@ Step 2 of `plans/small-physics.md`. Only `stepCar` changes; the fingerprint is i
 - **Effect:** braking at ~0.45 g in neutral the M3 E46 pitches 0.90° (1.22° without the links), the MX-5 1.34° (1.75°): anti-dive 27 % and 23 %, both within 0.1 % of a reference worked out apart from `stepCar` (`test222`, new). Under power the M3's rear rises 2 mm (anti-squat) and its pitch falls 20 %; a front-driven strut car pitches more (its half-shafts' torque gives pro-lift).
 - **Known gap, approved by the owner:** `test170`'s `OFF_KNOWN` caps raised, Civic Type R FK8 4.6 → 4.8 m and 911 GT3 (991.2) 4.8 → 4.9 m. The stepped lap's furthest off the line moved ~0.2 m (4.6 → 4.8, 4.7 → 4.9): its driver follows the lap's planned speeds without judging the car's own grip, and the links' pitch share moves the load in transients.
 - **Left open:** the arm's change with travel, inboard brakes on presets that have them, the arms by the kit.
+### A rain tyre's own wet grip (build 367)
+
+- A rain compound's rubber now grips the wet better than a road tyre's, not only its grooves: the EU tyre label's
+  wet grip index (Regulation (EU) 2020/740, ISO 23671), a road tyre taken at class B's middle (G 1.47) and the
+  inter and full wet at class A's floor (1.55), both probable. Standing still on a properly wet track a rain tyre
+  keeps 0.749 of its dry grip, a road tyre 0.71 as before.
+- Only wet races move; dry laps, 0–100 and the dyno are unchanged. Open: each road compound by its own class, and a
+  race rain tyre's real figure above class A (no label grades it).
 
 ### Regen power against measured EVs, researched (build 366)
 

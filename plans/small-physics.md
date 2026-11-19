@@ -28,7 +28,7 @@ reporting its range. Sourcing is batched apart from physics.
    Left open: travel by the kit, the damper's blow-off.
 2. **Anti-dive and anti-squat.** The pitch share carried by the links, from the side-view swing arm by suspension
    type (Milliken RCVD ch. 17; Reimpell). Today all pitch goes through the springs (~2° at 0.5 g). Jacking with it.
-   *Build 367:* done (`SUSP_GEO` `svF`/`svR` by type, PROBABLE; drive through half-shafts and inboard brakes on the
+   *Build 368:* done (`SUSP_GEO` `svF`/`svR` by type, PROBABLE; drive through half-shafts and inboard brakes on the
    wheel centre; jacking; `test222`: M3 anti-dive 27 %, MX-5 23 %). Left open: the arm's change with travel, inboard
    brakes on presets, arms by the kit.
 3. **Camber and toe by heave and pitch**, from the same type curves the roll already uses. Also the weight's own roll
@@ -51,6 +51,9 @@ reporting its range. Sourcing is batched apart from physics.
    surface.
 8. **A rain tyre's own wet grip.** The compound's wet advantage from the EU label's wet grip index (Regulation
    2020/740, ISO 23671), class by class against a road tyre's. Today only its grooves help.
+   *Build 367:* `RACE_WET_G` (race.js): a road tyre is class B's middle (G 1.47), a rain compound (inter, full wet)
+   class A's floor (1.55), both PROBABLE; its low-speed wet grip is 0.71 x 1.55/1.47 = 0.749. Open: road compounds
+   by their own class (eco, sport, semi), and a race rain tyre measured above class A.
 
 ## 4. Brakes (moves the 100–0)
 
