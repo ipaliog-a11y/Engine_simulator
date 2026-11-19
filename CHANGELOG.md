@@ -18,6 +18,20 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 ## [Unreleased]
 
+### Power assistance, steering friction and the scrub radius in the stepped car (build N)
+
+- Plan small-physics step 4. `stepCar` now gives `s.handTorque` (Nm), what the driver holds at the hand wheel: the
+  column load `-s.steerTorque` through a boost curve (a 1 Nm threshold, then a gain of 8 parking falling to 1.5 at
+  speed, a 60 Nm ceiling; the shape after Pfeffer & Harrer, *Steering Handbook*; every number PROBABLE), plus 1.5 Nm
+  of Coulomb friction (PROBABLE) against a turning wheel. A held wheel near the centre needs nothing: the dead band.
+- On an FK8 at 80 km/h the assist takes 58–70% of a 4–14 Nm load (test229); at a 20 Nm load it takes 84% parking.
+- The column load now includes each front tyre's longitudinal force on the scrub radius (equal forces cancel). No
+  preset gives one, so every car takes 10 mm (Reimpell: −20 to +20 mm on passenger cars; PROBABLE); `scrubRadius`
+  in a preset overrides it.
+- Nothing reads the hand torque yet (for force feedback later), so the fingerprint is identical.
+- Left open: a scrub radius by suspension type (no source gives one per type), a hydraulic or EPS curve per car, and
+  torque steer (no preset gives shaft angles).
+
 ### Camber and toe by heave and pitch in the stepped car (build 374)
 
 Step 3 of `plans/small-physics.md`. Only `stepCar` changes; the fingerprint is identical.

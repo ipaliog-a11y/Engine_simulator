@@ -41,6 +41,8 @@ reporting its range. Sourcing is batched apart from physics.
 
 4. **Power assistance and steering friction.** An EPS boost curve on the column load `s.steerTorque` already gives
    (PROBABLE, marked), plus the scrub radius's drive-force moment. Torque steer stays out: no preset gives shaft angles.
+   *Build N:* done (`s.handTorque`: boost curve, Coulomb friction with a dead band, 10 mm scrub radius, all
+   PROBABLE; `test229`). Left open: scrub radius by suspension type, a curve per car, torque steer.
 5. **ESP judges a spin by yaw rate**, with a lagged reference (van Zanten, Bosch, SAE 2000-01-1633), in place of
    the rear slip angle. The previous try (yaw alone, no lag) braked the MX-5 on 30% of a hot lap. Its limit reads the
    surface (needs 7).
