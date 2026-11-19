@@ -224,6 +224,12 @@ body.track-open{overflow:hidden}
 .race-ent button{padding:2px 6px;font-size:7px;box-shadow:none}
 .race-add{display:flex;gap:6px;margin-top:8px}.race-add select{flex:1;min-width:0}
 .race-prog{margin-top:8px;font-size:7px;color:#88aacc}
+#chalRankAddSel{width:0}
+#chalRankOut .perf-head{margin-top:8px}
+.chal-rank-h{font-size:8px;margin:12px 0 4px;color:#ffcc00}
+.chal-rank{width:100%;table-layout:fixed;border-collapse:collapse;font-size:7px;color:#ddd;margin-top:4px}
+.chal-rank th,.chal-rank td{padding:4px 2px;border-bottom:1px solid #222;text-align:left;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.chal-rank th{color:#88aacc}.chal-rank th:first-child{width:16px}.chal-rank th:nth-child(3){width:38%}.chal-rank th:last-child{width:56px}
 .race-prog-track{height:8px;background:#26263a;margin-bottom:4px}.race-prog-bar{height:100%;width:0;background:#00ff88}
 #raceScrub{margin:2px 0 10px}
 .race-tower{width:100%;border-collapse:collapse;font-size:7px;color:#ccd}
@@ -815,7 +821,7 @@ body.guided-open{overflow:hidden}
 </div>
 <div class="container">
 <header>
-<h1>PIXEL POWERTRAIN v0.8 build 367</h1>
+<h1>PIXEL POWERTRAIN v0.8 build 371</h1>
 <div class="subtitle" id="subtitle">ENGINE DESIGNER • BUILD IT, THEN DRIVE IT</div>
 </header>
 <div class="build-strip" id="buildStrip">
@@ -3204,7 +3210,7 @@ says) or drying, and <b>AIR</b> sets the day's temperature; a sunny track runs ~
 one at it. Water takes about 30% of any tyre's grip, and more with speed: the water under the tyre lifts it, and its
 grooves clear some of the water away. A road tyre keeps ~60% at 150 km/h, a semi-slick ~30%, a slick floats
 from ~80 km/h. <b>Intermediates</b> and <b>full wets</b> are rain tyres for the race
-only: their deep grooves clear the water, and they overheat and wear on a drying line. A car changes to
+only: their deep grooves clear the water, their rubber grips the wet ~5% better than a road tyre's, and they overheat and wear on a drying line. A car changes to
 the compound that leaves it most grip when the time that wins back on its own solved laps, over the laps
 still to go, is more than a stop costs. So with three laps left a car may sensibly stay out on the wrong
 tyres. The tyres also cool in the spray, and run cooler on a wet surface.<br>
@@ -3235,7 +3241,7 @@ fight for space on it; a pass is drawn alongside. The wet-grip, tyre-window and 
 <b>Pace comes from the lap solver.</b> Each car's lap is solved up front on its own racing line at five grip levels (0.72 to 1.00 of its tyres at their best; eight, down to 0.42, when the race can be wet) and three fuel loads (empty, half, full), plus once from a standing start. The race then moves every car along its line on a <b>50 ms</b> clock, reading its speed off that grid for the grip and fuel it has at that moment.<br>
 <b>Tyres</b> are one lump each, loaded as the car's own weight transfer and downforce say:
 <span class="geq">C · dT/dt = 0.03 · F · v · u + 0.8 · c<sub>rr</sub> · N · v − A · (12 + 7 v<sup>0.8</sup> + 150 w) · (T − T<sub>air</sub>) − 10 A · (T − T<sub>track</sub>)</span>
-slip work (rising with <i>u</i>, the share of the tyre's grip in use) and rolling hysteresis in; convection to the air, the water on a wet track (<i>w</i>, its wetness) and conduction into the surface out, with the track ~14 °C above the air when dry. Wet grip is <i>(1 − x · 0.29) · (1 − 0.84 · lift)</i>, x the rain's share of a wet race's: 0.71 is a wet road's grip over a dry one's (Wong, Table 1.3), 0.84 what floats away (Fwa). The water film is Gallaway's depth <i>d</i> from the rain, the track's width (its drainage path), texture and cross fall, and <i>lift = (v / V<sub>p</sub>)² · d / (d + void · tread)</i>, with Horne's <i>V<sub>p</sub> = 6.35 √p</i> km/h (p in kPa) and the grooves' volume clearing the film; a car changes compound when the lap time that wins back, read off its own solved laps, times the laps left beats the stop. Grip from temperature is <i>1 − k · ((T − T<sub>opt</sub>)/T<sub>win</sub>)²</i>, with k = 0.03 cold and 0.12 hot, so the same loss comes in half the distance above the window as below it (grip falls away twice as fast hot), floored at 0.72. Wear follows the slip work, faster on a softer compound, and above the window it is multiplied by 1 + 3 × how far over (in windows) the tyre runs; and costs grip as <i>1 − 0.06 w − 1.2 · max(0, w − 0.7)²</i>: the cliff.<br>
+slip work (rising with <i>u</i>, the share of the tyre's grip in use) and rolling hysteresis in; convection to the air, the water on a wet track (<i>w</i>, its wetness) and conduction into the surface out, with the track ~14 °C above the air when dry. Wet grip is <i>(1 − x · 0.29) · (1 − 0.84 · lift)</i>, x the rain's share of a wet race's: 0.71 is a wet road's grip over a dry one's (Wong, Table 1.3), times 1.55/1.47 for a rain compound (EU tyre label wet grip index, class A over B), 0.84 what floats away (Fwa). The water film is Gallaway's depth <i>d</i> from the rain, the track's width (its drainage path), texture and cross fall, and <i>lift = (v / V<sub>p</sub>)² · d / (d + void · tread)</i>, with Horne's <i>V<sub>p</sub> = 6.35 √p</i> km/h (p in kPa) and the grooves' volume clearing the film; a car changes compound when the lap time that wins back, read off its own solved laps, times the laps left beats the stop. Grip from temperature is <i>1 − k · ((T − T<sub>opt</sub>)/T<sub>win</sub>)²</i>, with k = 0.03 cold and 0.12 hot, so the same loss comes in half the distance above the window as below it (grip falls away twice as fast hot), floored at 0.72. Wear follows the slip work, faster on a softer compound, and above the window it is multiplied by 1 + 3 × how far over (in windows) the tyre runs; and costs grip as <i>1 − 0.06 w − 1.2 · max(0, w − 0.7)²</i>: the cliff.<br>
 <b>Fuel</b> burned is the power spent at each point times that engine's BSFC at its rpm and boost, out of a tank sized by body, and the car is lighter as it goes.<br>
 <b>Brakes</b> run the lap solver's rotor model (heat in from the braking power, convection and radiation out, the vanes pumping air) every step of the race, so their temperature carries from lap to lap; where the rotors fade, a braking zone runs to its apex as <i>v² = v<sub>apex</sub>² + (fade now / fade on the solved lap) · (v² − v<sub>apex</sub>²)</i>.
 </div>
@@ -3245,7 +3251,7 @@ Rules, not physics: refuelling at 2.5 L/s and 6 s for tyres; in the wet a car wi
 </div>
 <div class="guide-see">See also: <a data-gp="tyres">Tyres &amp; grip</a> · <a data-gp="lapsolve">Solving a lap</a> · <a data-gp="brakes">Brakes &amp; fade</a> · <a data-gp="fuels">Fuels &amp; octane</a></div>
 </section>
-<section class="guide-page" id="gp-challenges" data-cat="track" data-title="Challenges" data-tags="challenges economy eco driving fuel kwh regen stage fixed time dnf moose elk test iso 3888 lane change" hidden>
+<section class="guide-page" id="gp-challenges" data-cat="track" data-title="Challenges" data-tags="challenges economy eco driving fuel kwh regen stage fixed time dnf moose elk test iso 3888 lane change skid pad skidpad lateral g" hidden>
 <h4 class="guide-title">Challenges</h4>
 <div class="gtier gt-real"><div class="gtier-h">LV1 · REAL LIFE</div>
 <canvas class="gart" data-art="challenge"></canvas><div class="gart-cap">Three ways to test a whole car on a road: how little it burns at a set pace, whether it beats a set time, and how fast it can swerve round a moose.</div>
@@ -3259,7 +3265,9 @@ The <b>CHALLENGES</b> tab (DRIVE) runs the car on its own. Pick a challenge and 
 <b>Economy</b>: the target time is the PACE (125, 150 or 200%) times the car's own fastest time on that road. The score is litres and L/100 km, or kWh and Wh/km for an EV, with the regen it recovered. The grid also shows the peak acceleration and braking, the mean engine speed on power, the top gear used, and ECO BLEND (below).<br>
 <b>Fixed-time stage</b>: one set time per road for every car. The car's fastest run from a standing start is shown against it; slower is a <b>DNF</b>.<br>
 <b>Moose avoidance</b>: ENTRY picks BEST CLEAR (the speed is raised until a cone falls, as ISO 3888-2 does; the grid also says how it fails one step up) or a magazine's fixed speed, 72 km/h (Teknikens Värld's pass mark) or 77 km/h (km77's). The result is CLEAR, CONE, SPIN or ROLLOVER, with a warning for a two-wheel lift, its time and the largest tip. REPLAY slows the replay to 0.5× or 0.25×; it starts 25 m before the cones and runs on 20 m past the judged end (nothing after that changes the score). The lower view is the front axle seen from behind, with each force labelled in kN on one scale: <b>W</b> the axle's weight, <b>m·ay(front)</b> its sideways inertial force, <b>Fz</b> each tyre's load and <b>Fy</b> each tyre's side force. Roll and camber are drawn at their true angles. Tap that view to see the car <b>from above</b>, nose up, to true scale: the yaw axis <b>z</b> through the CG with the yaw rate <b>r</b> round it, the <b>pivot</b> (the point on the centre line with no sideways velocity, −vy/r), each tyre's direction of travel and side force, and the path the car takes beside the one the same steer gives at neutral steer (δ/L). The balance is read from the slip angles: <b>UNDERSTEER</b> when the front tyres slip more than the rear (αF &gt; αR), <b>OVERSTEER</b> when less, <b>TRANSITION</b> while front and rear slip opposite ways as the car is swung from one lane to the next.<br>
-<b>S-Route Powerslide</b>: ESP and TC off; the best of the plans (entry speed, target body slip β, initiation, radius). <b>METHOD</b> picks the initiation: POWER-OVER, CLUTCH KICK or FLICK (lift and steer away, then sharply in, each for half the body's natural period so its rebound helps turn-in); AUTO tries all three. <b>ENTRY</b> fixes the speed or picks BEST. The <b>i</b> button beside CHALLENGES explains the selected challenge. The result is <b>CLEAR</b> (a slide in both corners: the rear past its peak for 0.25 s, β over 8°, and countersteer or a long slide), <b>FADE</b> (one corner), <b>NO_SLIDE</b> (neither; a FWD car without a handbrake), <b>STALL</b> (stopped or never reached the exit), <b>OFF</b> (any corner of the body, swept at its slip angle, over the edge) or <b>SPIN</b>. The grid gives each corner's peak β and slide time.
+<b>S-Route Powerslide</b>: ESP and TC off; the best of the plans (entry speed, target body slip β, initiation, radius). <b>METHOD</b> picks the initiation: POWER-OVER, CLUTCH KICK or FLICK (lift and steer away, then sharply in, each for half the body's natural period so its rebound helps turn-in); AUTO tries all three. <b>ENTRY</b> fixes the speed or picks BEST. The <b>i</b> button beside CHALLENGES explains the selected challenge. The result is <b>CLEAR</b> (a slide in both corners: the rear past its peak for 0.25 s, β over 8°, and countersteer or a long slide), <b>FADE</b> (one corner), <b>NO_SLIDE</b> (neither; a FWD car without a handbrake), <b>STALL</b> (stopped or never reached the exit), <b>OFF</b> (any corner of the body, swept at its slip angle, over the edge) or <b>SPIN</b>. The grid gives each corner's peak β and slide time.<br>
+<b>Skid Pad</b>: a 200 ft (61 m) circle, as Motor Trend and Road &amp; Track use. The speed is raised until the car can no longer stay within 1 m of the line; the score is the magazines' figure, <i>v²/(g·R)</i> from the fastest held lap's time, with the body's own mean lateral acceleration beside it and how it fails 1 km/h faster: <b>WIDE</b> (understeer), <b>TIGHT</b> (the tail steps out) or <b>SPIN</b>.
+<b>RANK CARS</b>: add cars (this build, the garage's or factory cars) and press RANK; each runs the selected challenge with the settings above, one car at a time (CANCEL stops before the next). The table puts passes first, then sorts by the challenge's own score: least energy for economy (fuel as litres × density × heating value, an EV's pack kWh, both in MJ, so engine cars and EVs share one scale), shortest time for a stage, highest clear speed for the moose test, largest peak β for the powerslide, highest steady g for the skid pad.
 </div>
 </div>
 <div class="gtier gt-phys"><div class="gtier-h">LV3 · THE PHYSICS</div>
@@ -4059,6 +4067,12 @@ Most other tests check behaviour that is true of real cars: a bigger turbo spool
 <div class="perf-head" id="chalHead">—</div>
 <div class="perf-grid" id="chalGrid"></div>
 <div class="build-row"><button id="btnChalSolve" title="Solve the selected challenge for the current car">SOLVE</button></div>
+<h3 class="chal-rank-h">RANK CARS</h3>
+<div id="chalRankCars"></div>
+<div class="race-add"><select id="chalRankAddSel" class="opt-select" aria-label="Car to add"></select><button id="chalRankAddBtn">ADD</button></div>
+<div class="build-row"><button id="chalRankGo" title="Run every car through this challenge with the settings above">RANK</button><button id="chalRankStop" hidden>CANCEL</button></div>
+<div class="race-prog" id="chalRankProg" hidden><div class="race-prog-track"><div class="race-prog-bar"></div></div><span></span></div>
+<div id="chalRankOut"></div>
 </div>
 <div class="panel" id="racePanel" style="display:none">
 <h2>Race</h2>
@@ -5247,7 +5261,7 @@ function manifoldPR(mAir,mEx,mapBar,T3,area,compEta,flowFrac){
   for(let i=0;i<40;i++){const m=(lo+hi)/2;if(tPower(m)<pComp)lo=m;else hi=m;}
   return hi;
 }
-// A compound's manifold at boost mapBar (build 367): the split that balances both shafts (compoundSplit), then the HP
+// A compound's manifold at boost mapBar (build 371): the split that balances both shafts (compoundSplit), then the HP
 // turbine's share of the exhaust that supplies its compressor (the gate bypasses the rest).
 function compoundManifoldPR(mAir,mEx,mapBar,T3,compEta,flowFrac){
   const e=engine, pr=Math.max(1,mapBar), ff=flowFrac>0?flowFrac:mAir/Math.max(1e-9,e.chokeFlow_kgs);
@@ -5433,7 +5447,7 @@ function shaftNetPower(shaftRpm,mAir,T3,T01,rpm){
   const Pc=compPowerAt(mA,prCap,T01,eta);
   return{net:Pt-Pc,pr:pMan,prRaw:pr-dp,eta,Pt,Pc,turbArea:area};
 }
-// ---- COMPOUND: two stages in series (build 294; the split off its design point, build 367) ----
+// ---- COMPOUND: two stages in series (build 294; the split off its design point, build 371) ----
 // A large low-pressure (LP) turbo feeds a small high-pressure (HP) one; the frame the build chose is the HP stage, and
 // the exhaust runs through the HP turbine, then the LP turbine. It was one frame with 2.30 of its flow.
 // SIZING. A two-stage system is matched with the pressure ratio split equally between the stages (Watson & Janota,
@@ -5442,7 +5456,7 @@ function shaftNetPower(shaftRpm,mAir,T3,T01,rpm){
 // inlet is the LP stage's outlet (s, T1), so
 //     D_LP / D_HP = (s / sqrt(T1/T0))^(1/2),   T1/T0 = 1 + (s^0.286 - 1)/eta,  eta the island's peak.
 // The LP turbine and its housing scale with its wheel as a frame's do (A/R is a length, so the throat goes as D^2).
-// OFF THE DESIGN POINT (build 367). Each shaft is its own: each stage's compressor runs on its own map (compressorPR,
+// OFF THE DESIGN POINT (build 371). Each shaft is its own: each stage's compressor runs on its own map (compressorPR,
 // the HP one at the LP outlet's pressure and temperature, so its corrected flow is m sqrt(T1)/p1) and each turbine on
 // its own nozzle (the HP one first, the LP one on what the HP one left). The LP shaft is the state; the HP shaft, about
 // a third of its inertia (D^5), is taken as settled at its own balance at every point, turbine against compressor.
@@ -9252,12 +9266,20 @@ function trackRoad(key){const T=TRACKS[key];return T&&T.road?T.road:TRACK_ROAD_O
 //     droop (the damper's rebound stop). Passenger cars run ~70-100 mm each way at the wheel; a strut's travel is
 //     bounded by its own length, so the least, and a solid axle's beam needs the most (Reimpell et al., The Automotive
 //     Chassis, ch. 5, spring travel: PROBABLE by type, no maker publishes each car's).
+//   svF, svR (m, build 365) — the side-view swing arm at the front and at the rear: [e, d], its instant centre's height
+//     above the ground and its length from the wheel centre, toward the car's middle. A tyre's longitudinal force Fx
+//     reaches the body through it with a vertical part Fx e/d (torque reacting on the upright: outboard brakes, a live
+//     axle's drive) or Fx (e - r)/d (torque reacting on the body: inboard brakes, drive through half-shafts), which the
+//     springs do not carry: anti-dive % = brake share x (e/d) x L/h (Milliken & Milliken, RCVD, ch. 17). Road cars run
+//     0-50 % anti-dive and up to ~100 % anti-squat (ibid.); a strut's arm is short of height (its top mount), a
+//     trailing twist beam's instant centre is its own pivot, ~0.5 m ahead near wheel-centre height (Reimpell, The
+//     Automotive Chassis, ch. 3, pitch poles). PROBABLE by type: no maker publishes each car's.
 const SUSP_GEO={
-  strut:    {label:'MACPHERSON STRUT',fvsa:3.0,rc:0.08, front:true, cost:2500,bump:0.070,droop:0.080},
-  wishbone: {label:'DOUBLE WISHBONE', fvsa:1.6,rc:0.06, front:true, cost:5500,bump:0.080,droop:0.090},
-  multilink:{label:'MULTI-LINK',      fvsa:2.0,rc:0.10, front:true, cost:4500,bump:0.080,droop:0.090},
-  twist:    {label:'TWIST BEAM',      recov:0.4,rc:0.125,front:false,cost:1500,bump:0.085,droop:0.095},
-  solid:    {label:'SOLID AXLE',      recov:1,  rc:null, front:true, cost:2000,bump:0.100,droop:0.110}
+  strut:    {label:'MACPHERSON STRUT',fvsa:3.0,rc:0.08, front:true, cost:2500,bump:0.070,droop:0.080,svF:[0.15,3.0],svR:[0.40,2.5]},
+  wishbone: {label:'DOUBLE WISHBONE', fvsa:1.6,rc:0.06, front:true, cost:5500,bump:0.080,droop:0.090,svF:[0.20,2.5],svR:[0.45,2.5]},
+  multilink:{label:'MULTI-LINK',      fvsa:2.0,rc:0.10, front:true, cost:4500,bump:0.080,droop:0.090,svF:[0.20,2.5],svR:[0.50,2.0]},
+  twist:    {label:'TWIST BEAM',      recov:0.4,rc:0.125,front:false,cost:1500,bump:0.085,droop:0.095,svF:[0.15,3.0],svR:[0.32,0.55]},
+  solid:    {label:'SOLID AXLE',      recov:1,  rc:null, front:true, cost:2000,bump:0.100,droop:0.110,svF:[0.15,2.5],svR:[0.35,2.5]}
 };
 // The real cars' suspension (front, rear) and front and rear track (m). Sources: maker sheets where found
 // (BMW media 2012, Porsche US 2021, GM, Nissan heritage), spec databases (carsales/Redbook, carexpert, conceptcarz,
@@ -14465,7 +14487,7 @@ function driveAids(v){const A=Object.assign({},DRIVE_AIDS,v.aids||{});A.absSlip=
 //   pitch  Iyy theta'' = m ax h less the four corners' forces at their arms (each corner's wheel rate and damping:
 //          quarterCar; since phase G6 through each wheel's own travel, THE WHEELS). The transfer is m ax h / L when
 //          steady. Iyy = m a b: a dynamic index of 1 in pitch (Gillespie, Fundamentals of Vehicle Dynamics, ch. 5:
-//          road cars 0.8-1.2). No anti-dive or anti-squat yet, so all of it goes through the springs.
+//          road cars 0.8-1.2). Since build 369 the links carry the anti-dive and anti-squat share (THE LINKS).
 //   Left out: the weight's own roll moment as the body leans (m g arm phi, a few per cent: the lap's rollGrad leaves
 //   it out too), and the unsprung masses' share of the transfer (it is counted with the body's).
 // THE WHEELS (phase G6). Each wheel moves up and down on its own, between its tyre and its spring: a quarter car at
@@ -14492,8 +14514,15 @@ function driveAids(v){const A=Object.assign({},DRIVE_AIDS,v.aids||{});A.absSlip=
 //   damper (build 364) bound and rebound apart: rebound DAMPER_RB times bound (passenger dampers ~3:1, Dixon, The
 //          Shock Absorber Handbook, 2007, ch. 1: PROBABLE), their mean the kit's cs, so the lap's quarter car, which
 //          meets a road wave with that mean (the describing function, as the suspension calculator), is unchanged.
-//   Left out, named: the tyre's own damping, the damper's blow-off, anti-dive and anti-squat, jacking, camber and toe
-//   by heave and pitch, and travel by the kit (a lowered car keeps its type's).
+//   links  (build 369) anti-dive, anti-squat and anti-lift: each tyre's longitudinal force Fl reaches the body through
+//          its side-view swing arm (SUSP_GEO svF/svR: [e, d]) with a vertical part J = (Fl e - Tb)/d, Tb the torque on
+//          the wheel that reacts on the body (drive through half-shafts on an independent axle, inboard brakes; a live
+//          axle's and outboard brakes' react on the upright), lifting the body at the front and pulling it down at the
+//          rear when braking (Milliken & Milliken, RCVD, ch. 17). J is a force between wheel and body: the body gets it
+//          at the corner, the wheel its reaction, so the springs carry the transfer less J, and their sum heaves the
+//          body (jacking). Brakes are outboard unless the car says v.inboardF / v.inboardR (no preset does).
+//   Left out, named: the tyre's own damping, the damper's blow-off, camber and toe by heave and pitch, the arm's change
+//   with travel, and travel by the kit (a lowered car keeps its type's).
 const DRIVE_BUMP_RUBBER=0.025,DAMPER_RB=3;
 function driveBody(v,a,b){
   const gF=SUSP_GEO[v.suspFront]||SUSP_GEO.strut,gR=SUSP_GEO[v.suspRear]||SUSP_GEO.multilink;
@@ -14503,7 +14532,8 @@ function driveBody(v,a,b){
   const kz=q=>2*q.ks*q.kt/(q.ks+q.kt),L=a+b;      // an axle's vertical rate, its springs on its tyres
   return {rollI:v.mass*(kx*kx+arm*arm),rollArm:arm,rollK:K,rollKF:KF,KaF:K*KF,KaR:K*(1-KF),
     rcGF:fw*zF,rcGR:(1-fw)*zR,
-    ksF:qF.ks,ksR:qR.ks,cdF:qF.cs,cdR:qR.cs,bumpF:gF.bump,bumpR:gR.bump,droopF:gF.droop,droopR:gR.droop,unsF:qF.mu,unsR:qR.mu,mS:v.mass-2*(qF.mu+qR.mu),
+    ksF:qF.ks,ksR:qR.ks,cdF:qF.cs,cdR:qR.cs,bumpF:gF.bump,bumpR:gR.bump,droopF:gF.droop,droopR:gR.droop,svF:gF.svF,svR:gR.svR,
+    liveF:v.suspFront==='solid',liveR:v.suspRear==='solid',inbF:!!v.inboardF,inbR:!!v.inboardR,unsF:qF.mu,unsR:qR.mu,mS:v.mass-2*(qF.mu+qR.mu),
     pitchI:v.mass*a*b,pitchK:L*L/(1/kz(qF)+1/kz(qR))};
 }
 // THE STEERING TORQUE (phase G2). Each front tyre's side force acts behind the steering axis, so it turns the wheel
@@ -15078,9 +15108,11 @@ function stepCar(car,s,u,dt){
     // eases the motor's braking by as much (every electric car cuts regeneration when its ABS works).
     if(car.el&&car.abs&&Tw<0){let m=1;for(let i=0;i<4;i++)if(drv[i])m=Math.min(m,s.abs[i]);Tw*=m;}
     // ---- wheels
+    const Tbd=[0,0,0,0];                                                   // each wheel's torque reacting on the body (THE LINKS)
     for(let ax=0;ax<2;ax++){
-      const i=ax*2,j=i+1,driven=drv[i];
-      let Ti=(driven?(sg?Tw*sg[i]:Tw/nd):0)+(ax===0?Ff*car.r/2:0),Tj=Ti;
+      const i=ax*2,j=i+1,driven=drv[i],Td=driven?(sg?Tw*sg[i]:Tw/nd):0;
+      let Ti=Td+(ax===0?Ff*car.r/2:0),Tj=Ti;
+      if(!(ax===0?car.liveF:car.liveR))Tbd[i]=Tbd[j]=Td;
       const share=ax===0?car.brakeFront:1-car.brakeFront;
       for(const [q,Tq] of [[i,Ti],[j,Tj]]){
         if(car.abs){const vl=Math.abs(s.vx);s.abs[q]=Math.max(0.05,Math.min(1,s.abs[q]+((s.kappa[q]<-car.slipOpt*car.aids.absSlip[ax]&&vl>2)?-car.aids.absRel:car.aids.absApp)*h));}
@@ -15088,6 +15120,7 @@ function stepCar(car,s,u,dt){
         const roll=car.crr*Fz[q]*car.r*Math.tanh(s.w[q]*car.r/0.5);
         const Iq=car.Iw+h*car.r*dF[q];                                      // the tyre's own stiffness taken implicitly
         let wq=s.w[q]+h*(Tq-Fl[q]*car.r-roll)/Iq;
+        if(ax===0?car.inbF:car.inbR)Tbd[q]-=Math.sign(wq)*Tb;
         const db=h*Tb/Iq;                                                  // the brake can stop a wheel, never turn it back
         if(Math.abs(wq)<=db)wq=0;else wq-=Math.sign(wq)*db;
         s.w[q]=wq;
@@ -15137,7 +15170,8 @@ function stepCar(car,s,u,dt){
         let vr=A/(1+h*(A>0?cb:cr)/mu);                                      // the damper's sign is A's, whichever c
         const cn=cc+h*vr;if(cn>top)vr=(top-cc)/h;else if(cn<-dn)vr=(-dn-cc)/h;
         const vw=vb+vr,S=Fz[w]-W0+Fl-mu*dg-mu*(vw-s.zuV[w])/h;s.zuV[w]=vw;s.zu[w]+=h*vw;return S;};
-      const SL=wheel(i,cL,zbV+rlV,e-bar,D),SR=wheel(j,cR,zbV-rlV,e+bar,-D);
+      const sv=f?car.svF:car.svR,sx=f?1:-1,JL=sx*(Fl[i]*sv[0]-Tbd[i])/sv[1],JR=sx*(Fl[j]*sv[0]-Tbd[j])/sv[1];   // THE LINKS
+      const SL=wheel(i,cL,zbV+rlV,e-bar,D+JL)-JL,SR=wheel(j,cR,zbV-rlV,e+bar,-D+JR)-JR;
       SS+=SL+SR;MP+=xw[i]*(SL+SR);MR+=(SR-SL)*t/2;s.rr[q]=pr;}
     s.heaveV+=h*(SS-car.mS*dg-down)/car.mS;s.heave+=h*s.heaveV;
     s.rollV+=h*(car.m*ay*car.rollArm-MR)/car.rollI;s.roll+=h*s.rollV;
@@ -16638,6 +16672,14 @@ const RACE_RAIN_TYRES={
 // floor: what is left fully afloat, the water's drag: 15.8% of the low-speed wet friction (Fwa et al., quoted in
 // Sinha et al.'s review of hydroplaning, Virginia Tech).
 const RACE_WATER={rainMmH:10,txd:0.6,slope:0.02,keep0:0.71,floor:0.158};
+// A compound's own wet grip (build 367): the EU tyre label's wet grip index G, the tyre's wet braking against the
+// standard reference test tyre's (Regulation (EU) 2020/740, Annex I; test method ISO 23671 / UNECE R117 Annex 5,
+// braking 80-20 km/h on wet asphalt). Classes for C1 tyres: A G>=1.55, B 1.40-1.54, C 1.25-1.39, D 1.10-1.24,
+// E <=1.09. keep0 (Wong's 0.6/0.85) stands for a road tyre, taken as class B's middle, 1.47 (PROBABLE: B and C are
+// the commonest classes of summer road tyres). A rain compound (inter, full wet) has no label; it is set at class A's
+// floor, 1.55 (PROBABLE, and the least it is likely to reach: a compound made for the wet is at least as good as the
+// best road tyres the label grades). Its low-speed wet grip is keep0 x G/1.47; every other compound stays at 1.47.
+const RACE_WET_G={ref:1.47,inter:1.55,wet:1.55};
 // Each compound's tread when new (mm), the grooves' share of the patch (void), and its usual hot pressure (kPa).
 // All PROBABLE, from makers' listings: a road tyre 8 mm and about 30% void at 230-240 kPa; a semi-slick ~5.5 mm
 // (7/32 in) with few grooves; a slick none, at ~170 kPa hot; a drag radial ~4 mm at ~110 kPa (16 psi); a race
@@ -16652,7 +16694,8 @@ function raceFilmMm(x,width){
   return Math.max(0,25.4*(0.00338*Math.pow(t,0.11)*Math.pow(L,0.43)*Math.pow(I,0.59)*Math.pow(W.slope,-0.42)-t));
 }
 // What the water leaves a compound at speed v (m/s), as a share of its dry grip. The adhesion goes with the
-// wetness (keep0 on a properly wet track). Then the water under the patch lifts the share (v/Vp)^2 of the load,
+// wetness (keep0 on a properly wet track, scaled by the compound's label class, RACE_WET_G). Then the water under
+// the patch lifts the share (v/Vp)^2 of the load,
 // Horne's own balance of the water's dynamic pressure against the tyre's (NASA TN D-2056, 1963:
 // Vp = 6.35 sqrt(p kPa) km/h), on the share of the patch the film floods: its depth over itself and the
 // grooves' volume (void x depth), so a slick is all exposed and a full wet barely (the owner's choice, build 303).
@@ -16662,7 +16705,8 @@ function raceWetKeep(ty,w,v,width,coldKPa){
   const W=RACE_WATER,tr=RACE_TREAD[ty.key]||RACE_TREAD.sport,d=raceFilmMm(x,width);
   const exposed=d>0?d/(d+tr.void*tr.mm):0, vp=6.35*Math.sqrt(coldKPa>0?tyreHotKPa(coldKPa,ty.tOpt||60):tr.kPa)/3.6;
   const lift=Math.min(1,(v/vp)*(v/vp)*exposed);
-  return (1-x*(1-W.keep0))*(1-(1-W.floor)*lift);
+  const keep0=W.keep0*(RACE_WET_G[ty.key]||RACE_WET_G.ref)/RACE_WET_G.ref;
+  return (1-x*(1-keep0))*(1-(1-W.floor)*lift);
 }
 // The same over a lap: the share averaged by time along the car's own dry lap, its speeds scaled by the root of
 // the grip they settle at (a corner's speed goes with the root of its grip). Cached per compound and wetness.
@@ -23657,8 +23701,8 @@ function fillTrackSelect(sel,value){
   sel.value=TRACKS[value]?value:Object.keys(TRACKS)[0];
 }
 // Where an entrant can come from: what is built now, the garage's cars, and the factory cars.
-function raceFillAdd(){
-  const sel=document.getElementById('raceAddSel');if(!sel)return;
+function raceFillAdd(id){
+  const sel=document.getElementById(id||'raceAddSel');if(!sel)return;
   const cars=garage.filter(g=>gKind(g)==='car');
   let h='<optgroup label="'+esc(tr('THIS BUILD'))+'"><option value="cur">'+esc(tr('The car on the VEHICLE tab'))+'</option></optgroup>';
   if(cars.length)h+='<optgroup label="'+esc(tr('GARAGE'))+'">'+cars.map(g=>'<option value="g:'+esc(g.id)+'">'+esc(g.name)+'</option>').join('')+'</optgroup>';
@@ -24549,7 +24593,7 @@ function updateUI(){
   else{status.textContent=tr('IDLE / LOW LOAD')+' • '+Math.round(state.rpm)+' RPM';status.className='status-bar'}
   if(vizMode==='design')legend.innerHTML=tr('Bore/stroke set displacement. Octane+compression+boost+ignition feed the knock model.')+'<br>'+tr('Cooling (radiator/fan/oil cooler/thermostat) sets running temps in AUTO THERMAL mode.');
   else if(vizMode==='engine')legend.innerHTML=tr('THROTTLE makes power; LOAD (dyno brake) sets the hold RPM — more load = lower RPM, zero = free-rev to limiter.')+'<br>'+tr('Lift off at speed → engine braking + fuel cut. Detonation/overheat/lean-boost/valve float wear the engine.');
-  else if(vizMode==='challenges')legend.innerHTML=tr('Solved vehicle tests: economy, moose avoid, S-route powerslide; later skid pad.')+'<br>'+tr('Economy: green start, red finish; line colour is pace versus flat-out; hover for speed and incline; pace sets the target time.')+' '+tr('Wheel or pinch to zoom, drag to scroll, double-click to reset.')+' '+tr('Moose: ISO 3888-2 cones, frontal forces and body roll.')+' '+tr('Powerslide: S-route with linked drifts; CLEAR needs both corners.');
+  else if(vizMode==='challenges')legend.innerHTML=tr('Solved vehicle tests: economy, moose avoid, S-route powerslide, skid pad.')+'<br>'+tr('Economy: green start, red finish; line colour is pace versus flat-out; hover for speed and incline; pace sets the target time.')+' '+tr('Wheel or pinch to zoom, drag to scroll, double-click to reset.')+' '+tr('Moose: ISO 3888-2 cones, frontal forces and body roll.')+' '+tr('Powerslide: S-route with linked drifts; CLEAR needs both corners.')+' '+tr('Skid pad: 61 m circle; steady lateral g from the lap time.');
   else legend.innerHTML=tr('Dyno shows full power & torque curves to redline.')+'<br>'+tr('Green line = current RPM. Peaks marked with dots.');
   updateDashLamps();
 }
@@ -24605,7 +24649,7 @@ function setTab(mode){
   document.getElementById('livePanel').style.display=(mode==='engine'||mode==='dyno')?'':'none';
   if(mode==='vehicle'){buildVehicle();updateVehicleSummary();}
   if(mode==='track'){buildVehicle();refreshLap();}
-  if(mode==='challenges'){buildVehicle();refreshChallenge();}
+  if(mode==='challenges'){buildVehicle();refreshChallenge();raceFillAdd('chalRankAddSel');}
   if(mode==='race'){const ts=document.getElementById('raceTrk');fillTrackSelect(ts,ts.value||trackKey);raceFillAdd();openRacePage(prevMode);renderRaceSetup();renderRacePanel(true);}
   updateUI();
 }
@@ -29554,9 +29598,92 @@ function simulateDriftChallenge(){
     slide1:R.slide1,slide2:R.slide2,pkR:R.pkR
   };
 }
+// ====== SKID PAD (build 368) ======
+// Steady cornering on a 200 ft (61 m) diameter circle, the pad Motor Trend and Road & Track report their skidpad g on
+// (Car and Driver uses a 300 ft circle). The magazines time laps at the highest speed the car holds on the circle and
+// give g = v²/(g·R) with v = 2πR / lap time; so does this. Physics: stepCar driven by driveDriver round a closed line
+// (it wraps), counter-clockwise; the car is symmetric, so the other direction gives the same figure.
+//
+// One run at speed v: the car starts on the circle at v with the yaw rate v/R, settles for one lap, and is judged on
+// the next. Outcomes (worst first):
+//   SPIN   body slip β over 25°, or heading more than 90° off the circle
+//   WIDE   the CG more than SKID_TOL outside the circle (pushed wide: understeer at the limit)
+//   TIGHT  the CG more than SKID_TOL inside it (the tail stepped out and tucked the nose in)
+//   SLOW   on the line, but the judged lap not finished in time
+//   HOLD   none of these: the car holds the circle at its own steady speed
+// driveDriver's speed loop is proportional (1/s), so the car settles a little under v, short by the tyres' cornering
+// drag; v only drives the search. The score is the judged lap's own time, as on a real pad.
+// SKID_TOL (1 m either side) is this game's lane, not a standard: the magazines' drivers keep to a painted circle.
+const SKID_D=60.96,SKID_R=SKID_D/2,SKID_TOL=1;
+const SKID_RANK={HOLD:0,SLOW:1,TIGHT:2,WIDE:3,SPIN:4};
+function skidLine(R,v){
+  const N=Math.round(2*Math.PI*R/0.5),line=[];
+  for(let k=0;k<N;k++){const a=-Math.PI/2+2*Math.PI*k/N;line.push({x:R*Math.cos(a),y:R+R*Math.sin(a),v,grade:0,kv:0});}
+  return line;
+}
+function skidRun(car,v,sample){
+  const R=SKID_R,line=skidLine(R,v),g=DRIVE_G;
+  const s=driveState(car),d={i:0};
+  s.vx=v;s.yaw=v/R;s.w=s.w.map(()=>v/car.r);
+  for(let k=car.ratios.length;k>=1;k--){s.gear=k;if(v/car.r*car.ratios[k-1]*car.fd*30/Math.PI>=2500)break;}
+  s.we=v/car.r*car.ratios[s.gear-1]*car.fd;
+  const o={v,eMax:0,eMin:0,betaMax:0,ayMean:0,lapT:0,vMean:0,steer:0,samples:sample?[]:null,line,R};
+  const dt=0.005,tMax=4*2*Math.PI*R/Math.max(3,v)+5;
+  let ang=0,pa=-Math.PI/2,judging=false,tJ=0,ayS=0,vS=0,stS=0,n=0,nextT=0,spin=false;
+  while(s.t<tMax){
+    const u=driveDriver(car,s,line,d);
+    stepCar(car,s,u,dt);
+    const a=Math.atan2(s.y-R,s.x);let da=a-pa;while(da>Math.PI)da-=2*Math.PI;while(da<-Math.PI)da+=2*Math.PI;ang+=da;pa=a;
+    const beta=Math.atan2(s.vy,Math.max(0.5,s.vx));
+    let dh=s.psi-(a+Math.PI/2);dh-=2*Math.PI*Math.round(dh/(2*Math.PI));
+    if(Math.abs(beta)>25*Math.PI/180||Math.abs(dh)>Math.PI/2){spin=true;}
+    if(!judging&&ang>=2*Math.PI){judging=true;tJ=s.t;}
+    if(judging){
+      const e=R-Math.hypot(s.x,s.y-R);   // + inside the circle
+      o.eMax=Math.max(o.eMax,e);o.eMin=Math.min(o.eMin,e);o.betaMax=Math.max(o.betaMax,Math.abs(beta));
+      ayS+=Math.abs(s.ayF);vS+=s.speed;stS+=Math.abs(s.delta||0);n++;
+      if(sample&&s.t>=nextT){
+        o.samples.push({t:s.t,x:s.x,y:s.y,psi:s.psi,v:s.speed,beta,yaw:s.yaw,delta:s.delta||0,thr:u.throttle,brk:u.brake||0,
+          gear:s.gear,rpm:s.rpm,ax:s.ax||0,ay:s.ay||0,e});
+        nextT=s.t+0.04;
+      }
+      if(ang>=4*Math.PI){o.lapT=s.t-tJ;break;}
+      if(!sample&&(o.eMin<-SKID_TOL||o.eMax>SKID_TOL))break;
+    }
+    if(spin)break;
+  }
+  o.ayMean=n?ayS/n/g:0;o.vMean=n?vS/n:0;o.steer=n?stS/n:0;
+  o.outcome=spin?'SPIN':!o.lapT&&!(o.eMin<-SKID_TOL||o.eMax>SKID_TOL)?'SLOW'
+    :o.eMin<-SKID_TOL?'WIDE':o.eMax>SKID_TOL?'TIGHT':'HOLD';
+  o.ok=o.outcome==='HOLD';
+  // the magazines' figure: the judged lap's time at the circle's radius
+  o.gLap=o.lapT>0?4*Math.PI*Math.PI*R/(g*o.lapT*o.lapT):0;
+  return o;
+}
+// The highest speed held: bracket around the tyres' own sqrt(μ g R), then bisect to 0.05 m/s. The held speed need
+// not be monotone in v (an aid or a gear change can bite at one speed only); bisection takes the first edge it finds.
+function skidBest(car){
+  const v0=Math.sqrt((car.mu||0.9)*DRIVE_G*SKID_R);
+  let lo=0.6*v0,hi=1.3*v0;
+  while(lo>3&&!skidRun(car,lo).ok)lo*=0.8;
+  if(!(lo>3))return null;
+  while(skidRun(car,hi).ok&&hi<80)hi*=1.2;
+  while(hi-lo>0.05){const m=(lo+hi)/2;if(skidRun(car,m).ok)lo=m;else hi=m;}
+  return lo;
+}
+function simulateSkidpadChallenge(){
+  const pt=powertrain();if(!pt.ready()||!vehicle.mass)return null;
+  const car=driveCar(),v=skidBest(car);
+  if(!v)return{ok:false,reason:'no-hold',kind:'skidpad'};
+  const R=skidRun(car,v,true),F=skidRun(car,v+1/3.6);   // how it fails 1 km/h faster (target speed)
+  const D=typeof mooseDims==='function'?mooseDims():{w:(car.tF+car.tR)/2+0.3,ovF:0.35*(car.a+car.b),ovR:0.35*(car.a+car.b)};
+  return{ok:true,kind:'skidpad',outcome:R.outcome,speedKmh:R.vMean*3.6,targetKmh:v*3.6,gLap:R.gLap,ayMean:R.ayMean,lapT:R.lapT,
+    betaMax:R.betaMax*180/Math.PI,steerDeg:R.steer*180/Math.PI,eMin:R.eMin,eMax:R.eMax,failBy:F.outcome,
+    radius:SKID_R,tol:SKID_TOL,samples:R.samples,trackW:D.w,body:{f:car.a+D.ovF,r:car.b+D.ovR},drive:car.drive};
+}
 // ====== VEHICLE RUN CHALLENGES (build 341; real roads 343; moose 345) ======
 // Dynamic tests on the CHALLENGES tab — not the ENGINE career/scorecard list in challenges.js.
-// Economy, fixed-time stages (build 352), moose (345) and S-route powerslide (358). Later: skidpad.
+// Economy, fixed-time stages (build 352), moose (345), S-route powerslide (358) and skid pad (368).
 const RUN_CHALLENGES=[
   {id:'economy',kind:'economy',name:'Mountain Economy',
     desc:'Open mountain road. Finish inside the time limit; burn as little fuel as you can.',
@@ -29595,7 +29722,9 @@ const RUN_CHALLENGES=[
   {id:'moose',kind:'moose',name:'Moose Avoidance',
     desc:'ISO 3888-2 double lane change. Highest entry speed with no cone touched.'},
   {id:'drift-s',kind:'drift',name:'S-Route Powerslide',
-    desc:'Point-to-point S: two linked corners. Hold a controlled powerslide through both, or fail honestly.'}
+    desc:'Point-to-point S: two linked corners. Hold a controlled powerslide through both, or fail honestly.'},
+  {id:'skidpad',kind:'skidpad',name:'Skid Pad',
+    desc:'A 200 ft (61 m) circle. Highest speed the car holds on it, as steady lateral g.'}
 ];
 let activeRunChallenge='economy';
 let chalResult=null;
@@ -29612,7 +29741,31 @@ function solveRunChallenge(id){
   if(ch.kind==='stage')return simulateStageChallenge(ch.road,ch.target);
   if(ch.kind==='moose')return simulateMooseChallenge();
   if(ch.kind==='drift')return simulateDriftChallenge();
+  if(ch.kind==='skidpad')return simulateSkidpadChallenge();
   return{ok:false,reason:'unimplemented',challenge:ch};
+}
+// Each challenge's own score, for the ranking (build 370, src/js/chal-rank.js). Keyed by kind; an entry may carry its
+// own `score` instead. A new challenge registers here (or on its entry) and the ranking needs no change.
+// score(R) runs with that car loaded and returns {v, higher, pass, text}: v sorts (higher is better when `higher`),
+// pass is the challenge's own pass/fail, text is shown. Return null when R has nothing to rank.
+const RUN_CHALLENGE_SCORES={
+  // Economy: each car against its own target time. Sorted by energy drawn from the tank or pack (fuel: litres ×
+  // density × LHV from FUELS; EV: pack kWh × 3.6 MJ), so petrol, diesel and EVs share one scale; shown in their own unit.
+  economy:R=>{
+    const f=!R.ev&&powertrain().fuel(),mj=R.ev?R.kWh*3.6:R.fuelL*(f?f.density*f.LHV:0);
+    return{v:mj,higher:false,pass:Math.abs(R.time-R.target)<=Math.max(1,0.01*R.target),
+      text:(R.ev?R.kWh.toFixed(2)+' kWh':R.fuelL.toFixed(2)+' L')+' · '+mj.toFixed(1)+' MJ'};
+  },
+  stage:R=>({v:R.time,higher:false,pass:!R.dnf,text:R.time.toFixed(1)+' s'}),
+  moose:R=>({v:R.speedKmh,higher:true,pass:R.outcome==='CLEAR',text:R.speedKmh+' km/h · '+tr(R.outcome)}),
+  // Skid pad (build 368): the magazines' figure v²/(g·R) from the held lap; HOLD passes.
+  skidpad:R=>({v:R.gLap,higher:true,pass:R.outcome==='HOLD',text:R.gLap.toFixed(2)+' g · '+tr(R.outcome)}),
+  drift:R=>({v:R.peakBeta,higher:true,pass:R.outcome==='CLEAR',text:R.peakBeta.toFixed(1)+'° · '+tr(R.outcome)})
+};
+function runChallengeScore(ch,R){
+  if(!R||!R.ok)return null;
+  const f=ch.score||RUN_CHALLENGE_SCORES[ch.kind];
+  return f?f(R):null;
 }
 // ====== CHALLENGES tab UI (build 341; EV 342; pace + hover 344; moose 345) ======
 const chalHover={i:-1,map:null};
@@ -29622,6 +29775,7 @@ let chalMooseRate=1;const CHAL_MOOSE_RATES=[1,0.5,0.25];
 function chalMooseNow(){return((typeof performance!=='undefined'?performance.now():Date.now())-chalMooseT0)/1000*chalMooseRate;}
 function refreshChallenge(){
   // Do not call buildVehicle here: it hooks back into refreshChallenge (same pattern as refreshLap).
+  if(typeof chalRank!=='undefined'&&chalRank.busy)return;   // a ranking is swapping cars in (chal-rank.js)
   const ch=runChallengeById(activeRunChallenge);
   chalResult=solveRunChallenge(ch.id);
   chalHover.i=-1;
@@ -29634,7 +29788,7 @@ function refreshChallenge(){
   for(const id of['chalDriftEntry','chalDriftMethod']){const el=document.getElementById(id);
     if(el){const row=el.closest('.field');if(row)row.style.display=ch.kind==='drift'?'':'none';}}
   const mr=document.getElementById('chalMooseRate');
-  if(mr){const row=mr.closest('.field');if(row)row.style.display=(ch.kind==='moose'||ch.kind==='drift')?'':'none';}
+  if(mr){const row=mr.closest('.field');if(row)row.style.display=(ch.kind==='moose'||ch.kind==='drift'||ch.kind==='skidpad')?'':'none';}
   renderChallenge();
 }
 function renderChallenge(){
@@ -29677,6 +29831,23 @@ function renderChallenge(){
       cell('RADIUS',R.radius+' m')+
       cell('DRIVE',tr((R.drive||'').toUpperCase()));
     note.textContent=tr(ch.desc)+' '+tr('ESP and traction control off. METHOD picks how the slide starts: POWER-OVER (throttle), CLUTCH KICK (clutch down, the engine revs itself, then the clutch is dropped) or FLICK (lift and steer away, then sharply in, each for half the body’s natural period, so its rebound helps turn-in; FWD lifts to rotate). AUTO tries them in that order. ENTRY fixes the speed, or BEST searches 32–43 km/h. The driver holds body slip with throttle and countersteer, then links the second corner. CLEAR needs a sustained slide in both. Failures: NO_SLIDE (never past the rear peak — typical FWD without a handbrake), FADE (only one corner), STALL (stopped or never reached the exit), OFF (any corner of the body over the edge, swept at its slip angle), or SPIN. Handbrake and loose surfaces are not modelled yet.');
+    return;
+  }
+  if(R.kind==='skidpad'){
+    const col=SKID_OUT_COL[R.outcome]||'#e0e0e0';
+    head.innerHTML=tr(ch.name)+' · <b>'+R.gLap.toFixed(2)+' g</b> · '+R.speedKmh.toFixed(1)+' km/h';
+    grid.innerHTML=cell('LATERAL g',R.gLap.toFixed(2)+' g')+
+      cell('SPEED',R.speedKmh.toFixed(1)+' km/h')+
+      cell('LAP',R.lapT.toFixed(2)+' s')+
+      cell('RESULT','<span style="color:'+col+'">'+tr(R.outcome)+'</span>')+
+      cell('FAILS AT','+1 km/h: '+tr(R.failBy))+
+      cell('MEAN ay',R.ayMean.toFixed(2)+' g')+
+      cell('PEAK β',R.betaMax.toFixed(1)+'°')+
+      cell('STEER',R.steerDeg.toFixed(1)+'°')+
+      cell('OFF LINE',Math.max(-R.eMin,R.eMax).toFixed(2)+' m')+
+      cell('DIAMETER',(2*R.radius).toFixed(1)+' m')+
+      cell('DRIVE',tr((R.drive||'').toUpperCase()));
+    note.textContent=tr(ch.desc)+' '+tr('A 200 ft circle, as Motor Trend and Road & Track use (Car and Driver: 300 ft). The driver holds the circle while the speed is raised; the best is the fastest lap that stays within 1 m of the line with no spin. LATERAL g is the magazines\' figure from that lap\'s time, v²/(g·R); MEAN ay is the body\'s own. One step faster it runs WIDE (understeer), TIGHT (the tail steps out) or SPINs.');
     return;
   }
   if(R.kind==='stage'){
@@ -29772,6 +29943,7 @@ function mooseSampleAt(R,t){
   return S[i];
 }
 const MOOSE_OUT_COL={CLEAR:'#55dd66',CONE:'#ffcc00',SPIN:'#ff8833',ROLLOVER:'#ff4444'};
+const SKID_OUT_COL={HOLD:'#55dd66',SLOW:'#b088ff',TIGHT:'#ffcc00',WIDE:'#ff8833',SPIN:'#ff4444'};
 const DRIFT_OUT_COL={CLEAR:'#55dd66',FADE:'#ffcc00',NO_SLIDE:'#4aa3ff',STALL:'#b088ff',OFF:'#ff8833',SPIN:'#ff4444'};
 function driftSampleAt(R,t){
   const S=R.samples;if(!S||!S.length)return null;
@@ -29841,6 +30013,30 @@ function drawDriftHud(s){
   ctx.fillStyle=C.yellow;ctx.font='6px '+PS;ctx.fillText(sw.txt,x0+60,ys+12);
   ctx.fillStyle='#667';ctx.font='5px '+PS;ctx.fillText(sw.road,x0+60,ys+24);
   drawSteerWheel(x0+150,ys+16,15,sw.wheel);
+}
+// Skid pad (build 368): the circle and its 1 m lane from above, the car replaying the judged lap, the dashboard.
+function drawSkidpadChallenge(g,R){
+  chalHover.map=null;
+  g.fillStyle='#0a0e14';g.fillRect(0,0,vizW,vizH);
+  const Rr=R.radius,tol=R.tol,pad=24,sc=Math.min(vizW-2*pad,vizH-2*pad)/(2*(Rr+tol+3));
+  const cx=Math.min(vizW/2,pad+(Rr+tol+3)*sc),cy=vizH/2,MX=x=>cx+x*sc,MY=y=>cy-(y-Rr)*sc;
+  g.strokeStyle='#1c2330';g.lineWidth=Math.max(3,2*tol*sc);g.beginPath();g.arc(cx,cy,Rr*sc,0,2*Math.PI);g.stroke();
+  g.strokeStyle='#ffcc00';g.lineWidth=1;g.setLineDash([4,4]);g.beginPath();g.arc(cx,cy,Rr*sc,0,2*Math.PI);g.stroke();g.setLineDash([]);
+  const S=R.samples||[];
+  if(S.length>1){g.strokeStyle='rgba(85,221,102,0.35)';g.lineWidth=Math.max(2,(R.trackW||1.8)*sc);
+    g.beginPath();for(let i=0;i<S.length;i++){const X=MX(S[i].x),Y=MY(S[i].y);if(i)g.lineTo(X,Y);else g.moveTo(X,Y);}g.stroke();}
+  const s=driftSampleAt(R,chalMooseNow());
+  if(s){
+    const B=R.body||{f:2,r:2.3},c=Math.cos(s.psi||0),sn=Math.sin(s.psi||0),tw=(R.trackW||1.8)/2;
+    g.fillStyle=SKID_OUT_COL[R.outcome]||'#55dd66';g.beginPath();
+    [[B.f,tw],[B.f,-tw],[-B.r,-tw],[-B.r,tw]].forEach(([dx,dy],k)=>{const X=MX(s.x+dx*c-dy*sn),Y=MY(s.y+dx*sn+dy*c);if(k)g.lineTo(X,Y);else g.moveTo(X,Y);});
+    g.closePath();g.fill();
+    g.fillStyle='#e0e0e0';g.font='8px "Press Start 2P"';
+    g.fillText((Math.abs(s.ay||0)/DRIVE_G).toFixed(2)+' g · β '+(Math.abs(s.beta||0)*180/Math.PI).toFixed(1)+'°',10,20);
+  }
+  g.fillStyle='#9ab';g.font='7px "Press Start 2P"';
+  g.fillText(tr('SKID PAD')+' · '+(2*Rr).toFixed(1)+' m '+tr('circle')+' · ±'+tol+' m',10,vizH-10);
+  if(s&&s.rpm!=null)drawDriftHud(s);
 }
 function drawMooseTopDown(g,R,x0,y0,w,h){
   const G=R.cones,line=R.line;if(!line||!line.length)return;
@@ -30117,6 +30313,7 @@ function drawChallenge(){
   const ta=R&&R.road?'none':'';if(canvas.style.touchAction!==ta)canvas.style.touchAction=ta;   // a touch drag pans the route map
   if(R&&R.kind==='moose'&&R.ok){drawMooseChallenge(g,R);return;}
   if(R&&R.kind==='drift'&&R.ok){drawDriftChallenge(g,R);return;}
+  if(R&&R.kind==='skidpad'&&R.ok){drawSkidpadChallenge(g,R);return;}
   if(!R||!R.road){g.fillStyle='#556';g.font='10px "Press Start 2P"';g.fillText(tr('CHALLENGES'),16,28);chalHover.map=null;return;}
   const map=chalMapProject(R),p=map.p,n=p.length,MX=map.MX,MY=map.MY,T=map.T;
   chalHover.map=map;
@@ -30191,6 +30388,80 @@ function bindChallengeHover(){
   const up=e=>{ptrs.delete(e.pointerId);if(ptrs.size<2)pinch=null;last=ptrs.size===1?[...ptrs.values()][0]:null;};
   canvas.addEventListener('pointerup',up);canvas.addEventListener('pointercancel',up);
   canvas.addEventListener('pointerleave',()=>{if(chalHover.i>=0)chalHover.i=-1;});
+}
+// ====== CHALLENGES: rank several cars on one challenge (build 370) ======
+// Each car is loaded in turn (withBuild, as the race does), solved by the challenge's own solver with the settings
+// on screen, and scored by runChallengeScore (src/js/run-challenges.js). One car per step, the page yields between
+// cars, so the progress bar moves and CANCEL is heard; a car already solving finishes first (the powerslide's
+// worst search is ~3 s). Nothing here changes a solver.
+const CHAL_RANK_MAX=12;
+const chalRank={cars:[],rows:null,ch:null,busy:false,stop:false,prog:0,progTxt:''};
+function chalRankAdd(){
+  if(chalRank.cars.length>=CHAL_RANK_MAX){flash(tr('TWELVE CARS AT MOST'),'warn');return;}
+  const sel=document.getElementById('chalRankAddSel');if(!sel)return;
+  const e=raceEntrantFrom(sel.value);if(!e)return;
+  const same=chalRank.cars.filter(x=>x.base===e.name).length;
+  e.base=e.name;if(same)e.name=e.name+' #'+(same+1);
+  chalRank.cars.push(e);renderChalRank();
+}
+// Pass first, then by score (each challenge says which way is better); cars with no result last.
+function chalRankSort(rows){
+  return rows.slice().sort((a,b)=>{
+    if(!a.s||!b.s)return(a.s?0:1)-(b.s?0:1);
+    if(a.s.pass!==b.s.pass)return a.s.pass?-1:1;
+    return a.s.higher?b.s.v-a.s.v:a.s.v-b.s.v;
+  });
+}
+async function chalRankRun(){
+  if(chalRank.busy||!chalRank.cars.length)return;
+  const ch=runChallengeById(activeRunChallenge),cars=chalRank.cars.slice(),rows=[];
+  chalRank.busy=true;chalRank.stop=false;chalRank.rows=null;chalRank.ch=ch;
+  try{
+    for(let k=0;k<cars.length&&!chalRank.stop;k++){
+      const e=cars[k];
+      chalRank.prog=k/cars.length;chalRank.progTxt=tr('SOLVING')+' '+e.name+' ('+(k+1)+'/'+cars.length+')';renderChalRank();
+      await raceYield();await raceYield();
+      if(chalRank.stop)break;
+      let s=null,err='';
+      try{s=withBuild(e.build,()=>{
+        if(!powertrain().ready()||!vehicle||!vehicle.mass)return null;
+        return runChallengeScore(ch,solveRunChallenge(ch.id));
+      });}catch(x){err=String(x&&x.message||x);}
+      rows.push({name:e.name,s,err});
+    }
+  }finally{
+    chalRank.busy=false;chalRank.rows=chalRankSort(rows);chalRank.prog=1;
+    if(chalRank.stop)flash(tr('RANKING CANCELLED'),'warn');
+    renderChalRank();
+  }
+}
+function renderChalRank(){
+  const box=document.getElementById('chalRankCars');if(!box)return;
+  box.innerHTML=chalRank.cars.length?chalRank.cars.map((e,k)=>
+    '<div class="race-ent"><span title="'+esc(e.name)+'">'+esc(e.name)+'</span>'+
+    '<button data-rm="'+k+'" aria-label="'+esc(tr('Remove'))+'"'+(chalRank.busy?' disabled':'')+'>✕</button></div>').join('')
+    :'<div class="perf-note">'+tr('Add cars to rank them on this challenge: the car you have built, a garage build or a factory car.')+'</div>';
+  box.querySelectorAll('button[data-rm]').forEach(b=>b.addEventListener('click',()=>{if(chalRank.busy)return;chalRank.cars.splice(+b.dataset.rm,1);renderChalRank();}));
+  const go=document.getElementById('chalRankGo'),stop=document.getElementById('chalRankStop'),add=document.getElementById('chalRankAddBtn');
+  if(go){go.disabled=chalRank.busy||!chalRank.cars.length;go.hidden=chalRank.busy;}
+  if(stop)stop.hidden=!chalRank.busy;
+  if(add)add.disabled=chalRank.busy;
+  const pg=document.getElementById('chalRankProg');
+  if(pg){pg.hidden=!chalRank.busy;pg.querySelector('.race-prog-bar').style.width=Math.round(chalRank.prog*100)+'%';pg.querySelector('span').textContent=chalRank.progTxt;}
+  const out=document.getElementById('chalRankOut');if(!out)return;
+  if(!chalRank.rows||chalRank.busy){out.innerHTML='';return;}
+  out.innerHTML='<div class="perf-head">'+esc(tr(chalRank.ch.name))+'</div><table class="chal-rank"><thead><tr><th>#</th><th>'+tr('CAR')+'</th><th>'+tr('SCORE')+'</th><th>'+tr('RESULT')+'</th></tr></thead><tbody>'+
+    chalRank.rows.map((r,i)=>'<tr><td>'+(i+1)+'</td><td title="'+esc(r.name)+'">'+esc(r.name)+'</td><td>'+(r.s?esc(r.s.text):'—')+'</td>'+
+      '<td style="color:'+(r.s?(r.s.pass?'#55dd66':'#ff4444'):'#888')+'">'+(r.s?tr(r.s.pass?'PASS':'FAIL'):tr(r.err?'ERROR':'NO RESULT'))+'</td></tr>').join('')+
+    '</tbody></table>';
+}
+function bindChalRank(){
+  if(typeof raceFillAdd==='function')raceFillAdd('chalRankAddSel');
+  const g=id=>document.getElementById(id);
+  if(g('chalRankAddBtn'))g('chalRankAddBtn').addEventListener('click',chalRankAdd);
+  if(g('chalRankGo'))g('chalRankGo').addEventListener('click',chalRankRun);
+  if(g('chalRankStop'))g('chalRankStop').addEventListener('click',()=>{chalRank.stop=true;});
+  renderChalRank();
 }
 // ====== ELECTRIC PRESETS: the three Teslas (build 183, step 2.5b of plans/hybrid-electric/) ======
 // Decision 10: the Model 3 RWD (one motor), the Model Y Long Range (two: a magnet motor at the rear, an induction motor
@@ -32246,7 +32517,7 @@ function bindControls(){
   const chalSel=document.getElementById('chalSel');
   if(chalSel){
     // One group per kind (build 352: the list grew past a dozen).
-    const KIND={economy:'ECONOMY',stage:'FIXED-TIME STAGE',moose:'MOOSE TEST',drift:'POWERSLIDE'},groups={};
+    const KIND={economy:'ECONOMY',stage:'FIXED-TIME STAGE',moose:'MOOSE TEST',drift:'POWERSLIDE',skidpad:'SKID PAD'},groups={};
     RUN_CHALLENGES.forEach(c=>{
       let gp=groups[c.kind];if(!gp){gp=groups[c.kind]=document.createElement('optgroup');gp.label=tr(KIND[c.kind]||c.kind);chalSel.appendChild(gp);}
       const o=document.createElement('option');o.value=c.id;o.textContent=tr(c.name);gp.appendChild(o);});
@@ -32279,6 +32550,7 @@ function bindControls(){
   if(typeof bindChallengeHover==='function')bindChallengeHover();
   const btnChal=document.getElementById('btnChalSolve');
   if(btnChal)btnChal.addEventListener('click',()=>refreshChallenge());
+  if(typeof bindChalRank==='function')bindChalRank();
   loadImportedTracks();
   const trkSel=document.getElementById('trkSel');
   if(trkSel){refreshTrackList();trkSel.addEventListener('change',e=>{trackKey=e.target.value;refreshLap();});}

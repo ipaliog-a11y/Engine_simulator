@@ -6,6 +6,7 @@ let chalMooseRate=1;const CHAL_MOOSE_RATES=[1,0.5,0.25];
 function chalMooseNow(){return((typeof performance!=='undefined'?performance.now():Date.now())-chalMooseT0)/1000*chalMooseRate;}
 function refreshChallenge(){
   // Do not call buildVehicle here: it hooks back into refreshChallenge (same pattern as refreshLap).
+  if(typeof chalRank!=='undefined'&&chalRank.busy)return;   // a ranking is swapping cars in (chal-rank.js)
   const ch=runChallengeById(activeRunChallenge);
   chalResult=solveRunChallenge(ch.id);
   chalHover.i=-1;
@@ -18,7 +19,7 @@ function refreshChallenge(){
   for(const id of['chalDriftEntry','chalDriftMethod']){const el=document.getElementById(id);
     if(el){const row=el.closest('.field');if(row)row.style.display=ch.kind==='drift'?'':'none';}}
   const mr=document.getElementById('chalMooseRate');
-  if(mr){const row=mr.closest('.field');if(row)row.style.display=(ch.kind==='moose'||ch.kind==='drift')?'':'none';}
+  if(mr){const row=mr.closest('.field');if(row)row.style.display=(ch.kind==='moose'||ch.kind==='drift'||ch.kind==='skidpad')?'':'none';}
   renderChallenge();
 }
 function renderChallenge(){
@@ -61,6 +62,23 @@ function renderChallenge(){
       cell('RADIUS',R.radius+' m')+
       cell('DRIVE',tr((R.drive||'').toUpperCase()));
     note.textContent=tr(ch.desc)+' '+tr('ESP and traction control off. METHOD picks how the slide starts: POWER-OVER (throttle), CLUTCH KICK (clutch down, the engine revs itself, then the clutch is dropped) or FLICK (lift and steer away, then sharply in, each for half the body’s natural period, so its rebound helps turn-in; FWD lifts to rotate). AUTO tries them in that order. ENTRY fixes the speed, or BEST searches 32–43 km/h. The driver holds body slip with throttle and countersteer, then links the second corner. CLEAR needs a sustained slide in both. Failures: NO_SLIDE (never past the rear peak — typical FWD without a handbrake), FADE (only one corner), STALL (stopped or never reached the exit), OFF (any corner of the body over the edge, swept at its slip angle), or SPIN. Handbrake and loose surfaces are not modelled yet.');
+    return;
+  }
+  if(R.kind==='skidpad'){
+    const col=SKID_OUT_COL[R.outcome]||'#e0e0e0';
+    head.innerHTML=tr(ch.name)+' · <b>'+R.gLap.toFixed(2)+' g</b> · '+R.speedKmh.toFixed(1)+' km/h';
+    grid.innerHTML=cell('LATERAL g',R.gLap.toFixed(2)+' g')+
+      cell('SPEED',R.speedKmh.toFixed(1)+' km/h')+
+      cell('LAP',R.lapT.toFixed(2)+' s')+
+      cell('RESULT','<span style="color:'+col+'">'+tr(R.outcome)+'</span>')+
+      cell('FAILS AT','+1 km/h: '+tr(R.failBy))+
+      cell('MEAN ay',R.ayMean.toFixed(2)+' g')+
+      cell('PEAK β',R.betaMax.toFixed(1)+'°')+
+      cell('STEER',R.steerDeg.toFixed(1)+'°')+
+      cell('OFF LINE',Math.max(-R.eMin,R.eMax).toFixed(2)+' m')+
+      cell('DIAMETER',(2*R.radius).toFixed(1)+' m')+
+      cell('DRIVE',tr((R.drive||'').toUpperCase()));
+    note.textContent=tr(ch.desc)+' '+tr('A 200 ft circle, as Motor Trend and Road & Track use (Car and Driver: 300 ft). The driver holds the circle while the speed is raised; the best is the fastest lap that stays within 1 m of the line with no spin. LATERAL g is the magazines\' figure from that lap\'s time, v²/(g·R); MEAN ay is the body\'s own. One step faster it runs WIDE (understeer), TIGHT (the tail steps out) or SPINs.');
     return;
   }
   if(R.kind==='stage'){
@@ -156,6 +174,7 @@ function mooseSampleAt(R,t){
   return S[i];
 }
 const MOOSE_OUT_COL={CLEAR:'#55dd66',CONE:'#ffcc00',SPIN:'#ff8833',ROLLOVER:'#ff4444'};
+const SKID_OUT_COL={HOLD:'#55dd66',SLOW:'#b088ff',TIGHT:'#ffcc00',WIDE:'#ff8833',SPIN:'#ff4444'};
 const DRIFT_OUT_COL={CLEAR:'#55dd66',FADE:'#ffcc00',NO_SLIDE:'#4aa3ff',STALL:'#b088ff',OFF:'#ff8833',SPIN:'#ff4444'};
 function driftSampleAt(R,t){
   const S=R.samples;if(!S||!S.length)return null;
@@ -225,6 +244,30 @@ function drawDriftHud(s){
   ctx.fillStyle=C.yellow;ctx.font='6px '+PS;ctx.fillText(sw.txt,x0+60,ys+12);
   ctx.fillStyle='#667';ctx.font='5px '+PS;ctx.fillText(sw.road,x0+60,ys+24);
   drawSteerWheel(x0+150,ys+16,15,sw.wheel);
+}
+// Skid pad (build 368): the circle and its 1 m lane from above, the car replaying the judged lap, the dashboard.
+function drawSkidpadChallenge(g,R){
+  chalHover.map=null;
+  g.fillStyle='#0a0e14';g.fillRect(0,0,vizW,vizH);
+  const Rr=R.radius,tol=R.tol,pad=24,sc=Math.min(vizW-2*pad,vizH-2*pad)/(2*(Rr+tol+3));
+  const cx=Math.min(vizW/2,pad+(Rr+tol+3)*sc),cy=vizH/2,MX=x=>cx+x*sc,MY=y=>cy-(y-Rr)*sc;
+  g.strokeStyle='#1c2330';g.lineWidth=Math.max(3,2*tol*sc);g.beginPath();g.arc(cx,cy,Rr*sc,0,2*Math.PI);g.stroke();
+  g.strokeStyle='#ffcc00';g.lineWidth=1;g.setLineDash([4,4]);g.beginPath();g.arc(cx,cy,Rr*sc,0,2*Math.PI);g.stroke();g.setLineDash([]);
+  const S=R.samples||[];
+  if(S.length>1){g.strokeStyle='rgba(85,221,102,0.35)';g.lineWidth=Math.max(2,(R.trackW||1.8)*sc);
+    g.beginPath();for(let i=0;i<S.length;i++){const X=MX(S[i].x),Y=MY(S[i].y);if(i)g.lineTo(X,Y);else g.moveTo(X,Y);}g.stroke();}
+  const s=driftSampleAt(R,chalMooseNow());
+  if(s){
+    const B=R.body||{f:2,r:2.3},c=Math.cos(s.psi||0),sn=Math.sin(s.psi||0),tw=(R.trackW||1.8)/2;
+    g.fillStyle=SKID_OUT_COL[R.outcome]||'#55dd66';g.beginPath();
+    [[B.f,tw],[B.f,-tw],[-B.r,-tw],[-B.r,tw]].forEach(([dx,dy],k)=>{const X=MX(s.x+dx*c-dy*sn),Y=MY(s.y+dx*sn+dy*c);if(k)g.lineTo(X,Y);else g.moveTo(X,Y);});
+    g.closePath();g.fill();
+    g.fillStyle='#e0e0e0';g.font='8px "Press Start 2P"';
+    g.fillText((Math.abs(s.ay||0)/DRIVE_G).toFixed(2)+' g · β '+(Math.abs(s.beta||0)*180/Math.PI).toFixed(1)+'°',10,20);
+  }
+  g.fillStyle='#9ab';g.font='7px "Press Start 2P"';
+  g.fillText(tr('SKID PAD')+' · '+(2*Rr).toFixed(1)+' m '+tr('circle')+' · ±'+tol+' m',10,vizH-10);
+  if(s&&s.rpm!=null)drawDriftHud(s);
 }
 function drawMooseTopDown(g,R,x0,y0,w,h){
   const G=R.cones,line=R.line;if(!line||!line.length)return;
@@ -501,6 +544,7 @@ function drawChallenge(){
   const ta=R&&R.road?'none':'';if(canvas.style.touchAction!==ta)canvas.style.touchAction=ta;   // a touch drag pans the route map
   if(R&&R.kind==='moose'&&R.ok){drawMooseChallenge(g,R);return;}
   if(R&&R.kind==='drift'&&R.ok){drawDriftChallenge(g,R);return;}
+  if(R&&R.kind==='skidpad'&&R.ok){drawSkidpadChallenge(g,R);return;}
   if(!R||!R.road){g.fillStyle='#556';g.font='10px "Press Start 2P"';g.fillText(tr('CHALLENGES'),16,28);chalHover.map=null;return;}
   const map=chalMapProject(R),p=map.p,n=p.length,MX=map.MX,MY=map.MY,T=map.T;
   chalHover.map=map;

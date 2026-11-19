@@ -431,12 +431,20 @@ function trackRoad(key){const T=TRACKS[key];return T&&T.road?T.road:TRACK_ROAD_O
 //     droop (the damper's rebound stop). Passenger cars run ~70-100 mm each way at the wheel; a strut's travel is
 //     bounded by its own length, so the least, and a solid axle's beam needs the most (Reimpell et al., The Automotive
 //     Chassis, ch. 5, spring travel: PROBABLE by type, no maker publishes each car's).
+//   svF, svR (m, build 365) — the side-view swing arm at the front and at the rear: [e, d], its instant centre's height
+//     above the ground and its length from the wheel centre, toward the car's middle. A tyre's longitudinal force Fx
+//     reaches the body through it with a vertical part Fx e/d (torque reacting on the upright: outboard brakes, a live
+//     axle's drive) or Fx (e - r)/d (torque reacting on the body: inboard brakes, drive through half-shafts), which the
+//     springs do not carry: anti-dive % = brake share x (e/d) x L/h (Milliken & Milliken, RCVD, ch. 17). Road cars run
+//     0-50 % anti-dive and up to ~100 % anti-squat (ibid.); a strut's arm is short of height (its top mount), a
+//     trailing twist beam's instant centre is its own pivot, ~0.5 m ahead near wheel-centre height (Reimpell, The
+//     Automotive Chassis, ch. 3, pitch poles). PROBABLE by type: no maker publishes each car's.
 const SUSP_GEO={
-  strut:    {label:'MACPHERSON STRUT',fvsa:3.0,rc:0.08, front:true, cost:2500,bump:0.070,droop:0.080},
-  wishbone: {label:'DOUBLE WISHBONE', fvsa:1.6,rc:0.06, front:true, cost:5500,bump:0.080,droop:0.090},
-  multilink:{label:'MULTI-LINK',      fvsa:2.0,rc:0.10, front:true, cost:4500,bump:0.080,droop:0.090},
-  twist:    {label:'TWIST BEAM',      recov:0.4,rc:0.125,front:false,cost:1500,bump:0.085,droop:0.095},
-  solid:    {label:'SOLID AXLE',      recov:1,  rc:null, front:true, cost:2000,bump:0.100,droop:0.110}
+  strut:    {label:'MACPHERSON STRUT',fvsa:3.0,rc:0.08, front:true, cost:2500,bump:0.070,droop:0.080,svF:[0.15,3.0],svR:[0.40,2.5]},
+  wishbone: {label:'DOUBLE WISHBONE', fvsa:1.6,rc:0.06, front:true, cost:5500,bump:0.080,droop:0.090,svF:[0.20,2.5],svR:[0.45,2.5]},
+  multilink:{label:'MULTI-LINK',      fvsa:2.0,rc:0.10, front:true, cost:4500,bump:0.080,droop:0.090,svF:[0.20,2.5],svR:[0.50,2.0]},
+  twist:    {label:'TWIST BEAM',      recov:0.4,rc:0.125,front:false,cost:1500,bump:0.085,droop:0.095,svF:[0.15,3.0],svR:[0.32,0.55]},
+  solid:    {label:'SOLID AXLE',      recov:1,  rc:null, front:true, cost:2000,bump:0.100,droop:0.110,svF:[0.15,2.5],svR:[0.35,2.5]}
 };
 // The real cars' suspension (front, rear) and front and rear track (m). Sources: maker sheets where found
 // (BMW media 2012, Porsche US 2021, GM, Nissan heritage), spec databases (carsales/Redbook, carexpert, conceptcarz,

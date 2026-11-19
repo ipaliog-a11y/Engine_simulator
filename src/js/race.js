@@ -113,6 +113,14 @@ const RACE_RAIN_TYRES={
 // floor: what is left fully afloat, the water's drag: 15.8% of the low-speed wet friction (Fwa et al., quoted in
 // Sinha et al.'s review of hydroplaning, Virginia Tech).
 const RACE_WATER={rainMmH:10,txd:0.6,slope:0.02,keep0:0.71,floor:0.158};
+// A compound's own wet grip (build 367): the EU tyre label's wet grip index G, the tyre's wet braking against the
+// standard reference test tyre's (Regulation (EU) 2020/740, Annex I; test method ISO 23671 / UNECE R117 Annex 5,
+// braking 80-20 km/h on wet asphalt). Classes for C1 tyres: A G>=1.55, B 1.40-1.54, C 1.25-1.39, D 1.10-1.24,
+// E <=1.09. keep0 (Wong's 0.6/0.85) stands for a road tyre, taken as class B's middle, 1.47 (PROBABLE: B and C are
+// the commonest classes of summer road tyres). A rain compound (inter, full wet) has no label; it is set at class A's
+// floor, 1.55 (PROBABLE, and the least it is likely to reach: a compound made for the wet is at least as good as the
+// best road tyres the label grades). Its low-speed wet grip is keep0 x G/1.47; every other compound stays at 1.47.
+const RACE_WET_G={ref:1.47,inter:1.55,wet:1.55};
 // Each compound's tread when new (mm), the grooves' share of the patch (void), and its usual hot pressure (kPa).
 // All PROBABLE, from makers' listings: a road tyre 8 mm and about 30% void at 230-240 kPa; a semi-slick ~5.5 mm
 // (7/32 in) with few grooves; a slick none, at ~170 kPa hot; a drag radial ~4 mm at ~110 kPa (16 psi); a race
@@ -127,7 +135,8 @@ function raceFilmMm(x,width){
   return Math.max(0,25.4*(0.00338*Math.pow(t,0.11)*Math.pow(L,0.43)*Math.pow(I,0.59)*Math.pow(W.slope,-0.42)-t));
 }
 // What the water leaves a compound at speed v (m/s), as a share of its dry grip. The adhesion goes with the
-// wetness (keep0 on a properly wet track). Then the water under the patch lifts the share (v/Vp)^2 of the load,
+// wetness (keep0 on a properly wet track, scaled by the compound's label class, RACE_WET_G). Then the water under
+// the patch lifts the share (v/Vp)^2 of the load,
 // Horne's own balance of the water's dynamic pressure against the tyre's (NASA TN D-2056, 1963:
 // Vp = 6.35 sqrt(p kPa) km/h), on the share of the patch the film floods: its depth over itself and the
 // grooves' volume (void x depth), so a slick is all exposed and a full wet barely (the owner's choice, build 303).
@@ -137,7 +146,8 @@ function raceWetKeep(ty,w,v,width,coldKPa){
   const W=RACE_WATER,tr=RACE_TREAD[ty.key]||RACE_TREAD.sport,d=raceFilmMm(x,width);
   const exposed=d>0?d/(d+tr.void*tr.mm):0, vp=6.35*Math.sqrt(coldKPa>0?tyreHotKPa(coldKPa,ty.tOpt||60):tr.kPa)/3.6;
   const lift=Math.min(1,(v/vp)*(v/vp)*exposed);
-  return (1-x*(1-W.keep0))*(1-(1-W.floor)*lift);
+  const keep0=W.keep0*(RACE_WET_G[ty.key]||RACE_WET_G.ref)/RACE_WET_G.ref;
+  return (1-x*(1-keep0))*(1-(1-W.floor)*lift);
 }
 // The same over a lap: the share averaged by time along the car's own dry lap, its speeds scaled by the root of
 // the grip they settle at (a corner's speed goes with the root of its grip). Cached per compound and wetness.
