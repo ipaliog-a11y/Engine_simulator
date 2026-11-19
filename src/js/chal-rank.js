@@ -1,4 +1,4 @@
-// ====== CHALLENGES: rank several cars on one challenge (build G2) ======
+// ====== CHALLENGES: rank several cars on one challenge (build 369) ======
 // Each car is loaded in turn (withBuild, as the race does), solved by the challenge's own solver with the settings
 // on screen, and scored by runChallengeScore (src/js/run-challenges.js). One car per step, the page yields between
 // cars, so the progress bar moves and CANCEL is heard; a car already solving finishes first (the powerslide's

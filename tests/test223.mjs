@@ -1,4 +1,4 @@
-// Challenges: rank several cars on one challenge (build G2).
+// Challenges: rank several cars on one challenge (build 369).
 //
 // WHY THIS EXISTS. The CHALLENGES tab solved one car at a time. The ranking runs a list of cars through the
 // selected challenge with its own solver and score. What must hold:

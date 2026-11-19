@@ -1,6 +1,6 @@
 // ====== VEHICLE RUN CHALLENGES (build 341; real roads 343; moose 345) ======
 // Dynamic tests on the CHALLENGES tab — not the ENGINE career/scorecard list in challenges.js.
-// Economy, fixed-time stages (build 352), moose (345) and S-route powerslide (358). Later: skidpad.
+// Economy, fixed-time stages (build 352), moose (345), S-route powerslide (358) and skid pad (368).
 const RUN_CHALLENGES=[
   {id:'economy',kind:'economy',name:'Mountain Economy',
     desc:'Open mountain road. Finish inside the time limit; burn as little fuel as you can.',
@@ -39,7 +39,9 @@ const RUN_CHALLENGES=[
   {id:'moose',kind:'moose',name:'Moose Avoidance',
     desc:'ISO 3888-2 double lane change. Highest entry speed with no cone touched.'},
   {id:'drift-s',kind:'drift',name:'S-Route Powerslide',
-    desc:'Point-to-point S: two linked corners. Hold a controlled powerslide through both, or fail honestly.'}
+    desc:'Point-to-point S: two linked corners. Hold a controlled powerslide through both, or fail honestly.'},
+  {id:'skidpad',kind:'skidpad',name:'Skid Pad',
+    desc:'A 200 ft (61 m) circle. Highest speed the car holds on it, as steady lateral g.'}
 ];
 let activeRunChallenge='economy';
 let chalResult=null;
@@ -56,9 +58,10 @@ function solveRunChallenge(id){
   if(ch.kind==='stage')return simulateStageChallenge(ch.road,ch.target);
   if(ch.kind==='moose')return simulateMooseChallenge();
   if(ch.kind==='drift')return simulateDriftChallenge();
+  if(ch.kind==='skidpad')return simulateSkidpadChallenge();
   return{ok:false,reason:'unimplemented',challenge:ch};
 }
-// Each challenge's own score, for the ranking (build G2, src/js/chal-rank.js). Keyed by kind; an entry may carry its
+// Each challenge's own score, for the ranking (build 369, src/js/chal-rank.js). Keyed by kind; an entry may carry its
 // own `score` instead. A new challenge registers here (or on its entry) and the ranking needs no change.
 // score(R) runs with that car loaded and returns {v, higher, pass, text}: v sorts (higher is better when `higher`),
 // pass is the challenge's own pass/fail, text is shown. Return null when R has nothing to rank.
@@ -72,6 +75,8 @@ const RUN_CHALLENGE_SCORES={
   },
   stage:R=>({v:R.time,higher:false,pass:!R.dnf,text:R.time.toFixed(1)+' s'}),
   moose:R=>({v:R.speedKmh,higher:true,pass:R.outcome==='CLEAR',text:R.speedKmh+' km/h · '+tr(R.outcome)}),
+  // Skid pad (build 368): the magazines' figure v²/(g·R) from the held lap; HOLD passes.
+  skidpad:R=>({v:R.gLap,higher:true,pass:R.outcome==='HOLD',text:R.gLap.toFixed(2)+' g · '+tr(R.outcome)}),
   drift:R=>({v:R.peakBeta,higher:true,pass:R.outcome==='CLEAR',text:R.peakBeta.toFixed(1)+'° · '+tr(R.outcome)})
 };
 function runChallengeScore(ch,R){
