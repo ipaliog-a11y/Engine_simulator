@@ -18,6 +18,15 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 ## [Unreleased]
 
+### Ten more measured real circuits (build 385)
+
+- **+10 real circuits** (22 → 32): Moscow Raceway, Oschersleben and the Norisring from the remaining TUM
+  CSVs (OSM bbox or circuit relation for geo; DEM heights as before); Daytona road course, Lime Rock,
+  Laguna Seca, VIR, Indianapolis road course, Le Mans and Road Atlanta from track-atlas measured edges
+  (width = distance to left + right edge; already WGS84, no rigid fit).
+- Importer: OSM `type=circuit` relations; atlas `.surface.geojson` path. `test65` covers all 32.
+- Left open: Sebring / Watkins Glen / Long Beach (atlas seen-both edge coverage too low).
+
 ### Rich mixtures cool the exhaust; the ECU enriches to hold the turbine at 950 °C (build 384)
 
 Step 13 of `plans/small-physics.md`, build 311's follow-up, on the owner's decisions.

@@ -1,6 +1,6 @@
-// Real circuits (build 123): the 22 tracks in tracks/real-circuits.js are what their sources say they
-// are. Length against the official figure, width from the measured data rather than a model, the
-// terrain model's height against published elevation changes, and a lap that solves on every one.
+// Real circuits (build 123, extended): the tracks in tracks/real-circuits.js are what their sources
+// say they are. Length against the official figure, width from the measured data rather than a model,
+// the terrain model's height against published elevation changes, and a lap that solves on every one.
 import { chromium } from './pw.mjs';
 import { fileURLToPath, pathToFileURL } from 'url';
 import path from 'path';
@@ -15,14 +15,20 @@ await page.waitForTimeout(400);
 const fails = [];
 
 // Official lap lengths (m) for the layout each source file carries (Catalunya with the 2007-2020
-// chicane, Zandvoort before the 2020 rebuild, Yas Marina before 2021, Indianapolis the oval).
+// chicane, Zandvoort before the 2020 rebuild, Yas Marina before 2021, Indianapolis the oval,
+// Moscow the full layout TUM surveyed, Lime Rock the 1.474 mi course).
 const OFFICIAL = { cota: 5513, brands: 3908, hungaro: 4381, catalunya: 4655, hockenheim: 4574, indy: 4023,
   melbourne: 5303, mexico: 4304, montreal: 4361, monza: 5793, nurgp: 5148, sakhir: 5412, interlagos: 4309,
   sepang: 5543, shanghai: 5451, silverstone: 5891, sochi: 5848, spa: 7004, spielberg: 4318, suzuka: 5807,
-  yasmarina: 5554, zandvoort: 4307 };
+  yasmarina: 5554, zandvoort: 4307,
+  moscow: 4070, oschersleben: 3696, norisring: 2300,
+  daytona: 5729, lime_rock: 2372, laguna: 3602, vir: 5262, indy_road: 3925, lemans: 13626, road_atlanta: 4088 };
+const EXPECTED = Object.keys(OFFICIAL).length;
 // Published elevation changes (m) where the figure is well established; flat circuits by a ceiling.
-const ELEV = { spa: 104, spielberg: 65, suzuka: 40, interlagos: 43, hungaro: 35 };
-const FLAT = ['indy', 'yasmarina', 'zandvoort', 'shanghai', 'sochi', 'montreal'];
+const ELEV = { spa: 104, spielberg: 65, suzuka: 40, interlagos: 43, hungaro: 35, laguna: 55 };
+const FLAT = ['indy', 'yasmarina', 'zandvoort', 'shanghai', 'sochi', 'montreal', 'daytona', 'indy_road'];
+// Banked speedways and Le Mans' Mulsanne skew average speed above a flat F1 road course.
+const NOT_F1_ROAD = new Set(['indy', 'daytona', 'lemans', 'indy_road']);
 
 const r = await page.evaluate(() => {
   loadVehiclePreset(VEHICLE_PRESETS.find(v => v.name === 'Porsche 911 GT3 (991.2, 2017)'));
@@ -42,8 +48,8 @@ console.log('== real circuits (911 GT3 991.2) ==');
 for (const t of r.tracks) console.log(`  ${t.label.padEnd(19)} ${Math.round(t.len)} m  lap ${t.lap.toFixed(2)} s  ` +
   `avg ${Math.round(t.avg)} km/h  width ${t.wMin.toFixed(1)}-${t.wMax.toFixed(1)} m  rise ${t.dz.toFixed(1)} m  fit ${t.fit} m`);
 
-if (r.tracks.length !== 22) fails.push(`expected 22 real circuits, found ${r.tracks.length}`);
-if (r.menu !== 22) fails.push(`the CIRCUIT menu's REAL CIRCUITS group lists ${r.menu}, expected 22`);
+if (r.tracks.length !== EXPECTED) fails.push(`expected ${EXPECTED} real circuits, found ${r.tracks.length}`);
+if (r.menu !== EXPECTED) fails.push(`the CIRCUIT menu's REAL CIRCUITS group lists ${r.menu}, expected ${EXPECTED}`);
 const by = Object.fromEntries(r.tracks.map(t => [t.k, t]));
 for (const t of r.tracks) {
   const off = OFFICIAL[t.k];
@@ -59,13 +65,14 @@ for (const t of r.tracks) {
 for (const [k, e] of Object.entries(ELEV))
   if (by[k] && Math.abs(by[k].dz - e) > Math.max(10, 0.15 * e)) fails.push(`${by[k].label} rises ${by[k].dz.toFixed(1)} m against a published ${e} m`);
 for (const k of FLAT) if (by[k] && by[k].dz > 12) fails.push(`${by[k].label} rises ${by[k].dz.toFixed(1)} m; it is a flat circuit`);
-// Character: Monza is the fastest road circuit, the Hungaroring among the slowest, the oval faster than both.
-const road = r.tracks.filter(t => t.k !== 'indy').sort((a, b) => b.avg - a.avg);
-if (road[0].k !== 'monza') fails.push(`fastest road circuit is ${road[0].label}, expected Monza`);
+// Character: among ordinary road circuits Monza is the fastest, the Hungaroring among the slowest;
+// the Indianapolis oval is faster still.
+const road = r.tracks.filter(t => !NOT_F1_ROAD.has(t.k)).sort((a, b) => b.avg - a.avg);
+if (road[0].k !== 'monza') fails.push(`fastest ordinary road circuit is ${road[0].label}, expected Monza`);
 if (!(by.hungaro.avg < by.silverstone.avg && by.hungaro.avg < by.spa.avg)) fails.push('the Hungaroring should be slower on average than Silverstone and Spa');
-if (!(by.indy.avg > road[0].avg)) fails.push('the oval should be faster on average than any road circuit');
+if (!(by.indy.avg > by.monza.avg)) fails.push('the oval should be faster on average than Monza');
 
 if (errors.length) fails.push(...errors);
-console.log(fails.length ? '\nFAIL\n  ' + fails.join('\n  ') : '\nPASS — 22 real circuits: lengths, widths, elevation and laps');
+console.log(fails.length ? '\nFAIL\n  ' + fails.join('\n  ') : `\nPASS — ${EXPECTED} real circuits: lengths, widths, elevation and laps`);
 await browser.close();
 process.exit(fails.length ? 1 : 0);

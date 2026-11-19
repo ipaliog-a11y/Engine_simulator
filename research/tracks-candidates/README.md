@@ -1,7 +1,8 @@
 # Real-circuit candidates (beyond the 22)
 
-Research only. Nothing in `tracks/real-circuits.js` or `tools/import-real-tracks.mjs` was
-changed. A later session imports from `candidates.json` and re-runs `test65`.
+Imported in build 385 (Tier A ready + Norisring relation path + Tier B adapter_needed).
+Sebring / Watkins Glen / Long Beach stay on hold. `candidates.json` is the checklist this
+session used; `node research/tracks-candidates/validate.mjs` still checks its shape.
 
 ## Quality bar (same as build 123)
 

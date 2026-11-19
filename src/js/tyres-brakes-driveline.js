@@ -411,7 +411,7 @@ function roadSigma(ax,v){return ROAD.gd>0&&v>0?(ax==='F'?vehicle.roughF:vehicle.
 // A's middle (8e-6 m3); a circuit run on public or park roads, or one whose bumps its drivers complain of, class A's
 // middle (16e-6); the Nordschleife, a public toll road from 1927, the A/B boundary (32e-6).
 const TRACK_ROAD={smooth:8e-6,bumpy:16e-6,road:32e-6};
-const TRACK_ROAD_OF={nord:'road',tech:'bumpy',cota:'bumpy',interlagos:'bumpy',mexico:'bumpy',montreal:'bumpy',melbourne:'bumpy',sochi:'bumpy',brands:'bumpy'};
+const TRACK_ROAD_OF={nord:'road',tech:'bumpy',cota:'bumpy',interlagos:'bumpy',mexico:'bumpy',montreal:'bumpy',melbourne:'bumpy',sochi:'bumpy',brands:'bumpy',oschersleben:'bumpy',norisring:'bumpy',lime_rock:'bumpy',laguna:'bumpy',road_atlanta:'bumpy',vir:'bumpy',lemans:'bumpy'};
 function trackRoad(key){const T=TRACKS[key];return T&&T.road?T.road:TRACK_ROAD_OF[key]||(T&&T.imported?'bumpy':'smooth');}   // an imported trace: unknown, so the middle
 // Suspension geometry, each axle its own (build 173). Two things separate the types in a corner:
 //   camber recovery — the share of the body roll the linkage claws back at the loaded outside wheel. An independent
