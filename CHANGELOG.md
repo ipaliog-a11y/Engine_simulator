@@ -18,7 +18,7 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 ## [Unreleased]
 
-### A green baseline: test136 re-locked, test145 passes (build 364)
+### A green baseline: test136 re-locked, test145 passes (build 365)
 
 Step 0 of `plans/small-physics.md`. No physics changed; the fingerprint is identical.
 
@@ -30,6 +30,15 @@ Step 0 of `plans/small-physics.md`. No physics changed; the fingerprint is ident
   in the test. The hybrids, the tail motor and the Wh/km had not moved past the lock.
 - **test145** passes on `main` (7 min): builds 336 and 337 had already fixed what failed at build ~320.
 - Left open, not physics: test42, test64 and test125 still fail on `main` (see the plan).
+### Bump stops, droop, and bound and rebound damping in the stepped car (build 364)
+
+Step 1 of `plans/small-physics.md`. Only `stepCar` changes; the fingerprint is identical.
+
+- **Each wheel's travel ends.** Up to the bump rubber and down to full droop by the axle's type (`SUSP_GEO`: strut 70/80 mm, wishbone and multi-link 80/90, twist beam 85/95, solid axle 100/110; PROBABLE, Reimpell, *The Automotive Chassis*, ch. 5). Past bump a progressive rubber, F = kb x / (1 − x/25 mm), kb the wheel rate (PROBABLE); at its solid height and at full droop the wheel is stopped on the body, so a lifted wheel hangs from it.
+- **Bound and rebound apart:** rebound 3× bound (passenger dampers ~3:1, Dixon, *The Shock Absorber Handbook*; PROBABLE), their mean the kit's damper, so the lap's quarter car is unchanged.
+- **`test220`** (new): a 200 mm step reaches the rubber and stops at its travel (M3 95 mm, MX-5 105 mm); a 300 mm hole leaves the wheel hanging at full droop off the road for 140–160 ms, never past it.
+- **`test205` updated, in the open:** a wheel falling into a 60 mm dip now falls against the rebound damping, so it is off the road 49–53 ms (44–47 before); its reference quarter car now uses the rebound damping too (51–55 ms).
+- **Left open:** travel by the kit (a lowered car keeps its type's), the damper's blow-off, the tyre's own damping.
 
 ### v0.8, and the leftovers to v1.0 grouped (build 363)
 

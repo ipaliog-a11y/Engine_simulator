@@ -4,7 +4,7 @@
 // so a bump could not unload one. Each wheel is now a quarter car and the tyre's load is its own deflection. What must hold:
 //   · on a flat road at a steady speed the four loads add up to the weight and the downforce, within 0.5%;
 //   · the road falling away 60 mm under the left front leaves that tyre off the road for the time a quarter car of
-//     that corner (worked out here, apart from stepCar, the body held) takes to fall that far, within 10%;
+//     that corner (worked out here, apart from stepCar, the body held, its damper in rebound) takes to fall that far, within 10%;
 //   · meanwhile the right front's load rises (the anti-roll bar) and the rears' hardly move;
 //   · after a 10 mm step up, the wheel's load rings at the quarter car's wheel-hop frequency, within 8%;
 //   · at half the step (0.5 ms) the time off the road is the same within 2%: no smaller step is needed.
@@ -36,9 +36,9 @@ const R = await page.evaluate(() => {
     const d = 0.06, A = drop(0.001, d), B = drop(0.0005, d);
     o.off = A.off; o.offHalf = B.off; o.right = A.pkR; o.rear = A.pkRear; o.f0 = A.f0[0];
     // the quarter car on its own, the body and the other wheel held: the wheel falls under its spring's load, less as
-    // the spring and the bar let go, against the damper, until the tyre meets the road again
-    { const k = car.ksF / 2 + car.KaF / (car.tF * car.tF), far = d - A.f0[0] / car.ktF; let z = 0, v = 0, t = 0;
-      while (z < far && t < 1) { v += 1e-5 * (A.f0[0] - k * z - car.cdF * v) / car.unsF; z += 1e-5 * v; t += 1e-5; } o.offWant = t; }
+    // the spring and the bar let go, against the damper in rebound (build 364), until the tyre meets the road again
+    { const k = car.ksF / 2 + car.KaF / (car.tF * car.tF), far = d - A.f0[0] / car.ktF, cr = car.cdF * 2 * DAMPER_RB / (1 + DAMPER_RB); let z = 0, v = 0, t = 0;
+      while (z < far && t < 1) { v += 1e-5 * (A.f0[0] - k * z - cr * v) / car.unsF; z += 1e-5 * v; t += 1e-5; } o.offWant = t; }
     // a 10 mm step up: the load rings at the wheel hop
     { const q = settle(); let last = 0, prev = 0, ups = [], mean = 0;
       for (let t = 0; t < 0.5; t += 0.0005) { stepCar(car, q, { steer: 0, throttle: 0.12, brake: 0, road: { z: [0.01, 0, 0, 0] } }, 0.0005);

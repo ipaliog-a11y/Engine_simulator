@@ -14,7 +14,7 @@ reporting its range. Sourcing is batched apart from physics.
   open, or fix it.
 - `test145` (engine wear and coolant at full load; ~6 min) was reported failing on `main` at build ~320. Rerun it, then
   treat it the same way.
-  *Build 364:* test136 re-locked to builds 314 (stator 225 mm), 315 (jacket cooling) and 354 (tyres), all intended;
+  *Build 365:* test136 re-locked to builds 314 (stator 225 mm), 315 (jacket cooling) and 354 (tyres), all intended;
   test145 passes on `main` (fixed by builds 336-337). Nothing left open here.
 - Not physics, noted only: `test42` (3 untranslated starter messages, Greek paused), `test64` (the track map never
   draws the car sprite), `test125` (folded LIVE OUTPUT at 21%, not a third).
@@ -24,6 +24,8 @@ reporting its range. Sourcing is batched apart from physics.
 1. **Bump stops and droop.** Travel by suspension type (Reimpell), a progressive bump rubber past it, and the wheel
    hanging free at full droop. Bound and rebound damping apart, from the damper part's ratio (typical about 1:3,
    PROBABLE; Dixon, *The Shock Absorber Handbook*).
+   *Build 364:* done (travel by `SUSP_GEO` type, rubber 25 mm, rebound 3× bound about the kit's mean; `test220`).
+   Left open: travel by the kit, the damper's blow-off.
 2. **Anti-dive and anti-squat.** The pitch share carried by the links, from the side-view swing arm by suspension
    type (Milliken RCVD ch. 17; Reimpell). Today all pitch goes through the springs (~2° at 0.5 g). Jacking with it.
 3. **Camber and toe by heave and pitch**, from the same type curves the roll already uses. Also the weight's own roll
