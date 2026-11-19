@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// Join the sources in src/ into the pages that ship: index.html, and film.html.
+// Join the sources in src/ into the one index.html that ships.
 //
 //   node tools/build.mjs           write index.html from src/
 //   node tools/build.mjs --check   fail if index.html is not exactly what src/ builds
@@ -25,66 +25,51 @@ import path from 'path';
 
 const ROOT = fileURLToPath(new URL('..', import.meta.url));
 const SRC = path.join(ROOT, 'src');
+const OUT = path.join(ROOT, 'index.html');
+const SHELL = 'shell.html';
 const INCLUDE = /^<!-- @include (\S+) -->$/;
 const check = process.argv.includes('--check');
-// index.html is the sim. film.html is the evolution film, joined the same way so its script is
-// edited in src/ and still ships. A file under src/ must be included by one of these pages.
-const PAGES = [
-  { shell: 'shell.html', out: 'index.html' },
-  { shell: 'film-shell.html', out: 'film.html' }
-];
 
 const fail = msg => { console.error(msg); process.exit(1); };
 
-function join(shell, used) {
-  used.add(shell);
-  const lines = readFileSync(path.join(SRC, shell), 'utf8').split('\n');
-  return lines.map((line, i) => {
+function build() {
+  const used = new Set([SHELL]);
+  const lines = readFileSync(path.join(SRC, SHELL), 'utf8').split('\n');
+  const out = lines.map((line, i) => {
     const m = line.match(INCLUDE);
     if (!m) return line;
     const rel = m[1];
-    if (used.has(rel)) fail(`  src/${shell}:${i + 1}: ${rel} is included twice`);
+    if (used.has(rel)) fail(`  src/${SHELL}:${i + 1}: ${rel} is included twice`);
     used.add(rel);
     let s;
     try { s = readFileSync(path.join(SRC, rel), 'utf8'); }
-    catch { fail(`  src/${shell}:${i + 1}: src/${rel} does not exist`); }
+    catch { fail(`  src/${SHELL}:${i + 1}: src/${rel} does not exist`); }
     // Each part is whole lines. The include line's own newline is the part's last one.
     if (!s.endsWith('\n')) fail(`  src/${rel} must end with a newline`);
     if (s.split('\n').some(l => INCLUDE.test(l))) fail(`  src/${rel}: includes do not nest`);
     return s.slice(0, -1);
   }).join('\n');
-}
-
-function build() {
-  const used = new Set();
-  const pages = PAGES.map(p => {
-    const text = join(p.shell, used);
-    const parts = readFileSync(path.join(SRC, p.shell), 'utf8').split('\n').filter(l => INCLUDE.test(l)).length;
-    return { ...p, text, parts };
-  });
+  // A file in src/ that nothing includes is code that silently does not ship.
   const walk = d => readdirSync(d).flatMap(n => {
     const f = path.join(d, n);
     return statSync(f).isDirectory() ? walk(f) : [path.relative(SRC, f).split(path.sep).join('/')];
   });
   const orphans = walk(SRC).filter(f => !used.has(f));
-  if (orphans.length) fail(`  not included by src/: ${orphans.join(', ')}`);
-  return pages;
+  if (orphans.length) fail(`  not included by src/${SHELL}: ${orphans.join(', ')}`);
+  return { out, parts: used.size - 1 };
 }
 
-const pages = build();
-for (const p of pages) {
-  const dest = path.join(ROOT, p.out);
-  if (check) {
-    const cur = readFileSync(dest, 'utf8');
-    if (cur !== p.text) {
-      const a = cur.split('\n'), b = p.text.split('\n');
-      let i = 0; while (i < a.length && i < b.length && a[i] === b[i]) i++;
-      fail(`FAIL: ${p.out} is not what src/ builds (first difference at line ${i + 1}).\n` +
-        `  Edit src/, not ${p.out}, then run "node tools/build.mjs".`);
-    }
-    console.log(`OK: ${p.out} is src/ joined (${p.parts} parts).`);
-  } else {
-    writeFileSync(dest, p.text);
-    console.log(`  ${p.out} <- src/ (${p.parts} parts, ${(Buffer.byteLength(p.text) / 1024).toFixed(0)} KB)`);
+const { out, parts } = build();
+if (check) {
+  const cur = readFileSync(OUT, 'utf8');
+  if (cur !== out) {
+    const a = cur.split('\n'), b = out.split('\n');
+    let i = 0; while (i < a.length && i < b.length && a[i] === b[i]) i++;
+    fail(`FAIL: index.html is not what src/ builds (first difference at line ${i + 1}).\n` +
+      `  Edit src/, not index.html, then run "node tools/build.mjs".`);
   }
+  console.log(`OK: index.html is src/ joined (${parts} parts).`);
+} else {
+  writeFileSync(OUT, out);
+  console.log(`  index.html <- src/ (${parts} parts, ${(Buffer.byteLength(out) / 1024).toFixed(0)} KB)`);
 }
