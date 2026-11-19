@@ -18,7 +18,7 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 ## [Unreleased]
 
-### The lap's torque and the race's energy price at the pack's own temperature (build 372)
+### The lap's torque and the race's energy price at the pack's own temperature (build 373)
 
 Step 10 of `plans/small-physics.md`, build 346's follow-up.
 - **The lap:** its torque curve stays the rated one (pack at 25 °C), and the lap's heat walk now scales the drive by the
@@ -30,6 +30,17 @@ Step 10 of `plans/small-physics.md`, build 346's follow-up.
   No top speed, ICE car or hybrid moves. `test226` (new) checks it.
 - Left open: hybrids walk no pack temperature in the lap or the race, so nothing to read; the race's pace grid speeds
   and the motor bench stay at 25 °C.
+
+### test174: ESP is judged at FMVSS 126's final run, where the Model 3 still spins (build 372)
+
+- test174 failed since build 354: on its premium touring tyres the Model 3 no longer spins at 6.5 times the 0.3 g
+  steering (116 deg of hand wheel) without ESP (yaw 0.01 of its peak 1 s on), so ESP had nothing to correct. That is
+  the car changing as intended, not a bug.
+- The ESP off/on comparison now runs at the rule's own final run (FMVSS 126 S7.9.4: the greater of 6.5 times or 270 deg).
+  There ESP off spins (yaw 0.91 of its peak, 83 deg sideways) and ESP on holds it to 0.46 and 36 deg. The test now also
+  asks that ESP off spins there. The pass checks at 5 and 6.5 times are unchanged.
+- Left open: at 270 deg, ESP on still has yaw 0.46 of its peak 1 s on, past the rule's 0.35. The ESP is not tuned to
+  pass there. That needs its own build.
 
 ### Tyre screech on the lap replay and the moose replay (build 371)
 

@@ -1,4 +1,4 @@
-// The lap's torque and the race's energy price at the pack's own temperature (build 372, plans/small-physics.md step 10).
+// The lap's torque and the race's energy price at the pack's own temperature (build 373, plans/small-physics.md step 10).
 //
 // WHY THIS EXISTS. Build 346 made the cells' heat follow their temperature, but the lap's torque curve (rated at 25 °C)
 // and the race's pace-grid price still read 25 °C. What must hold:
