@@ -27,7 +27,8 @@
       "slug": "mitsubishi-minica-dangan-zz-1990",
       "phrase": "1990 Mitsubishi Minica Dangan ZZ kei hatchback, boxy three-door, turbo badge, white paint with red accents",
       "prompt": "8-bit pixel-art side profile of a 1990 Mitsubishi Minica Dangan ZZ kei hatchback, boxy three-door, turbo badge, white paint with red accents. Accurate body shape and proportions for this exact model and generation. Exact side elevation, car facing LEFT (nose on the left), centred, wheels on the road, the car spans about 80% of the image width. Match the reference image's style exactly: chunky visible pixels, retro 16-bit/8-bit game palette, the same coastal road scene behind the car - grey asphalt foreground, metal guardrail, blue sea, green hills/mountains on the left, bright blue sky with white pixel clouds. Same framing and lighting as the reference. No text, no logos, no watermark.",
-      "status": "done"
+      "status": "done",
+      "note": "regenerated: removed readable turbo door lettering"
     },
     {
       "cat": "kei-city",
